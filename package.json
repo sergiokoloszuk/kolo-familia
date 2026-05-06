@@ -1,0 +1,19 @@
+{
+  "name": "kolo-familia",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Kolo Família — estratégia personalizada para o dia a dia da família atípica.",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspace=web",
+    "build": "npm run build --workspace=web",
+    "start": "npm run start --workspace=web",
+    "lint": "npm run lint --workspace=web"
+  },
+  "engines": {
+    "node": ">=20.9.0"
+  }
+}
