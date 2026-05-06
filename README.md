@@ -59,11 +59,33 @@ App em `http://localhost:3000`.
 
 **Fase 1 — Setup do ambiente** concluída:
 - Next.js 16 + Tailwind v4 + shadcn/ui scaffolded
-- Monorepo workspaces configurado (`apps/web`, `packages/shared`)
+- Monorepo workspaces (`apps/web`, `packages/shared`)
 - Dependências base instaladas
-- Smoke test renderizando componentes shadcn
 
-**Próxima fase:** Fase 2 — Banco de dados e Autenticação Supabase.
+**Fase 2 — Banco e Autenticação** em andamento:
+- Migrações SQL escritas em [supabase/migrations/](supabase/migrations/)
+- `lib/supabase/{client,server,proxy}.ts` wired
+- `proxy.ts` (Next 16) refresca sessão antes de cada SSR
+- Supabase self-hosted no Easypanel (`api-supabase.4oydba.easypanel.host`)
+- Aguardando: aplicar migrações via Studio + auth UI
+
+## Aplicar migrações no Supabase self-hosted
+
+O Supabase está hospedado em Easypanel — porta `5432` não exposta externamente,
+então o caminho é colar SQL no **Studio**:
+
+1. Abrir https://painel.4oydba.easypanel.host/ → SQL Editor
+2. Em ordem, colar e executar o conteúdo de:
+   1. [supabase/migrations/0001_init.sql](supabase/migrations/0001_init.sql) — tabelas, índices, helpers
+   2. [supabase/migrations/0002_rls.sql](supabase/migrations/0002_rls.sql) — RLS + políticas
+   3. [supabase/migrations/0003_seed.sql](supabase/migrations/0003_seed.sql) — output_types, skills iniciais, boas_praticas exemplares
+3. Verificar: tabelas em `public.*`, RLS habilitado, `select count(*) from output_types` retorna 7.
+
+> **Para automatizar depois:** expor porta `5432` (ou usar pgbouncer 6543) no
+> Easypanel e configurar `supabase` CLI com `--db-url`. Não recomendado expor
+> publicamente — use IP allow-list ou tunnel SSH.
+
+**Próxima fase:** Fase 3 — Páginas core (landing, cadastro 6 telas, painel, Kolo Vivo).
 
 ## Princípios
 
