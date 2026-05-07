@@ -70,11 +70,13 @@ App em `http://localhost:3000`.
 - Auth UI: login (e-mail/senha + Google), signup, callback OAuth, logout
 - Aguardando: aplicar migrações via Studio + Google OAuth setup
 
-**Fase 3 — Páginas core** em andamento:
+**Fase 3 — Páginas core** concluída (UI):
 - Onboarding wizard 6 telas com state machine ([apps/web/src/app/onboarding/](apps/web/src/app/onboarding/))
-- Painel básico em `/painel` (será expandido nas próximas fases)
+- Route group `(app)/` com layout compartilhado (nav: Painel | Kolo Vivo)
+- `/painel` cheio: 3 cards topo (conquistas/desafios/emoção) + sugestões count + Ayla diz placeholder + banner trial/past_due/paused
+- `/kolo-vivo`: abas por membro + família + sugestões. Editor por seção (5 da Camada 1, 4 da Camada 2). Server actions pra salvar e aprovar/rejeitar sugestão.
 - Roteamento da home: deslogada → landing; logada+onboarding pendente → wizard; logada+completo → painel
-- Falta: Kolo Vivo page (visualizar/editar Camada 1+2), painel completo (cards de conquistas/desafios/Ayla diz)
+- Cobertura por aplicar: tudo aguardando migrações no Studio para teste end-to-end
 
 ## Aplicar migrações no Supabase self-hosted
 
