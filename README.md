@@ -72,11 +72,19 @@ App em `http://localhost:3000`.
 
 **Fase 3 — Páginas core** concluída (UI):
 - Onboarding wizard 6 telas com state machine ([apps/web/src/app/onboarding/](apps/web/src/app/onboarding/))
-- Route group `(app)/` com layout compartilhado (nav: Painel | Kolo Vivo)
-- `/painel` cheio: 3 cards topo (conquistas/desafios/emoção) + sugestões count + Ayla diz placeholder + banner trial/past_due/paused
-- `/kolo-vivo`: abas por membro + família + sugestões. Editor por seção (5 da Camada 1, 4 da Camada 2). Server actions pra salvar e aprovar/rejeitar sugestão.
-- Roteamento da home: deslogada → landing; logada+onboarding pendente → wizard; logada+completo → painel
-- Cobertura por aplicar: tudo aguardando migrações no Studio para teste end-to-end
+- Route group `(app)/` com layout compartilhado (nav: Painel | Conversar | Kolo Vivo)
+- `/painel` cheio: 3 cards topo + sugestões count + Ayla diz placeholder + banner trial/past_due/paused
+- `/kolo-vivo`: abas por membro + família + sugestões. Editor por seção. Server actions pra salvar e aprovar/rejeitar sugestão.
+
+**Fase 4 — SpecialistPromptEngine + skills** em andamento:
+- [lib/ia/engine.ts](apps/web/src/lib/ia/engine.ts) orquestra: router → context → prompt → Claude (streaming + adaptive thinking) → validators
+- Roteamento por keywords + routing_priority (PRD §7.4.1), aciona 1+ skills
+- Contexto: Kolo Vivo filtrado por `kolo_vivo_fields`, Diário 7d×5, top-3 Boas Práticas (skills_relacionadas/tags), histórico 6 mensagens
+- System prompt cacheável (cache_control ephemeral) com identidade da skill + 7-part template + voz do produto + limites duros
+- Validadores: anti-cópia (Jaccard + substring), anti-substituição-profissional (regex), anti-comparação, anti-alarme, tamanho ≤350 palavras. Regenera 1× se falha.
+- `/conversar` UI: nova conversa (escolhe membro de foco) + lista de conversas anteriores
+- `/conversar/[id]` UI: thread completo com badges de skills acionadas + form de continuação
+- **Pendente:** ANTHROPIC_API_KEY no `.env.local` para testar; aplicar migrações 0001-0004 no Studio
 
 ## Aplicar migrações no Supabase self-hosted
 
