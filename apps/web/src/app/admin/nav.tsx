@@ -5,19 +5,20 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 
 const items = [
-  { href: "/painel", label: "Painel" },
-  { href: "/conversar", label: "Conversar" },
-  { href: "/apoio", label: "Apoio" },
-  { href: "/aprender", label: "Aprender" },
-  { href: "/kolo-vivo", label: "Kolo Vivo" },
+  { href: "/admin", label: "Início", exact: true },
+  { href: "/admin/aulas", label: "Aulas" },
+  { href: "/admin/trilhas", label: "Trilhas" },
+  { href: "/admin/boas-praticas", label: "Boas Práticas" },
 ];
 
-export function AppNav() {
+export function AdminNav() {
   const pathname = usePathname();
   return (
-    <nav className="hidden items-center gap-1 sm:flex">
+    <nav className="flex flex-wrap items-center gap-1 border-b pb-3">
       {items.map((item) => {
-        const active = pathname === item.href || pathname.startsWith(item.href + "/");
+        const active = item.exact
+          ? pathname === item.href
+          : pathname === item.href || pathname.startsWith(item.href + "/");
         return (
           <Link
             key={item.href}

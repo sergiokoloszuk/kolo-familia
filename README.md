@@ -81,13 +81,16 @@ App em `http://localhost:3000`.
 - Modo conversa (template 7 partes) e modo output_type (formato dos botões de apoio)
 - `/conversar` + `/conversar/[id]` UI
 
-**Fase 5 (parcial) — Botões de Apoio (7 tipos)** ✅ código pronto:
-- `respondAsOutputType()` no engine: aciona 1 skill (top score), usa `output_types.prompt_template` em vez do template de 7 partes, aplica validadores exceto tamanho
-- `/apoio` lista os 7 tipos com ícones lucide e descrições
-- `/apoio/[key]` form (membro + contexto) → resposta in-place sem persistência
-- Defer pra próxima sessão: Aulas + Trilhas (admin CRUD + área Aprender), extração automática de Boas Práticas via IA, geração de imagem (Fase 9)
+**Fase 5 — Aulas, Trilhas, Botões de apoio, Aprender** ✅ código pronto:
+- `respondAsOutputType()` no engine + `/apoio` (7 tipos) com form e resposta in-place
+- Admin: bootstrap em `/admin/setup` (primeiro usuário vira admin), nav próprio
+- `/admin/aulas`: CRUD com transição de status (rascunho/ativo/arquivado)
+- `/admin/trilhas`: CRUD com lista de aulas vinculadas
+- `/admin/boas-praticas`: lista filtrada por status, edit/aprovar/arquivar com versionamento
+- **Extração automática de Boas Práticas:** ao publicar aula (status→ativo), `lib/ia/extract-boas-praticas.ts` processa a transcrição via Claude Sonnet, extrai até 10 candidatas estruturadas (titulo, texto_original, skills_relacionadas, tags, nivel) e insere com status=rascunho/origem=aula
+- `/aprender` user-facing: trilhas em destaque + aulas avulsas, player de iframe, transcrição lateral, navegação dentro da trilha
 
-**Pendente para testar Fases 4 e 5:** `ANTHROPIC_API_KEY` no `.env.local`; aplicar migrações 0001-0004 no Studio.
+**Pendente para testar Fases 4 e 5:** `ANTHROPIC_API_KEY` no `.env.local`; aplicar migrações 0001-0004 no Studio. Após login, visite `/admin/setup` pra virar admin.
 
 ## Aplicar migrações no Supabase self-hosted
 
