@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import {
   Card,
   CardContent,
@@ -6,7 +7,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/server";
 import { cn } from "@/lib/utils";
 
@@ -18,8 +19,15 @@ export default async function Home() {
 
   if (!user) return <PublicLanding />;
 
-  // Logado: por enquanto mostra o card de boas-vindas. Painel real entra na Fase 3.
-  return <LoggedInHome email={user.email ?? "—"} />;
+  // Logado: roteia conforme estado de onboarding.
+  const { data: family } = await supabase
+    .from("family_accounts")
+    .select("onboarding_completed")
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  if (!family || !family.onboarding_completed) redirect("/onboarding");
+  redirect("/painel");
 }
 
 function PublicLanding() {
@@ -84,27 +92,3 @@ function PublicLanding() {
     </main>
   );
 }
-
-function LoggedInHome({ email }: { email: string }) {
-  return (
-    <main className="flex min-h-screen flex-col items-center justify-center bg-background px-6 py-12">
-      <Card className="w-full max-w-md">
-        <CardHeader>
-          <CardTitle>Bem-vinda</CardTitle>
-          <CardDescription>{email}</CardDescription>
-        </CardHeader>
-        <CardContent className="flex flex-col gap-3">
-          <p className="text-sm text-muted-foreground">
-            Painel completo entra na próxima fase. Por enquanto, sua conta está ativa.
-          </p>
-          <form action="/auth/logout" method="post">
-            <Button type="submit" variant="outline" className="w-full">
-              Sair
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
-    </main>
-  );
-}
-

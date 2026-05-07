@@ -63,11 +63,18 @@ App em `http://localhost:3000`.
 - Dependências base instaladas
 
 **Fase 2 — Banco e Autenticação** em andamento:
-- Migrações SQL escritas em [supabase/migrations/](supabase/migrations/)
+- Migrações SQL escritas em [supabase/migrations/](supabase/migrations/) (4 arquivos)
 - `lib/supabase/{client,server,proxy}.ts` wired
 - `proxy.ts` (Next 16) refresca sessão antes de cada SSR
 - Supabase self-hosted no Easypanel (`api-supabase.4oydba.easypanel.host`)
-- Aguardando: aplicar migrações via Studio + auth UI
+- Auth UI: login (e-mail/senha + Google), signup, callback OAuth, logout
+- Aguardando: aplicar migrações via Studio + Google OAuth setup
+
+**Fase 3 — Páginas core** em andamento:
+- Onboarding wizard 6 telas com state machine ([apps/web/src/app/onboarding/](apps/web/src/app/onboarding/))
+- Painel básico em `/painel` (será expandido nas próximas fases)
+- Roteamento da home: deslogada → landing; logada+onboarding pendente → wizard; logada+completo → painel
+- Falta: Kolo Vivo page (visualizar/editar Camada 1+2), painel completo (cards de conquistas/desafios/Ayla diz)
 
 ## Aplicar migrações no Supabase self-hosted
 
@@ -80,6 +87,7 @@ então o caminho é colar SQL no **Studio**:
    2. [supabase/migrations/0002_rls.sql](supabase/migrations/0002_rls.sql) — RLS + políticas
    3. [supabase/migrations/0003_seed.sql](supabase/migrations/0003_seed.sql) — output_types, skills iniciais, boas_praticas exemplares
 3. Verificar: tabelas em `public.*`, RLS habilitado, `select count(*) from output_types` retorna 7.
+4. Em seguida, aplicar [supabase/migrations/0004_auth_trigger_and_onboarding.sql](supabase/migrations/0004_auth_trigger_and_onboarding.sql) — adiciona `onboarding_step`/`onboarding_completed` e o trigger que cria `family_accounts` + `subscription_accesses` + `ayla_preferences` automaticamente quando um usuário se cadastra.
 
 > **Para automatizar depois:** expor porta `5432` (ou usar pgbouncer 6543) no
 > Easypanel e configurar `supabase` CLI com `--db-url`. Não recomendado expor
