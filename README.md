@@ -87,6 +87,15 @@ então o caminho é colar SQL no **Studio**:
 
 **Próxima fase:** Fase 3 — Páginas core (landing, cadastro 6 telas, painel, Kolo Vivo).
 
+## Notas conhecidas
+
+- **Turbopack** crasha no Windows quando o caminho do projeto contém caracteres
+  não-ASCII (o `í` em `Família` quebra o spawn de processos do PostCSS — exit
+  `0xc0000142`). Por isso `dev`/`build` usam `--webpack`. Voltar pra Turbopack
+  quando: (a) renomear pasta sem acento, ou (b) Turbopack consertar.
+- **`zod` pinned via override** para `^3.25.76` na raiz porque `eslint-config-next@16`
+  puxa transitivamente `zod@4` que quebra `@hookform/resolvers ^3.x`.
+
 ## Princípios
 
 - Não pular fases. A ordem é uma escolha técnica.
