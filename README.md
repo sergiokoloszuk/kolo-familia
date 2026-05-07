@@ -76,15 +76,18 @@ App em `http://localhost:3000`.
 - `/painel` cheio: 3 cards topo + sugestões count + Ayla diz placeholder + banner trial/past_due/paused
 - `/kolo-vivo`: abas por membro + família + sugestões. Editor por seção. Server actions pra salvar e aprovar/rejeitar sugestão.
 
-**Fase 4 — SpecialistPromptEngine + skills** em andamento:
-- [lib/ia/engine.ts](apps/web/src/lib/ia/engine.ts) orquestra: router → context → prompt → Claude (streaming + adaptive thinking) → validators
-- Roteamento por keywords + routing_priority (PRD §7.4.1), aciona 1+ skills
-- Contexto: Kolo Vivo filtrado por `kolo_vivo_fields`, Diário 7d×5, top-3 Boas Práticas (skills_relacionadas/tags), histórico 6 mensagens
-- System prompt cacheável (cache_control ephemeral) com identidade da skill + 7-part template + voz do produto + limites duros
-- Validadores: anti-cópia (Jaccard + substring), anti-substituição-profissional (regex), anti-comparação, anti-alarme, tamanho ≤350 palavras. Regenera 1× se falha.
-- `/conversar` UI: nova conversa (escolhe membro de foco) + lista de conversas anteriores
-- `/conversar/[id]` UI: thread completo com badges de skills acionadas + form de continuação
-- **Pendente:** ANTHROPIC_API_KEY no `.env.local` para testar; aplicar migrações 0001-0004 no Studio
+**Fase 4 — SpecialistPromptEngine + skills** ✅ código pronto:
+- [lib/ia/engine.ts](apps/web/src/lib/ia/engine.ts) orquestra router → context → prompt → Claude (streaming + adaptive thinking) → validators
+- Modo conversa (template 7 partes) e modo output_type (formato dos botões de apoio)
+- `/conversar` + `/conversar/[id]` UI
+
+**Fase 5 (parcial) — Botões de Apoio (7 tipos)** ✅ código pronto:
+- `respondAsOutputType()` no engine: aciona 1 skill (top score), usa `output_types.prompt_template` em vez do template de 7 partes, aplica validadores exceto tamanho
+- `/apoio` lista os 7 tipos com ícones lucide e descrições
+- `/apoio/[key]` form (membro + contexto) → resposta in-place sem persistência
+- Defer pra próxima sessão: Aulas + Trilhas (admin CRUD + área Aprender), extração automática de Boas Práticas via IA, geração de imagem (Fase 9)
+
+**Pendente para testar Fases 4 e 5:** `ANTHROPIC_API_KEY` no `.env.local`; aplicar migrações 0001-0004 no Studio.
 
 ## Aplicar migrações no Supabase self-hosted
 

@@ -2,12 +2,19 @@ import type Anthropic from "@anthropic-ai/sdk";
 import type { ContextoSkillResposta } from "./context";
 import type { SkillRow } from "./router";
 
+export type OutputTypeData = {
+  key: string;
+  label: string;
+  prompt_template: string;
+};
+
 /**
- * Texto-base do system prompt com a identidade das skills + estrutura
- * de 7 partes + regras duras. Estável → cacheável.
+ * Bloco de identidade das skills — usado em ambos os modos (conversa e
+ * output_type). Estável dentro de uma skill, então cacheável quando o
+ * conjunto de skills não muda.
  */
-function buildSystemText(skills: SkillRow[]): string {
-  const identidades = skills
+function buildIdentityBlock(skills: SkillRow[]): string {
+  return skills
     .map(
       (s, i) => `## Skill ${i + 1}: ${s.display_name}
 - Objetivo: ${s.objective}
@@ -16,14 +23,12 @@ function buildSystemText(skills: SkillRow[]): string {
 - Limites: ${s.limits}`,
     )
     .join("\n\n");
+}
 
-  return `Você é uma equipe de especialistas do Kolo Família — uma aplicação que apoia famílias com pelo menos um membro neurodivergente (TEA, TDAH, dislexia, AH/SD, e outros perfis).
-
-# Especialistas neste turno
-
-${identidades}
-
-# Voz do produto (PRD §6)
+/**
+ * Voz do produto e limites duros — texto fixo, máximo de cache hit.
+ */
+const VOZ_E_LIMITES = `# Voz do produto (PRD §6)
 
 - HIPÓTESES, NÃO CAUSAS AFIRMADAS. Você abre possibilidades para a mãe observar — nunca afirma o que está acontecendo. A mãe é a especialista no filho dela. ERRADO: "isso é por causa do acúmulo de transições". CERTO: "pode ser acúmulo. Pode ser temperatura. Pode ser barulho. Vale observar com calma".
 - Tom: amiga experiente, não terapeuta. Direta, humana, afetuosa. Sem performar empatia.
@@ -32,6 +37,23 @@ ${identidades}
 - NÃO comparar com outras crianças ("o normal seria", "outras crianças com TEA").
 - NÃO usar palavras alarmistas (preocupante, grave, urgente) fora de contexto de risco real.
 - NÃO substitui profissionais de saúde. Quando o input pede diagnóstico ou conduta clínica, redirecionar explicitamente para profissional.
+
+# Limites duros
+
+- Não copie literalmente texto das Boas Práticas — integre as ideias com suas próprias palavras.
+- Em caso de dúvida sobre risco real (auto-lesão, ideação suicida, abuso), responda APENAS: "Isso precisa de apoio profissional agora. Procure um profissional de saúde mental ou ligue para o CVV: 188." e pare.`;
+
+/**
+ * System prompt do MODO CONVERSA — template de 7 partes (PRD §7.4.2).
+ */
+function buildSystemTextConversa(skills: SkillRow[]): string {
+  return `Você é uma equipe de especialistas do Kolo Família — uma aplicação que apoia famílias com pelo menos um membro neurodivergente (TEA, TDAH, dislexia, AH/SD, e outros perfis).
+
+# Especialistas neste turno
+
+${buildIdentityBlock(skills)}
+
+${VOZ_E_LIMITES}
 
 # Estrutura obrigatória da resposta — 7 partes
 
@@ -48,15 +70,39 @@ ${identidades}
 > • Registrar conquista
 > • Registrar desafio
 
-# Limites duros
+# Tamanho
 
-- Resposta total ≤ 350 palavras (sem contar o bloco "registrar este papo").
-- Não copie literalmente texto das Boas Práticas — integre as ideias com suas próprias palavras.
-- Em caso de dúvida sobre risco real (auto-lesão, ideação suicida, abuso), responda APENAS: "Isso precisa de apoio profissional agora. Procure um profissional de saúde mental ou ligue para o CVV: 188." e pare.${
+Resposta total ≤ 350 palavras (sem contar o bloco "registrar este papo").${
     skills.length > 1
       ? `\n\n# Composição multi-skill\n\nVocê está integrando ${skills.length} perspectivas — apresente UMA resposta única e coesa, não duas separadas. Ao final, antes do bloco "registrar este papo", inclua uma frase curta indicando quais perspectivas se uniram. Ex: "Esta resposta uniu olhares de ${skills.map((s) => s.display_name).join(" + ")}."`
       : ""
   }`;
+}
+
+/**
+ * System prompt do MODO OUTPUT_TYPE — atalho dos 7 botões de apoio
+ * (PRD §7.12). Não usa o template de 7 partes — segue o
+ * output_type.prompt_template.
+ */
+function buildSystemTextOutputType(
+  skills: SkillRow[],
+  outputType: OutputTypeData,
+): string {
+  return `Você é uma equipe de especialistas do Kolo Família. A mãe pediu uma resposta no formato "${outputType.label}".
+
+# Especialistas neste turno
+
+${buildIdentityBlock(skills)}
+
+${VOZ_E_LIMITES}
+
+# Formato da resposta — "${outputType.label}"
+
+${outputType.prompt_template}
+
+# Tamanho
+
+Mantenha a resposta concisa e útil — não exceda 400 palavras. Use markdown leve (negrito, listas). Sem template de 7 partes.`;
 }
 
 /**
@@ -139,6 +185,10 @@ ${ctx.boasPraticas
   return partes.join("\n\n");
 }
 
+export type Modo =
+  | { kind: "conversa" }
+  | { kind: "output_type"; outputType: OutputTypeData };
+
 /**
  * Monta os parâmetros pra messages.create() / messages.stream() do
  * Anthropic SDK, com cache_control no system prompt (estável) e o
@@ -148,16 +198,22 @@ export function assemblePrompt(params: {
   skills: SkillRow[];
   ctx: ContextoSkillResposta;
   userInput: string;
+  modo: Modo;
 }): {
   system: Anthropic.TextBlockParam[];
   messages: Anthropic.MessageParam[];
 } {
-  const { skills, ctx, userInput } = params;
+  const { skills, ctx, userInput, modo } = params;
+
+  const systemText =
+    modo.kind === "conversa"
+      ? buildSystemTextConversa(skills)
+      : buildSystemTextOutputType(skills, modo.outputType);
 
   const system: Anthropic.TextBlockParam[] = [
     {
       type: "text",
-      text: buildSystemText(skills),
+      text: systemText,
       cache_control: { type: "ephemeral" },
     },
   ];
@@ -166,15 +222,19 @@ export function assemblePrompt(params: {
 
   const messages: Anthropic.MessageParam[] = [];
 
-  // Histórico da conversa atual (últimas 6 trocas)
-  for (const h of ctx.historico) {
-    messages.push({ role: h.papel, content: h.conteudo });
+  // Histórico só faz sentido em modo conversa
+  if (modo.kind === "conversa") {
+    for (const h of ctx.historico) {
+      messages.push({ role: h.papel, content: h.conteudo });
+    }
   }
 
-  // Turno corrente: contexto da família + input da mãe
+  const wrapper =
+    modo.kind === "conversa" ? "mensagem_da_mae" : "pedido_da_mae";
+
   const userTurnText = contextoBloco
-    ? `${contextoBloco}\n\n<mensagem_da_mae>\n${userInput}\n</mensagem_da_mae>`
-    : `<mensagem_da_mae>\n${userInput}\n</mensagem_da_mae>`;
+    ? `${contextoBloco}\n\n<${wrapper}>\n${userInput}\n</${wrapper}>`
+    : `<${wrapper}>\n${userInput}\n</${wrapper}>`;
 
   messages.push({ role: "user", content: userTurnText });
 

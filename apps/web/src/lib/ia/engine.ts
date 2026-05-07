@@ -2,8 +2,15 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { getAnthropicClient, MODELS } from "./anthropic";
 import { loadActiveSkills, routeSkills, type RoutedSkill } from "./router";
 import { buildContext } from "./context";
-import { assemblePrompt } from "./prompt";
-import { runAllValidators } from "./validators";
+import { assemblePrompt, type Modo, type OutputTypeData } from "./prompt";
+import {
+  runAllValidators,
+  validateAntiSubstituicaoProfissional,
+  validateAntiComparacao,
+  validateAntiAlarme,
+  validateAntiCopy,
+  type ValidationResult,
+} from "./validators";
 
 export type EngineResponse = {
   texto: string;
@@ -20,15 +27,14 @@ export type EngineResponse = {
 /**
  * SpecialistPromptEngine — peça central do produto (PRD §7.4).
  *
- * Fluxo:
+ * Modo conversa:
  *   input + contexto da família
  *     → router decide skill(s) por keywords + priority
  *     → context builder traz Kolo Vivo, Diário, Boas Práticas, histórico
  *     → prompt assembler monta system (cacheável) + messages
  *     → Claude Sonnet com adaptive thinking, streaming
  *     → validators (anti-cópia, anti-substituição-profissional, etc.)
- *     → se falha: regenera 1× com prompt ajustado; se persiste, retorna
- *       resposta marcada com aviso
+ *     → se falha: regenera 1× com prompt ajustado.
  */
 export async function respond(params: {
   supabase: SupabaseClient;
@@ -39,7 +45,6 @@ export async function respond(params: {
 }): Promise<EngineResponse> {
   const { supabase, familyId, membroAtipicoId, conversaId, userInput } = params;
 
-  // 1. Roteamento
   const skills = await loadActiveSkills(supabase);
   if (skills.length === 0) {
     throw new Error(
@@ -48,7 +53,6 @@ export async function respond(params: {
   }
   const roteadas = routeSkills(userInput, skills);
 
-  // 2. Contexto
   const ctx = await buildContext(supabase, {
     familyId,
     membroAtipicoId,
@@ -56,18 +60,25 @@ export async function respond(params: {
     conversaId,
   });
 
-  // 3. Primeira tentativa
-  let resposta = await callClaude(roteadas, ctx, userInput);
+  let resposta = await callClaude(
+    roteadas,
+    ctx,
+    userInput,
+    { kind: "conversa" },
+  );
 
-  // 4. Validação
   let validacao = runAllValidators(resposta.texto, ctx.boasPraticas);
   let regenerou = false;
 
   if (!validacao.ok) {
     regenerou = true;
-    resposta = await callClaude(roteadas, ctx, userInput, {
-      regeneracao: { motivo: validacao.motivo, sugestao: validacao.sugestao },
-    });
+    resposta = await callClaude(
+      roteadas,
+      ctx,
+      userInput,
+      { kind: "conversa" },
+      { regeneracao: { motivo: validacao.motivo, sugestao: validacao.sugestao } },
+    );
     validacao = runAllValidators(resposta.texto, ctx.boasPraticas);
   }
 
@@ -83,10 +94,82 @@ export async function respond(params: {
   };
 }
 
+/**
+ * Modo OUTPUT_TYPE — atalhos dos 7 botões de apoio (PRD §7.12).
+ *
+ * Diferente de respond():
+ *   - Roteia pra no máximo 1 skill (a mais relevante)
+ *   - Não usa template de 7 partes — segue output_type.prompt_template
+ *   - Não usa histórico (cada pedido é independente)
+ *   - Validadores: aplica todos exceto o de tamanho (output types variam)
+ */
+export async function respondAsOutputType(params: {
+  supabase: SupabaseClient;
+  familyId: string;
+  membroAtipicoId: string | null;
+  outputType: OutputTypeData;
+  pedido: string;
+}): Promise<EngineResponse> {
+  const { supabase, familyId, membroAtipicoId, outputType, pedido } = params;
+
+  const skills = await loadActiveSkills(supabase);
+  if (skills.length === 0) {
+    throw new Error(
+      "Nenhuma skill ativa cadastrada. Aplique a migração 0003_seed.sql no Supabase.",
+    );
+  }
+  // Aciona só a skill mais relevante (output_type já dita o formato)
+  const roteadas = routeSkills(pedido, skills, { maxSkills: 1, minScore: 0 });
+
+  const ctx = await buildContext(supabase, {
+    familyId,
+    membroAtipicoId,
+    skills: roteadas.map((r) => r.skill),
+    conversaId: null,
+  });
+
+  const modo: Modo = { kind: "output_type", outputType };
+
+  const resposta = await callClaude(roteadas, ctx, pedido, modo);
+
+  // Validadores: rodar tudo exceto tamanho (output types têm tamanho próprio)
+  const validacao = runAllValidatorsExceptSize(resposta.texto, ctx.boasPraticas);
+
+  return {
+    texto: resposta.texto,
+    skillsAcionadas: roteadas.map((r) => ({
+      name: r.skill.name,
+      display_name: r.skill.display_name,
+      score: r.score,
+    })),
+    validacao: validacao.ok
+      ? { ok: true }
+      : { ok: false, motivo: validacao.motivo, regenerou: false },
+    uso: resposta.uso,
+  };
+}
+
+function runAllValidatorsExceptSize(
+  texto: string,
+  bps: { versao_curta: string; versao_conversa: string | null }[],
+): ValidationResult {
+  for (const check of [
+    () => validateAntiSubstituicaoProfissional(texto),
+    () => validateAntiComparacao(texto),
+    () => validateAntiAlarme(texto),
+    () => validateAntiCopy(texto, bps),
+  ]) {
+    const r = check();
+    if (!r.ok) return r;
+  }
+  return { ok: true };
+}
+
 async function callClaude(
   roteadas: RoutedSkill[],
   ctx: Awaited<ReturnType<typeof buildContext>>,
   userInput: string,
+  modo: Modo,
   options: {
     regeneracao?: { motivo: string; sugestao?: string };
   } = {},
@@ -94,13 +177,14 @@ async function callClaude(
   const client = getAnthropicClient();
 
   const inputComRegeneracao = options.regeneracao
-    ? `${userInput}\n\n<sistema>A resposta anterior falhou na validação: ${options.regeneracao.motivo}. ${options.regeneracao.sugestao ?? ""} Refaça respeitando as 7 partes e os limites.</sistema>`
+    ? `${userInput}\n\n<sistema>A resposta anterior falhou na validação: ${options.regeneracao.motivo}. ${options.regeneracao.sugestao ?? ""} Refaça respeitando o formato e os limites.</sistema>`
     : userInput;
 
   const { system, messages } = assemblePrompt({
     skills: roteadas.map((r) => r.skill),
     ctx,
     userInput: inputComRegeneracao,
+    modo,
   });
 
   const stream = client.messages.stream({
