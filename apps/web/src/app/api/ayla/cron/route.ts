@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createServiceRoleClient } from "@/lib/supabase/server";
+import { logServerError } from "@/lib/log";
 import {
   sendRotinaDiaria,
   sendEngajamento,
@@ -38,14 +39,22 @@ export async function POST(request: NextRequest) {
 
   const supabase = createServiceRoleClient();
 
-  if (tipo === "rotina") return runRotina(supabase);
-  if (tipo === "inatividade") return runInatividade(supabase);
-  if (tipo === "comercial") return runComercial(supabase);
-  if (tipo === "emocional") return runEmocional(supabase);
-  if (tipo === "insights") return runInsights(supabase);
-  if (tipo === "campanhas") return runCampanhas(supabase);
+  try {
+    if (tipo === "rotina") return await runRotina(supabase);
+    if (tipo === "inatividade") return await runInatividade(supabase);
+    if (tipo === "comercial") return await runComercial(supabase);
+    if (tipo === "emocional") return await runEmocional(supabase);
+    if (tipo === "insights") return await runInsights(supabase);
+    if (tipo === "campanhas") return await runCampanhas(supabase);
 
-  return NextResponse.json({ error: `tipo inválido: ${tipo}` }, { status: 400 });
+    return NextResponse.json({ error: `tipo inválido: ${tipo}` }, { status: 400 });
+  } catch (err) {
+    await logServerError("ayla_cron", err, { payload: { tipo } });
+    return NextResponse.json(
+      { error: err instanceof Error ? err.message : "erro" },
+      { status: 500 },
+    );
+  }
 }
 
 type AdminClient = ReturnType<typeof createServiceRoleClient>;

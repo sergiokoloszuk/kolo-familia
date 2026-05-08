@@ -12,6 +12,7 @@ const items = [
   { href: "/admin/skills", label: "Skills" },
   { href: "/admin/campanhas", label: "Campanhas" },
   { href: "/admin/ayla", label: "Ayla" },
+  { href: "/admin/observabilidade", label: "Observabilidade" },
 ];
 
 export function AdminNav() {

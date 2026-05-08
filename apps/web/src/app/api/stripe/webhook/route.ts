@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import type Stripe from "stripe";
 import { getStripeClient } from "@/lib/stripe/client";
 import { createServiceRoleClient } from "@/lib/supabase/server";
+import { logEvent, logServerError } from "@/lib/log";
 
 /**
  * Webhook do Stripe — recebe eventos de assinatura e atualiza
@@ -73,12 +74,20 @@ export async function POST(request: NextRequest) {
     // Auditoria — registra todos os eventos relevantes em assinaturas
     await registrarEvento(event, admin);
   } catch (err) {
+    await logServerError("stripe_webhook", err, {
+      payload: { event_type: event.type, event_id: event.id },
+    });
     const message = err instanceof Error ? err.message : "unknown";
-    console.error(`[stripe webhook] erro processando ${event.type}: ${message}`);
     // 500 faz Stripe retentar. Útil pra falhas transitórias.
     return NextResponse.json({ error: message }, { status: 500 });
   }
 
+  await logEvent({
+    kind: "stripe_webhook",
+    severity: "info",
+    message: `processed ${event.type}`,
+    payload: { event_type: event.type, event_id: event.id },
+  });
   return NextResponse.json({ received: true });
 }
 

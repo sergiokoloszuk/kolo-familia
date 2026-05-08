@@ -1,7 +1,9 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/components/providers/auth-provider";
+import { ErrorTracker } from "@/components/providers/error-tracker";
+import { ServiceWorkerRegister } from "@/components/providers/sw-register";
 import { Toaster } from "@/components/ui/sonner";
 
 const geistSans = Geist({
@@ -18,6 +20,22 @@ export const metadata: Metadata = {
   title: "Kolo Família",
   description:
     "Estratégia personalizada para o dia a dia da família atípica, com mais clareza e leveza.",
+  manifest: "/manifest.webmanifest",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Kolo",
+  },
+  icons: {
+    icon: [{ url: "/icons/icon.svg", type: "image/svg+xml" }],
+    apple: [{ url: "/icons/icon.svg", type: "image/svg+xml" }],
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#ffffff",
+  width: "device-width",
+  initialScale: 1,
 };
 
 export default function RootLayout({
@@ -32,6 +50,8 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col">
         <AuthProvider>{children}</AuthProvider>
+        <ErrorTracker />
+        <ServiceWorkerRegister />
         <Toaster richColors position="top-right" />
       </body>
     </html>
