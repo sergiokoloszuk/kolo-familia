@@ -6,6 +6,8 @@ import {
   sendTrial,
   sendEmocionalStreak,
   sendProximoInsight,
+  sendCampanha,
+  type CampanhaCategoria,
 } from "@/lib/ayla/orchestrator";
 import { detectAndPersist } from "@/lib/ayla/insightEngine";
 
@@ -41,6 +43,7 @@ export async function POST(request: NextRequest) {
   if (tipo === "comercial") return runComercial(supabase);
   if (tipo === "emocional") return runEmocional(supabase);
   if (tipo === "insights") return runInsights(supabase);
+  if (tipo === "campanhas") return runCampanhas(supabase);
 
   return NextResponse.json({ error: `tipo inválido: ${tipo}` }, { status: 400 });
 }
@@ -374,6 +377,125 @@ async function runInsights(supabase: AdminClient) {
     processadas: resultados.length,
     enviadas: resultados.filter((r) => r.enviada).length,
     detalhes: resultados,
+  });
+}
+
+/**
+ * Campanhas: processa destinatarios pendentes de qualquer campanha em
+ * status='enviando'. Roda 1x/hora (PRD §7.13). Bounded por BATCH_GLOBAL.
+ */
+async function runCampanhas(supabase: AdminClient) {
+  const BATCH_GLOBAL = 500;
+
+  const { data: ativas } = await supabase
+    .from("campanhas")
+    .select("id, categoria, conteudo_whatsapp")
+    .eq("status", "enviando");
+
+  const resultados: Array<{
+    campanhaId: string;
+    enviadas: number;
+    bloqueadas: number;
+    pendentes: number;
+  }> = [];
+
+  let restanteGlobal = BATCH_GLOBAL;
+
+  for (const camp of ativas ?? []) {
+    if (restanteGlobal <= 0) break;
+    if (!camp.conteudo_whatsapp) continue;
+
+    const { data: pendentes } = await supabase
+      .from("campanhas_destinatarios")
+      .select("id, family_account_id")
+      .eq("campanha_id", camp.id)
+      .eq("status", "pendente")
+      .limit(restanteGlobal);
+
+    let enviadas = 0;
+    let bloqueadas = 0;
+
+    for (const p of pendentes ?? []) {
+      try {
+        const r = await sendCampanha(supabase, {
+          family_account_id: p.family_account_id as string,
+          campanha_id: camp.id as string,
+          categoria: camp.categoria as CampanhaCategoria,
+          conteudo_whatsapp: camp.conteudo_whatsapp as string,
+        });
+        if (r.enviada) {
+          enviadas++;
+          await supabase
+            .from("campanhas_destinatarios")
+            .update({
+              status: "enviada",
+              enviada_em: new Date().toISOString(),
+            })
+            .eq("id", p.id);
+        } else {
+          bloqueadas++;
+          await supabase
+            .from("campanhas_destinatarios")
+            .update({ status: "bloqueada", bloqueio_motivo: r.motivo })
+            .eq("id", p.id);
+        }
+      } catch (e) {
+        bloqueadas++;
+        await supabase
+          .from("campanhas_destinatarios")
+          .update({
+            status: "falha",
+            bloqueio_motivo: e instanceof Error ? e.message : "erro",
+          })
+          .eq("id", p.id);
+      }
+      restanteGlobal--;
+    }
+
+    // Encerra campanha quando esvaziar
+    const { count: pendCount } = await supabase
+      .from("campanhas_destinatarios")
+      .select("id", { count: "exact", head: true })
+      .eq("campanha_id", camp.id)
+      .eq("status", "pendente");
+    const restantes = pendCount ?? 0;
+
+    if (restantes === 0) {
+      const [{ count: enviadasCount }, { count: bloqueadasCount }] =
+        await Promise.all([
+          supabase
+            .from("campanhas_destinatarios")
+            .select("id", { count: "exact", head: true })
+            .eq("campanha_id", camp.id)
+            .eq("status", "enviada"),
+          supabase
+            .from("campanhas_destinatarios")
+            .select("id", { count: "exact", head: true })
+            .eq("campanha_id", camp.id)
+            .in("status", ["bloqueada", "falha"]),
+        ]);
+      await supabase
+        .from("campanhas")
+        .update({
+          status: "enviada",
+          total_alcance: enviadasCount ?? 0,
+          total_bloqueados: bloqueadasCount ?? 0,
+        })
+        .eq("id", camp.id);
+    }
+
+    resultados.push({
+      campanhaId: camp.id as string,
+      enviadas,
+      bloqueadas,
+      pendentes: restantes,
+    });
+  }
+
+  return NextResponse.json({
+    campanhas: resultados.length,
+    detalhes: resultados,
+    batch_global_restante: restanteGlobal,
   });
 }
 

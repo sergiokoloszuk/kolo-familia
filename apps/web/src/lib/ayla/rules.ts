@@ -21,6 +21,7 @@ import type { AylaTipoProativa } from "./types";
 const COMERCIAL: ReadonlyArray<AylaTipoProativa> = [
   "trial_d3",
   "trial_d0",
+  "campanha_promocional",
 ] as const;
 
 export type RulesContext = {

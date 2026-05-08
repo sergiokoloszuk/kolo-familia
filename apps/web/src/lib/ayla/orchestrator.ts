@@ -259,6 +259,71 @@ export async function sendProximoInsight(
 }
 
 // ============================================================
+// PROATIVA: Campanha administrativa — PRD §7.13 + §12.5
+//
+// Aplica todas as regras da Ayla (consentimento, pausa, limite 2/dia,
+// silêncio>10d, anti-colisão comercial-pós-crise) + opt-out por categoria.
+// "operacional" é comunicado obrigatório (sem opt-out, mas ainda respeita
+// consentimento + pausa + silêncio total).
+// ============================================================
+
+export type CampanhaCategoria =
+  | "informacional"
+  | "promocional"
+  | "avaliacao"
+  | "operacional";
+
+export async function sendCampanha(
+  supabase: SupabaseClient,
+  params: {
+    family_account_id: string;
+    campanha_id: string;
+    categoria: CampanhaCategoria;
+    conteudo_whatsapp: string;
+  },
+  agora: Date = new Date(),
+): Promise<EnvioResultado> {
+  const tipo: AylaTipoProativa = (`campanha_${params.categoria}` as AylaTipoProativa);
+
+  // 1. Opt-out por categoria (operacional é exceção — comunicado obrigatório)
+  if (params.categoria !== "operacional") {
+    const { data: optout } = await supabase
+      .from("categorias_optout")
+      .select("id")
+      .eq("family_account_id", params.family_account_id)
+      .eq("categoria", params.categoria)
+      .maybeSingle();
+    if (optout) {
+      return {
+        enviada: false,
+        motivo: `Família optou-out de '${params.categoria}'.`,
+      };
+    }
+  }
+
+  // 2. Regras Ayla (consentimento, pausa, 2/dia, silêncio total, comercial-pós-crise)
+  const podeRes = await podeEnviarProativa(
+    supabase,
+    { family_account_id: params.family_account_id, agora },
+    tipo,
+  );
+  if (!podeRes.permitido) return { enviada: false, motivo: podeRes.motivo };
+
+  // 3. Carrega contato
+  const ctx = await loadFamiliaParaEnvio(supabase, params.family_account_id);
+  if (!ctx) return { enviada: false, motivo: "Sem contexto da família." };
+
+  return enviarEPersistir(supabase, {
+    family_account_id: params.family_account_id,
+    membro_atipico_id: null,
+    phone: ctx.whatsapp_e164,
+    texto: params.conteudo_whatsapp,
+    category: "proativa",
+    tipo,
+  });
+}
+
+// ============================================================
 // REATIVA: processa mensagem recebida (webhook)
 // ============================================================
 

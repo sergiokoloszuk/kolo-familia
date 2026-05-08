@@ -9,6 +9,8 @@ const items = [
   { href: "/admin/aulas", label: "Aulas" },
   { href: "/admin/trilhas", label: "Trilhas" },
   { href: "/admin/boas-praticas", label: "Boas Práticas" },
+  { href: "/admin/skills", label: "Skills" },
+  { href: "/admin/campanhas", label: "Campanhas" },
   { href: "/admin/ayla", label: "Ayla" },
 ];
 

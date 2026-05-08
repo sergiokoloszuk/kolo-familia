@@ -18,7 +18,11 @@ export type AylaTipoProativa =
   | "emocional_conquista"
   | "dass21_convite"
   | "dass21_resultado_moderado"
-  | "dass21_resultado_severo";
+  | "dass21_resultado_severo"
+  | "campanha_informacional"
+  | "campanha_promocional"
+  | "campanha_avaliacao"
+  | "campanha_operacional";
 
 export type AylaTipoReativa =
   | "resposta_registro"
