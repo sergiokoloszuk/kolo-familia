@@ -11,6 +11,7 @@ import {
   type CampanhaCategoria,
 } from "@/lib/ayla/orchestrator";
 import { detectAndPersist } from "@/lib/ayla/insightEngine";
+import { runRegrasParaFamilia } from "@/lib/regras/engine";
 
 /**
  * Cron da Ayla — chamado por scheduler externo (n8n, Vercel Cron, etc.).
@@ -46,6 +47,7 @@ export async function POST(request: NextRequest) {
     if (tipo === "emocional") return await runEmocional(supabase);
     if (tipo === "insights") return await runInsights(supabase);
     if (tipo === "campanhas") return await runCampanhas(supabase);
+    if (tipo === "regras") return await runRegras(supabase);
 
     return NextResponse.json({ error: `tipo inválido: ${tipo}` }, { status: 400 });
   } catch (err) {
@@ -385,6 +387,52 @@ async function runInsights(supabase: AdminClient) {
   return NextResponse.json({
     processadas: resultados.length,
     enviadas: resultados.filter((r) => r.enviada).length,
+    detalhes: resultados,
+  });
+}
+
+/**
+ * Regras: avalia o engine para todas as famílias com assinatura ativa.
+ * Roda 1×/dia. Cada família é isolada (catch local) — falha em uma não
+ * derruba as outras.
+ */
+async function runRegras(supabase: AdminClient) {
+  const { data: ativas } = await supabase
+    .from("subscription_accesses")
+    .select("family_account_id, status")
+    .in("status", ["trialing", "active", "past_due"]);
+
+  const agora = new Date();
+  const resultados: Array<{
+    familyId: string;
+    fired: number;
+    resolved: number;
+    error?: string;
+  }> = [];
+
+  for (const a of ativas ?? []) {
+    const familyId = a.family_account_id as string;
+    try {
+      const r = await runRegrasParaFamilia(supabase, familyId, agora);
+      resultados.push({
+        familyId,
+        fired: r.filter((x) => x.status === "fired_new").length,
+        resolved: r.filter((x) => x.status === "resolved").length,
+      });
+    } catch (e) {
+      resultados.push({
+        familyId,
+        fired: 0,
+        resolved: 0,
+        error: e instanceof Error ? e.message : "erro",
+      });
+    }
+  }
+
+  return NextResponse.json({
+    processadas: resultados.length,
+    novos_alertas: resultados.reduce((acc, r) => acc + r.fired, 0),
+    resolvidos: resultados.reduce((acc, r) => acc + r.resolved, 0),
     detalhes: resultados,
   });
 }

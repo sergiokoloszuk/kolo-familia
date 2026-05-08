@@ -11,6 +11,7 @@ const items = [
   { href: "/admin/boas-praticas", label: "Boas Práticas" },
   { href: "/admin/skills", label: "Skills" },
   { href: "/admin/campanhas", label: "Campanhas" },
+  { href: "/admin/regras", label: "Regras" },
   { href: "/admin/ayla", label: "Ayla" },
   { href: "/admin/observabilidade", label: "Observabilidade" },
 ];

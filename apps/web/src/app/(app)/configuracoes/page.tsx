@@ -85,6 +85,24 @@ export default async function ConfiguracoesPage() {
           </a>
         </CardContent>
       </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Alertas e adaptações</CardTitle>
+          <CardDescription>
+            Veja alertas automáticos (cansada, gatilho recorrente, DASS-21
+            elevada) e adaptações sugeridas. Você decide o que aceitar.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <a
+            href="/configuracoes/regras"
+            className="text-sm font-medium underline-offset-4 hover:underline"
+          >
+            Abrir alertas →
+          </a>
+        </CardContent>
+      </Card>
     </div>
   );
 }
