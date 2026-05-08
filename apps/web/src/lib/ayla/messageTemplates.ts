@@ -109,6 +109,56 @@ export function templateRespostaRegistro(params: {
 }
 
 // ============================================================
+// Comerciais — trial D-3, D-0 (PRD §12.5)
+// ============================================================
+
+const TRIAL_D3: string[] = [
+  "Oi, {nomeMae}. Te lembrando que seus 30 dias grátis terminam em 3 dias.\n\nSe quiser continuar, entra em /assinatura quando der.",
+  "{nomeMae}, faltam 3 dias do seu trial. Sem pressão — só pra você não ser pega de surpresa.",
+];
+
+const TRIAL_D0: string[] = [
+  "Oi, {nomeMae}. Hoje é o último dia do seu trial 🌿\n\nSe quiser seguir, é só assinar em /assinatura. Cancela quando quiser.",
+  "{nomeMae}, hoje termina seu trial. Tudo que você registrou continua aqui — pra continuar usando, é só assinar.",
+];
+
+export function templateTrial(params: {
+  diasRestantes: 3 | 0;
+  nomeMae: string;
+  seed: string;
+}): string {
+  const variations = params.diasRestantes === 0 ? TRIAL_D0 : TRIAL_D3;
+  const v = pickVariation(variations, params.seed);
+  return fill(v, params);
+}
+
+// ============================================================
+// Emocional — streak 7 dias seguidos (PRD §12.5)
+// ============================================================
+
+const EMOCIONAL_STREAK: string[] = [
+  "{nomeMae}, você registrou 7 dias seguidos. Isso é cuidado de verdade — o/a {nomeMembro} está tendo uma mãe bem presente. 🌿",
+  "Sete dias de papo seguidos, {nomeMae}. Você tá fazendo um trabalho enorme com {nomeMembro}.",
+];
+
+export function templateEmocionalStreak(params: {
+  nomeMae: string;
+  nomeMembro: string;
+  seed: string;
+}): string {
+  const v = pickVariation(EMOCIONAL_STREAK, params.seed);
+  return fill(v, params);
+}
+
+// ============================================================
+// Insight — usa mensagem_proposta gerada pelo insightEngine
+// ============================================================
+
+export function templateInsight(mensagemProposta: string): string {
+  return mensagemProposta;
+}
+
+// ============================================================
 // Comandos
 // ============================================================
 

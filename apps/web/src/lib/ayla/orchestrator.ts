@@ -12,6 +12,9 @@ import {
   templateComandoPausada,
   templateComandoHorarioMudado,
   templateComandoSair,
+  templateTrial,
+  templateEmocionalStreak,
+  templateInsight,
 } from "./messageTemplates";
 import type { AylaTipoProativa, AylaTipoReativa, ParserResult } from "./types";
 
@@ -129,6 +132,130 @@ export async function sendEngajamento(
     category: "proativa",
     tipo,
   });
+}
+
+// ============================================================
+// PROATIVA: Trial D-3 e D-0
+// ============================================================
+
+export async function sendTrial(
+  supabase: SupabaseClient,
+  familyAccountId: string,
+  diasRestantes: 3 | 0,
+  agora: Date = new Date(),
+): Promise<EnvioResultado> {
+  const tipo: AylaTipoProativa = diasRestantes === 3 ? "trial_d3" : "trial_d0";
+
+  const podeRes = await podeEnviarProativa(
+    supabase,
+    { family_account_id: familyAccountId, agora },
+    tipo,
+  );
+  if (!podeRes.permitido) return { enviada: false, motivo: podeRes.motivo };
+
+  const ctx = await loadFamiliaParaEnvio(supabase, familyAccountId);
+  if (!ctx) return { enviada: false, motivo: "Sem contexto da família." };
+
+  const texto = templateTrial({
+    diasRestantes,
+    nomeMae: ctx.nomeMae,
+    seed: `${familyAccountId}-trial-${diasRestantes}`,
+  });
+
+  return enviarEPersistir(supabase, {
+    family_account_id: familyAccountId,
+    membro_atipico_id: null,
+    phone: ctx.whatsapp_e164,
+    texto,
+    category: "proativa",
+    tipo,
+  });
+}
+
+// ============================================================
+// PROATIVA: Emocional streak 7 dias
+// ============================================================
+
+export async function sendEmocionalStreak(
+  supabase: SupabaseClient,
+  familyAccountId: string,
+  agora: Date = new Date(),
+): Promise<EnvioResultado> {
+  const podeRes = await podeEnviarProativa(
+    supabase,
+    { family_account_id: familyAccountId, agora },
+    "emocional_streak",
+  );
+  if (!podeRes.permitido) return { enviada: false, motivo: podeRes.motivo };
+
+  const ctx = await loadFamiliaParaEnvio(supabase, familyAccountId);
+  if (!ctx) return { enviada: false, motivo: "Sem contexto da família." };
+
+  const membroFoco = ctx.membros[0];
+  const texto = templateEmocionalStreak({
+    nomeMae: ctx.nomeMae,
+    nomeMembro: membroFoco?.nome ?? "seu filho/sua filha",
+    seed: `${familyAccountId}-streak-${agora.toDateString()}`,
+  });
+
+  return enviarEPersistir(supabase, {
+    family_account_id: familyAccountId,
+    membro_atipico_id: membroFoco?.id ?? null,
+    phone: ctx.whatsapp_e164,
+    texto,
+    category: "proativa",
+    tipo: "emocional_streak",
+  });
+}
+
+// ============================================================
+// PROATIVA: Insight (lê próximo pendente de ayla_insights)
+// ============================================================
+
+export async function sendProximoInsight(
+  supabase: SupabaseClient,
+  familyAccountId: string,
+  agora: Date = new Date(),
+): Promise<EnvioResultado> {
+  const podeRes = await podeEnviarProativa(
+    supabase,
+    { family_account_id: familyAccountId, agora },
+    "insight",
+  );
+  if (!podeRes.permitido) return { enviada: false, motivo: podeRes.motivo };
+
+  const { data: insight } = await supabase
+    .from("ayla_insights")
+    .select("id, mensagem_proposta, membro_atipico_id")
+    .eq("family_account_id", familyAccountId)
+    .eq("enviado", false)
+    .order("created_at", { ascending: true })
+    .limit(1)
+    .maybeSingle();
+
+  if (!insight || !insight.mensagem_proposta) {
+    return { enviada: false, motivo: "Nenhum insight pendente." };
+  }
+
+  const ctx = await loadFamiliaParaEnvio(supabase, familyAccountId);
+  if (!ctx) return { enviada: false, motivo: "Sem contexto da família." };
+
+  const resp = await enviarEPersistir(supabase, {
+    family_account_id: familyAccountId,
+    membro_atipico_id: insight.membro_atipico_id,
+    phone: ctx.whatsapp_e164,
+    texto: templateInsight(insight.mensagem_proposta),
+    category: "proativa",
+    tipo: "insight",
+  });
+
+  if (resp.enviada) {
+    await supabase
+      .from("ayla_insights")
+      .update({ enviado: true, enviado_em: agora.toISOString() })
+      .eq("id", insight.id);
+  }
+  return resp;
 }
 
 // ============================================================
