@@ -92,6 +92,18 @@ App em `http://localhost:3000`.
 
 **Pendente para testar Fases 4 e 5:** `ANTHROPIC_API_KEY` no `.env.local`; aplicar migrações 0001-0004 no Studio. Após login, visite `/admin/setup` pra virar admin.
 
+**Fase 6 — Pagamento Stripe** ✅ código pronto:
+- `lib/stripe/client.ts` singleton com lazy init e helper de price IDs
+- `/api/stripe/checkout` cria session com `client_reference_id` + metadata
+- `/api/stripe/portal` Customer Portal
+- `/api/stripe/webhook` verifica assinatura, trata `checkout.session.completed`, `customer.subscription.*`, `invoice.payment_{succeeded,failed}`. Atualiza `subscription_accesses` via service role e audita em `assinaturas`.
+- `/assinatura` page com estado atual + CTAs (Assinar mensal/anual, Gerenciar)
+- `lib/auth/require-active-write.ts` bloqueia escrita em paused/canceled (aplicado em `enviarMensagem` como PoC; resto na próxima sessão)
+- Painel banner virou acionável (link pra `/assinatura`)
+- Nav: "Assinatura" como último item
+
+**Pendente para testar Fase 6:** `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PRICE_ID_MENSAL`, `STRIPE_PRICE_ID_ANUAL` no `.env.local`. Em dev local, usar `stripe listen --forward-to localhost:3000/api/stripe/webhook` pra capturar webhooks.
+
 ## Aplicar migrações no Supabase self-hosted
 
 O Supabase está hospedado em Easypanel — porta `5432` não exposta externamente,

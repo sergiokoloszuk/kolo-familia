@@ -188,32 +188,72 @@ function SubscriptionBanner({
   if (status === "active") return null;
 
   if (status === "trialing" && trialDaysLeft !== null) {
+    const urgente = trialDaysLeft <= 3;
     return (
-      <div className="rounded-md border bg-muted/30 px-4 py-3 text-sm">
+      <BannerLayout
+        tone={urgente ? "warning" : "neutral"}
+        cta={trialDaysLeft <= 7 ? "Assinar agora" : "Ver assinatura"}
+      >
         {trialDaysLeft > 0
           ? `Faltam ${trialDaysLeft} dia${trialDaysLeft === 1 ? "" : "s"} dos seus 30 dias grátis.`
           : "Seu trial termina hoje."}
-      </div>
+      </BannerLayout>
     );
   }
 
   if (status === "past_due") {
     return (
-      <div className="rounded-md border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+      <BannerLayout tone="destructive" cta="Atualizar pagamento">
         Pagamento pendente. Regularize para manter tudo ativo.
-      </div>
+      </BannerLayout>
     );
   }
 
   if (status === "paused") {
     return (
-      <div className="rounded-md border border-amber-300/60 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+      <BannerLayout tone="warning" cta="Reativar">
         Sua assinatura está pausada. Histórico preservado — reative quando quiser.
-      </div>
+      </BannerLayout>
+    );
+  }
+
+  if (status === "canceled") {
+    return (
+      <BannerLayout tone="warning" cta="Reativar">
+        Sua assinatura foi cancelada. Reative pra continuar usando.
+      </BannerLayout>
     );
   }
 
   return null;
+}
+
+function BannerLayout({
+  tone,
+  cta,
+  children,
+}: {
+  tone: "neutral" | "warning" | "destructive";
+  cta: string;
+  children: React.ReactNode;
+}) {
+  const toneCls =
+    tone === "destructive"
+      ? "border-destructive/40 bg-destructive/10 text-destructive"
+      : tone === "warning"
+        ? "border-amber-300/60 bg-amber-50 text-amber-900"
+        : "bg-muted/30";
+  return (
+    <div className={cn("flex flex-wrap items-center justify-between gap-3 rounded-md border px-4 py-3 text-sm", toneCls)}>
+      <span>{children}</span>
+      <Link
+        href="/assinatura"
+        className={cn(buttonVariants({ size: "sm", variant: tone === "neutral" ? "outline" : "default" }))}
+      >
+        {cta}
+      </Link>
+    </div>
+  );
 }
 
 type DiarioRow = {

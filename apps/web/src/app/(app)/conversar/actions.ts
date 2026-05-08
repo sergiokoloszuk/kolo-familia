@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { respond } from "@/lib/ia/engine";
+import { requireActiveWrite } from "@/lib/auth/require-active-write";
 
 async function requireFamily() {
   const supabase = await createClient();
@@ -31,6 +32,9 @@ export async function enviarMensagem(input: z.infer<typeof enviarSchema>): Promi
 }> {
   const { conversaId, membroAtipicoId, texto } = enviarSchema.parse(input);
   const { supabase, family } = await requireFamily();
+
+  // Gate de assinatura — bloqueia escrita em paused/canceled
+  await requireActiveWrite(family.id);
 
   // 1. Cria a conversa se for primeira mensagem
   let conversaIdFinal: string;
