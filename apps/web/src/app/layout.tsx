@@ -17,10 +17,18 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const APP_URL =
+  process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") ??
+  "https://kolofamilia.com.br";
+
 export const metadata: Metadata = {
-  title: "Kolo Família",
+  metadataBase: new URL(APP_URL),
+  title: {
+    default: "Kolo Família",
+    template: "%s · Kolo Família",
+  },
   description:
-    "Estratégia personalizada para o dia a dia da família atípica, com mais clareza e leveza.",
+    "Estratégia personalizada pro dia a dia da família atípica. Acolhimento e orientação no WhatsApp + app PWA com conteúdo personalizado.",
   manifest: "/manifest.webmanifest",
   appleWebApp: {
     capable: true,
@@ -30,6 +38,30 @@ export const metadata: Metadata = {
   icons: {
     icon: [{ url: "/icons/icon.svg", type: "image/svg+xml" }],
     apple: [{ url: "/icons/icon.svg", type: "image/svg+xml" }],
+  },
+  openGraph: {
+    type: "website",
+    locale: "pt_BR",
+    url: APP_URL,
+    siteName: "Kolo Família",
+    title: "Kolo Família — Cuidado todo dia, onde você já está",
+    description:
+      "Estratégia personalizada pro dia a dia da família atípica. Acolhimento e orientação no WhatsApp + app PWA.",
+    images: [{ url: "/icons/icon.svg" }],
+  },
+  twitter: {
+    card: "summary",
+    title: "Kolo Família",
+    description:
+      "Estratégia personalizada pro dia a dia da família atípica.",
+    images: ["/icons/icon.svg"],
+  },
+  alternates: {
+    canonical: APP_URL,
+  },
+  robots: {
+    index: true,
+    follow: true,
   },
 };
 
