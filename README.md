@@ -137,6 +137,26 @@ App em `http://localhost:3000`.
 
 **Pendente Fase 8:** Pattern do DASS-21 em insightEngine (queda sustentada por 3 meses), cron de lembrete mensal pra DASS-21 via Ayla (1×/mês no aniversário do cadastro).
 
+**Fase 9 — Visualização ilustrada (parcial)** ✅ código pronto:
+- Migração `0005_storage_imagens.sql` — bucket `imagens` público, RLS com path-prefix por `family_account_id`
+- `lib/imagem/generate.ts` — wrapper DALL-E 3 → download → upload pro Supabase Storage → URL permanente
+- `lib/imagem/avatar-prompt.ts` — monta prompt canônico do avatar (cartoon ou aquarela) e prompt de cena
+- `/configuracoes/avatar` — listagem dos membros + status (configurado/pendente)
+- `/configuracoes/avatar/[id]` — form com 9 campos descritivos (estilo/idade/gênero visual/tom de pele/cabelo cor/comprimento/textura/óculos/traços/roupas) + "Gerar avatar" / "Gerar de novo"
+- `/galeria` — grid de imagens com filtros por tipo + apenas favoritas. Cada item tem favoritar (estrela), baixar, apagar (também remove do Storage)
+- `/apoio/[key]` quando `gera_imagem_opcional` (Brincadeiras, Atividades, Histórias sociais): Card "Gerar imagem desta cena" usa avatar canônico + descrição do pedido. Salva direto na galeria.
+- Nav (app): "Galeria" entre Aprender e Kolo Vivo
+
+**Defer pra próxima Visualização:**
+- Foto-referência (1-3 fotos enviadas + descarte após gerar — multimodal Vision)
+- Sequência de Histórias Sociais (3-5 imagens encadeadas)
+- Auto-geração nas respostas das skills (engine sinaliza que tem cena pra ilustrar)
+- Cleanup cron pra imagens não favoritadas após 30 dias
+- Geração pela Ayla (visualização de conquista marcante)
+- Monitoramento de custo de imagem (NFR-11, R-CUSTO-IMAGEM)
+
+**Pendente Fase 9:** `OPENAI_API_KEY` no `.env.local`; aplicar migração 0005 no Studio (cria bucket via SQL no schema `storage`).
+
 ## Aplicar migrações no Supabase self-hosted
 
 O Supabase está hospedado em Easypanel — porta `5432` não exposta externamente,

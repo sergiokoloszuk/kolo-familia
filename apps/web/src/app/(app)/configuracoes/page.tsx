@@ -67,6 +67,24 @@ export default async function ConfiguracoesPage() {
           <OptOutsForm optoutSet={Array.from(optoutSet)} />
         </CardContent>
       </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Avatar dos membros</CardTitle>
+          <CardDescription>
+            Configure o avatar canônico (cartoon/aquarela) usado nas brincadeiras,
+            atividades e histórias sociais.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <a
+            href="/configuracoes/avatar"
+            className="text-sm font-medium underline-offset-4 hover:underline"
+          >
+            Configurar avatares →
+          </a>
+        </CardContent>
+      </Card>
     </div>
   );
 }

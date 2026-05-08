@@ -13,7 +13,7 @@ export default async function ApoioTipoPage(props: PageProps<"/apoio/[key]">) {
   const [{ data: tipo }, { data: membros }] = await Promise.all([
     supabase
       .from("output_types")
-      .select("key, label, prompt_template, ordem")
+      .select("key, label, prompt_template, ordem, gera_imagem_opcional")
       .eq("key", key)
       .eq("ativo", true)
       .maybeSingle(),
@@ -49,7 +49,11 @@ export default async function ApoioTipoPage(props: PageProps<"/apoio/[key]">) {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <ApoioForm outputTypeKey={tipo.key} membros={membros ?? []} />
+          <ApoioForm
+            outputTypeKey={tipo.key}
+            geraImagemOpcional={Boolean(tipo.gera_imagem_opcional)}
+            membros={membros ?? []}
+          />
         </CardContent>
       </Card>
     </div>

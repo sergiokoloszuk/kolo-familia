@@ -6,12 +6,21 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { gerarApoio, type GerarApoioResultado } from "../actions";
+import { gerarCenaParaGaleria } from "../../galeria/actions";
+
+const TIPO_GALERIA: Record<string, "brincadeira" | "atividade" | "historia_social"> = {
+  brincadeiras: "brincadeira",
+  atividades: "atividade",
+  historias_sociais: "historia_social",
+};
 
 export function ApoioForm({
   outputTypeKey,
+  geraImagemOpcional,
   membros,
 }: {
   outputTypeKey: string;
+  geraImagemOpcional: boolean;
   membros: Array<{ id: string; nome: string }>;
 }) {
   const [pending, startTransition] = useTransition();
@@ -19,6 +28,9 @@ export function ApoioForm({
   const [resultado, setResultado] = useState<GerarApoioResultado | null>(null);
   const [membroId, setMembroId] = useState<string>(membros[0]?.id ?? "");
   const [pedido, setPedido] = useState("");
+  const [imagemUrl, setImagemUrl] = useState<string | null>(null);
+  const [imagemPending, setImagemPending] = useState(false);
+  const [imagemErro, setImagemErro] = useState<string | null>(null);
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -42,6 +54,33 @@ export function ApoioForm({
   function tentarOutra() {
     setResultado(null);
     setPedido("");
+    setImagemUrl(null);
+    setImagemErro(null);
+  }
+
+  function handleGerarImagem() {
+    if (!membroId) {
+      setImagemErro("Escolha sobre qual membro é a cena pra gerar imagem.");
+      return;
+    }
+    const tipo = TIPO_GALERIA[outputTypeKey];
+    if (!tipo) return;
+    setImagemErro(null);
+    setImagemPending(true);
+    (async () => {
+      try {
+        const r = await gerarCenaParaGaleria({
+          membroAtipicoId: membroId,
+          descricaoCena: pedido,
+          tipo,
+        });
+        setImagemUrl(r.url);
+      } catch (e) {
+        setImagemErro(traduzirErro(e instanceof Error ? e.message : "Erro inesperado"));
+      } finally {
+        setImagemPending(false);
+      }
+    })();
   }
 
   if (resultado) {
@@ -69,6 +108,51 @@ export function ApoioForm({
             <p className="whitespace-pre-wrap text-sm">{resultado.texto}</p>
           </CardContent>
         </Card>
+
+        {geraImagemOpcional && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-sm font-medium">Gerar imagem desta cena</CardTitle>
+            </CardHeader>
+            <CardContent className="flex flex-col gap-3">
+              {imagemErro && (
+                <div className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs text-destructive">
+                  {imagemErro}
+                </div>
+              )}
+              {imagemUrl ? (
+                <>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={imagemUrl}
+                    alt="Cena ilustrada"
+                    className="aspect-square w-full max-w-sm rounded-md border object-cover"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Salva na sua galeria. Você pode favoritar e baixar lá.
+                  </p>
+                </>
+              ) : (
+                <>
+                  <p className="text-xs text-muted-foreground">
+                    Vai usar o avatar canônico do membro + a descrição da cena.
+                    Configure o avatar antes em /configuracoes/avatar.
+                  </p>
+                  <div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={handleGerarImagem}
+                      disabled={imagemPending}
+                    >
+                      {imagemPending ? "Gerando..." : "Gerar imagem"}
+                    </Button>
+                  </div>
+                </>
+              )}
+            </CardContent>
+          </Card>
+        )}
 
         <div className="flex justify-end">
           <Button type="button" variant="outline" onClick={tentarOutra}>

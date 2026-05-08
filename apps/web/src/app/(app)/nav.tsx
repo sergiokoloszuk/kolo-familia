@@ -10,6 +10,7 @@ const items = [
   { href: "/conversar", label: "Conversar" },
   { href: "/apoio", label: "Apoio" },
   { href: "/aprender", label: "Aprender" },
+  { href: "/galeria", label: "Galeria" },
   { href: "/kolo-vivo", label: "Kolo Vivo" },
   { href: "/configuracoes", label: "Configurações" },
   { href: "/assinatura", label: "Assinatura" },
