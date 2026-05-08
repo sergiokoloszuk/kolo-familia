@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { loadFamilyContext } from "@/lib/auth/require-user";
 import { cn } from "@/lib/utils";
+import { NpsBanner } from "./nps-banner";
 
 export default async function PainelPage() {
   const { user, supabase, family } = await loadFamilyContext();
@@ -79,6 +80,40 @@ export default async function PainelPage() {
       ? Math.max(0, differenceInCalendarDays(new Date(subscription.trial_ends_at), new Date()))
       : null;
 
+  // NPS elegibilidade: conta criada há ≥7 dias E sem feedback nos últimos 60 dias
+  const [{ data: familyMeta }, { data: ultimoFeedback }] = await Promise.all([
+    supabase
+      .from("family_accounts")
+      .select("created_at")
+      .eq("id", familyId)
+      .single(),
+    supabase
+      .from("feedback_beta")
+      .select("created_at")
+      .eq("family_account_id", familyId)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+  ]);
+  const agora = Date.now();
+  const idadeDias = familyMeta
+    ? Math.floor(
+        (agora - new Date(familyMeta.created_at as string).getTime()) /
+          (24 * 60 * 60 * 1000),
+      )
+    : 0;
+  const ultimoFeedbackDias = ultimoFeedback
+    ? Math.floor(
+        (agora - new Date(ultimoFeedback.created_at as string).getTime()) /
+          (24 * 60 * 60 * 1000),
+      )
+    : null;
+  const npsElegivel =
+    idadeDias >= 7 &&
+    (ultimoFeedbackDias == null || ultimoFeedbackDias >= 60);
+  const npsContexto: "d7" | "d30" | "manual" =
+    idadeDias < 30 ? "d7" : "d30";
+
   return (
     <div className="flex flex-col gap-6">
       <header>
@@ -93,6 +128,8 @@ export default async function PainelPage() {
       </header>
 
       <SubscriptionBanner status={subscription?.status} trialDaysLeft={trialDaysLeft} />
+
+      {npsElegivel && <NpsBanner contexto={npsContexto} />}
 
       <section className="grid gap-4 md:grid-cols-3">
         <Card>

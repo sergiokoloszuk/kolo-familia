@@ -13,6 +13,8 @@ const items = [
   { href: "/admin/campanhas", label: "Campanhas" },
   { href: "/admin/regras", label: "Regras" },
   { href: "/admin/ayla", label: "Ayla" },
+  { href: "/admin/convites", label: "Convites" },
+  { href: "/admin/beta", label: "Beta" },
   { href: "/admin/observabilidade", label: "Observabilidade" },
 ];
 

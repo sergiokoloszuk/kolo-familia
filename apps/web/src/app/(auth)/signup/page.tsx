@@ -11,9 +11,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { createClient } from "@/lib/supabase/client";
 
+const BETA_GATE = process.env.NEXT_PUBLIC_BETA_GATE_ENABLED === "true";
+
 const schema = z.object({
   email: z.string().email("E-mail inválido"),
   password: z.string().min(8, "Mínimo 8 caracteres"),
+  codigo_convite: BETA_GATE
+    ? z.string().trim().min(4, "Código de convite obrigatório").max(40)
+    : z.string().optional(),
 });
 
 type FormValues = z.infer<typeof schema>;
@@ -32,6 +37,29 @@ export default function SignupPage() {
   async function onSubmit(values: FormValues) {
     setSubmitting(true);
     setAuthError(null);
+
+    // Beta gate: valida convite ANTES de criar conta
+    if (BETA_GATE) {
+      const codigo = values.codigo_convite?.trim() ?? "";
+      const r = await fetch("/api/beta/validar-convite", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ codigo }),
+      });
+      const j = await r.json();
+      if (!j.ok) {
+        setSubmitting(false);
+        setAuthError(j.motivo ?? "Convite inválido.");
+        return;
+      }
+      // Guarda o código pra consumir pós-onboarding
+      try {
+        localStorage.setItem("beta_codigo_pendente", codigo);
+      } catch {
+        // Privacy mode pode bloquear localStorage — segue sem persistir
+      }
+    }
+
     const supabase = createClient();
     const { data, error } = await supabase.auth.signUp({
       email: values.email,
@@ -109,6 +137,28 @@ export default function SignupPage() {
               <span className="text-xs text-destructive">{errors.password.message}</span>
             )}
           </div>
+          {BETA_GATE && (
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="codigo_convite">Código de convite</Label>
+              <Input
+                id="codigo_convite"
+                type="text"
+                autoComplete="off"
+                spellCheck={false}
+                style={{ textTransform: "uppercase" }}
+                placeholder="Ex: ABCD2345"
+                {...register("codigo_convite")}
+              />
+              {errors.codigo_convite && (
+                <span className="text-xs text-destructive">
+                  {errors.codigo_convite.message}
+                </span>
+              )}
+              <span className="text-xs text-muted-foreground">
+                Estamos em beta fechado. Quem te convidou te passou um código.
+              </span>
+            </div>
+          )}
           <Button type="submit" disabled={submitting}>
             {submitting ? "Criando conta..." : "Criar conta"}
           </Button>

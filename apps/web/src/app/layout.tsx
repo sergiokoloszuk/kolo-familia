@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/components/providers/auth-provider";
+import { BetaConviteConsumer } from "@/components/providers/beta-convite-consumer";
 import { ErrorTracker } from "@/components/providers/error-tracker";
 import { ServiceWorkerRegister } from "@/components/providers/sw-register";
 import { Toaster } from "@/components/ui/sonner";
@@ -52,6 +53,7 @@ export default function RootLayout({
         <AuthProvider>{children}</AuthProvider>
         <ErrorTracker />
         <ServiceWorkerRegister />
+        <BetaConviteConsumer />
         <Toaster richColors position="top-right" />
       </body>
     </html>

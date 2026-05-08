@@ -99,7 +99,7 @@ Após aplicar todas, rode estas queries de verificação:
   select count(*) as total_tabelas
   from information_schema.tables
   where table_schema = 'public';
-  -- Esperado: 41
+  -- Esperado: 50
 
   -- Seeds básicos (0003)
   select count(*) as output_types from public.output_types;
@@ -144,7 +144,7 @@ Reporte o resultado de cada uma. Se algo estiver vazio ou divergir do
 esperado, me avise indicando o número da migração e eu reaplico.
 
 Quando terminar, me dê um sumário em 4 linhas:
-  - tabelas: X / 41
+  - tabelas: X / 50
   - seeds: output_types=N, skills=N, boas_praticas=N
   - trigger + bucket + RLS eventos_app: OK / FALTANDO (lista o que faltar)
   - catálogo regras: 4 / outro número
