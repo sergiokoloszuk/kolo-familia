@@ -48,6 +48,7 @@ export async function POST(request: NextRequest) {
     if (tipo === "insights") return await runInsights(supabase);
     if (tipo === "campanhas") return await runCampanhas(supabase);
     if (tipo === "regras") return await runRegras(supabase);
+    if (tipo === "cleanup") return await runCleanup(supabase);
 
     return NextResponse.json({ error: `tipo inválido: ${tipo}` }, { status: 400 });
   } catch (err) {
@@ -389,6 +390,89 @@ async function runInsights(supabase: AdminClient) {
     enviadas: resultados.filter((r) => r.enviada).length,
     detalhes: resultados,
   });
+}
+
+/**
+ * Cleanup: purga linhas antigas das tabelas operacionais. Roda 1×/dia.
+ *
+ *   - eventos_app: info/debug com >30 dias; warn/error/fatal com >180d
+ *   - links_vivos: revogados ou expirados há >90 dias
+ *   - beta_invites: expirados ou esgotados há >180 dias
+ *   - campanhas_destinatarios: status final em campanhas enviadas há >365d
+ *
+ * Bounded por DEL_LIMIT por tabela pra não travar o DB.
+ */
+async function runCleanup(supabase: AdminClient) {
+  const agora = new Date();
+  const dia = 24 * 60 * 60 * 1000;
+  const limites = {
+    eventos_info: new Date(agora.getTime() - 30 * dia).toISOString(),
+    eventos_grave: new Date(agora.getTime() - 180 * dia).toISOString(),
+    links_vivos: new Date(agora.getTime() - 90 * dia).toISOString(),
+    beta_invites: new Date(agora.getTime() - 180 * dia).toISOString(),
+    campanhas_old: new Date(agora.getTime() - 365 * dia).toISOString(),
+  };
+
+  const resultados: Record<string, number | string> = {};
+
+  // eventos_app info/debug
+  {
+    const { count, error } = await supabase
+      .from("eventos_app")
+      .delete({ count: "exact" })
+      .in("severity", ["debug", "info"])
+      .lt("created_at", limites.eventos_info);
+    resultados.eventos_info = error ? `erro: ${error.message}` : (count ?? 0);
+  }
+  // eventos_app warn/error/fatal
+  {
+    const { count, error } = await supabase
+      .from("eventos_app")
+      .delete({ count: "exact" })
+      .in("severity", ["warn", "error", "fatal"])
+      .lt("created_at", limites.eventos_grave);
+    resultados.eventos_grave = error ? `erro: ${error.message}` : (count ?? 0);
+  }
+  // links_vivos revogados ou expirados
+  {
+    const { count, error } = await supabase
+      .from("links_vivos")
+      .delete({ count: "exact" })
+      .or(
+        `revogado.eq.true,expira_em.lt.${limites.links_vivos}`,
+      );
+    resultados.links_vivos = error ? `erro: ${error.message}` : (count ?? 0);
+  }
+  // beta_invites expirados/revogados antigos
+  {
+    const { count, error } = await supabase
+      .from("beta_invites")
+      .delete({ count: "exact" })
+      .or(`revogado.eq.true,expira_em.lt.${limites.beta_invites}`);
+    resultados.beta_invites = error ? `erro: ${error.message}` : (count ?? 0);
+  }
+  // campanhas_destinatarios de campanhas enviadas há muito tempo
+  {
+    const { data: campanhasAntigas } = await supabase
+      .from("campanhas")
+      .select("id")
+      .eq("status", "enviada")
+      .lt("updated_at", limites.campanhas_old);
+    const ids = (campanhasAntigas ?? []).map((c) => c.id as string);
+    if (ids.length > 0) {
+      const { count, error } = await supabase
+        .from("campanhas_destinatarios")
+        .delete({ count: "exact" })
+        .in("campanha_id", ids);
+      resultados.campanhas_destinatarios = error
+        ? `erro: ${error.message}`
+        : (count ?? 0);
+    } else {
+      resultados.campanhas_destinatarios = 0;
+    }
+  }
+
+  return NextResponse.json({ ok: true, agora: agora.toISOString(), purgado: resultados });
 }
 
 /**

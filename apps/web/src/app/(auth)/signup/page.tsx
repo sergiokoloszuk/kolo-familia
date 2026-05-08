@@ -19,6 +19,11 @@ const schema = z.object({
   codigo_convite: BETA_GATE
     ? z.string().trim().min(4, "Código de convite obrigatório").max(40)
     : z.string().optional(),
+  aceito_termos: z.literal(true, {
+    errorMap: () => ({
+      message: "Você precisa aceitar termos e política pra continuar.",
+    }),
+  }),
 });
 
 type FormValues = z.infer<typeof schema>;
@@ -27,6 +32,8 @@ export default function SignupPage() {
   const [submitting, setSubmitting] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
   const [needsConfirm, setNeedsConfirm] = useState<string | null>(null);
+  const [reenviando, setReenviando] = useState(false);
+  const [reenvioMsg, setReenvioMsg] = useState<string | null>(null);
 
   const {
     register,
@@ -73,11 +80,30 @@ export default function SignupPage() {
       setAuthError(traduzirErro(error.message));
       return;
     }
+
+    // Aceite de termos: guarda timestamp pra ser persistido após login
+    const aceitoEm = new Date().toISOString();
+    try {
+      localStorage.setItem("termos_aceitos_em_pendente", aceitoEm);
+    } catch {
+      // privacy mode bloqueia; aceito é tentado de novo via banner pós-login
+    }
+
     // Quando email confirmation está ON no Supabase, session vem null e precisa confirmar.
     // Quando está OFF, session vem preenchida e o usuário já entra.
     if (!data.session) {
       setNeedsConfirm(values.email);
     } else {
+      // Tenta persistir agora (best-effort; consumer também tenta)
+      try {
+        await fetch("/api/me/aceitar-termos", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ aceitos_em: aceitoEm }),
+        });
+      } catch {
+        /* consumer cuida */
+      }
       window.location.href = "/onboarding";
     }
   }
@@ -92,15 +118,44 @@ export default function SignupPage() {
             clica para entrar.
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="flex flex-col gap-3">
           <p className="text-sm text-muted-foreground">
-            Não chegou? Verifica spam, ou{" "}
+            Não chegou? Verifica spam ou{" "}
+            <button
+              type="button"
+              onClick={async () => {
+                setReenviando(true);
+                setReenvioMsg(null);
+                const supabase = createClient();
+                const { error } = await supabase.auth.resend({
+                  type: "signup",
+                  email: needsConfirm,
+                });
+                setReenviando(false);
+                setReenvioMsg(
+                  error
+                    ? `Falha ao reenviar: ${error.message}`
+                    : "Reenviei. Aguarde uns minutos e confira o spam.",
+                );
+              }}
+              disabled={reenviando}
+              className="font-medium text-foreground underline-offset-4 hover:underline disabled:opacity-50"
+            >
+              {reenviando ? "reenviando..." : "reenvia o link"}
+            </button>
+            .
+          </p>
+          {reenvioMsg && (
+            <p className="text-xs text-muted-foreground">{reenvioMsg}</p>
+          )}
+          <p className="text-sm text-muted-foreground">
+            Ou{" "}
             <button
               type="button"
               onClick={() => setNeedsConfirm(null)}
               className="font-medium text-foreground underline-offset-4 hover:underline"
             >
-              tenta com outro e-mail
+              tente com outro e-mail
             </button>
             .
           </p>
@@ -158,6 +213,38 @@ export default function SignupPage() {
                 Estamos em beta fechado. Quem te convidou te passou um código.
               </span>
             </div>
+          )}
+          <label className="flex items-start gap-2 text-xs text-muted-foreground">
+            <input
+              type="checkbox"
+              {...register("aceito_termos")}
+              className="mt-0.5"
+            />
+            <span>
+              Li e aceito os{" "}
+              <Link
+                href="/termos"
+                target="_blank"
+                className="font-medium text-foreground underline-offset-2 hover:underline"
+              >
+                termos de uso
+              </Link>{" "}
+              e a{" "}
+              <Link
+                href="/privacidade"
+                target="_blank"
+                className="font-medium text-foreground underline-offset-2 hover:underline"
+              >
+                política de privacidade
+              </Link>
+              . Entendo que o Kolo Família não substitui profissionais de
+              saúde.
+            </span>
+          </label>
+          {errors.aceito_termos && (
+            <span className="text-xs text-destructive">
+              {errors.aceito_termos.message}
+            </span>
           )}
           <Button type="submit" disabled={submitting}>
             {submitting ? "Criando conta..." : "Criar conta"}

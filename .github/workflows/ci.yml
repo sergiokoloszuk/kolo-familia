@@ -1,0 +1,58 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    env:
+      # Envs mínimas para o build/typecheck. Valores fake — service role
+      # não é usado em build, mas o módulo lê pra montar o cliente.
+      NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: fake-anon-key-for-ci
+      SUPABASE_SERVICE_ROLE_KEY: fake-service-role-for-ci
+      NEXT_PUBLIC_APP_URL: https://example.com
+      ANTHROPIC_API_KEY: fake
+      OPENAI_API_KEY: fake
+      STRIPE_SECRET_KEY: fake
+      STRIPE_WEBHOOK_SECRET: fake
+      STRIPE_PRICE_ID_MENSAL: price_fake_mensal
+      STRIPE_PRICE_ID_ANUAL: price_fake_anual
+      ZAPI_TOKEN: fake
+      ZAPI_INSTANCE_ID: fake
+      CRON_SECRET: fake
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Typegen (Next.js)
+        working-directory: apps/web
+        run: npx next typegen
+
+      - name: Typecheck
+        working-directory: apps/web
+        run: npx tsc --noEmit
+
+      - name: Run unit tests
+        working-directory: apps/web
+        run: npm test
+
+      - name: Build
+        working-directory: apps/web
+        run: npx next build --webpack

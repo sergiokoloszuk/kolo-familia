@@ -1,8 +1,10 @@
 "use server";
 
+import { headers } from "next/headers";
 import { z } from "zod";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { logEvent } from "@/lib/log";
+import { checkRateLimit } from "@/lib/rate-limit";
 
 const schema = z.object({
   nome: z.string().trim().min(2).max(100),
@@ -14,6 +16,20 @@ export async function entrarNaListaEspera(
   input: z.infer<typeof schema>,
 ): Promise<void> {
   const data = schema.parse(input);
+
+  const h = await headers();
+  const ip =
+    h.get("x-forwarded-for")?.split(",")[0]?.trim() ??
+    h.get("x-real-ip") ??
+    "unknown";
+  const rl = checkRateLimit(`lista_espera:${ip}`, {
+    capacidade: 3,
+    refilPorMinuto: 1,
+  });
+  if (!rl.ok) {
+    throw new Error("Muitas tentativas. Aguarde alguns minutos.");
+  }
+
   const admin = createServiceRoleClient();
   const mensagem = data.contexto
     ? `[lista-espera] ${data.contexto}`

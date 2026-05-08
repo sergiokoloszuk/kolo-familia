@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
 import { validarConvite } from "@/lib/beta/gate";
 import { isBetaGateAtivo } from "@/lib/beta/codigos";
+import { checkRateLimit, clientKey } from "@/lib/rate-limit";
 
 /**
  * Endpoint público (sem auth) — só valida se um código de convite é
@@ -13,6 +14,24 @@ const schema = z.object({
 });
 
 export async function POST(request: NextRequest) {
+  // Rate limit estreito: 10 tentativas/min por IP — defende contra
+  // brute-force de códigos.
+  const rl = checkRateLimit(clientKey(request, "beta_validar"), {
+    capacidade: 10,
+    refilPorMinuto: 10,
+  });
+  if (!rl.ok) {
+    return NextResponse.json(
+      { ok: false, motivo: "muitas tentativas, aguarde" },
+      {
+        status: 429,
+        headers: rl.retry_after_s
+          ? { "retry-after": String(rl.retry_after_s) }
+          : undefined,
+      },
+    );
+  }
+
   if (!isBetaGateAtivo()) {
     return NextResponse.json({
       ok: true,

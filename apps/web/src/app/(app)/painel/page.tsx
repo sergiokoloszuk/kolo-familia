@@ -81,7 +81,12 @@ export default async function PainelPage() {
       : null;
 
   // NPS elegibilidade: conta criada há ≥7 dias E sem feedback nos últimos 60 dias
-  const [{ data: familyMeta }, { data: ultimoFeedback }] = await Promise.all([
+  const [
+    { data: familyMeta },
+    { data: ultimoFeedback },
+    { data: alertasOpen },
+    { count: adaptacoesPendentesCount },
+  ] = await Promise.all([
     supabase
       .from("family_accounts")
       .select("created_at")
@@ -94,6 +99,18 @@ export default async function PainelPage() {
       .order("created_at", { ascending: false })
       .limit(1)
       .maybeSingle(),
+    supabase
+      .from("alertas")
+      .select("id, regra_key, severidade, mensagem, first_disparo_em")
+      .eq("family_account_id", familyId)
+      .eq("estado", "open")
+      .order("first_disparo_em", { ascending: false })
+      .limit(3),
+    supabase
+      .from("adaptacoes_sugeridas")
+      .select("id", { count: "exact", head: true })
+      .eq("family_account_id", familyId)
+      .eq("estado", "pendente"),
   ]);
   const agora = Date.now();
   const idadeDias = familyMeta
@@ -130,6 +147,59 @@ export default async function PainelPage() {
       <SubscriptionBanner status={subscription?.status} trialDaysLeft={trialDaysLeft} />
 
       {npsElegivel && <NpsBanner contexto={npsContexto} />}
+
+      {((alertasOpen?.length ?? 0) > 0 ||
+        (adaptacoesPendentesCount ?? 0) > 0) && (
+        <Card className="border-amber-200 bg-amber-50/40">
+          <CardHeader className="flex flex-row items-start justify-between gap-2">
+            <div>
+              <CardTitle className="text-base">Precisa da sua atenção</CardTitle>
+              <CardDescription>
+                {(alertasOpen?.length ?? 0) > 0 &&
+                  `${alertasOpen!.length} alerta(s)`}
+                {(alertasOpen?.length ?? 0) > 0 &&
+                  (adaptacoesPendentesCount ?? 0) > 0 &&
+                  " · "}
+                {(adaptacoesPendentesCount ?? 0) > 0 &&
+                  `${adaptacoesPendentesCount} sugestão(ões) pra revisar`}
+              </CardDescription>
+            </div>
+            <Link
+              href="/configuracoes/regras"
+              className={cn(
+                buttonVariants({ variant: "outline", size: "sm" }),
+              )}
+            >
+              Abrir
+            </Link>
+          </CardHeader>
+          {(alertasOpen?.length ?? 0) > 0 && (
+            <CardContent className="text-sm">
+              <ul className="flex flex-col gap-1.5">
+                {(alertasOpen ?? []).slice(0, 3).map((a) => (
+                  <li
+                    key={a.id}
+                    className="flex items-start gap-2"
+                  >
+                    <Badge
+                      variant={
+                        a.severidade === "high"
+                          ? "destructive"
+                          : a.severidade === "warn"
+                            ? "default"
+                            : "secondary"
+                      }
+                    >
+                      {a.severidade}
+                    </Badge>
+                    <span className="text-muted-foreground">{a.mensagem}</span>
+                  </li>
+                ))}
+              </ul>
+            </CardContent>
+          )}
+        </Card>
+      )}
 
       <section className="grid gap-4 md:grid-cols-3">
         <Card>

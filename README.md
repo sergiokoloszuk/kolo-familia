@@ -1,206 +1,166 @@
 # Kolo Família
 
-Estratégia personalizada para o dia a dia da família atípica, com mais clareza e leveza, em qualquer hora do dia — porque a orientação para a inclusão acontece onde a família já está: no WhatsApp.
+Estratégia personalizada pro dia a dia da família atípica. Acolhimento e
+orientação no WhatsApp + app PWA com conteúdo personalizado + relatórios
+para terapeutas e escola.
 
 ## Documentação
 
-- **PRD do produto pleno:** [docs/PRD_Kolo_Familia_v3.1.md](docs/PRD_Kolo_Familia_v3.1.md) — visão, escopo, requisitos por área, especificação da Ayla, arquitetura.
-- **Roadmap de implantação:** [docs/Roadmap_Implantacao_v2.md](docs/Roadmap_Implantacao_v2.md) — sequência das 15 fases, sem datas. Não pular fases.
-- **Explicação das funcionalidades:** [docs/Explicacao_Funcionalidades.md](docs/Explicacao_Funcionalidades.md) — companion não-técnico.
+- **PRD do produto pleno:** [docs/PRD_Kolo_Familia_v3.1.md](docs/PRD_Kolo_Familia_v3.1.md)
+- **Roadmap de implantação:** [docs/Roadmap_Implantacao_v2.md](docs/Roadmap_Implantacao_v2.md) — 15 fases.
+- **Explicação das funcionalidades:** [docs/Explicacao_Funcionalidades.md](docs/Explicacao_Funcionalidades.md)
+- **Aplicar migrações no Supabase Studio:** [docs/migracoes-chrome-prompt.md](docs/migracoes-chrome-prompt.md)
 
 ## Stack
 
-- **Frontend / PWA:** Next.js 16 (App Router) + TypeScript + Tailwind v4 + shadcn/ui
-- **Backend / API:** API Routes do Next.js
-- **Auth + DB + Storage:** Supabase
-- **IA:** Anthropic (Claude Sonnet 4.6 / Haiku 4.5)
-- **Pagamento:** Stripe
-- **WhatsApp:** Z-API (com plano de migração para Cloud API)
-- **Orquestração:** n8n (self-hosted)
-- **Áudio:** ElevenLabs · **Imagem:** OpenAI/Replicate
-- **Hospedagem:** VPS Hostinger + CapRover/Coolify
-- **Observabilidade:** Sentry + PostHog
+- **App:** Next.js 16 (App Router) + TypeScript + Tailwind v4 + shadcn/ui
+- **Auth + DB + Storage:** Supabase self-hosted (Easypanel)
+- **IA:** Anthropic (Claude Opus/Sonnet/Haiku) + OpenAI (DALL-E 3 pra imagem)
+- **Pagamento:** Stripe (Checkout + Portal + Webhook)
+- **WhatsApp:** Z-API (REST + webhook)
+- **PWA:** service worker próprio (network-first em HTML, cache-first em assets)
+- **Observabilidade:** logger próprio + tabela `eventos_app` + `/admin/observabilidade`
 
-## Estrutura do monorepo
+## Estrutura
 
 ```
 .
-├── apps/
-│   └── web/                  # Next.js 16 (App Router)
-├── packages/
-│   └── shared/               # Tipos e schemas Zod compartilhados
-├── supabase/
-│   └── migrations/           # SQL versionado
-├── n8n/
-│   └── workflows/            # Workflows versionados em JSON
-└── docs/
-    ├── PRD_Kolo_Familia_v3.1.md
-    ├── Roadmap_Implantacao_v2.md
-    └── Explicacao_Funcionalidades.md
+├── apps/web/                # Next.js 16 — todo o produto
+├── packages/shared/         # Tipos/schemas comuns (ainda enxuto)
+├── supabase/migrations/     # 0001 → 0009 (idempotentes)
+└── docs/                    # PRD + Roadmap + Explicações + Prompt Chrome
 ```
 
-## Como rodar local
+## Rodar local
 
 ```bash
-# 1. Instalar dependências (na raiz)
+# 1. Dependências (raiz)
 npm install
 
-# 2. Copiar variáveis de ambiente
+# 2. Variáveis de ambiente
 cp .env.example apps/web/.env.local
-# Preencher conforme a fase atual do roadmap.
+# Preencher conforme tabela abaixo. Sem ANTHROPIC/STRIPE/ZAPI dá pra
+# subir o app, mas as features dependentes ficam off.
 
-# 3. Subir o app
+# 3. Dev server
 npm run dev
 ```
 
-App em `http://localhost:3000`.
+App em `http://localhost:3000`. Login: `/login` (precisa migrações
+aplicadas no Supabase + primeiro admin via `/admin/setup`).
+
+> **Windows + caminho com `í`:** os scripts já usam `next dev --webpack`
+> e `next build --webpack` porque o Turbopack crasha em paths com
+> caracteres não-ASCII. Não trocar.
+
+## Variáveis de ambiente
+
+Em `apps/web/.env.local`:
+
+| Variável | Onde usa | Obrigatória? |
+|---|---|---|
+| `NEXT_PUBLIC_SUPABASE_URL` | Cliente + servidor Supabase | sim |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Cliente Supabase | sim |
+| `SUPABASE_SERVICE_ROLE_KEY` | Webhooks, cron, gate Beta | sim |
+| `NEXT_PUBLIC_APP_URL` | Sitemap, Open Graph, redirects | sim |
+| `ANTHROPIC_API_KEY` | Skills + Ayla parser + curadoria | sim em prod |
+| `OPENAI_API_KEY` | Geração de imagem (DALL-E 3) | só pra galeria |
+| `STRIPE_SECRET_KEY` | Stripe SDK | só pra Stripe |
+| `STRIPE_WEBHOOK_SECRET` | Verifica assinatura do webhook | só pra Stripe |
+| `STRIPE_PRICE_ID_MENSAL` | Preço mensal | só pra Stripe |
+| `STRIPE_PRICE_ID_ANUAL` | Preço anual | só pra Stripe |
+| `ZAPI_INSTANCE_ID` | URL Z-API | só pra Ayla |
+| `ZAPI_TOKEN` | Token Z-API | só pra Ayla |
+| `ZAPI_CLIENT_TOKEN` | Token de cliente Z-API | só pra Ayla |
+| `AYLA_WEBHOOK_SECRET` | Header `x-ayla-secret` no webhook | só pra Ayla |
+| `CRON_SECRET` | `Authorization: Bearer` em `/api/ayla/cron` | só pra cron |
+| `BETA_GATE_ENABLED` | `true` exige convite no signup | opcional |
+| `NEXT_PUBLIC_BETA_GATE_ENABLED` | Mesmo valor, exposto ao client | opcional |
+
+## Migrações (Supabase)
+
+Aplicadas em ordem **0001 → 0009** via Supabase Studio. Todas idempotentes.
+
+Resumo:
+
+| # | Arquivo | O que faz |
+|---|---|---|
+| 0001 | `0001_init.sql` | 44 tabelas + índices + triggers |
+| 0002 | `0002_rls.sql` | Row Level Security + `is_admin()` + `current_family_account_id()` |
+| 0003 | `0003_seed.sql` | 7 output_types + 7 skills + 3 boas práticas + configs |
+| 0004 | `0004_auth_trigger_and_onboarding.sql` | trigger `on_auth_user_created` |
+| 0005 | `0005_storage_imagens.sql` | bucket `imagens` |
+| 0006 | `0006_eventos_app.sql` | observabilidade + RLS |
+| 0007 | `0007_rules_engine.sql` | regras + alertas + adaptações |
+| 0008 | `0008_beta.sql` | convites Beta + NPS + RPC `increment_invite_uses` |
+| 0009 | `0009_termos_aceite.sql` | colunas de aceite LGPD em `family_accounts` |
+
+Total esperado: **50 tabelas em `public`**.
+
+Aplicar: ver [docs/migracoes-chrome-prompt.md](docs/migracoes-chrome-prompt.md)
+ou colar manualmente no Studio em ordem. Após aplicar, criar conta em
+`/signup` e visitar `/admin/setup` (primeiro usuário vira superadmin).
+
+## Stripe
+
+1. **Dashboard Stripe → Products** — criar 1 produto "Kolo Família" com 2 preços (mensal + anual).
+2. Copiar IDs dos preços para `STRIPE_PRICE_ID_MENSAL` e `STRIPE_PRICE_ID_ANUAL`.
+3. **Developers → Webhooks** — endpoint apontando pra `https://<seu-dominio>/api/stripe/webhook`. Eventos:
+   - `checkout.session.completed`
+   - `checkout.session.async_payment_succeeded`
+   - `customer.subscription.created`
+   - `customer.subscription.updated`
+   - `customer.subscription.deleted`
+   - `invoice.payment_succeeded`
+   - `invoice.payment_failed`
+4. Copiar **Signing secret** para `STRIPE_WEBHOOK_SECRET`.
+
+Em dev: `stripe listen --forward-to localhost:3000/api/stripe/webhook`.
+
+## Z-API (WhatsApp)
+
+1. Criar instância na Z-API e copiar `Instance ID` + `Token` + `Client-Token`.
+2. Configurar webhook no painel Z-API apontando pra `https://<seu-dominio>/api/ayla/webhook`.
+3. **Adicionar header customizado** `x-ayla-secret: <AYLA_WEBHOOK_SECRET>`.
+
+## Cron externo
+
+Scheduler (n8n / Vercel Cron / GitHub Actions) chama `POST` em
+`/api/ayla/cron?tipo=...` com `Authorization: Bearer $CRON_SECRET`:
+
+| Tipo | Cadência | O que faz |
+|---|---|---|
+| `rotina` | a cada 30min | pergunta diária da Ayla na janela horária da família |
+| `inatividade` | 1×/dia | engajamento 2/5 dias |
+| `comercial` | 1×/dia | trial D-3 e D-0 |
+| `emocional` | 1×/dia | streak 7 dias |
+| `insights` | 1×/semana | detecção de padrões + envia próximo pendente |
+| `campanhas` | 1×/hora | drena destinatários pendentes |
+| `regras` | 1×/dia | Rules Engine |
+| `cleanup` | 1×/dia | purga eventos antigos, links vivos expirados, etc. |
 
 ## Status atual
 
-**Fase 1 — Setup do ambiente** concluída:
-- Next.js 16 + Tailwind v4 + shadcn/ui scaffolded
-- Monorepo workspaces (`apps/web`, `packages/shared`)
-- Dependências base instaladas
+Roadmap fechado da fase 1 à fase 14. Fase 15 (migração WhatsApp Cloud
+API) não vai acontecer — mantemos Z-API.
 
-**Fase 2 — Banco e Autenticação** em andamento:
-- Migrações SQL escritas em [supabase/migrations/](supabase/migrations/) (4 arquivos)
-- `lib/supabase/{client,server,proxy}.ts` wired
-- `proxy.ts` (Next 16) refresca sessão antes de cada SSR
-- Supabase self-hosted no Easypanel (`api-supabase.4oydba.easypanel.host`)
-- Auth UI: login (e-mail/senha + Google), signup, callback OAuth, logout
-- Aguardando: aplicar migrações via Studio + Google OAuth setup
+Lacunas conhecidas (não bloqueiam o produto):
 
-**Fase 3 — Páginas core** concluída (UI):
-- Onboarding wizard 6 telas com state machine ([apps/web/src/app/onboarding/](apps/web/src/app/onboarding/))
-- Route group `(app)/` com layout compartilhado (nav: Painel | Conversar | Kolo Vivo)
-- `/painel` cheio: 3 cards topo + sugestões count + Ayla diz placeholder + banner trial/past_due/paused
-- `/kolo-vivo`: abas por membro + família + sugestões. Editor por seção. Server actions pra salvar e aprovar/rejeitar sugestão.
-
-**Fase 4 — SpecialistPromptEngine + skills** ✅ código pronto:
-- [lib/ia/engine.ts](apps/web/src/lib/ia/engine.ts) orquestra router → context → prompt → Claude (streaming + adaptive thinking) → validators
-- Modo conversa (template 7 partes) e modo output_type (formato dos botões de apoio)
-- `/conversar` + `/conversar/[id]` UI
-
-**Fase 5 — Aulas, Trilhas, Botões de apoio, Aprender** ✅ código pronto:
-- `respondAsOutputType()` no engine + `/apoio` (7 tipos) com form e resposta in-place
-- Admin: bootstrap em `/admin/setup` (primeiro usuário vira admin), nav próprio
-- `/admin/aulas`: CRUD com transição de status (rascunho/ativo/arquivado)
-- `/admin/trilhas`: CRUD com lista de aulas vinculadas
-- `/admin/boas-praticas`: lista filtrada por status, edit/aprovar/arquivar com versionamento
-- **Extração automática de Boas Práticas:** ao publicar aula (status→ativo), `lib/ia/extract-boas-praticas.ts` processa a transcrição via Claude Sonnet, extrai até 10 candidatas estruturadas (titulo, texto_original, skills_relacionadas, tags, nivel) e insere com status=rascunho/origem=aula
-- `/aprender` user-facing: trilhas em destaque + aulas avulsas, player de iframe, transcrição lateral, navegação dentro da trilha
-
-**Pendente para testar Fases 4 e 5:** `ANTHROPIC_API_KEY` no `.env.local`; aplicar migrações 0001-0004 no Studio. Após login, visite `/admin/setup` pra virar admin.
-
-**Fase 6 — Pagamento Stripe** ✅ código pronto:
-- `lib/stripe/client.ts` singleton com lazy init e helper de price IDs
-- `/api/stripe/checkout` cria session com `client_reference_id` + metadata
-- `/api/stripe/portal` Customer Portal
-- `/api/stripe/webhook` verifica assinatura, trata `checkout.session.completed`, `customer.subscription.*`, `invoice.payment_{succeeded,failed}`. Atualiza `subscription_accesses` via service role e audita em `assinaturas`.
-- `/assinatura` page com estado atual + CTAs (Assinar mensal/anual, Gerenciar)
-- `lib/auth/require-active-write.ts` bloqueia escrita em paused/canceled (aplicado em `enviarMensagem` como PoC; resto na próxima sessão)
-- Painel banner virou acionável (link pra `/assinatura`)
-- Nav: "Assinatura" como último item
-
-**Pendente para testar Fase 6:** `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PRICE_ID_MENSAL`, `STRIPE_PRICE_ID_ANUAL` no `.env.local`. Em dev local, usar `stripe listen --forward-to localhost:3000/api/stripe/webhook` pra capturar webhooks.
-
-**Fase 7 — Ayla v1** ✅ código pronto (DASS-21 fica pra Fase 8; TTS pra Fase 9):
-- `lib/ayla/` totalmente isolada de `lib/ia/` (PRD §12.3 — fronteira rígida; comunicação só via banco; Anthropic client próprio)
-- `whatsappSender.ts` — Z-API REST + parser de webhook (Z-API/n8n)
-- `messageTemplates.ts` — rotina, engajamento 2d/5d, clarificações, comandos, **trial D-3/D-0**, **emocional streak**, **insight**. Variações round-robin
-- `rules.ts` — não-colisão completa
-- `parser.ts` — Haiku parser com schema Zod, detector de comandos
-- `orchestrator.ts` — `sendRotinaDiaria()`, `sendEngajamento()`, **`sendTrial()`**, **`sendEmocionalStreak()`**, **`sendProximoInsight()`**, `processInbound()`
-- **`insightEngine.ts`** — detecta exaustão da mãe, queda emocional sustentada do membro, queda de energia. Persiste em `ayla_insights` com idempotência 7d
-- **`metrics.ts`** — 9 KPIs do PRD §12.11 (taxa de resposta, tempo mediano, streak médio, famílias ativas, conversões, taxa de pausa)
-- `/api/ayla/webhook` — recebe Z-API/n8n com `x-ayla-secret`
-- `/api/ayla/cron?tipo=rotina|inatividade|comercial|emocional|insights` — protegido por `CRON_SECRET` Bearer
-- **`/admin/ayla`** — dashboard de KPIs com últimos envios e insights detectados
-- **`/configuracoes`** — toggle Ayla, horário/frequência, opt-in granular por categoria de campanha (informacional/promocional/avaliacao)
-
-**Pendente para testar Fase 7:** `ZAPI_INSTANCE_ID`, `ZAPI_TOKEN`, `ZAPI_CLIENT_TOKEN`, `AYLA_WEBHOOK_SECRET`, `CRON_SECRET` no `.env.local`. Configurar n8n: webhook Z-API → `https://app/api/ayla/webhook` com header `x-ayla-secret`. Cron externo chamando `POST /api/ayla/cron?tipo=...`:
-- `rotina` a cada 30min
-- `inatividade` 1×/dia (manhã)
-- `comercial` 1×/dia (manhã)
-- `emocional` 1×/dia (noite)
-- `insights` 1×/semana
-
-**Fase 8 — Check-in formal + Camada B no app + DASS-21** ✅ código pronto:
-- `/registrar` landing com 3 cards (hoje / semanal / termômetro mensal) e badges de status (feito/pendente/recomendado)
-- `/registrar/diario` — combina check-in leve (escala emocional mãe + opcional do membro) + Diário Camada A (conquista/desafio/observação/gatilho) + Diário Camada B (quem estava + estado adulto + reação adulto). Camada B só aparece quando há evento; flag `incompleto` quando só há Camada A.
-- `/registrar/semanal` — 4 perguntas (emocional + energia, mãe e opcionalmente o membro) + comentário + reflexão "o que faria diferente" → grava `check_ins_semanais` + `reflexoes_semanais`
-- `/registrar/dass-21` — 21 itens validados em PT-BR (Vignola & Tucci 2014), escala 0-3, scoring DASS-21 raw com faixas (normal/leve/moderada/severa/extremamente_severa) por dimensão, banner explícito de risco em faixa severa+ com CVV 188, banner de sugestão em moderada
-- `lib/dass21.ts` com items, escala, calcularDASS21() e dicionários de label/interpretação
-- Engine das skills já consume Camada B + último check-in no `lib/ia/context.ts` — sem mudanças necessárias
-- Painel "Como você está" ganha CTA "Registrar"
-- Nav: "Registrar" entre Painel e Conversar
-
-**Pendente Fase 8:** Pattern do DASS-21 em insightEngine (queda sustentada por 3 meses), cron de lembrete mensal pra DASS-21 via Ayla (1×/mês no aniversário do cadastro).
-
-**Fase 9 — Visualização ilustrada (parcial)** ✅ código pronto:
-- Migração `0005_storage_imagens.sql` — bucket `imagens` público, RLS com path-prefix por `family_account_id`
-- `lib/imagem/generate.ts` — wrapper DALL-E 3 → download → upload pro Supabase Storage → URL permanente
-- `lib/imagem/avatar-prompt.ts` — monta prompt canônico do avatar (cartoon ou aquarela) e prompt de cena
-- `/configuracoes/avatar` — listagem dos membros + status (configurado/pendente)
-- `/configuracoes/avatar/[id]` — form com 9 campos descritivos (estilo/idade/gênero visual/tom de pele/cabelo cor/comprimento/textura/óculos/traços/roupas) + "Gerar avatar" / "Gerar de novo"
-- `/galeria` — grid de imagens com filtros por tipo + apenas favoritas. Cada item tem favoritar (estrela), baixar, apagar (também remove do Storage)
-- `/apoio/[key]` quando `gera_imagem_opcional` (Brincadeiras, Atividades, Histórias sociais): Card "Gerar imagem desta cena" usa avatar canônico + descrição do pedido. Salva direto na galeria.
-- Nav (app): "Galeria" entre Aprender e Kolo Vivo
-
-**Defer pra próxima Visualização:**
-- Foto-referência (1-3 fotos enviadas + descarte após gerar — multimodal Vision)
-- Sequência de Histórias Sociais (3-5 imagens encadeadas)
-- Auto-geração nas respostas das skills (engine sinaliza que tem cena pra ilustrar)
-- Cleanup cron pra imagens não favoritadas após 30 dias
-- Geração pela Ayla (visualização de conquista marcante)
-- Monitoramento de custo de imagem (NFR-11, R-CUSTO-IMAGEM)
-
-**Pendente Fase 9:** `OPENAI_API_KEY` no `.env.local`; aplicar migração 0005 no Studio (cria bucket via SQL no schema `storage`).
-
-**Fase 10 — Relatórios** ✅ código pronto:
-- `lib/relatorio/data.ts` consolida dados (Kolo Vivo, conquistas/desafios, gatilhos top-N, estratégias extraídas das conversas, Camada B agregada com opt-in só pra terapeuta, DASS-21 longitudinal opt-in)
-- `lib/relatorio/narrativa.ts` gera 3-6 observações via Claude Sonnet, com lista negra de termos clínicos prescritivos. Sem chave: relatório roda sem narrativa.
-- `components/relatorio/render.tsx` shared. Renderiza terapeuta (técnico/descritivo) ou escola (prático/sem Camada B/sem DASS-21)
-- `/relatorios` lista relatórios + links vivos ativos
-- `/relatorios/novo` form (membro, destinatário, janela 1/3/6/12m, opt-ins Camada B + DASS-21 só em terapeuta)
-- `/relatorios/[id]` preview do snapshot + criar/copiar/revogar link vivo (com histórico de revogados em `<details>`) + botão Imprimir + apagar
-- `/relatorios/[id]/imprimir` HTML print-friendly. CSS esconde nav via `[data-app-chrome]`. Marca d'água de geração.
-- `/r/[token]` rota PÚBLICA (fora de `(app)`) — valida token, expiração, revogação. Carrega dados FRESCOS (live, não snapshot). Auditoria de acesso (IP + user-agent + timestamp) acumulada em `links_vivos.acessos[]` (truncada a 200)
-
-**Pendente Fase 10:** PDF nativo (server-side, sem dependência de browser-print) — defer pra Fase 12 ou quando bibliotecas como @react-pdf forem necessárias. Por enquanto, "Imprimir → Salvar como PDF" do navegador resolve.
-
-## Aplicar migrações no Supabase self-hosted
-
-O Supabase está hospedado em Easypanel — porta `5432` não exposta externamente,
-então o caminho é colar SQL no **Studio**:
-
-1. Abrir https://painel.4oydba.easypanel.host/ → SQL Editor
-2. Em ordem, colar e executar o conteúdo de:
-   1. [supabase/migrations/0001_init.sql](supabase/migrations/0001_init.sql) — tabelas, índices, helpers
-   2. [supabase/migrations/0002_rls.sql](supabase/migrations/0002_rls.sql) — RLS + políticas
-   3. [supabase/migrations/0003_seed.sql](supabase/migrations/0003_seed.sql) — output_types, skills iniciais, boas_praticas exemplares
-3. Verificar: tabelas em `public.*`, RLS habilitado, `select count(*) from output_types` retorna 7.
-4. Em seguida, aplicar [supabase/migrations/0004_auth_trigger_and_onboarding.sql](supabase/migrations/0004_auth_trigger_and_onboarding.sql) — adiciona `onboarding_step`/`onboarding_completed` e o trigger que cria `family_accounts` + `subscription_accesses` + `ayla_preferences` automaticamente quando um usuário se cadastra.
-
-> **Para automatizar depois:** expor porta `5432` (ou usar pgbouncer 6543) no
-> Easypanel e configurar `supabase` CLI com `--db-url`. Não recomendado expor
-> publicamente — use IP allow-list ou tunnel SSH.
-
-**Próxima fase:** Fase 3 — Páginas core (landing, cadastro 6 telas, painel, Kolo Vivo).
-
-## Notas conhecidas
-
-- **Turbopack** crasha no Windows quando o caminho do projeto contém caracteres
-  não-ASCII (o `í` em `Família` quebra o spawn de processos do PostCSS — exit
-  `0xc0000142`). Por isso `dev`/`build` usam `--webpack`. Voltar pra Turbopack
-  quando: (a) renomear pasta sem acento, ou (b) Turbopack consertar.
-- **`zod` pinned via override** para `^3.25.76` na raiz porque `eslint-config-next@16`
-  puxa transitivamente `zod@4` que quebra `@hookform/resolvers ^3.x`.
+- Conteúdo real precisa ser populado pela fundadora (aulas, trilhas,
+  boas práticas, depoimentos, vídeos).
+- Stripe + Z-API + cron precisam ser configurados no ambiente de prod.
 
 ## Princípios
 
 - Não pular fases. A ordem é uma escolha técnica.
-- Critério de saída de cada fase é não-negociável.
 - Ayla é produto separado (`lib/ayla/`). Fronteira rígida com `lib/ia/`.
 - Hipóteses, não causas afirmadas (PRD §6.1).
-- Sem reaproveitamento de código Base44. Apenas conteúdo dos prompts iniciais.
+- Adaptações automáticas só entram com OK explícito da mãe e são
+  reversíveis.
+
+## Notas conhecidas
+
+- Turbopack crasha em paths com não-ASCII no Windows; `dev`/`build`
+  usam `--webpack`.
+- `zod` pinned para `^3.25.76` via override na raiz por causa de
+  conflito transitivo com `eslint-config-next@16`.

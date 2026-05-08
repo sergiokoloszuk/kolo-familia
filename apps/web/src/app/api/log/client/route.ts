@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
+import { checkRateLimit, clientKey } from "@/lib/rate-limit";
 
 /**
  * Endpoint pra erros client-side. Recebe um pacote pequeno e insere
@@ -25,6 +26,23 @@ const schema = z.object({
 });
 
 export async function POST(request: NextRequest) {
+  // Rate limit: 60/min por IP é generoso pra erros legítimos
+  const rl = checkRateLimit(clientKey(request, "log_client"), {
+    capacidade: 60,
+    refilPorMinuto: 60,
+  });
+  if (!rl.ok) {
+    return NextResponse.json(
+      { error: "rate_limited" },
+      {
+        status: 429,
+        headers: rl.retry_after_s
+          ? { "retry-after": String(rl.retry_after_s) }
+          : undefined,
+      },
+    );
+  }
+
   // Tamanho do body bem limitado
   const raw = await request.text();
   if (raw.length > 8 * 1024) {

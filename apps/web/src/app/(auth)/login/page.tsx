@@ -100,6 +100,12 @@ function LoginPageInner() {
           <Button type="submit" disabled={submitting}>
             {submitting ? "Entrando..." : "Entrar"}
           </Button>
+          <Link
+            href="/recuperar-senha"
+            className="self-end text-xs text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+          >
+            Esqueci minha senha
+          </Link>
         </form>
 
         <div className="relative">

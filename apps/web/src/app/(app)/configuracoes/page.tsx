@@ -103,6 +103,23 @@ export default async function ConfiguracoesPage() {
           </a>
         </CardContent>
       </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Minha conta</CardTitle>
+          <CardDescription>
+            Mudar senha, exportar meus dados, excluir conta (LGPD).
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <a
+            href="/configuracoes/conta"
+            className="text-sm font-medium underline-offset-4 hover:underline"
+          >
+            Abrir minha conta →
+          </a>
+        </CardContent>
+      </Card>
     </div>
   );
 }
