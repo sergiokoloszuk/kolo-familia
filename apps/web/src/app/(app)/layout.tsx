@@ -12,7 +12,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
-      <header className="sticky top-0 z-10 border-b bg-background/95 backdrop-blur">
+      <header data-app-chrome className="sticky top-0 z-10 border-b bg-background/95 backdrop-blur print:hidden">
         <div className="mx-auto flex h-14 w-full max-w-5xl items-center justify-between gap-4 px-6">
           <Link href="/painel" className="font-heading text-lg font-semibold">
             Kolo Família

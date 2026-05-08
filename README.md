@@ -157,6 +157,18 @@ App em `http://localhost:3000`.
 
 **Pendente Fase 9:** `OPENAI_API_KEY` no `.env.local`; aplicar migração 0005 no Studio (cria bucket via SQL no schema `storage`).
 
+**Fase 10 — Relatórios** ✅ código pronto:
+- `lib/relatorio/data.ts` consolida dados (Kolo Vivo, conquistas/desafios, gatilhos top-N, estratégias extraídas das conversas, Camada B agregada com opt-in só pra terapeuta, DASS-21 longitudinal opt-in)
+- `lib/relatorio/narrativa.ts` gera 3-6 observações via Claude Sonnet, com lista negra de termos clínicos prescritivos. Sem chave: relatório roda sem narrativa.
+- `components/relatorio/render.tsx` shared. Renderiza terapeuta (técnico/descritivo) ou escola (prático/sem Camada B/sem DASS-21)
+- `/relatorios` lista relatórios + links vivos ativos
+- `/relatorios/novo` form (membro, destinatário, janela 1/3/6/12m, opt-ins Camada B + DASS-21 só em terapeuta)
+- `/relatorios/[id]` preview do snapshot + criar/copiar/revogar link vivo (com histórico de revogados em `<details>`) + botão Imprimir + apagar
+- `/relatorios/[id]/imprimir` HTML print-friendly. CSS esconde nav via `[data-app-chrome]`. Marca d'água de geração.
+- `/r/[token]` rota PÚBLICA (fora de `(app)`) — valida token, expiração, revogação. Carrega dados FRESCOS (live, não snapshot). Auditoria de acesso (IP + user-agent + timestamp) acumulada em `links_vivos.acessos[]` (truncada a 200)
+
+**Pendente Fase 10:** PDF nativo (server-side, sem dependência de browser-print) — defer pra Fase 12 ou quando bibliotecas como @react-pdf forem necessárias. Por enquanto, "Imprimir → Salvar como PDF" do navegador resolve.
+
 ## Aplicar migrações no Supabase self-hosted
 
 O Supabase está hospedado em Easypanel — porta `5432` não exposta externamente,
