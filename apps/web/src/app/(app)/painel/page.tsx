@@ -20,6 +20,7 @@ export default async function PainelPage() {
     { data: ultimosDesafios },
     { data: ultimosCheckins },
     { count: sugestoesCount },
+    { data: ultimaMensagemAyla },
   ] = await Promise.all([
     supabase
       .from("family_profiles")
@@ -61,6 +62,15 @@ export default async function PainelPage() {
       .select("id", { count: "exact", head: true })
       .eq("family_account_id", familyId)
       .eq("status", "pendente"),
+    supabase
+      .from("ayla_messages")
+      .select("texto, tipo, category, created_at")
+      .eq("family_account_id", familyId)
+      .eq("direcao", "outbound")
+      .eq("category", "proativa")
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
   ]);
 
   const greeting = profile?.como_chamar?.trim() || profile?.nome_mae?.trim() || user.email;
@@ -165,12 +175,20 @@ export default async function PainelPage() {
         <Card>
           <CardHeader>
             <CardTitle className="text-base">Ayla diz</CardTitle>
-            <CardDescription>Mensagem mais recente da Ayla.</CardDescription>
+            <CardDescription>
+              {ultimaMensagemAyla
+                ? formatRelative(new Date(ultimaMensagemAyla.created_at), new Date(), { locale: ptBR })
+                : "Mensagem mais recente da Ayla."}
+            </CardDescription>
           </CardHeader>
           <CardContent>
-            <p className="text-sm text-muted-foreground">
-              A Ayla entra em ar na próxima fase. Em breve você terá a primeira mensagem.
-            </p>
+            {ultimaMensagemAyla?.texto ? (
+              <p className="line-clamp-4 whitespace-pre-wrap text-sm">{ultimaMensagemAyla.texto}</p>
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                Em até 4 horas após o cadastro a Ayla manda a primeira mensagem no WhatsApp.
+              </p>
+            )}
           </CardContent>
         </Card>
       </section>

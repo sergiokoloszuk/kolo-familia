@@ -104,6 +104,21 @@ App em `http://localhost:3000`.
 
 **Pendente para testar Fase 6:** `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PRICE_ID_MENSAL`, `STRIPE_PRICE_ID_ANUAL` no `.env.local`. Em dev local, usar `stripe listen --forward-to localhost:3000/api/stripe/webhook` pra capturar webhooks.
 
+**Fase 7 — Ayla v1 (parcial)** ✅ código pronto:
+- `lib/ayla/` totalmente isolada de `lib/ia/` (PRD §12.3 — fronteira rígida; comunicação só via banco; Anthropic client próprio)
+- `whatsappSender.ts` — Z-API REST + parser de webhook (cobre formatos Z-API e n8n)
+- `messageTemplates.ts` — rotina diária, engajamento 2d/5d, clarificações, comandos. Variações round-robin por seed (família+dia)
+- `rules.ts` — não-colisão completa: max 2 proativas/dia, comercial bloqueada em janela 48h pós-crise, insight não no mesmo dia que comercial, engajamento se >36h, silêncio total >10d sem resposta
+- `parser.ts` — Haiku parser com schema Zod, identifica membro foco em famílias 2+ usando último foco como contexto, detector de comandos sem IA
+- `orchestrator.ts` — `sendRotinaDiaria()`, `sendEngajamento()`, `processInbound()`. Fluxo: clarificações condicionais, persistência em ayla_messages/ayla_daily_checkins/diarios/sugestao_perfil_vivos, comandos PAUSAR/MUDAR HORARIO/SAIR/AJUDA
+- `/api/ayla/webhook` — recebe Z-API/n8n com `x-ayla-secret` validado
+- `/api/ayla/cron?tipo=rotina|inatividade` — protegido por `CRON_SECRET` Bearer; rotina envia pra famílias dentro do horário preferido + status assinatura ativo; inatividade detecta 2/5/10 dias
+- Painel "Ayla diz" mostra última mensagem proativa real do banco
+
+**Defer pra próxima sessão Ayla:** insight engine (padrões), crons trial D-3/D-0 e emocional, DASS-21 mensal, KPIs dashboard, TTS via ElevenLabs, página /configuracoes pra horário/toggles.
+
+**Pendente para testar Fase 7:** `ZAPI_INSTANCE_ID`, `ZAPI_TOKEN`, `ZAPI_CLIENT_TOKEN`, `AYLA_WEBHOOK_SECRET`, `CRON_SECRET` no `.env.local`. Configurar n8n: webhook Z-API → `https://app/api/ayla/webhook` com header `x-ayla-secret`. Cron externo chamando `POST /api/ayla/cron?tipo=rotina` a cada 30min e `tipo=inatividade` 1×/dia.
+
 ## Aplicar migrações no Supabase self-hosted
 
 O Supabase está hospedado em Easypanel — porta `5432` não exposta externamente,
