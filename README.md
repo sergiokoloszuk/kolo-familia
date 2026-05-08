@@ -125,6 +125,18 @@ App em `http://localhost:3000`.
 - `emocional` 1×/dia (noite)
 - `insights` 1×/semana
 
+**Fase 8 — Check-in formal + Camada B no app + DASS-21** ✅ código pronto:
+- `/registrar` landing com 3 cards (hoje / semanal / termômetro mensal) e badges de status (feito/pendente/recomendado)
+- `/registrar/diario` — combina check-in leve (escala emocional mãe + opcional do membro) + Diário Camada A (conquista/desafio/observação/gatilho) + Diário Camada B (quem estava + estado adulto + reação adulto). Camada B só aparece quando há evento; flag `incompleto` quando só há Camada A.
+- `/registrar/semanal` — 4 perguntas (emocional + energia, mãe e opcionalmente o membro) + comentário + reflexão "o que faria diferente" → grava `check_ins_semanais` + `reflexoes_semanais`
+- `/registrar/dass-21` — 21 itens validados em PT-BR (Vignola & Tucci 2014), escala 0-3, scoring DASS-21 raw com faixas (normal/leve/moderada/severa/extremamente_severa) por dimensão, banner explícito de risco em faixa severa+ com CVV 188, banner de sugestão em moderada
+- `lib/dass21.ts` com items, escala, calcularDASS21() e dicionários de label/interpretação
+- Engine das skills já consume Camada B + último check-in no `lib/ia/context.ts` — sem mudanças necessárias
+- Painel "Como você está" ganha CTA "Registrar"
+- Nav: "Registrar" entre Painel e Conversar
+
+**Pendente Fase 8:** Pattern do DASS-21 em insightEngine (queda sustentada por 3 meses), cron de lembrete mensal pra DASS-21 via Ayla (1×/mês no aniversário do cadastro).
+
 ## Aplicar migrações no Supabase self-hosted
 
 O Supabase está hospedado em Easypanel — porta `5432` não exposta externamente,

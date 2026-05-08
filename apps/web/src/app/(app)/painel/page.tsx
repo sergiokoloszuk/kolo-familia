@@ -122,9 +122,17 @@ export default async function PainelPage() {
         </Card>
 
         <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Como você está</CardTitle>
-            <CardDescription>Últimos 3 dias</CardDescription>
+          <CardHeader className="flex flex-row items-start justify-between gap-2">
+            <div>
+              <CardTitle className="text-base">Como você está</CardTitle>
+              <CardDescription>Últimos 3 dias</CardDescription>
+            </div>
+            <Link
+              href="/registrar/diario"
+              className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
+            >
+              Registrar
+            </Link>
           </CardHeader>
           <CardContent className="text-sm">
             {ultimosCheckins && ultimosCheckins.length > 0 ? (
@@ -140,7 +148,7 @@ export default async function PainelPage() {
               </ul>
             ) : (
               <p className="text-muted-foreground">
-                Sem check-ins ainda. A Ayla vai te perguntar no fim do dia.
+                Sem check-ins ainda. Você pode registrar agora ou esperar a Ayla.
               </p>
             )}
           </CardContent>
