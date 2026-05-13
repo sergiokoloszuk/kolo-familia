@@ -13,7 +13,7 @@ const items = [
   { href: "/galeria", label: "Galeria" },
   { href: "/kolo-vivo", label: "Kolo Vivo" },
   { href: "/relatorios", label: "Relatórios" },
-  { href: "/configuracoes", label: "Configurações" },
+  { href: "/configuracoes", label: "Config." },
   { href: "/assinatura", label: "Assinatura" },
 ];
 
@@ -22,16 +22,17 @@ export function AppNav() {
   return (
     <nav className="hidden items-center gap-1 sm:flex">
       {items.map((item) => {
-        const active = pathname === item.href || pathname.startsWith(item.href + "/");
+        const active =
+          pathname === item.href || pathname.startsWith(item.href + "/");
         return (
           <Link
             key={item.href}
             href={item.href}
             className={cn(
-              "rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
+              "rounded-md px-2.5 py-1.5 text-sm font-medium transition-colors",
               active
-                ? "bg-muted text-foreground"
-                : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                ? "bg-purple-100 text-brand-purple-dark"
+                : "text-gray-600 hover:bg-purple-50 hover:text-brand-purple-dark",
             )}
           >
             {item.label}

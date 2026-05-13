@@ -44,7 +44,7 @@ export const metadata: Metadata = {
     locale: "pt_BR",
     url: APP_URL,
     siteName: "Kolo Família",
-    title: "Kolo Família — Cuidado todo dia, onde você já está",
+    title: "Kolo Família — Cuidado diário, onde você já está",
     description:
       "Estratégia personalizada pro dia a dia da família atípica. Acolhimento e orientação no WhatsApp + app PWA.",
     images: [{ url: "/icons/icon.svg" }],
@@ -66,7 +66,10 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#ffffff",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+    { media: "(prefers-color-scheme: dark)", color: "#0b0716" },
+  ],
   width: "device-width",
   initialScale: 1,
 };

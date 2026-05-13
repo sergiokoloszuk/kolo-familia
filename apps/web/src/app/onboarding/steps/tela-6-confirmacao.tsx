@@ -4,12 +4,12 @@ import { Button } from "@/components/ui/button";
 import { CheckCircle2, MessageCircle, Sparkles, Users } from "lucide-react";
 
 export function Tela6Confirmacao({
-  userEmail,
+  apelido,
   pending,
   onComplete,
   onPrevious,
 }: {
-  userEmail: string;
+  apelido: string;
   pending: boolean;
   onComplete: () => void;
   onPrevious: () => void;
@@ -20,7 +20,7 @@ export function Tela6Confirmacao({
         <div className="flex items-start gap-3">
           <CheckCircle2 className="mt-0.5 size-5 text-primary" aria-hidden="true" />
           <div>
-            <p className="font-medium">Tudo pronto, {userEmail}.</p>
+            <p className="font-medium">Tudo pronto, {apelido}.</p>
             <p className="mt-1 text-sm text-muted-foreground">
               Seus 30 dias grátis começam agora. Sem cartão. Cancela quando quiser.
             </p>
@@ -31,8 +31,8 @@ export function Tela6Confirmacao({
       <div className="grid gap-3 md:grid-cols-3">
         <Tour
           icon={<MessageCircle className="size-5" aria-hidden="true" />}
-          title="A Ayla vai aparecer"
-          body="Em até 4 horas você recebe a primeira mensagem dela no WhatsApp."
+          title="A Ayla já vai aparecer"
+          body="A primeira mensagem dela está saindo agora pro seu WhatsApp."
         />
         <Tour
           icon={<Users className="size-5" aria-hidden="true" />}

@@ -65,3 +65,5 @@ supabase/.env
 
 # n8n local data
 n8n/.n8n/
+
+.vercel

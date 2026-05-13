@@ -301,7 +301,7 @@ export default async function PainelPage() {
               <p className="line-clamp-4 whitespace-pre-wrap text-sm">{ultimaMensagemAyla.texto}</p>
             ) : (
               <p className="text-sm text-muted-foreground">
-                Em até 4 horas após o cadastro a Ayla manda a primeira mensagem no WhatsApp.
+                A primeira mensagem da Ayla foi enviada pro seu WhatsApp assim que você concluiu o cadastro.
               </p>
             )}
           </CardContent>

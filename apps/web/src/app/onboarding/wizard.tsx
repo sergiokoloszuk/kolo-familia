@@ -141,9 +141,8 @@ export function OnboardingWizard({ initial }: { initial: InitialState }) {
                 runAction(
                   async () => {
                     const { saveTela2 } = await import("./actions");
-                    await saveTela2({ membros });
-                    // Recarrega a página pra trazer ids gerados pelo banco
-                    router.refresh();
+                    const novos = await saveTela2({ membros });
+                    setState((s) => ({ ...s, membros: novos }));
                   },
                   () => next(),
                 )
@@ -227,7 +226,12 @@ export function OnboardingWizard({ initial }: { initial: InitialState }) {
 
           {step === 6 && (
             <Tela6Confirmacao
-              userEmail={state.userEmail}
+              apelido={
+                state.profile?.como_chamar?.trim() ||
+                state.profile?.nome_mae?.trim().split(/\s+/)[0] ||
+                state.userEmail.split("@")[0] ||
+                "você"
+              }
               pending={pending}
               onComplete={() =>
                 runAction(
