@@ -93,10 +93,14 @@ export function parseZapiWebhook(payload: unknown): InboundWhatsApp | null {
   if (!phoneRaw) return null;
   const phoneE164 = phoneRaw.startsWith("+") ? phoneRaw : `+${phoneRaw}`;
 
-  // Texto pode estar em várias chaves
+  // Texto pode estar em várias chaves — Z-API ReceivedCallback usa
+  // { text: { message: "..." } }; n8n às vezes manda { message: { text: "..." } }
+  // ou { text: "..." } direto. Cobre tudo.
   const texto =
     pickString(p.text) ??
+    pickString((p.text as Record<string, unknown> | undefined)?.message) ??
     pickString((p.message as Record<string, unknown> | undefined)?.text) ??
+    pickString(p.message) ??
     pickString(p.body) ??
     "";
   if (!texto.trim()) return null;

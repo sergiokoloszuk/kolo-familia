@@ -3,6 +3,7 @@ import { enviarTexto, type InboundWhatsApp } from "./whatsappSender";
 import { podeEnviarProativa } from "./rules";
 import { parseInbound, detectarComando } from "./parser";
 import {
+  templateBoasVindas,
   templateRotinaDiaria,
   templateEngajamento,
   templateClarificacaoMembro,
@@ -37,6 +38,68 @@ import type { AylaTipoProativa, AylaTipoReativa, ParserResult } from "./types";
 export type EnvioResultado =
   | { enviada: true; messageId: string }
   | { enviada: false; motivo: string };
+
+// ============================================================
+// PROATIVA: Boas-vindas — primeira mensagem após onboarding
+// ============================================================
+
+export async function sendBoasVindas(
+  supabase: SupabaseClient,
+  familyAccountId: string,
+  agora: Date = new Date(),
+): Promise<EnvioResultado> {
+  console.log("[ayla:boas_vindas] start family=", familyAccountId);
+  // Consentimento + não desativada + não pausada + limite diário —
+  // todas as regras universais. Como é a primeira mensagem, não há
+  // conflito com comercial/engajamento.
+  const podeRes = await podeEnviarProativa(
+    supabase,
+    { family_account_id: familyAccountId, agora },
+    "boas_vindas",
+  );
+  console.log("[ayla:boas_vindas] gate podeEnviarProativa =", podeRes);
+  if (!podeRes.permitido) return { enviada: false, motivo: podeRes.motivo };
+
+  // Idempotência: se já enviou boas-vindas pra essa família, não repete.
+  const { data: jaEnviada } = await supabase
+    .from("ayla_messages")
+    .select("id")
+    .eq("family_account_id", familyAccountId)
+    .eq("tipo", "boas_vindas")
+    .eq("direcao", "outbound")
+    .limit(1);
+  console.log("[ayla:boas_vindas] gate idempotencia rows=", jaEnviada?.length ?? 0);
+  if ((jaEnviada?.length ?? 0) > 0) {
+    return { enviada: false, motivo: "Boas-vindas já enviada." };
+  }
+
+  const ctx = await loadFamiliaParaEnvio(supabase, familyAccountId);
+  console.log("[ayla:boas_vindas] ctx loaded:", ctx ? {
+    whatsapp: ctx.whatsapp_e164,
+    nomeMae: ctx.nomeMae,
+    membros: ctx.membros.length,
+  } : null);
+  if (!ctx) return { enviada: false, motivo: "Sem contexto da família." };
+  if (ctx.membros.length === 0) {
+    return { enviada: false, motivo: "Sem membros atípicos cadastrados." };
+  }
+
+  const membroFoco = ctx.membros[0];
+  const texto = templateBoasVindas({
+    nomeMae: ctx.nomeMae,
+    nomeMembro: membroFoco.nome,
+    seed: `${familyAccountId}-boas-vindas`,
+  });
+
+  return enviarEPersistir(supabase, {
+    family_account_id: familyAccountId,
+    membro_atipico_id: membroFoco.id,
+    phone: ctx.whatsapp_e164,
+    texto,
+    category: "proativa",
+    tipo: "boas_vindas",
+  });
+}
 
 // ============================================================
 // PROATIVA: Rotina diária

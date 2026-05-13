@@ -30,12 +30,14 @@ export async function POST(request: NextRequest) {
   } catch {
     return NextResponse.json({ error: "invalid json" }, { status: 400 });
   }
+  console.log("[ayla webhook] raw payload:", JSON.stringify(payload).slice(0, 600));
 
   const inbound = parseZapiWebhook(payload);
   if (!inbound) {
-    // Mensagem que não é texto recebido (status, mídia sem texto, fromMe...)
+    console.log("[ayla webhook] parser retornou null — skipped");
     return NextResponse.json({ skipped: true });
   }
+  console.log("[ayla webhook] parsed:", { phone: inbound.phoneE164, texto: inbound.texto });
 
   const supabase = createServiceRoleClient();
 

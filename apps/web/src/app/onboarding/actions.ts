@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createServiceRoleClient } from "@/lib/supabase/server";
 
 // ============================================================
 // Helpers
@@ -112,6 +112,20 @@ export async function saveTela2(raw: Tela2Input) {
   }
 
   await bumpStep(supabase, family.id, Math.max(family.onboarding_step, 3));
+
+  // Retorna a lista canônica do banco — wizard usa esses ids no step 4.
+  const { data: membros } = await supabase
+    .from("membros_atipicos")
+    .select("id, nome, idade, perfil")
+    .eq("family_account_id", family.id)
+    .order("created_at", { ascending: true });
+
+  return (membros ?? []) as Array<{
+    id: string;
+    nome: string;
+    idade: number;
+    perfil: string;
+  }>;
 }
 
 export async function removeMembro(membroId: string) {
@@ -233,6 +247,23 @@ export async function completeOnboarding() {
     .from("family_accounts")
     .update({ onboarding_completed: true, onboarding_step: 7 })
     .eq("id", family.id);
+
+  // Dispara a primeira mensagem da Ayla na hora — best-effort.
+  // sendBoasVindas já respeita consentimento (LGPD), pausa e idempotência.
+  // Usa service-role porque o orchestrator escreve em ayla_send_log
+  // (admin-only) e ayla_messages outbound (sem policy de insert para
+  // usuário comum). Se Z-API falhar, o erro fica em ayla_send_log e o
+  // usuário continua o fluxo normalmente.
+  try {
+    console.log("[onboarding] → sendBoasVindas family.id =", family.id);
+    const admin = createServiceRoleClient();
+    const { sendBoasVindas } = await import("@/lib/ayla/orchestrator");
+    const r = await sendBoasVindas(admin, family.id);
+    console.log("[onboarding] ← sendBoasVindas result:", r);
+  } catch (err) {
+    console.error("[onboarding] sendBoasVindas threw:", err);
+  }
+
   revalidatePath("/onboarding");
   revalidatePath("/painel");
   revalidatePath("/");
