@@ -8,6 +8,7 @@
 export type AylaCategoria = "proativa" | "reativa";
 
 export type AylaTipoProativa =
+  | "boas_vindas"
   | "rotina"
   | "engajamento_2dias"
   | "engajamento_5dias"
