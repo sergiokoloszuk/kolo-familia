@@ -32,6 +32,25 @@ function pickVariation(variations: string[], seed: string): string {
 }
 
 // ============================================================
+// Boas-vindas — primeira mensagem após onboarding concluído
+// ============================================================
+
+const BOAS_VINDAS: string[] = [
+  "Oi, {nomeMae}. Sou a Ayla 🌿\n\nObrigada por confiar a gente com a história do/da {nomeMembro}. A partir de agora vou aparecer por aqui pra te perguntar como foi o dia — sem cobrança, só pra organizar junto.\n\nQuando quiser, é só me escrever. Digite AJUDA pra ver os comandos.",
+  "{nomeMae}, oi! Aqui é a Ayla.\n\nCadastro concluído ✅. Daqui pra frente vou te mandar uma perguntinha por dia sobre o/a {nomeMembro} — uma conquista e um desafio bastam.\n\nVocê pode pausar (PAUSAR), mudar horário (MUDAR HORARIO 20:00) ou sair (SAIR) quando quiser.",
+  "Oi, {nomeMae} 🌿\n\nSou a Ayla. A partir de hoje fico do seu lado pra organizar o dia a dia com o/a {nomeMembro}. Sem pressa, sem cobrança.\n\nResponde quando der. Se precisar de ajuda, digite AJUDA.",
+];
+
+export function templateBoasVindas(params: {
+  nomeMae: string;
+  nomeMembro: string;
+  seed: string;
+}): string {
+  const v = pickVariation(BOAS_VINDAS, params.seed);
+  return fill(v, params);
+}
+
+// ============================================================
 // Pergunta diária de rotina — PRD §12.4
 // ============================================================
 
