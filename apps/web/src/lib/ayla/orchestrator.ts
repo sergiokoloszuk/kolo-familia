@@ -85,7 +85,7 @@ export async function sendBoasVindas(
   }
 
   const membroFoco = ctx.membros[0];
-  const texto = templateBoasVindas({
+  const texto = await templateBoasVindas(supabase, {
     nomeMae: ctx.nomeMae,
     nomeMembro: membroFoco.nome,
     seed: `${familyAccountId}-boas-vindas`,
@@ -140,7 +140,7 @@ export async function sendRotinaDiaria(
   const idx = Math.abs(hashSeed(`${familyAccountId}-${agora.toDateString()}`)) % ctx.membros.length;
   const membroFoco = ctx.membros[idx];
 
-  const texto = templateRotinaDiaria({
+  const texto = await templateRotinaDiaria(supabase, {
     nomeMae: ctx.nomeMae,
     nomeMembro: membroFoco.nome,
     seed: `${familyAccountId}-${agora.toDateString()}`,
@@ -180,7 +180,7 @@ export async function sendEngajamento(
   if (!ctx) return { enviada: false, motivo: "Sem contexto da família." };
 
   const membroFoco = ctx.membros[0];
-  const texto = templateEngajamento({
+  const texto = await templateEngajamento(supabase, {
     diasInativos,
     nomeMae: ctx.nomeMae,
     nomeMembro: membroFoco?.nome ?? "seu filho/sua filha",
@@ -219,7 +219,7 @@ export async function sendTrial(
   const ctx = await loadFamiliaParaEnvio(supabase, familyAccountId);
   if (!ctx) return { enviada: false, motivo: "Sem contexto da família." };
 
-  const texto = templateTrial({
+  const texto = await templateTrial(supabase, {
     diasRestantes,
     nomeMae: ctx.nomeMae,
     seed: `${familyAccountId}-trial-${diasRestantes}`,
@@ -255,7 +255,7 @@ export async function sendEmocionalStreak(
   if (!ctx) return { enviada: false, motivo: "Sem contexto da família." };
 
   const membroFoco = ctx.membros[0];
-  const texto = templateEmocionalStreak({
+  const texto = await templateEmocionalStreak(supabase, {
     nomeMae: ctx.nomeMae,
     nomeMembro: membroFoco?.nome ?? "seu filho/sua filha",
     seed: `${familyAccountId}-streak-${agora.toDateString()}`,
@@ -454,7 +454,7 @@ export async function processInbound(
     parsed.confianca_identificacao < 70 &&
     parsed.confianca >= 30 // tem conteúdo mas não sabemos sobre quem
   ) {
-    const texto = templateClarificacaoMembro({ membros: ctx.membros });
+    const texto = await templateClarificacaoMembro(supabase, { membros: ctx.membros });
     const resp = await enviarEPersistir(supabase, {
       family_account_id: family.id,
       membro_atipico_id: null,
@@ -472,7 +472,7 @@ export async function processInbound(
       family_account_id: family.id,
       membro_atipico_id: parsed.membro_atipico_id,
       phone: ctx.whatsapp_e164,
-      texto: templateClarificacaoConteudo(),
+      texto: await templateClarificacaoConteudo(supabase),
       category: "reativa",
       tipo: "clarificacao_conteudo",
     });
@@ -518,7 +518,7 @@ async function processarComando(
 
   switch (cmd.tipo) {
     case "ajuda":
-      texto = templateComandoAjuda();
+      texto = await templateComandoAjuda(supabase);
       break;
     case "pausar": {
       const ate = new Date();
@@ -527,7 +527,7 @@ async function processarComando(
         .from("ayla_preferences")
         .update({ pausada_ate: ate.toISOString().slice(0, 10) })
         .eq("family_account_id", familyId);
-      texto = templateComandoPausada(cmd.dias);
+      texto = await templateComandoPausada(supabase, cmd.dias);
       break;
     }
     case "mudar_horario": {
@@ -538,7 +538,7 @@ async function processarComando(
           horario_preferido_inicio: `${h.padStart(2, "0")}:${m.padStart(2, "0")}:00`,
         })
         .eq("family_account_id", familyId);
-      texto = templateComandoHorarioMudado(cmd.hora);
+      texto = await templateComandoHorarioMudado(supabase, cmd.hora);
       break;
     }
     case "sair":
@@ -546,7 +546,7 @@ async function processarComando(
         .from("ayla_preferences")
         .update({ desativada: true })
         .eq("family_account_id", familyId);
-      texto = templateComandoSair();
+      texto = await templateComandoSair(supabase);
       break;
   }
 
