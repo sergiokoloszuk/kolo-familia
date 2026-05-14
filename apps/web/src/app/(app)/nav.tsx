@@ -17,11 +17,12 @@ const items = [
   { href: "/assinatura", label: "Assinatura" },
 ];
 
-export function AppNav() {
+export function AppNav({ isAdmin }: { isAdmin?: boolean }) {
   const pathname = usePathname();
+  const all = isAdmin ? [...items, { href: "/admin", label: "Admin" }] : items;
   return (
     <nav className="hidden items-center gap-1 sm:flex">
-      {items.map((item) => {
+      {all.map((item) => {
         const active =
           pathname === item.href || pathname.startsWith(item.href + "/");
         return (
