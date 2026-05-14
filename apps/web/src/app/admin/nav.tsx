@@ -16,6 +16,7 @@ const items = [
   { href: "/admin/convites", label: "Convites" },
   { href: "/admin/beta", label: "Beta" },
   { href: "/admin/observabilidade", label: "Observabilidade" },
+  { href: "/admin/admins", label: "Admins" },
 ];
 
 export function AdminNav() {
