@@ -43,7 +43,7 @@ export function ConversarForm({
         </div>
       )}
 
-      {membros.length > 1 && (
+      {membros.length > 0 && (
         <div className="flex flex-col gap-1.5">
           <Label htmlFor="membro">Sobre quem é?</Label>
           <select
