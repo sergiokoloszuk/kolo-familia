@@ -129,6 +129,144 @@ export function validateAntiAlarme(resposta: string): ValidationResult {
 }
 
 /**
+ * Vetos absolutos — Adendo PRD §4 (Q5). Frases/expressões que NUNCA
+ * podem aparecer na resposta da skill. Diferente do anti-substituição-
+ * profissional (clínico) ou anti-alarme — esses são vetos de TOM.
+ */
+const VETOS_ABSOLUTOS: { regex: RegExp; categoria: string }[] = [
+  // Performar empatia
+  { regex: /\bquerida m[ãa]e\b/i, categoria: "performar empatia" },
+  { regex: /\bcompreendo perfeitamente\b/i, categoria: "performar empatia" },
+  { regex: /\bque situa[çc][ãa]o delicada\b/i, categoria: "performar empatia" },
+  { regex: /\bentendo perfeitamente sua (ang[úu]stia|dor|preocupa[çc][ãa]o)\b/i, categoria: "performar empatia" },
+  // Clichês de maternidade
+  { regex: /\bguerreira\b/i, categoria: "clichê de maternidade" },
+  { regex: /\bsuperm[ãa]e\b/i, categoria: "clichê de maternidade" },
+  { regex: /\bm[ãa]e (especial|top|incr[íi]vel)\b/i, categoria: "clichê de maternidade" },
+  { regex: /\b(mommy|mamis)\b/i, categoria: "clichê de maternidade" },
+  { regex: /\b(sua|minha) tribo\b/i, categoria: "clichê de maternidade" },
+  { regex: /\bsororidade\b/i, categoria: "clichê de maternidade" },
+  { regex: /\bvamos juntas\b/i, categoria: "clichê de maternidade" },
+  { regex: /\bjornada da maternidade\b/i, categoria: "clichê de maternidade" },
+  // Clichês corporativos
+  { regex: /\btransforma[çc][ãa]o\b/i, categoria: "clichê corporativo" },
+  { regex: /\brevolu[çc][ãa]o\b/i, categoria: "clichê corporativo" },
+  { regex: /\bdisruptiv[oa]\b/i, categoria: "clichê corporativo" },
+  { regex: /\bdestrave\b/i, categoria: "clichê corporativo" },
+  { regex: /\bdesbloqueie\b/i, categoria: "clichê corporativo" },
+  // Palavrão
+  { regex: /\bputa\b/i, categoria: "palavrão" },
+  { regex: /\bfoda\b/i, categoria: "palavrão" },
+  { regex: /\bporra\b/i, categoria: "palavrão" },
+  { regex: /\bcaralho\b/i, categoria: "palavrão" },
+  { regex: /\bcacete\b/i, categoria: "palavrão" },
+  // Nomes de métodos (não citáveis pra mãe)
+  { regex: /\bPNL\b/, categoria: "nome de método" },
+  { regex: /\bprograma[çc][ãa]o neurolingu[íi]stica\b/i, categoria: "nome de método" },
+  { regex: /\bjoe dispenza\b/i, categoria: "nome de método" },
+  { regex: /\bREAC\b/, categoria: "nome de método" },
+  // Autores de neurodivergência
+  { regex: /\b(siegel|bryson|greene|delahooke|prizant|grandin|shanker|barkley)\b/i, categoria: "autor de neurodivergência" },
+];
+
+export function validateVetosAbsolutos(resposta: string): ValidationResult {
+  for (const v of VETOS_ABSOLUTOS) {
+    const m = resposta.match(v.regex);
+    if (m) {
+      return {
+        ok: false,
+        motivo: `Veto absoluto (${v.categoria}): "${m[0]}"`,
+        sugestao: "Reescreva sem essa expressão. O acolhimento mora na precisão da informação, não em declarações genéricas.",
+      };
+    }
+  }
+  return { ok: true };
+}
+
+/**
+ * Glossário respeitado — Adendo PRD §4 (Q6). Termos clínicos/técnicos
+ * que precisam vir traduzidos pra linguagem comum. Lista derivada do
+ * glossário de tradução da Régua de Tom v3.
+ */
+const TERMOS_TECNICOS_SEM_TRADUCAO: { termo: RegExp; sugestao: string }[] = [
+  { termo: /\boffline\b/i, sugestao: "use 'desliga nessa hora' ou 'tá desligada'" },
+  { termo: /\bfun[çc][ãa]o executiva\b/i, sugestao: "use 'se organizar'" },
+  { termo: /\bcogni[çc][ãa]o social\b/i, sugestao: "use 'entender as pessoas'" },
+  { termo: /\bmodular emo[çc][ãa]o\b/i, sugestao: "use 'lidar com o sentimento'" },
+  { termo: /\bmodelagem\b/i, sugestao: "use 'se ensina mostrando, não explicando'" },
+  { termo: /\bturn-taking\b/i, sugestao: "use 'pingue-pongue da conversa'" },
+  { termo: /\bdisrregula[çc][ãa]o\b/i, sugestao: "use 'estar fora do eixo' ou 'sobrecarga'" },
+  { termo: /\bhabilidade substituta\b/i, sugestao: "use 'outro jeito de fazer'" },
+  { termo: /\bcomportamento adaptativo\b/i, sugestao: "use 'jeito que funciona'" },
+];
+
+export function validateGlossarioRespeitado(resposta: string): ValidationResult {
+  for (const t of TERMOS_TECNICOS_SEM_TRADUCAO) {
+    const m = resposta.match(t.termo);
+    if (m) {
+      return {
+        ok: false,
+        motivo: `Termo técnico sem tradução: "${m[0]}"`,
+        sugestao: t.sugestao,
+      };
+    }
+  }
+  return { ok: true };
+}
+
+/**
+ * Limite de uso do nome da criança — Adendo PRD §4 (Q7). Máximo 2x
+ * na resposta-base. Resto deve usar pronomes ou referências.
+ */
+export function validateNomeLimite(
+  resposta: string,
+  nomeCrianca: string | null,
+  max = 2,
+): ValidationResult {
+  if (!nomeCrianca || nomeCrianca.length < 2) return { ok: true };
+  // Boundary insensível a maiúscula/minúscula
+  const escaped = nomeCrianca.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const re = new RegExp(`\\b${escaped}\\b`, "gi");
+  const ocorrencias = (resposta.match(re) ?? []).length;
+  if (ocorrencias > max) {
+    return {
+      ok: false,
+      motivo: `Nome '${nomeCrianca}' aparece ${ocorrencias} vezes (máx ${max}).`,
+      sugestao: "Substitua excessos por 'ela/ele', 'sua filha/seu filho' ou contexto.",
+    };
+  }
+  return { ok: true };
+}
+
+/**
+ * Abertura empática reflexa — Adendo PRD §4 (Q8). Detecta primeira frase
+ * que é declaração genérica de empatia que poderia ser dada a qualquer
+ * mãe — não argumento técnico. Acolhimento deve morar dentro do argumento.
+ */
+const ABERTURAS_REFLEXAS = [
+  /^isso cansa mesmo/i,
+  /^entendo (perfeitamente )?(o |sua |a sua )/i,
+  /^que situa[çc][ãa]o/i,
+  /^sei que [ée] dif[íi]cil/i,
+  /^imagino o (quanto|que voc[êe])/i,
+  /^primeiramente,? (quero|deixo)/i,
+];
+
+export function validateAberturaEmpatica(resposta: string): ValidationResult {
+  const primeiraLinha = resposta.trim().split(/\n+/)[0] ?? "";
+  for (const re of ABERTURAS_REFLEXAS) {
+    if (re.test(primeiraLinha)) {
+      return {
+        ok: false,
+        motivo: `Abertura empática reflexa: "${primeiraLinha.slice(0, 50)}"`,
+        sugestao: "Abra direto pelo argumento técnico. Acolhimento mora na precisão da informação, não antes dela.",
+      };
+    }
+  }
+  return { ok: true };
+}
+
+/**
  * Tamanho ≤ 350 palavras (sem contar o bloco "registrar este papo").
  */
 export function validateTamanho(resposta: string, maxPalavras = 350): ValidationResult {
@@ -151,17 +289,38 @@ export function validateTamanho(resposta: string, maxPalavras = 350): Validation
 }
 
 /**
- * Roda todos os validadores em sequência. Retorna o primeiro erro ou
- * { ok: true } se todos passaram.
+ * Roda validadores de TOM (Grupo C do Adendo PRD §4) — eliminatórios.
+ * Falha em qualquer um = regenera. Ordem é da menor pra maior chance
+ * de match: vetos primeiro (mais comuns), glossário, etc.
  */
-export function runAllValidators(
+export function runTomValidators(
+  resposta: string,
+  ctx: { nomeCrianca?: string | null } = {},
+): ValidationResult {
+  for (const v of [
+    () => validateVetosAbsolutos(resposta),
+    () => validateGlossarioRespeitado(resposta),
+    () => validateAberturaEmpatica(resposta),
+    () => validateAntiSubstituicaoProfissional(resposta),
+    () => validateAntiComparacao(resposta),
+    () => validateAntiAlarme(resposta),
+    () => validateNomeLimite(resposta, ctx.nomeCrianca ?? null),
+  ]) {
+    const r = v();
+    if (!r.ok) return r;
+  }
+  return { ok: true };
+}
+
+/**
+ * Roda validadores estruturais (tamanho + anti-cópia). Separado de tom
+ * porque tom é eliminatório e estes são saneamento.
+ */
+export function runEstruturalValidators(
   resposta: string,
   boasPraticas: { versao_curta: string; versao_conversa: string | null }[],
 ): ValidationResult {
   for (const v of [
-    () => validateAntiSubstituicaoProfissional(resposta),
-    () => validateAntiComparacao(resposta),
-    () => validateAntiAlarme(resposta),
     () => validateTamanho(resposta),
     () => validateAntiCopy(resposta, boasPraticas),
   ]) {
@@ -169,6 +328,21 @@ export function runAllValidators(
     if (!r.ok) return r;
   }
   return { ok: true };
+}
+
+/**
+ * Roda todos os validadores em sequência. Mantido pra compatibilidade
+ * com callers antigos. Novo código deve usar runTomValidators +
+ * runEstruturalValidators + validateWithAI separadamente.
+ */
+export function runAllValidators(
+  resposta: string,
+  boasPraticas: { versao_curta: string; versao_conversa: string | null }[],
+  ctx: { nomeCrianca?: string | null } = {},
+): ValidationResult {
+  const tom = runTomValidators(resposta, ctx);
+  if (!tom.ok) return tom;
+  return runEstruturalValidators(resposta, boasPraticas);
 }
 
 // ---------- helpers ----------

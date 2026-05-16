@@ -4,13 +4,15 @@ import { loadActiveSkills, routeSkills, type RoutedSkill } from "./router";
 import { buildContext } from "./context";
 import { assemblePrompt, type Modo, type OutputTypeData } from "./prompt";
 import {
-  runAllValidators,
+  runTomValidators,
+  runEstruturalValidators,
   validateAntiSubstituicaoProfissional,
   validateAntiComparacao,
   validateAntiAlarme,
   validateAntiCopy,
   type ValidationResult,
 } from "./validators";
+import { validateWithAI } from "./validator-ai";
 
 export type EngineResponse = {
   texto: string;
@@ -67,7 +69,7 @@ export async function respond(params: {
     { kind: "conversa" },
   );
 
-  let validacao = runAllValidators(resposta.texto, ctx.boasPraticas);
+  let validacao = await runFullValidation(resposta.texto, ctx);
   let regenerou = false;
 
   if (!validacao.ok) {
@@ -79,7 +81,7 @@ export async function respond(params: {
       { kind: "conversa" },
       { regeneracao: { motivo: validacao.motivo, sugestao: validacao.sugestao } },
     );
-    validacao = runAllValidators(resposta.texto, ctx.boasPraticas);
+    validacao = await runFullValidation(resposta.texto, ctx);
   }
 
   return {
@@ -147,6 +149,40 @@ export async function respondAsOutputType(params: {
       : { ok: false, motivo: validacao.motivo, regenerou: false },
     uso: resposta.uso,
   };
+}
+
+/**
+ * Pipeline completo de validação — Adendo PRD §4.
+ *
+ *   1. Tom (Grupo C, regex)        → falha = regenera
+ *   2. Estrutural (tamanho + cópia) → falha = regenera
+ *   3. IA Validator (Grupos A + B)  → 2+ falhas = regenera, 1 falha tolera
+ *
+ * Custo: o IA Validator adiciona +15-18% por mensagem. Vale pra zerar
+ * vazamentos de tom/personalização que regex não captura.
+ */
+async function runFullValidation(
+  resposta: string,
+  ctx: Awaited<ReturnType<typeof buildContext>>,
+): Promise<ValidationResult> {
+  const nomeCrianca = ctx.membroFoco?.nome ?? null;
+
+  // 1. Tom (eliminatório)
+  const tom = runTomValidators(resposta, { nomeCrianca });
+  if (!tom.ok) return tom;
+
+  // 2. Estrutural
+  const estrutural = runEstruturalValidators(resposta, ctx.boasPraticas);
+  if (!estrutural.ok) return estrutural;
+
+  // 3. IA Validator (semântico)
+  return validateWithAI(resposta, {
+    nome_crianca: nomeCrianca,
+    idade: ctx.membroFoco?.idade ?? null,
+    perfil: ctx.membroFoco?.perfil ?? null,
+    interesses: ctx.membroFoco?.secoes?.como_e ?? null,
+    desafios: ctx.membroFoco?.secoes?.desafios_regulacao ?? null,
+  });
 }
 
 function runAllValidatorsExceptSize(
