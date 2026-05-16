@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import { getAnthropicClient, MODELS } from "./anthropic";
+import { getSystemPrompt } from "@/lib/ai/prompts";
 
 const BPCandidatasSchema = z.object({
   candidatas: z
@@ -21,7 +22,7 @@ export type BPCandidata = z.infer<typeof BPCandidatasSchema>["candidatas"][numbe
 const SKILL_NAMES_HINT =
   "sensorial, regulacao_emocional, comunicacao, transicoes, sono, meu_bem_estar, comportamento_e_limites";
 
-const SYSTEM_PROMPT = `Você ajuda a fundadora do Kolo Família a transformar a transcrição de uma aula em sugestões de Boas Práticas curadas.
+const SYSTEM_PROMPT_FALLBACK = `Você ajuda a fundadora do Kolo Família a transformar a transcrição de uma aula em sugestões de Boas Práticas curadas.
 
 # O que é uma Boa Prática
 Orientação curta e aplicável que as skills do app vão consumir em conversas reais. Não é resumo de aula — é uma dica concreta que a mãe pode usar.
@@ -85,10 +86,12 @@ export async function extractBoasPraticasFromAula(
     };
   }
 
+  const systemPrompt = await getSystemPrompt("extract_boas_praticas", SYSTEM_PROMPT_FALLBACK);
+
   const stream = client.messages.stream({
     model: MODELS.principal,
     max_tokens: 4096,
-    system: [{ type: "text", text: SYSTEM_PROMPT, cache_control: { type: "ephemeral" } }],
+    system: [{ type: "text", text: systemPrompt, cache_control: { type: "ephemeral" } }],
     messages: [
       {
         role: "user",

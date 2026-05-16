@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { getAylaAnthropicClient, AYLA_MODEL } from "./anthropic";
+import { getSystemPrompt } from "@/lib/ai/prompts";
 import type { ParserResult } from "./types";
 
 const ParserSchema = z.object({
@@ -29,7 +30,7 @@ const ParserSchema = z.object({
   precisa_clarificar: z.string().optional(),
 });
 
-const SYSTEM_PROMPT = `Você é o parser da Ayla — converte uma frase livre da mãe (resposta a pergunta diária no WhatsApp) em estrutura.
+const SYSTEM_PROMPT_FALLBACK = `Você é o parser da Ayla — converte uma frase livre da mãe (resposta a pergunta diária no WhatsApp) em estrutura.
 
 # Regras
 - Devolva APENAS um JSON com a forma do schema. Sem texto antes/depois.
@@ -87,12 +88,14 @@ ${params.texto}
 
 Devolva o JSON.`;
 
+  const systemPrompt = await getSystemPrompt("parser_ayla", SYSTEM_PROMPT_FALLBACK);
+
   let raw: string;
   try {
     const stream = client.messages.stream({
       model: AYLA_MODEL,
       max_tokens: 1024,
-      system: [{ type: "text", text: SYSTEM_PROMPT, cache_control: { type: "ephemeral" } }],
+      system: [{ type: "text", text: systemPrompt, cache_control: { type: "ephemeral" } }],
       messages: [{ role: "user", content: userMsg }],
     });
     const finalMessage = await stream.finalMessage();

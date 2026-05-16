@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { getAnthropicClient, MODELS } from "@/lib/ia/anthropic";
+import { getSystemPrompt } from "@/lib/ai/prompts";
 
 /**
  * Assistente de curadoria de skills (PRD §11.3 / §7.4).
@@ -50,7 +51,7 @@ export type SkillResumo = {
   routing_keywords: string[];
 };
 
-const SYSTEM = `Você é o assistente de curadoria de skills do Kolo Família. A fundadora descreve uma demanda de skill nova e você decide se:
+const SYSTEM_FALLBACK = `Você é o assistente de curadoria de skills do Kolo Família. A fundadora descreve uma demanda de skill nova e você decide se:
 
 1. Já é coberta por uma skill existente — sugira ampliar keywords/scope se necessário
 2. É melhoria — sugira ajustes em uma ou mais skills existentes
@@ -111,12 +112,14 @@ ${params.demanda}
 
 Decida: coberta, melhoria, ou nova. Devolva o JSON.`;
 
+  const systemPrompt = await getSystemPrompt("skill_suggestion", SYSTEM_FALLBACK);
+
   let texto: string;
   try {
     const stream = client.messages.stream({
       model: MODELS.principal,
       max_tokens: 2500,
-      system: [{ type: "text", text: SYSTEM, cache_control: { type: "ephemeral" } }],
+      system: [{ type: "text", text: systemPrompt, cache_control: { type: "ephemeral" } }],
       messages: [{ role: "user", content: userMsg }],
     });
     const finalMessage = await stream.finalMessage();

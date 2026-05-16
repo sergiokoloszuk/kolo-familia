@@ -1,15 +1,25 @@
+import Link from "next/link";
 import { formatRelative } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { requireAdmin } from "@/lib/auth/require-admin";
 import { computeKPIs } from "@/lib/ayla/metrics";
 import { AdminNav } from "../nav";
 
+const CATEGORY_LABEL: Record<string, string> = {
+  proativa: "Proativa",
+  reativa: "Reativa",
+  comando: "Comando",
+  auxiliar: "Auxiliar",
+};
+
 export default async function AdminAylaPage() {
   const { supabase } = await requireAdmin();
 
-  const [kpis, ultimosLogs, ultimosInsights] = await Promise.all([
+  const [kpis, ultimosLogs, ultimosInsights, templates, prompts] = await Promise.all([
     computeKPIs(supabase, 30),
     supabase
       .from("ayla_send_log")
@@ -21,6 +31,16 @@ export default async function AdminAylaPage() {
       .select("id, padrao, mensagem_proposta, enviado, created_at")
       .order("created_at", { ascending: false })
       .limit(10),
+    supabase
+      .from("ayla_message_templates")
+      .select("key, label, category, variations, ativo, versao")
+      .order("category", { ascending: true })
+      .order("label", { ascending: true }),
+    supabase
+      .from("ai_prompts")
+      .select("key, label, scope, ativo, versao")
+      .eq("scope", "ayla")
+      .order("label", { ascending: true }),
   ]);
 
   return (
@@ -97,6 +117,102 @@ export default async function AdminAylaPage() {
           ok={null}
         />
       </section>
+
+      <Card>
+        <CardHeader className="flex flex-row items-start justify-between gap-2">
+          <div>
+            <CardTitle className="text-base">Mensagens programadas</CardTitle>
+            <CardDescription>
+              Os textos fixos da Ayla. Clique pra editar variações.
+            </CardDescription>
+          </div>
+          <Link
+            href="/admin/mensagens"
+            className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
+          >
+            Ver tudo
+          </Link>
+        </CardHeader>
+        <CardContent>
+          {(templates.data?.length ?? 0) === 0 ? (
+            <p className="text-sm text-muted-foreground">
+              Nenhum template no DB. Rode a migration 0011 + seed.
+            </p>
+          ) : (
+            <ul className="grid gap-1.5 md:grid-cols-2">
+              {(templates.data ?? []).map((t) => (
+                <li key={t.key as string}>
+                  <Link
+                    href={`/admin/mensagens/${t.key}`}
+                    className="flex items-center justify-between gap-2 rounded-md border bg-card px-3 py-2 text-sm hover:bg-muted/50"
+                  >
+                    <span className="min-w-0 truncate">
+                      <span className="text-xs text-muted-foreground">
+                        {CATEGORY_LABEL[t.category as string] ?? t.category}
+                      </span>{" "}
+                      · {t.label}
+                    </span>
+                    <span className="flex shrink-0 items-center gap-2">
+                      <span className="text-xs text-muted-foreground">
+                        {(t.variations as string[] | undefined)?.length ?? 0} var
+                      </span>
+                      <Badge variant={t.ativo ? "default" : "secondary"}>
+                        {t.ativo ? "on" : "off"}
+                      </Badge>
+                    </span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="flex flex-row items-start justify-between gap-2">
+          <div>
+            <CardTitle className="text-base">Prompts da Ayla (IA)</CardTitle>
+            <CardDescription>
+              System prompts usados pelo parser de mensagens recebidas no WhatsApp.
+            </CardDescription>
+          </div>
+          <Link
+            href="/admin/prompts"
+            className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
+          >
+            Ver todos
+          </Link>
+        </CardHeader>
+        <CardContent>
+          {(prompts.data?.length ?? 0) === 0 ? (
+            <p className="text-sm text-muted-foreground">
+              Nenhum prompt no DB. Rode a migration 0012 + seed.
+            </p>
+          ) : (
+            <ul className="flex flex-col gap-1.5">
+              {(prompts.data ?? []).map((p) => (
+                <li key={p.key as string}>
+                  <Link
+                    href={`/admin/prompts/${p.key}`}
+                    className="flex items-center justify-between gap-2 rounded-md border bg-card px-3 py-2 text-sm hover:bg-muted/50"
+                  >
+                    <span className="truncate">
+                      <code className="text-xs text-muted-foreground">{p.key as string}</code>{" "}
+                      · {p.label}
+                    </span>
+                    <span className="flex shrink-0 items-center gap-2 text-xs text-muted-foreground">
+                      v{p.versao}
+                      <Badge variant={p.ativo ? "default" : "secondary"}>
+                        {p.ativo ? "on" : "off"}
+                      </Badge>
+                    </span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+        </CardContent>
+      </Card>
 
       <section className="grid gap-4 md:grid-cols-2">
         <Card>

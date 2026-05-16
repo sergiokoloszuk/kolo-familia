@@ -1,4 +1,5 @@
 import { getAnthropicClient, MODELS } from "@/lib/ia/anthropic";
+import { getSystemPrompt } from "@/lib/ai/prompts";
 import type { ReportData } from "./data";
 
 /**
@@ -23,7 +24,7 @@ const TERMOS_PROIBIDOS = [
   /\brecomendo (?:tratamento|medicamento)\b/i,
 ];
 
-const SYSTEM_PROMPT = `Você é o gerador de observações narrativas para o relatório do Kolo Família.
+const SYSTEM_PROMPT_FALLBACK = `Você é o gerador de observações narrativas para o relatório do Kolo Família.
 
 # Sua tarefa
 Escrever 3-6 observações curtas (1-2 frases cada) sobre os PADRÕES OBSERVADOS nos dados que vou te passar. Em PORTUGUÊS BRASILEIRO. Cada observação descreve algo que aparece nos números/fatos — gatilhos frequentes, evolução, estratégias que vêm aparecendo, frequência de eventos.
@@ -48,6 +49,7 @@ export async function gerarNarrativa(data: ReportData): Promise<string[]> {
   }
 
   const userMsg = montarUserMsg(data);
+  const systemPrompt = await getSystemPrompt("relatorio_narrativa", SYSTEM_PROMPT_FALLBACK);
 
   let texto: string;
   try {
@@ -55,7 +57,7 @@ export async function gerarNarrativa(data: ReportData): Promise<string[]> {
       model: MODELS.principal,
       max_tokens: 1500,
       system: [
-        { type: "text", text: SYSTEM_PROMPT, cache_control: { type: "ephemeral" } },
+        { type: "text", text: systemPrompt, cache_control: { type: "ephemeral" } },
       ],
       messages: [{ role: "user", content: userMsg }],
     });

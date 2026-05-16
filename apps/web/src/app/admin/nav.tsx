@@ -10,6 +10,7 @@ const items = [
   { href: "/admin/mensagens", label: "Mensagens" },
   { href: "/admin/boas-praticas", label: "Boas Práticas" },
   { href: "/admin/skills", label: "Skills" },
+  { href: "/admin/prompts", label: "Prompts" },
   { href: "/admin/campanhas", label: "Campanhas" },
   { href: "/admin/regras", label: "Regras" },
   { href: "/admin/ayla", label: "Ayla" },
