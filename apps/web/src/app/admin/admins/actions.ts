@@ -8,6 +8,8 @@ import { createServiceRoleClient } from "@/lib/supabase/server";
 const ROLES = ["admin_geral", "admin_conteudo", "admin_suporte"] as const;
 export type AdminRole = (typeof ROLES)[number];
 
+export type ActionResult = { ok: true } | { ok: false; error: string };
+
 const addAdminSchema = z.object({
   email: z.string().trim().toLowerCase().email("Email inválido"),
   role: z.enum(ROLES),
@@ -16,62 +18,93 @@ const addAdminSchema = z.object({
 /**
  * Adiciona um admin pelo email. O usuário precisa já existir em
  * auth.users (signup feito) — não pré-cria conta.
+ *
+ * Retorna Result em vez de lançar erro porque Server Actions do Next 16
+ * em produção mascaram exceptions com mensagem genérica de segurança.
  */
-export async function addAdmin(input: z.infer<typeof addAdminSchema>): Promise<void> {
-  const { email, role } = addAdminSchema.parse(input);
-  await requireAdmin();
+export async function addAdmin(
+  input: z.infer<typeof addAdminSchema>,
+): Promise<ActionResult> {
+  try {
+    const parsed = addAdminSchema.parse(input);
+    await requireAdmin();
 
-  const admin = createServiceRoleClient();
+    const admin = createServiceRoleClient();
 
-  let userId: string | null = null;
-  for (let page = 1; page <= 50; page++) {
-    const { data, error } = await admin.auth.admin.listUsers({ page, perPage: 200 });
-    if (error) throw new Error(`Falha ao buscar usuários: ${error.message}`);
-    const found = data.users.find((u) => u.email?.toLowerCase() === email);
-    if (found) { userId = found.id; break; }
-    if (data.users.length < 200) break;
+    let userId: string | null = null;
+    for (let page = 1; page <= 50; page++) {
+      const { data, error } = await admin.auth.admin.listUsers({ page, perPage: 200 });
+      if (error) return { ok: false, error: `Falha ao buscar usuários: ${error.message}` };
+      const found = data.users.find((u) => u.email?.toLowerCase() === parsed.email);
+      if (found) { userId = found.id; break; }
+      if (data.users.length < 200) break;
+    }
+    if (!userId) {
+      return {
+        ok: false,
+        error: `Nenhum usuário com email '${parsed.email}'. Peça para fazer signup primeiro.`,
+      };
+    }
+
+    const { error } = await admin
+      .from("controle_acessos")
+      .upsert(
+        { user_id: userId, role: parsed.role, ativo: true },
+        { onConflict: "user_id" },
+      );
+    if (error) return { ok: false, error: `Falha ao gravar: ${error.message}` };
+
+    revalidatePath("/admin/admins");
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "Erro desconhecido" };
   }
-  if (!userId) {
-    throw new Error(`Nenhum usuário com email '${email}'. Peça para fazer signup primeiro.`);
-  }
-
-  const { error } = await admin
-    .from("controle_acessos")
-    .upsert(
-      { user_id: userId, role, ativo: true },
-      { onConflict: "user_id" },
-    );
-  if (error) throw new Error(`Falha ao gravar: ${error.message}`);
-
-  revalidatePath("/admin/admins");
 }
 
-export async function setAdminAtivo(userId: string, ativo: boolean): Promise<void> {
-  const { user } = await requireAdmin();
-  if (userId === user.id && !ativo) {
-    throw new Error("Você não pode desativar a si mesmo.");
+export async function setAdminAtivo(
+  userId: string,
+  ativo: boolean,
+): Promise<ActionResult> {
+  try {
+    const { user } = await requireAdmin();
+    if (userId === user.id && !ativo) {
+      return { ok: false, error: "Você não pode desativar a si mesmo." };
+    }
+
+    const admin = createServiceRoleClient();
+    const { error } = await admin
+      .from("controle_acessos")
+      .update({ ativo })
+      .eq("user_id", userId);
+    if (error) return { ok: false, error: `Falha: ${error.message}` };
+
+    revalidatePath("/admin/admins");
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "Erro desconhecido" };
   }
-
-  const admin = createServiceRoleClient();
-  const { error } = await admin
-    .from("controle_acessos")
-    .update({ ativo })
-    .eq("user_id", userId);
-  if (error) throw new Error(`Falha: ${error.message}`);
-
-  revalidatePath("/admin/admins");
 }
 
-export async function setAdminRole(userId: string, role: AdminRole): Promise<void> {
-  if (!ROLES.includes(role)) throw new Error("Cargo inválido.");
-  await requireAdmin();
+export async function setAdminRole(
+  userId: string,
+  role: AdminRole,
+): Promise<ActionResult> {
+  try {
+    if (!ROLES.includes(role)) {
+      return { ok: false, error: "Cargo inválido." };
+    }
+    await requireAdmin();
 
-  const admin = createServiceRoleClient();
-  const { error } = await admin
-    .from("controle_acessos")
-    .update({ role })
-    .eq("user_id", userId);
-  if (error) throw new Error(`Falha: ${error.message}`);
+    const admin = createServiceRoleClient();
+    const { error } = await admin
+      .from("controle_acessos")
+      .update({ role })
+      .eq("user_id", userId);
+    if (error) return { ok: false, error: `Falha: ${error.message}` };
 
-  revalidatePath("/admin/admins");
+    revalidatePath("/admin/admins");
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "Erro desconhecido" };
+  }
 }

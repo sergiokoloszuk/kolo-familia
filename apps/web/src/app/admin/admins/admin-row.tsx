@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { setAdminAtivo, setAdminRole, type AdminRole } from "./actions";
+import { setAdminAtivo, setAdminRole, type AdminRole, type ActionResult } from "./actions";
 
 const ROLE_OPTIONS: { value: AdminRole; label: string }[] = [
   { value: "admin_geral", label: "Geral" },
@@ -26,15 +26,15 @@ export function AdminRow({
   const [pending, startTransition] = useTransition();
   const [erro, setErro] = useState<string | null>(null);
 
-  function run(fn: () => Promise<void>) {
+  function run(fn: () => Promise<ActionResult>) {
     setErro(null);
     startTransition(async () => {
-      try {
-        await fn();
-        router.refresh();
-      } catch (err) {
-        setErro(err instanceof Error ? err.message : "Erro");
+      const res = await fn();
+      if (!res.ok) {
+        setErro(res.error);
+        return;
       }
+      router.refresh();
     });
   }
 

@@ -23,14 +23,14 @@ export function AddAdminForm() {
     e.preventDefault();
     setErro(null);
     startTransition(async () => {
-      try {
-        await addAdmin({ email, role });
-        setEmail("");
-        setRole("admin_geral");
-        router.refresh();
-      } catch (err) {
-        setErro(err instanceof Error ? err.message : "Erro");
+      const res = await addAdmin({ email, role });
+      if (!res.ok) {
+        setErro(res.error);
+        return;
       }
+      setEmail("");
+      setRole("admin_geral");
+      router.refresh();
     });
   }
 
