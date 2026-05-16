@@ -32,8 +32,8 @@ export function AppNav({ isAdmin }: { isAdmin?: boolean }) {
             className={cn(
               "rounded-md px-2.5 py-1.5 text-sm font-medium transition-colors",
               active
-                ? "bg-purple-100 text-brand-purple-dark"
-                : "text-gray-600 hover:bg-purple-50 hover:text-brand-purple-dark",
+                ? "bg-white/25 text-white shadow-inner"
+                : "text-white/85 hover:bg-white/15 hover:text-white",
             )}
           >
             {item.label}

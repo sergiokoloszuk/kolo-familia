@@ -19,25 +19,30 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
   const isAdmin = Boolean(acesso?.ativo);
 
   return (
-    <div className="flex min-h-screen flex-col bg-background">
+    <div className="flex min-h-screen flex-col bg-kolo-page">
       <header
         data-app-chrome
-        className="sticky top-0 z-10 border-b border-purple-100/60 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80 print:hidden"
+        className="sticky top-0 z-10 bg-kolo-header text-white shadow-md print:hidden"
       >
         <div className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between gap-4 px-6">
           <Link
             href="/painel"
-            className="flex items-center gap-2.5 text-gray-900"
+            className="flex items-center gap-2.5 text-white"
             aria-label="Kolo Família — painel"
           >
-            <Logo size={32} />
+            <Logo size={36} />
             <span className="font-heading text-base font-bold tracking-tight">
               Kolo Família
             </span>
           </Link>
           <AppNav isAdmin={isAdmin} />
           <form action="/auth/logout" method="post">
-            <Button type="submit" variant="ghost" size="sm">
+            <Button
+              type="submit"
+              variant="ghost"
+              size="sm"
+              className="text-white hover:bg-white/15 hover:text-white"
+            >
               Sair
             </Button>
           </form>

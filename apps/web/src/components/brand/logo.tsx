@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { cn } from "@/lib/utils";
 
 type LogoProps = {
@@ -7,6 +8,12 @@ type LogoProps = {
   wordmarkClassName?: string;
 };
 
+/**
+ * Logo Kolo Família — círculo com o mascote, em PNG.
+ * Asset original em /public/logo-kolo.png (342x159, fundo escuro com texto).
+ * Renderizamos em forma circular com overflow hidden pra ficar consistente
+ * em qualquer fundo (header gradient ou claro).
+ */
 export function Logo({
   size = 36,
   className,
@@ -17,25 +24,17 @@ export function Logo({
     <span className={cn("inline-flex items-center gap-2", className)}>
       <span
         aria-hidden
-        className="inline-flex shrink-0 items-center justify-center rounded-full"
-        style={{
-          width: size,
-          height: size,
-          backgroundColor: "#facc15",
-        }}
+        className="relative inline-flex shrink-0 overflow-hidden rounded-full bg-white shadow-sm ring-1 ring-white/40"
+        style={{ width: size, height: size }}
       >
-        <svg
-          viewBox="0 0 64 64"
-          width={size * 0.7}
-          height={size * 0.7}
-          aria-hidden
-        >
-          <g fill="#6b21a8">
-            <circle cx="22" cy="26" r="6.5" />
-            <circle cx="42" cy="26" r="6.5" />
-            <path d="M14 44c0-5 8-9 18-9s18 4 18 9v1c0 1.6-1.4 3-3 3H17c-1.6 0-3-1.4-3-3z" />
-          </g>
-        </svg>
+        <Image
+          src="/logo-kolo.png"
+          alt=""
+          width={size}
+          height={size}
+          className="h-full w-full object-cover"
+          priority
+        />
       </span>
       {withWordmark && (
         <span
