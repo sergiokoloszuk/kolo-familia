@@ -1,3 +1,6 @@
+import { Users } from "lucide-react";
+import { Eyebrow } from "@/components/brand/eyebrow";
+import { IconCard } from "@/components/brand/icon-card";
 import { loadFamilyContext } from "@/lib/auth/require-user";
 import { KoloVivoWrapper, type FamiliaSecoes, type MembroData, type SugestaoRow } from "./wrapper";
 
@@ -54,13 +57,23 @@ export default async function KoloVivoPage() {
   });
 
   return (
-    <div className="flex flex-col gap-6">
-      <header>
-        <h1 className="font-heading text-2xl font-semibold tracking-tight">Kolo Vivo</h1>
-        <p className="text-sm text-muted-foreground">
-          Perfil progressivo da sua família. Edite o que mudou — a Ayla e os
-          especialistas usam isso de contexto.
-        </p>
+    <div className="flex flex-col gap-8">
+      <header className="flex items-start gap-4">
+        <IconCard tone="light" size="lg" className="hidden md:inline-flex">
+          <Users aria-hidden />
+        </IconCard>
+        <div>
+          <Eyebrow>Kolo Vivo</Eyebrow>
+          <h1 className="mt-1 font-heading text-3xl text-foreground md:text-4xl">
+            Perfil{" "}
+            <em className="not-italic text-brand-purple">progressivo</em> da
+            sua família
+          </h1>
+          <p className="mt-2 max-w-2xl text-muted-foreground">
+            Edite o que mudou — a Ayla e os especialistas usam isso de contexto.
+            Quanto mais completo, mais útil ficam as respostas.
+          </p>
+        </div>
       </header>
 
       <KoloVivoWrapper
