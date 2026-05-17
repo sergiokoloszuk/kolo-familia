@@ -50,7 +50,7 @@ export default async function Home() {
         <div className="pointer-events-none absolute inset-0 bg-black/10" />
         <div className="relative mx-auto grid w-full max-w-7xl items-center gap-12 px-6 py-20 md:grid-cols-[1.2fr_1fr] md:gap-16 md:px-8 md:py-28">
           <div className="flex flex-col gap-6">
-            <span className="w-fit rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-medium text-white/90 backdrop-blur">
+            <span className="w-fit rounded-full border border-white/20 bg-white/10 px-3 py-1 text-base font-medium text-red-500 backdrop-blur">
               Apoio prático para famílias atípicas
             </span>
             <h1 className="font-heading text-4xl font-extrabold leading-[1.05] tracking-tight text-white md:text-6xl">
