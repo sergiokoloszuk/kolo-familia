@@ -1,51 +1,90 @@
-import Image from "next/image";
 import { cn } from "@/lib/utils";
 
+type LogoTone = "light" | "dark";
+
 type LogoProps = {
+  /** Font-size do "Kolo" em px. Sub-marca, ponto e respiro derivam disso. Manual: confortável 24–28px em nav header. */
   size?: number;
+  /** Fundo claro → "light" (roxo escuro + cinza). Fundo escuro → "dark" (branco + amarelo). */
+  tone?: LogoTone;
+  /** Sub-marca empilhada embaixo. Default "Família". Passe "Inclusão", "Escola" etc para variantes. */
+  submark?: string;
   className?: string;
-  withWordmark?: boolean;
-  wordmarkClassName?: string;
 };
 
+const TONE = {
+  light: { kolo: "#4A1577", sub: "#5B4E7A" },
+  dark: { kolo: "#FFFFFF", sub: "#FFBA00" },
+} as const;
+
+const DOT_YELLOW = "#FFBA00";
+
 /**
- * Logo Kolo Família — círculo com o mascote, em PNG.
- * Asset original em /public/logo-kolo.png (342x159, fundo escuro com texto).
- * Renderizamos em forma circular com overflow hidden pra ficar consistente
- * em qualquer fundo (header gradient ou claro).
+ * Logo Kolo Família — anatomia empilhada do Sistema de Logos Kolo v1.0 (Maio 2026).
+ *
+ * - "Kolo" em Fraunces medium (500), letter-spacing -0.025em + ponto amarelo (#FFBA00).
+ * - Sub-marca em Plus Jakarta Sans semibold (600), uppercase, tracking 0.22em.
+ * - Proporções fixas: dot = 25% do font-size do "Kolo"; sub-marca ≈ 27% e margin-top = 25%.
+ *
+ * Quem altera proporções/cores quebra o manual — não fazer sem revisão de marca.
  */
 export function Logo({
-  size = 36,
+  size = 28,
+  tone = "dark",
+  submark = "Família",
   className,
-  withWordmark = false,
-  wordmarkClassName,
 }: LogoProps) {
+  const colors = TONE[tone];
+  const dotSize = Math.round(size * 0.25);
+  const subSize = Math.max(7, Math.round(size * 0.27));
+  const subGap = Math.round(size * 0.25);
+
   return (
-    <span className={cn("inline-flex items-center gap-2", className)}>
+    <span
+      className={cn("inline-flex flex-col items-start leading-none", className)}
+      aria-label={`Kolo ${submark}`}
+    >
       <span
         aria-hidden
-        className="relative inline-flex shrink-0 overflow-hidden rounded-full bg-white shadow-sm ring-1 ring-white/40"
-        style={{ width: size, height: size }}
+        style={{
+          fontFamily: "var(--font-fraunces), 'Fraunces', Georgia, serif",
+          fontWeight: 500,
+          fontStyle: "normal",
+          letterSpacing: "-0.025em",
+          fontSize: `${size}px`,
+          color: colors.kolo,
+          lineHeight: 1,
+        }}
       >
-        <Image
-          src="/logo-kolo.png"
-          alt=""
-          width={size}
-          height={size}
-          className="h-full w-full object-cover"
-          priority
+        Kolo
+        <span
+          aria-hidden
+          style={{
+            display: "inline-block",
+            width: `${dotSize}px`,
+            height: `${dotSize}px`,
+            backgroundColor: DOT_YELLOW,
+            borderRadius: "50%",
+            marginLeft: `${Math.max(1, Math.round(size * 0.05))}px`,
+            verticalAlign: "baseline",
+          }}
         />
       </span>
-      {withWordmark && (
-        <span
-          className={cn(
-            "font-heading text-base font-bold tracking-tight",
-            wordmarkClassName,
-          )}
-        >
-          Kolo Família
-        </span>
-      )}
+      <span
+        aria-hidden
+        style={{
+          fontFamily: "var(--font-jakarta), 'Plus Jakarta Sans', system-ui, sans-serif",
+          fontWeight: 600,
+          textTransform: "uppercase",
+          letterSpacing: "0.22em",
+          fontSize: `${subSize}px`,
+          color: colors.sub,
+          marginTop: `${subGap}px`,
+          lineHeight: 1,
+        }}
+      >
+        {submark}
+      </span>
     </span>
   );
 }

@@ -11,13 +11,10 @@ export default function PublicLayout({ children }: { children: ReactNode }) {
         <div className="mx-auto flex h-16 w-full max-w-7xl items-center justify-between gap-4 px-6 md:px-8">
           <Link
             href="/"
-            className="flex items-center gap-2.5 text-gray-900"
+            className="flex items-center"
             aria-label="Kolo Família — início"
           >
-            <Logo size={36} />
-            <span className="font-heading text-lg font-bold tracking-tight">
-              Kolo Família
-            </span>
+            <Logo size={28} tone="light" />
           </Link>
           <nav className="hidden items-center gap-1 text-sm sm:flex">
             <Link
@@ -64,13 +61,10 @@ export default function PublicLayout({ children }: { children: ReactNode }) {
           <div className="flex flex-col gap-3">
             <Link
               href="/"
-              className="flex items-center gap-2.5 text-white"
+              className="flex items-center"
               aria-label="Kolo Família"
             >
-              <Logo size={40} />
-              <span className="font-heading text-lg font-bold tracking-tight">
-                Kolo Família
-              </span>
+              <Logo size={32} tone="dark" />
             </Link>
             <p className="max-w-xs text-sm">
               Apoio prático para famílias no desenvolvimento infantil. Não é

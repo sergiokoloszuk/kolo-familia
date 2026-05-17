@@ -9,12 +9,12 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
         <div className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between gap-4 px-6">
           <Link
             href="/admin"
-            className="flex items-center gap-2.5 text-white"
+            className="flex items-center gap-3 text-white"
             aria-label="Kolo Família · Admin"
           >
-            <Logo size={36} />
-            <span className="font-heading text-base font-bold tracking-tight">
-              Kolo Família · Admin
+            <Logo size={28} tone="dark" />
+            <span className="text-xs font-semibold uppercase tracking-[0.18em] text-white/80">
+              Admin
             </span>
           </Link>
           <Link

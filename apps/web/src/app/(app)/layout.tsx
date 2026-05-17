@@ -27,13 +27,10 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
         <div className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between gap-4 px-6">
           <Link
             href="/painel"
-            className="flex items-center gap-2.5 text-white"
+            className="flex items-center"
             aria-label="Kolo Família — painel"
           >
-            <Logo size={36} />
-            <span className="font-heading text-base font-bold tracking-tight">
-              Kolo Família
-            </span>
+            <Logo size={28} tone="dark" />
           </Link>
           <AppNav isAdmin={isAdmin} />
           <form action="/auth/logout" method="post">
