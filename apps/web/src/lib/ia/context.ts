@@ -1,20 +1,57 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { SkillRow } from "./router";
 
-const KOLO_VIVO_FIELDS_MEMBRO = [
+// Campos jsonb top-level em perfil_vivo_membro (legados, mantidos)
+const KOLO_VIVO_FIELDS_MEMBRO_TOPLEVEL = [
   "essencial",
   "como_e",
   "corpo_rotina",
   "desafios_regulacao",
   "sensorial",
 ] as const;
+
+// Chaves dentro de perfil_vivo_membro.categorias_extras (Adendo PRD v1 §6).
+// Skills lêem essas como gavetas espelho. Coletadas pela Ayla via conversa.
+const KOLO_VIVO_FIELDS_MEMBRO_EXTRAS = [
+  "comunicacao",
+  "socializacao",
+  "imitacao",
+  "motor",
+  "autonomia",
+  "aprendizado",
+  "foco",
+  "sono",
+  "nutricional",
+  "tela_midia",
+  "escola",
+  "saude_geral",
+] as const;
+
+const KOLO_VIVO_FIELDS_MEMBRO = [
+  ...KOLO_VIVO_FIELDS_MEMBRO_TOPLEVEL,
+  ...KOLO_VIVO_FIELDS_MEMBRO_EXTRAS,
+] as const;
 type KoloVivoFieldMembro = (typeof KOLO_VIVO_FIELDS_MEMBRO)[number];
 
-const KOLO_VIVO_FIELDS_FAMILIA = [
+// Campos jsonb top-level em perfil_vivo_familia (legados, mantidos)
+const KOLO_VIVO_FIELDS_FAMILIA_TOPLEVEL = [
   "composicao",
   "rotina",
   "recursos",
   "dinamica",
+] as const;
+
+// Chaves dentro de perfil_vivo_familia.categorias_extras
+const KOLO_VIVO_FIELDS_FAMILIA_EXTRAS = [
+  "apoio_comunitario",
+  "marcos_conquistas",
+  "estrategias_ativas",
+  "terapias",
+] as const;
+
+const KOLO_VIVO_FIELDS_FAMILIA = [
+  ...KOLO_VIVO_FIELDS_FAMILIA_TOPLEVEL,
+  ...KOLO_VIVO_FIELDS_FAMILIA_EXTRAS,
 ] as const;
 type KoloVivoFieldFamilia = (typeof KOLO_VIVO_FIELDS_FAMILIA)[number];
 
@@ -105,13 +142,15 @@ export async function buildContext(
     membroAtipicoId
       ? supabase
           .from("perfil_vivo_membro")
-          .select("essencial, como_e, corpo_rotina, desafios_regulacao, sensorial")
+          .select(
+            "essencial, como_e, corpo_rotina, desafios_regulacao, sensorial, categorias_extras",
+          )
           .eq("membro_atipico_id", membroAtipicoId)
           .maybeSingle()
       : Promise.resolve({ data: null }),
     supabase
       .from("perfil_vivo_familia")
-      .select("composicao, rotina, recursos, dinamica")
+      .select("composicao, rotina, recursos, dinamica, categorias_extras")
       .eq("family_account_id", familyId)
       .maybeSingle(),
     supabase
@@ -242,6 +281,28 @@ function nomeFromMembrosAtipicos(
   return m.nome ?? "—";
 }
 
+/**
+ * Resolve um campo do Kolo Vivo no schema híbrido (top-level + categorias_extras).
+ * Top-level vence (campos legados). Se vazio, busca dentro de categorias_extras.
+ */
+function resolveSecaoMembro(
+  json: Record<string, unknown> | null,
+  campo: string,
+): string {
+  if (!json) return "";
+  // Campos legados (top-level)
+  if ((KOLO_VIVO_FIELDS_MEMBRO_TOPLEVEL as readonly string[]).includes(campo)) {
+    const direto = extractTextoFrom(json[campo]);
+    if (direto) return direto;
+  }
+  // Categorias novas (dentro de categorias_extras)
+  const extras = json.categorias_extras as Record<string, unknown> | undefined;
+  if (extras && typeof extras === "object") {
+    return extractTextoFrom(extras[campo]);
+  }
+  return "";
+}
+
 function filterMembroSections(
   json: Record<string, unknown> | null,
   campos: Set<string>,
@@ -249,8 +310,7 @@ function filterMembroSections(
   if (!json) return {};
   const out: Partial<Record<KoloVivoFieldMembro, string>> = {};
   for (const c of campos) {
-    const valor = json[c];
-    const texto = extractTextoFrom(valor);
+    const texto = resolveSecaoMembro(json, c);
     if (texto) out[c as KoloVivoFieldMembro] = texto;
   }
   return out;
@@ -261,10 +321,18 @@ function extractFamiliaSections(
 ): Partial<Record<KoloVivoFieldFamilia, string>> {
   if (!json) return {};
   const out: Partial<Record<KoloVivoFieldFamilia, string>> = {};
-  for (const c of KOLO_VIVO_FIELDS_FAMILIA) {
-    const valor = json[c];
-    const texto = extractTextoFrom(valor);
+  // Top-level (legados)
+  for (const c of KOLO_VIVO_FIELDS_FAMILIA_TOPLEVEL) {
+    const texto = extractTextoFrom(json[c]);
     if (texto) out[c] = texto;
+  }
+  // categorias_extras (novas)
+  const extras = json.categorias_extras as Record<string, unknown> | undefined;
+  if (extras && typeof extras === "object") {
+    for (const c of KOLO_VIVO_FIELDS_FAMILIA_EXTRAS) {
+      const texto = extractTextoFrom(extras[c]);
+      if (texto) out[c] = texto;
+    }
   }
   return out;
 }
