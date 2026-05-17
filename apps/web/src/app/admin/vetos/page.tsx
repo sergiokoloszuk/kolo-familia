@@ -7,7 +7,6 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { requireAdmin } from "@/lib/auth/require-admin";
-import { AdminNav } from "../nav";
 import { VetoForm } from "./veto-form";
 import { VetoRow } from "./veto-row";
 
@@ -32,7 +31,6 @@ export default async function AdminVetosPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <AdminNav />
       <header>
         <h1 className="font-heading text-2xl font-semibold tracking-tight">Vetos do Validador</h1>
         <p className="text-sm text-muted-foreground">

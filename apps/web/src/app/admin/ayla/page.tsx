@@ -7,7 +7,6 @@ import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { requireAdmin } from "@/lib/auth/require-admin";
 import { computeKPIs } from "@/lib/ayla/metrics";
-import { AdminNav } from "../nav";
 
 const CATEGORY_LABEL: Record<string, string> = {
   proativa: "Proativa",
@@ -45,7 +44,6 @@ export default async function AdminAylaPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <AdminNav />
       <header>
         <h1 className="font-heading text-2xl font-semibold tracking-tight">Ayla</h1>
         <p className="text-sm text-muted-foreground">

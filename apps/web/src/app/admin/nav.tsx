@@ -24,7 +24,10 @@ const items = [
 export function AdminNav() {
   const pathname = usePathname();
   return (
-    <nav className="flex flex-wrap items-center gap-1 border-b pb-3">
+    <nav
+      aria-label="Navegação admin"
+      className="flex flex-wrap items-center gap-1"
+    >
       {items.map((item) => {
         const active = item.exact
           ? pathname === item.href
@@ -34,10 +37,10 @@ export function AdminNav() {
             key={item.href}
             href={item.href}
             className={cn(
-              "rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
+              "rounded-full px-3 py-1.5 text-xs font-semibold transition-colors",
               active
-                ? "bg-muted text-foreground"
-                : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                ? "bg-brand-yellow text-brand-purple-dark"
+                : "text-white/75 hover:bg-white/15 hover:text-white",
             )}
           >
             {item.label}

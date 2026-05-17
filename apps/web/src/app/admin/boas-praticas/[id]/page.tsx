@@ -4,7 +4,6 @@ import { ChevronLeft } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { requireAdmin } from "@/lib/auth/require-admin";
-import { AdminNav } from "../../nav";
 import { BPForm } from "./bp-form";
 import { BPStatusActions } from "./status-actions";
 
@@ -24,7 +23,6 @@ export default async function EditarBPPage(props: PageProps<"/admin/boas-pratica
 
   return (
     <div className="flex flex-col gap-6">
-      <AdminNav />
       <header className="flex flex-col gap-2">
         <Link
           href="/admin/boas-praticas"

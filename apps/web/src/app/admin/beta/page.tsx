@@ -8,7 +8,6 @@ import {
 import { format, formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { requireAdmin } from "@/lib/auth/require-admin";
-import { AdminNav } from "../nav";
 
 export default async function AdminBetaPage() {
   const { supabase } = await requireAdmin();
@@ -69,7 +68,6 @@ export default async function AdminBetaPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <AdminNav />
       <header>
         <h1 className="font-heading text-2xl font-semibold tracking-tight">
           Beta

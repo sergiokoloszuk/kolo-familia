@@ -10,7 +10,6 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { requireAdmin } from "@/lib/auth/require-admin";
 import { isBetaGateAtivo } from "@/lib/beta/codigos";
-import { AdminNav } from "../nav";
 import { CriarConvitesForm } from "./criar-form";
 import { ConviteAcoes } from "./linha-acoes";
 
@@ -27,7 +26,6 @@ export default async function AdminConvitesPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <AdminNav />
       <header>
         <h1 className="font-heading text-2xl font-semibold tracking-tight">
           Convites Beta

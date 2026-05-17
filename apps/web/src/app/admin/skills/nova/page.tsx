@@ -2,14 +2,12 @@ import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { requireAdmin } from "@/lib/auth/require-admin";
-import { AdminNav } from "../../nav";
 import { SkillForm } from "../skill-form";
 
 export default async function NovaSkillPage() {
   await requireAdmin();
   return (
     <div className="flex flex-col gap-6">
-      <AdminNav />
       <header className="flex flex-col gap-2">
         <Link
           href="/admin/skills"

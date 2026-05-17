@@ -10,7 +10,6 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { requireAdmin } from "@/lib/auth/require-admin";
-import { AdminNav } from "../nav";
 
 const SEVERITY_VARIANT: Record<
   string,
@@ -71,7 +70,6 @@ export default async function ObservabilidadePage(props: {
 
   return (
     <div className="flex flex-col gap-6">
-      <AdminNav />
       <header>
         <h1 className="font-heading text-2xl font-semibold tracking-tight">
           Observabilidade

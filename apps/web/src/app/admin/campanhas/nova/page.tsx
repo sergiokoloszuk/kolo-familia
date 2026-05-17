@@ -7,14 +7,12 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { requireAdmin } from "@/lib/auth/require-admin";
-import { AdminNav } from "../../nav";
 import { CampanhaForm } from "../campanha-form";
 
 export default async function NovaCampanhaPage() {
   await requireAdmin();
   return (
     <div className="flex flex-col gap-6">
-      <AdminNav />
       <header className="flex flex-col gap-2">
         <Link
           href="/admin/campanhas"

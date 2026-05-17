@@ -1,6 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { requireAdmin } from "@/lib/auth/require-admin";
-import { AdminNav } from "../../nav";
 import { AulaForm } from "../aula-form";
 
 export default async function NovaAulaPage() {
@@ -14,7 +13,6 @@ export default async function NovaAulaPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <AdminNav />
       <header>
         <h1 className="font-heading text-2xl font-semibold tracking-tight">Nova aula</h1>
       </header>

@@ -3,7 +3,6 @@ import { notFound } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { requireAdmin } from "@/lib/auth/require-admin";
-import { AdminNav } from "../../nav";
 import { TemplateForm } from "./template-form";
 
 const CATEGORY_LABEL: Record<string, string> = {
@@ -34,7 +33,6 @@ export default async function AdminMensagemPage({
 
   return (
     <div className="flex flex-col gap-6">
-      <AdminNav />
       <div>
         <Link
           href="/admin/mensagens"

@@ -5,7 +5,6 @@ import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { requireAdmin } from "@/lib/auth/require-admin";
-import { AdminNav } from "../nav";
 
 export default async function AdminTrilhasPage() {
   const { supabase } = await requireAdmin();
@@ -17,7 +16,6 @@ export default async function AdminTrilhasPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <AdminNav />
       <header className="flex items-start justify-between gap-3">
         <div>
           <h1 className="font-heading text-2xl font-semibold tracking-tight">Trilhas</h1>

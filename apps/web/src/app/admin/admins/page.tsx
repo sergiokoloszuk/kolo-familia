@@ -10,7 +10,6 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { requireAdmin } from "@/lib/auth/require-admin";
 import { createServiceRoleClient } from "@/lib/supabase/server";
-import { AdminNav } from "../nav";
 import { AddAdminForm } from "./admin-form";
 import { AdminRow } from "./admin-row";
 
@@ -47,7 +46,6 @@ export default async function AdminAdminsPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <AdminNav />
       <header>
         <h1 className="font-heading text-2xl font-semibold tracking-tight">Admins</h1>
         <p className="text-sm text-muted-foreground">

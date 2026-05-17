@@ -3,7 +3,6 @@ import { notFound } from "next/navigation";
 import { ChevronLeft } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { requireAdmin } from "@/lib/auth/require-admin";
-import { AdminNav } from "../../nav";
 import { TrilhaForm } from "../trilha-form";
 
 export default async function EditarTrilhaPage(props: PageProps<"/admin/trilhas/[id]">) {
@@ -27,7 +26,6 @@ export default async function EditarTrilhaPage(props: PageProps<"/admin/trilhas/
 
   return (
     <div className="flex flex-col gap-6">
-      <AdminNav />
       <header className="flex flex-col gap-2">
         <Link
           href="/admin/trilhas"
