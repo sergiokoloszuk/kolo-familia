@@ -1,9 +1,11 @@
 /**
- * Validadores pós-resposta — PRD §7.4.4.
+ * Validadores pós-resposta — PRD §7.4.4 + Adendo PRD §4.
  *
  * Cada validator retorna { ok: true } ou { ok: false, motivo, sugestao? }.
  * Quando falha, o engine pode regenerar com prompt ajustado.
  */
+
+import { createServiceRoleClient } from "@/lib/supabase/server";
 
 export type ValidationResult =
   | { ok: true }
@@ -132,8 +134,16 @@ export function validateAntiAlarme(resposta: string): ValidationResult {
  * Vetos absolutos — Adendo PRD §4 (Q5). Frases/expressões que NUNCA
  * podem aparecer na resposta da skill. Diferente do anti-substituição-
  * profissional (clínico) ou anti-alarme — esses são vetos de TOM.
+ *
+ * Vetos vivem em public.ai_validator_vetos (editáveis via /admin/vetos)
+ * com cache em memória de 60s + fallback hardcoded abaixo.
  */
-const VETOS_ABSOLUTOS: { regex: RegExp; categoria: string }[] = [
+type VetoEntry = { regex: RegExp; categoria: string; sugestao?: string };
+
+const SUGESTAO_PADRAO =
+  "Reescreva sem essa expressão. O acolhimento mora na precisão da informação.";
+
+const VETOS_FALLBACK: VetoEntry[] = [
   // Performar empatia
   { regex: /\bquerida m[ãa]e\b/i, categoria: "performar empatia" },
   { regex: /\bcompreendo perfeitamente\b/i, categoria: "performar empatia" },
@@ -169,14 +179,56 @@ const VETOS_ABSOLUTOS: { regex: RegExp; categoria: string }[] = [
   { regex: /\b(siegel|bryson|greene|delahooke|prizant|grandin|shanker|barkley)\b/i, categoria: "autor de neurodivergência" },
 ];
 
-export function validateVetosAbsolutos(resposta: string): ValidationResult {
-  for (const v of VETOS_ABSOLUTOS) {
+// Cache em memória pros vetos lidos do DB. TTL curto pra refletir edições
+// rápidas via /admin/vetos sem precisar restart do serverless.
+let vetosCache: VetoEntry[] | null = null;
+let vetosCacheLoadedAt = 0;
+const VETOS_CACHE_TTL_MS = 60_000;
+
+async function getVetos(): Promise<VetoEntry[]> {
+  if (vetosCache && Date.now() - vetosCacheLoadedAt < VETOS_CACHE_TTL_MS) {
+    return vetosCache;
+  }
+  try {
+    const supabase = createServiceRoleClient();
+    const { data } = await supabase
+      .from("ai_validator_vetos")
+      .select("padrao, flags, categoria, sugestao")
+      .eq("ativo", true);
+    if (data && data.length > 0) {
+      const parsed: VetoEntry[] = [];
+      for (const v of data) {
+        try {
+          parsed.push({
+            regex: new RegExp(v.padrao as string, (v.flags as string) ?? "i"),
+            categoria: v.categoria as string,
+            sugestao: (v.sugestao as string) || SUGESTAO_PADRAO,
+          });
+        } catch {
+          console.warn(`[validators] regex inválido pulado: ${v.padrao}`);
+        }
+      }
+      vetosCache = parsed;
+      vetosCacheLoadedAt = Date.now();
+      return parsed;
+    }
+  } catch (e) {
+    console.warn("[validators] DB error pra vetos, usando fallback hardcoded:", e);
+  }
+  return VETOS_FALLBACK;
+}
+
+export async function validateVetosAbsolutos(
+  resposta: string,
+): Promise<ValidationResult> {
+  const vetos = await getVetos();
+  for (const v of vetos) {
     const m = resposta.match(v.regex);
     if (m) {
       return {
         ok: false,
         motivo: `Veto absoluto (${v.categoria}): "${m[0]}"`,
-        sugestao: "Reescreva sem essa expressão. O acolhimento mora na precisão da informação, não em declarações genéricas.",
+        sugestao: v.sugestao ?? SUGESTAO_PADRAO,
       };
     }
   }
@@ -290,23 +342,24 @@ export function validateTamanho(resposta: string, maxPalavras = 350): Validation
 
 /**
  * Roda validadores de TOM (Grupo C do Adendo PRD §4) — eliminatórios.
- * Falha em qualquer um = regenera. Ordem é da menor pra maior chance
- * de match: vetos primeiro (mais comuns), glossário, etc.
+ * Falha em qualquer um = regenera. Vetos primeiro porque podem ler DB
+ * (mais lento), os outros são regex puro sync.
  */
-export function runTomValidators(
+export async function runTomValidators(
   resposta: string,
   ctx: { nomeCrianca?: string | null } = {},
-): ValidationResult {
-  for (const v of [
-    () => validateVetosAbsolutos(resposta),
-    () => validateGlossarioRespeitado(resposta),
-    () => validateAberturaEmpatica(resposta),
-    () => validateAntiSubstituicaoProfissional(resposta),
-    () => validateAntiComparacao(resposta),
-    () => validateAntiAlarme(resposta),
-    () => validateNomeLimite(resposta, ctx.nomeCrianca ?? null),
+): Promise<ValidationResult> {
+  const vetos = await validateVetosAbsolutos(resposta);
+  if (!vetos.ok) return vetos;
+
+  for (const r of [
+    validateGlossarioRespeitado(resposta),
+    validateAberturaEmpatica(resposta),
+    validateAntiSubstituicaoProfissional(resposta),
+    validateAntiComparacao(resposta),
+    validateAntiAlarme(resposta),
+    validateNomeLimite(resposta, ctx.nomeCrianca ?? null),
   ]) {
-    const r = v();
     if (!r.ok) return r;
   }
   return { ok: true };
@@ -335,12 +388,12 @@ export function runEstruturalValidators(
  * com callers antigos. Novo código deve usar runTomValidators +
  * runEstruturalValidators + validateWithAI separadamente.
  */
-export function runAllValidators(
+export async function runAllValidators(
   resposta: string,
   boasPraticas: { versao_curta: string; versao_conversa: string | null }[],
   ctx: { nomeCrianca?: string | null } = {},
-): ValidationResult {
-  const tom = runTomValidators(resposta, ctx);
+): Promise<ValidationResult> {
+  const tom = await runTomValidators(resposta, ctx);
   if (!tom.ok) return tom;
   return runEstruturalValidators(resposta, boasPraticas);
 }

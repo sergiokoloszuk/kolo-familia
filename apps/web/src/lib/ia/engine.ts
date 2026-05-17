@@ -168,7 +168,7 @@ async function runFullValidation(
   const nomeCrianca = ctx.membroFoco?.nome ?? null;
 
   // 1. Tom (eliminatório)
-  const tom = runTomValidators(resposta, { nomeCrianca });
+  const tom = await runTomValidators(resposta, { nomeCrianca });
   if (!tom.ok) return tom;
 
   // 2. Estrutural
