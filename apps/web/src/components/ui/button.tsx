@@ -8,8 +8,9 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
+        // Pill roxo Kolo sólido — primário em fundo claro (Manual §07).
         default:
-          "rounded-full font-bold text-white bg-[linear-gradient(135deg,#667eea_0%,#764ba2_100%)] shadow-[0_10px_25px_-10px_rgba(118,75,162,0.6)] [a]:hover:brightness-105 hover:brightness-105 hover:shadow-[0_14px_30px_-10px_rgba(118,75,162,0.7)] transition-all",
+          "rounded-full font-semibold text-white bg-brand-purple shadow-[0_10px_25px_-12px_rgba(74,21,119,0.45)] [a]:hover:bg-brand-purple-dark hover:bg-brand-purple-dark hover:shadow-[0_14px_30px_-12px_rgba(74,21,119,0.55)] transition-all",
         outline:
           "border-border bg-background hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:border-input dark:bg-input/30 dark:hover:bg-input/50",
         secondary:
@@ -19,9 +20,11 @@ const buttonVariants = cva(
         destructive:
           "bg-destructive/10 text-destructive hover:bg-destructive/20 focus-visible:border-destructive/40 focus-visible:ring-destructive/20 dark:bg-destructive/20 dark:hover:bg-destructive/30 dark:focus-visible:ring-destructive/40",
         link: "text-primary underline-offset-4 hover:underline",
-        cta: "bg-brand-yellow text-gray-900 font-bold shadow-[0_25px_50px_-12px_rgba(0,0,0,0.25)] [a]:hover:bg-brand-yellow-dark",
+        // Pill amarelo Kolo — primário em fundo escuro (Manual §07).
+        cta: "rounded-full bg-brand-yellow text-brand-purple-dark font-bold shadow-[0_16px_32px_-16px_rgba(74,21,119,0.4)] [a]:hover:bg-brand-yellow-light hover:bg-brand-yellow-light transition-all",
+        // Secundário em fundo escuro — outline branco translúcido.
         "outline-light":
-          "border-[1.6px] border-white bg-transparent text-white [a]:hover:bg-white/15",
+          "rounded-full border-[1.6px] border-white/30 bg-white/5 backdrop-blur text-white [a]:hover:bg-white/15 hover:bg-white/15 transition-all",
       },
       size: {
         default:
