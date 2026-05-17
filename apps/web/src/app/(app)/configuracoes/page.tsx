@@ -70,6 +70,25 @@ export default async function ConfiguracoesPage() {
 
       <Card>
         <CardHeader>
+          <CardTitle className="text-base">Mapa familiar</CardTitle>
+          <CardDescription>
+            Quem cuida do(s) filho(s) atípico(s) com você — pai, padrasto, avós,
+            babá, professora, terapeuta. Quem mora junto, com que frequência
+            aparece, e como cada um se relaciona com cada criança.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <a
+            href="/configuracoes/familia"
+            className="text-sm font-medium underline-offset-4 hover:underline"
+          >
+            Abrir mapa familiar →
+          </a>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
           <CardTitle className="text-base">Avatar dos membros</CardTitle>
           <CardDescription>
             Configure o avatar canônico (cartoon/aquarela) usado nas brincadeiras,
