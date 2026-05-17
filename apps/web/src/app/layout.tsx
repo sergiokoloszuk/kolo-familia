@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono, Fraunces, Plus_Jakarta_Sans } from "next/font/google";
+import { Geist_Mono, Fraunces, Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/components/providers/auth-provider";
 import { BetaConviteConsumer } from "@/components/providers/beta-convite-consumer";
@@ -7,31 +7,27 @@ import { ErrorTracker } from "@/components/providers/error-tracker";
 import { ServiceWorkerRegister } from "@/components/providers/sw-register";
 import { Toaster } from "@/components/ui/sonner";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
 });
 
-// Fontes do sistema de logos Kolo (manual v1.0 — Maio 2026).
-// Fraunces: usada no wordmark "Kolo." (weight 500, italic só pra detalhes editoriais).
-// Plus Jakarta Sans: usada na sub-marca empilhada (weight 600, uppercase tracking 0.22em).
+// Fontes do sistema visual Kolo (Manual de Marca v2 §03).
+// Fraunces (serif): wordmark "Kolo." + H1/H2/H3. Pesos 500/600 + itálico pra destaques.
 const fraunces = Fraunces({
   variable: "--font-fraunces",
   subsets: ["latin"],
-  weight: ["500"],
-  style: ["normal"],
+  weight: ["500", "600"],
+  style: ["normal", "italic"],
   display: "swap",
 });
 
+// Plus Jakarta Sans (sans): body global + sub-marca + eyebrow.
+// Pesos 400 body, 500 medium, 600 semibold (eyebrow + sub-marca), 700 bold.
 const jakarta = Plus_Jakarta_Sans({
   variable: "--font-jakarta",
   subsets: ["latin"],
-  weight: ["600"],
+  weight: ["400", "500", "600", "700"],
   display: "swap",
 });
 
@@ -100,7 +96,7 @@ export default function RootLayout({
   return (
     <html
       lang="pt-BR"
-      className={`${geistSans.variable} ${geistMono.variable} ${fraunces.variable} ${jakarta.variable} h-full antialiased`}
+      className={`${geistMono.variable} ${fraunces.variable} ${jakarta.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
         <AuthProvider>{children}</AuthProvider>

@@ -7,9 +7,10 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-sans);
+  /* Tipografia Kolo (Manual de Marca v2 §03): Plus Jakarta Sans body + Fraunces titles. */
+  --font-sans: var(--font-jakarta), system-ui, sans-serif;
   --font-mono: var(--font-geist-mono);
-  --font-heading: var(--font-sans);
+  --font-heading: var(--font-fraunces), Georgia, serif;
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -39,12 +40,20 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
+  /* Paleta Kolo (Manual §04). brand-purple = roxo Kolo, brand-yellow = amarelo Kolo. */
   --color-brand-purple: var(--brand-purple);
   --color-brand-purple-dark: var(--brand-purple-dark);
-  --color-brand-indigo: var(--brand-indigo);
+  --color-brand-purple-deep: var(--brand-purple-deep);
+  --color-brand-purple-light: var(--brand-purple-light);
   --color-brand-yellow: var(--brand-yellow);
   --color-brand-yellow-dark: var(--brand-yellow-dark);
   --color-brand-yellow-light: var(--brand-yellow-light);
+  --color-brand-rosa: var(--brand-rosa);
+  --color-kolo-cinza: var(--kolo-cinza);
+  --color-kolo-creme: var(--kolo-creme);
+  --color-kolo-lilas-bg: var(--kolo-lilas-bg);
+  --color-kolo-lilas-bg-2: var(--kolo-lilas-bg-2);
+  --color-kolo-linha: var(--kolo-linha);
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
@@ -55,88 +64,107 @@
 }
 
 :root {
-  /* Kolo Família — brand palette */
-  --brand-purple: #9333ea;        /* purple-600 */
-  --brand-purple-dark: #6b21a8;   /* purple-800 */
-  --brand-indigo: #4f46e5;        /* indigo-600 */
-  --brand-yellow: #facc15;        /* yellow-400 */
-  --brand-yellow-dark: #eab308;   /* yellow-500 */
-  --brand-yellow-light: #fde047;  /* yellow-300 */
+  /* Kolo — paleta oficial do Manual de Marca v2 §04. */
+  /* Roxos: roxo Kolo primário, claro pra hover, escuro pra texto em destaque, deep pra fundos escuros. */
+  --brand-purple: #6B1FA8;
+  --brand-purple-light: #8B3FC8;
+  --brand-purple-dark: #4A1577;
+  --brand-purple-deep: #2E0A52;
+  /* Amarelo Kolo + claro pra hover. yellow-dark mantido p/ retrocompat de hover, mas próximo do oficial. */
+  --brand-yellow: #FFBA00;
+  --brand-yellow-light: #FFD460;
+  --brand-yellow-dark: #E5A700;
+  /* Rosa pontual (Manual §04 — uso esporádico, só detalhe). */
+  --brand-rosa: #F472B6;
+  /* Neutros Kolo. */
+  --kolo-cinza: #5B4E7A;
+  --kolo-creme: #FAF6EE;
+  --kolo-lilas-bg: #F5EFFB;
+  --kolo-lilas-bg-2: #FAF5FE;
+  --kolo-linha: rgba(31, 19, 56, 0.08);
 
-  /* Shadcn tokens mapped to brand */
+  /* Shadcn tokens, agora alinhados à marca. */
   --background: #ffffff;
-  --foreground: #111827;          /* gray-900 */
+  --foreground: #1F1338;          /* texto Kolo */
   --card: #ffffff;
-  --card-foreground: #111827;
+  --card-foreground: #1F1338;
   --popover: #ffffff;
-  --popover-foreground: #111827;
-  --primary: #9333ea;             /* brand-purple */
+  --popover-foreground: #1F1338;
+  --primary: #6B1FA8;             /* roxo Kolo */
   --primary-foreground: #ffffff;
-  --secondary: #f3e8ff;           /* purple-100 */
-  --secondary-foreground: #6b21a8;
-  --muted: #f9fafb;               /* gray-50 */
-  --muted-foreground: #6b7280;    /* gray-500 */
-  --accent: #fde047;              /* yellow-300 */
-  --accent-foreground: #111827;
+  --secondary: #F5EFFB;           /* lilás-bg */
+  --secondary-foreground: #4A1577;
+  --muted: #FAF5FE;               /* lilás-bg-2 */
+  --muted-foreground: #5B4E7A;    /* cinza Kolo */
+  --accent: #FFBA00;              /* amarelo Kolo */
+  --accent-foreground: #4A1577;
   --destructive: oklch(0.577 0.245 27.325);
-  --border: #e5e7eb;              /* gray-200 */
-  --input: #e5e7eb;
-  --ring: #9333ea;
-  --chart-1: #9333ea;
-  --chart-2: #4f46e5;
-  --chart-3: #facc15;
-  --chart-4: #a855f7;
-  --chart-5: #6b21a8;
-  --radius: 0.75rem;              /* 12px — brand spec */
+  --border: rgba(31, 19, 56, 0.08);
+  --input: rgba(31, 19, 56, 0.12);
+  --ring: #6B1FA8;
+  --chart-1: #6B1FA8;             /* roxo Kolo */
+  --chart-2: #8B3FC8;             /* roxo claro (era indigo — azul banido) */
+  --chart-3: #FFBA00;             /* amarelo */
+  --chart-4: #4A1577;             /* roxo escuro */
+  --chart-5: #FFD460;             /* amarelo claro */
+  --radius: 1rem;                 /* 16px — Manual §06 cards rounded-2xl */
   --sidebar: #ffffff;
-  --sidebar-foreground: #111827;
-  --sidebar-primary: #9333ea;
+  --sidebar-foreground: #1F1338;
+  --sidebar-primary: #6B1FA8;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #f3e8ff;
-  --sidebar-accent-foreground: #6b21a8;
-  --sidebar-border: #e5e7eb;
-  --sidebar-ring: #9333ea;
+  --sidebar-accent: #F5EFFB;
+  --sidebar-accent-foreground: #4A1577;
+  --sidebar-border: rgba(31, 19, 56, 0.08);
+  --sidebar-ring: #6B1FA8;
 }
 
 .dark {
-  --brand-purple: #a855f7;
-  --brand-purple-dark: #6b21a8;
-  --brand-indigo: #6366f1;
-  --brand-yellow: #facc15;
-  --brand-yellow-dark: #eab308;
-  --brand-yellow-light: #fde047;
+  /* Paleta Kolo no dark — roxos mais claros como primários, mas fundos roxo-deep. */
+  --brand-purple: #8B3FC8;        /* roxo claro Kolo */
+  --brand-purple-light: #A864E0;
+  --brand-purple-dark: #6B1FA8;
+  --brand-purple-deep: #2E0A52;
+  --brand-yellow: #FFBA00;
+  --brand-yellow-light: #FFD460;
+  --brand-yellow-dark: #E5A700;
+  --brand-rosa: #F472B6;
+  --kolo-cinza: #9089A8;          /* cinza claro pra dark */
+  --kolo-creme: #FAF6EE;
+  --kolo-lilas-bg: #2A1F3D;       /* roxo dark sutil */
+  --kolo-lilas-bg-2: #1F1538;
+  --kolo-linha: rgba(255, 255, 255, 0.08);
 
-  --background: #0b0716;
-  --foreground: #f5f3ff;
-  --card: #1a1326;
-  --card-foreground: #f5f3ff;
-  --popover: #1a1326;
-  --popover-foreground: #f5f3ff;
-  --primary: #a855f7;
-  --primary-foreground: #ffffff;
-  --secondary: #2a1f3d;
-  --secondary-foreground: #e9d5ff;
-  --muted: #1a1326;
-  --muted-foreground: #a1a1aa;
-  --accent: #facc15;
-  --accent-foreground: #111827;
+  --background: #2E0A52;          /* roxo deep Kolo */
+  --foreground: #FAF6EE;
+  --card: #4A1577;
+  --card-foreground: #FAF6EE;
+  --popover: #4A1577;
+  --popover-foreground: #FAF6EE;
+  --primary: #FFBA00;             /* em dark, amarelo Kolo é primário (Manual §07) */
+  --primary-foreground: #4A1577;
+  --secondary: rgba(255,255,255,0.06);
+  --secondary-foreground: #FAF6EE;
+  --muted: rgba(255,255,255,0.04);
+  --muted-foreground: rgba(255,255,255,0.65);
+  --accent: #FFBA00;
+  --accent-foreground: #4A1577;
   --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: #a855f7;
-  --chart-1: #a855f7;
-  --chart-2: #6366f1;
-  --chart-3: #facc15;
-  --chart-4: #c084fc;
-  --chart-5: #4c1d95;
-  --sidebar: #1a1326;
-  --sidebar-foreground: #f5f3ff;
-  --sidebar-primary: #a855f7;
-  --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #2a1f3d;
-  --sidebar-accent-foreground: #e9d5ff;
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: #a855f7;
+  --border: rgba(255, 255, 255, 0.12);
+  --input: rgba(255, 255, 255, 0.18);
+  --ring: #FFBA00;
+  --chart-1: #8B3FC8;
+  --chart-2: #6B1FA8;             /* era indigo — azul banido */
+  --chart-3: #FFBA00;
+  --chart-4: #4A1577;
+  --chart-5: #FFD460;
+  --sidebar: #4A1577;
+  --sidebar-foreground: #FAF6EE;
+  --sidebar-primary: #FFBA00;
+  --sidebar-primary-foreground: #4A1577;
+  --sidebar-accent: rgba(255,255,255,0.08);
+  --sidebar-accent-foreground: #FAF6EE;
+  --sidebar-border: rgba(255, 255, 255, 0.1);
+  --sidebar-ring: #FFBA00;
 }
 
 @layer base {
@@ -145,9 +173,39 @@
   }
   body {
     @apply bg-background text-foreground;
+    /* Plus Jakarta Sans no body global (Manual §03). line-height 1.5–1.65 pra body. */
+    font-family: var(--font-jakarta), system-ui, sans-serif;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
   }
   html {
     @apply font-sans;
+  }
+  /* Tipografia de títulos — Fraunces medium 500 com letter-spacing negativo (Manual §03). */
+  h1, h2, h3 {
+    font-family: var(--font-fraunces), Georgia, serif;
+    font-weight: 500;
+    letter-spacing: -0.02em;
+  }
+  h1 { line-height: 1.05; letter-spacing: -0.025em; }
+  h2 { line-height: 1.12; }
+  h3 { line-height: 1.2; letter-spacing: -0.015em; font-weight: 600; }
+
+  /* Focus visível amarelo Kolo — exigido pelo Manual §13 (acessibilidade TEA). */
+  *:focus-visible {
+    outline: 2px solid var(--brand-yellow);
+    outline-offset: 3px;
+    border-radius: 6px;
+  }
+}
+
+/* Acessibilidade — reduz animação pra quem tem prefers-reduced-motion (Manual §12). */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }
 
@@ -156,50 +214,73 @@
    * KOLO FAMÍLIA — identidade visual (gradients + glassmorphism)
    * ============================================================ */
 
-  /* Body / fundo de página (app autenticado) — pastel suave */
+  /* Body / fundo de página (app autenticado) — creme sólido (protótipo + Manual §11). */
   .bg-kolo-page {
+    background-color: var(--kolo-creme);
+  }
+
+  /* Header / navbar — roxo deep→escuro→Kolo (sem azul, Manual §01 princípio 5). */
+  .bg-kolo-header {
     background-image: linear-gradient(
       135deg,
-      #ffeef8 0%,
-      #f0f8ff 50%,
-      #e8f5e8 100%
+      var(--brand-purple-deep) 0%,
+      var(--brand-purple-dark) 55%,
+      var(--brand-purple) 100%
     );
   }
 
-  /* Header / navbar — roxo→azul→roxo escuro */
-  .bg-kolo-header {
-    background-image: linear-gradient(to right, #9333ea, #2563eb, #7e22ce);
+  /* Fundo roxo deep (manifestos, hero do app, CTA final — Manual §11). */
+  .bg-kolo-deep {
+    background-color: var(--brand-purple-deep);
   }
 
-  /* Barra de trial / pill informativo */
+  /* Fundo creme — alternativa neutra. */
+  .bg-kolo-creme {
+    background-color: var(--kolo-creme);
+  }
+
+  /* Fundos lilás — fundos de seção e cards (Manual §04). */
+  .bg-kolo-lilas {
+    background-color: var(--kolo-lilas-bg);
+  }
+  .bg-kolo-lilas-2 {
+    background-color: var(--kolo-lilas-bg-2);
+  }
+
+  /* Barra de trial / pill informativo — roxo sólido (sem indigo). */
   .bg-kolo-trial {
-    background-image: linear-gradient(to right, #9333ea, #4f46e5);
+    background-image: linear-gradient(to right, var(--brand-purple), var(--brand-purple-dark));
     color: #ffffff;
   }
 
-  /* Botão primário (CTA principal — pill com gradient roxo/azul) */
+  /* Botão primário Kolo — pill roxo Kolo. Manual §07. */
   .btn-kolo-primary {
-    background-image: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background-color: var(--brand-purple);
     color: #ffffff;
     border-radius: 9999px;
-    font-weight: 700;
-    box-shadow: 0 10px 25px -10px rgba(118, 75, 162, 0.6);
-    transition: transform 0.15s, box-shadow 0.15s;
+    font-weight: 600;
+    padding: 14px 28px;
+    box-shadow: 0 10px 25px -12px rgba(74, 21, 119, 0.45);
+    transition: background-color 0.15s, transform 0.15s, box-shadow 0.15s;
   }
   .btn-kolo-primary:hover {
-    box-shadow: 0 14px 30px -10px rgba(118, 75, 162, 0.7);
+    background-color: var(--brand-purple-dark);
+    box-shadow: 0 14px 30px -12px rgba(74, 21, 119, 0.55);
     transform: translateY(-1px);
   }
 
-  /* CTA secundário (pink → purple) */
+  /* CTA secundário — pill amarelo Kolo (versão pra fundos escuros). */
   .btn-kolo-cta {
-    background-image: linear-gradient(to right, #ec4899, #9333ea);
-    color: #ffffff;
-    border-radius: 16px;
+    background-color: var(--brand-yellow);
+    color: var(--brand-purple-dark);
+    border-radius: 9999px;
     font-weight: 700;
+    padding: 14px 28px;
+    transition: background-color 0.15s, transform 0.15s;
   }
   .btn-kolo-cta:hover {
-    filter: brightness(1.05);
+    background-color: var(--brand-yellow-light);
+    transform: translateY(-1px);
   }
 
   /* Botão "confirmar" (amarelo → laranja) */
@@ -221,9 +302,9 @@
     box-shadow: 0 12px 28px -6px rgba(0, 0, 0, 0.12);
   }
 
-  /* Ícone circular com gradient (cabeçalho de seção) */
+  /* Ícone circular sólido (cabeçalho de seção) — sem azul. */
   .icon-kolo-circle {
-    background-image: linear-gradient(to right, #a855f7, #3b82f6);
+    background-color: var(--brand-purple);
     color: #ffffff;
     border-radius: 50%;
     display: inline-flex;
@@ -231,39 +312,113 @@
     justify-content: center;
   }
 
+  /* IconCard — container amarelo Kolo (Manual §08). Em fundo claro: amarelo sólido + ícone roxo. */
+  .icon-card-kolo {
+    width: 48px;
+    height: 48px;
+    border-radius: 16px;
+    background-color: var(--brand-yellow);
+    color: var(--brand-purple-dark);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+  /* IconCard em fundo escuro — container translúcido + ícone amarelo. */
+  .icon-card-kolo-dark {
+    width: 48px;
+    height: 48px;
+    border-radius: 16px;
+    background-color: rgba(255, 255, 255, 0.12);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    color: var(--brand-yellow);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Eyebrow — linha amarela 28×2 + caps tracking 0.18em (Manual §14). */
+  .eyebrow-kolo {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--brand-purple);
+  }
+  .eyebrow-kolo::before {
+    content: "";
+    width: 28px;
+    height: 2px;
+    background-color: var(--brand-yellow);
+    border-radius: 2px;
+    flex-shrink: 0;
+  }
+  /* Eyebrow em fundos escuros — texto amarelo. */
+  .eyebrow-kolo-dark {
+    color: var(--brand-yellow);
+  }
+
+  /* Highlight amarelo "marca-texto" pra palavras-chave (Manual §14). */
+  .hl-kolo {
+    background-image: linear-gradient(
+      180deg,
+      transparent 65%,
+      rgba(255, 186, 0, 0.4) 65%
+    );
+    padding: 0 4px;
+  }
+
+  /* Ponto amarelo assinatura — Manual §14, usar UMA vez por página. */
+  .ponto-kolo {
+    display: inline-block;
+    width: 0.55em;
+    height: 0.55em;
+    background-color: var(--brand-yellow);
+    border-radius: 50%;
+    margin-left: 0.08em;
+    vertical-align: baseline;
+  }
+
   /* ============================================================
    * Legados da identidade anterior — mantidos pras páginas (public)
    * que ainda usam essas classes
    * ============================================================ */
 
+  /* Gradients Kolo só com roxos — azul banido pelo Manual §01 princípio 5. */
   .bg-brand-hero {
     background-image: linear-gradient(
-      to bottom right,
-      #9333ea 0%,
-      #4f46e5 50%,
-      #6b21a8 100%
+      135deg,
+      var(--brand-purple-deep) 0%,
+      var(--brand-purple-dark) 55%,
+      var(--brand-purple) 100%
     );
   }
 
   .bg-brand-soft {
     background-image: linear-gradient(
       to bottom right,
-      #faf5ff 0%,
-      #eff6ff 50%,
-      #fdf2f8 100%
+      var(--kolo-lilas-bg-2) 0%,
+      var(--kolo-lilas-bg) 100%
     );
   }
 
   .bg-brand-pricing {
     background-image: linear-gradient(
-      to bottom right,
-      #a855f7 0%,
-      #4f46e5 100%
+      135deg,
+      var(--brand-purple) 0%,
+      var(--brand-purple-dark) 100%
     );
   }
 
   .bg-brand-fade {
-    background-image: linear-gradient(to bottom, #f9fafb 0%, #ffffff 100%);
+    background-image: linear-gradient(
+      to bottom,
+      var(--kolo-lilas-bg-2) 0%,
+      #ffffff 100%
+    );
   }
 
   .text-brand-purple {
@@ -278,11 +433,11 @@
 
   .btn-brand-cta {
     background-color: var(--brand-yellow);
-    color: #111827;
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    color: var(--brand-purple-dark);
+    box-shadow: 0 16px 32px -16px rgba(74, 21, 119, 0.4);
   }
   .btn-brand-cta:hover {
-    background-color: var(--brand-yellow-dark);
+    background-color: var(--brand-yellow-light);
   }
 
   .btn-brand-outline-light {
