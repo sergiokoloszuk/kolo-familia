@@ -125,7 +125,12 @@ export interface PadraoHipotetico {
    * `./types.ts` pra permitir crescimento orgânico.
    */
   padrao_key: string;
-  descricao: string; // narrativa curta
+  /**
+   * Narrativa curta em linguagem OBSERVACIONAL (Karina, §13). NÃO contém
+   * verbos clínicos/assertivos. Gerada via `pattern-language.ts` que
+   * valida vocabulário antes de persistir.
+   */
+  descricao: string;
   evidencias_count: number;
   confianca: Confianca;
   estado: EstadoPadrao;
@@ -133,6 +138,47 @@ export interface PadraoHipotetico {
   ultima_evidencia: string;
   /** Ids de `EventoLongitudinal` que sustentam o padrão. */
   evidencias_evento_ids: EventoId[];
+
+  // ============================================================
+  // Rastreabilidade (Karina: "não quero caixa preta")
+  // ============================================================
+
+  /**
+   * Qual heurística determinística disparou. Auditoria — permite saber
+   * de onde veio cada padrão. Ver `pattern-language.ts:TipoHeuristica`.
+   */
+  motivo_hipotese: string | null;
+
+  /**
+   * Sinais descritivos que pesaram na detecção. Ex:
+   *   ["3 ocorrências em 14d", "mesmo domínio", "intensidade modal alta"]
+   */
+  sinais_correlacionados: string[];
+
+  /**
+   * Janela temporal usada na detecção. Ex: "30d", "90d", "6m", "todo_periodo".
+   * Permite refazer a análise se necessário com a mesma janela.
+   */
+  janela_analisada: string | null;
+
+  // ============================================================
+  // Revisão humana (treinamento longitudinal — Karina)
+  // ============================================================
+
+  /**
+   * Ajuste de relevância manual:
+   *   -1 = irrelevante (ignorar futuramente)
+   *    0 = sem ajuste
+   *  1..5 = relevância crescente (5 = altamente relevante)
+   */
+  relevancia_karina: number | null;
+
+  /** Quando a Karina revisou. */
+  revisado_em: string | null;
+
+  /** Quem revisou (user id). */
+  revisado_por: string | null;
+
   metadados: Record<string, unknown>;
 }
 

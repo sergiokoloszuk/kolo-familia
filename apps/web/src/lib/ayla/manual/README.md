@@ -32,7 +32,10 @@ Convive com a Ayla v1 transacional em `../`. Ver `../README.md` pra contexto.
 | `chips.ts` | §11 (continuidade contextual) | Chips contextuais — sugestões conversacionais por domínio |
 | `checkin-templates.ts` | §9, §16 | Templates de check-in proativo natural (não-formulário) |
 | `kolo-vivo.ts` | §12, §13 | Consolidação do Kolo Vivo derivada da memória longitudinal |
-| `longitudinal.ts` | §13, §14, §19 | Motor analítico — padrões, mudanças de fase, efeito de estratégias |
+| `longitudinal.ts` | §13, §14, §19 | Tipos do motor analítico — padrões, mudanças de fase, efeito de estratégias |
+| `pattern-language.ts` | §13, §16, §17 | Linguagem observacional pra descrição de padrões |
+| `avaliar-padroes.ts` | §13, §14 | Motor real (não-stub) de detecção de padrões — heurísticas determinísticas |
+| `strategies.ts` | §20, §21 | Schema de eventos `estrategia_testada` + resumo derivado |
 | `bridge.ts` | (integração) | Adapter v1↔v2 — herda regras duras da v1 sem duplicar |
 
 ## ETL longitudinal (já em produção)
