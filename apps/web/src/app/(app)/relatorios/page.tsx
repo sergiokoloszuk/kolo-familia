@@ -1,10 +1,12 @@
 import Link from "next/link";
 import { formatRelative } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Plus } from "lucide-react";
+import { BarChart3, Plus } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
+import { Eyebrow } from "@/components/brand/eyebrow";
+import { IconCard } from "@/components/brand/icon-card";
 import { cn } from "@/lib/utils";
 import { loadFamilyContext } from "@/lib/auth/require-user";
 
@@ -33,22 +35,35 @@ export default async function RelatoriosPage() {
   ]);
 
   return (
-    <div className="flex flex-col gap-6">
-      <header className="flex items-start justify-between gap-3">
-        <div>
-          <h1 className="font-heading text-2xl font-semibold tracking-tight">Relatórios</h1>
-          <p className="text-sm text-muted-foreground">
-            Para terapeuta ou para escola. Os relatórios espelham seus registros
-            voluntários — não substituem avaliação profissional.
-          </p>
+    <div className="flex flex-col gap-8">
+      <header className="flex items-start justify-between gap-4">
+        <div className="flex items-start gap-4">
+          <IconCard tone="light" size="lg" className="hidden md:inline-flex">
+            <BarChart3 aria-hidden />
+          </IconCard>
+          <div>
+            <Eyebrow>Relatórios</Eyebrow>
+            <h1 className="mt-1 font-heading text-3xl text-foreground md:text-4xl">
+              Pra{" "}
+              <em className="not-italic text-brand-purple">terapeuta</em> ou
+              escola
+            </h1>
+            <p className="mt-2 max-w-2xl text-muted-foreground">
+              Os relatórios espelham seus registros voluntários — não
+              substituem avaliação profissional.
+            </p>
+          </div>
         </div>
-        <Link href="/relatorios/novo" className={cn(buttonVariants({ size: "sm" }))}>
-          <Plus aria-hidden="true" className="size-4" /> Novo relatório
+        <Link
+          href="/relatorios/novo"
+          className={cn(buttonVariants({ size: "sm" }), "shrink-0")}
+        >
+          <Plus aria-hidden className="size-4" /> Novo relatório
         </Link>
       </header>
 
-      <section className="flex flex-col gap-3">
-        <h2 className="text-sm font-medium text-muted-foreground">Relatórios gerados</h2>
+      <section className="flex flex-col gap-4">
+        <Eyebrow>Relatórios gerados</Eyebrow>
         {relatorios && relatorios.length > 0 ? (
           <ul className="flex flex-col gap-2">
             {relatorios.map((r) => {
@@ -57,20 +72,24 @@ export default async function RelatoriosPage() {
                 <li key={r.id}>
                   <Link
                     href={`/relatorios/${r.id}`}
-                    className="block rounded-md border bg-card px-4 py-3 text-sm hover:bg-muted/50"
+                    className="block rounded-2xl border border-kolo-linha bg-white px-5 py-4 transition-all hover:-translate-y-0.5 hover:border-brand-purple hover:shadow-md"
                   >
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <div>
-                        <p className="font-medium">
+                        <p className="font-semibold text-foreground">
                           {nome ?? "—"} ·{" "}
-                          {r.destinatario === "terapeuta" ? "Para terapeuta" : "Para escola"}
+                          {r.destinatario === "terapeuta"
+                            ? "Para terapeuta"
+                            : "Para escola"}
                         </p>
                         <p className="text-xs text-muted-foreground">
                           Janela {r.janela_inicio} → {r.janela_fim}
                         </p>
                       </div>
                       <span className="text-xs text-muted-foreground">
-                        {formatRelative(new Date(r.created_at), new Date(), { locale: ptBR })}
+                        {formatRelative(new Date(r.created_at), new Date(), {
+                          locale: ptBR,
+                        })}
                       </span>
                     </div>
                   </Link>
@@ -79,9 +98,11 @@ export default async function RelatoriosPage() {
             })}
           </ul>
         ) : (
-          <Card>
+          <Card className="rounded-3xl border-l-4 border-brand-yellow bg-kolo-lilas-bg-2">
             <CardHeader>
-              <CardTitle className="text-base">Nenhum relatório ainda</CardTitle>
+              <CardTitle className="text-base">
+                Nenhum relatório ainda
+              </CardTitle>
               <CardDescription>
                 Gere o primeiro escolhendo destinatário e janela temporal.
               </CardDescription>
@@ -96,29 +117,29 @@ export default async function RelatoriosPage() {
       </section>
 
       {links && links.length > 0 && (
-        <section className="flex flex-col gap-3">
-          <h2 className="text-sm font-medium text-muted-foreground">Links vivos ativos</h2>
+        <section className="flex flex-col gap-4">
+          <Eyebrow>Links vivos ativos</Eyebrow>
           <ul className="flex flex-col gap-2">
             {links.map((l) => {
               const nome = nomeFromRel(l.membros_atipicos);
               const acessos = Array.isArray(l.acessos) ? l.acessos.length : 0;
               return (
                 <li key={l.id}>
-                  <div className="flex flex-wrap items-center justify-between gap-3 rounded-md border bg-card px-4 py-3 text-sm">
+                  <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-kolo-linha bg-white px-5 py-4">
                     <div>
-                      <p className="font-medium">
-                        {nome ?? "—"} → {l.destinatario_nome} ({l.destinatario})
+                      <p className="font-semibold text-foreground">
+                        {nome ?? "—"} → {l.destinatario_nome} (
+                        {l.destinatario})
                       </p>
                       <p className="text-xs text-muted-foreground">
                         {l.expira_em
                           ? `Expira em ${new Date(l.expira_em as string).toLocaleDateString("pt-BR")}`
                           : "Sem expiração"}{" "}
-                        · {acessos} {acessos === 1 ? "acesso" : "acessos"} registrados
+                        · {acessos}{" "}
+                        {acessos === 1 ? "acesso" : "acessos"} registrados
                       </p>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <Badge variant="secondary">Ativo</Badge>
-                    </div>
+                    <Badge variant="default">Ativo</Badge>
                   </div>
                 </li>
               );

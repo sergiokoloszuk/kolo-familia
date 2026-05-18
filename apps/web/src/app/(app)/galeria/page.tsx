@@ -1,9 +1,12 @@
 import Link from "next/link";
 import { formatRelative } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { Image as ImageIcon, Star } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { Eyebrow } from "@/components/brand/eyebrow";
+import { IconCard } from "@/components/brand/icon-card";
 import { loadFamilyContext } from "@/lib/auth/require-user";
+import { cn } from "@/lib/utils";
 import { GaleriaItem } from "./galeria-item";
 
 const TIPOS_LABEL: Record<string, string> = {
@@ -34,20 +37,31 @@ export default async function GaleriaPage(props: PageProps<"/galeria">) {
   const { data: imagens } = await query;
 
   return (
-    <div className="flex flex-col gap-6">
-      <header>
-        <h1 className="font-heading text-2xl font-semibold tracking-tight">Galeria</h1>
-        <p className="text-sm text-muted-foreground">
-          Imagens geradas pelas skills e pela Ayla. Favorita pra ficar e compartilha
-          ou baixa quando quiser.
-        </p>
+    <div className="flex flex-col gap-8">
+      <header className="flex items-start gap-4">
+        <IconCard tone="light" size="lg" className="hidden md:inline-flex">
+          <ImageIcon aria-hidden />
+        </IconCard>
+        <div>
+          <Eyebrow>Galeria</Eyebrow>
+          <h1 className="mt-1 font-heading text-3xl text-foreground md:text-4xl">
+            Imagens das{" "}
+            <em className="not-italic text-brand-purple">brincadeiras</em> e
+            histórias
+          </h1>
+          <p className="mt-2 max-w-2xl text-muted-foreground">
+            Geradas pelas skills e pela Ayla. Favorita pra ficar, compartilha
+            ou baixa quando quiser.
+          </p>
+        </div>
       </header>
 
       <div className="flex flex-wrap gap-2">
         <FilterPill href="/galeria" label="Todas" active={!filtroTipo && !apenasFavoritas} />
         <FilterPill
           href="/galeria?fav=1"
-          label="⭐ Favoritas"
+          label="Favoritas"
+          icon={<Star className="size-3.5 fill-current" aria-hidden />}
           active={apenasFavoritas && !filtroTipo}
         />
         {Object.entries(TIPOS_LABEL).map(([k, label]) => (
@@ -81,16 +95,19 @@ export default async function GaleriaPage(props: PageProps<"/galeria">) {
           })}
         </ul>
       ) : (
-        <Card>
+        <Card className="rounded-3xl border-l-4 border-brand-yellow bg-kolo-lilas-bg-2">
           <CardHeader>
             <CardTitle className="text-base">Sem imagens ainda</CardTitle>
             <CardDescription>
               Configure o avatar do membro em{" "}
-              <Link href="/configuracoes/avatar" className="underline">
+              <Link
+                href="/configuracoes/avatar"
+                className="text-brand-purple underline underline-offset-2 hover:text-brand-purple-dark"
+              >
                 /configuracoes/avatar
               </Link>{" "}
-              e depois gere imagens em /apoio (Brincadeiras, Atividades, Histórias
-              sociais).
+              e depois gere imagens em /apoio (Brincadeiras, Atividades,
+              Histórias sociais).
             </CardDescription>
           </CardHeader>
         </Card>
@@ -102,21 +119,25 @@ export default async function GaleriaPage(props: PageProps<"/galeria">) {
 function FilterPill({
   href,
   label,
+  icon,
   active,
 }: {
   href: string;
   label: string;
+  icon?: React.ReactNode;
   active: boolean;
 }) {
   return (
     <Link
       href={href}
-      className={`rounded-full border px-3 py-1 text-xs ${
+      className={cn(
+        "inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 text-xs font-semibold transition-colors",
         active
-          ? "border-foreground bg-foreground text-background"
-          : "text-muted-foreground hover:bg-muted"
-      }`}
+          ? "bg-brand-purple text-white"
+          : "bg-kolo-lilas-bg-2 text-muted-foreground hover:bg-kolo-lilas hover:text-foreground",
+      )}
     >
+      {icon}
       {label}
     </Link>
   );

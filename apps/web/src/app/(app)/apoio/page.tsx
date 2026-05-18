@@ -1,15 +1,18 @@
 import Link from "next/link";
 import {
+  ArrowRight,
   BookOpen,
   CalendarClock,
   Gamepad2,
+  Heart,
   Lightbulb,
   MessageSquare,
   Route,
   Sparkles,
   type LucideIcon,
 } from "lucide-react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Eyebrow } from "@/components/brand/eyebrow";
+import { IconCard } from "@/components/brand/icon-card";
 import { loadFamilyContext } from "@/lib/auth/require-user";
 
 const ICONES: Record<string, LucideIcon> = {
@@ -49,13 +52,23 @@ export default async function ApoioPage() {
     .order("ordem", { ascending: true });
 
   return (
-    <div className="flex flex-col gap-6">
-      <header>
-        <h1 className="font-heading text-2xl font-semibold tracking-tight">Apoio</h1>
-        <p className="text-sm text-muted-foreground">
-          Atalhos para tipos específicos de resposta. Você não precisa ter uma pergunta —
-          escolha o formato e o sistema gera com base no contexto da sua família.
-        </p>
+    <div className="flex flex-col gap-8">
+      <header className="flex items-start gap-4">
+        <IconCard tone="light" size="lg" className="hidden md:inline-flex">
+          <Heart aria-hidden />
+        </IconCard>
+        <div>
+          <Eyebrow>Apoio</Eyebrow>
+          <h1 className="mt-1 font-heading text-3xl text-foreground md:text-4xl">
+            Atalhos pra{" "}
+            <em className="not-italic text-brand-purple">tipos específicos</em>{" "}
+            de resposta
+          </h1>
+          <p className="mt-2 max-w-2xl text-muted-foreground">
+            Você não precisa ter uma pergunta. Escolha o formato e o sistema
+            gera com base no contexto da sua família.
+          </p>
+        </div>
       </header>
 
       <ul className="grid gap-4 md:grid-cols-2">
@@ -63,23 +76,27 @@ export default async function ApoioPage() {
           const Icon = ICONES[t.key] ?? Sparkles;
           return (
             <li key={t.key}>
-              <Link href={`/apoio/${t.key}`} className="block">
-                <Card className="h-full transition-colors hover:bg-muted/30">
-                  <CardHeader className="flex flex-row items-start gap-3">
-                    <div className="rounded-md bg-primary/10 p-2 text-primary">
-                      <Icon aria-hidden="true" className="size-5" />
-                    </div>
-                    <div className="flex-1">
-                      <CardTitle className="text-base">{t.label}</CardTitle>
-                      <CardDescription>
-                        {DESCRICOES[t.key] ?? ""}
-                      </CardDescription>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-xs text-muted-foreground">Pedir →</p>
-                  </CardContent>
-                </Card>
+              <Link
+                href={`/apoio/${t.key}`}
+                className="group flex h-full flex-col gap-3 rounded-3xl border border-kolo-linha bg-white p-6 transition-all hover:-translate-y-1 hover:border-brand-purple hover:shadow-lg"
+              >
+                <div className="flex items-start gap-4">
+                  <IconCard tone="light">
+                    <Icon aria-hidden />
+                  </IconCard>
+                  <div className="flex-1">
+                    <h3 className="font-heading text-lg text-foreground">
+                      {t.label}
+                    </h3>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      {DESCRICOES[t.key] ?? ""}
+                    </p>
+                  </div>
+                </div>
+                <span className="mt-auto inline-flex items-center gap-1.5 text-xs font-semibold text-brand-purple transition-all group-hover:gap-2.5">
+                  Pedir
+                  <ArrowRight className="size-3" aria-hidden />
+                </span>
               </Link>
             </li>
           );

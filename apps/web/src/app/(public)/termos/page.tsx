@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Eyebrow } from "@/components/brand/eyebrow";
 
 export const metadata: Metadata = {
   title: "Termos de Uso · Kolo Família",
@@ -8,12 +9,14 @@ export const metadata: Metadata = {
 
 export default function TermosPage() {
   return (
-    <article className="mx-auto w-full max-w-3xl px-6 py-12">
-      <header className="mb-8">
-        <h1 className="font-heading text-3xl font-semibold tracking-tight md:text-4xl">
-          Termos de Uso
+    <article className="mx-auto w-full max-w-3xl px-6 py-16">
+      <header className="mb-10 border-b border-kolo-linha pb-8">
+        <Eyebrow>Documento legal</Eyebrow>
+        <h1 className="mt-2 font-heading text-4xl text-foreground md:text-5xl">
+          Termos de{" "}
+          <em className="not-italic text-brand-purple">Uso</em>
         </h1>
-        <p className="mt-2 text-sm text-muted-foreground">
+        <p className="mt-3 text-sm text-muted-foreground">
           Última atualização: 8 de maio de 2026
         </p>
       </header>

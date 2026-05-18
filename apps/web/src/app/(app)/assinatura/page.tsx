@@ -1,7 +1,10 @@
 import { differenceInCalendarDays, format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { Check, CreditCard, Info } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Eyebrow } from "@/components/brand/eyebrow";
+import { IconCard } from "@/components/brand/icon-card";
 import { loadFamilyContext } from "@/lib/auth/require-user";
 import { AssinaturaActions } from "./assinatura-actions";
 
@@ -47,32 +50,53 @@ export default async function AssinaturaPage(props: PageProps<"/assinatura">) {
   const statusKey = sub?.status ?? "trialing";
 
   return (
-    <div className="flex flex-col gap-6">
-      <header className="flex items-start justify-between gap-3">
-        <div>
-          <h1 className="font-heading text-2xl font-semibold tracking-tight">Assinatura</h1>
-          <p className="text-sm text-muted-foreground">
-            R$ 53/mês ou plano anual com desconto. Cancela em 2 cliques.
-          </p>
+    <div className="flex flex-col gap-8">
+      <header className="flex items-start justify-between gap-4">
+        <div className="flex items-start gap-4">
+          <IconCard tone="light" size="lg" className="hidden md:inline-flex">
+            <CreditCard aria-hidden />
+          </IconCard>
+          <div>
+            <Eyebrow>Assinatura</Eyebrow>
+            <h1 className="mt-1 font-heading text-3xl text-foreground md:text-4xl">
+              R$ 53/mês{" "}
+              <em className="not-italic text-brand-purple">ou anual</em>
+            </h1>
+            <p className="mt-2 max-w-2xl text-muted-foreground">
+              Cancela em 2 cliques. Histórico fica preservado mesmo após
+              cancelar.
+            </p>
+          </div>
         </div>
-        <Badge variant={STATUS_VARIANT[statusKey] ?? "outline"}>
+        <Badge
+          variant={STATUS_VARIANT[statusKey] ?? "outline"}
+          className="shrink-0"
+        >
           {STATUS_LABEL[statusKey] ?? statusKey}
         </Badge>
       </header>
 
+      {/* Flash messages — sem verde banido. Sucesso = amarelo Kolo. */}
       {flash === "success" && (
-        <div className="rounded-md border border-green-300/60 bg-green-50 px-4 py-3 text-sm text-green-900">
-          Pagamento confirmado. Sua assinatura está sendo ativada — recarregue se ainda
-          aparecer como trial em alguns segundos.
+        <div className="flex items-start gap-3 rounded-2xl border-l-4 border-brand-yellow bg-brand-yellow/10 px-5 py-4">
+          <Check className="mt-0.5 size-5 shrink-0 text-brand-purple-dark" aria-hidden />
+          <p className="text-sm text-brand-purple-dark">
+            <strong className="font-semibold">Pagamento confirmado.</strong>{" "}
+            Sua assinatura está sendo ativada — recarregue se ainda aparecer
+            como trial em alguns segundos.
+          </p>
         </div>
       )}
       {flash === "canceled" && (
-        <div className="rounded-md border bg-muted/30 px-4 py-3 text-sm text-muted-foreground">
-          Pagamento não concluído. Você pode tentar de novo quando quiser.
+        <div className="flex items-start gap-3 rounded-2xl border border-kolo-linha bg-kolo-lilas-bg-2 px-5 py-4">
+          <Info className="mt-0.5 size-5 shrink-0 text-muted-foreground" aria-hidden />
+          <p className="text-sm text-muted-foreground">
+            Pagamento não concluído. Você pode tentar de novo quando quiser.
+          </p>
         </div>
       )}
 
-      <Card>
+      <Card className="rounded-3xl bg-white">
         <CardHeader>
           <CardTitle className="text-base">Estado atual</CardTitle>
           <CardDescription>
@@ -92,16 +116,26 @@ export default async function AssinaturaPage(props: PageProps<"/assinatura">) {
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="rounded-3xl border-l-4 border-brand-yellow bg-kolo-lilas-bg-2">
         <CardHeader>
           <CardTitle className="text-base">O que está incluso</CardTitle>
         </CardHeader>
-        <CardContent className="text-sm text-muted-foreground">
-          <ul className="ml-5 list-disc space-y-1">
-            <li>App completo (painel, Kolo Vivo, conversar, apoio, aprender).</li>
-            <li>Ayla no WhatsApp (entra na próxima fase).</li>
-            <li>n especialistas que respondem por contexto, sem você escolher.</li>
-            <li>Histórico nunca é apagado, mesmo se cancelar.</li>
+        <CardContent className="text-sm text-foreground/80">
+          <ul className="flex flex-col gap-2">
+            {[
+              "App completo (painel, Kolo Vivo, conversar, apoio, aprender).",
+              "Ayla no WhatsApp (entra na próxima fase).",
+              "n especialistas que respondem por contexto, sem você escolher.",
+              "Histórico nunca é apagado, mesmo se cancelar.",
+            ].map((b) => (
+              <li key={b} className="flex items-start gap-2">
+                <Check
+                  className="mt-0.5 size-4 shrink-0 text-brand-purple"
+                  aria-hidden
+                />
+                <span>{b}</span>
+              </li>
+            ))}
           </ul>
         </CardContent>
       </Card>
