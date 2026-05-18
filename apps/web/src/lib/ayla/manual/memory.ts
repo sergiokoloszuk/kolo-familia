@@ -33,19 +33,52 @@ import type {
 
 /**
  * Tipos de evento que a Ayla registra (§13, §14, §15).
- * Vocabulário fechado — adicionar tipo exige decisão de produto.
+ *
+ * Vocabulário fechado — adicionar tipo exige decisão de produto + migração
+ * SQL (CHECK constraint em `ayla_eventos_longitudinais`).
+ *
+ * Organização:
+ *   - Manifestações agudas: crise, meltdown, shutdown
+ *   - Progresso: conquista, melhora
+ *   - Retrocesso: regressao
+ *   - Revelações de perfil: sensibilidade, hiperfoco, preferencia
+ *   - Mudanças estruturais: mudanca_observada (genérica), mudanca_fase (transição)
+ *   - Interação com base: estrategia_testada
+ *   - Conversa: conversa_turno, check_in_resposta, follow_up_resposta
+ *   - Captura neutra: registro_explicito
  */
 export type TipoEvento =
-  | "conversa_turno" // turno isolado de conversa
-  | "check_in_resposta" // resposta a check-in proativo
-  | "crise_relatada" // mãe descreveu uma crise da criança
-  | "meltdown_relatado" // §18 — externalização
-  | "shutdown_relatado" // §18 — internalização
-  | "conquista_relatada" // mudança positiva
-  | "mudanca_observada" // mudança de fase / regressão / progressão
-  | "estrategia_testada" // mãe testou estratégia X
-  | "follow_up_resposta" // resposta a follow-up
-  | "registro_explicito"; // mãe registrou via app/WhatsApp diretamente
+  // Manifestações agudas
+  | "crise_relatada"
+  | "meltdown_relatado"          // §18 — externalização
+  | "shutdown_relatado"          // §18 — internalização
+
+  // Progresso
+  | "conquista_relatada"
+  | "melhora_relatada"           // mudança positiva clara, ex: dormiu melhor por 1 semana
+
+  // Retrocesso
+  | "regressao_observada"        // perda de capacidade que já estava estabelecida
+
+  // Revelações do perfil neurofuncional
+  | "sensibilidade_evidenciada"  // perfil sensorial/alimentar/etc evidenciado em evento
+  | "hiperfoco_evidenciado"      // interesse intenso identificado
+  | "preferencia_revelada"       // gosta de / evita algo concreto
+
+  // Mudanças
+  | "mudanca_observada"          // mudança geral (sem afirmar que é fase nova)
+  | "mudanca_fase"               // §19 — transição estrutural confirmada
+
+  // Interação com a base de estratégias
+  | "estrategia_testada"
+
+  // Conversa
+  | "conversa_turno"
+  | "check_in_resposta"
+  | "follow_up_resposta"
+
+  // Captura neutra (sem inferência de natureza)
+  | "registro_explicito";
 
 export interface EventoLongitudinal {
   id: EventoId;
@@ -174,8 +207,7 @@ export interface ResumoEstadoRecente {
 
 /** Registra um evento. Implementação real escreve em `ayla_eventos_longitudinais`. */
 export async function registrarEvento(
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  evento: Omit<EventoLongitudinal, "id" | "created_at">,
+  _evento: Omit<EventoLongitudinal, "id" | "created_at">,
 ): Promise<EventoId> {
   throw new Error(
     "NOT_IMPLEMENTED: lib/ayla/manual/memory.registrarEvento — " +
@@ -189,8 +221,7 @@ export async function registrarEvento(
  * evento de alta intensidade.
  */
 export async function avaliarPadroes(
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  membro: MembroAtipicoId,
+  _membro: MembroAtipicoId,
 ): Promise<PadraoHipotetico[]> {
   throw new Error(
     "NOT_IMPLEMENTED: lib/ayla/manual/memory.avaliarPadroes — " +

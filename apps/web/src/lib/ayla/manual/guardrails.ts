@@ -194,8 +194,7 @@ export interface ValidateInput {
  * @throws Error `NOT_IMPLEMENTED` até implementação.
  */
 export async function validateResponse(
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  input: ValidateInput,
+  _input: ValidateInput,
 ): Promise<ValidationResult> {
   throw new Error(
     "NOT_IMPLEMENTED: lib/ayla/manual/guardrails.validateResponse — " +

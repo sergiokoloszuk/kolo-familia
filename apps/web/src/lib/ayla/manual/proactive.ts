@@ -195,10 +195,8 @@ export interface EstadoSilencio {
  * Retorna `null` se nada deve ser enviado, ou o tipo recomendado.
  */
 export async function avaliarCheckInProativo(
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  familyAccountId: FamilyAccountId,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  agora: Date,
+  _familyAccountId: FamilyAccountId,
+  _agora: Date,
 ): Promise<TipoCheckIn | null> {
   throw new Error(
     "NOT_IMPLEMENTED: lib/ayla/manual/proactive.avaliarCheckInProativo — " +

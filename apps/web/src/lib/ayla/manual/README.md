@@ -9,6 +9,15 @@ em TypeScript: tipos, vocabulário controlado, regras como dado, contratos.
 
 Convive com a Ayla v1 transacional em `../`. Ver `../README.md` pra contexto.
 
+## Princípio condutor
+
+> A Ayla precisa evoluir para **"especialista acompanhando continuamente
+> a criança"**, e NÃO "chatbot que responde perguntas".
+>
+> Tudo nesta camada serve a esse princípio. Quando houver dúvida sobre uma
+> decisão de design, a pergunta é: *isso me move pra acompanhamento
+> longitudinal contextual ou pra chat reativo?*
+
 ## Arquivos
 
 | Arquivo | §Manual | Conteúdo |
@@ -20,6 +29,24 @@ Convive com a Ayla v1 transacional em `../`. Ver `../README.md` pra contexto.
 | `memory.ts` | §12, §13, §14, §15 | Tipos pra eventos / padrões / sugestões longitudinais |
 | `proactive.ts` | §9, §10 | Política de silêncio + cadência + tipos de check-in proativo |
 | `channels.ts` | §11 | Contrato WhatsApp vs app |
+| `chips.ts` | §11 (continuidade contextual) | Chips contextuais — sugestões conversacionais por domínio |
+| `checkin-templates.ts` | §9, §16 | Templates de check-in proativo natural (não-formulário) |
+| `kolo-vivo.ts` | §12, §13 | Consolidação do Kolo Vivo derivada da memória longitudinal |
+| `longitudinal.ts` | §13, §14, §19 | Motor analítico — padrões, mudanças de fase, efeito de estratégias |
+| `bridge.ts` | (integração) | Adapter v1↔v2 — herda regras duras da v1 sem duplicar |
+
+## ETL longitudinal (já em produção)
+
+Em `supabase/migrations/0020_ayla_eventos_etl.sql`: triggers AFTER INSERT
+em `ayla_messages`, `diarios` e `check_ins_diarios` populam
+`ayla_eventos_longitudinais` automaticamente. Sem LLM, sem alterar v1.
+
+Em `supabase/migrations/0021_ayla_tipos_eventos_extra.sql`: amplia o
+CHECK constraint pra incluir os tipos `melhora_relatada`, `regressao_observada`,
+`sensibilidade_evidenciada`, `hiperfoco_evidenciado`, `preferencia_revelada`,
+`mudanca_fase`.
+
+Backfill histórico: `apps/web/scripts/ayla-eventos-backfill.mjs`.
 
 ## Filosofia desta camada
 

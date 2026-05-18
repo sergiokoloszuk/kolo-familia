@@ -131,8 +131,7 @@ export interface ClassifyInput {
  * @throws Error com `NOT_IMPLEMENTED` até a fase de implementação do classifier.
  */
 export async function classifyMessage(
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  input: ClassifyInput,
+  _input: ClassifyInput,
 ): Promise<ClassifierOutput> {
   throw new Error(
     "NOT_IMPLEMENTED: lib/ayla/manual/classifier.classifyMessage — " +
@@ -149,8 +148,7 @@ export async function classifyMessage(
  * orientar no mesmo turno).
  */
 export function escolherModoFinal(
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  output: ClassifierOutput,
+  _output: ClassifierOutput,
 ): AylaMode {
   throw new Error(
     "NOT_IMPLEMENTED: lib/ayla/manual/classifier.escolherModoFinal — " +

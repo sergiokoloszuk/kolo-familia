@@ -74,17 +74,23 @@ export type DominioKolo =
   | "comunicacao"
   | "socializacao"
   | "sensorial"
-  | "regulacao_emocional"
+  | "regulacao_emocional"   // engloba meltdown/shutdown (§18) como manifestações
   | "hiperfocos"
   | "rotina"
-  | "meltdown"             // §18 — explosão externa
-  | "shutdown"             // §18 — colapso interno/desligamento
-  | "transicoes"           // §19 — progressão gradual
+  | "transicoes"            // §19 — progressão gradual
   | "autonomia"
   | "auto_cuidado_mae"
   | "familia"
   | "escola"
   | "saude";
+
+/**
+ * NOTA SOBRE meltdown/shutdown:
+ * São TIPOS DE EVENTO (manifestações agudas), não domínios estruturais.
+ * O domínio onde uma crise se manifesta é tipicamente `regulacao_emocional`.
+ * Eventos `meltdown_relatado` e `shutdown_relatado` ficam em
+ * `lib/ayla/manual/memory.ts` (TipoEvento).
+ */
 
 /**
  * Hierarquia operacional (§6). Ordem de prioridade quando a Ayla decide
