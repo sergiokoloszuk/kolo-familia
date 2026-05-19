@@ -104,7 +104,7 @@ export default async function FamiliaPage() {
         <h1 className="font-heading text-2xl font-semibold tracking-tight">Mapa familiar</h1>
         <p className="text-sm text-muted-foreground">
           Quem cuida, quem mora junto, quem aparece no dia a dia. Esses dados
-          ajudam a Ayla e as especialistas a entender o contexto sem você
+          ajudam o sistema e as especialistas a entender o contexto sem você
           precisar contar do zero toda vez.
         </p>
       </header>

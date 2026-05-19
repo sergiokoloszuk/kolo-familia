@@ -63,8 +63,8 @@ export default async function RegistrarPage() {
           <em className="not-italic text-brand-purple">aconteceu</em> hoje?
         </h1>
         <p className="mt-3 max-w-2xl text-muted-foreground">
-          Registros diários e periódicos. Quanto mais a Ayla e os especialistas
-          têm de contexto, mais útil ficam as respostas.
+          Registros diários e periódicos. Quanto mais contexto você registrar,
+          mais úteis ficam as respostas.
         </p>
       </header>
 

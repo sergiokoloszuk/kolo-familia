@@ -41,7 +41,7 @@ export function SugestoesPanel({
         <CardHeader>
           <CardTitle className="text-base">Nenhuma sugestão pendente</CardTitle>
           <CardDescription>
-            Quando a Ayla ou um especialista propor uma atualização do Kolo Vivo, aparece aqui pra
+            Quando o sistema propor uma atualização do Kolo Vivo, aparece aqui pra
             você decidir.
           </CardDescription>
         </CardHeader>
@@ -122,7 +122,7 @@ function labelCampo(campo: string): string {
 
 function labelOrigem(origem: string): string {
   const map: Record<string, string> = {
-    ayla: "Ayla",
+    ayla: "WhatsApp",
     skill: "Especialista",
     app: "Você",
     diario_parser: "Diário",

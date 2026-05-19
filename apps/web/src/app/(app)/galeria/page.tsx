@@ -2,7 +2,7 @@ import Link from "next/link";
 import { formatRelative } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Image as ImageIcon, Star } from "lucide-react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Eyebrow } from "@/components/brand/eyebrow";
 import { IconCard } from "@/components/brand/icon-card";
 import { loadFamilyContext } from "@/lib/auth/require-user";
@@ -50,8 +50,8 @@ export default async function GaleriaPage(props: PageProps<"/galeria">) {
             histórias
           </h1>
           <p className="mt-2 max-w-2xl text-muted-foreground">
-            Geradas pelas skills e pela Ayla. Favorita pra ficar, compartilha
-            ou baixa quando quiser.
+            Geradas pelas estratégias e pelas conversas. Favorita pra ficar,
+            compartilha ou baixa quando quiser.
           </p>
         </div>
       </header>

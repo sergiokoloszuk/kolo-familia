@@ -168,8 +168,8 @@ export default async function ConfiguracoesRegrasPage() {
         <CardHeader>
           <CardTitle className="text-base">Adaptações sugeridas</CardTitle>
           <CardDescription>
-            Mudanças concretas que faço no seu Kolo Vivo ou na Ayla quando você
-            aceitar. Tudo é reversível.
+            Mudanças concretas que faço no seu Kolo Vivo ou nas mensagens do
+            WhatsApp quando você aceitar. Tudo é reversível.
           </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-3">

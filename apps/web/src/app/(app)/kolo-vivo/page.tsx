@@ -70,8 +70,8 @@ export default async function KoloVivoPage() {
             sua família
           </h1>
           <p className="mt-2 max-w-2xl text-muted-foreground">
-            Edite o que mudou — a Ayla e os especialistas usam isso de contexto.
-            Quanto mais completo, mais útil ficam as respostas.
+            Edite o que mudou — o sistema usa isso de contexto pras
+            estratégias. Quanto mais completo, mais útil ficam as respostas.
           </p>
         </div>
       </header>
