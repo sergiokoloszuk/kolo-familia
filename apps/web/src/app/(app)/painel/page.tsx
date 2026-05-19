@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { differenceInCalendarDays, format, formatRelative } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { ArrowRight, Sparkles, Star } from "lucide-react";
+import { ArrowRight, Sparkles } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
@@ -170,13 +170,68 @@ export default async function PainelPage() {
         ? "teve desafios"
         : "teve de tudo";
 
-  const heroTexto = !houveAtividade
-    ? `Comece registrando como ${primeiraCrianca ? "vocês estão" : "tá sendo"} a semana — ajuda a perceber padrões depois.`
-    : totalConquistas >= 2 && totalConquistas > totalDesafios
-      ? `Várias conquistas registradas. Vale celebrar discreto e tentar manter os contextos que ajudaram.`
-      : totalDesafios >= 2 && totalDesafios > totalConquistas
-        ? `Foi uma semana com peso. Lembra: identificar gatilho não é culpa, é leitura.`
-        : `Registros chegaram. Devagar e firme — é assim que se enxerga o padrão da fase.`;
+  // Bloco editorial único — absorve a interpretação rica do antigo FOCO DA SEMANA.
+  // Texto em JSX porque tem ênfases. CTA primário contextual; secundário "Registrar
+  // dia" só aparece quando o primário não vai pra lá (pra não duplicar).
+  const focoContent =
+    !houveAtividade
+      ? {
+          texto: (
+            <>
+              Um minuto de registro hoje vira{" "}
+              <strong className="font-semibold text-foreground">
+                padrão observável
+              </strong>{" "}
+              em duas semanas. Não precisa ser longo — uma frase já conta.
+            </>
+          ),
+          ctaLabel: "Registrar primeira",
+          ctaHref: "/registrar/diario",
+        }
+      : totalConquistas > totalDesafios
+        ? {
+            texto: (
+              <>
+                {primeiraCrianca?.nome ?? "Vocês"} mostrou algo novo. Vale{" "}
+                <strong className="font-semibold text-foreground">
+                  manter o contexto que ajudou
+                </strong>{" "}
+                e seguir devagar — sem pressão pra render mais.
+              </>
+            ),
+            ctaLabel: "Ver estratégias",
+            ctaHref: "/estrategias?tab=biblioteca",
+          }
+        : totalDesafios > totalConquistas
+          ? {
+              texto: (
+                <>
+                  Foi uma semana com peso. Identificar o que disparou é{" "}
+                  <strong className="font-semibold text-foreground">
+                    leitura, não falha
+                  </strong>
+                  . Vamos pensar na próxima vez sem revisar a passada.
+                </>
+              ),
+              ctaLabel: "Pedir estratégia",
+              ctaHref: "/estrategias",
+            }
+          : {
+              texto: (
+                <>
+                  Conquistas e desafios convivem — é assim que o desenvolvimento
+                  acontece. Continuar registrando{" "}
+                  <strong className="font-semibold text-foreground">
+                    conta a história
+                  </strong>{" "}
+                  no longo prazo.
+                </>
+              ),
+              ctaLabel: "Ver estratégias",
+              ctaHref: "/estrategias",
+            };
+
+  const mostrarSecundario = focoContent.ctaHref !== "/registrar/diario";
 
   return (
     <div className="flex flex-col gap-8">
@@ -255,26 +310,86 @@ export default async function PainelPage() {
               .
             </span>
           </h2>
-          <p className="mt-3 max-w-xl text-muted-foreground">{heroTexto}</p>
-          <div className="mt-6 flex flex-wrap gap-3">
+          <p className="mt-3 max-w-xl text-muted-foreground">
+            {focoContent.texto}
+          </p>
+
+          {/* Strip de métricas inline — anotação editorial, não dashboard. */}
+          {houveAtividade && (
+            <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-muted-foreground md:text-sm">
+              {totalConquistas > 0 && (
+                <span className="inline-flex items-center gap-1.5">
+                  <span
+                    aria-hidden
+                    className="inline-flex size-4 items-center justify-center rounded-full bg-cat-social-bg text-[10px] font-bold text-cat-social"
+                  >
+                    ✓
+                  </span>
+                  <strong className="font-semibold text-foreground">
+                    {totalConquistas}
+                  </strong>
+                  conquista{totalConquistas === 1 ? "" : "s"}
+                </span>
+              )}
+              {totalDesafios > 0 && (
+                <span className="inline-flex items-center gap-1.5">
+                  <span
+                    aria-hidden
+                    className="inline-flex size-4 items-center justify-center rounded-full bg-cat-sensorial-bg text-[10px] font-bold text-cat-sensorial"
+                  >
+                    !
+                  </span>
+                  <strong className="font-semibold text-foreground">
+                    {totalDesafios}
+                  </strong>
+                  desafio{totalDesafios === 1 ? "" : "s"}
+                </span>
+              )}
+              {totalCheckins > 0 && (
+                <span className="inline-flex items-center gap-1.5">
+                  <span
+                    aria-hidden
+                    className="inline-flex size-4 items-center justify-center rounded-full bg-cat-social-bg text-[10px] font-bold text-cat-social"
+                  >
+                    ✓
+                  </span>
+                  <strong className="font-semibold text-foreground">
+                    {totalCheckins}
+                  </strong>
+                  check-in{totalCheckins === 1 ? "" : "s"}
+                </span>
+              )}
+              <span>
+                em{" "}
+                <strong className="font-semibold text-foreground">
+                  {diasComRegistro}
+                </strong>{" "}
+                dia{diasComRegistro === 1 ? "" : "s"} dos últimos 7
+              </span>
+            </div>
+          )}
+
+          <div className="mt-5 flex flex-wrap gap-3 md:mt-6">
             <Link
-              href="/estrategias"
+              href={focoContent.ctaHref}
               className={cn(
                 buttonVariants({ variant: "cta", size: "lg" }),
                 "shadow-sm",
               )}
             >
-              Pedir uma estratégia
+              {focoContent.ctaLabel}
               <ArrowRight className="size-4" aria-hidden />
             </Link>
-            <Link
-              href="/registrar/diario"
-              className={cn(
-                buttonVariants({ variant: "outline", size: "lg" }),
-              )}
-            >
-              Registrar dia
-            </Link>
+            {mostrarSecundario && (
+              <Link
+                href="/registrar/diario"
+                className={cn(
+                  buttonVariants({ variant: "outline", size: "lg" }),
+                )}
+              >
+                Registrar dia
+              </Link>
+            )}
           </div>
         </div>
       </section>
@@ -336,23 +451,6 @@ export default async function PainelPage() {
           )}
         </Card>
       )}
-
-      {/* ============================================================
-       * FOCO DA SEMANA + ESSA SEMANA (grid 2 colunas)
-       * ============================================================ */}
-      <section className="grid gap-4 md:grid-cols-[1.4fr_1fr]">
-        <FocoSemana
-          temConquistas={totalConquistas > 0}
-          temDesafios={totalDesafios > 0}
-          nomeCrianca={primeiraCrianca?.nome}
-        />
-        <EssaSemana
-          conquistas={totalConquistas}
-          desafios={totalDesafios}
-          checkins={totalCheckins}
-          diasComRegistro={diasComRegistro}
-        />
-      </section>
 
       {/* ============================================================
        * PEQUENAS CONQUISTAS (grid 3 cards temáticos)
@@ -465,264 +563,6 @@ export default async function PainelPage() {
         </Link>
       </section>
     </div>
-  );
-}
-
-// ============================================================
-// Foco da semana — card branco, conteúdo adaptativo
-// ============================================================
-
-function FocoSemana({
-  temConquistas,
-  temDesafios,
-  nomeCrianca,
-}: {
-  temConquistas: boolean;
-  temDesafios: boolean;
-  nomeCrianca?: string;
-}) {
-  const nome = nomeCrianca ?? "vocês";
-
-  const conteudo =
-    !temConquistas && !temDesafios
-      ? {
-          titulo: (
-            <>
-              Comece pelo{" "}
-              <em className="not-italic text-brand-purple">registro do dia</em>
-            </>
-          ),
-          texto: (
-            <>
-              Um minuto de registro hoje vira <strong>padrão observável</strong>{" "}
-              em 2 semanas. Não precisa ser longo — uma frase já conta.
-            </>
-          ),
-          chips: [
-            { label: "Sem cobrança", cor: "neutro" as const },
-            { label: "1 minuto", cor: "neutro" as const },
-          ],
-          cta: { label: "Registrar agora", href: "/registrar/diario" },
-        }
-      : temConquistas && !temDesafios
-        ? {
-            titulo: (
-              <>
-                Aproveitar a{" "}
-                <em className="not-italic text-brand-purple">janela boa</em>{" "}
-                sem fechar a porta
-              </>
-            ),
-            texto: (
-              <>
-                {nome} mostrou algo novo. Vale{" "}
-                <strong>manter o contexto que ajudou</strong> e seguir devagar
-                — sem pressão pra "render" mais.
-              </>
-            ),
-            chips: [
-              { label: "Conquista", cor: "amarela" as const },
-              { label: "Sem pressão", cor: "neutro" as const },
-            ],
-            cta: { label: "Ver estratégias", href: "/estrategias?tab=biblioteca" },
-          }
-        : temDesafios && !temConquistas
-          ? {
-              titulo: (
-                <>
-                  Identificar gatilho{" "}
-                  <em className="not-italic text-brand-purple">não é culpa</em>
-                </>
-              ),
-              texto: (
-                <>
-                  Foi uma semana com peso. Identificar o que disparou é{" "}
-                  <strong>leitura, não falha</strong>. Vamos pensar na próxima
-                  vez sem revisar a passada.
-                </>
-              ),
-              chips: [
-                { label: "Sem culpa", cor: "neutro" as const },
-                { label: "Olhar pra frente", cor: "amarela" as const },
-              ],
-              cta: { label: "Conversar", href: "/estrategias" },
-            }
-          : {
-              titulo: (
-                <>
-                  Continuidade <em className="not-italic text-brand-purple">é o que conta</em>
-                </>
-              ),
-              texto: (
-                <>
-                  Conquistas e desafios convivem — é assim que o desenvolvimento
-                  acontece. Continuar registrando <strong>conta a história</strong>{" "}
-                  no longo prazo.
-                </>
-              ),
-              chips: [
-                { label: "Mistura natural", cor: "neutro" as const },
-                { label: "Longo prazo", cor: "neutro" as const },
-              ],
-              cta: { label: "Ver estratégias", href: "/estrategias" },
-            };
-
-  return (
-    <Card className="relative rounded-3xl bg-white before:absolute before:left-0 before:right-0 before:top-0 before:h-1 before:bg-gradient-to-r before:from-brand-yellow before:to-transparent">
-      <CardHeader>
-        <div className="mb-2 inline-flex items-center gap-2.5">
-          <span
-            aria-hidden
-            className="inline-flex size-6 items-center justify-center rounded-md bg-brand-yellow text-brand-purple-dark"
-          >
-            <Sparkles className="size-3.5 stroke-[2.4]" />
-          </span>
-          <span className="text-xs font-bold uppercase tracking-[0.18em] text-muted-foreground">
-            Foco da semana
-          </span>
-        </div>
-        <CardTitle className="font-heading text-xl leading-snug md:text-2xl">
-          {conteudo.titulo}
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="flex flex-col gap-5">
-        <p className="text-sm text-muted-foreground md:text-base">
-          {conteudo.texto}
-        </p>
-        <div className="flex flex-wrap gap-2">
-          {conteudo.chips.map((c) => (
-            <span
-              key={c.label}
-              className={cn(
-                "inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold",
-                c.cor === "amarela"
-                  ? "bg-brand-yellow/15 text-brand-purple-dark"
-                  : "bg-kolo-lilas-bg-2 text-muted-foreground",
-              )}
-            >
-              <span
-                className={cn(
-                  "size-1.5 rounded-full",
-                  c.cor === "amarela" ? "bg-brand-yellow" : "bg-muted-foreground",
-                )}
-              />
-              {c.label}
-            </span>
-          ))}
-        </div>
-        <Link
-          href={conteudo.cta.href}
-          className={cn(
-            buttonVariants({ size: "sm" }),
-            "w-fit gap-2",
-          )}
-        >
-          {conteudo.cta.label}
-          <ArrowRight className="size-3.5" aria-hidden />
-        </Link>
-      </CardContent>
-    </Card>
-  );
-}
-
-// ============================================================
-// Essa semana — card branco, lista de marcas
-// ============================================================
-
-function EssaSemana({
-  conquistas,
-  desafios,
-  checkins,
-  diasComRegistro,
-}: {
-  conquistas: number;
-  desafios: number;
-  checkins: number;
-  diasComRegistro: number;
-}) {
-  const items: Array<{ tipo: "ok" | "alerta" | "neutro"; texto: React.ReactNode }> =
-    [];
-
-  if (conquistas > 0) {
-    items.push({
-      tipo: "ok",
-      texto: (
-        <>
-          <strong>{conquistas}</strong>{" "}
-          conquista{conquistas === 1 ? "" : "s"} registrada{conquistas === 1 ? "" : "s"}
-        </>
-      ),
-    });
-  }
-  if (desafios > 0) {
-    items.push({
-      tipo: "alerta",
-      texto: (
-        <>
-          <strong>{desafios}</strong> desafio
-          {desafios === 1 ? "" : "s"} anotado{desafios === 1 ? "" : "s"}
-        </>
-      ),
-    });
-  }
-  if (checkins > 0) {
-    items.push({
-      tipo: "ok",
-      texto: (
-        <>
-          <strong>{checkins}</strong> check-in{checkins === 1 ? "" : "s"} emocional
-          {checkins === 1 ? "" : "is"}
-        </>
-      ),
-    });
-  }
-  items.push({
-    tipo: "neutro",
-    texto: (
-      <>
-        <strong>{diasComRegistro}</strong> dia{diasComRegistro === 1 ? "" : "s"} com
-        registro nos últimos 7
-      </>
-    ),
-  });
-
-  return (
-    <Card className="rounded-3xl bg-white">
-      <CardHeader>
-        <div className="flex items-center gap-3">
-          <span
-            aria-hidden
-            className="inline-flex size-8 items-center justify-center rounded-lg bg-brand-yellow/15 text-brand-yellow-dark"
-          >
-            <Star className="size-4 stroke-[1.8]" />
-          </span>
-          <CardTitle className="text-base">Essa semana</CardTitle>
-        </div>
-      </CardHeader>
-      <CardContent>
-        <ul className="flex flex-col gap-3">
-          {items.map((item, i) => (
-            <li key={i} className="flex items-start gap-3 text-sm leading-snug">
-              <span
-                aria-hidden
-                className={cn(
-                  "mt-0.5 inline-flex size-5 shrink-0 items-center justify-center rounded-full text-xs font-bold",
-                  item.tipo === "ok" &&
-                    "bg-cat-social-bg text-cat-social",
-                  item.tipo === "alerta" &&
-                    "bg-cat-sensorial-bg text-cat-sensorial",
-                  item.tipo === "neutro" &&
-                    "bg-kolo-lilas-bg-2 text-muted-foreground",
-                )}
-              >
-                {item.tipo === "ok" ? "✓" : item.tipo === "alerta" ? "!" : "·"}
-              </span>
-              <span className="text-foreground">{item.texto}</span>
-            </li>
-          ))}
-        </ul>
-      </CardContent>
-    </Card>
   );
 }
 
