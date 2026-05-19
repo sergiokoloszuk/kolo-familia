@@ -104,8 +104,8 @@ export default async function ConfiguracoesPage() {
                 Comunicações por categoria
               </CardTitle>
               <CardDescription>
-                Operacionais (manutenção, mudanças importantes) sempre são
-                entregues — não dá pra optar fora destas (PRD §7.13).
+                Manutenção e mudanças importantes sempre chegam — são as
+                únicas que você não consegue silenciar.
               </CardDescription>
             </div>
           </div>
