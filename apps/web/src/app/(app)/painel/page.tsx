@@ -1,30 +1,34 @@
 import Link from "next/link";
-import { differenceInCalendarDays, formatRelative } from "date-fns";
+import { differenceInCalendarDays, format, formatRelative } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { ArrowRight, FileText, MessageCircle, Sparkles } from "lucide-react";
+import { ArrowRight, Sparkles, Star } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { Eyebrow } from "@/components/brand/eyebrow";
-import { IconCard } from "@/components/brand/icon-card";
 import { loadFamilyContext } from "@/lib/auth/require-user";
 import { cn } from "@/lib/utils";
 import { NpsBanner } from "./nps-banner";
 
 export default async function PainelPage() {
   const { user, supabase, family } = await loadFamilyContext();
-  // Layout (app) garante family + onboarding completos.
   const familyId = family!.id;
+  const hoje = new Date();
+  const seteDiasAtras = new Date(
+    hoje.getTime() - 7 * 24 * 60 * 60 * 1000,
+  )
+    .toISOString()
+    .slice(0, 10);
 
   const [
     { data: profile },
     { data: subscription },
     { data: membros },
-    { data: ultimasConquistas },
-    { data: ultimosDesafios },
-    { data: ultimosCheckins },
+    { data: conquistas },
+    { data: desafios },
+    { data: checkins7d },
     { count: sugestoesCount },
-    { data: ultimaMensagemAyla },
+    { data: ultimaMensagemWhatsApp },
   ] = await Promise.all([
     supabase
       .from("family_profiles")
@@ -43,24 +47,26 @@ export default async function PainelPage() {
       .eq("ativo", true),
     supabase
       .from("diarios")
-      .select("id, data, conquista, membro_atipico_id, membros_atipicos(nome)")
+      .select(
+        "id, data, conquista, observacao_livre, membro_atipico_id, membros_atipicos(nome)",
+      )
       .eq("family_account_id", familyId)
       .not("conquista", "is", null)
+      .gte("data", seteDiasAtras)
       .order("data", { ascending: false })
       .limit(3),
     supabase
       .from("diarios")
-      .select("id, data, desafio, membro_atipico_id, membros_atipicos(nome)")
+      .select("id, data, desafio")
       .eq("family_account_id", familyId)
       .not("desafio", "is", null)
-      .order("data", { ascending: false })
-      .limit(3),
+      .gte("data", seteDiasAtras),
     supabase
       .from("check_ins_diarios")
       .select("id, data, escala_emocional_mae")
       .eq("family_account_id", familyId)
-      .order("data", { ascending: false })
-      .limit(3),
+      .gte("data", seteDiasAtras)
+      .order("data", { ascending: false }),
     supabase
       .from("sugestao_perfil_vivos")
       .select("id", { count: "exact", head: true })
@@ -77,13 +83,22 @@ export default async function PainelPage() {
       .maybeSingle(),
   ]);
 
-  const greeting = profile?.como_chamar?.trim() || profile?.nome_mae?.trim() || user.email;
+  const greeting =
+    profile?.como_chamar?.trim() ||
+    profile?.nome_mae?.trim() ||
+    user.email?.split("@")[0] ||
+    "Você";
+  const primeiraCrianca = membros?.[0];
+
   const trialDaysLeft =
     subscription?.status === "trialing" && subscription.trial_ends_at
-      ? Math.max(0, differenceInCalendarDays(new Date(subscription.trial_ends_at), new Date()))
+      ? Math.max(
+          0,
+          differenceInCalendarDays(new Date(subscription.trial_ends_at), hoje),
+        )
       : null;
 
-  // NPS elegibilidade: conta criada há ≥7 dias E sem feedback nos últimos 60 dias.
+  // NPS elegibilidade
   const [
     { data: familyMeta },
     { data: ultimoFeedback },
@@ -134,63 +149,154 @@ export default async function PainelPage() {
   const npsContexto: "d7" | "d30" | "manual" =
     idadeDias < 30 ? "d7" : "d30";
 
-  const acompanhamentoText =
-    membros && membros.length > 0
-      ? membros.length === 1
-        ? `Acompanhando ${membros[0].nome}.`
-        : `Acompanhando ${membros.length} pessoas atípicas.`
-      : "Painel inicial.";
+  // ============================================================
+  // Lógica do hero contextual
+  // ============================================================
+  const totalConquistas = conquistas?.length ?? 0;
+  const totalDesafios = desafios?.length ?? 0;
+  const totalCheckins = checkins7d?.length ?? 0;
+  const diasComRegistro = new Set([
+    ...(conquistas ?? []).map((d) => d.data),
+    ...(desafios ?? []).map((d) => d.data),
+    ...(checkins7d ?? []).map((c) => c.data),
+  ]).size;
+  const houveAtividade = totalConquistas + totalDesafios + totalCheckins > 0;
+
+  const statusSemana = !houveAtividade
+    ? "começou agora"
+    : totalConquistas >= 2 && totalConquistas > totalDesafios
+      ? "foi boa"
+      : totalDesafios >= 2 && totalDesafios > totalConquistas
+        ? "teve desafios"
+        : "teve de tudo";
+
+  const heroTexto = !houveAtividade
+    ? `Comece registrando como ${primeiraCrianca ? "vocês estão" : "tá sendo"} a semana — ajuda a perceber padrões depois.`
+    : totalConquistas >= 2 && totalConquistas > totalDesafios
+      ? `Várias conquistas registradas. Vale celebrar discreto e tentar manter os contextos que ajudaram.`
+      : totalDesafios >= 2 && totalDesafios > totalConquistas
+        ? `Foi uma semana com peso. Lembra: identificar gatilho não é culpa, é leitura.`
+        : `Registros chegaram. Devagar e firme — é assim que se enxerga o padrão da fase.`;
 
   return (
     <div className="flex flex-col gap-8">
-      {/* HERO acolhedor — protótipo §Painel. */}
-      <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-brand-purple-deep via-brand-purple-dark to-brand-purple px-6 py-10 text-white md:px-10 md:py-12">
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-0 opacity-40"
-          style={{
-            backgroundImage:
-              "radial-gradient(circle, rgba(255,186,0,0.14) 1.2px, transparent 1.2px)",
-            backgroundSize: "28px 28px",
-          }}
-        />
+      {/* ============================================================
+       * GREETING — data atual + saudação
+       * ============================================================ */}
+      <header>
+        <p className="text-xs font-bold uppercase tracking-[0.18em] text-muted-foreground">
+          {format(hoje, "EEEE · d 'de' MMMM", { locale: ptBR })}
+        </p>
+        <h1 className="mt-2 font-heading text-3xl text-foreground md:text-4xl">
+          Oi, {greeting}.{" "}
+          <em className="not-italic text-brand-purple">
+            Essa semana {statusSemana}
+          </em>
+          .
+        </h1>
+      </header>
+
+      {/* ============================================================
+       * HERO CONTEXTUAL — janela da semana (lilás com toques amarelos)
+       * ============================================================ */}
+      <section
+        className="relative overflow-hidden rounded-3xl px-6 py-8 md:px-10 md:py-10"
+        style={{
+          background:
+            "radial-gradient(circle at 90% 10%, rgba(255,186,0,0.18) 0%, transparent 50%), radial-gradient(circle at 10% 80%, rgba(107,31,168,0.06) 0%, transparent 50%), linear-gradient(135deg, var(--kolo-lilas-bg) 0%, var(--kolo-creme) 100%)",
+        }}
+      >
         <div className="relative max-w-2xl">
-          <Eyebrow tone="dark">Olá, {greeting}</Eyebrow>
-          <h1 className="mt-3 font-heading text-3xl text-white md:text-4xl">
-            Como você está{" "}
-            <em className="not-italic text-brand-yellow">hoje</em>?
-          </h1>
-          <p className="mt-3 text-white/80">{acompanhamentoText}</p>
+          <span className="inline-flex items-center gap-2 rounded-full bg-white px-3.5 py-1.5 text-xs font-semibold text-muted-foreground shadow-sm">
+            <span
+              aria-hidden
+              className="relative flex size-2 items-center justify-center"
+            >
+              <span className="absolute inset-0 animate-ping rounded-full bg-brand-yellow opacity-50" />
+              <span className="relative size-2 rounded-full bg-brand-yellow" />
+            </span>
+            Vimos sua semana
+          </span>
+          <h2 className="mt-4 font-heading text-2xl text-foreground md:text-3xl">
+            {!houveAtividade ? (
+              <>
+                Painel ainda vazio —{" "}
+                <em className="not-italic text-brand-purple">vai encher</em>{" "}
+                com pouca coisa registrada
+              </>
+            ) : totalConquistas > totalDesafios ? (
+              <>
+                {primeiraCrianca?.nome ?? "Vocês"} teve{" "}
+                <span
+                  className="inline-block px-1"
+                  style={{
+                    background:
+                      "linear-gradient(180deg, transparent 60%, rgba(255,186,0,0.42) 60%)",
+                  }}
+                >
+                  {totalConquistas} conquista{totalConquistas === 1 ? "" : "s"}
+                </span>{" "}
+                nos últimos 7 dias
+              </>
+            ) : (
+              <>
+                Foram{" "}
+                <span
+                  className="inline-block px-1"
+                  style={{
+                    background:
+                      "linear-gradient(180deg, transparent 60%, rgba(255,186,0,0.42) 60%)",
+                  }}
+                >
+                  {diasComRegistro} dia{diasComRegistro === 1 ? "" : "s"}
+                </span>{" "}
+                com registros — e isso já conta
+              </>
+            )}
+            <span aria-hidden className="text-brand-yellow">
+              .
+            </span>
+          </h2>
+          <p className="mt-3 max-w-xl text-muted-foreground">{heroTexto}</p>
           <div className="mt-6 flex flex-wrap gap-3">
             <Link
-              href="/registrar/diario"
-              className={cn(buttonVariants({ variant: "cta", size: "lg" }))}
+              href="/estrategias"
+              className={cn(
+                buttonVariants({ variant: "cta", size: "lg" }),
+                "shadow-sm",
+              )}
             >
-              Registrar dia
+              Pedir uma estratégia
               <ArrowRight className="size-4" aria-hidden />
             </Link>
             <Link
-              href="/conversar"
+              href="/registrar/diario"
               className={cn(
-                buttonVariants({ variant: "outline-light", size: "lg" }),
+                buttonVariants({ variant: "outline", size: "lg" }),
               )}
             >
-              Conversar
+              Registrar dia
             </Link>
           </div>
         </div>
       </section>
 
-      <SubscriptionBanner status={subscription?.status} trialDaysLeft={trialDaysLeft} />
+      {/* Banners funcionais — mantidos da versão anterior */}
+      <SubscriptionBanner
+        status={subscription?.status}
+        trialDaysLeft={trialDaysLeft}
+      />
 
       {npsElegivel && <NpsBanner contexto={npsContexto} />}
 
       {((alertasOpen?.length ?? 0) > 0 ||
         (adaptacoesPendentesCount ?? 0) > 0) && (
-        <Card className="border-brand-yellow/40 bg-brand-yellow/5">
+        <Card className="rounded-3xl border-brand-yellow/40 bg-brand-yellow/5">
           <CardHeader className="flex flex-row items-start justify-between gap-2">
             <div>
-              <CardTitle className="text-base">Precisa da sua atenção</CardTitle>
+              <CardTitle className="text-base">
+                Precisa da sua atenção
+              </CardTitle>
               <CardDescription>
                 {(alertasOpen?.length ?? 0) > 0 &&
                   `${alertasOpen!.length} alerta(s)`}
@@ -203,9 +309,7 @@ export default async function PainelPage() {
             </div>
             <Link
               href="/configuracoes/regras"
-              className={cn(
-                buttonVariants({ variant: "outline", size: "sm" }),
-              )}
+              className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
             >
               Abrir
             </Link>
@@ -235,187 +339,488 @@ export default async function PainelPage() {
         </Card>
       )}
 
-      {/* AÇÕES RÁPIDAS — protótipo §"O que fazer agora". */}
-      <section>
-        <div className="mb-4 flex items-end justify-between gap-4">
-          <div>
-            <Eyebrow>O que fazer agora</Eyebrow>
-            <h2 className="mt-1 font-heading text-2xl text-foreground">
-              Atalhos pros{" "}
-              <em className="not-italic text-brand-purple">momentos comuns</em>{" "}
-              do dia
-            </h2>
-          </div>
-        </div>
-        <div className="grid gap-4 md:grid-cols-3">
-          <AcaoCard
-            href="/registrar/diario"
-            icon={FileText}
-            titulo="Registrar dia"
-            descricao="Como foi hoje. Leva 2 minutos."
-          />
-          <AcaoCard
-            href="/conversar"
-            icon={MessageCircle}
-            titulo="Perguntar pra Kolo"
-            descricao="Estratégia ou orientação rápida."
-          />
-          <AcaoCard
-            href="/kolo-vivo"
-            icon={Sparkles}
-            titulo="Atualizar perfil"
-            descricao="Mais contexto = melhores estratégias."
-          />
-        </div>
+      {/* ============================================================
+       * FOCO DA SEMANA + ESSA SEMANA (grid 2 colunas)
+       * ============================================================ */}
+      <section className="grid gap-4 md:grid-cols-[1.4fr_1fr]">
+        <FocoSemana
+          temConquistas={totalConquistas > 0}
+          temDesafios={totalDesafios > 0}
+          nomeCrianca={primeiraCrianca?.nome}
+        />
+        <EssaSemana
+          conquistas={totalConquistas}
+          desafios={totalDesafios}
+          checkins={totalCheckins}
+          diasComRegistro={diasComRegistro}
+        />
       </section>
 
-      {/* STATUS — conquistas/desafios/check-ins. */}
-      <section>
-        <div className="mb-4">
-          <Eyebrow>A semana de vocês</Eyebrow>
-          <h2 className="mt-1 font-heading text-2xl text-foreground">
-            O que aconteceu por{" "}
-            <em className="not-italic text-brand-purple">aí</em>
-          </h2>
-        </div>
-        <div className="grid gap-4 md:grid-cols-3">
-          <Card className="rounded-3xl bg-kolo-lilas-bg-2">
-            <CardHeader>
-              <CardTitle className="text-base">Últimas conquistas</CardTitle>
-            </CardHeader>
-            <CardContent className="text-sm">
-              <DiarioList
-                rows={ultimasConquistas as DiarioRow[] | null}
-                field="conquista"
-                empty="Nenhuma conquista registrada ainda."
-              />
-            </CardContent>
-          </Card>
+      {/* ============================================================
+       * PEQUENAS CONQUISTAS (grid 3 cards temáticos)
+       * ============================================================ */}
+      <ConquistasGrid conquistas={conquistas ?? []} />
 
-          <Card className="rounded-3xl bg-kolo-lilas-bg-2">
-            <CardHeader>
-              <CardTitle className="text-base">Últimos desafios</CardTitle>
-            </CardHeader>
-            <CardContent className="text-sm">
-              <DiarioList
-                rows={ultimosDesafios as DiarioRow[] | null}
-                field="desafio"
-                empty="Nenhum desafio registrado ainda."
-              />
-            </CardContent>
-          </Card>
-
-          <Card className="rounded-3xl bg-kolo-lilas-bg-2">
-            <CardHeader className="flex flex-row items-start justify-between gap-2">
-              <div>
-                <CardTitle className="text-base">Como você está</CardTitle>
-                <CardDescription>Últimos 3 dias</CardDescription>
-              </div>
-              <Link
-                href="/registrar/diario"
-                className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
-              >
-                Registrar
-              </Link>
-            </CardHeader>
-            <CardContent className="text-sm">
-              {ultimosCheckins && ultimosCheckins.length > 0 ? (
-                <ul className="flex flex-col gap-1">
-                  {ultimosCheckins.map((c) => (
-                    <li key={c.id} className="flex items-center justify-between">
-                      <span className="text-muted-foreground">
-                        {formatRelative(new Date(c.data), new Date(), { locale: ptBR })}
-                      </span>
-                      <span>{labelEmocional(c.escala_emocional_mae)}</span>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p className="text-muted-foreground">
-                  Sem check-ins ainda. Você pode registrar agora ou esperar a Ayla.
-                </p>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-      </section>
-
-      {/* SUGESTÕES + AYLA. */}
+      {/* ============================================================
+       * SUGESTÕES + MENSAGEM WHATSAPP (grid)
+       * ============================================================ */}
       <section className="grid gap-4 md:grid-cols-2">
-        <Card className="rounded-3xl bg-white">
-          <CardHeader className="flex flex-row items-start justify-between gap-3">
-            <div>
-              <CardTitle className="text-base">Sugestões pendentes</CardTitle>
-              <CardDescription>
-                {sugestoesCount && sugestoesCount > 0
-                  ? `${sugestoesCount} para revisar no Kolo Vivo.`
-                  : "Nada esperando você."}
-              </CardDescription>
-            </div>
-            {sugestoesCount && sugestoesCount > 0 ? (
+        {(sugestoesCount ?? 0) > 0 ? (
+          <Card className="rounded-3xl bg-white">
+            <CardHeader className="flex flex-row items-start justify-between gap-3">
+              <div>
+                <CardTitle className="text-base">
+                  Sugestões pra revisar
+                </CardTitle>
+                <CardDescription>
+                  {sugestoesCount} item{sugestoesCount === 1 ? "" : "s"} esperando
+                  você no Kolo Vivo.
+                </CardDescription>
+              </div>
               <Badge variant="secondary">{sugestoesCount}</Badge>
-            ) : null}
-          </CardHeader>
-          <CardContent>
-            <Link
-              href="/kolo-vivo"
-              className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
-            >
-              Abrir Kolo Vivo
-            </Link>
-          </CardContent>
-        </Card>
+            </CardHeader>
+            <CardContent>
+              <Link
+                href="/kolo-vivo"
+                className={cn(
+                  buttonVariants({ variant: "outline", size: "sm" }),
+                )}
+              >
+                Abrir Kolo Vivo
+              </Link>
+            </CardContent>
+          </Card>
+        ) : (
+          <Card className="rounded-3xl bg-kolo-lilas-bg-2 border-0">
+            <CardHeader>
+              <CardTitle className="text-base">
+                Atualizar o Kolo Vivo
+              </CardTitle>
+              <CardDescription>
+                Mais contexto = melhores estratégias na hora da dúvida.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Link
+                href="/kolo-vivo"
+                className={cn(
+                  buttonVariants({ variant: "outline", size: "sm" }),
+                )}
+              >
+                Abrir Kolo Vivo
+              </Link>
+            </CardContent>
+          </Card>
+        )}
 
-        <Card className="rounded-3xl border-l-4 border-brand-yellow bg-white">
-          <CardHeader>
-            <CardTitle className="text-base">Ayla diz</CardTitle>
-            <CardDescription>
-              {ultimaMensagemAyla
-                ? formatRelative(new Date(ultimaMensagemAyla.created_at), new Date(), { locale: ptBR })
-                : "Mensagem mais recente da Ayla."}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {ultimaMensagemAyla?.texto ? (
-              <p className="line-clamp-4 whitespace-pre-wrap text-sm">{ultimaMensagemAyla.texto}</p>
-            ) : (
-              <p className="text-sm text-muted-foreground">
-                A primeira mensagem da Ayla foi enviada pro seu WhatsApp assim que você concluiu o cadastro.
+        {ultimaMensagemWhatsApp?.texto && (
+          <Card className="rounded-3xl border-l-4 border-brand-yellow bg-white">
+            <CardHeader>
+              <div className="flex flex-wrap items-center gap-2">
+                <CardTitle className="text-base">
+                  Sua última mensagem no WhatsApp
+                </CardTitle>
+                <Badge variant="outline" className="text-[10px]">
+                  WhatsApp
+                </Badge>
+              </div>
+              <CardDescription>
+                {formatRelative(
+                  new Date(ultimaMensagemWhatsApp.created_at),
+                  hoje,
+                  { locale: ptBR },
+                )}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="line-clamp-4 whitespace-pre-wrap text-sm italic text-foreground/85">
+                “{ultimaMensagemWhatsApp.texto}”
               </p>
-            )}
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        )}
+      </section>
+
+      {/* ============================================================
+       * CHECK-IN LEVE — convite suave
+       * ============================================================ */}
+      <section
+        className="flex flex-col items-start justify-between gap-4 rounded-3xl px-6 py-5 md:flex-row md:items-center md:px-8 md:py-6"
+        style={{
+          background:
+            "linear-gradient(135deg, var(--cat-sensorial-soft) 0%, #FFF9E6 100%)",
+        }}
+      >
+        <p className="text-sm text-foreground md:text-base">
+          E você,{" "}
+          <strong className="font-bold text-brand-purple-dark">
+            como tá hoje
+          </strong>
+          ? Um toque rápido — fica só entre vocês.
+        </p>
+        <Link
+          href="/registrar/diario"
+          className={cn(buttonVariants({ variant: "cta", size: "lg" }))}
+        >
+          Contar
+          <ArrowRight className="size-4" aria-hidden />
+        </Link>
       </section>
     </div>
   );
 }
 
-function AcaoCard({
-  href,
-  icon: Icon,
-  titulo,
-  descricao,
+// ============================================================
+// Foco da semana — card branco, conteúdo adaptativo
+// ============================================================
+
+function FocoSemana({
+  temConquistas,
+  temDesafios,
+  nomeCrianca,
 }: {
-  href: string;
-  icon: typeof FileText;
-  titulo: string;
-  descricao: string;
+  temConquistas: boolean;
+  temDesafios: boolean;
+  nomeCrianca?: string;
 }) {
+  const nome = nomeCrianca ?? "vocês";
+
+  const conteudo =
+    !temConquistas && !temDesafios
+      ? {
+          titulo: (
+            <>
+              Comece pelo{" "}
+              <em className="not-italic text-brand-purple">registro do dia</em>
+            </>
+          ),
+          texto: (
+            <>
+              Um minuto de registro hoje vira <strong>padrão observável</strong>{" "}
+              em 2 semanas. Não precisa ser longo — uma frase já conta.
+            </>
+          ),
+          chips: [
+            { label: "Sem cobrança", cor: "neutro" as const },
+            { label: "1 minuto", cor: "neutro" as const },
+          ],
+          cta: { label: "Registrar agora", href: "/registrar/diario" },
+        }
+      : temConquistas && !temDesafios
+        ? {
+            titulo: (
+              <>
+                Aproveitar a{" "}
+                <em className="not-italic text-brand-purple">janela boa</em>{" "}
+                sem fechar a porta
+              </>
+            ),
+            texto: (
+              <>
+                {nome} mostrou algo novo. Vale{" "}
+                <strong>manter o contexto que ajudou</strong> e seguir devagar
+                — sem pressão pra "render" mais.
+              </>
+            ),
+            chips: [
+              { label: "Conquista", cor: "amarela" as const },
+              { label: "Sem pressão", cor: "neutro" as const },
+            ],
+            cta: { label: "Ver estratégias", href: "/estrategias?tab=biblioteca" },
+          }
+        : temDesafios && !temConquistas
+          ? {
+              titulo: (
+                <>
+                  Identificar gatilho{" "}
+                  <em className="not-italic text-brand-purple">não é culpa</em>
+                </>
+              ),
+              texto: (
+                <>
+                  Foi uma semana com peso. Identificar o que disparou é{" "}
+                  <strong>leitura, não falha</strong>. Vamos pensar na próxima
+                  vez sem revisar a passada.
+                </>
+              ),
+              chips: [
+                { label: "Sem culpa", cor: "neutro" as const },
+                { label: "Olhar pra frente", cor: "amarela" as const },
+              ],
+              cta: { label: "Conversar", href: "/estrategias" },
+            }
+          : {
+              titulo: (
+                <>
+                  Continuidade <em className="not-italic text-brand-purple">é o que conta</em>
+                </>
+              ),
+              texto: (
+                <>
+                  Conquistas e desafios convivem — é assim que o desenvolvimento
+                  acontece. Continuar registrando <strong>conta a história</strong>{" "}
+                  no longo prazo.
+                </>
+              ),
+              chips: [
+                { label: "Mistura natural", cor: "neutro" as const },
+                { label: "Longo prazo", cor: "neutro" as const },
+              ],
+              cta: { label: "Ver estratégias", href: "/estrategias" },
+            };
+
   return (
-    <Link
-      href={href}
-      className="group flex flex-col gap-3 rounded-3xl border border-kolo-linha bg-white p-6 transition-all hover:-translate-y-1 hover:border-brand-purple hover:shadow-lg"
-    >
-      <IconCard tone="light">
-        <Icon aria-hidden />
-      </IconCard>
-      <h3 className="font-heading text-base font-semibold text-foreground">
-        {titulo}
-      </h3>
-      <p className="text-sm text-muted-foreground">{descricao}</p>
-    </Link>
+    <Card className="relative rounded-3xl bg-white before:absolute before:left-0 before:right-0 before:top-0 before:h-1 before:bg-gradient-to-r before:from-brand-yellow before:to-transparent">
+      <CardHeader>
+        <div className="mb-2 inline-flex items-center gap-2.5">
+          <span
+            aria-hidden
+            className="inline-flex size-6 items-center justify-center rounded-md bg-brand-yellow text-brand-purple-dark"
+          >
+            <Sparkles className="size-3.5 stroke-[2.4]" />
+          </span>
+          <span className="text-xs font-bold uppercase tracking-[0.18em] text-muted-foreground">
+            Foco da semana
+          </span>
+        </div>
+        <CardTitle className="font-heading text-xl leading-snug md:text-2xl">
+          {conteudo.titulo}
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="flex flex-col gap-5">
+        <p className="text-sm text-muted-foreground md:text-base">
+          {conteudo.texto}
+        </p>
+        <div className="flex flex-wrap gap-2">
+          {conteudo.chips.map((c) => (
+            <span
+              key={c.label}
+              className={cn(
+                "inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold",
+                c.cor === "amarela"
+                  ? "bg-brand-yellow/15 text-brand-purple-dark"
+                  : "bg-kolo-lilas-bg-2 text-muted-foreground",
+              )}
+            >
+              <span
+                className={cn(
+                  "size-1.5 rounded-full",
+                  c.cor === "amarela" ? "bg-brand-yellow" : "bg-muted-foreground",
+                )}
+              />
+              {c.label}
+            </span>
+          ))}
+        </div>
+        <Link
+          href={conteudo.cta.href}
+          className={cn(
+            buttonVariants({ size: "sm" }),
+            "w-fit gap-2",
+          )}
+        >
+          {conteudo.cta.label}
+          <ArrowRight className="size-3.5" aria-hidden />
+        </Link>
+      </CardContent>
+    </Card>
   );
 }
+
+// ============================================================
+// Essa semana — card branco, lista de marcas
+// ============================================================
+
+function EssaSemana({
+  conquistas,
+  desafios,
+  checkins,
+  diasComRegistro,
+}: {
+  conquistas: number;
+  desafios: number;
+  checkins: number;
+  diasComRegistro: number;
+}) {
+  const items: Array<{ tipo: "ok" | "alerta" | "neutro"; texto: React.ReactNode }> =
+    [];
+
+  if (conquistas > 0) {
+    items.push({
+      tipo: "ok",
+      texto: (
+        <>
+          <strong>{conquistas}</strong>{" "}
+          conquista{conquistas === 1 ? "" : "s"} registrada{conquistas === 1 ? "" : "s"}
+        </>
+      ),
+    });
+  }
+  if (desafios > 0) {
+    items.push({
+      tipo: "alerta",
+      texto: (
+        <>
+          <strong>{desafios}</strong> desafio
+          {desafios === 1 ? "" : "s"} anotado{desafios === 1 ? "" : "s"}
+        </>
+      ),
+    });
+  }
+  if (checkins > 0) {
+    items.push({
+      tipo: "ok",
+      texto: (
+        <>
+          <strong>{checkins}</strong> check-in{checkins === 1 ? "" : "s"} emocional
+          {checkins === 1 ? "" : "is"}
+        </>
+      ),
+    });
+  }
+  items.push({
+    tipo: "neutro",
+    texto: (
+      <>
+        <strong>{diasComRegistro}</strong> dia{diasComRegistro === 1 ? "" : "s"} com
+        registro nos últimos 7
+      </>
+    ),
+  });
+
+  return (
+    <Card className="rounded-3xl bg-white">
+      <CardHeader>
+        <div className="flex items-center gap-3">
+          <span
+            aria-hidden
+            className="inline-flex size-8 items-center justify-center rounded-lg bg-brand-yellow/15 text-brand-yellow-dark"
+          >
+            <Star className="size-4 stroke-[1.8]" />
+          </span>
+          <CardTitle className="text-base">Essa semana</CardTitle>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <ul className="flex flex-col gap-3">
+          {items.map((item, i) => (
+            <li key={i} className="flex items-start gap-3 text-sm leading-snug">
+              <span
+                aria-hidden
+                className={cn(
+                  "mt-0.5 inline-flex size-5 shrink-0 items-center justify-center rounded-full text-xs font-bold",
+                  item.tipo === "ok" &&
+                    "bg-cat-social-bg text-cat-social",
+                  item.tipo === "alerta" &&
+                    "bg-cat-sensorial-bg text-cat-sensorial",
+                  item.tipo === "neutro" &&
+                    "bg-kolo-lilas-bg-2 text-muted-foreground",
+                )}
+              >
+                {item.tipo === "ok" ? "✓" : item.tipo === "alerta" ? "!" : "·"}
+              </span>
+              <span className="text-foreground">{item.texto}</span>
+            </li>
+          ))}
+        </ul>
+      </CardContent>
+    </Card>
+  );
+}
+
+// ============================================================
+// Conquistas grid — 3 cards temáticos
+// ============================================================
+
+type ConquistaDiario = {
+  id: string;
+  data: string;
+  conquista: string | null;
+  observacao_livre: string | null;
+  membros_atipicos: { nome: string } | { nome: string }[] | null;
+};
+
+function ConquistasGrid({ conquistas }: { conquistas: ConquistaDiario[] }) {
+  if (conquistas.length === 0) {
+    return null;
+  }
+
+  // Rotação de paleta temática
+  const paletas = [
+    { bgGradient: "from-cat-alimentacao to-cat-alimentacao", bg: "bg-cat-alimentacao-soft", color: "text-cat-alimentacao", iconBg: "bg-cat-alimentacao-bg" },
+    { bgGradient: "from-cat-comunicacao to-cat-comunicacao", bg: "bg-cat-comunicacao-soft", color: "text-cat-comunicacao", iconBg: "bg-cat-comunicacao-bg" },
+    { bgGradient: "from-cat-motor to-cat-motor", bg: "bg-cat-motor-soft", color: "text-cat-motor", iconBg: "bg-cat-motor-bg" },
+  ];
+
+  return (
+    <section>
+      <div className="mb-4 flex items-center justify-between gap-3">
+        <h2 className="font-heading text-2xl text-foreground">
+          Pequenas <em className="not-italic text-brand-purple">conquistas</em>
+        </h2>
+        <Link
+          href="/evolucao"
+          className="inline-flex items-center gap-1 text-sm font-semibold text-brand-purple hover:gap-2 transition-all"
+        >
+          Linha do tempo
+          <ArrowRight className="size-3" aria-hidden />
+        </Link>
+      </div>
+      <div className="grid gap-4 md:grid-cols-3">
+        {conquistas.slice(0, 3).map((c, i) => {
+          const paleta = paletas[i % paletas.length];
+          const nomeMembro = Array.isArray(c.membros_atipicos)
+            ? c.membros_atipicos[0]?.nome
+            : c.membros_atipicos?.nome;
+          return (
+            <article
+              key={c.id}
+              className={cn(
+                "relative flex flex-col gap-3 overflow-hidden rounded-3xl bg-white p-6 shadow-sm transition-all hover:-translate-y-1 hover:shadow-md",
+              )}
+            >
+              <span
+                aria-hidden
+                className={cn(
+                  "pointer-events-none absolute -right-8 -top-8 size-32 rounded-full opacity-25 blur-2xl",
+                  paleta.bg,
+                )}
+              />
+              <div className="relative">
+                <span
+                  aria-hidden
+                  className={cn(
+                    "inline-flex size-11 items-center justify-center rounded-2xl",
+                    paleta.iconBg,
+                    paleta.color,
+                  )}
+                >
+                  <Sparkles className="size-5 stroke-[1.8]" />
+                </span>
+                <p className="mt-4 text-xs font-bold uppercase tracking-[0.14em] text-muted-foreground">
+                  {format(new Date(c.data), "d 'de' MMM", { locale: ptBR })}
+                  {nomeMembro && ` · ${nomeMembro}`}
+                </p>
+                <h3 className="mt-1 font-heading text-base font-semibold leading-snug text-foreground">
+                  {c.conquista}
+                </h3>
+                {c.observacao_livre && (
+                  <p className="mt-1.5 text-sm text-muted-foreground line-clamp-2">
+                    {c.observacao_livre}
+                  </p>
+                )}
+              </div>
+            </article>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
+// ============================================================
+// SubscriptionBanner — mantém do anterior (lógica funcional)
+// ============================================================
 
 function SubscriptionBanner({
   status,
@@ -451,7 +856,8 @@ function SubscriptionBanner({
   if (status === "paused") {
     return (
       <BannerLayout tone="warning" cta="Reativar">
-        Sua assinatura está pausada. Histórico preservado — reative quando quiser.
+        Sua assinatura está pausada. Histórico preservado — reative quando
+        quiser.
       </BannerLayout>
     );
   }
@@ -505,59 +911,3 @@ function BannerLayout({
   );
 }
 
-type DiarioRow = {
-  id: string;
-  data: string;
-  conquista?: string | null;
-  desafio?: string | null;
-  membros_atipicos: { nome: string } | { nome: string }[] | null;
-};
-
-function DiarioList({
-  rows,
-  field,
-  empty,
-}: {
-  rows: DiarioRow[] | null;
-  field: "conquista" | "desafio";
-  empty: string;
-}) {
-  if (!rows || rows.length === 0) {
-    return <p className="text-muted-foreground">{empty}</p>;
-  }
-  return (
-    <ul className="flex flex-col gap-2">
-      {rows.map((r) => {
-        const nome = Array.isArray(r.membros_atipicos)
-          ? r.membros_atipicos[0]?.nome
-          : r.membros_atipicos?.nome;
-        return (
-          <li key={r.id}>
-            <p className="line-clamp-2">{r[field]}</p>
-            <p className="text-xs text-muted-foreground">
-              {nome ?? "—"} ·{" "}
-              {formatRelative(new Date(r.data), new Date(), { locale: ptBR })}
-            </p>
-          </li>
-        );
-      })}
-    </ul>
-  );
-}
-
-function labelEmocional(escala: string): string {
-  switch (escala) {
-    case "muito_bem":
-      return "Muito bem 🌞";
-    case "bem":
-      return "Bem 🙂";
-    case "neutro":
-      return "Neutro 😐";
-    case "dificil":
-      return "Difícil 🌧";
-    case "muito_dificil":
-      return "Muito difícil 🌧🌧";
-    default:
-      return "—";
-  }
-}
