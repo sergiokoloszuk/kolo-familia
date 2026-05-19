@@ -375,10 +375,7 @@ function PadraoCard({
 function RelevanciaForm({ padraoId }: { padraoId: string }) {
   async function onSubmit(formData: FormData) {
     "use server";
-    const valor = Number(formData.get("relevancia"));
-    if (Number.isFinite(valor)) {
-      await ajustarRelevancia(padraoId, valor);
-    }
+    await ajustarRelevanciaFromForm(padraoId, formData);
   }
   return (
     <form action={onSubmit} className="inline-flex items-center gap-2">
