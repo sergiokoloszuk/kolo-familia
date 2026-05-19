@@ -44,7 +44,7 @@ type NavItem = {
 const NAV_ITEMS: NavItem[] = [
   { href: "/painel", label: "Home", icon: Home },
   { href: "/kolo-vivo", label: "Kolo Vivo", icon: Leaf },
-  { href: "/conversar", label: "Estratégias", icon: Sparkles }, // → /estrategias em NAV-3
+  { href: "/estrategias", label: "Estratégias", icon: Sparkles },
   { href: "/relatorios", label: "Evolução", icon: TrendingUp }, // → /evolucao em NAV-4
   { href: "/historias", label: "Histórias", icon: BookOpen }, // placeholder em NAV-5
 ];
