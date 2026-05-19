@@ -98,7 +98,7 @@ export default async function EstrategiasPage(
           <Sparkles aria-hidden />
         </IconCard>
         <div>
-          <Eyebrow>Estratégias Kolo</Eyebrow>
+          <Eyebrow>Estratégias</Eyebrow>
           <h1 className="mt-1 font-heading text-3xl text-foreground md:text-4xl">
             Conversa e{" "}
             <em className="not-italic text-brand-purple">biblioteca da fase</em>

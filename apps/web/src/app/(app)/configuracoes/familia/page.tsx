@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Users } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -7,6 +8,8 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Eyebrow } from "@/components/brand/eyebrow";
+import { IconCard } from "@/components/brand/icon-card";
 import { loadFamilyContext } from "@/lib/auth/require-user";
 import { PessoaForm } from "./pessoa-form";
 import { TogglePessoa } from "./pessoa-row";
@@ -100,13 +103,22 @@ export default async function FamiliaPage() {
         </Link>
       </div>
 
-      <header>
-        <h1 className="font-heading text-2xl font-semibold tracking-tight">Mapa familiar</h1>
-        <p className="text-sm text-muted-foreground">
-          Quem cuida, quem mora junto, quem aparece no dia a dia. Esses dados
-          ajudam o sistema e as especialistas a entender o contexto sem você
-          precisar contar do zero toda vez.
-        </p>
+      <header className="flex items-start gap-4">
+        <IconCard tone="light" size="lg" className="hidden md:inline-flex">
+          <Users aria-hidden />
+        </IconCard>
+        <div>
+          <Eyebrow>Mapa familiar</Eyebrow>
+          <h1 className="mt-1 font-heading text-3xl text-foreground md:text-4xl">
+            Quem cuida{" "}
+            <em className="not-italic text-brand-purple">com você</em>
+          </h1>
+          <p className="mt-2 max-w-2xl text-muted-foreground">
+            Pai, padrasto, avós, babá, professora, terapeuta — todo mundo que
+            aparece no dia a dia. Cadastra uma vez, o sistema entende o
+            contexto sem você repetir.
+          </p>
+        </div>
       </header>
 
       <Card>

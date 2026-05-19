@@ -184,10 +184,8 @@ export default async function PainelPage() {
        * GREETING — data atual + saudação
        * ============================================================ */}
       <header>
-        <p className="text-xs font-bold uppercase tracking-[0.18em] text-muted-foreground">
-          {format(hoje, "EEEE · d 'de' MMMM", { locale: ptBR })}
-        </p>
-        <h1 className="mt-2 font-heading text-3xl text-foreground md:text-4xl">
+        <Eyebrow>{format(hoje, "EEEE · d 'de' MMMM", { locale: ptBR })}</Eyebrow>
+        <h1 className="mt-1 font-heading text-3xl text-foreground md:text-4xl">
           Oi, {greeting}.{" "}
           <em className="not-italic text-brand-purple">
             Essa semana {statusSemana}

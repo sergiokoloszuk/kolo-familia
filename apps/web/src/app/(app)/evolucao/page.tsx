@@ -243,7 +243,8 @@ export default async function EvolucaoPage(props: PageProps<"/evolucao">) {
           <div>
             <Eyebrow>A jornada longa</Eyebrow>
             <h1 className="mt-1 font-heading text-3xl text-foreground md:text-4xl">
-              Evolução
+              Evolução em{" "}
+              <em className="not-italic text-brand-purple">movimento</em>
             </h1>
             <p className="mt-2 max-w-2xl text-muted-foreground">
               O que mudou, o que apareceu, o que ela está treinando — do mais
