@@ -53,7 +53,7 @@ export function AylaPrefsForm({
 
       {pausadaAte && new Date(pausadaAte) > new Date() && (
         <div className="rounded-md border border-amber-300/60 bg-amber-50 px-3 py-2 text-sm text-amber-900">
-          Ayla pausada até {pausadaAte}. Você pode digitar &quot;PAUSAR 0&quot; no WhatsApp ou desativar abaixo pra voltar antes.
+          Acompanhamento pausado até {pausadaAte}. Você pode digitar &quot;PAUSAR 0&quot; no WhatsApp ou desativar abaixo pra voltar antes.
         </div>
       )}
 
@@ -68,7 +68,7 @@ export function AylaPrefsForm({
         />
         <div className="flex-1">
           <Label htmlFor="desativada" className="font-medium">
-            Receber mensagens da Ayla no WhatsApp
+            Receber mensagens no WhatsApp
           </Label>
           <p className="mt-1 text-xs text-muted-foreground">
             Máximo 2 mensagens proativas por dia, no horário que você escolher.

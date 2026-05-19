@@ -124,7 +124,7 @@ export default async function AssinaturaPage(props: PageProps<"/assinatura">) {
           <ul className="flex flex-col gap-2">
             {[
               "App completo (painel, Kolo Vivo, conversar, apoio, aprender).",
-              "Ayla no WhatsApp (entra na próxima fase).",
+              "Acompanhamento no WhatsApp (próxima fase).",
               "n especialistas que respondem por contexto, sem você escolher.",
               "Histórico nunca é apagado, mesmo se cancelar.",
             ].map((b) => (

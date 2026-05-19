@@ -48,8 +48,8 @@ export default async function ConfiguracoesPage() {
             <em className="not-italic text-brand-purple">comunicações</em>
           </h1>
           <p className="mt-2 max-w-2xl text-muted-foreground">
-            Mensagens da Ayla, categorias que você recebe e tudo que afeta seu
-            dia a dia.
+            Mensagens no WhatsApp, categorias que você recebe e tudo que afeta
+            seu dia a dia.
           </p>
         </div>
       </header>
@@ -62,11 +62,13 @@ export default async function ConfiguracoesPage() {
               <MessageCircle aria-hidden />
             </IconCard>
             <div>
-              <CardTitle className="text-base">Ayla no WhatsApp</CardTitle>
+              <CardTitle className="text-base">
+                Acompanhamento no WhatsApp
+              </CardTitle>
               <CardDescription>
                 {prefs?.consentimento_em
-                  ? "Você autorizou a Ayla. Ajuste o horário e a frequência aqui."
-                  : "Você ainda não autorizou a Ayla. Marque na primeira pergunta dela ou volte ao onboarding."}
+                  ? "Você autorizou o acompanhamento. Ajuste o horário e a frequência aqui."
+                  : "Você ainda não autorizou o acompanhamento. Marque na primeira pergunta no WhatsApp ou volte ao onboarding."}
               </CardDescription>
             </div>
           </div>
