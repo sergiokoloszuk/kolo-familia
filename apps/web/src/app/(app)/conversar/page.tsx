@@ -34,7 +34,7 @@ export default async function ConversarPage() {
           <MessageCircle aria-hidden />
         </IconCard>
         <div>
-          <Eyebrow>Conversar com Koló</Eyebrow>
+          <Eyebrow>Conversar com Kolo</Eyebrow>
           <h1 className="mt-1 font-heading text-3xl text-foreground md:text-4xl">
             Pergunta como{" "}
             <em className="not-italic text-brand-purple">aconteceria</em> no dia.

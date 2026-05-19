@@ -257,7 +257,7 @@ export default async function PainelPage() {
           <AcaoCard
             href="/conversar"
             icon={MessageCircle}
-            titulo="Perguntar pra Koló"
+            titulo="Perguntar pra Kolo"
             descricao="Estratégia ou orientação rápida."
           />
           <AcaoCard
