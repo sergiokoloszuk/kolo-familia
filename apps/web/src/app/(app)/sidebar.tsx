@@ -158,27 +158,6 @@ export function Sidebar({
             </Link>
           );
         })}
-
-        {isAdmin && (
-          <Link
-            href="/admin"
-            className={cn(
-              "mt-4 flex items-center gap-3 rounded-xl border border-kolo-linha px-3 py-2.5 text-sm transition-colors",
-              isActive(pathname, "/admin")
-                ? "bg-brand-purple font-semibold text-white"
-                : "font-medium text-muted-foreground hover:bg-kolo-lilas-bg-2 hover:text-foreground",
-            )}
-          >
-            <Shield
-              className={cn(
-                "size-[18px] shrink-0 stroke-[1.8]",
-                isActive(pathname, "/admin") && "text-brand-yellow",
-              )}
-              aria-hidden
-            />
-            Admin
-          </Link>
-        )}
       </nav>
 
       {/* Rodapé — Configurações/Assinatura como ícones discretos + user info. */}
@@ -206,6 +185,20 @@ export function Sidebar({
           >
             <CreditCard className="size-4 stroke-[1.8]" aria-hidden />
           </Link>
+          {isAdmin && (
+            <Link
+              href="/admin"
+              aria-label="Admin"
+              title="Admin"
+              className={cn(
+                "inline-flex size-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-kolo-lilas-bg-2 hover:text-foreground",
+                isActive(pathname, "/admin") &&
+                  "bg-kolo-lilas-bg-2 text-foreground",
+              )}
+            >
+              <Shield className="size-4 stroke-[1.8]" aria-hidden />
+            </Link>
+          )}
           <form action="/auth/logout" method="post" className="ml-auto">
             <button
               type="submit"
