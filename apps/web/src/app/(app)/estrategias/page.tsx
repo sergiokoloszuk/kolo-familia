@@ -14,6 +14,7 @@ import {
   Sparkles,
   type LucideIcon,
 } from "lucide-react";
+import { EstadoVazio } from "@/components/brand/estado-vazio";
 import { Eyebrow } from "@/components/brand/eyebrow";
 import { IconCard } from "@/components/brand/icon-card";
 import { loadFamilyContext } from "@/lib/auth/require-user";
@@ -251,9 +252,11 @@ interface TipoBiblioteca {
 function BibliotecaTab({ tipos }: { tipos: TipoBiblioteca[] }) {
   if (tipos.length === 0) {
     return (
-      <div className="rounded-3xl border border-dashed border-kolo-linha bg-kolo-lilas-bg-2 p-8 text-center text-sm text-muted-foreground">
-        Nenhum tipo de estratégia ativo no momento. Volte mais tarde.
-      </div>
+      <EstadoVazio
+        icon={<Library />}
+        titulo="A biblioteca está em montagem"
+        descricao="Os tipos de estratégia (brincadeiras, frases prontas, histórias sociais, rotinas) aparecem aqui assim que a equipe curar os primeiros. Enquanto isso, use a aba Conversa."
+      />
     );
   }
 

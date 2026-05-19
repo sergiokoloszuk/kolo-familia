@@ -8,6 +8,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { EstadoVazio } from "@/components/brand/estado-vazio";
 import { Eyebrow } from "@/components/brand/eyebrow";
 import { IconCard } from "@/components/brand/icon-card";
 import { loadFamilyContext } from "@/lib/auth/require-user";
@@ -134,19 +135,21 @@ export default async function FamiliaPage() {
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Pessoas cadastradas</CardTitle>
-          <CardDescription>
-            {pessoas?.length ?? 0} cadastrada(s) · {ativos} ativa(s).
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {(pessoas?.length ?? 0) === 0 ? (
-            <p className="text-sm text-muted-foreground">
-              Nenhuma pessoa cadastrada ainda. Comece pelo cuidador principal.
-            </p>
-          ) : (
+      {(pessoas?.length ?? 0) === 0 ? (
+        <EstadoVazio
+          icon={<Users />}
+          titulo="Comece pelo círculo mais próximo"
+          descricao="Geralmente o(a) parceiro(a) ou alguém da família que está no dia a dia. O resto vem depois, sem pressa — adiciona ali em cima."
+        />
+      ) : (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Pessoas cadastradas</CardTitle>
+            <CardDescription>
+              {pessoas?.length ?? 0} cadastrada(s) · {ativos} ativa(s).
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
             <ul className="flex flex-col gap-3">
               {(pessoas ?? []).map((p) => {
                 const papelLabel = PAPEL_LABEL[p.papel as string] ?? (p.papel as string);
@@ -201,9 +204,9 @@ export default async function FamiliaPage() {
                 );
               })}
             </ul>
-          )}
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

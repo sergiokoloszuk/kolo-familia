@@ -1,10 +1,10 @@
 import Link from "next/link";
 import { formatRelative } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { BarChart3, Plus } from "lucide-react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { BarChart3, FileText, Plus } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
+import { EstadoVazio } from "@/components/brand/estado-vazio";
 import { Eyebrow } from "@/components/brand/eyebrow";
 import { IconCard } from "@/components/brand/icon-card";
 import { cn } from "@/lib/utils";
@@ -98,21 +98,16 @@ export default async function RelatoriosPage() {
             })}
           </ul>
         ) : (
-          <Card className="rounded-3xl border-l-4 border-brand-yellow bg-kolo-lilas-bg-2">
-            <CardHeader>
-              <CardTitle className="text-base">
-                Nenhum relatório ainda
-              </CardTitle>
-              <CardDescription>
-                Gere o primeiro escolhendo destinatário e janela temporal.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
+          <EstadoVazio
+            icon={<FileText />}
+            titulo="Seu primeiro relatório está a um clique"
+            descricao="Escolhe destinatário e janela acima — o sistema costura um documento com a leitura dessa fase."
+            acao={
               <Link href="/relatorios/novo" className={cn(buttonVariants())}>
                 Gerar relatório
               </Link>
-            </CardContent>
-          </Card>
+            }
+          />
         )}
       </section>
 

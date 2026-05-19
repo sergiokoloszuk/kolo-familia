@@ -6,7 +6,8 @@ import { ptBR } from "date-fns/locale";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Check, X } from "lucide-react";
+import { Check, Sparkles, X } from "lucide-react";
+import { EstadoVazio } from "@/components/brand/estado-vazio";
 import { decideSugestao } from "./actions";
 import type { MembroData, SugestaoRow } from "./wrapper";
 
@@ -37,15 +38,11 @@ export function SugestoesPanel({
 
   if (sugestoes.length === 0) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Nenhuma sugestão pendente</CardTitle>
-          <CardDescription>
-            Quando o sistema propor uma atualização do Kolo Vivo, aparece aqui pra
-            você decidir.
-          </CardDescription>
-        </CardHeader>
-      </Card>
+      <EstadoVazio
+        icon={<Sparkles />}
+        titulo="Tudo em dia por aqui"
+        descricao="Quando o sistema costurar uma sugestão de atualização — vinda de uma conversa ou de um relatório — ela pousa aqui pra você aprovar ou ajustar."
+      />
     );
   }
 

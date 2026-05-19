@@ -13,6 +13,7 @@ import {
   TriangleAlert,
 } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
+import { EstadoVazio } from "@/components/brand/estado-vazio";
 import { Eyebrow } from "@/components/brand/eyebrow";
 import { IconCard } from "@/components/brand/icon-card";
 import { loadFamilyContext } from "@/lib/auth/require-user";
@@ -320,15 +321,29 @@ export default async function EvolucaoPage(props: PageProps<"/evolucao">) {
           ))}
         </ol>
       ) : (
-        <div className="rounded-3xl border-l-4 border-brand-yellow bg-kolo-lilas-bg-2 p-8">
-          <h3 className="font-heading text-lg text-foreground">
-            Sem registros{" "}
-            {periodo === "tudo" ? "ainda" : `nos últimos ${periodo}`}
-          </h3>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Comece registrando o dia ou amplie a janela acima.
-          </p>
-        </div>
+        <EstadoVazio
+          icon={<Sprout />}
+          titulo={
+            periodo === "tudo"
+              ? "A jornada ainda não começou"
+              : `Nada nos últimos ${periodo}`
+          }
+          descricao={
+            periodo === "tudo"
+              ? "Registra um primeiro dia e a linha do tempo começa a aparecer aqui — sem pressa de preencher tudo."
+              : "Amplia a janela acima ou registra um dia recente — o silêncio nesse período pode ser só falta de registro, não de movimento."
+          }
+          acao={
+            periodo === "tudo" ? (
+              <Link
+                href="/registrar/diario"
+                className={cn(buttonVariants({ size: "sm" }))}
+              >
+                Registrar hoje
+              </Link>
+            ) : undefined
+          }
+        />
       )}
 
       {/* CTA pra ver relatórios (link pro legacy enquanto não consolida) */}

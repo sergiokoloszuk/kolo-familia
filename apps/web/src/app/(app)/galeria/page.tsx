@@ -1,9 +1,9 @@
 import Link from "next/link";
 import { formatRelative } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Image as ImageIcon, Star } from "lucide-react";
-import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Image as ImageIcon, Sparkles, Star } from "lucide-react";
 import { Eyebrow } from "@/components/brand/eyebrow";
+import { EstadoVazio } from "@/components/brand/estado-vazio";
 import { IconCard } from "@/components/brand/icon-card";
 import { loadFamilyContext } from "@/lib/auth/require-user";
 import { cn } from "@/lib/utils";
@@ -95,22 +95,23 @@ export default async function GaleriaPage(props: PageProps<"/galeria">) {
           })}
         </ul>
       ) : (
-        <Card className="rounded-3xl border-l-4 border-brand-yellow bg-kolo-lilas-bg-2">
-          <CardHeader>
-            <CardTitle className="text-base">Sem imagens ainda</CardTitle>
-            <CardDescription>
-              Configure o avatar do membro em{" "}
+        <EstadoVazio
+          icon={<Sparkles />}
+          titulo="A galeria começa em branco"
+          descricao={
+            <>
+              Configura o avatar do membro em{" "}
               <Link
                 href="/configuracoes/avatar"
                 className="text-brand-purple underline underline-offset-2 hover:text-brand-purple-dark"
               >
                 /configuracoes/avatar
               </Link>{" "}
-              e depois gere imagens em /apoio (Brincadeiras, Atividades,
-              Histórias sociais).
-            </CardDescription>
-          </CardHeader>
-        </Card>
+              — cada brincadeira, atividade ou história social gera uma
+              imagem que pousa aqui.
+            </>
+          }
+        />
       )}
     </div>
   );
