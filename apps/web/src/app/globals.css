@@ -54,6 +54,39 @@
   --color-kolo-lilas-bg: var(--kolo-lilas-bg);
   --color-kolo-lilas-bg-2: var(--kolo-lilas-bg-2);
   --color-kolo-linha: var(--kolo-linha);
+
+  /* Cores funcionais por domínio (protótipo) — cada domínio do Kolo Vivo
+   * tem 3 tons: foreground escuro, bg sólido suave, soft p/ áreas grandes.
+   * Tons dessaturados de propósito — Manual §17 (sem positividade tóxica,
+   * sem rosa pink, sem verde de check). */
+  --color-cat-sensorial: var(--cat-sensorial);
+  --color-cat-sensorial-bg: var(--cat-sensorial-bg);
+  --color-cat-sensorial-soft: var(--cat-sensorial-soft);
+  --color-cat-comunicacao: var(--cat-comunicacao);
+  --color-cat-comunicacao-bg: var(--cat-comunicacao-bg);
+  --color-cat-comunicacao-soft: var(--cat-comunicacao-soft);
+  --color-cat-social: var(--cat-social);
+  --color-cat-social-bg: var(--cat-social-bg);
+  --color-cat-social-soft: var(--cat-social-soft);
+  --color-cat-motor: var(--cat-motor);
+  --color-cat-motor-bg: var(--cat-motor-bg);
+  --color-cat-motor-soft: var(--cat-motor-soft);
+  --color-cat-sono: var(--cat-sono);
+  --color-cat-sono-bg: var(--cat-sono-bg);
+  --color-cat-sono-soft: var(--cat-sono-soft);
+  --color-cat-emocao: var(--cat-emocao);
+  --color-cat-emocao-bg: var(--cat-emocao-bg);
+  --color-cat-emocao-soft: var(--cat-emocao-soft);
+  --color-cat-foco: var(--cat-foco);
+  --color-cat-foco-bg: var(--cat-foco-bg);
+  --color-cat-foco-soft: var(--cat-foco-soft);
+  --color-cat-rotina: var(--cat-rotina);
+  --color-cat-rotina-bg: var(--cat-rotina-bg);
+  --color-cat-rotina-soft: var(--cat-rotina-soft);
+  --color-cat-alimentacao: var(--cat-alimentacao);
+  --color-cat-alimentacao-bg: var(--cat-alimentacao-bg);
+  --color-cat-alimentacao-soft: var(--cat-alimentacao-soft);
+
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
@@ -82,6 +115,37 @@
   --kolo-lilas-bg: #F5EFFB;
   --kolo-lilas-bg-2: #FAF5FE;
   --kolo-linha: rgba(31, 19, 56, 0.08);
+
+  /* Cores funcionais por domínio do Kolo Vivo (protótipo, 19/05/2026).
+   * 9 domínios × 3 tons: foreground / bg sólido / soft (áreas grandes).
+   * Sem rosa pink, sem verde de check (Manual §17, §08). */
+  --cat-sensorial:      #C77F00;
+  --cat-sensorial-bg:   #FFF3D9;
+  --cat-sensorial-soft: #FFFAEC;
+  --cat-comunicacao:      #B85540;
+  --cat-comunicacao-bg:   #FBE8DF;
+  --cat-comunicacao-soft: #FDF3ED;
+  --cat-social:      #6B7A4E;
+  --cat-social-bg:   #EEF2DE;
+  --cat-social-soft: #F6F8EC;
+  --cat-motor:      #8B4789;
+  --cat-motor-bg:   #F5E5F4;
+  --cat-motor-soft: #FAF1F9;
+  --cat-sono:      #4A5878;
+  --cat-sono-bg:   #E5EAF2;
+  --cat-sono-soft: #F0F3F8;
+  --cat-emocao:      #B0455B;
+  --cat-emocao-bg:   #FBE3E7;
+  --cat-emocao-soft: #FDF1F3;
+  --cat-foco:      #7A5C2E;
+  --cat-foco-bg:   #F2EADB;
+  --cat-foco-soft: #F8F3E7;
+  --cat-rotina:      #4F6B6B;
+  --cat-rotina-bg:   #E2ECEC;
+  --cat-rotina-soft: #EEF4F4;
+  --cat-alimentacao:      #9C4221;
+  --cat-alimentacao-bg:   #FAE5DA;
+  --cat-alimentacao-soft: #FCF0E8;
 
   /* Shadcn tokens, agora alinhados à marca. */
   --background: #ffffff;
@@ -133,6 +197,38 @@
   --kolo-lilas-bg: #2A1F3D;       /* roxo dark sutil */
   --kolo-lilas-bg-2: #1F1538;
   --kolo-linha: rgba(255, 255, 255, 0.08);
+
+  /* Cores funcionais no dark — mesmos foregrounds (já dessaturados).
+   * `-bg` e `-soft` viram opacidades sobre o roxo deep pra preservar
+   * coerência visual. Dark mode não é ativo na app hoje — valores
+   * provisórios, refinar quando dark for ligado. */
+  --cat-sensorial:      #E8A445;
+  --cat-sensorial-bg:   rgba(199, 127, 0, 0.18);
+  --cat-sensorial-soft: rgba(199, 127, 0, 0.08);
+  --cat-comunicacao:      #D27865;
+  --cat-comunicacao-bg:   rgba(184, 85, 64, 0.18);
+  --cat-comunicacao-soft: rgba(184, 85, 64, 0.08);
+  --cat-social:      #9CAB78;
+  --cat-social-bg:   rgba(107, 122, 78, 0.18);
+  --cat-social-soft: rgba(107, 122, 78, 0.08);
+  --cat-motor:      #B070AE;
+  --cat-motor-bg:   rgba(139, 71, 137, 0.18);
+  --cat-motor-soft: rgba(139, 71, 137, 0.08);
+  --cat-sono:      #7989AB;
+  --cat-sono-bg:   rgba(74, 88, 120, 0.22);
+  --cat-sono-soft: rgba(74, 88, 120, 0.10);
+  --cat-emocao:      #D26B80;
+  --cat-emocao-bg:   rgba(176, 69, 91, 0.18);
+  --cat-emocao-soft: rgba(176, 69, 91, 0.08);
+  --cat-foco:      #A88858;
+  --cat-foco-bg:   rgba(122, 92, 46, 0.20);
+  --cat-foco-soft: rgba(122, 92, 46, 0.10);
+  --cat-rotina:      #7E9999;
+  --cat-rotina-bg:   rgba(79, 107, 107, 0.20);
+  --cat-rotina-soft: rgba(79, 107, 107, 0.10);
+  --cat-alimentacao:      #C16944;
+  --cat-alimentacao-bg:   rgba(156, 66, 33, 0.20);
+  --cat-alimentacao-soft: rgba(156, 66, 33, 0.10);
 
   --background: #2E0A52;          /* roxo deep Kolo */
   --foreground: #FAF6EE;
