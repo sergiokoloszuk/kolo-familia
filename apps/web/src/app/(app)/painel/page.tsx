@@ -1,7 +1,7 @@
 import Link from "next/link";
-import { differenceInCalendarDays, format, formatRelative } from "date-fns";
+import { differenceInCalendarDays, format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { ArrowRight, Sparkles } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
@@ -28,7 +28,6 @@ export default async function PainelPage() {
     { data: desafios },
     { data: checkins7d },
     { count: sugestoesCount },
-    { data: ultimaMensagemWhatsApp },
   ] = await Promise.all([
     supabase
       .from("family_profiles")
@@ -72,15 +71,6 @@ export default async function PainelPage() {
       .select("id", { count: "exact", head: true })
       .eq("family_account_id", familyId)
       .eq("status", "pendente"),
-    supabase
-      .from("ayla_messages")
-      .select("texto, tipo, category, created_at")
-      .eq("family_account_id", familyId)
-      .eq("direcao", "outbound")
-      .eq("category", "proativa")
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle(),
   ]);
 
   const greeting =
@@ -250,13 +240,16 @@ export default async function PainelPage() {
       </header>
 
       {/* ============================================================
-       * HERO CONTEXTUAL — janela da semana (lilás com toques amarelos)
+       * HERO CONTEXTUAL — leitura da semana (lilás com profundidade)
+       * Hero dominante: 3 radials sobrepostos + vignette inset bottom
+       * pra atmosfera editorial sem inflar.
        * ============================================================ */}
       <section
-        className="relative overflow-hidden rounded-3xl px-6 py-8 md:px-10 md:py-10"
+        className="relative mb-4 overflow-hidden rounded-3xl px-6 py-10 md:mb-6 md:px-10 md:py-12"
         style={{
           background:
-            "radial-gradient(circle at 90% 10%, rgba(255,186,0,0.18) 0%, transparent 50%), radial-gradient(circle at 10% 80%, rgba(107,31,168,0.06) 0%, transparent 50%), linear-gradient(135deg, var(--kolo-lilas-bg) 0%, var(--kolo-creme) 100%)",
+            "radial-gradient(circle at 90% 8%, rgba(255,186,0,0.22) 0%, transparent 55%), radial-gradient(circle at 8% 88%, rgba(107,31,168,0.10) 0%, transparent 55%), radial-gradient(ellipse at 50% 110%, rgba(46,10,82,0.06) 0%, transparent 60%), linear-gradient(135deg, var(--kolo-lilas-bg) 0%, var(--kolo-creme) 100%)",
+          boxShadow: "inset 0 -1px 0 rgba(46,10,82,0.04)",
         }}
       >
         <div className="relative max-w-2xl">
@@ -270,7 +263,7 @@ export default async function PainelPage() {
             </span>
             Vimos sua semana
           </span>
-          <h2 className="mt-4 font-heading text-2xl text-foreground md:text-3xl">
+          <h2 className="mt-4 font-heading text-3xl leading-[1.15] text-foreground md:text-4xl">
             {!houveAtividade ? (
               <>
                 Painel ainda vazio —{" "}
@@ -384,7 +377,8 @@ export default async function PainelPage() {
               <Link
                 href="/registrar/diario"
                 className={cn(
-                  buttonVariants({ variant: "outline", size: "lg" }),
+                  buttonVariants({ variant: "ghost", size: "lg" }),
+                  "text-muted-foreground hover:text-foreground",
                 )}
               >
                 Registrar dia
@@ -458,9 +452,10 @@ export default async function PainelPage() {
       <ConquistasGrid conquistas={conquistas ?? []} />
 
       {/* ============================================================
-       * SUGESTÕES + MENSAGEM WHATSAPP (grid)
+       * SUGESTÕES — coluna única, largura comportada
+       * (WhatsApp card removido — sem mensagem estilo chatbot na Home)
        * ============================================================ */}
-      <section className="grid gap-4 md:grid-cols-2">
+      <section className="max-w-2xl">
         {(sugestoesCount ?? 0) > 0 ? (
           <Card className="rounded-3xl bg-white">
             <CardHeader className="flex flex-row items-start justify-between gap-3">
@@ -508,40 +503,14 @@ export default async function PainelPage() {
             </CardContent>
           </Card>
         )}
-
-        {ultimaMensagemWhatsApp?.texto && (
-          <Card className="rounded-3xl border-l-4 border-brand-yellow bg-white">
-            <CardHeader>
-              <div className="flex flex-wrap items-center gap-2">
-                <CardTitle className="text-base">
-                  Sua última mensagem no WhatsApp
-                </CardTitle>
-                <Badge variant="outline" className="text-[10px]">
-                  WhatsApp
-                </Badge>
-              </div>
-              <CardDescription>
-                {formatRelative(
-                  new Date(ultimaMensagemWhatsApp.created_at),
-                  hoje,
-                  { locale: ptBR },
-                )}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="line-clamp-4 whitespace-pre-wrap text-sm italic text-foreground/85">
-                “{ultimaMensagemWhatsApp.texto}”
-              </p>
-            </CardContent>
-          </Card>
-        )}
       </section>
 
       {/* ============================================================
-       * CHECK-IN LEVE — convite suave
+       * CHECK-IN LEVE — convite suave (fechamento editorial sobre a mãe)
+       * Silêncio antes do fechamento — ritmo assimétrico.
        * ============================================================ */}
       <section
-        className="flex flex-col items-start justify-between gap-4 rounded-3xl px-6 py-5 md:flex-row md:items-center md:px-8 md:py-6"
+        className="mt-4 flex flex-col items-start justify-between gap-4 rounded-3xl px-6 py-5 md:mt-6 md:flex-row md:items-center md:px-8 md:py-6"
         style={{
           background:
             "linear-gradient(135deg, var(--cat-sensorial-soft) 0%, #FFF9E6 100%)",
@@ -583,75 +552,54 @@ function ConquistasGrid({ conquistas }: { conquistas: ConquistaDiario[] }) {
     return null;
   }
 
-  // Rotação de paleta temática
-  const paletas = [
-    { bgGradient: "from-cat-alimentacao to-cat-alimentacao", bg: "bg-cat-alimentacao-soft", color: "text-cat-alimentacao", iconBg: "bg-cat-alimentacao-bg" },
-    { bgGradient: "from-cat-comunicacao to-cat-comunicacao", bg: "bg-cat-comunicacao-soft", color: "text-cat-comunicacao", iconBg: "bg-cat-comunicacao-bg" },
-    { bgGradient: "from-cat-motor to-cat-motor", bg: "bg-cat-motor-soft", color: "text-cat-motor", iconBg: "bg-cat-motor-bg" },
-  ];
-
   return (
     <section>
-      <div className="mb-4 flex items-center justify-between gap-3">
+      <div className="mb-5 flex items-center justify-between gap-3">
         <h2 className="font-heading text-2xl text-foreground">
           Pequenas <em className="not-italic text-brand-purple">conquistas</em>
         </h2>
         <Link
           href="/evolucao"
-          className="inline-flex items-center gap-1 text-sm font-semibold text-brand-purple hover:gap-2 transition-all"
+          className="inline-flex items-center gap-1 text-sm font-semibold text-brand-purple transition-all hover:gap-2"
         >
           Linha do tempo
           <ArrowRight className="size-3" aria-hidden />
         </Link>
       </div>
-      <div className="grid gap-4 md:grid-cols-3">
-        {conquistas.slice(0, 3).map((c, i) => {
-          const paleta = paletas[i % paletas.length];
+      {/* Timeline editorial — barra amarela à esquerda, marcas pequenas.
+          Sem cards, sem palette categórica — leitura como diário. */}
+      <ol className="relative ml-1 flex flex-col gap-5 border-l-2 border-brand-yellow/30 pl-6">
+        {conquistas.slice(0, 3).map((c) => {
           const nomeMembro = Array.isArray(c.membros_atipicos)
             ? c.membros_atipicos[0]?.nome
             : c.membros_atipicos?.nome;
           return (
-            <article
-              key={c.id}
-              className={cn(
-                "relative flex flex-col gap-3 overflow-hidden rounded-3xl bg-white p-6 shadow-sm transition-all hover:-translate-y-1 hover:shadow-md",
-              )}
-            >
+            <li key={c.id} className="relative">
               <span
                 aria-hidden
-                className={cn(
-                  "pointer-events-none absolute -right-8 -top-8 size-32 rounded-full opacity-25 blur-2xl",
-                  paleta.bg,
-                )}
+                className="absolute -left-[1.625rem] top-2 size-2.5 rounded-full bg-brand-yellow ring-4 ring-kolo-page"
               />
-              <div className="relative">
-                <span
-                  aria-hidden
-                  className={cn(
-                    "inline-flex size-11 items-center justify-center rounded-2xl",
-                    paleta.iconBg,
-                    paleta.color,
-                  )}
-                >
-                  <Sparkles className="size-5 stroke-[1.8]" />
-                </span>
-                <p className="mt-4 text-xs font-bold uppercase tracking-[0.14em] text-muted-foreground">
-                  {format(new Date(c.data), "d 'de' MMM", { locale: ptBR })}
-                  {nomeMembro && ` · ${nomeMembro}`}
-                </p>
-                <h3 className="mt-1 font-heading text-base font-semibold leading-snug text-foreground">
-                  {c.conquista}
-                </h3>
-                {c.observacao_livre && (
-                  <p className="mt-1.5 text-sm text-muted-foreground line-clamp-2">
-                    {c.observacao_livre}
-                  </p>
+              <p className="text-xs font-bold uppercase tracking-[0.14em] text-muted-foreground">
+                {format(new Date(c.data), "d 'de' MMM", { locale: ptBR })}
+                {nomeMembro && (
+                  <>
+                    {" · "}
+                    <span className="text-foreground/70">{nomeMembro}</span>
+                  </>
                 )}
-              </div>
-            </article>
+              </p>
+              <h3 className="mt-1 font-heading text-lg font-medium leading-snug text-foreground">
+                {c.conquista}
+              </h3>
+              {c.observacao_livre && (
+                <p className="mt-1.5 line-clamp-2 text-sm text-muted-foreground">
+                  {c.observacao_livre}
+                </p>
+              )}
+            </li>
           );
         })}
-      </div>
+      </ol>
     </section>
   );
 }
