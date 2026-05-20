@@ -49,6 +49,35 @@ const CHIP_TONES: Record<
   },
 };
 
+// ============================================================
+// Helpers do bloco "Essa semana" — microcontexto temporal
+// ============================================================
+
+/** Dia curto em pt-BR, sem ponto, lowercase. "seg" / "ter" / "qua" ... */
+function diaCurto(dataISO: string): string {
+  return format(new Date(dataISO), "EEE", { locale: ptBR })
+    .replace(/\./g, "")
+    .toLowerCase();
+}
+
+/**
+ * Converte enum `quem_estava` do schema diarios em label humano curto.
+ * Retorna null pra "outro" (genérico demais pra mostrar) ou ausente.
+ */
+function quemEstavaLabel(raw: string | null | undefined): string | null {
+  if (!raw) return null;
+  const map: Record<string, string> = {
+    mae: "mãe",
+    pai: "pai",
+    avo_a: "avó",
+    avo_o: "avô",
+    irmao_a: "irmão",
+    baba: "babá",
+    professor_a: "professora",
+  };
+  return map[raw] ?? null;
+}
+
 function FocoChip({ label, tone }: { label: string; tone: ChipTone }) {
   const t = CHIP_TONES[tone];
   return (
@@ -102,7 +131,7 @@ export default async function PainelPage() {
     supabase
       .from("diarios")
       .select(
-        "id, data, conquista, observacao_livre, membro_atipico_id, membros_atipicos(nome)",
+        "id, data, conquista, observacao_livre, quem_estava, membro_atipico_id, membros_atipicos(nome)",
       )
       .eq("family_account_id", familyId)
       .not("conquista", "is", null)
@@ -111,7 +140,7 @@ export default async function PainelPage() {
       .limit(3),
     supabase
       .from("diarios")
-      .select("id, data, desafio")
+      .select("id, data, desafio, quem_estava")
       .eq("family_account_id", familyId)
       .not("desafio", "is", null)
       .gte("data", seteDiasAtras),
@@ -232,12 +261,14 @@ export default async function PainelPage() {
       data: c.data,
       tipo: "conquista" as const,
       texto: c.conquista ?? "",
+      quemEstava: (c as { quem_estava?: string | null }).quem_estava ?? null,
     })),
     ...(desafios ?? []).map((d) => ({
       id: `d-${d.id}`,
       data: d.data,
       tipo: "desafio" as const,
       texto: d.desafio ?? "",
+      quemEstava: (d as { quem_estava?: string | null }).quem_estava ?? null,
     })),
   ]
     .filter((i) => i.texto.trim().length > 0)
@@ -552,30 +583,44 @@ export default async function PainelPage() {
             </p>
           ) : (
             <ul className="flex flex-col">
-              {itensSemana.map((item, idx) => (
-                <li
-                  key={item.id}
-                  className={cn(
-                    "flex items-start gap-3.5 py-3.5",
-                    idx > 0 && "border-t border-foreground/[0.06]",
-                  )}
-                >
-                  <span
-                    aria-hidden
+              {itensSemana.map((item, idx) => {
+                const contexto = quemEstavaLabel(item.quemEstava);
+                return (
+                  <li
+                    key={item.id}
                     className={cn(
-                      "mt-[7px] inline-flex w-3.5 shrink-0 font-mono text-sm font-semibold leading-none",
-                      item.tipo === "conquista"
-                        ? "text-cat-social"
-                        : "text-cat-sensorial",
+                      "flex items-start gap-3.5 py-3.5",
+                      idx > 0 && "border-t border-foreground/[0.06]",
                     )}
                   >
-                    {item.tipo === "conquista" ? "✓" : "!"}
-                  </span>
-                  <span className="text-base leading-relaxed tracking-[-0.005em] text-foreground">
-                    {item.texto}
-                  </span>
-                </li>
-              ))}
+                    <span
+                      aria-hidden
+                      className={cn(
+                        "mt-[7px] inline-flex w-3.5 shrink-0 font-mono text-sm font-semibold leading-none",
+                        item.tipo === "conquista"
+                          ? "text-cat-social"
+                          : "text-cat-sensorial",
+                      )}
+                    >
+                      {item.tipo === "conquista" ? "✓" : "!"}
+                    </span>
+                    <div className="flex flex-1 flex-col gap-1">
+                      <span className="text-base leading-relaxed tracking-[-0.005em] text-foreground">
+                        {item.texto}
+                      </span>
+                      <span className="text-[11px] uppercase tracking-[0.14em] text-muted-foreground/60">
+                        {diaCurto(item.data)}
+                        {contexto && (
+                          <>
+                            <span className="mx-1.5 opacity-60">·</span>
+                            {contexto}
+                          </>
+                        )}
+                      </span>
+                    </div>
+                  </li>
+                );
+              })}
             </ul>
           )}
         </div>
