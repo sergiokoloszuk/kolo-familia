@@ -94,20 +94,15 @@ export default async function EstrategiasPage(
 
   return (
     <div className="flex flex-col gap-8">
-      <header className="flex items-start gap-4">
-        <IconCard tone="light" size="lg" className="hidden md:inline-flex">
-          <Sparkles aria-hidden />
-        </IconCard>
-        <div>
-          <Eyebrow>Quando você precisa de ajuda</Eyebrow>
-          <h1 className="mt-1 font-heading text-3xl text-foreground md:text-4xl">
-            Conta o que aconteceu.{" "}
-            <em className="not-italic text-brand-purple">
-              Vamos pensar nisso juntos
-            </em>
-            .
-          </h1>
-        </div>
+      <header>
+        <Eyebrow>Quando você precisa de ajuda</Eyebrow>
+        <h1 className="mt-1 font-heading text-3xl text-foreground md:text-4xl">
+          Conta o que aconteceu.{" "}
+          <em className="not-italic text-brand-purple">
+            Vamos pensar nisso juntos
+          </em>
+          .
+        </h1>
       </header>
 
       {/* Tabs — pill switcher inspirado no protótipo. */}
@@ -192,15 +187,10 @@ function ConversaTab({
 }) {
   return (
     <div className="flex flex-col gap-8">
-      <div className="rounded-3xl bg-kolo-lilas-bg-2 p-6 md:p-8">
-        <h2 className="font-heading text-xl text-foreground">Nova conversa</h2>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Sobre quem é (se for um membro específico) e o que aconteceu.
-        </p>
-        <div className="mt-6">
-          <ConversarForm membros={membros} />
-        </div>
-      </div>
+      {/* Form flutua direto na página — sem Card wrapper "Nova conversa".
+       * O h1 do header já estabelece o contexto ("Conta o que aconteceu.
+       * Vamos pensar nisso juntos."), não precisa de h2 redundante aqui. */}
+      <ConversarForm membros={membros} />
 
       {conversas.length > 0 && (
         <section className="flex flex-col gap-4">

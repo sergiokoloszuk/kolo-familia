@@ -1,9 +1,7 @@
 import Link from "next/link";
 import { formatRelative } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { MessageCircle } from "lucide-react";
 import { Eyebrow } from "@/components/brand/eyebrow";
-import { IconCard } from "@/components/brand/icon-card";
 import { loadFamilyContext } from "@/lib/auth/require-user";
 import { ConversarForm } from "./conversar-form";
 
@@ -28,34 +26,18 @@ export default async function ConversarPage() {
 
   return (
     <div className="flex flex-col gap-8">
-      {/* Hero da página. */}
-      <header className="flex items-start gap-4">
-        <IconCard tone="light" size="lg" className="hidden md:inline-flex">
-          <MessageCircle aria-hidden />
-        </IconCard>
-        <div>
-          <Eyebrow>Conversar com Kolo</Eyebrow>
-          <h1 className="mt-1 font-heading text-3xl text-foreground md:text-4xl">
-            Pergunta como{" "}
-            <em className="not-italic text-brand-purple">aconteceria</em> no dia.
-          </h1>
-          <p className="mt-2 max-w-2xl text-muted-foreground">
-            Escreva uma dúvida real. O sistema decide qual perspectiva responde
-            — você não precisa escolher.
-          </p>
-        </div>
+      <header>
+        <Eyebrow>Quando você precisa de ajuda</Eyebrow>
+        <h1 className="mt-1 font-heading text-3xl text-foreground md:text-4xl">
+          Conta o que aconteceu.{" "}
+          <em className="not-italic text-brand-purple">
+            Vamos pensar nisso juntos
+          </em>
+          .
+        </h1>
       </header>
 
-      {/* Form em card lilás. */}
-      <div className="rounded-3xl bg-kolo-lilas-bg-2 p-6 md:p-8">
-        <h2 className="font-heading text-xl text-foreground">Nova conversa</h2>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Sobre quem é (se for um membro específico) e o que aconteceu.
-        </p>
-        <div className="mt-6">
-          <ConversarForm membros={membros ?? []} />
-        </div>
-      </div>
+      <ConversarForm membros={membros ?? []} />
 
       {/* Conversas anteriores. */}
       {conversas && conversas.length > 0 && (

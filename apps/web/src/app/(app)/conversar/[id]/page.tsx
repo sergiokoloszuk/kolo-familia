@@ -2,7 +2,6 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { loadFamilyContext } from "@/lib/auth/require-user";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { ChevronLeft } from "lucide-react";
 import { ContinuarForm } from "./continuar-form";
 
@@ -70,9 +69,8 @@ export default async function ConversaPage(props: PageProps<"/conversar/[id]">) 
               </Card>
             ) : (
               <Card>
-                <CardHeader className="flex flex-row items-start justify-between gap-2">
-                  <CardTitle className="text-sm font-medium">Especialistas</CardTitle>
-                  <SkillsBadges skills={m.skills_acionadas} />
+                <CardHeader>
+                  <CardDescription>Kolo</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <p className="whitespace-pre-wrap text-sm">{m.conteudo}</p>
@@ -98,15 +96,3 @@ export default async function ConversaPage(props: PageProps<"/conversar/[id]">) 
   );
 }
 
-function SkillsBadges({ skills }: { skills: unknown }) {
-  if (!Array.isArray(skills) || skills.length === 0) return null;
-  return (
-    <div className="flex flex-wrap gap-1.5">
-      {skills.map((s: { name: string; display_name: string }) => (
-        <Badge key={s.name} variant="secondary" className="text-xs">
-          {s.display_name}
-        </Badge>
-      ))}
-    </div>
-  );
-}

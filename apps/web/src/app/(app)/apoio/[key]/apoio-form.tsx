@@ -4,7 +4,6 @@ import { useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { gerarApoio, type GerarApoioResultado } from "../actions";
 import { gerarCenaParaGaleria } from "../../galeria/actions";
 
@@ -92,20 +91,10 @@ export function ApoioForm({
           </div>
         )}
         <Card>
-          <CardHeader className="flex flex-row items-start justify-between gap-2">
-            <CardTitle className="text-sm font-medium">Sua resposta</CardTitle>
-            {resultado.skillsAcionadas.length > 0 && (
-              <div className="flex flex-wrap gap-1.5">
-                {resultado.skillsAcionadas.map((s) => (
-                  <Badge key={s.name} variant="secondary" className="text-xs">
-                    {s.display_name}
-                  </Badge>
-                ))}
-              </div>
-            )}
-          </CardHeader>
-          <CardContent>
-            <p className="whitespace-pre-wrap text-sm">{resultado.texto}</p>
+          <CardContent className="pt-6">
+            <p className="whitespace-pre-wrap text-base leading-relaxed text-foreground">
+              {resultado.texto}
+            </p>
           </CardContent>
         </Card>
 

@@ -4,7 +4,6 @@ import {
   BookOpen,
   CalendarClock,
   Gamepad2,
-  Heart,
   Lightbulb,
   MessageSquare,
   Route,
@@ -53,22 +52,15 @@ export default async function ApoioPage() {
 
   return (
     <div className="flex flex-col gap-8">
-      <header className="flex items-start gap-4">
-        <IconCard tone="light" size="lg" className="hidden md:inline-flex">
-          <Heart aria-hidden />
-        </IconCard>
-        <div>
-          <Eyebrow>Apoio</Eyebrow>
-          <h1 className="mt-1 font-heading text-3xl text-foreground md:text-4xl">
-            Atalhos pra{" "}
-            <em className="not-italic text-brand-purple">tipos específicos</em>{" "}
-            de resposta
-          </h1>
-          <p className="mt-2 max-w-2xl text-muted-foreground">
-            Você não precisa ter uma pergunta. Escolha o formato e o sistema
-            gera com base no contexto da sua família.
-          </p>
-        </div>
+      <header>
+        <Eyebrow>Pra quando você sabe o que precisa</Eyebrow>
+        <h1 className="mt-1 font-heading text-3xl text-foreground md:text-4xl">
+          Atalhos <em className="not-italic text-brand-purple">prontos</em>.
+        </h1>
+        <p className="mt-2 max-w-2xl text-muted-foreground">
+          Se preferir não conversar, escolha o formato — a resposta vem
+          pensada pra sua família.
+        </p>
       </header>
 
       <ul className="grid gap-4 md:grid-cols-2">
