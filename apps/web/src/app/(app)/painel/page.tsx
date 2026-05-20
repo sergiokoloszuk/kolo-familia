@@ -348,7 +348,7 @@ export default async function PainelPage() {
        * pra atmosfera editorial sem inflar.
        * ============================================================ */}
       <section
-        className="relative mb-4 overflow-hidden rounded-3xl px-6 py-10 md:mb-6 md:px-10 md:py-12"
+        className="relative overflow-hidden rounded-3xl px-6 py-8 md:px-10 md:py-10"
         style={{
           background:
             "radial-gradient(circle at 90% 8%, rgba(255,186,0,0.22) 0%, transparent 55%), radial-gradient(circle at 8% 88%, rgba(107,31,168,0.10) 0%, transparent 55%), radial-gradient(ellipse at 50% 110%, rgba(46,10,82,0.06) 0%, transparent 60%), linear-gradient(135deg, var(--kolo-lilas-bg) 0%, var(--kolo-creme) 100%)",
@@ -498,21 +498,27 @@ export default async function PainelPage() {
               família começa a perceber.
             </p>
           ) : (
-            <ul className="flex flex-col gap-3.5 text-[15px]">
-              {itensSemana.map((item) => (
-                <li key={item.id} className="flex items-start gap-3">
+            <ul className="flex flex-col">
+              {itensSemana.map((item, idx) => (
+                <li
+                  key={item.id}
+                  className={cn(
+                    "flex items-start gap-3.5 py-3.5",
+                    idx > 0 && "border-t border-foreground/[0.06]",
+                  )}
+                >
                   <span
                     aria-hidden
                     className={cn(
-                      "mt-[3px] inline-flex size-5 shrink-0 items-center justify-center rounded-full text-[11px] font-bold",
+                      "mt-[7px] inline-flex w-3.5 shrink-0 font-mono text-sm font-semibold leading-none",
                       item.tipo === "conquista"
-                        ? "bg-cat-social-soft text-cat-social"
-                        : "bg-cat-sensorial-soft text-cat-sensorial",
+                        ? "text-cat-social"
+                        : "text-cat-sensorial",
                     )}
                   >
                     {item.tipo === "conquista" ? "✓" : "!"}
                   </span>
-                  <span className="leading-snug text-foreground/85">
+                  <span className="text-base leading-relaxed tracking-[-0.005em] text-foreground">
                     {item.texto}
                   </span>
                 </li>
@@ -586,11 +592,13 @@ export default async function PainelPage() {
       <ConquistasGrid conquistas={conquistas ?? []} />
 
       {/* ============================================================
-       * SUGESTÕES — coluna única, largura comportada
-       * (WhatsApp card removido — sem mensagem estilo chatbot na Home)
+       * SUGESTÕES PRA REVISAR — só aparece quando há pendência real.
+       * O card "Atualizar o Kolo Vivo" do estado vazio foi removido:
+       * interrompia a narrativa emocional da Home como CTA admin.
+       * Quem quer abrir o Kolo Vivo usa o menu lateral (rota dedicada).
        * ============================================================ */}
-      <section className="max-w-2xl">
-        {(sugestoesCount ?? 0) > 0 ? (
+      {(sugestoesCount ?? 0) > 0 && (
+        <section className="max-w-2xl">
           <Card className="rounded-3xl bg-white">
             <CardHeader className="flex flex-row items-start justify-between gap-3">
               <div>
@@ -615,29 +623,8 @@ export default async function PainelPage() {
               </Link>
             </CardContent>
           </Card>
-        ) : (
-          <Card className="rounded-3xl bg-kolo-lilas-bg-2 border-0">
-            <CardHeader>
-              <CardTitle className="text-base">
-                Atualizar o Kolo Vivo
-              </CardTitle>
-              <CardDescription>
-                Mais contexto = melhores estratégias na hora da dúvida.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Link
-                href="/kolo-vivo"
-                className={cn(
-                  buttonVariants({ variant: "outline", size: "sm" }),
-                )}
-              >
-                Abrir Kolo Vivo
-              </Link>
-            </CardContent>
-          </Card>
-        )}
-      </section>
+        </section>
+      )}
 
       {/* ============================================================
        * CHECK-IN LEVE — convite suave (fechamento editorial sobre a mãe)
