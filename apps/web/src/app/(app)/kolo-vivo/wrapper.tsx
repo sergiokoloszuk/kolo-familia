@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import { ChevronDown } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 import { FamiliaEditor } from "./familia-editor";
 import { MembroEditor } from "./membro-editor";
 import { SugestoesPanel } from "./sugestoes-panel";
@@ -48,44 +49,68 @@ export function KoloVivoWrapper({
   membros: MembroData[];
   sugestoes: SugestaoRow[];
 }) {
-  // Default: primeira aba é o primeiro membro (foco do produto), depois família,
-  // depois sugestões. Se não tem membro ainda, vai pra família.
+  // Default: primeira aba é o primeiro membro (foco do produto), depois família.
   const initialTab =
     membros.length > 0 ? `membro-${membros[0].id}` : "familia";
   const [tab, setTab] = useState(initialTab);
 
+  // Sugestões saíram de "tab" pra faixa contextual no topo.
+  // P-KV-8: parecem parte do retrato em construção, não fila de moderação.
+  const [showSugestoes, setShowSugestoes] = useState(false);
+  const temSugestoes = sugestoes.length > 0;
+
   return (
-    <Tabs value={tab} onValueChange={setTab} className="flex flex-col gap-4">
-      <TabsList className="flex w-full flex-wrap justify-start gap-1">
-        {membros.map((m) => (
-          <TabsTrigger key={m.id} value={`membro-${m.id}`}>
-            {m.nome}
-          </TabsTrigger>
-        ))}
-        <TabsTrigger value="familia">Família</TabsTrigger>
-        <TabsTrigger value="sugestoes" className="gap-2">
-          Sugestões
-          {sugestoes.length > 0 && (
-            <Badge variant="secondary" className="ml-1">
-              {sugestoes.length}
-            </Badge>
+    <div className="flex flex-col gap-5">
+      {temSugestoes && (
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-kolo-lilas-bg-2/70 px-5 py-3">
+            <p className="text-sm text-foreground">
+              Há{" "}
+              <strong className="font-semibold">{sugestoes.length}</strong>{" "}
+              atualiza{sugestoes.length === 1 ? "ção" : "ções"} esperando.
+            </p>
+            <button
+              type="button"
+              onClick={() => setShowSugestoes((v) => !v)}
+              className="inline-flex items-center gap-1.5 text-sm font-semibold text-brand-purple underline-offset-4 transition-colors hover:underline"
+            >
+              {showSugestoes ? "Esconder" : "Ver"}
+              <ChevronDown
+                aria-hidden
+                className={cn(
+                  "size-4 transition-transform",
+                  showSugestoes && "rotate-180",
+                )}
+              />
+            </button>
+          </div>
+
+          {showSugestoes && (
+            <SugestoesPanel sugestoes={sugestoes} membros={membros} />
           )}
-        </TabsTrigger>
-      </TabsList>
+        </div>
+      )}
 
-      {membros.map((m) => (
-        <TabsContent key={m.id} value={`membro-${m.id}`}>
-          <MembroEditor membro={m} />
+      <Tabs value={tab} onValueChange={setTab} className="flex flex-col gap-4">
+        <TabsList className="flex w-full flex-wrap justify-start gap-1">
+          {membros.map((m) => (
+            <TabsTrigger key={m.id} value={`membro-${m.id}`}>
+              {m.nome}
+            </TabsTrigger>
+          ))}
+          <TabsTrigger value="familia">Família</TabsTrigger>
+        </TabsList>
+
+        {membros.map((m) => (
+          <TabsContent key={m.id} value={`membro-${m.id}`}>
+            <MembroEditor membro={m} />
+          </TabsContent>
+        ))}
+
+        <TabsContent value="familia">
+          <FamiliaEditor familia={familia} />
         </TabsContent>
-      ))}
-
-      <TabsContent value="familia">
-        <FamiliaEditor familia={familia} />
-      </TabsContent>
-
-      <TabsContent value="sugestoes">
-        <SugestoesPanel sugestoes={sugestoes} membros={membros} />
-      </TabsContent>
-    </Tabs>
+      </Tabs>
+    </div>
   );
 }

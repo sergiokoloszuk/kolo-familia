@@ -3,11 +3,8 @@
 import { useState, useTransition } from "react";
 import { formatRelative } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Check, Sparkles, X } from "lucide-react";
-import { EstadoVazio } from "@/components/brand/estado-vazio";
+import { Check, X } from "lucide-react";
 import { decideSugestao } from "./actions";
 import type { MembroData, SugestaoRow } from "./wrapper";
 
@@ -38,16 +35,14 @@ export function SugestoesPanel({
 
   if (sugestoes.length === 0) {
     return (
-      <EstadoVazio
-        icon={<Sparkles />}
-        titulo="Tudo em dia por aqui"
-        descricao="Quando o sistema costurar uma sugestão de atualização — vinda de uma conversa ou de um relatório — ela pousa aqui pra você aprovar ou ajustar."
-      />
+      <p className="px-1 text-sm text-muted-foreground">
+        Por enquanto, nada esperando.
+      </p>
     );
   }
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-3">
       {error && (
         <div className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
           {error}
@@ -56,73 +51,83 @@ export function SugestoesPanel({
 
       {sugestoes.map((s) => {
         const membro = membros.find((m) => m.id === s.membro_atipico_id);
+        const subtitulo =
+          s.camada === "camada1"
+            ? `${membro?.nome ?? "Membro"} · ${labelCampo(s.campo)}`
+            : `Família · ${labelCampo(s.campo)}`;
         return (
-          <Card key={s.id}>
-            <CardHeader className="flex flex-row items-start justify-between gap-3">
-              <div className="flex flex-col gap-1">
-                <CardTitle className="text-sm font-medium">
-                  {s.camada === "camada1"
-                    ? `${membro?.nome ?? "Membro"} · ${labelCampo(s.campo)}`
-                    : `Família · ${labelCampo(s.campo)}`}
-                </CardTitle>
-                <CardDescription className="flex items-center gap-2">
-                  <Badge variant="secondary">{labelOrigem(s.origem)}</Badge>
-                  <span>{formatRelative(new Date(s.created_at), new Date(), { locale: ptBR })}</span>
-                </CardDescription>
-              </div>
-            </CardHeader>
-            <CardContent className="flex flex-col gap-3">
-              <p className="whitespace-pre-wrap rounded-md bg-muted/50 p-3 text-sm">
-                {s.texto_sugerido}
-              </p>
-              <div className="flex justify-end gap-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleDecide(s.id, "rejeitar")}
-                  disabled={pendingId === s.id}
-                >
-                  <X aria-hidden="true" /> Rejeitar
-                </Button>
-                <Button
-                  type="button"
-                  size="sm"
-                  onClick={() => handleDecide(s.id, "aprovar")}
-                  disabled={pendingId === s.id}
-                >
-                  <Check aria-hidden="true" /> {pendingId === s.id ? "..." : "Aprovar"}
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+          <article
+            key={s.id}
+            className="rounded-2xl bg-white px-5 py-4 shadow-[0_1px_2px_rgba(46,10,82,0.04),_0_4px_12px_rgba(46,10,82,0.03)]"
+          >
+            <header className="mb-2 flex flex-col gap-0.5">
+              <span className="font-heading text-base font-medium text-foreground">
+                {subtitulo}
+              </span>
+              <span className="text-xs text-muted-foreground">
+                De {labelOrigem(s.origem)} ·{" "}
+                {formatRelative(new Date(s.created_at), new Date(), {
+                  locale: ptBR,
+                })}
+              </span>
+            </header>
+            <p className="whitespace-pre-wrap rounded-xl bg-kolo-lilas-bg-2/50 px-4 py-3 text-sm leading-relaxed text-foreground">
+              {s.texto_sugerido}
+            </p>
+            <div className="mt-3 flex justify-end gap-2">
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => handleDecide(s.id, "rejeitar")}
+                disabled={pendingId === s.id}
+                className="text-muted-foreground hover:text-foreground"
+              >
+                <X aria-hidden="true" /> Descartar
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                onClick={() => handleDecide(s.id, "aprovar")}
+                disabled={pendingId === s.id}
+              >
+                <Check aria-hidden="true" />{" "}
+                {pendingId === s.id ? "..." : "Aceitar"}
+              </Button>
+            </div>
+          </article>
         );
       })}
     </div>
   );
 }
 
+/**
+ * Labels dos campos — espelham os títulos editoriais dos editores
+ * (membro-editor.tsx e familia-editor.tsx). Quando o título lá muda,
+ * atualizar aqui também.
+ */
 function labelCampo(campo: string): string {
   const map: Record<string, string> = {
-    essencial: "Essencial",
+    essencial: "Quem ele/ela é, oficialmente",
     como_e: "Como ele/ela é",
-    corpo_rotina: "Corpo & Rotina",
-    desafios_regulacao: "Desafios & Regulação",
-    sensorial: "Sensorial",
-    composicao: "Composição",
-    rotina: "Rotina",
-    recursos: "Recursos",
-    dinamica: "Dinâmica",
+    corpo_rotina: "Sono, comida, corpo",
+    desafios_regulacao: "O que pesa, o que acalma",
+    sensorial: "Sentidos e laudos",
+    composicao: "Quem mora junto",
+    rotina: "Como a semana acontece",
+    recursos: "Quem ajuda",
+    dinamica: "Como vocês se cuidam",
   };
   return map[campo] ?? campo;
 }
 
 function labelOrigem(origem: string): string {
   const map: Record<string, string> = {
-    ayla: "WhatsApp",
-    skill: "Especialista",
-    app: "Você",
-    diario_parser: "Diário",
+    ayla: "uma conversa no WhatsApp",
+    skill: "um especialista",
+    app: "você mesmo",
+    diario_parser: "um registro do diário",
   };
   return map[origem] ?? origem;
 }
