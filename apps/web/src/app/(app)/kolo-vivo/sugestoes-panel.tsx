@@ -107,17 +107,22 @@ export function SugestoesPanel({
  * (membro-editor.tsx e familia-editor.tsx). Quando o título lá muda,
  * atualizar aqui também.
  */
+/**
+ * Versões CURTAS dos títulos — no card de sugestão o nome do membro
+ * já aparece antes do "·", então não interpolamos nome aqui. Espelha
+ * os títulos editoriais do membro-editor.tsx e familia-editor.tsx.
+ */
 function labelCampo(campo: string): string {
   const map: Record<string, string> = {
-    essencial: "Quem ele/ela é, oficialmente",
-    como_e: "Como ele/ela é",
-    corpo_rotina: "Sono, comida, corpo",
-    desafios_regulacao: "O que pesa, o que acalma",
-    sensorial: "Sentidos e laudos",
-    composicao: "Quem mora junto",
-    rotina: "Como a semana acontece",
-    recursos: "Quem ajuda",
-    dinamica: "Como vocês se cuidam",
+    essencial: "o básico",
+    como_e: "o jeito",
+    corpo_rotina: "o corpo e o dia a dia",
+    desafios_regulacao: "o que ajuda — e o que pesa",
+    sensorial: "sensações e acompanhamentos",
+    composicao: "quem faz parte da rotina",
+    rotina: "como os dias costumam ser",
+    recursos: "quem está por perto",
+    dinamica: "como vocês atravessam os dias",
   };
   return map[campo] ?? campo;
 }

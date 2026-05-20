@@ -151,7 +151,7 @@ export function SectionEditor({
             onClick={() => setEditing(true)}
             aria-label="Editar"
             title="Editar"
-            className="inline-flex size-7 shrink-0 items-center justify-center rounded-full text-foreground/40 opacity-30 transition-all hover:text-foreground hover:opacity-100 md:opacity-0 md:group-hover:opacity-30 md:focus-visible:opacity-100 md:hover:opacity-100"
+            className="inline-flex size-7 shrink-0 items-center justify-center rounded-full text-foreground/50 opacity-50 transition-all hover:text-foreground hover:opacity-100 md:opacity-0 md:group-hover:opacity-60 md:focus-visible:opacity-100 md:hover:opacity-100"
           >
             <Pencil className="size-3.5" aria-hidden />
           </button>

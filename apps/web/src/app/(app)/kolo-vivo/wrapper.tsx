@@ -94,14 +94,15 @@ export function KoloVivoWrapper({
       )}
 
       {/* Leitura contínua — membros em sequência, depois a família como
-       * continuação natural. Sem tabs (P-KV-2 desta etapa). Quando há
-       * múltiplos membros, eles aparecem um abaixo do outro com gap-12
-       * pra olho não confundir entre eles. */}
+       * continuação natural. Sem tabs (P-KV-2). Mudança de capítulo
+       * sentida via mt-8 extra antes da família (sem virar quebra). */}
       <div className="flex flex-col gap-12">
         {membros.map((m) => (
           <MembroEditor key={m.id} membro={m} />
         ))}
-        <FamiliaEditor familia={familia} />
+        <div className="mt-8">
+          <FamiliaEditor familia={familia} />
+        </div>
       </div>
     </div>
   );
