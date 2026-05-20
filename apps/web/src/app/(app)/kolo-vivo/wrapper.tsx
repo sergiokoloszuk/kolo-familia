@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { ChevronDown } from "lucide-react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 import { FamiliaEditor } from "./familia-editor";
 import { MembroEditor } from "./membro-editor";
@@ -59,13 +58,8 @@ export function KoloVivoWrapper({
   membros: MembroData[];
   sugestoes: SugestaoRow[];
 }) {
-  // Default: primeira aba é o primeiro membro (foco do produto), depois família.
-  const initialTab =
-    membros.length > 0 ? `membro-${membros[0].id}` : "familia";
-  const [tab, setTab] = useState(initialTab);
-
-  // Sugestões saíram de "tab" pra faixa contextual no topo.
-  // P-KV-8: parecem parte do retrato em construção, não fila de moderação.
+  // Sugestões — faixa contextual no topo (P-KV-8).
+  // Tabs membros/família — removidas (P-KV-2): agora é leitura contínua.
   const [showSugestoes, setShowSugestoes] = useState(false);
   const temSugestoes = sugestoes.length > 0;
 
@@ -99,26 +93,16 @@ export function KoloVivoWrapper({
         </div>
       )}
 
-      <Tabs value={tab} onValueChange={setTab} className="flex flex-col gap-4">
-        <TabsList className="flex w-full flex-wrap justify-start gap-1">
-          {membros.map((m) => (
-            <TabsTrigger key={m.id} value={`membro-${m.id}`}>
-              {m.nome}
-            </TabsTrigger>
-          ))}
-          <TabsTrigger value="familia">Família</TabsTrigger>
-        </TabsList>
-
+      {/* Leitura contínua — membros em sequência, depois a família como
+       * continuação natural. Sem tabs (P-KV-2 desta etapa). Quando há
+       * múltiplos membros, eles aparecem um abaixo do outro com gap-12
+       * pra olho não confundir entre eles. */}
+      <div className="flex flex-col gap-12">
         {membros.map((m) => (
-          <TabsContent key={m.id} value={`membro-${m.id}`}>
-            <MembroEditor membro={m} />
-          </TabsContent>
+          <MembroEditor key={m.id} membro={m} />
         ))}
-
-        <TabsContent value="familia">
-          <FamiliaEditor familia={familia} />
-        </TabsContent>
-      </Tabs>
+        <FamiliaEditor familia={familia} />
+      </div>
     </div>
   );
 }
