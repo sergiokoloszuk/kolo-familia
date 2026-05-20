@@ -240,14 +240,6 @@ export default async function PainelPage() {
   ]).size;
   const houveAtividade = totalConquistas + totalDesafios + totalCheckins > 0;
 
-  const statusSemana = !houveAtividade
-    ? "começou agora"
-    : totalConquistas >= 2 && totalConquistas > totalDesafios
-      ? "foi boa"
-      : totalDesafios >= 2 && totalDesafios > totalConquistas
-        ? "teve desafios"
-        : "teve de tudo";
-
   // ============================================================
   // Itens de "Essa semana" — lista editorial humana
   // ============================================================
@@ -378,57 +370,28 @@ export default async function PainelPage() {
     ctaHref: string;
   } =
     !houveAtividade
-      ? // Estado vazio com VARIAÇÃO POR ETAPA DE USO — três frases
-        // editoriais que avançam conforme a família convive com o produto.
-        idadeDias < 7
-        ? {
-            manchete: "Os primeiros dias",
-            texto: (
-              <>
-                Pequenas observações vão mostrando o{" "}
-                <strong className="font-semibold text-foreground">
-                  jeito da semana
-                </strong>{" "}
-                de vocês. Uma frase por dia já basta.
-              </>
-            ),
-            chips: [{ label: "Dia a dia", tone: "foco" }],
-            ctaLabel: "Registrar primeira",
-            ctaHref: "/registrar/diario",
-          }
-        : idadeDias < 14
-          ? {
-              manchete: "Algumas coisas começam a aparecer",
-              texto: (
-                <>
-                  A Kolo vai aprendendo o{" "}
-                  <strong className="font-semibold text-foreground">
-                    ritmo da semana
-                  </strong>{" "}
-                  de vocês. Cada observação ajuda a entender o que volta e o
-                  que é só do momento.
-                </>
-              ),
-              chips: [{ label: "Dia a dia", tone: "foco" }],
-              ctaLabel: "Registrar dia",
-              ctaHref: "/registrar/diario",
-            }
-          : {
-              manchete: "O dia a dia ficando mais claro",
-              texto: (
-                <>
-                  O dia a dia começa a{" "}
-                  <strong className="font-semibold text-foreground">
-                    ganhar forma
-                  </strong>{" "}
-                  aos poucos. Cada observação ajuda a entender o que é jeito
-                  da criança e o que é só do momento.
-                </>
-              ),
-              chips: [{ label: "Dia a dia", tone: "foco" }],
-              ctaLabel: "Registrar dia",
-              ctaHref: "/registrar/diario",
-            }
+      ? // Estado vazio único, simples — sem variação por etapa.
+        // Manchete varia minimamente; subtítulo é uma frase só.
+        {
+          manchete:
+            idadeDias < 7
+              ? "Os primeiros dias"
+              : idadeDias < 14
+                ? "Algumas coisas começam a aparecer"
+                : "O dia a dia ficando mais claro",
+          texto: (
+            <>
+              Uma observação por dia já ajuda a entender{" "}
+              <strong className="font-semibold text-foreground">
+                como a semana está sendo
+              </strong>
+              .
+            </>
+          ),
+          chips: [{ label: "Dia a dia", tone: "foco" }],
+          ctaLabel: idadeDias < 7 ? "Registrar primeira" : "Registrar dia",
+          ctaHref: "/registrar/diario",
+        }
       : totalConquistas > totalDesafios
         ? {
             manchete: "Vale manter o que ajudou",
@@ -508,11 +471,7 @@ export default async function PainelPage() {
       <header>
         <Eyebrow>{format(hoje, "EEEE · d 'de' MMMM", { locale: ptBR })}</Eyebrow>
         <h1 className="mt-1 font-heading text-3xl text-foreground md:text-4xl">
-          Oi, {greeting}.{" "}
-          <em className="not-italic text-brand-purple">
-            Essa semana {statusSemana}
-          </em>
-          .
+          Oi, {greeting}.
         </h1>
       </header>
 
@@ -682,8 +641,7 @@ export default async function PainelPage() {
           </div>
           {itensSemana.length === 0 ? (
             <p className="max-w-md text-[15px] leading-relaxed text-muted-foreground">
-              Esperando os primeiros registros — aos poucos eles vão
-              mostrando o jeito da semana de vocês.
+              Os primeiros registros aparecem aqui.
             </p>
           ) : (
             <ul className="flex flex-col">
@@ -842,9 +800,9 @@ export default async function PainelPage() {
         <p className="text-sm text-foreground md:text-base">
           E você,{" "}
           <strong className="font-bold text-brand-purple-dark">
-            como tá hoje
+            como foi o dia
           </strong>
-          ? Um toque rápido — fica só entre vocês.
+          ?
         </p>
         <Link
           href="/registrar/diario"
@@ -934,9 +892,9 @@ const CARD_TONES = [
 // sem nome, sem observação). Texto é claramente meta ("aparece aqui"),
 // pra usuário entender que é lugar reservado, não dado fictício.
 const GHOST_PHRASES = [
-  "A primeira conquista da semana aparece aqui.",
-  "Algo pequeno que você notou e quis guardar.",
-  "Um momento que voltou a acontecer no dia a dia.",
+  "Algumas pequenas conquistas aparecem aqui.",
+  "Coisas do dia a dia que merecem ser lembradas.",
+  "Um momento que voltou a acontecer — e por isso importa.",
 ];
 
 function ConquistasGrid({ conquistas }: { conquistas: ConquistaDiario[] }) {
