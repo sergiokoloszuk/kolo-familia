@@ -99,15 +99,14 @@ export default async function EstrategiasPage(
           <Sparkles aria-hidden />
         </IconCard>
         <div>
-          <Eyebrow>Estratégias</Eyebrow>
+          <Eyebrow>Quando você precisa de ajuda</Eyebrow>
           <h1 className="mt-1 font-heading text-3xl text-foreground md:text-4xl">
-            Conversa e{" "}
-            <em className="not-italic text-brand-purple">biblioteca da fase</em>
+            Conta o que aconteceu.{" "}
+            <em className="not-italic text-brand-purple">
+              Vamos pensar nisso juntos
+            </em>
+            .
           </h1>
-          <p className="mt-2 max-w-2xl text-muted-foreground">
-            Conte uma situação ou peça um tipo específico — o sistema escolhe a
-            melhor leitura pra essa fase da criança.
-          </p>
         </div>
       </header>
 
