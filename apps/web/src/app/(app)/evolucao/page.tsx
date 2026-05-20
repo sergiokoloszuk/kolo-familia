@@ -1,15 +1,6 @@
 import Link from "next/link";
-import { differenceInCalendarDays, formatRelative } from "date-fns";
-import { ptBR } from "date-fns/locale";
-import {
-  ArrowRight,
-  BarChart3,
-  CalendarClock,
-  FileText,
-  Sparkles,
-  Sprout,
-  TriangleAlert,
-} from "lucide-react";
+import { differenceInCalendarDays } from "date-fns";
+import { Sprout } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { EstadoVazio } from "@/components/brand/estado-vazio";
 import { Eyebrow } from "@/components/brand/eyebrow";
@@ -17,18 +8,17 @@ import { loadFamilyContext } from "@/lib/auth/require-user";
 import { cn } from "@/lib/utils";
 
 /**
- * Evolução (Fase 1) — leitura do que foi mudando ao longo do tempo.
+ * Evolução (Fase 2) — leitura editorial do que foi mudando.
  *
- * Removido:
- *   - 3 ResumoCards (KPI dashboard) → números não são protagonistas
- *   - Filtros 7d/30d/90d/Tudo → temporalidade vem do conteúdo, não de query manual
- *   - Botão grande "Registrar dia" no header → link discreto no rodapé
- *   - IconCard pesado no header
+ * Antes: timeline com dots redondos coloridos, border-l vertical,
+ * badges categóricas "Conquista/Desafio/Registro/Check-in/Relatório".
  *
- * Mantido:
- *   - Timeline editorial (Fase 2 vai refinar visual)
- *   - EstadoVazio acolhedor
- *   - Card de Relatórios pra terapeuta/escola
+ * Agora: eventos agrupados em BUCKETS TEMPORAIS naturais (Hoje /
+ * Ontem / Esta semana / etc), com marcadores tipográficos sutis
+ * (✓ ! · ○ ◇) e leitura corrida entre items. Mesma régua de
+ * "Essa semana" da Home.
+ *
+ * Mantém: queries dos diários/check-ins/relatórios, schema, banco.
  */
 
 type TimelineEvento =
@@ -78,19 +68,49 @@ function nomeFromRel(rel: unknown): string | null {
 }
 
 const ESCALA_LABEL: Record<string, string> = {
-  muito_bem: "Muito bem",
-  bem: "Bem",
-  neutro: "Neutro",
-  dificil: "Difícil",
-  muito_dificil: "Muito difícil",
+  muito_bem: "muito bem",
+  bem: "bem",
+  neutro: "neutro",
+  dificil: "difícil",
+  muito_dificil: "muito difícil",
 };
+
+/**
+ * Buckets temporais — janelas naturais que dão estrutura sem filtros
+ * manuais. Cada bucket vira uma "seção" com h3 micromarker discreto.
+ */
+function bucketTemporal(dataISO: string): { label: string; ordem: number } {
+  const dias = differenceInCalendarDays(new Date(), new Date(dataISO));
+  if (dias <= 0) return { label: "Hoje", ordem: 0 };
+  if (dias === 1) return { label: "Ontem", ordem: 1 };
+  if (dias <= 7) return { label: "Esta semana", ordem: 2 };
+  if (dias <= 14) return { label: "Semana passada", ordem: 3 };
+  if (dias <= 30) return { label: "Este mês", ordem: 4 };
+  if (dias <= 60) return { label: "Mês passado", ordem: 5 };
+  if (dias <= 90) return { label: "Há alguns meses", ordem: 6 };
+  if (dias <= 180) return { label: "Há vários meses", ordem: 7 };
+  return { label: "Mais antigo", ordem: 8 };
+}
+
+function agruparPorBucket(
+  eventos: TimelineEvento[],
+): Array<{ label: string; ordem: number; eventos: TimelineEvento[] }> {
+  const map = new Map<
+    number,
+    { label: string; ordem: number; eventos: TimelineEvento[] }
+  >();
+  for (const ev of eventos) {
+    const { label, ordem } = bucketTemporal(ev.data);
+    if (!map.has(ordem)) map.set(ordem, { label, ordem, eventos: [] });
+    map.get(ordem)!.eventos.push(ev);
+  }
+  return [...map.values()].sort((a, b) => a.ordem - b.ordem);
+}
 
 export default async function EvolucaoPage() {
   const { supabase, family } = await loadFamilyContext();
   const familyId = family!.id;
 
-  // Sem filtro de período — sempre traz os últimos N registros,
-  // a temporalidade emerge do conteúdo (datas relativas dos itens).
   const [{ data: diarios }, { data: checkIns }, { data: relatorios }] =
     await Promise.all([
       supabase
@@ -117,7 +137,6 @@ export default async function EvolucaoPage() {
         .limit(30),
     ]);
 
-  // Mescla em uma timeline ordenada
   const eventos: TimelineEvento[] = [];
 
   for (const d of diarios ?? []) {
@@ -176,8 +195,8 @@ export default async function EvolucaoPage() {
     });
   }
 
-  // Ordena descendente por data
   eventos.sort((a, b) => b.data.localeCompare(a.data));
+  const buckets = agruparPorBucket(eventos);
 
   return (
     <div className="flex flex-col gap-10">
@@ -199,11 +218,11 @@ export default async function EvolucaoPage() {
         </h2>
 
         {eventos.length > 0 ? (
-          <ol className="relative ml-3 mt-6 flex flex-col gap-6 border-l-2 border-kolo-linha pl-8 pt-2">
-            {eventos.map((ev, idx) => (
-              <TimelineItem key={`${ev.tipo}-${idx}`} ev={ev} />
+          <div className="mt-8 flex flex-col gap-10">
+            {buckets.map((bucket) => (
+              <BucketSection key={bucket.label} bucket={bucket} />
             ))}
-          </ol>
+          </div>
         ) : (
           <div className="mt-6">
             <EstadoVazio
@@ -223,7 +242,6 @@ export default async function EvolucaoPage() {
         )}
       </section>
 
-      {/* Link discreto pra registrar — convite contextual, não CTA estrutural */}
       {eventos.length > 0 && (
         <div className="flex justify-center">
           <Link
@@ -235,7 +253,6 @@ export default async function EvolucaoPage() {
         </div>
       )}
 
-      {/* CTA pra ver relatórios (link pro legacy enquanto não consolida) */}
       <div className="flex items-center justify-between gap-4 rounded-3xl border border-kolo-linha bg-white p-6">
         <div>
           <h3 className="font-heading text-base font-semibold text-foreground">
@@ -247,10 +264,9 @@ export default async function EvolucaoPage() {
         </div>
         <Link
           href="/relatorios"
-          className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
+          className="inline-flex items-center gap-1 text-sm font-semibold text-brand-purple underline-offset-4 hover:underline"
         >
-          Abrir relatórios
-          <ArrowRight className="ml-1 size-3" aria-hidden />
+          Abrir relatórios →
         </Link>
       </div>
     </div>
@@ -258,159 +274,175 @@ export default async function EvolucaoPage() {
 }
 
 // ============================================================
-// Componentes auxiliares
+// Bucket temporal — seção com h3 micromarker + lista de eventos
 // ============================================================
 
-function TimelineItem({ ev }: { ev: TimelineEvento }) {
-  const config = getTimelineConfig(ev);
-  const dataObj = new Date(ev.data);
-  const ehHoje = differenceInCalendarDays(new Date(), dataObj) === 0;
-
+function BucketSection({
+  bucket,
+}: {
+  bucket: { label: string; eventos: TimelineEvento[] };
+}) {
   return (
-    <li className="relative">
-      <span
-        aria-hidden
-        className={cn(
-          "absolute -left-[42px] top-1.5 flex size-6 items-center justify-center rounded-full ring-4 ring-background",
-          config.dotBg,
-        )}
-      >
-        <config.icon className={cn("size-3 stroke-[2.5]", config.dotIcon)} aria-hidden />
-      </span>
-
-      <div className="flex flex-col gap-2">
-        <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-          <span className="font-semibold uppercase tracking-[0.12em]">
-            {ehHoje
-              ? "Hoje"
-              : formatRelative(dataObj, new Date(), { locale: ptBR })}
-          </span>
-          <span
+    <section>
+      <h3 className="text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground">
+        {bucket.label}
+      </h3>
+      <ul className="mt-3 flex flex-col">
+        {bucket.eventos.map((ev, i) => (
+          <li
+            key={`${bucket.label}-${i}`}
             className={cn(
-              "rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.12em]",
-              config.badgeStyles,
+              "py-3.5",
+              i > 0 && "border-t border-foreground/[0.06]",
             )}
           >
-            {config.tipoLabel}
-          </span>
-          {ev.tipo !== "check_in" && ev.tipo !== "relatorio" && ev.membro_nome && (
-            <span className="text-muted-foreground/80">· {ev.membro_nome}</span>
-          )}
-        </div>
-
-        <TimelineItemBody ev={ev} />
-      </div>
-    </li>
+            <EventoItem ev={ev} />
+          </li>
+        ))}
+      </ul>
+    </section>
   );
 }
 
-function TimelineItemBody({ ev }: { ev: TimelineEvento }) {
+// ============================================================
+// Render por tipo — marcadores tipográficos discretos
+// ============================================================
+
+function EventoItem({ ev }: { ev: TimelineEvento }) {
   if (ev.tipo === "conquista") {
     return (
-      <>
-        <h4 className="font-heading text-lg leading-snug text-foreground">
-          {ev.titulo}
-        </h4>
-        {ev.descricao && (
-          <p className="text-sm text-muted-foreground">{ev.descricao}</p>
-        )}
-      </>
+      <div className="flex items-start gap-3.5">
+        <span
+          aria-hidden
+          className="mt-[7px] inline-flex w-3.5 shrink-0 font-mono text-sm font-semibold leading-none text-cat-social"
+        >
+          ✓
+        </span>
+        <div className="flex flex-1 flex-col gap-1.5">
+          <p className="text-base leading-relaxed tracking-[-0.005em] text-foreground">
+            {ev.titulo}
+          </p>
+          {ev.descricao && (
+            <p className="text-sm leading-relaxed text-muted-foreground">
+              {ev.descricao}
+            </p>
+          )}
+          {ev.membro_nome && (
+            <p className="text-[11px] uppercase tracking-[0.14em] text-muted-foreground/60">
+              {ev.membro_nome}
+            </p>
+          )}
+        </div>
+      </div>
     );
   }
+
   if (ev.tipo === "desafio") {
     return (
-      <>
-        <h4 className="font-heading text-lg leading-snug text-foreground">
-          {ev.titulo}
-        </h4>
-        {ev.gatilho && (
-          <p className="text-xs text-muted-foreground">
-            Possível gatilho: <span className="font-semibold">{ev.gatilho}</span>
+      <div className="flex items-start gap-3.5">
+        <span
+          aria-hidden
+          className="mt-[7px] inline-flex w-3.5 shrink-0 font-mono text-sm font-semibold leading-none text-cat-sensorial"
+        >
+          !
+        </span>
+        <div className="flex flex-1 flex-col gap-1.5">
+          <p className="text-base leading-relaxed tracking-[-0.005em] text-foreground">
+            {ev.titulo}
           </p>
-        )}
-        {ev.descricao && (
-          <p className="text-sm text-muted-foreground">{ev.descricao}</p>
-        )}
-      </>
+          {ev.gatilho && (
+            <p className="text-xs text-muted-foreground">
+              possível gatilho:{" "}
+              <span className="italic text-foreground/70">{ev.gatilho}</span>
+            </p>
+          )}
+          {ev.descricao && (
+            <p className="text-sm leading-relaxed text-muted-foreground">
+              {ev.descricao}
+            </p>
+          )}
+          {ev.membro_nome && (
+            <p className="text-[11px] uppercase tracking-[0.14em] text-muted-foreground/60">
+              {ev.membro_nome}
+            </p>
+          )}
+        </div>
+      </div>
     );
   }
+
   if (ev.tipo === "registro") {
-    return <p className="text-sm text-foreground">{ev.titulo}</p>;
+    return (
+      <div className="flex items-start gap-3.5">
+        <span
+          aria-hidden
+          className="mt-[7px] inline-flex w-3.5 shrink-0 font-mono text-sm leading-none text-foreground/30"
+        >
+          ·
+        </span>
+        <div className="flex flex-1 flex-col gap-1.5">
+          <p className="text-base leading-relaxed text-foreground/85">
+            {ev.titulo}
+          </p>
+          {ev.membro_nome && (
+            <p className="text-[11px] uppercase tracking-[0.14em] text-muted-foreground/60">
+              {ev.membro_nome}
+            </p>
+          )}
+        </div>
+      </div>
+    );
   }
+
   if (ev.tipo === "check_in") {
     return (
-      <p className="text-sm text-muted-foreground">
-        Você marcou:{" "}
-        <span className="font-semibold text-foreground">
-          {ev.escala ? ESCALA_LABEL[ev.escala] ?? ev.escala : "sem escala"}
+      <div className="flex items-start gap-3.5">
+        <span
+          aria-hidden
+          className="mt-[7px] inline-flex w-3.5 shrink-0 font-mono text-sm leading-none text-cat-foco"
+        >
+          ○
         </span>
-      </p>
+        <p className="text-sm leading-relaxed text-muted-foreground">
+          Como você esteve:{" "}
+          <span className="text-foreground">
+            {ev.escala ? ESCALA_LABEL[ev.escala] ?? ev.escala : "sem marcação"}
+          </span>
+        </p>
+      </div>
     );
   }
+
   if (ev.tipo === "relatorio") {
     return (
-      <>
-        <p className="text-sm text-foreground">
-          {ev.membro_nome ?? "—"} ·{" "}
-          {ev.destinatario === "terapeuta" ? "Para terapeuta" : "Para escola"}
-        </p>
-        <p className="text-xs text-muted-foreground">
-          Janela {ev.janela_inicio} → {ev.janela_fim}
-        </p>
-        <Link
-          href={`/relatorios/${ev.id}`}
-          className="mt-1 inline-flex items-center gap-1 text-xs font-semibold text-brand-purple hover:underline"
+      <div className="flex items-start gap-3.5">
+        <span
+          aria-hidden
+          className="mt-[7px] inline-flex w-3.5 shrink-0 font-mono text-sm leading-none text-brand-purple"
         >
-          Abrir relatório
-          <ArrowRight className="size-3" aria-hidden />
-        </Link>
-      </>
+          ◇
+        </span>
+        <div className="flex flex-1 flex-col gap-1.5">
+          <p className="text-base leading-relaxed text-foreground">
+            Relatório pra{" "}
+            {ev.destinatario === "terapeuta" ? "terapeuta" : "escola"}
+            {ev.membro_nome && (
+              <span className="text-muted-foreground"> · sobre {ev.membro_nome}</span>
+            )}
+          </p>
+          <p className="text-xs text-muted-foreground">
+            Janela {ev.janela_inicio} → {ev.janela_fim}
+          </p>
+          <Link
+            href={`/relatorios/${ev.id}`}
+            className="mt-1 inline-flex w-fit text-xs font-semibold text-brand-purple underline-offset-4 hover:underline"
+          >
+            Abrir →
+          </Link>
+        </div>
+      </div>
     );
   }
-  return null;
-}
 
-function getTimelineConfig(ev: TimelineEvento) {
-  switch (ev.tipo) {
-    case "conquista":
-      return {
-        icon: Sparkles,
-        tipoLabel: "Conquista",
-        dotBg: "bg-brand-yellow",
-        dotIcon: "text-brand-purple-dark",
-        badgeStyles: "bg-brand-yellow/20 text-brand-purple-dark",
-      };
-    case "desafio":
-      return {
-        icon: TriangleAlert,
-        tipoLabel: "Desafio",
-        dotBg: "bg-cat-emocao-bg",
-        dotIcon: "text-cat-emocao",
-        badgeStyles: "bg-cat-emocao-bg text-cat-emocao",
-      };
-    case "registro":
-      return {
-        icon: FileText,
-        tipoLabel: "Registro",
-        dotBg: "bg-kolo-lilas-bg-2",
-        dotIcon: "text-muted-foreground",
-        badgeStyles: "bg-kolo-lilas-bg-2 text-muted-foreground",
-      };
-    case "check_in":
-      return {
-        icon: CalendarClock,
-        tipoLabel: "Check-in",
-        dotBg: "bg-cat-foco-bg",
-        dotIcon: "text-cat-foco",
-        badgeStyles: "bg-cat-foco-bg text-cat-foco",
-      };
-    case "relatorio":
-      return {
-        icon: BarChart3,
-        tipoLabel: "Relatório",
-        dotBg: "bg-brand-purple/15",
-        dotIcon: "text-brand-purple",
-        badgeStyles: "bg-brand-purple/15 text-brand-purple",
-      };
-  }
+  return null;
 }
