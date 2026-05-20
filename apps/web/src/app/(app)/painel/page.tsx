@@ -261,7 +261,7 @@ export default async function PainelPage() {
               <span className="absolute inset-0 animate-ping rounded-full bg-brand-yellow opacity-50" />
               <span className="relative size-2 rounded-full bg-brand-yellow" />
             </span>
-            Vimos sua semana
+            {houveAtividade ? "Vimos sua semana" : "Começando a leitura"}
           </span>
           <h2 className="mt-4 font-heading text-3xl leading-[1.15] text-foreground md:text-4xl">
             {!houveAtividade ? (
