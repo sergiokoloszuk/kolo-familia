@@ -6,37 +6,30 @@ import {
   BookOpen,
   CalendarClock,
   Gamepad2,
-  Library,
   Lightbulb,
-  MessageCircle,
   MessageSquare,
   Route,
   Sparkles,
   type LucideIcon,
 } from "lucide-react";
-import { EstadoVazio } from "@/components/brand/estado-vazio";
 import { Eyebrow } from "@/components/brand/eyebrow";
-import { IconCard } from "@/components/brand/icon-card";
 import { loadFamilyContext } from "@/lib/auth/require-user";
-import { cn } from "@/lib/utils";
 import { ConversarForm } from "../conversar/conversar-form";
 
 /**
- * Estratégias Kolo — área principal de orientação contextual.
+ * Estratégias Kolo — leitura contínua (Bloco 2):
+ *   1. Conversar sobre o que aconteceu (ConversarForm)
+ *   2. Outras formas de ajuda (biblioteca de tipos como continuação)
+ *   3. Conversas anteriores (lista editorial)
  *
- * Duas sub-abas (via `?tab=`):
- *   - conversa (default): chat com a inteligência Kolo + lista de conversas
- *   - biblioteca: tipos curados de resposta (brincadeiras, frases prontas, etc.)
+ * Sem tabs. Sem categorização funcional. A página é UM CAMINHO, com
+ * três paradas naturais.
  *
- * IMPORTANTE: NÃO usa a palavra "Ayla" no UI público. Ayla é a assistente
- * conversacional do WhatsApp — a área web se chama "Estratégias".
- *
- * `/conversar/[id]` e `/apoio/[key]` continuam ativos como destinos das
- * conversas individuais e dos formulários por tipo (NAV-9 vai redirecionar
- * pra subpaths de /estrategias quando consolidarmos).
+ * Mantém:
+ *   - rotas legacy /conversar e /apoio/[key]
+ *   - actions/IA intactas
+ *   - lógica de routing entre skills intacta
  */
-
-type Tab = "conversa" | "biblioteca";
 
 const ICONES_BIBLIOTECA: Record<string, LucideIcon> = {
   brincadeiras: Gamepad2,
@@ -48,28 +41,25 @@ const ICONES_BIBLIOTECA: Record<string, LucideIcon> = {
   rotinas: CalendarClock,
 };
 
+/**
+ * Descrições reescritas em linguagem do cotidiano (Bloco 2).
+ * Antes eram specs de output type ("2 a 3 brincadeiras concretas").
+ * Agora são frases curtas que descrevem o tipo de ajuda.
+ */
 const DESCRICOES_BIBLIOTECA: Record<string, string> = {
-  brincadeiras:
-    "2 a 3 brincadeiras concretas, com materiais simples e duração estimada.",
-  atividades: "Atividades do dia a dia que apoiam o neurodesenvolvimento.",
-  crencas:
-    "Crenças e mitos comuns sobre o tema, com contraposição prática — sem afirmar causas.",
+  brincadeiras: "Sugestões pra usar com o que tem em casa.",
+  atividades: "Pequenas atividades pra incluir no dia.",
+  crencas: "Mitos comuns e o que se sabe sobre eles.",
   o_que_fazer_diferente:
-    "Mudança concreta de abordagem para um desafio recorrente.",
-  historias_sociais:
-    "Mini-história em 3 a 5 cenas para preparar para uma situação específica.",
-  frases_prontas:
-    "5 a 8 frases para usar literalmente em momentos específicos.",
-  rotinas: "Sugestão de rotina ou ajuste em uma rotina existente.",
+    "Outra forma de lidar com algo que vem se repetindo.",
+  historias_sociais: "Uma história curta pra preparar pra uma situação.",
+  frases_prontas: "Frases curtas pra usar na hora.",
+  rotinas: "Sugestão de rotina ou ajuste numa que já existe.",
 };
 
-export default async function EstrategiasPage(
-  props: PageProps<"/estrategias">,
-) {
+export default async function EstrategiasPage() {
   const { supabase, family } = await loadFamilyContext();
   const familyId = family!.id;
-  const sp = await props.searchParams;
-  const tab: Tab = sp.tab === "biblioteca" ? "biblioteca" : "conversa";
 
   const [{ data: membros }, { data: conversas }, { data: tipos }] =
     await Promise.all([
@@ -92,8 +82,11 @@ export default async function EstrategiasPage(
         .order("ordem", { ascending: true }),
     ]);
 
+  const temTipos = (tipos ?? []).length > 0;
+  const temConversas = (conversas ?? []).length > 0;
+
   return (
-    <div className="flex flex-col gap-8">
+    <div className="flex flex-col gap-12">
       <header>
         <Eyebrow>Quando você precisa de ajuda</Eyebrow>
         <h1 className="mt-1 font-heading text-3xl text-foreground md:text-4xl">
@@ -105,131 +98,19 @@ export default async function EstrategiasPage(
         </h1>
       </header>
 
-      {/* Tabs — pill switcher inspirado no protótipo. */}
-      <div
-        role="tablist"
-        aria-label="Sub-abas de Estratégias"
-        className="inline-flex w-fit gap-1 rounded-2xl bg-kolo-lilas-bg-2 p-1.5"
-      >
-        <TabLink
-          href="/estrategias?tab=conversa"
-          active={tab === "conversa"}
-          icon={MessageCircle}
-          label="Conversa"
-        />
-        <TabLink
-          href="/estrategias?tab=biblioteca"
-          active={tab === "biblioteca"}
-          icon={Library}
-          label="Biblioteca da fase"
-        />
-      </div>
+      <ConversarForm membros={membros ?? []} />
 
-      {tab === "conversa" ? (
-        <ConversaTab membros={membros ?? []} conversas={conversas ?? []} />
-      ) : (
-        <BibliotecaTab tipos={tipos ?? []} />
-      )}
-    </div>
-  );
-}
+      {temTipos && <BibliotecaSection tipos={tipos ?? []} />}
 
-function TabLink({
-  href,
-  active,
-  icon: Icon,
-  label,
-}: {
-  href: string;
-  active: boolean;
-  icon: LucideIcon;
-  label: string;
-}) {
-  return (
-    <Link
-      href={href}
-      role="tab"
-      aria-selected={active}
-      className={cn(
-        "inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold transition-colors",
-        active
-          ? "bg-white text-foreground shadow-sm"
-          : "text-muted-foreground hover:text-foreground",
-      )}
-    >
-      <Icon className="size-4 stroke-[1.8]" aria-hidden />
-      {label}
-    </Link>
-  );
-}
-
-// ============================================================
-// Sub-aba: Conversa
-// ============================================================
-
-interface Membro {
-  id: string;
-  nome: string;
-}
-
-interface ConversaResumo {
-  id: string;
-  titulo: string | null;
-  created_at: string;
-}
-
-function ConversaTab({
-  membros,
-  conversas,
-}: {
-  membros: Membro[];
-  conversas: ConversaResumo[];
-}) {
-  return (
-    <div className="flex flex-col gap-8">
-      {/* Form flutua direto na página — sem Card wrapper "Nova conversa".
-       * O h1 do header já estabelece o contexto ("Conta o que aconteceu.
-       * Vamos pensar nisso juntos."), não precisa de h2 redundante aqui. */}
-      <ConversarForm membros={membros} />
-
-      {conversas.length > 0 && (
-        <section className="flex flex-col gap-4">
-          <div>
-            <Eyebrow>Conversas anteriores</Eyebrow>
-            <h2 className="mt-1 font-heading text-2xl text-foreground">
-              O que você{" "}
-              <em className="not-italic text-brand-purple">já perguntou</em>
-            </h2>
-          </div>
-          <ul className="flex flex-col gap-2">
-            {conversas.map((c) => (
-              <li key={c.id}>
-                <Link
-                  href={`/conversar/${c.id}`}
-                  className="block rounded-2xl border border-kolo-linha bg-white px-5 py-4 text-sm transition-all hover:-translate-y-0.5 hover:border-brand-purple hover:shadow-md"
-                >
-                  <div className="flex items-center justify-between gap-3">
-                    <span className="line-clamp-1 font-medium text-foreground">
-                      {c.titulo ?? "Conversa"}
-                    </span>
-                    <span className="shrink-0 text-xs text-muted-foreground">
-                      {formatRelative(new Date(c.created_at), new Date(), {
-                        locale: ptBR,
-                      })}
-                    </span>
-                  </div>
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </section>
+      {temConversas && (
+        <ConversasAnterioresSection conversas={conversas ?? []} />
       )}
     </div>
   );
 }
 
 // ============================================================
-// Sub-aba: Biblioteca da fase
+// Biblioteca — continuação contextual, não catálogo
 // ============================================================
 
 interface TipoBiblioteca {
@@ -238,48 +119,95 @@ interface TipoBiblioteca {
   ordem: number | null;
 }
 
-function BibliotecaTab({ tipos }: { tipos: TipoBiblioteca[] }) {
-  if (tipos.length === 0) {
-    return (
-      <EstadoVazio
-        icon={<Library />}
-        titulo="A biblioteca está em montagem"
-        descricao="Os tipos de estratégia (brincadeiras, frases prontas, histórias sociais, rotinas) aparecem aqui assim que a equipe curar os primeiros. Enquanto isso, use a aba Conversa."
-      />
-    );
-  }
-
+function BibliotecaSection({ tipos }: { tipos: TipoBiblioteca[] }) {
   return (
-    <ul className="grid gap-4 md:grid-cols-2">
-      {tipos.map((t) => {
-        const Icon = ICONES_BIBLIOTECA[t.key] ?? Sparkles;
-        return (
-          <li key={t.key}>
-            <Link
-              href={`/apoio/${t.key}`}
-              className="group flex h-full flex-col gap-3 rounded-3xl border border-kolo-linha bg-white p-6 transition-all hover:-translate-y-1 hover:border-brand-purple hover:shadow-lg"
-            >
-              <div className="flex items-start gap-4">
-                <IconCard tone="light">
-                  <Icon aria-hidden />
-                </IconCard>
-                <div className="flex-1">
-                  <h3 className="font-heading text-lg text-foreground">
-                    {t.label}
-                  </h3>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    {DESCRICOES_BIBLIOTECA[t.key] ?? ""}
-                  </p>
+    <section>
+      <Eyebrow>Outras formas de ajuda</Eyebrow>
+      <h2 className="mt-1 font-heading text-2xl text-foreground">
+        Se preferir um{" "}
+        <em className="not-italic text-brand-purple">formato específico</em>
+      </h2>
+      <ul className="mt-5 grid gap-3 md:grid-cols-2">
+        {tipos.map((t) => {
+          const Icon = ICONES_BIBLIOTECA[t.key] ?? Sparkles;
+          return (
+            <li key={t.key}>
+              <Link
+                href={`/apoio/${t.key}`}
+                className="group flex h-full flex-col rounded-2xl bg-white px-5 py-5 shadow-[0_1px_2px_rgba(46,10,82,0.04),_0_4px_12px_rgba(46,10,82,0.03)] transition-shadow hover:shadow-[0_4px_12px_rgba(46,10,82,0.06),_0_12px_28px_rgba(46,10,82,0.06)]"
+              >
+                <div className="flex items-start gap-3">
+                  <Icon
+                    className="mt-0.5 size-5 shrink-0 text-foreground/40"
+                    aria-hidden
+                  />
+                  <div className="flex-1">
+                    <h3 className="font-heading text-base font-medium leading-snug text-foreground md:text-lg">
+                      {t.label}
+                    </h3>
+                    <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">
+                      {DESCRICOES_BIBLIOTECA[t.key] ?? ""}
+                    </p>
+                  </div>
                 </div>
-              </div>
-              <span className="mt-auto inline-flex items-center gap-1.5 text-xs font-semibold text-brand-purple transition-all group-hover:gap-2.5">
-                Pedir
-                <ArrowRight className="size-3" aria-hidden />
+                <span className="mt-4 inline-flex items-center gap-1.5 text-xs font-semibold text-brand-purple transition-all group-hover:gap-2.5">
+                  Ver
+                  <ArrowRight className="size-3" aria-hidden />
+                </span>
+              </Link>
+            </li>
+          );
+        })}
+      </ul>
+    </section>
+  );
+}
+
+// ============================================================
+// Conversas anteriores — lista editorial estilo "Essa semana" da Home
+// ============================================================
+
+interface ConversaResumo {
+  id: string;
+  titulo: string | null;
+  created_at: string;
+}
+
+function ConversasAnterioresSection({
+  conversas,
+}: {
+  conversas: ConversaResumo[];
+}) {
+  return (
+    <section>
+      <Eyebrow>Conversas anteriores</Eyebrow>
+      <h2 className="mt-1 font-heading text-2xl text-foreground">
+        Onde vocês <em className="not-italic text-brand-purple">pararam</em>
+      </h2>
+      <ul className="mt-5 flex flex-col">
+        {conversas.map((c, idx) => (
+          <li
+            key={c.id}
+            className={
+              idx > 0 ? "border-t border-foreground/[0.06]" : undefined
+            }
+          >
+            <Link
+              href={`/conversar/${c.id}`}
+              className="group flex flex-col gap-1 py-3.5 transition-colors hover:text-brand-purple"
+            >
+              <span className="line-clamp-1 text-base leading-relaxed text-foreground transition-colors group-hover:text-brand-purple">
+                {c.titulo ?? "Conversa sem título"}
+              </span>
+              <span className="text-xs text-muted-foreground">
+                {formatRelative(new Date(c.created_at), new Date(), {
+                  locale: ptBR,
+                })}
               </span>
             </Link>
           </li>
-        );
-      })}
-    </ul>
+        ))}
+      </ul>
+    </section>
   );
 }
