@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { differenceInCalendarDays, format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { ArrowRight, Sparkles } from "lucide-react";
+import { ArrowRight, Sparkles, Star } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
@@ -215,6 +215,31 @@ export default async function PainelPage() {
         ? "teve desafios"
         : "teve de tudo";
 
+  // ============================================================
+  // Itens de "Essa semana" — lista editorial humana
+  // ============================================================
+  // Usa o TEXTO BRUTO das conquistas/desafios (já são observações
+  // escritas pela família). NUNCA contagens — listas devem soar como
+  // diário de bordo, não como log de eventos.
+  // Intercala conquista/desafio por data desc, limita a 5.
+  const itensSemana = [
+    ...(conquistas ?? []).map((c) => ({
+      id: `c-${c.id}`,
+      data: c.data,
+      tipo: "conquista" as const,
+      texto: c.conquista ?? "",
+    })),
+    ...(desafios ?? []).map((d) => ({
+      id: `d-${d.id}`,
+      data: d.data,
+      tipo: "desafio" as const,
+      texto: d.desafio ?? "",
+    })),
+  ]
+    .filter((i) => i.texto.trim().length > 0)
+    .sort((a, b) => b.data.localeCompare(a.data))
+    .slice(0, 5);
+
   // Bloco editorial do Foco da semana — card próprio abaixo do hero.
   // Cada estado tem manchete (h3 ativo), texto interpretativo, 1-2 chips
   // categóricos pra ancorar visualmente, e CTA contextual.
@@ -388,61 +413,6 @@ export default async function PainelPage() {
               .
             </span>
           </h2>
-
-          {/* Strip de métricas inline — anotação editorial, não dashboard. */}
-          {houveAtividade && (
-            <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-muted-foreground md:text-sm">
-              {totalConquistas > 0 && (
-                <span className="inline-flex items-center gap-1.5">
-                  <span
-                    aria-hidden
-                    className="inline-flex size-4 items-center justify-center rounded-full bg-cat-social-bg text-[10px] font-bold text-cat-social"
-                  >
-                    ✓
-                  </span>
-                  <strong className="font-semibold text-foreground">
-                    {totalConquistas}
-                  </strong>
-                  conquista{totalConquistas === 1 ? "" : "s"}
-                </span>
-              )}
-              {totalDesafios > 0 && (
-                <span className="inline-flex items-center gap-1.5">
-                  <span
-                    aria-hidden
-                    className="inline-flex size-4 items-center justify-center rounded-full bg-cat-sensorial-bg text-[10px] font-bold text-cat-sensorial"
-                  >
-                    !
-                  </span>
-                  <strong className="font-semibold text-foreground">
-                    {totalDesafios}
-                  </strong>
-                  desafio{totalDesafios === 1 ? "" : "s"}
-                </span>
-              )}
-              {totalCheckins > 0 && (
-                <span className="inline-flex items-center gap-1.5">
-                  <span
-                    aria-hidden
-                    className="inline-flex size-4 items-center justify-center rounded-full bg-cat-social-bg text-[10px] font-bold text-cat-social"
-                  >
-                    ✓
-                  </span>
-                  <strong className="font-semibold text-foreground">
-                    {totalCheckins}
-                  </strong>
-                  check-in{totalCheckins === 1 ? "" : "s"}
-                </span>
-              )}
-              <span>
-                em{" "}
-                <strong className="font-semibold text-foreground">
-                  {diasComRegistro}
-                </strong>{" "}
-                dia{diasComRegistro === 1 ? "" : "s"} dos últimos 7
-              </span>
-            </div>
-          )}
         </div>
       </section>
 
@@ -502,6 +472,53 @@ export default async function PainelPage() {
               </Link>
             )}
           </div>
+        </div>
+      </section>
+
+      {/* ============================================================
+       * ESSA SEMANA — lista editorial humana, não dashboard.
+       * Usa o TEXTO BRUTO das conquistas/desafios da família como
+       * itens (já são observações escritas). Marca discreta ✓ / !
+       * com fundo soft (não badge saturado). Em onboarding, frase
+       * editorial central "esperando os primeiros registros".
+       * ============================================================ */}
+      <section>
+        <div className="rounded-3xl bg-white px-6 py-7 shadow-[0_1px_2px_rgba(46,10,82,0.04),_0_4px_12px_rgba(46,10,82,0.03)] md:px-8 md:py-8">
+          <div className="mb-5 flex items-center gap-3">
+            <span className="inline-flex size-8 items-center justify-center rounded-xl bg-brand-yellow/10 text-brand-yellow">
+              <Star className="size-4" aria-hidden />
+            </span>
+            <h3 className="font-heading text-lg font-semibold text-foreground md:text-xl">
+              Essa semana
+            </h3>
+          </div>
+          {itensSemana.length === 0 ? (
+            <p className="max-w-md text-[15px] leading-relaxed text-muted-foreground">
+              Esperando os primeiros registros — eles desenham o que sua
+              família começa a perceber.
+            </p>
+          ) : (
+            <ul className="flex flex-col gap-3.5 text-[15px]">
+              {itensSemana.map((item) => (
+                <li key={item.id} className="flex items-start gap-3">
+                  <span
+                    aria-hidden
+                    className={cn(
+                      "mt-[3px] inline-flex size-5 shrink-0 items-center justify-center rounded-full text-[11px] font-bold",
+                      item.tipo === "conquista"
+                        ? "bg-cat-social-soft text-cat-social"
+                        : "bg-cat-sensorial-soft text-cat-sensorial",
+                    )}
+                  >
+                    {item.tipo === "conquista" ? "✓" : "!"}
+                  </span>
+                  <span className="leading-snug text-foreground/85">
+                    {item.texto}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
       </section>
 
