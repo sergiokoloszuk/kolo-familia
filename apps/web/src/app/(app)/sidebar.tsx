@@ -105,17 +105,19 @@ export function Sidebar({
         <Logo size={28} tone="light" />
       </Link>
 
-      {/* Seletor de criança ativa (se houver). */}
+      {/* Seletor de criança ativa (se houver). Peso visual reduzido pra
+          conteúdo virar protagonista: fundo mais lavado, avatar menor,
+          tipografia semibold em vez de bold. */}
       {criancaAtiva && (
-        <div className="flex items-center gap-3 rounded-2xl bg-kolo-lilas-bg-2 p-3 transition-colors hover:bg-kolo-lilas-bg">
+        <div className="flex items-center gap-3 rounded-2xl bg-kolo-lilas-bg-2/60 px-3 py-2.5 transition-colors hover:bg-kolo-lilas-bg-2">
           <span
             aria-hidden
-            className="flex size-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-brand-yellow to-brand-yellow-dark font-heading text-base font-semibold text-brand-purple-dark shadow-sm"
+            className="flex size-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-brand-yellow to-brand-yellow-dark font-heading text-[15px] font-semibold text-brand-purple-dark"
           >
             {criancaAtiva.nome[0]?.toUpperCase() ?? "?"}
           </span>
           <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-bold text-foreground">
+            <p className="truncate text-sm font-semibold text-foreground">
               {criancaAtiva.nome}
             </p>
             {criancaAtiva.idade != null && (
@@ -125,13 +127,15 @@ export function Sidebar({
             )}
           </div>
           <ChevronDown
-            className="size-3.5 shrink-0 text-muted-foreground"
+            className="size-3.5 shrink-0 text-muted-foreground/70"
             aria-hidden
           />
         </div>
       )}
 
-      {/* Navegação plana — 5 itens (sem grupos). */}
+      {/* Navegação plana — 5 itens. Item ativo segue o protótipo §nav-item.active:
+          bg lilás claro + texto roxo escuro + traço amarelo lateral 3px (não bg
+          sólido roxo). Ícones com stroke 1.5 pra menos peso visual. */}
       <nav className="flex flex-1 flex-col gap-1" aria-label="Navegação principal">
         {NAV_ITEMS.map((item) => {
           const Icon = item.icon;
@@ -141,16 +145,22 @@ export function Sidebar({
               key={item.href}
               href={item.href}
               className={cn(
-                "group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-colors",
+                "group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-colors",
                 active
-                  ? "bg-brand-purple font-semibold text-white"
-                  : "font-medium text-muted-foreground hover:bg-kolo-lilas-bg-2 hover:text-foreground",
+                  ? "bg-kolo-lilas-bg font-semibold text-brand-purple-dark"
+                  : "font-medium text-muted-foreground hover:bg-kolo-lilas-bg-2/70 hover:text-foreground",
               )}
             >
+              {active && (
+                <span
+                  aria-hidden
+                  className="absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-r-sm bg-brand-yellow"
+                />
+              )}
               <Icon
                 className={cn(
-                  "size-[18px] shrink-0 stroke-[1.8]",
-                  active && "text-brand-yellow",
+                  "size-[17px] shrink-0 stroke-[1.5]",
+                  active ? "text-brand-purple-dark" : "text-muted-foreground/80",
                 )}
                 aria-hidden
               />
@@ -172,7 +182,7 @@ export function Sidebar({
                 "bg-kolo-lilas-bg-2 text-foreground",
             )}
           >
-            <Settings className="size-4 stroke-[1.8]" aria-hidden />
+            <Settings className="size-4 stroke-[1.5]" aria-hidden />
           </Link>
           <Link
             href="/assinatura"
@@ -183,7 +193,7 @@ export function Sidebar({
                 "bg-kolo-lilas-bg-2 text-foreground",
             )}
           >
-            <CreditCard className="size-4 stroke-[1.8]" aria-hidden />
+            <CreditCard className="size-4 stroke-[1.5]" aria-hidden />
           </Link>
           {isAdmin && (
             <Link
@@ -196,7 +206,7 @@ export function Sidebar({
                   "bg-kolo-lilas-bg-2 text-foreground",
               )}
             >
-              <Shield className="size-4 stroke-[1.8]" aria-hidden />
+              <Shield className="size-4 stroke-[1.5]" aria-hidden />
             </Link>
           )}
           <form action="/auth/logout" method="post" className="ml-auto">
@@ -205,7 +215,7 @@ export function Sidebar({
               aria-label="Sair"
               className="inline-flex size-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-kolo-lilas-bg-2 hover:text-foreground"
             >
-              <LogOut className="size-4 stroke-[1.8]" aria-hidden />
+              <LogOut className="size-4 stroke-[1.5]" aria-hidden />
             </button>
           </form>
         </div>
