@@ -275,6 +275,98 @@ export default async function PainelPage() {
     .sort((a, b) => b.data.localeCompare(a.data))
     .slice(0, 5);
 
+  // ============================================================
+  // Sinais — "Momentos que se conversam"
+  // ============================================================
+  // Regras DETERMINÍSTICAS sem keyword/NLP, sem IA. Geram frases
+  // OBSERVACIONAIS (nunca "o sistema detectou"). A voz aqui é
+  // editorial: descrevem uma sensação de quem leu os registros,
+  // não uma análise algorítmica.
+  //
+  // Limita a 2 sinais visíveis pra evitar virar lista de relatório.
+  // Em ausência de sinais, o bloco renderiza com "lugar reservado"
+  // editorial (não esconde).
+  type Sinal = { id: string; texto: React.ReactNode };
+  const sinaisCalc: Sinal[] = [];
+
+  // Sinal — Equilíbrio (≥2 conquistas E ≥2 desafios na semana)
+  if (totalConquistas >= 2 && totalDesafios >= 2) {
+    sinaisCalc.push({
+      id: "equilibrio",
+      texto: (
+        <>
+          Conquistas e desafios apareceram lado a lado — é assim que as
+          semanas se misturam.
+        </>
+      ),
+    });
+  }
+
+  // Sinal — Concentração de desafios (≥3 desafios em 7d, sem equilíbrio)
+  if (totalDesafios >= 3 && totalConquistas < 2) {
+    sinaisCalc.push({
+      id: "concentracao-desafios",
+      texto: <>A semana teve mais peso em alguns dias.</>,
+    });
+  }
+
+  // Sinal — Presença recorrente (≥2 conquistas com mesma quem_estava)
+  const conquistasPorQuem = new Map<string, number>();
+  for (const c of conquistas ?? []) {
+    const q = (c as { quem_estava?: string | null }).quem_estava;
+    if (q && q !== "outro") {
+      conquistasPorQuem.set(q, (conquistasPorQuem.get(q) || 0) + 1);
+    }
+  }
+  const pessoaRecorrente = [...conquistasPorQuem.entries()].find(
+    ([, count]) => count >= 2,
+  );
+  if (pessoaRecorrente) {
+    const label = quemEstavaLabel(pessoaRecorrente[0]);
+    if (label) {
+      sinaisCalc.push({
+        id: "presenca",
+        texto: (
+          <>
+            Boa parte das conquistas aconteceu com {label} por perto.
+          </>
+        ),
+      });
+    }
+  }
+
+  // Sinal — Mãe leve (escala média ≥4 em 3+ checkins)
+  const escalasValidas = (checkins7d ?? [])
+    .map((c) => c.escala_emocional_mae)
+    .filter((v): v is number => typeof v === "number");
+  if (escalasValidas.length >= 3) {
+    const media =
+      escalasValidas.reduce((s, v) => s + v, 0) / escalasValidas.length;
+    if (media >= 4) {
+      sinaisCalc.push({
+        id: "leveza",
+        texto: (
+          <>Os dias com mais leveza apareceram também nesta semana.</>
+        ),
+      });
+    } else if (media < 3) {
+      sinaisCalc.push({
+        id: "cansaco",
+        texto: (
+          <>
+            Foi uma semana que pesou no fim do dia também — faz parte.
+          </>
+        ),
+      });
+    }
+  }
+
+  const sinais = sinaisCalc.slice(0, 2);
+  const sinaisTitulo =
+    sinais.length === 0
+      ? "Os primeiros momentos começam a aparecer."
+      : "Pequenas recorrências começam a ganhar forma.";
+
   // Bloco editorial do Foco da semana — card próprio abaixo do hero.
   // Cada estado tem manchete (h3 ativo), texto interpretativo, 1-2 chips
   // categóricos pra ancorar visualmente, e CTA contextual.
@@ -643,6 +735,61 @@ export default async function PainelPage() {
        * pra cima do greeting; NPS e avisos desceram pro rodapé.
        * ============================================================ */}
       <ConquistasGrid conquistas={conquistas ?? []} />
+
+      {/* ============================================================
+       * MOMENTOS QUE SE CONVERSAM (P5) — bloco roxo deep editorial.
+       * Caderno noturno de observações. Frases geradas por REGRAS
+       * DETERMINÍSTICAS (sinaisCalc acima) — nunca "sistema percebeu"
+       * ou "IA notou". Voz observacional, descreve sensação de quem
+       * leu os registros. Estado vazio: lugar reservado editorial.
+       * ============================================================ */}
+      <section
+        className="relative overflow-hidden rounded-3xl px-7 py-9 text-white md:px-10 md:py-10"
+        style={{
+          background:
+            "linear-gradient(135deg, var(--brand-purple-deep) 0%, var(--brand-purple-dark) 100%)",
+        }}
+      >
+        <span
+          aria-hidden
+          className="pointer-events-none absolute -right-24 -top-24 size-72 rounded-full opacity-40 blur-3xl"
+          style={{
+            background:
+              "radial-gradient(circle, rgba(255,186,0,0.22) 0%, transparent 70%)",
+          }}
+        />
+        <div className="relative">
+          <div className="inline-flex items-center gap-3">
+            <span
+              aria-hidden
+              className="h-[2px] w-7 rounded-full bg-brand-yellow"
+            />
+            <Eyebrow tone="dark" as="span">
+              Momentos que se conversam
+            </Eyebrow>
+          </div>
+          <h2 className="mt-4 max-w-xl font-heading text-2xl leading-snug text-white md:text-[26px]">
+            {sinaisTitulo}
+          </h2>
+          {sinais.length === 0 ? (
+            <p className="mt-4 max-w-lg text-[15px] leading-relaxed text-white/75">
+              Quando dois ou três registros começam a se conversar, eles
+              ganham forma aqui. Aos poucos, o cotidiano vai aparecendo.
+            </p>
+          ) : (
+            <ul className="mt-5 grid gap-4 md:grid-cols-2 md:gap-5">
+              {sinais.map((s) => (
+                <li
+                  key={s.id}
+                  className="border-l-2 border-brand-yellow pl-4 text-[15px] leading-relaxed text-white/85"
+                >
+                  {s.texto}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </section>
 
       {/* ============================================================
        * SUGESTÕES PRA REVISAR — só aparece quando há pendência real.
