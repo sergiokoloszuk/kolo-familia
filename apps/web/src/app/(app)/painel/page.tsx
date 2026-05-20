@@ -168,11 +168,11 @@ export default async function PainelPage() {
       ? {
           texto: (
             <>
-              Um minuto de registro hoje vira{" "}
+              Pequenas observações vão virando{" "}
               <strong className="font-semibold text-foreground">
-                padrão observável
+                contexto
               </strong>{" "}
-              em duas semanas. Não precisa ser longo — uma frase já conta.
+              com o tempo. Uma frase por dia já conta como leitura.
             </>
           ),
           ctaLabel: "Registrar primeira",
@@ -266,9 +266,16 @@ export default async function PainelPage() {
           <h2 className="mt-4 font-heading text-3xl leading-[1.15] text-foreground md:text-4xl">
             {!houveAtividade ? (
               <>
-                Painel ainda vazio —{" "}
-                <em className="not-italic text-brand-purple">vai encher</em>{" "}
-                com pouca coisa registrada
+                Os primeiros registros começam a{" "}
+                <span
+                  className="inline-block px-1"
+                  style={{
+                    background:
+                      "linear-gradient(180deg, transparent 60%, rgba(255,186,0,0.42) 60%)",
+                  }}
+                >
+                  desenhar padrões
+                </span>
               </>
             ) : totalConquistas > totalDesafios ? (
               <>
