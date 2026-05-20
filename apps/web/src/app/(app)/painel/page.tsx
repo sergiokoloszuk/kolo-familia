@@ -194,6 +194,10 @@ export default async function PainelPage() {
   const npsContexto: "d7" | "d30" | "manual" =
     idadeDias < 30 ? "d7" : "d30";
 
+  // Semana de leitura — usada como microcamada editorial no hero.
+  // Dia 0-6 = Semana 1; dia 7-13 = Semana 2; etc.
+  const semanaDeLeitura = Math.floor(idadeDias / 7) + 1;
+
   // ============================================================
   // Lógica do hero contextual
   // ============================================================
@@ -355,6 +359,19 @@ export default async function PainelPage() {
           boxShadow: "inset 0 -1px 0 rgba(46,10,82,0.04)",
         }}
       >
+        {/* Microcamada editorial — só desktop. Atende massa visual à direita
+            sem virar dashboard: numeração discreta de "leitura longitudinal". */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute right-10 top-9 hidden flex-col items-end text-right md:flex"
+        >
+          <span className="text-[10px] font-bold uppercase tracking-[0.24em] text-foreground/35">
+            Semana {semanaDeLeitura}
+          </span>
+          <span className="mt-1 text-[10px] lowercase tracking-[0.08em] text-foreground/30">
+            de leitura
+          </span>
+        </div>
         <div className="relative max-w-2xl">
           <span className="inline-flex items-center gap-2 rounded-full bg-white px-3.5 py-1.5 text-xs font-semibold text-muted-foreground shadow-sm">
             <span
