@@ -255,21 +255,57 @@ export default async function PainelPage() {
     ctaHref: string;
   } =
     !houveAtividade
-      ? {
-          manchete: "Primeiros traços",
-          texto: (
-            <>
-              Pequenas observações vão virando{" "}
-              <strong className="font-semibold text-foreground">
-                contexto
-              </strong>{" "}
-              com o tempo. Uma frase por dia já conta como leitura.
-            </>
-          ),
-          chips: [{ label: "Em observação", tone: "foco" }],
-          ctaLabel: "Registrar primeira",
-          ctaHref: "/registrar/diario",
-        }
+      ? // Estado vazio com VARIAÇÃO POR ETAPA DE USO — três frases
+        // editoriais que avançam conforme a família convive com o produto.
+        // Cria sensação de leitura longitudinal viva, não copy fixa.
+        idadeDias < 7
+        ? {
+            manchete: "Primeiros traços",
+            texto: (
+              <>
+                Pequenas observações vão virando{" "}
+                <strong className="font-semibold text-foreground">
+                  contexto
+                </strong>{" "}
+                com o tempo. Uma frase por dia já conta como leitura.
+              </>
+            ),
+            chips: [{ label: "Em observação", tone: "foco" }],
+            ctaLabel: "Registrar primeira",
+            ctaHref: "/registrar/diario",
+          }
+        : idadeDias < 14
+          ? {
+              manchete: "A leitura começa a se formar",
+              texto: (
+                <>
+                  A Kolo começa a reconhecer o{" "}
+                  <strong className="font-semibold text-foreground">
+                    jeito da semana
+                  </strong>{" "}
+                  de vocês. Cada observação ajuda a separar padrão de fase.
+                </>
+              ),
+              chips: [{ label: "Em observação", tone: "foco" }],
+              ctaLabel: "Registrar dia",
+              ctaHref: "/registrar/diario",
+            }
+          : {
+              manchete: "Padrão e fase se distinguindo",
+              texto: (
+                <>
+                  O contexto começa a{" "}
+                  <strong className="font-semibold text-foreground">
+                    ganhar forma
+                  </strong>{" "}
+                  aos poucos. Cada observação ajuda a separar o que é da fase
+                  do que é do jeito da criança.
+                </>
+              ),
+              chips: [{ label: "Em observação", tone: "foco" }],
+              ctaLabel: "Registrar dia",
+              ctaHref: "/registrar/diario",
+            }
       : totalConquistas > totalDesafios
         ? {
             manchete: "Manter o caminho que abriu",
