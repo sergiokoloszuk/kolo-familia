@@ -400,6 +400,16 @@ export default async function PainelPage() {
   return (
     <div className="flex flex-col gap-8">
       {/* ============================================================
+       * TOPO — faixa fina de assinatura (só renderiza se status !== active).
+       * Fica acima do greeting pra não intrudir na narrativa editorial.
+       * Em maioria dos usuários (active), nem aparece.
+       * ============================================================ */}
+      <SubscriptionBanner
+        status={subscription?.status}
+        trialDaysLeft={trialDaysLeft}
+      />
+
+      {/* ============================================================
        * GREETING — data atual + saudação
        * ============================================================ */}
       <header>
@@ -626,66 +636,11 @@ export default async function PainelPage() {
         </div>
       </section>
 
-      {/* Banners funcionais — mantidos da versão anterior */}
-      <SubscriptionBanner
-        status={subscription?.status}
-        trialDaysLeft={trialDaysLeft}
-      />
-
-      {npsElegivel && <NpsBanner contexto={npsContexto} />}
-
-      {((alertasOpen?.length ?? 0) > 0 ||
-        (adaptacoesPendentesCount ?? 0) > 0) && (
-        <Card className="rounded-3xl border-brand-yellow/40 bg-brand-yellow/5">
-          <CardHeader className="flex flex-row items-start justify-between gap-2">
-            <div>
-              <CardTitle className="text-base">
-                Precisa da sua atenção
-              </CardTitle>
-              <CardDescription>
-                {(alertasOpen?.length ?? 0) > 0 &&
-                  `${alertasOpen!.length} alerta(s)`}
-                {(alertasOpen?.length ?? 0) > 0 &&
-                  (adaptacoesPendentesCount ?? 0) > 0 &&
-                  " · "}
-                {(adaptacoesPendentesCount ?? 0) > 0 &&
-                  `${adaptacoesPendentesCount} sugestão(ões) pra revisar`}
-              </CardDescription>
-            </div>
-            <Link
-              href="/configuracoes/regras"
-              className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
-            >
-              Abrir
-            </Link>
-          </CardHeader>
-          {(alertasOpen?.length ?? 0) > 0 && (
-            <CardContent className="text-sm">
-              <ul className="flex flex-col gap-1.5">
-                {(alertasOpen ?? []).slice(0, 3).map((a) => (
-                  <li key={a.id} className="flex items-start gap-2">
-                    <Badge
-                      variant={
-                        a.severidade === "high"
-                          ? "destructive"
-                          : a.severidade === "warn"
-                            ? "default"
-                            : "secondary"
-                      }
-                    >
-                      {a.severidade}
-                    </Badge>
-                    <span className="text-muted-foreground">{a.mensagem}</span>
-                  </li>
-                ))}
-              </ul>
-            </CardContent>
-          )}
-        </Card>
-      )}
-
       {/* ============================================================
        * PEQUENAS CONQUISTAS (grid 3 cards temáticos)
+       * Banners administrativos (Subscription, NPS, "Precisa atenção")
+       * que ficavam aqui foram removidos no P6: subscription subiu
+       * pra cima do greeting; NPS e avisos desceram pro rodapé.
        * ============================================================ */}
       <ConquistasGrid conquistas={conquistas ?? []} />
 
@@ -750,6 +705,55 @@ export default async function PainelPage() {
           <ArrowRight className="size-4" aria-hidden />
         </Link>
       </section>
+
+      {/* ============================================================
+       * RODAPÉ ADMINISTRATIVO — discreto, fora da narrativa editorial.
+       * NPS (se elegível) + avisos pendentes (se houver). Quem não tem
+       * NPS pendente nem avisos abertos não vê nada aqui.
+       * ============================================================ */}
+      {npsElegivel && <NpsBanner contexto={npsContexto} />}
+
+      {((alertasOpen?.length ?? 0) > 0 ||
+        (adaptacoesPendentesCount ?? 0) > 0) && (
+        <section className="border-t border-foreground/[0.06] pt-6">
+          <h4 className="mb-3 text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground">
+            Precisa de atenção
+          </h4>
+          <ul className="flex flex-col gap-2.5 text-sm">
+            {(alertasOpen ?? []).slice(0, 3).map((a) => (
+              <li
+                key={a.id}
+                className="flex items-start gap-2.5 text-muted-foreground"
+              >
+                <span
+                  aria-hidden
+                  className="mt-[7px] size-1.5 shrink-0 rounded-full bg-brand-purple/40"
+                />
+                <span className="leading-relaxed">{a.mensagem}</span>
+              </li>
+            ))}
+            {(adaptacoesPendentesCount ?? 0) > 0 && (
+              <li className="flex items-start gap-2.5 text-muted-foreground">
+                <span
+                  aria-hidden
+                  className="mt-[7px] size-1.5 shrink-0 rounded-full bg-brand-purple/40"
+                />
+                <span className="leading-relaxed">
+                  {adaptacoesPendentesCount} sugestão
+                  {adaptacoesPendentesCount === 1 ? "" : "ões"} do Kolo Vivo
+                  pra revisar.{" "}
+                  <Link
+                    href="/configuracoes/regras"
+                    className="font-semibold text-brand-purple hover:underline"
+                  >
+                    Abrir →
+                  </Link>
+                </span>
+              </li>
+            )}
+          </ul>
+        </section>
+      )}
     </div>
   );
 }
@@ -958,21 +962,16 @@ function BannerLayout({
   return (
     <div
       className={cn(
-        "flex flex-wrap items-center justify-between gap-3 rounded-2xl border px-5 py-4 text-sm",
+        "flex flex-wrap items-center justify-between gap-3 rounded-full border px-4 py-2 text-xs md:text-sm",
         toneCls,
       )}
     >
-      <span>{children}</span>
+      <span className="leading-snug">{children}</span>
       <Link
         href="/assinatura"
-        className={cn(
-          buttonVariants({
-            size: "sm",
-            variant: tone === "neutral" ? "outline" : "default",
-          }),
-        )}
+        className="text-xs font-semibold underline-offset-4 hover:underline md:text-sm"
       >
-        {cta}
+        {cta} →
       </Link>
     </div>
   );
