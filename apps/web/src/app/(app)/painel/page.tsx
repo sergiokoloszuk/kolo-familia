@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { differenceInCalendarDays, format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Sparkles } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
@@ -9,6 +9,61 @@ import { Eyebrow } from "@/components/brand/eyebrow";
 import { loadFamilyContext } from "@/lib/auth/require-user";
 import { cn } from "@/lib/utils";
 import { NpsBanner } from "./nps-banner";
+
+// ============================================================
+// Chips categóricos do Foco da semana
+// Tons fixos do design system (globals.css) — sem queries dinâmicas;
+// o mapeamento de qual chip aparece em cada estado fica no focoContent.
+// ============================================================
+
+type ChipTone = "sensorial" | "social" | "emocao" | "foco" | "rotina";
+
+const CHIP_TONES: Record<
+  ChipTone,
+  { bg: string; text: string; dot: string }
+> = {
+  sensorial: {
+    bg: "bg-cat-sensorial-bg",
+    text: "text-cat-sensorial",
+    dot: "bg-cat-sensorial",
+  },
+  social: {
+    bg: "bg-cat-social-bg",
+    text: "text-cat-social",
+    dot: "bg-cat-social",
+  },
+  emocao: {
+    bg: "bg-cat-emocao-bg",
+    text: "text-cat-emocao",
+    dot: "bg-cat-emocao",
+  },
+  foco: {
+    bg: "bg-cat-foco-bg",
+    text: "text-cat-foco",
+    dot: "bg-cat-foco",
+  },
+  rotina: {
+    bg: "bg-cat-rotina-bg",
+    text: "text-cat-rotina",
+    dot: "bg-cat-rotina",
+  },
+};
+
+function FocoChip({ label, tone }: { label: string; tone: ChipTone }) {
+  const t = CHIP_TONES[tone];
+  return (
+    <span
+      className={cn(
+        "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold",
+        t.bg,
+        t.text,
+      )}
+    >
+      <span aria-hidden className={cn("size-1.5 rounded-full", t.dot)} />
+      {label}
+    </span>
+  );
+}
 
 export default async function PainelPage() {
   const { user, supabase, family } = await loadFamilyContext();
@@ -160,12 +215,19 @@ export default async function PainelPage() {
         ? "teve desafios"
         : "teve de tudo";
 
-  // Bloco editorial único — absorve a interpretação rica do antigo FOCO DA SEMANA.
-  // Texto em JSX porque tem ênfases. CTA primário contextual; secundário "Registrar
-  // dia" só aparece quando o primário não vai pra lá (pra não duplicar).
-  const focoContent =
+  // Bloco editorial do Foco da semana — card próprio abaixo do hero.
+  // Cada estado tem manchete (h3 ativo), texto interpretativo, 1-2 chips
+  // categóricos pra ancorar visualmente, e CTA contextual.
+  const focoContent: {
+    manchete: string;
+    texto: React.ReactNode;
+    chips: { label: string; tone: ChipTone }[];
+    ctaLabel: string;
+    ctaHref: string;
+  } =
     !houveAtividade
       ? {
+          manchete: "Primeiros traços",
           texto: (
             <>
               Pequenas observações vão virando{" "}
@@ -175,11 +237,13 @@ export default async function PainelPage() {
               com o tempo. Uma frase por dia já conta como leitura.
             </>
           ),
+          chips: [{ label: "Em observação", tone: "foco" }],
           ctaLabel: "Registrar primeira",
           ctaHref: "/registrar/diario",
         }
       : totalConquistas > totalDesafios
         ? {
+            manchete: "Manter o caminho que abriu",
             texto: (
               <>
                 {primeiraCrianca?.nome ?? "Vocês"} mostrou algo novo. Vale{" "}
@@ -189,11 +253,16 @@ export default async function PainelPage() {
                 e seguir devagar — sem pressão pra render mais.
               </>
             ),
+            chips: [
+              { label: "Conquistas", tone: "social" },
+              { label: "Continuidade", tone: "rotina" },
+            ],
             ctaLabel: "Ver estratégias",
             ctaHref: "/estrategias?tab=biblioteca",
           }
         : totalDesafios > totalConquistas
           ? {
+              manchete: "Ler sem revisar",
               texto: (
                 <>
                   Foi uma semana com peso. Identificar o que disparou é{" "}
@@ -203,10 +272,15 @@ export default async function PainelPage() {
                   . Vamos pensar na próxima vez sem revisar a passada.
                 </>
               ),
+              chips: [
+                { label: "Regulação", tone: "emocao" },
+                { label: "Gatilhos", tone: "sensorial" },
+              ],
               ctaLabel: "Pedir estratégia",
               ctaHref: "/estrategias",
             }
           : {
+              manchete: "Equilíbrio na mesma página",
               texto: (
                 <>
                   Conquistas e desafios convivem — é assim que o desenvolvimento
@@ -217,6 +291,10 @@ export default async function PainelPage() {
                   no longo prazo.
                 </>
               ),
+              chips: [
+                { label: "Equilíbrio", tone: "rotina" },
+                { label: "Observação", tone: "foco" },
+              ],
               ctaLabel: "Ver estratégias",
               ctaHref: "/estrategias",
             };
@@ -310,9 +388,6 @@ export default async function PainelPage() {
               .
             </span>
           </h2>
-          <p className="mt-3 max-w-xl text-muted-foreground">
-            {focoContent.texto}
-          </p>
 
           {/* Strip de métricas inline — anotação editorial, não dashboard. */}
           {houveAtividade && (
@@ -368,8 +443,43 @@ export default async function PainelPage() {
               </span>
             </div>
           )}
+        </div>
+      </section>
 
-          <div className="mt-5 flex flex-wrap gap-3 md:mt-6">
+      {/* ============================================================
+       * FOCO DA SEMANA — card branco editorial, eyebrow com ícone
+       * amarelo. Manchete h3 Fraunces, texto interpretativo, chips
+       * categóricos (cores do design system), CTA contextual.
+       * Migrado de dentro do hero pra dar identidade própria.
+       * ============================================================ */}
+      <section>
+        <div className="relative overflow-hidden rounded-3xl bg-white px-6 py-7 shadow-[0_1px_2px_rgba(46,10,82,0.04),_0_4px_12px_rgba(46,10,82,0.03)] md:px-8 md:py-8">
+          <span
+            aria-hidden
+            className="absolute left-0 top-0 h-[3px] w-full bg-gradient-to-r from-brand-yellow via-brand-yellow/40 to-transparent"
+          />
+          <div className="inline-flex items-center gap-2.5">
+            <span className="inline-flex size-6 items-center justify-center rounded-md bg-brand-yellow text-brand-purple-dark">
+              <Sparkles className="size-3.5" aria-hidden />
+            </span>
+            <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-muted-foreground">
+              Foco da semana
+            </span>
+          </div>
+          <h3 className="mt-3.5 font-heading text-2xl leading-snug text-foreground md:text-[26px]">
+            {focoContent.manchete}
+          </h3>
+          <p className="mt-3 max-w-xl text-[15px] leading-relaxed text-muted-foreground">
+            {focoContent.texto}
+          </p>
+          {focoContent.chips.length > 0 && (
+            <div className="mt-5 flex flex-wrap gap-2">
+              {focoContent.chips.map((chip) => (
+                <FocoChip key={chip.label} {...chip} />
+              ))}
+            </div>
+          )}
+          <div className="mt-6 flex flex-wrap gap-3">
             <Link
               href={focoContent.ctaHref}
               className={cn(
