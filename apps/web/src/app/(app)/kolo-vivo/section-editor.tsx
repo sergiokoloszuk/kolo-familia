@@ -40,12 +40,31 @@ const SECTION_TONE_CLASS: Record<SectionTone, string> = {
  * Card de formulário. Edição continua via botão Editar → textarea →
  * Salvar/Cancelar (refator de edição inline fica pra P-KV-7).
  */
+/**
+ * Microtexto temporal editorial (P-KV-6) — frase humana que muda conforme
+ * o tempo desde a última atualização. Não é "atualizado há X dias" técnico;
+ * é leitura de quem percebe que algo mudou no retrato.
+ */
+function labelTempo(atualizadoEm: string): string {
+  const diasAtras = Math.floor(
+    (Date.now() - new Date(atualizadoEm).getTime()) / (24 * 60 * 60 * 1000),
+  );
+  if (diasAtras <= 0) return "mudou hoje";
+  if (diasAtras <= 3) return "mudou nos últimos dias";
+  if (diasAtras <= 7) return "atualizado esta semana";
+  if (diasAtras <= 14) return "revisado faz pouco";
+  if (diasAtras <= 30) return "atualizado há algumas semanas";
+  if (diasAtras <= 90) return "atualizado há alguns meses";
+  return "atualizado há mais tempo";
+}
+
 export function SectionEditor({
   title,
   description,
   initialValue,
   placeholder,
   tone = "foco",
+  atualizadoEm,
   onSave,
 }: {
   title: string;
@@ -53,6 +72,7 @@ export function SectionEditor({
   initialValue: string;
   placeholder?: string;
   tone?: SectionTone;
+  atualizadoEm?: string | null;
   onSave: (texto: string) => Promise<void>;
 }) {
   const [editing, setEditing] = useState(false);
@@ -140,9 +160,16 @@ export function SectionEditor({
             </div>
           </div>
         ) : value.trim().length > 0 ? (
-          <p className="whitespace-pre-wrap text-base leading-relaxed text-foreground">
-            {value}
-          </p>
+          <>
+            <p className="whitespace-pre-wrap text-base leading-relaxed text-foreground">
+              {value}
+            </p>
+            {atualizadoEm && (
+              <p className="mt-4 text-xs text-foreground/40">
+                {labelTempo(atualizadoEm)}
+              </p>
+            )}
+          </>
         ) : (
           <p className="text-sm leading-relaxed text-muted-foreground/60">
             Isso vai sendo construído com o tempo.

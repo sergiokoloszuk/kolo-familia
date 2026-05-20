@@ -8,11 +8,21 @@ import { FamiliaEditor } from "./familia-editor";
 import { MembroEditor } from "./membro-editor";
 import { SugestoesPanel } from "./sugestoes-panel";
 
+/**
+ * Cada seção tem texto + timestamp da última atualização (P-KV-6).
+ * `atualizadoEm` é null quando a seção nunca foi salva via novos actions
+ * (jsonb antigo do onboarding pode não ter o campo).
+ */
+export type Secao = {
+  texto: string;
+  atualizadoEm: string | null;
+};
+
 export type FamiliaSecoes = {
-  composicao: string;
-  rotina: string;
-  recursos: string;
-  dinamica: string;
+  composicao: Secao;
+  rotina: Secao;
+  recursos: Secao;
+  dinamica: Secao;
 };
 
 export type MembroData = {
@@ -20,11 +30,11 @@ export type MembroData = {
   nome: string;
   idade: number;
   perfil: string;
-  essencial: string;
-  como_e: string;
-  corpo_rotina: string;
-  desafios_regulacao: string;
-  sensorial: string;
+  essencial: Secao;
+  como_e: Secao;
+  corpo_rotina: Secao;
+  desafios_regulacao: Secao;
+  sensorial: Secao;
   completude_pct: number;
 };
 
@@ -65,9 +75,7 @@ export function KoloVivoWrapper({
         <div className="flex flex-col gap-4">
           <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-kolo-lilas-bg-2/70 px-5 py-3">
             <p className="text-sm text-foreground">
-              Há{" "}
-              <strong className="font-semibold">{sugestoes.length}</strong>{" "}
-              atualiza{sugestoes.length === 1 ? "ção" : "ções"} esperando.
+              Algumas coisas novas apareceram por aqui.
             </p>
             <button
               type="button"

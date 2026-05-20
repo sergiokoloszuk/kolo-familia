@@ -74,7 +74,8 @@ export function MembroEditor({ membro }: { membro: MembroData }) {
             key={s.key}
             title={s.title}
             description={s.description}
-            initialValue={membro[s.key]}
+            initialValue={membro[s.key].texto}
+            atualizadoEm={membro[s.key].atualizadoEm}
             placeholder={s.placeholder}
             tone={s.tone}
             onSave={async (texto) => {

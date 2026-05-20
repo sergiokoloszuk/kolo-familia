@@ -61,7 +61,8 @@ export function FamiliaEditor({ familia }: { familia: FamiliaSecoes }) {
             key={s.key}
             title={s.title}
             description={s.description}
-            initialValue={familia[s.key]}
+            initialValue={familia[s.key].texto}
+            atualizadoEm={familia[s.key].atualizadoEm}
             placeholder={s.placeholder}
             tone={s.tone}
             onSave={async (texto) => {

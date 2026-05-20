@@ -47,7 +47,11 @@ export async function saveSecaoFamilia(input: z.infer<typeof saveFamiliaSchema>)
     dinamica: atual?.dinamica ?? {},
   } as Record<(typeof familiaCampos)[number], Record<string, unknown>>;
 
-  novo[campo] = { ...(novo[campo] as Record<string, unknown>), texto };
+  novo[campo] = {
+    ...(novo[campo] as Record<string, unknown>),
+    texto,
+    atualizado_em: new Date().toISOString(),
+  };
 
   await supabase.from("perfil_vivo_familia").upsert({
     family_account_id: family.id,
@@ -99,7 +103,11 @@ export async function saveSecaoMembro(input: z.infer<typeof saveMembroSchema>) {
     sensorial: atual?.sensorial ?? {},
   } as Record<(typeof membroCampos)[number], Record<string, unknown>>;
 
-  novo[campo] = { ...(novo[campo] as Record<string, unknown>), texto };
+  novo[campo] = {
+    ...(novo[campo] as Record<string, unknown>),
+    texto,
+    atualizado_em: new Date().toISOString(),
+  };
 
   await supabase.from("perfil_vivo_membro").upsert(
     {

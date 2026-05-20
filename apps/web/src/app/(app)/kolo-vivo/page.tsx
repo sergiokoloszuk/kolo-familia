@@ -34,10 +34,10 @@ export default async function KoloVivoPage() {
     ]);
 
   const familiaSecoes: FamiliaSecoes = {
-    composicao: extractTexto(familia?.composicao),
-    rotina: extractTexto(familia?.rotina),
-    recursos: extractTexto(familia?.recursos),
-    dinamica: extractTexto(familia?.dinamica),
+    composicao: extractSecao(familia?.composicao),
+    rotina: extractSecao(familia?.rotina),
+    recursos: extractSecao(familia?.recursos),
+    dinamica: extractSecao(familia?.dinamica),
   };
 
   const membrosData: MembroData[] = (membros ?? []).map((m) => {
@@ -47,11 +47,11 @@ export default async function KoloVivoPage() {
       nome: m.nome,
       idade: m.idade,
       perfil: m.perfil,
-      essencial: extractTexto(p?.essencial),
-      como_e: extractTexto(p?.como_e),
-      corpo_rotina: extractTexto(p?.corpo_rotina),
-      desafios_regulacao: extractTexto(p?.desafios_regulacao),
-      sensorial: extractTexto(p?.sensorial),
+      essencial: extractSecao(p?.essencial),
+      como_e: extractSecao(p?.como_e),
+      corpo_rotina: extractSecao(p?.corpo_rotina),
+      desafios_regulacao: extractSecao(p?.desafios_regulacao),
+      sensorial: extractSecao(p?.sensorial),
       completude_pct: p?.completude_pct ?? 0,
     };
   });
@@ -82,13 +82,18 @@ export default async function KoloVivoPage() {
 }
 
 /**
- * Os campos jsonb foram gravados pelo onboarding como { texto?: string, ... }.
- * Aqui extraímos só o `texto` para o editor simples desta versão.
- * (Versões futuras podem expor a estrutura inteira.)
+ * Os campos jsonb são gravados como { texto: string, atualizado_em?: ISO }.
+ * Onboarding antigo pode ter gravado apenas { texto } — `atualizado_em`
+ * fica null nesses casos e o microtexto temporal não aparece.
  */
-function extractTexto(json: unknown): string {
-  if (!json || typeof json !== "object") return "";
+function extractSecao(json: unknown): {
+  texto: string;
+  atualizadoEm: string | null;
+} {
+  if (!json || typeof json !== "object") return { texto: "", atualizadoEm: null };
   const obj = json as Record<string, unknown>;
-  if (typeof obj.texto === "string") return obj.texto;
-  return "";
+  const texto = typeof obj.texto === "string" ? obj.texto : "";
+  const atualizadoEm =
+    typeof obj.atualizado_em === "string" ? obj.atualizado_em : null;
+  return { texto, atualizadoEm };
 }
