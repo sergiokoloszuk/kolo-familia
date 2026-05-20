@@ -1,26 +1,58 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Check, Pencil } from "lucide-react";
+import { cn } from "@/lib/utils";
+
+/**
+ * Tons de fundo das seções — cores `-soft` (8-10% alpha) do design system.
+ * Mapeamento literal pro Tailwind v4 extrair todas as classes em build.
+ * Não usar concatenação dinâmica de strings.
+ */
+export type SectionTone =
+  | "foco"
+  | "social"
+  | "alimentacao"
+  | "emocao"
+  | "sensorial"
+  | "rotina"
+  | "comunicacao"
+  | "motor"
+  | "sono";
+
+const SECTION_TONE_CLASS: Record<SectionTone, string> = {
+  foco: "bg-cat-foco-soft",
+  social: "bg-cat-social-soft",
+  alimentacao: "bg-cat-alimentacao-soft",
+  emocao: "bg-cat-emocao-soft",
+  sensorial: "bg-cat-sensorial-soft",
+  rotina: "bg-cat-rotina-soft",
+  comunicacao: "bg-cat-comunicacao-soft",
+  motor: "bg-cat-motor-soft",
+  sono: "bg-cat-sono-soft",
+};
 
 /**
  * Editor de uma seção do Kolo Vivo.
  *
- * Modo: leitura → "Editar" abre textarea → "Salvar" persiste via server action.
+ * Visual: <section> respirada com fundo cromático sutil (tone) — não mais
+ * Card de formulário. Edição continua via botão Editar → textarea →
+ * Salvar/Cancelar (refator de edição inline fica pra P-KV-7).
  */
 export function SectionEditor({
   title,
   description,
   initialValue,
   placeholder,
+  tone = "foco",
   onSave,
 }: {
   title: string;
   description?: string;
   initialValue: string;
   placeholder?: string;
+  tone?: SectionTone;
   onSave: (texto: string) => Promise<void>;
 }) {
   const [editing, setEditing] = useState(false);
@@ -47,23 +79,36 @@ export function SectionEditor({
   }
 
   return (
-    <Card>
-      <CardHeader className="flex flex-row items-start justify-between gap-3">
+    <section
+      className={cn(
+        "rounded-3xl px-6 py-7 md:px-8 md:py-8",
+        SECTION_TONE_CLASS[tone],
+      )}
+    >
+      <header className="flex flex-row items-start justify-between gap-3">
         <div>
-          <CardTitle className="font-heading text-lg font-medium leading-snug text-foreground md:text-xl">
+          <h3 className="font-heading text-lg font-medium leading-snug text-foreground md:text-xl">
             {title}
-          </CardTitle>
+          </h3>
           {description && (
-            <CardDescription className="mt-1.5">{description}</CardDescription>
+            <p className="mt-1.5 text-sm text-muted-foreground">
+              {description}
+            </p>
           )}
         </div>
         {!editing && (
-          <Button type="button" variant="ghost" size="sm" onClick={() => setEditing(true)}>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={() => setEditing(true)}
+            className="text-muted-foreground hover:bg-white/40 hover:text-foreground"
+          >
             <Pencil aria-hidden="true" /> Editar
           </Button>
         )}
-      </CardHeader>
-      <CardContent>
+      </header>
+      <div className="mt-5">
         {editing ? (
           <div className="flex flex-col gap-2">
             <textarea
@@ -71,16 +116,25 @@ export function SectionEditor({
               value={value}
               placeholder={placeholder}
               onChange={(e) => setValue(e.target.value)}
-              className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+              className="flex w-full rounded-2xl border border-foreground/[0.08] bg-white/70 px-4 py-3 text-sm placeholder:text-muted-foreground/70 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
             />
-            {error && (
-              <p className="text-xs text-destructive">{error}</p>
-            )}
+            {error && <p className="text-xs text-destructive">{error}</p>}
             <div className="flex justify-end gap-2">
-              <Button type="button" variant="outline" size="sm" onClick={handleCancel} disabled={pending}>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={handleCancel}
+                disabled={pending}
+              >
                 Cancelar
               </Button>
-              <Button type="button" size="sm" onClick={handleSave} disabled={pending}>
+              <Button
+                type="button"
+                size="sm"
+                onClick={handleSave}
+                disabled={pending}
+              >
                 <Check aria-hidden="true" /> {pending ? "Salvando..." : "Salvar"}
               </Button>
             </div>
@@ -90,11 +144,11 @@ export function SectionEditor({
             {value}
           </p>
         ) : (
-          <p className="text-sm leading-relaxed text-muted-foreground/70">
+          <p className="text-sm leading-relaxed text-muted-foreground/60">
             Isso vai sendo construído com o tempo.
           </p>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </section>
   );
 }
