@@ -354,10 +354,7 @@ export default async function PainelPage() {
   }
 
   const sinais = sinaisCalc.slice(0, 2);
-  const sinaisTitulo =
-    sinais.length === 0
-      ? "Os primeiros momentos começam a aparecer."
-      : "Alguns momentos começaram a se repetir esta semana.";
+  const sinaisTitulo = "Algumas situações começam a se repetir.";
 
   // Bloco editorial do Foco da semana — card próprio abaixo do hero.
   // Cada estado tem manchete (h3 ativo), texto interpretativo, 1-2 chips
@@ -731,12 +728,10 @@ export default async function PainelPage() {
           <h2 className="mt-4 max-w-xl font-heading text-2xl leading-snug text-white md:text-[26px]">
             {sinaisTitulo}
           </h2>
-          {sinais.length === 0 ? (
-            <p className="mt-4 max-w-lg text-[15px] leading-relaxed text-white/75">
-              Quando algumas coisas começam a aparecer mais vezes, elas
-              ganham forma aqui. Aos poucos, o dia a dia vai aparecendo.
-            </p>
-          ) : (
+          <p className="mt-4 max-w-lg text-[15px] leading-relaxed text-white/75">
+            Aos poucos, o dia a dia mostra o que precisa de mais cuidado.
+          </p>
+          {sinais.length > 0 && (
             <ul className="mt-5 grid gap-4 md:grid-cols-2 md:gap-5">
               {sinais.map((s) => (
                 <li
