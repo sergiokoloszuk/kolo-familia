@@ -766,10 +766,35 @@ type ConquistaDiario = {
   membros_atipicos: { nome: string } | { nome: string }[] | null;
 };
 
+// Tons decorativos rotativos por POSIÇÃO no grid — não representam
+// categoria semântica do conteúdo (diários não têm domain no schema).
+// Cada conquista recebe um blur radial colorido conforme sua posição,
+// criando atmosfera editorial sem inventar categorização. CSS vars vêm
+// de globals.css §cat-*.
+const CARD_TONES = [
+  "var(--cat-alimentacao)",
+  "var(--cat-comunicacao)",
+  "var(--cat-motor)",
+];
+
+// Frases editoriais pros ghost cards — NÃO simulam conquista (sem data,
+// sem nome, sem observação). Texto é claramente meta ("aparece aqui"),
+// pra usuário entender que é lugar reservado, não dado fictício.
+const GHOST_PHRASES = [
+  "A primeira conquista da semana aparece aqui.",
+  "Algo pequeno que você notou e quer guardar.",
+  "Um padrão novo entrando na rotina.",
+];
+
 function ConquistasGrid({ conquistas }: { conquistas: ConquistaDiario[] }) {
-  if (conquistas.length === 0) {
-    return null;
-  }
+  // 3 slots fixos: preenche com conquistas reais, completa com ghost cards.
+  // Sempre renderiza a seção — em onboarding, os ghosts criam sensação de
+  // "lugar reservado", não "produto sem dados".
+  const slots: (ConquistaDiario | null)[] = Array.from(
+    { length: 3 },
+    (_, i) => conquistas[i] ?? null,
+  );
+  const houveConquistas = conquistas.length > 0;
 
   return (
     <section>
@@ -777,49 +802,86 @@ function ConquistasGrid({ conquistas }: { conquistas: ConquistaDiario[] }) {
         <h2 className="font-heading text-2xl text-foreground">
           Pequenas <em className="not-italic text-brand-purple">conquistas</em>
         </h2>
-        <Link
-          href="/evolucao"
-          className="inline-flex items-center gap-1 text-sm font-semibold text-brand-purple transition-all hover:gap-2"
-        >
-          Linha do tempo
-          <ArrowRight className="size-3" aria-hidden />
-        </Link>
+        {houveConquistas && (
+          <Link
+            href="/evolucao"
+            className="inline-flex items-center gap-1 text-sm font-semibold text-brand-purple transition-all hover:gap-2"
+          >
+            Linha do tempo
+            <ArrowRight className="size-3" aria-hidden />
+          </Link>
+        )}
       </div>
-      {/* Timeline editorial — barra amarela à esquerda, marcas pequenas.
-          Sem cards, sem palette categórica — leitura como diário. */}
-      <ol className="relative ml-1 flex flex-col gap-5 border-l-2 border-brand-yellow/30 pl-6">
-        {conquistas.slice(0, 3).map((c) => {
-          const nomeMembro = Array.isArray(c.membros_atipicos)
-            ? c.membros_atipicos[0]?.nome
-            : c.membros_atipicos?.nome;
-          return (
-            <li key={c.id} className="relative">
-              <span
-                aria-hidden
-                className="absolute -left-[1.625rem] top-2 size-2.5 rounded-full bg-brand-yellow ring-4 ring-kolo-page"
-              />
-              <p className="text-xs font-bold uppercase tracking-[0.14em] text-muted-foreground">
-                {format(new Date(c.data), "d 'de' MMM", { locale: ptBR })}
-                {nomeMembro && (
-                  <>
-                    {" · "}
-                    <span className="text-foreground/70">{nomeMembro}</span>
-                  </>
-                )}
-              </p>
-              <h3 className="mt-1 font-heading text-lg font-medium leading-snug text-foreground">
-                {c.conquista}
-              </h3>
-              {c.observacao_livre && (
-                <p className="mt-1.5 line-clamp-2 text-sm text-muted-foreground">
-                  {c.observacao_livre}
-                </p>
-              )}
-            </li>
-          );
-        })}
-      </ol>
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {slots.map((c, i) =>
+          c ? (
+            <ConquistaCard key={c.id} c={c} pos={i} />
+          ) : (
+            <GhostCard key={`ghost-${i}`} pos={i} />
+          ),
+        )}
+      </div>
     </section>
+  );
+}
+
+function ConquistaCard({
+  c,
+  pos,
+}: {
+  c: ConquistaDiario;
+  pos: number;
+}) {
+  const nomeMembro = Array.isArray(c.membros_atipicos)
+    ? c.membros_atipicos[0]?.nome
+    : c.membros_atipicos?.nome;
+  const toneColor = CARD_TONES[pos % CARD_TONES.length];
+
+  return (
+    <article className="relative overflow-hidden rounded-3xl bg-white px-6 py-6 shadow-[0_1px_2px_rgba(46,10,82,0.04),_0_4px_12px_rgba(46,10,82,0.03)] transition-shadow hover:shadow-[0_4px_12px_rgba(46,10,82,0.06),_0_12px_28px_rgba(46,10,82,0.06)]">
+      <span
+        aria-hidden
+        className="pointer-events-none absolute -right-10 -top-10 size-36 rounded-full opacity-40 blur-2xl"
+        style={{ background: toneColor }}
+      />
+      <div className="relative">
+        <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-muted-foreground">
+          {format(new Date(c.data), "d 'de' MMM", { locale: ptBR })}
+          {nomeMembro && (
+            <>
+              <span className="mx-1.5 opacity-60">·</span>
+              <span className="font-semibold normal-case tracking-normal text-foreground/70">
+                {nomeMembro}
+              </span>
+            </>
+          )}
+        </p>
+        <h3 className="mt-2 font-heading text-lg font-medium leading-snug text-foreground md:text-xl">
+          {c.conquista}
+        </h3>
+        {c.observacao_livre && (
+          <p className="mt-2 line-clamp-2 text-sm leading-relaxed text-muted-foreground">
+            {c.observacao_livre}
+          </p>
+        )}
+      </div>
+    </article>
+  );
+}
+
+function GhostCard({ pos }: { pos: number }) {
+  const text = GHOST_PHRASES[pos % GHOST_PHRASES.length];
+  return (
+    <article
+      aria-hidden
+      className="relative overflow-hidden rounded-3xl border border-dashed border-foreground/[0.08] bg-white/40 px-6 py-6"
+    >
+      <div className="flex min-h-[120px] items-center">
+        <p className="text-sm leading-relaxed text-muted-foreground/70">
+          {text}
+        </p>
+      </div>
+    </article>
   );
 }
 
