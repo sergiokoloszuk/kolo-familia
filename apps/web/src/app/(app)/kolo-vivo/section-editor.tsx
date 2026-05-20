@@ -1,8 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Button } from "@/components/ui/button";
-import { Check, Pencil } from "lucide-react";
+import { Pencil } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 /**
@@ -49,13 +48,13 @@ function labelTempo(atualizadoEm: string): string {
   const diasAtras = Math.floor(
     (Date.now() - new Date(atualizadoEm).getTime()) / (24 * 60 * 60 * 1000),
   );
-  if (diasAtras <= 0) return "mudou hoje";
-  if (diasAtras <= 3) return "mudou nos últimos dias";
-  if (diasAtras <= 7) return "atualizado esta semana";
-  if (diasAtras <= 14) return "revisado faz pouco";
-  if (diasAtras <= 30) return "atualizado há algumas semanas";
-  if (diasAtras <= 90) return "atualizado há alguns meses";
-  return "atualizado há mais tempo";
+  if (diasAtras <= 0) return "isso mudou hoje";
+  if (diasAtras <= 3) return "isso mudou nos últimos dias";
+  if (diasAtras <= 7) return "vocês mexeram nisso esta semana";
+  if (diasAtras <= 14) return "vocês mexeram nisso faz pouco";
+  if (diasAtras <= 30) return "isso mudou há algumas semanas";
+  if (diasAtras <= 90) return "isso mudou há alguns meses";
+  return "isso já tem um tempo";
 }
 
 export function SectionEditor({
@@ -79,29 +78,59 @@ export function SectionEditor({
   const [value, setValue] = useState(initialValue);
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const [showSaved, setShowSaved] = useState(false);
 
-  function handleSave() {
+  function commit() {
+    // Sem mudança → só fecha, não dispara save
+    if (value === initialValue) {
+      setEditing(false);
+      return;
+    }
     setError(null);
     startTransition(async () => {
       try {
         await onSave(value);
         setEditing(false);
+        setShowSaved(true);
+        setTimeout(() => setShowSaved(false), 2500);
       } catch (e) {
         setError(e instanceof Error ? e.message : "Erro ao salvar");
       }
     });
   }
 
-  function handleCancel() {
+  function cancel() {
     setValue(initialValue);
     setEditing(false);
     setError(null);
   }
 
+  function handleKey(e: React.KeyboardEvent<HTMLTextAreaElement>) {
+    if (e.key === "Escape") {
+      e.preventDefault();
+      cancel();
+    } else if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
+      e.preventDefault();
+      commit();
+    }
+  }
+
+  // Microtexto unificado: status de save tem prioridade sobre labelTempo
+  const statusMicro = pending
+    ? "salvando…"
+    : showSaved
+      ? "salvo"
+      : null;
+  const tempoMicro =
+    !editing && value.trim().length > 0 && atualizadoEm
+      ? labelTempo(atualizadoEm)
+      : null;
+  const microtexto = statusMicro ?? tempoMicro;
+
   return (
     <section
       className={cn(
-        "rounded-3xl px-6 py-7 md:px-8 md:py-8",
+        "group rounded-3xl px-6 py-7 md:px-8 md:py-8",
         SECTION_TONE_CLASS[tone],
       )}
     >
@@ -117,62 +146,56 @@ export function SectionEditor({
           )}
         </div>
         {!editing && (
-          <Button
+          <button
             type="button"
-            variant="ghost"
-            size="sm"
             onClick={() => setEditing(true)}
-            className="text-muted-foreground hover:bg-white/40 hover:text-foreground"
+            aria-label="Editar"
+            title="Editar"
+            className="inline-flex size-8 shrink-0 items-center justify-center rounded-full text-muted-foreground opacity-60 transition-all hover:bg-white/40 hover:text-foreground md:opacity-0 md:group-hover:opacity-60 md:focus-visible:opacity-100 md:hover:opacity-100"
           >
-            <Pencil aria-hidden="true" /> Editar
-          </Button>
+            <Pencil className="size-4" aria-hidden />
+          </button>
         )}
       </header>
       <div className="mt-5">
         {editing ? (
-          <div className="flex flex-col gap-2">
+          <>
             <textarea
-              rows={5}
+              autoFocus
+              rows={Math.max(4, value.split("\n").length + 1)}
               value={value}
               placeholder={placeholder}
               onChange={(e) => setValue(e.target.value)}
-              className="flex w-full rounded-2xl border border-foreground/[0.08] bg-white/70 px-4 py-3 text-sm placeholder:text-muted-foreground/70 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+              onBlur={commit}
+              onKeyDown={handleKey}
+              disabled={pending}
+              className="w-full resize-none whitespace-pre-wrap bg-transparent text-base leading-relaxed text-foreground placeholder:text-muted-foreground/50 focus:outline-none disabled:opacity-60"
             />
-            {error && <p className="text-xs text-destructive">{error}</p>}
-            <div className="flex justify-end gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={handleCancel}
-                disabled={pending}
-              >
-                Cancelar
-              </Button>
-              <Button
-                type="button"
-                size="sm"
-                onClick={handleSave}
-                disabled={pending}
-              >
-                <Check aria-hidden="true" /> {pending ? "Salvando..." : "Salvar"}
-              </Button>
-            </div>
-          </div>
-        ) : value.trim().length > 0 ? (
-          <>
-            <p className="whitespace-pre-wrap text-base leading-relaxed text-foreground">
-              {value}
-            </p>
-            {atualizadoEm && (
-              <p className="mt-4 text-xs text-foreground/40">
-                {labelTempo(atualizadoEm)}
-              </p>
+            {error && (
+              <p className="mt-2 text-xs text-destructive">{error}</p>
             )}
           </>
+        ) : value.trim().length > 0 ? (
+          <p
+            onClick={() => setEditing(true)}
+            className="cursor-text whitespace-pre-wrap text-base leading-relaxed text-foreground"
+          >
+            {value}
+          </p>
         ) : (
-          <p className="text-sm leading-relaxed text-muted-foreground/60">
+          <p
+            onClick={() => setEditing(true)}
+            className="cursor-text text-sm leading-relaxed text-muted-foreground/60"
+          >
             Isso vai sendo construído com o tempo.
+          </p>
+        )}
+        {microtexto && (
+          <p
+            className="mt-4 text-xs text-foreground/40"
+            aria-live="polite"
+          >
+            {microtexto}
           </p>
         )}
       </div>
