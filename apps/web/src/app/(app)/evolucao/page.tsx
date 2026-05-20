@@ -6,43 +6,30 @@ import {
   BarChart3,
   CalendarClock,
   FileText,
-  Plus,
   Sparkles,
   Sprout,
-  TrendingUp,
   TriangleAlert,
 } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { EstadoVazio } from "@/components/brand/estado-vazio";
 import { Eyebrow } from "@/components/brand/eyebrow";
-import { IconCard } from "@/components/brand/icon-card";
 import { loadFamilyContext } from "@/lib/auth/require-user";
 import { cn } from "@/lib/utils";
 
 /**
- * Evolução — visão longitudinal da jornada da criança e da família.
+ * Evolução (Fase 1) — leitura do que foi mudando ao longo do tempo.
  *
- * Conforme protótipo (19/05/2026):
- *   - 3 resumo-cards no topo (registros / conquistas / dias com registro)
- *   - Filtro de período (7d / 30d / 90d / tudo) via ?periodo=
- *   - Timeline vertical com items mixados de diarios, check_ins_diarios e
- *     relatorios_gerados, ordenada por data descendente
- *   - CTA "Registrar dia" no hero
+ * Removido:
+ *   - 3 ResumoCards (KPI dashboard) → números não são protagonistas
+ *   - Filtros 7d/30d/90d/Tudo → temporalidade vem do conteúdo, não de query manual
+ *   - Botão grande "Registrar dia" no header → link discreto no rodapé
+ *   - IconCard pesado no header
  *
- * Padrões (`ayla_padroes`) viriam aqui também, mas dependem da migration
- * 0019 estar aplicada — por ora omitidos.
- *
- * `/relatorios` segue ativo como rota legacy (NAV-9 → redirect futuro).
+ * Mantido:
+ *   - Timeline editorial (Fase 2 vai refinar visual)
+ *   - EstadoVazio acolhedor
+ *   - Card de Relatórios pra terapeuta/escola
  */
-
-type Periodo = "7d" | "30d" | "90d" | "tudo";
-
-const PERIODO_DIAS: Record<Periodo, number | null> = {
-  "7d": 7,
-  "30d": 30,
-  "90d": 90,
-  tudo: null,
-};
 
 type TimelineEvento =
   | {
@@ -98,60 +85,36 @@ const ESCALA_LABEL: Record<string, string> = {
   muito_dificil: "Muito difícil",
 };
 
-export default async function EvolucaoPage(props: PageProps<"/evolucao">) {
+export default async function EvolucaoPage() {
   const { supabase, family } = await loadFamilyContext();
   const familyId = family!.id;
-  const sp = await props.searchParams;
-  const periodo: Periodo = (
-    sp.periodo === "7d" || sp.periodo === "90d" || sp.periodo === "tudo"
-      ? sp.periodo
-      : "30d"
-  ) as Periodo;
 
-  const dias = PERIODO_DIAS[periodo];
-  const dataInicio = dias
-    ? new Date(Date.now() - dias * 24 * 60 * 60 * 1000)
-        .toISOString()
-        .slice(0, 10)
-    : null;
-
-  // Diarios + check-ins + relatórios em paralelo, todos no período.
+  // Sem filtro de período — sempre traz os últimos N registros,
+  // a temporalidade emerge do conteúdo (datas relativas dos itens).
   const [{ data: diarios }, { data: checkIns }, { data: relatorios }] =
     await Promise.all([
-      (() => {
-        let q = supabase
-          .from("diarios")
-          .select(
-            "id, data, conquista, desafio, observacao_livre, possivel_gatilho, membros_atipicos(nome)",
-          )
-          .eq("family_account_id", familyId)
-          .order("data", { ascending: false })
-          .limit(100);
-        if (dataInicio) q = q.gte("data", dataInicio);
-        return q;
-      })(),
-      (() => {
-        let q = supabase
-          .from("check_ins_diarios")
-          .select("id, data, escala_emocional_mae")
-          .eq("family_account_id", familyId)
-          .order("data", { ascending: false })
-          .limit(100);
-        if (dataInicio) q = q.gte("data", dataInicio);
-        return q;
-      })(),
-      (() => {
-        let q = supabase
-          .from("relatorios_gerados")
-          .select(
-            "id, destinatario, janela_inicio, janela_fim, created_at, membros_atipicos(nome)",
-          )
-          .eq("family_account_id", familyId)
-          .order("created_at", { ascending: false })
-          .limit(30);
-        if (dataInicio) q = q.gte("created_at", dataInicio);
-        return q;
-      })(),
+      supabase
+        .from("diarios")
+        .select(
+          "id, data, conquista, desafio, observacao_livre, possivel_gatilho, membros_atipicos(nome)",
+        )
+        .eq("family_account_id", familyId)
+        .order("data", { ascending: false })
+        .limit(100),
+      supabase
+        .from("check_ins_diarios")
+        .select("id, data, escala_emocional_mae")
+        .eq("family_account_id", familyId)
+        .order("data", { ascending: false })
+        .limit(100),
+      supabase
+        .from("relatorios_gerados")
+        .select(
+          "id, destinatario, janela_inicio, janela_fim, created_at, membros_atipicos(nome)",
+        )
+        .eq("family_account_id", familyId)
+        .order("created_at", { ascending: false })
+        .limit(30),
     ]);
 
   // Mescla em uma timeline ordenada
@@ -216,134 +179,60 @@ export default async function EvolucaoPage(props: PageProps<"/evolucao">) {
   // Ordena descendente por data
   eventos.sort((a, b) => b.data.localeCompare(a.data));
 
-  // Resumo cards
-  const totalConquistas = eventos.filter((e) => e.tipo === "conquista").length;
-  const totalRegistros = eventos.filter(
-    (e) =>
-      e.tipo === "conquista" || e.tipo === "desafio" || e.tipo === "registro",
-  ).length;
-  const diasUnicos = new Set(
-    eventos
-      .filter(
-        (e) =>
-          e.tipo === "conquista" ||
-          e.tipo === "desafio" ||
-          e.tipo === "registro" ||
-          e.tipo === "check_in",
-      )
-      .map((e) => e.data.slice(0, 10)),
-  ).size;
-
   return (
-    <div className="flex flex-col gap-8">
-      <header className="flex items-start justify-between gap-4">
-        <div className="flex items-start gap-4">
-          <IconCard tone="light" size="lg" className="hidden md:inline-flex">
-            <TrendingUp aria-hidden />
-          </IconCard>
-          <div>
-            <Eyebrow>O que foi mudando</Eyebrow>
-            <h1 className="mt-1 font-heading text-3xl text-foreground md:text-4xl">
-              A jornada{" "}
-              <em className="not-italic text-brand-purple">de vocês</em>
-            </h1>
-            <p className="mt-2 max-w-2xl text-muted-foreground">
-              O que mudou, o que apareceu, o que ela está treinando — do mais
-              recente ao mais antigo.
-            </p>
-          </div>
-        </div>
-        <Link
-          href="/registrar/diario"
-          className={cn(buttonVariants({ size: "lg" }), "shrink-0 gap-2")}
-        >
-          <Plus className="size-4 stroke-[2.2]" aria-hidden />
-          Registrar dia
-        </Link>
+    <div className="flex flex-col gap-10">
+      <header>
+        <Eyebrow>O que foi mudando</Eyebrow>
+        <h1 className="mt-1 font-heading text-3xl text-foreground md:text-4xl">
+          A jornada{" "}
+          <em className="not-italic text-brand-purple">de vocês</em>
+        </h1>
+        <p className="mt-2 max-w-2xl text-muted-foreground">
+          O que apareceu, o que ficou, o que vai mudando — aos poucos.
+        </p>
       </header>
 
-      {/* Resumo cards */}
-      <section className="grid gap-4 md:grid-cols-3">
-        <ResumoCard
-          icon={Sparkles}
-          numero={totalConquistas}
-          label="Conquistas registradas"
-          accent="conquista"
-        />
-        <ResumoCard
-          icon={Sprout}
-          numero={totalRegistros}
-          label="Total de registros no período"
-          accent="area"
-        />
-        <ResumoCard
-          icon={CalendarClock}
-          numero={diasUnicos}
-          label="Dias com registro"
-          accent="padrao"
-        />
+      <section>
+        <h2 className="font-heading text-2xl text-foreground">
+          Como os dias foram{" "}
+          <em className="not-italic text-brand-purple">acontecendo</em>
+        </h2>
+
+        {eventos.length > 0 ? (
+          <ol className="relative ml-3 mt-6 flex flex-col gap-6 border-l-2 border-kolo-linha pl-8 pt-2">
+            {eventos.map((ev, idx) => (
+              <TimelineItem key={`${ev.tipo}-${idx}`} ev={ev} />
+            ))}
+          </ol>
+        ) : (
+          <div className="mt-6">
+            <EstadoVazio
+              icon={<Sprout />}
+              titulo="A jornada ainda não começou"
+              descricao="Os primeiros dias vão aparecer aqui — sem pressa de preencher tudo."
+              acao={
+                <Link
+                  href="/registrar/diario"
+                  className={cn(buttonVariants({ size: "sm" }))}
+                >
+                  Registrar hoje
+                </Link>
+              }
+            />
+          </div>
+        )}
       </section>
 
-      {/* Filtro de período */}
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h2 className="font-heading text-2xl text-foreground">
-          Linha do tempo
-        </h2>
-        <div
-          role="tablist"
-          aria-label="Período"
-          className="inline-flex gap-1 rounded-2xl bg-kolo-lilas-bg-2 p-1.5"
-        >
-          {(["7d", "30d", "90d", "tudo"] as const).map((p) => (
-            <Link
-              key={p}
-              href={`/evolucao?periodo=${p}`}
-              role="tab"
-              aria-selected={periodo === p}
-              className={cn(
-                "rounded-xl px-3 py-1.5 text-xs font-semibold transition-colors",
-                periodo === p
-                  ? "bg-white text-foreground shadow-sm"
-                  : "text-muted-foreground hover:text-foreground",
-              )}
-            >
-              {p === "tudo" ? "Tudo" : p}
-            </Link>
-          ))}
+      {/* Link discreto pra registrar — convite contextual, não CTA estrutural */}
+      {eventos.length > 0 && (
+        <div className="flex justify-center">
+          <Link
+            href="/registrar/diario"
+            className="text-sm font-semibold text-brand-purple underline-offset-4 hover:underline"
+          >
+            Registrar um dia →
+          </Link>
         </div>
-      </div>
-
-      {/* Timeline */}
-      {eventos.length > 0 ? (
-        <ol className="relative ml-3 flex flex-col gap-6 border-l-2 border-kolo-linha pl-8 pt-2">
-          {eventos.map((ev, idx) => (
-            <TimelineItem key={`${ev.tipo}-${idx}`} ev={ev} />
-          ))}
-        </ol>
-      ) : (
-        <EstadoVazio
-          icon={<Sprout />}
-          titulo={
-            periodo === "tudo"
-              ? "A jornada ainda não começou"
-              : `Nada nos últimos ${periodo}`
-          }
-          descricao={
-            periodo === "tudo"
-              ? "Registra um primeiro dia e a linha do tempo começa a aparecer aqui — sem pressa de preencher tudo."
-              : "Amplia a janela acima ou registra um dia recente — o silêncio nesse período pode ser só falta de registro, não de movimento."
-          }
-          acao={
-            periodo === "tudo" ? (
-              <Link
-                href="/registrar/diario"
-                className={cn(buttonVariants({ size: "sm" }))}
-              >
-                Registrar hoje
-              </Link>
-            ) : undefined
-          }
-        />
       )}
 
       {/* CTA pra ver relatórios (link pro legacy enquanto não consolida) */}
@@ -371,49 +260,6 @@ export default async function EvolucaoPage(props: PageProps<"/evolucao">) {
 // ============================================================
 // Componentes auxiliares
 // ============================================================
-
-function ResumoCard({
-  icon: Icon,
-  numero,
-  label,
-  accent,
-}: {
-  icon: typeof Sparkles;
-  numero: number;
-  label: string;
-  accent: "conquista" | "area" | "padrao";
-}) {
-  const accentColors: Record<typeof accent, string> = {
-    conquista: "before:bg-brand-yellow",
-    area: "before:bg-brand-purple",
-    padrao: "before:bg-cat-emocao",
-  };
-  const iconBg: Record<typeof accent, string> = {
-    conquista: "bg-brand-yellow/15 text-brand-yellow-dark",
-    area: "bg-kolo-lilas-bg-2 text-brand-purple",
-    padrao: "bg-cat-emocao-bg text-cat-emocao",
-  };
-  return (
-    <div
-      className={cn(
-        "relative overflow-hidden rounded-3xl bg-white p-6 shadow-sm",
-        "before:absolute before:left-0 before:top-0 before:h-1 before:w-full",
-        accentColors[accent],
-      )}
-    >
-      <span
-        className={cn(
-          "inline-flex size-10 items-center justify-center rounded-xl",
-          iconBg[accent],
-        )}
-      >
-        <Icon className="size-5 stroke-[1.8]" aria-hidden />
-      </span>
-      <p className="mt-4 font-heading text-4xl text-foreground">{numero}</p>
-      <p className="mt-1 text-sm text-muted-foreground">{label}</p>
-    </div>
-  );
-}
 
 function TimelineItem({ ev }: { ev: TimelineEvento }) {
   const config = getTimelineConfig(ev);
