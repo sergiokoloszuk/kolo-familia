@@ -7,27 +7,27 @@ import type { FamiliaSecoes } from "./wrapper";
 const SECOES = [
   {
     key: "composicao" as const,
-    title: "Composição da família",
-    description: "Quem mora junto, papéis, presença.",
+    title: "Quem mora junto",
+    description: "Pessoas em volta no dia a dia.",
     placeholder:
       "Ex: eu, marido, dois filhos (10 e 6), minha mãe nos finais de semana.",
   },
   {
     key: "rotina" as const,
-    title: "Rotina da família",
-    description: "Horários, escola/trabalho, divisão de cuidados.",
+    title: "Como a semana acontece",
+    description: "Escola, trabalho, terapias, horários que ancoram o dia.",
     placeholder: "Ex: criança escola 7–12h, terapias terça/quinta, jantar 19h.",
   },
   {
     key: "recursos" as const,
-    title: "Recursos disponíveis",
-    description: "Acompanhamento profissional, escola inclusiva, rede de apoio.",
+    title: "Quem ajuda",
+    description: "Profissionais, escola, família estendida, apoio próximo.",
     placeholder: "Ex: TO semanal, escola inclusiva, vó aposentada que ajuda.",
   },
   {
     key: "dinamica" as const,
-    title: "Dinâmica familiar",
-    description: "Estilo de comunicação, valores, momentos sensíveis.",
+    title: "Como vocês se cuidam",
+    description: "Estilo de cuidar, comunicação, momentos sensíveis.",
     placeholder:
       "Ex: marido trabalha de turno; eu sou a referência principal de cuidado.",
   },
@@ -37,9 +37,11 @@ export function FamiliaEditor({ familia }: { familia: FamiliaSecoes }) {
   return (
     <div className="flex flex-col gap-4">
       <header>
-        <h2 className="font-heading text-lg font-medium">Contexto da família</h2>
-        <p className="text-sm text-muted-foreground">
-          Quem está em volta do membro atípico, como vocês vivem.
+        <h2 className="font-heading text-2xl font-medium leading-tight text-foreground">
+          A família
+        </h2>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Como vocês vivem juntos.
         </p>
       </header>
 

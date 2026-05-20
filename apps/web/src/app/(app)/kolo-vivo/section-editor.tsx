@@ -50,8 +50,12 @@ export function SectionEditor({
     <Card>
       <CardHeader className="flex flex-row items-start justify-between gap-3">
         <div>
-          <CardTitle className="text-base">{title}</CardTitle>
-          {description && <CardDescription>{description}</CardDescription>}
+          <CardTitle className="font-heading text-lg font-medium leading-snug text-foreground md:text-xl">
+            {title}
+          </CardTitle>
+          {description && (
+            <CardDescription className="mt-1.5">{description}</CardDescription>
+          )}
         </div>
         {!editing && (
           <Button type="button" variant="ghost" size="sm" onClick={() => setEditing(true)}>
@@ -82,10 +86,12 @@ export function SectionEditor({
             </div>
           </div>
         ) : value.trim().length > 0 ? (
-          <p className="whitespace-pre-wrap text-sm">{value}</p>
+          <p className="whitespace-pre-wrap text-base leading-relaxed text-foreground">
+            {value}
+          </p>
         ) : (
-          <p className="text-sm text-muted-foreground">
-            {placeholder ?? "Ainda não preenchido."}
+          <p className="text-sm leading-relaxed text-muted-foreground/70">
+            Isso vai sendo construído com o tempo.
           </p>
         )}
       </CardContent>
