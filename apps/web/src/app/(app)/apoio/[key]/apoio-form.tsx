@@ -1,9 +1,10 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
+import { buttonVariants } from "@/components/ui/button";
 import { gerarApoio, type GerarApoioResultado } from "../actions";
 import { gerarCenaParaGaleria } from "../../galeria/actions";
 
@@ -13,6 +14,14 @@ const TIPO_GALERIA: Record<string, "brincadeira" | "atividade" | "historia_socia
   historias_sociais: "historia_social",
 };
 
+/**
+ * ApoioForm editorial (P-EST-7):
+ * - sem Label, select compacto, textarea editorial
+ * - botão "Pedir" → "Continuar →"
+ * - resposta como bloco de leitura (sem Card pesado)
+ * - "Gerar imagem" como section inline discreta
+ * - "Pedir outra" → "Outra ideia →"
+ */
 export function ApoioForm({
   outputTypeKey,
   geraImagemOpcional,
@@ -59,7 +68,7 @@ export function ApoioForm({
 
   function handleGerarImagem() {
     if (!membroId) {
-      setImagemErro("Escolha sobre qual membro é a cena pra gerar imagem.");
+      setImagemErro("Escolha sobre qual membro é a cena pra incluir imagem.");
       return;
     }
     const tipo = TIPO_GALERIA[outputTypeKey];
@@ -84,26 +93,29 @@ export function ApoioForm({
 
   if (resultado) {
     return (
-      <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-8">
         {!resultado.validacaoOk && resultado.validacaoMotivo && (
           <div className="rounded-md border border-amber-300/60 bg-amber-50 px-3 py-2 text-xs text-amber-900">
             Aviso de validação: {resultado.validacaoMotivo}
           </div>
         )}
-        <Card>
-          <CardContent className="pt-6">
-            <p className="whitespace-pre-wrap text-base leading-relaxed text-foreground">
-              {resultado.texto}
-            </p>
-          </CardContent>
-        </Card>
+
+        {/* Resposta como bloco de leitura editorial — sem Card retangular */}
+        <div>
+          <span className="text-[11px] font-bold uppercase tracking-[0.18em] text-brand-purple">
+            Kolo
+          </span>
+          <p className="mt-2 whitespace-pre-wrap text-base leading-relaxed text-foreground">
+            {resultado.texto}
+          </p>
+        </div>
 
         {geraImagemOpcional && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-sm font-medium">Gerar imagem desta cena</CardTitle>
-            </CardHeader>
-            <CardContent className="flex flex-col gap-3">
+          <div className="border-t border-foreground/[0.06] pt-6">
+            <span className="text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground">
+              Quiser ver com imagem
+            </span>
+            <div className="mt-3 flex flex-col gap-3">
               {imagemErro && (
                 <div className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs text-destructive">
                   {imagemErro}
@@ -115,37 +127,53 @@ export function ApoioForm({
                   <img
                     src={imagemUrl}
                     alt="Cena ilustrada"
-                    className="aspect-square w-full max-w-sm rounded-md border object-cover"
+                    className="aspect-square w-full max-w-sm rounded-2xl object-cover"
                   />
                   <p className="text-xs text-muted-foreground">
-                    Salva na sua galeria. Você pode favoritar e baixar lá.
+                    Salva na galeria — você pode favoritar e baixar lá.
                   </p>
                 </>
               ) : (
                 <>
-                  <p className="text-xs text-muted-foreground">
-                    Vai usar o avatar canônico do membro + a descrição da cena.
+                  <p className="text-sm leading-relaxed text-muted-foreground">
+                    Vai usar o avatar do membro com a descrição da cena.
                     Configure o avatar antes em /configuracoes/avatar.
                   </p>
                   <div>
                     <Button
                       type="button"
-                      variant="outline"
+                      variant="ghost"
+                      size="sm"
                       onClick={handleGerarImagem}
                       disabled={imagemPending}
+                      className={cn(
+                        buttonVariants({ variant: "ghost", size: "sm" }),
+                        "text-brand-purple hover:bg-transparent hover:text-brand-purple-dark",
+                      )}
                     >
-                      {imagemPending ? "Gerando..." : "Gerar imagem"}
+                      {imagemPending ? "Pensando..." : "Ver com imagem"}
+                      {!imagemPending && <ArrowRight className="size-3" aria-hidden />}
                     </Button>
                   </div>
                 </>
               )}
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         )}
 
         <div className="flex justify-end">
-          <Button type="button" variant="outline" onClick={tentarOutra}>
-            Pedir outra
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={tentarOutra}
+            className={cn(
+              buttonVariants({ variant: "ghost", size: "sm" }),
+              "text-brand-purple hover:bg-transparent hover:text-brand-purple-dark",
+            )}
+          >
+            Outra ideia
+            <ArrowRight className="size-3" aria-hidden />
           </Button>
         </div>
       </div>
@@ -161,45 +189,51 @@ export function ApoioForm({
       )}
 
       {membros.length > 0 && (
-        <div className="flex flex-col gap-1.5">
-          <Label htmlFor="membro">Sobre quem é?</Label>
-          <select
-            id="membro"
-            className="flex h-9 w-full rounded-md border border-input bg-background px-3 text-sm shadow-sm"
-            value={membroId}
-            onChange={(e) => setMembroId(e.target.value)}
-          >
-            <option value="">Geral da família</option>
-            {membros.map((m) => (
-              <option key={m.id} value={m.id}>
-                {m.nome}
-              </option>
-            ))}
-          </select>
-        </div>
+        <select
+          id="membro"
+          aria-label="Sobre quem é?"
+          className="h-9 w-fit rounded-full bg-transparent px-1 text-sm text-muted-foreground focus:outline-none focus:ring-0"
+          value={membroId}
+          onChange={(e) => setMembroId(e.target.value)}
+        >
+          <option value="">Sobre a família em geral</option>
+          {membros.map((m) => (
+            <option key={m.id} value={m.id}>
+              Sobre {m.nome}
+            </option>
+          ))}
+        </select>
       )}
 
-      <div className="flex flex-col gap-1.5">
-        <Label htmlFor="pedido">Contexto / situação</Label>
-        <textarea
-          id="pedido"
-          rows={4}
-          value={pedido}
-          onChange={(e) => setPedido(e.target.value)}
-          placeholder="Ex: dia chuvoso, criança em casa o dia inteiro, querendo descarregar energia."
-          className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-          disabled={pending}
-        />
-      </div>
+      <textarea
+        id="pedido"
+        rows={5}
+        value={pedido}
+        onChange={(e) => setPedido(e.target.value)}
+        placeholder="Ex: dia chuvoso, criança em casa o dia inteiro, querendo descarregar energia."
+        className="w-full resize-none rounded-2xl border border-foreground/[0.08] bg-white/70 px-4 py-3 text-base leading-relaxed text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-1 focus:ring-foreground/10"
+        disabled={pending}
+      />
 
-      <div className="flex items-center justify-between">
-        <p className="text-xs text-muted-foreground">
-          O Kolo Família não substitui profissionais da saúde.
-        </p>
-        <Button type="submit" disabled={pending || !pedido.trim()}>
-          {pending ? "Pensando..." : "Gerar"}
+      <div className="flex items-center justify-end">
+        <Button
+          type="submit"
+          variant="ghost"
+          size="sm"
+          disabled={pending || !pedido.trim()}
+          className={cn(
+            buttonVariants({ variant: "ghost", size: "sm" }),
+            "text-brand-purple hover:bg-transparent hover:text-brand-purple-dark",
+          )}
+        >
+          {pending ? "Pensando..." : "Continuar"}
+          {!pending && <ArrowRight className="size-3" aria-hidden />}
         </Button>
       </div>
+
+      <p className="mt-2 text-[11px] text-muted-foreground/60">
+        Kolo Família não substitui profissionais da saúde.
+      </p>
     </form>
   );
 }

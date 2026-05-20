@@ -2,10 +2,18 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
+import { cn } from "@/lib/utils";
+import { buttonVariants } from "@/components/ui/button";
 import { enviarMensagem } from "./actions";
 
+/**
+ * Form principal de Estratégias (P-EST-3 + P-EST-7):
+ * sem Labels, select compacto integrado, textarea editorial,
+ * botão "Conversar →" em vez de "Enviar". Disclaimer movido pro
+ * rodapé pra não roubar atenção do CTA.
+ */
 export function ConversarForm({
   membros,
 }: {
@@ -44,45 +52,51 @@ export function ConversarForm({
       )}
 
       {membros.length > 0 && (
-        <div className="flex flex-col gap-1.5">
-          <Label htmlFor="membro">Sobre quem é?</Label>
-          <select
-            id="membro"
-            className="flex h-9 w-full rounded-md border border-input bg-background px-3 text-sm shadow-sm"
-            value={membroId}
-            onChange={(e) => setMembroId(e.target.value)}
-          >
-            <option value="">Conversa geral da família</option>
-            {membros.map((m) => (
-              <option key={m.id} value={m.id}>
-                {m.nome}
-              </option>
-            ))}
-          </select>
-        </div>
+        <select
+          id="membro"
+          aria-label="Sobre quem é?"
+          className="h-9 w-fit rounded-full bg-transparent px-1 text-sm text-muted-foreground focus:outline-none focus:ring-0"
+          value={membroId}
+          onChange={(e) => setMembroId(e.target.value)}
+        >
+          <option value="">Sobre a família em geral</option>
+          {membros.map((m) => (
+            <option key={m.id} value={m.id}>
+              Sobre {m.nome}
+            </option>
+          ))}
+        </select>
       )}
 
-      <div className="flex flex-col gap-1.5">
-        <Label htmlFor="texto">O que aconteceu? Como posso ajudar?</Label>
-        <textarea
-          id="texto"
-          rows={4}
-          value={texto}
-          onChange={(e) => setTexto(e.target.value)}
-          placeholder="Ex: Ele teve uma crise grande agora pela tarde, do nada. Não sei o que aconteceu."
-          className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-          disabled={pending}
-        />
-      </div>
+      <textarea
+        id="texto"
+        rows={5}
+        value={texto}
+        onChange={(e) => setTexto(e.target.value)}
+        placeholder="Ex: Ele teve uma crise grande agora pela tarde, do nada. Não sei o que aconteceu."
+        className="w-full resize-none rounded-2xl border border-foreground/[0.08] bg-white/70 px-4 py-3 text-base leading-relaxed text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-1 focus:ring-foreground/10"
+        disabled={pending}
+      />
 
-      <div className="flex items-center justify-between">
-        <p className="text-xs text-muted-foreground">
-          O Kolo Família não substitui profissionais da saúde.
-        </p>
-        <Button type="submit" disabled={pending || !texto.trim()}>
-          {pending ? "Pensando..." : "Enviar"}
+      <div className="flex items-center justify-end">
+        <Button
+          type="submit"
+          variant="ghost"
+          size="sm"
+          disabled={pending || !texto.trim()}
+          className={cn(
+            buttonVariants({ variant: "ghost", size: "sm" }),
+            "text-brand-purple hover:bg-transparent hover:text-brand-purple-dark",
+          )}
+        >
+          {pending ? "Pensando..." : "Conversar"}
+          {!pending && <ArrowRight className="size-3" aria-hidden />}
         </Button>
       </div>
+
+      <p className="mt-2 text-[11px] text-muted-foreground/60">
+        Kolo Família não substitui profissionais da saúde.
+      </p>
     </form>
   );
 }
