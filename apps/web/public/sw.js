@@ -8,7 +8,7 @@
 // PRD §13.5: PWA é "casca offline" + instalação. Não caching agressivo
 // de dados sensíveis (Kolo Vivo, diários) — esses sempre online.
 
-const VERSION = "kolo-v1";
+const VERSION = "kolo-v2";
 const SHELL_CACHE = `shell-${VERSION}`;
 const STATIC_CACHE = `static-${VERSION}`;
 const OFFLINE_URL = "/offline.html";
