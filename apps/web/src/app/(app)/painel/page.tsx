@@ -365,7 +365,7 @@ export default async function PainelPage() {
   const sinaisTitulo =
     sinais.length === 0
       ? "Os primeiros momentos começam a aparecer."
-      : "Pequenas recorrências começam a ganhar forma.";
+      : "Alguns momentos começaram a se repetir esta semana.";
 
   // Bloco editorial do Foco da semana — card próprio abaixo do hero.
   // Cada estado tem manchete (h3 ativo), texto interpretativo, 1-2 chips
@@ -380,108 +380,109 @@ export default async function PainelPage() {
     !houveAtividade
       ? // Estado vazio com VARIAÇÃO POR ETAPA DE USO — três frases
         // editoriais que avançam conforme a família convive com o produto.
-        // Cria sensação de leitura longitudinal viva, não copy fixa.
         idadeDias < 7
         ? {
-            manchete: "Primeiros traços",
+            manchete: "Os primeiros dias",
             texto: (
               <>
-                Pequenas observações vão virando{" "}
+                Pequenas observações vão mostrando o{" "}
                 <strong className="font-semibold text-foreground">
-                  contexto
+                  jeito da semana
                 </strong>{" "}
-                com o tempo. Uma frase por dia já conta como leitura.
+                de vocês. Uma frase por dia já basta.
               </>
             ),
-            chips: [{ label: "Em observação", tone: "foco" }],
+            chips: [{ label: "Dia a dia", tone: "foco" }],
             ctaLabel: "Registrar primeira",
             ctaHref: "/registrar/diario",
           }
         : idadeDias < 14
           ? {
-              manchete: "A leitura começa a se formar",
+              manchete: "Algumas coisas começam a aparecer",
               texto: (
                 <>
-                  A Kolo começa a reconhecer o{" "}
+                  A Kolo vai aprendendo o{" "}
                   <strong className="font-semibold text-foreground">
-                    jeito da semana
+                    ritmo da semana
                   </strong>{" "}
-                  de vocês. Cada observação ajuda a separar padrão de fase.
+                  de vocês. Cada observação ajuda a entender o que volta e o
+                  que é só do momento.
                 </>
               ),
-              chips: [{ label: "Em observação", tone: "foco" }],
+              chips: [{ label: "Dia a dia", tone: "foco" }],
               ctaLabel: "Registrar dia",
               ctaHref: "/registrar/diario",
             }
           : {
-              manchete: "Padrão e fase se distinguindo",
+              manchete: "O dia a dia ficando mais claro",
               texto: (
                 <>
-                  O contexto começa a{" "}
+                  O dia a dia começa a{" "}
                   <strong className="font-semibold text-foreground">
                     ganhar forma
                   </strong>{" "}
-                  aos poucos. Cada observação ajuda a separar o que é da fase
-                  do que é do jeito da criança.
+                  aos poucos. Cada observação ajuda a entender o que é jeito
+                  da criança e o que é só do momento.
                 </>
               ),
-              chips: [{ label: "Em observação", tone: "foco" }],
+              chips: [{ label: "Dia a dia", tone: "foco" }],
               ctaLabel: "Registrar dia",
               ctaHref: "/registrar/diario",
             }
       : totalConquistas > totalDesafios
         ? {
-            manchete: "Manter o caminho que abriu",
+            manchete: "Vale manter o que ajudou",
             texto: (
               <>
-                {primeiraCrianca?.nome ?? "Vocês"} mostrou algo novo. Vale{" "}
+                {primeiraCrianca?.nome ?? "Vocês"} mostrou algo novo essa
+                semana. Vale{" "}
                 <strong className="font-semibold text-foreground">
-                  manter o contexto que ajudou
+                  manter o que ajudou
                 </strong>{" "}
-                e seguir devagar — sem pressão pra render mais.
+                e seguir devagar — sem pressão por mais.
               </>
             ),
             chips: [
               { label: "Conquistas", tone: "social" },
-              { label: "Continuidade", tone: "rotina" },
+              { label: "O que ajudou", tone: "rotina" },
             ],
             ctaLabel: "Ver estratégias",
             ctaHref: "/estrategias?tab=biblioteca",
           }
         : totalDesafios > totalConquistas
           ? {
-              manchete: "Ler sem revisar",
+              manchete: "Olhar pra frente sem se cobrar",
               texto: (
                 <>
-                  Foi uma semana com peso. Identificar o que disparou é{" "}
+                  Foi uma semana que pesou. Reparar no que pegou mais não é
+                  cobrança —{" "}
                   <strong className="font-semibold text-foreground">
-                    leitura, não falha
+                    é parte do cuidado
                   </strong>
-                  . Vamos pensar na próxima vez sem revisar a passada.
+                  . Vamos pensar nos próximos dias com calma.
                 </>
               ),
               chips: [
-                { label: "Regulação", tone: "emocao" },
-                { label: "Gatilhos", tone: "sensorial" },
+                { label: "Acolhimento", tone: "emocao" },
+                { label: "Cuidado", tone: "sensorial" },
               ],
-              ctaLabel: "Pedir estratégia",
+              ctaLabel: "Ver estratégias",
               ctaHref: "/estrategias",
             }
           : {
-              manchete: "Equilíbrio na mesma página",
+              manchete: "Cada semana tem de tudo",
               texto: (
                 <>
-                  Conquistas e desafios convivem — é assim que o desenvolvimento
-                  acontece. Continuar registrando{" "}
+                  Conquistas e desafios apareceram lado a lado essa semana.{" "}
                   <strong className="font-semibold text-foreground">
-                    conta a história
+                    Faz parte do dia a dia
                   </strong>{" "}
-                  no longo prazo.
+                  — continuar contando ajuda a ver tudo junto com o tempo.
                 </>
               ),
               chips: [
                 { label: "Equilíbrio", tone: "rotina" },
-                { label: "Observação", tone: "foco" },
+                { label: "Dia a dia", tone: "foco" },
               ],
               ctaLabel: "Ver estratégias",
               ctaHref: "/estrategias",
@@ -538,7 +539,7 @@ export default async function PainelPage() {
             Semana {semanaDeLeitura}
           </span>
           <span className="mt-1 text-[10px] lowercase tracking-[0.08em] text-foreground/30">
-            de leitura
+            com vocês
           </span>
         </div>
         <div className="relative max-w-2xl">
@@ -550,12 +551,12 @@ export default async function PainelPage() {
               <span className="absolute inset-0 animate-ping rounded-full bg-brand-yellow opacity-50" />
               <span className="relative size-2 rounded-full bg-brand-yellow" />
             </span>
-            {houveAtividade ? "Vimos sua semana" : "Começando a leitura"}
+            {houveAtividade ? "Vimos sua semana" : "Os primeiros dias"}
           </span>
           <h2 className="mt-4 font-heading text-3xl leading-[1.15] text-foreground md:text-4xl">
             {!houveAtividade ? (
               <>
-                Os primeiros registros começam a{" "}
+                A rotina começa a{" "}
                 <span
                   className="inline-block px-1"
                   style={{
@@ -563,8 +564,9 @@ export default async function PainelPage() {
                       "linear-gradient(180deg, transparent 60%, rgba(255,186,0,0.42) 60%)",
                   }}
                 >
-                  desenhar padrões
-                </span>
+                  ganhar forma
+                </span>{" "}
+                aos poucos
               </>
             ) : totalConquistas > totalDesafios ? (
               <>
@@ -680,8 +682,8 @@ export default async function PainelPage() {
           </div>
           {itensSemana.length === 0 ? (
             <p className="max-w-md text-[15px] leading-relaxed text-muted-foreground">
-              Esperando os primeiros registros — eles desenham o que sua
-              família começa a perceber.
+              Esperando os primeiros registros — aos poucos eles vão
+              mostrando o jeito da semana de vocês.
             </p>
           ) : (
             <ul className="flex flex-col">
@@ -773,8 +775,8 @@ export default async function PainelPage() {
           </h2>
           {sinais.length === 0 ? (
             <p className="mt-4 max-w-lg text-[15px] leading-relaxed text-white/75">
-              Quando dois ou três registros começam a se conversar, eles
-              ganham forma aqui. Aos poucos, o cotidiano vai aparecendo.
+              Quando algumas coisas começam a aparecer mais vezes, elas
+              ganham forma aqui. Aos poucos, o dia a dia vai aparecendo.
             </p>
           ) : (
             <ul className="mt-5 grid gap-4 md:grid-cols-2 md:gap-5">
@@ -933,8 +935,8 @@ const CARD_TONES = [
 // pra usuário entender que é lugar reservado, não dado fictício.
 const GHOST_PHRASES = [
   "A primeira conquista da semana aparece aqui.",
-  "Algo pequeno que você notou e quer guardar.",
-  "Um padrão novo entrando na rotina.",
+  "Algo pequeno que você notou e quis guardar.",
+  "Um momento que voltou a acontecer no dia a dia.",
 ];
 
 function ConquistasGrid({ conquistas }: { conquistas: ConquistaDiario[] }) {
