@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light" />
+    <meta name="supported-color-schemes" content="light" />
+    <title>Confirme seu cadastro — Kolo Família</title>
+  </head>
+  <body style="margin:0; padding:0; background-color:#FAF6EE; -webkit-font-smoothing:antialiased;">
+    <!-- preheader (oculto) -->
+    <div style="display:none; max-height:0; overflow:hidden; opacity:0; font-size:1px; line-height:1px; color:#FAF6EE;">
+      Falta só um passo pra sua conta na Kolo Família ficar pronta.
+    </div>
+
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#FAF6EE;">
+      <tr>
+        <td align="center" style="padding:40px 16px;">
+          <table role="presentation" width="480" cellpadding="0" cellspacing="0" border="0" style="width:480px; max-width:480px;">
+
+            <!-- wordmark -->
+            <tr>
+              <td align="center" style="padding-bottom:24px;">
+                <span style="font-family:Georgia,'Times New Roman',serif; font-size:26px; font-weight:600; color:#6B1FA8; letter-spacing:-0.02em;">Kolo</span><span style="display:inline-block; width:7px; height:7px; background-color:#FFBA00; border-radius:50%; margin-left:2px; vertical-align:baseline;"></span>
+              </td>
+            </tr>
+
+            <!-- card -->
+            <tr>
+              <td style="background-color:#FFFFFF; border-radius:16px; padding:40px 36px; box-shadow:0 4px 14px -4px rgba(31,19,56,0.10);">
+
+                <!-- eyebrow -->
+                <p style="margin:0 0 18px 0; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif; font-size:11px; font-weight:700; letter-spacing:0.18em; text-transform:uppercase; color:#6B1FA8;">
+                  <span style="display:inline-block; width:24px; height:2px; background-color:#FFBA00; border-radius:2px; vertical-align:middle; margin-right:10px;"></span>Confirme seu cadastro
+                </p>
+
+                <!-- título -->
+                <h1 style="margin:0 0 16px 0; font-family:Georgia,'Times New Roman',serif; font-size:26px; line-height:1.2; font-weight:500; color:#1F1338; letter-spacing:-0.02em;">
+                  Falta só confirmar seu e-mail
+                </h1>
+
+                <!-- corpo -->
+                <p style="margin:0 0 28px 0; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif; font-size:15px; line-height:1.6; color:#5B4E7A;">
+                  Você começou a criar sua conta na Kolo Família. Confirme que este e-mail é seu pra continuar de onde parou.
+                </p>
+
+                <!-- botão -->
+                <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 28px 0;">
+                  <tr>
+                    <td align="center" bgcolor="#6B1FA8" style="border-radius:9999px;">
+                      <a href="{{ .ConfirmationURL }}" target="_blank" style="display:inline-block; padding:14px 32px; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif; font-size:15px; font-weight:600; color:#FFFFFF; text-decoration:none; border-radius:9999px;">
+                        Confirmar e-mail
+                      </a>
+                    </td>
+                  </tr>
+                </table>
+
+                <!-- fallback -->
+                <p style="margin:0 0 8px 0; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif; font-size:13px; line-height:1.5; color:#9089A8;">
+                  Se o botão não funcionar, copie e cole este endereço no seu navegador:
+                </p>
+                <p style="margin:0; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif; font-size:13px; line-height:1.5; word-break:break-all;">
+                  <a href="{{ .ConfirmationURL }}" target="_blank" style="color:#6B1FA8; text-decoration:underline;">{{ .ConfirmationURL }}</a>
+                </p>
+
+              </td>
+            </tr>
+
+            <!-- rodapé -->
+            <tr>
+              <td style="padding:24px 36px 0 36px;">
+                <p style="margin:0 0 10px 0; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif; font-size:12px; line-height:1.5; color:#9089A8;">
+                  Você recebeu este e-mail porque alguém usou este endereço para criar uma conta na Kolo Família. Se não foi você, pode ignorar — nada será criado sem essa confirmação.
+                </p>
+                <p style="margin:0; font-family:Georgia,'Times New Roman',serif; font-size:13px; color:#5B4E7A;">
+                  Kolo Família — companhia diária para famílias atípicas.
+                </p>
+              </td>
+            </tr>
+
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>
