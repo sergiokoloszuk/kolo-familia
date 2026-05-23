@@ -85,6 +85,24 @@ export function OnboardingWizard({ initial }: { initial: InitialState }) {
     <div className="flex flex-col gap-6">
       <ProgressIndicator step={step} />
 
+      {step === 1 && (
+        <div className="rounded-2xl border border-kolo-linha bg-secondary/50 p-5">
+          <h2 className="font-heading text-lg text-foreground">Quem é a Ayla?</h2>
+          <p className="mt-2 text-sm text-muted-foreground">
+            A Ayla é sua assistente no Kolo Família.
+          </p>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Ela acompanha a jornada da sua família ao longo do tempo, registra
+            acontecimentos importantes e sugere estratégias, reflexões e próximos
+            passos adaptados à sua realidade.
+          </p>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Você pode conversar com ela quando quiser, pelo aplicativo ou no dia
+            a dia, pelo WhatsApp.
+          </p>
+        </div>
+      )}
+
       <Card>
         <CardHeader>
           <CardDescription>
