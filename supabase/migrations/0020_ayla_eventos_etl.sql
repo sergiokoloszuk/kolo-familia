@@ -30,12 +30,22 @@
 --    Formato: <source>:<source_id>:<campo>  (campo = '_' quando único)
 -- ============================================================
 ALTER TABLE ayla_eventos_longitudinais
-  ADD COLUMN source_key text;
+  ADD COLUMN IF NOT EXISTS source_key text;
 
 -- Postgres permite múltiplos NULLs em UNIQUE — eventos criados manualmente
 -- pela API v2 no futuro podem ter source_key = NULL sem conflito.
-ALTER TABLE ayla_eventos_longitudinais
-  ADD CONSTRAINT ayla_eventos_source_key_uq UNIQUE (source_key);
+-- Guard manual: ADD CONSTRAINT não aceita IF NOT EXISTS direto.
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint
+    WHERE conname = 'ayla_eventos_source_key_uq'
+      AND conrelid = 'ayla_eventos_longitudinais'::regclass
+  ) THEN
+    ALTER TABLE ayla_eventos_longitudinais
+      ADD CONSTRAINT ayla_eventos_source_key_uq UNIQUE (source_key);
+  END IF;
+END $$;
 
 
 -- ============================================================

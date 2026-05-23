@@ -25,7 +25,7 @@
 --   Eventos granulares por membro/família com tipos e domínios.
 --   Ver lib/ayla/manual/memory.ts — EventoLongitudinal.
 -- ============================================================
-CREATE TABLE ayla_eventos_longitudinais (
+CREATE TABLE IF NOT EXISTS ayla_eventos_longitudinais (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   family_account_id uuid NOT NULL REFERENCES family_accounts(id) ON DELETE CASCADE,
   membro_atipico_id uuid REFERENCES membros_atipicos(id) ON DELETE SET NULL,
@@ -52,18 +52,19 @@ CREATE TABLE ayla_eventos_longitudinais (
   created_at timestamptz DEFAULT now()
 );
 
-CREATE INDEX idx_ayla_eventos_membro_data
+CREATE INDEX IF NOT EXISTS idx_ayla_eventos_membro_data
   ON ayla_eventos_longitudinais (membro_atipico_id, ocorreu_em DESC)
   WHERE membro_atipico_id IS NOT NULL;
 
-CREATE INDEX idx_ayla_eventos_familia_data
+CREATE INDEX IF NOT EXISTS idx_ayla_eventos_familia_data
   ON ayla_eventos_longitudinais (family_account_id, ocorreu_em DESC);
 
-CREATE INDEX idx_ayla_eventos_dominios
+CREATE INDEX IF NOT EXISTS idx_ayla_eventos_dominios
   ON ayla_eventos_longitudinais USING gin (dominios);
 
 ALTER TABLE ayla_eventos_longitudinais ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS ayla_eventos_owner_read ON ayla_eventos_longitudinais;
 CREATE POLICY ayla_eventos_owner_read ON ayla_eventos_longitudinais
   FOR SELECT
   USING (
@@ -73,6 +74,7 @@ CREATE POLICY ayla_eventos_owner_read ON ayla_eventos_longitudinais
   );
 
 -- Escrita só via service_role / RPC. Mãe não escreve direto.
+DROP POLICY IF EXISTS ayla_eventos_service_write ON ayla_eventos_longitudinais;
 CREATE POLICY ayla_eventos_service_write ON ayla_eventos_longitudinais
   FOR ALL TO service_role
   USING (true) WITH CHECK (true);
@@ -83,7 +85,7 @@ CREATE POLICY ayla_eventos_service_write ON ayla_eventos_longitudinais
 --   Hipóteses de padrão emergente, com estado e confiança.
 --   Ver lib/ayla/manual/memory.ts — PadraoHipotetico.
 -- ============================================================
-CREATE TABLE ayla_padroes (
+CREATE TABLE IF NOT EXISTS ayla_padroes (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   family_account_id uuid NOT NULL REFERENCES family_accounts(id) ON DELETE CASCADE,
   membro_atipico_id uuid NOT NULL REFERENCES membros_atipicos(id) ON DELETE CASCADE,
@@ -109,14 +111,15 @@ CREATE TABLE ayla_padroes (
   UNIQUE (membro_atipico_id, padrao_key)
 );
 
-CREATE INDEX idx_ayla_padroes_membro_estado
+CREATE INDEX IF NOT EXISTS idx_ayla_padroes_membro_estado
   ON ayla_padroes (membro_atipico_id, estado);
 
-CREATE INDEX idx_ayla_padroes_familia
+CREATE INDEX IF NOT EXISTS idx_ayla_padroes_familia
   ON ayla_padroes (family_account_id);
 
 ALTER TABLE ayla_padroes ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS ayla_padroes_owner_read ON ayla_padroes;
 CREATE POLICY ayla_padroes_owner_read ON ayla_padroes
   FOR SELECT
   USING (
@@ -125,6 +128,7 @@ CREATE POLICY ayla_padroes_owner_read ON ayla_padroes
     )
   );
 
+DROP POLICY IF EXISTS ayla_padroes_service_write ON ayla_padroes;
 CREATE POLICY ayla_padroes_service_write ON ayla_padroes
   FOR ALL TO service_role
   USING (true) WITH CHECK (true);
@@ -135,7 +139,7 @@ CREATE POLICY ayla_padroes_service_write ON ayla_padroes
 --   Estado de "saber desaparecer" por família (§10).
 --   Ver lib/ayla/manual/proactive.ts — EstadoSilencio.
 -- ============================================================
-CREATE TABLE ayla_silencio_estado (
+CREATE TABLE IF NOT EXISTS ayla_silencio_estado (
   family_account_id uuid PRIMARY KEY REFERENCES family_accounts(id) ON DELETE CASCADE,
   ultima_resposta_em timestamptz,
   respostas_curtas_seguidas int NOT NULL DEFAULT 0,
@@ -159,6 +163,7 @@ CREATE TABLE ayla_silencio_estado (
 
 ALTER TABLE ayla_silencio_estado ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS ayla_silencio_owner_read ON ayla_silencio_estado;
 CREATE POLICY ayla_silencio_owner_read ON ayla_silencio_estado
   FOR SELECT
   USING (
@@ -167,6 +172,7 @@ CREATE POLICY ayla_silencio_owner_read ON ayla_silencio_estado
     )
   );
 
+DROP POLICY IF EXISTS ayla_silencio_service_write ON ayla_silencio_estado;
 CREATE POLICY ayla_silencio_service_write ON ayla_silencio_estado
   FOR ALL TO service_role
   USING (true) WITH CHECK (true);
@@ -179,7 +185,7 @@ CREATE POLICY ayla_silencio_service_write ON ayla_silencio_estado
 --   Esta tabela registra a DECISÃO + intenção do scheduler v2.
 --   Ver lib/ayla/manual/proactive.ts — TipoCheckIn.
 -- ============================================================
-CREATE TABLE ayla_proativo_log (
+CREATE TABLE IF NOT EXISTS ayla_proativo_log (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   family_account_id uuid NOT NULL REFERENCES family_accounts(id) ON DELETE CASCADE,
   membro_atipico_id uuid REFERENCES membros_atipicos(id) ON DELETE SET NULL,
@@ -203,14 +209,15 @@ CREATE TABLE ayla_proativo_log (
   metadados jsonb NOT NULL DEFAULT '{}'::jsonb
 );
 
-CREATE INDEX idx_ayla_proativo_familia_data
+CREATE INDEX IF NOT EXISTS idx_ayla_proativo_familia_data
   ON ayla_proativo_log (family_account_id, enviado_em DESC);
 
-CREATE INDEX idx_ayla_proativo_tipo
+CREATE INDEX IF NOT EXISTS idx_ayla_proativo_tipo
   ON ayla_proativo_log (tipo_check_in, enviado_em DESC);
 
 ALTER TABLE ayla_proativo_log ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS ayla_proativo_owner_read ON ayla_proativo_log;
 CREATE POLICY ayla_proativo_owner_read ON ayla_proativo_log
   FOR SELECT
   USING (
@@ -219,6 +226,7 @@ CREATE POLICY ayla_proativo_owner_read ON ayla_proativo_log
     )
   );
 
+DROP POLICY IF EXISTS ayla_proativo_service_write ON ayla_proativo_log;
 CREATE POLICY ayla_proativo_service_write ON ayla_proativo_log
   FOR ALL TO service_role
   USING (true) WITH CHECK (true);
