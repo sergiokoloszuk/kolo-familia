@@ -23,6 +23,9 @@ const schema = z.object({
     .trim()
     .regex(/^\+55\d{10,11}$/, "Informe o DDD + número, ex: (11) 99999-9999"),
   como_chamar: z.string().trim().optional(),
+  papel: z.enum(["mae", "pai", "avo", "outro"], {
+    message: "Selecione sua relação com a criança",
+  }),
 });
 
 type FormValues = z.infer<typeof schema>;
@@ -56,7 +59,7 @@ export function Tela1Mae({
   pending,
   onSubmit,
 }: {
-  initial: { nome_mae: string; data_nascimento_mae: string; como_chamar: string; whatsapp_e164: string };
+  initial: { nome_mae: string; data_nascimento_mae: string; como_chamar: string; whatsapp_e164: string; papel: string };
   pending: boolean;
   onSubmit: (values: FormValues) => void;
 }) {
@@ -72,6 +75,7 @@ export function Tela1Mae({
       data_nascimento_mae: initial.data_nascimento_mae ?? "",
       como_chamar: initial.como_chamar,
       whatsapp_e164: initial.whatsapp_e164,
+      papel: (initial.papel || "") as FormValues["papel"],
     },
   });
 
@@ -93,6 +97,24 @@ export function Tela1Mae({
         <div className="flex flex-col gap-1.5">
           <Label htmlFor="como_chamar">Apelido (opcional)</Label>
           <Input id="como_chamar" placeholder="Como prefere que a gente te chame" {...register("como_chamar")} />
+        </div>
+
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="papel">Qual é a sua relação com a criança?</Label>
+          <select
+            id="papel"
+            className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm"
+            {...register("papel")}
+          >
+            <option value="">Selecione...</option>
+            <option value="mae">Mãe</option>
+            <option value="pai">Pai</option>
+            <option value="avo">Avó ou avô</option>
+            <option value="outro">Outro(a) responsável</option>
+          </select>
+          {errors.papel && (
+            <span className="text-xs text-destructive">{errors.papel.message}</span>
+          )}
         </div>
 
         <div className="flex flex-col gap-1.5">

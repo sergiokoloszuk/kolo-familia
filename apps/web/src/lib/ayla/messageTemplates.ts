@@ -68,7 +68,7 @@ const FALLBACK: Record<string, string[]> = {
     "{nomeMae}, hoje termina seu trial. Tudo que você registrou continua aqui — pra continuar usando, é só assinar.",
   ],
   emocional_streak: [
-    "{nomeMae}, você registrou 7 dias seguidos. Isso é cuidado de verdade — o/a {nomeMembro} está tendo uma mãe bem presente. 🌿",
+    "{nomeMae}, você registrou 7 dias seguidos. Isso é cuidado de verdade — o/a {nomeMembro} está tendo um cuidado bem presente. 🌿",
     "Sete dias de papo seguidos, {nomeMae}. Você tá fazendo um trabalho enorme com {nomeMembro}.",
   ],
   clarificacao_membro: [

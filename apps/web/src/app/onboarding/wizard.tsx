@@ -20,6 +20,7 @@ export type InitialState = {
     nome_mae: string | null;
     data_nascimento_mae: string | null;
     como_chamar: string | null;
+    papel: string | null;
   } | null;
   whatsapp: string | null;
   membros: Membro[];
@@ -126,6 +127,7 @@ export function OnboardingWizard({ initial }: { initial: InitialState }) {
                 data_nascimento_mae: state.profile?.data_nascimento_mae ?? "",
                 como_chamar: state.profile?.como_chamar ?? "",
                 whatsapp_e164: state.whatsapp ?? "",
+                papel: state.profile?.papel ?? "",
               }}
               pending={pending}
               onSubmit={(values) =>
@@ -141,6 +143,7 @@ export function OnboardingWizard({ initial }: { initial: InitialState }) {
                         nome_mae: values.nome_mae,
                         data_nascimento_mae: values.data_nascimento_mae,
                         como_chamar: values.como_chamar ?? null,
+                        papel: values.papel,
                       },
                       whatsapp: values.whatsapp_e164,
                     }));

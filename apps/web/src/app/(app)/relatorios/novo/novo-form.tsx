@@ -92,7 +92,7 @@ export function NovoRelatorioForm({
               <p className="mt-1 text-xs text-muted-foreground">
                 {d === "terapeuta"
                   ? "Tom técnico-descritivo. Inclui Kolo Vivo completo, linha do tempo, opcionalmente Camada B e DASS-21."
-                  : "Tom prático para sala de aula. Sem Camada B nem DASS-21. Sem reflexões da mãe."}
+                  : "Tom prático para sala de aula. Sem Camada B nem DASS-21. Sem reflexões do responsável."}
               </p>
             </button>
           ))}

@@ -30,7 +30,7 @@ function buildIdentityBlock(skills: SkillRow[]): string {
  */
 const VOZ_E_LIMITES = `# Voz do produto (PRD §6)
 
-- HIPÓTESES, NÃO CAUSAS AFIRMADAS. Você abre possibilidades para a mãe observar — nunca afirma o que está acontecendo. A mãe é a especialista no filho dela. ERRADO: "isso é por causa do acúmulo de transições". CERTO: "pode ser acúmulo. Pode ser temperatura. Pode ser barulho. Vale observar com calma".
+- HIPÓTESES, NÃO CAUSAS AFIRMADAS. Você abre possibilidades para o adulto responsável observar — nunca afirma o que está acontecendo. Quem cuida conhece a criança melhor que ninguém. ERRADO: "isso é por causa do acúmulo de transições". CERTO: "pode ser acúmulo. Pode ser temperatura. Pode ser barulho. Vale observar com calma".
 - Tom: amiga experiente, não terapeuta. Direta, humana, afetuosa. Sem performar empatia.
 - NÃO citar fontes da metodologia (REAC, Joe Dispenza, PNL, psicologia positiva, etc.).
 - NÃO usar termos clínicos prescritivos: diagnóstico, terapia, tratamento, cura, prognóstico.
@@ -61,7 +61,7 @@ ${VOZ_E_LIMITES}
 2. **Leitura contextual** — cite 1 ou 2 elementos do Kolo Vivo de forma natural, referenciando o membro atípico em foco.
 3. **Interpretação** — o que pode estar por trás (HIPÓTESES, várias possibilidades). Integre as perspectivas das skills envolvidas.
 4. **Estratégia prática** — 1 ou 2 ideias acionáveis ancoradas em Boas Práticas. Pode incluir atividade lúdica.
-5. **Frase pronta** — para a mãe usar literalmente, em itálico (\`*frase*\`).
+5. **Frase pronta** — para o adulto responsável usar literalmente, em itálico (\`*frase*\`).
 6. **Pergunta final** — mantém a conversa aberta.
 7. **Bloco "registrar este papo"** — exatamente este texto:
 
@@ -88,7 +88,7 @@ function buildSystemTextOutputType(
   skills: SkillRow[],
   outputType: OutputTypeData,
 ): string {
-  return `Você é uma equipe de especialistas do Kolo Família. A mãe pediu uma resposta no formato "${outputType.label}".
+  return `Você é uma equipe de especialistas do Kolo Família. O adulto responsável pediu uma resposta no formato "${outputType.label}".
 
 # Especialistas neste turno
 
@@ -158,7 +158,7 @@ ${ctx.diariosRecentes
   if (ctx.ultimoCheckin) {
     partes.push(
       `<ultimo_checkin>
-${ctx.ultimoCheckin.data} — mãe: ${ctx.ultimoCheckin.escala_emocional_mae}${
+${ctx.ultimoCheckin.data} — responsável: ${ctx.ultimoCheckin.escala_emocional_mae}${
         ctx.ultimoCheckin.escala_emocional_membro
           ? `; membro: ${ctx.ultimoCheckin.escala_emocional_membro}`
           : ""

@@ -57,6 +57,7 @@ const tela1Schema = z.object({
     .trim()
     .regex(/^\+\d{8,15}$/, "WhatsApp deve estar no formato +DDIDDDNNNNNNNNN"),
   como_chamar: z.string().trim().optional(),
+  papel: z.enum(["mae", "pai", "avo", "outro"]),
 });
 
 export type Tela1Input = z.infer<typeof tela1Schema>;
@@ -70,6 +71,7 @@ export async function saveTela1(raw: Tela1Input) {
     nome_mae: data.nome_mae,
     data_nascimento_mae: data.data_nascimento_mae,
     como_chamar: data.como_chamar || null,
+    papel: data.papel,
   });
   if (errProfile) throw new Error(`Erro ao salvar perfil: ${errProfile.message}`);
 
