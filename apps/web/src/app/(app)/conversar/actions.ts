@@ -3,7 +3,9 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
-import { respond } from "@/lib/ia/engine";
+import { respond, respondAsOutputType } from "@/lib/ia/engine";
+import { extrairAtualizacoes, type PropostaAtualizacao } from "@/lib/ia/atualizar";
+import { idadeAnos } from "@/lib/idade";
 import { requireActiveWrite } from "@/lib/auth/require-active-write";
 
 async function requireFamily() {
@@ -89,4 +91,286 @@ export async function enviarMensagem(input: z.infer<typeof enviarSchema>): Promi
   }
 
   return { conversaId: conversaIdFinal };
+}
+
+// ============================================================
+// Mais ajuda na conversa — gera um output_type sobre o MESMO tema,
+// sem o usuário redigitar o problema. Vira uma nova mensagem da Kolo.
+// ============================================================
+
+export type AcaoResult = { ok: true } | { ok: false; error: string };
+
+const apoioSchema = z.object({
+  conversaId: z.string().uuid(),
+  outputTypeKey: z.string().min(1),
+});
+
+export async function pedirApoioNaConversa(
+  input: z.infer<typeof apoioSchema>,
+): Promise<AcaoResult> {
+  try {
+    const { conversaId, outputTypeKey } = apoioSchema.parse(input);
+    const { supabase, family } = await requireFamily();
+    await requireActiveWrite(family.id);
+
+    const { data: conversa } = await supabase
+      .from("conversas")
+      .select("id, membro_atipico_id")
+      .eq("id", conversaId)
+      .eq("family_account_id", family.id)
+      .maybeSingle();
+    if (!conversa) return { ok: false, error: "Conversa não encontrada." };
+
+    const { data: tipo } = await supabase
+      .from("output_types")
+      .select("key, label, prompt_template")
+      .eq("key", outputTypeKey)
+      .eq("ativo", true)
+      .maybeSingle();
+    if (!tipo) return { ok: false, error: "Tipo de ajuda não encontrado." };
+
+    // Reaproveita o contexto: o "pedido" é o que o adulto já contou na conversa.
+    const { data: msgs } = await supabase
+      .from("mensagens_skill")
+      .select("papel, conteudo")
+      .eq("conversa_id", conversaId)
+      .order("created_at", { ascending: true });
+    const pedido =
+      (msgs ?? [])
+        .filter((m) => m.papel === "user")
+        .map((m) => m.conteudo as string)
+        .join("\n")
+        .slice(0, 1800) || "Sobre o tema desta conversa.";
+
+    const resposta = await respondAsOutputType({
+      supabase,
+      familyId: family.id,
+      membroAtipicoId: conversa.membro_atipico_id as string | null,
+      outputType: {
+        key: tipo.key,
+        label: tipo.label,
+        prompt_template: tipo.prompt_template,
+      },
+      pedido,
+    });
+
+    const { error } = await supabase.from("mensagens_skill").insert({
+      conversa_id: conversaId,
+      family_account_id: family.id,
+      papel: "assistant",
+      conteudo: resposta.texto,
+      skills_acionadas: resposta.skillsAcionadas,
+      output_type: tipo.key,
+      tokens_input: resposta.uso.tokens_input,
+      tokens_output: resposta.uso.tokens_output,
+    });
+    if (error) return { ok: false, error: `Falha ao salvar: ${error.message}` };
+
+    revalidatePath(`/conversar/${conversaId}`);
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "Erro inesperado" };
+  }
+}
+
+// ============================================================
+// Atualizar — a IA propõe o que registrar (Kolo Vivo / conquista /
+// desafio). proporAtualizacao só LÊ; confirmarAtualizacao grava o que
+// o usuário deixou marcado no preview.
+// ============================================================
+
+export type PropostaResult =
+  | { ok: true; proposta: PropostaAtualizacao; temMembro: boolean }
+  | { ok: false; error: string };
+
+const conversaIdSchema = z.object({ conversaId: z.string().uuid() });
+
+export async function proporAtualizacao(
+  input: z.infer<typeof conversaIdSchema>,
+): Promise<PropostaResult> {
+  try {
+    const { conversaId } = conversaIdSchema.parse(input);
+    const { supabase, family } = await requireFamily();
+    await requireActiveWrite(family.id);
+
+    const { data: conversa } = await supabase
+      .from("conversas")
+      .select("id, membro_atipico_id, membros_atipicos(nome, data_nascimento, perfil)")
+      .eq("id", conversaId)
+      .eq("family_account_id", family.id)
+      .maybeSingle();
+    if (!conversa) return { ok: false, error: "Conversa não encontrada." };
+
+    const { data: msgs } = await supabase
+      .from("mensagens_skill")
+      .select("papel, conteudo")
+      .eq("conversa_id", conversaId)
+      .order("created_at", { ascending: true });
+    const transcript = (msgs ?? [])
+      .map((m) => `${m.papel === "user" ? "Responsável" : "Kolo"}: ${m.conteudo}`)
+      .join("\n\n")
+      .slice(0, 8000);
+
+    const rel = conversa.membros_atipicos as
+      | { nome: string; data_nascimento: string | null; perfil: string }
+      | { nome: string; data_nascimento: string | null; perfil: string }[]
+      | null;
+    const membroRow = rel ? (Array.isArray(rel) ? rel[0] : rel) : null;
+    const membro = membroRow
+      ? {
+          nome: membroRow.nome,
+          idade: idadeAnos(membroRow.data_nascimento),
+          perfil: membroRow.perfil,
+        }
+      : null;
+
+    const koloVivoResumo = await montarKoloVivoResumo(
+      supabase,
+      family.id,
+      conversa.membro_atipico_id as string | null,
+    );
+
+    const proposta = await extrairAtualizacoes({ transcript, koloVivoResumo, membro });
+    return {
+      ok: true,
+      proposta,
+      temMembro: Boolean(conversa.membro_atipico_id),
+    };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "Erro inesperado" };
+  }
+}
+
+const confirmarSchema = z.object({
+  conversaId: z.string().uuid(),
+  koloVivo: z
+    .array(
+      z.object({
+        camada: z.enum(["camada1", "camada2"]),
+        campo: z.string().min(1),
+        texto: z.string().trim().min(1),
+      }),
+    )
+    .default([]),
+  conquista: z.string().trim().min(1).nullable().default(null),
+  desafio: z.string().trim().min(1).nullable().default(null),
+});
+
+export async function confirmarAtualizacao(
+  input: z.infer<typeof confirmarSchema>,
+): Promise<{ ok: true; resumo: string } | { ok: false; error: string }> {
+  try {
+    const data = confirmarSchema.parse(input);
+    const { supabase, family } = await requireFamily();
+    await requireActiveWrite(family.id);
+
+    const { data: conversa } = await supabase
+      .from("conversas")
+      .select("id, membro_atipico_id")
+      .eq("id", data.conversaId)
+      .eq("family_account_id", family.id)
+      .maybeSingle();
+    if (!conversa) return { ok: false, error: "Conversa não encontrada." };
+    const membroId = conversa.membro_atipico_id as string | null;
+
+    const partes: string[] = [];
+
+    // Kolo Vivo → sugestões pendentes (revisadas depois no Kolo Vivo).
+    const sugestoes = data.koloVivo
+      .filter((it) => it.camada === "camada2" || membroId)
+      .map((it) => ({
+        family_account_id: family.id,
+        membro_atipico_id: it.camada === "camada1" ? membroId : null,
+        camada: it.camada,
+        campo: it.campo,
+        texto_sugerido: it.texto,
+        origem: "skill" as const,
+      }));
+    if (sugestoes.length > 0) {
+      const { error } = await supabase.from("sugestao_perfil_vivos").insert(sugestoes);
+      if (error) return { ok: false, error: `Falha ao salvar no Kolo Vivo: ${error.message}` };
+      partes.push(
+        `${sugestoes.length} ${sugestoes.length === 1 ? "sugestão" : "sugestões"} no Kolo Vivo pra revisar`,
+      );
+    }
+
+    // Conquista/desafio → diário (precisa de criança vinculada).
+    if (membroId && (data.conquista || data.desafio)) {
+      const { error } = await supabase.from("diarios").insert({
+        family_account_id: family.id,
+        membro_atipico_id: membroId,
+        data: new Date().toISOString().slice(0, 10),
+        conquista: data.conquista ?? null,
+        desafio: data.desafio ?? null,
+        origem: "app",
+        incompleto: true,
+      });
+      if (error) return { ok: false, error: `Falha ao registrar no diário: ${error.message}` };
+      if (data.conquista) partes.push("conquista registrada");
+      if (data.desafio) partes.push("desafio registrado");
+    }
+
+    if (partes.length === 0) {
+      return { ok: false, error: "Nada selecionado pra registrar." };
+    }
+
+    revalidatePath(`/conversar/${data.conversaId}`);
+    revalidatePath("/kolo-vivo");
+    revalidatePath("/painel");
+    return { ok: true, resumo: partes.join(" · ") };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "Erro inesperado" };
+  }
+}
+
+/**
+ * Resumo compacto do Kolo Vivo atual — dado à IA pra ela não re-sugerir o
+ * que já está registrado.
+ */
+async function montarKoloVivoResumo(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  familyId: string,
+  membroId: string | null,
+): Promise<string> {
+  const linhas: string[] = [];
+
+  if (membroId) {
+    const { data: pvm } = await supabase
+      .from("perfil_vivo_membro")
+      .select("essencial, como_e, corpo_rotina, desafios_regulacao, sensorial")
+      .eq("membro_atipico_id", membroId)
+      .maybeSingle();
+    if (pvm) {
+      for (const campo of [
+        "essencial",
+        "como_e",
+        "corpo_rotina",
+        "desafios_regulacao",
+        "sensorial",
+      ] as const) {
+        const resumo = resumoCampo(pvm[campo]);
+        if (resumo) linhas.push(`[criança/${campo}] ${resumo}`);
+      }
+    }
+  }
+
+  const { data: pvf } = await supabase
+    .from("perfil_vivo_familia")
+    .select("composicao, rotina, recursos, dinamica")
+    .eq("family_account_id", familyId)
+    .maybeSingle();
+  if (pvf) {
+    for (const campo of ["composicao", "rotina", "recursos", "dinamica"] as const) {
+      const resumo = resumoCampo(pvf[campo]);
+      if (resumo) linhas.push(`[família/${campo}] ${resumo}`);
+    }
+  }
+
+  return linhas.join("\n");
+}
+
+function resumoCampo(json: unknown): string {
+  if (!json || typeof json !== "object") return "";
+  if (Object.keys(json as object).length === 0) return "";
+  return JSON.stringify(json);
 }

@@ -55,7 +55,7 @@ ${buildIdentityBlock(skills)}
 
 ${VOZ_E_LIMITES}
 
-# Estrutura obrigatória da resposta — 7 partes
+# Estrutura obrigatória da resposta — 6 partes
 
 1. **Acolhimento breve** — 1 frase. Sem performar empatia.
 2. **Leitura contextual** — cite 1 ou 2 elementos do Kolo Vivo de forma natural, referenciando o membro atípico em foco.
@@ -63,12 +63,8 @@ ${VOZ_E_LIMITES}
 4. **Estratégia prática** — 1 ou 2 ideias acionáveis ancoradas em Boas Práticas. Pode incluir atividade lúdica.
 5. **Frase pronta** — para o adulto responsável usar literalmente, em itálico (\`*frase*\`).
 6. **Pergunta final** — mantém a conversa aberta.
-7. **Bloco "registrar este papo"** — exatamente este texto:
 
-> Registrar este papo:
-> • Adicionar ao Kolo Vivo
-> • Registrar conquista
-> • Registrar desafio
+NÃO escreva nenhum bloco de "registrar este papo" nem liste opções de registro — a interface já oferece esses botões automaticamente abaixo da resposta.
 
 # Formatação (markdown)
 
@@ -78,9 +74,9 @@ ${VOZ_E_LIMITES}
 
 # Tamanho
 
-Resposta total ≤ 350 palavras (sem contar o bloco "registrar este papo").${
+Resposta total ≤ 350 palavras.${
     skills.length > 1
-      ? `\n\n# Composição multi-skill\n\nVocê está integrando ${skills.length} perspectivas — apresente UMA resposta única e coesa, não duas separadas. Ao final, antes do bloco "registrar este papo", inclua uma frase curta indicando quais perspectivas se uniram. Ex: "Esta resposta uniu olhares de ${skills.map((s) => s.display_name).join(" + ")}."`
+      ? `\n\n# Composição multi-skill\n\nVocê está integrando ${skills.length} perspectivas — apresente UMA resposta única e coesa, não duas separadas. Ao final, inclua uma frase curta indicando quais perspectivas se uniram. Ex: "Esta resposta uniu olhares de ${skills.map((s) => s.display_name).join(" + ")}."`
       : ""
   }`;
 }

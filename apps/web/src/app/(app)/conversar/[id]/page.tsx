@@ -4,6 +4,7 @@ import { ChevronLeft } from "lucide-react";
 import { loadFamilyContext } from "@/lib/auth/require-user";
 import { RespostaMarkdown, limparRespostaKolo } from "@/components/resposta-markdown";
 import { ContinuarForm } from "./continuar-form";
+import { ConversaAcoes } from "./conversa-acoes";
 
 /**
  * Conversa individual (P-EST-5 + P-EST-6):
@@ -34,6 +35,14 @@ export default async function ConversaPage(props: PageProps<"/conversar/[id]">) 
     .select("id, papel, conteudo, skills_acionadas, created_at")
     .eq("conversa_id", conversa.id)
     .order("created_at", { ascending: true });
+
+  const { data: tipos } = await supabase
+    .from("output_types")
+    .select("key, label, ordem")
+    .eq("ativo", true)
+    .order("ordem", { ascending: true });
+
+  const temResposta = (mensagens ?? []).some((m) => m.papel === "assistant");
 
   const membrosRel = conversa.membros_atipicos as
     | { nome: string }
@@ -89,6 +98,17 @@ export default async function ConversaPage(props: PageProps<"/conversar/[id]">) 
           </li>
         ))}
       </ul>
+
+      {/* Mais ajuda + Atualizar — só depois de ao menos uma resposta da Kolo. */}
+      {temResposta && (
+        <ConversaAcoes
+          conversaId={conversa.id}
+          outputTypes={(tipos ?? []).map((t) => ({
+            key: t.key as string,
+            label: t.label as string,
+          }))}
+        />
+      )}
 
       {/* Continuar conversa — textarea direto, sem Card wrapper. */}
       <ContinuarForm

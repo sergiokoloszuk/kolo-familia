@@ -36,7 +36,6 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
     ]);
 
   const isAdmin = Boolean(acesso?.ativo);
-  const userEmail = user.email ?? "Sem email";
   const nomeUsuario =
     profile?.como_chamar?.trim() ||
     profile?.nome_mae?.trim() ||
@@ -65,7 +64,6 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
       <Sidebar
         isAdmin={isAdmin}
         nomeUsuario={nomeUsuario}
-        userEmail={userEmail}
         userInitial={userInitial}
         diasNaKolo={diasNaKolo}
         criancaAtiva={criancaAtiva}

@@ -56,7 +56,6 @@ function isActive(pathname: string, href: string): boolean {
 interface SidebarProps {
   isAdmin: boolean;
   nomeUsuario: string;
-  userEmail: string;
   userInitial: string;
   diasNaKolo: number | null;
   criancaAtiva: {
@@ -69,7 +68,6 @@ interface SidebarProps {
 export function Sidebar({
   isAdmin,
   nomeUsuario,
-  userEmail,
   userInitial,
   diasNaKolo,
   criancaAtiva,
@@ -234,9 +232,11 @@ export function Sidebar({
           </form>
         </div>
 
-        <div
-          className="flex items-center gap-3 rounded-xl bg-kolo-lilas-bg-2 px-3 py-2.5"
-          title={userEmail}
+        <Link
+          href="/configuracoes/conta"
+          title="Editar meu nome e como quero ser chamado(a)"
+          aria-label="Minha conta — editar meu nome e apelido"
+          className="flex items-center gap-3 rounded-xl bg-kolo-lilas-bg-2 px-3 py-2.5 transition-colors hover:bg-kolo-lilas-bg"
         >
           <span
             aria-hidden
@@ -256,7 +256,7 @@ export function Sidebar({
               </p>
             )}
           </div>
-        </div>
+        </Link>
       </div>
     </>
   );
