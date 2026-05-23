@@ -1,6 +1,6 @@
 "use client";
 
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
@@ -13,11 +13,35 @@ const schema = z.object({
   whatsapp_e164: z
     .string()
     .trim()
-    .regex(/^\+\d{8,15}$/, "Use o formato +5511999999999"),
+    .regex(/^\+55\d{10,11}$/, "Informe o DDD + número, ex: (11) 99999-9999"),
   como_chamar: z.string().trim().optional(),
 });
 
 type FormValues = z.infer<typeof schema>;
+
+// ---- Máscara de telefone BR: input mostra (nn) nnnnn-nnnn, armazena E.164 (+55...) ----
+function digitsFromE164(e164: string): string {
+  let d = (e164 ?? "").replace(/\D/g, "");
+  if (d.startsWith("55")) d = d.slice(2);
+  return d.slice(0, 11);
+}
+
+function maskTelefone(digits: string): string {
+  const d = digits.replace(/\D/g, "").slice(0, 11);
+  if (d.length === 0) return "";
+  if (d.length <= 2) return `(${d}`;
+  if (d.length <= 7) return `(${d.slice(0, 2)}) ${d.slice(2)}`;
+  return `(${d.slice(0, 2)}) ${d.slice(2, 7)}-${d.slice(7)}`;
+}
+
+function maskFromE164(e164: string): string {
+  return maskTelefone(digitsFromE164(e164));
+}
+
+function maskedToE164(masked: string): string {
+  const d = masked.replace(/\D/g, "").slice(0, 11);
+  return d ? `+55${d}` : "";
+}
 
 export function Tela1Mae({
   initial,
@@ -30,6 +54,7 @@ export function Tela1Mae({
 }) {
   const {
     register,
+    control,
     handleSubmit,
     formState: { errors },
   } = useForm<FormValues>({
@@ -59,7 +84,7 @@ export function Tela1Mae({
 
         <div className="flex flex-col gap-1.5">
           <Label htmlFor="como_chamar">Apelido (opcional)</Label>
-          <Input id="como_chamar" placeholder="Como prefere ser chamada" {...register("como_chamar")} />
+          <Input id="como_chamar" placeholder="Como prefere que a gente te chame" {...register("como_chamar")} />
         </div>
 
         <div className="flex flex-col gap-1.5">
@@ -72,17 +97,26 @@ export function Tela1Mae({
 
         <div className="flex flex-col gap-1.5">
           <Label htmlFor="whatsapp">WhatsApp</Label>
-          <Input
-            id="whatsapp"
-            placeholder="+5511999999999"
-            autoComplete="tel"
-            {...register("whatsapp_e164")}
+          <Controller
+            name="whatsapp_e164"
+            control={control}
+            render={({ field }) => (
+              <Input
+                id="whatsapp"
+                placeholder="(11) 99999-9999"
+                inputMode="numeric"
+                autoComplete="tel"
+                value={maskFromE164(field.value ?? "")}
+                onChange={(e) => field.onChange(maskedToE164(e.target.value))}
+                onBlur={field.onBlur}
+              />
+            )}
           />
           {errors.whatsapp_e164 ? (
             <span className="text-xs text-destructive">{errors.whatsapp_e164.message}</span>
           ) : (
             <span className="text-xs text-muted-foreground">
-              Inclua o código do país (+55) e o DDD.
+              Use DDD + número. O código do país (+55) entra automaticamente.
             </span>
           )}
         </div>
