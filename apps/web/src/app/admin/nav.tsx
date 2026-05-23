@@ -20,6 +20,7 @@ const items = [
   { href: "/admin/beta", label: "Beta" },
   { href: "/admin/observabilidade", label: "Observabilidade" },
   { href: "/admin/admins", label: "Admins" },
+  { href: "/admin/teste", label: "Testes" },
 ];
 
 export function AdminNav() {

@@ -176,6 +176,30 @@ export function Sidebar({
 
       {/* Rodapé — Configurações/Assinatura como ícones discretos + user info. */}
       <div className="flex flex-col gap-3 border-t border-kolo-linha pt-4">
+        {/* Acesso à área da equipe — só admin vê. Rotulado (não só ícone)
+            pra não passar despercebido, mas fora da navegação da família. */}
+        {isAdmin && (
+          <Link
+            href="/admin"
+            aria-label="Área administrativa"
+            className={cn(
+              "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-colors",
+              isActive(pathname, "/admin")
+                ? "bg-kolo-lilas-bg font-semibold text-brand-purple-dark"
+                : "font-medium text-muted-foreground hover:bg-kolo-lilas-bg-2/70 hover:text-foreground",
+            )}
+          >
+            <Shield
+              className="size-[17px] shrink-0 stroke-[1.5] text-brand-purple"
+              aria-hidden
+            />
+            <span className="flex-1">Admin</span>
+            <ChevronRight
+              className="size-3.5 shrink-0 text-muted-foreground/70"
+              aria-hidden
+            />
+          </Link>
+        )}
         <div className="flex items-center gap-1 px-1">
           <Link
             href="/configuracoes"
@@ -199,20 +223,6 @@ export function Sidebar({
           >
             <CreditCard className="size-4 stroke-[1.5]" aria-hidden />
           </Link>
-          {isAdmin && (
-            <Link
-              href="/admin"
-              aria-label="Admin"
-              title="Admin"
-              className={cn(
-                "inline-flex size-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-kolo-lilas-bg-2 hover:text-foreground",
-                isActive(pathname, "/admin") &&
-                  "bg-kolo-lilas-bg-2 text-foreground",
-              )}
-            >
-              <Shield className="size-4 stroke-[1.5]" aria-hidden />
-            </Link>
-          )}
           <form action="/auth/logout" method="post" className="ml-auto">
             <button
               type="submit"

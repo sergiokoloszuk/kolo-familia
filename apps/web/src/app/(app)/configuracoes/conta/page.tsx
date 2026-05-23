@@ -9,9 +9,20 @@ import {
 } from "@/components/ui/card";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { loadFamilyContext } from "@/lib/auth/require-user";
 import { ExcluirContaForm } from "./excluir-form";
+import { PerfilForm } from "./perfil-form";
 
-export default function MinhaContaPage() {
+export default async function MinhaContaPage() {
+  const { supabase, family } = await loadFamilyContext();
+  const { data: profile } = family
+    ? await supabase
+        .from("family_profiles")
+        .select("nome_mae, como_chamar")
+        .eq("family_account_id", family.id)
+        .maybeSingle()
+    : { data: null };
+
   return (
     <div className="flex flex-col gap-6">
       <header className="flex flex-col gap-1">
@@ -26,6 +37,24 @@ export default function MinhaContaPage() {
           Minha conta
         </h1>
       </header>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Seu nome</CardTitle>
+          <CardDescription>
+            Como você quer ser chamado(a) no app — é o nome que aparece no
+            início e no menu.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <PerfilForm
+            initial={{
+              nome_mae: profile?.nome_mae ?? "",
+              como_chamar: profile?.como_chamar ?? "",
+            }}
+          />
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>

@@ -1,11 +1,52 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { requireUser, loadFamilyContext } from "@/lib/auth/require-user";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { getStripeClient } from "@/lib/stripe/client";
 import { logEvent, logServerError } from "@/lib/log";
+
+export type PerfilResult = { ok: true } | { ok: false; error: string };
+
+const perfilSchema = z.object({
+  nome_mae: z.string().trim().min(2, "Nome muito curto").max(120, "Nome muito longo"),
+  como_chamar: z.string().trim().max(60, "Apelido muito longo").optional(),
+});
+
+/**
+ * Atualiza nome e apelido (como_chamar) do responsável. É o `como_chamar`
+ * que alimenta o "Oi, {nome}" do painel e o nome na sidebar — daí
+ * revalidar painel e layout do app.
+ */
+export async function salvarPerfilAction(
+  input: z.infer<typeof perfilSchema>,
+): Promise<PerfilResult> {
+  try {
+    const data = perfilSchema.parse(input);
+    const { supabase, family } = await loadFamilyContext();
+    if (!family) return { ok: false, error: "Família não inicializada." };
+
+    const { error } = await supabase
+      .from("family_profiles")
+      .upsert(
+        {
+          family_account_id: family.id,
+          nome_mae: data.nome_mae,
+          como_chamar: data.como_chamar?.trim() ? data.como_chamar.trim() : null,
+        },
+        { onConflict: "family_account_id" },
+      );
+    if (error) return { ok: false, error: `Não consegui salvar: ${error.message}` };
+
+    revalidatePath("/configuracoes/conta");
+    revalidatePath("/painel");
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "Erro inesperado" };
+  }
+}
 
 const schema = z.object({
   confirmacao: z

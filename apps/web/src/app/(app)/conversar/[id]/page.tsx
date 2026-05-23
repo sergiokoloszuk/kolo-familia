@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
 import { loadFamilyContext } from "@/lib/auth/require-user";
+import { RespostaMarkdown, limparRespostaKolo } from "@/components/resposta-markdown";
 import { ContinuarForm } from "./continuar-form";
 
 /**
@@ -79,9 +80,10 @@ export default async function ConversaPage(props: PageProps<"/conversar/[id]">) 
                 <span className="text-[11px] font-bold uppercase tracking-[0.18em] text-brand-purple">
                   Kolo
                 </span>
-                <p className="mt-2 whitespace-pre-wrap text-base leading-relaxed text-foreground">
-                  {m.conteudo}
-                </p>
+                <RespostaMarkdown
+                  texto={limparRespostaKolo(m.conteudo)}
+                  className="mt-2 flex flex-col gap-3 text-base text-foreground"
+                />
               </div>
             )}
           </li>

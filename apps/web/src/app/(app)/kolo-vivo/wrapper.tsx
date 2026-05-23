@@ -59,9 +59,18 @@ export function KoloVivoWrapper({
   sugestoes: SugestaoRow[];
 }) {
   // Sugestões — faixa contextual no topo (P-KV-8).
-  // Tabs membros/família — removidas (P-KV-2): agora é leitura contínua.
   const [showSugestoes, setShowSugestoes] = useState(false);
   const temSugestoes = sugestoes.length > 0;
+
+  // Multi-criança: seletor pra focar numa por vez. Com 1 criança só, mantém
+  // a leitura contínua original do protótipo (sem seletor, sem mudança).
+  const multi = membros.length > 1;
+  const [membroAtivoId, setMembroAtivoId] = useState<string | null>(
+    membros[0]?.id ?? null,
+  );
+  const membrosVisiveis = multi
+    ? membros.filter((m) => m.id === membroAtivoId)
+    : membros;
 
   return (
     <div className="flex flex-col gap-5">
@@ -93,11 +102,53 @@ export function KoloVivoWrapper({
         </div>
       )}
 
-      {/* Leitura contínua — membros em sequência, depois a família como
-       * continuação natural. Sem tabs (P-KV-2). Mudança de capítulo
-       * sentida via mt-8 extra antes da família (sem virar quebra). */}
+      {/* Seletor de criança — só com 2+. Pills discretas pra focar numa
+       * por vez. A família segue como continuação natural no fim. */}
+      {multi && (
+        <div
+          role="tablist"
+          aria-label="Escolher criança"
+          className="flex flex-wrap gap-2"
+        >
+          {membros.map((m) => {
+            const ativo = m.id === membroAtivoId;
+            return (
+              <button
+                key={m.id}
+                type="button"
+                role="tab"
+                aria-selected={ativo}
+                onClick={() => setMembroAtivoId(m.id)}
+                className={cn(
+                  "inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition-colors",
+                  ativo
+                    ? "bg-brand-purple text-white"
+                    : "bg-kolo-lilas-bg-2 text-foreground hover:bg-kolo-lilas-bg",
+                )}
+              >
+                <span
+                  aria-hidden
+                  className={cn(
+                    "flex size-6 shrink-0 items-center justify-center rounded-full font-heading text-xs font-semibold",
+                    ativo
+                      ? "bg-white/20 text-white"
+                      : "bg-brand-yellow text-brand-purple-dark",
+                  )}
+                >
+                  {m.nome[0]?.toUpperCase() ?? "?"}
+                </span>
+                {m.nome}
+              </button>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Leitura contínua — membro(s) em sequência, depois a família como
+       * continuação natural. Com 1 criança, mantém o comportamento do
+       * protótipo (P-KV-2). Com 2+, o seletor acima filtra. */}
       <div className="flex flex-col gap-12">
-        {membros.map((m) => (
+        {membrosVisiveis.map((m) => (
           <MembroEditor key={m.id} membro={m} />
         ))}
         <div className="mt-8">

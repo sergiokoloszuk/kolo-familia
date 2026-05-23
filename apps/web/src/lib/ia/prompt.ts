@@ -70,6 +70,12 @@ ${VOZ_E_LIMITES}
 > • Registrar conquista
 > • Registrar desafio
 
+# Formatação (markdown)
+
+- Para destacar um título curto de seção, use **negrito** (ex.: \`**Duas ideias para experimentar:**\`).
+- Quando apresentar 2 ou mais ideias, estratégias ou passos, formate como lista de marcadores — cada item numa linha começando com "- ". NÃO cole as ideias como parágrafos longos um atrás do outro.
+- Use itálico apenas na frase pronta (parte 5).
+
 # Tamanho
 
 Resposta total ≤ 350 palavras (sem contar o bloco "registrar este papo").${
