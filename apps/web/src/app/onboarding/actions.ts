@@ -37,10 +37,11 @@ async function requireFamily() {
 }
 
 async function bumpStep(supabase: Awaited<ReturnType<typeof createClient>>, familyId: string, nextStep: number) {
-  await supabase
+  const { error } = await supabase
     .from("family_accounts")
     .update({ onboarding_step: nextStep })
     .eq("id", familyId);
+  if (error) throw new Error(`Erro ao avançar etapa: ${error.message}`);
   revalidatePath("/onboarding");
 }
 
@@ -64,17 +65,19 @@ export async function saveTela1(raw: Tela1Input) {
   const data = tela1Schema.parse(raw);
   const { supabase, family } = await requireFamily();
 
-  await supabase.from("family_profiles").upsert({
+  const { error: errProfile } = await supabase.from("family_profiles").upsert({
     family_account_id: family.id,
     nome_mae: data.nome_mae,
     data_nascimento_mae: data.data_nascimento_mae,
     como_chamar: data.como_chamar || null,
   });
+  if (errProfile) throw new Error(`Erro ao salvar perfil: ${errProfile.message}`);
 
-  await supabase
+  const { error: errWhats } = await supabase
     .from("family_accounts")
     .update({ whatsapp_e164: data.whatsapp_e164 })
     .eq("id", family.id);
+  if (errWhats) throw new Error(`Erro ao salvar WhatsApp: ${errWhats.message}`);
 
   await bumpStep(supabase, family.id, Math.max(family.onboarding_step, 2));
 }
@@ -104,7 +107,7 @@ export async function saveTela2(raw: Tela2Input) {
   const existentes = data.membros.filter((m) => m.id);
 
   if (novos.length > 0) {
-    await supabase.from("membros_atipicos").insert(
+    const { error } = await supabase.from("membros_atipicos").insert(
       novos.map((m) => ({
         family_account_id: family.id,
         nome: m.nome,
@@ -112,14 +115,16 @@ export async function saveTela2(raw: Tela2Input) {
         perfil: m.perfil,
       })),
     );
+    if (error) throw new Error(`Erro ao cadastrar membro(s): ${error.message}`);
   }
 
   for (const m of existentes) {
-    await supabase
+    const { error } = await supabase
       .from("membros_atipicos")
       .update({ nome: m.nome, data_nascimento: m.data_nascimento, perfil: m.perfil })
       .eq("id", m.id!)
       .eq("family_account_id", family.id);
+    if (error) throw new Error(`Erro ao atualizar membro: ${error.message}`);
   }
 
   await bumpStep(supabase, family.id, Math.max(family.onboarding_step, 3));
@@ -166,7 +171,7 @@ export async function saveTela3(raw: Tela3Input) {
   const data = tela3Schema.parse(raw);
   const { supabase, family } = await requireFamily();
 
-  await supabase.from("perfil_vivo_familia").upsert({
+  const { error } = await supabase.from("perfil_vivo_familia").upsert({
     family_account_id: family.id,
     composicao: data.composicao ? { texto: data.composicao } : {},
     rotina: data.rotina ? { texto: data.rotina } : {},
@@ -174,6 +179,7 @@ export async function saveTela3(raw: Tela3Input) {
     dinamica: data.dinamica ? { texto: data.dinamica } : {},
     completude_pct: estimaCompletude([data.composicao, data.rotina, data.recursos, data.dinamica]),
   });
+  if (error) throw new Error(`Erro ao salvar contexto: ${error.message}`);
 
   await bumpStep(supabase, family.id, Math.max(family.onboarding_step, 4));
 }
@@ -207,7 +213,7 @@ export async function saveTela4(raw: Tela4Input) {
   for (const item of data.porMembro) {
     const desafios = item.desafios.filter(Boolean);
     const interesses = item.interesses.filter(Boolean);
-    await supabase.from("perfil_vivo_membro").upsert(
+    const { error } = await supabase.from("perfil_vivo_membro").upsert(
       {
         membro_atipico_id: item.membro_id,
         family_account_id: family.id,
@@ -218,6 +224,7 @@ export async function saveTela4(raw: Tela4Input) {
       },
       { onConflict: "membro_atipico_id" },
     );
+    if (error) throw new Error(`Erro ao salvar primeiros sinais: ${error.message}`);
   }
 
   await bumpStep(supabase, family.id, Math.max(family.onboarding_step, 5));
@@ -239,10 +246,11 @@ export async function saveTela5(raw: Tela5Input) {
   const { supabase, family } = await requireFamily();
 
   if (data.optin_ayla) {
-    await supabase
+    const { error } = await supabase
       .from("ayla_preferences")
       .update({ desativada: false, consentimento_em: new Date().toISOString() })
       .eq("family_account_id", family.id);
+    if (error) throw new Error(`Erro ao salvar consentimento da Ayla: ${error.message}`);
   }
 
   await bumpStep(supabase, family.id, Math.max(family.onboarding_step, 6));
@@ -254,10 +262,11 @@ export async function saveTela5(raw: Tela5Input) {
 
 export async function completeOnboarding() {
   const { supabase, family } = await requireFamily();
-  await supabase
+  const { error } = await supabase
     .from("family_accounts")
     .update({ onboarding_completed: true, onboarding_step: 7 })
     .eq("id", family.id);
+  if (error) throw new Error(`Erro ao concluir onboarding: ${error.message}`);
 
   // Dispara a primeira mensagem da Ayla na hora — best-effort.
   // sendBoasVindas já respeita consentimento (LGPD), pausa e idempotência.
