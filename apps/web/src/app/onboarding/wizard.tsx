@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { dataBrParaIso } from "@/lib/idade";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tela1Mae } from "./steps/tela-1-mae";
 import { Tela2Membros } from "./steps/tela-2-membros";
@@ -141,7 +142,7 @@ export function OnboardingWizard({ initial }: { initial: InitialState }) {
                       ...s,
                       profile: {
                         nome_mae: values.nome_mae,
-                        data_nascimento_mae: values.data_nascimento_mae,
+                        data_nascimento_mae: dataBrParaIso(values.data_nascimento_mae),
                         como_chamar: values.como_chamar ?? null,
                         papel: values.papel,
                       },

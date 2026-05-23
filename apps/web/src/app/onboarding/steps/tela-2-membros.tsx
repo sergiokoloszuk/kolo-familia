@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useForm, useFieldArray } from "react-hook-form";
+import { useForm, useFieldArray, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Trash2, UserPlus } from "lucide-react";
 import { Explanation } from "./tela-1-mae";
 import type { Membro } from "../wizard";
-import { idadeAnos } from "@/lib/idade";
+import { idadeAnos, dataBrParaIso, mascararDataBr, dataIsoParaBr } from "@/lib/idade";
 
 const PERFIS = [
   { value: "TEA", label: "TEA" },
@@ -30,11 +30,12 @@ const schema = z.object({
         data_nascimento: z
           .string()
           .trim()
-          .regex(/^\d{4}-\d{2}-\d{2}$/, "Informe a data de nascimento")
-          .refine((d) => {
-            const a = idadeAnos(d);
+          .refine((v) => {
+            const iso = dataBrParaIso(v);
+            if (!iso) return false;
+            const a = idadeAnos(iso);
             return a !== null && a >= 0 && a <= 120;
-          }, "Data de nascimento inválida"),
+          }, "Informe uma data válida (dd/mm/aaaa)"),
         perfil: z.enum(["TEA", "TDAH", "Dislexia", "AHSD", "Outro", "EmInvestigacao"]),
       }),
     )
@@ -69,7 +70,7 @@ export function Tela2Membros({
           ? initial.map((m) => ({
               id: m.id,
               nome: m.nome,
-              data_nascimento: m.data_nascimento,
+              data_nascimento: dataIsoParaBr(m.data_nascimento),
               perfil: m.perfil as FormValues["membros"][number]["perfil"],
             }))
           : [{ nome: "", data_nascimento: "", perfil: "TEA" }],
@@ -126,10 +127,19 @@ export function Tela2Membros({
 
               <div className="flex flex-col gap-1.5">
                 <Label htmlFor={`membros.${index}.data_nascimento`}>Data de nascimento</Label>
-                <Input
-                  id={`membros.${index}.data_nascimento`}
-                  type="date"
-                  {...register(`membros.${index}.data_nascimento`)}
+                <Controller
+                  name={`membros.${index}.data_nascimento`}
+                  control={control}
+                  render={({ field }) => (
+                    <Input
+                      id={`membros.${index}.data_nascimento`}
+                      inputMode="numeric"
+                      placeholder="dd/mm/aaaa"
+                      value={field.value ?? ""}
+                      onChange={(e) => field.onChange(mascararDataBr(e.target.value))}
+                      onBlur={field.onBlur}
+                    />
+                  )}
                 />
                 {errors.membros?.[index]?.data_nascimento && (
                   <span className="text-xs text-destructive">

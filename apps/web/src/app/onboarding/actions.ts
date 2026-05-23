@@ -3,15 +3,16 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { createClient, createServiceRoleClient } from "@/lib/supabase/server";
-import { idadeAnos } from "@/lib/idade";
+import { idadeAnos, dataBrParaIso } from "@/lib/idade";
 
 const dataNascimentoSchema = (minAnos: number, maxAnos: number, msg: string) =>
   z
     .string()
     .trim()
-    .regex(/^\d{4}-\d{2}-\d{2}$/, "Data inválida")
-    .refine((d) => {
-      const a = idadeAnos(d);
+    .refine((v) => {
+      const iso = dataBrParaIso(v);
+      if (!iso) return false;
+      const a = idadeAnos(iso);
       return a !== null && a >= minAnos && a <= maxAnos;
     }, msg);
 
@@ -69,7 +70,7 @@ export async function saveTela1(raw: Tela1Input) {
   const { error: errProfile } = await supabase.from("family_profiles").upsert({
     family_account_id: family.id,
     nome_mae: data.nome_mae,
-    data_nascimento_mae: data.data_nascimento_mae,
+    data_nascimento_mae: dataBrParaIso(data.data_nascimento_mae),
     como_chamar: data.como_chamar || null,
     papel: data.papel,
   });
@@ -113,7 +114,7 @@ export async function saveTela2(raw: Tela2Input) {
       novos.map((m) => ({
         family_account_id: family.id,
         nome: m.nome,
-        data_nascimento: m.data_nascimento,
+        data_nascimento: dataBrParaIso(m.data_nascimento),
         perfil: m.perfil,
       })),
     );
@@ -123,7 +124,7 @@ export async function saveTela2(raw: Tela2Input) {
   for (const m of existentes) {
     const { error } = await supabase
       .from("membros_atipicos")
-      .update({ nome: m.nome, data_nascimento: m.data_nascimento, perfil: m.perfil })
+      .update({ nome: m.nome, data_nascimento: dataBrParaIso(m.data_nascimento), perfil: m.perfil })
       .eq("id", m.id!)
       .eq("family_account_id", family.id);
     if (error) throw new Error(`Erro ao atualizar membro: ${error.message}`);

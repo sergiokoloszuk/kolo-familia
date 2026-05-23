@@ -6,18 +6,19 @@ import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { idadeAnos } from "@/lib/idade";
+import { idadeAnos, dataBrParaIso, mascararDataBr, dataIsoParaBr } from "@/lib/idade";
 
 const schema = z.object({
   nome_mae: z.string().trim().min(2, "Nome muito curto"),
   data_nascimento_mae: z
     .string()
     .trim()
-    .regex(/^\d{4}-\d{2}-\d{2}$/, "Informe sua data de nascimento")
-    .refine((d) => {
-      const a = idadeAnos(d);
+    .refine((v) => {
+      const iso = dataBrParaIso(v);
+      if (!iso) return false;
+      const a = idadeAnos(iso);
       return a !== null && a >= 16 && a <= 100;
-    }, "Idade deve estar entre 16 e 100 anos"),
+    }, "Informe uma data válida (idade entre 16 e 100)"),
   whatsapp_e164: z
     .string()
     .trim()
@@ -72,7 +73,7 @@ export function Tela1Mae({
     resolver: zodResolver(schema),
     defaultValues: {
       nome_mae: initial.nome_mae,
-      data_nascimento_mae: initial.data_nascimento_mae ?? "",
+      data_nascimento_mae: dataIsoParaBr(initial.data_nascimento_mae),
       como_chamar: initial.como_chamar,
       whatsapp_e164: initial.whatsapp_e164,
       papel: (initial.papel || "") as FormValues["papel"],
@@ -119,7 +120,20 @@ export function Tela1Mae({
 
         <div className="flex flex-col gap-1.5">
           <Label htmlFor="data_nascimento_mae">Sua data de nascimento</Label>
-          <Input id="data_nascimento_mae" type="date" {...register("data_nascimento_mae")} />
+          <Controller
+            name="data_nascimento_mae"
+            control={control}
+            render={({ field }) => (
+              <Input
+                id="data_nascimento_mae"
+                inputMode="numeric"
+                placeholder="dd/mm/aaaa"
+                value={field.value ?? ""}
+                onChange={(e) => field.onChange(mascararDataBr(e.target.value))}
+                onBlur={field.onBlur}
+              />
+            )}
+          />
           {errors.data_nascimento_mae && (
             <span className="text-xs text-destructive">{errors.data_nascimento_mae.message}</span>
           )}
