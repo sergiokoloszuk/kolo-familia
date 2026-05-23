@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { createClient } from "@/lib/supabase/client";
+import { GoogleButton } from "@/components/auth/google-button";
 
 const schema = z.object({
   email: z.string().email("E-mail inválido"),
@@ -55,18 +56,6 @@ function LoginPageInner() {
     }
     router.push("/");
     router.refresh();
-  }
-
-  async function handleGoogle() {
-    setAuthError(null);
-    const supabase = createClient();
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo: `${window.location.origin}/auth/callback?next=/`,
-      },
-    });
-    if (error) setAuthError(traduzirErro(error.message));
   }
 
   return (
@@ -115,9 +104,7 @@ function LoginPageInner() {
           </span>
         </div>
 
-        <Button type="button" variant="outline" onClick={handleGoogle}>
-          Entrar com Google
-        </Button>
+        <GoogleButton next="/" onError={(m) => setAuthError(traduzirErro(m))} />
 
         <p className="text-center text-sm text-muted-foreground">
           Ainda não tem conta?{" "}
