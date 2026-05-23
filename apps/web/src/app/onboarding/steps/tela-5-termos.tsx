@@ -48,7 +48,24 @@ export function Tela5Termos({
             <input type="checkbox" className="mt-1" {...register("aceitou_termos")} />
             <span>
               <Label htmlFor="" className="font-medium">
-                Aceito os termos de uso e a política de privacidade
+                Aceito os{" "}
+                <a
+                  href="/termos"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-brand-purple underline underline-offset-2"
+                >
+                  termos de uso
+                </a>{" "}
+                e a{" "}
+                <a
+                  href="/privacidade"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-brand-purple underline underline-offset-2"
+                >
+                  política de privacidade
+                </a>
               </Label>
               <p className="mt-1 text-xs text-muted-foreground">
                 O Kolo Família não substitui profissionais da saúde. Os dados ficam

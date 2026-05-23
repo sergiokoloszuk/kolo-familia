@@ -17,181 +17,146 @@ export default function PrivacidadePage() {
           <em className="not-italic text-brand-purple">Privacidade</em>
         </h1>
         <p className="mt-3 text-sm text-muted-foreground">
-          Última atualização: 8 de maio de 2026
+          Última atualização: 23 de maio de 2026
         </p>
       </header>
 
-      <div className="prose prose-sm max-w-none space-y-6 text-sm leading-relaxed text-foreground/90">
+      <div className="space-y-6 text-sm leading-relaxed text-foreground/90">
         <section>
-          <h2 className="text-lg font-semibold">1. Quem somos</h2>
+          <h2 className="text-lg font-semibold">1. Compromisso com a Privacidade</h2>
           <p>
-            Kolo Família é uma plataforma de apoio educacional e organizacional
-            para famílias com pelo menos um membro neurodivergente (TEA, TDAH,
-            dislexia, AH/SD). Esta política descreve como tratamos seus dados
-            em conformidade com a Lei Geral de Proteção de Dados (Lei
-            13.709/2018).
+            A Kolo compromete-se com a privacidade, segurança e proteção dos
+            dados compartilhados pelas famílias, em conformidade com a{" "}
+            <strong>Lei Geral de Proteção de Dados (LGPD – Lei nº 13.709/2018)</strong>.
           </p>
         </section>
 
         <section>
-          <h2 className="text-lg font-semibold">2. Dados que coletamos</h2>
+          <h2 className="text-lg font-semibold">2. Quais dados coletamos?</h2>
+          <p>
+            Coletamos apenas informações necessárias para funcionamento e
+            personalização do serviço.
+          </p>
+          <p className="font-medium">Dados do responsável:</p>
+          <ul className="ml-5 list-disc space-y-1">
+            <li>nome;</li>
+            <li>telefone (WhatsApp);</li>
+            <li>e-mail.</li>
+          </ul>
+          <p className="font-medium">Dados da criança (quando compartilhados):</p>
+          <ul className="ml-5 list-disc space-y-1">
+            <li>primeiro nome;</li>
+            <li>idade;</li>
+            <li>rotina;</li>
+            <li>preferências;</li>
+            <li>desenvolvimento;</li>
+            <li>
+              informações sobre comportamento ou desafios relatados pelo
+              responsável.
+            </li>
+          </ul>
+          <p>
+            Esses dados podem incluir informações classificadas como{" "}
+            <strong>dados pessoais sensíveis</strong>.
+          </p>
+        </section>
+
+        <section>
+          <h2 className="text-lg font-semibold">3. Para que utilizamos os dados?</h2>
           <ul className="ml-5 list-disc space-y-1">
             <li>
-              <strong>Cadastro:</strong> e-mail e senha (criptografada).
+              <strong>Personalização:</strong> adaptar respostas considerando
+              histórico e contexto compartilhado.
             </li>
             <li>
-              <strong>Perfil da família:</strong> nome, idade, características
-              das pessoas atípicas, rotina, desafios e conquistas — só o que
-              você decide registrar.
+              <strong>Prestação do serviço:</strong> fornecer suporte e
+              funcionamento da plataforma.
             </li>
             <li>
-              <strong>Diários e check-ins:</strong> conteúdo voluntário que você
-              registra no app ou via WhatsApp.
+              <strong>Comunicação:</strong> enviar mensagens relacionadas ao uso
+              do Kolo Família.
             </li>
             <li>
-              <strong>WhatsApp:</strong> número e mensagens trocadas com a Ayla
-              (apenas se você autorizar).
-            </li>
-            <li>
-              <strong>DASS-21:</strong> respostas e pontuações (apenas se você
-              optar por aplicar).
-            </li>
-            <li>
-              <strong>Pagamento:</strong> processado pelo Stripe; nós não
-              armazenamos dados de cartão.
-            </li>
-            <li>
-              <strong>Operacional:</strong> logs de acesso, identificadores de
-              dispositivo, navegador e endereço IP — para segurança e
-              observabilidade.
+              <strong>Melhoria:</strong> aprimorar a qualidade da experiência por
+              meio de análises agregadas ou anonimizadas.
             </li>
           </ul>
         </section>
 
         <section>
-          <h2 className="text-lg font-semibold">3. Como usamos</h2>
+          <h2 className="text-lg font-semibold">4. Compartilhamento de Dados</h2>
+          <p>
+            Os dados não são vendidos nem compartilhados para fins publicitários.
+          </p>
+          <p>
+            Podemos utilizar fornecedores tecnológicos necessários para operação
+            do serviço (como infraestrutura ou processamento técnico da IA),
+            adotando medidas de proteção adequadas.
+          </p>
+        </section>
+
+        <section>
+          <h2 className="text-lg font-semibold">5. Armazenamento e Segurança</h2>
+          <p>
+            Adotamos medidas técnicas e administrativas para reduzir riscos
+            relacionados a acesso indevido, alteração, perda ou uso não
+            autorizado.
+          </p>
+          <p>
+            Embora utilizemos mecanismos de segurança, nenhum sistema é
+            totalmente imune a riscos. Mas proteção de dados faz parte do
+            compromisso da Kolo.
+          </p>
+        </section>
+
+        <section>
+          <h2 className="text-lg font-semibold">6. Direitos do Usuário (LGPD)</h2>
+          <p>Você pode solicitar:</p>
           <ul className="ml-5 list-disc space-y-1">
-            <li>Personalizar o conteúdo (brincadeiras, atividades, etc.).</li>
-            <li>
-              Permitir que a Ayla converse com você no WhatsApp e organize seus
-              registros.
-            </li>
-            <li>
-              Gerar relatórios para terapeutas e escola — somente quando você
-              cria e compartilha o link.
-            </li>
-            <li>
-              Detectar padrões e propor adaptações reversíveis (sempre com seu
-              OK explícito).
-            </li>
-            <li>
-              Cobrar a assinatura e cumprir obrigações fiscais e legais.
-            </li>
+            <li>confirmação do tratamento;</li>
+            <li>acesso aos dados;</li>
+            <li>correção;</li>
+            <li>exclusão;</li>
+            <li>revogação de consentimento;</li>
+            <li>informações sobre compartilhamento;</li>
+            <li>demais direitos previstos pela LGPD.</li>
           </ul>
+          <p>Solicitações podem ser feitas pelos canais oficiais de suporte.</p>
         </section>
 
         <section>
-          <h2 className="text-lg font-semibold">4. Quem vê</h2>
+          <h2 className="text-lg font-semibold">7. Exclusão de Dados</h2>
           <p>
-            <strong>Sua família.</strong> Nem nossa equipe consulta o conteúdo
-            do seu diário, perfil vivo ou conversas com a Ayla. Acesso interno
-            é restrito a casos de suporte ativamente solicitado por você.
+            Você pode solicitar a exclusão dos seus dados enviando:{" "}
+            <strong>&quot;Excluir meus dados&quot;</strong>.
           </p>
-          <p>
-            <strong>Terceiros operacionais:</strong> Supabase (banco de dados),
-            Stripe (pagamentos), Z-API/WhatsApp (mensagens), Anthropic e OpenAI
-            (modelos de IA), serviço de e-mail transacional. Cada um trata
-            apenas o necessário pra prestar o serviço, sob contrato adequado.
-          </p>
-          <p>
-            <strong>Profissionais que você escolhe:</strong> via link vivo de
-            relatório que você gera e compartilha. Você pode revogar o link a
-            qualquer hora.
-          </p>
+          <p>A exclusão ocorrerá conforme exigências legais aplicáveis.</p>
         </section>
 
         <section>
-          <h2 className="text-lg font-semibold">5. Base legal</h2>
+          <h2 className="text-lg font-semibold">8. Contato</h2>
           <p>
-            Tratamos dados com base no <strong>consentimento</strong> explícito
-            (cadastro, registros, autorização da Ayla, geração de relatório),
-            na <strong>execução do contrato</strong> (cobrança, entrega do
-            serviço) e em <strong>obrigação legal</strong> (registros fiscais).
-          </p>
-        </section>
-
-        <section>
-          <h2 className="text-lg font-semibold">6. Crianças</h2>
-          <p>
-            O cadastro é feito por pais ou responsáveis. Nenhuma criança
-            interage diretamente com a plataforma — você decide o que registrar
-            sobre ela. Mesmo assim, evitamos dados sensíveis (CPF, endereço
-            preciso) sempre que dá pra evitar.
-          </p>
-        </section>
-
-        <section>
-          <h2 className="text-lg font-semibold">7. Seus direitos</h2>
-          <p>Você pode, a qualquer momento:</p>
-          <ul className="ml-5 list-disc space-y-1">
-            <li>Acessar e exportar seus dados.</li>
-            <li>Corrigir, anonimizar ou excluir.</li>
-            <li>
-              Revogar consentimento (Ayla, link vivo, opt-out de categorias).
-            </li>
-            <li>Cancelar a conta — basta nos contatar.</li>
-          </ul>
-          <p>
-            Pra qualquer uma dessas solicitações, escreva pra{" "}
+            Para dúvidas, solicitações ou exercício dos direitos previstos na
+            LGPD:{" "}
             <a
-              href="mailto:contato@kolofamilia.com.br"
+              href="mailto:kolosuporte@gmail.com"
               className="underline underline-offset-2"
             >
-              contato@kolofamilia.com.br
+              kolosuporte@gmail.com
             </a>
-            . Respondemos em até 15 dias.
           </p>
         </section>
 
-        <section>
-          <h2 className="text-lg font-semibold">8. Retenção</h2>
-          <p>
-            Mantemos seus dados enquanto a conta existir. Quando você cancela,
-            arquivamos pelo prazo necessário pra obrigações legais (fiscal e
-            jurídico, normalmente 5 anos) e excluímos o conteúdo livre
-            (diários, perfil vivo) em até 90 dias.
+        <section className="border-t border-kolo-linha pt-6">
+          <p className="font-heading text-base text-foreground">
+            A Kolo Família existe para apoiar quem cuida.
           </p>
-        </section>
-
-        <section>
-          <h2 className="text-lg font-semibold">9. Segurança</h2>
-          <p>
-            Usamos TLS em trânsito, criptografia em repouso para credenciais,
-            controles de acesso por papel e Row Level Security no banco.
-            Mesmo assim, nenhum sistema é 100% — se acontecer um incidente
-            que afete seus dados, comunicamos você e a ANPD em até 72 horas.
+          <p className="font-heading text-base text-foreground">
+            Não substituímos profissionais.
           </p>
-        </section>
-
-        <section>
-          <h2 className="text-lg font-semibold">10. Mudanças</h2>
-          <p>
-            Atualizações desta política são publicadas aqui com a data
-            revisada. Mudanças significativas são comunicadas por e-mail.
-          </p>
-        </section>
-
-        <section>
-          <h2 className="text-lg font-semibold">11. Contato e DPO</h2>
-          <p>
-            Encarregada de Dados (DPO):{" "}
-            <a
-              href="mailto:dpo@kolofamilia.com.br"
-              className="underline underline-offset-2"
-            >
-              dpo@kolofamilia.com.br
-            </a>
-            .
+          <p className="font-heading text-base text-foreground">
+            Fortalecemos a rede de apoio da criança com método, direção e
+            continuidade.
           </p>
         </section>
       </div>
