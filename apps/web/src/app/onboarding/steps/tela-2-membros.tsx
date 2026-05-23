@@ -158,7 +158,6 @@ export function Tela2Membros({
 
         <Button
           type="button"
-          variant="outline"
           onClick={() => append({ nome: "", data_nascimento: "", perfil: "TEA" })}
           disabled={pending}
         >
