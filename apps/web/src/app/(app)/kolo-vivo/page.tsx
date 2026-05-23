@@ -2,6 +2,7 @@ import { Users } from "lucide-react";
 import { Eyebrow } from "@/components/brand/eyebrow";
 import { IconCard } from "@/components/brand/icon-card";
 import { loadFamilyContext } from "@/lib/auth/require-user";
+import { idadeAnos } from "@/lib/idade";
 import { KoloVivoWrapper, type FamiliaSecoes, type MembroData, type SugestaoRow } from "./wrapper";
 
 export default async function KoloVivoPage() {
@@ -12,7 +13,7 @@ export default async function KoloVivoPage() {
     await Promise.all([
       supabase
         .from("membros_atipicos")
-        .select("id, nome, idade, perfil")
+        .select("id, nome, data_nascimento, perfil")
         .eq("family_account_id", familyId)
         .eq("ativo", true)
         .order("created_at", { ascending: true }),
@@ -45,7 +46,7 @@ export default async function KoloVivoPage() {
     return {
       id: m.id,
       nome: m.nome,
-      idade: m.idade,
+      idade: idadeAnos(m.data_nascimento),
       perfil: m.perfil,
       essencial: extractSecao(p?.essencial),
       como_e: extractSecao(p?.como_e),

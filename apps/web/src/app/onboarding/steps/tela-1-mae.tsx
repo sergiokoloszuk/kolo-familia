@@ -6,10 +6,18 @@ import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { idadeAnos } from "@/lib/idade";
 
 const schema = z.object({
   nome_mae: z.string().trim().min(2, "Nome muito curto"),
-  idade_mae: z.coerce.number().int().min(16, "Idade mínima 16").max(100),
+  data_nascimento_mae: z
+    .string()
+    .trim()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, "Informe sua data de nascimento")
+    .refine((d) => {
+      const a = idadeAnos(d);
+      return a !== null && a >= 16 && a <= 100;
+    }, "Idade deve estar entre 16 e 100 anos"),
   whatsapp_e164: z
     .string()
     .trim()
@@ -48,7 +56,7 @@ export function Tela1Mae({
   pending,
   onSubmit,
 }: {
-  initial: { nome_mae: string; idade_mae: number | null; como_chamar: string; whatsapp_e164: string };
+  initial: { nome_mae: string; data_nascimento_mae: string; como_chamar: string; whatsapp_e164: string };
   pending: boolean;
   onSubmit: (values: FormValues) => void;
 }) {
@@ -61,7 +69,7 @@ export function Tela1Mae({
     resolver: zodResolver(schema),
     defaultValues: {
       nome_mae: initial.nome_mae,
-      idade_mae: initial.idade_mae ?? undefined,
+      data_nascimento_mae: initial.data_nascimento_mae ?? "",
       como_chamar: initial.como_chamar,
       whatsapp_e164: initial.whatsapp_e164,
     },
@@ -88,10 +96,10 @@ export function Tela1Mae({
         </div>
 
         <div className="flex flex-col gap-1.5">
-          <Label htmlFor="idade_mae">Sua idade</Label>
-          <Input id="idade_mae" type="number" inputMode="numeric" {...register("idade_mae")} />
-          {errors.idade_mae && (
-            <span className="text-xs text-destructive">{errors.idade_mae.message}</span>
+          <Label htmlFor="data_nascimento_mae">Sua data de nascimento</Label>
+          <Input id="data_nascimento_mae" type="date" {...register("data_nascimento_mae")} />
+          {errors.data_nascimento_mae && (
+            <span className="text-xs text-destructive">{errors.data_nascimento_mae.message}</span>
           )}
         </div>
 

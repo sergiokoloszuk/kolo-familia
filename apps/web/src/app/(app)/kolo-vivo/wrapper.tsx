@@ -27,7 +27,7 @@ export type FamiliaSecoes = {
 export type MembroData = {
   id: string;
   nome: string;
-  idade: number;
+  idade: number | null;
   perfil: string;
   essencial: Secao;
   como_e: Secao;

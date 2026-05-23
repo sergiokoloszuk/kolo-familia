@@ -3,6 +3,7 @@ import { ChevronLeft } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { loadFamilyContext } from "@/lib/auth/require-user";
+import { idadeAnos } from "@/lib/idade";
 
 export default async function AvataresIndexPage() {
   const { supabase, family } = await loadFamilyContext();
@@ -10,7 +11,7 @@ export default async function AvataresIndexPage() {
 
   const { data: membros } = await supabase
     .from("membros_atipicos")
-    .select("id, nome, idade, perfil, avatares_membros_atipicos(imagem_url)")
+    .select("id, nome, data_nascimento, perfil, avatares_membros_atipicos(imagem_url)")
     .eq("family_account_id", familyId)
     .eq("ativo", true)
     .order("created_at", { ascending: true });
@@ -49,7 +50,7 @@ export default async function AvataresIndexPage() {
                     <div>
                       <CardTitle className="text-base">{m.nome}</CardTitle>
                       <CardDescription>
-                        {m.idade} anos · {m.perfil}
+                        {idadeAnos(m.data_nascimento)} anos · {m.perfil}
                       </CardDescription>
                     </div>
                     <Badge variant={temAvatar ? "default" : "outline"}>

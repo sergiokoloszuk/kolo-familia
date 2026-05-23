@@ -10,7 +10,7 @@ import { Tela4QuickKoloVivo } from "./steps/tela-4-quick-kolo-vivo";
 import { Tela5Termos } from "./steps/tela-5-termos";
 import { Tela6Confirmacao } from "./steps/tela-6-confirmacao";
 
-export type Membro = { id: string; nome: string; idade: number; perfil: string };
+export type Membro = { id: string; nome: string; data_nascimento: string; perfil: string };
 
 export type InitialState = {
   familyId: string;
@@ -18,7 +18,7 @@ export type InitialState = {
   currentStep: number;
   profile: {
     nome_mae: string | null;
-    idade_mae: number | null;
+    data_nascimento_mae: string | null;
     como_chamar: string | null;
   } | null;
   whatsapp: string | null;
@@ -123,7 +123,7 @@ export function OnboardingWizard({ initial }: { initial: InitialState }) {
             <Tela1Mae
               initial={{
                 nome_mae: state.profile?.nome_mae ?? "",
-                idade_mae: state.profile?.idade_mae ?? null,
+                data_nascimento_mae: state.profile?.data_nascimento_mae ?? "",
                 como_chamar: state.profile?.como_chamar ?? "",
                 whatsapp_e164: state.whatsapp ?? "",
               }}
@@ -139,7 +139,7 @@ export function OnboardingWizard({ initial }: { initial: InitialState }) {
                       ...s,
                       profile: {
                         nome_mae: values.nome_mae,
-                        idade_mae: values.idade_mae,
+                        data_nascimento_mae: values.data_nascimento_mae,
                         como_chamar: values.como_chamar ?? null,
                       },
                       whatsapp: values.whatsapp_e164,

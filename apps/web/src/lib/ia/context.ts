@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { SkillRow } from "./router";
+import { idadeAnos } from "@/lib/idade";
 
 // Campos jsonb top-level em perfil_vivo_membro (legados, mantidos)
 const KOLO_VIVO_FIELDS_MEMBRO_TOPLEVEL = [
@@ -59,7 +60,7 @@ export type ContextoSkillResposta = {
   membroFoco: {
     id: string;
     nome: string;
-    idade: number;
+    idade: number | null;
     perfil: string;
     secoes: Partial<Record<KoloVivoFieldMembro, string>>;
   } | null;
@@ -135,7 +136,7 @@ export async function buildContext(
     membroAtipicoId
       ? supabase
           .from("membros_atipicos")
-          .select("id, nome, idade, perfil")
+          .select("id, nome, data_nascimento, perfil")
           .eq("id", membroAtipicoId)
           .maybeSingle()
       : Promise.resolve({ data: null }),
@@ -188,7 +189,7 @@ export async function buildContext(
     ? {
         id: (membroResult.data as { id: string }).id,
         nome: (membroResult.data as { nome: string }).nome,
-        idade: (membroResult.data as { idade: number }).idade,
+        idade: idadeAnos((membroResult.data as { data_nascimento: string | null }).data_nascimento),
         perfil: (membroResult.data as { perfil: string }).perfil,
         secoes: filterMembroSections(
           perfilMembroResult.data as Record<string, unknown> | null,

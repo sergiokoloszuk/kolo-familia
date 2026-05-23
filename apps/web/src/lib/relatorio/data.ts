@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { idadeAnos } from "@/lib/idade";
 
 /**
  * Coleta de dados para relatório (PRD §7.17).
@@ -20,7 +21,7 @@ export type ReportData = {
   janelaMeses: JanelaMeses;
   membro: {
     nome: string;
-    idade: number;
+    idade: number | null;
     perfil: string;
     diagnosticosFormais: string[];
   };
@@ -89,7 +90,7 @@ export async function fetchReportData(
   ] = await Promise.all([
     supabase
       .from("membros_atipicos")
-      .select("nome, idade, perfil, diagnosticos_formais")
+      .select("nome, data_nascimento, perfil, diagnosticos_formais")
       .eq("id", opts.membroAtipicoId)
       .single(),
     supabase
@@ -209,7 +210,7 @@ export async function fetchReportData(
     janelaMeses: opts.janelaMeses,
     membro: {
       nome: membro.nome as string,
-      idade: membro.idade as number,
+      idade: idadeAnos(membro.data_nascimento as string | null),
       perfil: membro.perfil as string,
       diagnosticosFormais: (membro.diagnosticos_formais as string[]) ?? [],
     },

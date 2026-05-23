@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { ChevronLeft } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { loadFamilyContext } from "@/lib/auth/require-user";
+import { idadeAnos } from "@/lib/idade";
 import { AvatarForm } from "./avatar-form";
 import type { AvatarDescricao } from "@/lib/imagem/avatar-prompt";
 
@@ -16,7 +17,7 @@ export default async function AvatarMembroPage(
   const [{ data: membro }, { data: avatar }] = await Promise.all([
     supabase
       .from("membros_atipicos")
-      .select("id, nome, idade, perfil")
+      .select("id, nome, data_nascimento, perfil")
       .eq("id", id)
       .eq("family_account_id", familyId)
       .maybeSingle(),
@@ -32,7 +33,7 @@ export default async function AvatarMembroPage(
   const descricao = (avatar?.descricao_textual ?? {}) as Partial<AvatarDescricao>;
   const inicial: AvatarDescricao = {
     estilo: (avatar?.estilo as "cartoon" | "aquarela") ?? "cartoon",
-    idade: descricao.idade ?? membro.idade,
+    idade: descricao.idade ?? idadeAnos(membro.data_nascimento),
     generoVisual: descricao.generoVisual ?? null,
     tomPele: descricao.tomPele ?? null,
     cabeloCor: descricao.cabeloCor ?? null,
@@ -57,7 +58,7 @@ export default async function AvatarMembroPage(
           Avatar de {membro.nome}
         </h1>
         <p className="text-sm text-muted-foreground">
-          {membro.idade} anos · {membro.perfil}
+          {idadeAnos(membro.data_nascimento)} anos · {membro.perfil}
         </p>
       </header>
 

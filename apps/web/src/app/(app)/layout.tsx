@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { differenceInCalendarDays } from "date-fns";
 import { loadFamilyContext } from "@/lib/auth/require-user";
 import { Sidebar } from "./sidebar";
+import { idadeAnos } from "@/lib/idade";
 
 export default async function AppLayout({ children }: { children: ReactNode }) {
   const { user, supabase, family } = await loadFamilyContext();
@@ -28,7 +29,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
         .maybeSingle(),
       supabase
         .from("membros_atipicos")
-        .select("id, nome, idade")
+        .select("id, nome, data_nascimento")
         .eq("family_account_id", family.id)
         .eq("ativo", true)
         .order("created_at", { ascending: true }),
@@ -55,7 +56,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
     ? {
         id: criancas[0].id,
         nome: criancas[0].nome,
-        idade: criancas[0].idade as number | null,
+        idade: idadeAnos(criancas[0].data_nascimento as string | null),
       }
     : null;
 

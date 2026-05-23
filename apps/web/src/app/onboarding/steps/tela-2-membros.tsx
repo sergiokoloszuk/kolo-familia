@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Trash2, UserPlus } from "lucide-react";
 import { Explanation } from "./tela-1-mae";
 import type { Membro } from "../wizard";
+import { idadeAnos } from "@/lib/idade";
 
 const PERFIS = [
   { value: "TEA", label: "TEA" },
@@ -26,7 +27,14 @@ const schema = z.object({
       z.object({
         id: z.string().uuid().optional(),
         nome: z.string().trim().min(2, "Nome muito curto"),
-        idade: z.coerce.number().int().min(0).max(120),
+        data_nascimento: z
+          .string()
+          .trim()
+          .regex(/^\d{4}-\d{2}-\d{2}$/, "Informe a data de nascimento")
+          .refine((d) => {
+            const a = idadeAnos(d);
+            return a !== null && a >= 0 && a <= 120;
+          }, "Data de nascimento inválida"),
         perfil: z.enum(["TEA", "TDAH", "Dislexia", "AHSD", "Outro", "EmInvestigacao"]),
       }),
     )
@@ -61,10 +69,10 @@ export function Tela2Membros({
           ? initial.map((m) => ({
               id: m.id,
               nome: m.nome,
-              idade: m.idade,
+              data_nascimento: m.data_nascimento,
               perfil: m.perfil as FormValues["membros"][number]["perfil"],
             }))
-          : [{ nome: "", idade: undefined as unknown as number, perfil: "TEA" }],
+          : [{ nome: "", data_nascimento: "", perfil: "TEA" }],
     },
   });
 
@@ -117,16 +125,15 @@ export function Tela2Membros({
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <Label htmlFor={`membros.${index}.idade`}>Idade</Label>
+                <Label htmlFor={`membros.${index}.data_nascimento`}>Data de nascimento</Label>
                 <Input
-                  id={`membros.${index}.idade`}
-                  type="number"
-                  inputMode="numeric"
-                  {...register(`membros.${index}.idade`)}
+                  id={`membros.${index}.data_nascimento`}
+                  type="date"
+                  {...register(`membros.${index}.data_nascimento`)}
                 />
-                {errors.membros?.[index]?.idade && (
+                {errors.membros?.[index]?.data_nascimento && (
                   <span className="text-xs text-destructive">
-                    {errors.membros[index]?.idade?.message}
+                    {errors.membros[index]?.data_nascimento?.message}
                   </span>
                 )}
               </div>
@@ -152,7 +159,7 @@ export function Tela2Membros({
         <Button
           type="button"
           variant="outline"
-          onClick={() => append({ nome: "", idade: undefined as unknown as number, perfil: "TEA" })}
+          onClick={() => append({ nome: "", data_nascimento: "", perfil: "TEA" })}
           disabled={pending}
         >
           <UserPlus aria-hidden="true" /> Adicionar mais um(a) atípico(a) na família

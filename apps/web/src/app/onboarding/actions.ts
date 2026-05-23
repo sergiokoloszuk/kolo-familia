@@ -3,6 +3,17 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { createClient, createServiceRoleClient } from "@/lib/supabase/server";
+import { idadeAnos } from "@/lib/idade";
+
+const dataNascimentoSchema = (minAnos: number, maxAnos: number, msg: string) =>
+  z
+    .string()
+    .trim()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, "Data inválida")
+    .refine((d) => {
+      const a = idadeAnos(d);
+      return a !== null && a >= minAnos && a <= maxAnos;
+    }, msg);
 
 // ============================================================
 // Helpers
@@ -39,7 +50,7 @@ async function bumpStep(supabase: Awaited<ReturnType<typeof createClient>>, fami
 
 const tela1Schema = z.object({
   nome_mae: z.string().trim().min(2, "Nome muito curto"),
-  idade_mae: z.coerce.number().int().min(16).max(100),
+  data_nascimento_mae: dataNascimentoSchema(16, 100, "Idade deve estar entre 16 e 100 anos"),
   whatsapp_e164: z
     .string()
     .trim()
@@ -56,7 +67,7 @@ export async function saveTela1(raw: Tela1Input) {
   await supabase.from("family_profiles").upsert({
     family_account_id: family.id,
     nome_mae: data.nome_mae,
-    idade_mae: data.idade_mae,
+    data_nascimento_mae: data.data_nascimento_mae,
     como_chamar: data.como_chamar || null,
   });
 
@@ -75,7 +86,7 @@ export async function saveTela1(raw: Tela1Input) {
 const membroSchema = z.object({
   id: z.string().uuid().optional(),
   nome: z.string().trim().min(2, "Nome muito curto"),
-  idade: z.coerce.number().int().min(0).max(120),
+  data_nascimento: dataNascimentoSchema(0, 120, "Data de nascimento inválida"),
   perfil: z.enum(["TEA", "TDAH", "Dislexia", "AHSD", "Outro", "EmInvestigacao"]),
 });
 
@@ -97,7 +108,7 @@ export async function saveTela2(raw: Tela2Input) {
       novos.map((m) => ({
         family_account_id: family.id,
         nome: m.nome,
-        idade: m.idade,
+        data_nascimento: m.data_nascimento,
         perfil: m.perfil,
       })),
     );
@@ -106,7 +117,7 @@ export async function saveTela2(raw: Tela2Input) {
   for (const m of existentes) {
     await supabase
       .from("membros_atipicos")
-      .update({ nome: m.nome, idade: m.idade, perfil: m.perfil })
+      .update({ nome: m.nome, data_nascimento: m.data_nascimento, perfil: m.perfil })
       .eq("id", m.id!)
       .eq("family_account_id", family.id);
   }
@@ -116,14 +127,14 @@ export async function saveTela2(raw: Tela2Input) {
   // Retorna a lista canônica do banco — wizard usa esses ids no step 4.
   const { data: membros } = await supabase
     .from("membros_atipicos")
-    .select("id, nome, idade, perfil")
+    .select("id, nome, data_nascimento, perfil")
     .eq("family_account_id", family.id)
     .order("created_at", { ascending: true });
 
   return (membros ?? []) as Array<{
     id: string;
     nome: string;
-    idade: number;
+    data_nascimento: string;
     perfil: string;
   }>;
 }
