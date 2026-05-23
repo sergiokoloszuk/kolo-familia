@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { loadFamilyContext } from "@/lib/auth/require-user";
 import { OnboardingWizard, type InitialState } from "./wizard";
@@ -42,6 +43,13 @@ export default async function OnboardingPage() {
     .eq("family_account_id", family.id)
     .maybeSingle();
 
+  const { data: acessoAdmin } = await supabase
+    .from("controle_acessos")
+    .select("ativo")
+    .eq("user_id", user.id)
+    .maybeSingle();
+  const isAdmin = Boolean(acessoAdmin?.ativo);
+
   const initialState: InitialState = {
     familyId: family.id,
     userEmail: user.email ?? "",
@@ -52,5 +60,22 @@ export default async function OnboardingPage() {
     perfilFamilia: perfilFamilia ?? null,
   };
 
-  return <OnboardingWizard initial={initialState} />;
+  return (
+    <div className="flex flex-col gap-4">
+      {isAdmin && (
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-kolo-linha bg-secondary/50 px-4 py-3 text-sm">
+          <span className="text-muted-foreground">
+            Você tem acesso de administrador — não precisa preencher o onboarding.
+          </span>
+          <Link
+            href="/admin"
+            className="font-semibold text-brand-purple underline-offset-4 hover:underline"
+          >
+            Ir para o painel admin →
+          </Link>
+        </div>
+      )}
+      <OnboardingWizard initial={initialState} />
+    </div>
+  );
 }
