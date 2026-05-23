@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import {
   BookOpen,
-  ChevronDown,
+  ChevronRight,
   CreditCard,
   Home,
   Leaf,
@@ -109,7 +109,11 @@ export function Sidebar({
           conteúdo virar protagonista: fundo mais lavado, avatar menor,
           tipografia semibold em vez de bold. */}
       {criancaAtiva && (
-        <div className="flex items-center gap-3 rounded-2xl bg-kolo-lilas-bg-2/60 px-3 py-2.5 transition-colors hover:bg-kolo-lilas-bg-2">
+        <Link
+          href="/kolo-vivo"
+          aria-label={`Abrir o Kolo Vivo de ${criancaAtiva.nome}`}
+          className="flex items-center gap-3 rounded-2xl bg-kolo-lilas-bg-2/60 px-3 py-2.5 transition-colors hover:bg-kolo-lilas-bg-2"
+        >
           <span
             aria-hidden
             className="flex size-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-brand-yellow to-brand-yellow-dark font-heading text-[15px] font-semibold text-brand-purple-dark"
@@ -126,11 +130,11 @@ export function Sidebar({
               </p>
             )}
           </div>
-          <ChevronDown
+          <ChevronRight
             className="size-3.5 shrink-0 text-muted-foreground/70"
             aria-hidden
           />
-        </div>
+        </Link>
       )}
 
       {/* Navegação plana — 5 itens. Item ativo segue o protótipo §nav-item.active:
