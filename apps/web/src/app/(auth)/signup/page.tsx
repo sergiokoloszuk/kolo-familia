@@ -34,6 +34,9 @@ export default function SignupPage() {
   const [needsConfirm, setNeedsConfirm] = useState<string | null>(null);
   const [reenviando, setReenviando] = useState(false);
   const [reenvioMsg, setReenvioMsg] = useState<string | null>(null);
+  const [codigo, setCodigo] = useState("");
+  const [verificando, setVerificando] = useState(false);
+  const [verifyError, setVerifyError] = useState<string | null>(null);
 
   const {
     register,
@@ -112,13 +115,55 @@ export default function SignupPage() {
     return (
       <Card className="w-full max-w-sm">
         <CardHeader>
-          <CardTitle>Falta um clique</CardTitle>
+          <CardTitle>Confirme seu e-mail</CardTitle>
           <CardDescription>
-            Enviamos um link de confirmação para <strong>{needsConfirm}</strong>. Abre o e-mail e
-            clica para entrar.
+            Enviamos um código (e um link) para <strong>{needsConfirm}</strong>. Digite o código do
+            e-mail aqui pra continuar sem sair desta tela — ou clique no link do e-mail.
           </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-3">
+          {verifyError && (
+            <div className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+              {verifyError}
+            </div>
+          )}
+
+          <form
+            onSubmit={async (e) => {
+              e.preventDefault();
+              setVerificando(true);
+              setVerifyError(null);
+              const supabase = createClient();
+              const { error } = await supabase.auth.verifyOtp({
+                email: needsConfirm,
+                token: codigo.trim(),
+                type: "signup",
+              });
+              setVerificando(false);
+              if (error) {
+                setVerifyError(traduzirErro(error.message));
+                return;
+              }
+              window.location.href = "/onboarding";
+            }}
+            className="flex flex-col gap-2"
+          >
+            <Label htmlFor="codigo">Código do e-mail</Label>
+            <Input
+              id="codigo"
+              inputMode="numeric"
+              autoComplete="one-time-code"
+              maxLength={6}
+              placeholder="000000"
+              value={codigo}
+              onChange={(e) => setCodigo(e.target.value.replace(/\D/g, ""))}
+              className="text-center text-lg tracking-[0.4em]"
+            />
+            <Button type="submit" disabled={verificando || codigo.length < 6}>
+              {verificando ? "Confirmando..." : "Confirmar e continuar"}
+            </Button>
+          </form>
+
           <p className="text-sm text-muted-foreground">
             Não chegou? Verifica spam ou{" "}
             <button
@@ -272,5 +317,7 @@ function traduzirErro(message: string): string {
   if (m.includes("already registered") || m.includes("already exists"))
     return "Esse e-mail já tem conta. Tenta entrar.";
   if (m.includes("password should be")) return "Senha muito curta. Use pelo menos 8 caracteres.";
+  if (m.includes("expired") || m.includes("invalid") || m.includes("token"))
+    return "Código inválido ou expirado. Confira o e-mail ou reenvie o link.";
   return message;
 }
