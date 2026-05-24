@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { Check, Leaf, Plus, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -116,9 +117,12 @@ export function ConversaAcoes({
         </p>
       )}
       {resumoOk && (
-        <p className="rounded-md border border-emerald-500/40 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-700">
-          Pronto — {resumoOk}.
-        </p>
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1 rounded-md border border-emerald-500/40 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-700">
+          <span>Pronto — {resumoOk}.</span>
+          <Link href="/kolo-vivo" className="font-semibold underline underline-offset-2">
+            Ver no Kolo Vivo
+          </Link>
+        </div>
       )}
 
       {/* Mais ajuda — gera o tipo escolhido sobre o mesmo tema. */}
@@ -218,7 +222,7 @@ export function ConversaAcoes({
               {proposta.proposta.koloVivo.length > 0 && (
                 <fieldset className="flex flex-col gap-2">
                   <legend className="mb-1 text-[11px] font-bold uppercase tracking-[0.14em] text-muted-foreground">
-                    Kolo Vivo (entra pra você revisar)
+                    Vai pro Kolo Vivo
                   </legend>
                   {proposta.proposta.koloVivo.map((it, i) => (
                     <label

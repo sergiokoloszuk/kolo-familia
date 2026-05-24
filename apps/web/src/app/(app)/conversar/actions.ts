@@ -256,6 +256,24 @@ const confirmarSchema = z.object({
   desafio: z.string().trim().min(1).nullable().default(null),
 });
 
+const MEMBRO_CAMPOS = [
+  "essencial",
+  "como_e",
+  "corpo_rotina",
+  "desafios_regulacao",
+  "sensorial",
+] as const;
+const FAMILIA_CAMPOS = ["composicao", "rotina", "recursos", "dinamica"] as const;
+
+/** Anexa um fato curto ao texto da seção, sem substituir o que já existe. */
+function appendFato(prev: string, fato: string): string {
+  const p = (prev ?? "").trim();
+  const f = fato.trim();
+  if (!p) return f;
+  if (p.toLowerCase().includes(f.toLowerCase())) return p;
+  return `${p}\n${f}`;
+}
+
 export async function confirmarAtualizacao(
   input: z.infer<typeof confirmarSchema>,
 ): Promise<{ ok: true; resumo: string } | { ok: false; error: string }> {
@@ -274,24 +292,61 @@ export async function confirmarAtualizacao(
     const membroId = conversa.membro_atipico_id as string | null;
 
     const partes: string[] = [];
+    const now = new Date().toISOString();
 
-    // Kolo Vivo → sugestões pendentes (revisadas depois no Kolo Vivo).
-    const sugestoes = data.koloVivo
-      .filter((it) => it.camada === "camada2" || membroId)
-      .map((it) => ({
-        family_account_id: family.id,
-        membro_atipico_id: it.camada === "camada1" ? membroId : null,
-        camada: it.camada,
-        campo: it.campo,
-        texto_sugerido: it.texto,
-        origem: "skill" as const,
-      }));
-    if (sugestoes.length > 0) {
-      const { error } = await supabase.from("sugestao_perfil_vivos").insert(sugestoes);
+    const membroItens = data.koloVivo.filter(
+      (it) => it.camada === "camada1" && (MEMBRO_CAMPOS as readonly string[]).includes(it.campo),
+    );
+    const familiaItens = data.koloVivo.filter(
+      (it) => it.camada === "camada2" && (FAMILIA_CAMPOS as readonly string[]).includes(it.campo),
+    );
+
+    // Kolo Vivo do membro — aplica DIRETO (já foi revisado no preview),
+    // anexando ao texto existente em vez de substituir.
+    if (membroItens.length > 0 && membroId) {
+      const { data: atual } = await supabase
+        .from("perfil_vivo_membro")
+        .select("essencial, como_e, corpo_rotina, desafios_regulacao, sensorial")
+        .eq("membro_atipico_id", membroId)
+        .maybeSingle();
+      const secoes: Record<string, Record<string, unknown>> = {};
+      for (const campo of MEMBRO_CAMPOS) {
+        secoes[campo] = (atual?.[campo] as Record<string, unknown>) ?? {};
+      }
+      for (const it of membroItens) {
+        const prev = (secoes[it.campo].texto as string) ?? "";
+        secoes[it.campo] = { ...secoes[it.campo], texto: appendFato(prev, it.texto), atualizado_em: now };
+      }
+      const { error } = await supabase
+        .from("perfil_vivo_membro")
+        .upsert(
+          { membro_atipico_id: membroId, family_account_id: family.id, ...secoes },
+          { onConflict: "membro_atipico_id" },
+        );
       if (error) return { ok: false, error: `Falha ao salvar no Kolo Vivo: ${error.message}` };
-      partes.push(
-        `${sugestoes.length} ${sugestoes.length === 1 ? "sugestão" : "sugestões"} no Kolo Vivo pra revisar`,
-      );
+      partes.push(`${membroItens.length} ${membroItens.length === 1 ? "item" : "itens"} no Kolo Vivo`);
+    }
+
+    // Kolo Vivo da família — mesma lógica de anexar.
+    if (familiaItens.length > 0) {
+      const { data: atual } = await supabase
+        .from("perfil_vivo_familia")
+        .select("composicao, rotina, recursos, dinamica")
+        .eq("family_account_id", family.id)
+        .maybeSingle();
+      const secoes: Record<string, Record<string, unknown>> = {};
+      for (const campo of FAMILIA_CAMPOS) {
+        secoes[campo] = (atual?.[campo] as Record<string, unknown>) ?? {};
+      }
+      for (const it of familiaItens) {
+        const prev = (secoes[it.campo].texto as string) ?? "";
+        secoes[it.campo] = { ...secoes[it.campo], texto: appendFato(prev, it.texto), atualizado_em: now };
+      }
+      const { error } = await supabase
+        .from("perfil_vivo_familia")
+        .upsert({ family_account_id: family.id, ...secoes });
+      if (error) return { ok: false, error: `Falha ao salvar no Kolo Vivo da família: ${error.message}` };
+      partes.push(`${familiaItens.length} ${familiaItens.length === 1 ? "item" : "itens"} no Kolo Vivo da família`);
     }
 
     // Conquista/desafio → diário (precisa de criança vinculada).
@@ -299,7 +354,7 @@ export async function confirmarAtualizacao(
       const { error } = await supabase.from("diarios").insert({
         family_account_id: family.id,
         membro_atipico_id: membroId,
-        data: new Date().toISOString().slice(0, 10),
+        data: now.slice(0, 10),
         conquista: data.conquista ?? null,
         desafio: data.desafio ?? null,
         origem: "app",
