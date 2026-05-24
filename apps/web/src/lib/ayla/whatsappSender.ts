@@ -38,6 +38,8 @@ function getZapiConfig(): ZapiConfig {
 export async function enviarTexto(params: {
   phoneE164: string;
   texto: string;
+  /** Segundos de "digitando..." antes da mensagem aparecer (Z-API delayMessage). */
+  delaySegundos?: number;
 }): Promise<{ messageId: string; raw: unknown }> {
   const { instanceId, token, clientToken } = getZapiConfig();
 
@@ -45,13 +47,17 @@ export async function enviarTexto(params: {
   const phone = params.phoneE164.replace(/^\+/, "");
 
   const url = `${ZAPI_BASE}/instances/${instanceId}/token/${token}/send-text`;
+  const body: Record<string, unknown> = { phone, message: params.texto };
+  if (params.delaySegundos && params.delaySegundos > 0) {
+    body.delayMessage = Math.min(Math.round(params.delaySegundos), 15);
+  }
   const res = await fetch(url, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       "Client-Token": clientToken,
     },
-    body: JSON.stringify({ phone, message: params.texto }),
+    body: JSON.stringify(body),
   });
 
   if (!res.ok) {

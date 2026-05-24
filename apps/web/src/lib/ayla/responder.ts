@@ -52,7 +52,16 @@ export type RespostaParams = {
   precisaEscolherMembro?: { nomes: string[] } | null;
 };
 
-export async function gerarRespostaAyla(params: RespostaParams): Promise<string> {
+/**
+ * Gera a resposta da Ayla. Se `onParagrafo` for passado, faz streaming e
+ * dispara cada parágrafo assim que fica pronto (pra mandar no WhatsApp em
+ * pedaços — efeito de "digitando", primeira parte chega rápido). Sempre
+ * devolve o texto completo no fim (pra persistir uma vez só).
+ */
+export async function gerarRespostaAyla(
+  params: RespostaParams,
+  onParagrafo?: (texto: string) => Promise<void>,
+): Promise<string> {
   const client = getAylaAnthropicClient();
   const system = await getSystemPrompt("voz_ayla", VOZ_AYLA_FALLBACK);
 
@@ -100,6 +109,7 @@ export async function gerarRespostaAyla(params: RespostaParams): Promise<string>
   }
   linhas.push(`\nResponda como a Ayla.`);
 
+  let enviouAlgo = false;
   try {
     const stream = client.messages.stream({
       model: AYLA_MODEL_FALLBACK,
@@ -107,17 +117,68 @@ export async function gerarRespostaAyla(params: RespostaParams): Promise<string>
       system: [{ type: "text", text: system, cache_control: { type: "ephemeral" } }],
       messages: [{ role: "user", content: linhas.join("\n") }],
     });
-    const final = await stream.finalMessage();
-    const txt = final.content
-      .filter((b): b is Extract<typeof b, { type: "text" }> => b.type === "text")
-      .map((b) => b.text)
-      .join("")
-      .trim();
-    return txt || fallbackSimples(params);
+
+    if (!onParagrafo) {
+      const final = await stream.finalMessage();
+      const txt = textoDe(final.content);
+      return txt || fallbackSimples(params);
+    }
+
+    // Streaming: manda cada parágrafo (separado por linha em branco) assim
+    // que ele fecha. A primeira parte chega bem mais rápido.
+    let buffer = "";
+    let full = "";
+    for await (const event of stream) {
+      if (
+        event.type === "content_block_delta" &&
+        event.delta.type === "text_delta"
+      ) {
+        buffer += event.delta.text;
+        full += event.delta.text;
+        let idx: number;
+        while ((idx = buffer.indexOf("\n\n")) !== -1) {
+          const par = buffer.slice(0, idx).trim();
+          buffer = buffer.slice(idx + 2);
+          if (par) {
+            await onParagrafo(par);
+            enviouAlgo = true;
+          }
+        }
+      }
+    }
+    const resto = buffer.trim();
+    if (resto) {
+      await onParagrafo(resto);
+      enviouAlgo = true;
+    }
+    const fullTrim = full.trim();
+    if (!enviouAlgo) {
+      const fb = fallbackSimples(params);
+      await onParagrafo(fb);
+      return fb;
+    }
+    return fullTrim;
   } catch (e) {
     console.warn("[ayla:responder] falha do modelo:", e instanceof Error ? e.message : e);
-    return fallbackSimples(params);
+    const fb = fallbackSimples(params);
+    // Só manda o fallback se ainda não enviou nada (evita resposta partida).
+    if (onParagrafo && !enviouAlgo) {
+      try {
+        await onParagrafo(fb);
+      } catch {
+        /* não trava o fluxo */
+      }
+    }
+    return fb;
   }
+}
+
+function textoDe(content: Array<{ type: string }>): string {
+  return (content as Array<{ type: string; text?: string }>)
+    .filter((b) => b.type === "text")
+    .map((b) => b.text ?? "")
+    .join("")
+    .trim();
 }
 
 /** Última linha de defesa: nunca deixar a Ayla muda. */

@@ -3,7 +3,7 @@ import { hojeLocalISO } from "@/lib/idade";
 import { enviarTexto, type InboundWhatsApp } from "./whatsappSender";
 import { podeEnviarProativa } from "./rules";
 import { parseInbound, detectarComando } from "./parser";
-import { gerarRespostaAyla } from "./responder";
+import { gerarRespostaAyla, type RespostaParams } from "./responder";
 import {
   templateBoasVindas,
   templateRotinaDiaria,
@@ -498,32 +498,92 @@ export async function processInbound(
   const koloVivoResumo = await carregarKoloVivoResumo(supabase, parsed.membro_atipico_id);
   const historico = await carregarHistorico(supabase, family.id, inbound.texto);
 
-  const texto = await gerarRespostaAyla({
-    nomeMae: ctx.nomeMae,
-    nomeMembro,
-    koloVivoResumo,
-    historico,
-    mensagem: inbound.texto,
-    sinais: {
-      conquista: parsed.conquista,
-      desafio: parsed.desafio,
-      emocao_mae: parsed.emocao_mae,
-      temSugestaoKoloVivo: Boolean(
-        parsed.sugestao_kolo_vivo && parsed.texto_kolo_vivo_sugerido,
-      ),
-    },
-    precisaEscolherMembro,
-  });
-
-  const resp = await enviarEPersistir(supabase, {
+  const resp = await enviarRespostaEmChunks(supabase, {
     family_account_id: family.id,
     membro_atipico_id: parsed.membro_atipico_id,
     phone: ctx.whatsapp_e164,
-    texto,
-    category: "reativa",
     tipo: precisaEscolherMembro ? "clarificacao_identificacao" : "resposta_registro",
+    params: {
+      nomeMae: ctx.nomeMae,
+      nomeMembro,
+      koloVivoResumo,
+      historico,
+      mensagem: inbound.texto,
+      sinais: {
+        conquista: parsed.conquista,
+        desafio: parsed.desafio,
+        emocao_mae: parsed.emocao_mae,
+        temSugestaoKoloVivo: Boolean(
+          parsed.sugestao_kolo_vivo && parsed.texto_kolo_vivo_sugerido,
+        ),
+      },
+      precisaEscolherMembro,
+    },
   });
   return { tratada: true, familia: family.id, resposta: resp };
+}
+
+/**
+ * Gera a resposta da Ayla em streaming e manda cada parágrafo no WhatsApp
+ * assim que fica pronto (primeira parte chega rápido, efeito de "digitando").
+ * Persiste UM registro com o texto completo, pra histórico/“sim” coerentes.
+ */
+async function enviarRespostaEmChunks(
+  supabase: SupabaseClient,
+  args: {
+    family_account_id: string;
+    membro_atipico_id: string | null;
+    phone: string;
+    tipo: AylaTipoReativa;
+    params: RespostaParams;
+  },
+): Promise<EnvioResultado> {
+  let providerResp: unknown = null;
+  let messageId = "unknown";
+  let erro: string | null = null;
+  let primeiro = true;
+
+  const textoCompleto = await gerarRespostaAyla(args.params, async (par) => {
+    // 1º parágrafo: pouco "digitando" (chega logo). Próximos: ritmo natural.
+    const delay = primeiro ? 1 : Math.min(Math.max(Math.round(par.length / 35), 1), 4);
+    primeiro = false;
+    try {
+      const r = await enviarTexto({ phoneE164: args.phone, texto: par, delaySegundos: delay });
+      providerResp = r.raw;
+      messageId = r.messageId;
+    } catch (e) {
+      erro = e instanceof Error ? e.message : "falha no envio";
+    }
+  });
+
+  const enviada = erro == null;
+
+  await supabase.from("ayla_send_log").insert({
+    family_account_id: args.family_account_id,
+    template_key: args.tipo,
+    payload: { phone: args.phone, texto: textoCompleto },
+    resposta_provider: providerResp as Record<string, unknown> | null,
+    status: enviada ? "enviada" : "falha",
+    erro,
+  });
+
+  if (enviada) {
+    await supabase.from("ayla_messages").insert({
+      family_account_id: args.family_account_id,
+      membro_atipico_id: args.membro_atipico_id,
+      direcao: "outbound",
+      category: "reativa",
+      tipo: args.tipo,
+      texto: textoCompleto,
+      enviada_em: new Date().toISOString(),
+    });
+    await supabase
+      .from("ayla_preferences")
+      .update({ ultima_mensagem_em: new Date().toISOString() })
+      .eq("family_account_id", args.family_account_id);
+    return { enviada: true, messageId };
+  }
+  return { enviada: false, motivo: erro ?? "falha" };
 }
 
 // ============================================================
