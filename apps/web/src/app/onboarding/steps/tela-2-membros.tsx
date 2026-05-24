@@ -46,12 +46,15 @@ type FormValues = z.infer<typeof schema>;
 
 export function Tela2Membros({
   initial,
+  dobResponsavel,
   pending,
   onSubmit,
   onRemove,
   onPrevious,
 }: {
   initial: Membro[];
+  /** Data de nascimento do responsável (ISO) — pra avisar se digitar a mesma. */
+  dobResponsavel: string | null;
   pending: boolean;
   onSubmit: (membros: FormValues["membros"]) => void;
   onRemove: (id: string) => void;
@@ -61,6 +64,7 @@ export function Tela2Membros({
     register,
     control,
     handleSubmit,
+    watch,
     formState: { errors },
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -146,6 +150,14 @@ export function Tela2Membros({
                     {errors.membros[index]?.data_nascimento?.message}
                   </span>
                 )}
+                {dobResponsavel &&
+                  dataBrParaIso(watch(`membros.${index}.data_nascimento`) || "") ===
+                    dobResponsavel && (
+                    <span className="text-xs text-amber-600">
+                      Essa é a <strong>sua</strong> data de nascimento. Confirme a
+                      data do(a) {watch(`membros.${index}.nome`)?.trim() || "membro"}.
+                    </span>
+                  )}
               </div>
 
               <div className="flex flex-col gap-1.5 md:col-span-3">

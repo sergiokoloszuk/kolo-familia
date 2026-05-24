@@ -126,6 +126,12 @@ export default async function ConfiguracoesPage() {
       {/* Atalhos pra sub-páginas. */}
       <section className="grid gap-4 md:grid-cols-2">
         <SubLink
+          href="/configuracoes/membros"
+          icon={UserIcon}
+          titulo="Crianças e membros"
+          descricao="Corrigir nome, data de nascimento e perfil dos membros atípicos cadastrados."
+        />
+        <SubLink
           href="/configuracoes/familia"
           icon={Users}
           titulo="Mapa familiar"

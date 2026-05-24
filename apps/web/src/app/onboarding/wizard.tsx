@@ -158,6 +158,7 @@ export function OnboardingWizard({ initial }: { initial: InitialState }) {
           {step === 2 && (
             <Tela2Membros
               initial={state.membros}
+              dobResponsavel={state.profile?.data_nascimento_mae ?? null}
               pending={pending}
               onSubmit={(membros) =>
                 runAction(
