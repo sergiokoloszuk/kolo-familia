@@ -544,8 +544,9 @@ async function enviarRespostaEmChunks(
   let primeiro = true;
 
   const textoCompleto = await gerarRespostaAyla(args.params, async (par) => {
-    // 1º parágrafo: pouco "digitando" (chega logo). Próximos: ritmo natural.
-    const delay = primeiro ? 1 : Math.min(Math.max(Math.round(par.length / 35), 1), 4);
+    // "Digitando..." visível antes de cada bolha; tempo ~proporcional ao
+    // tamanho do trecho, pra parecer alguém escrevendo de verdade.
+    const delay = primeiro ? 2 : Math.min(Math.max(Math.round(par.length / 25), 2), 6);
     primeiro = false;
     try {
       const r = await enviarTexto({ phoneE164: args.phone, texto: par, delaySegundos: delay });
