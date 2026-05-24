@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { dataBrParaIso } from "@/lib/idade";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -61,6 +61,18 @@ export function OnboardingWizard({ initial }: { initial: InitialState }) {
 
   // Estado mutável compartilhado entre telas — fonte é o que o servidor já tem.
   const [state, setState] = useState(initial);
+
+  // Atribuição de afiliado (cookie kolo_ref → afiliado_id), uma vez ao abrir.
+  useEffect(() => {
+    void (async () => {
+      try {
+        const { atribuirAfiliado } = await import("./actions");
+        await atribuirAfiliado();
+      } catch {
+        /* best-effort */
+      }
+    })();
+  }, []);
 
   function next() {
     setStep((s) => Math.min(s + 1, TOTAL_STEPS));

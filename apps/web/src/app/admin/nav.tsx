@@ -17,6 +17,7 @@ const items = [
   { href: "/admin/ayla", label: "Ayla" },
   { href: "/admin/padroes", label: "Padrões" },
   { href: "/admin/convites", label: "Convites" },
+  { href: "/admin/afiliados", label: "Afiliados" },
   { href: "/admin/beta", label: "Beta" },
   { href: "/admin/observabilidade", label: "Observabilidade" },
   { href: "/admin/admins", label: "Admins" },

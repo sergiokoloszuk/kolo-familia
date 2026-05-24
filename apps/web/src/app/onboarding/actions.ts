@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { cookies } from "next/headers";
 import { z } from "zod";
 import { createClient, createServiceRoleClient } from "@/lib/supabase/server";
 import { idadeAnos, dataBrParaIso } from "@/lib/idade";
@@ -44,6 +45,58 @@ async function bumpStep(supabase: Awaited<ReturnType<typeof createClient>>, fami
     .eq("id", familyId);
   if (error) throw new Error(`Erro ao avançar etapa: ${error.message}`);
   revalidatePath("/onboarding");
+}
+
+// ============================================================
+// Atribuição de afiliado — lê o cookie kolo_ref (setado por /i/CODIGO) e
+// vincula a família ao afiliado, uma única vez. Best-effort: chamada no
+// início do onboarding e nunca trava o fluxo.
+// ============================================================
+
+export async function atribuirAfiliado(): Promise<void> {
+  try {
+    const { supabase, user, family } = await requireFamily();
+
+    const { data: fam } = await supabase
+      .from("family_accounts")
+      .select("afiliado_id")
+      .eq("id", family.id)
+      .maybeSingle();
+    if (fam?.afiliado_id) return; // já atribuído
+
+    const ref = (await cookies()).get("kolo_ref")?.value;
+    if (!ref) return;
+
+    const admin = createServiceRoleClient();
+    const { data: af } = await admin
+      .from("afiliados")
+      .select("id, email, ativo")
+      .eq("codigo_unico", ref)
+      .eq("ativo", true)
+      .maybeSingle();
+    if (!af) return;
+
+    // Anti auto-indicação: afiliado não pode atribuir o próprio cadastro.
+    if (
+      af.email &&
+      user.email &&
+      af.email.toLowerCase() === user.email.toLowerCase()
+    ) {
+      return;
+    }
+
+    await admin
+      .from("family_accounts")
+      .update({
+        afiliado_id: af.id,
+        ref_codigo: ref,
+        atribuido_em: new Date().toISOString(),
+      })
+      .eq("id", family.id)
+      .is("afiliado_id", null);
+  } catch {
+    // best-effort — atribuição nunca pode quebrar o onboarding
+  }
 }
 
 // ============================================================
