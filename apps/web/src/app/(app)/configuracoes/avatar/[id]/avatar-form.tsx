@@ -33,14 +33,13 @@ export function AvatarForm({
     setSucesso(null);
     setAcao("salvar");
     startTransition(async () => {
-      try {
-        await salvarDescricao({ membroId, ...form });
-        setSucesso("Descrição salva.");
-      } catch (e) {
-        setErro(traduzirErro(e instanceof Error ? e.message : "Erro inesperado"));
-      } finally {
-        setAcao(null);
+      const r = await salvarDescricao({ membroId, ...form });
+      setAcao(null);
+      if (!r.ok) {
+        setErro(traduzirErro(r.error));
+        return;
       }
+      setSucesso("Descrição salva.");
     });
   }
 
@@ -49,17 +48,21 @@ export function AvatarForm({
     setSucesso(null);
     setAcao("gerar");
     startTransition(async () => {
-      try {
-        // Salva primeiro pra garantir que o gerar usa os dados atuais
-        await salvarDescricao({ membroId, ...form });
-        const r = await gerarAvatar(membroId);
-        setImagemUrl(r.imagem_url);
-        setSucesso("Avatar gerado.");
-      } catch (e) {
-        setErro(traduzirErro(e instanceof Error ? e.message : "Erro inesperado"));
-      } finally {
+      // Salva primeiro pra garantir que o gerar usa os dados atuais
+      const s = await salvarDescricao({ membroId, ...form });
+      if (!s.ok) {
         setAcao(null);
+        setErro(traduzirErro(s.error));
+        return;
       }
+      const r = await gerarAvatar(membroId);
+      setAcao(null);
+      if (!r.ok) {
+        setErro(traduzirErro(r.error));
+        return;
+      }
+      setImagemUrl(r.imagem_url);
+      setSucesso("Avatar gerado.");
     });
   }
 

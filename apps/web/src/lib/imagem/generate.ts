@@ -1,27 +1,30 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 /**
- * Geração de imagem via OpenAI DALL-E 3.
+ * Geração de imagem via OpenAI (modelo gpt-image-1).
  *
  * Fluxo:
- *   1. Chama POST /v1/images/generations
- *   2. Baixa o PNG da URL temporária da OpenAI
+ *   1. Chama POST /v1/images/generations (gpt-image-1 → devolve base64)
+ *   2. Decodifica o base64 em bytes
  *   3. Faz upload pro bucket 'imagens' do Supabase Storage
  *   4. Retorna a URL pública (permanente)
  *
  * Path: imagens/{family_id}/{tipo}/{uuid}.png
  *
- * Em caso de OPENAI_API_KEY ausente, throw — UI traduz pra mensagem
- * amigável.
+ * Nota: trocamos dall-e-3 → gpt-image-1 porque a conta OpenAI atual não
+ * tem acesso ao dall-e-3 (só aos modelos gpt-image-*). Modelo e qualidade
+ * são sobrescrevíveis por env.
  */
 
 const OPENAI_BASE = "https://api.openai.com/v1";
+const IMAGE_MODEL = process.env.OPENAI_IMAGE_MODEL || "gpt-image-1";
+const IMAGE_QUALITY = process.env.OPENAI_IMAGE_QUALITY || "medium";
 
 export type GerarImagemParams = {
   prompt: string;
   familyAccountId: string;
   tipo: "avatar" | "cena" | "historia_social";
-  size?: "1024x1024" | "1792x1024" | "1024x1792";
+  size?: "1024x1024" | "1024x1536" | "1536x1024" | "auto";
 };
 
 export type GerarImagemResult = {
@@ -43,40 +46,35 @@ export async function gerarImagem(
 
   const size = params.size ?? "1024x1024";
 
-  // 1. Pede pra DALL-E 3
-  const dallRes = await fetch(`${OPENAI_BASE}/images/generations`, {
+  // 1. Gera a imagem (gpt-image-1 devolve base64 direto, sem URL temporária)
+  const genRes = await fetch(`${OPENAI_BASE}/images/generations`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${apiKey}`,
     },
     body: JSON.stringify({
-      model: "dall-e-3",
+      model: IMAGE_MODEL,
       prompt: params.prompt,
       n: 1,
       size,
-      quality: "standard",
-      response_format: "url",
+      quality: IMAGE_QUALITY,
     }),
   });
 
-  if (!dallRes.ok) {
-    const t = await dallRes.text().catch(() => "");
-    throw new Error(`DALL-E ${dallRes.status}: ${t.slice(0, 500)}`);
+  if (!genRes.ok) {
+    const t = await genRes.text().catch(() => "");
+    throw new Error(`OpenAI imagem ${genRes.status}: ${t.slice(0, 500)}`);
   }
 
-  const dallJson = (await dallRes.json()) as {
-    data: Array<{ url: string; revised_prompt?: string }>;
+  const genJson = (await genRes.json()) as {
+    data: Array<{ b64_json?: string; url?: string; revised_prompt?: string }>;
   };
-  const item = dallJson.data?.[0];
-  if (!item?.url) throw new Error("DALL-E não retornou URL.");
+  const item = genJson.data?.[0];
+  if (!item?.b64_json) throw new Error("O modelo de imagem não retornou conteúdo.");
 
-  // 2. Baixa o arquivo
-  const imgRes = await fetch(item.url);
-  if (!imgRes.ok) {
-    throw new Error(`Falha ao baixar imagem da OpenAI: ${imgRes.status}`);
-  }
-  const blob = await imgRes.blob();
+  // 2. Decodifica o base64 em bytes
+  const bytes = Buffer.from(item.b64_json, "base64");
 
   // 3. Upload no Storage
   const filename = `${crypto.randomUUID()}.png`;
@@ -84,7 +82,7 @@ export async function gerarImagem(
 
   const { error: uploadErr } = await supabase.storage
     .from("imagens")
-    .upload(path, blob, { contentType: "image/png", upsert: false });
+    .upload(path, bytes, { contentType: "image/png", upsert: false });
   if (uploadErr) {
     throw new Error(`Storage upload falhou: ${uploadErr.message}`);
   }

@@ -9,6 +9,9 @@ import { loadFamilyContext } from "@/lib/auth/require-user";
 import { cn } from "@/lib/utils";
 import { GaleriaItem } from "./galeria-item";
 
+// Geração de cena (gpt-image-1) leva ~15-25s; evita timeout da action.
+export const maxDuration = 60;
+
 const TIPOS_LABEL: Record<string, string> = {
   brincadeira: "Brincadeira",
   atividade: "Atividade",

@@ -53,73 +53,83 @@ export type SalvarDescricaoInput = z.infer<typeof descricaoSchema> & {
   membroId: string;
 };
 
-export async function salvarDescricao(input: SalvarDescricaoInput): Promise<void> {
-  const data = descricaoSchema.parse(input);
-  const { supabase, family } = await requireFamilyAndMembro(input.membroId);
+export type SalvarResult = { ok: true } | { ok: false; error: string };
 
-  await supabase.from("avatares_membros_atipicos").upsert(
-    {
-      membro_atipico_id: input.membroId,
-      family_account_id: family.id,
-      estilo: data.estilo,
-      descricao_textual: data,
-    },
-    { onConflict: "membro_atipico_id" },
-  );
+export async function salvarDescricao(
+  input: SalvarDescricaoInput,
+): Promise<SalvarResult> {
+  try {
+    const data = descricaoSchema.parse(input);
+    const { supabase, family } = await requireFamilyAndMembro(input.membroId);
 
-  revalidatePath(`/configuracoes/avatar/${input.membroId}`);
-  revalidatePath("/configuracoes/avatar");
+    const { error } = await supabase.from("avatares_membros_atipicos").upsert(
+      {
+        membro_atipico_id: input.membroId,
+        family_account_id: family.id,
+        estilo: data.estilo,
+        descricao_textual: data,
+      },
+      { onConflict: "membro_atipico_id" },
+    );
+    if (error) return { ok: false, error: `Falha ao salvar: ${error.message}` };
+
+    revalidatePath(`/configuracoes/avatar/${input.membroId}`);
+    revalidatePath("/configuracoes/avatar");
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "Erro inesperado" };
+  }
 }
 
-export type GerarAvatarResult = {
-  imagem_url: string;
-  prompt_canonico: string;
-  prompt_revisado?: string;
-};
+export type GerarAvatarResult =
+  | { ok: true; imagem_url: string; prompt_canonico: string; prompt_revisado?: string }
+  | { ok: false; error: string };
 
 export async function gerarAvatar(membroId: string): Promise<GerarAvatarResult> {
-  const { supabase, family } = await requireFamilyAndMembro(membroId);
-  await requireActiveWrite(family.id);
+  try {
+    const { supabase, family } = await requireFamilyAndMembro(membroId);
+    await requireActiveWrite(family.id);
 
-  const { data: avatar } = await supabase
-    .from("avatares_membros_atipicos")
-    .select("estilo, descricao_textual")
-    .eq("membro_atipico_id", membroId)
-    .single();
+    const { data: avatar } = await supabase
+      .from("avatares_membros_atipicos")
+      .select("estilo, descricao_textual")
+      .eq("membro_atipico_id", membroId)
+      .single();
 
-  if (!avatar) {
-    throw new Error("Salve a descrição antes de gerar o avatar.");
-  }
+    if (!avatar) {
+      return { ok: false, error: "Salve a descrição antes de gerar o avatar." };
+    }
 
-  const descricao: AvatarDescricao = {
-    estilo: (avatar.estilo as AvatarDescricao["estilo"]) ?? "cartoon",
-    ...((avatar.descricao_textual as Record<string, unknown>) ?? {}),
-  };
-  const promptCanonico = montarPromptCanonico(descricao);
+    const descricao: AvatarDescricao = {
+      estilo: (avatar.estilo as AvatarDescricao["estilo"]) ?? "cartoon",
+      ...((avatar.descricao_textual as Record<string, unknown>) ?? {}),
+    };
+    const promptCanonico = montarPromptCanonico(descricao);
 
-  // Geração com service role pra escrever no Storage (RLS owner_delete
-  // depende do family_account_id, mas insert é mais simples por aqui).
-  const admin = createServiceRoleClient();
-  const result = await gerarImagem(admin, {
-    prompt: promptCanonico,
-    familyAccountId: family.id,
-    tipo: "avatar",
-  });
+    // Geração com service role pra escrever no Storage.
+    const admin = createServiceRoleClient();
+    const result = await gerarImagem(admin, {
+      prompt: promptCanonico,
+      familyAccountId: family.id,
+      tipo: "avatar",
+    });
 
-  await supabase
-    .from("avatares_membros_atipicos")
-    .update({
+    const { error: updErr } = await supabase
+      .from("avatares_membros_atipicos")
+      .update({ imagem_url: result.url, prompt_canonico: promptCanonico })
+      .eq("membro_atipico_id", membroId);
+    if (updErr) return { ok: false, error: `Imagem gerada, mas falhou ao salvar: ${updErr.message}` };
+
+    revalidatePath(`/configuracoes/avatar/${membroId}`);
+    revalidatePath("/configuracoes/avatar");
+
+    return {
+      ok: true,
       imagem_url: result.url,
       prompt_canonico: promptCanonico,
-    })
-    .eq("membro_atipico_id", membroId);
-
-  revalidatePath(`/configuracoes/avatar/${membroId}`);
-  revalidatePath("/configuracoes/avatar");
-
-  return {
-    imagem_url: result.url,
-    prompt_canonico: promptCanonico,
-    prompt_revisado: result.prompt_revisado,
-  };
+      prompt_revisado: result.prompt_revisado,
+    };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "Erro inesperado" };
+  }
 }

@@ -7,6 +7,9 @@ import { idadeAnos } from "@/lib/idade";
 import { AvatarForm } from "./avatar-form";
 import type { AvatarDescricao } from "@/lib/imagem/avatar-prompt";
 
+// Geração de imagem (gpt-image-1) leva ~15-25s; evita timeout da action.
+export const maxDuration = 60;
+
 export default async function AvatarMembroPage(
   props: PageProps<"/configuracoes/avatar/[id]">,
 ) {
