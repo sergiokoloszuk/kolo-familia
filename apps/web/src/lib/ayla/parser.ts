@@ -24,10 +24,13 @@ const ParserSchema = z.object({
     .nullable(),
   confianca_camada_adulto: z.number().min(0).max(100),
   sugestao_kolo_vivo: z.boolean(),
-  campo_kolo_vivo_sugerido: z.string().optional(),
-  texto_kolo_vivo_sugerido: z.string().optional(),
+  // .nullish() (string | null | undefined): o modelo emite null nesses
+  // campos quando não há sugestão; .optional() sozinho rejeitava o null e
+  // derrubava TODO parse no fallback → "não consegui entender".
+  campo_kolo_vivo_sugerido: z.string().nullish(),
+  texto_kolo_vivo_sugerido: z.string().nullish(),
   confianca: z.number().min(0).max(100),
-  precisa_clarificar: z.string().optional(),
+  precisa_clarificar: z.string().nullish(),
 });
 
 const SYSTEM_PROMPT_FALLBACK = `Você é o parser da Ayla — converte uma frase livre da mãe (resposta a pergunta diária no WhatsApp) em estrutura.

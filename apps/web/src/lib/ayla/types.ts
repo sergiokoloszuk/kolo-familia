@@ -86,12 +86,12 @@ export type ParserResult = {
 
   // Sugestão Kolo Vivo
   sugestao_kolo_vivo: boolean;
-  campo_kolo_vivo_sugerido?: string;
-  texto_kolo_vivo_sugerido?: string;
+  campo_kolo_vivo_sugerido?: string | null;
+  texto_kolo_vivo_sugerido?: string | null;
 
   // Confiança geral
   confianca: number; // 0-100
-  precisa_clarificar?: string;
+  precisa_clarificar?: string | null;
 };
 
 /**
