@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { salvarDescricao, gerarAvatar } from "./actions";
-import type { AvatarDescricao } from "@/lib/imagem/avatar-prompt";
+import { AVATAR_ESTILOS, type AvatarDescricao } from "@/lib/imagem/avatar-prompt";
 
 export function AvatarForm({
   membroId,
@@ -92,10 +92,13 @@ export function AvatarForm({
             <select
               className="flex h-9 w-full rounded-md border border-input bg-background px-3 text-sm shadow-sm"
               value={form.estilo}
-              onChange={(e) => update("estilo", e.target.value as "cartoon" | "aquarela")}
+              onChange={(e) => update("estilo", e.target.value as AvatarDescricao["estilo"])}
             >
-              <option value="cartoon">Cartoon</option>
-              <option value="aquarela">Aquarela</option>
+              {AVATAR_ESTILOS.map((es) => (
+                <option key={es.value} value={es.value}>
+                  {es.label}
+                </option>
+              ))}
             </select>
           }
         />

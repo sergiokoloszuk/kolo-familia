@@ -7,6 +7,7 @@ import { requireActiveWrite } from "@/lib/auth/require-active-write";
 import { gerarImagem } from "@/lib/imagem/generate";
 import {
   montarPromptCanonico,
+  AVATAR_ESTILO_VALUES,
   type AvatarDescricao,
 } from "@/lib/imagem/avatar-prompt";
 
@@ -33,7 +34,7 @@ async function requireFamilyAndMembro(membroId: string) {
 }
 
 const descricaoSchema = z.object({
-  estilo: z.enum(["cartoon", "aquarela"]),
+  estilo: z.enum(AVATAR_ESTILO_VALUES),
   idade: z.coerce.number().int().min(0).max(120).nullable().optional(),
   generoVisual: z.enum(["menino", "menina", "neutro"]).nullable().optional(),
   tomPele: z

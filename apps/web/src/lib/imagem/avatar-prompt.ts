@@ -1,11 +1,61 @@
 /**
  * Helper que monta o prompt canônico do avatar a partir dos campos
- * descritivos. Estilo cartoon/aquarela suave, não foto-realista
- * (PRD §7.14).
+ * descritivos. Vários estilos ilustrados, nunca foto-realista (PRD §7.14).
  */
 
+/**
+ * Estilos disponíveis — fonte única (label pro form, prompt pra geração).
+ * Ao adicionar um estilo aqui, lembrar de soltar o CHECK do banco
+ * (migração avatares_membros_atipicos.estilo).
+ */
+export const AVATAR_ESTILOS = [
+  {
+    value: "cartoon",
+    label: "Cartoon",
+    prompt: "Ilustração estilo cartoon amigável, traços simples e cores suaves",
+  },
+  {
+    value: "aquarela",
+    label: "Aquarela",
+    prompt: "Ilustração em estilo aquarela suave, traços leves, cores pastel",
+  },
+  {
+    value: "livro_infantil",
+    label: "Livro infantil",
+    prompt: "Ilustração de livro infantil, lúdica e acolhedora, cores quentes",
+  },
+  {
+    value: "lapis_cor",
+    label: "Lápis de cor",
+    prompt: "Ilustração feita com lápis de cor, textura de giz, traço artesanal",
+  },
+  {
+    value: "massinha_3d",
+    label: "Massinha 3D",
+    prompt:
+      "Personagem em estilo massinha/clay 3D fofo, iluminação suave, aparência de animação",
+  },
+  {
+    value: "papel_recortado",
+    label: "Papel recortado",
+    prompt: "Ilustração em estilo colagem de papel recortado, formas chapadas",
+  },
+  {
+    value: "line_art",
+    label: "Traço (line art)",
+    prompt: "Ilustração em line art colorido, contornos limpos, preenchimento leve",
+  },
+] as const;
+
+export type AvatarEstilo = (typeof AVATAR_ESTILOS)[number]["value"];
+
+export const AVATAR_ESTILO_VALUES = AVATAR_ESTILOS.map((e) => e.value) as [
+  AvatarEstilo,
+  ...AvatarEstilo[],
+];
+
 export type AvatarDescricao = {
-  estilo: "cartoon" | "aquarela";
+  estilo: AvatarEstilo;
   idade?: number | null;
   generoVisual?: "menino" | "menina" | "neutro" | null;
   tomPele?: "muito_clara" | "clara" | "media" | "morena" | "negra_clara" | "negra" | null;
@@ -25,11 +75,8 @@ export type AvatarDescricao = {
 export function montarPromptCanonico(d: AvatarDescricao): string {
   const partes: string[] = [];
 
-  const estilo =
-    d.estilo === "aquarela"
-      ? "Ilustração em estilo aquarela suave, traços leves, cores pastel"
-      : "Ilustração estilo cartoon amigável, traços simples e cores suaves";
-  partes.push(estilo);
+  const estiloDef = AVATAR_ESTILOS.find((e) => e.value === d.estilo) ?? AVATAR_ESTILOS[0];
+  partes.push(estiloDef.prompt);
 
   // Personagem
   const sujeitoBase: string[] = [];

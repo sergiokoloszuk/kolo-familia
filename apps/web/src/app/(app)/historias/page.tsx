@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { Eyebrow } from "@/components/brand/eyebrow";
+import { buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { loadFamilyContext } from "@/lib/auth/require-user";
 
 /**
@@ -64,6 +66,22 @@ export default async function HistoriasPage() {
         <p className="mt-3 text-base leading-relaxed text-muted-foreground">
           Por enquanto, o cotidiano vai sendo registrado no Diário.
         </p>
+      </section>
+
+      <section className="max-w-2xl rounded-2xl border border-kolo-linha bg-secondary/40 p-5">
+        <h2 className="font-heading text-lg text-foreground">
+          As histórias ganham vida com um avatar
+        </h2>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Crie o avatar de cada criança pra ilustrar as histórias e as ideias da
+          Ayla — dá pra escolher entre vários estilos.
+        </p>
+        <Link
+          href="/configuracoes/avatar"
+          className={cn(buttonVariants({ variant: "outline" }), "mt-3")}
+        >
+          Criar avatar das crianças
+        </Link>
       </section>
 
       <div className="flex justify-center">

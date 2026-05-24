@@ -30,9 +30,9 @@ export default async function AvataresIndexPage() {
           Avatar dos membros
         </h1>
         <p className="text-sm text-muted-foreground">
-          Avatar canônico em estilo cartoon ou aquarela. Usado nas brincadeiras,
-          atividades e histórias sociais geradas pelas skills. Não armazenamos fotos
-          — só a representação ilustrada.
+          Avatar canônico ilustrado, em vários estilos (cartoon, aquarela, massinha
+          3D e mais). Usado nas brincadeiras, atividades e histórias geradas pela
+          Ayla. Não armazenamos fotos — só a representação ilustrada.
         </p>
       </header>
 
