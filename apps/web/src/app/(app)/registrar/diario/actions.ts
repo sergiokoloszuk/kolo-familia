@@ -58,18 +58,41 @@ export async function registrarDia(input: RegistrarDiaInput): Promise<void> {
   const { supabase, family } = await requireFamily();
   await requireActiveWrite(family.id);
 
-  // 1. Check-in diário (upsert por familyId + membro + data)
-  await supabase.from("check_ins_diarios").upsert(
-    {
+  // 1. Check-in diário — buscar e atualizar/inserir.
+  //    (O índice único é numa expressão `coalesce(membro_atipico_id, ...)`,
+  //    então `upsert(onConflict: colunas)` dava 42P10 e o check-in nunca
+  //    salvava — o erro era engolido. Por isso parecia "travar".)
+  let buscaCheckin = supabase
+    .from("check_ins_diarios")
+    .select("id")
+    .eq("family_account_id", family.id)
+    .eq("data", data.data);
+  buscaCheckin = data.membroAtipicoId
+    ? buscaCheckin.eq("membro_atipico_id", data.membroAtipicoId)
+    : buscaCheckin.is("membro_atipico_id", null);
+  const { data: checkinExistente, error: errBusca } = await buscaCheckin.maybeSingle();
+  if (errBusca) throw new Error(`Erro ao verificar check-in: ${errBusca.message}`);
+
+  if (checkinExistente) {
+    const { error } = await supabase
+      .from("check_ins_diarios")
+      .update({
+        escala_emocional_mae: data.escalaEmocionalMae,
+        escala_emocional_membro: data.escalaEmocionalMembro ?? null,
+      })
+      .eq("id", checkinExistente.id);
+    if (error) throw new Error(`Erro ao atualizar check-in: ${error.message}`);
+  } else {
+    const { error } = await supabase.from("check_ins_diarios").insert({
       family_account_id: family.id,
       membro_atipico_id: data.membroAtipicoId,
       data: data.data,
       escala_emocional_mae: data.escalaEmocionalMae,
       escala_emocional_membro: data.escalaEmocionalMembro ?? null,
       origem: "app",
-    },
-    { onConflict: "family_account_id,membro_atipico_id,data" },
-  );
+    });
+    if (error) throw new Error(`Erro ao salvar check-in: ${error.message}`);
+  }
 
   // 2. Diário (só insere se houver alguma das 3 colunas A preenchida)
   const temCamadaA = Boolean(
@@ -80,7 +103,7 @@ export async function registrarDia(input: RegistrarDiaInput): Promise<void> {
     const temCamadaB = Boolean(data.quemEstava || data.estadoAdulto || data.reacaoAdulto);
     const incompleto = Boolean(data.conquista || data.desafio) && !temCamadaB;
 
-    await supabase.from("diarios").insert({
+    const { error } = await supabase.from("diarios").insert({
       family_account_id: family.id,
       membro_atipico_id: data.membroAtipicoId,
       data: data.data,
@@ -94,6 +117,7 @@ export async function registrarDia(input: RegistrarDiaInput): Promise<void> {
       origem: "app",
       incompleto,
     });
+    if (error) throw new Error(`Erro ao salvar registro do dia: ${error.message}`);
   }
 
   revalidatePath("/painel");
