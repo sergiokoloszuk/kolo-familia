@@ -3,13 +3,11 @@ import { hojeLocalISO } from "@/lib/idade";
 import { enviarTexto, type InboundWhatsApp } from "./whatsappSender";
 import { podeEnviarProativa } from "./rules";
 import { parseInbound, detectarComando } from "./parser";
+import { gerarRespostaAyla } from "./responder";
 import {
   templateBoasVindas,
   templateRotinaDiaria,
   templateEngajamento,
-  templateClarificacaoMembro,
-  templateClarificacaoConteudo,
-  templateRespostaRegistro,
   templateComandoAjuda,
   templateComandoPausada,
   templateComandoHorarioMudado,
@@ -479,54 +477,51 @@ export async function processInbound(
       (parsed.sugestao_kolo_vivo && parsed.texto_kolo_vivo_sugerido),
   );
 
-  // Família 2+ membros + há conteúdo mas não sabemos de quem → clarifica QUEM
-  if (
+  // Família 2+ membros + há conteúdo mas não sabemos de quem → a Ayla pergunta
+  // QUEM (de forma natural), e não registramos até saber.
+  const precisaEscolherMembro =
     ctx.membros.length >= 2 &&
     (parsed.confianca_identificacao < 70 || !parsed.membro_atipico_id) &&
     temAlgoPraRegistrar
-  ) {
-    const texto = await templateClarificacaoMembro(supabase, { membros: ctx.membros });
-    const resp = await enviarEPersistir(supabase, {
-      family_account_id: family.id,
-      membro_atipico_id: null,
-      phone: ctx.whatsapp_e164,
-      texto,
-      category: "reativa",
-      tipo: "clarificacao_identificacao",
-    });
-    return { tratada: true, familia: family.id, resposta: resp };
+      ? { nomes: ctx.membros.map((m) => m.nome) }
+      : null;
+
+  // Registra nos bastidores (check-in + diário + sugestão) quando há conteúdo
+  // e sabemos de quem é. Invisível pra mãe — a fala vem da voz da Ayla.
+  if (temAlgoPraRegistrar && parsed.membro_atipico_id && !precisaEscolherMembro) {
+    await persistirRegistro(supabase, family.id, parsed);
   }
 
-  // Nada registrável (mensagem genérica tipo "tudo bem") → clarifica O QUE
-  if (!temAlgoPraRegistrar) {
-    const resp = await enviarEPersistir(supabase, {
-      family_account_id: family.id,
-      membro_atipico_id: parsed.membro_atipico_id,
-      phone: ctx.whatsapp_e164,
-      texto: await templateClarificacaoConteudo(supabase),
-      category: "reativa",
-      tipo: "clarificacao_conteudo",
-    });
-    return { tratada: true, familia: family.id, resposta: resp };
-  }
+  const nomeMembro = parsed.membro_atipico_id
+    ? (ctx.membros.find((m) => m.id === parsed.membro_atipico_id)?.nome ?? null)
+    : null;
+  const koloVivoResumo = await carregarKoloVivoResumo(supabase, parsed.membro_atipico_id);
+  const historico = await carregarHistorico(supabase, family.id, inbound.texto);
 
-  // Tem conteúdo: persiste check-in + diário, gera sugestão se for o caso
-  await persistirRegistro(supabase, family.id, parsed);
-
-  // Resposta acolher → organizar → ação (template determinístico nesta versão)
-  const acolhimento = montarAcolhimento(parsed);
-  const organizacao = montarOrganizacao(parsed);
-  const acao = parsed.sugestao_kolo_vivo
-    ? "Quer que eu adicione isso ao Kolo Vivo? Responde 'sim'."
-    : undefined;
+  const texto = await gerarRespostaAyla({
+    nomeMae: ctx.nomeMae,
+    nomeMembro,
+    koloVivoResumo,
+    historico,
+    mensagem: inbound.texto,
+    sinais: {
+      conquista: parsed.conquista,
+      desafio: parsed.desafio,
+      emocao_mae: parsed.emocao_mae,
+      temSugestaoKoloVivo: Boolean(
+        parsed.sugestao_kolo_vivo && parsed.texto_kolo_vivo_sugerido,
+      ),
+    },
+    precisaEscolherMembro,
+  });
 
   const resp = await enviarEPersistir(supabase, {
     family_account_id: family.id,
     membro_atipico_id: parsed.membro_atipico_id,
     phone: ctx.whatsapp_e164,
-    texto: templateRespostaRegistro({ acolhimento, organizacao, acao }),
+    texto,
     category: "reativa",
-    tipo: "resposta_registro",
+    tipo: precisaEscolherMembro ? "clarificacao_identificacao" : "resposta_registro",
   });
   return { tratada: true, familia: family.id, resposta: resp };
 }
@@ -880,22 +875,58 @@ function hashSeed(s: string): number {
   return h;
 }
 
-function montarAcolhimento(p: ParserResult): string {
-  if (p.emocao_mae === "cansada" || p.emocao_mae === "ansiosa_estressada") {
-    return "Entendi. Cansaço pesa.";
+/** Resumo curto do Kolo Vivo do membro pra ancorar a voz da Ayla. */
+async function carregarKoloVivoResumo(
+  supabase: SupabaseClient,
+  membroId: string | null,
+): Promise<string> {
+  if (!membroId) return "";
+  const { data } = await supabase
+    .from("perfil_vivo_membro")
+    .select("essencial, como_e, corpo_rotina, desafios_regulacao, sensorial")
+    .eq("membro_atipico_id", membroId)
+    .maybeSingle();
+  if (!data) return "";
+  const labels: Record<string, string> = {
+    essencial: "O essencial",
+    como_e: "Como é / interesses",
+    corpo_rotina: "Corpo e rotina",
+    desafios_regulacao: "Desafios e regulação",
+    sensorial: "Sensorial",
+  };
+  const linhas: string[] = [];
+  for (const [campo, label] of Object.entries(labels)) {
+    const texto = ((data as Record<string, { texto?: string } | null>)[campo]?.texto ?? "").trim();
+    if (texto) linhas.push(`${label}: ${texto}`);
   }
-  if (p.emocao_mae === "triste") return "Entendi.";
-  if (p.conquista && !p.desafio) return "Que bom.";
-  if (p.desafio && !p.conquista) return "Entendi.";
-  return "Entendi.";
+  return linhas.join("\n");
 }
 
-function montarOrganizacao(p: ParserResult): string {
-  const partes: string[] = [];
-  if (p.conquista) partes.push(`Registrei como conquista: '${p.conquista}'.`);
-  if (p.desafio) partes.push(`E como desafio: '${p.desafio}'.`);
-  if (partes.length === 0 && p.observacao_livre) {
-    partes.push(`Anotei: '${p.observacao_livre}'.`);
+/** Últimos turnos da conversa (pra Ayla não soar amnésica), sem a msg atual. */
+async function carregarHistorico(
+  supabase: SupabaseClient,
+  familyId: string,
+  mensagemAtual: string,
+): Promise<Array<{ de: "mae" | "ayla"; texto: string }>> {
+  const { data } = await supabase
+    .from("ayla_messages")
+    .select("direcao, texto, created_at")
+    .eq("family_account_id", familyId)
+    .order("created_at", { ascending: false })
+    .limit(9);
+  const turnos = (data ?? [])
+    .reverse()
+    .filter((m) => typeof m.texto === "string" && m.texto.trim())
+    .map((m) => ({
+      de: (m.direcao === "inbound" ? "mae" : "ayla") as "mae" | "ayla",
+      texto: m.texto as string,
+    }));
+  // Remove a própria mensagem recém-inserida do fim, pra não duplicar.
+  if (turnos.length > 0) {
+    const ultimo = turnos[turnos.length - 1];
+    if (ultimo.de === "mae" && ultimo.texto.trim() === mensagemAtual.trim()) {
+      turnos.pop();
+    }
   }
-  return partes.length > 0 ? partes.join(" ") : "Anotei.";
+  return turnos.slice(-6);
 }

@@ -1,7 +1,11 @@
-import { NextResponse, type NextRequest } from "next/server";
+import { NextResponse, type NextRequest, after } from "next/server";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { parseZapiWebhook } from "@/lib/ayla/whatsappSender";
 import { processInbound } from "@/lib/ayla/orchestrator";
+
+// A resposta da Ayla agora passa por IA (Sonnet), que leva alguns segundos.
+// Damos tempo ao processamento em background; ver `after()` abaixo.
+export const maxDuration = 60;
 
 /**
  * Webhook da Ayla — recebe mensagens do Z-API (direto ou via n8n).
@@ -41,12 +45,16 @@ export async function POST(request: NextRequest) {
 
   const supabase = createServiceRoleClient();
 
-  try {
-    const result = await processInbound(supabase, inbound);
-    return NextResponse.json(result);
-  } catch (e) {
-    const message = e instanceof Error ? e.message : "erro desconhecido";
-    console.error(`[ayla webhook] ${message}`);
-    return NextResponse.json({ error: message }, { status: 500 });
-  }
+  // Confirma o recebimento na hora e processa em background. Assim a Z-API
+  // recebe 200 em <1s e NÃO reenvia o webhook (era o que duplicava as
+  // respostas quando o processamento ficava lento com a IA).
+  after(async () => {
+    try {
+      await processInbound(supabase, inbound);
+    } catch (e) {
+      console.error(`[ayla webhook] erro no processamento:`, e instanceof Error ? e.message : e);
+    }
+  });
+
+  return NextResponse.json({ ok: true, queued: true });
 }
