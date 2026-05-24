@@ -272,7 +272,11 @@ async function callClaude(
   const stream = client.messages.stream({
     model: MODELS.principal,
     max_tokens: 2048,
-    thinking: { type: "adaptive" },
+    // Budget fixo em vez de "adaptive": o adaptive disparava picos de até
+    // ~10s de thinking. Limitado, o custo fica previsível mantendo algum
+    // raciocínio (estes caminhos não fazem streaming, então o tempo total
+    // é o que a pessoa espera).
+    thinking: { type: "enabled", budget_tokens: 1024 },
     system,
     messages,
   });

@@ -73,7 +73,11 @@ export async function POST(req: NextRequest) {
         const stream = client.messages.stream({
           model: MODELS.principal,
           max_tokens: 2048,
-          thinking: { type: "adaptive" },
+          // Sem extended thinking nesta rota: o "thinking" é silencioso e
+          // atrasava o 1º token visível de 3 a 10s (medido). Desligado, a
+          // resposta começa a aparecer em ~1s — o que importa no chat. A
+          // qualidade segue alta (Sonnet + contexto rico do Kolo Vivo).
+          thinking: { type: "disabled" },
           system,
           messages,
         });
