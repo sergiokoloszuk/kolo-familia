@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { logServerError } from "@/lib/log";
+import { horaLocalHHMM } from "@/lib/idade";
 import {
   sendRotinaDiaria,
   sendEngajamento,
@@ -66,14 +67,15 @@ type AdminClient = ReturnType<typeof createServiceRoleClient>;
  * Roda rotina diária para todas as famílias ativas onde:
  *   - subscription_access.status in (trialing, active, past_due)
  *   - ayla_preferences.consentimento_em existe + não desativada + não pausada
- *   - hora atual (UTC) cai dentro de horario_preferido_inicio..fim
+ *   - hora atual (fuso BR) cai dentro de horario_preferido_inicio..fim
  *
  * Ideal: cron rodar a cada 30min. Cada chamada despacha as famílias
  * cujo horário casa naquele momento.
  */
 async function runRotina(supabase: AdminClient) {
   const agora = new Date();
-  const horaAtualUtc = agora.toISOString().slice(11, 16); // HH:MM
+  // Janela comparada no fuso de Brasília (horário preferido é local), não UTC.
+  const horaAtualLocal = horaLocalHHMM(agora); // "HH:MM"
 
   const { data: candidatas } = await supabase
     .from("ayla_preferences")
@@ -88,8 +90,7 @@ async function runRotina(supabase: AdminClient) {
     if (p.pausada_ate && new Date(p.pausada_ate) > agora) continue;
     const inicio = (p.horario_preferido_inicio as string)?.slice(0, 5);
     const fim = (p.horario_preferido_fim as string)?.slice(0, 5);
-    // Janela em horário UTC simples — TODO: respeitar timezone real da família
-    if (inicio && fim && horaAtualUtc >= inicio && horaAtualUtc <= fim) {
+    if (inicio && fim && horaAtualLocal >= inicio && horaAtualLocal <= fim) {
       elegiveis.push(p.family_account_id);
     }
   }

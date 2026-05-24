@@ -8,6 +8,23 @@ export function hojeLocalISO(timeZone = "America/Sao_Paulo"): string {
 }
 
 /**
+ * Hora atual "HH:MM" no fuso informado (padrão America/Sao_Paulo).
+ * Usado pra comparar com a janela de horário preferido da família — antes
+ * comparávamos contra UTC e a pergunta diária saía 3h adiantada.
+ */
+export function horaLocalHHMM(
+  agora = new Date(),
+  timeZone = "America/Sao_Paulo",
+): string {
+  return new Intl.DateTimeFormat("en-GB", {
+    timeZone,
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).format(agora);
+}
+
+/**
  * Idade em anos completos a partir da data de nascimento.
  *
  * Fonte de verdade no banco passou a ser `data_nascimento` (date). A idade é
