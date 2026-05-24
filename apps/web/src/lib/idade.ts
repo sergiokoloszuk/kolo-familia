@@ -1,4 +1,13 @@
 /**
+ * Data de "hoje" (YYYY-MM-DD) no fuso informado (padrão America/Sao_Paulo).
+ * Evita o bug de usar `toISOString()` (UTC): à noite no Brasil, UTC já virou
+ * o dia seguinte, e o registro caía na data errada.
+ */
+export function hojeLocalISO(timeZone = "America/Sao_Paulo"): string {
+  return new Intl.DateTimeFormat("en-CA", { timeZone }).format(new Date());
+}
+
+/**
  * Idade em anos completos a partir da data de nascimento.
  *
  * Fonte de verdade no banco passou a ser `data_nascimento` (date). A idade é

@@ -11,11 +11,12 @@ import { Badge } from "@/components/ui/badge";
 import { Eyebrow } from "@/components/brand/eyebrow";
 import { IconCard } from "@/components/brand/icon-card";
 import { loadFamilyContext } from "@/lib/auth/require-user";
+import { hojeLocalISO } from "@/lib/idade";
 
 export default async function RegistrarPage() {
   const { supabase, family, user } = await loadFamilyContext();
   const familyId = family!.id;
-  const hoje = new Date().toISOString().slice(0, 10);
+  const hoje = hojeLocalISO();
 
   const [{ data: checkinHoje }, { data: ultimoSemanal }, { data: ultimoDass21 }] =
     await Promise.all([

@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { calcularDASS21, type DASS21Resultado } from "@/lib/dass21";
+import { hojeLocalISO } from "@/lib/idade";
 
 async function requireUserAndFamily() {
   const supabase = await createClient();
@@ -40,7 +41,7 @@ export async function aplicarDASS21(input: z.infer<typeof schema>): Promise<Apli
   await supabase.from("dass21_aplicacoes").insert({
     user_id: user.id,
     family_account_id: family.id,
-    data_aplicacao: new Date().toISOString().slice(0, 10),
+    data_aplicacao: hojeLocalISO(),
     respostas,
     score_depressao: resultado.scores.depressao,
     score_ansiedade: resultado.scores.ansiedade,

@@ -5,7 +5,7 @@ import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { respond, respondAsOutputType } from "@/lib/ia/engine";
 import { extrairAtualizacoes, type PropostaAtualizacao } from "@/lib/ia/atualizar";
-import { idadeAnos } from "@/lib/idade";
+import { idadeAnos, hojeLocalISO } from "@/lib/idade";
 import { requireActiveWrite } from "@/lib/auth/require-active-write";
 
 async function requireFamily() {
@@ -378,7 +378,7 @@ export async function confirmarAtualizacao(
       const { error } = await supabase.from("diarios").insert({
         family_account_id: family.id,
         membro_atipico_id: membroId,
-        data: now.slice(0, 10),
+        data: hojeLocalISO(),
         conquista: data.conquista ?? null,
         desafio: data.desafio ?? null,
         origem: "app",

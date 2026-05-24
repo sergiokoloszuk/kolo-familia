@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import { hojeLocalISO } from "@/lib/idade";
 import { registrarDia, type RegistrarDiaInput } from "./actions";
 
 const ESCALAS_MAE = [
@@ -90,7 +91,7 @@ export function DiarioForm({
       try {
         await registrarDia({
           membroAtipicoId: form.membroAtipicoId,
-          data: new Date().toISOString().slice(0, 10),
+          data: hojeLocalISO(),
           escalaEmocionalMae: form.escalaEmocionalMae,
           escalaEmocionalMembro: form.escalaEmocionalMembro ?? null,
           conquista: form.conquista || undefined,

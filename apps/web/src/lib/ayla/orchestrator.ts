@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { hojeLocalISO } from "@/lib/idade";
 import { enviarTexto, type InboundWhatsApp } from "./whatsappSender";
 import { podeEnviarProativa } from "./rules";
 import { parseInbound, detectarComando } from "./parser";
@@ -576,7 +577,7 @@ async function persistirRegistro(
     {
       family_account_id: familyId,
       membro_atipico_id: p.membro_atipico_id,
-      date: new Date().toISOString().slice(0, 10),
+      date: hojeLocalISO(),
       conquista_extraida: p.conquista,
       desafio_extraido: p.desafio,
       emocao_mae: p.emocao_mae,
@@ -598,7 +599,7 @@ async function persistirRegistro(
     await supabase.from("diarios").insert({
       family_account_id: familyId,
       membro_atipico_id: p.membro_atipico_id,
-      data: new Date().toISOString().slice(0, 10),
+      data: hojeLocalISO(),
       conquista: p.conquista,
       desafio: p.desafio,
       observacao_livre: p.observacao_livre,
