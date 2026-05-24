@@ -104,22 +104,28 @@ Mensagem do adulto:
 
 Quais especialistas? Responda só o JSON.`;
 
-  let raw: string;
-  try {
-    const stream = client.messages.stream({
-      model: MODELS.leve,
-      max_tokens: 150,
-      system: [{ type: "text", text: system, cache_control: { type: "ephemeral" } }],
-      messages: [{ role: "user", content: user }],
-    });
-    const final = await stream.finalMessage();
-    raw = final.content
-      .filter((b): b is Extract<typeof b, { type: "text" }> => b.type === "text")
-      .map((b) => b.text)
-      .join("");
-  } catch {
-    return routeSkills(input, skills, { maxSkills });
+  // Tenta o modelo leve; se falhar (ex.: indisponível no ambiente), cai no
+  // principal — que comprovadamente funciona — antes de desistir pro keyword.
+  let raw: string | null = null;
+  for (const model of [MODELS.leve, MODELS.principal]) {
+    try {
+      const stream = client.messages.stream({
+        model,
+        max_tokens: 150,
+        system: [{ type: "text", text: system, cache_control: { type: "ephemeral" } }],
+        messages: [{ role: "user", content: user }],
+      });
+      const final = await stream.finalMessage();
+      raw = final.content
+        .filter((b): b is Extract<typeof b, { type: "text" }> => b.type === "text")
+        .map((b) => b.text)
+        .join("");
+      if (raw.trim()) break;
+    } catch {
+      raw = null;
+    }
   }
+  if (!raw) return routeSkills(input, skills, { maxSkills });
 
   const names = parseSkillNames(raw);
   if (!names || names.length === 0) return routeSkills(input, skills, { maxSkills });
