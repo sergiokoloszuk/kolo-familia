@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { getAylaAnthropicClient, AYLA_MODEL } from "./anthropic";
+import { getAylaAnthropicClient, AYLA_MODEL, AYLA_MODEL_FALLBACK } from "./anthropic";
 import { getSystemPrompt } from "@/lib/ai/prompts";
 import type { ParserResult } from "./types";
 
@@ -90,43 +90,47 @@ Devolva o JSON.`;
 
   const systemPrompt = await getSystemPrompt("parser_ayla", SYSTEM_PROMPT_FALLBACK);
 
-  let raw: string;
-  try {
-    const stream = client.messages.stream({
-      model: AYLA_MODEL,
-      max_tokens: 1024,
-      system: [{ type: "text", text: systemPrompt, cache_control: { type: "ephemeral" } }],
-      messages: [{ role: "user", content: userMsg }],
-    });
-    const finalMessage = await stream.finalMessage();
-    raw = finalMessage.content
-      .filter((b): b is Extract<typeof b, { type: "text" }> => b.type === "text")
-      .map((b) => b.text)
-      .join("");
-  } catch (e) {
-    return fallbackResult(`falha do modelo: ${e instanceof Error ? e.message : "?"}`);
-  }
+  // Tenta o modelo leve; se falhar (erro, JSON ou schema inválido) tenta o
+  // principal antes de desistir — o Haiku às vezes vacila em produção.
+  const tentar = async (model: string): Promise<ParserResult | null> => {
+    let raw: string;
+    try {
+      const stream = client.messages.stream({
+        model,
+        max_tokens: 1024,
+        system: [{ type: "text", text: systemPrompt, cache_control: { type: "ephemeral" } }],
+        messages: [{ role: "user", content: userMsg }],
+      });
+      const finalMessage = await stream.finalMessage();
+      raw = finalMessage.content
+        .filter((b): b is Extract<typeof b, { type: "text" }> => b.type === "text")
+        .map((b) => b.text)
+        .join("");
+    } catch (e) {
+      console.warn(`[ayla:parser] falha do modelo ${model}:`, e instanceof Error ? e.message : e);
+      return null;
+    }
 
-  const json = parseJsonLoose(raw);
-  if (!json) return fallbackResult("JSON inválido");
+    const json = parseJsonLoose(raw);
+    if (!json) return null;
 
-  const parsed = ParserSchema.safeParse(json);
-  if (!parsed.success) {
-    return fallbackResult(
-      `schema inválido: ${parsed.error.message.slice(0, 120)}`,
-    );
-  }
+    const parsed = ParserSchema.safeParse(json);
+    if (!parsed.success) return null;
 
-  // Defesa: se o ID retornado pela IA não existe na lista de membros, anula.
-  if (
-    parsed.data.membro_atipico_id &&
-    !params.membros.some((m) => m.id === parsed.data.membro_atipico_id)
-  ) {
-    parsed.data.membro_atipico_id = null;
-    parsed.data.confianca_identificacao = 0;
-  }
+    // Defesa: se o ID retornado pela IA não existe na lista de membros, anula.
+    if (
+      parsed.data.membro_atipico_id &&
+      !params.membros.some((m) => m.id === parsed.data.membro_atipico_id)
+    ) {
+      parsed.data.membro_atipico_id = null;
+      parsed.data.confianca_identificacao = 0;
+    }
 
-  return parsed.data;
+    return parsed.data;
+  };
+
+  const resultado = (await tentar(AYLA_MODEL)) ?? (await tentar(AYLA_MODEL_FALLBACK));
+  return resultado ?? fallbackResult("modelo não devolveu JSON válido");
 }
 
 function fallbackResult(motivo: string): ParserResult {

@@ -26,3 +26,10 @@ export function getAylaAnthropicClient(): Anthropic {
 }
 
 export const AYLA_MODEL = process.env.ANTHROPIC_MODEL_LEVE || "claude-haiku-4-5";
+
+/**
+ * Modelo de reforço: quando o leve falha ou devolve JSON inválido (acontece
+ * em prod com o Haiku), o parser tenta de novo com este antes de desistir.
+ */
+export const AYLA_MODEL_FALLBACK =
+  process.env.ANTHROPIC_MODEL_PRINCIPAL || "claude-sonnet-4-6";

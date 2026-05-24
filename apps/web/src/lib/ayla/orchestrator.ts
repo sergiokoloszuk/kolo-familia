@@ -447,13 +447,26 @@ export async function processInbound(
     ultimoMembroFoco: ultimoNome ?? null,
   });
 
+  // Família com 1 membro: se o parser não cravou quem é, é o único possível.
+  if (ctx.membros.length === 1 && !parsed.membro_atipico_id) {
+    parsed.membro_atipico_id = ctx.membros[0].id;
+    parsed.confianca_identificacao = 100;
+  }
+
   // 5. Decide o caminho
 
-  // Família 2+ membros + identificação fraca → clarifica
+  const temAlgoPraRegistrar = Boolean(
+    parsed.conquista ||
+      parsed.desafio ||
+      parsed.observacao_livre ||
+      (parsed.sugestao_kolo_vivo && parsed.texto_kolo_vivo_sugerido),
+  );
+
+  // Família 2+ membros + há conteúdo mas não sabemos de quem → clarifica QUEM
   if (
     ctx.membros.length >= 2 &&
-    parsed.confianca_identificacao < 70 &&
-    parsed.confianca >= 30 // tem conteúdo mas não sabemos sobre quem
+    (parsed.confianca_identificacao < 70 || !parsed.membro_atipico_id) &&
+    temAlgoPraRegistrar
   ) {
     const texto = await templateClarificacaoMembro(supabase, { membros: ctx.membros });
     const resp = await enviarEPersistir(supabase, {
@@ -467,8 +480,8 @@ export async function processInbound(
     return { tratada: true, familia: family.id, resposta: resp };
   }
 
-  // Confiança baixa do conteúdo → clarifica
-  if (parsed.confianca < 50) {
+  // Nada registrável (mensagem genérica tipo "tudo bem") → clarifica O QUE
+  if (!temAlgoPraRegistrar) {
     const resp = await enviarEPersistir(supabase, {
       family_account_id: family.id,
       membro_atipico_id: parsed.membro_atipico_id,
