@@ -27,9 +27,9 @@ export function Tela3Contexto({
 
   return (
     <Explanation
-      o_que="O contexto que rodeia o membro atípico — pai, avós, irmãos, rotina, recursos."
+      o_que="O contexto que rodeia a família — quem mora junto, o ritmo da casa, recursos e dinâmica."
       por_que="As skills usam isso para sugerir estratégias realistas, não receita de revista."
-      proximo="Em seguida, três sinais iniciais por pessoa atípica."
+      proximo="Em seguida, os sinais e a rotina de cada pessoa atípica."
     >
       <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4" noValidate>
         <Field
@@ -41,8 +41,8 @@ export function Tela3Contexto({
 
         <Field
           id="rotina"
-          label="Como é a rotina típica"
-          placeholder="Ex: criança vai pra escola das 7h às 12h, terapias às terças e quintas, jantar 19h."
+          label="Rotina da casa"
+          placeholder="Ex: todos jantam por volta das 19h, dormem cedo, fins de semana mais livres, a avó ajuda nas tardes. (a rotina de cada criança vem na próxima tela)"
           register={register("rotina")}
         />
 

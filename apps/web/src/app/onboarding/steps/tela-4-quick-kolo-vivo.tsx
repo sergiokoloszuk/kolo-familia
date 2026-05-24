@@ -13,6 +13,7 @@ type FormValues = {
     desafios: { value: string }[];
     interesses: { value: string }[];
     conquista: string;
+    rotina: string;
   }[];
 };
 
@@ -30,6 +31,7 @@ export function Tela4QuickKoloVivo({
       desafios: string[];
       interesses: string[];
       conquista?: string;
+      rotina?: string;
     }[],
   ) => void;
   onPrevious: () => void;
@@ -41,6 +43,7 @@ export function Tela4QuickKoloVivo({
         desafios: [{ value: "" }, { value: "" }, { value: "" }],
         interesses: [{ value: "" }, { value: "" }, { value: "" }],
         conquista: "",
+        rotina: "",
       })),
     },
   });
@@ -53,14 +56,15 @@ export function Tela4QuickKoloVivo({
       desafios: p.desafios.map((d) => d.value).filter((s) => s.trim().length > 0),
       interesses: p.interesses.map((i) => i.value).filter((s) => s.trim().length > 0),
       conquista: p.conquista.trim() || undefined,
+      rotina: p.rotina.trim() || undefined,
     }));
     onSubmit(out);
   }
 
   return (
     <Explanation
-      o_que="Três desafios + três interesses + uma conquista para cada pessoa atípica."
-      por_que="Isso já alimenta o Kolo Vivo dela e deixa a primeira conversa com a Ayla mais útil."
+      o_que="Para cada pessoa atípica: desafios, interesses, uma conquista e como é o dia dela."
+      por_que="Isso já alimenta o Kolo Vivo dela e deixa a primeira conversa com a Ayla mais útil. A rotina aqui é a de cada criança — pode ser diferente entre os filhos."
       proximo="Em seguida, termos de uso e a permissão pra Ayla aparecer no WhatsApp."
     >
       <form onSubmit={handleSubmit(submit)} className="flex flex-col gap-6" noValidate>
@@ -106,6 +110,19 @@ export function Tela4QuickKoloVivo({
                     placeholder="Algo que você quer celebrar"
                     className="mt-2"
                     {...register(`porMembro.${mi}.conquista`)}
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor={`rotina-${mi}`} className="text-sm font-medium">
+                    Como é o dia dela? (opcional)
+                  </Label>
+                  <textarea
+                    id={`rotina-${mi}`}
+                    rows={2}
+                    placeholder="Ex: escola de manhã, terapia ter/qui, custa pegar no sono, come devagar."
+                    className="mt-2 flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                    {...register(`porMembro.${mi}.rotina`)}
                   />
                 </div>
               </div>

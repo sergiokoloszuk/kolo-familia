@@ -201,6 +201,7 @@ const quickKoloSchema = z.object({
   desafios: z.array(z.string().trim()).max(3),
   interesses: z.array(z.string().trim()).max(3),
   conquista: z.string().trim().optional(),
+  rotina: z.string().trim().optional(),
 });
 
 const tela4Schema = z.object({
@@ -223,6 +224,7 @@ export async function saveTela4(raw: Tela4Input) {
         como_e: { interesses },
         desafios_regulacao: { desafios_iniciais: desafios },
         essencial: item.conquista ? { conquista_inicial: item.conquista } : {},
+        corpo_rotina: item.rotina ? { texto: item.rotina } : {},
         completude_pct: 25,
       },
       { onConflict: "membro_atipico_id" },
