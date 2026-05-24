@@ -7,6 +7,7 @@ import {
   BookOpen,
   ChevronRight,
   CreditCard,
+  HelpCircle,
   Home,
   Leaf,
   LogOut,
@@ -220,6 +221,17 @@ export function Sidebar({
             )}
           >
             <CreditCard className="size-4 stroke-[1.5]" aria-hidden />
+          </Link>
+          <Link
+            href="/ajuda"
+            aria-label="Ajuda"
+            title="Ajuda"
+            className={cn(
+              "inline-flex size-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-kolo-lilas-bg-2 hover:text-foreground",
+              isActive(pathname, "/ajuda") && "bg-kolo-lilas-bg-2 text-foreground",
+            )}
+          >
+            <HelpCircle className="size-4 stroke-[1.5]" aria-hidden />
           </Link>
           <form action="/auth/logout" method="post" className="ml-auto">
             <button
