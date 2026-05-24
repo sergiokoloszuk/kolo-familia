@@ -9,18 +9,18 @@ insert into public.output_types (key, label, icone, prompt_template, gera_imagem
   ('atividades',          'Atividades',             'sparkles',    'Sugira 2 a 3 atividades do dia a dia que apoiam o neurodesenvolvimento, alinhadas ao perfil e à rotina familiar.',                                                  true,  20, true),
   ('crencas',             'Crenças',                'lightbulb',   'Apresente 2 a 3 crenças/mitos comuns sobre o tema, com contraposição prática baseada em observação. Sem afirmar causas.',                                       false, 30, true),
   ('o_que_fazer_diferente','O que fazer diferente', 'route',       'A partir do diário recente, sugira uma mudança concreta de abordagem para um desafio recorrente. Aberto a hipóteses, sem afirmar a causa.',                       false, 40, true),
-  ('historias_sociais',   'Histórias sociais',      'book-open',   'Escreva UMA história curta e encantadora para a criança, com o(s) interesse(s) dela como espinha da narrativa (não como enfeite). A história apoia a situação descrita, mas é antes de tudo uma BOA HISTÓRIA — de ler junto e querer reler.
+  ('historias_sociais',   'Histórias sociais',      'book-open',   'Escreva UMA história curta e encantadora para a criança. Use um PERSONAGEM cativante como protagonista — NÃO a própria criança. Crie o personagem a partir de um interesse dela (um dinossauro, um carrinho, um aviãozinho, um sapo, etc.) e dê um nome a ele. A criança se identifica com o personagem; ela não aparece como personagem na história. O personagem vive a mesma situação descrita.
 
 Como construir (não rotule "cena 1, cena 2" na saída):
-- Apresente a própria criança como herói/heroína dentro do universo que ela ama.
+- Apresente o personagem no universo que a criança ama.
 - Traga uma pequena tensão ligada à situação.
 - Crie um REFRÃO curto que se repete 2 a 3 vezes — algo que a criança consiga antecipar e falar junto.
 - Use batidas sensoriais e sonoras concretas ("Tchibum!", "splash", "tic-tac") e detalhes simples que dão vida.
-- Resolva com um final caloroso e satisfatório: a criança consegue, do jeito dela.
+- Resolva com um final caloroso e satisfatório: o personagem consegue, do jeito dele.
 
 Linguagem: frases curtas e claras, no presente, gostosas de ler em voz alta. Previsível e concreta (importa para o perfil), mas com calor e um humor leve. NADA de hipótese, análise ou conselho dentro da história ("pode ser que...", "vale observar..." não entram).
 
-Saída: um título com 1 emoji; a história corrida (quebras curtas são bem-vindas); o refrão em destaque quando reaparece. No final, separe um bloco curto "Para você, adulto:" com 2 ou 3 dicas práticas de uso (quando ler, como convidar a criança a participar) — é o único lugar com linguagem para o adulto.
+Saída: um título com 1 emoji; a história corrida (quebras curtas são bem-vindas); o refrão em destaque quando reaparece. No final, separe um bloco curto "Para você, adulto:" com 2 ou 3 dicas práticas de uso, incluindo como ajudar a criança a se identificar com o personagem — é o único lugar com linguagem para o adulto.
 
 Tamanho: a história em si entre 120 e 220 palavras.',     true,  50, true),
   ('frases_prontas',      'Frases prontas',         'message-square','Forneça 5 a 8 frases que a mãe pode usar literalmente em situações específicas. Tom calmo, firme, acolhedor. Sem "eu sei como você se sente".',                  false, 60, true),

@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Check, Plus, RefreshCw } from "lucide-react";
+import { Check, Leaf, Plus, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   pedirApoioNaConversa,
@@ -151,23 +151,43 @@ export function ConversaAcoes({
 
       {/* Atualizar — IA propõe o que registrar; usuário confirma. */}
       {!proposta && (
-        <div>
-          <Button
-            type="button"
-            variant="outline"
-            onClick={handlePropor}
-            disabled={propondo}
-            className="rounded-full"
-          >
-            {propondo ? (
-              <>
-                <RefreshCw className="size-4 animate-spin" aria-hidden />
-                Lendo a conversa...
-              </>
-            ) : (
-              "Atualizar com base nesse papo"
-            )}
-          </Button>
+        <div className="rounded-2xl border border-brand-purple/15 bg-kolo-lilas-bg-2/40 p-4">
+          <div className="flex items-start gap-3">
+            <span
+              aria-hidden
+              className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-brand-purple/10 text-brand-purple"
+            >
+              <Leaf className="size-5" />
+            </span>
+            <div className="flex-1">
+              <p className="font-heading text-base font-medium text-foreground">
+                Guardar o que apareceu nesse papo
+              </p>
+              <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+                Quanto mais a Kolo conhece sua família, mais certeiras ficam as
+                respostas. Ela lê a conversa e sugere o que vale registrar no Kolo
+                Vivo e no diário — você confere e confirma antes de salvar.
+              </p>
+              <Button
+                type="button"
+                onClick={handlePropor}
+                disabled={propondo}
+                className="mt-3"
+              >
+                {propondo ? (
+                  <>
+                    <RefreshCw className="size-4 animate-spin" aria-hidden />
+                    Lendo a conversa...
+                  </>
+                ) : (
+                  <>
+                    <Leaf className="size-4" aria-hidden />
+                    Atualizar com base nesse papo
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
         </div>
       )}
 
