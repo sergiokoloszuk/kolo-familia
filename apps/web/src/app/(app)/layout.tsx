@@ -10,30 +10,40 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
   if (!family) redirect("/onboarding");
   if (!family.onboarding_completed) redirect("/onboarding");
 
-  const [{ data: acesso }, { data: familyMeta }, { data: profile }, { data: criancas }] =
-    await Promise.all([
-      supabase
-        .from("controle_acessos")
-        .select("ativo")
-        .eq("user_id", user.id)
-        .maybeSingle(),
-      supabase
-        .from("family_accounts")
-        .select("created_at")
-        .eq("id", family.id)
-        .maybeSingle(),
-      supabase
-        .from("family_profiles")
-        .select("como_chamar, nome_mae")
-        .eq("family_account_id", family.id)
-        .maybeSingle(),
-      supabase
-        .from("membros_atipicos")
-        .select("id, nome, data_nascimento")
-        .eq("family_account_id", family.id)
-        .eq("ativo", true)
-        .order("created_at", { ascending: true }),
-    ]);
+  const [
+    { data: acesso },
+    { data: familyMeta },
+    { data: profile },
+    { data: criancas },
+    { count: sugestoesPendentes },
+  ] = await Promise.all([
+    supabase
+      .from("controle_acessos")
+      .select("ativo")
+      .eq("user_id", user.id)
+      .maybeSingle(),
+    supabase
+      .from("family_accounts")
+      .select("created_at")
+      .eq("id", family.id)
+      .maybeSingle(),
+    supabase
+      .from("family_profiles")
+      .select("como_chamar, nome_mae")
+      .eq("family_account_id", family.id)
+      .maybeSingle(),
+    supabase
+      .from("membros_atipicos")
+      .select("id, nome, data_nascimento")
+      .eq("family_account_id", family.id)
+      .eq("ativo", true)
+      .order("created_at", { ascending: true }),
+    supabase
+      .from("sugestao_perfil_vivos")
+      .select("id", { count: "exact", head: true })
+      .eq("family_account_id", family.id)
+      .eq("status", "pendente"),
+  ]);
 
   const isAdmin = Boolean(acesso?.ativo);
   const nomeUsuario =
@@ -67,6 +77,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
         userInitial={userInitial}
         diasNaKolo={diasNaKolo}
         criancaAtiva={criancaAtiva}
+        sugestoesPendentes={sugestoesPendentes ?? 0}
       />
       <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col px-6 py-8 lg:px-10">
         {children}

@@ -64,6 +64,7 @@ interface SidebarProps {
     nome: string;
     idade: number | null;
   } | null;
+  sugestoesPendentes: number;
 }
 
 export function Sidebar({
@@ -72,6 +73,7 @@ export function Sidebar({
   userInitial,
   diasNaKolo,
   criancaAtiva,
+  sugestoesPendentes,
 }: SidebarProps) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
@@ -167,7 +169,15 @@ export function Sidebar({
                 )}
                 aria-hidden
               />
-              {item.label}
+              <span className="flex-1">{item.label}</span>
+              {item.href === "/kolo-vivo" && sugestoesPendentes > 0 && (
+                <span
+                  aria-label={`${sugestoesPendentes} para revisar`}
+                  className="inline-flex min-w-5 items-center justify-center rounded-full bg-brand-yellow px-1.5 text-xs font-bold text-brand-purple-dark"
+                >
+                  {sugestoesPendentes}
+                </span>
+              )}
             </Link>
           );
         })}

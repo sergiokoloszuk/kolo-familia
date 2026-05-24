@@ -58,9 +58,10 @@ export function KoloVivoWrapper({
   membros: MembroData[];
   sugestoes: SugestaoRow[];
 }) {
-  // Sugestões — faixa contextual no topo (P-KV-8).
-  const [showSugestoes, setShowSugestoes] = useState(false);
+  // Sugestões — faixa contextual no topo (P-KV-8). Abre já quando há itens
+  // pra não passar batido.
   const temSugestoes = sugestoes.length > 0;
+  const [showSugestoes, setShowSugestoes] = useState(temSugestoes);
 
   // Multi-criança: seletor pra focar numa por vez. Com 1 criança só, mantém
   // a leitura contínua original do protótipo (sem seletor, sem mudança).
@@ -76,10 +77,17 @@ export function KoloVivoWrapper({
     <div className="flex flex-col gap-5">
       {temSugestoes && (
         <div className="flex flex-col gap-4">
-          <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-kolo-lilas-bg-2/70 px-5 py-3">
-            <p className="text-sm text-foreground">
-              Algumas coisas novas apareceram por aqui.
-            </p>
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-brand-yellow/40 bg-brand-yellow/10 px-5 py-3.5">
+            <div className="flex items-center gap-2.5">
+              <span aria-hidden className="relative flex size-2.5 items-center justify-center">
+                <span className="absolute inset-0 animate-ping rounded-full bg-brand-yellow opacity-60" />
+                <span className="relative size-2.5 rounded-full bg-brand-yellow" />
+              </span>
+              <p className="text-sm font-semibold text-foreground">
+                {sugestoes.length}{" "}
+                {sugestoes.length === 1 ? "coisa nova pra revisar" : "coisas novas pra revisar"}
+              </p>
+            </div>
             <button
               type="button"
               onClick={() => setShowSugestoes((v) => !v)}
