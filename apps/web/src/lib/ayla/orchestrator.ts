@@ -424,6 +424,23 @@ export async function processInbound(
     return { tratada: true, familia: family.id, resposta: resp };
   }
 
+  // 3b. "Sim" curto → confirma a última sugestão pendente da Ayla pro Kolo Vivo.
+  // Se não houver nada pendente, segue pro parser (pode ser "sim" a outra coisa).
+  if (ehAfirmacaoCurta(inbound.texto)) {
+    const aplicada = await confirmarSugestaoPendente(supabase, family.id);
+    if (aplicada) {
+      const resp = await enviarEPersistir(supabase, {
+        family_account_id: family.id,
+        membro_atipico_id: aplicada.membro_atipico_id,
+        phone: inbound.phoneE164,
+        texto: `Pronto, guardei no Kolo Vivo${aplicada.nomeMembro ? ` do ${aplicada.nomeMembro}` : ""}: "${aplicada.texto}". 🌿`,
+        category: "reativa",
+        tipo: "confirmacao_sugestao",
+      });
+      return { tratada: true, familia: family.id, resposta: resp };
+    }
+  }
+
   // 4. Parser IA
   const ctx = await loadFamiliaParaEnvio(supabase, family.id);
   if (!ctx) return { tratada: true, familia: family.id };
@@ -637,6 +654,120 @@ async function persistirRegistro(
       origem_detalhe: { confianca: p.confianca },
     });
   }
+}
+
+// ============================================================
+// Confirmação de sugestão pendente ("sim" no WhatsApp)
+// ============================================================
+
+const AFIRMACOES = new Set([
+  "sim", "s", "simm", "sim sim", "claro", "claro que sim", "pode", "pode sim",
+  "sim pode", "isso", "isso mesmo", "isso ai", "quero", "quero sim", "ok",
+  "okay", "ta", "ta bom", "adiciona", "adicionar", "pode adicionar",
+  "adiciona sim", "manda", "boa", "perfeito", "yes",
+]);
+
+/** Mensagem curta que é só um "sim" (sem conteúdo novo pra registrar). */
+function ehAfirmacaoCurta(texto: string): boolean {
+  const norm = texto
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "") // tira acentos
+    .replace(/[^a-z\s]/g, " ") // tira pontuação/emoji
+    .replace(/\s+/g, " ")
+    .trim();
+  if (!norm) return /^[\u{1F44D}\u{1F642}✅\u{1F44C}]+$/u.test(texto.trim());
+  return AFIRMACOES.has(norm);
+}
+
+/** Anexa um fato curto ao texto da seção, sem substituir o que já existe. */
+function appendFato(prev: string, fato: string): string {
+  const p = (prev ?? "").trim();
+  const f = fato.trim();
+  if (!p) return f;
+  if (p.toLowerCase().includes(f.toLowerCase())) return p;
+  return `${p}\n${f}`;
+}
+
+const CAMPOS_MEMBRO = ["essencial", "como_e", "corpo_rotina", "desafios_regulacao", "sensorial"];
+const CAMPOS_FAMILIA = ["composicao", "rotina", "recursos", "dinamica"];
+
+type SecaoJson = { texto?: string } | null;
+
+/**
+ * Aplica a sugestão pendente mais recente da Ayla (últimas 2h) ao Kolo Vivo,
+ * anexando ao texto existente, e marca como aprovada. Retorna null se não há
+ * nada pendente — aí o "sim" segue pro fluxo normal.
+ */
+async function confirmarSugestaoPendente(
+  supabase: SupabaseClient,
+  familyId: string,
+): Promise<{ texto: string; membro_atipico_id: string | null; nomeMembro: string | null } | null> {
+  const desde = new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString();
+  const { data: sug } = await supabase
+    .from("sugestao_perfil_vivos")
+    .select("id, membro_atipico_id, camada, campo, texto_sugerido")
+    .eq("family_account_id", familyId)
+    .eq("origem", "ayla")
+    .eq("status", "pendente")
+    .gte("created_at", desde)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (!sug) return null;
+
+  const now = new Date().toISOString();
+
+  if (sug.camada === "camada1" && sug.membro_atipico_id) {
+    if (!CAMPOS_MEMBRO.includes(sug.campo)) return null;
+    const { data: atual } = await supabase
+      .from("perfil_vivo_membro")
+      .select("essencial, como_e, corpo_rotina, desafios_regulacao, sensorial")
+      .eq("membro_atipico_id", sug.membro_atipico_id)
+      .maybeSingle();
+    const secaoAtual = (atual as Record<string, SecaoJson> | null)?.[sug.campo] ?? {};
+    const novoTexto = appendFato(secaoAtual?.texto ?? "", sug.texto_sugerido);
+    const { error } = await supabase.from("perfil_vivo_membro").upsert(
+      {
+        membro_atipico_id: sug.membro_atipico_id,
+        family_account_id: familyId,
+        [sug.campo]: { ...secaoAtual, texto: novoTexto, atualizado_em: now },
+      },
+      { onConflict: "membro_atipico_id" },
+    );
+    if (error) return null;
+  } else if (sug.camada === "camada2") {
+    if (!CAMPOS_FAMILIA.includes(sug.campo)) return null;
+    const { data: atual } = await supabase
+      .from("perfil_vivo_familia")
+      .select("composicao, rotina, recursos, dinamica")
+      .eq("family_account_id", familyId)
+      .maybeSingle();
+    const secaoAtual = (atual as Record<string, SecaoJson> | null)?.[sug.campo] ?? {};
+    const novoTexto = appendFato(secaoAtual?.texto ?? "", sug.texto_sugerido);
+    const { error } = await supabase
+      .from("perfil_vivo_familia")
+      .upsert({ family_account_id: familyId, [sug.campo]: { ...secaoAtual, texto: novoTexto, atualizado_em: now } });
+    if (error) return null;
+  } else {
+    return null;
+  }
+
+  await supabase
+    .from("sugestao_perfil_vivos")
+    .update({ status: "aprovada", decidido_em: now })
+    .eq("id", sug.id);
+
+  let nomeMembro: string | null = null;
+  if (sug.membro_atipico_id) {
+    const { data: m } = await supabase
+      .from("membros_atipicos")
+      .select("nome")
+      .eq("id", sug.membro_atipico_id)
+      .maybeSingle();
+    nomeMembro = m?.nome ?? null;
+  }
+  return { texto: sug.texto_sugerido, membro_atipico_id: sug.membro_atipico_id, nomeMembro };
 }
 
 // ============================================================
