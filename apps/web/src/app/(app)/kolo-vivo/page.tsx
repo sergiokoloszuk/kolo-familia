@@ -1,6 +1,7 @@
 import { Users } from "lucide-react";
 import { Eyebrow } from "@/components/brand/eyebrow";
 import { IconCard } from "@/components/brand/icon-card";
+import { ComoUsar } from "@/components/brand/como-usar";
 import { loadFamilyContext } from "@/lib/auth/require-user";
 import { idadeAnos } from "@/lib/idade";
 import { KoloVivoWrapper, type FamiliaSecoes, type MembroData, type SugestaoRow } from "./wrapper";
@@ -71,6 +72,11 @@ export default async function KoloVivoPage() {
           </h1>
         </div>
       </header>
+
+      <ComoUsar
+        oQueFazer="Toque em cada seção pra editar o que se sabe sobre a criança e a família. Com mais de um filho, troque pelo seletor no topo."
+        porQue="É a memória viva que a Ayla usa pra personalizar tudo — quanto mais completa, melhores as respostas."
+      />
 
       <KoloVivoWrapper
         familyId={familyId}

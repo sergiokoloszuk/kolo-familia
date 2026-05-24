@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Eyebrow } from "@/components/brand/eyebrow";
+import { ComoUsar } from "@/components/brand/como-usar";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { loadFamilyContext } from "@/lib/auth/require-user";
@@ -57,6 +58,11 @@ export default async function HistoriasPage() {
           precisar.
         </p>
       </header>
+
+      <ComoUsar
+        oQueFazer="As histórias aparecem aqui quando algo marcante é registrado no Diário. Você também pode criar o avatar da criança pra ilustrá-las."
+        porQue="São memórias afetivas em forma de cena — pra relembrar e retomar quando fizer sentido."
+      />
 
       <section className="max-w-2xl">
         <p className="text-base leading-relaxed text-foreground/80">

@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { Eyebrow } from "@/components/brand/eyebrow";
+import { ComoUsar } from "@/components/brand/como-usar";
 import { loadFamilyContext } from "@/lib/auth/require-user";
 import { cn } from "@/lib/utils";
 import { NpsBanner } from "./nps-banner";
@@ -470,6 +471,10 @@ export default async function PainelPage() {
         <h1 className="mt-1 font-heading text-3xl text-foreground md:text-4xl">
           Oi, {greeting}.
         </h1>
+        <ComoUsar
+          oQueFazer="Esta é sua visão geral: a leitura da semana, as pequenas conquistas e o foco. Toque em 'Registrar dia' pra contar como foi."
+          porQue="Acompanhar o dia a dia ajuda a Ayla a entender padrões e te apoiar melhor."
+        />
       </header>
 
       {/* ============================================================

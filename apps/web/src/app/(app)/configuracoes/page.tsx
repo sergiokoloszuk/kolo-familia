@@ -11,6 +11,7 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Eyebrow } from "@/components/brand/eyebrow";
 import { IconCard } from "@/components/brand/icon-card";
+import { ComoUsar } from "@/components/brand/como-usar";
 import { loadFamilyContext } from "@/lib/auth/require-user";
 import { AylaPrefsForm } from "./ayla-prefs-form";
 import { OptOutsForm } from "./optouts-form";
@@ -53,6 +54,11 @@ export default async function ConfiguracoesPage() {
           </p>
         </div>
       </header>
+
+      <ComoUsar
+        oQueFazer="Ajuste o acompanhamento da Ayla no WhatsApp (horário, frequência) e as categorias que você recebe. Use os atalhos pra conta, mapa familiar, avatar e alertas."
+        porQue="Você controla quando e como a Ayla aparece — nada é enviado sem a sua permissão."
+      />
 
       {/* Forms inline — Ayla preferences. */}
       <Card className="rounded-3xl bg-white">
