@@ -110,7 +110,7 @@ Audite a resposta nos 4 critérios e devolva o JSON.`;
   let raw: string;
   try {
     const stream = client.messages.stream({
-      model: MODELS.principal,
+      model: MODELS.leve,
       max_tokens: 600,
       system: [{ type: "text", text: systemPrompt, cache_control: { type: "ephemeral" } }],
       messages: [{ role: "user", content: userMsg }],

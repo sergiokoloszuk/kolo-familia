@@ -100,6 +100,30 @@ export async function enviarMensagem(input: z.infer<typeof enviarSchema>): Promi
 
 export type AcaoResult = { ok: true } | { ok: false; error: string };
 
+/**
+ * Apaga uma conversa da família (cascata leva as mensagens). Ação da
+ * própria usuária na lista de conversas anteriores.
+ */
+export async function deletarConversa(
+  input: { conversaId: string },
+): Promise<AcaoResult> {
+  try {
+    const { conversaId } = z.object({ conversaId: z.string().uuid() }).parse(input);
+    const { supabase, family } = await requireFamily();
+    const { error } = await supabase
+      .from("conversas")
+      .delete()
+      .eq("id", conversaId)
+      .eq("family_account_id", family.id);
+    if (error) return { ok: false, error: `Falha ao apagar: ${error.message}` };
+    revalidatePath("/estrategias");
+    revalidatePath("/conversar");
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "Erro inesperado" };
+  }
+}
+
 const apoioSchema = z.object({
   conversaId: z.string().uuid(),
   outputTypeKey: z.string().min(1),

@@ -4,15 +4,11 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
-import { buttonVariants } from "@/components/ui/button";
 import { enviarMensagem } from "./actions";
 
 /**
- * Form principal de Estratégias (P-EST-3 + P-EST-7):
- * sem Labels, select compacto integrado, textarea editorial,
- * botão "Conversar →" em vez de "Enviar". Disclaimer movido pro
- * rodapé pra não roubar atenção do CTA.
+ * Form principal de Estratégias. Seletor de criança e CTA destacados;
+ * Enter envia (Shift+Enter pula linha).
  */
 export function ConversarForm({
   membros,
@@ -25,9 +21,8 @@ export function ConversarForm({
   const [membroId, setMembroId] = useState<string>(membros[0]?.id ?? "");
   const [texto, setTexto] = useState("");
 
-  function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    if (!texto.trim()) return;
+  function submit() {
+    if (!texto.trim() || pending) return;
     setError(null);
     startTransition(async () => {
       try {
@@ -43,8 +38,21 @@ export function ConversarForm({
     });
   }
 
+  function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      submit();
+    }
+  }
+
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+    <form
+      onSubmit={(e) => {
+        e.preventDefault();
+        submit();
+      }}
+      className="flex flex-col gap-3"
+    >
       {error && (
         <div className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
           {error}
@@ -55,7 +63,7 @@ export function ConversarForm({
         <select
           id="membro"
           aria-label="Sobre quem é?"
-          className="h-9 w-fit rounded-full bg-transparent px-1 text-sm text-muted-foreground focus:outline-none focus:ring-0"
+          className="h-10 w-fit rounded-full border border-brand-purple/20 bg-white px-4 text-sm font-medium text-foreground shadow-sm transition-colors hover:border-brand-purple/40 focus:outline-none focus:ring-1 focus:ring-brand-purple/30"
           value={membroId}
           onChange={(e) => setMembroId(e.target.value)}
         >
@@ -73,28 +81,23 @@ export function ConversarForm({
         rows={5}
         value={texto}
         onChange={(e) => setTexto(e.target.value)}
+        onKeyDown={handleKeyDown}
         placeholder="Ex: Ele teve uma crise grande agora pela tarde, do nada. Não sei o que aconteceu."
         className="w-full resize-none rounded-2xl border border-foreground/[0.08] bg-white/70 px-4 py-3 text-base leading-relaxed text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-1 focus:ring-foreground/10"
         disabled={pending}
       />
 
-      <div className="flex items-center justify-end">
-        <Button
-          type="submit"
-          variant="ghost"
-          size="sm"
-          disabled={pending || !texto.trim()}
-          className={cn(
-            buttonVariants({ variant: "ghost", size: "sm" }),
-            "text-brand-purple hover:bg-transparent hover:text-brand-purple-dark",
-          )}
-        >
+      <div className="flex items-center justify-between gap-3">
+        <span className="hidden text-[11px] text-muted-foreground/60 sm:inline">
+          Enter envia · Shift+Enter pula linha
+        </span>
+        <Button type="submit" size="lg" disabled={pending || !texto.trim()}>
           {pending ? "Pensando..." : "Conversar"}
-          {!pending && <ArrowRight className="size-3" aria-hidden />}
+          {!pending && <ArrowRight className="size-4" aria-hidden />}
         </Button>
       </div>
 
-      <p className="mt-2 text-[11px] text-muted-foreground/60">
+      <p className="text-[11px] text-muted-foreground/60">
         Kolo Família não substitui profissionais da saúde.
       </p>
     </form>

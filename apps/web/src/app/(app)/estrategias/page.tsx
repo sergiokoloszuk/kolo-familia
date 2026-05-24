@@ -1,6 +1,4 @@
 import Link from "next/link";
-import { formatRelative } from "date-fns";
-import { ptBR } from "date-fns/locale";
 import {
   ArrowRight,
   BookOpen,
@@ -15,6 +13,7 @@ import {
 import { Eyebrow } from "@/components/brand/eyebrow";
 import { loadFamilyContext } from "@/lib/auth/require-user";
 import { ConversarForm } from "../conversar/conversar-form";
+import { ConversaItem } from "./conversa-item";
 
 /**
  * Estratégias Kolo — leitura contínua (Bloco 2):
@@ -186,26 +185,13 @@ function ConversasAnterioresSection({
       </h2>
       <ul className="mt-5 flex flex-col">
         {conversas.map((c, idx) => (
-          <li
+          <ConversaItem
             key={c.id}
-            className={
-              idx > 0 ? "border-t border-foreground/[0.06]" : undefined
-            }
-          >
-            <Link
-              href={`/conversar/${c.id}`}
-              className="group flex flex-col gap-1 py-3.5 transition-colors hover:text-brand-purple"
-            >
-              <span className="line-clamp-1 text-base leading-relaxed text-foreground transition-colors group-hover:text-brand-purple">
-                {c.titulo ?? "Conversa sem título"}
-              </span>
-              <span className="text-xs text-muted-foreground">
-                {formatRelative(new Date(c.created_at), new Date(), {
-                  locale: ptBR,
-                })}
-              </span>
-            </Link>
-          </li>
+            id={c.id}
+            titulo={c.titulo}
+            createdAt={c.created_at}
+            comBorda={idx > 0}
+          />
         ))}
       </ul>
     </section>
