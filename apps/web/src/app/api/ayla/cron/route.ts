@@ -26,8 +26,19 @@ import { runRegrasParaFamilia } from "@/lib/regras/engine";
  *
  * Protegido por CRON_SECRET no header `Authorization: Bearer <secret>`.
  * Sem o env, qualquer um pode disparar — só no dev.
+ *
+ * O Vercel Cron chama via GET (e já injeta o header Authorization com o
+ * CRON_SECRET); n8n/manual chamam via POST. Os dois caem no mesmo handler.
  */
+export async function GET(request: NextRequest) {
+  return handle(request);
+}
+
 export async function POST(request: NextRequest) {
+  return handle(request);
+}
+
+async function handle(request: NextRequest) {
   const expectedSecret = process.env.CRON_SECRET;
   if (expectedSecret) {
     const auth = request.headers.get("authorization");
