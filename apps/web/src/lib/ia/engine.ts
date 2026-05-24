@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { getAnthropicClient, MODELS } from "./anthropic";
-import { loadActiveSkills, routeSkills, type RoutedSkill } from "./router";
+import { loadActiveSkills, routeSkillsAI, type RoutedSkill } from "./router";
 import { buildContext } from "./context";
 import { assemblePrompt, type Modo, type OutputTypeData } from "./prompt";
 import {
@@ -53,7 +53,7 @@ export async function respond(params: {
       "Nenhuma skill ativa cadastrada. Aplique a migração 0003_seed.sql no Supabase.",
     );
   }
-  const roteadas = routeSkills(userInput, skills);
+  const roteadas = await routeSkillsAI(userInput, skills);
 
   const ctx = await buildContext(supabase, {
     familyId,
@@ -121,7 +121,7 @@ export async function respondAsOutputType(params: {
     );
   }
   // Aciona só a skill mais relevante (output_type já dita o formato)
-  const roteadas = routeSkills(pedido, skills, { maxSkills: 1, minScore: 0 });
+  const roteadas = await routeSkillsAI(pedido, skills, { maxSkills: 1 });
 
   const ctx = await buildContext(supabase, {
     familyId,
