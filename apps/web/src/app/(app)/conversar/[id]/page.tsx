@@ -3,8 +3,7 @@ import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
 import { loadFamilyContext } from "@/lib/auth/require-user";
 import { RespostaMarkdown, limparRespostaKolo } from "@/components/resposta-markdown";
-import { ContinuarForm } from "./continuar-form";
-import { ConversaAcoes } from "./conversa-acoes";
+import { RespostaStreamer } from "./resposta-streamer";
 
 /**
  * Conversa individual (P-EST-5 + P-EST-6):
@@ -42,7 +41,10 @@ export default async function ConversaPage(props: PageProps<"/conversar/[id]">) 
     .eq("ativo", true)
     .order("ordem", { ascending: true });
 
-  const temResposta = (mensagens ?? []).some((m) => m.papel === "assistant");
+  const msgs = mensagens ?? [];
+  const temResposta = msgs.some((m) => m.papel === "assistant");
+  const ultima = msgs[msgs.length - 1];
+  const precisaResposta = ultima?.papel === "user";
 
   const membrosRel = conversa.membros_atipicos as
     | { nome: string }
@@ -99,21 +101,15 @@ export default async function ConversaPage(props: PageProps<"/conversar/[id]">) 
         ))}
       </ul>
 
-      {/* Mais ajuda + Atualizar — só depois de ao menos uma resposta da Kolo. */}
-      {temResposta && (
-        <ConversaAcoes
-          conversaId={conversa.id}
-          outputTypes={(tipos ?? []).map((t) => ({
-            key: t.key as string,
-            label: t.label as string,
-          }))}
-        />
-      )}
-
-      {/* Continuar conversa — textarea direto, sem Card wrapper. */}
-      <ContinuarForm
+      {/* Resposta em streaming + ações (mais ajuda / Atualizar) + continuar. */}
+      <RespostaStreamer
         conversaId={conversa.id}
-        membroAtipicoId={conversa.membro_atipico_id}
+        precisaResposta={precisaResposta}
+        temResposta={temResposta}
+        outputTypes={(tipos ?? []).map((t) => ({
+          key: t.key as string,
+          label: t.label as string,
+        }))}
       />
     </div>
   );

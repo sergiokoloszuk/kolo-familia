@@ -97,6 +97,52 @@ export async function respond(params: {
 }
 
 /**
+ * Modo conversa em STREAMING — prepara routing/contexto/prompt para a
+ * resposta ser transmitida token a token (o route handler abre o stream
+ * Anthropic e persiste no fim). Não regenera (não dá pra "des-streamar").
+ */
+export async function prepararRespostaStream(params: {
+  supabase: SupabaseClient;
+  familyId: string;
+  membroAtipicoId: string | null;
+  conversaId: string;
+  userInput: string;
+}) {
+  const { supabase, familyId, membroAtipicoId, conversaId, userInput } = params;
+
+  const skills = await loadActiveSkills(supabase);
+  if (skills.length === 0) {
+    throw new Error("Nenhuma skill ativa cadastrada.");
+  }
+  const roteadas = await routeSkillsAI(userInput, skills);
+
+  const ctx = await buildContext(supabase, {
+    familyId,
+    membroAtipicoId,
+    skills: roteadas.map((r) => r.skill),
+    conversaId,
+  });
+
+  // O histórico já inclui a última mensagem do usuário (= userInput);
+  // remover pra não duplicar no prompt.
+  if (ctx.historico.length > 0) {
+    const ultima = ctx.historico[ctx.historico.length - 1];
+    if (ultima.papel === "user" && ultima.conteudo === userInput) {
+      ctx.historico = ctx.historico.slice(0, -1);
+    }
+  }
+
+  const { system, messages } = assemblePrompt({
+    skills: roteadas.map((r) => r.skill),
+    ctx,
+    userInput,
+    modo: { kind: "conversa" },
+  });
+
+  return { system, messages, roteadas };
+}
+
+/**
  * Modo OUTPUT_TYPE — atalhos dos 7 botões de apoio (PRD §7.12).
  *
  * Diferente de respond():

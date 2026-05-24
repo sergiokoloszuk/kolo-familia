@@ -94,6 +94,80 @@ export async function enviarMensagem(input: z.infer<typeof enviarSchema>): Promi
 }
 
 // ============================================================
+// Streaming — cria conversa / adiciona mensagem do usuário (a resposta
+// da Kolo vem via /api/conversar/stream).
+// ============================================================
+
+const criarConversaSchema = z.object({
+  membroAtipicoId: z.string().uuid().nullable(),
+  texto: z.string().trim().min(1, "Mensagem vazia").max(2000),
+});
+
+export async function criarConversa(
+  input: z.infer<typeof criarConversaSchema>,
+): Promise<{ conversaId: string }> {
+  const { membroAtipicoId, texto } = criarConversaSchema.parse(input);
+  const { supabase, family } = await requireFamily();
+  await requireActiveWrite(family.id);
+
+  const { data: nova, error } = await supabase
+    .from("conversas")
+    .insert({
+      family_account_id: family.id,
+      membro_atipico_id: membroAtipicoId,
+      titulo: texto.slice(0, 80),
+    })
+    .select("id")
+    .single();
+  if (error || !nova) throw new Error(`Falha ao criar conversa: ${error?.message}`);
+
+  await supabase.from("mensagens_skill").insert({
+    conversa_id: nova.id,
+    family_account_id: family.id,
+    papel: "user",
+    conteudo: texto,
+  });
+
+  return { conversaId: nova.id as string };
+}
+
+const adicionarMsgSchema = z.object({
+  conversaId: z.string().uuid(),
+  texto: z.string().trim().min(1, "Mensagem vazia").max(2000),
+});
+
+export async function adicionarMensagemUsuario(
+  input: z.infer<typeof adicionarMsgSchema>,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  try {
+    const { conversaId, texto } = adicionarMsgSchema.parse(input);
+    const { supabase, family } = await requireFamily();
+    await requireActiveWrite(family.id);
+
+    const { data: conversa } = await supabase
+      .from("conversas")
+      .select("id")
+      .eq("id", conversaId)
+      .eq("family_account_id", family.id)
+      .maybeSingle();
+    if (!conversa) return { ok: false, error: "Conversa não encontrada." };
+
+    const { error } = await supabase.from("mensagens_skill").insert({
+      conversa_id: conversaId,
+      family_account_id: family.id,
+      papel: "user",
+      conteudo: texto,
+    });
+    if (error) return { ok: false, error: `Falha ao enviar: ${error.message}` };
+
+    revalidatePath(`/conversar/${conversaId}`);
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "Erro inesperado" };
+  }
+}
+
+// ============================================================
 // Mais ajuda na conversa — gera um output_type sobre o MESMO tema,
 // sem o usuário redigitar o problema. Vira uma nova mensagem da Kolo.
 // ============================================================

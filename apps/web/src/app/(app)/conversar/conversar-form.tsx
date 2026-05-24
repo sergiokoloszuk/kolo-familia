@@ -4,7 +4,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { enviarMensagem } from "./actions";
+import { criarConversa } from "./actions";
 
 /**
  * Form principal de Estratégias. Seletor de criança e CTA destacados;
@@ -26,8 +26,7 @@ export function ConversarForm({
     setError(null);
     startTransition(async () => {
       try {
-        const { conversaId } = await enviarMensagem({
-          conversaId: null,
+        const { conversaId } = await criarConversa({
           membroAtipicoId: membroId || null,
           texto,
         });
