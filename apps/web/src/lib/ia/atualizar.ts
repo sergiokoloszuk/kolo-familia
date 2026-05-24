@@ -26,6 +26,9 @@ export type ItemKoloVivo = {
   camada: "camada1" | "camada2";
   campo: string;
   texto: string;
+  // "adicionar": fato novo pra anexar. "reescrever": texto completo da seção
+  // já mesclando o que existia + o novo (quando a info se sobrepõe).
+  operacao: "adicionar" | "reescrever";
 };
 
 export type PropostaAtualizacao = {
@@ -41,6 +44,7 @@ const PropostaSchema = z.object({
         camada: z.enum(["camada1", "camada2"]),
         campo: z.string(),
         texto: z.string().trim().min(1),
+        operacao: z.enum(["adicionar", "reescrever"]).default("adicionar"),
       }),
     )
     .default([]),
@@ -54,7 +58,7 @@ Sua missão é ajudar a plataforma a ir aprendendo sobre a criança a cada conve
 
 Capture em 3 destinos (qualquer um pode ficar vazio):
 
-1. kolo_vivo — fatos novos e duradouros. Cada item { camada, campo, texto } (texto = frase curta e objetiva, não a conversa inteira):
+1. kolo_vivo — informações duradouras. Cada item { camada, campo, texto, operacao }:
    - camada "camada1" (a criança), campo:
      • como_e → interesses, gostos, jeito de ser. GATILHOS: "gosta de", "adora", "ama", "curte", "se interessa por".
      • desafios_regulacao → dificuldades, o que pesa, o que precisa melhorar. GATILHOS: "tem dificuldade", "preciso ajudar com", "não consegue", "foco", "atenção", "birra", "crise", "frustra".
@@ -62,19 +66,22 @@ Capture em 3 destinos (qualquer um pode ficar vazio):
      • sensorial → reações a som, luz, textura, toque, cheiro.
      • essencial → diagnóstico ou algo central de quem ela é.
    - camada "camada2" (a família), campo: composicao, rotina, recursos (terapias/escola/apoios), dinamica.
-   - Não repita o que já está no "Kolo Vivo atual". Na dúvida se é novo, inclua.
+   - **operacao** — olhe o "Kolo Vivo atual" antes de decidir:
+     • "adicionar" → é um FATO NOVO que NÃO está na seção. texto = a frase curta nova.
+     • "reescrever" → o assunto JÁ está na seção e você vai REFINAR/atualizar (mais detalhe, correção). texto = o TEXTO COMPLETO e atualizado da seção, integrando o que já existia + o novo, SEM perder nada importante e SEM repetir.
+   - Se a info já está na seção EXATAMENTE igual (nada novo a acrescentar), NÃO inclua o item.
 
 2. conquista — algo que deu certo / um avanço pra celebrar (frase curta), senão null.
 
 3. desafio — uma dificuldade pontual do dia (frase curta), senão null.
 
-Exemplos do que capturar:
-- "ela adora andar de bicicleta" → kolo_vivo camada1 como_e: "Adora andar de bicicleta."
-- "preciso ajudar ela a ter mais foco na lição" → kolo_vivo camada1 desafios_regulacao: "Dificuldade de foco na lição de casa."
+Exemplos:
+- "ela adora andar de bicicleta" e a seção como_e não menciona bicicleta → { camada1, como_e, "Adora andar de bicicleta.", "adicionar" }.
+- como_e já diz "Adora dinossauros" e o adulto conta "também ama cozinhar" → { camada1, como_e, "Adora dinossauros e cozinhar.", "reescrever" }.
 - "ele comeu brócolis pela primeira vez" → conquista: "Comeu brócolis pela primeira vez."
 
 Formato OBRIGATÓRIO (apenas isto):
-{ "kolo_vivo": [ { "camada": "camada1", "campo": "como_e", "texto": "..." } ], "conquista": null, "desafio": "..." }`;
+{ "kolo_vivo": [ { "camada": "camada1", "campo": "como_e", "texto": "...", "operacao": "adicionar" } ], "conquista": null, "desafio": "..." }`;
 
 export async function extrairAtualizacoes(params: {
   transcript: string;

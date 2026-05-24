@@ -242,8 +242,19 @@ export function ConversaAcoes({
                         className="mt-1 size-4 shrink-0 accent-brand-purple"
                       />
                       <span className="flex flex-col gap-0.5">
-                        <span className="text-[11px] font-semibold uppercase tracking-[0.1em] text-brand-purple/80">
-                          {CAMPO_LABEL[it.campo] ?? it.campo}
+                        <span className="flex items-center gap-1.5">
+                          <span className="text-[11px] font-semibold uppercase tracking-[0.1em] text-brand-purple/80">
+                            {CAMPO_LABEL[it.campo] ?? it.campo}
+                          </span>
+                          <span
+                            className={
+                              it.operacao === "reescrever"
+                                ? "rounded-full bg-brand-yellow/20 px-1.5 text-[10px] font-bold uppercase text-brand-purple-dark"
+                                : "rounded-full bg-cat-social/15 px-1.5 text-[10px] font-bold uppercase text-cat-social"
+                            }
+                          >
+                            {it.operacao === "reescrever" ? "atualiza" : "novo"}
+                          </span>
                         </span>
                         <span className="text-sm leading-relaxed text-foreground">
                           {it.texto}

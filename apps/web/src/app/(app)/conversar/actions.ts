@@ -347,6 +347,7 @@ const confirmarSchema = z.object({
         camada: z.enum(["camada1", "camada2"]),
         campo: z.string().min(1),
         texto: z.string().trim().min(1),
+        operacao: z.enum(["adicionar", "reescrever"]).default("adicionar"),
       }),
     )
     .default([]),
@@ -413,7 +414,8 @@ export async function confirmarAtualizacao(
       }
       for (const it of membroItens) {
         const prev = (secoes[it.campo].texto as string) ?? "";
-        secoes[it.campo] = { ...secoes[it.campo], texto: appendFato(prev, it.texto), atualizado_em: now };
+        const novoTexto = it.operacao === "reescrever" ? it.texto : appendFato(prev, it.texto);
+        secoes[it.campo] = { ...secoes[it.campo], texto: novoTexto, atualizado_em: now };
       }
       const { error } = await supabase
         .from("perfil_vivo_membro")
@@ -438,7 +440,8 @@ export async function confirmarAtualizacao(
       }
       for (const it of familiaItens) {
         const prev = (secoes[it.campo].texto as string) ?? "";
-        secoes[it.campo] = { ...secoes[it.campo], texto: appendFato(prev, it.texto), atualizado_em: now };
+        const novoTexto = it.operacao === "reescrever" ? it.texto : appendFato(prev, it.texto);
+        secoes[it.campo] = { ...secoes[it.campo], texto: novoTexto, atualizado_em: now };
       }
       const { error } = await supabase
         .from("perfil_vivo_familia")
@@ -524,6 +527,14 @@ async function montarKoloVivoResumo(
 
 function resumoCampo(json: unknown): string {
   if (!json || typeof json !== "object") return "";
-  if (Object.keys(json as object).length === 0) return "";
-  return JSON.stringify(json);
+  const obj = json as Record<string, unknown>;
+  if (typeof obj.texto === "string" && obj.texto.trim()) return obj.texto.trim();
+  // Onboarding rápido grava listas (interesses, desafios_iniciais, etc.).
+  const partes: string[] = [];
+  for (const [k, v] of Object.entries(obj)) {
+    if (k === "atualizado_em") continue;
+    if (typeof v === "string" && v.trim()) partes.push(v.trim());
+    else if (Array.isArray(v)) partes.push(v.filter((x) => typeof x === "string").join("; "));
+  }
+  return partes.filter(Boolean).join(" · ");
 }
