@@ -73,29 +73,84 @@ export async function gerarImagem(
   const item = genJson.data?.[0];
   if (!item?.b64_json) throw new Error("O modelo de imagem não retornou conteúdo.");
 
-  // 2. Decodifica o base64 em bytes
+  // 2. Decodifica + sobe no Storage
   const bytes = Buffer.from(item.b64_json, "base64");
+  const { url, storage_path } = await uploadImagem(
+    supabase,
+    bytes,
+    params.familyAccountId,
+    params.tipo,
+  );
+  return { url, prompt_revisado: item.revised_prompt, storage_path };
+}
 
-  // 3. Upload no Storage
+/**
+ * Gera uma imagem usando UMA imagem de referência (o avatar) — mantém o
+ * personagem consistente em cenas novas. Usa /v1/images/edits do gpt-image-1.
+ * É o que dá ao "livro de histórias" o mesmo personagem em todas as páginas.
+ */
+export async function gerarImagemComReferencia(
+  supabase: SupabaseClient,
+  params: {
+    prompt: string;
+    referencia: Buffer;
+    familyAccountId: string;
+    tipo: "avatar" | "cena" | "historia_social";
+    size?: GerarImagemParams["size"];
+  },
+): Promise<GerarImagemResult> {
+  const apiKey = process.env.OPENAI_API_KEY;
+  if (!apiKey) {
+    throw new Error("OPENAI_API_KEY não configurada.");
+  }
+
+  const fd = new FormData();
+  fd.append("model", IMAGE_MODEL);
+  fd.append("image", new Blob([new Uint8Array(params.referencia)], { type: "image/png" }), "ref.png");
+  fd.append("prompt", params.prompt);
+  fd.append("size", params.size ?? "1024x1024");
+  fd.append("quality", IMAGE_QUALITY);
+
+  const res = await fetch(`${OPENAI_BASE}/images/edits`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${apiKey}` },
+    body: fd,
+  });
+  if (!res.ok) {
+    const t = await res.text().catch(() => "");
+    throw new Error(`OpenAI imagem(ref) ${res.status}: ${t.slice(0, 500)}`);
+  }
+  const json = (await res.json()) as { data: Array<{ b64_json?: string }> };
+  const b64 = json.data?.[0]?.b64_json;
+  if (!b64) throw new Error("O modelo de imagem não retornou conteúdo (ref).");
+
+  const bytes = Buffer.from(b64, "base64");
+  const { url, storage_path } = await uploadImagem(
+    supabase,
+    bytes,
+    params.familyAccountId,
+    params.tipo,
+  );
+  return { url, storage_path };
+}
+
+async function uploadImagem(
+  supabase: SupabaseClient,
+  bytes: Buffer,
+  familyAccountId: string,
+  tipo: string,
+): Promise<{ url: string; storage_path: string }> {
   const filename = `${crypto.randomUUID()}.png`;
-  const path = `${params.familyAccountId}/${params.tipo}/${filename}`;
-
+  const path = `${familyAccountId}/${tipo}/${filename}`;
   const { error: uploadErr } = await supabase.storage
     .from("imagens")
     .upload(path, bytes, { contentType: "image/png", upsert: false });
   if (uploadErr) {
     throw new Error(`Storage upload falhou: ${uploadErr.message}`);
   }
-
-  // 4. URL pública
   const { data: pub } = supabase.storage.from("imagens").getPublicUrl(path);
   if (!pub.publicUrl) {
     throw new Error("Não foi possível obter URL pública do Storage.");
   }
-
-  return {
-    url: pub.publicUrl,
-    prompt_revisado: item.revised_prompt,
-    storage_path: path,
-  };
+  return { url: pub.publicUrl, storage_path: path };
 }
