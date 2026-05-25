@@ -74,7 +74,7 @@ export async function criarHistoria(
     // Resumo do Kolo Vivo (contexto pra história)
     const { data: kv } = await supabase
       .from("perfil_vivo_membro")
-      .select("essencial, como_e, corpo_rotina, desafios_regulacao, sensorial")
+      .select("essencial, como_e, corpo_rotina, desafios_regulacao, sensorial, categorias_extras")
       .eq("membro_atipico_id", data.membroId)
       .maybeSingle();
     const resumo = kv
@@ -87,6 +87,21 @@ export async function criarHistoria(
           .join("\n")
       : "";
 
+    // Gostos & Preferências (personaliza a história)
+    const pref =
+      (kv?.categorias_extras as { preferencias?: Record<string, unknown> } | null)
+        ?.preferencias ?? {};
+    const lista = (v: unknown) =>
+      Array.isArray(v) ? v.filter((x): x is string => typeof x === "string").join(", ") : "";
+    const gostos = [
+      lista(pref.midia) && `Personagens/desenhos favoritos: ${lista(pref.midia)}`,
+      lista(pref.temas) && `Temas que ama: ${lista(pref.temas)}`,
+      lista(pref.materiais) && `Materiais/brincadeiras favoritos: ${lista(pref.materiais)}`,
+      lista(pref.musicas) && `Músicas/sons: ${lista(pref.musicas)}`,
+    ]
+      .filter(Boolean)
+      .join("\n");
+
     // Gera (texto + ilustrações) usando service-role pro Storage
     const admin = createServiceRoleClient();
     const historia = await gerarHistoria(admin, {
@@ -97,6 +112,7 @@ export async function criarHistoria(
         perfil: membro.perfil as string,
       },
       koloVivoResumo: resumo,
+      gostos,
       descricao: data.descricao,
       nPaginas: data.nPaginas,
       avatarBytes,

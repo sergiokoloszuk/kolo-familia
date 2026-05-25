@@ -132,6 +132,12 @@ export default async function ConfiguracoesPage() {
           descricao="Corrigir nome, data de nascimento e perfil dos membros atípicos cadastrados."
         />
         <SubLink
+          href="/configuracoes/preferencias"
+          icon={Sparkles}
+          titulo="Gostos e preferências"
+          descricao="Temas, personagens, materiais e músicas favoritos — pra histórias e brincadeiras personalizadas."
+        />
+        <SubLink
           href="/configuracoes/familia"
           icon={Users}
           titulo="Mapa familiar"

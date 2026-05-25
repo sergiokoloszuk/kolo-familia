@@ -51,6 +51,7 @@ export async function gerarHistoria(
     familyAccountId: string;
     membro: { nome: string; idade: number | null; perfil: string };
     koloVivoResumo: string;
+    gostos?: string;
     descricao: string;
     nPaginas: number;
     avatarBytes: Buffer;
@@ -66,7 +67,11 @@ export async function gerarHistoria(
 <o_que_sabemos_da_crianca>
 ${params.koloVivoResumo || "(pouca informação ainda)"}
 </o_que_sabemos_da_crianca>
-
+${
+  params.gostos?.trim()
+    ? `\n<gostos_favoritos>\n${params.gostos}\n</gostos_favoritos>\nUse os personagens, temas e materiais favoritos dela na história (e nas cenas) sempre que fizer sentido — é o que deixa pessoal e envolvente.\n`
+    : ""
+}
 <pedido_do_responsavel>
 ${params.descricao}
 </pedido_do_responsavel>
