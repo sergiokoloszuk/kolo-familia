@@ -30,7 +30,7 @@ export async function GET() {
     const t1 = Date.now();
     const { error } = await supabase
       .from("output_types")
-      .select("id", { count: "exact", head: true })
+      .select("key", { count: "exact", head: true })
       .limit(1);
     db_latency_ms = Date.now() - t1;
     if (error) db_error = error.message;
