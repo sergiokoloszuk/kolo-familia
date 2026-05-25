@@ -96,7 +96,7 @@ Escreva a história em EXATAMENTE ${n} páginas. Devolva o JSON.`;
   const ilustracoes = await Promise.allSettled(
     roteiro.paginas.map((p) =>
       gerarImagemComReferencia(supabase, {
-        prompt: `${estiloPrompt}. A MESMA criança da imagem de referência (mesmo rosto, cabelo, tom de pele, óculos se houver, e roupa). Cena: ${p.cena}. Ilustração de livro infantil, acolhedora, sem nenhum texto ou letras na imagem.`,
+        prompt: `Mantenha EXATAMENTE o mesmo personagem da imagem de referência: mesmo rosto, mesmo cabelo, mesmo tom de pele, mesmos óculos (se houver) e a MESMA roupa. Mesmo estilo de ilustração (${estiloPrompt}). Cena: ${p.cena}. Livro infantil acolhedor, personagem de corpo inteiro quando fizer sentido na cena. SEM nenhum texto, letra ou número na imagem.`,
         referencia: params.avatarBytes,
         familyAccountId: params.familyAccountId,
         tipo: "historia_social",

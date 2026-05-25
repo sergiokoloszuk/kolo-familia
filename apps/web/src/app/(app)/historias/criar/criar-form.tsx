@@ -41,12 +41,24 @@ export function CriarHistoriaForm({
 
   if (pending) {
     return (
-      <div className="flex flex-col items-center gap-5 rounded-3xl bg-gradient-to-br from-brand-purple-deep to-brand-purple-dark px-8 py-16 text-center text-white">
-        <span className="flex size-20 items-center justify-center rounded-full bg-white/10 backdrop-blur">
-          <Wand2 className="size-9 animate-pulse text-brand-yellow" />
+      <div className="relative flex flex-col items-center gap-5 overflow-hidden rounded-3xl bg-gradient-to-br from-brand-purple-deep to-brand-purple-dark px-8 py-16 text-center text-white">
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0 opacity-70"
+          style={{
+            backgroundImage:
+              "radial-gradient(1.5px 1.5px at 18% 26%, rgba(255,255,255,.55) 50%, transparent), radial-gradient(1.5px 1.5px at 82% 20%, rgba(255,186,0,.7) 50%, transparent), radial-gradient(1px 1px at 70% 80%, rgba(255,255,255,.5) 50%, transparent), radial-gradient(1px 1px at 28% 82%, rgba(255,186,0,.5) 50%, transparent)",
+          }}
+        />
+        <span className="relative flex size-24 items-center justify-center rounded-full bg-white/10 backdrop-blur">
+          <span
+            aria-hidden
+            className="absolute -inset-2 rounded-full border-2 border-dashed border-brand-yellow/50 animate-[spin_10s_linear_infinite]"
+          />
+          <Wand2 className="size-10 text-brand-yellow" />
         </span>
-        <h2 className="font-heading text-2xl">A Kolo está ilustrando…</h2>
-        <p className="max-w-sm text-sm text-white/75">
+        <h2 className="relative font-heading text-2xl">A Kolo está ilustrando…</h2>
+        <p className="relative max-w-sm text-sm text-white/75">
           Escrevendo a história e desenhando cada página com o mesmo personagem.
           Leva cerca de um minuto — pode deixar aberto.
         </p>

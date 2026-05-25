@@ -12,7 +12,7 @@ export default async function HistoriaPage(props: {
 
   const { data: historia } = await supabase
     .from("historias")
-    .select("id, titulo")
+    .select("id, titulo, capa_url")
     .eq("id", id)
     .eq("family_account_id", family!.id)
     .maybeSingle();
@@ -33,11 +33,9 @@ export default async function HistoriaPage(props: {
         <ArrowLeft className="size-4" aria-hidden /> Histórias
       </Link>
 
-      <h1 className="font-heading text-2xl text-foreground md:text-3xl">
-        {historia.titulo as string}
-      </h1>
-
       <LeitorHistoria
+        titulo={historia.titulo as string}
+        capaUrl={(historia.capa_url as string | null) ?? null}
         paginas={
           (paginas ?? []) as Array<{
             ordem: number;
