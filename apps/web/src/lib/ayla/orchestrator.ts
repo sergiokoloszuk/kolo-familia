@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { hojeLocalISO } from "@/lib/idade";
+import { hojeLocalISO, idadeAnos } from "@/lib/idade";
 import { enviarTexto, type InboundWhatsApp } from "./whatsappSender";
 import { podeEnviarProativa } from "./rules";
 import { parseInbound, detectarComando } from "./parser";
@@ -492,9 +492,10 @@ export async function processInbound(
     await persistirRegistro(supabase, family.id, parsed);
   }
 
-  const nomeMembro = parsed.membro_atipico_id
-    ? (ctx.membros.find((m) => m.id === parsed.membro_atipico_id)?.nome ?? null)
+  const membroFoco = parsed.membro_atipico_id
+    ? (ctx.membros.find((m) => m.id === parsed.membro_atipico_id) ?? null)
     : null;
+  const nomeMembro = membroFoco?.nome ?? null;
   const koloVivoResumo = await carregarKoloVivoResumo(supabase, parsed.membro_atipico_id);
   const historico = await carregarHistorico(supabase, family.id, inbound.texto);
 
@@ -506,6 +507,8 @@ export async function processInbound(
     params: {
       nomeMae: ctx.nomeMae,
       nomeMembro,
+      idadeMembro: idadeAnos(membroFoco?.data_nascimento ?? null),
+      perfilMembro: membroFoco?.perfil ?? null,
       koloVivoResumo,
       historico,
       mensagem: inbound.texto,
@@ -834,7 +837,7 @@ type FamiliaEnvio = {
   family_account_id: string;
   whatsapp_e164: string;
   nomeMae: string;
-  membros: Array<{ id: string; nome: string }>;
+  membros: Array<{ id: string; nome: string; data_nascimento: string | null; perfil: string | null }>;
 };
 
 async function loadFamiliaParaEnvio(
@@ -854,7 +857,7 @@ async function loadFamiliaParaEnvio(
       .maybeSingle(),
     supabase
       .from("membros_atipicos")
-      .select("id, nome")
+      .select("id, nome, data_nascimento, perfil")
       .eq("family_account_id", familyAccountId)
       .eq("ativo", true)
       .order("created_at", { ascending: true }),
@@ -957,10 +960,34 @@ async function carregarKoloVivoResumo(
   };
   const linhas: string[] = [];
   for (const [campo, label] of Object.entries(labels)) {
-    const texto = ((data as Record<string, { texto?: string } | null>)[campo]?.texto ?? "").trim();
-    if (texto) linhas.push(`${label}: ${texto}`);
+    const resumo = resumoCampoKV((data as Record<string, unknown>)[campo]);
+    if (resumo) linhas.push(`${label}: ${resumo}`);
   }
   return linhas.join("\n");
+}
+
+/**
+ * Extrai o texto legível de um campo jsonb do Kolo Vivo. Os campos guardam
+ * formas diferentes: { texto } (livre), { interesses: [] } e
+ * { desafios_iniciais: [] } (onboarding), { conquista_inicial } (essencial).
+ * Antes líamos só `.texto` — por isso a Ayla "não sabia" interesses/desafios.
+ */
+function resumoCampoKV(json: unknown): string {
+  if (!json || typeof json !== "object") return "";
+  const o = json as Record<string, unknown>;
+  const partes: string[] = [];
+  if (typeof o.texto === "string" && o.texto.trim()) partes.push(o.texto.trim());
+  for (const k of ["interesses", "desafios_iniciais"]) {
+    const v = o[k];
+    if (Array.isArray(v)) {
+      const itens = v.filter((x): x is string => typeof x === "string" && x.trim().length > 0);
+      if (itens.length) partes.push(itens.join(", "));
+    }
+  }
+  if (typeof o.conquista_inicial === "string" && o.conquista_inicial.trim()) {
+    partes.push(o.conquista_inicial.trim());
+  }
+  return partes.join(" · ");
 }
 
 /** Últimos turnos da conversa (pra Ayla não soar amnésica), sem a msg atual. */

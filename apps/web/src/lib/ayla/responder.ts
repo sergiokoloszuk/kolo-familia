@@ -45,6 +45,7 @@ export type RespostaParams = {
   nomeMae: string;
   nomeMembro: string | null;
   idadeMembro?: number | null;
+  perfilMembro?: string | null;
   koloVivoResumo: string;
   historico: Array<{ de: "mae" | "ayla"; texto: string }>;
   mensagem: string;
@@ -69,7 +70,7 @@ export async function gerarRespostaAyla(
   linhas.push(`Você está falando com ${params.nomeMae}.`);
   if (params.nomeMembro) {
     linhas.push(
-      `A criança em foco é ${params.nomeMembro}${params.idadeMembro != null ? `, ${params.idadeMembro} anos` : ""}.`,
+      `A criança em foco é ${params.nomeMembro}${params.idadeMembro != null ? `, ${params.idadeMembro} anos` : ""}${params.perfilMembro ? `, perfil ${params.perfilMembro}` : ""}.`,
     );
   }
   if (params.koloVivoResumo.trim()) {
