@@ -389,19 +389,39 @@ export async function sendCampanha(
 // REATIVA: processa mensagem recebida (webhook)
 // ============================================================
 
+/**
+ * Normaliza um telefone BR pra uma chave comparável: tira país (55),
+ * formatação e o 9º dígito opcional. Assim "+55 11 99622-0221",
+ * "5511966220221" e "551196220221" batem todos. Resolve o número não
+ * casar por causa de formato/9º dígito.
+ */
+function chaveTelefoneBR(phone: string | null | undefined): string {
+  let d = (phone ?? "").replace(/\D/g, "");
+  if (d.startsWith("55") && d.length > 11) d = d.slice(2); // remove país
+  if (d.length === 11 && d[2] === "9") d = d.slice(0, 2) + d.slice(3); // remove 9º dígito
+  return d;
+}
+
 export async function processInbound(
   supabase: SupabaseClient,
   inbound: InboundWhatsApp,
 ): Promise<{ tratada: boolean; familia?: string; resposta?: EnvioResultado }> {
-  // 1. Identifica família pelo número
-  const phoneSemMais = inbound.phoneE164.replace(/^\+/, "");
-  const { data: family } = await supabase
+  // 1. Identifica família pelo número — casamento TOLERANTE (BR tem a
+  // pegadinha do 9º dígito + variações de formato/país). Comparamos por
+  // uma chave normalizada em vez de igualdade exata.
+  const chaveIn = chaveTelefoneBR(inbound.phoneE164);
+  const { data: familias } = await supabase
     .from("family_accounts")
     .select("id, whatsapp_e164")
-    .or(`whatsapp_e164.eq.${inbound.phoneE164},whatsapp_e164.eq.+${phoneSemMais}`)
-    .maybeSingle();
+    .not("whatsapp_e164", "is", null);
+  const family = (familias ?? []).find(
+    (f) => chaveTelefoneBR(f.whatsapp_e164 as string) === chaveIn,
+  );
   if (!family) {
-    // Mensagem de número desconhecido — registra mas não responde
+    // Número não reconhecido — loga pra dar pra diagnosticar (antes sumia).
+    console.warn(
+      `[ayla] inbound de número não cadastrado: ${inbound.phoneE164} (chave ${chaveIn})`,
+    );
     return { tratada: false };
   }
 
