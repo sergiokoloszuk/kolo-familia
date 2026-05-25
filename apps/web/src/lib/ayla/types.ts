@@ -13,6 +13,7 @@ export type AylaTipoProativa =
   | "engajamento_2dias"
   | "engajamento_5dias"
   | "insight"
+  | "repertorio_sugestao"
   | "trial_d3"
   | "trial_d0"
   | "emocional_streak"

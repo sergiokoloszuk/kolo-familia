@@ -8,6 +8,7 @@ import {
   sendTrial,
   sendEmocionalStreak,
   sendProximoInsight,
+  sendRepertorioSugestao,
   sendCampanha,
   type CampanhaCategoria,
 } from "@/lib/ayla/orchestrator";
@@ -58,6 +59,7 @@ async function handle(request: NextRequest) {
     if (tipo === "comercial") return await runComercial(supabase);
     if (tipo === "emocional") return await runEmocional(supabase);
     if (tipo === "insights") return await runInsights(supabase);
+    if (tipo === "repertorio") return await runRepertorio(supabase);
     if (tipo === "campanhas") return await runCampanhas(supabase);
     if (tipo === "regras") return await runRegras(supabase);
     if (tipo === "cleanup") return await runCleanup(supabase);
@@ -391,6 +393,61 @@ async function runInsights(supabase: AdminClient) {
       resultados.push({
         familyId,
         detectados: 0,
+        enviada: false,
+        motivo: e instanceof Error ? e.message : "erro",
+      });
+    }
+  }
+
+  return NextResponse.json({
+    processadas: resultados.length,
+    enviadas: resultados.filter((r) => r.enviada).length,
+    detalhes: resultados,
+  });
+}
+
+/**
+ * Repertório: 1×/semana, sugere uma experiência nova adjacente aos
+ * interesses da criança (Fatia 3.3b). Elegíveis: consentimento + não
+ * desativada + não pausada + assinatura ativa. A cadência semanal e o
+ * "não repetir o recusado" ficam dentro de sendRepertorioSugestao.
+ */
+async function runRepertorio(supabase: AdminClient) {
+  const agora = new Date();
+  const { data: candidatas } = await supabase
+    .from("ayla_preferences")
+    .select("family_account_id, pausada_ate")
+    .not("consentimento_em", "is", null)
+    .eq("desativada", false);
+
+  let ids: string[] = [];
+  for (const p of candidatas ?? []) {
+    if (p.pausada_ate && new Date(p.pausada_ate) > agora) continue;
+    ids.push(p.family_account_id as string);
+  }
+
+  if (ids.length > 0) {
+    const { data: ativas } = await supabase
+      .from("subscription_accesses")
+      .select("family_account_id, status")
+      .in("family_account_id", ids)
+      .in("status", ["trialing", "active", "past_due"]);
+    const ativasSet = new Set((ativas ?? []).map((a) => a.family_account_id as string));
+    ids = ids.filter((id) => ativasSet.has(id));
+  }
+
+  const resultados: Array<{ familyId: string; enviada: boolean; motivo?: string }> = [];
+  for (const familyId of ids) {
+    try {
+      const r = await sendRepertorioSugestao(supabase, familyId, agora);
+      resultados.push({
+        familyId,
+        enviada: r.enviada,
+        motivo: r.enviada ? undefined : r.motivo,
+      });
+    } catch (e) {
+      resultados.push({
+        familyId,
         enviada: false,
         motivo: e instanceof Error ? e.message : "erro",
       });

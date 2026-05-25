@@ -5,6 +5,7 @@ import { podeEnviarProativa } from "./rules";
 import { parseInbound, detectarComando } from "./parser";
 import { membroCampoStorage } from "@/lib/kolo-vivo/campos";
 import { gerarRespostaAyla, type RespostaParams } from "./responder";
+import { gerarSugestaoRepertorio } from "./repertorio";
 import {
   templateBoasVindas,
   templateRotinaDiaria,
@@ -319,6 +320,96 @@ export async function sendProximoInsight(
       .eq("id", insight.id);
   }
   return resp;
+}
+
+// ============================================================
+// PROATIVA: Expansão de repertório — Fatia 3.3b
+//
+// 1×/semana, propõe UMA experiência nova adjacente aos interesses da
+// criança. Respeita todas as regras da Ayla (consentimento, pausa, limite
+// 2/dia, silêncio>10d) + cadência semanal + nunca repete o que ela recusou.
+// ============================================================
+
+export async function sendRepertorioSugestao(
+  supabase: SupabaseClient,
+  familyAccountId: string,
+  agora: Date = new Date(),
+): Promise<EnvioResultado> {
+  const podeRes = await podeEnviarProativa(
+    supabase,
+    { family_account_id: familyAccountId, agora },
+    "repertorio_sugestao",
+  );
+  if (!podeRes.permitido) return { enviada: false, motivo: podeRes.motivo };
+
+  // Cadência: no máximo 1 sugestão de repertório a cada 7 dias.
+  const seteDiasAtras = new Date(agora.getTime() - 7 * 24 * 60 * 60 * 1000);
+  const { data: recente } = await supabase
+    .from("ayla_messages")
+    .select("id")
+    .eq("family_account_id", familyAccountId)
+    .eq("tipo", "repertorio_sugestao")
+    .gte("created_at", seteDiasAtras.toISOString())
+    .limit(1);
+  if ((recente?.length ?? 0) > 0) {
+    return { enviada: false, motivo: "Sugestão de repertório já enviada esta semana." };
+  }
+
+  const ctx = await loadFamiliaParaEnvio(supabase, familyAccountId);
+  if (!ctx) return { enviada: false, motivo: "Sem contexto da família." };
+  if (ctx.membros.length === 0) {
+    return { enviada: false, motivo: "Sem membros atípicos cadastrados." };
+  }
+
+  // Round-robin por semana entre os membros.
+  const semana = Math.floor(agora.getTime() / (7 * 24 * 60 * 60 * 1000));
+  const membroFoco = ctx.membros[Math.abs(hashSeed(`${familyAccountId}-${semana}`)) % ctx.membros.length];
+
+  const { data: perfil } = await supabase
+    .from("perfil_vivo_membro")
+    .select("categorias_extras")
+    .eq("membro_atipico_id", membroFoco.id)
+    .maybeSingle();
+
+  const pref =
+    ((perfil?.categorias_extras as { preferencias?: Record<string, unknown> } | null)
+      ?.preferencias as Record<string, unknown>) ?? {};
+  const lista = (v: unknown): string[] =>
+    Array.isArray(v) ? v.filter((x): x is string => typeof x === "string" && x.trim().length > 0) : [];
+
+  const interesses = [
+    ...lista(pref.temas),
+    ...lista(pref.midia),
+    ...lista(pref.materiais),
+  ];
+  if (interesses.length === 0) {
+    return { enviada: false, motivo: "Sem interesses cadastrados pra sugerir." };
+  }
+  const evitar = lista(pref.evitar);
+  const jaTentados = Array.isArray(pref.experimentos)
+    ? pref.experimentos
+        .map((e) => (e && typeof e === "object" ? (e as { item?: unknown }).item : null))
+        .filter((x): x is string => typeof x === "string")
+    : [];
+
+  const texto = await gerarSugestaoRepertorio({
+    nomeMae: ctx.nomeMae,
+    nomeMembro: membroFoco.nome,
+    idadeMembro: idadeAnos(membroFoco.data_nascimento ?? null),
+    perfilMembro: membroFoco.perfil ?? null,
+    interesses,
+    evitar,
+    jaTentados,
+  });
+
+  return enviarEPersistir(supabase, {
+    family_account_id: familyAccountId,
+    membro_atipico_id: membroFoco.id,
+    phone: ctx.whatsapp_e164,
+    texto,
+    category: "proativa",
+    tipo: "repertorio_sugestao",
+  });
 }
 
 // ============================================================

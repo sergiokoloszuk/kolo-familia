@@ -1,6 +1,7 @@
 {
   "crons": [
     { "path": "/api/ayla/cron?tipo=rotina", "schedule": "0 22 * * *" },
-    { "path": "/api/ayla/cron?tipo=inatividade", "schedule": "0 12 * * *" }
+    { "path": "/api/ayla/cron?tipo=inatividade", "schedule": "0 12 * * *" },
+    { "path": "/api/ayla/cron?tipo=repertorio", "schedule": "0 13 * * 6" }
   ]
 }
