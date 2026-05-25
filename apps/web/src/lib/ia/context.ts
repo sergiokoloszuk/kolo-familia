@@ -26,6 +26,9 @@ const KOLO_VIVO_FIELDS_MEMBRO_EXTRAS = [
   "tela_midia",
   "escola",
   "saude_geral",
+  // Domínios do Retrato vivo (tela Kolo Vivo) gravados em categorias_extras.
+  "emocional",
+  "rotina",
 ] as const;
 
 const KOLO_VIVO_FIELDS_MEMBRO = [

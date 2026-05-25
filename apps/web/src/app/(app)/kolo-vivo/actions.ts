@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
+import { DOMINIOS, membroCampoStorage } from "./dominios";
 
 async function requireFamily() {
   const supabase = await createClient();
@@ -68,64 +69,95 @@ export async function saveSecaoFamilia(input: z.infer<typeof saveFamiliaSchema>)
 }
 
 // ============================================================
-// Camada 1 (membro) — essencial | como_e | corpo_rotina | desafios_regulacao | sensorial
+// Camada 1 (membro) — 9 domínios do Retrato vivo + campos legados.
+// Cada campo cai numa coluna jsonb dedicada (toplevel) ou numa chave de
+// `categorias_extras` (ver dominios.ts → membroCampoStorage).
 // ============================================================
-
-const membroCampos = [
-  "essencial",
-  "como_e",
-  "corpo_rotina",
-  "desafios_regulacao",
-  "sensorial",
-] as const;
 
 const saveMembroSchema = z.object({
   membro_id: z.string().uuid(),
-  campo: z.enum(membroCampos),
+  campo: z.string().refine((c) => membroCampoStorage(c) !== null, {
+    message: "Campo desconhecido",
+  }),
   texto: z.string().trim().max(5000),
 });
+
+/** Texto guardado num campo do membro — { texto, atualizado_em } ou string. */
+function textoDe(json: unknown): string {
+  if (!json) return "";
+  if (typeof json === "string") return json;
+  if (typeof json === "object") {
+    const t = (json as { texto?: unknown }).texto;
+    return typeof t === "string" ? t : "";
+  }
+  return "";
+}
+
+type MembroRow = {
+  essencial?: unknown;
+  como_e?: unknown;
+  corpo_rotina?: unknown;
+  desafios_regulacao?: unknown;
+  sensorial?: unknown;
+  categorias_extras?: Record<string, unknown> | null;
+};
+
+/** % do retrato preenchido, medido pelos 9 domínios (com fallback legado). */
+function completudeDosDominios(row: MembroRow): number {
+  const extras = (row.categorias_extras ?? {}) as Record<string, unknown>;
+  const textos = DOMINIOS.map((d) => {
+    const principal =
+      d.storage === "toplevel"
+        ? textoDe((row as Record<string, unknown>)[d.key])
+        : textoDe(extras[d.key]);
+    if (principal.trim()) return principal;
+    return d.legacyFallback
+      ? textoDe((row as Record<string, unknown>)[d.legacyFallback])
+      : "";
+  });
+  return estimaCompletude(textos);
+}
 
 export async function saveSecaoMembro(input: z.infer<typeof saveMembroSchema>) {
   const { membro_id, campo, texto } = saveMembroSchema.parse(input);
   const { supabase, family } = await requireFamily();
+  const storage = membroCampoStorage(campo);
 
   const { data: atual } = await supabase
     .from("perfil_vivo_membro")
-    .select("essencial, como_e, corpo_rotina, desafios_regulacao, sensorial")
+    .select(
+      "essencial, como_e, corpo_rotina, desafios_regulacao, sensorial, categorias_extras",
+    )
     .eq("membro_atipico_id", membro_id)
     .maybeSingle();
 
-  const novo = {
-    essencial: atual?.essencial ?? {},
-    como_e: atual?.como_e ?? {},
-    corpo_rotina: atual?.corpo_rotina ?? {},
-    desafios_regulacao: atual?.desafios_regulacao ?? {},
-    sensorial: atual?.sensorial ?? {},
-  } as Record<(typeof membroCampos)[number], Record<string, unknown>>;
+  const row: MembroRow = { ...(atual ?? {}) };
+  const valor = { texto, atualizado_em: new Date().toISOString() };
 
-  novo[campo] = {
-    ...(novo[campo] as Record<string, unknown>),
-    texto,
-    atualizado_em: new Date().toISOString(),
+  // Monta o patch só com o que muda — preserva o resto via upsert.
+  const patch: Record<string, unknown> = {
+    membro_atipico_id: membro_id,
+    family_account_id: family.id,
   };
 
-  await supabase.from("perfil_vivo_membro").upsert(
-    {
-      membro_atipico_id: membro_id,
-      family_account_id: family.id,
-      ...novo,
-      completude_pct: estimaCompletude([
-        novo.essencial.texto as string | undefined,
-        novo.como_e.texto as string | undefined,
-        novo.corpo_rotina.texto as string | undefined,
-        novo.desafios_regulacao.texto as string | undefined,
-        novo.sensorial.texto as string | undefined,
-      ]),
-    },
-    { onConflict: "membro_atipico_id" },
-  );
+  if (storage === "toplevel") {
+    (row as Record<string, unknown>)[campo] = valor;
+    patch[campo] = valor;
+  } else {
+    const extras = { ...((atual?.categorias_extras as Record<string, unknown>) ?? {}) };
+    extras[campo] = valor;
+    row.categorias_extras = extras;
+    patch.categorias_extras = extras;
+  }
+
+  patch.completude_pct = completudeDosDominios(row);
+
+  await supabase
+    .from("perfil_vivo_membro")
+    .upsert(patch, { onConflict: "membro_atipico_id" });
 
   revalidatePath("/kolo-vivo");
+  revalidatePath("/painel");
 }
 
 // ============================================================
@@ -157,8 +189,8 @@ export async function decideSugestao(input: z.infer<typeof decideSugestaoSchema>
   if (decisao === "aprovar") {
     if (sug.camada === "camada1") {
       if (!sug.membro_atipico_id) throw new Error("Sugestão sem membro");
-      const campo = sug.campo as (typeof membroCampos)[number];
-      if (!membroCampos.includes(campo)) throw new Error("Campo inválido");
+      const campo = sug.campo as string;
+      if (membroCampoStorage(campo) === null) throw new Error("Campo inválido");
       await saveSecaoMembro({ membro_id: sug.membro_atipico_id, campo, texto: sug.texto_sugerido });
     } else {
       const campo = sug.campo as (typeof familiaCampos)[number];

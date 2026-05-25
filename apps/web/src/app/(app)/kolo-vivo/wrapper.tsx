@@ -6,6 +6,8 @@ import { cn } from "@/lib/utils";
 import { FamiliaEditor } from "./familia-editor";
 import { MembroEditor } from "./membro-editor";
 import { SugestoesPanel } from "./sugestoes-panel";
+import type { DominioKey } from "./dominios";
+import type { DominioSugestao } from "./dominio-card";
 
 /**
  * Cada seção tem texto + timestamp da última atualização (P-KV-6).
@@ -29,12 +31,11 @@ export type MembroData = {
   nome: string;
   idade: number | null;
   perfil: string;
-  essencial: Secao;
-  como_e: Secao;
-  corpo_rotina: Secao;
-  desafios_regulacao: Secao;
-  sensorial: Secao;
-  completude_pct: number;
+  diasAcompanhada: number | null;
+  hiperfocos: string[];
+  completude: number;
+  dominios: Record<DominioKey, Secao>;
+  sugestoes: Partial<Record<DominioKey, DominioSugestao>>;
 };
 
 export type SugestaoRow = {

@@ -114,11 +114,27 @@ export function SugestoesPanel({
  */
 function labelCampo(campo: string): string {
   const map: Record<string, string> = {
+    // Domínios do Retrato vivo
+    sensorial: "sensorial",
+    nutricional: "alimentação",
+    comunicacao: "comunicação",
+    emocional: "regulação emocional",
+    foco: "foco e atenção",
+    sono: "sono",
+    socializacao: "socialização",
+    motor: "motor",
+    // Campos legados / sem card próprio
     essencial: "o básico",
     como_e: "o jeito",
-    corpo_rotina: "o corpo e o dia a dia",
-    desafios_regulacao: "o que ajuda — e o que pesa",
-    sensorial: "sensações e acompanhamentos",
+    corpo_rotina: "rotina",
+    desafios_regulacao: "regulação emocional",
+    imitacao: "imitação",
+    autonomia: "autonomia",
+    aprendizado: "aprendizado",
+    tela_midia: "telas e mídia",
+    escola: "escola",
+    saude_geral: "saúde geral",
+    // Família
     composicao: "quem faz parte da rotina",
     rotina: "como os dias costumam ser",
     recursos: "quem está por perto",
