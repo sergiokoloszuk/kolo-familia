@@ -179,6 +179,7 @@ export default async function PainelPage() {
     { data: ultimoFeedback },
     { data: alertasOpen },
     { count: adaptacoesPendentesCount },
+    { data: ultimaAyla },
   ] = await Promise.all([
     supabase
       .from("family_accounts")
@@ -204,8 +205,17 @@ export default async function PainelPage() {
       .select("id", { count: "exact", head: true })
       .eq("family_account_id", familyId)
       .eq("estado", "pendente"),
+    supabase
+      .from("ayla_messages")
+      .select("texto, created_at")
+      .eq("family_account_id", familyId)
+      .eq("direcao", "outbound")
+      .not("texto", "is", null)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
   ]);
-  const agora = Date.now();
+  const agora = hoje.getTime();
   const idadeDias = familyMeta
     ? Math.floor(
         (agora - new Date(familyMeta.created_at as string).getTime()) /
@@ -240,6 +250,17 @@ export default async function PainelPage() {
     ...(checkins7d ?? []).map((c) => c.data),
   ]).size;
   const houveAtividade = totalConquistas + totalDesafios + totalCheckins > 0;
+
+  // Segunda frase da saudação — leitura emocional da semana (como o
+  // protótipo: "Oi, Maria. Essa semana foi boa."). Editorial e gentil;
+  // some quando ainda não há registros.
+  const saudacaoClause = !houveAtividade
+    ? null
+    : totalConquistas > totalDesafios
+      ? "Essa semana teve coisas boas."
+      : totalDesafios > totalConquistas
+        ? "Um dia de cada vez — você está aqui."
+        : "Cada semana tem de tudo.";
 
   // ============================================================
   // Itens de "Essa semana" — lista editorial humana
@@ -470,6 +491,12 @@ export default async function PainelPage() {
         <Eyebrow>{format(hoje, "EEEE · d 'de' MMMM", { locale: ptBR })}</Eyebrow>
         <h1 className="mt-1 font-heading text-3xl text-foreground md:text-4xl">
           Oi, {greeting}.
+          {saudacaoClause && (
+            <>
+              {" "}
+              <em className="not-italic text-brand-purple">{saudacaoClause}</em>
+            </>
+          )}
         </h1>
         <ComoUsar
           oQueFazer="Esta é sua visão geral: a leitura da semana, as pequenas conquistas e o foco. Toque em 'Registrar dia' pra contar como foi."
@@ -787,6 +814,43 @@ export default async function PainelPage() {
       )}
 
       {/* ============================================================
+       * AYLA NO WHATSAPP — última fala real da Ayla (espelha o ayla-ref
+       * do protótipo). Traz a presença dela pra Home; só renderiza quando
+       * existe mensagem. "Abrir" leva pra Estratégias (onde se conversa).
+       * ============================================================ */}
+      {ultimaAyla?.texto && (
+        <section className="flex items-start gap-4 rounded-3xl bg-white px-5 py-5 shadow-[0_1px_2px_rgba(46,10,82,0.04),_0_4px_12px_rgba(46,10,82,0.03)] md:px-6">
+          <span
+            aria-hidden
+            className="flex size-9 shrink-0 items-center justify-center rounded-full bg-brand-purple font-heading text-sm font-semibold text-white"
+          >
+            A
+          </span>
+          <div className="min-w-0 flex-1">
+            <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-muted-foreground">
+              Ayla · WhatsApp
+              <span className="mx-1.5 opacity-60">·</span>
+              <span className="font-semibold normal-case tracking-normal text-foreground/60">
+                {format(new Date(ultimaAyla.created_at as string), "d 'de' MMM", {
+                  locale: ptBR,
+                })}
+              </span>
+            </p>
+            <p className="mt-1.5 line-clamp-3 text-[15px] leading-relaxed text-foreground/90">
+              {ultimaAyla.texto}
+            </p>
+          </div>
+          <Link
+            href="/estrategias"
+            className="mt-0.5 inline-flex shrink-0 items-center gap-1 self-center text-sm font-semibold text-brand-purple underline-offset-4 transition-all hover:gap-2"
+          >
+            Abrir
+            <ArrowRight className="size-3" aria-hidden />
+          </Link>
+        </section>
+      )}
+
+      {/* ============================================================
        * CHECK-IN LEVE — convite suave (fechamento editorial sobre a mãe)
        * Silêncio antes do fechamento — ritmo assimétrico.
        * ============================================================ */}
@@ -879,13 +943,13 @@ type ConquistaDiario = {
 
 // Tons decorativos rotativos por POSIÇÃO no grid — não representam
 // categoria semântica do conteúdo (diários não têm domain no schema).
-// Cada conquista recebe um blur radial colorido conforme sua posição,
-// criando atmosfera editorial sem inventar categorização. CSS vars vêm
-// de globals.css §cat-*.
+// Cada conquista recebe faixa + chip de ícone + blur conforme a posição,
+// criando atmosfera editorial (peso do protótipo) sem inventar categoria.
+// Classes literais pro Tailwind v4 extrair em build.
 const CARD_TONES = [
-  "var(--cat-alimentacao)",
-  "var(--cat-comunicacao)",
-  "var(--cat-motor)",
+  { blur: "var(--cat-alimentacao)", bar: "bg-cat-alimentacao", chip: "bg-cat-alimentacao-soft text-cat-alimentacao" },
+  { blur: "var(--cat-comunicacao)", bar: "bg-cat-comunicacao", chip: "bg-cat-comunicacao-soft text-cat-comunicacao" },
+  { blur: "var(--cat-motor)", bar: "bg-cat-motor", chip: "bg-cat-motor-soft text-cat-motor" },
 ];
 
 // Frases editoriais pros ghost cards — NÃO simulam conquista (sem data,
@@ -946,17 +1010,27 @@ function ConquistaCard({
   const nomeMembro = Array.isArray(c.membros_atipicos)
     ? c.membros_atipicos[0]?.nome
     : c.membros_atipicos?.nome;
-  const toneColor = CARD_TONES[pos % CARD_TONES.length];
+  const tone = CARD_TONES[pos % CARD_TONES.length];
 
   return (
-    <article className="relative overflow-hidden rounded-3xl bg-white px-6 py-6 shadow-[0_1px_2px_rgba(46,10,82,0.04),_0_4px_12px_rgba(46,10,82,0.03)] transition-shadow hover:shadow-[0_4px_12px_rgba(46,10,82,0.06),_0_12px_28px_rgba(46,10,82,0.06)]">
+    <article className="relative overflow-hidden rounded-3xl bg-white px-6 pb-6 pt-7 shadow-[0_1px_2px_rgba(46,10,82,0.04),_0_4px_12px_rgba(46,10,82,0.03)] transition-shadow hover:shadow-[0_4px_12px_rgba(46,10,82,0.06),_0_12px_28px_rgba(46,10,82,0.06)]">
+      <span aria-hidden className={cn("absolute inset-x-0 top-0 h-1", tone.bar)} />
       <span
         aria-hidden
         className="pointer-events-none absolute -right-10 -top-10 size-36 rounded-full opacity-40 blur-2xl"
-        style={{ background: toneColor }}
+        style={{ background: tone.blur }}
       />
       <div className="relative">
-        <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-muted-foreground">
+        <span
+          aria-hidden
+          className={cn(
+            "inline-flex size-9 items-center justify-center rounded-xl",
+            tone.chip,
+          )}
+        >
+          <Sparkles className="size-[18px]" strokeWidth={1.8} />
+        </span>
+        <p className="mt-3 text-[11px] font-bold uppercase tracking-[0.16em] text-muted-foreground">
           {format(new Date(c.data), "d 'de' MMM", { locale: ptBR })}
           {nomeMembro && (
             <>
