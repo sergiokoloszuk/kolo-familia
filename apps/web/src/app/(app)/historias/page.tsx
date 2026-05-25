@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { Sparkles, Wand2, BookOpen } from "lucide-react";
-import { ComoUsar } from "@/components/brand/como-usar";
 import { loadFamilyContext } from "@/lib/auth/require-user";
 
 export const metadata = { title: "Histórias — Kolo Família" };
@@ -94,11 +93,6 @@ export default async function HistoriasPage() {
           )}
         </div>
       </section>
-
-      <ComoUsar
-        oQueFazer="Descreva a história que você quer (ex.: 'preparar para o dentista') e a Kolo escreve e ilustra com o avatar da criança. Depois é só ler junto."
-        porQue="Histórias sociais ajudam a criança a entender e antecipar o que vai acontecer — diminui a ansiedade do desconhecido."
-      />
 
       {/* Estante */}
       <section className="grid grid-cols-2 gap-5 sm:grid-cols-3 lg:grid-cols-4">

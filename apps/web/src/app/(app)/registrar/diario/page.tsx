@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ComoUsar } from "@/components/brand/como-usar";
 import { loadFamilyContext } from "@/lib/auth/require-user";
 import { DiarioForm } from "./diario-form";
 
@@ -32,11 +31,6 @@ export default async function RegistrarDiarioPage() {
           contexto sobre quem estava e como você reagiu, mais útil fica.
         </p>
       </header>
-
-      <ComoUsar
-        oQueFazer="Marque como você (e a criança) está hoje e, se quiser, registre uma conquista ou desafio. Preenchimento parcial é bem-vindo."
-        porQue="Registros curtos viram as conquistas do Painel e a leitura da Evolução ao longo do tempo."
-      />
 
       <Card>
         <CardHeader>

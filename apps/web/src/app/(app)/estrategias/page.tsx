@@ -11,7 +11,6 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { Eyebrow } from "@/components/brand/eyebrow";
-import { ComoUsar } from "@/components/brand/como-usar";
 import { loadFamilyContext } from "@/lib/auth/require-user";
 import { ConversarForm } from "../conversar/conversar-form";
 import { ConversaItem } from "./conversa-item";
@@ -97,11 +96,6 @@ export default async function EstrategiasPage() {
           .
         </h1>
       </header>
-
-      <ComoUsar
-        oQueFazer="Conte no campo o que aconteceu (Enter envia). Depois da resposta, peça mais ajuda (brincadeiras, histórias…) ou use 'Atualizar' pra guardar no Kolo Vivo e no diário."
-        porQue="A Ayla pensa junto com você e ainda registra o que for relevante, sem você precisar repetir."
-      />
 
       <ConversarForm membros={membros ?? []} />
 

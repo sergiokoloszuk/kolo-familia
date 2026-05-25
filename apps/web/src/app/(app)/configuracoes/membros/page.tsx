@@ -2,7 +2,6 @@ import Link from "next/link";
 import { ArrowLeft, Users } from "lucide-react";
 import { Eyebrow } from "@/components/brand/eyebrow";
 import { IconCard } from "@/components/brand/icon-card";
-import { ComoUsar } from "@/components/brand/como-usar";
 import { loadFamilyContext } from "@/lib/auth/require-user";
 import { MembrosForm } from "./membros-form";
 
@@ -44,11 +43,6 @@ export default async function MembrosPage() {
           </p>
         </div>
       </header>
-
-      <ComoUsar
-        oQueFazer="Ajuste os dados de cada membro atípico. A idade aparece embaixo da data conforme você digita — confira se bate."
-        porQue="A idade e o perfil personalizam as respostas das skills e o que a Ayla pergunta. Dado certo = resposta certa."
-      />
 
       {(membros?.length ?? 0) === 0 ? (
         <p className="text-sm text-muted-foreground">

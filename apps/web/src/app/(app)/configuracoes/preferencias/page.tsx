@@ -2,7 +2,6 @@ import Link from "next/link";
 import { ArrowLeft, Heart } from "lucide-react";
 import { Eyebrow } from "@/components/brand/eyebrow";
 import { IconCard } from "@/components/brand/icon-card";
-import { ComoUsar } from "@/components/brand/como-usar";
 import { loadFamilyContext } from "@/lib/auth/require-user";
 import { PreferenciasForm } from "./preferencias-form";
 import type { Preferencias } from "./actions";
@@ -72,11 +71,6 @@ export default async function PreferenciasPage() {
           </p>
         </div>
       </header>
-
-      <ComoUsar
-        oQueFazer="Digite e tecle Enter (ou vírgula) pra adicionar cada gosto. Pode tirar clicando no x."
-        porQue="As histórias e brincadeiras passam a usar o personagem e o material favoritos — fica muito mais envolvente pra criança."
-      />
 
       {criancas.length === 0 ? (
         <p className="text-sm text-muted-foreground">Nenhuma criança cadastrada ainda.</p>

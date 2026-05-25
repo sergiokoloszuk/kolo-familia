@@ -4,7 +4,6 @@ import { Sprout } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { EstadoVazio } from "@/components/brand/estado-vazio";
 import { Eyebrow } from "@/components/brand/eyebrow";
-import { ComoUsar } from "@/components/brand/como-usar";
 import { loadFamilyContext } from "@/lib/auth/require-user";
 import { cn } from "@/lib/utils";
 
@@ -211,11 +210,6 @@ export default async function EvolucaoPage() {
           O que apareceu, o que ficou, o que vai mudando — aos poucos.
         </p>
       </header>
-
-      <ComoUsar
-        oQueFazer="Role pra ver, em ordem de tempo, o que foi acontecendo — conquistas, desafios e registros."
-        porQue="Ver a linha do tempo ajuda a perceber avanços que no corre-corre do dia passam batido."
-      />
 
       <section>
         <h2 className="font-heading text-2xl text-foreground">

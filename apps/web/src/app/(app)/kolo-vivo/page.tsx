@@ -1,7 +1,6 @@
 import { Users } from "lucide-react";
 import { Eyebrow } from "@/components/brand/eyebrow";
 import { IconCard } from "@/components/brand/icon-card";
-import { ComoUsar } from "@/components/brand/como-usar";
 import { loadFamilyContext } from "@/lib/auth/require-user";
 import { idadeAnos } from "@/lib/idade";
 import { DOMINIOS, type DominioKey } from "./dominios";
@@ -120,11 +119,6 @@ export default async function KoloVivoPage() {
           </h1>
         </div>
       </header>
-
-      <ComoUsar
-        oQueFazer="Toque em cada área pra contar o que se sabe sobre a criança. Os filtros mostram o que já está vivo, o que vale entender e o que ainda falta começar."
-        porQue="É a memória viva que a Ayla usa pra personalizar tudo — quanto mais completa, melhores as histórias, brincadeiras e respostas."
-      />
 
       <KoloVivoWrapper
         familyId={familyId}
