@@ -12,6 +12,14 @@
  * destrutiva — o texto antigo segue no banco e continua lido pela Ayla).
  */
 
+export {
+  MEMBRO_CAMPOS_TOPLEVEL,
+  MEMBRO_CAMPOS_EXTRAS,
+  membroCampoStorage,
+  type MembroCampoToplevel,
+  type MembroCampoExtras,
+} from "@/lib/kolo-vivo/campos";
+
 export type DominioTone =
   | "sensorial"
   | "alimentacao"
@@ -131,48 +139,3 @@ export const DOMINIOS: DominioDef[] = [
       "Ex: boa com previsibilidade. Aceita aviso de 5min antes de trocar de atividade. Tablet sem preparo vira gatilho.",
   },
 ];
-
-// ── Roteamento de campos no perfil_vivo_membro (usado pela action) ──
-
-/** Campos jsonb com coluna dedicada na tabela. */
-export const MEMBRO_CAMPOS_TOPLEVEL = [
-  "essencial",
-  "como_e",
-  "corpo_rotina",
-  "desafios_regulacao",
-  "sensorial",
-] as const;
-
-/** Chaves dentro de categorias_extras (espelham as skills + domínios novos). */
-export const MEMBRO_CAMPOS_EXTRAS = [
-  "comunicacao",
-  "socializacao",
-  "imitacao",
-  "motor",
-  "autonomia",
-  "aprendizado",
-  "foco",
-  "sono",
-  "nutricional",
-  "tela_midia",
-  "escola",
-  "saude_geral",
-  "emocional",
-  "rotina",
-] as const;
-
-export type MembroCampoToplevel = (typeof MEMBRO_CAMPOS_TOPLEVEL)[number];
-export type MembroCampoExtras = (typeof MEMBRO_CAMPOS_EXTRAS)[number];
-
-/** Onde um campo do membro é gravado — ou null se desconhecido. */
-export function membroCampoStorage(
-  campo: string,
-): "toplevel" | "extras" | null {
-  if ((MEMBRO_CAMPOS_TOPLEVEL as readonly string[]).includes(campo)) {
-    return "toplevel";
-  }
-  if ((MEMBRO_CAMPOS_EXTRAS as readonly string[]).includes(campo)) {
-    return "extras";
-  }
-  return null;
-}

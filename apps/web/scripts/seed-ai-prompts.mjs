@@ -31,7 +31,21 @@ const PROMPTS = [
 - Em famílias com mais de 1 membro atípico, identifique pelo nome citado, pronome ou contexto. Se confiança < 70, deixe membro_atipico_id=null e marque precisa_clarificar.
 - Camada B (adulto cuidador): só preencha se a mensagem mencionar quem estava + como o adulto agiu/sentiu. Se ambíguo, confianca_camada_adulto < 70.
 - emocao_mae: detecte tom da mensagem (ela está cansada? bem?). Se ambíguo, null.
-- sugestao_kolo_vivo=true só se a mensagem revelou algo NOVO sobre o membro que vale arquivar (ex: "descobri que ele acalma com música baixa"). Caso contrário false.
+- sugestao_kolo_vivo=true só se a mensagem revelou algo NOVO sobre o membro que vale arquivar (ex: "descobri que ele acalma com música baixa", "passou a aceitar morango"). Caso contrário false.
+- Quando sugestao_kolo_vivo=true, escolha campo_kolo_vivo_sugerido pelo DOMÍNIO mais específico da lista abaixo e escreva texto_kolo_vivo_sugerido como um fato curto (1 frase).
+
+# Domínios do Kolo Vivo (valores válidos de campo_kolo_vivo_sugerido)
+Escolha sempre o MAIS específico:
+- sensorial — sons, texturas, luz, toque; o que acalma ou incomoda o corpo
+- nutricional — comida: o que come, recusa ou passou a aceitar; como prefere comer
+- comunicacao — como fala, entende, aponta, usa imagens/gestos
+- emocional — gatilhos, sinais de desregulação (crises), o que acalma
+- foco — concentração, hiperfoco, dispersão
+- sono — como adormece, como dorme, como acorda
+- socializacao — relação com outras crianças e adultos, brincar junto/lado a lado
+- motor — coordenação do corpo todo e das mãos
+- rotina — transições, previsibilidade, avisos antes de mudar de atividade
+Use "essencial" só pra identidade ampla (diagnóstico, forças, personalidade) que não couber em nenhum domínio acima.
 
 # Schema de saída
 {
@@ -47,7 +61,7 @@ const PROMPTS = [
   "reacao_adulto": "acolhedor|esperou|interveio|impositivo|chamou_ajuda|outro|null",
   "confianca_camada_adulto": 0-100,
   "sugestao_kolo_vivo": true/false,
-  "campo_kolo_vivo_sugerido": "como_e|desafios_regulacao|...|opcional",
+  "campo_kolo_vivo_sugerido": "sensorial|nutricional|comunicacao|emocional|foco|sono|socializacao|motor|rotina|essencial|null",
   "texto_kolo_vivo_sugerido": "texto-curto-opcional",
   "confianca": 0-100,
   "precisa_clarificar": "frase-opcional"

@@ -3,6 +3,7 @@ import { hojeLocalISO, idadeAnos } from "@/lib/idade";
 import { enviarTexto, type InboundWhatsApp } from "./whatsappSender";
 import { podeEnviarProativa } from "./rules";
 import { parseInbound, detectarComando } from "./parser";
+import { membroCampoStorage } from "@/lib/kolo-vivo/campos";
 import { gerarRespostaAyla, type RespostaParams } from "./responder";
 import {
   templateBoasVindas,
@@ -768,7 +769,6 @@ function appendFato(prev: string, fato: string): string {
   return `${p}\n${f}`;
 }
 
-const CAMPOS_MEMBRO = ["essencial", "como_e", "corpo_rotina", "desafios_regulacao", "sensorial"];
 const CAMPOS_FAMILIA = ["composicao", "rotina", "recursos", "dinamica"];
 
 type SecaoJson = { texto?: string } | null;
@@ -798,19 +798,36 @@ async function confirmarSugestaoPendente(
   const now = new Date().toISOString();
 
   if (sug.camada === "camada1" && sug.membro_atipico_id) {
-    if (!CAMPOS_MEMBRO.includes(sug.campo)) return null;
+    const storage = membroCampoStorage(sug.campo);
+    if (storage === null) return null;
     const { data: atual } = await supabase
       .from("perfil_vivo_membro")
-      .select("essencial, como_e, corpo_rotina, desafios_regulacao, sensorial")
+      .select(
+        "essencial, como_e, corpo_rotina, desafios_regulacao, sensorial, categorias_extras",
+      )
       .eq("membro_atipico_id", sug.membro_atipico_id)
       .maybeSingle();
-    const secaoAtual = (atual as Record<string, SecaoJson> | null)?.[sug.campo] ?? {};
-    const novoTexto = appendFato(secaoAtual?.texto ?? "", sug.texto_sugerido);
+
+    let patch: Record<string, unknown>;
+    if (storage === "toplevel") {
+      const secaoAtual = (atual as Record<string, SecaoJson> | null)?.[sug.campo] ?? {};
+      const novoTexto = appendFato(secaoAtual?.texto ?? "", sug.texto_sugerido);
+      patch = { [sug.campo]: { ...secaoAtual, texto: novoTexto, atualizado_em: now } };
+    } else {
+      const extras = {
+        ...((atual?.categorias_extras as Record<string, unknown>) ?? {}),
+      };
+      const secaoAtual = (extras[sug.campo] as SecaoJson) ?? {};
+      const novoTexto = appendFato(secaoAtual?.texto ?? "", sug.texto_sugerido);
+      extras[sug.campo] = { ...secaoAtual, texto: novoTexto, atualizado_em: now };
+      patch = { categorias_extras: extras };
+    }
+
     const { error } = await supabase.from("perfil_vivo_membro").upsert(
       {
         membro_atipico_id: sug.membro_atipico_id,
         family_account_id: familyId,
-        [sug.campo]: { ...secaoAtual, texto: novoTexto, atualizado_em: now },
+        ...patch,
       },
       { onConflict: "membro_atipico_id" },
     );
