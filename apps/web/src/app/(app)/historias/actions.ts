@@ -8,8 +8,19 @@ import { idadeAnos } from "@/lib/idade";
 import { gerarHistoria } from "@/lib/historias/gerar";
 import type { AvatarEstilo } from "@/lib/imagem/avatar-prompt";
 
+/**
+ * Compreensão ativa (Fatia 3.2): depois de criar a história, a Ayla faz UMA
+ * perguntinha de leve pra enriquecer os Gostos da área mais vazia. `area` é a
+ * chave em categorias_extras.preferencias; `opcoes` são sugestões de 1 toque.
+ */
+export type Enriquecimento = {
+  area: "materiais" | "temas";
+  pergunta: string;
+  opcoes: string[];
+};
+
 export type CriarHistoriaResult =
-  | { ok: true; id: string }
+  | { ok: true; id: string; enriquecimento?: Enriquecimento | null }
   | { ok: false; error: string };
 
 const schema = z.object({
@@ -156,7 +167,113 @@ export async function criarHistoria(
     }
 
     revalidatePath("/historias");
-    return { ok: true, id: row.id as string };
+    return {
+      ok: true,
+      id: row.id as string,
+      enriquecimento: proximoEnriquecimento(membro.nome as string, pref),
+    };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "Erro inesperado" };
+  }
+}
+
+/**
+ * Escolhe a próxima perguntinha de enriquecimento pela área de Gostos mais
+ * vazia. Retorna null quando já temos materiais e temas (não fica insistindo).
+ */
+function proximoEnriquecimento(
+  nome: string,
+  pref: Record<string, unknown>,
+): Enriquecimento | null {
+  const temItens = (v: unknown) =>
+    Array.isArray(v) && v.some((x) => typeof x === "string" && x.trim().length > 0);
+
+  if (!temItens(pref.materiais)) {
+    return {
+      area: "materiais",
+      pergunta: `Quando ${nome} vai criar, o que cai melhor na mão?`,
+      opcoes: ["giz de cera", "guache", "massinha", "lápis de cor"],
+    };
+  }
+  if (!temItens(pref.temas)) {
+    return {
+      area: "temas",
+      pergunta: `Que mundo encanta ${nome} agora?`,
+      opcoes: ["dinossauros", "animais", "espaço", "carrinhos", "contos e princesas"],
+    };
+  }
+  return null;
+}
+
+const enriquecimentoSchema = z.object({
+  membroId: z.string().uuid(),
+  area: z.enum(["materiais", "temas"]),
+  valor: z.string().trim().min(1).max(60),
+});
+
+export type EnriquecimentoResult = { ok: true } | { ok: false; error: string };
+
+/**
+ * Salva a resposta da perguntinha de enriquecimento: anexa `valor` à lista
+ * `area` dentro de categorias_extras.preferencias, sem perder o resto.
+ */
+export async function responderEnriquecimento(
+  input: z.infer<typeof enriquecimentoSchema>,
+): Promise<EnriquecimentoResult> {
+  try {
+    const data = enriquecimentoSchema.parse(input);
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return { ok: false, error: "Não autenticado." };
+    const { data: family } = await supabase
+      .from("family_accounts")
+      .select("id")
+      .eq("user_id", user.id)
+      .single();
+    if (!family) return { ok: false, error: "Família não inicializada." };
+
+    const { data: membro } = await supabase
+      .from("membros_atipicos")
+      .select("id")
+      .eq("id", data.membroId)
+      .eq("family_account_id", family.id)
+      .maybeSingle();
+    if (!membro) return { ok: false, error: "Criança não encontrada." };
+
+    const { data: atual } = await supabase
+      .from("perfil_vivo_membro")
+      .select("categorias_extras")
+      .eq("membro_atipico_id", data.membroId)
+      .maybeSingle();
+
+    const extras = { ...((atual?.categorias_extras as Record<string, unknown>) ?? {}) };
+    const pref = { ...((extras.preferencias as Record<string, unknown>) ?? {}) };
+    const listaAtual = Array.isArray(pref[data.area])
+      ? (pref[data.area] as unknown[]).filter((x): x is string => typeof x === "string")
+      : [];
+    if (!listaAtual.some((x) => x.toLowerCase() === data.valor.toLowerCase())) {
+      listaAtual.push(data.valor);
+    }
+    pref[data.area] = listaAtual;
+    extras.preferencias = pref;
+
+    const { error } = await supabase
+      .from("perfil_vivo_membro")
+      .upsert(
+        {
+          membro_atipico_id: data.membroId,
+          family_account_id: family.id,
+          categorias_extras: extras,
+        },
+        { onConflict: "membro_atipico_id" },
+      );
+    if (error) return { ok: false, error: `Não consegui salvar: ${error.message}` };
+
+    revalidatePath("/configuracoes/preferencias");
+    revalidatePath("/kolo-vivo");
+    return { ok: true };
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : "Erro inesperado" };
   }

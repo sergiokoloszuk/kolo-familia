@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Sparkles, Wand2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { criarHistoria } from "../actions";
+import { criarHistoria, responderEnriquecimento, type Enriquecimento } from "../actions";
 
 const EXEMPLOS = [
   "Preparar para a primeira ida ao dentista",
@@ -25,6 +25,9 @@ export function CriarHistoriaForm({
   const [nPaginas, setNPaginas] = useState(5);
   const [erro, setErro] = useState<string | null>(null);
   const [pending, start] = useTransition();
+  // Compreensão ativa (Fatia 3.2): perguntinha de leve depois de gerar.
+  const [enriq, setEnriq] = useState<(Enriquecimento & { id: string }) | null>(null);
+  const [salvandoOpcao, setSalvandoOpcao] = useState(false);
 
   function criar() {
     if (!descricao.trim() || pending) return;
@@ -35,8 +38,23 @@ export function CriarHistoriaForm({
         setErro(r.error);
         return;
       }
+      if (r.enriquecimento) {
+        setEnriq({ ...r.enriquecimento, id: r.id });
+        return;
+      }
       router.push(`/historias/${r.id}`);
     });
+  }
+
+  async function responder(valor: string) {
+    if (!enriq || salvandoOpcao) return;
+    setSalvandoOpcao(true);
+    try {
+      await responderEnriquecimento({ membroId, area: enriq.area, valor });
+    } catch {
+      // não trava o fluxo — o importante é ver a história
+    }
+    router.push(`/historias/${enriq.id}`);
   }
 
   if (pending) {
@@ -62,6 +80,50 @@ export function CriarHistoriaForm({
           Escrevendo a história e desenhando cada página com o mesmo personagem.
           Leva cerca de um minuto — pode deixar aberto.
         </p>
+      </div>
+    );
+  }
+
+  if (enriq) {
+    return (
+      <div className="flex flex-col items-center gap-6 rounded-3xl bg-gradient-to-br from-kolo-creme to-kolo-lilas-bg px-7 py-12 text-center">
+        <span className="grid size-14 place-items-center rounded-full bg-brand-yellow/20 text-brand-purple">
+          <Sparkles className="size-6" aria-hidden />
+        </span>
+        <div>
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-muted-foreground">
+            Sua história está pronta
+          </p>
+          <h2 className="mt-2 max-w-md font-heading text-2xl text-foreground">
+            {enriq.pergunta}
+          </h2>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Uma coisinha rápida pra deixar as próximas ainda mais com a cara dela.
+          </p>
+        </div>
+
+        <div className="flex flex-wrap justify-center gap-2">
+          {enriq.opcoes.map((op) => (
+            <button
+              key={op}
+              type="button"
+              onClick={() => responder(op)}
+              disabled={salvandoOpcao}
+              className="rounded-full border border-brand-purple/20 bg-white px-4 py-2 text-sm font-medium text-foreground transition-all hover:-translate-y-0.5 hover:border-brand-purple hover:text-brand-purple disabled:opacity-50"
+            >
+              {op}
+            </button>
+          ))}
+        </div>
+
+        <button
+          type="button"
+          onClick={() => router.push(`/historias/${enriq.id}`)}
+          disabled={salvandoOpcao}
+          className="text-sm font-semibold text-brand-purple underline-offset-4 transition-colors hover:underline disabled:opacity-50"
+        >
+          {salvandoOpcao ? "abrindo…" : "ver a história agora"}
+        </button>
       </div>
     );
   }
