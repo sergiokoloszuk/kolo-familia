@@ -29,6 +29,11 @@ const ParserSchema = z.object({
   // derrubava TODO parse no fallback → "não consegui entender".
   campo_kolo_vivo_sugerido: z.string().nullish(),
   texto_kolo_vivo_sugerido: z.string().nullish(),
+  // Expansão de repertório (Fatia 3.3): algo NOVO que a criança experimentou.
+  experimentou: z.string().nullish(),
+  experimentou_resultado: z
+    .enum(["amou", "gostou", "neutro", "nao_gostou"])
+    .nullish(),
   confianca: z.number().min(0).max(100),
   precisa_clarificar: z.string().nullish(),
 });
@@ -57,6 +62,10 @@ Escolha sempre o MAIS específico:
 - rotina — transições, previsibilidade, avisos antes de mudar de atividade
 Use "essencial" só pra identidade ampla (diagnóstico, forças, personalidade) que não couber em nenhum domínio acima.
 
+# Expansão de repertório
+- experimentou: preencha quando a mensagem contar que a criança EXPERIMENTOU algo NOVO (uma comida, um material/tinta, uma brincadeira, um lugar, uma textura) — mesmo que por pouco tempo ou que não tenha gostado. A tentativa em si importa. Senão, null.
+- experimentou_resultado: "amou" | "gostou" | "neutro" (só experimentou/indiferente) | "nao_gostou". Se não der pra saber, "neutro".
+
 # Schema de saída
 {
   "membro_atipico_id": "uuid-ou-null",
@@ -73,6 +82,8 @@ Use "essencial" só pra identidade ampla (diagnóstico, forças, personalidade) 
   "sugestao_kolo_vivo": true/false,
   "campo_kolo_vivo_sugerido": "sensorial|nutricional|comunicacao|emocional|foco|sono|socializacao|motor|rotina|essencial|null",
   "texto_kolo_vivo_sugerido": "texto-curto-opcional",
+  "experimentou": "o-que-ela-experimentou-de-novo-ou-null",
+  "experimentou_resultado": "amou|gostou|neutro|nao_gostou|null",
   "confianca": 0-100,
   "precisa_clarificar": "frase-opcional"
 }`;

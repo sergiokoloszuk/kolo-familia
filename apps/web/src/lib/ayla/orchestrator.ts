@@ -537,6 +537,7 @@ export async function processInbound(
         conquista: parsed.conquista,
         desafio: parsed.desafio,
         emocao_mae: parsed.emocao_mae,
+        experimentou: parsed.experimentou ?? null,
         temSugestaoKoloVivo: Boolean(
           parsed.sugestao_kolo_vivo && parsed.texto_kolo_vivo_sugerido,
         ),
@@ -682,13 +683,18 @@ async function persistirRegistro(
 ): Promise<void> {
   if (!p.membro_atipico_id) return;
 
+  // Tentar algo novo já é conquista: se a mãe contou um experimento e não
+  // veio conquista explícita, celebramos a tentativa em si (Fatia 3.3).
+  const conquista =
+    p.conquista ?? (p.experimentou ? `Experimentou ${p.experimentou}` : null);
+
   // 1. Daily check-in
   await supabase.from("ayla_daily_checkins").upsert(
     {
       family_account_id: familyId,
       membro_atipico_id: p.membro_atipico_id,
       date: hojeLocalISO(),
-      conquista_extraida: p.conquista,
+      conquista_extraida: conquista,
       desafio_extraido: p.desafio,
       emocao_mae: p.emocao_mae,
       possivel_gatilho: p.possivel_gatilho,
@@ -701,16 +707,16 @@ async function persistirRegistro(
   );
 
   // 2. Diário (Camada A + B se confianca_camada_adulto >= 70)
-  if (p.conquista || p.desafio || p.observacao_livre) {
+  if (conquista || p.desafio || p.observacao_livre) {
     const incompleto =
       Boolean(p.estado_adulto || p.reacao_adulto || p.quem_estava) === false &&
-      Boolean(p.conquista || p.desafio); // Tem evento mas sem Camada B
+      Boolean(conquista || p.desafio); // Tem evento mas sem Camada B
 
     await supabase.from("diarios").insert({
       family_account_id: familyId,
       membro_atipico_id: p.membro_atipico_id,
       data: hojeLocalISO(),
-      conquista: p.conquista,
+      conquista,
       desafio: p.desafio,
       observacao_livre: p.observacao_livre,
       possivel_gatilho: p.possivel_gatilho,
@@ -720,6 +726,17 @@ async function persistirRegistro(
       origem: "ayla",
       incompleto,
     });
+  }
+
+  // 2b. Memória de repertório: o que experimentou e como foi (Fatia 3.3).
+  if (p.experimentou) {
+    await registrarExperimento(
+      supabase,
+      p.membro_atipico_id,
+      familyId,
+      p.experimentou,
+      p.experimentou_resultado ?? "neutro",
+    );
   }
 
   // 3. Sugestão de Kolo Vivo
@@ -734,6 +751,55 @@ async function persistirRegistro(
       origem_detalhe: { confianca: p.confianca },
     });
   }
+}
+
+/**
+ * Guarda a experimentação na memória de repertório do membro, dentro de
+ * `categorias_extras.preferencias` (Fatia 3.3):
+ * - `experimentos`: histórico { item, resultado, data } (últimos 50).
+ * - `evitar`: itens que ela NÃO curtiu — pra Ayla não insistir depois.
+ */
+async function registrarExperimento(
+  supabase: SupabaseClient,
+  membroId: string,
+  familyId: string,
+  item: string,
+  resultado: "amou" | "gostou" | "neutro" | "nao_gostou",
+): Promise<void> {
+  const limpo = item.trim();
+  if (!limpo) return;
+
+  const { data } = await supabase
+    .from("perfil_vivo_membro")
+    .select("categorias_extras")
+    .eq("membro_atipico_id", membroId)
+    .maybeSingle();
+
+  const extras = { ...((data?.categorias_extras as Record<string, unknown>) ?? {}) };
+  const pref = { ...((extras.preferencias as Record<string, unknown>) ?? {}) };
+
+  const experimentos = Array.isArray(pref.experimentos) ? [...pref.experimentos] : [];
+  experimentos.push({ item: limpo, resultado, data: hojeLocalISO() });
+  pref.experimentos = experimentos.slice(-50);
+
+  if (resultado === "nao_gostou") {
+    const evitar = Array.isArray(pref.evitar)
+      ? pref.evitar.filter((x): x is string => typeof x === "string")
+      : [];
+    if (!evitar.some((e) => e.toLowerCase() === limpo.toLowerCase())) {
+      evitar.push(limpo);
+    }
+    pref.evitar = evitar;
+  }
+
+  extras.preferencias = pref;
+
+  await supabase
+    .from("perfil_vivo_membro")
+    .upsert(
+      { membro_atipico_id: membroId, family_account_id: familyId, categorias_extras: extras },
+      { onConflict: "membro_atipico_id" },
+    );
 }
 
 // ============================================================

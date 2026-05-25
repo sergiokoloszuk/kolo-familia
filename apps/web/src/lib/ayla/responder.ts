@@ -40,6 +40,7 @@ export type SinaisResposta = {
   conquista: string | null;
   desafio: string | null;
   emocao_mae: string | null;
+  experimentou?: string | null;
   temSugestaoKoloVivo: boolean;
 };
 
@@ -101,6 +102,11 @@ export async function gerarRespostaAyla(
   }
   if (params.sinais.conquista) {
     notas.push(`Nos bastidores anotei a conquista ("${params.sinais.conquista}").`);
+  }
+  if (params.sinais.experimentou) {
+    notas.push(
+      `A criança experimentou algo novo ("${params.sinais.experimentou}"). Celebre a TENTATIVA em si — tentar já é uma vitória, mesmo que ela não tenha curtido. Não pressione a repetir nem force o que ela recusou.`,
+    );
   }
   if (params.sinais.temSugestaoKoloVivo) {
     notas.push(

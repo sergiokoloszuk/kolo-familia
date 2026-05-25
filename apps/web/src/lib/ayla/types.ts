@@ -89,6 +89,10 @@ export type ParserResult = {
   campo_kolo_vivo_sugerido?: string | null;
   texto_kolo_vivo_sugerido?: string | null;
 
+  // Expansão de repertório (Fatia 3.3)
+  experimentou?: string | null;
+  experimentou_resultado?: "amou" | "gostou" | "neutro" | "nao_gostou" | null;
+
   // Confiança geral
   confianca: number; // 0-100
   precisa_clarificar?: string | null;
