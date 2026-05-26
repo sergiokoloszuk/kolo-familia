@@ -19,6 +19,28 @@ export async function GET() {
         ? "unknown"
         : "missing";
 
+  // Diagnóstico: verifica se cada price do .env existe no modo do secret
+  // (live com price de teste devolve 404 — explica falha do checkout).
+  async function checkPrice(id: string | undefined): Promise<string> {
+    if (!stripeKey) return "no_key";
+    if (!id) return "missing_env";
+    try {
+      const r = await fetch(`https://api.stripe.com/v1/prices/${id}`, {
+        headers: { authorization: `Bearer ${stripeKey}` },
+        signal: AbortSignal.timeout(8000),
+      });
+      if (r.status === 200) return "ok";
+      if (r.status === 404) return "not_found_in_mode";
+      return `http_${r.status}`;
+    } catch {
+      return "error";
+    }
+  }
+  const [priceMensal, priceAnual] = await Promise.all([
+    checkPrice(process.env.STRIPE_PRICE_ID_MENSAL),
+    checkPrice(process.env.STRIPE_PRICE_ID_ANUAL),
+  ]);
+
   const env = {
     supabase_url: Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL),
     supabase_anon: Boolean(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY),
@@ -27,6 +49,8 @@ export async function GET() {
     openai: Boolean(process.env.OPENAI_API_KEY),
     stripe_secret: Boolean(process.env.STRIPE_SECRET_KEY),
     stripe_secret_mode: stripeMode,
+    stripe_price_mensal: priceMensal,
+    stripe_price_anual: priceAnual,
     zapi_token: Boolean(process.env.ZAPI_TOKEN),
     cron_secret: Boolean(process.env.CRON_SECRET),
   };
