@@ -1,5 +1,6 @@
 "use server";
 
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
@@ -21,10 +22,20 @@ async function requireFamilyAndOrigin(): Promise<{
     .eq("user_id", user.id)
     .single();
   if (!family) throw new Error("Família não inicializada");
+
+  // Deriva origin do request (Stripe live exige HTTPS em success_url/cancel_url).
+  // Cai em NEXT_PUBLIC_APP_URL só se header faltar; localhost só em dev.
+  const h = await headers();
+  const host = h.get("host");
+  const proto = h.get("x-forwarded-proto") ?? (host?.includes("localhost") ? "http" : "https");
+  const origin = host
+    ? `${proto}://${host}`
+    : process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+
   return {
     familyId: family.id,
     userEmail: user.email ?? null,
-    origin: process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000",
+    origin,
   };
 }
 
