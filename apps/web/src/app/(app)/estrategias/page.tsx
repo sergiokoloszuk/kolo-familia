@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { Eyebrow } from "@/components/brand/eyebrow";
 import { loadFamilyContext } from "@/lib/auth/require-user";
+import { cn } from "@/lib/utils";
 import { ConversarForm } from "../conversar/conversar-form";
 import { ConversaItem } from "./conversa-item";
 
@@ -38,6 +39,25 @@ const ICONES_BIBLIOTECA: Record<string, LucideIcon> = {
   historias_sociais: BookOpen,
   frases_prontas: MessageSquare,
   rotinas: CalendarClock,
+};
+
+/**
+ * Tom cromático por tipo de ajuda — peso visual estilo estrategia-card
+ * do protótipo (faixa colorida no topo + chip do tipo). Classes literais
+ * pro Tailwind v4 extrair em build.
+ */
+const TIPO_TONE: Record<string, { bar: string; chip: string }> = {
+  brincadeiras: { bar: "bg-cat-social", chip: "bg-cat-social-bg text-cat-social" },
+  atividades: { bar: "bg-cat-foco", chip: "bg-cat-foco-bg text-cat-foco" },
+  crencas: { bar: "bg-cat-emocao", chip: "bg-cat-emocao-bg text-cat-emocao" },
+  o_que_fazer_diferente: { bar: "bg-cat-comunicacao", chip: "bg-cat-comunicacao-bg text-cat-comunicacao" },
+  historias_sociais: { bar: "bg-cat-sensorial", chip: "bg-cat-sensorial-bg text-cat-sensorial" },
+  frases_prontas: { bar: "bg-cat-motor", chip: "bg-cat-motor-bg text-cat-motor" },
+  rotinas: { bar: "bg-cat-rotina", chip: "bg-cat-rotina-bg text-cat-rotina" },
+};
+const TIPO_TONE_FALLBACK = {
+  bar: "bg-cat-social",
+  chip: "bg-cat-social-bg text-cat-social",
 };
 
 /**
@@ -126,29 +146,32 @@ function BibliotecaSection({ tipos }: { tipos: TipoBiblioteca[] }) {
         Se preferir um{" "}
         <em className="not-italic text-brand-purple">formato específico</em>
       </h2>
-      <ul className="mt-5 grid gap-3 md:grid-cols-2">
+      <ul className="mt-5 grid gap-4 md:grid-cols-2">
         {tipos.map((t) => {
           const Icon = ICONES_BIBLIOTECA[t.key] ?? Sparkles;
+          const tone = TIPO_TONE[t.key] ?? TIPO_TONE_FALLBACK;
           return (
             <li key={t.key}>
               <Link
                 href={`/apoio/${t.key}`}
-                className="group flex h-full flex-col rounded-2xl bg-white px-5 py-5 shadow-[0_1px_2px_rgba(46,10,82,0.04),_0_4px_12px_rgba(46,10,82,0.03)] transition-shadow hover:shadow-[0_4px_12px_rgba(46,10,82,0.06),_0_12px_28px_rgba(46,10,82,0.06)]"
+                className="group relative flex h-full flex-col overflow-hidden rounded-2xl bg-white px-6 pb-6 pt-7 shadow-[0_1px_2px_rgba(46,10,82,0.04),_0_4px_12px_rgba(46,10,82,0.03)] transition-all hover:-translate-y-0.5 hover:shadow-[0_4px_12px_rgba(46,10,82,0.06),_0_12px_28px_rgba(46,10,82,0.06)]"
               >
-                <div className="flex items-start gap-3">
-                  <Icon
-                    className="mt-0.5 size-5 shrink-0 text-foreground/40"
-                    aria-hidden
-                  />
-                  <div className="flex-1">
-                    <h3 className="font-heading text-base font-medium leading-snug text-foreground md:text-lg">
-                      {t.label}
-                    </h3>
-                    <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">
-                      {DESCRICOES_BIBLIOTECA[t.key] ?? ""}
-                    </p>
-                  </div>
-                </div>
+                <span aria-hidden className={cn("absolute inset-x-0 top-0 h-1", tone.bar)} />
+                <span
+                  aria-hidden
+                  className={cn(
+                    "inline-flex size-9 items-center justify-center rounded-xl",
+                    tone.chip,
+                  )}
+                >
+                  <Icon className="size-[18px]" strokeWidth={1.8} />
+                </span>
+                <h3 className="mt-3 font-heading text-lg font-medium leading-snug text-foreground md:text-xl">
+                  {t.label}
+                </h3>
+                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                  {DESCRICOES_BIBLIOTECA[t.key] ?? ""}
+                </p>
                 <span className="mt-4 inline-flex items-center gap-1.5 text-xs font-semibold text-brand-purple transition-all group-hover:gap-2.5">
                   Ver
                   <ArrowRight className="size-3" aria-hidden />
