@@ -5,6 +5,11 @@ let _client: Stripe | null = null;
 /**
  * Cliente Stripe em singleton. Lança erro claro se a chave não estiver
  * configurada — pra não falhar com mensagem opaca em produção.
+ *
+ * Usa fetch-based HTTP client (em vez do default https do Node) — o
+ * default falha intermitentemente no runtime do Vercel com
+ * "StripeConnectionError: Request was retried 2 times". O fetch nativo
+ * (que /api/health já provou funcionar contra api.stripe.com) resolve.
  */
 export function getStripeClient(): Stripe {
   if (_client) return _client;
@@ -14,8 +19,9 @@ export function getStripeClient(): Stripe {
       "STRIPE_SECRET_KEY não configurada. Adicione em apps/web/.env.local.",
     );
   }
-  // apiVersion: usar a default — atualiza junto com o pacote stripe.
-  _client = new Stripe(apiKey);
+  _client = new Stripe(apiKey, {
+    httpClient: Stripe.createFetchHttpClient(),
+  });
   return _client;
 }
 
