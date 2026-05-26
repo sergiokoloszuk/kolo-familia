@@ -32,7 +32,7 @@ export function Tela6Confirmacao({
         <Tour
           icon={<MessageCircle className="size-5" aria-hidden="true" />}
           title="A Ayla já vai aparecer"
-          body="A primeira mensagem dela está saindo agora pro seu WhatsApp."
+          body="A primeira mensagem da Ayla está saindo agora pro seu WhatsApp."
         />
         <Tour
           icon={<Users className="size-5" aria-hidden="true" />}

@@ -146,19 +146,6 @@ export default function PrivacidadePage() {
             </a>
           </p>
         </section>
-
-        <section className="border-t border-kolo-linha pt-6">
-          <p className="font-heading text-base text-foreground">
-            A Kolo Família existe para apoiar quem cuida.
-          </p>
-          <p className="font-heading text-base text-foreground">
-            Não substituímos profissionais.
-          </p>
-          <p className="font-heading text-base text-foreground">
-            Fortalecemos a rede de apoio da criança com método, direção e
-            continuidade.
-          </p>
-        </section>
       </div>
     </article>
   );

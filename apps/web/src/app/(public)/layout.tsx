@@ -79,6 +79,22 @@ export default function PublicLayout({ children }: { children: ReactNode }) {
 
       {/* Footer obrigatório — Manual §17: fundo roxo-deep + contatos oficiais. */}
       <footer className="bg-brand-purple-deep text-white/70">
+        {/* Bloco editorial: missão e posicionamento da Kolo Família. */}
+        <div className="border-b border-white/10">
+          <div className="mx-auto w-full max-w-7xl px-6 py-12 md:px-8 md:py-14">
+            <div className="flex flex-col gap-2 text-white">
+              <p className="font-heading text-xl leading-snug md:text-2xl">
+                A Kolo Família existe para apoiar quem cuida.
+              </p>
+              <p className="font-heading text-xl leading-snug md:text-2xl">
+                Não substituímos profissionais.
+              </p>
+              <p className="font-heading text-xl leading-snug text-white/80 md:text-2xl">
+                Fortalecemos a rede de apoio da criança com método, direção e continuidade.
+              </p>
+            </div>
+          </div>
+        </div>
         <div className="mx-auto grid w-full max-w-7xl gap-10 px-6 py-16 md:grid-cols-[1.4fr_1fr_1fr] md:gap-12 md:px-8">
           <div className="flex flex-col gap-4">
             <Link href="/" aria-label="Página inicial Kolo Família">

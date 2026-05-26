@@ -63,8 +63,8 @@ export function Tela4QuickKoloVivo({
 
   return (
     <Explanation
-      o_que="Para cada pessoa atípica: desafios, interesses, uma conquista e como é o dia dela."
-      por_que="Isso já alimenta o Kolo Vivo dela e deixa a primeira conversa com a Ayla mais útil. A rotina aqui é a de cada criança — pode ser diferente entre os filhos."
+      o_que="Para cada pessoa atípica: desafios, interesses, uma conquista e como é o dia dessa pessoa."
+      por_que="Isso já alimenta o Kolo Vivo de cada uma e deixa a primeira conversa com a Ayla mais útil. A rotina aqui é a de cada criança — pode ser diferente entre os filhos."
       proximo="Em seguida, termos de uso e a permissão pra Ayla aparecer no WhatsApp."
     >
       <form onSubmit={handleSubmit(submit)} className="flex flex-col gap-6" noValidate>
@@ -115,7 +115,7 @@ export function Tela4QuickKoloVivo({
 
                 <div>
                   <Label htmlFor={`rotina-${mi}`} className="text-sm font-medium">
-                    Como é o dia dela? (opcional)
+                    Como é o dia de {membro.nome}? (opcional)
                   </Label>
                   <textarea
                     id={`rotina-${mi}`}

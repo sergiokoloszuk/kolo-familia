@@ -102,22 +102,49 @@ export async function registrarDia(input: RegistrarDiaInput): Promise<void> {
   if (temCamadaA && data.membroAtipicoId) {
     const temCamadaB = Boolean(data.quemEstava || data.estadoAdulto || data.reacaoAdulto);
     const incompleto = Boolean(data.conquista || data.desafio) && !temCamadaB;
+    const conquista = data.conquista?.trim() || null;
+    const desafio = data.desafio?.trim() || null;
+    const observacao_livre = data.observacaoLivre?.trim() || null;
 
-    const { error } = await supabase.from("diarios").insert({
+    // Dedup: se já existe um diário hoje pra esse membro/origem com o MESMO
+    // conteúdo (conquista + desafio + observação), atualiza em vez de inserir.
+    // Evita duplicação por double-click no botão. Não impede o usuário de
+    // registrar coisas diferentes no mesmo dia (textos distintos = nova linha).
+    const { data: dup } = await supabase
+      .from("diarios")
+      .select("id")
+      .eq("family_account_id", family.id)
+      .eq("membro_atipico_id", data.membroAtipicoId)
+      .eq("data", data.data)
+      .eq("origem", "app")
+      .match({ conquista, desafio, observacao_livre })
+      .maybeSingle();
+
+    const payload = {
       family_account_id: family.id,
       membro_atipico_id: data.membroAtipicoId,
       data: data.data,
-      conquista: data.conquista?.trim() || null,
-      desafio: data.desafio?.trim() || null,
-      observacao_livre: data.observacaoLivre?.trim() || null,
+      conquista,
+      desafio,
+      observacao_livre,
       possivel_gatilho: data.possivelGatilho?.trim() || null,
       quem_estava: data.quemEstava ?? null,
       estado_adulto: data.estadoAdulto ?? null,
       reacao_adulto: data.reacaoAdulto ?? null,
       origem: "app",
       incompleto,
-    });
-    if (error) throw new Error(`Erro ao salvar registro do dia: ${error.message}`);
+    };
+
+    if (dup) {
+      const { error } = await supabase
+        .from("diarios")
+        .update(payload)
+        .eq("id", dup.id);
+      if (error) throw new Error(`Erro ao atualizar registro do dia: ${error.message}`);
+    } else {
+      const { error } = await supabase.from("diarios").insert(payload);
+      if (error) throw new Error(`Erro ao salvar registro do dia: ${error.message}`);
+    }
   }
 
   revalidatePath("/painel");

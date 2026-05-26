@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -84,6 +85,23 @@ export function DiarioForm({
     setSucesso(false);
   }
 
+  function resetar() {
+    setForm({
+      membroAtipicoId: membros[0]?.id ?? null,
+      escalaEmocionalMae: "neutro",
+      escalaEmocionalMembro: null,
+      conquista: "",
+      desafio: "",
+      observacaoLivre: "",
+      possivelGatilho: "",
+      quemEstava: null,
+      estadoAdulto: null,
+      reacaoAdulto: null,
+    });
+    setSucesso(false);
+    setErro(null);
+  }
+
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setErro(null);
@@ -114,16 +132,42 @@ export function DiarioForm({
     form.conquista.trim() || form.desafio.trim() || form.observacaoLivre.trim(),
   );
 
+  if (sucesso) {
+    return (
+      <div className="flex flex-col items-start gap-6 rounded-2xl border-l-4 border-brand-yellow bg-brand-yellow/10 p-6">
+        <div className="flex items-start gap-3">
+          <span
+            aria-hidden
+            className="grid size-10 shrink-0 place-items-center rounded-full bg-brand-yellow text-brand-purple-dark"
+          >
+            <Check className="size-5" strokeWidth={2.5} />
+          </span>
+          <div>
+            <p className="font-heading text-lg font-semibold text-brand-purple-dark">
+              Registrado!
+            </p>
+            <p className="mt-1 text-sm text-foreground/80">
+              Já entrou no seu painel e na linha do tempo da Evolução.
+            </p>
+          </div>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <Button type="button" onClick={() => router.push("/painel")}>
+            Ver no painel
+          </Button>
+          <Button type="button" variant="outline" onClick={resetar}>
+            Registrar outro
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-6">
       {erro && (
         <div className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
           {erro}
-        </div>
-      )}
-      {sucesso && (
-        <div className="rounded-md border border-green-300/60 bg-green-50 px-3 py-2 text-sm text-green-900">
-          Registrado.
         </div>
       )}
 
