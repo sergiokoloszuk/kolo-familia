@@ -764,6 +764,64 @@ async function processarComando(
 }
 
 // ============================================================
+// Aplicação direta de sugestão de Kolo Vivo no membro
+// (auto-incorporação — Sérgio 2026-05-26: sem aprovação humana)
+// ============================================================
+
+/**
+ * Anexa o `texto` ao campo correto do `perfil_vivo_membro` (toplevel ou
+ * categorias_extras, decidido por membroCampoStorage). Devolve true se o
+ * upsert deu certo. Idempotente via appendFato (não duplica substring).
+ *
+ * Usado tanto pela auto-incorporação em persistirRegistro quanto pelo
+ * confirmarSugestaoPendente (fluxo legado "sim" no WhatsApp).
+ */
+async function aplicarSugestaoNoMembro(
+  supabase: SupabaseClient,
+  familyId: string,
+  membroId: string,
+  campo: string,
+  textoSugerido: string,
+): Promise<boolean> {
+  const storage = membroCampoStorage(campo);
+  if (storage === null) return false;
+
+  const { data: atual } = await supabase
+    .from("perfil_vivo_membro")
+    .select(
+      "essencial, como_e, corpo_rotina, desafios_regulacao, sensorial, categorias_extras",
+    )
+    .eq("membro_atipico_id", membroId)
+    .maybeSingle();
+
+  const now = new Date().toISOString();
+  let patch: Record<string, unknown>;
+  if (storage === "toplevel") {
+    const secaoAtual = (atual as Record<string, SecaoJson> | null)?.[campo] ?? {};
+    const novoTexto = appendFato(secaoAtual?.texto ?? "", textoSugerido);
+    patch = { [campo]: { ...secaoAtual, texto: novoTexto, atualizado_em: now } };
+  } else {
+    const extras = {
+      ...((atual?.categorias_extras as Record<string, unknown>) ?? {}),
+    };
+    const secaoAtual = (extras[campo] as SecaoJson) ?? {};
+    const novoTexto = appendFato(secaoAtual?.texto ?? "", textoSugerido);
+    extras[campo] = { ...secaoAtual, texto: novoTexto, atualizado_em: now };
+    patch = { categorias_extras: extras };
+  }
+
+  const { error } = await supabase.from("perfil_vivo_membro").upsert(
+    {
+      membro_atipico_id: membroId,
+      family_account_id: familyId,
+      ...patch,
+    },
+    { onConflict: "membro_atipico_id" },
+  );
+  return !error;
+}
+
+// ============================================================
 // Persistência de registro derivado do parser
 // ============================================================
 
@@ -830,16 +888,31 @@ async function persistirRegistro(
     );
   }
 
-  // 3. Sugestão de Kolo Vivo
+  // 3. Sugestão de Kolo Vivo — AUTO-INCORPORAÇÃO direto no membro.
+  //    Decidido em 2026-05-26: info nova entra automática sem aprovação humana.
+  //    A linha em sugestao_perfil_vivos vira log de auditoria (status=aprovada,
+  //    auto=true). Se a aplicação falhar (campo desconhecido, etc.), fica
+  //    pendente pra revisão manual via Kolo Vivo card.
   if (p.sugestao_kolo_vivo && p.texto_kolo_vivo_sugerido) {
+    const campo = p.campo_kolo_vivo_sugerido ?? "como_e";
+    const aplicou = await aplicarSugestaoNoMembro(
+      supabase,
+      familyId,
+      p.membro_atipico_id,
+      campo,
+      p.texto_kolo_vivo_sugerido,
+    );
+    const agora = new Date().toISOString();
     await supabase.from("sugestao_perfil_vivos").insert({
       family_account_id: familyId,
       membro_atipico_id: p.membro_atipico_id,
       camada: "camada1",
-      campo: p.campo_kolo_vivo_sugerido ?? "como_e",
+      campo,
       texto_sugerido: p.texto_kolo_vivo_sugerido,
       origem: "ayla",
-      origem_detalhe: { confianca: p.confianca },
+      origem_detalhe: { confianca: p.confianca, auto: true },
+      status: aplicou ? "aprovada" : "pendente",
+      decidido_em: aplicou ? agora : null,
     });
   }
 }
@@ -955,40 +1028,14 @@ async function confirmarSugestaoPendente(
   const now = new Date().toISOString();
 
   if (sug.camada === "camada1" && sug.membro_atipico_id) {
-    const storage = membroCampoStorage(sug.campo);
-    if (storage === null) return null;
-    const { data: atual } = await supabase
-      .from("perfil_vivo_membro")
-      .select(
-        "essencial, como_e, corpo_rotina, desafios_regulacao, sensorial, categorias_extras",
-      )
-      .eq("membro_atipico_id", sug.membro_atipico_id)
-      .maybeSingle();
-
-    let patch: Record<string, unknown>;
-    if (storage === "toplevel") {
-      const secaoAtual = (atual as Record<string, SecaoJson> | null)?.[sug.campo] ?? {};
-      const novoTexto = appendFato(secaoAtual?.texto ?? "", sug.texto_sugerido);
-      patch = { [sug.campo]: { ...secaoAtual, texto: novoTexto, atualizado_em: now } };
-    } else {
-      const extras = {
-        ...((atual?.categorias_extras as Record<string, unknown>) ?? {}),
-      };
-      const secaoAtual = (extras[sug.campo] as SecaoJson) ?? {};
-      const novoTexto = appendFato(secaoAtual?.texto ?? "", sug.texto_sugerido);
-      extras[sug.campo] = { ...secaoAtual, texto: novoTexto, atualizado_em: now };
-      patch = { categorias_extras: extras };
-    }
-
-    const { error } = await supabase.from("perfil_vivo_membro").upsert(
-      {
-        membro_atipico_id: sug.membro_atipico_id,
-        family_account_id: familyId,
-        ...patch,
-      },
-      { onConflict: "membro_atipico_id" },
+    const ok = await aplicarSugestaoNoMembro(
+      supabase,
+      familyId,
+      sug.membro_atipico_id,
+      sug.campo,
+      sug.texto_sugerido,
     );
-    if (error) return null;
+    if (!ok) return null;
   } else if (sug.camada === "camada2") {
     if (!CAMPOS_FAMILIA.includes(sug.campo)) return null;
     const { data: atual } = await supabase
