@@ -10,6 +10,15 @@ import { createServiceRoleClient } from "@/lib/supabase/server";
 export async function GET() {
   const t0 = Date.now();
 
+  const stripeKey = process.env.STRIPE_SECRET_KEY ?? "";
+  const stripeMode = stripeKey.startsWith("sk_live_")
+    ? "live"
+    : stripeKey.startsWith("sk_test_")
+      ? "test"
+      : stripeKey
+        ? "unknown"
+        : "missing";
+
   const env = {
     supabase_url: Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL),
     supabase_anon: Boolean(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY),
@@ -17,6 +26,7 @@ export async function GET() {
     anthropic: Boolean(process.env.ANTHROPIC_API_KEY),
     openai: Boolean(process.env.OPENAI_API_KEY),
     stripe_secret: Boolean(process.env.STRIPE_SECRET_KEY),
+    stripe_secret_mode: stripeMode,
     zapi_token: Boolean(process.env.ZAPI_TOKEN),
     cron_secret: Boolean(process.env.CRON_SECRET),
   };
