@@ -113,9 +113,8 @@ export function parseZapiWebhook(payload: unknown): InboundWhatsApp | null {
     pickString(p.message) ??
     pickString(p.body) ??
     "";
-  if (!texto.trim()) return null;
 
-  // Mídia (opcional — Ayla apenas arquiva por ora)
+  // Mídia (opcional)
   const midiaUrl =
     pickString(p.mediaUrl) ??
     pickString((p.image as Record<string, unknown> | undefined)?.imageUrl) ??
@@ -124,6 +123,11 @@ export function parseZapiWebhook(payload: unknown): InboundWhatsApp | null {
     ? (typeof p.mediaType === "string" && p.mediaType) ||
       (p.image ? "image" : p.audio ? "audio" : "outro")
     : undefined;
+
+  // Aceita mensagem se tem texto OU áudio (vai ser transcrito downstream).
+  // Mídia sem áudio (foto, vídeo) sem caption continua sendo ignorada por ora.
+  const ehAudio = midiaUrl && midiaTipo === "audio";
+  if (!texto.trim() && !ehAudio) return null;
 
   // Timestamp
   const tsMs =

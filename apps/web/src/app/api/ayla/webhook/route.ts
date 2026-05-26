@@ -1,7 +1,8 @@
 import { NextResponse, type NextRequest, after } from "next/server";
 import { createServiceRoleClient } from "@/lib/supabase/server";
-import { parseZapiWebhook } from "@/lib/ayla/whatsappSender";
+import { enviarTexto, parseZapiWebhook } from "@/lib/ayla/whatsappSender";
 import { processInbound } from "@/lib/ayla/orchestrator";
+import { transcreverAudio } from "@/lib/ayla/transcribe";
 
 // A resposta da Ayla agora passa por IA (Sonnet), que leva alguns segundos.
 // Damos tempo ao processamento em background; ver `after()` abaixo.
@@ -50,7 +51,37 @@ export async function POST(request: NextRequest) {
   // respostas quando o processamento ficava lento com a IA).
   after(async () => {
     try {
-      await processInbound(supabase, inbound);
+      let inboundFinal = inbound;
+
+      // Áudio puro (sem texto) → STT via Whisper. Em caso de falha, manda
+      // fallback amigável e não tenta processar (parser não funciona vazio).
+      if (
+        !inbound.texto.trim() &&
+        inbound.midiaUrl &&
+        inbound.midiaTipo === "audio"
+      ) {
+        const transcrito = await transcreverAudio(inbound.midiaUrl);
+        if (transcrito) {
+          console.log(
+            `[ayla webhook] áudio transcrito (${transcrito.length} chars)`,
+          );
+          inboundFinal = { ...inbound, texto: transcrito };
+        } else {
+          console.warn("[ayla webhook] transcrição falhou — enviando fallback");
+          try {
+            await enviarTexto({
+              phoneE164: inbound.phoneE164,
+              texto:
+                "Não consegui ouvir o áudio agora 🌿 Pode mandar de novo, ou escrever em texto?",
+            });
+          } catch {
+            /* fallback é best-effort */
+          }
+          return;
+        }
+      }
+
+      await processInbound(supabase, inboundFinal);
     } catch (e) {
       console.error(`[ayla webhook] erro no processamento:`, e instanceof Error ? e.message : e);
     }
