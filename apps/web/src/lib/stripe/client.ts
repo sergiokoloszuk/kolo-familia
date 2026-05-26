@@ -13,7 +13,9 @@ let _client: Stripe | null = null;
  */
 export function getStripeClient(): Stripe {
   if (_client) return _client;
-  const apiKey = process.env.STRIPE_SECRET_KEY;
+  // .trim() pra blindar contra valor pastado com \n no final no Vercel
+  // (caso clássico: "No such price: 'price_xxx\n'").
+  const apiKey = process.env.STRIPE_SECRET_KEY?.trim();
   if (!apiKey) {
     throw new Error(
       "STRIPE_SECRET_KEY não configurada. Adicione em apps/web/.env.local.",
@@ -26,8 +28,8 @@ export function getStripeClient(): Stripe {
 }
 
 export const STRIPE_PRICE = {
-  mensal: process.env.STRIPE_PRICE_ID_MENSAL || "",
-  anual: process.env.STRIPE_PRICE_ID_ANUAL || "",
+  mensal: process.env.STRIPE_PRICE_ID_MENSAL?.trim() || "",
+  anual: process.env.STRIPE_PRICE_ID_ANUAL?.trim() || "",
 } as const;
 
 export type PlanoTipo = keyof typeof STRIPE_PRICE;
