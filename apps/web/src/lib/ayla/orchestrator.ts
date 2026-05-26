@@ -6,6 +6,7 @@ import { parseInbound, detectarComando } from "./parser";
 import { membroCampoStorage } from "@/lib/kolo-vivo/campos";
 import { gerarRespostaAyla, type RespostaParams } from "./responder";
 import { gerarSugestaoRepertorio } from "./repertorio";
+import { decidirDedup } from "./dedup-kolo-vivo";
 import {
   templateBoasVindas,
   templateRotinaDiaria,
@@ -769,19 +770,25 @@ async function processarComando(
 // ============================================================
 
 /**
- * Anexa o `texto` ao campo correto do `perfil_vivo_membro` (toplevel ou
+ * Aplica um fato no campo correto do `perfil_vivo_membro` (toplevel ou
  * categorias_extras, decidido por membroCampoStorage). Devolve true se o
- * upsert deu certo. Idempotente via appendFato (não duplica substring).
+ * upsert deu certo.
  *
- * Usado tanto pela auto-incorporação em persistirRegistro quanto pelo
- * confirmarSugestaoPendente (fluxo legado "sim" no WhatsApp).
+ * `operacao`:
+ *  - "adicionar" (default): appendFato — anexa, dedupando por substring.
+ *  - "reescrever": substitui o texto da seção pelo `texto` recebido
+ *    (usado pelo dedup semântico quando o fato sobrepõe/refina o existente).
+ *
+ * Usado tanto pela auto-incorporação (persistirRegistro) quanto pelo
+ * fluxo legado "sim" no WhatsApp (confirmarSugestaoPendente).
  */
 async function aplicarSugestaoNoMembro(
   supabase: SupabaseClient,
   familyId: string,
   membroId: string,
   campo: string,
-  textoSugerido: string,
+  texto: string,
+  operacao: "adicionar" | "reescrever" = "adicionar",
 ): Promise<boolean> {
   const storage = membroCampoStorage(campo);
   if (storage === null) return false;
@@ -798,14 +805,20 @@ async function aplicarSugestaoNoMembro(
   let patch: Record<string, unknown>;
   if (storage === "toplevel") {
     const secaoAtual = (atual as Record<string, SecaoJson> | null)?.[campo] ?? {};
-    const novoTexto = appendFato(secaoAtual?.texto ?? "", textoSugerido);
+    const novoTexto =
+      operacao === "reescrever"
+        ? texto.trim()
+        : appendFato(secaoAtual?.texto ?? "", texto);
     patch = { [campo]: { ...secaoAtual, texto: novoTexto, atualizado_em: now } };
   } else {
     const extras = {
       ...((atual?.categorias_extras as Record<string, unknown>) ?? {}),
     };
     const secaoAtual = (extras[campo] as SecaoJson) ?? {};
-    const novoTexto = appendFato(secaoAtual?.texto ?? "", textoSugerido);
+    const novoTexto =
+      operacao === "reescrever"
+        ? texto.trim()
+        : appendFato(secaoAtual?.texto ?? "", texto);
     extras[campo] = { ...secaoAtual, texto: novoTexto, atualizado_em: now };
     patch = { categorias_extras: extras };
   }
@@ -819,6 +832,25 @@ async function aplicarSugestaoNoMembro(
     { onConflict: "membro_atipico_id" },
   );
   return !error;
+}
+
+/** Lê o texto atual de uma seção, considerando toplevel vs categorias_extras. */
+function lerTextoAtualDaSecao(
+  row: Record<string, unknown> | null | undefined,
+  campo: string,
+): string {
+  if (!row) return "";
+  const storage = membroCampoStorage(campo);
+  if (storage === "toplevel") {
+    const sec = row[campo] as SecaoJson;
+    return sec?.texto?.trim() ?? "";
+  }
+  if (storage === "extras") {
+    const extras = (row.categorias_extras as Record<string, unknown>) ?? {};
+    const sec = extras[campo] as SecaoJson;
+    return sec?.texto?.trim() ?? "";
+  }
+  return "";
 }
 
 // ============================================================
@@ -888,32 +920,84 @@ async function persistirRegistro(
     );
   }
 
-  // 3. Sugestão de Kolo Vivo — AUTO-INCORPORAÇÃO direto no membro.
+  // 3. Sugestão de Kolo Vivo — AUTO-INCORPORAÇÃO com DEDUP SEMÂNTICO.
   //    Decidido em 2026-05-26: info nova entra automática sem aprovação humana.
-  //    A linha em sugestao_perfil_vivos vira log de auditoria (status=aprovada,
-  //    auto=true). Se a aplicação falhar (campo desconhecido, etc.), fica
-  //    pendente pra revisão manual via Kolo Vivo card.
+  //    O Haiku compara o fato novo com o texto atual da seção e decide entre
+  //    adicionar / reescrever / skip — evita duplicar paráfrase. A linha em
+  //    sugestao_perfil_vivos vira log de auditoria (status=aprovada se
+  //    aplicou, rejeitada se skip, pendente se campo desconhecido).
   if (p.sugestao_kolo_vivo && p.texto_kolo_vivo_sugerido) {
     const campo = p.campo_kolo_vivo_sugerido ?? "como_e";
-    const aplicou = await aplicarSugestaoNoMembro(
-      supabase,
-      familyId,
-      p.membro_atipico_id,
-      campo,
-      p.texto_kolo_vivo_sugerido,
-    );
+    const storage = membroCampoStorage(campo);
     const agora = new Date().toISOString();
-    await supabase.from("sugestao_perfil_vivos").insert({
-      family_account_id: familyId,
-      membro_atipico_id: p.membro_atipico_id,
-      camada: "camada1",
-      campo,
-      texto_sugerido: p.texto_kolo_vivo_sugerido,
-      origem: "ayla",
-      origem_detalhe: { confianca: p.confianca, auto: true },
-      status: aplicou ? "aprovada" : "pendente",
-      decidido_em: aplicou ? agora : null,
-    });
+
+    if (storage === null) {
+      // Campo desconhecido — deixa pendente pra revisão manual via card.
+      await supabase.from("sugestao_perfil_vivos").insert({
+        family_account_id: familyId,
+        membro_atipico_id: p.membro_atipico_id,
+        camada: "camada1",
+        campo,
+        texto_sugerido: p.texto_kolo_vivo_sugerido,
+        origem: "ayla",
+        origem_detalhe: {
+          confianca: p.confianca,
+          auto: true,
+          motivo: "campo_desconhecido",
+        },
+        status: "pendente",
+      });
+    } else {
+      const { data: rowAtual } = await supabase
+        .from("perfil_vivo_membro")
+        .select(
+          "essencial, como_e, corpo_rotina, desafios_regulacao, sensorial, categorias_extras",
+        )
+        .eq("membro_atipico_id", p.membro_atipico_id)
+        .maybeSingle();
+      const textoAtual = lerTextoAtualDaSecao(rowAtual, campo);
+
+      const decisao = await decidirDedup({
+        campo,
+        textoSugerido: p.texto_kolo_vivo_sugerido,
+        textoAtual,
+      });
+
+      let aplicou = false;
+      if (decisao.operacao !== "skip" && decisao.texto.trim()) {
+        aplicou = await aplicarSugestaoNoMembro(
+          supabase,
+          familyId,
+          p.membro_atipico_id,
+          campo,
+          decisao.texto,
+          decisao.operacao,
+        );
+      }
+
+      await supabase.from("sugestao_perfil_vivos").insert({
+        family_account_id: familyId,
+        membro_atipico_id: p.membro_atipico_id,
+        camada: "camada1",
+        campo,
+        texto_sugerido: p.texto_kolo_vivo_sugerido,
+        origem: "ayla",
+        origem_detalhe: {
+          confianca: p.confianca,
+          auto: true,
+          operacao: decisao.operacao,
+          texto_aplicado: decisao.operacao === "skip" ? null : decisao.texto,
+        },
+        status:
+          decisao.operacao === "skip"
+            ? "rejeitada"
+            : aplicou
+              ? "aprovada"
+              : "pendente",
+        decidido_em:
+          decisao.operacao === "skip" || aplicou ? agora : null,
+      });
+    }
   }
 }
 
