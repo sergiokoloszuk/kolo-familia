@@ -1,11 +1,12 @@
 import Link from "next/link";
 import { differenceInCalendarDays } from "date-fns";
-import { Sprout } from "lucide-react";
+import { Eye, Sprout, Target, Trophy, type LucideIcon } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { EstadoVazio } from "@/components/brand/estado-vazio";
 import { Eyebrow } from "@/components/brand/eyebrow";
 import { loadFamilyContext } from "@/lib/auth/require-user";
 import { cn } from "@/lib/utils";
+import { DOMINIOS } from "../kolo-vivo/dominios";
 
 /**
  * Evolução (Fase 2) — leitura editorial do que foi mudando.
@@ -111,31 +112,79 @@ export default async function EvolucaoPage() {
   const { supabase, family } = await loadFamilyContext();
   const familyId = family!.id;
 
-  const [{ data: diarios }, { data: checkIns }, { data: relatorios }] =
-    await Promise.all([
-      supabase
-        .from("diarios")
-        .select(
-          "id, data, conquista, desafio, observacao_livre, possivel_gatilho, membros_atipicos(nome)",
-        )
-        .eq("family_account_id", familyId)
-        .order("data", { ascending: false })
-        .limit(100),
-      supabase
-        .from("check_ins_diarios")
-        .select("id, data, escala_emocional_mae")
-        .eq("family_account_id", familyId)
-        .order("data", { ascending: false })
-        .limit(100),
-      supabase
-        .from("relatorios_gerados")
-        .select(
-          "id, destinatario, janela_inicio, janela_fim, created_at, membros_atipicos(nome)",
-        )
-        .eq("family_account_id", familyId)
-        .order("created_at", { ascending: false })
-        .limit(30),
-    ]);
+  const dias30AtrasIso = new Date(
+    new Date().getTime() - 30 * 24 * 60 * 60 * 1000,
+  ).toISOString();
+  const dias30AtrasData = dias30AtrasIso.slice(0, 10);
+
+  const [
+    { data: diarios },
+    { data: checkIns },
+    { data: relatorios },
+    { count: padroesCount },
+    { data: perfis },
+  ] = await Promise.all([
+    supabase
+      .from("diarios")
+      .select(
+        "id, data, conquista, desafio, observacao_livre, possivel_gatilho, membros_atipicos(nome)",
+      )
+      .eq("family_account_id", familyId)
+      .order("data", { ascending: false })
+      .limit(100),
+    supabase
+      .from("check_ins_diarios")
+      .select("id, data, escala_emocional_mae")
+      .eq("family_account_id", familyId)
+      .order("data", { ascending: false })
+      .limit(100),
+    supabase
+      .from("relatorios_gerados")
+      .select(
+        "id, destinatario, janela_inicio, janela_fim, created_at, membros_atipicos(nome)",
+      )
+      .eq("family_account_id", familyId)
+      .order("created_at", { ascending: false })
+      .limit(30),
+    supabase
+      .from("ayla_padroes")
+      .select("id", { count: "exact", head: true })
+      .eq("family_account_id", familyId)
+      .gte("created_at", dias30AtrasIso),
+    supabase
+      .from("perfil_vivo_membro")
+      .select("sensorial, desafios_regulacao, corpo_rotina, categorias_extras")
+      .eq("family_account_id", familyId),
+  ]);
+
+  // Resumo (3 cards do topo) — peso visual do protótipo, dados reais.
+  const conquistas30d = (diarios ?? []).filter(
+    (d) => d.conquista && d.conquista.trim().length > 0 && d.data >= dias30AtrasData,
+  ).length;
+
+  const dominiosComMovimento = new Set<string>();
+  const textoDe = (v: unknown): string => {
+    if (!v || typeof v !== "object") return "";
+    const t = (v as { texto?: unknown }).texto;
+    return typeof t === "string" ? t : "";
+  };
+  for (const row of perfis ?? []) {
+    const extras = (row.categorias_extras as Record<string, unknown> | null) ?? {};
+    for (const d of DOMINIOS) {
+      const principal =
+        d.storage === "toplevel"
+          ? textoDe((row as Record<string, unknown>)[d.key])
+          : textoDe(extras[d.key]);
+      const legacy = d.legacyFallback
+        ? textoDe((row as Record<string, unknown>)[d.legacyFallback])
+        : "";
+      if (principal.trim().length > 10 || legacy.trim().length > 10) {
+        dominiosComMovimento.add(d.key);
+      }
+    }
+  }
+  const padroes30d = padroesCount ?? 0;
+  const temAlgumResumo = conquistas30d + dominiosComMovimento.size + padroes30d > 0;
 
   const eventos: TimelineEvento[] = [];
 
@@ -210,6 +259,33 @@ export default async function EvolucaoPage() {
           O que apareceu, o que ficou, o que vai mudando — aos poucos.
         </p>
       </header>
+
+      {temAlgumResumo && (
+        <section className="grid gap-4 sm:grid-cols-3">
+          <ResumoCard
+            icon={Trophy}
+            num={conquistas30d}
+            label="Conquistas registradas nos últimos 30 dias"
+            bar="bg-cat-social"
+            chip="bg-cat-social-bg text-cat-social"
+          />
+          <ResumoCard
+            icon={Target}
+            num={dominiosComMovimento.size}
+            sufixo="áreas"
+            label="Domínios do Kolo Vivo com movimento"
+            bar="bg-cat-foco"
+            chip="bg-cat-foco-bg text-cat-foco"
+          />
+          <ResumoCard
+            icon={Eye}
+            num={padroes30d}
+            label="Padrões detectados pela Ayla no mês"
+            bar="bg-cat-sensorial"
+            chip="bg-cat-sensorial-bg text-cat-sensorial"
+          />
+        </section>
+      )}
 
       <section>
         <h2 className="font-heading text-2xl text-foreground">
@@ -301,6 +377,50 @@ function BucketSection({
         ))}
       </ul>
     </section>
+  );
+}
+
+// ============================================================
+// Resumo cards do topo — peso visual do protótipo (evolucao-hero)
+// ============================================================
+
+function ResumoCard({
+  icon: Icon,
+  num,
+  sufixo,
+  label,
+  bar,
+  chip,
+}: {
+  icon: LucideIcon;
+  num: number;
+  sufixo?: string;
+  label: string;
+  bar: string;
+  chip: string;
+}) {
+  return (
+    <article className="relative overflow-hidden rounded-3xl bg-white px-6 pb-6 pt-7 shadow-[0_1px_2px_rgba(46,10,82,0.04),_0_4px_12px_rgba(46,10,82,0.03)]">
+      <span aria-hidden className={cn("absolute inset-x-0 top-0 h-1", bar)} />
+      <span
+        aria-hidden
+        className={cn(
+          "inline-flex size-10 items-center justify-center rounded-xl",
+          chip,
+        )}
+      >
+        <Icon className="size-5" strokeWidth={1.8} />
+      </span>
+      <div className="mt-4 font-heading text-4xl font-medium leading-none tracking-tight text-foreground">
+        {num}
+        {sufixo && (
+          <span className="ml-2 text-base font-normal text-muted-foreground">
+            {sufixo}
+          </span>
+        )}
+      </div>
+      <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{label}</p>
+    </article>
   );
 }
 
