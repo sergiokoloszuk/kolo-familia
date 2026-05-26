@@ -19,12 +19,13 @@ export function AssinaturaActions({
     setErro(null);
     setPendingAcao(`checkout-${plano}`);
     startTransition(async () => {
-      try {
-        await iniciarCheckout({ plano });
-      } catch (e) {
-        setErro(traduzirErro(e instanceof Error ? e.message : "Erro inesperado"));
+      const r = await iniciarCheckout({ plano });
+      if (!r.ok) {
+        setErro(traduzirErro(r.error));
         setPendingAcao(null);
+        return;
       }
+      window.location.assign(r.url);
     });
   }
 
@@ -32,12 +33,13 @@ export function AssinaturaActions({
     setErro(null);
     setPendingAcao("portal");
     startTransition(async () => {
-      try {
-        await abrirPortal();
-      } catch (e) {
-        setErro(traduzirErro(e instanceof Error ? e.message : "Erro inesperado"));
+      const r = await abrirPortal();
+      if (!r.ok) {
+        setErro(traduzirErro(r.error));
         setPendingAcao(null);
+        return;
       }
+      window.location.assign(r.url);
     });
   }
 

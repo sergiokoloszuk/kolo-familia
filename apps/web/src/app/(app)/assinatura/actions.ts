@@ -1,7 +1,6 @@
 "use server";
 
 import { headers } from "next/headers";
-import { redirect } from "next/navigation";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { getStripeClient, priceIdFor, type PlanoTipo } from "@/lib/stripe/client";
@@ -41,52 +40,84 @@ async function requireFamilyAndOrigin(): Promise<{
 
 const planoSchema = z.object({ plano: z.enum(["mensal", "anual"]) });
 
-export async function iniciarCheckout(input: { plano: PlanoTipo }) {
-  const { plano } = planoSchema.parse(input);
-  const { familyId, userEmail, origin } = await requireFamilyAndOrigin();
+export type CheckoutResult =
+  | { ok: true; url: string }
+  | { ok: false; error: string };
 
-  const supabase = await createClient();
-  const { data: subAcc } = await supabase
-    .from("subscription_accesses")
-    .select("stripe_customer_id")
-    .eq("family_account_id", familyId)
-    .maybeSingle();
+/**
+ * Cria a sessão de checkout do Stripe e devolve a URL. O Next esconde a
+ * mensagem de exceções em produção ("Server Components render") — por isso
+ * retornamos Result em vez de throw, pra mãe ver o motivo real.
+ */
+export async function iniciarCheckout(
+  input: { plano: PlanoTipo },
+): Promise<CheckoutResult> {
+  try {
+    const { plano } = planoSchema.parse(input);
+    const { familyId, userEmail, origin } = await requireFamilyAndOrigin();
 
-  const stripe = getStripeClient();
-  const session = await stripe.checkout.sessions.create({
-    mode: "subscription",
-    line_items: [{ price: priceIdFor(plano), quantity: 1 }],
-    customer: subAcc?.stripe_customer_id ?? undefined,
-    customer_email: subAcc?.stripe_customer_id ? undefined : userEmail ?? undefined,
-    client_reference_id: familyId,
-    metadata: { family_account_id: familyId, plano },
-    subscription_data: { metadata: { family_account_id: familyId, plano } },
-    allow_promotion_codes: true,
-    success_url: `${origin}/assinatura?status=success&session_id={CHECKOUT_SESSION_ID}`,
-    cancel_url: `${origin}/assinatura?status=canceled`,
-  });
+    const supabase = await createClient();
+    const { data: subAcc } = await supabase
+      .from("subscription_accesses")
+      .select("stripe_customer_id")
+      .eq("family_account_id", familyId)
+      .maybeSingle();
 
-  if (!session.url) throw new Error("Stripe não retornou URL");
-  redirect(session.url);
+    const stripe = getStripeClient();
+    const session = await stripe.checkout.sessions.create({
+      mode: "subscription",
+      line_items: [{ price: priceIdFor(plano), quantity: 1 }],
+      customer: subAcc?.stripe_customer_id ?? undefined,
+      customer_email: subAcc?.stripe_customer_id ? undefined : userEmail ?? undefined,
+      client_reference_id: familyId,
+      metadata: { family_account_id: familyId, plano },
+      subscription_data: { metadata: { family_account_id: familyId, plano } },
+      allow_promotion_codes: true,
+      success_url: `${origin}/assinatura?status=success&session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${origin}/assinatura?status=canceled`,
+    });
+
+    if (!session.url) return { ok: false, error: "Stripe não retornou URL" };
+    return { ok: true, url: session.url };
+  } catch (e) {
+    return {
+      ok: false,
+      error: e instanceof Error ? e.message : "Erro desconhecido ao iniciar checkout",
+    };
+  }
 }
 
-export async function abrirPortal() {
-  const { familyId, origin } = await requireFamilyAndOrigin();
-  const supabase = await createClient();
-  const { data: subAcc } = await supabase
-    .from("subscription_accesses")
-    .select("stripe_customer_id")
-    .eq("family_account_id", familyId)
-    .maybeSingle();
+export type PortalResult =
+  | { ok: true; url: string }
+  | { ok: false; error: string };
 
-  if (!subAcc?.stripe_customer_id) {
-    throw new Error("Você ainda não tem assinatura paga. Use 'Assinar agora' primeiro.");
+export async function abrirPortal(): Promise<PortalResult> {
+  try {
+    const { familyId, origin } = await requireFamilyAndOrigin();
+    const supabase = await createClient();
+    const { data: subAcc } = await supabase
+      .from("subscription_accesses")
+      .select("stripe_customer_id")
+      .eq("family_account_id", familyId)
+      .maybeSingle();
+
+    if (!subAcc?.stripe_customer_id) {
+      return {
+        ok: false,
+        error: "Você ainda não tem assinatura paga. Use 'Assinar agora' primeiro.",
+      };
+    }
+
+    const stripe = getStripeClient();
+    const session = await stripe.billingPortal.sessions.create({
+      customer: subAcc.stripe_customer_id,
+      return_url: `${origin}/assinatura`,
+    });
+    return { ok: true, url: session.url };
+  } catch (e) {
+    return {
+      ok: false,
+      error: e instanceof Error ? e.message : "Erro desconhecido ao abrir o portal",
+    };
   }
-
-  const stripe = getStripeClient();
-  const session = await stripe.billingPortal.sessions.create({
-    customer: subAcc.stripe_customer_id,
-    return_url: `${origin}/assinatura`,
-  });
-  redirect(session.url);
 }
