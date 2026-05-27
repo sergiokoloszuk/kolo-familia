@@ -89,7 +89,7 @@ export async function gerarSugestaoRepertorio(
 function fallback(p: RepertorioParams): string {
   const i = p.interesses.find((x) => x.trim());
   if (!i) {
-    return `Tive uma ideia boba pra ${p.nomeMembro} 💛 Que tal experimentarem juntos algo novinho hoje — pode ser pequeno. Sem pressão; se topar, depois me conta como foi.`;
+    return `Tive uma ideia pra ${p.nomeMembro} 💛 Que tal experimentarem juntos algo novinho hoje — pode ser pequeno. Sem pressão: tentar já é uma vitória. Se topar, depois me conta como foi.`;
   }
-  return `Tive uma ideia pra ${p.nomeMembro} 💛 Ela ama ${i.trim()} — que tal brincar com isso de um jeito diferente hoje, testando algo novo no meio? Sem pressão: tentar já é uma vitória. Se topar, me conta depois como foi.`;
+  return `Tive uma ideia pra ${p.nomeMembro} 💛 Que tal misturar ${i.trim()} com algo novo hoje? Pode ser pequeno. Sem pressão: tentar já é uma vitória. Se topar, me conta depois como foi.`;
 }

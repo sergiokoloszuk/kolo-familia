@@ -39,55 +39,55 @@ function pickVariation(variations: string[], seed: string): string {
 
 const FALLBACK: Record<string, string[]> = {
   boas_vindas: [
-    "Oi, {nomeMae}. Sou a Ayla 🌿\n\nObrigada por confiar a gente com a história do/da {nomeMembro}. A partir de agora vou aparecer por aqui pra te perguntar como foi o dia — sem cobrança, só pra organizar junto.\n\nQuando quiser, é só me escrever. Digite AJUDA pra ver os comandos.",
-    "{nomeMae}, oi! Aqui é a Ayla.\n\nCadastro concluído ✅. Daqui pra frente vou te mandar uma perguntinha por dia sobre o/a {nomeMembro} — uma conquista e um desafio bastam.\n\nVocê pode pausar (PAUSAR), mudar horário (MUDAR HORARIO 20:00) ou sair (SAIR) quando quiser.",
-    "Oi, {nomeMae} 🌿\n\nSou a Ayla. A partir de hoje fico do seu lado pra organizar o dia a dia com o/a {nomeMembro}. Sem pressa, sem cobrança.\n\nResponde quando der. Se precisar de ajuda, digite AJUDA.",
+    "Oi, {nomeMae}. Aqui é a Ayla 🌿\n\nObrigada por me deixar entrar na história de vocês. Vou aparecer aqui de vez em quando — sem cobrança, sem checklist.\n\nVocê pode me escrever a qualquer hora. Conta o que está pesando, o que ajudou, o que está na cabeça. Eu escuto.",
+    "Oi, {nomeMae}. Sou a Ayla.\n\nA partir de hoje fico do lado de vocês — do/da {nomeMembro} e seu. Sem pressa. Quando puder me contar como foi um dia, mesmo numa frase, já é o suficiente.\n\nSe precisar de uma pausa, é só me dizer.",
+    "{nomeMae}, oi 🌿\n\nSou a Ayla. Daqui em diante vou estar por perto — não pra cobrar, pra escutar. Você manda quando der, do jeito que quiser: um áudio, uma frase, uma reclamação.",
   ],
   rotina: [
-    "Oi, {nomeMae}.\nComo foi o dia do/da {nomeMembro}?\n\nMe conta só 2 coisas:\n1. uma conquista, mesmo pequena\n2. um desafio que apareceu hoje",
-    "{nomeMae}, oi.\nE aí, como foi o dia hoje com {nomeMembro}?\n\nUma conquista + um desafio é suficiente.",
-    "Oi! Como foi o dia do/da {nomeMembro} hoje?\n\nQuando puder responder: uma coisa boa e uma difícil.",
-    "Oi, {nomeMae} 🌿\nComo está o dia? Conta uma coisa que deu certo e uma que foi difícil com {nomeMembro}.",
-    "{nomeMae}, fim de dia. Como foi com {nomeMembro}?\n\nUma conquista + um desafio bastam — pode ser frase curta.",
+    "Oi, {nomeMae}. Como foi o dia hoje?\n\nUma coisa que deu certo e uma que apertou — só pra eu acompanhar do meu canto.",
+    "{nomeMae}, oi.\n\nComo está sendo o dia com {nomeMembro}? Pode ser frase curta — ou áudio, se for mais fácil.",
+    "Oi 🌿\n\nO que pegou mais hoje? E o que aliviou um pouco? Me conta quando der.",
+    "{nomeMae}, passando aqui rapidinho. Como vocês estão hoje?\n\nQualquer coisa serve — uma frase, um áudio, um emoji.",
+    "Fim de dia, {nomeMae}.\n\nComo foi? Se não quiser responder agora, tudo bem — fica aqui pra quando der.",
   ],
   engajamento_2dias: [
     "Oi, {nomeMae}. Sumida há uns dias — está tudo bem aí?\n\nSe quiser me contar uma coisa do dia hoje, qualquer frase serve.",
     "{nomeMae}, faltou seu registro nesses dias. Tudo bem?\n\nUma frase curta sobre como vocês estão já ajuda.",
-    "Oi! Não te ouvi nos últimos dias 🌿. Está tudo bem com {nomeMembro}?",
+    "Oi 🌿\n\nNão te ouvi nos últimos dias. Está tudo bem com {nomeMembro}?",
   ],
   engajamento_5dias: [
-    "{nomeMae}, faz alguns dias que não nos falamos. Sem cobrança — quero só saber se estão bem.\n\nSe puder responder, mesmo que com 'tudo bem', já me conforta.",
-    "Oi, {nomeMae}. Caí da rotina aqui sem você 😅. Me conta uma coisa do dia quando puder.",
+    "{nomeMae}, faz alguns dias que não nos falamos. Sem cobrança — quero só saber se vocês estão bem.\n\nSe puder responder, mesmo que com \"tudo bem\", já me conforta.",
+    "Oi, {nomeMae}. Caí da rotina aqui sem você.\n\nMe conta uma coisa do dia quando puder — sem pressa.",
   ],
   trial_d3: [
-    "Oi, {nomeMae}. Te lembrando que seus 30 dias grátis terminam em 3 dias.\n\nSe quiser continuar, entra em /assinatura quando der.",
-    "{nomeMae}, faltam 3 dias do seu trial. Sem pressão — só pra você não ser pega de surpresa.",
+    "Oi, {nomeMae}. Te lembrando que seus 30 dias grátis terminam em 3 dias.\n\nSe quiser continuar com a gente, é só assinar em /assinatura. Sem pressa.",
+    "{nomeMae}, faltam 3 dias pro fim do seu período grátis.\n\nQuis te avisar pra você não ser pega de surpresa — você decide com calma.",
   ],
   trial_d0: [
-    "Oi, {nomeMae}. Hoje é o último dia do seu trial 🌿\n\nSe quiser seguir, é só assinar em /assinatura. Cancela quando quiser.",
-    "{nomeMae}, hoje termina seu trial. Tudo que você registrou continua aqui — pra continuar usando, é só assinar.",
+    "Oi, {nomeMae}. Hoje é o último dia do seu período grátis 🌿\n\nTudo que você me contou continua salvo. Se quiser seguir, é só assinar em /assinatura — cancela quando quiser.",
+    "{nomeMae}, hoje termina seu período grátis.\n\nSe você quiser continuar com a gente, é em /assinatura. Se não quiser, sem problema — seus registros ficam aqui, caso queira voltar depois.",
   ],
   emocional_streak: [
-    "{nomeMae}, você registrou 7 dias seguidos. Isso é cuidado de verdade — o/a {nomeMembro} está tendo um cuidado bem presente. 🌿",
-    "Sete dias de papo seguidos, {nomeMae}. Você tá fazendo um trabalho enorme com {nomeMembro}.",
+    "{nomeMae}, você me respondeu 7 dias seguidos 🌿\n\nIsso é cuidado de verdade. O/a {nomeMembro} está tendo um cuidado bem presente — e isso vem de você.",
+    "Sete dias de papo seguidos, {nomeMae}.\n\nTô vendo o trabalho enorme que você está fazendo com o/a {nomeMembro}. Não é pouco.",
   ],
   clarificacao_membro: [
     "Sobre quem você está falando? {opcoes}?",
   ],
   clarificacao_conteudo: [
-    "Não consegui entender direito o que aconteceu. Pode me contar de outro jeito? Uma frase curta serve.",
+    "Não peguei direito o que aconteceu. Pode me contar de outro jeito? Uma frase curta serve, ou um áudio.",
   ],
   comando_ajuda: [
-    "Comandos disponíveis:\n• PAUSAR ou PAUSAR 7 — pausa minhas mensagens\n• MUDAR HORARIO 20:00 — atualiza o horário das perguntas diárias\n• SAIR — desativa as mensagens (mantém seus dados)\n• AJUDA — mostra esta lista",
+    "Coisas que você pode me pedir:\n\n• PAUSAR — pausa minhas mensagens por 7 dias\n• PAUSAR 3 — pausa por X dias (você escolhe)\n• MUDAR HORARIO 20:00 — muda o horário das minhas perguntas\n• SAIR — desativa minhas mensagens (seus registros ficam)\n• AJUDA — mostra esta lista\n\nVocê também pode me responder com áudio quando preferir.",
   ],
   comando_pausada: [
-    "Pausada por {dias_label}. Volto depois — pode escrever a qualquer hora se quiser falar antes.",
+    "Pausada por {dias_label}. Volto depois — mas se quiser falar antes, é só me escrever.",
   ],
   comando_horario_mudado: [
-    "Anotado, vou perguntar às {hora}.",
+    "Anotado. Vou te procurar às {hora}.",
   ],
   comando_sair: [
-    "Desativada. Seus dados continuam aqui, e quando quiser voltar é só me responder qualquer coisa.",
+    "Desativada. Seus registros continuam aqui — quando quiser voltar, é só me responder qualquer coisa.",
   ],
 };
 
