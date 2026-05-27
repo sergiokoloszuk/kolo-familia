@@ -1,7 +1,9 @@
 "use client";
 
-import { useState } from "react";
-import { ChevronLeft, ChevronRight, BookOpen } from "lucide-react";
+import { useEffect, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
+import { ChevronLeft, ChevronRight, BookOpen, Trash2, RotateCw } from "lucide-react";
+import { excluirHistoria, incrementarLeituras, regenerarPagina } from "../actions";
 
 type Pagina = {
   ordem: number;
@@ -11,29 +13,74 @@ type Pagina = {
 };
 
 export function LeitorHistoria({
+  historiaId,
   titulo,
   capaUrl,
   paginas,
+  aviso,
 }: {
+  historiaId: string;
   titulo: string;
   capaUrl: string | null;
   paginas: Pagina[];
+  aviso: string | null;
 }) {
-  // Slide 0 = capa; slides 1..N = páginas.
+  const router = useRouter();
   const totalSlides = paginas.length + 1;
   const [i, setI] = useState(0);
+  const [pending, start] = useTransition();
+  const [erroAcao, setErroAcao] = useState<string | null>(null);
+
+  // Métrica leve: 1 leitura por abertura (não bloqueia o leitor).
+  useEffect(() => {
+    incrementarLeituras({ id: historiaId }).catch(() => {});
+  }, [historiaId]);
+
   if (paginas.length === 0) {
     return <p className="text-sm text-muted-foreground">Esta história ainda não tem páginas.</p>;
   }
   const naCapa = i === 0;
   const pagina = naCapa ? null : paginas[i - 1];
 
+  function excluir() {
+    if (!confirm("Apagar essa história? Não dá pra desfazer.")) return;
+    start(async () => {
+      const r = await excluirHistoria({ id: historiaId });
+      if (!r.ok) {
+        setErroAcao(r.error);
+        return;
+      }
+      router.push("/historias");
+    });
+  }
+
+  function regerar(ordem: number) {
+    setErroAcao(null);
+    start(async () => {
+      const r = await regenerarPagina({ historiaId, ordem });
+      if (!r.ok) {
+        setErroAcao(r.error);
+        return;
+      }
+      router.refresh();
+    });
+  }
+
   return (
     <div className="flex flex-col gap-5">
-      {/* Moldura de livro: fundo creme + página branca com sombra de livro */}
+      {aviso && (
+        <div className="rounded-xl border border-amber-300/60 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+          {aviso}
+        </div>
+      )}
+      {erroAcao && (
+        <div className="rounded-xl border border-destructive/40 bg-destructive/10 px-4 py-2 text-sm text-destructive">
+          {erroAcao}
+        </div>
+      )}
+
       <div className="rounded-[28px] bg-kolo-lilas-bg-2/50 p-3 sm:p-5">
         <div className="relative mx-auto max-w-2xl overflow-hidden rounded-2xl bg-white shadow-[0_2px_8px_rgba(46,10,82,0.06),0_18px_40px_rgba(46,10,82,0.14)]">
-          {/* "lombada" sutil à esquerda */}
           <div
             aria-hidden
             className="pointer-events-none absolute inset-y-0 left-0 z-10 w-2 bg-gradient-to-r from-black/15 to-transparent"
@@ -69,8 +116,17 @@ export function LeitorHistoria({
                   className="aspect-[4/3] w-full object-cover"
                 />
               ) : (
-                <div className="flex aspect-[4/3] w-full items-center justify-center bg-kolo-lilas-bg text-muted-foreground">
-                  (ilustração indisponível)
+                <div className="flex aspect-[4/3] w-full flex-col items-center justify-center gap-3 bg-kolo-lilas-bg text-muted-foreground">
+                  <span className="text-sm">Ilustração não saiu dessa vez.</span>
+                  <button
+                    type="button"
+                    onClick={() => regerar(pagina!.ordem)}
+                    disabled={pending}
+                    className="inline-flex items-center gap-1.5 rounded-full bg-white px-4 py-2 text-sm font-semibold text-brand-purple shadow-sm disabled:opacity-50"
+                  >
+                    <RotateCw className={`size-4 ${pending ? "animate-spin" : ""}`} aria-hidden />
+                    {pending ? "regerando…" : "Tentar de novo"}
+                  </button>
                 </div>
               )}
               <div className="flex flex-col items-center gap-4 px-6 py-7 text-center sm:px-10">
@@ -90,7 +146,6 @@ export function LeitorHistoria({
         </div>
       </div>
 
-      {/* Navegação */}
       <div className="flex items-center justify-between">
         <button
           type="button"
@@ -124,6 +179,17 @@ export function LeitorHistoria({
           className="inline-flex items-center gap-1.5 rounded-full bg-white px-4 py-2 text-sm font-semibold text-brand-purple shadow-sm transition-transform hover:translate-x-0.5 disabled:opacity-40"
         >
           {i === 0 ? "Começar" : "Próxima"} <ChevronRight className="size-4" aria-hidden />
+        </button>
+      </div>
+
+      <div className="flex justify-end">
+        <button
+          type="button"
+          onClick={excluir}
+          disabled={pending}
+          className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive disabled:opacity-50"
+        >
+          <Trash2 className="size-3.5" aria-hidden /> Apagar história
         </button>
       </div>
     </div>

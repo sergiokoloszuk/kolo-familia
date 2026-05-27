@@ -10,8 +10,9 @@ export default async function HistoriasPage() {
   const [{ data: historias }, { data: membros }] = await Promise.all([
     supabase
       .from("historias")
-      .select("id, titulo, capa_url, leituras, created_at")
+      .select("id, titulo, capa_url, leituras, status, created_at")
       .eq("family_account_id", family!.id)
+      .in("status", ["pronta", "gerando"]) // esconde status='erro'
       .order("created_at", { ascending: false }),
     supabase
       .from("membros_atipicos")
@@ -32,12 +33,14 @@ export default async function HistoriasPage() {
   })();
   const temAvatar = Boolean(avatarUrl);
   const lista = historias ?? [];
+  const temGerando = lista.some((h) => h.status === "gerando");
 
   return (
     <div className="flex flex-col gap-8">
-      {/* Portal "universo" */}
+      {/* "criando" no topo dá feedback enquanto o async roda */}
+      {temGerando && <meta httpEquiv="refresh" content="8" />}
+
       <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-brand-purple-deep via-brand-purple-dark to-brand-purple px-8 py-10 text-white">
-        {/* estrelas */}
         <div
           aria-hidden
           className="pointer-events-none absolute inset-0 opacity-70"
@@ -46,7 +49,6 @@ export default async function HistoriasPage() {
               "radial-gradient(1.5px 1.5px at 12% 20%, rgba(255,255,255,.7) 50%, transparent), radial-gradient(1.5px 1.5px at 85% 30%, rgba(255,186,0,.7) 50%, transparent), radial-gradient(1px 1px at 70% 75%, rgba(255,255,255,.6) 50%, transparent), radial-gradient(1px 1px at 30% 80%, rgba(255,186,0,.5) 50%, transparent)",
           }}
         />
-        {/* lua */}
         <div
           aria-hidden
           className="pointer-events-none absolute -right-12 -top-12 size-56 rounded-full blur-[2px]"
@@ -94,9 +96,7 @@ export default async function HistoriasPage() {
         </div>
       </section>
 
-      {/* Estante */}
       <section className="grid grid-cols-2 gap-5 sm:grid-cols-3 lg:grid-cols-4">
-        {/* Card criar — varinha com anel girando */}
         <Link
           href="/historias/criar"
           className="group flex flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed border-brand-purple/30 bg-kolo-lilas-bg-2/40 p-6 text-center transition-all hover:-translate-y-1 hover:border-brand-purple hover:shadow-lg"
@@ -117,42 +117,53 @@ export default async function HistoriasPage() {
           </span>
         </Link>
 
-        {lista.map((h) => (
-          <Link key={h.id} href={`/historias/${h.id}`} className="group flex flex-col gap-2">
-            <div
-              className="relative overflow-hidden rounded-2xl bg-kolo-lilas-bg shadow-[0_2px_6px_rgba(46,10,82,0.08),0_14px_30px_rgba(46,10,82,0.14)] transition-all group-hover:-translate-y-1.5"
-              style={{ aspectRatio: "3 / 4" }}
-            >
-              {/* lombada */}
+        {lista.map((h) => {
+          const gerando = h.status === "gerando";
+          return (
+            <Link key={h.id} href={`/historias/${h.id}`} className="group flex flex-col gap-2">
               <div
-                aria-hidden
-                className="pointer-events-none absolute inset-y-0 left-0 z-10 w-2 bg-gradient-to-r from-black/20 to-transparent"
-              />
-              {h.capa_url ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={h.capa_url as string}
-                  alt={h.titulo as string}
-                  className="size-full object-cover"
+                className="relative overflow-hidden rounded-2xl bg-kolo-lilas-bg shadow-[0_2px_6px_rgba(46,10,82,0.08),0_14px_30px_rgba(46,10,82,0.14)] transition-all group-hover:-translate-y-1.5"
+                style={{ aspectRatio: "3 / 4" }}
+              >
+                <div
+                  aria-hidden
+                  className="pointer-events-none absolute inset-y-0 left-0 z-10 w-2 bg-gradient-to-r from-black/20 to-transparent"
                 />
-              ) : (
-                <div className="flex size-full items-center justify-center bg-gradient-to-br from-brand-purple-dark to-brand-purple text-white/60">
-                  <Sparkles className="size-8" />
+                {h.capa_url ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={h.capa_url as string}
+                    alt={h.titulo as string}
+                    className="size-full object-cover"
+                  />
+                ) : (
+                  <div className="flex size-full items-center justify-center bg-gradient-to-br from-brand-purple-dark to-brand-purple text-white/60">
+                    {gerando ? (
+                      <span className="flex flex-col items-center gap-2 text-white/80">
+                        <Sparkles className="size-8 animate-pulse text-brand-yellow" />
+                        <span className="text-[11px] font-bold uppercase tracking-[0.16em]">
+                          criando…
+                        </span>
+                      </span>
+                    ) : (
+                      <Sparkles className="size-8" />
+                    )}
+                  </div>
+                )}
+                <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent p-3 pt-10">
+                  <p className="font-heading text-sm font-medium leading-tight text-white drop-shadow">
+                    {gerando ? "Criando…" : (h.titulo as string)}
+                  </p>
                 </div>
-              )}
-              <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent p-3 pt-10">
-                <p className="font-heading text-sm font-medium leading-tight text-white drop-shadow">
-                  {h.titulo as string}
-                </p>
               </div>
-            </div>
-            {Number(h.leituras) > 0 && (
-              <span className="px-1 text-xs text-muted-foreground">
-                ✦ {h.leituras} {Number(h.leituras) === 1 ? "leitura" : "leituras"}
-              </span>
-            )}
-          </Link>
-        ))}
+              {Number(h.leituras) > 0 && !gerando && (
+                <span className="px-1 text-xs text-muted-foreground">
+                  ✦ {h.leituras} {Number(h.leituras) === 1 ? "leitura" : "leituras"}
+                </span>
+              )}
+            </Link>
+          );
+        })}
       </section>
     </div>
   );
