@@ -1,5 +1,5 @@
 /**
- * Regras duras de não-colisão e limite — PRD §12.5.
+ * Regras duras de não-colisão e limite — PRD §12.5 + decisões 2026-05-27.
  *
  * MÁXIMO 2 MENSAGENS PROATIVAS POR DIA, qualquer tipo.
  * Reativas (resposta a inputs da mãe) NÃO contam.
@@ -13,9 +13,17 @@
  *
  * Se mãe não responder por 10 dias, Ayla cala completamente até ela voltar
  * a responder qualquer coisa.
+ *
+ * NOVO (Sprint C):
+ *  - Se a mãe escreveu qualquer coisa hoje, NÃO mandar proativa nova.
+ *    "Já conversamos hoje" = não preciso te chamar. (boas_vindas é exceção)
+ *  - Respeitar horario_preferido_inicio/fim da família (timezone BR).
+ *    Proativas só saem dentro da janela. (boas_vindas é exceção — sai na
+ *    hora que termina o onboarding)
  */
 
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { horaLocalHHMM } from "@/lib/idade";
 import type { AylaTipoProativa } from "./types";
 
 const COMERCIAL: ReadonlyArray<AylaTipoProativa> = [
@@ -42,10 +50,12 @@ export async function podeEnviarProativa(
   ctx: RulesContext,
   tipo: AylaTipoProativa,
 ): Promise<RuleCheckResult> {
-  // 1. Consentimento explícito + não desativada
+  // 1. Consentimento explícito + não desativada + janela preferida
   const { data: prefs } = await supabase
     .from("ayla_preferences")
-    .select("consentimento_em, pausada_ate, desativada")
+    .select(
+      "consentimento_em, pausada_ate, desativada, horario_preferido_inicio, horario_preferido_fim",
+    )
     .eq("family_account_id", ctx.family_account_id)
     .maybeSingle();
   if (!prefs) {
@@ -61,8 +71,44 @@ export async function podeEnviarProativa(
     return { permitido: false, motivo: "Pausa em vigor." };
   }
 
-  // 2. Limite duro: máx 2 proativas hoje
   const inicioDoDia = startOfDay(ctx.agora);
+
+  // 2. "Já conversamos hoje" — se ela escreveu qualquer coisa no dia,
+  //    a Ayla não inicia uma nova conversa. Boas-vindas é exceção (é a
+  //    primeira mensagem que ela vai receber).
+  if (tipo !== "boas_vindas") {
+    const { data: inboundHoje } = await supabase
+      .from("ayla_messages")
+      .select("id")
+      .eq("family_account_id", ctx.family_account_id)
+      .eq("direcao", "inbound")
+      .gte("created_at", inicioDoDia.toISOString())
+      .limit(1);
+    if ((inboundHoje?.length ?? 0) > 0) {
+      return {
+        permitido: false,
+        motivo: "Já conversamos hoje — sem espontânea.",
+      };
+    }
+  }
+
+  // 3. Janela preferida da mãe (timezone BR). Fora dela, a Ayla cala.
+  //    Boas-vindas é exceção (dispara no fim do onboarding, qualquer hora).
+  if (tipo !== "boas_vindas") {
+    const inicio = (prefs.horario_preferido_inicio as string | null)?.slice(0, 5);
+    const fim = (prefs.horario_preferido_fim as string | null)?.slice(0, 5);
+    if (inicio && fim) {
+      const horaAtual = horaLocalHHMM(ctx.agora);
+      if (horaAtual < inicio || horaAtual > fim) {
+        return {
+          permitido: false,
+          motivo: `Fora da janela preferida (${inicio}–${fim}).`,
+        };
+      }
+    }
+  }
+
+  // 4. Limite duro: máx 2 proativas hoje
   const { data: enviadasHoje } = await supabase
     .from("ayla_messages")
     .select("id, tipo")
@@ -76,7 +122,7 @@ export async function podeEnviarProativa(
     return { permitido: false, motivo: "Limite de 2 proativas/dia atingido." };
   }
 
-  // 3. Comercial não dispara em janela de 48h após menção de crise/exaustão
+  // 5. Comercial não dispara em janela de 48h após menção de crise/exaustão
   if ((COMERCIAL as ReadonlyArray<string>).includes(tipo)) {
     const limite = new Date(ctx.agora.getTime() - 48 * 60 * 60 * 1000);
     const { data: criseRecente } = await supabase
@@ -94,7 +140,7 @@ export async function podeEnviarProativa(
     }
   }
 
-  // 4. Insight não dispara no mesmo dia que comercial
+  // 6. Insight não dispara no mesmo dia que comercial
   if (tipo === "insight") {
     const comercialHoje = enviadasHoje?.some((m) =>
       (COMERCIAL as ReadonlyArray<string>).includes(m.tipo as string),
@@ -107,7 +153,7 @@ export async function podeEnviarProativa(
     }
   }
 
-  // 5. Engajamento: última mensagem da Ayla há menos de 36h cancela
+  // 7. Engajamento: última mensagem da Ayla há menos de 36h cancela
   if (tipo === "engajamento_2dias" || tipo === "engajamento_5dias") {
     const limite = new Date(ctx.agora.getTime() - 36 * 60 * 60 * 1000);
     const { data: ultima } = await supabase
@@ -125,7 +171,7 @@ export async function podeEnviarProativa(
     }
   }
 
-  // 6. Silêncio total após 10 dias sem resposta
+  // 8. Silêncio total após 10 dias sem resposta
   const { data: ultimaResposta } = await supabase
     .from("ayla_messages")
     .select("created_at")
