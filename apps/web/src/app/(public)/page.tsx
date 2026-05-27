@@ -36,10 +36,11 @@ export default async function Home() {
   if (user) {
     const { data: family } = await supabase
       .from("family_accounts")
-      .select("onboarding_completed")
+      .select("onboarding_completed, boas_vindas_vista_at")
       .eq("user_id", user.id)
       .maybeSingle();
     if (!family || !family.onboarding_completed) redirect("/onboarding");
+    if (!family.boas_vindas_vista_at) redirect("/boas-vindas");
     redirect("/painel");
   }
 

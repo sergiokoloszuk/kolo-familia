@@ -21,7 +21,7 @@ export default async function OnboardingPage() {
   }
 
   if (family.onboarding_completed) {
-    redirect("/painel");
+    redirect(family.boas_vindas_vista_at ? "/painel" : "/boas-vindas");
   }
 
   // Carrega membros já cadastrados (caso esteja retomando onboarding).

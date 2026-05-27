@@ -9,6 +9,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
   const { user, supabase, family } = await loadFamilyContext();
   if (!family) redirect("/onboarding");
   if (!family.onboarding_completed) redirect("/onboarding");
+  if (!family.boas_vindas_vista_at) redirect("/boas-vindas");
 
   const [
     { data: acesso },

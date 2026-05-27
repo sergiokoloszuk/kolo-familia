@@ -274,7 +274,7 @@ export function OnboardingWizard({ initial }: { initial: InitialState }) {
                     const { completeOnboarding } = await import("./actions");
                     await completeOnboarding();
                   },
-                  () => router.push("/painel"),
+                  () => router.push("/boas-vindas"),
                 )
               }
               onPrevious={previous}
