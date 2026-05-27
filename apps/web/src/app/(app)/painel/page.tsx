@@ -10,6 +10,7 @@ import { loadFamilyContext } from "@/lib/auth/require-user";
 import { cn } from "@/lib/utils";
 import { NpsBanner } from "./nps-banner";
 import { BalaoPrimeirosPassos } from "./balao-primeiros-passos";
+import { BannerGenero } from "./banner-genero";
 
 // ============================================================
 // Chips categóricos do Foco da semana
@@ -126,7 +127,7 @@ export default async function PainelPage() {
       .single(),
     supabase
       .from("membros_atipicos")
-      .select("id, nome")
+      .select("id, nome, genero")
       .eq("family_account_id", familyId)
       .eq("ativo", true),
     supabase
@@ -587,6 +588,21 @@ export default async function PainelPage() {
           </h2>
         </div>
       </section>
+
+      {/* ============================================================
+       * BANNER de gênero — discreto, aparece pra cada membro com
+       * `genero IS NULL`. Sumiu quando responde. Acima do balão pq
+       * é mais leve e dá contexto pra Ayla falar certo.
+       * ============================================================ */}
+      {(membros ?? [])
+        .filter((m) => !m.genero)
+        .map((m) => (
+          <BannerGenero
+            key={m.id as string}
+            membroId={m.id as string}
+            nomeMembro={m.nome as string}
+          />
+        ))}
 
       {/* ============================================================
        * BALÃO "Os primeiros passos" — aparece UMA vez, no primeiro

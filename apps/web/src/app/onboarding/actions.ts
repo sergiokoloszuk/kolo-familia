@@ -147,6 +147,7 @@ const membroSchema = z.object({
   nome: z.string().trim().min(2, "Nome muito curto"),
   data_nascimento: dataNascimentoSchema(0, 120, "Data de nascimento inválida"),
   perfil: z.enum(["TEA", "TDAH", "Dislexia", "AHSD", "Outro", "EmInvestigacao"]),
+  genero: z.enum(["masculino", "feminino", "neutro"]).optional(),
 });
 
 const tela2Schema = z.object({
@@ -169,6 +170,7 @@ export async function saveTela2(raw: Tela2Input) {
         nome: m.nome,
         data_nascimento: dataBrParaIso(m.data_nascimento),
         perfil: m.perfil,
+        genero: m.genero ?? null,
       })),
     );
     if (error) throw new Error(`Erro ao cadastrar membro(s): ${error.message}`);
@@ -177,7 +179,12 @@ export async function saveTela2(raw: Tela2Input) {
   for (const m of existentes) {
     const { error } = await supabase
       .from("membros_atipicos")
-      .update({ nome: m.nome, data_nascimento: dataBrParaIso(m.data_nascimento), perfil: m.perfil })
+      .update({
+        nome: m.nome,
+        data_nascimento: dataBrParaIso(m.data_nascimento),
+        perfil: m.perfil,
+        genero: m.genero ?? null,
+      })
       .eq("id", m.id!)
       .eq("family_account_id", family.id);
     if (error) throw new Error(`Erro ao atualizar membro: ${error.message}`);
@@ -188,7 +195,7 @@ export async function saveTela2(raw: Tela2Input) {
   // Retorna a lista canônica do banco — wizard usa esses ids no step 4.
   const { data: membros } = await supabase
     .from("membros_atipicos")
-    .select("id, nome, data_nascimento, perfil")
+    .select("id, nome, data_nascimento, perfil, genero")
     .eq("family_account_id", family.id)
     .order("created_at", { ascending: true });
 
@@ -197,6 +204,7 @@ export async function saveTela2(raw: Tela2Input) {
     nome: string;
     data_nascimento: string;
     perfil: string;
+    genero: "masculino" | "feminino" | "neutro" | null;
   }>;
 }
 

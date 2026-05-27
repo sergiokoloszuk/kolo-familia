@@ -11,7 +11,13 @@ import { Tela4QuickKoloVivo } from "./steps/tela-4-quick-kolo-vivo";
 import { Tela5Termos } from "./steps/tela-5-termos";
 import { Tela6Confirmacao } from "./steps/tela-6-confirmacao";
 
-export type Membro = { id: string; nome: string; data_nascimento: string; perfil: string };
+export type Membro = {
+  id: string;
+  nome: string;
+  data_nascimento: string;
+  perfil: string;
+  genero?: "masculino" | "feminino" | "neutro" | null;
+};
 
 export type InitialState = {
   familyId: string;

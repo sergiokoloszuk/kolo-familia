@@ -90,6 +90,7 @@ export async function sendBoasVindas(
   const texto = await templateBoasVindas(supabase, {
     nomeMae: ctx.nomeMae,
     nomeMembro: membroFoco.nome,
+    genero: membroFoco.genero,
     seed: `${familyAccountId}-boas-vindas`,
   });
 
@@ -145,6 +146,7 @@ export async function sendRotinaDiaria(
   const texto = await templateRotinaDiaria(supabase, {
     nomeMae: ctx.nomeMae,
     nomeMembro: membroFoco.nome,
+    genero: membroFoco.genero,
     seed: `${familyAccountId}-${agora.toDateString()}`,
   });
 
@@ -186,6 +188,7 @@ export async function sendEngajamento(
     diasInativos,
     nomeMae: ctx.nomeMae,
     nomeMembro: membroFoco?.nome ?? "seu filho/sua filha",
+    genero: membroFoco?.genero ?? null,
     seed: `${familyAccountId}-eng-${diasInativos}`,
   });
 
@@ -260,6 +263,7 @@ export async function sendEmocionalStreak(
   const texto = await templateEmocionalStreak(supabase, {
     nomeMae: ctx.nomeMae,
     nomeMembro: membroFoco?.nome ?? "seu filho/sua filha",
+    genero: membroFoco?.genero ?? null,
     seed: `${familyAccountId}-streak-${agora.toDateString()}`,
   });
 
@@ -1162,7 +1166,13 @@ type FamiliaEnvio = {
   family_account_id: string;
   whatsapp_e164: string;
   nomeMae: string;
-  membros: Array<{ id: string; nome: string; data_nascimento: string | null; perfil: string | null }>;
+  membros: Array<{
+    id: string;
+    nome: string;
+    data_nascimento: string | null;
+    perfil: string | null;
+    genero: "masculino" | "feminino" | "neutro" | null;
+  }>;
 };
 
 async function loadFamiliaParaEnvio(
@@ -1182,7 +1192,7 @@ async function loadFamiliaParaEnvio(
       .maybeSingle(),
     supabase
       .from("membros_atipicos")
-      .select("id, nome, data_nascimento, perfil")
+      .select("id, nome, data_nascimento, perfil, genero")
       .eq("family_account_id", familyAccountId)
       .eq("ativo", true)
       .order("created_at", { ascending: true }),

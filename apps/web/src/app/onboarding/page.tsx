@@ -27,7 +27,7 @@ export default async function OnboardingPage() {
   // Carrega membros já cadastrados (caso esteja retomando onboarding).
   const { data: membros } = await supabase
     .from("membros_atipicos")
-    .select("id, nome, data_nascimento, perfil")
+    .select("id, nome, data_nascimento, perfil, genero")
     .eq("family_account_id", family.id)
     .order("created_at", { ascending: true });
 

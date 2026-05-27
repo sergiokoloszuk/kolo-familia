@@ -9,6 +9,7 @@
  */
 
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { pronomesVars, type Genero } from "./pronomes";
 
 type TemplateVars = Record<string, string | number | undefined>;
 
@@ -40,7 +41,7 @@ function pickVariation(variations: string[], seed: string): string {
 const FALLBACK: Record<string, string[]> = {
   boas_vindas: [
     "Oi, {nomeMae}. Aqui é a Ayla 🌿\n\nObrigada por me deixar entrar na história de vocês. Vou aparecer aqui de vez em quando — sem cobrança, sem checklist.\n\nVocê pode me escrever a qualquer hora. Conta o que está pesando, o que ajudou, o que está na cabeça. Eu escuto.",
-    "Oi, {nomeMae}. Sou a Ayla.\n\nA partir de hoje fico do lado de vocês — do/da {nomeMembro} e seu. Sem pressa. Quando puder me contar como foi um dia, mesmo numa frase, já é o suficiente.\n\nSe precisar de uma pausa, é só me dizer.",
+    "Oi, {nomeMae}. Sou a Ayla.\n\nA partir de hoje fico do lado de vocês — {deNomeMembro} e seu. Sem pressa. Quando puder me contar como foi um dia, mesmo numa frase, já é o suficiente.\n\nSe precisar de uma pausa, é só me dizer.",
     "{nomeMae}, oi 🌿\n\nSou a Ayla. Daqui em diante vou estar por perto — não pra cobrar, pra escutar. Você manda quando der, do jeito que quiser: um áudio, uma frase, uma reclamação.",
   ],
   rotina: [
@@ -68,8 +69,8 @@ const FALLBACK: Record<string, string[]> = {
     "{nomeMae}, hoje termina seu período grátis.\n\nSe você quiser continuar com a gente, é em /assinatura. Se não quiser, sem problema — seus registros ficam aqui, caso queira voltar depois.",
   ],
   emocional_streak: [
-    "{nomeMae}, você me respondeu 7 dias seguidos 🌿\n\nIsso é cuidado de verdade. O/a {nomeMembro} está tendo um cuidado bem presente — e isso vem de você.",
-    "Sete dias de papo seguidos, {nomeMae}.\n\nTô vendo o trabalho enorme que você está fazendo com o/a {nomeMembro}. Não é pouco.",
+    "{nomeMae}, você me respondeu 7 dias seguidos 🌿\n\nIsso é cuidado de verdade. {nomeMembro} está tendo um cuidado bem presente — e isso vem de você.",
+    "Sete dias de papo seguidos, {nomeMae}.\n\nTô vendo o trabalho enorme que você está fazendo {comNomeMembro}. Não é pouco.",
   ],
   clarificacao_membro: [
     "Sobre quem você está falando? {opcoes}?",
@@ -120,10 +121,11 @@ async function getVariations(
 
 export async function templateBoasVindas(
   supabase: SupabaseClient,
-  params: { nomeMae: string; nomeMembro: string; seed: string },
+  params: { nomeMae: string; nomeMembro: string; genero: Genero; seed: string },
 ): Promise<string> {
   const variations = await getVariations(supabase, "boas_vindas");
-  return fill(pickVariation(variations, params.seed), params);
+  const vars = { nomeMae: params.nomeMae, ...pronomesVars(params.genero, params.nomeMembro) };
+  return fill(pickVariation(variations, params.seed), vars);
 }
 
 // ============================================================
@@ -132,10 +134,11 @@ export async function templateBoasVindas(
 
 export async function templateRotinaDiaria(
   supabase: SupabaseClient,
-  params: { nomeMae: string; nomeMembro: string; seed: string },
+  params: { nomeMae: string; nomeMembro: string; genero: Genero; seed: string },
 ): Promise<string> {
   const variations = await getVariations(supabase, "rotina");
-  return fill(pickVariation(variations, params.seed), params);
+  const vars = { nomeMae: params.nomeMae, ...pronomesVars(params.genero, params.nomeMembro) };
+  return fill(pickVariation(variations, params.seed), vars);
 }
 
 // ============================================================
@@ -148,12 +151,14 @@ export async function templateEngajamento(
     diasInativos: number;
     nomeMae: string;
     nomeMembro: string;
+    genero: Genero;
     seed: string;
   },
 ): Promise<string> {
   const key = params.diasInativos >= 5 ? "engajamento_5dias" : "engajamento_2dias";
   const variations = await getVariations(supabase, key);
-  return fill(pickVariation(variations, params.seed), params);
+  const vars = { nomeMae: params.nomeMae, ...pronomesVars(params.genero, params.nomeMembro) };
+  return fill(pickVariation(variations, params.seed), vars);
 }
 
 // ============================================================
@@ -211,10 +216,11 @@ export async function templateTrial(
 
 export async function templateEmocionalStreak(
   supabase: SupabaseClient,
-  params: { nomeMae: string; nomeMembro: string; seed: string },
+  params: { nomeMae: string; nomeMembro: string; genero: Genero; seed: string },
 ): Promise<string> {
   const variations = await getVariations(supabase, "emocional_streak");
-  return fill(pickVariation(variations, params.seed), params);
+  const vars = { nomeMae: params.nomeMae, ...pronomesVars(params.genero, params.nomeMembro) };
+  return fill(pickVariation(variations, params.seed), vars);
 }
 
 // ============================================================

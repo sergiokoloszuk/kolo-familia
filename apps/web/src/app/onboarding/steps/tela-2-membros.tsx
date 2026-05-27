@@ -21,6 +21,12 @@ const PERFIS = [
   { value: "EmInvestigacao", label: "Em investigação" },
 ] as const;
 
+const GENEROS = [
+  { value: "masculino", label: "Menino", sub: "ele / dele" },
+  { value: "feminino", label: "Menina", sub: "ela / dela" },
+  { value: "neutro", label: "Prefiro não dizer", sub: "vou usar o nome" },
+] as const;
+
 const schema = z.object({
   membros: z
     .array(
@@ -37,6 +43,7 @@ const schema = z.object({
             return a !== null && a >= 0 && a <= 120;
           }, "Informe uma data válida (dd/mm/aaaa)"),
         perfil: z.enum(["TEA", "TDAH", "Dislexia", "AHSD", "Outro", "EmInvestigacao"]),
+        genero: z.enum(["masculino", "feminino", "neutro"]).optional(),
       }),
     )
     .min(1, "Cadastre pelo menos 1 membro"),
@@ -76,6 +83,8 @@ export function Tela2Membros({
               nome: m.nome,
               data_nascimento: dataIsoParaBr(m.data_nascimento),
               perfil: m.perfil as FormValues["membros"][number]["perfil"],
+              genero: (m.genero ?? undefined) as
+                | FormValues["membros"][number]["genero"],
             }))
           : [{ nome: "", data_nascimento: "", perfil: "TEA" }],
     },
@@ -173,6 +182,48 @@ export function Tela2Membros({
                     </option>
                   ))}
                 </select>
+              </div>
+
+              <div className="flex flex-col gap-2 md:col-span-3">
+                <Label>
+                  Como vocês chamam{" "}
+                  {watch(`membros.${index}.nome`)?.trim() || "essa pessoa"}?
+                </Label>
+                <Controller
+                  name={`membros.${index}.genero`}
+                  control={control}
+                  render={({ field }) => (
+                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+                      {GENEROS.map((g) => {
+                        const ativa = field.value === g.value;
+                        return (
+                          <button
+                            key={g.value}
+                            type="button"
+                            onClick={() => field.onChange(g.value)}
+                            disabled={pending}
+                            className={`flex flex-col items-start gap-0.5 rounded-md border px-3 py-2 text-left transition-colors disabled:opacity-50 ${
+                              ativa
+                                ? "border-brand-purple bg-brand-purple/5"
+                                : "border-input bg-background hover:border-brand-purple/40"
+                            }`}
+                          >
+                            <span className="text-sm font-medium text-foreground">
+                              {g.label}
+                            </span>
+                            <span className="text-xs text-muted-foreground">
+                              {g.sub}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Ajuda a Ayla a falar do jeito certo nas mensagens. Dá pra
+                  mudar depois.
+                </p>
               </div>
             </div>
           </div>

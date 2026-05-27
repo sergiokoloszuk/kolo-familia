@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { pronomesPara, comPreposicaoDe, type Genero } from "./pronomes";
 
 /**
  * Insight Engine — PRD §12.10.
@@ -131,7 +132,7 @@ async function detectQuedaEmocionalSustentada(
   const dezDiasAtras = new Date(agora.getTime() - 10 * 24 * 60 * 60 * 1000);
   const { data: checkins } = await supabase
     .from("check_ins_diarios")
-    .select("data, escala_emocional_membro, membro_atipico_id, membros_atipicos(nome)")
+    .select("data, escala_emocional_membro, membro_atipico_id, membros_atipicos(nome, genero)")
     .eq("family_account_id", familyAccountId)
     .gte("data", dezDiasAtras.toISOString().slice(0, 10))
     .order("data", { ascending: false });
@@ -159,12 +160,14 @@ async function detectQuedaEmocionalSustentada(
       }
     }
     if (consecutivos >= 3) {
-      const nome = nomeFromRel(lista[0].membros_atipicos);
+      const { nome, genero } = nomeEGeneroFromRel(lista[0].membros_atipicos);
+      const p = pronomesPara(genero);
+      const deNome = comPreposicaoDe(p, nome);
       out.push({
         padrao: "queda_emocional_membro_sustentada",
         membro_atipico_id: membroId,
         detalhe: { consecutivos, membro: nome },
-        mensagem_proposta: `Os últimos dias do/da ${nome} estão pesados. Quer ver junto comigo o que pode estar pegando?`,
+        mensagem_proposta: `Os últimos dias ${deNome} estão pesados. Quer ver junto comigo o que pode estar pegando?`,
         prioridade: 70,
       });
     }
@@ -229,4 +232,15 @@ function nomeFromRel(rel: unknown): string {
     return first?.nome ?? "ele/ela";
   }
   return (rel as { nome?: string }).nome ?? "ele/ela";
+}
+
+function nomeEGeneroFromRel(rel: unknown): { nome: string; genero: Genero } {
+  if (!rel) return { nome: "essa criança", genero: null };
+  const first = Array.isArray(rel)
+    ? (rel[0] as { nome?: string; genero?: Genero } | undefined)
+    : (rel as { nome?: string; genero?: Genero });
+  return {
+    nome: first?.nome ?? "essa criança",
+    genero: (first?.genero as Genero) ?? null,
+  };
 }
