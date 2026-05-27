@@ -23,7 +23,7 @@ export async function loadFamilyContext() {
 
   const { data: family } = await supabase
     .from("family_accounts")
-    .select("id, onboarding_step, onboarding_completed, whatsapp_e164, timezone, boas_vindas_vista_at")
+    .select("id, onboarding_step, onboarding_completed, whatsapp_e164, timezone, boas_vindas_vista_at, painel_balao_visto_at")
     .eq("user_id", user.id)
     .maybeSingle();
 

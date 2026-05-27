@@ -9,6 +9,7 @@ import { Eyebrow } from "@/components/brand/eyebrow";
 import { loadFamilyContext } from "@/lib/auth/require-user";
 import { cn } from "@/lib/utils";
 import { NpsBanner } from "./nps-banner";
+import { BalaoPrimeirosPassos } from "./balao-primeiros-passos";
 
 // ============================================================
 // Chips categóricos do Foco da semana
@@ -586,6 +587,13 @@ export default async function PainelPage() {
           </h2>
         </div>
       </section>
+
+      {/* ============================================================
+       * BALÃO "Os primeiros passos" — aparece UMA vez, no primeiro
+       * acesso ao painel. Marca visto ao fechar ou clicar num dos
+       * dois destinos (Kolo Vivo / Estratégias). Some depois.
+       * ============================================================ */}
+      {!family!.painel_balao_visto_at && <BalaoPrimeirosPassos />}
 
       {/* ============================================================
        * FOCO DA SEMANA — card branco editorial, eyebrow com ícone
