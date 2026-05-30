@@ -42,9 +42,17 @@ export default async function CriarHistoriaPage() {
       </Link>
 
       <header>
-        <h1 className="font-heading text-3xl text-foreground">
-          Criar uma <em className="not-italic text-brand-purple">história</em>
-        </h1>
+        <div className="flex items-center gap-3">
+          <h1 className="font-heading text-3xl text-foreground">
+            Criar uma <em className="not-italic text-brand-purple">história</em>
+          </h1>
+          <span
+            aria-label="feature em versão beta"
+            className="inline-flex items-center rounded-full border border-kolo-linha bg-secondary/60 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground"
+          >
+            beta
+          </span>
+        </div>
         <p className="mt-2 text-muted-foreground">
           Conte a situação com suas palavras. A Kolo escreve a história e ilustra
           cada página com o avatar da criança como personagem.

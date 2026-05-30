@@ -48,12 +48,20 @@ export default async function HistoriaPage(props: {
     return (
       <div className="mx-auto flex w-full max-w-3xl flex-col gap-5">
         <HistoriaPoller />
-        <Link
-          href="/historias"
-          className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
-        >
-          <ArrowLeft className="size-4" aria-hidden /> Histórias
-        </Link>
+        <div className="flex items-center gap-3">
+          <Link
+            href="/historias"
+            className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
+          >
+            <ArrowLeft className="size-4" aria-hidden /> Histórias
+          </Link>
+          <span
+            aria-label="feature em versão beta"
+            className="inline-flex items-center rounded-full border border-kolo-linha bg-secondary/60 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground"
+          >
+            beta
+          </span>
+        </div>
         <div className="relative flex flex-col items-center gap-5 overflow-hidden rounded-3xl bg-gradient-to-br from-brand-purple-deep to-brand-purple-dark px-8 py-16 text-center text-white">
           <div
             aria-hidden
@@ -89,12 +97,20 @@ export default async function HistoriaPage(props: {
   if (status === "erro") {
     return (
       <div className="mx-auto flex w-full max-w-3xl flex-col gap-5">
-        <Link
-          href="/historias"
-          className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
-        >
-          <ArrowLeft className="size-4" aria-hidden /> Histórias
-        </Link>
+        <div className="flex items-center gap-3">
+          <Link
+            href="/historias"
+            className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
+          >
+            <ArrowLeft className="size-4" aria-hidden /> Histórias
+          </Link>
+          <span
+            aria-label="feature em versão beta"
+            className="inline-flex items-center rounded-full border border-kolo-linha bg-secondary/60 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground"
+          >
+            beta
+          </span>
+        </div>
         <div className="rounded-2xl border border-destructive/30 bg-destructive/5 p-6">
           <p className="font-heading text-lg text-foreground">Não consegui terminar essa história.</p>
           <p className="mt-1 text-sm text-muted-foreground">
@@ -119,12 +135,20 @@ export default async function HistoriaPage(props: {
 
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-5">
-      <Link
-        href="/historias"
-        className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
-      >
-        <ArrowLeft className="size-4" aria-hidden /> Histórias
-      </Link>
+      <div className="flex items-center gap-3">
+        <Link
+          href="/historias"
+          className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
+        >
+          <ArrowLeft className="size-4" aria-hidden /> Histórias
+        </Link>
+        <span
+          aria-label="feature em versão beta"
+          className="inline-flex items-center rounded-full border border-kolo-linha bg-secondary/60 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground"
+        >
+          beta
+        </span>
+      </div>
 
       <LeitorHistoria
         historiaId={historia.id as string}
