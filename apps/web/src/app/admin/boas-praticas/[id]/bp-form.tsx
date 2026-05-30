@@ -133,7 +133,7 @@ export function BPForm({ inicial }: { inicial: Inicial }) {
           id="skills"
           value={form.skills_csv}
           onChange={(e) => setForm((f) => ({ ...f, skills_csv: e.target.value }))}
-          placeholder="sensorial, regulacao_emocional"
+          placeholder="sensorial, emocional"
         />
       </div>
 

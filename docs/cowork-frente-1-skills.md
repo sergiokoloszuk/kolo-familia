@@ -1,22 +1,27 @@
 # Frente 1 — Reescrever 11 skills com voz v3
 
+> **Atualizado em 2026-05-17** (devolutiva da Karina aplicada no DB):
+> - `regulacao_emocional` foi renomeada para `emocional`
+> - `transicoes` foi renomeada para `rotina`
+> - `comportamento_e_limites` foi **desativada** (cobertura pulverizada nas outras)
+> - `meu_bem_estar` ficou com `routing_priority=0` — não é roteada pela LLM, só acessível por entrada explícita da mãe no app
+
 ## Estado atual no DB
 
-Existem **14 skills** no banco de dados:
+Existem **12 skills** úteis no banco. `comportamento_e_limites` está inativa e não entra na curadoria.
 
-### 7 ativas (precisam ser reescritas com voz v3)
+### 6 ativas (precisam ser reescritas com voz v3)
 
 Estão funcionando no app, mas com conteúdo do PRD original (antes da calibração de tom):
 
 - `sensorial`
 - `comunicacao`
-- `regulacao_emocional`
+- `emocional` *(ex-`regulacao_emocional`)*
 - `sono`
-- `transicoes`
-- `comportamento_e_limites`
-- `meu_bem_estar` (skill especial — fala com a mãe sobre o bem-estar dela mesma)
+- `rotina` *(ex-`transicoes`)*
+- `meu_bem_estar` (skill especial — fala com a mãe sobre o bem-estar dela mesma; nunca roteada por LLM, só via entrada explícita no app)
 
-### 7 em rascunho (esqueleto criado, sem conteúdo real)
+### 6 em rascunho (esqueleto criado, sem conteúdo real)
 
 `ativo=false` no DB. Foram criadas pelo Sérgio com placeholders durante a implementação do schema. Precisam de conteúdo verdadeiro antes de virarem ativas:
 
@@ -28,13 +33,15 @@ Estão funcionando no app, mas com conteúdo do PRD original (antes da calibraç
 - `foco`
 - `nutricional`
 
-A skill **Emocional** já tem versão v3 finalizada — está no documento `05_PROMPT_SKILL_EMOCIONAL_v3.md`. É a **referência canônica** para as outras 11.
+> Obs: `comportamento_e_limites` continua na tabela como `ativo=false` por compatibilidade histórica. **Não reescrever** — o tema é tratado dentro de `emocional`/`rotina`/skills específicas conforme o caso.
+
+A skill **Emocional** já tem versão v3 finalizada — está no documento `05_PROMPT_SKILL_EMOCIONAL_v3.md`. É a **referência canônica** para as outras 10 (excluindo `meu_bem_estar`, que tem tom próprio).
 
 ---
 
 ## O que cada skill precisa ter
 
-As 11 skills são **variações do template Emocional v3**. A maior parte da estrutura é compartilhada:
+As skills ativas/rascunho são **variações do template Emocional v3**. A maior parte da estrutura é compartilhada:
 
 **Compartilhado (não precisa reescrever a cada skill):**
 - Anatomia da resposta-base (180-300 palavras em 4 partes: abertura direta, leitura técnica, orientação prática, selo)
@@ -50,7 +57,7 @@ As 11 skills são **variações do template Emocional v3**. A maior parte da est
 - `limits` — o que ela NÃO faz (sempre inclui "não diagnostica, não prescreve")
 - `kolo_vivo_fields` — quais gavetas do Kolo Vivo ela lê (Sérgio já configurou no commit `a73a236`)
 - `routing_keywords` — 8-15 palavras-chave em PT-BR que ativam a skill no roteador
-- `routing_priority` — 50-85 normalmente (mais alto = mais prioridade quando há ambiguidade)
+- `routing_priority` — 50-85 normalmente (mais alto = mais prioridade quando há ambiguidade). `meu_bem_estar` fica em `0` por decisão da Karina.
 - `fallback_questions` — exatamente 4 perguntas para manter conversa aberta quando a skill não tem certeza
 
 **Específico por skill (conteúdo livre, para a Karina escrever em prosa):**
@@ -119,7 +126,7 @@ scope: [parágrafo]
 limits: [parágrafo]
 kolo_vivo_fields: [array — já configurado pelo Sérgio]
 routing_keywords: [array de 8-15 strings]
-routing_priority: [50-85]
+routing_priority: [50-85, ou 0 para meu_bem_estar]
 fallback_questions:
   - [pergunta 1]
   - [pergunta 2]
@@ -133,20 +140,19 @@ fallback_questions:
 
 A Karina pode mudar essa ordem. A lógica é começar pelas mais próximas da Emocional (ganho de momentum) e pelas mais valiosas para mãe de TEA (público inicial).
 
-1. `regulacao_emocional` — quase prima da Emocional, transição suave
+1. `emocional` *(ex-`regulacao_emocional`)* — referência canônica, já v3
 2. `comunicacao` — alta prioridade para mãe de TEA
 3. `sensorial` — alta prioridade para mãe de TEA
 4. `socializacao` — nova, importante para TEA
-5. `comportamento_e_limites` — geral, todas as mães
-6. `sono` — alta dor diária
-7. `transicoes` — alta dor diária
-8. `autonomia` — nova
-9. `foco` — nova, relevante para mãe de TDAH
-10. `motor` — nova
-11. `imitacao` — nova, mais técnica
-12. `nutricional` — nova
-13. `aprendizado` — nova
-14. `meu_bem_estar` — pra mãe (skill especial, tom diferente)
+5. `sono` — alta dor diária
+6. `rotina` *(ex-`transicoes`)* — alta dor diária
+7. `autonomia` — nova
+8. `foco` — nova, relevante para mãe de TDAH
+9. `motor` — nova
+10. `imitacao` — nova, mais técnica
+11. `nutricional` — nova
+12. `aprendizado` — nova
+13. `meu_bem_estar` — pra mãe (skill especial, tom diferente, não roteada por LLM)
 
 ---
 
@@ -179,7 +185,7 @@ Combinar com o Sérgio antes de começar.
 
 ## Vetos que se aplicam (não esquecer)
 
-Algumas regras importantes que valem para todas as 11 skills:
+Algumas regras importantes que valem para todas as skills:
 
 - **Sem nomes de método na resposta** — PNL, Joe Dispenza, REAC nunca aparecem. A técnica entra dissolvida.
 - **Sem citar autores** — Siegel, Bryson, Greene, Delahooke, Prizant, Grandin, Shanker, Barkley nunca aparecem na resposta. Pode aparecer no campo "Origem" (uso interno).

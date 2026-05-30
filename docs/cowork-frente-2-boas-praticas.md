@@ -1,4 +1,9 @@
-# Frente 2 — Processar 12 PDFs em 250-400 Boas Práticas
+# Frente 2 — Importar as 349 Boas Práticas curadas pela Karina
+
+> **Atualizado em 2026-05-17** — devolutiva da Karina:
+> - **Não vamos mais gerar BPs a partir dos 12 PDFs** no Cowork. A Karina já curou **349 BPs** offline e vai entregar em XLSX.
+> - O fluxo de extração via Claude no Cowork (descrito no fim deste doc) fica disponível como **trilha futura/opcional** para expandir o acervo depois do beta, se ela quiser.
+> - **Skills válidas para `skills_relacionadas`**: `sensorial`, `emocional`, `comunicacao`, `rotina`, `sono`, `meu_bem_estar`, mais as 6 em rascunho (`socializacao`, `imitacao`, `motor`, `autonomia`, `aprendizado`, `foco`, `nutricional`). **Não usar mais** `regulacao_emocional`, `transicoes`, `comportamento_e_limites`.
 
 ## O que é uma Boa Prática (BP)
 
@@ -15,9 +20,9 @@ Cada BP deve:
 
 ## Origem
 
-A fundadora tem 12 PDFs (aulas, conteúdos, materiais autorais). Cada PDF rende aproximadamente 20-30 BPs curadas. Total estimado: **250-400 BPs**.
+A fundadora consolidou **349 BPs** curadas a partir das aulas, conteúdos e materiais autorais dela. Cada BP foi escrita/aprovada por ela diretamente, com nomes técnicos das skills já mapeados.
 
-A extração não é automática — é semi-curada: a Claude no Cowork lê o PDF, identifica candidatas, e a Karina aprova/edita/descarta. Daí vai pro DB.
+A entrega para o Sérgio será um **XLSX** (uma linha por BP, colunas espelhando os 17 campos do schema). O Sérgio escreve um importer que parseia o XLSX e popula `boas_praticas`.
 
 ---
 
@@ -36,7 +41,7 @@ Cada BP é uma linha na tabela `boas_praticas` do banco. Campos preenchidos pela
 | `erros_comuns` | text | 1-2 frases sobre o que a mãe costuma errar nesse tema. |
 | `crencas_adulto` | text | **Prosa livre** — qual crença limitante da mãe essa BP ajuda a derrubar + direção possível de reframe. **NÃO usar o formato "Tríplice rotulada"** (CrenÇa limitante / CrenÇa saudável / Mecanismo). Esse formato foi descartado na Virada 7. A crença é texto que a skill vai transformar em "gancho" na hora. |
 | `atividades_praticas` | jsonb (array) | Opcional. 0-3 atividades específicas que a mãe pode fazer com a criança ligadas à BP. |
-| `skills_relacionadas` | jsonb (array) | Nomes técnicos das skills que se beneficiam dessa BP (use os mesmos da Frente 1). Pode ser mais de uma. |
+| `skills_relacionadas` | jsonb (array) | Nomes técnicos das skills que se beneficiam dessa BP (use os 12 nomes válidos — ver acima). Pode ser mais de uma. |
 | `tags` | jsonb (array) | 2-5 palavras-chave temáticas. |
 | `nivel` | text (opcional) | `iniciante` / `intermediario` / `avancado`. |
 | `faixa_etaria_min` | int (opcional) | Idade mínima em anos onde a BP se aplica. |
@@ -78,7 +83,7 @@ crencas_adulto: "Mãe costuma pensar que avisar antes é 'mimo' ou que vai
 atividades_praticas:
   - "Cronômetro visual de 3 minutos antes do desligar tela"
   - "Música-jingle curta que sinaliza 'agora a gente troca'"
-skills_relacionadas: ["transicoes", "regulacao_emocional"]
+skills_relacionadas: ["rotina", "emocional"]
 tags: ["transicao", "antecipacao", "limite", "previsibilidade"]
 nivel: iniciante
 faixa_etaria_min: 2
@@ -106,40 +111,59 @@ O Validador do app pega esses no momento da resposta, mas pegar de saída ao esc
 
 ## Como entregar para o Sérgio
 
-### Formato preferido: CSV
+### Formato preferido: XLSX
 
-Uma linha por BP, com todos os 17 campos acima (jsonb fields como strings JSON entre aspas).
+Uma linha por BP, com todos os 17 campos acima. Os campos `jsonb` (array) entram como **strings JSON** dentro da célula (entre `[ ]` com aspas duplas nos itens).
 
-Cabeçalho da CSV:
+Cabeçalho da planilha (exatamente nesta ordem):
 
-```csv
-titulo,texto_original,versao_curta,versao_conversa,passos_praticos,quando_usar,erros_comuns,crencas_adulto,atividades_praticas,skills_relacionadas,tags,nivel,faixa_etaria_min,faixa_etaria_max,perfis_aplicaveis,status,origem
+```
+titulo | texto_original | versao_curta | versao_conversa | passos_praticos | quando_usar | erros_comuns | crencas_adulto | atividades_praticas | skills_relacionadas | tags | nivel | faixa_etaria_min | faixa_etaria_max | perfis_aplicaveis | status | origem
 ```
 
-Exemplo de linha:
+Exemplo de célula `skills_relacionadas`:
 
-```csv
-"Conta o que vai acontecer antes","Em transições difíceis...","Antecipa a próxima mudança em 2-3 minutos","Uma coisa que costuma ajudar...","[\"Cronometra mentalmente...\", \"Anuncia em tom calmo...\"]","Em qualquer transição...","Avisar com pressa...","Mãe costuma pensar que avisar antes é 'mimo'...","[\"Cronômetro visual...\"]","[\"transicoes\", \"regulacao_emocional\"]","[\"transicao\", \"antecipacao\"]",iniciante,2,12,"[\"todos\"]",rascunho,admin
+```
+["rotina", "emocional"]
 ```
 
-Sérgio fará um script de import que lê o CSV e popula `boas_praticas` no DB. As BPs entram com `status='rascunho'` — Karina revisa pelo `/admin/boas-praticas` antes de ativar.
+Exemplo de célula `passos_praticos`:
+
+```
+["Cronometra mentalmente 2-3 minutos antes", "Anuncia em tom calmo", "No momento da troca, repete"]
+```
+
+Notas importantes:
+- Manter o cabeçalho na primeira linha.
+- Deixar células vazias quando o campo for opcional e não se aplicar (não usar `null` literal, só vazio mesmo).
+- `status` default = `rascunho` — Karina revisa em `/admin/boas-praticas` antes de marcar como `ativo`.
+- `origem` = `admin` para tudo curado por ela.
+
+### O que o Sérgio faz
+
+1. Recebe o XLSX.
+2. Roda `scripts/import-boas-praticas.mjs <caminho-do-xlsx>` (a ser escrito no momento do import).
+3. O script valida cada linha contra o schema do Validator (mesmos vetos), reporta linhas problemáticas, e popula `boas_praticas` em lote.
+4. Karina abre `/admin/boas-praticas`, filtra `status=rascunho`, revisa as que quiser editar, e ativa.
 
 ### Alternativa: direto na UI
 
-Para BPs pontuais (não em lote), Karina pode acessar `/admin/boas-praticas/nova` no app e preencher os campos manualmente. Mais lento, mas útil para BPs novas que surgem após o lançamento.
+Para BPs pontuais (não em lote), Karina pode acessar `/admin/boas-praticas/nova` no app e preencher os campos manualmente. Útil para BPs novas que surgem após o lançamento.
 
 ---
 
-## Como trabalhar com a Claude no Cowork
+## Trilha futura — Extrair BPs novas de PDFs no Cowork (opcional, pós-beta)
 
-Para cada PDF:
+> Esta seção fica como referência para depois. **Não é prioridade do beta.** O acervo de 349 BPs curado pela Karina é o que entra no app no lançamento.
+
+Caso a Karina queira expandir o acervo depois (a partir das aulas em PDF ou novos conteúdos), o fluxo seria:
 
 1. **Karina compartilha o PDF** no chat do Cowork.
 2. **Claude lê e identifica candidatas** — uma lista resumida (título + 1 frase de cada BP candidata), agrupadas pela skill provável.
 3. **Karina marca** quais manter, quais cortar, quais editar.
 4. **Claude finaliza** cada BP aprovada no schema completo (17 campos).
-5. **Claude gera CSV parcial** ao fim de cada PDF.
-6. **Sérgio acumula CSVs** e importa em lote ao final.
+5. **Claude gera XLSX/CSV parcial** ao fim de cada PDF.
+6. **Sérgio importa** em lote.
 
 Esse fluxo evita revisão tardia — Karina valida na origem.
 
@@ -149,6 +173,6 @@ Esse fluxo evita revisão tardia — Karina valida na origem.
 
 - **Tamanho das versões**: `versao_curta` é frase única, `versao_conversa` é 3-4 frases que fluem em conversa de mãe. A skill pode usar uma ou outra dependendo do contexto.
 - **`crencas_adulto` em prosa livre**: este é o ponto mais importante do Adendo §3. Não usar formato rotulado. A skill na resposta gera o "gancho" na hora (título em negrito + 2-3 frases) usando uma das 6 famílias de imagens da Régua v3. O texto aqui é apenas matéria-prima.
-- **`skills_relacionadas`**: uma BP pode atender mais de uma skill (ex: regulação emocional + transições). Listar todas que se aplicam.
+- **`skills_relacionadas`**: uma BP pode atender mais de uma skill (ex: `emocional` + `rotina`). Listar todas que se aplicam. **Nomes válidos**: `sensorial`, `emocional`, `comunicacao`, `rotina`, `sono`, `meu_bem_estar`, `socializacao`, `imitacao`, `motor`, `autonomia`, `aprendizado`, `foco`, `nutricional`.
 - **`perfis_aplicaveis`**: usar `["todos"]` para BPs gerais. Para específicas, listar: `["TEA"]`, `["TDAH"]`, ou combinar.
 - **`faixa_etaria`**: deixar em branco se a BP vale para qualquer idade. Preencher quando a aplicação só faz sentido em faixa específica.

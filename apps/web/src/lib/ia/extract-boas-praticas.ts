@@ -20,7 +20,7 @@ const BPCandidatasSchema = z.object({
 export type BPCandidata = z.infer<typeof BPCandidatasSchema>["candidatas"][number];
 
 const SKILL_NAMES_HINT =
-  "sensorial, regulacao_emocional, comunicacao, transicoes, sono, meu_bem_estar, comportamento_e_limites";
+  "sensorial, emocional, comunicacao, rotina, sono, meu_bem_estar";
 
 const SYSTEM_PROMPT_FALLBACK = `Você ajuda a fundadora do Kolo Família a transformar a transcrição de uma aula em sugestões de Boas Práticas curadas.
 

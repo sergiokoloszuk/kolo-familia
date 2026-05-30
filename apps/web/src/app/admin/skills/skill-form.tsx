@@ -101,7 +101,7 @@ export function SkillForm({
             value={form.name}
             onChange={(e) => set("name", e.target.value)}
             disabled={Boolean(inicial.id)}
-            placeholder="ex: regulacao_emocional"
+            placeholder="ex: emocional"
             required
           />
           {inicial.id && (
