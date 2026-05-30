@@ -235,7 +235,7 @@ function proximoEnriquecimento(
   if (!temItens(pref.materiais)) {
     return {
       area: "materiais",
-      pergunta: `Quando ${nome} vai criar, o que cai melhor na mão?`,
+      pergunta: `Quando ${nome} senta pra criar, o que costuma escolher?`,
       opcoes: ["giz de cera", "guache", "massinha", "lápis de cor"],
     };
   }
