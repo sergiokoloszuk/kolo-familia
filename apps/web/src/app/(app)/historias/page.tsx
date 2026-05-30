@@ -59,9 +59,14 @@ export default async function HistoriasPage() {
         />
         <div className="relative flex items-center gap-8">
           <div className="flex-1">
-            <span className="inline-flex items-center gap-2 rounded-full border border-brand-yellow/30 bg-white/10 px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.16em] text-brand-yellow backdrop-blur">
-              <Sparkles className="size-3.5" /> Histórias ilustradas
-            </span>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="inline-flex items-center gap-2 rounded-full border border-brand-yellow/30 bg-white/10 px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.16em] text-brand-yellow backdrop-blur">
+                <Sparkles className="size-3.5" /> Histórias ilustradas
+              </span>
+              <span className="inline-flex items-center rounded-full border border-white/20 bg-white/5 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-white/70 backdrop-blur">
+                beta
+              </span>
+            </div>
             <h1 className="mt-4 max-w-2xl font-heading text-3xl leading-tight md:text-4xl">
               Você conta a situação, a Kolo cria a{" "}
               <em className="not-italic text-brand-yellow">história ilustrada</em> com o
