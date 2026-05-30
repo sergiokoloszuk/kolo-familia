@@ -58,6 +58,18 @@ next-env.d.ts
 *.log
 logs/
 
+# data files (planilhas/XLSX de import — conteúdo curado, fora do git)
+data/import/*.xlsx
+data/import/*.xls
+data/import/*.csv
+
+# artefatos locais de dev (config do Claude Code, protótipos soltos,
+# saídas de scripts de diagnóstico/import)
+.claude/
+.proto*.html
+apps/web/scripts/_test-*.png
+apps/web/scripts/reports/
+
 # supabase local
 supabase/.branches
 supabase/.temp
