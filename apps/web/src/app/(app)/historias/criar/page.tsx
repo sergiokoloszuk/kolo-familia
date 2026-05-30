@@ -7,8 +7,11 @@ import { CriarHistoriaForm } from "./criar-form";
 
 export const metadata = { title: "Criar história — Kolo Família" };
 
-// Geração escreve + ilustra várias páginas (gpt-image-1) — pode levar ~1 min.
-export const maxDuration = 60;
+// Geração escreve + ilustra várias páginas (gpt-image-1). O trabalho pesado
+// roda em after() e HERDA este maxDuration — 60s não cabia (5 imgs paralelas
+// em pares + roteiro passava do limite e matava o container antes do catch
+// marcar status='erro', prendendo o usuário no skeleton).
+export const maxDuration = 300;
 
 export default async function CriarHistoriaPage() {
   const { supabase, family } = await loadFamilyContext();
