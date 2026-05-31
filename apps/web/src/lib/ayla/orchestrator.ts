@@ -19,6 +19,7 @@ import {
   templateEmocionalStreak,
   templateInsight,
 } from "./messageTemplates";
+import { gerarMensagemEspontanea } from "./mensagemEspontanea";
 import type { AylaTipoProativa, AylaTipoReativa, ParserResult } from "./types";
 
 /**
@@ -143,12 +144,32 @@ export async function sendRotinaDiaria(
   const idx = Math.abs(hashSeed(`${familyAccountId}-${agora.toDateString()}`)) % ctx.membros.length;
   const membroFoco = ctx.membros[idx];
 
-  const texto = await templateRotinaDiaria(supabase, {
-    nomeMae: ctx.nomeMae,
-    nomeMembro: membroFoco.nome,
-    genero: membroFoco.genero,
-    seed: `${familyAccountId}-${agora.toDateString()}`,
-  });
+  // Tenta a Ayla-IA primeiro (3 intenções: acolhimento, voce_sabia,
+  // completar_perfil). Se a chamada falhar (rede, modelo, vazio), cai no
+  // templateRotinaDiaria estático — rede de segurança preservada.
+  let texto: string;
+  let intent: string;
+  try {
+    const ai = await gerarMensagemEspontanea(supabase, {
+      familyId: familyAccountId,
+      agora,
+      membroFocoId: membroFoco.id,
+    });
+    texto = ai.texto;
+    intent = `ai:${ai.intent}`;
+  } catch (e) {
+    console.warn(
+      "[ayla:rotina] gerador IA falhou, caindo no template estático:",
+      e instanceof Error ? e.message : e,
+    );
+    texto = await templateRotinaDiaria(supabase, {
+      nomeMae: ctx.nomeMae,
+      nomeMembro: membroFoco.nome,
+      genero: membroFoco.genero,
+      seed: `${familyAccountId}-${agora.toDateString()}`,
+    });
+    intent = "fallback:template";
+  }
 
   return enviarEPersistir(supabase, {
     family_account_id: familyAccountId,
@@ -157,6 +178,7 @@ export async function sendRotinaDiaria(
     texto,
     category: "proativa",
     tipo: "rotina",
+    meta: { intent },
   });
 }
 
@@ -1216,6 +1238,8 @@ async function enviarEPersistir(
     texto: string;
     category: "proativa" | "reativa";
     tipo: AylaTipoProativa | AylaTipoReativa;
+    /** Metadados opcionais que vão pro ayla_send_log.payload.meta (auditoria). */
+    meta?: Record<string, unknown>;
   },
 ): Promise<EnvioResultado> {
   let resultado: EnvioResultado;
@@ -1235,7 +1259,11 @@ async function enviarEPersistir(
   await supabase.from("ayla_send_log").insert({
     family_account_id: params.family_account_id,
     template_key: params.tipo,
-    payload: { phone: params.phone, texto: params.texto },
+    payload: {
+      phone: params.phone,
+      texto: params.texto,
+      ...(params.meta ? { meta: params.meta } : {}),
+    },
     resposta_provider: providerResp as Record<string, unknown> | null,
     status: resultado.enviada ? "enviada" : "falha",
     erro,
