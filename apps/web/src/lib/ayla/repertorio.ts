@@ -1,5 +1,7 @@
 import { getAylaAnthropicClient, AYLA_MODEL_FALLBACK } from "./anthropic";
 import { getSystemPrompt } from "@/lib/ai/prompts";
+import { logarUsoApi } from "@/lib/billing/logar";
+import type { UsageTracking } from "./responder";
 
 /**
  * Sugestão de EXPANSÃO DE REPERTÓRIO (Fatia 3.3b) — a Ayla propõe, de leve,
@@ -40,6 +42,7 @@ export type RepertorioParams = {
 
 export async function gerarSugestaoRepertorio(
   params: RepertorioParams,
+  tracking?: UsageTracking,
 ): Promise<string> {
   const interesses = params.interesses.filter((x) => x.trim()).slice(0, 12);
   if (interesses.length === 0) return fallback(params);
@@ -70,6 +73,16 @@ export async function gerarSugestaoRepertorio(
       messages: [{ role: "user", content: userMsg }],
     });
     const final = await stream.finalMessage();
+    if (tracking) {
+      await logarUsoApi(tracking.supabase, {
+        family_account_id: tracking.family_account_id,
+        provider: "anthropic",
+        model: AYLA_MODEL_FALLBACK,
+        feature: tracking.feature,
+        input_tokens: final.usage.input_tokens,
+        output_tokens: final.usage.output_tokens,
+      });
+    }
     const txt = final.content
       .filter((b): b is Extract<typeof b, { type: "text" }> => b.type === "text")
       .map((b) => b.text)

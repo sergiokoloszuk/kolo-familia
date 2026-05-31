@@ -1,6 +1,8 @@
 import { z } from "zod";
 import { getAylaAnthropicClient, AYLA_MODEL, AYLA_MODEL_FALLBACK } from "./anthropic";
 import { getSystemPrompt } from "@/lib/ai/prompts";
+import { logarUsoApi } from "@/lib/billing/logar";
+import type { UsageTracking } from "./responder";
 import type { ParserResult } from "./types";
 
 const ParserSchema = z.object({
@@ -95,11 +97,14 @@ Use "essencial" só pra identidade ampla (diagnóstico, forças, personalidade) 
  * fallback com confiança 0 e precisa_clarificar — o orquestrador então
  * envia uma mensagem de clarificação determinística.
  */
-export async function parseInbound(params: {
-  texto: string;
-  membros: Array<{ id: string; nome: string }>;
-  ultimoMembroFoco?: string | null;
-}): Promise<ParserResult> {
+export async function parseInbound(
+  params: {
+    texto: string;
+    membros: Array<{ id: string; nome: string }>;
+    ultimoMembroFoco?: string | null;
+  },
+  tracking?: UsageTracking,
+): Promise<ParserResult> {
   const client = getAylaAnthropicClient();
 
   const contextoMembros = params.membros
@@ -134,6 +139,16 @@ Devolva o JSON.`;
         .filter((b): b is Extract<typeof b, { type: "text" }> => b.type === "text")
         .map((b) => b.text)
         .join("");
+      if (tracking) {
+        await logarUsoApi(tracking.supabase, {
+          family_account_id: tracking.family_account_id,
+          provider: "anthropic",
+          model,
+          feature: tracking.feature,
+          input_tokens: finalMessage.usage.input_tokens,
+          output_tokens: finalMessage.usage.output_tokens,
+        });
+      }
     } catch (e) {
       console.warn(`[ayla:parser] falha do modelo ${model}:`, e instanceof Error ? e.message : e);
       return null;

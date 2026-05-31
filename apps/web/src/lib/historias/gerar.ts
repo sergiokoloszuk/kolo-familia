@@ -2,6 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { getAnthropicClient, MODELS } from "@/lib/ia/anthropic";
 import { gerarImagemComReferencia } from "@/lib/imagem/generate";
 import { AVATAR_ESTILOS, type AvatarEstilo } from "@/lib/imagem/avatar-prompt";
+import { logarUsoApi } from "@/lib/billing/logar";
 
 /**
  * Geração de história ilustrada — o responsável descreve, a IA escreve em
@@ -42,13 +43,16 @@ Regras:
 - Use os interesses da criança quando fizer sentido (deixa mais envolvente).
 - 'cena' precisa ser concreta e ilustrável, coerente de uma página pra outra.`;
 
-export async function gerarRoteiro(params: {
-  membro: { nome: string; idade: number | null; perfil: string };
-  koloVivoResumo: string;
-  gostos?: string;
-  descricao: string;
-  nPaginas: number;
-}): Promise<{ titulo: string; paginas: PaginaRoteiro[] }> {
+export async function gerarRoteiro(
+  params: {
+    membro: { nome: string; idade: number | null; perfil: string };
+    koloVivoResumo: string;
+    gostos?: string;
+    descricao: string;
+    nPaginas: number;
+  },
+  tracking?: { supabase: SupabaseClient; family_account_id: string | null },
+): Promise<{ titulo: string; paginas: PaginaRoteiro[] }> {
   const n = Math.min(Math.max(params.nPaginas, 3), 6);
   const client = getAnthropicClient();
   const userMsg = `Criança: ${params.membro.nome}${params.membro.idade != null ? `, ${params.membro.idade} anos` : ""}, perfil ${params.membro.perfil}.
@@ -75,6 +79,17 @@ Escreva a história em EXATAMENTE ${n} páginas. Devolva o JSON.`;
     messages: [{ role: "user", content: userMsg }],
   });
   const final = await stream.finalMessage();
+  if (tracking) {
+    await logarUsoApi(tracking.supabase, {
+      family_account_id: tracking.family_account_id,
+      provider: "anthropic",
+      model: MODELS.principal,
+      feature: "historias_roteiro",
+      input_tokens: final.usage.input_tokens,
+      output_tokens: final.usage.output_tokens,
+      meta: { n_paginas: n },
+    });
+  }
   const raw = final.content
     .filter((b): b is Extract<typeof b, { type: "text" }> => b.type === "text")
     .map((b) => b.text)
@@ -145,6 +160,7 @@ async function ilustrarComRetry(
         referencia,
         familyAccountId,
         tipo: "historia_social",
+        feature: "historias_imagem",
       });
       return { url: r.url };
     } catch (e) {

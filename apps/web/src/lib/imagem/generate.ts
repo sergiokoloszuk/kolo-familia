@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { logarUsoApi } from "@/lib/billing/logar";
 
 /**
  * Geração de imagem via OpenAI (modelo gpt-image-1).
@@ -25,6 +26,8 @@ export type GerarImagemParams = {
   familyAccountId: string;
   tipo: "avatar" | "cena" | "historia_social";
   size?: "1024x1024" | "1024x1536" | "1536x1024" | "auto";
+  /** Label da feature pra o log em api_calls. Default: "imagem_<tipo>". */
+  feature?: string;
 };
 
 export type GerarImagemResult = {
@@ -81,6 +84,16 @@ export async function gerarImagem(
     params.familyAccountId,
     params.tipo,
   );
+
+  await logarUsoApi(supabase, {
+    family_account_id: params.familyAccountId,
+    provider: "openai",
+    model: IMAGE_MODEL,
+    feature: params.feature ?? `imagem_${params.tipo}`,
+    quantidade: 1,
+    meta: { size, quality: IMAGE_QUALITY, tipo: params.tipo },
+  });
+
   return { url, prompt_revisado: item.revised_prompt, storage_path };
 }
 
@@ -97,6 +110,7 @@ export async function gerarImagemComReferencia(
     familyAccountId: string;
     tipo: "avatar" | "cena" | "historia_social";
     size?: GerarImagemParams["size"];
+    feature?: string;
   },
 ): Promise<GerarImagemResult> {
   const apiKey = process.env.OPENAI_API_KEY;
@@ -131,6 +145,16 @@ export async function gerarImagemComReferencia(
     params.familyAccountId,
     params.tipo,
   );
+
+  await logarUsoApi(supabase, {
+    family_account_id: params.familyAccountId,
+    provider: "openai",
+    model: IMAGE_MODEL,
+    feature: params.feature ?? `imagem_${params.tipo}`,
+    quantidade: 1,
+    meta: { size: params.size ?? "1024x1024", quality: IMAGE_QUALITY, tipo: params.tipo, com_referencia: true },
+  });
+
   return { url, storage_path };
 }
 

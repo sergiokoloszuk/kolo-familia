@@ -13,10 +13,16 @@
  * o caller deve cair num fallback (responder pedindo pra mandar de novo).
  */
 
+import { logarUsoApi } from "@/lib/billing/logar";
+import type { UsageTracking } from "./responder";
+
 const OPENAI_TRANSCRIPTIONS_URL =
   "https://api.openai.com/v1/audio/transcriptions";
 
-export async function transcreverAudio(audioUrl: string): Promise<string | null> {
+export async function transcreverAudio(
+  audioUrl: string,
+  tracking?: UsageTracking,
+): Promise<string | null> {
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) {
     console.warn("[transcribe] OPENAI_API_KEY não configurada");
@@ -59,6 +65,24 @@ export async function transcreverAudio(audioUrl: string): Promise<string | null>
 
     const json = (await transRes.json()) as { text?: string };
     const texto = (json.text ?? "").trim();
+
+    // Whisper bilha por minuto. Não temos duração precisa aqui — aproximamos
+    // pelo tamanho do buffer (OPUS voice note ~8kbps → 1KB ≈ 1 segundo).
+    // Subestima/superestima por +/-30% em casos extremos; ordem de grandeza
+    // certa pra dashboard agregado.
+    if (tracking) {
+      const segundos = Math.max(1, Math.round(audioBuffer.byteLength / 1024));
+      const minutos = segundos / 60;
+      await logarUsoApi(tracking.supabase, {
+        family_account_id: tracking.family_account_id,
+        provider: "openai",
+        model: "whisper-1",
+        feature: tracking.feature,
+        quantidade: minutos,
+        meta: { duracao_aprox_seg: segundos, bytes: audioBuffer.byteLength },
+      });
+    }
+
     return texto || null;
   } catch (e) {
     console.warn(

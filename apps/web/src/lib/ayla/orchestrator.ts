@@ -419,15 +419,18 @@ export async function sendRepertorioSugestao(
         .filter((x): x is string => typeof x === "string")
     : [];
 
-  const texto = await gerarSugestaoRepertorio({
-    nomeMae: ctx.nomeMae,
-    nomeMembro: membroFoco.nome,
-    idadeMembro: idadeAnos(membroFoco.data_nascimento ?? null),
-    perfilMembro: membroFoco.perfil ?? null,
-    interesses,
-    evitar,
-    jaTentados,
-  });
+  const texto = await gerarSugestaoRepertorio(
+    {
+      nomeMae: ctx.nomeMae,
+      nomeMembro: membroFoco.nome,
+      idadeMembro: idadeAnos(membroFoco.data_nascimento ?? null),
+      perfilMembro: membroFoco.perfil ?? null,
+      interesses,
+      evitar,
+      jaTentados,
+    },
+    { supabase, family_account_id: familyAccountId, feature: "ayla_repertorio" },
+  );
 
   return enviarEPersistir(supabase, {
     family_account_id: familyAccountId,
@@ -595,11 +598,14 @@ export async function processInbound(
       : (ultimoCheckin[0].membros_atipicos as { nome: string } | null)?.nome
     : null;
 
-  const parsed = await parseInbound({
-    texto: inbound.texto,
-    membros: ctx.membros,
-    ultimoMembroFoco: ultimoNome ?? null,
-  });
+  const parsed = await parseInbound(
+    {
+      texto: inbound.texto,
+      membros: ctx.membros,
+      ultimoMembroFoco: ultimoNome ?? null,
+    },
+    { supabase, family_account_id: family.id, feature: "ayla_parser" },
+  );
 
   // Família com 1 membro: se o parser não cravou quem é, é o único possível.
   if (ctx.membros.length === 1 && !parsed.membro_atipico_id) {
@@ -686,19 +692,23 @@ async function enviarRespostaEmChunks(
   let erro: string | null = null;
   let primeiro = true;
 
-  const textoCompleto = await gerarRespostaAyla(args.params, async (par) => {
-    // "Digitando..." visível antes de cada bolha; tempo ~proporcional ao
-    // tamanho do trecho, pra parecer alguém escrevendo de verdade.
-    const delay = primeiro ? 2 : Math.min(Math.max(Math.round(par.length / 25), 2), 6);
-    primeiro = false;
-    try {
-      const r = await enviarTexto({ phoneE164: args.phone, texto: par, delaySegundos: delay });
-      providerResp = r.raw;
-      messageId = r.messageId;
-    } catch (e) {
-      erro = e instanceof Error ? e.message : "falha no envio";
-    }
-  });
+  const textoCompleto = await gerarRespostaAyla(
+    args.params,
+    async (par) => {
+      // "Digitando..." visível antes de cada bolha; tempo ~proporcional ao
+      // tamanho do trecho, pra parecer alguém escrevendo de verdade.
+      const delay = primeiro ? 2 : Math.min(Math.max(Math.round(par.length / 25), 2), 6);
+      primeiro = false;
+      try {
+        const r = await enviarTexto({ phoneE164: args.phone, texto: par, delaySegundos: delay });
+        providerResp = r.raw;
+        messageId = r.messageId;
+      } catch (e) {
+        erro = e instanceof Error ? e.message : "falha no envio";
+      }
+    },
+    { supabase, family_account_id: args.family_account_id, feature: "ayla_responder" },
+  );
 
   const enviada = erro == null;
 
@@ -983,11 +993,14 @@ async function persistirRegistro(
         .maybeSingle();
       const textoAtual = lerTextoAtualDaSecao(rowAtual, campo);
 
-      const decisao = await decidirDedup({
-        campo,
-        textoSugerido: p.texto_kolo_vivo_sugerido,
-        textoAtual,
-      });
+      const decisao = await decidirDedup(
+        {
+          campo,
+          textoSugerido: p.texto_kolo_vivo_sugerido,
+          textoAtual,
+        },
+        { supabase, family_account_id: familyId, feature: "ayla_dedup" },
+      );
 
       let aplicou = false;
       if (decisao.operacao !== "skip" && decisao.texto.trim()) {

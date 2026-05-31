@@ -112,6 +112,7 @@ export async function gerarAvatar(membroId: string): Promise<GerarAvatarResult> 
       prompt: promptCanonico,
       familyAccountId: family.id,
       tipo: "avatar",
+      feature: "avatar_geracao",
     });
 
     const { error: updErr } = await supabase

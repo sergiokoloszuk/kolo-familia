@@ -1,5 +1,17 @@
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { getAylaAnthropicClient, AYLA_MODEL_FALLBACK } from "./anthropic";
 import { getSystemPrompt } from "@/lib/ai/prompts";
+import { logarUsoApi } from "@/lib/billing/logar";
+
+/**
+ * Tracking opcional pra logar a chamada em api_calls. Quando ausente, a
+ * função roda normal mas o uso não vai pro dashboard.
+ */
+export type UsageTracking = {
+  supabase: SupabaseClient;
+  family_account_id: string | null;
+  feature: string;
+};
 
 /**
  * A VOZ da Ayla — gera a resposta que a mãe lê no WhatsApp.
@@ -65,6 +77,7 @@ export type RespostaParams = {
 export async function gerarRespostaAyla(
   params: RespostaParams,
   onParagrafo?: (texto: string) => Promise<void>,
+  tracking?: UsageTracking,
 ): Promise<string> {
   const client = getAylaAnthropicClient();
   const system = await getSystemPrompt("voz_ayla", VOZ_AYLA_FALLBACK);
@@ -129,6 +142,16 @@ export async function gerarRespostaAyla(
 
     if (!onParagrafo) {
       const final = await stream.finalMessage();
+      if (tracking) {
+        await logarUsoApi(tracking.supabase, {
+          family_account_id: tracking.family_account_id,
+          provider: "anthropic",
+          model: AYLA_MODEL_FALLBACK,
+          feature: tracking.feature,
+          input_tokens: final.usage.input_tokens,
+          output_tokens: final.usage.output_tokens,
+        });
+      }
       const txt = textoDe(final.content);
       return txt || fallbackSimples(params);
     }
@@ -161,6 +184,17 @@ export async function gerarRespostaAyla(
       enviouAlgo = true;
     }
     const fullTrim = full.trim();
+    if (tracking) {
+      const final = await stream.finalMessage();
+      await logarUsoApi(tracking.supabase, {
+        family_account_id: tracking.family_account_id,
+        provider: "anthropic",
+        model: AYLA_MODEL_FALLBACK,
+        feature: tracking.feature,
+        input_tokens: final.usage.input_tokens,
+        output_tokens: final.usage.output_tokens,
+      });
+    }
     if (!enviouAlgo) {
       const fb = fallbackSimples(params);
       await onParagrafo(fb);

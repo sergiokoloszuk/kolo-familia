@@ -1,5 +1,7 @@
 import { z } from "zod";
 import { getAylaAnthropicClient, AYLA_MODEL, AYLA_MODEL_FALLBACK } from "./anthropic";
+import { logarUsoApi } from "@/lib/billing/logar";
+import type { UsageTracking } from "./responder";
 
 /**
  * Dedup semântico antes de aplicar uma sugestão no Kolo Vivo (caminho da
@@ -41,11 +43,14 @@ Atual: "Fala em 2-3 palavras." | Novo: "Aprendeu a cantar Parabéns."
 Atual: "" | Novo: "Faz birra ao trocar de atividade."
 → {"operacao":"adicionar","texto":"Faz birra ao trocar de atividade."}`;
 
-export async function decidirDedup(params: {
-  campo: string;
-  textoSugerido: string;
-  textoAtual: string;
-}): Promise<DedupResult> {
+export async function decidirDedup(
+  params: {
+    campo: string;
+    textoSugerido: string;
+    textoAtual: string;
+  },
+  tracking?: UsageTracking,
+): Promise<DedupResult> {
   const userMsg = `Campo: ${params.campo}
 
 <texto_atual_da_secao>
@@ -73,6 +78,16 @@ Devolva o JSON.`;
         .filter((b): b is Extract<typeof b, { type: "text" }> => b.type === "text")
         .map((b) => b.text)
         .join("");
+      if (tracking) {
+        await logarUsoApi(tracking.supabase, {
+          family_account_id: tracking.family_account_id,
+          provider: "anthropic",
+          model,
+          feature: tracking.feature,
+          input_tokens: finalMessage.usage.input_tokens,
+          output_tokens: finalMessage.usage.output_tokens,
+        });
+      }
       const json = parseJsonLoose(raw);
       if (!json) return null;
       const safe = Schema.safeParse(json);

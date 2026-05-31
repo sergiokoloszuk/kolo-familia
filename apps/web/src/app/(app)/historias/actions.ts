@@ -148,13 +148,16 @@ export async function criarHistoria(
         if (!avRes.ok) throw new Error(`avatar fetch ${avRes.status}`);
         const avatarBytes = Buffer.from(await avRes.arrayBuffer());
 
-        const roteiro = await gerarRoteiro({
-          membro: membroSnap,
-          koloVivoResumo: resumo,
-          gostos,
-          descricao: data.descricao,
-          nPaginas: data.nPaginas,
-        });
+        const roteiro = await gerarRoteiro(
+          {
+            membro: membroSnap,
+            koloVivoResumo: resumo,
+            gostos,
+            descricao: data.descricao,
+            nPaginas: data.nPaginas,
+          },
+          { supabase: admin, family_account_id: family.id },
+        );
 
         const paginas = await ilustrarPaginas(admin, roteiro.paginas, {
           familyAccountId: family.id,

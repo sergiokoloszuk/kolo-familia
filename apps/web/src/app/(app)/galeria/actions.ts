@@ -105,6 +105,7 @@ export async function gerarCenaParaGaleria(
     prompt: promptCena,
     familyAccountId: family.id,
     tipo: "cena",
+    feature: "galeria_cena",
   });
 
   const tipoBanco =

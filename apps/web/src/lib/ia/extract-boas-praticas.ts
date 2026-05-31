@@ -2,6 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import { getAnthropicClient, MODELS } from "./anthropic";
 import { getSystemPrompt } from "@/lib/ai/prompts";
+import { logarUsoApi } from "@/lib/billing/logar";
 
 const BPCandidatasSchema = z.object({
   candidatas: z
@@ -107,6 +108,15 @@ Devolva o JSON com as candidatas.`,
   });
 
   const finalMessage = await stream.finalMessage();
+  await logarUsoApi(supabase, {
+    family_account_id: null,
+    provider: "anthropic",
+    model: MODELS.principal,
+    feature: "bps_extract",
+    input_tokens: finalMessage.usage.input_tokens,
+    output_tokens: finalMessage.usage.output_tokens,
+    meta: { aula_id: aulaId },
+  });
   const texto = finalMessage.content
     .filter((b): b is Extract<typeof b, { type: "text" }> => b.type === "text")
     .map((b) => b.text)

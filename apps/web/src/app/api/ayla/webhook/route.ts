@@ -60,7 +60,11 @@ export async function POST(request: NextRequest) {
         inbound.midiaUrl &&
         inbound.midiaTipo === "audio"
       ) {
-        const transcrito = await transcreverAudio(inbound.midiaUrl);
+        const transcrito = await transcreverAudio(inbound.midiaUrl, {
+          supabase,
+          family_account_id: null,
+          feature: "ayla_audio",
+        });
         if (transcrito) {
           console.log(
             `[ayla webhook] áudio transcrito (${transcrito.length} chars)`,

@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { getAylaAnthropicClient, AYLA_MODEL } from "./anthropic";
+import { logarUsoApi } from "@/lib/billing/logar";
 import {
   pronomesPara,
   comPreposicaoCom,
@@ -291,6 +292,16 @@ export async function gerarMensagemEspontanea(
     max_tokens: 300,
     system: SYSTEM_PROMPT,
     messages: [{ role: "user", content: userPrompt }],
+  });
+
+  await logarUsoApi(supabase, {
+    family_account_id: params.familyId,
+    provider: "anthropic",
+    model: AYLA_MODEL,
+    feature: "ayla_espontanea",
+    input_tokens: resp.usage.input_tokens,
+    output_tokens: resp.usage.output_tokens,
+    meta: { intent },
   });
 
   const block = resp.content[0];
