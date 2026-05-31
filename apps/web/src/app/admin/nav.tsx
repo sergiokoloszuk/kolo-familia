@@ -20,6 +20,7 @@ const items = [
   { href: "/admin/afiliados", label: "Afiliados" },
   { href: "/admin/beta", label: "Beta" },
   { href: "/admin/observabilidade", label: "Observabilidade" },
+  { href: "/admin/uso-api", label: "Uso de API" },
   { href: "/admin/admins", label: "Admins" },
   { href: "/admin/teste", label: "Testes" },
 ];
