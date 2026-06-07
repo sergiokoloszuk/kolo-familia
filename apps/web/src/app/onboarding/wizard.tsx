@@ -28,6 +28,8 @@ export type InitialState = {
     data_nascimento_mae: string | null;
     como_chamar: string | null;
     papel: string | null;
+    papel_outro: string | null;
+    genero_responsavel: string | null;
   } | null;
   whatsapp: string | null;
   membros: Membro[];
@@ -147,6 +149,8 @@ export function OnboardingWizard({ initial }: { initial: InitialState }) {
                 como_chamar: state.profile?.como_chamar ?? "",
                 whatsapp_e164: state.whatsapp ?? "",
                 papel: state.profile?.papel ?? "",
+                papel_outro: state.profile?.papel_outro ?? "",
+                genero_responsavel: state.profile?.genero_responsavel ?? "",
               }}
               pending={pending}
               onSubmit={(values) =>
@@ -163,6 +167,9 @@ export function OnboardingWizard({ initial }: { initial: InitialState }) {
                         data_nascimento_mae: dataBrParaIso(values.data_nascimento_mae),
                         como_chamar: values.como_chamar ?? null,
                         papel: values.papel,
+                        papel_outro: values.papel === "outro" ? (values.papel_outro ?? null) : null,
+                        genero_responsavel:
+                          values.papel === "outro" ? (values.genero_responsavel ?? null) : null,
                       },
                       whatsapp: values.whatsapp_e164,
                     }));

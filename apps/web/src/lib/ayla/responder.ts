@@ -2,6 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { getAylaAnthropicClient, AYLA_MODEL_FALLBACK } from "./anthropic";
 import { getSystemPrompt } from "@/lib/ai/prompts";
 import { logarUsoApi } from "@/lib/billing/logar";
+import { pronomesPara, type Genero, type CuidadorDescrito } from "./pronomes";
 
 /**
  * Tracking opcional pra logar a chamada em api_calls. Quando ausente, a
@@ -58,9 +59,12 @@ export type SinaisResposta = {
 
 export type RespostaParams = {
   nomeMae: string;
+  /** Vínculo + gênero do adulto responsável (mãe, pai, avó, tia...). */
+  cuidador?: CuidadorDescrito;
   nomeMembro: string | null;
   idadeMembro?: number | null;
   perfilMembro?: string | null;
+  generoMembro?: Genero;
   koloVivoResumo: string;
   historico: Array<{ de: "mae" | "ayla"; texto: string }>;
   mensagem: string;
@@ -83,11 +87,40 @@ export async function gerarRespostaAyla(
   const system = await getSystemPrompt("voz_ayla", VOZ_AYLA_FALLBACK);
 
   const linhas: string[] = [];
-  linhas.push(`Você está falando com ${params.nomeMae}.`);
+  const relacao = params.cuidador?.relacao;
+  linhas.push(
+    `Você está falando com ${params.nomeMae}${relacao ? `, ${relacao} da criança` : ""}.`,
+  );
+  if (params.cuidador) {
+    const pc = pronomesPara(params.cuidador.genero);
+    if (pc.generoDefinido) {
+      linhas.push(
+        `Trate ${params.nomeMae} no ${
+          params.cuidador.genero === "feminino" ? "feminino" : "masculino"
+        } (ex.: "${
+          params.cuidador.genero === "feminino" ? "bem-vinda" : "bem-vindo"
+        }"). NÃO presuma que é a mãe — é ${relacao ?? "o(a) responsável"}.`,
+      );
+    } else if (relacao && relacao !== "responsável") {
+      linhas.push(`Lembre: quem fala com você é ${relacao} da criança, não necessariamente a mãe.`);
+    }
+  }
   if (params.nomeMembro) {
     linhas.push(
       `A criança em foco é ${params.nomeMembro}${params.idadeMembro != null ? `, ${params.idadeMembro} anos` : ""}${params.perfilMembro ? `, perfil ${params.perfilMembro}` : ""}.`,
     );
+    const p = pronomesPara(params.generoMembro);
+    if (p.generoDefinido) {
+      linhas.push(
+        `Concordância: ${params.nomeMembro} é tratada no ${
+          params.generoMembro === "feminino" ? "feminino" : "masculino"
+        } — use "${p.sujeito}/${p.possessivo}" e "${p.artigo} ${params.nomeMembro}". Nunca troque o gênero.`,
+      );
+    } else {
+      linhas.push(
+        `Concordância: o gênero de ${params.nomeMembro} não foi informado — refira-se pelo nome e evite "ele/ela" e "dele/dela". Se inevitável, use formas neutras.`,
+      );
+    }
   }
   if (params.koloVivoResumo.trim()) {
     linhas.push(
@@ -226,7 +259,7 @@ function textoDe(content: Array<{ type: string }>): string {
 
 /** Última linha de defesa: nunca deixar a Ayla muda. */
 function fallbackSimples(p: RespostaParams): string {
-  const nome = p.nomeMembro ?? "ele";
+  const nome = p.nomeMembro ?? pronomesPara(p.generoMembro).sujeito;
   if (p.precisaEscolherMembro) {
     return `Tô aqui. Sobre qual deles você quer falar — ${p.precisaEscolherMembro.nomes.join(" ou ")}?`;
   }

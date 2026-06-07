@@ -5,6 +5,7 @@ import { podeEnviarProativa } from "./rules";
 import { parseInbound, detectarComando } from "./parser";
 import { membroCampoStorage } from "@/lib/kolo-vivo/campos";
 import { gerarRespostaAyla, type RespostaParams } from "./responder";
+import { descricaoCuidador, type CuidadorDescrito, type Genero } from "./pronomes";
 import { gerarSugestaoRepertorio } from "./repertorio";
 import { decidirDedup } from "./dedup-kolo-vivo";
 import {
@@ -651,9 +652,11 @@ export async function processInbound(
     tipo: precisaEscolherMembro ? "clarificacao_identificacao" : "resposta_registro",
     params: {
       nomeMae: ctx.nomeMae,
+      cuidador: ctx.cuidador,
       nomeMembro,
       idadeMembro: idadeAnos(membroFoco?.data_nascimento ?? null),
       perfilMembro: membroFoco?.perfil ?? null,
+      generoMembro: membroFoco?.genero ?? null,
       koloVivoResumo,
       historico,
       mensagem: inbound.texto,
@@ -1201,6 +1204,8 @@ type FamiliaEnvio = {
   family_account_id: string;
   whatsapp_e164: string;
   nomeMae: string;
+  /** Vínculo + gênero do responsável, pra Ayla não presumir "mãe". */
+  cuidador: CuidadorDescrito;
   membros: Array<{
     id: string;
     nome: string;
@@ -1222,7 +1227,7 @@ async function loadFamiliaParaEnvio(
       .maybeSingle(),
     supabase
       .from("family_profiles")
-      .select("nome_mae, como_chamar")
+      .select("nome_mae, como_chamar, papel, papel_outro, genero_responsavel")
       .eq("family_account_id", familyAccountId)
       .maybeSingle(),
     supabase
@@ -1238,6 +1243,11 @@ async function loadFamiliaParaEnvio(
     family_account_id: familyAccountId,
     whatsapp_e164: family.whatsapp_e164,
     nomeMae: profile?.como_chamar?.trim() || profile?.nome_mae?.trim() || "oi",
+    cuidador: descricaoCuidador({
+      papel: (profile as { papel?: string | null } | null)?.papel ?? null,
+      papelOutro: (profile as { papel_outro?: string | null } | null)?.papel_outro ?? null,
+      genero: (profile as { genero_responsavel?: Genero } | null)?.genero_responsavel ?? null,
+    }),
     membros: membros ?? [],
   };
 }

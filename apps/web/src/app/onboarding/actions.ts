@@ -111,8 +111,16 @@ const tela1Schema = z.object({
     .trim()
     .regex(/^\+\d{8,15}$/, "WhatsApp deve estar no formato +DDIDDDNNNNNNNNN"),
   como_chamar: z.string().trim().optional(),
-  papel: z.enum(["mae", "pai", "avo", "outro"]),
-});
+  papel: z.enum(["mae", "pai", "outro"]),
+  papel_outro: z.string().trim().optional(),
+  genero_responsavel: z.enum(["masculino", "feminino", "neutro"]).optional(),
+}).refine(
+  (d) => d.papel !== "outro" || (d.papel_outro && d.papel_outro.length >= 2),
+  { path: ["papel_outro"], message: "Diga qual é o grau de parentesco" },
+).refine(
+  (d) => d.papel !== "outro" || !!d.genero_responsavel,
+  { path: ["genero_responsavel"], message: "Selecione o gênero" },
+);
 
 export type Tela1Input = z.infer<typeof tela1Schema>;
 
@@ -120,12 +128,16 @@ export async function saveTela1(raw: Tela1Input) {
   const data = tela1Schema.parse(raw);
   const { supabase, family } = await requireFamily();
 
+  // Detalhe de "outro responsável" só faz sentido quando papel = outro.
+  const ehOutro = data.papel === "outro";
   const { error: errProfile } = await supabase.from("family_profiles").upsert({
     family_account_id: family.id,
     nome_mae: data.nome_mae,
     data_nascimento_mae: dataBrParaIso(data.data_nascimento_mae),
     como_chamar: data.como_chamar || null,
     papel: data.papel,
+    papel_outro: ehOutro ? data.papel_outro! : null,
+    genero_responsavel: ehOutro ? data.genero_responsavel! : null,
   });
   if (errProfile) throw new Error(`Erro ao salvar perfil: ${errProfile.message}`);
 

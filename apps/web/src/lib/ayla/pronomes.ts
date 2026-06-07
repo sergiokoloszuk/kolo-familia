@@ -73,6 +73,45 @@ export function pronomesPara(genero: Genero): Pronomes {
 }
 
 /**
+ * Dados crus do responsável (como vêm de family_profiles).
+ *  - papel: 'mae' | 'pai' | 'avo' | 'outro' | null
+ *  - papelOutro: grau de parentesco livre quando 'outro' (ou 'avo')
+ *  - genero: gênero do responsável, quando informado
+ */
+export type Cuidador = {
+  papel?: string | null;
+  papelOutro?: string | null;
+  genero?: Genero;
+};
+
+/** Como a Ayla deve enxergar o cuidador: vínculo + gênero pra concordância. */
+export type CuidadorDescrito = {
+  /** "mãe" / "pai" / "avó" / "tia" / "responsável" — o vínculo com a criança. */
+  relacao: string;
+  /** Gênero do próprio cuidador (pra "bem-vinda/bem-vindo"). */
+  genero: Genero;
+};
+
+/**
+ * Resolve o vínculo + gênero do cuidador a partir do papel cadastrado.
+ * Mãe/pai inferem o gênero; "avo"/"outro" usam o detalhe livre + o gênero
+ * informado no onboarding. Fonte única — qualquer fala da Ayla que precise
+ * tratar o adulto responsável deve passar por aqui.
+ */
+export function descricaoCuidador(c: Cuidador): CuidadorDescrito {
+  const papel = (c.papel ?? "").toLowerCase();
+  if (papel === "mae") return { relacao: "mãe", genero: "feminino" };
+  if (papel === "pai") return { relacao: "pai", genero: "masculino" };
+  if (papel === "avo") {
+    return { relacao: c.papelOutro?.trim() || "avó/avô", genero: c.genero ?? null };
+  }
+  if (papel === "outro") {
+    return { relacao: c.papelOutro?.trim() || "responsável", genero: c.genero ?? null };
+  }
+  return { relacao: "responsável", genero: c.genero ?? null };
+}
+
+/**
  * "do André" / "da Maria" / "de Alex" — sem espaço sobrando no neutro.
  */
 export function comPreposicaoDe(p: Pronomes, nome: string): string {

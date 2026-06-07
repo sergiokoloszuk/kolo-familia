@@ -24,10 +24,24 @@ const schema = z.object({
     .trim()
     .regex(/^\+55\d{10,11}$/, "Informe o DDD + número, ex: (11) 99999-9999"),
   como_chamar: z.string().trim().optional(),
-  papel: z.enum(["mae", "pai", "avo", "outro"], {
+  papel: z.enum(["mae", "pai", "outro"], {
     message: "Selecione sua relação com a criança",
   }),
-});
+  papel_outro: z.string().trim().optional(),
+  genero_responsavel: z.enum(["masculino", "feminino", "neutro"]).optional(),
+}).refine(
+  (d) => d.papel !== "outro" || (d.papel_outro && d.papel_outro.trim().length >= 2),
+  { path: ["papel_outro"], message: "Diga qual é o grau de parentesco" },
+).refine(
+  (d) => d.papel !== "outro" || !!d.genero_responsavel,
+  { path: ["genero_responsavel"], message: "Selecione o gênero" },
+);
+
+const GENEROS_RESPONSAVEL = [
+  { value: "feminino", label: "Feminino" },
+  { value: "masculino", label: "Masculino" },
+  { value: "neutro", label: "Prefiro não dizer" },
+] as const;
 
 type FormValues = z.infer<typeof schema>;
 
@@ -60,7 +74,15 @@ export function Tela1Mae({
   pending,
   onSubmit,
 }: {
-  initial: { nome_mae: string; data_nascimento_mae: string; como_chamar: string; whatsapp_e164: string; papel: string };
+  initial: {
+    nome_mae: string;
+    data_nascimento_mae: string;
+    como_chamar: string;
+    whatsapp_e164: string;
+    papel: string;
+    papel_outro?: string | null;
+    genero_responsavel?: string | null;
+  };
   pending: boolean;
   onSubmit: (values: FormValues) => void;
 }) {
@@ -68,6 +90,7 @@ export function Tela1Mae({
     register,
     control,
     handleSubmit,
+    watch,
     formState: { errors },
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -76,9 +99,14 @@ export function Tela1Mae({
       data_nascimento_mae: dataIsoParaBr(initial.data_nascimento_mae),
       como_chamar: initial.como_chamar,
       whatsapp_e164: initial.whatsapp_e164,
-      papel: (initial.papel || "") as FormValues["papel"],
+      // 'avo' legado passa a ser tratado como 'outro' (com detalhe livre).
+      papel: ((initial.papel === "avo" ? "outro" : initial.papel) || "") as FormValues["papel"],
+      papel_outro: initial.papel_outro ?? "",
+      genero_responsavel: (initial.genero_responsavel ?? undefined) as FormValues["genero_responsavel"],
     },
   });
+
+  const papel = watch("papel");
 
   return (
     <Explanation
@@ -110,13 +138,51 @@ export function Tela1Mae({
             <option value="">Selecione...</option>
             <option value="mae">Mãe</option>
             <option value="pai">Pai</option>
-            <option value="avo">Avó ou avô</option>
             <option value="outro">Outro(a) responsável</option>
           </select>
           {errors.papel && (
             <span className="text-xs text-destructive">{errors.papel.message}</span>
           )}
         </div>
+
+        {papel === "outro" && (
+          <div className="grid grid-cols-1 gap-3 rounded-md border border-input bg-muted/30 p-3 md:grid-cols-2">
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="papel_outro">Qual é o grau de parentesco?</Label>
+              <Input
+                id="papel_outro"
+                placeholder="Ex.: avó, tio, madrinha, tutor"
+                {...register("papel_outro")}
+              />
+              {errors.papel_outro && (
+                <span className="text-xs text-destructive">{errors.papel_outro.message}</span>
+              )}
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="genero_responsavel">Seu gênero</Label>
+              <select
+                id="genero_responsavel"
+                className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm"
+                {...register("genero_responsavel")}
+              >
+                <option value="">Selecione...</option>
+                {GENEROS_RESPONSAVEL.map((g) => (
+                  <option key={g.value} value={g.value}>
+                    {g.label}
+                  </option>
+                ))}
+              </select>
+              {errors.genero_responsavel && (
+                <span className="text-xs text-destructive">
+                  {errors.genero_responsavel.message}
+                </span>
+              )}
+            </div>
+            <p className="text-xs text-muted-foreground md:col-span-2">
+              Ajuda a Ayla a falar com você do jeito certo — sem presumir que é a mãe.
+            </p>
+          </div>
+        )}
 
         <div className="flex flex-col gap-1.5">
           <Label htmlFor="data_nascimento_mae">Sua data de nascimento</Label>

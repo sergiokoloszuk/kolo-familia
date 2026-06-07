@@ -33,7 +33,7 @@ export default async function OnboardingPage() {
 
   const { data: profile } = await supabase
     .from("family_profiles")
-    .select("nome_mae, data_nascimento_mae, como_chamar, papel")
+    .select("nome_mae, data_nascimento_mae, como_chamar, papel, papel_outro, genero_responsavel")
     .eq("family_account_id", family.id)
     .maybeSingle();
 
