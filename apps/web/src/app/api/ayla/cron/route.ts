@@ -10,6 +10,7 @@ import {
   sendProximoInsight,
   sendRepertorioSugestao,
   sendPlanoSeguimento,
+  sendOfertaFimDeSemana,
   sendCampanha,
   type CampanhaCategoria,
 } from "@/lib/ayla/orchestrator";
@@ -62,6 +63,7 @@ async function handle(request: NextRequest) {
     if (tipo === "insights") return await runInsights(supabase);
     if (tipo === "repertorio") return await runRepertorio(supabase);
     if (tipo === "seguimento") return await runSeguimento(supabase);
+    if (tipo === "fim_de_semana") return await runFimDeSemana(supabase);
     if (tipo === "campanhas") return await runCampanhas(supabase);
     if (tipo === "regras") return await runRegras(supabase);
     if (tipo === "cleanup") return await runCleanup(supabase);
@@ -524,6 +526,78 @@ async function runSeguimento(supabase: AdminClient) {
         },
         agora,
       );
+      resultados.push({
+        familyId,
+        enviada: r.enviada,
+        motivo: r.enviada ? undefined : r.motivo,
+      });
+    } catch (e) {
+      resultados.push({
+        familyId,
+        enviada: false,
+        motivo: e instanceof Error ? e.message : "erro",
+      });
+    }
+  }
+
+  return NextResponse.json({
+    processadas: resultados.length,
+    enviadas: resultados.filter((r) => r.enviada).length,
+    detalhes: resultados,
+  });
+}
+
+/**
+ * Fim de semana (Fase 5): às sextas, oferece um roteiro leve de fim de
+ * semana. Mesma elegibilidade da rotina (janela de horário + assinatura);
+ * a geração do plano acontece quando a mãe responde (no processInbound).
+ * Trava de sexta-feira no fuso BR — no-op em qualquer outro dia.
+ */
+async function runFimDeSemana(supabase: AdminClient) {
+  const agora = new Date();
+
+  const diaSemanaBR = new Intl.DateTimeFormat("en-US", {
+    weekday: "short",
+    timeZone: "America/Sao_Paulo",
+  }).format(agora);
+  if (diaSemanaBR !== "Fri") {
+    return NextResponse.json({ pulado: "não é sexta-feira no fuso BR", dia: diaSemanaBR });
+  }
+
+  const horaAtualLocal = horaLocalHHMM(agora);
+
+  const { data: candidatas } = await supabase
+    .from("ayla_preferences")
+    .select(
+      "family_account_id, horario_preferido_inicio, horario_preferido_fim, desativada, pausada_ate, consentimento_em",
+    )
+    .not("consentimento_em", "is", null)
+    .eq("desativada", false);
+
+  let elegiveis: string[] = [];
+  for (const p of candidatas ?? []) {
+    if (p.pausada_ate && new Date(p.pausada_ate) > agora) continue;
+    const inicio = (p.horario_preferido_inicio as string)?.slice(0, 5);
+    const fim = (p.horario_preferido_fim as string)?.slice(0, 5);
+    if (inicio && fim && horaAtualLocal >= inicio && horaAtualLocal <= fim) {
+      elegiveis.push(p.family_account_id as string);
+    }
+  }
+
+  if (elegiveis.length > 0) {
+    const { data: ativas } = await supabase
+      .from("subscription_accesses")
+      .select("family_account_id, status")
+      .in("family_account_id", elegiveis)
+      .in("status", ["trialing", "active", "past_due"]);
+    const ativasSet = new Set((ativas ?? []).map((a) => a.family_account_id as string));
+    elegiveis = elegiveis.filter((id) => ativasSet.has(id));
+  }
+
+  const resultados: Array<{ familyId: string; enviada: boolean; motivo?: string }> = [];
+  for (const familyId of elegiveis) {
+    try {
+      const r = await sendOfertaFimDeSemana(supabase, familyId, agora);
       resultados.push({
         familyId,
         enviada: r.enviada,

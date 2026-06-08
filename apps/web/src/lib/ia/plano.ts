@@ -25,7 +25,16 @@ export const PLANO_TIPOS = [
   "observar",
 ] as const;
 
-const SISTEMA = `Você é a Kolo montando um PLANO completo e personalizado pra o adulto responsável por uma criança neurodivergente.
+export type VariantePlano = "padrao" | "fim_de_semana";
+
+const SAIDA = `# Saída
+Responda APENAS com JSON válido, sem texto antes/depois:
+{"titulo":"...","tema":"...","secoes":[{"tipo":"...","titulo":"...","conteudo_markdown":"..."}]}
+"titulo" curto. "tema" = o foco do plano.`;
+
+const SISTEMA_APRENDIZADO = `- Se houver um bloco <o_que_ja_funcionou>, APRENDA com ele: priorize abordagens parecidas com o que funcionou e NÃO repita o que a família já disse que não funcionou. Não cite o bloco nem diga "da última vez" — só deixe o plano mais certeiro.`;
+
+const SISTEMA_PADRAO = `Você é a Kolo montando um PLANO completo e personalizado pra o adulto responsável por uma criança neurodivergente.
 
 ${VOZ_E_LIMITES}
 
@@ -38,12 +47,34 @@ ${VOZ_E_LIMITES}
 - atividades / diferente / frases / rotina: conforme fizer sentido pro desafio.
 - observar: o que reparar nos próximos dias pra entender melhor.
 - Use o que você já sabe da criança (contexto abaixo). Voz de amiga sábia, NÃO relatório. Markdown leve dentro de cada seção (listas, *itálico* na frase pronta).
-- Se houver um bloco <o_que_ja_funcionou>, APRENDA com ele: priorize abordagens parecidas com o que funcionou e NÃO repita o que a família já disse que não funcionou. Não cite o bloco nem diga "da última vez" — só deixe o plano mais certeiro.
+${SISTEMA_APRENDIZADO}
 
-# Saída
-Responda APENAS com JSON válido, sem texto antes/depois:
-{"titulo":"...","tema":"...","secoes":[{"tipo":"...","titulo":"...","conteudo_markdown":"..."}]}
-"titulo" curto (ex.: "Plano de foco — Maria"). "tema" = o foco do plano.`;
+${SAIDA}
+"titulo" curto (ex.: "Plano de foco — Maria").`;
+
+const SISTEMA_FIM_DE_SEMANA = `Você é a Kolo montando um ROTEIRO LEVE de fim de semana pro adulto responsável por uma criança neurodivergente.
+
+${VOZ_E_LIMITES}
+
+# Como montar o roteiro de fim de semana
+- NÃO é uma grade rígida hora a hora. É um roteiro FLEXÍVEL, tecido na rotina real da família, que dá pra encaixar no que o dia trouxer. Ócio e "não fazer nada" também são válidos — não encha o fim de semana.
+- Parta do que a família já tem em vista (passeio, casa, visita, nada planejado) e do que ela queria que rolasse. Se ela não disse muito, proponha 2-3 momentos possíveis, sem obrigar.
+- Foco: conexão e leveza, não produtividade. Respeite sono, regulação, transições e o sensorial da criança (evite sobrecarga; sugira como preparar transições).
+- Tipos de seção possíveis (campo "tipo"): "entender", "atividades", "brincadeiras", "diferente", "rotina", "frases", "observar". Escolha SÓ as que fizerem sentido.
+- entender: 1-2 frases acolhedoras sobre o tom do fim de semana (sem pressão de "aproveitar tudo").
+- atividades / brincadeiras: 2-4 ideias possíveis, ancoradas nos interesses da criança, com plano B simples se ela não topar. Diga que pular é ok.
+- rotina: como manter âncoras que acalmam (refeições, sono) mesmo fora da semana, de forma leve.
+- frases: 1-2 frases prontas pra momentos de transição ou frustração (*itálico*).
+- observar: 1-2 coisas pra reparar no fim de semana.
+- Voz de amiga sábia, curta e quente. Markdown leve.
+${SISTEMA_APRENDIZADO}
+
+${SAIDA}
+"titulo" curto (ex.: "Fim de semana leve — Maria"). "tema" = "fim de semana".`;
+
+function sistemaPlano(variante: VariantePlano): string {
+  return variante === "fim_de_semana" ? SISTEMA_FIM_DE_SEMANA : SISTEMA_PADRAO;
+}
 
 export async function gerarPlano(params: {
   supabase: SupabaseClient;
@@ -51,8 +82,18 @@ export async function gerarPlano(params: {
   membroAtipicoId: string | null;
   desafio: string;
   conversaId?: string | null;
+  variante?: VariantePlano;
+  origem?: string;
 }): Promise<{ id: string; titulo: string; secoes: PlanoSecao[] }> {
-  const { supabase, familyId, membroAtipicoId, desafio, conversaId } = params;
+  const {
+    supabase,
+    familyId,
+    membroAtipicoId,
+    desafio,
+    conversaId,
+    variante = "padrao",
+    origem = "estrategias",
+  } = params;
 
   const skills = await loadActiveSkills(supabase);
   const roteadas =
@@ -66,13 +107,20 @@ export async function gerarPlano(params: {
 
   const contexto = buildContextBlock(ctx);
   const aprendizado = await carregarAprendizado(supabase, familyId, membroAtipicoId);
-  const userMsg = `${contexto}${aprendizado ? `\n\n${aprendizado}` : ""}\n\n<desafio>\n${desafio}\n</desafio>\n\nMonte o plano. Só o JSON.`;
+  const wrapper = variante === "fim_de_semana" ? "fim_de_semana" : "desafio";
+  const pedido =
+    variante === "fim_de_semana"
+      ? "Monte o roteiro leve do fim de semana. Só o JSON."
+      : "Monte o plano. Só o JSON.";
+  const userMsg = `${contexto}${aprendizado ? `\n\n${aprendizado}` : ""}\n\n<${wrapper}>\n${desafio}\n</${wrapper}>\n\n${pedido}`;
 
   const client = getAnthropicClient();
   const final = await client.messages.create({
     model: MODELS.principal,
     max_tokens: 3500,
-    system: [{ type: "text", text: SISTEMA, cache_control: { type: "ephemeral" } }],
+    system: [
+      { type: "text", text: sistemaPlano(variante), cache_control: { type: "ephemeral" } },
+    ],
     messages: [{ role: "user", content: userMsg }],
   });
 
@@ -99,7 +147,7 @@ export async function gerarPlano(params: {
       titulo,
       tema,
       secoes: parsed.secoes,
-      origem: "estrategias",
+      origem,
     })
     .select("id")
     .single();

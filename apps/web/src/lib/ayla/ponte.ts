@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { classificarIntencao } from "@/lib/ia/intencao";
+import { gerarPlano } from "@/lib/ia/plano";
 
 /**
  * Ponte WhatsApp → app (Fase 3).
@@ -136,6 +137,47 @@ export async function montarPonteWhatsApp(
   } catch (e) {
     console.warn(
       "[ayla:ponte] falha ao montar ponte WhatsApp→app:",
+      e instanceof Error ? e.message : e,
+    );
+    return null;
+  }
+}
+
+/**
+ * Gera o roteiro leve de fim de semana (Fase 5) a partir do que a mãe
+ * contou no WhatsApp e devolve uma mensagem com o magic-link pro plano.
+ * Flexível, sem grade rígida (a variante do gerarPlano cuida do tom).
+ * Falha silenciosa → null (a Ayla segue com a resposta normal).
+ */
+export async function montarPlanoFimDeSemana(
+  supabase: SupabaseClient,
+  params: { familyId: string; membroAtipicoId: string | null; contexto: string; nomeMembro?: string | null },
+): Promise<string | null> {
+  try {
+    const desafio =
+      params.contexto.trim() ||
+      "Montar um fim de semana leve e gostoso, sem grade rígida, com o que a família já tem em vista.";
+
+    const plano = await gerarPlano({
+      supabase,
+      familyId: params.familyId,
+      membroAtipicoId: params.membroAtipicoId,
+      desafio,
+      variante: "fim_de_semana",
+      origem: "fim_de_semana",
+    });
+
+    const link = await gerarMagicLink(supabase, {
+      familyId: params.familyId,
+      next: `/planos/${plano.id}`,
+    });
+    if (!link) return null;
+
+    const ref = params.nomeMembro ? ` pra ${params.nomeMembro}` : "";
+    return `Montei um roteiro leve pro fim de semana${ref} — sem grade rígida, dá pra encaixar no que o dia trouxer. Dá uma olhada (já entra direto):\n${link}`;
+  } catch (e) {
+    console.warn(
+      "[ayla:ponte] falha ao montar plano de fim de semana:",
       e instanceof Error ? e.message : e,
     );
     return null;

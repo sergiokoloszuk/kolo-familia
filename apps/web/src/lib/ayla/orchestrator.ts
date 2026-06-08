@@ -21,7 +21,7 @@ import {
   templateInsight,
 } from "./messageTemplates";
 import { gerarMensagemEspontanea } from "./mensagemEspontanea";
-import { montarPonteWhatsApp, gerarMagicLink } from "./ponte";
+import { montarPonteWhatsApp, gerarMagicLink, montarPlanoFimDeSemana } from "./ponte";
 import type { AylaTipoProativa, AylaTipoReativa, ParserResult } from "./types";
 
 /**
@@ -244,6 +244,124 @@ export async function sendPlanoSeguimento(
       .eq("id", plano.id);
   }
   return r;
+}
+
+// ============================================================
+// PROATIVA: Oferta de plano de fim de semana (Fase 5)
+// ============================================================
+
+/**
+ * Sexta-feira: a Ayla pergunta se a mãe quer um roteiro leve pro fim de
+ * semana e convida a contar o que já tá no radar + o que queria que
+ * rolasse. A geração em si acontece quando ela responde (ver o gancho no
+ * processInbound → montarPlanoFimDeSemana). Idempotente por dia.
+ */
+export async function sendOfertaFimDeSemana(
+  supabase: SupabaseClient,
+  familyAccountId: string,
+  agora: Date = new Date(),
+): Promise<EnvioResultado> {
+  const podeRes = await podeEnviarProativa(
+    supabase,
+    { family_account_id: familyAccountId, agora },
+    "fim_de_semana",
+  );
+  if (!podeRes.permitido) return { enviada: false, motivo: podeRes.motivo };
+
+  const ctx = await loadFamiliaParaEnvio(supabase, familyAccountId);
+  if (!ctx) return { enviada: false, motivo: "Sem contexto da família." };
+  if (ctx.membros.length === 0) {
+    return { enviada: false, motivo: "Sem membros atípicos cadastrados." };
+  }
+
+  // Idempotência: no máx 1 oferta de fim de semana por dia.
+  const inicio = startOfDay(agora);
+  const { data: jaHoje } = await supabase
+    .from("ayla_messages")
+    .select("id")
+    .eq("family_account_id", familyAccountId)
+    .eq("tipo", "fim_de_semana")
+    .gte("created_at", inicio.toISOString())
+    .limit(1);
+  if ((jaHoje?.length ?? 0) > 0) {
+    return { enviada: false, motivo: "Oferta de fim de semana já enviada hoje." };
+  }
+
+  // Round-robin entre membros (igual à rotina), pra famílias 2+.
+  const idx =
+    Math.abs(hashSeed(`${familyAccountId}-fds-${agora.toDateString()}`)) % ctx.membros.length;
+  const membroFoco = ctx.membros[idx];
+
+  const texto = `Sexta chegou 🌿 Quer que eu monte um roteiro leve pro fim de semana${membroFoco.nome ? ` com ${membroFoco.nome}` : ""}? Sem grade rígida — só algumas ideias pra encaixar no que rolar. Me conta o que já tá no radar (passeio, casa, nada planejado?) e o que você queria que acontecesse. Ou responde "pode ser" que eu já mando uma sugestão.`;
+
+  return enviarEPersistir(supabase, {
+    family_account_id: familyAccountId,
+    membro_atipico_id: membroFoco.id,
+    phone: ctx.whatsapp_e164,
+    texto,
+    category: "proativa",
+    tipo: "fim_de_semana",
+  });
+}
+
+/**
+ * Há uma oferta de fim de semana esperando resposta? True quando: existe
+ * uma oferta `fim_de_semana` nas últimas 48h, a mãe AINDA não respondeu a
+ * ela (nenhum inbound depois) e nenhum plano de fim de semana foi gerado
+ * desde então. Calcular ANTES de persistir o inbound atual.
+ */
+async function ofertaFimDeSemanaPendente(
+  supabase: SupabaseClient,
+  familyId: string,
+  agora: Date,
+): Promise<{ membroId: string | null } | null> {
+  const limite = new Date(agora.getTime() - 48 * 60 * 60 * 1000);
+  const { data: ofertas } = await supabase
+    .from("ayla_messages")
+    .select("created_at, membro_atipico_id")
+    .eq("family_account_id", familyId)
+    .eq("tipo", "fim_de_semana")
+    .eq("direcao", "outbound")
+    .gte("created_at", limite.toISOString())
+    .order("created_at", { ascending: false })
+    .limit(1);
+  const oferta = ofertas?.[0];
+  if (!oferta) return null;
+
+  const ofertaEm = oferta.created_at as string;
+
+  const { data: respostas } = await supabase
+    .from("ayla_messages")
+    .select("id")
+    .eq("family_account_id", familyId)
+    .eq("direcao", "inbound")
+    .gt("created_at", ofertaEm)
+    .limit(1);
+  if ((respostas?.length ?? 0) > 0) return null;
+
+  const { data: planos } = await supabase
+    .from("planos")
+    .select("id")
+    .eq("family_account_id", familyId)
+    .eq("origem", "fim_de_semana")
+    .gte("created_at", ofertaEm)
+    .limit(1);
+  if ((planos?.length ?? 0) > 0) return null;
+
+  return { membroId: (oferta.membro_atipico_id as string | null) ?? null };
+}
+
+/** Resposta curta e claramente negativa à oferta de fim de semana. */
+function ehRecusaFimDeSemana(texto: string): boolean {
+  const t = texto
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .trim();
+  if (t.length > 40) return false; // resposta longa = ela contou algo → gerar
+  return /\b(nao|agora nao|hoje nao|nao quero|nao da|nao precisa|depois|talvez depois|fica pra proxima|deixa pra depois)\b/.test(
+    t,
+  );
 }
 
 // ============================================================
@@ -611,6 +729,14 @@ export async function processInbound(
     return { tratada: false };
   }
 
+  // 1b. Há uma oferta de fim de semana esperando resposta? (calcular ANTES
+  // de persistir o inbound atual, pra "primeira resposta" ser detectada).
+  const ofertaFds = await ofertaFimDeSemanaPendente(
+    supabase,
+    family.id,
+    inbound.recebidaEm,
+  );
+
   // 2. Persiste inbound
   await supabase.from("ayla_messages").insert({
     family_account_id: family.id,
@@ -626,6 +752,36 @@ export async function processInbound(
   if (cmd) {
     const resp = await processarComando(supabase, family.id, cmd);
     return { tratada: true, familia: family.id, resposta: resp };
+  }
+
+  // 3a. Resposta à oferta de fim de semana (Fase 5): se não for recusa,
+  // monta o roteiro leve a partir do que ela contou e manda o link.
+  if (ofertaFds && !ehRecusaFimDeSemana(inbound.texto)) {
+    const ctxFds = await loadFamiliaParaEnvio(supabase, family.id);
+    if (ctxFds) {
+      const membroId = ofertaFds.membroId ?? ctxFds.membros[0]?.id ?? null;
+      const membroNome = membroId
+        ? (ctxFds.membros.find((m) => m.id === membroId)?.nome ?? null)
+        : null;
+      const msg = await montarPlanoFimDeSemana(supabase, {
+        familyId: family.id,
+        membroAtipicoId: membroId,
+        contexto: inbound.texto,
+        nomeMembro: membroNome,
+      });
+      if (msg) {
+        const resp = await enviarEPersistir(supabase, {
+          family_account_id: family.id,
+          membro_atipico_id: membroId,
+          phone: ctxFds.whatsapp_e164,
+          texto: msg,
+          category: "reativa",
+          tipo: "resposta_registro",
+        });
+        return { tratada: true, familia: family.id, resposta: resp };
+      }
+      // Falhou gerar → cai no fluxo normal (a Ayla ainda responde algo).
+    }
   }
 
   // 3b. "Sim" curto → confirma a última sugestão pendente da Ayla pro Kolo Vivo.
