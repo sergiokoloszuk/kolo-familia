@@ -193,6 +193,10 @@ function MembroBloco({
         {/* Desafios */}
         <div className="flex flex-col gap-3">
           <Label className="text-sm font-medium">O que está difícil agora? (até 3)</Label>
+          <p className="-mt-1 text-xs text-muted-foreground">
+            Em cada desafio, selecione o tema mais desafiador e depois explique o que
+            está acontecendo.
+          </p>
 
           {fields.map((f, di) => {
             const temaAtual = desafios?.[di]?.tema ?? "";
@@ -268,6 +272,9 @@ function MembroBloco({
         {/* Interesses */}
         <div className="flex flex-col gap-2">
           <Label className="text-sm font-medium">E o que {nome} ama?</Label>
+          <p className="-mt-1 text-xs text-muted-foreground">
+            Pode escolher mais de um — e detalhar no campo logo abaixo.
+          </p>
           <Controller
             name={`porMembro.${mi}.interesses`}
             control={control}
