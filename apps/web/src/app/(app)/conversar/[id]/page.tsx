@@ -31,7 +31,7 @@ export default async function ConversaPage(props: PageProps<"/conversar/[id]">) 
 
   const { data: mensagens } = await supabase
     .from("mensagens_skill")
-    .select("id, papel, conteudo, skills_acionadas, created_at")
+    .select("id, papel, conteudo, skills_acionadas, metadata, created_at")
     .eq("conversa_id", conversa.id)
     .order("created_at", { ascending: true });
 
@@ -45,6 +45,17 @@ export default async function ConversaPage(props: PageProps<"/conversar/[id]">) 
   const temResposta = msgs.some((m) => m.papel === "assistant");
   const ultima = msgs[msgs.length - 1];
   const precisaResposta = ultima?.papel === "user";
+
+  // Intenção do último turno respondido — define se o CTA de plano aparece
+  // (numa crise a Kolo acolhe; não empurra plano).
+  const ultimaResposta = [...msgs].reverse().find((m) => m.papel === "assistant");
+  const intencao =
+    ((ultimaResposta?.metadata as { intencao?: string } | null)?.intencao as
+      | "crise"
+      | "desafio"
+      | "duvida"
+      | "desabafo"
+      | undefined) ?? "desafio";
 
   const membrosRel = conversa.membros_atipicos as
     | { nome: string }
@@ -107,6 +118,7 @@ export default async function ConversaPage(props: PageProps<"/conversar/[id]">) 
         precisaResposta={precisaResposta}
         temResposta={temResposta}
         msgCount={msgs.length}
+        intencao={intencao}
         outputTypes={(tipos ?? []).map((t) => ({
           key: t.key as string,
           label: t.label as string,

@@ -1,6 +1,7 @@
 import type Anthropic from "@anthropic-ai/sdk";
 import type { ContextoSkillResposta } from "./context";
 import type { SkillRow } from "./router";
+import type { Intencao } from "./intencao";
 import { pronomesPara } from "@/lib/ayla/pronomes";
 
 export type OutputTypeData = {
@@ -47,16 +48,49 @@ export const VOZ_E_LIMITES = `# Voz do produto (PRD §6)
 - Em caso de dúvida sobre risco real (auto-lesão, ideação suicida, abuso), responda APENAS: "Isso precisa de apoio profissional agora. Procure um profissional de saúde mental ou ligue para o CVV: 188." e pare.`;
 
 /**
+ * Bloco de comportamento por INTENÇÃO (Fase 2). Molda como a Kolo responde
+ * antes de qualquer conteúdo — crise acolhe e devolve a escolha; desabafo
+ * ouve; dúvida vai direto; desafio é o caminho normal e sinaliza o plano.
+ */
+export function blocoIntencao(intencao: Intencao): string {
+  switch (intencao) {
+    case "crise":
+      return `# Esta mensagem parece uma crise — algo difícil acontecendo AGORA
+
+Antes de qualquer coisa, ACOLHA: 1-2 frases curtas que mostram que você entende o peso deste momento. Não minimize, não dê lição, não corra pra resolver.
+NÃO despeje um plano nem uma lista de soluções agora — no meio de uma crise isso sobrecarrega.
+Depois de acolher, devolva a escolha pra ela numa única pergunta: ela prefere entender agora o que pode ter desencadeado, ou só respirar e olhar isso com calma depois? Quem manda no ritmo é ela.
+Se ela quiser entender, levante NO MÁXIMO 1-2 possíveis "suspeitos" a partir do que você sabe da criança (sensorial, transição, fome, sono, excesso de estímulo) — sempre como hipótese, nunca causa afirmada.
+Termine gentil e curto.`;
+    case "desabafo":
+      return `# Esta mensagem parece um desabafo
+
+Ela quer ser ouvida, não necessariamente resolvida. ACOLHA e valide o que ela sente, sem correr pra solução.
+Não force uma ideia prática. No fim, pergunte de leve se ela quer pensar em algo concreto agora ou se hoje é só pra colocar pra fora.`;
+    case "duvida":
+      return `# Esta mensagem é uma dúvida pontual
+
+Responda direto e objetivo, no tom de sempre. Sem alongar nem montar plano.`;
+    case "desafio":
+    default:
+      return `# Esta mensagem traz um desafio do dia a dia
+
+Responda como sempre. Se faltar um contexto essencial pra ajudar de verdade, faça 1 pergunta curta antes de aprofundar.
+Quando já tiver o suficiente, ajude — e, ao final, sinalize de leve que dá pra montar um plano completo sobre isso (a interface já oferece o botão; não invente links).`;
+  }
+}
+
+/**
  * System prompt do MODO CONVERSA — template de 7 partes (PRD §7.4.2).
  */
-function buildSystemTextConversa(skills: SkillRow[]): string {
+function buildSystemTextConversa(skills: SkillRow[], intencao?: Intencao): string {
   return `Você é uma equipe de especialistas do Kolo Família — uma aplicação que apoia famílias com pelo menos um membro neurodivergente (TEA, TDAH, dislexia, AH/SD, e outros perfis).
 
 # Especialistas neste turno
 
 ${buildIdentityBlock(skills)}
 
-${VOZ_E_LIMITES}
+${VOZ_E_LIMITES}${intencao ? `\n\n${blocoIntencao(intencao)}` : ""}
 
 # Como responder
 
@@ -211,15 +245,16 @@ export function assemblePrompt(params: {
   ctx: ContextoSkillResposta;
   userInput: string;
   modo: Modo;
+  intencao?: Intencao;
 }): {
   system: Anthropic.TextBlockParam[];
   messages: Anthropic.MessageParam[];
 } {
-  const { skills, ctx, userInput, modo } = params;
+  const { skills, ctx, userInput, modo, intencao } = params;
 
   const systemText =
     modo.kind === "conversa"
-      ? buildSystemTextConversa(skills)
+      ? buildSystemTextConversa(skills, intencao)
       : buildSystemTextOutputType(skills, modo.outputType);
 
   const system: Anthropic.TextBlockParam[] = [

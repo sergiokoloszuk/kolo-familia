@@ -29,11 +29,14 @@ const CAMPO_LABEL: Record<string, string> = {
 
 export function ConversaAcoes({
   conversaId,
+  intencao,
   outputTypes,
 }: {
   conversaId: string;
+  intencao: "crise" | "desafio" | "duvida" | "desabafo";
   outputTypes: { key: string; label: string }[];
 }) {
+  const emCrise = intencao === "crise";
   const router = useRouter();
   const [erro, setErro] = useState<string | null>(null);
 
@@ -143,39 +146,64 @@ export function ConversaAcoes({
         </div>
       )}
 
-      {/* Plano completo — a ação principal: junta tudo num plano só. */}
-      <div className="rounded-2xl border border-brand-purple/20 bg-kolo-lilas-bg-2/40 p-4">
-        <div className="flex items-start gap-3">
-          <span
-            aria-hidden
-            className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-brand-yellow/25 text-brand-purple"
+      {/* Plano completo — a ação principal: junta tudo num plano só.
+          Numa crise a Kolo acolhe; em vez de empurrar o plano, faz uma
+          oferta discreta e sem pressa (a mãe escolhe o ritmo). */}
+      {emCrise ? (
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-xl bg-kolo-lilas-bg-2/40 px-4 py-3">
+          <p className="text-sm leading-relaxed text-muted-foreground">
+            Quando você quiser — sem pressa — posso organizar isso num plano com calma.
+          </p>
+          <button
+            type="button"
+            onClick={handlePlano}
+            disabled={pendingPlano}
+            className="inline-flex items-center gap-1.5 text-sm font-semibold text-brand-purple underline underline-offset-2 hover:text-brand-purple-dark disabled:opacity-50"
           >
-            <Sparkles className="size-5" />
-          </span>
-          <div className="flex-1">
-            <p className="font-heading text-base font-medium text-foreground">
-              Quer um plano completo sobre isso?
-            </p>
-            <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-              Junto tudo num plano organizado — ideias práticas, frases pra usar e o
-              que observar — com a cara da sua família. Dá pra imprimir.
-            </p>
-            <Button type="button" onClick={handlePlano} disabled={pendingPlano} className="mt-3">
-              {pendingPlano ? (
-                <>
-                  <RefreshCw className="size-4 animate-spin" aria-hidden />
-                  Montando o plano...
-                </>
-              ) : (
-                <>
-                  <Sparkles className="size-4" aria-hidden />
-                  Montar plano completo
-                </>
-              )}
-            </Button>
+            {pendingPlano ? (
+              <>
+                <RefreshCw className="size-3.5 animate-spin" aria-hidden />
+                Montando...
+              </>
+            ) : (
+              "Montar um plano"
+            )}
+          </button>
+        </div>
+      ) : (
+        <div className="rounded-2xl border border-brand-purple/20 bg-kolo-lilas-bg-2/40 p-4">
+          <div className="flex items-start gap-3">
+            <span
+              aria-hidden
+              className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-brand-yellow/25 text-brand-purple"
+            >
+              <Sparkles className="size-5" />
+            </span>
+            <div className="flex-1">
+              <p className="font-heading text-base font-medium text-foreground">
+                Quer um plano completo sobre isso?
+              </p>
+              <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+                Junto tudo num plano organizado — ideias práticas, frases pra usar e o
+                que observar — personalizado pra sua família. Dá pra imprimir.
+              </p>
+              <Button type="button" onClick={handlePlano} disabled={pendingPlano} className="mt-3">
+                {pendingPlano ? (
+                  <>
+                    <RefreshCw className="size-4 animate-spin" aria-hidden />
+                    Montando o plano...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="size-4" aria-hidden />
+                    Montar plano completo
+                  </>
+                )}
+              </Button>
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       {/* Mais ajuda — gera o tipo escolhido sobre o mesmo tema. */}
       <div>

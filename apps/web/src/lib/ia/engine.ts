@@ -3,6 +3,7 @@ import { getAnthropicClient, MODELS } from "./anthropic";
 import { loadActiveSkills, routeSkillsAI, type RoutedSkill } from "./router";
 import { buildContext } from "./context";
 import { assemblePrompt, type Modo, type OutputTypeData } from "./prompt";
+import { classificarIntencao, type Intencao } from "./intencao";
 import {
   runTomValidators,
   runEstruturalValidators,
@@ -16,6 +17,7 @@ import { validateWithAI } from "./validator-ai";
 
 export type EngineResponse = {
   texto: string;
+  intencao: Intencao;
   skillsAcionadas: Array<{ name: string; display_name: string; score: number }>;
   validacao: { ok: true } | { ok: false; motivo: string; regenerou: boolean };
   uso: {
@@ -53,7 +55,10 @@ export async function respond(params: {
       "Nenhuma skill ativa cadastrada. Aplique a migração 0003_seed.sql no Supabase.",
     );
   }
-  const roteadas = await routeSkillsAI(userInput, skills);
+  const [roteadas, intencao] = await Promise.all([
+    routeSkillsAI(userInput, skills),
+    classificarIntencao({ supabase, familyId, texto: userInput }),
+  ]);
 
   const ctx = await buildContext(supabase, {
     familyId,
@@ -67,6 +72,7 @@ export async function respond(params: {
     ctx,
     userInput,
     { kind: "conversa" },
+    { intencao },
   );
 
   let validacao = await runFullValidation(resposta.texto, ctx);
@@ -79,13 +85,14 @@ export async function respond(params: {
       ctx,
       userInput,
       { kind: "conversa" },
-      { regeneracao: { motivo: validacao.motivo, sugestao: validacao.sugestao } },
+      { intencao, regeneracao: { motivo: validacao.motivo, sugestao: validacao.sugestao } },
     );
     validacao = await runFullValidation(resposta.texto, ctx);
   }
 
   return {
     texto: resposta.texto,
+    intencao,
     skillsAcionadas: roteadas.map((r) => ({
       name: r.skill.name,
       display_name: r.skill.display_name,
@@ -114,7 +121,10 @@ export async function prepararRespostaStream(params: {
   if (skills.length === 0) {
     throw new Error("Nenhuma skill ativa cadastrada.");
   }
-  const roteadas = await routeSkillsAI(userInput, skills);
+  const [roteadas, intencao] = await Promise.all([
+    routeSkillsAI(userInput, skills),
+    classificarIntencao({ supabase, familyId, texto: userInput }),
+  ]);
 
   const ctx = await buildContext(supabase, {
     familyId,
@@ -137,9 +147,10 @@ export async function prepararRespostaStream(params: {
     ctx,
     userInput,
     modo: { kind: "conversa" },
+    intencao,
   });
 
-  return { system, messages, roteadas };
+  return { system, messages, roteadas, intencao };
 }
 
 /**
@@ -185,6 +196,7 @@ export async function respondAsOutputType(params: {
 
   return {
     texto: resposta.texto,
+    intencao: "desafio",
     skillsAcionadas: roteadas.map((r) => ({
       name: r.skill.name,
       display_name: r.skill.display_name,
@@ -253,6 +265,7 @@ async function callClaude(
   userInput: string,
   modo: Modo,
   options: {
+    intencao?: Intencao;
     regeneracao?: { motivo: string; sugestao?: string };
   } = {},
 ): Promise<{ texto: string; uso: EngineResponse["uso"] }> {
@@ -267,6 +280,7 @@ async function callClaude(
     ctx,
     userInput: inputComRegeneracao,
     modo,
+    intencao: options.intencao,
   });
 
   const stream = client.messages.stream({

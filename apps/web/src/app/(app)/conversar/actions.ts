@@ -81,7 +81,7 @@ export async function enviarMensagem(input: z.infer<typeof enviarSchema>): Promi
     papel: "assistant",
     conteudo: resposta.texto,
     skills_acionadas: resposta.skillsAcionadas,
-    metadata: { validacao: resposta.validacao },
+    metadata: { validacao: resposta.validacao, intencao: resposta.intencao },
     tokens_input: resposta.uso.tokens_input,
     tokens_output: resposta.uso.tokens_output,
   });

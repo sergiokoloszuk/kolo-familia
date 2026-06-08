@@ -19,6 +19,7 @@ export function RespostaStreamer({
   precisaResposta,
   temResposta,
   msgCount,
+  intencao,
   outputTypes,
 }: {
   conversaId: string;
@@ -27,6 +28,8 @@ export function RespostaStreamer({
   /** Nº de mensagens persistidas (vindo do servidor). Cresce quando o refresh
    *  traz a resposta salva — usamos isso pra fazer o handoff sem piscar. */
   msgCount: number;
+  /** Intenção do último turno — numa crise o CTA de plano não aparece. */
+  intencao: "crise" | "desafio" | "duvida" | "desabafo";
   outputTypes: { key: string; label: string }[];
 }) {
   const router = useRouter();
@@ -153,7 +156,11 @@ export function RespostaStreamer({
 
       {/* Ações (mais ajuda / Atualizar) — só quando há resposta e não está transmitindo */}
       {temResposta && !streaming && (
-        <ConversaAcoes conversaId={conversaId} outputTypes={outputTypes} />
+        <ConversaAcoes
+          conversaId={conversaId}
+          intencao={intencao}
+          outputTypes={outputTypes}
+        />
       )}
 
       {/* Continuar conversa */}

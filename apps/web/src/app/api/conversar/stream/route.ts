@@ -57,7 +57,7 @@ export async function POST(req: NextRequest) {
     }
     const userInput = ultima.conteudo as string;
 
-    const { system, messages, roteadas } = await prepararRespostaStream({
+    const { system, messages, roteadas, intencao } = await prepararRespostaStream({
       supabase,
       familyId: family.id,
       membroAtipicoId: conversa.membro_atipico_id as string | null,
@@ -108,6 +108,7 @@ export async function POST(req: NextRequest) {
               display_name: r.skill.display_name,
               score: r.score,
             })),
+            metadata: { intencao },
             tokens_input: final.usage.input_tokens,
             tokens_output: final.usage.output_tokens,
           });
