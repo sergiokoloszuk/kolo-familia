@@ -21,6 +21,7 @@ import {
   templateInsight,
 } from "./messageTemplates";
 import { gerarMensagemEspontanea } from "./mensagemEspontanea";
+import { montarPonteWhatsApp } from "./ponte";
 import type { AylaTipoProativa, AylaTipoReativa, ParserResult } from "./types";
 
 /**
@@ -711,7 +712,7 @@ async function enviarRespostaEmChunks(
   let erro: string | null = null;
   let primeiro = true;
 
-  const textoCompleto = await gerarRespostaAyla(
+  let textoCompleto = await gerarRespostaAyla(
     args.params,
     async (par) => {
       // "Digitando..." visível antes de cada bolha; tempo ~proporcional ao
@@ -730,6 +731,30 @@ async function enviarRespostaEmChunks(
   );
 
   const enviada = erro == null;
+
+  // Ponte WhatsApp → app (Fase 3): num desafio de verdade, manda um
+  // magic-link que abre o plano completo no app, já logado. Numa crise /
+  // desabafo / dúvida (ou clarificação de membro) não manda — a própria
+  // ponte filtra por intenção. Falha silenciosa: nunca quebra a resposta.
+  if (enviada && args.tipo === "resposta_registro") {
+    const nudge = await montarPonteWhatsApp(supabase, {
+      familyId: args.family_account_id,
+      membroAtipicoId: args.membro_atipico_id,
+      mensagem: args.params.mensagem,
+      temDesafio: Boolean(args.params.sinais.desafio),
+    });
+    if (nudge) {
+      try {
+        await enviarTexto({ phoneE164: args.phone, texto: nudge, delaySegundos: 3 });
+        textoCompleto = `${textoCompleto}\n\n${nudge}`;
+      } catch (e) {
+        console.warn(
+          "[ayla:ponte] falha ao enviar link no WhatsApp:",
+          e instanceof Error ? e.message : e,
+        );
+      }
+    }
+  }
 
   await supabase.from("ayla_send_log").insert({
     family_account_id: args.family_account_id,
