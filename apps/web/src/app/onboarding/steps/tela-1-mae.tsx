@@ -6,6 +6,8 @@ import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Chip, ChipGroup } from "@/components/ui/chip";
+import { inferGeneroDePalavra } from "@/lib/ayla/pronomes";
 import { idadeAnos, dataBrParaIso, mascararDataBr, dataIsoParaBr } from "@/lib/idade";
 
 const schema = z.object({
@@ -18,13 +20,14 @@ const schema = z.object({
       if (!iso) return false;
       const a = idadeAnos(iso);
       return a !== null && a >= 16 && a <= 100;
-    }, "Informe uma data válida (idade entre 16 e 100)"),
+    }, "Informe sua data de nascimento (idade entre 16 e 100)"),
   whatsapp_e164: z
     .string()
     .trim()
     .regex(/^\+55\d{10,11}$/, "Informe o DDD + número, ex: (11) 99999-9999"),
-  como_chamar: z.string().trim().optional(),
-  papel: z.enum(["mae", "pai", "outro"], {
+  // avó/avô são chips separados — o gênero do cuidador fica implícito no chip.
+  // Em "outro", o grau livre (tia, madrinha...) também já revela o gênero pela palavra.
+  papel: z.enum(["mae", "pai", "avo", "avoh", "outro"], {
     message: "Selecione sua relação com a criança",
   }),
   papel_outro: z.string().trim().optional(),
@@ -33,9 +36,25 @@ const schema = z.object({
   (d) => d.papel !== "outro" || (d.papel_outro && d.papel_outro.trim().length >= 2),
   { path: ["papel_outro"], message: "Diga qual é o grau de parentesco" },
 ).refine(
-  (d) => d.papel !== "outro" || !!d.genero_responsavel,
-  { path: ["genero_responsavel"], message: "Selecione o gênero" },
+  // Em "outro": se a palavra não revela o gênero (ex.: "responsável", "tutor"),
+  // exige a escolha explícita. Se revela (tia, tio, madrinha...), dispensa.
+  (d) => {
+    if (d.papel !== "outro") return true;
+    const grau = d.papel_outro?.trim() ?? "";
+    if (grau.length < 2) return true; // outra mensagem já cobre
+    if (inferGeneroDePalavra(grau)) return true;
+    return !!d.genero_responsavel;
+  },
+  { path: ["genero_responsavel"], message: "Me diz se é no feminino ou masculino" },
 );
+
+const PARENTESCOS = [
+  { value: "mae", label: "Mãe" },
+  { value: "pai", label: "Pai" },
+  { value: "avo", label: "Avó" },
+  { value: "avoh", label: "Avô" },
+  { value: "outro", label: "Outro(a) responsável" },
+] as const;
 
 const GENEROS_RESPONSAVEL = [
   { value: "feminino", label: "Feminino" },
@@ -77,7 +96,6 @@ export function Tela1Mae({
   initial: {
     nome_mae: string;
     data_nascimento_mae: string;
-    como_chamar: string;
     whatsapp_e164: string;
     papel: string;
     papel_outro?: string | null;
@@ -97,24 +115,35 @@ export function Tela1Mae({
     defaultValues: {
       nome_mae: initial.nome_mae,
       data_nascimento_mae: dataIsoParaBr(initial.data_nascimento_mae),
-      como_chamar: initial.como_chamar,
       whatsapp_e164: initial.whatsapp_e164,
-      // 'avo' legado passa a ser tratado como 'outro' (com detalhe livre).
-      papel: ((initial.papel === "avo" ? "outro" : initial.papel) || "") as FormValues["papel"],
+      papel: (initial.papel || "") as FormValues["papel"],
       papel_outro: initial.papel_outro ?? "",
-      genero_responsavel: (initial.genero_responsavel ?? undefined) as FormValues["genero_responsavel"],
+      // "" quebra o z.enum().optional() — precisa ser undefined quando vazio.
+      genero_responsavel: (initial.genero_responsavel || undefined) as FormValues["genero_responsavel"],
     },
   });
 
   const papel = watch("papel");
+  const papelOutro = watch("papel_outro");
+  // Só perguntamos o gênero quando a palavra digitada não revela (ex.: "responsável").
+  const generoIndefinido =
+    papel === "outro" &&
+    (papelOutro?.trim().length ?? 0) >= 2 &&
+    inferGeneroDePalavra(papelOutro ?? "") === null;
 
   return (
-    <Explanation
-      o_que="Estes dados ficam só com você e ajudam a Ayla a te chamar pelo nome."
-      por_que="Sem o WhatsApp a Ayla não consegue aparecer onde sua família já está."
-      proximo="Em seguida, vamos saber sobre o(s) membro(s) atípico(s) da família."
-    >
+    <div className="flex flex-col gap-4">
       <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4" noValidate>
+        {Object.keys(errors).length > 0 && (
+          <div className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+            Faltou conferir:{" "}
+            {Object.values(errors)
+              .map((e) => e?.message)
+              .filter(Boolean)
+              .join(" · ")}
+          </div>
+        )}
+
         <div className="flex flex-col gap-1.5">
           <Label htmlFor="nome_mae">Como você se chama?</Label>
           <Input id="nome_mae" autoComplete="name" {...register("nome_mae")} />
@@ -123,64 +152,73 @@ export function Tela1Mae({
           )}
         </div>
 
-        <div className="flex flex-col gap-1.5">
-          <Label htmlFor="como_chamar">Apelido (opcional)</Label>
-          <Input id="como_chamar" placeholder="Como prefere que a gente te chame" {...register("como_chamar")} />
-        </div>
-
-        <div className="flex flex-col gap-1.5">
-          <Label htmlFor="papel">Qual é a sua relação com a criança?</Label>
-          <select
-            id="papel"
-            className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm"
-            {...register("papel")}
-          >
-            <option value="">Selecione...</option>
-            <option value="mae">Mãe</option>
-            <option value="pai">Pai</option>
-            <option value="outro">Outro(a) responsável</option>
-          </select>
+        <div className="flex flex-col gap-2">
+          <Label>Qual é a sua relação com a criança?</Label>
+          <Controller
+            name="papel"
+            control={control}
+            render={({ field }) => (
+              <ChipGroup label="Sua relação com a criança">
+                {PARENTESCOS.map((p) => (
+                  <Chip
+                    key={p.value}
+                    selected={field.value === p.value}
+                    onClick={() => field.onChange(p.value)}
+                    disabled={pending}
+                  >
+                    {p.label}
+                  </Chip>
+                ))}
+              </ChipGroup>
+            )}
+          />
           {errors.papel && (
             <span className="text-xs text-destructive">{errors.papel.message}</span>
           )}
         </div>
 
         {papel === "outro" && (
-          <div className="grid grid-cols-1 gap-3 rounded-md border border-input bg-muted/30 p-3 md:grid-cols-2">
+          <div className="flex flex-col gap-3 rounded-md border border-input bg-muted/30 p-3">
             <div className="flex flex-col gap-1.5">
               <Label htmlFor="papel_outro">Qual é o grau de parentesco?</Label>
               <Input
                 id="papel_outro"
-                placeholder="Ex.: avó, tio, madrinha, tutor"
+                placeholder="Ex.: tia, madrinha, tio, padrinho"
                 {...register("papel_outro")}
               />
               {errors.papel_outro && (
                 <span className="text-xs text-destructive">{errors.papel_outro.message}</span>
               )}
             </div>
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="genero_responsavel">Seu gênero</Label>
-              <select
-                id="genero_responsavel"
-                className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm"
-                {...register("genero_responsavel")}
-              >
-                <option value="">Selecione...</option>
-                {GENEROS_RESPONSAVEL.map((g) => (
-                  <option key={g.value} value={g.value}>
-                    {g.label}
-                  </option>
-                ))}
-              </select>
-              {errors.genero_responsavel && (
-                <span className="text-xs text-destructive">
-                  {errors.genero_responsavel.message}
-                </span>
-              )}
-            </div>
-            <p className="text-xs text-muted-foreground md:col-span-2">
-              Ajuda a Ayla a falar com você do jeito certo — sem presumir que é a mãe.
-            </p>
+
+            {generoIndefinido && (
+              <div className="flex flex-col gap-2">
+                <Label>Como a Ayla deve falar com você?</Label>
+                <Controller
+                  name="genero_responsavel"
+                  control={control}
+                  render={({ field }) => (
+                    <ChipGroup label="Seu gênero">
+                      {GENEROS_RESPONSAVEL.map((g) => (
+                        <Chip
+                          key={g.value}
+                          selected={field.value === g.value}
+                          onClick={() => field.onChange(g.value)}
+                          disabled={pending}
+                        >
+                          {g.label}
+                        </Chip>
+                      ))}
+                    </ChipGroup>
+                  )}
+                />
+                {errors.genero_responsavel && (
+                  <span className="text-xs text-destructive">
+                    {errors.genero_responsavel.message}
+                  </span>
+                )}
+              </div>
+            )}
           </div>
         )}
 
@@ -226,10 +264,12 @@ export function Tela1Mae({
             <span className="text-xs text-destructive">{errors.whatsapp_e164.message}</span>
           ) : (
             <span className="text-xs text-muted-foreground">
-              Use DDD + número. O código do país (+55) entra automaticamente.
+              Preciso do seu WhatsApp pra te acompanhar no dia a dia. (O +55 entra automático.)
             </span>
           )}
         </div>
+
+        <p className="text-xs text-muted-foreground">Esses dados ficam só com você.</p>
 
         <div className="flex justify-end pt-2">
           <Button type="submit" disabled={pending}>
@@ -237,7 +277,7 @@ export function Tela1Mae({
           </Button>
         </div>
       </form>
-    </Explanation>
+    </div>
   );
 }
 

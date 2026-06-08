@@ -1333,10 +1333,11 @@ async function carregarKoloVivoResumo(
   if (!membroId) return "";
   const { data } = await supabase
     .from("perfil_vivo_membro")
-    .select("essencial, como_e, corpo_rotina, desafios_regulacao, sensorial")
+    .select("essencial, como_e, corpo_rotina, desafios_regulacao, sensorial, categorias_extras")
     .eq("membro_atipico_id", membroId)
     .maybeSingle();
   if (!data) return "";
+  const row = data as Record<string, unknown>;
   const labels: Record<string, string> = {
     essencial: "O essencial",
     como_e: "Como é / interesses",
@@ -1346,8 +1347,28 @@ async function carregarKoloVivoResumo(
   };
   const linhas: string[] = [];
   for (const [campo, label] of Object.entries(labels)) {
-    const resumo = resumoCampoKV((data as Record<string, unknown>)[campo]);
+    const resumo = resumoCampoKV(row[campo]);
     if (resumo) linhas.push(`${label}: ${resumo}`);
+  }
+  // Domínios novos vivem em categorias_extras (onboarding distribui desafios
+  // por tema; rotina/etc. também ficam aqui). Sem isso a Ayla "não sabe".
+  const extras = row.categorias_extras as Record<string, unknown> | null;
+  if (extras && typeof extras === "object") {
+    const extrasLabels: Record<string, string> = {
+      comunicacao: "Comunicação",
+      socializacao: "Socialização",
+      motor: "Motor",
+      autonomia: "Autonomia",
+      foco: "Foco",
+      sono: "Sono",
+      nutricional: "Alimentação",
+      emocional: "Regulação emocional",
+      rotina: "Rotina",
+    };
+    for (const [campo, label] of Object.entries(extrasLabels)) {
+      const resumo = resumoCampoKV(extras[campo]);
+      if (resumo) linhas.push(`${label}: ${resumo}`);
+    }
   }
   return linhas.join("\n");
 }

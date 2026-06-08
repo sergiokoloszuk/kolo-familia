@@ -3,6 +3,7 @@
 import { useState, useTransition, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { dataBrParaIso } from "@/lib/idade";
+import { capitalizarNome } from "@/lib/nome";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tela1Mae } from "./steps/tela-1-mae";
 import { Tela2Membros } from "./steps/tela-2-membros";
@@ -17,6 +18,10 @@ export type Membro = {
   data_nascimento: string;
   perfil: string;
   genero?: "masculino" | "feminino" | "neutro" | null;
+  // Diagnóstico múltiplo (reconstruído de diagnosticos_formais).
+  diagnosticos?: string[];
+  diagnostico_outro?: string | null;
+  hipoteses?: string[];
 };
 
 export type InitialState = {
@@ -34,7 +39,10 @@ export type InitialState = {
   whatsapp: string | null;
   membros: Membro[];
   perfilFamilia: {
-    composicao: { texto?: string } | null;
+    composicao: {
+      texto?: string;
+      irmaos?: Array<{ nome: string; data_nascimento: string; brinca_junto: string }>;
+    } | null;
     rotina: { texto?: string } | null;
     recursos: { texto?: string } | null;
     dinamica: { texto?: string } | null;
@@ -43,23 +51,44 @@ export type InitialState = {
 
 const TOTAL_STEPS = 6;
 
-const STEP_LABELS = [
-  "Sobre você",
-  "Membro(s) atípico(s)",
-  "Contexto da família",
-  "Primeiros sinais",
-  "Termos e Ayla",
-  "Tudo pronto",
-];
-
-const STEP_BLURB = [
-  "Vamos te conhecer um pouco.",
-  "Quem é o foco do cuidado.",
-  "Quem mais está em volta e como vocês vivem.",
-  "Três desafios + três interesses + uma conquista.",
-  "Aceite e a permissão pra Ayla aparecer.",
-  "30 dias grátis começam agora.",
-];
+/**
+ * Título (Fraunces) + 1 linha na voz da Ayla por passo — substitui os antigos
+ * rótulos "O que é / Por que / Próximo". A linha diz o que é E já avisa o que
+ * vem (previsibilidade). [NOME] = primeira criança; antes de capturada, usa
+ * "seu filho ou sua filha".
+ */
+function chromeDoPasso(step: number, nomeCrianca: string | null): { titulo: string; linha: string } {
+  const N = capitalizarNome(nomeCrianca) || "seu filho ou sua filha";
+  switch (step) {
+    case 1:
+      return { titulo: "Sobre você", linha: "Pra começar, me diz quem é você." };
+    case 2:
+      return {
+        titulo: "Quem você cuida",
+        linha:
+          "Agora me conta de quem vamos cuidar. Pode ser mais de uma criança — é só adicionar. Depois, quem mais faz parte do dia a dia dela.",
+      };
+    case 3:
+      return {
+        titulo: "Quem mais está por perto",
+        linha:
+          "Agora me conta quem mais vive com vocês — irmãos, quem ajuda no dia a dia. Assim minhas ideias cabem na sua casa real, não numa receita de revista.",
+      };
+    case 4:
+      return {
+        titulo: `Como ${N} está agora`,
+        linha: `Me mostra três coisas que estão difíceis agora. Escolhe o tema e conta um pouco do que acontece — quanto mais você detalha, mais as minhas ideias de brincadeira e atividade ficam com a cara de ${N}, não genéricas. Comece pelo que mais pesa; um já me ajuda.`,
+      };
+    case 5:
+      return {
+        titulo: "Termos e WhatsApp",
+        linha:
+          "Por último, dois aceites: um pros termos de uso e outro pra Ayla poder te mandar mensagem no WhatsApp — a lei pede essa permissão separada, e você pode tirar quando quiser. Depois disso, seu trial de 30 dias começa.",
+      };
+    default:
+      return { titulo: "Tudo pronto", linha: "" };
+  }
+}
 
 export function OnboardingWizard({ initial }: { initial: InitialState }) {
   const router = useRouter();
@@ -69,6 +98,8 @@ export function OnboardingWizard({ initial }: { initial: InitialState }) {
 
   // Estado mutável compartilhado entre telas — fonte é o que o servidor já tem.
   const [state, setState] = useState(initial);
+  // Opt-in do WhatsApp (Passo 5) — o card da Ayla no Passo 6 só aparece se autorizado.
+  const [optinAyla, setOptinAyla] = useState(false);
 
   // Atribuição de afiliado (cookie kolo_ref → afiliado_id), uma vez ao abrir.
   useEffect(() => {
@@ -103,26 +134,36 @@ export function OnboardingWizard({ initial }: { initial: InitialState }) {
     });
   }
 
+  const nomeCrianca = state.membros[0]?.nome ?? null;
+  const chrome = chromeDoPasso(step, nomeCrianca);
+
   return (
     <div className="flex flex-col gap-6">
       <ProgressIndicator step={step} />
 
       {step === 1 && (
-        <div className="rounded-2xl border border-kolo-linha bg-secondary/50 p-5">
-          <h2 className="font-heading text-lg text-foreground">Quem é a Ayla?</h2>
-          <p className="mt-2 text-sm text-muted-foreground">
-            A Ayla é sua assistente no Kolo Família.
-          </p>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Ela acompanha a jornada da sua família ao longo do tempo, registra
-            acontecimentos importantes e sugere estratégias, reflexões e próximos
-            passos adaptados à sua realidade.
-          </p>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Você pode conversar com ela quando quiser, pelo aplicativo ou no dia
-            a dia, pelo WhatsApp.
-          </p>
-        </div>
+        <>
+          <div>
+            <h1 className="font-heading text-2xl text-foreground">
+              Olá! Você está no Kolo Família
+            </h1>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Apoio diário pra você e pra quem você cuida.
+            </p>
+          </div>
+
+          <div className="rounded-2xl border border-kolo-linha bg-secondary/50 p-5">
+            <h2 className="font-heading text-lg text-foreground">Quem é a Ayla?</h2>
+            <p className="mt-2 text-sm text-muted-foreground">
+              A Ayla te acompanha no dia a dia, pelo WhatsApp. Ela vai conhecendo
+              seu filho ou sua filha conforme você conta — o que gosta, o que
+              incomoda, o que muda. Quanto mais você conta, melhores ficam as
+              ideias que ela te manda: o que tentar, o que observar, por onde
+              começar. O que você conta fica guardado no aplicativo, e a Ayla
+              lembra de tudo.
+            </p>
+          </div>
+        </>
       )}
 
       <Card>
@@ -130,8 +171,8 @@ export function OnboardingWizard({ initial }: { initial: InitialState }) {
           <CardDescription>
             Passo {step} de {TOTAL_STEPS}
           </CardDescription>
-          <CardTitle>{STEP_LABELS[step - 1]}</CardTitle>
-          <CardDescription>{STEP_BLURB[step - 1]}</CardDescription>
+          <CardTitle>{chrome.titulo}</CardTitle>
+          {chrome.linha && <CardDescription>{chrome.linha}</CardDescription>}
         </CardHeader>
 
         <CardContent>
@@ -146,7 +187,6 @@ export function OnboardingWizard({ initial }: { initial: InitialState }) {
               initial={{
                 nome_mae: state.profile?.nome_mae ?? "",
                 data_nascimento_mae: state.profile?.data_nascimento_mae ?? "",
-                como_chamar: state.profile?.como_chamar ?? "",
                 whatsapp_e164: state.whatsapp ?? "",
                 papel: state.profile?.papel ?? "",
                 papel_outro: state.profile?.papel_outro ?? "",
@@ -163,9 +203,10 @@ export function OnboardingWizard({ initial }: { initial: InitialState }) {
                     setState((s) => ({
                       ...s,
                       profile: {
+                        ...s.profile,
                         nome_mae: values.nome_mae,
                         data_nascimento_mae: dataBrParaIso(values.data_nascimento_mae),
-                        como_chamar: values.como_chamar ?? null,
+                        como_chamar: s.profile?.como_chamar ?? null,
                         papel: values.papel,
                         papel_outro: values.papel === "outro" ? (values.papel_outro ?? null) : null,
                         genero_responsavel:
@@ -209,10 +250,8 @@ export function OnboardingWizard({ initial }: { initial: InitialState }) {
           {step === 3 && (
             <Tela3Contexto
               initial={{
-                composicao: state.perfilFamilia?.composicao?.texto ?? "",
-                rotina: state.perfilFamilia?.rotina?.texto ?? "",
-                recursos: state.perfilFamilia?.recursos?.texto ?? "",
-                dinamica: state.perfilFamilia?.dinamica?.texto ?? "",
+                irmaos: state.perfilFamilia?.composicao?.irmaos ?? [],
+                observacao: state.perfilFamilia?.composicao?.texto ?? "",
               }}
               pending={pending}
               onSubmit={(values) =>
@@ -222,13 +261,22 @@ export function OnboardingWizard({ initial }: { initial: InitialState }) {
                     await saveTela3(values);
                   },
                   () => {
+                    const irmaos =
+                      values.tem_irmaos === "sim"
+                        ? values.irmaos.map((i) => ({
+                            nome: i.nome,
+                            data_nascimento: dataBrParaIso(i.data_nascimento) ?? "",
+                            brinca_junto: i.brinca_junto,
+                          }))
+                        : [];
                     setState((s) => ({
                       ...s,
                       perfilFamilia: {
-                        composicao: { texto: values.composicao },
-                        rotina: { texto: values.rotina },
-                        recursos: { texto: values.recursos },
-                        dinamica: { texto: values.dinamica },
+                        ...s.perfilFamilia,
+                        composicao: { texto: values.observacao, irmaos },
+                        rotina: s.perfilFamilia?.rotina ?? null,
+                        recursos: s.perfilFamilia?.recursos ?? null,
+                        dinamica: s.perfilFamilia?.dinamica ?? null,
                       },
                     }));
                     next();
@@ -265,7 +313,10 @@ export function OnboardingWizard({ initial }: { initial: InitialState }) {
                     const { saveTela5 } = await import("./actions");
                     await saveTela5(values);
                   },
-                  () => next(),
+                  () => {
+                    setOptinAyla(values.optin_ayla);
+                    next();
+                  },
                 )
               }
               onPrevious={previous}
@@ -280,14 +331,16 @@ export function OnboardingWizard({ initial }: { initial: InitialState }) {
                 state.userEmail.split("@")[0] ||
                 "você"
               }
+              nomeCrianca={capitalizarNome(state.membros[0]?.nome) || "quem você cuida"}
+              aylaAutorizada={optinAyla}
               pending={pending}
-              onComplete={() =>
+              onComplete={(destino, janela) =>
                 runAction(
                   async () => {
                     const { completeOnboarding } = await import("./actions");
-                    await completeOnboarding();
+                    await completeOnboarding({ janela });
                   },
-                  () => router.push("/boas-vindas"),
+                  () => router.push(destino),
                 )
               }
               onPrevious={previous}

@@ -3,6 +3,8 @@ import { Eyebrow } from "@/components/brand/eyebrow";
 import { IconCard } from "@/components/brand/icon-card";
 import { loadFamilyContext } from "@/lib/auth/require-user";
 import { idadeAnos } from "@/lib/idade";
+import { resumirComposicao } from "@/lib/familia/composicao";
+import { resumoDiagnostico } from "@/lib/onboarding/diagnostico";
 import { DOMINIOS, type DominioKey } from "./dominios";
 import type { DominioSugestao } from "./dominio-card";
 import {
@@ -21,7 +23,7 @@ export default async function KoloVivoPage() {
     await Promise.all([
       supabase
         .from("membros_atipicos")
-        .select("id, nome, data_nascimento, perfil, created_at")
+        .select("id, nome, data_nascimento, perfil, diagnosticos_formais, created_at")
         .eq("family_account_id", familyId)
         .eq("ativo", true)
         .order("created_at", { ascending: true }),
@@ -45,7 +47,10 @@ export default async function KoloVivoPage() {
     ]);
 
   const familiaSecoes: FamiliaSecoes = {
-    composicao: extractSecao(familia?.composicao),
+    composicao: {
+      ...extractSecao(familia?.composicao),
+      texto: resumirComposicao(familia?.composicao),
+    },
     rotina: extractSecao(familia?.rotina),
     recursos: extractSecao(familia?.recursos),
     dinamica: extractSecao(familia?.dinamica),
@@ -93,7 +98,10 @@ export default async function KoloVivoPage() {
       id: m.id as string,
       nome: m.nome as string,
       idade: idadeAnos(m.data_nascimento as string | null),
-      perfil: m.perfil as string,
+      perfil: resumoDiagnostico(
+        (m as { diagnosticos_formais?: unknown }).diagnosticos_formais,
+        m.perfil as string,
+      ),
       diasAcompanhada: diasDesde(m.created_at as string | null),
       hiperfocos: lerHiperfocos(extras),
       completude: Math.round((preenchidos / DOMINIOS.length) * 100),
@@ -112,11 +120,16 @@ export default async function KoloVivoPage() {
           <Users aria-hidden />
         </IconCard>
         <div>
-          <Eyebrow>Retrato vivo</Eyebrow>
+          <Eyebrow>Kolo Vivo</Eyebrow>
           <h1 className="mt-1 font-heading text-3xl text-foreground md:text-4xl">
             Quem é essa família,{" "}
             <em className="not-italic text-brand-purple">hoje</em>.
           </h1>
+          <p className="mt-2 max-w-xl text-sm text-muted-foreground">
+            Aqui mora tudo que a gente sabe sobre quem você cuida — interesses,
+            rotina, o que ajuda e o que pesa. Quanto mais completo, mais certeiras
+            ficam as Estratégias que a gente te sugere. Você atualiza quando quiser.
+          </p>
         </div>
       </header>
 

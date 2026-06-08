@@ -8,48 +8,55 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Trash2, UserPlus } from "lucide-react";
-import { Explanation } from "./tela-1-mae";
+import { Chip, ChipGroup } from "@/components/ui/chip";
+import { DIAGNOSTICO_OPCOES, HIPOTESE_OPCOES } from "@/lib/onboarding/diagnostico";
 import type { Membro } from "../wizard";
 import { idadeAnos, dataBrParaIso, mascararDataBr, dataIsoParaBr } from "@/lib/idade";
 
-const PERFIS = [
-  { value: "TEA", label: "TEA" },
-  { value: "TDAH", label: "TDAH" },
-  { value: "Dislexia", label: "Dislexia" },
-  { value: "AHSD", label: "AH/SD" },
-  { value: "Outro", label: "Outro" },
-  { value: "EmInvestigacao", label: "Em investigação" },
+const GENEROS = [
+  { value: "feminino", label: "Feminino" },
+  { value: "masculino", label: "Masculino" },
 ] as const;
 
-const GENEROS = [
-  { value: "masculino", label: "Menino", sub: "ele / dele" },
-  { value: "feminino", label: "Menina", sub: "ela / dela" },
-  { value: "neutro", label: "Prefiro não dizer", sub: "vou usar o nome" },
-] as const;
+const DIAG_VALUES = ["TEA", "TDAH", "Dislexia", "AHSD", "Outro", "EmInvestigacao"] as const;
+const HIP_VALUES = ["TEA", "TDAH", "Dislexia", "AHSD", "Outro"] as const;
+
+const membroSchema = z
+  .object({
+    id: z.string().uuid().optional(),
+    nome: z.string().trim().min(2, "Nome muito curto"),
+    data_nascimento: z
+      .string()
+      .trim()
+      .refine((v) => {
+        const iso = dataBrParaIso(v);
+        if (!iso) return false;
+        const a = idadeAnos(iso);
+        return a !== null && a >= 0 && a <= 120;
+      }, "Informe uma data válida (dd/mm/aaaa)"),
+    diagnosticos: z.array(z.enum(DIAG_VALUES)).min(1, "Escolha ao menos um diagnóstico"),
+    diagnostico_outro: z.string().trim().optional(),
+    hipoteses: z.array(z.enum(HIP_VALUES)).optional().default([]),
+    genero: z.enum(["feminino", "masculino"], { message: "Escolha o gênero" }),
+  })
+  .refine(
+    (m) => !m.diagnosticos.includes("Outro") || (m.diagnostico_outro && m.diagnostico_outro.trim().length >= 2),
+    { path: ["diagnostico_outro"], message: "Detalhe qual é o outro diagnóstico" },
+  );
 
 const schema = z.object({
-  membros: z
-    .array(
-      z.object({
-        id: z.string().uuid().optional(),
-        nome: z.string().trim().min(2, "Nome muito curto"),
-        data_nascimento: z
-          .string()
-          .trim()
-          .refine((v) => {
-            const iso = dataBrParaIso(v);
-            if (!iso) return false;
-            const a = idadeAnos(iso);
-            return a !== null && a >= 0 && a <= 120;
-          }, "Informe uma data válida (dd/mm/aaaa)"),
-        perfil: z.enum(["TEA", "TDAH", "Dislexia", "AHSD", "Outro", "EmInvestigacao"]),
-        genero: z.enum(["masculino", "feminino", "neutro"]).optional(),
-      }),
-    )
-    .min(1, "Cadastre pelo menos 1 membro"),
+  membros: z.array(membroSchema).min(1, "Cadastre pelo menos 1 criança"),
 });
 
 type FormValues = z.infer<typeof schema>;
+
+const EMPTY_MEMBRO = {
+  nome: "",
+  data_nascimento: "",
+  diagnosticos: [] as string[],
+  diagnostico_outro: "",
+  hipoteses: [] as string[],
+} as unknown as FormValues["membros"][number];
 
 export function Tela2Membros({
   initial,
@@ -82,16 +89,29 @@ export function Tela2Membros({
               id: m.id,
               nome: m.nome,
               data_nascimento: dataIsoParaBr(m.data_nascimento),
-              perfil: m.perfil as FormValues["membros"][number]["perfil"],
-              genero: (m.genero ?? undefined) as
-                | FormValues["membros"][number]["genero"],
+              diagnosticos: (m.diagnosticos && m.diagnosticos.length > 0
+                ? m.diagnosticos
+                : m.perfil
+                  ? [m.perfil]
+                  : []) as FormValues["membros"][number]["diagnosticos"],
+              diagnostico_outro: m.diagnostico_outro ?? "",
+              hipoteses: (m.hipoteses ?? []) as FormValues["membros"][number]["hipoteses"],
+              genero:
+                m.genero === "feminino" || m.genero === "masculino"
+                  ? m.genero
+                  : (undefined as unknown as FormValues["membros"][number]["genero"]),
             }))
-          : [{ nome: "", data_nascimento: "", perfil: "TEA" }],
+          : [EMPTY_MEMBRO],
     },
   });
 
   const { fields, append, remove } = useFieldArray({ control, name: "membros" });
   const [removingId, setRemovingId] = useState<string | null>(null);
+
+  /** Liga/desliga um valor numa lista (multi-seleção). */
+  function toggle(list: string[], value: string): string[] {
+    return list.includes(value) ? list.filter((v) => v !== value) : [...list, value];
+  }
 
   function handleRemoveAt(index: number) {
     const id = fields[index].id;
@@ -104,16 +124,18 @@ export function Tela2Membros({
   }
 
   return (
-    <Explanation
-      o_que="Quem é o foco do cuidado. Pode ser mais de uma pessoa atípica na mesma família."
-      por_que="A Ayla precisa saber sobre quem ela está te perguntando. As skills personalizam por aqui."
-      proximo="Em seguida, o contexto familiar (quem mais está em volta)."
-    >
+    <div className="flex flex-col gap-4">
       <form onSubmit={handleSubmit((v) => onSubmit(v.membros))} className="flex flex-col gap-4" noValidate>
+        {errors.membros && (
+          <div className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+            Faltou conferir alguns campos das crianças — veja os destaques em vermelho abaixo.
+          </div>
+        )}
+
         {fields.map((field, index) => (
           <div key={field.id} className="rounded-md border p-4">
             <div className="mb-3 flex items-center justify-between">
-              <span className="text-sm font-medium">Pessoa {index + 1}</span>
+              <span className="text-sm font-medium">Criança {index + 1}</span>
               {fields.length > 1 && (
                 <Button
                   type="button"
@@ -169,72 +191,126 @@ export function Tela2Membros({
                   )}
               </div>
 
-              <div className="flex flex-col gap-1.5 md:col-span-3">
-                <Label htmlFor={`membros.${index}.perfil`}>Perfil</Label>
-                <select
-                  id={`membros.${index}.perfil`}
-                  className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm"
-                  {...register(`membros.${index}.perfil`)}
-                >
-                  {PERFIS.map((p) => (
-                    <option key={p.value} value={p.value}>
-                      {p.label}
-                    </option>
-                  ))}
-                </select>
+              <div className="flex flex-col gap-2 md:col-span-3">
+                <Label>Diagnóstico</Label>
+                <Controller
+                  name={`membros.${index}.diagnosticos`}
+                  control={control}
+                  render={({ field }) => {
+                    const sel = field.value ?? [];
+                    return (
+                      <ChipGroup label="Diagnóstico" multiSelect>
+                        {DIAGNOSTICO_OPCOES.map((p) => (
+                          <Chip
+                            key={p.value}
+                            multiSelect
+                            selected={sel.includes(p.value)}
+                            onClick={() => field.onChange(toggle(sel, p.value))}
+                            disabled={pending}
+                          >
+                            {p.label}
+                          </Chip>
+                        ))}
+                      </ChipGroup>
+                    );
+                  }}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Pode marcar mais de um (ex.: TEA e TDAH). Se já tem diagnóstico,
+                  me conta; se ainda está investigando, também tem espaço — eu não
+                  diagnostico, só registro o que você me traz.
+                </p>
+                {errors.membros?.[index]?.diagnosticos && (
+                  <span className="text-xs text-destructive">
+                    {errors.membros[index]?.diagnosticos?.message}
+                  </span>
+                )}
+
+                {(watch(`membros.${index}.diagnosticos`) ?? []).includes("Outro") && (
+                  <div className="flex flex-col gap-1.5">
+                    <Label htmlFor={`membros.${index}.diagnostico_outro`}>
+                      Qual outro diagnóstico?
+                    </Label>
+                    <Input
+                      id={`membros.${index}.diagnostico_outro`}
+                      placeholder="Ex.: Síndrome de Down, TOD, deficiência intelectual"
+                      {...register(`membros.${index}.diagnostico_outro`)}
+                    />
+                    {errors.membros?.[index]?.diagnostico_outro && (
+                      <span className="text-xs text-destructive">
+                        {errors.membros[index]?.diagnostico_outro?.message}
+                      </span>
+                    )}
+                  </div>
+                )}
+
+                {(watch(`membros.${index}.diagnosticos`) ?? []).includes("EmInvestigacao") && (
+                  <div className="flex flex-col gap-2 rounded-md border border-input bg-muted/30 p-3">
+                    <Label>Qual a hipótese em investigação?</Label>
+                    <Controller
+                      name={`membros.${index}.hipoteses`}
+                      control={control}
+                      render={({ field }) => {
+                        const sel = field.value ?? [];
+                        return (
+                          <ChipGroup label="Hipótese em investigação" multiSelect>
+                            {HIPOTESE_OPCOES.map((p) => (
+                              <Chip
+                                key={p.value}
+                                multiSelect
+                                selected={sel.includes(p.value)}
+                                onClick={() => field.onChange(toggle(sel, p.value))}
+                                disabled={pending}
+                              >
+                                {p.label}
+                              </Chip>
+                            ))}
+                          </ChipGroup>
+                        );
+                      }}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      O que estão suspeitando, mesmo sem fechar o diagnóstico.
+                    </p>
+                  </div>
+                )}
               </div>
 
               <div className="flex flex-col gap-2 md:col-span-3">
-                <Label>
-                  Como vocês chamam{" "}
-                  {watch(`membros.${index}.nome`)?.trim() || "essa pessoa"}?
-                </Label>
+                <Label>Gênero</Label>
                 <Controller
                   name={`membros.${index}.genero`}
                   control={control}
                   render={({ field }) => (
-                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-                      {GENEROS.map((g) => {
-                        const ativa = field.value === g.value;
-                        return (
-                          <button
-                            key={g.value}
-                            type="button"
-                            onClick={() => field.onChange(g.value)}
-                            disabled={pending}
-                            className={`flex flex-col items-start gap-0.5 rounded-md border px-3 py-2 text-left transition-colors disabled:opacity-50 ${
-                              ativa
-                                ? "border-brand-purple bg-brand-purple/5"
-                                : "border-input bg-background hover:border-brand-purple/40"
-                            }`}
-                          >
-                            <span className="text-sm font-medium text-foreground">
-                              {g.label}
-                            </span>
-                            <span className="text-xs text-muted-foreground">
-                              {g.sub}
-                            </span>
-                          </button>
-                        );
-                      })}
-                    </div>
+                    <ChipGroup label="Gênero">
+                      {GENEROS.map((g) => (
+                        <Chip
+                          key={g.value}
+                          selected={field.value === g.value}
+                          onClick={() => field.onChange(g.value)}
+                          disabled={pending}
+                        >
+                          {g.label}
+                        </Chip>
+                      ))}
+                    </ChipGroup>
                   )}
                 />
+                {errors.membros?.[index]?.genero && (
+                  <span className="text-xs text-destructive">
+                    {errors.membros[index]?.genero?.message}
+                  </span>
+                )}
                 <p className="text-xs text-muted-foreground">
-                  Ajuda a Ayla a falar do jeito certo nas mensagens. Dá pra
-                  mudar depois.
+                  Me ajuda a falar do jeito certo. Dá pra mudar depois.
                 </p>
               </div>
             </div>
           </div>
         ))}
 
-        <Button
-          type="button"
-          onClick={() => append({ nome: "", data_nascimento: "", perfil: "TEA" })}
-          disabled={pending}
-        >
-          <UserPlus aria-hidden="true" /> Adicionar mais um(a) atípico(a) na família
+        <Button type="button" onClick={() => append(EMPTY_MEMBRO)} disabled={pending}>
+          <UserPlus aria-hidden="true" /> Adicionar outra criança
         </Button>
 
         <div className="flex justify-between pt-2">
@@ -246,6 +322,6 @@ export function Tela2Membros({
           </Button>
         </div>
       </form>
-    </Explanation>
+    </div>
   );
 }

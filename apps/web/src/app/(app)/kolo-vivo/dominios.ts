@@ -40,7 +40,13 @@ export type DominioKey =
   | "sono"
   | "socializacao"
   | "motor"
-  | "rotina";
+  | "rotina"
+  | "autonomia"
+  | "aprendizado"
+  | "imitacao"
+  | "tela_midia"
+  | "escola"
+  | "saude_geral";
 
 export type DominioDef = {
   key: DominioKey;
@@ -137,5 +143,60 @@ export const DOMINIOS: DominioDef[] = [
     descricao: "Como atravessa as transições e o ritmo do dia.",
     placeholder:
       "Ex: boa com previsibilidade. Aceita aviso de 5min antes de trocar de atividade. Tablet sem preparo vira gatilho.",
+  },
+  // Domínios previstos no Adendo PRD — antes existiam só como dado, agora viram card.
+  {
+    key: "autonomia",
+    storage: "extras",
+    label: "Autonomia",
+    tone: "motor",
+    descricao: "O que já faz sozinha e onde ainda precisa de ajuda.",
+    placeholder:
+      "Ex: come e veste sozinha; ainda precisa de ajuda no banho e pra calçar.",
+  },
+  {
+    key: "aprendizado",
+    storage: "extras",
+    label: "Aprendizado",
+    tone: "foco",
+    descricao: "Como aprende e o que ajuda a aprender.",
+    placeholder:
+      "Ex: aprende vendo e repetindo. Números fáceis, letras ainda custam. Gosta de aprender brincando.",
+  },
+  {
+    key: "imitacao",
+    storage: "extras",
+    label: "Imitação",
+    tone: "social",
+    descricao: "O que imita — gestos, sons, brincadeiras de faz de conta.",
+    placeholder:
+      "Ex: imita gestos e sons de bichos. Faz de conta começando a aparecer.",
+  },
+  {
+    key: "tela_midia",
+    storage: "extras",
+    label: "Tela e mídia",
+    tone: "comunicacao",
+    descricao: "Relação com telas — o que assiste, quanto, como reage.",
+    placeholder:
+      "Ex: ama desenhos de dinossauro. Difícil desligar; sem aviso, vira gatilho.",
+  },
+  {
+    key: "escola",
+    storage: "extras",
+    label: "Escola",
+    tone: "rotina",
+    descricao: "Como é a escola — adaptações, o que funciona, queixas.",
+    placeholder:
+      "Ex: escola inclusiva, tem acompanhante. Barulho do recreio pesa. Professora parceira.",
+  },
+  {
+    key: "saude_geral",
+    storage: "extras",
+    label: "Saúde geral",
+    tone: "sensorial",
+    descricao: "Saúde, acompanhamentos, alergias, sono do ponto médico.",
+    placeholder:
+      "Ex: acompanha com neuro e TO. Alergia a amendoim. Sono irregular.",
   },
 ];

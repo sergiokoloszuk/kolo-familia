@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { loadFamilyContext } from "@/lib/auth/require-user";
-import { OnboardingWizard, type InitialState } from "./wizard";
+import { parseDiagnosticosFormais } from "@/lib/onboarding/diagnostico";
+import { OnboardingWizard, type InitialState, type Membro } from "./wizard";
 
 export default async function OnboardingPage() {
   const { user, supabase, family } = await loadFamilyContext();
@@ -25,11 +26,33 @@ export default async function OnboardingPage() {
   }
 
   // Carrega membros já cadastrados (caso esteja retomando onboarding).
-  const { data: membros } = await supabase
+  const { data: membrosRaw } = await supabase
     .from("membros_atipicos")
-    .select("id, nome, data_nascimento, perfil, genero")
+    .select("id, nome, data_nascimento, perfil, genero, diagnosticos_formais")
     .eq("family_account_id", family.id)
     .order("created_at", { ascending: true });
+
+  const membros: Membro[] = (membrosRaw ?? []).map((m) => {
+    const row = m as {
+      id: string;
+      nome: string;
+      data_nascimento: string;
+      perfil: string;
+      genero: "masculino" | "feminino" | "neutro" | null;
+      diagnosticos_formais: unknown;
+    };
+    const sel = parseDiagnosticosFormais(row.diagnosticos_formais, row.perfil);
+    return {
+      id: row.id,
+      nome: row.nome,
+      data_nascimento: row.data_nascimento,
+      perfil: row.perfil,
+      genero: row.genero,
+      diagnosticos: sel.diagnosticos,
+      diagnostico_outro: sel.outro,
+      hipoteses: sel.hipoteses,
+    };
+  });
 
   const { data: profile } = await supabase
     .from("family_profiles")
@@ -56,7 +79,7 @@ export default async function OnboardingPage() {
     currentStep: family.onboarding_step,
     profile: profile ?? null,
     whatsapp: family.whatsapp_e164,
-    membros: membros ?? [],
+    membros,
     perfilFamilia: perfilFamilia ?? null,
   };
 

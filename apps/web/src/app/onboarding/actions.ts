@@ -5,6 +5,12 @@ import { cookies } from "next/headers";
 import { z } from "zod";
 import { createClient, createServiceRoleClient } from "@/lib/supabase/server";
 import { idadeAnos, dataBrParaIso } from "@/lib/idade";
+import { capitalizarNome } from "@/lib/nome";
+import {
+  perfilPrimario,
+  buildDiagnosticosFormais,
+  parseDiagnosticosFormais,
+} from "@/lib/onboarding/diagnostico";
 
 const dataNascimentoSchema = (minAnos: number, maxAnos: number, msg: string) =>
   z
@@ -110,16 +116,14 @@ const tela1Schema = z.object({
     .string()
     .trim()
     .regex(/^\+\d{8,15}$/, "WhatsApp deve estar no formato +DDIDDDNNNNNNNNN"),
-  como_chamar: z.string().trim().optional(),
-  papel: z.enum(["mae", "pai", "outro"]),
+  // avó/avô são papéis distintos (gênero implícito); "outro" traz o grau livre.
+  papel: z.enum(["mae", "pai", "avo", "avoh", "outro"]),
   papel_outro: z.string().trim().optional(),
+  // Só vem preenchido quando "outro" e a palavra não revela o gênero.
   genero_responsavel: z.enum(["masculino", "feminino", "neutro"]).optional(),
 }).refine(
   (d) => d.papel !== "outro" || (d.papel_outro && d.papel_outro.length >= 2),
   { path: ["papel_outro"], message: "Diga qual é o grau de parentesco" },
-).refine(
-  (d) => d.papel !== "outro" || !!d.genero_responsavel,
-  { path: ["genero_responsavel"], message: "Selecione o gênero" },
 );
 
 export type Tela1Input = z.infer<typeof tela1Schema>;
@@ -128,16 +132,16 @@ export async function saveTela1(raw: Tela1Input) {
   const data = tela1Schema.parse(raw);
   const { supabase, family } = await requireFamily();
 
-  // Detalhe de "outro responsável" só faz sentido quando papel = outro.
+  // Grau livre só em "outro"; o gênero é inferido da palavra (descricaoCuidador)
+  // e só guardamos a escolha explícita quando a palavra foi ambígua.
   const ehOutro = data.papel === "outro";
   const { error: errProfile } = await supabase.from("family_profiles").upsert({
     family_account_id: family.id,
-    nome_mae: data.nome_mae,
+    nome_mae: capitalizarNome(data.nome_mae),
     data_nascimento_mae: dataBrParaIso(data.data_nascimento_mae),
-    como_chamar: data.como_chamar || null,
     papel: data.papel,
     papel_outro: ehOutro ? data.papel_outro! : null,
-    genero_responsavel: ehOutro ? data.genero_responsavel! : null,
+    genero_responsavel: ehOutro ? (data.genero_responsavel ?? null) : null,
   });
   if (errProfile) throw new Error(`Erro ao salvar perfil: ${errProfile.message}`);
 
@@ -154,19 +158,53 @@ export async function saveTela1(raw: Tela1Input) {
 // Tela 2 — membros atípicos (1+)
 // ============================================================
 
-const membroSchema = z.object({
-  id: z.string().uuid().optional(),
-  nome: z.string().trim().min(2, "Nome muito curto"),
-  data_nascimento: dataNascimentoSchema(0, 120, "Data de nascimento inválida"),
-  perfil: z.enum(["TEA", "TDAH", "Dislexia", "AHSD", "Outro", "EmInvestigacao"]),
-  genero: z.enum(["masculino", "feminino", "neutro"]).optional(),
-});
+const membroSchema = z
+  .object({
+    id: z.string().uuid().optional(),
+    nome: z.string().trim().min(2, "Nome muito curto"),
+    data_nascimento: dataNascimentoSchema(0, 120, "Data de nascimento inválida"),
+    diagnosticos: z
+      .array(z.enum(["TEA", "TDAH", "Dislexia", "AHSD", "Outro", "EmInvestigacao"]))
+      .min(1, "Escolha ao menos um diagnóstico"),
+    diagnostico_outro: z.string().trim().optional(),
+    hipoteses: z
+      .array(z.enum(["TEA", "TDAH", "Dislexia", "AHSD", "Outro"]))
+      .optional()
+      .default([]),
+    genero: z.enum(["feminino", "masculino"]),
+  })
+  .refine(
+    (m) =>
+      !m.diagnosticos.includes("Outro") ||
+      (m.diagnostico_outro && m.diagnostico_outro.trim().length >= 2),
+    { path: ["diagnostico_outro"], message: "Detalhe qual é o outro diagnóstico" },
+  );
 
 const tela2Schema = z.object({
-  membros: z.array(membroSchema).min(1, "Cadastre pelo menos 1 membro atípico"),
+  membros: z.array(membroSchema).min(1, "Cadastre pelo menos 1 criança"),
 });
 
 export type Tela2Input = z.infer<typeof tela2Schema>;
+
+type MembroForm = z.infer<typeof membroSchema>;
+
+// Colunas do membro derivadas do form (sem family_account_id — comum a
+// insert e update). diagnosticos_formais carrega a lista completa; perfil
+// guarda o principal pra compatibilidade.
+function camposMembro(m: MembroForm) {
+  const sel = {
+    diagnosticos: m.diagnosticos,
+    outro: m.diagnostico_outro ?? null,
+    hipoteses: m.hipoteses ?? [],
+  };
+  return {
+    nome: capitalizarNome(m.nome),
+    data_nascimento: dataBrParaIso(m.data_nascimento),
+    perfil: perfilPrimario(m.diagnosticos),
+    diagnosticos_formais: buildDiagnosticosFormais(sel),
+    genero: m.genero,
+  };
+}
 
 export async function saveTela2(raw: Tela2Input) {
   const data = tela2Schema.parse(raw);
@@ -176,30 +214,19 @@ export async function saveTela2(raw: Tela2Input) {
   const existentes = data.membros.filter((m) => m.id);
 
   if (novos.length > 0) {
-    const { error } = await supabase.from("membros_atipicos").insert(
-      novos.map((m) => ({
-        family_account_id: family.id,
-        nome: m.nome,
-        data_nascimento: dataBrParaIso(m.data_nascimento),
-        perfil: m.perfil,
-        genero: m.genero ?? null,
-      })),
-    );
-    if (error) throw new Error(`Erro ao cadastrar membro(s): ${error.message}`);
+    const { error } = await supabase
+      .from("membros_atipicos")
+      .insert(novos.map((m) => ({ family_account_id: family.id, ...camposMembro(m) })));
+    if (error) throw new Error(`Erro ao cadastrar criança(s): ${error.message}`);
   }
 
   for (const m of existentes) {
     const { error } = await supabase
       .from("membros_atipicos")
-      .update({
-        nome: m.nome,
-        data_nascimento: dataBrParaIso(m.data_nascimento),
-        perfil: m.perfil,
-        genero: m.genero ?? null,
-      })
+      .update(camposMembro(m))
       .eq("id", m.id!)
       .eq("family_account_id", family.id);
-    if (error) throw new Error(`Erro ao atualizar membro: ${error.message}`);
+    if (error) throw new Error(`Erro ao atualizar criança: ${error.message}`);
   }
 
   await bumpStep(supabase, family.id, Math.max(family.onboarding_step, 3));
@@ -207,17 +234,31 @@ export async function saveTela2(raw: Tela2Input) {
   // Retorna a lista canônica do banco — wizard usa esses ids no step 4.
   const { data: membros } = await supabase
     .from("membros_atipicos")
-    .select("id, nome, data_nascimento, perfil, genero")
+    .select("id, nome, data_nascimento, perfil, genero, diagnosticos_formais")
     .eq("family_account_id", family.id)
     .order("created_at", { ascending: true });
 
-  return (membros ?? []) as Array<{
-    id: string;
-    nome: string;
-    data_nascimento: string;
-    perfil: string;
-    genero: "masculino" | "feminino" | "neutro" | null;
-  }>;
+  return (membros ?? []).map((m) => {
+    const row = m as {
+      id: string;
+      nome: string;
+      data_nascimento: string;
+      perfil: string;
+      genero: "masculino" | "feminino" | "neutro" | null;
+      diagnosticos_formais: unknown;
+    };
+    const sel = parseDiagnosticosFormais(row.diagnosticos_formais, row.perfil);
+    return {
+      id: row.id,
+      nome: row.nome,
+      data_nascimento: row.data_nascimento,
+      perfil: row.perfil,
+      genero: row.genero,
+      diagnosticos: sel.diagnosticos,
+      diagnostico_outro: sel.outro,
+      hipoteses: sel.hipoteses,
+    };
+  });
 }
 
 export async function removeMembro(membroId: string) {
@@ -235,10 +276,17 @@ export async function removeMembro(membroId: string) {
 // ============================================================
 
 const tela3Schema = z.object({
-  composicao: z.string().trim().optional(),
-  rotina: z.string().trim().optional(),
-  recursos: z.string().trim().optional(),
-  dinamica: z.string().trim().optional(),
+  tem_irmaos: z.enum(["sim", "nao"]),
+  irmaos: z
+    .array(
+      z.object({
+        nome: z.string().trim().min(2, "Nome muito curto"),
+        data_nascimento: dataNascimentoSchema(0, 120, "Data de nascimento inválida"),
+        brinca_junto: z.enum(["sim", "asvezes", "nao"]),
+      }),
+    )
+    .default([]),
+  observacao: z.string().trim().optional(),
 });
 
 export type Tela3Input = z.infer<typeof tela3Schema>;
@@ -247,22 +295,29 @@ export async function saveTela3(raw: Tela3Input) {
   const data = tela3Schema.parse(raw);
   const { supabase, family } = await requireFamily();
 
+  const irmaos =
+    data.tem_irmaos === "sim"
+      ? data.irmaos.map((i) => ({
+          nome: capitalizarNome(i.nome),
+          data_nascimento: dataBrParaIso(i.data_nascimento),
+          brinca_junto: i.brinca_junto,
+        }))
+      : [];
+
+  // Guarda irmãos (estruturado, com data de nascimento p/ idade dinâmica) +
+  // nota livre opcional dentro de composicao. rotina/recursos/dinamica ficam
+  // pra detalhamento futuro — omitidos no upsert pra preservar o que já houver.
+  const composicao: Record<string, unknown> = { irmaos };
+  if (data.observacao) composicao.texto = data.observacao;
+
   const { error } = await supabase.from("perfil_vivo_familia").upsert({
     family_account_id: family.id,
-    composicao: data.composicao ? { texto: data.composicao } : {},
-    rotina: data.rotina ? { texto: data.rotina } : {},
-    recursos: data.recursos ? { texto: data.recursos } : {},
-    dinamica: data.dinamica ? { texto: data.dinamica } : {},
-    completude_pct: estimaCompletude([data.composicao, data.rotina, data.recursos, data.dinamica]),
+    composicao,
+    completude_pct: irmaos.length > 0 || data.observacao ? 50 : 0,
   });
   if (error) throw new Error(`Erro ao salvar contexto: ${error.message}`);
 
   await bumpStep(supabase, family.id, Math.max(family.onboarding_step, 4));
-}
-
-function estimaCompletude(textos: (string | undefined)[]): number {
-  const preenchidos = textos.filter((t) => t && t.trim().length > 10).length;
-  return Math.round((preenchidos / textos.length) * 100);
 }
 
 // ============================================================
@@ -283,22 +338,57 @@ const tela4Schema = z.object({
 
 export type Tela4Input = z.infer<typeof tela4Schema>;
 
+// Tema do desafio (Passo 4) → domínio do Kolo Vivo (categorias_extras), pra
+// cada desafio aparecer no card certo e a Ayla ler por domínio.
+const TEMA_PARA_DOMINIO: Record<string, string> = {
+  "Comunicação": "comunicacao",
+  "Foco": "foco",
+  "Socialização": "socializacao",
+  "Autonomia": "autonomia",
+  "Gestão de emoções": "emocional",
+  "Alimentação": "nutricional",
+};
+
+// Domínios que viram card na tela do Kolo Vivo (pra calcular completude).
+const DOMINIO_KEYS = [
+  "sensorial", "nutricional", "comunicacao", "emocional", "foco",
+  "sono", "socializacao", "motor", "rotina",
+  "autonomia", "aprendizado", "imitacao", "tela_midia", "escola", "saude_geral",
+];
+
 export async function saveTela4(raw: Tela4Input) {
   const data = tela4Schema.parse(raw);
   const { supabase, family } = await requireFamily();
 
   for (const item of data.porMembro) {
-    const desafios = item.desafios.filter(Boolean);
     const interesses = item.interesses.filter(Boolean);
+
+    // Distribui cada desafio "Tema: o que acontece" no domínio correspondente.
+    const extras: Record<string, unknown> = {};
+    const porDominio: Record<string, string[]> = {};
+    for (const d of item.desafios.filter(Boolean)) {
+      const i = d.indexOf(": ");
+      const tema = i >= 0 ? d.slice(0, i) : "";
+      const texto = (i >= 0 ? d.slice(i + 2) : d).trim();
+      const dominio = TEMA_PARA_DOMINIO[tema];
+      if (dominio && texto) (porDominio[dominio] ??= []).push(texto);
+    }
+    for (const [k, arr] of Object.entries(porDominio)) extras[k] = { texto: arr.join(". ") };
+    // Interesses viram os hiperfocos do hero (lidos de preferencias.temas).
+    if (interesses.length) extras.preferencias = { temas: interesses };
+    if (item.rotina) extras.rotina = { texto: item.rotina };
+
+    const preenchidos = Object.keys(extras).filter((k) => DOMINIO_KEYS.includes(k)).length;
+
     const { error } = await supabase.from("perfil_vivo_membro").upsert(
       {
         membro_atipico_id: item.membro_id,
         family_account_id: family.id,
-        como_e: { interesses },
-        desafios_regulacao: { desafios_iniciais: desafios },
+        // como_e mantém os interesses pra Ayla (campo legado que ela já lê).
+        como_e: interesses.length ? { interesses } : {},
         essencial: item.conquista ? { conquista_inicial: item.conquista } : {},
-        corpo_rotina: item.rotina ? { texto: item.rotina } : {},
-        completude_pct: 25,
+        categorias_extras: extras,
+        completude_pct: Math.round((preenchidos / DOMINIO_KEYS.length) * 100),
       },
       { onConflict: "membro_atipico_id" },
     );
@@ -335,16 +425,47 @@ export async function saveTela5(raw: Tela5Input) {
 }
 
 // ============================================================
-// Tela 6 — confirmação + tour
+// Tela 6 — confirmação + escolha de início (fundiu a antiga /boas-vindas)
 // ============================================================
 
-export async function completeOnboarding() {
+// Janelas de WhatsApp → horario_preferido (a tela de chegada virou o Passo 6).
+const JANELAS_HORARIO = {
+  manha: { inicio: "08:00", fim: "10:00" },
+  meio_dia: { inicio: "12:00", fim: "14:00" },
+  tarde: { inicio: "15:00", fim: "17:00" },
+  noite: { inicio: "19:00", fim: "21:00" },
+} as const;
+
+export type JanelaOnboarding = keyof typeof JANELAS_HORARIO;
+
+export async function completeOnboarding(opts?: { janela?: JanelaOnboarding | null }) {
   const { supabase, family } = await requireFamily();
   const { error } = await supabase
     .from("family_accounts")
-    .update({ onboarding_completed: true, onboarding_step: 7 })
+    .update({
+      onboarding_completed: true,
+      onboarding_step: 7,
+      // Marca a chegada como vista — a /boas-vindas não aparece mais (fundida aqui).
+      boas_vindas_vista_at: new Date().toISOString(),
+    })
     .eq("id", family.id);
   if (error) throw new Error(`Erro ao concluir onboarding: ${error.message}`);
+
+  // Horário preferido do WhatsApp (só quem autorizou a Ayla escolhe no Passo 6).
+  if (opts?.janela && JANELAS_HORARIO[opts.janela]) {
+    const j = JANELAS_HORARIO[opts.janela];
+    const { error: errPref } = await supabase
+      .from("ayla_preferences")
+      .upsert(
+        {
+          family_account_id: family.id,
+          horario_preferido_inicio: j.inicio,
+          horario_preferido_fim: j.fim,
+        },
+        { onConflict: "family_account_id" },
+      );
+    if (errPref) throw new Error(`Erro ao salvar horário: ${errPref.message}`);
+  }
 
   // Dispara a primeira mensagem da Ayla na hora — best-effort.
   // sendBoasVindas já respeita consentimento (LGPD), pausa e idempotência.

@@ -102,13 +102,28 @@ export function descricaoCuidador(c: Cuidador): CuidadorDescrito {
   const papel = (c.papel ?? "").toLowerCase();
   if (papel === "mae") return { relacao: "mãe", genero: "feminino" };
   if (papel === "pai") return { relacao: "pai", genero: "masculino" };
-  if (papel === "avo") {
-    return { relacao: c.papelOutro?.trim() || "avó/avô", genero: c.genero ?? null };
-  }
+  // avó/avô são papéis distintos no onboarding — gênero implícito no papel.
+  if (papel === "avo") return { relacao: "avó", genero: "feminino" };
+  if (papel === "avoh") return { relacao: "avô", genero: "masculino" };
   if (papel === "outro") {
-    return { relacao: c.papelOutro?.trim() || "responsável", genero: c.genero ?? null };
+    const grau = c.papelOutro?.trim();
+    if (grau) return { relacao: grau, genero: c.genero ?? inferGeneroDePalavra(grau) };
+    return { relacao: "responsável", genero: c.genero ?? null };
   }
   return { relacao: "responsável", genero: c.genero ?? null };
+}
+
+/**
+ * Infere o gênero a partir da palavra de parentesco que a pessoa escreveu
+ * ("tia"→feminino, "tio"→masculino, "madrinha"→feminino, "padrasto"→masculino).
+ * Heurística por terminação; quando ambíguo (ex.: "responsável", "tutor"), null.
+ */
+export function inferGeneroDePalavra(palavra: string): Genero {
+  const w = palavra.trim().toLowerCase();
+  if (!w) return null;
+  if (/(a|ã|ó)$/.test(w)) return "feminino"; // tia, madrinha, madrasta, irmã, avó
+  if (/(o|ô)$/.test(w)) return "masculino"; // tio, padrinho, padrasto, irmão, avô
+  return null;
 }
 
 /**

@@ -5,14 +5,11 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Explanation } from "./tela-1-mae";
 
 const schema = z.object({
   aceitou_termos: z.literal(true, { message: "É preciso aceitar os termos para continuar" }),
   optin_ayla: z.boolean(),
 });
-
-type FormValues = z.infer<typeof schema>;
 
 export function Tela5Termos({
   pending,
@@ -29,15 +26,12 @@ export function Tela5Termos({
     formState: { errors },
   } = useForm<{ aceitou_termos: boolean; optin_ayla: boolean }>({
     resolver: zodResolver(schema) as never,
-    defaultValues: { aceitou_termos: false, optin_ayla: true },
+    // LGPD: nenhum dos dois pode vir pré-marcado, e são consentimentos separados.
+    defaultValues: { aceitou_termos: false, optin_ayla: false },
   });
 
   return (
-    <Explanation
-      o_que="Aceite dos termos e a permissão para a Ayla mandar mensagem no WhatsApp."
-      por_que="LGPD pede consentimento explícito separado para o canal de WhatsApp. Você pode revogar a qualquer momento."
-      proximo="Última tela: confirmação e início do trial de 30 dias."
-    >
+    <div className="flex flex-col gap-4">
       <form
         onSubmit={handleSubmit((v) => onSubmit(v as { aceitou_termos: true; optin_ayla: boolean }))}
         className="flex flex-col gap-4"
@@ -68,9 +62,9 @@ export function Tela5Termos({
                 </a>
               </Label>
               <p className="mt-1 text-xs text-muted-foreground">
-                O Kolo Família não substitui profissionais da saúde. Os dados ficam
-                criptografados em repouso. Você pode pedir exportação ou exclusão a
-                qualquer momento.
+                O Kolo Família não substitui profissionais da saúde. Seus dados são
+                tratados com segurança, e você pode exportar ou excluir tudo quando
+                quiser, direto na sua conta.
               </p>
             </span>
           </label>
@@ -84,11 +78,16 @@ export function Tela5Termos({
             <input type="checkbox" className="mt-1" {...register("optin_ayla")} />
             <span>
               <Label htmlFor="" className="font-medium">
-                Autorizo a Ayla a me mandar mensagem no WhatsApp
+                Autorizo a Ayla a me mandar mensagem no WhatsApp{" "}
+                <span className="text-brand-purple">(recomendado)</span>
               </Label>
               <p className="mt-1 text-xs text-muted-foreground">
-                No máximo 2 mensagens proativas por dia, no horário que você escolher.
-                Pode pausar com <code>PAUSAR</code> ou desativar com <code>SAIR</code>.
+                Assim, além de pedir orientações e dicas à Ayla a qualquer hora,
+                você deixa ela acompanhar de perto o dia a dia — ela pergunta como
+                foi o dia, comemora junto as conquistas e apoia nos perrengues, e
+                com isso acompanha melhor a evolução do seu filho ou sua filha. No
+                máximo 2 mensagens por dia, no horário que você escolher. Mudou de
+                ideia? É só desativar essa opção na sua conta quando quiser.
               </p>
             </span>
           </label>
@@ -103,6 +102,6 @@ export function Tela5Termos({
           </Button>
         </div>
       </form>
-    </Explanation>
+    </div>
   );
 }

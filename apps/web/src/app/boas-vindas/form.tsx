@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Sparkles, MessageCircle, BookHeart, ArrowRight, Sunrise, Sun, CloudSun, Moon } from "lucide-react";
 import { salvarBoasVindas, type JanelaKey } from "./actions";
+import { capitalizarNome } from "@/lib/nome";
 
 type Janela = {
   key: JanelaKey;
@@ -31,9 +32,12 @@ export function BoasVindasForm({
   const [erro, setErro] = useState<string | null>(null);
   const [pending, start] = useTransition();
 
-  const saudacao = nome ? `Que bom que você chegou, ${nome}.` : "Que bom que você chegou.";
+  const saudacao = nome
+    ? `Que bom que você chegou, ${capitalizarNome(nome)}.`
+    : "Que bom que você chegou.";
+  const nomeCrianca = primeiraCrianca ? capitalizarNome(primeiraCrianca.nome) : null;
 
-  function salvar() {
+  function escolher(destino: "/kolo-vivo" | "/estrategias") {
     if (!janela || pending) return;
     setErro(null);
     start(async () => {
@@ -42,7 +46,7 @@ export function BoasVindasForm({
         setErro(r.error);
         return;
       }
-      router.push("/painel");
+      router.push(destino);
     });
   }
 
@@ -94,39 +98,61 @@ export function BoasVindasForm({
         </p>
       </section>
 
-      {/* Pré-apresentação das 2 portas — sem botões, é só convite */}
-      <section className="rounded-2xl border border-kolo-linha bg-kolo-lilas-bg-2/30 p-6">
+      {/* As 2 portas — agora uma escolha de verdade */}
+      <section className="flex flex-col gap-3">
         <p className="text-xs font-bold uppercase tracking-[0.18em] text-brand-purple">
-          O que tem dentro
+          Como você quer começar?
         </p>
-        <div className="mt-4 grid gap-5 md:grid-cols-2">
-          <div className="flex gap-3">
-            <span className="mt-0.5 grid size-9 shrink-0 place-items-center rounded-full bg-brand-yellow/20 text-brand-purple">
-              <MessageCircle className="size-4" aria-hidden />
-            </span>
-            <div>
-              <p className="font-heading text-base text-foreground">Quando tiver dúvida</p>
-              <p className="mt-0.5 text-sm text-muted-foreground">
-                Pergunta no app ou no WhatsApp. A Ayla escuta e devolve uma estratégia que cabe no seu dia.
-              </p>
-            </div>
-          </div>
-          <div className="flex gap-3">
-            <span className="mt-0.5 grid size-9 shrink-0 place-items-center rounded-full bg-brand-yellow/20 text-brand-purple">
+        {!janela && (
+          <p className="text-sm text-muted-foreground">
+            Escolha um horário acima e toque numa das opções.
+          </p>
+        )}
+        <div className="grid gap-3 md:grid-cols-2">
+          <button
+            type="button"
+            onClick={() => escolher("/kolo-vivo")}
+            disabled={!janela || pending}
+            className="flex flex-col gap-2 rounded-2xl border border-kolo-linha bg-white p-5 text-left transition-all hover:-translate-y-0.5 hover:border-brand-purple/40 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0"
+          >
+            <span className="grid size-9 place-items-center rounded-full bg-brand-yellow/20 text-brand-purple">
               <BookHeart className="size-4" aria-hidden />
             </span>
-            <div>
-              <p className="font-heading text-base text-foreground">
-                {primeiraCrianca
-                  ? `Quanto mais a gente sabe sobre ${primeiraCrianca.nome}`
-                  : "Quanto mais a gente sabe da sua criança"}
-              </p>
-              <p className="mt-0.5 text-sm text-muted-foreground">
-                Mais as orientações ganham a cara dela. Você vai vendo o Kolo Vivo crescer junto.
-              </p>
-            </div>
-          </div>
+            <span className="font-heading text-base text-foreground">
+              Continuar preenchendo o perfil
+            </span>
+            <span className="text-sm text-muted-foreground">
+              Te levo ao Kolo Vivo, onde você atualiza tudo sobre{" "}
+              {nomeCrianca ?? "quem você cuida"}.
+            </span>
+            <span className="mt-1 inline-flex items-center gap-1 text-sm font-medium text-brand-purple">
+              Ir pro Kolo Vivo <ArrowRight className="size-4" aria-hidden />
+            </span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => escolher("/estrategias")}
+            disabled={!janela || pending}
+            className="flex flex-col gap-2 rounded-2xl border border-kolo-linha bg-white p-5 text-left transition-all hover:-translate-y-0.5 hover:border-brand-purple/40 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0"
+          >
+            <span className="grid size-9 place-items-center rounded-full bg-brand-yellow/20 text-brand-purple">
+              <MessageCircle className="size-4" aria-hidden />
+            </span>
+            <span className="font-heading text-base text-foreground">
+              Começar a receber orientações
+            </span>
+            <span className="text-sm text-muted-foreground">
+              Foco, socialização, autonomia, sono e muito mais — é só perguntar.
+            </span>
+            <span className="mt-1 inline-flex items-center gap-1 text-sm font-medium text-brand-purple">
+              Ir pra Estratégias <ArrowRight className="size-4" aria-hidden />
+            </span>
+          </button>
         </div>
+        <p className="text-center text-xs text-muted-foreground">
+          {pending ? "Abrindo…" : "Dá pra fazer as duas — escolha por onde começar."}
+        </p>
       </section>
 
       {erro && (
@@ -134,18 +160,6 @@ export function BoasVindasForm({
           {erro}
         </p>
       )}
-
-      <div className="flex flex-col items-center gap-3">
-        <button
-          type="button"
-          onClick={salvar}
-          disabled={!janela || pending}
-          className="inline-flex items-center gap-2 rounded-full bg-brand-purple px-7 py-3 text-base font-semibold text-white shadow-lg transition-all hover:-translate-y-0.5 hover:bg-brand-purple-dark disabled:opacity-50 disabled:hover:translate-y-0"
-        >
-          {pending ? "Salvando…" : "Começar"}
-          {!pending && <ArrowRight className="size-4" aria-hidden />}
-        </button>
-      </div>
     </div>
   );
 }

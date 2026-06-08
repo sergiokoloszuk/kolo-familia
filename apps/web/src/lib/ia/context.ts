@@ -2,6 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { SkillRow } from "./router";
 import { idadeAnos } from "@/lib/idade";
 import type { Genero } from "@/lib/ayla/pronomes";
+import { resumirComposicao } from "@/lib/familia/composicao";
 
 // Campos jsonb top-level em perfil_vivo_membro (legados, mantidos)
 const KOLO_VIVO_FIELDS_MEMBRO_TOPLEVEL = [
@@ -330,7 +331,9 @@ function extractFamiliaSections(
   const out: Partial<Record<KoloVivoFieldFamilia, string>> = {};
   // Top-level (legados)
   for (const c of KOLO_VIVO_FIELDS_FAMILIA_TOPLEVEL) {
-    const texto = extractTextoFrom(json[c]);
+    // composicao guarda irmãos estruturados — formata com idade calculada na
+    // hora (atualiza com o tempo) + nota livre opcional.
+    const texto = c === "composicao" ? resumirComposicao(json[c]) : extractTextoFrom(json[c]);
     if (texto) out[c] = texto;
   }
   // categorias_extras (novas)
