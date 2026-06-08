@@ -85,9 +85,6 @@ export default async function EstrategiasPage({
   const familyId = family!.id;
   const sp = await searchParams;
   const temaContexto = sp.tema?.trim() || null;
-  const initialTexto = temaContexto
-    ? `Queria uma dica sobre ${temaContexto.toLowerCase()}.`
-    : undefined;
 
   const [{ data: membros }, { data: conversas }, { data: tipos }] =
     await Promise.all([
@@ -116,7 +113,7 @@ export default async function EstrategiasPage({
   return (
     <div className="flex flex-col gap-12">
       <header>
-        <Eyebrow>Quando você precisa de ajuda</Eyebrow>
+        <Eyebrow>Estratégias</Eyebrow>
         <h1 className="mt-1 font-heading text-3xl text-foreground md:text-4xl">
           Conta o que aconteceu.{" "}
           <em className="not-italic text-brand-purple">
@@ -131,12 +128,6 @@ export default async function EstrategiasPage({
           preferir um formato específico (uma brincadeira, uma frase pronta), tem as
           opções mais abaixo.
         </p>
-        {temaContexto && (
-          <p className="mt-3 inline-flex rounded-full bg-kolo-lilas-bg px-4 py-2 text-sm text-brand-purple-dark">
-            Você veio do Kolo Vivo, sobre <strong className="mx-1">{temaContexto}</strong> —
-            conta o que está acontecendo que eu penso numa ideia.
-          </p>
-        )}
         <p className="mt-3 text-sm text-muted-foreground">
           Quer ajustar o perfil antes?{" "}
           <Link
@@ -152,7 +143,7 @@ export default async function EstrategiasPage({
       <ConversarForm
         membros={membros ?? []}
         initialMembroId={sp.membro}
-        initialTexto={initialTexto}
+        tema={temaContexto ?? undefined}
       />
 
       {temTipos && <BibliotecaSection tipos={tipos ?? []} />}

@@ -13,11 +13,12 @@ import { criarConversa } from "./actions";
 export function ConversarForm({
   membros,
   initialMembroId,
-  initialTexto,
+  tema,
 }: {
   membros: Array<{ id: string; nome: string }>;
   initialMembroId?: string;
-  initialTexto?: string;
+  /** Quando vem de um card do Kolo Vivo: guia a pergunta sem pré-preencher. */
+  tema?: string;
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
@@ -25,7 +26,10 @@ export function ConversarForm({
   const [membroId, setMembroId] = useState<string>(
     initialMembroId ?? membros[0]?.id ?? "",
   );
-  const [texto, setTexto] = useState(initialTexto ?? "");
+  const [texto, setTexto] = useState("");
+  const placeholder = tema
+    ? `Conte o desafio atual com ${tema.toLowerCase()} — o que acontece no dia a dia — e depois aperte Conversar.`
+    : "Escreva à vontade o que está acontecendo. Quando terminar, é só apertar Conversar.";
 
   function submit() {
     if (!texto.trim() || pending) return;
@@ -74,12 +78,19 @@ export function ConversarForm({
         </select>
       )}
 
+      {tema && (
+        <p className="text-sm font-medium text-foreground">
+          Sobre <span className="text-brand-purple">{tema}</span> — conte o desafio
+          atual:
+        </p>
+      )}
+
       <textarea
         id="texto"
         rows={5}
         value={texto}
         onChange={(e) => setTexto(e.target.value)}
-        placeholder="Escreva à vontade o que está acontecendo. Quando terminar, é só apertar Conversar."
+        placeholder={placeholder}
         className="w-full resize-none rounded-2xl border border-foreground/[0.08] bg-white/70 px-4 py-3 text-base leading-relaxed text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-1 focus:ring-foreground/10"
         disabled={pending}
       />
