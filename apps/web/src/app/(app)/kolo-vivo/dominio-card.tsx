@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import Link from "next/link";
 import {
   Activity,
   Apple,
@@ -10,6 +11,7 @@ import {
   Eye,
   GraduationCap,
   Heart,
+  Lightbulb,
   MessageSquare,
   Moon,
   PersonStanding,
@@ -97,6 +99,7 @@ export function DominioCard({
   atualizadoEm,
   status,
   sugestao,
+  membroId,
   onSave,
   onDecideSugestao,
 }: {
@@ -105,6 +108,7 @@ export function DominioCard({
   atualizadoEm: string | null;
   status: DominioStatus;
   sugestao?: DominioSugestao;
+  membroId: string;
   onSave: (texto: string) => Promise<void>;
   onDecideSugestao: (id: string, decisao: "aprovar" | "rejeitar") => Promise<void>;
 }) {
@@ -275,6 +279,16 @@ export function DominioCard({
         <p className="mt-4 text-xs text-foreground/40" aria-live="polite">
           {microtexto ?? (texto.trim() ? null : "Tocar pra começar")}
         </p>
+      )}
+
+      {/* Atalho pra Estratégias com o tema já no contexto. */}
+      {!editing && (
+        <Link
+          href={`/estrategias?membro=${membroId}&tema=${encodeURIComponent(dominio.label)}`}
+          className="mt-3 inline-flex items-center gap-1.5 self-start text-xs font-semibold text-brand-purple underline-offset-4 transition-colors hover:underline"
+        >
+          <Lightbulb className="size-3.5" aria-hidden /> Quero uma dica sobre isto
+        </Link>
       )}
     </article>
   );

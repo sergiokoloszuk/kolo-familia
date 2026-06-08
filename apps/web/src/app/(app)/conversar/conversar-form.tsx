@@ -12,14 +12,20 @@ import { criarConversa } from "./actions";
  */
 export function ConversarForm({
   membros,
+  initialMembroId,
+  initialTexto,
 }: {
   membros: Array<{ id: string; nome: string }>;
+  initialMembroId?: string;
+  initialTexto?: string;
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
-  const [membroId, setMembroId] = useState<string>(membros[0]?.id ?? "");
-  const [texto, setTexto] = useState("");
+  const [membroId, setMembroId] = useState<string>(
+    initialMembroId ?? membros[0]?.id ?? "",
+  );
+  const [texto, setTexto] = useState(initialTexto ?? "");
 
   function submit() {
     if (!texto.trim() || pending) return;

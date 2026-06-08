@@ -638,16 +638,30 @@ export async function processInbound(
     await persistirRegistro(supabase, family.id, parsed);
   }
 
-  const membroFoco = parsed.membro_atipico_id
-    ? (ctx.membros.find((m) => m.id === parsed.membro_atipico_id) ?? null)
+  // Foco pra CONTEXTO da conversa (perfil + Kolo Vivo). O parser só crava o
+  // membro quando há evento a registrar; numa PERGUNTA ("o que sabe da X?")
+  // ele volta null. Então, se não cravou, casa pelo nome citado na mensagem
+  // (e, em último caso, usa o único membro). Isso NÃO registra nada — só
+  // permite a Ayla puxar o perfil de quem a mãe perguntou.
+  const textoLower = inbound.texto.toLowerCase();
+  const membroPorNome = ctx.membros.find(
+    (m) => m.nome && textoLower.includes(m.nome.toLowerCase()),
+  );
+  const membroContextoId =
+    parsed.membro_atipico_id ??
+    membroPorNome?.id ??
+    (ctx.membros.length === 1 ? ctx.membros[0].id : null);
+
+  const membroFoco = membroContextoId
+    ? (ctx.membros.find((m) => m.id === membroContextoId) ?? null)
     : null;
   const nomeMembro = membroFoco?.nome ?? null;
-  const koloVivoResumo = await carregarKoloVivoResumo(supabase, parsed.membro_atipico_id);
+  const koloVivoResumo = await carregarKoloVivoResumo(supabase, membroContextoId);
   const historico = await carregarHistorico(supabase, family.id, inbound.texto);
 
   const resp = await enviarRespostaEmChunks(supabase, {
     family_account_id: family.id,
-    membro_atipico_id: parsed.membro_atipico_id,
+    membro_atipico_id: membroContextoId,
     phone: ctx.whatsapp_e164,
     tipo: precisaEscolherMembro ? "clarificacao_identificacao" : "resposta_registro",
     params: {

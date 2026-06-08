@@ -76,9 +76,18 @@ const DESCRICOES_BIBLIOTECA: Record<string, string> = {
   rotinas: "Sugestão de rotina ou ajuste numa que já existe.",
 };
 
-export default async function EstrategiasPage() {
+export default async function EstrategiasPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ membro?: string; tema?: string }>;
+}) {
   const { supabase, family } = await loadFamilyContext();
   const familyId = family!.id;
+  const sp = await searchParams;
+  const temaContexto = sp.tema?.trim() || null;
+  const initialTexto = temaContexto
+    ? `Queria uma dica sobre ${temaContexto.toLowerCase()}.`
+    : undefined;
 
   const [{ data: membros }, { data: conversas }, { data: tipos }] =
     await Promise.all([
@@ -115,9 +124,36 @@ export default async function EstrategiasPage() {
           </em>
           .
         </h1>
+        <p className="mt-3 max-w-2xl text-sm leading-relaxed text-muted-foreground">
+          Descreva uma situação — uma crise, uma dúvida, um perrengue do dia — e eu
+          te devolvo ideias práticas pra tentar, com a cara da sua família. Pode ser
+          sobre foco, sono, socialização, alimentação… o que estiver pesando. Se
+          preferir um formato específico (uma brincadeira, uma frase pronta), tem as
+          opções mais abaixo.
+        </p>
+        {temaContexto && (
+          <p className="mt-3 inline-flex rounded-full bg-kolo-lilas-bg px-4 py-2 text-sm text-brand-purple-dark">
+            Você veio do Kolo Vivo, sobre <strong className="mx-1">{temaContexto}</strong> —
+            conta o que está acontecendo que eu penso numa ideia.
+          </p>
+        )}
+        <p className="mt-3 text-sm text-muted-foreground">
+          Quer ajustar o perfil antes?{" "}
+          <Link
+            href="/kolo-vivo"
+            className="font-semibold text-brand-purple underline-offset-4 hover:underline"
+          >
+            Ir pro Kolo Vivo
+          </Link>
+          .
+        </p>
       </header>
 
-      <ConversarForm membros={membros ?? []} />
+      <ConversarForm
+        membros={membros ?? []}
+        initialMembroId={sp.membro}
+        initialTexto={initialTexto}
+      />
 
       {temTipos && <BibliotecaSection tipos={tipos ?? []} />}
 

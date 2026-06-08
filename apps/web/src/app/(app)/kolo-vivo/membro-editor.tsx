@@ -144,6 +144,7 @@ export function MembroEditor({ membro }: { membro: MembroData }) {
             atualizadoEm={secao.atualizadoEm}
             status={status}
             sugestao={sugestao}
+            membroId={membro.id}
             onSave={async (texto) => {
               await saveSecaoMembro({ membro_id: membro.id, campo: d.key, texto });
             }}
