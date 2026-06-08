@@ -12,7 +12,9 @@ export default async function PlanoPage({
 
   const { data: plano } = await supabase
     .from("planos")
-    .select("id, titulo, tema, secoes, created_at, membros_atipicos(nome)")
+    .select(
+      "id, titulo, tema, secoes, resultado, resultado_nota, created_at, membros_atipicos(nome)",
+    )
     .eq("id", id)
     .eq("family_account_id", family!.id)
     .maybeSingle();
@@ -27,6 +29,20 @@ export default async function PlanoPage({
   const secoes = (plano.secoes as PlanoSecaoView[] | null) ?? [];
 
   return (
-    <PlanoView titulo={plano.titulo as string} crianca={crianca} secoes={secoes} />
+    <PlanoView
+      planoId={plano.id as string}
+      titulo={plano.titulo as string}
+      crianca={crianca}
+      secoes={secoes}
+      resultado={
+        (plano.resultado as
+          | "funcionou"
+          | "parcial"
+          | "nao_funcionou"
+          | "nao_testou"
+          | null) ?? null
+      }
+      resultadoNota={(plano.resultado_nota as string | null) ?? null}
+    />
   );
 }

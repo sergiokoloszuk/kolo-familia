@@ -23,6 +23,54 @@ function appUrl(): string {
   return (process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000").replace(/\/$/, "");
 }
 
+/**
+ * Mint de um magic-link que abre o app já logado num destino interno.
+ * Reusado pela ponte e pelo follow-up de plano (Fase 4). Devolve null se
+ * não conseguir (sem e-mail, falha no admin) — o chamador decide o fallback.
+ */
+export async function gerarMagicLink(
+  supabase: SupabaseClient,
+  params: { familyId: string; next: string },
+): Promise<string | null> {
+  try {
+    const next =
+      params.next.startsWith("/") && !params.next.startsWith("//")
+        ? params.next
+        : "/estrategias";
+
+    const { data: fam } = await supabase
+      .from("family_accounts")
+      .select("user_id")
+      .eq("id", params.familyId)
+      .maybeSingle();
+    const userId = fam?.user_id as string | undefined;
+    if (!userId) return null;
+
+    const admin = createServiceRoleClient();
+    const { data: userData } = await admin.auth.admin.getUserById(userId);
+    const email = userData?.user?.email;
+    if (!email) return null;
+
+    const { data: linkData, error: linkErr } = await admin.auth.admin.generateLink({
+      type: "magiclink",
+      email,
+      options: { redirectTo: `${appUrl()}/auth/wa` },
+    });
+    const tokenHash = linkData?.properties?.hashed_token;
+    if (linkErr || !tokenHash) return null;
+
+    return `${appUrl()}/auth/wa?token_hash=${encodeURIComponent(
+      tokenHash,
+    )}&next=${encodeURIComponent(next)}`;
+  } catch (e) {
+    console.warn(
+      "[ayla:ponte] falha ao gerar magic-link:",
+      e instanceof Error ? e.message : e,
+    );
+    return null;
+  }
+}
+
 export async function montarPonteWhatsApp(
   supabase: SupabaseClient,
   params: {
@@ -78,32 +126,11 @@ export async function montarPonteWhatsApp(
     });
     if (msgErr) return null;
 
-    // E-mail do usuário dono da família (pra mintar o magic-link).
-    const { data: fam } = await supabase
-      .from("family_accounts")
-      .select("user_id")
-      .eq("id", familyId)
-      .maybeSingle();
-    const userId = fam?.user_id as string | undefined;
-    if (!userId) return null;
-
-    const admin = createServiceRoleClient();
-    const { data: userData } = await admin.auth.admin.getUserById(userId);
-    const email = userData?.user?.email;
-    if (!email) return null;
-
-    const next = `/conversar/${conversa.id}`;
-    const { data: linkData, error: linkErr } = await admin.auth.admin.generateLink({
-      type: "magiclink",
-      email,
-      options: { redirectTo: `${appUrl()}/auth/wa` },
+    const link = await gerarMagicLink(supabase, {
+      familyId,
+      next: `/conversar/${conversa.id}`,
     });
-    const tokenHash = linkData?.properties?.hashed_token;
-    if (linkErr || !tokenHash) return null;
-
-    const link = `${appUrl()}/auth/wa?token_hash=${encodeURIComponent(
-      tokenHash,
-    )}&next=${encodeURIComponent(next)}`;
+    if (!link) return null;
 
     return `Se quiser, deixei o começo de um plano completo sobre isso aqui no app — com ideias práticas, frases pra usar e o que observar. É só abrir, você já entra direto:\n${link}`;
   } catch (e) {

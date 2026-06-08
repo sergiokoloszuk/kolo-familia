@@ -38,6 +38,7 @@ ${VOZ_E_LIMITES}
 - atividades / diferente / frases / rotina: conforme fizer sentido pro desafio.
 - observar: o que reparar nos próximos dias pra entender melhor.
 - Use o que você já sabe da criança (contexto abaixo). Voz de amiga sábia, NÃO relatório. Markdown leve dentro de cada seção (listas, *itálico* na frase pronta).
+- Se houver um bloco <o_que_ja_funcionou>, APRENDA com ele: priorize abordagens parecidas com o que funcionou e NÃO repita o que a família já disse que não funcionou. Não cite o bloco nem diga "da última vez" — só deixe o plano mais certeiro.
 
 # Saída
 Responda APENAS com JSON válido, sem texto antes/depois:
@@ -64,7 +65,8 @@ export async function gerarPlano(params: {
   });
 
   const contexto = buildContextBlock(ctx);
-  const userMsg = `${contexto}\n\n<desafio>\n${desafio}\n</desafio>\n\nMonte o plano. Só o JSON.`;
+  const aprendizado = await carregarAprendizado(supabase, familyId, membroAtipicoId);
+  const userMsg = `${contexto}${aprendizado ? `\n\n${aprendizado}` : ""}\n\n<desafio>\n${desafio}\n</desafio>\n\nMonte o plano. Só o JSON.`;
 
   const client = getAnthropicClient();
   const final = await client.messages.create({
@@ -104,6 +106,48 @@ export async function gerarPlano(params: {
   if (error) throw new Error(`Erro ao salvar o plano: ${error.message}`);
 
   return { id: (data as { id: string }).id, titulo, secoes: parsed.secoes };
+}
+
+/**
+ * Aprendizado (Fase 4): o que a família já disse sobre planos anteriores
+ * desta criança. Vira um bloco curto pra o modelo priorizar o que funcionou
+ * e evitar o que não funcionou.
+ */
+async function carregarAprendizado(
+  supabase: SupabaseClient,
+  familyId: string,
+  membroAtipicoId: string | null,
+): Promise<string | null> {
+  let q = supabase
+    .from("planos")
+    .select("tema, resultado, resultado_nota")
+    .eq("family_account_id", familyId)
+    .not("resultado", "is", null)
+    .order("resultado_em", { ascending: false })
+    .limit(8);
+  q = membroAtipicoId
+    ? q.eq("membro_atipico_id", membroAtipicoId)
+    : q.is("membro_atipico_id", null);
+  const { data } = await q;
+  if (!data || data.length === 0) return null;
+
+  const rotulo: Record<string, string> = {
+    funcionou: "funcionou",
+    parcial: "funcionou mais ou menos",
+    nao_funcionou: "NÃO funcionou",
+    nao_testou: "ainda não testou",
+  };
+  const linhas = data
+    .filter((p) => p.resultado && p.resultado !== "nao_testou")
+    .map((p) => {
+      const tema = (p.tema as string | null)?.trim() || "plano";
+      const r = rotulo[p.resultado as string] ?? (p.resultado as string);
+      const nota = (p.resultado_nota as string | null)?.trim();
+      return `- ${tema}: ${r}${nota ? ` — "${nota}"` : ""}`;
+    });
+  if (linhas.length === 0) return null;
+
+  return `<o_que_ja_funcionou>\n${linhas.join("\n")}\n</o_que_ja_funcionou>`;
 }
 
 function parsePlano(raw: string): {

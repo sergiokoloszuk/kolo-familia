@@ -21,7 +21,7 @@ import {
   templateInsight,
 } from "./messageTemplates";
 import { gerarMensagemEspontanea } from "./mensagemEspontanea";
-import { montarPonteWhatsApp } from "./ponte";
+import { montarPonteWhatsApp, gerarMagicLink } from "./ponte";
 import type { AylaTipoProativa, AylaTipoReativa, ParserResult } from "./types";
 
 /**
@@ -182,6 +182,68 @@ export async function sendRotinaDiaria(
     tipo: "rotina",
     meta: { intent },
   });
+}
+
+// ============================================================
+// PROATIVA: Follow-up de plano (Fase 4 — ciclo de aprendizado)
+// ============================================================
+
+/**
+ * Alguns dias depois de um plano, a Ayla pergunta se a mãe testou e como
+ * foi — com um magic-link que abre o plano no app, onde ela marca o
+ * resultado num toque (captura confiável; sem depender de texto livre).
+ * O que ela responde lá realimenta os próximos planos.
+ *
+ * Respeita todas as regras de proativa (janela, cap diário, consentimento).
+ * Idempotência por plano: marca `seguimento_enviado_em` ao enviar.
+ */
+export async function sendPlanoSeguimento(
+  supabase: SupabaseClient,
+  familyAccountId: string,
+  plano: { id: string; tema: string | null; membro_atipico_id: string | null },
+  agora: Date = new Date(),
+): Promise<EnvioResultado> {
+  const podeRes = await podeEnviarProativa(
+    supabase,
+    { family_account_id: familyAccountId, agora },
+    "plano_seguimento",
+  );
+  if (!podeRes.permitido) return { enviada: false, motivo: podeRes.motivo };
+
+  const ctx = await loadFamiliaParaEnvio(supabase, familyAccountId);
+  if (!ctx) return { enviada: false, motivo: "Sem contexto da família." };
+
+  const link = await gerarMagicLink(supabase, {
+    familyId: familyAccountId,
+    next: `/planos/${plano.id}`,
+  });
+  if (!link) return { enviada: false, motivo: "Não consegui gerar o link do plano." };
+
+  const membro = plano.membro_atipico_id
+    ? ctx.membros.find((m) => m.id === plano.membro_atipico_id)
+    : null;
+  const tema = (plano.tema ?? "").trim();
+  const refTema = tema ? ` sobre ${tema}` : "";
+  const refMembro = membro?.nome ? ` pra ${membro.nome}` : "";
+  const texto = `Oi, ${ctx.nomeMae}! Lembra do plano${refTema} que montei${refMembro}? Você chegou a testar? Me conta rapidinho como foi — assim eu deixo os próximos cada vez mais certeiros. É só tocar aqui, você já entra direto:\n${link}`;
+
+  const r = await enviarEPersistir(supabase, {
+    family_account_id: familyAccountId,
+    membro_atipico_id: plano.membro_atipico_id,
+    phone: ctx.whatsapp_e164,
+    texto,
+    category: "proativa",
+    tipo: "plano_seguimento",
+    meta: { plano_id: plano.id },
+  });
+
+  if (r.enviada) {
+    await supabase
+      .from("planos")
+      .update({ seguimento_enviado_em: agora.toISOString() })
+      .eq("id", plano.id);
+  }
+  return r;
 }
 
 // ============================================================

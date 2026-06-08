@@ -18,6 +18,7 @@ export type AylaTipoProativa =
   | "trial_d0"
   | "emocional_streak"
   | "emocional_conquista"
+  | "plano_seguimento"
   | "dass21_convite"
   | "dass21_resultado_moderado"
   | "dass21_resultado_severo"

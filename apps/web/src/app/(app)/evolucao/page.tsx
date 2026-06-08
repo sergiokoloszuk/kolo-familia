@@ -57,7 +57,22 @@ type TimelineEvento =
       janela_fim: string;
       id: string;
       membro_nome: string | null;
+    }
+  | {
+      tipo: "plano";
+      data: string;
+      id: string;
+      titulo: string;
+      resultado: string;
+      membro_nome: string | null;
     };
+
+const RESULTADO_PLANO_LABEL: Record<string, string> = {
+  funcionou: "funcionou",
+  parcial: "funcionou mais ou menos",
+  nao_funcionou: "não funcionou",
+  nao_testou: "ainda não testado",
+};
 
 function nomeFromRel(rel: unknown): string | null {
   if (!rel) return null;
@@ -123,6 +138,7 @@ export default async function EvolucaoPage() {
     { data: relatorios },
     { count: padroesCount },
     { data: perfis },
+    { data: planos },
   ] = await Promise.all([
     supabase
       .from("diarios")
@@ -155,6 +171,13 @@ export default async function EvolucaoPage() {
       .from("perfil_vivo_membro")
       .select("sensorial, desafios_regulacao, corpo_rotina, categorias_extras")
       .eq("family_account_id", familyId),
+    supabase
+      .from("planos")
+      .select("id, titulo, resultado, resultado_em, created_at, membros_atipicos(nome)")
+      .eq("family_account_id", familyId)
+      .not("resultado", "is", null)
+      .order("resultado_em", { ascending: false })
+      .limit(30),
   ]);
 
   // Resumo (3 cards do topo) — peso visual do protótipo, dados reais.
@@ -241,6 +264,17 @@ export default async function EvolucaoPage() {
       janela_inicio: r.janela_inicio,
       janela_fim: r.janela_fim,
       membro_nome: nomeFromRel(r.membros_atipicos),
+    });
+  }
+
+  for (const p of planos ?? []) {
+    eventos.push({
+      tipo: "plano",
+      data: (p.resultado_em as string | null) ?? (p.created_at as string),
+      id: p.id as string,
+      titulo: p.titulo as string,
+      resultado: p.resultado as string,
+      membro_nome: nomeFromRel(p.membros_atipicos),
     });
   }
 
@@ -555,6 +589,39 @@ function EventoItem({ ev }: { ev: TimelineEvento }) {
           </p>
           <Link
             href={`/relatorios/${ev.id}`}
+            className="mt-1 inline-flex w-fit text-xs font-semibold text-brand-purple underline-offset-4 hover:underline"
+          >
+            Abrir →
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  if (ev.tipo === "plano") {
+    return (
+      <div className="flex items-start gap-3.5">
+        <span
+          aria-hidden
+          className="mt-[7px] inline-flex w-3.5 shrink-0 font-mono text-sm leading-none text-brand-purple"
+        >
+          ◈
+        </span>
+        <div className="flex flex-1 flex-col gap-1.5">
+          <p className="text-base leading-relaxed text-foreground">
+            Plano: {ev.titulo}
+            <span className="text-muted-foreground">
+              {" "}
+              · {RESULTADO_PLANO_LABEL[ev.resultado] ?? ev.resultado}
+            </span>
+          </p>
+          {ev.membro_nome && (
+            <p className="text-[11px] uppercase tracking-[0.14em] text-muted-foreground/60">
+              {ev.membro_nome}
+            </p>
+          )}
+          <Link
+            href={`/planos/${ev.id}`}
             className="mt-1 inline-flex w-fit text-xs font-semibold text-brand-purple underline-offset-4 hover:underline"
           >
             Abrir →

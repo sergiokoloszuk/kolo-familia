@@ -9,11 +9,18 @@ export default async function PlanosPage() {
 
   const { data: planos } = await supabase
     .from("planos")
-    .select("id, titulo, tema, created_at, membros_atipicos(nome)")
+    .select("id, titulo, tema, resultado, created_at, membros_atipicos(nome)")
     .eq("family_account_id", family!.id)
     .order("created_at", { ascending: false });
 
   const lista = planos ?? [];
+
+  const RESULTADO_CHIP: Record<string, { label: string; classe: string }> = {
+    funcionou: { label: "Funcionou", classe: "bg-emerald-500/10 text-emerald-700" },
+    parcial: { label: "Mais ou menos", classe: "bg-brand-yellow/20 text-brand-purple-dark" },
+    nao_funcionou: { label: "Não funcionou", classe: "bg-foreground/[0.06] text-muted-foreground" },
+    nao_testou: { label: "A testar", classe: "bg-foreground/[0.06] text-muted-foreground" },
+  };
 
   return (
     <div className="flex flex-col gap-8">
@@ -65,6 +72,15 @@ export default async function PlanosPage() {
                       {[nome ? capitalizarNome(nome) : null, data].filter(Boolean).join(" · ")}
                     </span>
                   </span>
+                  {p.resultado && RESULTADO_CHIP[p.resultado as string] && (
+                    <span
+                      className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] font-semibold ${
+                        RESULTADO_CHIP[p.resultado as string].classe
+                      }`}
+                    >
+                      {RESULTADO_CHIP[p.resultado as string].label}
+                    </span>
+                  )}
                   <ChevronRight className="size-4 shrink-0 text-muted-foreground/70" aria-hidden />
                 </Link>
               </li>

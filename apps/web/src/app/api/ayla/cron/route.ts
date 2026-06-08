@@ -9,6 +9,7 @@ import {
   sendEmocionalStreak,
   sendProximoInsight,
   sendRepertorioSugestao,
+  sendPlanoSeguimento,
   sendCampanha,
   type CampanhaCategoria,
 } from "@/lib/ayla/orchestrator";
@@ -60,6 +61,7 @@ async function handle(request: NextRequest) {
     if (tipo === "emocional") return await runEmocional(supabase);
     if (tipo === "insights") return await runInsights(supabase);
     if (tipo === "repertorio") return await runRepertorio(supabase);
+    if (tipo === "seguimento") return await runSeguimento(supabase);
     if (tipo === "campanhas") return await runCampanhas(supabase);
     if (tipo === "regras") return await runRegras(supabase);
     if (tipo === "cleanup") return await runCleanup(supabase);
@@ -440,6 +442,88 @@ async function runRepertorio(supabase: AdminClient) {
   for (const familyId of ids) {
     try {
       const r = await sendRepertorioSugestao(supabase, familyId, agora);
+      resultados.push({
+        familyId,
+        enviada: r.enviada,
+        motivo: r.enviada ? undefined : r.motivo,
+      });
+    } catch (e) {
+      resultados.push({
+        familyId,
+        enviada: false,
+        motivo: e instanceof Error ? e.message : "erro",
+      });
+    }
+  }
+
+  return NextResponse.json({
+    processadas: resultados.length,
+    enviadas: resultados.filter((r) => r.enviada).length,
+    detalhes: resultados,
+  });
+}
+
+/**
+ * Follow-up de plano (Fase 4): alguns dias depois de um plano sem resultado,
+ * a Ayla pergunta como foi (com link pro plano). Roda 1×/dia. Pega o plano
+ * mais antigo de cada família na janela de 3–14 dias, ainda sem resultado e
+ * sem follow-up enviado. As regras de proativa (janela/cap/consentimento) e
+ * a idempotência por plano são garantidas dentro de sendPlanoSeguimento.
+ */
+async function runSeguimento(supabase: AdminClient) {
+  const agora = new Date();
+  const dia = 24 * 60 * 60 * 1000;
+  const tresDiasAtras = new Date(agora.getTime() - 3 * dia);
+  const quatorzeDiasAtras = new Date(agora.getTime() - 14 * dia);
+
+  const { data: candidatas } = await supabase
+    .from("ayla_preferences")
+    .select("family_account_id, pausada_ate")
+    .not("consentimento_em", "is", null)
+    .eq("desativada", false);
+
+  let ids: string[] = [];
+  for (const p of candidatas ?? []) {
+    if (p.pausada_ate && new Date(p.pausada_ate) > agora) continue;
+    ids.push(p.family_account_id as string);
+  }
+
+  if (ids.length > 0) {
+    const { data: ativas } = await supabase
+      .from("subscription_accesses")
+      .select("family_account_id, status")
+      .in("family_account_id", ids)
+      .in("status", ["trialing", "active", "past_due"]);
+    const ativasSet = new Set((ativas ?? []).map((a) => a.family_account_id as string));
+    ids = ids.filter((id) => ativasSet.has(id));
+  }
+
+  const resultados: Array<{ familyId: string; enviada: boolean; motivo?: string }> = [];
+  for (const familyId of ids) {
+    try {
+      const { data: planos } = await supabase
+        .from("planos")
+        .select("id, tema, membro_atipico_id")
+        .eq("family_account_id", familyId)
+        .is("resultado", null)
+        .is("seguimento_enviado_em", null)
+        .lte("created_at", tresDiasAtras.toISOString())
+        .gte("created_at", quatorzeDiasAtras.toISOString())
+        .order("created_at", { ascending: true })
+        .limit(1);
+      const plano = planos?.[0];
+      if (!plano) continue;
+
+      const r = await sendPlanoSeguimento(
+        supabase,
+        familyId,
+        {
+          id: plano.id as string,
+          tema: (plano.tema as string | null) ?? null,
+          membro_atipico_id: (plano.membro_atipico_id as string | null) ?? null,
+        },
+        agora,
+      );
       resultados.push({
         familyId,
         enviada: r.enviada,

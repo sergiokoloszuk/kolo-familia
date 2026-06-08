@@ -6,6 +6,7 @@ import { ChevronLeft, Printer } from "lucide-react";
 import { RespostaMarkdown } from "@/components/resposta-markdown";
 import { capitalizarNome } from "@/lib/nome";
 import { cn } from "@/lib/utils";
+import { PlanoResultado } from "./plano-resultado";
 
 export type PlanoSecaoView = {
   tipo: string;
@@ -25,13 +26,19 @@ const LABEL: Record<string, string> = {
 };
 
 export function PlanoView({
+  planoId,
   titulo,
   crianca,
   secoes,
+  resultado,
+  resultadoNota,
 }: {
+  planoId: string;
   titulo: string;
   crianca: string | null;
   secoes: PlanoSecaoView[];
+  resultado: "funcionou" | "parcial" | "nao_funcionou" | "nao_testou" | null;
+  resultadoNota: string | null;
 }) {
   const [filtro, setFiltro] = useState<string>("tudo");
   const tipos = Array.from(new Set(secoes.map((s) => s.tipo)));
@@ -90,6 +97,8 @@ export function PlanoView({
           </section>
         ))}
       </div>
+
+      <PlanoResultado planoId={planoId} resultado={resultado} nota={resultadoNota} />
     </div>
   );
 }
