@@ -233,7 +233,17 @@ function MembroBloco({
                   )}
                 />
 
-                <Input placeholder={ph} {...register(`porMembro.${mi}.desafios.${di}.texto`)} />
+                <div className="flex flex-col gap-1">
+                  <Label className="text-xs font-semibold text-brand-purple">
+                    Conte o que acontece
+                  </Label>
+                  <textarea
+                    rows={2}
+                    placeholder={ph}
+                    {...register(`porMembro.${mi}.desafios.${di}.texto`)}
+                    className="w-full resize-none rounded-md border-2 border-brand-purple/30 bg-white px-3 py-2 text-sm leading-relaxed text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-brand-purple/20"
+                  />
+                </div>
               </div>
             );
           })}
@@ -251,7 +261,7 @@ function MembroBloco({
             </Button>
           )}
           <p className="text-xs text-muted-foreground">
-            Comece pelo que mais pesa — um bem contado já me norteia.
+            Comece pelo que mais pesa — um desafio bem contado já me norteia.
           </p>
         </div>
 
@@ -284,13 +294,21 @@ function MembroBloco({
               );
             }}
           />
-          <Input
-            placeholder={exemploInteresse(idade)}
-            {...register(`porMembro.${mi}.interesse_aberto`)}
-          />
+          <div className="flex flex-col gap-1">
+            <Label className="text-xs font-semibold text-brand-purple">
+              Conta mais sobre o que {nome} ama
+            </Label>
+            <textarea
+              rows={2}
+              placeholder={exemploInteresse(idade)}
+              {...register(`porMembro.${mi}.interesse_aberto`)}
+              className="w-full resize-none rounded-md border-2 border-brand-purple/30 bg-white px-3 py-2 text-sm leading-relaxed text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-brand-purple/20"
+            />
+          </div>
           <p className="text-xs text-muted-foreground">
-            Pode tocar nos chips e detalhar no campo — um personagem, série ou jogo
-            favorito vale ouro pras minhas ideias.
+            Toque no que combina e, principalmente, detalhe no campo acima — um
+            personagem, série, brincadeira ou jogo favorito vale ouro pras minhas
+            ideias.
           </p>
         </div>
 
