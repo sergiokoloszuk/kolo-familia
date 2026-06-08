@@ -326,8 +326,10 @@ export async function saveTela3(raw: Tela3Input) {
 
 const quickKoloSchema = z.object({
   membro_id: z.string().uuid(),
-  desafios: z.array(z.string().trim()).max(3),
-  interesses: z.array(z.string().trim()).max(3),
+  // desafios = "Tema: o que acontece" (até 3). interesses = chips marcados +
+  // o campo aberto, então pode passar de 3 — sem limite apertado aqui.
+  desafios: z.array(z.string().trim()).max(5),
+  interesses: z.array(z.string().trim()).max(30),
   conquista: z.string().trim().optional(),
   rotina: z.string().trim().optional(),
 });
