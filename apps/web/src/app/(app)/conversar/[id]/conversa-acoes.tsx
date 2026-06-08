@@ -3,12 +3,13 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Check, Leaf, Plus, RefreshCw } from "lucide-react";
+import { Check, Leaf, Plus, RefreshCw, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   pedirApoioNaConversa,
   proporAtualizacao,
   confirmarAtualizacao,
+  criarPlanoDaConversa,
   type PropostaResult,
 } from "../actions";
 
@@ -36,9 +37,26 @@ export function ConversaAcoes({
   const router = useRouter();
   const [erro, setErro] = useState<string | null>(null);
 
+  // Plano completo
+  const [pendingPlano, startPlano] = useTransition();
+
   // Mais ajuda
   const [pendingApoio, startApoio] = useTransition();
   const [apoioAtivo, setApoioAtivo] = useState<string | null>(null);
+
+  function handlePlano() {
+    if (pendingPlano) return;
+    setErro(null);
+    setResumoOk(null);
+    startPlano(async () => {
+      const r = await criarPlanoDaConversa({ conversaId });
+      if (!r.ok) {
+        setErro(r.error);
+        return;
+      }
+      router.push(`/planos/${r.planoId}`);
+    });
+  }
 
   // Atualizar
   const [propondo, startPropor] = useTransition();
@@ -124,6 +142,40 @@ export function ConversaAcoes({
           </Link>
         </div>
       )}
+
+      {/* Plano completo — a ação principal: junta tudo num plano só. */}
+      <div className="rounded-2xl border border-brand-purple/20 bg-kolo-lilas-bg-2/40 p-4">
+        <div className="flex items-start gap-3">
+          <span
+            aria-hidden
+            className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-brand-yellow/25 text-brand-purple"
+          >
+            <Sparkles className="size-5" />
+          </span>
+          <div className="flex-1">
+            <p className="font-heading text-base font-medium text-foreground">
+              Quer um plano completo sobre isso?
+            </p>
+            <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+              Junto tudo num plano organizado — ideias práticas, frases pra usar e o
+              que observar — com a cara da sua família. Dá pra imprimir.
+            </p>
+            <Button type="button" onClick={handlePlano} disabled={pendingPlano} className="mt-3">
+              {pendingPlano ? (
+                <>
+                  <RefreshCw className="size-4 animate-spin" aria-hidden />
+                  Montando o plano...
+                </>
+              ) : (
+                <>
+                  <Sparkles className="size-4" aria-hidden />
+                  Montar plano completo
+                </>
+              )}
+            </Button>
+          </div>
+        </div>
+      </div>
 
       {/* Mais ajuda — gera o tipo escolhido sobre o mesmo tema. */}
       <div>

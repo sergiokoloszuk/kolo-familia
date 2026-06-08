@@ -7,6 +7,7 @@ import {
   BookOpen,
   ChevronRight,
   CreditCard,
+  FileText,
   HelpCircle,
   Home,
   Leaf,
@@ -65,6 +66,8 @@ interface SidebarProps {
     idade: number | null;
   } | null;
   sugestoesPendentes: number;
+  /** "Meus Planos" só aparece quando há ao menos um plano salvo. */
+  temPlanos: boolean;
 }
 
 export function Sidebar({
@@ -74,9 +77,19 @@ export function Sidebar({
   diasNaKolo,
   criancaAtiva,
   sugestoesPendentes,
+  temPlanos,
 }: SidebarProps) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
+
+  // "Meus Planos" entra após Estratégias, só quando há plano salvo.
+  const navItems: NavItem[] = temPlanos
+    ? NAV_ITEMS.flatMap((it) =>
+        it.href === "/estrategias"
+          ? [it, { href: "/planos", label: "Meus Planos", icon: FileText }]
+          : [it],
+      )
+    : NAV_ITEMS;
 
   // Fecha o drawer ao mudar de rota (mobile).
   useEffect(() => {
@@ -142,7 +155,7 @@ export function Sidebar({
           bg lilás claro + texto roxo escuro + traço amarelo lateral 3px (não bg
           sólido roxo). Ícones com stroke 1.5 pra menos peso visual. */}
       <nav className="flex flex-1 flex-col gap-1" aria-label="Navegação principal">
-        {NAV_ITEMS.map((item) => {
+        {navItems.map((item) => {
           const Icon = item.icon;
           const active = isActive(pathname, item.href);
           return (

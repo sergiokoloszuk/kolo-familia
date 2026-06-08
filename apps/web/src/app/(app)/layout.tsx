@@ -17,6 +17,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
     { data: profile },
     { data: criancas },
     { count: sugestoesPendentes },
+    { count: planosCount },
   ] = await Promise.all([
     supabase
       .from("controle_acessos")
@@ -44,6 +45,10 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
       .select("id", { count: "exact", head: true })
       .eq("family_account_id", family.id)
       .eq("status", "pendente"),
+    supabase
+      .from("planos")
+      .select("id", { count: "exact", head: true })
+      .eq("family_account_id", family.id),
   ]);
 
   const isAdmin = Boolean(acesso?.ativo);
@@ -79,6 +84,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
         diasNaKolo={diasNaKolo}
         criancaAtiva={criancaAtiva}
         sugestoesPendentes={sugestoesPendentes ?? 0}
+        temPlanos={(planosCount ?? 0) > 0}
       />
       <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col px-6 py-8 lg:px-10">
         {children}

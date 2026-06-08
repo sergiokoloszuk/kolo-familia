@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { respond, respondAsOutputType } from "@/lib/ia/engine";
+import { gerarPlano } from "@/lib/ia/plano";
 import { extrairAtualizacoes, type PropostaAtualizacao } from "@/lib/ia/atualizar";
 import { idadeAnos, hojeLocalISO } from "@/lib/idade";
 import { requireActiveWrite } from "@/lib/auth/require-active-write";
@@ -266,6 +267,54 @@ export async function pedirApoioNaConversa(
 
     revalidatePath(`/conversar/${conversaId}`);
     return { ok: true };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "Erro inesperado" };
+  }
+}
+
+// ============================================================
+// Plano completo — monta UM plano (por seções) sobre o tema da conversa,
+// numa única chamada. Salvo em `planos`; a tela /planos/[id] renderiza.
+// ============================================================
+
+export async function criarPlanoDaConversa(
+  input: { conversaId: string },
+): Promise<{ ok: true; planoId: string } | { ok: false; error: string }> {
+  try {
+    const { conversaId } = z.object({ conversaId: z.string().uuid() }).parse(input);
+    const { supabase, family } = await requireFamily();
+    await requireActiveWrite(family.id);
+
+    const { data: conversa } = await supabase
+      .from("conversas")
+      .select("id, membro_atipico_id")
+      .eq("id", conversaId)
+      .eq("family_account_id", family.id)
+      .maybeSingle();
+    if (!conversa) return { ok: false, error: "Conversa não encontrada." };
+
+    const { data: msgs } = await supabase
+      .from("mensagens_skill")
+      .select("papel, conteudo")
+      .eq("conversa_id", conversaId)
+      .order("created_at", { ascending: true });
+    const desafio =
+      (msgs ?? [])
+        .filter((m) => m.papel === "user")
+        .map((m) => m.conteudo as string)
+        .join("\n")
+        .slice(0, 1800) || "Sobre o tema desta conversa.";
+
+    const plano = await gerarPlano({
+      supabase,
+      familyId: family.id,
+      membroAtipicoId: conversa.membro_atipico_id as string | null,
+      desafio,
+      conversaId,
+    });
+
+    revalidatePath("/planos");
+    return { ok: true, planoId: plano.id };
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : "Erro inesperado" };
   }

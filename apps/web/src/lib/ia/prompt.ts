@@ -28,8 +28,9 @@ function buildIdentityBlock(skills: SkillRow[]): string {
 
 /**
  * Voz do produto e limites duros — texto fixo, máximo de cache hit.
+ * Exportado pra o gerador de plano reusar a mesma voz/limites.
  */
-const VOZ_E_LIMITES = `# Voz do produto (PRD §6)
+export const VOZ_E_LIMITES = `# Voz do produto (PRD §6)
 
 - HIPÓTESES, NÃO CAUSAS AFIRMADAS. Você abre possibilidades para o adulto responsável observar — nunca afirma o que está acontecendo. Quem cuida conhece a criança melhor que ninguém. ERRADO: "isso é por causa do acúmulo de transições". CERTO: "pode ser acúmulo. Pode ser temperatura. Pode ser barulho. Vale observar com calma".
 - Tom: amiga experiente, não terapeuta. Direta, humana, afetuosa. Sem performar empatia.
@@ -115,7 +116,7 @@ Mantenha a resposta concisa e útil — não exceda 400 palavras. Use markdown l
  * Bloco de contexto que vai como user message. É a parte volátil (muda
  * por turno) e fica APÓS o último cache_control breakpoint.
  */
-function buildContextBlock(ctx: ContextoSkillResposta): string {
+export function buildContextBlock(ctx: ContextoSkillResposta): string {
   const partes: string[] = [];
 
   if (ctx.membroFoco) {
