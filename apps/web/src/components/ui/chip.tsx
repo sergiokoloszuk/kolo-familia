@@ -37,7 +37,7 @@ export function Chip({
           : "border-input bg-background text-foreground hover:border-brand-purple/40",
       )}
     >
-      {selected && <Check className="size-4 shrink-0" aria-hidden="true" />}
+      {selected && <Check className="size-4 shrink-0 text-brand-yellow" aria-hidden="true" />}
       {children}
     </button>
   );

@@ -40,7 +40,12 @@ export function Tela6Confirmacao({
     <div className="flex flex-col gap-6">
       <div className="rounded-md border bg-muted/30 p-5">
         <div className="flex items-start gap-3">
-          <CheckCircle2 className="mt-0.5 size-5 text-primary" aria-hidden="true" />
+          <span
+            aria-hidden
+            className="mt-0.5 grid size-7 shrink-0 place-items-center rounded-full bg-brand-yellow/25"
+          >
+            <CheckCircle2 className="size-4 text-brand-purple-dark" aria-hidden="true" />
+          </span>
           <div>
             <p className="font-medium">Tudo pronto, {apelido}.</p>
             <p className="mt-1 text-sm text-muted-foreground">

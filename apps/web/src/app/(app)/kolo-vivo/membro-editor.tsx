@@ -101,6 +101,10 @@ export function MembroEditor({ membro }: { membro: MembroData }) {
           <div className="font-heading text-5xl font-medium leading-none tracking-tight text-brand-purple">
             {membro.completude}%
           </div>
+          <span
+            aria-hidden
+            className="mt-2 block h-1 w-10 rounded-full bg-brand-yellow md:ml-auto"
+          />
           <div className="mt-1.5 text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground">
             do mapa vivo
           </div>
