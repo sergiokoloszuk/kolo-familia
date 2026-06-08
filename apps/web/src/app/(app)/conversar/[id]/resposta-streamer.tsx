@@ -18,11 +18,15 @@ export function RespostaStreamer({
   conversaId,
   precisaResposta,
   temResposta,
+  msgCount,
   outputTypes,
 }: {
   conversaId: string;
   precisaResposta: boolean;
   temResposta: boolean;
+  /** Nº de mensagens persistidas (vindo do servidor). Cresce quando o refresh
+   *  traz a resposta salva — usamos isso pra fazer o handoff sem piscar. */
+  msgCount: number;
   outputTypes: { key: string; label: string }[];
 }) {
   const router = useRouter();
@@ -32,11 +36,19 @@ export function RespostaStreamer({
   const [erro, setErro] = useState<string | null>(null);
   const [texto, setTexto] = useState("");
   const jaIniciou = useRef(false);
+  // Quantas mensagens existiam quando o stream atual começou. A resposta salva
+  // "chegou" quando msgCount passa desse valor — só então limpamos o transmitido.
+  const baselineRef = useRef(msgCount);
+  // A resposta salva "chegou" quando msgCount passa do baseline. Os gates de
+  // exibição usam isso pra esconder o transmitido sem buraco; o parcial em si
+  // é sobrescrito no início do próximo stream (setParcial("")).
+  const respostaChegou = msgCount > baselineRef.current;
 
   async function stream() {
     setErro(null);
     setParcial("");
     setStreaming(true);
+    baselineRef.current = msgCount; // baseline = mensagens antes desta resposta
     try {
       const res = await fetch("/api/conversar/stream", {
         method: "POST",
@@ -57,9 +69,9 @@ export function RespostaStreamer({
         acc += decoder.decode(value, { stream: true });
         setParcial(acc);
       }
+      // Mantém o texto transmitido na tela e pede o refresh. O parcial só some
+      // quando a versão salva entra na lista (via msgCount), sem flash.
       setStreaming(false);
-      setParcial("");
-      setPendingUser(null);
       router.refresh();
     } catch {
       setErro("A resposta foi interrompida. Tente de novo.");
@@ -95,7 +107,7 @@ export function RespostaStreamer({
   return (
     <div className="flex flex-col gap-8">
       {/* Mensagem do usuário otimista (enquanto persiste/transmite no continuar) */}
-      {pendingUser && (
+      {pendingUser && !respostaChegou && (
         <div>
           <span className="text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground">
             Você
@@ -106,8 +118,8 @@ export function RespostaStreamer({
         </div>
       )}
 
-      {/* Resposta da Kolo transmitindo */}
-      {streaming && (
+      {/* Resposta da Kolo: transmitindo OU já transmitida e ainda não salva na lista */}
+      {(streaming || (parcial && !respostaChegou)) && (
         <div>
           <span className="text-[11px] font-bold uppercase tracking-[0.18em] text-brand-purple">
             Kolo

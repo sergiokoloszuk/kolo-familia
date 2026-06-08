@@ -106,6 +106,7 @@ export default async function ConversaPage(props: PageProps<"/conversar/[id]">) 
         conversaId={conversa.id}
         precisaResposta={precisaResposta}
         temResposta={temResposta}
+        msgCount={msgs.length}
         outputTypes={(tipos ?? []).map((t) => ({
           key: t.key as string,
           label: t.label as string,
