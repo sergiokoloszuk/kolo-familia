@@ -27,7 +27,7 @@ const MAPA = `# Mapa do app Kolo Família (telas reais e o que se faz em cada um
 
 - /painel (Início): visão da semana, pequenas conquistas, "foco da semana"; atalho "Registrar dia".
 - /kolo-vivo (Kolo Vivo): o retrato de cada criança e da família. Editar as seções (o básico, o jeito, o corpo e o dia a dia, o que ajuda/pesa, sensações; e da família: composição, rotina da casa, recursos, dinâmica). Com 2+ crianças, há um seletor (pills) no topo pra trocar de filho. Sugestões novas aparecem num aviso pra aprovar/descartar.
-- /estrategias (Estratégias): conversar com a Kolo sobre algo que aconteceu (escreve no campo e Enter envia). Abaixo da resposta há botões de "mais ajuda" (brincadeiras, atividades, crenças, o que fazer diferente, histórias sociais, frases prontas, rotinas) e um botão "Atualizar" que guarda no Kolo Vivo/diário. Também lista conversas anteriores (dá pra apagar na lixeira).
+- /estrategias (Estratégias): conversar com a Kolo sobre algo que aconteceu (escreve no campo à vontade e aperta "Conversar"). Abaixo da resposta há botões de "mais ajuda" (brincadeiras, atividades, crenças, o que fazer diferente, histórias sociais, frases prontas, rotinas) e um botão "Atualizar" que guarda no Kolo Vivo/diário. Também lista conversas anteriores (dá pra apagar na lixeira).
 - /registrar/diario (Registrar o dia): check-in (como você está e como a criança está) + conquista, desafio, observação e contexto (quem estava, como reagiu).
 - /evolucao (Evolução): linha do tempo de conquistas e registros.
 - /historias (Histórias): memórias em forma de história; atalho pra criar avatar.

@@ -91,12 +91,6 @@ export function RespostaStreamer({
     void stream();
   }
 
-  function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      enviar();
-    }
-  }
 
   return (
     <div className="flex flex-col gap-8">
@@ -162,15 +156,11 @@ export function RespostaStreamer({
           rows={3}
           value={texto}
           onChange={(e) => setTexto(e.target.value)}
-          onKeyDown={handleKeyDown}
           placeholder="Continuar conversando..."
           disabled={streaming}
           className="w-full resize-none rounded-2xl border border-foreground/[0.08] bg-white/70 px-4 py-3 text-base leading-relaxed text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-1 focus:ring-foreground/10 disabled:opacity-60"
         />
-        <div className="flex items-center justify-between gap-3">
-          <span className="hidden text-[11px] text-muted-foreground/60 sm:inline">
-            Enter envia · Shift+Enter pula linha
-          </span>
+        <div className="flex items-center justify-end gap-3">
           <Button type="submit" size="lg" disabled={streaming || !texto.trim()}>
             {streaming ? "Pensando..." : "Continuar"}
             {!streaming && <ArrowRight className="size-4" aria-hidden />}

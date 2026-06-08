@@ -7,8 +7,8 @@ import { Button } from "@/components/ui/button";
 import { criarConversa } from "./actions";
 
 /**
- * Form principal de Estratégias. Seletor de criança e CTA destacados;
- * Enter envia (Shift+Enter pula linha).
+ * Form principal de Estratégias. Seletor de criança e CTA destacados.
+ * Enter NÃO envia — a pessoa escreve livremente e aperta "Conversar".
  */
 export function ConversarForm({
   membros,
@@ -41,13 +41,6 @@ export function ConversarForm({
         setError(traduzirErro(e instanceof Error ? e.message : "Erro inesperado"));
       }
     });
-  }
-
-  function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      submit();
-    }
   }
 
   return (
@@ -86,16 +79,12 @@ export function ConversarForm({
         rows={5}
         value={texto}
         onChange={(e) => setTexto(e.target.value)}
-        onKeyDown={handleKeyDown}
-        placeholder="Ex: Ele teve uma crise grande agora pela tarde, do nada. Não sei o que aconteceu."
+        placeholder="Escreva à vontade o que está acontecendo. Quando terminar, é só apertar Conversar."
         className="w-full resize-none rounded-2xl border border-foreground/[0.08] bg-white/70 px-4 py-3 text-base leading-relaxed text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-1 focus:ring-foreground/10"
         disabled={pending}
       />
 
-      <div className="flex items-center justify-between gap-3">
-        <span className="hidden text-[11px] text-muted-foreground/60 sm:inline">
-          Enter envia · Shift+Enter pula linha
-        </span>
+      <div className="flex items-center justify-end gap-3">
         <Button type="submit" size="lg" disabled={pending || !texto.trim()}>
           {pending ? "Pensando..." : "Conversar"}
           {!pending && <ArrowRight className="size-4" aria-hidden />}

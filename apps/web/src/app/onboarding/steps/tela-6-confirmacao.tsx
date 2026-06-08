@@ -117,7 +117,7 @@ export function Tela6Confirmacao({
             </span>
             <span className="text-sm text-muted-foreground">
               quando quiser ideias pra um perrengue — foco, sono, socialização, o
-              que estiver pesando.
+              que estiver mais desafiador.
             </span>
             <span className="mt-1 inline-flex items-center gap-1 text-sm font-medium text-brand-purple">
               Começar pelas Estratégias <ArrowRight className="size-4" aria-hidden="true" />

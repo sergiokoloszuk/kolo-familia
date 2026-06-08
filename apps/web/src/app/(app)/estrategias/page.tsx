@@ -126,8 +126,8 @@ export default async function EstrategiasPage({
         </h1>
         <p className="mt-3 max-w-2xl text-sm leading-relaxed text-muted-foreground">
           Descreva uma situação — uma crise, uma dúvida, um perrengue do dia — e eu
-          te devolvo ideias práticas pra tentar, com a cara da sua família. Pode ser
-          sobre foco, sono, socialização, alimentação… o que estiver pesando. Se
+          te devolvo ideias práticas e personalizadas pra tentar. Pode ser sobre
+          foco, sono, socialização, alimentação… o que estiver mais desafiador. Se
           preferir um formato específico (uma brincadeira, uma frase pronta), tem as
           opções mais abaixo.
         </p>
