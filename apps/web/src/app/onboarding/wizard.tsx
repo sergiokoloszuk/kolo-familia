@@ -374,6 +374,19 @@ function traduzirErro(message: string): string {
   if (m.includes("não autenticado")) return "Sessão expirada. Faça login novamente.";
   if (m.includes("não inicializada"))
     return "Sua família não está inicializada. Recarregue a página.";
-  if (m.includes("whatsapp")) return "WhatsApp inválido. Use o formato +5511999999999.";
+  if (m.includes("whatsapp")) return "WhatsApp inválido. Use o DDD + número, ex: (11) 99999-9999.";
+  if (m.includes("data") && (m.includes("nascimento") || m.includes("válida")))
+    return "Confira as datas de nascimento (formato dd/mm/aaaa).";
+  if (m.includes("nome muito curto")) return "Algum nome ficou muito curto. Confira e tente de novo.";
+  // Erro genérico do servidor — em produção o Next esconde o detalhe técnico.
+  // Em vez do texto cru ("Server Components render…/digest"), mostra algo humano.
+  if (
+    m.includes("server components") ||
+    m.includes("omitted in production") ||
+    m.includes("digest") ||
+    m.includes("unexpected")
+  ) {
+    return "Não consegui salvar agora. Confira os campos desta tela e tente de novo — se continuar, me avise pelo suporte.";
+  }
   return message;
 }
