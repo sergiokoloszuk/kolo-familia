@@ -6,6 +6,7 @@ import { z } from "zod";
 import { createClient, createServiceRoleClient } from "@/lib/supabase/server";
 import { idadeAnos, dataBrParaIso } from "@/lib/idade";
 import { capitalizarNome } from "@/lib/nome";
+import { chaveTelefoneBR } from "@/lib/telefone";
 import {
   perfilPrimario,
   buildDiagnosticosFormais,
@@ -145,11 +146,41 @@ export async function saveTela1(raw: Tela1Input) {
   });
   if (errProfile) throw new Error(`Erro ao salvar perfil: ${errProfile.message}`);
 
+  // Impede duas famílias com o mesmo WhatsApp (senão a Ayla responde pra
+  // família errada). Compara pela chave normalizada (9º dígito/país). Usa
+  // service-role pra enxergar além da própria família (RLS esconderia as
+  // outras). É a proteção principal; o índice único no banco é o backstop.
+  const chaveNova = chaveTelefoneBR(data.whatsapp_e164);
+  if (chaveNova) {
+    const admin = createServiceRoleClient();
+    const { data: outras } = await admin
+      .from("family_accounts")
+      .select("id, whatsapp_e164")
+      .not("whatsapp_e164", "is", null)
+      .neq("id", family.id);
+    const conflito = (outras ?? []).some(
+      (f) => chaveTelefoneBR(f.whatsapp_e164 as string) === chaveNova,
+    );
+    if (conflito) {
+      throw new Error(
+        "Esse número de WhatsApp já está em uso por outra conta. Use o número que você usa no WhatsApp, ou fale com o suporte se achar que é um engano.",
+      );
+    }
+  }
+
   const { error: errWhats } = await supabase
     .from("family_accounts")
     .update({ whatsapp_e164: data.whatsapp_e164 })
     .eq("id", family.id);
-  if (errWhats) throw new Error(`Erro ao salvar WhatsApp: ${errWhats.message}`);
+  if (errWhats) {
+    // 23505 = unique_violation do índice family_accounts_whatsapp_unico.
+    if (errWhats.code === "23505") {
+      throw new Error(
+        "Esse número de WhatsApp já está em uso por outra conta. Use o número que você usa no WhatsApp, ou fale com o suporte se achar que é um engano.",
+      );
+    }
+    throw new Error(`Erro ao salvar WhatsApp: ${errWhats.message}`);
+  }
 
   await bumpStep(supabase, family.id, Math.max(family.onboarding_step, 2));
 }

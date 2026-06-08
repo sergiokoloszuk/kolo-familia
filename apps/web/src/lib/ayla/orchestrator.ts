@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { hojeLocalISO, idadeAnos } from "@/lib/idade";
+import { chaveTelefoneBR } from "@/lib/telefone";
 import { enviarTexto, type InboundWhatsApp } from "./whatsappSender";
 import { podeEnviarProativa } from "./rules";
 import { parseInbound, detectarComando } from "./parser";
@@ -692,19 +693,6 @@ export async function sendCampanha(
 // ============================================================
 // REATIVA: processa mensagem recebida (webhook)
 // ============================================================
-
-/**
- * Normaliza um telefone BR pra uma chave comparável: tira país (55),
- * formatação e o 9º dígito opcional. Assim "+55 11 99622-0221",
- * "5511966220221" e "551196220221" batem todos. Resolve o número não
- * casar por causa de formato/9º dígito.
- */
-function chaveTelefoneBR(phone: string | null | undefined): string {
-  let d = (phone ?? "").replace(/\D/g, "");
-  if (d.startsWith("55") && d.length > 11) d = d.slice(2); // remove país
-  if (d.length === 11 && d[2] === "9") d = d.slice(0, 2) + d.slice(3); // remove 9º dígito
-  return d;
-}
 
 export async function processInbound(
   supabase: SupabaseClient,
