@@ -360,7 +360,7 @@ function ProgressIndicator({ step }: { step: number }) {
         return (
           <div
             key={n}
-            className={`h-1.5 flex-1 rounded-full ${filled ? "bg-primary" : "bg-muted"}`}
+            className={`h-1.5 flex-1 rounded-full ${filled ? "bg-brand-yellow" : "bg-muted"}`}
             aria-label={`Passo ${n}${n === step ? " (atual)" : ""}`}
           />
         );

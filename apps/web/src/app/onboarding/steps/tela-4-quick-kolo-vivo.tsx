@@ -257,7 +257,7 @@ function MembroBloco({
               type="button"
               onClick={() => append({ tema: "", texto: "" })}
               disabled={pending}
-              className="flex w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed border-brand-purple/40 bg-brand-purple/5 px-4 py-3 text-sm font-semibold text-brand-purple transition-colors hover:border-brand-purple/60 hover:bg-brand-purple/10 disabled:opacity-50"
+              className="flex w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed border-brand-yellow-dark/50 bg-brand-yellow/10 px-4 py-3 text-sm font-semibold text-brand-purple-dark transition-colors hover:border-brand-yellow-dark/70 hover:bg-brand-yellow/20 disabled:opacity-50"
             >
               <Plus className="size-4" aria-hidden="true" /> Adicionar outro desafio
             </button>
