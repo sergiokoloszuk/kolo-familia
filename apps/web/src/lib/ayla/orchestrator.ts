@@ -657,6 +657,7 @@ export async function processInbound(
     : null;
   const nomeMembro = membroFoco?.nome ?? null;
   const koloVivoResumo = await carregarKoloVivoResumo(supabase, membroContextoId);
+  const estrategiasRecentes = await carregarEstrategiasRecentes(supabase, family.id);
   const historico = await carregarHistorico(supabase, family.id, inbound.texto);
 
   const resp = await enviarRespostaEmChunks(supabase, {
@@ -672,6 +673,7 @@ export async function processInbound(
       perfilMembro: membroFoco?.perfil ?? null,
       generoMembro: membroFoco?.genero ?? null,
       koloVivoResumo,
+      estrategiasRecentes,
       historico,
       mensagem: inbound.texto,
       sinais: {
@@ -1385,6 +1387,25 @@ async function carregarKoloVivoResumo(
     }
   }
   return linhas.join("\n");
+}
+
+/**
+ * Últimas perguntas que a mãe fez nas Estratégias (in-app), pra a Ayla
+ * mostrar que acompanha os dois canais — não só o WhatsApp.
+ */
+async function carregarEstrategiasRecentes(
+  supabase: SupabaseClient,
+  familyId: string,
+): Promise<string[]> {
+  const { data } = await supabase
+    .from("conversas")
+    .select("titulo, created_at")
+    .eq("family_account_id", familyId)
+    .order("created_at", { ascending: false })
+    .limit(3);
+  return (data ?? [])
+    .map((c) => (typeof c.titulo === "string" ? c.titulo.trim() : ""))
+    .filter((t) => t.length > 0);
 }
 
 /**

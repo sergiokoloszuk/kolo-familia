@@ -66,6 +66,8 @@ export type RespostaParams = {
   perfilMembro?: string | null;
   generoMembro?: Genero;
   koloVivoResumo: string;
+  /** Títulos das últimas conversas nas Estratégias (in-app), pra continuidade. */
+  estrategiasRecentes?: string[];
   historico: Array<{ de: "mae" | "ayla"; texto: string }>;
   mensagem: string;
   sinais: SinaisResposta;
@@ -127,6 +129,13 @@ export async function gerarRespostaAyla(
       `\n<o_que_ja_sabemos_da_crianca>\n${params.koloVivoResumo}\n</o_que_ja_sabemos_da_crianca>`,
     );
   }
+  if (params.estrategiasRecentes && params.estrategiasRecentes.length > 0) {
+    linhas.push(
+      `\n<perguntas_recentes_nas_estrategias>\n${params.estrategiasRecentes
+        .map((q) => `- ${q}`)
+        .join("\n")}\n</perguntas_recentes_nas_estrategias>`,
+    );
+  }
   if (params.historico.length > 0) {
     const hist = params.historico
       .map((h) => `${h.de === "mae" ? params.nomeMae : "Ayla"}: ${h.texto}`)
@@ -136,6 +145,11 @@ export async function gerarRespostaAyla(
   linhas.push(`\n<mensagem_de_agora>\n${params.mensagem}\n</mensagem_de_agora>`);
 
   const notas: string[] = [];
+  if (params.koloVivoResumo.trim() || (params.estrategiasRecentes?.length ?? 0) > 0) {
+    notas.push(
+      `Você acompanha esta família pelo Kolo Vivo e pelas Estratégias (blocos acima). Quando ${params.nomeMae} perguntar o que você sabe da criança, pedir um resumo, ou quando ajudar a conversa, MOSTRE que está acompanhando: cite de leve o que importa (idade, perfil, 1-2 desafios principais) e, se houver, uma pergunta recente das Estratégias. Não despeje tudo — escolha o que é relevante pro momento.`,
+    );
+  }
   if (params.precisaEscolherMembro) {
     notas.push(
       `Não ficou claro de qual filho ela fala (${params.precisaEscolherMembro.nomes.join(", ")}). Antes de tudo, pergunte com gentileza de quem é.`,
