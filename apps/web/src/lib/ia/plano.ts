@@ -117,7 +117,9 @@ export async function gerarPlano(params: {
   const client = getAnthropicClient();
   const final = await client.messages.create({
     model: MODELS.principal,
-    max_tokens: 3500,
+    // Espaço folgado: um plano completo (crenças 3+3 + várias brincadeiras +
+    // seções) passava de 3500 e o JSON vinha cortado → falha no parse.
+    max_tokens: 8000,
     system: [
       { type: "text", text: sistemaPlano(variante), cache_control: { type: "ephemeral" } },
     ],
@@ -131,6 +133,9 @@ export async function gerarPlano(params: {
 
   const parsed = parsePlano(raw);
   if (parsed.secoes.length === 0) {
+    console.error(
+      `[plano] 0 seções. stop_reason=${final.stop_reason} raw_len=${raw.length} head=${raw.slice(0, 300)}`,
+    );
     throw new Error("Não consegui montar o plano agora. Tente de novo em instantes.");
   }
 
@@ -198,6 +203,66 @@ async function carregarAprendizado(
   return `<o_que_ja_funcionou>\n${linhas.join("\n")}\n</o_que_ja_funcionou>`;
 }
 
+function normalizarSecao(s: unknown): PlanoSecao {
+  const x = (s ?? {}) as Record<string, unknown>;
+  const tipo =
+    typeof x.tipo === "string" && (PLANO_TIPOS as readonly string[]).includes(x.tipo)
+      ? x.tipo
+      : "entender";
+  return {
+    tipo,
+    titulo: typeof x.titulo === "string" ? x.titulo : "",
+    conteudo_markdown: typeof x.conteudo_markdown === "string" ? x.conteudo_markdown : "",
+  };
+}
+
+/**
+ * Resgata as seções mesmo quando o JSON vem truncado (ex.: estourou
+ * max_tokens) ou com prosa em volta. Faz brace-matching ciente de strings:
+ * cada objeto `{...}` balanceado que contiver "conteudo_markdown" é parseado
+ * individualmente — o último objeto incompleto é simplesmente ignorado, em
+ * vez de derrubar o plano inteiro.
+ */
+function salvarSecoes(raw: string): PlanoSecao[] {
+  const out: PlanoSecao[] = [];
+  const seen = new Set<string>();
+  const stack: number[] = [];
+  let inStr = false;
+  let esc = false;
+
+  for (let i = 0; i < raw.length; i++) {
+    const c = raw[i];
+    if (inStr) {
+      if (esc) esc = false;
+      else if (c === "\\") esc = true;
+      else if (c === '"') inStr = false;
+      continue;
+    }
+    if (c === '"') inStr = true;
+    else if (c === "{") stack.push(i);
+    else if (c === "}") {
+      const start = stack.pop();
+      if (start === undefined) continue;
+      const slice = raw.slice(start, i + 1);
+      if (!slice.includes("conteudo_markdown")) continue;
+      try {
+        const o = JSON.parse(slice) as Record<string, unknown>;
+        if (typeof o.conteudo_markdown === "string" && o.conteudo_markdown.trim()) {
+          const sec = normalizarSecao(o);
+          const key = `${sec.tipo}|${sec.conteudo_markdown.slice(0, 48)}`;
+          if (!seen.has(key)) {
+            seen.add(key);
+            out.push(sec);
+          }
+        }
+      } catch {
+        // objeto interno inválido — ignora e segue
+      }
+    }
+  }
+  return out;
+}
+
 function parsePlano(raw: string): {
   titulo?: string;
   tema?: string;
@@ -218,20 +283,15 @@ function parsePlano(raw: string): {
   }
   const o = (obj ?? {}) as { titulo?: unknown; tema?: unknown; secoes?: unknown };
   const secoesRaw = Array.isArray(o.secoes) ? o.secoes : [];
-  const secoes: PlanoSecao[] = secoesRaw
-    .map((s) => {
-      const x = (s ?? {}) as Record<string, unknown>;
-      const tipo =
-        typeof x.tipo === "string" && (PLANO_TIPOS as readonly string[]).includes(x.tipo)
-          ? x.tipo
-          : "entender";
-      return {
-        tipo,
-        titulo: typeof x.titulo === "string" ? x.titulo : "",
-        conteudo_markdown: typeof x.conteudo_markdown === "string" ? x.conteudo_markdown : "",
-      };
-    })
+  let secoes: PlanoSecao[] = secoesRaw
+    .map(normalizarSecao)
     .filter((s) => s.conteudo_markdown.trim().length > 0);
+
+  // JSON cortado/ilegível → resgata o que dá das seções soltas no texto.
+  if (secoes.length === 0) {
+    secoes = salvarSecoes(raw);
+  }
+
   return {
     titulo: typeof o.titulo === "string" ? o.titulo : undefined,
     tema: typeof o.tema === "string" ? o.tema : undefined,
