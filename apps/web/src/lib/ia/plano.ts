@@ -3,6 +3,7 @@ import { getAnthropicClient, MODELS } from "./anthropic";
 import { buildContext } from "./context";
 import { buildContextBlock, VOZ_E_LIMITES } from "./prompt";
 import { loadActiveSkills, routeSkillsAI } from "./router";
+import { respondAsOutputType } from "./engine";
 import { capitalizarNome } from "@/lib/nome";
 
 /**
@@ -246,6 +247,170 @@ export async function gerarPlano(params: {
   if (error) throw new Error(`Erro ao salvar o plano: ${error.message}`);
 
   return { id: (data as { id: string }).id, titulo, secoes };
+}
+
+function textoDeResposta(content: Array<{ type: string }>): string {
+  return (content as Array<{ type: string; text?: string }>)
+    .filter((b) => b.type === "text")
+    .map((b) => b.text ?? "")
+    .join("")
+    .trim();
+}
+
+// Seções práticas SEMPRE no plano (cada uma = o botão correspondente).
+const SECOES_SEMPRE = ["crencas", "diferente", "brincadeiras", "atividades", "frases"] as const;
+// Estas só entram quando o tema pede (decidido por um classificador leve).
+const SECOES_CONDICIONAIS_MC = ["historia_social", "rotina"] as const;
+
+/** Decide (Haiku, barato) quais condicionais entram. Degradação: inclui história. */
+async function decidirCondicionais(
+  desafio: string,
+): Promise<{ historia_social: boolean; rotina: boolean }> {
+  try {
+    const client = getAnthropicClient();
+    const sys = `Dado o desafio de uma criança neurodivergente, decida quais seções fazem sentido. Responda APENAS JSON {"historia_social":true|false,"rotina":true|false}. historia_social = útil quando o tema envolve transições, regras, situações sociais, ou antecipar/ensaiar algo. rotina = útil quando envolve estruturar o dia a dia (sono, refeições, horários, sequências).`;
+    const final = await client.messages.create({
+      model: MODELS.leve,
+      max_tokens: 40,
+      system: [{ type: "text", text: sys }],
+      messages: [{ role: "user", content: desafio.slice(0, 800) }],
+    });
+    const raw = textoDeResposta(final.content);
+    const m = raw.match(/\{[\s\S]*\}/);
+    const o = m ? (JSON.parse(m[0]) as Record<string, unknown>) : {};
+    return { historia_social: Boolean(o.historia_social), rotina: Boolean(o.rotina) };
+  } catch {
+    return { historia_social: true, rotina: false };
+  }
+}
+
+/** Gera "entender" (acolhe + hipótese) e "observar" numa chamada focada. */
+async function gerarEntenderObservar(params: {
+  supabase: SupabaseClient;
+  familyId: string;
+  membroAtipicoId: string | null;
+  desafio: string;
+}): Promise<{ entender: string; observar: string }> {
+  const { supabase, familyId, membroAtipicoId, desafio } = params;
+  try {
+    const skills = await loadActiveSkills(supabase);
+    const roteadas =
+      skills.length > 0 ? await routeSkillsAI(desafio, skills, { maxSkills: 2 }) : [];
+    const ctx = await buildContext(supabase, {
+      familyId,
+      membroAtipicoId,
+      skills: roteadas.map((r) => r.skill),
+      conversaId: null,
+    });
+    const contexto = buildContextBlock(ctx);
+    const system = `Você é a Kolo.
+
+${VOZ_E_LIMITES}
+
+# Tarefa
+Produza DUAS partes curtas, ESPECÍFICAS e personalizadas (use os dados reais do contexto):
+- entender: ${RECEITA_ENTENDER}
+- observar: ${RECEITA_OBSERVAR}
+Responda APENAS JSON válido: {"entender":"...markdown...","observar":"...markdown..."}`;
+    const client = getAnthropicClient();
+    const final = await client.messages.create({
+      model: MODELS.principal,
+      max_tokens: 1600,
+      system: [{ type: "text", text: system, cache_control: { type: "ephemeral" } }],
+      messages: [
+        { role: "user", content: `${contexto}\n\n<desafio>\n${desafio}\n</desafio>\n\nSó o JSON.` },
+      ],
+    });
+    const raw = textoDeResposta(final.content);
+    const m = raw.match(/\{[\s\S]*\}/);
+    const o = m ? (JSON.parse(m[0]) as Record<string, unknown>) : {};
+    return {
+      entender: typeof o.entender === "string" ? o.entender : "",
+      observar: typeof o.observar === "string" ? o.observar : "",
+    };
+  } catch (e) {
+    console.warn("[plano.entenderObservar]", e instanceof Error ? e.message : e);
+    return { entender: "", observar: "" };
+  }
+}
+
+/**
+ * Gera o plano com a MESMA qualidade dos botões: cada seção prática é o
+ * output_type correspondente (respondAsOutputType — o exato gerador do botão),
+ * rodando em PARALELO; entender/observar numa chamada focada; condicionais
+ * (história/rotina) só quando o tema pede. Mais caro que a chamada única, mas
+ * é a qualidade que a mãe pediu — e roda em 2º plano, então não prende ninguém.
+ */
+export async function gerarSecoesPlanoMultiCall(params: {
+  supabase: SupabaseClient;
+  familyId: string;
+  membroAtipicoId: string | null;
+  desafio: string;
+}): Promise<{ titulo: string; tema: string; secoes: PlanoSecao[] }> {
+  const { supabase, familyId, membroAtipicoId, desafio } = params;
+
+  const [{ data: otsRaw }, { data: membroRow }, conds] = await Promise.all([
+    supabase.from("output_types").select("key, label, prompt_template").eq("ativo", true),
+    membroAtipicoId
+      ? supabase.from("membros_atipicos").select("nome").eq("id", membroAtipicoId).maybeSingle()
+      : Promise.resolve({ data: null }),
+    decidirCondicionais(desafio),
+  ]);
+  const otByKey = new Map((otsRaw ?? []).map((o) => [o.key as string, o as OutputTypeRow]));
+
+  const tiposPraGerar = [
+    ...SECOES_SEMPRE,
+    ...SECOES_CONDICIONAIS_MC.filter((t) => conds[t as "historia_social" | "rotina"]),
+  ];
+
+  // Cada seção prática = o botão real, em paralelo. + entender/observar.
+  const [secoesOutput, framing] = await Promise.all([
+    Promise.all(
+      tiposPraGerar.map(async (tipo) => {
+        const ot = otByKey.get(TIPO_PARA_OUTPUT[tipo]);
+        if (!ot) return null;
+        try {
+          const r = await respondAsOutputType({
+            supabase,
+            familyId,
+            membroAtipicoId,
+            outputType: { key: ot.key, label: ot.label, prompt_template: ot.prompt_template },
+            pedido: desafio,
+          });
+          const txt = (r.texto ?? "").trim();
+          if (!txt) return null;
+          return { tipo, titulo: ot.label, conteudo_markdown: txt } as PlanoSecao;
+        } catch (e) {
+          console.warn("[plano.multicall]", tipo, e instanceof Error ? e.message : e);
+          return null;
+        }
+      }),
+    ),
+    gerarEntenderObservar({ supabase, familyId, membroAtipicoId, desafio }),
+  ]);
+
+  const porTipo = new Map<string, PlanoSecao>();
+  if (framing.entender.trim())
+    porTipo.set("entender", { tipo: "entender", titulo: "", conteudo_markdown: framing.entender });
+  if (framing.observar.trim())
+    porTipo.set("observar", { tipo: "observar", titulo: "", conteudo_markdown: framing.observar });
+  for (const s of secoesOutput) if (s) porTipo.set(s.tipo, s);
+
+  const secoes = ORDEM_SECOES.map((t) => porTipo.get(t)).filter(
+    (s): s is PlanoSecao => Boolean(s),
+  );
+  if (secoes.length === 0) {
+    throw new Error("Não consegui montar o plano agora. Tente de novo em instantes.");
+  }
+
+  const nome = (membroRow as { nome?: string } | null)?.nome
+    ? capitalizarNome((membroRow as { nome: string }).nome)
+    : null;
+  return {
+    titulo: nome ? `Plano — ${nome}` : "Plano",
+    tema: desafio.slice(0, 80),
+    secoes,
+  };
 }
 
 /**

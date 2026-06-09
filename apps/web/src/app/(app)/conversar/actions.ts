@@ -5,7 +5,7 @@ import { after } from "next/server";
 import { z } from "zod";
 import { createClient, createServiceRoleClient } from "@/lib/supabase/server";
 import { respond, respondAsOutputType } from "@/lib/ia/engine";
-import { gerarSecoesPlano } from "@/lib/ia/plano";
+import { gerarSecoesPlanoMultiCall } from "@/lib/ia/plano";
 import { extrairAtualizacoes, type PropostaAtualizacao } from "@/lib/ia/atualizar";
 import { idadeAnos, hojeLocalISO } from "@/lib/idade";
 import { requireActiveWrite } from "@/lib/auth/require-active-write";
@@ -332,7 +332,7 @@ export async function criarPlanoDaConversa(
     after(async () => {
       const admin = createServiceRoleClient();
       try {
-        const { titulo, tema, secoes } = await gerarSecoesPlano({
+        const { titulo, tema, secoes } = await gerarSecoesPlanoMultiCall({
           supabase: admin,
           familyId: family.id,
           membroAtipicoId,
