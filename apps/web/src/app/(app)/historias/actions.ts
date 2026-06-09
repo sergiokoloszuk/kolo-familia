@@ -10,6 +10,28 @@ import { gerarRoteiro, ilustrarPaginas, ilustrarComRetryPublico } from "@/lib/hi
 import { AVATAR_ESTILOS, type AvatarEstilo } from "@/lib/imagem/avatar-prompt";
 
 /**
+ * Busca os bytes do avatar com retry — o Storage às vezes dá pico de latência
+ * ou 5xx transitório, e sem retry isso derrubava a história inteira ("avatar
+ * fetch 544"). 3 tentativas com backoff; só falha de vez se persistir.
+ */
+async function fetchAvatarBytes(url: string): Promise<Buffer> {
+  let ultimoErro = "";
+  for (let tentativa = 1; tentativa <= 3; tentativa++) {
+    try {
+      const res = await fetch(url, { cache: "no-store" });
+      if (res.ok) return Buffer.from(await res.arrayBuffer());
+      ultimoErro = `status ${res.status}`;
+    } catch (e) {
+      ultimoErro = e instanceof Error ? e.message : String(e);
+    }
+    if (tentativa < 3) await new Promise((r) => setTimeout(r, 1200 * tentativa));
+  }
+  throw new Error(
+    `Não consegui carregar o avatar (${ultimoErro}). Tente criar de novo; se persistir, recrie o avatar em Configurações → Avatar.`,
+  );
+}
+
+/**
  * Compreensão ativa (Fatia 3.2): depois de criar a história, a Ayla faz UMA
  * perguntinha de leve pra enriquecer os Gostos da área mais vazia. `area` é a
  * chave em categorias_extras.preferencias; `opcoes` são sugestões de 1 toque.
@@ -144,9 +166,7 @@ export async function criarHistoria(
     after(async () => {
       const admin = createServiceRoleClient();
       try {
-        const avRes = await fetch(avatarUrl);
-        if (!avRes.ok) throw new Error(`avatar fetch ${avRes.status}`);
-        const avatarBytes = Buffer.from(await avRes.arrayBuffer());
+        const avatarBytes = await fetchAvatarBytes(avatarUrl);
 
         const roteiro = await gerarRoteiro(
           {
@@ -446,9 +466,12 @@ export async function regenerarPagina(
       .maybeSingle();
     if (!avatar?.imagem_url) return { ok: false, error: "Avatar não encontrado." };
 
-    const avRes = await fetch(avatar.imagem_url as string);
-    if (!avRes.ok) return { ok: false, error: "Falha ao carregar avatar." };
-    const avatarBytes = Buffer.from(await avRes.arrayBuffer());
+    let avatarBytes: Buffer;
+    try {
+      avatarBytes = await fetchAvatarBytes(avatar.imagem_url as string);
+    } catch (e) {
+      return { ok: false, error: e instanceof Error ? e.message : "Falha ao carregar avatar." };
+    }
 
     const estilo = (historia.estilo as AvatarEstilo) ?? (avatar.estilo as AvatarEstilo) ?? "cartoon";
     const estiloPrompt =
