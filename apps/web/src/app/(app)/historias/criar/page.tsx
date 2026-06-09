@@ -23,14 +23,14 @@ export default async function CriarHistoriaPage() {
     .eq("ativo", true)
     .order("created_at", { ascending: true });
 
-  const comAvatar = (membros ?? [])
-    .map((m) => {
-      const a = Array.isArray(m.avatares_membros_atipicos)
-        ? m.avatares_membros_atipicos[0]
-        : m.avatares_membros_atipicos;
-      return { id: m.id as string, nome: m.nome as string, temAvatar: Boolean(a?.imagem_url) };
-    })
-    .filter((m) => m.temAvatar);
+  const todas = (membros ?? []).map((m) => {
+    const a = Array.isArray(m.avatares_membros_atipicos)
+      ? m.avatares_membros_atipicos[0]
+      : m.avatares_membros_atipicos;
+    return { id: m.id as string, nome: m.nome as string, temAvatar: Boolean(a?.imagem_url) };
+  });
+  const comAvatar = todas.filter((m) => m.temAvatar);
+  const semAvatar = todas.filter((m) => !m.temAvatar);
 
   return (
     <div className="mx-auto flex w-full max-w-2xl flex-col gap-6">
@@ -59,23 +59,65 @@ export default async function CriarHistoriaPage() {
         </p>
       </header>
 
-      {comAvatar.length === 0 ? (
+      {todas.length === 0 ? (
         <div className="rounded-2xl border border-kolo-linha bg-secondary/40 p-6">
           <p className="font-heading text-lg text-foreground">
-            Falta o avatar da criança
+            Nenhuma criança cadastrada
           </p>
           <p className="mt-1 text-sm text-muted-foreground">
-            O avatar é o personagem das histórias. Crie um e volte aqui.
+            Adicione no Kolo Vivo e volte aqui pra criar a história.
           </p>
-          <Link
-            href="/configuracoes/avatar"
-            className={cn(buttonVariants({ variant: "outline" }), "mt-3")}
-          >
-            Criar avatar
-          </Link>
         </div>
       ) : (
-        <CriarHistoriaForm criancas={comAvatar} />
+        <div className="flex flex-col gap-6">
+          {comAvatar.length > 0 ? (
+            <CriarHistoriaForm criancas={comAvatar} />
+          ) : (
+            <div className="rounded-2xl border border-kolo-linha bg-secondary/40 p-6">
+              <p className="font-heading text-lg text-foreground">
+                Falta o avatar da criança
+              </p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                O avatar é o personagem das histórias. Crie um abaixo e volte aqui.
+              </p>
+            </div>
+          )}
+
+          {semAvatar.length > 0 && (
+            <div className="rounded-2xl border border-brand-purple/20 bg-kolo-lilas-bg-2/40 p-4">
+              <p className="font-heading text-base font-medium text-foreground">
+                {comAvatar.length > 0 ? "Criar avatar de outra criança" : "Comece criando o avatar"}
+              </p>
+              <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+                O avatar é o personagem das histórias — você escolhe o estilo e a
+                Kolo ilustra. É feito uma vez por criança.
+              </p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {semAvatar.map((m) => (
+                  <Link
+                    key={m.id}
+                    href={`/configuracoes/avatar/${m.id}`}
+                    className={cn(
+                      buttonVariants({
+                        variant: comAvatar.length > 0 ? "outline" : "default",
+                        size: "sm",
+                      }),
+                    )}
+                  >
+                    Criar avatar de {m.nome}
+                  </Link>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <Link
+            href="/configuracoes/avatar"
+            className="text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+          >
+            Ver / editar avatares de todas as crianças →
+          </Link>
+        </div>
       )}
     </div>
   );
