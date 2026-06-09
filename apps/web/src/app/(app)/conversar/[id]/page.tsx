@@ -5,6 +5,11 @@ import { loadFamilyContext } from "@/lib/auth/require-user";
 import { RespostaMarkdown, limparRespostaKolo } from "@/components/resposta-markdown";
 import { RespostaStreamer } from "./resposta-streamer";
 
+// "Montar plano completo" roda uma chamada longa do Sonnet (server action
+// criarPlanoDaConversa) nesta rota. Sem isso, a função do Vercel estourava o
+// timeout padrão e o plano "quebrava" no meio. 300s = mesmo teto da história.
+export const maxDuration = 300;
+
 /**
  * Conversa individual (P-EST-5 + P-EST-6):
  *   - Mensagens como LEITURA CORRIDA (sem Cards retangulares)

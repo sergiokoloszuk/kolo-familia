@@ -128,9 +128,10 @@ export async function gerarPlano(params: {
   const client = getAnthropicClient();
   const final = await client.messages.create({
     model: MODELS.principal,
-    // Espaço folgado: um plano completo (crenças 3+3 + várias brincadeiras +
-    // seções) passava de 3500 e o JSON vinha cortado → falha no parse.
-    max_tokens: 8000,
+    // 6000 = meio-termo: cabe um plano completo (3500 truncava) sem deixar a
+    // geração longa demais (8000 levava ~2min e estourava timeout). Se ainda
+    // cortar, salvarSecoes() resgata as seções completas.
+    max_tokens: 6000,
     system: [
       { type: "text", text: sistemaPlano(variante), cache_control: { type: "ephemeral" } },
     ],
