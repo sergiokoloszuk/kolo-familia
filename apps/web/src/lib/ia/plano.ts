@@ -262,25 +262,36 @@ const SECOES_SEMPRE = ["crencas", "diferente", "brincadeiras", "atividades", "fr
 // Estas só entram quando o tema pede (decidido por um classificador leve).
 const SECOES_CONDICIONAIS_MC = ["historia_social", "rotina"] as const;
 
-/** Decide (Haiku, barato) quais condicionais entram. Degradação: inclui história. */
-async function decidirCondicionais(
+/**
+ * Numa chamada Haiku barata: resume o ASSUNTO (pra título do plano) e decide
+ * quais seções condicionais entram. Degradação: sem título, inclui história.
+ */
+async function analisarDesafio(
   desafio: string,
-): Promise<{ historia_social: boolean; rotina: boolean }> {
+): Promise<{ titulo: string; historia_social: boolean; rotina: boolean }> {
   try {
     const client = getAnthropicClient();
-    const sys = `Dado o desafio de uma criança neurodivergente, decida quais seções fazem sentido. Responda APENAS JSON {"historia_social":true|false,"rotina":true|false}. historia_social = útil quando o tema envolve transições, regras, situações sociais, ou antecipar/ensaiar algo. rotina = útil quando envolve estruturar o dia a dia (sono, refeições, horários, sequências).`;
+    const sys = `Dado o desafio de uma criança neurodivergente, devolva APENAS JSON:
+{"titulo":"...","historia_social":true|false,"rotina":true|false}
+- titulo: 3 a 6 palavras resumindo o ASSUNTO do desafio, específico, SEM a palavra "plano". Ex.: "Brincar com outras crianças", "Sono e hora de dormir", "Transição da escola pra casa".
+- historia_social: true quando o tema envolve transições, regras, situações sociais, ou antecipar/ensaiar algo.
+- rotina: true quando envolve estruturar o dia a dia (sono, refeições, horários, sequências).`;
     const final = await client.messages.create({
       model: MODELS.leve,
-      max_tokens: 40,
+      max_tokens: 80,
       system: [{ type: "text", text: sys }],
       messages: [{ role: "user", content: desafio.slice(0, 800) }],
     });
     const raw = textoDeResposta(final.content);
     const m = raw.match(/\{[\s\S]*\}/);
     const o = m ? (JSON.parse(m[0]) as Record<string, unknown>) : {};
-    return { historia_social: Boolean(o.historia_social), rotina: Boolean(o.rotina) };
+    return {
+      titulo: typeof o.titulo === "string" ? o.titulo.trim() : "",
+      historia_social: Boolean(o.historia_social),
+      rotina: Boolean(o.rotina),
+    };
   } catch {
-    return { historia_social: true, rotina: false };
+    return { titulo: "", historia_social: true, rotina: false };
   }
 }
 
@@ -349,13 +360,14 @@ export async function gerarSecoesPlanoMultiCall(params: {
 }): Promise<{ titulo: string; tema: string; secoes: PlanoSecao[] }> {
   const { supabase, familyId, membroAtipicoId, desafio } = params;
 
-  const [{ data: otsRaw }, { data: membroRow }, conds] = await Promise.all([
+  const [{ data: otsRaw }, { data: membroRow }, analise] = await Promise.all([
     supabase.from("output_types").select("key, label, prompt_template").eq("ativo", true),
     membroAtipicoId
       ? supabase.from("membros_atipicos").select("nome").eq("id", membroAtipicoId).maybeSingle()
       : Promise.resolve({ data: null }),
-    decidirCondicionais(desafio),
+    analisarDesafio(desafio),
   ]);
+  const conds = { historia_social: analise.historia_social, rotina: analise.rotina };
   const otByKey = new Map((otsRaw ?? []).map((o) => [o.key as string, o as OutputTypeRow]));
 
   const tiposPraGerar = [
@@ -406,9 +418,10 @@ export async function gerarSecoesPlanoMultiCall(params: {
   const nome = (membroRow as { nome?: string } | null)?.nome
     ? capitalizarNome((membroRow as { nome: string }).nome)
     : null;
+  const assunto = analise.titulo;
   return {
-    titulo: nome ? `Plano — ${nome}` : "Plano",
-    tema: desafio.slice(0, 80),
+    titulo: assunto || (nome ? `Plano — ${nome}` : "Plano"),
+    tema: assunto || desafio.slice(0, 80),
     secoes,
   };
 }

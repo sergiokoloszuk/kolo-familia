@@ -1,12 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import Link from "next/link";
-import { ChevronLeft, Printer } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { ChevronLeft, Printer, Sparkles, Trash2, RefreshCw } from "lucide-react";
 import { RespostaMarkdown } from "@/components/resposta-markdown";
 import { capitalizarNome } from "@/lib/nome";
 import { cn } from "@/lib/utils";
 import { PlanoResultado } from "./plano-resultado";
+import { ajustarPlano, deletarPlano } from "../actions";
 
 export type PlanoSecaoView = {
   tipo: string;
@@ -100,6 +102,141 @@ export function PlanoView({
       </div>
 
       <PlanoResultado planoId={planoId} resultado={resultado} nota={resultadoNota} />
+
+      <PlanoGestao planoId={planoId} />
+    </div>
+  );
+}
+
+/** Pedir um ajuste (regenera) + excluir o plano. */
+function PlanoGestao({ planoId }: { planoId: string }) {
+  const router = useRouter();
+  const [aberto, setAberto] = useState(false);
+  const [instrucao, setInstrucao] = useState("");
+  const [erro, setErro] = useState<string | null>(null);
+  const [ajustando, startAjuste] = useTransition();
+  const [excluindo, startExcluir] = useTransition();
+  const [confirmaExcluir, setConfirmaExcluir] = useState(false);
+
+  function pedirAjuste() {
+    const t = instrucao.trim();
+    if (t.length < 3 || ajustando) return;
+    setErro(null);
+    startAjuste(async () => {
+      const r = await ajustarPlano({ planoId, instrucao: t });
+      if (!r.ok) {
+        setErro(r.error);
+        return;
+      }
+      // Volta pro estado "montando…"; a própria página re-renderiza no poller.
+      router.refresh();
+    });
+  }
+
+  function excluir() {
+    if (excluindo) return;
+    setErro(null);
+    startExcluir(async () => {
+      const r = await deletarPlano({ planoId });
+      if (!r.ok) {
+        setErro(r.error);
+        return;
+      }
+      router.push("/planos");
+    });
+  }
+
+  return (
+    <div className="flex flex-col gap-4 border-t border-foreground/[0.06] pt-6 print:hidden">
+      {erro && <p className="text-sm text-destructive">{erro}</p>}
+
+      {/* Pedir um ajuste */}
+      <div className="rounded-2xl border border-brand-purple/15 bg-kolo-lilas-bg-2/40 p-4">
+        {!aberto ? (
+          <button
+            type="button"
+            onClick={() => setAberto(true)}
+            className="inline-flex items-center gap-1.5 text-sm font-semibold text-brand-purple hover:text-brand-purple-dark"
+          >
+            <Sparkles className="size-4" aria-hidden /> Pedir um ajuste neste plano
+          </button>
+        ) : (
+          <div className="flex flex-col gap-3">
+            <p className="font-heading text-base font-medium text-foreground">
+              O que você quer ajustar?
+            </p>
+            <textarea
+              rows={2}
+              value={instrucao}
+              onChange={(e) => setInstrucao(e.target.value)}
+              placeholder="Ex.: deixa mais simples · foca em ideias pra fora de casa · mais frases prontas · tira a parte de rotina…"
+              className="w-full resize-none rounded-xl border border-foreground/[0.08] bg-white/70 px-3.5 py-2.5 text-sm leading-relaxed text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-1 focus:ring-foreground/10"
+            />
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={pedirAjuste}
+                disabled={ajustando || instrucao.trim().length < 3}
+                className="inline-flex items-center gap-1.5 rounded-full bg-brand-purple px-5 py-2.5 text-sm font-semibold text-white hover:bg-brand-purple-dark disabled:opacity-50"
+              >
+                {ajustando ? (
+                  <>
+                    <RefreshCw className="size-4 animate-spin" aria-hidden /> Refazendo…
+                  </>
+                ) : (
+                  "Refazer com o ajuste"
+                )}
+              </button>
+              <button
+                type="button"
+                onClick={() => setAberto(false)}
+                disabled={ajustando}
+                className="text-sm text-muted-foreground hover:text-foreground"
+              >
+                Cancelar
+              </button>
+            </div>
+            <p className="text-xs leading-relaxed text-muted-foreground">
+              Refaço o plano inteiro levando seu ajuste em conta — leva ~1 min e a tela
+              atualiza sozinha.
+            </p>
+          </div>
+        )}
+      </div>
+
+      {/* Excluir */}
+      <div className="flex items-center justify-end">
+        {confirmaExcluir ? (
+          <span className="inline-flex items-center gap-3 text-sm">
+            <span className="text-muted-foreground">Excluir este plano?</span>
+            <button
+              type="button"
+              onClick={excluir}
+              disabled={excluindo}
+              className="inline-flex items-center gap-1.5 font-semibold text-destructive hover:underline disabled:opacity-50"
+            >
+              {excluindo ? <RefreshCw className="size-3.5 animate-spin" aria-hidden /> : null}
+              Sim, excluir
+            </button>
+            <button
+              type="button"
+              onClick={() => setConfirmaExcluir(false)}
+              disabled={excluindo}
+              className="text-muted-foreground hover:text-foreground"
+            >
+              Não
+            </button>
+          </span>
+        ) : (
+          <button
+            type="button"
+            onClick={() => setConfirmaExcluir(true)}
+            className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-destructive"
+          >
+            <Trash2 className="size-4" aria-hidden /> Excluir plano
+          </button>
+        )}
+      </div>
     </div>
   );
 }
