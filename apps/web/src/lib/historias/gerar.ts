@@ -32,7 +32,7 @@ Devolva APENAS um JSON, sem texto antes ou depois:
     {
       "texto": "1 a 2 frases narrativas curtas (livro infantil)",
       "fala": "uma fala curta da criança, ou null",
-      "cena": "descrição VISUAL da cena para o ilustrador: o que acontece, o cenário e os objetos. NÃO descreva a aparência da criança (já temos o avatar dela). Uma ação clara por página. Em português."
+      "cena": "descrição VISUAL rica pro ilustrador: a AÇÃO e a POSE do personagem, o ENQUADRAMENTO/ângulo (varie entre as páginas: plano aberto, mais perto, de cima, de lado) e o cenário com objetos, profundidade e luz. NÃO descreva a aparência da criança (já temos o avatar dela). Em português."
     }
   ]
 }
@@ -41,7 +41,8 @@ Regras:
 - Exatamente o número de páginas pedido.
 - Histórias com começo, meio e um fecho tranquilo/positivo.
 - Use os interesses da criança quando fizer sentido (deixa mais envolvente).
-- 'cena' precisa ser concreta e ilustrável, coerente de uma página pra outra.`;
+- 'cena' precisa ser concreta e ilustrável, coerente de uma página pra outra.
+- VARIE a pose do personagem e o enquadramento de uma página pra outra — nunca a mesma composição repetida. Cada cena num momento/ângulo diferente, com ambiente específico e rico em detalhes.`;
 
 export async function gerarRoteiro(
   params: {
@@ -143,8 +144,19 @@ export async function ilustrarPaginas(
   return resultados;
 }
 
+/** Qualidade das ilustrações de história (rica em detalhe). Ajustável por env. */
+const HISTORIA_IMAGE_QUALITY = process.env.OPENAI_IMAGE_QUALITY_HISTORIA || "high";
+
 function montarPromptIlustracao(estiloPrompt: string, cena: string): string {
-  return `Mantenha EXATAMENTE o mesmo personagem da imagem de referência: mesmo rosto, mesmo cabelo, mesmo tom de pele, mesmos óculos (se houver) e a MESMA roupa. Mesmo estilo de ilustração (${estiloPrompt}). Cena: ${cena}. Livro infantil acolhedor, personagem de corpo inteiro quando fizer sentido na cena. SEM nenhum texto, letra ou número na imagem.`;
+  return `Ilustração de livro infantil, acolhedora e RICA EM DETALHES, no estilo ${estiloPrompt}.
+
+Use a imagem de referência APENAS para a IDENTIDADE do personagem: mesmo rosto, mesmo cabelo, mesmo tom de pele, mesmos óculos (se houver) e a MESMA roupa. NÃO copie a pose nem o enquadramento da referência.
+
+Redesenhe o personagem numa NOVA pose e ação, integrado e interagindo com a cena. Varie o enquadramento e o ângulo de câmera (às vezes plano aberto mostrando o ambiente, às vezes mais próximo), de corpo inteiro quando fizer sentido. Cenário vivo e detalhado: lugar específico, objetos, profundidade, luz suave e cores agradáveis.
+
+Cena: ${cena}
+
+SEM nenhum texto, letra ou número na imagem.`;
 }
 
 async function ilustrarComRetry(
@@ -160,6 +172,7 @@ async function ilustrarComRetry(
         referencia,
         familyAccountId,
         tipo: "historia_social",
+        quality: HISTORIA_IMAGE_QUALITY,
         feature: "historias_imagem",
       });
       return { url: r.url };

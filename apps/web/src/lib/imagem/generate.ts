@@ -110,6 +110,8 @@ export async function gerarImagemComReferencia(
     familyAccountId: string;
     tipo: "avatar" | "cena" | "historia_social";
     size?: GerarImagemParams["size"];
+    /** Sobrescreve a qualidade (ex.: "high" pras histórias). Default: env. */
+    quality?: string;
     feature?: string;
   },
 ): Promise<GerarImagemResult> {
@@ -118,12 +120,13 @@ export async function gerarImagemComReferencia(
     throw new Error("OPENAI_API_KEY não configurada.");
   }
 
+  const quality = params.quality ?? IMAGE_QUALITY;
   const fd = new FormData();
   fd.append("model", IMAGE_MODEL);
   fd.append("image", new Blob([new Uint8Array(params.referencia)], { type: "image/png" }), "ref.png");
   fd.append("prompt", params.prompt);
   fd.append("size", params.size ?? "1024x1024");
-  fd.append("quality", IMAGE_QUALITY);
+  fd.append("quality", quality);
 
   const res = await fetch(`${OPENAI_BASE}/images/edits`, {
     method: "POST",
@@ -152,7 +155,7 @@ export async function gerarImagemComReferencia(
     model: IMAGE_MODEL,
     feature: params.feature ?? `imagem_${params.tipo}`,
     quantidade: 1,
-    meta: { size: params.size ?? "1024x1024", quality: IMAGE_QUALITY, tipo: params.tipo, com_referencia: true },
+    meta: { size: params.size ?? "1024x1024", quality, tipo: params.tipo, com_referencia: true },
   });
 
   return { url, storage_path };
