@@ -13,15 +13,16 @@ import { capitalizarNome } from "@/lib/nome";
 
 export type PlanoSecao = { tipo: string; titulo: string; conteudo_markdown: string };
 
-/** Tipos de seção que a tela sabe renderizar/filtrar. */
+/** Tipos de seção que a tela sabe renderizar/filtrar (ordem narrativa). */
 export const PLANO_TIPOS = [
   "entender",
   "crencas",
+  "diferente",
+  "rotina",
   "brincadeiras",
   "atividades",
-  "diferente",
+  "historia_social",
   "frases",
-  "rotina",
   "observar",
 ] as const;
 
@@ -39,18 +40,28 @@ const SISTEMA_PADRAO = `Você é a Kolo montando um PLANO completo e personaliza
 ${VOZ_E_LIMITES}
 
 # Como montar o plano
-- Organize em SEÇÕES. Escolha SÓ as relevantes ao desafio — não force todas.
-- Tipos possíveis (campo "tipo"): "entender", "crencas", "brincadeiras", "atividades", "diferente", "frases", "rotina", "observar".
-- entender: 1-2 parágrafos acolhedores + a hipótese central (possibilidade, NUNCA causa afirmada).
-- crencas: até 3 crenças limitantes sobre a CRIANÇA + até 3 sobre o RESPONSÁVEL — as do responsável SEMPRE como hipótese gentil pra refletir, jamais julgamento ("pode ser que bata um receio de…"). Depois, como ajustar o olhar, com argumentos acolhedores.
-- brincadeiras: VÁRIAS (3 ou mais), curtas, ancoradas nos interesses da criança, com materiais e duração.
-- atividades / diferente / frases / rotina: conforme fizer sentido pro desafio.
-- observar: o que reparar nos próximos dias pra entender melhor.
-- Use o que você já sabe da criança (contexto abaixo). Voz de amiga sábia, NÃO relatório. Markdown leve dentro de cada seção (listas, *itálico* na frase pronta).
+O plano é UM documento coeso, lido de cima a baixo. Cada seção tem um papel ÚNICO: uma ideia mora em UMA seção só — NUNCA repita a mesma sugestão ou frase em duas seções.
+
+## Seções do NÚCLEO — SEMPRE presentes, nesta ordem:
+- entender: 1-2 parágrafos que acolhem + 1 hipótese central do que pode estar por trás (possibilidade, NUNCA causa afirmada). Aqui você NÃO dá soluções.
+- diferente: os princípios de como agir — postura, ambiente, abordagem (o "jeito" de lidar). NÃO liste brincadeiras/atividades concretas aqui (elas têm seção própria).
+- frases: 2-4 falas prontas pro adulto usar nos momentos-chave, em *itálico*. Frases prontas aparecem SÓ aqui.
+- observar: 1-2 coisas pra reparar nos próximos dias pra entender melhor.
+
+## Seções EXTRAS — inclua SÓ quando forem relevantes ao desafio:
+- crencas: até 3 crenças limitantes da CRIANÇA + até 3 da RESPONSÁVEL (as do responsável SEMPRE como hipótese gentil pra refletir, jamais julgamento) + como reenquadrar, acolhedor. NÃO repita a hipótese da seção "entender" — aprofunde.
+- rotina: como ancorar no dia a dia — estrutura no tempo (quando/como na rotina). NÃO repita os princípios de "diferente".
+- brincadeiras: VÁRIAS (3+) brincadeiras LÚDICAS/livres, ancoradas nos interesses da criança, com materiais e duração.
+- atividades: atividades mais DIRIGIDAS/estruturadas, com objetivo (ex.: treinar uma habilidade) — diferentes de brincadeira livre.
+- historia_social: UMA história social pronta sobre o tema (só quando combinar: transições, regras, situações sociais).
+
+Ordem final quando houver extras: entender → crencas → diferente → rotina → brincadeiras → atividades → historia_social → frases → observar.
+
+Use o que você já sabe da criança (contexto abaixo). Voz de amiga sábia, NÃO relatório. Markdown leve dentro de cada seção.
 ${SISTEMA_APRENDIZADO}
 
 ${SAIDA}
-"titulo" curto (ex.: "Plano de foco — Maria").`;
+"titulo" curto (ex.: "Plano de foco — Maria"). Use EXATAMENTE estes valores no campo "tipo": entender, crencas, diferente, rotina, brincadeiras, atividades, historia_social, frases, observar.`;
 
 const SISTEMA_FIM_DE_SEMANA = `Você é a Kolo montando um ROTEIRO LEVE de fim de semana pro adulto responsável por uma criança neurodivergente.
 

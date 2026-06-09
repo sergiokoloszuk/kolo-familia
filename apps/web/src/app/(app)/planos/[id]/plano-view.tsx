@@ -17,11 +17,12 @@ export type PlanoSecaoView = {
 const LABEL: Record<string, string> = {
   entender: "Entendendo",
   crencas: "Crenças",
+  diferente: "O que fazer diferente",
+  rotina: "Rotina",
   brincadeiras: "Brincadeiras",
   atividades: "Atividades",
-  diferente: "O que fazer diferente",
+  historia_social: "Histórias sociais",
   frases: "Frases prontas",
-  rotina: "Rotina",
   observar: "O que observar",
 };
 
