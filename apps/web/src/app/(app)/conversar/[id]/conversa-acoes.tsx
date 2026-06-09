@@ -52,12 +52,19 @@ export function ConversaAcoes({
     setErro(null);
     setResumoOk(null);
     startPlano(async () => {
-      const r = await criarPlanoDaConversa({ conversaId });
-      if (!r.ok) {
-        setErro(r.error);
-        return;
+      try {
+        const r = await criarPlanoDaConversa({ conversaId });
+        if (!r.ok) {
+          setErro(r.error);
+          return;
+        }
+        router.push(`/planos/${r.planoId}`);
+      } catch {
+        // Rede/timeout: não derruba a página inteira — mostra aviso aqui.
+        setErro(
+          "A geração demorou mais que o esperado. Tente de novo em instantes — costuma funcionar.",
+        );
       }
-      router.push(`/planos/${r.planoId}`);
     });
   }
 
