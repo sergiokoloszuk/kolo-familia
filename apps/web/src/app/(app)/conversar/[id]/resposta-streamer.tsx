@@ -97,10 +97,15 @@ export function RespostaStreamer({
     setErro(null);
     setTexto("");
     setPendingUser(t);
+    // Entra em "Pensando..." JÁ — assim o bloco de ações da resposta anterior
+    // não pisca no intervalo entre salvar a mensagem e começar o streaming.
+    setParcial("");
+    setStreaming(true);
     const r = await adicionarMensagemUsuario({ conversaId, texto: t });
     if (!r.ok) {
       setErro(r.error);
       setPendingUser(null);
+      setStreaming(false);
       return;
     }
     void stream();
