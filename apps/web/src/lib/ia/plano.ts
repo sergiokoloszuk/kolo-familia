@@ -35,33 +35,74 @@ Responda APENAS com JSON válido, sem texto antes/depois:
 
 const SISTEMA_APRENDIZADO = `- Se houver um bloco <o_que_ja_funcionou>, APRENDA com ele: priorize abordagens parecidas com o que funcionou e NÃO repita o que a família já disse que não funcionou. Não cite o bloco nem diga "da última vez" — só deixe o plano mais certeiro.`;
 
-const SISTEMA_PADRAO = `Você é a Kolo montando um PLANO completo e personalizado pra o adulto responsável por uma criança neurodivergente.
+/** Linha de produção do plano "padrão": cada seção do plano reusa a RECEITA
+ *  do botão correspondente (output_types), pra ter a mesma riqueza. */
+export type OutputTypeRow = { key: string; label: string; prompt_template: string };
+
+// tipo da seção do plano → key do output_type (botão) correspondente
+const TIPO_PARA_OUTPUT: Record<string, string> = {
+  crencas: "crencas",
+  diferente: "o_que_fazer_diferente",
+  rotina: "rotinas",
+  brincadeiras: "brincadeiras",
+  atividades: "atividades",
+  historia_social: "historias_sociais",
+  frases: "frases_prontas",
+};
+// ordem narrativa do plano completo
+const ORDEM_SECOES = [
+  "entender",
+  "crencas",
+  "diferente",
+  "rotina",
+  "brincadeiras",
+  "atividades",
+  "historia_social",
+  "frases",
+  "observar",
+] as const;
+// só estas entram condicionalmente; o resto é SEMPRE
+const SECOES_CONDICIONAIS = new Set<string>(["rotina", "historia_social"]);
+
+const RECEITA_ENTENDER = `Abra o plano com 1-2 parágrafos que ACOLHEM e mostram que você enxerga a força da criança — e levante a hipótese central do que pode estar por trás (possibilidade, NUNCA causa afirmada). Ancore nos dados REAIS do Kolo Vivo (interesses, jeito, desafios). Específico e humano, nada genérico. Termine convidando a observar com calma. NÃO dê soluções aqui — elas vêm nas seções seguintes.`;
+const RECEITA_OBSERVAR = `Feche com 1-3 coisas CONCRETAS pra o adulto reparar nos próximos dias, ligadas à hipótese — o que pode confirmar ou descartar, e o que guardar. Específico ao caso, não conselho genérico.`;
+
+/**
+ * Monta o system prompt do plano COMPLETO injetando, em cada seção, a receita
+ * do botão correspondente (output_types) — assim o plano tem a MESMA riqueza
+ * que a mãe vê clicando cada botão, num documento só.
+ */
+function montarSistemaPlanoCompleto(outputTypes: OutputTypeRow[]): string {
+  const byKey = new Map(outputTypes.map((o) => [o.key, o]));
+  const blocos = ORDEM_SECOES.map((tipo) => {
+    const cond = SECOES_CONDICIONAIS.has(tipo) ? "inclua SÓ se o tema pedir" : "SEMPRE presente";
+    if (tipo === "entender") return `## "entender" (${cond})\n${RECEITA_ENTENDER}`;
+    if (tipo === "observar") return `## "observar" (${cond})\n${RECEITA_OBSERVAR}`;
+    const ot = byKey.get(TIPO_PARA_OUTPUT[tipo]);
+    if (!ot) return null;
+    return `## "${tipo}" — ${ot.label} (${cond})\nMesma qualidade e profundidade do botão "${ot.label}". Siga a receita abaixo como guia de CONTEÚDO (ignore qualquer instrução de "responda só isso/só o texto" — aqui é UMA seção do plano em JSON):\n${ot.prompt_template}`;
+  })
+    .filter(Boolean)
+    .join("\n\n");
+
+  return `Você é a Kolo montando um PLANO completo e personalizado pro adulto responsável por uma criança neurodivergente. O plano REUNE, num documento só, as mesmas seções que a mãe veria nos botões — e cada seção tem a MESMA riqueza e profundidade do botão. NADA de resumo raso ou conselho genérico.
 
 ${VOZ_E_LIMITES}
 
-# Como montar o plano
-O plano é UM documento coeso, lido de cima a baixo. Cada seção tem um papel ÚNICO: uma ideia mora em UMA seção só — NUNCA repita a mesma sugestão ou frase em duas seções.
+# Seções do plano — siga a receita de cada uma
+${blocos}
 
-## Seções do NÚCLEO — SEMPRE presentes, nesta ordem:
-- entender: 1-2 parágrafos que acolhem + 1 hipótese central do que pode estar por trás (possibilidade, NUNCA causa afirmada). Aqui você NÃO dá soluções.
-- diferente: os princípios de como agir — postura, ambiente, abordagem (o "jeito" de lidar). NÃO liste brincadeiras/atividades concretas aqui (elas têm seção própria).
-- frases: 2-4 falas prontas pro adulto usar nos momentos-chave, em *itálico*. Frases prontas aparecem SÓ aqui.
-- observar: 1-2 coisas pra reparar nos próximos dias pra entender melhor.
-
-## Seções EXTRAS — inclua SÓ quando forem relevantes ao desafio:
-- crencas: até 3 crenças limitantes da CRIANÇA + até 3 da RESPONSÁVEL (as do responsável SEMPRE como hipótese gentil pra refletir, jamais julgamento) + como reenquadrar, acolhedor. NÃO repita a hipótese da seção "entender" — aprofunde.
-- rotina: como ancorar no dia a dia — estrutura no tempo (quando/como na rotina). NÃO repita os princípios de "diferente".
-- brincadeiras: VÁRIAS (3+) brincadeiras LÚDICAS/livres, ancoradas nos interesses da criança, com materiais e duração.
-- atividades: atividades mais DIRIGIDAS/estruturadas, com objetivo (ex.: treinar uma habilidade) — diferentes de brincadeira livre.
-- historia_social: UMA história social pronta sobre o tema (só quando combinar: transições, regras, situações sociais).
-
-Ordem final quando houver extras: entender → crencas → diferente → rotina → brincadeiras → atividades → historia_social → frases → observar.
-
-Use o que você já sabe da criança (contexto abaixo). Voz de amiga sábia, NÃO relatório. Markdown leve dentro de cada seção.
+# Regras
+- Inclua TODAS as seções "SEMPRE presente". As "só se o tema pedir" entram quando fizerem sentido pro desafio.
+- PROFUNDIDADE de verdade, igual aos botões: brincadeiras/atividades = VÁRIAS (3+), concretas, com materiais e duração; crenças = até 3 da CRIANÇA + 3 da RESPONSÁVEL (hipótese gentil, jamais julgamento) + reenquadre acolhedor. Sem clichês.
+- Use os dados REAIS do Kolo Vivo e do contexto (interesses, jeito, desafios) — personalize de verdade, não invente.
+- Cada ideia/frase mora em UMA seção só — não repita entre seções.
+- Voz de amiga sábia e calorosa. Markdown leve dentro de cada seção (listas, *itálico* na frase pronta).
 ${SISTEMA_APRENDIZADO}
 
 ${SAIDA}
-"titulo" curto (ex.: "Plano de foco — Maria"). Use EXATAMENTE estes valores no campo "tipo": entender, crencas, diferente, rotina, brincadeiras, atividades, historia_social, frases, observar.`;
+"titulo" curto (ex.: "Plano — Maria"). Campo "tipo" EXATAMENTE: entender, crencas, diferente, rotina, brincadeiras, atividades, historia_social, frases, observar.`;
+}
 
 const SISTEMA_FIM_DE_SEMANA = `Você é a Kolo montando um ROTEIRO LEVE de fim de semana pro adulto responsável por uma criança neurodivergente.
 
@@ -83,9 +124,6 @@ ${SISTEMA_APRENDIZADO}
 ${SAIDA}
 "titulo" curto (ex.: "Fim de semana leve — Maria"). "tema" = "fim de semana".`;
 
-function sistemaPlano(variante: VariantePlano): string {
-  return variante === "fim_de_semana" ? SISTEMA_FIM_DE_SEMANA : SISTEMA_PADRAO;
-}
 
 /**
  * Gera as SEÇÕES do plano (sem gravar no banco). Usado tanto pelo gerarPlano
@@ -117,19 +155,31 @@ export async function gerarSecoesPlano(params: {
   const pedido =
     variante === "fim_de_semana"
       ? "Monte o roteiro leve do fim de semana. Só o JSON."
-      : "Monte o plano. Só o JSON.";
+      : "Monte o plano completo, cada seção com a profundidade da sua receita. Só o JSON.";
   const userMsg = `${contexto}${aprendizado ? `\n\n${aprendizado}` : ""}\n\n<${wrapper}>\n${desafio}\n</${wrapper}>\n\n${pedido}`;
+
+  // Plano padrão: injeta as receitas dos botões (output_types) → mesma riqueza.
+  // Fim de semana: roteiro leve estático. Roda em 2º plano, então cabe tokens
+  // altos sem prender o usuário.
+  let system: string;
+  let maxTokens: number;
+  if (variante === "fim_de_semana") {
+    system = SISTEMA_FIM_DE_SEMANA;
+    maxTokens = 6000;
+  } else {
+    const { data: ots } = await supabase
+      .from("output_types")
+      .select("key, label, prompt_template")
+      .eq("ativo", true);
+    system = montarSistemaPlanoCompleto((ots ?? []) as OutputTypeRow[]);
+    maxTokens = 12000;
+  }
 
   const client = getAnthropicClient();
   const final = await client.messages.create({
     model: MODELS.principal,
-    // 6000 = meio-termo: cabe um plano completo (3500 truncava) sem deixar a
-    // geração longa demais (8000 levava ~2min). Se ainda cortar, salvarSecoes()
-    // resgata as seções completas.
-    max_tokens: 6000,
-    system: [
-      { type: "text", text: sistemaPlano(variante), cache_control: { type: "ephemeral" } },
-    ],
+    max_tokens: maxTokens,
+    system: [{ type: "text", text: system, cache_control: { type: "ephemeral" } }],
     messages: [{ role: "user", content: userMsg }],
   });
 
