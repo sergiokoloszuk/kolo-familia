@@ -1,10 +1,11 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { after } from "next/server";
 import { z } from "zod";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createServiceRoleClient } from "@/lib/supabase/server";
 import { respond, respondAsOutputType } from "@/lib/ia/engine";
-import { gerarPlano } from "@/lib/ia/plano";
+import { gerarSecoesPlano } from "@/lib/ia/plano";
 import { extrairAtualizacoes, type PropostaAtualizacao } from "@/lib/ia/atualizar";
 import { idadeAnos, hojeLocalISO } from "@/lib/idade";
 import { requireActiveWrite } from "@/lib/auth/require-active-write";
@@ -305,16 +306,60 @@ export async function criarPlanoDaConversa(
         .join("\n")
         .slice(0, 1800) || "Sobre o tema desta conversa.";
 
-    const plano = await gerarPlano({
-      supabase,
-      familyId: family.id,
-      membroAtipicoId: conversa.membro_atipico_id as string | null,
-      desafio,
-      conversaId,
+    const membroAtipicoId = conversa.membro_atipico_id as string | null;
+
+    // Cria o plano VAZIO na hora (secoes=[]) e devolve o id em <1s. A geração
+    // pesada (Sonnet) roda em segundo plano (after) e preenche via UPDATE; a
+    // tela /planos/[id] mostra "montando…" e atualiza sozinha quando fica
+    // pronto. Sem espera travada no clique, sem risco de timeout no usuário.
+    const { data: row, error: insErr } = await supabase
+      .from("planos")
+      .insert({
+        family_account_id: family.id,
+        membro_atipico_id: membroAtipicoId,
+        conversa_id: conversaId,
+        titulo: "Montando seu plano…",
+        secoes: [],
+        origem: "estrategias",
+      })
+      .select("id")
+      .single();
+    if (insErr || !row) {
+      return { ok: false, error: `Não consegui iniciar o plano: ${insErr?.message}` };
+    }
+    const planoId = row.id as string;
+
+    after(async () => {
+      const admin = createServiceRoleClient();
+      try {
+        const { titulo, tema, secoes } = await gerarSecoesPlano({
+          supabase: admin,
+          familyId: family.id,
+          membroAtipicoId,
+          desafio,
+        });
+        await admin.from("planos").update({ titulo, tema, secoes }).eq("id", planoId);
+      } catch (e) {
+        console.error("[plano.after]", e);
+        await admin
+          .from("planos")
+          .update({
+            titulo: "Não consegui montar o plano",
+            secoes: [
+              {
+                tipo: "__erro__",
+                titulo: "",
+                conteudo_markdown:
+                  "Tive um problema ao montar este plano. Volte às Estratégias e tente gerar de novo em instantes.",
+              },
+            ],
+          })
+          .eq("id", planoId);
+      }
     });
 
     revalidatePath("/planos");
-    return { ok: true, planoId: plano.id };
+    return { ok: true, planoId };
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : "Erro inesperado" };
   }

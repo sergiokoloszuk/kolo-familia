@@ -87,24 +87,19 @@ function sistemaPlano(variante: VariantePlano): string {
   return variante === "fim_de_semana" ? SISTEMA_FIM_DE_SEMANA : SISTEMA_PADRAO;
 }
 
-export async function gerarPlano(params: {
+/**
+ * Gera as SEÇÕES do plano (sem gravar no banco). Usado tanto pelo gerarPlano
+ * síncrono (WhatsApp/fim de semana) quanto pela geração em segundo plano da
+ * conversa (que insere um plano vazio e depois preenche via UPDATE).
+ */
+export async function gerarSecoesPlano(params: {
   supabase: SupabaseClient;
   familyId: string;
   membroAtipicoId: string | null;
   desafio: string;
-  conversaId?: string | null;
   variante?: VariantePlano;
-  origem?: string;
-}): Promise<{ id: string; titulo: string; secoes: PlanoSecao[] }> {
-  const {
-    supabase,
-    familyId,
-    membroAtipicoId,
-    desafio,
-    conversaId,
-    variante = "padrao",
-    origem = "estrategias",
-  } = params;
+}): Promise<{ titulo: string; tema: string; secoes: PlanoSecao[] }> {
+  const { supabase, familyId, membroAtipicoId, desafio, variante = "padrao" } = params;
 
   const skills = await loadActiveSkills(supabase);
   const roteadas =
@@ -129,8 +124,8 @@ export async function gerarPlano(params: {
   const final = await client.messages.create({
     model: MODELS.principal,
     // 6000 = meio-termo: cabe um plano completo (3500 truncava) sem deixar a
-    // geração longa demais (8000 levava ~2min e estourava timeout). Se ainda
-    // cortar, salvarSecoes() resgata as seções completas.
+    // geração longa demais (8000 levava ~2min). Se ainda cortar, salvarSecoes()
+    // resgata as seções completas.
     max_tokens: 6000,
     system: [
       { type: "text", text: sistemaPlano(variante), cache_control: { type: "ephemeral" } },
@@ -155,6 +150,36 @@ export async function gerarPlano(params: {
   const titulo = parsed.titulo?.trim() || (nome ? `Plano — ${nome}` : "Plano");
   const tema = parsed.tema?.trim() || desafio.slice(0, 80);
 
+  return { titulo, tema, secoes: parsed.secoes };
+}
+
+export async function gerarPlano(params: {
+  supabase: SupabaseClient;
+  familyId: string;
+  membroAtipicoId: string | null;
+  desafio: string;
+  conversaId?: string | null;
+  variante?: VariantePlano;
+  origem?: string;
+}): Promise<{ id: string; titulo: string; secoes: PlanoSecao[] }> {
+  const {
+    supabase,
+    familyId,
+    membroAtipicoId,
+    desafio,
+    conversaId,
+    variante = "padrao",
+    origem = "estrategias",
+  } = params;
+
+  const { titulo, tema, secoes } = await gerarSecoesPlano({
+    supabase,
+    familyId,
+    membroAtipicoId,
+    desafio,
+    variante,
+  });
+
   const { data, error } = await supabase
     .from("planos")
     .insert({
@@ -163,14 +188,14 @@ export async function gerarPlano(params: {
       conversa_id: conversaId ?? null,
       titulo,
       tema,
-      secoes: parsed.secoes,
+      secoes,
       origem,
     })
     .select("id")
     .single();
   if (error) throw new Error(`Erro ao salvar o plano: ${error.message}`);
 
-  return { id: (data as { id: string }).id, titulo, secoes: parsed.secoes };
+  return { id: (data as { id: string }).id, titulo, secoes };
 }
 
 /**
