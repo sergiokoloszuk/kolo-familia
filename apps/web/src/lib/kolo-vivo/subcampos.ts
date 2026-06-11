@@ -73,10 +73,11 @@ export const SUBCAMPOS_DOMINIO: Record<string, SubCampo[]> = {
   ],
   sensorial: [
     {
-      key: "sensibilidade",
-      label: "Sensibilidade sensorial",
-      opcoes: ["Alta", "Média", "Baixa"],
-      placeholder: "O quanto o sensorial pesa no dia a dia (no geral).",
+      key: "perfil",
+      label: "Perfil sensorial",
+      opcoes: ["Hipersensível", "Hipossensível", "Misto"],
+      placeholder:
+        "Hiper = sente demais e evita · Hipo = sente de menos e busca estímulo · Misto = varia por canal",
     },
     { key: "sons", label: "Reação a sons", placeholder: "Ex: cobre os ouvidos com barulho alto; gosta de música baixa" },
     { key: "toques", label: "Reação a toques", placeholder: "Ex: não gosta de abraços; busca pressão profunda (apertado)" },
