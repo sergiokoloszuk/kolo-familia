@@ -235,21 +235,31 @@ export function DominioCard({
           <p className="text-xs text-muted-foreground">{dominio.descricao}</p>
           {error && <p className="text-xs text-destructive">{error}</p>}
         </div>
-      ) : texto.trim() ? (
-        <p
-          onClick={() => setEditing(true)}
-          className="cursor-text whitespace-pre-wrap text-sm leading-relaxed text-muted-foreground"
-        >
-          {texto}
-        </p>
       ) : (
-        <button
-          type="button"
-          onClick={() => setEditing(true)}
-          className="text-left text-sm leading-relaxed text-muted-foreground/60 transition-colors hover:text-brand-purple"
-        >
-          {dominio.descricao}
-        </button>
+        <div className="flex flex-col items-start gap-2">
+          {texto.trim() ? (
+            <p
+              onClick={() => setEditing(true)}
+              className="cursor-text whitespace-pre-wrap text-sm leading-relaxed text-muted-foreground"
+            >
+              {texto}
+            </p>
+          ) : (
+            <p
+              onClick={() => setEditing(true)}
+              className="cursor-pointer text-sm leading-relaxed text-muted-foreground/60 transition-colors hover:text-brand-purple"
+            >
+              {dominio.descricao}
+            </p>
+          )}
+          <button
+            type="button"
+            onClick={() => setEditing(true)}
+            className="inline-flex items-center gap-1.5 rounded-full bg-kolo-lilas-bg-2 px-3.5 py-1.5 text-xs font-semibold text-brand-purple transition-colors hover:bg-kolo-lilas-bg"
+          >
+            <Pencil className="size-3" aria-hidden /> {texto.trim() ? "Editar" : "Preencher"}
+          </button>
+        </div>
       )}
 
       {/* Sugestão da Ayla — destaque com pulso, dentro do card. */}
@@ -286,10 +296,10 @@ export function DominioCard({
         </div>
       )}
 
-      {/* Rodapé discreto: tempo (se preenchido) ou convite (se vazio). */}
-      {!editing && !sugestao && (
+      {/* Rodapé discreto: só o tempo (o botão Preencher/Editar já convida). */}
+      {!editing && !sugestao && microtexto && (
         <p className="mt-4 text-xs text-foreground/40" aria-live="polite">
-          {microtexto ?? (texto.trim() ? null : "Tocar pra começar")}
+          {microtexto}
         </p>
       )}
 
