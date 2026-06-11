@@ -1,26 +1,25 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { salvarDescricao, gerarAvatar } from "./actions";
+import { criarEGerarAvatar } from "./actions";
 import { AVATAR_ESTILOS, type AvatarDescricao } from "@/lib/imagem/avatar-prompt";
 
 export function AvatarForm({
   membroId,
   inicial,
-  imagemAtualUrl,
 }: {
   membroId: string;
   inicial: AvatarDescricao;
-  imagemAtualUrl: string | null;
 }) {
+  const router = useRouter();
   const [pending, startTransition] = useTransition();
-  const [acao, setAcao] = useState<"salvar" | "gerar" | null>(null);
   const [erro, setErro] = useState<string | null>(null);
   const [sucesso, setSucesso] = useState<string | null>(null);
-  const [imagemUrl, setImagemUrl] = useState(imagemAtualUrl);
+  const [imagemUrl, setImagemUrl] = useState<string | null>(null);
   const [form, setForm] = useState<AvatarDescricao>(inicial);
 
   function update<K extends keyof AvatarDescricao>(k: K, v: AvatarDescricao[K]) {
@@ -28,41 +27,18 @@ export function AvatarForm({
     setSucesso(null);
   }
 
-  function handleSalvar() {
+  function handleCriar() {
     setErro(null);
     setSucesso(null);
-    setAcao("salvar");
     startTransition(async () => {
-      const r = await salvarDescricao({ membroId, ...form });
-      setAcao(null);
-      if (!r.ok) {
-        setErro(traduzirErro(r.error));
-        return;
-      }
-      setSucesso("Descrição salva.");
-    });
-  }
-
-  function handleGerar() {
-    setErro(null);
-    setSucesso(null);
-    setAcao("gerar");
-    startTransition(async () => {
-      // Salva primeiro pra garantir que o gerar usa os dados atuais
-      const s = await salvarDescricao({ membroId, ...form });
-      if (!s.ok) {
-        setAcao(null);
-        setErro(traduzirErro(s.error));
-        return;
-      }
-      const r = await gerarAvatar(membroId);
-      setAcao(null);
+      const r = await criarEGerarAvatar({ membroId, ...form });
       if (!r.ok) {
         setErro(traduzirErro(r.error));
         return;
       }
       setImagemUrl(r.imagem_url);
-      setSucesso("Avatar gerado.");
+      setSucesso("Avatar criado e escolhido como o atual.");
+      router.refresh();
     });
   }
 
@@ -240,12 +216,9 @@ export function AvatarForm({
         />
       </div>
 
-      <div className="flex flex-wrap justify-end gap-2 pt-2">
-        <Button type="button" variant="outline" onClick={handleSalvar} disabled={pending}>
-          {acao === "salvar" ? "Salvando..." : "Salvar descrição"}
-        </Button>
-        <Button type="button" onClick={handleGerar} disabled={pending}>
-          {acao === "gerar" ? "Gerando..." : imagemUrl ? "Gerar de novo" : "Gerar avatar"}
+      <div className="flex flex-wrap items-center justify-end gap-2 pt-2">
+        <Button type="button" onClick={handleCriar} disabled={pending}>
+          {pending ? "Criando…" : "Criar avatar"}
         </Button>
       </div>
     </div>

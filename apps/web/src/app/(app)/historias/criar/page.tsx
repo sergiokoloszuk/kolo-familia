@@ -18,15 +18,18 @@ export default async function CriarHistoriaPage() {
 
   const { data: membros } = await supabase
     .from("membros_atipicos")
-    .select("id, nome, avatares_membros_atipicos(imagem_url)")
+    .select("id, nome, avatares_membros_atipicos(imagem_url, selecionado)")
     .eq("family_account_id", family!.id)
     .eq("ativo", true)
     .order("created_at", { ascending: true });
 
   const todas = (membros ?? []).map((m) => {
-    const a = Array.isArray(m.avatares_membros_atipicos)
-      ? m.avatares_membros_atipicos[0]
-      : m.avatares_membros_atipicos;
+    const arr = Array.isArray(m.avatares_membros_atipicos)
+      ? m.avatares_membros_atipicos
+      : m.avatares_membros_atipicos
+        ? [m.avatares_membros_atipicos]
+        : [];
+    const a = arr.find((x) => x?.selecionado) ?? arr[0];
     return { id: m.id as string, nome: m.nome as string, temAvatar: Boolean(a?.imagem_url) };
   });
   const comAvatar = todas.filter((m) => m.temAvatar);

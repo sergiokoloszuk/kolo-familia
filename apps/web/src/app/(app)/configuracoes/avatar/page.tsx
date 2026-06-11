@@ -11,7 +11,7 @@ export default async function AvataresIndexPage() {
 
   const { data: membros } = await supabase
     .from("membros_atipicos")
-    .select("id, nome, data_nascimento, perfil, avatares_membros_atipicos(imagem_url)")
+    .select("id, nome, data_nascimento, perfil, avatares_membros_atipicos(imagem_url, selecionado)")
     .eq("family_account_id", familyId)
     .eq("ativo", true)
     .order("created_at", { ascending: true });
@@ -38,9 +38,12 @@ export default async function AvataresIndexPage() {
 
       <ul className="grid gap-4 md:grid-cols-2">
         {(membros ?? []).map((m) => {
-          const avatar = Array.isArray(m.avatares_membros_atipicos)
-            ? m.avatares_membros_atipicos[0]
-            : m.avatares_membros_atipicos;
+          const arr = Array.isArray(m.avatares_membros_atipicos)
+            ? m.avatares_membros_atipicos
+            : m.avatares_membros_atipicos
+              ? [m.avatares_membros_atipicos]
+              : [];
+          const avatar = arr.find((x) => x?.selecionado) ?? arr[0];
           const temAvatar = Boolean(avatar?.imagem_url);
           return (
             <li key={m.id}>

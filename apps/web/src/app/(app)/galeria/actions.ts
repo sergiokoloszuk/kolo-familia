@@ -87,6 +87,7 @@ export async function gerarCenaParaGaleria(
     .select("prompt_canonico, imagem_url")
     .eq("membro_atipico_id", membroAtipicoId)
     .eq("family_account_id", family.id)
+    .eq("selecionado", true)
     .maybeSingle();
 
   if (!avatar?.prompt_canonico) {

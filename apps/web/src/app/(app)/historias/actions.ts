@@ -95,6 +95,7 @@ export async function criarHistoria(
       .from("avatares_membros_atipicos")
       .select("estilo, imagem_url")
       .eq("membro_atipico_id", data.membroId)
+      .eq("selecionado", true)
       .maybeSingle();
     if (!avatar?.imagem_url) {
       return {
@@ -463,6 +464,7 @@ export async function regenerarPagina(
       .from("avatares_membros_atipicos")
       .select("estilo, imagem_url")
       .eq("membro_atipico_id", historia.membro_atipico_id as string)
+      .eq("selecionado", true)
       .maybeSingle();
     if (!avatar?.imagem_url) return { ok: false, error: "Avatar não encontrado." };
 

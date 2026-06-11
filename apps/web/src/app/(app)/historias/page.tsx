@@ -16,7 +16,7 @@ export default async function HistoriasPage() {
       .order("created_at", { ascending: false }),
     supabase
       .from("membros_atipicos")
-      .select("id, nome, avatares_membros_atipicos(imagem_url)")
+      .select("id, nome, avatares_membros_atipicos(imagem_url, selecionado)")
       .eq("family_account_id", family!.id)
       .eq("ativo", true)
       .order("created_at", { ascending: true }),
@@ -24,9 +24,12 @@ export default async function HistoriasPage() {
 
   const avatarUrl = (() => {
     for (const m of membros ?? []) {
-      const a = Array.isArray(m.avatares_membros_atipicos)
-        ? m.avatares_membros_atipicos[0]
-        : m.avatares_membros_atipicos;
+      const arr = Array.isArray(m.avatares_membros_atipicos)
+        ? m.avatares_membros_atipicos
+        : m.avatares_membros_atipicos
+          ? [m.avatares_membros_atipicos]
+          : [];
+      const a = arr.find((x) => x?.selecionado) ?? arr[0];
       if (a?.imagem_url) return a.imagem_url as string;
     }
     return null;

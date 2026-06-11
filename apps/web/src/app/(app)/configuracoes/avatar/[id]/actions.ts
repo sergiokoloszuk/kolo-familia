@@ -34,6 +34,7 @@ async function requireFamilyAndMembro(membroId: string) {
 }
 
 const descricaoSchema = z.object({
+  membroId: z.string().uuid(),
   estilo: z.enum(AVATAR_ESTILO_VALUES),
   idade: z.coerce.number().int().min(0).max(120).nullable().optional(),
   generoVisual: z.enum(["menino", "menina", "neutro"]).nullable().optional(),
@@ -49,64 +50,29 @@ const descricaoSchema = z.object({
   roupasFrequentes: z.string().trim().max(300).nullable().optional(),
 });
 
-export type SalvarDescricaoInput = z.infer<typeof descricaoSchema> & {
-  membroId: string;
-};
-
-export type SalvarResult = { ok: true } | { ok: false; error: string };
-
-export async function salvarDescricao(
-  input: SalvarDescricaoInput,
-): Promise<SalvarResult> {
-  try {
-    const data = descricaoSchema.parse(input);
-    const { supabase, family } = await requireFamilyAndMembro(input.membroId);
-
-    const { error } = await supabase.from("avatares_membros_atipicos").upsert(
-      {
-        membro_atipico_id: input.membroId,
-        family_account_id: family.id,
-        estilo: data.estilo,
-        descricao_textual: data,
-      },
-      { onConflict: "membro_atipico_id" },
-    );
-    if (error) return { ok: false, error: `Falha ao salvar: ${error.message}` };
-
-    revalidatePath(`/configuracoes/avatar/${input.membroId}`);
-    revalidatePath("/configuracoes/avatar");
-    return { ok: true };
-  } catch (e) {
-    return { ok: false, error: e instanceof Error ? e.message : "Erro inesperado" };
-  }
-}
+export type CriarAvatarInput = z.infer<typeof descricaoSchema>;
 
 export type GerarAvatarResult =
-  | { ok: true; imagem_url: string; prompt_canonico: string; prompt_revisado?: string }
+  | { ok: true; avatarId: string; imagem_url: string; prompt_revisado?: string }
   | { ok: false; error: string };
 
-export async function gerarAvatar(membroId: string): Promise<GerarAvatarResult> {
+/**
+ * Cria UM NOVO avatar a partir da descrição, gera a imagem e já o deixa como
+ * selecionado (o usado nas Histórias/Rotinas). Vários avatares por membro
+ * convivem — este vira o escolhido.
+ */
+export async function criarEGerarAvatar(
+  input: CriarAvatarInput,
+): Promise<GerarAvatarResult> {
   try {
+    const { membroId, ...desc } = descricaoSchema.parse(input);
     const { supabase, family } = await requireFamilyAndMembro(membroId);
     await requireActiveWrite(family.id);
 
-    const { data: avatar } = await supabase
-      .from("avatares_membros_atipicos")
-      .select("estilo, descricao_textual")
-      .eq("membro_atipico_id", membroId)
-      .single();
-
-    if (!avatar) {
-      return { ok: false, error: "Salve a descrição antes de gerar o avatar." };
-    }
-
-    const descricao: AvatarDescricao = {
-      estilo: (avatar.estilo as AvatarDescricao["estilo"]) ?? "cartoon",
-      ...((avatar.descricao_textual as Record<string, unknown>) ?? {}),
-    };
+    const descricao = desc as AvatarDescricao;
     const promptCanonico = montarPromptCanonico(descricao);
 
-    // Geração com service role pra escrever no Storage.
+    // Gera ANTES de inserir — se a geração falhar, não fica avatar órfão.
     const admin = createServiceRoleClient();
     const result = await gerarImagem(admin, {
       prompt: promptCanonico,
@@ -115,21 +81,143 @@ export async function gerarAvatar(membroId: string): Promise<GerarAvatarResult> 
       feature: "avatar_geracao",
     });
 
-    const { error: updErr } = await supabase
+    // O novo vira o selecionado: tira a seleção dos outros, insere já marcado.
+    await supabase
       .from("avatares_membros_atipicos")
-      .update({ imagem_url: result.url, prompt_canonico: promptCanonico })
+      .update({ selecionado: false })
       .eq("membro_atipico_id", membroId);
-    if (updErr) return { ok: false, error: `Imagem gerada, mas falhou ao salvar: ${updErr.message}` };
+
+    const { data: novo, error } = await supabase
+      .from("avatares_membros_atipicos")
+      .insert({
+        membro_atipico_id: membroId,
+        family_account_id: family.id,
+        estilo: desc.estilo,
+        descricao_textual: desc,
+        imagem_url: result.url,
+        prompt_canonico: promptCanonico,
+        selecionado: true,
+      })
+      .select("id")
+      .single();
+    if (error || !novo) {
+      return { ok: false, error: `Imagem gerada, mas falhou ao salvar: ${error?.message}` };
+    }
 
     revalidatePath(`/configuracoes/avatar/${membroId}`);
     revalidatePath("/configuracoes/avatar");
 
     return {
       ok: true,
+      avatarId: novo.id as string,
       imagem_url: result.url,
-      prompt_canonico: promptCanonico,
       prompt_revisado: result.prompt_revisado,
     };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "Erro inesperado" };
+  }
+}
+
+const idSchema = z.object({ avatarId: z.string().uuid() });
+export type AvatarAcaoResult = { ok: true } | { ok: false; error: string };
+
+/** Escolhe qual avatar do membro é o usado (selecionado). */
+export async function selecionarAvatar(
+  input: z.infer<typeof idSchema>,
+): Promise<AvatarAcaoResult> {
+  try {
+    const { avatarId } = idSchema.parse(input);
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return { ok: false, error: "Não autenticado" };
+    const { data: family } = await supabase
+      .from("family_accounts")
+      .select("id")
+      .eq("user_id", user.id)
+      .single();
+    if (!family) return { ok: false, error: "Família não inicializada" };
+
+    const { data: alvo } = await supabase
+      .from("avatares_membros_atipicos")
+      .select("id, membro_atipico_id")
+      .eq("id", avatarId)
+      .eq("family_account_id", family.id)
+      .maybeSingle();
+    if (!alvo) return { ok: false, error: "Avatar não encontrado." };
+
+    // Tira a seleção dos outros do membro, depois marca este.
+    await supabase
+      .from("avatares_membros_atipicos")
+      .update({ selecionado: false })
+      .eq("membro_atipico_id", alvo.membro_atipico_id);
+    const { error } = await supabase
+      .from("avatares_membros_atipicos")
+      .update({ selecionado: true })
+      .eq("id", avatarId);
+    if (error) return { ok: false, error: error.message };
+
+    revalidatePath(`/configuracoes/avatar/${alvo.membro_atipico_id}`);
+    revalidatePath("/configuracoes/avatar");
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "Erro inesperado" };
+  }
+}
+
+/** Exclui um avatar. Se era o selecionado, escolhe o mais recente restante. */
+export async function excluirAvatar(
+  input: z.infer<typeof idSchema>,
+): Promise<AvatarAcaoResult> {
+  try {
+    const { avatarId } = idSchema.parse(input);
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return { ok: false, error: "Não autenticado" };
+    const { data: family } = await supabase
+      .from("family_accounts")
+      .select("id")
+      .eq("user_id", user.id)
+      .single();
+    if (!family) return { ok: false, error: "Família não inicializada" };
+
+    const { data: alvo } = await supabase
+      .from("avatares_membros_atipicos")
+      .select("id, membro_atipico_id, selecionado")
+      .eq("id", avatarId)
+      .eq("family_account_id", family.id)
+      .maybeSingle();
+    if (!alvo) return { ok: false, error: "Avatar não encontrado." };
+
+    const { error } = await supabase
+      .from("avatares_membros_atipicos")
+      .delete()
+      .eq("id", avatarId);
+    if (error) return { ok: false, error: error.message };
+
+    // Se o excluído era o selecionado, promove o mais recente restante.
+    if (alvo.selecionado) {
+      const { data: restante } = await supabase
+        .from("avatares_membros_atipicos")
+        .select("id")
+        .eq("membro_atipico_id", alvo.membro_atipico_id)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (restante) {
+        await supabase
+          .from("avatares_membros_atipicos")
+          .update({ selecionado: true })
+          .eq("id", restante.id);
+      }
+    }
+
+    revalidatePath(`/configuracoes/avatar/${alvo.membro_atipico_id}`);
+    revalidatePath("/configuracoes/avatar");
+    return { ok: true };
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : "Erro inesperado" };
   }
