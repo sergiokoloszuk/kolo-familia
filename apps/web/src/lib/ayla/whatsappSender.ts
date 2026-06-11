@@ -75,6 +75,43 @@ export async function enviarTexto(params: {
 }
 
 /**
+ * Envia um DOCUMENTO (ex.: PDF do plano) via Z-API.
+ * Endpoint: POST /send-document/{extensao}  body { phone, document, fileName }.
+ * `document` aceita uma URL pública ou data URI base64.
+ */
+export async function enviarDocumento(params: {
+  phoneE164: string;
+  url: string;
+  fileName: string;
+  extensao?: string;
+  caption?: string;
+}): Promise<{ messageId: string; raw: unknown }> {
+  const { instanceId, token, clientToken } = getZapiConfig();
+  const phone = params.phoneE164.replace(/^\+/, "");
+  const ext = params.extensao ?? "pdf";
+
+  const url = `${ZAPI_BASE}/instances/${instanceId}/token/${token}/send-document/${ext}`;
+  const body: Record<string, unknown> = {
+    phone,
+    document: params.url,
+    fileName: params.fileName,
+  };
+  if (params.caption) body.caption = params.caption;
+
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "Client-Token": clientToken },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) {
+    const text = await res.text().catch(() => "");
+    throw new Error(`Z-API send-document ${res.status}: ${text.slice(0, 500)}`);
+  }
+  const json = (await res.json()) as { messageId?: string; zaapId?: string };
+  return { messageId: json.messageId ?? json.zaapId ?? "unknown", raw: json };
+}
+
+/**
  * Normaliza o payload de webhook do Z-API/n8n para um shape único.
  * Z-API webhook tem várias formas (textos simples, mídia, status, etc.).
  * Aqui só lemos texto recebido — o mínimo para o parser.

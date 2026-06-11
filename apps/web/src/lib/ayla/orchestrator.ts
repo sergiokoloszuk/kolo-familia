@@ -756,6 +756,7 @@ export async function processInbound(
         membroAtipicoId: membroId,
         contexto: inbound.texto,
         nomeMembro: membroNome,
+        phoneE164: ctxFds.whatsapp_e164,
       });
       if (msg) {
         const resp = await enviarEPersistir(supabase, {
@@ -948,6 +949,7 @@ async function enviarRespostaEmChunks(
       membroAtipicoId: args.membro_atipico_id,
       mensagem: args.params.mensagem,
       temDesafio: Boolean(args.params.sinais.desafio),
+      phoneE164: args.phone,
     });
     if (nudge) {
       try {

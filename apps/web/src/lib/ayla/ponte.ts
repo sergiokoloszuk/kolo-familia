@@ -2,6 +2,62 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { classificarIntencao } from "@/lib/ia/intencao";
 import { gerarPlano } from "@/lib/ia/plano";
+import { planoParaPdf } from "@/lib/plano/pdf";
+import { enviarDocumento } from "./whatsappSender";
+
+/**
+ * Gera o PDF do plano, sobe no Storage (URL assinada, 1h) e envia como
+ * documento no WhatsApp. Falha 100% silenciosa — o PDF é um bônus; se falhar,
+ * o link segue normal. Z-API baixa o arquivo na hora do envio, então a URL
+ * curta basta (e mantém o dado privado, sem URL pública permanente).
+ */
+async function entregarPdfDoPlano(
+  supabase: SupabaseClient,
+  params: {
+    familyId: string;
+    phoneE164: string;
+    titulo: string;
+    secoes: Array<{ tipo: string; titulo: string; conteudo_markdown: string }>;
+    nomeMembro?: string | null;
+  },
+): Promise<void> {
+  try {
+    const bytes = await planoParaPdf({
+      titulo: params.titulo,
+      nome: params.nomeMembro,
+      secoes: params.secoes,
+    });
+    const path = `${params.familyId}/plano/${crypto.randomUUID()}.pdf`;
+    const { error: upErr } = await supabase.storage
+      .from("imagens")
+      .upload(path, Buffer.from(bytes), { contentType: "application/pdf", upsert: false });
+    if (upErr) throw upErr;
+    const { data: signed } = await supabase.storage
+      .from("imagens")
+      .createSignedUrl(path, 3600);
+    if (!signed?.signedUrl) throw new Error("sem signed url");
+
+    const fileName = `${(params.titulo || "plano").replace(/[^\w\sÀ-ÿ-]/g, "").slice(0, 50).trim() || "plano"}.pdf`;
+    await enviarDocumento({ phoneE164: params.phoneE164, url: signed.signedUrl, fileName });
+  } catch (e) {
+    console.warn("[ayla:ponte] falha ao entregar PDF:", e instanceof Error ? e.message : e);
+  }
+}
+
+async function nomeDoMembro(
+  supabase: SupabaseClient,
+  familyId: string,
+  membroId: string | null,
+): Promise<string | null> {
+  if (!membroId) return null;
+  const { data } = await supabase
+    .from("membros_atipicos")
+    .select("nome")
+    .eq("id", membroId)
+    .eq("family_account_id", familyId)
+    .maybeSingle();
+  return (data?.nome as string | undefined) ?? null;
+}
 
 /**
  * Ponte WhatsApp → app (Fase 3).
@@ -80,15 +136,17 @@ export async function montarPonteWhatsApp(
     mensagem: string;
     /** O parser detectou um desafio concreto nesta mensagem. */
     temDesafio: boolean;
+    /** Telefone pra enviar o PDF do plano como documento. */
+    phoneE164: string;
   },
 ): Promise<string | null> {
-  const { familyId, membroAtipicoId, mensagem, temDesafio } = params;
+  const { familyId, membroAtipicoId, mensagem, temDesafio, phoneE164 } = params;
 
   try {
     // Gate 1 (barato): só quando ela descreveu um desafio concreto.
     if (!temDesafio) return null;
 
-    // Gate 2 (dedup): já mandamos um link nas últimas ~20h? Não insiste.
+    // Gate 2 (dedup): já mandamos um plano nas últimas ~20h? Não insiste.
     const desde = new Date(Date.now() - JANELA_DEDUP_HORAS * 3600_000).toISOString();
     const { data: recentes } = await supabase
       .from("ayla_messages")
@@ -100,40 +158,36 @@ export async function montarPonteWhatsApp(
       .limit(1);
     if (recentes && recentes.length > 0) return null;
 
-    // Gate 3 (intenção): crise/desabafo/dúvida não recebem link de plano.
+    // Gate 3 (intenção): crise/desabafo/dúvida não recebem plano.
     const intencao = await classificarIntencao({ supabase, familyId, texto: mensagem });
     if (intencao !== "desafio") return null;
 
-    // Semeia a conversa nas Estratégias com a pergunta dela. Ao chegar pelo
-    // link, ela vê a própria mensagem e a Ayla responde no app (com o CTA de
-    // plano completo da Fase 1).
-    const titulo = mensagem.trim().slice(0, 80) || "Conversa do WhatsApp";
-    const { data: conversa, error: convErr } = await supabase
-      .from("conversas")
-      .insert({
-        family_account_id: familyId,
-        membro_atipico_id: membroAtipicoId,
-        titulo,
-      })
-      .select("id")
-      .single();
-    if (convErr || !conversa) return null;
-
-    const { error: msgErr } = await supabase.from("mensagens_skill").insert({
-      conversa_id: conversa.id,
-      family_account_id: familyId,
-      papel: "user",
-      conteudo: mensagem,
-    });
-    if (msgErr) return null;
-
-    const link = await gerarMagicLink(supabase, {
+    // Gera o plano completo na hora (single-call) a partir do desafio. Fica
+    // salvo em /planos — então o link abre o plano JÁ PRONTO (não precisa
+    // clicar em "gerar"), e o PDF vai junto no WhatsApp.
+    const plano = await gerarPlano({
+      supabase,
       familyId,
-      next: `/conversar/${conversa.id}`,
+      membroAtipicoId,
+      desafio: mensagem,
+      origem: "estrategias",
     });
-    if (!link) return null;
 
-    return `Se quiser, deixei o começo de um plano completo sobre isso aqui no app — com ideias práticas, frases pra usar e o que observar. É só abrir, você já entra direto:\n${link}`;
+    const nomeMembro = await nomeDoMembro(supabase, familyId, membroAtipicoId);
+    await entregarPdfDoPlano(supabase, {
+      familyId,
+      phoneE164,
+      titulo: plano.titulo,
+      secoes: plano.secoes,
+      nomeMembro,
+    });
+
+    const link = await gerarMagicLink(supabase, { familyId, next: `/planos/${plano.id}` });
+
+    const base =
+      "Montei um plano completo sobre isso — mandei em PDF aqui em cima 👆 (dá pra salvar e imprimir).";
+    if (!link) return base;
+    return `${base}\nE se quiser ver no app, ajustar ou me contar depois como foi, é só abrir (já entra direto):\n${link}`;
   } catch (e) {
     console.warn(
       "[ayla:ponte] falha ao montar ponte WhatsApp→app:",
@@ -151,7 +205,13 @@ export async function montarPonteWhatsApp(
  */
 export async function montarPlanoFimDeSemana(
   supabase: SupabaseClient,
-  params: { familyId: string; membroAtipicoId: string | null; contexto: string; nomeMembro?: string | null },
+  params: {
+    familyId: string;
+    membroAtipicoId: string | null;
+    contexto: string;
+    nomeMembro?: string | null;
+    phoneE164: string;
+  },
 ): Promise<string | null> {
   try {
     const desafio =
@@ -167,14 +227,23 @@ export async function montarPlanoFimDeSemana(
       origem: "fim_de_semana",
     });
 
+    await entregarPdfDoPlano(supabase, {
+      familyId: params.familyId,
+      phoneE164: params.phoneE164,
+      titulo: plano.titulo,
+      secoes: plano.secoes,
+      nomeMembro: params.nomeMembro,
+    });
+
     const link = await gerarMagicLink(supabase, {
       familyId: params.familyId,
       next: `/planos/${plano.id}`,
     });
-    if (!link) return null;
 
     const ref = params.nomeMembro ? ` pra ${params.nomeMembro}` : "";
-    return `Montei um roteiro leve pro fim de semana${ref} — sem grade rígida, dá pra encaixar no que o dia trouxer. Dá uma olhada (já entra direto):\n${link}`;
+    const base = `Montei um roteiro leve pro fim de semana${ref} — mandei em PDF aqui em cima 👆.`;
+    if (!link) return base;
+    return `${base}\nQuer ver no app ou ajustar? É só abrir (já entra direto):\n${link}`;
   } catch (e) {
     console.warn(
       "[ayla:ponte] falha ao montar plano de fim de semana:",
