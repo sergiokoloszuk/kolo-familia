@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { getAnthropicClient, MODELS } from "./anthropic";
+import { MEMBRO_CAMPOS_TOPLEVEL, MEMBRO_CAMPOS_EXTRAS } from "@/lib/kolo-vivo/campos";
 
 /**
  * Extração estruturada do "Atualizar" — lê uma conversa e propõe o que vale
@@ -12,13 +13,13 @@ import { getAnthropicClient, MODELS } from "./anthropic";
  * Quem grava é a action, depois do usuário revisar o preview.
  */
 
-export const CAMPOS_CAMADA1 = [
-  "essencial",
-  "como_e",
-  "corpo_rotina",
-  "desafios_regulacao",
-  "sensorial",
-] as const;
+// Campos válidos da criança = todos os domínios reais do Kolo Vivo (toplevel
+// legados + os domínios novos em categorias_extras). Antes só havia os 5
+// legados, então alimentação/sono/comunicação caíam errado em corpo_rotina.
+export const CAMPOS_CAMADA1: readonly string[] = [
+  ...MEMBRO_CAMPOS_TOPLEVEL,
+  ...MEMBRO_CAMPOS_EXTRAS,
+];
 
 export const CAMPOS_CAMADA2 = ["composicao", "rotina", "recursos", "dinamica"] as const;
 
@@ -59,12 +60,24 @@ Sua missão é ajudar a plataforma a ir aprendendo sobre a criança a cada conve
 Capture em 3 destinos (qualquer um pode ficar vazio):
 
 1. kolo_vivo — informações duradouras. Cada item { camada, campo, texto, operacao }:
-   - camada "camada1" (a criança), campo:
-     • como_e → interesses, gostos, jeito de ser. GATILHOS: "gosta de", "adora", "ama", "curte", "se interessa por".
-     • desafios_regulacao → dificuldades, o que pesa, o que precisa melhorar. GATILHOS: "tem dificuldade", "preciso ajudar com", "não consegue", "foco", "atenção", "birra", "crise", "frustra".
-     • corpo_rotina → sono, alimentação, banho, horários, energia ao longo do dia.
-     • sensorial → reações a som, luz, textura, toque, cheiro.
+   - camada "camada1" (a criança) — escolha o campo MAIS específico:
+     • nutricional → ALIMENTAÇÃO: o que come/aceita, o que recusa, texturas, seletividade, dificuldades à mesa, água. GATILHOS: "come", "não come", "aceita", "recusa", "fruta", "verdura", "textura", "seletiv", "à mesa".
+     • sono → como adormece, como dorme, despertares, horário de dormir.
+     • sensorial → reações a som, luz, textura, toque, cheiro, movimento.
+     • comunicacao → como se expressa e como entende (fala, palavras, apontar, imagens, CAA).
+     • socializacao → como se relaciona com outras pessoas, com quem flui, o que trava.
+     • emocional → gatilhos, sinais quando está difícil, crises, o que ajuda a regular. GATILHOS: "crise", "birra", "frustra", "explode", "chora", "acalma".
+     • foco → atenção, concentração, dispersão, hiperfoco.
+     • motor → coordenação do corpo todo (grossa) e das mãos (fina).
+     • autonomia → o que faz sozinha, o que ainda precisa de ajuda.
+     • aprendizado → como aprende, o que ajuda a aprender.
+     • imitacao → o que imita (gestos, sons, faz de conta).
+     • tela_midia → relação com telas (o que assiste, quanto, como reage).
+     • escola → adaptações, o que funciona, queixas.
+     • saude_geral → acompanhamentos, alergias, saúde.
+     • como_e → interesses, gostos, jeito de ser (que NÃO sejam comida). GATILHOS: "gosta de", "adora", "ama", "curte".
      • essencial → diagnóstico ou algo central de quem ela é.
+     • (legado — evite, prefira os específicos acima) corpo_rotina, desafios_regulacao.
    - camada "camada2" (a família), campo: composicao, rotina, recursos (terapias/escola/apoios), dinamica.
    - **operacao** — olhe o "Kolo Vivo atual" antes de decidir:
      • "adicionar" → é um FATO NOVO que NÃO está na seção. texto = a frase curta nova.
@@ -77,7 +90,8 @@ Capture em 3 destinos (qualquer um pode ficar vazio):
 
 Exemplos:
 - "ela adora andar de bicicleta" e a seção como_e não menciona bicicleta → { camada1, como_e, "Adora andar de bicicleta.", "adicionar" }.
-- como_e já diz "Adora dinossauros" e o adulto conta "também ama cozinhar" → { camada1, como_e, "Adora dinossauros e cozinhar.", "reescrever" }.
+- "não aceita frutas e só come o que é crocante" → { camada1, nutricional, "Não aceita frutas; aceita bem alimentos crocantes.", "adicionar" }.
+- "ela demora muito pra dormir, só com luz baixa" → { camada1, sono, "Demora pra adormecer; precisa de luz baixa.", "adicionar" }.
 - "ele comeu brócolis pela primeira vez" → conquista: "Comeu brócolis pela primeira vez."
 
 Formato OBRIGATÓRIO (apenas isto):

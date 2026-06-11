@@ -7,6 +7,7 @@ import { createClient, createServiceRoleClient } from "@/lib/supabase/server";
 import { respond, respondAsOutputType } from "@/lib/ia/engine";
 import { gerarSecoesPlanoMultiCall } from "@/lib/ia/plano";
 import { extrairAtualizacoes, type PropostaAtualizacao } from "@/lib/ia/atualizar";
+import { MEMBRO_CAMPOS_TOPLEVEL, membroCampoStorage } from "@/lib/kolo-vivo/campos";
 import { idadeAnos, hojeLocalISO } from "@/lib/idade";
 import { requireActiveWrite } from "@/lib/auth/require-active-write";
 
@@ -449,13 +450,6 @@ const confirmarSchema = z.object({
   desafio: z.string().trim().min(1).nullable().default(null),
 });
 
-const MEMBRO_CAMPOS = [
-  "essencial",
-  "como_e",
-  "corpo_rotina",
-  "desafios_regulacao",
-  "sensorial",
-] as const;
 const FAMILIA_CAMPOS = ["composicao", "rotina", "recursos", "dinamica"] as const;
 
 /** Anexa um fato curto ao texto da seção, sem substituir o que já existe. */
@@ -488,33 +482,54 @@ export async function confirmarAtualizacao(
     const now = new Date().toISOString();
 
     const membroItens = data.koloVivo.filter(
-      (it) => it.camada === "camada1" && (MEMBRO_CAMPOS as readonly string[]).includes(it.campo),
+      (it) => it.camada === "camada1" && membroCampoStorage(it.campo) !== null,
     );
     const familiaItens = data.koloVivo.filter(
       (it) => it.camada === "camada2" && (FAMILIA_CAMPOS as readonly string[]).includes(it.campo),
     );
 
-    // Kolo Vivo do membro — aplica DIRETO (já foi revisado no preview),
-    // anexando ao texto existente em vez de substituir.
+    // Kolo Vivo do membro — aplica DIRETO (já revisado no preview), anexando ao
+    // texto existente. Campos legados vão em colunas; os domínios novos
+    // (nutricional, sono, comunicacao…) em categorias_extras.
     if (membroItens.length > 0 && membroId) {
       const { data: atual } = await supabase
         .from("perfil_vivo_membro")
-        .select("essencial, como_e, corpo_rotina, desafios_regulacao, sensorial")
+        .select(
+          "essencial, como_e, corpo_rotina, desafios_regulacao, sensorial, categorias_extras",
+        )
         .eq("membro_atipico_id", membroId)
         .maybeSingle();
-      const secoes: Record<string, Record<string, unknown>> = {};
-      for (const campo of MEMBRO_CAMPOS) {
-        secoes[campo] = (atual?.[campo] as Record<string, unknown>) ?? {};
+
+      const toplevel: Record<string, Record<string, unknown>> = {};
+      for (const campo of MEMBRO_CAMPOS_TOPLEVEL) {
+        toplevel[campo] = (atual?.[campo] as Record<string, unknown>) ?? {};
       }
+      const extras: Record<string, unknown> =
+        (atual?.categorias_extras as Record<string, unknown>) ?? {};
+
       for (const it of membroItens) {
-        const prev = (secoes[it.campo].texto as string) ?? "";
-        const novoTexto = it.operacao === "reescrever" ? it.texto : appendFato(prev, it.texto);
-        secoes[it.campo] = { ...secoes[it.campo], texto: novoTexto, atualizado_em: now };
+        const onde = membroCampoStorage(it.campo);
+        if (onde === "toplevel") {
+          const prev = (toplevel[it.campo].texto as string) ?? "";
+          const novo = it.operacao === "reescrever" ? it.texto : appendFato(prev, it.texto);
+          toplevel[it.campo] = { ...toplevel[it.campo], texto: novo, atualizado_em: now };
+        } else if (onde === "extras") {
+          const atualCampo = (extras[it.campo] as Record<string, unknown>) ?? {};
+          const prev = (atualCampo.texto as string) ?? "";
+          const novo = it.operacao === "reescrever" ? it.texto : appendFato(prev, it.texto);
+          extras[it.campo] = { ...atualCampo, texto: novo, atualizado_em: now };
+        }
       }
+
       const { error } = await supabase
         .from("perfil_vivo_membro")
         .upsert(
-          { membro_atipico_id: membroId, family_account_id: family.id, ...secoes },
+          {
+            membro_atipico_id: membroId,
+            family_account_id: family.id,
+            ...toplevel,
+            categorias_extras: extras,
+          },
           { onConflict: "membro_atipico_id" },
         );
       if (error) return { ok: false, error: `Falha ao salvar no Kolo Vivo: ${error.message}` };

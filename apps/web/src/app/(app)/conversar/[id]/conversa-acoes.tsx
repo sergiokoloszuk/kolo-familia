@@ -15,11 +15,27 @@ import {
 type PropostaOk = Extract<PropostaResult, { ok: true }>;
 
 const CAMPO_LABEL: Record<string, string> = {
+  // toplevel (legados)
   essencial: "O essencial",
   como_e: "Como é / interesses",
   corpo_rotina: "Corpo e rotina",
   desafios_regulacao: "Desafios e regulação",
   sensorial: "Sensorial",
+  // domínios novos (categorias_extras)
+  nutricional: "Alimentação",
+  sono: "Sono",
+  comunicacao: "Comunicação",
+  socializacao: "Socialização",
+  emocional: "Regulação emocional",
+  foco: "Foco e atenção",
+  motor: "Motor",
+  autonomia: "Autonomia",
+  aprendizado: "Aprendizado",
+  imitacao: "Imitação",
+  tela_midia: "Tela e mídia",
+  escola: "Escola",
+  saude_geral: "Saúde geral",
+  // família (camada2)
   composicao: "Composição da família",
   rotina: "Rotina da família",
   recursos: "Recursos",
@@ -222,7 +238,9 @@ export function ConversaAcoes({
                       <span className="flex flex-col gap-0.5">
                         <span className="flex items-center gap-1.5">
                           <span className="text-[11px] font-semibold uppercase tracking-[0.1em] text-brand-purple/80">
-                            {CAMPO_LABEL[it.campo] ?? it.campo}
+                            {it.camada === "camada1" && it.campo === "rotina"
+                              ? "Rotina"
+                              : CAMPO_LABEL[it.campo] ?? it.campo}
                           </span>
                           <span
                             className={
