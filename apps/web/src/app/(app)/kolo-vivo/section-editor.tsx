@@ -130,7 +130,7 @@ export function SectionEditor({
   return (
     <section
       className={cn(
-        "group rounded-3xl px-6 py-7 md:px-8 md:py-8",
+        "group rounded-2xl border border-foreground/[0.07] px-5 py-5 md:px-6 md:py-6",
         SECTION_TONE_CLASS[tone],
       )}
     >
@@ -151,13 +151,13 @@ export function SectionEditor({
             onClick={() => setEditing(true)}
             aria-label="Editar"
             title="Editar"
-            className="inline-flex size-7 shrink-0 items-center justify-center rounded-full text-foreground/50 opacity-50 transition-all hover:text-foreground hover:opacity-100 md:opacity-0 md:group-hover:opacity-60 md:focus-visible:opacity-100 md:hover:opacity-100"
+            className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-foreground/10 bg-white/60 px-3 py-1.5 text-xs font-semibold text-foreground/60 transition-colors hover:bg-white hover:text-foreground"
           >
-            <Pencil className="size-3.5" aria-hidden />
+            <Pencil className="size-3" aria-hidden /> Editar
           </button>
         )}
       </header>
-      <div className="mt-5">
+      <div className="mt-3">
         {editing ? (
           <>
             <textarea
@@ -192,7 +192,7 @@ export function SectionEditor({
         )}
         {microtexto && (
           <p
-            className="mt-4 text-xs text-foreground/40"
+            className="mt-3 text-xs text-foreground/40"
             aria-live="polite"
           >
             {microtexto}

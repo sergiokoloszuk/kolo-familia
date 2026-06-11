@@ -55,7 +55,7 @@ export function FamiliaEditor({ familia }: { familia: FamiliaSecoes }) {
         </p>
       </header>
 
-      <div className="flex flex-col gap-5">
+      <div className="flex flex-col gap-3">
         {SECOES.map((s) => (
           <SectionEditor
             key={s.key}
