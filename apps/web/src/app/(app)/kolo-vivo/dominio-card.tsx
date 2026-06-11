@@ -6,6 +6,8 @@ import {
   Activity,
   Apple,
   Check,
+  ChevronDown,
+  ChevronUp,
   Clock,
   Copy,
   Eye,
@@ -320,6 +322,7 @@ function CamposEditor({
   onSave: (texto: string) => Promise<void>;
 }) {
   const [editing, setEditing] = useState(false);
+  const [expandido, setExpandido] = useState(false);
   const [valores, setValores] = useState<Record<string, string>>(() =>
     parsearSubcampos(campos, value),
   );
@@ -348,9 +351,11 @@ function CamposEditor({
 
   if (!editing) {
     const preenchidos = campos.filter((c) => (valores[c.key] ?? "").trim());
-    return (
-      <div className="flex flex-col gap-2.5">
-        {preenchidos.length === 0 ? (
+
+    // Vazio: convite discreto pra preencher.
+    if (preenchidos.length === 0) {
+      return (
+        <div className="flex flex-col gap-2.5">
           <button
             type="button"
             onClick={() => setEditing(true)}
@@ -358,25 +363,73 @@ function CamposEditor({
           >
             {descricao}
           </button>
-        ) : (
-          preenchidos.map((c) => (
-            <div key={c.key}>
-              <span className="text-[11px] font-bold uppercase tracking-[0.1em] text-muted-foreground">
-                {c.label}
-              </span>
-              <p className="whitespace-pre-wrap text-sm leading-relaxed text-foreground">
-                {valores[c.key]}
-              </p>
-            </div>
-          ))
-        )}
-        <div className="flex items-center gap-3">
           <button
             type="button"
             onClick={() => setEditing(true)}
             className="inline-flex w-fit items-center gap-1.5 text-xs font-semibold text-brand-purple transition-colors hover:text-brand-purple-dark"
           >
-            <Pencil className="size-3" aria-hidden /> {preenchidos.length === 0 ? "Preencher" : "Editar"}
+            <Pencil className="size-3" aria-hidden /> Preencher
+          </button>
+        </div>
+      );
+    }
+
+    // Preenchido: COLAPSADO por padrão (termômetro + resumo curto). "Ver tudo"
+    // expande — assim o card não fica gigante na grade.
+    const seletor = campos.find((c) => c.opcoes && (valores[c.key] ?? "").trim());
+    const resto = preenchidos.filter((c) => c.key !== seletor?.key);
+    return (
+      <div className="flex flex-col gap-2.5">
+        {seletor && (
+          <span className="inline-flex w-fit items-center rounded-full bg-brand-yellow/20 px-2.5 py-1 text-xs font-semibold text-[#8B5A00]">
+            {seletor.label}: {valores[seletor.key]}
+          </span>
+        )}
+
+        {resto.length > 0 &&
+          (expandido ? (
+            <div className="flex flex-col gap-2.5">
+              {resto.map((c) => (
+                <div key={c.key}>
+                  <span className="text-[11px] font-bold uppercase tracking-[0.1em] text-muted-foreground">
+                    {c.label}
+                  </span>
+                  <p className="whitespace-pre-wrap text-sm leading-relaxed text-foreground">
+                    {valores[c.key]}
+                  </p>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="line-clamp-2 text-sm leading-relaxed text-muted-foreground">
+              {resto.map((c) => valores[c.key]).join(" · ")}
+            </p>
+          ))}
+
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+          {resto.length > 0 && (
+            <button
+              type="button"
+              onClick={() => setExpandido((e) => !e)}
+              className="inline-flex items-center gap-1 text-xs font-semibold text-brand-purple transition-colors hover:text-brand-purple-dark"
+            >
+              {expandido ? (
+                <>
+                  <ChevronUp className="size-3.5" aria-hidden /> Recolher
+                </>
+              ) : (
+                <>
+                  <ChevronDown className="size-3.5" aria-hidden /> Ver tudo
+                </>
+              )}
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={() => setEditing(true)}
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-brand-purple transition-colors hover:text-brand-purple-dark"
+          >
+            <Pencil className="size-3" aria-hidden /> Editar
           </button>
           {showSaved && <span className="text-xs text-foreground/40">salvo</span>}
         </div>
