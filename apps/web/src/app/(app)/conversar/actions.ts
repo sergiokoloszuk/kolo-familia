@@ -12,6 +12,8 @@ import {
   subcamposDe,
   parsearSubcampos,
   serializarSubcampos,
+  splitItens,
+  joinItens,
 } from "@/lib/kolo-vivo/subcampos";
 import { idadeAnos, hojeLocalISO } from "@/lib/idade";
 import { requireActiveWrite } from "@/lib/auth/require-active-write";
@@ -486,6 +488,12 @@ function aplicarTextoCampo(
     (it.subcampo && subs.find((s) => s.key === it.subcampo)) || subs[subs.length - 1];
   if (def.opcoes) {
     valores[def.key] = it.texto; // seletor: substitui pelo valor
+  } else if (def.lista) {
+    // lista: anexa como item(ns), sem duplicar
+    valores[def.key] = joinItens([
+      ...splitItens(valores[def.key] ?? ""),
+      ...splitItens(it.texto),
+    ]);
   } else {
     valores[def.key] = appendFato(valores[def.key] ?? "", it.texto);
   }

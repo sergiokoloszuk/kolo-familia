@@ -30,6 +30,8 @@ import { cn } from "@/lib/utils";
 import {
   parsearSubcampos,
   serializarSubcampos,
+  splitItens,
+  joinItens,
   type SubCampo,
 } from "@/lib/kolo-vivo/subcampos";
 import type { DominioDef, DominioKey, DominioTone } from "./dominios";
@@ -404,9 +406,20 @@ function CamposEditor({
                   <span className="text-[11px] font-bold uppercase tracking-[0.1em] text-muted-foreground">
                     {c.label}
                   </span>
-                  <p className="whitespace-pre-wrap text-sm leading-relaxed text-foreground">
-                    {valores[c.key]}
-                  </p>
+                  {c.lista ? (
+                    <ul className="mt-0.5 flex flex-col gap-0.5">
+                      {splitItens(valores[c.key]).map((item, idx) => (
+                        <li key={idx} className="flex gap-2 text-sm leading-relaxed text-foreground">
+                          <span aria-hidden className="text-brand-purple/50">•</span>
+                          <span>{item}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="whitespace-pre-wrap text-sm leading-relaxed text-foreground">
+                      {valores[c.key]}
+                    </p>
+                  )}
                 </div>
               ))}
             </div>
@@ -480,6 +493,13 @@ function CamposEditor({
                 <span className="text-xs leading-relaxed text-muted-foreground">{c.placeholder}</span>
               )}
             </>
+          ) : c.lista ? (
+            <ListaCampo
+              valueInicial={valores[c.key] ?? ""}
+              placeholder={c.placeholder}
+              disabled={pending}
+              onChange={(v) => setValores((vs) => ({ ...vs, [c.key]: v }))}
+            />
           ) : (
             <textarea
               rows={2}
@@ -513,6 +533,80 @@ function CamposEditor({
         >
           Cancelar
         </button>
+      </div>
+    </div>
+  );
+}
+
+/** Editor de LISTA: cada item é um bullet; a linha "+ adicionar" já fica pronta
+ *  pro próximo. Guarda como "a; b; c". */
+function ListaCampo({
+  valueInicial,
+  placeholder,
+  disabled,
+  onChange,
+}: {
+  valueInicial: string;
+  placeholder?: string;
+  disabled?: boolean;
+  onChange: (v: string) => void;
+}) {
+  const [itens, setItens] = useState<string[]>(() => splitItens(valueInicial));
+  const [novo, setNovo] = useState("");
+
+  function sync(arr: string[]) {
+    setItens(arr);
+    onChange(joinItens(arr));
+  }
+  function adicionar() {
+    const t = novo.trim();
+    if (!t) return;
+    sync([...itens, t]);
+    setNovo("");
+  }
+
+  return (
+    <div className="flex flex-col gap-1.5">
+      {itens.map((it, i) => (
+        <div key={i} className="flex items-center gap-2">
+          <span aria-hidden className="text-brand-purple/50">
+            •
+          </span>
+          <input
+            value={it}
+            disabled={disabled}
+            onChange={(e) => sync(itens.map((x, idx) => (idx === i ? e.target.value : x)))}
+            className="flex-1 rounded-lg bg-kolo-lilas-bg-2/40 px-2.5 py-1.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-brand-purple/20 disabled:opacity-60"
+          />
+          <button
+            type="button"
+            onClick={() => sync(itens.filter((_, idx) => idx !== i))}
+            disabled={disabled}
+            aria-label="Remover"
+            className="text-foreground/40 transition-colors hover:text-destructive"
+          >
+            <X className="size-3.5" aria-hidden />
+          </button>
+        </div>
+      ))}
+      <div className="flex items-center gap-2">
+        <span aria-hidden className="text-brand-purple/40">
+          +
+        </span>
+        <input
+          value={novo}
+          placeholder={placeholder ?? "adicionar…"}
+          disabled={disabled}
+          onChange={(e) => setNovo(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              adicionar();
+            }
+          }}
+          onBlur={adicionar}
+          className="flex-1 rounded-lg border border-dashed border-foreground/15 px-2.5 py-1.5 text-sm text-foreground placeholder:text-muted-foreground/50 focus:border-brand-purple/40 focus:outline-none disabled:opacity-60"
+        />
       </div>
     </div>
   );

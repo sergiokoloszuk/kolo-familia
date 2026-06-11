@@ -20,7 +20,33 @@ export type SubCampo = {
   /** Quando presente, o campo vira um seletor (chips) em vez de texto livre.
    *  Ex.: Seletividade alimentar → ["Alta", "Média", "Baixa"]. */
   opcoes?: string[];
+  /** Quando true, o campo é uma LISTA de itens (bullets). Guardado como
+   *  "item1; item2; item3". Ex.: aceita, rejeita, texturas. */
+  lista?: boolean;
 };
+
+/** Itens de um campo-lista (guardado como "a; b; c" ou em linhas). */
+export function splitItens(value: string): string[] {
+  return (value ?? "")
+    .split(/[;\n]+/)
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
+
+/** Junta itens em "a; b; c", aparando e removendo duplicados. */
+export function joinItens(itens: string[]): string {
+  const vistos = new Set<string>();
+  const out: string[] = [];
+  for (const it of itens) {
+    const t = (it ?? "").trim();
+    if (!t) continue;
+    const k = t.toLowerCase();
+    if (vistos.has(k)) continue;
+    vistos.add(k);
+    out.push(t);
+  }
+  return out.join("; ");
+}
 
 /**
  * Sub-campos por domínio do Kolo Vivo. Fonte ÚNICA — usada pelo card (UI), pelo
@@ -35,10 +61,10 @@ export const SUBCAMPOS_DOMINIO: Record<string, SubCampo[]> = {
       opcoes: ["Alta", "Média", "Baixa"],
       placeholder: "Alta = come poucos alimentos · Média = seletivo, mas aceita variedade · Baixa = come bem",
     },
-    { key: "aceita", label: "Aceita bem / preferidos", placeholder: "Ex: arroz, banana, pão, iogurte, frango desfiado" },
-    { key: "rejeita", label: "Rejeita ou recusa", placeholder: "Ex: folhas, carne em pedaço, comida nova" },
-    { key: "texturas_aceita", label: "Texturas que aceita", placeholder: "Ex: crocante, cremoso, macio" },
-    { key: "texturas_rejeita", label: "Texturas que rejeita", placeholder: "Ex: pastoso, fibroso, molhado" },
+    { key: "aceita", label: "Aceita bem / preferidos", lista: true, placeholder: "arroz, banana, pão…" },
+    { key: "rejeita", label: "Rejeita ou recusa", lista: true, placeholder: "folhas, carne em pedaço…" },
+    { key: "texturas_aceita", label: "Texturas que aceita", lista: true, placeholder: "crocante, cremoso…" },
+    { key: "texturas_rejeita", label: "Texturas que rejeita", lista: true, placeholder: "pastoso, fibroso…" },
     {
       key: "dificuldades",
       label: "Dificuldades na alimentação",
