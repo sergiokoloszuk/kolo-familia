@@ -22,6 +22,36 @@ export type SubCampo = {
   opcoes?: string[];
 };
 
+/**
+ * Sub-campos por domínio do Kolo Vivo. Fonte ÚNICA — usada pelo card (UI), pelo
+ * extrator de atualizações (IA) e pela gravação. Domínios sem entrada aqui
+ * continuam como texto único.
+ */
+export const SUBCAMPOS_DOMINIO: Record<string, SubCampo[]> = {
+  nutricional: [
+    {
+      key: "seletividade",
+      label: "Seletividade alimentar",
+      opcoes: ["Alta", "Média", "Baixa"],
+      placeholder: "Alta = come poucos alimentos · Média = seletivo, mas aceita variedade · Baixa = come bem",
+    },
+    { key: "aceita", label: "Aceita bem / preferidos", placeholder: "Ex: arroz, banana, pão, iogurte, frango desfiado" },
+    { key: "rejeita", label: "Rejeita ou recusa", placeholder: "Ex: folhas, carne em pedaço, comida nova" },
+    { key: "texturas_aceita", label: "Texturas que aceita", placeholder: "Ex: crocante, cremoso, macio" },
+    { key: "texturas_rejeita", label: "Texturas que rejeita", placeholder: "Ex: pastoso, fibroso, molhado" },
+    {
+      key: "dificuldades",
+      label: "Dificuldades na alimentação",
+      placeholder: "Ex: demora muito, distrai fácil, só come no prato dela",
+    },
+  ],
+};
+
+/** Domínio tem sub-campos? Devolve a definição ou null. */
+export function subcamposDe(campo: string): SubCampo[] | null {
+  return SUBCAMPOS_DOMINIO[campo] ?? null;
+}
+
 export function serializarSubcampos(
   campos: SubCampo[],
   valores: Record<string, string>,

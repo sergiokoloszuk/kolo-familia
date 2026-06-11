@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { getAnthropicClient, MODELS } from "./anthropic";
 import { MEMBRO_CAMPOS_TOPLEVEL, MEMBRO_CAMPOS_EXTRAS } from "@/lib/kolo-vivo/campos";
+import { SUBCAMPOS_DOMINIO } from "@/lib/kolo-vivo/subcampos";
 
 /**
  * Extração estruturada do "Atualizar" — lê uma conversa e propõe o que vale
@@ -26,6 +27,8 @@ export const CAMPOS_CAMADA2 = ["composicao", "rotina", "recursos", "dinamica"] a
 export type ItemKoloVivo = {
   camada: "camada1" | "camada2";
   campo: string;
+  /** Sub-campo (ex.: nutricional → "rejeita"), quando o domínio tem sub-campos. */
+  subcampo?: string | null;
   texto: string;
   // "adicionar": fato novo pra anexar. "reescrever": texto completo da seção
   // já mesclando o que existia + o novo (quando a info se sobrepõe).
@@ -44,6 +47,7 @@ const PropostaSchema = z.object({
       z.object({
         camada: z.enum(["camada1", "camada2"]),
         campo: z.string(),
+        subcampo: z.string().trim().nullable().optional(),
         texto: z.string().trim().min(1),
         operacao: z.enum(["adicionar", "reescrever"]).default("adicionar"),
       }),
@@ -94,8 +98,10 @@ Exemplos:
 - "ela demora muito pra dormir, só com luz baixa" → { camada1, sono, "Demora pra adormecer; precisa de luz baixa.", "adicionar" }.
 - "ele comeu brócolis pela primeira vez" → conquista: "Comeu brócolis pela primeira vez."
 
+Alguns campos têm SUB-CAMPOS — quando propuser um item nesses campos, escolha também "subcampo" (a dimensão exata). Se o sub-campo tiver valor fixo, o "texto" deve ser exatamente um desses valores. (A lista exata vem na mensagem.)
+
 Formato OBRIGATÓRIO (apenas isto):
-{ "kolo_vivo": [ { "camada": "camada1", "campo": "como_e", "texto": "...", "operacao": "adicionar" } ], "conquista": null, "desafio": "..." }`;
+{ "kolo_vivo": [ { "camada": "camada1", "campo": "nutricional", "subcampo": "rejeita", "texto": "frutas", "operacao": "adicionar" } ], "conquista": null, "desafio": "..." }`;
 
 export async function extrairAtualizacoes(params: {
   transcript: string;
@@ -110,7 +116,21 @@ export async function extrairAtualizacoes(params: {
     ? `A conversa é sobre a criança: ${membro.nome}${membro.idade != null ? `, ${membro.idade} anos` : ""}, perfil ${membro.perfil}.`
     : `A conversa é sobre a família em geral (sem criança específica): use SÓ camada2 no kolo_vivo, e deixe conquista e desafio como null.`;
 
+  const instrSub = Object.entries(SUBCAMPOS_DOMINIO)
+    .map(([campo, subs]) => {
+      const lista = subs
+        .map((s) => (s.opcoes ? `${s.key} (valor: ${s.opcoes.join("/")})` : s.key))
+        .join(", ");
+      return `- ${campo}: ${lista}`;
+    })
+    .join("\n");
+
   const userMsg = `${regraMembro}
+
+<campos_com_subcampos>
+Ao propor itens nestes campos, defina "subcampo":
+${instrSub}
+</campos_com_subcampos>
 
 <kolo_vivo_atual>
 ${koloVivoResumo || "(vazio)"}
@@ -141,13 +161,29 @@ Decida o que vale guardar e devolva o JSON.`;
   }
 
   // Filtra campos inválidos e respeita a ausência de membro.
-  const koloVivo = parsed.kolo_vivo.filter((item) => {
-    if (item.camada === "camada1") {
-      if (!membro) return false;
-      return (CAMPOS_CAMADA1 as readonly string[]).includes(item.campo);
-    }
-    return (CAMPOS_CAMADA2 as readonly string[]).includes(item.campo);
-  });
+  const koloVivo: ItemKoloVivo[] = parsed.kolo_vivo
+    .filter((item) => {
+      if (item.camada === "camada1") {
+        if (!membro) return false;
+        return (CAMPOS_CAMADA1 as readonly string[]).includes(item.campo);
+      }
+      return (CAMPOS_CAMADA2 as readonly string[]).includes(item.campo);
+    })
+    .map((item) => {
+      // Valida o subcampo contra a definição do domínio (descarta se inválido).
+      const subs = SUBCAMPOS_DOMINIO[item.campo];
+      const subcampo =
+        subs && item.subcampo && subs.some((s) => s.key === item.subcampo)
+          ? item.subcampo
+          : null;
+      return {
+        camada: item.camada,
+        campo: item.campo,
+        subcampo,
+        texto: item.texto,
+        operacao: item.operacao,
+      };
+    });
 
   return {
     koloVivo,

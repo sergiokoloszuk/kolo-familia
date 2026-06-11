@@ -19,7 +19,7 @@ export {
   type MembroCampoToplevel,
   type MembroCampoExtras,
 } from "@/lib/kolo-vivo/campos";
-import type { SubCampo } from "@/lib/kolo-vivo/subcampos";
+import { SUBCAMPOS_DOMINIO, type SubCampo } from "@/lib/kolo-vivo/subcampos";
 
 export type { SubCampo };
 
@@ -84,23 +84,7 @@ export const DOMINIOS: DominioDef[] = [
     descricao: "O que come bem, o que recusa, como prefere comer.",
     placeholder:
       "Ex: aceita ~12 alimentos. Recusa texturas moles. Come melhor com colher e quando vira brincadeira.",
-    campos: [
-      {
-        key: "seletividade",
-        label: "Seletividade alimentar",
-        opcoes: ["Alta", "Média", "Baixa"],
-        placeholder: "Alta = come poucos alimentos · Média = seletivo, mas aceita variedade · Baixa = come bem",
-      },
-      { key: "aceita", label: "Aceita bem / preferidos", placeholder: "Ex: arroz, banana, pão, iogurte, frango desfiado" },
-      { key: "rejeita", label: "Rejeita ou recusa", placeholder: "Ex: folhas, carne em pedaço, comida nova" },
-      { key: "texturas_aceita", label: "Texturas que aceita", placeholder: "Ex: crocante, cremoso, macio" },
-      { key: "texturas_rejeita", label: "Texturas que rejeita", placeholder: "Ex: pastoso, fibroso, molhado" },
-      {
-        key: "dificuldades",
-        label: "Dificuldades na alimentação",
-        placeholder: "Ex: demora muito, distrai fácil, só come no prato dela",
-      },
-    ],
+    campos: SUBCAMPOS_DOMINIO.nutricional,
   },
   {
     key: "comunicacao",

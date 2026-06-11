@@ -8,6 +8,11 @@ import { respond, respondAsOutputType } from "@/lib/ia/engine";
 import { gerarSecoesPlanoMultiCall } from "@/lib/ia/plano";
 import { extrairAtualizacoes, type PropostaAtualizacao } from "@/lib/ia/atualizar";
 import { MEMBRO_CAMPOS_TOPLEVEL, membroCampoStorage } from "@/lib/kolo-vivo/campos";
+import {
+  subcamposDe,
+  parsearSubcampos,
+  serializarSubcampos,
+} from "@/lib/kolo-vivo/subcampos";
 import { idadeAnos, hojeLocalISO } from "@/lib/idade";
 import { requireActiveWrite } from "@/lib/auth/require-active-write";
 
@@ -441,6 +446,7 @@ const confirmarSchema = z.object({
       z.object({
         camada: z.enum(["camada1", "camada2"]),
         campo: z.string().min(1),
+        subcampo: z.string().trim().nullable().optional(),
         texto: z.string().trim().min(1),
         operacao: z.enum(["adicionar", "reescrever"]).default("adicionar"),
       }),
@@ -459,6 +465,31 @@ function appendFato(prev: string, fato: string): string {
   if (!p) return f;
   if (p.toLowerCase().includes(f.toLowerCase())) return p;
   return `${p}\n${f}`;
+}
+
+/**
+ * Novo texto de um campo, respeitando sub-campos estruturados. Domínios com
+ * sub-campos (ex.: nutricional) recebem o fato NO sub-campo certo (seletor
+ * substitui; demais anexam); domínios simples usam o anexo/reescrita normal.
+ */
+function aplicarTextoCampo(
+  campo: string,
+  prev: string,
+  it: { subcampo?: string | null; texto: string; operacao: "adicionar" | "reescrever" },
+): string {
+  const subs = subcamposDe(campo);
+  if (!subs) {
+    return it.operacao === "reescrever" ? it.texto : appendFato(prev, it.texto);
+  }
+  const valores = parsearSubcampos(subs, prev);
+  const def =
+    (it.subcampo && subs.find((s) => s.key === it.subcampo)) || subs[subs.length - 1];
+  if (def.opcoes) {
+    valores[def.key] = it.texto; // seletor: substitui pelo valor
+  } else {
+    valores[def.key] = appendFato(valores[def.key] ?? "", it.texto);
+  }
+  return serializarSubcampos(subs, valores);
 }
 
 export async function confirmarAtualizacao(
@@ -511,13 +542,19 @@ export async function confirmarAtualizacao(
         const onde = membroCampoStorage(it.campo);
         if (onde === "toplevel") {
           const prev = (toplevel[it.campo].texto as string) ?? "";
-          const novo = it.operacao === "reescrever" ? it.texto : appendFato(prev, it.texto);
-          toplevel[it.campo] = { ...toplevel[it.campo], texto: novo, atualizado_em: now };
+          toplevel[it.campo] = {
+            ...toplevel[it.campo],
+            texto: aplicarTextoCampo(it.campo, prev, it),
+            atualizado_em: now,
+          };
         } else if (onde === "extras") {
           const atualCampo = (extras[it.campo] as Record<string, unknown>) ?? {};
           const prev = (atualCampo.texto as string) ?? "";
-          const novo = it.operacao === "reescrever" ? it.texto : appendFato(prev, it.texto);
-          extras[it.campo] = { ...atualCampo, texto: novo, atualizado_em: now };
+          extras[it.campo] = {
+            ...atualCampo,
+            texto: aplicarTextoCampo(it.campo, prev, it),
+            atualizado_em: now,
+          };
         }
       }
 
