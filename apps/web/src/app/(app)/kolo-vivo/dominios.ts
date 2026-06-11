@@ -75,6 +75,7 @@ export const DOMINIOS: DominioDef[] = [
     descricao: "Como o corpo percebe sons, texturas, luz e movimento.",
     placeholder:
       "Ex: hipersensível a sons agudos e texturas grudentas. Pressão profunda (abraço apertado) acalma.",
+    campos: SUBCAMPOS_DOMINIO.sensorial,
   },
   {
     key: "nutricional",

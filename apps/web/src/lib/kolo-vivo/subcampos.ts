@@ -71,6 +71,21 @@ export const SUBCAMPOS_DOMINIO: Record<string, SubCampo[]> = {
       placeholder: "Ex: demora muito, distrai fácil, só come no prato dela",
     },
   ],
+  sensorial: [
+    {
+      key: "sensibilidade",
+      label: "Sensibilidade sensorial",
+      opcoes: ["Alta", "Média", "Baixa"],
+      placeholder: "O quanto o sensorial pesa no dia a dia (no geral).",
+    },
+    { key: "sons", label: "Reação a sons", placeholder: "Ex: cobre os ouvidos com barulho alto; gosta de música baixa" },
+    { key: "toques", label: "Reação a toques", placeholder: "Ex: não gosta de abraços; busca pressão profunda (apertado)" },
+    { key: "texturas", label: "Texturas (roupas, objetos)", placeholder: "Ex: evita etiquetas; prefere roupas macias" },
+    { key: "luz", label: "Luz", placeholder: "Ex: incomoda-se com luzes fortes" },
+    { key: "cheiros", label: "Cheiros", placeholder: "Ex: sensível a perfumes" },
+    { key: "movimento", label: "Movimento", placeholder: "Ex: precisa balançar; gosta de ventilador girando" },
+    { key: "outras", label: "Outras observações sensoriais", placeholder: "Qualquer outra coisa que você percebe" },
+  ],
 };
 
 /** Domínio tem sub-campos? Devolve a definição ou null. */

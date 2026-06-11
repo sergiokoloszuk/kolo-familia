@@ -229,13 +229,30 @@ export function DominioCard({
             value={value}
             placeholder={dominio.placeholder}
             onChange={(e) => setValue(e.target.value)}
-            onBlur={commit}
             onKeyDown={handleKey}
             disabled={pending}
             className="w-full resize-none whitespace-pre-wrap rounded-xl bg-kolo-lilas-bg-2/40 p-3 text-sm leading-relaxed text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-brand-purple/20 disabled:opacity-60"
           />
           <p className="text-xs text-muted-foreground">{dominio.descricao}</p>
           {error && <p className="text-xs text-destructive">{error}</p>}
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={commit}
+              disabled={pending}
+              className="rounded-full bg-brand-purple px-4 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-brand-purple-dark disabled:opacity-50"
+            >
+              {pending ? "Salvando…" : "Salvar"}
+            </button>
+            <button
+              type="button"
+              onClick={cancel}
+              disabled={pending}
+              className="text-xs text-muted-foreground hover:text-foreground"
+            >
+              Cancelar
+            </button>
+          </div>
         </div>
       ) : (
         <div className="flex flex-col items-start gap-2">
