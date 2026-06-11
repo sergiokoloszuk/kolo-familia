@@ -133,6 +133,7 @@ export const DOMINIOS: DominioDef[] = [
     descricao: "Como se relaciona com outras pessoas.",
     placeholder:
       "Ex: prefere adultos. Brinca lado a lado, não em interação. Conexão forte com uma priminha.",
+    campos: SUBCAMPOS_DOMINIO.socializacao,
   },
   {
     key: "motor",

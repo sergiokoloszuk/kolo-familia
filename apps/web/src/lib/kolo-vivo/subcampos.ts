@@ -180,6 +180,44 @@ export const SUBCAMPOS_DOMINIO: Record<string, SubCampo[]> = {
       placeholder: "o que ajuda (frases curtas, apoio visual, dar tempo) e qualquer outra coisa que você percebe",
     },
   ],
+  socializacao: [
+    {
+      key: "disposicao",
+      label: "Como é socializar pra ele(a)",
+      opcoes: ["Busca e curte", "Curte em doses", "Custa / cansa", "Evita"],
+    },
+    {
+      key: "interage",
+      label: "Interage com outras pessoas (pares)",
+      opcoes: ["Com facilidade", "Às vezes", "Raramente", "Quase não"],
+    },
+    {
+      key: "com_quem",
+      label: "Com quem flui melhor",
+      opcoes: ["Adultos", "Pares (mesma idade)", "Mais novos", "Indiferente"],
+    },
+    {
+      key: "divide",
+      label: "Divide e espera a vez",
+      opcoes: ["Sim", "Às vezes", "Custa"],
+    },
+    {
+      key: "sozinho",
+      label: "Sozinho ou acompanhado",
+      placeholder: "prefere ficar só (por quanto tempo) ou busca companhia?",
+    },
+    {
+      key: "iniciativa",
+      label: "Iniciativa e reciprocidade",
+      placeholder: "inicia ou espera/responde? interage junto ou fica lado a lado? mantém o vai-e-vem?",
+    },
+    {
+      key: "vinculos",
+      label: "Vínculos e conflitos",
+      placeholder: "tem amizades/pessoas de referência? como lida com dividir, perder, conflito?",
+    },
+    { key: "outras", label: "Outras observações", placeholder: "qualquer outra coisa que você percebe" },
+  ],
 };
 
 /** Domínio tem sub-campos? Devolve a definição ou null. */
