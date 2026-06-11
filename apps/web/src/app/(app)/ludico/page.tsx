@@ -50,10 +50,10 @@ const CARDS: Card[] = [
   },
   {
     titulo: "Meditação guiada",
-    desc: "Visualizações curtas com o avatar — pra acalmar, ou pra imaginar algo desejado acontecendo antes de viver de verdade.",
+    desc: "Escolha uma intenção (acalmar, ensaiar um momento, dormir…) e a Kolo escreve uma meditação curta pra ler em voz alta — no jeito dela.",
     icone: Wind,
-    tone: { bar: "bg-cat-emocao", chip: "bg-cat-emocao-soft text-cat-emocao" },
-    status: "em breve",
+    href: "/ludico/meditacao",
+    tone: { bar: "bg-cat-sono", chip: "bg-cat-sono-soft text-cat-sono" },
   },
   {
     titulo: "Timer lúdico",
