@@ -50,15 +50,6 @@ type TimelineEvento =
       escala: string | null;
     }
   | {
-      tipo: "relatorio";
-      data: string;
-      destinatario: string;
-      janela_inicio: string;
-      janela_fim: string;
-      id: string;
-      membro_nome: string | null;
-    }
-  | {
       tipo: "plano";
       data: string;
       id: string;
@@ -135,7 +126,6 @@ export default async function EvolucaoPage() {
   const [
     { data: diarios },
     { data: checkIns },
-    { data: relatorios },
     { count: padroesCount },
     { data: perfis },
     { data: planos },
@@ -154,14 +144,6 @@ export default async function EvolucaoPage() {
       .eq("family_account_id", familyId)
       .order("data", { ascending: false })
       .limit(100),
-    supabase
-      .from("relatorios_gerados")
-      .select(
-        "id, destinatario, janela_inicio, janela_fim, created_at, membros_atipicos(nome)",
-      )
-      .eq("family_account_id", familyId)
-      .order("created_at", { ascending: false })
-      .limit(30),
     supabase
       .from("ayla_padroes")
       .select("id", { count: "exact", head: true })
@@ -255,17 +237,6 @@ export default async function EvolucaoPage() {
     });
   }
 
-  for (const r of relatorios ?? []) {
-    eventos.push({
-      tipo: "relatorio",
-      data: r.created_at,
-      id: r.id,
-      destinatario: r.destinatario,
-      janela_inicio: r.janela_inicio,
-      janela_fim: r.janela_fim,
-      membro_nome: nomeFromRel(r.membros_atipicos),
-    });
-  }
 
   for (const p of planos ?? []) {
     eventos.push({
@@ -384,22 +355,6 @@ export default async function EvolucaoPage() {
         </div>
       )}
 
-      <div className="flex items-center justify-between gap-4 rounded-3xl border border-kolo-linha bg-white p-6">
-        <div>
-          <h3 className="font-heading text-base font-semibold text-foreground">
-            Relatórios pra terapeuta e escola
-          </h3>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Compile registros em PDF ou link vivo compartilhável.
-          </p>
-        </div>
-        <Link
-          href="/relatorios"
-          className="inline-flex items-center gap-1 text-sm font-semibold text-brand-purple underline-offset-4 hover:underline"
-        >
-          Abrir relatórios →
-        </Link>
-      </div>
     </div>
   );
 }
@@ -584,37 +539,6 @@ function EventoItem({ ev }: { ev: TimelineEvento }) {
             {ev.escala ? ESCALA_LABEL[ev.escala] ?? ev.escala : "sem marcação"}
           </span>
         </p>
-      </div>
-    );
-  }
-
-  if (ev.tipo === "relatorio") {
-    return (
-      <div className="flex items-start gap-3.5">
-        <span
-          aria-hidden
-          className="mt-[7px] inline-flex w-3.5 shrink-0 font-mono text-sm leading-none text-brand-purple"
-        >
-          ◇
-        </span>
-        <div className="flex flex-1 flex-col gap-1.5">
-          <p className="text-base leading-relaxed text-foreground">
-            Relatório pra{" "}
-            {ev.destinatario === "terapeuta" ? "terapeuta" : "escola"}
-            {ev.membro_nome && (
-              <span className="text-muted-foreground"> · sobre {ev.membro_nome}</span>
-            )}
-          </p>
-          <p className="text-xs text-muted-foreground">
-            Janela {ev.janela_inicio} → {ev.janela_fim}
-          </p>
-          <Link
-            href={`/relatorios/${ev.id}`}
-            className="mt-1 inline-flex w-fit text-xs font-semibold text-brand-purple underline-offset-4 hover:underline"
-          >
-            Abrir →
-          </Link>
-        </div>
       </div>
     );
   }
