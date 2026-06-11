@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { SkillRow } from "./router";
 import { idadeAnos } from "@/lib/idade";
-import type { Genero } from "@/lib/ayla/pronomes";
+import { descricaoCuidador, type Genero } from "@/lib/ayla/pronomes";
 import { resumirComposicao } from "@/lib/familia/composicao";
 
 // Campos jsonb top-level em perfil_vivo_membro (legados, mantidos)
@@ -70,6 +70,8 @@ export type ContextoSkillResposta = {
     genero: Genero;
     secoes: Partial<Record<KoloVivoFieldMembro, string>>;
   } | null;
+  /** Quem está falando (cuidador): nome + parentesco + gênero. */
+  cuidador: { nome: string; relacao: string; genero: Genero } | null;
   familia: Partial<Record<KoloVivoFieldFamilia, string>>;
   diariosRecentes: Array<{
     data: string;
@@ -138,6 +140,7 @@ export async function buildContext(
     checkinResult,
     boasPraticasResult,
     historicoResult,
+    profileResult,
   ] = await Promise.all([
     membroAtipicoId
       ? supabase
@@ -189,6 +192,11 @@ export async function buildContext(
           .order("created_at", { ascending: false })
           .limit(6)
       : Promise.resolve({ data: [] }),
+    supabase
+      .from("family_profiles")
+      .select("nome_mae, como_chamar, papel, papel_outro, genero_responsavel")
+      .eq("family_account_id", familyId)
+      .maybeSingle(),
   ]);
 
   const membroFoco = membroResult.data
@@ -208,6 +216,28 @@ export async function buildContext(
   const familia = extractFamiliaSections(
     familiaResult.data as Record<string, unknown> | null,
   );
+
+  const profile = profileResult.data as {
+    nome_mae?: string | null;
+    como_chamar?: string | null;
+    papel?: string | null;
+    papel_outro?: string | null;
+    genero_responsavel?: Genero;
+  } | null;
+  const cuidadorDesc = profile
+    ? descricaoCuidador({
+        papel: profile.papel ?? null,
+        papelOutro: profile.papel_outro ?? null,
+        genero: profile.genero_responsavel ?? null,
+      })
+    : null;
+  const cuidador = cuidadorDesc
+    ? {
+        nome: profile?.como_chamar?.trim() || profile?.nome_mae?.trim() || "responsável",
+        relacao: cuidadorDesc.relacao,
+        genero: cuidadorDesc.genero,
+      }
+    : null;
 
   const diariosRecentes = ((diariosResult.data ?? []) as DiarioRow[]).map((d) => ({
     data: d.data,
@@ -248,6 +278,7 @@ export async function buildContext(
 
   return {
     membroFoco,
+    cuidador,
     familia,
     diariosRecentes,
     ultimoCheckin,

@@ -42,6 +42,7 @@ export const VOZ_E_LIMITES = `# Voz do produto (PRD §6)
 - NÃO comparar com outras crianças ("o normal seria", "outras crianças com TEA").
 - NÃO usar palavras alarmistas (preocupante, grave, urgente) fora de contexto de risco real.
 - NÃO substitui profissionais de saúde. Quando o input pede diagnóstico ou conduta clínica, redirecionar explicitamente para profissional.
+- NÃO INVENTE DE QUEM É UM FATO. Se o contexto não diz claramente o dono de algo (ex.: quem tem o cachorro, de quem é a casa, quem faz tal coisa), NÃO atribua a uma pessoa específica — fale de forma neutra ("vocês têm um cachorro", "aí em casa") ou pergunte. Atribuir a alguém que o contexto não confirmou é invenção.
 - NUNCA use comida, brinquedo, tela ou qualquer interesse da criança como RECOMPENSA, prêmio, suborno ou "moeda de troca" por comportamento ("se você escovar os dentes, ganha X", "oferece Y se ela fizer Z"). Isso é lógica de reforço/condicionamento (estilo ABA) e NÃO é o método Kolo. Os alimentos e interesses que a família registrou servem pra ENTENDER a criança e CONECTAR (deixar o momento mais leve, familiar e gostoso) — jamais como prêmio condicionado a obedecer. Um alimento registrado como "novo aceito" é repertório alimentar, não recompensa; nunca o reaproveite como incentivo.
 
 # Limites duros
@@ -154,6 +155,19 @@ Mantenha a resposta concisa e útil — não exceda 400 palavras. Use markdown l
  */
 export function buildContextBlock(ctx: ContextoSkillResposta): string {
   const partes: string[] = [];
+
+  if (ctx.cuidador) {
+    const membroNome = ctx.membroFoco?.nome;
+    partes.push(
+      `<cuidador>
+Você está falando com ${ctx.cuidador.nome}${
+        ctx.cuidador.relacao
+          ? `, ${ctx.cuidador.relacao}${membroNome ? ` de ${membroNome}` : ""}`
+          : ""
+      }. O que ${ctx.cuidador.nome} conta em primeira pessoa ("eu tenho", "lá em casa") é sobre ela mesma. NÃO atribua um fato a outra pessoa (pai, mãe, avó…) a menos que o contexto diga explicitamente de quem é.
+</cuidador>`,
+    );
+  }
 
   if (ctx.membroFoco) {
     const pron = pronomesPara(ctx.membroFoco.genero);
