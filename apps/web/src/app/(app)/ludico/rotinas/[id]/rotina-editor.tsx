@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import {
   ArrowDown,
@@ -26,9 +26,11 @@ import {
   Shirt,
   ShoppingBag,
   Smartphone,
+  Sparkles,
   Sun,
   Trash2,
   Utensils,
+  Wand2,
   Waves,
   X,
   type LucideIcon,
@@ -40,11 +42,14 @@ import {
   adicionarTarefa,
   excluirRotina,
   excluirTarefa,
+  gerarCardsVisuais,
   renomearRotina,
   reordenarTarefas,
   resetarRotina,
   toggleTarefa,
 } from "../actions";
+
+type CardsStatus = "nenhum" | "gerando" | "pronto" | "erro";
 
 /** Ícones curados pros passos visuais. A chave é guardada em rotina_tarefas.icone. */
 const ICONES: Record<string, LucideIcon> = {
@@ -71,20 +76,41 @@ function IconeDe(k: string | null | undefined): LucideIcon {
   return (k && ICONES[k]) || Circle;
 }
 
-type Tarefa = { id: string; texto: string; icone: string | null; concluida: boolean };
+type Tarefa = {
+  id: string;
+  texto: string;
+  icone: string | null;
+  concluida: boolean;
+  nomeTematico: string | null;
+  imagemUrl: string | null;
+};
 
 export function RotinaEditor({
   rotinaId,
   nomeInicial,
   idade,
+  tema,
+  historia,
+  cardsStatus,
   tarefasIniciais,
 }: {
   rotinaId: string;
   nomeInicial: string;
   idade: number | null;
+  tema: string | null;
+  historia: string | null;
+  cardsStatus: CardsStatus;
   tarefasIniciais: Tarefa[];
 }) {
+  const router = useRouter();
   const visual = idade == null || idade < 13; // criança = cartões; 13+ = checklist
+
+  // Enquanto gera os cards em segundo plano, faz polling até virar pronto/erro.
+  useEffect(() => {
+    if (cardsStatus !== "gerando") return;
+    const t = setInterval(() => router.refresh(), 4000);
+    return () => clearInterval(t);
+  }, [cardsStatus, router]);
   const [nome, setNome] = useState(nomeInicial);
   const [tarefas, setTarefas] = useState<Tarefa[]>(tarefasIniciais);
   const [erro, setErro] = useState<string | null>(null);
@@ -125,7 +151,10 @@ export function RotinaEditor({
         setErro(r.error);
         return;
       }
-      setTarefas((ts) => [...ts, { id: r.tarefaId, texto, icone, concluida: false }]);
+      setTarefas((ts) => [
+        ...ts,
+        { id: r.tarefaId, texto, icone, concluida: false, nomeTematico: null, imagemUrl: null },
+      ]);
     });
   }
 
@@ -157,8 +186,22 @@ export function RotinaEditor({
         rotinaId={rotinaId}
       />
 
+      {cardsStatus === "gerando" && (
+        <div className="flex items-center gap-3 rounded-2xl border border-brand-purple/20 bg-kolo-lilas-bg-2/50 px-4 py-3 text-sm text-brand-purple-dark">
+          <Sparkles className="size-4 animate-pulse" aria-hidden />
+          Montando os cards ilustrados e a história… leva ~1-2 min, a tela atualiza sozinha.
+        </div>
+      )}
+      {cardsStatus === "erro" && (
+        <p className="rounded-2xl border border-amber-300/60 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          Algo falhou ao montar os cards. Dá pra tentar de novo abaixo.
+        </p>
+      )}
+
+      {historia && <HistoriaPanel historia={historia} />}
+
       {!visual && (
-        <p className="flex items-center gap-2 text-xs text-muted-foreground">
+        <p className="flex items-center gap-2 text-xs text-muted-foreground print:hidden">
           <Smartphone className="size-3.5" /> Dá pra abrir no celular dele(a) e ir marcando.
         </p>
       )}
@@ -170,6 +213,10 @@ export function RotinaEditor({
       )}
 
       <AddTarefa visual={visual} onAdd={adicionar} />
+
+      {visual && cardsStatus !== "gerando" && (
+        <GerarCards rotinaId={rotinaId} temaInicial={tema} jaTem={cardsStatus === "pronto"} />
+      )}
 
       <p className="text-xs text-muted-foreground">
         Sem nota e sem prêmio — marcar é só pra saber o que já passou. É previsibilidade
@@ -321,22 +368,42 @@ function ViewCartoes({
               <span className="text-[11px] font-bold uppercase tracking-[0.14em] text-muted-foreground">
                 {i + 1}º
               </span>
+              {t.imagemUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={t.imagemUrl}
+                  alt={t.texto}
+                  className={cn(
+                    "aspect-square w-full rounded-2xl object-cover",
+                    t.concluida && "opacity-50 grayscale",
+                  )}
+                />
+              ) : (
+                <span
+                  className={cn(
+                    "flex size-20 items-center justify-center rounded-2xl",
+                    t.concluida ? "bg-foreground/5 text-foreground/40" : "bg-brand-yellow/20 text-[#8B5A00]",
+                  )}
+                >
+                  <Icon className="size-10" strokeWidth={1.6} />
+                </span>
+              )}
               <span
                 className={cn(
-                  "flex size-20 items-center justify-center rounded-2xl",
-                  t.concluida ? "bg-foreground/5 text-foreground/40" : "bg-brand-yellow/20 text-[#8B5A00]",
-                )}
-              >
-                <Icon className="size-10" strokeWidth={1.6} />
-              </span>
-              <span
-                className={cn(
-                  "text-base font-medium leading-snug",
+                  "leading-snug",
+                  t.nomeTematico
+                    ? "text-base font-bold uppercase tracking-wide"
+                    : "text-base font-medium",
                   t.concluida ? "text-foreground/40 line-through" : "text-foreground",
                 )}
               >
-                {t.texto}
+                {t.nomeTematico ?? t.texto}
               </span>
+              {t.nomeTematico && (
+                <span className={cn("text-xs", t.concluida ? "text-foreground/30" : "text-muted-foreground")}>
+                  {t.texto}
+                </span>
+              )}
               <span
                 className={cn(
                   "flex size-7 items-center justify-center rounded-full border-2 transition-colors",
@@ -491,5 +558,97 @@ function Mini({
     >
       <Icon className="size-3.5" />
     </button>
+  );
+}
+
+function HistoriaPanel({ historia }: { historia: string }) {
+  const [aberto, setAberto] = useState(true);
+  return (
+    <div className="rounded-2xl border border-brand-yellow/40 bg-brand-yellow/[0.07] p-4">
+      <button
+        type="button"
+        onClick={() => setAberto((a) => !a)}
+        className="flex w-full items-center gap-2 text-left print:hidden"
+      >
+        <BookOpen className="size-4 text-[#8B5A00]" aria-hidden />
+        <span className="font-heading text-base font-medium text-foreground">A história da rotina</span>
+        <span className="ml-auto text-xs text-muted-foreground">{aberto ? "ocultar" : "ler"}</span>
+      </button>
+      {aberto && (
+        <p className="mt-3 whitespace-pre-wrap text-sm leading-relaxed text-foreground/90">
+          {historia}
+        </p>
+      )}
+    </div>
+  );
+}
+
+function GerarCards({
+  rotinaId,
+  temaInicial,
+  jaTem,
+}: {
+  rotinaId: string;
+  temaInicial: string | null;
+  jaTem: boolean;
+}) {
+  const router = useRouter();
+  const [tema, setTema] = useState(temaInicial ?? "");
+  const [erro, setErro] = useState<string | null>(null);
+  const [pending, start] = useTransition();
+
+  function gerar() {
+    const t = tema.trim();
+    if (!t || pending) return;
+    setErro(null);
+    start(async () => {
+      const r = await gerarCardsVisuais({ rotinaId, tema: t });
+      if (!r.ok) {
+        setErro(r.error);
+        return;
+      }
+      router.refresh();
+    });
+  }
+
+  return (
+    <div className="flex flex-col gap-3 rounded-2xl border border-brand-purple/15 bg-kolo-lilas-bg-2/40 p-4 print:hidden">
+      <div className="flex items-start gap-3">
+        <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-brand-yellow/25 text-[#8B5A00]">
+          <Wand2 className="size-5" aria-hidden />
+        </span>
+        <div className="flex-1">
+          <p className="font-heading text-base font-medium text-foreground">
+            {jaTem ? "Refazer os cards visuais" : "Gerar cards visuais"}
+          </p>
+          <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+            Escolha um tema — a Kolo escreve uma historinha e ilustra cada passo com um
+            personagem do tema (o mesmo em todos). Suas atividades e a ordem não mudam.
+          </p>
+          {erro && <p className="mt-2 text-sm text-destructive">{erro}</p>}
+          <div className="mt-3 flex flex-wrap gap-2">
+            <Input
+              value={tema}
+              onChange={(e) => setTema(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && gerar()}
+              placeholder="Tema (ex.: carros, dinossauros, espaço…)"
+              className="max-w-xs"
+              disabled={pending}
+            />
+            <Button type="button" onClick={gerar} disabled={pending || !tema.trim()}>
+              {pending ? (
+                <>
+                  <Sparkles className="size-4 animate-pulse" aria-hidden /> Iniciando…
+                </>
+              ) : (
+                <>
+                  <Wand2 className="size-4" aria-hidden /> {jaTem ? "Refazer" : "Gerar"}
+                </>
+              )}
+            </Button>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }

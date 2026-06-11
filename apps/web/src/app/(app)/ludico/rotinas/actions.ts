@@ -1,8 +1,11 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { after } from "next/server";
 import { z } from "zod";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createServiceRoleClient } from "@/lib/supabase/server";
+import { idadeAnos } from "@/lib/idade";
+import { gerarRoteiroRotina, ilustrarCards } from "@/lib/ludico/gerar";
 
 type Ok<T = object> = { ok: true } & T;
 type Fail = { ok: false; error: string };
@@ -264,6 +267,108 @@ export async function resetarRotina(input: { rotinaId: string }): Promise<Ok | F
       .eq("rotina_id", rotinaId);
     if (error) return { ok: false, error: error.message };
     revalidatePath(`/ludico/rotinas/${rotinaId}`);
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "Erro inesperado" };
+  }
+}
+
+// ---------- Gerador de cards visuais (tema + história + ilustrações) ----------
+
+const gerarSchema = z.object({
+  rotinaId: z.string().uuid(),
+  tema: z.string().trim().min(2, "Escolha um tema").max(60),
+});
+
+/**
+ * Veste a rotina num tema: a IA escreve a história + nomes temáticos e ilustra
+ * cada card (mascote consistente). Roda em segundo plano (após responder); a
+ * tela faz polling pelo cards_status. NÃO muda as atividades — usa as que existem.
+ */
+export async function gerarCardsVisuais(
+  input: z.infer<typeof gerarSchema>,
+): Promise<Ok | Fail> {
+  try {
+    const { rotinaId, tema } = gerarSchema.parse(input);
+    const { supabase, family } = await requireFamily();
+
+    const { data: rotina } = await supabase
+      .from("rotinas")
+      .select("id, nome, membros_atipicos(data_nascimento)")
+      .eq("id", rotinaId)
+      .eq("family_account_id", family.id)
+      .maybeSingle();
+    if (!rotina) return { ok: false, error: "Rotina não encontrada." };
+
+    const { data: tarefasData } = await supabase
+      .from("rotina_tarefas")
+      .select("id, texto, ordem")
+      .eq("rotina_id", rotinaId)
+      .order("ordem", { ascending: true });
+    const tarefas = tarefasData ?? [];
+    if (tarefas.length === 0)
+      return { ok: false, error: "Adicione os passos antes de gerar os cards." };
+
+    const rel = rotina.membros_atipicos as
+      | { data_nascimento: string | null }
+      | { data_nascimento: string | null }[]
+      | null;
+    const membro = rel ? (Array.isArray(rel) ? rel[0] ?? null : rel) : null;
+    const idade = idadeAnos(membro?.data_nascimento ?? null);
+
+    await supabase
+      .from("rotinas")
+      .update({ tema, cards_status: "gerando" })
+      .eq("id", rotinaId)
+      .eq("family_account_id", family.id);
+    revalidatePath(`/ludico/rotinas/${rotinaId}`);
+
+    const familyId = family.id;
+    const nomeRotina = rotina.nome as string;
+    const atividades = tarefas.map((t) => t.texto as string);
+    const tarefaIds = tarefas.map((t) => t.id as string);
+
+    after(async () => {
+      const svc = createServiceRoleClient();
+      try {
+        const roteiro = await gerarRoteiroRotina(
+          { tema, atividades, idade, nomeRotina },
+          { supabase: svc, family_account_id: familyId },
+        );
+        const { mascoteUrl, imagens } = await ilustrarCards(svc, {
+          familyAccountId: familyId,
+          tema,
+          mascoteDescricao: roteiro.mascote,
+          cards: roteiro.cards,
+        });
+        await Promise.all(
+          tarefaIds.map((id, i) => {
+            const card = roteiro.cards[i];
+            if (!card) return Promise.resolve();
+            return svc
+              .from("rotina_tarefas")
+              .update({
+                nome_tematico: card.nome_tematico,
+                cena: card.cena,
+                imagem_url: imagens[i] ?? null,
+              })
+              .eq("id", id);
+          }),
+        );
+        await svc
+          .from("rotinas")
+          .update({
+            historia: roteiro.historia,
+            mascote_url: mascoteUrl,
+            cards_status: "pronto",
+          })
+          .eq("id", rotinaId);
+      } catch (e) {
+        console.error("[gerarCardsVisuais]", e);
+        await svc.from("rotinas").update({ cards_status: "erro" }).eq("id", rotinaId);
+      }
+    });
+
     return { ok: true };
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : "Erro inesperado" };

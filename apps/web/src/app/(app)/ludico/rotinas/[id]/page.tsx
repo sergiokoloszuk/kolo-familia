@@ -6,6 +6,10 @@ import { capitalizarNome } from "@/lib/nome";
 import { idadeAnos } from "@/lib/idade";
 import { RotinaEditor } from "./rotina-editor";
 
+// A geração dos cards (história + N ilustrações) roda em segundo plano e pode
+// levar ~2 min. 300s = teto, igual às Histórias/Planos.
+export const maxDuration = 300;
+
 export default async function RotinaPage({
   params,
 }: {
@@ -16,7 +20,9 @@ export default async function RotinaPage({
 
   const { data: rotina } = await supabase
     .from("rotinas")
-    .select("id, nome, membro_atipico_id, membros_atipicos(nome, data_nascimento)")
+    .select(
+      "id, nome, tema, historia, cards_status, membro_atipico_id, membros_atipicos(nome, data_nascimento)",
+    )
     .eq("id", id)
     .eq("family_account_id", family!.id)
     .maybeSingle();
@@ -33,7 +39,7 @@ export default async function RotinaPage({
 
   const { data: tarefas } = await supabase
     .from("rotina_tarefas")
-    .select("id, texto, icone, concluida")
+    .select("id, texto, icone, concluida, nome_tematico, imagem_url")
     .eq("rotina_id", rotina.id)
     .order("ordem", { ascending: true });
 
@@ -54,14 +60,24 @@ export default async function RotinaPage({
       )}
 
       <RotinaEditor
+        key={(rotina.cards_status as string) ?? "nenhum"}
         rotinaId={rotina.id as string}
         nomeInicial={rotina.nome as string}
         idade={idade}
+        tema={(rotina.tema as string | null) ?? null}
+        historia={(rotina.historia as string | null) ?? null}
+        cardsStatus={((rotina.cards_status as string | null) ?? "nenhum") as
+          | "nenhum"
+          | "gerando"
+          | "pronto"
+          | "erro"}
         tarefasIniciais={(tarefas ?? []).map((t) => ({
           id: t.id as string,
           texto: t.texto as string,
           icone: (t.icone as string | null) ?? null,
           concluida: Boolean(t.concluida),
+          nomeTematico: (t.nome_tematico as string | null) ?? null,
+          imagemUrl: (t.imagem_url as string | null) ?? null,
         }))}
       />
     </div>

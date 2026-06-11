@@ -11,9 +11,20 @@ create table if not exists public.rotinas (
   membro_atipico_id uuid references public.membros_atipicos(id) on delete cascade,
   nome text not null,
   ordem int not null default 0,
+  -- Cards visuais (gerador): tema escolhido, história lúdica gerada, mascote
+  -- de referência (mantém o personagem consistente) e status da geração.
+  tema text,
+  historia text,
+  mascote_url text,
+  cards_status text not null default 'nenhum', -- nenhum | gerando | pronto | erro
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+-- Colunas idempotentes (caso a tabela já existisse de uma aplicação anterior).
+alter table public.rotinas add column if not exists tema text;
+alter table public.rotinas add column if not exists historia text;
+alter table public.rotinas add column if not exists mascote_url text;
+alter table public.rotinas add column if not exists cards_status text not null default 'nenhum';
 
 create index if not exists rotinas_family_idx
   on public.rotinas(family_account_id, ordem);
@@ -25,10 +36,18 @@ create table if not exists public.rotina_tarefas (
   rotina_id uuid not null references public.rotinas(id) on delete cascade,
   texto text not null,
   icone text, -- chave do ícone (curado) ou null
+  -- Cards visuais: nome temático (ex.: "Posto dos Campeões"), descrição da
+  -- cena pro ilustrador, e a imagem gerada do card.
+  nome_tematico text,
+  cena text,
+  imagem_url text,
   ordem int not null default 0,
   concluida boolean not null default false,
   created_at timestamptz not null default now()
 );
+alter table public.rotina_tarefas add column if not exists nome_tematico text;
+alter table public.rotina_tarefas add column if not exists cena text;
+alter table public.rotina_tarefas add column if not exists imagem_url text;
 
 create index if not exists rotina_tarefas_rotina_idx
   on public.rotina_tarefas(rotina_id, ordem);
