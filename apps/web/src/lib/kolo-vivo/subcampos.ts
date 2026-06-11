@@ -119,6 +119,7 @@ export const SUBCAMPOS_DOMINIO: Record<string, SubCampo[]> = {
       key: "entende",
       label: "Como demonstra que entende",
       placeholder: "segue pedidos simples, reage ao nome, precisa de apoio visual, entende mais do que fala",
+      mostrarSe: { campo: "forma", valores: ["Fala frases", "Fala palavras soltas"] },
     },
     // Tem alguma fala:
     {
@@ -139,6 +140,25 @@ export const SUBCAMPOS_DOMINIO: Record<string, SubCampo[]> = {
       label: "Conversa e argumentação",
       placeholder: "mantém o vai-e-vem? resolve problema/negocia/argumenta falando? ou fala bem mas trava nisso? frustra quando não é entendida?",
       mostrarSe: { campo: "forma", valores: ["Fala frases"] },
+    },
+    // Não-verbal:
+    {
+      key: "contexto",
+      label: "Entende o contexto",
+      placeholder: "entende a situação / o que vai acontecer pela rotina e pistas, mesmo sem palavras?",
+      mostrarSe: { campo: "forma", valores: ["Não-verbal"] },
+    },
+    {
+      key: "le_labios",
+      label: "Lê lábios / pistas visuais",
+      placeholder: "presta atenção no rosto e na boca? precisa te ver pra entender?",
+      mostrarSe: { campo: "forma", valores: ["Não-verbal"] },
+    },
+    {
+      key: "iniciativa",
+      label: "Mostra o que quer ou espera?",
+      opcoes: ["Mostra o que quer", "Espera oferecerem", "Varia"],
+      mostrarSe: { campo: "forma", valores: ["Não-verbal"] },
     },
     // Não-verbal (ou palavras soltas):
     {
