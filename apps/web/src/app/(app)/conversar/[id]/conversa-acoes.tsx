@@ -130,44 +130,8 @@ export function ConversaAcoes({
         </div>
       )}
 
-      {/* Plano completo — só aparece quando a Kolo OFERECEU na conversa
-          (marcador na resposta). O plano é o aprofundamento das ideias. */}
-      {planoOferecido && (
-        <div className="rounded-2xl border border-brand-purple/20 bg-kolo-lilas-bg-2/40 p-4">
-          <div className="flex items-start gap-3">
-            <span
-              aria-hidden
-              className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-brand-yellow/25 text-brand-purple"
-            >
-              <Sparkles className="size-5" />
-            </span>
-            <div className="flex-1">
-              <p className="font-heading text-base font-medium text-foreground">
-                Quer o plano completo?
-              </p>
-              <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-                Junto tudo num plano organizado — mais ideias, frases pra usar e o que
-                observar, personalizado pra sua família. Dá pra imprimir.
-              </p>
-              <Button type="button" onClick={handlePlano} disabled={pendingPlano} className="mt-3">
-                {pendingPlano ? (
-                  <>
-                    <RefreshCw className="size-4 animate-spin" aria-hidden />
-                    Montando o plano...
-                  </>
-                ) : (
-                  <>
-                    <Sparkles className="size-4" aria-hidden />
-                    Montar plano completo
-                  </>
-                )}
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Atualizar — IA propõe o que registrar; usuário confirma. */}
+      {/* 1º: guardar no Kolo Vivo (antes do plano, pra não esquecer).
+          IA propõe o que registrar; usuário confirma. */}
       {!proposta && (
         <div className="rounded-2xl border border-brand-purple/15 bg-kolo-lilas-bg-2/40 p-4">
           <div className="flex items-start gap-3">
@@ -348,6 +312,43 @@ export function ConversaAcoes({
               </div>
             </div>
           )}
+        </div>
+      )}
+
+      {/* 2º: o plano (aprofundamento). Vem depois do "guardar", pra a mãe não
+          ler o plano e esquecer de atualizar o Kolo Vivo. */}
+      {planoOferecido && (
+        <div className="rounded-2xl border border-brand-purple/20 bg-kolo-lilas-bg-2/40 p-4">
+          <div className="flex items-start gap-3">
+            <span
+              aria-hidden
+              className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-brand-yellow/25 text-brand-purple"
+            >
+              <Sparkles className="size-5" />
+            </span>
+            <div className="flex-1">
+              <p className="font-heading text-base font-medium text-foreground">
+                Montar o plano completo
+              </p>
+              <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+                Junto tudo num plano organizado — mais ideias, frases pra usar e o que
+                observar, personalizado pra sua família. Dá pra imprimir.
+              </p>
+              <Button type="button" onClick={handlePlano} disabled={pendingPlano} className="mt-3">
+                {pendingPlano ? (
+                  <>
+                    <RefreshCw className="size-4 animate-spin" aria-hidden />
+                    Montando o plano...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="size-4" aria-hidden />
+                    Montar plano completo
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
         </div>
       )}
     </div>
