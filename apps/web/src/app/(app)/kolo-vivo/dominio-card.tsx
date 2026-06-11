@@ -49,8 +49,8 @@ const BAR: Record<DominioTone, string> = {
 // topo): amarelo Kolo nos que já têm conteúdo (destaque), cinza apagado nos
 // que faltam preencher (recuam).
 const ICON_BY_STATUS: Record<DominioStatus, string> = {
-  vivo: "bg-brand-yellow/30 text-[#8B5A00]",
-  perceber: "bg-brand-yellow/20 text-[#8B5A00]",
+  vivo: "bg-brand-yellow text-[#7a4f00]",
+  perceber: "bg-brand-yellow/45 text-[#7a4f00]",
   comecar: "bg-foreground/[0.05] text-muted-foreground/50",
 };
 const ICONE: Record<DominioKey, LucideIcon> = {
