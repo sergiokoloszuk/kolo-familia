@@ -187,13 +187,13 @@ export function RotinaEditor({
       />
 
       {cardsStatus === "gerando" && (
-        <div className="flex items-center gap-3 rounded-2xl border border-brand-purple/20 bg-kolo-lilas-bg-2/50 px-4 py-3 text-sm text-brand-purple-dark">
+        <div className="flex items-center gap-3 rounded-2xl border border-brand-purple/20 bg-kolo-lilas-bg-2/50 px-4 py-3 text-sm text-brand-purple-dark print:hidden">
           <Sparkles className="size-4 animate-pulse" aria-hidden />
           Montando os cards ilustrados e a história… leva ~1-2 min, a tela atualiza sozinha.
         </div>
       )}
       {cardsStatus === "erro" && (
-        <p className="rounded-2xl border border-amber-300/60 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+        <p className="rounded-2xl border border-amber-300/60 bg-amber-50 px-4 py-3 text-sm text-amber-800 print:hidden">
           Algo falhou ao montar os cards. Dá pra tentar de novo abaixo.
         </p>
       )}
@@ -218,7 +218,7 @@ export function RotinaEditor({
         <GerarCards rotinaId={rotinaId} temaInicial={tema} jaTem={cardsStatus === "pronto"} />
       )}
 
-      <p className="text-xs text-muted-foreground">
+      <p className="text-xs text-muted-foreground print:hidden">
         Sem nota e sem prêmio — marcar é só pra saber o que já passou. É previsibilidade
         e autonomia.
       </p>
@@ -350,11 +350,11 @@ function ViewCartoes({
 }) {
   if (tarefas.length === 0) return <Vazio />;
   return (
-    <ol className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+    <ol className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 print:grid-cols-3 print:gap-2">
       {tarefas.map((t, i) => {
         const Icon = IconeDe(t.icone);
         return (
-          <li key={t.id} className="group relative">
+          <li key={t.id} className="group relative print:break-inside-avoid">
             <button
               type="button"
               onClick={() => onToggle(t.id)}
