@@ -36,8 +36,18 @@ const irmaoSchema = z.object({
   brinca_junto: z.enum(["sim", "asvezes", "nao"], { message: "Brincam juntos?" }),
 });
 
+const QUEM_MORA = [
+  "Eu e o outro pai/mãe (juntos)",
+  "Só eu",
+  "Eu e avós/familiares",
+  "Pais separados (revezam)",
+  "Outro",
+] as const;
+
 const schema = z
   .object({
+    quem_mora: z.array(z.string()).default([]),
+    quem_mora_outro: z.string().trim().optional(),
     tem_irmaos: z.enum(["sim", "nao"], { message: "Responda se há outras crianças" }),
     irmaos: z.array(irmaoSchema),
     observacao: z.string().trim().optional(),
@@ -50,6 +60,8 @@ const schema = z
 type FormValues = z.infer<typeof schema>;
 
 export type Tela3Initial = {
+  quem_mora: string[];
+  quem_mora_outro: string;
   irmaos: Array<{ nome: string; data_nascimento: string; brinca_junto: string }>;
   observacao: string;
 };
@@ -76,6 +88,8 @@ export function Tela3Contexto({
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
+      quem_mora: initial.quem_mora ?? [],
+      quem_mora_outro: initial.quem_mora_outro ?? "",
       tem_irmaos: initial.irmaos.length > 0 ? "sim" : undefined,
       irmaos: initial.irmaos.map((i) => ({
         nome: i.nome,
@@ -88,6 +102,7 @@ export function Tela3Contexto({
 
   const { fields, append, remove } = useFieldArray({ control, name: "irmaos" });
   const temIrmaos = watch("tem_irmaos");
+  const quemMora = watch("quem_mora");
 
   // Ao escolher "Sim" sem nenhuma criança ainda, abre a primeira.
   function escolherTem(value: "sim" | "nao", onChange: (v: string) => void) {
@@ -103,6 +118,48 @@ export function Tela3Contexto({
             {errors.tem_irmaos.message}
           </div>
         )}
+
+        <div className="flex flex-col gap-2">
+          <Label>Quem mora na casa hoje? (opcional)</Label>
+          <Controller
+            name="quem_mora"
+            control={control}
+            render={({ field }) => (
+              <ChipGroup label="Quem mora na casa">
+                {QUEM_MORA.map((op) => {
+                  const sel = (field.value ?? []).includes(op);
+                  return (
+                    <Chip
+                      key={op}
+                      selected={sel}
+                      disabled={pending}
+                      onClick={() =>
+                        field.onChange(
+                          sel
+                            ? (field.value ?? []).filter((v: string) => v !== op)
+                            : [...(field.value ?? []), op],
+                        )
+                      }
+                    >
+                      {op}
+                    </Chip>
+                  );
+                })}
+              </ChipGroup>
+            )}
+          />
+          {(quemMora ?? []).includes("Outro") && (
+            <Input
+              placeholder="Conte como é o arranjo da casa"
+              disabled={pending}
+              {...register("quem_mora_outro")}
+            />
+          )}
+          <p className="text-xs text-muted-foreground">
+            Ajuda minhas ideias a caberem na sua casa real — quem está no dia a dia
+            muda o que faz sentido. Pode marcar mais de um, ou pular.
+          </p>
+        </div>
 
         <div className="flex flex-col gap-2">
           <Label>Tem outras crianças morando com vocês?</Label>

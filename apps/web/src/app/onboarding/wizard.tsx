@@ -41,6 +41,8 @@ export type InitialState = {
   perfilFamilia: {
     composicao: {
       texto?: string;
+      quem_mora?: string[];
+      quem_mora_outro?: string;
       irmaos?: Array<{ nome: string; data_nascimento: string; brinca_junto: string }>;
     } | null;
     rotina: { texto?: string } | null;
@@ -250,6 +252,8 @@ export function OnboardingWizard({ initial }: { initial: InitialState }) {
           {step === 3 && (
             <Tela3Contexto
               initial={{
+                quem_mora: state.perfilFamilia?.composicao?.quem_mora ?? [],
+                quem_mora_outro: state.perfilFamilia?.composicao?.quem_mora_outro ?? "",
                 irmaos: state.perfilFamilia?.composicao?.irmaos ?? [],
                 observacao: state.perfilFamilia?.composicao?.texto ?? "",
               }}
@@ -273,7 +277,12 @@ export function OnboardingWizard({ initial }: { initial: InitialState }) {
                       ...s,
                       perfilFamilia: {
                         ...s.perfilFamilia,
-                        composicao: { texto: values.observacao, irmaos },
+                        composicao: {
+                          texto: values.observacao,
+                          quem_mora: values.quem_mora,
+                          quem_mora_outro: values.quem_mora_outro,
+                          irmaos,
+                        },
                         rotina: s.perfilFamilia?.rotina ?? null,
                         recursos: s.perfilFamilia?.recursos ?? null,
                         dinamica: s.perfilFamilia?.dinamica ?? null,

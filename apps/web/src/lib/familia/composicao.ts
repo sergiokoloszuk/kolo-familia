@@ -12,8 +12,23 @@ const BRINCA: Record<string, string> = {
 
 export function resumirComposicao(valor: unknown): string {
   if (!valor || typeof valor !== "object") return "";
-  const obj = valor as { texto?: unknown; irmaos?: unknown };
+  const obj = valor as {
+    texto?: unknown;
+    irmaos?: unknown;
+    quem_mora?: unknown;
+    quem_mora_outro?: unknown;
+  };
   const partes: string[] = [];
+
+  // Quem mora na casa (estrutura do lar) — vem primeiro, é o que mais muda as sugestões.
+  const quemMora = Array.isArray(obj.quem_mora)
+    ? (obj.quem_mora as unknown[]).filter((v): v is string => typeof v === "string")
+    : [];
+  const quemMoraOutro =
+    typeof obj.quem_mora_outro === "string" ? obj.quem_mora_outro.trim() : "";
+  const quemMoraTudo = [...quemMora, quemMoraOutro].filter(Boolean);
+  if (quemMoraTudo.length > 0) partes.push(`Quem mora na casa: ${quemMoraTudo.join("; ")}`);
+
   if (typeof obj.texto === "string" && obj.texto.trim()) partes.push(obj.texto.trim());
   if (Array.isArray(obj.irmaos) && obj.irmaos.length > 0) {
     const lista = (obj.irmaos as Array<Record<string, unknown>>)

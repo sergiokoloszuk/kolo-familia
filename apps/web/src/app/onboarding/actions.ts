@@ -307,6 +307,8 @@ export async function removeMembro(membroId: string) {
 // ============================================================
 
 const tela3Schema = z.object({
+  quem_mora: z.array(z.string().trim().min(1)).max(8).default([]),
+  quem_mora_outro: z.string().trim().max(200).optional(),
   tem_irmaos: z.enum(["sim", "nao"]),
   irmaos: z
     .array(
@@ -339,12 +341,19 @@ export async function saveTela3(raw: Tela3Input) {
   // nota livre opcional dentro de composicao. rotina/recursos/dinamica ficam
   // pra detalhamento futuro — omitidos no upsert pra preservar o que já houver.
   const composicao: Record<string, unknown> = { irmaos };
+  if (data.quem_mora.length > 0) composicao.quem_mora = data.quem_mora;
+  if (data.quem_mora_outro) composicao.quem_mora_outro = data.quem_mora_outro;
   if (data.observacao) composicao.texto = data.observacao;
 
+  const temAlgo =
+    irmaos.length > 0 ||
+    data.quem_mora.length > 0 ||
+    Boolean(data.quem_mora_outro) ||
+    Boolean(data.observacao);
   const { error } = await supabase.from("perfil_vivo_familia").upsert({
     family_account_id: family.id,
     composicao,
-    completude_pct: irmaos.length > 0 || data.observacao ? 50 : 0,
+    completude_pct: temAlgo ? 50 : 0,
   });
   if (error) throw new Error(`Erro ao salvar contexto: ${error.message}`);
 
