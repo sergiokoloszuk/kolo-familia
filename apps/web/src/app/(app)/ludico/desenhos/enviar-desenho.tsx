@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { ImagePlus, Sparkles, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -18,15 +18,33 @@ export function EnviarDesenho({ membros }: { membros: Array<{ id: string; nome: 
 
   function escolher(f: File | null) {
     setErro(null);
-    if (preview) URL.revokeObjectURL(preview);
-    if (!f) {
-      setFile(null);
-      setPreview(null);
-      return;
-    }
+    setPreview((prev) => {
+      if (prev) URL.revokeObjectURL(prev);
+      return f ? URL.createObjectURL(f) : null;
+    });
     setFile(f);
-    setPreview(URL.createObjectURL(f));
   }
+
+  // Colar imagem (Ctrl+V / Cmd+V) — pega a primeira imagem da área de
+  // transferência (print, foto copiada, etc.) e usa como o desenho.
+  useEffect(() => {
+    function onPaste(e: ClipboardEvent) {
+      const items = e.clipboardData?.items;
+      if (!items) return;
+      for (const it of items) {
+        if (it.type.startsWith("image/")) {
+          const f = it.getAsFile();
+          if (f) {
+            escolher(f);
+            e.preventDefault();
+          }
+          break;
+        }
+      }
+    }
+    document.addEventListener("paste", onPaste);
+    return () => document.removeEventListener("paste", onPaste);
+  }, []);
 
   function enviar() {
     if (!file || pending) return;
@@ -78,6 +96,7 @@ export function EnviarDesenho({ membros }: { membros: Array<{ id: string; nome: 
         >
           <ImagePlus className="size-8" aria-hidden />
           <span className="text-sm font-medium">Tirar foto ou escolher o desenho</span>
+          <span className="text-xs text-muted-foreground/70">ou cole uma imagem (Ctrl+V)</span>
         </button>
       )}
 
