@@ -57,10 +57,10 @@ const CARDS: Card[] = [
   },
   {
     titulo: "Timer lúdico",
-    desc: "O tempo vira história: o avatar se prepara, entra na piscina e nada até o fim da raia — e ali se passaram 10 minutos.",
+    desc: "O tempo vira uma jornada: o personagem avança até o destino e a criança sabe, desde o início, como vai ser o fim e o que vem depois.",
     icone: Timer,
+    href: "/ludico/timer",
     tone: { bar: "bg-cat-rotina", chip: "bg-cat-rotina-soft text-cat-rotina" },
-    status: "em breve",
   },
 ];
 
