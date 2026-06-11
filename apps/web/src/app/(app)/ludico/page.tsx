@@ -3,6 +3,7 @@ import {
   ArrowRight,
   BookOpen,
   ListChecks,
+  Palette,
   Timer,
   Wind,
   type LucideIcon,
@@ -39,6 +40,13 @@ const CARDS: Card[] = [
     icone: ListChecks,
     href: "/ludico/rotinas",
     tone: { bar: "bg-cat-foco", chip: "bg-cat-foco-soft text-cat-foco" },
+  },
+  {
+    titulo: "O que o desenho conta?",
+    desc: "Envie a foto de um desenho e receba uma leitura cuidadosa (sem rótulos) — o que aparece, possíveis leituras e perguntas pra explorar. Fica guardado com a data.",
+    icone: Palette,
+    href: "/ludico/desenhos",
+    tone: { bar: "bg-cat-emocao", chip: "bg-cat-emocao-soft text-cat-emocao" },
   },
   {
     titulo: "Meditação guiada",
