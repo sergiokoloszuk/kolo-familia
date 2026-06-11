@@ -157,13 +157,6 @@ export function RespostaStreamer({
         </div>
       )}
 
-      {/* Quando a Kolo oferece o plano: guardar no Kolo Vivo + montar plano
-          aparecem ACIMA da caixa — viram o próximo passo óbvio (a pessoa toca
-          o botão, sem precisar digitar "sim"). Fora da oferta, conversa limpa. */}
-      {planoOferecido && temResposta && !streaming && (
-        <ConversaAcoes conversaId={conversaId} planoOferecido={planoOferecido} />
-      )}
-
       {/* Caixa de resposta — logo após a conversa, nunca cortada/empurrada. */}
       <form
         onSubmit={(e) => {
@@ -187,6 +180,13 @@ export function RespostaStreamer({
           </Button>
         </div>
       </form>
+
+      {/* Abaixo da caixa: "Guardar no Kolo Vivo" SEMPRE disponível (a mãe pode
+          guardar info a qualquer momento) + "Montar plano" só quando a Kolo
+          ofereceu. */}
+      {temResposta && !streaming && (
+        <ConversaAcoes conversaId={conversaId} planoOferecido={planoOferecido} />
+      )}
     </div>
   );
 }
