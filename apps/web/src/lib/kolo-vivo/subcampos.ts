@@ -86,6 +86,7 @@ export const SUBCAMPOS_DOMINIO: Record<string, SubCampo[]> = {
       label: "Dificuldades na alimentação",
       placeholder: "Ex: demora muito, distrai fácil, só come no prato dela",
     },
+    { key: "outras", label: "Outras observações", placeholder: "qualquer outra coisa que você percebe" },
   ],
   sensorial: [
     {
@@ -173,7 +174,11 @@ export const SUBCAMPOS_DOMINIO: Record<string, SubCampo[]> = {
       placeholder: "usa pranchas, PECS, app de comunicação?",
       mostrarSe: { campo: "forma", valores: ["Não-verbal", "Fala palavras soltas"] },
     },
-    { key: "ajuda", label: "O que ajuda a comunicação", placeholder: "frases curtas, apoio visual, dar tempo pra responder" },
+    {
+      key: "outras",
+      label: "Outras observações",
+      placeholder: "o que ajuda (frases curtas, apoio visual, dar tempo) e qualquer outra coisa que você percebe",
+    },
   ],
 };
 
