@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ChevronLeft } from "lucide-react";
 import { capitalizarNome } from "@/lib/nome";
+import { idadeAnos } from "@/lib/idade";
 import { loadFamilyContext } from "@/lib/auth/require-user";
 import { PlanoView, type PlanoSecaoView } from "./plano-view";
 import { PlanoMontando } from "./plano-poller";
@@ -20,7 +21,7 @@ export default async function PlanoPage({
   const { data: plano } = await supabase
     .from("planos")
     .select(
-      "id, titulo, tema, secoes, resultado, resultado_nota, created_at, membros_atipicos(nome)",
+      "id, titulo, tema, secoes, resultado, resultado_nota, created_at, membros_atipicos(nome, data_nascimento)",
     )
     .eq("id", id)
     .eq("family_account_id", family!.id)
@@ -29,11 +30,13 @@ export default async function PlanoPage({
   if (!plano) notFound();
 
   const rel = plano.membros_atipicos as
-    | { nome: string }
-    | { nome: string }[]
+    | { nome: string; data_nascimento: string | null }
+    | { nome: string; data_nascimento: string | null }[]
     | null;
-  const crianca = rel ? (Array.isArray(rel) ? rel[0]?.nome ?? null : rel.nome) : null;
+  const membroRow = rel ? (Array.isArray(rel) ? rel[0] ?? null : rel) : null;
+  const crianca = membroRow?.nome ?? null;
   const nomeCrianca = crianca ? capitalizarNome(crianca) : null;
+  const idade = idadeAnos(membroRow?.data_nascimento ?? null);
   const secoes = (plano.secoes as PlanoSecaoView[] | null) ?? [];
 
   // Ainda gerando em segundo plano (plano vazio) → tela "montando…" que faz polling.
@@ -65,6 +68,7 @@ export default async function PlanoPage({
       planoId={plano.id as string}
       titulo={plano.titulo as string}
       crianca={crianca}
+      idade={idade}
       secoes={secoes}
       resultado={
         (plano.resultado as

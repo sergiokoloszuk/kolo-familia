@@ -28,10 +28,18 @@ const LABEL: Record<string, string> = {
   observar: "O que observar",
 };
 
+/** Rótulo da seção, adaptado à idade: "Brincadeiras" só faz sentido pra
+ *  criança — adolescente/adulto vê "Lazer e interesses". */
+function labelDe(tipo: string, idade: number | null): string | undefined {
+  if (tipo === "brincadeiras" && idade != null && idade >= 13) return "Lazer e interesses";
+  return LABEL[tipo];
+}
+
 export function PlanoView({
   planoId,
   titulo,
   crianca,
+  idade,
   secoes,
   resultado,
   resultadoNota,
@@ -39,6 +47,7 @@ export function PlanoView({
   planoId: string;
   titulo: string;
   crianca: string | null;
+  idade: number | null;
   secoes: PlanoSecaoView[];
   resultado: "funcionou" | "parcial" | "nao_funcionou" | "nao_testou" | null;
   resultadoNota: string | null;
@@ -81,7 +90,7 @@ export function PlanoView({
           </Aba>
           {tipos.map((t) => (
             <Aba key={t} ativo={filtro === t} onClick={() => setFiltro(t)}>
-              {LABEL[t] ?? t}
+              {labelDe(t, idade) ?? t}
             </Aba>
           ))}
         </div>
@@ -91,7 +100,7 @@ export function PlanoView({
         {visiveis.map((s, i) => (
           <section key={`${s.tipo}-${i}`}>
             <h2 className="font-heading text-xl text-brand-purple md:text-2xl">
-              {s.titulo || LABEL[s.tipo] || "Seção"}
+              {labelDe(s.tipo, idade) || s.titulo || "Seção"}
             </h2>
             <RespostaMarkdown
               texto={s.conteudo_markdown}
