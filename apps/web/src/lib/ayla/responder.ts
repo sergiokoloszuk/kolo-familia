@@ -110,8 +110,17 @@ export async function gerarRespostaAyla(
   }
   if (params.nomeMembro) {
     linhas.push(
-      `A criança em foco é ${params.nomeMembro}${params.idadeMembro != null ? `, ${params.idadeMembro} anos` : ""}${params.perfilMembro ? `, perfil ${params.perfilMembro}` : ""}.`,
+      `Em foco: ${params.nomeMembro}${params.idadeMembro != null ? `, ${params.idadeMembro} anos` : ""}${params.perfilMembro ? `, perfil ${params.perfilMembro}` : ""}.`,
     );
+    if (params.idadeMembro != null && params.idadeMembro >= 18) {
+      linhas.push(
+        `IMPORTANTE: ${params.nomeMembro} é ADULTO(a) (${params.idadeMembro} anos). NUNCA chame de "criança" nem use diminutivos infantis — use o nome ou "seu filho(a)", com linguagem adequada a um adulto.`,
+      );
+    } else if (params.idadeMembro != null && params.idadeMembro >= 13) {
+      linhas.push(
+        `${params.nomeMembro} é ADOLESCENTE (${params.idadeMembro} anos) — evite "criança/criancinha"; use o nome.`,
+      );
+    }
     const p = pronomesPara(params.generoMembro);
     if (p.generoDefinido) {
       linhas.push(

@@ -35,7 +35,8 @@ export const VOZ_E_LIMITES = `# Voz do produto (PRD §6)
 
 - HIPÓTESES, NÃO CAUSAS AFIRMADAS. Você abre possibilidades para o adulto responsável observar — nunca afirma o que está acontecendo. Quem cuida conhece a criança melhor que ninguém. ERRADO: "isso é por causa do acúmulo de transições". CERTO: "pode ser acúmulo. Pode ser temperatura. Pode ser barulho. Vale observar com calma".
 - Tom: amiga experiente, não terapeuta. Direta, humana, afetuosa. Sem performar empatia.
-- CONCORDÂNCIA DE GÊNERO: trate a criança no gênero do campo \`genero\` do contexto (masculino → o/ele/dele; feminino → a/ela/dela). Se "não informado", chame pelo nome e evite ele/ela. Nunca troque o gênero no meio da resposta.
+- CONCORDÂNCIA DE GÊNERO: trate a pessoa em foco no gênero do campo \`genero\` do contexto (masculino → o/ele/dele; feminino → a/ela/dela). Se "não informado", chame pelo nome e evite ele/ela. Nunca troque o gênero no meio da resposta.
+- IDADE / TRATAMENTO: a pessoa em foco pode ser CRIANÇA, ADOLESCENTE ou ADULTO — confira a idade no contexto (campo \`tratamento\`). NUNCA chame de "criança", "criancinha" ou use diminutivos infantis com quem é adolescente ou adulto. Pra adolescentes e adultos, use o NOME e linguagem/exemplos adequados à idade. "Filho(a)" é sempre ok (é o vínculo), mas "a criança" só pra crianças de fato.
 - NÃO citar fontes da metodologia (REAC, Joe Dispenza, PNL, psicologia positiva, etc.).
 - NÃO usar termos clínicos prescritivos: diagnóstico, terapia, tratamento, cura, prognóstico.
 - NÃO comparar com outras crianças ("o normal seria", "outras crianças com TEA").
@@ -159,12 +160,23 @@ export function buildContextBlock(ctx: ContextoSkillResposta): string {
     const generoLinha = pron.generoDefinido
       ? `genero: ${ctx.membroFoco.genero} (trate como "${pron.sujeito}/${pron.possessivo}", artigo "${pron.artigo}")`
       : `genero: não informado (use o nome, evite ele/ela)`;
+    const idade = ctx.membroFoco.idade;
+    const nome = ctx.membroFoco.nome;
+    const tratamentoLinha =
+      idade == null
+        ? `tratamento: refira-se pelo nome (${nome})`
+        : idade >= 18
+          ? `tratamento: ${nome} é ADULTO(a) (${idade} anos) — refira-se pelo nome ou "seu filho(a)". NUNCA "criança/criancinha" nem diminutivos infantis. Exemplos e linguagem adequados a um adulto.`
+          : idade >= 13
+            ? `tratamento: ${nome} é ADOLESCENTE (${idade} anos) — use o nome; evite "criança/criancinha". Linguagem adequada à idade.`
+            : `tratamento: ${nome} é criança (${idade} anos).`;
     partes.push(
       `<membro_atipico>
-nome: ${ctx.membroFoco.nome}
+nome: ${nome}
 idade: ${ctx.membroFoco.idade} anos
 perfil: ${ctx.membroFoco.perfil}
 ${generoLinha}
+${tratamentoLinha}
 ${Object.entries(ctx.membroFoco.secoes)
   .filter(([, v]) => v && v.trim())
   .map(([k, v]) => `${k}: ${v}`)
