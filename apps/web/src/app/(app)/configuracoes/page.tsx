@@ -138,12 +138,6 @@ export default async function ConfiguracoesPage() {
           descricao="Quem cuida do(s) filho(s) atípico(s) com você — pai, padrasto, avós, babá, professora, terapeuta."
         />
         <SubLink
-          href="/configuracoes/avatar"
-          icon={Sparkles}
-          titulo="Avatar dos membros"
-          descricao="Configure o avatar canônico (cartoon/aquarela) usado nas brincadeiras, atividades e histórias sociais."
-        />
-        <SubLink
           href="/configuracoes/regras"
           icon={Bell}
           titulo="Alertas e adaptações"

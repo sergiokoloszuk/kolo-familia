@@ -4,6 +4,7 @@ import {
   BookOpen,
   ListChecks,
   Palette,
+  Smile,
   Timer,
   Wind,
   type LucideIcon,
@@ -27,6 +28,13 @@ type Card = {
 };
 
 const CARDS: Card[] = [
+  {
+    titulo: "Avatar",
+    desc: "Crie o avatar ilustrado de cada um — o personagem usado nas Histórias, nas Rotinas e nas ilustrações.",
+    icone: Smile,
+    href: "/configuracoes/avatar",
+    tone: { bar: "bg-cat-social", chip: "bg-cat-social-soft text-cat-social" },
+  },
   {
     titulo: "Histórias",
     desc: "Uma história ilustrada com o avatar pra antecipar um momento, ensaiar uma situação ou celebrar uma conquista.",
