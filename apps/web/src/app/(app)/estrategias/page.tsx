@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { Eyebrow } from "@/components/brand/eyebrow";
 import { loadFamilyContext } from "@/lib/auth/require-user";
+import { capitalizarNome } from "@/lib/nome";
 import { cn } from "@/lib/utils";
 import { ConversarForm } from "../conversar/conversar-form";
 import { ConversaItem } from "./conversa-item";
@@ -109,24 +110,67 @@ export default async function EstrategiasPage({
 
   const temTipos = (tipos ?? []).length > 0;
   const temConversas = (conversas ?? []).length > 0;
+  const primeiroNome = (membros ?? [])[0]?.nome
+    ? capitalizarNome((membros ?? [])[0].nome as string)
+    : null;
 
   return (
     <div className="flex flex-col gap-12">
-      <header>
+      <header className="max-w-2xl">
         <Eyebrow>Estratégias</Eyebrow>
         <h1 className="mt-1 font-heading text-3xl text-foreground md:text-4xl">
-          Conta o que aconteceu.{" "}
-          <em className="not-italic text-brand-purple">
-            Vamos pensar nisso juntos
-          </em>
-          .
+          Conte o que tá difícil —{" "}
+          <em className="not-italic text-brand-purple">eu te ajudo a achar um caminho</em>.
         </h1>
-        <p className="mt-3 max-w-2xl text-sm leading-relaxed text-muted-foreground">
-          Descreva uma situação — uma crise, uma dúvida, um perrengue do dia — e eu
-          te devolvo ideias práticas e personalizadas pra tentar. Pode ser sobre
-          foco, sono, socialização, alimentação… o que estiver mais desafiador. Se
-          preferir um formato específico (uma brincadeira, uma frase pronta), tem as
-          opções mais abaixo.
+        <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+          Me fala um desafio do dia a dia, do jeito que ele acontece aí na sua casa.
+          Não precisa caprichar no texto — quanto mais você me der do quadro real,
+          mais certeira eu fico. Ajuda bastante incluir:
+        </p>
+        <ul className="mt-3 flex flex-col gap-1.5 text-sm leading-relaxed text-muted-foreground">
+          {[
+            <>
+              <strong className="font-semibold text-foreground">o que acontece</strong> e{" "}
+              <strong className="font-semibold text-foreground">quando</strong> (de manhã, na
+              hora de dormir, nas transições…)
+            </>,
+            <>
+              <strong className="font-semibold text-foreground">
+                como {primeiroNome ?? "a criança"} reage
+              </strong>{" "}
+              e o que parece disparar
+            </>,
+            <>
+              <strong className="font-semibold text-foreground">como você reage na hora</strong>{" "}
+              — e o que sente ou pensa quando acontece
+            </>,
+            <>
+              <strong className="font-semibold text-foreground">o que você já tentou</strong> — o
+              que ajudou um pouco, o que não rolou
+            </>,
+          ].map((item, i) => (
+            <li key={i} className="flex gap-2.5">
+              <span
+                aria-hidden
+                className="mt-[0.55em] size-1.5 shrink-0 rounded-full bg-brand-purple/50"
+              />
+              <span className="flex-1">{item}</span>
+            </li>
+          ))}
+        </ul>
+        <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+          Eu trago uma ideia prática na hora. E, quando fizer sentido, te ofereço um{" "}
+          <strong className="font-semibold text-foreground">plano completo</strong> — com mais
+          ideias, frases pra usar e o que observar.
+        </p>
+        <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+          <strong className="font-semibold text-foreground">Quer um plano pro fim de semana?</strong>{" "}
+          Conte a programação (passeio, casa, visita, dia tranquilo…) e o que gostaria de
+          fortalecer — autonomia, foco, socialização, rotina…
+        </p>
+        <p className="mt-3 text-xs italic leading-relaxed text-muted-foreground/80">
+          Aqui é apoio de quem entende de neurodivergência e do cansaço de cuidar — não
+          substitui profissionais de saúde.
         </p>
         <p className="mt-3 text-sm text-muted-foreground">
           Quer ajustar o perfil antes?{" "}
