@@ -14,6 +14,7 @@ import {
   Lightbulb,
   MessageSquare,
   Moon,
+  Pencil,
   PersonStanding,
   School,
   Stethoscope,
@@ -24,6 +25,11 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import {
+  parsearSubcampos,
+  serializarSubcampos,
+  type SubCampo,
+} from "@/lib/kolo-vivo/subcampos";
 import type { DominioDef, DominioKey, DominioTone } from "./dominios";
 
 export type DominioStatus = "vivo" | "perceber" | "comecar";
@@ -204,7 +210,14 @@ export function DominioCard({
         </h3>
       </header>
 
-      {editing ? (
+      {dominio.campos ? (
+        <CamposEditor
+          campos={dominio.campos}
+          value={texto}
+          descricao={dominio.descricao}
+          onSave={onSave}
+        />
+      ) : editing ? (
         <div className="flex flex-col gap-2">
           <textarea
             autoFocus
@@ -288,5 +301,156 @@ export function DominioCard({
         </Link>
       )}
     </article>
+  );
+}
+
+/**
+ * Editor de domínio com SUB-CAMPOS (ex.: Alimentação: aceita / rejeita /
+ * texturas…). Serializa tudo no mesmo `texto` rotulado — backend inalterado.
+ */
+function CamposEditor({
+  campos,
+  value,
+  descricao,
+  onSave,
+}: {
+  campos: SubCampo[];
+  value: string;
+  descricao: string;
+  onSave: (texto: string) => Promise<void>;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [valores, setValores] = useState<Record<string, string>>(() =>
+    parsearSubcampos(campos, value),
+  );
+  const [pending, startTransition] = useTransition();
+  const [erro, setErro] = useState<string | null>(null);
+  const [showSaved, setShowSaved] = useState(false);
+
+  function commit() {
+    const texto = serializarSubcampos(campos, valores);
+    if (texto === value.trim()) {
+      setEditing(false);
+      return;
+    }
+    setErro(null);
+    startTransition(async () => {
+      try {
+        await onSave(texto);
+        setEditing(false);
+        setShowSaved(true);
+        setTimeout(() => setShowSaved(false), 2500);
+      } catch (e) {
+        setErro(e instanceof Error ? e.message : "Erro ao salvar");
+      }
+    });
+  }
+
+  if (!editing) {
+    const preenchidos = campos.filter((c) => (valores[c.key] ?? "").trim());
+    return (
+      <div className="flex flex-col gap-2.5">
+        {preenchidos.length === 0 ? (
+          <button
+            type="button"
+            onClick={() => setEditing(true)}
+            className="text-left text-sm leading-relaxed text-muted-foreground/60 transition-colors hover:text-brand-purple"
+          >
+            {descricao}
+          </button>
+        ) : (
+          preenchidos.map((c) => (
+            <div key={c.key}>
+              <span className="text-[11px] font-bold uppercase tracking-[0.1em] text-muted-foreground">
+                {c.label}
+              </span>
+              <p className="whitespace-pre-wrap text-sm leading-relaxed text-foreground">
+                {valores[c.key]}
+              </p>
+            </div>
+          ))
+        )}
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => setEditing(true)}
+            className="inline-flex w-fit items-center gap-1.5 text-xs font-semibold text-brand-purple transition-colors hover:text-brand-purple-dark"
+          >
+            <Pencil className="size-3" aria-hidden /> {preenchidos.length === 0 ? "Preencher" : "Editar"}
+          </button>
+          {showSaved && <span className="text-xs text-foreground/40">salvo</span>}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col gap-3">
+      {campos.map((c) => (
+        <div key={c.key} className="flex flex-col gap-1.5">
+          <label className="text-[11px] font-bold uppercase tracking-[0.1em] text-muted-foreground">
+            {c.label}
+          </label>
+          {c.opcoes ? (
+            <>
+              <div className="flex flex-wrap gap-2">
+                {c.opcoes.map((op) => (
+                  <button
+                    key={op}
+                    type="button"
+                    disabled={pending}
+                    onClick={() =>
+                      setValores((v) => ({ ...v, [c.key]: v[c.key] === op ? "" : op }))
+                    }
+                    className={cn(
+                      "rounded-full border px-3.5 py-1.5 text-sm font-medium transition-colors disabled:opacity-60",
+                      valores[c.key] === op
+                        ? "border-brand-purple bg-brand-purple text-white"
+                        : "border-input bg-white text-foreground hover:border-brand-purple/40",
+                    )}
+                  >
+                    {op}
+                  </button>
+                ))}
+              </div>
+              {c.placeholder && (
+                <span className="text-xs leading-relaxed text-muted-foreground">{c.placeholder}</span>
+              )}
+            </>
+          ) : (
+            <textarea
+              rows={2}
+              value={valores[c.key] ?? ""}
+              placeholder={c.placeholder}
+              onChange={(e) => setValores((v) => ({ ...v, [c.key]: e.target.value }))}
+              disabled={pending}
+              className="w-full resize-none rounded-xl bg-kolo-lilas-bg-2/40 p-2.5 text-sm leading-relaxed text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-brand-purple/20 disabled:opacity-60"
+            />
+          )}
+        </div>
+      ))}
+      {erro && <p className="text-xs text-destructive">{erro}</p>}
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          onClick={commit}
+          disabled={pending}
+          className="rounded-full bg-brand-purple px-4 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-brand-purple-dark disabled:opacity-50"
+        >
+          {pending ? "Salvando…" : "Salvar"}
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            setValores(parsearSubcampos(campos, value));
+            setEditing(false);
+          }}
+          disabled={pending}
+          className="text-xs text-muted-foreground hover:text-foreground"
+        >
+          Cancelar
+        </button>
+      </div>
+    </div>
   );
 }
