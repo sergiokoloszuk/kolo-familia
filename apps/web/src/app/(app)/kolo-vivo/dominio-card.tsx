@@ -45,16 +45,13 @@ const BAR: Record<DominioTone, string> = {
   motor: "bg-cat-motor",
   rotina: "bg-cat-rotina",
 };
-const ICON_WRAP: Record<DominioTone, string> = {
-  sensorial: "bg-cat-sensorial-soft text-cat-sensorial",
-  alimentacao: "bg-cat-alimentacao-soft text-cat-alimentacao",
-  comunicacao: "bg-cat-comunicacao-soft text-cat-comunicacao",
-  emocao: "bg-cat-emocao-soft text-cat-emocao",
-  foco: "bg-cat-foco-soft text-cat-foco",
-  sono: "bg-cat-sono-soft text-cat-sono",
-  social: "bg-cat-social-soft text-cat-social",
-  motor: "bg-cat-motor-soft text-cat-motor",
-  rotina: "bg-cat-rotina-soft text-cat-rotina",
+// O ícone indica o PREENCHIMENTO (a identidade do domínio fica na barra do
+// topo): amarelo Kolo nos que já têm conteúdo (destaque), cinza apagado nos
+// que faltam preencher (recuam).
+const ICON_BY_STATUS: Record<DominioStatus, string> = {
+  vivo: "bg-brand-yellow/30 text-[#8B5A00]",
+  perceber: "bg-brand-yellow/20 text-[#8B5A00]",
+  comecar: "bg-foreground/[0.05] text-muted-foreground/50",
 };
 const ICONE: Record<DominioKey, LucideIcon> = {
   sensorial: Eye,
@@ -197,7 +194,7 @@ export function DominioCard({
           aria-hidden
           className={cn(
             "grid size-11 shrink-0 place-items-center rounded-2xl",
-            ICON_WRAP[dominio.tone],
+            ICON_BY_STATUS[status],
           )}
         >
           <Icon className="size-5" strokeWidth={1.8} />
