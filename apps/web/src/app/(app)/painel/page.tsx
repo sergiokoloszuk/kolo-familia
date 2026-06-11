@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { differenceInCalendarDays, format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { ArrowRight, Sparkles, Star } from "lucide-react";
+import { ArrowRight, Lightbulb, NotebookPen, Sparkles, Sprout, Star } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
@@ -587,6 +587,52 @@ export default async function PainelPage() {
             </span>
           </h2>
         </div>
+      </section>
+
+      {/* ============================================================
+       * AS 3 PORTAS — os jeitos de interagir com a Kolo: registrar o
+       * dia, cuidar do retrato vivo (Kolo Vivo) e pedir um caminho
+       * (Estratégias). Navegação principal do dia a dia.
+       * ============================================================ */}
+      <section className="grid gap-4 sm:grid-cols-3">
+        {[
+          {
+            titulo: "Registro do dia",
+            desc: "Conte como foi hoje — uma linha já vale.",
+            href: "/registrar/diario",
+            Icon: NotebookPen,
+            chip: "bg-cat-rotina-bg text-cat-rotina",
+          },
+          {
+            titulo: "Kolo Vivo",
+            desc: "O retrato vivo de quem vocês são.",
+            href: "/kolo-vivo",
+            Icon: Sprout,
+            chip: "bg-cat-social-bg text-cat-social",
+          },
+          {
+            titulo: "Estratégias",
+            desc: "Conte um desafio e ache um caminho.",
+            href: "/estrategias",
+            Icon: Lightbulb,
+            chip: "bg-cat-foco-bg text-cat-foco",
+          },
+        ].map(({ titulo, desc, href, Icon, chip }) => (
+          <Link
+            key={href}
+            href={href}
+            className="group flex flex-col gap-2.5 rounded-2xl border border-foreground/[0.06] bg-white p-5 shadow-[0_1px_2px_rgba(46,10,82,0.04),_0_4px_12px_rgba(46,10,82,0.03)] transition-all hover:-translate-y-0.5 hover:shadow-[0_4px_12px_rgba(46,10,82,0.06),_0_12px_28px_rgba(46,10,82,0.06)]"
+          >
+            <span aria-hidden className={cn("flex size-10 items-center justify-center rounded-xl", chip)}>
+              <Icon className="size-5" strokeWidth={1.8} />
+            </span>
+            <h3 className="font-heading text-lg font-medium text-foreground">{titulo}</h3>
+            <p className="text-sm leading-relaxed text-muted-foreground">{desc}</p>
+            <span className="mt-1 inline-flex items-center gap-1 text-xs font-semibold text-brand-purple transition-all group-hover:gap-2">
+              Abrir <ArrowRight className="size-3" aria-hidden />
+            </span>
+          </Link>
+        ))}
       </section>
 
       {/* ============================================================
