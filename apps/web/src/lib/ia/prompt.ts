@@ -173,6 +173,22 @@ Você está falando com ${ctx.cuidador.nome}${
     );
   }
 
+  if (ctx.membros.length > 0) {
+    const linhas = ctx.membros.map((m) => {
+      const pron = pronomesPara(m.genero);
+      const gen = pron.generoDefinido ? ` (${pron.sujeito})` : "";
+      const idadeTxt = m.idade != null ? `${m.idade} anos` : "idade não informada";
+      const perfil = m.perfil?.trim() ? ` — ${m.perfil.trim()}` : "";
+      return `- ${m.nome}, ${idadeTxt}${gen}${perfil}`;
+    });
+    partes.push(
+      `<familia_membros>
+Pessoas atípicas cadastradas nesta família — você JÁ sabe quem são, a idade e o básico de cada uma. NÃO pergunte quem são nem a idade; quando o cuidador citar um destes nomes, é esta pessoa. Use a idade EXATA (nunca chute):
+${linhas.join("\n")}
+</familia_membros>`,
+    );
+  }
+
   if (ctx.membroFoco) {
     const pron = pronomesPara(ctx.membroFoco.genero);
     const generoLinha = pron.generoDefinido

@@ -72,6 +72,16 @@ export type ContextoSkillResposta = {
   } | null;
   /** Quem está falando (cuidador): nome + parentesco + gênero. */
   cuidador: { nome: string; relacao: string; genero: Genero } | null;
+  /** Elenco da família — todos os membros atípicos cadastrados, com um
+   *  snapshot (perfil). Sempre presente, mesmo no modo "família em geral", pra
+   *  a Kolo saber quem são quando o cuidador citar um nome. A evolução do que
+   *  acontece vem dos diários (diariosRecentes), que são da família toda. */
+  membros: Array<{
+    nome: string;
+    idade: number | null;
+    genero: Genero;
+    perfil: string;
+  }>;
   familia: Partial<Record<KoloVivoFieldFamilia, string>>;
   diariosRecentes: Array<{
     data: string;
@@ -141,6 +151,7 @@ export async function buildContext(
     boasPraticasResult,
     historicoResult,
     profileResult,
+    membrosResult,
   ] = await Promise.all([
     membroAtipicoId
       ? supabase
@@ -197,6 +208,14 @@ export async function buildContext(
       .select("nome_mae, como_chamar, papel, papel_outro, genero_responsavel")
       .eq("family_account_id", familyId)
       .maybeSingle(),
+    // Elenco completo — sempre, pra a Kolo saber quem são os membros (e um
+    // snapshot de cada) mesmo quando a conversa é sobre "a família em geral".
+    supabase
+      .from("membros_atipicos")
+      .select("nome, data_nascimento, genero, perfil")
+      .eq("family_account_id", familyId)
+      .eq("ativo", true)
+      .order("created_at", { ascending: true }),
   ]);
 
   const membroFoco = membroResult.data
@@ -216,6 +235,18 @@ export async function buildContext(
   const familia = extractFamiliaSections(
     familiaResult.data as Record<string, unknown> | null,
   );
+
+  const membros = ((membrosResult.data ?? []) as Array<{
+    nome: string;
+    data_nascimento: string | null;
+    genero: Genero;
+    perfil: string | null;
+  }>).map((m) => ({
+    nome: m.nome,
+    idade: idadeAnos(m.data_nascimento),
+    genero: (m.genero ?? null) as Genero,
+    perfil: m.perfil ?? "",
+  }));
 
   const profile = profileResult.data as {
     nome_mae?: string | null;
@@ -279,6 +310,7 @@ export async function buildContext(
   return {
     membroFoco,
     cuidador,
+    membros,
     familia,
     diariosRecentes,
     ultimoCheckin,
