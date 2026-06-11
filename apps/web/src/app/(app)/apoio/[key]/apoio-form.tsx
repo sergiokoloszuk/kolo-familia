@@ -212,7 +212,7 @@ export function ApoioForm({
         rows={5}
         value={pedido}
         onChange={(e) => setPedido(e.target.value)}
-        placeholder="Ex: dia chuvoso, criança em casa o dia inteiro, querendo descarregar energia."
+        placeholder="Ex: dia chuvoso, em casa o dia inteiro, querendo descarregar energia."
         className="w-full resize-none rounded-2xl border border-foreground/[0.08] bg-white/70 px-4 py-3 text-base leading-relaxed text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-1 focus:ring-foreground/10"
         disabled={pending}
       />

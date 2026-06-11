@@ -42,7 +42,7 @@ export function NpsBanner({ contexto }: { contexto: "d7" | "d30" | "manual" }) {
       <CardContent className="flex flex-col gap-3 text-sm">
         <p className="text-muted-foreground">
           De 0 a 10, o quanto você indicaria o Kolo Família para outra mãe ou
-          pai de criança atípica?
+          pai de filho(a) atípico(a)?
         </p>
         <div className="flex flex-wrap gap-1">
           {Array.from({ length: 11 }).map((_, n) => (

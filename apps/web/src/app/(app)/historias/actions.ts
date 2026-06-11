@@ -100,7 +100,7 @@ export async function criarHistoria(
       return {
         ok: false,
         error:
-          "Crie primeiro o avatar dessa criança (em Configurações → Avatar). Ele é usado como personagem da história.",
+          "Crie primeiro o avatar dessa pessoa (em Configurações → Avatar). Ele é usado como personagem da história.",
       };
     }
 

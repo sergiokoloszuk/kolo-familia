@@ -63,17 +63,17 @@ export default async function PreferenciasPage() {
         <div>
           <Eyebrow>Gostos e preferências</Eyebrow>
           <h1 className="mt-1 font-heading text-3xl text-foreground md:text-4xl">
-            O que cada criança <em className="not-italic text-brand-purple">ama</em>
+            O que cada um(a) <em className="not-italic text-brand-purple">ama</em>
           </h1>
           <p className="mt-2 max-w-2xl text-muted-foreground">
             Temas, personagens, materiais e músicas favoritos. Quanto mais a Kolo
-            sabe, mais as histórias e brincadeiras saem com a cara dela.
+            sabe, mais as histórias e ideias saem com a cara de cada um.
           </p>
         </div>
       </header>
 
       {criancas.length === 0 ? (
-        <p className="text-sm text-muted-foreground">Nenhuma criança cadastrada ainda.</p>
+        <p className="text-sm text-muted-foreground">Ninguém cadastrado ainda.</p>
       ) : (
         <PreferenciasForm criancas={criancas} />
       )}

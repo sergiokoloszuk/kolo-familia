@@ -55,14 +55,14 @@ export default async function CriarHistoriaPage() {
         </div>
         <p className="mt-2 text-muted-foreground">
           Conte a situação com suas palavras. A Kolo escreve a história e ilustra
-          cada página com o avatar da criança como personagem.
+          cada página com o avatar como personagem.
         </p>
       </header>
 
       {todas.length === 0 ? (
         <div className="rounded-2xl border border-kolo-linha bg-secondary/40 p-6">
           <p className="font-heading text-lg text-foreground">
-            Nenhuma criança cadastrada
+            Ninguém cadastrado ainda
           </p>
           <p className="mt-1 text-sm text-muted-foreground">
             Adicione no Kolo Vivo e volte aqui pra criar a história.
@@ -75,7 +75,7 @@ export default async function CriarHistoriaPage() {
           ) : (
             <div className="rounded-2xl border border-kolo-linha bg-secondary/40 p-6">
               <p className="font-heading text-lg text-foreground">
-                Falta o avatar da criança
+                Falta o avatar
               </p>
               <p className="mt-1 text-sm text-muted-foreground">
                 O avatar é o personagem das histórias. Crie um abaixo e volte aqui.
@@ -86,11 +86,11 @@ export default async function CriarHistoriaPage() {
           {semAvatar.length > 0 && (
             <div className="rounded-2xl border border-brand-purple/20 bg-kolo-lilas-bg-2/40 p-4">
               <p className="font-heading text-base font-medium text-foreground">
-                {comAvatar.length > 0 ? "Criar avatar de outra criança" : "Comece criando o avatar"}
+                {comAvatar.length > 0 ? "Criar avatar de outra pessoa" : "Comece criando o avatar"}
               </p>
               <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
                 O avatar é o personagem das histórias — você escolhe o estilo e a
-                Kolo ilustra. É feito uma vez por criança.
+                Kolo ilustra. É feito uma vez por pessoa.
               </p>
               <div className="mt-3 flex flex-wrap gap-2">
                 {semAvatar.map((m) => (
@@ -115,7 +115,7 @@ export default async function CriarHistoriaPage() {
             href="/configuracoes/avatar"
             className="text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
           >
-            Ver / editar avatares de todas as crianças →
+            Ver / editar todos os avatares →
           </Link>
         </div>
       )}

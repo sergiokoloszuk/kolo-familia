@@ -132,7 +132,7 @@ export function CriarHistoriaForm({
     <div className="flex flex-col gap-5 rounded-2xl border border-kolo-linha bg-white p-5">
       {criancas.length > 1 && (
         <div className="flex flex-col gap-1.5">
-          <Label htmlFor="crianca">Pra qual criança</Label>
+          <Label htmlFor="crianca">Pra quem</Label>
           <select
             id="crianca"
             value={membroId}

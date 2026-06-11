@@ -23,7 +23,7 @@ const SECOES: Array<{
     key: "rotina",
     title: "Como os dias costumam ser",
     description: "Escola, trabalho, terapias, horários que ancoram o dia.",
-    placeholder: "Ex: criança escola 7–12h, terapias terça/quinta, jantar 19h.",
+    placeholder: "Ex: escola 7–12h, terapias terça/quinta, jantar 19h.",
     tone: "rotina",
   },
   {

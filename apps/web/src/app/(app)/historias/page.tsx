@@ -70,11 +70,11 @@ export default async function HistoriasPage() {
             <h1 className="mt-4 max-w-2xl font-heading text-3xl leading-tight md:text-4xl">
               Você conta a situação, a Kolo cria a{" "}
               <em className="not-italic text-brand-yellow">história ilustrada</em> com o
-              personagem da criança.
+              avatar como personagem.
             </h1>
             <p className="mt-3 max-w-xl text-white/75">
               Pra antecipar um momento difícil, ensaiar uma situação nova ou celebrar
-              uma conquista — sempre com a criança como protagonista.
+              uma conquista — sempre com quem você cuida como protagonista.
             </p>
             {lista.length > 0 && (
               <span className="mt-5 inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1.5 text-xs font-semibold text-white/85 backdrop-blur">
@@ -93,7 +93,7 @@ export default async function HistoriasPage() {
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={avatarUrl}
-                alt="Avatar da criança"
+                alt="Avatar"
                 className="relative size-32 rounded-full border-2 border-white/40 object-cover shadow-xl md:size-40"
               />
             </div>

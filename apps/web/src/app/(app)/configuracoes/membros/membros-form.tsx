@@ -124,8 +124,8 @@ function MembroCard({ membro }: { membro: Membro }) {
 
       {idadeSuspeita && (
         <p className="mt-3 rounded-md border border-amber-300/60 bg-amber-50 px-3 py-2 text-xs text-amber-700">
-          {idade} anos é uma idade alta pra uma criança — confira se a data não é,
-          por engano, a do responsável.
+          {idade} anos — confira se a data de nascimento está certa (às vezes entra,
+          por engano, a do responsável).
         </p>
       )}
       {erro && (
