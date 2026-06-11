@@ -407,16 +407,28 @@ function CamposEditor({
       );
     }
 
-    // Preenchido: COLAPSADO por padrão (termômetro + resumo curto). "Ver tudo"
-    // expande — assim o card não fica gigante na grade.
-    const seletor = visiveis.find((c) => c.opcoes && (valores[c.key] ?? "").trim());
-    const resto = preenchidos.filter((c) => c.key !== seletor?.key);
+    // Preenchido: COLAPSADO por padrão (termômetros + resumo curto). "Ver tudo"
+    // expande. Termômetro = chip pequeno SÓ com o valor, e SÓ quando o valor é
+    // uma das opções (senão vira texto normal — evita bloco laranja gigante de
+    // texto corrido que caiu no campo do seletor).
+    const seletores = preenchidos.filter(
+      (c) => c.opcoes && c.opcoes.includes((valores[c.key] ?? "").trim()),
+    );
+    const resto = preenchidos.filter((c) => !seletores.includes(c));
     return (
       <div className="flex flex-col gap-2.5">
-        {seletor && (
-          <span className="inline-flex w-fit items-center rounded-full bg-brand-yellow/20 px-2.5 py-1 text-xs font-semibold text-[#8B5A00]">
-            {seletor.label}: {valores[seletor.key]}
-          </span>
+        {seletores.length > 0 && (
+          <div className="flex flex-wrap gap-1.5">
+            {seletores.map((c) => (
+              <span
+                key={c.key}
+                title={c.label}
+                className="rounded-full bg-brand-yellow/20 px-2.5 py-1 text-xs font-semibold text-[#8B5A00]"
+              >
+                {valores[c.key]}
+              </span>
+            ))}
+          </div>
         )}
 
         {resto.length > 0 &&
