@@ -66,7 +66,7 @@ export const DOMINIOS: DominioDef[] = [
     storage: "toplevel",
     label: "Sensorial",
     tone: "sensorial",
-    descricao: "Como o corpo dela percebe sons, texturas, luz e movimento.",
+    descricao: "Como o corpo percebe sons, texturas, luz e movimento.",
     placeholder:
       "Ex: hipersensível a sons agudos e texturas grudentas. Pressão profunda (abraço apertado) acalma.",
   },
@@ -84,7 +84,7 @@ export const DOMINIOS: DominioDef[] = [
     storage: "extras",
     label: "Comunicação",
     tone: "comunicacao",
-    descricao: "Como se expressa e como entende o que falam com ela.",
+    descricao: "Como se expressa e como entende o que falam.",
     placeholder:
       "Ex: fala em 2-3 palavras. Entende muito mais do que diz. Apontar e imagens ajudam.",
   },
@@ -121,7 +121,7 @@ export const DOMINIOS: DominioDef[] = [
     storage: "extras",
     label: "Socialização",
     tone: "social",
-    descricao: "Como se relaciona com outras crianças e adultos.",
+    descricao: "Como se relaciona com outras pessoas.",
     placeholder:
       "Ex: prefere adultos. Brinca lado a lado, não em interação. Conexão forte com uma priminha.",
   },
@@ -150,7 +150,7 @@ export const DOMINIOS: DominioDef[] = [
     storage: "extras",
     label: "Autonomia",
     tone: "motor",
-    descricao: "O que já faz sozinha e onde ainda precisa de ajuda.",
+    descricao: "O que já faz sem ajuda e onde ainda precisa de apoio.",
     placeholder:
       "Ex: come e veste sozinha; ainda precisa de ajuda no banho e pra calçar.",
   },
