@@ -110,9 +110,18 @@ export default async function EstrategiasPage({
 
   const temTipos = (tipos ?? []).length > 0;
   const temConversas = (conversas ?? []).length > 0;
-  const primeiroNome = (membros ?? [])[0]?.nome
-    ? capitalizarNome((membros ?? [])[0].nome as string)
-    : null;
+  const nomes = (membros ?? [])
+    .map((m) => (m.nome ? capitalizarNome(m.nome as string) : null))
+    .filter((n): n is string => Boolean(n));
+  const nomesFmt =
+    nomes.length === 0
+      ? "a pessoa que você cuida"
+      : nomes.length === 1
+        ? nomes[0]
+        : nomes.length === 2
+          ? `${nomes[0]} e ${nomes[1]}`
+          : `${nomes.slice(0, -1).join(", ")} e ${nomes[nomes.length - 1]}`;
+  const reageVerbo = nomes.length > 1 ? "reagem" : "reage";
 
   return (
     <div className="flex flex-col gap-12">
@@ -136,7 +145,7 @@ export default async function EstrategiasPage({
             </>,
             <>
               <strong className="font-semibold text-foreground">
-                como {primeiroNome ?? "a criança"} reage
+                como {nomesFmt} {reageVerbo}
               </strong>{" "}
               e o que parece disparar
             </>,
@@ -163,11 +172,21 @@ export default async function EstrategiasPage({
           <strong className="font-semibold text-foreground">plano completo</strong> — com mais
           ideias, frases pra usar e o que observar.
         </p>
-        <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-          <strong className="font-semibold text-foreground">Quer um plano pro fim de semana?</strong>{" "}
-          Conte a programação (passeio, casa, visita, dia tranquilo…) e o que gostaria de
-          fortalecer — autonomia, foco, socialização, rotina…
-        </p>
+        <div className="mt-4 flex items-start gap-3 rounded-2xl border border-brand-yellow/40 bg-brand-yellow/10 p-4">
+          <span
+            aria-hidden
+            className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-brand-yellow/25 text-[#8B5A00]"
+          >
+            <CalendarClock className="size-5" strokeWidth={1.8} />
+          </span>
+          <p className="text-sm leading-relaxed text-foreground/90">
+            <strong className="font-semibold text-foreground">
+              Quer um plano pro fim de semana ou pras férias?
+            </strong>{" "}
+            Conte a programação (passeio, casa, visita, viagem, dia tranquilo…) e o que
+            gostaria de fortalecer — autonomia, foco, socialização, rotina…
+          </p>
+        </div>
         <p className="mt-3 text-xs italic leading-relaxed text-muted-foreground/80">
           Aqui é apoio de quem entende de neurodivergência e do cansaço de cuidar — não
           substitui profissionais de saúde.
