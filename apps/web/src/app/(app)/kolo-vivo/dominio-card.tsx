@@ -30,6 +30,7 @@ import { cn } from "@/lib/utils";
 import {
   parsearSubcampos,
   serializarSubcampos,
+  camposVisiveis,
   splitItens,
   joinItens,
   type SubCampo,
@@ -359,6 +360,9 @@ function CamposEditor({
   const [erro, setErro] = useState<string | null>(null);
   const [showSaved, setShowSaved] = useState(false);
 
+  // Campos que aparecem dado o estado atual (condicionais, ex.: verbal × não).
+  const visiveis = camposVisiveis(campos, valores);
+
   function commit() {
     const texto = serializarSubcampos(campos, valores);
     if (texto === value.trim()) {
@@ -379,7 +383,7 @@ function CamposEditor({
   }
 
   if (!editing) {
-    const preenchidos = campos.filter((c) => (valores[c.key] ?? "").trim());
+    const preenchidos = visiveis.filter((c) => (valores[c.key] ?? "").trim());
 
     // Vazio: convite discreto pra preencher.
     if (preenchidos.length === 0) {
@@ -405,7 +409,7 @@ function CamposEditor({
 
     // Preenchido: COLAPSADO por padrão (termômetro + resumo curto). "Ver tudo"
     // expande — assim o card não fica gigante na grade.
-    const seletor = campos.find((c) => c.opcoes && (valores[c.key] ?? "").trim());
+    const seletor = visiveis.find((c) => c.opcoes && (valores[c.key] ?? "").trim());
     const resto = preenchidos.filter((c) => c.key !== seletor?.key);
     return (
       <div className="flex flex-col gap-2.5">
@@ -479,7 +483,7 @@ function CamposEditor({
 
   return (
     <div className="flex flex-col gap-3">
-      {campos.map((c) => (
+      {visiveis.map((c) => (
         <div key={c.key} className="flex flex-col gap-1.5">
           <label className="text-[11px] font-bold uppercase tracking-[0.1em] text-muted-foreground">
             {c.label}

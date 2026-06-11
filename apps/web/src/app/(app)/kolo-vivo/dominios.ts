@@ -95,6 +95,7 @@ export const DOMINIOS: DominioDef[] = [
     descricao: "Como se expressa e como entende o que falam.",
     placeholder:
       "Ex: fala em 2-3 palavras. Entende muito mais do que diz. Apontar e imagens ajudam.",
+    campos: SUBCAMPOS_DOMINIO.comunicacao,
   },
   {
     key: "emocional",

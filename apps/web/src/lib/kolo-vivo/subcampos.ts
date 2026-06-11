@@ -23,7 +23,23 @@ export type SubCampo = {
   /** Quando true, o campo é uma LISTA de itens (bullets). Guardado como
    *  "item1; item2; item3". Ex.: aceita, rejeita, texturas. */
   lista?: boolean;
+  /** Campo CONDICIONAL: só aparece se outro campo (geralmente o seletor
+   *  inicial) estiver com um dos valores. Ex.: perguntas de fala só se "Como
+   *  se comunica" = "Fala frases"/"Fala palavras soltas". */
+  mostrarSe?: { campo: string; valores: string[] };
 };
+
+/** Filtra os campos que devem aparecer dado o estado atual (condicionais). */
+export function camposVisiveis(
+  campos: SubCampo[],
+  valores: Record<string, string>,
+): SubCampo[] {
+  return campos.filter((c) => {
+    if (!c.mostrarSe) return true;
+    const v = (valores[c.mostrarSe.campo] ?? "").trim();
+    return c.mostrarSe.valores.includes(v);
+  });
+}
 
 /** Itens de um campo-lista (guardado como "a; b; c" ou em linhas). */
 export function splitItens(value: string): string[] {
@@ -86,6 +102,58 @@ export const SUBCAMPOS_DOMINIO: Record<string, SubCampo[]> = {
     { key: "cheiros", label: "Cheiros", placeholder: "Ex: sensível a perfumes" },
     { key: "movimento", label: "Movimento", placeholder: "Ex: precisa balançar; gosta de ventilador girando" },
     { key: "outras", label: "Outras observações sensoriais", placeholder: "Qualquer outra coisa que você percebe" },
+  ],
+  comunicacao: [
+    // Começa pela forma — e o resto se adapta a ela.
+    {
+      key: "forma",
+      label: "Como se comunica",
+      opcoes: ["Fala frases", "Fala palavras soltas", "Não-verbal"],
+    },
+    {
+      key: "mostra",
+      label: "Como mostra o que quer",
+      placeholder: "aponta, leva pela mão até o objeto, gestos, imagens/CAA, fala",
+    },
+    {
+      key: "entende",
+      label: "Como demonstra que entende",
+      placeholder: "segue pedidos simples, reage ao nome, precisa de apoio visual, entende mais do que fala",
+    },
+    // Tem alguma fala:
+    {
+      key: "vocabulario",
+      label: "Vocabulário e fala",
+      placeholder: "quantas palavras; combina frases; troca/omite letras; gagueira",
+      mostrarSe: { campo: "forma", valores: ["Fala frases", "Fala palavras soltas"] },
+    },
+    {
+      key: "ecolalia",
+      label: "Ecolalia / repetições",
+      placeholder: "repete falas, perguntas ou frases de desenho?",
+      mostrarSe: { campo: "forma", valores: ["Fala frases", "Fala palavras soltas"] },
+    },
+    // Fala fluente:
+    {
+      key: "conversa",
+      label: "Conversa e argumentação",
+      placeholder: "mantém o vai-e-vem? resolve problema/negocia/argumenta falando? ou fala bem mas trava nisso? frustra quando não é entendida?",
+      mostrarSe: { campo: "forma", valores: ["Fala frases"] },
+    },
+    // Não-verbal (ou palavras soltas):
+    {
+      key: "contato",
+      label: "Contato visual e gestos",
+      placeholder: "olha quando é chamada? aponta pra mostrar? usa gestos?",
+      mostrarSe: { campo: "forma", valores: ["Não-verbal", "Fala palavras soltas"] },
+    },
+    {
+      key: "caa",
+      label: "Comunicação alternativa (CAA)",
+      placeholder: "usa pranchas, PECS, app de comunicação?",
+      mostrarSe: { campo: "forma", valores: ["Não-verbal", "Fala palavras soltas"] },
+    },
+    { key: "ajuda", label: "O que ajuda a comunicação", placeholder: "frases curtas, apoio visual, dar tempo pra responder" },
   ],
 };
 
