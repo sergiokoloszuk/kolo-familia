@@ -4,7 +4,6 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import {
-  BookOpen,
   ChevronRight,
   CreditCard,
   FileText,
@@ -14,6 +13,7 @@ import {
   LogOut,
   Menu,
   Settings,
+  Shapes,
   Shield,
   Sparkles,
   TrendingUp,
@@ -48,7 +48,7 @@ const NAV_ITEMS: NavItem[] = [
   { href: "/kolo-vivo", label: "Kolo Vivo", icon: Leaf },
   { href: "/estrategias", label: "Estratégias", icon: Sparkles },
   { href: "/evolucao", label: "Evolução", icon: TrendingUp },
-  { href: "/historias", label: "Histórias", icon: BookOpen }, // placeholder em NAV-5
+  { href: "/ludico", label: "Lúdico", icon: Shapes }, // engloba Histórias + Rotinas visuais
 ];
 
 function isActive(pathname: string, href: string): boolean {
@@ -183,7 +183,7 @@ export function Sidebar({
                 aria-hidden
               />
               <span className="flex-1">{item.label}</span>
-              {item.href === "/historias" && (
+              {item.href === "/ludico" && (
                 <span
                   aria-label="em versão beta"
                   className="inline-flex items-center rounded-full border border-kolo-linha bg-white/60 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-[0.12em] text-muted-foreground"

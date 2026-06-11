@@ -1,0 +1,271 @@
+"use server";
+
+import { revalidatePath } from "next/cache";
+import { z } from "zod";
+import { createClient } from "@/lib/supabase/server";
+
+type Ok<T = object> = { ok: true } & T;
+type Fail = { ok: false; error: string };
+
+async function requireFamily() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error("Não autenticado");
+  const { data: family } = await supabase
+    .from("family_accounts")
+    .select("id")
+    .eq("user_id", user.id)
+    .single();
+  if (!family) throw new Error("Família não inicializada");
+  return { supabase, family };
+}
+
+/** A rotina pertence à família? (defesa em profundidade além do RLS) */
+async function rotinaDaFamilia(
+  supabase: Awaited<ReturnType<typeof requireFamily>>["supabase"],
+  familyId: string,
+  rotinaId: string,
+): Promise<boolean> {
+  const { data } = await supabase
+    .from("rotinas")
+    .select("id")
+    .eq("id", rotinaId)
+    .eq("family_account_id", familyId)
+    .maybeSingle();
+  return Boolean(data);
+}
+
+// ---------- Rotinas ----------
+
+const criarSchema = z.object({
+  membroAtipicoId: z.string().uuid(),
+  nome: z.string().trim().min(1, "Dê um nome pra rotina").max(80),
+});
+
+export async function criarRotina(
+  input: z.infer<typeof criarSchema>,
+): Promise<Ok<{ rotinaId: string }> | Fail> {
+  try {
+    const { membroAtipicoId, nome } = criarSchema.parse(input);
+    const { supabase, family } = await requireFamily();
+
+    // O membro é da família?
+    const { data: membro } = await supabase
+      .from("membros_atipicos")
+      .select("id")
+      .eq("id", membroAtipicoId)
+      .eq("family_account_id", family.id)
+      .maybeSingle();
+    if (!membro) return { ok: false, error: "Membro não encontrado." };
+
+    const { data, error } = await supabase
+      .from("rotinas")
+      .insert({ family_account_id: family.id, membro_atipico_id: membroAtipicoId, nome })
+      .select("id")
+      .single();
+    if (error || !data) return { ok: false, error: `Não consegui criar: ${error?.message}` };
+
+    revalidatePath("/ludico/rotinas");
+    return { ok: true, rotinaId: data.id as string };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "Erro inesperado" };
+  }
+}
+
+const renomearSchema = z.object({
+  rotinaId: z.string().uuid(),
+  nome: z.string().trim().min(1).max(80),
+});
+
+export async function renomearRotina(
+  input: z.infer<typeof renomearSchema>,
+): Promise<Ok | Fail> {
+  try {
+    const { rotinaId, nome } = renomearSchema.parse(input);
+    const { supabase, family } = await requireFamily();
+    const { error } = await supabase
+      .from("rotinas")
+      .update({ nome })
+      .eq("id", rotinaId)
+      .eq("family_account_id", family.id);
+    if (error) return { ok: false, error: error.message };
+    revalidatePath(`/ludico/rotinas/${rotinaId}`);
+    revalidatePath("/ludico/rotinas");
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "Erro inesperado" };
+  }
+}
+
+export async function excluirRotina(input: { rotinaId: string }): Promise<Ok | Fail> {
+  try {
+    const rotinaId = z.string().uuid().parse(input.rotinaId);
+    const { supabase, family } = await requireFamily();
+    const { error } = await supabase
+      .from("rotinas")
+      .delete()
+      .eq("id", rotinaId)
+      .eq("family_account_id", family.id);
+    if (error) return { ok: false, error: error.message };
+    revalidatePath("/ludico/rotinas");
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "Erro inesperado" };
+  }
+}
+
+// ---------- Tarefas ----------
+
+const addTarefaSchema = z.object({
+  rotinaId: z.string().uuid(),
+  texto: z.string().trim().min(1, "Escreva a tarefa").max(120),
+  icone: z.string().trim().max(40).optional().nullable(),
+});
+
+export async function adicionarTarefa(
+  input: z.infer<typeof addTarefaSchema>,
+): Promise<Ok<{ tarefaId: string }> | Fail> {
+  try {
+    const { rotinaId, texto, icone } = addTarefaSchema.parse(input);
+    const { supabase, family } = await requireFamily();
+    if (!(await rotinaDaFamilia(supabase, family.id, rotinaId)))
+      return { ok: false, error: "Rotina não encontrada." };
+
+    const { count } = await supabase
+      .from("rotina_tarefas")
+      .select("id", { count: "exact", head: true })
+      .eq("rotina_id", rotinaId);
+
+    const { data, error } = await supabase
+      .from("rotina_tarefas")
+      .insert({ rotina_id: rotinaId, texto, icone: icone || null, ordem: count ?? 0 })
+      .select("id")
+      .single();
+    if (error || !data) return { ok: false, error: `Não consegui adicionar: ${error?.message}` };
+    revalidatePath(`/ludico/rotinas/${rotinaId}`);
+    return { ok: true, tarefaId: data.id as string };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "Erro inesperado" };
+  }
+}
+
+const editTarefaSchema = z.object({
+  rotinaId: z.string().uuid(),
+  tarefaId: z.string().uuid(),
+  texto: z.string().trim().min(1).max(120),
+  icone: z.string().trim().max(40).optional().nullable(),
+});
+
+export async function editarTarefa(
+  input: z.infer<typeof editTarefaSchema>,
+): Promise<Ok | Fail> {
+  try {
+    const { rotinaId, tarefaId, texto, icone } = editTarefaSchema.parse(input);
+    const { supabase, family } = await requireFamily();
+    if (!(await rotinaDaFamilia(supabase, family.id, rotinaId)))
+      return { ok: false, error: "Rotina não encontrada." };
+    const { error } = await supabase
+      .from("rotina_tarefas")
+      .update({ texto, icone: icone || null })
+      .eq("id", tarefaId)
+      .eq("rotina_id", rotinaId);
+    if (error) return { ok: false, error: error.message };
+    revalidatePath(`/ludico/rotinas/${rotinaId}`);
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "Erro inesperado" };
+  }
+}
+
+export async function excluirTarefa(input: {
+  rotinaId: string;
+  tarefaId: string;
+}): Promise<Ok | Fail> {
+  try {
+    const rotinaId = z.string().uuid().parse(input.rotinaId);
+    const tarefaId = z.string().uuid().parse(input.tarefaId);
+    const { supabase, family } = await requireFamily();
+    if (!(await rotinaDaFamilia(supabase, family.id, rotinaId)))
+      return { ok: false, error: "Rotina não encontrada." };
+    const { error } = await supabase
+      .from("rotina_tarefas")
+      .delete()
+      .eq("id", tarefaId)
+      .eq("rotina_id", rotinaId);
+    if (error) return { ok: false, error: error.message };
+    revalidatePath(`/ludico/rotinas/${rotinaId}`);
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "Erro inesperado" };
+  }
+}
+
+const toggleSchema = z.object({
+  rotinaId: z.string().uuid(),
+  tarefaId: z.string().uuid(),
+  concluida: z.boolean(),
+});
+
+export async function toggleTarefa(input: z.infer<typeof toggleSchema>): Promise<Ok | Fail> {
+  try {
+    const { rotinaId, tarefaId, concluida } = toggleSchema.parse(input);
+    const { supabase, family } = await requireFamily();
+    if (!(await rotinaDaFamilia(supabase, family.id, rotinaId)))
+      return { ok: false, error: "Rotina não encontrada." };
+    const { error } = await supabase
+      .from("rotina_tarefas")
+      .update({ concluida })
+      .eq("id", tarefaId)
+      .eq("rotina_id", rotinaId);
+    if (error) return { ok: false, error: error.message };
+    // Sem revalidatePath: o cliente já atualizou (otimista).
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "Erro inesperado" };
+  }
+}
+
+const reordenarSchema = z.object({
+  rotinaId: z.string().uuid(),
+  ordemIds: z.array(z.string().uuid()).max(50),
+});
+
+/** Reescreve a ordem das tarefas a partir da lista de ids (índice = ordem). */
+export async function reordenarTarefas(
+  input: z.infer<typeof reordenarSchema>,
+): Promise<Ok | Fail> {
+  try {
+    const { rotinaId, ordemIds } = reordenarSchema.parse(input);
+    const { supabase, family } = await requireFamily();
+    if (!(await rotinaDaFamilia(supabase, family.id, rotinaId)))
+      return { ok: false, error: "Rotina não encontrada." };
+    await Promise.all(
+      ordemIds.map((id, i) =>
+        supabase.from("rotina_tarefas").update({ ordem: i }).eq("id", id).eq("rotina_id", rotinaId),
+      ),
+    );
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "Erro inesperado" };
+  }
+}
+
+export async function resetarRotina(input: { rotinaId: string }): Promise<Ok | Fail> {
+  try {
+    const rotinaId = z.string().uuid().parse(input.rotinaId);
+    const { supabase, family } = await requireFamily();
+    if (!(await rotinaDaFamilia(supabase, family.id, rotinaId)))
+      return { ok: false, error: "Rotina não encontrada." };
+    const { error } = await supabase
+      .from("rotina_tarefas")
+      .update({ concluida: false })
+      .eq("rotina_id", rotinaId);
+    if (error) return { ok: false, error: error.message };
+    revalidatePath(`/ludico/rotinas/${rotinaId}`);
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "Erro inesperado" };
+  }
+}

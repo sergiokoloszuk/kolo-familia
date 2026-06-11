@@ -11,10 +11,9 @@ import { Eyebrow } from "@/components/brand/eyebrow";
 import { cn } from "@/lib/utils";
 
 /**
- * PROTÓTIPO (sem backend) — hub da seção nova que agrupa ferramentas
- * visuais/experienciais com o avatar no centro: Histórias, Rotinas visuais,
- * Meditação guiada e (futuro) o Timer lúdico. Só pra ver e aprovar o visual.
- * Nome da seção é provisório ("Momentos").
+ * Lúdico — seção que agrupa as ferramentas visuais/experienciais com o avatar
+ * no centro: Histórias, Rotinas visuais, e (em breve) Meditação guiada e o
+ * Timer lúdico. Apoio pelo brincar e imaginar.
  */
 
 type Card = {
@@ -23,8 +22,7 @@ type Card = {
   icone: LucideIcon;
   href?: string;
   tone: { bar: string; chip: string };
-  status?: "novo" | "em breve";
-  rodape?: string;
+  status?: "em breve";
 };
 
 const CARDS: Card[] = [
@@ -37,11 +35,10 @@ const CARDS: Card[] = [
   },
   {
     titulo: "Rotinas visuais",
-    desc: "Uma sequência do dia com o avatar — a criança aponta o que vem; o adolescente consulta e marca sozinho. Dá pra imprimir.",
+    desc: "A sequência do dia com o avatar — a criança aponta o que vem; o adolescente consulta e marca sozinho. Dá pra imprimir.",
     icone: ListChecks,
-    href: "/momentos/rotinas",
+    href: "/ludico/rotinas",
     tone: { bar: "bg-cat-foco", chip: "bg-cat-foco-soft text-cat-foco" },
-    status: "novo",
   },
   {
     titulo: "Meditação guiada",
@@ -52,20 +49,16 @@ const CARDS: Card[] = [
   },
   {
     titulo: "Timer lúdico",
-    desc: "O tempo vira história: o avatar se prepara, entra na piscina e nada até o fim da raia — e ali se passaram 10 minutos. Precisou de mais? Mais roupa pra dobrar e guardar.",
+    desc: "O tempo vira história: o avatar se prepara, entra na piscina e nada até o fim da raia — e ali se passaram 10 minutos.",
     icone: Timer,
     tone: { bar: "bg-cat-rotina", chip: "bg-cat-rotina-soft text-cat-rotina" },
     status: "em breve",
   },
 ];
 
-export default function MomentosPrototipo() {
+export default function LudicoPage() {
   return (
     <div className="flex flex-col gap-10">
-      <div className="rounded-xl border border-amber-300/60 bg-amber-50 px-3 py-2 text-xs text-amber-800">
-        Protótipo — só pra ver o visual. Ainda não salva nada e não está no menu.
-      </div>
-
       <header className="max-w-2xl">
         <Eyebrow>Lúdico</Eyebrow>
         <h1 className="mt-1 font-heading text-3xl text-foreground md:text-4xl">
@@ -94,15 +87,8 @@ export default function MomentosPrototipo() {
                   <Icon className="size-[20px]" strokeWidth={1.8} />
                 </span>
                 {c.status && (
-                  <span
-                    className={cn(
-                      "rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.12em]",
-                      c.status === "novo"
-                        ? "bg-brand-yellow/25 text-[#8B5A00]"
-                        : "bg-foreground/5 text-muted-foreground",
-                    )}
-                  >
-                    {c.status === "novo" ? "Novo" : "Em breve"}
+                  <span className="rounded-full bg-foreground/5 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-muted-foreground">
+                    Em breve
                   </span>
                 )}
               </div>
@@ -127,7 +113,10 @@ export default function MomentosPrototipo() {
               {c.href ? (
                 <Link
                   href={c.href}
-                  className={cn(base, "transition-all hover:-translate-y-0.5 hover:shadow-[0_4px_12px_rgba(46,10,82,0.06),_0_12px_28px_rgba(46,10,82,0.06)]")}
+                  className={cn(
+                    base,
+                    "transition-all hover:-translate-y-0.5 hover:shadow-[0_4px_12px_rgba(46,10,82,0.06),_0_12px_28px_rgba(46,10,82,0.06)]",
+                  )}
                 >
                   {inner}
                 </Link>
