@@ -189,7 +189,7 @@ export const SUBCAMPOS_DOMINIO: Record<string, SubCampo[]> = {
     {
       key: "interage",
       label: "Interage com outras pessoas (pares)",
-      opcoes: ["Com facilidade", "Às vezes", "Raramente", "Quase não"],
+      opcoes: ["Com facilidade", "Às vezes", "Raramente"],
     },
     {
       key: "com_quem",
