@@ -3,6 +3,7 @@ import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
 import { loadFamilyContext } from "@/lib/auth/require-user";
 import { RespostaMarkdown, limparRespostaKolo } from "@/components/resposta-markdown";
+import { ofereceuPlano } from "@/lib/ia/marcadores";
 import { RespostaStreamer } from "./resposta-streamer";
 
 // "Montar plano completo" roda uma chamada longa do Sonnet (server action
@@ -40,27 +41,15 @@ export default async function ConversaPage(props: PageProps<"/conversar/[id]">) 
     .eq("conversa_id", conversa.id)
     .order("created_at", { ascending: true });
 
-  const { data: tipos } = await supabase
-    .from("output_types")
-    .select("key, label, ordem")
-    .eq("ativo", true)
-    .order("ordem", { ascending: true });
-
   const msgs = mensagens ?? [];
   const temResposta = msgs.some((m) => m.papel === "assistant");
   const ultima = msgs[msgs.length - 1];
   const precisaResposta = ultima?.papel === "user";
 
-  // Intenção do último turno respondido — define se o CTA de plano aparece
-  // (numa crise a Kolo acolhe; não empurra plano).
+  // O botão "Montar plano" só aparece quando a Kolo OFERECEU o plano na última
+  // resposta (marcador). Antes disso, a conversa fica limpa.
   const ultimaResposta = [...msgs].reverse().find((m) => m.papel === "assistant");
-  const intencao =
-    ((ultimaResposta?.metadata as { intencao?: string } | null)?.intencao as
-      | "crise"
-      | "desafio"
-      | "duvida"
-      | "desabafo"
-      | undefined) ?? "desafio";
+  const planoOferecido = ofereceuPlano(ultimaResposta?.conteudo as string | undefined);
 
   const membrosRel = conversa.membros_atipicos as
     | { nome: string }
@@ -117,17 +106,13 @@ export default async function ConversaPage(props: PageProps<"/conversar/[id]">) 
         ))}
       </ul>
 
-      {/* Resposta em streaming + ações (mais ajuda / Atualizar) + continuar. */}
+      {/* Resposta em streaming → caixa de resposta → ações (abaixo). */}
       <RespostaStreamer
         conversaId={conversa.id}
         precisaResposta={precisaResposta}
         temResposta={temResposta}
         msgCount={msgs.length}
-        intencao={intencao}
-        outputTypes={(tipos ?? []).map((t) => ({
-          key: t.key as string,
-          label: t.label as string,
-        }))}
+        planoOferecido={planoOferecido}
       />
     </div>
   );

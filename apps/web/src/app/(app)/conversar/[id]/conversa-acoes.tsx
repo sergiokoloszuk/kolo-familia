@@ -3,10 +3,9 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Check, Leaf, Plus, RefreshCw, Sparkles } from "lucide-react";
+import { Check, Leaf, RefreshCw, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
-  pedirApoioNaConversa,
   proporAtualizacao,
   confirmarAtualizacao,
   criarPlanoDaConversa,
@@ -29,23 +28,17 @@ const CAMPO_LABEL: Record<string, string> = {
 
 export function ConversaAcoes({
   conversaId,
-  intencao,
-  outputTypes,
+  planoOferecido,
 }: {
   conversaId: string;
-  intencao: "crise" | "desafio" | "duvida" | "desabafo";
-  outputTypes: { key: string; label: string }[];
+  /** A Kolo ofereceu o plano na última resposta? Só então mostra o botão. */
+  planoOferecido: boolean;
 }) {
-  const emCrise = intencao === "crise";
   const router = useRouter();
   const [erro, setErro] = useState<string | null>(null);
 
   // Plano completo
   const [pendingPlano, startPlano] = useTransition();
-
-  // Mais ajuda
-  const [pendingApoio, startApoio] = useTransition();
-  const [apoioAtivo, setApoioAtivo] = useState<string | null>(null);
 
   function handlePlano() {
     if (pendingPlano) return;
@@ -76,22 +69,6 @@ export function ConversaAcoes({
   const [selConquista, setSelConquista] = useState(false);
   const [selDesafio, setSelDesafio] = useState(false);
   const [resumoOk, setResumoOk] = useState<string | null>(null);
-
-  function handleApoio(key: string) {
-    if (pendingApoio) return;
-    setErro(null);
-    setResumoOk(null);
-    setApoioAtivo(key);
-    startApoio(async () => {
-      const r = await pedirApoioNaConversa({ conversaId, outputTypeKey: key });
-      setApoioAtivo(null);
-      if (!r.ok) {
-        setErro(r.error);
-        return;
-      }
-      router.refresh();
-    });
-  }
 
   function handlePropor() {
     setErro(null);
@@ -153,31 +130,9 @@ export function ConversaAcoes({
         </div>
       )}
 
-      {/* Plano completo — a ação principal: junta tudo num plano só.
-          Numa crise a Kolo acolhe; em vez de empurrar o plano, faz uma
-          oferta discreta e sem pressa (a mãe escolhe o ritmo). */}
-      {emCrise ? (
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-xl bg-kolo-lilas-bg-2/40 px-4 py-3">
-          <p className="text-sm leading-relaxed text-muted-foreground">
-            Quando você quiser — sem pressa — posso organizar isso num plano com calma.
-          </p>
-          <button
-            type="button"
-            onClick={handlePlano}
-            disabled={pendingPlano}
-            className="inline-flex items-center gap-1.5 text-sm font-semibold text-brand-purple underline underline-offset-2 hover:text-brand-purple-dark disabled:opacity-50"
-          >
-            {pendingPlano ? (
-              <>
-                <RefreshCw className="size-3.5 animate-spin" aria-hidden />
-                Montando...
-              </>
-            ) : (
-              "Montar um plano"
-            )}
-          </button>
-        </div>
-      ) : (
+      {/* Plano completo — só aparece quando a Kolo OFERECEU na conversa
+          (marcador na resposta). O plano é o aprofundamento das ideias. */}
+      {planoOferecido && (
         <div className="rounded-2xl border border-brand-purple/20 bg-kolo-lilas-bg-2/40 p-4">
           <div className="flex items-start gap-3">
             <span
@@ -188,11 +143,11 @@ export function ConversaAcoes({
             </span>
             <div className="flex-1">
               <p className="font-heading text-base font-medium text-foreground">
-                Quer um plano completo sobre isso?
+                Quer o plano completo?
               </p>
               <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-                Junto tudo num plano organizado — ideias práticas, frases pra usar e o
-                que observar — personalizado pra sua família. Dá pra imprimir.
+                Junto tudo num plano organizado — mais ideias, frases pra usar e o que
+                observar, personalizado pra sua família. Dá pra imprimir.
               </p>
               <Button type="button" onClick={handlePlano} disabled={pendingPlano} className="mt-3">
                 {pendingPlano ? (
@@ -211,34 +166,6 @@ export function ConversaAcoes({
           </div>
         </div>
       )}
-
-      {/* Mais ajuda — gera o tipo escolhido sobre o mesmo tema. */}
-      <div>
-        <p className="mb-2.5 text-[11px] font-bold uppercase tracking-[0.16em] text-muted-foreground">
-          Quer ir mais fundo nesse tema?
-        </p>
-        <div className="flex flex-wrap gap-2">
-          {outputTypes.map((t) => {
-            const carregando = pendingApoio && apoioAtivo === t.key;
-            return (
-              <button
-                key={t.key}
-                type="button"
-                onClick={() => handleApoio(t.key)}
-                disabled={pendingApoio}
-                className="inline-flex items-center gap-1.5 rounded-full border border-foreground/10 bg-white px-3.5 py-2 text-sm font-medium text-foreground shadow-sm transition-colors hover:border-brand-purple/30 hover:bg-kolo-lilas-bg-2 hover:text-brand-purple disabled:opacity-50"
-              >
-                {carregando ? (
-                  <RefreshCw className="size-3.5 shrink-0 animate-spin text-brand-purple/70" aria-hidden />
-                ) : (
-                  <Plus className="size-3.5 shrink-0 text-brand-purple/70" aria-hidden />
-                )}
-                {carregando ? "Pensando..." : t.label}
-              </button>
-            );
-          })}
-        </div>
-      </div>
 
       {/* Atualizar — IA propõe o que registrar; usuário confirma. */}
       {!proposta && (

@@ -2,6 +2,7 @@ import type Anthropic from "@anthropic-ai/sdk";
 import type { ContextoSkillResposta } from "./context";
 import type { SkillRow } from "./router";
 import type { Intencao } from "./intencao";
+import { MARCADOR_PLANO } from "./marcadores";
 import { pronomesPara } from "@/lib/ayla/pronomes";
 
 export type OutputTypeData = {
@@ -79,8 +80,10 @@ Responda direto e objetivo, no tom de sempre. Sem alongar nem montar plano.`;
     default:
       return `# Esta mensagem traz um desafio do dia a dia
 
-Responda como sempre. Se faltar um contexto essencial pra ajudar de verdade, faça 1 pergunta curta antes de aprofundar.
-Quando já tiver o suficiente, ajude — e, ao final, sinalize de leve que dá pra montar um plano completo sobre isso (a interface já oferece o botão; não invente links).`;
+Ajude de verdade JÁ na conversa: a cada resposta, traga 1 ideia prática e possível agora (não segure as ideias esperando o plano). Pode usar o interesse da criança.
+Faça POUCAS perguntas — só as 1-3 que de fato mudam o que você vai sugerir. Faltou um contexto essencial? Pergunte. Já tem o suficiente? PARE de perguntar e ajude.
+Assim que tiver contexto suficiente pra um bom plano, FECHE assim: dê uma ideia útil + ofereça o plano como um APROFUNDAMENTO — algo como "Acho que já consigo te montar um plano completo com isso (mais ideias, frases prontas e o que observar). Quer?" — e, na ÚLTIMA linha, escreva exatamente o marcador ${MARCADOR_PLANO}. Esse marcador some do texto e faz a interface mostrar o botão do plano; use SÓ quando for mesmo hora de oferecer, nunca em toda resposta.
+Não termine toda resposta com pergunta.`;
   }
 }
 
@@ -100,10 +103,10 @@ ${VOZ_E_LIMITES}${intencao ? `\n\n${blocoIntencao(intencao)}` : ""}
 
 Responda como uma amiga sábia conversando no WhatsApp — curto, quente e direto. Não é redação nem relatório.
 
-- Acolha e mostre que entende, citando de leve 1 elemento do Kolo Vivo da criança em foco (1-2 frases).
+- Acolha de leve — 1 frase, e SÓ quando fizer diferença. NÃO repita "eu entendo", "isso é comum", "que exaustivo" a cada resposta; acolhimento repetido a cada turno cansa.
 - Quando ajudar, levante 1 hipótese do que pode estar por trás — possibilidade, NUNCA causa afirmada.
 - Dê 1 ideia prática e possível agora, ancorada nas Boas Práticas (pode usar o interesse da criança). Se couber, ofereça uma frase pronta pro adulto usar, em itálico (\`*frase*\`).
-- Termine com 1 pergunta curta que mantém a conversa aberta.
+- Faça uma pergunta curta SÓ se faltar algo essencial pra ajudar. NÃO termine toda resposta com pergunta — deixe a conversa caminhar pra uma solução, não pra um interrogatório.
 
 Nem todo item é obrigatório — siga o que a mensagem pede. Deixe fluir como conversa: NÃO use títulos de seção pra cada parte.
 

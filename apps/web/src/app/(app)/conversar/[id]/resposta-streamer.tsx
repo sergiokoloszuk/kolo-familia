@@ -19,8 +19,7 @@ export function RespostaStreamer({
   precisaResposta,
   temResposta,
   msgCount,
-  intencao,
-  outputTypes,
+  planoOferecido,
 }: {
   conversaId: string;
   precisaResposta: boolean;
@@ -28,9 +27,8 @@ export function RespostaStreamer({
   /** Nº de mensagens persistidas (vindo do servidor). Cresce quando o refresh
    *  traz a resposta salva — usamos isso pra fazer o handoff sem piscar. */
   msgCount: number;
-  /** Intenção do último turno — numa crise o CTA de plano não aparece. */
-  intencao: "crise" | "desafio" | "duvida" | "desabafo";
-  outputTypes: { key: string; label: string }[];
+  /** A Kolo ofereceu o plano na última resposta? Só então mostra o botão. */
+  planoOferecido: boolean;
 }) {
   const router = useRouter();
   const [streaming, setStreaming] = useState(false);
@@ -159,16 +157,7 @@ export function RespostaStreamer({
         </div>
       )}
 
-      {/* Ações (mais ajuda / Atualizar) — só quando há resposta e não está transmitindo */}
-      {temResposta && !streaming && (
-        <ConversaAcoes
-          conversaId={conversaId}
-          intencao={intencao}
-          outputTypes={outputTypes}
-        />
-      )}
-
-      {/* Continuar conversa */}
+      {/* Caixa de resposta — logo após a conversa, nunca cortada/empurrada. */}
       <form
         onSubmit={(e) => {
           e.preventDefault();
@@ -191,6 +180,11 @@ export function RespostaStreamer({
           </Button>
         </div>
       </form>
+
+      {/* Ações ABAIXO da caixa — plano (só quando oferecido) + guardar o papo. */}
+      {temResposta && !streaming && (
+        <ConversaAcoes conversaId={conversaId} planoOferecido={planoOferecido} />
+      )}
     </div>
   );
 }

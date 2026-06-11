@@ -1,4 +1,5 @@
 import { Fragment, type ReactNode } from "react";
+import { MARCADOR_PLANO } from "@/lib/ia/marcadores";
 
 /**
  * Renderizador de markdown leve e on-brand para as respostas das skills.
@@ -202,6 +203,9 @@ export function RespostaMarkdown({
  * imediatamente antes do marcador.
  */
 export function limparRespostaKolo(texto: string): string {
+  // Remove o marcador de "ofereceu plano" (a interface usa a presença dele,
+  // não deve aparecer no texto).
+  texto = texto.split(MARCADOR_PLANO).join("").trimEnd();
   const linhas = texto.replace(/\r\n/g, "\n").split("\n");
   const markerIdx = linhas.findIndex((l) => /registrar este papo/i.test(l));
   if (markerIdx === -1) return texto;
