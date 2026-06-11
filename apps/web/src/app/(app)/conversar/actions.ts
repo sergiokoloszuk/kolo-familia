@@ -7,7 +7,11 @@ import { createClient, createServiceRoleClient } from "@/lib/supabase/server";
 import { respond, respondAsOutputType } from "@/lib/ia/engine";
 import { gerarSecoesPlanoMultiCall } from "@/lib/ia/plano";
 import { extrairAtualizacoes, type PropostaAtualizacao } from "@/lib/ia/atualizar";
-import { MEMBRO_CAMPOS_TOPLEVEL, membroCampoStorage } from "@/lib/kolo-vivo/campos";
+import {
+  MEMBRO_CAMPOS_TOPLEVEL,
+  MEMBRO_CAMPOS_EXTRAS,
+  membroCampoStorage,
+} from "@/lib/kolo-vivo/campos";
 import {
   subcamposDe,
   parsearSubcampos,
@@ -647,18 +651,22 @@ async function montarKoloVivoResumo(
   if (membroId) {
     const { data: pvm } = await supabase
       .from("perfil_vivo_membro")
-      .select("essencial, como_e, corpo_rotina, desafios_regulacao, sensorial")
+      .select(
+        "essencial, como_e, corpo_rotina, desafios_regulacao, sensorial, categorias_extras",
+      )
       .eq("membro_atipico_id", membroId)
       .maybeSingle();
     if (pvm) {
-      for (const campo of [
-        "essencial",
-        "como_e",
-        "corpo_rotina",
-        "desafios_regulacao",
-        "sensorial",
-      ] as const) {
-        const resumo = resumoCampo(pvm[campo]);
+      // Toplevel legados.
+      for (const campo of MEMBRO_CAMPOS_TOPLEVEL) {
+        const resumo = resumoCampo((pvm as Record<string, unknown>)[campo]);
+        if (resumo) linhas.push(`[criança/${campo}] ${resumo}`);
+      }
+      // Domínios novos (categorias_extras) — sem isto, o extrator não enxerga
+      // o que já existe nesses domínios e acaba propondo duplicado.
+      const extras = (pvm.categorias_extras as Record<string, unknown> | null) ?? {};
+      for (const campo of MEMBRO_CAMPOS_EXTRAS) {
+        const resumo = resumoCampo(extras[campo]);
         if (resumo) linhas.push(`[criança/${campo}] ${resumo}`);
       }
     }
