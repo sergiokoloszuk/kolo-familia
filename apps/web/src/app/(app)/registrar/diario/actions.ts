@@ -4,6 +4,9 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { requireActiveWrite } from "@/lib/auth/require-active-write";
+import { idadeAnos } from "@/lib/idade";
+import { extrairAtualizacoes, type ItemKoloVivo } from "@/lib/ia/atualizar";
+import { montarKoloVivoResumo, aplicarItensNoMembro } from "@/lib/kolo-vivo/incorporar";
 
 async function requireFamily() {
   const supabase = await createClient();
@@ -150,4 +153,84 @@ export async function registrarDia(input: RegistrarDiaInput): Promise<void> {
   revalidatePath("/painel");
   revalidatePath("/registrar");
   revalidatePath("/registrar/diario");
+}
+
+// ============================================================
+// Diário → Kolo Vivo (proposta com pergunta, sem duplicar)
+// Depois de registrar o dia, a Kolo lê o que foi escrito e, se houver algo
+// NOVO (que ainda não está no Kolo Vivo), oferece guardar — a mãe decide.
+// ============================================================
+
+const proporSchema = z.object({
+  membroAtipicoId: z.string().uuid(),
+  texto: z.string().trim().min(1),
+});
+
+export async function proporKoloVivoDoDiario(
+  input: z.infer<typeof proporSchema>,
+): Promise<{ ok: true; koloVivo: ItemKoloVivo[]; nome: string } | { ok: false; error: string }> {
+  try {
+    const { membroAtipicoId, texto } = proporSchema.parse(input);
+    const { supabase, family } = await requireFamily();
+
+    const { data: m } = await supabase
+      .from("membros_atipicos")
+      .select("nome, data_nascimento, perfil")
+      .eq("id", membroAtipicoId)
+      .eq("family_account_id", family.id)
+      .maybeSingle();
+    if (!m) return { ok: false, error: "Membro não encontrado." };
+
+    const koloVivoResumo = await montarKoloVivoResumo(supabase, family.id, membroAtipicoId);
+    const proposta = await extrairAtualizacoes({
+      transcript: texto,
+      koloVivoResumo,
+      membro: {
+        nome: m.nome as string,
+        idade: idadeAnos((m.data_nascimento as string | null) ?? null),
+        perfil: (m.perfil as string) ?? "",
+      },
+    });
+    // Só camada1 (a criança) faz sentido a partir do diário.
+    const koloVivo = proposta.koloVivo.filter((it) => it.camada === "camada1");
+    return { ok: true, koloVivo, nome: m.nome as string };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "Erro inesperado" };
+  }
+}
+
+const salvarKvSchema = z.object({
+  membroAtipicoId: z.string().uuid(),
+  koloVivo: z
+    .array(
+      z.object({
+        camada: z.enum(["camada1", "camada2"]),
+        campo: z.string().min(1),
+        subcampo: z.string().trim().nullable().optional(),
+        texto: z.string().trim().min(1),
+        operacao: z.enum(["adicionar", "reescrever"]).default("adicionar"),
+      }),
+    )
+    .min(1),
+});
+
+export async function salvarKoloVivoDoDiario(
+  input: z.infer<typeof salvarKvSchema>,
+): Promise<{ ok: true; count: number } | { ok: false; error: string }> {
+  try {
+    const { membroAtipicoId, koloVivo } = salvarKvSchema.parse(input);
+    const { supabase, family } = await requireFamily();
+    await requireActiveWrite(family.id);
+    const count = await aplicarItensNoMembro(
+      supabase,
+      family.id,
+      membroAtipicoId,
+      koloVivo as ItemKoloVivo[],
+    );
+    revalidatePath("/kolo-vivo");
+    revalidatePath("/painel");
+    return { ok: true, count };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "Erro inesperado" };
+  }
 }

@@ -7,7 +7,41 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { hojeLocalISO } from "@/lib/idade";
-import { registrarDia, type RegistrarDiaInput } from "./actions";
+import {
+  registrarDia,
+  proporKoloVivoDoDiario,
+  salvarKoloVivoDoDiario,
+  type RegistrarDiaInput,
+} from "./actions";
+
+type KvItem = {
+  camada: "camada1" | "camada2";
+  campo: string;
+  subcampo?: string | null;
+  texto: string;
+  operacao: "adicionar" | "reescrever";
+};
+
+const CAMPO_LABEL: Record<string, string> = {
+  nutricional: "Alimentação",
+  sono: "Sono",
+  sensorial: "Sensorial",
+  comunicacao: "Comunicação",
+  socializacao: "Socialização",
+  emocional: "Regulação emocional",
+  foco: "Foco e atenção",
+  motor: "Motor",
+  autonomia: "Autonomia",
+  aprendizado: "Aprendizado",
+  imitacao: "Imitação",
+  tela_midia: "Tela e mídia",
+  escola: "Escola",
+  saude_geral: "Saúde geral",
+  como_e: "Interesses e jeito de ser",
+  essencial: "O essencial",
+  corpo_rotina: "Corpo e rotina",
+  desafios_regulacao: "Desafios",
+};
 
 const ESCALAS_MAE = [
   { v: "muito_bem", emoji: "🌞", label: "Muito bem" },
@@ -67,6 +101,9 @@ export function DiarioForm({
   const [pending, startTransition] = useTransition();
   const [erro, setErro] = useState<string | null>(null);
   const [sucesso, setSucesso] = useState(false);
+  const [proposta, setProposta] = useState<{ koloVivo: KvItem[]; nome: string } | null>(null);
+  const [kvPending, startKv] = useTransition();
+  const [kvFeito, setKvFeito] = useState<"salvo" | "dispensado" | null>(null);
   const [form, setForm] = useState<FormState>({
     membroAtipicoId: membros[0]?.id ?? null,
     escalaEmocionalMae: "neutro",
@@ -100,15 +137,20 @@ export function DiarioForm({
     });
     setSucesso(false);
     setErro(null);
+    setProposta(null);
+    setKvFeito(null);
   }
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setErro(null);
+    setProposta(null);
+    setKvFeito(null);
+    const membroId = form.membroAtipicoId;
     startTransition(async () => {
       try {
         await registrarDia({
-          membroAtipicoId: form.membroAtipicoId,
+          membroAtipicoId: membroId,
           data: hojeLocalISO(),
           escalaEmocionalMae: form.escalaEmocionalMae,
           escalaEmocionalMembro: form.escalaEmocionalMembro ?? null,
@@ -122,8 +164,39 @@ export function DiarioForm({
         });
         setSucesso(true);
         router.refresh();
+
+        // Diário → Kolo Vivo: lê o que foi escrito e oferece guardar o que é
+        // novo (a mãe decide). Só com criança vinculada + algo escrito.
+        if (membroId && temEvento) {
+          const texto = [
+            form.conquista.trim() && `Conquista: ${form.conquista.trim()}`,
+            form.desafio.trim() && `Desafio: ${form.desafio.trim()}`,
+            form.possivelGatilho.trim() && `Possível gatilho: ${form.possivelGatilho.trim()}`,
+            form.observacaoLivre.trim() && `Observação: ${form.observacaoLivre.trim()}`,
+          ]
+            .filter(Boolean)
+            .join("\n");
+          const r = await proporKoloVivoDoDiario({ membroAtipicoId: membroId, texto });
+          if (r.ok && r.koloVivo.length > 0) {
+            setProposta({ koloVivo: r.koloVivo as KvItem[], nome: r.nome });
+          }
+        }
       } catch (e) {
         setErro(e instanceof Error ? e.message : "Erro inesperado");
+      }
+    });
+  }
+
+  function salvarKv() {
+    if (!proposta || !form.membroAtipicoId) return;
+    const membroId = form.membroAtipicoId;
+    startKv(async () => {
+      const r = await salvarKoloVivoDoDiario({ membroAtipicoId: membroId, koloVivo: proposta.koloVivo });
+      if (r.ok) {
+        setKvFeito("salvo");
+        router.refresh();
+      } else {
+        setErro(r.error);
       }
     });
   }
@@ -151,6 +224,44 @@ export function DiarioForm({
             </p>
           </div>
         </div>
+        {pending && form.membroAtipicoId && (
+          <p className="text-sm text-muted-foreground">Vendo se tem algo novo pro Kolo Vivo…</p>
+        )}
+
+        {kvFeito === "salvo" ? (
+          <p className="text-sm font-medium text-brand-purple-dark">✓ Guardado no Kolo Vivo.</p>
+        ) : proposta && proposta.koloVivo.length > 0 && kvFeito !== "dispensado" ? (
+          <div className="w-full rounded-xl border border-brand-purple/20 bg-white p-4">
+            <p className="text-sm font-medium text-foreground">
+              Percebi algo novo sobre {proposta.nome} — quer guardar no Kolo Vivo?
+            </p>
+            <ul className="mt-2 flex flex-col gap-1">
+              {proposta.koloVivo.map((it, i) => (
+                <li key={i} className="flex gap-2 text-sm text-muted-foreground">
+                  <span
+                    aria-hidden
+                    className="mt-[0.5em] size-1.5 shrink-0 rounded-full bg-brand-purple/40"
+                  />
+                  <span>
+                    <span className="font-medium text-foreground">
+                      {CAMPO_LABEL[it.campo] ?? it.campo}:
+                    </span>{" "}
+                    {it.texto}
+                  </span>
+                </li>
+              ))}
+            </ul>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <Button type="button" onClick={salvarKv} disabled={kvPending}>
+                {kvPending ? "Guardando..." : "Guardar no Kolo Vivo"}
+              </Button>
+              <Button type="button" variant="ghost" onClick={() => setKvFeito("dispensado")}>
+                Agora não
+              </Button>
+            </div>
+          </div>
+        ) : null}
+
         <div className="flex flex-wrap gap-2">
           <Button type="button" onClick={() => router.push("/painel")}>
             Ver no painel
