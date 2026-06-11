@@ -67,12 +67,12 @@ export default function MomentosPrototipo() {
       </div>
 
       <header className="max-w-2xl">
-        <Eyebrow>Momentos · nome provisório</Eyebrow>
+        <Eyebrow>Lúdico</Eyebrow>
         <h1 className="mt-1 font-heading text-3xl text-foreground md:text-4xl">
-          Ferramentas pra <em className="not-italic text-brand-purple">cada momento</em>
+          Apoio pelo <em className="not-italic text-brand-purple">brincar e imaginar</em>
         </h1>
         <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-          Apoios visuais com o avatar de cada um — pra preparar, seguir o dia, acalmar
+          Recursos visuais com o avatar de cada um — pra preparar, seguir o dia, acalmar
           ou imaginar algo bom acontecendo. Pra diferentes momentos e necessidades.
         </p>
       </header>
