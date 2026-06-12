@@ -58,16 +58,13 @@ Seja conciso e útil; use bullets quando ajudar. NÃO invente nada — use só o
 
 export type Destinatario = "escola" | "terapeuta";
 
-export async function gerarRelatorio(
-  params: {
-    supabase: SupabaseClient;
-    familyId: string;
-    membroId: string;
-    destinatario: Destinatario;
-  },
-): Promise<{ markdown: string; nome: string } | null> {
-  const { supabase, familyId, membroId, destinatario } = params;
-
+/** Reúne o contexto da criança (foco + perfil + Kolo Vivo + registros). */
+async function montarContextoRelatorio(
+  supabase: SupabaseClient,
+  familyId: string,
+  membroId: string,
+  destinatario: Destinatario,
+): Promise<{ nome: string; bloco: string } | null> {
   const { data: m } = await supabase
     .from("membros_atipicos")
     .select("id, nome, data_nascimento, perfil")
@@ -83,12 +80,10 @@ export async function gerarRelatorio(
     )
     .eq("membro_atipico_id", membroId)
     .maybeSingle();
-  const extras = ((pv?.categorias_extras as Record<string, unknown> | null) ?? {});
+  const extras = (pv?.categorias_extras as Record<string, unknown> | null) ?? {};
 
   const dominios = ROTULOS.map((r) => {
-    const val = r.toplevel
-      ? (pv as Record<string, unknown> | null)?.[r.key]
-      : extras[r.key];
+    const val = r.toplevel ? (pv as Record<string, unknown> | null)?.[r.key] : extras[r.key];
     const t = textoDe(val);
     return t ? `${r.label}: ${t}` : "";
   })
@@ -117,13 +112,12 @@ export async function gerarRelatorio(
 
   const idade = idadeAnos((m.data_nascimento as string | null) ?? null);
   const nome = m.nome as string;
-
   const foco =
     destinatario === "escola"
       ? "Este relatório é para a ESCOLA. Foque no que ajuda no dia a dia escolar: como se comunica, sensorial, regulação, foco, o que ajuda em sala, pontos fortes e adaptações úteis. NÃO inclua detalhes íntimos da família."
       : "Este relatório é para o TERAPEUTA. Pode ser mais completo (comunicação, sensorial, regulação, alimentação, avanços e desafios ao longo do tempo), sempre no tom descritivo da família.";
 
-  const userMsg = `${foco}
+  const bloco = `${foco}
 
 Pessoa: ${nome}${idade != null ? `, ${idade} anos` : ""}.
 Perfil informado pela família: ${(m.perfil as string) || "(não informado)"}
@@ -134,10 +128,16 @@ ${dominios || "(pouca informação preenchida)"}
 
 <registros_recentes>
 ${registros || "(sem registros recentes)"}
-</registros_recentes>
+</registros_recentes>`;
 
-Escreva o relatório em markdown.`;
+  return { nome, bloco };
+}
 
+async function chamarRelatorio(
+  supabase: SupabaseClient,
+  familyId: string,
+  userMsg: string,
+): Promise<string> {
   const client = getAnthropicClient();
   const msg = await client.messages.create({
     model: MODELS.principal,
@@ -153,12 +153,53 @@ Escreva o relatório em markdown.`;
     input_tokens: msg.usage.input_tokens,
     output_tokens: msg.usage.output_tokens,
   });
-
-  const markdown = msg.content
+  return msg.content
     .filter((b): b is Extract<typeof b, { type: "text" }> => b.type === "text")
     .map((b) => b.text)
     .join("")
     .trim();
+}
+
+export async function gerarRelatorio(params: {
+  supabase: SupabaseClient;
+  familyId: string;
+  membroId: string;
+  destinatario: Destinatario;
+}): Promise<{ markdown: string; nome: string } | null> {
+  const { supabase, familyId, membroId, destinatario } = params;
+  const ctx = await montarContextoRelatorio(supabase, familyId, membroId, destinatario);
+  if (!ctx) return null;
+  const markdown = await chamarRelatorio(
+    supabase,
+    familyId,
+    `${ctx.bloco}\n\nEscreva o relatório em markdown.`,
+  );
   if (!markdown) return null;
-  return { markdown, nome };
+  return { markdown, nome: ctx.nome };
+}
+
+/** Reescreve o relatório aplicando um ajuste pedido pela família (chat de IA). */
+export async function ajustarRelatorio(params: {
+  supabase: SupabaseClient;
+  familyId: string;
+  membroId: string;
+  destinatario: Destinatario;
+  markdownAtual: string;
+  pedido: string;
+}): Promise<{ markdown: string; nome: string } | null> {
+  const { supabase, familyId, membroId, destinatario, markdownAtual, pedido } = params;
+  const ctx = await montarContextoRelatorio(supabase, familyId, membroId, destinatario);
+  if (!ctx) return null;
+  const userMsg = `${ctx.bloco}
+
+<relatorio_atual>
+${markdownAtual}
+</relatorio_atual>
+
+A família pediu este AJUSTE: "${pedido.trim()}"
+
+Reescreva o relatório APLICANDO o ajuste pedido, mantendo o tom descritivo (não-diagnóstico), a estrutura em seções e os fatos verdadeiros. Mude só o que o pedido pede. Devolva o relatório COMPLETO em markdown.`;
+  const markdown = await chamarRelatorio(supabase, familyId, userMsg);
+  if (!markdown) return null;
+  return { markdown, nome: ctx.nome };
 }

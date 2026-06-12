@@ -21,6 +21,12 @@ export default async function RelatorioPage() {
     nome: capitalizarNome(m.nome as string),
   }));
 
+  const dataHoje = new Date().toLocaleDateString("pt-BR", {
+    day: "2-digit",
+    month: "long",
+    year: "numeric",
+  });
+
   return (
     <div className="flex flex-col gap-8">
       <Link
@@ -49,7 +55,7 @@ export default async function RelatorioPage() {
           Cadastre um membro no Kolo Vivo pra gerar o relatório.
         </p>
       ) : (
-        <RelatorioClient membros={lista} />
+        <RelatorioClient membros={lista} dataHoje={dataHoje} />
       )}
     </div>
   );

@@ -2,7 +2,10 @@
 
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
-import { gerarRelatorio as gerarRelatorioIA } from "@/lib/relatorio/gerar";
+import {
+  gerarRelatorio as gerarRelatorioIA,
+  ajustarRelatorio as ajustarRelatorioIA,
+} from "@/lib/relatorio/gerar";
 
 async function requireFamily() {
   const supabase = await createClient();
@@ -38,6 +41,33 @@ export async function gerarRelatorio(
       destinatario,
     });
     if (!r) return { ok: false, error: "Não consegui montar o relatório. Tente de novo." };
+    return { ok: true, markdown: r.markdown, nome: r.nome };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "Erro inesperado" };
+  }
+}
+
+const ajusteSchema = schema.extend({
+  markdownAtual: z.string().trim().min(1),
+  pedido: z.string().trim().min(1).max(500),
+});
+
+/** Reescreve o relatório aplicando um pedido de ajuste (chat de IA). */
+export async function ajustarRelatorio(
+  input: z.infer<typeof ajusteSchema>,
+): Promise<{ ok: true; markdown: string; nome: string } | { ok: false; error: string }> {
+  try {
+    const { membroId, destinatario, markdownAtual, pedido } = ajusteSchema.parse(input);
+    const { supabase, family } = await requireFamily();
+    const r = await ajustarRelatorioIA({
+      supabase,
+      familyId: family.id,
+      membroId,
+      destinatario,
+      markdownAtual,
+      pedido,
+    });
+    if (!r) return { ok: false, error: "Não consegui ajustar o relatório. Tente de novo." };
     return { ok: true, markdown: r.markdown, nome: r.nome };
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : "Erro inesperado" };
