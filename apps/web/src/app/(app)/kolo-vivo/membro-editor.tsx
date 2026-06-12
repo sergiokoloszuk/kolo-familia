@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { TrendingUp } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { decideSugestao, saveSecaoMembro } from "./actions";
 import { DOMINIOS } from "./dominios";
@@ -22,6 +23,16 @@ const FILTRO_DOT: Record<Exclude<Filtro, "todos">, string> = {
   perceber: "bg-cat-emocao",
   comecar: "bg-foreground/15",
 };
+
+const MESES_ABREV = [
+  "jan", "fev", "mar", "abr", "mai", "jun",
+  "jul", "ago", "set", "out", "nov", "dez",
+];
+function formatarMarcoData(iso: string): string {
+  const [y, m] = iso.split("-");
+  const mi = Number(m) - 1;
+  return MESES_ABREV[mi] ? `${MESES_ABREV[mi]}/${y}` : iso;
+}
 
 export function MembroEditor({ membro }: { membro: MembroData }) {
   const [filtro, setFiltro] = useState<Filtro>("todos");
@@ -137,6 +148,28 @@ export function MembroEditor({ membro }: { membro: MembroData }) {
           Começar · {contagem.comecar}
         </FiltroPill>
       </div>
+
+      {/* Marcos da evolução — mudanças de status datadas (a criança cresce). */}
+      {membro.marcos.length > 0 && (
+        <section className="rounded-2xl border border-brand-purple/15 bg-kolo-lilas-bg-2/40 p-4">
+          <div className="mb-2.5 flex items-center gap-2">
+            <span className="flex size-6 items-center justify-center rounded-lg bg-brand-purple/10 text-brand-purple">
+              <TrendingUp className="size-3.5" aria-hidden />
+            </span>
+            <h3 className="text-sm font-semibold text-foreground">Marcos da evolução</h3>
+          </div>
+          <ul className="flex flex-col gap-1.5">
+            {membro.marcos.map((m, i) => (
+              <li key={i} className="flex gap-3 text-sm text-foreground/90">
+                <span className="w-16 shrink-0 text-xs font-medium text-muted-foreground">
+                  {formatarMarcoData(m.data)}
+                </span>
+                <span className="flex-1">{m.texto}</span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       {/* Grid de domínios */}
       <div className="grid items-start gap-4 [grid-template-columns:repeat(auto-fill,minmax(280px,1fr))]">

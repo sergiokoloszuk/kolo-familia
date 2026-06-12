@@ -116,6 +116,40 @@ export function aplicarTextoCampo(
   return serializarSubcampos(subs, valores);
 }
 
+export type Marco = { data: string; dominio: string; texto: string };
+
+/**
+ * Detecta MUDANÇA de status (seletor) entre o texto antigo e o novo de um
+ * domínio — vira um marco datado da evolução (ex.: "Como se comunica:
+ * Não-verbal → Fala palavras soltas"). Só seletores (opcoes), e só quando já
+ * havia um valor antes (a 1ª vez que se preenche não é marco).
+ */
+export function detectarMarcos(
+  campo: string,
+  textoAntigo: string,
+  textoNovo: string,
+  dataIso: string,
+): Marco[] {
+  const subs = subcamposDe(campo);
+  if (!subs) return [];
+  const antes = parsearSubcampos(subs, textoAntigo ?? "");
+  const depois = parsearSubcampos(subs, textoNovo ?? "");
+  const out: Marco[] = [];
+  for (const s of subs) {
+    if (!s.opcoes) continue;
+    const de = (antes[s.key] ?? "").trim();
+    const para = (depois[s.key] ?? "").trim();
+    if (de && para && de !== para) {
+      out.push({
+        data: dataIso.slice(0, 10),
+        dominio: campo,
+        texto: `${s.label}: ${de} → ${para}`,
+      });
+    }
+  }
+  return out;
+}
+
 /** Grava itens camada1 (criança) no perfil_vivo_membro. Devolve quantos. */
 export async function aplicarItensNoMembro(
   supabase: SupabaseClient,
@@ -144,24 +178,25 @@ export async function aplicarItensNoMembro(
   const extras: Record<string, unknown> =
     (atual?.categorias_extras as Record<string, unknown>) ?? {};
 
+  const marcos: Marco[] = [];
   for (const it of membroItens) {
     const onde = membroCampoStorage(it.campo);
     if (onde === "toplevel") {
       const prev = (toplevel[it.campo].texto as string) ?? "";
-      toplevel[it.campo] = {
-        ...toplevel[it.campo],
-        texto: aplicarTextoCampo(it.campo, prev, it),
-        atualizado_em: now,
-      };
+      const novo = aplicarTextoCampo(it.campo, prev, it);
+      marcos.push(...detectarMarcos(it.campo, prev, novo, now));
+      toplevel[it.campo] = { ...toplevel[it.campo], texto: novo, atualizado_em: now };
     } else if (onde === "extras") {
       const atualCampo = (extras[it.campo] as Record<string, unknown>) ?? {};
       const prev = (atualCampo.texto as string) ?? "";
-      extras[it.campo] = {
-        ...atualCampo,
-        texto: aplicarTextoCampo(it.campo, prev, it),
-        atualizado_em: now,
-      };
+      const novo = aplicarTextoCampo(it.campo, prev, it);
+      marcos.push(...detectarMarcos(it.campo, prev, novo, now));
+      extras[it.campo] = { ...atualCampo, texto: novo, atualizado_em: now };
     }
+  }
+  if (marcos.length) {
+    const anteriores = Array.isArray(extras.marcos) ? (extras.marcos as Marco[]) : [];
+    extras.marcos = [...marcos, ...anteriores].slice(0, 40);
   }
 
   const { error } = await supabase.from("perfil_vivo_membro").upsert(

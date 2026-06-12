@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { DOMINIOS, membroCampoStorage } from "./dominios";
+import { detectarMarcos } from "@/lib/kolo-vivo/incorporar";
 
 async function requireFamily() {
   const supabase = await createClient();
@@ -132,7 +133,21 @@ export async function saveSecaoMembro(input: z.infer<typeof saveMembroSchema>) {
     .maybeSingle();
 
   const row: MembroRow = { ...(atual ?? {}) };
-  const valor = { texto, atualizado_em: new Date().toISOString() };
+  const agora = new Date().toISOString();
+  const valor = { texto, atualizado_em: agora };
+
+  // Marco de evolução: um status (seletor) que mudou de valor vira marco datado.
+  const oldTexto =
+    storage === "toplevel"
+      ? textoDe((atual as Record<string, unknown> | null)?.[campo])
+      : textoDe(((atual?.categorias_extras as Record<string, unknown> | null) ?? {})[campo]);
+  const marcos = detectarMarcos(campo, oldTexto, texto, agora);
+
+  const extras = { ...((atual?.categorias_extras as Record<string, unknown>) ?? {}) };
+  if (marcos.length) {
+    const anteriores = Array.isArray(extras.marcos) ? (extras.marcos as unknown[]) : [];
+    extras.marcos = [...marcos, ...anteriores].slice(0, 40);
+  }
 
   // Monta o patch só com o que muda — preserva o resto via upsert.
   const patch: Record<string, unknown> = {
@@ -144,9 +159,11 @@ export async function saveSecaoMembro(input: z.infer<typeof saveMembroSchema>) {
     (row as Record<string, unknown>)[campo] = valor;
     patch[campo] = valor;
   } else {
-    const extras = { ...((atual?.categorias_extras as Record<string, unknown>) ?? {}) };
     extras[campo] = valor;
-    row.categorias_extras = extras;
+  }
+  row.categorias_extras = extras;
+  // Grava extras se for domínio extra OU se houve marco (que mora em extras).
+  if (storage !== "toplevel" || marcos.length) {
     patch.categorias_extras = extras;
   }
 

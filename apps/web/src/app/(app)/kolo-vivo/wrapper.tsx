@@ -36,6 +36,7 @@ export type MembroData = {
   completude: number;
   dominios: Record<DominioKey, Secao>;
   sugestoes: Partial<Record<DominioKey, DominioSugestao>>;
+  marcos: Array<{ data: string; dominio: string; texto: string }>;
 };
 
 export type SugestaoRow = {

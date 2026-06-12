@@ -107,6 +107,7 @@ export default async function KoloVivoPage() {
       completude: Math.round((preenchidos / DOMINIOS.length) * 100),
       dominios,
       sugestoes: sugestoesPorDominio,
+      marcos: lerMarcos(extras),
     };
   });
 
@@ -163,6 +164,23 @@ function extractSecao(json: unknown): Secao {
   const atualizadoEm =
     typeof obj.atualizado_em === "string" ? obj.atualizado_em : null;
   return { texto, atualizadoEm };
+}
+
+/** Marcos da evolução (mudanças de status datadas), mais recentes primeiro. */
+function lerMarcos(
+  extras: Record<string, unknown>,
+): Array<{ data: string; dominio: string; texto: string }> {
+  const m = extras.marcos;
+  if (!Array.isArray(m)) return [];
+  return m
+    .filter(
+      (x): x is { data: string; dominio: string; texto: string } =>
+        Boolean(x) &&
+        typeof x === "object" &&
+        typeof (x as { texto?: unknown }).texto === "string" &&
+        typeof (x as { data?: unknown }).data === "string",
+    )
+    .slice(0, 12);
 }
 
 /** Hiperfocos pro hero: temas favoritos (Gostos & Preferências), até 3. */
