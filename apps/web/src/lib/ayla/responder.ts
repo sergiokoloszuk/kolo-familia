@@ -159,6 +159,15 @@ export async function gerarRespostaAyla(
   linhas.push(`\n<mensagem_de_agora>\n${params.mensagem}\n</mensagem_de_agora>`);
 
   const notas: string[] = [];
+  if (
+    /\b(obede|desobed|n[ãa]o\s+(me\s+)?(escuta|ouve|obedece)|birra|malcriad|mal[-\s]criad|teimos|fazer\s+o\s+que\s+(eu\s+)?mando)/i.test(
+      params.mensagem,
+    )
+  ) {
+    notas.push(
+      `A mãe descreveu o comportamento como DESOBEDIÊNCIA/birra. NÃO valide esse enquadre (não diga "a desobediência", "ela não obedece"). No método Kolo, a criança não está "desobedecendo" — quase sempre está sobrecarregada, desregulada, com medo ou sem conseguir naquele momento. Reenquadre com gentileza e sem julgar a mãe: o que parece desobediência costuma ser o corpo pedindo socorro. O foco é entender o gatilho e co-regular JUNTO — nunca obediência, controle ou "fazer obedecer".`,
+    );
+  }
   if (params.querPlano) {
     notas.push(
       `A pessoa está PEDINDO um plano (um roteiro / passo a passo). MUITO IMPORTANTE: NÃO escreva o plano aqui no WhatsApp — nada de passos numerados, listas longas, seções ou plano completo no chat. Responda em 1 ou 2 frases curtas, com carinho, dizendo que você já está montando um plano completo sobre isso e vai mandar pra ela agora — em PDF e com um link pra abrir no app (com ideias práticas, frases pra usar e o que observar). No máximo UMA dica curtinha; o plano de verdade vai no PDF/link, não no chat.`,
