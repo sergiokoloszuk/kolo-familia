@@ -74,6 +74,8 @@ export type RespostaParams = {
   historico: Array<{ de: "mae" | "ayla"; texto: string }>;
   mensagem: string;
   sinais: SinaisResposta;
+  /** A pessoa pediu um plano explicitamente — não escreva o plano, ofereça. */
+  querPlano?: boolean;
   precisaEscolherMembro?: { nomes: string[] } | null;
 };
 
@@ -157,6 +159,11 @@ export async function gerarRespostaAyla(
   linhas.push(`\n<mensagem_de_agora>\n${params.mensagem}\n</mensagem_de_agora>`);
 
   const notas: string[] = [];
+  if (params.querPlano) {
+    notas.push(
+      `A pessoa está PEDINDO um plano (um roteiro / passo a passo). MUITO IMPORTANTE: NÃO escreva o plano aqui no WhatsApp — nada de passos numerados, listas longas, seções ou plano completo no chat. Responda em 1 ou 2 frases curtas, com carinho, dizendo que você já está montando um plano completo sobre isso e vai mandar pra ela agora — em PDF e com um link pra abrir no app (com ideias práticas, frases pra usar e o que observar). No máximo UMA dica curtinha; o plano de verdade vai no PDF/link, não no chat.`,
+    );
+  }
   if (params.koloVivoResumo.trim() || (params.estrategiasRecentes?.length ?? 0) > 0) {
     notas.push(
       `Você acompanha esta família pelo Kolo Vivo e pelas Estratégias (blocos acima). Quando ${params.nomeMae} perguntar o que você sabe da criança, pedir um resumo, ou quando ajudar a conversa, MOSTRE que está acompanhando: cite de leve o que importa (idade, perfil, 1-2 desafios principais) e, se houver, uma pergunta recente das Estratégias. Não despeje tudo — escolha o que é relevante pro momento.`,

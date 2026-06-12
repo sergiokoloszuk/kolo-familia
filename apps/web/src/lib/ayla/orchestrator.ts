@@ -899,6 +899,17 @@ export async function processInbound(
   return { tratada: true, familia: family.id, resposta: resp };
 }
 
+/** Heurística: a mensagem é um pedido explícito de plano/roteiro? */
+function pedeUmPlano(texto: string): boolean {
+  const t = (texto ?? "").toLowerCase();
+  if (!/\b(plano|roteiro|passo a passo|passo-a-passo)\b/.test(t)) return false;
+  // Exige um verbo de pedido perto, pra não confundir com feedback
+  // ("o plano funcionou", "valeu pelo plano").
+  return /\b(quero|queria|preciso|gostaria|pode|poderia|consegue|tem como|me (faz|d[aá]|ajuda|monta|monte|prepara)|faz|fazer|monta|montar|cria|criar|prepara|preparar|elabora|elaborar)\b/.test(
+    t,
+  );
+}
+
 /**
  * Gera a resposta da Ayla em streaming e manda cada parágrafo no WhatsApp
  * assim que fica pronto (primeira parte chega rápido, efeito de "digitando").
@@ -918,6 +929,11 @@ async function enviarRespostaEmChunks(
   let messageId = "unknown";
   let erro: string | null = null;
   let primeiro = true;
+
+  // A pessoa pediu um plano? Então a Ayla NÃO escreve o plano no chat —
+  // dá uma resposta curta e o sistema entrega o plano (PDF + link).
+  const querPlano = pedeUmPlano(args.params.mensagem);
+  args.params.querPlano = querPlano;
 
   let textoCompleto = await gerarRespostaAyla(
     args.params,
@@ -950,6 +966,8 @@ async function enviarRespostaEmChunks(
       mensagem: args.params.mensagem,
       temDesafio: Boolean(args.params.sinais.desafio),
       phoneE164: args.phone,
+      // Pedido explícito de plano: fura o dedup/intenção e entrega na hora.
+      forcar: querPlano,
     });
     if (nudge) {
       try {

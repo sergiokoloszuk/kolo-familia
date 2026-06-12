@@ -138,29 +138,33 @@ export async function montarPonteWhatsApp(
     temDesafio: boolean;
     /** Telefone pra enviar o PDF do plano como documento. */
     phoneE164: string;
+    /** Pedido explícito de plano: pula os gates (dedup/intenção/temDesafio). */
+    forcar?: boolean;
   },
 ): Promise<string | null> {
-  const { familyId, membroAtipicoId, mensagem, temDesafio, phoneE164 } = params;
+  const { familyId, membroAtipicoId, mensagem, temDesafio, phoneE164, forcar } = params;
 
   try {
-    // Gate 1 (barato): só quando ela descreveu um desafio concreto.
-    if (!temDesafio) return null;
+    if (!forcar) {
+      // Gate 1 (barato): só quando ela descreveu um desafio concreto.
+      if (!temDesafio) return null;
 
-    // Gate 2 (dedup): já mandamos um plano nas últimas ~20h? Não insiste.
-    const desde = new Date(Date.now() - JANELA_DEDUP_HORAS * 3600_000).toISOString();
-    const { data: recentes } = await supabase
-      .from("ayla_messages")
-      .select("id")
-      .eq("family_account_id", familyId)
-      .eq("direcao", "outbound")
-      .gte("enviada_em", desde)
-      .ilike("texto", "%/auth/wa%")
-      .limit(1);
-    if (recentes && recentes.length > 0) return null;
+      // Gate 2 (dedup): já mandamos um plano nas últimas ~20h? Não insiste.
+      const desde = new Date(Date.now() - JANELA_DEDUP_HORAS * 3600_000).toISOString();
+      const { data: recentes } = await supabase
+        .from("ayla_messages")
+        .select("id")
+        .eq("family_account_id", familyId)
+        .eq("direcao", "outbound")
+        .gte("enviada_em", desde)
+        .ilike("texto", "%/auth/wa%")
+        .limit(1);
+      if (recentes && recentes.length > 0) return null;
 
-    // Gate 3 (intenção): crise/desabafo/dúvida não recebem plano.
-    const intencao = await classificarIntencao({ supabase, familyId, texto: mensagem });
-    if (intencao !== "desafio") return null;
+      // Gate 3 (intenção): crise/desabafo/dúvida não recebem plano.
+      const intencao = await classificarIntencao({ supabase, familyId, texto: mensagem });
+      if (intencao !== "desafio") return null;
+    }
 
     // Gera o plano completo na hora (single-call) a partir do desafio. Fica
     // salvo em /planos — então o link abre o plano JÁ PRONTO (não precisa
