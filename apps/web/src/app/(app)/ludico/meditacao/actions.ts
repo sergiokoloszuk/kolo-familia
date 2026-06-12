@@ -95,6 +95,8 @@ async function carregarContexto(
   const comoE = textoJsonb(pv?.como_e);
   if (comoE) interessesPartes.push(comoE);
   const extras = (pv?.categorias_extras as Record<string, unknown> | null) ?? {};
+  const gostos = textoJsonb(extras.gostos);
+  if (gostos) interessesPartes.push(gostos);
   const pref = (extras.preferencias as { temas?: unknown } | undefined) ?? {};
   const hiper = Array.isArray(pref.temas)
     ? pref.temas.filter((x): x is string => typeof x === "string" && x.trim().length > 0)

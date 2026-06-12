@@ -28,6 +28,7 @@ const ROTULOS: Array<{ key: string; toplevel: boolean; label: string }> = [
   { key: "tela_midia", toplevel: false, label: "Tela e mídia" },
   { key: "escola", toplevel: false, label: "Escola" },
   { key: "saude_geral", toplevel: false, label: "Saúde geral" },
+  { key: "gostos", toplevel: false, label: "Gostos e interesses" },
   { key: "corpo_rotina", toplevel: true, label: "Corpo e rotina" },
   { key: "desafios_regulacao", toplevel: true, label: "Desafios" },
 ];
