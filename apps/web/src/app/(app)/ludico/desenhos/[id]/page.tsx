@@ -7,6 +7,7 @@ import {
   Heart,
   Lightbulb,
   MessageCircleQuestion,
+  Sparkles,
   Sprout,
   Star,
 } from "lucide-react";
@@ -20,6 +21,7 @@ export const maxDuration = 300;
 
 type Releitura = {
   o_que_contou?: string;
+  expressao?: string;
   importante?: string[];
   perguntas?: string[];
   historia?: string;
@@ -197,6 +199,16 @@ function ReleituraSecao({
 
       {releitura.o_que_contou && (
         <p className="text-sm leading-relaxed text-foreground/90">{releitura.o_que_contou}</p>
+      )}
+
+      {releitura.expressao && (
+        <Bloco
+          icone={<Sparkles className="size-4" />}
+          titulo="O que este desenho parece expressar"
+          tom="bg-brand-yellow/25 text-[#8B5A00]"
+        >
+          <p className="text-sm leading-relaxed text-foreground/90">{releitura.expressao}</p>
+        </Bloco>
       )}
 
       {(releitura.importante?.length ?? 0) > 0 && (

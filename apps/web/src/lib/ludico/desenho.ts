@@ -30,7 +30,7 @@ Para crianças que falam pouco / não-verbais: pergunte sobre o PERSONAGEM, não
 
 Devolva APENAS um JSON, sem nada antes ou depois:
 {
-  "observamos": ["4 a 7 fatos VISUAIS e objetivos: cores predominantes; nº de figuras; quem aparece (criança/mãe/pai/amigos/animais); proximidade e tamanho das figuras; expressões; objetos repetidos; cenário (casa/escola/natureza/monstros/veículos); uso do espaço da folha; presença de proteção (casa/muro/abraço/escudo). SÓ o que dá pra ver."],
+  "observamos": ["4 a 7 fatos VISUAIS e objetivos: cores predominantes; nº de figuras; quem aparece (criança/mãe/pai/amigos/animais); proximidade e tamanho das figuras; expressões; objetos repetidos; cenário (casa/escola/natureza/monstros/veículos); uso do espaço da folha; presença de proteção (casa/muro/abraço/escudo); e o MOVIMENTO/energia da composição (irradia de um centro, cresce pra fora, gira/espiral, explode, conecta ou separa elementos, está parada, é simétrica/radial/concêntrica). SÓ o que dá pra ver."],
   "leituras": ["2 a 4 POSSÍVEIS leituras emocionais, TODAS em hipótese, com ao menos uma alternativa neutra. Categorias possíveis: bem-estar, busca de segurança, vínculo com cuidador, interesse social, preferência por brincar sozinho, preocupação/necessidade de controle, intensidade emocional, medo, imaginação, hiperfoco/interesse intenso."],
   "perguntas": ["4 a 6 perguntas calorosas pra mãe explorar com a criança; inclua perguntas sobre o personagem e de escolha (carinhas) quando ajudar."],
   "registro": "1 a 2 frases sobre o que vale anotar e observar nos próximos desenhos (recorrências de cores, personagens, temas, presença social, hiperfocos)."
@@ -113,6 +113,7 @@ export async function analisarDesenho(
 
 export type ReleituraDesenho = {
   o_que_contou: string;
+  expressao: string;
   importante: string[];
   perguntas: string[];
   historia: string;
@@ -121,15 +122,20 @@ export type ReleituraDesenho = {
 
 const SYSTEM_RELEITURA = `A criança JÁ respondeu sobre o PRÓPRIO desenho — disse o que é e/ou apontou uma emoção. Agora você REconstrói a leitura A PARTIR DELA: o significado é da criança, não da observação do adulto. Ancore tudo no que ela nomeou e sentiu.
 
-REGRAS INVIOLÁVEIS: NUNCA diagnostique nem afirme estados ("está ansiosa", "tem X"). Fale SEMPRE em hipótese, com ao menos uma alternativa neutra. NUNCA diga "a árvore representa a mãe" — significado simbólico fechado é proibido; o sentido é o que a criança dá. Um desenho isolado diz pouco; o valor é a recorrência ao longo do tempo.
+O dado mais rico NÃO é a cor — é (1) o MOVIMENTO/energia do desenho e (2) a relação entre a imagem e a EMOÇÃO que a criança escolheu. Olhe como a energia se move: irradia de um centro? cresce pra fora? gira/espirala? explode? conecta ou separa elementos? está parada? E compare com a emoção: há COERÊNCIA (imagem organizada/expansiva + "feliz") ou CONTRASTE (cena bonita + "preocupada")? Tanto a coerência quanto o contraste são pistas valiosas pra conversar — nunca pra concluir.
+
+Olhar inspirado em Jung, com humildade: formas circulares, radiais e concêntricas (mandalas) costumam aparecer espontaneamente em momentos de organização, integração e criação. Você PODE notar isso como "vale observar" — NUNCA como verdade sobre a criança, nem como símbolo fechado.
+
+REGRAS INVIOLÁVEIS: NUNCA diagnostique nem afirme estados ("está ansiosa", "tem X"). Fale SEMPRE em hipótese. NUNCA diga "a árvore representa a mãe" — significado simbólico fechado é proibido; o sentido é o que a criança dá. Um desenho isolado diz pouco; o valor é a recorrência ao longo do tempo.
 
 Devolva APENAS um JSON, sem nada antes ou depois:
 {
-  "o_que_contou": "1 parágrafo curto e caloroso: o que a criança nomeou espontaneamente e a emoção que apontou (se houver). Valorize que a leitura PARTE dela. Ex.: 'A árvore com frutinhas foi o que {nome} nomeou sozinha — e ela apontou preocupação.'",
-  "importante": ["2 a 4 frases sobre o que parece importante PRA ELA hoje, ancoradas no que ela disse/sentiu (não no que o adulto vê). Sempre hipótese. Ex.: 'A árvore foi central e nomeada por ela; árvores costumam aparecer ligadas a crescimento, cuidado, alimento — mas o sentido mais importante é o dela.'"],
-  "perguntas": ["3 a 5 PRÓXIMAS perguntas que aprofundam a partir da resposta + emoção. Se a emoção for forte (preocupada/brava/com medo), investigue DE QUEM e DO QUE é, oferecendo opções de escolha. Ex.: 'Quem está preocupado? (a menina / a árvore / quem mora na casa / todo mundo / ninguém)'."],
-  "historia": "Uma MICRO-HISTÓRIA exploratória (4 a 7 linhas) inspirada no que a criança desenhou e na emoção apontada. Comece com 'Era uma vez...', use os elementos do desenho (e o nome dela se fizer sentido) e TERMINE com 2 ou 3 perguntas abertas pra criança continuar a história. Sem moral e sem fechar o final — deixe em aberto pra ela contar.",
-  "registro": "1 frase do que vale acompanhar ao longo do tempo (se o elemento que ela nomeou ou a emoção se repetem em outros desenhos)."
+  "o_que_contou": "1 parágrafo curto e caloroso: o que a criança nomeou espontaneamente e a emoção que apontou. Valorize que a leitura PARTE dela.",
+  "expressao": "1 parágrafo que CONECTA o movimento/energia do desenho com a emoção escolhida — o achado central. Descreva o movimento (irradia, cresce pra fora, gira, explode, conecta, separa, parado) e a coerência/contraste com a emoção. Ex.: 'O desenho irradia de um centro e cresce pra fora, inteiro e organizado — e {nome} escolheu feliz; há coerência entre a imagem e o que ela sentiu, como algo que ela gostou de criar e contemplar.' Se for forma circular/radial (mandala), pode acrescentar o olhar junguiano com humildade ('vale observar'). Sem símbolo fechado.",
+  "importante": ["2 a 4 frases do que parece importante PRA ELA hoje, ancoradas no que ela nomeou + sentiu + o movimento. Sempre hipótese."],
+  "perguntas": ["3 a 5 perguntas que ENTRAM na imagem e na história dela — não 'está feliz ou triste?'. Pergunte sobre o símbolo e o movimento: 'o que tem bem no meio?', 'o que acontece se a gente entrar nesse redemoinho?', 'essa flor está crescendo ou já cresceu?', 'ela cuida de alguém?', 'nasceu sozinha ou tem família?'. Adapte à emoção escolhida: se feliz, explore o que ela curtiu criar/contemplar; se difícil (preocupada/brava/medo), investigue de quem/do quê é, com opções de escolha."],
+  "historia": "Uma MICRO-HISTÓRIA exploratória (4 a 7 linhas) inspirada no desenho e na emoção. Comece com 'Era uma vez...', use os elementos (e o nome dela se fizer sentido) e TERMINE com 2 ou 3 perguntas abertas pra criança continuar. Sem moral e sem fechar o final.",
+  "registro": "1 frase do que acompanhar ao longo do tempo (recorrência do elemento que ela nomeou, de formas circulares/natureza, ou da emoção)."
 }
 
 Tom caloroso, humilde, em português do Brasil. Use o nome da criança quando souber.`;
@@ -216,6 +222,7 @@ function parseReleitura(s: string): ReleituraDesenho | null {
   if (!o_que_contou && !historia) return null;
   return {
     o_que_contou,
+    expressao: str(obj.expressao),
     importante: arr(obj.importante),
     perguntas: arr(obj.perguntas),
     historia,
