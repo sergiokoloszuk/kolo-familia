@@ -531,7 +531,7 @@ function EventoItem({ ev }: { ev: TimelineEvento }) {
             </p>
           )}
           {ev.membro_nome && (
-            <p className="text-[11px] uppercase tracking-[0.14em] text-muted-foreground/60">
+            <p className="text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
               {ev.membro_nome}
             </p>
           )}
@@ -565,7 +565,7 @@ function EventoItem({ ev }: { ev: TimelineEvento }) {
             </p>
           )}
           {ev.membro_nome && (
-            <p className="text-[11px] uppercase tracking-[0.14em] text-muted-foreground/60">
+            <p className="text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
               {ev.membro_nome}
             </p>
           )}
@@ -588,7 +588,7 @@ function EventoItem({ ev }: { ev: TimelineEvento }) {
             {ev.titulo}
           </p>
           {ev.membro_nome && (
-            <p className="text-[11px] uppercase tracking-[0.14em] text-muted-foreground/60">
+            <p className="text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
               {ev.membro_nome}
             </p>
           )}
@@ -634,7 +634,7 @@ function EventoItem({ ev }: { ev: TimelineEvento }) {
             </span>
           </p>
           {ev.membro_nome && (
-            <p className="text-[11px] uppercase tracking-[0.14em] text-muted-foreground/60">
+            <p className="text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
               {ev.membro_nome}
             </p>
           )}
@@ -664,7 +664,7 @@ function EventoItem({ ev }: { ev: TimelineEvento }) {
             <span className="text-muted-foreground">“{ev.titulo}”</span>
           </p>
           {ev.membro_nome && (
-            <p className="text-[11px] uppercase tracking-[0.14em] text-muted-foreground/60">
+            <p className="text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
               {ev.membro_nome}
             </p>
           )}
@@ -718,7 +718,7 @@ function EventoItem({ ev }: { ev: TimelineEvento }) {
             </span>
           </p>
           {ev.membro_nome && (
-            <p className="text-[11px] uppercase tracking-[0.14em] text-muted-foreground/60">
+            <p className="text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
               {ev.membro_nome}
             </p>
           )}

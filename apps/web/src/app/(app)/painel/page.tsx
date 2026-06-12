@@ -717,7 +717,7 @@ export default async function PainelPage() {
                       <span className="text-base leading-relaxed tracking-[-0.005em] text-foreground">
                         {item.texto}
                       </span>
-                      <span className="text-[11px] uppercase tracking-[0.14em] text-muted-foreground/60">
+                      <span className="text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
                         {diaCurto(item.data)}
                         {contexto && (
                           <>

@@ -44,15 +44,21 @@ export default async function ConfiguracoesPage() {
         <div>
           <Eyebrow>Configurações</Eyebrow>
           <h1 className="mt-1 font-heading text-3xl text-foreground md:text-4xl">
-            Controle das{" "}
-            <em className="not-italic text-brand-purple">comunicações</em>
+            Ajustes da{" "}
+            <em className="not-italic text-brand-purple">sua Kolo</em>
           </h1>
           <p className="mt-2 max-w-2xl text-muted-foreground">
-            Mensagens no WhatsApp, categorias que você recebe e tudo que afeta
-            seu dia a dia.
+            De um lado, como a Kolo conversa com você. Do outro, o perfil da
+            sua família.
           </p>
         </div>
       </header>
+
+      {/* ── Bloco 1: Comunicação com a Kolo ─────────────────────── */}
+      <section className="flex flex-col gap-4">
+        <h2 className="font-heading text-xl text-foreground">
+          Comunicação com a Kolo
+        </h2>
 
       {/* Forms inline — Ayla preferences. */}
       <Card className="rounded-3xl bg-white">
@@ -117,38 +123,45 @@ export default async function ConfiguracoesPage() {
         </CardContent>
       </Card>
 
-      {/* Atalhos pra sub-páginas. */}
-      <section className="grid gap-4 md:grid-cols-2">
-        <SubLink
-          href="/configuracoes/membros"
-          icon={UserIcon}
-          titulo="Crianças e membros"
-          descricao="Corrigir nome, data de nascimento e perfil dos membros atípicos cadastrados."
-        />
-        <SubLink
-          href="/configuracoes/preferencias"
-          icon={Sparkles}
-          titulo="Gostos e preferências"
-          descricao="Temas, personagens, materiais e músicas favoritos — pra histórias e brincadeiras personalizadas."
-        />
-        <SubLink
-          href="/configuracoes/familia"
-          icon={Users}
-          titulo="Mapa familiar"
-          descricao="Quem cuida do(s) filho(s) atípico(s) com você — pai, padrasto, avós, babá, professora, terapeuta."
-        />
         <SubLink
           href="/configuracoes/regras"
           icon={Bell}
           titulo="Alertas e adaptações"
           descricao="Alertas automáticos (cansada, gatilho recorrente, DASS-21 elevada) e adaptações sugeridas. Você decide."
         />
-        <SubLink
-          href="/configuracoes/conta"
-          icon={UserIcon}
-          titulo="Minha conta"
-          descricao="Mudar senha, exportar meus dados, excluir conta (LGPD)."
-        />
+      </section>
+
+      {/* ── Bloco 2: Perfil da família ──────────────────────────── */}
+      <section className="flex flex-col gap-4">
+        <h2 className="font-heading text-xl text-foreground">
+          Perfil da família
+        </h2>
+        <div className="grid gap-4 md:grid-cols-2">
+          <SubLink
+            href="/configuracoes/membros"
+            icon={UserIcon}
+            titulo="Crianças e membros"
+            descricao="Corrigir nome, data de nascimento e perfil dos membros atípicos cadastrados."
+          />
+          <SubLink
+            href="/configuracoes/preferencias"
+            icon={Sparkles}
+            titulo="Gostos e preferências"
+            descricao="Temas, personagens, materiais e músicas favoritos — pra histórias e brincadeiras personalizadas."
+          />
+          <SubLink
+            href="/configuracoes/familia"
+            icon={Users}
+            titulo="Mapa familiar"
+            descricao="Quem cuida do(s) filho(s) atípico(s) com você — pai, padrasto, avós, babá, professora, terapeuta."
+          />
+          <SubLink
+            href="/configuracoes/conta"
+            icon={UserIcon}
+            titulo="Minha conta"
+            descricao="Mudar senha, exportar meus dados, excluir conta (LGPD)."
+          />
+        </div>
       </section>
     </div>
   );
