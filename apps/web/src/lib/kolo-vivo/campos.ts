@@ -33,6 +33,7 @@ export const MEMBRO_CAMPOS_EXTRAS = [
   "saude_geral",
   "emocional",
   "rotina",
+  "gostos",
 ] as const;
 
 export type MembroCampoToplevel = (typeof MEMBRO_CAMPOS_TOPLEVEL)[number];

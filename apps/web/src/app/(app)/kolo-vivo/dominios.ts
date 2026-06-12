@@ -49,7 +49,8 @@ export type DominioKey =
   | "imitacao"
   | "tela_midia"
   | "escola"
-  | "saude_geral";
+  | "saude_geral"
+  | "gostos";
 
 export type DominioDef = {
   key: DominioKey;
@@ -116,6 +117,7 @@ export const DOMINIOS: DominioDef[] = [
     descricao: "Quando se concentra fácil e quando dispersa.",
     placeholder:
       "Ex: foco intenso nos hiperfocos (até 40min). Em outras atividades, varia muito. Funciona melhor em passos curtos.",
+    campos: SUBCAMPOS_DOMINIO.foco,
   },
   {
     key: "sono",
@@ -125,6 +127,7 @@ export const DOMINIOS: DominioDef[] = [
     descricao: "Como adormece, como dorme, como acorda.",
     placeholder:
       "Ex: demora ~40min pra dormir. Luz baixa + som ambiente. Acorda 1x e volta sozinha.",
+    campos: SUBCAMPOS_DOMINIO.sono,
   },
   {
     key: "socializacao",
@@ -144,6 +147,7 @@ export const DOMINIOS: DominioDef[] = [
     descricao: "Coordenação do corpo todo e das mãos.",
     placeholder:
       "Ex: motricidade grossa boa (corre, pula). Fina em desenvolvimento. Começou a usar pincel há 3 semanas.",
+    campos: SUBCAMPOS_DOMINIO.motor,
   },
   {
     key: "rotina",
@@ -154,6 +158,7 @@ export const DOMINIOS: DominioDef[] = [
     descricao: "Como atravessa as transições e o ritmo do dia.",
     placeholder:
       "Ex: boa com previsibilidade. Aceita aviso de 5min antes de trocar de atividade. Tablet sem preparo vira gatilho.",
+    campos: SUBCAMPOS_DOMINIO.rotina,
   },
   // Domínios previstos no Adendo PRD — antes existiam só como dado, agora viram card.
   {
@@ -164,6 +169,7 @@ export const DOMINIOS: DominioDef[] = [
     descricao: "O que já faz sem ajuda e onde ainda precisa de apoio.",
     placeholder:
       "Ex: come e veste sozinha; ainda precisa de ajuda no banho e pra calçar.",
+    campos: SUBCAMPOS_DOMINIO.autonomia,
   },
   {
     key: "aprendizado",
@@ -173,6 +179,7 @@ export const DOMINIOS: DominioDef[] = [
     descricao: "Como aprende e o que ajuda a aprender.",
     placeholder:
       "Ex: aprende vendo e repetindo. Números fáceis, letras ainda custam. Gosta de aprender brincando.",
+    campos: SUBCAMPOS_DOMINIO.aprendizado,
   },
   {
     key: "imitacao",
@@ -182,6 +189,7 @@ export const DOMINIOS: DominioDef[] = [
     descricao: "O que imita — gestos, sons, brincadeiras de faz de conta.",
     placeholder:
       "Ex: imita gestos e sons de bichos. Faz de conta começando a aparecer.",
+    campos: SUBCAMPOS_DOMINIO.imitacao,
   },
   {
     key: "tela_midia",
@@ -191,6 +199,7 @@ export const DOMINIOS: DominioDef[] = [
     descricao: "Relação com telas — o que assiste, quanto, como reage.",
     placeholder:
       "Ex: ama desenhos de dinossauro. Difícil desligar; sem aviso, vira gatilho.",
+    campos: SUBCAMPOS_DOMINIO.tela_midia,
   },
   {
     key: "escola",
@@ -200,6 +209,7 @@ export const DOMINIOS: DominioDef[] = [
     descricao: "Como é a escola — adaptações, o que funciona, queixas.",
     placeholder:
       "Ex: escola inclusiva, tem acompanhante. Barulho do recreio pesa. Professora parceira.",
+    campos: SUBCAMPOS_DOMINIO.escola,
   },
   {
     key: "saude_geral",
@@ -209,5 +219,16 @@ export const DOMINIOS: DominioDef[] = [
     descricao: "Saúde, acompanhamentos, alergias, sono do ponto médico.",
     placeholder:
       "Ex: acompanha com neuro e TO. Alergia a amendoim. Sono irregular.",
+    campos: SUBCAMPOS_DOMINIO.saude_geral,
+  },
+  {
+    key: "gostos",
+    storage: "extras",
+    label: "Gostos & arte",
+    tone: "social",
+    descricao: "Filmes, brincadeiras e arte que ama — e o que não gosta.",
+    placeholder:
+      "Ex: ama dinossauros e a Patrulha Canina. Adora massinha e tinta guache. Não gosta de cola na mão.",
+    campos: SUBCAMPOS_DOMINIO.gostos,
   },
 ];

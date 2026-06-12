@@ -20,6 +20,7 @@ import {
   PersonStanding,
   School,
   Stethoscope,
+  Palette,
   Target,
   Tv,
   Users,
@@ -80,6 +81,7 @@ const ICONE: Record<DominioKey, LucideIcon> = {
   tela_midia: Tv,
   escola: School,
   saude_geral: Stethoscope,
+  gostos: Palette,
 };
 
 const STATUS_TAG: Record<DominioStatus, { label: string; cls: string }> = {
