@@ -219,8 +219,8 @@ export function RotinaEditor({
       )}
 
       <p className="text-xs text-muted-foreground print:hidden">
-        Sem nota e sem prêmio — marcar é só pra saber o que já passou. É previsibilidade
-        e autonomia.
+        Marcar é só pra acompanhar o que já passou — ajuda na previsibilidade e na
+        autonomia.
       </p>
     </div>
   );
