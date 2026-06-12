@@ -292,11 +292,14 @@ export default async function PainelPage() {
     })),
     ...(aylaRecentes ?? []).map((a) => {
       const t = ((a.texto as string) ?? "").trim().replace(/\s+/g, " ");
+      // Corta em fim de palavra (não no meio) e com folga suficiente pra dar
+      // contexto — as falas da Kolo perdiam o sentido cortadas curtas demais.
+      const resumo = t.length > 180 ? `${t.slice(0, 180).replace(/\s+\S*$/, "")}…` : t;
       return {
         id: `a-${a.id}`,
         data: ((a.created_at as string) ?? "").slice(0, 10),
         tipo: "ayla" as const,
-        texto: t.length > 90 ? `${t.slice(0, 90)}…` : t,
+        texto: resumo,
         quemEstava: null as string | null,
       };
     }),
