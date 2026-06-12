@@ -17,12 +17,12 @@ export default function TimerPage() {
           Timer lúdico
         </p>
         <h1 className="mt-1 font-heading text-3xl text-foreground md:text-4xl">
-          O tempo vira uma <em className="not-italic text-brand-purple">jornada</em>
+          O tempo vira um <em className="not-italic text-brand-purple">arco-íris</em>
         </h1>
         <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-          Escolha um tema, quanto tempo e o que vem depois. A criança vê o personagem
-          avançar até o destino — e sabe, desde o começo, como vai ser o fim e o que vem na
-          sequência. Previsibilidade pra transições sem susto.
+          Escolha quanto tempo e o que vem depois. As cores do arco-íris vão chegando uma por
+          uma — quando ele fica completo, o tempo acabou. A criança vê o fim se formar e sabe,
+          desde o começo, o que vem na sequência. Previsibilidade pra transições sem susto.
         </p>
       </header>
 
