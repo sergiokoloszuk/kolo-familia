@@ -147,7 +147,10 @@ export async function montarPonteWhatsApp(
   try {
     if (!forcar) {
       // Gate 1 (barato): só quando ela descreveu um desafio concreto.
-      if (!temDesafio) return null;
+      if (!temDesafio) {
+        console.log("[ayla:ponte] sem plano — gate1: parser não marcou desafio");
+        return null;
+      }
 
       // Gate 2 (dedup): já mandamos um plano nas últimas ~20h? Não insiste.
       const desde = new Date(Date.now() - JANELA_DEDUP_HORAS * 3600_000).toISOString();
@@ -159,11 +162,18 @@ export async function montarPonteWhatsApp(
         .gte("enviada_em", desde)
         .ilike("texto", "%/auth/wa%")
         .limit(1);
-      if (recentes && recentes.length > 0) return null;
+      if (recentes && recentes.length > 0) {
+        console.log("[ayla:ponte] sem plano — gate2: já enviou um plano nas últimas ~20h");
+        return null;
+      }
 
       // Gate 3 (intenção): crise/desabafo/dúvida não recebem plano.
       const intencao = await classificarIntencao({ supabase, familyId, texto: mensagem });
-      if (intencao !== "desafio") return null;
+      console.log(`[ayla:ponte] gate3 intencao=${intencao}`);
+      if (intencao !== "desafio") {
+        console.log("[ayla:ponte] sem plano — gate3: intenção não é 'desafio'");
+        return null;
+      }
     }
 
     // Gera o plano completo na hora (single-call) a partir do desafio. Fica

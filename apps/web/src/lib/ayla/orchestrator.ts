@@ -9,7 +9,13 @@ import {
   MEMBRO_CAMPOS_TODOS,
   MEMBRO_CAMPO_LABEL,
 } from "@/lib/kolo-vivo/campos";
+import {
+  subcamposDe,
+  parsearSubcampos,
+  serializarSubcampos,
+} from "@/lib/kolo-vivo/subcampos";
 import { detectarConflitoCrossCampo } from "./conflito-kolo-vivo";
+import { rotearFatoSubcampo } from "./incorporar-subcampo";
 import { gerarRespostaAyla, type RespostaParams } from "./responder";
 import { descricaoCuidador, type CuidadorDescrito, type Genero } from "./pronomes";
 import { gerarSugestaoRepertorio } from "./repertorio";
@@ -976,6 +982,9 @@ async function enviarRespostaEmChunks(
   // magic-link que abre o plano completo no app, já logado. Numa crise /
   // desabafo / dúvida (ou clarificação de membro) não manda — a própria
   // ponte filtra por intenção. Falha silenciosa: nunca quebra a resposta.
+  console.log(
+    `[ayla:ponte] avaliando — tipo=${args.tipo} enviada=${enviada} querPlano=${querPlano} temDesafio=${Boolean(args.params.sinais.desafio)}`,
+  );
   if (enviada && args.tipo === "resposta_registro") {
     const nudge = await montarPonteWhatsApp(supabase, {
       familyId: args.family_account_id,
@@ -1309,12 +1318,14 @@ async function persistirRegistro(
     );
   }
 
-  // 3. Sugestão de Kolo Vivo — AUTO-INCORPORAÇÃO com DEDUP SEMÂNTICO.
+  // 3. Sugestão de Kolo Vivo — AUTO-INCORPORAÇÃO ORGANIZADA.
   //    Decidido em 2026-05-26: info nova entra automática sem aprovação humana.
-  //    O Haiku compara o fato novo com o texto atual da seção e decide entre
-  //    adicionar / reescrever / skip — evita duplicar paráfrase. A linha em
-  //    sugestao_perfil_vivos vira log de auditoria (status=aprovada se
-  //    aplicou, rejeitada se skip, pendente se campo desconhecido).
+  //    Domínio COM sub-campos (Sensorial, Emocional…): o fato é ROTEADO pro
+  //    sub-campo certo (Sons, Gatilhos…) e integrado ali — nada de empilhar
+  //    frase solta em "Outras observações". Domínio de texto livre: dedup
+  //    semântico consolida. A linha em sugestao_perfil_vivos vira log de
+  //    auditoria (aprovada se aplicou, rejeitada se skip, pendente se campo
+  //    desconhecido).
   if (p.sugestao_kolo_vivo && p.texto_kolo_vivo_sugerido) {
     const campo = p.campo_kolo_vivo_sugerido ?? "como_e";
     const storage = membroCampoStorage(campo);
@@ -1345,26 +1356,58 @@ async function persistirRegistro(
         .eq("membro_atipico_id", p.membro_atipico_id)
         .maybeSingle();
       const textoAtual = lerTextoAtualDaSecao(rowAtual, campo);
-
-      const decisao = await decidirDedup(
-        {
-          campo,
-          textoSugerido: p.texto_kolo_vivo_sugerido,
-          textoAtual,
-        },
-        { supabase, family_account_id: familyId, feature: "ayla_dedup" },
-      );
+      const subcampos = subcamposDe(campo);
 
       let aplicou = false;
-      if (decisao.operacao !== "skip" && decisao.texto.trim()) {
-        aplicou = await aplicarSugestaoNoMembro(
-          supabase,
-          familyId,
-          p.membro_atipico_id,
-          campo,
-          decisao.texto,
-          decisao.operacao,
+      let operacaoLog: "adicionar" | "reescrever" | "skip" = "skip";
+      let textoAplicado: string | null = null;
+      let textoParaConflito = "";
+
+      if (subcampos) {
+        // Domínio com sub-campos: roteia o fato pro campo certo (Sons,
+        // Gatilhos, O que ajuda…) e integra ali — em vez de empilhar frase
+        // solta em "Outras observações". É o que mantém o perfil organizado.
+        const valoresAtuais = parsearSubcampos(subcampos, textoAtual);
+        const r = await rotearFatoSubcampo(
+          { subcampos, valoresAtuais, fato: p.texto_kolo_vivo_sugerido },
+          { supabase, family_account_id: familyId, feature: "ayla_rotear_kv" },
         );
+        if (!r.skip && r.campoSub && r.valor.trim()) {
+          const novoTexto = serializarSubcampos(subcampos, {
+            ...valoresAtuais,
+            [r.campoSub]: r.valor.trim(),
+          });
+          aplicou = await aplicarSugestaoNoMembro(
+            supabase,
+            familyId,
+            p.membro_atipico_id,
+            campo,
+            novoTexto,
+            "reescrever",
+          );
+          operacaoLog = "reescrever";
+          textoAplicado = novoTexto;
+          textoParaConflito = r.valor.trim();
+        }
+      } else {
+        // Domínio de texto livre: dedup semântico consolida velho + novo.
+        const decisao = await decidirDedup(
+          { campo, textoSugerido: p.texto_kolo_vivo_sugerido, textoAtual },
+          { supabase, family_account_id: familyId, feature: "ayla_dedup" },
+        );
+        if (decisao.operacao !== "skip" && decisao.texto.trim()) {
+          aplicou = await aplicarSugestaoNoMembro(
+            supabase,
+            familyId,
+            p.membro_atipico_id,
+            campo,
+            decisao.texto,
+            decisao.operacao,
+          );
+          textoAplicado = decisao.texto;
+          textoParaConflito = decisao.texto;
+        }
+        operacaoLog = decisao.operacao;
       }
 
       // Conflito cross-campo: o fato novo contradiz ALGUMA outra área? Só
@@ -1375,7 +1418,7 @@ async function persistirRegistro(
           familyId,
           p.membro_atipico_id,
           campo,
-          decisao.texto,
+          textoParaConflito,
           rowAtual,
         );
       }
@@ -1390,17 +1433,12 @@ async function persistirRegistro(
         origem_detalhe: {
           confianca: p.confianca,
           auto: true,
-          operacao: decisao.operacao,
-          texto_aplicado: decisao.operacao === "skip" ? null : decisao.texto,
+          operacao: operacaoLog,
+          texto_aplicado: textoAplicado,
         },
         status:
-          decisao.operacao === "skip"
-            ? "rejeitada"
-            : aplicou
-              ? "aprovada"
-              : "pendente",
-        decidido_em:
-          decisao.operacao === "skip" || aplicou ? agora : null,
+          operacaoLog === "skip" ? "rejeitada" : aplicou ? "aprovada" : "pendente",
+        decidido_em: operacaoLog === "skip" || aplicou ? agora : null,
       });
     }
   }
