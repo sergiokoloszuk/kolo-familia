@@ -263,12 +263,14 @@ export default async function EvolucaoPage() {
     }
   }
 
+  // Check-in: só os dias DIFÍCEIS entram na linha do tempo. Mostrar "você
+  // esteve bem" todo santo dia inchava a página sem dizer nada — o dia difícil
+  // é que é um momento que vale registrar e olhar depois.
   for (const c of checkIns ?? []) {
-    eventos.push({
-      tipo: "check_in",
-      data: c.data,
-      escala: c.escala_emocional_mae,
-    });
+    const escala = c.escala_emocional_mae as string | null;
+    if (escala === "dificil" || escala === "muito_dificil") {
+      eventos.push({ tipo: "check_in", data: c.data, escala });
+    }
   }
 
 
@@ -316,8 +318,10 @@ export default async function EvolucaoPage() {
     }
   }
 
+  // Teto pra não virar um rolo infinito: os ~40 momentos mais recentes.
   eventos.sort((a, b) => b.data.localeCompare(a.data));
-  const buckets = agruparPorBucket(eventos);
+  const eventosVisiveis = eventos.slice(0, 40);
+  const buckets = agruparPorBucket(eventosVisiveis);
 
   return (
     <div className="flex flex-col gap-10">

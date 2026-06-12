@@ -40,6 +40,21 @@ export function RelatorioClient({
     });
   }
 
+  // O nome do PDF salvo vem do document.title. Setamos pra "Relatório Kolo
+  // Família — [nome]" antes de imprimir e restauramos depois (senão salvava
+  // como "Kolo Família").
+  function imprimir() {
+    const anterior = document.title;
+    const limpo = nome.trim();
+    document.title = `Relatório Kolo Família${limpo ? ` — ${limpo}` : ""}`;
+    const restaurar = () => {
+      document.title = anterior;
+      window.removeEventListener("afterprint", restaurar);
+    };
+    window.addEventListener("afterprint", restaurar);
+    window.print();
+  }
+
   function ajustar() {
     const p = pedido.trim();
     if (!p || !markdown || ajustando) return;
@@ -118,7 +133,7 @@ export function RelatorioClient({
           {markdown && (
             <button
               type="button"
-              onClick={() => window.print()}
+              onClick={imprimir}
               className="inline-flex items-center gap-1.5 rounded-full border border-foreground/10 bg-white px-4 py-2 text-sm font-semibold text-brand-purple transition-colors hover:bg-kolo-lilas-bg-2"
             >
               <Printer className="size-4" aria-hidden /> Imprimir / salvar PDF
