@@ -8,19 +8,29 @@ import { requireActiveWrite } from "@/lib/auth/require-active-write";
 import { idadeAnos } from "@/lib/idade";
 import { gerarRoteiro, ilustrarPaginas, ilustrarComRetryPublico } from "@/lib/historias/gerar";
 import { AVATAR_ESTILOS, type AvatarEstilo } from "@/lib/imagem/avatar-prompt";
+import { pathDeImagem } from "@/lib/storage/imagens";
 
 /**
- * Busca os bytes do avatar com retry — o Storage às vezes dá pico de latência
- * ou 5xx transitório, e sem retry isso derrubava a história inteira ("avatar
- * fetch 544"). 3 tentativas com backoff; só falha de vez se persistir.
+ * Busca os bytes do avatar com retry. O bucket é PRIVADO, então baixa via
+ * Storage (download por path), não por URL pública — esta dava 400. Retry com
+ * backoff pros 5xx transitórios do Storage; fallback de fetch só pra valores
+ * que não são do nosso bucket (legado). Service role: roda em background.
  */
 async function fetchAvatarBytes(url: string): Promise<Buffer> {
+  const path = pathDeImagem(url);
+  const storage = createServiceRoleClient().storage.from("imagens");
   let ultimoErro = "";
   for (let tentativa = 1; tentativa <= 3; tentativa++) {
     try {
-      const res = await fetch(url, { cache: "no-store" });
-      if (res.ok) return Buffer.from(await res.arrayBuffer());
-      ultimoErro = `status ${res.status}`;
+      if (path) {
+        const { data, error } = await storage.download(path);
+        if (!error && data) return Buffer.from(await data.arrayBuffer());
+        ultimoErro = error?.message ?? "download vazio";
+      } else {
+        const res = await fetch(url, { cache: "no-store" });
+        if (res.ok) return Buffer.from(await res.arrayBuffer());
+        ultimoErro = `status ${res.status}`;
+      }
     } catch (e) {
       ultimoErro = e instanceof Error ? e.message : String(e);
     }

@@ -2,6 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { getAnthropicClient, MODELS } from "@/lib/ia/anthropic";
 import { gerarImagem, gerarImagemComReferencia } from "@/lib/imagem/generate";
 import { logarUsoApi } from "@/lib/billing/logar";
+import { pathDeImagem } from "@/lib/storage/imagens";
 
 /**
  * Gerador de cards de ROTINA VISUAL (seção Lúdico).
@@ -121,7 +122,7 @@ export async function ilustrarCards(
     tipo: "cena",
     feature: "rotina_mascote",
   });
-  const mascoteBytes = await baixarBytes(mascoteRes.url);
+  const mascoteBytes = await baixarBytes(supabase, mascoteRes.url);
 
   // 2. Ilustra cada card com o mascote como referência (2 paralelas, 1 retry).
   const PARALELAS = 2;
@@ -181,9 +182,17 @@ async function ilustrarComRetry(
   return null;
 }
 
-async function baixarBytes(url: string): Promise<Buffer> {
+// Bucket privado → baixa o mascote via Storage (download por path), não por
+// URL pública. Fallback de fetch só pra valores fora do nosso bucket (legado).
+async function baixarBytes(supabase: SupabaseClient, url: string): Promise<Buffer> {
+  const path = pathDeImagem(url);
   for (let tentativa = 1; tentativa <= 3; tentativa++) {
     try {
+      if (path) {
+        const { data, error } = await supabase.storage.from("imagens").download(path);
+        if (error || !data) throw new Error(error?.message ?? "download vazio");
+        return Buffer.from(await data.arrayBuffer());
+      }
       const res = await fetch(url);
       if (!res.ok) throw new Error(`fetch ${res.status}`);
       return Buffer.from(await res.arrayBuffer());
