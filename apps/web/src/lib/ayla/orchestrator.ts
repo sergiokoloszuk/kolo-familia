@@ -9,6 +9,7 @@ import { gerarRespostaAyla, type RespostaParams } from "./responder";
 import { descricaoCuidador, type CuidadorDescrito, type Genero } from "./pronomes";
 import { gerarSugestaoRepertorio } from "./repertorio";
 import { decidirDedup } from "./dedup-kolo-vivo";
+import { decidirDedupDiario } from "./dedup-diario";
 import {
   templateBoasVindas,
   templateRotinaDiaria,
@@ -1204,26 +1205,92 @@ async function persistirRegistro(
     { onConflict: "family_account_id,membro_atipico_id,date" },
   );
 
-  // 2. Diário (Camada A + B se confianca_camada_adulto >= 70)
+  // 2. Diário (Camada A + B se confianca_camada_adulto >= 70). Com DEDUP:
+  //    numa mesma conversa a mãe detalha o MESMO episódio em várias mensagens —
+  //    em vez de duplicar, consolidamos no registro de hoje (Haiku decide se é
+  //    o mesmo evento e devolve a versão mais rica). Mesmo padrão do Kolo Vivo.
   if (conquista || p.desafio || p.observacao_livre) {
-    const incompleto =
-      Boolean(p.estado_adulto || p.reacao_adulto || p.quem_estava) === false &&
-      Boolean(conquista || p.desafio); // Tem evento mas sem Camada B
+    const temCamadaB = p.confianca_camada_adulto >= 70;
+    const quemEstava = temCamadaB ? p.quem_estava : null;
+    const estadoAdulto = temCamadaB ? p.estado_adulto : null;
+    const reacaoAdulto = temCamadaB ? p.reacao_adulto : null;
 
-    await supabase.from("diarios").insert({
-      family_account_id: familyId,
-      membro_atipico_id: p.membro_atipico_id,
-      data: hojeLocalISO(),
-      conquista,
-      desafio: p.desafio,
-      observacao_livre: p.observacao_livre,
-      possivel_gatilho: p.possivel_gatilho,
-      quem_estava: p.confianca_camada_adulto >= 70 ? p.quem_estava : null,
-      estado_adulto: p.confianca_camada_adulto >= 70 ? p.estado_adulto : null,
-      reacao_adulto: p.confianca_camada_adulto >= 70 ? p.reacao_adulto : null,
-      origem: "ayla",
-      incompleto,
-    });
+    const { data: hojeRows } = await supabase
+      .from("diarios")
+      .select(
+        "id, conquista, desafio, observacao_livre, possivel_gatilho, quem_estava, estado_adulto, reacao_adulto",
+      )
+      .eq("family_account_id", familyId)
+      .eq("membro_atipico_id", p.membro_atipico_id)
+      .eq("data", hojeLocalISO())
+      .eq("origem", "ayla")
+      .order("created_at", { ascending: true })
+      .limit(8);
+    const existentes = hojeRows ?? [];
+
+    let mergedId: string | null = null;
+    if (existentes.length > 0) {
+      const decisao = await decidirDedupDiario(
+        {
+          novo: {
+            conquista,
+            desafio: p.desafio,
+            observacao: p.observacao_livre,
+            gatilho: p.possivel_gatilho,
+          },
+          existentes: existentes.map((r) => ({
+            conquista: (r.conquista as string | null) ?? null,
+            desafio: (r.desafio as string | null) ?? null,
+            observacao: (r.observacao_livre as string | null) ?? null,
+            gatilho: (r.possivel_gatilho as string | null) ?? null,
+          })),
+        },
+        { supabase, family_account_id: familyId, feature: "ayla_dedup_diario" },
+      );
+
+      if (decisao.acao === "merge") {
+        const alvo = existentes[decisao.alvo];
+        // Camada B: mantém a que já existia; se não tinha e a nova trouxe, preenche.
+        const qe = (alvo.quem_estava as string | null) ?? quemEstava;
+        const ea = (alvo.estado_adulto as string | null) ?? estadoAdulto;
+        const ra = (alvo.reacao_adulto as string | null) ?? reacaoAdulto;
+        await supabase
+          .from("diarios")
+          .update({
+            conquista: decisao.conquista,
+            desafio: decisao.desafio,
+            observacao_livre: decisao.observacao,
+            possivel_gatilho: decisao.gatilho,
+            quem_estava: qe,
+            estado_adulto: ea,
+            reacao_adulto: ra,
+            incompleto:
+              Boolean(qe || ea || ra) === false &&
+              Boolean(decisao.conquista || decisao.desafio),
+          })
+          .eq("id", alvo.id as string);
+        mergedId = alvo.id as string;
+      }
+    }
+
+    if (!mergedId) {
+      await supabase.from("diarios").insert({
+        family_account_id: familyId,
+        membro_atipico_id: p.membro_atipico_id,
+        data: hojeLocalISO(),
+        conquista,
+        desafio: p.desafio,
+        observacao_livre: p.observacao_livre,
+        possivel_gatilho: p.possivel_gatilho,
+        quem_estava: quemEstava,
+        estado_adulto: estadoAdulto,
+        reacao_adulto: reacaoAdulto,
+        origem: "ayla",
+        incompleto:
+          Boolean(quemEstava || estadoAdulto || reacaoAdulto) === false &&
+          Boolean(conquista || p.desafio),
+      });
+    }
   }
 
   // 2b. Memória de repertório: o que experimentou e como foi (Fatia 3.3).
