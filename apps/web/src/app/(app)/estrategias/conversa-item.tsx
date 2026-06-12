@@ -23,15 +23,16 @@ export function ConversaItem({
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [erro, setErro] = useState<string | null>(null);
+  const [confirmando, setConfirmando] = useState(false);
 
   function handleDelete() {
     if (pending) return;
-    if (!confirm("Apagar esta conversa? Isso não dá pra desfazer.")) return;
     setErro(null);
     startTransition(async () => {
       const r = await deletarConversa({ conversaId: id });
       if (!r.ok) {
         setErro(r.error);
+        setConfirmando(false);
         return;
       }
       router.refresh();
@@ -56,16 +57,36 @@ export function ConversaItem({
           {erro ?? formatRelative(new Date(createdAt), new Date(), { locale: ptBR })}
         </span>
       </Link>
-      <button
-        type="button"
-        onClick={handleDelete}
-        disabled={pending}
-        aria-label="Apagar conversa"
-        title="Apagar conversa"
-        className="inline-flex size-9 shrink-0 items-center justify-center rounded-lg text-muted-foreground/50 transition-colors hover:bg-destructive/10 hover:text-destructive disabled:opacity-40"
-      >
-        <Trash2 className="size-4" aria-hidden />
-      </button>
+      {confirmando ? (
+        <span className="flex shrink-0 items-center gap-1 pr-1">
+          <button
+            type="button"
+            onClick={handleDelete}
+            disabled={pending}
+            className="rounded-lg px-2.5 py-1.5 text-xs font-semibold text-destructive transition-colors hover:bg-destructive/10 disabled:opacity-40"
+          >
+            {pending ? "apagando…" : "apagar"}
+          </button>
+          <button
+            type="button"
+            onClick={() => setConfirmando(false)}
+            disabled={pending}
+            className="rounded-lg px-2.5 py-1.5 text-xs text-muted-foreground transition-colors hover:bg-foreground/5 disabled:opacity-40"
+          >
+            cancelar
+          </button>
+        </span>
+      ) : (
+        <button
+          type="button"
+          onClick={() => setConfirmando(true)}
+          aria-label="Apagar conversa"
+          title="Apagar conversa"
+          className="inline-flex size-9 shrink-0 items-center justify-center rounded-lg text-muted-foreground/50 transition-colors hover:bg-destructive/10 hover:text-destructive disabled:opacity-40"
+        >
+          <Trash2 className="size-4" aria-hidden />
+        </button>
+      )}
     </li>
   );
 }

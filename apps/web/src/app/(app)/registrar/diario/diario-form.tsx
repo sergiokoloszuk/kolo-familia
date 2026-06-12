@@ -312,6 +312,8 @@ export function DiarioForm({
               <button
                 key={e.v}
                 type="button"
+                aria-label={e.label}
+                aria-pressed={form.escalaEmocionalMae === e.v}
                 onClick={() => update("escalaEmocionalMae", e.v)}
                 className={`flex flex-col items-center gap-1 rounded-md border px-3 py-2 text-xs ${
                   form.escalaEmocionalMae === e.v
@@ -319,7 +321,7 @@ export function DiarioForm({
                     : "hover:bg-muted"
                 }`}
               >
-                <span className="text-lg">{e.emoji}</span>
+                <span className="text-lg" aria-hidden>{e.emoji}</span>
                 <span>{e.label}</span>
               </button>
             ))}
@@ -338,6 +340,8 @@ export function DiarioForm({
                 <button
                   key={e.v}
                   type="button"
+                  aria-label={e.label}
+                  aria-pressed={form.escalaEmocionalMembro === e.v}
                   onClick={() =>
                     update(
                       "escalaEmocionalMembro",
@@ -350,7 +354,7 @@ export function DiarioForm({
                       : "hover:bg-muted"
                   }`}
                 >
-                  <span className="text-lg">{e.emoji}</span>
+                  <span className="text-lg" aria-hidden>{e.emoji}</span>
                   <span>{e.label}</span>
                 </button>
               ))}

@@ -180,7 +180,7 @@ export function ConversaAcoes({
                 ) : (
                   <>
                     <Leaf className="size-4" aria-hidden />
-                    Atualizar com base nesse papo
+                    Ler a conversa e sugerir o que guardar
                   </>
                 )}
               </Button>

@@ -532,7 +532,7 @@ export default async function PainelPage() {
        * dia, cuidar do retrato vivo (Kolo Vivo) e pedir um caminho
        * (Estratégias). Navegação principal do dia a dia.
        * ============================================================ */}
-      <section className="grid gap-4 sm:grid-cols-3">
+      <section className="grid gap-4 md:grid-cols-3">
         {[
           {
             titulo: "Registro do dia",
@@ -606,11 +606,11 @@ export default async function PainelPage() {
         ))}
 
       {/* ============================================================
-       * BALÃO "Os primeiros passos" — aparece UMA vez, no primeiro
-       * acesso ao painel. Marca visto ao fechar ou clicar num dos
-       * dois destinos (Kolo Vivo / Estratégias). Some depois.
+       * BALÃO "Os primeiros passos" — só na 1ª semana de conta e enquanto
+       * não foi visto. Some sozinho depois (mesmo sem dispensar), pra não
+       * incomodar quem já tem semanas de uso.
        * ============================================================ */}
-      {!family!.painel_balao_visto_at && <BalaoPrimeirosPassos />}
+      {!family!.painel_balao_visto_at && idadeDias <= 7 && <BalaoPrimeirosPassos />}
 
       {/* ============================================================
        * FOCO DA SEMANA — card branco editorial, eyebrow com ícone

@@ -263,11 +263,12 @@ function Aba({
     <button
       type="button"
       onClick={onClick}
+      aria-pressed={ativo}
       className={cn(
-        "rounded-full border px-4 py-2 text-sm font-medium transition-colors",
+        "rounded-full border px-4 py-2 text-sm transition-colors",
         ativo
-          ? "border-brand-purple bg-brand-purple text-white"
-          : "border-input bg-white text-foreground hover:border-brand-purple/40",
+          ? "border-brand-purple bg-brand-purple font-semibold text-white shadow-sm"
+          : "border-input bg-white font-medium text-muted-foreground hover:border-brand-purple/40 hover:text-foreground",
       )}
     >
       {children}

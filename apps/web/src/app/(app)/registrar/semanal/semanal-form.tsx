@@ -181,12 +181,14 @@ function EmocionalGroup({
           <button
             key={e.v}
             type="button"
+            aria-label={e.label}
+            aria-pressed={value === e.v}
             onClick={() => onChange(e.v)}
             className={`flex flex-col items-center gap-1 rounded-md border px-3 py-2 text-xs ${
               value === e.v ? "border-foreground bg-foreground text-background" : "hover:bg-muted"
             }`}
           >
-            <span className="text-lg">{e.emoji}</span>
+            <span className="text-lg" aria-hidden>{e.emoji}</span>
             <span>{e.label}</span>
           </button>
         ))}
