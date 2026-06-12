@@ -12,11 +12,19 @@ import { logarUsoApi } from "@/lib/billing/logar";
  * criança. Anti-ABA (sem recompensa/obediência), nada clínico.
  */
 
-export type Intencao = "acalmar" | "visualizar" | "dormir" | "coragem" | "seguranca" | "outra";
+export type Intencao =
+  | "acalmar"
+  | "visualizar"
+  | "processar"
+  | "dormir"
+  | "coragem"
+  | "seguranca"
+  | "outra";
 
 export const INTENCOES: Array<{ key: Intencao; label: string; desc: string }> = [
-  { key: "acalmar", label: "Acalmar", desc: "voltar ao corpo quando está agitada ou brava" },
-  { key: "visualizar", label: "Visualizar um momento", desc: "ensaiar algo que vai acontecer, correndo bem" },
+  { key: "acalmar", label: "Acalmar agora", desc: "regular o corpo quando já está agitada ou ansiosa" },
+  { key: "visualizar", label: "Ensaiar um momento", desc: "viver mentalmente a vitória de algo que vai acontecer" },
+  { key: "processar", label: "Guardar o que passou", desc: "consolidar uma boa memória de algo que já aconteceu" },
   { key: "dormir", label: "Relaxar pra dormir", desc: "soltar o corpo e desacelerar à noite" },
   { key: "coragem", label: "Coragem", desc: "sentir-se forte antes de algo difícil" },
   { key: "seguranca", label: "Sentir-se segura", desc: "sentir-se protegida e querida" },
@@ -28,24 +36,30 @@ function rotuloIntencao(i: Intencao): string {
 
 const SYSTEM_MED = `Você cria MEDITAÇÕES-HISTÓRIA guiadas para crianças neurodivergentes, em português do Brasil, pra um ADULTO LER EM VOZ ALTA devagar. NÃO é meditação de adulto, nem exposição gradual ao medo, nem roteiro terapêutico — é uma EXPERIÊNCIA INFANTIL e IMAGINATIVA. Aos 4-6 anos (e em crianças neurodivergentes), a imaginação funciona melhor que a instrução: a criança ENTRA NUMA AVENTURA, não recebe ordens nem aviso de perigo.
 
-ESTRUTURA (siga sempre, nesta ordem):
-1. CONVITE PRA AVENTURA — algo mágico chama a criança pelo NOME (uma estrelinha, um guardião, um bichinho ligado aos INTERESSES dela). Ela aceita e a história começa.
-2. EXPECTATIVA POSITIVA — o caminho é gostoso e seguro, com a pessoa favorita do lado (mão na mão); coisas bonitas no trajeto.
-3. VISUALIZAÇÃO DO SUCESSO JÁ ACONTECENDO — a criança VIVENDO a vitória do começo ao fim, com detalhes sensoriais BONS (luz dourada, sorrisos, calorzinho no peito). É o coração da meditação.
-4. CELEBRAÇÃO — todo mundo comemora o que ela conseguiu (palmas, festa, espelho mágico mostrando o resultado lindo).
-5. REFORÇO DE COMPETÊNCIA — "você conseguiu; seu corpo sabe o caminho; sempre que precisar, vai lembrar que já fez isso antes".
+REGRA DE OURO — COMECE PELO FINAL FELIZ. Como atletas e músicos ensaiam: primeiro a criança VÊ a chegada bem-sucedida (que JÁ deu certo), e só depois, de leve, a jornada. ~80% da narrativa é o SUCESSO e a sensação boa; no MÁXIMO ~20% toca o caminho/desafio, de passagem.
 
-REGRA DE OURO (80/20): ~80% da narrativa mostra o SUCESSO acontecendo; no MÁXIMO ~20% menciona o desafio — e de leve, de passagem, NUNCA demorado. NÃO descreva o medo nem o desconforto em detalhes ("tem um cheiro ruim, você pode não gostar" — PROIBIDO). A criança VIVE mentalmente a vitória, não ensaia o medo.
+NUNCA ENSAIE O MEDO. O cérebro ensaia EXATAMENTE o que você descreve — então NÃO detalhe cheiro ruim, barulho, cadeira estranha, frio na barriga, aperto de mão de aflição. Em vez disso, descreva: o sorriso, os dentes brilhando, o orgulho, os parabéns, o calorzinho gostoso no peito, a missão cumprida.
 
-Tom: calmo, lento, concreto, sensorial, afetuoso, mágico e previsível. Tece uma respiração simples (mãos na barriga, encher/soltar) e PAUSAS marcadas com "…" ou "(pausa)" DENTRO da aventura (sem virar exercício clínico). Frases curtas. Fecho tranquilo e orgulhoso.
+Tom: calmo, lento, concreto, sensorial, afetuoso, mágico e previsível. Frases curtas. Tece uma respiração simples (mãos na barriga, encher/soltar) e PAUSAS "…" ou "(pausa)" DENTRO da história. Fecho tranquilo e orgulhoso, guardando a imagem boa no coração.
 
 ANTI-ABA: a celebração é por ela ter ido / pela coragem / por quem ela é — NUNCA recompensa por obediência ("se ficar quietinha ganha…").
 
-Adapte pela INTENÇÃO (sempre com a estrutura acima):
-- visualizar: a AVENTURA completa em que o momento futuro acontece com SUCESSO (use os 5 passos inteiros).
-- coragem: uma MISSÃO em que ela descobre a própria força e VENCE.
-- acalmar: uma viagem curtinha a um lugar mágico, calmo e seguro, voltando ao corpo e à respiração.
-- dormir: uma jornada lenta e sonolenta até um lugar fofo de dormir; ritmo cada vez mais devagar.
+TRÊS TIPOS DE EXPERIÊNCIA — siga o objetivo da INTENÇÃO escolhida:
+
+1) ENSAIAR A VITÓRIA (intenção "visualizar") — preparar pra um evento futuro. ESTRUTURA:
+   a. Relaxa e respira um pouquinho.
+   b. CENA FINAL DE SUCESSO PRIMEIRO — um "espelho mágico" (ou cena imaginada) mostra o momento JÁ TENDO DADO CERTO: a criança saindo/terminando, sorrindo, recebendo parabéns, o resultado lindo (ex.: dentes brilhando como estrelinhas).
+   c. DEMORA nessa vitória — detalhes sensoriais BONS, o orgulho, o calorzinho no peito, as pessoas felizes por ela.
+   d. Só DE PASSAGEM, a jornada: "e você foi, passo a passo, respiração por respiração, até conseguir — não precisou ser perfeita, só precisou ir".
+   e. Guarda a imagem no coração ("ela já está esperando por você").
+
+2) ACALMAR AGORA (intenção "acalmar") — a criança já está agitada/ansiosa. Objetivo: regular o corpo. Uma viagem curtinha a um lugar mágico calmo e seguro, com respiração e âncoras no corpo. (Sem ensaiar evento nenhum.)
+
+3) GUARDAR O QUE PASSOU (intenção "processar") — algo já aconteceu. Objetivo: consolidar a MEMÓRIA POSITIVA. Reviva a parte boa do que aconteceu, o quanto ela foi corajosa/capaz, e guarde essa lembrança gostosa.
+
+Outras intenções:
+- coragem: uma missão curtinha onde ela DESCOBRE a própria força e já se vê vencendo.
+- dormir: jornada lenta e sonolenta até um lugar fofo de dormir; ritmo cada vez mais devagar.
 - seguranca: um lugar mágico onde ela é protegida, acompanhada e muito amada.
 
 Devolva EXATAMENTE neste formato (sem JSON, sem markdown, sem comentários):
@@ -105,7 +119,7 @@ export type TemaSugerido = { intencao: Intencao; tema: string; motivo: string };
 
 const SYSTEM_SUG = `Você sugere TEMAS de meditação guiada pertinentes ao que está acontecendo com uma criança neurodivergente, em PT-BR. A partir do contexto, proponha 2 a 3 ideias úteis AGORA. NÃO diagnostique; fale com cuidado.
 
-Intenções possíveis: acalmar, visualizar (ensaiar um momento futuro), dormir, coragem, seguranca.
+Intenções possíveis: acalmar (regular agora), visualizar (ensaiar a vitória de um momento futuro), processar (guardar boa memória do que já passou), dormir, coragem, seguranca.
 
 Devolva APENAS um JSON array:
 [ { "intencao": "acalmar|visualizar|dormir|coragem|seguranca", "tema": "foco curto (ex.: 'antes da consulta no dentista')", "motivo": "1 frase curta de por que pode ajudar agora" } ]`;
@@ -165,7 +179,14 @@ function parseMeditacao(s: string): { titulo: string; roteiro: string } | null {
   return null;
 }
 
-const INTENCOES_VALIDAS: Intencao[] = ["acalmar", "visualizar", "dormir", "coragem", "seguranca"];
+const INTENCOES_VALIDAS: Intencao[] = [
+  "acalmar",
+  "visualizar",
+  "processar",
+  "dormir",
+  "coragem",
+  "seguranca",
+];
 
 function parseSugestoes(s: string): TemaSugerido[] {
   const arr = extrairJson(s);

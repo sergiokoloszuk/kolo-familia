@@ -10,8 +10,9 @@ import { criarMeditacao, sugerirTemasMeditacao } from "./actions";
 
 // Duplicado do lib (evita bundlar o cliente Anthropic no cliente).
 const INTENCOES = [
-  { key: "acalmar", label: "Acalmar", desc: "voltar ao corpo quando está agitada ou brava" },
-  { key: "visualizar", label: "Visualizar um momento", desc: "ensaiar algo que vai acontecer, correndo bem" },
+  { key: "acalmar", label: "Acalmar agora", desc: "regular o corpo quando já está agitada ou ansiosa" },
+  { key: "visualizar", label: "Ensaiar um momento", desc: "viver mentalmente a vitória de algo que vai acontecer" },
+  { key: "processar", label: "Guardar o que passou", desc: "consolidar uma boa memória de algo que já aconteceu" },
   { key: "dormir", label: "Relaxar pra dormir", desc: "soltar o corpo à noite" },
   { key: "coragem", label: "Coragem", desc: "sentir-se forte antes de algo difícil" },
   { key: "seguranca", label: "Sentir-se segura", desc: "sentir-se protegida e querida" },
@@ -152,14 +153,19 @@ export function CriarMeditacao({ membros }: { membros: Array<{ id: string; nome:
 
       <div className="flex flex-col gap-1.5">
         <label htmlFor="med-tema" className="text-sm font-medium text-foreground">
-          Foco <span className="font-normal text-muted-foreground">(opcional)</span>
+          O final feliz que queremos ensaiar{" "}
+          <span className="font-normal text-muted-foreground">(opcional)</span>
         </label>
         <Input
           id="med-tema"
           value={tema}
           onChange={(e) => setTema(e.target.value)}
-          placeholder="Ex.: o primeiro dia de escola, a consulta no dentista…"
+          placeholder="Ex.: saindo do dentista sorrindo, com os dentes limpos e recebendo parabéns"
         />
+        <p className="text-xs text-muted-foreground/80">
+          Descreva a <strong>cena de sucesso</strong> — a Kolo começa por ela (como atletas
+          ensaiam a chegada).
+        </p>
       </div>
 
       <div className="flex flex-col gap-1.5">
