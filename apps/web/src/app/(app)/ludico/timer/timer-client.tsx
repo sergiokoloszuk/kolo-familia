@@ -5,121 +5,21 @@ import { Pause, Play, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
-type Tema = {
-  key: string;
-  label: string;
-  cor: string; // gradiente tailwind
-  personagem: string;
-  carga: string;
-  destino: string;
-  fraseChegada: string; // "a formiga chegar no formigueiro"
-  fraseFim: string; // "A formiga chegou no formigueiro!"
-  cenario: string[];
-  etapas: string[];
-};
-
-const TEMAS: Tema[] = [
-  {
-    key: "formiga",
-    label: "A formiga e a folhinha",
-    cor: "from-emerald-100 to-lime-50",
-    personagem: "🐜",
-    carga: "🍃",
-    destino: "🪵",
-    fraseChegada: "a formiga chegar no formigueiro",
-    fraseFim: "A formiga chegou no formigueiro!",
-    cenario: ["🌳", "🌿", "🍄", "🌼", "🐛"],
-    etapas: [
-      "Cortando a folhinha da árvore",
-      "Carregando a folhinha",
-      "Desviando de uma pedrinha",
-      "Cruzando com um amiguinho",
-      "Chegando no formigueiro!",
-    ],
-  },
-  {
-    key: "garca",
-    label: "A garça pescadora",
-    cor: "from-sky-100 to-cyan-50",
-    personagem: "🦢",
-    carga: "",
-    destino: "🐟",
-    fraseChegada: "a garça pescar o peixinho",
-    fraseFim: "A garça pescou o peixinho!",
-    cenario: ["🌾", "💧", "🪷", "🐸", "🌊"],
-    etapas: [
-      "Descendo do voo devagar",
-      "Pousando bem quietinha",
-      "Esperando com paciência",
-      "Mirando o peixinho",
-      "Pescou! Hora de comer",
-    ],
-  },
-  {
-    key: "piscina",
-    label: "Nadando na raia",
-    cor: "from-cyan-100 to-blue-50",
-    personagem: "🏊",
-    carga: "",
-    destino: "🏁",
-    fraseChegada: "chegar no fim da raia",
-    fraseFim: "Chegou no fim da raia!",
-    cenario: ["🌊", "💦", "🟦"],
-    etapas: [
-      "Entrando na água",
-      "Primeira volta",
-      "Respirando e seguindo",
-      "Reta final",
-      "Chegou na parede!",
-    ],
-  },
-  {
-    key: "foguete",
-    label: "Viagem ao planeta",
-    cor: "from-indigo-100 to-violet-50",
-    personagem: "🚀",
-    carga: "",
-    destino: "🪐",
-    fraseChegada: "o foguete pousar no planeta",
-    fraseFim: "O foguete pousou no planeta!",
-    cenario: ["⭐", "✨", "☄️", "🌙", "🌟"],
-    etapas: [
-      "Preparando a decolagem",
-      "Decolou!",
-      "Viajando pelo espaço",
-      "Chegando perto",
-      "Pousou no planeta!",
-    ],
-  },
-  {
-    key: "corrida",
-    label: "Corrida de carrinhos",
-    cor: "from-amber-100 to-orange-50",
-    personagem: "🏎️",
-    carga: "",
-    destino: "🏁",
-    fraseChegada: "o carrinho cruzar a linha de chegada",
-    fraseFim: "Cruzou a linha de chegada!",
-    cenario: ["🚥", "🚧", "🏆", "🌳"],
-    etapas: ["Largada!", "Primeira volta", "Acelerando", "Última volta", "Cruzou a chegada!"],
-  },
-];
-
 const DURACOES = [5, 10, 15, 20, 30];
 const DEPOIS_SUGESTOES = ["jantar", "dormir", "tomar banho", "guardar os brinquedos", "ir pra escola"];
+
+// 7 cores do arco-íris, da mais externa (vermelha) pra mais interna (violeta).
+const CORES = ["#e23b3b", "#ef8a2b", "#f2c200", "#3fae5a", "#3b86d8", "#5a5fd8", "#9a55d6"];
 
 type Fase = "setup" | "antecipacao" | "rodando" | "pausado" | "fim";
 
 export function TimerClient() {
   const [fase, setFase] = useState<Fase>("setup");
-  const [temaKey, setTemaKey] = useState(TEMAS[0].key);
   const [duracaoMin, setDuracaoMin] = useState(10);
   const [depois, setDepois] = useState("");
 
-  const tema = TEMAS.find((t) => t.key === temaKey) ?? TEMAS[0];
   const totalMs = duracaoMin * 60 * 1000;
 
-  // Cronômetro: elapsed acumulado + início do segmento atual.
   const [elapsed, setElapsed] = useState(0);
   const inicioRef = useRef<number | null>(null);
   const baseRef = useRef(0);
@@ -170,14 +70,11 @@ export function TimerClient() {
 
   const progresso = Math.min(elapsed / totalMs, 1);
   const restanteMs = Math.max(totalMs - elapsed, 0);
-  const etapaIdx = Math.min(Math.floor(progresso * tema.etapas.length), tema.etapas.length - 1);
   const depoisTxt = depois.trim() || "a próxima atividade";
 
   if (fase === "setup") {
     return (
       <Setup
-        temaKey={temaKey}
-        setTemaKey={setTemaKey}
         duracaoMin={duracaoMin}
         setDuracaoMin={setDuracaoMin}
         depois={depois}
@@ -189,17 +86,18 @@ export function TimerClient() {
 
   if (fase === "antecipacao") {
     return (
-      <div className={cn("flex flex-col items-center gap-6 rounded-3xl bg-gradient-to-b p-8 text-center", tema.cor)}>
-        <div className="text-6xl">{tema.personagem}</div>
+      <div className="flex flex-col items-center gap-6 rounded-3xl bg-gradient-to-b from-sky-50 to-violet-50 p-8 text-center">
+        <ArcoIris progresso={0} />
         <div>
           <p className="font-heading text-xl text-foreground md:text-2xl">
-            Quando {tema.fraseChegada},
+            Quando o arco-íris ficar{" "}
+            <span className="text-brand-purple">prontinho</span>,
             <br />
             vai ser hora de <span className="text-brand-purple">{depoisTxt}</span>.
           </p>
           <p className="mt-3 text-sm text-muted-foreground">
-            São {duracaoMin} minutos. Dá pra ver a {tema.destino} no fim do caminho o tempo
-            todo.
+            São {duracaoMin} minutos. As cores vão chegando uma por uma — quando o arco-íris
+            estiver completo, o tempo acabou.
           </p>
         </div>
         <div className="flex gap-3">
@@ -220,13 +118,17 @@ export function TimerClient() {
 
   if (fase === "fim") {
     return (
-      <div className={cn("flex flex-col items-center gap-6 rounded-3xl bg-gradient-to-b p-10 text-center", tema.cor)}>
-        <div className="text-7xl">{tema.destino}</div>
+      <div className="flex flex-col items-center gap-6 rounded-3xl bg-gradient-to-b from-sky-50 to-violet-50 p-10 text-center">
+        <div className="relative">
+          <ArcoIris progresso={1} />
+          <span aria-hidden className="absolute -right-1 top-0 animate-pulse text-2xl">
+            ✨
+          </span>
+        </div>
         <div>
           <p className="font-heading text-2xl text-foreground md:text-3xl">
-            Chegou! 🎉
+            O arco-íris ficou pronto! 🌈
           </p>
-          <p className="mt-2 text-lg text-foreground">{tema.fraseFim}</p>
           <p className="mt-4 font-heading text-xl text-brand-purple">
             Agora é hora de {depoisTxt}.
           </p>
@@ -244,12 +146,20 @@ export function TimerClient() {
   }
 
   // rodando | pausado
+  const coresProntas = Math.floor(progresso * CORES.length);
+  const faltam = CORES.length - coresProntas;
   const quaseLa = progresso > 0.85;
+  const narracao = quaseLa
+    ? "Quase pronto!"
+    : coresProntas === 0
+      ? "O arco-íris está começando…"
+      : `Falta${faltam === 1 ? "" : "m"} ${faltam} cor${faltam === 1 ? "" : "es"} pro arco-íris ficar pronto`;
+
   return (
     <div className="flex flex-col gap-5">
       <div className="flex items-center justify-between">
         <div>
-          <p className="font-heading text-lg text-foreground">{tema.label}</p>
+          <p className="font-heading text-lg text-foreground">O arco-íris</p>
           <p className="text-sm text-muted-foreground">
             Depois: <span className="font-medium text-foreground">{depoisTxt}</span>
           </p>
@@ -259,48 +169,12 @@ export function TimerClient() {
         </span>
       </div>
 
-      {/* Cena: caminho com destino à vista e o personagem avançando */}
-      <div className={cn("relative h-44 overflow-hidden rounded-3xl bg-gradient-to-b", tema.cor)}>
-        {/* cenário decorativo */}
-        {tema.cenario.map((c, i) => (
-          <span
-            key={i}
-            aria-hidden
-            className="absolute text-2xl opacity-70"
-            style={{
-              left: `${8 + i * 17}%`,
-              top: i % 2 === 0 ? "18%" : "55%",
-            }}
-          >
-            {c}
-          </span>
-        ))}
-        {/* linha do chão */}
-        <div className="absolute inset-x-0 bottom-9 h-px bg-foreground/15" />
-        {/* destino — sempre à vista no fim */}
-        <span aria-hidden className="absolute bottom-5 right-3 text-5xl">
-          {tema.destino}
-        </span>
-        {/* personagem */}
-        <span
-          aria-hidden
-          className="absolute bottom-4 text-4xl transition-all duration-200 ease-linear"
-          style={{ left: `calc(${progresso * 86}% + 0.5rem)` }}
-        >
-          {tema.carga}
-          {tema.personagem}
-        </span>
-        {quaseLa && (
-          <span className="absolute left-1/2 top-3 -translate-x-1/2 rounded-full bg-white/80 px-3 py-1 text-xs font-semibold text-brand-purple">
-            quase lá…
-          </span>
-        )}
+      <div className="flex items-center justify-center rounded-3xl bg-gradient-to-b from-sky-50 to-violet-50 px-6 py-8">
+        <ArcoIris progresso={progresso} />
       </div>
 
-      {/* etapa atual */}
-      <p className="text-center font-heading text-lg text-foreground">{tema.etapas[etapaIdx]}</p>
+      <p className="text-center font-heading text-lg text-foreground">{narracao}</p>
 
-      {/* progresso */}
       <div className="h-2 overflow-hidden rounded-full bg-foreground/10">
         <div
           className="h-full rounded-full bg-brand-purple transition-all duration-200 ease-linear"
@@ -333,6 +207,35 @@ export function TimerClient() {
   );
 }
 
+/** Arco-íris que se forma: cada cor aparece na sua fatia do tempo (0 → 1). */
+function ArcoIris({ progresso }: { progresso: number }) {
+  const n = CORES.length;
+  return (
+    <svg viewBox="0 0 200 118" className="w-full max-w-md" role="img" aria-label="Arco-íris se formando">
+      {CORES.map((cor, i) => {
+        const r = 90 - i * 11;
+        const slice = 1 / n;
+        const op = Math.max(0, Math.min(1, (progresso - i * slice) / slice));
+        return (
+          <path
+            key={i}
+            d={`M ${100 - r},100 A ${r},${r} 0 0 1 ${100 + r},100`}
+            fill="none"
+            stroke={cor}
+            strokeWidth={9}
+            strokeLinecap="round"
+            opacity={op}
+            style={{ transition: "opacity 350ms linear" }}
+          />
+        );
+      })}
+      {/* nuvenzinhas na base, cobrindo as pontas do arco */}
+      <ellipse cx="38" cy="100" rx="30" ry="13" fill="#fff" opacity="0.95" />
+      <ellipse cx="162" cy="100" rx="30" ry="13" fill="#fff" opacity="0.95" />
+    </svg>
+  );
+}
+
 function formatar(ms: number): string {
   const s = Math.ceil(ms / 1000);
   const m = Math.floor(s / 60);
@@ -341,16 +244,12 @@ function formatar(ms: number): string {
 }
 
 function Setup({
-  temaKey,
-  setTemaKey,
   duracaoMin,
   setDuracaoMin,
   depois,
   setDepois,
   onAvancar,
 }: {
-  temaKey: string;
-  setTemaKey: (k: string) => void;
   duracaoMin: number;
   setDuracaoMin: (n: number) => void;
   depois: string;
@@ -359,30 +258,6 @@ function Setup({
 }) {
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex flex-col gap-2">
-        <span className="text-sm font-medium text-foreground">O tema</span>
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-          {TEMAS.map((t) => (
-            <button
-              key={t.key}
-              type="button"
-              onClick={() => setTemaKey(t.key)}
-              className={cn(
-                "flex flex-col items-center gap-1.5 rounded-2xl border-2 bg-gradient-to-b p-4 text-center transition-all",
-                t.cor,
-                temaKey === t.key ? "border-brand-purple" : "border-transparent hover:border-brand-purple/30",
-              )}
-            >
-              <span className="text-3xl">
-                {t.carga}
-                {t.personagem}
-              </span>
-              <span className="text-xs font-medium text-foreground">{t.label}</span>
-            </button>
-          ))}
-        </div>
-      </div>
-
       <div className="flex flex-col gap-2">
         <span className="text-sm font-medium text-foreground">Quanto tempo</span>
         <div className="flex flex-wrap gap-2">
@@ -406,7 +281,8 @@ function Setup({
 
       <div className="flex flex-col gap-2">
         <span className="text-sm font-medium text-foreground">
-          O que vem depois <span className="font-normal text-muted-foreground">(o combinado)</span>
+          O que vem depois{" "}
+          <span className="font-normal text-muted-foreground">(o combinado)</span>
         </span>
         <div className="flex flex-wrap gap-2">
           {DEPOIS_SUGESTOES.map((d) => (
