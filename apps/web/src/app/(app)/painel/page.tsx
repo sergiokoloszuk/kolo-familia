@@ -198,7 +198,6 @@ export default async function PainelPage() {
     { data: familyMeta },
     { data: alertasOpen },
     { count: adaptacoesPendentesCount },
-    { data: aylaRecentes },
   ] = await Promise.all([
     supabase
       .from("family_accounts")
@@ -217,16 +216,7 @@ export default async function PainelPage() {
       .select("id", { count: "exact", head: true })
       .eq("family_account_id", familyId)
       .eq("estado", "pendente"),
-    supabase
-      .from("ayla_messages")
-      .select("id, texto, created_at")
-      .eq("family_account_id", familyId)
-      .eq("direcao", "outbound")
-      .not("texto", "is", null)
-      .order("created_at", { ascending: false })
-      .limit(4),
   ]);
-  const ultimaAyla = (aylaRecentes ?? [])[0] ?? null;
   const agora = hoje.getTime();
   const idadeDias = familyMeta
     ? Math.floor(
@@ -266,6 +256,23 @@ export default async function PainelPage() {
   // escritas pela família). NUNCA contagens — listas devem soar como
   // diário de bordo, não como log de eventos.
   // Intercala conquista/desafio por data desc, limita a 5.
+  // Dias com "Registro do dia" salvo (check-in) mas SEM conquista/desafio
+  // viram um reconhecimento discreto — pra não parecer que o registro sumiu
+  // quando o dia foi tranquilo. 1 por data, no máx. 3 recentes (não enche).
+  const datasComDestaque = new Set<string>([
+    ...(conquistas ?? []).map((c) => c.data as string),
+    ...(desafios ?? []).map((d) => d.data as string),
+  ]);
+  const datasTranquilas = [
+    ...new Set(
+      (checkins7d ?? [])
+        .map((c) => c.data as string)
+        .filter((d) => !datasComDestaque.has(d)),
+    ),
+  ]
+    .sort((a, b) => b.localeCompare(a))
+    .slice(0, 3);
+
   const itensSemana = [
     ...(conquistas ?? []).map((c) => ({
       id: `c-${c.id}`,
@@ -290,20 +297,26 @@ export default async function PainelPage() {
         : "Conversa nas Estratégias",
       quemEstava: null as string | null,
     })),
-    // As falas cruas da Ayla NÃO entram no feed — são a voz do assistente, sem
-    // contexto da pergunta, e soavam estranhas ("Ah, sem problema!…"). O que
-    // importou da conversa já aparece aqui como conquista/desafio registrado.
-    // A presença da Ayla na Home fica no card "Ayla · WhatsApp" (abaixo).
+    ...datasTranquilas.map((d) => ({
+      id: `t-${d}`,
+      data: d,
+      tipo: "tranquilo" as const,
+      texto: "Dia tranquilo — registrado",
+      quemEstava: null as string | null,
+    })),
+    // As falas cruas da Ayla NÃO entram no feed — eram a voz do assistente, sem
+    // contexto da pergunta. O que importa da conversa já vira conquista/desafio.
   ]
     .filter((i) => i.texto.trim().length > 0)
     .sort((a, b) => b.data.localeCompare(a.data))
     .slice(0, 6);
 
-  // Marcador tipográfico por frente (diário / estratégia).
+  // Marcador tipográfico por frente (diário / estratégia / dia tranquilo).
   const MARK_SEMANA: Record<string, { ch: string; cls: string }> = {
     conquista: { ch: "✓", cls: "text-cat-social" },
     desafio: { ch: "!", cls: "text-cat-sensorial" },
     estrategia: { ch: "›", cls: "text-cat-foco" },
+    tranquilo: { ch: "·", cls: "text-muted-foreground" },
   };
 
   // ============================================================
@@ -818,42 +831,8 @@ export default async function PainelPage() {
         </section>
       )}
 
-      {/* ============================================================
-       * AYLA NO WHATSAPP — última fala real da Ayla (espelha o ayla-ref
-       * do protótipo). Traz a presença dela pra Home; só renderiza quando
-       * existe mensagem. "Abrir" leva pra Estratégias (onde se conversa).
-       * ============================================================ */}
-      {ultimaAyla?.texto && (
-        <section className="flex items-start gap-4 rounded-3xl bg-white px-5 py-5 shadow-[0_1px_2px_rgba(46,10,82,0.04),_0_4px_12px_rgba(46,10,82,0.03)] md:px-6">
-          <span
-            aria-hidden
-            className="flex size-9 shrink-0 items-center justify-center rounded-full bg-brand-purple font-heading text-sm font-semibold text-white"
-          >
-            A
-          </span>
-          <div className="min-w-0 flex-1">
-            <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-muted-foreground">
-              Ayla · WhatsApp
-              <span className="mx-1.5 opacity-60">·</span>
-              <span className="font-semibold normal-case tracking-normal text-foreground/60">
-                {format(new Date(ultimaAyla.created_at as string), "d 'de' MMM", {
-                  locale: ptBR,
-                })}
-              </span>
-            </p>
-            <p className="mt-1.5 line-clamp-3 text-[15px] leading-relaxed text-foreground/90">
-              {ultimaAyla.texto}
-            </p>
-          </div>
-          <Link
-            href="/estrategias"
-            className="mt-0.5 inline-flex shrink-0 items-center gap-1 self-center text-sm font-semibold text-brand-purple underline-offset-4 transition-all hover:gap-2"
-          >
-            Abrir
-            <ArrowRight className="size-3" aria-hidden />
-          </Link>
-        </section>
-      )}
+      {/* A Ayla conversa só pelo WhatsApp (celular). A Home não espelha mais a
+          fala dela aqui — web é a tela da família, Ayla é o canal do celular. */}
 
       {/* ============================================================
        * RODAPÉ ADMINISTRATIVO — discreto, fora da narrativa editorial.
