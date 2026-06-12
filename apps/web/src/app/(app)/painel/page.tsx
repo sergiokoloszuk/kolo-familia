@@ -8,7 +8,6 @@ import { buttonVariants } from "@/components/ui/button";
 import { Eyebrow } from "@/components/brand/eyebrow";
 import { loadFamilyContext } from "@/lib/auth/require-user";
 import { cn } from "@/lib/utils";
-import { NpsBanner } from "./nps-banner";
 import { BalaoPrimeirosPassos } from "./balao-primeiros-passos";
 import { BannerGenero } from "./banner-genero";
 
@@ -197,7 +196,6 @@ export default async function PainelPage() {
   // NPS elegibilidade
   const [
     { data: familyMeta },
-    { data: ultimoFeedback },
     { data: alertasOpen },
     { count: adaptacoesPendentesCount },
     { data: aylaRecentes },
@@ -207,13 +205,6 @@ export default async function PainelPage() {
       .select("created_at")
       .eq("id", familyId)
       .single(),
-    supabase
-      .from("feedback_beta")
-      .select("created_at")
-      .eq("family_account_id", familyId)
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle(),
     supabase
       .from("alertas")
       .select("id, regra_key, severidade, mensagem, first_disparo_em")
@@ -243,21 +234,6 @@ export default async function PainelPage() {
           (24 * 60 * 60 * 1000),
       )
     : 0;
-  const ultimoFeedbackDias = ultimoFeedback
-    ? Math.floor(
-        (agora - new Date(ultimoFeedback.created_at as string).getTime()) /
-          (24 * 60 * 60 * 1000),
-      )
-    : null;
-  const npsElegivel =
-    idadeDias >= 7 &&
-    (ultimoFeedbackDias == null || ultimoFeedbackDias >= 60);
-  const npsContexto: "d7" | "d30" | "manual" =
-    idadeDias < 30 ? "d7" : "d30";
-
-  // Semana de leitura — usada como microcamada editorial no hero.
-  // Dia 0-6 = Semana 1; dia 7-13 = Semana 2; etc.
-  const semanaDeLeitura = Math.floor(idadeDias / 7) + 1;
 
   // ============================================================
   // Lógica do hero contextual
@@ -549,94 +525,6 @@ export default async function PainelPage() {
       </header>
 
       {/* ============================================================
-       * HERO CONTEXTUAL — leitura da semana (lilás com profundidade)
-       * Hero dominante: 3 radials sobrepostos + vignette inset bottom
-       * pra atmosfera editorial sem inflar.
-       * ============================================================ */}
-      <section
-        className="relative overflow-hidden rounded-3xl px-6 py-8 md:px-10 md:py-10"
-        style={{
-          background:
-            "radial-gradient(circle at 90% 8%, rgba(255,186,0,0.22) 0%, transparent 55%), radial-gradient(circle at 8% 88%, rgba(107,31,168,0.10) 0%, transparent 55%), radial-gradient(ellipse at 50% 110%, rgba(46,10,82,0.06) 0%, transparent 60%), linear-gradient(135deg, var(--kolo-lilas-bg) 0%, var(--kolo-creme) 100%)",
-          boxShadow: "inset 0 -1px 0 rgba(46,10,82,0.04)",
-        }}
-      >
-        {/* Microcamada editorial — só desktop. Atende massa visual à direita
-            sem virar dashboard: numeração discreta de "leitura longitudinal". */}
-        <div
-          aria-hidden
-          className="pointer-events-none absolute right-10 top-9 hidden flex-col items-end text-right md:flex"
-        >
-          <span className="text-[10px] font-bold uppercase tracking-[0.24em] text-foreground/35">
-            Semana {semanaDeLeitura}
-          </span>
-          <span className="mt-1 text-[10px] lowercase tracking-[0.08em] text-foreground/30">
-            com vocês
-          </span>
-        </div>
-        <div className="relative max-w-2xl">
-          <span className="inline-flex items-center gap-2 rounded-full bg-white px-3.5 py-1.5 text-xs font-semibold text-muted-foreground shadow-sm">
-            <span
-              aria-hidden
-              className="relative flex size-2 items-center justify-center"
-            >
-              <span className="absolute inset-0 animate-ping rounded-full bg-brand-yellow opacity-50" />
-              <span className="relative size-2 rounded-full bg-brand-yellow" />
-            </span>
-            {houveAtividade ? "Vimos sua semana" : "Os primeiros dias"}
-          </span>
-          <h2 className="mt-4 font-heading text-3xl leading-[1.15] text-foreground md:text-4xl">
-            {!houveAtividade ? (
-              <>
-                A rotina começa a{" "}
-                <span
-                  className="inline-block px-1"
-                  style={{
-                    background:
-                      "linear-gradient(180deg, transparent 60%, rgba(255,186,0,0.42) 60%)",
-                  }}
-                >
-                  ganhar forma
-                </span>{" "}
-                aos poucos
-              </>
-            ) : totalConquistas > totalDesafios ? (
-              <>
-                {primeiraCrianca?.nome ?? "Vocês"} teve{" "}
-                <span
-                  className="inline-block px-1"
-                  style={{
-                    background:
-                      "linear-gradient(180deg, transparent 60%, rgba(255,186,0,0.42) 60%)",
-                  }}
-                >
-                  {totalConquistas} conquista{totalConquistas === 1 ? "" : "s"}
-                </span>{" "}
-                nos últimos 7 dias
-              </>
-            ) : (
-              <>
-                Foram{" "}
-                <span
-                  className="inline-block px-1"
-                  style={{
-                    background:
-                      "linear-gradient(180deg, transparent 60%, rgba(255,186,0,0.42) 60%)",
-                  }}
-                >
-                  {diasComRegistro} dia{diasComRegistro === 1 ? "" : "s"}
-                </span>{" "}
-                com registros — e isso já conta
-              </>
-            )}
-            <span aria-hidden className="text-brand-yellow">
-              .
-            </span>
-          </h2>
-        </div>
-      </section>
-
-      {/* ============================================================
        * AS 3 PORTAS — os jeitos de interagir com a Kolo: registrar o
        * dia, cuidar do retrato vivo (Kolo Vivo) e pedir um caminho
        * (Estratégias). Navegação principal do dia a dia.
@@ -859,38 +747,35 @@ export default async function PainelPage() {
        * ou "IA notou". Voz observacional, descreve sensação de quem
        * leu os registros. Estado vazio: lugar reservado editorial.
        * ============================================================ */}
-      <section
-        className="relative overflow-hidden rounded-3xl px-7 py-9 text-white md:px-10 md:py-10"
-        style={{
-          background:
-            "linear-gradient(135deg, var(--brand-purple-deep) 0%, var(--brand-purple-dark) 100%)",
-        }}
-      >
-        <span
-          aria-hidden
-          className="pointer-events-none absolute -right-24 -top-24 size-72 rounded-full opacity-40 blur-3xl"
+      {sinais.length > 0 && (
+        <section
+          className="relative overflow-hidden rounded-3xl px-7 py-9 text-white md:px-10 md:py-10"
           style={{
             background:
-              "radial-gradient(circle, rgba(255,186,0,0.22) 0%, transparent 70%)",
+              "linear-gradient(135deg, var(--brand-purple-deep) 0%, var(--brand-purple-dark) 100%)",
           }}
-        />
-        <div className="relative">
-          <div className="inline-flex items-center gap-3">
-            <span
-              aria-hidden
-              className="h-[2px] w-7 rounded-full bg-brand-yellow"
-            />
-            <Eyebrow tone="dark" as="span">
-              Momentos que se conversam
-            </Eyebrow>
-          </div>
-          <h2 className="mt-4 max-w-xl font-heading text-2xl leading-snug text-white md:text-[26px]">
-            {sinaisTitulo}
-          </h2>
-          <p className="mt-4 max-w-lg text-[15px] leading-relaxed text-white/75">
-            Aos poucos, o dia a dia mostra o que precisa de mais cuidado.
-          </p>
-          {sinais.length > 0 && (
+        >
+          <span
+            aria-hidden
+            className="pointer-events-none absolute -right-24 -top-24 size-72 rounded-full opacity-40 blur-3xl"
+            style={{
+              background:
+                "radial-gradient(circle, rgba(255,186,0,0.22) 0%, transparent 70%)",
+            }}
+          />
+          <div className="relative">
+            <div className="inline-flex items-center gap-3">
+              <span aria-hidden className="h-[2px] w-7 rounded-full bg-brand-yellow" />
+              <Eyebrow tone="dark" as="span">
+                Momentos que se conversam
+              </Eyebrow>
+            </div>
+            <h2 className="mt-4 max-w-xl font-heading text-2xl leading-snug text-white md:text-[26px]">
+              {sinaisTitulo}
+            </h2>
+            <p className="mt-4 max-w-lg text-[15px] leading-relaxed text-white/75">
+              Aos poucos, o dia a dia mostra o que precisa de mais cuidado.
+            </p>
             <ul className="mt-5 grid gap-4 md:grid-cols-2 md:gap-5">
               {sinais.map((s) => (
                 <li
@@ -901,9 +786,9 @@ export default async function PainelPage() {
                 </li>
               ))}
             </ul>
-          )}
-        </div>
-      </section>
+          </div>
+        </section>
+      )}
 
       {/* ============================================================
        * SUGESTÕES PRA REVISAR — só aparece quando há pendência real.
@@ -982,8 +867,6 @@ export default async function PainelPage() {
        * NPS (se elegível) + avisos pendentes (se houver). Quem não tem
        * NPS pendente nem avisos abertos não vê nada aqui.
        * ============================================================ */}
-      {npsElegivel && <NpsBanner contexto={npsContexto} />}
-
       {((alertasOpen?.length ?? 0) > 0 ||
         (adaptacoesPendentesCount ?? 0) > 0) && (
         <section className="border-t border-foreground/[0.06] pt-6">
