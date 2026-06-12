@@ -16,6 +16,9 @@ export type AnaliseDesenho = {
   leituras: string[];
   perguntas: string[];
   registro: string;
+  /** Etiquetas pra o mapa longitudinal (Nível 3). */
+  temas?: string[];
+  forma?: string;
 };
 
 const SYSTEM = `Você ajuda a MÃE de uma criança neurodivergente a OBSERVAR um desenho e a fazer boas perguntas — NUNCA a diagnosticar. O desenho é um convite à conversa, não um laudo.
@@ -33,7 +36,9 @@ Devolva APENAS um JSON, sem nada antes ou depois:
   "observamos": ["4 a 7 fatos VISUAIS e objetivos: cores predominantes; nº de figuras; quem aparece (criança/mãe/pai/amigos/animais); proximidade e tamanho das figuras; expressões; objetos repetidos; cenário (casa/escola/natureza/monstros/veículos); uso do espaço da folha; presença de proteção (casa/muro/abraço/escudo); e o MOVIMENTO/energia da composição (irradia de um centro, cresce pra fora, gira/espiral, explode, conecta ou separa elementos, está parada, é simétrica/radial/concêntrica). SÓ o que dá pra ver."],
   "leituras": ["2 a 4 POSSÍVEIS leituras emocionais, TODAS em hipótese, com ao menos uma alternativa neutra. Categorias possíveis: bem-estar, busca de segurança, vínculo com cuidador, interesse social, preferência por brincar sozinho, preocupação/necessidade de controle, intensidade emocional, medo, imaginação, hiperfoco/interesse intenso."],
   "perguntas": ["4 a 6 perguntas calorosas pra mãe explorar com a criança; inclua perguntas sobre o personagem e de escolha (carinhas) quando ajudar."],
-  "registro": "1 a 2 frases sobre o que vale anotar e observar nos próximos desenhos (recorrências de cores, personagens, temas, presença social, hiperfocos)."
+  "registro": "1 a 2 frases sobre o que vale anotar e observar nos próximos desenhos (recorrências de cores, personagens, temas, presença social, hiperfocos).",
+  "temas": ["1 a 4 TAGS curtas do que o desenho mostra, minúsculas e no singular, pra agrupar ao longo do tempo. Vocabulário simples e CONSISTENTE: flor, árvore, casa, pessoa, família, animal, sol, coração, carro, monstro, comida, arco-íris, natureza, abstrato. Só as que de fato aparecem."],
+  "forma": "1 tag curta do movimento/forma dominante: radial | circular | espiral | cena | sequência | espalhado | central | simétrico. Vazio se não se aplica."
 }
 
 Tom: caloroso, cuidadoso, humilde. Sem termos clínicos. Em português do Brasil.`;
@@ -254,5 +259,10 @@ function parseAnalise(s: string): AnaliseDesenho | null {
   const perguntas = arr(obj.perguntas);
   const registro = typeof obj.registro === "string" ? obj.registro : "";
   if (observamos.length === 0 && leituras.length === 0) return null;
-  return { observamos, leituras, perguntas, registro };
+  const temas = arr(obj.temas)
+    .map((t) => t.trim().toLowerCase())
+    .filter(Boolean)
+    .slice(0, 4);
+  const forma = typeof obj.forma === "string" ? obj.forma.trim().toLowerCase() : "";
+  return { observamos, leituras, perguntas, registro, temas, forma };
 }

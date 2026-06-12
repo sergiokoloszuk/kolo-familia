@@ -25,11 +25,15 @@ export default async function DesenhosPage() {
       .order("created_at", { ascending: true }),
     supabase
       .from("desenhos")
-      .select("id, imagem_url, status, created_at, membro_atipico_id, membros_atipicos(nome)")
+      .select(
+        "id, imagem_url, status, created_at, membro_atipico_id, resposta_crianca, analise, membros_atipicos(nome)",
+      )
       .eq("family_account_id", familyId)
       .order("created_at", { ascending: false })
-      .limit(60),
+      .limit(120),
   ]);
+
+  const mapas = montarMapas(desenhos ?? []);
 
   const membrosList = (membros ?? []).map((m) => ({
     id: m.id as string,
@@ -66,6 +70,23 @@ export default async function DesenhosPage() {
         </p>
       ) : (
         <EnviarDesenho membros={membrosList} />
+      )}
+
+      {mapas.length > 0 && (
+        <section className="flex flex-col gap-4">
+          <div>
+            <h2 className="font-heading text-xl text-foreground">Mapa dos desenhos</h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              O que vai se repetindo ao longo do tempo — um desenho diz pouco; o padrão diz
+              muito. Vai ficando mais rico a cada novo desenho.
+            </p>
+          </div>
+          <div className="grid gap-4 md:grid-cols-2">
+            {mapas.map((m) => (
+              <MapaCard key={m.membroId} mapa={m} />
+            ))}
+          </div>
+        </section>
       )}
 
       {(desenhos ?? []).length > 0 && (
@@ -114,6 +135,142 @@ export default async function DesenhosPage() {
             })}
           </ul>
         </section>
+      )}
+    </div>
+  );
+}
+
+// ============================================================
+// Mapa dos desenhos (Nível 3) — agregação longitudinal por membro.
+// A partir de ~5 desenhos analisados, mostra os temas/forma/emoção que voltam.
+// ============================================================
+
+type Contagem = { rotulo: string; n: number };
+type MapaMembro = {
+  membroId: string;
+  nome: string;
+  total: number;
+  temas: Contagem[];
+  formas: Contagem[];
+  emocoes: Contagem[];
+};
+
+const EMOCOES_RX = /apontou:\s*(feliz|preocupad[ao]|brav[ao]|com medo|tranquil[ao])/i;
+function emocaoDaResposta(resp: string | null): string | null {
+  if (!resp) return null;
+  const m = resp.toLowerCase().match(EMOCOES_RX);
+  if (!m) return null;
+  return m[1].replace(/[ao]$/, "a"); // normaliza gênero pra rótulo único
+}
+
+function topN(map: Map<string, number>, n: number): Contagem[] {
+  return [...map.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, n)
+    .map(([rotulo, nn]) => ({ rotulo, n: nn }));
+}
+
+function montarMapas(desenhos: Array<Record<string, unknown>>): MapaMembro[] {
+  const por = new Map<
+    string,
+    {
+      nome: string;
+      total: number;
+      temas: Map<string, number>;
+      formas: Map<string, number>;
+      emocoes: Map<string, number>;
+    }
+  >();
+  for (const d of desenhos) {
+    if (d.status !== "pronto") continue;
+    const membroId = d.membro_atipico_id as string | null;
+    if (!membroId) continue;
+    const rel = d.membros_atipicos as { nome?: string } | { nome?: string }[] | null;
+    const nome = rel ? (Array.isArray(rel) ? rel[0]?.nome : rel.nome) : null;
+    if (!por.has(membroId))
+      por.set(membroId, {
+        nome: nome ?? "",
+        total: 0,
+        temas: new Map(),
+        formas: new Map(),
+        emocoes: new Map(),
+      });
+    const agg = por.get(membroId)!;
+    agg.total++;
+    const analise = d.analise as { temas?: unknown; forma?: unknown } | null;
+    const temas = Array.isArray(analise?.temas)
+      ? (analise!.temas as unknown[]).filter((x): x is string => typeof x === "string")
+      : [];
+    for (const t of temas) agg.temas.set(t, (agg.temas.get(t) ?? 0) + 1);
+    const forma = typeof analise?.forma === "string" ? analise.forma : "";
+    if (forma) agg.formas.set(forma, (agg.formas.get(forma) ?? 0) + 1);
+    const emo = emocaoDaResposta(d.resposta_crianca as string | null);
+    if (emo) agg.emocoes.set(emo, (agg.emocoes.get(emo) ?? 0) + 1);
+  }
+  return [...por.entries()]
+    .filter(([, a]) => a.total >= 5)
+    .map(([membroId, a]) => ({
+      membroId,
+      nome: a.nome,
+      total: a.total,
+      temas: topN(a.temas, 6),
+      formas: topN(a.formas, 3),
+      emocoes: topN(a.emocoes, 3),
+    }));
+}
+
+function MapaCard({ mapa }: { mapa: MapaMembro }) {
+  const nome = mapa.nome ? capitalizarNome(mapa.nome) : "essa criança";
+  const emoTop = mapa.emocoes[0]?.rotulo;
+  const temaTop = mapa.temas[0]?.rotulo;
+  return (
+    <div className="flex flex-col gap-3 rounded-2xl border border-foreground/[0.07] bg-white p-5">
+      <div className="flex items-baseline justify-between gap-2">
+        <h3 className="font-heading text-lg text-foreground">{nome}</h3>
+        <span className="text-xs text-muted-foreground">{mapa.total} desenhos</span>
+      </div>
+
+      {mapa.temas.length > 0 && (
+        <div className="flex flex-col gap-1.5">
+          <span className="text-[11px] font-bold uppercase tracking-wide text-muted-foreground/70">
+            Temas que voltam
+          </span>
+          <div className="flex flex-wrap gap-1.5">
+            {mapa.temas.map((t) => (
+              <span
+                key={t.rotulo}
+                className="inline-flex items-center gap-1 rounded-full bg-cat-social-bg px-2.5 py-1 text-xs font-medium text-cat-social"
+              >
+                {t.rotulo}
+                {t.n > 1 && <span className="opacity-60">· {t.n}</span>}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {(emoTop || mapa.formas[0]) && (
+        <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm">
+          {emoTop && (
+            <span className="text-muted-foreground">
+              Emoção mais apontada: <span className="font-medium text-foreground">{emoTop}</span>
+            </span>
+          )}
+          {mapa.formas[0] && (
+            <span className="text-muted-foreground">
+              Forma recorrente:{" "}
+              <span className="font-medium text-foreground">{mapa.formas[0].rotulo}</span>
+            </span>
+          )}
+        </div>
+      )}
+
+      {temaTop && (
+        <p className="text-sm leading-relaxed text-muted-foreground">
+          Nos desenhos de {nome}, <span className="text-foreground">{temaTop}</span> aparece com
+          frequência{emoTop ? ` e a emoção que mais volta é ${emoTop}` : ""}. São pistas do que
+          parece importante pra {nome} agora — não conclusões.
+        </p>
       )}
     </div>
   );
