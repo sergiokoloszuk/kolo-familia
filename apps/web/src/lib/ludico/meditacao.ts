@@ -119,6 +119,60 @@ export async function gerarMeditacao(
   return parsed;
 }
 
+/** Reescreve uma meditação aplicando um ajuste pedido pela família (chat de IA). */
+export async function ajustarMeditacao(
+  params: {
+    roteiroAtual: string;
+    pedido: string;
+    intencao: Intencao;
+    tema?: string;
+    contexto?: string;
+    membro: { nome: string; idade: number | null } | null;
+    interesses?: string;
+  },
+  tracking?: { supabase: SupabaseClient; family_account_id: string | null },
+): Promise<{ titulo: string; roteiro: string }> {
+  const client = getAnthropicClient();
+  const linhas: string[] = [`Intenção: ${rotuloIntencao(params.intencao)}.`];
+  if (params.membro) {
+    linhas.push(
+      `Criança: ${params.membro.nome}${params.membro.idade != null ? `, ${params.membro.idade} anos` : ""}.`,
+    );
+  }
+  if (params.interesses?.trim()) linhas.push(`O que ela ama / desenha: ${params.interesses.trim()}.`);
+  if (params.tema?.trim()) linhas.push(`Foco/tema: ${params.tema.trim()}.`);
+  if (params.contexto?.trim()) linhas.push(`Contexto: ${params.contexto.trim()}.`);
+  linhas.push(`\n<meditacao_atual>\n${params.roteiroAtual.trim()}\n</meditacao_atual>`);
+  linhas.push(`\nA família pediu este AJUSTE: "${params.pedido.trim()}"`);
+  linhas.push(
+    `\nReescreva a meditação APLICANDO o ajuste, mantendo todas as regras (português impecável, começar pelo sucesso quando for ensaio, nunca ensaiar o medo, anti-ABA, e tecer o que ela ama/desenha). Devolva no formato TÍTULO:/ROTEIRO:.`,
+  );
+
+  const msg = await client.messages.create({
+    model: MODELS.principal,
+    max_tokens: 1800,
+    system: [{ type: "text", text: SYSTEM_MED, cache_control: { type: "ephemeral" } }],
+    messages: [{ role: "user", content: linhas.join("\n") }],
+  });
+  if (tracking) {
+    await logarUsoApi(tracking.supabase, {
+      family_account_id: tracking.family_account_id,
+      provider: "anthropic",
+      model: MODELS.principal,
+      feature: "meditacao_ajuste",
+      input_tokens: msg.usage.input_tokens,
+      output_tokens: msg.usage.output_tokens,
+    });
+  }
+  const raw = msg.content
+    .filter((b): b is Extract<typeof b, { type: "text" }> => b.type === "text")
+    .map((b) => b.text)
+    .join("");
+  const parsed = parseMeditacao(raw);
+  if (!parsed) throw new Error("Não consegui ajustar a meditação. Tente de novo.");
+  return parsed;
+}
+
 export type TemaSugerido = { intencao: Intencao; tema: string; motivo: string };
 
 const SYSTEM_SUG = `Você sugere TEMAS de meditação guiada pertinentes ao que está acontecendo com uma criança neurodivergente, em PT-BR. A partir do contexto, proponha 2 a 3 ideias úteis AGORA. NÃO diagnostique; fale com cuidado.

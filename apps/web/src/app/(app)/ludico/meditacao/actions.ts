@@ -4,7 +4,13 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { idadeAnos } from "@/lib/idade";
-import { gerarMeditacao, sugerirTemas, type Intencao, type TemaSugerido } from "@/lib/ludico/meditacao";
+import {
+  gerarMeditacao,
+  ajustarMeditacao,
+  sugerirTemas,
+  type Intencao,
+  type TemaSugerido,
+} from "@/lib/ludico/meditacao";
 
 type Ok<T = object> = { ok: true } & T;
 type Fail = { ok: false; error: string };
@@ -187,6 +193,59 @@ export async function criarMeditacao(
 
     revalidatePath("/ludico/meditacao");
     return { ok: true, meditacaoId: data.id as string };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "Erro inesperado" };
+  }
+}
+
+const ajusteMedSchema = z.object({
+  meditacaoId: z.string().uuid(),
+  pedido: z.string().trim().min(1).max(400),
+});
+
+/** Reescreve uma meditação salva aplicando um pedido de ajuste (chat de IA). */
+export async function ajustarMeditacaoExistente(
+  input: z.infer<typeof ajusteMedSchema>,
+): Promise<Ok | Fail> {
+  try {
+    const { meditacaoId, pedido } = ajusteMedSchema.parse(input);
+    const { supabase, family } = await requireFamily();
+    const { data: med } = await supabase
+      .from("meditacoes")
+      .select("id, intencao, tema, contexto, roteiro, membro_atipico_id")
+      .eq("id", meditacaoId)
+      .eq("family_account_id", family.id)
+      .maybeSingle();
+    if (!med) return { ok: false, error: "Meditação não encontrada." };
+
+    const { membro, contexto: ctxCrianca, interesses } = await carregarContexto(
+      supabase,
+      family.id,
+      med.membro_atipico_id as string,
+    );
+    const contextoFinal = [(med.contexto as string | null)?.trim(), ctxCrianca]
+      .filter(Boolean)
+      .join("\n");
+    const { titulo, roteiro } = await ajustarMeditacao(
+      {
+        roteiroAtual: med.roteiro as string,
+        pedido,
+        intencao: med.intencao as Intencao,
+        tema: (med.tema as string | null) ?? undefined,
+        contexto: contextoFinal,
+        membro,
+        interesses,
+      },
+      { supabase, family_account_id: family.id },
+    );
+    const { error } = await supabase
+      .from("meditacoes")
+      .update({ titulo, roteiro })
+      .eq("id", meditacaoId)
+      .eq("family_account_id", family.id);
+    if (error) return { ok: false, error: error.message };
+    revalidatePath(`/ludico/meditacao/${meditacaoId}`);
+    return { ok: true };
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : "Erro inesperado" };
   }

@@ -5,10 +5,12 @@ import { loadFamilyContext } from "@/lib/auth/require-user";
 import { capitalizarNome } from "@/lib/nome";
 import { ExcluirMeditacao } from "./excluir-meditacao";
 import { PrintButton } from "./print-button";
+import { AjustarMeditacao } from "./ajustar-meditacao";
 
 const INTENCAO_LABEL: Record<string, string> = {
-  acalmar: "Acalmar",
-  visualizar: "Visualizar um momento",
+  acalmar: "Acalmar agora",
+  visualizar: "Ensaiar um momento",
+  processar: "Guardar o que passou",
   dormir: "Relaxar pra dormir",
   coragem: "Coragem",
   seguranca: "Sentir-se segura",
@@ -59,6 +61,8 @@ export default async function MeditacaoView({
         Leia devagar, em voz baixa, fazendo as pausas. Não precisa ficar perfeito — o ritmo
         calmo já acolhe.
       </p>
+
+      <AjustarMeditacao meditacaoId={med.id as string} />
 
       <article className="whitespace-pre-wrap font-heading text-lg leading-relaxed text-foreground md:text-xl">
         {med.roteiro as string}

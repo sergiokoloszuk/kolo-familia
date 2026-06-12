@@ -3,13 +3,15 @@ import { ChevronLeft, Wind } from "lucide-react";
 import { loadFamilyContext } from "@/lib/auth/require-user";
 import { capitalizarNome } from "@/lib/nome";
 import { CriarMeditacao } from "./criar-meditacao";
+import { ExcluirMini } from "./excluir-mini";
 
 // A geração do roteiro (Sonnet) roda na action — teto largo por garantia.
 export const maxDuration = 300;
 
 const INTENCAO_LABEL: Record<string, string> = {
-  acalmar: "Acalmar",
-  visualizar: "Visualizar um momento",
+  acalmar: "Acalmar agora",
+  visualizar: "Ensaiar um momento",
+  processar: "Guardar o que passou",
   dormir: "Relaxar pra dormir",
   coragem: "Coragem",
   seguranca: "Sentir-se segura",
@@ -87,10 +89,10 @@ export default async function MeditacaoPage() {
               const rel = m.membros_atipicos as { nome: string } | { nome: string }[] | null;
               const nome = rel ? (Array.isArray(rel) ? rel[0]?.nome : rel.nome) : null;
               return (
-                <li key={m.id as string}>
+                <li key={m.id as string} className="relative">
                   <Link
                     href={`/ludico/meditacao/${m.id}`}
-                    className="group flex items-center gap-4 rounded-2xl border border-foreground/[0.07] bg-white px-5 py-4 transition-colors hover:border-brand-purple/30"
+                    className="group flex items-center gap-4 rounded-2xl border border-foreground/[0.07] bg-white py-4 pl-5 pr-14 transition-colors hover:border-brand-purple/30"
                   >
                     <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-cat-emocao-soft text-cat-emocao">
                       <Wind className="size-5" />
@@ -105,6 +107,7 @@ export default async function MeditacaoPage() {
                       </p>
                     </div>
                   </Link>
+                  <ExcluirMini meditacaoId={m.id as string} />
                 </li>
               );
             })}
