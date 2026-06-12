@@ -258,6 +258,15 @@ function Setup({
 }) {
   return (
     <div className="flex flex-col gap-6">
+      <div className="rounded-2xl border border-brand-yellow/30 bg-brand-yellow/[0.07] px-4 py-3">
+        <p className="text-sm leading-relaxed text-foreground">
+          <strong className="font-semibold">Quem cuida:</strong> combine o tempo e o que
+          vem <em className="not-italic">depois</em>, e conte pra criança antes de começar
+          (“quando o arco-íris ficar pronto, é hora de…”). O combinado claro é o que evita a
+          surpresa — o arco-íris só mostra, pra ela, quanto falta.
+        </p>
+      </div>
+
       <div className="flex flex-col gap-2">
         <span className="text-sm font-medium text-foreground">Quanto tempo</span>
         <div className="flex flex-wrap gap-2">

@@ -71,6 +71,11 @@ export default async function MeditacaoPage() {
           dormir — e a Kolo escreve uma meditação curtinha pra você ler em voz alta, com o
           nome e os interesses dela. Se quiser, ela sugere temas pelo que está acontecendo.
         </p>
+        <p className="mt-2 text-sm leading-relaxed text-foreground/70">
+          <strong className="font-medium text-foreground">Quem cuida:</strong> escolha um
+          momento calmo e leia devagar, com voz baixa — a sua voz é parte do relaxamento.
+          Não precisa decorar; pode pausar e repetir quantas vezes ela quiser.
+        </p>
       </header>
 
       {membrosList.length === 0 ? (

@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { ImagePlus, Sparkles, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { enviarDesenho } from "./actions";
 
 export function EnviarDesenho({ membros }: { membros: Array<{ id: string; nome: string }> }) {
@@ -14,15 +15,27 @@ export function EnviarDesenho({ membros }: { membros: Array<{ id: string; nome: 
   const [membroId, setMembroId] = useState(membros[0]?.id ?? "");
   const [contexto, setContexto] = useState("");
   const [erro, setErro] = useState<string | null>(null);
+  const [arrastando, setArrastando] = useState(false);
   const [pending, start] = useTransition();
 
   function escolher(f: File | null) {
     setErro(null);
+    if (f && !f.type.startsWith("image/")) {
+      setErro("Isso não parece uma imagem. Use uma foto/print (PNG, JPG ou WEBP).");
+      return;
+    }
     setPreview((prev) => {
       if (prev) URL.revokeObjectURL(prev);
       return f ? URL.createObjectURL(f) : null;
     });
     setFile(f);
+  }
+
+  function aoSoltar(e: React.DragEvent) {
+    e.preventDefault();
+    setArrastando(false);
+    const f = e.dataTransfer.files?.[0];
+    if (f) escolher(f);
   }
 
   // Colar imagem (Ctrl+V / Cmd+V) — pega a primeira imagem da área de
@@ -92,11 +105,26 @@ export function EnviarDesenho({ membros }: { membros: Array<{ id: string; nome: 
         <button
           type="button"
           onClick={() => inputRef.current?.click()}
-          className="flex flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-foreground/15 py-10 text-muted-foreground transition-colors hover:border-brand-purple/40 hover:text-brand-purple"
+          onDragOver={(e) => {
+            e.preventDefault();
+            setArrastando(true);
+          }}
+          onDragLeave={() => setArrastando(false)}
+          onDrop={aoSoltar}
+          className={cn(
+            "flex flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed py-10 transition-colors",
+            arrastando
+              ? "border-brand-purple bg-brand-purple/5 text-brand-purple"
+              : "border-foreground/15 text-muted-foreground hover:border-brand-purple/40 hover:text-brand-purple",
+          )}
         >
           <ImagePlus className="size-8" aria-hidden />
-          <span className="text-sm font-medium">Tirar foto ou escolher o desenho</span>
-          <span className="text-xs text-muted-foreground/70">ou cole uma imagem (Ctrl+V)</span>
+          <span className="text-sm font-medium">
+            {arrastando ? "Solte a imagem aqui" : "Arraste, cole ou escolha o desenho"}
+          </span>
+          <span className="text-xs text-muted-foreground/70">
+            Arraste pra cá · cole com Ctrl+V · ou toque pra tirar foto/abrir arquivo
+          </span>
         </button>
       )}
 

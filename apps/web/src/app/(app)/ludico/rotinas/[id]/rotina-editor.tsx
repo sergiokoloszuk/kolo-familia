@@ -206,6 +206,19 @@ export function RotinaEditor({
         </p>
       )}
 
+      {visual && (
+        <div className="rounded-2xl border border-brand-yellow/30 bg-brand-yellow/[0.07] px-4 py-3 print:hidden">
+          <p className="text-sm leading-relaxed text-foreground">
+            <strong className="font-semibold">Como usar:</strong> mostre os cards pra
+            criança e, a cada etapa que ela terminar, <strong className="font-semibold">toquem
+            juntos no card</strong> pra marcar como feito. Ele fica colorido até concluir e
+            esmaece ao marcar — assim ela vê o que já passou e qual é a próxima. É esse
+            “marquei!” que ajuda a criança a entender a sequência. Tocou sem querer? Toque
+            de novo que ele volta.
+          </p>
+        </div>
+      )}
+
       {visual ? (
         <ViewCartoes tarefas={tarefas} onToggle={toggle} onMover={mover} onRemover={remover} />
       ) : (
