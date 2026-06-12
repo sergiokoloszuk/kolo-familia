@@ -15,7 +15,6 @@ import { loadFamilyContext } from "@/lib/auth/require-user";
 import { capitalizarNome } from "@/lib/nome";
 import { DesenhoPoller } from "./desenho-poller";
 import { RespostaCrianca } from "./resposta-crianca";
-import { AprofundarDesenho } from "./aprofundar-desenho";
 
 export const maxDuration = 300;
 
@@ -151,16 +150,13 @@ export default async function DesenhoPage({
               <RespostaCrianca
                 desenhoId={desenho.id as string}
                 inicial={(desenho.resposta_crianca as string | null) ?? null}
+                nome={nome ? capitalizarNome(nome) : null}
+                temReleitura={Boolean(analise.releitura)}
               />
 
-              {analise.releitura ? (
+              {analise.releitura && (
                 <ReleituraSecao
                   releitura={analise.releitura}
-                  nome={nome ? capitalizarNome(nome) : null}
-                />
-              ) : (
-                <AprofundarDesenho
-                  desenhoId={desenho.id as string}
                   nome={nome ? capitalizarNome(nome) : null}
                 />
               )}
