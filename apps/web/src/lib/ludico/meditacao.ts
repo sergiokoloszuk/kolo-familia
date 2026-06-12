@@ -39,8 +39,12 @@ Adapte pela INTENÇÃO:
 - coragem: sentir uma força tranquila no corpo antes de algo difícil.
 - seguranca: sensação de estar protegida, acompanhada e querida.
 
-Fecho sempre tranquilo. Devolva APENAS um JSON:
-{ "titulo": "título curto e doce", "roteiro": "o texto pra ler em voz alta, com quebras de linha e pausas marcadas" }`;
+Fecho sempre tranquilo.
+
+Devolva EXATAMENTE neste formato (sem JSON, sem markdown, sem comentários):
+TÍTULO: <título curto e doce>
+ROTEIRO:
+<o texto pra ler em voz alta, com quebras de linha e pausas marcadas com "…" ou "(pausa)">`;
 
 export async function gerarMeditacao(
   params: {
@@ -133,12 +137,25 @@ Sugira 2-3 temas. Devolva o JSON array.`;
 }
 
 function parseMeditacao(s: string): { titulo: string; roteiro: string } | null {
-  const obj = extrairJson(s) as { titulo?: unknown; roteiro?: unknown } | null;
-  if (!obj || typeof obj.roteiro !== "string" || !obj.roteiro.trim()) return null;
-  return {
-    titulo: typeof obj.titulo === "string" && obj.titulo.trim() ? obj.titulo : "Meditação",
-    roteiro: obj.roteiro,
-  };
+  const txt = s.trim();
+  // Formato delimitado (preferido — texto multilinha quebra JSON com newline cru).
+  const mRot = txt.match(/ROTEIRO:\s*([\s\S]+)$/i);
+  if (mRot && mRot[1].trim()) {
+    const mTit = txt.match(/T[ÍI]TULO:\s*(.+)/i);
+    return {
+      titulo: mTit && mTit[1].trim() ? mTit[1].trim() : "Meditação",
+      roteiro: mRot[1].trim(),
+    };
+  }
+  // Fallback: JSON (caso o modelo ignore o formato).
+  const obj = extrairJson(txt) as { titulo?: unknown; roteiro?: unknown } | null;
+  if (obj && typeof obj.roteiro === "string" && obj.roteiro.trim()) {
+    return {
+      titulo: typeof obj.titulo === "string" && obj.titulo.trim() ? obj.titulo : "Meditação",
+      roteiro: obj.roteiro,
+    };
+  }
+  return null;
 }
 
 const INTENCOES_VALIDAS: Intencao[] = ["acalmar", "visualizar", "dormir", "coragem", "seguranca"];
