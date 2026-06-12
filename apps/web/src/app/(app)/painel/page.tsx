@@ -916,33 +916,6 @@ export default async function PainelPage() {
       )}
 
       {/* ============================================================
-       * CHECK-IN LEVE — convite suave (fechamento editorial sobre a mãe)
-       * Silêncio antes do fechamento — ritmo assimétrico.
-       * ============================================================ */}
-      <section
-        className="mt-4 flex flex-col items-start justify-between gap-4 rounded-3xl px-6 py-5 md:mt-6 md:flex-row md:items-center md:px-8 md:py-6"
-        style={{
-          background:
-            "linear-gradient(135deg, var(--cat-sensorial-soft) 0%, #FFF9E6 100%)",
-        }}
-      >
-        <p className="text-sm text-foreground md:text-base">
-          E você,{" "}
-          <strong className="font-bold text-brand-purple-dark">
-            como foi o dia
-          </strong>
-          ?
-        </p>
-        <Link
-          href="/registrar/diario"
-          className={cn(buttonVariants({ variant: "cta", size: "lg" }))}
-        >
-          Contar
-          <ArrowRight className="size-4" aria-hidden />
-        </Link>
-      </section>
-
-      {/* ============================================================
        * RODAPÉ ADMINISTRATIVO — discreto, fora da narrativa editorial.
        * NPS (se elegível) + avisos pendentes (se houver). Quem não tem
        * NPS pendente nem avisos abertos não vê nada aqui.
