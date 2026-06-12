@@ -6,6 +6,7 @@ import {
   Eye,
   Heart,
   Lightbulb,
+  Link2,
   MessageCircleQuestion,
   Sparkles,
   Sprout,
@@ -20,6 +21,7 @@ export const maxDuration = 300;
 
 type Releitura = {
   o_que_contou?: string;
+  conexao_contexto?: string;
   expressao?: string;
   importante?: string[];
   perguntas?: string[];
@@ -189,6 +191,22 @@ function ReleituraSecao({
 
       {releitura.o_que_contou && (
         <p className="text-sm leading-relaxed text-foreground/90">{releitura.o_que_contou}</p>
+      )}
+
+      {releitura.conexao_contexto && (
+        <div className="rounded-2xl border border-brand-purple/20 bg-brand-purple/[0.04] p-4">
+          <div className="mb-1.5 flex items-center gap-2">
+            <span className="flex size-6 items-center justify-center rounded-lg bg-brand-purple/10 text-brand-purple">
+              <Link2 className="size-3.5" aria-hidden />
+            </span>
+            <h3 className="text-sm font-semibold text-foreground">
+              Conexão com o que você observou
+            </h3>
+          </div>
+          <p className="text-sm leading-relaxed text-foreground/90">
+            {releitura.conexao_contexto}
+          </p>
+        </div>
       )}
 
       {releitura.expressao && (

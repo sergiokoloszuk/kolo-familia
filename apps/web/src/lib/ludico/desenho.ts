@@ -118,6 +118,7 @@ export async function analisarDesenho(
 
 export type ReleituraDesenho = {
   o_que_contou: string;
+  conexao_contexto: string;
   expressao: string;
   importante: string[];
   perguntas: string[];
@@ -131,14 +132,17 @@ O dado mais rico NÃO é a cor — é (1) o MOVIMENTO/energia do desenho e (2) a
 
 Olhar inspirado em Jung, com humildade: formas circulares, radiais e concêntricas (mandalas) costumam aparecer espontaneamente em momentos de organização, integração e criação. Você PODE notar isso como "vale observar" — NUNCA como verdade sobre a criança, nem como símbolo fechado.
 
+CONTEXTO DO DIA TEM PRIORIDADE: se a mãe contou o que estava acontecendo antes do desenho, COMPARE quatro coisas — (1) o que o adulto observou, (2) o que a criança desenhou, (3) o que ela explicou, (4) a emoção que escolheu — e revele o que a criança FEZ com aquilo. Muitas vezes ela NÃO desenha a preocupação ou a espera; desenha o DESTINO, a aventura, a preparação, o momento bom que está por vir. NÃO repita o que a mãe já disse ("ela estava ansiosa"); mostre o que ela transformou disso. Esse é o insight mais valioso ("nossa, não tinha pensado por esse lado").
+
 REGRAS INVIOLÁVEIS: NUNCA diagnostique nem afirme estados ("está ansiosa", "tem X"). Fale SEMPRE em hipótese. NUNCA diga "a árvore representa a mãe" — significado simbólico fechado é proibido; o sentido é o que a criança dá. Um desenho isolado diz pouco; o valor é a recorrência ao longo do tempo.
 
 Devolva APENAS um JSON, sem nada antes ou depois:
 {
   "o_que_contou": "1 parágrafo curto e caloroso: o que a criança nomeou espontaneamente e a emoção que apontou. Valorize que a leitura PARTE dela.",
+  "conexao_contexto": "SÓ se houver contexto do dia. 1 parágrafo comparando o que a MÃE observou antes com o que a criança DESENHOU/CONTOU — revelando o que ela fez com aquilo (ex.: 'Embora você tenha percebido ansiedade pela espera do passeio, {nome} escolheu representar o momento positivo que estava por vir — o desenho fala mais de expectativa, preparação e imaginação do que de preocupação.'). Se NÃO houver contexto do dia, devolva string vazia.",
   "expressao": "1 parágrafo que CONECTA o movimento/energia do desenho com a emoção escolhida — o achado central. Descreva o movimento (irradia, cresce pra fora, gira, explode, conecta, separa, parado) e a coerência/contraste com a emoção. Ex.: 'O desenho irradia de um centro e cresce pra fora, inteiro e organizado — e {nome} escolheu feliz; há coerência entre a imagem e o que ela sentiu, como algo que ela gostou de criar e contemplar.' Se for forma circular/radial (mandala), pode acrescentar o olhar junguiano com humildade ('vale observar'). Sem símbolo fechado.",
   "importante": ["2 a 4 frases do que parece importante PRA ELA hoje, ancoradas no que ela nomeou + sentiu + o movimento. Sempre hipótese."],
-  "perguntas": ["3 a 5 perguntas ABERTAS que ENTRAM na imagem e na história dela — não 'está feliz ou triste?'. Misture: (a) sobre o símbolo/movimento ('o que tem bem no meio?', 'esse redemoinho está girando ou parado?', 'essa flor está crescendo ou já cresceu?'); (b) NARRATIVAS, pra continuar a cena ('o que aconteceu ANTES dessa cena?', 'o que acontece depois?', 'quem mais vive nesse lugar?', 'esse personagem cuida de alguém?'). Nunca induza a resposta. Adapte à emoção: se feliz, explore o que ela curtiu criar/contemplar; se difícil (preocupada/brava/medo), investigue de quem/do quê é, com opções de escolha."],
+  "perguntas": ["3 a 5 perguntas ABERTAS que ENTRAM na imagem e na história dela — não 'está feliz ou triste?'. Misture: (a) sobre o símbolo/movimento ('o que tem bem no meio?', 'esse redemoinho está girando ou parado?', 'essa flor está crescendo ou já cresceu?'); (b) NARRATIVAS, pra continuar a cena ('o que aconteceu ANTES dessa cena?', 'o que acontece depois?', 'quem mais vive nesse lugar?'); (c) CONECTADAS AO CONTEXTO DO DIA, quando houver — ex.: se a mãe disse 'ansiosa para passear', pergunte 'o pato também está esperando alguma coisa? está animado pra chegar? o que ele mais quer fazer quando chegar na lagoa? quem vai encontrar ele lá?'. Nunca induza a resposta. Adapte à emoção: se feliz, explore o que ela curtiu; se difícil (preocupada/brava/medo), investigue de quem/do quê é, com opções de escolha."],
   "historia": "Uma MICRO-HISTÓRIA exploratória inspirada no que a criança CONTOU (não na interpretação do adulto). MÁXIMO ~120 palavras. Comece com 'Era uma vez...', use os elementos que ela nomeou (e o nome dela se fizer sentido) e TERMINE com 2 ou 3 perguntas abertas pra criança continuar. NUNCA assustadora, triste ou com perigo/perda — só continue a aventura dela, leve e curiosa. Sem moral e sem fechar o final.",
   "registro": "1 frase do que acompanhar ao longo do tempo (recorrência do elemento que ela nomeou, de formas circulares/natureza, ou da emoção)."
 }
@@ -233,6 +237,7 @@ function parseReleitura(s: string): ReleituraDesenho | null {
   if (!o_que_contou && !historia) return null;
   return {
     o_que_contou,
+    conexao_contexto: str(obj.conexao_contexto),
     expressao: str(obj.expressao),
     importante: arr(obj.importante),
     perguntas: arr(obj.perguntas),
