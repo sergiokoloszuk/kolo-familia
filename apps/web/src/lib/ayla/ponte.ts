@@ -169,6 +169,7 @@ export async function montarPonteWhatsApp(
     // Gera o plano completo na hora (single-call) a partir do desafio. Fica
     // salvo em /planos — então o link abre o plano JÁ PRONTO (não precisa
     // clicar em "gerar"), e o PDF vai junto no WhatsApp.
+    console.log(`[ayla:ponte] gerando plano (forcar=${Boolean(forcar)}) membro=${membroAtipicoId ?? "null"}`);
     const plano = await gerarPlano({
       supabase,
       familyId,
@@ -176,6 +177,7 @@ export async function montarPonteWhatsApp(
       desafio: mensagem,
       origem: "estrategias",
     });
+    console.log(`[ayla:ponte] plano gerado id=${plano.id} secoes=${plano.secoes.length}`);
 
     const nomeMembro = await nomeDoMembro(supabase, familyId, membroAtipicoId);
     await entregarPdfDoPlano(supabase, {
@@ -187,6 +189,7 @@ export async function montarPonteWhatsApp(
     });
 
     const link = await gerarMagicLink(supabase, { familyId, next: `/planos/${plano.id}` });
+    console.log(`[ayla:ponte] magic-link ${link ? "ok" : "FALHOU"} → /planos/${plano.id}`);
 
     const base =
       "Montei um plano completo sobre isso — mandei em PDF aqui em cima 👆 (dá pra salvar e imprimir).";

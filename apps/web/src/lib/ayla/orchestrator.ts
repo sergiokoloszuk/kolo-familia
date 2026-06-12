@@ -806,6 +806,7 @@ export async function processInbound(
       ? ultimoCheckin[0].membros_atipicos[0]?.nome
       : (ultimoCheckin[0].membros_atipicos as { nome: string } | null)?.nome
     : null;
+  const ultimoMembroId = (ultimoCheckin?.[0]?.membro_atipico_id as string | null) ?? null;
 
   const parsed = await parseInbound(
     {
@@ -831,10 +832,24 @@ export async function processInbound(
       (parsed.sugestao_kolo_vivo && parsed.texto_kolo_vivo_sugerido),
   );
 
+  // Nome citado EXPLICITAMENTE na mensagem — vence o palpite do parser (que às
+  // vezes "gruda" no membro da conversa anterior). É o sinal mais confiável.
+  const textoLower = inbound.texto.toLowerCase();
+  const membroPorNome = ctx.membros.find(
+    (m) => m.nome && textoLower.includes(m.nome.toLowerCase()),
+  );
+  // O nome escrito é autoridade: corrige o palpite do parser pra TUDO (registro
+  // e contexto), evitando filar conteúdo no membro errado.
+  if (membroPorNome) {
+    parsed.membro_atipico_id = membroPorNome.id;
+    parsed.confianca_identificacao = Math.max(parsed.confianca_identificacao, 90);
+  }
+
   // Família 2+ membros + há conteúdo mas não sabemos de quem → a Ayla pergunta
-  // QUEM (de forma natural), e não registramos até saber.
+  // QUEM. NÃO pergunta se o nome está escrito na mensagem (aí já sabemos).
   const precisaEscolherMembro =
     ctx.membros.length >= 2 &&
+    !membroPorNome &&
     (parsed.confianca_identificacao < 70 || !parsed.membro_atipico_id) &&
     temAlgoPraRegistrar
       ? { nomes: ctx.membros.map((m) => m.nome) }
@@ -846,18 +861,14 @@ export async function processInbound(
     await persistirRegistro(supabase, family.id, parsed);
   }
 
-  // Foco pra CONTEXTO da conversa (perfil + Kolo Vivo). O parser só crava o
-  // membro quando há evento a registrar; numa PERGUNTA ("o que sabe da X?")
-  // ele volta null. Então, se não cravou, casa pelo nome citado na mensagem
-  // (e, em último caso, usa o único membro). Isso NÃO registra nada — só
-  // permite a Ayla puxar o perfil de quem a mãe perguntou.
-  const textoLower = inbound.texto.toLowerCase();
-  const membroPorNome = ctx.membros.find(
-    (m) => m.nome && textoLower.includes(m.nome.toLowerCase()),
-  );
+  // Foco pra CONTEXTO da conversa (perfil + Kolo Vivo). Numa PERGUNTA ("o que
+  // sabe da X?") o parser volta null — por isso a prioridade aqui é: nome
+  // escrito na mensagem > palpite do parser > último membro da conversa
+  // (fixação) > único membro. NÃO registra nada — só carrega o perfil.
   const membroContextoId =
-    parsed.membro_atipico_id ??
     membroPorNome?.id ??
+    parsed.membro_atipico_id ??
+    ultimoMembroId ??
     (ctx.membros.length === 1 ? ctx.membros[0].id : null);
 
   const membroFoco = membroContextoId
