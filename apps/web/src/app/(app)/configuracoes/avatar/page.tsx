@@ -3,7 +3,15 @@ import { ChevronLeft } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { loadFamilyContext } from "@/lib/auth/require-user";
+import { assinarImagens } from "@/lib/storage/imagens";
 import { idadeAnos } from "@/lib/idade";
+
+type AvatarRel = { imagem_url: string | null; selecionado: boolean | null };
+
+function avatarEscolhido(rel: unknown): AvatarRel | undefined {
+  const arr = Array.isArray(rel) ? rel : rel ? [rel] : [];
+  return (arr as AvatarRel[]).find((x) => x?.selecionado) ?? (arr as AvatarRel[])[0];
+}
 
 export default async function AvataresIndexPage() {
   const { supabase, family } = await loadFamilyContext();
@@ -15,6 +23,13 @@ export default async function AvataresIndexPage() {
     .eq("family_account_id", familyId)
     .eq("ativo", true)
     .order("created_at", { ascending: true });
+
+  const membrosList = membros ?? [];
+  // Bucket privado → assina o avatar escolhido de cada membro na leitura.
+  const avatarUrls = await assinarImagens(
+    supabase,
+    membrosList.map((m) => avatarEscolhido(m.avatares_membros_atipicos)?.imagem_url ?? null),
+  );
 
   return (
     <div className="flex flex-col gap-6">
@@ -37,14 +52,9 @@ export default async function AvataresIndexPage() {
       </header>
 
       <ul className="grid gap-4 md:grid-cols-2">
-        {(membros ?? []).map((m) => {
-          const arr = Array.isArray(m.avatares_membros_atipicos)
-            ? m.avatares_membros_atipicos
-            : m.avatares_membros_atipicos
-              ? [m.avatares_membros_atipicos]
-              : [];
-          const avatar = arr.find((x) => x?.selecionado) ?? arr[0];
-          const temAvatar = Boolean(avatar?.imagem_url);
+        {membrosList.map((m, i) => {
+          const avatarUrl = avatarUrls[i];
+          const temAvatar = Boolean(avatarUrl);
           return (
             <li key={m.id}>
               <Link href={`/configuracoes/avatar/${m.id}`} className="block">
@@ -61,10 +71,10 @@ export default async function AvataresIndexPage() {
                     </Badge>
                   </CardHeader>
                   <CardContent>
-                    {temAvatar && avatar?.imagem_url ? (
+                    {temAvatar && avatarUrl ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img
-                        src={avatar.imagem_url}
+                        src={avatarUrl}
                         alt={`Avatar de ${m.nome}`}
                         className="aspect-square w-32 rounded-md border object-cover"
                       />

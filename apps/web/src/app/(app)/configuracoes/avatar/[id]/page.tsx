@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { ChevronLeft } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { loadFamilyContext } from "@/lib/auth/require-user";
+import { assinarImagens } from "@/lib/storage/imagens";
 import { idadeAnos } from "@/lib/idade";
 import { AvatarForm } from "./avatar-form";
 import { AvataresGaleria } from "./avatares-galeria";
@@ -35,9 +36,14 @@ export default async function AvatarMembroPage(
 
   if (!membro) notFound();
 
-  const lista = (avatares ?? []).map((a) => ({
+  // Bucket privado → assina cada avatar na leitura.
+  const avatarUrls = await assinarImagens(
+    supabase,
+    (avatares ?? []).map((a) => (a.imagem_url as string | null) ?? null),
+  );
+  const lista = (avatares ?? []).map((a, i) => ({
     id: a.id as string,
-    imagem_url: (a.imagem_url as string | null) ?? null,
+    imagem_url: avatarUrls[i] ?? (a.imagem_url as string | null) ?? null,
     selecionado: Boolean(a.selecionado),
   }));
 

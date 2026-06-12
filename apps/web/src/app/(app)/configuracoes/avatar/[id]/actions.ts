@@ -5,6 +5,7 @@ import { z } from "zod";
 import { createClient, createServiceRoleClient } from "@/lib/supabase/server";
 import { requireActiveWrite } from "@/lib/auth/require-active-write";
 import { gerarImagem } from "@/lib/imagem/generate";
+import { assinarImagem } from "@/lib/storage/imagens";
 import {
   montarPromptCanonico,
   AVATAR_ESTILO_VALUES,
@@ -107,10 +108,13 @@ export async function criarEGerarAvatar(
     revalidatePath(`/configuracoes/avatar/${membroId}`);
     revalidatePath("/configuracoes/avatar");
 
+    // Bucket privado → assina pro preview imediato no formulário.
+    const previewUrl = await assinarImagem(supabase, result.url);
+
     return {
       ok: true,
       avatarId: novo.id as string,
-      imagem_url: result.url,
+      imagem_url: previewUrl ?? result.url,
       prompt_revisado: result.prompt_revisado,
     };
   } catch (e) {

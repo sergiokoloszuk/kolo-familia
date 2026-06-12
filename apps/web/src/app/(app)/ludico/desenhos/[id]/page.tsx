@@ -13,6 +13,7 @@ import {
   Star,
 } from "lucide-react";
 import { loadFamilyContext } from "@/lib/auth/require-user";
+import { assinarImagem } from "@/lib/storage/imagens";
 import { capitalizarNome } from "@/lib/nome";
 import { DesenhoPoller } from "./desenho-poller";
 import { RespostaCrianca } from "./resposta-crianca";
@@ -66,6 +67,7 @@ export default async function DesenhoPage({
 
   const rel = desenho.membros_atipicos as { nome: string } | { nome: string }[] | null;
   const nome = rel ? (Array.isArray(rel) ? rel[0]?.nome : rel.nome) : null;
+  const imagemUrl = await assinarImagem(supabase, desenho.imagem_url as string);
   const status = desenho.status as string;
   const analise = (desenho.analise as Analise | null) ?? null;
 
@@ -92,7 +94,7 @@ export default async function DesenhoPage({
         <div className="flex flex-col gap-3">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src={desenho.imagem_url as string}
+            src={imagemUrl as string}
             alt="Desenho"
             className="w-full rounded-2xl border border-foreground/[0.06] object-contain"
           />

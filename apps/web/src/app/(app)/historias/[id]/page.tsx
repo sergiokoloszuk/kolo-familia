@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { ArrowLeft, Sparkles } from "lucide-react";
 import { loadFamilyContext } from "@/lib/auth/require-user";
 import { createServiceRoleClient } from "@/lib/supabase/server";
+import { assinarImagem, assinarImagens } from "@/lib/storage/imagens";
 import { LeitorHistoria } from "./leitor";
 import { HistoriaPoller } from "./historia-poller";
 
@@ -29,7 +30,7 @@ export default async function HistoriaPage(props: {
   // do Vercel, OOM, etc.), o status fica eternamente 'gerando'. Depois
   // de TIMEOUT_GERANDO_MS, marca como erro pra não prender o usuário.
   if (status === "gerando") {
-    const idadeMs = Date.now() - new Date(historia.created_at as string).getTime();
+    const idadeMs = new Date().getTime() - new Date(historia.created_at as string).getTime();
     if (idadeMs > TIMEOUT_GERANDO_MS) {
       const admin = createServiceRoleClient();
       const mensagem = "A geração demorou demais e foi interrompida. Tente criar de novo.";
@@ -133,6 +134,19 @@ export default async function HistoriaPage(props: {
     .eq("historia_id", id)
     .order("ordem", { ascending: true });
 
+  // Bucket privado → assina capa e cada página na leitura.
+  const capaAssinada = await assinarImagem(supabase, historia.capa_url as string | null);
+  const paginasUrls = await assinarImagens(
+    supabase,
+    (paginas ?? []).map((p) => (p.imagem_url as string | null) ?? null),
+  );
+  const paginasAssinadas = (paginas ?? []).map((p, i) => ({
+    ordem: p.ordem as number,
+    texto: (p.texto as string | null) ?? null,
+    fala: (p.fala as string | null) ?? null,
+    imagem_url: paginasUrls[i] ?? (p.imagem_url as string | null) ?? null,
+  }));
+
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-5">
       <div className="flex items-center gap-3">
@@ -153,16 +167,9 @@ export default async function HistoriaPage(props: {
       <LeitorHistoria
         historiaId={historia.id as string}
         titulo={historia.titulo as string}
-        capaUrl={(historia.capa_url as string | null) ?? null}
+        capaUrl={capaAssinada}
         aviso={(historia.erro as string | null) ?? null}
-        paginas={
-          (paginas ?? []) as Array<{
-            ordem: number;
-            texto: string | null;
-            fala: string | null;
-            imagem_url: string | null;
-          }>
-        }
+        paginas={paginasAssinadas}
       />
     </div>
   );

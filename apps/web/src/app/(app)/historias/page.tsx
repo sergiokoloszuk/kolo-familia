@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Sparkles, Wand2, BookOpen } from "lucide-react";
 import { loadFamilyContext } from "@/lib/auth/require-user";
+import { assinarImagem, assinarImagens } from "@/lib/storage/imagens";
 
 export const metadata = { title: "Histórias — Kolo Família" };
 
@@ -37,6 +38,13 @@ export default async function HistoriasPage() {
   const temAvatar = Boolean(avatarUrl);
   const lista = historias ?? [];
   const temGerando = lista.some((h) => h.status === "gerando");
+
+  // Bucket privado → assina avatar (hero) e capas (grid) na leitura.
+  const avatarAssinado = await assinarImagem(supabase, avatarUrl);
+  const capasAssinadas = await assinarImagens(
+    supabase,
+    lista.map((h) => (h.capa_url as string | null) ?? null),
+  );
 
   return (
     <div className="flex flex-col gap-8">
@@ -86,7 +94,7 @@ export default async function HistoriasPage() {
               </span>
             )}
           </div>
-          {avatarUrl && (
+          {avatarAssinado && (
             <div className="relative hidden shrink-0 sm:block">
               <div
                 aria-hidden
@@ -95,7 +103,7 @@ export default async function HistoriasPage() {
               />
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src={avatarUrl}
+                src={avatarAssinado}
                 alt="Avatar"
                 className="relative size-32 rounded-full border-2 border-white/40 object-cover shadow-xl md:size-40"
               />
@@ -125,8 +133,9 @@ export default async function HistoriasPage() {
           </span>
         </Link>
 
-        {lista.map((h) => {
+        {lista.map((h, i) => {
           const gerando = h.status === "gerando";
+          const capa = capasAssinadas[i];
           return (
             <Link key={h.id} href={`/historias/${h.id}`} className="group flex flex-col gap-2">
               <div
@@ -137,10 +146,10 @@ export default async function HistoriasPage() {
                   aria-hidden
                   className="pointer-events-none absolute inset-y-0 left-0 z-10 w-2 bg-gradient-to-r from-black/20 to-transparent"
                 />
-                {h.capa_url ? (
+                {capa ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
-                    src={h.capa_url as string}
+                    src={capa}
                     alt={h.titulo as string}
                     className="size-full object-cover"
                   />

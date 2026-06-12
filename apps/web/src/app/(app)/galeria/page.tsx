@@ -6,6 +6,7 @@ import { Eyebrow } from "@/components/brand/eyebrow";
 import { EstadoVazio } from "@/components/brand/estado-vazio";
 import { IconCard } from "@/components/brand/icon-card";
 import { loadFamilyContext } from "@/lib/auth/require-user";
+import { assinarImagens } from "@/lib/storage/imagens";
 import { cn } from "@/lib/utils";
 import { GaleriaItem } from "./galeria-item";
 
@@ -38,6 +39,11 @@ export default async function GaleriaPage(props: PageProps<"/galeria">) {
   if (apenasFavoritas) query = query.eq("favoritada", true);
 
   const { data: imagens } = await query;
+  // Bucket privado → URL assinada de curta duração, gerada na leitura.
+  const urlsAssinadas = await assinarImagens(
+    supabase,
+    (imagens ?? []).map((i) => i.url as string),
+  );
 
   return (
     <div className="flex flex-col gap-8">
@@ -79,7 +85,7 @@ export default async function GaleriaPage(props: PageProps<"/galeria">) {
 
       {imagens && imagens.length > 0 ? (
         <ul className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {imagens.map((img) => {
+          {imagens.map((img, i) => {
             const nome = Array.isArray(img.membros_atipicos)
               ? img.membros_atipicos[0]?.nome
               : (img.membros_atipicos as { nome: string } | null)?.nome;
@@ -87,7 +93,7 @@ export default async function GaleriaPage(props: PageProps<"/galeria">) {
               <li key={img.id}>
                 <GaleriaItem
                   id={img.id}
-                  url={img.url}
+                  url={urlsAssinadas[i] ?? img.url}
                   tipo={img.tipo as string | null}
                   favoritada={img.favoritada as boolean}
                   membroNome={nome ?? null}

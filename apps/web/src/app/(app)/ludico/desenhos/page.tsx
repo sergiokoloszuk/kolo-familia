@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
 import { loadFamilyContext } from "@/lib/auth/require-user";
+import { assinarImagens } from "@/lib/storage/imagens";
 import { capitalizarNome } from "@/lib/nome";
 import { EnviarDesenho } from "./enviar-desenho";
 
@@ -34,6 +35,11 @@ export default async function DesenhosPage() {
   ]);
 
   const mapas = montarMapas(desenhos ?? []);
+  // Bucket privado → URL assinada na leitura (alinhada à ordem de `desenhos`).
+  const desenhosUrls = await assinarImagens(
+    supabase,
+    (desenhos ?? []).map((d) => d.imagem_url as string),
+  );
 
   const membrosList = (membros ?? []).map((m) => ({
     id: m.id as string,
@@ -93,7 +99,7 @@ export default async function DesenhosPage() {
         <section className="flex flex-col gap-4">
           <h2 className="font-heading text-xl text-foreground">Diário de desenhos</h2>
           <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-            {(desenhos ?? []).map((d) => {
+            {(desenhos ?? []).map((d, i) => {
               const rel = d.membros_atipicos as { nome: string } | { nome: string }[] | null;
               const nome = rel
                 ? Array.isArray(rel)
@@ -109,7 +115,7 @@ export default async function DesenhosPage() {
                     <div className="relative aspect-square overflow-hidden bg-secondary/40">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
-                        src={d.imagem_url as string}
+                        src={(desenhosUrls[i] ?? d.imagem_url) as string}
                         alt="Desenho"
                         className="size-full object-cover"
                       />

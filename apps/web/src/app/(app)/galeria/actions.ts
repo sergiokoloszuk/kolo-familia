@@ -6,6 +6,7 @@ import { createClient, createServiceRoleClient } from "@/lib/supabase/server";
 import { requireActiveWrite } from "@/lib/auth/require-active-write";
 import { gerarImagem } from "@/lib/imagem/generate";
 import { montarPromptCena } from "@/lib/imagem/avatar-prompt";
+import { assinarImagem } from "@/lib/storage/imagens";
 
 async function requireFamily() {
   const supabase = await createClient();
@@ -134,7 +135,9 @@ export async function gerarCenaParaGaleria(
   if (error || !row) throw new Error(`Falha ao salvar: ${error?.message}`);
 
   revalidatePath("/galeria");
-  return { url: result.url, id: row.id as string };
+  // Bucket privado → assina pro preview imediato no apoio/galeria.
+  const previewUrl = await assinarImagem(supabase, result.url);
+  return { url: previewUrl ?? result.url, id: row.id as string };
 }
 
 function extrairStoragePath(publicUrl: string): string | null {

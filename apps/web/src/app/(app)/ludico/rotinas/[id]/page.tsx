@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ChevronLeft } from "lucide-react";
 import { loadFamilyContext } from "@/lib/auth/require-user";
+import { assinarImagens } from "@/lib/storage/imagens";
 import { capitalizarNome } from "@/lib/nome";
 import { idadeAnos } from "@/lib/idade";
 import { RotinaEditor } from "./rotina-editor";
@@ -43,6 +44,12 @@ export default async function RotinaPage({
     .eq("rotina_id", rotina.id)
     .order("ordem", { ascending: true });
 
+  // Bucket privado → assina as ilustrações dos cards na leitura.
+  const tarefasUrls = await assinarImagens(
+    supabase,
+    (tarefas ?? []).map((t) => (t.imagem_url as string | null) ?? null),
+  );
+
   return (
     <div className="flex flex-col gap-6">
       <Link
@@ -71,13 +78,13 @@ export default async function RotinaPage({
           | "gerando"
           | "pronto"
           | "erro"}
-        tarefasIniciais={(tarefas ?? []).map((t) => ({
+        tarefasIniciais={(tarefas ?? []).map((t, i) => ({
           id: t.id as string,
           texto: t.texto as string,
           icone: (t.icone as string | null) ?? null,
           concluida: Boolean(t.concluida),
           nomeTematico: (t.nome_tematico as string | null) ?? null,
-          imagemUrl: (t.imagem_url as string | null) ?? null,
+          imagemUrl: tarefasUrls[i] ?? (t.imagem_url as string | null) ?? null,
         }))}
       />
     </div>
