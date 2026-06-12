@@ -219,12 +219,65 @@ function montarMapas(desenhos: Array<Record<string, unknown>>): MapaMembro[] {
     }));
 }
 
+const EMOJI_TEMA: Record<string, string> = {
+  flor: "🌸",
+  árvore: "🌳",
+  natureza: "🌿",
+  casa: "🏠",
+  pessoa: "🧍",
+  família: "👨‍👩‍👧",
+  animal: "🐾",
+  sol: "☀️",
+  coração: "❤️",
+  carro: "🚗",
+  monstro: "👾",
+  comida: "🍎",
+  "arco-íris": "🌈",
+  abstrato: "🌀",
+};
+
+const EMOJI_EMOCAO: Record<string, string> = {
+  feliz: "😊",
+  tranquila: "😐",
+  preocupada: "😟",
+  brava: "😠",
+  "com medo": "😨",
+};
+
+const SUGESTAO_TEMA: Record<string, string> = {
+  flor: "Explorar a natureza juntas — passear, plantar, observar.",
+  natureza: "Explorar a natureza juntas — passear, plantar, observar.",
+  árvore: "Explorar a natureza juntas — passear, plantar, observar.",
+  animal: "Criar histórias com bichos — ela curte esse universo.",
+  casa: "Usar os personagens pra conversar sobre quem ela ama e onde se sente bem.",
+  família: "Usar os personagens pra conversar sobre quem ela ama.",
+  monstro: "Faz-de-conta com personagens — dá pra explorar medos com leveza.",
+  abstrato: "Brincar com formas, cores e movimento — massinha, tinta, dança.",
+  carro: "Brincadeiras de movimento e percursos.",
+  coração: "Conversar sobre afeto e quem ela gosta, usando o desenho.",
+};
+
+function sugestoesDoMapa(temas: Contagem[]): string[] {
+  const vistas = new Set<string>();
+  const out: string[] = [];
+  for (const t of temas) {
+    const s = SUGESTAO_TEMA[t.rotulo];
+    if (s && !vistas.has(s)) {
+      vistas.add(s);
+      out.push(s);
+    }
+    if (out.length >= 3) break;
+  }
+  return out;
+}
+
 function MapaCard({ mapa }: { mapa: MapaMembro }) {
   const nome = mapa.nome ? capitalizarNome(mapa.nome) : "essa criança";
   const emoTop = mapa.emocoes[0]?.rotulo;
   const temaTop = mapa.temas[0]?.rotulo;
+  const sugestoes = sugestoesDoMapa(mapa.temas);
   return (
-    <div className="flex flex-col gap-3 rounded-2xl border border-foreground/[0.07] bg-white p-5">
+    <div className="flex flex-col gap-4 rounded-2xl border border-foreground/[0.07] bg-white p-5">
       <div className="flex items-baseline justify-between gap-2">
         <h3 className="font-heading text-lg text-foreground">{nome}</h3>
         <span className="text-xs text-muted-foreground">{mapa.total} desenhos</span>
@@ -233,7 +286,7 @@ function MapaCard({ mapa }: { mapa: MapaMembro }) {
       {mapa.temas.length > 0 && (
         <div className="flex flex-col gap-1.5">
           <span className="text-[11px] font-bold uppercase tracking-wide text-muted-foreground/70">
-            Temas que voltam
+            Temas favoritos
           </span>
           <div className="flex flex-wrap gap-1.5">
             {mapa.temas.map((t) => (
@@ -241,7 +294,7 @@ function MapaCard({ mapa }: { mapa: MapaMembro }) {
                 key={t.rotulo}
                 className="inline-flex items-center gap-1 rounded-full bg-cat-social-bg px-2.5 py-1 text-xs font-medium text-cat-social"
               >
-                {t.rotulo}
+                {EMOJI_TEMA[t.rotulo] ?? "•"} {t.rotulo}
                 {t.n > 1 && <span className="opacity-60">· {t.n}</span>}
               </span>
             ))}
@@ -249,19 +302,45 @@ function MapaCard({ mapa }: { mapa: MapaMembro }) {
         </div>
       )}
 
-      {(emoTop || mapa.formas[0]) && (
-        <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm">
-          {emoTop && (
-            <span className="text-muted-foreground">
-              Emoção mais apontada: <span className="font-medium text-foreground">{emoTop}</span>
-            </span>
-          )}
-          {mapa.formas[0] && (
-            <span className="text-muted-foreground">
-              Forma recorrente:{" "}
-              <span className="font-medium text-foreground">{mapa.formas[0].rotulo}</span>
-            </span>
-          )}
+      {mapa.emocoes.length > 0 && (
+        <div className="flex flex-col gap-1.5">
+          <span className="text-[11px] font-bold uppercase tracking-wide text-muted-foreground/70">
+            Emoções mais escolhidas
+          </span>
+          <div className="flex flex-wrap gap-1.5">
+            {mapa.emocoes.map((e) => (
+              <span
+                key={e.rotulo}
+                className="inline-flex items-center gap-1 rounded-full bg-cat-emocao-bg px-2.5 py-1 text-xs font-medium text-cat-emocao"
+              >
+                {EMOJI_EMOCAO[e.rotulo] ?? "•"} {e.rotulo}
+                {e.n > 1 && <span className="opacity-60">· {e.n}</span>}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {mapa.formas[0] && (
+        <p className="text-sm text-muted-foreground">
+          Forma recorrente:{" "}
+          <span className="font-medium text-foreground">{mapa.formas[0].rotulo}</span>
+        </p>
+      )}
+
+      {sugestoes.length > 0 && (
+        <div className="flex flex-col gap-1.5">
+          <span className="text-[11px] font-bold uppercase tracking-wide text-muted-foreground/70">
+            Ideias pra brincar e conversar
+          </span>
+          <ul className="flex flex-col gap-1">
+            {sugestoes.map((s, i) => (
+              <li key={i} className="flex gap-2 text-sm leading-relaxed text-foreground/90">
+                <span aria-hidden className="mt-[0.55em] size-1.5 shrink-0 rounded-full bg-brand-purple/40" />
+                <span>{s}</span>
+              </li>
+            ))}
+          </ul>
         </div>
       )}
 

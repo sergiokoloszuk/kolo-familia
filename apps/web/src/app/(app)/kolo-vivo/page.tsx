@@ -130,6 +130,14 @@ export default async function KoloVivoPage() {
             rotina, o que ajuda e o que pesa. Quanto mais completo, mais certeiras
             ficam as Estratégias que a gente te sugere. Você atualiza quando quiser.
           </p>
+          <p className="mt-2 max-w-xl text-sm text-muted-foreground/80">
+            Fique tranquila: é um processo de construção. Quando você registra algo
+            no <span className="text-foreground/80">dia a dia</span>, conversa com a{" "}
+            <span className="text-foreground/80">Ayla</span> ou pede uma{" "}
+            <span className="text-foreground/80">Estratégia</span>, o que for novo
+            pode vir pra cá — sempre com a sua confirmação. Não precisa preencher tudo
+            de uma vez.
+          </p>
         </div>
       </header>
 
