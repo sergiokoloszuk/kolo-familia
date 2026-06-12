@@ -114,7 +114,7 @@ export default async function PainelPage() {
     { data: desafios },
     { data: checkins7d },
     { count: sugestoesCount },
-    { data: ultimaConversa },
+    { data: conversasRecentes },
     { data: perfisCompletude },
   ] = await Promise.all([
     supabase
@@ -161,11 +161,10 @@ export default async function PainelPage() {
       .eq("status", "pendente"),
     supabase
       .from("conversas")
-      .select("id, titulo")
+      .select("id, titulo, created_at")
       .eq("family_account_id", familyId)
       .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle(),
+      .limit(5),
     supabase
       .from("perfil_vivo_membro")
       .select("completude_pct")
@@ -184,7 +183,8 @@ export default async function PainelPage() {
     const arr = (perfisCompletude ?? []).map((p) => Number(p.completude_pct) || 0);
     return arr.length ? Math.round(Math.max(...arr)) : 0;
   })();
-  const ultimaConversaTitulo = (ultimaConversa?.titulo as string | null)?.trim() || null;
+  const ultimaConversaTitulo =
+    ((conversasRecentes ?? [])[0]?.titulo as string | null)?.trim() || null;
 
   const trialDaysLeft =
     subscription?.status === "trialing" && subscription.trial_ends_at
@@ -200,7 +200,7 @@ export default async function PainelPage() {
     { data: ultimoFeedback },
     { data: alertasOpen },
     { count: adaptacoesPendentesCount },
-    { data: ultimaAyla },
+    { data: aylaRecentes },
   ] = await Promise.all([
     supabase
       .from("family_accounts")
@@ -228,14 +228,14 @@ export default async function PainelPage() {
       .eq("estado", "pendente"),
     supabase
       .from("ayla_messages")
-      .select("texto, created_at")
+      .select("id, texto, created_at")
       .eq("family_account_id", familyId)
       .eq("direcao", "outbound")
       .not("texto", "is", null)
       .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle(),
+      .limit(4),
   ]);
+  const ultimaAyla = (aylaRecentes ?? [])[0] ?? null;
   const agora = hoje.getTime();
   const idadeDias = familyMeta
     ? Math.floor(
@@ -305,10 +305,37 @@ export default async function PainelPage() {
       texto: d.desafio ?? "",
       quemEstava: (d as { quem_estava?: string | null }).quem_estava ?? null,
     })),
+    ...(conversasRecentes ?? []).map((c) => ({
+      id: `e-${c.id}`,
+      data: ((c.created_at as string) ?? "").slice(0, 10),
+      tipo: "estrategia" as const,
+      texto: (c.titulo as string | null)?.trim()
+        ? `Conversaram sobre "${(c.titulo as string).trim()}"`
+        : "Conversa nas Estratégias",
+      quemEstava: null as string | null,
+    })),
+    ...(aylaRecentes ?? []).map((a) => {
+      const t = ((a.texto as string) ?? "").trim().replace(/\s+/g, " ");
+      return {
+        id: `a-${a.id}`,
+        data: ((a.created_at as string) ?? "").slice(0, 10),
+        tipo: "ayla" as const,
+        texto: t.length > 90 ? `${t.slice(0, 90)}…` : t,
+        quemEstava: null as string | null,
+      };
+    }),
   ]
     .filter((i) => i.texto.trim().length > 0)
     .sort((a, b) => b.data.localeCompare(a.data))
-    .slice(0, 5);
+    .slice(0, 6);
+
+  // Marcador tipográfico por frente (diário / estratégia / ayla).
+  const MARK_SEMANA: Record<string, { ch: string; cls: string }> = {
+    conquista: { ch: "✓", cls: "text-cat-social" },
+    desafio: { ch: "!", cls: "text-cat-sensorial" },
+    estrategia: { ch: "›", cls: "text-cat-foco" },
+    ayla: { ch: "✦", cls: "text-brand-purple" },
+  };
 
   // ============================================================
   // Sinais — "Momentos que se conversam"
@@ -767,7 +794,7 @@ export default async function PainelPage() {
               <Star className="size-4" aria-hidden />
             </span>
             <h3 className="font-heading text-lg font-semibold text-foreground md:text-xl">
-              Essa semana
+              O que vem acontecendo
             </h3>
           </div>
           {itensSemana.length === 0 ? (
@@ -790,12 +817,10 @@ export default async function PainelPage() {
                       aria-hidden
                       className={cn(
                         "mt-[7px] inline-flex w-3.5 shrink-0 font-mono text-sm font-semibold leading-none",
-                        item.tipo === "conquista"
-                          ? "text-cat-social"
-                          : "text-cat-sensorial",
+                        (MARK_SEMANA[item.tipo] ?? MARK_SEMANA.conquista).cls,
                       )}
                     >
-                      {item.tipo === "conquista" ? "✓" : "!"}
+                      {(MARK_SEMANA[item.tipo] ?? MARK_SEMANA.conquista).ch}
                     </span>
                     <div className="flex flex-1 flex-col gap-1">
                       <span className="text-base leading-relaxed tracking-[-0.005em] text-foreground">
