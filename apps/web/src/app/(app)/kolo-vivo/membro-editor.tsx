@@ -171,6 +171,15 @@ export function MembroEditor({ membro }: { membro: MembroData }) {
         </section>
       )}
 
+      {/* Revisão leve — domínios parados há um tempo (a criança muda). */}
+      {membro.revisar.length > 0 && (
+        <p className="text-sm leading-relaxed text-muted-foreground">
+          Faz um tempo que você não mexe em{" "}
+          <span className="font-medium text-foreground">{membro.revisar.join(", ")}</span> —
+          ainda está assim? Se algo mudou, é só atualizar (sem pressa).
+        </p>
+      )}
+
       {/* Grid de domínios */}
       <div className="grid items-start gap-4 [grid-template-columns:repeat(auto-fill,minmax(280px,1fr))]">
         {visiveis.map(({ d, secao, sugestao, status }) => (

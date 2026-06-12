@@ -58,6 +58,7 @@ export default async function KoloVivoPage() {
 
   const todasSugestoes = (sugestoes as SugestaoRow[] | null) ?? [];
   const consumidas = new Set<string>();
+  const noventaDias = new Date().getTime() - 90 * 24 * 60 * 60 * 1000;
 
   const membrosData: MembroData[] = (membros ?? []).map((m) => {
     const p = perfisMembros?.find((x) => x.membro_atipico_id === m.id);
@@ -67,6 +68,7 @@ export default async function KoloVivoPage() {
     const dominios = {} as Record<DominioKey, Secao>;
     const sugestoesPorDominio: Partial<Record<DominioKey, DominioSugestao>> = {};
     let preenchidos = 0;
+    const revisar: string[] = [];
 
     for (const d of DOMINIOS) {
       const principal =
@@ -78,7 +80,11 @@ export default async function KoloVivoPage() {
           ? principal
           : extractSecao((p as Record<string, unknown> | undefined)?.[d.legacyFallback]);
       dominios[d.key] = secao;
-      if (secao.texto.trim().length > 10) preenchidos++;
+      if (secao.texto.trim().length > 10) {
+        preenchidos++;
+        const t = secao.atualizadoEm ? Date.parse(secao.atualizadoEm) : NaN;
+        if (!Number.isNaN(t) && t < noventaDias) revisar.push(d.label);
+      }
 
       // Sugestão pendente desse domínio (casa pela chave nova ou legada).
       const sug = todasSugestoes.find(
@@ -108,6 +114,7 @@ export default async function KoloVivoPage() {
       dominios,
       sugestoes: sugestoesPorDominio,
       marcos: lerMarcos(extras),
+      revisar: revisar.slice(0, 3),
     };
   });
 

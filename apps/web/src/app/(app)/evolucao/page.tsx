@@ -70,6 +70,12 @@ type TimelineEvento =
       titulo: string;
       estado: string;
       membro_nome: string | null;
+    }
+  | {
+      tipo: "marco";
+      data: string;
+      titulo: string;
+      membro_nome: string | null;
     };
 
 const RESULTADO_PLANO_LABEL: Record<string, string> = {
@@ -177,7 +183,9 @@ export default async function EvolucaoPage() {
       .limit(15),
     supabase
       .from("perfil_vivo_membro")
-      .select("sensorial, desafios_regulacao, corpo_rotina, categorias_extras")
+      .select(
+        "sensorial, desafios_regulacao, corpo_rotina, categorias_extras, membros_atipicos(nome)",
+      )
       .eq("family_account_id", familyId),
     supabase
       .from("planos")
@@ -293,6 +301,19 @@ export default async function EvolucaoPage() {
       estado: p.estado as string,
       membro_nome: nomeFromRel(p.membros_atipicos),
     });
+  }
+
+  // Marcos da evolução do Kolo Vivo (mudanças de status datadas).
+  for (const p of perfis ?? []) {
+    const extras = (p.categorias_extras as Record<string, unknown> | null) ?? {};
+    const marcos = Array.isArray(extras.marcos) ? extras.marcos : [];
+    const nome = nomeFromRel((p as { membros_atipicos?: unknown }).membros_atipicos);
+    for (const m of marcos) {
+      if (!m || typeof m !== "object") continue;
+      const mm = m as { data?: unknown; texto?: unknown };
+      if (typeof mm.data !== "string" || typeof mm.texto !== "string") continue;
+      eventos.push({ tipo: "marco", data: mm.data, titulo: mm.texto, membro_nome: nome });
+    }
   }
 
   eventos.sort((a, b) => b.data.localeCompare(a.data));
@@ -653,6 +674,27 @@ function EventoItem({ ev }: { ev: TimelineEvento }) {
           >
             Abrir →
           </Link>
+        </div>
+      </div>
+    );
+  }
+
+  if (ev.tipo === "marco") {
+    return (
+      <div className="flex items-start gap-3.5">
+        <span
+          aria-hidden
+          className="mt-[7px] inline-flex w-3.5 shrink-0 font-mono text-sm leading-none text-cat-social"
+        >
+          ↗
+        </span>
+        <div className="flex flex-1 flex-col gap-1.5">
+          <p className="text-base leading-relaxed text-foreground">
+            Marco no Kolo Vivo: {ev.titulo}
+            {ev.membro_nome && (
+              <span className="text-muted-foreground"> · {ev.membro_nome}</span>
+            )}
+          </p>
         </div>
       </div>
     );
