@@ -39,6 +39,36 @@ export const MEMBRO_CAMPOS_EXTRAS = [
 export type MembroCampoToplevel = (typeof MEMBRO_CAMPOS_TOPLEVEL)[number];
 export type MembroCampoExtras = (typeof MEMBRO_CAMPOS_EXTRAS)[number];
 
+/** Todos os campos do membro (toplevel + extras), pra varreduras. */
+export const MEMBRO_CAMPOS_TODOS = [
+  ...MEMBRO_CAMPOS_TOPLEVEL,
+  ...MEMBRO_CAMPOS_EXTRAS,
+] as const;
+
+/** Rótulo legível de cada campo — fonte única pra UI, relatório e Ayla. */
+export const MEMBRO_CAMPO_LABEL: Record<string, string> = {
+  essencial: "O essencial",
+  como_e: "Como é / interesses",
+  corpo_rotina: "Corpo e rotina",
+  desafios_regulacao: "Desafios",
+  sensorial: "Sensorial",
+  comunicacao: "Comunicação",
+  socializacao: "Socialização",
+  imitacao: "Imitação",
+  motor: "Motor",
+  autonomia: "Autonomia",
+  aprendizado: "Aprendizado",
+  foco: "Foco e atenção",
+  sono: "Sono",
+  nutricional: "Alimentação",
+  tela_midia: "Tela e mídia",
+  escola: "Escola",
+  saude_geral: "Saúde geral",
+  emocional: "Regulação emocional",
+  rotina: "Rotina",
+  gostos: "Gostos e interesses",
+};
+
 /** Onde um campo do membro é gravado — ou null se desconhecido. */
 export function membroCampoStorage(
   campo: string,

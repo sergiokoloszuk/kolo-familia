@@ -225,6 +225,45 @@ export async function decideSugestao(input: z.infer<typeof decideSugestaoSchema>
   revalidatePath("/painel");
 }
 
+// ============================================================
+// Conflitos cross-campo — dispensar um aviso revisado
+// ============================================================
+
+const descartarConflitoSchema = z.object({
+  membro_id: z.string().uuid(),
+  chave: z.string().min(1).max(200),
+});
+
+/** Dispensa um aviso de conflito cross-campo (a mãe revisou / não procede). */
+export async function descartarConflito(
+  input: z.infer<typeof descartarConflitoSchema>,
+) {
+  const { membro_id, chave } = descartarConflitoSchema.parse(input);
+  const { supabase, family } = await requireFamily();
+
+  const { data: atual } = await supabase
+    .from("perfil_vivo_membro")
+    .select("categorias_extras")
+    .eq("membro_atipico_id", membro_id)
+    .eq("family_account_id", family.id)
+    .maybeSingle();
+  const extras = { ...((atual?.categorias_extras as Record<string, unknown>) ?? {}) };
+  const conflitos = Array.isArray(extras.conflitos) ? [...extras.conflitos] : [];
+  extras.conflitos = conflitos.map((c) =>
+    c && typeof c === "object" && (c as { chave?: string }).chave === chave
+      ? { ...(c as object), status: "dispensado" }
+      : c,
+  );
+
+  await supabase
+    .from("perfil_vivo_membro")
+    .update({ categorias_extras: extras })
+    .eq("membro_atipico_id", membro_id)
+    .eq("family_account_id", family.id);
+
+  revalidatePath("/kolo-vivo");
+}
+
 function estimaCompletude(textos: (string | undefined)[]): number {
   const preenchidos = textos.filter((t) => t && t.trim().length > 10).length;
   return Math.round((preenchidos / textos.length) * 100);

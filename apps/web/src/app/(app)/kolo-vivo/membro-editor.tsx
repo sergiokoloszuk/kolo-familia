@@ -1,9 +1,9 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { TrendingUp } from "lucide-react";
+import { useMemo, useState, useTransition } from "react";
+import { TrendingUp, AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { decideSugestao, saveSecaoMembro } from "./actions";
+import { decideSugestao, descartarConflito, saveSecaoMembro } from "./actions";
 import { DOMINIOS } from "./dominios";
 import { DominioCard, type DominioStatus } from "./dominio-card";
 import type { MembroData } from "./wrapper";
@@ -171,6 +171,21 @@ export function MembroEditor({ membro }: { membro: MembroData }) {
         </section>
       )}
 
+      {/* Conflitos cross-campo — duas áreas que parecem se contradizer.
+          Só SINALIZA (a mãe revisa e ajusta, ou dispensa). */}
+      {membro.conflitos.length > 0 && (
+        <div className="flex flex-col gap-2">
+          {membro.conflitos.map((c) => (
+            <ConflitoAviso
+              key={c.chave}
+              membroId={membro.id}
+              chave={c.chave}
+              descricao={c.descricao}
+            />
+          ))}
+        </div>
+      )}
+
       {/* Revisão leve — domínios parados há um tempo (a criança muda). */}
       {membro.revisar.length > 0 && (
         <p className="text-sm leading-relaxed text-muted-foreground">
@@ -206,6 +221,45 @@ export function MembroEditor({ membro }: { membro: MembroData }) {
           Nada nesse filtro por enquanto.
         </p>
       )}
+    </div>
+  );
+}
+
+function ConflitoAviso({
+  membroId,
+  chave,
+  descricao,
+}: {
+  membroId: string;
+  chave: string;
+  descricao: string;
+}) {
+  const [pending, start] = useTransition();
+  const [oculto, setOculto] = useState(false);
+  if (oculto) return null;
+  return (
+    <div className="flex items-start gap-3 rounded-2xl border border-cat-emocao/25 bg-cat-emocao-bg/50 px-4 py-3">
+      <AlertTriangle aria-hidden className="mt-0.5 size-4 shrink-0 text-cat-emocao" />
+      <div className="flex-1">
+        <p className="text-sm leading-relaxed text-foreground">{descricao}</p>
+        <p className="mt-1 text-xs text-muted-foreground">
+          Revise as duas áreas e ajuste o que não bate. Se as duas estão certas
+          (mudou com o tempo, por exemplo), é só dispensar.
+        </p>
+      </div>
+      <button
+        type="button"
+        disabled={pending}
+        onClick={() =>
+          start(async () => {
+            await descartarConflito({ membro_id: membroId, chave });
+            setOculto(true);
+          })
+        }
+        className="shrink-0 rounded-lg px-2.5 py-1 text-xs font-semibold text-muted-foreground transition-colors hover:bg-foreground/5 hover:text-foreground disabled:opacity-50"
+      >
+        {pending ? "…" : "dispensar"}
+      </button>
     </div>
   );
 }

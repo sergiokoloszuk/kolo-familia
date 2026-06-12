@@ -38,6 +38,7 @@ export type MembroData = {
   sugestoes: Partial<Record<DominioKey, DominioSugestao>>;
   marcos: Array<{ data: string; dominio: string; texto: string }>;
   revisar: string[];
+  conflitos: Array<{ chave: string; descricao: string }>;
 };
 
 export type SugestaoRow = {

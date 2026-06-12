@@ -4,7 +4,12 @@ import { chaveTelefoneBR } from "@/lib/telefone";
 import { enviarTexto, type InboundWhatsApp } from "./whatsappSender";
 import { podeEnviarProativa } from "./rules";
 import { parseInbound, detectarComando } from "./parser";
-import { membroCampoStorage } from "@/lib/kolo-vivo/campos";
+import {
+  membroCampoStorage,
+  MEMBRO_CAMPOS_TODOS,
+  MEMBRO_CAMPO_LABEL,
+} from "@/lib/kolo-vivo/campos";
+import { detectarConflitoCrossCampo } from "./conflito-kolo-vivo";
 import { gerarRespostaAyla, type RespostaParams } from "./responder";
 import { descricaoCuidador, type CuidadorDescrito, type Genero } from "./pronomes";
 import { gerarSugestaoRepertorio } from "./repertorio";
@@ -1362,6 +1367,19 @@ async function persistirRegistro(
         );
       }
 
+      // Conflito cross-campo: o fato novo contradiz ALGUMA outra área? Só
+      // sinaliza (não reescreve) pra mãe revisar. Roda quando algo foi aplicado.
+      if (aplicou) {
+        await sinalizarConflitoCrossCampo(
+          supabase,
+          familyId,
+          p.membro_atipico_id,
+          campo,
+          decisao.texto,
+          rowAtual,
+        );
+      }
+
       await supabase.from("sugestao_perfil_vivos").insert({
         family_account_id: familyId,
         membro_atipico_id: p.membro_atipico_id,
@@ -1385,6 +1403,77 @@ async function persistirRegistro(
           decisao.operacao === "skip" || aplicou ? agora : null,
       });
     }
+  }
+}
+
+/**
+ * Detecta contradição entre o campo recém-atualizado e as OUTRAS áreas do
+ * Kolo Vivo. Se houver, registra um aviso em `categorias_extras.conflitos`
+ * pra mãe revisar (dedup por par de campos) — NÃO reescreve nada. Falha
+ * silenciosa: conflito é um bônus, nunca pode quebrar a incorporação.
+ */
+async function sinalizarConflitoCrossCampo(
+  supabase: SupabaseClient,
+  familyId: string,
+  membroId: string,
+  campo: string,
+  textoNovo: string,
+  rowAtual: Record<string, unknown> | null | undefined,
+): Promise<void> {
+  try {
+    const outros = MEMBRO_CAMPOS_TODOS.filter((c) => c !== campo).map((c) => ({
+      campo: c,
+      label: MEMBRO_CAMPO_LABEL[c] ?? c,
+      texto: lerTextoAtualDaSecao(rowAtual, c),
+    }));
+
+    const conflito = await detectarConflitoCrossCampo(
+      {
+        campoNovo: campo,
+        labelNovo: MEMBRO_CAMPO_LABEL[campo] ?? campo,
+        textoNovo,
+        outros,
+      },
+      { supabase, family_account_id: familyId, feature: "ayla_conflito_kv" },
+    );
+    if (!conflito) return;
+
+    const chave = [campo, conflito.campo].sort().join("|");
+
+    // Re-lê categorias_extras (a aplicação acabou de mexer nela) e anexa o
+    // aviso, deduplicando por par de campos pra não repetir o mesmo conflito.
+    const { data: row } = await supabase
+      .from("perfil_vivo_membro")
+      .select("categorias_extras")
+      .eq("membro_atipico_id", membroId)
+      .maybeSingle();
+    const extras = { ...((row?.categorias_extras as Record<string, unknown>) ?? {}) };
+    const conflitos = Array.isArray(extras.conflitos) ? [...extras.conflitos] : [];
+    const jaAberto = conflitos.some(
+      (c) =>
+        c &&
+        typeof c === "object" &&
+        (c as { chave?: string }).chave === chave &&
+        (c as { status?: string }).status === "aberto",
+    );
+    if (jaAberto) return;
+
+    conflitos.push({
+      chave,
+      campos: [campo, conflito.campo],
+      descricao: conflito.descricao,
+      data: hojeLocalISO(),
+      status: "aberto",
+    });
+    extras.conflitos = conflitos.slice(-20);
+
+    await supabase
+      .from("perfil_vivo_membro")
+      .update({ categorias_extras: extras })
+      .eq("membro_atipico_id", membroId)
+      .eq("family_account_id", familyId);
+  } catch (e) {
+    console.warn("[conflito-kv] falha ao sinalizar:", e instanceof Error ? e.message : e);
   }
 }
 
