@@ -218,6 +218,48 @@ export const SUBCAMPOS_DOMINIO: Record<string, SubCampo[]> = {
     },
     { key: "outras", label: "Outras observações", placeholder: "qualquer outra coisa que você percebe" },
   ],
+  emocional: [
+    {
+      key: "padrao",
+      label: "Como costuma ser",
+      opcoes: ["Estável na maioria do tempo", "Oscila", "Desregula com facilidade", "Crises intensas"],
+    },
+    {
+      key: "gatilhos",
+      label: "Gatilhos",
+      lista: true,
+      placeholder: "o que costuma disparar (barulho, fome, mudança de plano, transição, frustração, cansaço…)",
+    },
+    {
+      key: "sinais",
+      label: "Sinais de que vem vindo",
+      lista: true,
+      placeholder: "como você percebe antes / no começo (fica quieto, agita, tampa o ouvido, fica vermelho…)",
+    },
+    {
+      key: "manifesta",
+      label: "Como se manifesta",
+      placeholder: "o que acontece (choro, grito, fugir, congelar, bater, autolesão…)",
+    },
+    {
+      key: "ajuda",
+      label: "O que ajuda a passar",
+      lista: true,
+      placeholder: "o que acalma/regula junto (lugar quieto, ficar perto em silêncio, pressão profunda, água, previsibilidade…)",
+    },
+    {
+      key: "piora",
+      label: "O que NÃO ajuda / piora",
+      lista: true,
+      placeholder: "o que intensifica (insistir, falar muito, plateia, toque leve…)",
+    },
+    {
+      key: "depois",
+      label: "Depois",
+      placeholder: "como fica e o que precisa pra voltar (tempo, colo, ficar sozinho…)",
+    },
+    { key: "outras", label: "Outras observações", placeholder: "qualquer outra coisa que você percebe" },
+  ],
 };
 
 /** Domínio tem sub-campos? Devolve a definição ou null. */

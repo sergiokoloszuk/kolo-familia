@@ -106,6 +106,7 @@ export const DOMINIOS: DominioDef[] = [
     descricao: "Gatilhos, sinais quando está difícil e o que ajuda a passar.",
     placeholder:
       "Ex: crises depois de TV, transições e barulho. Sinais: bate as mãos. Acalma com peso/abraço e música baixa.",
+    campos: SUBCAMPOS_DOMINIO.emocional,
   },
   {
     key: "foco",
