@@ -290,30 +290,20 @@ export default async function PainelPage() {
         : "Conversa nas Estratégias",
       quemEstava: null as string | null,
     })),
-    ...(aylaRecentes ?? []).map((a) => {
-      const t = ((a.texto as string) ?? "").trim().replace(/\s+/g, " ");
-      // Corta em fim de palavra (não no meio) e com folga suficiente pra dar
-      // contexto — as falas da Kolo perdiam o sentido cortadas curtas demais.
-      const resumo = t.length > 180 ? `${t.slice(0, 180).replace(/\s+\S*$/, "")}…` : t;
-      return {
-        id: `a-${a.id}`,
-        data: ((a.created_at as string) ?? "").slice(0, 10),
-        tipo: "ayla" as const,
-        texto: resumo,
-        quemEstava: null as string | null,
-      };
-    }),
+    // As falas cruas da Ayla NÃO entram no feed — são a voz do assistente, sem
+    // contexto da pergunta, e soavam estranhas ("Ah, sem problema!…"). O que
+    // importou da conversa já aparece aqui como conquista/desafio registrado.
+    // A presença da Ayla na Home fica no card "Ayla · WhatsApp" (abaixo).
   ]
     .filter((i) => i.texto.trim().length > 0)
     .sort((a, b) => b.data.localeCompare(a.data))
     .slice(0, 6);
 
-  // Marcador tipográfico por frente (diário / estratégia / ayla).
+  // Marcador tipográfico por frente (diário / estratégia).
   const MARK_SEMANA: Record<string, { ch: string; cls: string }> = {
     conquista: { ch: "✓", cls: "text-cat-social" },
     desafio: { ch: "!", cls: "text-cat-sensorial" },
     estrategia: { ch: "›", cls: "text-cat-foco" },
-    ayla: { ch: "✦", cls: "text-brand-purple" },
   };
 
   // ============================================================
