@@ -5,7 +5,11 @@ import { after } from "next/server";
 import { z } from "zod";
 import { createClient, createServiceRoleClient } from "@/lib/supabase/server";
 import { idadeAnos } from "@/lib/idade";
-import { analisarDesenho, type MediaTypeImagem } from "@/lib/ludico/desenho";
+import {
+  analisarDesenho,
+  aprofundarComResposta,
+  type MediaTypeImagem,
+} from "@/lib/ludico/desenho";
 
 type Ok<T = object> = { ok: true } & T;
 type Fail = { ok: false; error: string };
@@ -140,6 +144,73 @@ export async function salvarRespostaCrianca(
       .eq("id", desenhoId)
       .eq("family_account_id", family.id);
     if (error) return { ok: false, error: error.message };
+    revalidatePath(`/ludico/desenhos/${desenhoId}`);
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "Erro inesperado" };
+  }
+}
+
+/**
+ * Segunda camada: re-leitura a partir do que a CRIANÇA contou. Gera a partir da
+ * análise inicial + da resposta da criança e guarda em analise.releitura (sem
+ * migração — nested no jsonb que já existe).
+ */
+export async function aprofundarDesenho(input: { desenhoId: string }): Promise<Ok | Fail> {
+  try {
+    const desenhoId = z.string().uuid().parse(input.desenhoId);
+    const { supabase, family } = await requireFamily();
+
+    const { data: d } = await supabase
+      .from("desenhos")
+      .select(
+        "id, analise, resposta_crianca, contexto_dia, membros_atipicos(nome, data_nascimento)",
+      )
+      .eq("id", desenhoId)
+      .eq("family_account_id", family.id)
+      .maybeSingle();
+    if (!d) return { ok: false, error: "Desenho não encontrado." };
+    if (!d.resposta_crianca || !(d.resposta_crianca as string).trim())
+      return { ok: false, error: "Anote primeiro o que a criança contou." };
+    const analise = d.analise as {
+      observamos?: string[];
+      leituras?: string[];
+      perguntas?: string[];
+      registro?: string;
+    } | null;
+    if (!analise) return { ok: false, error: "A análise inicial ainda não está pronta." };
+
+    const rel = d.membros_atipicos as
+      | { nome: string; data_nascimento: string | null }
+      | { nome: string; data_nascimento: string | null }[]
+      | null;
+    const membroRow = rel ? (Array.isArray(rel) ? rel[0] : rel) : null;
+    const membro = membroRow
+      ? { nome: membroRow.nome, idade: idadeAnos(membroRow.data_nascimento ?? null) }
+      : null;
+
+    const releitura = await aprofundarComResposta(
+      {
+        analise: {
+          observamos: analise.observamos ?? [],
+          leituras: analise.leituras ?? [],
+          perguntas: analise.perguntas ?? [],
+          registro: analise.registro ?? "",
+        },
+        resposta: d.resposta_crianca as string,
+        membro,
+        contextoDia: (d.contexto_dia as string | null) ?? null,
+      },
+      { supabase, family_account_id: family.id },
+    );
+
+    const { error } = await supabase
+      .from("desenhos")
+      .update({ analise: { ...analise, releitura } })
+      .eq("id", desenhoId)
+      .eq("family_account_id", family.id);
+    if (error) return { ok: false, error: error.message };
+
     revalidatePath(`/ludico/desenhos/${desenhoId}`);
     return { ok: true };
   } catch (e) {

@@ -103,6 +103,126 @@ export async function analisarDesenho(
   return parsed;
 }
 
+// ============================================================
+// Segunda camada — RE-LEITURA a partir do que a CRIANÇA contou.
+// O significado é da criança: depois que ela nomeia o que desenhou e/ou aponta
+// uma emoção, a IA reconstrói a leitura centrada nela + propõe uma micro-
+// história exploratória (muitas crianças contam mais por história do que por
+// pergunta direta) + o que acompanhar ao longo do tempo.
+// ============================================================
+
+export type ReleituraDesenho = {
+  o_que_contou: string;
+  importante: string[];
+  perguntas: string[];
+  historia: string;
+  registro: string;
+};
+
+const SYSTEM_RELEITURA = `A criança JÁ respondeu sobre o PRÓPRIO desenho — disse o que é e/ou apontou uma emoção. Agora você REconstrói a leitura A PARTIR DELA: o significado é da criança, não da observação do adulto. Ancore tudo no que ela nomeou e sentiu.
+
+REGRAS INVIOLÁVEIS: NUNCA diagnostique nem afirme estados ("está ansiosa", "tem X"). Fale SEMPRE em hipótese, com ao menos uma alternativa neutra. NUNCA diga "a árvore representa a mãe" — significado simbólico fechado é proibido; o sentido é o que a criança dá. Um desenho isolado diz pouco; o valor é a recorrência ao longo do tempo.
+
+Devolva APENAS um JSON, sem nada antes ou depois:
+{
+  "o_que_contou": "1 parágrafo curto e caloroso: o que a criança nomeou espontaneamente e a emoção que apontou (se houver). Valorize que a leitura PARTE dela. Ex.: 'A árvore com frutinhas foi o que {nome} nomeou sozinha — e ela apontou preocupação.'",
+  "importante": ["2 a 4 frases sobre o que parece importante PRA ELA hoje, ancoradas no que ela disse/sentiu (não no que o adulto vê). Sempre hipótese. Ex.: 'A árvore foi central e nomeada por ela; árvores costumam aparecer ligadas a crescimento, cuidado, alimento — mas o sentido mais importante é o dela.'"],
+  "perguntas": ["3 a 5 PRÓXIMAS perguntas que aprofundam a partir da resposta + emoção. Se a emoção for forte (preocupada/brava/com medo), investigue DE QUEM e DO QUE é, oferecendo opções de escolha. Ex.: 'Quem está preocupado? (a menina / a árvore / quem mora na casa / todo mundo / ninguém)'."],
+  "historia": "Uma MICRO-HISTÓRIA exploratória (4 a 7 linhas) inspirada no que a criança desenhou e na emoção apontada. Comece com 'Era uma vez...', use os elementos do desenho (e o nome dela se fizer sentido) e TERMINE com 2 ou 3 perguntas abertas pra criança continuar a história. Sem moral e sem fechar o final — deixe em aberto pra ela contar.",
+  "registro": "1 frase do que vale acompanhar ao longo do tempo (se o elemento que ela nomeou ou a emoção se repetem em outros desenhos)."
+}
+
+Tom caloroso, humilde, em português do Brasil. Use o nome da criança quando souber.`;
+
+export async function aprofundarComResposta(
+  params: {
+    analise: AnaliseDesenho;
+    resposta: string;
+    membro: { nome: string; idade: number | null } | null;
+    contextoDia?: string | null;
+  },
+  tracking?: { supabase: SupabaseClient; family_account_id: string | null },
+): Promise<ReleituraDesenho> {
+  const client = getAnthropicClient();
+  const nome = params.membro?.nome ?? "a criança";
+
+  const linhas: string[] = [
+    `Criança: ${nome}${params.membro?.idade != null ? `, ${params.membro.idade} anos` : ""}.`,
+  ];
+  if (params.contextoDia?.trim()) {
+    linhas.push(`Contexto do dia (segundo a mãe): ${params.contextoDia.trim()}.`);
+  }
+  linhas.push(
+    `Primeira leitura (observação do adulto) — o que observamos: ${params.analise.observamos.join("; ")}`,
+  );
+  if (params.analise.leituras.length) {
+    linhas.push(`Possíveis leituras iniciais: ${params.analise.leituras.join("; ")}`);
+  }
+  linhas.push(
+    `\nO QUE A CRIANÇA RESPONDEU (o mais importante — reconstrua a partir disto): "${params.resposta.trim()}"`,
+  );
+  linhas.push("\nDevolva o JSON com os 5 blocos.");
+
+  const msg = await client.messages.create({
+    model: MODELS.principal,
+    max_tokens: 1800,
+    system: [{ type: "text", text: SYSTEM_RELEITURA, cache_control: { type: "ephemeral" } }],
+    messages: [{ role: "user", content: linhas.join("\n") }],
+  });
+
+  if (tracking) {
+    await logarUsoApi(tracking.supabase, {
+      family_account_id: tracking.family_account_id,
+      provider: "anthropic",
+      model: MODELS.principal,
+      feature: "desenho_releitura",
+      input_tokens: msg.usage.input_tokens,
+      output_tokens: msg.usage.output_tokens,
+    });
+  }
+
+  const raw = msg.content
+    .filter((b): b is Extract<typeof b, { type: "text" }> => b.type === "text")
+    .map((b) => b.text)
+    .join("");
+
+  const parsed = parseReleitura(raw);
+  if (!parsed) throw new Error("Não consegui aprofundar a leitura. Tente de novo.");
+  return parsed;
+}
+
+function parseReleitura(s: string): ReleituraDesenho | null {
+  const trimmed = s.trim();
+  let candidate: unknown;
+  try {
+    candidate = JSON.parse(trimmed);
+  } catch {
+    const m =
+      trimmed.match(/```json\s*([\s\S]*?)\s*```/i) ?? trimmed.match(/(\{[\s\S]*\})/);
+    if (!m) return null;
+    try {
+      candidate = JSON.parse(m[1]);
+    } catch {
+      return null;
+    }
+  }
+  if (!candidate || typeof candidate !== "object") return null;
+  const obj = candidate as Record<string, unknown>;
+  const arr = (v: unknown): string[] =>
+    Array.isArray(v) ? v.filter((x): x is string => typeof x === "string") : [];
+  const str = (v: unknown): string => (typeof v === "string" ? v : "");
+  const o_que_contou = str(obj.o_que_contou);
+  const historia = str(obj.historia);
+  if (!o_que_contou && !historia) return null;
+  return {
+    o_que_contou,
+    importante: arr(obj.importante),
+    perguntas: arr(obj.perguntas),
+    historia,
+    registro: str(obj.registro),
+  };
+}
+
 function parseAnalise(s: string): AnaliseDesenho | null {
   const trimmed = s.trim();
   let candidate: unknown;

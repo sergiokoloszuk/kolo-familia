@@ -1,18 +1,37 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ChevronLeft, Eye, Lightbulb, MessageCircleQuestion, Sprout } from "lucide-react";
+import {
+  BookOpen,
+  ChevronLeft,
+  Eye,
+  Heart,
+  Lightbulb,
+  MessageCircleQuestion,
+  Sprout,
+  Star,
+} from "lucide-react";
 import { loadFamilyContext } from "@/lib/auth/require-user";
 import { capitalizarNome } from "@/lib/nome";
 import { DesenhoPoller } from "./desenho-poller";
 import { RespostaCrianca } from "./resposta-crianca";
+import { AprofundarDesenho } from "./aprofundar-desenho";
 
 export const maxDuration = 300;
+
+type Releitura = {
+  o_que_contou?: string;
+  importante?: string[];
+  perguntas?: string[];
+  historia?: string;
+  registro?: string;
+};
 
 type Analise = {
   observamos?: string[];
   leituras?: string[];
   perguntas?: string[];
   registro?: string;
+  releitura?: Releitura;
 };
 
 function dataBr(iso: string): string {
@@ -136,10 +155,91 @@ export default async function DesenhoPage({
                 desenhoId={desenho.id as string}
                 inicial={(desenho.resposta_crianca as string | null) ?? null}
               />
+
+              {(desenho.resposta_crianca as string | null)?.trim() &&
+                (analise.releitura ? (
+                  <ReleituraSecao
+                    releitura={analise.releitura}
+                    nome={nome ? capitalizarNome(nome) : null}
+                  />
+                ) : (
+                  <AprofundarDesenho
+                    desenhoId={desenho.id as string}
+                    nome={nome ? capitalizarNome(nome) : null}
+                  />
+                ))}
             </>
           )}
         </div>
       </div>
+    </div>
+  );
+}
+
+function ReleituraSecao({
+  releitura,
+  nome,
+}: {
+  releitura: Releitura;
+  nome: string | null;
+}) {
+  const quem = nome ?? "a criança";
+  return (
+    <div className="flex flex-col gap-5 rounded-3xl border border-brand-purple/15 bg-kolo-lilas-bg-2/40 p-5">
+      <div className="flex items-center gap-2">
+        <span className="flex size-7 items-center justify-center rounded-lg bg-brand-purple text-white">
+          <Heart className="size-4" />
+        </span>
+        <h2 className="font-heading text-lg font-medium text-foreground">
+          A partir do que {quem} contou
+        </h2>
+      </div>
+
+      {releitura.o_que_contou && (
+        <p className="text-sm leading-relaxed text-foreground/90">{releitura.o_que_contou}</p>
+      )}
+
+      {(releitura.importante?.length ?? 0) > 0 && (
+        <Bloco
+          icone={<Star className="size-4" />}
+          titulo={`O que parece importante pra ${quem}`}
+          tom="bg-cat-emocao-soft text-cat-emocao"
+        >
+          <Lista itens={releitura.importante ?? []} />
+        </Bloco>
+      )}
+
+      {(releitura.perguntas?.length ?? 0) > 0 && (
+        <Bloco
+          icone={<MessageCircleQuestion className="size-4" />}
+          titulo="Próximas perguntas"
+          tom="bg-cat-comunicacao-soft text-cat-comunicacao"
+        >
+          <Lista itens={releitura.perguntas ?? []} />
+        </Bloco>
+      )}
+
+      {releitura.historia && (
+        <Bloco
+          icone={<BookOpen className="size-4" />}
+          titulo={`Uma história pra continuar com ${quem}`}
+          tom="bg-cat-social-soft text-cat-social"
+        >
+          <p className="whitespace-pre-line text-sm leading-relaxed text-foreground/90">
+            {releitura.historia}
+          </p>
+        </Bloco>
+      )}
+
+      {releitura.registro && (
+        <Bloco
+          icone={<Sprout className="size-4" />}
+          titulo="Pra acompanhar"
+          tom="bg-cat-rotina-soft text-cat-rotina"
+        >
+          <p className="text-sm leading-relaxed text-foreground/90">{releitura.registro}</p>
+        </Bloco>
+      )}
     </div>
   );
 }
