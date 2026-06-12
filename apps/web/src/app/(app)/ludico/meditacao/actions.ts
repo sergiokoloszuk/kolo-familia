@@ -26,28 +26,56 @@ async function requireFamily() {
 
 type Sup = Awaited<ReturnType<typeof requireFamily>>["supabase"];
 
-/** Monta o contexto da criança (perfil + desafios recentes) pra dar pertinência. */
+function textoJsonb(v: unknown): string {
+  if (!v || typeof v !== "object") return "";
+  const t = (v as { texto?: unknown }).texto;
+  return typeof t === "string" ? t.trim() : "";
+}
+
+/**
+ * Monta o contexto da criança (perfil + desafios) E o que ela AMA — gostos,
+ * hiperfocos e o que costuma DESENHAR — pra deixar a meditação pessoal e gostosa.
+ */
 async function carregarContexto(
   supabase: Sup,
   familyId: string,
   membroId: string,
-): Promise<{ membro: { nome: string; idade: number | null } | null; contexto: string }> {
+): Promise<{
+  membro: { nome: string; idade: number | null } | null;
+  contexto: string;
+  interesses: string;
+}> {
   const { data: m } = await supabase
     .from("membros_atipicos")
     .select("id, nome, data_nascimento, perfil")
     .eq("id", membroId)
     .eq("family_account_id", familyId)
     .maybeSingle();
-  if (!m) return { membro: null, contexto: "" };
+  if (!m) return { membro: null, contexto: "", interesses: "" };
 
-  const { data: diarios } = await supabase
-    .from("diarios")
-    .select("data, desafio")
-    .eq("family_account_id", familyId)
-    .eq("membro_atipico_id", membroId)
-    .not("desafio", "is", null)
-    .order("data", { ascending: false })
-    .limit(5);
+  const [{ data: diarios }, { data: pv }, { data: desenhos }] = await Promise.all([
+    supabase
+      .from("diarios")
+      .select("data, desafio")
+      .eq("family_account_id", familyId)
+      .eq("membro_atipico_id", membroId)
+      .not("desafio", "is", null)
+      .order("data", { ascending: false })
+      .limit(5),
+    supabase
+      .from("perfil_vivo_membro")
+      .select("como_e, categorias_extras")
+      .eq("membro_atipico_id", membroId)
+      .maybeSingle(),
+    supabase
+      .from("desenhos")
+      .select("analise")
+      .eq("family_account_id", familyId)
+      .eq("membro_atipico_id", membroId)
+      .eq("status", "pronto")
+      .order("created_at", { ascending: false })
+      .limit(20),
+  ]);
 
   const partes: string[] = [];
   if (typeof m.perfil === "string" && m.perfil.trim()) partes.push(`Perfil: ${m.perfil.trim()}`);
@@ -56,12 +84,37 @@ async function carregarContexto(
     .filter((x): x is string => Boolean(x));
   if (desafios.length > 0) partes.push(`Desafios recentes: ${desafios.join("; ")}`);
 
+  // Interesses: jeito de ser/gostos + hiperfocos + o que ela costuma desenhar.
+  const interessesPartes: string[] = [];
+  const comoE = textoJsonb(pv?.como_e);
+  if (comoE) interessesPartes.push(comoE);
+  const extras = (pv?.categorias_extras as Record<string, unknown> | null) ?? {};
+  const pref = (extras.preferencias as { temas?: unknown } | undefined) ?? {};
+  const hiper = Array.isArray(pref.temas)
+    ? pref.temas.filter((x): x is string => typeof x === "string" && x.trim().length > 0)
+    : [];
+  if (hiper.length) interessesPartes.push(`gosta de ${hiper.join(", ")}`);
+  const temaCount = new Map<string, number>();
+  for (const d of desenhos ?? []) {
+    const a = d.analise as { temas?: unknown } | null;
+    const temas = Array.isArray(a?.temas)
+      ? (a!.temas as unknown[]).filter((x): x is string => typeof x === "string")
+      : [];
+    for (const t of temas) temaCount.set(t, (temaCount.get(t) ?? 0) + 1);
+  }
+  const desenha = [...temaCount.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 5)
+    .map(([t]) => t);
+  if (desenha.length) interessesPartes.push(`costuma desenhar ${desenha.join(", ")}`);
+
   return {
     membro: {
       nome: m.nome as string,
       idade: idadeAnos((m.data_nascimento as string | null) ?? null),
     },
     contexto: partes.join("\n"),
+    interesses: interessesPartes.join("; "),
   };
 }
 
@@ -85,7 +138,15 @@ export async function sugerirTemasMeditacao(input: {
 
 const criarSchema = z.object({
   membroId: z.string().uuid(),
-  intencao: z.enum(["acalmar", "visualizar", "dormir", "coragem", "seguranca", "outra"]),
+  intencao: z.enum([
+    "acalmar",
+    "visualizar",
+    "processar",
+    "dormir",
+    "coragem",
+    "seguranca",
+    "outra",
+  ]),
   tema: z.string().trim().max(120).optional(),
   contexto: z.string().trim().max(600).optional(),
 });
@@ -96,12 +157,16 @@ export async function criarMeditacao(
   try {
     const { membroId, intencao, tema, contexto } = criarSchema.parse(input);
     const { supabase, family } = await requireFamily();
-    const { membro, contexto: ctxCrianca } = await carregarContexto(supabase, family.id, membroId);
+    const { membro, contexto: ctxCrianca, interesses } = await carregarContexto(
+      supabase,
+      family.id,
+      membroId,
+    );
     if (!membro) return { ok: false, error: "Membro não encontrado." };
 
     const contextoFinal = [contexto?.trim(), ctxCrianca].filter(Boolean).join("\n");
     const { titulo, roteiro } = await gerarMeditacao(
-      { intencao: intencao as Intencao, tema, contexto: contextoFinal, membro },
+      { intencao: intencao as Intencao, tema, contexto: contextoFinal, membro, interesses },
       { supabase, family_account_id: family.id },
     );
 
