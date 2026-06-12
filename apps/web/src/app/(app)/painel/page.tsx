@@ -114,6 +114,8 @@ export default async function PainelPage() {
     { data: desafios },
     { data: checkins7d },
     { count: sugestoesCount },
+    { data: ultimaConversa },
+    { data: perfisCompletude },
   ] = await Promise.all([
     supabase
       .from("family_profiles")
@@ -157,6 +159,17 @@ export default async function PainelPage() {
       .select("id", { count: "exact", head: true })
       .eq("family_account_id", familyId)
       .eq("status", "pendente"),
+    supabase
+      .from("conversas")
+      .select("id, titulo")
+      .eq("family_account_id", familyId)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+    supabase
+      .from("perfil_vivo_membro")
+      .select("completude_pct")
+      .eq("family_account_id", familyId),
   ]);
 
   const greeting =
@@ -165,6 +178,13 @@ export default async function PainelPage() {
     user.email?.split("@")[0] ||
     "Você";
   const primeiraCrianca = membros?.[0];
+
+  // Sinais vivos das 3 portas.
+  const koloVivoPct = (() => {
+    const arr = (perfisCompletude ?? []).map((p) => Number(p.completude_pct) || 0);
+    return arr.length ? Math.round(Math.max(...arr)) : 0;
+  })();
+  const ultimaConversaTitulo = (ultimaConversa?.titulo as string | null)?.trim() || null;
 
   const trialDaysLeft =
     subscription?.status === "trialing" && subscription.trial_ends_at
@@ -598,10 +618,15 @@ export default async function PainelPage() {
         {[
           {
             titulo: "Registro do dia",
-            desc: "Conte como foi hoje — uma linha já vale.",
+            desc: "Conte como foi hoje.",
             href: "/registrar/diario",
             Icon: NotebookPen,
             chip: "bg-cat-rotina-bg text-cat-rotina",
+            bar: "bg-cat-rotina",
+            sinal:
+              diasComRegistro > 0
+                ? `${diasComRegistro} ${diasComRegistro === 1 ? "dia" : "dias"} essa semana`
+                : "comece por aqui",
           },
           {
             titulo: "Kolo Vivo",
@@ -609,27 +634,39 @@ export default async function PainelPage() {
             href: "/kolo-vivo",
             Icon: Sprout,
             chip: "bg-cat-social-bg text-cat-social",
+            bar: "bg-cat-social",
+            sinal: koloVivoPct > 0 ? `${koloVivoPct}% preenchido` : "monte o retrato",
           },
           {
             titulo: "Estratégias",
-            desc: "Conte um desafio e ache um caminho.",
+            desc: "Conte um desafio, ache um caminho.",
             href: "/estrategias",
             Icon: Lightbulb,
             chip: "bg-cat-foco-bg text-cat-foco",
+            bar: "bg-cat-foco",
+            sinal: ultimaConversaTitulo
+              ? `última: ${ultimaConversaTitulo.length > 30 ? `${ultimaConversaTitulo.slice(0, 30)}…` : ultimaConversaTitulo}`
+              : "comece uma conversa",
           },
-        ].map(({ titulo, desc, href, Icon, chip }) => (
+        ].map(({ titulo, desc, href, Icon, chip, bar, sinal }) => (
           <Link
             key={href}
             href={href}
-            className="group flex flex-col gap-2.5 rounded-2xl border border-foreground/[0.06] bg-white p-5 shadow-[0_1px_2px_rgba(46,10,82,0.04),_0_4px_12px_rgba(46,10,82,0.03)] transition-all hover:-translate-y-0.5 hover:shadow-[0_4px_12px_rgba(46,10,82,0.06),_0_12px_28px_rgba(46,10,82,0.06)]"
+            className="group relative flex flex-col gap-3 overflow-hidden rounded-2xl border border-foreground/[0.06] bg-white p-5 pt-6 shadow-[0_1px_2px_rgba(46,10,82,0.04),_0_4px_12px_rgba(46,10,82,0.03)] transition-all hover:-translate-y-0.5 hover:shadow-[0_4px_12px_rgba(46,10,82,0.06),_0_12px_28px_rgba(46,10,82,0.06)]"
           >
-            <span aria-hidden className={cn("flex size-10 items-center justify-center rounded-xl", chip)}>
-              <Icon className="size-5" strokeWidth={1.8} />
+            <span aria-hidden className={cn("absolute inset-x-0 top-0 h-1", bar)} />
+            <span
+              aria-hidden
+              className={cn("flex size-11 items-center justify-center rounded-xl", chip)}
+            >
+              <Icon className="size-[22px]" strokeWidth={1.8} />
             </span>
-            <h3 className="font-heading text-lg font-medium text-foreground">{titulo}</h3>
-            <p className="text-sm leading-relaxed text-muted-foreground">{desc}</p>
-            <span className="mt-1 inline-flex items-center gap-1 text-xs font-semibold text-brand-purple transition-all group-hover:gap-2">
-              Abrir <ArrowRight className="size-3" aria-hidden />
+            <div>
+              <h3 className="font-heading text-lg font-medium text-foreground">{titulo}</h3>
+              <p className="mt-0.5 text-sm leading-relaxed text-muted-foreground">{desc}</p>
+            </div>
+            <span className="mt-auto inline-flex w-fit max-w-full items-center truncate rounded-full bg-foreground/[0.04] px-2.5 py-1 text-xs font-medium text-foreground/70">
+              {sinal}
             </span>
           </Link>
         ))}
