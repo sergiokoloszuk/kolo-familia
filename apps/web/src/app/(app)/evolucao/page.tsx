@@ -56,6 +56,20 @@ type TimelineEvento =
       titulo: string;
       resultado: string;
       membro_nome: string | null;
+    }
+  | {
+      tipo: "estrategia";
+      data: string;
+      id: string;
+      titulo: string;
+      membro_nome: string | null;
+    }
+  | {
+      tipo: "padrao";
+      data: string;
+      titulo: string;
+      estado: string;
+      membro_nome: string | null;
     };
 
 const RESULTADO_PLANO_LABEL: Record<string, string> = {
@@ -126,7 +140,8 @@ export default async function EvolucaoPage() {
   const [
     { data: diarios },
     { data: checkIns },
-    { count: padroesCount },
+    { data: padroes },
+    { data: conversas },
     { data: perfis },
     { data: planos },
   ] = await Promise.all([
@@ -144,11 +159,22 @@ export default async function EvolucaoPage() {
       .eq("family_account_id", familyId)
       .order("data", { ascending: false })
       .limit(100),
+    // Padrões que a Ayla vem notando (o "o que preocupa") — só os ativos.
     supabase
       .from("ayla_padroes")
-      .select("id", { count: "exact", head: true })
+      .select("id, descricao, estado, confianca, ultima_evidencia, membros_atipicos(nome)")
       .eq("family_account_id", familyId)
-      .gte("created_at", dias30AtrasIso),
+      .neq("estado", "descartado")
+      .gte("ultima_evidencia", dias30AtrasIso)
+      .order("ultima_evidencia", { ascending: false })
+      .limit(20),
+    // Conversas das Estratégias (o que a mãe trouxe pra resolver).
+    supabase
+      .from("conversas")
+      .select("id, titulo, created_at, membros_atipicos(nome)")
+      .eq("family_account_id", familyId)
+      .order("created_at", { ascending: false })
+      .limit(15),
     supabase
       .from("perfil_vivo_membro")
       .select("sensorial, desafios_regulacao, corpo_rotina, categorias_extras")
@@ -188,7 +214,7 @@ export default async function EvolucaoPage() {
       }
     }
   }
-  const padroes30d = padroesCount ?? 0;
+  const padroes30d = (padroes ?? []).length;
   const temAlgumResumo = conquistas30d + dominiosComMovimento.size + padroes30d > 0;
 
   const eventos: TimelineEvento[] = [];
@@ -245,6 +271,26 @@ export default async function EvolucaoPage() {
       id: p.id as string,
       titulo: p.titulo as string,
       resultado: p.resultado as string,
+      membro_nome: nomeFromRel(p.membros_atipicos),
+    });
+  }
+
+  for (const c of conversas ?? []) {
+    eventos.push({
+      tipo: "estrategia",
+      data: c.created_at as string,
+      id: c.id as string,
+      titulo: (c.titulo as string | null)?.trim() || "Conversa nas Estratégias",
+      membro_nome: nomeFromRel(c.membros_atipicos),
+    });
+  }
+
+  for (const p of padroes ?? []) {
+    eventos.push({
+      tipo: "padrao",
+      data: (p.ultima_evidencia as string),
+      titulo: p.descricao as string,
+      estado: p.estado as string,
       membro_nome: nomeFromRel(p.membros_atipicos),
     });
   }
@@ -438,6 +484,12 @@ function ResumoCard({
 // Render por tipo — marcadores tipográficos discretos
 // ============================================================
 
+const ESTADO_PADRAO_LABEL: Record<string, string> = {
+  hipotese: "ainda observando",
+  observado: "vem se repetindo",
+  confirmado_mae: "você confirmou",
+};
+
 function EventoItem({ ev }: { ev: TimelineEvento }) {
   if (ev.tipo === "conquista") {
     return (
@@ -571,6 +623,63 @@ function EventoItem({ ev }: { ev: TimelineEvento }) {
           >
             Abrir →
           </Link>
+        </div>
+      </div>
+    );
+  }
+
+  if (ev.tipo === "estrategia") {
+    return (
+      <div className="flex items-start gap-3.5">
+        <span
+          aria-hidden
+          className="mt-[7px] inline-flex w-3.5 shrink-0 font-mono text-sm leading-none text-brand-purple"
+        >
+          ›
+        </span>
+        <div className="flex flex-1 flex-col gap-1.5">
+          <p className="text-base leading-relaxed text-foreground">
+            Vocês conversaram sobre{" "}
+            <span className="text-muted-foreground">“{ev.titulo}”</span>
+          </p>
+          {ev.membro_nome && (
+            <p className="text-[11px] uppercase tracking-[0.14em] text-muted-foreground/60">
+              {ev.membro_nome}
+            </p>
+          )}
+          <Link
+            href={`/conversar/${ev.id}`}
+            className="mt-1 inline-flex w-fit text-xs font-semibold text-brand-purple underline-offset-4 hover:underline"
+          >
+            Abrir →
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  if (ev.tipo === "padrao") {
+    return (
+      <div className="flex items-start gap-3.5">
+        <span
+          aria-hidden
+          className="mt-[7px] inline-flex w-3.5 shrink-0 font-mono text-sm leading-none text-cat-emocao"
+        >
+          ~
+        </span>
+        <div className="flex flex-1 flex-col gap-1.5">
+          <p className="text-base leading-relaxed text-foreground">
+            A Ayla vem notando: {ev.titulo}
+            <span className="text-muted-foreground">
+              {" "}
+              · {ESTADO_PADRAO_LABEL[ev.estado] ?? ev.estado}
+            </span>
+          </p>
+          {ev.membro_nome && (
+            <p className="text-[11px] uppercase tracking-[0.14em] text-muted-foreground/60">
+              {ev.membro_nome}
+            </p>
+          )}
         </div>
       </div>
     );
