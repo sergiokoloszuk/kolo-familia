@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Sparkles } from "lucide-react";
+import { Pencil, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { salvarRespostaCrianca, aprofundarDesenho } from "../actions";
 
@@ -26,6 +26,7 @@ export function RespostaCrianca({
   temReleitura: boolean;
 }) {
   const router = useRouter();
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [texto, setTexto] = useState(inicial ?? "");
   const [erro, setErro] = useState<string | null>(null);
   const [salvo, setSalvo] = useState(false);
@@ -35,6 +36,18 @@ export function RespostaCrianca({
 
   function addCarinha(label: string) {
     setTexto((t) => (t.trim() ? `${t.trim()} · apontou: ${label}` : `Apontou: ${label}`));
+  }
+
+  // Emoção fora das 5 carinhas — prepara o texto e foca pra mãe digitar.
+  function outraEmocao() {
+    setTexto((t) => (t.trim() ? `${t.trim()} · apontou: ` : "Apontou: "));
+    requestAnimationFrame(() => {
+      const el = textareaRef.current;
+      if (el) {
+        el.focus();
+        el.setSelectionRange(el.value.length, el.value.length);
+      }
+    });
   }
 
   function soGuardar() {
@@ -96,10 +109,19 @@ export function RespostaCrianca({
             {c.label}
           </button>
         ))}
+        <button
+          type="button"
+          onClick={outraEmocao}
+          className="inline-flex items-center gap-1.5 rounded-full border border-dashed border-foreground/20 bg-white px-3 py-1.5 text-sm text-muted-foreground transition-colors hover:border-brand-purple/40 hover:text-brand-purple"
+        >
+          <Pencil className="size-3.5" aria-hidden />
+          outra…
+        </button>
       </div>
 
       {erro && <p className="text-sm text-destructive">{erro}</p>}
       <textarea
+        ref={textareaRef}
         rows={3}
         value={texto}
         onChange={(e) => setTexto(e.target.value)}

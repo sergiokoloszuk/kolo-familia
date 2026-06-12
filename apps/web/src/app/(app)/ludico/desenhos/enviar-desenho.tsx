@@ -122,14 +122,15 @@ export function EnviarDesenho({ membros }: { membros: Array<{ id: string; nome: 
 
       <div className="flex flex-col gap-1.5">
         <label htmlFor="des-contexto" className="text-sm font-medium text-foreground">
-          Contexto do dia <span className="font-normal text-muted-foreground">(opcional)</span>
+          O que rolava antes / como ela estava{" "}
+          <span className="font-normal text-muted-foreground">(opcional)</span>
         </label>
         <textarea
           id="des-contexto"
           rows={2}
           value={contexto}
           onChange={(e) => setContexto(e.target.value)}
-          placeholder="Ex.: fez depois da escola, num dia agitado; estava quietinha hoje…"
+          placeholder="Ex.: fez depois da escola, num dia agitado; estava animada; se ela já te contou o que é, pode adiantar aqui."
           className="w-full resize-none rounded-xl border border-foreground/[0.08] bg-white/70 px-3.5 py-2.5 text-sm leading-relaxed text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-1 focus:ring-foreground/10"
         />
       </div>
