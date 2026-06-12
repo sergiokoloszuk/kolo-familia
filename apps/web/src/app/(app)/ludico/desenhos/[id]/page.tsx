@@ -123,33 +123,28 @@ export default async function DesenhoPage({
               </Bloco>
 
               <Bloco
-                icone={<Lightbulb className="size-4" />}
-                titulo="Possíveis leituras"
-                tom="bg-cat-emocao-soft text-cat-emocao"
-              >
-                <p className="mb-2 text-xs italic text-muted-foreground">
-                  São hipóteses pra observar — não conclusões. O sentido é da criança.
-                </p>
-                <Lista itens={analise.leituras ?? []} />
-              </Bloco>
-
-              <Bloco
                 icone={<MessageCircleQuestion className="size-4" />}
-                titulo="Perguntas pra explorar"
+                titulo={`Perguntas pra explorar${nome ? ` com ${capitalizarNome(nome)}` : ""}`}
                 tom="bg-cat-comunicacao-soft text-cat-comunicacao"
               >
+                <p className="mb-2 text-xs italic text-muted-foreground">
+                  Converse antes de qualquer leitura — o sentido é da criança. A leitura vem
+                  depois, a partir do que ela contar.
+                </p>
                 <Lista itens={analise.perguntas ?? []} />
               </Bloco>
 
-              {analise.registro && (
+              {/* Interpretação antiga (desenhos analisados antes da inversão). */}
+              {(analise.leituras?.length ?? 0) > 0 && (
                 <Bloco
-                  icone={<Sprout className="size-4" />}
-                  titulo="Pra acompanhar"
-                  tom="bg-cat-rotina-soft text-cat-rotina"
+                  icone={<Lightbulb className="size-4" />}
+                  titulo="Possíveis leituras"
+                  tom="bg-cat-emocao-soft text-cat-emocao"
                 >
-                  <p className="text-sm leading-relaxed text-foreground/90">
-                    {analise.registro}
+                  <p className="mb-2 text-xs italic text-muted-foreground">
+                    São hipóteses pra observar — não conclusões. O sentido é da criança.
                   </p>
+                  <Lista itens={analise.leituras ?? []} />
                 </Bloco>
               )}
 
@@ -158,18 +153,17 @@ export default async function DesenhoPage({
                 inicial={(desenho.resposta_crianca as string | null) ?? null}
               />
 
-              {(desenho.resposta_crianca as string | null)?.trim() &&
-                (analise.releitura ? (
-                  <ReleituraSecao
-                    releitura={analise.releitura}
-                    nome={nome ? capitalizarNome(nome) : null}
-                  />
-                ) : (
-                  <AprofundarDesenho
-                    desenhoId={desenho.id as string}
-                    nome={nome ? capitalizarNome(nome) : null}
-                  />
-                ))}
+              {analise.releitura ? (
+                <ReleituraSecao
+                  releitura={analise.releitura}
+                  nome={nome ? capitalizarNome(nome) : null}
+                />
+              ) : (
+                <AprofundarDesenho
+                  desenhoId={desenho.id as string}
+                  nome={nome ? capitalizarNome(nome) : null}
+                />
+              )}
             </>
           )}
         </div>

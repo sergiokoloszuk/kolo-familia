@@ -170,8 +170,6 @@ export async function aprofundarDesenho(input: { desenhoId: string }): Promise<O
       .eq("family_account_id", family.id)
       .maybeSingle();
     if (!d) return { ok: false, error: "Desenho não encontrado." };
-    if (!d.resposta_crianca || !(d.resposta_crianca as string).trim())
-      return { ok: false, error: "Anote primeiro o que a criança contou." };
     const analise = d.analise as {
       observamos?: string[];
       leituras?: string[];
@@ -197,7 +195,7 @@ export async function aprofundarDesenho(input: { desenhoId: string }): Promise<O
           perguntas: analise.perguntas ?? [],
           registro: analise.registro ?? "",
         },
-        resposta: d.resposta_crianca as string,
+        resposta: (d.resposta_crianca as string | null) ?? "",
         membro,
         contextoDia: (d.contexto_dia as string | null) ?? null,
       },

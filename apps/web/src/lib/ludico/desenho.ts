@@ -13,19 +13,21 @@ export type MediaTypeImagem = "image/jpeg" | "image/png" | "image/gif" | "image/
 
 export type AnaliseDesenho = {
   observamos: string[];
-  leituras: string[];
   perguntas: string[];
-  registro: string;
+  /** Interpretação NÃO entra na 1ª passada — vem na re-leitura, depois da
+   * resposta da criança. Mantidos opcionais por compatibilidade com desenhos
+   * antigos que já tinham esses blocos. */
+  leituras?: string[];
+  registro?: string;
   /** Etiquetas pra o mapa longitudinal (Nível 3). */
   temas?: string[];
   forma?: string;
 };
 
-const SYSTEM = `Você ajuda a MÃE de uma criança neurodivergente a OBSERVAR um desenho e a fazer boas perguntas — NUNCA a diagnosticar. O desenho é um convite à conversa, não um laudo.
+const SYSTEM = `Você ajuda a MÃE de uma criança neurodivergente a OBSERVAR um desenho e a fazer boas perguntas — NUNCA a diagnosticar. Nesta etapa você AINDA NÃO interpreta: primeiro a mãe observa e CONVERSA com a criança; a leitura vem depois, a partir do que a criança contar. O sentido é da criança.
 
 REGRAS INVIOLÁVEIS:
-- NUNCA afirme estados ou condições. Proibido: "está ansiosa", "sofreu trauma", "tem autismo/depressão", "isso é abuso", "prova dificuldade social", ou qualquer conclusão clínica.
-- Fale SEMPRE em hipótese: "pode sugerir", "pode indicar", "uma possibilidade é", "vale observar". Em 'leituras', inclua SEMPRE ao menos uma alternativa neutra ("também pode ser só uma cena que ela gosta").
+- NUNCA afirme estados ou condições, nem ofereça interpretação emocional aqui ("pode indicar que está ansiosa" etc.). Nesta etapa, SÓ o que se vê + as perguntas.
 - O sentido é da CRIANÇA: o mais importante é a mãe PERGUNTAR a ela o que aquilo significa.
 - Um desenho isolado diz pouco — o valor está em observar recorrências ao longo do tempo.
 
@@ -34,9 +36,7 @@ Para crianças que falam pouco / não-verbais: pergunte sobre o PERSONAGEM, não
 Devolva APENAS um JSON, sem nada antes ou depois:
 {
   "observamos": ["4 a 7 fatos VISUAIS e objetivos: cores predominantes; nº de figuras; quem aparece (criança/mãe/pai/amigos/animais); proximidade e tamanho das figuras; expressões; objetos repetidos; cenário (casa/escola/natureza/monstros/veículos); uso do espaço da folha; presença de proteção (casa/muro/abraço/escudo); e o MOVIMENTO/energia da composição (irradia de um centro, cresce pra fora, gira/espiral, explode, conecta ou separa elementos, está parada, é simétrica/radial/concêntrica). SÓ o que dá pra ver."],
-  "leituras": ["2 a 4 POSSÍVEIS leituras emocionais, TODAS em hipótese, com ao menos uma alternativa neutra. Categorias possíveis: bem-estar, busca de segurança, vínculo com cuidador, interesse social, preferência por brincar sozinho, preocupação/necessidade de controle, intensidade emocional, medo, imaginação, hiperfoco/interesse intenso."],
-  "perguntas": ["4 a 6 perguntas calorosas pra mãe explorar com a criança; inclua perguntas sobre o personagem e de escolha (carinhas) quando ajudar."],
-  "registro": "1 a 2 frases sobre o que vale anotar e observar nos próximos desenhos (recorrências de cores, personagens, temas, presença social, hiperfocos).",
+  "perguntas": ["5 a 7 perguntas calorosas pra a mãe explorar COM a criança antes de qualquer interpretação. Inclua perguntas sobre o que cada parte é, sobre o personagem, e de escolha (carinhas/duas opções) quando ajudar. Uma delas deve convidar a criança a apontar a emoção (mostrar as carinhas)."],
   "temas": ["1 a 4 TAGS curtas do que o desenho mostra, minúsculas e no singular, pra agrupar ao longo do tempo. Vocabulário simples e CONSISTENTE: flor, árvore, casa, pessoa, família, animal, sol, coração, carro, monstro, comida, arco-íris, natureza, abstrato. Só as que de fato aparecem."],
   "forma": "1 tag curta do movimento/forma dominante: radial | circular | espiral | cena | sequência | espalhado | central | simétrico. Vazio se não se aplica."
 }
@@ -166,12 +166,18 @@ export async function aprofundarComResposta(
   linhas.push(
     `Primeira leitura (observação do adulto) — o que observamos: ${params.analise.observamos.join("; ")}`,
   );
-  if (params.analise.leituras.length) {
+  if (params.analise.leituras?.length) {
     linhas.push(`Possíveis leituras iniciais: ${params.analise.leituras.join("; ")}`);
   }
-  linhas.push(
-    `\nO QUE A CRIANÇA RESPONDEU (o mais importante — reconstrua a partir disto): "${params.resposta.trim()}"`,
-  );
+  if (params.resposta.trim()) {
+    linhas.push(
+      `\nO QUE A CRIANÇA RESPONDEU (o mais importante — reconstrua a partir disto): "${params.resposta.trim()}"`,
+    );
+  } else {
+    linhas.push(
+      `\nA criança AINDA NÃO respondeu. Gere a leitura como HIPÓTESE do adulto: em "o_que_contou", deixe claro com gentileza que a voz da criança ainda falta e que o ideal é perguntar a ela; NUNCA invente a fala dela; foque na observação e no movimento. As perguntas devem ajudar a mãe a buscar a resposta da criança.`,
+    );
+  }
   linhas.push("\nDevolva o JSON com os 5 blocos.");
 
   const msg = await client.messages.create({
@@ -255,14 +261,12 @@ function parseAnalise(s: string): AnaliseDesenho | null {
   const arr = (v: unknown): string[] =>
     Array.isArray(v) ? v.filter((x): x is string => typeof x === "string") : [];
   const observamos = arr(obj.observamos);
-  const leituras = arr(obj.leituras);
   const perguntas = arr(obj.perguntas);
-  const registro = typeof obj.registro === "string" ? obj.registro : "";
-  if (observamos.length === 0 && leituras.length === 0) return null;
+  if (observamos.length === 0 && perguntas.length === 0) return null;
   const temas = arr(obj.temas)
     .map((t) => t.trim().toLowerCase())
     .filter(Boolean)
     .slice(0, 4);
   const forma = typeof obj.forma === "string" ? obj.forma.trim().toLowerCase() : "";
-  return { observamos, leituras, perguntas, registro, temas, forma };
+  return { observamos, perguntas, temas, forma };
 }

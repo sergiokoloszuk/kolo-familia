@@ -30,18 +30,20 @@ export function AprofundarDesenho({
   return (
     <div className="flex flex-col gap-2.5 rounded-2xl border border-brand-purple/20 bg-white p-4">
       <p className="text-sm leading-relaxed text-foreground">
-        Anotou o que {ela} contou? A leitura mais importante é a dela. A Kolo pode refazer a
-        partir da perspectiva de {ela} — com uma <strong>história pra continuar juntas</strong>.
+        Conversou com {ela} e anotou acima? Agora a Kolo monta a <strong>leitura</strong> a
+        partir do desenho e do que {ela} contou — com uma{" "}
+        <strong>história pra continuar juntas</strong>. (Dá pra gerar sem a resposta, mas com a
+        voz de {ela} fica muito mais rica.)
       </p>
       {erro && <p className="text-sm text-destructive">{erro}</p>}
       <Button type="button" onClick={go} disabled={pending} className="w-fit">
         {pending ? (
           <>
-            <Sparkles className="size-4 animate-pulse" aria-hidden /> Aprofundando…
+            <Sparkles className="size-4 animate-pulse" aria-hidden /> Gerando a leitura…
           </>
         ) : (
           <>
-            <Sparkles className="size-4" aria-hidden /> Aprofundar com o que {ela} contou
+            <Sparkles className="size-4" aria-hidden /> Gerar a leitura
           </>
         )}
       </Button>
