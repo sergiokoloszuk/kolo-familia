@@ -4,6 +4,7 @@ import { ChevronLeft } from "lucide-react";
 import { loadFamilyContext } from "@/lib/auth/require-user";
 import { RespostaMarkdown, limparRespostaKolo } from "@/components/resposta-markdown";
 import { ofereceuPlano } from "@/lib/ia/marcadores";
+import { pedeUmPlano } from "@/lib/ia/pedido-plano";
 import { RespostaStreamer } from "./resposta-streamer";
 
 // "Montar plano completo" roda uma chamada longa do Sonnet (server action
@@ -46,10 +47,16 @@ export default async function ConversaPage(props: PageProps<"/conversar/[id]">) 
   const ultima = msgs[msgs.length - 1];
   const precisaResposta = ultima?.papel === "user";
 
-  // O botão "Montar plano" só aparece quando a Kolo OFERECEU o plano na última
-  // resposta (marcador). Antes disso, a conversa fica limpa.
+  // O botão "Montar plano" aparece quando a Kolo OFERECEU o plano na última
+  // resposta (marcador) OU quando a própria mãe PEDIU o plano na última
+  // mensagem dela — assim ela nunca fica presa esperando a IA decidir oferecer
+  // (mesmo gatilho-por-pedido que a ponte do WhatsApp usa). Antes disso, a
+  // conversa fica limpa.
   const ultimaResposta = [...msgs].reverse().find((m) => m.papel === "assistant");
-  const planoOferecido = ofereceuPlano(ultimaResposta?.conteudo as string | undefined);
+  const ultimaMensagemMae = [...msgs].reverse().find((m) => m.papel === "user");
+  const planoOferecido =
+    ofereceuPlano(ultimaResposta?.conteudo as string | undefined) ||
+    pedeUmPlano(ultimaMensagemMae?.conteudo as string | undefined);
 
   const membrosRel = conversa.membros_atipicos as
     | { nome: string }

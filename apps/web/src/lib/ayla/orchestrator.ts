@@ -35,6 +35,7 @@ import {
 } from "./messageTemplates";
 import { gerarMensagemEspontanea } from "./mensagemEspontanea";
 import { montarPonteWhatsApp, gerarMagicLink, montarPlanoFimDeSemana } from "./ponte";
+import { pedeUmPlano } from "@/lib/ia/pedido-plano";
 import type { AylaTipoProativa, AylaTipoReativa, ParserResult } from "./types";
 
 /**
@@ -920,19 +921,6 @@ export async function processInbound(
     },
   });
   return { tratada: true, familia: family.id, resposta: resp };
-}
-
-/** Heurística: a mensagem é um pedido explícito de plano/roteiro? */
-function pedeUmPlano(texto: string): boolean {
-  const t = (texto ?? "").toLowerCase();
-  if (!/\b(plano|roteiro|passo a passo|passo-a-passo)\b/.test(t)) return false;
-  // Exige um verbo de pedido perto, pra não confundir com feedback
-  // ("o plano funcionou", "valeu pelo plano"). Inclui tanto verbos de CRIAR
-  // (faz, monta, elabora…) quanto de ENTREGAR (traz, manda, envia, mostra,
-  // retoma…) — a mãe pode pedir "monta um plano" ou "traga/manda o plano".
-  return /\b(quero|queria|preciso|gostaria|pode|poderia|consegue|tem como|me (faz|d[aá]|ajuda|monta|monte|prepara|traz|manda|mande|envia|envie|mostra|passa)|faz|fazer|monta|montar|cria|criar|prepara|preparar|elabora|elaborar|traz|trazer|traga|manda|mandar|mande|envia|enviar|envie|mostra|mostrar|mostre|passa|passar|retoma|retomar|retome)\b/.test(
-    t,
-  );
 }
 
 /**
