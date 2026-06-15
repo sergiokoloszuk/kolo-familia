@@ -1,14 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import dynamic from "next/dynamic";
-import type { LottieRefCurrentProps } from "lottie-react";
 import { Pause, Play, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-
-// Lottie usa APIs do browser — carrega só no cliente.
-const Lottie = dynamic(() => import("lottie-react"), { ssr: false });
 
 const DURACOES = [5, 10, 15, 20, 30];
 const DEPOIS_SUGESTOES = ["jantar", "dormir", "tomar banho", "guardar os brinquedos", "ir pra escola"];
@@ -19,8 +14,12 @@ type TemaKey = "arco_iris" | "lagarta" | "piscina";
 type Tema = {
   label: string;
   emoji: string;
-  /** Caminho do arquivo Lottie em /public. A Karina solta o JSON aqui. */
-  lottie: string;
+  /**
+   * Caminho do vídeo (MP4) em /public. A Karina solta o filminho do Kling aqui.
+   * Enquanto o arquivo não existir, cai no anel de progresso. O vídeo roda em
+   * loop, em velocidade normal; quem marca o tempo de verdade é o anel por cima.
+   */
+  video: string;
   comoUsar: () => string;
   antecipacao: (depois: string) => React.ReactNode;
   narracao: (progresso: number) => string;
@@ -31,7 +30,7 @@ const TEMAS: Record<TemaKey, Tema> = {
   arco_iris: {
     label: "Arco-íris",
     emoji: "🌈",
-    lottie: "/lottie/arco-iris.json",
+    video: "/video/arco-iris.mp4",
     comoUsar: () =>
       "O arco-íris vai se formando aos poucos; quando ficar completo, o tempo acabou.",
     antecipacao: (depois) => (
@@ -47,7 +46,7 @@ const TEMAS: Record<TemaKey, Tema> = {
   lagarta: {
     label: "Lagarta vira borboleta",
     emoji: "🦋",
-    lottie: "/lottie/borboleta.json",
+    video: "/video/borboleta.mp4",
     comoUsar: () =>
       "A lagarta vira casulo e nasce a borboleta, que vai abrindo as asas; quando a borboleta estiver pronta, o tempo acabou.",
     antecipacao: (depois) => (
@@ -69,7 +68,7 @@ const TEMAS: Record<TemaKey, Tema> = {
   piscina: {
     label: "Vamos nadar",
     emoji: "🏊",
-    lottie: "/lottie/nadar.json",
+    video: "/video/nadar.mp4",
     comoUsar: () =>
       "A criança vai se preparando pra nadar e, quando estiver pronta, mergulha; é quando o tempo acaba.",
     antecipacao: (depois) => (
@@ -266,64 +265,49 @@ export function TimerClient() {
 }
 
 /**
- * Visual do timer. Se o arquivo Lottie do tema existir em /public, mostra a
- * ANIMAÇÃO sincronizada com o tempo (avança o quadro conforme o progresso, e
- * termina exatamente no zero). Enquanto não houver arquivo, mostra um anel de
- * progresso limpo com o emoji do tema — funcional e sem feiura.
+ * Visual do timer. Se o vídeo do tema existir em /public, mostra o FILMINHO em
+ * loop (velocidade normal) com um anel fino por cima marcando o tempo real —
+ * que avança com o cronômetro e fecha no zero. Enquanto não houver arquivo,
+ * cai num anel de progresso limpo com o emoji do tema — funcional e sem feiura.
  */
 function Visual({ tema, progresso }: { tema: Tema; progresso: number }) {
-  const lottieRef = useRef<LottieRefCurrentProps>(null);
-  const [data, setData] = useState<object | null>(null);
-  const [estado, setEstado] = useState<"loading" | "ok" | "ausente">("loading");
-  const [carregado, setCarregado] = useState(false);
+  const [ausente, setAusente] = useState(false);
 
+  // Tema mudou → tenta de novo (o novo tema pode ter vídeo).
   useEffect(() => {
-    let vivo = true;
-    fetch(tema.lottie)
-      .then((r) => (r.ok ? r.json() : Promise.reject(new Error("ausente"))))
-      .then((j) => {
-        if (vivo) {
-          setData(j);
-          setEstado("ok");
-        }
-      })
-      .catch(() => {
-        if (vivo) setEstado("ausente");
-      });
-    return () => {
-      vivo = false;
-    };
-  }, [tema.lottie]);
+    setAusente(false);
+  }, [tema.video]);
 
-  // Sincroniza o quadro da animação com o progresso do cronômetro.
-  useEffect(() => {
-    if (!carregado) return;
-    const inst = lottieRef.current;
-    if (!inst) return;
-    const total = inst.getDuration(true) ?? 0;
-    if (total > 0) {
-      inst.goToAndStop(Math.max(0, Math.min(total - 0.001, progresso * total)), true);
-    }
-  }, [progresso, carregado]);
-
-  if (estado === "ok" && data) {
-    return (
-      <div className="w-full max-w-md">
-        <Lottie
-          lottieRef={lottieRef}
-          animationData={data}
-          autoplay={false}
-          loop={false}
-          onDOMLoaded={() => setCarregado(true)}
-        />
-      </div>
-    );
+  if (ausente) {
+    return <AnelProgresso progresso={progresso} emoji={tema.emoji} />;
   }
 
-  return <AnelProgresso progresso={progresso} emoji={tema.emoji} />;
+  return (
+    <div className="relative w-full max-w-md overflow-hidden rounded-2xl">
+      <video
+        // key força recarregar o elemento ao trocar de tema
+        key={tema.video}
+        src={tema.video}
+        autoPlay
+        muted
+        loop
+        playsInline
+        onError={() => setAusente(true)}
+        className="block w-full"
+      />
+      {/* Barra de tempo por cima do vídeo: dá à criança a pista visual de que
+          está "enchendo", já que o loop sozinho não cresce. */}
+      <div className="pointer-events-none absolute inset-x-3 bottom-3 h-2 overflow-hidden rounded-full bg-white/40 backdrop-blur-sm">
+        <div
+          className="h-full rounded-full bg-white transition-all duration-200 ease-linear"
+          style={{ width: `${progresso * 100}%` }}
+        />
+      </div>
+    </div>
+  );
 }
 
-/** Anel de progresso limpo (estado temporário até ter o Lottie). */
+/** Anel de progresso limpo (estado temporário até ter o vídeo). */
 function AnelProgresso({ progresso, emoji }: { progresso: number; emoji: string }) {
   const R = 54;
   const C = 2 * Math.PI * R;

@@ -4,9 +4,11 @@ import { enviarTexto, parseZapiWebhook } from "@/lib/ayla/whatsappSender";
 import { processInbound } from "@/lib/ayla/orchestrator";
 import { transcreverAudio } from "@/lib/ayla/transcribe";
 
-// A resposta da Ayla agora passa por IA (Sonnet), que leva alguns segundos.
-// Damos tempo ao processamento em background; ver `after()` abaixo.
-export const maxDuration = 60;
+// A resposta da Ayla passa por IA (Sonnet) e, num pedido de plano, ainda
+// dispara a geração completa do plano (chamada única de até 12k tokens, ~40–90s)
+// dentro do `after()`. Com 60s a função era morta no meio da geração e o plano
+// nunca chegava. 300s (máx. do plano Pro) dá fôlego pra terminar.
+export const maxDuration = 300;
 
 /**
  * Webhook da Ayla — recebe mensagens do Z-API (direto ou via n8n).
