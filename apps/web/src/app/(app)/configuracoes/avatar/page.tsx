@@ -103,14 +103,28 @@ export default async function AvataresIndexPage() {
         </Link>
         <Eyebrow>Lúdico</Eyebrow>
         <h1 className="font-heading text-2xl font-semibold tracking-tight md:text-3xl">
-          Avatar dos membros
+          Avatares
         </h1>
         <p className="max-w-2xl text-sm text-muted-foreground">
-          Avatar canônico ilustrado, em vários estilos (cartoon, aquarela, massinha
-          3D e mais). Usado nas brincadeiras, atividades e histórias geradas pela
-          Ayla. Não armazenamos fotos — só a representação ilustrada. Crie quantos
-          quiser por pessoa e escolha qual fica em uso.
+          Aqui você cria os personagens ilustrados de cada um (vários estilos 3D —
+          animação, massinha, boneco…). <strong>São eles que entram nas Histórias e
+          nas Rotinas visuais.</strong> Crie quantos quiser por pessoa e escolha qual
+          fica em uso. Não guardamos fotos — só a ilustração.
         </p>
+        <div className="mt-1 flex flex-wrap gap-2">
+          <Link
+            href="/historias"
+            className="inline-flex items-center gap-1.5 rounded-full border border-brand-purple/30 bg-white px-3 py-1.5 text-xs font-semibold text-brand-purple transition-colors hover:bg-kolo-lilas-bg-2"
+          >
+            Criar uma história →
+          </Link>
+          <Link
+            href="/ludico/rotinas"
+            className="inline-flex items-center gap-1.5 rounded-full border border-brand-purple/30 bg-white px-3 py-1.5 text-xs font-semibold text-brand-purple transition-colors hover:bg-kolo-lilas-bg-2"
+          >
+            Montar uma rotina visual →
+          </Link>
+        </div>
       </header>
 
       {secoes.length > 0 ? (
