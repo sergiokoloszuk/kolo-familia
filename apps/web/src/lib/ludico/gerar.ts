@@ -61,18 +61,23 @@ export async function gerarRoteiroRotina(
     atividades: string[];
     idade: number | null;
     nomeRotina: string;
+    /** Personagem = a própria criança (avatar) em vez de um mascote do tema. */
+    usarAvatar?: boolean;
   },
   tracking?: { supabase: SupabaseClient; family_account_id: string | null },
 ): Promise<RoteiroRotina> {
   const client = getAnthropicClient();
   const lista = params.atividades.map((a, i) => `${i + 1}. ${a}`).join("\n");
+  const instrucaoAvatar = params.usarAvatar
+    ? `\n\nIMPORTANTE: o personagem dos cards é a PRÓPRIA CRIANÇA (vamos usar o avatar dela como referência visual). NÃO invente um mascote temático. No campo "mascote", escreva apenas "a própria criança". Em cada "cena", descreva a CRIANÇA fazendo a atividade${params.tema ? ", com elementos do tema ao redor" : ""}.`
+    : "";
   const userMsg = `Tema: ${params.tema}
 Rotina: ${params.nomeRotina}${params.idade != null ? `\nIdade da criança: ${params.idade} anos` : ""}
 
 Atividades (use exatamente estas, nesta ordem):
 ${lista}
 
-Devolva o JSON com ${params.atividades.length} cards, na mesma ordem.`;
+Devolva o JSON com ${params.atividades.length} cards, na mesma ordem.${instrucaoAvatar}`;
 
   const stream = client.messages.stream({
     model: MODELS.principal,
@@ -113,16 +118,26 @@ export async function ilustrarCards(
     tema: string;
     mascoteDescricao: string;
     cards: CardRoteiro[];
+    /** Se vier, usa ESTA imagem (o avatar da criança) como personagem dos cards
+     *  em vez de gerar um mascote do tema. */
+    referenciaUrl?: string;
   },
 ): Promise<{ mascoteUrl: string; imagens: Array<string | null> }> {
-  // 1. Mascote de referência (pose neutra, fundo branco).
-  const mascoteRes = await gerarImagem(supabase, {
-    prompt: `Personagem mascote para cards de rotina infantil, estilo ${ESTILO}. ${params.mascoteDescricao}. Corpo inteiro, pose amigável e neutra, sorrindo, centralizado, fundo branco liso. SEM nenhum texto, letra ou número.`,
-    familyAccountId: params.familyAccountId,
-    tipo: "cena",
-    feature: "rotina_mascote",
-  });
-  const mascoteBytes = await baixarBytes(supabase, mascoteRes.url);
+  // 1. Personagem de referência: o avatar da criança (se veio referenciaUrl) ou
+  //    um mascote do tema gerado na hora (pose neutra, fundo branco).
+  let mascoteUrl: string;
+  if (params.referenciaUrl) {
+    mascoteUrl = params.referenciaUrl;
+  } else {
+    const mascoteRes = await gerarImagem(supabase, {
+      prompt: `Personagem mascote para cards de rotina infantil, estilo ${ESTILO}. ${params.mascoteDescricao}. Corpo inteiro, pose amigável e neutra, sorrindo, centralizado, fundo branco liso. SEM nenhum texto, letra ou número.`,
+      familyAccountId: params.familyAccountId,
+      tipo: "cena",
+      feature: "rotina_mascote",
+    });
+    mascoteUrl = mascoteRes.url;
+  }
+  const mascoteBytes = await baixarBytes(supabase, mascoteUrl);
 
   // 2. Ilustra cada card com o mascote como referência (2 paralelas, 1 retry).
   const PARALELAS = 2;
@@ -143,7 +158,7 @@ export async function ilustrarCards(
   }
   await Promise.all(Array.from({ length: PARALELAS }, () => worker()));
 
-  return { mascoteUrl: mascoteRes.url, imagens };
+  return { mascoteUrl, imagens };
 }
 
 function montarPromptCard(tema: string, cena: string): string {

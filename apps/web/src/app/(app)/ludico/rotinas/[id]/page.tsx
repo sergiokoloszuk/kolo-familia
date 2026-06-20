@@ -38,6 +38,17 @@ export default async function RotinaPage({
   const nomeMembro = membro?.nome ? capitalizarNome(membro.nome) : null;
   const idade = idadeAnos(membro?.data_nascimento ?? null);
 
+  // #2: a criança tem avatar? (pra oferecer "usar o avatar nos cards")
+  const membroId = rotina.membro_atipico_id as string | null;
+  let temAvatar = false;
+  if (membroId) {
+    const { count } = await supabase
+      .from("avatares_membros_atipicos")
+      .select("id", { count: "exact", head: true })
+      .eq("membro_atipico_id", membroId);
+    temAvatar = (count ?? 0) > 0;
+  }
+
   const { data: tarefas } = await supabase
     .from("rotina_tarefas")
     .select("id, texto, icone, concluida, nome_tematico, imagem_url")
@@ -71,6 +82,8 @@ export default async function RotinaPage({
         rotinaId={rotina.id as string}
         nomeInicial={rotina.nome as string}
         idade={idade}
+        nomeMembro={nomeMembro}
+        temAvatar={temAvatar}
         tema={(rotina.tema as string | null) ?? null}
         historia={(rotina.historia as string | null) ?? null}
         cardsStatus={((rotina.cards_status as string | null) ?? "nenhum") as

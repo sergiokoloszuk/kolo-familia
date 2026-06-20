@@ -154,6 +154,46 @@ export async function adicionarTarefa(
   }
 }
 
+const addVariasSchema = z.object({
+  rotinaId: z.string().uuid(),
+  textos: z.array(z.string().trim().min(1).max(120)).min(1).max(30),
+});
+
+/**
+ * Adiciona vários passos de uma vez (uma atividade por linha). Mantém a ordem
+ * recebida, anexando ao fim da lista. O cliente faz refresh pra recarregar.
+ */
+export async function adicionarVariasTarefas(
+  input: z.infer<typeof addVariasSchema>,
+): Promise<Ok<{ quantidade: number }> | Fail> {
+  try {
+    const { rotinaId, textos } = addVariasSchema.parse(input);
+    const { supabase, family } = await requireFamily();
+    if (!(await rotinaDaFamilia(supabase, family.id, rotinaId)))
+      return { ok: false, error: "Rotina não encontrada." };
+
+    const { count } = await supabase
+      .from("rotina_tarefas")
+      .select("id", { count: "exact", head: true })
+      .eq("rotina_id", rotinaId);
+    const base = count ?? 0;
+
+    const rows = textos.map((texto, i) => ({
+      rotina_id: rotinaId,
+      texto,
+      icone: null,
+      ordem: base + i,
+    }));
+    const { error } = await supabase.from("rotina_tarefas").insert(rows);
+    if (error) return { ok: false, error: `Não consegui adicionar: ${error.message}` };
+
+    revalidatePath(`/ludico/rotinas/${rotinaId}`);
+    return { ok: true, quantidade: rows.length };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "Erro inesperado" };
+  }
+}
+
 const editTarefaSchema = z.object({
   rotinaId: z.string().uuid(),
   tarefaId: z.string().uuid(),
@@ -277,7 +317,9 @@ export async function resetarRotina(input: { rotinaId: string }): Promise<Ok | F
 
 const gerarSchema = z.object({
   rotinaId: z.string().uuid(),
-  tema: z.string().trim().min(2, "Escolha um tema").max(60),
+  // Quando usarAvatar=true, o tema é opcional (só ambienta a cena).
+  tema: z.string().trim().max(60).optional().default(""),
+  usarAvatar: z.boolean().optional().default(false),
 });
 
 /**
@@ -289,16 +331,42 @@ export async function gerarCardsVisuais(
   input: z.infer<typeof gerarSchema>,
 ): Promise<Ok | Fail> {
   try {
-    const { rotinaId, tema } = gerarSchema.parse(input);
+    const { rotinaId, tema, usarAvatar } = gerarSchema.parse(input);
+    if (!usarAvatar && tema.trim().length < 2) {
+      return { ok: false, error: "Escolha um tema (ou use o avatar)." };
+    }
     const { supabase, family } = await requireFamily();
 
     const { data: rotina } = await supabase
       .from("rotinas")
-      .select("id, nome, membros_atipicos(data_nascimento)")
+      .select("id, nome, membro_atipico_id, membros_atipicos(data_nascimento)")
       .eq("id", rotinaId)
       .eq("family_account_id", family.id)
       .maybeSingle();
     if (!rotina) return { ok: false, error: "Rotina não encontrada." };
+
+    // #2: usar o avatar da criança como personagem dos cards.
+    let avatarUrl: string | null = null;
+    if (usarAvatar) {
+      const membroId = rotina.membro_atipico_id as string | null;
+      if (!membroId) return { ok: false, error: "Esta rotina não tem uma criança vinculada." };
+      const { data: av } = await supabase
+        .from("avatares_membros_atipicos")
+        .select("imagem_url, selecionado, created_at")
+        .eq("membro_atipico_id", membroId)
+        .eq("family_account_id", family.id)
+        .order("selecionado", { ascending: false })
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      avatarUrl = (av?.imagem_url as string | null) ?? null;
+      if (!avatarUrl) {
+        return {
+          ok: false,
+          error: "Crie um avatar pra essa criança primeiro (no Lúdico → Avatar).",
+        };
+      }
+    }
 
     const { data: tarefasData } = await supabase
       .from("rotina_tarefas")
@@ -327,19 +395,23 @@ export async function gerarCardsVisuais(
     const nomeRotina = rotina.nome as string;
     const atividades = tarefas.map((t) => t.texto as string);
     const tarefaIds = tarefas.map((t) => t.id as string);
+    // Sem tema (caso avatar sem tema): um cenário neutro pro roteiro.
+    const temaParaRoteiro = tema.trim() || "do dia a dia";
+    const referenciaUrl = avatarUrl ?? undefined;
 
     after(async () => {
       const svc = createServiceRoleClient();
       try {
         const roteiro = await gerarRoteiroRotina(
-          { tema, atividades, idade, nomeRotina },
+          { tema: temaParaRoteiro, atividades, idade, nomeRotina, usarAvatar },
           { supabase: svc, family_account_id: familyId },
         );
         const { mascoteUrl, imagens } = await ilustrarCards(svc, {
           familyAccountId: familyId,
-          tema,
+          tema: temaParaRoteiro,
           mascoteDescricao: roteiro.mascote,
           cards: roteiro.cards,
+          referenciaUrl,
         });
         await Promise.all(
           tarefaIds.map((id, i) => {

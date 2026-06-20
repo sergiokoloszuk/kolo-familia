@@ -40,6 +40,7 @@ import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import {
   adicionarTarefa,
+  adicionarVariasTarefas,
   excluirRotina,
   excluirTarefa,
   gerarCardsVisuais,
@@ -89,6 +90,8 @@ export function RotinaEditor({
   rotinaId,
   nomeInicial,
   idade,
+  nomeMembro,
+  temAvatar,
   tema,
   historia,
   cardsStatus,
@@ -97,6 +100,8 @@ export function RotinaEditor({
   rotinaId: string;
   nomeInicial: string;
   idade: number | null;
+  nomeMembro: string | null;
+  temAvatar: boolean;
   tema: string | null;
   historia: string | null;
   cardsStatus: CardsStatus;
@@ -155,6 +160,18 @@ export function RotinaEditor({
         ...ts,
         { id: r.tarefaId, texto, icone, concluida: false, nomeTematico: null, imagemUrl: null },
       ]);
+    });
+  }
+
+  function adicionarVarios(textos: string[]) {
+    if (textos.length === 0) return;
+    start(async () => {
+      const r = await adicionarVariasTarefas({ rotinaId, textos });
+      if (!r.ok) {
+        setErro(r.error);
+        return;
+      }
+      router.refresh(); // recarrega já na ordem certa
     });
   }
 
@@ -225,10 +242,21 @@ export function RotinaEditor({
         <ViewChecklist tarefas={tarefas} onToggle={toggle} onMover={mover} onRemover={remover} />
       )}
 
-      <AddTarefa visual={visual} onAdd={adicionar} />
+      <AddTarefa
+        visual={visual}
+        temPassos={tarefas.length > 0}
+        onAdd={adicionar}
+        onAddVarios={adicionarVarios}
+      />
 
       {visual && cardsStatus !== "gerando" && (
-        <GerarCards rotinaId={rotinaId} temaInicial={tema} jaTem={cardsStatus === "pronto"} />
+        <GerarCards
+          rotinaId={rotinaId}
+          temaInicial={tema}
+          jaTem={cardsStatus === "pronto"}
+          nomeMembro={nomeMembro}
+          temAvatar={temAvatar}
+        />
       )}
 
       <p className="text-xs text-muted-foreground print:hidden">
@@ -485,21 +513,33 @@ function ViewChecklist({
 
 function Vazio() {
   return (
-    <p className="rounded-2xl border border-dashed border-foreground/15 px-5 py-8 text-center text-sm text-muted-foreground">
-      Ainda sem passos. Adicione o primeiro abaixo.
-    </p>
+    <div className="rounded-2xl border border-dashed border-foreground/15 px-5 py-8 text-center">
+      <p className="text-sm font-medium text-foreground">
+        Monte a lista de atividades do dia
+      </p>
+      <p className="mx-auto mt-1 max-w-md text-sm leading-relaxed text-muted-foreground">
+        Escreva as etapas na ordem em que acontecem — uma por linha — no campo
+        abaixo. Ex.: <em className="not-italic text-foreground/70">Acordar · Escovar os
+        dentes · Tomar café · Vestir a roupa · Escola</em>.
+      </p>
+    </div>
   );
 }
 
 function AddTarefa({
   visual,
+  temPassos,
   onAdd,
+  onAddVarios,
 }: {
   visual: boolean;
+  temPassos: boolean;
   onAdd: (texto: string, icone: string | null) => void;
+  onAddVarios: (textos: string[]) => void;
 }) {
   const [texto, setTexto] = useState("");
   const [icone, setIcone] = useState<string | null>(null);
+  const [varios, setVarios] = useState("");
 
   function add() {
     const t = texto.trim();
@@ -509,43 +549,85 @@ function AddTarefa({
     setIcone(null);
   }
 
+  function addVarios() {
+    const linhas = varios
+      .split("\n")
+      .map((l) => l.trim())
+      .filter(Boolean)
+      .slice(0, 30);
+    if (linhas.length === 0) return;
+    onAddVarios(linhas);
+    setVarios("");
+  }
+
   return (
-    <div className="flex flex-col gap-3 rounded-2xl border border-brand-purple/15 bg-kolo-lilas-bg-2/40 p-4 print:hidden">
-      <div className="flex gap-2">
-        <Input
-          value={texto}
-          onChange={(e) => setTexto(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && add()}
-          placeholder="Novo passo (ex.: praia, sorveteria…)"
+    <div className="flex flex-col gap-4 rounded-2xl border border-brand-purple/15 bg-kolo-lilas-bg-2/40 p-4 print:hidden">
+      {/* Montar a lista de uma vez (uma atividade por linha) */}
+      <div className="flex flex-col gap-2">
+        <p className="text-sm font-medium text-foreground">
+          {temPassos ? "Adicionar vários passos" : "Monte a lista de atividades"}
+        </p>
+        <p className="text-xs leading-relaxed text-muted-foreground">
+          Uma atividade por linha, na ordem em que acontecem no dia.
+        </p>
+        <textarea
+          value={varios}
+          onChange={(e) => setVarios(e.target.value)}
+          rows={5}
+          placeholder={"Acordar\nEscovar os dentes\nTomar café\nVestir a roupa\nEscola"}
+          className="w-full resize-y rounded-xl border border-foreground/10 bg-white px-3 py-2 text-sm leading-relaxed text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-brand-purple/30"
         />
-        <Button type="button" onClick={add} disabled={!texto.trim()}>
-          <Plus className="size-4" aria-hidden /> Adicionar
-        </Button>
-      </div>
-      {visual && (
-        <div className="flex flex-wrap gap-1.5">
-          {ICONE_KEYS.map((k) => {
-            const Icon = ICONES[k];
-            const sel = icone === k;
-            return (
-              <button
-                key={k}
-                type="button"
-                onClick={() => setIcone(sel ? null : k)}
-                aria-label={k}
-                className={cn(
-                  "flex size-9 items-center justify-center rounded-xl border transition-colors",
-                  sel
-                    ? "border-brand-purple bg-brand-yellow/25 text-[#8B5A00]"
-                    : "border-foreground/10 bg-white text-foreground/50 hover:border-brand-purple/30",
-                )}
-              >
-                <Icon className="size-[18px]" strokeWidth={1.8} />
-              </button>
-            );
-          })}
+        <div>
+          <Button type="button" onClick={addVarios} disabled={!varios.trim()}>
+            <Plus className="size-4" aria-hidden /> Adicionar à rotina
+          </Button>
         </div>
-      )}
+      </div>
+
+      <div className="flex items-center gap-3 text-xs text-muted-foreground">
+        <span className="h-px flex-1 bg-foreground/10" />
+        ou adicione um por vez
+        <span className="h-px flex-1 bg-foreground/10" />
+      </div>
+
+      {/* Um por vez (com ícone, no modo visual) */}
+      <div className="flex flex-col gap-3">
+        <div className="flex gap-2">
+          <Input
+            value={texto}
+            onChange={(e) => setTexto(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && add()}
+            placeholder="Novo passo (ex.: praia, sorveteria…)"
+          />
+          <Button type="button" variant="outline" onClick={add} disabled={!texto.trim()}>
+            <Plus className="size-4" aria-hidden /> Adicionar
+          </Button>
+        </div>
+        {visual && (
+          <div className="flex flex-wrap gap-1.5">
+            {ICONE_KEYS.map((k) => {
+              const Icon = ICONES[k];
+              const sel = icone === k;
+              return (
+                <button
+                  key={k}
+                  type="button"
+                  onClick={() => setIcone(sel ? null : k)}
+                  aria-label={k}
+                  className={cn(
+                    "flex size-9 items-center justify-center rounded-xl border transition-colors",
+                    sel
+                      ? "border-brand-purple bg-brand-yellow/25 text-[#8B5A00]"
+                      : "border-foreground/10 bg-white text-foreground/50 hover:border-brand-purple/30",
+                  )}
+                >
+                  <Icon className="size-[18px]" strokeWidth={1.8} />
+                </button>
+              );
+            })}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
@@ -600,22 +682,31 @@ function GerarCards({
   rotinaId,
   temaInicial,
   jaTem,
+  nomeMembro,
+  temAvatar,
 }: {
   rotinaId: string;
   temaInicial: string | null;
   jaTem: boolean;
+  nomeMembro: string | null;
+  temAvatar: boolean;
 }) {
   const router = useRouter();
+  // Se a criança tem avatar, esse é o padrão (mais pessoal).
+  const [usarAvatar, setUsarAvatar] = useState(temAvatar);
   const [tema, setTema] = useState(temaInicial ?? "");
   const [erro, setErro] = useState<string | null>(null);
   const [pending, start] = useTransition();
 
   function gerar() {
-    const t = tema.trim();
-    if (!t || pending) return;
+    if (pending) return;
+    if (!usarAvatar && tema.trim().length < 2) {
+      setErro("Escolha um tema (ou use o avatar).");
+      return;
+    }
     setErro(null);
     start(async () => {
-      const r = await gerarCardsVisuais({ rotinaId, tema: t });
+      const r = await gerarCardsVisuais({ rotinaId, tema: tema.trim(), usarAvatar });
       if (!r.ok) {
         setErro(r.error);
         return;
@@ -623,6 +714,8 @@ function GerarCards({
       router.refresh();
     });
   }
+
+  const nome = nomeMembro ?? "a criança";
 
   return (
     <div className="flex flex-col gap-3 rounded-2xl border border-brand-purple/15 bg-kolo-lilas-bg-2/40 p-4 print:hidden">
@@ -635,20 +728,55 @@ function GerarCards({
             {jaTem ? "Refazer os cards visuais" : "Gerar cards visuais"}
           </p>
           <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-            Escolha um tema — a Kolo escreve uma historinha e ilustra cada passo com um
-            personagem do tema (o mesmo em todos). Suas atividades e a ordem não mudam.
+            {usarAvatar
+              ? `A Kolo ilustra cada passo com o avatar de ${nome} como personagem. Um tema é opcional, só pra ambientar. Suas atividades e a ordem não mudam.`
+              : "A Kolo escreve uma historinha e ilustra cada passo com um personagem do tema (o mesmo em todos). Suas atividades e a ordem não mudam."}
           </p>
+
+          {/* Escolha: avatar da criança × tema (só se houver avatar) */}
+          {temAvatar && (
+            <div className="mt-3 inline-flex rounded-full border border-foreground/10 bg-white p-0.5 text-xs font-semibold">
+              <button
+                type="button"
+                onClick={() => setUsarAvatar(true)}
+                className={cn(
+                  "rounded-full px-3 py-1.5 transition-colors",
+                  usarAvatar ? "bg-brand-purple text-white" : "text-foreground/60 hover:text-foreground",
+                )}
+              >
+                Avatar de {nome}
+              </button>
+              <button
+                type="button"
+                onClick={() => setUsarAvatar(false)}
+                className={cn(
+                  "rounded-full px-3 py-1.5 transition-colors",
+                  !usarAvatar ? "bg-brand-purple text-white" : "text-foreground/60 hover:text-foreground",
+                )}
+              >
+                Por um tema
+              </button>
+            </div>
+          )}
+          {!temAvatar && (
+            <p className="mt-2 text-xs text-muted-foreground">
+              Quer usar a carinha de {nome}? Crie um avatar em Lúdico → Avatar.
+            </p>
+          )}
+
           {erro && <p className="mt-2 text-sm text-destructive">{erro}</p>}
           <div className="mt-3 flex flex-wrap gap-2">
             <Input
               value={tema}
               onChange={(e) => setTema(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && gerar()}
-              placeholder="Tema (ex.: carros, dinossauros, espaço…)"
+              placeholder={
+                usarAvatar ? "Tema (opcional) — ex.: praia, espaço…" : "Tema (ex.: carros, dinossauros, espaço…)"
+              }
               className="max-w-xs"
               disabled={pending}
             />
-            <Button type="button" onClick={gerar} disabled={pending || !tema.trim()}>
+            <Button type="button" onClick={gerar} disabled={pending || (!usarAvatar && !tema.trim())}>
               {pending ? (
                 <>
                   <Sparkles className="size-4 animate-pulse" aria-hidden /> Iniciando…
