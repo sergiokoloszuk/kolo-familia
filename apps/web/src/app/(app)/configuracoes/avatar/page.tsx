@@ -6,7 +6,7 @@ import { loadFamilyContext } from "@/lib/auth/require-user";
 import { assinarImagens } from "@/lib/storage/imagens";
 import { idadeAnos } from "@/lib/idade";
 import { AvatarMembroSecao } from "./secao-membro";
-import type { AvatarDescricao } from "@/lib/imagem/avatar-prompt";
+import { coerceEstilo, type AvatarDescricao } from "@/lib/imagem/avatar-prompt";
 
 // A geração de imagem (gpt-image-1) roda na action a partir desta rota; dá
 // fôlego pra não estourar o timeout.
@@ -56,7 +56,7 @@ export default async function AvataresIndexPage() {
       const d = (base?.descricao_textual ?? {}) as Partial<AvatarDescricao>;
 
       const inicialEditar: AvatarDescricao = {
-        estilo: (base?.estilo as "cartoon" | "aquarela") ?? "cartoon",
+        estilo: coerceEstilo(base?.estilo),
         idade: d.idade ?? idade,
         generoVisual: d.generoVisual ?? null,
         tomPele: d.tomPele ?? null,
@@ -68,7 +68,7 @@ export default async function AvataresIndexPage() {
         roupasFrequentes: d.roupasFrequentes ?? null,
       };
       const inicialCriar: AvatarDescricao = {
-        estilo: "cartoon",
+        estilo: coerceEstilo(null),
         idade,
         generoVisual: null,
         tomPele: null,

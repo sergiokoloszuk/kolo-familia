@@ -8,42 +8,49 @@
  * Ao adicionar um estilo aqui, lembrar de soltar o CHECK do banco
  * (migração avatares_membros_atipicos.estilo).
  */
+/**
+ * Estilos 3D/boneco (curadoria jun/2026 — Karina pediu look 3D, tipo
+ * Disney/Playmobil, não desenho plano). `label`/`descricao` aparecem pro
+ * usuário; `prompt` vai pro modelo de imagem.
+ *
+ * NOTA: depois da migração 0043 (que solta o CHECK de estilo), mudar esta
+ * lista é SÓ código — não precisa mais mexer no banco.
+ */
 export const AVATAR_ESTILOS = [
   {
-    value: "cartoon",
-    label: "Cartoon",
-    prompt: "Ilustração estilo cartoon amigável, traços simples e cores suaves",
-  },
-  {
-    value: "aquarela",
-    label: "Aquarela",
-    prompt: "Ilustração em estilo aquarela suave, traços leves, cores pastel",
-  },
-  {
-    value: "livro_infantil",
-    label: "Livro infantil",
-    prompt: "Ilustração de livro infantil, lúdica e acolhedora, cores quentes",
-  },
-  {
-    value: "lapis_cor",
-    label: "Lápis de cor",
-    prompt: "Ilustração feita com lápis de cor, textura de giz, traço artesanal",
+    value: "animacao_3d",
+    label: "Animação 3D",
+    descricao: "Cara de filme de animação — fofo, olhos grandes, brilho de cinema.",
+    prompt:
+      "Personagem em estilo de animação 3D de grande estúdio (CGI), renderização suave e fofa, olhos grandes e expressivos, proporções amigáveis, iluminação cinematográfica macia",
   },
   {
     value: "massinha_3d",
     label: "Massinha 3D",
+    descricao: "Aparência de massinha/stop-motion, tridimensional e aconchegante.",
     prompt:
-      "Personagem em estilo massinha/clay 3D fofo, iluminação suave, aparência de animação",
+      "Personagem em estilo massinha/clay 3D fofo, textura de massa de modelar, iluminação suave, aparência de animação stop-motion",
   },
   {
-    value: "papel_recortado",
-    label: "Papel recortado",
-    prompt: "Ilustração em estilo colagem de papel recortado, formas chapadas",
+    value: "boneco_brinquedo",
+    label: "Bonequinho de brinquedo",
+    descricao: "Tipo bonequinho de playset — plástico fofo e colorido.",
+    prompt:
+      "Personagem em estilo de boneco de brinquedo plástico de playset infantil, corpo simples e arredondado, acabamento de plástico fosco, fofo e colorido",
   },
   {
-    value: "line_art",
-    label: "Traço (line art)",
-    prompt: "Ilustração em line art colorido, contornos limpos, preenchimento leve",
+    value: "boneco_vinil",
+    label: "Boneco de vinil",
+    descricao: "Boneco colecionável de vinil — cabeçudo e estiloso.",
+    prompt:
+      "Personagem em estilo boneco de vinil colecionável, cabeça grande estilizada, olhos grandes, corpo pequeno, acabamento liso de vinil, fofo",
+  },
+  {
+    value: "pelucia",
+    label: "Pelúcia",
+    descricao: "Boneco de pelúcia/feltro, macio e abraçável.",
+    prompt:
+      "Personagem em estilo boneco de pelúcia/feltro costurado, texturas macias de tecido com costuras visíveis, fofo e tátil",
   },
 ] as const;
 
@@ -53,6 +60,17 @@ export const AVATAR_ESTILO_VALUES = AVATAR_ESTILOS.map((e) => e.value) as [
   AvatarEstilo,
   ...AvatarEstilo[],
 ];
+
+/**
+ * Converte um valor de estilo (possivelmente legado, ex.: "cartoon") num estilo
+ * válido da lista atual. Avatares antigos seguem exibindo a imagem já gerada;
+ * isto só garante um default seguro pros formulários e prompts.
+ */
+export function coerceEstilo(v: unknown): AvatarEstilo {
+  return (AVATAR_ESTILO_VALUES as readonly string[]).includes(v as string)
+    ? (v as AvatarEstilo)
+    : AVATAR_ESTILOS[0].value;
+}
 
 export type AvatarDescricao = {
   estilo: AvatarEstilo;

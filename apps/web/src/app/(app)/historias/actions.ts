@@ -7,7 +7,7 @@ import { createClient, createServiceRoleClient } from "@/lib/supabase/server";
 import { requireActiveWrite } from "@/lib/auth/require-active-write";
 import { idadeAnos } from "@/lib/idade";
 import { gerarRoteiro, ilustrarPaginas, ilustrarComRetryPublico } from "@/lib/historias/gerar";
-import { AVATAR_ESTILOS, type AvatarEstilo } from "@/lib/imagem/avatar-prompt";
+import { AVATAR_ESTILOS, coerceEstilo } from "@/lib/imagem/avatar-prompt";
 import { pathDeImagem } from "@/lib/storage/imagens";
 
 /**
@@ -143,7 +143,7 @@ export async function criarHistoria(
       perfil: membro.perfil as string,
     };
     const avatarUrl = avatar.imagem_url as string;
-    const avatarEstilo = (avatar.estilo as AvatarEstilo) ?? "cartoon";
+    const avatarEstilo = coerceEstilo(avatar.estilo);
 
     // Lê Kolo Vivo (resumo + gostos) já aqui — o cliente do user ainda está vivo.
     const { data: kv } = await supabase
@@ -485,7 +485,7 @@ export async function regenerarPagina(
       return { ok: false, error: e instanceof Error ? e.message : "Falha ao carregar avatar." };
     }
 
-    const estilo = (historia.estilo as AvatarEstilo) ?? (avatar.estilo as AvatarEstilo) ?? "cartoon";
+    const estilo = coerceEstilo(historia.estilo ?? avatar.estilo);
     const estiloPrompt =
       AVATAR_ESTILOS.find((e) => e.value === estilo)?.prompt ?? AVATAR_ESTILOS[0].prompt;
 

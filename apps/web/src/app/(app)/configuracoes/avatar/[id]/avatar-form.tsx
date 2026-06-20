@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { cn } from "@/lib/utils";
 import { criarEGerarAvatar } from "./actions";
 import { AVATAR_ESTILOS, type AvatarDescricao } from "@/lib/imagem/avatar-prompt";
 
@@ -64,23 +65,33 @@ export function AvatarForm({
         />
       )}
 
+      <div className="flex flex-col gap-2">
+        <Label>Estilo</Label>
+        <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+          {AVATAR_ESTILOS.map((es) => {
+            const ativo = form.estilo === es.value;
+            return (
+              <button
+                key={es.value}
+                type="button"
+                onClick={() => update("estilo", es.value)}
+                aria-pressed={ativo}
+                className={cn(
+                  "flex flex-col gap-1 rounded-xl border-2 p-3 text-left transition-colors",
+                  ativo
+                    ? "border-brand-purple bg-kolo-lilas-bg-2/50"
+                    : "border-input bg-background hover:border-brand-purple/40",
+                )}
+              >
+                <span className="text-sm font-semibold text-foreground">{es.label}</span>
+                <span className="text-xs leading-snug text-muted-foreground">{es.descricao}</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
       <div className="grid gap-4 md:grid-cols-2">
-        <Field
-          label="Estilo"
-          control={
-            <select
-              className="flex h-9 w-full rounded-md border border-input bg-background px-3 text-sm shadow-sm"
-              value={form.estilo}
-              onChange={(e) => update("estilo", e.target.value as AvatarDescricao["estilo"])}
-            >
-              {AVATAR_ESTILOS.map((es) => (
-                <option key={es.value} value={es.value}>
-                  {es.label}
-                </option>
-              ))}
-            </select>
-          }
-        />
         <Field
           label="Idade aproximada (opcional)"
           control={

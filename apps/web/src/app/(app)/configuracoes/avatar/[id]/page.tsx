@@ -7,7 +7,7 @@ import { assinarImagens } from "@/lib/storage/imagens";
 import { idadeAnos } from "@/lib/idade";
 import { AvatarForm } from "./avatar-form";
 import { AvataresGaleria } from "./avatares-galeria";
-import type { AvatarDescricao } from "@/lib/imagem/avatar-prompt";
+import { coerceEstilo, type AvatarDescricao } from "@/lib/imagem/avatar-prompt";
 
 // Geração de imagem (gpt-image-1) leva ~15-25s; evita timeout da action.
 export const maxDuration = 60;
@@ -52,7 +52,7 @@ export default async function AvatarMembroPage(
   const base = (avatares ?? [])[0];
   const descricao = (base?.descricao_textual ?? {}) as Partial<AvatarDescricao>;
   const inicial: AvatarDescricao = {
-    estilo: (base?.estilo as "cartoon" | "aquarela") ?? "cartoon",
+    estilo: coerceEstilo(base?.estilo),
     idade: descricao.idade ?? idadeAnos(membro.data_nascimento),
     generoVisual: descricao.generoVisual ?? null,
     tomPele: descricao.tomPele ?? null,
