@@ -5,8 +5,6 @@ import {
   ListChecks,
   Palette,
   Smile,
-  Timer,
-  Wind,
   type LucideIcon,
 } from "lucide-react";
 import { Eyebrow } from "@/components/brand/eyebrow";
@@ -14,8 +12,13 @@ import { cn } from "@/lib/utils";
 
 /**
  * Lúdico — seção que agrupa as ferramentas visuais/experienciais com o avatar
- * no centro: Histórias, Rotinas visuais, e (em breve) Meditação guiada e o
- * Timer lúdico. Apoio pelo brincar e imaginar.
+ * no centro: Histórias, Rotinas visuais e leitura de desenhos. Apoio pelo
+ * brincar e imaginar.
+ *
+ * OCULTOS TEMPORARIAMENTE (decisão de produto, jun/2026): "Meditação guiada"
+ * (/ludico/meditacao) e "Timer lúdico" (/ludico/timer). As rotas e todo o
+ * código seguem intactos — só removemos os cards daqui. Pra retomar, basta
+ * recolocar as entradas no array CARDS abaixo (ícones Wind e Timer da lucide).
  */
 
 type Card = {
@@ -56,20 +59,22 @@ const CARDS: Card[] = [
     href: "/ludico/desenhos",
     tone: { bar: "bg-cat-emocao", chip: "bg-cat-emocao-soft text-cat-emocao" },
   },
-  {
-    titulo: "Meditação guiada",
-    desc: "Escolha uma intenção (acalmar, ensaiar um momento, dormir…) e a Kolo escreve uma meditação curta pra ler em voz alta — no jeito dela.",
-    icone: Wind,
-    href: "/ludico/meditacao",
-    tone: { bar: "bg-cat-sono", chip: "bg-cat-sono-soft text-cat-sono" },
-  },
-  {
-    titulo: "Timer lúdico",
-    desc: "O tempo vira uma jornada: o personagem avança até o destino e a criança sabe, desde o início, como vai ser o fim e o que vem depois.",
-    icone: Timer,
-    href: "/ludico/timer",
-    tone: { bar: "bg-cat-rotina", chip: "bg-cat-rotina-soft text-cat-rotina" },
-  },
+  // OCULTOS (jun/2026) — ver comentário no topo. Mantidos aqui comentados pra
+  // retomar fácil:
+  // {
+  //   titulo: "Meditação guiada",
+  //   desc: "Escolha uma intenção (acalmar, ensaiar um momento, dormir…) e a Kolo escreve uma meditação curta pra ler em voz alta — no jeito dela.",
+  //   icone: Wind,
+  //   href: "/ludico/meditacao",
+  //   tone: { bar: "bg-cat-sono", chip: "bg-cat-sono-soft text-cat-sono" },
+  // },
+  // {
+  //   titulo: "Timer lúdico",
+  //   desc: "O tempo vira uma jornada: o personagem avança até o destino e a criança sabe, desde o início, como vai ser o fim e o que vem depois.",
+  //   icone: Timer,
+  //   href: "/ludico/timer",
+  //   tone: { bar: "bg-cat-rotina", chip: "bg-cat-rotina-soft text-cat-rotina" },
+  // },
 ];
 
 export default function LudicoPage() {
