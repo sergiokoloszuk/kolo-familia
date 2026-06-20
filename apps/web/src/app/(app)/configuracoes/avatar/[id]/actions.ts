@@ -4,10 +4,11 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { createClient, createServiceRoleClient } from "@/lib/supabase/server";
 import { requireActiveWrite } from "@/lib/auth/require-active-write";
-import { gerarImagem } from "@/lib/imagem/generate";
-import { assinarImagem } from "@/lib/storage/imagens";
+import { gerarImagem, gerarImagemComReferencia } from "@/lib/imagem/generate";
+import { assinarImagem, pathDeImagem } from "@/lib/storage/imagens";
 import {
   montarPromptCanonico,
+  AVATAR_ESTILOS,
   AVATAR_ESTILO_VALUES,
   type AvatarDescricao,
 } from "@/lib/imagem/avatar-prompt";
@@ -117,6 +118,102 @@ export async function criarEGerarAvatar(
       imagem_url: previewUrl ?? result.url,
       prompt_revisado: result.prompt_revisado,
     };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "Erro inesperado" };
+  }
+}
+
+const vestirSchema = z.object({
+  avatarId: z.string().uuid(),
+  ocasiao: z.string().trim().min(1).max(200),
+});
+
+/**
+ * "Vestir" o avatar (Sérgio/Karina, jun/2026): mantém EXATAMENTE o mesmo
+ * personagem (mesma cara, cabelo, estilo) e troca só a roupa/figurino pra uma
+ * ocasião — festa junina, aniversário, Natal, tema do mês… Usa a imagem do
+ * avatar como referência (gpt-image-1 /edits), igual às Histórias. Salva como
+ * um NOVO avatar (a versão original continua na galeria) e já o deixa em uso.
+ */
+export async function vestirAvatar(
+  input: z.infer<typeof vestirSchema>,
+): Promise<GerarAvatarResult> {
+  try {
+    const { avatarId, ocasiao } = vestirSchema.parse(input);
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return { ok: false, error: "Não autenticado" };
+    const { data: family } = await supabase
+      .from("family_accounts")
+      .select("id")
+      .eq("user_id", user.id)
+      .single();
+    if (!family) return { ok: false, error: "Família não inicializada" };
+    await requireActiveWrite(family.id);
+
+    const { data: base } = await supabase
+      .from("avatares_membros_atipicos")
+      .select("id, membro_atipico_id, estilo, descricao_textual, imagem_url")
+      .eq("id", avatarId)
+      .eq("family_account_id", family.id)
+      .maybeSingle();
+    if (!base) return { ok: false, error: "Avatar não encontrado." };
+
+    const admin = createServiceRoleClient();
+
+    // Baixa os bytes do avatar base (bucket privado) pra usar como referência.
+    const path = pathDeImagem(base.imagem_url as string);
+    if (!path) return { ok: false, error: "Não localizei a imagem do avatar base." };
+    const { data: file, error: dErr } = await admin.storage.from("imagens").download(path);
+    if (dErr || !file) {
+      return { ok: false, error: `Falha ao ler a imagem do avatar: ${dErr?.message}` };
+    }
+    const bytes = Buffer.from(await file.arrayBuffer());
+
+    const estiloDef = AVATAR_ESTILOS.find((e) => e.value === base.estilo) ?? AVATAR_ESTILOS[0];
+    const prompt = `${estiloDef.prompt}. Mantenha EXATAMENTE o mesmo personagem da imagem de referência — mesmo rosto, cabelo, tom de pele e identidade visual. Mude APENAS a roupa/figurino para: ${ocasiao}. Corpo inteiro, expressão acolhedora, postura natural, fundo neutro claro, sem texto, sem letras, sem logotipos, ilustração 2D, NÃO fotorrealista.`;
+
+    const result = await gerarImagemComReferencia(admin, {
+      prompt,
+      referencia: bytes,
+      familyAccountId: family.id,
+      tipo: "avatar",
+      feature: "avatar_vestir",
+    });
+
+    // O novo (vestido) vira o selecionado.
+    await supabase
+      .from("avatares_membros_atipicos")
+      .update({ selecionado: false })
+      .eq("membro_atipico_id", base.membro_atipico_id);
+
+    const desc = {
+      ...((base.descricao_textual as Record<string, unknown>) ?? {}),
+      roupasFrequentes: ocasiao,
+    };
+    const { data: novo, error } = await supabase
+      .from("avatares_membros_atipicos")
+      .insert({
+        membro_atipico_id: base.membro_atipico_id,
+        family_account_id: family.id,
+        estilo: base.estilo,
+        descricao_textual: desc,
+        imagem_url: result.url,
+        prompt_canonico: prompt,
+        selecionado: true,
+      })
+      .select("id")
+      .single();
+    if (error || !novo) {
+      return { ok: false, error: `Imagem gerada, mas falhou ao salvar: ${error?.message}` };
+    }
+
+    revalidatePath("/configuracoes/avatar");
+    revalidatePath(`/configuracoes/avatar/${base.membro_atipico_id}`);
+    const previewUrl = await assinarImagem(supabase, result.url);
+    return { ok: true, avatarId: novo.id as string, imagem_url: previewUrl ?? result.url };
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : "Erro inesperado" };
   }
