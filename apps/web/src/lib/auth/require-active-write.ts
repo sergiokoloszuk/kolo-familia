@@ -26,12 +26,21 @@ export async function requireActiveWrite(familyAccountId: string): Promise<void>
   const supabase = await createClient();
   const { data } = await supabase
     .from("subscription_accesses")
-    .select("status")
+    .select("status, cortesia, cortesia_ate")
     .eq("family_account_id", familyAccountId)
     .maybeSingle();
 
   const status = data?.status ?? null;
-  const liberada = status === "trialing" || status === "active" || status === "past_due";
+  // Cortesia (comp): libera independente de status/trial. cortesia_ate = NULL é
+  // vitalícia; com data, vale até expirar.
+  const cortesiaValida =
+    data?.cortesia === true &&
+    (!data.cortesia_ate || new Date(data.cortesia_ate as string).getTime() > Date.now());
+  const liberada =
+    cortesiaValida ||
+    status === "trialing" ||
+    status === "active" ||
+    status === "past_due";
   if (!liberada) {
     throw new SubscriptionBlockedError(status);
   }

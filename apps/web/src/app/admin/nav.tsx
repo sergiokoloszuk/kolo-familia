@@ -18,6 +18,7 @@ const items = [
   { href: "/admin/padroes", label: "Padrões" },
   { href: "/admin/convites", label: "Convites" },
   { href: "/admin/afiliados", label: "Afiliados" },
+  { href: "/admin/cortesias", label: "Cortesias" },
   { href: "/admin/beta", label: "Beta" },
   { href: "/admin/observabilidade", label: "Observabilidade" },
   { href: "/admin/uso-api", label: "Uso de API" },
