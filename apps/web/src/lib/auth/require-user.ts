@@ -21,11 +21,20 @@ export async function requireUser() {
 export async function loadFamilyContext() {
   const { user, supabase } = await requireUser();
 
-  const { data: family } = await supabase
-    .from("family_accounts")
-    .select("id, onboarding_step, onboarding_completed, whatsapp_e164, timezone, boas_vindas_vista_at, painel_balao_visto_at")
-    .eq("user_id", user.id)
-    .maybeSingle();
+  // Resolve a família via a MESMA função do RLS (current_family_account_id):
+  // dono → própria família; co-acesso ativo → a família vinculada. Assim quem
+  // tem co-acesso vê o conteúdo da conta certa (e pula o onboarding dela).
+  const { data: famId } = await supabase.rpc("current_family_account_id");
+
+  const { data: family } = famId
+    ? await supabase
+        .from("family_accounts")
+        .select(
+          "id, onboarding_step, onboarding_completed, whatsapp_e164, timezone, boas_vindas_vista_at, painel_balao_visto_at",
+        )
+        .eq("id", famId as string)
+        .maybeSingle()
+    : { data: null };
 
   return { user, supabase, family };
 }
