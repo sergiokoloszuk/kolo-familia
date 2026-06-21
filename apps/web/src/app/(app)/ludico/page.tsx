@@ -28,29 +28,36 @@ type Card = {
   href?: string;
   tone: { bar: string; chip: string };
   status?: "em breve";
+  /** Selo de destaque (ex.: "comece por aqui"). */
+  destaque?: string;
+  /** Mostra a etiqueta "Usa o avatar escolhido". */
+  usaAvatar?: boolean;
 };
 
 const CARDS: Card[] = [
   {
     titulo: "Avatar",
-    desc: "Crie o avatar ilustrado de cada um — o personagem usado nas Histórias, nas Rotinas e nas ilustrações.",
+    desc: "O personagem de tudo: crie uma vez (vários estilos 3D) e use nas Histórias e nas Rotinas. Você escolhe qual fica em uso.",
     icone: Smile,
     href: "/configuracoes/avatar",
     tone: { bar: "bg-cat-social", chip: "bg-cat-social-soft text-cat-social" },
+    destaque: "comece por aqui",
   },
   {
     titulo: "Histórias",
-    desc: "Uma história ilustrada com o avatar pra antecipar um momento, ensaiar uma situação ou celebrar uma conquista.",
+    desc: "Uma história ilustrada pra antecipar um momento, ensaiar uma situação ou celebrar uma conquista.",
     icone: BookOpen,
     href: "/historias",
     tone: { bar: "bg-cat-sensorial", chip: "bg-cat-sensorial-soft text-cat-sensorial" },
+    usaAvatar: true,
   },
   {
     titulo: "Rotinas visuais",
-    desc: "A sequência do dia com o avatar — a criança aponta o que vem; o adolescente consulta e marca sozinho. Dá pra imprimir.",
+    desc: "A sequência do dia em cards — a criança aponta o que vem; o adolescente consulta e marca sozinho. Dá pra imprimir.",
     icone: ListChecks,
     href: "/ludico/rotinas",
     tone: { bar: "bg-cat-foco", chip: "bg-cat-foco-soft text-cat-foco" },
+    usaAvatar: true,
   },
   {
     titulo: "O que o desenho conta?",
@@ -86,8 +93,7 @@ export default function LudicoPage() {
           Apoio pelo <em className="not-italic text-brand-purple">brincar e imaginar</em>
         </h1>
         <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-          Recursos visuais com o avatar de cada um — pra preparar, seguir o dia, acalmar
-          ou imaginar algo bom acontecendo. Pra diferentes momentos e necessidades.
+          Crie o avatar de cada um e use nas histórias e rotinas — <strong className="font-medium text-foreground">o mesmo personagem em tudo</strong>. Recursos visuais pra preparar, seguir o dia ou imaginar algo bom.
         </p>
       </header>
 
@@ -107,6 +113,11 @@ export default function LudicoPage() {
                 >
                   <Icon className="size-[20px]" strokeWidth={1.8} />
                 </span>
+                {c.destaque && (
+                  <span className="rounded-full bg-brand-purple/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-brand-purple">
+                    {c.destaque}
+                  </span>
+                )}
                 {c.status && (
                   <span className="rounded-full bg-foreground/5 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-muted-foreground">
                     Em breve
@@ -116,9 +127,14 @@ export default function LudicoPage() {
               <h3 className="mt-3 font-heading text-xl font-medium leading-snug text-foreground">
                 {c.titulo}
               </h3>
-              <p className="mt-2 flex-1 text-sm leading-relaxed text-muted-foreground">
-                {c.desc}
-              </p>
+              <div className="mt-2 flex flex-1 flex-col gap-2">
+                <p className="text-sm leading-relaxed text-muted-foreground">{c.desc}</p>
+                {c.usaAvatar && (
+                  <span className="inline-flex w-fit items-center gap-1 rounded-full bg-cat-social-soft px-2 py-0.5 text-[11px] font-medium text-cat-social">
+                    <Smile className="size-3" aria-hidden /> Usa o avatar escolhido
+                  </span>
+                )}
+              </div>
               {c.href && (
                 <span className="mt-4 inline-flex items-center gap-1.5 text-xs font-semibold text-brand-purple transition-all group-hover:gap-2.5">
                   Abrir
