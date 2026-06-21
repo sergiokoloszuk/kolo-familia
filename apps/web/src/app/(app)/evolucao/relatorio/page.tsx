@@ -44,7 +44,7 @@ export default async function RelatorioPage() {
           Um relatório <em className="not-italic text-brand-purple">pra escola ou terapeuta</em>
         </h1>
         <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-          A Kolo traduz o que você registrou (o Kolo Vivo + os últimos meses) num relatório
+          A Kolo traduz o que você registrou (o Perfil + os últimos meses) num relatório
           claro. Você revisa, ajusta e baixa em PDF — fica só com você, sem link nem
           compartilhamento pela plataforma.
         </p>
@@ -52,7 +52,7 @@ export default async function RelatorioPage() {
 
       {lista.length === 0 ? (
         <p className="text-sm text-muted-foreground print:hidden">
-          Cadastre um membro no Kolo Vivo pra gerar o relatório.
+          Cadastre uma criança no Perfil pra gerar o relatório.
         </p>
       ) : (
         <RelatorioClient membros={lista} dataHoje={dataHoje} />

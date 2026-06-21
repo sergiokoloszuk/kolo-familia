@@ -129,7 +129,7 @@ export default async function EstrategiasPage({
             href="/kolo-vivo"
             className="font-semibold text-brand-purple underline-offset-4 hover:underline"
           >
-            Ir pro Kolo Vivo
+            Ir pro Perfil
           </Link>
           .
         </p>

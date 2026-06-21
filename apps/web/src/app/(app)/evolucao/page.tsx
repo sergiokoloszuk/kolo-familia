@@ -351,7 +351,7 @@ export default async function EvolucaoPage() {
             Relatório pra escola ou terapeuta
           </p>
           <p className="text-sm text-muted-foreground">
-            A Kolo traduz o Kolo Vivo + os últimos meses num PDF pra você revisar e baixar.
+            A Kolo traduz o Perfil + os últimos meses num PDF pra você revisar e baixar.
           </p>
         </div>
         <ArrowRight className="size-4 shrink-0 text-brand-purple transition-transform group-hover:translate-x-0.5" aria-hidden />
@@ -370,7 +370,7 @@ export default async function EvolucaoPage() {
             icon={Target}
             num={dominiosComMovimento.size}
             sufixo="áreas"
-            label="Domínios do Kolo Vivo com movimento"
+            label="Domínios do Perfil com movimento"
             bar="bg-cat-foco"
             chip="bg-cat-foco-bg text-cat-foco"
           />
@@ -694,7 +694,7 @@ function EventoItem({ ev }: { ev: TimelineEvento }) {
         </span>
         <div className="flex flex-1 flex-col gap-1.5">
           <p className="text-base leading-relaxed text-foreground">
-            Marco no Kolo Vivo: {ev.titulo}
+            Marco no Perfil: {ev.titulo}
             {ev.membro_nome && (
               <span className="text-muted-foreground"> · {ev.membro_nome}</span>
             )}

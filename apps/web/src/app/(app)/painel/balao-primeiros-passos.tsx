@@ -73,7 +73,7 @@ export function BalaoPrimeirosPassos() {
             </span>
             <div className="flex-1">
               <p className="font-heading text-base text-foreground">
-                Alimentar o Kolo Vivo
+                Alimentar o Perfil
               </p>
               <p className="mt-0.5 text-sm text-muted-foreground">
                 Conte mais sobre seu filho — sensorial, foco, rotina, o que ajuda.

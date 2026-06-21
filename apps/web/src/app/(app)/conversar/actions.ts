@@ -578,8 +578,8 @@ export async function confirmarAtualizacao(
           },
           { onConflict: "membro_atipico_id" },
         );
-      if (error) return { ok: false, error: `Falha ao salvar no Kolo Vivo: ${error.message}` };
-      partes.push(`${membroItens.length} ${membroItens.length === 1 ? "item" : "itens"} no Kolo Vivo`);
+      if (error) return { ok: false, error: `Falha ao salvar no Perfil: ${error.message}` };
+      partes.push(`${membroItens.length} ${membroItens.length === 1 ? "item" : "itens"} no Perfil`);
     }
 
     // Kolo Vivo da família — mesma lógica de anexar.
@@ -601,8 +601,8 @@ export async function confirmarAtualizacao(
       const { error } = await supabase
         .from("perfil_vivo_familia")
         .upsert({ family_account_id: family.id, ...secoes });
-      if (error) return { ok: false, error: `Falha ao salvar no Kolo Vivo da família: ${error.message}` };
-      partes.push(`${familiaItens.length} ${familiaItens.length === 1 ? "item" : "itens"} no Kolo Vivo da família`);
+      if (error) return { ok: false, error: `Falha ao salvar no Perfil da família: ${error.message}` };
+      partes.push(`${familiaItens.length} ${familiaItens.length === 1 ? "item" : "itens"} no Perfil da família`);
     }
 
     // Conquista/desafio → diário (precisa de criança vinculada).

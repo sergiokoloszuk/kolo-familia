@@ -101,7 +101,7 @@ export default async function CriarHistoriaPage() {
             Ninguém cadastrado ainda
           </p>
           <p className="mt-1 text-sm text-muted-foreground">
-            Adicione no Kolo Vivo e volte aqui pra criar a história.
+            Adicione no Perfil e volte aqui pra criar a história.
           </p>
         </div>
       ) : (

@@ -225,15 +225,15 @@ export function DiarioForm({
           </div>
         </div>
         {pending && form.membroAtipicoId && (
-          <p className="text-sm text-muted-foreground">Vendo se tem algo novo pro Kolo Vivo…</p>
+          <p className="text-sm text-muted-foreground">Vendo se tem algo novo pro Perfil…</p>
         )}
 
         {kvFeito === "salvo" ? (
-          <p className="text-sm font-medium text-brand-purple-dark">✓ Guardado no Kolo Vivo.</p>
+          <p className="text-sm font-medium text-brand-purple-dark">✓ Guardado no Perfil.</p>
         ) : proposta && proposta.koloVivo.length > 0 && kvFeito !== "dispensado" ? (
           <div className="w-full rounded-xl border border-brand-purple/20 bg-white p-4">
             <p className="text-sm font-medium text-foreground">
-              Percebi algo novo sobre {proposta.nome} — quer guardar no Kolo Vivo?
+              Percebi algo novo sobre {proposta.nome} — quer guardar no Perfil?
             </p>
             <ul className="mt-2 flex flex-col gap-1">
               {proposta.koloVivo.map((it, i) => (
@@ -253,7 +253,7 @@ export function DiarioForm({
             </ul>
             <div className="mt-3 flex flex-wrap gap-2">
               <Button type="button" onClick={salvarKv} disabled={kvPending}>
-                {kvPending ? "Guardando..." : "Guardar no Kolo Vivo"}
+                {kvPending ? "Guardando..." : "Guardar no Perfil"}
               </Button>
               <Button type="button" variant="ghost" onClick={() => setKvFeito("dispensado")}>
                 Agora não

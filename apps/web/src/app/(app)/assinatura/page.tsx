@@ -123,7 +123,7 @@ export default async function AssinaturaPage(props: PageProps<"/assinatura">) {
         <CardContent className="text-sm text-foreground/80">
           <ul className="flex flex-col gap-2">
             {[
-              "App completo (painel, Kolo Vivo, conversar, apoio, aprender).",
+              "App completo (painel, Perfil, conversar, apoio, aprender).",
               "Acompanhamento no WhatsApp (próxima fase).",
               "Especialistas que respondem conforme o contexto, sem você precisar escolher.",
               "Histórico nunca é apagado, mesmo se cancelar.",

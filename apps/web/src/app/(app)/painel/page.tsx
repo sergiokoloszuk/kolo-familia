@@ -550,7 +550,7 @@ export default async function PainelPage() {
                 : "comece por aqui",
           },
           {
-            titulo: "Kolo Vivo",
+            titulo: "Perfil",
             desc: "O retrato vivo de quem vocês são.",
             href: "/kolo-vivo",
             Icon: Sprout,
@@ -812,7 +812,7 @@ export default async function PainelPage() {
                 </CardTitle>
                 <CardDescription>
                   {sugestoesCount} item{sugestoesCount === 1 ? "" : "s"} esperando
-                  você no Kolo Vivo.
+                  você no Perfil.
                 </CardDescription>
               </div>
               <Badge variant="secondary">{sugestoesCount}</Badge>
@@ -824,7 +824,7 @@ export default async function PainelPage() {
                   buttonVariants({ variant: "outline", size: "sm" }),
                 )}
               >
-                Abrir Kolo Vivo
+                Abrir o Perfil
               </Link>
             </CardContent>
           </Card>
@@ -866,7 +866,7 @@ export default async function PainelPage() {
                 />
                 <span className="leading-relaxed">
                   {adaptacoesPendentesCount} sugestão
-                  {adaptacoesPendentesCount === 1 ? "" : "ões"} do Kolo Vivo
+                  {adaptacoesPendentesCount === 1 ? "" : "ões"} do Perfil
                   pra revisar.{" "}
                   <Link
                     href="/configuracoes/regras"

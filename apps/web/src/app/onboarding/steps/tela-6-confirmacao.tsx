@@ -97,14 +97,14 @@ export function Tela6Confirmacao({
               <Leaf className="size-4" aria-hidden="true" />
             </span>
             <span className="font-heading text-base text-foreground">
-              Selecione “Kolo Vivo”
+              Selecione “Perfil”
             </span>
             <span className="text-sm text-muted-foreground">
               quando quiser atualizar o que a gente sabe sobre {nomeCrianca} —
               interesses, rotina, o que mudou.
             </span>
             <span className="mt-1 inline-flex items-center gap-1 text-sm font-medium text-brand-purple">
-              Começar pelo Kolo Vivo <ArrowRight className="size-4" aria-hidden="true" />
+              Começar pelo Perfil <ArrowRight className="size-4" aria-hidden="true" />
             </span>
           </button>
 

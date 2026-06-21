@@ -141,7 +141,7 @@ export function ConversaAcoes({
         <div className="flex flex-wrap items-center gap-x-2 gap-y-1 rounded-md border border-emerald-500/40 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-700">
           <span>Pronto — {resumoOk}.</span>
           <Link href="/kolo-vivo" className="font-semibold underline underline-offset-2">
-            Ver no Kolo Vivo
+            Ver no Perfil
           </Link>
         </div>
       )}
@@ -216,7 +216,7 @@ export function ConversaAcoes({
               {proposta.proposta.koloVivo.length > 0 && (
                 <fieldset className="flex flex-col gap-2">
                   <legend className="mb-1 text-[11px] font-bold uppercase tracking-[0.14em] text-muted-foreground">
-                    Vai pro Kolo Vivo
+                    Vai pro Perfil
                   </legend>
                   {proposta.proposta.koloVivo.map((it, i) => (
                     <label

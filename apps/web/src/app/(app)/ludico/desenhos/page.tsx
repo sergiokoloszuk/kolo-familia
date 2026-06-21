@@ -72,7 +72,7 @@ export default async function DesenhosPage() {
 
       {membrosList.length === 0 ? (
         <p className="text-sm text-muted-foreground">
-          Cadastre um membro no Kolo Vivo pra começar.
+          Cadastre uma criança no Perfil pra começar.
         </p>
       ) : (
         <EnviarDesenho membros={membrosList} />

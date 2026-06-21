@@ -117,7 +117,7 @@ export function MembroEditor({ membro }: { membro: MembroData }) {
             className="mt-2 block h-1 w-10 rounded-full bg-brand-yellow md:ml-auto"
           />
           <div className="mt-1.5 text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground">
-            do Kolo Vivo preenchido
+            do Perfil preenchido
           </div>
         </div>
       </div>

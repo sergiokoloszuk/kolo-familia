@@ -45,7 +45,7 @@ type NavItem = {
  */
 const NAV_ITEMS: NavItem[] = [
   { href: "/painel", label: "Home", icon: Home },
-  { href: "/kolo-vivo", label: "Kolo Vivo", icon: Leaf },
+  { href: "/kolo-vivo", label: "Perfil", icon: Leaf },
   { href: "/estrategias", label: "Estratégias", icon: Sparkles },
   { href: "/evolucao", label: "Evolução", icon: TrendingUp },
   { href: "/ludico", label: "Lúdico", icon: Shapes }, // engloba Histórias + Rotinas visuais
@@ -125,7 +125,7 @@ export function Sidebar({
       {criancaAtiva && (
         <Link
           href="/kolo-vivo"
-          aria-label={`Abrir o Kolo Vivo de ${criancaAtiva.nome}`}
+          aria-label={`Abrir o Perfil de ${criancaAtiva.nome}`}
           className="flex items-center gap-3 rounded-2xl bg-kolo-lilas-bg-2/60 px-3 py-2.5 transition-colors hover:bg-kolo-lilas-bg-2"
         >
           <span

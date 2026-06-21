@@ -122,11 +122,11 @@ export function BoasVindasForm({
               Continuar preenchendo o perfil
             </span>
             <span className="text-sm text-muted-foreground">
-              Te levo ao Kolo Vivo, onde você atualiza tudo sobre{" "}
+              Te levo ao Perfil, onde você atualiza tudo sobre{" "}
               {nomeCrianca ?? "quem você cuida"}.
             </span>
             <span className="mt-1 inline-flex items-center gap-1 text-sm font-medium text-brand-purple">
-              Ir pro Kolo Vivo <ArrowRight className="size-4" aria-hidden />
+              Ir pro Perfil <ArrowRight className="size-4" aria-hidden />
             </span>
           </button>
 

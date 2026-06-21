@@ -144,9 +144,9 @@ export default async function AvataresIndexPage() {
       ) : (
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Sem membros cadastrados</CardTitle>
+            <CardTitle className="text-base">Ninguém cadastrado ainda</CardTitle>
             <CardDescription>
-              Adicione no Kolo Vivo e volte aqui pra criar o avatar.
+              Adicione no Perfil e volte aqui pra criar o avatar.
             </CardDescription>
           </CardHeader>
         </Card>

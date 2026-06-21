@@ -129,7 +129,7 @@ export default async function KoloVivoPage() {
           <Users aria-hidden />
         </IconCard>
         <div>
-          <Eyebrow>Kolo Vivo</Eyebrow>
+          <Eyebrow>Perfil</Eyebrow>
           <h1 className="mt-1 font-heading text-3xl text-foreground md:text-4xl">
             Quem é essa família,{" "}
             <em className="not-italic text-brand-purple">hoje</em>.

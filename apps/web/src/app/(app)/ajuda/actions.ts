@@ -10,7 +10,7 @@ import { getAnthropicClient, MODELS } from "@/lib/ia/anthropic";
  */
 export const ROTAS_AJUDA: { rota: string; label: string }[] = [
   { rota: "/painel", label: "Início" },
-  { rota: "/kolo-vivo", label: "Kolo Vivo" },
+  { rota: "/kolo-vivo", label: "Perfil" },
   { rota: "/estrategias", label: "Estratégias" },
   { rota: "/evolucao", label: "Evolução" },
   { rota: "/historias", label: "Histórias" },

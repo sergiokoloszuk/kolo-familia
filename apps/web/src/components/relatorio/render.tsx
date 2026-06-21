@@ -121,7 +121,7 @@ function RelatorioTerapeuta({
   return (
     <>
       <section>
-        <h2 className="mb-2 text-lg font-medium">Resumo do perfil (Kolo Vivo)</h2>
+        <h2 className="mb-2 text-lg font-medium">Resumo do perfil</h2>
         <Field label="Essencial" value={data.koloVivo.essencial} />
         <Field label="Como ele/ela é" value={data.koloVivo.como_e} />
         <Field label="Corpo & rotina" value={data.koloVivo.corpo_rotina} />

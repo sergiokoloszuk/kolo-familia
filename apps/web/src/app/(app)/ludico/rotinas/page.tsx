@@ -71,7 +71,7 @@ export default async function RotinasPage() {
 
       {membrosList.length === 0 ? (
         <p className="text-sm text-muted-foreground">
-          Cadastre um membro no Kolo Vivo pra criar uma rotina.
+          Cadastre uma criança no Perfil pra criar uma rotina.
         </p>
       ) : (
         <NovaRotina membros={membrosList.map((m) => ({ id: m.id, nome: m.nome }))} />

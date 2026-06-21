@@ -80,7 +80,7 @@ export default async function MeditacaoPage() {
 
       {membrosList.length === 0 ? (
         <p className="text-sm text-muted-foreground">
-          Cadastre um membro no Kolo Vivo pra começar.
+          Cadastre uma criança no Perfil pra começar.
         </p>
       ) : (
         <CriarMeditacao membros={membrosList} />
