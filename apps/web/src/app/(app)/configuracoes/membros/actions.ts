@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { dataBrParaIso, idadeAnos } from "@/lib/idade";
+import { resolveFamily } from "@/lib/auth/current-family";
 
 export type AtualizarMembroResult = { ok: true } | { ok: false; error: string };
 
@@ -41,11 +42,7 @@ export async function atualizarMembro(
     } = await supabase.auth.getUser();
     if (!user) return { ok: false, error: "Não autenticado." };
 
-    const { data: family } = await supabase
-      .from("family_accounts")
-      .select("id")
-      .eq("user_id", user.id)
-      .single();
+    const { data: family } = await resolveFamily(supabase);
     if (!family) return { ok: false, error: "Família não inicializada." };
 
     const { error } = await supabase

@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
+import { resolveFamily } from "@/lib/auth/current-family";
 
 /**
  * Salva o gênero de um membro a partir do banner do painel. Usado quando
@@ -25,11 +26,7 @@ export async function salvarGeneroMembro(
       data: { user },
     } = await supabase.auth.getUser();
     if (!user) return { ok: false, error: "Não autenticado." };
-    const { data: family } = await supabase
-      .from("family_accounts")
-      .select("id")
-      .eq("user_id", user.id)
-      .single();
+    const { data: family } = await resolveFamily(supabase);
     if (!family) return { ok: false, error: "Família não inicializada." };
 
     const { error } = await supabase

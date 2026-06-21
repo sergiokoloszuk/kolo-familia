@@ -9,6 +9,7 @@ import { idadeAnos } from "@/lib/idade";
 import { gerarRoteiro, ilustrarPaginas, ilustrarComRetryPublico } from "@/lib/historias/gerar";
 import { AVATAR_ESTILOS, coerceEstilo } from "@/lib/imagem/avatar-prompt";
 import { pathDeImagem } from "@/lib/storage/imagens";
+import { resolveFamily } from "@/lib/auth/current-family";
 
 /**
  * Busca os bytes do avatar com retry. O bucket é PRIVADO, então baixa via
@@ -85,11 +86,7 @@ export async function criarHistoria(
       data: { user },
     } = await supabase.auth.getUser();
     if (!user) return { ok: false, error: "Não autenticado." };
-    const { data: family } = await supabase
-      .from("family_accounts")
-      .select("id")
-      .eq("user_id", user.id)
-      .single();
+    const { data: family } = await resolveFamily(supabase);
     if (!family) return { ok: false, error: "Família não inicializada." };
     await requireActiveWrite(family.id);
 
@@ -305,11 +302,7 @@ export async function responderEnriquecimento(
       data: { user },
     } = await supabase.auth.getUser();
     if (!user) return { ok: false, error: "Não autenticado." };
-    const { data: family } = await supabase
-      .from("family_accounts")
-      .select("id")
-      .eq("user_id", user.id)
-      .single();
+    const { data: family } = await resolveFamily(supabase);
     if (!family) return { ok: false, error: "Família não inicializada." };
 
     const { data: membro } = await supabase
@@ -373,11 +366,7 @@ export async function excluirHistoria(input: { id: string }): Promise<AcaoResult
       data: { user },
     } = await supabase.auth.getUser();
     if (!user) return { ok: false, error: "Não autenticado." };
-    const { data: family } = await supabase
-      .from("family_accounts")
-      .select("id")
-      .eq("user_id", user.id)
-      .single();
+    const { data: family } = await resolveFamily(supabase);
     if (!family) return { ok: false, error: "Família não inicializada." };
 
     const { error } = await supabase
@@ -402,11 +391,7 @@ export async function incrementarLeituras(input: { id: string }): Promise<void> 
       data: { user },
     } = await supabase.auth.getUser();
     if (!user) return;
-    const { data: family } = await supabase
-      .from("family_accounts")
-      .select("id")
-      .eq("user_id", user.id)
-      .single();
+    const { data: family } = await resolveFamily(supabase);
     if (!family) return;
 
     // Lê + escreve (sem RPC) — chamada infrequente, não vale uma migração.
@@ -442,11 +427,7 @@ export async function regenerarPagina(
       data: { user },
     } = await supabase.auth.getUser();
     if (!user) return { ok: false, error: "Não autenticado." };
-    const { data: family } = await supabase
-      .from("family_accounts")
-      .select("id")
-      .eq("user_id", user.id)
-      .single();
+    const { data: family } = await resolveFamily(supabase);
     if (!family) return { ok: false, error: "Família não inicializada." };
     await requireActiveWrite(family.id);
 

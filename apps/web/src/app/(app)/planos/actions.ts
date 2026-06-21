@@ -6,6 +6,7 @@ import { z } from "zod";
 import { createClient, createServiceRoleClient } from "@/lib/supabase/server";
 import { requireActiveWrite } from "@/lib/auth/require-active-write";
 import { gerarSecoesPlanoMultiCall } from "@/lib/ia/plano";
+import { resolveFamily } from "@/lib/auth/current-family";
 
 async function requireFamily() {
   const supabase = await createClient();
@@ -13,11 +14,7 @@ async function requireFamily() {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) throw new Error("Não autenticado");
-  const { data: family } = await supabase
-    .from("family_accounts")
-    .select("id")
-    .eq("user_id", user.id)
-    .single();
+  const { data: family } = await resolveFamily(supabase);
   if (!family) throw new Error("Família não inicializada");
   return { supabase, family };
 }

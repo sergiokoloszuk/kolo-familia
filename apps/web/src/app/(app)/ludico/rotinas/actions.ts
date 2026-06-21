@@ -6,6 +6,7 @@ import { z } from "zod";
 import { createClient, createServiceRoleClient } from "@/lib/supabase/server";
 import { idadeAnos } from "@/lib/idade";
 import { gerarRoteiroRotina, ilustrarCards } from "@/lib/ludico/gerar";
+import { resolveFamily } from "@/lib/auth/current-family";
 
 type Ok<T = object> = { ok: true } & T;
 type Fail = { ok: false; error: string };
@@ -16,11 +17,7 @@ async function requireFamily() {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) throw new Error("Não autenticado");
-  const { data: family } = await supabase
-    .from("family_accounts")
-    .select("id")
-    .eq("user_id", user.id)
-    .single();
+  const { data: family } = await resolveFamily(supabase);
   if (!family) throw new Error("Família não inicializada");
   return { supabase, family };
 }

@@ -5,6 +5,7 @@ import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { DOMINIOS, membroCampoStorage } from "./dominios";
 import { detectarMarcos } from "@/lib/kolo-vivo/incorporar";
+import { resolveFamily } from "@/lib/auth/current-family";
 
 async function requireFamily() {
   const supabase = await createClient();
@@ -12,11 +13,7 @@ async function requireFamily() {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) throw new Error("Não autenticado");
-  const { data: family } = await supabase
-    .from("family_accounts")
-    .select("id")
-    .eq("user_id", user.id)
-    .single();
+  const { data: family } = await resolveFamily(supabase);
   if (!family) throw new Error("Família não inicializada");
   return { supabase, user, family };
 }

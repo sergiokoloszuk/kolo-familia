@@ -12,6 +12,7 @@ import {
   AVATAR_ESTILO_VALUES,
   type AvatarDescricao,
 } from "@/lib/imagem/avatar-prompt";
+import { resolveFamily } from "@/lib/auth/current-family";
 
 async function requireFamilyAndMembro(membroId: string) {
   const supabase = await createClient();
@@ -19,11 +20,7 @@ async function requireFamilyAndMembro(membroId: string) {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) throw new Error("Não autenticado");
-  const { data: family } = await supabase
-    .from("family_accounts")
-    .select("id")
-    .eq("user_id", user.id)
-    .single();
+  const { data: family } = await resolveFamily(supabase);
   if (!family) throw new Error("Família não inicializada");
   const { data: membro } = await supabase
     .from("membros_atipicos")
@@ -145,11 +142,7 @@ export async function vestirAvatar(
       data: { user },
     } = await supabase.auth.getUser();
     if (!user) return { ok: false, error: "Não autenticado" };
-    const { data: family } = await supabase
-      .from("family_accounts")
-      .select("id")
-      .eq("user_id", user.id)
-      .single();
+    const { data: family } = await resolveFamily(supabase);
     if (!family) return { ok: false, error: "Família não inicializada" };
     await requireActiveWrite(family.id);
 
@@ -233,11 +226,7 @@ export async function selecionarAvatar(
       data: { user },
     } = await supabase.auth.getUser();
     if (!user) return { ok: false, error: "Não autenticado" };
-    const { data: family } = await supabase
-      .from("family_accounts")
-      .select("id")
-      .eq("user_id", user.id)
-      .single();
+    const { data: family } = await resolveFamily(supabase);
     if (!family) return { ok: false, error: "Família não inicializada" };
 
     const { data: alvo } = await supabase
@@ -278,11 +267,7 @@ export async function excluirAvatar(
       data: { user },
     } = await supabase.auth.getUser();
     if (!user) return { ok: false, error: "Não autenticado" };
-    const { data: family } = await supabase
-      .from("family_accounts")
-      .select("id")
-      .eq("user_id", user.id)
-      .single();
+    const { data: family } = await resolveFamily(supabase);
     if (!family) return { ok: false, error: "Família não inicializada" };
 
     const { data: alvo } = await supabase

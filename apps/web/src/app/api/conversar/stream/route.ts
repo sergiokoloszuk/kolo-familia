@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getAnthropicClient, MODELS } from "@/lib/ia/anthropic";
 import { prepararRespostaStream } from "@/lib/ia/engine";
 import { requireActiveWrite } from "@/lib/auth/require-active-write";
+import { resolveFamily } from "@/lib/auth/current-family";
 
 /**
  * Resposta da Kolo em STREAMING (texto token a token).
@@ -17,11 +18,7 @@ export async function POST(req: NextRequest) {
     } = await supabase.auth.getUser();
     if (!user) return new Response("Não autenticado", { status: 401 });
 
-    const { data: family } = await supabase
-      .from("family_accounts")
-      .select("id")
-      .eq("user_id", user.id)
-      .single();
+    const { data: family } = await resolveFamily(supabase);
     if (!family) return new Response("Família não inicializada", { status: 400 });
 
     const body = (await req.json().catch(() => null)) as { conversaId?: string } | null;

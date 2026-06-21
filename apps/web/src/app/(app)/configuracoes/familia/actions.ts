@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
+import { resolveFamily } from "@/lib/auth/current-family";
 
 export type ActionResult = { ok: true; id?: string } | { ok: false; error: string };
 
@@ -50,11 +51,7 @@ async function familyId(): Promise<string> {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) throw new Error("Não autenticado");
-  const { data: family } = await supabase
-    .from("family_accounts")
-    .select("id")
-    .eq("user_id", user.id)
-    .maybeSingle();
+  const { data: family } = await resolveFamily(supabase);
   if (!family) throw new Error("Família não encontrada");
   return family.id as string;
 }

@@ -11,6 +11,7 @@ import {
   type Intencao,
   type TemaSugerido,
 } from "@/lib/ludico/meditacao";
+import { resolveFamily } from "@/lib/auth/current-family";
 
 type Ok<T = object> = { ok: true } & T;
 type Fail = { ok: false; error: string };
@@ -21,11 +22,7 @@ async function requireFamily() {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) throw new Error("Não autenticado");
-  const { data: family } = await supabase
-    .from("family_accounts")
-    .select("id")
-    .eq("user_id", user.id)
-    .single();
+  const { data: family } = await resolveFamily(supabase);
   if (!family) throw new Error("Família não inicializada");
   return { supabase, family };
 }
