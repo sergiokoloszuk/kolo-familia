@@ -22,7 +22,7 @@ const Schema = z.object({
 export type DedupOperacao = z.infer<typeof Schema>["operacao"];
 export type DedupResult = z.infer<typeof Schema>;
 
-const SYSTEM = `Você decide o que fazer com um fato NOVO sobre uma criança atípica, comparando com o texto que JÁ existe na mesma área do perfil (Kolo Vivo).
+const SYSTEM = `Você decide o que fazer com um fato NOVO sobre uma criança atípica, comparando com o texto que JÁ existe na mesma área do perfil.
 
 Devolva APENAS JSON: { "operacao": "adicionar" | "reescrever" | "skip", "texto": "..." }
 

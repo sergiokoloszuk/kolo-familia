@@ -28,7 +28,7 @@ function tipoDe(c: SubCampo): string {
   return "texto curto";
 }
 
-const SYSTEM = `Você organiza o perfil de uma criança atípica (Kolo Vivo). Uma ÁREA tem CAMPOS específicos. Você recebe os campos (rótulo, tipo e o que JÁ está em cada um) e um FATO NOVO que a mãe contou. Coloque o fato no campo certo, integrando.
+const SYSTEM = `Você organiza o perfil de uma criança atípica. Uma ÁREA tem CAMPOS específicos. Você recebe os campos (rótulo, tipo e o que JÁ está em cada um) e um FATO NOVO que a mãe contou. Coloque o fato no campo certo, integrando.
 
 Devolva APENAS JSON: { "skip": true|false, "campo": "<key do campo>"|null, "valor": "..." }
 

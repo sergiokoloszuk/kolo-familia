@@ -175,7 +175,7 @@ export async function gerarRespostaAyla(
   }
   if (params.koloVivoResumo.trim() || (params.estrategiasRecentes?.length ?? 0) > 0) {
     notas.push(
-      `Você acompanha esta família pelo Kolo Vivo e pelas Estratégias (blocos acima). Quando ${params.nomeMae} perguntar o que você sabe da criança, pedir um resumo, ou quando ajudar a conversa, MOSTRE que está acompanhando: cite de leve o que importa (idade, perfil, 1-2 desafios principais) e, se houver, uma pergunta recente das Estratégias. Não despeje tudo — escolha o que é relevante pro momento.`,
+      `Você acompanha esta família pelo Perfil e pelas Estratégias (blocos acima). Quando ${params.nomeMae} perguntar o que você sabe da criança, pedir um resumo, ou quando ajudar a conversa, MOSTRE que está acompanhando: cite de leve o que importa (idade, perfil, 1-2 desafios principais) e, se houver, uma pergunta recente das Estratégias. Não despeje tudo — escolha o que é relevante pro momento.`,
     );
   }
   if (params.precisaEscolherMembro) {
@@ -198,7 +198,7 @@ export async function gerarRespostaAyla(
   }
   if (params.sinais.temSugestaoKoloVivo) {
     notas.push(
-      `Apareceu algo que pode valer guardar no perfil da criança (Kolo Vivo). Se — e só se — fizer sentido no fluxo, pergunte de leve se ela quer que eu guarde. Sem insistir.`,
+      `Apareceu algo que pode valer guardar no perfil da criança. Se — e só se — fizer sentido no fluxo, pergunte de leve se ela quer que eu guarde. Sem insistir.`,
     );
   }
   if (notas.length > 0) {

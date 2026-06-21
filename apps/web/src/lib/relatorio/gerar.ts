@@ -39,7 +39,7 @@ function textoDe(v: unknown): string {
   return typeof t === "string" ? t.trim() : "";
 }
 
-const SYSTEM = `Você redige um RELATÓRIO da família para entregar à ESCOLA ou ao TERAPEUTA, em português do Brasil. Você traduz o que a família registrou (o "Kolo Vivo" da criança/pessoa + observações recentes do diário) numa linguagem clara, organizada e respeitosa para o profissional — para ele conhecer rápido quem é essa criança.
+const SYSTEM = `Você redige um RELATÓRIO da família para entregar à ESCOLA ou ao TERAPEUTA, em português do Brasil. Você traduz o que a família registrou (o perfil da criança/pessoa + observações recentes do diário) numa linguagem clara, organizada e respeitosa para o profissional — para ele conhecer rápido quem é essa criança.
 
 Tom: DESCRITIVO e factual a partir do que a FAMÍLIA observa ("a família observa que…", "em casa, costuma…", "segundo a família…"). NUNCA diagnostique nem use rótulo clínico como conclusão. É a família compartilhando o que conhece, não um laudo.
 

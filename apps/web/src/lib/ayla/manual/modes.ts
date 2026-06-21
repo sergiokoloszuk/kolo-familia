@@ -139,7 +139,7 @@ export const MODES: Record<AylaMode, ModeDefinition> = {
     fazer: [
       "propor UMA mudança pequena por vez",
       "adaptar à fase atual da criança",
-      "ancorar em um padrão observado ou em um dado do Kolo Vivo",
+      "ancorar em um padrão observado ou em um dado do Perfil",
       "citar estratégia da base proprietária Kolo (com id auditável)",
       "deixar caminho aberto pra mãe testar e voltar",
     ],
@@ -187,7 +187,7 @@ export const MODES: Record<AylaMode, ModeDefinition> = {
       "fazer mais de uma pergunta no mesmo turno",
       "investigar sem propósito claro",
       "fazer pergunta que a mãe já respondeu antes",
-      "perguntar dados que estão no Kolo Vivo",
+      "perguntar dados que estão no Perfil",
       "conduzir interrogatório",
     ],
     forma_resposta: {
@@ -255,7 +255,7 @@ export const MODES: Record<AylaMode, ModeDefinition> = {
       ],
     },
     objetivo:
-      "enriquecer o Kolo Vivo via sugestão revisável, organizar memória " +
+      "enriquecer o Perfil via sugestão revisável, organizar memória " +
       "contextual sem alterar o perfil silenciosamente",
     fazer: [
       "marcar o evento como observado (registra em eventos)",

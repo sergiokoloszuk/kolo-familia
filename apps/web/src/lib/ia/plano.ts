@@ -65,7 +65,7 @@ const ORDEM_SECOES = [
 // só estas entram condicionalmente; o resto é SEMPRE
 const SECOES_CONDICIONAIS = new Set<string>(["rotina", "historia_social"]);
 
-const RECEITA_ENTENDER = `Abra o plano com 1-2 parágrafos que ACOLHEM e mostram que você enxerga a força da criança — e levante a hipótese central do que pode estar por trás (possibilidade, NUNCA causa afirmada). Ancore nos dados REAIS do Kolo Vivo (interesses, jeito, desafios). Específico e humano, nada genérico. Termine convidando a observar com calma. NÃO dê soluções aqui — elas vêm nas seções seguintes.`;
+const RECEITA_ENTENDER = `Abra o plano com 1-2 parágrafos que ACOLHEM e mostram que você enxerga a força da criança — e levante a hipótese central do que pode estar por trás (possibilidade, NUNCA causa afirmada). Ancore nos dados REAIS do Perfil (interesses, jeito, desafios). Específico e humano, nada genérico. Termine convidando a observar com calma. NÃO dê soluções aqui — elas vêm nas seções seguintes.`;
 const RECEITA_OBSERVAR = `Feche com 1-3 coisas CONCRETAS pra o adulto reparar nos próximos dias, ligadas à hipótese — o que pode confirmar ou descartar, e o que guardar. Específico ao caso, não conselho genérico.`;
 
 /**
@@ -96,7 +96,7 @@ ${blocos}
 # Regras
 - Inclua TODAS as seções "SEMPRE presente". As "só se o tema pedir" entram quando fizerem sentido pro desafio.
 - PROFUNDIDADE de verdade, igual aos botões: brincadeiras/atividades = VÁRIAS (3+), concretas, com materiais e duração; crenças = até 3 da CRIANÇA + 3 da RESPONSÁVEL (hipótese gentil, jamais julgamento) + reenquadre acolhedor. Sem clichês.
-- Use os dados REAIS do Kolo Vivo e do contexto (interesses, jeito, desafios) — personalize de verdade, não invente.
+- Use os dados REAIS do Perfil e do contexto (interesses, jeito, desafios) — personalize de verdade, não invente.
 - Cada ideia/frase mora em UMA seção só — não repita entre seções.
 - Voz de amiga sábia e calorosa. Markdown leve dentro de cada seção (listas, *itálico* na frase pronta).
 ${SISTEMA_APRENDIZADO}

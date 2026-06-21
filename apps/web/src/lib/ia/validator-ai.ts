@@ -51,7 +51,7 @@ const SYSTEM_FALLBACK = `Você é o Validador IA do Kolo Família. Sua única fu
 
 # Critérios (Adendo PRD v1 §4)
 
-A1. **Cita Kolo Vivo** — a resposta cita pelo menos UM elemento concreto do contexto da família: nome da criança, idade, perfil/diagnóstico, interesse específico, ou desafio específico que foi passado. Genérico não conta.
+A1. **Cita o Perfil** — a resposta cita pelo menos UM elemento concreto do contexto da família: nome da criança, idade, perfil/diagnóstico, interesse específico, ou desafio específico que foi passado. Genérico não conta.
 
 A2. **Compatível com idade** — as orientações/atividades/exemplos sugeridos fazem sentido para a faixa etária da criança. Brincadeira de bebê pra adolescente falha. Conselho pra criança de 8 anos falha em bebê.
 
@@ -134,7 +134,7 @@ Audite a resposta nos 4 critérios e devolva o JSON.`;
   // Conta falhas
   const falhas: string[] = [];
   if (!parsed.cita_kolo_vivo.ok) {
-    falhas.push(`A1 (cita Kolo Vivo): ${parsed.cita_kolo_vivo.motivo ?? "sem motivo"}`);
+    falhas.push(`A1 (cita o Perfil): ${parsed.cita_kolo_vivo.motivo ?? "sem motivo"}`);
   }
   if (!parsed.compativel_com_idade.ok) {
     falhas.push(`A2 (compatível com idade): ${parsed.compativel_com_idade.motivo ?? "sem motivo"}`);

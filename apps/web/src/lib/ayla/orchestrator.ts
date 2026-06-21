@@ -795,7 +795,7 @@ export async function processInbound(
         family_account_id: family.id,
         membro_atipico_id: aplicada.membro_atipico_id,
         phone: inbound.phoneE164,
-        texto: `Pronto, guardei no Kolo Vivo${aplicada.nomeMembro ? ` do ${aplicada.nomeMembro}` : ""}: "${aplicada.texto}". 🌿`,
+        texto: `Pronto, guardei no Perfil${aplicada.nomeMembro ? ` do ${aplicada.nomeMembro}` : ""}: "${aplicada.texto}". 🌿`,
         category: "reativa",
         tipo: "confirmacao_sugestao",
       });

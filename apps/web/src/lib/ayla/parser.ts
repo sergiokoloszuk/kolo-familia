@@ -51,7 +51,7 @@ const SYSTEM_PROMPT_FALLBACK = `Você é o parser da Ayla — converte uma frase
 - sugestao_kolo_vivo=true só se a mensagem revelou algo NOVO sobre o membro que vale arquivar (ex: "descobri que ele acalma com música baixa", "passou a aceitar morango"). Caso contrário false.
 - Quando sugestao_kolo_vivo=true, escolha campo_kolo_vivo_sugerido pelo DOMÍNIO mais específico da lista abaixo e escreva texto_kolo_vivo_sugerido como um fato curto (1 frase).
 
-# Domínios do Kolo Vivo (valores válidos de campo_kolo_vivo_sugerido)
+# Domínios do Perfil (valores válidos de campo_kolo_vivo_sugerido)
 Escolha sempre o MAIS específico:
 - sensorial — sons, texturas, luz, toque; o que acalma ou incomoda o corpo
 - nutricional — comida: o que come, recusa ou passou a aceitar; como prefere comer

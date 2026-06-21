@@ -33,7 +33,7 @@ const FEATURES: Array<{ slug: string; descricao: string }> = [
   {
     slug: "kolo_vivo",
     descricao:
-      "Kolo Vivo: cada filho tem um perfil que vai crescendo conforme você me conta — gostos, gatilhos, rotina, jeito de ser. Você abre no app e vê tudo organizado.",
+      "Perfil: cada filho tem um retrato que vai crescendo conforme você me conta — gostos, gatilhos, rotina, jeito de ser. Você abre no app e vê tudo organizado.",
   },
   {
     slug: "historias",
@@ -43,7 +43,7 @@ const FEATURES: Array<{ slug: string; descricao: string }> = [
   {
     slug: "sugestoes",
     descricao:
-      "Sugestões: quando vejo um padrão repetindo no que você me conta, eu proponho uma prática pra você experimentar. Fica como sugestão no Kolo Vivo, você aceita ou ignora.",
+      "Sugestões: quando vejo um padrão repetindo no que você me conta, eu proponho uma prática pra você experimentar. Fica como sugestão no Perfil, você aceita ou ignora.",
   },
   {
     slug: "audio",
@@ -250,7 +250,7 @@ Estrutura sugerida:
 - Frase 2: a pergunta em si, do jeito ${ctx.nomeMae} contaria
 - Frase 3 (curta): "qualquer coisa serve — uma palavra, um áudio"
 
-NÃO use as palavras "neurodivergente", "perfil", "Kolo Vivo", "banco de dados", "registro". Fala como amiga curiosa.`;
+NÃO use as palavras "neurodivergente", "perfil", "banco de dados", "registro". Fala como amiga curiosa.`;
 }
 
 export async function gerarMensagemEspontanea(

@@ -185,7 +185,7 @@ const gatilhoRecorrente: RegraEvaluator = async (supabase, ctx) => {
     fired: true,
     severidade: "info",
     membro_atipico_id: melhor.membroId,
-    mensagem: `Você marcou '${melhor.gatilho}' como possível gatilho ${melhor.qty} vezes nos últimos ${janelaDias} dias. Quer registrar isso no Kolo Vivo pra que a IA já chegue sabendo?`,
+    mensagem: `Você marcou '${melhor.gatilho}' como possível gatilho ${melhor.qty} vezes nos últimos ${janelaDias} dias. Quer registrar isso no Perfil pra que a IA já chegue sabendo?`,
     contexto: {
       gatilho: melhor.gatilho,
       qty: melhor.qty,
@@ -193,7 +193,7 @@ const gatilhoRecorrente: RegraEvaluator = async (supabase, ctx) => {
     },
     sugestaoAdaptacao: {
       tipo: "adicionar_kolo_vivo_desafio",
-      titulo: `Adicionar '${melhor.gatilho}' aos desafios do Kolo Vivo`,
+      titulo: `Adicionar '${melhor.gatilho}' aos desafios do Perfil`,
       descricao:
         "Quando aceito, eu acrescento esse texto na lista 'desafios_regulacao' da camada1 do membro. Reversível — a gente desfaz depois se quiser.",
       membro_atipico_id: melhor.membroId,

@@ -19,7 +19,7 @@ export const SEED_PROMPTS: SeedPrompt[] = [
     key: "parser_ayla",
     label: "Parser da Ayla (inbound WhatsApp)",
     description:
-      "Recebe a frase livre da mãe (resposta da pergunta diária no WhatsApp) e devolve JSON estruturado com conquista, desafio, emoção, camada B do adulto, sugestão de Kolo Vivo etc. Usado pelo orchestrator em processInbound.",
+      "Recebe a frase livre da mãe (resposta da pergunta diária no WhatsApp) e devolve JSON estruturado com conquista, desafio, emoção, camada B do adulto, sugestão de Perfil etc. Usado pelo orchestrator em processInbound.",
     scope: "ayla",
     system_text: `Você é o parser da Ayla — converte uma frase livre da mãe (resposta a pergunta diária no WhatsApp) em estrutura.
 
@@ -32,7 +32,7 @@ export const SEED_PROMPTS: SeedPrompt[] = [
 - sugestao_kolo_vivo=true só se a mensagem revelou algo NOVO sobre o membro que vale arquivar (ex: "descobri que ele acalma com música baixa", "passou a aceitar morango"). Caso contrário false.
 - Quando sugestao_kolo_vivo=true, escolha campo_kolo_vivo_sugerido pelo DOMÍNIO mais específico da lista abaixo e escreva texto_kolo_vivo_sugerido como um fato curto (1 frase).
 
-# Domínios do Kolo Vivo (valores válidos de campo_kolo_vivo_sugerido)
+# Domínios do Perfil (valores válidos de campo_kolo_vivo_sugerido)
 Escolha sempre o MAIS específico:
 - sensorial — sons, texturas, luz, toque; o que acalma ou incomoda o corpo
 - nutricional — comida: o que come, recusa ou passou a aceitar; como prefere comer
@@ -136,13 +136,13 @@ Para minutaNovaSkill (só quando "nova"):
     key: "validador_ai",
     label: "Validador IA (semântico)",
     description:
-      "Audita a resposta da skill em 4 critérios semânticos (cita Kolo Vivo, compatível com idade, incorpora interesse quando há atividade lúdica, abre hipóteses). Roda após validators regex. Tolera 1 falha, 2+ regenera.",
+      "Audita a resposta da skill em 4 critérios semânticos (cita o Perfil, compatível com idade, incorpora interesse quando há atividade lúdica, abre hipóteses). Roda após validators regex. Tolera 1 falha, 2+ regenera.",
     scope: "validador",
     system_text: `Você é o Validador IA do Kolo Família. Sua única função é auditar uma resposta de skill em 4 critérios semânticos e retornar um JSON estrito. Sem texto antes/depois.
 
 # Critérios (Adendo PRD v1 §4)
 
-A1. **Cita Kolo Vivo** — a resposta cita pelo menos UM elemento concreto do contexto da família: nome da criança, idade, perfil/diagnóstico, interesse específico, ou desafio específico que foi passado. Genérico não conta.
+A1. **Cita o Perfil** — a resposta cita pelo menos UM elemento concreto do contexto da família: nome da criança, idade, perfil/diagnóstico, interesse específico, ou desafio específico que foi passado. Genérico não conta.
 
 A2. **Compatível com idade** — as orientações/atividades/exemplos sugeridos fazem sentido para a faixa etária da criança. Brincadeira de bebê pra adolescente falha. Conselho pra criança de 8 anos falha em bebê.
 

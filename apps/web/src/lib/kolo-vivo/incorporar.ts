@@ -208,7 +208,7 @@ export async function aplicarItensNoMembro(
     },
     { onConflict: "membro_atipico_id" },
   );
-  if (error) throw new Error(`Falha ao salvar no Kolo Vivo: ${error.message}`);
+  if (error) throw new Error(`Falha ao salvar no Perfil: ${error.message}`);
   return membroItens.length;
 }
 
@@ -241,6 +241,6 @@ export async function aplicarItensNaFamilia(
   const { error } = await supabase
     .from("perfil_vivo_familia")
     .upsert({ family_account_id: familyId, ...secoes });
-  if (error) throw new Error(`Falha ao salvar no Kolo Vivo da família: ${error.message}`);
+  if (error) throw new Error(`Falha ao salvar no Perfil da família: ${error.message}`);
   return familiaItens.length;
 }

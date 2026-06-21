@@ -28,7 +28,7 @@ const Schema = z.object({
 });
 export type ConflitoResult = { campo: string; descricao: string } | null;
 
-const SYSTEM = `Você compara um TRECHO recém-atualizado do perfil de uma criança atípica (Kolo Vivo) com OUTRAS áreas do mesmo perfil, procurando uma CONTRADIÇÃO FACTUAL clara entre elas.
+const SYSTEM = `Você compara um TRECHO recém-atualizado do perfil de uma criança atípica com OUTRAS áreas do mesmo perfil, procurando uma CONTRADIÇÃO FACTUAL clara entre elas.
 
 Devolva APENAS JSON: { "conflito": true|false, "campo": "<chave da área que conflita>"|null, "descricao": "..." }
 
