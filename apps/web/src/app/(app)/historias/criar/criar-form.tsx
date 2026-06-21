@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Sparkles, Wand2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { cn } from "@/lib/utils";
 import { criarHistoria, responderEnriquecimento, type Enriquecimento } from "../actions";
 
 const EXEMPLOS = [
@@ -14,17 +15,28 @@ const EXEMPLOS = [
   "Antecipar o almoço de domingo na casa da vó",
 ];
 
-export function CriarHistoriaForm({
-  criancas,
-}: {
-  criancas: { id: string; nome: string }[];
-}) {
+type Avatar = { id: string; url: string; selecionado: boolean };
+type Crianca = { id: string; nome: string; avatares: Avatar[] };
+
+function avatarPadrao(avs: Avatar[]): string {
+  return (avs.find((a) => a.selecionado) ?? avs[0])?.id ?? "";
+}
+
+export function CriarHistoriaForm({ criancas }: { criancas: Crianca[] }) {
   const router = useRouter();
   const [membroId, setMembroId] = useState(criancas[0]?.id ?? "");
+  const [avatarId, setAvatarId] = useState(() => avatarPadrao(criancas[0]?.avatares ?? []));
   const [descricao, setDescricao] = useState("");
   const [nPaginas, setNPaginas] = useState(5);
   const [erro, setErro] = useState<string | null>(null);
   const [pending, start] = useTransition();
+
+  const avatares = criancas.find((c) => c.id === membroId)?.avatares ?? [];
+
+  function trocarCrianca(id: string) {
+    setMembroId(id);
+    setAvatarId(avatarPadrao(criancas.find((c) => c.id === id)?.avatares ?? []));
+  }
   // Compreensão ativa (Fatia 3.2): perguntinha de leve depois de gerar.
   const [enriq, setEnriq] = useState<(Enriquecimento & { id: string }) | null>(null);
   const [salvandoOpcao, setSalvandoOpcao] = useState(false);
@@ -33,7 +45,7 @@ export function CriarHistoriaForm({
     if (!descricao.trim() || pending) return;
     setErro(null);
     start(async () => {
-      const r = await criarHistoria({ membroId, descricao, nPaginas });
+      const r = await criarHistoria({ membroId, descricao, nPaginas, avatarId: avatarId || undefined });
       if (!r.ok) {
         setErro(r.error);
         return;
@@ -136,7 +148,7 @@ export function CriarHistoriaForm({
           <select
             id="crianca"
             value={membroId}
-            onChange={(e) => setMembroId(e.target.value)}
+            onChange={(e) => trocarCrianca(e.target.value)}
             className="flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
           >
             {criancas.map((c) => (
@@ -145,6 +157,37 @@ export function CriarHistoriaForm({
               </option>
             ))}
           </select>
+        </div>
+      )}
+
+      {avatares.length > 1 && (
+        <div className="flex flex-col gap-1.5">
+          <Label>Com qual avatar?</Label>
+          <div className="flex flex-wrap gap-2.5">
+            {avatares.map((a) => {
+              const ativo = a.id === avatarId;
+              return (
+                <button
+                  key={a.id}
+                  type="button"
+                  onClick={() => setAvatarId(a.id)}
+                  aria-pressed={ativo}
+                  className={cn(
+                    "relative overflow-hidden rounded-xl border-2 transition-colors",
+                    ativo ? "border-brand-purple" : "border-transparent hover:border-brand-purple/40",
+                  )}
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={a.url} alt="Avatar" className="size-16 object-cover" />
+                  {a.selecionado && (
+                    <span className="absolute bottom-0 inset-x-0 bg-brand-purple/85 py-0.5 text-center text-[9px] font-semibold uppercase tracking-wide text-white">
+                      em uso
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
         </div>
       )}
 

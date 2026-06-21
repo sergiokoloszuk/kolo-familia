@@ -3,6 +3,7 @@ import { ArrowLeft } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { loadFamilyContext } from "@/lib/auth/require-user";
+import { assinarImagens } from "@/lib/storage/imagens";
 import { CriarHistoriaForm } from "./criar-form";
 
 export const metadata = { title: "Criar história — Kolo Família" };
@@ -18,21 +19,53 @@ export default async function CriarHistoriaPage() {
 
   const { data: membros } = await supabase
     .from("membros_atipicos")
-    .select("id, nome, avatares_membros_atipicos(imagem_url, selecionado)")
+    .select("id, nome, avatares_membros_atipicos(id, imagem_url, selecionado, created_at)")
     .eq("family_account_id", family!.id)
     .eq("ativo", true)
     .order("created_at", { ascending: true });
 
-  const todas = (membros ?? []).map((m) => {
-    const arr = Array.isArray(m.avatares_membros_atipicos)
-      ? m.avatares_membros_atipicos
-      : m.avatares_membros_atipicos
-        ? [m.avatares_membros_atipicos]
-        : [];
-    const a = arr.find((x) => x?.selecionado) ?? arr[0];
-    return { id: m.id as string, nome: m.nome as string, temAvatar: Boolean(a?.imagem_url) };
+  type AvRow = {
+    id: string;
+    imagem_url: string | null;
+    selecionado: boolean | null;
+    created_at: string | null;
+  };
+
+  // Por criança: ordena os avatares (em uso primeiro, depois recentes).
+  const perMembro = (membros ?? []).map((m) => {
+    const arr = (
+      Array.isArray(m.avatares_membros_atipicos)
+        ? m.avatares_membros_atipicos
+        : m.avatares_membros_atipicos
+          ? [m.avatares_membros_atipicos]
+          : []
+    ) as AvRow[];
+    const avs = [...arr].sort((a, b) => {
+      if (Boolean(b.selecionado) !== Boolean(a.selecionado)) return b.selecionado ? 1 : -1;
+      return (b.created_at ?? "").localeCompare(a.created_at ?? "");
+    });
+    return { id: m.id as string, nome: m.nome as string, avs };
   });
-  const comAvatar = todas.filter((m) => m.temAvatar);
+
+  // Assina todas as URLs num lote só (bucket privado) e redistribui.
+  const signed = await assinarImagens(
+    supabase,
+    perMembro.flatMap((pm) => pm.avs.map((a) => a.imagem_url ?? null)),
+  );
+  let idx = 0;
+  const criancas = perMembro.map((pm) => {
+    const avatares = pm.avs
+      .map((a) => ({
+        id: a.id,
+        url: signed[idx++] ?? a.imagem_url ?? null,
+        selecionado: Boolean(a.selecionado),
+      }))
+      .filter((a): a is { id: string; url: string; selecionado: boolean } => Boolean(a.url));
+    return { id: pm.id, nome: pm.nome, avatares };
+  });
+
+  const todas = criancas.map((c) => ({ id: c.id, nome: c.nome, temAvatar: c.avatares.length > 0 }));
+  const comAvatar = criancas.filter((c) => c.avatares.length > 0);
   const semAvatar = todas.filter((m) => !m.temAvatar);
 
   return (

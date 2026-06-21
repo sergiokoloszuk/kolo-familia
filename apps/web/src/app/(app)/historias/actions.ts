@@ -61,6 +61,8 @@ const schema = z.object({
   membroId: z.string().uuid(),
   descricao: z.string().trim().min(5, "Descreva um pouco mais a história").max(1500),
   nPaginas: z.coerce.number().int().min(3).max(6).default(5),
+  // Avatar escolhido pra ESTA história. Se ausente/ inválido, cai no "em uso".
+  avatarId: z.string().uuid().optional(),
 });
 
 const CAMPOS_KV: Record<string, string> = {
@@ -98,12 +100,27 @@ export async function criarHistoria(
       .maybeSingle();
     if (!membro) return { ok: false, error: "Criança não encontrada." };
 
-    const { data: avatar } = await supabase
-      .from("avatares_membros_atipicos")
-      .select("estilo, imagem_url")
-      .eq("membro_atipico_id", data.membroId)
-      .eq("selecionado", true)
-      .maybeSingle();
+    // Avatar escolhido pra esta história (se veio avatarId válido do membro);
+    // senão, o "em uso". RLS já escopa por família.
+    let avatar: { estilo: string | null; imagem_url: string | null } | null = null;
+    if (data.avatarId) {
+      const r = await supabase
+        .from("avatares_membros_atipicos")
+        .select("estilo, imagem_url")
+        .eq("membro_atipico_id", data.membroId)
+        .eq("id", data.avatarId)
+        .maybeSingle();
+      avatar = r.data;
+    }
+    if (!avatar) {
+      const r = await supabase
+        .from("avatares_membros_atipicos")
+        .select("estilo, imagem_url")
+        .eq("membro_atipico_id", data.membroId)
+        .eq("selecionado", true)
+        .maybeSingle();
+      avatar = r.data;
+    }
     if (!avatar?.imagem_url) {
       return {
         ok: false,
