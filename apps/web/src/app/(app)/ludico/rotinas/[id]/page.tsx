@@ -38,15 +38,24 @@ export default async function RotinaPage({
   const nomeMembro = membro?.nome ? capitalizarNome(membro.nome) : null;
   const idade = idadeAnos(membro?.data_nascimento ?? null);
 
-  // #2: a criança tem avatar? (pra oferecer "usar o avatar nos cards")
+  // #2: avatares da criança (pra oferecer "usar o avatar nos cards" + escolher qual)
   const membroId = rotina.membro_atipico_id as string | null;
-  let temAvatar = false;
+  let avataresMembro: { id: string; url: string; selecionado: boolean }[] = [];
   if (membroId) {
-    const { count } = await supabase
+    const { data: avs } = await supabase
       .from("avatares_membros_atipicos")
-      .select("id", { count: "exact", head: true })
-      .eq("membro_atipico_id", membroId);
-    temAvatar = (count ?? 0) > 0;
+      .select("id, imagem_url, selecionado, created_at")
+      .eq("membro_atipico_id", membroId)
+      .order("selecionado", { ascending: false })
+      .order("created_at", { ascending: false });
+    const urls = await assinarImagens(supabase, (avs ?? []).map((a) => (a.imagem_url as string | null) ?? null));
+    avataresMembro = (avs ?? [])
+      .map((a, i) => ({
+        id: a.id as string,
+        url: urls[i] ?? (a.imagem_url as string | null) ?? "",
+        selecionado: Boolean(a.selecionado),
+      }))
+      .filter((a) => a.url);
   }
 
   const { data: tarefas } = await supabase
@@ -83,7 +92,7 @@ export default async function RotinaPage({
         nomeInicial={rotina.nome as string}
         idade={idade}
         nomeMembro={nomeMembro}
-        temAvatar={temAvatar}
+        avatares={avataresMembro}
         tema={(rotina.tema as string | null) ?? null}
         historia={(rotina.historia as string | null) ?? null}
         cardsStatus={((rotina.cards_status as string | null) ?? "nenhum") as

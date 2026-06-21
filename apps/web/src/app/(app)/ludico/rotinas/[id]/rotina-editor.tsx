@@ -86,12 +86,14 @@ type Tarefa = {
   imagemUrl: string | null;
 };
 
+type AvatarMini = { id: string; url: string; selecionado: boolean };
+
 export function RotinaEditor({
   rotinaId,
   nomeInicial,
   idade,
   nomeMembro,
-  temAvatar,
+  avatares,
   tema,
   historia,
   cardsStatus,
@@ -101,7 +103,7 @@ export function RotinaEditor({
   nomeInicial: string;
   idade: number | null;
   nomeMembro: string | null;
-  temAvatar: boolean;
+  avatares: AvatarMini[];
   tema: string | null;
   historia: string | null;
   cardsStatus: CardsStatus;
@@ -255,7 +257,7 @@ export function RotinaEditor({
           temaInicial={tema}
           jaTem={cardsStatus === "pronto"}
           nomeMembro={nomeMembro}
-          temAvatar={temAvatar}
+          avatares={avatares}
         />
       )}
 
@@ -683,17 +685,21 @@ function GerarCards({
   temaInicial,
   jaTem,
   nomeMembro,
-  temAvatar,
+  avatares,
 }: {
   rotinaId: string;
   temaInicial: string | null;
   jaTem: boolean;
   nomeMembro: string | null;
-  temAvatar: boolean;
+  avatares: AvatarMini[];
 }) {
   const router = useRouter();
+  const temAvatar = avatares.length > 0;
   // Se a criança tem avatar, esse é o padrão (mais pessoal).
   const [usarAvatar, setUsarAvatar] = useState(temAvatar);
+  const [avatarId, setAvatarId] = useState(
+    () => (avatares.find((a) => a.selecionado) ?? avatares[0])?.id ?? "",
+  );
   const [tema, setTema] = useState(temaInicial ?? "");
   const [erro, setErro] = useState<string | null>(null);
   const [pending, start] = useTransition();
@@ -706,7 +712,12 @@ function GerarCards({
     }
     setErro(null);
     start(async () => {
-      const r = await gerarCardsVisuais({ rotinaId, tema: tema.trim(), usarAvatar });
+      const r = await gerarCardsVisuais({
+        rotinaId,
+        tema: tema.trim(),
+        usarAvatar,
+        avatarId: usarAvatar ? avatarId || undefined : undefined,
+      });
       if (!r.ok) {
         setErro(r.error);
         return;
@@ -756,6 +767,33 @@ function GerarCards({
               >
                 Por um tema
               </button>
+            </div>
+          )}
+          {usarAvatar && avatares.length > 1 && (
+            <div className="mt-3 flex flex-wrap gap-2">
+              {avatares.map((a) => {
+                const ativo = a.id === avatarId;
+                return (
+                  <button
+                    key={a.id}
+                    type="button"
+                    onClick={() => setAvatarId(a.id)}
+                    aria-pressed={ativo}
+                    className={cn(
+                      "relative overflow-hidden rounded-lg border-2 transition-colors",
+                      ativo ? "border-brand-purple" : "border-transparent hover:border-brand-purple/40",
+                    )}
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={a.url} alt="Avatar" className="size-12 object-cover" />
+                    {a.selecionado && (
+                      <span className="absolute inset-x-0 bottom-0 bg-brand-purple/85 py-px text-center text-[8px] font-semibold uppercase text-white">
+                        em uso
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
             </div>
           )}
           {!temAvatar && (

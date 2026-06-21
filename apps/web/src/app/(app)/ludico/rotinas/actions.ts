@@ -317,6 +317,8 @@ const gerarSchema = z.object({
   // Quando usarAvatar=true, o tema é opcional (só ambienta a cena).
   tema: z.string().trim().max(60).optional().default(""),
   usarAvatar: z.boolean().optional().default(false),
+  // Avatar escolhido pra ESTES cards. Ausente/inválido → cai no "em uso".
+  avatarId: z.string().uuid().optional(),
 });
 
 /**
@@ -328,7 +330,7 @@ export async function gerarCardsVisuais(
   input: z.infer<typeof gerarSchema>,
 ): Promise<Ok | Fail> {
   try {
-    const { rotinaId, tema, usarAvatar } = gerarSchema.parse(input);
+    const { rotinaId, tema, usarAvatar, avatarId } = gerarSchema.parse(input);
     if (!usarAvatar && tema.trim().length < 2) {
       return { ok: false, error: "Escolha um tema (ou use o avatar)." };
     }
@@ -347,15 +349,30 @@ export async function gerarCardsVisuais(
     if (usarAvatar) {
       const membroId = rotina.membro_atipico_id as string | null;
       if (!membroId) return { ok: false, error: "Esta rotina não tem uma criança vinculada." };
-      const { data: av } = await supabase
-        .from("avatares_membros_atipicos")
-        .select("imagem_url, selecionado, created_at")
-        .eq("membro_atipico_id", membroId)
-        .eq("family_account_id", family.id)
-        .order("selecionado", { ascending: false })
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
+      // Avatar escolhido (se veio avatarId válido do membro); senão, o "em uso".
+      let av: { imagem_url: string | null } | null = null;
+      if (avatarId) {
+        const r = await supabase
+          .from("avatares_membros_atipicos")
+          .select("imagem_url")
+          .eq("id", avatarId)
+          .eq("membro_atipico_id", membroId)
+          .eq("family_account_id", family.id)
+          .maybeSingle();
+        av = r.data;
+      }
+      if (!av) {
+        const r = await supabase
+          .from("avatares_membros_atipicos")
+          .select("imagem_url")
+          .eq("membro_atipico_id", membroId)
+          .eq("family_account_id", family.id)
+          .order("selecionado", { ascending: false })
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        av = r.data;
+      }
       avatarUrl = (av?.imagem_url as string | null) ?? null;
       if (!avatarUrl) {
         return {
