@@ -127,7 +127,7 @@ function SinalTile({
         <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground">
           {label}
         </p>
-        <p className="mt-1 font-heading text-xl font-medium leading-snug text-foreground">
+        <p className="mt-1 line-clamp-2 break-words font-heading text-xl font-medium leading-snug text-foreground">
           {value}
         </p>
         <p className="mt-1 text-[13px] leading-relaxed text-muted-foreground">{sub}</p>
@@ -601,9 +601,7 @@ export default async function PainelPage() {
     {
       icon: MessageCircle,
       label: "Última conversa",
-      value: ultimaConversaTitulo
-        ? `“${ultimaConversaTitulo.length > 26 ? `${ultimaConversaTitulo.slice(0, 26)}…` : ultimaConversaTitulo}”`
-        : "Nenhuma ainda",
+      value: ultimaConversaTitulo ? `“${ultimaConversaTitulo}”` : "Nenhuma ainda",
       sub: ultimaConversaAt
         ? `nas Estratégias · ${diasAtrasLabel(ultimaConversaAt, hoje)}`
         : "conte um desafio nas Estratégias",
