@@ -7,11 +7,19 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { criarRotina } from "./actions";
 
-export function NovaRotina({ membros }: { membros: Array<{ id: string; nome: string }> }) {
+export function NovaRotina({
+  membros,
+  ativaId,
+}: {
+  membros: Array<{ id: string; nome: string }>;
+  ativaId?: string | null;
+}) {
   const router = useRouter();
   const [aberto, setAberto] = useState(false);
   const [nome, setNome] = useState("");
-  const [membroId, setMembroId] = useState(membros[0]?.id ?? "");
+  const [membroId, setMembroId] = useState(
+    membros.find((m) => m.id === ativaId)?.id ?? membros[0]?.id ?? "",
+  );
   const [erro, setErro] = useState<string | null>(null);
   const [pending, start] = useTransition();
 

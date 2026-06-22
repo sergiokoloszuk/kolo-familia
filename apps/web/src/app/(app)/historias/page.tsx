@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { Sparkles, Wand2, BookOpen } from "lucide-react";
 import { loadFamilyContext } from "@/lib/auth/require-user";
+import { resolverCriancaAtivaId } from "@/lib/crianca-ativa";
 import { assinarImagem, assinarImagens } from "@/lib/storage/imagens";
+import { SeletorCrianca } from "../seletor-crianca";
 
 export const metadata = { title: "Histórias — Kolo Família" };
 
@@ -11,7 +13,7 @@ export default async function HistoriasPage() {
   const [{ data: historias }, { data: membros }] = await Promise.all([
     supabase
       .from("historias")
-      .select("id, titulo, capa_url, leituras, status, created_at")
+      .select("id, titulo, capa_url, leituras, status, created_at, membro_atipico_id")
       .eq("family_account_id", family!.id)
       .in("status", ["pronta", "gerando"]) // esconde status='erro'
       .order("created_at", { ascending: false }),
@@ -23,20 +25,24 @@ export default async function HistoriasPage() {
       .order("created_at", { ascending: true }),
   ]);
 
+  // Criança ativa (cookie): hero + lista são DELA. Seletor global troca em tudo.
+  const criancas = (membros ?? []).map((m) => ({ id: m.id as string, nome: m.nome as string }));
+  const ativaId = (await resolverCriancaAtivaId(membros ?? [])) ?? null;
+  const ativo = (membros ?? []).find((m) => m.id === ativaId) ?? (membros ?? [])[0];
+
   const avatarUrl = (() => {
-    for (const m of membros ?? []) {
-      const arr = Array.isArray(m.avatares_membros_atipicos)
-        ? m.avatares_membros_atipicos
-        : m.avatares_membros_atipicos
-          ? [m.avatares_membros_atipicos]
-          : [];
-      const a = arr.find((x) => x?.selecionado) ?? arr[0];
-      if (a?.imagem_url) return a.imagem_url as string;
-    }
-    return null;
+    const arr = Array.isArray(ativo?.avatares_membros_atipicos)
+      ? ativo.avatares_membros_atipicos
+      : ativo?.avatares_membros_atipicos
+        ? [ativo.avatares_membros_atipicos]
+        : [];
+    const a = arr.find((x) => x?.selecionado) ?? arr[0];
+    return (a?.imagem_url as string | null) ?? null;
   })();
   const temAvatar = Boolean(avatarUrl);
-  const lista = historias ?? [];
+  const lista = (historias ?? []).filter(
+    (h) => !ativaId || (h.membro_atipico_id as string | null) === ativaId,
+  );
   const temGerando = lista.some((h) => h.status === "gerando");
 
   // Bucket privado → assina avatar (hero) e capas (grid) na leitura.
@@ -50,6 +56,12 @@ export default async function HistoriasPage() {
     <div className="flex flex-col gap-8">
       {/* "criando" no topo dá feedback enquanto o async roda */}
       {temGerando && <meta httpEquiv="refresh" content="8" />}
+
+      {criancas.length > 1 && ativaId && (
+        <div className="w-fit">
+          <SeletorCrianca criancas={criancas} ativaId={ativaId} variant="screen" />
+        </div>
+      )}
 
       <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-brand-purple-deep via-brand-purple-dark to-brand-purple px-8 py-10 text-white">
         <div

@@ -2,18 +2,32 @@ import Link from "next/link";
 import { ChevronRight, FileText } from "lucide-react";
 import { Eyebrow } from "@/components/brand/eyebrow";
 import { loadFamilyContext } from "@/lib/auth/require-user";
+import { resolverCriancaAtivaId } from "@/lib/crianca-ativa";
 import { capitalizarNome } from "@/lib/nome";
+import { SeletorCrianca } from "../seletor-crianca";
 
 export default async function PlanosPage() {
   const { supabase, family } = await loadFamilyContext();
 
-  const { data: planos } = await supabase
-    .from("planos")
-    .select("id, titulo, tema, resultado, created_at, membros_atipicos(nome)")
-    .eq("family_account_id", family!.id)
-    .order("created_at", { ascending: false });
+  const [{ data: planos }, { data: membros }] = await Promise.all([
+    supabase
+      .from("planos")
+      .select("id, titulo, tema, resultado, created_at, membro_atipico_id, membros_atipicos(nome)")
+      .eq("family_account_id", family!.id)
+      .order("created_at", { ascending: false }),
+    supabase
+      .from("membros_atipicos")
+      .select("id, nome")
+      .eq("family_account_id", family!.id)
+      .eq("ativo", true)
+      .order("created_at", { ascending: true }),
+  ]);
 
-  const lista = planos ?? [];
+  const criancas = (membros ?? []).map((m) => ({ id: m.id as string, nome: m.nome as string }));
+  const ativaId = (await resolverCriancaAtivaId(membros ?? [])) ?? null;
+  const lista = (planos ?? []).filter(
+    (p) => !ativaId || (p.membro_atipico_id as string | null) === ativaId,
+  );
 
   const RESULTADO_CHIP: Record<string, { label: string; classe: string }> = {
     funcionou: { label: "Funcionou", classe: "bg-emerald-500/10 text-emerald-700" },
@@ -24,11 +38,18 @@ export default async function PlanosPage() {
 
   return (
     <div className="flex flex-col gap-8">
-      <header>
-        <Eyebrow>Meus Planos</Eyebrow>
-        <h1 className="mt-1 font-heading text-3xl text-foreground md:text-4xl">
-          Seus planos <em className="not-italic text-brand-purple">guardados</em>
-        </h1>
+      <header className="flex flex-col gap-3">
+        <div>
+          <Eyebrow>Meus Planos</Eyebrow>
+          <h1 className="mt-1 font-heading text-3xl text-foreground md:text-4xl">
+            Seus planos <em className="not-italic text-brand-purple">guardados</em>
+          </h1>
+        </div>
+        {criancas.length > 1 && ativaId && (
+          <div className="w-fit">
+            <SeletorCrianca criancas={criancas} ativaId={ativaId} variant="screen" />
+          </div>
+        )}
       </header>
 
       {lista.length === 0 ? (

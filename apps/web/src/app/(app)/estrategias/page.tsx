@@ -2,6 +2,7 @@ import Link from "next/link";
 import { CalendarClock } from "lucide-react";
 import { Eyebrow } from "@/components/brand/eyebrow";
 import { loadFamilyContext } from "@/lib/auth/require-user";
+import { resolverCriancaAtivaId } from "@/lib/crianca-ativa";
 import { capitalizarNome } from "@/lib/nome";
 import { ConversarForm } from "../conversar/conversar-form";
 import { ConversaItem } from "./conversa-item";
@@ -41,6 +42,7 @@ export default async function EstrategiasPage({
       .limit(5),
   ]);
 
+  const ativaId = (await resolverCriancaAtivaId(membros ?? [])) ?? undefined;
   const temConversas = (conversas ?? []).length > 0;
   const nomes = (membros ?? [])
     .map((m) => (m.nome ? capitalizarNome(m.nome as string) : null))
@@ -137,7 +139,7 @@ export default async function EstrategiasPage({
 
       <ConversarForm
         membros={membros ?? []}
-        initialMembroId={sp.membro}
+        initialMembroId={sp.membro ?? ativaId}
         tema={temaContexto ?? undefined}
       />
 

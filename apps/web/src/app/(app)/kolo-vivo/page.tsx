@@ -2,6 +2,7 @@ import { Users } from "lucide-react";
 import { Eyebrow } from "@/components/brand/eyebrow";
 import { IconCard } from "@/components/brand/icon-card";
 import { loadFamilyContext } from "@/lib/auth/require-user";
+import { resolverCriancaAtivaId } from "@/lib/crianca-ativa";
 import { idadeAnos } from "@/lib/idade";
 import { resumirComposicao } from "@/lib/familia/composicao";
 import { resumoDiagnostico } from "@/lib/onboarding/diagnostico";
@@ -122,6 +123,9 @@ export default async function KoloVivoPage() {
   // No topo, só o que não aparece dentro de um card (família + campos sem card).
   const sugestoesRestantes = todasSugestoes.filter((s) => !consumidas.has(s.id));
 
+  // Criança ativa (cookie) — o Perfil abre nela e o seletor é o global.
+  const ativaId = (await resolverCriancaAtivaId(membrosData)) ?? null;
+
   return (
     <div className="flex flex-col gap-8">
       <header className="flex items-start gap-4">
@@ -154,6 +158,7 @@ export default async function KoloVivoPage() {
         familyId={familyId}
         familia={familiaSecoes}
         membros={membrosData}
+        ativaId={ativaId}
         sugestoes={sugestoesRestantes}
       />
     </div>

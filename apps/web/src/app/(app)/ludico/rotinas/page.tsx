@@ -1,9 +1,11 @@
 import Link from "next/link";
 import { ChevronLeft, ListChecks } from "lucide-react";
 import { loadFamilyContext } from "@/lib/auth/require-user";
+import { resolverCriancaAtivaId } from "@/lib/crianca-ativa";
 import { capitalizarNome } from "@/lib/nome";
 import { idadeAnos } from "@/lib/idade";
 import { NovaRotina } from "./nova-rotina";
+import { SeletorCrianca } from "../../seletor-crianca";
 
 export default async function RotinasPage() {
   const { supabase, family } = await loadFamilyContext();
@@ -46,6 +48,12 @@ export default async function RotinasPage() {
   }));
   const nomePorMembro = new Map(membrosList.map((m) => [m.id, m]));
 
+  // Criança ativa (cookie): lista e nova rotina já são dela.
+  const ativaId = (await resolverCriancaAtivaId(membros ?? [])) ?? null;
+  const rotinasVisiveis = (rotinas ?? []).filter(
+    (r) => !ativaId || (r.membro_atipico_id as string | null) === ativaId,
+  );
+
   return (
     <div className="flex flex-col gap-8">
       <Link
@@ -69,17 +77,27 @@ export default async function RotinasPage() {
         </p>
       </header>
 
+      {membrosList.length > 1 && ativaId && (
+        <div className="w-fit">
+          <SeletorCrianca
+            criancas={membrosList.map((m) => ({ id: m.id, nome: m.nome }))}
+            ativaId={ativaId}
+            variant="screen"
+          />
+        </div>
+      )}
+
       {membrosList.length === 0 ? (
         <p className="text-sm text-muted-foreground">
           Cadastre uma criança no Perfil pra criar uma rotina.
         </p>
       ) : (
-        <NovaRotina membros={membrosList.map((m) => ({ id: m.id, nome: m.nome }))} />
+        <NovaRotina membros={membrosList.map((m) => ({ id: m.id, nome: m.nome }))} ativaId={ativaId} />
       )}
 
-      {(rotinas ?? []).length > 0 && (
+      {rotinasVisiveis.length > 0 && (
         <ul className="flex flex-col gap-3">
-          {(rotinas ?? []).map((r) => {
+          {rotinasVisiveis.map((r) => {
             const c = contagem.get(r.id as string) ?? { total: 0, feito: 0 };
             const dono = r.membro_atipico_id
               ? nomePorMembro.get(r.membro_atipico_id as string)

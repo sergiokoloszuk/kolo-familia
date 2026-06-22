@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { SeletorCrianca } from "../seletor-crianca";
 import { FamiliaEditor } from "./familia-editor";
 import { MembroEditor } from "./membro-editor";
 import { SugestoesPanel } from "./sugestoes-panel";
@@ -55,11 +56,13 @@ export function KoloVivoWrapper({
   familyId: _familyId,
   familia,
   membros,
+  ativaId,
   sugestoes,
 }: {
   familyId: string;
   familia: FamiliaSecoes;
   membros: MembroData[];
+  ativaId: string | null;
   sugestoes: SugestaoRow[];
 }) {
   // Sugestões — faixa contextual no topo (P-KV-8). Abre já quando há itens
@@ -67,15 +70,12 @@ export function KoloVivoWrapper({
   const temSugestoes = sugestoes.length > 0;
   const [showSugestoes, setShowSugestoes] = useState(temSugestoes);
 
-  // Multi-criança: seletor pra focar numa por vez. Com 1 criança só, mantém
-  // a leitura contínua original do protótipo (sem seletor, sem mudança).
+  // Multi-criança: mostra a CRIANÇA ATIVA (cookie global). O seletor é o mesmo
+  // de toda a plataforma — trocar aqui troca em todo lugar. Com 1, leitura
+  // contínua original (sem seletor).
   const multi = membros.length > 1;
-  const [membroAtivoId, setMembroAtivoId] = useState<string | null>(
-    membros[0]?.id ?? null,
-  );
-  const membrosVisiveis = multi
-    ? membros.filter((m) => m.id === membroAtivoId)
-    : membros;
+  const ativo = membros.find((m) => m.id === ativaId) ?? membros[0] ?? null;
+  const membrosVisiveis = multi && ativo ? [ativo] : membros;
 
   return (
     <div className="flex flex-col gap-5">
@@ -114,45 +114,15 @@ export function KoloVivoWrapper({
         </div>
       )}
 
-      {/* Seletor de criança — só com 2+. Pills discretas pra focar numa
-       * por vez. A família segue como continuação natural no fim. */}
-      {multi && (
-        <div
-          role="tablist"
-          aria-label="Escolher criança"
-          className="flex flex-wrap gap-2"
-        >
-          {membros.map((m) => {
-            const ativo = m.id === membroAtivoId;
-            return (
-              <button
-                key={m.id}
-                type="button"
-                role="tab"
-                aria-selected={ativo}
-                onClick={() => setMembroAtivoId(m.id)}
-                className={cn(
-                  "inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition-colors",
-                  ativo
-                    ? "bg-brand-purple text-white"
-                    : "bg-kolo-lilas-bg-2 text-foreground hover:bg-kolo-lilas-bg",
-                )}
-              >
-                <span
-                  aria-hidden
-                  className={cn(
-                    "flex size-6 shrink-0 items-center justify-center rounded-full font-heading text-xs font-semibold",
-                    ativo
-                      ? "bg-white/20 text-white"
-                      : "bg-brand-yellow text-brand-purple-dark",
-                  )}
-                >
-                  {m.nome[0]?.toUpperCase() ?? "?"}
-                </span>
-                {m.nome}
-              </button>
-            );
-          })}
+      {/* Seletor de criança GLOBAL — só com 2+. Trocar aqui troca em toda a
+       * plataforma (cookie). A família segue como continuação no fim. */}
+      {multi && ativo && (
+        <div className="w-fit">
+          <SeletorCrianca
+            criancas={membros.map((m) => ({ id: m.id, nome: m.nome }))}
+            ativaId={ativo.id}
+            variant="screen"
+          />
         </div>
       )}
 
