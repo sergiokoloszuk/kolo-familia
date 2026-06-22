@@ -431,8 +431,8 @@ export default async function PainelPage() {
     manchete: string;
     texto: React.ReactNode;
     chips: { label: string; tone: ChipTone }[];
-    ctaLabel: string;
-    ctaHref: string;
+    ctaLabel: string | null;
+    ctaHref: string | null;
   } =
     !houveAtividade
       ? // Estado vazio único, simples — sem variação por etapa.
@@ -454,8 +454,9 @@ export default async function PainelPage() {
             </>
           ),
           chips: [{ label: "Dia a dia", tone: "foco" }],
-          ctaLabel: idadeDias < 7 ? "Registrar primeira" : "Registrar dia",
-          ctaHref: "/registrar/diario",
+          // Registro agora é inline no topo da Home — sem CTA repetido aqui.
+          ctaLabel: null as string | null,
+          ctaHref: null as string | null,
         }
       : totalConquistas > totalDesafios
         ? {
@@ -516,7 +517,6 @@ export default async function PainelPage() {
               ctaHref: "/estrategias",
             };
 
-  const mostrarSecundario = focoContent.ctaHref !== "/registrar/diario";
 
   return (
     <div className="flex flex-col gap-8">
@@ -607,22 +607,30 @@ export default async function PainelPage() {
           <Link
             key={href}
             href={href}
-            className="group relative flex flex-col gap-3 overflow-hidden rounded-2xl border border-foreground/[0.06] bg-white p-5 pt-6 shadow-[0_1px_2px_rgba(46,10,82,0.04),_0_4px_12px_rgba(46,10,82,0.03)] transition-all hover:-translate-y-0.5 hover:shadow-[0_4px_12px_rgba(46,10,82,0.06),_0_12px_28px_rgba(46,10,82,0.06)]"
+            className="group relative flex flex-col gap-3 overflow-hidden rounded-2xl border border-foreground/[0.06] bg-white p-5 pt-6 shadow-[0_1px_2px_rgba(46,10,82,0.04),_0_4px_12px_rgba(46,10,82,0.03)] transition-all hover:-translate-y-0.5 hover:border-brand-yellow/50 hover:shadow-[0_4px_12px_rgba(46,10,82,0.06),_0_12px_28px_rgba(46,10,82,0.06)]"
           >
             <span aria-hidden className={cn("absolute inset-x-0 top-0 h-1", bar)} />
             <span
               aria-hidden
-              className={cn("flex size-11 items-center justify-center rounded-xl", chip)}
+              className={cn("flex size-12 items-center justify-center rounded-2xl transition-transform group-hover:scale-105", chip)}
             >
-              <Icon className="size-[22px]" strokeWidth={1.8} />
+              <Icon className="size-6" strokeWidth={1.8} />
             </span>
             <div>
               <h3 className="font-heading text-lg font-medium text-foreground">{titulo}</h3>
               <p className="mt-0.5 text-sm leading-relaxed text-muted-foreground">{desc}</p>
             </div>
-            <span className="mt-auto inline-flex w-fit max-w-full items-center truncate rounded-full bg-foreground/[0.04] px-2.5 py-1 text-xs font-medium text-foreground/70">
-              {sinal}
-            </span>
+            <div className="mt-auto flex items-center justify-between gap-2 pt-1">
+              <span className="inline-flex min-w-0 items-center truncate rounded-full bg-foreground/[0.04] px-2.5 py-1 text-xs font-medium text-foreground/70">
+                {sinal}
+              </span>
+              <span
+                aria-hidden
+                className="flex size-9 shrink-0 items-center justify-center rounded-full bg-brand-yellow text-brand-purple-dark shadow-sm transition-transform group-hover:translate-x-0.5 group-hover:scale-105"
+              >
+                <ArrowRight className="size-4" strokeWidth={2.5} />
+              </span>
+            </div>
           </Link>
         ))}
       </section>
@@ -682,29 +690,17 @@ export default async function PainelPage() {
               ))}
             </div>
           )}
-          <div className="mt-6 flex flex-wrap gap-3">
-            <Link
-              href={focoContent.ctaHref}
-              className={cn(
-                buttonVariants({ variant: "cta", size: "lg" }),
-                "shadow-sm",
-              )}
-            >
-              {focoContent.ctaLabel}
-              <ArrowRight className="size-4" aria-hidden />
-            </Link>
-            {mostrarSecundario && (
+          {focoContent.ctaHref && focoContent.ctaLabel && (
+            <div className="mt-6 flex flex-wrap gap-3">
               <Link
-                href="/registrar/diario"
-                className={cn(
-                  buttonVariants({ variant: "ghost", size: "lg" }),
-                  "text-muted-foreground hover:text-foreground",
-                )}
+                href={focoContent.ctaHref}
+                className={cn(buttonVariants({ variant: "cta", size: "lg" }), "shadow-sm")}
               >
-                Registrar dia
+                {focoContent.ctaLabel}
+                <ArrowRight className="size-4" aria-hidden />
               </Link>
-            )}
-          </div>
+            </div>
+          )}
         </div>
       </section>
 

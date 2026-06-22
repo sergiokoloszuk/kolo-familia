@@ -277,7 +277,7 @@ export function RegistroRapido({
         <Input
           value={conquista}
           onChange={(e) => setConquista(e.target.value)}
-          placeholder="Ex.: comeu um alimento novo, pediu ajuda sozinho…"
+          placeholder="Ex.: lidou bem com uma mudança, tentou algo novo, pediu ajuda…"
           disabled={pending}
         />
       </div>
