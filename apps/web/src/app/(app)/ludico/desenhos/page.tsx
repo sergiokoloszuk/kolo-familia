@@ -278,7 +278,7 @@ function sugestoesDoMapa(temas: Contagem[]): string[] {
 }
 
 function MapaCard({ mapa }: { mapa: MapaMembro }) {
-  const nome = mapa.nome ? capitalizarNome(mapa.nome) : "essa criança";
+  const nome = mapa.nome ? capitalizarNome(mapa.nome) : "essa pessoa";
   const emoTop = mapa.emocoes[0]?.rotulo;
   const temaTop = mapa.temas[0]?.rotulo;
   const sugestoes = sugestoesDoMapa(mapa.temas);

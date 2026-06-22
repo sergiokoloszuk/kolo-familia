@@ -10,7 +10,7 @@ import { perguntarAjuda, type AjudaResult } from "./actions";
 const EXEMPLOS = [
   "Como mudo o nome que aparece pra mim?",
   "Onde registro uma conquista do dia?",
-  "Como crio o avatar da criança?",
+  "Como crio o avatar?",
   "Quero pedir ideias de brincadeira",
 ];
 

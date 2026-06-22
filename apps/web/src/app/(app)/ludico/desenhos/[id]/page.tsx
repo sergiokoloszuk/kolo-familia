@@ -179,7 +179,7 @@ function ReleituraSecao({
   releitura: Releitura;
   nome: string | null;
 }) {
-  const quem = nome ?? "a criança";
+  const quem = nome ?? "essa pessoa";
   return (
     <div className="flex flex-col gap-5 rounded-3xl border border-brand-purple/15 bg-kolo-lilas-bg-2/40 p-5">
       <div className="flex items-center gap-2">

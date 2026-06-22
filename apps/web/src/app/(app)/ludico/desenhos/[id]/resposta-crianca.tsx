@@ -88,11 +88,11 @@ export function RespostaCrianca({
   return (
     <div className="flex flex-col gap-3 rounded-2xl border border-brand-purple/15 bg-kolo-lilas-bg-2/40 p-4">
       <p className="font-heading text-base font-medium text-foreground">
-        O que {nome ?? "a criança"} respondeu?
+        O que {nome ?? "essa pessoa"} respondeu?
       </p>
       <p className="text-sm leading-relaxed text-muted-foreground">
-        Converse e anote com as palavras dela. Se ela fala pouco, mostre as carinhas e toque na
-        que ela apontou. Depois, é só gerar a leitura — a partir do que ela contou.
+        Converse e anote com as próprias palavras. Se fala pouco, mostre as carinhas e toque na
+        que apontou. Depois, é só gerar a leitura — a partir do que contou.
       </p>
 
       <div className="flex flex-wrap gap-2">

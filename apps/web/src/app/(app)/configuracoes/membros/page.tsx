@@ -32,7 +32,7 @@ export default async function MembrosPage() {
           <Users aria-hidden />
         </IconCard>
         <div>
-          <Eyebrow>Crianças e membros</Eyebrow>
+          <Eyebrow>Membros da família</Eyebrow>
           <h1 className="mt-1 font-heading text-3xl text-foreground md:text-4xl">
             Editar{" "}
             <em className="not-italic text-brand-purple">membros atípicos</em>

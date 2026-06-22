@@ -140,7 +140,7 @@ export default async function ConfiguracoesPage() {
           <SubLink
             href="/configuracoes/membros"
             icon={UserIcon}
-            titulo="Crianças e membros"
+            titulo="Membros da família"
             descricao="Corrigir nome, data de nascimento e perfil dos membros atípicos cadastrados."
           />
           <SubLink

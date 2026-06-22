@@ -45,7 +45,7 @@ export async function salvarPreferencias(
       .eq("id", data.membroId)
       .eq("family_account_id", family.id)
       .maybeSingle();
-    if (!membro) return { ok: false, error: "Criança não encontrada." };
+    if (!membro) return { ok: false, error: "Pessoa não encontrada." };
 
     // Mescla preferencias dentro de categorias_extras, sem perder outras chaves.
     const { data: atual } = await supabase

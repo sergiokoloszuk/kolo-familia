@@ -373,7 +373,7 @@ export async function gerarCardsVisuais(
     let avatarUrl: string | null = null;
     if (usarAvatar) {
       const membroId = rotina.membro_atipico_id as string | null;
-      if (!membroId) return { ok: false, error: "Esta rotina não tem uma criança vinculada." };
+      if (!membroId) return { ok: false, error: "Esta rotina não tem ninguém vinculado." };
       // Avatar escolhido (se veio avatarId válido do membro); senão, o "em uso".
       let av: { imagem_url: string | null } | null = null;
       if (avatarId) {
@@ -402,7 +402,7 @@ export async function gerarCardsVisuais(
       if (!avatarUrl) {
         return {
           ok: false,
-          error: "Crie um avatar pra essa criança primeiro (no Lúdico → Avatar).",
+          error: "Crie um avatar primeiro (no Lúdico → Avatar).",
         };
       }
     }

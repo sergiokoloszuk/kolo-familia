@@ -264,12 +264,11 @@ export function RotinaEditor({
       {visual && (
         <div className="rounded-2xl border border-brand-yellow/30 bg-brand-yellow/[0.07] px-4 py-3 print:hidden">
           <p className="text-sm leading-relaxed text-foreground">
-            <strong className="font-semibold">Como usar:</strong> mostre os cards pra
-            criança e, a cada etapa que ela terminar, <strong className="font-semibold">toquem
-            juntos no card</strong> pra marcar como feito. Ele fica colorido até concluir e
-            esmaece ao marcar — assim ela vê o que já passou e qual é a próxima. É esse
-            “marquei!” que ajuda a criança a entender a sequência. Tocou sem querer? Toque
-            de novo que ele volta.
+            <strong className="font-semibold">Como usar:</strong> a cada etapa concluída,{" "}
+            <strong className="font-semibold">toquem juntos no card</strong> pra marcar como
+            feito. Ele fica colorido até concluir e esmaece ao marcar — assim fica claro o que
+            já passou e qual é a próxima. É esse “marquei!” que ajuda a entender a sequência.
+            Tocou sem querer? Toque de novo que ele volta.
           </p>
         </div>
       )}
@@ -762,7 +761,7 @@ function GerarCards({
     });
   }
 
-  const nome = nomeMembro ?? "a criança";
+  const nome = nomeMembro ?? "a pessoa";
 
   return (
     <div className="flex flex-col gap-3 rounded-2xl border border-brand-purple/15 bg-kolo-lilas-bg-2/40 p-4 print:hidden">

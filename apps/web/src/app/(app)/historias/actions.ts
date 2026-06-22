@@ -98,7 +98,7 @@ export async function criarHistoria(
       .eq("id", data.membroId)
       .eq("family_account_id", family.id)
       .maybeSingle();
-    if (!membro) return { ok: false, error: "Criança não encontrada." };
+    if (!membro) return { ok: false, error: "Pessoa não encontrada." };
 
     // Avatar escolhido pra esta história (se veio avatarId válido do membro);
     // senão, o "em uso". RLS já escopa por família.
@@ -328,7 +328,7 @@ export async function responderEnriquecimento(
       .eq("id", data.membroId)
       .eq("family_account_id", family.id)
       .maybeSingle();
-    if (!membro) return { ok: false, error: "Criança não encontrada." };
+    if (!membro) return { ok: false, error: "Pessoa não encontrada." };
 
     const { data: atual } = await supabase
       .from("perfil_vivo_membro")

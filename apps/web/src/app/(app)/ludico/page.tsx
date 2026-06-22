@@ -56,7 +56,7 @@ const CARDS: Card[] = [
   },
   {
     titulo: "Rotinas visuais",
-    desc: "A sequência do dia em cards — a criança aponta o que vem; o adolescente consulta e marca sozinho. Dá pra imprimir.",
+    desc: "A sequência do dia em cards — aponta o que vem e marca sozinho. Dá pra imprimir.",
     icone: ListChecks,
     href: "/ludico/rotinas",
     tone: { bar: "bg-cat-foco", chip: "bg-cat-foco-soft text-cat-foco" },
