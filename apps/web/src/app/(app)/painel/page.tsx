@@ -1,14 +1,16 @@
 import Link from "next/link";
 import { differenceInCalendarDays, format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { ArrowRight, Lightbulb, NotebookPen, Sparkles, Sprout, Star } from "lucide-react";
+import { ArrowRight, Lightbulb, Sparkles, Sprout, Star } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { Eyebrow } from "@/components/brand/eyebrow";
 import { loadFamilyContext } from "@/lib/auth/require-user";
 import { resolverCriancaAtivaId } from "@/lib/crianca-ativa";
+import { capitalizarNome } from "@/lib/nome";
 import { cn } from "@/lib/utils";
+import { RegistroRapido } from "../registrar/diario/registro-rapido";
 import { BalaoPrimeirosPassos } from "./balao-primeiros-passos";
 import { BannerGenero } from "./banner-genero";
 
@@ -540,24 +542,41 @@ export default async function PainelPage() {
       </header>
 
       {/* ============================================================
-       * AS 3 PORTAS — os jeitos de interagir com a Kolo: registrar o
-       * dia, cuidar do retrato vivo (Kolo Vivo) e pedir um caminho
-       * (Estratégias). Navegação principal do dia a dia.
+       * REGISTRO DO DIA — inline, sem sair da Home. Segue a criança ativa.
+       * A IA limpa o texto e etiqueta por área; em sinal de crise pede o
+       * possível gatilho. Substitui o antigo card que levava pra outra tela.
        * ============================================================ */}
-      <section className="grid gap-4 md:grid-cols-3">
+      <section>
+        <Card>
+          <CardHeader className="flex flex-row items-start justify-between gap-3 pb-3">
+            <div>
+              <CardTitle className="text-base">Registro do dia</CardTitle>
+              <CardDescription>
+                Escreva do seu jeito — a Kolo organiza e guarda na Evolução.
+              </CardDescription>
+            </div>
+            {diasComRegistro > 0 && (
+              <span className="shrink-0 rounded-full bg-cat-rotina-bg px-2.5 py-1 text-xs font-medium text-cat-rotina">
+                {diasComRegistro} {diasComRegistro === 1 ? "dia" : "dias"} essa semana
+              </span>
+            )}
+          </CardHeader>
+          <CardContent>
+            <RegistroRapido
+              key={ativaId ?? "none"}
+              nomeCrianca={primeiraCrianca?.nome ? capitalizarNome(primeiraCrianca.nome as string) : null}
+              membroId={ativaId}
+            />
+          </CardContent>
+        </Card>
+      </section>
+
+      {/* ============================================================
+       * AS PORTAS — Perfil (retrato vivo) e Estratégias (achar um caminho).
+       * O registro do dia agora é inline acima.
+       * ============================================================ */}
+      <section className="grid gap-4 md:grid-cols-2">
         {[
-          {
-            titulo: "Registro do dia",
-            desc: "Conte como foi hoje.",
-            href: "/registrar/diario",
-            Icon: NotebookPen,
-            chip: "bg-cat-rotina-bg text-cat-rotina",
-            bar: "bg-cat-rotina",
-            sinal:
-              diasComRegistro > 0
-                ? `${diasComRegistro} ${diasComRegistro === 1 ? "dia" : "dias"} essa semana`
-                : "comece por aqui",
-          },
           {
             titulo: "Perfil",
             desc: "O retrato vivo de quem vocês são.",

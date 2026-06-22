@@ -12,6 +12,7 @@ import {
   Leaf,
   LogOut,
   Menu,
+  NotebookPen,
   Settings,
   Shapes,
   Shield,
@@ -46,6 +47,7 @@ type NavItem = {
  */
 const NAV_ITEMS: NavItem[] = [
   { href: "/painel", label: "Home", icon: Home },
+  { href: "/registrar/diario", label: "Registro Diário", icon: NotebookPen },
   { href: "/kolo-vivo", label: "Perfil", icon: Leaf },
   { href: "/estrategias", label: "Estratégias", icon: Sparkles },
   { href: "/evolucao", label: "Evolução", icon: TrendingUp },
