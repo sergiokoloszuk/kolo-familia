@@ -36,6 +36,7 @@ import {
 import { gerarMensagemEspontanea } from "./mensagemEspontanea";
 import { montarPonteWhatsApp, gerarMagicLink, montarPlanoFimDeSemana } from "./ponte";
 import { pedeUmPlano } from "@/lib/ia/pedido-plano";
+import { classificarAreasDiario } from "@/lib/ia/classificar-area";
 import type { AylaTipoProativa, AylaTipoReativa, ParserResult } from "./types";
 
 /**
@@ -1232,6 +1233,12 @@ async function persistirRegistro(
       .limit(8);
     const existentes = hojeRows ?? [];
 
+    // Etiqueta por área (o texto já vem limpo do parser → não repolir).
+    const areaWa = await classificarAreasDiario(
+      { conquista, desafio: p.desafio, polir: false },
+      { supabase, family_account_id: familyId },
+    );
+
     let mergedId: string | null = null;
     if (existentes.length > 0) {
       const decisao = await decidirDedupDiario(
@@ -1265,6 +1272,8 @@ async function persistirRegistro(
             desafio: decisao.desafio,
             observacao_livre: decisao.observacao,
             possivel_gatilho: decisao.gatilho,
+            conquista_area: areaWa.conquistaArea,
+            desafio_area: areaWa.desafioArea,
             quem_estava: qe,
             estado_adulto: ea,
             reacao_adulto: ra,
@@ -1286,6 +1295,8 @@ async function persistirRegistro(
         desafio: p.desafio,
         observacao_livre: p.observacao_livre,
         possivel_gatilho: p.possivel_gatilho,
+        conquista_area: areaWa.conquistaArea,
+        desafio_area: areaWa.desafioArea,
         quem_estava: quemEstava,
         estado_adulto: estadoAdulto,
         reacao_adulto: reacaoAdulto,

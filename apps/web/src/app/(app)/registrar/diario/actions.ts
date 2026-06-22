@@ -7,6 +7,7 @@ import { requireActiveWrite } from "@/lib/auth/require-active-write";
 import { idadeAnos } from "@/lib/idade";
 import { extrairAtualizacoes, type ItemKoloVivo } from "@/lib/ia/atualizar";
 import { montarKoloVivoResumo, aplicarItensNoMembro } from "@/lib/kolo-vivo/incorporar";
+import { classificarAreasDiario } from "@/lib/ia/classificar-area";
 import { resolveFamily } from "@/lib/auth/current-family";
 
 async function requireFamily() {
@@ -102,14 +103,21 @@ export async function registrarDia(input: RegistrarDiaInput): Promise<void> {
   if (temCamadaA && data.membroAtipicoId) {
     const temCamadaB = Boolean(data.quemEstava || data.estadoAdulto || data.reacaoAdulto);
     const incompleto = Boolean(data.conquista || data.desafio) && !temCamadaB;
-    const conquista = data.conquista?.trim() || null;
-    const desafio = data.desafio?.trim() || null;
+    const conquistaRaw = data.conquista?.trim() || null;
+    const desafioRaw = data.desafio?.trim() || null;
     const observacao_livre = data.observacaoLivre?.trim() || null;
 
+    // Etiqueta por área + reescreve bonito (1 chamada leve; graceful — se falhar,
+    // mantém o texto original e área null). Guarda a versão limpa.
+    const area = await classificarAreasDiario(
+      { conquista: conquistaRaw, desafio: desafioRaw, polir: true },
+      { supabase, family_account_id: family.id },
+    );
+    const conquista = area.conquistaLimpa ?? conquistaRaw;
+    const desafio = area.desafioLimpa ?? desafioRaw;
+
     // Dedup: se já existe um diário hoje pra esse membro/origem com o MESMO
-    // conteúdo (conquista + desafio + observação), atualiza em vez de inserir.
-    // Evita duplicação por double-click no botão. Não impede o usuário de
-    // registrar coisas diferentes no mesmo dia (textos distintos = nova linha).
+    // conteúdo, atualiza em vez de inserir (evita duplicação por double-click).
     const { data: dup } = await supabase
       .from("diarios")
       .select("id")
@@ -127,6 +135,8 @@ export async function registrarDia(input: RegistrarDiaInput): Promise<void> {
       conquista,
       desafio,
       observacao_livre,
+      conquista_area: area.conquistaArea,
+      desafio_area: area.desafioArea,
       possivel_gatilho: data.possivelGatilho?.trim() || null,
       quem_estava: data.quemEstava ?? null,
       estado_adulto: data.estadoAdulto ?? null,
