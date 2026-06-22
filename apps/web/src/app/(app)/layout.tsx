@@ -4,6 +4,7 @@ import { differenceInCalendarDays } from "date-fns";
 import { loadFamilyContext } from "@/lib/auth/require-user";
 import { Sidebar } from "./sidebar";
 import { idadeAnos } from "@/lib/idade";
+import { lerCriancaAtivaId, resolverCriancaAtiva } from "@/lib/crianca-ativa";
 
 export default async function AppLayout({ children }: { children: ReactNode }) {
   const { user, supabase, family } = await loadFamilyContext();
@@ -65,15 +66,14 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
       )
     : null;
 
-  // V1: primeira criança ativa = "criança ativa do sidebar"
-  // (multi-criança não é v1 — Adendo PRD).
-  const criancaAtiva = criancas?.[0]
-    ? {
-        id: criancas[0].id,
-        nome: criancas[0].nome,
-        idade: idadeAnos(criancas[0].data_nascimento as string | null),
-      }
-    : null;
+  // Criança ativa: resolvida pelo cookie (de quem a mãe está falando), com
+  // fallback na primeira. A sidebar troca; todas as telas seguem.
+  const criancasList = (criancas ?? []).map((c) => ({
+    id: c.id as string,
+    nome: c.nome as string,
+    idade: idadeAnos(c.data_nascimento as string | null),
+  }));
+  const criancaAtiva = resolverCriancaAtiva(criancasList, await lerCriancaAtivaId());
 
   return (
     <div className="min-h-screen bg-kolo-page lg:grid lg:grid-cols-[260px_1fr]">
@@ -82,7 +82,8 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
         nomeUsuario={nomeUsuario}
         userInitial={userInitial}
         diasNaKolo={diasNaKolo}
-        criancaAtiva={criancaAtiva}
+        criancas={criancasList}
+        criancaAtivaId={criancaAtiva?.id ?? null}
         sugestoesPendentes={sugestoesPendentes ?? 0}
         temPlanos={(planosCount ?? 0) > 0}
       />

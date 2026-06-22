@@ -4,6 +4,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { loadFamilyContext } from "@/lib/auth/require-user";
 import { assinarImagens } from "@/lib/storage/imagens";
+import { resolverCriancaAtivaId } from "@/lib/crianca-ativa";
 import { CriarHistoriaForm } from "./criar-form";
 
 export const metadata = { title: "Criar história — Kolo Família" };
@@ -67,6 +68,8 @@ export default async function CriarHistoriaPage() {
   const todas = criancas.map((c) => ({ id: c.id, nome: c.nome, temAvatar: c.avatares.length > 0 }));
   const comAvatar = criancas.filter((c) => c.avatares.length > 0);
   const semAvatar = todas.filter((m) => !m.temAvatar);
+  // Já abre na criança ativa (de quem a mãe está falando), se ela tiver avatar.
+  const ativaId = (await resolverCriancaAtivaId(comAvatar)) ?? "";
 
   return (
     <div className="mx-auto flex w-full max-w-2xl flex-col gap-6">
@@ -107,7 +110,7 @@ export default async function CriarHistoriaPage() {
       ) : (
         <div className="flex flex-col gap-6">
           {comAvatar.length > 0 ? (
-            <CriarHistoriaForm criancas={comAvatar} />
+            <CriarHistoriaForm criancas={comAvatar} ativaId={ativaId} />
           ) : (
             <div className="rounded-2xl border border-kolo-linha bg-secondary/40 p-6">
               <p className="font-heading text-lg text-foreground">

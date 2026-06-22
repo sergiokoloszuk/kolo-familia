@@ -94,8 +94,10 @@ type FormState = {
 
 export function DiarioForm({
   membros,
+  ativaId,
 }: {
   membros: Array<{ id: string; nome: string }>;
+  ativaId?: string | null;
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
@@ -105,7 +107,7 @@ export function DiarioForm({
   const [kvPending, startKv] = useTransition();
   const [kvFeito, setKvFeito] = useState<"salvo" | "dispensado" | null>(null);
   const [form, setForm] = useState<FormState>({
-    membroAtipicoId: membros[0]?.id ?? null,
+    membroAtipicoId: membros.find((m) => m.id === ativaId)?.id ?? membros[0]?.id ?? null,
     escalaEmocionalMae: "neutro",
     escalaEmocionalMembro: null,
     conquista: "",

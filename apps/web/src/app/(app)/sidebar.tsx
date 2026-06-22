@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { Logo } from "@/components/brand/logo";
 import { cn } from "@/lib/utils";
+import { SeletorCrianca } from "./seletor-crianca";
 
 type NavItem = {
   href: string;
@@ -60,11 +61,8 @@ interface SidebarProps {
   nomeUsuario: string;
   userInitial: string;
   diasNaKolo: number | null;
-  criancaAtiva: {
-    id: string;
-    nome: string;
-    idade: number | null;
-  } | null;
+  criancas: { id: string; nome: string; idade: number | null }[];
+  criancaAtivaId: string | null;
   sugestoesPendentes: number;
   /** "Meus Planos" só aparece quando há ao menos um plano salvo. */
   temPlanos: boolean;
@@ -75,7 +73,8 @@ export function Sidebar({
   nomeUsuario,
   userInitial,
   diasNaKolo,
-  criancaAtiva,
+  criancas,
+  criancaAtivaId,
   sugestoesPendentes,
   temPlanos,
 }: SidebarProps) {
@@ -122,34 +121,31 @@ export function Sidebar({
       {/* Seletor de criança ativa (se houver). Peso visual reduzido pra
           conteúdo virar protagonista: fundo mais lavado, avatar menor,
           tipografia semibold em vez de bold. */}
-      {criancaAtiva && (
+      {/* Seletor de criança ativa — troca "de quem você fala" em toda a
+          plataforma. Com 2+ filhos vira menu; com 1, é só um atalho pro Perfil. */}
+      {criancas.length > 1 && criancaAtivaId ? (
+        <SeletorCrianca criancas={criancas} ativaId={criancaAtivaId} variant="sidebar" />
+      ) : criancas.length === 1 ? (
         <Link
           href="/kolo-vivo"
-          aria-label={`Abrir o Perfil de ${criancaAtiva.nome}`}
+          aria-label={`Abrir o Perfil de ${criancas[0].nome}`}
           className="flex items-center gap-3 rounded-2xl bg-kolo-lilas-bg-2/60 px-3 py-2.5 transition-colors hover:bg-kolo-lilas-bg-2"
         >
           <span
             aria-hidden
             className="flex size-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-brand-yellow to-brand-yellow-dark font-heading text-[15px] font-semibold text-brand-purple-dark"
           >
-            {criancaAtiva.nome[0]?.toUpperCase() ?? "?"}
+            {criancas[0].nome[0]?.toUpperCase() ?? "?"}
           </span>
           <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-semibold text-foreground">
-              {criancaAtiva.nome}
-            </p>
-            {criancaAtiva.idade != null && (
-              <p className="text-xs text-muted-foreground">
-                {criancaAtiva.idade} anos
-              </p>
+            <p className="truncate text-sm font-semibold text-foreground">{criancas[0].nome}</p>
+            {criancas[0].idade != null && (
+              <p className="text-xs text-muted-foreground">{criancas[0].idade} anos</p>
             )}
           </div>
-          <ChevronRight
-            className="size-3.5 shrink-0 text-muted-foreground/70"
-            aria-hidden
-          />
+          <ChevronRight className="size-3.5 shrink-0 text-muted-foreground/70" aria-hidden />
         </Link>
-      )}
+      ) : null}
 
       {/* Navegação plana — 5 itens. Item ativo segue o protótipo §nav-item.active:
           bg lilás claro + texto roxo escuro + traço amarelo lateral 3px (não bg

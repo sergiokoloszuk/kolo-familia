@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { loadFamilyContext } from "@/lib/auth/require-user";
+import { resolverCriancaAtivaId } from "@/lib/crianca-ativa";
 import { DiarioForm } from "./diario-form";
 
 export default async function RegistrarDiarioPage() {
@@ -14,6 +15,8 @@ export default async function RegistrarDiarioPage() {
     .eq("family_account_id", familyId)
     .eq("ativo", true)
     .order("created_at", { ascending: true });
+
+  const ativaId = (await resolverCriancaAtivaId(membros ?? [])) ?? null;
 
   return (
     <div className="flex flex-col gap-6">
@@ -41,7 +44,7 @@ export default async function RegistrarDiarioPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <DiarioForm membros={membros ?? []} />
+          <DiarioForm membros={membros ?? []} ativaId={ativaId} />
         </CardContent>
       </Card>
     </div>

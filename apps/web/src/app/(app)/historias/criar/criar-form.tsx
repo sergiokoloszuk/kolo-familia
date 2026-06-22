@@ -22,10 +22,17 @@ function avatarPadrao(avs: Avatar[]): string {
   return (avs.find((a) => a.selecionado) ?? avs[0])?.id ?? "";
 }
 
-export function CriarHistoriaForm({ criancas }: { criancas: Crianca[] }) {
+export function CriarHistoriaForm({
+  criancas,
+  ativaId,
+}: {
+  criancas: Crianca[];
+  ativaId?: string;
+}) {
   const router = useRouter();
-  const [membroId, setMembroId] = useState(criancas[0]?.id ?? "");
-  const [avatarId, setAvatarId] = useState(() => avatarPadrao(criancas[0]?.avatares ?? []));
+  const inicial = criancas.find((c) => c.id === ativaId) ?? criancas[0];
+  const [membroId, setMembroId] = useState(inicial?.id ?? "");
+  const [avatarId, setAvatarId] = useState(() => avatarPadrao(inicial?.avatares ?? []));
   const [descricao, setDescricao] = useState("");
   const [nPaginas, setNPaginas] = useState(5);
   const [erro, setErro] = useState<string | null>(null);

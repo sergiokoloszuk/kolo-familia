@@ -9,6 +9,9 @@ import {
 } from "lucide-react";
 import { Eyebrow } from "@/components/brand/eyebrow";
 import { cn } from "@/lib/utils";
+import { loadFamilyContext } from "@/lib/auth/require-user";
+import { resolverCriancaAtivaId } from "@/lib/crianca-ativa";
+import { SeletorCrianca } from "../seletor-crianca";
 
 /**
  * Lúdico — seção que agrupa as ferramentas visuais/experienciais com o avatar
@@ -84,7 +87,17 @@ const CARDS: Card[] = [
   // },
 ];
 
-export default function LudicoPage() {
+export default async function LudicoPage() {
+  const { supabase, family } = await loadFamilyContext();
+  const { data: membros } = await supabase
+    .from("membros_atipicos")
+    .select("id, nome")
+    .eq("family_account_id", family!.id)
+    .eq("ativo", true)
+    .order("created_at", { ascending: true });
+  const criancas = (membros ?? []).map((m) => ({ id: m.id as string, nome: m.nome as string }));
+  const ativaId = (await resolverCriancaAtivaId(criancas)) ?? "";
+
   return (
     <div className="flex flex-col gap-10">
       <header className="max-w-2xl">
@@ -95,6 +108,11 @@ export default function LudicoPage() {
         <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
           Crie o avatar de cada um e use nas histórias e rotinas — <strong className="font-medium text-foreground">o mesmo personagem em tudo</strong>. Recursos visuais pra preparar, seguir o dia ou imaginar algo bom.
         </p>
+        {criancas.length > 1 && (
+          <div className="mt-4 w-fit">
+            <SeletorCrianca criancas={criancas} ativaId={ativaId} variant="screen" />
+          </div>
+        )}
       </header>
 
       <ul className="grid gap-4 md:grid-cols-2">
