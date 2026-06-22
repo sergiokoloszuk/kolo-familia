@@ -27,7 +27,7 @@ export default async function Home() {
   const ctaPrincipalHref = gateBeta ? "/lista-espera" : "/signup";
   const ctaPrincipalLabel = gateBeta
     ? "Entrar na lista de espera"
-    : "Começar 30 dias grátis";
+    : "Começar 7 dias grátis";
   const supabase = await createClient();
   const {
     data: { user },
@@ -396,7 +396,7 @@ export default async function Home() {
           <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-brand-purple to-brand-purple-dark p-10 text-white shadow-2xl md:p-16">
             <div className="grid items-center gap-10 md:grid-cols-[1.3fr_1fr]">
               <div>
-                <Eyebrow tone="dark">30 dias grátis · sem cartão</Eyebrow>
+                <Eyebrow tone="dark">7 dias grátis · sem cartão</Eyebrow>
                 <h2 className="mt-4 font-heading text-3xl leading-tight text-white md:text-5xl">
                   Comece sem risco.{" "}
                   <em className="not-italic text-brand-yellow">
@@ -501,7 +501,7 @@ export default async function Home() {
               ],
               [
                 "Quanto custa?",
-                "Trial de 30 dias grátis sem cartão. Depois do trial, mensalidade única. Detalhes em /precos.",
+                "Trial de 7 dias grátis sem cartão. Depois do trial, mensalidade única. Detalhes em /precos.",
               ],
               [
                 "Posso cancelar?",
@@ -558,7 +558,7 @@ export default async function Home() {
               <>
                 Comece com{" "}
                 <em className="not-italic text-brand-yellow">
-                  30 dias grátis
+                  7 dias grátis
                 </em>
               </>
             )}

@@ -49,7 +49,7 @@ export function Tela6Confirmacao({
           <div>
             <p className="font-medium">Tudo pronto, {apelido}.</p>
             <p className="mt-1 text-sm text-muted-foreground">
-              Seus 30 dias grátis começam agora. Sem cartão. Cancela quando quiser.
+              Seus 7 dias grátis começam agora. Sem cartão. Cancela quando quiser.
             </p>
           </div>
         </div>

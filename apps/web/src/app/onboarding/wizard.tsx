@@ -85,7 +85,7 @@ function chromeDoPasso(step: number, nomeCrianca: string | null): { titulo: stri
       return {
         titulo: "Termos e WhatsApp",
         linha:
-          "Por último, dois aceites: um pros termos de uso e outro pra Ayla poder te mandar mensagem no WhatsApp — a lei pede essa permissão separada, e você pode tirar quando quiser. Depois disso, seu trial de 30 dias começa.",
+          "Por último, dois aceites: um pros termos de uso e outro pra Ayla poder te mandar mensagem no WhatsApp — a lei pede essa permissão separada, e você pode tirar quando quiser. Depois disso, seu trial de 7 dias começa.",
       };
     default:
       return { titulo: "Tudo pronto", linha: "" };

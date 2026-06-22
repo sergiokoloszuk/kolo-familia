@@ -9,7 +9,7 @@ export type ActionResult = { ok: true } | { ok: false; error: string };
 
 type Admin = ReturnType<typeof createServiceRoleClient>;
 
-const TRIAL_DIAS = 30;
+const TRIAL_DIAS = 7;
 
 /**
  * Recria a família do usuário do zero: apaga a linha de family_accounts

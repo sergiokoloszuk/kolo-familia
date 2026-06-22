@@ -61,7 +61,7 @@ const FALLBACK: Record<string, string[]> = {
     "Oi, {nomeMae}. Caí da rotina aqui sem você.\n\nMe conta uma coisa do dia quando puder — sem pressa.",
   ],
   trial_d3: [
-    "Oi, {nomeMae}. Te lembrando que seus 30 dias grátis terminam em 3 dias.\n\nSe quiser continuar com a gente, é só assinar em /assinatura. Sem pressa.",
+    "Oi, {nomeMae}. Te lembrando que seu período grátis termina em 3 dias.\n\nSe quiser continuar com a gente, é só assinar em /assinatura. Sem pressa.",
     "{nomeMae}, faltam 3 dias pro fim do seu período grátis.\n\nQuis te avisar com antecedência, pra você decidir com calma.",
   ],
   trial_d0: [

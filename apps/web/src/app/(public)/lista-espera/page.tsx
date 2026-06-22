@@ -88,7 +88,7 @@ export default function ListaEsperaPage() {
               </h3>
               <p className="text-muted-foreground">
                 Quando sua vez chegar, você recebe um código pra criar sua
-                conta com 30 dias grátis.
+                conta com 7 dias grátis.
               </p>
             </div>
             <div className="flex flex-col gap-4 rounded-3xl bg-kolo-lilas-bg-2 p-8">

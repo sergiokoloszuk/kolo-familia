@@ -157,7 +157,7 @@ function StatusDescription({
   if (status === "trialing") {
     if (trialDaysLeft === null) return "Trial em andamento.";
     if (trialDaysLeft === 0) return "Seu trial termina hoje.";
-    return `Faltam ${trialDaysLeft} dia${trialDaysLeft === 1 ? "" : "s"} dos seus 30 dias grátis.`;
+    return `Faltam ${trialDaysLeft} dia${trialDaysLeft === 1 ? "" : "s"} do seu período grátis.`;
   }
   if (status === "active") {
     if (cancelAtPeriodEnd && proximaCobranca) {

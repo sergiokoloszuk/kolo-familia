@@ -10,7 +10,7 @@ import { createServiceRoleClient } from "@/lib/supabase/server";
 export const metadata: Metadata = {
   title: "Preços · Kolo Família",
   description:
-    "Trial de 30 dias grátis sem cartão. Depois, mensalidade ou anual com desconto. Sem pegadinhas.",
+    "Trial de 7 dias grátis sem cartão. Depois, mensalidade ou anual com desconto. Sem pegadinhas.",
 };
 
 // Lê de configuracao_precos no DB — admin pode ajustar sem redeploy.
@@ -85,7 +85,7 @@ export default async function PrecosPage() {
         <div className="mx-auto w-full max-w-7xl px-6 py-16 text-center md:px-8 md:py-24">
           <Eyebrow className="justify-center">Preços simples</Eyebrow>
           <h1 className="mt-4 font-heading text-4xl text-foreground md:text-6xl">
-            30 dias grátis{" "}
+            7 dias grátis{" "}
             <em className="not-italic text-brand-purple">pra sentir se vale</em>
             .
           </h1>
@@ -136,7 +136,7 @@ export default async function PrecosPage() {
                   "mt-auto w-full justify-center rounded-full border-brand-purple text-brand-purple hover:bg-kolo-lilas hover:text-brand-purple-dark",
                 )}
               >
-                Começar 30 dias grátis
+                Começar 7 dias grátis
               </Link>
             </div>
 
@@ -189,7 +189,7 @@ export default async function PrecosPage() {
                   "mt-auto w-full justify-center",
                 )}
               >
-                Começar 30 dias grátis
+                Começar 7 dias grátis
               </Link>
             </div>
           </div>
