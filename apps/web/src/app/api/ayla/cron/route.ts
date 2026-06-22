@@ -1,7 +1,8 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { logServerError } from "@/lib/log";
-import { horaLocalHHMM } from "@/lib/idade";
+import { horaLocalHHMM, hojeLocalISO } from "@/lib/idade";
+import { gerarSnapshotMensal } from "@/lib/evolucao/snapshot";
 import {
   sendRotinaDiaria,
   sendEngajamento,
@@ -67,6 +68,7 @@ async function handle(request: NextRequest) {
     if (tipo === "campanhas") return await runCampanhas(supabase);
     if (tipo === "regras") return await runRegras(supabase);
     if (tipo === "cleanup") return await runCleanup(supabase);
+    if (tipo === "snapshots") return await runSnapshots(supabase);
 
     return NextResponse.json({ error: `tipo inválido: ${tipo}` }, { status: 400 });
   } catch (err) {
@@ -79,6 +81,43 @@ async function handle(request: NextRequest) {
 }
 
 type AdminClient = ReturnType<typeof createServiceRoleClient>;
+
+/**
+ * Snapshots mensais da Evolução — roda no início do mês e tira a FOTO do mês
+ * ANTERIOR pra cada membro ativo (só os que ainda não têm). Idempotente.
+ * Ideal: cron 1×/dia nos primeiros dias do mês (ou 1×/mês no dia 1).
+ */
+async function runSnapshots(supabase: AdminClient) {
+  const hoje = hojeLocalISO(); // 'YYYY-MM-DD' (America/Sao_Paulo)
+  const [y, m] = hoje.split("-").map(Number);
+  const py = m === 1 ? y - 1 : y;
+  const pm = m === 1 ? 12 : m - 1;
+  const periodo = `${py}-${String(pm).padStart(2, "0")}-01`;
+
+  const { data: membros } = await supabase
+    .from("membros_atipicos")
+    .select("id, family_account_id")
+    .eq("ativo", true);
+
+  let gerados = 0;
+  let pulados = 0;
+  for (const mem of membros ?? []) {
+    try {
+      const r = await gerarSnapshotMensal(supabase, {
+        membroId: mem.id as string,
+        familyId: (mem.family_account_id as string | null) ?? null,
+        periodo,
+        geradoPor: "cron",
+      });
+      if (r.status === "gerado" || r.status === "atualizado") gerados += 1;
+      else pulados += 1;
+    } catch {
+      pulados += 1;
+    }
+  }
+
+  return NextResponse.json({ ok: true, tipo: "snapshots", periodo, gerados, pulados });
+}
 
 /**
  * Roda rotina diária para todas as famílias ativas onde:
