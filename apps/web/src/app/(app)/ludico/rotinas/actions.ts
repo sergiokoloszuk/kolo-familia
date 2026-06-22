@@ -292,6 +292,31 @@ export async function reordenarTarefas(
   }
 }
 
+const modoSchema = z.object({
+  rotinaId: z.string().uuid(),
+  modo: z.enum(["cartoes", "lista"]),
+});
+
+/** Define como a rotina é exibida: cartões (imagem) ou lista. Persiste por rotina. */
+export async function definirModoExibicao(
+  input: z.infer<typeof modoSchema>,
+): Promise<Ok | Fail> {
+  try {
+    const { rotinaId, modo } = modoSchema.parse(input);
+    const { supabase, family } = await requireFamily();
+    const { error } = await supabase
+      .from("rotinas")
+      .update({ modo_exibicao: modo })
+      .eq("id", rotinaId)
+      .eq("family_account_id", family.id);
+    if (error) return { ok: false, error: error.message };
+    revalidatePath(`/ludico/rotinas/${rotinaId}`);
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "Erro inesperado" };
+  }
+}
+
 export async function resetarRotina(input: { rotinaId: string }): Promise<Ok | Fail> {
   try {
     const rotinaId = z.string().uuid().parse(input.rotinaId);

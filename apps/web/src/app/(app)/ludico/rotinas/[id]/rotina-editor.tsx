@@ -41,6 +41,7 @@ import { cn } from "@/lib/utils";
 import {
   adicionarTarefa,
   adicionarVariasTarefas,
+  definirModoExibicao,
   excluirRotina,
   excluirTarefa,
   gerarCardsVisuais,
@@ -91,6 +92,7 @@ type AvatarMini = { id: string; url: string; selecionado: boolean };
 export function RotinaEditor({
   rotinaId,
   nomeInicial,
+  modoInicial,
   nomeMembro,
   avatares,
   tema,
@@ -100,6 +102,7 @@ export function RotinaEditor({
 }: {
   rotinaId: string;
   nomeInicial: string;
+  modoInicial: "cartoes" | "lista";
   nomeMembro: string | null;
   avatares: AvatarMini[];
   tema: string | null;
@@ -108,7 +111,15 @@ export function RotinaEditor({
   tarefasIniciais: Tarefa[];
 }) {
   const router = useRouter();
-  const visual = true; // cards visuais liberados pra todas as idades (decisão jun/2026)
+  // A pessoa escolhe como ver: cartões (imagem) ou lista. Persiste por rotina.
+  const [modo, setModo] = useState<"cartoes" | "lista">(modoInicial);
+  const visual = modo === "cartoes";
+
+  function trocarModo(novo: "cartoes" | "lista") {
+    if (novo === modo) return;
+    setModo(novo);
+    start(async () => setErroFrom(await definirModoExibicao({ rotinaId, modo: novo })));
+  }
 
   // Enquanto gera os cards em segundo plano, faz polling até virar pronto/erro.
   useEffect(() => {
@@ -203,6 +214,33 @@ export function RotinaEditor({
         rotinaId={rotinaId}
       />
 
+      {/* Como exibir: cartões (imagem) ou lista. Escolha da pessoa, persiste. */}
+      <div className="flex items-center gap-2 print:hidden">
+        <span className="text-sm text-muted-foreground">Ver como:</span>
+        <div className="inline-flex rounded-full border border-foreground/10 bg-white p-0.5 text-xs font-semibold">
+          <button
+            type="button"
+            onClick={() => trocarModo("cartoes")}
+            className={cn(
+              "rounded-full px-3 py-1.5 transition-colors",
+              visual ? "bg-brand-purple text-white" : "text-foreground/60 hover:text-foreground",
+            )}
+          >
+            Cartões
+          </button>
+          <button
+            type="button"
+            onClick={() => trocarModo("lista")}
+            className={cn(
+              "rounded-full px-3 py-1.5 transition-colors",
+              !visual ? "bg-brand-purple text-white" : "text-foreground/60 hover:text-foreground",
+            )}
+          >
+            Lista
+          </button>
+        </div>
+      </div>
+
       {cardsStatus === "gerando" && (
         <div className="flex items-center gap-3 rounded-2xl border border-brand-purple/20 bg-kolo-lilas-bg-2/50 px-4 py-3 text-sm text-brand-purple-dark print:hidden">
           <Sparkles className="size-4 animate-pulse" aria-hidden />
@@ -219,7 +257,7 @@ export function RotinaEditor({
 
       {!visual && (
         <p className="flex items-center gap-2 text-xs text-muted-foreground print:hidden">
-          <Smartphone className="size-3.5" /> Dá pra abrir no celular dele(a) e ir marcando.
+          <Smartphone className="size-3.5" /> Dá pra abrir no celular e ir marcando.
         </p>
       )}
 
