@@ -6,6 +6,7 @@ import { z } from "zod";
 import { createClient, createServiceRoleClient } from "@/lib/supabase/server";
 import { respond, respondAsOutputType } from "@/lib/ia/engine";
 import { gerarSecoesPlanoMultiCall } from "@/lib/ia/plano";
+import { gerarTituloConversa } from "@/lib/ia/titulo";
 import { extrairAtualizacoes, type PropostaAtualizacao } from "@/lib/ia/atualizar";
 import {
   MEMBRO_CAMPOS_TOPLEVEL,
@@ -22,6 +23,24 @@ import {
 import { idadeAnos, hojeLocalISO } from "@/lib/idade";
 import { requireActiveWrite } from "@/lib/auth/require-active-write";
 import { resolveFamily } from "@/lib/auth/current-family";
+
+/**
+ * Em background (after()), gera um título curto e bem-escrito pra conversa e
+ * substitui o placeholder cru. Graceful: se a IA falhar, o placeholder fica.
+ */
+function agendarTituloConversa(familyId: string, conversaId: string, texto: string) {
+  after(async () => {
+    try {
+      const admin = createServiceRoleClient();
+      const titulo = await gerarTituloConversa(admin, familyId, texto);
+      if (titulo) {
+        await admin.from("conversas").update({ titulo }).eq("id", conversaId);
+      }
+    } catch {
+      // título é cosmético — nunca derruba o fluxo da conversa
+    }
+  });
+}
 
 async function requireFamily() {
   const supabase = await createClient();
@@ -65,6 +84,7 @@ export async function enviarMensagem(input: z.infer<typeof enviarSchema>): Promi
       .single();
     if (error || !nova) throw new Error(`Falha ao criar conversa: ${error?.message}`);
     conversaIdFinal = nova.id as string;
+    agendarTituloConversa(family.id, conversaIdFinal, texto);
   }
 
   // 2. Persiste mensagem da mãe
@@ -138,6 +158,8 @@ export async function criarConversa(
     papel: "user",
     conteudo: texto,
   });
+
+  agendarTituloConversa(family.id, nova.id as string, texto);
 
   return { conversaId: nova.id as string };
 }
