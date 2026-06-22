@@ -1,11 +1,12 @@
 import Link from "next/link";
 import { differenceInCalendarDays, format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { ArrowRight, Lightbulb, Sparkles, Sprout, Star } from "lucide-react";
+import { ArrowRight, Lightbulb, MessageCircle, Sparkles, Sprout, Star } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { Eyebrow } from "@/components/brand/eyebrow";
+import { IconCard } from "@/components/brand/icon-card";
 import { loadFamilyContext } from "@/lib/auth/require-user";
 import { resolverCriancaAtivaId } from "@/lib/crianca-ativa";
 import { deNome, primeiroNome } from "@/lib/nome";
@@ -80,6 +81,59 @@ function quemEstavaLabel(raw: string | null | undefined): string | null {
     professor_a: "professora",
   };
   return map[raw] ?? null;
+}
+
+/** Palavra editorial pro estado do Perfil vivo, conforme a completude. */
+function perfilPalavra(pct: number): string {
+  if (pct <= 0) return "Comece o retrato";
+  if (pct < 40) return "Começando";
+  if (pct < 70) return "Tomando forma";
+  return "Bem montado";
+}
+
+/** Tempo relativo gentil: "hoje" / "ontem" / "anteontem" / "há N dias" / … */
+function diasAtrasLabel(dataISO: string, hoje: Date): string {
+  const d = differenceInCalendarDays(hoje, new Date(dataISO));
+  if (d <= 0) return "hoje";
+  if (d === 1) return "ontem";
+  if (d === 2) return "anteontem";
+  if (d < 7) return `há ${d} dias`;
+  if (d < 14) return "semana passada";
+  return "semanas atrás";
+}
+
+/**
+ * Tira de sinais (logo abaixo do hero) — tile calmo com plaquinha amarela
+ * (IconCard), no espírito da tela de admin, mas EDITORIAL: valor em palavra,
+ * não número de dashboard. Consolida sinais antes espalhados pela Home.
+ */
+function SinalTile({
+  icon: Icon,
+  label,
+  value,
+  sub,
+}: {
+  icon: typeof Sprout;
+  label: string;
+  value: string;
+  sub: string;
+}) {
+  return (
+    <div className="flex flex-col gap-3 rounded-3xl bg-white p-5 shadow-[0_1px_2px_rgba(46,10,82,0.04),_0_4px_12px_rgba(46,10,82,0.03)] transition-all hover:-translate-y-0.5 hover:shadow-[0_4px_12px_rgba(46,10,82,0.06),_0_12px_28px_rgba(46,10,82,0.06)]">
+      <IconCard tone="light" size="sm">
+        <Icon aria-hidden />
+      </IconCard>
+      <div>
+        <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground">
+          {label}
+        </p>
+        <p className="mt-1 font-heading text-xl font-medium leading-snug text-foreground">
+          {value}
+        </p>
+        <p className="mt-1 text-[13px] leading-relaxed text-muted-foreground">{sub}</p>
+      </div>
+    </div>
+  );
 }
 
 function FocoChip({ label, tone }: { label: string; tone: ChipTone }) {
@@ -520,6 +574,42 @@ export default async function PainelPage() {
             };
 
 
+  // ============================================================
+  // Tira de sinais — consolida o que antes ficava espalhado (o "X dias" do
+  // Registro, o "%" da porta Perfil, a última conversa). Valores editoriais.
+  // ============================================================
+  const ultimaConversaAt = ((conversasRecentes ?? [])[0]?.created_at as string | null) ?? null;
+  const tiles: { icon: typeof Sprout; label: string; value: string; sub: string }[] = [
+    {
+      icon: Sprout,
+      label: nomeCA ? `Perfil ${deNome(nomeCA, generoCA)}` : "Perfil de vocês",
+      value: perfilPalavra(koloVivoPct),
+      sub:
+        koloVivoPct > 0
+          ? `${koloVivoPct}% do retrato vivo preenchido`
+          : "o retrato vivo começa com você",
+    },
+    {
+      icon: Star,
+      label: "Esta semana",
+      value:
+        diasComRegistro > 0
+          ? `${diasComRegistro} ${diasComRegistro === 1 ? "dia registrado" : "dias registrados"}`
+          : "Ainda sem registros",
+      sub: diasComRegistro > 0 ? "o dia a dia indo pro papel" : "o primeiro aparece aqui",
+    },
+    {
+      icon: MessageCircle,
+      label: "Última conversa",
+      value: ultimaConversaTitulo
+        ? `“${ultimaConversaTitulo.length > 26 ? `${ultimaConversaTitulo.slice(0, 26)}…` : ultimaConversaTitulo}”`
+        : "Nenhuma ainda",
+      sub: ultimaConversaAt
+        ? `nas Estratégias · ${diasAtrasLabel(ultimaConversaAt, hoje)}`
+        : "conte um desafio nas Estratégias",
+    },
+  ];
+
   return (
     <div className="flex flex-col gap-8">
       {/* ============================================================
@@ -565,6 +655,17 @@ export default async function PainelPage() {
       </header>
 
       {/* ============================================================
+       * TIRA DE SINAIS — fileira de tiles (plaquinha amarela, IconCard) no
+       * espírito da tela de admin, mas editorial. Consolida sinais antes
+       * espalhados: estado do Perfil, ritmo da semana, última conversa.
+       * ============================================================ */}
+      <section className="grid gap-4 sm:grid-cols-3">
+        {tiles.map((t) => (
+          <SinalTile key={t.label} {...t} />
+        ))}
+      </section>
+
+      {/* ============================================================
        * REGISTRO DO DIA — inline, sem sair da Home. Segue a criança ativa.
        * A IA limpa o texto e etiqueta por área; em sinal de crise pede o
        * possível gatilho. Substitui o antigo card que levava pra outra tela.
@@ -575,18 +676,11 @@ export default async function PainelPage() {
             aria-hidden
             className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-brand-yellow via-brand-yellow/50 to-transparent"
           />
-          <CardHeader className="flex flex-row items-start justify-between gap-3 pb-3">
-            <div>
-              <CardTitle className="text-base">Registro do dia</CardTitle>
-              <CardDescription>
-                Escreva do seu jeito — a Kolo organiza e guarda na Evolução.
-              </CardDescription>
-            </div>
-            {diasComRegistro > 0 && (
-              <span className="shrink-0 rounded-full bg-brand-yellow/20 px-2.5 py-1 text-xs font-semibold text-[#8B5A00]">
-                {diasComRegistro} {diasComRegistro === 1 ? "dia" : "dias"} essa semana
-              </span>
-            )}
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base">Registro do dia</CardTitle>
+            <CardDescription>
+              Escreva do seu jeito — a Kolo organiza e guarda na Evolução.
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <RegistroRapido
@@ -723,18 +817,15 @@ export default async function PainelPage() {
               </Link>
             </div>
           )}
-        </div>
-      </section>
 
-      {/* ============================================================
-       * ESSA SEMANA — lista editorial humana, não dashboard.
-       * Usa o TEXTO BRUTO das conquistas/desafios da família como
-       * itens (já são observações escritas). Marca discreta ✓ / !
-       * com fundo soft (não badge saturado). Em onboarding, frase
-       * editorial central "esperando os primeiros registros".
-       * ============================================================ */}
-      <section>
-        <div className="rounded-3xl bg-white px-6 py-7 shadow-[0_1px_2px_rgba(46,10,82,0.04),_0_4px_12px_rgba(46,10,82,0.03)] md:px-8 md:py-8">
+          {/* ──────────────────────────────────────────────────────────
+           * O QUE VEM ACONTECENDO — agora no MESMO cartão do Foco, depois
+           * de uma divisória fina (antes eram dois blocos empilhados). Dá
+           * ar à Home, no espírito de restrição da tela de admin. Lista
+           * editorial humana (texto bruto da família), nunca dashboard.
+           * ────────────────────────────────────────────────────────── */}
+          <hr className="my-7 border-foreground/[0.06] md:my-8" />
+
           <div className="mb-5 flex items-center gap-3">
             <span className="inline-flex size-8 items-center justify-center rounded-xl bg-brand-yellow/10 text-brand-yellow">
               <Star className="size-4" aria-hidden />
