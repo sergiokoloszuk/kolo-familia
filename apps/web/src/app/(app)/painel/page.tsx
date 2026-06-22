@@ -8,7 +8,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { Eyebrow } from "@/components/brand/eyebrow";
 import { loadFamilyContext } from "@/lib/auth/require-user";
 import { resolverCriancaAtivaId } from "@/lib/crianca-ativa";
-import { capitalizarNome } from "@/lib/nome";
+import { deNome, primeiroNome } from "@/lib/nome";
 import { cn } from "@/lib/utils";
 import { RegistroRapido } from "../registrar/diario/registro-rapido";
 import { BalaoPrimeirosPassos } from "./balao-primeiros-passos";
@@ -187,6 +187,11 @@ export default async function PainelPage() {
     user.email?.split("@")[0] ||
     "Você";
   const primeiraCrianca = (membros ?? []).find((m) => m.id === ativaId) ?? membros?.[0];
+
+  // Subtítulo do card Perfil — fala da criança ativa, com "do/da/de" por gênero.
+  const perfilDesc = primeiraCrianca?.nome
+    ? `O jeito de ser ${deNome(primeiroNome(primeiraCrianca.nome as string), (primeiraCrianca.genero as string | null) ?? null)}, sempre vivo.`
+    : "O jeito de ser de vocês, sempre vivo.";
 
   // Sinais vivos das 3 portas.
   const koloVivoPct = (() => {
@@ -564,7 +569,8 @@ export default async function PainelPage() {
           <CardContent>
             <RegistroRapido
               key={ativaId ?? "none"}
-              nomeCrianca={primeiraCrianca?.nome ? capitalizarNome(primeiraCrianca.nome as string) : null}
+              nomeCrianca={primeiraCrianca?.nome ? primeiroNome(primeiraCrianca.nome as string) : null}
+              genero={(primeiraCrianca?.genero as string | null) ?? null}
               membroId={ativaId}
             />
           </CardContent>
@@ -579,7 +585,7 @@ export default async function PainelPage() {
         {[
           {
             titulo: "Perfil",
-            desc: "O retrato vivo de quem vocês são.",
+            desc: perfilDesc,
             href: "/kolo-vivo",
             Icon: Sprout,
             chip: "bg-cat-social-bg text-cat-social",

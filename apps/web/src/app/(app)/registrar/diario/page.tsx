@@ -3,7 +3,7 @@ import { ChevronLeft } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { loadFamilyContext } from "@/lib/auth/require-user";
 import { resolverCriancaAtivaId } from "@/lib/crianca-ativa";
-import { capitalizarNome } from "@/lib/nome";
+import { primeiroNome } from "@/lib/nome";
 import { SeletorCrianca } from "../../seletor-crianca";
 import { RegistroRapido } from "./registro-rapido";
 
@@ -13,14 +13,15 @@ export default async function RegistrarDiarioPage() {
 
   const { data: membros } = await supabase
     .from("membros_atipicos")
-    .select("id, nome")
+    .select("id, nome, genero")
     .eq("family_account_id", familyId)
     .eq("ativo", true)
     .order("created_at", { ascending: true });
 
   const ativaId = (await resolverCriancaAtivaId(membros ?? [])) ?? null;
   const ativa = (membros ?? []).find((m) => m.id === ativaId) ?? membros?.[0];
-  const nomeCrianca = ativa?.nome ? capitalizarNome(ativa.nome as string) : null;
+  const nomeCrianca = ativa?.nome ? primeiroNome(ativa.nome as string) : null;
+  const generoCrianca = (ativa?.genero as string | null) ?? null;
 
   return (
     <div className="flex flex-col gap-6">
@@ -48,7 +49,12 @@ export default async function RegistrarDiarioPage() {
 
       <Card>
         <CardContent className="pt-6">
-          <RegistroRapido key={ativaId ?? "none"} nomeCrianca={nomeCrianca} membroId={ativaId} />
+          <RegistroRapido
+            key={ativaId ?? "none"}
+            nomeCrianca={nomeCrianca}
+            genero={generoCrianca}
+            membroId={ativaId}
+          />
         </CardContent>
       </Card>
     </div>

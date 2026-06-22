@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { hojeLocalISO } from "@/lib/idade";
+import { deNome } from "@/lib/nome";
 import {
   registrarDia,
   proporKoloVivoDoDiario,
@@ -86,9 +87,11 @@ type KvItem = {
  */
 export function RegistroRapido({
   nomeCrianca,
+  genero,
   membroId,
 }: {
   nomeCrianca: string | null;
+  genero?: string | null;
   membroId: string | null;
 }) {
   const router = useRouter();
@@ -177,7 +180,7 @@ export function RegistroRapido({
           <div>
             <p className="font-heading text-base font-semibold text-brand-purple-dark">Registrado! 🌿</p>
             <p className="mt-0.5 text-sm text-foreground/80">
-              Já entrou na Evolução{nomeCrianca ? ` de ${nomeCrianca}` : ""}.
+              Já entrou na Evolução{nomeCrianca ? ` ${deNome(nomeCrianca, genero)}` : ""}.
             </p>
           </div>
         </div>
@@ -246,7 +249,7 @@ export function RegistroRapido({
 
       <div className="flex flex-col gap-2">
         <p className="text-sm font-medium text-foreground">
-          Como foi o dia{nomeCrianca ? ` da ${nomeCrianca}` : ""}?
+          Como foi o dia{nomeCrianca ? ` ${deNome(nomeCrianca, genero)}` : ""}?
         </p>
         <div className="flex flex-wrap gap-2">
           {MOODS.map((m) => (

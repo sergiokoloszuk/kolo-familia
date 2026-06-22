@@ -20,3 +20,16 @@ export function capitalizarNome(nome: string | null | undefined): string {
     .map((w, i) => (i > 0 && MINUSCULAS.has(w) ? w : capPalavra(w)))
     .join(" ");
 }
+
+// Só o primeiro nome (já capitalizado): "maria de souza" -> "Maria".
+export function primeiroNome(nome: string | null | undefined): string {
+  return capitalizarNome(nome).split(" ")[0] ?? "";
+}
+
+// Contração coloquial pt-BR por gênero: "do Mario" / "da Manu" / "de Alex".
+// genero: "masculino" | "feminino" | "neutro" | null.
+export function deNome(nome: string, genero?: string | null): string {
+  if (genero === "masculino") return `do ${nome}`;
+  if (genero === "feminino") return `da ${nome}`;
+  return `de ${nome}`;
+}
