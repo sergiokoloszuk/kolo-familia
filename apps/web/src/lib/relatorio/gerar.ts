@@ -39,6 +39,41 @@ function textoDe(v: unknown): string {
   return typeof t === "string" ? t.trim() : "";
 }
 
+const MESES_PT = [
+  "janeiro", "fevereiro", "março", "abril", "maio", "junho",
+  "julho", "agosto", "setembro", "outubro", "novembro", "dezembro",
+];
+
+/** 'YYYY-MM-01' → 'mês de YYYY' (pt-BR), sem depender de Date/timezone. */
+function mesLabel(periodo: string): string {
+  const [y, m] = periodo.split("-").map(Number);
+  const nome = MESES_PT[(m ?? 1) - 1] ?? "";
+  return `${nome} de ${y}`;
+}
+
+/**
+ * Monta o bloco longitudinal (a "máquina do tempo") a partir das fotos mensais
+ * — uma linha por mês, da mais antiga à mais recente. Vazio se não houver fotos
+ * o bastante pra narrar um arco.
+ */
+function blocoEvolucaoMensal(
+  snaps: Array<{ periodo: string; resumo: string | null; sinais: Record<string, unknown> | null }>,
+): string {
+  if (snaps.length < 2) return "";
+  const linhas = snaps
+    .map((s) => {
+      const sinais = s.sinais ?? {};
+      const humor = typeof sinais.humor_label === "string" ? sinais.humor_label : null;
+      const resumo = s.resumo?.trim();
+      if (!resumo && !humor) return "";
+      const partes = [resumo || "(sem resumo)"];
+      if (humor) partes.push(`humor predominante: ${humor}`);
+      return `${mesLabel(s.periodo)}: ${partes.join(" — ")}`;
+    })
+    .filter(Boolean);
+  return linhas.length >= 2 ? linhas.join("\n") : "";
+}
+
 const SYSTEM = `Você redige um RELATÓRIO da família para entregar à ESCOLA ou ao TERAPEUTA, em português do Brasil. Você traduz o que a família registrou (o perfil da criança/pessoa + observações recentes do diário) numa linguagem clara, organizada e respeitosa para o profissional — para ele conhecer rápido quem é essa criança.
 
 Tom: DESCRITIVO e factual a partir do que a FAMÍLIA observa ("a família observa que…", "em casa, costuma…", "segundo a família…"). NUNCA diagnostique nem use rótulo clínico como conclusão. É a família compartilhando o que conhece, não um laudo.
@@ -54,6 +89,7 @@ Organize em seções markdown (use "## "), na ordem abaixo, PULANDO as que não 
 ## Pontos fortes e interesses
 ## O que ajuda
 ## Observações recentes — avanços e desafios do diário, se houver.
+## Evolução ao longo do tempo — INCLUA esta seção SÓ se houver <evolucao_mensal> com fotos de meses diferentes. Narre o ARCO em prosa: como a pessoa estava nos meses iniciais e como está nos mais recentes, mudanças notáveis (regulação, comunicação, humor, autonomia). Use frases como "ao longo dos últimos meses, a família observa que…". NÃO invente progresso — descreva só o que os resumos mensais mostram; se o quadro foi estável, diga que se manteve estável. Sem números crus de contagem; é uma leitura humana do percurso.
 
 Seja conciso e útil; use bullets quando ajudar. NÃO invente nada — use só o que foi dado. Devolva APENAS o relatório em markdown, sem comentários.`;
 
@@ -111,6 +147,24 @@ async function montarContextoRelatorio(
     .filter(Boolean)
     .join("\n");
 
+  // Fotos mensais (máquina do tempo) — últimos ~18 meses, da mais antiga à
+  // mais recente, pra o relatório narrar o arco. Só entra se houver ≥2 meses.
+  const { data: snapsRaw } = await supabase
+    .from("evolucao_snapshots")
+    .select("periodo, resumo, sinais")
+    .eq("membro_atipico_id", membroId)
+    .eq("periodo_tipo", "mensal")
+    .order("periodo", { ascending: false })
+    .limit(18);
+  const snaps = (snapsRaw ?? [])
+    .map((s) => ({
+      periodo: s.periodo as string,
+      resumo: (s.resumo as string | null) ?? null,
+      sinais: (s.sinais as Record<string, unknown> | null) ?? null,
+    }))
+    .reverse(); // mais antiga → mais recente
+  const evolucaoMensal = blocoEvolucaoMensal(snaps);
+
   const idade = idadeAnos((m.data_nascimento as string | null) ?? null);
   const nome = m.nome as string;
   const foco =
@@ -129,7 +183,15 @@ ${dominios || "(pouca informação preenchida)"}
 
 <registros_recentes>
 ${registros || "(sem registros recentes)"}
-</registros_recentes>`;
+</registros_recentes>${
+    evolucaoMensal
+      ? `
+
+<evolucao_mensal>
+${evolucaoMensal}
+</evolucao_mensal>`
+      : ""
+  }`;
 
   return { nome, bloco };
 }
