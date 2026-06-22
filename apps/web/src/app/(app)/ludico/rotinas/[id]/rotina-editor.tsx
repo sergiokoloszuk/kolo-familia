@@ -91,7 +91,6 @@ type AvatarMini = { id: string; url: string; selecionado: boolean };
 export function RotinaEditor({
   rotinaId,
   nomeInicial,
-  idade,
   nomeMembro,
   avatares,
   tema,
@@ -101,7 +100,6 @@ export function RotinaEditor({
 }: {
   rotinaId: string;
   nomeInicial: string;
-  idade: number | null;
   nomeMembro: string | null;
   avatares: AvatarMini[];
   tema: string | null;
@@ -110,7 +108,7 @@ export function RotinaEditor({
   tarefasIniciais: Tarefa[];
 }) {
   const router = useRouter();
-  const visual = idade == null || idade < 13; // criança = cartões; 13+ = checklist
+  const visual = true; // cards visuais liberados pra todas as idades (decisão jun/2026)
 
   // Enquanto gera os cards em segundo plano, faz polling até virar pronto/erro.
   useEffect(() => {

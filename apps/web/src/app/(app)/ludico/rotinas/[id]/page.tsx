@@ -90,7 +90,6 @@ export default async function RotinaPage({
         key={(rotina.cards_status as string) ?? "nenhum"}
         rotinaId={rotina.id as string}
         nomeInicial={rotina.nome as string}
-        idade={idade}
         nomeMembro={nomeMembro}
         avatares={avataresMembro}
         tema={(rotina.tema as string | null) ?? null}
