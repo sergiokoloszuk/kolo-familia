@@ -1,14 +1,25 @@
 import Link from "next/link";
 import { differenceInCalendarDays } from "date-fns";
-import { ArrowRight, Eye, FileText, Sprout, Target, Trophy, type LucideIcon } from "lucide-react";
+import { ArrowRight, FileText, Sprout } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { EstadoVazio } from "@/components/brand/estado-vazio";
 import { Eyebrow } from "@/components/brand/eyebrow";
 import { loadFamilyContext } from "@/lib/auth/require-user";
 import { resolverCriancaAtivaId } from "@/lib/crianca-ativa";
+import { AREAS_DIARIO } from "@/lib/ia/classificar-area";
+import { primeiroNome, deNome } from "@/lib/nome";
 import { cn } from "@/lib/utils";
 import { SeletorCrianca } from "../seletor-crianca";
 import { DOMINIOS } from "../kolo-vivo/dominios";
+
+// Leitura por área (Passo 3): conquistas/desafios agrupados pela etiqueta
+// conquista_area/desafio_area que o Passo 1 grava.
+type AreaBucket = {
+  area: string;
+  label: string;
+  conquistas: { texto: string; data: string }[];
+  desafios: { texto: string; data: string; gatilho: string | null }[];
+};
 
 /**
  * Evolução (Fase 2) — leitura editorial do que foi mudando.
@@ -148,13 +159,22 @@ export default async function EvolucaoPage() {
   // Criança ativa (cookie): a Evolução é DELA. Sentinela quando não há filho.
   const { data: membrosLista } = await supabase
     .from("membros_atipicos")
-    .select("id, nome")
+    .select("id, nome, genero")
     .eq("family_account_id", familyId)
     .eq("ativo", true)
     .order("created_at", { ascending: true });
   const criancas = (membrosLista ?? []).map((m) => ({ id: m.id as string, nome: m.nome as string }));
   const ativaId = (await resolverCriancaAtivaId(membrosLista ?? [])) ?? null;
   const filtroMembro = ativaId ?? "00000000-0000-0000-0000-000000000000";
+
+  // Nome (1º) + gênero da criança ativa → títulos "do Mario", "Como o Mario está".
+  const ativaMembro = (membrosLista ?? []).find((m) => m.id === ativaId) ?? membrosLista?.[0];
+  const nomeCA = ativaMembro?.nome ? primeiroNome(ativaMembro.nome as string) : null;
+  const generoCA = (ativaMembro?.genero as string | null) ?? null;
+  const artigoCA = generoCA === "masculino" ? "o" : generoCA === "feminino" ? "a" : "";
+  const tituloComoEsta = nomeCA
+    ? `Como ${artigoCA ? `${artigoCA} ` : ""}${nomeCA} está`
+    : "Como vocês estão";
 
   const [
     { data: diarios },
@@ -167,7 +187,7 @@ export default async function EvolucaoPage() {
     supabase
       .from("diarios")
       .select(
-        "id, data, conquista, desafio, observacao_livre, possivel_gatilho, membros_atipicos(nome)",
+        "id, data, conquista, desafio, conquista_area, desafio_area, observacao_livre, possivel_gatilho, membros_atipicos(nome)",
       )
       .eq("family_account_id", familyId)
       .eq("membro_atipico_id", filtroMembro)
@@ -342,13 +362,72 @@ export default async function EvolucaoPage() {
   const eventosVisiveis = eventos.slice(0, 40);
   const buckets = agruparPorBucket(eventosVisiveis);
 
+  // ── Passo 3: leitura por ÁREA (etiquetas conquista_area/desafio_area) ──
+  const areaMap = new Map<string, AreaBucket>();
+  const ensureArea = (area: string): AreaBucket => {
+    let b = areaMap.get(area);
+    if (!b) {
+      b = { area, label: AREAS_DIARIO[area] ?? area, conquistas: [], desafios: [] };
+      areaMap.set(area, b);
+    }
+    return b;
+  };
+  for (const d of diarios ?? []) {
+    const ca = d.conquista_area as string | null;
+    const da = d.desafio_area as string | null;
+    if (d.conquista && (d.conquista as string).trim() && ca && AREAS_DIARIO[ca]) {
+      ensureArea(ca).conquistas.push({ texto: d.conquista as string, data: d.data as string });
+    }
+    if (d.desafio && (d.desafio as string).trim() && da && AREAS_DIARIO[da]) {
+      ensureArea(da).desafios.push({
+        texto: d.desafio as string,
+        data: d.data as string,
+        gatilho: (d.possivel_gatilho as string | null) ?? null,
+      });
+    }
+  }
+  const temas = [...areaMap.values()].sort(
+    (a, b) => b.conquistas.length + b.desafios.length - (a.conquistas.length + a.desafios.length),
+  );
+
+  // Síntese "Como o Mario está" — por REGRA (sem IA): áreas com mais conquistas
+  // + área com desafio mais recorrente.
+  const joinE = (arr: string[]) =>
+    arr.length <= 1 ? arr[0] ?? "" : `${arr.slice(0, -1).join(", ")} e ${arr[arr.length - 1]}`;
+  const topConquistaAreas = [...temas]
+    .filter((t) => t.conquistas.length > 0)
+    .sort((a, b) => b.conquistas.length - a.conquistas.length)
+    .slice(0, 2)
+    .map((t) => t.label);
+  const topDesafio =
+    [...temas]
+      .filter((t) => t.desafios.length > 0)
+      .sort((a, b) => b.desafios.length - a.desafios.length)[0]?.label ?? null;
+  let sintese: string;
+  if (topConquistaAreas.length && topDesafio) {
+    sintese = `Mais conquistas em ${joinE(topConquistaAreas)}. O desafio que mais voltou foi em ${topDesafio}.`;
+  } else if (topConquistaAreas.length) {
+    sintese = `Mais conquistas em ${joinE(topConquistaAreas)}.`;
+  } else if (topDesafio) {
+    sintese = `O desafio que mais apareceu foi em ${topDesafio}.`;
+  } else {
+    sintese = `Conforme você for registrando, um resumo do momento ${nomeCA ? deNome(nomeCA, generoCA) : "de vocês"} aparece aqui.`;
+  }
+
+  // "O que ajudou" — planos que deram certo (highlight curado, além da timeline).
+  const planosAjuda = (planos ?? []).filter(
+    (p) => p.resultado === "funcionou" || p.resultado === "parcial",
+  );
+
   return (
     <div className="flex flex-col gap-10">
       <header>
         <Eyebrow>Evolução</Eyebrow>
         <h1 className="mt-1 font-heading text-3xl text-foreground md:text-4xl">
           O caminho{" "}
-          <em className="not-italic text-brand-purple">de vocês</em>
+          <em className="not-italic text-brand-purple">
+            {nomeCA ? deNome(nomeCA, generoCA) : "de vocês"}
+          </em>
         </h1>
         <p className="mt-2 max-w-2xl text-muted-foreground">
           O que apareceu, o que ficou, o que vai mudando — aos poucos.
@@ -360,51 +439,81 @@ export default async function EvolucaoPage() {
         )}
       </header>
 
-      <Link
-        href="/evolucao/relatorio"
-        className="group flex items-center gap-3 rounded-2xl border border-brand-purple/20 bg-kolo-lilas-bg-2/40 px-5 py-4 transition-colors hover:border-brand-purple/40"
-      >
+      {/* COMO O MARIO ESTÁ — síntese por regra + números do mês */}
+      <section className="relative overflow-hidden rounded-3xl border border-brand-yellow/30 bg-gradient-to-br from-brand-yellow/[0.08] to-white px-6 py-6 shadow-[0_1px_2px_rgba(46,10,82,0.04),_0_4px_16px_rgba(46,10,82,0.04)] md:px-8 md:py-7">
         <span
           aria-hidden
-          className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-brand-yellow/25 text-[#8B5A00]"
-        >
-          <FileText className="size-5" />
-        </span>
-        <div className="flex-1">
-          <p className="font-heading text-base font-medium text-foreground">
-            Relatório pra escola ou terapeuta
-          </p>
-          <p className="text-sm text-muted-foreground">
-            A Kolo traduz o Perfil + os últimos meses num PDF pra você revisar e baixar.
-          </p>
-        </div>
-        <ArrowRight className="size-4 shrink-0 text-brand-purple transition-transform group-hover:translate-x-0.5" aria-hidden />
-      </Link>
+          className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-brand-yellow via-brand-yellow/50 to-transparent"
+        />
+        <h2 className="text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground">
+          {tituloComoEsta}
+        </h2>
+        <p className="mt-2 max-w-2xl font-heading text-xl leading-snug text-foreground">
+          {sintese}
+        </p>
+        {temAlgumResumo && (
+          <div className="mt-5 flex flex-wrap gap-2.5">
+            <StatPill
+              num={conquistas30d}
+              label={conquistas30d === 1 ? "conquista (30d)" : "conquistas (30d)"}
+            />
+            <StatPill
+              num={dominiosComMovimento.size}
+              label={dominiosComMovimento.size === 1 ? "área em movimento" : "áreas em movimento"}
+            />
+            <StatPill num={padroes30d} label={padroes30d === 1 ? "padrão" : "padrões"} />
+          </div>
+        )}
+      </section>
 
-      {temAlgumResumo && (
-        <section className="grid gap-4 sm:grid-cols-3">
-          <ResumoCard
-            icon={Trophy}
-            num={conquistas30d}
-            label="Conquistas registradas nos últimos 30 dias"
-            bar="bg-cat-social"
-            chip="bg-cat-social-bg text-cat-social"
-          />
-          <ResumoCard
-            icon={Target}
-            num={dominiosComMovimento.size}
-            sufixo="áreas"
-            label="Domínios do Perfil com movimento"
-            bar="bg-cat-foco"
-            chip="bg-cat-foco-bg text-cat-foco"
-          />
-          <ResumoCard
-            icon={Eye}
-            num={padroes30d}
-            label="Padrões detectados pela Ayla no mês"
-            bar="bg-cat-sensorial"
-            chip="bg-cat-sensorial-bg text-cat-sensorial"
-          />
+      {/* MARIO EM CADA TEMA — agrupado pelas etiquetas de área */}
+      {temas.length > 0 && (
+        <section>
+          <h2 className="font-heading text-2xl text-foreground">
+            {nomeCA ?? "Cada um"} em cada{" "}
+            <em className="not-italic text-brand-purple">tema</em>
+          </h2>
+          <div className="mt-6 grid gap-4 sm:grid-cols-2">
+            {temas.map((t) => (
+              <TemaCard key={t.area} tema={t} />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* O QUE AJUDOU — planos que deram certo (highlight, além da timeline) */}
+      {planosAjuda.length > 0 && (
+        <section>
+          <h2 className="font-heading text-2xl text-foreground">
+            O que <em className="not-italic text-brand-purple">ajudou</em>
+          </h2>
+          <ul className="mt-5 flex flex-col gap-2.5">
+            {planosAjuda.slice(0, 5).map((p) => (
+              <li
+                key={p.id as string}
+                className="flex items-start gap-3 rounded-2xl border border-foreground/[0.06] bg-white px-4 py-3.5"
+              >
+                <span aria-hidden className="mt-0.5 font-mono text-sm leading-none text-brand-purple">
+                  ◈
+                </span>
+                <div className="flex-1">
+                  <p className="text-base leading-relaxed text-foreground">
+                    {p.titulo as string}
+                    <span className="text-muted-foreground">
+                      {" "}
+                      · {RESULTADO_PLANO_LABEL[p.resultado as string] ?? (p.resultado as string)}
+                    </span>
+                  </p>
+                  <Link
+                    href={`/planos/${p.id}`}
+                    className="mt-0.5 inline-flex w-fit text-xs font-semibold text-brand-purple underline-offset-4 hover:underline"
+                  >
+                    Abrir →
+                  </Link>
+                </div>
+              </li>
+            ))}
+          </ul>
         </section>
       )}
 
@@ -450,6 +559,30 @@ export default async function EvolucaoPage() {
         </div>
       )}
 
+      {/* RELATÓRIO — fecha a página (Passo 4 melhora o conteúdo). */}
+      <Link
+        href="/evolucao/relatorio"
+        className="group flex items-center gap-3 rounded-2xl border border-brand-purple/20 bg-kolo-lilas-bg-2/40 px-5 py-4 transition-colors hover:border-brand-purple/40"
+      >
+        <span
+          aria-hidden
+          className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-brand-yellow/25 text-[#8B5A00]"
+        >
+          <FileText className="size-5" />
+        </span>
+        <div className="flex-1">
+          <p className="font-heading text-base font-medium text-foreground">
+            Relatório pra escola ou terapeuta
+          </p>
+          <p className="text-sm text-muted-foreground">
+            A Kolo traduz o Perfil + os últimos meses num PDF pra você revisar e baixar.
+          </p>
+        </div>
+        <ArrowRight
+          className="size-4 shrink-0 text-brand-purple transition-transform group-hover:translate-x-0.5"
+          aria-hidden
+        />
+      </Link>
     </div>
   );
 }
@@ -486,45 +619,62 @@ function BucketSection({
 }
 
 // ============================================================
-// Resumo cards do topo — peso visual do protótipo (evolucao-hero)
+// Números do mês — pílulas compactas dentro do "Como X está"
 // ============================================================
 
-function ResumoCard({
-  icon: Icon,
-  num,
-  sufixo,
-  label,
-  bar,
-  chip,
-}: {
-  icon: LucideIcon;
-  num: number;
-  sufixo?: string;
-  label: string;
-  bar: string;
-  chip: string;
-}) {
+function StatPill({ num, label }: { num: number; label: string }) {
   return (
-    <article className="relative overflow-hidden rounded-3xl bg-white px-6 pb-6 pt-7 shadow-[0_1px_2px_rgba(46,10,82,0.04),_0_4px_12px_rgba(46,10,82,0.03)]">
-      <span aria-hidden className={cn("absolute inset-x-0 top-0 h-1", bar)} />
-      <span
-        aria-hidden
-        className={cn(
-          "inline-flex size-10 items-center justify-center rounded-xl",
-          chip,
-        )}
-      >
-        <Icon className="size-5" strokeWidth={1.8} />
-      </span>
-      <div className="mt-4 font-heading text-4xl font-medium leading-none tracking-tight text-foreground">
-        {num}
-        {sufixo && (
-          <span className="ml-2 text-base font-normal text-muted-foreground">
-            {sufixo}
-          </span>
-        )}
+    <span className="inline-flex items-center gap-1.5 rounded-full border border-brand-yellow/40 bg-white px-3 py-1.5 text-sm">
+      <span className="font-heading text-base font-semibold text-foreground">{num}</span>
+      <span className="text-muted-foreground">{label}</span>
+    </span>
+  );
+}
+
+// ============================================================
+// Card de tema — conquistas (✓) e desafios (!) agrupados por área
+// ============================================================
+
+function TemaCard({ tema }: { tema: AreaBucket }) {
+  const conq = tema.conquistas.slice(0, 2);
+  const des = tema.desafios.slice(0, 2);
+  return (
+    <article className="relative overflow-hidden rounded-2xl border border-foreground/[0.08] bg-white p-5 shadow-[0_1px_2px_rgba(46,10,82,0.04),_0_4px_12px_rgba(46,10,82,0.03)]">
+      <div className="flex items-center justify-between gap-2">
+        <h3 className="font-heading text-lg font-medium text-foreground">{tema.label}</h3>
+        <span className="shrink-0 text-xs font-semibold">
+          {tema.conquistas.length > 0 && (
+            <span className="text-cat-social">↑{tema.conquistas.length}</span>
+          )}
+          {tema.conquistas.length > 0 && tema.desafios.length > 0 && (
+            <span className="text-muted-foreground"> · </span>
+          )}
+          {tema.desafios.length > 0 && (
+            <span className="text-cat-sensorial">!{tema.desafios.length}</span>
+          )}
+        </span>
       </div>
-      <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{label}</p>
+      <ul className="mt-3 flex flex-col gap-2">
+        {conq.map((c, i) => (
+          <li key={`c${i}`} className="flex items-start gap-2 text-sm">
+            <span aria-hidden className="mt-[3px] font-mono leading-none text-cat-social">✓</span>
+            <span className="text-foreground">{c.texto}</span>
+          </li>
+        ))}
+        {des.map((d, i) => (
+          <li key={`d${i}`} className="flex flex-col gap-0.5">
+            <span className="flex items-start gap-2 text-sm">
+              <span aria-hidden className="mt-[3px] font-mono leading-none text-cat-sensorial">!</span>
+              <span className="text-foreground">{d.texto}</span>
+            </span>
+            {d.gatilho && (
+              <span className="ml-[18px] text-xs text-muted-foreground">
+                gatilho: <span className="italic text-foreground/70">{d.gatilho}</span>
+              </span>
+            )}
+          </li>
+        ))}
+      </ul>
     </article>
   );
 }
