@@ -188,9 +188,11 @@ export default async function PainelPage() {
     "Você";
   const primeiraCrianca = (membros ?? []).find((m) => m.id === ativaId) ?? membros?.[0];
 
-  // Subtítulo do card Perfil — fala da criança ativa, com "do/da/de" por gênero.
-  const perfilDesc = primeiraCrianca?.nome
-    ? `O jeito de ser ${deNome(primeiroNome(primeiraCrianca.nome as string), (primeiraCrianca.genero as string | null) ?? null)}, sempre vivo.`
+  // Criança ativa: nome (1º) + gênero, reusados na saudação e no card Perfil.
+  const nomeCA = primeiraCrianca?.nome ? primeiroNome(primeiraCrianca.nome as string) : null;
+  const generoCA = (primeiraCrianca?.genero as string | null) ?? null;
+  const perfilDesc = nomeCA
+    ? `O jeito de ser ${deNome(nomeCA, generoCA)}, sempre vivo.`
     : "O jeito de ser de vocês, sempre vivo.";
 
   // Sinais vivos das 3 portas.
@@ -531,12 +533,23 @@ export default async function PainelPage() {
       />
 
       {/* ============================================================
-       * GREETING — data atual + saudação
+       * GREETING — hero acolhedor: moldura + brilho amarelo (marca),
+       * data, "oi" caloroso com o ponto amarelo do logo e uma linha
+       * que convida pro dia da criança ativa. Dá vida ao topo.
        * ============================================================ */}
-      <header>
+      <header className="relative overflow-hidden rounded-3xl border border-brand-yellow/30 bg-gradient-to-br from-brand-yellow/[0.14] via-kolo-lilas-bg-2/40 to-white px-6 py-7 shadow-[0_1px_2px_rgba(46,10,82,0.04),_0_4px_16px_rgba(46,10,82,0.04)] md:px-8 md:py-9">
+        <span
+          aria-hidden
+          className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-brand-yellow via-brand-yellow/50 to-transparent"
+        />
+        <span
+          aria-hidden
+          className="pointer-events-none absolute -right-8 -top-8 size-32 rounded-full bg-brand-yellow/25 blur-3xl"
+        />
         <Eyebrow>{format(hoje, "EEEE · d 'de' MMMM", { locale: ptBR })}</Eyebrow>
-        <h1 className="mt-1 font-heading text-3xl text-foreground md:text-4xl">
-          Oi, {greeting}.
+        <h1 className="mt-2 font-heading text-3xl text-foreground md:text-4xl">
+          Oi, {greeting}
+          <span aria-hidden style={{ color: "#FFBA00" }}>.</span>
           {saudacaoClause && (
             <>
               {" "}
@@ -544,6 +557,11 @@ export default async function PainelPage() {
             </>
           )}
         </h1>
+        <p className="mt-2.5 max-w-md text-sm leading-relaxed text-muted-foreground">
+          {nomeCA
+            ? `Que bom te ver. Vamos cuidar do dia ${deNome(nomeCA, generoCA)}?`
+            : "Que bom te ver por aqui."}
+        </p>
       </header>
 
       {/* ============================================================
@@ -552,7 +570,11 @@ export default async function PainelPage() {
        * possível gatilho. Substitui o antigo card que levava pra outra tela.
        * ============================================================ */}
       <section>
-        <Card>
+        <Card className="relative overflow-hidden border-brand-yellow/30">
+          <span
+            aria-hidden
+            className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-brand-yellow via-brand-yellow/50 to-transparent"
+          />
           <CardHeader className="flex flex-row items-start justify-between gap-3 pb-3">
             <div>
               <CardTitle className="text-base">Registro do dia</CardTitle>
@@ -561,7 +583,7 @@ export default async function PainelPage() {
               </CardDescription>
             </div>
             {diasComRegistro > 0 && (
-              <span className="shrink-0 rounded-full bg-cat-rotina-bg px-2.5 py-1 text-xs font-medium text-cat-rotina">
+              <span className="shrink-0 rounded-full bg-brand-yellow/20 px-2.5 py-1 text-xs font-semibold text-[#8B5A00]">
                 {diasComRegistro} {diasComRegistro === 1 ? "dia" : "dias"} essa semana
               </span>
             )}
