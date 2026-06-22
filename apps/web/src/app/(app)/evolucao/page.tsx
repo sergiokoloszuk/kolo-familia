@@ -5,7 +5,9 @@ import { buttonVariants } from "@/components/ui/button";
 import { EstadoVazio } from "@/components/brand/estado-vazio";
 import { Eyebrow } from "@/components/brand/eyebrow";
 import { loadFamilyContext } from "@/lib/auth/require-user";
+import { resolverCriancaAtivaId } from "@/lib/crianca-ativa";
 import { cn } from "@/lib/utils";
+import { SeletorCrianca } from "../seletor-crianca";
 import { DOMINIOS } from "../kolo-vivo/dominios";
 
 /**
@@ -143,6 +145,17 @@ export default async function EvolucaoPage() {
   ).toISOString();
   const dias30AtrasData = dias30AtrasIso.slice(0, 10);
 
+  // Criança ativa (cookie): a Evolução é DELA. Sentinela quando não há filho.
+  const { data: membrosLista } = await supabase
+    .from("membros_atipicos")
+    .select("id, nome")
+    .eq("family_account_id", familyId)
+    .eq("ativo", true)
+    .order("created_at", { ascending: true });
+  const criancas = (membrosLista ?? []).map((m) => ({ id: m.id as string, nome: m.nome as string }));
+  const ativaId = (await resolverCriancaAtivaId(membrosLista ?? [])) ?? null;
+  const filtroMembro = ativaId ?? "00000000-0000-0000-0000-000000000000";
+
   const [
     { data: diarios },
     { data: checkIns },
@@ -157,8 +170,10 @@ export default async function EvolucaoPage() {
         "id, data, conquista, desafio, observacao_livre, possivel_gatilho, membros_atipicos(nome)",
       )
       .eq("family_account_id", familyId)
+      .eq("membro_atipico_id", filtroMembro)
       .order("data", { ascending: false })
       .limit(100),
+    // Check-in é o humor da MÃE (família) — fica como está, não é por criança.
     supabase
       .from("check_ins_diarios")
       .select("id, data, escala_emocional_mae")
@@ -170,6 +185,7 @@ export default async function EvolucaoPage() {
       .from("ayla_padroes")
       .select("id, descricao, estado, confianca, ultima_evidencia, membros_atipicos(nome)")
       .eq("family_account_id", familyId)
+      .eq("membro_atipico_id", filtroMembro)
       .neq("estado", "descartado")
       .gte("ultima_evidencia", dias30AtrasIso)
       .order("ultima_evidencia", { ascending: false })
@@ -179,6 +195,7 @@ export default async function EvolucaoPage() {
       .from("conversas")
       .select("id, titulo, created_at, membros_atipicos(nome)")
       .eq("family_account_id", familyId)
+      .eq("membro_atipico_id", filtroMembro)
       .order("created_at", { ascending: false })
       .limit(15),
     supabase
@@ -186,11 +203,13 @@ export default async function EvolucaoPage() {
       .select(
         "sensorial, desafios_regulacao, corpo_rotina, categorias_extras, membros_atipicos(nome)",
       )
-      .eq("family_account_id", familyId),
+      .eq("family_account_id", familyId)
+      .eq("membro_atipico_id", filtroMembro),
     supabase
       .from("planos")
       .select("id, titulo, resultado, resultado_em, created_at, membros_atipicos(nome)")
       .eq("family_account_id", familyId)
+      .eq("membro_atipico_id", filtroMembro)
       .not("resultado", "is", null)
       .order("resultado_em", { ascending: false })
       .limit(30),
@@ -334,6 +353,11 @@ export default async function EvolucaoPage() {
         <p className="mt-2 max-w-2xl text-muted-foreground">
           O que apareceu, o que ficou, o que vai mudando — aos poucos.
         </p>
+        {criancas.length > 1 && ativaId && (
+          <div className="mt-4 w-fit">
+            <SeletorCrianca criancas={criancas} ativaId={ativaId} variant="screen" />
+          </div>
+        )}
       </header>
 
       <Link

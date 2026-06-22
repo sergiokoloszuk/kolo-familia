@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { Eyebrow } from "@/components/brand/eyebrow";
 import { loadFamilyContext } from "@/lib/auth/require-user";
+import { resolverCriancaAtivaId } from "@/lib/crianca-ativa";
 import { cn } from "@/lib/utils";
 import { BalaoPrimeirosPassos } from "./balao-primeiros-passos";
 import { BannerGenero } from "./banner-genero";
@@ -105,10 +106,18 @@ export default async function PainelPage() {
     .toISOString()
     .slice(0, 10);
 
+  // Criança ativa (cookie): a Home fala DELA. Sentinela quando não há filho.
+  const { data: membros } = await supabase
+    .from("membros_atipicos")
+    .select("id, nome, genero")
+    .eq("family_account_id", familyId)
+    .eq("ativo", true);
+  const ativaId = (await resolverCriancaAtivaId(membros ?? [])) ?? null;
+  const filtroMembro = ativaId ?? "00000000-0000-0000-0000-000000000000";
+
   const [
     { data: profile },
     { data: subscription },
-    { data: membros },
     { data: conquistas },
     { data: desafios },
     { data: checkins7d },
@@ -127,16 +136,12 @@ export default async function PainelPage() {
       .eq("family_account_id", familyId)
       .single(),
     supabase
-      .from("membros_atipicos")
-      .select("id, nome, genero")
-      .eq("family_account_id", familyId)
-      .eq("ativo", true),
-    supabase
       .from("diarios")
       .select(
         "id, data, conquista, observacao_livre, quem_estava, membro_atipico_id, membros_atipicos(nome)",
       )
       .eq("family_account_id", familyId)
+      .eq("membro_atipico_id", filtroMembro)
       .not("conquista", "is", null)
       .gte("data", seteDiasAtras)
       .order("data", { ascending: false })
@@ -145,8 +150,10 @@ export default async function PainelPage() {
       .from("diarios")
       .select("id, data, desafio, quem_estava")
       .eq("family_account_id", familyId)
+      .eq("membro_atipico_id", filtroMembro)
       .not("desafio", "is", null)
       .gte("data", seteDiasAtras),
+    // Check-in é o humor da MÃE (família) — não filtra por criança.
     supabase
       .from("check_ins_diarios")
       .select("id, data, escala_emocional_mae")
@@ -162,12 +169,14 @@ export default async function PainelPage() {
       .from("conversas")
       .select("id, titulo, created_at")
       .eq("family_account_id", familyId)
+      .eq("membro_atipico_id", filtroMembro)
       .order("created_at", { ascending: false })
       .limit(5),
     supabase
       .from("perfil_vivo_membro")
       .select("completude_pct")
-      .eq("family_account_id", familyId),
+      .eq("family_account_id", familyId)
+      .eq("membro_atipico_id", filtroMembro),
   ]);
 
   const greeting =
@@ -175,7 +184,7 @@ export default async function PainelPage() {
     profile?.nome_mae?.trim() ||
     user.email?.split("@")[0] ||
     "Você";
-  const primeiraCrianca = membros?.[0];
+  const primeiraCrianca = (membros ?? []).find((m) => m.id === ativaId) ?? membros?.[0];
 
   // Sinais vivos das 3 portas.
   const koloVivoPct = (() => {

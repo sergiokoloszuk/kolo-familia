@@ -27,22 +27,24 @@ export default async function EstrategiasPage({
   const sp = await searchParams;
   const temaContexto = sp.tema?.trim() || null;
 
-  const [{ data: membros }, { data: conversas }] = await Promise.all([
-    supabase
-      .from("membros_atipicos")
-      .select("id, nome")
-      .eq("family_account_id", familyId)
-      .eq("ativo", true)
-      .order("created_at", { ascending: true }),
-    supabase
-      .from("conversas")
-      .select("id, titulo, created_at")
-      .eq("family_account_id", familyId)
-      .order("created_at", { ascending: false })
-      .limit(5),
-  ]);
+  const { data: membros } = await supabase
+    .from("membros_atipicos")
+    .select("id, nome")
+    .eq("family_account_id", familyId)
+    .eq("ativo", true)
+    .order("created_at", { ascending: true });
 
   const ativaId = (await resolverCriancaAtivaId(membros ?? [])) ?? undefined;
+
+  // Conversas anteriores da CRIANÇA ATIVA (não mistura os filhos).
+  let convQuery = supabase
+    .from("conversas")
+    .select("id, titulo, created_at")
+    .eq("family_account_id", familyId)
+    .order("created_at", { ascending: false })
+    .limit(5);
+  if (ativaId) convQuery = convQuery.eq("membro_atipico_id", ativaId);
+  const { data: conversas } = await convQuery;
   const temConversas = (conversas ?? []).length > 0;
   const nomes = (membros ?? [])
     .map((m) => (m.nome ? capitalizarNome(m.nome as string) : null))
