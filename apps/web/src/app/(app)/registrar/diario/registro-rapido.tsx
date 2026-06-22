@@ -289,18 +289,25 @@ export function RegistroRapido({
         />
       </div>
 
-      {/* Sinal de crise → checar possível gatilho (alimenta os padrões). */}
+      {/* Sinal de crise → relato mais rico (gatilhos, reação, quem estava e
+          como essas pessoas reagiram). Alimenta a detecção de padrões. */}
       {sinalCrise && (
         <div className="flex flex-col gap-1.5 rounded-xl border border-brand-yellow/40 bg-brand-yellow/[0.07] p-3">
-          <label className="flex items-center gap-1.5 text-sm text-foreground">
-            <Search className="size-3.5 text-[#8B5A00]" aria-hidden /> O que parece ter disparado?{" "}
-            <span className="font-normal text-muted-foreground">(opcional — ajuda a achar padrões)</span>
+          <label htmlFor="crise-detalhe" className="flex items-start gap-1.5 text-sm text-foreground">
+            <Search className="mt-0.5 size-3.5 shrink-0 text-[#8B5A00]" aria-hidden />
+            <span>
+              Teve uma crise? Conte um pouco mais{" "}
+              <span className="font-normal text-muted-foreground">— ajuda a achar padrões.</span>
+            </span>
           </label>
-          <Input
+          <textarea
+            id="crise-detalhe"
+            rows={3}
             value={gatilho}
             onChange={(e) => setGatilho(e.target.value)}
-            placeholder="Ex.: barulho, fome, mudança de rotina, cansaço…"
+            placeholder="O que parece ter disparado, como você reagiu, quem estava por perto e como essas pessoas reagiram."
             disabled={pending}
+            className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
           />
         </div>
       )}
