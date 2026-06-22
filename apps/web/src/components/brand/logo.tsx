@@ -41,7 +41,7 @@ export function Logo({
 
   return (
     <span
-      className={cn("inline-flex flex-col items-start leading-none", className)}
+      className={cn("inline-flex flex-col items-center leading-none", className)}
       aria-label={`Kolo ${submark}`}
     >
       <span
