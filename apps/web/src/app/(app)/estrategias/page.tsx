@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { CalendarClock } from "lucide-react";
 import { Eyebrow } from "@/components/brand/eyebrow";
 import { loadFamilyContext } from "@/lib/auth/require-user";
 import { resolverCriancaAtivaId } from "@/lib/crianca-ativa";
@@ -65,69 +64,38 @@ export default async function EstrategiasPage({
         <Eyebrow>Estratégias</Eyebrow>
         <h1 className="mt-1 font-heading text-3xl text-foreground md:text-4xl">
           Conte o que tá difícil —{" "}
-          <em className="not-italic text-brand-purple">eu te ajudo a achar um caminho</em>.
+          <em className="not-italic text-brand-purple">eu acho um caminho</em>.
         </h1>
-        <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-          Me fala um desafio do dia a dia, do jeito que ele acontece aí na sua casa.
-          Não precisa caprichar no texto — quanto mais você me der do quadro real,
-          mais certeira eu fico. Ajuda bastante incluir:
+        <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+          Escreva do seu jeito; quanto mais do dia real, mais certeira eu fico.
         </p>
-        <ul className="mt-3 flex flex-col gap-1.5 text-sm leading-relaxed text-muted-foreground">
-          {[
-            <>
-              <strong className="font-semibold text-foreground">o que acontece</strong> e{" "}
-              <strong className="font-semibold text-foreground">quando</strong> (de manhã, na
-              hora de dormir, nas transições…)
-            </>,
-            <>
-              <strong className="font-semibold text-foreground">
-                como {nomesFmt} {reageVerbo}
-              </strong>{" "}
-              e o que parece disparar
-            </>,
-            <>
-              <strong className="font-semibold text-foreground">como você reage na hora</strong>{" "}
-              — e o que sente ou pensa quando acontece
-            </>,
-            <>
-              <strong className="font-semibold text-foreground">o que você já tentou</strong> — o
-              que ajudou um pouco, o que não rolou
-            </>,
-          ].map((item, i) => (
-            <li key={i} className="flex gap-2.5">
-              <span
-                aria-hidden
-                className="mt-[0.55em] size-1.5 shrink-0 rounded-full bg-brand-purple/50"
-              />
-              <span className="flex-1">{item}</span>
-            </li>
-          ))}
-        </ul>
-        <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-          Eu trago uma ideia prática na hora. E, quando fizer sentido, te ofereço um{" "}
-          <strong className="font-semibold text-foreground">plano completo</strong> — com mais
-          ideias, frases pra usar e o que observar.
+      </header>
+
+      {/* Dicas pra perto de onde importam (saíram do cabeçalho): o que incluir
+          + o plano de fim de semana, numa linha discreta acima do campo. */}
+      <div className="flex flex-col gap-3">
+        <p className="max-w-2xl text-sm leading-relaxed text-muted-foreground">
+          <span className="font-medium text-foreground">Ajuda incluir:</span> o que acontece e
+          quando, como {nomesFmt} {reageVerbo} e o que parece disparar, e o que você já tentou.
+          Também monto{" "}
+          <span className="font-medium text-foreground">plano de fim de semana ou férias</span> — é
+          só contar a programação.
         </p>
-        <div className="mt-4 flex items-start gap-3 rounded-2xl border border-brand-yellow/40 bg-brand-yellow/10 p-4">
-          <span
-            aria-hidden
-            className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-brand-yellow/25 text-[#8B5A00]"
-          >
-            <CalendarClock className="size-5" strokeWidth={1.8} />
-          </span>
-          <p className="text-sm leading-relaxed text-foreground/90">
-            <strong className="font-semibold text-foreground">
-              Quer um plano pro fim de semana ou pras férias?
-            </strong>{" "}
-            Conte a programação (passeio, casa, visita, viagem, dia tranquilo…) e o que
-            gostaria de fortalecer — autonomia, foco, socialização, rotina…
-          </p>
-        </div>
-        <p className="mt-3 text-xs italic leading-relaxed text-muted-foreground/80">
-          Aqui é apoio de quem entende de neurodivergência e do cansaço de cuidar — não
-          substitui profissionais de saúde.
+        <ConversarForm
+          membros={membros ?? []}
+          initialMembroId={sp.membro ?? ativaId}
+          tema={temaContexto ?? undefined}
+        />
+      </div>
+
+      {temConversas && <ConversasAnterioresSection conversas={conversas ?? []} />}
+
+      <footer className="max-w-2xl border-t border-foreground/[0.06] pt-5 text-sm text-muted-foreground">
+        <p className="italic text-muted-foreground/80">
+          Aqui é apoio de quem entende de neurodivergência e do cansaço de cuidar — não substitui
+          profissionais de saúde.
         </p>
-        <p className="mt-3 text-sm text-muted-foreground">
+        <p className="mt-2">
           Quer ajustar o perfil antes?{" "}
           <Link
             href="/kolo-vivo"
@@ -137,15 +105,7 @@ export default async function EstrategiasPage({
           </Link>
           .
         </p>
-      </header>
-
-      <ConversarForm
-        membros={membros ?? []}
-        initialMembroId={sp.membro ?? ativaId}
-        tema={temaContexto ?? undefined}
-      />
-
-      {temConversas && <ConversasAnterioresSection conversas={conversas ?? []} />}
+      </footer>
     </div>
   );
 }

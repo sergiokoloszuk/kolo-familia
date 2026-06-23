@@ -1,6 +1,4 @@
-import { Users } from "lucide-react";
 import { Eyebrow } from "@/components/brand/eyebrow";
-import { IconCard } from "@/components/brand/icon-card";
 import { loadFamilyContext } from "@/lib/auth/require-user";
 import { resolverCriancaAtivaId } from "@/lib/crianca-ativa";
 import { idadeAnos } from "@/lib/idade";
@@ -128,30 +126,15 @@ export default async function KoloVivoPage() {
 
   return (
     <div className="flex flex-col gap-8">
-      <header className="flex items-start gap-4">
-        <IconCard tone="light" size="lg" className="hidden md:inline-flex">
-          <Users aria-hidden />
-        </IconCard>
-        <div>
-          <Eyebrow>Perfil</Eyebrow>
-          <h1 className="mt-1 font-heading text-3xl text-foreground md:text-4xl">
-            Quem é essa família,{" "}
-            <em className="not-italic text-brand-purple">hoje</em>.
-          </h1>
-          <p className="mt-2 max-w-xl text-sm text-muted-foreground">
-            Aqui mora tudo que a gente sabe sobre quem você cuida — interesses,
-            rotina, o que ajuda e o que pesa. Quanto mais completo, mais certeiras
-            ficam as Estratégias que a gente te sugere. Você atualiza quando quiser.
-          </p>
-          <p className="mt-2 max-w-xl text-sm text-muted-foreground/80">
-            Fique tranquila: é um processo de construção. Quando você registra algo
-            no <span className="text-foreground/80">dia a dia</span>, conversa com a{" "}
-            <span className="text-foreground/80">Ayla</span> ou pede uma{" "}
-            <span className="text-foreground/80">Estratégia</span>, o que for novo
-            pode vir pra cá — sempre com a sua confirmação. Não precisa preencher tudo
-            de uma vez.
-          </p>
-        </div>
+      <header>
+        <Eyebrow>Perfil</Eyebrow>
+        <h1 className="mt-1 font-heading text-3xl text-foreground md:text-4xl">
+          Quem é essa família, <em className="not-italic text-brand-purple">hoje</em>.
+        </h1>
+        <p className="mt-2 max-w-xl text-sm text-muted-foreground">
+          O retrato de quem você cuida — complete quando quiser; ele vai se
+          enchendo com o uso.
+        </p>
       </header>
 
       <KoloVivoWrapper
