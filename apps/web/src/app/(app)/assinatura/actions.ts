@@ -4,6 +4,7 @@ import { headers } from "next/headers";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { getStripeClient, priceIdFor, type PlanoTipo } from "@/lib/stripe/client";
+import { trackFeature } from "@/lib/analytics/track";
 
 async function requireFamilyAndOrigin(): Promise<{
   familyId: string;
@@ -78,6 +79,11 @@ export async function iniciarCheckout(
     });
 
     if (!session.url) return { ok: false, error: "Stripe não retornou URL" };
+    await trackFeature({
+      familyId,
+      evento: "checkout_iniciado",
+      detalhe: { plano },
+    });
     return { ok: true, url: session.url };
   } catch (e) {
     return {

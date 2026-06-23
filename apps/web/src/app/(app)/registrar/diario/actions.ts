@@ -1,9 +1,11 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { after } from "next/server";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { requireActiveWrite } from "@/lib/auth/require-active-write";
+import { trackFeature } from "@/lib/analytics/track";
 import { idadeAnos } from "@/lib/idade";
 import { extrairAtualizacoes, type ItemKoloVivo } from "@/lib/ia/atualizar";
 import { montarKoloVivoResumo, aplicarItensNoMembro } from "@/lib/kolo-vivo/incorporar";
@@ -156,6 +158,14 @@ export async function registrarDia(input: RegistrarDiaInput): Promise<void> {
       if (error) throw new Error(`Erro ao salvar registro do dia: ${error.message}`);
     }
   }
+
+  after(() =>
+    trackFeature({
+      familyId: family.id,
+      evento: "registro_dia",
+      detalhe: { com_diario: temCamadaA, humor_mae: data.escalaEmocionalMae },
+    }),
+  );
 
   revalidatePath("/painel");
   revalidatePath("/registrar");

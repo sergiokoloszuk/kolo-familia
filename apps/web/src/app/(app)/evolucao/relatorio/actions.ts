@@ -6,6 +6,7 @@ import {
   gerarRelatorio as gerarRelatorioIA,
   ajustarRelatorio as ajustarRelatorioIA,
 } from "@/lib/relatorio/gerar";
+import { trackFeature } from "@/lib/analytics/track";
 
 async function requireFamily() {
   const supabase = await createClient();
@@ -41,6 +42,11 @@ export async function gerarRelatorio(
       destinatario,
     });
     if (!r) return { ok: false, error: "Não consegui montar o relatório. Tente de novo." };
+    await trackFeature({
+      familyId: family.id,
+      evento: "relatorio_gerado",
+      detalhe: { destinatario },
+    });
     return { ok: true, markdown: r.markdown, nome: r.nome };
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : "Erro inesperado" };

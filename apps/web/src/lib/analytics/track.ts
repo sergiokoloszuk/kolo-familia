@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { createServiceRoleClient } from "@/lib/supabase/server";
 
 /**
  * Tracking de COMPORTAMENTO (server-side). Insere em user_events com a família
@@ -6,8 +7,8 @@ import type { SupabaseClient } from "@supabase/supabase-js";
  * jamais derruba o fluxo principal. Escrita por service-role (ignora RLS).
  *
  * Página visitada vem do client via /api/track; eventos de feature (lúdico
- * gerado, plano solicitado, diário criado…) chamam isto direto na server action
- * onde a ação acontece, reusando o admin client e a família já conhecidos.
+ * gerado, plano solicitado, diário criado…) chamam `trackFeature` direto na
+ * server action onde a ação acontece, com a família já conhecida.
  */
 export type TrackParams = {
   familyId?: string | null;
@@ -29,5 +30,18 @@ export async function trackEventServer(
     });
   } catch {
     // analítico — silencioso de propósito
+  }
+}
+
+/**
+ * Conveniência pra instrumentar features nas server actions: cria o client
+ * service-role sozinho. Chame fire-and-forget (sem travar a ação) — idealmente
+ * via `after(() => trackFeature(...))`.
+ */
+export async function trackFeature(p: TrackParams): Promise<void> {
+  try {
+    await trackEventServer(createServiceRoleClient(), p);
+  } catch {
+    // silencioso
   }
 }

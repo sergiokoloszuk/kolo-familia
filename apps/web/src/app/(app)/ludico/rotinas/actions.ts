@@ -7,6 +7,7 @@ import { createClient, createServiceRoleClient } from "@/lib/supabase/server";
 import { idadeAnos } from "@/lib/idade";
 import { gerarRoteiroRotina, ilustrarCards } from "@/lib/ludico/gerar";
 import { resolveFamily } from "@/lib/auth/current-family";
+import { trackFeature } from "@/lib/analytics/track";
 
 type Ok<T = object> = { ok: true } & T;
 type Fail = { ok: false; error: string };
@@ -429,6 +430,9 @@ export async function gerarCardsVisuais(
       .eq("id", rotinaId)
       .eq("family_account_id", family.id);
     revalidatePath(`/ludico/rotinas/${rotinaId}`);
+    after(() =>
+      trackFeature({ familyId: family.id, evento: "ludico_gerado", detalhe: { tipo: "rotina" } }),
+    );
 
     const familyId = family.id;
     const nomeRotina = rotina.nome as string;

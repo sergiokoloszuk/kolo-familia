@@ -7,6 +7,7 @@ import { createClient, createServiceRoleClient } from "@/lib/supabase/server";
 import { respond, respondAsOutputType } from "@/lib/ia/engine";
 import { gerarSecoesPlanoMultiCall } from "@/lib/ia/plano";
 import { gerarTituloConversa } from "@/lib/ia/titulo";
+import { trackFeature } from "@/lib/analytics/track";
 import { extrairAtualizacoes, type PropostaAtualizacao } from "@/lib/ia/atualizar";
 import {
   MEMBRO_CAMPOS_TOPLEVEL,
@@ -160,6 +161,9 @@ export async function criarConversa(
   });
 
   agendarTituloConversa(family.id, nova.id as string, texto);
+  after(() =>
+    trackFeature({ familyId: family.id, evento: "conversa_mensagem", detalhe: { nova: true } }),
+  );
 
   return { conversaId: nova.id as string };
 }
@@ -193,6 +197,9 @@ export async function adicionarMensagemUsuario(
     });
     if (error) return { ok: false, error: `Falha ao enviar: ${error.message}` };
 
+    after(() =>
+      trackFeature({ familyId: family.id, evento: "conversa_mensagem", detalhe: { nova: false } }),
+    );
     revalidatePath(`/conversar/${conversaId}`);
     return { ok: true };
   } catch (e) {
@@ -359,6 +366,9 @@ export async function criarPlanoDaConversa(
       return { ok: false, error: `Não consegui iniciar o plano: ${insErr?.message}` };
     }
     const planoId = row.id as string;
+    after(() =>
+      trackFeature({ familyId: family.id, evento: "plano_solicitado", detalhe: { origem: "estrategias" } }),
+    );
 
     after(async () => {
       const admin = createServiceRoleClient();

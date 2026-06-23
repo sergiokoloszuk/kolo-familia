@@ -5,6 +5,7 @@ import { after } from "next/server";
 import { z } from "zod";
 import { createClient, createServiceRoleClient } from "@/lib/supabase/server";
 import { idadeAnos } from "@/lib/idade";
+import { trackFeature } from "@/lib/analytics/track";
 import {
   analisarDesenho,
   aprofundarComResposta,
@@ -117,6 +118,9 @@ export async function enviarDesenho(
       }
     });
 
+    after(() =>
+      trackFeature({ familyId: familyId, evento: "ludico_gerado", detalhe: { tipo: "desenho" } }),
+    );
     revalidatePath("/ludico/desenhos");
     return { ok: true, desenhoId };
   } catch (e) {

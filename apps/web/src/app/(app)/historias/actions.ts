@@ -10,6 +10,7 @@ import { gerarRoteiro, ilustrarPaginas, ilustrarComRetryPublico } from "@/lib/hi
 import { AVATAR_ESTILOS, coerceEstilo } from "@/lib/imagem/avatar-prompt";
 import { pathDeImagem } from "@/lib/storage/imagens";
 import { resolveFamily } from "@/lib/auth/current-family";
+import { trackFeature } from "@/lib/analytics/track";
 
 /**
  * Busca os bytes do avatar com retry. O bucket é PRIVADO, então baixa via
@@ -148,6 +149,9 @@ export async function criarHistoria(
       return { ok: false, error: `Falha ao iniciar a história: ${errInsert?.message}` };
     }
     const historiaId = row.id as string;
+    after(() =>
+      trackFeature({ familyId: family.id, evento: "ludico_gerado", detalhe: { tipo: "historia" } }),
+    );
 
     // Pré-carrega o que precisa pro background (não dá pra usar `supabase`
     // dentro do after() porque o request handler já foi fechado).

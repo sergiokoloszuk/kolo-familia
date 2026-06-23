@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { idadeAnos } from "@/lib/idade";
+import { trackFeature } from "@/lib/analytics/track";
 import {
   gerarMeditacao,
   ajustarMeditacao,
@@ -190,6 +191,11 @@ export async function criarMeditacao(
       .single();
     if (error || !data) return { ok: false, error: `Não consegui salvar: ${error?.message}` };
 
+    await trackFeature({
+      familyId: family.id,
+      evento: "ludico_gerado",
+      detalhe: { tipo: "meditacao" },
+    });
     revalidatePath("/ludico/meditacao");
     return { ok: true, meditacaoId: data.id as string };
   } catch (e) {
