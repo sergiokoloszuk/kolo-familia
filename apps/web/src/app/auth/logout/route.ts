@@ -4,5 +4,6 @@ import { createClient } from "@/lib/supabase/server";
 export async function POST(request: NextRequest) {
   const supabase = await createClient();
   await supabase.auth.signOut();
-  return NextResponse.redirect(new URL("/", request.url), { status: 303 });
+  // Pós-logout vai pro login (não pra landing velha do app, que está inativa).
+  return NextResponse.redirect(new URL("/login", request.url), { status: 303 });
 }

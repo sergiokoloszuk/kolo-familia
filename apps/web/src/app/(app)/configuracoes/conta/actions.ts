@@ -122,5 +122,5 @@ export async function excluirContaAction(input: {
 
   // 3. Encerra sessão e leva pra home
   await supabase.auth.signOut();
-  redirect("/?conta_excluida=1");
+  redirect("/login?conta_excluida=1");
 }

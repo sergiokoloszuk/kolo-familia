@@ -283,16 +283,25 @@ export function Sidebar({
           >
             <HelpCircle className="size-4 stroke-[1.5]" aria-hidden />
           </Link>
-          <form action="/auth/logout" method="post" className="ml-auto">
-            <button
-              type="submit"
-              aria-label="Sair"
-              className="inline-flex size-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-kolo-lilas-bg-2 hover:text-foreground"
-            >
-              <LogOut className="size-4 stroke-[1.5]" aria-hidden />
-            </button>
-          </form>
         </div>
+
+        {/* Sair — rotulado e com confirmação (não é só um ícone), pra deixar
+            claro que desconecta da conta. */}
+        <form
+          action="/auth/logout"
+          method="post"
+          onSubmit={(e) => {
+            if (!window.confirm("Deseja sair da sua conta?")) e.preventDefault();
+          }}
+        >
+          <button
+            type="submit"
+            className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-kolo-lilas-bg-2/70 hover:text-foreground"
+          >
+            <LogOut className="size-[17px] shrink-0 stroke-[1.5]" aria-hidden />
+            <span className="flex-1 text-left">Sair da conta</span>
+          </button>
+        </form>
 
         <Link
           href="/configuracoes/conta"
