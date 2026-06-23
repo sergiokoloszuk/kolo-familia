@@ -466,6 +466,31 @@ export default async function EvolucaoPage() {
         )}
       </section>
 
+      {/* RELATÓRIO — no topo, pra a pessoa ver logo que pode gerar um. */}
+      <Link
+        href="/evolucao/relatorio"
+        className="group flex items-center gap-3 rounded-2xl border border-brand-purple/20 bg-kolo-lilas-bg-2/40 px-5 py-4 transition-colors hover:border-brand-purple/40"
+      >
+        <span
+          aria-hidden
+          className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-brand-yellow/25 text-[#8B5A00]"
+        >
+          <FileText className="size-5" />
+        </span>
+        <div className="flex-1">
+          <p className="font-heading text-base font-medium text-foreground">
+            Relatório pra escola ou terapeuta
+          </p>
+          <p className="text-sm text-muted-foreground">
+            A Kolo traduz o Perfil + os últimos meses num PDF pra você revisar e baixar.
+          </p>
+        </div>
+        <ArrowRight
+          className="size-4 shrink-0 text-brand-purple transition-transform group-hover:translate-x-0.5"
+          aria-hidden
+        />
+      </Link>
+
       {/* MARIO EM CADA TEMA — agrupado pelas etiquetas de área */}
       {temas.length > 0 && (
         <section>
@@ -559,30 +584,6 @@ export default async function EvolucaoPage() {
         </div>
       )}
 
-      {/* RELATÓRIO — fecha a página (Passo 4 melhora o conteúdo). */}
-      <Link
-        href="/evolucao/relatorio"
-        className="group flex items-center gap-3 rounded-2xl border border-brand-purple/20 bg-kolo-lilas-bg-2/40 px-5 py-4 transition-colors hover:border-brand-purple/40"
-      >
-        <span
-          aria-hidden
-          className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-brand-yellow/25 text-[#8B5A00]"
-        >
-          <FileText className="size-5" />
-        </span>
-        <div className="flex-1">
-          <p className="font-heading text-base font-medium text-foreground">
-            Relatório pra escola ou terapeuta
-          </p>
-          <p className="text-sm text-muted-foreground">
-            A Kolo traduz o Perfil + os últimos meses num PDF pra você revisar e baixar.
-          </p>
-        </div>
-        <ArrowRight
-          className="size-4 shrink-0 text-brand-purple transition-transform group-hover:translate-x-0.5"
-          aria-hidden
-        />
-      </Link>
     </div>
   );
 }
