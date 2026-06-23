@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { differenceInCalendarDays } from "date-fns";
 import { loadFamilyContext } from "@/lib/auth/require-user";
 import { Sidebar } from "./sidebar";
+import { PageViewTracker } from "./page-view-tracker";
 import { idadeAnos } from "@/lib/idade";
 import { lerCriancaAtivaId, resolverCriancaAtiva } from "@/lib/crianca-ativa";
 
@@ -77,6 +78,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
 
   return (
     <div className="min-h-screen bg-kolo-page lg:grid lg:grid-cols-[260px_1fr]">
+      <PageViewTracker />
       <Sidebar
         isAdmin={isAdmin}
         nomeUsuario={nomeUsuario}
