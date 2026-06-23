@@ -2,6 +2,7 @@
 
 import { z } from "zod";
 import { getAnthropicClient, MODELS } from "@/lib/ia/anthropic";
+import { createServiceRoleClient } from "@/lib/supabase/server";
 
 /**
  * Guia de uso do app — a pessoa diz o que quer fazer e a IA responde em
@@ -12,8 +13,9 @@ export const ROTAS_AJUDA: { rota: string; label: string }[] = [
   { rota: "/painel", label: "Início" },
   { rota: "/kolo-vivo", label: "Perfil" },
   { rota: "/estrategias", label: "Estratégias" },
+  { rota: "/planos", label: "Meus Planos" },
   { rota: "/evolucao", label: "Evolução" },
-  { rota: "/historias", label: "Histórias" },
+  { rota: "/ludico", label: "Lúdico" },
   { rota: "/registrar/diario", label: "Registrar o dia" },
   { rota: "/configuracoes", label: "Configurações" },
   { rota: "/configuracoes/conta", label: "Minha conta" },
@@ -25,30 +27,60 @@ export const ROTAS_AJUDA: { rota: string; label: string }[] = [
 
 const MAPA = `# Mapa do app Kolo Família (telas reais e o que se faz em cada uma)
 
-- /painel (Início): visão da semana, pequenas conquistas, "foco da semana"; atalho "Registrar dia".
-- /kolo-vivo (Kolo Vivo): o retrato de cada criança e da família. Editar as seções (o básico, o jeito, o corpo e o dia a dia, o que ajuda/pesa, sensações; e da família: composição, rotina da casa, recursos, dinâmica). Com 2+ crianças, há um seletor (pills) no topo pra trocar de filho. Sugestões novas aparecem num aviso pra aprovar/descartar.
-- /estrategias (Estratégias): conversar com a Kolo sobre algo que aconteceu (escreve no campo à vontade e aperta "Conversar"). Abaixo da resposta há botões de "mais ajuda" (brincadeiras, atividades, crenças, o que fazer diferente, histórias sociais, frases prontas, rotinas) e um botão "Atualizar" que guarda no Kolo Vivo/diário. Também lista conversas anteriores (dá pra apagar na lixeira).
-- /registrar/diario (Registrar o dia): check-in (como você está e como a criança está) + conquista, desafio, observação e contexto (quem estava, como reagiu).
-- /evolucao (Evolução): linha do tempo de conquistas e registros.
-- /historias (Histórias): memórias em forma de história; atalho pra criar avatar.
-- /configuracoes (Configurações): acompanhamento da Ayla no WhatsApp (ligar/desligar, horário, frequência) e categorias de comunicação. Tem sub-telas:
-  - /configuracoes/conta (Minha conta): mudar o nome e "como prefere ser chamada", mudar senha, exportar dados, excluir conta.
+- /painel (Início / Home): visão da semana — saudação, "tira de sinais" (estado do Perfil, ritmo da semana, última conversa), "foco da semana", pequenas conquistas e o "Registro do dia" inline.
+- /kolo-vivo (Perfil): o retrato vivo de cada criança e da família. Editar as seções (o essencial, o jeito, sensorial, comunicação, alimentação, sono, regulação, etc.; e da família: composição, rotina, recursos). Com 2+ crianças, há um seletor no topo pra trocar de filho. Sugestões novas aparecem num aviso pra aprovar/descartar.
+- /estrategias (Estratégias): conversar com a Kolo sobre algo que aconteceu (escreve no campo e aperta "Conversar"). Abaixo da resposta há botões de "mais ajuda" (brincadeiras, atividades, frases prontas, etc.) e a opção de montar um PLANO completo. Lista conversas anteriores.
+- /planos (Meus Planos): os planos completos que a Kolo montou nas Estratégias ficam guardados aqui (só aparece no menu quando há ao menos um plano).
+- /registrar/diario (Registrar o dia / Registro Diário): check-in (como você está e como a criança está) + conquista, desafio, observação e contexto (quem estava, como reagiu). A IA organiza e guarda na Evolução.
+- /evolucao (Evolução): como a criança está ao longo do tempo, por tema, e o que ajudou. No fim, dá pra gerar um RELATÓRIO pra escola ou terapeuta (a IA escreve, você edita e baixa em PDF).
+- /ludico (Lúdico): engloba Histórias ilustradas, Rotinas visuais (cards), "O que o desenho conta" (leitura de desenho), Meditação guiada, Timer lúdico e o Avatar da criança.
+- /configuracoes (Configurações): acompanhamento da Ayla no WhatsApp (ligar/desligar, horário, frequência) e categorias de comunicação. Sub-telas:
+  - /configuracoes/conta (Minha conta): mudar o nome e "como prefere ser chamada", trocar senha, EXPORTAR seus dados, e EXCLUIR a conta.
   - /configuracoes/familia (Mapa familiar): quem cuida junto (pai, avós, babá, professora, terapeuta).
   - /configuracoes/avatar (Avatar): criar/editar o avatar ilustrado de cada criança, em vários estilos.
   - /configuracoes/regras (Alertas e adaptações): alertas automáticos e adaptações sugeridas.
-- /assinatura (Assinatura): ver/gerenciar o plano e o período de teste.`;
+- /assinatura (Assinatura): ver o plano e o período de teste, assinar (mensal ou anual), gerenciar pagamento/cartão e CANCELAR.
 
-const SYSTEM = `Você é o guia de uso do app Kolo Família — ajuda a pessoa a achar onde fazer o que ela quer DENTRO do app (não é conselho sobre a criança; isso é o papel da Estratégias).
+Para SAIR DA CONTA (logout): use "Sair da conta" no rodapé do menu lateral (à esquerda), que pede confirmação.`;
+
+const SYSTEM_BASE = `Você é o guia de uso do app Kolo Família — ajuda a pessoa a achar onde fazer o que ela quer DENTRO do app (não é conselho sobre a criança; isso é o papel das Estratégias).
 
 Regras:
 - Responda em passos curtos e claros, em português simples e acolhedor.
 - Use SOMENTE as telas reais do mapa abaixo. Nunca invente telas ou caminhos.
 - Indique a tela principal pra ir e, se útil, o caminho (ex.: Configurações > Minha conta).
+- PODE informar o valor do plano, o período de teste e como cancelar — use os "Fatos atuais" abaixo e NUNCA invente valores.
 - Se a pessoa pedir algo que o app não faz, diga isso com gentileza e sugira o mais próximo.
 - Devolva APENAS JSON, sem texto antes/depois:
-{"resposta":"passos em markdown (use lista com - quando forem vários)","rota":"/uma-das-rotas-do-mapa-ou-null"}
+{"resposta":"passos em markdown (use lista com - quando forem vários)","rota":"/uma-das-rotas-do-mapa-ou-null"}`;
 
-${MAPA}`;
+const TRIAL_DIAS = 7;
+
+/** System prompt com fatos AO VIVO (preço vem da tabela; não fica velho). */
+function montarSystem(precos: { mensal: string | null; anual: string | null }): string {
+  const fatos = `# Fatos atuais (use estes valores; NÃO invente)
+- Plano mensal: ${precos.mensal ?? "ver na tela de Assinatura"}.
+- Plano anual: ${precos.anual ?? "ver na tela de Assinatura"}.
+- Teste grátis: ${TRIAL_DIAS} dias, sem precisar de cartão.
+- Cancelar: na tela de Assinatura há "Cancelar assinatura". IMPORTANTE — cancelar APAGA a conta e TODOS os registros (diários, Perfil, histórias, evolução), pra sempre e sem volta. Quem só quer dar uma pausa ou trocar o cartão deve usar "Gerenciar assinatura", não cancelar.`;
+  return `${SYSTEM_BASE}\n\n${fatos}\n\n${MAPA}`;
+}
+
+/** Lê os preços vigentes (mesma fonte de /precos e /assinatura). Graceful. */
+async function lerPrecos(): Promise<{ mensal: string | null; anual: string | null }> {
+  try {
+    const { data } = await createServiceRoleClient()
+      .from("configuracao_precos")
+      .select("chave, valor_centavos")
+      .in("chave", ["plano_mensal", "plano_anual"]);
+    const m = new Map((data ?? []).map((r) => [r.chave as string, r.valor_centavos as number]));
+    const fmt = (c?: number) =>
+      c != null ? (c / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" }) : null;
+    return { mensal: fmt(m.get("plano_mensal")), anual: fmt(m.get("plano_anual")) };
+  } catch {
+    return { mensal: null, anual: null };
+  }
+}
 
 export type AjudaResult =
   | { ok: true; resposta: string; rota: string | null; rotaLabel: string | null }
@@ -70,13 +102,15 @@ export async function perguntarAjuda(perguntaRaw: string): Promise<AjudaResult> 
       return { ok: false, error: "A ajuda inteligente não está configurada no servidor." };
     }
 
+    const system = montarSystem(await lerPrecos());
+
     let raw = "";
     for (const model of [MODELS.leve, MODELS.principal]) {
       try {
         const stream = client.messages.stream({
           model,
           max_tokens: 500,
-          system: [{ type: "text", text: SYSTEM, cache_control: { type: "ephemeral" } }],
+          system: [{ type: "text", text: system, cache_control: { type: "ephemeral" } }],
           messages: [{ role: "user", content: pergunta }],
         });
         const final = await stream.finalMessage();
