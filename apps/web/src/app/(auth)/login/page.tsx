@@ -54,7 +54,7 @@ function LoginPageInner() {
       setAuthError(traduzirErro(error.message));
       return;
     }
-    router.push("/");
+    router.push("/painel");
     router.refresh();
   }
 
@@ -104,7 +104,7 @@ function LoginPageInner() {
           </span>
         </div>
 
-        <GoogleButton next="/" onError={(m) => setAuthError(traduzirErro(m))} />
+        <GoogleButton next="/painel" onError={(m) => setAuthError(traduzirErro(m))} />
 
         <p className="text-center text-sm text-muted-foreground">
           Ainda não tem conta?{" "}
