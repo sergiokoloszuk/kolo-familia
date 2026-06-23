@@ -1,0 +1,280 @@
+import type { SupabaseClient } from "@supabase/supabase-js";
+import { AREAS_DIARIO } from "@/lib/ia/classificar-area";
+
+/**
+ * Carrega e agrega os dados do dashboard de COMPORTAMENTO. Fonte única usada
+ * por duas telas: /admin/comportamento (admin, com nomes/drill-down) e
+ * /dashboards (analista de tráfego via co-acesso — renderiza só o agregado,
+ * sem PII). Cruza histórico (Kolo Vivo, planos, lúdico, Ayla, diários) com os
+ * eventos novos (user_events). Janela: 90 dias onde aplicável.
+ */
+
+export type Rank = { label: string; n: number };
+export type FamRow = {
+  id: string;
+  nome: string | null;
+  ayla: number;
+  web: number;
+  diarios: number;
+  ludico: number;
+  planos: number;
+  ultima: number; // epoch ms (0 = sem atividade conhecida)
+};
+
+export type ComportamentoData = {
+  totalFamilias: number;
+  ativas7: number;
+  ativas30: number;
+  completudeMedia: number;
+  checkoutFamilias: number;
+  statusCount: Record<string, number>;
+  aylaInbound: number;
+  webConversas: number;
+  domRank: Rank[];
+  desafioRank: Rank[];
+  planoRank: Rank[];
+  ludico: { label: string; n: number; fam: number }[];
+  telaRank: Rank[];
+  featureRank: Rank[];
+  topEngajadas: FamRow[];
+  risco: FamRow[];
+};
+
+// Domínios do Kolo Vivo (key → label, e onde mora). Espelha kolo-vivo/dominios.
+const DOMINIOS: Array<{ key: string; toplevel: boolean; label: string }> = [
+  { key: "sensorial", toplevel: true, label: "Sensorial" },
+  { key: "essencial", toplevel: true, label: "O essencial" },
+  { key: "como_e", toplevel: true, label: "Como é / interesses" },
+  { key: "corpo_rotina", toplevel: true, label: "Corpo e rotina" },
+  { key: "desafios_regulacao", toplevel: true, label: "Desafios (regulação)" },
+  { key: "nutricional", toplevel: false, label: "Alimentação" },
+  { key: "comunicacao", toplevel: false, label: "Comunicação" },
+  { key: "emocional", toplevel: false, label: "Regulação emocional" },
+  { key: "foco", toplevel: false, label: "Foco e atenção" },
+  { key: "sono", toplevel: false, label: "Sono" },
+  { key: "socializacao", toplevel: false, label: "Socialização" },
+  { key: "motor", toplevel: false, label: "Motor" },
+  { key: "rotina", toplevel: false, label: "Rotina" },
+  { key: "autonomia", toplevel: false, label: "Autonomia" },
+  { key: "aprendizado", toplevel: false, label: "Aprendizado" },
+  { key: "imitacao", toplevel: false, label: "Imitação" },
+  { key: "tela_midia", toplevel: false, label: "Tela e mídia" },
+  { key: "escola", toplevel: false, label: "Escola" },
+  { key: "saude_geral", toplevel: false, label: "Saúde geral" },
+  { key: "gostos", toplevel: false, label: "Gostos" },
+];
+
+const MS_DIA = 24 * 60 * 60 * 1000;
+const diasAtrasISO = (n: number) => new Date(Date.now() - n * MS_DIA).toISOString();
+
+/** Tem algum conteúdo de verdade no jsonb do domínio? */
+function temConteudo(v: unknown): boolean {
+  if (!v || typeof v !== "object") return false;
+  const s = JSON.stringify(v);
+  return s.length > 2 && /[a-zA-ZÀ-ÿ0-9]/.test(s);
+}
+
+export async function carregarComportamento(
+  admin: SupabaseClient,
+): Promise<ComportamentoData> {
+  const desde90 = diasAtrasISO(90);
+
+  const [
+    { count: totalFamilias },
+    { data: subs },
+    { data: perfis },
+    { data: diarios },
+    { data: planos },
+    { data: aylaMsgs },
+    { data: conversas },
+    { data: rotinas },
+    { data: meditacoes },
+    { data: desenhos },
+    { data: historias },
+    { data: events },
+    { data: perfisFam },
+  ] = await Promise.all([
+    admin.from("family_accounts").select("id", { count: "exact", head: true }),
+    admin.from("subscription_accesses").select("family_account_id, status, trial_ends_at"),
+    admin
+      .from("perfil_vivo_membro")
+      .select(
+        "family_account_id, completude_pct, essencial, como_e, corpo_rotina, desafios_regulacao, sensorial, categorias_extras",
+      ),
+    admin
+      .from("diarios")
+      .select("family_account_id, desafio_area, created_at")
+      .gte("created_at", desde90),
+    admin.from("planos").select("family_account_id, tema, created_at"),
+    admin
+      .from("ayla_messages")
+      .select("family_account_id, direcao, created_at")
+      .gte("created_at", desde90),
+    admin.from("conversas").select("family_account_id, created_at").gte("created_at", desde90),
+    admin.from("rotinas").select("family_account_id, created_at"),
+    admin.from("meditacoes").select("family_account_id, created_at"),
+    admin.from("desenhos").select("family_account_id, created_at"),
+    admin.from("historias").select("family_account_id, created_at"),
+    admin
+      .from("user_events")
+      .select("family_account_id, evento, detalhe, created_at")
+      .gte("created_at", desde90),
+    admin.from("family_profiles").select("family_account_id, nome_mae"),
+  ]);
+
+  // Funil
+  const statusCount: Record<string, number> = {};
+  for (const s of subs ?? []) {
+    const st = (s.status as string) ?? "—";
+    statusCount[st] = (statusCount[st] ?? 0) + 1;
+  }
+  const checkoutFamilias = new Set(
+    (events ?? []).filter((e) => e.evento === "checkout_iniciado").map((e) => e.family_account_id),
+  ).size;
+
+  // Kolo Vivo: domínios preenchidos + completude média
+  const domPreenchido: Record<string, number> = {};
+  let somaCompletude = 0;
+  let nPerfis = 0;
+  for (const p of perfis ?? []) {
+    nPerfis += 1;
+    somaCompletude += Number(p.completude_pct) || 0;
+    const extras = (p.categorias_extras as Record<string, unknown> | null) ?? {};
+    for (const d of DOMINIOS) {
+      const val = d.toplevel ? (p as Record<string, unknown>)[d.key] : extras[d.key];
+      if (temConteudo(val)) domPreenchido[d.key] = (domPreenchido[d.key] ?? 0) + 1;
+    }
+  }
+  const completudeMedia = nPerfis ? Math.round(somaCompletude / nPerfis) : 0;
+  const domRank = DOMINIOS.map((d) => ({ label: d.label, n: domPreenchido[d.key] ?? 0 }))
+    .filter((x) => x.n > 0)
+    .sort((a, b) => b.n - a.n);
+
+  // Desafios mais recorrentes
+  const desafioCount: Record<string, number> = {};
+  for (const d of diarios ?? []) {
+    const a = d.desafio_area as string | null;
+    if (a && AREAS_DIARIO[a]) desafioCount[a] = (desafioCount[a] ?? 0) + 1;
+  }
+  const desafioRank = Object.entries(desafioCount)
+    .map(([k, n]) => ({ label: AREAS_DIARIO[k] ?? k, n }))
+    .sort((a, b) => b.n - a.n);
+
+  // Planos por tema
+  const planoTema: Record<string, number> = {};
+  for (const p of planos ?? []) {
+    const t = ((p.tema as string | null) ?? "").trim() || "(sem tema)";
+    planoTema[t] = (planoTema[t] ?? 0) + 1;
+  }
+  const planoRank = Object.entries(planoTema)
+    .map(([label, n]) => ({ label, n }))
+    .sort((a, b) => b.n - a.n)
+    .slice(0, 12);
+
+  // Lúdico
+  const distintas = (rows: { family_account_id: string | null }[] | null) =>
+    new Set((rows ?? []).map((r) => r.family_account_id)).size;
+  const ludico = [
+    { label: "Rotinas", n: (rotinas ?? []).length, fam: distintas(rotinas) },
+    { label: "Meditações", n: (meditacoes ?? []).length, fam: distintas(meditacoes) },
+    { label: "Desenhos", n: (desenhos ?? []).length, fam: distintas(desenhos) },
+    { label: "Histórias", n: (historias ?? []).length, fam: distintas(historias) },
+  ].sort((a, b) => b.n - a.n);
+
+  // Ayla × Web
+  const aylaInbound = (aylaMsgs ?? []).filter((m) => m.direcao === "inbound").length;
+  const webConversas = (conversas ?? []).length;
+
+  // Telas + features (user_events)
+  const telaCount: Record<string, number> = {};
+  const featureCount: Record<string, number> = {};
+  for (const e of events ?? []) {
+    if (e.evento === "tela_visitada") {
+      const tela = ((e.detalhe as Record<string, unknown>)?.tela as string) ?? "?";
+      telaCount[tela] = (telaCount[tela] ?? 0) + 1;
+    } else {
+      featureCount[e.evento] = (featureCount[e.evento] ?? 0) + 1;
+    }
+  }
+  const telaRank = Object.entries(telaCount).map(([label, n]) => ({ label, n })).sort((a, b) => b.n - a.n);
+  const featureRank = Object.entries(featureCount).map(([label, n]) => ({ label, n })).sort((a, b) => b.n - a.n);
+
+  // Por família: atividade combinada (recência + volumes)
+  const nomePorFam = new Map(
+    (perfisFam ?? []).map((p) => [p.family_account_id as string, (p.nome_mae as string | null) ?? null]),
+  );
+  const fam = new Map<string, FamRow>();
+  const get = (id: string | null): FamRow | null => {
+    if (!id) return null;
+    let f = fam.get(id);
+    if (!f) {
+      f = { id, nome: nomePorFam.get(id) ?? null, ayla: 0, web: 0, diarios: 0, ludico: 0, planos: 0, ultima: 0 };
+      fam.set(id, f);
+    }
+    return f;
+  };
+  const toca = (id: string | null, ts: string | null | undefined) => {
+    const f = get(id);
+    if (f && ts) f.ultima = Math.max(f.ultima, new Date(ts).getTime());
+  };
+  for (const m of aylaMsgs ?? []) {
+    if (m.direcao === "inbound") {
+      const f = get(m.family_account_id as string | null);
+      if (f) f.ayla += 1;
+    }
+    toca(m.family_account_id as string | null, m.created_at as string);
+  }
+  for (const c of conversas ?? []) {
+    const f = get(c.family_account_id as string | null);
+    if (f) f.web += 1;
+    toca(c.family_account_id as string | null, c.created_at as string);
+  }
+  for (const d of diarios ?? []) {
+    const f = get(d.family_account_id as string | null);
+    if (f) f.diarios += 1;
+    toca(d.family_account_id as string | null, d.created_at as string);
+  }
+  for (const rows of [rotinas, meditacoes, desenhos, historias]) {
+    for (const r of rows ?? []) {
+      const f = get(r.family_account_id as string | null);
+      if (f) f.ludico += 1;
+      toca(r.family_account_id as string | null, r.created_at as string);
+    }
+  }
+  for (const p of planos ?? []) {
+    const f = get(p.family_account_id as string | null);
+    if (f) f.planos += 1;
+    toca(p.family_account_id as string | null, p.created_at as string);
+  }
+  for (const e of events ?? []) toca(e.family_account_id as string | null, e.created_at as string);
+
+  const famArr = [...fam.values()];
+  const agora = Date.now();
+  const ativas7 = famArr.filter((f) => agora - f.ultima <= 7 * MS_DIA && f.ultima > 0).length;
+  const ativas30 = famArr.filter((f) => agora - f.ultima <= 30 * MS_DIA && f.ultima > 0).length;
+  const risco = famArr
+    .filter((f) => f.ultima > 0 && agora - f.ultima > 7 * MS_DIA)
+    .sort((a, b) => a.ultima - b.ultima)
+    .slice(0, 20);
+  const vol = (f: FamRow) => f.ayla + f.web + f.diarios + f.ludico + f.planos;
+  const topEngajadas = [...famArr].sort((a, b) => vol(b) - vol(a)).slice(0, 20);
+
+  return {
+    totalFamilias: totalFamilias ?? 0,
+    ativas7,
+    ativas30,
+    completudeMedia,
+    checkoutFamilias,
+    statusCount,
+    aylaInbound,
+    webConversas,
+    domRank,
+    desafioRank,
+    planoRank,
+    ludico,
+    telaRank,
+    featureRank,
+    topEngajadas,
+    risco,
+  };
+}

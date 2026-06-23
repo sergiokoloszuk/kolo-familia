@@ -1,31 +1,42 @@
-import { requireAdmin } from "@/lib/auth/require-admin";
+import { redirect } from "next/navigation";
+import { loadFamilyContext } from "@/lib/auth/require-user";
 import { createServiceRoleClient } from "@/lib/supabase/server";
-import { capitalizarNome } from "@/lib/nome";
 import { carregarComportamento, type FamRow } from "@/lib/analytics/dashboard";
 import { Eyebrow } from "@/components/brand/eyebrow";
 import { Bloco, BarList, Stat, TabelaFamilias, Vazio } from "@/components/dashboard/blocos";
 
 /**
- * Dashboard de COMPORTAMENTO (admin) — visão completa, com nomes e drill-down.
- * A versão anônima pro analista de tráfego vive em /dashboards.
+ * Dashboards do ANALISTA (co-acesso de tráfego). Mesmos números agregados do
+ * admin, porém ANÔNIMOS — sem nome de família nem conteúdo de criança. Acesso:
+ * admin OU quem está em family_acessos (co-acesso, gerenciado só pelo admin).
  */
 export const dynamic = "force-dynamic";
 
-export default async function AdminComportamentoPage() {
-  await requireAdmin();
+export default async function DashboardsPage() {
+  const { user, supabase } = await loadFamilyContext();
+
+  const [{ data: acesso }, { data: coAcesso }] = await Promise.all([
+    supabase.from("controle_acessos").select("ativo").eq("user_id", user.id).maybeSingle(),
+    supabase.from("family_acessos").select("id").eq("user_id", user.id).eq("ativo", true).limit(1),
+  ]);
+  const isAdmin = Boolean(acesso?.ativo);
+  const isAnalista = (coAcesso?.length ?? 0) > 0;
+  if (!isAdmin && !isAnalista) redirect("/painel");
+
   const d = await carregarComportamento(createServiceRoleClient());
-  const labelFam = (f: FamRow) => (f.nome ? capitalizarNome(f.nome) : `${f.id.slice(0, 8)}…`);
+  // Anônimo: nunca expõe nome de outras famílias ao analista.
+  const labelFam = (f: FamRow) => `Família #${f.id.slice(0, 6)}`;
 
   return (
     <div className="flex flex-col gap-8">
       <header>
-        <Eyebrow>Console institucional</Eyebrow>
+        <Eyebrow>Dashboards</Eyebrow>
         <h1 className="mt-1 font-heading text-3xl text-foreground md:text-4xl">
-          Comportamento <em className="not-italic text-brand-purple">das famílias</em>
+          Comportamento <em className="not-italic text-brand-purple">e funil</em>
         </h1>
         <p className="mt-2 max-w-2xl text-muted-foreground">
-          Como as famílias usam o produto. Telas e features (user_events) enchem a partir do deploy
-          do tracking; o resto é histórico (90 dias onde aplicável).
+          Visão agregada e anônima de como as famílias usam o produto — pra leitura de tráfego e
+          ativação. Telas e features enchem com o uso; o resto é histórico (90 dias).
         </p>
       </header>
 
@@ -61,10 +72,10 @@ export default async function AdminComportamentoPage() {
       </Bloco>
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <Bloco titulo="Kolo Vivo — temas preenchidos" desc="Quantos membros têm cada domínio com conteúdo.">
+        <Bloco titulo="Kolo Vivo — temas preenchidos" desc="Domínios com conteúdo (agregado).">
           <BarList items={d.domRank} />
         </Bloco>
-        <Bloco titulo="Desafios mais recorrentes" desc="Áreas dos desafios registrados no diário (90d).">
+        <Bloco titulo="Desafios mais recorrentes" desc="Áreas dos desafios registrados (90d).">
           <BarList items={d.desafioRank} />
         </Bloco>
         <Bloco titulo="Lúdico — o que e quanto" desc="Total gerado e quantas famílias usaram.">
@@ -82,19 +93,19 @@ export default async function AdminComportamentoPage() {
         <Bloco titulo="Planos por tema" desc="Sobre o que as famílias pedem plano.">
           <BarList items={d.planoRank} />
         </Bloco>
-        <Bloco titulo="Telas mais visitadas" desc="Do tracking novo — enche a partir do deploy.">
+        <Bloco titulo="Telas mais visitadas" desc="Do tracking — enche com o uso.">
           {d.telaRank.length ? <BarList items={d.telaRank} /> : <Vazio />}
         </Bloco>
-        <Bloco titulo="Features mais usadas" desc="Eventos de feature (registro, conversa, lúdico, plano…).">
+        <Bloco titulo="Features mais usadas" desc="Registro, conversa, lúdico, plano…">
           {d.featureRank.length ? <BarList items={d.featureRank} /> : <Vazio />}
         </Bloco>
       </div>
 
-      <Bloco titulo="Famílias mais engajadas" desc="Top 20 por volume combinado.">
+      <Bloco titulo="Leads mais engajados" desc="Top 20 por volume combinado (anônimo).">
         <TabelaFamilias linhas={d.topEngajadas} labelFam={labelFam} />
       </Bloco>
 
-      <Bloco titulo="Risco de abandono" desc="Sem atividade há mais de 7 dias (pra reengajar).">
+      <Bloco titulo="Risco de abandono" desc="Sem atividade há mais de 7 dias (anônimo).">
         {d.risco.length ? (
           <TabelaFamilias linhas={d.risco} labelFam={labelFam} />
         ) : (

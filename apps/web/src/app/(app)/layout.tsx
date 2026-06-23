@@ -15,6 +15,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
 
   const [
     { data: acesso },
+    { data: coAcesso },
     { data: familyMeta },
     { data: profile },
     { data: criancas },
@@ -26,6 +27,12 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
       .select("ativo")
       .eq("user_id", user.id)
       .maybeSingle(),
+    supabase
+      .from("family_acessos")
+      .select("id")
+      .eq("user_id", user.id)
+      .eq("ativo", true)
+      .limit(1),
     supabase
       .from("family_accounts")
       .select("created_at")
@@ -54,6 +61,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
   ]);
 
   const isAdmin = Boolean(acesso?.ativo);
+  const isAnalista = (coAcesso?.length ?? 0) > 0;
   const nomeUsuario =
     profile?.como_chamar?.trim() ||
     profile?.nome_mae?.trim() ||
@@ -81,6 +89,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
       <PageViewTracker />
       <Sidebar
         isAdmin={isAdmin}
+        isAnalista={isAnalista}
         nomeUsuario={nomeUsuario}
         userInitial={userInitial}
         diasNaKolo={diasNaKolo}

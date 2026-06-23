@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import {
+  BarChart3,
   ChevronRight,
   CreditCard,
   FileText,
@@ -60,6 +61,8 @@ function isActive(pathname: string, href: string): boolean {
 
 interface SidebarProps {
   isAdmin: boolean;
+  /** Analista de tráfego (co-acesso): vê o menu "Dashboards" (agregado/anônimo). */
+  isAnalista: boolean;
   nomeUsuario: string;
   userInitial: string;
   diasNaKolo: number | null;
@@ -72,6 +75,7 @@ interface SidebarProps {
 
 export function Sidebar({
   isAdmin,
+  isAnalista,
   nomeUsuario,
   userInitial,
   diasNaKolo,
@@ -204,6 +208,23 @@ export function Sidebar({
 
       {/* Rodapé — Configurações/Assinatura como ícones discretos + user info. */}
       <div className="flex flex-col gap-3 border-t border-kolo-linha pt-4">
+        {/* Dashboards — analista de tráfego (co-acesso). Admin acessa via /admin. */}
+        {isAnalista && !isAdmin && (
+          <Link
+            href="/dashboards"
+            aria-label="Dashboards"
+            className={cn(
+              "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-colors",
+              isActive(pathname, "/dashboards")
+                ? "bg-kolo-lilas-bg font-semibold text-brand-purple-dark"
+                : "font-medium text-muted-foreground hover:bg-kolo-lilas-bg-2/70 hover:text-foreground",
+            )}
+          >
+            <BarChart3 className="size-[17px] shrink-0 stroke-[1.5] text-brand-purple" aria-hidden />
+            <span className="flex-1">Dashboards</span>
+            <ChevronRight className="size-3.5 shrink-0 text-muted-foreground/70" aria-hidden />
+          </Link>
+        )}
         {/* Acesso à área da equipe — só admin vê. Rotulado (não só ícone)
             pra não passar despercebido, mas fora da navegação da família. */}
         {isAdmin && (
