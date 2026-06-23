@@ -3,6 +3,7 @@
 import { z } from "zod";
 import { getAnthropicClient, MODELS } from "@/lib/ia/anthropic";
 import { createServiceRoleClient } from "@/lib/supabase/server";
+import { logServerError } from "@/lib/log";
 
 /**
  * Guia de uso do app — a pessoa diz o que quer fazer e a IA responde em
@@ -137,6 +138,7 @@ export async function perguntarAjuda(perguntaRaw: string): Promise<AjudaResult> 
       rotaLabel: valida?.label ?? null,
     };
   } catch (e) {
+    await logServerError("ajuda_perguntar", e, {}).catch(() => {});
     return { ok: false, error: e instanceof Error ? e.message : "Erro inesperado" };
   }
 }

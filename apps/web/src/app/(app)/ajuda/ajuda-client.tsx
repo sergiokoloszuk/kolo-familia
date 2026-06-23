@@ -25,8 +25,16 @@ export function AjudaClient() {
     if (texto) setPergunta(texto);
     setResultado(null);
     startTransition(async () => {
-      const r = await perguntarAjuda(q);
-      setResultado(r);
+      try {
+        const r = await perguntarAjuda(q);
+        setResultado(r);
+      } catch {
+        // Nunca derruba a página (boundary global): mostra erro amigável aqui.
+        setResultado({
+          ok: false,
+          error: "Não consegui responder agora. Tente de novo em instantes.",
+        });
+      }
     });
   }
 
