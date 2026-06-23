@@ -48,6 +48,82 @@ export async function salvarPerfilAction(
   }
 }
 
+const whatsappSchema = z.object({
+  whatsapp_e164: z
+    .string()
+    .trim()
+    .transform((s) => s.replace(/[\s()\-.]/g, ""))
+    .pipe(
+      z
+        .string()
+        .regex(/^\+\d{8,15}$/, "Use o formato internacional, ex.: +55 11 91234-5678."),
+    ),
+});
+
+/**
+ * Atualiza o WhatsApp da família (por onde a Ayla fala). Valida o formato e
+ * bloqueia se outro cadastro já usa o mesmo número — protege contra a Ayla
+ * responder pra família errada (ver pendência de WhatsApp único).
+ */
+export async function atualizarWhatsappAction(
+  input: z.infer<typeof whatsappSchema>,
+): Promise<PerfilResult> {
+  try {
+    const { whatsapp_e164 } = whatsappSchema.parse(input);
+    const { family } = await loadFamilyContext();
+    if (!family) return { ok: false, error: "Família não inicializada." };
+
+    const admin = createServiceRoleClient();
+    const { data: outra } = await admin
+      .from("family_accounts")
+      .select("id")
+      .eq("whatsapp_e164", whatsapp_e164)
+      .neq("id", family.id)
+      .maybeSingle();
+    if (outra) {
+      return { ok: false, error: "Esse WhatsApp já está em uso por outra conta." };
+    }
+
+    const { error } = await admin
+      .from("family_accounts")
+      .update({ whatsapp_e164 })
+      .eq("id", family.id);
+    if (error) return { ok: false, error: `Não consegui salvar: ${error.message}` };
+
+    revalidatePath("/configuracoes/conta");
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "Erro inesperado" };
+  }
+}
+
+const emailSchema = z.object({
+  email: z.string().trim().toLowerCase().email("E-mail inválido"),
+});
+
+/**
+ * Troca o e-mail de login. O Supabase manda um link de confirmação pro NOVO
+ * e-mail; a troca só vale quando a pessoa confirma. Não muda nada na hora.
+ */
+export async function atualizarEmailAction(
+  input: z.infer<typeof emailSchema>,
+): Promise<PerfilResult> {
+  try {
+    const { email } = emailSchema.parse(input);
+    const { supabase, user } = await loadFamilyContext();
+    if (email === (user.email ?? "").toLowerCase()) {
+      return { ok: false, error: "Esse já é o seu e-mail atual." };
+    }
+    const { error } = await supabase.auth.updateUser({ email });
+    if (error) {
+      return { ok: false, error: `Não consegui trocar agora: ${error.message}` };
+    }
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "Erro inesperado" };
+  }
+}
+
 const schema = z.object({
   confirmacao: z
     .string()

@@ -12,16 +12,27 @@ import { cn } from "@/lib/utils";
 import { loadFamilyContext } from "@/lib/auth/require-user";
 import { ExcluirContaForm } from "./excluir-form";
 import { PerfilForm } from "./perfil-form";
+import { WhatsappForm } from "./whatsapp-form";
+import { EmailForm } from "./email-form";
 
 export default async function MinhaContaPage() {
-  const { supabase, family } = await loadFamilyContext();
-  const { data: profile } = family
-    ? await supabase
-        .from("family_profiles")
-        .select("nome_mae, como_chamar")
-        .eq("family_account_id", family.id)
-        .maybeSingle()
-    : { data: null };
+  const { user, supabase, family } = await loadFamilyContext();
+  const [{ data: profile }, { data: conta }] = await Promise.all([
+    family
+      ? supabase
+          .from("family_profiles")
+          .select("nome_mae, como_chamar")
+          .eq("family_account_id", family.id)
+          .maybeSingle()
+      : Promise.resolve({ data: null }),
+    family
+      ? supabase
+          .from("family_accounts")
+          .select("whatsapp_e164")
+          .eq("id", family.id)
+          .maybeSingle()
+      : Promise.resolve({ data: null }),
+  ]);
 
   return (
     <div className="flex flex-col gap-6">
@@ -53,6 +64,32 @@ export default async function MinhaContaPage() {
               como_chamar: profile?.como_chamar ?? "",
             }}
           />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">WhatsApp</CardTitle>
+          <CardDescription>
+            O número por onde a Ayla fala com você. Mantenha atualizado pra não
+            perder as mensagens.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <WhatsappForm initial={(conta?.whatsapp_e164 as string | null) ?? ""} />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">E-mail de login</CardTitle>
+          <CardDescription>
+            O e-mail que você usa pra entrar. Trocar exige confirmar pelo link
+            que mandamos pro novo e-mail.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <EmailForm atual={user.email ?? ""} />
         </CardContent>
       </Card>
 
