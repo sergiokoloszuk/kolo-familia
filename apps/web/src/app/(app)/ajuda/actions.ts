@@ -10,7 +10,9 @@ import { logServerError } from "@/lib/log";
  * passos curtos, indicando a tela certa. Ancorado num mapa REAL do app
  * (a IA só pode sugerir rotas desta lista; qualquer outra é descartada).
  */
-export const ROTAS_AJUDA: { rota: string; label: string }[] = [
+// NÃO exportar: arquivo "use server" só pode exportar funções async (Next 16).
+// Usado só aqui dentro (validação da rota sugerida pela IA).
+const ROTAS_AJUDA: { rota: string; label: string }[] = [
   { rota: "/painel", label: "Início" },
   { rota: "/kolo-vivo", label: "Perfil" },
   { rota: "/estrategias", label: "Estratégias" },
