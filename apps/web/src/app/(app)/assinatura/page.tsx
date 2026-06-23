@@ -8,6 +8,7 @@ import { IconCard } from "@/components/brand/icon-card";
 import { loadFamilyContext } from "@/lib/auth/require-user";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { AssinaturaActions } from "./assinatura-actions";
+import { ExcluirContaForm } from "../configuracoes/conta/excluir-form";
 
 /** Centavos → "R$ 54,90" (pt-BR). null quando não houver valor. */
 function fmtBRL(centavos?: number): string | null {
@@ -85,8 +86,8 @@ export default async function AssinaturaPage(props: PageProps<"/assinatura">) {
               </em>
             </h1>
             <p className="mt-2 max-w-2xl text-muted-foreground">
-              Cancela em 2 cliques. Histórico fica preservado mesmo após
-              cancelar.
+              Você cancela quando quiser. Atenção: ao cancelar, sua conta e
+              todos os registros são apagados — sem volta.
             </p>
           </div>
         </div>
@@ -148,7 +149,7 @@ export default async function AssinaturaPage(props: PageProps<"/assinatura">) {
               "App completo (painel, Perfil, conversar, apoio, aprender).",
               "Acompanhamento no WhatsApp (próxima fase).",
               "Especialistas que respondem conforme o contexto, sem você precisar escolher.",
-              "Histórico nunca é apagado, mesmo se cancelar.",
+              "Seus registros ficam guardados enquanto sua conta existir — e dá pra exportar quando quiser.",
             ].map((b) => (
               <li key={b} className="flex items-start gap-2">
                 <Check
@@ -159,6 +160,24 @@ export default async function AssinaturaPage(props: PageProps<"/assinatura">) {
               </li>
             ))}
           </ul>
+        </CardContent>
+      </Card>
+
+      {/* Cancelar = apagar tudo (política 23/06). Reusa o fluxo de exclusão de
+          conta (cancela o Stripe + deleta em cascata). Aviso forte + digitar
+          EXCLUIR. Falha de pagamento NÃO passa por aqui (retenção, à parte). */}
+      <Card className="rounded-3xl border-l-4 border-destructive/50 bg-destructive/[0.03]">
+        <CardHeader>
+          <CardTitle className="text-base text-destructive">Cancelar assinatura</CardTitle>
+          <CardDescription className="text-foreground/70">
+            Cancelar <strong>apaga sua conta e todos os registros do seu filho</strong> (diários,
+            Kolo Vivo, histórias, evolução) — <strong>para sempre, sem volta</strong>. Quer guardar
+            antes? Dá pra exportar seus dados em Configurações. Se só quer rever o pagamento ou o
+            cartão, use &ldquo;Gerenciar assinatura&rdquo; acima.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <ExcluirContaForm />
         </CardContent>
       </Card>
     </div>
