@@ -25,6 +25,7 @@ const items = [
   { href: "/admin/beta", label: "Beta" },
   { href: "/admin/observabilidade", label: "Observabilidade" },
   { href: "/admin/uso-api", label: "Uso de API" },
+  { href: "/admin/comportamento", label: "Comportamento" },
   { href: "/admin/admins", label: "Admins" },
   { href: "/admin/teste", label: "Testes" },
 ];
