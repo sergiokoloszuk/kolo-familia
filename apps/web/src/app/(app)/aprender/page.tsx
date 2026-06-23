@@ -3,7 +3,6 @@ import { BookOpen } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { EstadoVazio } from "@/components/brand/estado-vazio";
 import { Eyebrow } from "@/components/brand/eyebrow";
-import { IconCard } from "@/components/brand/icon-card";
 import { loadFamilyContext } from "@/lib/auth/require-user";
 
 export default async function AprenderPage() {
@@ -33,20 +32,14 @@ export default async function AprenderPage() {
 
   return (
     <div className="flex flex-col gap-8">
-      <header className="flex items-start gap-4">
-        <IconCard tone="light" size="lg" className="hidden md:inline-flex">
-          <BookOpen aria-hidden />
-        </IconCard>
-        <div>
-          <Eyebrow>Aprender</Eyebrow>
-          <h1 className="mt-1 font-heading text-3xl text-foreground md:text-4xl">
-            Conteúdo da{" "}
-            <em className="not-italic text-brand-purple">fundadora</em>
-          </h1>
-          <p className="mt-2 max-w-2xl text-muted-foreground">
-            Vídeos, transcrições e trilhas pra consultar quando precisar.
-          </p>
-        </div>
+      <header>
+        <Eyebrow>Aprender</Eyebrow>
+        <h1 className="mt-1 font-heading text-3xl text-foreground md:text-4xl">
+          Conteúdo da <em className="not-italic text-brand-purple">fundadora</em>
+        </h1>
+        <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
+          Vídeos, transcrições e trilhas pra consultar quando precisar.
+        </p>
       </header>
 
       {trilhasComContagem.length > 0 && (

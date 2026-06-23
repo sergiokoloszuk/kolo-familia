@@ -105,8 +105,9 @@ export default async function LudicoPage() {
         <h1 className="mt-1 font-heading text-3xl text-foreground md:text-4xl">
           Apoio pelo <em className="not-italic text-brand-purple">brincar e imaginar</em>
         </h1>
-        <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-          Crie o avatar de cada um e use nas histórias e rotinas — <strong className="font-medium text-foreground">o mesmo personagem em tudo</strong>. Recursos visuais pra preparar, seguir o dia ou imaginar algo bom.
+        <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+          Recursos visuais pra preparar o dia, contar histórias e imaginar — com o avatar
+          de cada um.
         </p>
         {criancas.length > 1 && (
           <div className="mt-4 w-fit">

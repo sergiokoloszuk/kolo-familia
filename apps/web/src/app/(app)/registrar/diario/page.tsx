@@ -1,6 +1,5 @@
-import Link from "next/link";
-import { ChevronLeft } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
+import { Eyebrow } from "@/components/brand/eyebrow";
 import { loadFamilyContext } from "@/lib/auth/require-user";
 import { resolverCriancaAtivaId } from "@/lib/crianca-ativa";
 import { primeiroNome } from "@/lib/nome";
@@ -25,26 +24,23 @@ export default async function RegistrarDiarioPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <header className="flex flex-col gap-2">
-        <Link
-          href="/registrar"
-          className="flex w-fit items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
-        >
-          <ChevronLeft aria-hidden="true" className="size-3" />
-          Registrar
-        </Link>
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <h1 className="font-heading text-2xl font-semibold tracking-tight">Registro do dia</h1>
-          <SeletorCrianca
-            criancas={(membros ?? []).map((m) => ({ id: m.id as string, nome: m.nome as string }))}
-            ativaId={ativaId ?? ""}
-            variant="screen"
-          />
-        </div>
-        <p className="text-sm text-muted-foreground">
-          Como foi o dia, e — se houver — algo pra celebrar ou um desafio. Pode escrever do
-          seu jeito, a Kolo organiza. Preencher pouco já vale.
+      <header>
+        <Eyebrow>Registro</Eyebrow>
+        <h1 className="mt-1 font-heading text-3xl text-foreground md:text-4xl">
+          Registro do <em className="not-italic text-brand-purple">dia</em>
+        </h1>
+        <p className="mt-2 max-w-xl text-sm text-muted-foreground">
+          Como foi o dia? Escreva do seu jeito — a Kolo organiza. Preencher pouco já vale.
         </p>
+        {(membros ?? []).length > 1 && (
+          <div className="mt-4 w-fit">
+            <SeletorCrianca
+              criancas={(membros ?? []).map((m) => ({ id: m.id as string, nome: m.nome as string }))}
+              ativaId={ativaId ?? ""}
+              variant="screen"
+            />
+          </div>
+        )}
       </header>
 
       <Card>

@@ -1,10 +1,9 @@
 import Link from "next/link";
 import { formatRelative } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Image as ImageIcon, Sparkles, Star } from "lucide-react";
+import { Sparkles, Star } from "lucide-react";
 import { Eyebrow } from "@/components/brand/eyebrow";
 import { EstadoVazio } from "@/components/brand/estado-vazio";
-import { IconCard } from "@/components/brand/icon-card";
 import { loadFamilyContext } from "@/lib/auth/require-user";
 import { assinarImagens } from "@/lib/storage/imagens";
 import { cn } from "@/lib/utils";
@@ -47,22 +46,14 @@ export default async function GaleriaPage(props: PageProps<"/galeria">) {
 
   return (
     <div className="flex flex-col gap-8">
-      <header className="flex items-start gap-4">
-        <IconCard tone="light" size="lg" className="hidden md:inline-flex">
-          <ImageIcon aria-hidden />
-        </IconCard>
-        <div>
-          <Eyebrow>Galeria</Eyebrow>
-          <h1 className="mt-1 font-heading text-3xl text-foreground md:text-4xl">
-            Imagens das{" "}
-            <em className="not-italic text-brand-purple">brincadeiras</em> e
-            histórias
-          </h1>
-          <p className="mt-2 max-w-2xl text-muted-foreground">
-            Geradas pelas estratégias e pelas conversas. Favorita pra ficar,
-            compartilha ou baixa quando quiser.
-          </p>
-        </div>
+      <header>
+        <Eyebrow>Galeria</Eyebrow>
+        <h1 className="mt-1 font-heading text-3xl text-foreground md:text-4xl">
+          Imagens das <em className="not-italic text-brand-purple">brincadeiras</em> e histórias
+        </h1>
+        <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
+          Geradas pelas estratégias e conversas — favorita, compartilha ou baixa quando quiser.
+        </p>
       </header>
 
       <div className="flex flex-wrap gap-2">
