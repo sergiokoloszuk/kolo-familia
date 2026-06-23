@@ -21,6 +21,14 @@ export type FamRow = {
   ultima: number; // epoch ms (0 = sem atividade conhecida)
 };
 
+export type LeadTrial = {
+  id: string;
+  diaTrial: number; // 1..7
+  diasRestantes: number | null;
+  origem: string;
+  ativado: boolean;
+};
+
 export type ComportamentoData = {
   totalFamilias: number;
   ativas7: number;
@@ -38,6 +46,9 @@ export type ComportamentoData = {
   featureRank: Rank[];
   topEngajadas: FamRow[];
   risco: FamRow[];
+  // Funil de trial (pra agência/analista): ativação e ciclo dos leads em teste.
+  ativacao: { trialTotal: number; ativados: number; taxa: number };
+  leadsTrial: LeadTrial[];
 };
 
 // Domínios do Kolo Vivo (key → label, e onde mora). Espelha kolo-vivo/dominios.
@@ -80,7 +91,7 @@ export async function carregarComportamento(
   const desde90 = diasAtrasISO(90);
 
   const [
-    { count: totalFamilias },
+    { data: familiasRows },
     { data: subs },
     { data: perfis },
     { data: diarios },
@@ -93,8 +104,11 @@ export async function carregarComportamento(
     { data: historias },
     { data: events },
     { data: perfisFam },
+    { data: afiliadosRows },
+    { data: convUsos },
+    { data: convites },
   ] = await Promise.all([
-    admin.from("family_accounts").select("id", { count: "exact", head: true }),
+    admin.from("family_accounts").select("id, created_at, afiliado_id, ref_codigo"),
     admin.from("subscription_accesses").select("family_account_id, status, trial_ends_at"),
     admin
       .from("perfil_vivo_membro")
@@ -120,7 +134,12 @@ export async function carregarComportamento(
       .select("family_account_id, evento, detalhe, created_at")
       .gte("created_at", desde90),
     admin.from("family_profiles").select("family_account_id, nome_mae"),
+    admin.from("afiliados").select("id, nome, codigo_unico"),
+    admin.from("beta_invite_uses").select("family_account_id, invite_id"),
+    admin.from("beta_invites").select("id, rotulo, codigo"),
   ]);
+
+  const totalFamilias = (familiasRows ?? []).length;
 
   // Funil
   const statusCount: Record<string, number> = {};
@@ -259,8 +278,56 @@ export async function carregarComportamento(
   const vol = (f: FamRow) => f.ayla + f.web + f.diarios + f.ludico + f.planos;
   const topEngajadas = [...famArr].sort((a, b) => vol(b) - vol(a)).slice(0, 20);
 
+  // ── Leads em trial: dia do ciclo, origem e ativação (pra agência/analista) ──
+  const afiliadoPorId = new Map(
+    (afiliadosRows ?? []).map((a) => [a.id as string, (a.nome as string) ?? (a.codigo_unico as string)]),
+  );
+  const rotuloPorInvite = new Map(
+    (convites ?? []).map((c) => [c.id as string, (c.rotulo as string | null) ?? (c.codigo as string)]),
+  );
+  const convitePorFam = new Map<string, string>();
+  for (const u of convUsos ?? []) {
+    const r = rotuloPorInvite.get(u.invite_id as string);
+    if (r) convitePorFam.set(u.family_account_id as string, r);
+  }
+  const statusPorFam = new Map((subs ?? []).map((s) => [s.family_account_id as string, s]));
+  const leadsTrial: LeadTrial[] = [];
+  let ativadosTrial = 0;
+  for (const fa of familiasRows ?? []) {
+    const id = fa.id as string;
+    const sub = statusPorFam.get(id);
+    if ((sub?.status as string) !== "trialing") continue;
+    const diaTrial = Math.min(
+      7,
+      Math.max(1, Math.floor((agora - new Date(fa.created_at as string).getTime()) / MS_DIA) + 1),
+    );
+    const trialEnds = (sub?.trial_ends_at as string | null) ?? null;
+    const diasRestantes = trialEnds
+      ? Math.ceil((new Date(trialEnds).getTime() - agora) / MS_DIA)
+      : null;
+    const ativado = fam.has(id); // teve qualquer atividade registrada
+    if (ativado) ativadosTrial += 1;
+    const afiliadoId = fa.afiliado_id as string | null;
+    const refCodigo = fa.ref_codigo as string | null;
+    const origem = afiliadoId
+      ? `Afiliado: ${afiliadoPorId.get(afiliadoId) ?? afiliadoId}`
+      : convitePorFam.get(id)
+        ? `Convite: ${convitePorFam.get(id)}`
+        : refCodigo
+          ? `Ref: ${refCodigo}`
+          : "Direto";
+    leadsTrial.push({ id, diaTrial, diasRestantes, origem, ativado });
+  }
+  leadsTrial.sort((a, b) => a.diaTrial - b.diaTrial);
+  const trialTotal = leadsTrial.length;
+  const ativacao = {
+    trialTotal,
+    ativados: ativadosTrial,
+    taxa: trialTotal ? Math.round((ativadosTrial / trialTotal) * 100) : 0,
+  };
+
   return {
-    totalFamilias: totalFamilias ?? 0,
+    totalFamilias,
     ativas7,
     ativas30,
     completudeMedia,
@@ -276,5 +343,7 @@ export async function carregarComportamento(
     featureRank,
     topEngajadas,
     risco,
+    ativacao,
+    leadsTrial,
   };
 }
