@@ -28,11 +28,11 @@ export function AjudaClient() {
       try {
         const r = await perguntarAjuda(q);
         setResultado(r);
-      } catch {
-        // Nunca derruba a página (boundary global): mostra erro amigável aqui.
+      } catch (err) {
+        // Temporário (diagnóstico): mostra o erro real pra entender a causa.
         setResultado({
           ok: false,
-          error: "Não consegui responder agora. Tente de novo em instantes.",
+          error: `Diagnóstico: ${err instanceof Error ? err.message : String(err)}`,
         });
       }
     });
