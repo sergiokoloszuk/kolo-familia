@@ -6,7 +6,15 @@ import { Badge } from "@/components/ui/badge";
 import { Eyebrow } from "@/components/brand/eyebrow";
 import { IconCard } from "@/components/brand/icon-card";
 import { loadFamilyContext } from "@/lib/auth/require-user";
+import { createServiceRoleClient } from "@/lib/supabase/server";
 import { AssinaturaActions } from "./assinatura-actions";
+
+/** Centavos → "R$ 54,90" (pt-BR). null quando não houver valor. */
+function fmtBRL(centavos?: number): string | null {
+  return centavos != null
+    ? (centavos / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })
+    : null;
+}
 
 const STATUS_LABEL: Record<string, string> = {
   trialing: "Em trial",
@@ -36,6 +44,18 @@ export default async function AssinaturaPage(props: PageProps<"/assinatura">) {
     .eq("family_account_id", familyId)
     .maybeSingle();
 
+  // Preços da MESMA fonte que a página de planos (configuracao_precos), pra
+  // nunca divergir do que é cobrado/anunciado. Service-role: config é pública.
+  const { data: precosRows } = await createServiceRoleClient()
+    .from("configuracao_precos")
+    .select("chave, valor_centavos")
+    .in("chave", ["plano_mensal", "plano_anual"]);
+  const precos = new Map(
+    (precosRows ?? []).map((r) => [r.chave as string, r.valor_centavos as number]),
+  );
+  const mensalLabel = fmtBRL(precos.get("plano_mensal"));
+  const anualLabel = fmtBRL(precos.get("plano_anual"));
+
   const sp = await props.searchParams;
   const flash = typeof sp.status === "string" ? sp.status : null;
 
@@ -59,8 +79,10 @@ export default async function AssinaturaPage(props: PageProps<"/assinatura">) {
           <div>
             <Eyebrow>Assinatura</Eyebrow>
             <h1 className="mt-1 font-heading text-3xl text-foreground md:text-4xl">
-              R$ 53/mês{" "}
-              <em className="not-italic text-brand-purple">ou anual</em>
+              {mensalLabel ? `${mensalLabel}/mês` : "Assinatura"}{" "}
+              <em className="not-italic text-brand-purple">
+                {anualLabel ? `ou ${anualLabel}/ano` : "ou anual"}
+              </em>
             </h1>
             <p className="mt-2 max-w-2xl text-muted-foreground">
               Cancela em 2 cliques. Histórico fica preservado mesmo após
