@@ -253,6 +253,7 @@ export function Sidebar({
           <Link
             href="/configuracoes"
             aria-label="Configurações"
+            title="Configurações"
             className={cn(
               "inline-flex size-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-kolo-lilas-bg-2 hover:text-foreground",
               isActive(pathname, "/configuracoes") &&
@@ -263,7 +264,8 @@ export function Sidebar({
           </Link>
           <Link
             href="/assinatura"
-            aria-label="Assinatura"
+            aria-label="Assinatura e pagamento"
+            title="Assinatura e pagamento"
             className={cn(
               "inline-flex size-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-kolo-lilas-bg-2 hover:text-foreground",
               isActive(pathname, "/assinatura") &&
@@ -274,8 +276,8 @@ export function Sidebar({
           </Link>
           <Link
             href="/ajuda"
-            aria-label="Ajuda"
-            title="Ajuda"
+            aria-label="Ajuda e suporte"
+            title="Ajuda e suporte"
             className={cn(
               "inline-flex size-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-kolo-lilas-bg-2 hover:text-foreground",
               isActive(pathname, "/ajuda") && "bg-kolo-lilas-bg-2 text-foreground",
