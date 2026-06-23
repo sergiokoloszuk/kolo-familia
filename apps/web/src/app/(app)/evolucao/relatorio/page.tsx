@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
 import { loadFamilyContext } from "@/lib/auth/require-user";
+import { resolverCriancaAtivaId } from "@/lib/crianca-ativa";
 import { capitalizarNome } from "@/lib/nome";
 import { RelatorioClient } from "./relatorio-client";
 
@@ -20,6 +21,10 @@ export default async function RelatorioPage() {
     id: m.id as string,
     nome: capitalizarNome(m.nome as string),
   }));
+
+  // Pré-seleciona a criança ATIVA (cookie) — não a primeira da lista. Antes o
+  // relatório vinha sempre do filho mais antigo, ignorando quem está em foco.
+  const ativaId = (await resolverCriancaAtivaId(membros ?? [])) ?? lista[0]?.id ?? "";
 
   const dataHoje = new Date().toLocaleDateString("pt-BR", {
     day: "2-digit",
@@ -55,7 +60,7 @@ export default async function RelatorioPage() {
           Cadastre uma criança no Perfil pra gerar o relatório.
         </p>
       ) : (
-        <RelatorioClient membros={lista} dataHoje={dataHoje} />
+        <RelatorioClient membros={lista} membroAtivoId={ativaId} dataHoje={dataHoje} />
       )}
     </div>
   );

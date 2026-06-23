@@ -185,14 +185,6 @@ export function Sidebar({
                 aria-hidden
               />
               <span className="flex-1">{item.label}</span>
-              {item.href === "/ludico" && (
-                <span
-                  aria-label="em versão beta"
-                  className="inline-flex items-center rounded-full border border-kolo-linha bg-white/60 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-[0.12em] text-muted-foreground"
-                >
-                  beta
-                </span>
-              )}
               {item.href === "/kolo-vivo" && sugestoesPendentes > 0 && (
                 <span
                   aria-label={`${sugestoesPendentes} para revisar`}

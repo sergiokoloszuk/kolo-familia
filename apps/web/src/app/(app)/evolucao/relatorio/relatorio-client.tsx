@@ -11,12 +11,14 @@ type Destinatario = "escola" | "terapeuta";
 
 export function RelatorioClient({
   membros,
+  membroAtivoId,
   dataHoje,
 }: {
   membros: Array<{ id: string; nome: string }>;
+  membroAtivoId: string;
   dataHoje: string;
 }) {
-  const [membroId, setMembroId] = useState(membros[0]?.id ?? "");
+  const [membroId, setMembroId] = useState(membroAtivoId || membros[0]?.id || "");
   const [destinatario, setDestinatario] = useState<Destinatario>("terapeuta");
   const [markdown, setMarkdown] = useState("");
   const [nome, setNome] = useState("");
