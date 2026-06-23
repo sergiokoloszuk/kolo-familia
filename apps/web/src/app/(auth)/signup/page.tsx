@@ -29,6 +29,17 @@ const schema = z.object({
 
 type FormValues = z.infer<typeof schema>;
 
+/** Empurra a conversão pro dataLayer do GTM (o container vive no layout de auth). */
+function pushFormSubmit() {
+  try {
+    const w = window as unknown as { dataLayer?: Record<string, unknown>[] };
+    w.dataLayer = w.dataLayer || [];
+    w.dataLayer.push({ event: "form_submit" });
+  } catch {
+    // tracking nunca pode quebrar o cadastro
+  }
+}
+
 export default function SignupPage() {
   const [submitting, setSubmitting] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
@@ -84,6 +95,9 @@ export default function SignupPage() {
       setAuthError(traduzirErro(error.message));
       return;
     }
+
+    // Conversão (GTM/agência de tráfego): a conta foi criada.
+    pushFormSubmit();
 
     // Aceite de termos: guarda timestamp pra ser persistido após login
     const aceitoEm = new Date().toISOString();
