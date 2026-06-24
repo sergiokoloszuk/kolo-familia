@@ -31,21 +31,25 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  // User sem family_account → primeiro acesso, manda pro onboarding.
-  // Sem isso, OAuth de novo usuário caía silenciosamente na landing.
+  // Conta nova via OAuth (Google) → passa pela página-relâmpago /cadastro-ok
+  // (no grupo (auth), onde o GTM carrega) pra disparar a conversão form_submit;
+  // ela encaminha pro /onboarding (que NÃO tem GTM, por LGPD).
+  //
+  // NÃO dá pra detectar "novo" por "não tem family_account": o gatilho
+  // handle_new_user cria a família já no insert do usuário, então ela SEMPRE
+  // existe aqui (era por isso que a conversão do Google nunca disparava).
+  // Detectamos por: provedor social (≠ email) + conta criada agora há pouco.
+  // O cadastro por e-mail NÃO entra aqui (provider 'email'), porque já dispara
+  // o form_submit na própria /signup — evita contagem dupla.
   const {
     data: { user },
   } = await supabase.auth.getUser();
   if (user) {
-    const { data: family } = await supabase
-      .from("family_accounts")
-      .select("id")
-      .eq("user_id", user.id)
-      .maybeSingle();
-    if (!family) {
-      // Conta nova (geralmente Google OAuth) → passa pela página-relâmpago
-      // /cadastro-ok (no grupo auth, onde o GTM carrega) pra disparar a
-      // conversão `form_submit`, e ela encaminha pro /onboarding.
+    const provider = user.app_metadata?.provider;
+    const ehSocial = !!provider && provider !== "email";
+    const criadoMs = user.created_at ? new Date(user.created_at).getTime() : 0;
+    const recemCriado = criadoMs > 0 && Date.now() - criadoMs < 5 * 60 * 1000;
+    if (ehSocial && recemCriado) {
       return NextResponse.redirect(`${origin}/cadastro-ok`);
     }
   }
