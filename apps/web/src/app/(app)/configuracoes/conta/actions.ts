@@ -6,6 +6,7 @@ import { z } from "zod";
 import { requireUser, loadFamilyContext } from "@/lib/auth/require-user";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { getStripeClient } from "@/lib/stripe/client";
+import { chaveTelefoneBR } from "@/lib/telefone";
 import { logEvent, logServerError } from "@/lib/log";
 
 export type PerfilResult = { ok: true } | { ok: false; error: string };
@@ -74,21 +75,34 @@ export async function atualizarWhatsappAction(
     if (!family) return { ok: false, error: "Família não inicializada." };
 
     const admin = createServiceRoleClient();
-    const { data: outra } = await admin
-      .from("family_accounts")
-      .select("id")
-      .eq("whatsapp_e164", whatsapp_e164)
-      .neq("id", family.id)
-      .maybeSingle();
-    if (outra) {
-      return { ok: false, error: "Esse WhatsApp já está em uso por outra conta." };
+    // Compara pela chave NORMALIZADA (9º dígito/país) — igual ao onboarding e à
+    // Ayla — pra pegar variações do mesmo número, não só o texto idêntico.
+    const chaveNova = chaveTelefoneBR(whatsapp_e164);
+    if (chaveNova) {
+      const { data: outras } = await admin
+        .from("family_accounts")
+        .select("id, whatsapp_e164")
+        .not("whatsapp_e164", "is", null)
+        .neq("id", family.id);
+      const conflito = (outras ?? []).some(
+        (f) => chaveTelefoneBR(f.whatsapp_e164 as string) === chaveNova,
+      );
+      if (conflito) {
+        return { ok: false, error: "Esse WhatsApp já está em uso por outra conta." };
+      }
     }
 
     const { error } = await admin
       .from("family_accounts")
       .update({ whatsapp_e164 })
       .eq("id", family.id);
-    if (error) return { ok: false, error: `Não consegui salvar: ${error.message}` };
+    if (error) {
+      // 23505 = unique_violation (índice family_accounts_whatsapp_unico).
+      if (error.code === "23505") {
+        return { ok: false, error: "Esse WhatsApp já está em uso por outra conta." };
+      }
+      return { ok: false, error: `Não consegui salvar: ${error.message}` };
+    }
 
     revalidatePath("/configuracoes/conta");
     return { ok: true };
