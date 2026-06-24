@@ -11,7 +11,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { createClient } from "@/lib/supabase/client";
-import { GoogleButton } from "@/components/auth/google-button";
 
 const schema = z.object({
   email: z.string().email("E-mail inválido"),
@@ -96,15 +95,6 @@ function LoginPageInner() {
             Esqueci minha senha
           </Link>
         </form>
-
-        <div className="relative">
-          <span className="absolute inset-x-0 top-1/2 h-px -translate-y-1/2 bg-border" />
-          <span className="relative mx-auto block w-fit bg-card px-2 text-xs text-muted-foreground">
-            ou
-          </span>
-        </div>
-
-        <GoogleButton next="/painel" onError={(m) => setAuthError(traduzirErro(m))} />
 
         <p className="text-center text-sm text-muted-foreground">
           Ainda não tem conta?{" "}

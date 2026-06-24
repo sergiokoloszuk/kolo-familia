@@ -10,7 +10,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { createClient } from "@/lib/supabase/client";
-import { GoogleButton } from "@/components/auth/google-button";
 
 const BETA_GATE = process.env.NEXT_PUBLIC_BETA_GATE_ENABLED === "true";
 
@@ -310,15 +309,6 @@ export default function SignupPage() {
             {submitting ? "Criando conta..." : "Criar conta"}
           </Button>
         </form>
-
-        <div className="relative">
-          <span className="absolute inset-x-0 top-1/2 h-px -translate-y-1/2 bg-border" />
-          <span className="relative mx-auto block w-fit bg-card px-2 text-xs text-muted-foreground">
-            ou
-          </span>
-        </div>
-
-        <GoogleButton next="/onboarding" onError={setAuthError} />
 
         <p className="text-center text-xs text-muted-foreground">
           Ao continuar você concorda com os termos de uso e a política de privacidade. O Kolo
