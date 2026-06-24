@@ -22,13 +22,18 @@ export const maxDuration = 300;
  * Comunicação com o app é só via banco.
  */
 export async function POST(request: NextRequest) {
-  // Validação de origem
+  // Validação de origem (fail-closed): sem o segredo configurado, RECUSA —
+  // antes aceitava qualquer chamada, o que deixava o webhook aberto a spoof
+  // de mensagens. Requer AYLA_WEBHOOK_SECRET setado em prod e o Z-API/n8n
+  // mandando o header x-ayla-secret com esse valor.
   const expectedSecret = process.env.AYLA_WEBHOOK_SECRET;
-  if (expectedSecret) {
-    const got = request.headers.get("x-ayla-secret");
-    if (got !== expectedSecret) {
-      return NextResponse.json({ error: "unauthorized" }, { status: 401 });
-    }
+  if (!expectedSecret) {
+    console.error("[ayla webhook] AYLA_WEBHOOK_SECRET não configurado — recusando chamada.");
+    return NextResponse.json({ error: "webhook secret missing" }, { status: 500 });
+  }
+  const got = request.headers.get("x-ayla-secret");
+  if (got !== expectedSecret) {
+    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
 
   let payload: unknown;

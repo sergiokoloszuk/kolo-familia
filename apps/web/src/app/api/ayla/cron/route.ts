@@ -43,12 +43,18 @@ export async function POST(request: NextRequest) {
 }
 
 async function handle(request: NextRequest) {
+  // Fail-closed: sem CRON_SECRET configurado, RECUSA — antes aceitava
+  // qualquer chamada (alguém poderia disparar os envios proativos da Ayla).
+  // O Vercel Cron manda Authorization: Bearer <CRON_SECRET> automaticamente
+  // quando CRON_SECRET está no env do projeto.
   const expectedSecret = process.env.CRON_SECRET;
-  if (expectedSecret) {
-    const auth = request.headers.get("authorization");
-    if (auth !== `Bearer ${expectedSecret}`) {
-      return NextResponse.json({ error: "unauthorized" }, { status: 401 });
-    }
+  if (!expectedSecret) {
+    console.error("[ayla cron] CRON_SECRET não configurado — recusando chamada.");
+    return NextResponse.json({ error: "cron secret missing" }, { status: 500 });
+  }
+  const auth = request.headers.get("authorization");
+  if (auth !== `Bearer ${expectedSecret}`) {
+    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
 
   const url = new URL(request.url);
