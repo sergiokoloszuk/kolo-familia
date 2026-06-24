@@ -43,7 +43,10 @@ export async function GET(request: NextRequest) {
       .eq("user_id", user.id)
       .maybeSingle();
     if (!family) {
-      return NextResponse.redirect(`${origin}/onboarding`);
+      // Conta nova (geralmente Google OAuth) → passa pela página-relâmpago
+      // /cadastro-ok (no grupo auth, onde o GTM carrega) pra disparar a
+      // conversão `form_submit`, e ela encaminha pro /onboarding.
+      return NextResponse.redirect(`${origin}/cadastro-ok`);
     }
   }
 
