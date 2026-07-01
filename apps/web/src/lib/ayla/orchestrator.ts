@@ -895,11 +895,13 @@ export async function processInbound(
       ? { nomes: ctx.membros.map((m) => m.nome) }
       : null;
 
-  // Registra nos bastidores (check-in + diário + sugestão) quando há conteúdo
-  // e sabemos de quem é. Invisível pra mãe — a fala vem da voz da Ayla.
-  if (temAlgoPraRegistrar && parsed.membro_atipico_id && !precisaEscolherMembro) {
-    await persistirRegistro(supabase, family.id, parsed);
-  }
+  // Registrar nos bastidores (check-in + diário + sugestão) quando há conteúdo
+  // e sabemos de quem é. ADIADO pra DEPOIS da resposta: essas gravações fazem
+  // 2-4 chamadas de IA que NÃO entram no texto que a mãe lê — rodá-las antes só
+  // atrasava a resposta. Marca aqui, executa no fim (invisível pra mãe).
+  const deveRegistrar = Boolean(
+    temAlgoPraRegistrar && parsed.membro_atipico_id && !precisaEscolherMembro,
+  );
 
   // Foco pra CONTEXTO da conversa (perfil + Kolo Vivo). Numa PERGUNTA ("o que
   // sabe da X?") o parser volta null — por isso a prioridade aqui é: nome
@@ -915,9 +917,13 @@ export async function processInbound(
     ? (ctx.membros.find((m) => m.id === membroContextoId) ?? null)
     : null;
   const nomeMembro = membroFoco?.nome ?? null;
-  const koloVivoResumo = await carregarKoloVivoResumo(supabase, membroContextoId);
-  const estrategiasRecentes = await carregarEstrategiasRecentes(supabase, family.id);
-  const historico = await carregarHistorico(supabase, family.id, inbound.texto);
+  // Loaders independentes em paralelo (antes eram 3 idas ao banco em fila,
+  // logo antes da chamada mais cara — a voz).
+  const [koloVivoResumo, estrategiasRecentes, historico] = await Promise.all([
+    carregarKoloVivoResumo(supabase, membroContextoId),
+    carregarEstrategiasRecentes(supabase, family.id),
+    carregarHistorico(supabase, family.id, inbound.texto),
+  ]);
 
   const resp = await enviarRespostaEmChunks(supabase, {
     family_account_id: family.id,
@@ -947,6 +953,21 @@ export async function processInbound(
       precisaEscolherMembro,
     },
   });
+
+  // Agora que a mãe JÁ recebeu a resposta, grava o registro nos bastidores
+  // (check-in/diário/Kolo Vivo — as chamadas de IA que tiramos da frente).
+  // Best-effort: nunca quebra o retorno.
+  if (deveRegistrar) {
+    try {
+      await persistirRegistro(supabase, family.id, parsed);
+    } catch (e) {
+      console.warn(
+        "[ayla] persistirRegistro (adiado) falhou:",
+        e instanceof Error ? e.message : e,
+      );
+    }
+  }
+
   return { tratada: true, familia: family.id, resposta: resp };
 }
 
