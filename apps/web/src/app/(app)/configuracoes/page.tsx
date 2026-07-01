@@ -151,7 +151,7 @@ export default async function ConfiguracoesPage() {
             href="/configuracoes/conta"
             icon={UserIcon}
             titulo="Minha conta"
-            descricao="Mudar senha, exportar meus dados, excluir conta (LGPD)."
+            descricao="Nome, WhatsApp, e-mail, senha e exclusão de conta."
           />
         </div>
       </section>

@@ -95,25 +95,6 @@ export default async function MinhaContaPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Exportar meus dados</CardTitle>
-          <CardDescription>
-            Direito LGPD de acesso e portabilidade. Baixe um arquivo JSON
-            com tudo que está registrado da sua família.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <a
-            href="/api/me/exportar"
-            className={cn(buttonVariants({ variant: "outline" }))}
-            download
-          >
-            Baixar meus dados (.json)
-          </a>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
           <CardTitle className="text-base">Mudar senha</CardTitle>
           <CardDescription>
             Mando um link pro seu e-mail e você define uma nova senha lá.
@@ -135,8 +116,8 @@ export default async function MinhaContaPage() {
             Excluir minha conta
           </CardTitle>
           <CardDescription>
-            Irreversível. Apaga todos os seus registros, cancela a
-            assinatura ativa e remove o acesso. Direito LGPD de eliminação.
+            Isso não tem volta: apaga todos os seus registros, cancela a
+            assinatura e encerra o acesso.
           </CardDescription>
         </CardHeader>
         <CardContent>

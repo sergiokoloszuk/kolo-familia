@@ -63,8 +63,8 @@ export function Tela5Termos({
               </Label>
               <p className="mt-1 text-xs text-muted-foreground">
                 O Kolo Família não substitui profissionais da saúde. Seus dados são
-                tratados com segurança, e você pode exportar ou excluir tudo quando
-                quiser, direto na sua conta.
+                tratados com segurança, e você pode excluir tudo quando quiser,
+                direto na sua conta.
               </p>
             </span>
           </label>

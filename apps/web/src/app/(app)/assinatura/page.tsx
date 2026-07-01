@@ -149,7 +149,7 @@ export default async function AssinaturaPage(props: PageProps<"/assinatura">) {
               "App completo (painel, Perfil, conversar, apoio, aprender).",
               "Acompanhamento no WhatsApp (próxima fase).",
               "Especialistas que respondem conforme o contexto, sem você precisar escolher.",
-              "Seus registros ficam guardados enquanto sua conta existir — e dá pra exportar quando quiser.",
+              "Seus registros ficam guardados enquanto sua conta existir.",
             ].map((b) => (
               <li key={b} className="flex items-start gap-2">
                 <Check
@@ -171,9 +171,8 @@ export default async function AssinaturaPage(props: PageProps<"/assinatura">) {
           <CardTitle className="text-base text-destructive">Cancelar assinatura</CardTitle>
           <CardDescription className="text-foreground/70">
             Cancelar <strong>apaga sua conta e todos os registros do seu filho</strong> (diários,
-            Kolo Vivo, histórias, evolução) — <strong>para sempre, sem volta</strong>. Quer guardar
-            antes? Dá pra exportar seus dados em Configurações. Se só quer rever o pagamento ou o
-            cartão, use &ldquo;Gerenciar assinatura&rdquo; acima.
+            Kolo Vivo, histórias, evolução) — <strong>para sempre, sem volta</strong>. Se só quer
+            rever o pagamento ou o cartão, use &ldquo;Gerenciar assinatura&rdquo; acima.
           </CardDescription>
         </CardHeader>
         <CardContent>
