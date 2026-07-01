@@ -432,6 +432,12 @@ export default async function EvolucaoPage() {
         <p className="mt-2 max-w-2xl text-muted-foreground">
           O que apareceu, o que ficou, o que vai mudando — aos poucos.
         </p>
+        <Link
+          href="/evolucao/registros"
+          className="mt-3 inline-flex w-fit items-center gap-1 text-sm font-medium text-brand-purple hover:underline"
+        >
+          Ver tudo que registrei →
+        </Link>
         {criancas.length > 1 && ativaId && (
           <div className="mt-4 w-fit">
             <SeletorCrianca criancas={criancas} ativaId={ativaId} variant="screen" />
