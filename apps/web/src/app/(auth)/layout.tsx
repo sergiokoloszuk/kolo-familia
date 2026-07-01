@@ -2,6 +2,7 @@ import Link from "next/link";
 import Script from "next/script";
 import type { ReactNode } from "react";
 import { Logo } from "@/components/brand/logo";
+import { UtmCapture } from "@/components/tracking/utm-capture";
 
 // GTM só nas telas de cadastro/login (funil) — NÃO nas telas internas do app,
 // que mostram dado de saúde de criança (LGPD). Atende o tracking de conversão
@@ -11,6 +12,7 @@ const GTM_ID = "GTM-PR4NGFW2";
 export default function AuthLayout({ children }: { children: ReactNode }) {
   return (
     <div className="flex min-h-screen flex-col bg-background">
+      <UtmCapture />
       <Script id="gtm-base" strategy="afterInteractive">
         {`(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','${GTM_ID}');`}
       </Script>

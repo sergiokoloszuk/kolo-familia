@@ -108,7 +108,9 @@ export async function carregarComportamento(
     { data: convUsos },
     { data: convites },
   ] = await Promise.all([
-    admin.from("family_accounts").select("id, created_at, afiliado_id, ref_codigo"),
+    admin
+      .from("family_accounts")
+      .select("id, created_at, afiliado_id, ref_codigo, utm_source, utm_campaign"),
     admin.from("subscription_accesses").select("family_account_id, status, trial_ends_at"),
     admin
       .from("perfil_vivo_membro")
@@ -309,13 +311,17 @@ export async function carregarComportamento(
     if (ativado) ativadosTrial += 1;
     const afiliadoId = fa.afiliado_id as string | null;
     const refCodigo = fa.ref_codigo as string | null;
+    const utmSource = fa.utm_source as string | null;
+    const utmCampaign = fa.utm_campaign as string | null;
     const origem = afiliadoId
       ? `Afiliado: ${afiliadoPorId.get(afiliadoId) ?? afiliadoId}`
       : convitePorFam.get(id)
         ? `Convite: ${convitePorFam.get(id)}`
-        : refCodigo
-          ? `Ref: ${refCodigo}`
-          : "Direto";
+        : utmSource
+          ? `${utmSource}${utmCampaign ? ` · ${utmCampaign}` : ""}`
+          : refCodigo
+            ? `Ref: ${refCodigo}`
+            : "Direto";
     leadsTrial.push({ id, diaTrial, diasRestantes, origem, ativado });
   }
   leadsTrial.sort((a, b) => a.diaTrial - b.diaTrial);

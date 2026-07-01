@@ -107,6 +107,56 @@ export async function atribuirAfiliado(): Promise<void> {
 }
 
 // ============================================================
+// Atribuição de UTM — lê o cookie kolo_utm (setado por <UtmCapture/> nas telas
+// de cadastro) e grava a origem do anúncio na família, uma única vez. Espelha
+// atribuirAfiliado. Best-effort: nunca trava o onboarding.
+// ============================================================
+
+export async function atribuirUtm(): Promise<void> {
+  try {
+    const { supabase, family } = await requireFamily();
+
+    const { data: fam } = await supabase
+      .from("family_accounts")
+      .select("utm_atribuido_em")
+      .eq("id", family.id)
+      .maybeSingle();
+    if (fam?.utm_atribuido_em) return; // já atribuído
+
+    const raw = (await cookies()).get("kolo_utm")?.value;
+    if (!raw) return;
+
+    let utm: Record<string, unknown>;
+    try {
+      utm = JSON.parse(decodeURIComponent(raw));
+    } catch {
+      return; // cookie corrompido
+    }
+
+    const val = (v: unknown) =>
+      typeof v === "string" && v.trim() ? v.trim().slice(0, 200) : null;
+    const source = val(utm.utm_source);
+    if (!source) return; // sem origem, nada a atribuir
+
+    const admin = createServiceRoleClient();
+    await admin
+      .from("family_accounts")
+      .update({
+        utm_source: source,
+        utm_medium: val(utm.utm_medium),
+        utm_campaign: val(utm.utm_campaign),
+        utm_content: val(utm.utm_content),
+        utm_term: val(utm.utm_term),
+        utm_atribuido_em: new Date().toISOString(),
+      })
+      .eq("id", family.id)
+      .is("utm_atribuido_em", null);
+  } catch {
+    // best-effort — atribuição nunca pode quebrar o onboarding
+  }
+}
+
+// ============================================================
 // Tela 1 — dados da mãe + WhatsApp
 // ============================================================
 

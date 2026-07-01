@@ -103,12 +103,14 @@ export function OnboardingWizard({ initial }: { initial: InitialState }) {
   // Opt-in do WhatsApp (Passo 5) — o card da Ayla no Passo 6 só aparece se autorizado.
   const [optinAyla, setOptinAyla] = useState(false);
 
-  // Atribuição de afiliado (cookie kolo_ref → afiliado_id), uma vez ao abrir.
+  // Atribuição de origem (afiliado kolo_ref → afiliado_id; UTM kolo_utm →
+  // utm_*), uma vez ao abrir o onboarding.
   useEffect(() => {
     void (async () => {
       try {
-        const { atribuirAfiliado } = await import("./actions");
+        const { atribuirAfiliado, atribuirUtm } = await import("./actions");
         await atribuirAfiliado();
+        await atribuirUtm();
       } catch {
         /* best-effort */
       }
