@@ -2,7 +2,9 @@ import { redirect } from "next/navigation";
 import type { ReactNode } from "react";
 import { differenceInCalendarDays } from "date-fns";
 import { loadFamilyContext } from "@/lib/auth/require-user";
+import { assinaturaLiberada, trialVencido } from "@/lib/auth/assinatura";
 import { Sidebar } from "./sidebar";
+import { TrialGate } from "./trial-gate";
 import { PageViewTracker } from "./page-view-tracker";
 import { idadeAnos } from "@/lib/idade";
 import { lerCriancaAtivaId, resolverCriancaAtiva } from "@/lib/crianca-ativa";
@@ -21,6 +23,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
     { data: criancas },
     { count: sugestoesPendentes },
     { count: planosCount },
+    { data: sub },
   ] = await Promise.all([
     supabase
       .from("controle_acessos")
@@ -58,10 +61,22 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
       .from("planos")
       .select("id", { count: "exact", head: true })
       .eq("family_account_id", family.id),
+    supabase
+      .from("subscription_accesses")
+      .select("status, trial_ends_at, cortesia, cortesia_ate")
+      .eq("family_account_id", family.id)
+      .maybeSingle(),
   ]);
 
   const isAdmin = Boolean(acesso?.ativo);
   const isAnalista = (coAcesso?.length ?? 0) > 0;
+
+  // Bloqueio de acesso: trial vencido / assinatura inativa (e não é admin,
+  // analista de tráfego ou cortesia) → tela "assine pra continuar". Sem isso,
+  // o status ficava "trialing" pra sempre e o acesso vazava de graça.
+  if (!isAdmin && !isAnalista && !assinaturaLiberada(sub)) {
+    return <TrialGate vencido={trialVencido(sub)} />;
+  }
   const nomeUsuario =
     profile?.como_chamar?.trim() ||
     profile?.nome_mae?.trim() ||
