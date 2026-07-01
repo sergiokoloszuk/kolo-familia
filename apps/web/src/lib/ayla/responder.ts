@@ -26,15 +26,16 @@ export type UsageTracking = {
  * camada usa o modelo principal (Sonnet) porque a qualidade da voz importa.
  */
 
-export const VOZ_AYLA_FALLBACK = `Você é a Ayla — uma presença calma, experiente e afetuosa que apoia mães e pais de crianças atípicas pelo WhatsApp. Você NÃO é um robô nem um aplicativo: fala como uma pessoa que entende de neurodivergência e do cansaço de cuidar.
+export const VOZ_AYLA_FALLBACK = `Você é a Ayla — uma presença calma, experiente e afetuosa que apoia mães, pais e cuidadores de pessoas atípicas (crianças, adolescentes ou adultos) pelo WhatsApp. Você NÃO é um robô nem um aplicativo: fala como uma pessoa que entende de neurodivergência e do cansaço de cuidar.
 
 # Como você fala
 - Curto e quente, em português do Brasil. É WhatsApp, não e-mail: 2 a 5 frases na maioria das vezes.
 - Linguagem simples, do dia a dia. Nada de jargão clínico nem frases de atendimento ("Entendi.", "Registrei como desafio").
 - Varie sempre. Nunca comece igual, nunca soe formulário.
 - Português do Brasil natural e correto. NUNCA invente palavras nem force diminutivos estranhos (é "uvinha", não "uvidinha"; "moranguinho", não "moranguidinho"). Na dúvida, use a palavra normal.
-- Fale de perto, na 2ª pessoa: "o seu filho", "a sua casa" — não "o filho", "a casa".
+- Fale de perto, na 2ª pessoa: "o(a) seu(sua) filho(a)", "a sua casa" — não "o filho", "a casa". Use o gênero informado no contexto (filho/filha) — nunca presuma masculino; na dúvida, use o nome.
 - No máximo UMA pergunta — e só se ajudar a conversa a continuar.
+- A pessoa atípica em foco pode ter QUALQUER idade — confira a idade no contexto e ajuste o registro. Adulto é tratado como adulto: sem chamar de "criança", sem diminutivos infantis. Refira-se pelo nome ou pelo laço (filho/a, neto/a) que o contexto indicar.
 
 # O que fazer em cada caso
 - Ela só conta o dia (uma conquista, um perrengue): acolha primeiro o que ela SENTE, de verdade. Comemore junto ou valide o cansaço. Não precisa dar conselho se ela não pediu.
@@ -95,8 +96,9 @@ export async function gerarRespostaAyla(
 
   const linhas: string[] = [];
   const relacao = params.cuidador?.relacao;
+  const refMembro = params.nomeMembro ?? "quem está em foco";
   linhas.push(
-    `Você está falando com ${params.nomeMae}${relacao ? `, ${relacao} da criança` : ""}.`,
+    `Você está falando com ${params.nomeMae}${relacao ? `, ${relacao} de ${refMembro}` : ""}.`,
   );
   if (params.cuidador) {
     const pc = pronomesPara(params.cuidador.genero);
@@ -109,7 +111,7 @@ export async function gerarRespostaAyla(
         }"). NÃO presuma que é a mãe — é ${relacao ?? "o(a) responsável"}.`,
       );
     } else if (relacao && relacao !== "responsável") {
-      linhas.push(`Lembre: quem fala com você é ${relacao} da criança, não necessariamente a mãe.`);
+      linhas.push(`Lembre: quem fala com você é ${relacao} de ${refMembro}, não necessariamente a mãe.`);
     }
   }
   if (params.nomeMembro) {
@@ -123,6 +125,10 @@ export async function gerarRespostaAyla(
     } else if (params.idadeMembro != null && params.idadeMembro >= 13) {
       linhas.push(
         `${params.nomeMembro} é ADOLESCENTE (${params.idadeMembro} anos) — evite "criança/criancinha"; use o nome.`,
+      );
+    } else if (params.idadeMembro == null) {
+      linhas.push(
+        `A idade de ${params.nomeMembro} NÃO foi informada — não presuma que é criança. Trate pelo nome, sem diminutivos infantis.`,
       );
     }
     const p = pronomesPara(params.generoMembro);
