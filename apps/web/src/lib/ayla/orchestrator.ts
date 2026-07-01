@@ -739,15 +739,41 @@ export async function processInbound(
     inbound.recebidaEm,
   );
 
-  // 2. Persiste inbound
-  await supabase.from("ayla_messages").insert({
+  // 2. Persiste inbound — E usa como TRAVA DE IDEMPOTÊNCIA. A Z-API entrega o
+  // mesmo webhook mais de uma vez (at-least-once); o índice único em
+  // zaap_message_id faz o segundo insert virar no-op → paramos aqui, evitando
+  // gerar plano/resposta em duplicata (o bug dos 2 PDFs iguais).
+  const baseInbound = {
     family_account_id: family.id,
     direcao: "inbound",
     texto: inbound.texto,
     midia_url: inbound.midiaUrl ?? null,
     midia_tipo: inbound.midiaTipo ?? null,
     recebida_em: inbound.recebidaEm.toISOString(),
-  });
+  };
+  if (inbound.messageId) {
+    const { data: claim, error: claimErr } = await supabase
+      .from("ayla_messages")
+      .upsert(
+        { ...baseInbound, zaap_message_id: inbound.messageId },
+        { onConflict: "zaap_message_id", ignoreDuplicates: true },
+      )
+      .select("id");
+    if (claimErr) {
+      // Falha inesperada (ex.: coluna ainda não migrada) — NÃO trava a Ayla:
+      // insere normal e segue (sem dedup nesse caso).
+      console.error("[ayla] claim de idempotência falhou, seguindo:", claimErr.message);
+      await supabase.from("ayla_messages").insert(baseInbound);
+    } else if (!claim || claim.length === 0) {
+      console.warn(
+        `[ayla] inbound duplicado ignorado (messageId ${inbound.messageId})`,
+      );
+      return { tratada: false, familia: family.id };
+    }
+  } else {
+    // Sem id (payload raro) — não dá pra deduplicar; insere normal.
+    await supabase.from("ayla_messages").insert(baseInbound);
+  }
 
   // 3. Comando? — antes do parser IA, mais rápido
   const cmd = detectarComando(inbound.texto);

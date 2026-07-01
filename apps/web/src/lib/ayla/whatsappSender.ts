@@ -122,6 +122,8 @@ export type InboundWhatsApp = {
   recebidaEm: Date;
   midiaUrl?: string;
   midiaTipo?: string;
+  /** Id da mensagem da Z-API — trava de idempotência contra reenvio. */
+  messageId?: string;
 };
 
 export function parseZapiWebhook(payload: unknown): InboundWhatsApp | null {
@@ -172,12 +174,21 @@ export function parseZapiWebhook(payload: unknown): InboundWhatsApp | null {
       ? p.timestamp * (p.timestamp < 1e12 ? 1000 : 1)
       : Date.now();
 
+  // Id da mensagem (varia entre Z-API e n8n) — trava de idempotência.
+  const messageId =
+    pickString(p.messageId) ??
+    pickString(p.zaapId) ??
+    pickString(p.id) ??
+    pickString((p.message as Record<string, unknown> | undefined)?.id) ??
+    undefined;
+
   return {
     phoneE164,
     texto,
     recebidaEm: new Date(tsMs),
     midiaUrl,
     midiaTipo,
+    messageId,
   };
 }
 

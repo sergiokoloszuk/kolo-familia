@@ -75,6 +75,9 @@ async function nomeDoMembro(
  *   segue normal, sem link. A ponte nunca pode quebrar a conversa.
  */
 const JANELA_DEDUP_HORAS = 20;
+/** Freio curto anti-duplicata: nunca gera 2 planos na mesma janela (vale até
+ * com forcar=true — rede de segurança contra double-dispatch). */
+const PLANO_COOLDOWN_MIN = 3;
 
 function appUrl(): string {
   return (process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000").replace(/\/$/, "");
@@ -145,6 +148,25 @@ export async function montarPonteWhatsApp(
   const { familyId, membroAtipicoId, mensagem, temDesafio, phoneE164, forcar } = params;
 
   try {
+    // Freio anti-duplicata (SEMPRE, mesmo com forcar): se acabamos de mandar um
+    // plano nos últimos minutos, não manda outro. Rede de segurança contra
+    // double-dispatch que escape da idempotência do inbound.
+    const cooldownDesde = new Date(
+      Date.now() - PLANO_COOLDOWN_MIN * 60_000,
+    ).toISOString();
+    const { data: recem } = await supabase
+      .from("ayla_messages")
+      .select("id")
+      .eq("family_account_id", familyId)
+      .eq("direcao", "outbound")
+      .gte("enviada_em", cooldownDesde)
+      .ilike("texto", "%/auth/wa%")
+      .limit(1);
+    if (recem && recem.length > 0) {
+      console.log("[ayla:ponte] sem plano — cooldown: plano enviado há poucos minutos");
+      return null;
+    }
+
     if (!forcar) {
       // Gate 1 (barato): só quando ela descreveu um desafio concreto.
       if (!temDesafio) {
