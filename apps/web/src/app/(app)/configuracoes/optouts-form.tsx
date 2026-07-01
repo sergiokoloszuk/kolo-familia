@@ -7,18 +7,18 @@ import { alterarOptOut } from "./actions";
 const CATEGORIAS = [
   {
     key: "informacional",
-    label: "Informativos",
-    descricao: "Avisos sobre novas aulas, atualizações do app.",
+    label: "Novidades",
+    descricao: "Novos recursos e melhorias na Kolo.",
   },
   {
     key: "promocional",
-    label: "Promocionais",
-    descricao: "Descontos e ofertas (plano anual, cupons).",
+    label: "Ofertas e descontos",
+    descricao: "Promoções, campanhas e cupons.",
   },
   {
     key: "avaliacao",
-    label: "Avaliação / NPS",
-    descricao: "Pesquisas curtas sobre sua experiência.",
+    label: "Pesquisas de opinião",
+    descricao: "Perguntas rápidas sobre a sua experiência.",
   },
 ] as const;
 
@@ -68,7 +68,7 @@ export function OptOutsForm({ optoutSet }: { optoutSet: string[] }) {
                   onChange={() => alternar(c.key)}
                 />
                 <div className="flex-1">
-                  <Label className="font-medium">Aceitar {c.label}</Label>
+                  <Label className="font-medium">{c.label}</Label>
                   <p className="mt-1 text-xs text-muted-foreground">{c.descricao}</p>
                 </div>
               </label>

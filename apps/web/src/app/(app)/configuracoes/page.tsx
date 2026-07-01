@@ -109,11 +109,10 @@ export default async function ConfiguracoesPage() {
             </IconCard>
             <div>
               <CardTitle className="text-base">
-                Comunicações por categoria
+                O que você quer receber
               </CardTitle>
               <CardDescription>
-                Manutenção e mudanças importantes sempre chegam — são as
-                únicas que você não consegue silenciar.
+                Escolha quais mensagens deseja receber.
               </CardDescription>
             </div>
           </div>
@@ -122,13 +121,6 @@ export default async function ConfiguracoesPage() {
           <OptOutsForm optoutSet={Array.from(optoutSet)} />
         </CardContent>
       </Card>
-
-        <SubLink
-          href="/configuracoes/regras"
-          icon={Bell}
-          titulo="Alertas e adaptações"
-          descricao="Alertas automáticos (cansada, gatilho recorrente, DASS-21 elevada) e adaptações sugeridas. Você decide."
-        />
       </section>
 
       {/* ── Bloco 2: Perfil da família ──────────────────────────── */}
