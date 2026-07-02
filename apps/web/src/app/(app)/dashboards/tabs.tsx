@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 const TABS = [
   { href: "/dashboards", label: "Aquisição & Conversão", exact: true },
   { href: "/dashboards/comportamento", label: "Comportamento & Uso" },
+  { href: "/dashboards/jornada", label: "Jornada do Trial" },
 ];
 
 /** Alterna entre os dois dashboards (mesma fonte de dados, recortes diferentes). */
