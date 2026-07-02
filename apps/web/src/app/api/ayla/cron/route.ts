@@ -17,6 +17,7 @@ import {
 } from "@/lib/ayla/orchestrator";
 import { detectAndPersist } from "@/lib/ayla/insightEngine";
 import { runRegrasParaFamilia } from "@/lib/regras/engine";
+import { enviarTexto, verificarStatusZapi } from "@/lib/ayla/whatsappSender";
 
 /**
  * Cron da Ayla — chamado por scheduler externo (n8n, Vercel Cron, etc.).
@@ -69,6 +70,7 @@ async function handle(request: NextRequest) {
     if (tipo === "regras") return await runRegras(supabase);
     if (tipo === "cleanup") return await runCleanup(supabase);
     if (tipo === "snapshots") return await runSnapshots(supabase);
+    if (tipo === "healthcheck") return await runHealthcheck();
 
     return NextResponse.json({ error: `tipo inválido: ${tipo}` }, { status: 400 });
   } catch (err) {
@@ -78,6 +80,34 @@ async function handle(request: NextRequest) {
       { status: 500 },
     );
   }
+}
+
+/**
+ * Monitor diário (8h): checa o Z-API e manda "no ar" pro WhatsApp do admin. Se
+ * a mensagem NÃO chegar, é sinal de que algo caiu (servidor/cron/Z-API).
+ * Número configurável por ADMIN_MONITOR_WHATSAPP (default: o da Karina).
+ */
+async function runHealthcheck() {
+  const numero = process.env.ADMIN_MONITOR_WHATSAPP || "+5511994770067";
+  const st = await verificarStatusZapi();
+  const quando = new Date().toLocaleString("pt-BR", {
+    timeZone: "America/Sao_Paulo",
+    day: "2-digit",
+    month: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+  const texto = st.connected
+    ? `✅ Kolo no ar — Z-API conectado, a Ayla está respondendo. (${quando})`
+    : `⚠️ ATENÇÃO: o Z-API parece DESCONECTADO — a Ayla pode não estar respondendo. Confira o painel do Z-API. (${quando})`;
+  let enviada = true;
+  try {
+    await enviarTexto({ phoneE164: numero, texto });
+  } catch (e) {
+    enviada = false;
+    await logServerError("healthcheck_send", e, {});
+  }
+  return NextResponse.json({ ok: true, connected: st.connected, enviada });
 }
 
 type AdminClient = ReturnType<typeof createServiceRoleClient>;

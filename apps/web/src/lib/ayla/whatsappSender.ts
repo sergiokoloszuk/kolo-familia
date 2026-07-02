@@ -112,6 +112,23 @@ export async function enviarDocumento(params: {
 }
 
 /**
+ * Checa se o Z-API está CONECTADO (monitor de saúde). Retorna connected=false
+ * em qualquer falha (HTTP, sessão caída) — nunca lança.
+ */
+export async function verificarStatusZapi(): Promise<{ connected: boolean; raw: unknown }> {
+  try {
+    const { instanceId, token, clientToken } = getZapiConfig();
+    const url = `${ZAPI_BASE}/instances/${instanceId}/token/${token}/status`;
+    const res = await fetch(url, { headers: { "Client-Token": clientToken } });
+    if (!res.ok) return { connected: false, raw: `HTTP ${res.status}` };
+    const json = (await res.json()) as { connected?: boolean; error?: unknown };
+    return { connected: json.connected === true, raw: json };
+  } catch (e) {
+    return { connected: false, raw: e instanceof Error ? e.message : "erro" };
+  }
+}
+
+/**
  * Normaliza o payload de webhook do Z-API/n8n para um shape único.
  * Z-API webhook tem várias formas (textos simples, mídia, status, etc.).
  * Aqui só lemos texto recebido — o mínimo para o parser.
