@@ -19,6 +19,16 @@ export default async function JornadaPage() {
         Em que fase cada família está no teste de 7 dias — e onde a gente perde gente.
       </p>
 
+      <div className="w-full rounded-3xl border border-brand-purple/20 bg-brand-purple/[0.04] px-6 py-5 sm:w-fit">
+        <p className="text-xs uppercase tracking-[0.12em] text-muted-foreground">
+          Conversão trial → pago
+        </p>
+        <p className="font-heading text-4xl text-foreground">{d.conversao.taxa}%</p>
+        <p className="text-sm text-muted-foreground">
+          {d.conversao.assinantes} de {d.conversao.cadastros} cadastros viraram assinantes
+        </p>
+      </div>
+
       {/* Funil de fases */}
       <Bloco titulo="Funil da jornada" desc="Cada etapa é um subconjunto da anterior. % sobre quem cadastrou.">
         <ul className="flex flex-col gap-2">
@@ -53,35 +63,26 @@ export default async function JornadaPage() {
         </div>
       </Bloco>
 
-      {/* Funil por origem */}
+      {/* Funil por origem (canal) */}
       <Bloco titulo="Conversão por origem" desc="Qual canal traz gente que ativa e assina.">
         {d.porOrigem.length === 0 ? (
           <Vazio texto="Ainda sem leads por origem." />
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="text-left text-xs uppercase tracking-wide text-muted-foreground">
-                  <th className="py-2 pr-3 font-medium">Origem</th>
-                  <th className="px-3 py-2 text-right font-medium">Cadastrou</th>
-                  <th className="px-3 py-2 text-right font-medium">Ativado</th>
-                  <th className="px-3 py-2 text-right font-medium">Converteu</th>
-                </tr>
-              </thead>
-              <tbody>
-                {d.porOrigem.map((o) => (
-                  <tr key={o.canal} className="border-t border-foreground/[0.06]">
-                    <td className="py-2 pr-3 text-foreground">{o.label}</td>
-                    <td className="px-3 py-2 text-right text-muted-foreground">{o.cadastrou}</td>
-                    <td className="px-3 py-2 text-right text-muted-foreground">{o.ativado}</td>
-                    <td className="px-3 py-2 text-right font-semibold text-foreground">{o.converteu}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <FunilTabela col="Origem" linhas={d.porOrigem} />
         )}
       </Bloco>
+
+      {/* Tráfego pago — por campanha e por criativo (enche quando a UTM rodar) */}
+      {d.porCampanha.length > 0 && (
+        <Bloco titulo="Tráfego pago — por campanha" desc="Qual campanha traz gente que ativa e assina.">
+          <FunilTabela col="Campanha" linhas={d.porCampanha} />
+        </Bloco>
+      )}
+      {d.porCriativo.length > 0 && (
+        <Bloco titulo="Tráfego pago — por criativo" desc="Qual anúncio converte melhor.">
+          <FunilTabela col="Criativo" linhas={d.porCriativo} />
+        </Bloco>
+      )}
 
       {/* Dor principal */}
       <Bloco titulo="Dor principal" desc="Os temas de desafio mais frequentes — pra mirar o criativo do anúncio.">
@@ -119,6 +120,39 @@ export default async function JornadaPage() {
           </div>
         )}
       </Bloco>
+    </div>
+  );
+}
+
+function FunilTabela({
+  col,
+  linhas,
+}: {
+  col: string;
+  linhas: { label: string; cadastrou: number; ativado: number; converteu: number }[];
+}) {
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full text-sm">
+        <thead>
+          <tr className="text-left text-xs uppercase tracking-wide text-muted-foreground">
+            <th className="py-2 pr-3 font-medium">{col}</th>
+            <th className="px-3 py-2 text-right font-medium">Cadastrou</th>
+            <th className="px-3 py-2 text-right font-medium">Ativado</th>
+            <th className="px-3 py-2 text-right font-medium">Converteu</th>
+          </tr>
+        </thead>
+        <tbody>
+          {linhas.map((o) => (
+            <tr key={o.label} className="border-t border-foreground/[0.06]">
+              <td className="py-2 pr-3 text-foreground">{o.label}</td>
+              <td className="px-3 py-2 text-right text-muted-foreground">{o.cadastrou}</td>
+              <td className="px-3 py-2 text-right text-muted-foreground">{o.ativado}</td>
+              <td className="px-3 py-2 text-right font-semibold text-foreground">{o.converteu}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 }

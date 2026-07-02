@@ -69,7 +69,10 @@ type FamRow = {
   ref_codigo: string | null;
   utm_source: string | null;
   utm_campaign: string | null;
+  utm_content: string | null;
 };
+
+type FunilOrigem = { cadastrou: number; ativado: number; converteu: number };
 
 export type JornadaLead = {
   id: string;
@@ -91,6 +94,12 @@ export type JornadaData = {
     ativado: number;
     converteu: number;
   }[];
+  /** Tráfego pago quebrado por campanha (utm_campaign). */
+  porCampanha: { label: string; cadastrou: number; ativado: number; converteu: number }[];
+  /** Tráfego pago quebrado por criativo (utm_content). */
+  porCriativo: { label: string; cadastrou: number; ativado: number; converteu: number }[];
+  /** Taxa de conversão trial→pago (assinantes / cadastros). */
+  conversao: { taxa: number; assinantes: number; cadastros: number };
   dorRank: Rank[];
   leads: JornadaLead[];
   fases: Record<FaseTrial, { label: string; desc: string }>;
@@ -104,7 +113,9 @@ export async function carregarJornadaTrial(admin: SupabaseClient): Promise<Jorna
     await Promise.all([
       admin
         .from("family_accounts")
-        .select("id, created_at, onboarding_completed, afiliado_id, ref_codigo, utm_source, utm_campaign"),
+        .select(
+          "id, created_at, onboarding_completed, afiliado_id, ref_codigo, utm_source, utm_campaign, utm_content",
+        ),
       admin.from("subscription_accesses").select("family_account_id, status, trial_ends_at"),
       admin
         .from("user_events")
@@ -164,8 +175,18 @@ export async function carregarJornadaTrial(admin: SupabaseClient): Promise<Jorna
     converteuN = 0,
     emRisco = 0,
     expirados = 0;
-  const porOrigem = new Map<string, { cadastrou: number; ativado: number; converteu: number }>();
+  const porOrigem = new Map<string, FunilOrigem>();
+  const porCampanha = new Map<string, FunilOrigem>();
+  const porCriativo = new Map<string, FunilOrigem>();
   const leads: JornadaLead[] = [];
+
+  const bump = (m: Map<string, FunilOrigem>, key: string, ativado: boolean, pago: boolean) => {
+    const cur = m.get(key) ?? { cadastrou: 0, ativado: 0, converteu: 0 };
+    cur.cadastrou += 1;
+    if (ativado) cur.ativado += 1;
+    if (pago) cur.converteu += 1;
+    m.set(key, cur);
+  };
 
   for (const f of fams) {
     const sub = subByFam.get(f.id);
@@ -205,11 +226,17 @@ export async function carregarJornadaTrial(admin: SupabaseClient): Promise<Jorna
     if (fase === "expirado") expirados += 1;
 
     const canal = canalDe(f);
-    const po = porOrigem.get(canal) ?? { cadastrou: 0, ativado: 0, converteu: 0 };
-    po.cadastrou += 1;
-    if (ativadoBool) po.ativado += 1;
-    if (status === "active") po.converteu += 1;
-    porOrigem.set(canal, po);
+    const converteu = status === "active";
+    bump(porOrigem, canal, ativadoBool, converteu);
+    if (f.utm_source) {
+      bump(
+        porCampanha,
+        `${f.utm_source} · ${f.utm_campaign?.trim() || "(sem campanha)"}`,
+        ativadoBool,
+        converteu,
+      );
+      bump(porCriativo, f.utm_content?.trim() || "(sem criativo)", ativadoBool, converteu);
+    }
 
     if (status === "trialing" && !trialVencido) {
       leads.push({
@@ -251,6 +278,18 @@ export async function carregarJornadaTrial(admin: SupabaseClient): Promise<Jorna
     }))
     .filter((o) => o.cadastrou > 0);
 
+  const mapToArr = (m: Map<string, FunilOrigem>) =>
+    [...m.entries()]
+      .map(([label, v]) => ({ label, ...v }))
+      .sort((a, b) => b.cadastrou - a.cadastrou)
+      .slice(0, 12);
+
+  const conversao = {
+    assinantes: converteuN,
+    cadastros: cadastrou,
+    taxa: cadastrou > 0 ? Math.round((converteuN / cadastrou) * 100) : 0,
+  };
+
   leads.sort((a, b) => b.diaTrial - a.diaTrial);
 
   return {
@@ -258,6 +297,9 @@ export async function carregarJornadaTrial(admin: SupabaseClient): Promise<Jorna
     emRisco,
     expirados,
     porOrigem: porOrigemArr,
+    porCampanha: mapToArr(porCampanha),
+    porCriativo: mapToArr(porCriativo),
+    conversao,
     dorRank,
     leads,
     fases: FASE_INFO,
