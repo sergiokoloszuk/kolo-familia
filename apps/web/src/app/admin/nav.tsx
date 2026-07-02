@@ -27,6 +27,7 @@ const items = [
   { href: "/admin/observabilidade", label: "Observabilidade" },
   { href: "/admin/uso-api", label: "Uso de API" },
   { href: "/admin/comportamento", label: "Comportamento" },
+  { href: "/admin/jornada", label: "Jornada" },
   { href: "/dashboards", label: "Dashboards" },
   { href: "/admin/admins", label: "Admins" },
   { href: "/admin/teste", label: "Testes" },

@@ -305,3 +305,187 @@ export async function carregarJornadaTrial(admin: SupabaseClient): Promise<Jorna
     fases: FASE_INFO,
   };
 }
+
+// ============================================================
+// Versão ADMIN (com NOMES + contato) — /admin/jornada. Mesmas fases da versão
+// anônima, mas nominal, pra o admin agir (mensagem custom por WhatsApp).
+// ============================================================
+
+export type JornadaAdminFamilia = {
+  id: string;
+  nomeMae: string;
+  nomeCrianca: string | null;
+  whatsapp: string | null;
+  diaTrial: number;
+  origem: string;
+  ultimoUsoDias: number | null;
+  dor: string | null;
+  fase: FaseTrial;
+};
+
+export type JornadaAdminData = {
+  funil: { key: FaseTrial; label: string; desc: string; n: number }[];
+  porFase: Record<FaseTrial, JornadaAdminFamilia[]>;
+};
+
+type FamAdminRow = FamRow & { whatsapp_e164: string | null };
+
+export async function carregarJornadaAdmin(admin: SupabaseClient): Promise<JornadaAdminData> {
+  const agora = Date.now();
+  const desde90 = new Date(agora - 90 * MS_DIA).toISOString();
+
+  const [
+    { data: famsRaw },
+    { data: subs },
+    { data: events },
+    { data: afiliadosRows },
+    { data: diarios },
+    { data: perfis },
+    { data: membros },
+  ] = await Promise.all([
+    admin
+      .from("family_accounts")
+      .select(
+        "id, created_at, onboarding_completed, whatsapp_e164, afiliado_id, ref_codigo, utm_source, utm_campaign, utm_content",
+      ),
+    admin.from("subscription_accesses").select("family_account_id, status, trial_ends_at"),
+    admin
+      .from("user_events")
+      .select("family_account_id, evento, created_at")
+      .gte("created_at", desde90),
+    admin.from("afiliados").select("id, nome, codigo_unico"),
+    admin
+      .from("diarios")
+      .select("family_account_id, desafio_area")
+      .not("desafio_area", "is", null)
+      .gte("created_at", desde90),
+    admin.from("family_profiles").select("family_account_id, nome_mae, como_chamar"),
+    admin
+      .from("membros_atipicos")
+      .select("family_account_id, nome, created_at")
+      .eq("ativo", true)
+      .order("created_at", { ascending: true }),
+  ]);
+
+  const fams = (famsRaw ?? []) as FamAdminRow[];
+
+  const subByFam = new Map<string, { status: string | null; trialEnds: string | null }>();
+  for (const s of subs ?? [])
+    subByFam.set(s.family_account_id as string, {
+      status: (s.status as string) ?? null,
+      trialEnds: (s.trial_ends_at as string | null) ?? null,
+    });
+
+  const afiliadoNome = new Map(
+    (afiliadosRows ?? []).map((a) => [a.id as string, (a.nome as string) ?? (a.codigo_unico as string)]),
+  );
+
+  const atividade = new Map<string, { total: number; usos: number; ultima: number }>();
+  for (const e of events ?? []) {
+    const fid = e.family_account_id as string | null;
+    if (!fid) continue;
+    const cur = atividade.get(fid) ?? { total: 0, usos: 0, ultima: 0 };
+    cur.total += 1;
+    if (!NAO_USO.has(e.evento as string)) cur.usos += 1;
+    const t = new Date(e.created_at as string).getTime();
+    if (t > cur.ultima) cur.ultima = t;
+    atividade.set(fid, cur);
+  }
+
+  const nomeMaeByFam = new Map(
+    (perfis ?? []).map((p) => [
+      p.family_account_id as string,
+      ((p.como_chamar as string | null)?.trim() || (p.nome_mae as string | null)?.trim() || "—") as string,
+    ]),
+  );
+  const criancaByFam = new Map<string, string>();
+  for (const m of membros ?? []) {
+    const fid = m.family_account_id as string;
+    if (!criancaByFam.has(fid)) criancaByFam.set(fid, m.nome as string);
+  }
+
+  // Dor por família: desafio_area mais frequente.
+  const dorCont = new Map<string, Map<string, number>>();
+  for (const d of diarios ?? []) {
+    const fid = d.family_account_id as string;
+    const area = (d.desafio_area as string | null)?.trim();
+    if (!fid || !area) continue;
+    const m = dorCont.get(fid) ?? new Map<string, number>();
+    m.set(area, (m.get(area) ?? 0) + 1);
+    dorCont.set(fid, m);
+  }
+  const dorByFam = new Map<string, string>();
+  for (const [fid, m] of dorCont) {
+    let melhor = "";
+    let max = 0;
+    for (const [area, n] of m) if (n > max) { max = n; melhor = area; }
+    if (melhor) dorByFam.set(fid, AREA_LABEL[melhor] ?? melhor);
+  }
+
+  const canalDe = (f: FamAdminRow): string => {
+    if (f.afiliado_id) return "afiliado";
+    if (f.utm_source) return "trafego_pago";
+    if (f.ref_codigo) return "convite";
+    return "direto";
+  };
+  const origemDe = (f: FamAdminRow): string => {
+    if (f.afiliado_id) return `Afiliado: ${afiliadoNome.get(f.afiliado_id) ?? f.afiliado_id}`;
+    if (f.utm_source) return `${f.utm_source}${f.utm_campaign ? ` · ${f.utm_campaign}` : ""}`;
+    if (f.ref_codigo) return `Convite: ${f.ref_codigo}`;
+    return "Direto";
+  };
+
+  const vazio = (): Record<FaseTrial, JornadaAdminFamilia[]> => ({
+    cadastrou: [], ativou_teste: [], ativado: [], engajado: [],
+    em_risco: [], oportunidade: [], convertido: [], expirado: [],
+  });
+  const porFase = vazio();
+  const cont: Record<string, number> = {};
+
+  for (const f of fams) {
+    const sub = subByFam.get(f.id);
+    const status = sub?.status ?? null;
+    const at = atividade.get(f.id) ?? { total: 0, usos: 0, ultima: 0 };
+    const criado = new Date(f.created_at).getTime();
+    const diaTrial = Math.min(7, Math.max(1, Math.floor((agora - criado) / MS_DIA) + 1));
+    const usos = at.usos;
+    const temAtividade = at.total > 0;
+    const ativadoBool = Boolean(f.onboarding_completed) && usos >= 1;
+    const engajadoBool = usos >= 2;
+    const inativo = temAtividade && at.ultima > 0 && agora - at.ultima > MS_DIA;
+    const trialEnds = sub?.trialEnds ? new Date(sub.trialEnds).getTime() : null;
+    const trialVencido = status === "trialing" && trialEnds != null && trialEnds <= agora;
+
+    let fase: FaseTrial;
+    if (status === "active") fase = "convertido";
+    else if (trialVencido || status === "canceled" || status === "paused") fase = "expirado";
+    else if (status === "trialing") {
+      if (diaTrial >= 6 && usos >= 1) fase = "oportunidade";
+      else if (inativo && usos >= 1) fase = "em_risco";
+      else if (engajadoBool) fase = "engajado";
+      else if (ativadoBool) fase = "ativado";
+      else if (temAtividade) fase = "ativou_teste";
+      else fase = "cadastrou";
+    } else fase = "cadastrou";
+
+    cont[fase] = (cont[fase] ?? 0) + 1;
+
+    porFase[fase].push({
+      id: f.id,
+      nomeMae: nomeMaeByFam.get(f.id) ?? "—",
+      nomeCrianca: criancaByFam.get(f.id) ?? null,
+      whatsapp: f.whatsapp_e164 ?? null,
+      diaTrial,
+      origem: origemDe(f),
+      ultimoUsoDias: at.ultima > 0 ? Math.floor((agora - at.ultima) / MS_DIA) : null,
+      dor: dorByFam.get(f.id) ?? null,
+      fase,
+    });
+  }
+
+  const funil: { key: FaseTrial; label: string; desc: string; n: number }[] = (
+    ["cadastrou", "ativou_teste", "ativado", "engajado", "em_risco", "oportunidade", "convertido", "expirado"] as FaseTrial[]
+  ).map((k) => ({ key: k, label: FASE_INFO[k].label, desc: FASE_INFO[k].desc, n: cont[k] ?? 0 }));
+
+  return { funil, porFase };
+}
