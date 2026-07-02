@@ -37,6 +37,39 @@ const CANAL_LABEL: Record<string, string> = {
   direto: "Direto",
 };
 
+/** utm_source cru → rótulo amigável. Fallback: o próprio valor. */
+const SOURCE_LABEL: Record<string, string> = {
+  facebookads: "Meta Ads",
+  facebook: "Meta Ads",
+  fb: "Meta Ads",
+  instagram: "Meta Ads",
+  ig: "Meta Ads",
+  meta: "Meta Ads",
+  google: "Google Ads",
+  googleads: "Google Ads",
+  google_ads: "Google Ads",
+  adwords: "Google Ads",
+  tiktok: "TikTok Ads",
+};
+const labelSource = (s: string) => SOURCE_LABEL[s.toLowerCase()] ?? s;
+
+/** Separa a origem em canal amigável + campanha + criativo (pra tabela). */
+function origemDetalhe(
+  f: { afiliado_id: string | null; utm_source: string | null; utm_campaign: string | null; utm_content: string | null; ref_codigo: string | null },
+  afiliadoNome: Map<string, string>,
+): { canal: string; campanha: string | null; criativo: string | null } {
+  if (f.afiliado_id)
+    return { canal: `Afiliado: ${afiliadoNome.get(f.afiliado_id) ?? f.afiliado_id}`, campanha: null, criativo: null };
+  if (f.utm_source)
+    return {
+      canal: labelSource(f.utm_source),
+      campanha: f.utm_campaign?.trim() || null,
+      criativo: f.utm_content?.trim() || null,
+    };
+  if (f.ref_codigo) return { canal: "Convite", campanha: f.ref_codigo, criativo: null };
+  return { canal: "Direto", campanha: null, criativo: null };
+}
+
 /** desafio_area → rótulo amigável (dor principal). Fallback: o próprio valor. */
 const AREA_LABEL: Record<string, string> = {
   sono: "Sono",
@@ -78,9 +111,13 @@ type FunilOrigem = { cadastrou: number; ativado: number; converteu: number };
 export type JornadaLead = {
   id: string;
   diaTrial: number;
+  criadoEm: string;
   canal: string;
   canalLabel: string;
   origem: string;
+  origemCanal: string;
+  campanha: string | null;
+  criativo: string | null;
   fase: FaseTrial;
   /** É conta de admin/agência (co-acesso)? Aparece na lista, marcada, mas fora das contagens. */
   interno: boolean;
@@ -249,12 +286,17 @@ export async function carregarJornadaTrial(admin: SupabaseClient): Promise<Jorna
 
     // Lista TODOS (inclusive interno, marcado) — pra validar/testar sem esconder.
     if (status === "trialing" && !trialVencido) {
+      const det = origemDetalhe(f, afiliadoNome);
       leads.push({
         id: f.id,
         diaTrial,
+        criadoEm: f.created_at,
         canal,
         canalLabel: CANAL_LABEL[canal] ?? canal,
         origem: origemDe(f),
+        origemCanal: det.canal,
+        campanha: det.campanha,
+        criativo: det.criativo,
         fase,
         interno,
       });
@@ -329,7 +371,11 @@ export type JornadaAdminFamilia = {
   nomeCrianca: string | null;
   whatsapp: string | null;
   diaTrial: number;
+  criadoEm: string;
   origem: string;
+  origemCanal: string;
+  campanha: string | null;
+  criativo: string | null;
   ultimoUsoDias: number | null;
   dor: string | null;
   fase: FaseTrial;
@@ -486,13 +532,18 @@ export async function carregarJornadaAdmin(admin: SupabaseClient): Promise<Jorna
 
     if (!interno) cont[fase] = (cont[fase] ?? 0) + 1; // contagem só de real
 
+    const det = origemDetalhe(f, afiliadoNome);
     porFase[fase].push({
       id: f.id,
       nomeMae: nomeMaeByFam.get(f.id) ?? "—",
       nomeCrianca: criancaByFam.get(f.id) ?? null,
       whatsapp: f.whatsapp_e164 ?? null,
       diaTrial,
+      criadoEm: f.created_at,
       origem: origemDe(f),
+      origemCanal: det.canal,
+      campanha: det.campanha,
+      criativo: det.criativo,
       ultimoUsoDias: at.ultima > 0 ? Math.floor((agora - at.ultima) / MS_DIA) : null,
       dor: dorByFam.get(f.id) ?? null,
       fase,

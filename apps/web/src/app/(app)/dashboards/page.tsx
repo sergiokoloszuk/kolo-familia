@@ -112,8 +112,11 @@ export default async function AquisicaoJornadaPage() {
               <thead>
                 <tr className="text-left text-xs uppercase tracking-wide text-muted-foreground">
                   <th className="py-2 pr-3 font-medium">Lead</th>
+                  <th className="px-3 py-2 font-medium">Criado</th>
                   <th className="px-3 py-2 font-medium">Dia</th>
                   <th className="px-3 py-2 font-medium">Origem</th>
+                  <th className="px-3 py-2 font-medium">Campanha</th>
+                  <th className="px-3 py-2 font-medium">Criativo</th>
                   <th className="px-3 py-2 font-medium">Fase</th>
                 </tr>
               </thead>
@@ -128,8 +131,11 @@ export default async function AquisicaoJornadaPage() {
                         </span>
                       )}
                     </td>
+                    <td className="px-3 py-2 text-muted-foreground">{dataBR(l.criadoEm)}</td>
                     <td className="px-3 py-2 text-muted-foreground">{l.diaTrial}/7</td>
-                    <td className="px-3 py-2 text-muted-foreground">{l.origem}</td>
+                    <td className="px-3 py-2 text-foreground">{l.origemCanal}</td>
+                    <td className="px-3 py-2 text-muted-foreground">{l.campanha ?? "—"}</td>
+                    <td className="px-3 py-2 text-muted-foreground">{l.criativo ?? "—"}</td>
                     <td className="px-3 py-2 text-foreground">{j.fases[l.fase].label}</td>
                   </tr>
                 ))}
@@ -140,6 +146,15 @@ export default async function AquisicaoJornadaPage() {
       </Bloco>
     </div>
   );
+}
+
+function dataBR(iso: string): string {
+  return new Date(iso).toLocaleDateString("pt-BR", {
+    timeZone: "America/Sao_Paulo",
+    day: "2-digit",
+    month: "2-digit",
+    year: "2-digit",
+  });
 }
 
 function FunilTabela({

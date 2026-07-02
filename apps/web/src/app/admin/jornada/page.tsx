@@ -17,6 +17,14 @@ const ACIONAVEIS: FaseTrial[] = ["oportunidade", "em_risco", "ativou_teste", "ca
 
 const primeiroNome = (n: string) => n.trim().split(/\s+/)[0] || n;
 
+const dataBR = (iso: string) =>
+  new Date(iso).toLocaleDateString("pt-BR", {
+    timeZone: "America/Sao_Paulo",
+    day: "2-digit",
+    month: "2-digit",
+    year: "2-digit",
+  });
+
 /** Mensagem sugerida por fase (aprovada com a Karina; adaptada do playbook). */
 function mensagemDaFase(fase: FaseTrial, f: JornadaAdminFamilia): string | null {
   const mae = primeiroNome(f.nomeMae === "—" ? "" : f.nomeMae) || "oi";
@@ -88,6 +96,7 @@ export default async function AdminJornadaPage() {
                 <thead>
                   <tr className="text-left text-xs uppercase tracking-wide text-muted-foreground">
                     <th className="py-2 pr-3 font-medium">Mãe · criança</th>
+                    <th className="px-3 py-2 font-medium">Criado</th>
                     <th className="px-3 py-2 font-medium">Dia</th>
                     <th className="px-3 py-2 font-medium">Origem</th>
                     <th className="px-3 py-2 font-medium">Dor</th>
@@ -111,8 +120,16 @@ export default async function AdminJornadaPage() {
                             </span>
                           )}
                         </td>
+                        <td className="px-3 py-2 text-muted-foreground">{dataBR(f.criadoEm)}</td>
                         <td className="px-3 py-2 text-muted-foreground">{f.diaTrial}/7</td>
-                        <td className="px-3 py-2 text-muted-foreground">{f.origem}</td>
+                        <td className="px-3 py-2 text-muted-foreground">
+                          {f.origemCanal}
+                          {(f.campanha || f.criativo) && (
+                            <span className="block text-[11px] text-foreground/50">
+                              {[f.campanha, f.criativo].filter(Boolean).join(" · ")}
+                            </span>
+                          )}
+                        </td>
                         <td className="px-3 py-2 text-muted-foreground">{f.dor ?? "—"}</td>
                         <td className="px-3 py-2 text-muted-foreground">
                           {f.ultimoUsoDias == null
