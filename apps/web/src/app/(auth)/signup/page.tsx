@@ -98,6 +98,27 @@ export default function SignupPage() {
     // Conversão (GTM/agência de tráfego): a conta foi criada.
     pushFormSubmit();
 
+    // Captura de UTM ROBUSTA: grava a origem do anúncio na conta recém-criada
+    // JÁ (sem depender do cookie sobreviver nem de terminar o onboarding). O
+    // atribuirUtm no onboarding continua como reforço. Best-effort.
+    try {
+      const p = new URLSearchParams(window.location.search);
+      const utm: Record<string, string> = {};
+      for (const k of ["utm_source", "utm_medium", "utm_campaign", "utm_content", "utm_term"]) {
+        const v = p.get(k);
+        if (v) utm[k] = v;
+      }
+      if (data.user?.id && utm.utm_source) {
+        void fetch("/api/track-utm", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ userId: data.user.id, utm }),
+        });
+      }
+    } catch {
+      /* tracking nunca quebra o cadastro */
+    }
+
     // Aceite de termos: guarda timestamp pra ser persistido após login
     const aceitoEm = new Date().toISOString();
     try {
