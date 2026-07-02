@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import type { ReactNode } from "react";
 import { differenceInCalendarDays } from "date-fns";
 import { loadFamilyContext } from "@/lib/auth/require-user";
+import { createServiceRoleClient } from "@/lib/supabase/server";
 import { assinaturaLiberada, trialVencido } from "@/lib/auth/assinatura";
 import { Sidebar } from "./sidebar";
 import { TrialGate } from "./trial-gate";
@@ -14,6 +15,16 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
   if (!family) redirect("/onboarding");
   if (!family.onboarding_completed) redirect("/onboarding");
   if (!family.boas_vindas_vista_at) redirect("/boas-vindas");
+
+  // Co-acesso (analista de tráfego) casa por user_id OU e-mail: o admin pode
+  // ter cadastrado o e-mail ANTES de a pessoa criar a conta (aí user_id ficou
+  // nulo) — casar por e-mail garante o acesso assim que ela loga, sem re-adição.
+  // Service-role porque a linha com user_id nulo não é "dela" pela RLS.
+  const admin = createServiceRoleClient();
+  const emailLower = user.email?.toLowerCase() ?? null;
+  const orCoAcesso = emailLower
+    ? `user_id.eq.${user.id},email.eq.${emailLower}`
+    : `user_id.eq.${user.id}`;
 
   const [
     { data: acesso },
@@ -30,11 +41,11 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
       .select("ativo")
       .eq("user_id", user.id)
       .maybeSingle(),
-    supabase
+    admin
       .from("family_acessos")
       .select("id")
-      .eq("user_id", user.id)
       .eq("ativo", true)
+      .or(orCoAcesso)
       .limit(1),
     supabase
       .from("family_accounts")
