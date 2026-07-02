@@ -109,11 +109,14 @@ export default function SignupPage() {
         if (v) utm[k] = v;
       }
       if (data.user?.id && utm.utm_source) {
-        void fetch("/api/track-utm", {
+        // keepalive + await: garante que a gravação da UTM COMPLETE mesmo se a
+        // página navegar logo depois (senão o navegador cancela a requisição).
+        await fetch("/api/track-utm", {
           method: "POST",
           headers: { "content-type": "application/json" },
           body: JSON.stringify({ userId: data.user.id, utm }),
-        });
+          keepalive: true,
+        }).catch(() => {});
       }
     } catch {
       /* tracking nunca quebra o cadastro */

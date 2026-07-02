@@ -34,19 +34,33 @@ export async function POST(request: NextRequest) {
   if (!source) return NextResponse.json({ ok: true, skipped: "sem utm_source" });
 
   const admin = createServiceRoleClient();
-  const { error } = await admin
-    .from("family_accounts")
-    .update({
-      utm_source: source,
-      utm_medium: val(utm.utm_medium),
-      utm_campaign: val(utm.utm_campaign),
-      utm_content: val(utm.utm_content),
-      utm_term: val(utm.utm_term),
-      utm_atribuido_em: new Date().toISOString(),
-    })
-    .eq("user_id", userId)
-    .is("utm_atribuido_em", null);
+  const gravar = () =>
+    admin
+      .from("family_accounts")
+      .update({
+        utm_source: source,
+        utm_medium: val(utm.utm_medium),
+        utm_campaign: val(utm.utm_campaign),
+        utm_content: val(utm.utm_content),
+        utm_term: val(utm.utm_term),
+        utm_atribuido_em: new Date().toISOString(),
+      })
+      .eq("user_id", userId)
+      .is("utm_atribuido_em", null)
+      .select("id");
 
-  if (error) return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
-  return NextResponse.json({ ok: true });
+  // Corrida: a família pode ainda não ter sido criada pelo trigger. Tenta 1x mais.
+  let res = await gravar();
+  if (!res.error && (res.data?.length ?? 0) === 0) {
+    await new Promise((r) => setTimeout(r, 800));
+    res = await gravar();
+  }
+
+  const n = res.data?.length ?? 0;
+  console.log(
+    `[track-utm] userId=${userId} source=${source} campaign=${val(utm.utm_campaign) ?? "-"} content=${val(utm.utm_content) ?? "-"} → ${n} linha(s)${res.error ? ` ERRO: ${res.error.message}` : ""}`,
+  );
+
+  if (res.error) return NextResponse.json({ ok: false, error: res.error.message }, { status: 500 });
+  return NextResponse.json({ ok: true, updated: n });
 }
