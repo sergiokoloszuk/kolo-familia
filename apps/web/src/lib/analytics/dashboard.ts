@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { AREAS_DIARIO } from "@/lib/ia/classificar-area";
+import { familiasInternas } from "./internos";
 
 /**
  * Carrega e agrega os dados do dashboard de COMPORTAMENTO. Fonte única usada
@@ -90,7 +91,13 @@ export async function carregarComportamento(
 ): Promise<ComportamentoData> {
   const desde90 = diasAtrasISO(90);
 
-  const [
+  const internas = await familiasInternas(admin);
+  const foraInterna = <T extends { family_account_id?: unknown; id?: unknown }>(
+    rows: T[] | null,
+    campo: "id" | "family_account_id",
+  ): T[] => (rows ?? []).filter((r) => !internas.has(r[campo] as string));
+
+  let [
     { data: familiasRows },
     { data: subs },
     { data: perfis },
@@ -140,6 +147,24 @@ export async function carregarComportamento(
     admin.from("beta_invite_uses").select("family_account_id, invite_id"),
     admin.from("beta_invites").select("id, rotulo, codigo"),
   ]);
+
+  // Tira admin + analista de tráfego (uso interno inflaria os números).
+  if (internas.size > 0) {
+    familiasRows = foraInterna(familiasRows, "id");
+    subs = foraInterna(subs, "family_account_id");
+    perfis = foraInterna(perfis, "family_account_id");
+    diarios = foraInterna(diarios, "family_account_id");
+    planos = foraInterna(planos, "family_account_id");
+    aylaMsgs = foraInterna(aylaMsgs, "family_account_id");
+    conversas = foraInterna(conversas, "family_account_id");
+    rotinas = foraInterna(rotinas, "family_account_id");
+    meditacoes = foraInterna(meditacoes, "family_account_id");
+    desenhos = foraInterna(desenhos, "family_account_id");
+    historias = foraInterna(historias, "family_account_id");
+    events = foraInterna(events, "family_account_id");
+    perfisFam = foraInterna(perfisFam, "family_account_id");
+    convUsos = foraInterna(convUsos, "family_account_id");
+  }
 
   const totalFamilias = (familiasRows ?? []).length;
 

@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { familiasInternas } from "./internos";
 
 /**
  * "Jornada do Trial" — mapeia cada família numa FASE da jornada de trial
@@ -129,7 +130,8 @@ export async function carregarJornadaTrial(admin: SupabaseClient): Promise<Jorna
         .gte("created_at", desde90),
     ]);
 
-  const fams = (famsRaw ?? []) as FamRow[];
+  const internas = await familiasInternas(admin);
+  const fams = ((famsRaw ?? []) as FamRow[]).filter((f) => !internas.has(f.id));
 
   const subByFam = new Map<string, { status: string | null; trialEnds: string | null }>();
   for (const s of subs ?? [])
@@ -252,6 +254,7 @@ export async function carregarJornadaTrial(admin: SupabaseClient): Promise<Jorna
 
   const dorMap = new Map<string, number>();
   for (const d of diarios ?? []) {
+    if (internas.has(d.family_account_id as string)) continue;
     const area = (d.desafio_area as string | null)?.trim();
     if (!area) continue;
     const label = AREA_LABEL[area] ?? area;
@@ -367,7 +370,8 @@ export async function carregarJornadaAdmin(admin: SupabaseClient): Promise<Jorna
       .order("created_at", { ascending: true }),
   ]);
 
-  const fams = (famsRaw ?? []) as FamAdminRow[];
+  const internas = await familiasInternas(admin);
+  const fams = ((famsRaw ?? []) as FamAdminRow[]).filter((f) => !internas.has(f.id));
 
   const subByFam = new Map<string, { status: string | null; trialEnds: string | null }>();
   for (const s of subs ?? [])
@@ -408,6 +412,7 @@ export async function carregarJornadaAdmin(admin: SupabaseClient): Promise<Jorna
   const dorCont = new Map<string, Map<string, number>>();
   for (const d of diarios ?? []) {
     const fid = d.family_account_id as string;
+    if (internas.has(fid)) continue;
     const area = (d.desafio_area as string | null)?.trim();
     if (!fid || !area) continue;
     const m = dorCont.get(fid) ?? new Map<string, number>();
