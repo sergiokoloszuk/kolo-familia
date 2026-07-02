@@ -105,6 +105,11 @@ export default async function AdminJornadaPage() {
                           {f.nomeCrianca && (
                             <span className="text-muted-foreground"> · {f.nomeCrianca}</span>
                           )}
+                          {f.interno && (
+                            <span className="ml-1 rounded bg-brand-yellow/30 px-1 text-[10px] font-medium text-brand-purple-dark">
+                              interno
+                            </span>
+                          )}
                         </td>
                         <td className="px-3 py-2 text-muted-foreground">{f.diaTrial}/7</td>
                         <td className="px-3 py-2 text-muted-foreground">{f.origem}</td>

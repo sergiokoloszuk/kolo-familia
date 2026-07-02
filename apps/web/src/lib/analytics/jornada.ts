@@ -82,6 +82,8 @@ export type JornadaLead = {
   canalLabel: string;
   origem: string;
   fase: FaseTrial;
+  /** É conta de admin/agência (co-acesso)? Aparece na lista, marcada, mas fora das contagens. */
+  interno: boolean;
 };
 
 export type JornadaData = {
@@ -131,7 +133,7 @@ export async function carregarJornadaTrial(admin: SupabaseClient): Promise<Jorna
     ]);
 
   const internas = await familiasInternas(admin);
-  const fams = ((famsRaw ?? []) as FamRow[]).filter((f) => !internas.has(f.id));
+  const fams = (famsRaw ?? []) as FamRow[];
 
   const subByFam = new Map<string, { status: string | null; trialEnds: string | null }>();
   for (const s of subs ?? [])
@@ -191,6 +193,7 @@ export async function carregarJornadaTrial(admin: SupabaseClient): Promise<Jorna
   };
 
   for (const f of fams) {
+    const interno = internas.has(f.id);
     const sub = subByFam.get(f.id);
     const status = sub?.status ?? null;
     const at = atividade.get(f.id) ?? { total: 0, usos: 0, ultima: 0 };
@@ -204,12 +207,14 @@ export async function carregarJornadaTrial(admin: SupabaseClient): Promise<Jorna
     const trialEnds = sub?.trialEnds ? new Date(sub.trialEnds).getTime() : null;
     const trialVencido = status === "trialing" && trialEnds != null && trialEnds <= agora;
 
-    // Funil cumulativo (cada etapa é subconjunto da anterior).
-    cadastrou += 1;
-    if (temAtividade) ativouTeste += 1;
-    if (ativadoBool) ativadoN += 1;
-    if (engajadoBool) engajadoN += 1;
-    if (status === "active") converteuN += 1;
+    // Funil cumulativo — só usuários REAIS (o interno fica de fora das contagens).
+    if (!interno) {
+      cadastrou += 1;
+      if (temAtividade) ativouTeste += 1;
+      if (ativadoBool) ativadoN += 1;
+      if (engajadoBool) engajadoN += 1;
+      if (status === "active") converteuN += 1;
+    }
 
     // Fase atual (estado único, por prioridade).
     let fase: FaseTrial;
@@ -224,22 +229,25 @@ export async function carregarJornadaTrial(admin: SupabaseClient): Promise<Jorna
       else fase = "cadastrou";
     } else fase = "cadastrou";
 
-    if (fase === "em_risco") emRisco += 1;
-    if (fase === "expirado") expirados += 1;
-
     const canal = canalDe(f);
-    const converteu = status === "active";
-    bump(porOrigem, canal, ativadoBool, converteu);
-    if (f.utm_source) {
-      bump(
-        porCampanha,
-        `${f.utm_source} · ${f.utm_campaign?.trim() || "(sem campanha)"}`,
-        ativadoBool,
-        converteu,
-      );
-      bump(porCriativo, f.utm_content?.trim() || "(sem criativo)", ativadoBool, converteu);
+    // Contagens (fases + origem/campanha) só de usuários reais.
+    if (!interno) {
+      if (fase === "em_risco") emRisco += 1;
+      if (fase === "expirado") expirados += 1;
+      const converteu = status === "active";
+      bump(porOrigem, canal, ativadoBool, converteu);
+      if (f.utm_source) {
+        bump(
+          porCampanha,
+          `${f.utm_source} · ${f.utm_campaign?.trim() || "(sem campanha)"}`,
+          ativadoBool,
+          converteu,
+        );
+        bump(porCriativo, f.utm_content?.trim() || "(sem criativo)", ativadoBool, converteu);
+      }
     }
 
+    // Lista TODOS (inclusive interno, marcado) — pra validar/testar sem esconder.
     if (status === "trialing" && !trialVencido) {
       leads.push({
         id: f.id,
@@ -248,6 +256,7 @@ export async function carregarJornadaTrial(admin: SupabaseClient): Promise<Jorna
         canalLabel: CANAL_LABEL[canal] ?? canal,
         origem: origemDe(f),
         fase,
+        interno,
       });
     }
   }
@@ -324,6 +333,7 @@ export type JornadaAdminFamilia = {
   ultimoUsoDias: number | null;
   dor: string | null;
   fase: FaseTrial;
+  interno: boolean;
 };
 
 export type JornadaAdminData = {
@@ -371,7 +381,7 @@ export async function carregarJornadaAdmin(admin: SupabaseClient): Promise<Jorna
   ]);
 
   const internas = await familiasInternas(admin);
-  const fams = ((famsRaw ?? []) as FamAdminRow[]).filter((f) => !internas.has(f.id));
+  const fams = (famsRaw ?? []) as FamAdminRow[];
 
   const subByFam = new Map<string, { status: string | null; trialEnds: string | null }>();
   for (const s of subs ?? [])
@@ -448,6 +458,7 @@ export async function carregarJornadaAdmin(admin: SupabaseClient): Promise<Jorna
   const cont: Record<string, number> = {};
 
   for (const f of fams) {
+    const interno = internas.has(f.id);
     const sub = subByFam.get(f.id);
     const status = sub?.status ?? null;
     const at = atividade.get(f.id) ?? { total: 0, usos: 0, ultima: 0 };
@@ -473,7 +484,7 @@ export async function carregarJornadaAdmin(admin: SupabaseClient): Promise<Jorna
       else fase = "cadastrou";
     } else fase = "cadastrou";
 
-    cont[fase] = (cont[fase] ?? 0) + 1;
+    if (!interno) cont[fase] = (cont[fase] ?? 0) + 1; // contagem só de real
 
     porFase[fase].push({
       id: f.id,
@@ -485,6 +496,7 @@ export async function carregarJornadaAdmin(admin: SupabaseClient): Promise<Jorna
       ultimoUsoDias: at.ultima > 0 ? Math.floor((agora - at.ultima) / MS_DIA) : null,
       dor: dorByFam.get(f.id) ?? null,
       fase,
+      interno,
     });
   }
 
