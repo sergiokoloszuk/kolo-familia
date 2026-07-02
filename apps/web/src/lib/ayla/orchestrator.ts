@@ -996,6 +996,27 @@ async function enviarRespostaEmChunks(
   const querPlano = pedeUmPlano(args.params.mensagem);
   args.params.querPlano = querPlano;
 
+  // Resposta LENTA (pedido de plano): manda um balão breve de acolhimento na
+  // hora — o Z-API não deixa mostrar "digitando" sozinho, então o balãozinho
+  // (com delayTyping) enche o silêncio e mostra que a Ayla está com ela
+  // enquanto o plano é montado. Só no caso lento, pra não poluir trocas rápidas.
+  if (querPlano) {
+    const fillers = [
+      "Deixa eu pensar nisso com você 🌿 já já te respondo.",
+      "Tô aqui — me dá um segundinho pra montar isso direito 🌿",
+      "Boa. Deixa eu olhar isso com carinho, já te mando.",
+    ];
+    try {
+      await enviarTexto({
+        phoneE164: args.phone,
+        texto: fillers[args.params.mensagem.length % fillers.length],
+        delaySegundos: 2,
+      });
+    } catch {
+      /* filler nunca quebra a resposta */
+    }
+  }
+
   let textoCompleto = await gerarRespostaAyla(
     args.params,
     async (par) => {
