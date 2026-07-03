@@ -885,11 +885,37 @@ export async function processInbound(
     parsed.confianca_identificacao = Math.max(parsed.confianca_identificacao, 90);
   }
 
+  // Referência por GÊNERO (quando o nome NÃO foi escrito): "minha filha" /
+  // "mi hija" / "my daughter" (ou filho/hijo/son) já diz o gênero. Se só há UM
+  // membro desse gênero, sabemos de quem ela fala — não precisa perguntar
+  // "qual filho?". Cobre PT/ES/EN. ("son" só com artigo/possessivo, pra não
+  // colidir com o verbo espanhol "son" = "são".)
+  const generoReferido = (texto: string): "masculino" | "feminino" | null => {
+    const t = texto.toLowerCase();
+    const fem = /\b(filha|hija|daughter)\b/.test(t);
+    const masc =
+      /\b(filho|hijo)\b/.test(t) || /\b(my|a|the|our|his|her)\s+son\b/.test(t);
+    if (fem && !masc) return "feminino";
+    if (masc && !fem) return "masculino";
+    return null;
+  };
+  const genRef = membroPorNome ? null : generoReferido(inbound.texto);
+  const membrosDoGenero = genRef
+    ? ctx.membros.filter((m) => m.genero === genRef)
+    : [];
+  const membroPorGenero = membrosDoGenero.length === 1 ? membrosDoGenero[0] : null;
+  if (membroPorGenero) {
+    parsed.membro_atipico_id = membroPorGenero.id;
+    parsed.confianca_identificacao = Math.max(parsed.confianca_identificacao, 85);
+  }
+
   // Família 2+ membros + há conteúdo mas não sabemos de quem → a Ayla pergunta
-  // QUEM. NÃO pergunta se o nome está escrito na mensagem (aí já sabemos).
+  // QUEM. NÃO pergunta se o nome está escrito na mensagem nem se o gênero já
+  // aponta um único membro (aí já sabemos).
   const precisaEscolherMembro =
     ctx.membros.length >= 2 &&
     !membroPorNome &&
+    !membroPorGenero &&
     (parsed.confianca_identificacao < 70 || !parsed.membro_atipico_id) &&
     temAlgoPraRegistrar
       ? { nomes: ctx.membros.map((m) => m.nome) }
@@ -909,6 +935,7 @@ export async function processInbound(
   // (fixação) > único membro. NÃO registra nada — só carrega o perfil.
   const membroContextoId =
     membroPorNome?.id ??
+    membroPorGenero?.id ??
     parsed.membro_atipico_id ??
     ultimoMembroId ??
     (ctx.membros.length === 1 ? ctx.membros[0].id : null);
