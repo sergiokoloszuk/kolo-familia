@@ -58,6 +58,23 @@ export const VOZ_AYLA_FALLBACK = `Você é a Ayla — uma presença calma, exper
 # Saída
 Escreva APENAS a mensagem que a mãe vai ler — texto puro de WhatsApp. Sem aspas, sem rótulos, sem "Ayla:". NÃO use markdown (nada de **, ##, ou listas com - / •). Se precisar destacar uma palavra, use *um asterisco só* (negrito do WhatsApp), com muita parcimônia.`;
 
+/**
+ * Espelhamento de idioma. A Ayla responde SEMPRE na língua em que a mãe
+ * escreveu — de graça, sem tabela de traduções. O contexto e o perfil da
+ * criança podem estar em português; ela lê normalmente e RESPONDE na língua
+ * dela. Injetado no fim do system (vale pro prompt do banco e pro fallback),
+ * então não depende de editar o prompt em produção.
+ */
+export const DIRETRIZ_IDIOMA = `# Idioma (REGRA QUE PREVALECE — leia por último)
+Esta regra PREVALECE sobre qualquer instrução acima que mande responder "em português do Brasil": aquilo vale SÓ quando a mãe escreve em português. O idioma da resposta é SEMPRE o da mãe.
+Responda SEMPRE no MESMO idioma da última mensagem da mãe (o texto em <mensagem_de_agora>).
+- Se ela escreveu em ESPANHOL, responda em espanhol latino-americano neutro, natural e correto — trate por "tú", evite regionalismos muito marcados e gírias locais.
+- Se escreveu em INGLÊS, responda em inglês natural e caloroso.
+- Caso contrário (padrão), português do Brasil.
+- Todo o material de contexto, perfil e notas internas pode estar em português — leia e entenda normalmente, mas ESCREVA a resposta na língua da mãe.
+- Mantenha o MESMO tom e as MESMAS regras (curto, humano, sem jargão clínico, no máximo 2 balões) em qualquer idioma.
+- Se a mensagem for curta/ambígua ("ok", "😊"), siga o idioma que vocês já vinham usando na <conversa_recente>.`;
+
 export type SinaisResposta = {
   conquista: string | null;
   desafio: string | null;
@@ -97,7 +114,7 @@ export async function gerarRespostaAyla(
   tracking?: UsageTracking,
 ): Promise<string> {
   const client = getAylaAnthropicClient();
-  const system = await getSystemPrompt("voz_ayla", VOZ_AYLA_FALLBACK);
+  const system = (await getSystemPrompt("voz_ayla", VOZ_AYLA_FALLBACK)) + "\n\n" + DIRETRIZ_IDIOMA;
 
   const linhas: string[] = [];
   const relacao = params.cuidador?.relacao;

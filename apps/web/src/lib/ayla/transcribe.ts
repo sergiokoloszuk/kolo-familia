@@ -45,6 +45,9 @@ export async function transcreverAudio(
     form.append("file", new Blob([audioBuffer], { type: mime }), `audio.${ext}`);
     form.append("model", "whisper-1");
     // Hint de idioma melhora qualidade em áudios curtos.
+    // TODO(i18n): quando houver campo `idioma` por família, passar a língua da
+    // família aqui (pt/es/en) — assim áudio em espanhol transcreve em espanhol
+    // SEM arriscar o português (auto-detect puro confunde PT curto com ES).
     form.append("language", "pt");
 
     const transRes = await fetch(OPENAI_TRANSCRIPTIONS_URL, {
