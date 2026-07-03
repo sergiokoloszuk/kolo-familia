@@ -22,6 +22,7 @@ const OPENAI_TRANSCRIPTIONS_URL =
 export async function transcreverAudio(
   audioUrl: string,
   tracking?: UsageTracking,
+  idioma: "pt" | "es" | "en" = "pt",
 ): Promise<string | null> {
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) {
@@ -44,11 +45,11 @@ export async function transcreverAudio(
     const form = new FormData();
     form.append("file", new Blob([audioBuffer], { type: mime }), `audio.${ext}`);
     form.append("model", "whisper-1");
-    // Hint de idioma melhora qualidade em áudios curtos.
-    // TODO(i18n): quando houver campo `idioma` por família, passar a língua da
-    // família aqui (pt/es/en) — assim áudio em espanhol transcreve em espanhol
-    // SEM arriscar o português (auto-detect puro confunde PT curto com ES).
-    form.append("language", "pt");
+    // Hint de idioma pela LÍNGUA DA FAMÍLIA (pt/es/en). Melhora a qualidade em
+    // áudios curtos e, pra família es/en, transcreve na língua certa SEM
+    // arriscar o português (fixar "pt" fazia áudio em espanhol virar PT; o
+    // auto-detect puro confunde PT curto com ES — por isso usamos o campo).
+    form.append("language", idioma);
 
     const transRes = await fetch(OPENAI_TRANSCRIPTIONS_URL, {
       method: "POST",

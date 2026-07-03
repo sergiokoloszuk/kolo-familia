@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest, after } from "next/server";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { enviarTexto, parseZapiWebhook } from "@/lib/ayla/whatsappSender";
-import { processInbound } from "@/lib/ayla/orchestrator";
+import { processInbound, idiomaPorTelefone } from "@/lib/ayla/orchestrator";
 import { transcreverAudio } from "@/lib/ayla/transcribe";
 
 // A resposta da Ayla passa por IA (Sonnet) e, num pedido de plano, ainda
@@ -62,11 +62,18 @@ export async function POST(request: NextRequest) {
         inbound.midiaUrl &&
         inbound.midiaTipo === "audio"
       ) {
-        const transcrito = await transcreverAudio(inbound.midiaUrl, {
-          supabase,
-          family_account_id: null,
-          feature: "ayla_audio",
-        });
+        // Dica de idioma pro Whisper pela língua da família (pt/es/en) — assim
+        // áudio em espanhol transcreve em espanhol sem arriscar o português.
+        const idiomaFamilia = await idiomaPorTelefone(supabase, inbound.phoneE164);
+        const transcrito = await transcreverAudio(
+          inbound.midiaUrl,
+          {
+            supabase,
+            family_account_id: null,
+            feature: "ayla_audio",
+          },
+          idiomaFamilia,
+        );
         if (transcrito) {
           console.log(
             `[ayla webhook] áudio transcrito (${transcrito.length} chars)`,

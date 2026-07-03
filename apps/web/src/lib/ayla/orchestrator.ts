@@ -34,6 +34,7 @@ import {
   templateInsight,
 } from "./messageTemplates";
 import { gerarMensagemEspontanea } from "./mensagemEspontanea";
+import { traduzirProativa } from "./traduzir";
 import { montarPonteWhatsApp, gerarMagicLink, montarPlanoFimDeSemana } from "./ponte";
 import { pedeUmPlano } from "@/lib/ia/pedido-plano";
 import { classificarAreasDiario } from "@/lib/ia/classificar-area";
@@ -1833,12 +1834,20 @@ async function enviarEPersistir(
     meta?: Record<string, unknown>;
   },
 ): Promise<EnvioResultado> {
+  // Idioma da família: todo texto proativo/template é gerado em PT; se a
+  // família é es/en, traduz AQUI (choke point único) antes de enviar. PT não
+  // passa pela tradução — zero custo/latência. A conversa reativa não usa esta
+  // função (já sai no idioma de quem escreve).
+  let texto = params.texto;
+  const idioma = await idiomaDaFamilia(supabase, params.family_account_id);
+  if (idioma !== "pt") texto = await traduzirProativa(params.texto, idioma);
+
   let resultado: EnvioResultado;
   let providerResp: unknown = null;
   let erro: string | null = null;
 
   try {
-    const r = await enviarTexto({ phoneE164: params.phone, texto: params.texto });
+    const r = await enviarTexto({ phoneE164: params.phone, texto });
     providerResp = r.raw;
     resultado = { enviada: true, messageId: r.messageId };
   } catch (e) {
@@ -1852,7 +1861,7 @@ async function enviarEPersistir(
     template_key: params.tipo,
     payload: {
       phone: params.phone,
-      texto: params.texto,
+      texto,
       ...(params.meta ? { meta: params.meta } : {}),
     },
     resposta_provider: providerResp as Record<string, unknown> | null,
@@ -1868,7 +1877,7 @@ async function enviarEPersistir(
       direcao: "outbound",
       category: params.category,
       tipo: params.tipo,
-      texto: params.texto,
+      texto,
       enviada_em: new Date().toISOString(),
     });
 
@@ -1879,6 +1888,49 @@ async function enviarEPersistir(
   }
 
   return resultado;
+}
+
+/** Idioma da família (pt/es/en) por id — pra traduzir as proativas no envio. */
+async function idiomaDaFamilia(
+  supabase: SupabaseClient,
+  familyAccountId: string,
+): Promise<"pt" | "es" | "en"> {
+  try {
+    const { data } = await supabase
+      .from("family_accounts")
+      .select("idioma")
+      .eq("id", familyAccountId)
+      .maybeSingle();
+    const v = data?.idioma as string | undefined;
+    return v === "es" || v === "en" ? v : "pt";
+  } catch {
+    return "pt";
+  }
+}
+
+/**
+ * Idioma da família (pt/es/en) pelo telefone do WhatsApp — usado no webhook
+ * pra dar a dica de idioma certa ao Whisper ANTES de transcrever o áudio.
+ * Casa pela chave normalizada (mesmo critério de processInbound).
+ */
+export async function idiomaPorTelefone(
+  supabase: SupabaseClient,
+  phoneE164: string,
+): Promise<"pt" | "es" | "en"> {
+  try {
+    const chave = chaveTelefoneBR(phoneE164);
+    const { data } = await supabase
+      .from("family_accounts")
+      .select("whatsapp_e164, idioma")
+      .not("whatsapp_e164", "is", null);
+    const f = (data ?? []).find(
+      (r) => chaveTelefoneBR(r.whatsapp_e164 as string) === chave,
+    );
+    const v = f?.idioma as string | undefined;
+    return v === "es" || v === "en" ? v : "pt";
+  } catch {
+    return "pt";
+  }
 }
 
 function startOfDay(d: Date): Date {
