@@ -49,10 +49,11 @@ export async function POST(request: NextRequest) {
       .is("utm_atribuido_em", null)
       .select("id");
 
-  // Corrida: a família pode ainda não ter sido criada pelo trigger. Tenta 1x mais.
+  // Corrida: a família pode ainda não ter sido criada pelo trigger. Tenta de
+  // novo (backoff) até casar uma linha ou dar erro.
   let res = await gravar();
-  if (!res.error && (res.data?.length ?? 0) === 0) {
-    await new Promise((r) => setTimeout(r, 800));
+  for (let t = 0; t < 3 && !res.error && (res.data?.length ?? 0) === 0; t++) {
+    await new Promise((r) => setTimeout(r, 600 * (t + 1)));
     res = await gravar();
   }
 

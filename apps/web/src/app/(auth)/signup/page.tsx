@@ -95,6 +95,15 @@ export default function SignupPage() {
       return;
     }
 
+    // E-mail JÁ cadastrado: com confirmação de e-mail ligada, o Supabase NÃO dá
+    // erro — devolve um usuário "fantasma" (identities vazio) por segurança
+    // (anti-enumeração). Se seguir, o track-utm dispara com um id que não casa
+    // com nenhuma família e a origem se perde ("Direto"). Detecta e para aqui.
+    if (data.user && (data.user.identities?.length ?? 0) === 0) {
+      setAuthError("Esse e-mail já tem conta. Tenta entrar, ou use outro e-mail.");
+      return;
+    }
+
     // Conversão (GTM/agência de tráfego): a conta foi criada.
     pushFormSubmit();
 
