@@ -93,6 +93,50 @@ const MS_DIA = 24 * 60 * 60 * 1000;
 /** Eventos que NÃO contam como "uso/orientação" (pageview e intenção). */
 const NAO_USO = new Set(["tela_visitada", "checkout_iniciado", "form_submit"]);
 
+export type FiltroJornada = { periodo?: string; origem?: string };
+
+/** Janela de datas (por created_at) a partir do filtro de período. */
+function janelaPeriodo(periodo: string, agora: number): { desde: number; ate: number } {
+  const d = new Date(agora);
+  const inicioMes = new Date(d.getFullYear(), d.getMonth(), 1).getTime();
+  const amanha = agora + MS_DIA;
+  switch (periodo) {
+    case "7d":
+      return { desde: agora - 7 * MS_DIA, ate: amanha };
+    case "30d":
+      return { desde: agora - 30 * MS_DIA, ate: amanha };
+    case "mes":
+      return { desde: inicioMes, ate: amanha };
+    case "mes_passado":
+      return { desde: new Date(d.getFullYear(), d.getMonth() - 1, 1).getTime(), ate: inicioMes };
+    default: // "tudo" = 90 dias
+      return { desde: agora - 90 * MS_DIA, ate: amanha };
+  }
+}
+
+/** A família passa no filtro de origem/canal? */
+function passaOrigem(
+  f: { utm_source: string | null; afiliado_id: string | null; ref_codigo: string | null },
+  origem: string,
+): boolean {
+  if (!origem || origem === "todas") return true;
+  const src = f.utm_source?.toLowerCase() ?? null;
+  switch (origem) {
+    case "trafego_pago":
+      return !!f.utm_source;
+    case "meta":
+      return src != null && ["facebookads", "facebook", "fb", "instagram", "ig", "meta"].includes(src);
+    case "google":
+      return src != null && ["google", "googleads", "google_ads", "adwords"].includes(src);
+    case "afiliado":
+      return !!f.afiliado_id;
+    case "direto":
+      return !f.utm_source && !f.afiliado_id && !f.ref_codigo;
+    default:
+      return true;
+  }
+}
+
 type Rank = { label: string; n: number };
 
 type FamRow = {
@@ -110,6 +154,7 @@ type FunilOrigem = { cadastrou: number; ativado: number; converteu: number };
 
 export type JornadaLead = {
   id: string;
+  nomeMae: string;
   diaTrial: number;
   criadoEm: string;
   canal: string;
@@ -149,28 +194,44 @@ export async function carregarJornadaTrial(admin: SupabaseClient): Promise<Jorna
   const agora = Date.now();
   const desde90 = new Date(agora - 90 * MS_DIA).toISOString();
 
-  const [{ data: famsRaw }, { data: subs }, { data: events }, { data: afiliadosRows }, { data: diarios }] =
-    await Promise.all([
-      admin
-        .from("family_accounts")
-        .select(
-          "id, created_at, onboarding_completed, afiliado_id, ref_codigo, utm_source, utm_campaign, utm_content",
-        ),
-      admin.from("subscription_accesses").select("family_account_id, status, trial_ends_at"),
-      admin
-        .from("user_events")
-        .select("family_account_id, evento, created_at")
-        .gte("created_at", desde90),
-      admin.from("afiliados").select("id, nome, codigo_unico"),
-      admin
-        .from("diarios")
-        .select("family_account_id, desafio_area")
-        .not("desafio_area", "is", null)
-        .gte("created_at", desde90),
-    ]);
+  const [
+    { data: famsRaw },
+    { data: subs },
+    { data: events },
+    { data: afiliadosRows },
+    { data: diarios },
+    { data: perfis },
+  ] = await Promise.all([
+    admin
+      .from("family_accounts")
+      .select(
+        "id, created_at, onboarding_completed, afiliado_id, ref_codigo, utm_source, utm_campaign, utm_content",
+      ),
+    admin.from("subscription_accesses").select("family_account_id, status, trial_ends_at"),
+    admin
+      .from("user_events")
+      .select("family_account_id, evento, created_at")
+      .gte("created_at", desde90),
+    admin.from("afiliados").select("id, nome, codigo_unico"),
+    admin
+      .from("diarios")
+      .select("family_account_id, desafio_area")
+      .not("desafio_area", "is", null)
+      .gte("created_at", desde90),
+    admin.from("family_profiles").select("family_account_id, nome_mae, como_chamar"),
+  ]);
 
   const internas = await familiasInternas(admin);
   const fams = (famsRaw ?? []) as FamRow[];
+
+  // Nomes (co-acesso agora vê nome — Karina confia na agência). Só o nome da
+  // mãe (identifica o lead p/ abordagem); nome de criança/dor fica de fora.
+  const nomeMaeByFam = new Map(
+    (perfis ?? []).map((p) => [
+      p.family_account_id as string,
+      ((p.como_chamar as string | null)?.trim() || (p.nome_mae as string | null)?.trim() || "") as string,
+    ]),
+  );
 
   const subByFam = new Map<string, { status: string | null; trialEnds: string | null }>();
   for (const s of subs ?? [])
@@ -289,6 +350,7 @@ export async function carregarJornadaTrial(admin: SupabaseClient): Promise<Jorna
       const det = origemDetalhe(f, afiliadoNome);
       leads.push({
         id: f.id,
+        nomeMae: nomeMaeByFam.get(f.id) ?? "",
         diaTrial,
         criadoEm: f.created_at,
         canal,
