@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
   });
   if (!rl.ok) return NextResponse.json({ ok: false, motivo: "rate_limit" }, { status: 429 });
 
-  let body: { userId?: unknown; utm?: Record<string, unknown> };
+  let body: { userId?: unknown; utm?: Record<string, unknown>; idioma?: unknown };
   try {
     body = await request.json();
   } catch {
@@ -31,23 +31,30 @@ export async function POST(request: NextRequest) {
   const val = (v: unknown) =>
     typeof v === "string" && v.trim() ? v.trim().slice(0, 200) : null;
   const source = val(utm.utm_source);
-  if (!source) return NextResponse.json({ ok: true, skipped: "sem utm_source" });
+  // Idioma por origem (landing ES → 'es'). 'pt' é o padrão da coluna, então só
+  // gravamos quando NÃO é pt. Se não veio nem UTM nem idioma, não há o que fazer.
+  const idioma = body.idioma === "es" || body.idioma === "en" ? body.idioma : null;
+  if (!source && !idioma) return NextResponse.json({ ok: true, skipped: "sem utm nem idioma" });
 
   const admin = createServiceRoleClient();
-  const gravar = () =>
-    admin
+  const gravar = () => {
+    const patch: Record<string, unknown> = {};
+    if (source) {
+      patch.utm_source = source;
+      patch.utm_medium = val(utm.utm_medium);
+      patch.utm_campaign = val(utm.utm_campaign);
+      patch.utm_content = val(utm.utm_content);
+      patch.utm_term = val(utm.utm_term);
+      patch.utm_atribuido_em = new Date().toISOString();
+    }
+    if (idioma) patch.idioma = idioma;
+    return admin
       .from("family_accounts")
-      .update({
-        utm_source: source,
-        utm_medium: val(utm.utm_medium),
-        utm_campaign: val(utm.utm_campaign),
-        utm_content: val(utm.utm_content),
-        utm_term: val(utm.utm_term),
-        utm_atribuido_em: new Date().toISOString(),
-      })
+      .update(patch)
       .eq("user_id", userId)
       .is("utm_atribuido_em", null)
       .select("id");
+  };
 
   // Corrida: a família pode ainda não ter sido criada pelo trigger. Tenta de
   // novo (backoff) até casar uma linha ou dar erro.
@@ -59,7 +66,7 @@ export async function POST(request: NextRequest) {
 
   const n = res.data?.length ?? 0;
   console.log(
-    `[track-utm] userId=${userId} source=${source} campaign=${val(utm.utm_campaign) ?? "-"} content=${val(utm.utm_content) ?? "-"} → ${n} linha(s)${res.error ? ` ERRO: ${res.error.message}` : ""}`,
+    `[track-utm] userId=${userId} source=${source ?? "-"} idioma=${idioma ?? "-"} campaign=${val(utm.utm_campaign) ?? "-"} content=${val(utm.utm_content) ?? "-"} → ${n} linha(s)${res.error ? ` ERRO: ${res.error.message}` : ""}`,
   );
 
   if (res.error) return NextResponse.json({ ok: false, error: res.error.message }, { status: 500 });

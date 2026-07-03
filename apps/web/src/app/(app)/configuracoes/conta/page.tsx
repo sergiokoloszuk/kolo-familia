@@ -14,6 +14,7 @@ import { ExcluirContaForm } from "./excluir-form";
 import { PerfilForm } from "./perfil-form";
 import { WhatsappForm } from "./whatsapp-form";
 import { EmailForm } from "./email-form";
+import { IdiomaForm, type Idioma } from "./idioma-form";
 
 export default async function MinhaContaPage() {
   const { user, supabase, family } = await loadFamilyContext();
@@ -28,11 +29,13 @@ export default async function MinhaContaPage() {
     family
       ? supabase
           .from("family_accounts")
-          .select("whatsapp_e164")
+          .select("whatsapp_e164, idioma")
           .eq("id", family.id)
           .maybeSingle()
       : Promise.resolve({ data: null }),
   ]);
+
+  const idioma = ((conta?.idioma as Idioma | null) ?? "pt") as Idioma;
 
   return (
     <div className="flex flex-col gap-6">
@@ -64,6 +67,20 @@ export default async function MinhaContaPage() {
               como_chamar: profile?.como_chamar ?? "",
             }}
           />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Idioma</CardTitle>
+          <CardDescription>
+            A língua da plataforma e das mensagens que a Ayla te envia. Quando
+            você escreve pra ela, a Ayla já responde no seu idioma de qualquer
+            forma.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <IdiomaForm initial={idioma} />
         </CardContent>
       </Card>
 

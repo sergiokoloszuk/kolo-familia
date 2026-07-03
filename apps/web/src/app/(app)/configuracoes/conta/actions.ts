@@ -111,6 +111,37 @@ export async function atualizarWhatsappAction(
   }
 }
 
+const idiomaSchema = z.object({
+  idioma: z.enum(["pt", "es", "en"]),
+});
+
+/**
+ * Troca o idioma da família (pt/es/en). Define a língua da plataforma e das
+ * mensagens que a Ayla ENVIA (proativas). A resposta reativa da Ayla já
+ * espelha o idioma de quem escreve, independente disto.
+ */
+export async function salvarIdiomaAction(
+  input: z.infer<typeof idiomaSchema>,
+): Promise<PerfilResult> {
+  try {
+    const { idioma } = idiomaSchema.parse(input);
+    const { family } = await loadFamilyContext();
+    if (!family) return { ok: false, error: "Família não inicializada." };
+
+    const admin = createServiceRoleClient();
+    const { error } = await admin
+      .from("family_accounts")
+      .update({ idioma })
+      .eq("id", family.id);
+    if (error) return { ok: false, error: `Não consegui salvar: ${error.message}` };
+
+    revalidatePath("/configuracoes/conta");
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "Erro inesperado" };
+  }
+}
+
 const emailSchema = z.object({
   email: z.string().trim().toLowerCase().email("E-mail inválido"),
 });

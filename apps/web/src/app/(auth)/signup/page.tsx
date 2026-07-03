@@ -117,13 +117,18 @@ export default function SignupPage() {
         const v = p.get(k);
         if (v) utm[k] = v;
       }
-      if (data.user?.id && utm.utm_source) {
-        // keepalive + await: garante que a gravação da UTM COMPLETE mesmo se a
-        // página navegar logo depois (senão o navegador cancela a requisição).
+      // Idioma por origem: a landing em espanhol adiciona ?lang=es aos botões
+      // do cadastro (a landing PT não põe nada → padrão pt). Fica dormente até
+      // a landing ES existir; enquanto isso todo mundo cai em pt.
+      const langRaw = (p.get("lang") ?? "").toLowerCase();
+      const idioma = langRaw === "es" || langRaw === "en" ? langRaw : null;
+      if (data.user?.id && (utm.utm_source || idioma)) {
+        // keepalive + await: garante que a gravação COMPLETE mesmo se a página
+        // navegar logo depois (senão o navegador cancela a requisição).
         await fetch("/api/track-utm", {
           method: "POST",
           headers: { "content-type": "application/json" },
-          body: JSON.stringify({ userId: data.user.id, utm }),
+          body: JSON.stringify({ userId: data.user.id, utm, idioma }),
           keepalive: true,
         }).catch(() => {});
       }
