@@ -149,6 +149,7 @@ type FamRow = {
   utm_source: string | null;
   utm_campaign: string | null;
   utm_content: string | null;
+  whatsapp_e164: string | null;
 };
 
 type FunilOrigem = { cadastrou: number; ativado: number; converteu: number };
@@ -171,6 +172,26 @@ export type JornadaLead = {
   interno: boolean;
 };
 
+/** Família para o drill-down: clicar numa fase/chip do funil lista quem está ali. */
+export type FamiliaSegmento = {
+  id: string;
+  nomeMae: string;
+  email: string | null;
+  diaTrial: number;
+  criadoEm: string;
+  origemCanal: string;
+  campanha: string | null;
+  criativo: string | null;
+  /** Último uso (ISO) ou null se nunca usou. */
+  ultimoUso: string | null;
+  whatsapp: string | null;
+  fase: FaseTrial;
+  /** Marcos cumulativos (o funil é cumulativo; a fase é o estado exclusivo). */
+  ativou: boolean;
+  ativado: boolean;
+  engajado: boolean;
+};
+
 export type JornadaData = {
   funil: { key: string; label: string; desc: string; n: number }[];
   emRisco: number;
@@ -190,6 +211,8 @@ export type JornadaData = {
   conversao: { taxa: number; assinantes: number; cadastros: number };
   dorRank: Rank[];
   leads: JornadaLead[];
+  /** Todas as famílias reais com marcos + fase — pro drill-down por segmento. */
+  todasFamilias: FamiliaSegmento[];
   fases: Record<FaseTrial, { label: string; desc: string }>;
 };
 
@@ -208,7 +231,7 @@ export async function carregarJornadaTrial(admin: SupabaseClient): Promise<Jorna
     admin
       .from("family_accounts")
       .select(
-        "id, created_at, onboarding_completed, afiliado_id, ref_codigo, utm_source, utm_campaign, utm_content",
+        "id, created_at, onboarding_completed, afiliado_id, ref_codigo, utm_source, utm_campaign, utm_content, whatsapp_e164",
       ),
     admin.from("subscription_accesses").select("family_account_id, status, trial_ends_at"),
     admin
@@ -285,6 +308,7 @@ export async function carregarJornadaTrial(admin: SupabaseClient): Promise<Jorna
   const porCampanha = new Map<string, FunilOrigem>();
   const porCriativo = new Map<string, FunilOrigem>();
   const leads: JornadaLead[] = [];
+  const todasFamilias: FamiliaSegmento[] = [];
 
   const bump = (m: Map<string, FunilOrigem>, key: string, ativado: boolean, pago: boolean) => {
     const cur = m.get(key) ?? { cadastrou: 0, ativado: 0, converteu: 0 };
@@ -349,9 +373,32 @@ export async function carregarJornadaTrial(admin: SupabaseClient): Promise<Jorna
       }
     }
 
+    const det = origemDetalhe(f, afiliadoNome);
+    const ultimoUso = at.ultima > 0 ? new Date(at.ultima).toISOString() : null;
+
+    // Drill-down por segmento: todas as famílias REAIS (sem interno, pra bater
+    // com as contagens do funil), com marcos + fase.
+    if (!interno) {
+      todasFamilias.push({
+        id: f.id,
+        nomeMae: nomeMaeByFam.get(f.id) ?? "",
+        email: emailPorFam.get(f.id) ?? null,
+        diaTrial,
+        criadoEm: f.created_at,
+        origemCanal: det.canal,
+        campanha: det.campanha,
+        criativo: det.criativo,
+        ultimoUso,
+        whatsapp: f.whatsapp_e164 ?? null,
+        fase,
+        ativou: temAtividade,
+        ativado: ativadoBool,
+        engajado: engajadoBool,
+      });
+    }
+
     // Lista TODOS (inclusive interno, marcado) — pra validar/testar sem esconder.
     if (status === "trialing" && !trialVencido) {
-      const det = origemDetalhe(f, afiliadoNome);
       leads.push({
         id: f.id,
         nomeMae: nomeMaeByFam.get(f.id) ?? "",
@@ -423,6 +470,7 @@ export async function carregarJornadaTrial(admin: SupabaseClient): Promise<Jorna
     conversao,
     dorRank,
     leads,
+    todasFamilias,
     fases: FASE_INFO,
   };
 }

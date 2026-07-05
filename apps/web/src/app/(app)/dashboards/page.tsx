@@ -1,6 +1,7 @@
+import Link from "next/link";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { carregarComportamento } from "@/lib/analytics/dashboard";
-import { carregarJornadaTrial } from "@/lib/analytics/jornada";
+import { carregarJornadaTrial, type FamiliaSegmento } from "@/lib/analytics/jornada";
 import { Bloco, BarList, Stat, Vazio } from "@/components/dashboard/blocos";
 
 /**
@@ -10,13 +11,32 @@ import { Bloco, BarList, Stat, Vazio } from "@/components/dashboard/blocos";
  */
 export const dynamic = "force-dynamic";
 
-export default async function AquisicaoJornadaPage() {
+const SEGMENTOS: Record<string, { label: string; pred: (f: FamiliaSegmento) => boolean }> = {
+  cadastrou: { label: "Cadastrou", pred: () => true },
+  ativou_teste: { label: "Ativou o teste", pred: (f) => f.ativou },
+  ativado: { label: "Ativado", pred: (f) => f.ativado },
+  engajado: { label: "Engajado", pred: (f) => f.engajado },
+  convertido: { label: "Converteu", pred: (f) => f.fase === "convertido" },
+  em_risco: { label: "Em risco (parou 24h+)", pred: (f) => f.fase === "em_risco" },
+  expirado: { label: "Expiraram sem assinar", pred: (f) => f.fase === "expirado" },
+};
+
+export default async function AquisicaoJornadaPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ seg?: string }>;
+}) {
   const admin = createServiceRoleClient();
   const [d, j] = await Promise.all([carregarComportamento(admin), carregarJornadaTrial(admin)]);
   const assinantes = d.statusCount.active ?? 0;
   const conversao = d.totalFamilias > 0 ? Math.round((assinantes / d.totalFamilias) * 100) : 0;
   const base = j.funil[0]?.n || 0;
   const pct = (n: number) => (base > 0 ? Math.round((n / base) * 100) : 0);
+
+  const sp = await searchParams;
+  const segDef = sp.seg ? SEGMENTOS[sp.seg] : undefined;
+  const segAtivo = segDef ? sp.seg : null;
+  const familiasSeg = segDef ? j.todasFamilias.filter(segDef.pred) : [];
 
   return (
     <div className="flex flex-col gap-8">
@@ -46,36 +66,127 @@ export default async function AquisicaoJornadaPage() {
       {/* Funil por fase da jornada */}
       <Bloco titulo="Funil da jornada" desc="Cada etapa é um subconjunto da anterior. % sobre quem cadastrou.">
         <ul className="flex flex-col gap-2">
-          {j.funil.map((f) => (
-            <li key={f.key} className="rounded-xl border border-foreground/[0.08] bg-white px-4 py-3">
-              <div className="flex items-center justify-between gap-3">
-                <div>
-                  <p className="font-heading text-lg text-foreground">{f.label}</p>
-                  <p className="text-xs text-muted-foreground">{f.desc}</p>
-                </div>
-                <div className="text-right">
-                  <p className="font-heading text-2xl text-foreground">{f.n}</p>
-                  <p className="text-xs text-muted-foreground">{pct(f.n)}%</p>
-                </div>
-              </div>
-              <span className="mt-2 block h-1.5 w-full overflow-hidden rounded-full bg-foreground/[0.06]">
-                <span
-                  className="block h-full rounded-full bg-brand-purple"
-                  style={{ width: `${pct(f.n)}%` }}
-                />
-              </span>
-            </li>
-          ))}
+          {j.funil.map((f) => {
+            const ativo = segAtivo === f.key;
+            return (
+              <li key={f.key}>
+                <Link
+                  href={ativo ? "/dashboards" : `/dashboards?seg=${f.key}`}
+                  scroll={false}
+                  className={`block rounded-xl border px-4 py-3 transition-colors ${
+                    ativo
+                      ? "border-brand-purple bg-kolo-lilas-bg-2 ring-1 ring-brand-purple"
+                      : "border-foreground/[0.08] bg-white hover:border-foreground/20"
+                  }`}
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <p className="font-heading text-lg text-foreground">{f.label}</p>
+                      <p className="text-xs text-muted-foreground">{f.desc}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-heading text-2xl text-foreground">{f.n}</p>
+                      <p className="text-xs text-muted-foreground">{pct(f.n)}%</p>
+                    </div>
+                  </div>
+                  <span className="mt-2 block h-1.5 w-full overflow-hidden rounded-full bg-foreground/[0.06]">
+                    <span
+                      className="block h-full rounded-full bg-brand-purple"
+                      style={{ width: `${pct(f.n)}%` }}
+                    />
+                  </span>
+                </Link>
+              </li>
+            );
+          })}
         </ul>
         <div className="mt-3 flex flex-wrap gap-3 text-sm">
-          <span className="rounded-full bg-destructive/10 px-3 py-1 text-destructive">
+          <Link
+            href={segAtivo === "em_risco" ? "/dashboards" : "/dashboards?seg=em_risco"}
+            scroll={false}
+            className={`rounded-full px-3 py-1 text-destructive transition-colors ${
+              segAtivo === "em_risco"
+                ? "bg-destructive/20 ring-1 ring-destructive"
+                : "bg-destructive/10 hover:bg-destructive/20"
+            }`}
+          >
             ⚠ Em risco (parou 24h+): <strong>{j.emRisco}</strong>
-          </span>
-          <span className="rounded-full bg-foreground/[0.05] px-3 py-1 text-muted-foreground">
+          </Link>
+          <Link
+            href={segAtivo === "expirado" ? "/dashboards" : "/dashboards?seg=expirado"}
+            scroll={false}
+            className={`rounded-full px-3 py-1 text-muted-foreground transition-colors ${
+              segAtivo === "expirado"
+                ? "bg-foreground/[0.12] ring-1 ring-foreground/30"
+                : "bg-foreground/[0.05] hover:bg-foreground/[0.1]"
+            }`}
+          >
             ✗ Expiraram sem assinar: <strong>{j.expirados}</strong>
-          </span>
+          </Link>
         </div>
       </Bloco>
+
+      {segDef && (
+        <Bloco
+          titulo={`Quem está em: ${segDef.label}`}
+          desc={`${familiasSeg.length} família(s). Nome da mãe (ou e-mail quando ainda sem nome).`}
+        >
+          <div className="mb-3">
+            <Link href="/dashboards" className="text-sm font-medium text-brand-purple hover:underline">
+              ← limpar seleção
+            </Link>
+          </div>
+          {familiasSeg.length === 0 ? (
+            <Vazio texto="Ninguém neste segmento agora." />
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="text-left text-xs uppercase tracking-wide text-muted-foreground">
+                    <th className="py-2 pr-3 font-medium">Lead</th>
+                    <th className="px-3 py-2 font-medium">Dia</th>
+                    <th className="px-3 py-2 font-medium">Origem</th>
+                    <th className="px-3 py-2 font-medium">Campanha</th>
+                    <th className="px-3 py-2 font-medium">Criativo</th>
+                    <th className="px-3 py-2 font-medium">Último uso</th>
+                    <th className="px-3 py-2 font-medium">Contato</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {familiasSeg.map((f) => (
+                    <tr key={f.id} className="border-t border-foreground/[0.06]">
+                      <td className="py-2 pr-3 text-foreground">
+                        {f.nomeMae || f.email || `#${f.id.slice(0, 6)}`}
+                      </td>
+                      <td className="px-3 py-2 text-muted-foreground">{f.diaTrial}/7</td>
+                      <td className="px-3 py-2 text-foreground">{f.origemCanal}</td>
+                      <td className="px-3 py-2 text-muted-foreground">{f.campanha ?? "—"}</td>
+                      <td className="px-3 py-2 text-muted-foreground">{f.criativo ?? "—"}</td>
+                      <td className="px-3 py-2 text-muted-foreground">
+                        {f.ultimoUso ? dataBR(f.ultimoUso) : "nunca"}
+                      </td>
+                      <td className="px-3 py-2">
+                        {f.whatsapp ? (
+                          <a
+                            href={`https://wa.me/${f.whatsapp.replace(/\D/g, "")}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="font-medium text-brand-purple hover:underline"
+                          >
+                            WhatsApp
+                          </a>
+                        ) : (
+                          <span className="text-muted-foreground">—</span>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </Bloco>
+      )}
 
       {/* Conversão por origem */}
       <Bloco titulo="Conversão por origem" desc="Qual canal traz gente que ativa e assina.">
