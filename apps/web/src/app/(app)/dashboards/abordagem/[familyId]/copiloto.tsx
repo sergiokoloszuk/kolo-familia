@@ -151,7 +151,7 @@ export function Copiloto({ familyId, temWhatsapp }: { familyId: string; temWhats
         <p className="mb-3 text-xs text-muted-foreground">
           {ehLigacao
             ? "A IA sugeriu LIGAR pra esse lead. O roteiro está no chat. (Envio por WhatsApp só pra mensagem.)"
-            : "Revise e edite à vontade. Nada é enviado sem o seu OK. Sai pelo WhatsApp da Kolo, no seu nome."}
+            : "Revise e edite à vontade. Nada é enviado sem o seu OK. Sai pelo WhatsApp da Kolo, no seu nome. Dica: escreva [link] onde quiser o link de assinatura — trocamos pelo link real (já logado) no envio."}
         </p>
 
         <textarea

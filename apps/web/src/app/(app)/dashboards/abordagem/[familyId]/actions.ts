@@ -5,6 +5,7 @@ import { z } from "zod";
 import { ehAdmin } from "@/lib/auth/require-admin";
 import { createClient, createServiceRoleClient } from "@/lib/supabase/server";
 import { enviarTexto } from "@/lib/ayla/whatsappSender";
+import { gerarMagicLink } from "@/lib/ayla/ponte";
 import { carregarContextoLead } from "@/lib/crm/contexto";
 
 const schema = z.object({
@@ -33,6 +34,16 @@ export async function enviarAbordagem(input: {
       return { ok: false, error: "Esse lead não tem WhatsApp cadastrado." };
     }
 
+    // Link de assinatura: se a mensagem tem o marcador [link], troca pelo link
+    // MÁGICO real (abre já logado na /assinatura). É aqui que converte — por isso
+    // gera fresco na hora do envio, sempre válido.
+    let textoFinal = texto;
+    if (/\[link\]/i.test(textoFinal)) {
+      const link = await gerarMagicLink(admin, { familyId, next: "/assinatura" });
+      const url = link ?? `${(process.env.NEXT_PUBLIC_APP_URL || "").replace(/\/$/, "")}/assinatura`;
+      textoFinal = textoFinal.replace(/\[link\]/gi, url);
+    }
+
     // Quem está enviando (pra registrar o autor).
     const supabase = await createClient();
     const {
@@ -41,7 +52,7 @@ export async function enviarAbordagem(input: {
 
     // 1. Envia pelo número da Kolo (Z-API).
     try {
-      await enviarTexto({ phoneE164: ctx.whatsapp, texto });
+      await enviarTexto({ phoneE164: ctx.whatsapp, texto: textoFinal });
     } catch (e) {
       return {
         ok: false,
@@ -49,11 +60,11 @@ export async function enviarAbordagem(input: {
       };
     }
 
-    // 2. Registra a mensagem na thread do CRM.
+    // 2. Registra a mensagem na thread do CRM (o texto real, com o link).
     await admin.from("crm_mensagens").insert({
       family_account_id: familyId,
       direcao: "enviada",
-      texto,
+      texto: textoFinal,
       autor_user_id: user?.id ?? null,
     });
 
