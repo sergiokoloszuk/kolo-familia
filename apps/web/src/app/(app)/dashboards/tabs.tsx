@@ -8,6 +8,7 @@ const TABS = [
   { href: "/dashboards", label: "Aquisição & Jornada", exact: true },
   { href: "/dashboards/comportamento", label: "Comportamento & Uso" },
   { href: "/dashboards/publico", label: "Público" },
+  { href: "/dashboards/crm", label: "CRM" },
 ];
 
 /** Alterna entre os dois dashboards (mesma fonte de dados, recortes diferentes). */
