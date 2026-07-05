@@ -30,7 +30,6 @@ export type PublicoData = {
   dorRank: Rank[];
   origemXPerfil: { origem: string; perfil: string; n: number }[];
   faixaXConversao: { faixa: string; cadastrou: number; assinou: number }[];
-  redeApoio: { com: number; sem: number };
 };
 
 const PERFIL_LABEL: Record<string, string> = {
@@ -75,7 +74,6 @@ export async function carregarPublico(admin: SupabaseClient): Promise<PublicoDat
     { data: profiles },
     { data: subs },
     { data: diarios },
-    { data: pessoas },
     internas,
   ] = await Promise.all([
     admin.from("family_accounts").select("id, whatsapp_e164, utm_source"),
@@ -92,7 +90,6 @@ export async function carregarPublico(admin: SupabaseClient): Promise<PublicoDat
       .select("family_account_id, desafio_area")
       .not("desafio_area", "is", null)
       .gte("created_at", desde90),
-    admin.from("pessoas_familia").select("family_account_id, ativo"),
     familiasInternas(admin),
   ]);
 
@@ -152,9 +149,18 @@ export async function carregarPublico(admin: SupabaseClient): Promise<PublicoDat
   const LACO: Record<string, string> = { mae: "Mãe", pai: "Pai", avo: "Avó", avoh: "Avô", outro: "Outro" };
   for (const p of profiles ?? []) {
     if (!real(p.family_account_id as string)) continue;
-    const g = p.genero_responsavel as string | null;
-    bump(generoRespC, g === "feminino" ? "Mulher" : g === "masculino" ? "Homem" : "Não informado");
     const papel = (p.papel as string | null) ?? null;
+    // Gênero do responsável: o campo genero_responsavel quase nunca é
+    // preenchido — mas o LAÇO é. Derivamos do laço (mãe/avó→mulher,
+    // pai/avô→homem) e só caímos no campo quando o laço não define (ex.: outro).
+    let gen: "feminino" | "masculino" | null = null;
+    if (papel === "mae" || papel === "avo") gen = "feminino";
+    else if (papel === "pai" || papel === "avoh") gen = "masculino";
+    else {
+      const g = p.genero_responsavel as string | null;
+      gen = g === "feminino" ? "feminino" : g === "masculino" ? "masculino" : null;
+    }
+    bump(generoRespC, gen === "feminino" ? "Mulher" : gen === "masculino" ? "Homem" : "Não informado");
     bump(lacoC, papel ? (LACO[papel] ?? "Outro") : "Não informado");
     const im = idadeAnos((p.data_nascimento_mae as string | null) ?? null);
     if (im != null) idadesMae.push(im);
@@ -193,18 +199,6 @@ export async function carregarPublico(admin: SupabaseClient): Promise<PublicoDat
     faixaConv.set(faixa, cur);
   }
 
-  // ── Rede de apoio (mapa familiar) ──────────────────────
-  const comRede = new Set<string>();
-  for (const p of pessoas ?? []) {
-    if (p.ativo && real(p.family_account_id as string)) comRede.add(p.family_account_id as string);
-  }
-  let redeCom = 0;
-  let redeSem = 0;
-  for (const fid of filhosPorFam.keys()) {
-    if (comRede.has(fid)) redeCom++;
-    else redeSem++;
-  }
-
   const ORDEM_FAIXA = ["0–3 anos", "4–6 anos", "7–12 anos", "13–17 anos", "18+ anos", "Não informado"];
 
   return {
@@ -230,6 +224,5 @@ export async function carregarPublico(admin: SupabaseClient): Promise<PublicoDat
       faixa,
       ...faixaConv.get(faixa)!,
     })),
-    redeApoio: { com: redeCom, sem: redeSem },
   };
 }

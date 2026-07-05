@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { createServiceRoleClient } from "@/lib/supabase/server";
+import { ehAdmin } from "@/lib/auth/require-admin";
 import { carregarComportamento } from "@/lib/analytics/dashboard";
 import { carregarJornadaTrial, type FamiliaSegmento } from "@/lib/analytics/jornada";
+import { carregarFichaFamilia } from "@/lib/analytics/ficha";
 import { Bloco, BarList, Stat, Vazio } from "@/components/dashboard/blocos";
 
 /**
@@ -24,7 +26,7 @@ const SEGMENTOS: Record<string, { label: string; pred: (f: FamiliaSegmento) => b
 export default async function AquisicaoJornadaPage({
   searchParams,
 }: {
-  searchParams: Promise<{ seg?: string }>;
+  searchParams: Promise<{ seg?: string; fam?: string }>;
 }) {
   const admin = createServiceRoleClient();
   const [d, j] = await Promise.all([carregarComportamento(admin), carregarJornadaTrial(admin)]);
@@ -37,6 +39,14 @@ export default async function AquisicaoJornadaPage({
   const segDef = sp.seg ? SEGMENTOS[sp.seg] : undefined;
   const segAtivo = segDef ? sp.seg : null;
   const familiasSeg = segDef ? j.todasFamilias.filter(segDef.pred) : [];
+
+  // Ficha "o que já fez" de uma família (Fase 2). Admin vê conteúdo; agência
+  // co-acesso vê só os sinais.
+  const famId = typeof sp.fam === "string" ? sp.fam : null;
+  const voltarHref = segAtivo ? `/dashboards?seg=${segAtivo}` : "/dashboards";
+  const [ficha, ehAdminView] = famId
+    ? await Promise.all([carregarFichaFamilia(admin, famId), ehAdmin()])
+    : ([null, false] as const);
 
   return (
     <div className="flex flex-col gap-8">
@@ -155,8 +165,14 @@ export default async function AquisicaoJornadaPage({
                 <tbody>
                   {familiasSeg.map((f) => (
                     <tr key={f.id} className="border-t border-foreground/[0.06]">
-                      <td className="py-2 pr-3 text-foreground">
-                        {f.nomeMae || f.email || `#${f.id.slice(0, 6)}`}
+                      <td className="py-2 pr-3">
+                        <Link
+                          href={`/dashboards?seg=${segAtivo}&fam=${f.id}`}
+                          scroll={false}
+                          className="font-medium text-brand-purple hover:underline"
+                        >
+                          {f.nomeMae || f.email || `#${f.id.slice(0, 6)}`}
+                        </Link>
                       </td>
                       <td className="px-3 py-2 text-muted-foreground">{f.diaTrial}/7</td>
                       <td className="px-3 py-2 text-foreground">{f.origemCanal}</td>
@@ -183,6 +199,98 @@ export default async function AquisicaoJornadaPage({
                   ))}
                 </tbody>
               </table>
+            </div>
+          )}
+        </Bloco>
+      )}
+
+      {ficha && (
+        <Bloco
+          titulo={`Ficha — ${ficha.nome}`}
+          desc={ehAdminView ? "Tudo que essa família já fez." : "Sinais de uso (visão da agência, sem conteúdo)."}
+        >
+          <div className="mb-3">
+            <Link href={voltarHref} scroll={false} className="text-sm font-medium text-brand-purple hover:underline">
+              ← voltar à lista
+            </Link>
+          </div>
+          {ficha.membros.length > 0 && (
+            <p className="mb-4 text-sm text-muted-foreground">
+              {ficha.membros
+                .map((m) => `${m.nome} (${m.perfil}${m.idade != null ? `, ${m.idade} anos` : ""})`)
+                .join(" · ")}
+            </p>
+          )}
+          <div className="grid gap-3 sm:grid-cols-2">
+            <FichaCard titulo="💬 Ayla (WhatsApp)">
+              {ficha.ayla.mensagens > 0
+                ? `${ficha.ayla.mensagens} mensagem(ns) · última em ${dataBR(ficha.ayla.ultima!)}`
+                : "Ainda não falou com a Ayla."}
+            </FichaCard>
+
+            <FichaCard titulo="🌿 Perfil (Kolo Vivo)">
+              {ficha.koloVivo.campos.length === 0 ? (
+                "Nada preenchido ainda."
+              ) : ehAdminView ? (
+                <ul className="flex flex-col gap-1">
+                  {ficha.koloVivo.conteudo.map((c, i) => (
+                    <li key={i}>
+                      <span className="font-medium text-foreground">{c.campo}:</span>{" "}
+                      {c.texto}
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                `${ficha.koloVivo.campos.length} campo(s) preenchido(s).`
+              )}
+            </FichaCard>
+
+            <FichaCard titulo="✨ Estratégias">
+              {ficha.estrategias.total === 0 ? (
+                "Nenhuma conversa."
+              ) : ehAdminView && ficha.estrategias.titulos.length ? (
+                <>
+                  {ficha.estrategias.total} conversa(s):
+                  <ul className="mt-1 list-disc pl-4">
+                    {ficha.estrategias.titulos.map((t, i) => (
+                      <li key={i}>{t}</li>
+                    ))}
+                  </ul>
+                </>
+              ) : (
+                `${ficha.estrategias.total} conversa(s).`
+              )}
+            </FichaCard>
+
+            <FichaCard titulo="📄 Planos">
+              {ficha.planos.total === 0
+                ? "Nenhum plano."
+                : ehAdminView && ficha.planos.temas.length
+                  ? `${ficha.planos.total} plano(s): ${ficha.planos.temas.join(", ")}`
+                  : `${ficha.planos.total} plano(s).`}
+            </FichaCard>
+
+            <FichaCard titulo="🎨 Lúdico">
+              {ficha.ludico.total === 0
+                ? "Não usou."
+                : ficha.ludico.porTipo.map((t) => `${t.tipo}: ${t.n}`).join(" · ")}
+            </FichaCard>
+          </div>
+
+          {ehAdminView && ficha.timeline.length > 0 && (
+            <div className="mt-5">
+              <h4 className="mb-2 font-heading text-sm text-foreground">Timeline recente</h4>
+              <ul className="flex flex-col gap-1 text-sm">
+                {ficha.timeline.map((t, i) => (
+                  <li key={i} className="flex items-center justify-between gap-3">
+                    <span className="text-foreground">
+                      {t.evento}
+                      {t.detalhe ? <span className="text-muted-foreground"> · {t.detalhe}</span> : null}
+                    </span>
+                    <span className="text-xs text-muted-foreground">{dataBR(t.quando)}</span>
+                  </li>
+                ))}
+              </ul>
             </div>
           )}
         </Bloco>
@@ -255,6 +363,15 @@ export default async function AquisicaoJornadaPage({
           </div>
         )}
       </Bloco>
+    </div>
+  );
+}
+
+function FichaCard({ titulo, children }: { titulo: string; children: React.ReactNode }) {
+  return (
+    <div className="rounded-xl border border-foreground/[0.08] bg-white px-4 py-3 text-sm">
+      <p className="mb-1 font-heading text-base text-foreground">{titulo}</p>
+      <div className="text-muted-foreground">{children}</div>
     </div>
   );
 }

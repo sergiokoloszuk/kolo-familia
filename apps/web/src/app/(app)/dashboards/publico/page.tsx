@@ -71,15 +71,6 @@ export default async function PublicoPage() {
         <Bloco titulo="Principais desafios" desc="Áreas dos desafios registrados (90d).">
           {d.dorRank.length ? <BarList items={d.dorRank} /> : <Vazio />}
         </Bloco>
-
-        <Bloco titulo="Rede de apoio" desc="Cadastrou alguém no mapa familiar (co-cuidador)?">
-          <BarList
-            items={[
-              { label: "Com rede cadastrada", n: d.redeApoio.com },
-              { label: "Sem rede (solo?)", n: d.redeApoio.sem },
-            ]}
-          />
-        </Bloco>
       </div>
 
       {/* Cruzamento origem × perfil */}
