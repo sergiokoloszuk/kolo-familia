@@ -103,6 +103,33 @@ export async function notificarNovoCadastro(
   }
 }
 
+const FEEDBACK_LABEL: Record<string, string> = {
+  elogio: "💛 Elogio",
+  sugestao: "💡 Sugestão",
+  reclamacao: "😟 Reclamação",
+};
+
+/**
+ * Aviso no celular do admin quando chega um feedback que ele quer ver — elogio,
+ * sugestão ou reclamação. Best-effort. Dúvida de uso NÃO passa por aqui (a IA
+ * de ajuda resolve sozinha).
+ */
+export async function notificarFeedback(
+  tipo: "elogio" | "sugestao" | "reclamacao",
+  texto: string,
+  quem: string,
+  origem: string,
+): Promise<void> {
+  try {
+    const label = FEEDBACK_LABEL[tipo] ?? "Feedback";
+    const via = origem === "ayla" ? "Ayla" : "ajuda do app";
+    const msg = `${label} — de ${quem} (via ${via}):\n"${texto.slice(0, 500)}"`;
+    await enviarTexto({ phoneE164: ADMIN_WHATSAPP, texto: msg });
+  } catch (e) {
+    console.warn("[admin:notificarFeedback] falhou:", e instanceof Error ? e.message : e);
+  }
+}
+
 /**
  * Contagem de novos cadastros (por created_at, fuso BRT) pro resumo das 8h:
  * ontem, semana atual (seg–dom) e mês vigente. Exclui contas internas

@@ -9,6 +9,7 @@ const TABS = [
   { href: "/dashboards/comportamento", label: "Comportamento & Uso" },
   { href: "/dashboards/publico", label: "Público" },
   { href: "/dashboards/crm", label: "CRM" },
+  { href: "/dashboards/feedback", label: "Feedback" },
 ];
 
 /** Alterna entre os dois dashboards (mesma fonte de dados, recortes diferentes). */

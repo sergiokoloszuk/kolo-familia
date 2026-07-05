@@ -2,8 +2,9 @@
 
 import { z } from "zod";
 import { getAnthropicClient, MODELS } from "@/lib/ia/anthropic";
-import { createServiceRoleClient } from "@/lib/supabase/server";
+import { createClient, createServiceRoleClient } from "@/lib/supabase/server";
 import { logServerError } from "@/lib/log";
+import { notificarFeedback } from "@/lib/admin/notificacoes";
 
 /**
  * Guia de uso do app — a pessoa diz o que quer fazer e a IA responde em
@@ -46,7 +47,7 @@ const MAPA = `# Mapa do app Kolo Família (telas reais e o que se faz em cada um
 
 Para SAIR DA CONTA (logout): use "Sair da conta" no rodapé do menu lateral (à esquerda), que pede confirmação.`;
 
-const SYSTEM_BASE = `Você é o guia de uso do app Kolo Família — ajuda a pessoa a achar onde fazer o que ela quer DENTRO do app (não é conselho sobre a criança; isso é o papel das Estratégias).
+const SYSTEM_BASE = `Você é o guia de uso do app Kolo Família — ajuda a pessoa a achar onde fazer o que ela quer DENTRO do app (não é conselho sobre a criança; isso é o papel das Estratégias). Você também RECEBE feedback (elogio, sugestão, reclamação) direto por aqui.
 
 Regras:
 - Responda em passos curtos e claros, em português simples e acolhedor.
@@ -54,8 +55,19 @@ Regras:
 - Indique a tela principal pra ir e, se útil, o caminho (ex.: Configurações > Minha conta).
 - PODE informar o valor do plano, o período de teste e como cancelar — use os "Fatos atuais" abaixo e NUNCA invente valores.
 - Se a pessoa pedir algo que o app não faz, diga isso com gentileza e sugira o mais próximo.
+
+# Classifique a mensagem (campo "tipo")
+- "duvida": pergunta de USO ("como faço X?", "onde fica Y?"). Responda guiando pela tela certa.
+- "elogio": a pessoa elogia a Kolo/equipe. AGRADEÇA de verdade e diga que vai passar pra equipe. Ela JÁ está falando com a Kolo aqui.
+- "sugestao": a pessoa sugere uma melhoria/ideia. ACOLHA, diga que registrou e vai levar pra equipe avaliar.
+- "reclamacao": a pessoa reclama de algo que não gostou/não funcionou. ACOLHA com empatia, diga que registrou e que a equipe vai olhar.
+- Para elogio/sugestao/reclamacao, "rota" deve ser null.
+
+# NUNCA (isto está errado hoje)
+- NUNCA mande procurar formulário de contato, e-mail de suporte, site externo, "kolo.com.br", App Store ou Google Play. A Kolo é um app web (PWA) e o feedback é registrado AQUI MESMO. A pessoa já está no lugar certo — é só receber.
+
 - Devolva APENAS JSON, sem texto antes/depois:
-{"resposta":"passos em markdown (use lista com - quando forem vários)","rota":"/uma-das-rotas-do-mapa-ou-null"}`;
+{"resposta":"resposta em markdown (passos com - quando forem vários; pra feedback, um agradecimento/acolhida curto)","rota":"/uma-das-rotas-do-mapa-ou-null","tipo":"duvida|elogio|sugestao|reclamacao"}`;
 
 const TRIAL_DIAS = 7;
 
@@ -132,6 +144,16 @@ export async function perguntarAjuda(perguntaRaw: string): Promise<AjudaResult> 
     if (!parsed) {
       return { ok: true, resposta: raw.trim(), rota: null, rotaLabel: null };
     }
+
+    // Feedback (elogio/sugestão/reclamação): registra e avisa a Karina. Não é
+    // "dúvida de uso" — aqui a pessoa está falando COM a Kolo.
+    if (parsed.tipo === "elogio" || parsed.tipo === "sugestao" || parsed.tipo === "reclamacao") {
+      await registrarFeedback(pergunta, parsed.tipo).catch((e) =>
+        logServerError("ajuda_feedback", e, {}).catch(() => {}),
+      );
+      return { ok: true, resposta: parsed.resposta, rota: null, rotaLabel: null };
+    }
+
     const valida = ROTAS_AJUDA.find((r) => r.rota === parsed.rota) ?? null;
     return {
       ok: true,
@@ -145,7 +167,9 @@ export async function perguntarAjuda(perguntaRaw: string): Promise<AjudaResult> 
   }
 }
 
-function parseAjuda(s: string): { resposta: string; rota: string | null } | null {
+function parseAjuda(
+  s: string,
+): { resposta: string; rota: string | null; tipo: string | null } | null {
   const trimmed = s.trim();
   let candidate: unknown;
   try {
@@ -161,10 +185,59 @@ function parseAjuda(s: string): { resposta: string; rota: string | null } | null
     }
   }
   if (candidate && typeof candidate === "object") {
-    const o = candidate as { resposta?: unknown; rota?: unknown };
+    const o = candidate as { resposta?: unknown; rota?: unknown; tipo?: unknown };
     if (typeof o.resposta === "string") {
-      return { resposta: o.resposta, rota: typeof o.rota === "string" ? o.rota : null };
+      return {
+        resposta: o.resposta,
+        rota: typeof o.rota === "string" ? o.rota : null,
+        tipo: typeof o.tipo === "string" ? o.tipo : null,
+      };
     }
   }
   return null;
+}
+
+/** Registra o feedback (via /ajuda) e avisa a Karina no celular. Best-effort. */
+async function registrarFeedback(
+  texto: string,
+  tipo: "elogio" | "sugestao" | "reclamacao",
+): Promise<void> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  const admin = createServiceRoleClient();
+  let familyId: string | null = null;
+  let nome = user?.email ?? "alguém";
+  if (user) {
+    const { data: fam } = await admin
+      .from("family_accounts")
+      .select("id")
+      .eq("user_id", user.id)
+      .maybeSingle();
+    familyId = (fam?.id as string | undefined) ?? null;
+    if (familyId) {
+      const { data: prof } = await admin
+        .from("family_profiles")
+        .select("nome_mae, como_chamar")
+        .eq("family_account_id", familyId)
+        .maybeSingle();
+      nome =
+        (prof?.como_chamar as string | null)?.trim() ||
+        (prof?.nome_mae as string | null)?.trim() ||
+        user.email ||
+        "alguém";
+    }
+  }
+
+  await admin.from("feedbacks").insert({
+    family_account_id: familyId,
+    user_id: user?.id ?? null,
+    origem: "ajuda",
+    tipo,
+    texto: texto.slice(0, 2000),
+  });
+
+  await notificarFeedback(tipo, texto, nome, "ajuda");
 }
