@@ -31,8 +31,26 @@ function LinhaLead({ l, isAdmin }: { l: RadarLead; isAdmin: boolean }) {
       <td className="px-3 py-2 text-muted-foreground">
         {l.faseLabel} · dia {l.diaTrial}/7
       </td>
+      <td className="px-3 py-2">
+        {l.temPlano ? (
+          <span className="text-emerald-600">✓ sim</span>
+        ) : (
+          <span className="rounded bg-brand-yellow/25 px-1.5 py-0.5 text-xs font-medium text-brand-purple-dark">
+            não
+          </span>
+        )}
+      </td>
       <td className="px-3 py-2 text-muted-foreground">
         {l.aylaMsgs > 0 ? `${l.aylaMsgs} msg · ${dataHora(l.aylaUltima)}` : "ainda não falou"}
+      </td>
+      <td className="px-3 py-2">
+        {l.reagiu === null ? (
+          <span className="text-muted-foreground">—</span>
+        ) : l.reagiu ? (
+          <span className="text-emerald-600">reagiu</span>
+        ) : (
+          <span className="text-muted-foreground">sem reação</span>
+        )}
       </td>
       <td className="px-3 py-2 text-sm text-foreground">{l.motivo ?? "—"}</td>
       <td className="px-3 py-2">
@@ -62,7 +80,9 @@ function Tabela({ linhas, isAdmin }: { linhas: RadarLead[]; isAdmin: boolean }) 
           <tr className="text-left text-xs uppercase tracking-wide text-muted-foreground">
             <th className="py-2 pr-3 font-medium">Lead</th>
             <th className="px-3 py-2 font-medium">Fase</th>
+            <th className="px-3 py-2 font-medium">Plano</th>
             <th className="px-3 py-2 font-medium">Ayla já fez</th>
+            <th className="px-3 py-2 font-medium">Reagiu</th>
             <th className="px-3 py-2 font-medium">Situação</th>
             <th className="px-3 py-2 font-medium"></th>
           </tr>

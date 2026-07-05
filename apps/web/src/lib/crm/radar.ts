@@ -27,6 +27,10 @@ export type RadarLead = {
   precisaVoce: boolean;
   motivo: string | null;
   prioridade: number; // menor = mais urgente
+  /** Já recebeu um plano? (o encantamento — gap-chave de ativação) */
+  temPlano: boolean;
+  /** Reagiu depois da última mensagem (Ayla ou sua)? null = ninguém mandou nada ainda. */
+  reagiu: boolean | null;
 };
 
 export type RadarData = {
@@ -40,26 +44,50 @@ export async function carregarRadarCrm(admin: SupabaseClient): Promise<RadarData
   const fams = j.todasFamilias;
   const ids = fams.map((f) => f.id);
 
-  const [{ data: aylaOut }, { data: crmLeads }] = await Promise.all([
-    ids.length
-      ? admin.from("ayla_messages").select("family_account_id, created_at").eq("direcao", "outbound").in("family_account_id", ids)
-      : Promise.resolve({ data: [] as { family_account_id: string; created_at: string }[] }),
-    admin.from("crm_leads").select("family_account_id, em_abordagem, aguardando_resposta, excluido"),
-  ]);
+  type Msg = { family_account_id: string; direcao?: string; created_at: string };
+  const empty = Promise.resolve({ data: [] as Msg[] });
+  const [{ data: aylaMsgs }, { data: crmMsgs }, { data: eventos }, { data: planos }, { data: crmLeads }] =
+    await Promise.all([
+      ids.length ? admin.from("ayla_messages").select("family_account_id, direcao, created_at").in("family_account_id", ids) : empty,
+      ids.length ? admin.from("crm_mensagens").select("family_account_id, direcao, created_at").in("family_account_id", ids) : empty,
+      ids.length ? admin.from("user_events").select("family_account_id, created_at").in("family_account_id", ids) : empty,
+      ids.length ? admin.from("planos").select("family_account_id").in("family_account_id", ids) : Promise.resolve({ data: [] as { family_account_id: string }[] }),
+      admin.from("crm_leads").select("family_account_id, em_abordagem, aguardando_resposta, excluido"),
+    ]);
 
   const excluidos = new Set(
     (crmLeads ?? []).filter((c) => c.excluido).map((c) => c.family_account_id as string),
   );
 
+  // Ayla já fez (nº de saídas + última), última SAÍDA (Ayla/Karina) e última
+  // REAÇÃO (inbound/resposta/uso do app) — pra saber se a mensagem moveu o lead.
   const aylaBy = new Map<string, { n: number; ultima: string | null }>();
-  for (const m of aylaOut ?? []) {
-    const fid = m.family_account_id as string;
-    const cur = aylaBy.get(fid) ?? { n: 0, ultima: null };
-    cur.n += 1;
-    const t = m.created_at as string;
-    if (!cur.ultima || t > cur.ultima) cur.ultima = t;
-    aylaBy.set(fid, cur);
+  const lastSaida = new Map<string, string>();
+  const lastReacao = new Map<string, string>();
+  const bumpMax = (m: Map<string, string>, fid: string, t: string) => {
+    const c = m.get(fid);
+    if (!c || t > c) m.set(fid, t);
+  };
+  for (const m of aylaMsgs ?? []) {
+    const fid = m.family_account_id;
+    const t = m.created_at;
+    if (m.direcao === "outbound") {
+      const cur = aylaBy.get(fid) ?? { n: 0, ultima: null };
+      cur.n += 1;
+      if (!cur.ultima || t > cur.ultima) cur.ultima = t;
+      aylaBy.set(fid, cur);
+      bumpMax(lastSaida, fid, t);
+    } else {
+      bumpMax(lastReacao, fid, t);
+    }
   }
+  for (const m of crmMsgs ?? []) {
+    if (m.direcao === "enviada") bumpMax(lastSaida, m.family_account_id, m.created_at);
+    else bumpMax(lastReacao, m.family_account_id, m.created_at);
+  }
+  for (const e of eventos ?? []) bumpMax(lastReacao, e.family_account_id, e.created_at);
+  const planoSet = new Set((planos ?? []).map((p) => p.family_account_id as string));
+
   const crmBy = new Map(
     (crmLeads ?? []).map((c) => [
       c.family_account_id as string,
@@ -92,6 +120,9 @@ export async function carregarRadarCrm(admin: SupabaseClient): Promise<RadarData
       motivo = "Expirou sem assinar — recuperar";
       prioridade = 3;
     }
+    const saida = lastSaida.get(f.id) ?? null;
+    const reacao = lastReacao.get(f.id) ?? null;
+    const reagiu = saida ? !!reacao && reacao > saida : null;
     return {
       familyId: f.id,
       nome: f.nomeMae || f.email || `#${f.id.slice(0, 6)}`,
@@ -105,6 +136,8 @@ export async function carregarRadarCrm(admin: SupabaseClient): Promise<RadarData
       precisaVoce: precisa,
       motivo,
       prioridade,
+      temPlano: planoSet.has(f.id),
+      reagiu,
     };
   });
 
