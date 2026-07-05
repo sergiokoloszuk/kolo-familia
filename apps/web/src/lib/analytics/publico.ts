@@ -55,7 +55,16 @@ function faixaIdade(a: number | null): string {
   if (a <= 6) return "4–6 anos";
   if (a <= 12) return "7–12 anos";
   if (a <= 17) return "13–17 anos";
-  return "18+ anos";
+  if (a <= 19) return "18–19 anos";
+  // Adultos por decênio dinâmico: 20–29, 30–39, 40–49… (só aparece se houver).
+  const dez = Math.floor(a / 10) * 10;
+  return `${dez}–${dez + 9} anos`;
+}
+
+/** Ordena as faixas pelo início numérico ("Não informado" vai pro fim). */
+function ordFaixa(label: string): number {
+  const n = parseInt(label, 10);
+  return Number.isNaN(n) ? 9999 : n;
 }
 
 function rank(c: Map<string, number>): Rank[] {
@@ -199,14 +208,12 @@ export async function carregarPublico(admin: SupabaseClient): Promise<PublicoDat
     faixaConv.set(faixa, cur);
   }
 
-  const ORDEM_FAIXA = ["0–3 anos", "4–6 anos", "7–12 anos", "13–17 anos", "18+ anos", "Não informado"];
-
   return {
     totalFamilias: fams.length,
     totalFilhos,
     perfilFilho: rank(perfilC),
     comSemLaudo: { com: comLaudo, sem: semLaudo },
-    idadeFilho: rank(idadeC).sort((a, b) => ORDEM_FAIXA.indexOf(a.label) - ORDEM_FAIXA.indexOf(b.label)),
+    idadeFilho: rank(idadeC).sort((a, b) => ordFaixa(a.label) - ordFaixa(b.label)),
     generoFilho: rank(generoC),
     filhosPorFamilia: rank(filhosBucket),
     generoResponsavel: rank(generoRespC),
@@ -220,9 +227,8 @@ export async function carregarPublico(admin: SupabaseClient): Promise<PublicoDat
         const [origem, perfil] = r.label.split("||");
         return { origem, perfil, n: r.n };
       }),
-    faixaXConversao: ORDEM_FAIXA.filter((f) => faixaConv.has(f)).map((faixa) => ({
-      faixa,
-      ...faixaConv.get(faixa)!,
-    })),
+    faixaXConversao: [...faixaConv.keys()]
+      .sort((a, b) => ordFaixa(a) - ordFaixa(b))
+      .map((faixa) => ({ faixa, ...faixaConv.get(faixa)! })),
   };
 }
