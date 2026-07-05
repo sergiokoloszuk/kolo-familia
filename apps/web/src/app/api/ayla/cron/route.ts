@@ -97,9 +97,22 @@ async function runHealthcheck() {
     hour: "2-digit",
     minute: "2-digit",
   });
-  const texto = st.connected
+
+  // Resumo de cadastros (ontem/semana/mês) — best-effort, não derruba o monitor.
+  let resumoLinha = "";
+  try {
+    const admin = createServiceRoleClient();
+    const { resumoCadastros } = await import("@/lib/admin/notificacoes");
+    const r = await resumoCadastros(admin);
+    resumoLinha = `\n📊 Cadastros: ontem ${r.ontem} · semana ${r.semana} · mês ${r.mes}`;
+  } catch (e) {
+    await logServerError("healthcheck_resumo", e, {});
+  }
+
+  const statusLinha = st.connected
     ? `✅ Kolo no ar — Z-API conectado, a Ayla está respondendo. (${quando})`
     : `⚠️ ATENÇÃO: o Z-API parece DESCONECTADO — a Ayla pode não estar respondendo. Confira o painel do Z-API. (${quando})`;
+  const texto = statusLinha + resumoLinha;
   let enviada = true;
   try {
     await enviarTexto({ phoneE164: numero, texto });

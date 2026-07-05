@@ -575,6 +575,16 @@ export async function completeOnboarding(opts?: { janela?: JanelaOnboarding | nu
     console.error("[onboarding] sendBoasVindas threw:", err);
   }
 
+  // Aviso em tempo real pro admin: novo cadastro concluído (nome + filho +
+  // origem). Best-effort — nunca trava a conclusão do onboarding.
+  try {
+    const admin = createServiceRoleClient();
+    const { notificarNovoCadastro } = await import("@/lib/admin/notificacoes");
+    await notificarNovoCadastro(admin, family.id);
+  } catch (err) {
+    console.error("[onboarding] notificarNovoCadastro threw:", err);
+  }
+
   revalidatePath("/onboarding");
   revalidatePath("/painel");
   revalidatePath("/");
