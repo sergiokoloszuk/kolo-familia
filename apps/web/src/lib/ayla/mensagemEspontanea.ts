@@ -22,7 +22,12 @@ import { idadeAnos } from "@/lib/idade";
  * no templateRotinaDiaria estático como rede de segurança.
  */
 
-export type Intent = "acolhimento" | "voce_sabia" | "completar_perfil";
+export type Intent =
+  | "acolhimento"
+  | "voce_sabia"
+  | "completar_perfil"
+  | "convite_plano"
+  | "ensinar_valor";
 
 export type MensagemEspontaneaResult = {
   texto: string;
@@ -119,6 +124,8 @@ type Context = {
   deNomeMembro: string;
   membrosDescritos: string;
   gapsAbertos: GapKV[];
+  /** Já recebeu ao menos um PLANO? O plano é o que encanta — se não, a Ayla puxa pra lá. */
+  temPlano: boolean;
 };
 
 async function loadContext(
@@ -126,7 +133,7 @@ async function loadContext(
   familyId: string,
   membroFocoId: string,
 ): Promise<Context | null> {
-  const [{ data: profile }, { data: membros }, { data: kv }] = await Promise.all([
+  const [{ data: profile }, { data: membros }, { data: kv }, { data: planos }] = await Promise.all([
     supabase
       .from("family_profiles")
       .select("nome_mae, como_chamar")
@@ -143,6 +150,7 @@ async function loadContext(
       .select("essencial, como_e, corpo_rotina, desafios_regulacao, sensorial")
       .eq("membro_atipico_id", membroFocoId)
       .maybeSingle(),
+    supabase.from("planos").select("id").eq("family_account_id", familyId).limit(1),
   ]);
 
   if (!membros || membros.length === 0) return null;
@@ -172,6 +180,7 @@ async function loadContext(
       })
       .join(", "),
     gapsAbertos,
+    temPlano: (planos?.length ?? 0) > 0,
   };
 }
 
@@ -181,10 +190,19 @@ function hashSeed(s: string): number {
   return h;
 }
 
-function pickIntent(seed: string): Intent {
+function pickIntent(seed: string, temPlano: boolean): Intent {
   const r = hashSeed(seed) % 100;
-  if (r < 40) return "acolhimento";
-  if (r < 70) return "voce_sabia";
+  // Ativação: quem AINDA não recebeu um plano precisa ENTENDER o valor e ser
+  // puxado pro plano (é o que encanta). Só "conta como foi o dia" não ativa.
+  if (!temPlano) {
+    if (r < 45) return "convite_plano";
+    if (r < 75) return "ensinar_valor";
+    return "acolhimento";
+  }
+  // Já recebeu plano: mix normal, com o plano ainda no radar.
+  if (r < 35) return "acolhimento";
+  if (r < 55) return "convite_plano";
+  if (r < 75) return "voce_sabia";
   return "completar_perfil";
 }
 
@@ -212,6 +230,44 @@ Escreve uma abertura de conversa, neutra e calorosa. Convida ${ctx.nomeMae} a co
 EXEMPLOS DO TOM (não copie literal, só inspira):
 - "${ctx.nomeMae}, oi. Como vocês estão ${ctx.comNomeMembro}? Pode ser frase curta — ou áudio, se for mais fácil."
 - "Oi 🌿 O que tá pegando mais por aí? E o que tá ajudando? Me conta quando der."
+
+Gere UMA nova mensagem.`;
+}
+
+function promptConvitePlano(ctx: Context): string {
+  return `INTENÇÃO: convite_plano
+
+CONTEXTO:
+- Quem recebe: ${ctx.nomeMae}
+- Em foco: ${ctx.nomeMembro}${ctx.idadeMembro != null ? `, ${ctx.idadeMembro} anos` : " (idade não informada — trate pelo nome, não presuma criança)"}
+
+TAREFA:
+Convide ${ctx.nomeMae} a te contar UM desafio concreto que esteja pegando AGORA (sono, birra, escola, comida, transição, crise…) — pra você montar um PLANO prático pra vocês tentarem. Deixe claro, sem prometer milagre, o ganho: você organiza passos possíveis, frases pra usar e o que observar, do jeito ${ctx.deNomeMembro}. É o que mais ajuda no dia a dia.
+
+- Uma pergunta só: qual perrengue ela quer atacar primeiro.
+- Curto, humano, do jeito de uma amiga que entende. NÃO use as palavras "funcionalidade", "plataforma", "recurso".
+
+EXEMPLOS DE TOM (não copie literal, só inspira):
+- "${ctx.nomeMae}, me conta um perrengue que tá pegando agora ${ctx.comNomeMembro} — sono, escola, birra? Eu monto um plano prático pra vocês tentarem."
+- "Se tem uma situação que te deixa sem saber o que fazer, me fala. A partir dela eu armo um passo a passo pensado pra ${ctx.nomeMembro}."
+
+Gere UMA nova mensagem.`;
+}
+
+function promptEnsinarValor(ctx: Context): string {
+  return `INTENÇÃO: ensinar_valor
+
+CONTEXTO:
+- Quem recebe: ${ctx.nomeMae}
+- Em foco: ${ctx.nomeMembro}${ctx.idadeMembro != null ? `, ${ctx.idadeMembro} anos` : " (idade não informada — trate pelo nome, não presuma criança)"}
+
+TAREFA:
+Muita gente no começo não sabe PRA QUÊ contar o dia a dia. Explique, do jeito de uma amiga (não tutorial, não lista fria), que quanto mais ${ctx.nomeMae} te conta do dia a dia, mais você consegue ajudar de verdade:
+- montar um panorama da EVOLUÇÃO ${ctx.deNomeMembro} ao longo do tempo — que dá pra mostrar pra escola ou terapeuta;
+- personalizar as ideias pra ${ctx.nomeMembro};
+- e montar PLANOS pra um desafio específico.
+
+Termine convidando de leve a começar por UMA coisa de hoje (uma conquista ou um perrengue). NÃO soe manual; é conversa. NÃO use "funcionalidade", "plataforma", "recurso", "banco de dados".
 
 Gere UMA nova mensagem.`;
 }
@@ -268,21 +324,26 @@ export async function gerarMensagemEspontanea(
   }
 
   const seed = `${params.familyId}-${params.agora.toDateString()}`;
-  let intent = pickIntent(seed);
+  let intent = pickIntent(seed, ctx.temPlano);
 
-  // Sub-sort por intenção; completar_perfil sem gaps vira acolhimento.
+  // Sub-sort por intenção; completar_perfil sem gaps vira convite ao plano
+  // (melhor puxar pro que ativa do que só pedir mais dado).
   let userPrompt: string;
   if (intent === "completar_perfil") {
     const gap = pickGap(seed, ctx.gapsAbertos);
     if (!gap) {
-      intent = "acolhimento";
-      userPrompt = promptAcolhimento(ctx);
+      intent = "convite_plano";
+      userPrompt = promptConvitePlano(ctx);
     } else {
       userPrompt = promptCompletarPerfil(ctx, gap);
     }
   } else if (intent === "voce_sabia") {
     const featureDescricao = pickFeature(seed, ctx.nomeMembro);
     userPrompt = promptVoceSabia(ctx, featureDescricao);
+  } else if (intent === "convite_plano") {
+    userPrompt = promptConvitePlano(ctx);
+  } else if (intent === "ensinar_valor") {
+    userPrompt = promptEnsinarValor(ctx);
   } else {
     userPrompt = promptAcolhimento(ctx);
   }
