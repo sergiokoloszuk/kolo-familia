@@ -27,7 +27,8 @@ export type Intent =
   | "voce_sabia"
   | "completar_perfil"
   | "convite_plano"
-  | "ensinar_valor";
+  | "ensinar_valor"
+  | "feedback_plano";
 
 export type MensagemEspontaneaResult = {
   texto: string;
@@ -199,10 +200,12 @@ function pickIntent(seed: string, temPlano: boolean): Intent {
     if (r < 75) return "ensinar_valor";
     return "acolhimento";
   }
-  // Já recebeu plano: mix normal, com o plano ainda no radar.
-  if (r < 35) return "acolhimento";
-  if (r < 55) return "convite_plano";
-  if (r < 75) return "voce_sabia";
+  // Já recebeu plano: vale perguntar o que achou (vira feedback/elogio) e seguir
+  // o mix normal, com o plano ainda no radar.
+  if (r < 25) return "feedback_plano";
+  if (r < 45) return "acolhimento";
+  if (r < 65) return "convite_plano";
+  if (r < 82) return "voce_sabia";
   return "completar_perfil";
 }
 
@@ -244,11 +247,11 @@ CONTEXTO:
 TAREFA:
 Convide ${ctx.nomeMae} a te contar UM desafio concreto que esteja pegando AGORA (sono, birra, escola, comida, transição, crise…) — pra você montar um PLANO prático pra vocês tentarem. Deixe claro, sem prometer milagre, o ganho: você organiza passos possíveis, frases pra usar e o que observar, do jeito ${ctx.deNomeMembro}. É o que mais ajuda no dia a dia.
 
-- Uma pergunta só: qual perrengue ela quer atacar primeiro.
+- Uma pergunta só: qual desafio ela quer atacar primeiro.
 - Curto, humano, do jeito de uma amiga que entende. NÃO use as palavras "funcionalidade", "plataforma", "recurso".
 
 EXEMPLOS DE TOM (não copie literal, só inspira):
-- "${ctx.nomeMae}, me conta um perrengue que tá pegando agora ${ctx.comNomeMembro} — sono, escola, birra? Eu monto um plano prático pra vocês tentarem."
+- "${ctx.nomeMae}, me conta um desafio que tá pegando agora ${ctx.comNomeMembro} — sono, escola, birra? Eu monto um plano prático pra vocês tentarem."
 - "Se tem uma situação que te deixa sem saber o que fazer, me fala. A partir dela eu armo um passo a passo pensado pra ${ctx.nomeMembro}."
 
 Gere UMA nova mensagem.`;
@@ -267,7 +270,25 @@ Muita gente no começo não sabe PRA QUÊ contar o dia a dia. Explique, do jeito
 - personalizar as ideias pra ${ctx.nomeMembro};
 - e montar PLANOS pra um desafio específico.
 
-Termine convidando de leve a começar por UMA coisa de hoje (uma conquista ou um perrengue). NÃO soe manual; é conversa. NÃO use "funcionalidade", "plataforma", "recurso", "banco de dados".
+Termine convidando de leve a começar por UMA coisa de hoje (uma conquista ou um desafio). NÃO soe manual; é conversa. NÃO use "funcionalidade", "plataforma", "recurso", "banco de dados".
+
+Gere UMA nova mensagem.`;
+}
+
+function promptFeedbackPlano(ctx: Context): string {
+  return `INTENÇÃO: feedback_plano
+
+CONTEXTO:
+- Quem recebe: ${ctx.nomeMae}
+- Em foco: ${ctx.nomeMembro}${ctx.idadeMembro != null ? `, ${ctx.idadeMembro} anos` : " (idade não informada — trate pelo nome, não presuma criança)"}
+- ${ctx.nomeMae} JÁ recebeu ao menos um plano.
+
+TAREFA:
+Pergunte, com leveza e curiosidade de verdade, o que ${ctx.nomeMae} achou do plano: se chegou a testar na rotina, o que funcionou e o que não. É pra você acompanhar e melhorar — e pra ela sentir que tem alguém junto. Uma pergunta só. NÃO soe pesquisa/formulário nem "avalie de 1 a 5".
+
+EXEMPLOS DE TOM (não copie literal, só inspira):
+- "${ctx.nomeMae}, você chegou a testar o plano que montei? Fico curiosa pra saber o que funcionou aí ${ctx.comNomeMembro} — e o que não."
+- "Como foi com o plano? Me conta o que pegou e o que não colou, que eu ajusto pro próximo."
 
 Gere UMA nova mensagem.`;
 }
@@ -344,6 +365,8 @@ export async function gerarMensagemEspontanea(
     userPrompt = promptConvitePlano(ctx);
   } else if (intent === "ensinar_valor") {
     userPrompt = promptEnsinarValor(ctx);
+  } else if (intent === "feedback_plano") {
+    userPrompt = promptFeedbackPlano(ctx);
   } else {
     userPrompt = promptAcolhimento(ctx);
   }

@@ -27,7 +27,7 @@ export async function carregarContextoLead(
   admin: SupabaseClient,
   familyId: string,
 ): Promise<ContextoLead> {
-  const [ficha, { data: conta }, { data: sub }, { data: diarios }] = await Promise.all([
+  const [ficha, { data: conta }, { data: sub }, { data: diarios }, { data: telas }] = await Promise.all([
     carregarFichaFamilia(admin, familyId),
     admin
       .from("family_accounts")
@@ -46,6 +46,13 @@ export async function carregarContextoLead(
       .not("desafio_area", "is", null)
       .order("created_at", { ascending: false })
       .limit(5),
+    admin
+      .from("user_events")
+      .select("detalhe")
+      .eq("family_account_id", familyId)
+      .eq("evento", "tela_visitada")
+      .order("created_at", { ascending: false })
+      .limit(150),
   ]);
 
   const criado = conta?.created_at ? new Date(conta.created_at as string).getTime() : null;
@@ -70,13 +77,41 @@ export async function carregarContextoLead(
   usos.push(ficha.planos.total > 0 ? `recebeu ${ficha.planos.total} plano(s)${ficha.planos.temas.length ? ` (${ficha.planos.temas.join(", ")})` : ""}` : "NÃO pediu plano");
   usos.push(ficha.ludico.total > 0 ? `usou o Lúdico (${ficha.ludico.porTipo.map((t) => t.tipo).join(", ")})` : "NÃO usou o Lúdico");
 
+  // Telas que a pessoa ABRIU (navegou) — diferente de "usou". Ajuda o copiloto a
+  // ver ex.: abriu Planos mas não gerou plano; nunca abriu Estratégias; etc.
+  const ROTA_LABEL: Record<string, string> = {
+    "/painel": "Início",
+    "/kolo-vivo": "Perfil",
+    "/estrategias": "Estratégias",
+    "/planos": "Meus Planos",
+    "/evolucao": "Evolução",
+    "/ludico": "Lúdico",
+    "/registrar/diario": "Registro Diário",
+    "/assinatura": "Assinatura",
+    "/configuracoes": "Configurações",
+  };
+  const telaCount = new Map<string, number>();
+  for (const t of telas ?? []) {
+    const det = t.detalhe as Record<string, unknown> | null;
+    const rota = det && typeof det.rota === "string" ? (det.rota as string) : null;
+    if (!rota) continue;
+    const label = ROTA_LABEL[rota] ?? rota;
+    telaCount.set(label, (telaCount.get(label) ?? 0) + 1);
+  }
+  const telasTop = [...telaCount.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 6)
+    .map(([l, n]) => `${l} (${n})`)
+    .join(", ");
+
   const resumo = [
     `Lead: ${ficha.nome}`,
     membros ? `Filho(s): ${membros}` : "Filho: (não cadastrou ainda)",
     `Dia do teste: ${diaTrial ?? "?"}/7 · Status: ${status}`,
     `Origem: ${origem}${conta?.utm_campaign ? ` · Campanha: ${conta.utm_campaign}` : ""}`,
     dores.length ? `Dores registradas: ${dores.join(", ")}` : "Dor principal: (nenhuma registrada ainda)",
-    `O que já fez: ${usos.join("; ")}.`,
+    `O que já USOU: ${usos.join("; ")}.`,
+    telasTop ? `Telas que ABRIU (navegou): ${telasTop}` : "Ainda não navegou pelo app.",
     ficha.ayla.ultima ? `Última interação: ${new Date(ficha.ayla.ultima).toLocaleDateString("pt-BR", { timeZone: "America/Sao_Paulo" })}` : "",
   ]
     .filter(Boolean)
