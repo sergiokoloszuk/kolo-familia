@@ -6,6 +6,7 @@ import { logarUsoApi } from "@/lib/billing/logar";
 import { PLAYBOOK_COPILOTO } from "@/lib/crm/playbook";
 import { carregarContextoLead } from "@/lib/crm/contexto";
 import { carregarTimelineLead } from "@/lib/crm/timeline";
+import { carregarFaseScripts } from "@/lib/crm/fase-scripts";
 
 /**
  * Copiloto comercial — um turno de conversa. Só admin. Recebe o histórico do
@@ -44,16 +45,24 @@ export async function POST(request: NextRequest) {
   }
 
   const admin = createServiceRoleClient();
-  const [ctx, timeline] = await Promise.all([
+  const [ctx, timeline, scripts] = await Promise.all([
     carregarContextoLead(admin, familyId),
     carregarTimelineLead(admin, familyId),
+    carregarFaseScripts(admin),
   ]);
   const recentes = timeline
     .slice(-8)
     .map((t) => `- ${t.rotulo}: ${t.texto}`)
     .join("\n");
+  const roteiro = scripts
+    .filter((s) => s.textoSugestao.trim())
+    .map((s) => `- ${s.label}: ${s.textoSugestao}`)
+    .join("\n");
   const system =
     `${PLAYBOOK_COPILOTO}\n\n# Contexto do lead (real)\n${ctx.resumo}` +
+    (roteiro
+      ? `\n\n# Roteiro por fase (base da Karina — use como ponto de partida, adaptando ao dia/estado do lead)\n${roteiro}`
+      : "") +
     (recentes
       ? `\n\n# Conversa recente (NÃO repita o que a Ayla já disse; complemente)\n${recentes}`
       : "");

@@ -44,8 +44,12 @@ export async function carregarRadarCrm(admin: SupabaseClient): Promise<RadarData
     ids.length
       ? admin.from("ayla_messages").select("family_account_id, created_at").eq("direcao", "outbound").in("family_account_id", ids)
       : Promise.resolve({ data: [] as { family_account_id: string; created_at: string }[] }),
-    admin.from("crm_leads").select("family_account_id, em_abordagem, aguardando_resposta"),
+    admin.from("crm_leads").select("family_account_id, em_abordagem, aguardando_resposta, excluido"),
   ]);
+
+  const excluidos = new Set(
+    (crmLeads ?? []).filter((c) => c.excluido).map((c) => c.family_account_id as string),
+  );
 
   const aylaBy = new Map<string, { n: number; ultima: string | null }>();
   for (const m of aylaOut ?? []) {
@@ -63,7 +67,9 @@ export async function carregarRadarCrm(admin: SupabaseClient): Promise<RadarData
     ]),
   );
 
-  const items: RadarLead[] = fams.map((f) => {
+  const items: RadarLead[] = fams
+    .filter((f) => !excluidos.has(f.id))
+    .map((f) => {
     const ayla = aylaBy.get(f.id) ?? { n: 0, ultima: null };
     const crm = crmBy.get(f.id) ?? { em: false, ag: false };
     let precisa = false;

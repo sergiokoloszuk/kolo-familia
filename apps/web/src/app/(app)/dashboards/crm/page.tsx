@@ -3,6 +3,8 @@ import { createServiceRoleClient } from "@/lib/supabase/server";
 import { ehAdmin } from "@/lib/auth/require-admin";
 import { carregarRadarCrm, type RadarLead } from "@/lib/crm/radar";
 import { Bloco, Vazio } from "@/components/dashboard/blocos";
+import { CrmNav } from "./crm-nav";
+import { ExcluirLead } from "./excluir-lead";
 
 export const dynamic = "force-dynamic";
 
@@ -35,12 +37,15 @@ function LinhaLead({ l, isAdmin }: { l: RadarLead; isAdmin: boolean }) {
       <td className="px-3 py-2 text-sm text-foreground">{l.motivo ?? "—"}</td>
       <td className="px-3 py-2">
         {isAdmin ? (
-          <Link
-            href={`/dashboards/abordagem/${l.familyId}`}
-            className="inline-flex rounded-full bg-brand-purple px-3 py-1 text-xs font-semibold text-white transition-colors hover:bg-brand-purple/90"
-          >
-            {l.emAbordagem ? "Abrir" : "Abordar"}
-          </Link>
+          <div className="flex flex-wrap items-start gap-2">
+            <Link
+              href={`/dashboards/abordagem/${l.familyId}`}
+              className="inline-flex rounded-full bg-brand-purple px-3 py-1 text-xs font-semibold text-white transition-colors hover:bg-brand-purple/90"
+            >
+              {l.emAbordagem ? "Abrir" : "Abordar"}
+            </Link>
+            <ExcluirLead familyId={l.familyId} />
+          </div>
         ) : (
           <span className="text-xs text-muted-foreground">—</span>
         )}
@@ -94,6 +99,7 @@ export default async function CrmPage({
 
   return (
     <div className="flex flex-col gap-6">
+      <CrmNav />
       <p className="-mt-2 text-sm text-muted-foreground">
         Seus leads — o que a Ayla já fez e quais precisam de você. A Ayla nutre; você fecha.
       </p>
