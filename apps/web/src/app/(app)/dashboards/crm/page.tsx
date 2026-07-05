@@ -110,7 +110,9 @@ export default async function CrmPage({
   const filtra = (arr: RadarLead[]) =>
     faseFiltro ? arr.filter((l) => l.fase === faseFiltro) : arr;
   const precisam = filtra(radar.precisam);
-  const resto = filtra(radar.resto);
+  const fasesPrecisam = [
+    ...new Map(radar.precisam.map((l) => [l.fase, l.faseLabel])).entries(),
+  ].map(([key, label]) => ({ key, label }));
 
   const chip = (ativo: boolean) =>
     `rounded-full px-3 py-1 text-sm font-medium transition-colors ${
@@ -121,20 +123,22 @@ export default async function CrmPage({
     <div className="flex flex-col gap-6">
       <CrmNav />
       <p className="-mt-2 text-sm text-muted-foreground">
-        Seus leads — o que a Ayla já fez e quais precisam de você. A Ayla nutre; você fecha.
+        Só o que <strong>precisa de você</strong> — responder, resgatar ou fechar. O resto, a Ayla nutre (veja na aba <strong>Ayla</strong>).
       </p>
 
-      {/* Filtro por fase */}
-      <div className="flex flex-wrap gap-2">
-        <Link href="/dashboards/crm" className={chip(!faseFiltro)}>
-          Todas
-        </Link>
-        {radar.fasesPresentes.map((f) => (
-          <Link key={f.key} href={`/dashboards/crm?fase=${f.key}`} className={chip(faseFiltro === f.key)}>
-            {f.label}
+      {/* Filtro por fase (só as fases que têm lead pra você) */}
+      {fasesPrecisam.length > 0 && (
+        <div className="flex flex-wrap gap-2">
+          <Link href="/dashboards/crm" className={chip(!faseFiltro)}>
+            Todas
           </Link>
-        ))}
-      </div>
+          {fasesPrecisam.map((f) => (
+            <Link key={f.key} href={`/dashboards/crm?fase=${f.key}`} className={chip(faseFiltro === f.key)}>
+              {f.label}
+            </Link>
+          ))}
+        </div>
+      )}
 
       <Bloco
         titulo={`🔥 Precisa de você (${precisam.length})`}
@@ -144,17 +148,6 @@ export default async function CrmPage({
           <Vazio texto="Nada pra você agora — a Ayla está cuidando. 🌿" />
         ) : (
           <Tabela linhas={precisam} isAdmin={isAdmin} />
-        )}
-      </Bloco>
-
-      <Bloco
-        titulo={`🤖 A Ayla está cuidando (${resto.length})`}
-        desc="Nutrição automática em andamento. Você pode abordar mesmo assim, se quiser."
-      >
-        {resto.length === 0 ? (
-          <Vazio texto="Ninguém aqui." />
-        ) : (
-          <Tabela linhas={resto} isAdmin={isAdmin} />
         )}
       </Bloco>
     </div>
