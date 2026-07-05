@@ -5,6 +5,7 @@ import { getAylaAnthropicClient, AYLA_MODEL_FALLBACK } from "@/lib/ayla/anthropi
 import { logarUsoApi } from "@/lib/billing/logar";
 import { PLAYBOOK_COPILOTO } from "@/lib/crm/playbook";
 import { carregarContextoLead } from "@/lib/crm/contexto";
+import { carregarTimelineLead } from "@/lib/crm/timeline";
 
 /**
  * Copiloto comercial — um turno de conversa. Só admin. Recebe o histórico do
@@ -43,8 +44,19 @@ export async function POST(request: NextRequest) {
   }
 
   const admin = createServiceRoleClient();
-  const ctx = await carregarContextoLead(admin, familyId);
-  const system = `${PLAYBOOK_COPILOTO}\n\n# Contexto do lead (real)\n${ctx.resumo}`;
+  const [ctx, timeline] = await Promise.all([
+    carregarContextoLead(admin, familyId),
+    carregarTimelineLead(admin, familyId),
+  ]);
+  const recentes = timeline
+    .slice(-8)
+    .map((t) => `- ${t.rotulo}: ${t.texto}`)
+    .join("\n");
+  const system =
+    `${PLAYBOOK_COPILOTO}\n\n# Contexto do lead (real)\n${ctx.resumo}` +
+    (recentes
+      ? `\n\n# Conversa recente (NÃO repita o que a Ayla já disse; complemente)\n${recentes}`
+      : "");
 
   try {
     const client = getAylaAnthropicClient();
