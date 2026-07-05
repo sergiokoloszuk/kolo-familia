@@ -209,10 +209,18 @@ export default async function AquisicaoJornadaPage({
           titulo={`Ficha — ${ficha.nome}`}
           desc={ehAdminView ? "Tudo que essa família já fez." : "Sinais de uso (visão da agência, sem conteúdo)."}
         >
-          <div className="mb-3">
+          <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
             <Link href={voltarHref} scroll={false} className="text-sm font-medium text-brand-purple hover:underline">
               ← voltar à lista
             </Link>
+            {ehAdminView && famId && (
+              <Link
+                href={`/dashboards/abordagem/${famId}`}
+                className="inline-flex items-center gap-1.5 rounded-full bg-brand-purple px-4 py-1.5 text-sm font-semibold text-white transition-colors hover:bg-brand-purple/90"
+              >
+                🎯 Preparar abordagem
+              </Link>
+            )}
           </div>
           {ficha.membros.length > 0 && (
             <p className="mb-4 text-sm text-muted-foreground">
