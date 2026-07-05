@@ -101,14 +101,20 @@ export type AjudaResult =
   | { ok: true; resposta: string; rota: string | null; rotaLabel: string | null }
   | { ok: false; error: string };
 
-export async function perguntarAjuda(perguntaRaw: string): Promise<AjudaResult> {
+const chatSchema = z
+  .array(z.object({ role: z.enum(["user", "assistant"]), content: z.string().trim().max(2000) }))
+  .min(1)
+  .max(24);
+
+export async function perguntarAjuda(
+  mensagensRaw: z.infer<typeof chatSchema>,
+): Promise<AjudaResult> {
   try {
-    const pergunta = z
-      .string()
-      .trim()
-      .min(2, "Escreva um pouquinho mais.")
-      .max(500)
-      .parse(perguntaRaw);
+    const mensagens = chatSchema.parse(mensagensRaw);
+    const ultima = mensagens[mensagens.length - 1];
+    if (ultima.role !== "user" || ultima.content.trim().length < 2) {
+      return { ok: false, error: "Escreva um pouquinho mais." };
+    }
 
     let client;
     try {
@@ -126,7 +132,7 @@ export async function perguntarAjuda(perguntaRaw: string): Promise<AjudaResult> 
           model,
           max_tokens: 500,
           system: [{ type: "text", text: system, cache_control: { type: "ephemeral" } }],
-          messages: [{ role: "user", content: pergunta }],
+          messages: mensagens.map((m) => ({ role: m.role, content: m.content })),
         });
         const final = await stream.finalMessage();
         raw = final.content
@@ -148,7 +154,7 @@ export async function perguntarAjuda(perguntaRaw: string): Promise<AjudaResult> 
     // Feedback (elogio/sugestão/reclamação): registra e avisa a Karina. Não é
     // "dúvida de uso" — aqui a pessoa está falando COM a Kolo.
     if (parsed.tipo === "elogio" || parsed.tipo === "sugestao" || parsed.tipo === "reclamacao") {
-      await registrarFeedback(pergunta, parsed.tipo).catch((e) =>
+      await registrarFeedback(ultima.content, parsed.tipo).catch((e) =>
         logServerError("ajuda_feedback", e, {}).catch(() => {}),
       );
       return { ok: true, resposta: parsed.resposta, rota: null, rotaLabel: null };
