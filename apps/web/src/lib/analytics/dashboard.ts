@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { AREAS_DIARIO } from "@/lib/ia/classificar-area";
 import { familiasInternas } from "./internos";
+import { emailsPorFamilia } from "./emails";
 
 /**
  * Carrega e agrega os dados do dashboard de COMPORTAMENTO. Fonte única usada
@@ -14,6 +15,8 @@ export type Rank = { label: string; n: number };
 export type FamRow = {
   id: string;
   nome: string | null;
+  /** E-mail de login — fallback quando não há nome (cadastrou sem onboarding). */
+  email: string | null;
   ayla: number;
   web: number;
   diarios: number;
@@ -249,12 +252,23 @@ export async function carregarComportamento(
   const nomePorFam = new Map(
     (perfisFam ?? []).map((p) => [p.family_account_id as string, (p.nome_mae as string | null) ?? null]),
   );
+  const emailPorFam = await emailsPorFamilia(admin);
   const fam = new Map<string, FamRow>();
   const get = (id: string | null): FamRow | null => {
     if (!id) return null;
     let f = fam.get(id);
     if (!f) {
-      f = { id, nome: nomePorFam.get(id) ?? null, ayla: 0, web: 0, diarios: 0, ludico: 0, planos: 0, ultima: 0 };
+      f = {
+        id,
+        nome: nomePorFam.get(id) ?? null,
+        email: emailPorFam.get(id) ?? null,
+        ayla: 0,
+        web: 0,
+        diarios: 0,
+        ludico: 0,
+        planos: 0,
+        ultima: 0,
+      };
       fam.set(id, f);
     }
     return f;

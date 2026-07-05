@@ -11,7 +11,8 @@ export const dynamic = "force-dynamic";
 
 export default async function ComportamentoUsoPage() {
   const d = await carregarComportamento(createServiceRoleClient());
-  const labelFam = (f: FamRow) => `Família #${f.id.slice(0, 6)}`;
+  const labelFam = (f: FamRow) =>
+    f.nome?.trim() || f.email || `Família #${f.id.slice(0, 6)}`;
 
   return (
     <div className="flex flex-col gap-8">
@@ -55,7 +56,7 @@ export default async function ComportamentoUsoPage() {
         </Bloco>
       </div>
 
-      <Bloco titulo="Leads mais engajados" desc="Top 20 por volume combinado (anônimo).">
+      <Bloco titulo="Leads mais engajados" desc="Top 20 por volume combinado. Nome da mãe (ou e-mail, quando ainda sem nome).">
         <TabelaFamilias linhas={d.topEngajadas} labelFam={labelFam} />
       </Bloco>
     </div>

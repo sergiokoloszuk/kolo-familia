@@ -124,7 +124,7 @@ export default async function AquisicaoJornadaPage() {
                 {j.leads.map((l) => (
                   <tr key={l.id} className="border-t border-foreground/[0.06]">
                     <td className="py-2 pr-3 text-foreground">
-                      {l.nomeMae || `#${l.id.slice(0, 6)}`}
+                      {l.nomeMae || l.email || `#${l.id.slice(0, 6)}`}
                       {l.interno && (
                         <span className="ml-1 rounded bg-brand-yellow/30 px-1 text-[10px] font-medium text-brand-purple-dark">
                           interno

@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { familiasInternas } from "./internos";
+import { emailsPorFamilia } from "./emails";
 
 /**
  * "Jornada do Trial" — mapeia cada família numa FASE da jornada de trial
@@ -155,6 +156,8 @@ type FunilOrigem = { cadastrou: number; ativado: number; converteu: number };
 export type JornadaLead = {
   id: string;
   nomeMae: string;
+  /** E-mail de login — fallback quando ainda não há nome (cadastrou sem onboarding). */
+  email: string | null;
   diaTrial: number;
   criadoEm: string;
   canal: string;
@@ -222,6 +225,7 @@ export async function carregarJornadaTrial(admin: SupabaseClient): Promise<Jorna
   ]);
 
   const internas = await familiasInternas(admin);
+  const emailPorFam = await emailsPorFamilia(admin);
   const fams = (famsRaw ?? []) as FamRow[];
 
   // Nomes (co-acesso agora vê nome — Karina confia na agência). Só o nome da
@@ -351,6 +355,7 @@ export async function carregarJornadaTrial(admin: SupabaseClient): Promise<Jorna
       leads.push({
         id: f.id,
         nomeMae: nomeMaeByFam.get(f.id) ?? "",
+        email: emailPorFam.get(f.id) ?? null,
         diaTrial,
         criadoEm: f.created_at,
         canal,
