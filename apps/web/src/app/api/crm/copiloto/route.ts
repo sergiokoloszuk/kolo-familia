@@ -5,7 +5,6 @@ import { getAylaAnthropicClient, AYLA_MODEL_FALLBACK } from "@/lib/ayla/anthropi
 import { logarUsoApi } from "@/lib/billing/logar";
 import { PLAYBOOK_COPILOTO } from "@/lib/crm/playbook";
 import { carregarContextoLead } from "@/lib/crm/contexto";
-import { carregarTimelineLead } from "@/lib/crm/timeline";
 import { carregarFaseScripts } from "@/lib/crm/fase-scripts";
 
 /**
@@ -45,26 +44,22 @@ export async function POST(request: NextRequest) {
   }
 
   const admin = createServiceRoleClient();
-  const [ctx, timeline, scripts] = await Promise.all([
+  const [ctx, scripts] = await Promise.all([
     carregarContextoLead(admin, familyId),
-    carregarTimelineLead(admin, familyId),
     carregarFaseScripts(admin),
   ]);
-  const recentes = timeline
-    .slice(-8)
-    .map((t) => `- ${t.rotulo}: ${t.texto}`)
-    .join("\n");
+  // NÃO injetamos o conteúdo da conversa que o lead teve com a Ayla — a
+  // abordagem é sobre o valor da plataforma, nunca ecoa a história privada
+  // dela. O copiloto trabalha só com os SINAIS do contexto (usou/não usou,
+  // recebeu plano, dia do teste...) + o roteiro por fase.
   const roteiro = scripts
     .filter((s) => s.textoSugestao.trim())
     .map((s) => `- ${s.label}: ${s.textoSugestao}`)
     .join("\n");
   const system =
-    `${PLAYBOOK_COPILOTO}\n\n# Contexto do lead (real)\n${ctx.resumo}` +
+    `${PLAYBOOK_COPILOTO}\n\n# Contexto do lead (só sinais, sem a história dela)\n${ctx.resumo}` +
     (roteiro
       ? `\n\n# Roteiro por fase (base da Karina — use como ponto de partida, adaptando ao dia/estado do lead)\n${roteiro}`
-      : "") +
-    (recentes
-      ? `\n\n# Conversa recente (NÃO repita o que a Ayla já disse; complemente)\n${recentes}`
       : "");
 
   try {
