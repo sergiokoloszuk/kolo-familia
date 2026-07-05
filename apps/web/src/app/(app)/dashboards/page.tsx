@@ -236,7 +236,7 @@ export default async function AquisicaoJornadaPage({
                 : "Ainda não falou com a Ayla."}
             </FichaCard>
 
-            <FichaCard titulo="🌿 Perfil (Kolo Vivo)">
+            <FichaCard titulo="🌿 Perfil">
               {ficha.koloVivo.campos.length === 0 ? (
                 "Nada preenchido ainda."
               ) : ehAdminView ? (

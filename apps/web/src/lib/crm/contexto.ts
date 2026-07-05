@@ -70,11 +70,17 @@ export async function carregarContextoLead(
     .map((m) => `${m.nome} (${m.perfil}${m.idade != null ? `, ${m.idade} anos` : ""})`)
     .join(", ");
 
+  // SÓ SINAIS — nada do conteúdo da conversa. (Não listar temas de plano: eles
+  // costumam ser trechos do que a mãe falou = história privada.)
   const usos: string[] = [];
   usos.push(ficha.ayla.mensagens > 0 ? `falou com a Ayla (${ficha.ayla.mensagens} msgs)` : "NÃO falou com a Ayla");
-  usos.push(ficha.koloVivo.campos.length > 0 ? `preencheu Kolo Vivo (${ficha.koloVivo.campos.join(", ")})` : "NÃO preencheu o Kolo Vivo");
+  usos.push(
+    ficha.koloVivo.campos.length > 0
+      ? `preencheu ${ficha.koloVivo.campos.length} campo(s) do Perfil`
+      : "NÃO preencheu o Perfil",
+  );
   usos.push(ficha.estrategias.total > 0 ? `usou Estratégias (${ficha.estrategias.total})` : "NÃO usou Estratégias");
-  usos.push(ficha.planos.total > 0 ? `recebeu ${ficha.planos.total} plano(s)${ficha.planos.temas.length ? ` (${ficha.planos.temas.join(", ")})` : ""}` : "NÃO pediu plano");
+  usos.push(ficha.planos.total > 0 ? `recebeu ${ficha.planos.total} plano(s)` : "NÃO recebeu plano");
   usos.push(ficha.ludico.total > 0 ? `usou o Lúdico (${ficha.ludico.porTipo.map((t) => t.tipo).join(", ")})` : "NÃO usou o Lúdico");
 
   // Telas que a pessoa ABRIU (navegou) — diferente de "usou". Ajuda o copiloto a

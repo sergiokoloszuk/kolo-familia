@@ -3,7 +3,7 @@ import { ArrowLeft } from "lucide-react";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { ehAdmin } from "@/lib/auth/require-admin";
 import { carregarContextoLead } from "@/lib/crm/contexto";
-import { carregarTimelineLead } from "@/lib/crm/timeline";
+import { carregarFaseScripts, faseDoLead, FASE_LABEL } from "@/lib/crm/fase-scripts";
 import { Copiloto } from "./copiloto";
 import { EstadoAbordagem } from "./estado";
 
@@ -30,15 +30,22 @@ export default async function AbordagemPage({
   }
 
   const admin = createServiceRoleClient();
-  const [ctx, timeline, { data: crmLead }] = await Promise.all([
+  const [ctx, { data: crmThread }, { data: crmLead }, fase, scripts] = await Promise.all([
     carregarContextoLead(admin, familyId),
-    carregarTimelineLead(admin, familyId),
+    admin
+      .from("crm_mensagens")
+      .select("direcao, texto, created_at")
+      .eq("family_account_id", familyId)
+      .order("created_at", { ascending: true }),
     admin
       .from("crm_leads")
       .select("em_abordagem, aguardando_resposta")
       .eq("family_account_id", familyId)
       .maybeSingle(),
+    faseDoLead(admin, familyId),
+    carregarFaseScripts(admin),
   ]);
+  const scriptFase = scripts.find((s) => s.fase === fase);
 
   return (
     <div className="flex flex-col gap-6">
@@ -67,43 +74,53 @@ export default async function AbordagemPage({
         <pre className="whitespace-pre-wrap font-sans text-sm text-muted-foreground">{ctx.resumo}</pre>
       </section>
 
-      {/* Linha do tempo unificada: Ayla + Você + Lead */}
-      {timeline.length > 0 && (
-        <section className="rounded-2xl border border-foreground/[0.08] bg-white p-5">
-          <h2 className="mb-1 font-heading text-base text-foreground">Linha do tempo</h2>
-          <p className="mb-3 text-xs text-muted-foreground">
-            Tudo que já rolou com esse lead — 🤖 Ayla, 🙋‍♀️ você, 💬 lead. Não repita o que a Ayla já cobriu.
+      {/* Sugestão da agência pra esta fase (editável em Configuração) */}
+      {scriptFase && (
+        <section className="rounded-2xl border border-brand-purple/20 bg-kolo-lilas-bg-2/50 p-5">
+          <h2 className="mb-1 font-heading text-base text-foreground">
+            💡 Sugestão da agência — fase: {FASE_LABEL[fase] ?? fase}
+          </h2>
+          <p className="text-sm text-muted-foreground">
+            {scriptFase.textoSugestao || "(sem sugestão pra esta fase — edite em CRM → Configuração)"}
           </p>
+          <p className="mt-2 text-xs text-muted-foreground">
+            Compare com a proposta do copiloto abaixo pra ver se está boa. Ajuste o roteiro em CRM → Configuração.
+          </p>
+        </section>
+      )}
+
+      {/* Suas abordagens (só a sua thread — a conversa da Ayla não aparece aqui) */}
+      {crmThread && crmThread.length > 0 && (
+        <section className="rounded-2xl border border-foreground/[0.08] bg-white p-5">
+          <h2 className="mb-3 font-heading text-base text-foreground">Suas abordagens</h2>
           <ul className="flex flex-col gap-2">
-            {timeline.map((m, i) => (
-              <li
-                key={i}
-                className={`max-w-[85%] rounded-xl px-3 py-2 text-sm ${
-                  m.autor === "voce"
-                    ? "self-end bg-brand-purple text-white"
-                    : m.autor === "ayla"
-                      ? "self-start bg-kolo-lilas-bg-2 text-foreground"
-                      : "self-start bg-foreground/[0.04] text-muted-foreground"
-                }`}
-              >
-                <span
-                  className={`mb-0.5 block text-[10px] uppercase tracking-wide ${
-                    m.autor === "voce" ? "text-white/70" : "text-muted-foreground"
+            {crmThread.map((m, i) => {
+              const enviada = (m.direcao as string) === "enviada";
+              return (
+                <li
+                  key={i}
+                  className={`max-w-[85%] rounded-xl px-3 py-2 text-sm ${
+                    enviada ? "self-end bg-brand-purple text-white" : "self-start bg-foreground/[0.04] text-muted-foreground"
                   }`}
                 >
-                  {m.autor === "ayla" ? "🤖 " : m.autor === "voce" ? "🙋‍♀️ " : "💬 "}
-                  {m.rotulo} ·{" "}
-                  {new Date(m.quando).toLocaleString("pt-BR", {
-                    timeZone: "America/Sao_Paulo",
-                    day: "2-digit",
-                    month: "2-digit",
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}
-                </span>
-                <span className="whitespace-pre-wrap">{m.texto}</span>
-              </li>
-            ))}
+                  <span
+                    className={`mb-0.5 block text-[10px] uppercase tracking-wide ${
+                      enviada ? "text-white/70" : "text-muted-foreground"
+                    }`}
+                  >
+                    {enviada ? "🙋‍♀️ Você" : "💬 Lead"} ·{" "}
+                    {new Date(m.created_at as string).toLocaleString("pt-BR", {
+                      timeZone: "America/Sao_Paulo",
+                      day: "2-digit",
+                      month: "2-digit",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </span>
+                  <span className="whitespace-pre-wrap">{m.texto as string}</span>
+                </li>
+              );
+            })}
           </ul>
         </section>
       )}
