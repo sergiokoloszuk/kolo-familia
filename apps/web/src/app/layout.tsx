@@ -77,6 +77,11 @@ export const metadata: Metadata = {
     index: true,
     follow: true,
   },
+  // Desliga a tradução automática do navegador (Chrome/Edge). NÓS controlamos
+  // o idioma (PT hoje; ES/EN via nossa própria tradução no futuro) — o navegador
+  // nunca deve reescrever nossas palavras (ex.: "Kolo"→"Rodada", "Lúdico"→
+  // "Brincalhão"). Renderiza <meta name="google" content="notranslate">.
+  other: { google: "notranslate" },
 };
 
 export const viewport: Viewport = {
@@ -96,7 +101,8 @@ export default function RootLayout({
   return (
     <html
       lang="pt-BR"
-      className={`${geistMono.variable} ${fraunces.variable} ${jakarta.variable} h-full antialiased`}
+      translate="no"
+      className={`${geistMono.variable} ${fraunces.variable} ${jakarta.variable} h-full antialiased notranslate`}
     >
       <body className="min-h-full flex flex-col">
         <AuthProvider>{children}</AuthProvider>
