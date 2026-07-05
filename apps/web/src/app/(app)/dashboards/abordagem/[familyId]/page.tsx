@@ -5,6 +5,7 @@ import { ehAdmin } from "@/lib/auth/require-admin";
 import { carregarContextoLead } from "@/lib/crm/contexto";
 import { carregarTimelineLead } from "@/lib/crm/timeline";
 import { Copiloto } from "./copiloto";
+import { EstadoAbordagem } from "./estado";
 
 export const dynamic = "force-dynamic";
 
@@ -29,9 +30,14 @@ export default async function AbordagemPage({
   }
 
   const admin = createServiceRoleClient();
-  const [ctx, timeline] = await Promise.all([
+  const [ctx, timeline, { data: crmLead }] = await Promise.all([
     carregarContextoLead(admin, familyId),
     carregarTimelineLead(admin, familyId),
+    admin
+      .from("crm_leads")
+      .select("em_abordagem, aguardando_resposta")
+      .eq("family_account_id", familyId)
+      .maybeSingle(),
   ]);
 
   return (
@@ -48,6 +54,12 @@ export default async function AbordagemPage({
           Preparar abordagem — {ctx.nome}
         </h1>
       </header>
+
+      <EstadoAbordagem
+        familyId={familyId}
+        emAbordagem={!!crmLead?.em_abordagem}
+        aguardando={!!crmLead?.aguardando_resposta}
+      />
 
       {/* Contexto do lead */}
       <section className="rounded-2xl border border-foreground/[0.08] bg-white p-5">

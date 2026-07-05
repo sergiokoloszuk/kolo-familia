@@ -776,11 +776,41 @@ export async function processInbound(
     await supabase.from("ayla_messages").insert(baseInbound);
   }
 
-  // 3. Comando? — antes do parser IA, mais rápido
+  // 3. Comando? — antes do parser IA, mais rápido (PAUSAR/SAIR valem mesmo em abordagem)
   const cmd = detectarComando(inbound.texto);
   if (cmd) {
     const resp = await processarComando(supabase, family.id, cmd);
     return { tratada: true, familia: family.id, resposta: resp };
+  }
+
+  // 3b. CRM Fase B: se o lead está em ABORDAGEM manual, a Ayla NÃO responde —
+  // registra a resposta na thread do CRM, marca "aguardando você" e avisa a
+  // Karina no celular. Ela responde pelo CRM. (Encerrar a abordagem devolve o
+  // controle pra Ayla.)
+  {
+    const { data: crm } = await supabase
+      .from("crm_leads")
+      .select("em_abordagem")
+      .eq("family_account_id", family.id)
+      .maybeSingle();
+    if (crm?.em_abordagem) {
+      await supabase.from("crm_mensagens").insert({
+        family_account_id: family.id,
+        direcao: "recebida",
+        texto: inbound.texto,
+      });
+      await supabase
+        .from("crm_leads")
+        .update({ aguardando_resposta: true, updated_at: new Date().toISOString() })
+        .eq("family_account_id", family.id);
+      try {
+        const { notificarRespostaLead } = await import("@/lib/admin/notificacoes");
+        await notificarRespostaLead(supabase, family.id, inbound.texto);
+      } catch (e) {
+        console.warn("[crm] aviso de resposta ao lead falhou:", e instanceof Error ? e.message : e);
+      }
+      return { tratada: true, familia: family.id };
+    }
   }
 
   // 3a. Resposta à oferta de fim de semana (Fase 5): se não for recusa,

@@ -131,6 +131,32 @@ export async function notificarFeedback(
 }
 
 /**
+ * Aviso no celular do admin: um lead EM ABORDAGEM respondeu no WhatsApp. A Ayla
+ * fica suprimida pra esse lead — a Karina responde pelo CRM. Best-effort.
+ */
+export async function notificarRespostaLead(
+  admin: SupabaseClient,
+  familyId: string,
+  texto: string,
+): Promise<void> {
+  try {
+    const { data: prof } = await admin
+      .from("family_profiles")
+      .select("nome_mae, como_chamar")
+      .eq("family_account_id", familyId)
+      .maybeSingle();
+    const nome =
+      (prof?.como_chamar as string | null)?.trim() ||
+      (prof?.nome_mae as string | null)?.trim() ||
+      "Um lead";
+    const msg = `💬 ${nome} respondeu sua abordagem:\n"${texto.slice(0, 500)}"\n\nResponda pelo CRM quando puder.`;
+    await enviarTexto({ phoneE164: ADMIN_WHATSAPP, texto: msg });
+  } catch (e) {
+    console.warn("[admin:notificarRespostaLead] falhou:", e instanceof Error ? e.message : e);
+  }
+}
+
+/**
  * Contagem de novos cadastros (por created_at, fuso BRT) pro resumo das 8h:
  * ontem, semana atual (seg–dom) e mês vigente. Exclui contas internas
  * (admin/co-acesso), igual aos dashboards.

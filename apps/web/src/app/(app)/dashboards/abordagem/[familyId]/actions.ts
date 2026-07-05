@@ -75,3 +75,23 @@ export async function enviarAbordagem(input: {
     return { ok: false, error: e instanceof Error ? e.message : "Erro inesperado" };
   }
 }
+
+/**
+ * Encerra a abordagem: a Ayla volta a responder esse lead normalmente. Só admin.
+ */
+export async function encerrarAbordagem(familyId: string): Promise<EnvioResult> {
+  try {
+    if (!(await ehAdmin())) return { ok: false, error: "Só admin." };
+    z.string().uuid().parse(familyId);
+    const admin = createServiceRoleClient();
+    const { error } = await admin
+      .from("crm_leads")
+      .update({ em_abordagem: false, aguardando_resposta: false, updated_at: new Date().toISOString() })
+      .eq("family_account_id", familyId);
+    if (error) return { ok: false, error: error.message };
+    revalidatePath(`/dashboards/abordagem/${familyId}`);
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "Erro inesperado" };
+  }
+}
