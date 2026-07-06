@@ -4,6 +4,7 @@ import { carregarCopy } from "@/lib/onboarding/copy-store";
 import { lerModo } from "@/lib/onboarding/modo";
 import { OnboardingExperiencia } from "./preview";
 import { OnboardingEditor } from "./editor";
+import { TestarCadastroNovo } from "./testar-cadastro";
 
 /**
  * Dashboards → Onboarding. A experiência inicial do lead (cadastro conversacional
@@ -39,7 +40,20 @@ export default async function DashboardsOnboardingPage() {
       {isAdmin ? (
         <OnboardingEditor initialCopy={copy} modoInicial={modo} />
       ) : (
-        <OnboardingExperiencia copy={copy} />
+        <div className="flex flex-col gap-5">
+          {modo === "teste" && (
+            <div className="rounded-2xl border border-brand-purple/30 bg-brand-purple/5 p-4">
+              <p className="text-sm font-semibold text-foreground">Testar o cadastro novo de verdade</p>
+              <p className="mb-3 mt-1 text-xs text-muted-foreground">
+                Estamos em modo de teste. Clique abaixo pra abrir um cadastro em branco e percorrer o
+                fluxo novo do começo ao fim — vale só pro seu navegador; os leads reais seguem no
+                cadastro atual.
+              </p>
+              <TestarCadastroNovo />
+            </div>
+          )}
+          <OnboardingExperiencia copy={copy} />
+        </div>
       )}
     </div>
   );

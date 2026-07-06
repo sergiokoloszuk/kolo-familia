@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import type { OnboardingCopy } from "@/lib/onboarding/copy-default";
 import type { ModoOnboarding } from "@/lib/onboarding/modo";
 import { OnboardingExperiencia } from "./preview";
+import { TestarCadastroNovo } from "./testar-cadastro";
 import {
   ajustarCopyComIA,
   publicarCopyAction,
@@ -129,15 +130,9 @@ export function OnboardingEditor({
           A troca vale na hora, sem deploy. O cadastro antigo continua intacto como rede.
         </p>
         {modo === "teste" && (
-          <button
-            onClick={() => {
-              document.cookie = "kolo_onb=novo; path=/; max-age=3600";
-              window.open("/signup", "_blank");
-            }}
-            className="mt-3 rounded-full bg-brand-purple px-4 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-brand-purple/90"
-          >
-            ▶ Testar o cadastro novo (abre um cadastro em branco, só pro seu navegador)
-          </button>
+          <div className="mt-3">
+            <TestarCadastroNovo />
+          </div>
         )}
       </div>
 
