@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -48,6 +48,21 @@ export function OnboardingConversacional({ copy }: { copy: OnboardingCopy }) {
   const [retomarEm, setRetomarEm] = useState<number | null>(null);
   const [fase, setFase] = useState<Fase>("form");
   const [erroMsg, setErroMsg] = useState("");
+
+  // Captura a ORIGEM (anúncio/campanha/criativo via UTM; afiliado via ref) — igual
+  // ao wizard antigo. Lê os cookies kolo_utm/kolo_ref e grava na família, 1x.
+  // Best-effort: nunca trava o cadastro.
+  useEffect(() => {
+    void (async () => {
+      try {
+        const { atribuirAfiliado, atribuirUtm } = await import("./actions");
+        await atribuirAfiliado();
+        await atribuirUtm();
+      } catch {
+        /* tracking nunca segura o fluxo */
+      }
+    })();
+  }, []);
 
   const passos = copy.passos;
   const passo: OnbPasso | undefined = passos[idx];
