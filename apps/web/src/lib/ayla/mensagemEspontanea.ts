@@ -14,6 +14,22 @@ import { carregarCadenciaMap } from "@/lib/crm/ayla-cadencia";
 
 const MS_DIA = 86_400_000;
 
+/** Domínios do Perfil (categorias_extras) → rótulo humano pras perguntas. */
+const DOMINIO_LABEL: Record<string, string> = {
+  comunicacao: "comunicação",
+  socializacao: "socialização",
+  foco: "foco e atenção",
+  escola: "escola",
+  sono: "sono",
+  autonomia: "autonomia",
+  emocional: "emoções e regulação",
+  nutricional: "alimentação",
+  sensorial: "sensorial",
+  rotina: "rotina",
+};
+/** Áreas que valem explorar numa CRIANÇA (as que ela pediu + as clássicas). */
+const DOMINIOS_CRIANCA = ["comunicacao", "socializacao", "foco", "escola", "sono", "autonomia", "emocional"];
+
 /**
  * Gerador de mensagens espontâneas da Ayla via IA — substitui os templates
  * estáticos da rotina diária por texto gerado por Haiku, escolhendo entre 3
@@ -33,7 +49,9 @@ export type Intent =
   | "convite_plano"
   | "ensinar_valor"
   | "feedback_plano"
-  | "menu_do_dia";
+  | "menu_do_dia"
+  | "aprofundar_tema"
+  | "explorar_temas";
 
 export type MensagemEspontaneaResult = {
   texto: string;
@@ -140,6 +158,12 @@ type Context = {
   perfilCompleto: boolean;
   /** O foco é CRIANÇA (≤12)? Só aí o Lúdico entra no menu. */
   ehCrianca: boolean;
+  /** Temas que ela JÁ indicou como desafiadores (com o que contou) — pra aprofundar. */
+  temasComInfo: { dominio: string; label: string; texto: string }[];
+  /** Áreas (criança) que AINDA não conhecemos — pra explorar sem repetir. */
+  temasSemInfo: string[];
+  /** Interesses da criança (pra cruzar com os desafios nos planos/histórias). */
+  interesses: string[];
 };
 
 async function loadContext(
@@ -169,7 +193,7 @@ async function loadContext(
       .order("created_at", { ascending: true }),
     supabase
       .from("perfil_vivo_membro")
-      .select("essencial, como_e, corpo_rotina, desafios_regulacao, sensorial")
+      .select("essencial, como_e, corpo_rotina, desafios_regulacao, sensorial, categorias_extras")
       .eq("membro_atipico_id", membroFocoId)
       .maybeSingle(),
     supabase.from("planos").select("id").eq("family_account_id", familyId).limit(1),
@@ -198,6 +222,20 @@ async function loadContext(
       : null;
   const idadeFoco = idadeAnos((foco.data_nascimento as string | null) ?? null);
 
+  // Temas (desafios) e interesses do Perfil — pra personalizar e não repetir.
+  const extras = ((kv as { categorias_extras?: Record<string, unknown> } | null)?.categorias_extras ??
+    {}) as Record<string, unknown>;
+  const textoDe = (k: string) => (extras[k] as { texto?: string } | undefined)?.texto?.trim() ?? "";
+  const temasComInfo = Object.keys(DOMINIO_LABEL)
+    .filter((k) => textoDe(k))
+    .map((k) => ({ dominio: k, label: DOMINIO_LABEL[k], texto: textoDe(k) }));
+  const temasSemInfo = DOMINIOS_CRIANCA.filter((k) => !textoDe(k)).map((k) => DOMINIO_LABEL[k]);
+  const interesses = (
+    ((extras.preferencias as { temas?: unknown } | undefined)?.temas as string[] | undefined) ??
+    ((kv as { como_e?: { interesses?: unknown } } | null)?.como_e?.interesses as string[] | undefined) ??
+    []
+  ).filter((x): x is string => typeof x === "string" && !!x.trim());
+
   return {
     nomeMae,
     nomeMembro: foco.nome as string,
@@ -218,6 +256,9 @@ async function loadContext(
     interagiu: (inbound?.length ?? 0) > 0,
     perfilCompleto: gapsAbertos.length === 0,
     ehCrianca: idadeFoco != null && idadeFoco <= 12,
+    temasComInfo,
+    temasSemInfo,
+    interesses,
   };
 }
 
@@ -229,29 +270,34 @@ function hashSeed(s: string): number {
 
 function pickIntent(
   seed: string,
-  s: { temPlano: boolean; diaTrial: number | null; interagiu: boolean },
+  s: {
+    temPlano: boolean;
+    diaTrial: number | null;
+    interagiu: boolean;
+    temTemaComInfo: boolean;
+    temGapExplorar: boolean;
+  },
 ): Intent {
   const r = hashSeed(seed) % 100;
-  // Não engajou ainda (D2+): o "menu do dia" é o desbloqueio — em vez de só
-  // "conta como foi o dia", oferece caminhos concretos de valor.
+  // Não engajou ainda (D2+): o "menu do dia" é o desbloqueio.
   if (!s.interagiu && (s.diaTrial ?? 1) >= 2) {
-    if (r < 55) return "menu_do_dia";
-    if (r < 80) return "convite_plano";
+    if (r < 50) return "menu_do_dia";
+    if (r < 78) return "convite_plano";
     return "ensinar_valor";
   }
-  // Ainda sem plano: puxa pro plano/valor, com o menu reaparecendo.
+  // Personalização ancorada nos temas dela — a mudança que mais move o lead.
+  if (s.temTemaComInfo && r < 26) return "aprofundar_tema";
+  if (s.temGapExplorar && r < 48) return "explorar_temas";
+  // Ainda sem plano: puxa pro plano/valor.
   if (!s.temPlano) {
-    if (r < 30) return "convite_plano";
-    if (r < 55) return "menu_do_dia";
-    if (r < 78) return "ensinar_valor";
+    if (r < 70) return "convite_plano";
+    if (r < 86) return "ensinar_valor";
     return "acolhimento";
   }
-  // Já tem plano: pergunta o que achou; menu e mix normal.
-  if (r < 22) return "feedback_plano";
-  if (r < 42) return "menu_do_dia";
-  if (r < 60) return "acolhimento";
+  // Já tem plano: pergunta o que achou; recurso e acolhimento.
+  if (r < 62) return "feedback_plano";
   if (r < 80) return "voce_sabia";
-  return "completar_perfil";
+  return "acolhimento";
 }
 
 function pickFeature(seed: string, nomeMembro: string): string {
@@ -334,6 +380,53 @@ Pergunte, com leveza e curiosidade de verdade, o que ${ctx.nomeMae} achou do pla
 EXEMPLOS DE TOM (não copie literal, só inspira):
 - "${ctx.nomeMae}, você chegou a testar o plano que montei? Fico curiosa pra saber o que funcionou aí ${ctx.comNomeMembro} — e o que não."
 - "Como foi com o plano? Me conta o que pegou e o que não colou, que eu ajusto pro próximo."
+
+Gere UMA nova mensagem.`;
+}
+
+function promptAprofundarTema(
+  ctx: Context,
+  tema: { dominio: string; label: string; texto: string },
+): string {
+  const usaInteresses = ctx.interesses.length
+    ? ` A ${ctx.nomeMembro} gosta de: ${ctx.interesses.join(", ")} — dá pra usar isso pra deixar mais leve.`
+    : "";
+  return `INTENÇÃO: aprofundar_tema
+
+CONTEXTO:
+- Quem recebe: ${ctx.nomeMae}
+- Em foco: ${ctx.nomeMembro}${ctx.idadeMembro != null ? `, ${ctx.idadeMembro} anos` : ""}
+- Tema que ${ctx.nomeMae} JÁ indicou como desafiador: "${tema.label}"${tema.texto ? ` — ela contou: "${tema.texto.slice(0, 200)}"` : ""}.${usaInteresses}
+
+TAREFA:
+Retome esse tema com carinho: pergunte como TEM SIDO ultimamente (de forma atemporal). Convide a contar um pouco mais — o que costuma acontecer, o que já tentaram — e ofereça montar um PLANO prático pra isso${ctx.interesses.length ? ", usando o que a criança ama" : ""}. Deixe a opção de ÁUDIO.
+
+Regras:
+- Diga "desafiador" / "difícil" — NUNCA "pega bastante aí".
+- NÃO cite acontecimentos pontuais/datados (viagem, prova, festa) — só o tema em si, atemporal.
+- Uma pergunta, curto, WhatsApp, sem "funcionalidade/plataforma/recurso".
+
+Gere UMA nova mensagem.`;
+}
+
+function promptExplorarTema(ctx: Context, dominioLabel: string): string {
+  const usaInteresses = ctx.interesses.length
+    ? ` Você já sabe que a ${ctx.nomeMembro} ama: ${ctx.interesses.join(", ")}.`
+    : "";
+  return `INTENÇÃO: explorar_temas
+
+CONTEXTO:
+- Quem recebe: ${ctx.nomeMae}
+- Em foco: ${ctx.nomeMembro}${ctx.idadeMembro != null ? `, ${ctx.idadeMembro} anos` : ""} (criança).${usaInteresses}
+- Área que você AINDA NÃO conhece e quer explorar HOJE: ${dominioLabel}.
+
+TAREFA:
+Faça UMA pergunta calorosa e curiosa sobre "${dominioLabel}", pra conhecer melhor a ${ctx.nomeMembro} e personalizar as ideias. Espírito (não copie): comunicação → como ela se comunica no dia a dia; socialização → como é com outras crianças, se brinca junto; foco → em que engata e quando dispersa; escola → o que funciona e o que é desafiador. Se ajudar, conecte de leve com um interesse que você já conhece.
+
+Regras:
+- O objetivo é conhecer/atualizar o Perfil — cada resposta deixa as ideias mais certeiras.
+- Atemporal: nada de eventos datados. Diga "desafiador", não "pega aí".
+- Uma pergunta, curto, WhatsApp, com opção de ÁUDIO, sem jargão.
 
 Gere UMA nova mensagem.`;
 }
@@ -424,6 +517,8 @@ export async function gerarMensagemEspontanea(
     temPlano: ctx.temPlano,
     diaTrial: ctx.diaTrial,
     interagiu: ctx.interagiu,
+    temTemaComInfo: ctx.temasComInfo.length > 0,
+    temGapExplorar: ctx.ehCrianca && ctx.temasSemInfo.length > 0,
   });
   // Situação desligada por você na Configuração → cai no acolhimento (sempre on).
   if (cadenciaMap.get(intent)?.ativo === false) intent = "acolhimento";
@@ -453,6 +548,16 @@ export async function gerarMensagemEspontanea(
       ? await gerarMagicLink(supabase, { familyId: params.familyId, next: "/ludico" })
       : null;
     userPrompt = promptMenuDia(ctx, ludicoLink);
+  } else if (intent === "aprofundar_tema") {
+    const tema = ctx.temasComInfo.length
+      ? ctx.temasComInfo[hashSeed(`${seed}-tema`) % ctx.temasComInfo.length]
+      : null;
+    userPrompt = tema ? promptAprofundarTema(ctx, tema) : promptConvitePlano(ctx);
+  } else if (intent === "explorar_temas") {
+    const dom = ctx.temasSemInfo.length
+      ? ctx.temasSemInfo[hashSeed(`${seed}-explorar`) % ctx.temasSemInfo.length]
+      : null;
+    userPrompt = dom ? promptExplorarTema(ctx, dom) : promptAcolhimento(ctx);
   } else {
     userPrompt = promptAcolhimento(ctx);
   }
