@@ -13,7 +13,7 @@ import type { OnboardingCopy, OnbPasso } from "@/lib/onboarding/copy-default";
  */
 
 function fill(text: string, nome: string, voce: string): string {
-  const n = nome.trim() || "seu filho ou sua filha";
+  const n = nome.trim() || "quem você cuida";
   const v = voce.trim() || "você";
   return text.replaceAll("[NOME]", n).replaceAll("[VOCE]", v);
 }
@@ -26,10 +26,11 @@ export function OnboardingPreview({ copy }: { copy: OnboardingCopy }) {
   // rascunho do input atual
   const [texto, setTexto] = useState("");
   const [multi, setMulti] = useState<string[]>([]);
+  const [uni, setUni] = useState<string | null>(null);
   const [aceites, setAceites] = useState({ termos: false, ayla: false });
 
-  const nome = (answers["crianca_nome"] as string) ?? "";
-  const voce = (answers["voce"] as string) ?? "";
+  const nome = (answers["membro_nome"] as string) ?? "";
+  const voce = (answers["voce_nome"] as string) ?? "";
   const passos = copy.passos;
   const passo: OnbPasso | undefined = passos[idx];
   const terminou = idx >= passos.length;
@@ -45,6 +46,7 @@ export function OnboardingPreview({ copy }: { copy: OnboardingCopy }) {
     setAnswers((a) => ({ ...a, [passo.id]: valor }));
     setTexto("");
     setMulti([]);
+    setUni(null);
     setIdx((i) => i + 1);
   }
 
@@ -53,6 +55,7 @@ export function OnboardingPreview({ copy }: { copy: OnboardingCopy }) {
     setAnswers({});
     setTexto("");
     setMulti([]);
+    setUni(null);
     setAceites({ termos: false, ayla: false });
   }
 
@@ -138,13 +141,36 @@ export function OnboardingPreview({ copy }: { copy: OnboardingCopy }) {
             )}
 
             {passo.tipo === "chips_uni" && (
-              <ChipGroup label={passo.id}>
-                {(passo.opcoes ?? []).map((o) => (
-                  <Chip key={o.value} selected={false} onClick={() => avancar(o.value)}>
-                    {o.label}
-                  </Chip>
-                ))}
-              </ChipGroup>
+              <div className="flex flex-col gap-2">
+                <ChipGroup label={passo.id}>
+                  {(passo.opcoes ?? []).map((o) => (
+                    <Chip
+                      key={o.value}
+                      selected={uni === o.value}
+                      onClick={() => (o.livre ? setUni(o.value) : avancar(o.label))}
+                    >
+                      {o.label}
+                    </Chip>
+                  ))}
+                </ChipGroup>
+                {uni && (passo.opcoes ?? []).find((o) => o.value === uni)?.livre && (
+                  <div className="flex flex-col gap-1.5">
+                    <Input
+                      value={texto}
+                      placeholder="Escreva aqui — ex.: tia, madrinha, tutor(a)"
+                      onChange={(e) => setTexto(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" && texto.trim()) avancar(texto.trim());
+                      }}
+                    />
+                    <div className="flex justify-end">
+                      <Button size="sm" disabled={!texto.trim()} onClick={() => avancar(texto.trim())}>
+                        Continuar
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
             )}
 
             {passo.tipo === "aceites" && (

@@ -7,7 +7,12 @@
  * Placeholders: [NOME] = nome da criança; [VOCE] = como a mãe/cuidador se chama.
  */
 
-export type OnbChip = { value: string; label: string };
+export type OnbChip = {
+  value: string;
+  label: string;
+  /** Quando escolhido, abre um campo livre pra a pessoa escrever (ex.: "Outro(a)"). */
+  livre?: boolean;
+};
 
 export type OnbTipo = "texto" | "data" | "chips_multi" | "chips_uni" | "whatsapp" | "aceites";
 
@@ -38,20 +43,29 @@ export const ONBOARDING_COPY_DEFAULT: OnboardingCopy = {
   },
   passos: [
     {
-      id: "crianca_nome",
-      ayla: "Quem é a criança que a gente vai cuidar junto?",
+      id: "membro_nome",
+      ayla: "Pra começar: quem é a pessoa que você cuida?",
       tipo: "texto",
       placeholder: "O nome dele ou dela",
     },
     {
-      id: "crianca_nascimento",
-      ayla: "Qual a data de aniversário do [NOME]? Assim eu cresço junto — minhas ideias acompanham a idade certinha.",
+      id: "membro_genero",
+      ayla: "Sobre [NOME]: falo no feminino ou no masculino?",
+      tipo: "chips_uni",
+      opcoes: [
+        { value: "feminino", label: "Feminino" },
+        { value: "masculino", label: "Masculino" },
+      ],
+    },
+    {
+      id: "membro_nascimento",
+      ayla: "Qual a data de nascimento de [NOME]? Assim minhas ideias acompanham a fase de vida — do jeito certo pra cada idade.",
       tipo: "data",
       placeholder: "dd/mm/aaaa",
     },
     {
-      id: "crianca_diagnostico",
-      ayla: "E como é o [NOME]? Pode tocar em mais de um — ou no que ainda está em investigação.",
+      id: "membro_diagnostico",
+      ayla: "E como é [NOME]? Pode tocar em mais de um — ou no que ainda está em investigação.",
       tipo: "chips_multi",
       opcoes: [
         { value: "TEA", label: "Autismo (TEA)" },
@@ -79,10 +93,22 @@ export const ONBOARDING_COPY_DEFAULT: OnboardingCopy = {
       ],
     },
     {
-      id: "voce",
-      ayla: "E você, como te chamo?",
+      id: "voce_nome",
+      ayla: "Agora me conta de você: como te chamo?",
       tipo: "texto",
       placeholder: "Seu nome",
+    },
+    {
+      id: "voce_relacao",
+      ayla: "E você é o quê de [NOME]?",
+      tipo: "chips_uni",
+      opcoes: [
+        { value: "mae", label: "Mãe" },
+        { value: "pai", label: "Pai" },
+        { value: "avo", label: "Avó" },
+        { value: "avoh", label: "Avô" },
+        { value: "outro", label: "Outro(a)", livre: true },
+      ],
     },
     {
       id: "whatsapp",
