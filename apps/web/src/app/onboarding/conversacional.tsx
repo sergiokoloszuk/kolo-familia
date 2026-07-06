@@ -5,8 +5,8 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Chip, ChipGroup } from "@/components/ui/chip";
-import { mascararDataBr } from "@/lib/idade";
-import type { OnboardingCopy, OnbPasso } from "@/lib/onboarding/copy-default";
+import { mascararDataBr, dataBrParaIso, idadeAnos } from "@/lib/idade";
+import { exemplosInteressePorIdade, type OnboardingCopy, type OnbPasso, type OnbChip } from "@/lib/onboarding/copy-default";
 import type { RespostasConversacional } from "@/lib/onboarding/salvar-conversacional";
 import { concluirConversacional } from "./actions-conversacional";
 
@@ -32,6 +32,15 @@ function maskTel(v: string): string {
 function telParaE164(v: string): string {
   const d = v.replace(/\D/g, "").slice(0, 11);
   return d ? `+55${d}` : "";
+}
+
+// Opções do passo — pro passo de interesses, os chips saem da IDADE de [NOME].
+function opcoesDoPasso(passo: OnbPasso, nascimentoBr: string): OnbChip[] {
+  if (passo.id !== "membro_interesses") return passo.opcoes ?? [];
+  const iso = dataBrParaIso(nascimentoBr);
+  const idade = iso ? idadeAnos(iso) : null;
+  const ex = exemplosInteressePorIdade(idade).map((e) => ({ value: e, label: e }));
+  return [...ex, { value: "Outro", label: "Outro", livre: true }];
 }
 
 type Fase = "form" | "salvando" | "pronto" | "duplicado" | "erro";
@@ -106,6 +115,9 @@ export function OnboardingConversacional({ copy }: { copy: OnboardingCopy }) {
     setFase("salvando");
     const str = (id: string) => (finais[id] as string) ?? "";
     const arr = (id: string) => (Array.isArray(finais[id]) ? (finais[id] as string[]) : []);
+    const interesses = arr("membro_interesses")
+      .map((v) => (v === "Outro" ? (outros["membro_interesses"] || "").trim() : v))
+      .filter(Boolean);
     const r: RespostasConversacional = {
       membro: {
         nome: str("membro_nome"),
@@ -114,8 +126,10 @@ export function OnboardingConversacional({ copy }: { copy: OnboardingCopy }) {
         laudo: arr("membro_laudo"),
         laudoOutro: outros["membro_laudo"] ?? null,
         investigacao: arr("membro_investigacao"),
+        interesses,
       },
       desafios: arr("desafios"),
+      horario: str("voce_horario") || null,
       responsavel: {
         nome: str("voce_nome"),
         relacao: str("voce_relacao"),
@@ -264,7 +278,7 @@ export function OnboardingConversacional({ copy }: { copy: OnboardingCopy }) {
 
           {passo.tipo === "chips_multi" &&
             (() => {
-              const opcoes = passo.opcoes ?? [];
+              const opcoes = opcoesDoPasso(passo, (answers["membro_nascimento"] as string) ?? "");
               const temLivre = multi.some((v) => opcoes.find((o) => o.value === v)?.livre);
               const pode = (passo.opcional || multi.length > 0) && (!temLivre || texto.trim().length > 0);
               return (

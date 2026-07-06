@@ -4,7 +4,8 @@
  * banco (rascunho/publicado) e fica editável por IA. Por isso é uma estrutura
  * serializável simples (nada de JSX/função aqui).
  *
- * Placeholders: [NOME] = nome da criança; [VOCE] = como a mãe/cuidador se chama.
+ * Placeholders: [NOME] = nome da pessoa cuidada (QUALQUER idade — nunca "criança");
+ * [VOCE] = como o cuidador se chama; [TEMA] = o desafio escolhido.
  */
 
 export type OnbChip = {
@@ -31,6 +32,23 @@ export type OnbPasso = {
 };
 
 export type OnbTourCard = { emoji: string; titulo: string; texto: string };
+
+/**
+ * Exemplos de interesse por faixa etária da PESSOA cuidada — pra nunca sugerir
+ * brinquedo infantil a um adolescente/adulto. Viram chips que a pessoa toca (+ um
+ * campo "outro" livre). A idade sai da data de nascimento já informada.
+ */
+export const EXEMPLOS_INTERESSE: { ateIdade: number; exemplos: string[] }[] = [
+  { ateIdade: 5, exemplos: ["música", "bichinhos", "água", "texturas", "dançar"] },
+  { ateIdade: 11, exemplos: ["desenhar", "animais", "montar (Lego)", "personagens", "jogos", "esportes"] },
+  { ateIdade: 17, exemplos: ["jogos", "música", "séries e filmes", "esportes", "tecnologia", "desenhar"] },
+  { ateIdade: 200, exemplos: ["música", "cinema", "leitura", "contato com a natureza", "culinária", "esportes", "arte"] },
+];
+
+export function exemplosInteressePorIdade(idade: number | null): string[] {
+  const b = EXEMPLOS_INTERESSE.find((x) => (idade ?? 99) <= x.ateIdade) ?? EXEMPLOS_INTERESSE[EXEMPLOS_INTERESSE.length - 1];
+  return b.exemplos;
+}
 
 export type OnboardingCopy = {
   intro: { titulo: string; subtitulo: string };
@@ -114,6 +132,14 @@ export const ONBOARDING_COPY_DEFAULT: OnboardingCopy = {
       ],
     },
     {
+      id: "membro_interesses",
+      ayla: "O que [NOME] mais gosta de fazer? Toque no que combina — e adicione outros se quiser.",
+      tipo: "chips_multi",
+      opcional: true,
+      // As opções aparecem conforme a idade (o app injeta); aqui fica só o "outro".
+      opcoes: [{ value: "Outro", label: "Outro", livre: true }],
+    },
+    {
       id: "voce_nome",
       ayla: "Agora me conta de você: como te chamo?",
       tipo: "texto",
@@ -150,6 +176,18 @@ export const ONBOARDING_COPY_DEFAULT: OnboardingCopy = {
       tipo: "whatsapp",
       placeholder: "(11) 99999-9999",
       nota: "É por aqui que eu te mando planos e estratégias pensados pra [NOME]. (O +55 entra automático.)",
+    },
+    {
+      id: "voce_horario",
+      ayla: "Qual horário costuma ser melhor pra eu te escrever no WhatsApp?",
+      tipo: "chips_uni",
+      opcional: true,
+      opcoes: [
+        { value: "manha", label: "De manhã" },
+        { value: "meio_dia", label: "No meio do dia" },
+        { value: "tarde", label: "À tarde" },
+        { value: "noite", label: "À noite" },
+      ],
     },
     {
       id: "aceites",

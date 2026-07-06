@@ -22,8 +22,10 @@ export type RespostasConversacional = {
     laudo: string[]; // valores enum (TEA, TDAH, Dislexia, AHSD, Outro)
     laudoOutro?: string | null;
     investigacao: string[]; // valores enum (hipóteses)
+    interesses: string[]; // gostos/hiperfocos (texto livre por chips)
   };
   desafios: string[]; // valores de tema (comunicacao, sono, foco...)
+  horario?: string | null; // manha | meio_dia | tarde | noite
   responsavel: {
     nome: string;
     relacao: string; // mae | pai | avo | avoh | outro
@@ -119,15 +121,20 @@ export async function salvarOnboardingConversacional(
       return { ok: false, motivo: "erro", mensagem: `Erro ao salvar a criança: ${errMembro?.message ?? "sem id"}` };
     }
 
-    // 4) Desafios marcados → perfil_vivo_membro. Guardo a lista pra a Ayla
-    //    aprofundar depois (Fatia 4); o conteúdo por domínio enche com a conversa.
+    // 4) Desafios + interesses → perfil_vivo_membro (espelha o tela4 antigo).
+    //    Cada desafio marca seu DOMÍNIO (o dashboard "temas preenchidos" conta);
+    //    a lista crua fica pra a Ayla aprofundar depois. Interesses viram os
+    //    hiperfocos (como_e.interesses + preferencias.temas), que a Ayla já lê.
+    const extras: Record<string, unknown> = { desafios_onboarding: r.desafios };
+    for (const d of r.desafios) extras[d] = { texto: "" };
+    if (r.membro.interesses.length) extras.preferencias = { temas: r.membro.interesses };
     await admin.from("perfil_vivo_membro").upsert(
       {
         membro_atipico_id: membro.id,
         family_account_id: familyId,
-        como_e: {},
+        como_e: r.membro.interesses.length ? { interesses: r.membro.interesses } : {},
         essencial: {},
-        categorias_extras: { desafios_onboarding: r.desafios },
+        categorias_extras: extras,
         completude_pct: 0,
       },
       { onConflict: "membro_atipico_id" },
@@ -150,14 +157,24 @@ export async function salvarOnboardingConversacional(
       return { ok: false, motivo: "erro", mensagem: `Erro ao concluir: ${errFam.message}` };
     }
 
-    // 6) Consentimento da Ayla (LGPD) — opt-in capturado cedo
+    // 6) Ayla preferences — consentimento (LGPD) + horário preferido do WhatsApp.
+    const JANELAS: Record<string, { i: string; f: string }> = {
+      manha: { i: "08:00", f: "10:00" },
+      meio_dia: { i: "12:00", f: "14:00" },
+      tarde: { i: "15:00", f: "17:00" },
+      noite: { i: "19:00", f: "21:00" },
+    };
+    const prefs: Record<string, unknown> = { family_account_id: familyId };
     if (r.aceites.ayla) {
-      await admin
-        .from("ayla_preferences")
-        .upsert(
-          { family_account_id: familyId, desativada: false, consentimento_em: new Date().toISOString() },
-          { onConflict: "family_account_id" },
-        );
+      prefs.desativada = false;
+      prefs.consentimento_em = new Date().toISOString();
+    }
+    if (r.horario && JANELAS[r.horario]) {
+      prefs.horario_preferido_inicio = JANELAS[r.horario].i;
+      prefs.horario_preferido_fim = JANELAS[r.horario].f;
+    }
+    if (Object.keys(prefs).length > 1) {
+      await admin.from("ayla_preferences").upsert(prefs, { onConflict: "family_account_id" });
     }
 
     // 7) Primeira mensagem da Ayla + aviso pro admin — best-effort, não trava.

@@ -4,8 +4,8 @@ import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Chip, ChipGroup } from "@/components/ui/chip";
-import { mascararDataBr } from "@/lib/idade";
-import type { OnboardingCopy, OnbPasso } from "@/lib/onboarding/copy-default";
+import { mascararDataBr, dataBrParaIso, idadeAnos } from "@/lib/idade";
+import { exemplosInteressePorIdade, type OnboardingCopy, type OnbPasso, type OnbChip } from "@/lib/onboarding/copy-default";
 
 /**
  * Preview INTERATIVO do onboarding conversacional — renderiza a copy (dado) como
@@ -17,6 +17,15 @@ function fill(text: string, nome: string, voce: string): string {
   const n = nome.trim() || "quem você cuida";
   const v = voce.trim() || "você";
   return text.replaceAll("[NOME]", n).replaceAll("[VOCE]", v);
+}
+
+// Interesses: chips por idade de [NOME]; o resto usa as opções da copy.
+function opcoesDoPasso(passo: OnbPasso, nascimentoBr: string): OnbChip[] {
+  if (passo.id !== "membro_interesses") return passo.opcoes ?? [];
+  const iso = dataBrParaIso(nascimentoBr);
+  const idade = iso ? idadeAnos(iso) : null;
+  const ex = exemplosInteressePorIdade(idade).map((e) => ({ value: e, label: e }));
+  return [...ex, { value: "Outro", label: "Outro", livre: true }];
 }
 
 type Answers = Record<string, string | string[] | boolean>;
@@ -167,7 +176,7 @@ export function OnboardingPreview({ copy }: { copy: OnboardingCopy }) {
 
             {passo.tipo === "chips_multi" &&
               (() => {
-                const opcoes = passo.opcoes ?? [];
+                const opcoes = opcoesDoPasso(passo, (answers["membro_nascimento"] as string) ?? "");
                 const temLivre = multi.some((v) => opcoes.find((o) => o.value === v)?.livre);
                 const podeAvancar =
                   (passo.opcional || multi.length > 0) && (!temLivre || texto.trim().length > 0);
