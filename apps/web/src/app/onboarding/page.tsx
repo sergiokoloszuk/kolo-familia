@@ -1,8 +1,14 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { cookies } from "next/headers";
 import { loadFamilyContext } from "@/lib/auth/require-user";
+import { createServiceRoleClient } from "@/lib/supabase/server";
 import { parseDiagnosticosFormais } from "@/lib/onboarding/diagnostico";
+import { lerModo } from "@/lib/onboarding/modo";
+import { carregarCopy } from "@/lib/onboarding/copy-store";
+import { familiasInternas } from "@/lib/analytics/internos";
 import { OnboardingWizard, type InitialState, type Membro } from "./wizard";
+import { OnboardingConversacional } from "./conversacional";
 
 export default async function OnboardingPage() {
   const { user, supabase, family } = await loadFamilyContext();
@@ -23,6 +29,26 @@ export default async function OnboardingPage() {
 
   if (family.onboarding_completed) {
     redirect(family.boas_vindas_vista_at ? "/painel" : "/boas-vindas");
+  }
+
+  // Chave de troca (Fatia 3): fluxo NOVO conversacional vs wizard antigo.
+  // "todos" = todos; "teste" = contas internas OU quem tem o cookie kolo_onb=novo
+  // (pra testar num cadastro novo sem expor os leads); "antigo" = o wizard.
+  const admin = createServiceRoleClient();
+  const modo = await lerModo(admin);
+  let usarNovo = modo === "todos";
+  if (modo === "teste") {
+    const internas = await familiasInternas(admin);
+    const cookieNovo = (await cookies()).get("kolo_onb")?.value === "novo";
+    usarNovo = internas.has(family.id) || cookieNovo;
+  }
+  if (usarNovo) {
+    const copy = await carregarCopy(admin, { publicado: true });
+    return (
+      <div className="flex flex-col gap-4">
+        <OnboardingConversacional copy={copy} />
+      </div>
+    );
   }
 
   // Carrega membros já cadastrados (caso esteja retomando onboarding).

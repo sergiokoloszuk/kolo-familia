@@ -1,6 +1,7 @@
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { ehAdmin } from "@/lib/auth/require-admin";
 import { carregarCopy } from "@/lib/onboarding/copy-store";
+import { lerModo } from "@/lib/onboarding/modo";
 import { OnboardingExperiencia } from "./preview";
 import { OnboardingEditor } from "./editor";
 
@@ -14,9 +15,11 @@ import { OnboardingEditor } from "./editor";
 export const dynamic = "force-dynamic";
 
 export default async function DashboardsOnboardingPage() {
-  const [copy, isAdmin] = await Promise.all([
-    carregarCopy(createServiceRoleClient()),
+  const admin = createServiceRoleClient();
+  const [copy, isAdmin, modo] = await Promise.all([
+    carregarCopy(admin),
     ehAdmin(),
+    lerModo(admin),
   ]);
 
   return (
@@ -33,7 +36,11 @@ export default async function DashboardsOnboardingPage() {
         </p>
       </div>
 
-      {isAdmin ? <OnboardingEditor initialCopy={copy} /> : <OnboardingExperiencia copy={copy} />}
+      {isAdmin ? (
+        <OnboardingEditor initialCopy={copy} modoInicial={modo} />
+      ) : (
+        <OnboardingExperiencia copy={copy} />
+      )}
     </div>
   );
 }

@@ -337,7 +337,7 @@ export function OnboardingPreview({ copy }: { copy: OnboardingCopy }) {
 }
 
 /** Passeio narrado pela Ayla — um cartão por área, visual Kolo. */
-function TourCarrossel({
+export function TourCarrossel({
   copy,
   nome,
   onVoltar,
@@ -406,7 +406,7 @@ function TourCarrossel({
 }
 
 /** Caminho "começar por um desafio": escolhe um tema (dos que marcou) e a Ayla abre. */
-function DesafioFluxo({
+export function DesafioFluxo({
   copy,
   nome,
   temas,

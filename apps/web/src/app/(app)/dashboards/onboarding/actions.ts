@@ -5,6 +5,7 @@ import { createServiceRoleClient } from "@/lib/supabase/server";
 import { getAnthropicClient, MODELS } from "@/lib/ia/anthropic";
 import { carregarCopy, salvarRascunho, publicarCopy, resetarRascunho } from "@/lib/onboarding/copy-store";
 import { parseCopy } from "@/lib/onboarding/copy-schema";
+import { definirModo, type ModoOnboarding } from "@/lib/onboarding/modo";
 import type { OnboardingCopy } from "@/lib/onboarding/copy-default";
 
 type EditResult =
@@ -83,6 +84,18 @@ export async function publicarCopyAction(): Promise<{ ok: boolean; error?: strin
     await requireAdmin();
     const ok = await publicarCopy(createServiceRoleClient());
     return ok ? { ok: true } : { ok: false, error: "Não consegui publicar (a tabela já existe? migração 0059)." };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "Erro inesperado" };
+  }
+}
+
+export async function definirModoAction(
+  modo: ModoOnboarding,
+): Promise<{ ok: boolean; error?: string }> {
+  try {
+    await requireAdmin();
+    const ok = await definirModo(createServiceRoleClient(), modo);
+    return ok ? { ok: true } : { ok: false, error: "Não consegui salvar o modo (migração 0060?)." };
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : "Erro inesperado" };
   }
