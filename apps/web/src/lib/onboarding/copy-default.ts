@@ -132,6 +132,19 @@ export const ONBOARDING_COPY_DEFAULT: OnboardingCopy = {
       ],
     },
     {
+      id: "voce_faixa",
+      ayla: "E você, em que faixa de idade está? (só pra eu conhecer melhor as famílias — pode pular)",
+      tipo: "chips_uni",
+      opcoes: [
+        { value: "18-25", label: "18 a 25" },
+        { value: "26-35", label: "26 a 35" },
+        { value: "36-45", label: "36 a 45" },
+        { value: "46-59", label: "46 a 59" },
+        { value: "60+", label: "60 ou mais" },
+        { value: "na", label: "Prefiro não dizer" },
+      ],
+    },
+    {
       id: "whatsapp",
       ayla: "Pra eu te acompanhar todo dia — e te mandar ideias pra [NOME] mesmo quando você não estiver no app — me passa seu WhatsApp?",
       tipo: "whatsapp",
