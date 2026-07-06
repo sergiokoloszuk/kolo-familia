@@ -975,12 +975,17 @@ export async function processInbound(
     ? (ctx.membros.find((m) => m.id === membroContextoId) ?? null)
     : null;
   const nomeMembro = membroFoco?.nome ?? null;
+  const idadeFoco = idadeAnos(membroFoco?.data_nascimento ?? null);
   // Loaders independentes em paralelo (antes eram 3 idas ao banco em fila,
-  // logo antes da chamada mais cara — a voz).
-  const [koloVivoResumo, estrategiasRecentes, historico] = await Promise.all([
+  // logo antes da chamada mais cara — a voz). O magic link do Lúdico (só
+  // criança) vem junto, pra Ayla mandar se pedirem história/rotina/desenho.
+  const [koloVivoResumo, estrategiasRecentes, historico, ludicoLink] = await Promise.all([
     carregarKoloVivoResumo(supabase, membroContextoId),
     carregarEstrategiasRecentes(supabase, family.id),
     carregarHistorico(supabase, family.id, inbound.texto),
+    idadeFoco != null && idadeFoco <= 12
+      ? gerarMagicLink(supabase, { familyId: family.id, next: "/ludico" })
+      : Promise.resolve(null),
   ]);
 
   const resp = await enviarRespostaEmChunks(supabase, {
@@ -992,12 +997,13 @@ export async function processInbound(
       nomeMae: ctx.nomeMae,
       cuidador: ctx.cuidador,
       nomeMembro,
-      idadeMembro: idadeAnos(membroFoco?.data_nascimento ?? null),
+      idadeMembro: idadeFoco,
       perfilMembro: membroFoco?.perfil ?? null,
       generoMembro: membroFoco?.genero ?? null,
       koloVivoResumo,
       estrategiasRecentes,
       historico,
+      ludicoLink,
       mensagem: inbound.texto,
       sinais: {
         conquista: parsed.conquista,

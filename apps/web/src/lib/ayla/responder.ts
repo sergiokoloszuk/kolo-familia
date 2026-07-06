@@ -103,6 +103,8 @@ export type RespostaParams = {
   /** A pessoa pediu um plano explicitamente — não escreva o plano, ofereça. */
   querPlano?: boolean;
   precisaEscolherMembro?: { nomes: string[] } | null;
+  /** Magic link do Lúdico (só criança) — pra Ayla mandar se pedirem história/rotina/desenho. */
+  ludicoLink?: string | null;
 };
 
 /**
@@ -230,6 +232,11 @@ export async function gerarRespostaAyla(
   if (params.sinais.temSugestaoKoloVivo) {
     notas.push(
       `Apareceu algo que pode valer guardar no perfil da criança. Se — e só se — fizer sentido no fluxo, pergunte de leve se ela quer que eu guarde. Sem insistir.`,
+    );
+  }
+  if (params.ludicoLink) {
+    notas.push(
+      `RECURSOS DO LÚDICO: se ${params.nomeMae} pedir OU claramente se beneficiar de uma HISTÓRIA (pra preparar/antecipar uma situação), de uma ROTINA VISUAL (previsibilidade/transições difíceis) ou de um DESENHO — MESMO sem usar essas palavras — convide de leve e inclua ESTE link, que abre já logado no Lúdico: ${params.ludicoLink}. Não force nem ofereça se não vier a propósito.`,
     );
   }
   if (notas.length > 0) {
