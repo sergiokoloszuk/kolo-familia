@@ -27,7 +27,7 @@ export function DashboardTabs() {
             className={cn(
               "rounded-full px-4 py-1.5 text-sm font-semibold transition-colors",
               active
-                ? "bg-brand-purple text-white"
+                ? "bg-brand-yellow text-brand-purple-dark"
                 : "bg-foreground/[0.05] text-muted-foreground hover:bg-foreground/[0.1]",
             )}
           >
