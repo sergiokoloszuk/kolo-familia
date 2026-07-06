@@ -127,10 +127,10 @@ export const ONBOARDING_COPY_DEFAULT: OnboardingCopy = {
     },
     {
       id: "whatsapp",
-      ayla: "Pra eu te acompanhar todo dia — e te mandar ideias pro [NOME] mesmo quando você não estiver no app — me passa seu WhatsApp?",
+      ayla: "Pra eu te acompanhar todo dia — e te mandar ideias pra [NOME] mesmo quando você não estiver no app — me passa seu WhatsApp?",
       tipo: "whatsapp",
       placeholder: "(11) 99999-9999",
-      nota: "É por aqui que eu te mando planos e estratégias pensados pro [NOME]. (O +55 entra automático.)",
+      nota: "É por aqui que eu te mando planos e estratégias pensados pra [NOME]. (O +55 entra automático.)",
     },
     {
       id: "aceites",
