@@ -39,6 +39,33 @@ export async function excluirLead(input: {
   }
 }
 
+const cadenciaSchema = z.object({
+  situacao: z.string().min(2).max(40),
+  diretriz: z.string().max(2000),
+  ativo: z.boolean(),
+});
+
+/** Salva a diretriz de uma situação da Ayla proativa (Configuração). Só admin. */
+export async function salvarCadencia(input: {
+  situacao: string;
+  diretriz: string;
+  ativo: boolean;
+}): Promise<CrmActionResult> {
+  try {
+    if (!(await ehAdmin())) return { ok: false, error: "Só admin." };
+    const { situacao, diretriz, ativo } = cadenciaSchema.parse(input);
+    const admin = createServiceRoleClient();
+    const { error } = await admin
+      .from("crm_ayla_cadencia")
+      .upsert({ situacao, diretriz, ativo, atualizado_em: new Date().toISOString() }, { onConflict: "situacao" });
+    if (error) return { ok: false, error: error.message };
+    revalidatePath("/dashboards/crm/config");
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "Erro inesperado" };
+  }
+}
+
 const scriptSchema = z.object({
   fase: z.string().min(2).max(40),
   textoAyla: z.string().max(2000),

@@ -10,6 +10,7 @@ import {
 } from "./pronomes";
 import { idadeAnos } from "@/lib/idade";
 import { gerarMagicLink } from "./ponte";
+import { carregarCadenciaMap } from "@/lib/crm/ayla-cadencia";
 
 const MS_DIA = 86_400_000;
 
@@ -417,12 +418,15 @@ export async function gerarMensagemEspontanea(
     throw new Error("Sem contexto da família/membro pra gerar mensagem espontânea.");
   }
 
+  const cadenciaMap = await carregarCadenciaMap(supabase);
   const seed = `${params.familyId}-${params.agora.toDateString()}`;
   let intent = pickIntent(seed, {
     temPlano: ctx.temPlano,
     diaTrial: ctx.diaTrial,
     interagiu: ctx.interagiu,
   });
+  // Situação desligada por você na Configuração → cai no acolhimento (sempre on).
+  if (cadenciaMap.get(intent)?.ativo === false) intent = "acolhimento";
 
   // Sub-sort por intenção; completar_perfil sem gaps vira convite ao plano
   // (melhor puxar pro que ativa do que só pedir mais dado).
@@ -451,6 +455,12 @@ export async function gerarMensagemEspontanea(
     userPrompt = promptMenuDia(ctx, ludicoLink);
   } else {
     userPrompt = promptAcolhimento(ctx);
+  }
+
+  // Diretriz editável da Karina pra esta situação (Configuração) tem prioridade.
+  const diretriz = cadenciaMap.get(intent)?.diretriz?.trim();
+  if (diretriz) {
+    userPrompt += `\n\nORIENTAÇÃO DA KARINA (prioridade — ajuste a mensagem a isto): ${diretriz}`;
   }
 
   const client = getAylaAnthropicClient();
