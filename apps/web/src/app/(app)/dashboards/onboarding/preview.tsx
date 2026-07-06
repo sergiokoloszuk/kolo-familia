@@ -31,6 +31,8 @@ export function OnboardingPreview({ copy }: { copy: OnboardingCopy }) {
   const [aceites, setAceites] = useState({ termos: false, ayla: false });
   // Quando a pessoa clica numa resposta pra CORRIGIR, guarda de onde voltar.
   const [retomarEm, setRetomarEm] = useState<number | null>(null);
+  // Caminho escolhido no garfo final: passeio ("tour") ou começar por um desafio.
+  const [caminho, setCaminho] = useState<"tour" | "desafio" | null>(null);
 
   const nome = (answers["membro_nome"] as string) ?? "";
   const voce = (answers["voce_nome"] as string) ?? "";
@@ -43,6 +45,11 @@ export function OnboardingPreview({ copy }: { copy: OnboardingCopy }) {
     for (const p of passos) for (const o of p.opcoes ?? []) m.set(`${p.id}:${o.value}`, o.label);
     return m;
   }, [passos]);
+
+  // Temas de desafio marcados (rótulos) — pra o caminho "começar por um desafio".
+  const temasEscolhidos = Array.isArray(answers["desafios"])
+    ? (answers["desafios"] as string[]).map((v) => opcoesLabel.get(`desafios:${v}`) ?? v)
+    : [];
 
   function avancar(valor: string | string[] | boolean) {
     if (!passo) return;
@@ -80,6 +87,7 @@ export function OnboardingPreview({ copy }: { copy: OnboardingCopy }) {
     setUni(null);
     setAceites({ termos: false, ayla: false });
     setRetomarEm(null);
+    setCaminho(null);
   }
 
   function respostaLegivel(p: OnbPasso, v: string | string[] | boolean): string {
@@ -286,14 +294,20 @@ export function OnboardingPreview({ copy }: { copy: OnboardingCopy }) {
           </div>
         )}
 
-        {/* Fecho / garfo */}
-        {terminou && (
+        {/* Fecho / garfo — os dois caminhos da experiência inicial */}
+        {terminou && caminho === null && (
           <div className="flex flex-col gap-2">
             <Bolha lado="ayla">{fill(copy.garfo.titulo, nome, voce)}</Bolha>
-            <button className="rounded-2xl border border-brand-purple bg-brand-purple/10 px-4 py-3 text-left text-sm font-medium text-brand-purple-dark">
+            <button
+              onClick={() => setCaminho("desafio")}
+              className="rounded-2xl border border-brand-purple bg-brand-purple/10 px-4 py-3 text-left text-sm font-medium text-brand-purple-dark transition-colors hover:bg-brand-purple/20"
+            >
               {copy.garfo.ajuda}
             </button>
-            <button className="rounded-2xl border border-kolo-linha bg-white px-4 py-3 text-left text-sm font-medium text-foreground">
+            <button
+              onClick={() => setCaminho("tour")}
+              className="rounded-2xl border border-kolo-linha bg-white px-4 py-3 text-left text-sm font-medium text-foreground transition-colors hover:border-brand-purple/40"
+            >
               {copy.garfo.explorar}
             </button>
             <div className="pt-1 text-center">
@@ -303,7 +317,145 @@ export function OnboardingPreview({ copy }: { copy: OnboardingCopy }) {
             </div>
           </div>
         )}
+
+        {terminou && caminho === "tour" && (
+          <TourCarrossel copy={copy} nome={nome} onVoltar={() => setCaminho(null)} onReiniciar={reiniciar} />
+        )}
+
+        {terminou && caminho === "desafio" && (
+          <DesafioFluxo
+            copy={copy}
+            nome={nome}
+            temas={temasEscolhidos}
+            onVoltar={() => setCaminho(null)}
+            onReiniciar={reiniciar}
+          />
+        )}
       </div>
+    </div>
+  );
+}
+
+/** Passeio narrado pela Ayla — um cartão por área, visual Kolo. */
+function TourCarrossel({
+  copy,
+  nome,
+  onVoltar,
+  onReiniciar,
+}: {
+  copy: OnboardingCopy;
+  nome: string;
+  onVoltar: () => void;
+  onReiniciar: () => void;
+}) {
+  const cards = copy.tour.cards;
+  const [i, setI] = useState(0);
+  const fim = i >= cards.length;
+  const card = cards[i];
+
+  return (
+    <div className="flex flex-col gap-3">
+      <Bolha lado="ayla">{fill(copy.tour.titulo, nome, "")}</Bolha>
+
+      {!fim ? (
+        <div className="overflow-hidden rounded-3xl border border-kolo-linha bg-gradient-to-br from-white to-secondary/40 shadow-sm">
+          <div className="flex flex-col items-center gap-3 px-6 py-8 text-center">
+            <div className="flex size-16 items-center justify-center rounded-2xl bg-brand-purple/10 text-3xl">
+              {card.emoji}
+            </div>
+            <p className="font-heading text-xl text-foreground">{fill(card.titulo, nome, "")}</p>
+            <p className="text-sm leading-relaxed text-muted-foreground">{fill(card.texto, nome, "")}</p>
+          </div>
+          {/* progresso */}
+          <div className="flex justify-center gap-1.5 pb-4">
+            {cards.map((_, k) => (
+              <span
+                key={k}
+                className={`h-1.5 rounded-full transition-all ${k === i ? "w-5 bg-brand-purple" : "w-1.5 bg-foreground/15"}`}
+              />
+            ))}
+          </div>
+          <div className="flex items-center justify-between border-t border-kolo-linha px-4 py-3">
+            <button
+              onClick={() => (i === 0 ? onVoltar() : setI((n) => n - 1))}
+              className="text-sm font-medium text-muted-foreground hover:text-foreground"
+            >
+              {i === 0 ? "voltar" : "← anterior"}
+            </button>
+            <Button size="sm" onClick={() => setI((n) => n + 1)}>
+              {i === cards.length - 1 ? "Terminar" : "Próximo"}
+            </Button>
+          </div>
+        </div>
+      ) : (
+        <div className="flex flex-col gap-2">
+          <Bolha lado="ayla">{fill(copy.tour.final, nome, "")}</Bolha>
+          <button className="rounded-2xl bg-brand-purple px-4 py-3 text-center text-sm font-semibold text-white">
+            Entrar no Kolo
+          </button>
+        </div>
+      )}
+
+      <div className="pt-1 text-center">
+        <button onClick={onReiniciar} className="text-xs font-medium text-brand-purple hover:underline">
+          ↺ ver a experiência de novo desde o começo
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/** Caminho "começar por um desafio": escolhe um tema (dos que marcou) e a Ayla abre. */
+function DesafioFluxo({
+  copy,
+  nome,
+  temas,
+  onVoltar,
+  onReiniciar,
+}: {
+  copy: OnboardingCopy;
+  nome: string;
+  temas: string[];
+  onVoltar: () => void;
+  onReiniciar: () => void;
+}) {
+  const [escolhido, setEscolhido] = useState<string | null>(null);
+  const opcoes = temas.length > 0 ? temas : ["Comunicação", "Sono", "Alimentação"];
+
+  return (
+    <div className="flex flex-col gap-2">
+      <Bolha lado="ayla">{fill(copy.desafio.pergunta, nome, "")}</Bolha>
+
+      {!escolhido ? (
+        <>
+          <ChipGroup label="temas">
+            {opcoes.map((t) => (
+              <Chip key={t} selected={false} onClick={() => setEscolhido(t)}>
+                {t}
+              </Chip>
+            ))}
+          </ChipGroup>
+          <div className="pt-1 text-center">
+            <button onClick={onVoltar} className="text-xs font-medium text-muted-foreground hover:text-foreground">
+              ← voltar
+            </button>
+          </div>
+        </>
+      ) : (
+        <>
+          <div className="flex justify-end">
+            <div className="max-w-[85%] rounded-2xl rounded-tr-sm bg-brand-purple px-3.5 py-2.5 text-sm text-white">
+              {escolhido}
+            </div>
+          </div>
+          <Bolha lado="ayla">{fill(copy.desafio.abertura.replaceAll("[TEMA]", escolhido), nome, "")}</Bolha>
+          <div className="pt-1 text-center">
+            <button onClick={onReiniciar} className="text-xs font-medium text-brand-purple hover:underline">
+              ↺ ver a experiência de novo desde o começo
+            </button>
+          </div>
+        </>
+      )}
     </div>
   );
 }

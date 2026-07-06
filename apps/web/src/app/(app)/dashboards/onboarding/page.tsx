@@ -13,11 +13,12 @@ export default function DashboardsOnboardingPage() {
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h2 className="font-heading text-xl text-foreground">Onboarding (prévia)</h2>
+        <h2 className="font-heading text-xl text-foreground">Experiência inicial do lead (prévia)</h2>
         <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
-          O novo cadastro conversacional — a Ayla conduz, quase tudo é toque, e começa pela pessoa
-          que a família cuida. Clique pelos passos como uma mãe faria. É só demonstração (não salva
-          nada; não altera nenhum dado).
+          Tudo o que uma família nova vive no começo: o cadastro conversacional (a Ayla conduz, quase
+          tudo é toque) e, no fim, os dois caminhos — <strong>conhecer o app</strong> (passeio narrado)
+          ou <strong>começar por um desafio</strong>. Clique como uma mãe faria. É só demonstração (não
+          salva nada; não altera nenhum dado).
         </p>
       </div>
 

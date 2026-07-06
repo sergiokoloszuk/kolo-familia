@@ -30,11 +30,17 @@ export type OnbPasso = {
   opcional?: boolean;
 };
 
+export type OnbTourCard = { emoji: string; titulo: string; texto: string };
+
 export type OnboardingCopy = {
   intro: { titulo: string; subtitulo: string };
   passos: OnbPasso[];
   /** Fecho: entrega valor na hora — dois caminhos. */
   garfo: { titulo: string; ajuda: string; explorar: string };
+  /** Caminho "conhecer o app": passeio narrado pela Ayla, um cartão por área. */
+  tour: { titulo: string; final: string; cards: OnbTourCard[] };
+  /** Caminho "começar por um desafio": escolhe um tema e a Ayla abre a conversa. */
+  desafio: { pergunta: string; abertura: string };
 };
 
 export const ONBOARDING_COPY_DEFAULT: OnboardingCopy = {
@@ -142,5 +148,22 @@ export const ONBOARDING_COPY_DEFAULT: OnboardingCopy = {
     titulo: "Tudo pronto, [VOCE]! Por onde você quer começar?",
     ajuda: "🎯 Me ajuda com um desafio agora",
     explorar: "🌿 Quero conhecer o app com calma",
+  },
+  tour: {
+    titulo: "Deixa eu te mostrar o Kolo, rapidinho 🌿",
+    final: "É isso! Estou aqui do seu lado sempre que precisar.",
+    cards: [
+      { emoji: "🏠", titulo: "A sua Home", texto: "Este é o cantinho de vocês — [NOME] de relance e o que dá pra fazer hoje." },
+      { emoji: "💬", titulo: "Falar comigo", texto: "É comigo que você conversa, aqui ou no WhatsApp. Me conta o dia, me pede uma ideia, manda áudio quando for mais fácil." },
+      { emoji: "🌿", titulo: "O Perfil de [NOME]", texto: "Aqui mora tudo sobre [NOME]: o que gosta, o que desafia, o que muda. E, conforme a gente conversa, eu vou atualizando esse perfil sozinha." },
+      { emoji: "🎨", titulo: "Lúdico", texto: "Histórias, rotina visual e a leitura dos desenhos — feitos com a cara de [NOME]." },
+      { emoji: "📈", titulo: "Evolução", texto: "Um registro leve do dia a dia — que ainda vira relatório pra escola ou terapeuta." },
+      { emoji: "📄", titulo: "Planos", texto: "Quando algo aperta, eu monto um plano passo a passo pra [NOME]." },
+    ],
+  },
+  desafio: {
+    pergunta: "Boa escolha 💛 Por qual a gente começa?",
+    abertura:
+      "Combinado! Vou pensar em [TEMA] com carinho e já te trago as primeiras ideias — aqui e no seu WhatsApp. Me conta, por texto ou áudio, o que mais te preocupa nisso?",
   },
 };
