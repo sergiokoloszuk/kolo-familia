@@ -242,7 +242,26 @@ export function OnboardingPreview({ copy }: { copy: OnboardingCopy }) {
                     onChange={(e) => setAceites((a) => ({ ...a, termos: e.target.checked }))}
                     className="mt-0.5"
                   />
-                  Aceito os termos de uso
+                  <span>
+                    Aceito os{" "}
+                    <a
+                      href="/termos"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-brand-purple underline"
+                    >
+                      termos de uso
+                    </a>{" "}
+                    e a{" "}
+                    <a
+                      href="/privacidade"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-brand-purple underline"
+                    >
+                      política de privacidade
+                    </a>
+                  </span>
                 </label>
                 <label className="flex items-start gap-2 text-sm text-foreground">
                   <input
