@@ -29,6 +29,8 @@ export function OnboardingPreview({ copy }: { copy: OnboardingCopy }) {
   const [multi, setMulti] = useState<string[]>([]);
   const [uni, setUni] = useState<string | null>(null);
   const [aceites, setAceites] = useState({ termos: false, ayla: false });
+  // Quando a pessoa clica numa resposta pra CORRIGIR, guarda de onde voltar.
+  const [retomarEm, setRetomarEm] = useState<number | null>(null);
 
   const nome = (answers["membro_nome"] as string) ?? "";
   const voce = (answers["voce_nome"] as string) ?? "";
@@ -48,7 +50,26 @@ export function OnboardingPreview({ copy }: { copy: OnboardingCopy }) {
     setTexto("");
     setMulti([]);
     setUni(null);
-    setIdx((i) => i + 1);
+    // Se estava CORRIGINDO uma resposta antiga, volta pra onde parou.
+    if (retomarEm !== null) {
+      const back = retomarEm;
+      setRetomarEm(null);
+      setIdx(back);
+    } else {
+      setIdx((i) => i + 1);
+    }
+  }
+
+  // Clicou numa resposta anterior pra corrigir: volta pra aquele passo (com o
+  // texto pré-preenchido, quando é campo de texto) e lembra de onde retomar.
+  function editar(k: number) {
+    const ans = answers[passos[k].id];
+    setRetomarEm((r) => (r === null ? idx : r));
+    setTexto(typeof ans === "string" ? ans : "");
+    setMulti([]);
+    setUni(null);
+    setAceites({ termos: false, ayla: false });
+    setIdx(k);
   }
 
   function reiniciar() {
@@ -58,6 +79,7 @@ export function OnboardingPreview({ copy }: { copy: OnboardingCopy }) {
     setMulti([]);
     setUni(null);
     setAceites({ termos: false, ayla: false });
+    setRetomarEm(null);
   }
 
   function respostaLegivel(p: OnbPasso, v: string | string[] | boolean): string {
@@ -82,12 +104,21 @@ export function OnboardingPreview({ copy }: { copy: OnboardingCopy }) {
           <p className="mt-1 text-sm text-muted-foreground">{copy.intro.subtitulo}</p>
         </div>
 
-        {/* Histórico da conversa */}
-        {passos.slice(0, idx).map((p) => (
+        {/* Histórico da conversa — toque na sua resposta pra corrigir. */}
+        {passos.slice(0, idx).map((p, k) => (
           <div key={p.id} className="flex flex-col gap-1.5">
             <Bolha lado="ayla">{fill(p.ayla, nome, voce)}</Bolha>
             {answers[p.id] !== undefined && (
-              <Bolha lado="user">{respostaLegivel(p, answers[p.id])}</Bolha>
+              <div className="flex justify-end">
+                <button
+                  onClick={() => editar(k)}
+                  title="Tocar pra corrigir"
+                  className="max-w-[85%] rounded-2xl rounded-tr-sm bg-brand-purple px-3.5 py-2.5 text-left text-sm text-white transition-opacity hover:opacity-80"
+                >
+                  {respostaLegivel(p, answers[p.id])}
+                  <span className="ml-1.5 opacity-70">✎</span>
+                </button>
+              </div>
             )}
           </div>
         ))}
@@ -95,6 +126,11 @@ export function OnboardingPreview({ copy }: { copy: OnboardingCopy }) {
         {/* Passo atual */}
         {passo && (
           <div className="flex flex-col gap-2">
+            {retomarEm !== null && (
+              <p className="text-center text-xs font-medium text-brand-purple">
+                ✎ corrigindo — responda de novo e você volta de onde parou
+              </p>
+            )}
             <Bolha lado="ayla">{fill(passo.ayla, nome, voce)}</Bolha>
 
             {(passo.tipo === "texto" || passo.tipo === "data" || passo.tipo === "whatsapp") && (
