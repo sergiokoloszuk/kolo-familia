@@ -136,6 +136,47 @@ export default async function AquisicaoJornadaPage({
         </div>
       </Bloco>
 
+      {/* Sub-funil do onboarding — abre a caixa-preta do "Cadastrou" */}
+      <Bloco
+        titulo="Onboarding — onde as pessoas param"
+        desc="O 'Cadastrou' aberto passo a passo. A queda de uma barra pra próxima é o abandono naquela tela."
+      >
+        <ul className="flex flex-col gap-2">
+          {j.onboardingFunil.map((e, i) => {
+            const total = j.onboardingFunil[0]?.n || 0;
+            const p = total > 0 ? Math.round((e.n / total) * 100) : 0;
+            const anterior = i > 0 ? j.onboardingFunil[i - 1].n : e.n;
+            const perdaN = Math.max(0, anterior - e.n);
+            const perdaP = anterior > 0 ? Math.round((perdaN / anterior) * 100) : 0;
+            return (
+              <li key={e.label} className="rounded-xl border border-foreground/[0.08] bg-white px-4 py-3">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <p className="font-heading text-base text-foreground">{e.label}</p>
+                    <p className="text-xs text-muted-foreground">{e.desc}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-heading text-xl text-foreground">{e.n}</p>
+                    <p className="text-xs text-muted-foreground">{p}%</p>
+                  </div>
+                </div>
+                <span className="mt-2 block h-1.5 w-full overflow-hidden rounded-full bg-foreground/[0.06]">
+                  <span className="block h-full rounded-full bg-brand-purple" style={{ width: `${p}%` }} />
+                </span>
+                {i > 0 && perdaN > 0 && (
+                  <p className="mt-1.5 text-xs text-destructive">
+                    ↓ perdeu {perdaN} aqui ({perdaP}% dos que tinham chegado)
+                  </p>
+                )}
+              </li>
+            );
+          })}
+        </ul>
+        <p className="mt-3 text-xs text-muted-foreground">
+          Dica: a maior queda mostra a tela a melhorar. Clique em “Cadastrou” acima pra ver, lead a lead, em qual tela cada um parou.
+        </p>
+      </Bloco>
+
       {segDef && (
         <Bloco
           titulo={`Quem está em: ${segDef.label}`}
@@ -155,6 +196,7 @@ export default async function AquisicaoJornadaPage({
                   <tr className="text-left text-xs uppercase tracking-wide text-muted-foreground">
                     <th className="py-2 pr-3 font-medium">Lead</th>
                     <th className="px-3 py-2 font-medium">Dia</th>
+                    {segAtivo === "cadastrou" && <th className="px-3 py-2 font-medium">Parou em</th>}
                     <th className="px-3 py-2 font-medium">Origem</th>
                     <th className="px-3 py-2 font-medium">Campanha</th>
                     <th className="px-3 py-2 font-medium">Criativo</th>
@@ -175,6 +217,9 @@ export default async function AquisicaoJornadaPage({
                         </Link>
                       </td>
                       <td className="px-3 py-2 text-muted-foreground">{f.diaTrial}/7</td>
+                      {segAtivo === "cadastrou" && (
+                        <td className="px-3 py-2 text-foreground">{f.onboardingLabel}</td>
+                      )}
                       <td className="px-3 py-2 text-foreground">{f.origemCanal}</td>
                       <td className="px-3 py-2 text-muted-foreground">{f.campanha ?? "—"}</td>
                       <td className="px-3 py-2 text-muted-foreground">{f.criativo ?? "—"}</td>

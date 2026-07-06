@@ -94,6 +94,33 @@ const MS_DIA = 24 * 60 * 60 * 1000;
 /** Eventos que NÃO contam como "uso/orientação" (pageview e intenção). */
 const NAO_USO = new Set(["tela_visitada", "checkout_iniciado", "form_submit"]);
 
+/**
+ * Sub-funil do ONBOARDING — decompõe o "Cadastrou". `family_accounts.onboarding_step`
+ * (1→7) já grava até onde cada pessoa chegou (cada tela dá bumpStep). Zero rastreio
+ * novo, zero mudança no fluxo. Cada etapa é cumulativa (quem chegou até aqui); a
+ * QUEDA pra próxima é o abandono naquela tela.
+ */
+const ONBOARDING_ETAPAS: { atingiu: number; label: string; desc: string }[] = [
+  { atingiu: 1, label: "Criou a conta", desc: "Cadastrou — total de contas." },
+  { atingiu: 2, label: "Passou 'Você'", desc: "Preencheu seus dados + WhatsApp (tela 1)." },
+  { atingiu: 3, label: "Cadastrou a criança", desc: "Completou a tela 2." },
+  { atingiu: 4, label: "Preencheu o contexto", desc: "Quem mora, irmãos (tela 3)." },
+  { atingiu: 5, label: "Deu os primeiros sinais", desc: "Desafios e interesses (tela 4)." },
+  { atingiu: 6, label: "Aceitou os termos", desc: "Passou a tela 5." },
+  { atingiu: 7, label: "Concluiu o onboarding", desc: "Terminou tudo e entrou no app." },
+];
+
+/** A tela em que a pessoa está PARADA agora (onboarding_step = próxima a preencher). */
+const TELA_ATUAL: Record<number, string> = {
+  1: "Tela 1 — Você",
+  2: "Tela 2 — A criança",
+  3: "Tela 3 — Contexto",
+  4: "Tela 4 — Primeiros sinais",
+  5: "Tela 5 — Termos",
+  6: "Tela 6 — Confirmação",
+  7: "Concluiu",
+};
+
 export type FiltroJornada = { periodo?: string; origem?: string };
 
 /** Janela de datas (por created_at) a partir do filtro de período. */
@@ -144,6 +171,7 @@ type FamRow = {
   id: string;
   created_at: string;
   onboarding_completed: boolean | null;
+  onboarding_step: number | null;
   afiliado_id: string | null;
   ref_codigo: string | null;
   utm_source: string | null;
@@ -190,10 +218,15 @@ export type FamiliaSegmento = {
   ativou: boolean;
   ativado: boolean;
   engajado: boolean;
+  /** Passo do onboarding (1-7) e a tela onde está parada — pra decompor "Cadastrou". */
+  onboardingStep: number;
+  onboardingLabel: string;
 };
 
 export type JornadaData = {
   funil: { key: string; label: string; desc: string; n: number }[];
+  /** Sub-funil do onboarding (cumulativo) — decompõe "Cadastrou" por onde a pessoa parou. */
+  onboardingFunil: { label: string; desc: string; n: number }[];
   emRisco: number;
   expirados: number;
   porOrigem: {
@@ -231,7 +264,7 @@ export async function carregarJornadaTrial(admin: SupabaseClient): Promise<Jorna
     admin
       .from("family_accounts")
       .select(
-        "id, created_at, onboarding_completed, afiliado_id, ref_codigo, utm_source, utm_campaign, utm_content, whatsapp_e164",
+        "id, created_at, onboarding_completed, onboarding_step, afiliado_id, ref_codigo, utm_source, utm_campaign, utm_content, whatsapp_e164",
       ),
     admin.from("subscription_accesses").select("family_account_id, status, trial_ends_at"),
     admin
@@ -307,6 +340,8 @@ export async function carregarJornadaTrial(admin: SupabaseClient): Promise<Jorna
   const porOrigem = new Map<string, FunilOrigem>();
   const porCampanha = new Map<string, FunilOrigem>();
   const porCriativo = new Map<string, FunilOrigem>();
+  // Contagem cumulativa por etapa do onboarding (índice = ONBOARDING_ETAPAS).
+  const onbCount = ONBOARDING_ETAPAS.map(() => 0);
   const leads: JornadaLead[] = [];
   const todasFamilias: FamiliaSegmento[] = [];
 
@@ -333,6 +368,9 @@ export async function carregarJornadaTrial(admin: SupabaseClient): Promise<Jorna
     const trialEnds = sub?.trialEnds ? new Date(sub.trialEnds).getTime() : null;
     const trialVencido = status === "trialing" && trialEnds != null && trialEnds <= agora;
 
+    const step = Math.min(7, Math.max(1, f.onboarding_step ?? 1));
+    const concluiuOnb = Boolean(f.onboarding_completed) || step >= 7;
+
     // Funil cumulativo — só usuários REAIS (o interno fica de fora das contagens).
     if (!interno) {
       cadastrou += 1;
@@ -340,6 +378,11 @@ export async function carregarJornadaTrial(admin: SupabaseClient): Promise<Jorna
       if (ativadoBool) ativadoN += 1;
       if (engajadoBool) engajadoN += 1;
       if (status === "active") converteuN += 1;
+      // Sub-funil do onboarding (cumulativo).
+      for (let i = 0; i < ONBOARDING_ETAPAS.length; i++) {
+        const passou = ONBOARDING_ETAPAS[i].atingiu >= 7 ? concluiuOnb : step >= ONBOARDING_ETAPAS[i].atingiu;
+        if (passou) onbCount[i] += 1;
+      }
     }
 
     // Fase atual (estado único, por prioridade).
@@ -394,6 +437,8 @@ export async function carregarJornadaTrial(admin: SupabaseClient): Promise<Jorna
         ativou: temAtividade,
         ativado: ativadoBool,
         engajado: engajadoBool,
+        onboardingStep: step,
+        onboardingLabel: concluiuOnb ? "Concluiu" : TELA_ATUAL[step] ?? `Passo ${step}`,
       });
     }
 
@@ -460,8 +505,15 @@ export async function carregarJornadaTrial(admin: SupabaseClient): Promise<Jorna
 
   leads.sort((a, b) => b.diaTrial - a.diaTrial);
 
+  const onboardingFunil = ONBOARDING_ETAPAS.map((et, i) => ({
+    label: et.label,
+    desc: et.desc,
+    n: onbCount[i],
+  }));
+
   return {
     funil,
+    onboardingFunil,
     emRisco,
     expirados,
     porOrigem: porOrigemArr,
