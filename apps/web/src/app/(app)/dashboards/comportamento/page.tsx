@@ -1,6 +1,9 @@
+import { Suspense } from "react";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { carregarComportamento, type FamRow } from "@/lib/analytics/dashboard";
 import { Bloco, BarList, Stat, TabelaFamilias, Vazio } from "@/components/dashboard/blocos";
+import { ehAdmin } from "@/lib/auth/require-admin";
+import { AnalisePlanos } from "./analise-planos";
 
 /**
  * Dashboard 2 — Comportamento & Uso. Responde: "o que as famílias mais fazem?"
@@ -10,7 +13,10 @@ import { Bloco, BarList, Stat, TabelaFamilias, Vazio } from "@/components/dashbo
 export const dynamic = "force-dynamic";
 
 export default async function ComportamentoUsoPage() {
-  const d = await carregarComportamento(createServiceRoleClient());
+  const [d, isAdmin] = await Promise.all([
+    carregarComportamento(createServiceRoleClient()),
+    ehAdmin(),
+  ]);
   const labelFam = (f: FamRow) =>
     f.nome?.trim() || f.email || `Família #${f.id.slice(0, 6)}`;
 
@@ -39,9 +45,15 @@ export default async function ComportamentoUsoPage() {
         <Bloco titulo="Desafios mais recorrentes" desc="Áreas dos desafios registrados (90d).">
           <BarList items={d.desafioRank} />
         </Bloco>
-        <Bloco titulo="Planos por tema" desc="Sobre o que as famílias pedem plano.">
-          <BarList items={d.planoRank} />
-        </Bloco>
+        <Suspense
+          fallback={
+            <Bloco titulo="Planos por área" desc="Sobre o que as famílias pedem plano.">
+              <p className="text-sm text-muted-foreground">Analisando os pedidos por IA…</p>
+            </Bloco>
+          }
+        >
+          <AnalisePlanos isAdmin={isAdmin} />
+        </Suspense>
         <Bloco titulo="Lúdico — o que e quanto" desc="Total gerado e quantas famílias usaram.">
           <ul className="flex flex-col gap-2">
             {d.ludico.map((l) => (
