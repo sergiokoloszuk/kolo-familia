@@ -128,6 +128,17 @@ export function OnboardingEditor({
         <p className="mt-2 text-xs text-muted-foreground">
           A troca vale na hora, sem deploy. O cadastro antigo continua intacto como rede.
         </p>
+        {modo === "teste" && (
+          <button
+            onClick={() => {
+              document.cookie = "kolo_onb=novo; path=/; max-age=3600";
+              window.open("/signup", "_blank");
+            }}
+            className="mt-3 rounded-full bg-brand-purple px-4 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-brand-purple/90"
+          >
+            ▶ Testar o cadastro novo (abre um cadastro em branco, só pro seu navegador)
+          </button>
+        )}
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
