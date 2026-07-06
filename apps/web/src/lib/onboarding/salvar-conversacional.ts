@@ -37,6 +37,13 @@ export type SalvarResultado =
   | { ok: true }
   | { ok: false; motivo: "whatsapp_duplicado" | "erro"; mensagem: string };
 
+// Domínios que contam como "tema preenchido" (espelha o tela4 antigo).
+const DOMINIO_KEYS = [
+  "sensorial", "nutricional", "comunicacao", "emocional", "foco", "sono",
+  "socializacao", "motor", "rotina", "autonomia", "aprendizado", "imitacao",
+  "tela_midia", "escola", "saude_geral",
+];
+
 // onboarding_step do fluxo NOVO: 2=pessoa, 3=whatsapp, 4=aceite, 7=concluiu.
 async function bumpStep(admin: SupabaseClient, familyId: string, step: number) {
   await admin
@@ -111,6 +118,9 @@ export async function cpMembro(
     const extras: Record<string, unknown> = { desafios_onboarding: desafios };
     for (const d of desafios) extras[d] = { texto: "" };
     if (m.interesses.length) extras.preferencias = { temas: m.interesses };
+    // Completude: conta os domínios marcados (igual ao tela4 antigo), pra não
+    // derrubar a "completude média" do dashboard com um 0.
+    const preenchidos = desafios.filter((d) => DOMINIO_KEYS.includes(d)).length;
     await admin.from("perfil_vivo_membro").upsert(
       {
         membro_atipico_id: membroId,
@@ -118,7 +128,7 @@ export async function cpMembro(
         como_e: m.interesses.length ? { interesses: m.interesses } : {},
         essencial: {},
         categorias_extras: extras,
-        completude_pct: 0,
+        completude_pct: Math.round((preenchidos / DOMINIO_KEYS.length) * 100),
       },
       { onConflict: "membro_atipico_id" },
     );
