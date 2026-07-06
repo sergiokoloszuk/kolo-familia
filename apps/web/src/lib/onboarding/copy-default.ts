@@ -26,6 +26,8 @@ export type OnbPasso = {
   nota?: string;
   /** Opções pros passos de chips. */
   opcoes?: OnbChip[];
+  /** Passo que pode ser pulado sem marcar nada (ex.: "em investigação"). */
+  opcional?: boolean;
 };
 
 export type OnboardingCopy = {
@@ -64,21 +66,34 @@ export const ONBOARDING_COPY_DEFAULT: OnboardingCopy = {
       placeholder: "dd/mm/aaaa",
     },
     {
-      id: "membro_diagnostico",
-      ayla: "E como é [NOME]? Pode tocar em mais de um — ou no que ainda está em investigação.",
+      id: "membro_laudo",
+      ayla: "[NOME] já tem laudo de alguma coisa? Toca em tudo que já tem — e se ainda não tiver, é só pular.",
       tipo: "chips_multi",
+      opcional: true,
       opcoes: [
         { value: "TEA", label: "Autismo (TEA)" },
         { value: "TDAH", label: "TDAH" },
         { value: "Dislexia", label: "Dislexia" },
         { value: "AHSD", label: "Altas habilidades" },
-        { value: "EmInvestigacao", label: "Em investigação" },
-        { value: "Outro", label: "Outro" },
+        { value: "Outro", label: "Outro", livre: true },
+      ],
+    },
+    {
+      id: "membro_investigacao",
+      ayla: "E tem algo ainda em investigação, sem laudo? (pode pular também)",
+      tipo: "chips_multi",
+      opcional: true,
+      opcoes: [
+        { value: "TEA", label: "Autismo (TEA)" },
+        { value: "TDAH", label: "TDAH" },
+        { value: "Dislexia", label: "Dislexia" },
+        { value: "AHSD", label: "Altas habilidades" },
+        { value: "Outro", label: "Outro", livre: true },
       ],
     },
     {
       id: "desafios",
-      ayla: "O que mais pesa no dia a dia agora? Toca no que hoje está difícil — a gente começa por aí.",
+      ayla: "O que mais pesa no dia a dia agora? Pode marcar vários — toque em tudo o que hoje está difícil. A gente começa por aí.",
       tipo: "chips_multi",
       opcoes: [
         { value: "comunicacao", label: "Comunicação" },

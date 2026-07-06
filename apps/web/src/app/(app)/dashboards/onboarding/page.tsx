@@ -1,25 +1,23 @@
-import { requireAdmin } from "@/lib/auth/require-admin";
 import { ONBOARDING_COPY_DEFAULT } from "@/lib/onboarding/copy-default";
 import { OnboardingExperiencia } from "./preview";
 
 /**
- * Admin → Onboarding. Fatia 1: PREVIEW interativo do onboarding conversacional
- * novo (Ideia 2), pra Karina ver e sentir antes de a gente ligar no cadastro
- * real. Próximas fatias: copy no banco (rascunho/publicado) + chat de IA que
- * ajusta o texto + botão Publicar + trocar o /onboarding real por este fluxo.
+ * Dashboards → Onboarding. Preview interativo do cadastro conversacional novo
+ * (Ideia 2), pra admin E agência (co-acesso) verem e sentirem antes de a gente
+ * ligar no cadastro real. O acesso (admin OU analista) é garantido pelo layout
+ * dos dashboards. É só simulação — não salva nada.
  */
 export const dynamic = "force-dynamic";
 
-export default async function AdminOnboardingPage() {
-  await requireAdmin();
-
+export default function DashboardsOnboardingPage() {
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h1 className="font-heading text-2xl text-foreground">Onboarding</h1>
+        <h2 className="font-heading text-xl text-foreground">Onboarding (prévia)</h2>
         <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
-          Prévia do novo cadastro conversacional — a Ayla conduz, quase tudo é toque, e começa pela
-          criança. Clique pelos passos como uma mãe faria. É só demonstração (não salva nada).
+          O novo cadastro conversacional — a Ayla conduz, quase tudo é toque, e começa pela pessoa
+          que a família cuida. Clique pelos passos como uma mãe faria. É só demonstração (não salva
+          nada; não altera nenhum dado).
         </p>
       </div>
 

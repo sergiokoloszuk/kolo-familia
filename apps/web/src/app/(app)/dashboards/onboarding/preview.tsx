@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Chip, ChipGroup } from "@/components/ui/chip";
+import { mascararDataBr } from "@/lib/idade";
 import type { OnboardingCopy, OnbPasso } from "@/lib/onboarding/copy-default";
 
 /**
@@ -101,7 +102,10 @@ export function OnboardingPreview({ copy }: { copy: OnboardingCopy }) {
                 <Input
                   value={texto}
                   placeholder={passo.placeholder}
-                  onChange={(e) => setTexto(e.target.value)}
+                  inputMode={passo.tipo === "data" || passo.tipo === "whatsapp" ? "numeric" : undefined}
+                  onChange={(e) =>
+                    setTexto(passo.tipo === "data" ? mascararDataBr(e.target.value) : e.target.value)
+                  }
                   onKeyDown={(e) => {
                     if (e.key === "Enter" && texto.trim()) avancar(texto.trim());
                   }}
@@ -117,28 +121,48 @@ export function OnboardingPreview({ copy }: { copy: OnboardingCopy }) {
               </div>
             )}
 
-            {passo.tipo === "chips_multi" && (
-              <div className="flex flex-col gap-2">
-                <ChipGroup label={passo.id}>
-                  {(passo.opcoes ?? []).map((o) => (
-                    <Chip
-                      key={o.value}
-                      selected={multi.includes(o.value)}
-                      onClick={() =>
-                        setMulti((m) => (m.includes(o.value) ? m.filter((x) => x !== o.value) : [...m, o.value]))
-                      }
-                    >
-                      {o.label}
-                    </Chip>
-                  ))}
-                </ChipGroup>
-                <div className="flex justify-end">
-                  <Button size="sm" disabled={multi.length === 0} onClick={() => avancar(multi)}>
-                    Continuar
-                  </Button>
-                </div>
-              </div>
-            )}
+            {passo.tipo === "chips_multi" &&
+              (() => {
+                const opcoes = passo.opcoes ?? [];
+                const temLivre = multi.some((v) => opcoes.find((o) => o.value === v)?.livre);
+                const podeAvancar =
+                  (passo.opcional || multi.length > 0) && (!temLivre || texto.trim().length > 0);
+                const finalizar = () =>
+                  avancar(
+                    multi.map((v) => (opcoes.find((o) => o.value === v)?.livre ? texto.trim() : v)),
+                  );
+                return (
+                  <div className="flex flex-col gap-2">
+                    <ChipGroup label={passo.id}>
+                      {opcoes.map((o) => (
+                        <Chip
+                          key={o.value}
+                          selected={multi.includes(o.value)}
+                          onClick={() =>
+                            setMulti((m) =>
+                              m.includes(o.value) ? m.filter((x) => x !== o.value) : [...m, o.value],
+                            )
+                          }
+                        >
+                          {o.label}
+                        </Chip>
+                      ))}
+                    </ChipGroup>
+                    {temLivre && (
+                      <Input
+                        value={texto}
+                        placeholder="Escreva aqui — qual?"
+                        onChange={(e) => setTexto(e.target.value)}
+                      />
+                    )}
+                    <div className="flex justify-end">
+                      <Button size="sm" disabled={!podeAvancar} onClick={finalizar}>
+                        {passo.opcional && multi.length === 0 ? "Pular" : "Continuar"}
+                      </Button>
+                    </div>
+                  </div>
+                );
+              })()}
 
             {passo.tipo === "chips_uni" && (
               <div className="flex flex-col gap-2">
