@@ -110,6 +110,13 @@ const ONBOARDING_ETAPAS: { atingiu: number; label: string; desc: string }[] = [
   { atingiu: 7, label: "Concluiu o onboarding", desc: "Terminou tudo e entrou no app." },
 ];
 
+/**
+ * O sub-funil do onboarding só considera cadastros a partir daqui — a coorte que
+ * interessa (antes disso os passos não eram medidos do mesmo jeito). Fuso de SP.
+ */
+const ONBOARDING_DESDE = new Date("2026-07-04T00:00:00-03:00").getTime();
+const ONBOARDING_DESDE_LABEL = "04/07/2026";
+
 /** A tela em que a pessoa está PARADA agora (onboarding_step = próxima a preencher). */
 const TELA_ATUAL: Record<number, string> = {
   1: "Tela 1 — Você",
@@ -227,6 +234,8 @@ export type JornadaData = {
   funil: { key: string; label: string; desc: string; n: number }[];
   /** Sub-funil do onboarding (cumulativo) — decompõe "Cadastrou" por onde a pessoa parou. */
   onboardingFunil: { label: string; desc: string; n: number }[];
+  /** Data-corte do sub-funil do onboarding (só conta cadastros a partir daqui). */
+  onboardingDesde: string;
   emRisco: number;
   expirados: number;
   porOrigem: {
@@ -378,10 +387,12 @@ export async function carregarJornadaTrial(admin: SupabaseClient): Promise<Jorna
       if (ativadoBool) ativadoN += 1;
       if (engajadoBool) engajadoN += 1;
       if (status === "active") converteuN += 1;
-      // Sub-funil do onboarding (cumulativo).
-      for (let i = 0; i < ONBOARDING_ETAPAS.length; i++) {
-        const passou = ONBOARDING_ETAPAS[i].atingiu >= 7 ? concluiuOnb : step >= ONBOARDING_ETAPAS[i].atingiu;
-        if (passou) onbCount[i] += 1;
+      // Sub-funil do onboarding (cumulativo) — só a coorte a partir de ONBOARDING_DESDE.
+      if (criado >= ONBOARDING_DESDE) {
+        for (let i = 0; i < ONBOARDING_ETAPAS.length; i++) {
+          const passou = ONBOARDING_ETAPAS[i].atingiu >= 7 ? concluiuOnb : step >= ONBOARDING_ETAPAS[i].atingiu;
+          if (passou) onbCount[i] += 1;
+        }
       }
     }
 
@@ -514,6 +525,7 @@ export async function carregarJornadaTrial(admin: SupabaseClient): Promise<Jorna
   return {
     funil,
     onboardingFunil,
+    onboardingDesde: ONBOARDING_DESDE_LABEL,
     emRisco,
     expirados,
     porOrigem: porOrigemArr,

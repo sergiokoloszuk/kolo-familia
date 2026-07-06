@@ -139,7 +139,7 @@ export default async function AquisicaoJornadaPage({
       {/* Sub-funil do onboarding — abre a caixa-preta do "Cadastrou" */}
       <Bloco
         titulo="Onboarding — onde as pessoas param"
-        desc="O 'Cadastrou' aberto passo a passo. A queda de uma barra pra próxima é o abandono naquela tela."
+        desc={`O 'Cadastrou' aberto passo a passo. A queda de uma barra pra próxima é o abandono naquela tela. Considera só cadastros a partir de ${j.onboardingDesde}.`}
       >
         <ul className="flex flex-col gap-2">
           {j.onboardingFunil.map((e, i) => {
