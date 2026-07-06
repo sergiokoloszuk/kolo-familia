@@ -1,34 +1,39 @@
-import { ONBOARDING_COPY_DEFAULT } from "@/lib/onboarding/copy-default";
+import { createServiceRoleClient } from "@/lib/supabase/server";
+import { ehAdmin } from "@/lib/auth/require-admin";
+import { carregarCopy } from "@/lib/onboarding/copy-store";
 import { OnboardingExperiencia } from "./preview";
+import { OnboardingEditor } from "./editor";
 
 /**
- * Dashboards → Onboarding. Preview interativo do cadastro conversacional novo
- * (Ideia 2), pra admin E agência (co-acesso) verem e sentirem antes de a gente
- * ligar no cadastro real. O acesso (admin OU analista) é garantido pelo layout
- * dos dashboards. É só simulação — não salva nada.
+ * Dashboards → Onboarding. A experiência inicial do lead (cadastro conversacional
+ * + passeio + começar por um desafio). Admin vê o EDITOR (chat de IA + preview ao
+ * vivo + publicar); agência (co-acesso) vê só a prévia. Acesso garantido pelo
+ * layout dos dashboards (admin OU analista). Copy vem do rascunho no banco (ou do
+ * default, se a migração 0059 ainda não foi aplicada).
  */
 export const dynamic = "force-dynamic";
 
-export default function DashboardsOnboardingPage() {
+export default async function DashboardsOnboardingPage() {
+  const [copy, isAdmin] = await Promise.all([
+    carregarCopy(createServiceRoleClient()),
+    ehAdmin(),
+  ]);
+
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h2 className="font-heading text-xl text-foreground">Experiência inicial do lead (prévia)</h2>
+        <h2 className="font-heading text-xl text-foreground">Experiência inicial do lead</h2>
         <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
           Tudo o que uma família nova vive no começo: o cadastro conversacional (a Ayla conduz, quase
           tudo é toque) e, no fim, os dois caminhos — <strong>conhecer o app</strong> (passeio narrado)
-          ou <strong>começar por um desafio</strong>. Clique como uma mãe faria. É só demonstração (não
-          salva nada; não altera nenhum dado).
+          ou <strong>começar por um desafio</strong>.
+          {isAdmin
+            ? " Ajuste a copy pelo chat ao lado; a prévia atualiza na hora. Publique quando gostar."
+            : " Clique como uma mãe faria — é uma demonstração, não altera nenhum dado."}
         </p>
       </div>
 
-      <div className="rounded-xl border border-brand-yellow/40 bg-brand-yellow/10 px-4 py-3 text-sm text-foreground">
-        <strong>Em construção (Fatia 1 de 4).</strong> Aqui você já <em>vê</em> o fluxo. A seguir vem:
-        editar a copy por um chat de IA com esta prévia atualizando ao vivo, um botão “Publicar”, e
-        por fim trocar o cadastro real por este fluxo.
-      </div>
-
-      <OnboardingExperiencia copy={ONBOARDING_COPY_DEFAULT} />
+      {isAdmin ? <OnboardingEditor initialCopy={copy} /> : <OnboardingExperiencia copy={copy} />}
     </div>
   );
 }
