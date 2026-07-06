@@ -112,8 +112,8 @@ const ONBOARDING_ETAPAS: { atingiu: number; label: string; desc: string }[] = [
  * O sub-funil do onboarding só considera cadastros a partir daqui — a coorte que
  * interessa (antes disso os passos não eram medidos do mesmo jeito). Fuso de SP.
  */
-const ONBOARDING_DESDE = new Date("2026-07-04T00:00:00-03:00").getTime();
-const ONBOARDING_DESDE_LABEL = "04/07/2026";
+const ONBOARDING_DESDE = new Date("2026-07-06T00:00:00-03:00").getTime();
+const ONBOARDING_DESDE_LABEL = "06/07/2026";
 
 /** A tela em que a pessoa está PARADA agora (onboarding_step = próxima a preencher). */
 const TELA_ATUAL: Record<number, string> = {
