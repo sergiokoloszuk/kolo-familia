@@ -102,12 +102,10 @@ const NAO_USO = new Set(["tela_visitada", "checkout_iniciado", "form_submit"]);
  */
 const ONBOARDING_ETAPAS: { atingiu: number; label: string; desc: string }[] = [
   { atingiu: 1, label: "Criou a conta", desc: "Cadastrou — total de contas." },
-  { atingiu: 2, label: "Passou 'Você'", desc: "Preencheu seus dados + WhatsApp (tela 1)." },
-  { atingiu: 3, label: "Cadastrou a criança", desc: "Completou a tela 2." },
-  { atingiu: 4, label: "Preencheu o contexto", desc: "Quem mora, irmãos (tela 3)." },
-  { atingiu: 5, label: "Deu os primeiros sinais", desc: "Desafios e interesses (tela 4)." },
-  { atingiu: 6, label: "Aceitou os termos", desc: "Passou a tela 5." },
-  { atingiu: 7, label: "Concluiu o onboarding", desc: "Terminou tudo e entrou no app." },
+  { atingiu: 2, label: "Cadastrou a pessoa", desc: "Preencheu quem é a pessoa cuidada." },
+  { atingiu: 3, label: "Deu o WhatsApp", desc: "Informou o número." },
+  { atingiu: 4, label: "Aceitou os termos", desc: "Consentiu (a Ayla pode escrever)." },
+  { atingiu: 7, label: "Concluiu o onboarding", desc: "Terminou e entrou no app." },
 ];
 
 /**
@@ -119,12 +117,10 @@ const ONBOARDING_DESDE_LABEL = "04/07/2026";
 
 /** A tela em que a pessoa está PARADA agora (onboarding_step = próxima a preencher). */
 const TELA_ATUAL: Record<number, string> = {
-  1: "Tela 1 — Você",
-  2: "Tela 2 — A criança",
-  3: "Tela 3 — Contexto",
-  4: "Tela 4 — Primeiros sinais",
-  5: "Tela 5 — Termos",
-  6: "Tela 6 — Confirmação",
+  1: "Preenchendo a pessoa",
+  2: "No WhatsApp",
+  3: "Nos termos",
+  4: "Nos seus dados",
   7: "Concluiu",
 };
 
