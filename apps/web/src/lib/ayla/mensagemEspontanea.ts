@@ -9,6 +9,9 @@ import {
   type Pronomes,
 } from "./pronomes";
 import { idadeAnos } from "@/lib/idade";
+import { gerarMagicLink } from "./ponte";
+
+const MS_DIA = 86_400_000;
 
 /**
  * Gerador de mensagens espontâneas da Ayla via IA — substitui os templates
@@ -28,7 +31,8 @@ export type Intent =
   | "completar_perfil"
   | "convite_plano"
   | "ensinar_valor"
-  | "feedback_plano";
+  | "feedback_plano"
+  | "menu_do_dia";
 
 export type MensagemEspontaneaResult = {
   texto: string;
@@ -127,6 +131,14 @@ type Context = {
   gapsAbertos: GapKV[];
   /** Já recebeu ao menos um PLANO? O plano é o que encanta — se não, a Ayla puxa pra lá. */
   temPlano: boolean;
+  /** Dia do teste (1-7), pra cadência dia-a-dia. null se não estiver em trial. */
+  diaTrial: number | null;
+  /** A pessoa já respondeu alguma vez? (se não, o "menu do dia" desbloqueia.) */
+  interagiu: boolean;
+  /** O Perfil está completo (sem campos-chave em branco)? */
+  perfilCompleto: boolean;
+  /** O foco é CRIANÇA (≤12)? Só aí o Lúdico entra no menu. */
+  ehCrianca: boolean;
 };
 
 async function loadContext(
@@ -134,7 +146,15 @@ async function loadContext(
   familyId: string,
   membroFocoId: string,
 ): Promise<Context | null> {
-  const [{ data: profile }, { data: membros }, { data: kv }, { data: planos }] = await Promise.all([
+  const [
+    { data: profile },
+    { data: membros },
+    { data: kv },
+    { data: planos },
+    { data: conta },
+    { data: sub },
+    { data: inbound },
+  ] = await Promise.all([
     supabase
       .from("family_profiles")
       .select("nome_mae, como_chamar")
@@ -152,6 +172,9 @@ async function loadContext(
       .eq("membro_atipico_id", membroFocoId)
       .maybeSingle(),
     supabase.from("planos").select("id").eq("family_account_id", familyId).limit(1),
+    supabase.from("family_accounts").select("created_at").eq("id", familyId).maybeSingle(),
+    supabase.from("subscription_accesses").select("status").eq("family_account_id", familyId).maybeSingle(),
+    supabase.from("ayla_messages").select("id").eq("family_account_id", familyId).eq("direcao", "inbound").limit(1),
   ]);
 
   if (!membros || membros.length === 0) return null;
@@ -165,6 +188,14 @@ async function loadContext(
     const sec = (kv as Record<string, { texto?: string } | null> | null)?.[g.campo];
     return !sec?.texto?.trim();
   });
+
+  const status = (sub?.status as string | null) ?? null;
+  const criado = conta?.created_at ? new Date(conta.created_at as string).getTime() : null;
+  const diaTrial =
+    status === "trialing" && criado
+      ? Math.min(7, Math.max(1, Math.floor((Date.now() - criado) / MS_DIA) + 1))
+      : null;
+  const idadeFoco = idadeAnos((foco.data_nascimento as string | null) ?? null);
 
   return {
     nomeMae,
@@ -182,6 +213,10 @@ async function loadContext(
       .join(", "),
     gapsAbertos,
     temPlano: (planos?.length ?? 0) > 0,
+    diaTrial,
+    interagiu: (inbound?.length ?? 0) > 0,
+    perfilCompleto: gapsAbertos.length === 0,
+    ehCrianca: idadeFoco != null && idadeFoco <= 12,
   };
 }
 
@@ -191,21 +226,30 @@ function hashSeed(s: string): number {
   return h;
 }
 
-function pickIntent(seed: string, temPlano: boolean): Intent {
+function pickIntent(
+  seed: string,
+  s: { temPlano: boolean; diaTrial: number | null; interagiu: boolean },
+): Intent {
   const r = hashSeed(seed) % 100;
-  // Ativação: quem AINDA não recebeu um plano precisa ENTENDER o valor e ser
-  // puxado pro plano (é o que encanta). Só "conta como foi o dia" não ativa.
-  if (!temPlano) {
-    if (r < 45) return "convite_plano";
-    if (r < 75) return "ensinar_valor";
+  // Não engajou ainda (D2+): o "menu do dia" é o desbloqueio — em vez de só
+  // "conta como foi o dia", oferece caminhos concretos de valor.
+  if (!s.interagiu && (s.diaTrial ?? 1) >= 2) {
+    if (r < 55) return "menu_do_dia";
+    if (r < 80) return "convite_plano";
+    return "ensinar_valor";
+  }
+  // Ainda sem plano: puxa pro plano/valor, com o menu reaparecendo.
+  if (!s.temPlano) {
+    if (r < 30) return "convite_plano";
+    if (r < 55) return "menu_do_dia";
+    if (r < 78) return "ensinar_valor";
     return "acolhimento";
   }
-  // Já recebeu plano: vale perguntar o que achou (vira feedback/elogio) e seguir
-  // o mix normal, com o plano ainda no radar.
-  if (r < 25) return "feedback_plano";
-  if (r < 45) return "acolhimento";
-  if (r < 65) return "convite_plano";
-  if (r < 82) return "voce_sabia";
+  // Já tem plano: pergunta o que achou; menu e mix normal.
+  if (r < 22) return "feedback_plano";
+  if (r < 42) return "menu_do_dia";
+  if (r < 60) return "acolhimento";
+  if (r < 80) return "voce_sabia";
   return "completar_perfil";
 }
 
@@ -293,6 +337,35 @@ EXEMPLOS DE TOM (não copie literal, só inspira):
 Gere UMA nova mensagem.`;
 }
 
+function promptMenuDia(ctx: Context, ludicoLink: string | null): string {
+  const opcoes = ctx.ehCrianca
+    ? `1. Ajuda pra uma SITUAÇÃO específica (um desafio de agora)
+2. Montar uma ROTINA VISUAL — dá previsibilidade e segurança nas transições do dia${ludicoLink ? ` (é só abrir: ${ludicoLink})` : ""}
+3. Uma HISTÓRIA com ${ctx.nomeMembro} de protagonista, pra ajudar num desafio${ludicoLink ? ` (mesmo link)` : ""}
+Ou só CONTAR como foi o dia — pode ser ÁUDIO`
+    : `1. Ajuda pra uma SITUAÇÃO específica (um desafio de agora)
+2. Montar um PLANO pra um desafio atual
+Ou só CONTAR como foi o dia — pode ser ÁUDIO`;
+
+  return `INTENÇÃO: menu_do_dia
+
+CONTEXTO:
+- Quem recebe: ${ctx.nomeMae}
+- Em foco: ${ctx.nomeMembro}${ctx.idadeMembro != null ? `, ${ctx.idadeMembro} anos` : ""}${ctx.ehCrianca ? " (criança)" : " (NÃO é criança — nada de Lúdico/rotina visual/história infantil)"}
+
+TAREFA:
+Ofereça um MENU curto do dia, deixando ${ctx.nomeMae} escolher como quer ser ajudada HOJE. Abra com 1 frase lembrando que registrar o dia é o que permite ver a EVOLUÇÃO ${ctx.deNomeMembro} por tema mais pra frente. Depois as opções (numeradas, curtas):
+${opcoes}
+
+Regras:
+- Convide a responder com o número, ou do jeito dela.
+- Se houver link, use EXATAMENTE o link que te passei (não invente URL).
+- Deixe claro que CONTAR o dia pode ser por ÁUDIO — e que isso já vira a evolução.
+- Curto, humano, WhatsApp. Sem "funcionalidade", "plataforma", "recurso".
+
+Gere UMA nova mensagem com esse menu.`;
+}
+
 function promptVoceSabia(ctx: Context, featureDescricao: string): string {
   return `INTENÇÃO: voce_sabia
 
@@ -345,7 +418,11 @@ export async function gerarMensagemEspontanea(
   }
 
   const seed = `${params.familyId}-${params.agora.toDateString()}`;
-  let intent = pickIntent(seed, ctx.temPlano);
+  let intent = pickIntent(seed, {
+    temPlano: ctx.temPlano,
+    diaTrial: ctx.diaTrial,
+    interagiu: ctx.interagiu,
+  });
 
   // Sub-sort por intenção; completar_perfil sem gaps vira convite ao plano
   // (melhor puxar pro que ativa do que só pedir mais dado).
@@ -367,6 +444,11 @@ export async function gerarMensagemEspontanea(
     userPrompt = promptEnsinarValor(ctx);
   } else if (intent === "feedback_plano") {
     userPrompt = promptFeedbackPlano(ctx);
+  } else if (intent === "menu_do_dia") {
+    const ludicoLink = ctx.ehCrianca
+      ? await gerarMagicLink(supabase, { familyId: params.familyId, next: "/ludico" })
+      : null;
+    userPrompt = promptMenuDia(ctx, ludicoLink);
   } else {
     userPrompt = promptAcolhimento(ctx);
   }
