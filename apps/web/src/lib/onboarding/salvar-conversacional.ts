@@ -6,42 +6,46 @@ import { inferGeneroDePalavra } from "@/lib/ayla/pronomes";
 import { perfilPrimario, buildDiagnosticosFormais } from "@/lib/onboarding/diagnostico";
 
 /**
- * Persistência do onboarding CONVERSACIONAL (Fatia 3) — mapeia as respostas do
- * fluxo novo pras mesmas tabelas do cadastro antigo, pra a experiência trocar
- * mas o dado continuar igual. Roda por service-role; o familyId JÁ vem resolvido
- * da sessão autenticada (a server action que chama garante isso).
- *
- * Espelha saveTela1/2/4/5 + completeOnboarding do onboarding antigo.
+ * Persistência do onboarding CONVERSACIONAL (Fatia 3) — em ETAPAS (checkpoints),
+ * espelhando o wizard antigo (que salvava por tela). Cada etapa salva o que já
+ * tem e avança `onboarding_step`, então:
+ *  - o "Parou em" do funil volta a mostrar onde a pessoa desistiu;
+ *  - o WhatsApp + opt-in entram CEDO → a Ayla consegue resgatar quem abandona.
+ * Tudo idempotente (dá pra reenviar a mesma etapa ao corrigir uma resposta).
+ * Roda por service-role; o familyId JÁ vem resolvido da sessão autenticada.
  */
 
-export type RespostasConversacional = {
-  membro: {
-    nome: string;
-    genero: "feminino" | "masculino";
-    nascimento: string; // dd/mm/aaaa
-    laudo: string[]; // valores enum (TEA, TDAH, Dislexia, AHSD, Outro)
-    laudoOutro?: string | null;
-    investigacao: string[]; // valores enum (hipóteses)
-    interesses: string[]; // gostos/hiperfocos (texto livre por chips)
-  };
-  desafios: string[]; // valores de tema (comunicacao, sono, foco...)
-  horario?: string | null; // manha | meio_dia | tarde | noite
-  responsavel: {
-    nome: string;
-    relacao: string; // mae | pai | avo | avoh | outro
-    relacaoOutro?: string | null;
-    genero?: "feminino" | "masculino" | "neutro" | null; // quando foi preciso perguntar
-    faixa?: string | null; // "26-35" | "na" | null
-  };
-  whatsapp: string; // E.164
-  aceites: { termos: boolean; ayla: boolean };
+export type MembroInput = {
+  nome: string;
+  genero: "feminino" | "masculino";
+  nascimento: string; // dd/mm/aaaa
+  laudo: string[];
+  laudoOutro?: string | null;
+  investigacao: string[];
+  interesses: string[];
+};
+
+export type ResponsavelInput = {
+  nome: string;
+  relacao: string; // mae | pai | avo | avoh | outro
+  relacaoOutro?: string | null;
+  genero?: "feminino" | "masculino" | "neutro" | null;
+  faixa?: string | null;
 };
 
 export type SalvarResultado =
   | { ok: true }
   | { ok: false; motivo: "whatsapp_duplicado" | "erro"; mensagem: string };
 
-/** faixa etária → data de nascimento aproximada (ponto médio), pra a idade média do Público. */
+// onboarding_step do fluxo NOVO: 2=pessoa, 3=whatsapp, 4=aceite, 7=concluiu.
+async function bumpStep(admin: SupabaseClient, familyId: string, step: number) {
+  await admin
+    .from("family_accounts")
+    .update({ onboarding_step: step })
+    .eq("id", familyId)
+    .lt("onboarding_step", step);
+}
+
 function faixaParaDataAprox(faixa: string | null | undefined): string | null {
   const meio: Record<string, number> = { "18-25": 21, "26-35": 30, "36-45": 40, "46-59": 52, "60+": 65 };
   const idade = faixa ? meio[faixa] : undefined;
@@ -51,7 +55,7 @@ function faixaParaDataAprox(faixa: string | null | undefined): string | null {
   return d.toISOString().slice(0, 10);
 }
 
-function generoDoResponsavel(r: RespostasConversacional["responsavel"]): "feminino" | "masculino" | "neutro" | null {
+function generoDoResponsavel(r: ResponsavelInput): "feminino" | "masculino" | "neutro" | null {
   if (r.genero) return r.genero;
   if (r.relacao === "mae" || r.relacao === "avo") return "feminino";
   if (r.relacao === "pai" || r.relacao === "avoh") return "masculino";
@@ -59,15 +63,81 @@ function generoDoResponsavel(r: RespostasConversacional["responsavel"]): "femini
   return null;
 }
 
-export async function salvarOnboardingConversacional(
+/** ETAPA 1 — a pessoa cuidada (membro + desafios/interesses). Idempotente. */
+export async function cpMembro(
   admin: SupabaseClient,
   familyId: string,
-  r: RespostasConversacional,
+  m: MembroInput,
+  desafios: string[],
 ): Promise<SalvarResultado> {
   try {
-    // 1) WhatsApp — checa duplicidade ANTES de gravar (senão a Ayla responde pra
-    //    família errada). Se duplicado, devolve pro fluxo oferecer "Entrar".
-    const chaveNova = chaveTelefoneBR(r.whatsapp);
+    const laudo = [...m.laudo];
+    if (m.laudoOutro && !laudo.includes("Outro")) laudo.push("Outro");
+    const diagParaPerfil = laudo.length ? laudo : m.investigacao.length ? ["EmInvestigacao"] : [];
+    const campos = {
+      nome: capitalizarNome(m.nome),
+      data_nascimento: dataBrParaIso(m.nascimento),
+      genero: m.genero,
+      perfil: perfilPrimario(diagParaPerfil),
+      diagnosticos_formais: buildDiagnosticosFormais({
+        diagnosticos: laudo,
+        outro: m.laudoOutro ?? null,
+        hipoteses: m.investigacao,
+      }),
+    };
+
+    // Idempotente: se já existe um membro (etapa reenviada ao corrigir), atualiza.
+    const { data: existente } = await admin
+      .from("membros_atipicos")
+      .select("id")
+      .eq("family_account_id", familyId)
+      .order("created_at", { ascending: true })
+      .limit(1)
+      .maybeSingle();
+
+    let membroId = existente?.id as string | undefined;
+    if (membroId) {
+      await admin.from("membros_atipicos").update(campos).eq("id", membroId);
+    } else {
+      const { data: novo, error } = await admin
+        .from("membros_atipicos")
+        .insert({ family_account_id: familyId, ...campos })
+        .select("id")
+        .single();
+      if (error || !novo) return { ok: false, motivo: "erro", mensagem: error?.message ?? "sem id" };
+      membroId = novo.id as string;
+    }
+
+    const extras: Record<string, unknown> = { desafios_onboarding: desafios };
+    for (const d of desafios) extras[d] = { texto: "" };
+    if (m.interesses.length) extras.preferencias = { temas: m.interesses };
+    await admin.from("perfil_vivo_membro").upsert(
+      {
+        membro_atipico_id: membroId,
+        family_account_id: familyId,
+        como_e: m.interesses.length ? { interesses: m.interesses } : {},
+        essencial: {},
+        categorias_extras: extras,
+        completude_pct: 0,
+      },
+      { onConflict: "membro_atipico_id" },
+    );
+
+    await bumpStep(admin, familyId, 2);
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, motivo: "erro", mensagem: e instanceof Error ? e.message : "erro" };
+  }
+}
+
+/** ETAPA 2 — WhatsApp (com checagem de duplicado). Idempotente. */
+export async function cpWhatsapp(
+  admin: SupabaseClient,
+  familyId: string,
+  whatsapp: string,
+): Promise<SalvarResultado> {
+  try {
+    const chaveNova = chaveTelefoneBR(whatsapp);
     if (chaveNova) {
       const { data: outras } = await admin
         .from("family_accounts")
@@ -78,106 +148,88 @@ export async function salvarOnboardingConversacional(
         (f) => chaveTelefoneBR(f.whatsapp_e164 as string) === chaveNova,
       );
       if (conflito) {
-        return {
-          ok: false,
-          motivo: "whatsapp_duplicado",
-          mensagem: "Já existe uma conta com esse WhatsApp.",
-        };
+        return { ok: false, motivo: "whatsapp_duplicado", mensagem: "Já existe uma conta com esse WhatsApp." };
       }
     }
+    const { error } = await admin.from("family_accounts").update({ whatsapp_e164: whatsapp }).eq("id", familyId);
+    if (error) {
+      if (error.code === "23505") {
+        return { ok: false, motivo: "whatsapp_duplicado", mensagem: "Já existe uma conta com esse WhatsApp." };
+      }
+      return { ok: false, motivo: "erro", mensagem: error.message };
+    }
+    await bumpStep(admin, familyId, 3);
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, motivo: "erro", mensagem: e instanceof Error ? e.message : "erro" };
+  }
+}
 
-    // 2) Perfil da mãe/responsável
-    const ehOutro = !["mae", "pai", "avo", "avoh"].includes(r.responsavel.relacao);
+/** ETAPA 3 — aceites (termos + opt-in da Ayla). Captura o consentimento CEDO. */
+export async function cpAceites(
+  admin: SupabaseClient,
+  familyId: string,
+  aceites: { termos: boolean; ayla: boolean },
+): Promise<void> {
+  try {
+    if (aceites.ayla) {
+      await admin.from("ayla_preferences").upsert(
+        { family_account_id: familyId, desativada: false, consentimento_em: new Date().toISOString() },
+        { onConflict: "family_account_id" },
+      );
+    }
+    await bumpStep(admin, familyId, 4);
+  } catch {
+    /* best-effort */
+  }
+}
+
+const JANELAS: Record<string, { i: string; f: string }> = {
+  manha: { i: "08:00", f: "10:00" },
+  meio_dia: { i: "12:00", f: "14:00" },
+  tarde: { i: "15:00", f: "17:00" },
+  noite: { i: "19:00", f: "21:00" },
+};
+
+/** ETAPA 4 — responsável + horário + CONCLUSÃO (1ª mensagem da Ayla + aviso admin). */
+export async function cpConcluir(
+  admin: SupabaseClient,
+  familyId: string,
+  r: ResponsavelInput,
+  horario: string | null | undefined,
+): Promise<SalvarResultado> {
+  try {
+    const ehOutro = !["mae", "pai", "avo", "avoh"].includes(r.relacao);
     await admin.from("family_profiles").upsert({
       family_account_id: familyId,
-      nome_mae: capitalizarNome(r.responsavel.nome),
-      data_nascimento_mae: faixaParaDataAprox(r.responsavel.faixa),
-      papel: ehOutro ? "outro" : r.responsavel.relacao,
-      papel_outro: ehOutro ? r.responsavel.relacaoOutro ?? null : null,
-      genero_responsavel: generoDoResponsavel(r.responsavel),
+      nome_mae: capitalizarNome(r.nome),
+      data_nascimento_mae: faixaParaDataAprox(r.faixa),
+      papel: ehOutro ? "outro" : r.relacao,
+      papel_outro: ehOutro ? r.relacaoOutro ?? null : null,
+      genero_responsavel: generoDoResponsavel(r),
     });
 
-    // 3) Membro atípico (a pessoa cuidada)
-    const laudo = [...r.membro.laudo];
-    if (r.membro.laudoOutro && !laudo.includes("Outro")) laudo.push("Outro");
-    const diagParaPerfil = laudo.length ? laudo : r.membro.investigacao.length ? ["EmInvestigacao"] : [];
-    const { data: membro, error: errMembro } = await admin
-      .from("membros_atipicos")
-      .insert({
-        family_account_id: familyId,
-        nome: capitalizarNome(r.membro.nome),
-        data_nascimento: dataBrParaIso(r.membro.nascimento),
-        genero: r.membro.genero,
-        perfil: perfilPrimario(diagParaPerfil),
-        diagnosticos_formais: buildDiagnosticosFormais({
-          diagnosticos: laudo,
-          outro: r.membro.laudoOutro ?? null,
-          hipoteses: r.membro.investigacao,
-        }),
-      })
-      .select("id")
-      .single();
-    if (errMembro || !membro) {
-      return { ok: false, motivo: "erro", mensagem: `Erro ao salvar a criança: ${errMembro?.message ?? "sem id"}` };
+    if (horario && JANELAS[horario]) {
+      await admin.from("ayla_preferences").upsert(
+        {
+          family_account_id: familyId,
+          horario_preferido_inicio: JANELAS[horario].i,
+          horario_preferido_fim: JANELAS[horario].f,
+        },
+        { onConflict: "family_account_id" },
+      );
     }
 
-    // 4) Desafios + interesses → perfil_vivo_membro (espelha o tela4 antigo).
-    //    Cada desafio marca seu DOMÍNIO (o dashboard "temas preenchidos" conta);
-    //    a lista crua fica pra a Ayla aprofundar depois. Interesses viram os
-    //    hiperfocos (como_e.interesses + preferencias.temas), que a Ayla já lê.
-    const extras: Record<string, unknown> = { desafios_onboarding: r.desafios };
-    for (const d of r.desafios) extras[d] = { texto: "" };
-    if (r.membro.interesses.length) extras.preferencias = { temas: r.membro.interesses };
-    await admin.from("perfil_vivo_membro").upsert(
-      {
-        membro_atipico_id: membro.id,
-        family_account_id: familyId,
-        como_e: r.membro.interesses.length ? { interesses: r.membro.interesses } : {},
-        essencial: {},
-        categorias_extras: extras,
-        completude_pct: 0,
-      },
-      { onConflict: "membro_atipico_id" },
-    );
-
-    // 5) WhatsApp + conclusão do onboarding
-    const { error: errFam } = await admin
+    const { error } = await admin
       .from("family_accounts")
       .update({
-        whatsapp_e164: r.whatsapp,
         onboarding_completed: true,
         onboarding_step: 7,
         boas_vindas_vista_at: new Date().toISOString(),
       })
       .eq("id", familyId);
-    if (errFam) {
-      if (errFam.code === "23505") {
-        return { ok: false, motivo: "whatsapp_duplicado", mensagem: "Já existe uma conta com esse WhatsApp." };
-      }
-      return { ok: false, motivo: "erro", mensagem: `Erro ao concluir: ${errFam.message}` };
-    }
+    if (error) return { ok: false, motivo: "erro", mensagem: error.message };
 
-    // 6) Ayla preferences — consentimento (LGPD) + horário preferido do WhatsApp.
-    const JANELAS: Record<string, { i: string; f: string }> = {
-      manha: { i: "08:00", f: "10:00" },
-      meio_dia: { i: "12:00", f: "14:00" },
-      tarde: { i: "15:00", f: "17:00" },
-      noite: { i: "19:00", f: "21:00" },
-    };
-    const prefs: Record<string, unknown> = { family_account_id: familyId };
-    if (r.aceites.ayla) {
-      prefs.desativada = false;
-      prefs.consentimento_em = new Date().toISOString();
-    }
-    if (r.horario && JANELAS[r.horario]) {
-      prefs.horario_preferido_inicio = JANELAS[r.horario].i;
-      prefs.horario_preferido_fim = JANELAS[r.horario].f;
-    }
-    if (Object.keys(prefs).length > 1) {
-      await admin.from("ayla_preferences").upsert(prefs, { onConflict: "family_account_id" });
-    }
-
-    // 7) Primeira mensagem da Ayla + aviso pro admin — best-effort, não trava.
     try {
       const { sendBoasVindas } = await import("@/lib/ayla/orchestrator");
       await sendBoasVindas(admin, familyId);
@@ -193,6 +245,6 @@ export async function salvarOnboardingConversacional(
 
     return { ok: true };
   } catch (e) {
-    return { ok: false, motivo: "erro", mensagem: e instanceof Error ? e.message : "Erro inesperado" };
+    return { ok: false, motivo: "erro", mensagem: e instanceof Error ? e.message : "erro" };
   }
 }

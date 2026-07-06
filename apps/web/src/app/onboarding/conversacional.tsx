@@ -7,8 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Chip, ChipGroup } from "@/components/ui/chip";
 import { mascararDataBr, dataBrParaIso, idadeAnos } from "@/lib/idade";
 import { exemplosInteressePorIdade, type OnboardingCopy, type OnbPasso, type OnbChip } from "@/lib/onboarding/copy-default";
-import type { RespostasConversacional } from "@/lib/onboarding/salvar-conversacional";
-import { concluirConversacional } from "./actions-conversacional";
+import type { MembroInput, ResponsavelInput } from "@/lib/onboarding/salvar-conversacional";
+import { salvarMembroAction, salvarWhatsappAction, salvarAceitesAction, concluirAction } from "./actions-conversacional";
 
 /**
  * Onboarding CONVERSACIONAL real (Fatia 3) — mesma cara do preview, mas guarda
@@ -84,22 +84,70 @@ export function OnboardingConversacional({ copy }: { copy: OnboardingCopy }) {
     return m;
   }, [passos]);
 
-  function proximo(next: Record<string, string | string[]>, novoOutro?: { id: string; texto: string }) {
+  // Constrói os dados de cada etapa a partir das respostas (valores) + "outros".
+  const strDe = (a: Record<string, string | string[]>, id: string) => (a[id] as string) ?? "";
+  const arrDe = (a: Record<string, string | string[]>, id: string) => (Array.isArray(a[id]) ? (a[id] as string[]) : []);
+
+  function buildMembro(a: Record<string, string | string[]>, o: Record<string, string>): MembroInput {
+    const interesses = arrDe(a, "membro_interesses")
+      .map((v) => (v === "Outro" ? (o["membro_interesses"] || "").trim() : v))
+      .filter(Boolean);
+    return {
+      nome: strDe(a, "membro_nome"),
+      genero: (strDe(a, "membro_genero") as "feminino" | "masculino") || "feminino",
+      nascimento: strDe(a, "membro_nascimento"),
+      laudo: arrDe(a, "membro_laudo"),
+      laudoOutro: o["membro_laudo"] ?? null,
+      investigacao: arrDe(a, "membro_investigacao"),
+      interesses,
+    };
+  }
+  function buildResp(a: Record<string, string | string[]>, o: Record<string, string>): ResponsavelInput {
+    return {
+      nome: strDe(a, "voce_nome"),
+      relacao: strDe(a, "voce_relacao"),
+      relacaoOutro: o["voce_relacao"] ?? null,
+      genero: null,
+      faixa: strDe(a, "voce_faixa") || null,
+    };
+  }
+
+  async function proximo(next: Record<string, string | string[]>, novoOutro?: { id: string; texto: string }) {
     const merged = { ...answers, ...next };
+    const outrosMerged = novoOutro ? { ...outros, [novoOutro.id]: novoOutro.texto } : outros;
     setAnswers(merged);
-    if (novoOutro) setOutros((o) => ({ ...o, [novoOutro.id]: novoOutro.texto }));
+    if (novoOutro) setOutros(outrosMerged);
     setTexto("");
     setMulti([]);
     setUni(null);
+
     if (retomarEm !== null) {
       const back = retomarEm;
       setRetomarEm(null);
       setIdx(back);
-    } else if (idx + 1 >= passos.length) {
-      void submeter(merged);
-    } else {
-      setIdx(idx + 1);
+      return;
     }
+
+    const id = passo?.id;
+    const ultimo = idx + 1 >= passos.length;
+
+    // Checkpoints — salvam cedo (pro "Parou em" + resgate) e são idempotentes.
+    if (id === "membro_interesses") {
+      void salvarMembroAction(buildMembro(merged, outrosMerged), arrDe(merged, "desafios"));
+    } else if (id === "whatsapp") {
+      setFase("salvando");
+      const res = await salvarWhatsappAction(telParaE164(strDe(merged, "whatsapp")));
+      if (!res.ok && res.motivo === "whatsapp_duplicado") {
+        setFase("duplicado");
+        return;
+      }
+      setFase("form");
+    } else if (id === "aceites") {
+      void salvarAceitesAction(aceites);
+    }
+
+    if (ultimo) void finalizar(merged, outrosMerged);
+    else setIdx(idx + 1);
   }
 
   function editar(k: number) {
@@ -111,36 +159,17 @@ export function OnboardingConversacional({ copy }: { copy: OnboardingCopy }) {
     setIdx(k);
   }
 
-  async function submeter(finais: Record<string, string | string[]>) {
+  // Fim: salva tudo de novo (captura edições) e conclui.
+  async function finalizar(a: Record<string, string | string[]>, o: Record<string, string>) {
     setFase("salvando");
-    const str = (id: string) => (finais[id] as string) ?? "";
-    const arr = (id: string) => (Array.isArray(finais[id]) ? (finais[id] as string[]) : []);
-    const interesses = arr("membro_interesses")
-      .map((v) => (v === "Outro" ? (outros["membro_interesses"] || "").trim() : v))
-      .filter(Boolean);
-    const r: RespostasConversacional = {
-      membro: {
-        nome: str("membro_nome"),
-        genero: (str("membro_genero") as "feminino" | "masculino") || "feminino",
-        nascimento: str("membro_nascimento"),
-        laudo: arr("membro_laudo"),
-        laudoOutro: outros["membro_laudo"] ?? null,
-        investigacao: arr("membro_investigacao"),
-        interesses,
-      },
-      desafios: arr("desafios"),
-      horario: str("voce_horario") || null,
-      responsavel: {
-        nome: str("voce_nome"),
-        relacao: str("voce_relacao"),
-        relacaoOutro: outros["voce_relacao"] ?? null,
-        genero: null,
-        faixa: str("voce_faixa") || null,
-      },
-      whatsapp: telParaE164(str("whatsapp")),
-      aceites,
-    };
-    const res = await concluirConversacional(r);
+    await salvarMembroAction(buildMembro(a, o), arrDe(a, "desafios"));
+    const w = await salvarWhatsappAction(telParaE164(strDe(a, "whatsapp")));
+    if (!w.ok && w.motivo === "whatsapp_duplicado") {
+      setFase("duplicado");
+      return;
+    }
+    await salvarAceitesAction(aceites);
+    const res = await concluirAction(buildResp(a, o), strDe(a, "voce_horario") || null);
     if (res.ok) setFase("pronto");
     else if (res.motivo === "whatsapp_duplicado") setFase("duplicado");
     else {
@@ -188,7 +217,7 @@ export function OnboardingConversacional({ copy }: { copy: OnboardingCopy }) {
       <Centro>
         <p className="font-heading text-lg text-foreground">Não consegui concluir agora</p>
         <p className="text-sm text-muted-foreground">{erroMsg || "Tente de novo em instantes."}</p>
-        <Button onClick={() => submeter(answers)}>Tentar de novo</Button>
+        <Button onClick={() => finalizar(answers, outros)}>Tentar de novo</Button>
       </Centro>
     );
   }
@@ -327,7 +356,7 @@ export function OnboardingConversacional({ copy }: { copy: OnboardingCopy }) {
               </label>
               <div className="flex justify-end">
                 <Button size="sm" disabled={!aceites.termos || !aceites.ayla} onClick={() => proximo({ [passo.id]: "ok" })}>
-                  Começar
+                  Continuar
                 </Button>
               </div>
             </div>

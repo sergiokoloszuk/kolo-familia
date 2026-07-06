@@ -2,33 +2,55 @@
 
 import { createClient, createServiceRoleClient } from "@/lib/supabase/server";
 import {
-  salvarOnboardingConversacional,
-  type RespostasConversacional,
+  cpMembro,
+  cpWhatsapp,
+  cpAceites,
+  cpConcluir,
+  type MembroInput,
+  type ResponsavelInput,
   type SalvarResultado,
 } from "@/lib/onboarding/salvar-conversacional";
 
-/**
- * Conclui o onboarding CONVERSACIONAL: resolve a família da SESSÃO (não confia no
- * cliente) e persiste tudo. Devolve o resultado (inclui "whatsapp_duplicado" pro
- * fluxo oferecer "Entrar").
- */
-export async function concluirConversacional(
-  respostas: RespostasConversacional,
-): Promise<SalvarResultado> {
+/** Resolve a família da SESSÃO (nunca confia no cliente). */
+async function resolverFamilia(): Promise<{ admin: ReturnType<typeof createServiceRoleClient>; familyId: string } | null> {
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return { ok: false, motivo: "erro", mensagem: "Não autenticado" };
-
+  if (!user) return null;
   const { data: family } = await supabase
     .from("family_accounts")
-    .select("id, onboarding_completed")
+    .select("id")
     .eq("user_id", user.id)
     .single();
-  if (!family) return { ok: false, motivo: "erro", mensagem: "Família não inicializada" };
-  if (family.onboarding_completed) return { ok: true }; // idempotente
+  if (!family) return null;
+  return { admin: createServiceRoleClient(), familyId: family.id as string };
+}
 
-  const admin = createServiceRoleClient();
-  return salvarOnboardingConversacional(admin, family.id as string, respostas);
+export async function salvarMembroAction(m: MembroInput, desafios: string[]): Promise<SalvarResultado> {
+  const ctx = await resolverFamilia();
+  if (!ctx) return { ok: false, motivo: "erro", mensagem: "Sessão expirada" };
+  return cpMembro(ctx.admin, ctx.familyId, m, desafios);
+}
+
+export async function salvarWhatsappAction(whatsapp: string): Promise<SalvarResultado> {
+  const ctx = await resolverFamilia();
+  if (!ctx) return { ok: false, motivo: "erro", mensagem: "Sessão expirada" };
+  return cpWhatsapp(ctx.admin, ctx.familyId, whatsapp);
+}
+
+export async function salvarAceitesAction(aceites: { termos: boolean; ayla: boolean }): Promise<{ ok: boolean }> {
+  const ctx = await resolverFamilia();
+  if (!ctx) return { ok: false };
+  await cpAceites(ctx.admin, ctx.familyId, aceites);
+  return { ok: true };
+}
+
+export async function concluirAction(
+  r: ResponsavelInput,
+  horario: string | null,
+): Promise<SalvarResultado> {
+  const ctx = await resolverFamilia();
+  if (!ctx) return { ok: false, motivo: "erro", mensagem: "Sessão expirada" };
+  return cpConcluir(ctx.admin, ctx.familyId, r, horario);
 }

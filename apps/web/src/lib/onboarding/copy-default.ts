@@ -140,6 +140,18 @@ export const ONBOARDING_COPY_DEFAULT: OnboardingCopy = {
       opcoes: [{ value: "Outro", label: "Outro", livre: true }],
     },
     {
+      id: "whatsapp",
+      ayla: "Pra eu te acompanhar todo dia — e te mandar ideias pra [NOME] mesmo quando você não estiver no app — me passa seu WhatsApp?",
+      tipo: "whatsapp",
+      placeholder: "(11) 99999-9999",
+      nota: "É por aqui que eu te mando planos e estratégias pensados pra [NOME]. (O +55 entra automático.)",
+    },
+    {
+      id: "aceites",
+      ayla: "Antes de seguir, dois combinados rapidinhos:",
+      tipo: "aceites",
+    },
+    {
       id: "voce_nome",
       ayla: "Agora me conta de você: como te chamo?",
       tipo: "texto",
@@ -171,13 +183,6 @@ export const ONBOARDING_COPY_DEFAULT: OnboardingCopy = {
       ],
     },
     {
-      id: "whatsapp",
-      ayla: "Pra eu te acompanhar todo dia — e te mandar ideias pra [NOME] mesmo quando você não estiver no app — me passa seu WhatsApp?",
-      tipo: "whatsapp",
-      placeholder: "(11) 99999-9999",
-      nota: "É por aqui que eu te mando planos e estratégias pensados pra [NOME]. (O +55 entra automático.)",
-    },
-    {
       id: "voce_horario",
       ayla: "Qual horário costuma ser melhor pra eu te escrever no WhatsApp?",
       tipo: "chips_uni",
@@ -188,11 +193,6 @@ export const ONBOARDING_COPY_DEFAULT: OnboardingCopy = {
         { value: "tarde", label: "À tarde" },
         { value: "noite", label: "À noite" },
       ],
-    },
-    {
-      id: "aceites",
-      ayla: "Por último, dois combinados rapidinhos e a gente começa:",
-      tipo: "aceites",
     },
   ],
   garfo: {
