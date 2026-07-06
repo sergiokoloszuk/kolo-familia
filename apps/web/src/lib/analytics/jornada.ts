@@ -203,6 +203,10 @@ export type JornadaLead = {
   campanha: string | null;
   criativo: string | null;
   fase: FaseTrial;
+  /** Tela onde parou (ou "Concluiu") — decompõe o "Cadastrou" direto na lista. */
+  onboardingLabel: string;
+  /** Tem WhatsApp capturado (Tela 1)? Se sim, a Ayla consegue conversar/resgatar. */
+  temWhatsapp: boolean;
   /** É conta de admin/agência (co-acesso)? Aparece na lista, marcada, mas fora das contagens. */
   interno: boolean;
 };
@@ -468,6 +472,8 @@ export async function carregarJornadaTrial(admin: SupabaseClient): Promise<Jorna
         campanha: det.campanha,
         criativo: det.criativo,
         fase,
+        onboardingLabel: concluiuOnb ? "Concluiu" : TELA_ATUAL[step] ?? `Passo ${step}`,
+        temWhatsapp: !!f.whatsapp_e164,
         interno,
       });
     }

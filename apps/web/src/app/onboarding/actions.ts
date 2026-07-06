@@ -162,7 +162,18 @@ export async function atribuirUtm(): Promise<void> {
 
 const tela1Schema = z.object({
   nome_mae: z.string().trim().min(2, "Nome muito curto"),
-  data_nascimento_mae: dataNascimentoSchema(16, 100, "Idade deve estar entre 16 e 100 anos"),
+  // Opcional (não barra a Tela 1). Só alimenta a idade média do Público.
+  data_nascimento_mae: z
+    .string()
+    .trim()
+    .optional()
+    .refine((v) => {
+      if (!v) return true;
+      const iso = dataBrParaIso(v);
+      if (!iso) return false;
+      const a = idadeAnos(iso);
+      return a !== null && a >= 16 && a <= 100;
+    }, "Idade deve estar entre 16 e 100 anos"),
   whatsapp_e164: z
     .string()
     .trim()
@@ -189,7 +200,7 @@ export async function saveTela1(raw: Tela1Input) {
   const { error: errProfile } = await supabase.from("family_profiles").upsert({
     family_account_id: family.id,
     nome_mae: capitalizarNome(data.nome_mae),
-    data_nascimento_mae: dataBrParaIso(data.data_nascimento_mae),
+    data_nascimento_mae: data.data_nascimento_mae ? dataBrParaIso(data.data_nascimento_mae) : null,
     papel: data.papel,
     papel_outro: ehOutro ? data.papel_outro! : null,
     genero_responsavel: ehOutro ? (data.genero_responsavel ?? null) : null,

@@ -209,7 +209,9 @@ export function OnboardingWizard({ initial }: { initial: InitialState }) {
                       profile: {
                         ...s.profile,
                         nome_mae: values.nome_mae,
-                        data_nascimento_mae: dataBrParaIso(values.data_nascimento_mae),
+                        data_nascimento_mae: values.data_nascimento_mae
+                  ? dataBrParaIso(values.data_nascimento_mae)
+                  : null,
                         como_chamar: s.profile?.como_chamar ?? null,
                         papel: values.papel,
                         papel_outro: values.papel === "outro" ? (values.papel_outro ?? null) : null,

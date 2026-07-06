@@ -12,15 +12,17 @@ import { idadeAnos, dataBrParaIso, mascararDataBr, dataIsoParaBr } from "@/lib/i
 
 const schema = z.object({
   nome_mae: z.string().trim().min(2, "Nome muito curto"),
+  // Opcional: não pode barrar a primeira tela. Se preenchida, precisa ser válida.
   data_nascimento_mae: z
     .string()
     .trim()
     .refine((v) => {
+      if (!v) return true;
       const iso = dataBrParaIso(v);
       if (!iso) return false;
       const a = idadeAnos(iso);
       return a !== null && a >= 16 && a <= 100;
-    }, "Informe sua data de nascimento (idade entre 16 e 100)"),
+    }, "Se for preencher, use dd/mm/aaaa (idade entre 16 e 100)"),
   whatsapp_e164: z
     .string()
     .trim()
@@ -223,7 +225,7 @@ export function Tela1Mae({
         )}
 
         <div className="flex flex-col gap-1.5">
-          <Label htmlFor="data_nascimento_mae">Sua data de nascimento</Label>
+          <Label htmlFor="data_nascimento_mae">Sua data de nascimento (opcional)</Label>
           <Controller
             name="data_nascimento_mae"
             control={control}

@@ -390,6 +390,8 @@ export default async function AquisicaoJornadaPage({
                   <th className="px-3 py-2 font-medium">Campanha</th>
                   <th className="px-3 py-2 font-medium">Criativo</th>
                   <th className="px-3 py-2 font-medium">Fase</th>
+                  <th className="px-3 py-2 font-medium">Parou em</th>
+                  <th className="px-3 py-2 font-medium">WhatsApp</th>
                 </tr>
               </thead>
               <tbody>
@@ -409,6 +411,20 @@ export default async function AquisicaoJornadaPage({
                     <td className="px-3 py-2 text-muted-foreground">{l.campanha ?? "—"}</td>
                     <td className="px-3 py-2 text-muted-foreground">{l.criativo ?? "—"}</td>
                     <td className="px-3 py-2 text-foreground">{j.fases[l.fase].label}</td>
+                    <td className="px-3 py-2">
+                      {l.onboardingLabel === "Concluiu" ? (
+                        <span className="text-muted-foreground">Concluiu</span>
+                      ) : (
+                        <span className="font-medium text-destructive">{l.onboardingLabel}</span>
+                      )}
+                    </td>
+                    <td className="px-3 py-2">
+                      {l.temWhatsapp ? (
+                        <span className="font-medium text-brand-purple">✓ tem</span>
+                      ) : (
+                        <span className="text-muted-foreground">—</span>
+                      )}
+                    </td>
                   </tr>
                 ))}
               </tbody>
