@@ -32,7 +32,7 @@ export async function requireActiveWrite(familyAccountId: string): Promise<void>
   const supabase = await createClient();
   const { data } = await supabase
     .from("subscription_accesses")
-    .select("status, trial_ends_at, cortesia, cortesia_ate")
+    .select("status, trial_ends_at, cortesia, cortesia_ate, pagamento_falhou_em")
     .eq("family_account_id", familyAccountId)
     .maybeSingle();
 

@@ -136,16 +136,16 @@ async function onSubscriptionChanged(sub: Stripe.Subscription, admin: AdminClien
   if (!familyId) return;
 
   const status = mapStripeStatus(sub.status);
-  await admin
-    .from("subscription_accesses")
-    .update({
-      status,
-      stripe_customer_id: typeof sub.customer === "string" ? sub.customer : sub.customer.id,
-      stripe_subscription_id: sub.id,
-      current_period_end: isoFromUnix(getSubPeriodEnd(sub)),
-      cancel_at_period_end: sub.cancel_at_period_end,
-    })
-    .eq("family_account_id", familyId);
+  const patch: Record<string, unknown> = {
+    status,
+    stripe_customer_id: typeof sub.customer === "string" ? sub.customer : sub.customer.id,
+    stripe_subscription_id: sub.id,
+    current_period_end: isoFromUnix(getSubPeriodEnd(sub)),
+    cancel_at_period_end: sub.cancel_at_period_end,
+  };
+  // Voltou a active (ex.: retentativa deu certo) → limpa o carimbo de falha.
+  if (status === "active") patch.pagamento_falhou_em = null;
+  await admin.from("subscription_accesses").update(patch).eq("family_account_id", familyId);
 }
 
 async function onSubscriptionDeleted(sub: Stripe.Subscription, admin: AdminClient) {
@@ -175,6 +175,7 @@ async function onInvoiceSucceeded(
     .update({
       status: "active",
       current_period_end: isoFromUnix(getSubPeriodEnd(sub)),
+      pagamento_falhou_em: null, // regularizou → limpa o carimbo (não apaga dados)
     })
     .eq("family_account_id", familyId);
 }
@@ -186,6 +187,13 @@ async function onInvoiceFailed(invoice: Stripe.Invoice, admin: AdminClient) {
     .from("subscription_accesses")
     .update({ status: "past_due" })
     .eq("stripe_customer_id", customerId);
+  // Carimba a 1ª falha (só se ainda não houver) — inicia a contagem dos 7 dias
+  // de graça/retenção. Não sobrescreve numa 2ª retentativa que também falha.
+  await admin
+    .from("subscription_accesses")
+    .update({ pagamento_falhou_em: new Date().toISOString() })
+    .eq("stripe_customer_id", customerId)
+    .is("pagamento_falhou_em", null);
 }
 
 async function registrarEvento(event: Stripe.Event, admin: AdminClient) {

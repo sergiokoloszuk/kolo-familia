@@ -3,9 +3,10 @@ import type { ReactNode } from "react";
 import { differenceInCalendarDays } from "date-fns";
 import { loadFamilyContext } from "@/lib/auth/require-user";
 import { createServiceRoleClient } from "@/lib/supabase/server";
-import { assinaturaLiberada, trialVencido } from "@/lib/auth/assinatura";
+import { assinaturaLiberada, trialVencido, pagamentoEmFalha, diasAteExclusao } from "@/lib/auth/assinatura";
 import { Sidebar } from "./sidebar";
 import { TrialGate } from "./trial-gate";
+import { PagamentoGate } from "./pagamento-gate";
 import { PageViewTracker } from "./page-view-tracker";
 import { idadeAnos } from "@/lib/idade";
 import { lerCriancaAtivaId, resolverCriancaAtiva } from "@/lib/crianca-ativa";
@@ -74,7 +75,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
       .eq("family_account_id", family.id),
     supabase
       .from("subscription_accesses")
-      .select("status, trial_ends_at, cortesia, cortesia_ate")
+      .select("status, trial_ends_at, cortesia, cortesia_ate, pagamento_falhou_em")
       .eq("family_account_id", family.id)
       .maybeSingle(),
   ]);
@@ -86,6 +87,9 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
   // analista de tráfego ou cortesia) → tela "assine pra continuar". Sem isso,
   // o status ficava "trialing" pra sempre e o acesso vazava de graça.
   if (!isAdmin && !isAnalista && !assinaturaLiberada(sub)) {
+    if (pagamentoEmFalha(sub)) {
+      return <PagamentoGate diasRestantes={diasAteExclusao(sub)} />;
+    }
     return <TrialGate vencido={trialVencido(sub)} />;
   }
   const nomeUsuario =
