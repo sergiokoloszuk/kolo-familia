@@ -8,6 +8,7 @@
     { "path": "/api/ayla/cron?tipo=healthcheck", "schedule": "0 11 * * *" },
     { "path": "/api/ayla/cron?tipo=fim_de_semana", "schedule": "0 11,15,18,22 * * 5" },
     { "path": "/api/admin/uso/snapshot", "schedule": "0 9 * * *" },
-    { "path": "/api/ayla/cron?tipo=snapshots", "schedule": "0 9 1-3 * *" }
+    { "path": "/api/ayla/cron?tipo=snapshots", "schedule": "0 9 1-3 * *" },
+    { "path": "/api/cron/exclusao-pagamento", "schedule": "0 10 * * *" }
   ]
 }
