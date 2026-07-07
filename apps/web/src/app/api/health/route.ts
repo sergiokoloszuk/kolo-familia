@@ -49,6 +49,7 @@ export async function GET() {
     openai: Boolean(process.env.OPENAI_API_KEY),
     stripe_secret: Boolean(process.env.STRIPE_SECRET_KEY),
     stripe_secret_mode: stripeMode,
+    stripe_webhook_secret: Boolean(process.env.STRIPE_WEBHOOK_SECRET),
     stripe_price_mensal: priceMensal,
     stripe_price_anual: priceAnual,
     zapi_token: Boolean(process.env.ZAPI_TOKEN),
