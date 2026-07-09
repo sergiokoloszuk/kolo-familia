@@ -9,6 +9,7 @@ import { mascararDataBr, dataBrParaIso, idadeAnos } from "@/lib/idade";
 import { exemplosInteressePorIdade, type OnboardingCopy, type OnbPasso, type OnbChip } from "@/lib/onboarding/copy-default";
 import type { MembroInput, ResponsavelInput } from "@/lib/onboarding/salvar-conversacional";
 import { salvarMembroAction, salvarWhatsappAction, salvarAceitesAction, concluirAction } from "./actions-conversacional";
+import { TourCarrossel, DesafioFluxo } from "@/app/(app)/dashboards/onboarding/preview";
 
 /**
  * Onboarding CONVERSACIONAL real (Fatia 3) — mesma cara do preview, mas guarda
@@ -43,7 +44,7 @@ function opcoesDoPasso(passo: OnbPasso, nascimentoBr: string): OnbChip[] {
   return [...ex, { value: "Outro", label: "Outro", livre: true }];
 }
 
-type Fase = "form" | "salvando" | "pronto" | "duplicado" | "erro";
+type Fase = "form" | "salvando" | "garfo" | "tour" | "desafio" | "duplicado" | "erro";
 
 export function OnboardingConversacional({ copy }: { copy: OnboardingCopy }) {
   const router = useRouter();
@@ -170,7 +171,7 @@ export function OnboardingConversacional({ copy }: { copy: OnboardingCopy }) {
     }
     await salvarAceitesAction(aceites);
     const res = await concluirAction(buildResp(a, o), strDe(a, "voce_horario") || null);
-    if (res.ok) setFase("pronto");
+    if (res.ok) setFase("garfo");
     else if (res.motivo === "whatsapp_duplicado") setFase("duplicado");
     else {
       setErroMsg(res.mensagem);
@@ -189,13 +190,60 @@ export function OnboardingConversacional({ copy }: { copy: OnboardingCopy }) {
   if (fase === "salvando") {
     return <Centro>Preparando tudo pra vocês… 🌱</Centro>;
   }
-  if (fase === "pronto") {
+  const temas = Array.isArray(answers["desafios"])
+    ? (answers["desafios"] as string[]).map((v) => opcoesLabel.get(`desafios:${v}`) ?? v)
+    : [];
+
+  if (fase === "garfo") {
     return (
-      <Centro>
-        <p className="font-heading text-xl text-foreground">Tudo pronto, {voce || "você"}! 💛</p>
-        <p className="text-sm text-muted-foreground">A Ayla já vai te escrever no WhatsApp.</p>
-        <Button onClick={() => router.push("/painel")}>Entrar no Kolo</Button>
-      </Centro>
+      <div className="mx-auto flex max-w-md flex-col gap-3 py-6">
+        <Bolha lado="ayla">{fill(copy.garfo.titulo, nome, voce)}</Bolha>
+        {/* Aviso do WhatsApp — todo mundo vê, mesmo quem não abre a conversa. */}
+        <div className="rounded-2xl border border-brand-purple/25 bg-brand-purple/[0.06] p-4 text-sm text-foreground">
+          💬 <strong>Vou te escrever no WhatsApp</strong> — é por lá que a gente conversa no dia a
+          dia. Pode me perguntar o que quiser, contar uma novidade ou atualizar o perfil{" "}
+          {nome ? `de ${nome}` : "de quem você cuida"} quando precisar.
+        </div>
+        <button
+          onClick={() => setFase("desafio")}
+          className="rounded-2xl border border-brand-purple bg-brand-purple/10 px-4 py-3 text-left text-sm font-medium text-brand-purple-dark transition-colors hover:bg-brand-purple/20"
+        >
+          {copy.garfo.ajuda}
+        </button>
+        <button
+          onClick={() => setFase("tour")}
+          className="rounded-2xl border border-kolo-linha bg-white px-4 py-3 text-left text-sm font-medium text-foreground transition-colors hover:border-brand-purple/40"
+        >
+          {copy.garfo.explorar}
+        </button>
+      </div>
+    );
+  }
+  if (fase === "tour") {
+    return (
+      <div className="mx-auto max-w-md py-6">
+        <TourCarrossel
+          copy={copy}
+          nome={nome}
+          onVoltar={() => setFase("garfo")}
+          onReiniciar={() => setFase("garfo")}
+          onEntrar={() => router.push("/painel")}
+        />
+      </div>
+    );
+  }
+  if (fase === "desafio") {
+    return (
+      <div className="mx-auto max-w-md py-6">
+        <DesafioFluxo
+          copy={copy}
+          nome={nome}
+          temas={temas}
+          onVoltar={() => setFase("garfo")}
+          onReiniciar={() => setFase("garfo")}
+          onEntrar={() => router.push("/estrategias")}
+        />
+      </div>
     );
   }
   if (fase === "duplicado") {

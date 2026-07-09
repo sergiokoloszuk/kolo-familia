@@ -351,11 +351,14 @@ export function TourCarrossel({
   nome,
   onVoltar,
   onReiniciar,
+  onEntrar,
 }: {
   copy: OnboardingCopy;
   nome: string;
   onVoltar: () => void;
   onReiniciar: () => void;
+  /** No fluxo real, "Entrar no Kolo" navega pro app; no preview fica decorativo. */
+  onEntrar?: () => void;
 }) {
   const cards = copy.tour.cards;
   const [i, setI] = useState(0);
@@ -399,7 +402,10 @@ export function TourCarrossel({
       ) : (
         <div className="flex flex-col gap-2">
           <Bolha lado="ayla">{fill(copy.tour.final, nome, "")}</Bolha>
-          <button className="rounded-2xl bg-brand-purple px-4 py-3 text-center text-sm font-semibold text-white">
+          <button
+            onClick={onEntrar}
+            className="rounded-2xl bg-brand-purple px-4 py-3 text-center text-sm font-semibold text-white"
+          >
             Entrar no Kolo
           </button>
         </div>
@@ -421,12 +427,15 @@ export function DesafioFluxo({
   temas,
   onVoltar,
   onReiniciar,
+  onEntrar,
 }: {
   copy: OnboardingCopy;
   nome: string;
   temas: string[];
   onVoltar: () => void;
   onReiniciar: () => void;
+  /** No fluxo real, leva pra montar a estratégia; no preview fica decorativo. */
+  onEntrar?: () => void;
 }) {
   const [escolhido, setEscolhido] = useState<string | null>(null);
   const opcoes = temas.length > 0 ? temas : ["Comunicação", "Sono", "Alimentação"];
@@ -458,6 +467,14 @@ export function DesafioFluxo({
             </div>
           </div>
           <Bolha lado="ayla">{fill(copy.desafio.abertura.replaceAll("[TEMA]", escolhido), nome, "")}</Bolha>
+          {onEntrar && (
+            <button
+              onClick={onEntrar}
+              className="rounded-2xl bg-brand-purple px-4 py-3 text-center text-sm font-semibold text-white"
+            >
+              Montar minha estratégia
+            </button>
+          )}
           <div className="pt-1 text-center">
             <button onClick={onReiniciar} className="text-xs font-medium text-brand-purple hover:underline">
               ↺ ver a experiência de novo desde o começo

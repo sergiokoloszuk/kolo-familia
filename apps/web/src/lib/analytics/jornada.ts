@@ -203,6 +203,8 @@ export type JornadaLead = {
   onboardingLabel: string;
   /** Tem WhatsApp capturado (Tela 1)? Se sim, a Ayla consegue conversar/resgatar. */
   temWhatsapp: boolean;
+  /** A PESSOA já escreveu pra Ayla (mensagem inbound)? Não vale só a Ayla ter falado. */
+  falouComAyla: boolean;
   /** É conta de admin/agência (co-acesso)? Aparece na lista, marcada, mas fora das contagens. */
   interno: boolean;
 };
@@ -269,6 +271,7 @@ export async function carregarJornadaTrial(admin: SupabaseClient): Promise<Jorna
     { data: afiliadosRows },
     { data: diarios },
     { data: perfis },
+    { data: aylaInbound },
   ] = await Promise.all([
     admin
       .from("family_accounts")
@@ -287,8 +290,13 @@ export async function carregarJornadaTrial(admin: SupabaseClient): Promise<Jorna
       .not("desafio_area", "is", null)
       .gte("created_at", desde90),
     admin.from("family_profiles").select("family_account_id, nome_mae, como_chamar"),
+    // Quem a PESSOA escreveu pra Ayla (inbound) — não vale só a Ayla ter falado.
+    admin.from("ayla_messages").select("family_account_id").eq("direcao", "inbound"),
   ]);
 
+  const falouComAyla = new Set(
+    (aylaInbound ?? []).map((m) => m.family_account_id as string).filter(Boolean),
+  );
   const internas = await familiasInternas(admin);
   const emailPorFam = await emailsPorFamilia(admin);
   const fams = (famsRaw ?? []) as FamRow[];
@@ -470,6 +478,7 @@ export async function carregarJornadaTrial(admin: SupabaseClient): Promise<Jorna
         fase,
         onboardingLabel: concluiuOnb ? "Concluiu" : TELA_ATUAL[step] ?? `Passo ${step}`,
         temWhatsapp: !!f.whatsapp_e164,
+        falouComAyla: falouComAyla.has(f.id),
         interno,
       });
     }
