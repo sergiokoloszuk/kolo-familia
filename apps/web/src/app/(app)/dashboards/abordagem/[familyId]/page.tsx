@@ -3,6 +3,7 @@ import { ArrowLeft } from "lucide-react";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { ehAdmin } from "@/lib/auth/require-admin";
 import { carregarContextoLead } from "@/lib/crm/contexto";
+import { carregarComportamentoDiario } from "@/lib/crm/comportamento-diario";
 import { carregarFaseScripts, faseDoLead, FASE_LABEL } from "@/lib/crm/fase-scripts";
 import { Copiloto } from "./copiloto";
 import { EstadoAbordagem } from "./estado";
@@ -30,7 +31,7 @@ export default async function AbordagemPage({
   }
 
   const admin = createServiceRoleClient();
-  const [ctx, { data: crmThread }, { data: crmLead }, fase, scripts] = await Promise.all([
+  const [ctx, { data: crmThread }, { data: crmLead }, fase, scripts, comportamento] = await Promise.all([
     carregarContextoLead(admin, familyId),
     admin
       .from("crm_mensagens")
@@ -44,6 +45,7 @@ export default async function AbordagemPage({
       .maybeSingle(),
     faseDoLead(admin, familyId),
     carregarFaseScripts(admin),
+    carregarComportamentoDiario(admin, familyId),
   ]);
   const scriptFase = scripts.find((s) => s.fase === fase);
 
@@ -73,6 +75,66 @@ export default async function AbordagemPage({
         <h2 className="mb-2 font-heading text-base text-foreground">Quem é esse lead</h2>
         <pre className="whitespace-pre-wrap font-sans text-sm text-muted-foreground">{ctx.resumo}</pre>
       </section>
+
+      {/* Comportamento no teste — dia a dia */}
+      {comportamento.length > 0 && (
+        <section className="rounded-2xl border border-foreground/[0.08] bg-white p-5">
+          <h2 className="mb-1 font-heading text-base text-foreground">Comportamento no teste — dia a dia</h2>
+          <p className="mb-3 text-xs text-muted-foreground">
+            Onde e como esse lead se mexeu em cada dia do teste (web, WhatsApp, planos).
+          </p>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-left text-xs uppercase tracking-wide text-muted-foreground">
+                  <th className="py-2 pr-3 font-medium">Dia</th>
+                  <th className="px-3 py-2 font-medium">Canal</th>
+                  <th className="px-3 py-2 font-medium">Web (telas/uso)</th>
+                  <th className="px-3 py-2 font-medium">Falou c/ Ayla</th>
+                  <th className="px-3 py-2 font-medium">Ayla escreveu</th>
+                  <th className="px-3 py-2 font-medium">Planos</th>
+                </tr>
+              </thead>
+              <tbody>
+                {comportamento.map((d) => {
+                  const canalLabel =
+                    d.canal === "ambos"
+                      ? "🖥️+💬 web e WhatsApp"
+                      : d.canal === "web"
+                        ? "🖥️ web"
+                        : d.canal === "whatsapp"
+                          ? "💬 WhatsApp"
+                          : "—";
+                  return (
+                    <tr key={d.dia} className="border-t border-foreground/[0.06]">
+                      <td className="py-2 pr-3 font-medium text-foreground">{d.dia}/7</td>
+                      <td className={`px-3 py-2 ${d.canal === "nenhum" ? "text-muted-foreground" : "text-foreground"}`}>
+                        {canalLabel}
+                      </td>
+                      <td className="px-3 py-2 text-muted-foreground">{d.web || "—"}</td>
+                      <td className="px-3 py-2">
+                        {d.pessoaFalou > 0 ? (
+                          <span className="font-medium text-emerald-600">✓ {d.pessoaFalou}</span>
+                        ) : (
+                          <span className="text-muted-foreground">—</span>
+                        )}
+                      </td>
+                      <td className="px-3 py-2 text-muted-foreground">{d.aylaFalou || "—"}</td>
+                      <td className="px-3 py-2">
+                        {d.planos > 0 ? (
+                          <span className="font-medium text-brand-purple">📄 {d.planos}</span>
+                        ) : (
+                          <span className="text-muted-foreground">—</span>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      )}
 
       {/* Sugestão da agência pra esta fase (editável em Configuração) */}
       {scriptFase && (
