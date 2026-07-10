@@ -23,7 +23,7 @@ export type FaseTrial =
 export const FASE_INFO: Record<FaseTrial, { label: string; desc: string }> = {
   cadastrou: { label: "Cadastrou", desc: "Criou a conta — ainda sem uso." },
   ativou_teste: { label: "Ativou o teste", desc: "Entrou no app, mas não gerou nada ainda." },
-  ativado: { label: "Ativado", desc: "Preencheu a criança e gerou a 1ª orientação." },
+  ativado: { label: "Ativado", desc: "Teve o 1º valor: recebeu um plano ou conversou com a Ayla." },
   engajado: { label: "Engajado", desc: "Usou 2 vezes ou mais — pegou o hábito." },
   em_risco: { label: "Em risco", desc: "Parou — sem atividade há mais de 24h." },
   oportunidade: { label: "Oportunidade", desc: "Reta final (dia 6-7), já usou, ainda não assinou." },
@@ -272,6 +272,7 @@ export async function carregarJornadaTrial(admin: SupabaseClient): Promise<Jorna
     { data: diarios },
     { data: perfis },
     { data: aylaInbound },
+    { data: planos },
   ] = await Promise.all([
     admin
       .from("family_accounts")
@@ -292,10 +293,15 @@ export async function carregarJornadaTrial(admin: SupabaseClient): Promise<Jorna
     admin.from("family_profiles").select("family_account_id, nome_mae, como_chamar"),
     // Quem a PESSOA escreveu pra Ayla (inbound) — não vale só a Ayla ter falado.
     admin.from("ayla_messages").select("family_account_id").eq("direcao", "inbound"),
+    // Quem já RECEBEU um plano (in-app OU pela Ayla) — o momento de valor = ativação.
+    admin.from("planos").select("family_account_id"),
   ]);
 
   const falouComAyla = new Set(
     (aylaInbound ?? []).map((m) => m.family_account_id as string).filter(Boolean),
+  );
+  const temPlano = new Set(
+    (planos ?? []).map((p) => p.family_account_id as string).filter(Boolean),
   );
   const internas = await familiasInternas(admin);
   const emailPorFam = await emailsPorFamilia(admin);
@@ -379,8 +385,11 @@ export async function carregarJornadaTrial(admin: SupabaseClient): Promise<Jorna
     const diaTrial = Math.min(7, Math.max(1, Math.floor((agora - criado) / MS_DIA) + 1));
     const usos = at.usos;
     const temAtividade = at.total > 0;
-    const ativadoBool = Boolean(f.onboarding_completed) && usos >= 1;
-    const engajadoBool = usos >= 2;
+    // Ativado = concluiu E teve o 1º momento de valor: uso no app, OU recebeu um
+    // plano, OU conversou com a Ayla (a orientação dela também é ativação).
+    const recebeuValor = usos >= 1 || temPlano.has(f.id) || falouComAyla.has(f.id);
+    const ativadoBool = Boolean(f.onboarding_completed) && recebeuValor;
+    const engajadoBool = usos >= 2 || (temPlano.has(f.id) && falouComAyla.has(f.id));
     const inativo = temAtividade && at.ultima > 0 && agora - at.ultima > MS_DIA;
     const trialEnds = sub?.trialEnds ? new Date(sub.trialEnds).getTime() : null;
     const trialVencido = status === "trialing" && trialEnds != null && trialEnds <= agora;
