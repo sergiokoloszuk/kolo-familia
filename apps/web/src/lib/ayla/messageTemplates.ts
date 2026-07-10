@@ -128,6 +128,41 @@ export async function templateBoasVindas(
   return fill(pickVariation(variations, params.seed), vars);
 }
 
+/** Desafio (domínio) → frase natural pra a boas-vindas. */
+const DESAFIO_FRASE: Record<string, string> = {
+  comunicacao: "a comunicação",
+  sono: "o sono",
+  foco: "o foco",
+  nutricional: "a alimentação",
+  socializacao: "a socialização",
+  emocional: "as emoções e as crises",
+  escola: "a escola",
+  autonomia: "a autonomia",
+  rotina: "a rotina e as transições",
+  sensorial: "a parte sensorial",
+  motor: "a parte motora",
+};
+
+/**
+ * Boas-vindas PERSONALIZADA: puxa continuidade ("acabamos de nos conhecer no
+ * app"), cita o DESAFIO que a pessoa marcou no cadastro, faz UMA pergunta fácil
+ * e oferece áudio — o que mais aumenta a chance de ela responder no WhatsApp e
+ * cair no fluxo do plano guiado. Sem desafio marcado → cai na template comum.
+ */
+export function templateBoasVindasComDesafio(params: {
+  nomeMae: string;
+  nomeMembro: string;
+  genero: Genero;
+  desafio: string;
+}): string {
+  const frase = DESAFIO_FRASE[params.desafio] ?? "esse ponto que você marcou";
+  const ref =
+    params.nomeMembro && (params.genero === "feminino" || params.genero === "masculino")
+      ? ` ${params.genero === "feminino" ? "da" : "do"} ${params.nomeMembro}`
+      : "";
+  return `Oi, ${params.nomeMae} 💛 Acabamos de nos conhecer aí no app. Vi que ${frase}${ref} tem pesado no dia a dia — me conta rapidinho como está sendo? Pode mandar um *áudio*, do jeito que for mais fácil pra você. Com o que você contar, eu já começo a pensar numa primeira ideia pra vocês. 🌿`;
+}
+
 // ============================================================
 // Pergunta diária de rotina — PRD §12.4
 // ============================================================

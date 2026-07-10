@@ -23,6 +23,7 @@ import { decidirDedup } from "./dedup-kolo-vivo";
 import { decidirDedupDiario } from "./dedup-diario";
 import {
   templateBoasVindas,
+  templateBoasVindasComDesafio,
   templateRotinaDiaria,
   templateEngajamento,
   templateComandoAjuda,
@@ -107,12 +108,36 @@ export async function sendBoasVindas(
   }
 
   const membroFoco = ctx.membros[0];
-  const texto = await templateBoasVindas(supabase, {
-    nomeMae: ctx.nomeMae,
-    nomeMembro: membroFoco.nome,
-    genero: membroFoco.genero,
-    seed: `${familyAccountId}-boas-vindas`,
-  });
+
+  // Desafio que a pessoa marcou no cadastro → boas-vindas PERSONALIZADA (cita o
+  // problema + pergunta fácil + oferece áudio), pra puxar a resposta no WhatsApp
+  // e cair no plano guiado. Sem desafio → template comum.
+  let desafioTop: string | null = null;
+  try {
+    const { data: pv } = await supabase
+      .from("perfil_vivo_membro")
+      .select("categorias_extras")
+      .eq("membro_atipico_id", membroFoco.id)
+      .maybeSingle();
+    const extras = pv?.categorias_extras as { desafios_onboarding?: string[] } | null;
+    desafioTop = extras?.desafios_onboarding?.[0] ?? null;
+  } catch {
+    /* sem desafio, usa a template comum */
+  }
+
+  const texto = desafioTop
+    ? templateBoasVindasComDesafio({
+        nomeMae: ctx.nomeMae,
+        nomeMembro: membroFoco.nome,
+        genero: membroFoco.genero,
+        desafio: desafioTop,
+      })
+    : await templateBoasVindas(supabase, {
+        nomeMae: ctx.nomeMae,
+        nomeMembro: membroFoco.nome,
+        genero: membroFoco.genero,
+        seed: `${familyAccountId}-boas-vindas`,
+      });
 
   return enviarEPersistir(supabase, {
     family_account_id: familyAccountId,
