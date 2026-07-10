@@ -4,7 +4,9 @@ import { ehAdmin } from "@/lib/auth/require-admin";
 import { carregarComportamento } from "@/lib/analytics/dashboard";
 import { carregarJornadaTrial, type FamiliaSegmento } from "@/lib/analytics/jornada";
 import { carregarFichaFamilia } from "@/lib/analytics/ficha";
+import { carregarComportamentoDiario } from "@/lib/crm/comportamento-diario";
 import { Bloco, BarList, Stat, Vazio } from "@/components/dashboard/blocos";
+import { ComportamentoDiarioTabela } from "@/components/dashboard/comportamento-diario-tabela";
 
 /**
  * Dashboard 1 — Aquisição & Jornada. Números de topo + a jornada de trial (fase
@@ -44,9 +46,13 @@ export default async function AquisicaoJornadaPage({
   // co-acesso vê só os sinais.
   const famId = typeof sp.fam === "string" ? sp.fam : null;
   const voltarHref = segAtivo ? `/dashboards?seg=${segAtivo}` : "/dashboards";
-  const [ficha, ehAdminView] = famId
-    ? await Promise.all([carregarFichaFamilia(admin, famId), ehAdmin()])
-    : ([null, false] as const);
+  const [ficha, ehAdminView, comportamento] = famId
+    ? await Promise.all([
+        carregarFichaFamilia(admin, famId),
+        ehAdmin(),
+        carregarComportamentoDiario(admin, famId),
+      ])
+    : ([null, false, []] as const);
 
   return (
     <div className="flex flex-col gap-8">
@@ -267,6 +273,15 @@ export default async function AquisicaoJornadaPage({
               </Link>
             )}
           </div>
+          {comportamento.length > 0 && (
+            <div className="mb-5">
+              <h4 className="mb-1 font-heading text-sm text-foreground">Comportamento no teste — dia a dia</h4>
+              <p className="mb-2 text-xs text-muted-foreground">
+                Onde e como se mexeu em cada dia (web, WhatsApp, planos).
+              </p>
+              <ComportamentoDiarioTabela dias={comportamento} />
+            </div>
+          )}
           {ficha.membros.length > 0 && (
             <p className="mb-4 text-sm text-muted-foreground">
               {ficha.membros
@@ -398,8 +413,14 @@ export default async function AquisicaoJornadaPage({
               <tbody>
                 {j.leads.map((l) => (
                   <tr key={l.id} className="border-t border-foreground/[0.06]">
-                    <td className="py-2 pr-3 text-foreground">
-                      {l.nomeMae || l.email || `#${l.id.slice(0, 6)}`}
+                    <td className="py-2 pr-3">
+                      <Link
+                        href={`/dashboards?fam=${l.id}`}
+                        scroll={true}
+                        className="font-medium text-brand-purple hover:underline"
+                      >
+                        {l.nomeMae || l.email || `#${l.id.slice(0, 6)}`}
+                      </Link>
                       {l.interno && (
                         <span className="ml-1 rounded bg-brand-yellow/30 px-1 text-[10px] font-medium text-brand-purple-dark">
                           interno
