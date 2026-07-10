@@ -35,8 +35,9 @@ import {
 } from "./messageTemplates";
 import { gerarMensagemEspontanea } from "./mensagemEspontanea";
 import { traduzirProativa } from "./traduzir";
-import { montarPonteWhatsApp, gerarMagicLink, montarPlanoFimDeSemana } from "./ponte";
+import { montarPonteWhatsApp, gerarMagicLink, montarPlanoFimDeSemana, montarPlanoDoRelato } from "./ponte";
 import { pedeUmPlano } from "@/lib/ia/pedido-plano";
+import { planoGuiadoPendente, montarPerguntaPlano } from "./plano-guiado";
 import { classificarAreasDiario } from "@/lib/ia/classificar-area";
 import type { AylaTipoProativa, AylaTipoReativa, ParserResult } from "./types";
 
@@ -740,6 +741,10 @@ export async function processInbound(
     inbound.recebidaEm,
   );
 
+  // 1c. Fluxo guiado de plano: já perguntamos "como está hoje?" e este inbound é
+  // o relato? (calcular ANTES de persistir o inbound atual, como o de fim de semana).
+  const planoGuiado = await planoGuiadoPendente(supabase, family.id, inbound.recebidaEm);
+
   // 2. Persiste inbound — E usa como TRAVA DE IDEMPOTÊNCIA. A Z-API entrega o
   // mesmo webhook mais de uma vez (at-least-once); o índice único em
   // zaap_message_id faz o segundo insert virar no-op → paramos aqui, evitando
@@ -841,6 +846,58 @@ export async function processInbound(
         return { tratada: true, familia: family.id, resposta: resp };
       }
       // Falhou gerar → cai no fluxo normal (a Ayla ainda responde algo).
+    }
+  }
+
+  // 3c. Fluxo GUIADO de plano.
+  // (a) Já perguntamos "como está hoje?" e ESTE inbound é o relato → gera o plano
+  //     a partir dele (cruza com os interesses do Perfil) e manda o PDF + link.
+  if (planoGuiado) {
+    const ctxP = await loadFamiliaParaEnvio(supabase, family.id);
+    if (ctxP) {
+      const membroId = planoGuiado.membroId ?? ctxP.membros[0]?.id ?? null;
+      const nomeMembro = membroId
+        ? (ctxP.membros.find((m) => m.id === membroId)?.nome ?? null)
+        : null;
+      const msg = await montarPlanoDoRelato(supabase, {
+        familyId: family.id,
+        membroAtipicoId: membroId,
+        contexto: inbound.texto,
+        nomeMembro,
+        phoneE164: ctxP.whatsapp_e164,
+      });
+      if (msg) {
+        const resp = await enviarEPersistir(supabase, {
+          family_account_id: family.id,
+          membro_atipico_id: membroId,
+          phone: ctxP.whatsapp_e164,
+          texto: msg,
+          category: "reativa",
+          tipo: "resposta_registro",
+        });
+        return { tratada: true, familia: family.id, resposta: resp };
+      }
+      // Falhou gerar → cai no fluxo normal.
+    }
+  }
+  // (b) Pediu um plano AGORA → não gera; pergunta como está hoje + puxa interesses.
+  if (pedeUmPlano(inbound.texto)) {
+    const ctxP = await loadFamiliaParaEnvio(supabase, family.id);
+    if (ctxP) {
+      const membroId = ctxP.membros[0]?.id ?? null;
+      const nomeMembro = membroId
+        ? (ctxP.membros.find((m) => m.id === membroId)?.nome ?? null)
+        : null;
+      const pergunta = await montarPerguntaPlano(supabase, membroId, nomeMembro);
+      const resp = await enviarEPersistir(supabase, {
+        family_account_id: family.id,
+        membro_atipico_id: membroId,
+        phone: inbound.phoneE164,
+        texto: pergunta,
+        category: "reativa",
+        tipo: "plano_pergunta",
+      });
+      return { tratada: true, familia: family.id, resposta: resp };
     }
   }
 

@@ -291,3 +291,57 @@ export async function montarPlanoFimDeSemana(
     return null;
   }
 }
+
+/**
+ * Fluxo GUIADO: gera o plano PADRÃO a partir do relato que a mãe mandou (o
+ * "como está hoje"), cruzando com os interesses do Perfil, e devolve a mensagem
+ * com o PDF + magic-link. Espelha montarPlanoFimDeSemana (variante padrão).
+ * Falha silenciosa → null (a Ayla segue com a resposta normal).
+ */
+export async function montarPlanoDoRelato(
+  supabase: SupabaseClient,
+  params: {
+    familyId: string;
+    membroAtipicoId: string | null;
+    contexto: string;
+    nomeMembro?: string | null;
+    phoneE164: string;
+  },
+): Promise<string | null> {
+  try {
+    const desafio = params.contexto.trim();
+    if (!desafio) return null;
+
+    const plano = await gerarPlano({
+      supabase,
+      familyId: params.familyId,
+      membroAtipicoId: params.membroAtipicoId,
+      desafio,
+      origem: "estrategias",
+    });
+
+    await entregarPdfDoPlano(supabase, {
+      familyId: params.familyId,
+      phoneE164: params.phoneE164,
+      titulo: plano.titulo,
+      secoes: plano.secoes,
+      nomeMembro: params.nomeMembro,
+    });
+
+    const link = await gerarMagicLink(supabase, {
+      familyId: params.familyId,
+      next: `/planos/${plano.id}`,
+    });
+
+    const ref = params.nomeMembro ? ` pra ${params.nomeMembro}` : "";
+    const base = `Prontinho — montei o plano${ref} com o que você me contou, usando os interesses que a gente já sabe 💛 Mandei em PDF aqui em cima 👆.`;
+    if (!link) return base;
+    return `${base}\nSe quiser ver no app ou me contar depois como foi, é só abrir (já entra direto):\n${link}`;
+  } catch (e) {
+    console.warn(
+      "[ayla:ponte] falha ao montar plano do relato:",
+      e instanceof Error ? e.message : e,
+    );
+    return null;
+  }
+}

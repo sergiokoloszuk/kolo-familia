@@ -33,7 +33,8 @@ export type AylaTipoReativa =
   | "clarificacao_identificacao"
   | "clarificacao_conteudo"
   | "resposta_comando"
-  | "confirmacao_sugestao";
+  | "confirmacao_sugestao"
+  | "plano_pergunta";
 
 export type AylaTipo = AylaTipoProativa | AylaTipoReativa;
 
