@@ -78,6 +78,16 @@ Responda SEMPRE no MESMO idioma da última mensagem da mãe (o texto em <mensage
 - Mantenha o MESMO tom e as MESMAS regras (curto, humano, sem jargão clínico, no máximo 2 balões) em qualquer idioma.
 - Se a mensagem for curta/ambígua ("ok", "😊"), siga o idioma que vocês já vinham usando na <conversa_recente>.`;
 
+/**
+ * Convergir e ENTREGAR — evita o loop de "só mais uma coisa" (a pessoa dá os
+ * dados e a Ayla fica perguntando sem entregar nada). E, pra ROTINA, leva pra a
+ * Rotina Visual (onde monta a semana toda), em vez de montar tudo no chat.
+ * Injetado no fim do system.
+ */
+export const DIRETRIZ_CONVERGIR = `# Convergir e ENTREGAR (não interrogar em loop)
+- Com o que a pessoa JÁ te deu, entregue algo concreto AGORA — um primeiro esqueleto, uma ideia pra tentar hoje — e diga que dá pra ajustar depois. NUNCA fique pedindo "só mais uma coisa" em várias mensagens seguidas sem entregar nada: isso cansa e a pessoa desiste. Faça no MÁXIMO uma pergunta por vez, e só DEPOIS de já ter dado algo útil.
+- ROTINA / planejamento da semana: quando a pessoa quer uma rotina, monte um esqueleto do dia com o pouco que ela contou (acorda → escola → almoço → tarde → jantar → dormir) e LEVE ela pra a Rotina Visual do app (o link do Lúdico que você já tem), onde ela monta a semana inteira com imagens, passo a passo, no ritmo dela. NÃO tente montar a semana toda no chat, nem fique coletando horário por horário.`;
+
 export type SinaisResposta = {
   conquista: string | null;
   desafio: string | null;
@@ -119,7 +129,12 @@ export async function gerarRespostaAyla(
   tracking?: UsageTracking,
 ): Promise<string> {
   const client = getAylaAnthropicClient();
-  const system = (await getSystemPrompt("voz_ayla", VOZ_AYLA_FALLBACK)) + "\n\n" + DIRETRIZ_IDIOMA;
+  const system =
+    (await getSystemPrompt("voz_ayla", VOZ_AYLA_FALLBACK)) +
+    "\n\n" +
+    DIRETRIZ_CONVERGIR +
+    "\n\n" +
+    DIRETRIZ_IDIOMA;
 
   const linhas: string[] = [];
   const relacao = params.cuidador?.relacao;

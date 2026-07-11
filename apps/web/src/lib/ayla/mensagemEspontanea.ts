@@ -562,6 +562,15 @@ export async function gerarMensagemEspontanea(
     userPrompt = promptAcolhimento(ctx);
   }
 
+  // Concordância de GÊNERO obrigatória (todos os intents) — antes vazava
+  // "a Heitor/ela" pra um menino. Usa o gênero que já está no contexto.
+  const pg = ctx.pronomesMembro;
+  const concordancia =
+    ctx.generoMembro === "feminino" || ctx.generoMembro === "masculino"
+      ? `CONCORDÂNCIA OBRIGATÓRIA: ${ctx.nomeMembro} é ${ctx.generoMembro} — use SEMPRE "${pg.sujeito}/${pg.possessivo}" e "${pg.artigo} ${ctx.nomeMembro}". NUNCA troque o gênero (erro grave que quebra a confiança).`
+      : `CONCORDÂNCIA: o gênero de ${ctx.nomeMembro} não foi informado — refira-se pelo nome e evite "ele/ela", "dele/dela".`;
+  userPrompt = `${concordancia}\n\n${userPrompt}`;
+
   // Diretriz editável da Karina pra esta situação (Configuração) tem prioridade.
   const diretriz = cadenciaMap.get(intent)?.diretriz?.trim();
   if (diretriz) {
