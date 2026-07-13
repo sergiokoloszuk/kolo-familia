@@ -89,34 +89,36 @@ export default async function RotinasPage() {
         </div>
       )}
 
-      {membrosList.length > 0 && (
-        <Link
-          href="/ludico/rotinas/semana"
-          className="group flex items-center justify-between gap-4 rounded-2xl border-2 border-brand-purple/30 bg-kolo-lilas-bg-2/50 px-5 py-5 transition-colors hover:border-brand-purple/60 hover:bg-kolo-lilas-bg-2/70"
-        >
-          <span className="flex items-center gap-4">
-            <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-brand-purple/15 text-xl">
-              🗓️
-            </span>
-            <span>
-              <span className="font-heading text-lg font-medium text-foreground">Montar a rotina da semana</span>
-              <span className="mt-0.5 block text-sm text-muted-foreground">
-                A semana toda (Seg–Dom), dia por dia, no tema do interesse.
-              </span>
-            </span>
-          </span>
-          <span className="shrink-0 rounded-full bg-brand-purple px-4 py-2 text-xs font-semibold text-white transition-transform group-hover:translate-x-0.5">
-            Abrir →
-          </span>
-        </Link>
-      )}
-
       {membrosList.length === 0 ? (
         <p className="text-sm text-muted-foreground">
           Cadastre uma criança no Perfil pra criar uma rotina.
         </p>
       ) : (
-        <NovaRotina membros={membrosList.map((m) => ({ id: m.id, nome: m.nome }))} ativaId={ativaId} />
+        <div className="flex flex-col gap-3">
+          <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-muted-foreground">
+            O que você quer montar?
+          </p>
+          <Link
+            href="/ludico/rotinas/semana"
+            className="group flex items-center justify-between gap-4 rounded-2xl border-2 border-brand-purple/30 bg-kolo-lilas-bg-2/50 px-5 py-5 transition-colors hover:border-brand-purple/60 hover:bg-kolo-lilas-bg-2/70"
+          >
+            <span className="flex items-center gap-4">
+              <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-brand-purple/15 text-xl">
+                🗓️
+              </span>
+              <span>
+                <span className="block font-heading text-lg font-medium text-foreground">Rotina da semana</span>
+                <span className="mt-0.5 block text-sm text-muted-foreground">
+                  A semana toda (Seg–Dom), dia por dia, no tema do interesse.
+                </span>
+              </span>
+            </span>
+            <span className="shrink-0 rounded-full bg-brand-purple px-4 py-2 text-xs font-semibold text-white transition-transform group-hover:translate-x-0.5">
+              Abrir →
+            </span>
+          </Link>
+          <NovaRotina membros={membrosList.map((m) => ({ id: m.id, nome: m.nome }))} ativaId={ativaId} />
+        </div>
       )}
 
       {rotinasVisiveis.length > 0 && (

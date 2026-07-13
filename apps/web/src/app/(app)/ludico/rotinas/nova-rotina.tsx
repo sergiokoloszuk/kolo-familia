@@ -42,9 +42,22 @@ export function NovaRotina({
       <button
         type="button"
         onClick={() => setAberto(true)}
-        className="inline-flex w-fit items-center gap-2 rounded-full bg-brand-purple px-5 py-2.5 text-sm font-semibold text-white hover:bg-brand-purple-dark"
+        className="group flex w-full items-center justify-between gap-4 rounded-2xl border border-foreground/[0.09] bg-white px-5 py-5 text-left transition-colors hover:border-brand-purple/40"
       >
-        <Plus className="size-4" aria-hidden /> Nova rotina
+        <span className="flex items-center gap-4">
+          <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-cat-foco-soft text-cat-foco">
+            <Plus className="size-5" aria-hidden />
+          </span>
+          <span>
+            <span className="block font-heading text-lg font-medium text-foreground">Rotina de um dia</span>
+            <span className="mt-0.5 block text-sm text-muted-foreground">
+              Uma sequência avulsa (manhã, dia de passeio…).
+            </span>
+          </span>
+        </span>
+        <span className="shrink-0 rounded-full border border-brand-purple/30 px-4 py-2 text-xs font-semibold text-brand-purple transition-colors group-hover:bg-brand-purple/5">
+          Criar +
+        </span>
       </button>
     );
   }

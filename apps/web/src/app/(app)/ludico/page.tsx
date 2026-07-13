@@ -2,6 +2,7 @@ import Link from "next/link";
 import {
   ArrowRight,
   BookOpen,
+  CalendarDays,
   ListChecks,
   Palette,
   Smile,
@@ -55,8 +56,16 @@ const CARDS: Card[] = [
     usaAvatar: true,
   },
   {
-    titulo: "Rotinas visuais",
-    desc: "A sequência do dia em cards — aponta o que vem e marca sozinho. Dá pra imprimir.",
+    titulo: "Rotina da semana",
+    desc: "A semana toda em cartões, dia por dia (Seg–Dom) — monte só os dias que quiser, no tema do interesse.",
+    icone: CalendarDays,
+    href: "/ludico/rotinas/semana",
+    tone: { bar: "bg-cat-foco", chip: "bg-cat-foco-soft text-cat-foco" },
+    usaAvatar: true,
+  },
+  {
+    titulo: "Rotina de um dia",
+    desc: "A sequência de um único dia em cards — aponta o que vem e marca sozinho. Dá pra imprimir.",
     icone: ListChecks,
     href: "/ludico/rotinas",
     tone: { bar: "bg-cat-foco", chip: "bg-cat-foco-soft text-cat-foco" },
