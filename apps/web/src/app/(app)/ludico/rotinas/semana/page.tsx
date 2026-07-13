@@ -4,7 +4,7 @@ import { loadFamilyContext } from "@/lib/auth/require-user";
 import { resolverCriancaAtivaId } from "@/lib/crianca-ativa";
 import { capitalizarNome } from "@/lib/nome";
 import { SeletorCrianca } from "../../../seletor-crianca";
-import { DIAS_SEMANA } from "../actions";
+import { DIAS_SEMANA } from "../dias";
 import { CriarDia } from "../criar-dia";
 import { CopiarDia } from "../copiar-dia";
 import { TemaSemana } from "../tema-semana";

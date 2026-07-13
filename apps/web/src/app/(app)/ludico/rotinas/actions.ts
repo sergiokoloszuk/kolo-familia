@@ -8,6 +8,7 @@ import { idadeAnos } from "@/lib/idade";
 import { gerarRoteiroRotina, ilustrarCards } from "@/lib/ludico/gerar";
 import { resolveFamily } from "@/lib/auth/current-family";
 import { trackFeature } from "@/lib/analytics/track";
+import { DIAS_SEMANA } from "./dias";
 
 type Ok<T = object> = { ok: true } & T;
 type Fail = { ok: false; error: string };
@@ -75,7 +76,6 @@ export async function criarRotina(
   }
 }
 
-export const DIAS_SEMANA = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado", "Domingo"];
 
 const criarDiaSchema = z.object({
   membroAtipicoId: z.string().uuid(),
