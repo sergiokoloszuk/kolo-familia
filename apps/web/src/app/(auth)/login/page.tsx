@@ -31,6 +31,10 @@ function LoginPageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const errorParam = searchParams.get("error");
+  // Destino pós-login (ex.: link da Ayla pra /historias/criar). Só caminho
+  // relativo interno, pra evitar open-redirect. Sem next → home.
+  const nextRaw = searchParams.get("next");
+  const destino = nextRaw && nextRaw.startsWith("/") && !nextRaw.startsWith("//") ? nextRaw : "/painel";
   const [submitting, setSubmitting] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
 
@@ -53,7 +57,7 @@ function LoginPageInner() {
       setAuthError(traduzirErro(error.message));
       return;
     }
-    router.push("/painel");
+    router.push(destino);
     router.refresh();
   }
 

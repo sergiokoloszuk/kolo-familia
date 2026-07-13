@@ -285,11 +285,14 @@ export async function gerarRespostaAyla(
       partes.push(`ROTINA VISUAL (previsibilidade/transições) → ESTE link abre a rotina da semana: ${l.rotina}`);
     if (l.desenho) partes.push(`DESENHO (leitura de um desenho) → ESTE link: ${l.desenho}`);
     partes.push(
-      `Regras dos links: mande SEMPRE o link DIRETO do recurso (nunca um genérico) — a pessoa já cai na tela certa, não precisa procurar caminho. NÃO diga "clica em Criar história" como se fosse um botão da primeira tela: o link já abre lá.`,
+      `Regras dos links: mande SEMPRE o link DIRETO do recurso (nunca um genérico) — a pessoa já cai na tela certa. O link JÁ loga ela; mas SE pedir e-mail/senha (às vezes acontece), depois de entrar ela chega no mesmo lugar.`,
+    );
+    partes.push(
+      `SEMPRE mande TAMBÉM o CAMINHO pelo app em palavras, curtinho, além do link — assim ela acha mesmo se o link falhar. Use o menu: "no app: *Lúdico* → *Histórias* → *Criar história*" (rotina: "*Lúdico* → *Rotinas visuais* → *Montar a rotina da semana*"; desenho: "*Lúdico* → *O que o desenho conta?*"). O menu Lúdico aparece como "Lúdico (Histórias, Rotina…)".`,
     );
     if (l.avatar)
       partes.push(
-        `AVATAR (ensine quando oferecer história ou rotina): pra ${nome} virar o personagem das histórias e dos cards, dá pra criar o avatar dele antes, uma vez só — ESTE link abre a criação do avatar: ${l.avatar}. Ofereça como um passo opcional e gostoso ("se quiser, cria antes o avatar do ${nome} pra ele ser o personagem"), sem obrigar.`,
+        `AVATAR (explique bem quando oferecer história): pra ${nome} virar o personagem das histórias e dos cards, dá pra criar o avatar dele ANTES, uma vez só — fica salvo e vale pra tudo. É opcional, mas deixa a história com a cara dele. Diga o passo a passo curtinho: "1) se quiser, cria antes o avatar do ${nome} (Configurações → Avatar) — ${l.avatar}  2) depois é só criar a história (Lúdico → Histórias) — ${l.historia ?? ""}". Deixe claro que sem avatar também funciona.`,
       );
     notas.push(
       `RECURSOS DO LÚDICO: se ${params.nomeMae} pedir OU claramente se beneficiar — MESMO sem usar essas palavras — convide de leve. Não force nem ofereça se não vier a propósito.\n${partes.join("\n")}`,
