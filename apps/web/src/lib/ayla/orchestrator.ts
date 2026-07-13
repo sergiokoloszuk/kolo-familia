@@ -39,6 +39,12 @@ import { traduzirProativa } from "./traduzir";
 import { montarPonteWhatsApp, gerarMagicLink, montarPlanoFimDeSemana, montarPlanoDoRelato } from "./ponte";
 import { pedeUmPlano } from "@/lib/ia/pedido-plano";
 import { planoGuiadoPendente, montarPerguntaPlano } from "./plano-guiado";
+import {
+  rotinaGuiadaPendente,
+  montarPerguntaRotina,
+  processarRelatoRotina,
+  pedeRotina,
+} from "./rotina-guiada";
 import { classificarAreasDiario } from "@/lib/ia/classificar-area";
 import type { AylaTipoProativa, AylaTipoReativa, ParserResult } from "./types";
 
@@ -769,6 +775,7 @@ export async function processInbound(
   // 1c. Fluxo guiado de plano: já perguntamos "como está hoje?" e este inbound é
   // o relato? (calcular ANTES de persistir o inbound atual, como o de fim de semana).
   const planoGuiado = await planoGuiadoPendente(supabase, family.id, inbound.recebidaEm);
+  const rotinaGuiada = await rotinaGuiadaPendente(supabase, family.id, inbound.recebidaEm);
 
   // 2. Persiste inbound — E usa como TRAVA DE IDEMPOTÊNCIA. A Z-API entrega o
   // mesmo webhook mais de uma vez (at-least-once); o índice único em
@@ -871,6 +878,46 @@ export async function processInbound(
         return { tratada: true, familia: family.id, resposta: resp };
       }
       // Falhou gerar → cai no fluxo normal (a Ayla ainda responde algo).
+    }
+  }
+
+  // 3c-rotina. Fluxo GUIADO de ROTINA (antes do plano — pedido mais específico).
+  // (a) Já mandamos o esquema e ESTE inbound é o preenchimento → organiza a semana.
+  if (rotinaGuiada) {
+    const ctxR = await loadFamiliaParaEnvio(supabase, family.id);
+    const membroId = rotinaGuiada.membroId ?? ctxR?.membros[0]?.id ?? null;
+    if (ctxR && membroId) {
+      const msg = await processarRelatoRotina(supabase, {
+        familyId: family.id,
+        membroAtipicoId: membroId,
+        contexto: inbound.texto,
+      });
+      if (msg) {
+        const resp = await enviarEPersistir(supabase, {
+          family_account_id: family.id,
+          membro_atipico_id: membroId,
+          phone: ctxR.whatsapp_e164,
+          texto: msg,
+          category: "reativa",
+          tipo: "resposta_registro",
+        });
+        return { tratada: true, familia: family.id, resposta: resp };
+      }
+    }
+  }
+  // (b) Pediu uma ROTINA agora → manda o esquema pra preencher (não gera ainda).
+  if (pedeRotina(inbound.texto)) {
+    const ctxR = await loadFamiliaParaEnvio(supabase, family.id);
+    if (ctxR) {
+      const resp = await enviarEPersistir(supabase, {
+        family_account_id: family.id,
+        membro_atipico_id: ctxR.membros[0]?.id ?? null,
+        phone: inbound.phoneE164,
+        texto: montarPerguntaRotina(),
+        category: "reativa",
+        tipo: "rotina_pergunta",
+      });
+      return { tratada: true, familia: family.id, resposta: resp };
     }
   }
 
