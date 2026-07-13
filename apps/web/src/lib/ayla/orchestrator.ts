@@ -905,15 +905,23 @@ export async function processInbound(
       }
     }
   }
-  // (b) Pediu uma ROTINA agora → manda o esquema pra preencher (não gera ainda).
+  // (b) Pediu uma ROTINA agora → manda o esquema pra preencher + o link DIRETO da
+  //     tabela da semana (quem preferir monta na tela, arrastando as tarefas).
   if (pedeRotina(inbound.texto)) {
     const ctxR = await loadFamiliaParaEnvio(supabase, family.id);
     if (ctxR) {
+      const link = await gerarMagicLink(supabase, {
+        familyId: family.id,
+        next: "/ludico/rotinas/semana",
+      });
+      const texto =
+        montarPerguntaRotina() +
+        (link ? `\n\nOu, se preferir montar direto na tela (a tabela da semana), é só abrir aqui:\n${link}` : "");
       const resp = await enviarEPersistir(supabase, {
         family_account_id: family.id,
         membro_atipico_id: ctxR.membros[0]?.id ?? null,
         phone: inbound.phoneE164,
-        texto: montarPerguntaRotina(),
+        texto,
         category: "reativa",
         tipo: "rotina_pergunta",
       });
@@ -1108,14 +1116,24 @@ export async function processInbound(
   // Loaders independentes em paralelo (antes eram 3 idas ao banco em fila,
   // logo antes da chamada mais cara — a voz). O magic link do Lúdico (só
   // criança) vem junto, pra Ayla mandar se pedirem história/rotina/desenho.
-  const [koloVivoResumo, estrategiasRecentes, historico, ludicoLink] = await Promise.all([
-    carregarKoloVivoResumo(supabase, membroContextoId),
-    carregarEstrategiasRecentes(supabase, family.id),
-    carregarHistorico(supabase, family.id, inbound.texto),
-    idadeFoco != null && idadeFoco <= 12
-      ? gerarMagicLink(supabase, { familyId: family.id, next: "/ludico" })
-      : Promise.resolve(null),
-  ]);
+  const ehCrianca = idadeFoco != null && idadeFoco <= 12;
+  const [koloVivoResumo, estrategiasRecentes, historico, linkHistoria, linkRotina, linkDesenho, linkAvatar] =
+    await Promise.all([
+      carregarKoloVivoResumo(supabase, membroContextoId),
+      carregarEstrategiasRecentes(supabase, family.id),
+      carregarHistorico(supabase, family.id, inbound.texto),
+      ehCrianca ? gerarMagicLink(supabase, { familyId: family.id, next: "/historias/criar" }) : Promise.resolve(null),
+      ehCrianca
+        ? gerarMagicLink(supabase, { familyId: family.id, next: "/ludico/rotinas/semana" })
+        : Promise.resolve(null),
+      ehCrianca ? gerarMagicLink(supabase, { familyId: family.id, next: "/ludico/desenhos" }) : Promise.resolve(null),
+      ehCrianca
+        ? gerarMagicLink(supabase, { familyId: family.id, next: "/configuracoes/avatar" })
+        : Promise.resolve(null),
+    ]);
+  const linksLudico = ehCrianca
+    ? { historia: linkHistoria, rotina: linkRotina, desenho: linkDesenho, avatar: linkAvatar }
+    : null;
 
   const resp = await enviarRespostaEmChunks(supabase, {
     family_account_id: family.id,
@@ -1132,7 +1150,7 @@ export async function processInbound(
       koloVivoResumo,
       estrategiasRecentes,
       historico,
-      ludicoLink,
+      linksLudico,
       mensagem: inbound.texto,
       sinais: {
         conquista: parsed.conquista,

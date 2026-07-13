@@ -92,15 +92,22 @@ export default async function RotinasPage() {
       {membrosList.length > 0 && (
         <Link
           href="/ludico/rotinas/semana"
-          className="flex items-center justify-between gap-3 rounded-2xl border border-brand-purple/25 bg-kolo-lilas-bg-2/40 px-5 py-4 transition-colors hover:border-brand-purple/50"
+          className="group flex items-center justify-between gap-4 rounded-2xl border-2 border-brand-purple/30 bg-kolo-lilas-bg-2/50 px-5 py-5 transition-colors hover:border-brand-purple/60 hover:bg-kolo-lilas-bg-2/70"
         >
-          <span>
-            <span className="font-heading text-base text-foreground">🗓️ Rotina da semana</span>
-            <span className="mt-0.5 block text-sm text-muted-foreground">
-              Monte a semana toda (Seg–Dom), dia por dia, no tema do interesse.
+          <span className="flex items-center gap-4">
+            <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-brand-purple/15 text-xl">
+              🗓️
+            </span>
+            <span>
+              <span className="font-heading text-lg font-medium text-foreground">Montar a rotina da semana</span>
+              <span className="mt-0.5 block text-sm text-muted-foreground">
+                A semana toda (Seg–Dom), dia por dia, no tema do interesse.
+              </span>
             </span>
           </span>
-          <span className="text-brand-purple">→</span>
+          <span className="shrink-0 rounded-full bg-brand-purple px-4 py-2 text-xs font-semibold text-white transition-transform group-hover:translate-x-0.5">
+            Abrir →
+          </span>
         </Link>
       )}
 

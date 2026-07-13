@@ -52,7 +52,7 @@ const NAV_ITEMS: NavItem[] = [
   { href: "/kolo-vivo", label: "Perfil", icon: Leaf },
   { href: "/estrategias", label: "Estratégias", icon: Sparkles },
   { href: "/evolucao", label: "Evolução", icon: TrendingUp },
-  { href: "/ludico", label: "Lúdico", icon: Shapes }, // engloba Histórias + Rotinas visuais
+  { href: "/ludico", label: "Lúdico (Histórias, Rotina…)", icon: Shapes }, // rótulo revela o que tem dentro, gera curiosidade
 ];
 
 function isActive(pathname: string, href: string): boolean {
@@ -184,7 +184,7 @@ export function Sidebar({
                 )}
                 aria-hidden
               />
-              <span className="flex-1">{item.label}</span>
+              <span className="flex-1 leading-tight">{item.label}</span>
               {item.href === "/kolo-vivo" && sugestoesPendentes > 0 && (
                 <span
                   aria-label={`${sugestoesPendentes} para revisar`}

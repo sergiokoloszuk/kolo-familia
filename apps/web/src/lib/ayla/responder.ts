@@ -113,8 +113,16 @@ export type RespostaParams = {
   /** A pessoa pediu um plano explicitamente — não escreva o plano, ofereça. */
   querPlano?: boolean;
   precisaEscolherMembro?: { nomes: string[] } | null;
-  /** Magic link do Lúdico (só criança) — pra Ayla mandar se pedirem história/rotina/desenho. */
-  ludicoLink?: string | null;
+  /**
+   * Magic links DIRETOS do Lúdico (só criança) — cada recurso abre já logado
+   * na tela certa, pra Ayla nunca mandar o hub genérico e a pessoa se perder.
+   */
+  linksLudico?: {
+    historia: string | null;
+    rotina: string | null;
+    desenho: string | null;
+    avatar: string | null;
+  } | null;
 };
 
 /**
@@ -249,9 +257,26 @@ export async function gerarRespostaAyla(
       `Apareceu algo que pode valer guardar no perfil da criança. Se — e só se — fizer sentido no fluxo, pergunte de leve se ela quer que eu guarde. Sem insistir.`,
     );
   }
-  if (params.ludicoLink) {
+  if (params.linksLudico) {
+    const l = params.linksLudico;
+    const nome = params.nomeMembro ?? "a criança";
+    const partes: string[] = [];
+    if (l.historia)
+      partes.push(
+        `HISTÓRIA (pra preparar/antecipar uma situação, ${nome} de protagonista) → mande ESTE link, que abre DIRETO na tela de criar história: ${l.historia}`,
+      );
+    if (l.rotina)
+      partes.push(`ROTINA VISUAL (previsibilidade/transições) → ESTE link abre a rotina da semana: ${l.rotina}`);
+    if (l.desenho) partes.push(`DESENHO (leitura de um desenho) → ESTE link: ${l.desenho}`);
+    partes.push(
+      `Regras dos links: mande SEMPRE o link DIRETO do recurso (nunca um genérico) — a pessoa já cai na tela certa, não precisa procurar caminho. NÃO diga "clica em Criar história" como se fosse um botão da primeira tela: o link já abre lá.`,
+    );
+    if (l.avatar)
+      partes.push(
+        `AVATAR (ensine quando oferecer história ou rotina): pra ${nome} virar o personagem das histórias e dos cards, dá pra criar o avatar dele antes, uma vez só — ESTE link abre a criação do avatar: ${l.avatar}. Ofereça como um passo opcional e gostoso ("se quiser, cria antes o avatar do ${nome} pra ele ser o personagem"), sem obrigar.`,
+      );
     notas.push(
-      `RECURSOS DO LÚDICO: se ${params.nomeMae} pedir OU claramente se beneficiar de uma HISTÓRIA (pra preparar/antecipar uma situação), de uma ROTINA VISUAL (previsibilidade/transições difíceis) ou de um DESENHO — MESMO sem usar essas palavras — convide de leve e inclua ESTE link, que abre já logado no Lúdico: ${params.ludicoLink}. Não force nem ofereça se não vier a propósito.`,
+      `RECURSOS DO LÚDICO: se ${params.nomeMae} pedir OU claramente se beneficiar — MESMO sem usar essas palavras — convide de leve. Não force nem ofereça se não vier a propósito.\n${partes.join("\n")}`,
     );
   }
   if (notas.length > 0) {

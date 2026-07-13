@@ -431,11 +431,11 @@ Regras:
 Gere UMA nova mensagem.`;
 }
 
-function promptMenuDia(ctx: Context, ludicoLink: string | null): string {
+function promptMenuDia(ctx: Context, links: { rotina: string | null; historia: string | null }): string {
   const opcoes = ctx.ehCrianca
     ? `1. Ajuda pra uma SITUAÇÃO específica (um desafio de agora)
-2. Montar uma ROTINA VISUAL — dá previsibilidade e segurança nas transições do dia${ludicoLink ? ` (é só abrir: ${ludicoLink})` : ""}
-3. Uma HISTÓRIA com ${ctx.nomeMembro} de protagonista, pra ajudar num desafio${ludicoLink ? ` (mesmo link)` : ""}
+2. Montar uma ROTINA VISUAL — dá previsibilidade e segurança nas transições do dia${links.rotina ? ` (abre direto: ${links.rotina})` : ""}
+3. Uma HISTÓRIA com ${ctx.nomeMembro} de protagonista, pra ajudar num desafio${links.historia ? ` (abre direto na criação: ${links.historia})` : ""}
 Ou só CONTAR como foi o dia — pode ser ÁUDIO`
     : `1. Ajuda pra uma SITUAÇÃO específica (um desafio de agora)
 2. Montar um PLANO pra um desafio atual
@@ -544,10 +544,13 @@ export async function gerarMensagemEspontanea(
   } else if (intent === "feedback_plano") {
     userPrompt = promptFeedbackPlano(ctx);
   } else if (intent === "menu_do_dia") {
-    const ludicoLink = ctx.ehCrianca
-      ? await gerarMagicLink(supabase, { familyId: params.familyId, next: "/ludico" })
-      : null;
-    userPrompt = promptMenuDia(ctx, ludicoLink);
+    const [rotina, historia] = ctx.ehCrianca
+      ? await Promise.all([
+          gerarMagicLink(supabase, { familyId: params.familyId, next: "/ludico/rotinas/semana" }),
+          gerarMagicLink(supabase, { familyId: params.familyId, next: "/historias/criar" }),
+        ])
+      : [null, null];
+    userPrompt = promptMenuDia(ctx, { rotina, historia });
   } else if (intent === "aprofundar_tema") {
     const tema = ctx.temasComInfo.length
       ? ctx.temasComInfo[hashSeed(`${seed}-tema`) % ctx.temasComInfo.length]
