@@ -20,7 +20,7 @@ export default async function RotinasPage() {
       .order("created_at", { ascending: true }),
     supabase
       .from("rotinas")
-      .select("id, nome, membro_atipico_id")
+      .select("id, nome, membro_atipico_id, dia_semana")
       .eq("family_account_id", familyId)
       .order("created_at", { ascending: false }),
   ]);
@@ -51,7 +51,9 @@ export default async function RotinasPage() {
   // Criança ativa (cookie): lista e nova rotina já são dela.
   const ativaId = (await resolverCriancaAtivaId(membros ?? [])) ?? null;
   const rotinasVisiveis = (rotinas ?? []).filter(
-    (r) => !ativaId || (r.membro_atipico_id as string | null) === ativaId,
+    (r) =>
+      (r.dia_semana as number | null) == null && // rotinas de dia vivem na "Rotina da semana"
+      (!ativaId || (r.membro_atipico_id as string | null) === ativaId),
   );
 
   return (
@@ -85,6 +87,21 @@ export default async function RotinasPage() {
             variant="screen"
           />
         </div>
+      )}
+
+      {membrosList.length > 0 && (
+        <Link
+          href="/ludico/rotinas/semana"
+          className="flex items-center justify-between gap-3 rounded-2xl border border-brand-purple/25 bg-kolo-lilas-bg-2/40 px-5 py-4 transition-colors hover:border-brand-purple/50"
+        >
+          <span>
+            <span className="font-heading text-base text-foreground">🗓️ Rotina da semana</span>
+            <span className="mt-0.5 block text-sm text-muted-foreground">
+              Monte a semana toda (Seg–Dom), dia por dia, no tema do interesse.
+            </span>
+          </span>
+          <span className="text-brand-purple">→</span>
+        </Link>
       )}
 
       {membrosList.length === 0 ? (

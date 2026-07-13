@@ -75,6 +75,57 @@ export async function criarRotina(
   }
 }
 
+export const DIAS_SEMANA = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado", "Domingo"];
+
+const criarDiaSchema = z.object({
+  membroAtipicoId: z.string().uuid(),
+  diaSemana: z.number().int().min(0).max(6),
+});
+
+/** Cria (ou reusa) a rotina de um DIA da semana pra a criança ativa. */
+export async function criarRotinaDia(
+  input: z.infer<typeof criarDiaSchema>,
+): Promise<Ok<{ rotinaId: string }> | Fail> {
+  try {
+    const { membroAtipicoId, diaSemana } = criarDiaSchema.parse(input);
+    const { supabase, family } = await requireFamily();
+
+    const { data: membro } = await supabase
+      .from("membros_atipicos")
+      .select("id")
+      .eq("id", membroAtipicoId)
+      .eq("family_account_id", family.id)
+      .maybeSingle();
+    if (!membro) return { ok: false, error: "Membro não encontrado." };
+
+    // Não duplica: se já existe a rotina desse dia, reusa.
+    const { data: existe } = await supabase
+      .from("rotinas")
+      .select("id")
+      .eq("membro_atipico_id", membroAtipicoId)
+      .eq("dia_semana", diaSemana)
+      .maybeSingle();
+    if (existe?.id) return { ok: true, rotinaId: existe.id as string };
+
+    const { data, error } = await supabase
+      .from("rotinas")
+      .insert({
+        family_account_id: family.id,
+        membro_atipico_id: membroAtipicoId,
+        nome: DIAS_SEMANA[diaSemana],
+        dia_semana: diaSemana,
+      })
+      .select("id")
+      .single();
+    if (error || !data) return { ok: false, error: `Não consegui criar: ${error?.message}` };
+
+    revalidatePath("/ludico/rotinas/semana");
+    return { ok: true, rotinaId: data.id as string };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "Erro inesperado" };
+  }
+}
+
 const renomearSchema = z.object({
   rotinaId: z.string().uuid(),
   nome: z.string().trim().min(1).max(80),
