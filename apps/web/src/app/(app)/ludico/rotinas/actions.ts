@@ -126,6 +126,86 @@ export async function criarRotinaDia(
   }
 }
 
+const copiarSchema = z.object({
+  rotinaId: z.string().uuid(),
+  paraDias: z.array(z.number().int().min(0).max(6)).min(1).max(7),
+});
+
+/** Copia a sequência de um dia pra outros dias da semana (substitui a deles). */
+export async function copiarDiaRotina(
+  input: z.infer<typeof copiarSchema>,
+): Promise<Ok<{ copiados: number }> | Fail> {
+  try {
+    const { rotinaId, paraDias } = copiarSchema.parse(input);
+    const { supabase, family } = await requireFamily();
+
+    const { data: origem } = await supabase
+      .from("rotinas")
+      .select("id, membro_atipico_id, dia_semana, tema")
+      .eq("id", rotinaId)
+      .eq("family_account_id", family.id)
+      .maybeSingle();
+    if (!origem) return { ok: false, error: "Rotina não encontrada." };
+    const membroId = origem.membro_atipico_id as string;
+
+    const { data: tarefas } = await supabase
+      .from("rotina_tarefas")
+      .select("texto, icone, hora, ordem")
+      .eq("rotina_id", rotinaId)
+      .order("ordem", { ascending: true });
+    const base = tarefas ?? [];
+
+    let copiados = 0;
+    for (const dia of paraDias) {
+      if (dia === origem.dia_semana) continue;
+      // rotina do dia destino (cria se não existe)
+      const { data: dest } = await supabase
+        .from("rotinas")
+        .select("id")
+        .eq("membro_atipico_id", membroId)
+        .eq("dia_semana", dia)
+        .maybeSingle();
+      let destId = dest?.id as string | undefined;
+      if (!destId) {
+        const { data: nova } = await supabase
+          .from("rotinas")
+          .insert({
+            family_account_id: family.id,
+            membro_atipico_id: membroId,
+            nome: DIAS_SEMANA[dia],
+            dia_semana: dia,
+            tema: (origem.tema as string | null) ?? null,
+          })
+          .select("id")
+          .single();
+        destId = nova?.id as string | undefined;
+      }
+      if (!destId) continue;
+
+      // Substitui as tarefas do destino pelas da origem; cartões voltam a "nenhum".
+      await supabase.from("rotina_tarefas").delete().eq("rotina_id", destId);
+      if (base.length) {
+        await supabase.from("rotina_tarefas").insert(
+          base.map((t, i) => ({
+            rotina_id: destId,
+            texto: t.texto as string,
+            icone: (t.icone as string | null) ?? null,
+            hora: (t.hora as string | null) ?? null,
+            ordem: i,
+          })),
+        );
+      }
+      await supabase.from("rotinas").update({ cards_status: "nenhum" }).eq("id", destId);
+      copiados += 1;
+    }
+
+    revalidatePath("/ludico/rotinas/semana");
+    return { ok: true, copiados };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "Erro inesperado" };
+  }
+}
+
 const renomearSchema = z.object({
   rotinaId: z.string().uuid(),
   nome: z.string().trim().min(1).max(80),

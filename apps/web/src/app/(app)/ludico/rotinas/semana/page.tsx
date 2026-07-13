@@ -6,6 +6,7 @@ import { capitalizarNome } from "@/lib/nome";
 import { SeletorCrianca } from "../../../seletor-crianca";
 import { DIAS_SEMANA } from "../actions";
 import { CriarDia } from "../criar-dia";
+import { CopiarDia } from "../copiar-dia";
 
 /**
  * Rotina da SEMANA — visão por dia (Seg–Dom). Cada dia é uma rotina própria
@@ -147,6 +148,11 @@ export default async function RotinaSemanaPage() {
                 )}
                 {rot && tasks.length === 0 && (
                   <p className="mt-3 text-sm text-muted-foreground">Sem tarefas ainda — abra pra montar a sequência.</p>
+                )}
+                {rot && tasks.length > 0 && (
+                  <div className="mt-3">
+                    <CopiarDia rotinaId={rot.id} diaOrigem={dia} />
+                  </div>
                 )}
               </div>
             );
