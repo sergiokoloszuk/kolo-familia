@@ -206,6 +206,43 @@ export async function copiarDiaRotina(
   }
 }
 
+const temaSemanaSchema = z.object({
+  membroAtipicoId: z.string().uuid(),
+  tema: z.string().trim().max(60),
+});
+
+/** Define UM tema pra a semana toda — aplica a todas as rotinas de dia da criança. */
+export async function definirTemaSemana(
+  input: z.infer<typeof temaSemanaSchema>,
+): Promise<Ok | Fail> {
+  try {
+    const { membroAtipicoId, tema } = temaSemanaSchema.parse(input);
+    const { supabase, family } = await requireFamily();
+
+    const { data: membro } = await supabase
+      .from("membros_atipicos")
+      .select("id")
+      .eq("id", membroAtipicoId)
+      .eq("family_account_id", family.id)
+      .maybeSingle();
+    if (!membro) return { ok: false, error: "Membro não encontrado." };
+
+    // Tema mudou → os cartões (temáticos) precisam ser gerados de novo.
+    const { error } = await supabase
+      .from("rotinas")
+      .update({ tema: tema || null, cards_status: "nenhum" })
+      .eq("membro_atipico_id", membroAtipicoId)
+      .eq("family_account_id", family.id)
+      .not("dia_semana", "is", null);
+    if (error) return { ok: false, error: error.message };
+
+    revalidatePath("/ludico/rotinas/semana");
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "Erro inesperado" };
+  }
+}
+
 const renomearSchema = z.object({
   rotinaId: z.string().uuid(),
   nome: z.string().trim().min(1).max(80),

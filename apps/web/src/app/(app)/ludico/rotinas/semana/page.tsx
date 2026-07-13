@@ -7,6 +7,7 @@ import { SeletorCrianca } from "../../../seletor-crianca";
 import { DIAS_SEMANA } from "../actions";
 import { CriarDia } from "../criar-dia";
 import { CopiarDia } from "../copiar-dia";
+import { TemaSemana } from "../tema-semana";
 
 /**
  * Rotina da SEMANA — visão por dia (Seg–Dom). Cada dia é uma rotina própria
@@ -62,6 +63,7 @@ export default async function RotinaSemanaPage() {
   }
 
   const nomeAtiva = membrosList.find((m) => m.id === ativaId)?.nome ?? "";
+  const temaSemana = (rotinas ?? []).map((r) => (r.tema as string | null) ?? null).find(Boolean) ?? null;
 
   return (
     <div className="flex flex-col gap-6">
@@ -99,6 +101,7 @@ export default async function RotinaSemanaPage() {
         <p className="text-sm text-muted-foreground">Cadastre uma criança no Perfil pra montar a rotina.</p>
       ) : (
         <div className="flex flex-col gap-3">
+          {ativaId && <TemaSemana membroId={ativaId} temaAtual={temaSemana} />}
           {DIAS_SEMANA.map((nomeDia, dia) => {
             const rot = rotinaPorDia.get(dia);
             const tasks = rot ? tarefasPorRotina.get(rot.id) ?? [] : [];
