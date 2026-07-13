@@ -60,7 +60,7 @@ export default async function RotinaPage({
 
   const { data: tarefas } = await supabase
     .from("rotina_tarefas")
-    .select("id, texto, icone, concluida, nome_tematico, imagem_url")
+    .select("id, texto, icone, hora, concluida, nome_tematico, imagem_url")
     .eq("rotina_id", rotina.id)
     .order("ordem", { ascending: true });
 
@@ -104,6 +104,7 @@ export default async function RotinaPage({
           id: t.id as string,
           texto: t.texto as string,
           icone: (t.icone as string | null) ?? null,
+          hora: (t.hora as string | null) ?? null,
           concluida: Boolean(t.concluida),
           nomeTematico: (t.nome_tematico as string | null) ?? null,
           imagemUrl: tarefasUrls[i] ?? (t.imagem_url as string | null) ?? null,

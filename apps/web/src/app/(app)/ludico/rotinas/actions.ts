@@ -174,13 +174,14 @@ const addTarefaSchema = z.object({
   rotinaId: z.string().uuid(),
   texto: z.string().trim().min(1, "Escreva a tarefa").max(120),
   icone: z.string().trim().max(40).optional().nullable(),
+  hora: z.string().trim().max(10).optional().nullable(),
 });
 
 export async function adicionarTarefa(
   input: z.infer<typeof addTarefaSchema>,
 ): Promise<Ok<{ tarefaId: string }> | Fail> {
   try {
-    const { rotinaId, texto, icone } = addTarefaSchema.parse(input);
+    const { rotinaId, texto, icone, hora } = addTarefaSchema.parse(input);
     const { supabase, family } = await requireFamily();
     if (!(await rotinaDaFamilia(supabase, family.id, rotinaId)))
       return { ok: false, error: "Rotina não encontrada." };
@@ -192,7 +193,7 @@ export async function adicionarTarefa(
 
     const { data, error } = await supabase
       .from("rotina_tarefas")
-      .insert({ rotina_id: rotinaId, texto, icone: icone || null, ordem: count ?? 0 })
+      .insert({ rotina_id: rotinaId, texto, icone: icone || null, hora: hora || null, ordem: count ?? 0 })
       .select("id")
       .single();
     if (error || !data) return { ok: false, error: `Não consegui adicionar: ${error?.message}` };
@@ -248,19 +249,23 @@ const editTarefaSchema = z.object({
   tarefaId: z.string().uuid(),
   texto: z.string().trim().min(1).max(120),
   icone: z.string().trim().max(40).optional().nullable(),
+  hora: z.string().trim().max(10).optional().nullable(),
 });
 
 export async function editarTarefa(
   input: z.infer<typeof editTarefaSchema>,
 ): Promise<Ok | Fail> {
   try {
-    const { rotinaId, tarefaId, texto, icone } = editTarefaSchema.parse(input);
+    const { rotinaId, tarefaId, texto, icone, hora } = editTarefaSchema.parse(input);
     const { supabase, family } = await requireFamily();
     if (!(await rotinaDaFamilia(supabase, family.id, rotinaId)))
       return { ok: false, error: "Rotina não encontrada." };
+    // hora undefined = não mexe (edição de texto não apaga a hora já salva).
+    const patch: Record<string, unknown> = { texto, icone: icone || null };
+    if (hora !== undefined) patch.hora = hora || null;
     const { error } = await supabase
       .from("rotina_tarefas")
-      .update({ texto, icone: icone || null })
+      .update(patch)
       .eq("id", tarefaId)
       .eq("rotina_id", rotinaId);
     if (error) return { ok: false, error: error.message };

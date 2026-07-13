@@ -82,6 +82,7 @@ type Tarefa = {
   id: string;
   texto: string;
   icone: string | null;
+  hora: string | null;
   concluida: boolean;
   nomeTematico: string | null;
   imagemUrl: string | null;
@@ -160,16 +161,16 @@ export function RotinaEditor({
     start(async () => setErroFrom(await excluirTarefa({ rotinaId, tarefaId: id })));
   }
 
-  function adicionar(texto: string, icone: string | null) {
+  function adicionar(texto: string, icone: string | null, hora: string | null) {
     start(async () => {
-      const r = await adicionarTarefa({ rotinaId, texto, icone });
+      const r = await adicionarTarefa({ rotinaId, texto, icone, hora });
       if (!r.ok) {
         setErro(r.error);
         return;
       }
       setTarefas((ts) => [
         ...ts,
-        { id: r.tarefaId, texto, icone, concluida: false, nomeTematico: null, imagemUrl: null },
+        { id: r.tarefaId, texto, icone, hora, concluida: false, nomeTematico: null, imagemUrl: null },
       ]);
     });
   }
@@ -571,19 +572,21 @@ function AddTarefa({
 }: {
   visual: boolean;
   temPassos: boolean;
-  onAdd: (texto: string, icone: string | null) => void;
+  onAdd: (texto: string, icone: string | null, hora: string | null) => void;
   onAddVarios: (textos: string[]) => void;
 }) {
   const [texto, setTexto] = useState("");
   const [icone, setIcone] = useState<string | null>(null);
+  const [hora, setHora] = useState("");
   const [varios, setVarios] = useState("");
 
   function add() {
     const t = texto.trim();
     if (!t) return;
-    onAdd(t, visual ? icone : null);
+    onAdd(t, visual ? icone : null, hora.trim() || null);
     setTexto("");
     setIcone(null);
+    setHora("");
   }
 
   function addVarios() {
@@ -635,6 +638,15 @@ function AddTarefa({
             onChange={(e) => setTexto(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && add()}
             placeholder="Novo passo (ex.: praia, sorveteria…)"
+          />
+          <Input
+            value={hora}
+            onChange={(e) => setHora(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && add()}
+            placeholder="hora"
+            inputMode="numeric"
+            className="w-20 shrink-0"
+            aria-label="Horário (opcional)"
           />
           <Button type="button" variant="outline" onClick={add} disabled={!texto.trim()}>
             <Plus className="size-4" aria-hidden /> Adicionar
