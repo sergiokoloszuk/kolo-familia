@@ -76,7 +76,7 @@ export function AssistenteChat({ membroId, nome }: { membroId: string; nome: str
     <div className="grid gap-5 lg:grid-cols-[1fr_1.1fr]">
       {/* Conversa */}
       <div className="flex flex-col gap-3">
-        <div className="flex min-h-[280px] flex-col gap-2.5 rounded-2xl border border-kolo-linha bg-white p-4">
+        <div className="flex max-h-[340px] min-h-[96px] flex-col gap-2.5 overflow-y-auto rounded-2xl border border-kolo-linha bg-white p-4">
           {mensagens.map((m, i) => (
             <div
               key={i}
@@ -96,30 +96,40 @@ export function AssistenteChat({ membroId, nome }: { membroId: string; nome: str
           )}
         </div>
 
-        <div className="flex items-end gap-2">
-          <textarea
-            value={texto}
-            onChange={(e) => setTexto(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault();
-                enviar();
-              }
-            }}
-            rows={2}
-            placeholder="Ex.: acorda 6h, escola até 12:30, segunda tem vôlei 16h, quinta é igual à segunda…"
-            className="flex-1 resize-none rounded-xl border border-input bg-background px-3 py-2 text-sm"
-            disabled={pensando}
-          />
-          <button
-            type="button"
-            onClick={enviar}
-            disabled={pensando || !texto.trim()}
-            className="inline-flex size-10 shrink-0 items-center justify-center rounded-xl bg-brand-purple text-white transition-colors hover:bg-brand-purple-dark disabled:opacity-40"
-            aria-label="Enviar"
-          >
-            <Send className="size-4" />
-          </button>
+        {/* Campo em destaque — onde a mãe escreve */}
+        <div className="rounded-2xl border-2 border-brand-purple/35 bg-brand-purple/[0.05] p-3">
+          <p className="mb-2 flex items-center gap-1.5 text-sm font-semibold text-brand-purple-dark">
+            <Sparkles className="size-4" aria-hidden /> Escreva aqui como são os dias
+          </p>
+          <div className="flex items-end gap-2">
+            <textarea
+              value={texto}
+              onChange={(e) => setTexto(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  enviar();
+                }
+              }}
+              rows={3}
+              autoFocus
+              placeholder="Ex.: acorda 6h, escola até 12:30, segunda tem vôlei 16h, quinta é igual à segunda, skincare de manhã e de noite…"
+              className="flex-1 resize-none rounded-xl border border-brand-purple/25 bg-white px-3 py-2 text-sm placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-brand-purple/30"
+              disabled={pensando}
+            />
+            <button
+              type="button"
+              onClick={enviar}
+              disabled={pensando || !texto.trim()}
+              className="inline-flex h-11 shrink-0 items-center gap-1.5 rounded-xl bg-brand-purple px-4 text-sm font-semibold text-white transition-colors hover:bg-brand-purple-dark disabled:opacity-40"
+              aria-label="Enviar"
+            >
+              <Send className="size-4" /> Enviar
+            </button>
+          </div>
+          <p className="mt-1.5 text-xs text-muted-foreground">
+            Pode mandar tudo de uma vez. Enter envia; Shift+Enter pula linha.
+          </p>
         </div>
         {erro && <p className="text-sm text-destructive">{erro}</p>}
       </div>
