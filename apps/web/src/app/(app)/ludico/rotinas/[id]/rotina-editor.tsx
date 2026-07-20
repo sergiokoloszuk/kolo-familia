@@ -41,6 +41,7 @@ import { cn } from "@/lib/utils";
 import {
   adicionarTarefa,
   adicionarVariasTarefas,
+  criarRotinaDia,
   definirModoExibicao,
   excluirRotina,
   excluirTarefa,
@@ -80,6 +81,7 @@ function IconeDe(k: string | null | undefined): LucideIcon {
 }
 
 const DIAS_CURTOS = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"];
+const DIAS_FULL = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado", "Domingo"];
 
 type Tarefa = {
   id: string;
@@ -139,7 +141,24 @@ export function RotinaEditor({
   const [nome, setNome] = useState(nomeInicial);
   const [tarefas, setTarefas] = useState<Tarefa[]>(tarefasIniciais);
   const [erro, setErro] = useState<string | null>(null);
+  // Tela do dia = só RESULTADO quando já tem passos; edição fica atrás de "Editar".
+  const [editando, setEditando] = useState(tarefasIniciais.length === 0);
   const [, start] = useTransition();
+
+  // Próximo dia da semana (só quando é uma rotina de dia). Domingo → volta à semana.
+  const proximoDia = diaSemana != null && diaSemana < 6 ? diaSemana + 1 : null;
+  function irProximoDia() {
+    if (diaSemana == null) return;
+    if (proximoDia == null) {
+      router.push("/ludico/rotinas/semana");
+      return;
+    }
+    start(async () => {
+      const r = await criarRotinaDia({ membroAtipicoId, diaSemana: proximoDia });
+      if (r.ok) router.push(`/ludico/rotinas/${r.rotinaId}`);
+      else setErro(r.error);
+    });
+  }
 
   function setErroFrom(r: { ok: boolean; error?: string }) {
     if (!r.ok && r.error) setErro(r.error);
@@ -293,22 +312,55 @@ export function RotinaEditor({
         <ViewChecklist tarefas={tarefas} onToggle={toggle} onMover={mover} onRemover={remover} />
       )}
 
-      <AddTarefa
-        visual={visual}
-        temPassos={tarefas.length > 0}
-        diaSemana={diaSemana}
-        onAdd={adicionar}
-        onAddVarios={adicionarVarios}
-      />
+      {editando ? (
+        <>
+          <AddTarefa
+            visual={visual}
+            temPassos={tarefas.length > 0}
+            diaSemana={diaSemana}
+            onAdd={adicionar}
+            onAddVarios={adicionarVarios}
+          />
 
-      {visual && cardsStatus !== "gerando" && (
-        <GerarCards
-          rotinaId={rotinaId}
-          temaInicial={tema}
-          jaTem={cardsStatus === "pronto"}
-          nomeMembro={nomeMembro}
-          avatares={avatares}
-        />
+          {visual && cardsStatus !== "gerando" && (
+            <GerarCards
+              rotinaId={rotinaId}
+              temaInicial={tema}
+              jaTem={cardsStatus === "pronto"}
+              nomeMembro={nomeMembro}
+              avatares={avatares}
+            />
+          )}
+
+          {tarefas.length > 0 && (
+            <button
+              type="button"
+              onClick={() => setEditando(false)}
+              className="w-fit rounded-full bg-brand-purple px-6 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-brand-purple-dark print:hidden"
+            >
+              Concluir ✓
+            </button>
+          )}
+        </>
+      ) : (
+        <div className="flex flex-wrap items-center gap-3 print:hidden">
+          <button
+            type="button"
+            onClick={() => setEditando(true)}
+            className="inline-flex items-center gap-1.5 rounded-full border border-brand-purple/30 px-4 py-2 text-sm font-semibold text-brand-purple transition-colors hover:bg-brand-purple/5"
+          >
+            ✏️ Editar
+          </button>
+          {diaSemana != null && (
+            <button
+              type="button"
+              onClick={irProximoDia}
+              className="inline-flex items-center gap-1.5 rounded-full bg-brand-purple px-5 py-2 text-sm font-semibold text-white transition-colors hover:bg-brand-purple-dark"
+            >
+              {proximoDia != null ? `Montar ${DIAS_FULL[proximoDia]}` : "Ver a semana"} →
+            </button>
+          )}
+        </div>
       )}
 
       <p className="text-xs text-muted-foreground print:hidden">

@@ -9,6 +9,7 @@ import { DIAS_SEMANA } from "../dias";
 import { CriarDia } from "../criar-dia";
 import { CopiarDia } from "../copiar-dia";
 import { TemaSemana } from "../tema-semana";
+import { ImprimirSemana } from "./imprimir-semana";
 
 /**
  * Rotina da SEMANA — visão por dia (Seg–Dom). Cada dia é uma rotina própria
@@ -65,50 +66,60 @@ export default async function RotinaSemanaPage() {
 
   const nomeAtiva = membrosList.find((m) => m.id === ativaId)?.nome ?? "";
   const temaSemana = (rotinas ?? []).map((r) => (r.tema as string | null) ?? null).find(Boolean) ?? null;
+  const temAlgumDia = (rotinas ?? []).length > 0;
 
   return (
     <div className="flex flex-col gap-6">
       <Link
         href="/ludico/rotinas"
-        className="inline-flex w-fit items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
+        className="inline-flex w-fit items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground print:hidden"
       >
         <ChevronLeft className="size-4" aria-hidden /> Rotinas
       </Link>
 
       <header className="max-w-2xl">
-        <Eyebrow>Rotina Visual</Eyebrow>
+        <div className="print:hidden">
+          <Eyebrow>Rotina Visual</Eyebrow>
+        </div>
         <h1 className="mt-1 font-heading text-3xl text-foreground md:text-4xl">
           Rotina da <em className="not-italic text-brand-purple">semana</em>
           {nomeAtiva ? ` — ${nomeAtiva}` : ""}
         </h1>
-        <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
+        <p className="mt-2 max-w-2xl text-sm text-muted-foreground print:hidden">
           Monte a sequência de cada dia (o horário é opcional). Ligue só os dias que fizerem sentido.
           Os cartões ilustrados de cada dia você gera quando quiser, no editor do dia.
         </p>
       </header>
 
-      {membrosList.length > 1 && ativaId && (
-        <div className="w-fit">
+      <div className="flex flex-wrap items-center gap-3 print:hidden">
+        {membrosList.length > 1 && ativaId && (
           <SeletorCrianca
             criancas={membrosList.map((m) => ({ id: m.id, nome: m.nome }))}
             ativaId={ativaId}
             variant="screen"
           />
-        </div>
-      )}
+        )}
+        {temAlgumDia && <ImprimirSemana />}
+      </div>
 
       {membrosList.length === 0 ? (
         <p className="text-sm text-muted-foreground">Cadastre uma pessoa no Perfil pra montar a rotina.</p>
       ) : (
         <div className="flex flex-col gap-3">
-          {ativaId && <TemaSemana membroId={ativaId} temaAtual={temaSemana} />}
+          {ativaId && (
+            <div className="print:hidden">
+              <TemaSemana membroId={ativaId} temaAtual={temaSemana} />
+            </div>
+          )}
           {DIAS_SEMANA.map((nomeDia, dia) => {
             const rot = rotinaPorDia.get(dia);
             const tasks = rot ? tarefasPorRotina.get(rot.id) ?? [] : [];
             return (
               <div
                 key={dia}
-                className={`rounded-2xl border border-kolo-linha p-4 ${rot ? "bg-white" : "bg-secondary/30"}`}
+                className={`rounded-2xl border border-kolo-linha p-4 ${rot ? "bg-white" : "bg-secondary/30"} ${
+                  rot && tasks.length > 0 ? "" : "print:hidden"
+                }`}
               >
                 <div className="flex items-center justify-between gap-3">
                   <div className="flex items-center gap-2">
@@ -123,12 +134,16 @@ export default async function RotinaSemanaPage() {
                   {rot ? (
                     <Link
                       href={`/ludico/rotinas/${rot.id}`}
-                      className="rounded-full bg-brand-purple px-4 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-brand-purple/90"
+                      className="rounded-full bg-brand-purple px-4 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-brand-purple/90 print:hidden"
                     >
                       Editar / cartões
                     </Link>
                   ) : (
-                    ativaId && <CriarDia membroId={ativaId} diaSemana={dia} />
+                    ativaId && (
+                      <span className="print:hidden">
+                        <CriarDia membroId={ativaId} diaSemana={dia} />
+                      </span>
+                    )
                   )}
                 </div>
 
@@ -136,15 +151,20 @@ export default async function RotinaSemanaPage() {
                   <div className="mt-3 flex flex-wrap items-center gap-2">
                     {tasks.map((t, i) => (
                       <span key={i} className="inline-flex items-center gap-2">
-                        <span className="inline-flex items-center gap-2 rounded-xl border border-kolo-linha bg-kolo-lilas-bg-2/40 px-3 py-1.5 text-sm text-foreground">
+                        <span className="inline-flex items-center gap-2 rounded-xl border border-kolo-linha bg-kolo-lilas-bg-2/40 px-3 py-1.5 text-sm text-foreground print:rounded-md print:border-foreground/40">
+                          <span className="hidden text-base leading-none print:inline" aria-hidden>
+                            ☐
+                          </span>
                           {t.hora && (
-                            <span className="rounded bg-white px-1.5 text-[11px] font-bold tabular-nums text-brand-purple">
+                            <span className="rounded bg-white px-1.5 text-[11px] font-bold tabular-nums text-brand-purple print:bg-transparent">
                               {t.hora}
                             </span>
                           )}
                           {t.texto}
                         </span>
-                        {i < tasks.length - 1 && <span className="text-xs text-muted-foreground">→</span>}
+                        {i < tasks.length - 1 && (
+                          <span className="text-xs text-muted-foreground print:hidden">→</span>
+                        )}
                       </span>
                     ))}
                   </div>
@@ -153,7 +173,7 @@ export default async function RotinaSemanaPage() {
                   <p className="mt-3 text-sm text-muted-foreground">Sem tarefas ainda — abra pra montar a sequência.</p>
                 )}
                 {rot && tasks.length > 0 && (
-                  <div className="mt-3">
+                  <div className="mt-3 print:hidden">
                     <CopiarDia rotinaId={rot.id} diaOrigem={dia} />
                   </div>
                 )}
