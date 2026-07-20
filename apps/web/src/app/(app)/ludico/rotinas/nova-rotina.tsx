@@ -51,7 +51,7 @@ export function NovaRotina({
           <span>
             <span className="block font-heading text-lg font-medium text-foreground">Rotina de um dia</span>
             <span className="mt-0.5 block text-sm text-muted-foreground">
-              Uma sequência avulsa (manhã, dia de passeio…).
+              Um dia do seu jeito: dia do dentista, dia do parque, manhã tranquila…
             </span>
           </span>
         </span>
@@ -88,7 +88,7 @@ export function NovaRotina({
         autoFocus
         value={nome}
         onChange={(e) => setNome(e.target.value)}
-        placeholder="Nome da rotina (ex.: Manhã, Dia de passeio)"
+        placeholder="Nome da rotina (ex.: Dia do dentista, Dia do parque, Manhã)"
         onKeyDown={(e) => e.key === "Enter" && criar()}
         disabled={pending}
       />

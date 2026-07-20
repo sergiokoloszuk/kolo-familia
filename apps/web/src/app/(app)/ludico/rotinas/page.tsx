@@ -73,9 +73,16 @@ export default async function RotinasPage() {
           A sequência do dia, <em className="not-italic text-brand-purple">do jeito de cada um</em>
         </h1>
         <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-          Monte uma rotina, ordene os passos e vão marcando o que já passou — fica cinza.
-          Pra criança vira cartões visuais; pro adolescente, uma lista que ele consulta.
-          É previsibilidade e autonomia, não cobrança.
+          Uma rotina visual mostra <em className="not-italic text-foreground">o que vem agora e o que vem depois</em> —
+          e isso tira o peso do desconhecido, que é o que mais desregula. A criança vai marcando o que já passou
+          (fica cinza) e ganha previsibilidade e autonomia, sem cobrança. Pra criança vira cartões ilustrados;
+          pro adolescente, uma lista que ele consulta no celular.
+        </p>
+        <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+          Pode ser a <em className="not-italic text-foreground">semana toda</em> ou <em className="not-italic text-foreground">um dia específico</em> —
+          e um dia pode ser bem do seu jeito: <span className="text-foreground">dia do dentista</span>,{" "}
+          <span className="text-foreground">dia do parque</span>, <span className="text-foreground">manhã tranquila</span>,
+          <span className="text-foreground"> dia de prova</span>…
         </p>
       </header>
 
