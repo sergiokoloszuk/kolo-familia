@@ -321,6 +321,75 @@ export async function adicionarTarefa(
   }
 }
 
+const repetirSchema = z.object({
+  membroAtipicoId: z.string().uuid(),
+  dias: z.array(z.number().int().min(0).max(6)).min(1).max(7),
+  texto: z.string().trim().min(1).max(120),
+  icone: z.string().trim().max(40).nullable().optional(),
+  hora: z.string().trim().max(10).nullable().optional(),
+});
+
+/**
+ * "Repete em": adiciona a MESMA atividade em outros dias da semana. Cria a
+ * rotina do dia se ainda não existe e anexa a atividade ao fim daquele dia.
+ * (Reusa a primeira rotina daquele dia da semana.)
+ */
+export async function repetirTarefaEmDias(
+  input: z.infer<typeof repetirSchema>,
+): Promise<Ok<{ dias: number }> | Fail> {
+  try {
+    const { membroAtipicoId, dias, texto, icone, hora } = repetirSchema.parse(input);
+    const { supabase, family } = await requireFamily();
+    const { data: membro } = await supabase
+      .from("membros_atipicos")
+      .select("id")
+      .eq("id", membroAtipicoId)
+      .eq("family_account_id", family.id)
+      .maybeSingle();
+    if (!membro) return { ok: false, error: "Membro não encontrado." };
+
+    let feitos = 0;
+    for (const dia of dias) {
+      const { data: existe } = await supabase
+        .from("rotinas")
+        .select("id")
+        .eq("membro_atipico_id", membroAtipicoId)
+        .eq("family_account_id", family.id)
+        .eq("dia_semana", dia)
+        .order("created_at", { ascending: true })
+        .limit(1)
+        .maybeSingle();
+      let rotinaId = existe?.id as string | undefined;
+      if (!rotinaId) {
+        const { data: nova } = await supabase
+          .from("rotinas")
+          .insert({
+            family_account_id: family.id,
+            membro_atipico_id: membroAtipicoId,
+            nome: DIAS_SEMANA[dia],
+            dia_semana: dia,
+          })
+          .select("id")
+          .single();
+        rotinaId = nova?.id as string | undefined;
+      }
+      if (!rotinaId) continue;
+      const { count } = await supabase
+        .from("rotina_tarefas")
+        .select("id", { count: "exact", head: true })
+        .eq("rotina_id", rotinaId);
+      await supabase
+        .from("rotina_tarefas")
+        .insert({ rotina_id: rotinaId, texto, icone: icone || null, hora: hora || null, ordem: count ?? 0 });
+      feitos += 1;
+    }
+    revalidatePath("/ludico/rotinas/semana");
+    return { ok: true, dias: feitos };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "Erro inesperado" };
+  }
+}
+
 const addVariasSchema = z.object({
   rotinaId: z.string().uuid(),
   textos: z.array(z.string().trim().min(1).max(120)).min(1).max(30),

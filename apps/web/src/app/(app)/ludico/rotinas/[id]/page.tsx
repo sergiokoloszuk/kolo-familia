@@ -22,7 +22,7 @@ export default async function RotinaPage({
   const { data: rotina } = await supabase
     .from("rotinas")
     .select(
-      "id, nome, tema, historia, cards_status, modo_exibicao, membro_atipico_id, membros_atipicos(nome, data_nascimento)",
+      "id, nome, tema, historia, cards_status, modo_exibicao, dia_semana, membro_atipico_id, membros_atipicos(nome, data_nascimento)",
     )
     .eq("id", id)
     .eq("family_account_id", family!.id)
@@ -89,6 +89,8 @@ export default async function RotinaPage({
       <RotinaEditor
         key={(rotina.cards_status as string) ?? "nenhum"}
         rotinaId={rotina.id as string}
+        membroAtipicoId={membroId as string}
+        diaSemana={(rotina.dia_semana as number | null) ?? null}
         nomeInicial={rotina.nome as string}
         modoInicial={((rotina.modo_exibicao as string | null) ?? "cartoes") as "cartoes" | "lista"}
         nomeMembro={nomeMembro}

@@ -47,6 +47,7 @@ import {
   gerarCardsVisuais,
   renomearRotina,
   reordenarTarefas,
+  repetirTarefaEmDias,
   resetarRotina,
   toggleTarefa,
 } from "../actions";
@@ -78,6 +79,8 @@ function IconeDe(k: string | null | undefined): LucideIcon {
   return (k && ICONES[k]) || Circle;
 }
 
+const DIAS_CURTOS = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"];
+
 type Tarefa = {
   id: string;
   texto: string;
@@ -92,6 +95,8 @@ type AvatarMini = { id: string; url: string; selecionado: boolean };
 
 export function RotinaEditor({
   rotinaId,
+  membroAtipicoId,
+  diaSemana,
   nomeInicial,
   modoInicial,
   nomeMembro,
@@ -102,6 +107,9 @@ export function RotinaEditor({
   tarefasIniciais,
 }: {
   rotinaId: string;
+  membroAtipicoId: string;
+  /** 0-6 se é um dia da semana; null se é rotina avulsa (aí não tem "repete em"). */
+  diaSemana: number | null;
   nomeInicial: string;
   modoInicial: "cartoes" | "lista";
   nomeMembro: string | null;
@@ -161,7 +169,7 @@ export function RotinaEditor({
     start(async () => setErroFrom(await excluirTarefa({ rotinaId, tarefaId: id })));
   }
 
-  function adicionar(texto: string, icone: string | null, hora: string | null) {
+  function adicionar(texto: string, icone: string | null, hora: string | null, repeteDias: number[]) {
     start(async () => {
       const r = await adicionarTarefa({ rotinaId, texto, icone, hora });
       if (!r.ok) {
@@ -172,6 +180,11 @@ export function RotinaEditor({
         ...ts,
         { id: r.tarefaId, texto, icone, hora, concluida: false, nomeTematico: null, imagemUrl: null },
       ]);
+      // "Repete em": grava a mesma atividade nos outros dias marcados.
+      const outros = repeteDias.filter((d) => d !== diaSemana);
+      if (outros.length > 0) {
+        await repetirTarefaEmDias({ membroAtipicoId, dias: outros, texto, icone, hora });
+      }
     });
   }
 
@@ -283,6 +296,7 @@ export function RotinaEditor({
       <AddTarefa
         visual={visual}
         temPassos={tarefas.length > 0}
+        diaSemana={diaSemana}
         onAdd={adicionar}
         onAddVarios={adicionarVarios}
       />
@@ -567,26 +581,30 @@ function Vazio() {
 function AddTarefa({
   visual,
   temPassos,
+  diaSemana,
   onAdd,
   onAddVarios,
 }: {
   visual: boolean;
   temPassos: boolean;
-  onAdd: (texto: string, icone: string | null, hora: string | null) => void;
+  diaSemana: number | null;
+  onAdd: (texto: string, icone: string | null, hora: string | null, repeteDias: number[]) => void;
   onAddVarios: (textos: string[]) => void;
 }) {
   const [texto, setTexto] = useState("");
   const [icone, setIcone] = useState<string | null>(null);
   const [hora, setHora] = useState("");
   const [varios, setVarios] = useState("");
+  const [repeteDias, setRepeteDias] = useState<number[]>([]);
 
   function add() {
     const t = texto.trim();
     if (!t) return;
-    onAdd(t, visual ? icone : null, hora.trim() || null);
+    onAdd(t, visual ? icone : null, hora.trim() || null, repeteDias);
     setTexto("");
     setIcone(null);
     setHora("");
+    setRepeteDias([]);
   }
 
   function addVarios() {
@@ -652,6 +670,37 @@ function AddTarefa({
             <Plus className="size-4" aria-hidden /> Adicionar
           </Button>
         </div>
+        {diaSemana != null && (
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-xs text-muted-foreground">Repete em:</span>
+            {DIAS_CURTOS.map((lbl, d) => {
+              if (d === diaSemana) return null;
+              const sel = repeteDias.includes(d);
+              return (
+                <button
+                  key={d}
+                  type="button"
+                  onClick={() =>
+                    setRepeteDias((ds) => (sel ? ds.filter((x) => x !== d) : [...ds, d]))
+                  }
+                  className={cn(
+                    "rounded-full border px-2.5 py-1 text-xs font-medium transition-colors",
+                    sel
+                      ? "border-brand-purple bg-brand-purple text-white"
+                      : "border-foreground/15 bg-white text-muted-foreground hover:border-brand-purple/40",
+                  )}
+                >
+                  {lbl}
+                </button>
+              );
+            })}
+            {repeteDias.length > 0 && (
+              <span className="text-xs text-brand-purple">
+                vai pra {repeteDias.length + 1} dias
+              </span>
+            )}
+          </div>
+        )}
         {visual && (
           <div className="flex flex-wrap gap-1.5">
             {ICONE_KEYS.map((k) => {
