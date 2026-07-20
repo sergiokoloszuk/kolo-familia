@@ -150,7 +150,8 @@ export function AssistenteChat({ membroId, nome }: { membroId: string; nome: str
                 const dia = r.dia_semana != null ? DIAS[r.dia_semana] : null;
                 return (
                   <div key={i} className="rounded-2xl border border-kolo-linha bg-white p-4">
-                    <div className="flex items-baseline gap-2">
+                    <div className="flex items-center gap-2">
+                      <span className="size-2.5 shrink-0 rounded-full bg-brand-yellow" aria-hidden />
                       <span className="font-heading text-base text-foreground">{r.nome}</span>
                       {dia && r.nome !== dia && (
                         <span className="text-xs text-muted-foreground">· {dia}</span>
@@ -161,14 +162,14 @@ export function AssistenteChat({ membroId, nome }: { membroId: string; nome: str
                         <span key={j} className="inline-flex items-center gap-1.5">
                           <span className="inline-flex items-center gap-1.5 rounded-xl border border-kolo-linha bg-kolo-lilas-bg-2/40 px-2.5 py-1 text-[13px] text-foreground">
                             {t.hora && (
-                              <span className="rounded bg-white px-1 text-[10px] font-bold tabular-nums text-brand-purple">
+                              <span className="rounded bg-brand-yellow/25 px-1 text-[10px] font-bold tabular-nums text-[#8B5A00]">
                                 {t.hora}
                               </span>
                             )}
                             {t.texto}
                           </span>
                           {j < r.tarefas.length - 1 && (
-                            <span className="text-xs text-muted-foreground">→</span>
+                            <span className="text-xs text-brand-purple/50">→</span>
                           )}
                         </span>
                       ))}
