@@ -3,6 +3,7 @@ import { ChevronLeft } from "lucide-react";
 import { loadFamilyContext } from "@/lib/auth/require-user";
 import { resolverCriancaAtivaId } from "@/lib/crianca-ativa";
 import { capitalizarNome } from "@/lib/nome";
+import { Eyebrow } from "@/components/brand/eyebrow";
 import { SeletorCrianca } from "../../../seletor-crianca";
 import { AssistenteChat } from "./assistente-chat";
 
@@ -39,11 +40,10 @@ export default async function AssistenteRotinaPage() {
       </Link>
 
       <header className="max-w-2xl">
-        <p className="text-xs font-semibold uppercase tracking-wide text-brand-purple">
-          Lúdico · Rotina Visual
-        </p>
-        <h1 className="mt-1 font-heading text-2xl text-foreground md:text-3xl">
-          Montar com a Kolo{ativa ? ` — ${ativa.nome}` : ""}
+        <Eyebrow>Rotina Visual</Eyebrow>
+        <h1 className="mt-1 font-heading text-3xl text-foreground md:text-4xl">
+          Montar com a <em className="not-italic text-brand-purple">Kolo</em>
+          {ativa ? ` — ${ativa.nome}` : ""}
         </h1>
         <p className="mt-2 text-sm text-muted-foreground">
           Me conta como são os dias — do jeito que você souber, pode ser tudo solto de uma vez.
@@ -65,7 +65,7 @@ export default async function AssistenteRotinaPage() {
         <AssistenteChat membroId={ativa.id} nome={ativa.nome} />
       ) : (
         <p className="text-sm text-muted-foreground">
-          Cadastre uma criança no Perfil pra montar a rotina.
+          Cadastre uma pessoa no Perfil pra montar a rotina.
         </p>
       )}
     </div>

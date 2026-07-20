@@ -3,6 +3,7 @@ import { ChevronLeft } from "lucide-react";
 import { loadFamilyContext } from "@/lib/auth/require-user";
 import { resolverCriancaAtivaId } from "@/lib/crianca-ativa";
 import { capitalizarNome } from "@/lib/nome";
+import { Eyebrow } from "@/components/brand/eyebrow";
 import { SeletorCrianca } from "../../../seletor-crianca";
 import { DIAS_SEMANA } from "../dias";
 import { CriarDia } from "../criar-dia";
@@ -74,12 +75,11 @@ export default async function RotinaSemanaPage() {
         <ChevronLeft className="size-4" aria-hidden /> Rotinas
       </Link>
 
-      <header>
-        <p className="text-xs font-semibold uppercase tracking-wide text-brand-purple">
-          Lúdico · Rotina Visual
-        </p>
-        <h1 className="mt-1 font-heading text-2xl text-foreground md:text-3xl">
-          Rotina da semana{nomeAtiva ? ` — ${nomeAtiva}` : ""}
+      <header className="max-w-2xl">
+        <Eyebrow>Rotina Visual</Eyebrow>
+        <h1 className="mt-1 font-heading text-3xl text-foreground md:text-4xl">
+          Rotina da <em className="not-italic text-brand-purple">semana</em>
+          {nomeAtiva ? ` — ${nomeAtiva}` : ""}
         </h1>
         <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
           Monte a sequência de cada dia (o horário é opcional). Ligue só os dias que fizerem sentido.
@@ -98,7 +98,7 @@ export default async function RotinaSemanaPage() {
       )}
 
       {membrosList.length === 0 ? (
-        <p className="text-sm text-muted-foreground">Cadastre uma criança no Perfil pra montar a rotina.</p>
+        <p className="text-sm text-muted-foreground">Cadastre uma pessoa no Perfil pra montar a rotina.</p>
       ) : (
         <div className="flex flex-col gap-3">
           {ativaId && <TemaSemana membroId={ativaId} temaAtual={temaSemana} />}

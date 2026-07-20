@@ -25,7 +25,7 @@ export function TemaSemana({ membroId, temaAtual }: { membroId: string; temaAtua
     <div className="rounded-2xl border border-brand-purple/20 bg-kolo-lilas-bg-2/40 p-4">
       <p className="text-sm font-semibold text-foreground">🎨 Tema da semana</p>
       <p className="mb-3 mt-0.5 text-xs text-muted-foreground">
-        Um tema só, no interesse da criança — vale pra os cartões de todos os dias.
+        Um tema só, no interesse de quem vai usar — vale pros cartões de todos os dias.
       </p>
       <div className="flex gap-2">
         <input

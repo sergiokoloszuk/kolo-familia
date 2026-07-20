@@ -4,6 +4,7 @@ import { loadFamilyContext } from "@/lib/auth/require-user";
 import { resolverCriancaAtivaId } from "@/lib/crianca-ativa";
 import { capitalizarNome } from "@/lib/nome";
 import { idadeAnos } from "@/lib/idade";
+import { Eyebrow } from "@/components/brand/eyebrow";
 import { NovaRotina } from "./nova-rotina";
 import { SeletorCrianca } from "../../seletor-crianca";
 
@@ -66,17 +67,15 @@ export default async function RotinasPage() {
       </Link>
 
       <header className="max-w-2xl">
-        <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-brand-purple">
-          Rotinas visuais
-        </p>
+        <Eyebrow>Rotina Visual</Eyebrow>
         <h1 className="mt-1 font-heading text-3xl text-foreground md:text-4xl">
           A sequência do dia, <em className="not-italic text-brand-purple">do jeito de cada um</em>
         </h1>
         <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
           Uma rotina visual mostra <em className="not-italic text-foreground">o que vem agora e o que vem depois</em> —
-          e isso tira o peso do desconhecido, que é o que mais desregula. A criança vai marcando o que já passou
-          (fica cinza) e ganha previsibilidade e autonomia, sem cobrança. Pra criança vira cartões ilustrados;
-          pro adolescente, uma lista que ele consulta no celular.
+          e isso tira o peso do desconhecido, que é o que mais desregula. Vai marcando o que já passou
+          (fica cinza) e ganha previsibilidade e autonomia, sem cobrança. Pode ser em cartões ilustrados ou uma
+          lista pra consultar no celular — do jeito que combina com a idade e o momento.
         </p>
         <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
           Pode ser a <em className="not-italic text-foreground">semana toda</em> ou <em className="not-italic text-foreground">um dia específico</em> —
@@ -98,7 +97,7 @@ export default async function RotinasPage() {
 
       {membrosList.length === 0 ? (
         <p className="text-sm text-muted-foreground">
-          Cadastre uma criança no Perfil pra criar uma rotina.
+          Cadastre uma pessoa no Perfil pra criar uma rotina.
         </p>
       ) : (
         <div className="flex flex-col gap-3">
