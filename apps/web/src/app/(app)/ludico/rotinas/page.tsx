@@ -68,20 +68,13 @@ export default async function RotinasPage() {
 
       <header className="max-w-2xl">
         <Eyebrow>Rotina Visual</Eyebrow>
-        <h1 className="mt-1 font-heading text-3xl text-foreground md:text-4xl">
+        <h1 className="mt-2 font-heading text-4xl leading-[1.05] text-foreground md:text-5xl">
           A sequência do dia, <em className="not-italic text-brand-purple">do jeito de cada um</em>
         </h1>
-        <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-          Uma rotina visual mostra <em className="not-italic text-foreground">o que vem agora e o que vem depois</em> —
-          e isso tira o peso do desconhecido, que é o que mais desregula. Vai marcando o que já passou
-          (fica cinza) e ganha previsibilidade e autonomia, sem cobrança. Pode ser em cartões ilustrados ou uma
-          lista pra consultar no celular — do jeito que combina com a idade e o momento.
-        </p>
-        <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-          Pode ser a <em className="not-italic text-foreground">semana toda</em> ou <em className="not-italic text-foreground">um dia específico</em> —
-          e um dia pode ser bem do seu jeito: <span className="text-foreground">dia do dentista</span>,{" "}
-          <span className="text-foreground">dia do parque</span>, <span className="text-foreground">manhã tranquila</span>,
-          <span className="text-foreground"> dia de prova</span>…
+        <p className="mt-4 text-base leading-relaxed text-muted-foreground md:text-lg">
+          Mostra <em className="not-italic text-foreground">o que vem agora e o que vem depois</em> — e isso tira o
+          peso do desconhecido, que é o que mais desregula. Pode ser a semana toda ou um dia do seu jeito
+          (dia do dentista, do parque…).
         </p>
       </header>
 
@@ -96,49 +89,53 @@ export default async function RotinasPage() {
       )}
 
       {membrosList.length === 0 ? (
-        <p className="text-sm text-muted-foreground">
+        <p className="text-base text-muted-foreground">
           Cadastre uma pessoa no Perfil pra criar uma rotina.
         </p>
       ) : (
-        <div className="flex flex-col gap-3">
-          <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-muted-foreground">
-            O que você quer montar?
+        <div className="flex max-w-3xl flex-col gap-4">
+          <p className="text-xs font-bold uppercase tracking-[0.16em] text-muted-foreground">
+            Por onde quer começar?
           </p>
           <Link
             href="/ludico/rotinas/assistente"
-            className="group flex items-center justify-between gap-4 rounded-2xl border-2 border-brand-purple/40 bg-brand-purple/[0.06] px-5 py-5 transition-colors hover:border-brand-purple/70 hover:bg-brand-purple/[0.1]"
+            className="group flex items-center justify-between gap-4 rounded-3xl border-2 border-brand-purple/40 bg-brand-purple/[0.06] px-6 py-7 transition-colors hover:border-brand-purple/70 hover:bg-brand-purple/[0.1]"
           >
             <span className="flex items-center gap-4">
-              <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-brand-purple/15 text-xl">
+              <span className="flex size-14 shrink-0 items-center justify-center rounded-2xl bg-brand-purple/15 text-3xl">
                 ✨
               </span>
               <span>
-                <span className="block font-heading text-lg font-medium text-foreground">Montar com a Kolo</span>
-                <span className="mt-0.5 block text-sm text-muted-foreground">
-                  Você conta como são os dias e a Kolo organiza a semana pra você. O jeito mais fácil.
+                <span className="block font-heading text-xl font-medium text-foreground md:text-2xl">
+                  Montar com a Kolo
+                </span>
+                <span className="mt-1 block text-sm text-muted-foreground md:text-base">
+                  Você conta como são os dias e a Kolo organiza pra você. O jeito mais fácil.
                 </span>
               </span>
             </span>
-            <span className="shrink-0 rounded-full bg-brand-purple px-4 py-2 text-xs font-semibold text-white transition-transform group-hover:translate-x-0.5">
+            <span className="shrink-0 rounded-full bg-brand-purple px-5 py-2.5 text-sm font-semibold text-white transition-transform group-hover:translate-x-0.5">
               Conversar →
             </span>
           </Link>
           <Link
             href="/ludico/rotinas/semana"
-            className="group flex items-center justify-between gap-4 rounded-2xl border-2 border-brand-purple/30 bg-kolo-lilas-bg-2/50 px-5 py-5 transition-colors hover:border-brand-purple/60 hover:bg-kolo-lilas-bg-2/70"
+            className="group flex items-center justify-between gap-4 rounded-3xl border-2 border-brand-purple/25 bg-kolo-lilas-bg-2/50 px-6 py-7 transition-colors hover:border-brand-purple/50 hover:bg-kolo-lilas-bg-2/70"
           >
             <span className="flex items-center gap-4">
-              <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-brand-purple/15 text-xl">
+              <span className="flex size-14 shrink-0 items-center justify-center rounded-2xl bg-brand-purple/15 text-3xl">
                 🗓️
               </span>
               <span>
-                <span className="block font-heading text-lg font-medium text-foreground">Rotina da semana</span>
-                <span className="mt-0.5 block text-sm text-muted-foreground">
+                <span className="block font-heading text-xl font-medium text-foreground md:text-2xl">
+                  Rotina da semana
+                </span>
+                <span className="mt-1 block text-sm text-muted-foreground md:text-base">
                   A semana toda (Seg–Dom), dia por dia, no tema do interesse.
                 </span>
               </span>
             </span>
-            <span className="shrink-0 rounded-full bg-brand-purple px-4 py-2 text-xs font-semibold text-white transition-transform group-hover:translate-x-0.5">
+            <span className="shrink-0 rounded-full bg-brand-purple px-5 py-2.5 text-sm font-semibold text-white transition-transform group-hover:translate-x-0.5">
               Abrir →
             </span>
           </Link>
@@ -147,33 +144,38 @@ export default async function RotinasPage() {
       )}
 
       {rotinasVisiveis.length > 0 && (
-        <ul className="flex flex-col gap-3">
-          {rotinasVisiveis.map((r) => {
-            const c = contagem.get(r.id as string) ?? { total: 0, feito: 0 };
-            const dono = r.membro_atipico_id
-              ? nomePorMembro.get(r.membro_atipico_id as string)
-              : null;
-            return (
-              <li key={r.id as string}>
-                <Link
-                  href={`/ludico/rotinas/${r.id}`}
-                  className="group flex items-center gap-4 rounded-2xl border border-foreground/[0.07] bg-white px-5 py-4 transition-colors hover:border-brand-purple/30"
-                >
-                  <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-cat-foco-soft text-cat-foco">
-                    <ListChecks className="size-5" />
-                  </span>
-                  <div className="flex-1">
-                    <p className="font-heading text-lg font-medium text-foreground">{r.nome}</p>
-                    <p className="text-sm text-muted-foreground">
-                      {dono ? `${dono.nome}${dono.idade != null ? `, ${dono.idade} anos` : ""}` : "Sem membro"}
-                      {c.total > 0 && ` · ${c.feito}/${c.total} feito`}
-                    </p>
-                  </div>
-                </Link>
-              </li>
-            );
-          })}
-        </ul>
+        <section className="flex max-w-3xl flex-col gap-3 border-t border-kolo-linha pt-8">
+          <h2 className="font-heading text-xl text-foreground md:text-2xl">
+            Suas rotinas <span className="text-base font-normal text-muted-foreground">· {rotinasVisiveis.length}</span>
+          </h2>
+          <ul className="flex flex-col gap-3">
+            {rotinasVisiveis.map((r) => {
+              const c = contagem.get(r.id as string) ?? { total: 0, feito: 0 };
+              const dono = r.membro_atipico_id
+                ? nomePorMembro.get(r.membro_atipico_id as string)
+                : null;
+              return (
+                <li key={r.id as string}>
+                  <Link
+                    href={`/ludico/rotinas/${r.id}`}
+                    className="group flex items-center gap-4 rounded-2xl border border-foreground/[0.07] bg-white px-5 py-4 transition-colors hover:border-brand-purple/30"
+                  >
+                    <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-cat-foco-soft text-cat-foco">
+                      <ListChecks className="size-5" />
+                    </span>
+                    <div className="flex-1">
+                      <p className="font-heading text-lg font-medium text-foreground">{r.nome}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {dono ? `${dono.nome}${dono.idade != null ? `, ${dono.idade} anos` : ""}` : "Sem membro"}
+                        {c.total > 0 && ` · ${c.feito}/${c.total} feito`}
+                      </p>
+                    </div>
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        </section>
       )}
     </div>
   );
