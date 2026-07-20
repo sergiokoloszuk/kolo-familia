@@ -128,6 +128,15 @@ export default async function AdminFamiliasPage() {
       Math.max(1, differenceInCalendarDays(hoje, new Date(f.created_at as string)) + 1),
     );
     const diasRestantes = trialEnds ? differenceInCalendarDays(new Date(trialEnds), hoje) : null;
+    // Estado do trial em texto: vence hoje / faltam Nd / venceu em DD/MM.
+    const trialInfo =
+      trialEnds == null || diasRestantes == null
+        ? null
+        : diasRestantes === 0
+          ? "vence hoje"
+          : diasRestantes > 0
+            ? `faltam ${diasRestantes}d`
+            : `venceu ${fmtData(trialEnds)}`;
 
     const afiliado = f.afiliado_id ? afiliadoPorId.get(f.afiliado_id as string) : null;
     const convite = conviteRotuloPorFam.get(id) ?? null;
@@ -154,6 +163,10 @@ export default async function AdminFamiliasPage() {
       criadoEm: f.created_at as string,
       irregular,
       motivoIrregular,
+      liberado,
+      trialInfo,
+      venceHoje: diasRestantes === 0,
+      venceu: diasRestantes != null && diasRestantes < 0,
     };
   });
 
@@ -207,6 +220,7 @@ export default async function AdminFamiliasPage() {
               <th className="px-4 py-3 font-medium">E-mail</th>
               <th className="px-4 py-3 font-medium">Status</th>
               <th className="px-4 py-3 font-medium">Trial</th>
+              <th className="px-4 py-3 font-medium">Acesso</th>
               <th className="px-4 py-3 font-medium">Origem</th>
               <th className="px-4 py-3 text-right font-medium">Entrou</th>
             </tr>
@@ -234,17 +248,30 @@ export default async function AdminFamiliasPage() {
                   </Badge>
                 </td>
                 <td className="px-4 py-3 text-muted-foreground">
-                  {l.trialing ? (
-                    <>
-                      dia {l.diasUsados}/{TRIAL_DIAS}
-                      {l.diasRestantes != null && (
-                        <span className="ml-1 text-foreground/60">
-                          ({l.diasRestantes <= 0 ? "vence hoje" : `faltam ${l.diasRestantes}d`})
-                        </span>
-                      )}
-                    </>
+                  {l.trialInfo ? (
+                    <span
+                      className={
+                        l.venceHoje
+                          ? "font-medium text-brand-purple"
+                          : l.venceu
+                            ? "font-medium text-destructive"
+                            : ""
+                      }
+                    >
+                      {l.trialing && `dia ${l.diasUsados}/${TRIAL_DIAS} · `}
+                      {l.trialInfo}
+                    </span>
                   ) : (
                     "—"
+                  )}
+                </td>
+                <td className="px-4 py-3">
+                  {l.liberado ? (
+                    <span className="text-xs font-medium text-emerald-600">Liberado</span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1 text-xs font-semibold text-destructive">
+                      🔒 Bloqueado
+                    </span>
                   )}
                 </td>
                 <td className="px-4 py-3 text-muted-foreground">{l.origem}</td>
@@ -253,7 +280,7 @@ export default async function AdminFamiliasPage() {
             ))}
             {linhas.length === 0 && (
               <tr>
-                <td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">
+                <td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">
                   Nenhuma família ainda.
                 </td>
               </tr>
