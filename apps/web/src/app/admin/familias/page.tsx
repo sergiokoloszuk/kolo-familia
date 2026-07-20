@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { requireAdmin } from "@/lib/auth/require-admin";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { capitalizarNome } from "@/lib/nome";
+import { assinaturaLiberada } from "@/lib/auth/assinatura";
 
 /**
  * Famílias / Leads — lista única com origem, momento do trial, e se assinou.
@@ -51,7 +52,9 @@ export default async function AdminFamiliasPage() {
       .from("family_accounts")
       .select("id, user_id, created_at, afiliado_id, ref_codigo")
       .order("created_at", { ascending: false }),
-    admin.from("subscription_accesses").select("family_account_id, status, trial_ends_at"),
+    admin
+      .from("subscription_accesses")
+      .select("family_account_id, status, trial_ends_at, pagamento_falhou_em, cortesia, cortesia_ate"),
     admin.from("family_profiles").select("family_account_id, nome_mae"),
     admin.from("afiliados").select("id, nome, codigo_unico"),
     admin.from("beta_invite_uses").select("family_account_id, invite_id"),
@@ -91,6 +94,34 @@ export default async function AdminFamiliasPage() {
     const sub = subPorFam.get(id);
     const status = (sub?.status as string) ?? "—";
     const trialEnds = (sub?.trial_ends_at as string | null) ?? null;
+
+    // Acesso IRREGULAR: tem o app liberado, mas não é assinante ativo, nem
+    // cortesia válida, nem trial vigente. São os que "usam de graça sem perder
+    // acesso" (ex.: trial que virou past_due sem carimbo, ou trialing sem data).
+    const subAcesso = sub
+      ? {
+          status: (sub.status as string) ?? null,
+          trial_ends_at: (sub.trial_ends_at as string | null) ?? null,
+          cortesia: (sub.cortesia as boolean | null) ?? null,
+          cortesia_ate: (sub.cortesia_ate as string | null) ?? null,
+          pagamento_falhou_em: (sub.pagamento_falhou_em as string | null) ?? null,
+        }
+      : null;
+    const liberado = assinaturaLiberada(subAcesso);
+    const cortesiaValida =
+      subAcesso?.cortesia === true &&
+      (!subAcesso.cortesia_ate || new Date(subAcesso.cortesia_ate) > hoje);
+    const trialVigente = status === "trialing" && !!trialEnds && new Date(trialEnds) > hoje;
+    const irregular = liberado && status !== "active" && !cortesiaValida && !trialVigente;
+    const motivoIrregular = !irregular
+      ? null
+      : status === "past_due" && !subAcesso?.pagamento_falhou_em
+        ? "past_due sem carimbo de falha"
+        : status === "trialing" && !trialEnds
+          ? "trial sem data de fim"
+          : status === "trialing"
+            ? "trial vencido, mas liberado"
+            : `status ${status} liberado`;
     // Dia do trial: quanto já passou desde o cadastro (1..7), e quantos faltam.
     const diasUsados = Math.min(
       TRIAL_DIAS,
@@ -121,12 +152,18 @@ export default async function AdminFamiliasPage() {
       diasRestantes,
       origem,
       criadoEm: f.created_at as string,
+      irregular,
+      motivoIrregular,
     };
   });
+
+  // Irregulares primeiro, pra saltar aos olhos.
+  linhas.sort((a, b) => Number(b.irregular) - Number(a.irregular));
 
   const total = linhas.length;
   const emTrial = linhas.filter((l) => l.status === "trialing").length;
   const assinantes = linhas.filter((l) => l.status === "active").length;
+  const irregulares = linhas.filter((l) => l.irregular);
 
   return (
     <div className="flex flex-col gap-8">
@@ -140,6 +177,27 @@ export default async function AdminFamiliasPage() {
           veio. {total} família(s) · {emTrial} em trial · {assinantes} assinante(s).
         </p>
       </header>
+
+      {irregulares.length > 0 && (
+        <div className="rounded-2xl border border-destructive/30 bg-destructive/5 p-5">
+          <p className="font-heading text-lg text-foreground">
+            ⚠️ {irregulares.length} com <em className="not-italic text-destructive">acesso irregular</em>
+          </p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Usam o app sem ser assinante ativo, cortesia válida ou trial vigente — o trial venceu mas o
+            acesso não foi cortado (na lista abaixo, aparecem no topo com a etiqueta vermelha).
+          </p>
+          <ul className="mt-3 flex flex-col gap-1 text-sm">
+            {irregulares.map((l) => (
+              <li key={l.id} className="text-foreground">
+                <span className="font-medium">{l.nome ?? l.email ?? l.id.slice(0, 8)}</span>
+                {l.email && l.nome ? <span className="text-muted-foreground"> · {l.email}</span> : null}
+                <span className="text-muted-foreground"> · entrou {fmtData(l.criadoEm)} · {l.motivoIrregular}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       <div className="overflow-x-auto rounded-3xl border border-foreground/[0.06] bg-white">
         <table className="w-full text-sm">
@@ -155,9 +213,19 @@ export default async function AdminFamiliasPage() {
           </thead>
           <tbody>
             {linhas.map((l) => (
-              <tr key={l.id} className="border-b border-foreground/[0.04] last:border-0">
+              <tr
+                key={l.id}
+                className={`border-b border-foreground/[0.04] last:border-0 ${l.irregular ? "bg-destructive/[0.04]" : ""}`}
+              >
                 <td className="px-4 py-3 text-foreground">
-                  {l.nome ?? <span className="text-muted-foreground">{l.id.slice(0, 8)}…</span>}
+                  <span className="flex items-center gap-2">
+                    {l.nome ?? <span className="text-muted-foreground">{l.id.slice(0, 8)}…</span>}
+                    {l.irregular && (
+                      <Badge variant="destructive" title={l.motivoIrregular ?? undefined}>
+                        acesso irregular
+                      </Badge>
+                    )}
+                  </span>
                 </td>
                 <td className="px-4 py-3 text-muted-foreground">{l.email ?? "—"}</td>
                 <td className="px-4 py-3">
