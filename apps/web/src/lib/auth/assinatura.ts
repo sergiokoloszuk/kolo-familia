@@ -11,8 +11,9 @@
  * exclusão). Recuperou o pagamento → status volta a active + carimbo limpo.
  *
  * Libera em: cortesia válida, active, trialing dentro do prazo, past_due dentro
- * da graça. Bloqueia em: trial vencido, paused, canceled, past_due fora da graça,
- * ou sem row.
+ * da graça (com carimbo). Bloqueia em: trial vencido, trialing sem data,
+ * past_due SEM carimbo (trial encerrado sem cartão), paused, canceled, past_due
+ * fora da graça, ou sem row.
  */
 
 const MS_DIA = 24 * 60 * 60 * 1000;
@@ -40,18 +41,35 @@ export function assinaturaLiberada(sub: AcessoAssinatura | null | undefined): bo
 
   if (sub.status === "active") return true;
 
-  // Falha de pagamento: 2 dias de graça a partir da falha, depois bloqueia.
+  // Falha de pagamento (dunning): 2 dias de graça a partir da falha CARIMBADA
+  // (invoice.payment_failed), depois bloqueia. SEM carimbo = past_due que veio
+  // de TRIAL ENCERRADO sem cartão — não é dunning de assinante → BLOQUEIA.
+  // (Antes liberava por engano e virava acesso grátis eterno.)
   if (sub.status === "past_due") {
-    if (!sub.pagamento_falhou_em) return true; // sem carimbo → fail-safe, não trava
+    if (!sub.pagamento_falhou_em) return false;
     const dias = (agora - new Date(sub.pagamento_falhou_em).getTime()) / MS_DIA;
     return dias < GRACA_DIAS;
   }
 
   if (sub.status === "trialing") {
-    // Trial vale só até a data. Sem data (não deveria ocorrer), não trava.
-    return !sub.trial_ends_at || new Date(sub.trial_ends_at).getTime() > agora;
+    // Trial vale só até a data. Sem data válida no futuro → BLOQUEIA.
+    // (Antes um trialing sem trial_ends_at liberava pra sempre.)
+    return !!sub.trial_ends_at && new Date(sub.trial_ends_at).getTime() > agora;
   }
 
+  return false;
+}
+
+/**
+ * Acesso encerrado porque o TESTE acabou sem assinar — trial vencido OU
+ * past_due sem carimbo de dunning (trial que virou past_due sem cartão).
+ * Usado pra mostrar "seu período grátis acabou" em vez de "assine pra continuar".
+ */
+export function acessoEncerradoSemPagar(sub: AcessoAssinatura | null | undefined): boolean {
+  if (!sub) return false;
+  if (sub.status === "trialing")
+    return !!sub.trial_ends_at && new Date(sub.trial_ends_at).getTime() <= Date.now();
+  if (sub.status === "past_due") return !sub.pagamento_falhou_em;
   return false;
 }
 
