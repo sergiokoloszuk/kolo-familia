@@ -10,6 +10,7 @@ import { CriarDia } from "../criar-dia";
 import { CopiarDia } from "../copiar-dia";
 import { TemaSemana } from "../tema-semana";
 import { ImprimirSemana } from "./imprimir-semana";
+import { AutoRefreshSemana } from "./auto-refresh-semana";
 
 /**
  * Rotina da SEMANA — visão por dia (Seg–Dom). Cada dia é uma rotina própria
@@ -68,9 +69,11 @@ export default async function RotinaSemanaPage() {
   const temaSemana = (rotinas ?? []).map((r) => (r.tema as string | null) ?? null).find(Boolean) ?? null;
   const temAlgumDia = (rotinas ?? []).length > 0;
   const temCartoesProntos = (rotinas ?? []).some((r) => (r.cards_status as string) === "pronto");
+  const temGerando = (rotinas ?? []).some((r) => (r.cards_status as string) === "gerando");
 
   return (
     <div className="flex flex-col gap-6">
+      <AutoRefreshSemana ativo={temGerando} />
       <Link
         href="/ludico/rotinas"
         className="inline-flex w-fit items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground print:hidden"
