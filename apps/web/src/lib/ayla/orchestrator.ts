@@ -891,6 +891,7 @@ export async function processInbound(
         familyId: family.id,
         membroAtipicoId: membroId,
         contexto: inbound.texto,
+        phoneE164: ctxR.whatsapp_e164,
       });
       if (msg) {
         const resp = await enviarEPersistir(supabase, {

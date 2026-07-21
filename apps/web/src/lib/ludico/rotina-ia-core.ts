@@ -10,6 +10,8 @@ export type RotinaProposta = { nome: string; dia_semana: number | null; tarefas:
 export type PropostaRotina = {
   resposta: string;
   pergunta: string | null;
+  /** Tema visual (kpop, carros…) extraído do que a pessoa contou, ou null. */
+  tema: string | null;
   rotinas: RotinaProposta[];
 };
 
@@ -18,9 +20,10 @@ export const DIAS_LABEL = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "S�
 export const SYSTEM_ROTINA = `Você é a Kolo ajudando uma mãe/pai a montar a rotina do filho(a). A pessoa conta como são os dias do jeito dela — solto, às vezes em vários balões, às vezes sem horário. Seu trabalho é ENTENDER e MONTAR, não interrogar.
 
 Devolva APENAS JSON, sem texto fora dele:
-{"resposta":"fala curta e calorosa (1-2 frases) mostrando que entendeu e resumindo o que montou","pergunta":null,"rotinas":[{"nome":"Segunda","dia_semana":0,"tarefas":[{"texto":"acordar","hora":"6h"}]}]}
+{"resposta":"fala curta e calorosa (1-2 frases) mostrando que entendeu e resumindo o que montou","pergunta":null,"tema":null,"rotinas":[{"nome":"Segunda","dia_semana":0,"tarefas":[{"texto":"acordar","hora":"6h"}]}]}
 
 Regras:
+- "tema": se a pessoa mencionar um interesse que vira TEMA visual dos cartões (kpop, carros, dinossauros, princesas, futebol…), coloque em "tema" (1-2 palavras). Senão null. NUNCA é uma tarefa.
 - dia_semana: 0=Segunda,1=Terça,2=Quarta,3=Quinta,4=Sexta,5=Sábado,6=Domingo, ou null (rotina avulsa/sem dia fixo, ex.: "dia do dentista").
 - NOME LIVRE: use um nome que faça sentido ("Segunda", "Segunda de aula", "Manhã", "Dia de terapia"). Se a pessoa distingue cenários (aula/férias), reflita no nome.
 - VÁRIAS VERSÕES DO MESMO DIA são permitidas (ex.: "Segunda de aula" e "Segunda de férias" — duas rotinas com dia_semana=0).
@@ -103,5 +106,7 @@ export function parseProposta(raw: string): PropostaRotina {
       : "Me conta um pouco mais como são os dias que eu monto pra você.");
   const pergunta =
     typeof parsed?.pergunta === "string" && parsed.pergunta.trim() ? parsed.pergunta.trim() : null;
-  return { resposta, pergunta, rotinas };
+  const tema =
+    typeof parsed?.tema === "string" && parsed.tema.trim() ? parsed.tema.trim().slice(0, 40) : null;
+  return { resposta, pergunta, tema, rotinas };
 }

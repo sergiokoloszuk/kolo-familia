@@ -6,8 +6,11 @@ import {
   SYSTEM_ROTINA,
   montarUserPromptRotina,
   parseProposta,
+  DIAS_LABEL,
   type RotinaProposta,
 } from "@/lib/ludico/rotina-ia-core";
+import { rotinaParaPdf } from "@/lib/ludico/rotina-pdf";
+import { enviarDocumento } from "./whatsappSender";
 
 /**
  * Fluxo GUIADO de ROTINA (reativo): quando a pessoa pede uma rotina/planejamento
@@ -78,12 +81,13 @@ export function temDetalheRotina(texto: string | null | undefined): boolean {
   return temHora || temDia || atividades >= 2;
 }
 
-/** Cria/reusa uma rotina (por nome+dia) e grava as tarefas. */
+/** Cria/reusa uma rotina (por nome+dia), aplica o tema e grava as tarefas. */
 async function aplicarRotina(
   supabase: SupabaseClient,
   familyId: string,
   membroAtipicoId: string,
   r: RotinaProposta,
+  tema: string | null,
 ): Promise<void> {
   const nome = r.nome.trim() || "Rotina";
   let q = supabase
@@ -98,10 +102,19 @@ async function aplicarRotina(
   if (!rotinaId) {
     const { data: nova } = await supabase
       .from("rotinas")
-      .insert({ family_account_id: familyId, membro_atipico_id: membroAtipicoId, nome, dia_semana: r.dia_semana })
+      .insert({
+        family_account_id: familyId,
+        membro_atipico_id: membroAtipicoId,
+        nome,
+        dia_semana: r.dia_semana,
+        tema: tema || null,
+      })
       .select("id")
       .single();
     rotinaId = nova?.id as string | undefined;
+  } else if (tema) {
+    // tema mudou → cartões (temáticos) precisam ser regerados
+    await supabase.from("rotinas").update({ tema, cards_status: "nenhum" }).eq("id", rotinaId);
   }
   if (!rotinaId) return;
   await supabase.from("rotina_tarefas").delete().eq("rotina_id", rotinaId);
@@ -115,6 +128,40 @@ async function aplicarRotina(
   if (rows.length) await supabase.from("rotina_tarefas").insert(rows);
 }
 
+/** Gera o PDF da rotina, sobe no Storage e manda como documento. Silencioso. */
+async function entregarPdfDaRotina(
+  supabase: SupabaseClient,
+  params: { familyId: string; phoneE164: string; nome: string; tema: string | null; rotinas: RotinaProposta[] },
+): Promise<void> {
+  try {
+    const comDia = params.rotinas.filter((r) => r.dia_semana != null);
+    const semDia = params.rotinas.filter((r) => r.dia_semana == null);
+    const ordenadas = [
+      ...comDia.sort((a, b) => (a.dia_semana ?? 0) - (b.dia_semana ?? 0)),
+      ...semDia,
+    ];
+    const dias = ordenadas.map((r) => ({
+      nome: r.nome || (r.dia_semana != null ? DIAS_LABEL[r.dia_semana] : "Rotina"),
+      tarefas: r.tarefas,
+    }));
+    const semana = comDia.length > 0;
+    const titulo = semana ? "Rotina da semana" : ordenadas[0]?.nome || "Rotina";
+    const bytes = await rotinaParaPdf({ titulo, nome: params.nome, tema: params.tema, dias });
+
+    const path = `${params.familyId}/rotina/${crypto.randomUUID()}.pdf`;
+    const { error: upErr } = await supabase.storage
+      .from("imagens")
+      .upload(path, Buffer.from(bytes), { contentType: "application/pdf", upsert: false });
+    if (upErr) throw upErr;
+    const { data: signed } = await supabase.storage.from("imagens").createSignedUrl(path, 3600);
+    if (!signed?.signedUrl) throw new Error("sem signed url");
+    const fileName = `rotina-${params.nome}`.replace(/[^\w\sÀ-ÿ-]/g, "").slice(0, 40).trim() + ".pdf";
+    await enviarDocumento({ phoneE164: params.phoneE164, url: signed.signedUrl, fileName });
+  } catch (e) {
+    console.warn("[ayla:rotina-guiada] falha no PDF:", e instanceof Error ? e.message : e);
+  }
+}
+
 /**
  * Lê o relato da rotina (juntando os últimos balões da mãe), MONTA a semana com o
  * MESMO cérebro do app (rotina-ia-core) e cria as rotinas + tarefas. Devolve a
@@ -122,7 +169,7 @@ async function aplicarRotina(
  */
 export async function processarRelatoRotina(
   supabase: SupabaseClient,
-  params: { familyId: string; membroAtipicoId: string; contexto: string },
+  params: { familyId: string; membroAtipicoId: string; contexto: string; phoneE164?: string | null },
 ): Promise<string | null> {
   try {
     if (!params.contexto.trim()) return null;
@@ -167,15 +214,29 @@ export async function processarRelatoRotina(
     });
     const b = resp.content[0];
     const raw = b?.type === "text" ? b.text : "";
-    const { rotinas } = parseProposta(raw);
+    const { rotinas, tema } = parseProposta(raw);
     if (!rotinas.length) return null;
 
-    for (const r of rotinas) await aplicarRotina(supabase, familyId, params.membroAtipicoId, r);
+    for (const r of rotinas) await aplicarRotina(supabase, familyId, params.membroAtipicoId, r, tema);
+
+    // PDF pra imprimir (barato, sem imagem) — vem pronto no WhatsApp.
+    if (params.phoneE164) {
+      await entregarPdfDaRotina(supabase, {
+        familyId,
+        phoneE164: params.phoneE164,
+        nome,
+        tema,
+        rotinas,
+      });
+    }
 
     const link = await gerarMagicLink(supabase, { familyId, next: "/ludico/rotinas/semana" });
-    const base = `Prontinho — organizei a rotina do(a) ${nome} pra você 🌿 Dá pra ajustar a ordem, os horários e o tema; depois é só gerar os cartões de cada dia.`;
+    const temaFrase = tema
+      ? ` Já deixei no tema *${tema}* — quando abrir, é só tocar em "Gerar cartões".`
+      : " Se quiser um tema pros cartões (ex.: futebol, princesas…), me fala que eu aplico.";
+    const base = `Prontinho — organizei a rotina do(a) ${nome} pra você 🌿${temaFrase} Te mandei também um *PDF pra imprimir* e colar na parede (com quadradinhos pra marcar).`;
     if (!link) return base;
-    return `${base}\nAbre aqui (já entra direto):\n${link}`;
+    return `${base}\n\nPra ver e ajustar no app (já entra direto):\n${link}`;
   } catch (e) {
     console.warn("[ayla:rotina-guiada] falha:", e instanceof Error ? e.message : e);
     return null;
