@@ -180,6 +180,22 @@ async function entregarPdfDaRotina(
   }
 }
 
+/** Dispara a geração dos cartões (endpoint interno) — a Ayla não gera direto
+ * (mundo separado de /lib/ia). Best-effort; roda em segundo plano no app. */
+async function dispararGeracao(rotinaId: string, tema: string): Promise<void> {
+  try {
+    const base = (process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000").replace(/\/$/, "");
+    const secret = process.env.AYLA_WEBHOOK_SECRET;
+    await fetch(`${base}/api/ludico/gerar-rotina`, {
+      method: "POST",
+      headers: { "content-type": "application/json", ...(secret ? { "x-ayla-secret": secret } : {}) },
+      body: JSON.stringify({ rotinaId, tema }),
+    });
+  } catch (e) {
+    console.warn("[ayla:rotina-guiada] disparar geração falhou:", e instanceof Error ? e.message : e);
+  }
+}
+
 /**
  * CONDUZ a conversa de rotina (natural, estratégica, um passo por vez). A IA
  * decide a próxima fala e, quando tem o suficiente, MONTA — aí a gente cria as
@@ -268,18 +284,135 @@ export async function conduzirRotina(
         : ids.length === 1
           ? `/ludico/rotinas/${ids[0]}`
           : "/ludico/rotinas";
+
+      // Auto-gerar DIA ÚNICO (tema): a mãe abre e já está gerando/pronto. A
+      // semana fica sob demanda (a mãe pede "a rotina de terça" — ver pedirRotinaDoDia).
+      let autoGerou = false;
+      if (!temSemana && tema && ids.length) {
+        for (const id of ids) await dispararGeracao(id, tema);
+        autoGerou = true;
+      }
+
       const link = await gerarMagicLink(supabase, { familyId, next });
       const fechamento = mensagem || `Prontinho — montei a rotina do(a) ${nome} 🌿`;
-      const orient = ` Te mandei um *PDF pra imprimir* (com quadradinhos pra marcar). No app dá pra ajustar${
-        tema ? ` e gerar os cartões no tema *${tema}*` : " e gerar os cartões ilustrados"
-      }.`;
-      mensagem = link ? `${fechamento}${orient}\n\nAbre aqui (já entra direto):\n${link}` : `${fechamento}${orient}`;
+      const orient = autoGerou
+        ? ` Já estou gerando os cartões no tema *${tema}* — quando abrir, já vão estar aparecendo. Te mandei também um *PDF pra imprimir*.`
+        : ` Te mandei um *PDF pra imprimir* (com quadradinhos pra marcar). No app dá pra ajustar${tema ? ` e gerar os cartões no tema *${tema}*` : " e gerar os cartões ilustrados"}.`;
+      const dica = "\n\n💡 Quando quiser, é só me pedir *a rotina de hoje* (ou *a de terça*) que eu te trago.";
+      mensagem = link
+        ? `${fechamento}${orient}\n\nAbre aqui (já entra direto):\n${link}${dica}`
+        : `${fechamento}${orient}${dica}`;
     }
 
     if (!mensagem) return null;
     return { mensagem, pronto: pronto && rotinas.length > 0 };
   } catch (e) {
     console.warn("[ayla:rotina-guiada] falha:", e instanceof Error ? e.message : e);
+    return null;
+  }
+}
+
+// ---------- "Traga a rotina de hoje / de terça" ----------
+
+const DIAS_MAP: Record<string, number> = {
+  segunda: 0,
+  terça: 1,
+  terca: 1,
+  quarta: 2,
+  quinta: 3,
+  sexta: 4,
+  sábado: 5,
+  sabado: 5,
+  domingo: 6,
+};
+
+/** Dia da semana (0=Seg..6=Dom) em um fuso, com offset de dias (hoje=0, amanhã=1). */
+function diaSemanaEmTz(tz: string | null | undefined, offsetDias: number): number {
+  const base = new Date(Date.now() + offsetDias * 24 * 60 * 60 * 1000);
+  const wd = new Intl.DateTimeFormat("en-US", {
+    timeZone: tz || "America/Sao_Paulo",
+    weekday: "short",
+  }).format(base);
+  const map: Record<string, number> = { Mon: 0, Tue: 1, Wed: 2, Thu: 3, Fri: 4, Sat: 5, Sun: 6 };
+  return map[wd] ?? 0;
+}
+
+function resolverDia(texto: string, tz: string | null | undefined): number | null {
+  const t = (texto ?? "").toLowerCase();
+  if (/\bhoje\b/.test(t)) return diaSemanaEmTz(tz, 0);
+  if (/\bamanh[ãa]\b/.test(t)) return diaSemanaEmTz(tz, 1);
+  for (const [nome, d] of Object.entries(DIAS_MAP)) if (t.includes(nome)) return d;
+  return null;
+}
+
+/** Pedido pra VER uma rotina de um dia (traga/manda/mostra a rotina de hoje/terça…). */
+export function pedeRotinaDeUmDia(texto: string | null | undefined): boolean {
+  const t = (texto ?? "").toLowerCase();
+  if (!/\brotina\b/.test(t)) return false;
+  const temDia = /\bhoje\b|\bamanh[ãa]\b|segunda|ter[çc]a|quarta|quinta|sexta|s[áa]bado|domingo/.test(t);
+  const temVerbo = /\b(traga|traz|tras|manda|mandar|mostra|mostrar|me v[êe]|quero ver|abre|abrir|puxa|puxar|ver a)\b/.test(
+    t,
+  );
+  // NÃO é criar/montar (isso é o condutor).
+  const ehCriar = /\b(criar|cria|montar|monta|monte|fazer|faz|fa[çc]a)\b/.test(t);
+  return temDia && temVerbo && !ehCriar;
+}
+
+/**
+ * A mãe pediu "a rotina de hoje/terça". Resolve o dia (pelo fuso), acha a rotina,
+ * gera os cartões se faltar (um dia por vez) e devolve o link. Null se não deu.
+ */
+export async function pedirRotinaDoDia(
+  supabase: SupabaseClient,
+  params: {
+    familyId: string;
+    membroAtipicoId: string;
+    texto: string;
+    timezone?: string | null;
+  },
+): Promise<string | null> {
+  try {
+    const dia = resolverDia(params.texto, params.timezone);
+    if (dia == null) return null;
+
+    const { data: membro } = await supabase
+      .from("membros_atipicos")
+      .select("nome")
+      .eq("id", params.membroAtipicoId)
+      .maybeSingle();
+    const nome = (membro?.nome as string) ?? "seu filho";
+    const nomeDia = DIAS_LABEL[dia];
+
+    const { data: rot } = await supabase
+      .from("rotinas")
+      .select("id, tema, cards_status")
+      .eq("membro_atipico_id", params.membroAtipicoId)
+      .eq("family_account_id", params.familyId)
+      .eq("dia_semana", dia)
+      .order("created_at", { ascending: true })
+      .limit(1)
+      .maybeSingle();
+
+    if (!rot) {
+      return `Ainda não montamos a rotina de ${nomeDia} 🌿 Quer montar agora? É só me contar como é esse dia (pode ser áudio).`;
+    }
+
+    const rotinaId = rot.id as string;
+    const tema = (rot.tema as string | null) ?? null;
+    const status = (rot.cards_status as string | null) ?? "nenhum";
+
+    let gerando = false;
+    if (tema && (status === "nenhum" || status === "erro")) {
+      await dispararGeracao(rotinaId, tema);
+      gerando = true;
+    }
+
+    const link = await gerarMagicLink(supabase, { familyId: params.familyId, next: `/ludico/rotinas/${rotinaId}` });
+    const extra = gerando ? " Tô gerando os cartões — ao abrir, já vão aparecendo 🌿" : "";
+    const base = `Aqui está a rotina de *${nomeDia}* do(a) ${nome} 🗓️${extra}`;
+    return link ? `${base}\nAbre aqui:\n${link}` : base;
+  } catch (e) {
+    console.warn("[ayla:rotina-guiada] pedirRotinaDoDia falhou:", e instanceof Error ? e.message : e);
     return null;
   }
 }

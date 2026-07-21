@@ -43,6 +43,8 @@ import {
   rotinaConversaPendente,
   conduzirRotina,
   pedeRotina,
+  pedeRotinaDeUmDia,
+  pedirRotinaDoDia,
 } from "./rotina-guiada";
 import { classificarAreasDiario } from "@/lib/ia/classificar-area";
 import type { AylaTipoProativa, AylaTipoReativa, ParserResult } from "./types";
@@ -877,6 +879,33 @@ export async function processInbound(
         return { tratada: true, familia: family.id, resposta: resp };
       }
       // Falhou gerar → cai no fluxo normal (a Ayla ainda responde algo).
+    }
+  }
+
+  // 3c-rotina-ver. "Traga a rotina de hoje/terça" — só quando NÃO está montando
+  // uma agora (senão o pedido é parte da conversa). Acha o dia, gera se faltar e
+  // manda o link certo.
+  if (!rotinaConversa && pedeRotinaDeUmDia(inbound.texto)) {
+    const ctxR = await loadFamiliaParaEnvio(supabase, family.id);
+    const membroId = ctxR?.membros[0]?.id ?? null;
+    if (ctxR && membroId) {
+      const msg = await pedirRotinaDoDia(supabase, {
+        familyId: family.id,
+        membroAtipicoId: membroId,
+        texto: inbound.texto,
+        timezone: null,
+      });
+      if (msg) {
+        const resp = await enviarEPersistir(supabase, {
+          family_account_id: family.id,
+          membro_atipico_id: membroId,
+          phone: ctxR.whatsapp_e164,
+          texto: msg,
+          category: "reativa",
+          tipo: "resposta_registro",
+        });
+        return { tratada: true, familia: family.id, resposta: resp };
+      }
     }
   }
 
