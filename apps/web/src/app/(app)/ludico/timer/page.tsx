@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
 import { TimerClient } from "./timer-client";
+import { Eyebrow } from "@/components/brand/eyebrow";
 
 export default function TimerPage() {
   return (
@@ -13,9 +14,7 @@ export default function TimerPage() {
       </Link>
 
       <header>
-        <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-brand-purple">
-          Timer lúdico
-        </p>
+        <Eyebrow>Timer lúdico</Eyebrow>
         <h1 className="mt-1 font-heading text-3xl text-foreground md:text-4xl">
           O tempo vira um <em className="not-italic text-brand-purple">arco-íris</em>
         </h1>

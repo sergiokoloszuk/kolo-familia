@@ -3,6 +3,7 @@ import { ChevronLeft } from "lucide-react";
 import { loadFamilyContext } from "@/lib/auth/require-user";
 import { assinarImagens } from "@/lib/storage/imagens";
 import { capitalizarNome } from "@/lib/nome";
+import { Eyebrow } from "@/components/brand/eyebrow";
 import { EnviarDesenho } from "./enviar-desenho";
 
 // A análise (Claude visão) roda em segundo plano após o upload — teto largo.
@@ -56,9 +57,7 @@ export default async function DesenhosPage() {
       </Link>
 
       <header className="max-w-2xl">
-        <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-brand-purple">
-          O que o desenho conta?
-        </p>
+        <Eyebrow>O que o desenho conta?</Eyebrow>
         <h1 className="mt-1 font-heading text-3xl text-foreground md:text-4xl">
           Uma leitura <em className="not-italic text-brand-purple">cuidadosa</em>, pra
           observar e perguntar

@@ -3,6 +3,7 @@ import { ChevronLeft, Wind } from "lucide-react";
 import { loadFamilyContext } from "@/lib/auth/require-user";
 import { capitalizarNome } from "@/lib/nome";
 import { CriarMeditacao } from "./criar-meditacao";
+import { Eyebrow } from "@/components/brand/eyebrow";
 import { ExcluirMini } from "./excluir-mini";
 
 // A geração do roteiro (Sonnet) roda na action — teto largo por garantia.
@@ -60,9 +61,7 @@ export default async function MeditacaoPage() {
       </Link>
 
       <header className="max-w-2xl">
-        <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-brand-purple">
-          Meditação guiada
-        </p>
+        <Eyebrow>Meditação guiada</Eyebrow>
         <h1 className="mt-1 font-heading text-3xl text-foreground md:text-4xl">
           Um respiro <em className="not-italic text-brand-purple">no jeito dela</em>
         </h1>

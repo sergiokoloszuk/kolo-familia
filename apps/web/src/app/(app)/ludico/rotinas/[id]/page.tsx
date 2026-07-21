@@ -5,6 +5,7 @@ import { loadFamilyContext } from "@/lib/auth/require-user";
 import { assinarImagens } from "@/lib/storage/imagens";
 import { capitalizarNome } from "@/lib/nome";
 import { idadeAnos } from "@/lib/idade";
+import { Eyebrow } from "@/components/brand/eyebrow";
 import { RotinaEditor } from "./rotina-editor";
 
 // A geração dos cards (história + N ilustrações) roda em segundo plano e pode
@@ -79,12 +80,15 @@ export default async function RotinaPage({
         <ChevronLeft aria-hidden className="size-3" /> Rotinas
       </Link>
 
-      {nomeMembro && (
-        <p className="text-sm text-muted-foreground print:hidden">
-          {nomeMembro}
-          {idade != null ? `, ${idade} anos` : ""}
-        </p>
-      )}
+      <div className="print:hidden">
+        <Eyebrow>Rotina Visual</Eyebrow>
+        {nomeMembro && (
+          <p className="mt-1 text-sm text-muted-foreground">
+            {nomeMembro}
+            {idade != null ? `, ${idade} anos` : ""}
+          </p>
+        )}
+      </div>
 
       <RotinaEditor
         key={(rotina.cards_status as string) ?? "nenhum"}
