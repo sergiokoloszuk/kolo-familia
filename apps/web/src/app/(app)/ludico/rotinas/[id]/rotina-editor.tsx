@@ -285,8 +285,8 @@ export function RotinaEditor({
       </div>
 
       {cardsStatus === "gerando" && (
-        <div className="flex items-center gap-2 rounded-xl border border-brand-purple/20 bg-kolo-lilas-bg-2/50 px-4 py-2.5 text-sm text-brand-purple-dark print:hidden">
-          <span className="animate-pulse" aria-hidden>⏳</span>
+        <div className="flex items-center gap-2 rounded-xl border border-brand-yellow/50 border-l-4 border-l-brand-yellow bg-brand-yellow/[0.08] px-4 py-2.5 text-sm text-brand-purple-dark print:hidden">
+          <span className="animate-bounce" aria-hidden>⏳</span>
           Gerando os cartões… a tela atualiza sozinha quando ficar pronto.
         </div>
       )}
@@ -334,14 +334,25 @@ export function RotinaEditor({
           />
 
           {visual && cardsStatus === "gerando" && (
-            <div className="flex flex-col items-center gap-2 rounded-2xl border-2 border-brand-purple/25 bg-kolo-lilas-bg-2/60 px-4 py-7 text-center">
-              <span className="animate-pulse text-4xl" aria-hidden>
+            <div className="flex flex-col items-center gap-3 rounded-2xl border-2 border-brand-yellow/60 bg-brand-yellow/[0.1] px-4 py-8 text-center shadow-[0_4px_20px_rgba(230,180,40,0.15)]">
+              <span className="animate-bounce text-4xl" aria-hidden>
                 ⏳
               </span>
               <p className="font-heading text-lg text-brand-purple-dark">Gerando os cartões ilustrados…</p>
+              <div className="flex gap-1.5" aria-hidden>
+                <span className="size-2 animate-bounce rounded-full bg-brand-yellow" style={{ animationDelay: "0ms" }} />
+                <span
+                  className="size-2 animate-bounce rounded-full bg-brand-purple/60"
+                  style={{ animationDelay: "150ms" }}
+                />
+                <span
+                  className="size-2 animate-bounce rounded-full bg-brand-yellow"
+                  style={{ animationDelay: "300ms" }}
+                />
+              </div>
               <p className="max-w-sm text-sm text-muted-foreground">
                 Leva ~1 a 2 minutos. Pode deixar esta tela aberta — ela atualiza sozinha quando ficar
-                pronto. Não travou. 🙂
+                pronto. <strong className="text-foreground">Não travou 🙂</strong>
               </p>
             </div>
           )}
