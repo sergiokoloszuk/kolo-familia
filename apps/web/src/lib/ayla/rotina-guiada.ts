@@ -92,7 +92,8 @@ Conduza nesta ordem, mas com naturalidade — PULE o que já estiver claro na co
 2. SEQUÊNCIA: peça como é o dia, na ordem. Se já mandaram uma lista, use-a. Para um dia específico, dê o NOME que a pessoa usou ("Dia com a vovó") — NUNCA "Segunda", a menos que seja mesmo um dia da semana. Para a semana, vá UM DIA POR VEZ ("bora pela segunda… a terça é parecida?").
 3. TRANSIÇÕES (o pulo do gato — o valor Kolo): identifique 1-2 passagens que costumam pesar (banho, SAIR de um lugar gostoso tipo zoológico/parque, dormir, ir pra escola) e pergunte se são tranquilas. Se não forem, ofereça encaixar uma atividade que ele GOSTA logo antes ou depois pra suavizar. No MÁXIMO 1-2 perguntas — não interrogue.
 4. TEMA: proponha um tema PROATIVAMENTE a partir dos INTERESSES conhecidos (ex.: "quer no tema de dinossauros, que ele ama?"). Se não souber, sugira 1-2 opções (carros, princesas…) ou deixar sem. Opcional.
-5. QUANDO TIVER O SUFICIENTE (sequência boa + transições consideradas + tema perguntado): pronto:true e preencha "tema" e "rotinas". A "mensagem" nesse caso é só uma confirmação CURTA e calorosa (ex.: "Prontinho, montei o Dia do Circo! 🎪"). NÃO prometa "vou gerar os cartões", nem diga que vai mandar link/PDF — o sistema completa a mensagem com o PDF e o link automaticamente.
+5. ANTES DE MONTAR — CONFIRME (evita erro e frustração): quando já tiver sequência + transições + tema, MOSTRE a rotina final resumida (a ordem, com horário quando houver) e pergunte "ficou assim, posso montar? 🌿". Nesse momento pronto:false ainda — você está só confirmando.
+6. SÓ ponha pronto:true DEPOIS que a pessoa CONFIRMAR (sim/pode/isso/perfeito/manda/tá bom). Se ela apontar um erro ou pedir mudança, ajuste e confirme de novo. Quando pronto:true, a "mensagem" é uma confirmação CURTA (ex.: "Prontinho, montei o Dia do Circo! 🎪"). NÃO prometa "vou gerar os cartões", nem diga que vai mandar link/PDF — o sistema completa a mensagem com o PDF e o link automaticamente.
 
 Formato de rotinas: [{"nome":"Dia com a vovó","dia_semana":null,"tarefas":[{"texto":"acordar","hora":null}]}]. dia_semana: 0=Seg..6=Dom, ou null pra dia avulso/nomeado. HORÁRIO SEMPRE OPCIONAL (null se não deram; NUNCA invente).
 
@@ -296,7 +297,7 @@ export async function conduzirRotina(
       const link = await gerarMagicLink(supabase, { familyId, next });
       const fechamento = mensagem || `Prontinho — montei a rotina do(a) ${nome} 🌿`;
       const orient = autoGerou
-        ? ` Já estou gerando os cartões no tema *${tema}* — quando abrir, já vão estar aparecendo. Te mandei também um *PDF pra imprimir*.`
+        ? ` Já comecei a gerar os cartões no tema *${tema}* — eles levam *1-2 minutinhos* pra ficar prontos, então pode abrir que vão aparecendo sozinhos 🌿 Te mandei também um *PDF pra imprimir*.`
         : ` Te mandei um *PDF pra imprimir* (com quadradinhos pra marcar). No app dá pra ajustar${tema ? ` e gerar os cartões no tema *${tema}*` : " e gerar os cartões ilustrados"}.`;
       const dica = "\n\n💡 Quando quiser, é só me pedir *a rotina de hoje* (ou *a de terça*) que eu te trago.";
       mensagem = link
