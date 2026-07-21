@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import {
   ArrowDown,
   ArrowUp,
@@ -82,6 +83,15 @@ function IconeDe(k: string | null | undefined): LucideIcon {
 
 const DIAS_CURTOS = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"];
 const DIAS_FULL = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado", "Domingo"];
+
+/** Selo de passo numerado — deixa o fluxo "1 faça isso, 2 faça aquilo" claro. */
+function StepBadge({ n }: { n: number }) {
+  return (
+    <span className="inline-flex size-6 shrink-0 items-center justify-center rounded-full bg-brand-purple text-xs font-bold text-white">
+      {n}
+    </span>
+  );
+}
 
 type Tarefa = {
   id: string;
@@ -275,9 +285,9 @@ export function RotinaEditor({
       </div>
 
       {cardsStatus === "gerando" && (
-        <div className="flex items-center gap-3 rounded-2xl border border-brand-purple/20 bg-kolo-lilas-bg-2/50 px-4 py-3 text-sm text-brand-purple-dark print:hidden">
-          <Sparkles className="size-4 animate-pulse" aria-hidden />
-          Montando os cards ilustrados e a história… leva ~1-2 min, a tela atualiza sozinha.
+        <div className="flex items-center gap-2 rounded-xl border border-brand-purple/20 bg-kolo-lilas-bg-2/50 px-4 py-2.5 text-sm text-brand-purple-dark print:hidden">
+          <span className="animate-pulse" aria-hidden>⏳</span>
+          Gerando os cartões… a tela atualiza sozinha quando ficar pronto.
         </div>
       )}
       {cardsStatus === "erro" && (
@@ -315,6 +325,7 @@ export function RotinaEditor({
       {editando ? (
         <>
           <AddTarefa
+            rotinaId={rotinaId}
             visual={visual}
             temPassos={tarefas.length > 0}
             diaSemana={diaSemana}
@@ -322,6 +333,18 @@ export function RotinaEditor({
             onAddVarios={adicionarVarios}
           />
 
+          {visual && cardsStatus === "gerando" && (
+            <div className="flex flex-col items-center gap-2 rounded-2xl border-2 border-brand-purple/25 bg-kolo-lilas-bg-2/60 px-4 py-7 text-center">
+              <span className="animate-pulse text-4xl" aria-hidden>
+                ⏳
+              </span>
+              <p className="font-heading text-lg text-brand-purple-dark">Gerando os cartões ilustrados…</p>
+              <p className="max-w-sm text-sm text-muted-foreground">
+                Leva ~1 a 2 minutos. Pode deixar esta tela aberta — ela atualiza sozinha quando ficar
+                pronto. Não travou. 🙂
+              </p>
+            </div>
+          )}
           {visual && cardsStatus !== "gerando" && (
             <GerarCards
               rotinaId={rotinaId}
@@ -631,12 +654,14 @@ function Vazio() {
 }
 
 function AddTarefa({
+  rotinaId,
   visual,
   temPassos,
   diaSemana,
   onAdd,
   onAddVarios,
 }: {
+  rotinaId: string;
   visual: boolean;
   temPassos: boolean;
   diaSemana: number | null;
@@ -648,6 +673,25 @@ function AddTarefa({
   const [hora, setHora] = useState("");
   const [varios, setVarios] = useState("");
   const [repeteDias, setRepeteDias] = useState<number[]>([]);
+
+  // Não perder a lista digitada se sair da tela (ex.: foi criar um avatar e voltou).
+  const draftKey = `rotina-lista-${rotinaId}`;
+  useEffect(() => {
+    try {
+      const s = localStorage.getItem(draftKey);
+      if (s) setVarios(s);
+    } catch {
+      /* localStorage indisponível */
+    }
+  }, [draftKey]);
+  useEffect(() => {
+    try {
+      if (varios.trim()) localStorage.setItem(draftKey, varios);
+      else localStorage.removeItem(draftKey);
+    } catch {
+      /* ignore */
+    }
+  }, [varios, draftKey]);
 
   function add() {
     const t = texto.trim();
@@ -674,11 +718,12 @@ function AddTarefa({
     <div className="flex flex-col gap-4 rounded-2xl border border-brand-purple/15 bg-kolo-lilas-bg-2/40 p-4 print:hidden">
       {/* Montar a lista de uma vez (uma atividade por linha) */}
       <div className="flex flex-col gap-2">
-        <p className="text-sm font-medium text-foreground">
-          {temPassos ? "Adicionar vários passos" : "Monte a lista de atividades"}
+        <p className="flex items-center gap-2 text-sm font-semibold text-foreground">
+          <StepBadge n={1} /> {temPassos ? "Adicionar mais passos" : "Monte a lista de atividades"}
         </p>
         <p className="text-xs leading-relaxed text-muted-foreground">
-          Uma atividade por linha, na ordem em que acontecem no dia.
+          Uma atividade por linha, na ordem em que acontecem no dia. <strong>Clique em “Adicionar à
+          rotina” pra salvar</strong> antes de gerar os cartões.
         </p>
         <textarea
           value={varios}
@@ -883,8 +928,8 @@ function GerarCards({
           <Wand2 className="size-5" aria-hidden />
         </span>
         <div className="flex-1">
-          <p className="font-heading text-base font-medium text-foreground">
-            {jaTem ? "Refazer os cards visuais" : "Gerar cards visuais"}
+          <p className="flex items-center gap-2 font-heading text-base font-medium text-foreground">
+            <StepBadge n={2} /> {jaTem ? "Refazer os cartões ilustrados" : "Ilustrar e gerar os cartões"}
           </p>
           <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
             {usarAvatar
@@ -946,7 +991,11 @@ function GerarCards({
           )}
           {!temAvatar && (
             <p className="mt-2 text-xs text-muted-foreground">
-              Quer usar a carinha de {nome}? Crie um avatar em Lúdico → Avatar.
+              Quer usar a carinha de {nome}?{" "}
+              <Link href="/configuracoes/avatar" className="font-semibold text-brand-purple underline-offset-2 hover:underline">
+                Criar avatar
+              </Link>{" "}
+              (sua lista fica salva — é só voltar).
             </p>
           )}
 
@@ -965,11 +1014,11 @@ function GerarCards({
             <Button type="button" onClick={gerar} disabled={pending || (!usarAvatar && !tema.trim())}>
               {pending ? (
                 <>
-                  <Sparkles className="size-4 animate-pulse" aria-hidden /> Iniciando…
+                  <span className="animate-pulse" aria-hidden>⏳</span> Começando…
                 </>
               ) : (
                 <>
-                  <Wand2 className="size-4" aria-hidden /> {jaTem ? "Refazer" : "Gerar"}
+                  <Wand2 className="size-4" aria-hidden /> {jaTem ? "Refazer" : "Gerar cartões"}
                 </>
               )}
             </Button>
