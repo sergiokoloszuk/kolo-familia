@@ -52,7 +52,7 @@ export default async function AdminFamiliasPage() {
   ] = await Promise.all([
     admin
       .from("family_accounts")
-      .select("id, user_id, created_at, afiliado_id, ref_codigo")
+      .select("id, user_id, created_at, afiliado_id, ref_codigo, whatsapp_e164")
       .order("created_at", { ascending: false }),
     admin
       .from("subscription_accesses")
@@ -61,11 +61,29 @@ export default async function AdminFamiliasPage() {
     admin.from("afiliados").select("id, nome, codigo_unico"),
     admin.from("beta_invite_uses").select("family_account_id, invite_id"),
     admin.from("beta_invites").select("id, rotulo, codigo"),
-    admin.from("ayla_preferences").select("family_account_id, desativada"),
+    admin.from("ayla_preferences").select("family_account_id, desativada, consentimento_em"),
   ]);
-  const bloqueadaPorFam = new Map(
-    (prefs ?? []).map((p) => [p.family_account_id as string, Boolean(p.desativada)]),
+  // "Bloqueada de verdade" = desativada E já consentiu (opt-out/manual). Só
+  // desativada (sem consentimento) = padrão do cadastro, NÃO é bloqueio.
+  const estadoAylaPorFam = new Map(
+    (prefs ?? []).map((p) => [
+      p.family_account_id as string,
+      {
+        bloqueada: Boolean(p.desativada) && p.consentimento_em != null,
+        consentiu: p.consentimento_em != null,
+      },
+    ]),
   );
+
+  // Famílias com alerta de possível criança/número errado (camada 1) nos últimos
+  // 7 dias e que AINDA aguardam ação (revisar/bloquear).
+  const seteDias = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+  const { data: alertas } = await admin
+    .from("ayla_messages")
+    .select("family_account_id")
+    .eq("texto", "[alerta-nao-titular]")
+    .gte("created_at", seteDias);
+  const precisaRevisarFam = new Set((alertas ?? []).map((a) => a.family_account_id as string));
 
   // E-mail por user_id (auth) — pagina os usuários.
   const emailPorUser = new Map<string, string>();
@@ -173,7 +191,10 @@ export default async function AdminFamiliasPage() {
       trialInfo,
       venceHoje: diasRestantes === 0,
       venceu: diasRestantes != null && diasRestantes < 0,
-      bloqueada: bloqueadaPorFam.get(id) ?? false,
+      bloqueada: estadoAylaPorFam.get(id)?.bloqueada ?? false,
+      consentiu: estadoAylaPorFam.get(id)?.consentiu ?? false,
+      whatsapp: (f.whatsapp_e164 as string | null) ?? null,
+      precisaRevisar: precisaRevisarFam.has(id),
     };
   });
 
@@ -240,7 +261,7 @@ export default async function AdminFamiliasPage() {
               >
                 <td className="px-4 py-3 text-foreground">
                   <div className="flex flex-col gap-1">
-                    <span className="flex items-center gap-2">
+                    <span className="flex flex-wrap items-center gap-2">
                       {l.nome ?? <span className="text-muted-foreground">{l.id.slice(0, 8)}…</span>}
                       {l.irregular && (
                         <Badge variant="destructive" title={l.motivoIrregular ?? undefined}>
@@ -248,8 +269,18 @@ export default async function AdminFamiliasPage() {
                         </Badge>
                       )}
                       {l.bloqueada && <Badge variant="destructive">🚫 Ayla bloqueada</Badge>}
+                      {l.precisaRevisar && !l.bloqueada && (
+                        <Badge variant="destructive" title="Alerta de possível criança/número errado — revise e bloqueie se preciso">
+                          ⚠️ revisar
+                        </Badge>
+                      )}
                     </span>
-                    <BloquearBtn familyId={l.id} bloqueada={l.bloqueada} />
+                    {l.whatsapp ? (
+                      <span className="font-mono text-xs text-muted-foreground">📱 {l.whatsapp}</span>
+                    ) : (
+                      <span className="text-xs text-muted-foreground/60">— sem WhatsApp (não consentiu)</span>
+                    )}
+                    {l.consentiu && <BloquearBtn familyId={l.id} bloqueada={l.bloqueada} />}
                   </div>
                 </td>
                 <td className="px-4 py-3 text-muted-foreground">{l.email ?? "—"}</td>

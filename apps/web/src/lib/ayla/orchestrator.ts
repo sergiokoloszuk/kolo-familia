@@ -821,11 +821,14 @@ export async function processInbound(
   // respondendo (inclusive pra quem pediu "sair").
   const { data: pref } = await supabase
     .from("ayla_preferences")
-    .select("desativada")
+    .select("desativada, consentimento_em")
     .eq("family_account_id", family.id)
     .maybeSingle();
-  if (pref?.desativada) {
-    console.warn(`[ayla] inbound de família DESATIVADA/bloqueada, ignorado: ${family.id}`);
+  // Bloqueada DE VERDADE = desativada E já tinha consentido (opt-out "sair" ou
+  // bloqueio manual do admin). `desativada` + SEM consentimento é só o padrão do
+  // cadastro (LGPD, "ainda não consentiu") — NÃO bloqueia o reativo.
+  if (pref?.desativada && pref?.consentimento_em) {
+    console.warn(`[ayla] inbound de família BLOQUEADA (opt-out/manual), ignorado: ${family.id}`);
     return { tratada: false, familia: family.id };
   }
 
