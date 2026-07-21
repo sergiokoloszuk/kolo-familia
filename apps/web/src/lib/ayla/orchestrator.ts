@@ -45,6 +45,8 @@ import {
   pedeRotina,
   pedeRotinaDeUmDia,
   pedirRotinaDoDia,
+  pedeEditarRotina,
+  editarRotina,
 } from "./rotina-guiada";
 import { classificarAreasDiario } from "@/lib/ia/classificar-area";
 import type { AylaTipoProativa, AylaTipoReativa, ParserResult } from "./types";
@@ -965,6 +967,33 @@ export async function processInbound(
         membroAtipicoId: membroId,
         texto: inbound.texto,
         timezone: null,
+      });
+      if (msg) {
+        const resp = await enviarEPersistir(supabase, {
+          family_account_id: family.id,
+          membro_atipico_id: membroId,
+          phone: ctxR.whatsapp_e164,
+          texto: msg,
+          category: "reativa",
+          tipo: "resposta_registro",
+        });
+        return { tratada: true, familia: family.id, resposta: resp };
+      }
+    }
+  }
+
+  // 3c-rotina-editar. "faltou o lanche na terça", "tira o vôlei", "muda a rotina
+  // de hoje" → ajusta a rotina existente (só quando NÃO está montando uma agora).
+  if (!rotinaConversa && pedeEditarRotina(inbound.texto)) {
+    const ctxR = await loadFamiliaParaEnvio(supabase, family.id);
+    const membroId = ctxR?.membros[0]?.id ?? null;
+    if (ctxR && membroId) {
+      const msg = await editarRotina(supabase, {
+        familyId: family.id,
+        membroAtipicoId: membroId,
+        texto: inbound.texto,
+        timezone: null,
+        phoneE164: ctxR.whatsapp_e164,
       });
       if (msg) {
         const resp = await enviarEPersistir(supabase, {

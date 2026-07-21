@@ -7,6 +7,7 @@ import {
   extrairJsonRotina,
   sanitizarRotinas,
   type RotinaProposta,
+  type TarefaProposta,
 } from "@/lib/ludico/rotina-ia-core";
 import { rotinaParaPdf } from "@/lib/ludico/rotina-pdf";
 import { enviarDocumento } from "./whatsappSender";
@@ -162,7 +163,7 @@ Conduza nesta ordem, mas com naturalidade — PULE o que já estiver claro na co
 1. ESCOPO: se ainda não sabe, pergunte se é pra um DIA ESPECÍFICO (ex.: "dia com a vovó", "dia do dentista") ou a ROTINA DA SEMANA. Lembre que pode responder por ÁUDIO. (pronto:false)
 2. SEQUÊNCIA: peça como é o dia, na ordem. Se já mandaram uma lista, use-a. Para um dia específico, dê o NOME que a pessoa usou ("Dia com a vovó") — NUNCA "Segunda", a menos que seja mesmo um dia da semana. Para a semana, vá UM DIA POR VEZ ("bora pela segunda… a terça é parecida?").
 3. TRANSIÇÕES (o pulo do gato — o valor Kolo): se vierem TRANSIÇÕES JÁ CONHECIDAS no contexto, USE-AS proativamente ("o banho costuma pesar pro X — coloquei a música depois de novo, ou quer tentar outra coisa?") em vez de re-perguntar. Se não houver, identifique 1-2 passagens que costumam pesar (banho, SAIR de um lugar gostoso tipo zoológico/parque, dormir, ir pra escola) e pergunte se são tranquilas. Se pesam, ofereça encaixar uma atividade que ele GOSTA logo antes/depois. A MÃE é a especialista — pergunte "o que costuma acalmar/motivar ele nessa hora?". No MÁXIMO 1-2 perguntas — não interrogue.
-3b. APRENDER: sempre que descobrir (ou reconfirmar) um momento difícil e a estratégia combinada, coloque em "transicoes":[{"momento":"banho","estrategia":"música depois"}]. Isso fica guardado no perfil e você reusa nas próximas.
+3b. APRENDER: sempre que descobrir (ou reconfirmar) um momento difícil e a estratégia combinada, coloque em "transicoes":[{"momento":"banho","estrategia":"música depois","funcionou":null}]. Se a mãe disser que uma estratégia FUNCIONOU ou NÃO, marque "funcionou":true/false — e, se não funcionou, proponha/pergunte OUTRA e ofereça "quer testar algo diferente?". Isso fica guardado no perfil e você reusa nas próximas.
 4. TEMA: proponha um tema PROATIVAMENTE a partir dos INTERESSES conhecidos (ex.: "quer no tema de dinossauros, que ele ama?"). Se não souber, sugira 1-2 opções (carros, princesas…) ou deixar sem. Opcional.
 5. ANTES DE MONTAR — CONFIRME (evita erro e frustração): quando já tiver sequência + transições + tema, MOSTRE a rotina final resumida (a ordem, com horário quando houver) e pergunte "ficou assim, posso montar? 🌿". Nesse momento pronto:false ainda — você está só confirmando.
 6. SÓ ponha pronto:true DEPOIS que a pessoa CONFIRMAR (sim/pode/isso/perfeito/manda/tá bom). Se ela apontar um erro ou pedir mudança, ajuste e confirme de novo. Quando pronto:true, a "mensagem" é uma confirmação CURTA (ex.: "Prontinho, montei o Dia do Circo! 🎪"). NÃO prometa "vou gerar os cartões", nem diga que vai mandar link/PDF — o sistema completa a mensagem com o PDF e o link automaticamente.
@@ -351,11 +352,15 @@ export async function conduzirRotina(
     // Aprendizado: guarda no Kolo Vivo as transições difíceis + estratégia.
     if (Array.isArray(parsed?.transicoes) && parsed.transicoes.length) {
       const aprendidas: Transicao[] = (parsed.transicoes as unknown[])
-        .map((t) => {
+        .map((t): Transicao | null => {
           const o = (t ?? {}) as Record<string, unknown>;
           const momento = String(o.momento ?? "").trim();
           if (!momento) return null;
-          return { momento, estrategia: o.estrategia ? String(o.estrategia) : null };
+          return {
+            momento,
+            estrategia: o.estrategia ? String(o.estrategia) : null,
+            funcionou: typeof o.funcionou === "boolean" ? o.funcionou : null,
+          };
         })
         .filter((t): t is Transicao => t != null);
       await salvarTransicoes(supabase, params.membroAtipicoId, aprendidas);
@@ -507,6 +512,128 @@ export async function pedirRotinaDoDia(
     return link ? `${base}\nAbre aqui:\n${link}` : base;
   } catch (e) {
     console.warn("[ayla:rotina-guiada] pedirRotinaDoDia falhou:", e instanceof Error ? e.message : e);
+    return null;
+  }
+}
+
+// ---------- Editar/corrigir uma rotina pela Ayla ----------
+
+/** Pedido de EDIÇÃO ("faltou o lanche na terça", "tira o vôlei", "muda a rotina de hoje"). */
+export function pedeEditarRotina(texto: string | null | undefined): boolean {
+  const t = (texto ?? "").toLowerCase();
+  const editVerbo =
+    /\b(faltou|falta|tira|tirar|tire|remove|remover|remova|adiciona|adicionar|acrescenta|acrescentar|p[õo]e|poe|coloca|colocar|muda|mudar|mude|troca|trocar|corrige|corrigir|arruma|arrumar|inverte|inverter|esqueci)\b/.test(
+      t,
+    );
+  if (!editVerbo) return false;
+  const refDia = /\bhoje\b|\bamanh[ãa]\b|segunda|ter[çc]a|quarta|quinta|sexta|s[áa]bado|domingo/.test(t);
+  const refRotina = /\brotina\b|\bcart[õo]es?\b|nessa rotina|na rotina|dessa rotina|no dia/.test(t);
+  return refDia || refRotina;
+}
+
+const SYSTEM_EDITAR = `Você edita uma rotina que já existe. Recebe as TAREFAS ATUAIS (JSON) e o PEDIDO da mãe. Devolva APENAS JSON com as tarefas ATUALIZADAS, aplicando o pedido (adicionar / remover / mudar texto / mudar horário / reordenar) e MANTENDO tudo que ela NÃO mencionou. Formato: {"tarefas":[{"texto":"acordar","hora":"6h"}]}. HORÁRIO é opcional (null se não tiver; nunca invente). Encaixe no lugar lógico (ex.: "lanche depois da escola" entra logo após a escola). Texto curto (1-5 palavras). NÃO invente atividades além do que ela pediu.`;
+
+function sanitizarTarefasSimples(bruto: unknown): TarefaProposta[] {
+  if (!Array.isArray(bruto)) return [];
+  const out: TarefaProposta[] = [];
+  for (const t of bruto.slice(0, 30)) {
+    const o = (t ?? {}) as Record<string, unknown>;
+    const texto = String(o.texto ?? "").trim().slice(0, 120);
+    if (!texto) continue;
+    const hora = o.hora == null ? null : String(o.hora).trim().slice(0, 10);
+    out.push({ texto, hora: hora || null });
+  }
+  return out;
+}
+
+/**
+ * Edita a rotina que a mãe pediu (dia mencionado, senão a mais recente): carrega
+ * as tarefas atuais, aplica a mudança (IA) e regrava. Se tinha cartões no tema,
+ * regenera. Devolve confirmação + link.
+ */
+export async function editarRotina(
+  supabase: SupabaseClient,
+  params: { familyId: string; membroAtipicoId: string; texto: string; timezone?: string | null; phoneE164?: string | null },
+): Promise<string | null> {
+  try {
+    const dia = resolverDia(params.texto, params.timezone);
+    type RotSel = { id: string; nome: string; tema: string | null; cards_status: string | null };
+    let rot: RotSel | null = null;
+
+    if (dia != null) {
+      const { data } = await supabase
+        .from("rotinas")
+        .select("id, nome, tema, cards_status")
+        .eq("membro_atipico_id", params.membroAtipicoId)
+        .eq("family_account_id", params.familyId)
+        .eq("dia_semana", dia)
+        .order("created_at", { ascending: true })
+        .limit(1)
+        .maybeSingle();
+      if (data) rot = data as unknown as RotSel;
+    }
+    if (!rot) {
+      const { data } = await supabase
+        .from("rotinas")
+        .select("id, nome, tema, cards_status")
+        .eq("membro_atipico_id", params.membroAtipicoId)
+        .eq("family_account_id", params.familyId)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (data) rot = data as unknown as RotSel;
+    }
+    if (!rot) return "Não achei uma rotina pra ajustar 🌿 Me diz qual dia, ou a gente monta uma nova.";
+
+    const rotinaId = rot.id;
+    const { data: tarefas } = await supabase
+      .from("rotina_tarefas")
+      .select("texto, hora, ordem")
+      .eq("rotina_id", rotinaId)
+      .order("ordem", { ascending: true });
+    const atuais = (tarefas ?? []).map((t) => ({ texto: t.texto as string, hora: (t.hora as string | null) ?? null }));
+
+    const client = getAylaAnthropicClient();
+    const resp = await client.messages.create({
+      model: AYLA_MODEL,
+      max_tokens: 1200,
+      system: SYSTEM_EDITAR,
+      messages: [
+        {
+          role: "user",
+          content: `TAREFAS ATUAIS:\n${JSON.stringify({ tarefas: atuais })}\n\nPEDIDO DA MÃE: ${params.texto}`,
+        },
+      ],
+    });
+    const b = resp.content[0];
+    const raw = b?.type === "text" ? b.text : "";
+    const parsed = extrairJsonRotina(raw) as { tarefas?: unknown } | null;
+    const novas = sanitizarTarefasSimples(parsed?.tarefas);
+    if (!novas.length) return null;
+
+    await supabase.from("rotina_tarefas").delete().eq("rotina_id", rotinaId);
+    const rows = novas.slice(0, 25).map((t, i) => ({
+      rotina_id: rotinaId,
+      texto: t.texto.slice(0, 120),
+      hora: t.hora ? t.hora.slice(0, 10) : null,
+      icone: null,
+      ordem: i,
+    }));
+    if (rows.length) await supabase.from("rotina_tarefas").insert(rows);
+
+    // Tinha cartões no tema? A mudança pede regeneração.
+    const tinhaCartoes = rot.tema && (rot.cards_status === "pronto" || rot.cards_status === "gerando");
+    if (tinhaCartoes && rot.tema) {
+      await supabase.from("rotinas").update({ cards_status: "nenhum" }).eq("id", rotinaId);
+      await dispararGeracao(rotinaId, rot.tema);
+    }
+
+    const link = await gerarMagicLink(supabase, { familyId: params.familyId, next: `/ludico/rotinas/${rotinaId}` });
+    const regen = tinhaCartoes ? " Tô refazendo os cartões com a mudança (uns minutinhos)." : "";
+    const base = `Pronto, ajustei a rotina *${rot.nome}* 🌿${regen}`;
+    return link ? `${base}\nAbre aqui:\n${link}` : base;
+  } catch (e) {
+    console.warn("[ayla:rotina-guiada] editarRotina falhou:", e instanceof Error ? e.message : e);
     return null;
   }
 }
