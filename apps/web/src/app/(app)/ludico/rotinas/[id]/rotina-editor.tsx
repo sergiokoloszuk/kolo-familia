@@ -305,12 +305,7 @@ export function RotinaEditor({
         </div>
       </div>
 
-      {cardsStatus === "gerando" && (
-        <div className="flex items-center gap-2 rounded-xl border border-brand-yellow/50 border-l-4 border-l-brand-yellow bg-brand-yellow/[0.08] px-4 py-2.5 text-sm text-brand-purple-dark print:hidden">
-          <span className="animate-bounce" aria-hidden>⏳</span>
-          Gerando os cartões… a tela atualiza sozinha quando ficar pronto.
-        </div>
-      )}
+      {cardsStatus === "gerando" && <CardGerando />}
       {cardsStatus === "erro" && (
         <p className="rounded-2xl border border-amber-300/60 bg-amber-50 px-4 py-3 text-sm text-amber-800 print:hidden">
           Algo falhou ao montar os cards. Dá pra tentar de novo abaixo.
@@ -365,7 +360,6 @@ export function RotinaEditor({
             onAddVarios={adicionarVarios}
           />
 
-          {visual && cardsStatus === "gerando" && <CardGerando />}
           {visual && cardsStatus !== "gerando" && (
             <GerarCards
               rotinaId={rotinaId}
@@ -388,9 +382,8 @@ export function RotinaEditor({
         </>
       ) : (
         <>
-          {/* Espera sempre visível; e o "Gerar cartões" aparece aqui quando ainda
-              não há cartões (senão ele ficaria escondido atrás de "Editar"). */}
-          {visual && cardsStatus === "gerando" && <CardGerando />}
+          {/* O "Gerar cartões" aparece aqui quando ainda não há cartões (senão
+              ficaria escondido atrás de "Editar"). A espera já está no topo. */}
           {visual && (cardsStatus === "nenhum" || cardsStatus === "erro") && (
             <GerarCards
               rotinaId={rotinaId}

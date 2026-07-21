@@ -136,6 +136,14 @@ export default async function RotinaSemanaPage() {
                   <div className="flex items-center gap-2">
                     <span className={`size-2.5 rounded-full ${rot ? "bg-brand-purple" : "bg-foreground/20"}`} />
                     <span className="font-heading text-base text-foreground">{nomeDia}</span>
+                    {rot?.cards_status === "gerando" && (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-brand-yellow/25 px-2 py-0.5 text-[11px] font-semibold text-[#8B5A00]">
+                        <span className="animate-bounce" aria-hidden>
+                          ⏳
+                        </span>{" "}
+                        gerando…
+                      </span>
+                    )}
                     {rot?.cards_status === "pronto" && (
                       <span className="rounded-full bg-brand-purple/10 px-2 py-0.5 text-[11px] font-medium text-brand-purple">
                         cartões prontos ✓
