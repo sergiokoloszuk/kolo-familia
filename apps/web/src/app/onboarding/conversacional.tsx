@@ -200,9 +200,10 @@ export function OnboardingConversacional({ copy }: { copy: OnboardingCopy }) {
         <Bolha lado="ayla">{fill(copy.garfo.titulo, nome, voce)}</Bolha>
         {/* Aviso do WhatsApp — todo mundo vê, mesmo quem não abre a conversa. */}
         <div className="rounded-2xl border border-brand-purple/25 bg-brand-purple/[0.06] p-4 text-sm text-foreground">
-          💬 <strong>Vou te escrever no WhatsApp</strong> — é por lá que a gente conversa no dia a
-          dia. Pode me perguntar o que quiser, contar uma novidade ou atualizar o perfil{" "}
-          {nome ? `de ${nome}` : "de quem você cuida"} quando precisar.
+          💬 <strong>É pelo WhatsApp que a Ayla te ajuda de verdade</strong> — dá pra pedir uma{" "}
+          <strong>estratégia</strong> pra um perrengue, <strong>montar a rotina do dia</strong> (com
+          cartões ilustrados pra imprimir!), tirar dúvidas e atualizar o perfil{" "}
+          {nome ? `de ${nome}` : "de quem você cuida"}. É onde a experiência fica completa. 🌿
         </div>
         <button
           onClick={() => setFase("desafio")}
@@ -400,7 +401,10 @@ export function OnboardingConversacional({ copy }: { copy: OnboardingCopy }) {
               </label>
               <label className="flex items-start gap-2 text-sm text-foreground">
                 <input type="checkbox" checked={aceites.ayla} onChange={(e) => setAceites((a) => ({ ...a, ayla: e.target.checked }))} className="mt-0.5" />
-                A Ayla pode me escrever no WhatsApp
+                <span>
+                  A Ayla pode me escrever no WhatsApp{" "}
+                  <span className="text-muted-foreground">— é por lá que peço estratégias, monto a rotina e muito mais</span>
+                </span>
               </label>
               <div className="flex justify-end">
                 <Button size="sm" disabled={!aceites.termos || !aceites.ayla} onClick={() => proximo({ [passo.id]: "ok" })}>
