@@ -67,6 +67,7 @@ export default async function RotinaSemanaPage() {
   const nomeAtiva = membrosList.find((m) => m.id === ativaId)?.nome ?? "";
   const temaSemana = (rotinas ?? []).map((r) => (r.tema as string | null) ?? null).find(Boolean) ?? null;
   const temAlgumDia = (rotinas ?? []).length > 0;
+  const temCartoesProntos = (rotinas ?? []).some((r) => (r.cards_status as string) === "pronto");
 
   return (
     <div className="flex flex-col gap-6">
@@ -100,6 +101,16 @@ export default async function RotinaSemanaPage() {
           />
         )}
         {temAlgumDia && <ImprimirSemana />}
+        {temCartoesProntos && (
+          <a
+            href="/api/ludico/rotinas/semana/cartoes"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 rounded-full border border-brand-purple/30 px-4 py-2 text-sm font-semibold text-brand-purple transition-colors hover:bg-brand-purple/5"
+          >
+            ✂️ Cartões pra recortar
+          </a>
+        )}
       </div>
 
       {membrosList.length === 0 ? (

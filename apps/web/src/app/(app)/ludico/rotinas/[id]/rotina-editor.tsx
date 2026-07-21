@@ -337,6 +337,17 @@ export function RotinaEditor({
         </div>
       )}
 
+      {visual && cardsStatus === "pronto" && (
+        <a
+          href={`/api/ludico/rotinas/${rotinaId}/cartoes`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex w-fit items-center gap-2 rounded-full border border-brand-purple/30 px-4 py-2 text-sm font-semibold text-brand-purple transition-colors hover:bg-brand-purple/5 print:hidden"
+        >
+          ✂️ Cartões pra recortar (varalzinho)
+        </a>
+      )}
+
       {visual ? (
         <ViewCartoes tarefas={tarefas} onToggle={toggle} onMover={mover} onRemover={remover} />
       ) : (
