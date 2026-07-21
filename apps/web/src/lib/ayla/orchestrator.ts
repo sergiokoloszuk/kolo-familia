@@ -765,6 +765,20 @@ export async function processInbound(
     return { tratada: false };
   }
 
+  // 1a. BLOQUEIO: se a Ayla foi desativada/bloqueada pra essa família (opt-out
+  // "sair", ou bloqueio manual do admin — ex.: criança/não-titular usando o
+  // número), NÃO responde a nada. Antes o reativo ignorava isso e continuava
+  // respondendo (inclusive pra quem pediu "sair").
+  const { data: pref } = await supabase
+    .from("ayla_preferences")
+    .select("desativada")
+    .eq("family_account_id", family.id)
+    .maybeSingle();
+  if (pref?.desativada) {
+    console.warn(`[ayla] inbound de família DESATIVADA/bloqueada, ignorado: ${family.id}`);
+    return { tratada: false, familia: family.id };
+  }
+
   // 1b. Há uma oferta de fim de semana esperando resposta? (calcular ANTES
   // de persistir o inbound atual, pra "primeira resposta" ser detectada).
   const ofertaFds = await ofertaFimDeSemanaPendente(

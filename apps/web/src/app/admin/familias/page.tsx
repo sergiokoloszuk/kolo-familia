@@ -5,6 +5,7 @@ import { requireAdmin } from "@/lib/auth/require-admin";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { capitalizarNome } from "@/lib/nome";
 import { assinaturaLiberada } from "@/lib/auth/assinatura";
+import { BloquearBtn } from "./bloquear-btn";
 
 /**
  * Famílias / Leads — lista única com origem, momento do trial, e se assinou.
@@ -47,6 +48,7 @@ export default async function AdminFamiliasPage() {
     { data: afiliados },
     { data: convUsos },
     { data: convites },
+    { data: prefs },
   ] = await Promise.all([
     admin
       .from("family_accounts")
@@ -59,7 +61,11 @@ export default async function AdminFamiliasPage() {
     admin.from("afiliados").select("id, nome, codigo_unico"),
     admin.from("beta_invite_uses").select("family_account_id, invite_id"),
     admin.from("beta_invites").select("id, rotulo, codigo"),
+    admin.from("ayla_preferences").select("family_account_id, desativada"),
   ]);
+  const bloqueadaPorFam = new Map(
+    (prefs ?? []).map((p) => [p.family_account_id as string, Boolean(p.desativada)]),
+  );
 
   // E-mail por user_id (auth) — pagina os usuários.
   const emailPorUser = new Map<string, string>();
@@ -167,6 +173,7 @@ export default async function AdminFamiliasPage() {
       trialInfo,
       venceHoje: diasRestantes === 0,
       venceu: diasRestantes != null && diasRestantes < 0,
+      bloqueada: bloqueadaPorFam.get(id) ?? false,
     };
   });
 
@@ -232,14 +239,18 @@ export default async function AdminFamiliasPage() {
                 className={`border-b border-foreground/[0.04] last:border-0 ${l.irregular ? "bg-destructive/[0.04]" : ""}`}
               >
                 <td className="px-4 py-3 text-foreground">
-                  <span className="flex items-center gap-2">
-                    {l.nome ?? <span className="text-muted-foreground">{l.id.slice(0, 8)}…</span>}
-                    {l.irregular && (
-                      <Badge variant="destructive" title={l.motivoIrregular ?? undefined}>
-                        acesso irregular
-                      </Badge>
-                    )}
-                  </span>
+                  <div className="flex flex-col gap-1">
+                    <span className="flex items-center gap-2">
+                      {l.nome ?? <span className="text-muted-foreground">{l.id.slice(0, 8)}…</span>}
+                      {l.irregular && (
+                        <Badge variant="destructive" title={l.motivoIrregular ?? undefined}>
+                          acesso irregular
+                        </Badge>
+                      )}
+                      {l.bloqueada && <Badge variant="destructive">🚫 Ayla bloqueada</Badge>}
+                    </span>
+                    <BloquearBtn familyId={l.id} bloqueada={l.bloqueada} />
+                  </div>
                 </td>
                 <td className="px-4 py-3 text-muted-foreground">{l.email ?? "—"}</td>
                 <td className="px-4 py-3">
