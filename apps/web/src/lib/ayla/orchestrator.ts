@@ -742,6 +742,54 @@ export async function sendCampanha(
 // REATIVA: processa mensagem recebida (webhook)
 // ============================================================
 
+/** Sinais FORTES de que quem escreve é uma criança / não é o titular (número
+ * errado no cadastro). Conservador de propósito — falso-positivo só gera um
+ * alerta pra admin, nunca bloqueio automático. */
+function pareceCrianca(texto: string | null | undefined): boolean {
+  const t = (texto ?? "").toLowerCase();
+  return (
+    /\bsou (uma |um )?crian[çc]a\b/.test(t) ||
+    /\bsou (uma |um )?menin[ao]\b/.test(t) ||
+    /\bpeguei o (celular|telefone|cel)\b/.test(t) ||
+    /\bcelular (do|da) (meu|minha)\b/.test(t)
+  );
+}
+
+/** Avisa a admin (WhatsApp) que um número parece errado/criança, com o número e
+ * o link pro Admin. Dedup: no máx 1 alerta por família a cada 24h. */
+async function alertarNaoTitular(
+  supabase: SupabaseClient,
+  familyId: string,
+  phone: string,
+  texto: string,
+): Promise<void> {
+  try {
+    const desde = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+    const { data: ja } = await supabase
+      .from("ayla_messages")
+      .select("id")
+      .eq("family_account_id", familyId)
+      .eq("direcao", "outbound")
+      .eq("texto", "[alerta-nao-titular]")
+      .gte("created_at", desde)
+      .limit(1);
+    if ((ja?.length ?? 0) > 0) return;
+
+    const alerta = process.env.ALERTA_WHATSAPP || "+5511994770067";
+    const base = (process.env.NEXT_PUBLIC_APP_URL || "").replace(/\/$/, "");
+    const msg = `⚠️ Kolo: parece que uma criança ou número errado está conversando com a Ayla.\nNúmero: ${phone}\nDisse: "${texto.slice(0, 80)}"\nConfira e bloqueie se precisar:\n${base}/admin/familias`;
+    await enviarTexto({ phoneE164: alerta, texto: msg });
+    await supabase.from("ayla_messages").insert({
+      family_account_id: familyId,
+      direcao: "outbound",
+      texto: "[alerta-nao-titular]",
+      tipo: "campanha_operacional",
+    });
+  } catch (e) {
+    console.warn("[ayla] alerta não-titular falhou:", e instanceof Error ? e.message : e);
+  }
+}
+
 export async function processInbound(
   supabase: SupabaseClient,
   inbound: InboundWhatsApp,
@@ -776,6 +824,15 @@ export async function processInbound(
     .maybeSingle();
   if (pref?.desativada) {
     console.warn(`[ayla] inbound de família DESATIVADA/bloqueada, ignorado: ${family.id}`);
+    return { tratada: false, familia: family.id };
+  }
+
+  // 1a-alerta. CRIANÇA / NÚMERO ERRADO: sinal forte de que quem escreve não é o
+  // titular. NÃO responde (evita o loop que aconteceu com a Isis) e AVISA a admin
+  // no WhatsApp com o número + link pro Admin, pra ela revisar e bloquear.
+  if (pareceCrianca(inbound.texto)) {
+    console.warn(`[ayla] possível criança/não-titular: ${inbound.phoneE164} (family ${family.id})`);
+    await alertarNaoTitular(supabase, family.id, inbound.phoneE164, inbound.texto);
     return { tratada: false, familia: family.id };
   }
 
