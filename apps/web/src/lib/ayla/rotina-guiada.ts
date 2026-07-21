@@ -82,15 +82,87 @@ async function carregarInteresses(supabase: SupabaseClient, membroId: string): P
   }
 }
 
+type Transicao = { momento: string; estrategia: string | null; funcionou?: boolean | null; atualizado_em?: string };
+
+/** Transições difíceis já aprendidas (do Kolo Vivo) — pra a Ayla já chegar sabendo. */
+async function carregarTransicoes(supabase: SupabaseClient, membroId: string): Promise<Transicao[]> {
+  try {
+    const { data } = await supabase
+      .from("perfil_vivo_membro")
+      .select("categorias_extras")
+      .eq("membro_atipico_id", membroId)
+      .maybeSingle();
+    const ce = (data?.categorias_extras ?? {}) as Record<string, unknown>;
+    const arr = Array.isArray(ce.transicoes) ? (ce.transicoes as unknown[]) : [];
+    return arr
+      .map((t) => {
+        const o = (t ?? {}) as Record<string, unknown>;
+        const momento = String(o.momento ?? "").trim();
+        if (!momento) return null;
+        return {
+          momento: momento.slice(0, 60),
+          estrategia: o.estrategia ? String(o.estrategia).slice(0, 120) : null,
+          funcionou: typeof o.funcionou === "boolean" ? o.funcionou : null,
+        } as Transicao;
+      })
+      .filter((t): t is Transicao => t != null)
+      .slice(0, 12);
+  } catch {
+    return [];
+  }
+}
+
+/** Mescla novas transições no Kolo Vivo (por momento) — auto-incorporação. */
+async function salvarTransicoes(
+  supabase: SupabaseClient,
+  membroId: string,
+  novas: Transicao[],
+): Promise<void> {
+  try {
+    if (!novas.length) return;
+    const { data } = await supabase
+      .from("perfil_vivo_membro")
+      .select("categorias_extras")
+      .eq("membro_atipico_id", membroId)
+      .maybeSingle();
+    const ce = (data?.categorias_extras ?? {}) as Record<string, unknown>;
+    const atuais = Array.isArray(ce.transicoes) ? (ce.transicoes as Transicao[]) : [];
+    const porMomento = new Map<string, Transicao>();
+    for (const t of atuais) if (t?.momento) porMomento.set(t.momento.toLowerCase(), t);
+    for (const n of novas) {
+      if (!n.momento) continue;
+      const key = n.momento.toLowerCase();
+      const antigo = porMomento.get(key);
+      porMomento.set(key, {
+        momento: n.momento.slice(0, 60),
+        estrategia: (n.estrategia ?? antigo?.estrategia ?? null)?.slice(0, 120) ?? null,
+        funcionou: n.funcionou ?? antigo?.funcionou ?? null,
+      });
+    }
+    const merged = Array.from(porMomento.values()).slice(0, 20);
+    // Só atualiza linha existente (evita insert sem family_account_id). Sem linha,
+    // o Kolo Vivo é criado por outros fluxos; a transição entra na próxima.
+    if (data) {
+      await supabase
+        .from("perfil_vivo_membro")
+        .update({ categorias_extras: { ...ce, transicoes: merged } })
+        .eq("membro_atipico_id", membroId);
+    }
+  } catch (e) {
+    console.warn("[ayla:rotina-guiada] salvar transições falhou:", e instanceof Error ? e.message : e);
+  }
+}
+
 const SYSTEM_CONDUZIR = `Você é a Ayla conduzindo, no WhatsApp, a montagem de uma ROTINA VISUAL com uma mãe/pai. Conduza de forma NATURAL e ESTRATÉGICA — a pessoa deve escrever o MÍNIMO possível.
 
 Devolva SEMPRE APENAS JSON, sem texto fora dele:
-{"mensagem":"sua próxima fala (WhatsApp, curta e calorosa)","pronto":false,"tema":null,"rotinas":[]}
+{"mensagem":"sua próxima fala (WhatsApp, curta e calorosa)","pronto":false,"tema":null,"transicoes":[],"rotinas":[]}
 
 Conduza nesta ordem, mas com naturalidade — PULE o que já estiver claro na conversa:
 1. ESCOPO: se ainda não sabe, pergunte se é pra um DIA ESPECÍFICO (ex.: "dia com a vovó", "dia do dentista") ou a ROTINA DA SEMANA. Lembre que pode responder por ÁUDIO. (pronto:false)
 2. SEQUÊNCIA: peça como é o dia, na ordem. Se já mandaram uma lista, use-a. Para um dia específico, dê o NOME que a pessoa usou ("Dia com a vovó") — NUNCA "Segunda", a menos que seja mesmo um dia da semana. Para a semana, vá UM DIA POR VEZ ("bora pela segunda… a terça é parecida?").
-3. TRANSIÇÕES (o pulo do gato — o valor Kolo): identifique 1-2 passagens que costumam pesar (banho, SAIR de um lugar gostoso tipo zoológico/parque, dormir, ir pra escola) e pergunte se são tranquilas. Se não forem, ofereça encaixar uma atividade que ele GOSTA logo antes ou depois pra suavizar. No MÁXIMO 1-2 perguntas — não interrogue.
+3. TRANSIÇÕES (o pulo do gato — o valor Kolo): se vierem TRANSIÇÕES JÁ CONHECIDAS no contexto, USE-AS proativamente ("o banho costuma pesar pro X — coloquei a música depois de novo, ou quer tentar outra coisa?") em vez de re-perguntar. Se não houver, identifique 1-2 passagens que costumam pesar (banho, SAIR de um lugar gostoso tipo zoológico/parque, dormir, ir pra escola) e pergunte se são tranquilas. Se pesam, ofereça encaixar uma atividade que ele GOSTA logo antes/depois. A MÃE é a especialista — pergunte "o que costuma acalmar/motivar ele nessa hora?". No MÁXIMO 1-2 perguntas — não interrogue.
+3b. APRENDER: sempre que descobrir (ou reconfirmar) um momento difícil e a estratégia combinada, coloque em "transicoes":[{"momento":"banho","estrategia":"música depois"}]. Isso fica guardado no perfil e você reusa nas próximas.
 4. TEMA: proponha um tema PROATIVAMENTE a partir dos INTERESSES conhecidos (ex.: "quer no tema de dinossauros, que ele ama?"). Se não souber, sugira 1-2 opções (carros, princesas…) ou deixar sem. Opcional.
 5. ANTES DE MONTAR — CONFIRME (evita erro e frustração): quando já tiver sequência + transições + tema, MOSTRE a rotina final resumida (a ordem, com horário quando houver) e pergunte "ficou assim, posso montar? 🌿". Nesse momento pronto:false ainda — você está só confirmando.
 6. SÓ ponha pronto:true DEPOIS que a pessoa CONFIRMAR (sim/pode/isso/perfeito/manda/tá bom). Se ela apontar um erro ou pedir mudança, ajuste e confirme de novo. Quando pronto:true, a "mensagem" é uma confirmação CURTA (ex.: "Prontinho, montei o Dia do Circo! 🎪"). NÃO prometa "vou gerar os cartões", nem diga que vai mandar link/PDF — o sistema completa a mensagem com o PDF e o link automaticamente.
@@ -241,9 +313,17 @@ export async function conduzirRotina(
       historico.push({ de: "mae", texto: params.contexto.trim() });
     }
 
+    const transicoesConhecidas = await carregarTransicoes(supabase, params.membroAtipicoId);
+    const transicoesTxt = transicoesConhecidas.length
+      ? transicoesConhecidas
+          .map((t) => `${t.momento}${t.estrategia ? ` → ${t.estrategia}` : ""}${t.funcionou === false ? " (não funcionou, tentar outra)" : ""}`)
+          .join("; ")
+      : "";
+
     const userPrompt = [
       `CRIANÇA/ADOLESCENTE/ADULTO: ${nome}${idade != null ? ` (${idade} anos)` : ""}.`,
       interesses ? `INTERESSES CONHECIDOS (pra propor tema): ${interesses}` : "",
+      transicoesTxt ? `TRANSIÇÕES JÁ CONHECIDAS (use proativamente, não re-pergunte): ${transicoesTxt}` : "",
       "CONVERSA (a última fala da mãe é o pedido atual):\n" +
         historico.map((h) => `${h.de === "mae" ? "Mãe" : "Kolo"}: ${h.texto}`).join("\n"),
     ]
@@ -260,13 +340,26 @@ export async function conduzirRotina(
     const b = resp.content[0];
     const raw = b?.type === "text" ? b.text : "";
     const parsed = extrairJsonRotina(raw) as
-      | { mensagem?: string; pronto?: boolean; tema?: string | null; rotinas?: unknown }
+      | { mensagem?: string; pronto?: boolean; tema?: string | null; transicoes?: unknown; rotinas?: unknown }
       | null;
 
     let mensagem = (typeof parsed?.mensagem === "string" && parsed.mensagem.trim()) || "";
     const pronto = parsed?.pronto === true;
     const tema = typeof parsed?.tema === "string" && parsed.tema.trim() ? parsed.tema.trim().slice(0, 40) : null;
     const rotinas = sanitizarRotinas(parsed?.rotinas);
+
+    // Aprendizado: guarda no Kolo Vivo as transições difíceis + estratégia.
+    if (Array.isArray(parsed?.transicoes) && parsed.transicoes.length) {
+      const aprendidas: Transicao[] = (parsed.transicoes as unknown[])
+        .map((t) => {
+          const o = (t ?? {}) as Record<string, unknown>;
+          const momento = String(o.momento ?? "").trim();
+          if (!momento) return null;
+          return { momento, estrategia: o.estrategia ? String(o.estrategia) : null };
+        })
+        .filter((t): t is Transicao => t != null);
+      await salvarTransicoes(supabase, params.membroAtipicoId, aprendidas);
+    }
 
     if (pronto && rotinas.length) {
       const ids: string[] = [];
