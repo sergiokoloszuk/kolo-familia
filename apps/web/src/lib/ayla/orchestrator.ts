@@ -40,9 +40,8 @@ import { montarPonteWhatsApp, gerarMagicLink, montarPlanoFimDeSemana, montarPlan
 import { pedeUmPlano } from "@/lib/ia/pedido-plano";
 import { planoGuiadoPendente, montarPerguntaPlano } from "./plano-guiado";
 import {
-  rotinaGuiadaPendente,
-  montarPerguntaRotina,
-  processarRelatoRotina,
+  rotinaConversaPendente,
+  conduzirRotina,
   pedeRotina,
 } from "./rotina-guiada";
 import { classificarAreasDiario } from "@/lib/ia/classificar-area";
@@ -775,7 +774,7 @@ export async function processInbound(
   // 1c. Fluxo guiado de plano: já perguntamos "como está hoje?" e este inbound é
   // o relato? (calcular ANTES de persistir o inbound atual, como o de fim de semana).
   const planoGuiado = await planoGuiadoPendente(supabase, family.id, inbound.recebidaEm);
-  const rotinaGuiada = await rotinaGuiadaPendente(supabase, family.id, inbound.recebidaEm);
+  const rotinaConversa = await rotinaConversaPendente(supabase, family.id, inbound.recebidaEm);
 
   // 2. Persiste inbound — E usa como TRAVA DE IDEMPOTÊNCIA. A Z-API entrega o
   // mesmo webhook mais de uma vez (at-least-once); o índice único em
@@ -881,52 +880,31 @@ export async function processInbound(
     }
   }
 
-  // 3c-rotina. Fluxo GUIADO de ROTINA (antes do plano — pedido mais específico).
-  // (a) Já mandamos o esquema e ESTE inbound é o preenchimento → organiza a semana.
-  if (rotinaGuiada) {
+  // 3c-rotina. Fluxo CONDUZIDO de ROTINA (antes do plano — pedido mais específico).
+  // A Ayla conduz a conversa (escopo dia×semana → sequência → transições → tema)
+  // e, quando tem o suficiente, monta + manda PDF + link. Enquanto não, faz a
+  // próxima pergunta (tipo="rotina_conversa"). Estado inferido do histórico.
+  if (rotinaConversa || pedeRotina(inbound.texto)) {
     const ctxR = await loadFamiliaParaEnvio(supabase, family.id);
-    const membroId = rotinaGuiada.membroId ?? ctxR?.membros[0]?.id ?? null;
+    const membroId = rotinaConversa?.membroId ?? ctxR?.membros[0]?.id ?? null;
     if (ctxR && membroId) {
-      const msg = await processarRelatoRotina(supabase, {
+      const r = await conduzirRotina(supabase, {
         familyId: family.id,
         membroAtipicoId: membroId,
         contexto: inbound.texto,
         phoneE164: ctxR.whatsapp_e164,
       });
-      if (msg) {
+      if (r) {
         const resp = await enviarEPersistir(supabase, {
           family_account_id: family.id,
           membro_atipico_id: membroId,
           phone: ctxR.whatsapp_e164,
-          texto: msg,
+          texto: r.mensagem,
           category: "reativa",
-          tipo: "resposta_registro",
+          tipo: r.pronto ? "resposta_registro" : "rotina_conversa",
         });
         return { tratada: true, familia: family.id, resposta: resp };
       }
-    }
-  }
-  // (b) Pediu uma ROTINA agora → manda o esquema pra preencher + o link DIRETO da
-  //     tabela da semana (quem preferir monta na tela, arrastando as tarefas).
-  if (pedeRotina(inbound.texto)) {
-    const ctxR = await loadFamiliaParaEnvio(supabase, family.id);
-    if (ctxR) {
-      const link = await gerarMagicLink(supabase, {
-        familyId: family.id,
-        next: "/ludico/rotinas/semana",
-      });
-      const texto =
-        montarPerguntaRotina() +
-        (link ? `\n\nOu, se preferir montar direto na tela (a tabela da semana), é só abrir aqui:\n${link}` : "");
-      const resp = await enviarEPersistir(supabase, {
-        family_account_id: family.id,
-        membro_atipico_id: ctxR.membros[0]?.id ?? null,
-        phone: inbound.phoneE164,
-        texto,
-        category: "reativa",
-        tipo: "rotina_pergunta",
-      });
-      return { tratada: true, familia: family.id, resposta: resp };
     }
   }
 

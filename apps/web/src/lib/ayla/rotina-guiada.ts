@@ -3,10 +3,9 @@ import { getAylaAnthropicClient, AYLA_MODEL } from "./anthropic";
 import { gerarMagicLink } from "./ponte";
 import { idadeAnos } from "@/lib/idade";
 import {
-  SYSTEM_ROTINA,
-  montarUserPromptRotina,
-  parseProposta,
   DIAS_LABEL,
+  extrairJsonRotina,
+  sanitizarRotinas,
   type RotinaProposta,
 } from "@/lib/ludico/rotina-ia-core";
 import { rotinaParaPdf } from "@/lib/ludico/rotina-pdf";
@@ -30,7 +29,8 @@ export function pedeRotina(texto: string | null | undefined): boolean {
   );
 }
 
-export async function rotinaGuiadaPendente(
+/** Há uma conversa de rotina em andamento? (último outbound tipo=rotina_conversa sem resposta ainda) */
+export async function rotinaConversaPendente(
   supabase: SupabaseClient,
   familyId: string,
   agora: Date,
@@ -40,7 +40,7 @@ export async function rotinaGuiadaPendente(
     .from("ayla_messages")
     .select("created_at, membro_atipico_id")
     .eq("family_account_id", familyId)
-    .eq("tipo", "rotina_pergunta")
+    .eq("tipo", "rotina_conversa")
     .eq("direcao", "outbound")
     .gte("created_at", limite.toISOString())
     .order("created_at", { ascending: false })
@@ -60,26 +60,43 @@ export async function rotinaGuiadaPendente(
   return { membroId: (p.membro_atipico_id as string | null) ?? null };
 }
 
-/** Convite quando a pessoa pede rotina mas NÃO deu detalhe ainda. */
-export function montarPerguntaRotina(): string {
-  return `Boa, deixa comigo! 🌿 Me conta como são os dias dela — do jeito que você souber, pode ser tudo solto de uma vez (horário de acordar, escola, atividades da tarde/noite, o que se repete todo dia, hora de dormir). Eu organizo a semana pra você. Se ela muda por época (férias, aula…), me diz qual você quer primeiro.`;
+/** Interesses conhecidos da criança (pra a Ayla PROPOR um tema). Best-effort. */
+async function carregarInteresses(supabase: SupabaseClient, membroId: string): Promise<string | null> {
+  try {
+    const { data } = await supabase
+      .from("perfil_vivo_membro")
+      .select("categorias_extras")
+      .eq("membro_atipico_id", membroId)
+      .maybeSingle();
+    const ce = (data?.categorias_extras ?? {}) as Record<string, unknown>;
+    const cand =
+      (ce?.como_e as Record<string, unknown> | undefined)?.interesses ??
+      (ce?.preferencias as Record<string, unknown> | undefined)?.temas ??
+      null;
+    const parts: string[] = [];
+    if (Array.isArray(cand)) parts.push(...cand.map((x) => String(x)));
+    else if (typeof cand === "string") parts.push(cand);
+    return parts.length ? parts.slice(0, 8).join(", ") : null;
+  } catch {
+    return null;
+  }
 }
 
-/**
- * A mensagem já traz DETALHE suficiente pra montar (horários, dias, ou várias
- * atividades)? Se sim, a Ayla constrói na hora em vez de mandar o esquema.
- */
-export function temDetalheRotina(texto: string | null | undefined): boolean {
-  const t = (texto ?? "").toLowerCase();
-  const temHora = /\b\d{1,2}\s*h\b|\b\d{1,2}\s*:\s*\d{2}\b/.test(t);
-  const temDia = /(segunda|ter[çc]a|quarta|quinta|sexta|s[áa]bado|domingo)/.test(t);
-  const atividades = (
-    t.match(
-      /(acorda|escola|aula|almo[çc]|jantar|café|cafe|lanche|terapia|v[ôo]lei|esporte|treino|estudo|tarefa|skincare|celular|dormir|curso|teclado|culto|pomodoro|banho|remédio|remedio)/g,
-    ) ?? []
-  ).length;
-  return temHora || temDia || atividades >= 2;
-}
+const SYSTEM_CONDUZIR = `Você é a Ayla conduzindo, no WhatsApp, a montagem de uma ROTINA VISUAL com uma mãe/pai. Conduza de forma NATURAL e ESTRATÉGICA — a pessoa deve escrever o MÍNIMO possível.
+
+Devolva SEMPRE APENAS JSON, sem texto fora dele:
+{"mensagem":"sua próxima fala (WhatsApp, curta e calorosa)","pronto":false,"tema":null,"rotinas":[]}
+
+Conduza nesta ordem, mas com naturalidade — PULE o que já estiver claro na conversa:
+1. ESCOPO: se ainda não sabe, pergunte se é pra um DIA ESPECÍFICO (ex.: "dia com a vovó", "dia do dentista") ou a ROTINA DA SEMANA. Lembre que pode responder por ÁUDIO. (pronto:false)
+2. SEQUÊNCIA: peça como é o dia, na ordem. Se já mandaram uma lista, use-a. Para um dia específico, dê o NOME que a pessoa usou ("Dia com a vovó") — NUNCA "Segunda", a menos que seja mesmo um dia da semana. Para a semana, vá UM DIA POR VEZ ("bora pela segunda… a terça é parecida?").
+3. TRANSIÇÕES (o pulo do gato — o valor Kolo): identifique 1-2 passagens que costumam pesar (banho, SAIR de um lugar gostoso tipo zoológico/parque, dormir, ir pra escola) e pergunte se são tranquilas. Se não forem, ofereça encaixar uma atividade que ele GOSTA logo antes ou depois pra suavizar. No MÁXIMO 1-2 perguntas — não interrogue.
+4. TEMA: proponha um tema PROATIVAMENTE a partir dos INTERESSES conhecidos (ex.: "quer no tema de dinossauros, que ele ama?"). Se não souber, sugira 1-2 opções (carros, princesas…) ou deixar sem. Opcional.
+5. QUANDO TIVER O SUFICIENTE (sequência boa + transições consideradas + tema perguntado): pronto:true e preencha "tema" e "rotinas".
+
+Formato de rotinas: [{"nome":"Dia com a vovó","dia_semana":null,"tarefas":[{"texto":"acordar","hora":null}]}]. dia_semana: 0=Seg..6=Dom, ou null pra dia avulso/nomeado. HORÁRIO SEMPRE OPCIONAL (null se não deram; NUNCA invente).
+
+Tom: quente, curto, humano — NUNCA formulário. UMA pergunta por vez. CONVIRJA: se a pessoa já deu a sequência, faça no máximo 1 pergunta de transição + o tema e então monte (pronto:true). Sempre que pedir algo mais longo, lembre que pode mandar ÁUDIO.`;
 
 /** Cria/reusa uma rotina (por nome+dia), aplica o tema e grava as tarefas. */
 async function aplicarRotina(
@@ -163,14 +180,15 @@ async function entregarPdfDaRotina(
 }
 
 /**
- * Lê o relato da rotina (juntando os últimos balões da mãe), MONTA a semana com o
- * MESMO cérebro do app (rotina-ia-core) e cria as rotinas + tarefas. Devolve a
- * mensagem com o link da tabela da semana. Null se não deu.
+ * CONDUZ a conversa de rotina (natural, estratégica, um passo por vez). A IA
+ * decide a próxima fala e, quando tem o suficiente, MONTA — aí a gente cria as
+ * rotinas + aplica o tema + manda o PDF, e devolve a mensagem final com o link.
+ * Enquanto não está pronto, devolve só a próxima pergunta (pronto=false).
  */
-export async function processarRelatoRotina(
+export async function conduzirRotina(
   supabase: SupabaseClient,
   params: { familyId: string; membroAtipicoId: string; contexto: string; phoneE164?: string | null },
-): Promise<string | null> {
+): Promise<{ mensagem: string; pronto: boolean } | null> {
   try {
     if (!params.contexto.trim()) return null;
 
@@ -183,60 +201,68 @@ export async function processarRelatoRotina(
     const familyId = (membro.family_account_id as string) ?? params.familyId;
     const nome = (membro.nome as string) ?? "seu filho";
     const idade = idadeAnos((membro.data_nascimento as string | null) ?? null);
+    const interesses = await carregarInteresses(supabase, params.membroAtipicoId);
 
-    // O brief costuma vir em vários balões — junta os inbounds recentes (20 min).
-    const desde = new Date(Date.now() - 20 * 60 * 1000).toISOString();
-    const { data: recentes } = await supabase
+    // Conversa desta sessão (ambas as direções, últimos 60 min) — pra a IA saber
+    // o que já perguntou e o que a mãe já respondeu.
+    const desde = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+    const { data: msgs } = await supabase
       .from("ayla_messages")
-      .select("texto, created_at")
+      .select("texto, direcao, created_at")
       .eq("family_account_id", familyId)
-      .eq("direcao", "inbound")
       .gte("created_at", desde)
       .order("created_at", { ascending: true })
-      .limit(10);
-    const historico: Array<{ de: "mae"; texto: string }> = [];
-    const vistos = new Set<string>();
-    for (const m of recentes ?? []) {
-      const t = ((m.texto as string) ?? "").trim();
-      if (t && !vistos.has(t)) {
-        vistos.add(t);
-        historico.push({ de: "mae", texto: t });
-      }
+      .limit(24);
+    const historico = (msgs ?? [])
+      .map((m) => ({
+        de: (m.direcao === "inbound" ? "mae" : "kolo") as "mae" | "kolo",
+        texto: ((m.texto as string) ?? "").trim(),
+      }))
+      .filter((h) => h.texto);
+    if (!historico.some((h) => h.de === "mae" && h.texto === params.contexto.trim())) {
+      historico.push({ de: "mae", texto: params.contexto.trim() });
     }
-    if (!vistos.has(params.contexto.trim())) historico.push({ de: "mae", texto: params.contexto.trim() });
+
+    const userPrompt = [
+      `CRIANÇA/ADOLESCENTE/ADULTO: ${nome}${idade != null ? ` (${idade} anos)` : ""}.`,
+      interesses ? `INTERESSES CONHECIDOS (pra propor tema): ${interesses}` : "",
+      "CONVERSA (a última fala da mãe é o pedido atual):\n" +
+        historico.map((h) => `${h.de === "mae" ? "Mãe" : "Kolo"}: ${h.texto}`).join("\n"),
+    ]
+      .filter(Boolean)
+      .join("\n\n");
 
     const client = getAylaAnthropicClient();
     const resp = await client.messages.create({
       model: AYLA_MODEL,
-      max_tokens: 2200,
-      system: SYSTEM_ROTINA,
-      messages: [{ role: "user", content: montarUserPromptRotina({ nome, idade, historico }) }],
+      max_tokens: 1600,
+      system: SYSTEM_CONDUZIR,
+      messages: [{ role: "user", content: userPrompt }],
     });
     const b = resp.content[0];
     const raw = b?.type === "text" ? b.text : "";
-    const { rotinas, tema } = parseProposta(raw);
-    if (!rotinas.length) return null;
+    const parsed = extrairJsonRotina(raw) as
+      | { mensagem?: string; pronto?: boolean; tema?: string | null; rotinas?: unknown }
+      | null;
 
-    for (const r of rotinas) await aplicarRotina(supabase, familyId, params.membroAtipicoId, r, tema);
+    let mensagem = (typeof parsed?.mensagem === "string" && parsed.mensagem.trim()) || "";
+    const pronto = parsed?.pronto === true;
+    const tema = typeof parsed?.tema === "string" && parsed.tema.trim() ? parsed.tema.trim().slice(0, 40) : null;
+    const rotinas = sanitizarRotinas(parsed?.rotinas);
 
-    // PDF pra imprimir (barato, sem imagem) — vem pronto no WhatsApp.
-    if (params.phoneE164) {
-      await entregarPdfDaRotina(supabase, {
-        familyId,
-        phoneE164: params.phoneE164,
-        nome,
-        tema,
-        rotinas,
-      });
+    if (pronto && rotinas.length) {
+      for (const r of rotinas) await aplicarRotina(supabase, familyId, params.membroAtipicoId, r, tema);
+      if (params.phoneE164) {
+        await entregarPdfDaRotina(supabase, { familyId, phoneE164: params.phoneE164, nome, tema, rotinas });
+      }
+      const link = await gerarMagicLink(supabase, { familyId, next: "/ludico/rotinas/semana" });
+      const fechamento = mensagem || `Prontinho — montei a rotina do(a) ${nome} 🌿`;
+      const orient = ` Te mandei um *PDF pra imprimir* (com quadradinhos pra marcar). No app dá pra ajustar e gerar os cartões ilustrados${tema ? ` no tema *${tema}*` : ""}.`;
+      mensagem = link ? `${fechamento}${orient}\n\nAbre aqui (já entra direto):\n${link}` : `${fechamento}${orient}`;
     }
 
-    const link = await gerarMagicLink(supabase, { familyId, next: "/ludico/rotinas/semana" });
-    const temaFrase = tema
-      ? ` Já deixei no tema *${tema}* — quando abrir, é só tocar em "Gerar cartões".`
-      : " Se quiser um tema pros cartões (ex.: futebol, princesas…), me fala que eu aplico.";
-    const base = `Prontinho — organizei a rotina do(a) ${nome} pra você 🌿${temaFrase} Te mandei também um *PDF pra imprimir* e colar na parede (com quadradinhos pra marcar).`;
-    if (!link) return base;
-    return `${base}\n\nPra ver e ajustar no app (já entra direto):\n${link}`;
+    if (!mensagem) return null;
+    return { mensagem, pronto: pronto && rotinas.length > 0 };
   } catch (e) {
     console.warn("[ayla:rotina-guiada] falha:", e instanceof Error ? e.message : e);
     return null;
