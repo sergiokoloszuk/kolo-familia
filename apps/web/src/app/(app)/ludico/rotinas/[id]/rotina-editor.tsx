@@ -93,6 +93,27 @@ function StepBadge({ n }: { n: number }) {
   );
 }
 
+/** Cartão de espera (geração dos cartões) — moldura amarela, animado, "não travou". */
+function CardGerando() {
+  return (
+    <div className="flex flex-col items-center gap-3 rounded-2xl border-2 border-brand-yellow/60 bg-brand-yellow/[0.1] px-4 py-8 text-center shadow-[0_4px_20px_rgba(230,180,40,0.15)] print:hidden">
+      <span className="animate-bounce text-4xl" aria-hidden>
+        ⏳
+      </span>
+      <p className="font-heading text-lg text-brand-purple-dark">Gerando os cartões ilustrados…</p>
+      <div className="flex gap-1.5" aria-hidden>
+        <span className="size-2 animate-bounce rounded-full bg-brand-yellow" style={{ animationDelay: "0ms" }} />
+        <span className="size-2 animate-bounce rounded-full bg-brand-purple/60" style={{ animationDelay: "150ms" }} />
+        <span className="size-2 animate-bounce rounded-full bg-brand-yellow" style={{ animationDelay: "300ms" }} />
+      </div>
+      <p className="max-w-sm text-sm text-muted-foreground">
+        Leva ~1 a 2 minutos. Pode deixar esta tela aberta — ela atualiza sozinha quando ficar pronto.{" "}
+        <strong className="text-foreground">Não travou 🙂</strong>
+      </p>
+    </div>
+  );
+}
+
 type Tarefa = {
   id: string;
   texto: string;
@@ -333,29 +354,7 @@ export function RotinaEditor({
             onAddVarios={adicionarVarios}
           />
 
-          {visual && cardsStatus === "gerando" && (
-            <div className="flex flex-col items-center gap-3 rounded-2xl border-2 border-brand-yellow/60 bg-brand-yellow/[0.1] px-4 py-8 text-center shadow-[0_4px_20px_rgba(230,180,40,0.15)]">
-              <span className="animate-bounce text-4xl" aria-hidden>
-                ⏳
-              </span>
-              <p className="font-heading text-lg text-brand-purple-dark">Gerando os cartões ilustrados…</p>
-              <div className="flex gap-1.5" aria-hidden>
-                <span className="size-2 animate-bounce rounded-full bg-brand-yellow" style={{ animationDelay: "0ms" }} />
-                <span
-                  className="size-2 animate-bounce rounded-full bg-brand-purple/60"
-                  style={{ animationDelay: "150ms" }}
-                />
-                <span
-                  className="size-2 animate-bounce rounded-full bg-brand-yellow"
-                  style={{ animationDelay: "300ms" }}
-                />
-              </div>
-              <p className="max-w-sm text-sm text-muted-foreground">
-                Leva ~1 a 2 minutos. Pode deixar esta tela aberta — ela atualiza sozinha quando ficar
-                pronto. <strong className="text-foreground">Não travou 🙂</strong>
-              </p>
-            </div>
-          )}
+          {visual && cardsStatus === "gerando" && <CardGerando />}
           {visual && cardsStatus !== "gerando" && (
             <GerarCards
               rotinaId={rotinaId}
@@ -377,24 +376,38 @@ export function RotinaEditor({
           )}
         </>
       ) : (
-        <div className="flex flex-wrap items-center gap-3 print:hidden">
-          <button
-            type="button"
-            onClick={() => setEditando(true)}
-            className="inline-flex items-center gap-1.5 rounded-full border border-brand-purple/30 px-4 py-2 text-sm font-semibold text-brand-purple transition-colors hover:bg-brand-purple/5"
-          >
-            ✏️ Editar
-          </button>
-          {diaSemana != null && (
+        <>
+          {/* Espera sempre visível; e o "Gerar cartões" aparece aqui quando ainda
+              não há cartões (senão ele ficaria escondido atrás de "Editar"). */}
+          {visual && cardsStatus === "gerando" && <CardGerando />}
+          {visual && (cardsStatus === "nenhum" || cardsStatus === "erro") && (
+            <GerarCards
+              rotinaId={rotinaId}
+              temaInicial={tema}
+              jaTem={false}
+              nomeMembro={nomeMembro}
+              avatares={avatares}
+            />
+          )}
+          <div className="flex flex-wrap items-center gap-3 print:hidden">
             <button
               type="button"
-              onClick={irProximoDia}
-              className="inline-flex items-center gap-1.5 rounded-full bg-brand-purple px-5 py-2 text-sm font-semibold text-white transition-colors hover:bg-brand-purple-dark"
+              onClick={() => setEditando(true)}
+              className="inline-flex items-center gap-1.5 rounded-full border border-brand-purple/30 px-4 py-2 text-sm font-semibold text-brand-purple transition-colors hover:bg-brand-purple/5"
             >
-              {proximoDia != null ? `Montar ${DIAS_FULL[proximoDia]}` : "Ver a semana"} →
+              ✏️ Editar
             </button>
-          )}
-        </div>
+            {diaSemana != null && (
+              <button
+                type="button"
+                onClick={irProximoDia}
+                className="inline-flex items-center gap-1.5 rounded-full bg-brand-purple px-5 py-2 text-sm font-semibold text-white transition-colors hover:bg-brand-purple-dark"
+              >
+                {proximoDia != null ? `Montar ${DIAS_FULL[proximoDia]}` : "Ver a semana"} →
+              </button>
+            )}
+          </div>
+        </>
       )}
 
       <p className="text-xs text-muted-foreground print:hidden">

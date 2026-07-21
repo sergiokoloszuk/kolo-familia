@@ -92,7 +92,7 @@ Conduza nesta ordem, mas com naturalidade — PULE o que já estiver claro na co
 2. SEQUÊNCIA: peça como é o dia, na ordem. Se já mandaram uma lista, use-a. Para um dia específico, dê o NOME que a pessoa usou ("Dia com a vovó") — NUNCA "Segunda", a menos que seja mesmo um dia da semana. Para a semana, vá UM DIA POR VEZ ("bora pela segunda… a terça é parecida?").
 3. TRANSIÇÕES (o pulo do gato — o valor Kolo): identifique 1-2 passagens que costumam pesar (banho, SAIR de um lugar gostoso tipo zoológico/parque, dormir, ir pra escola) e pergunte se são tranquilas. Se não forem, ofereça encaixar uma atividade que ele GOSTA logo antes ou depois pra suavizar. No MÁXIMO 1-2 perguntas — não interrogue.
 4. TEMA: proponha um tema PROATIVAMENTE a partir dos INTERESSES conhecidos (ex.: "quer no tema de dinossauros, que ele ama?"). Se não souber, sugira 1-2 opções (carros, princesas…) ou deixar sem. Opcional.
-5. QUANDO TIVER O SUFICIENTE (sequência boa + transições consideradas + tema perguntado): pronto:true e preencha "tema" e "rotinas".
+5. QUANDO TIVER O SUFICIENTE (sequência boa + transições consideradas + tema perguntado): pronto:true e preencha "tema" e "rotinas". A "mensagem" nesse caso é só uma confirmação CURTA e calorosa (ex.: "Prontinho, montei o Dia do Circo! 🎪"). NÃO prometa "vou gerar os cartões", nem diga que vai mandar link/PDF — o sistema completa a mensagem com o PDF e o link automaticamente.
 
 Formato de rotinas: [{"nome":"Dia com a vovó","dia_semana":null,"tarefas":[{"texto":"acordar","hora":null}]}]. dia_semana: 0=Seg..6=Dom, ou null pra dia avulso/nomeado. HORÁRIO SEMPRE OPCIONAL (null se não deram; NUNCA invente).
 
@@ -105,7 +105,7 @@ async function aplicarRotina(
   membroAtipicoId: string,
   r: RotinaProposta,
   tema: string | null,
-): Promise<void> {
+): Promise<string | undefined> {
   const nome = r.nome.trim() || "Rotina";
   let q = supabase
     .from("rotinas")
@@ -133,7 +133,7 @@ async function aplicarRotina(
     // tema mudou → cartões (temáticos) precisam ser regerados
     await supabase.from("rotinas").update({ tema, cards_status: "nenhum" }).eq("id", rotinaId);
   }
-  if (!rotinaId) return;
+  if (!rotinaId) return undefined;
   await supabase.from("rotina_tarefas").delete().eq("rotina_id", rotinaId);
   const rows = r.tarefas.slice(0, 25).map((t, i) => ({
     rotina_id: rotinaId,
@@ -143,6 +143,7 @@ async function aplicarRotina(
     ordem: i,
   }));
   if (rows.length) await supabase.from("rotina_tarefas").insert(rows);
+  return rotinaId;
 }
 
 /** Gera o PDF da rotina, sobe no Storage e manda como documento. Silencioso. */
@@ -251,13 +252,27 @@ export async function conduzirRotina(
     const rotinas = sanitizarRotinas(parsed?.rotinas);
 
     if (pronto && rotinas.length) {
-      for (const r of rotinas) await aplicarRotina(supabase, familyId, params.membroAtipicoId, r, tema);
+      const ids: string[] = [];
+      for (const r of rotinas) {
+        const id = await aplicarRotina(supabase, familyId, params.membroAtipicoId, r, tema);
+        if (id) ids.push(id);
+      }
       if (params.phoneE164) {
         await entregarPdfDaRotina(supabase, { familyId, phoneE164: params.phoneE164, nome, tema, rotinas });
       }
-      const link = await gerarMagicLink(supabase, { familyId, next: "/ludico/rotinas/semana" });
+      // Destino do link: rotina de DIA DA SEMANA → tabela da semana; UM dia avulso
+      // ("Dia do circo") → aquela rotina; vários avulsos → a lista de rotinas.
+      const temSemana = rotinas.some((r) => r.dia_semana != null);
+      const next = temSemana
+        ? "/ludico/rotinas/semana"
+        : ids.length === 1
+          ? `/ludico/rotinas/${ids[0]}`
+          : "/ludico/rotinas";
+      const link = await gerarMagicLink(supabase, { familyId, next });
       const fechamento = mensagem || `Prontinho — montei a rotina do(a) ${nome} 🌿`;
-      const orient = ` Te mandei um *PDF pra imprimir* (com quadradinhos pra marcar). No app dá pra ajustar e gerar os cartões ilustrados${tema ? ` no tema *${tema}*` : ""}.`;
+      const orient = ` Te mandei um *PDF pra imprimir* (com quadradinhos pra marcar). No app dá pra ajustar${
+        tema ? ` e gerar os cartões no tema *${tema}*` : " e gerar os cartões ilustrados"
+      }.`;
       mensagem = link ? `${fechamento}${orient}\n\nAbre aqui (já entra direto):\n${link}` : `${fechamento}${orient}`;
     }
 
