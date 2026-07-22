@@ -786,6 +786,25 @@ async function aylaServicoLiberado(supabase: SupabaseClient, familyId: string): 
   return assinaturaLiberada(sub);
 }
 
+/**
+ * Qual criança a conversa está tratando AGORA (famílias 2+). Pega o último
+ * membro identificado nas mensagens recentes (2h) — pra o plano/rotina não
+ * cair no `membros[0]` e trocar de filho no meio (bug Manu→Mario). Null = sem
+ * pista recente (aí o handler usa o default).
+ */
+async function criancaDaConversa(supabase: SupabaseClient, familyId: string): Promise<string | null> {
+  const desde = new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString();
+  const { data } = await supabase
+    .from("ayla_messages")
+    .select("membro_atipico_id")
+    .eq("family_account_id", familyId)
+    .not("membro_atipico_id", "is", null)
+    .gte("created_at", desde)
+    .order("created_at", { ascending: false })
+    .limit(1);
+  return (data?.[0]?.membro_atipico_id as string | null) ?? null;
+}
+
 /** Já convidou essa família pra assinar nas últimas 12h? (dedup do convite) */
 async function convidouAssinarRecente(supabase: SupabaseClient, familyId: string): Promise<boolean> {
   const desde = new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString();
@@ -1034,12 +1053,16 @@ export async function processInbound(
   // estado `rotinaConversa` conduz).
   const intent = rotinaConversa ? "outro" : await classificarIntencao({ texto: inbound.texto });
 
+  // Criança que a conversa trata AGORA (2+ filhos) — pra rotina/plano seguirem
+  // o filho certo e não caírem no membros[0] (bug Manu→Mario).
+  const membroConversa = await criancaDaConversa(supabase, family.id);
+
   // 3c-rotina-ver. "Traga a rotina de hoje/terça" — só quando NÃO está montando
   // uma agora (senão o pedido é parte da conversa). Acha o dia, gera se faltar e
   // manda o link certo.
   if (!rotinaConversa && (intent === "rotina_ver" || pedeRotinaDeUmDia(inbound.texto))) {
     const ctxR = await loadFamiliaParaEnvio(supabase, family.id);
-    const membroId = ctxR?.membros[0]?.id ?? null;
+    const membroId = membroConversa ?? ctxR?.membros[0]?.id ?? null;
     if (ctxR && membroId) {
       const msg = await pedirRotinaDoDia(supabase, {
         familyId: family.id,
@@ -1065,7 +1088,7 @@ export async function processInbound(
   // de hoje" → ajusta a rotina existente (só quando NÃO está montando uma agora).
   if (!rotinaConversa && (intent === "rotina_editar" || pedeEditarRotina(inbound.texto))) {
     const ctxR = await loadFamiliaParaEnvio(supabase, family.id);
-    const membroId = ctxR?.membros[0]?.id ?? null;
+    const membroId = membroConversa ?? ctxR?.membros[0]?.id ?? null;
     if (ctxR && membroId) {
       const msg = await editarRotina(supabase, {
         familyId: family.id,
@@ -1094,7 +1117,7 @@ export async function processInbound(
   // próxima pergunta (tipo="rotina_conversa"). Estado inferido do histórico.
   if (rotinaConversa || intent === "rotina_criar" || pedeRotina(inbound.texto)) {
     const ctxR = await loadFamiliaParaEnvio(supabase, family.id);
-    const membroId = rotinaConversa?.membroId ?? ctxR?.membros[0]?.id ?? null;
+    const membroId = rotinaConversa?.membroId ?? membroConversa ?? ctxR?.membros[0]?.id ?? null;
     if (ctxR && membroId) {
       const r = await conduzirRotina(supabase, {
         familyId: family.id,
@@ -1122,7 +1145,7 @@ export async function processInbound(
   if (planoGuiado) {
     const ctxP = await loadFamiliaParaEnvio(supabase, family.id);
     if (ctxP) {
-      const membroId = planoGuiado.membroId ?? ctxP.membros[0]?.id ?? null;
+      const membroId = planoGuiado.membroId ?? membroConversa ?? ctxP.membros[0]?.id ?? null;
       const nomeMembro = membroId
         ? (ctxP.membros.find((m) => m.id === membroId)?.nome ?? null)
         : null;
@@ -1151,7 +1174,7 @@ export async function processInbound(
   if (intent === "plano" || pedeUmPlano(inbound.texto)) {
     const ctxP = await loadFamiliaParaEnvio(supabase, family.id);
     if (ctxP) {
-      const membroId = ctxP.membros[0]?.id ?? null;
+      const membroId = membroConversa ?? ctxP.membros[0]?.id ?? null;
       const nomeMembro = membroId
         ? (ctxP.membros.find((m) => m.id === membroId)?.nome ?? null)
         : null;
