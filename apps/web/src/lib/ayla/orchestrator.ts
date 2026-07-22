@@ -49,6 +49,7 @@ import {
   editarRotina,
 } from "./rotina-guiada";
 import { classificarIntencao } from "./intent";
+import { assinaturaLiberada } from "@/lib/auth/assinatura";
 import { classificarAreasDiario } from "@/lib/ia/classificar-area";
 import type { AylaTipoProativa, AylaTipoReativa, ParserResult } from "./types";
 
@@ -758,6 +759,47 @@ function pareceCrianca(texto: string | null | undefined): boolean {
   );
 }
 
+/**
+ * A Ayla reativa só entrega o SERVIÇO pra trial-válido / assinante / admin —
+ * igual à web (requireActiveWrite). Admin/staff (controle_acessos.ativo) nunca
+ * é bloqueado. Expirado recebe um convite gentil pra assinar (não o serviço).
+ */
+async function aylaServicoLiberado(supabase: SupabaseClient, familyId: string): Promise<boolean> {
+  const { data: fam } = await supabase
+    .from("family_accounts")
+    .select("user_id")
+    .eq("id", familyId)
+    .maybeSingle();
+  if (fam?.user_id) {
+    const { data: acesso } = await supabase
+      .from("controle_acessos")
+      .select("ativo")
+      .eq("user_id", fam.user_id as string)
+      .maybeSingle();
+    if (acesso?.ativo) return true;
+  }
+  const { data: sub } = await supabase
+    .from("subscription_accesses")
+    .select("status, trial_ends_at, cortesia, cortesia_ate, pagamento_falhou_em")
+    .eq("family_account_id", familyId)
+    .maybeSingle();
+  return assinaturaLiberada(sub);
+}
+
+/** Já convidou essa família pra assinar nas últimas 12h? (dedup do convite) */
+async function convidouAssinarRecente(supabase: SupabaseClient, familyId: string): Promise<boolean> {
+  const desde = new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString();
+  const { data } = await supabase
+    .from("ayla_messages")
+    .select("id")
+    .eq("family_account_id", familyId)
+    .eq("direcao", "outbound")
+    .eq("tipo", "assinatura_nudge")
+    .gte("created_at", desde)
+    .limit(1);
+  return (data?.length ?? 0) > 0;
+}
+
 /** Avisa a admin (WhatsApp) que um número parece errado/criança, com o número e
  * o link pro Admin. Dedup: no máx 1 alerta por família a cada 24h. */
 async function alertarNaoTitular(
@@ -957,6 +999,32 @@ export async function processInbound(
       }
       // Falhou gerar → cai no fluxo normal (a Ayla ainda responde algo).
     }
+  }
+
+  // 2b. ASSINATURA: a Ayla reativa só entrega o serviço pra trial-válido /
+  // assinante / admin — igual à web. Expirado (não-admin) recebe um convite pra
+  // assinar (magic link) em vez do serviço. NUNCA fica em silêncio: a 1ª vez é o
+  // convite completo; se já convidou nas últimas 12h, manda um lembrete CURTO
+  // (não spamma, mas não deixa no vácuo). Comandos (sair/pausar) seguem acima.
+  if (!(await aylaServicoLiberado(supabase, family.id))) {
+    const ctxA = await loadFamiliaParaEnvio(supabase, family.id);
+    if (ctxA) {
+      const link = await gerarMagicLink(supabase, { familyId: family.id, next: "/assinatura" });
+      const jaConvidou = await convidouAssinarRecente(supabase, family.id);
+      const texto = jaConvidou
+        ? `🌿 Pra gente continuar, é só assinar aqui:\n${link}`
+        : `Oi, ${ctxA.nomeMae}! Eu adoraria seguir te ajudando 🌿 Mas seu período grátis acabou. Pra a gente continuar — estratégias, rotina, tudo o que você já conhece — é só assinar aqui:\n${link}\n\nO que você me contou fica tudo guardado. 💛`;
+      const resp = await enviarEPersistir(supabase, {
+        family_account_id: family.id,
+        membro_atipico_id: null,
+        phone: ctxA.whatsapp_e164,
+        texto,
+        category: "reativa",
+        tipo: "assinatura_nudge",
+      });
+      return { tratada: true, familia: family.id, resposta: resp };
+    }
+    return { tratada: true, familia: family.id };
   }
 
   // INTENÇÃO por IA (entende o que a mãe quer, não só palavra-chave). Sinal
