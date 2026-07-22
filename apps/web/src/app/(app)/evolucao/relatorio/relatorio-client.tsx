@@ -142,6 +142,12 @@ export function RelatorioClient({
             </button>
           )}
         </div>
+
+        {pending && (
+          <p className="text-sm leading-relaxed text-muted-foreground">
+            Pode levar até um minuto — estou lendo o Perfil e escrevendo o relatório com cuidado. 🌿
+          </p>
+        )}
       </div>
 
       {markdown && (
