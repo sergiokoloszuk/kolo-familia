@@ -30,6 +30,20 @@ export class SubscriptionBlockedError extends Error {
 
 export async function requireActiveWrite(familyAccountId: string): Promise<void> {
   const supabase = await createClient();
+
+  // Admin/staff (founder testando, suporte) NUNCA é bloqueado por assinatura.
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (user) {
+    const { data: acesso } = await supabase
+      .from("controle_acessos")
+      .select("ativo")
+      .eq("user_id", user.id)
+      .maybeSingle();
+    if (acesso?.ativo) return;
+  }
+
   const { data } = await supabase
     .from("subscription_accesses")
     .select("status, trial_ends_at, cortesia, cortesia_ate, pagamento_falhou_em")

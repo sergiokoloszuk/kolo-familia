@@ -22,7 +22,7 @@ import {
   joinItens,
 } from "@/lib/kolo-vivo/subcampos";
 import { idadeAnos, hojeLocalISO } from "@/lib/idade";
-import { requireActiveWrite } from "@/lib/auth/require-active-write";
+import { requireActiveWrite, SubscriptionBlockedError } from "@/lib/auth/require-active-write";
 import { resolveFamily } from "@/lib/auth/current-family";
 
 /**
@@ -137,10 +137,18 @@ const criarConversaSchema = z.object({
 
 export async function criarConversa(
   input: z.infer<typeof criarConversaSchema>,
-): Promise<{ conversaId: string }> {
+): Promise<{ conversaId: string } | { erro: string; assinatura?: boolean }> {
   const { membroAtipicoId, texto } = criarConversaSchema.parse(input);
   const { supabase, family } = await requireFamily();
-  await requireActiveWrite(family.id);
+  // Assinatura: em vez de dar throw (o Next MASCARA a mensagem de server action
+  // que sobe sem tratamento → vira "Server Components render error" genérico),
+  // devolvemos um sinal pra UI mostrar "quer assinar?" + botão pra /assinatura.
+  try {
+    await requireActiveWrite(family.id);
+  } catch (e) {
+    if (e instanceof SubscriptionBlockedError) return { erro: e.message, assinatura: true };
+    throw e;
+  }
 
   const { data: nova, error } = await supabase
     .from("conversas")

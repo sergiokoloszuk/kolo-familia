@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { PaywallAssine } from "@/components/paywall-assine";
 import { criarConversa } from "./actions";
 
 /**
@@ -23,6 +24,7 @@ export function ConversarForm({
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const [bloqueado, setBloqueado] = useState(false);
   const [membroId, setMembroId] = useState<string>(
     initialMembroId ?? membros[0]?.id ?? "",
   );
@@ -36,16 +38,23 @@ export function ConversarForm({
     setError(null);
     startTransition(async () => {
       try {
-        const { conversaId } = await criarConversa({
+        const res = await criarConversa({
           membroAtipicoId: membroId || null,
           texto,
         });
-        router.push(`/conversar/${conversaId}`);
+        if ("erro" in res) {
+          if (res.assinatura) setBloqueado(true);
+          else setError(res.erro);
+          return;
+        }
+        router.push(`/conversar/${res.conversaId}`);
       } catch (e) {
         setError(traduzirErro(e instanceof Error ? e.message : "Erro inesperado"));
       }
     });
   }
+
+  if (bloqueado) return <PaywallAssine />;
 
   return (
     <form
