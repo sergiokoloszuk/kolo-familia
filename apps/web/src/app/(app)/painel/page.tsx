@@ -155,7 +155,15 @@ function FocoChip({ label, tone }: { label: string; tone: ChipTone }) {
   );
 }
 
-export default async function PainelPage() {
+export default async function PainelPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ [k: string]: string | string[] | undefined }>;
+}) {
+  const sp = await searchParams;
+  // Preview da Home de boas-vindas em conta já engajada (?preview=boasvindas) —
+  // pra Karina/admin ver a experiência sem precisar de conta nova.
+  const previewBoasVindas = sp?.preview === "boasvindas";
   const { user, supabase, family } = await loadFamilyContext();
   const familyId = family!.id;
   const hoje = new Date();
@@ -325,9 +333,14 @@ export default async function PainelPage() {
   // um histórico que ainda não existe. Some sozinha no 1º registro (aí volta a
   // Home reflexiva abaixo). Preserva o registro inline e vende o WhatsApp.
   // ============================================================
-  if (ehRecemChegada) {
+  if (ehRecemChegada || previewBoasVindas) {
     return (
       <div className="flex flex-col gap-8">
+        {previewBoasVindas && (
+          <div className="rounded-2xl border border-brand-yellow/50 bg-brand-yellow/10 px-4 py-2.5 text-xs font-semibold text-brand-purple-dark">
+            👀 Prévia da Home de boas-vindas (só você vê, por causa do ?preview=boasvindas). O usuário real vê isso quando ainda não registrou nada.
+          </div>
+        )}
         <SubscriptionBanner status={subscription?.status} trialDaysLeft={trialDaysLeft} />
 
         {/* Hero de boas-vindas */}
