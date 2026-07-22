@@ -48,7 +48,7 @@ export function RelatorioClient({
   function imprimir() {
     const anterior = document.title;
     const limpo = nome.trim();
-    document.title = `Relatório Kolo Família${limpo ? ` — ${limpo}` : ""}`;
+    document.title = `Conhecendo ${limpo || "a criança"} — Guia Kolo Família`;
     const restaurar = () => {
       document.title = anterior;
       window.removeEventListener("afterprint", restaurar);
@@ -128,7 +128,7 @@ export function RelatorioClient({
               </>
             ) : (
               <>
-                <Sparkles className="size-4" aria-hidden /> {markdown ? "Gerar de novo" : "Gerar rascunho"}
+                <Sparkles className="size-4" aria-hidden /> {markdown ? "Gerar de novo" : "Gerar o guia"}
               </>
             )}
           </Button>
@@ -202,9 +202,11 @@ export function RelatorioClient({
           <article className="rounded-2xl border border-foreground/[0.08] bg-white px-8 py-10 shadow-[0_1px_2px_rgba(46,10,82,0.04),_0_8px_24px_rgba(46,10,82,0.05)] md:px-12 md:py-12 print:rounded-none print:border-0 print:px-0 print:py-0 print:shadow-none">
             <header className="mb-7 border-b-2 border-brand-purple/15 pb-5">
               <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-brand-purple">
-                Relatório {destinatario === "escola" ? "escolar" : "pra terapeuta"}
+                Guia {destinatario === "escola" ? "pra escola" : "pra terapeuta"}
               </p>
-              <h1 className="mt-2 font-heading text-3xl text-foreground md:text-4xl">{nome}</h1>
+              <h1 className="mt-2 font-heading text-3xl text-foreground md:text-4xl">
+                Conhecendo {nome}
+              </h1>
               {dataHoje && <p className="mt-1.5 text-sm text-muted-foreground">{dataHoje}</p>}
             </header>
             <RespostaMarkdown

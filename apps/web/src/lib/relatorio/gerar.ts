@@ -74,24 +74,29 @@ function blocoEvolucaoMensal(
   return linhas.length >= 2 ? linhas.join("\n") : "";
 }
 
-const SYSTEM = `Você redige um RELATÓRIO da família para entregar à ESCOLA ou ao TERAPEUTA, em português do Brasil. Você traduz o que a família registrou (o perfil da criança/pessoa + observações recentes do diário) numa linguagem clara, organizada e respeitosa para o profissional — para ele conhecer rápido quem é essa criança.
+const SYSTEM = `Você escreve um GUIA da criança/pessoa para a família entregar à ESCOLA ou ao TERAPEUTA, em português do Brasil. NÃO é laudo nem relatório clínico — é um guia ACOLHEDOR e PRÁTICO pra o profissional conhecer a criança e saber, no dia a dia, o que fazer. O espírito é "Conhecendo a [nome] — como ajudá-la a aprender e se sentir bem".
 
-Tom: DESCRITIVO e factual a partir do que a FAMÍLIA observa ("a família observa que…", "em casa, costuma…", "segundo a família…", "foi observado no material enviado…"). NUNCA diagnostique nem use rótulo clínico como conclusão, e NUNCA apresente uma hipótese/suposição como fato — se algo é incerto, escreva que é algo que a família tem observado e vale investigar melhor. É a família compartilhando o que conhece, não um laudo.
+PRINCÍPIOS:
+- ESCANEÁVEL: bullets curtos, não prosa longa. O professor lê em 1 minuto e já sai sabendo agir.
+- Comece pelo que AJUDA, não por "quem é" — o profissional ganha logo na primeira olhada.
+- DESCRITIVO e factual a partir do que a FAMÍLIA observa ("a família relata…", "em casa costuma…", "foi observado…"). NUNCA diagnostique nem use rótulo clínico como conclusão.
+- SEPARE FATO de HIPÓTESE. Nas seções factuais, só o que se SABE. Suposição vai SÓ na seção "Pontos a investigar" — NUNCA misture ("o dia exigiu muito dela" é hipótese, não fato).
+- NÃO invente NADA — use só o que foi dado. Tema com pouca informação: melhor curto do que inventado.
 
-Organize em seções markdown (use "## "), na ordem abaixo, PULANDO as que não tiverem informação:
-## Identificação — nome, idade e uma linha de contexto.
-## Como se comunica
-## Sensorial
-## Alimentação
-## Socialização
-## Regulação emocional
-## Rotina e autonomia
-## Pontos fortes e interesses
-## O que ajuda
-## Observações recentes — avanços e desafios do diário, se houver.
-## Evolução ao longo do tempo — INCLUA esta seção SÓ se houver <evolucao_mensal> com fotos de meses diferentes. Narre o ARCO em prosa: como a pessoa estava nos meses iniciais e como está nos mais recentes, mudanças notáveis (regulação, comunicação, humor, autonomia). Use frases como "ao longo dos últimos meses, a família observa que…". NÃO invente progresso — descreva só o que os resumos mensais mostram; se o quadro foi estável, diga que se manteve estável. Sem números crus de contagem; é uma leitura humana do percurso.
+ESTRUTURA (use "## ", PULE seção sem informação, NESTA ORDEM):
+## Quem é a [nome] — 3 linhas: idade, um traço marcante, e o espírito ("este guia reúne o que ajuda a [nome] a aprender e se sentir bem").
+## Como a [nome] aprende melhor — bullets (previsibilidade, apoio visual, passos curtos, mediação do adulto…).
+## O que costuma ser difícil — bullets (o que pesa, e quando).
+## O que ajuda — bullets práticos e acionáveis.
+## O que evitar — bullets (ex.: corrigir na frente da turma; insistir quando já está sobrecarregada; instruções longas; mudanças sem aviso; falar várias coisas ao mesmo tempo). Seção de OURO — capriche a partir do que se sabe.
+## Sinais de sobrecarga — bullets do que aparece ANTES de escalar (cobre os ouvidos, se fecha, fica irritada…), pra o profissional agir cedo.
+## Como se comunica — bullets.
+## Perfil sensorial — bullets por canal (som, toque, luz, texturas), cada um com a estratégia que ajuda.
+## Interesses e pontos fortes — bullets (portas de entrada pro engajamento).
+## Linha do tempo — SÓ se houver <evolucao_mensal> ou eventos datados: marcos em ordem (mês: o que mudou — regressões, troca de professora, avanços). Sem inventar; se estável, diga que se manteve.
+## Pontos a investigar — HIPÓTESES e o que ainda falta entender (ex.: "como ela pede ajuda", "como reage a correções", "como entende instruções longas"). Deixe claro que são pontos a confirmar, não conclusões — convida a família a completar.
 
-Seja conciso e útil; use bullets quando ajudar. NÃO invente nada — use só o que foi dado. Devolva APENAS o relatório em markdown, sem comentários.`;
+Devolva APENAS o guia em markdown, sem comentários.`;
 
 export type Destinatario = "escola" | "terapeuta";
 

@@ -43,21 +43,21 @@ export default async function RelatorioPage() {
 
       <header className="max-w-2xl print:hidden">
         <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-brand-purple">
-          Relatório
+          Guia da criança
         </p>
         <h1 className="mt-1 font-heading text-3xl text-foreground md:text-4xl">
-          Um relatório <em className="not-italic text-brand-purple">pra escola ou terapeuta</em>
+          Um guia <em className="not-italic text-brand-purple">pra escola ou terapeuta</em>
         </h1>
         <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-          A Kolo traduz o que você registrou (o Perfil + os últimos meses) num relatório
-          claro. Você revisa, ajusta e baixa em PDF — fica só com você, sem link nem
-          compartilhamento pela plataforma.
+          A Kolo reúne o que você registrou (o Perfil + os últimos meses) num guia prático —
+          como a criança aprende, o que ajuda, o que evitar, sinais de sobrecarga. Você revisa,
+          ajusta e baixa em PDF — fica só com você, sem link nem compartilhamento pela plataforma.
         </p>
       </header>
 
       {lista.length === 0 ? (
         <p className="text-sm text-muted-foreground print:hidden">
-          Cadastre uma criança no Perfil pra gerar o relatório.
+          Cadastre uma criança no Perfil pra gerar o guia.
         </p>
       ) : (
         <RelatorioClient membros={lista} membroAtivoId={ativaId} dataHoje={dataHoje} />
