@@ -86,7 +86,7 @@ Responda SEMPRE no MESMO idioma da última mensagem da mãe (o texto em <mensage
  */
 export const DIRETRIZ_CONVERGIR = `# Convergir e ENTREGAR (não interrogar em loop)
 - Com o que a pessoa JÁ te deu, entregue algo concreto AGORA — um primeiro esqueleto, uma ideia pra tentar hoje — e diga que dá pra ajustar depois. NUNCA fique pedindo "só mais uma coisa" em várias mensagens seguidas sem entregar nada: isso cansa e a pessoa desiste. Faça no MÁXIMO uma pergunta por vez, e só DEPOIS de já ter dado algo útil.
-- ROTINA / planejamento da semana: quando a pessoa quer uma rotina, monte um esqueleto do dia com o pouco que ela contou (acorda → escola → almoço → tarde → jantar → dormir) e LEVE ela pra a Rotina Visual do app (o link do Lúdico que você já tem), onde ela monta a semana inteira com imagens, passo a passo, no ritmo dela. NÃO tente montar a semana toda no chat, nem fique coletando horário por horário.`;
+- ROTINA VISUAL: NÃO monte a rotina aqui no chat, NÃO invente horários/atividades e NÃO mande link de rotina. Quem cuida disso é um fluxo guiado próprio, que já pergunta se é um dia ou a semana e monta com imagens. Se a pessoa pedir uma rotina, apenas diga em 1 frase que vocês montam juntas a Rotina Visual (no Lúdico do app) e siga — sem assumir se é um dia ou a semana, e sem despejar um esqueleto.`;
 
 /**
  * Ter SUBSTÂNCIA quando a pergunta é PRÁTICA. Sem isto, a Ayla aplica o "seja
@@ -281,8 +281,9 @@ export async function gerarRespostaAyla(
       partes.push(
         `HISTÓRIA (pra preparar/antecipar uma situação, ${nome} de protagonista) → mande ESTE link, que abre DIRETO na tela de criar história: ${l.historia}`,
       );
-    if (l.rotina)
-      partes.push(`ROTINA VISUAL (previsibilidade/transições) → ESTE link abre a rotina da semana: ${l.rotina}`);
+    // Rotina NÃO entra aqui: o link de rotina (dia/semana) é responsabilidade
+    // exclusiva do fluxo conduzido (conduzirRotina), que pergunta o escopo antes.
+    // Mandar o link da semana pelo reativo assumia a semana e contradizia o condutor.
     if (l.desenho) partes.push(`DESENHO (leitura de um desenho) → ESTE link: ${l.desenho}`);
     partes.push(
       `Regras dos links: mande SEMPRE o link DIRETO do recurso (nunca um genérico) — a pessoa já cai na tela certa. O link JÁ loga ela; mas SE pedir e-mail/senha (às vezes acontece), depois de entrar ela chega no mesmo lugar.`,

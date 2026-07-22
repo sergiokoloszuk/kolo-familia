@@ -23,10 +23,20 @@ import { enviarDocumento } from "./whatsappSender";
 /** Pedido explícito de rotina/planejamento da semana? */
 export function pedeRotina(texto: string | null | undefined): boolean {
   const t = (texto ?? "").toLowerCase();
-  if (!/\brotina\b|planejamento da semana|quadro (de|da) rotina|cronograma|rotina visual|organizar a semana/.test(t))
-    return false;
-  return /\b(quero|queria|preciso|gostaria|pode|monta|montar|monte|faz|fazer|cria|criar|ajuda|planejar|organiza|organizar|preparar|prepara)\b/.test(
-    t,
+  // Gatilhos FORTES — já são pedido de rotina por si só (dispensam verbo).
+  if (/rotina visual|quadro (de|da) rotina|planejamento da semana|organizar a semana|cronograma/.test(t)) {
+    return true;
+  }
+  if (!/\brotina\b/.test(t)) return false;
+  // "rotina" + intenção de criar/organizar/pedir ajuda. Usa RADICAIS pra pegar
+  // conjugações que a versão anterior perdia por exigir a palavra exata:
+  // "poderia" (não só "pode"), "ajudar/ajudasse" (não só "ajuda"), "gostaria",
+  // "montar/monta/monte", etc. Foi o que fez "Poderia me ajudar com uma rotina"
+  // cair no reativo genérico em vez do condutor.
+  return (
+    /\b(quer|gostar|precis|ajud|pod[ei]|mont|prepar|organiz|planej)/.test(t) ||
+    /\bcri(ar|a|e)\b/.test(t) ||
+    /\bfaz|\bfa[çc]a/.test(t)
   );
 }
 
@@ -83,7 +93,15 @@ async function carregarInteresses(supabase: SupabaseClient, membroId: string): P
   }
 }
 
-type Transicao = { momento: string; estrategia: string | null; funcionou?: boolean | null; atualizado_em?: string };
+type Transicao = {
+  momento: string;
+  estrategia: string | null;
+  funcionou?: boolean | null;
+  /** Momento que a rotina sozinha NÃO resolve (ex.: ansiedade de separação) →
+   *  semente pra a Ayla voltar depois e oferecer um PLANO de ação. */
+  merece_plano?: boolean | null;
+  atualizado_em?: string;
+};
 
 /** Transições difíceis já aprendidas (do Kolo Vivo) — pra a Ayla já chegar sabendo. */
 async function carregarTransicoes(supabase: SupabaseClient, membroId: string): Promise<Transicao[]> {
@@ -104,6 +122,7 @@ async function carregarTransicoes(supabase: SupabaseClient, membroId: string): P
           momento: momento.slice(0, 60),
           estrategia: o.estrategia ? String(o.estrategia).slice(0, 120) : null,
           funcionou: typeof o.funcionou === "boolean" ? o.funcionou : null,
+          merece_plano: typeof o.merece_plano === "boolean" ? o.merece_plano : null,
         } as Transicao;
       })
       .filter((t): t is Transicao => t != null)
@@ -138,6 +157,7 @@ async function salvarTransicoes(
         momento: n.momento.slice(0, 60),
         estrategia: (n.estrategia ?? antigo?.estrategia ?? null)?.slice(0, 120) ?? null,
         funcionou: n.funcionou ?? antigo?.funcionou ?? null,
+        merece_plano: n.merece_plano ?? antigo?.merece_plano ?? null,
       });
     }
     const merged = Array.from(porMomento.values()).slice(0, 20);
@@ -162,11 +182,11 @@ Devolva SEMPRE APENAS JSON, sem texto fora dele:
 Conduza nesta ordem, mas com naturalidade — PULE o que já estiver claro na conversa:
 1. ESCOPO: se ainda não sabe, pergunte se é pra um DIA ESPECÍFICO (ex.: "dia com a vovó", "dia do dentista") ou a ROTINA DA SEMANA. Lembre que pode responder por ÁUDIO. (pronto:false)
 2. SEQUÊNCIA: peça como é o dia, na ordem. Se já mandaram uma lista, use-a. Para um dia específico, dê o NOME que a pessoa usou ("Dia com a vovó") — NUNCA "Segunda", a menos que seja mesmo um dia da semana. Para a semana, vá UM DIA POR VEZ ("bora pela segunda… a terça é parecida?").
-3. TRANSIÇÕES (o pulo do gato — o valor Kolo): se vierem TRANSIÇÕES JÁ CONHECIDAS no contexto, USE-AS proativamente ("o banho costuma pesar pro X — coloquei a música depois de novo, ou quer tentar outra coisa?") em vez de re-perguntar. Se não houver, identifique 1-2 passagens que costumam pesar (banho, SAIR de um lugar gostoso tipo zoológico/parque, dormir, ir pra escola) e pergunte se são tranquilas. Se pesam, ofereça encaixar uma atividade que ele GOSTA logo antes/depois. A MÃE é a especialista — pergunte "o que costuma acalmar/motivar ele nessa hora?". No MÁXIMO 1-2 perguntas — não interrogue.
-3b. APRENDER: sempre que descobrir (ou reconfirmar) um momento difícil e a estratégia combinada, coloque em "transicoes":[{"momento":"banho","estrategia":"música depois","funcionou":null}]. Se a mãe disser que uma estratégia FUNCIONOU ou NÃO, marque "funcionou":true/false — e, se não funcionou, proponha/pergunte OUTRA e ofereça "quer testar algo diferente?". Isso fica guardado no perfil e você reusa nas próximas.
-4. TEMA: proponha um tema PROATIVAMENTE a partir dos INTERESSES conhecidos (ex.: "quer no tema de dinossauros, que ele ama?"). Se não souber, sugira 1-2 opções (carros, princesas…) ou deixar sem. Opcional.
-5. ANTES DE MONTAR — CONFIRME (evita erro e frustração): quando já tiver sequência + transições + tema, MOSTRE a rotina final resumida (a ordem, com horário quando houver) e pergunte "ficou assim, posso montar? 🌿". Nesse momento pronto:false ainda — você está só confirmando.
-6. SÓ ponha pronto:true DEPOIS que a pessoa CONFIRMAR (sim/pode/isso/perfeito/manda/tá bom). Se ela apontar um erro ou pedir mudança, ajuste e confirme de novo. Quando pronto:true, a "mensagem" é uma confirmação CURTA (ex.: "Prontinho, montei o Dia do Circo! 🎪"). NÃO prometa "vou gerar os cartões", nem diga que vai mandar link/PDF — o sistema completa a mensagem com o PDF e o link automaticamente.
+3. MOMENTO DIFÍCIL (o pulo do gato — o valor Kolo): se vierem TRANSIÇÕES JÁ CONHECIDAS no contexto, USE-AS proativamente ("o banho costuma pesar pro X — coloquei a música depois de novo, ou quer tentar outra coisa?"). Se não houver, PERGUNTE ABERTAMENTE, antes de chutar: "tem algum momento desse dia que costuma ser mais difícil pra ele — onde uma previsibilidade a mais ajudaria?" (resistência, choro, birra). Deixe a MÃE apontar — ela é a especialista. SÓ se ela não souber, sugira 1-2 passagens comuns (banho, SAIR de um lugar gostoso, dormir, ir pra escola). Quando ela apontar um momento, pergunte "o que costuma acalmar/motivar ele nessa hora?" e encaixe no cartão um apoio (aviso de "já já muda", uma atividade que ele gosta antes/depois, um passo a passo). No MÁXIMO 1-2 perguntas — não interrogue.
+3b. APRENDER + SEMEAR: sempre que descobrir um momento difícil e a estratégia, coloque em "transicoes":[{"momento":"banho","estrategia":"música depois","funcionou":null}] — fica guardado no perfil e você reusa. Se a mãe disser que uma estratégia FUNCIONOU ou NÃO, marque "funcionou":true/false (se não funcionou, ofereça "quer testar algo diferente?"). Se o momento for algo que a ROTINA sozinha NÃO resolve (ex.: ansiedade de separação na hora de dormir, crises intensas, recusa alimentar séria), seja HONESTA em 1 frase: a rotina já ajuda com previsibilidade, MAS isso merece um olhar mais calmo — e você vai voltar depois pra ver como foi e, se ela quiser, montar um PLANO só pra esse momento. Nesse caso marque "merece_plano":true na transição. NÃO tente resolver tudo agora nem transforme a rotina num tratado.
+4. TEMA DOS CARTÕES (SEMPRE pergunte antes de montar, a menos que já tenham dito): proponha PROATIVAMENTE a partir dos INTERESSES conhecidos — INCLUSIVE os do cadastro (ex.: "quer os cartões no tema de dinossauros, que ele ama?"). Se não souber, sugira 1-2 opções (carros, princesas, super-heróis…) ou deixar sem tema. É o que deixa os cartões com a cara dele.
+5. ANTES DE MONTAR — CONFIRME (evita erro e frustração): quando já tiver sequência + momento difícil + tema, MOSTRE a rotina final resumida (a ordem, com horário quando houver) e pergunte "ficou assim, posso montar? 🌿". Nesse momento pronto:false ainda — você está só confirmando.
+6. SÓ ponha pronto:true DEPOIS que a pessoa CONFIRMAR (sim/pode/isso/perfeito/manda/tá bom). Se ela apontar um erro ou pedir mudança, ajuste e confirme de novo. Quando pronto:true, a "mensagem" deve: (a) confirmar CURTO e feliz que montou (ex.: "Prontinho, montei o Dia do Davi! 🌿"); (b) avisar com carinho que os cartões têm IMAGENS e podem levar um tempinho pra aparecer (depende da internet) — mas que VALE muito a pena esperar, ficam lindos; (c) dizer que você quer MUITO saber o que ela achou: "quando abrir, me conta o que você achou? se algo não ficou com a cara dele, a gente ajusta rapidinho 💛". NÃO diga que vai mandar link/PDF nem prometa "vou gerar os cartões" — o sistema já anexa o PDF e o link, e os cartões ilustrados começam sozinhos.
 
 Formato de rotinas: [{"nome":"Dia com a vovó","dia_semana":null,"tarefas":[{"texto":"acordar","hora":null}]}]. dia_semana: 0=Seg..6=Dom, ou null pra dia avulso/nomeado. HORÁRIO SEMPRE OPCIONAL (null se não deram; NUNCA invente).
 
@@ -360,6 +380,7 @@ export async function conduzirRotina(
             momento,
             estrategia: o.estrategia ? String(o.estrategia) : null,
             funcionou: typeof o.funcionou === "boolean" ? o.funcionou : null,
+            merece_plano: typeof o.merece_plano === "boolean" ? o.merece_plano : null,
           };
         })
         .filter((t): t is Transicao => t != null);

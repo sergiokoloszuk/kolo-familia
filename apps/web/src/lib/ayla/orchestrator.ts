@@ -48,6 +48,7 @@ import {
   pedeEditarRotina,
   editarRotina,
 } from "./rotina-guiada";
+import { classificarIntencao } from "./intent";
 import { classificarAreasDiario } from "@/lib/ia/classificar-area";
 import type { AylaTipoProativa, AylaTipoReativa, ParserResult } from "./types";
 
@@ -958,10 +959,17 @@ export async function processInbound(
     }
   }
 
+  // INTENÇÃO por IA (entende o que a mãe quer, não só palavra-chave). Sinal
+  // PRIMÁRIO do roteamento abaixo; os `pede*` de regex ficam como reforço (OR).
+  // Só roda aqui (mensagem livre que precisa de rumo) — comandos/registro já
+  // trataram antes. Se uma conversa de rotina está em curso, nem precisa (o
+  // estado `rotinaConversa` conduz).
+  const intent = rotinaConversa ? "outro" : await classificarIntencao({ texto: inbound.texto });
+
   // 3c-rotina-ver. "Traga a rotina de hoje/terça" — só quando NÃO está montando
   // uma agora (senão o pedido é parte da conversa). Acha o dia, gera se faltar e
   // manda o link certo.
-  if (!rotinaConversa && pedeRotinaDeUmDia(inbound.texto)) {
+  if (!rotinaConversa && (intent === "rotina_ver" || pedeRotinaDeUmDia(inbound.texto))) {
     const ctxR = await loadFamiliaParaEnvio(supabase, family.id);
     const membroId = ctxR?.membros[0]?.id ?? null;
     if (ctxR && membroId) {
@@ -987,7 +995,7 @@ export async function processInbound(
 
   // 3c-rotina-editar. "faltou o lanche na terça", "tira o vôlei", "muda a rotina
   // de hoje" → ajusta a rotina existente (só quando NÃO está montando uma agora).
-  if (!rotinaConversa && pedeEditarRotina(inbound.texto)) {
+  if (!rotinaConversa && (intent === "rotina_editar" || pedeEditarRotina(inbound.texto))) {
     const ctxR = await loadFamiliaParaEnvio(supabase, family.id);
     const membroId = ctxR?.membros[0]?.id ?? null;
     if (ctxR && membroId) {
@@ -1016,7 +1024,7 @@ export async function processInbound(
   // A Ayla conduz a conversa (escopo dia×semana → sequência → transições → tema)
   // e, quando tem o suficiente, monta + manda PDF + link. Enquanto não, faz a
   // próxima pergunta (tipo="rotina_conversa"). Estado inferido do histórico.
-  if (rotinaConversa || pedeRotina(inbound.texto)) {
+  if (rotinaConversa || intent === "rotina_criar" || pedeRotina(inbound.texto)) {
     const ctxR = await loadFamiliaParaEnvio(supabase, family.id);
     const membroId = rotinaConversa?.membroId ?? ctxR?.membros[0]?.id ?? null;
     if (ctxR && membroId) {
@@ -1072,7 +1080,7 @@ export async function processInbound(
     }
   }
   // (b) Pediu um plano AGORA → não gera; pergunta como está hoje + puxa interesses.
-  if (pedeUmPlano(inbound.texto)) {
+  if (intent === "plano" || pedeUmPlano(inbound.texto)) {
     const ctxP = await loadFamiliaParaEnvio(supabase, family.id);
     if (ctxP) {
       const membroId = ctxP.membros[0]?.id ?? null;
