@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { differenceInCalendarDays, format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { ArrowRight, Lightbulb, MessageCircle, Sparkles, Sprout, Star } from "lucide-react";
+import { ArrowRight, MessageCircle, Sparkles, Sprout, Star } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
@@ -14,6 +14,9 @@ import { cn } from "@/lib/utils";
 import { RegistroRapido } from "../registrar/diario/registro-rapido";
 import { BalaoPrimeirosPassos } from "./balao-primeiros-passos";
 import { BannerGenero } from "./banner-genero";
+import { AtalhosKolo } from "./atalhos-kolo";
+import { PrimeiroPasso, desafiosDoOnboarding } from "./primeiro-passo";
+import { AtivarAylaCard } from "./ativar-ayla";
 
 // ============================================================
 // Chips categóricos do Foco da semana
@@ -230,7 +233,7 @@ export default async function PainelPage() {
       .limit(5),
     supabase
       .from("perfil_vivo_membro")
-      .select("completude_pct")
+      .select("completude_pct, categorias_extras")
       .eq("family_account_id", familyId)
       .eq("membro_atipico_id", filtroMembro),
   ]);
@@ -245,9 +248,6 @@ export default async function PainelPage() {
   // Criança ativa: nome (1º) + gênero, reusados na saudação e no card Perfil.
   const nomeCA = primeiraCrianca?.nome ? primeiroNome(primeiraCrianca.nome as string) : null;
   const generoCA = (primeiraCrianca?.genero as string | null) ?? null;
-  const perfilDesc = nomeCA
-    ? `O jeito de ser ${deNome(nomeCA, generoCA)}, sempre vivo.`
-    : "O jeito de ser de vocês, sempre vivo.";
 
   // Sinais vivos das 3 portas.
   const koloVivoPct = (() => {
@@ -265,11 +265,15 @@ export default async function PainelPage() {
         )
       : null;
 
-  // NPS elegibilidade
+  // NPS elegibilidade + estado da Ayla + se a família já registrou algo (define
+  // a Home de boas-vindas: recém-chegada = nunca registrou nada, na família toda).
   const [
     { data: familyMeta },
     { data: alertasOpen },
     { count: adaptacoesPendentesCount },
+    { data: aylaPrefs },
+    { count: diariosCountEver },
+    { count: checkinsCountEver },
   ] = await Promise.all([
     supabase
       .from("family_accounts")
@@ -288,7 +292,121 @@ export default async function PainelPage() {
       .select("id", { count: "exact", head: true })
       .eq("family_account_id", familyId)
       .eq("estado", "pendente"),
+    supabase
+      .from("ayla_preferences")
+      .select("consentimento_em, desativada")
+      .eq("family_account_id", familyId)
+      .maybeSingle(),
+    supabase
+      .from("diarios")
+      .select("id", { count: "exact", head: true })
+      .eq("family_account_id", familyId),
+    supabase
+      .from("check_ins_diarios")
+      .select("id", { count: "exact", head: true })
+      .eq("family_account_id", familyId),
   ]);
+
+  // ── Estado da Home (boas-vindas × diário reflexivo) ──────────────
+  // Recém-chegada = a família ainda não registrou nada (nem diário, nem
+  // check-in). Some sozinho no 1º registro.
+  const ehRecemChegada = (diariosCountEver ?? 0) === 0 && (checkinsCountEver ?? 0) === 0;
+  // Ayla ativa = consentiu e não desativou. "Nunca ativou" = sem consentimento
+  // (o padrão do cadastro pra quem não informou o WhatsApp) → oferece ativar.
+  const aylaAtiva = Boolean(aylaPrefs?.consentimento_em) && !aylaPrefs?.desativada;
+  const mostrarAtivarAyla = !aylaPrefs?.consentimento_em;
+  // Desafios que a mãe marcou no onboarding (categorias_extras da criança ativa).
+  const desafiosMarcados = desafiosDoOnboarding(
+    (perfisCompletude ?? [])[0]?.categorias_extras,
+  );
+
+  // ============================================================
+  // HOME DE BOAS-VINDAS (recém-chegada) — recebe e orienta em vez de refletir
+  // um histórico que ainda não existe. Some sozinha no 1º registro (aí volta a
+  // Home reflexiva abaixo). Preserva o registro inline e vende o WhatsApp.
+  // ============================================================
+  if (ehRecemChegada) {
+    return (
+      <div className="flex flex-col gap-8">
+        <SubscriptionBanner status={subscription?.status} trialDaysLeft={trialDaysLeft} />
+
+        {/* Hero de boas-vindas */}
+        <header className="relative overflow-hidden rounded-3xl border border-brand-yellow/30 bg-gradient-to-br from-brand-yellow/[0.14] via-kolo-lilas-bg-2/40 to-white px-6 py-7 shadow-[0_1px_2px_rgba(46,10,82,0.04),_0_4px_16px_rgba(46,10,82,0.04)] md:px-8 md:py-9">
+          <span
+            aria-hidden
+            className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-brand-yellow via-brand-yellow/50 to-transparent"
+          />
+          <span
+            aria-hidden
+            className="pointer-events-none absolute -right-8 -top-8 size-32 rounded-full bg-brand-yellow/25 blur-3xl"
+          />
+          <Eyebrow>{format(hoje, "EEEE · d 'de' MMMM", { locale: ptBR })}</Eyebrow>
+          <h1 className="mt-2 font-heading text-3xl text-foreground md:text-4xl">
+            Oi, {greeting}
+            <span aria-hidden style={{ color: "#FFBA00" }}>.</span> Bem-vinda à Kolo 🌿
+          </h1>
+          <p className="mt-2.5 max-w-md text-sm leading-relaxed text-muted-foreground">
+            Este é o seu ponto de partida. Dê uma olhada no que dá pra fazer — e comece
+            por onde fizer sentido{nomeCA ? ` pra você e ${deNome(nomeCA, generoCA)}` : ""}.
+          </p>
+        </header>
+
+        <PrimeiroPasso nomeCA={nomeCA} desafios={desafiosMarcados} aylaAtiva={aylaAtiva} />
+
+        {/* Registro do dia — inline, preservado */}
+        <section>
+          <Card className="relative overflow-hidden border-brand-yellow/30">
+            <span
+              aria-hidden
+              className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-brand-yellow via-brand-yellow/50 to-transparent"
+            />
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base">Registro do dia</CardTitle>
+              <CardDescription>
+                Escreva do seu jeito — a Kolo organiza e guarda na Evolução.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <RegistroRapido
+                key={ativaId ?? "none"}
+                nomeCrianca={primeiraCrianca?.nome ? primeiroNome(primeiraCrianca.nome as string) : null}
+                genero={(primeiraCrianca?.genero as string | null) ?? null}
+                membroId={ativaId}
+              />
+            </CardContent>
+          </Card>
+        </section>
+
+        {/* Ativar a Ayla — quando ainda não informou o WhatsApp */}
+        {mostrarAtivarAyla && <AtivarAylaCard numeroAtual={family!.whatsapp_e164 ?? null} />}
+
+        <AtalhosKolo
+          titulo="Tudo que dá pra fazer na Kolo"
+          evolucaoLocked
+          mostrarAtivarAyla={mostrarAtivarAyla}
+        />
+
+        {/* Banner de gênero — pra Ayla falar certo desde o começo */}
+        {(membros ?? [])
+          .filter((m) => !m.genero)
+          .map((m) => (
+            <BannerGenero
+              key={m.id as string}
+              membroId={m.id as string}
+              nomeMembro={m.nome as string}
+            />
+          ))}
+
+        {/* Nota: a Home vira diário conforme usa */}
+        <p className="rounded-3xl bg-kolo-lilas-bg px-6 py-5 text-sm leading-relaxed text-brand-purple-dark">
+          🌳 Conforme você for usando, esta Home ganha o <strong>seu diário</strong> — a
+          sua semana, as conquistas, o que vem acontecendo
+          {nomeCA ? ` com ${deNome(nomeCA, generoCA)}` : ""}. Os atalhos continuam aqui;
+          só o convite de boas-vindas dá lugar ao seu dia.
+        </p>
+      </div>
+    );
+  }
   const agora = hoje.getTime();
   const idadeDias = familyMeta
     ? Math.floor(
@@ -692,62 +810,20 @@ export default async function PainelPage() {
       </section>
 
       {/* ============================================================
-       * AS PORTAS — Perfil (retrato vivo) e Estratégias (achar um caminho).
-       * O registro do dia agora é inline acima.
+       * ATIVAR A AYLA — fica fixo na Home enquanto a família não informou o
+       * WhatsApp (mesmo já engajada), até ativar. Some ao consentir.
        * ============================================================ */}
-      <section className="grid gap-4 md:grid-cols-2">
-        {[
-          {
-            titulo: "Perfil",
-            desc: perfilDesc,
-            href: "/kolo-vivo",
-            Icon: Sprout,
-            chip: "bg-cat-social-bg text-cat-social",
-            bar: "bg-cat-social",
-            sinal: koloVivoPct > 0 ? `${koloVivoPct}% preenchido` : "monte o retrato",
-          },
-          {
-            titulo: "Estratégias",
-            desc: "Conte um desafio, ache um caminho.",
-            href: "/estrategias",
-            Icon: Lightbulb,
-            chip: "bg-cat-foco-bg text-cat-foco",
-            bar: "bg-cat-foco",
-            sinal: ultimaConversaTitulo
-              ? `última: ${ultimaConversaTitulo.length > 30 ? `${ultimaConversaTitulo.slice(0, 30)}…` : ultimaConversaTitulo}`
-              : "comece uma conversa",
-          },
-        ].map(({ titulo, desc, href, Icon, chip, bar, sinal }) => (
-          <Link
-            key={href}
-            href={href}
-            className="group relative flex flex-col gap-3 overflow-hidden rounded-2xl border border-foreground/[0.06] bg-white p-5 pt-6 shadow-[0_1px_2px_rgba(46,10,82,0.04),_0_4px_12px_rgba(46,10,82,0.03)] transition-all hover:-translate-y-0.5 hover:border-brand-yellow/50 hover:shadow-[0_4px_12px_rgba(46,10,82,0.06),_0_12px_28px_rgba(46,10,82,0.06)]"
-          >
-            <span aria-hidden className={cn("absolute inset-x-0 top-0 h-1", bar)} />
-            <span
-              aria-hidden
-              className={cn("flex size-12 items-center justify-center rounded-2xl transition-transform group-hover:scale-105", chip)}
-            >
-              <Icon className="size-6" strokeWidth={1.8} />
-            </span>
-            <div>
-              <h3 className="font-heading text-lg font-medium text-foreground">{titulo}</h3>
-              <p className="mt-0.5 text-sm leading-relaxed text-muted-foreground">{desc}</p>
-            </div>
-            <div className="mt-auto flex items-center justify-between gap-2 pt-1">
-              <span className="inline-flex min-w-0 items-center truncate rounded-full bg-foreground/[0.04] px-2.5 py-1 text-xs font-medium text-foreground/70">
-                {sinal}
-              </span>
-              <span
-                aria-hidden
-                className="flex size-9 shrink-0 items-center justify-center rounded-full bg-brand-yellow text-brand-purple-dark shadow-sm transition-transform group-hover:translate-x-0.5 group-hover:scale-105"
-              >
-                <ArrowRight className="size-4" strokeWidth={2.5} />
-              </span>
-            </div>
-          </Link>
-        ))}
-      </section>
+      {mostrarAtivarAyla && <AtivarAylaCard numeroAtual={family!.whatsapp_e164 ?? null} />}
+
+      {/* ============================================================
+       * EXPLORAR A KOLO — atalhos explicados pras seções. Fica na engajada
+       * também, pra quem ainda não abriu cada tela. (Substitui as 2 portas.)
+       * ============================================================ */}
+      <AtalhosKolo
+        titulo="Explorar a Kolo"
+        evolucaoLocked={false}
+        mostrarAtivarAyla={mostrarAtivarAyla}
+      />
 
       {/* ============================================================
        * BANNER de gênero — discreto, aparece pra cada membro com

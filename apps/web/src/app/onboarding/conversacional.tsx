@@ -201,7 +201,7 @@ export function OnboardingConversacional({ copy }: { copy: OnboardingCopy }) {
         {/* Aviso do WhatsApp — todo mundo vê, mesmo quem não abre a conversa. */}
         <div className="rounded-2xl border border-brand-purple/25 bg-brand-purple/[0.06] p-4 text-sm text-foreground">
           💬 <strong>É pelo WhatsApp que a Ayla te ajuda de verdade</strong> — dá pra pedir uma{" "}
-          <strong>estratégia</strong> pra um perrengue, <strong>montar a rotina do dia</strong> (com
+          <strong>estratégia</strong> pra um desafio, <strong>montar a rotina do dia</strong> (com
           cartões ilustrados pra imprimir!), tirar dúvidas e atualizar o perfil{" "}
           {nome ? `de ${nome}` : "de quem você cuida"}. É onde a experiência fica completa. 🌿
         </div>

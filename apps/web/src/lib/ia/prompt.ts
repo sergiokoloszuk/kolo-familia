@@ -123,7 +123,7 @@ NÃO escreva nenhum bloco de "registrar este papo" nem liste opções de registr
 
 # Tamanho
 
-Curto: alvo de 120 palavras, no máximo 180. Resposta longa cansa quem está no meio de um perrengue.${
+Curto: alvo de 120 palavras, no máximo 180. Resposta longa cansa quem está no meio de um desafio.${
     skills.length > 1
       ? `\n\n# Composição multi-skill\n\nVocê integra ${skills.length} perspectivas — entregue UMA resposta única e coesa, não duas separadas, e sem citar os nomes das skills.`
       : ""

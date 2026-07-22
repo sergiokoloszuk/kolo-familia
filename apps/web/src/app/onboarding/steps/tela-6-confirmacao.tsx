@@ -121,8 +121,8 @@ export function Tela6Confirmacao({
               Selecione “Estratégias”
             </span>
             <span className="text-sm text-muted-foreground">
-              quando quiser ideias pra um perrengue — foco, sono, socialização, o
-              que estiver mais desafiador.
+              quando quiser ideias pra um desafio — foco, sono, socialização, o
+              que estiver mais difícil.
             </span>
             <span className="mt-1 inline-flex items-center gap-1 text-sm font-medium text-brand-purple">
               Começar pelas Estratégias <ArrowRight className="size-4" aria-hidden="true" />

@@ -84,7 +84,7 @@ export function Tela5Termos({
               <p className="mt-1 text-xs text-muted-foreground">
                 Assim, além de pedir orientações e dicas à Ayla a qualquer hora,
                 você deixa ela acompanhar de perto o dia a dia — ela pergunta como
-                foi o dia, comemora junto as conquistas e apoia nos perrengues, e
+                foi o dia, comemora junto as conquistas e apoia nos desafios, e
                 com isso acompanha melhor a evolução do seu filho ou sua filha. No
                 máximo 2 mensagens por dia, no horário que você escolher. Mudou de
                 ideia? É só desativar essa opção na sua conta quando quiser.
