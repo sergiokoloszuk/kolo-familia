@@ -788,6 +788,26 @@ async function aylaServicoLiberado(supabase: SupabaseClient, familyId: string): 
 }
 
 /**
+ * Criança citada PELO NOME na mensagem atual (famílias 2+). Tem prioridade sobre
+ * a "criança da conversa" — se a mãe diz "a Manu", é a Manu, mesmo que a conversa
+ * anterior fosse de outro filho (bug Manu→Mario ao trocar de assunto).
+ */
+function membroMencionado(
+  texto: string,
+  membros: Array<{ id: string; nome?: string | null }>,
+): string | null {
+  const t = (texto ?? "").toLowerCase();
+  for (const m of membros) {
+    const primeiro = (m.nome ?? "").trim().split(/\s+/)[0]?.toLowerCase();
+    if (primeiro && primeiro.length >= 3) {
+      const re = new RegExp(`\\b${primeiro.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`, "i");
+      if (re.test(t)) return m.id;
+    }
+  }
+  return null;
+}
+
+/**
  * Qual criança a conversa está tratando AGORA (famílias 2+). Pega o último
  * membro identificado nas mensagens recentes (2h) — pra o plano/rotina não
  * cair no `membros[0]` e trocar de filho no meio (bug Manu→Mario). Null = sem
@@ -1104,7 +1124,7 @@ export async function processInbound(
   // manda o link certo.
   if (!rotinaConversa && (intent === "rotina_ver" || pedeRotinaDeUmDia(inbound.texto))) {
     const ctxR = await loadFamiliaParaEnvio(supabase, family.id);
-    const membroId = membroConversa ?? ctxR?.membros[0]?.id ?? null;
+    const membroId = (ctxR?.membros ? membroMencionado(inbound.texto, ctxR.membros) : null) ?? membroConversa ?? ctxR?.membros[0]?.id ?? null;
     if (ctxR && membroId) {
       const msg = await pedirRotinaDoDia(supabase, {
         familyId: family.id,
@@ -1130,7 +1150,7 @@ export async function processInbound(
   // de hoje" → ajusta a rotina existente (só quando NÃO está montando uma agora).
   if (!rotinaConversa && (intent === "rotina_editar" || pedeEditarRotina(inbound.texto))) {
     const ctxR = await loadFamiliaParaEnvio(supabase, family.id);
-    const membroId = membroConversa ?? ctxR?.membros[0]?.id ?? null;
+    const membroId = (ctxR?.membros ? membroMencionado(inbound.texto, ctxR.membros) : null) ?? membroConversa ?? ctxR?.membros[0]?.id ?? null;
     if (ctxR && membroId) {
       const msg = await editarRotina(supabase, {
         familyId: family.id,
@@ -1159,7 +1179,7 @@ export async function processInbound(
   // próxima pergunta (tipo="rotina_conversa"). Estado inferido do histórico.
   if (rotinaConversa || intent === "rotina_criar" || pedeRotina(inbound.texto)) {
     const ctxR = await loadFamiliaParaEnvio(supabase, family.id);
-    const membroId = rotinaConversa?.membroId ?? membroConversa ?? ctxR?.membros[0]?.id ?? null;
+    const membroId = (ctxR?.membros ? membroMencionado(inbound.texto, ctxR.membros) : null) ?? rotinaConversa?.membroId ?? membroConversa ?? ctxR?.membros[0]?.id ?? null;
     if (ctxR && membroId) {
       const r = await conduzirRotina(supabase, {
         familyId: family.id,
@@ -1187,7 +1207,7 @@ export async function processInbound(
   if (planoGuiado) {
     const ctxP = await loadFamiliaParaEnvio(supabase, family.id);
     if (ctxP) {
-      const membroId = planoGuiado.membroId ?? membroConversa ?? ctxP.membros[0]?.id ?? null;
+      const membroId = membroMencionado(inbound.texto, ctxP.membros) ?? planoGuiado.membroId ?? membroConversa ?? ctxP.membros[0]?.id ?? null;
       const nomeMembro = membroId
         ? (ctxP.membros.find((m) => m.id === membroId)?.nome ?? null)
         : null;
@@ -1216,7 +1236,7 @@ export async function processInbound(
   if (intent === "plano" || pedeUmPlano(inbound.texto)) {
     const ctxP = await loadFamiliaParaEnvio(supabase, family.id);
     if (ctxP) {
-      const membroId = membroConversa ?? ctxP.membros[0]?.id ?? null;
+      const membroId = membroMencionado(inbound.texto, ctxP.membros) ?? membroConversa ?? ctxP.membros[0]?.id ?? null;
       const nomeMembro = membroId
         ? (ctxP.membros.find((m) => m.id === membroId)?.nome ?? null)
         : null;

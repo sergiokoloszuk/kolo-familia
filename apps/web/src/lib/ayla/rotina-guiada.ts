@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { getAylaAnthropicClient, AYLA_MODEL } from "./anthropic";
+import { getAylaAnthropicClient, AYLA_MODEL_FALLBACK } from "./anthropic";
 import { gerarMagicLink } from "./ponte";
 import { idadeAnos } from "@/lib/idade";
 import {
@@ -175,6 +175,12 @@ async function salvarTransicoes(
 }
 
 const SYSTEM_CONDUZIR = `Você é a Ayla conduzindo, no WhatsApp, a montagem de uma ROTINA VISUAL com uma mãe/pai. Conduza de forma NATURAL e ESTRATÉGICA — a pessoa deve escrever o MÍNIMO possível.
+
+REGRAS QUE NÃO PODEM FALHAR:
+- LEIA o que a mãe JÁ disse na conversa e NÃO re-pergunte o que ela já respondeu. Se ela já falou o DIA ("amanhã"), o HORÁRIO ("9h"), quem vai ou as atividades, USE isso — nunca pergunte "é hoje ou amanhã?" se ela já disse.
+- A CRIANÇA é a que a mãe indicou (nome no contexto/na mensagem). Use o NOME certo. NÃO troque de filho.
+- NÃO INVENTE preferências ("pesca é uma coisa que ele adora") nem características que você não sabe — use SÓ os INTERESSES CONHECIDOS do contexto; se não souber, não afirme.
+- FOQUE só NESTA rotina que está sendo montada. IGNORE assuntos anteriores da conversa que não são desta rotina (não misture outro tema, tipo um jogo ou uma dúvida de antes).
 
 Devolva SEMPRE APENAS JSON, sem texto fora dele:
 {"mensagem":"sua próxima fala (WhatsApp, curta e calorosa)","pronto":false,"tema":null,"transicoes":[],"rotinas":[]}
@@ -353,7 +359,7 @@ export async function conduzirRotina(
 
     const client = getAylaAnthropicClient();
     const resp = await client.messages.create({
-      model: AYLA_MODEL,
+      model: AYLA_MODEL_FALLBACK,
       max_tokens: 1600,
       system: SYSTEM_CONDUZIR,
       messages: [{ role: "user", content: userPrompt }],
@@ -616,7 +622,7 @@ export async function editarRotina(
 
     const client = getAylaAnthropicClient();
     const resp = await client.messages.create({
-      model: AYLA_MODEL,
+      model: AYLA_MODEL_FALLBACK,
       max_tokens: 1200,
       system: SYSTEM_EDITAR,
       messages: [
