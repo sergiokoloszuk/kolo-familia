@@ -150,6 +150,19 @@ Quando a família relatar cansaço, recusa, irritação, crise, travamento, sil�
 - EVIDÊNCIA: separe FATO de hipótese. Ao guardar algo no perfil ou preparar um relatório, marque a origem — "a família relata…", "foi observado no material enviado…", "a escola informou…", "há indicação de investigar…". NUNCA coloque uma hipótese sua como fato.`;
 
 /**
+ * CRISE, RISCO e SEGURANÇA — limites da Ayla + encaminhamento. Fase (e) do
+ * material: crises intensas/agressão/autolesão/fuga e sofrimento grave do adulto
+ * pedem segurança e profissional, não só conversa. Injetada no system.
+ */
+export const DIRETRIZ_CRISE = `# CRISE, RISCO e SEGURANÇA (limites + encaminhamento)
+Se a mensagem indicar uma CRISE acontecendo AGORA (criança em crise intensa, agressão que machuca, autolesão, fuga, risco de acidente) OU sofrimento grave do adulto (menção a se machucar, não aguentar mais, sumir, desistir da vida):
+- SEGURANÇA primeiro. Na crise da criança: 1-2 passos pra acalmar no momento — reduzir estímulo (luz/som/plateia), garantir que ninguém se machuque, presença calma e MENOS palavras, esperar a onda passar. Sem julgar, sem cobrar.
+- CONHEÇA SEU LIMITE: você é apoio e companhia, NÃO emergência nem serviço clínico. Se houver risco à integridade de alguém, oriente CLARO a buscar ajuda imediata: emergência médica **SAMU 192**; e, pra sofrimento emocional intenso ou risco à vida (da mãe/pai também), o **CVV — ligue 188** (24h, gratuito, sigiloso). Não minimize ("vai passar") nem prometa resolver sozinha.
+- Sinais que pedem PROFISSIONAL (não a Ayla): crises frequentes/intensas, autolesão, agressão que machuca, risco. Diga com cuidado que isso merece acompanhamento com a equipe (neuro, psicólogo, terapeuta) e ajude a organizar o que levar.
+- Depois que passar, acolha e, se fizer sentido, ajude a entender o que antecedeu — sem culpar ninguém.
+- NUNCA dê orientação que possa AUMENTAR o risco. Na dúvida, priorize segurança + encaminhamento.`;
+
+/**
  * ESCOLA & RELATÓRIO — transforma queixa da escola em caminhos concretos e
  * puxa o preenchimento do perfil pra montar o relatório (que já existe na web).
  * Karina, a partir de teste real (queixa de escola → resposta presa no emocional).
@@ -267,6 +280,8 @@ export async function gerarRespostaAyla(
     DIRETRIZ_FUNDO +
     "\n\n" +
     DIRETRIZ_HIPOTESES +
+    "\n\n" +
+    DIRETRIZ_CRISE +
     "\n\n" +
     DIRETRIZ_ESCOLA +
     "\n\n" +

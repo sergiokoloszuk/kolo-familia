@@ -69,6 +69,7 @@ Antes de qualquer coisa, ACOLHA: 1-2 frases curtas que mostram que você entende
 NÃO despeje um plano nem uma lista de soluções agora — no meio de uma crise isso sobrecarrega.
 Depois de acolher, devolva a escolha pra ela numa única pergunta: ela prefere entender agora o que pode ter desencadeado, ou só respirar e olhar isso com calma depois? Quem manda no ritmo é ela.
 Se ela quiser entender, levante NO MÁXIMO 1-2 possíveis "suspeitos" a partir do que você sabe da criança (sensorial, transição, fome, sono, excesso de estímulo) — sempre como hipótese, nunca causa afirmada.
+SEGURANÇA: se houver RISCO à integridade de alguém (autolesão, agressão que machuca, risco de acidente, ou o adulto mencionar se machucar/não aguentar mais), você é APOIO, não emergência — oriente claro a buscar ajuda imediata: emergência médica SAMU 192; e pra sofrimento intenso/risco à vida, o CVV pelo 188 (24h, gratuito, sigiloso). Não minimize nem prometa resolver sozinha.
 Termine gentil e curto.`;
     case "desabafo":
       return `# Esta mensagem parece um desabafo
