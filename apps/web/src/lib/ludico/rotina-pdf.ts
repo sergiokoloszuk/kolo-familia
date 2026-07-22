@@ -10,6 +10,31 @@ const ROXO = rgb(0.29, 0.16, 0.5);
 const TEXTO = rgb(0.13, 0.12, 0.15);
 const CINZA = rgb(0.45, 0.43, 0.48);
 
+// Cor por TIPO de atividade — pra a agenda ficar colorida e legível num olhar.
+const TIPOS: Record<string, { label: string; cor: ReturnType<typeof rgb> }> = {
+  escola: { label: "Escola", cor: rgb(0.2, 0.45, 0.8) },
+  estudo: { label: "Estudo", cor: rgb(0.45, 0.16, 0.7) },
+  esporte: { label: "Esporte", cor: rgb(0.16, 0.55, 0.35) },
+  terapia: { label: "Terapia", cor: rgb(0.86, 0.5, 0.1) },
+  autocuidado: { label: "Autocuidado", cor: rgb(0.82, 0.3, 0.55) },
+  refeicao: { label: "Refeicao", cor: rgb(0.8, 0.6, 0.05) },
+  livre: { label: "Livre / tela", cor: rgb(0.4, 0.45, 0.55) },
+  outro: { label: "Outro", cor: rgb(0.55, 0.53, 0.58) },
+};
+
+/** Adivinha o tipo da atividade pelo texto (pra colorir). Best-effort. */
+function categorizar(texto: string): string {
+  const t = (texto ?? "").toLowerCase();
+  if (/escola|aula|col[eé]gio|creche/.test(t)) return "escola";
+  if (/estud|tarefa|pomodoro|li[çc][aã]o|dever|prova|revis/.test(t)) return "estudo";
+  if (/v[oô]lei|futebol|esporte|nata[çc]|nadar|dan[çc]a|teclado|m[uú]sica|piano|treino|corr/.test(t)) return "esporte";
+  if (/terapia|fono|psico|acompanhamento|consulta/.test(t)) return "terapia";
+  if (/skincare|banho|acordar|dormir|higiene|escovar|vestir|autocuidado|soneca|descans/.test(t)) return "autocuidado";
+  if (/caf[eé]|almo[çc]o|jantar|lanche|comer|refei[çc]|merenda/.test(t)) return "refeicao";
+  if (/celular|tela|\blivre\b|\btv\b|v[ií]deo|game|jogar|relax|folga|youtube|dorama|k-?pop/.test(t)) return "livre";
+  return "outro";
+}
+
 function sanitizar(s: string): string {
   return (s ?? "")
     .replace(/[“”]/g, '"')
@@ -60,45 +85,72 @@ export async function rotinaParaPdf(params: {
     return linhas.length ? linhas : [""];
   }
 
-  // Cabeçalho
-  page.drawText(sanitizar(params.titulo || "Rotina"), { x: margem, y: y - 20, size: 20, font: bold, color: ROXO });
-  y -= 30;
-  const sub = [params.nome ? `Rotina de ${params.nome}` : "", params.tema ? `Tema: ${params.tema}` : ""]
+  // ── Cabeçalho: faixa colorida + título + subtítulo ──
+  page.drawRectangle({ x: margem, y: y - 6, width: larguraUtil, height: 4, color: rgb(1, 0.73, 0) });
+  page.drawText(sanitizar(params.titulo || "Rotina"), { x: margem, y: y - 30, size: 21, font: bold, color: ROXO });
+  y -= 42;
+  const sub = [params.nome ? sanitizar(params.nome) : "", params.tema ? `Tema: ${sanitizar(params.tema)}` : ""]
     .filter(Boolean)
-    .join("  ·  ");
+    .join("   ·   ");
   if (sub) {
-    page.drawText(sanitizar(sub), { x: margem, y: y - 11, size: 11, font, color: CINZA });
-    y -= 22;
-  } else {
-    y -= 8;
+    page.drawText(sub, { x: margem, y: y - 11, size: 11, font, color: CINZA });
+    y -= 20;
   }
 
+  // ── Legenda: só os tipos que aparecem na rotina ──
+  const presentes = new Set<string>();
+  for (const d of params.dias) for (const t of d.tarefas) presentes.add(categorizar(t.texto));
+  const legenda = Object.keys(TIPOS).filter((k) => presentes.has(k));
+  if (legenda.length) {
+    let lx = margem;
+    novaPaginaSePreciso(20);
+    for (const k of legenda) {
+      const { label, cor } = TIPOS[k];
+      const w = 14 + font.widthOfTextAtSize(label, 9) + 14;
+      if (lx + w > margem + larguraUtil) {
+        lx = margem;
+        y -= 16;
+      }
+      page.drawEllipse({ x: lx + 4, y: y - 7, xScale: 3.4, yScale: 3.4, color: cor });
+      page.drawText(label, { x: lx + 12, y: y - 10, size: 9, font, color: TEXTO });
+      lx += w;
+    }
+    y -= 22;
+  }
+
+  // ── Dias ──
   for (const d of params.dias) {
     if (!d.tarefas.length) continue;
-    novaPaginaSePreciso(40);
-    y -= 8;
+    novaPaginaSePreciso(48);
+    y -= 6;
     page.drawText(sanitizar(d.nome), { x: margem, y: y - 14, size: 14, font: bold, color: ROXO });
-    y -= 22;
+    y -= 18;
+    page.drawRectangle({ x: margem, y: y, width: larguraUtil, height: 0.8, color: rgb(0.88, 0.85, 0.92) });
+    y -= 8;
+
     for (const t of d.tarefas) {
-      const horaTxt = t.hora ? `${t.hora}  ` : "";
-      const linhas = quebrar(`${horaTxt}${t.texto}`, 11, larguraUtil - 20);
-      novaPaginaSePreciso(linhas.length * 15 + 4);
+      const { cor } = TIPOS[categorizar(t.texto)];
+      const horaW = 34;
+      const textoX = margem + 20 + horaW + 14;
+      const linhas = quebrar(t.texto, 11, margem + larguraUtil - textoX);
+      novaPaginaSePreciso(linhas.length * 14 + 6);
+
       // caixinha pra marcar à mão
-      page.drawRectangle({
-        x: margem,
-        y: y - 12,
-        width: 11,
-        height: 11,
-        borderColor: CINZA,
-        borderWidth: 1,
-      });
+      page.drawRectangle({ x: margem, y: y - 12, width: 11, height: 11, borderColor: CINZA, borderWidth: 1 });
+      // horário
+      if (t.hora) {
+        page.drawText(sanitizar(t.hora), { x: margem + 20, y: y - 11, size: 10, font: bold, color: CINZA });
+      }
+      // bolinha do tipo
+      page.drawEllipse({ x: margem + 20 + horaW + 4, y: y - 7, xScale: 3.4, yScale: 3.4, color: cor });
+      // atividade
       linhas.forEach((ln, i) => {
-        page.drawText(ln, { x: margem + 20, y: y - 11, size: 11, font, color: TEXTO });
-        if (i < linhas.length - 1) y -= 15;
+        page.drawText(ln, { x: textoX, y: y - 11, size: 11, font, color: TEXTO });
+        if (i < linhas.length - 1) y -= 14;
       });
-      y -= 18;
+      y -= 17;
     }
-    y -= 4;
+    y -= 6;
   }
 
   novaPaginaSePreciso(24);
