@@ -143,6 +143,8 @@ export type RespostaParams = {
   estrategiasRecentes?: string[];
   historico: Array<{ de: "mae" | "ayla"; texto: string }>;
   mensagem: string;
+  /** URL de uma FOTO que a pessoa mandou — a Ayla LÊ a imagem (lição, rótulo, agenda…). */
+  imagemUrl?: string | null;
   sinais: SinaisResposta;
   /** A pessoa pediu um plano explicitamente — não escreva o plano, ofereça. */
   querPlano?: boolean;
@@ -158,6 +160,41 @@ export type RespostaParams = {
     avatar: string | null;
   } | null;
 };
+
+type ConteudoUsuario =
+  | { type: "text"; text: string }
+  | {
+      type: "image";
+      source: {
+        type: "base64";
+        media_type: "image/jpeg" | "image/png" | "image/webp" | "image/gif";
+        data: string;
+      };
+    };
+
+/** Baixa a imagem (URL da Z-API) e devolve base64 + media_type pro modelo ver. */
+async function baixarImagemBase64(
+  url: string,
+): Promise<{ base64: string; mediaType: "image/jpeg" | "image/png" | "image/webp" | "image/gif" } | null> {
+  try {
+    const res = await fetch(url);
+    if (!res.ok) return null;
+    const ct = (res.headers.get("content-type") || "").toLowerCase();
+    const mediaType = ct.includes("png")
+      ? "image/png"
+      : ct.includes("webp")
+        ? "image/webp"
+        : ct.includes("gif")
+          ? "image/gif"
+          : "image/jpeg";
+    const buf = Buffer.from(await res.arrayBuffer());
+    if (buf.length > 5 * 1024 * 1024) return null; // Anthropic ~5MB; WhatsApp manda menor
+    return { base64: buf.toString("base64"), mediaType };
+  } catch (e) {
+    console.warn("[ayla:responder] baixar imagem falhou:", e instanceof Error ? e.message : e);
+    return null;
+  }
+}
 
 /**
  * Gera a resposta da Ayla. Se `onParagrafo` for passado, faz streaming e
@@ -326,7 +363,36 @@ export async function gerarRespostaAyla(
   if (notas.length > 0) {
     linhas.push(`\n<notas_internas>\n${notas.join("\n")}\n</notas_internas>`);
   }
+  if (params.imagemUrl) {
+    linhas.push(
+      `\n<foto>
+A pessoa mandou uma FOTO — OLHE a imagem anexada e responda a ELA de verdade.
+Se for uma TAREFA da escola/terapia:
+- Ajude a mãe a ENTENDER o que a atividade exige (atenção sustentada, memória de trabalho, discriminação visual, controle motor…) à luz do perfil da criança — por que pesa.
+- Ajude a FAZER, quebrando em micro-passos: uma unidade por vez. Ex.: "olha a 1ª linha, cadê a letra A? ela aponta → você vê a cor do A na legenda → pinta → COMEMORA"; depois procura o A na 2ª linha; faz uma PAUSA; depois a letra E… Um pouquinho de cada vez.
+- Oriente o CLIMA: ambiente tranquilo e gostoso, sem pressa nem cobrança, pra a criança ASSOCIAR lição com prazer, não com sofrimento. Peça PACIÊNCIA — cada dia fica mais fácil.
+- Ofereça ADAPTAÇÕES concretas (menos itens, uma linha por vez, virar jogo com tampinhas antes de pintar, um marcador pra não perder a linha, terminar em 2 momentos).
+- Pode sugerir UMA pergunta construtiva pra escola ("qual habilidade querem desenvolver? há adaptação prevista pro perfil dela?").
+- NÃO ataque o profissional nem valide xingamento — o ponto é a falta de PERSONALIZAÇÃO, não a atividade em si. Foque em ajudar a criança no dia a dia, ensinando a mãe.
+</foto>`,
+    );
+  }
   linhas.push(`\nResponda como a Ayla.`);
+
+  // Conteúdo do usuário: texto sempre; se veio FOTO, anexa o bloco de imagem
+  // (a Ayla enxerga — Sonnet tem visão). Baixa e manda em base64 (URL da Z-API
+  // pode expirar/exigir token). Se falhar o download, segue só com o texto.
+  const textoUser = linhas.join("\n");
+  let userContent: string | ConteudoUsuario[] = textoUser;
+  if (params.imagemUrl) {
+    const img = await baixarImagemBase64(params.imagemUrl);
+    if (img) {
+      userContent = [
+        { type: "text", text: textoUser },
+        { type: "image", source: { type: "base64", media_type: img.mediaType, data: img.base64 } },
+      ];
+    }
+  }
 
   let enviouAlgo = false;
   try {
@@ -334,7 +400,7 @@ export async function gerarRespostaAyla(
       model: AYLA_MODEL_FALLBACK,
       max_tokens: 900,
       system: [{ type: "text", text: system, cache_control: { type: "ephemeral" } }],
-      messages: [{ role: "user", content: linhas.join("\n") }],
+      messages: [{ role: "user", content: userContent }],
     });
 
     if (!onParagrafo) {

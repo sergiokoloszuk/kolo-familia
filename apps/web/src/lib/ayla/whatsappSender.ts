@@ -168,6 +168,10 @@ export function parseZapiWebhook(payload: unknown): InboundWhatsApp | null {
     pickString((p.message as Record<string, unknown> | undefined)?.text) ??
     pickString(p.message) ??
     pickString(p.body) ??
+    // Legenda de imagem — a Z-API manda em image.caption (antes a foto+legenda
+    // virava "sem texto" e a mensagem inteira era IGNORADA).
+    pickString((p.image as Record<string, unknown> | undefined)?.caption) ??
+    pickString(p.caption) ??
     "";
 
   // Mídia (opcional)
@@ -180,10 +184,11 @@ export function parseZapiWebhook(payload: unknown): InboundWhatsApp | null {
       (p.image ? "image" : p.audio ? "audio" : "outro")
     : undefined;
 
-  // Aceita mensagem se tem texto OU áudio (vai ser transcrito downstream).
-  // Mídia sem áudio (foto, vídeo) sem caption continua sendo ignorada por ora.
+  // Aceita mensagem se tem texto OU áudio (transcrito downstream) OU IMAGEM
+  // (a Ayla lê a foto — lição, rótulo, agenda). Vídeo sem legenda segue ignorado.
   const ehAudio = midiaUrl && midiaTipo === "audio";
-  if (!texto.trim() && !ehAudio) return null;
+  const ehImagem = midiaUrl && midiaTipo === "image";
+  if (!texto.trim() && !ehAudio && !ehImagem) return null;
 
   // Timestamp
   const tsMs =

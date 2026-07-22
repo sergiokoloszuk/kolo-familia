@@ -1339,6 +1339,7 @@ export async function processInbound(
       historico,
       linksLudico,
       mensagem: inbound.texto,
+      imagemUrl: inbound.midiaTipo === "image" ? (inbound.midiaUrl ?? null) : null,
       sinais: {
         conquista: parsed.conquista,
         desafio: parsed.desafio,
