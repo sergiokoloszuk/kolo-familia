@@ -21,6 +21,24 @@ const OPENAI_BASE = "https://api.openai.com/v1";
 const IMAGE_MODEL = process.env.OPENAI_IMAGE_MODEL || "gpt-image-1";
 const IMAGE_QUALITY = process.env.OPENAI_IMAGE_QUALITY || "medium";
 
+// Formato de SAÍDA — JPEG comprimido corta ~6x o peso vs PNG (1024px vira
+// ~150-250KB no lugar de ~1,5MB). Resolve a lentidão pra CARREGAR as imagens
+// no navegador (rotina com 9 cartões: ~1,8MB no lugar de ~13MB). Escolhemos
+// JPEG (não WebP) porque os cartões vão pra PDF (varalzinho) e o pdf-lib só
+// embute PNG/JPEG — WebP quebraria o PDF. Ilustrações têm fundo, não precisam
+// de transparência. O /edits do gpt-image-1 aceita JPEG como referência.
+const IMAGE_FORMAT = (process.env.OPENAI_IMAGE_FORMAT || "jpeg").toLowerCase();
+const IMAGE_COMPRESSION = Number(process.env.OPENAI_IMAGE_COMPRESSION || "78");
+const FORMAT_COMPRIMIVEL = IMAGE_FORMAT === "webp" || IMAGE_FORMAT === "jpeg";
+
+/** Sniff simples do MIME de uma imagem, pra rotular a referência do /edits. */
+function sniffMime(b: Buffer): "image/webp" | "image/jpeg" | "image/png" {
+  if (b.length >= 12 && b.toString("ascii", 0, 4) === "RIFF" && b.toString("ascii", 8, 12) === "WEBP")
+    return "image/webp";
+  if (b.length >= 3 && b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff) return "image/jpeg";
+  return "image/png";
+}
+
 export type GerarImagemParams = {
   prompt: string;
   familyAccountId: string;
@@ -62,6 +80,8 @@ export async function gerarImagem(
       n: 1,
       size,
       quality: IMAGE_QUALITY,
+      output_format: IMAGE_FORMAT,
+      ...(FORMAT_COMPRIMIVEL ? { output_compression: IMAGE_COMPRESSION } : {}),
     }),
   });
 
@@ -83,6 +103,7 @@ export async function gerarImagem(
     bytes,
     params.familyAccountId,
     params.tipo,
+    IMAGE_FORMAT,
   );
 
   await logarUsoApi(supabase, {
@@ -121,12 +142,16 @@ export async function gerarImagemComReferencia(
   }
 
   const quality = params.quality ?? IMAGE_QUALITY;
+  const refMime = sniffMime(params.referencia);
+  const refExt = refMime === "image/webp" ? "webp" : refMime === "image/jpeg" ? "jpg" : "png";
   const fd = new FormData();
   fd.append("model", IMAGE_MODEL);
-  fd.append("image", new Blob([new Uint8Array(params.referencia)], { type: "image/png" }), "ref.png");
+  fd.append("image", new Blob([new Uint8Array(params.referencia)], { type: refMime }), `ref.${refExt}`);
   fd.append("prompt", params.prompt);
   fd.append("size", params.size ?? "1024x1024");
   fd.append("quality", quality);
+  fd.append("output_format", IMAGE_FORMAT);
+  if (FORMAT_COMPRIMIVEL) fd.append("output_compression", String(IMAGE_COMPRESSION));
 
   const res = await fetch(`${OPENAI_BASE}/images/edits`, {
     method: "POST",
@@ -147,6 +172,7 @@ export async function gerarImagemComReferencia(
     bytes,
     params.familyAccountId,
     params.tipo,
+    IMAGE_FORMAT,
   );
 
   await logarUsoApi(supabase, {
@@ -166,12 +192,16 @@ async function uploadImagem(
   bytes: Buffer,
   familyAccountId: string,
   tipo: string,
+  ext: string = "png",
 ): Promise<{ url: string; storage_path: string }> {
-  const filename = `${crypto.randomUUID()}.png`;
+  const extLimpa = ext === "jpg" ? "jpeg" : ext;
+  const contentType =
+    extLimpa === "webp" ? "image/webp" : extLimpa === "jpeg" ? "image/jpeg" : "image/png";
+  const filename = `${crypto.randomUUID()}.${extLimpa === "jpeg" ? "jpg" : extLimpa}`;
   const path = `${familyAccountId}/${tipo}/${filename}`;
   const { error: uploadErr } = await supabase.storage
     .from("imagens")
-    .upload(path, bytes, { contentType: "image/png", upsert: false });
+    .upload(path, bytes, { contentType, upsert: false });
   if (uploadErr) {
     throw new Error(`Storage upload falhou: ${uploadErr.message}`);
   }
