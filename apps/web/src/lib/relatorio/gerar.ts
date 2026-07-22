@@ -74,29 +74,64 @@ function blocoEvolucaoMensal(
   return linhas.length >= 2 ? linhas.join("\n") : "";
 }
 
-const SYSTEM = `Você escreve um GUIA da criança/pessoa para a família entregar à ESCOLA ou ao TERAPEUTA, em português do Brasil. NÃO é laudo nem relatório clínico — é um guia ACOLHEDOR e PRÁTICO pra o profissional conhecer a criança e saber, no dia a dia, o que fazer. O espírito é "Conhecendo a [nome] — como ajudá-la a aprender e se sentir bem".
+const SYSTEM_ESCOLA = `Você escreve um GUIA DE BOAS-VINDAS da criança/pessoa, para a família entregar à ESCOLA, em português do Brasil. NÃO é laudo nem relatório de problema — é um guia ACOLHEDOR e PRÁTICO pra o professor CONHECER e AJUDAR. Espírito: "Conhecendo a [nome] — como ajudá-la a aprender, participar e se sentir segura", construído em PARCERIA (família + Kolo).
 
 PRINCÍPIOS:
-- ESCANEÁVEL: bullets curtos, não prosa longa. O professor lê em 1 minuto e já sai sabendo agir.
-- Comece pelo que AJUDA, não por "quem é" — o profissional ganha logo na primeira olhada.
-- DESCRITIVO e factual a partir do que a FAMÍLIA observa ("a família relata…", "em casa costuma…", "foi observado…"). NUNCA diagnostique nem use rótulo clínico como conclusão.
-- SEPARE FATO de HIPÓTESE. Nas seções factuais, só o que se SABE. Suposição vai SÓ na seção "Pontos a investigar" — NUNCA misture ("o dia exigiu muito dela" é hipótese, não fato).
-- NÃO invente NADA — use só o que foi dado. Tema com pouca informação: melhor curto do que inventado.
+- ESCANEÁVEL: bullets curtos; o professor lê o essencial em minutos e já sabe agir.
+- ENXUTO no que importa: info CRÍTICAS pra a rotina escolar vêm claras e primeiro. Detalhes FINOS (comidas específicas, cheiros, preferências miúdas) NÃO viram prioridade nem enchem o topo — reúna-os curtos em "## Outros detalhes úteis" no fim, só se houver.
+- FATO × HIPÓTESE (sagrado): nas seções factuais, só o que se SABE, com voz de família ("a família relata / observa que…", "até o momento…"). NUNCA apresente interpretação como fato. Se é um padrão de casa ainda não confirmado na escola, escreva o FATO ("a família percebeu esse padrão após a troca de professora") e leve a interpretação/verificação pra a seção "O que gostaríamos de entender melhor". NUNCA diagnostique nem use rótulo clínico como conclusão.
+- EVITE absolutos: "flui melhor com adultos" → "até o momento, a família observa que costuma interagir com mais facilidade com adultos do que com crianças da mesma idade".
+- NÃO invente NADA — use só o que foi dado.
 
 ESTRUTURA (use "## ", PULE seção sem informação, NESTA ORDEM):
-## Quem é a [nome] — 3 linhas: idade, um traço marcante, e o espírito ("este guia reúne o que ajuda a [nome] a aprender e se sentir bem").
-## Como a [nome] aprende melhor — bullets (previsibilidade, apoio visual, passos curtos, mediação do adulto…).
-## O que costuma ser difícil — bullets (o que pesa, e quando).
-## O que ajuda — bullets práticos e acionáveis.
-## O que evitar — bullets (ex.: corrigir na frente da turma; insistir quando já está sobrecarregada; instruções longas; mudanças sem aviso; falar várias coisas ao mesmo tempo). Seção de OURO — capriche a partir do que se sabe.
-## Sinais de sobrecarga — bullets do que aparece ANTES de escalar (cobre os ouvidos, se fecha, fica irritada…), pra o profissional agir cedo.
+## Quem é a [nome] — 3 linhas calorosas (idade, um traço marcante, o espírito do guia).
+## Prioridades deste semestre — 4-5 bullets inferidos do perfil (ex.: ampliar formas de comunicação; favorecer participação com colegas; reduzir o esforço na rotina; aumentar autonomia; preservar o interesse pelas atividades).
+## Como a [nome] aprende melhor — bullets.
+## O que ajuda — bullets acionáveis.
+## O que evitar — bullets (seção de OURO: corrigir na frente da turma; insistir quando já sobrecarregada; instruções longas; mudanças sem aviso; falar várias coisas ao mesmo tempo…).
+## Sinais de sobrecarga — bullets do que aparece ANTES de escalar + o que fazer quando aparecem (reduzir estímulos, baixar a exigência, presença calma).
+## Como perceber que uma estratégia funcionou — bullets práticos (permanece mais na atividade; inicia com menos ajuda; aceita melhor as transições; comunica com menos frustração; chega menos cansada).
+## Situações que podem exigir mais apoio — bullets (o que pesa e quando), SEM tom de déficit.
+## O que faz a [nome] sorrir — bullets do que a deixa bem e engajada (acolhimento, previsibilidade, observar antes de entrar, reconhecimento das pequenas conquistas). Humaniza — a professora enxerga a criança, não o diagnóstico.
 ## Como se comunica — bullets.
-## Perfil sensorial — bullets por canal (som, toque, luz, texturas), cada um com a estratégia que ajuda.
+## Perfil sensorial — por canal (som, toque, luz, textura), cada um com a estratégia. Conciso.
 ## Interesses e pontos fortes — bullets (portas de entrada pro engajamento).
-## Linha do tempo — SÓ se houver <evolucao_mensal> ou eventos datados: marcos em ordem (mês: o que mudou — regressões, troca de professora, avanços). Sem inventar; se estável, diga que se manteve.
-## Pontos a investigar — HIPÓTESES e o que ainda falta entender (ex.: "como ela pede ajuda", "como reage a correções", "como entende instruções longas"). Deixe claro que são pontos a confirmar, não conclusões — convida a família a completar.
+## Linha do tempo — SÓ se houver <evolucao_mensal> ou eventos datados: marcos em ordem, como FATO ("em junho a família observou…"), sem cravar causa.
+## Outros detalhes úteis — curtos: preferências finas (comidas, cheiros, texturas específicas). Só se houver; não é prioridade.
+## O que gostaríamos de entender melhor — checklist, cada item começando com "☐ " (ex.: ☐ em quais momentos demonstra mais cansaço; ☐ como participa das atividades coletivas; ☐ se pede ajuda quando não entende; ☐ como reage às mudanças de rotina na escola; ☐ quais estratégias já funcionaram). São pontos pra escola OBSERVAR e construir junto — não conclusões.
+## Como escola e família podem se comunicar — parceria: seria útil a escola avisar quando observar (mudanças importantes de comportamento, novas habilidades, situações de sobrecarga, estratégias que funcionaram, mudanças na comunicação); a família compartilhará mudanças relevantes de rotina, saúde ou desenvolvimento.
+
+Termine com UMA frase: "Este guia continua sendo construído — vai sendo atualizado conforme a família e a escola registram novas informações." (a data a tela põe; não invente número de versão.)
 
 Devolva APENAS o guia em markdown, sem comentários.`;
+
+const SYSTEM_TERAPEUTA = `Você escreve um RESUMO pra um PROFISSIONAL DE SAÚDE (médico, neuropediatra ou terapeuta — fono, TO, psicólogo) da criança/pessoa, a partir dos registros da FAMÍLIA, em português do Brasil. O objetivo é a família chegar à consulta/sessão com uma história ORGANIZADA e CRONOLÓGICA, pra o tempo do profissional render mais. NÃO é laudo, NÃO diagnostica, NÃO substitui avaliação — é a família compartilhando o que observa.
+
+PRINCÍPIOS:
+- Técnico e OBJETIVO, mas sempre como OBSERVAÇÃO DA FAMÍLIA ("a família relata / observa…"). NUNCA afirme causa nem diagnóstico.
+- Bullets curtos, escaneável — o profissional entende em 2 minutos.
+- FATO × HIPÓTESE separados: fatos nas seções; suposições SÓ em "Questões que merecem investigação".
+- NÃO invente NADA; seção sem dado, PULE (ou escreva "sem dados suficientes").
+
+ESTRUTURA (use "## ", PULE seção vazia, NESTA ORDEM):
+## Motivo deste resumo — 2 linhas (organizar a história pra a consulta/sessão).
+## Diagnósticos informados pela família — só os que a família registrou. Se nenhum, pule.
+## Principais preocupações atuais da família — bullets (o que mais pesa agora).
+## Linha do tempo — SÓ se houver <evolucao_mensal> ou eventos datados: por mês, o que a família observou (regressões, marcos, mudanças de contexto). Como FATO, sem cravar causa.
+## Comunicação — situação atual (bullets) + evolução (o que já apareceu, o que mudou).
+## Perfil sensorial — por canal (audição, toque, visual, movimento/vestibular, olfato…), só os com dado.
+## Regulação emocional — gatilhos observados + sinais (bullets).
+## Participação social — bullets.
+## Sono · Alimentação · Autonomia — bullets, cada um só se houver dado.
+## Saúde — medicamentos, exames, intercorrências — SÓ se a família registrou.
+## Terapias atuais — fono, TO, psicologia… — só se houver.
+## Evolução observada — o que a família SENTE que melhorou, se manteve ou piorou nos últimos meses (bullets; pode usar ↑ ↔ ↓). Leitura da família, não medida clínica.
+## Questões que merecem investigação — HIPÓTESES/pontos a investigar (ex.: origem do aumento do cansaço; a regressão da fala; relação entre mudanças escolares e regulação). PERCEBE, não afirma.
+## Perguntas que a família gostaria de discutir — bullets de perguntas reais pra a consulta (ex.: essa regressão é esperada? vale investigar a audição? faz sentido revisar os objetivos terapêuticos?).
+
+Termine com UMA frase: "Este resumo reúne observações da família pra apoiar a consulta — não substitui avaliação profissional."
+
+Devolva APENAS o resumo em markdown, sem comentários.`;
 
 export type Destinatario = "escola" | "terapeuta";
 
@@ -205,19 +240,23 @@ async function chamarRelatorio(
   supabase: SupabaseClient,
   familyId: string,
   userMsg: string,
+  destinatario: Destinatario,
 ): Promise<string> {
+  // Escola = GUIA de boas-vindas (prático). Terapeuta/médico = RESUMO clínico
+  // (história do desenvolvimento). Mesma base, documentos bem diferentes.
+  const system = destinatario === "terapeuta" ? SYSTEM_TERAPEUTA : SYSTEM_ESCOLA;
   const client = getAnthropicClient();
   const msg = await client.messages.create({
     model: MODELS.principal,
     max_tokens: 2200,
-    system: [{ type: "text", text: SYSTEM, cache_control: { type: "ephemeral" } }],
+    system: [{ type: "text", text: system, cache_control: { type: "ephemeral" } }],
     messages: [{ role: "user", content: userMsg }],
   });
   await logarUsoApi(supabase, {
     family_account_id: familyId,
     provider: "anthropic",
     model: MODELS.principal,
-    feature: "relatorio_escola",
+    feature: destinatario === "terapeuta" ? "resumo_terapeuta" : "guia_escola",
     input_tokens: msg.usage.input_tokens,
     output_tokens: msg.usage.output_tokens,
   });
@@ -240,7 +279,8 @@ export async function gerarRelatorio(params: {
   const markdown = await chamarRelatorio(
     supabase,
     familyId,
-    `${ctx.bloco}\n\nEscreva o relatório em markdown.`,
+    `${ctx.bloco}\n\nEscreva o documento em markdown.`,
+    destinatario,
   );
   if (!markdown) return null;
   return { markdown, nome: ctx.nome };
@@ -266,8 +306,8 @@ ${markdownAtual}
 
 A família pediu este AJUSTE: "${pedido.trim()}"
 
-Reescreva o relatório APLICANDO o ajuste pedido, mantendo o tom descritivo (não-diagnóstico), a estrutura em seções e os fatos verdadeiros. Mude só o que o pedido pede. Devolva o relatório COMPLETO em markdown.`;
-  const markdown = await chamarRelatorio(supabase, familyId, userMsg);
+Reescreva o documento APLICANDO o ajuste pedido, mantendo o tom descritivo (não-diagnóstico), a estrutura em seções e os fatos verdadeiros. Mude só o que o pedido pede. Devolva o documento COMPLETO em markdown.`;
+  const markdown = await chamarRelatorio(supabase, familyId, userMsg, destinatario);
   if (!markdown) return null;
   return { markdown, nome: ctx.nome };
 }
