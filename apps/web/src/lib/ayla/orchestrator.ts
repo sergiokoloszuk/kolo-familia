@@ -49,6 +49,7 @@ import {
   editarRotina,
 } from "./rotina-guiada";
 import { classificarIntencao } from "./intent";
+import { extrairESalvarEventos } from "./eventos";
 import { assinaturaLiberada } from "@/lib/auth/assinatura";
 import { classificarAreasDiario } from "@/lib/ia/classificar-area";
 import type { AylaTipoProativa, AylaTipoReativa, ParserResult } from "./types";
@@ -1442,6 +1443,11 @@ export async function processInbound(
       );
     }
   }
+
+  // Linha do tempo (Livro Vivo): registra eventos importantes mencionados
+  // (troca de professora, mudança, medicação, terapia…). Best-effort, só com
+  // gatilho — a resposta já foi enviada acima.
+  await extrairESalvarEventos(supabase, family.id, membroContextoId, inbound.texto);
 
   return { tratada: true, familia: family.id, resposta: resp };
 }

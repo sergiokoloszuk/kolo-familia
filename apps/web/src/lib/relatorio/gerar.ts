@@ -96,7 +96,7 @@ ESTRUTURA (use "## ", PULE seção sem informação, NESTA ORDEM):
 ## Como se comunica — bullets.
 ## Perfil sensorial — por canal (som, toque, luz, textura), cada um com a estratégia. Conciso.
 ## Interesses e pontos fortes — bullets (portas de entrada pro engajamento).
-## Linha do tempo — SÓ se houver <evolucao_mensal> ou eventos datados: marcos em ordem, como FATO ("em junho a família observou…"), sem cravar causa.
+## Linha do tempo — SÓ se houver <evolucao_mensal> ou <eventos_linha_do_tempo>: marcos em ordem, como FATO ("em junho a família observou…"), sem cravar causa.
 ## Outros detalhes úteis — curtos: preferências finas (comidas, cheiros, texturas específicas). Só se houver; não é prioridade.
 ## O que gostaríamos de entender melhor — checklist, cada item começando com "☐ " (ex.: ☐ em quais momentos demonstra mais cansaço; ☐ como participa das atividades coletivas; ☐ se pede ajuda quando não entende; ☐ como reage às mudanças de rotina na escola; ☐ quais estratégias já funcionaram). São pontos pra escola OBSERVAR e construir junto — não conclusões.
 ## Como escola e família podem se comunicar — parceria: seria útil a escola avisar quando observar (mudanças importantes de comportamento, novas habilidades, situações de sobrecarga, estratégias que funcionaram, mudanças na comunicação); a família compartilhará mudanças relevantes de rotina, saúde ou desenvolvimento.
@@ -117,7 +117,7 @@ ESTRUTURA (use "## ", PULE seção vazia, NESTA ORDEM):
 ## Motivo deste resumo — 2 linhas (organizar a história pra a consulta/sessão).
 ## Diagnósticos informados pela família — só os que a família registrou. Se nenhum, pule.
 ## Principais preocupações atuais da família — bullets (o que mais pesa agora).
-## Linha do tempo — SÓ se houver <evolucao_mensal> ou eventos datados: por mês, o que a família observou (regressões, marcos, mudanças de contexto). Como FATO, sem cravar causa.
+## Linha do tempo — SÓ se houver <evolucao_mensal> ou <eventos_linha_do_tempo>: por mês, o que a família observou (regressões, marcos, mudanças de contexto). Como FATO, sem cravar causa.
 ## Comunicação — situação atual (bullets) + evolução (o que já apareceu, o que mudou).
 ## Perfil sensorial — por canal (audição, toque, visual, movimento/vestibular, olfato…), só os com dado.
 ## Regulação emocional — gatilhos observados + sinais (bullets).
@@ -205,6 +205,18 @@ async function montarContextoRelatorio(
     .reverse(); // mais antiga → mais recente
   const evolucaoMensal = blocoEvolucaoMensal(snaps);
 
+  // Linha do tempo de EVENTOS importantes (Livro Vivo): troca de professora,
+  // mudança de escola/rotina, medicação, início de terapia, perda, marco…
+  const { data: eventosRaw } = await supabase
+    .from("eventos_membro")
+    .select("data, tipo, descricao, fonte")
+    .eq("membro_atipico_id", membroId)
+    .order("data", { ascending: true })
+    .limit(40);
+  const eventos = (eventosRaw ?? [])
+    .map((e) => `${e.data} — ${e.descricao}${e.fonte && e.fonte !== "familia" ? ` (${e.fonte})` : ""}`)
+    .join("\n");
+
   const idade = idadeAnos((m.data_nascimento as string | null) ?? null);
   const nome = m.nome as string;
   const foco =
@@ -230,6 +242,14 @@ ${registros || "(sem registros recentes)"}
 <evolucao_mensal>
 ${evolucaoMensal}
 </evolucao_mensal>`
+      : ""
+  }${
+    eventos
+      ? `
+
+<eventos_linha_do_tempo>
+${eventos}
+</eventos_linha_do_tempo>`
       : ""
   }`;
 
