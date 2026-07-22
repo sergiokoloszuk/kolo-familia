@@ -24,6 +24,7 @@ import {
 import { Logo } from "@/components/brand/logo";
 import { cn } from "@/lib/utils";
 import { SeletorCrianca } from "./seletor-crianca";
+import { TourGuiado } from "./tour-guiado";
 
 type NavItem = {
   href: string;
@@ -164,6 +165,7 @@ export function Sidebar({
             <Link
               key={item.href}
               href={item.href}
+              data-tour={item.href}
               className={cn(
                 "group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-colors",
                 active
@@ -376,6 +378,9 @@ export function Sidebar({
 
         {sidebarContent}
       </aside>
+
+      {/* Tour de boas-vindas (coach marks) — abre o menu antes, no mobile. */}
+      <TourGuiado abrirMenu={() => setOpen(true)} />
     </>
   );
 }

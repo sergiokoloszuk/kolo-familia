@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { requireAdmin } from "@/lib/auth/require-admin";
@@ -56,6 +57,36 @@ export default async function AdminTestePage() {
           ) : (
             <span className="text-muted-foreground">Família ainda não inicializada.</span>
           )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Telas de primeira vez</CardTitle>
+          <CardDescription>
+            Veja o que o recém-chegado vê, sem precisar de conta nova. O preview
+            não altera seus dados — só troca a visão da Home.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="flex flex-wrap gap-2.5 text-sm">
+          <Link
+            href="/painel?preview=boasvindas"
+            className="rounded-full border border-kolo-linha bg-white px-4 py-2 font-semibold text-brand-purple transition-colors hover:border-brand-yellow/60 hover:bg-kolo-lilas-bg-2"
+          >
+            🌱 Home de boas-vindas
+          </Link>
+          <Link
+            href="/painel?preview=boasvindas&tour=1"
+            className="rounded-full border border-kolo-linha bg-white px-4 py-2 font-semibold text-brand-purple transition-colors hover:border-brand-yellow/60 hover:bg-kolo-lilas-bg-2"
+          >
+            🌱 + 👀 Boas-vindas com o tour
+          </Link>
+          <Link
+            href="/painel?tour=1"
+            className="rounded-full border border-kolo-linha bg-white px-4 py-2 font-semibold text-brand-purple transition-colors hover:border-brand-yellow/60 hover:bg-kolo-lilas-bg-2"
+          >
+            👀 Só o tour do menu
+          </Link>
         </CardContent>
       </Card>
 

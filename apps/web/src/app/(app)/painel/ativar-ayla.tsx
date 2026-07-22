@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { MessageCircle, Check, ArrowRight } from "lucide-react";
-import { ativarAyla } from "./ativar-actions";
+import { enviarCodigoAtivacao, confirmarCodigoAtivacao } from "./ativar-actions";
 
 // "+5511999998888" → "(11) 99999-8888" (só pra exibir o número já salvo).
 function paraExibir(e164: string | null): string {
@@ -26,18 +26,18 @@ function normalizar(raw: string): string {
 
 export function AtivarAylaCard({
   numeroAtual,
-  variante = "card",
 }: {
   numeroAtual: string | null;
-  /** "card" = bloco cheio (estado engajado). "passo" = enxuto (dentro do primeiro passo). */
-  variante?: "card" | "passo";
 }) {
+  const [etapa, setEtapa] = useState<"numero" | "codigo">("numero");
   const [valor, setValor] = useState(paraExibir(numeroAtual));
+  const [codigo, setCodigo] = useState("");
+  const [numeroConfirmado, setNumeroConfirmado] = useState("");
   const [erro, setErro] = useState<string | null>(null);
   const [ok, setOk] = useState(false);
   const [pending, startTransition] = useTransition();
 
-  function ativar() {
+  function enviarCodigo() {
     setErro(null);
     const e164 = normalizar(valor);
     if (!/^\+55\d{10,11}$/.test(e164)) {
@@ -45,7 +45,25 @@ export function AtivarAylaCard({
       return;
     }
     startTransition(async () => {
-      const res = await ativarAyla({ whatsapp_e164: e164 });
+      const res = await enviarCodigoAtivacao({ whatsapp_e164: e164 });
+      if (res.ok) {
+        setNumeroConfirmado(valor);
+        setEtapa("codigo");
+        setCodigo("");
+      } else {
+        setErro(res.erro);
+      }
+    });
+  }
+
+  function confirmar() {
+    setErro(null);
+    if (codigo.replace(/\D/g, "").length !== 6) {
+      setErro("Digite os 6 números do código.");
+      return;
+    }
+    startTransition(async () => {
+      const res = await confirmarCodigoAtivacao({ codigo });
       if (res.ok) setOk(true);
       else setErro(res.erro);
     });
@@ -70,8 +88,6 @@ export function AtivarAylaCard({
     );
   }
 
-  const enxuto = variante === "passo";
-
   return (
     <div
       id="ativar-ayla"
@@ -95,37 +111,84 @@ export function AtivarAylaCard({
             Ayla no WhatsApp
           </span>
         </div>
-        <h3 className="mt-3 font-heading text-xl text-white md:text-2xl">
-          {enxuto ? "E se você fizesse isso pelo WhatsApp?" : "Ative a Ayla e leve a Kolo pro seu dia"}
-        </h3>
-        <p className="mt-2 max-w-lg text-[14px] leading-relaxed text-white/75">
-          A Ayla vira sua parceira no dia a dia: uma estratégia na hora do desafio,
-          montar a rotina (com cartões pra imprimir), tirar dúvidas — na hora em que
-          acontece. É onde a experiência fica completa.
-        </p>
 
-        <div className="mt-5 flex flex-col gap-2.5 sm:flex-row sm:items-start">
-          <div className="flex-1">
-            <input
-              inputMode="tel"
-              value={valor}
-              onChange={(e) => setValor(e.target.value)}
-              placeholder="(11) 99999-9999"
-              aria-label="Seu WhatsApp"
-              className="w-full rounded-full border border-white/20 bg-white/10 px-4 py-3 text-sm text-white placeholder:text-white/50 focus:border-brand-yellow focus:outline-none"
-            />
-            {erro && <p className="mt-1.5 pl-1 text-xs text-brand-yellow-light">{erro}</p>}
-          </div>
-          <button
-            type="button"
-            onClick={ativar}
-            disabled={pending}
-            className="inline-flex items-center justify-center gap-1.5 rounded-full bg-brand-yellow px-5 py-3 text-sm font-bold text-brand-purple-dark transition-transform hover:scale-[1.02] disabled:opacity-60"
-          >
-            {pending ? "Ativando…" : "Ativar a Ayla"}
-            {!pending && <ArrowRight className="size-4" strokeWidth={2.5} aria-hidden />}
-          </button>
-        </div>
+        {etapa === "numero" ? (
+          <>
+            <h3 className="mt-3 font-heading text-xl text-white md:text-2xl">
+              Ative a Ayla e leve a Kolo pro seu dia
+            </h3>
+            <p className="mt-2 max-w-lg text-[14px] leading-relaxed text-white/75">
+              A Ayla vira sua parceira no dia a dia: uma estratégia na hora do desafio,
+              montar a rotina (com cartões pra imprimir), tirar dúvidas — na hora em que
+              acontece. Pra confirmar que o número é seu, a gente manda um código.
+            </p>
+            <div className="mt-5 flex flex-col gap-2.5 sm:flex-row sm:items-start">
+              <div className="flex-1">
+                <input
+                  inputMode="tel"
+                  value={valor}
+                  onChange={(e) => setValor(e.target.value)}
+                  placeholder="(11) 99999-9999"
+                  aria-label="Seu WhatsApp"
+                  className="w-full rounded-full border border-white/20 bg-white/10 px-4 py-3 text-sm text-white placeholder:text-white/50 focus:border-brand-yellow focus:outline-none"
+                />
+                {erro && <p className="mt-1.5 pl-1 text-xs text-brand-yellow-light">{erro}</p>}
+              </div>
+              <button
+                type="button"
+                onClick={enviarCodigo}
+                disabled={pending}
+                className="inline-flex items-center justify-center gap-1.5 rounded-full bg-brand-yellow px-5 py-3 text-sm font-bold text-brand-purple-dark transition-transform hover:scale-[1.02] disabled:opacity-60"
+              >
+                {pending ? "Enviando…" : "Enviar código"}
+                {!pending && <ArrowRight className="size-4" strokeWidth={2.5} aria-hidden />}
+              </button>
+            </div>
+          </>
+        ) : (
+          <>
+            <h3 className="mt-3 font-heading text-xl text-white md:text-2xl">
+              Digite o código que enviei
+            </h3>
+            <p className="mt-2 max-w-lg text-[14px] leading-relaxed text-white/75">
+              Mandei um código de 6 números no WhatsApp <strong className="text-white">{numeroConfirmado}</strong>.
+              Digite ele aqui pra ativar a Ayla. 🌿
+            </p>
+            <div className="mt-5 flex flex-col gap-2.5 sm:flex-row sm:items-start">
+              <div className="flex-1">
+                <input
+                  inputMode="numeric"
+                  value={codigo}
+                  onChange={(e) => setCodigo(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                  placeholder="000000"
+                  aria-label="Código de 6 dígitos"
+                  className="w-full rounded-full border border-white/20 bg-white/10 px-4 py-3 text-center text-lg font-bold tracking-[0.3em] text-white placeholder:tracking-[0.2em] placeholder:text-white/40 focus:border-brand-yellow focus:outline-none"
+                />
+                {erro && <p className="mt-1.5 pl-1 text-xs text-brand-yellow-light">{erro}</p>}
+              </div>
+              <button
+                type="button"
+                onClick={confirmar}
+                disabled={pending}
+                className="inline-flex items-center justify-center gap-1.5 rounded-full bg-brand-yellow px-5 py-3 text-sm font-bold text-brand-purple-dark transition-transform hover:scale-[1.02] disabled:opacity-60"
+              >
+                {pending ? "Ativando…" : "Ativar a Ayla"}
+                {!pending && <Check className="size-4" strokeWidth={2.5} aria-hidden />}
+              </button>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                setEtapa("numero");
+                setErro(null);
+              }}
+              className="mt-3 pl-1 text-xs text-white/60 underline-offset-2 hover:underline"
+            >
+              ← trocar o número ou reenviar
+            </button>
+          </>
+        )}
+
         <p className="mt-2.5 pl-1 text-[11px] text-white/50">
           Você pode ajustar horários ou pausar quando quiser, nas Configurações.
         </p>
