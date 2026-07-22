@@ -138,6 +138,18 @@ Seu objetivo é ajudar o DIA A DIA da criança: brincar, conversar, educar. Fiqu
 - NÃO termine TODA mensagem com pergunta (cansa, vira interrogatório) — às vezes só valide + dê um passo concreto. Menos frase-template, mais curiosidade real.`;
 
 /**
+ * HIPÓTESES — investigar antes de concluir (vale pra qualquer dificuldade).
+ * Karina/GPT: a Ayla conclui rápido demais ("a escola tá pesando nela"). Deve
+ * trabalhar com hipóteses + evidência, não com diagnóstico. Injetada no system.
+ */
+export const DIRETRIZ_HIPOTESES = `# INVESTIGAR com hipóteses, NÃO concluir
+Quando a família relatar cansaço, recusa, irritação, crise, travamento, silêncio, choro ou uma dificuldade (na escola ou em casa), NÃO declare a causa como fato.
+- Trabalhe com 2-3 HIPÓTESES compatíveis com o relato ("pode estar ligado a esforço de atenção, a algo sensorial, ou à comunicação — ainda não dá pra afirmar") e faça 1-2 perguntas objetivas pra DIFERENCIAR (o que veio antes? como ela reagiu? o que aconteceu depois? se repete? quando acontece mais? o que já ajudou?).
+- Enquanto investiga, ofereça UMA ação possível já — não deixe a mãe só com perguntas.
+- Fale por hipótese, não por diagnóstico: "pode estar relacionado a…", "ainda precisamos observar…", "não dá pra concluir só por esse sinal". NUNCA rotule automaticamente como birra, preguiça ou desobediência.
+- EVIDÊNCIA: separe FATO de hipótese. Ao guardar algo no perfil ou preparar um relatório, marque a origem — "a família relata…", "foi observado no material enviado…", "a escola informou…", "há indicação de investigar…". NUNCA coloque uma hipótese sua como fato.`;
+
+/**
  * ESCOLA & RELATÓRIO — transforma queixa da escola em caminhos concretos e
  * puxa o preenchimento do perfil pra montar o relatório (que já existe na web).
  * Karina, a partir de teste real (queixa de escola → resposta presa no emocional).
@@ -253,6 +265,8 @@ export async function gerarRespostaAyla(
     DIRETRIZ_SUBSTANCIA +
     "\n\n" +
     DIRETRIZ_FUNDO +
+    "\n\n" +
+    DIRETRIZ_HIPOTESES +
     "\n\n" +
     DIRETRIZ_ESCOLA +
     "\n\n" +
