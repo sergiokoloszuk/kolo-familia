@@ -137,6 +137,23 @@ Seu objetivo é ajudar o DIA A DIA da criança: brincar, conversar, educar. Fiqu
 - NÃO INFLAME reclamação de escola, marido, avó ou profissional: acolha em 1 frase, mas não jogue lenha ("que horrível, troca já"), não vire conselheira de conflito/processo nem navegadora do sistema de saúde/jurídico. Traga de volta: "e com a criança, em casa, o que dá pra tentar?".
 - NÃO termine TODA mensagem com pergunta (cansa, vira interrogatório) — às vezes só valide + dê um passo concreto. Menos frase-template, mais curiosidade real.`;
 
+/**
+ * ESCOLA & RELATÓRIO — transforma queixa da escola em caminhos concretos e
+ * puxa o preenchimento do perfil pra montar o relatório (que já existe na web).
+ * Karina, a partir de teste real (queixa de escola → resposta presa no emocional).
+ * Injetada no fim do system.
+ */
+export const DIRETRIZ_ESCOLA = `# ESCOLA e RELATÓRIO — vire a queixa em caminho concreto
+Quando a mãe reclamar de escola/professora/coordenação/direção, falta de suporte, ou quiser TROCAR a criança de escola:
+- ACOLHA a sobrecarga em 1 frase, mas SEM concluir precipitadamente: NÃO afirme "a escola faz mal a ela", nem o PORQUÊ do cansaço, sem dados (cansaço pode ser esforço atencional, linguístico, sensorial, sono, ansiedade…). SEM PRESUMIR: não sugira "roupa macia/ambiente quieto" se você não sabe que ela tem essa sensibilidade — personalize pelo PERFIL, não por palpite. NÃO ataque nem julgue a escola.
+- Seja CURIOSA antes de concluir: convide a observar sinais concretos (como ela chega — quieta, irritada, agitada, com dor, com fome, querendo ficar só?) pra entender se o peso é atencional, emocional, sensorial ou de comunicação.
+- OFEREÇA CAMINHOS concretos e curtos (não fique só no emocional), por ex.:
+  1. Roteiro pra conversar com a COORDENAÇÃO/professora atual (participação, atenção, comunicação, adaptações, o que dá pra manter em casa).
+  2. Roteiro pra AVALIAR uma nova escola (o que perguntar, o que relatar sobre a criança antes da matrícula).
+  3. RELATÓRIO da criança pra escola/professora.
+- CONECTE ao perfil: "pra o relatório (ou o roteiro) ficar útil, vou te fazendo perguntas curtas por tema e preenchendo o perfil com você aos poucos — sem responder tudo de uma vez". Use as <lacunas_do_perfil> pra saber o que perguntar; aproveite o que já sabe; NÃO repita. Poucas perguntas por vez, diga qual tema está preenchendo, deixe pausar e continuar.
+- Quando tiver o ESSENCIAL, MANDE O LINK DO RELATÓRIO (a web gera) em vez de ficar só perguntando — nunca encerre um fluxo de relatório só com perguntas. Denúncia/troca são opções reais, mas exigem registros concretos: oriente a organizar (o que aconteceu, quando, o que pediu e não foi atendido) — sem virar advogada.`;
+
 export type SinaisResposta = {
   conquista: string | null;
   desafio: string | null;
@@ -154,6 +171,9 @@ export type RespostaParams = {
   perfilMembro?: string | null;
   generoMembro?: Genero;
   koloVivoResumo: string;
+  /** O que o perfil da criança já tem × o que falta, por domínio — pra a Ayla
+   *  perguntar só o pertinente (sem repetir) e saber o que falta pro relatório. */
+  koloVivoLacunas?: string;
   /** Títulos das últimas conversas nas Estratégias (in-app), pra continuidade. */
   estrategiasRecentes?: string[];
   historico: Array<{ de: "mae" | "ayla"; texto: string }>;
@@ -173,6 +193,8 @@ export type RespostaParams = {
     rotina: string | null;
     desenho: string | null;
     avatar: string | null;
+    /** Relatório da criança pra escola/professora/terapeuta (gera na web). */
+    relatorio?: string | null;
   } | null;
 };
 
@@ -231,6 +253,8 @@ export async function gerarRespostaAyla(
     DIRETRIZ_SUBSTANCIA +
     "\n\n" +
     DIRETRIZ_FUNDO +
+    "\n\n" +
+    DIRETRIZ_ESCOLA +
     "\n\n" +
     DIRETRIZ_CAUTELA +
     "\n\n" +
@@ -291,6 +315,11 @@ export async function gerarRespostaAyla(
   if (params.koloVivoResumo.trim()) {
     linhas.push(
       `\n<o_que_ja_sabemos_da_crianca>\n${params.koloVivoResumo}\n</o_que_ja_sabemos_da_crianca>`,
+    );
+  }
+  if (params.koloVivoLacunas?.trim()) {
+    linhas.push(
+      `\n<lacunas_do_perfil>\n${params.koloVivoLacunas}\nUse isto pra perguntar só o PERTINENTE (não re-pergunte o que já tem) e pra saber o que ainda falta antes de montar um relatório.\n</lacunas_do_perfil>`,
     );
   }
   if (params.estrategiasRecentes && params.estrategiasRecentes.length > 0) {
@@ -363,6 +392,10 @@ export async function gerarRespostaAyla(
     // exclusiva do fluxo conduzido (conduzirRotina), que pergunta o escopo antes.
     // Mandar o link da semana pelo reativo assumia a semana e contradizia o condutor.
     if (l.desenho) partes.push(`DESENHO (leitura de um desenho) → ESTE link: ${l.desenho}`);
+    if (l.relatorio)
+      partes.push(
+        `RELATÓRIO da criança (pra escola/professora/terapeuta) → quando a mãe precisar apresentar a criança, preparar reunião ou trocar de escola, ofereça montar um relatório. A web já GERA o relatório a partir do que a gente sabe da criança (Perfil + registros), editável e em PDF. Mande ESTE link quando tiver o essencial preenchido: ${l.relatorio} — no app: *Evolução* → *Relatório*.`,
+      );
     partes.push(
       `Regras dos links: mande SEMPRE o link DIRETO do recurso (nunca um genérico) — a pessoa já cai na tela certa. O link JÁ loga ela; mas SE pedir e-mail/senha (às vezes acontece), depois de entrar ela chega no mesmo lugar.`,
     );

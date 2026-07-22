@@ -805,6 +805,47 @@ async function criancaDaConversa(supabase: SupabaseClient, familyId: string): Pr
   return (data?.[0]?.membro_atipico_id as string | null) ?? null;
 }
 
+function temConteudo(v: unknown): boolean {
+  if (v == null) return false;
+  if (typeof v === "string") return v.trim().length > 1;
+  if (Array.isArray(v)) return v.length > 0;
+  if (typeof v === "object") return Object.values(v as Record<string, unknown>).some(temConteudo);
+  return Boolean(v);
+}
+
+/**
+ * Lacunas do perfil por domínio — o que já tem × o que falta. Dá pra a Ayla
+ * "perfil no centro": perguntar só o pertinente, sem repetir, e saber o que
+ * ainda falta pra montar um relatório. Devolve uma frase curta pro prompt.
+ */
+async function carregarLacunasKoloVivo(
+  supabase: SupabaseClient,
+  membroId: string | null,
+): Promise<string> {
+  if (!membroId) return "";
+  try {
+    const { data } = await supabase
+      .from("perfil_vivo_membro")
+      .select("essencial, como_e, corpo_rotina, desafios_regulacao, sensorial, categorias_extras")
+      .eq("membro_atipico_id", membroId)
+      .maybeSingle();
+    const linha = (data ?? {}) as Record<string, unknown>;
+    const extras = (linha.categorias_extras ?? {}) as Record<string, unknown>;
+    const preenchidos: string[] = [];
+    const faltando: string[] = [];
+    for (const campo of MEMBRO_CAMPOS_TODOS) {
+      const v = membroCampoStorage(campo) === "toplevel" ? linha[campo] : extras[campo];
+      (temConteudo(v) ? preenchidos : faltando).push(MEMBRO_CAMPO_LABEL[campo] ?? campo);
+    }
+    const partes: string[] = [];
+    if (preenchidos.length) partes.push(`JÁ TEM no perfil: ${preenchidos.join(", ")}`);
+    if (faltando.length) partes.push(`AINDA FALTA (pergunte só se vier a propósito): ${faltando.join(", ")}`);
+    return partes.join(". ");
+  } catch {
+    return "";
+  }
+}
+
 /** Já convidou essa família pra assinar nas últimas 12h? (dedup do convite) */
 async function convidouAssinarRecente(supabase: SupabaseClient, familyId: string): Promise<boolean> {
   const desde = new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString();
@@ -1327,22 +1368,33 @@ export async function processInbound(
   // logo antes da chamada mais cara — a voz). O magic link do Lúdico (só
   // criança) vem junto, pra Ayla mandar se pedirem história/rotina/desenho.
   const ehCrianca = idadeFoco != null && idadeFoco <= 12;
-  const [koloVivoResumo, estrategiasRecentes, historico, linkHistoria, linkRotina, linkDesenho, linkAvatar] =
-    await Promise.all([
-      carregarKoloVivoResumo(supabase, membroContextoId),
-      carregarEstrategiasRecentes(supabase, family.id),
-      carregarHistorico(supabase, family.id, inbound.texto),
-      ehCrianca ? gerarMagicLink(supabase, { familyId: family.id, next: "/historias/criar" }) : Promise.resolve(null),
-      ehCrianca
-        ? gerarMagicLink(supabase, { familyId: family.id, next: "/ludico/rotinas/semana" })
-        : Promise.resolve(null),
-      ehCrianca ? gerarMagicLink(supabase, { familyId: family.id, next: "/ludico/desenhos" }) : Promise.resolve(null),
-      ehCrianca
-        ? gerarMagicLink(supabase, { familyId: family.id, next: "/configuracoes/avatar" })
-        : Promise.resolve(null),
-    ]);
+  const [
+    koloVivoResumo,
+    koloVivoLacunas,
+    estrategiasRecentes,
+    historico,
+    linkHistoria,
+    linkRotina,
+    linkDesenho,
+    linkAvatar,
+    linkRelatorio,
+  ] = await Promise.all([
+    carregarKoloVivoResumo(supabase, membroContextoId),
+    carregarLacunasKoloVivo(supabase, membroContextoId),
+    carregarEstrategiasRecentes(supabase, family.id),
+    carregarHistorico(supabase, family.id, inbound.texto),
+    ehCrianca ? gerarMagicLink(supabase, { familyId: family.id, next: "/historias/criar" }) : Promise.resolve(null),
+    ehCrianca
+      ? gerarMagicLink(supabase, { familyId: family.id, next: "/ludico/rotinas/semana" })
+      : Promise.resolve(null),
+    ehCrianca ? gerarMagicLink(supabase, { familyId: family.id, next: "/ludico/desenhos" }) : Promise.resolve(null),
+    ehCrianca
+      ? gerarMagicLink(supabase, { familyId: family.id, next: "/configuracoes/avatar" })
+      : Promise.resolve(null),
+    ehCrianca ? gerarMagicLink(supabase, { familyId: family.id, next: "/evolucao/relatorio" }) : Promise.resolve(null),
+  ]);
   const linksLudico = ehCrianca
-    ? { historia: linkHistoria, rotina: linkRotina, desenho: linkDesenho, avatar: linkAvatar }
+    ? { historia: linkHistoria, rotina: linkRotina, desenho: linkDesenho, avatar: linkAvatar, relatorio: linkRelatorio }
     : null;
 
   const resp = await enviarRespostaEmChunks(supabase, {
@@ -1358,6 +1410,7 @@ export async function processInbound(
       perfilMembro: membroFoco?.perfil ?? null,
       generoMembro: membroFoco?.genero ?? null,
       koloVivoResumo,
+      koloVivoLacunas,
       estrategiasRecentes,
       historico,
       linksLudico,
