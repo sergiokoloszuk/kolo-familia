@@ -79,3 +79,6 @@ supabase/.env
 n8n/.n8n/
 
 .vercel
+
+# Vídeos pesados (assets grandes não entram no git — servir por CDN/host)
+apps/web/public/video/
