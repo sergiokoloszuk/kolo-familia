@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Cabeçalho-padrão — Kolo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --foreground:#1F1338; --muted:#5B4E7A; --purple:#6B1FA8; --yellow:#FFBA00;
+    --lilas2:#FAF5FE; --line:rgba(31,19,56,.08);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Plus Jakarta Sans',sans-serif;background:#F7F4FB;color:var(--foreground);line-height:1.5;padding:32px 20px 80px}
+  .heading{font-family:'Fraunces',Georgia,serif}
+  .em{color:var(--purple);font-style:normal}
+  .wrap{max-width:760px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
+  .intro{background:#fff;border-radius:14px;padding:14px 18px;box-shadow:0 1px 3px rgba(46,10,82,.06);border-left:4px solid var(--yellow);font-size:13.5px;color:var(--muted)}
+  .intro b{color:var(--foreground)}
+  h2.sec{font-family:'Fraunces',serif;font-size:20px;font-weight:600;margin-top:26px}
+  .eyebrow{font-size:11px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--muted)}
+  .eyebrow::before{content:"";display:inline-block;width:22px;height:2px;background:var(--yellow);vertical-align:middle;margin-right:10px;border-radius:2px}
+  .card{background:#fff;border-radius:18px;padding:24px 26px;box-shadow:0 1px 3px rgba(46,10,82,.05)}
+  .tag{display:inline-block;font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;border-radius:5px;padding:3px 8px;margin-bottom:12px}
+  .tag.antes{background:#f3eef8;color:#7a6a98}
+  .tag.depois{background:var(--purple);color:#fff}
+  .h1{font-family:'Fraunces',serif;font-size:33px;font-weight:500;line-height:1.12;margin-top:6px}
+  .sub{margin-top:10px;max-width:34rem;font-size:14.5px;color:var(--muted);line-height:1.55}
+  .sub.longo{color:#6a5d88}
+  .seletor{margin-top:16px;display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:999px;padding:6px 12px 6px 6px;font-size:13px;font-weight:600;background:#fff;box-shadow:0 1px 2px rgba(46,10,82,.04)}
+  .seletor .av{width:26px;height:26px;border-radius:50%;background:var(--yellow);display:flex;align-items:center;justify-content:center;font-weight:700;color:#4A1577;font-size:12px}
+  .seletor .ch{color:var(--muted);font-size:11px}
+  .ic{width:56px;height:56px;border-radius:16px;background:var(--yellow);display:flex;align-items:center;justify-content:center;color:#4A1577;flex-shrink:0}
+  .row{display:flex;gap:16px;align-items:flex-start}
+  .disc{margin-top:14px;display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:var(--purple);cursor:pointer}
+  .nota{font-size:12px;color:var(--muted);margin-top:8px}
+  ul.b{margin:10px 0 0 18px;color:#6a5d88;font-size:14px;line-height:1.7}
+  .box{margin-top:12px;background:#FFF8E6;border-radius:12px;padding:12px 14px;font-size:13.5px;color:#6a5d88}
+  .hr{height:1px;background:var(--line);margin:18px 0}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="intro">
+    <b>Cabeçalho-padrão proposto</b> (com suas escolhas: <b>sem ícone</b> + <b>título + 1 linha</b>):
+    olho · título serif com 1 destaque roxo · <b>no máximo uma linha</b> de subtítulo (só quando ajuda) ·
+    seletor de criança numa <b>posição fixa</b> logo abaixo. Explicação longa sai do cabeçalho (vira um
+    &ldquo;como funciona&rdquo; recolhível ou some). Abaixo, o antes/depois das 2 piores.
+  </div>
+
+  <!-- ANATOMIA -->
+  <h2 class="sec heading">A anatomia do padrão</h2>
+  <div class="card">
+    <div class="eyebrow">Página</div>
+    <div class="h1">Título com voz, <span class="em">um destaque</span>.</div>
+    <div class="sub">Uma linha curta — e só se ela orienta de verdade.</div>
+    <div class="seletor"><span class="av">M</span> Sobre: Mario <span class="ch">▾</span></div>
+  </div>
+
+  <!-- PERFIL -->
+  <h2 class="sec heading">Perfil — antes / depois</h2>
+  <div class="card">
+    <span class="tag antes">Antes</span>
+    <div class="row">
+      <span class="ic"><svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="8" r="3"/><path d="M15 11a3 3 0 1 0-2-5"/><path d="M3 20c0-3 3-5 6-5s6 2 6 5M16 15c2 .4 4 2 4 5"/></svg></span>
+      <div>
+        <div class="eyebrow">Perfil</div>
+        <div class="h1">Quem é essa família, <span class="em">hoje</span>.</div>
+        <div class="sub longo">Aqui mora tudo que a gente sabe sobre quem você cuida — interesses, rotina, o que ajuda e o que pesa. Quanto mais completo, mais certeiras ficam as Estratégias que a gente te sugere. Você atualiza quando quiser.</div>
+        <div class="sub longo" style="margin-top:8px">Fique tranquila: é um processo de construção. Quando você registra algo no dia a dia, conversa com a Ayla ou pede uma Estratégia, o que for novo pode vir pra cá — sempre com a sua confirmação. Não precisa preencher tudo de uma vez.</div>
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <span class="tag depois">Depois</span>
+    <div class="eyebrow">Perfil</div>
+    <div class="h1">Quem é essa família, <span class="em">hoje</span>.</div>
+    <div class="sub">O retrato de quem você cuida — atualize quando quiser.</div>
+    <div class="seletor"><span class="av">M</span> Sobre: Mario <span class="ch">▾</span></div>
+    <div class="disc">＋ Como o Perfil se constrói sozinho</div>
+    <div class="nota">(os 2 parágrafos viram esse &ldquo;como funciona&rdquo; recolhível — quem já sabe não vê, quem quer abre.)</div>
+  </div>
+
+  <!-- ESTRATÉGIAS -->
+  <h2 class="sec heading">Estratégias — antes / depois</h2>
+  <div class="card">
+    <span class="tag antes">Antes</span>
+    <div class="eyebrow">Estratégias</div>
+    <div class="h1">Conte o que tá difícil — <span class="em">eu te ajudo a achar um caminho</span>.</div>
+    <div class="sub longo">Me fala um desafio do dia a dia, do jeito que ele acontece aí na sua casa. Não precisa caprichar no texto — quanto mais você me der do quadro real, mais certeira eu fico. Ajuda bastante incluir:</div>
+    <ul class="b">
+      <li>o que acontece e quando</li>
+      <li>como Manu e Mario reagem</li>
+      <li>como você reage na hora</li>
+      <li>o que você já tentou</li>
+    </ul>
+    <div class="box">📅 Quer um plano pro fim de semana ou pras férias? Conte a programação…</div>
+    <div class="nota" style="font-style:italic">Aqui é apoio de quem entende… não substitui profissionais de saúde. · Quer ajustar o perfil antes?</div>
+  </div>
+  <div class="card">
+    <span class="tag depois">Depois</span>
+    <div class="eyebrow">Estratégias</div>
+    <div class="h1">Conte o que tá difícil — <span class="em">eu acho um caminho</span>.</div>
+    <div class="sub">Escreva do seu jeito; quanto mais do dia real, mais certeira eu fico.</div>
+    <div class="seletor"><span class="av">M</span> Sobre: Mario <span class="ch">▾</span></div>
+    <div class="hr"></div>
+    <div class="nota">↓ O campo de escrever vem logo aqui. As dicas (&ldquo;o que ajuda incluir&rdquo;, plano de fim de semana, aviso de profissionais) descem pra perto de onde importam — viram placeholder do campo, um chip discreto e o rodapé — <b>fora</b> do cabeçalho.</div>
+  </div>
+
+</div>
+</body>
+</html>

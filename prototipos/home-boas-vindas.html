@@ -1,0 +1,251 @@
+<style>
+  :root{
+    --roxo:#6B1FA8; --roxo-light:#8B3FC8; --roxo-dark:#4A1577; --roxo-deep:#2E0A52;
+    --amarelo:#FFBA00; --amarelo-dark:#E5A700;
+    --lilas:#F5EFFB; --lilas2:#FAF5FE;
+    --tinta:#1F1338; --muted:#5B4E7A; --linha:rgba(31,19,56,.08);
+    --serif:"Fraunces",Georgia,"Times New Roman",serif;
+    --sans:"Plus Jakarta Sans",system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+    --pg:#f6f2fb; --card:#fff; --tinta2:#1F1338; --muted2:#5B4E7A; --linha2:rgba(31,19,56,.08);
+    --sombra:0 1px 2px rgba(46,10,82,.04),0 4px 14px rgba(46,10,82,.05);
+    --sombra-h:0 6px 16px rgba(46,10,82,.08),0 16px 34px rgba(46,10,82,.07);
+  }
+  @media (prefers-color-scheme:dark){
+    :root{--pg:#180f28;--card:#241636;--tinta:#F3EEFA;--muted:#b6a9d0;--linha:rgba(255,255,255,.09);--lilas:#2a1f3d;--lilas2:#211634;--tinta2:#F3EEFA;--muted2:#b6a9d0;--linha2:rgba(255,255,255,.09)}
+  }
+  :root[data-theme="dark"]{--pg:#180f28;--card:#241636;--tinta:#F3EEFA;--muted:#b6a9d0;--linha:rgba(255,255,255,.09);--lilas:#2a1f3d;--lilas2:#211634;--tinta2:#F3EEFA;--muted2:#b6a9d0;--linha2:rgba(255,255,255,.09)}
+  :root[data-theme="light"]{--pg:#f6f2fb;--card:#fff;--tinta:#1F1338;--muted:#5B4E7A;--linha:rgba(31,19,56,.08);--lilas:#F5EFFB;--lilas2:#FAF5FE;--tinta2:#1F1338;--muted2:#5B4E7A;--linha2:rgba(31,19,56,.08)}
+
+  *{box-sizing:border-box}
+  body{margin:0;font-family:var(--sans);background:var(--pg);color:var(--tinta);line-height:1.55;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:860px;margin:0 auto;padding:34px 20px 70px}
+  .kick{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--roxo);font-weight:700}
+  h1.tt{font-family:var(--serif);font-weight:600;font-size:clamp(26px,4vw,36px);line-height:1.1;margin:.3rem 0 .4rem;text-wrap:balance}
+  .sub{color:var(--muted);font-size:15px;max-width:60ch}
+  .toggle{display:inline-flex;background:var(--lilas);border-radius:999px;padding:4px;margin:18px 0 8px;gap:4px}
+  .toggle button{font-family:inherit;font-size:13px;font-weight:600;border:none;background:none;color:var(--muted);padding:7px 15px;border-radius:999px;cursor:pointer}
+  .toggle button.on{background:var(--card);color:var(--roxo-dark);box-shadow:var(--sombra)}
+  .hint{font-size:12.5px;color:var(--muted);margin:0 0 20px}
+
+  /* --- app content mock --- */
+  .app{background:var(--pg);border:1px solid var(--linha);border-radius:22px;padding:20px;box-shadow:var(--sombra)}
+  .stack{display:flex;flex-direction:column;gap:18px}
+
+  .hero{position:relative;overflow:hidden;border:1px solid rgba(255,186,0,.3);border-radius:22px;padding:22px 24px;background:linear-gradient(135deg,rgba(255,186,0,.14),var(--lilas2) 55%,var(--card))}
+  .hero::before{content:"";position:absolute;inset:0 0 auto 0;height:4px;background:linear-gradient(90deg,var(--amarelo),rgba(255,186,0,.4),transparent)}
+  .hero .date{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:700}
+  .hero h2{font-family:var(--serif);font-weight:600;font-size:clamp(22px,3.4vw,30px);margin:8px 0 6px;color:var(--tinta)}
+  .hero h2 .amp{color:var(--amarelo)}
+  .hero p{margin:0;font-size:14px;color:var(--muted);max-width:44ch}
+
+  /* primeiro passo */
+  .passo{position:relative;display:flex;gap:15px;align-items:center;border-radius:20px;padding:18px 20px;background:var(--roxo-deep);color:#fff;overflow:hidden}
+  .passo .glow{position:absolute;right:-40px;top:-40px;width:140px;height:140px;border-radius:50%;background:radial-gradient(circle,rgba(255,186,0,.35),transparent 70%)}
+  .passo .num{flex-shrink:0;width:42px;height:42px;border-radius:14px;background:var(--amarelo);color:#3a2a00;display:grid;place-items:center;font-size:20px;position:relative}
+  .passo .tx{position:relative;flex:1}
+  .passo .lb{font-size:11px;letter-spacing:.12em;text-transform:uppercase;font-weight:700;color:var(--amarelo)}
+  .passo h3{font-family:var(--serif);font-weight:600;font-size:18px;margin:3px 0 3px}
+  .passo p{margin:0;font-size:13px;color:rgba(255,255,255,.72)}
+  .passo .go{position:relative;flex-shrink:0;background:var(--amarelo);color:#3a2a00;font-weight:700;font-size:13px;border-radius:999px;padding:9px 16px;white-space:nowrap}
+  .passo.col{flex-direction:column;align-items:stretch;gap:11px}
+  .passo.col .lb{position:relative}
+  .passo.col h3{position:relative}
+  .passo .pdesc{position:relative;max-width:54ch}
+  .temas{position:relative;display:flex;flex-wrap:wrap;gap:8px}
+  .tchip{font-family:inherit;font-size:13px;font-weight:600;border-radius:999px;padding:8px 14px;border:1.5px solid rgba(255,255,255,.25);background:rgba(255,255,255,.07);color:#fff;cursor:pointer}
+  .tchip.sel{background:var(--amarelo);color:#3a2a00;border-color:var(--amarelo)}
+  .pfoot{position:relative;margin-top:5px;border-top:1px solid rgba(255,255,255,.14);padding-top:13px}
+  .canal-q{font-size:12.5px;color:rgba(255,255,255,.72);margin-bottom:9px}
+  .canal-btns{display:flex;flex-wrap:wrap;gap:8px}
+  .bp{display:inline-block;background:var(--amarelo);color:#3a2a00;font-weight:700;font-size:12.5px;border-radius:999px;padding:9px 15px;cursor:pointer}
+  .bp.alt{background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.28)}
+  .nudge-h{font-family:var(--serif);font-weight:600;font-size:16px;color:#fff;margin-bottom:6px;display:flex;align-items:center;gap:7px}
+  .pfoot.nowpp p{font-size:12.5px;color:rgba(255,255,255,.74);margin:0 0 12px;max-width:54ch;line-height:1.5}
+  #viewNovo .pfoot.nowpp{display:none}
+  #viewNovo.semwpp .pfoot.withwpp{display:none}
+  #viewNovo.semwpp .pfoot.nowpp{display:block}
+  .toggle.sub{margin:0 0 14px}
+  .toggle.sub button{font-size:12.5px;padding:6px 13px}
+
+  /* registro inline (preservado) */
+  .reg{background:var(--card);border:1px solid rgba(255,186,0,.3);border-radius:18px;padding:16px 18px;position:relative;overflow:hidden}
+  .reg::before{content:"";position:absolute;inset:0 0 auto 0;height:3px;background:linear-gradient(90deg,var(--amarelo),rgba(255,186,0,.4),transparent)}
+  .reg .t{font-family:var(--serif);font-weight:600;font-size:16px}
+  .reg .d{font-size:13px;color:var(--muted);margin:2px 0 12px}
+  .reg .fake{border:1px solid var(--linha);border-radius:14px;padding:12px 14px;color:var(--muted);font-size:13.5px;display:flex;justify-content:space-between;align-items:center}
+  .reg .fake .snd{width:34px;height:34px;border-radius:50%;background:var(--amarelo);display:grid;place-items:center}
+
+  /* tudo que dá pra fazer */
+  .bloco-lbl{display:flex;align-items:center;gap:10px;margin:4px 2px 0}
+  .bloco-lbl .ln{height:2px;width:26px;border-radius:2px;background:var(--amarelo)}
+  .bloco-lbl span{font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);font-weight:700}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  @media (max-width:560px){.grid{grid-template-columns:1fr}}
+  .porta{position:relative;display:flex;gap:13px;background:var(--card);border:1px solid var(--linha);border-radius:18px;padding:15px 16px;overflow:hidden;transition:transform .16s ease,box-shadow .16s ease,border-color .16s ease;cursor:pointer}
+  .porta:hover{transform:translateY(-2px);box-shadow:var(--sombra-h);border-color:rgba(255,186,0,.5)}
+  .porta::before{content:"";position:absolute;inset:0 auto 0 0;width:3px;background:var(--bar,var(--roxo))}
+  .porta .ic{flex-shrink:0;width:40px;height:40px;border-radius:13px;display:grid;place-items:center;font-size:19px;background:var(--icbg,var(--lilas))}
+  .porta .bd{flex:1;min-width:0}
+  .porta h4{margin:0 0 2px;font-size:14.5px;font-family:var(--serif);font-weight:600;color:var(--tinta)}
+  .porta p{margin:0;font-size:12.5px;color:var(--muted);line-height:1.45}
+  .porta .arr{flex-shrink:0;align-self:center;width:30px;height:30px;border-radius:50%;background:var(--amarelo);color:#3a2a00;display:grid;place-items:center;font-weight:700}
+  .porta.zap{background:linear-gradient(135deg,rgba(107,31,168,.06),var(--card));border-color:rgba(107,31,168,.22)}
+  .porta.lock{opacity:.62;cursor:default}
+  .porta.lock:hover{transform:none;box-shadow:none;border-color:var(--linha)}
+  .porta.lock .soon{font-size:12px}
+
+  /* nota preservação */
+  .nota{background:var(--lilas);border-radius:18px;padding:16px 18px;font-size:13.5px;color:var(--roxo-dark);display:flex;gap:12px;align-items:flex-start}
+  @media (prefers-color-scheme:dark){.nota{color:#d9cbf0}}
+  :root[data-theme="dark"] .nota{color:#d9cbf0}
+  .nota .em{font-size:20px;line-height:1}
+
+  /* engajado state */
+  .reflex .card{background:var(--card);border:1px solid var(--linha);border-radius:18px;padding:16px 18px}
+  .reflex .feed{list-style:none;margin:8px 0 0;padding:0}
+  .reflex .feed li{display:flex;gap:12px;padding:11px 0;border-top:1px solid var(--linha);font-size:14px}
+  .reflex .feed li:first-child{border-top:none}
+  .reflex .feed .mk{color:var(--roxo);font-weight:700}
+  .reflex .feed small{display:block;font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-top:2px}
+  .reflex .deep{background:linear-gradient(135deg,var(--roxo-deep),var(--roxo-dark));color:#fff;border-radius:18px;padding:18px 20px}
+  .reflex .deep .k{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--amarelo);font-weight:700}
+  .reflex .deep h4{font-family:var(--serif);font-weight:600;font-size:18px;margin:8px 0 10px}
+  .reflex .deep .q{border-left:2px solid var(--amarelo);padding-left:13px;font-size:13.5px;color:rgba(255,255,255,.85);margin:8px 0}
+  .hide{display:none}
+  .foot{margin-top:34px;font-size:11.5px;color:var(--muted);text-align:center}
+</style>
+
+<div class="wrap">
+  <div class="kick">Proposta visual · Home consciente do momento</div>
+  <h1 class="tt">A Home que recebe — e a que reflete</h1>
+  <p class="sub">A mesma tela muda de cara conforme o momento da família. Recém-chegada, ela <b>recebe e orienta</b> — e o primeiro passo já puxa os <b>desafios que ela marcou no cadastro</b> e checa se ela <b>informou o WhatsApp</b>. Já engajada, vira o <b>diário reflexivo</b> de hoje — que não se perde.</p>
+
+  <div class="toggle">
+    <button class="on" id="bNovo" onclick="setView('novo')">🌱 Recém-chegada</button>
+    <button id="bEng" onclick="setView('eng')">🌳 Já engajada</button>
+  </div>
+  <p class="hint" id="hint">Primeira semana, ainda sem registros — a Home vira boas-vindas + tudo que dá pra fazer.</p>
+  <div class="toggle sub" id="wppToggle">
+    <button class="on" id="bWppSim" onclick="setWpp(true)">💬 Informou WhatsApp</button>
+    <button id="bWppNao" onclick="setWpp(false)">📵 Sem WhatsApp</button>
+  </div>
+
+  <!-- ===== ESTADO NOVO ===== -->
+  <div class="app" id="viewNovo">
+    <div class="stack">
+      <div class="hero">
+        <div class="date">Terça · 22 de julho</div>
+        <h2>Oi, Karina<span class="amp">.</span> Bem-vinda à Kolo 🌿</h2>
+        <p>Este é o seu ponto de partida. Dê uma olhada no que dá pra fazer — e comece por onde fizer sentido pra você e o Henrique.</p>
+      </div>
+
+      <div class="passo col">
+        <span class="glow"></span>
+        <div class="lb">Por onde começar</div>
+        <h3>Vamos começar pelo que mais pesa</h3>
+        <p class="pdesc">No cadastro você me contou alguns desafios do Henrique. Escolha um pra trabalhar agora — e me conte melhor o que está sendo difícil neste momento.</p>
+        <div class="temas">
+          <button class="tchip sel">🍽️ Alimentação</button>
+          <button class="tchip">💬 Comunicação</button>
+          <button class="tchip">🧩 Autonomia</button>
+        </div>
+
+        <div class="pfoot withwpp">
+          <div class="canal-q">Como prefere trabalhar isso?</div>
+          <div class="canal-btns">
+            <span class="bp">Aqui pela Kolo →</span>
+            <span class="bp alt">💬 Com a Ayla, no WhatsApp</span>
+          </div>
+        </div>
+
+        <div class="pfoot nowpp">
+          <div class="nudge-h">💬 E se você fizesse isso pelo WhatsApp?</div>
+          <p>A Ayla vira sua parceira no dia a dia: uma estratégia na hora do desafio, montar a rotina do Henrique (com cartões pra imprimir), tirar dúvidas — na hora em que acontece. É onde a experiência fica completa.</p>
+          <span class="bp">Informar meu WhatsApp e ativar a Ayla →</span>
+        </div>
+      </div>
+
+      <div class="reg">
+        <div class="t">Registro do dia</div>
+        <div class="d">Escreva do seu jeito — a Kolo organiza e guarda na Evolução.</div>
+        <div class="fake"><span>Como foi o dia do Henrique hoje?</span><span class="snd">🌿</span></div>
+      </div>
+
+      <div class="bloco-lbl"><span class="ln"></span><span>Tudo que dá pra fazer na Kolo</span></div>
+      <div class="grid">
+        <div class="porta" style="--bar:#7c9a3e;--icbg:#eef4e0"><span class="ic">🌿</span><div class="bd"><h4>Perfil</h4><p>O retrato vivo do Henrique. Quanto mais a Kolo conhece, melhor ela ajuda.</p></div><span class="arr">→</span></div>
+        <div class="porta" style="--bar:#6b1fa8;--icbg:#f0e6fa"><span class="ic">✨</span><div class="bd"><h4>Estratégias</h4><p>Travou? Conte um desafio e receba um caminho prático.</p></div><span class="arr">→</span></div>
+        <div class="porta" style="--bar:#b23b7a;--icbg:#f7dcec"><span class="ic">🎨</span><div class="bd"><h4>Lúdico</h4><p>Histórias, rotina visual com cartões pra imprimir e leitura dos desenhos.</p></div><span class="arr">→</span></div>
+        <div class="porta zap"><span class="ic">💬</span><div class="bd"><h4>Ayla no WhatsApp</h4><p>Sua parceira no dia a dia: estratégia, rotina e dúvidas — na hora.</p></div><span class="arr">→</span></div>
+        <div class="porta lock" style="--bar:#3e7c9a;--icbg:#e8eef1"><span class="ic">📈</span><div class="bd"><h4>Evolução <span class="soon">🔒</span></h4><p>O caminho ao longo das semanas. Aparece assim que você registrar alguns dias.</p></div></div>
+      </div>
+
+      <div class="nota"><span class="em">🌳</span><div>Conforme você for usando, esta Home ganha o <b>seu diário</b> — a sua semana, as conquistas, o que vem acontecendo com o Henrique. Os atalhos continuam aqui, sempre organizados; só o convite de boas-vindas dá lugar ao seu dia.</div></div>
+    </div>
+  </div>
+
+  <!-- ===== ESTADO ENGAJADO ===== -->
+  <div class="app hide reflex" id="viewEng">
+    <div class="stack">
+      <div class="hero">
+        <div class="date">Terça · 22 de julho</div>
+        <h2>Oi, Karina<span class="amp">.</span> <em style="font-style:normal;color:var(--roxo)">Essa semana teve coisas boas.</em></h2>
+        <p>Que bom te ver. Vamos cuidar do dia do Henrique?</p>
+      </div>
+
+      <div class="reg">
+        <div class="t">Registro do dia</div>
+        <div class="d">Escreva do seu jeito — a Kolo organiza e guarda na Evolução.</div>
+        <div class="fake"><span>Como foi o dia do Henrique hoje?</span><span class="snd">🌿</span></div>
+      </div>
+
+      <div class="card">
+        <div class="bloco-lbl" style="margin-top:0"><span class="ln"></span><span>O que vem acontecendo</span></div>
+        <ul class="feed">
+          <li><span class="mk">✓</span><div>Comeu sem recusar o lanche novo<small>seg · mãe</small></div></li>
+          <li><span class="mk">!</span><div>Manhã difícil pra sair de casa<small>ter</small></div></li>
+          <li><span class="mk">›</span><div>Conversaram sobre "transição da escola"<small>ter · estratégias</small></div></li>
+        </ul>
+      </div>
+
+      <div class="bloco-lbl"><span class="ln"></span><span>Explorar a Kolo</span></div>
+      <div class="grid">
+        <div class="porta" style="--bar:#7c9a3e;--icbg:#eef4e0"><span class="ic">🌿</span><div class="bd"><h4>Perfil</h4><p>O retrato vivo do Henrique. Quanto mais a Kolo conhece, melhor ela ajuda.</p></div><span class="arr">→</span></div>
+        <div class="porta" style="--bar:#6b1fa8;--icbg:#f0e6fa"><span class="ic">✨</span><div class="bd"><h4>Estratégias</h4><p>Travou? Conte um desafio e receba um caminho prático.</p></div><span class="arr">→</span></div>
+        <div class="porta" style="--bar:#3e7c9a;--icbg:#dceef4"><span class="ic">📈</span><div class="bd"><h4>Evolução</h4><p>O caminho ao longo das semanas: o que mudou, o que floresceu.</p></div><span class="arr">→</span></div>
+        <div class="porta" style="--bar:#b23b7a;--icbg:#f7dcec"><span class="ic">🎨</span><div class="bd"><h4>Lúdico</h4><p>Histórias, rotina visual com cartões pra imprimir e leitura dos desenhos.</p></div><span class="arr">→</span></div>
+        <div class="porta zap"><span class="ic">💬</span><div class="bd"><h4>Ayla no WhatsApp</h4><p>Sua parceira no dia a dia: estratégia, rotina e dúvidas — na hora.</p></div><span class="arr">→</span></div>
+      </div>
+
+      <div class="deep">
+        <div class="k">Momentos que se conversam</div>
+        <h4>Algumas situações começam a se repetir.</h4>
+        <div class="q">Boa parte das conquistas aconteceu com a mãe por perto.</div>
+        <div class="q">Os dias com mais leveza apareceram também nesta semana.</div>
+      </div>
+
+      <div class="nota" style="background:transparent;padding:6px 2px"><span class="em">🌱</span><div style="color:var(--muted)">A Home de boas-vindas <b>não aparece mais aqui</b> — quem já registra vê o diário, não o tutorial.</div></div>
+    </div>
+  </div>
+
+  <div class="foot">Protótipo Kolo Família · cores/tipografia reais · serif aproximada (Georgia) no lugar da Fraunces · atalhos ilustrativos</div>
+</div>
+
+<script>
+  function setView(v){
+    var novo=v==='novo';
+    document.getElementById('viewNovo').classList.toggle('hide',!novo);
+    document.getElementById('viewEng').classList.toggle('hide',novo);
+    document.getElementById('bNovo').classList.toggle('on',novo);
+    document.getElementById('bEng').classList.toggle('on',!novo);
+    document.getElementById('wppToggle').style.display = novo ? 'inline-flex' : 'none';
+    document.getElementById('hint').textContent = novo
+      ? 'Primeira semana, ainda sem registros — a Home vira boas-vindas + tudo que dá pra fazer. Use o botão abaixo pra ver com e sem WhatsApp informado.'
+      : 'Já tem registros — o diário reflexivo volta, e os atalhos explicados continuam ali, organizados, pra quem ainda não explorou tudo.';
+  }
+  function setWpp(has){
+    document.getElementById('viewNovo').classList.toggle('semwpp',!has);
+    document.getElementById('bWppSim').classList.toggle('on',has);
+    document.getElementById('bWppNao').classList.toggle('on',!has);
+  }
+</script>

@@ -1,0 +1,267 @@
+<style>
+  :root{
+    --roxo:#6B1FA8; --roxo-dark:#4A1577; --roxo-deep:#2E0A52;
+    --amarelo:#FFBA00; --amarelo-dark:#E5A700;
+    --lilas:#F5EFFB; --lilas2:#FAF5FE;
+    --tinta:#1F1338; --muted:#5B4E7A; --linha:rgba(31,19,56,.10);
+    --serif:"Fraunces",Georgia,"Times New Roman",serif;
+    --sans:"Plus Jakarta Sans",system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+    --pg:#faf7fc; --card:#fff; --pg-tinta:#1F1338; --pg-muted:#5B4E7A; --pg-linha:rgba(31,19,56,.10);
+  }
+  @media (prefers-color-scheme:dark){
+    :root{ --pg:#1a1029; --card:#241636; --pg-tinta:#F3EEFA; --pg-muted:#b6a9d0; --pg-linha:rgba(255,255,255,.10); }
+  }
+  :root[data-theme="dark"]{ --pg:#1a1029; --card:#241636; --pg-tinta:#F3EEFA; --pg-muted:#b6a9d0; --pg-linha:rgba(255,255,255,.10); }
+  :root[data-theme="light"]{ --pg:#faf7fc; --card:#fff; --pg-tinta:#1F1338; --pg-muted:#5B4E7A; --pg-linha:rgba(31,19,56,.10); }
+
+  *{box-sizing:border-box}
+  body{margin:0;font-family:var(--sans);background:var(--pg);color:var(--pg-tinta);line-height:1.55;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1000px;margin:0 auto;padding:38px 22px 80px}
+
+  .eyebrow{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--roxo);font-weight:700}
+  h1{font-family:var(--serif);font-weight:600;font-size:clamp(28px,4.4vw,42px);line-height:1.08;margin:.35rem 0 .5rem;text-wrap:balance}
+  .lead{color:var(--pg-muted);font-size:16px;max-width:60ch}
+
+  /* ---- por quê ---- */
+  .porque{margin:30px 0 8px;display:grid;grid-template-columns:1fr;gap:14px}
+  .ficha{background:var(--card);border:1px solid var(--pg-linha);border-radius:18px;padding:18px 20px}
+  .ficha h3{font-family:var(--serif);font-weight:600;font-size:18px;margin:0 0 8px}
+  .flow{display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:13px}
+  .pill{display:inline-flex;align-items:center;gap:6px;padding:5px 11px;border-radius:999px;background:var(--lilas);color:var(--roxo-dark);font-weight:600;white-space:nowrap}
+  .pill.cold{background:#fdecec;color:#b23b3b}
+  .arrow{color:var(--pg-muted);font-weight:700}
+  .diag{margin-top:12px;font-size:14px;color:var(--pg-muted)}
+  .diag b{color:var(--pg-tinta)}
+
+  .levers{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:16px}
+  @media (max-width:680px){.levers{grid-template-columns:1fr}}
+  .lever{background:var(--card);border:1px solid var(--pg-linha);border-radius:16px;padding:15px 16px;position:relative}
+  .lever .n{font-family:var(--serif);font-size:13px;color:var(--roxo);font-weight:700}
+  .lever.hero{border-color:var(--amarelo);box-shadow:0 0 0 3px rgba(255,186,0,.16)}
+  .lever h4{margin:6px 0 4px;font-size:15px}
+  .lever p{margin:0;font-size:13px;color:var(--pg-muted)}
+  .tag{position:absolute;top:-9px;right:12px;background:var(--amarelo);color:#3a2a00;font-size:10.5px;font-weight:800;letter-spacing:.04em;padding:3px 9px;border-radius:999px;text-transform:uppercase}
+
+  .section-title{font-family:var(--serif);font-weight:600;font-size:22px;margin:44px 0 4px}
+  .section-sub{color:var(--pg-muted);font-size:14px;margin:0 0 18px}
+
+  /* ---- app mock ---- */
+  .stage{position:relative;border-radius:22px;overflow:hidden;border:1px solid var(--pg-linha);box-shadow:0 18px 50px -24px rgba(46,10,82,.55);background:#fff}
+  .appframe{position:relative;display:grid;grid-template-columns:232px 1fr;min-height:430px;font-family:var(--sans);color:var(--tinta);background:#fff}
+  @media (max-width:640px){.appframe{grid-template-columns:200px 1fr;min-height:400px}}
+
+  .side{background:#fff;border-right:1px solid var(--linha);padding:18px 14px;display:flex;flex-direction:column;gap:16px;position:relative;z-index:1}
+  .brand{display:flex;align-items:center;gap:9px;font-family:var(--serif);font-weight:600;font-size:18px;color:var(--roxo-deep);padding:2px 6px}
+  .brand .dot{width:26px;height:26px;border-radius:9px;background:linear-gradient(135deg,var(--roxo),var(--roxo-light,#8B3FC8));display:grid;place-items:center;color:#fff;font-size:14px}
+  .selchild{display:flex;align-items:center;gap:9px;background:var(--lilas);border-radius:13px;padding:8px 11px;font-size:13px}
+  .selchild .av{width:28px;height:28px;border-radius:50%;background:var(--amarelo);display:grid;place-items:center;font-size:14px}
+  .selchild small{display:block;color:var(--muted);font-size:11px}
+  nav{display:flex;flex-direction:column;gap:3px}
+  .navitem{display:flex;align-items:center;gap:11px;padding:9px 11px;border-radius:12px;font-size:13.5px;font-weight:500;color:var(--muted);position:relative;transition:transform .18s ease}
+  .navitem .ic{width:17px;text-align:center;opacity:.85}
+  .navitem.active{background:var(--lilas);color:var(--roxo-dark);font-weight:600}
+  .navitem.active::before{content:"";position:absolute;left:0;top:50%;transform:translateY(-50%);width:3px;height:18px;border-radius:0 3px 3px 0;background:var(--amarelo)}
+
+  .content{padding:26px 30px;background:linear-gradient(180deg,#fff,#fbf8fe)}
+  .content .h{font-family:var(--serif);font-size:22px;font-weight:600;color:var(--roxo-deep)}
+  .content .sub{color:var(--muted);font-size:13.5px;margin-top:2px}
+  .skel{height:12px;border-radius:6px;background:var(--linha);margin-top:14px}
+  .cardrow{display:flex;gap:12px;margin-top:20px}
+  .minicard{flex:1;height:78px;border-radius:14px;border:1px solid var(--linha);background:#fff}
+
+  /* overlay + spotlight */
+  .overlay{position:absolute;inset:0;background:rgba(31,10,64,.62);opacity:0;pointer-events:none;transition:opacity .25s ease;z-index:20}
+  .stage.touron .overlay{opacity:1}
+  .navitem.spot{z-index:30;background:#fff;color:var(--roxo-dark);font-weight:700;box-shadow:0 0 0 3px var(--amarelo),0 10px 26px -8px rgba(46,10,82,.5);transform:scale(1.04)}
+  .navitem.spot .ic{opacity:1}
+
+  .popup{position:absolute;z-index:40;width:250px;background:#fff;border-radius:18px;padding:16px 17px 14px;box-shadow:0 22px 55px -18px rgba(46,10,82,.7);opacity:0;transform:translateY(6px);transition:opacity .2s ease,transform .2s ease;pointer-events:none}
+  .stage.touron .popup{opacity:1;transform:none;pointer-events:auto}
+  .popup .step{font-size:11px;font-weight:800;letter-spacing:.08em;color:var(--roxo);text-transform:uppercase}
+  .popup h5{font-family:var(--serif);font-weight:600;font-size:17px;margin:5px 0 5px}
+  .popup p{margin:0;font-size:13.5px;color:var(--muted);line-height:1.5}
+  .dots{display:flex;gap:5px;margin-top:13px}
+  .dots i{width:6px;height:6px;border-radius:50%;background:var(--linha)}
+  .dots i.on{background:var(--amarelo);width:16px;border-radius:3px}
+  .poprow{display:flex;align-items:center;justify-content:space-between;margin-top:12px}
+  .skip{background:none;border:none;color:var(--muted);font-size:12.5px;cursor:pointer;font-family:inherit;padding:4px}
+  .rgt{display:flex;gap:7px}
+  .btn{font-family:inherit;font-size:12.5px;font-weight:600;border-radius:999px;padding:7px 14px;cursor:pointer;border:1px solid transparent}
+  .btn.ghost{background:#fff;border-color:var(--linha);color:var(--tinta)}
+  .btn.solid{background:var(--roxo);color:#fff}
+  .popup .arrowtip{position:absolute;left:-8px;top:22px;width:16px;height:16px;background:#fff;transform:rotate(45deg);border-radius:3px}
+  .popup.below .arrowtip{left:24px;top:-8px}
+
+  .replay{margin-top:14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  .replay button{font-family:inherit;font-size:13px;font-weight:600;color:var(--roxo);background:var(--lilas);border:1px solid var(--pg-linha);border-radius:999px;padding:8px 16px;cursor:pointer}
+  .replay span{font-size:12.5px;color:var(--pg-muted)}
+
+  /* copy reference */
+  .copylist{margin-top:26px;display:grid;gap:9px}
+  .copyrow{display:grid;grid-template-columns:150px 1fr;gap:14px;background:var(--card);border:1px solid var(--pg-linha);border-radius:13px;padding:12px 15px;align-items:start}
+  @media (max-width:560px){.copyrow{grid-template-columns:1fr;gap:3px}}
+  .copyrow .k{font-weight:700;font-size:13.5px;color:var(--roxo-dark);display:flex;align-items:center;gap:8px}
+  .copyrow .v{font-size:13.5px;color:var(--pg-muted)}
+  .note{margin-top:26px;background:var(--lilas);border-radius:16px;padding:16px 18px;font-size:13.5px;color:var(--roxo-dark)}
+  .note b{color:var(--roxo-deep)}
+  :root[data-theme="dark"] .note,@media (prefers-color-scheme:dark){.note{background:#2a1f3d;color:#d9cbf0}}
+  .foot{margin-top:40px;font-size:12px;color:var(--pg-muted);text-align:center}
+</style>
+
+<div class="wrap">
+  <div class="eyebrow">Proposta visual · engajamento</div>
+  <h1>Um tour que apresenta a Kolo — item por item</h1>
+  <p class="lead">Quando alguém entra, um guia leve destaca cada parte do menu com um balãozinho: “é aqui que você faz X”. Simples, humano, uma vez só. É a primeira alavanca contra o padrão que a gente vê nas fichas.</p>
+
+  <!-- POR QUÊ -->
+  <div class="porque">
+    <div class="ficha">
+      <h3>O padrão que se repete (ficha do Diego)</h3>
+      <div class="flow">
+        <span class="pill">🖥️ Entrou · viu 4 telas</span>
+        <span class="arrow">→</span>
+        <span class="pill">💬 Ayla escreveu 3×</span>
+        <span class="arrow">→</span>
+        <span class="pill cold">nunca respondeu</span>
+        <span class="arrow">→</span>
+        <span class="pill cold">Perfil vazio · esfriou</span>
+      </div>
+      <p class="diag">A pessoa <b>chegou</b> — mas não achou o que fazer, não respondeu a Ayla e não preencheu nada. Não é falta de acesso: é <b>ativação</b>. Ela precisa, nos primeiros minutos, entender o lugar e dar o primeiro passo.</p>
+    </div>
+
+    <div class="levers">
+      <div class="lever hero">
+        <span class="tag">esta proposta</span>
+        <div class="n">Alavanca 1</div>
+        <h4>Tour visual do menu</h4>
+        <p>Orienta na 1ª visita: cada item ganha um balão “é aqui que…”. Um por vez, pulável, uma vez só.</p>
+      </div>
+      <div class="lever">
+        <div class="n">Alavanca 2</div>
+        <h4>1º passo na Home</h4>
+        <p>Uma única tarefa clara ao entrar (“monte a rotina de amanhã” / “conte um perrengue”).</p>
+      </div>
+      <div class="lever">
+        <div class="n">Alavanca 3</div>
+        <h4>1ª mensagem da Ayla que pede resposta</h4>
+        <p>Uma pergunta concreta sobre a criança — não “oi, sou a Ayla”. E não disparar no vazio.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOUR MOCK -->
+  <div class="section-title">Como fica na tela</div>
+  <p class="section-sub">Clique <b>Próximo</b> e percorra os 6 itens do menu — é exatamente a experiência proposta. No celular, o tour abre o menu e destaca do mesmo jeito.</p>
+
+  <div class="stage" id="stage">
+    <div class="appframe" id="frame">
+      <aside class="side">
+        <div class="brand"><span class="dot">🌿</span> Kolo</div>
+        <div class="selchild"><span class="av">🦊</span><div>Henrique<small>14 anos · AH/SD</small></div></div>
+        <nav id="nav">
+          <div class="navitem active" data-i="0"><span class="ic">🏠</span> Home</div>
+          <div class="navitem" data-i="1"><span class="ic">📓</span> Registro Diário</div>
+          <div class="navitem" data-i="2"><span class="ic">🌿</span> Perfil</div>
+          <div class="navitem" data-i="3"><span class="ic">✨</span> Estratégias</div>
+          <div class="navitem" data-i="4"><span class="ic">📈</span> Evolução</div>
+          <div class="navitem" data-i="5"><span class="ic">🎨</span> Lúdico</div>
+        </nav>
+      </aside>
+      <main class="content">
+        <div class="h">Boa tarde 🌿</div>
+        <div class="sub">Que bom te ver por aqui.</div>
+        <div class="skel" style="width:70%"></div>
+        <div class="skel" style="width:52%"></div>
+        <div class="cardrow"><div class="minicard"></div><div class="minicard"></div></div>
+        <div class="skel" style="width:60%;margin-top:22px"></div>
+      </main>
+      <div class="overlay" id="overlay"></div>
+      <div class="popup" id="popup">
+        <span class="arrowtip"></span>
+        <div class="step" id="pstep">Passo 1 de 6</div>
+        <h5 id="ptitle">Home</h5>
+        <p id="ptext">…</p>
+        <div class="dots" id="dots"></div>
+        <div class="poprow">
+          <button class="skip" id="skip">Pular tour</button>
+          <div class="rgt">
+            <button class="btn ghost" id="prev" style="display:none">Voltar</button>
+            <button class="btn solid" id="next">Próximo</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="replay">
+    <button id="restart">↺ Rever o tour</button>
+    <span>O usuário real vê isso só uma vez, no primeiro acesso.</span>
+  </div>
+
+  <!-- COPY -->
+  <div class="section-title">Os textos de cada balão</div>
+  <p class="section-sub">É aqui que a gente afina as palavras — pode editar à vontade.</p>
+  <div class="copylist" id="copylist"></div>
+
+  <div class="note">
+    <b>Importante:</b> o tour resolve a <b>orientação</b> (alavanca 1). Mas a ficha do Diego mostra que ele já tinha navegado — o que faltou foi <b>dar o primeiro passo</b> e <b>responder a Ayla</b>. Recomendo fazer o tour agora e, na sequência, as alavancas 2 e 3 — é a dobradinha que de fato converte “entrou” em “engajou”.
+  </div>
+
+  <div class="foot">Protótipo Kolo Família · cores e tipografia reais do app · fonte serif aproximada (Georgia) no lugar da Fraunces</div>
+</div>
+
+<script>
+  var passos = [
+    {ic:"🏠", t:"Home", d:"Seu ponto de partida. O resumo do dia e o que dá pra fazer agora."},
+    {ic:"📓", t:"Registro Diário", d:"Um respiro do dia em 30 segundos. É daqui que nasce a Evolução do Henrique."},
+    {ic:"🌿", t:"Perfil", d:"Tudo o que a Kolo já sabe sobre o Henrique — e vai crescendo com vocês."},
+    {ic:"✨", t:"Estratégias", d:"Travou num desafio? Peça ajuda. A Kolo devolve um caminho prático."},
+    {ic:"📈", t:"Evolução", d:"O caminho ao longo do tempo: o que mudou, o que floresceu."},
+    {ic:"🎨", t:"Lúdico", d:"Histórias, rotina visual com cartões pra imprimir e leitura dos desenhos."}
+  ];
+  var i = 0;
+  var stage=document.getElementById('stage'), frame=document.getElementById('frame'),
+      nav=document.getElementById('nav'), popup=document.getElementById('popup'),
+      items=nav.querySelectorAll('.navitem');
+
+  function place(){
+    var it = items[i];
+    var fr = frame.getBoundingClientRect(), r = it.getBoundingClientRect();
+    var top = r.top - fr.top, left = r.left - fr.left + r.width + 16;
+    var below = false;
+    // se não couber à direita dentro do frame, joga embaixo do item
+    if(left + 250 > fr.width - 8){ left = r.left - fr.left; top = (r.top - fr.top) + r.height + 14; below = true; }
+    // trava dentro da altura
+    top = Math.max(8, Math.min(top, fr.height - 190));
+    popup.style.top = top+'px'; popup.style.left = left+'px';
+    popup.classList.toggle('below', below);
+  }
+  function render(){
+    items.forEach(function(el,idx){ el.classList.toggle('spot', idx===i); el.classList.toggle('active', idx===i); });
+    var p = passos[i];
+    document.getElementById('pstep').textContent = 'Passo '+(i+1)+' de '+passos.length;
+    document.getElementById('ptitle').textContent = p.t;
+    document.getElementById('ptext').textContent = p.d;
+    var dots=''; for(var k=0;k<passos.length;k++){ dots += '<i class="'+(k===i?'on':'')+'"></i>'; }
+    document.getElementById('dots').innerHTML = dots;
+    document.getElementById('prev').style.display = i===0 ? 'none':'inline-block';
+    document.getElementById('next').textContent = i===passos.length-1 ? 'Entendi! 🌿' : 'Próximo';
+    place();
+  }
+  function start(){ i=0; stage.classList.add('touron'); render(); }
+  function stop(){ stage.classList.remove('touron'); items.forEach(function(el,idx){el.classList.toggle('active',idx===0);el.classList.remove('spot');}); }
+  document.getElementById('next').onclick=function(){ if(i<passos.length-1){i++;render();} else {stop();} };
+  document.getElementById('prev').onclick=function(){ if(i>0){i--;render();} };
+  document.getElementById('skip').onclick=stop;
+  document.getElementById('restart').onclick=start;
+  window.addEventListener('resize', function(){ if(stage.classList.contains('touron')) place(); });
+
+  // copy reference list
+  var cl=document.getElementById('copylist');
+  passos.forEach(function(p,idx){
+    var row=document.createElement('div'); row.className='copyrow';
+    row.innerHTML='<div class="k"><span>'+p.ic+'</span> '+(idx+1)+'. '+p.t+'</div><div class="v">'+p.d+'</div>';
+    cl.appendChild(row);
+  });
+
+  start();
+</script>

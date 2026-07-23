@@ -1,0 +1,165 @@
+<style>
+  :root{
+    --roxo:#6B1FA8; --roxo-deep:#2E0A52; --amarelo:#FFBA00;
+    --wa-bg:#E6DDD4; --wa-head:#4A1577; --wa-in:#ffffff; --wa-out:#E4D4F4;
+    --tinta:#1F1338; --muted:#5B4E7A; --linha:rgba(31,19,56,.10);
+    --serif:"Fraunces",Georgia,serif; --sans:"Plus Jakarta Sans",system-ui,sans-serif;
+    --pg:#f4f0fa; --card:#fff; --pgtinta:#1F1338; --pgmuted:#5B4E7A;
+    --ok:#2e8b57; --bad:#c0392b;
+  }
+  @media (prefers-color-scheme:dark){:root{--pg:#170e26;--card:#241636;--pgtinta:#F3EEFA;--pgmuted:#b6a9d0;--wa-bg:#0e1a17;--wa-in:#233138;--wa-out:#3a2b52;--tinta:#eee;--muted:#b6a9d0}}
+  :root[data-theme="dark"]{--pg:#170e26;--card:#241636;--pgtinta:#F3EEFA;--pgmuted:#b6a9d0;--wa-bg:#0e1a17;--wa-in:#233138;--wa-out:#3a2b52;--tinta:#eee;--muted:#b6a9d0}
+  :root[data-theme="light"]{--pg:#f4f0fa;--card:#fff;--pgtinta:#1F1338;--pgmuted:#5B4E7A;--wa-bg:#E6DDD4;--wa-in:#fff;--wa-out:#E4D4F4;--tinta:#1F1338;--muted:#5B4E7A}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:var(--sans);background:var(--pg);color:var(--pgtinta);line-height:1.5;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:900px;margin:0 auto;padding:32px 18px 70px}
+  .kick{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--roxo);font-weight:700}
+  h1{font-family:var(--serif);font-weight:600;font-size:clamp(25px,3.8vw,34px);line-height:1.1;margin:.3rem 0 .5rem;text-wrap:balance}
+  .lead{color:var(--pgmuted);font-size:15px;max-width:62ch}
+
+  .cols{display:grid;grid-template-columns:1fr 380px;gap:26px;margin-top:24px;align-items:start}
+  @media (max-width:800px){.cols{grid-template-columns:1fr}}
+
+  /* controles */
+  .modo{display:inline-flex;background:var(--card);border:1px solid var(--linha);border-radius:999px;padding:4px;gap:4px;margin-bottom:16px}
+  .modo button{font-family:inherit;font-size:12.5px;font-weight:600;border:none;background:none;color:var(--pgmuted);padding:8px 14px;border-radius:999px;cursor:pointer;display:flex;align-items:center;gap:6px}
+  .modo button.on{color:#fff}
+  .modo button.on.k{background:#8a7f9c}
+  .modo button.on.i{background:var(--roxo)}
+  .lbl{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--pgmuted);font-weight:700;margin:0 2px 8px}
+  .chips{display:flex;flex-direction:column;gap:8px}
+  .chip{font-family:inherit;text-align:left;font-size:13.5px;font-weight:500;border:1px solid var(--linha);background:var(--card);color:var(--pgtinta);padding:11px 14px;border-radius:14px;cursor:pointer;transition:all .14s ease}
+  .chip:hover{border-color:var(--roxo)}
+  .chip.sel{border-color:var(--roxo);background:color-mix(in srgb,var(--roxo) 8%,var(--card));box-shadow:0 0 0 2px color-mix(in srgb,var(--roxo) 20%,transparent)}
+  .chip small{display:block;color:var(--pgmuted);font-weight:400;font-size:11.5px;margin-top:2px}
+
+  /* phone / whatsapp */
+  .phone{border-radius:26px;overflow:hidden;border:1px solid var(--linha);box-shadow:0 18px 46px -20px rgba(46,10,82,.5);background:var(--wa-bg)}
+  .wahead{background:var(--wa-head);color:#fff;padding:13px 16px;display:flex;align-items:center;gap:11px}
+  .wahead .av{width:38px;height:38px;border-radius:50%;background:var(--amarelo);display:grid;place-items:center;font-size:18px}
+  .wahead b{font-size:15px;display:block}
+  .wahead span{font-size:11px;opacity:.7}
+  .chat{padding:16px 14px;min-height:420px;display:flex;flex-direction:column;gap:9px;background-image:linear-gradient(color-mix(in srgb,var(--wa-bg) 92%,#000),var(--wa-bg))}
+  .btag{align-self:center;font-size:10.5px;font-weight:700;letter-spacing:.06em;color:var(--pgmuted);background:color-mix(in srgb,var(--wa-bg) 60%,#fff);border-radius:8px;padding:3px 10px;margin:2px 0}
+  .b{max-width:82%;padding:9px 12px;border-radius:14px;font-size:13.5px;line-height:1.45;position:relative;box-shadow:0 1px 1px rgba(0,0,0,.08)}
+  .b.out{align-self:flex-end;background:var(--wa-out);border-bottom-right-radius:4px}
+  .b.in{align-self:flex-start;background:var(--wa-in);border-bottom-left-radius:4px;color:var(--tinta)}
+  .b .t{font-size:9.5px;opacity:.5;text-align:right;margin-top:3px}
+  .intent{align-self:flex-start;display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:700;border-radius:8px;padding:4px 9px;margin:1px 0 3px}
+  .intent.ok{background:color-mix(in srgb,var(--ok) 16%,transparent);color:var(--ok)}
+  .intent.bad{background:color-mix(in srgb,var(--bad) 15%,transparent);color:var(--bad)}
+  .nota{align-self:flex-start;max-width:88%;font-size:11.5px;color:var(--pgmuted);font-style:italic;border-left:2px solid var(--amarelo);padding:2px 0 2px 9px;margin:2px 0}
+
+  .verdict{margin-top:14px;border-radius:16px;padding:14px 16px;font-size:13.5px;border:1px solid var(--linha);background:var(--card)}
+  .verdict.ruim{border-color:color-mix(in srgb,var(--bad) 40%,transparent)}
+  .verdict.bom{border-color:color-mix(in srgb,var(--ok) 45%,transparent)}
+  .verdict b{color:var(--pgtinta)}
+  .foot{margin-top:34px;font-size:11.5px;color:var(--pgmuted);text-align:center}
+</style>
+
+<div class="wrap">
+  <div class="kick">Ayla · reconhecer intenção, não verbos</div>
+  <h1>“É uma IA — devia entender o que a mãe quer”</h1>
+  <p class="lead">Você tem razão: casar palavra-chave sempre vaza. Toque nas frases e compare os dois jeitos. Repare nas duas frases marcadas 👀 — é onde as palavras-chave falham e a IA acerta. E na última, onde a IA sabe que <em>não</em> é montar rotina.</p>
+
+  <div class="cols">
+    <div>
+      <div class="modo" id="modo">
+        <button class="k on" id="bK" onclick="setModo('k')">🔤 Só palavras-chave (hoje)</button>
+        <button class="i" id="bI" onclick="setModo('i')">🧠 IA entende a intenção</button>
+      </div>
+
+      <div class="phone">
+        <div class="wahead">
+          <div class="av">🌿</div>
+          <div><b>Kolo Inclusão</b><span>online</span></div>
+        </div>
+        <div class="chat" id="chat"></div>
+      </div>
+      <div class="verdict" id="verdict"></div>
+    </div>
+
+    <div>
+      <p class="lbl">A mãe escreve…</p>
+      <div class="chips" id="chips"></div>
+    </div>
+  </div>
+
+  <div class="foot">Simulação · cores/tipografia reais da Kolo · comportamento ilustrativo do roteamento da Ayla</div>
+</div>
+
+<script>
+  var cenarios = [
+    {
+      id:'poderia', user:'Poderia me ajudar com uma rotina visual pro Davi?', marca:false,
+      k:{ intent:'rotina_criar ✓', ok:true, ayla:['Claro! 🌿 Essa rotina é pra um dia específico (tipo um dia com a vovó) ou pra a semana inteira do Davi?'] },
+      i:{ intent:'rotina_criar', ok:true, ayla:['Claro! 🌿 Essa rotina é pra um dia específico (tipo um dia com a vovó) ou pra a semana inteira do Davi?'] }
+    },
+    {
+      id:'desenhar', user:'Vamos desenhar a rotina do Davi', marca:true,
+      k:{ intent:'não reconhecido — “desenhar” não está na lista', ok:false,
+          ayla:['Oi! Como tá sendo o dia com o Davi — tem algo acontecendo ou só queria bater um papo?'],
+          nota:'Cai no genérico. Às vezes pior: “já montei um esqueleto… futebol terças…” + link da semana — assumindo e inventando.' },
+      i:{ intent:'rotina_criar', ok:true, ayla:['Bora desenhar isso juntas! 🌿 É pra um dia específico ou pra a semana toda do Davi?'] }
+    },
+    {
+      id:'preciso', user:'Preciso de rotina visual', marca:false,
+      k:{ intent:'rotina_criar ✓', ok:true, ayla:['Perfeito! 🌿 Você quer a rotina de um dia específico ou da semana inteira?'] },
+      i:{ intent:'rotina_criar', ok:true, ayla:['Perfeito! 🌿 Você quer a rotina de um dia específico ou da semana inteira?'] }
+    },
+    {
+      id:'organizar', user:'queria organizar melhor os dias dele', marca:true,
+      k:{ intent:'não reconhecido — sem a palavra “rotina”', ok:false,
+          ayla:['Que bom que você tá por aqui! Me conta um pouco mais do que tá pegando?'],
+          nota:'Nem entra no fluxo de rotina — falta a palavra exata.' },
+      i:{ intent:'rotina_criar', ok:true, ayla:['Vamos organizar isso juntas 🌿 Prefere um mapa pra um dia ou pra a semana inteira dele?'] }
+    },
+    {
+      id:'dificil', user:'a rotina dele de manhã tá difícil, não quer sair de casa', marca:false,
+      k:{ intent:'“rotina” presente → risco de abrir montador', ok:false,
+          ayla:['Quer montar a rotina visual? 🌿 É pra um dia ou pra a semana?'],
+          nota:'Palavra-chave confunde: ela não quer MONTAR rotina, quer ajuda com a manhã.' },
+      i:{ intent:'desabafo + ajuda (não é montar rotina)', ok:true,
+          ayla:['Manhã puxada, né? 💛 O que costuma travar mais — sair de casa, a troca de atividade, o barulho? A gente pensa num caminho juntas.'],
+          nota:'A IA entende que aqui NÃO é montar rotina. Acolhe e ajuda — sem link, sem montador.' }
+    }
+  ];
+
+  var modo='k', sel='poderia';
+
+  function setModo(m){ modo=m; document.getElementById('bK').classList.toggle('on',m==='k'); document.getElementById('bI').classList.toggle('on',m==='i'); render(); }
+  function pick(id){ sel=id; render(); }
+
+  function render(){
+    // chips
+    var chips=document.getElementById('chips'); chips.innerHTML='';
+    cenarios.forEach(function(c){
+      var b=document.createElement('button');
+      b.className='chip'+(c.id===sel?' sel':'');
+      b.onclick=function(){pick(c.id)};
+      b.innerHTML='“'+c.user+'”'+(c.marca?'<small>👀 onde palavra-chave falha</small>':'');
+      chips.appendChild(b);
+    });
+    var c = cenarios.find(function(x){return x.id===sel});
+    var d = c[modo];
+    var chat=document.getElementById('chat'); chat.innerHTML='';
+    chat.insertAdjacentHTML('beforeend','<div class="btag">HOJE · 08:15</div>');
+    chat.insertAdjacentHTML('beforeend','<div class="b out">'+esc(c.user)+'<div class="t">08:15 ✓✓</div></div>');
+    chat.insertAdjacentHTML('beforeend','<div class="intent '+(d.ok?'ok':'bad')+'">'+(d.ok?'✓':'✕')+' intenção: '+esc(d.intent)+'</div>');
+    d.ayla.forEach(function(m){ chat.insertAdjacentHTML('beforeend','<div class="b in">'+esc(m)+'<div class="t">08:15</div></div>'); });
+    if(d.nota) chat.insertAdjacentHTML('beforeend','<div class="nota">'+esc(d.nota)+'</div>');
+
+    var v=document.getElementById('verdict');
+    if(modo==='k'){
+      v.className='verdict '+(d.ok?'bom':'ruim');
+      v.innerHTML = d.ok
+        ? '<b>Deu certo por sorte</b> — a frase tinha uma palavra da lista. Mas basta trocar o verbo pra quebrar.'
+        : '<b>Falhou.</b> A intenção era clara pra qualquer humano, mas a palavra exata não estava na lista — então a Ayla errou o rumo.';
+    } else {
+      v.className='verdict bom';
+      v.innerHTML = '<b>Entendeu a intenção</b>, não a palavra. Funciona com qualquer jeito de falar — e sabe diferenciar “montar uma rotina” de “a rotina tá difícil”.';
+    }
+  }
+  function esc(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+  render();
+</script>

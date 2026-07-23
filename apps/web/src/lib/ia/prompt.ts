@@ -4,6 +4,32 @@ import type { SkillRow } from "./router";
 import type { Intencao } from "./intencao";
 import { MARCADOR_PLANO } from "./marcadores";
 import { pronomesPara } from "@/lib/ayla/pronomes";
+// Diretrizes de condução COMPARTILHADAS com a Ayla (WhatsApp). Fonte única:
+// o que melhora aqui, melhora nos dois canais. Ver lib/conducao/diretrizes.ts.
+import {
+  DIRETRIZ_TOM,
+  DIRETRIZ_CAUTELA,
+  DIRETRIZ_FUNDO,
+  DIRETRIZ_HIPOTESES,
+  DIRETRIZ_FRUSTRACAO,
+  DIRETRIZ_HABILIDADE,
+  DIRETRIZ_ESCOLA,
+} from "@/lib/conducao/diretrizes";
+
+/**
+ * Condução compartilhada com a Ayla — injetada no modo conversa. A crise, na
+ * web, já é tratada pelo blocoIntencao("crise") (fluxo próprio que devolve a
+ * escolha), então DIRETRIZ_CRISE não entra aqui pra não duplicar.
+ */
+const CONDUCAO_COMPARTILHADA = [
+  DIRETRIZ_TOM,
+  DIRETRIZ_FUNDO,
+  DIRETRIZ_HIPOTESES,
+  DIRETRIZ_FRUSTRACAO,
+  DIRETRIZ_HABILIDADE,
+  DIRETRIZ_ESCOLA,
+  DIRETRIZ_CAUTELA,
+].join("\n\n");
 
 export type OutputTypeData = {
   key: string;
@@ -102,6 +128,10 @@ function buildSystemTextConversa(skills: SkillRow[], intencao?: Intencao): strin
 ${buildIdentityBlock(skills)}
 
 ${VOZ_E_LIMITES}${intencao ? `\n\n${blocoIntencao(intencao)}` : ""}
+
+# Condução (mesma da Ayla, nos dois canais)
+
+${CONDUCAO_COMPARTILHADA}
 
 # Como responder
 

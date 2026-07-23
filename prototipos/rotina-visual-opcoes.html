@@ -1,0 +1,365 @@
+<title>Rotina da Gabriella — opções de visual</title>
+<style>
+  :root {
+    color-scheme: light dark;
+    --cream: #F4F0E8;
+    --sheet: #FFFFFF;
+    --sheet-2: #FBF8F2;
+    --ink: #2B1B45;
+    --muted: #6B617C;
+    --line: #E7DFD3;
+    --line-soft: #F0EAE0;
+    --purple: #6E3AA6;
+    --purple-deep: #43206E;
+    --purple-soft: #EEE7F7;
+    --shadow: 0 1px 2px rgba(43,27,69,.05), 0 10px 28px rgba(43,27,69,.06);
+
+    --c-escola:   #3D6DA8;
+    --c-estudo:   #6E3AA6;
+    --c-esporte:  #2F8A5F;
+    --c-terapia:  #B44580;
+    --c-cuidado:  #C0703A;
+    --c-livre:    #B08A1E;
+    --c-refeicao: #857260;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --cream: #15111C;
+      --sheet: #1E1828;
+      --sheet-2: #241D31;
+      --ink: #F1ECF7;
+      --muted: #A99EBA;
+      --line: #2F2740;
+      --line-soft: #241D31;
+      --purple: #B78FE6;
+      --purple-deep: #C7A6EE;
+      --purple-soft: #2A2140;
+      --shadow: 0 1px 2px rgba(0,0,0,.3), 0 12px 30px rgba(0,0,0,.35);
+
+      --c-escola:   #7FA9DE;
+      --c-estudo:   #B78FE6;
+      --c-esporte:  #6FC79B;
+      --c-terapia:  #E58FBB;
+      --c-cuidado:  #E3A876;
+      --c-livre:    #DCC061;
+      --c-refeicao: #C3B09B;
+    }
+  }
+  :root[data-theme="dark"] {
+    --cream:#15111C;--sheet:#1E1828;--sheet-2:#241D31;--ink:#F1ECF7;--muted:#A99EBA;
+    --line:#2F2740;--line-soft:#241D31;--purple:#B78FE6;--purple-deep:#C7A6EE;--purple-soft:#2A2140;
+    --shadow:0 1px 2px rgba(0,0,0,.3),0 12px 30px rgba(0,0,0,.35);
+    --c-escola:#7FA9DE;--c-estudo:#B78FE6;--c-esporte:#6FC79B;--c-terapia:#E58FBB;--c-cuidado:#E3A876;--c-livre:#DCC061;--c-refeicao:#C3B09B;
+  }
+  :root[data-theme="light"] {
+    --cream:#F4F0E8;--sheet:#FFFFFF;--sheet-2:#FBF8F2;--ink:#2B1B45;--muted:#6B617C;
+    --line:#E7DFD3;--line-soft:#F0EAE0;--purple:#6E3AA6;--purple-deep:#43206E;--purple-soft:#EEE7F7;
+    --shadow:0 1px 2px rgba(43,27,69,.05),0 10px 28px rgba(43,27,69,.06);
+    --c-escola:#3D6DA8;--c-estudo:#6E3AA6;--c-esporte:#2F8A5F;--c-terapia:#B44580;--c-cuidado:#C0703A;--c-livre:#B08A1E;--c-refeicao:#857260;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--cream);
+    color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+  .serif { font-family: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, "Times New Roman", serif; }
+  .wrap { max-width: 940px; margin: 0 auto; padding: 40px 20px 72px; }
+
+  .lede { max-width: 640px; }
+  .eyebrow {
+    font-size: 12px; font-weight: 700; letter-spacing: .16em; text-transform: uppercase;
+    color: var(--purple);
+  }
+  h1.title { font-size: clamp(28px, 5vw, 40px); line-height: 1.08; margin: 8px 0 0; font-weight: 600; text-wrap: balance; }
+  h1.title em { font-style: normal; color: var(--purple); }
+  .sub { margin-top: 14px; color: var(--muted); font-size: 15px; }
+  .sub b { color: var(--ink); font-weight: 600; }
+
+  .option { margin-top: 48px; }
+  .option-head { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; margin-bottom: 6px; }
+  .badge {
+    font-family: inherit; font-size: 12px; font-weight: 700; letter-spacing: .04em;
+    color: #fff; background: var(--purple); border-radius: 999px; padding: 4px 11px; white-space: nowrap;
+  }
+  h2.opt-title { font-size: 22px; margin: 0; font-weight: 600; }
+  .opt-note { color: var(--muted); font-size: 14px; margin: 4px 0 18px; }
+  .opt-note b { color: var(--ink); font-weight: 600; }
+
+  /* ---- shared sheet ---- */
+  .sheet {
+    background: var(--sheet);
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    box-shadow: var(--shadow);
+    overflow: hidden;
+  }
+  .sheet-head {
+    padding: 18px 22px 14px;
+    border-bottom: 1px solid var(--line-soft);
+    background: linear-gradient(180deg, var(--sheet-2), var(--sheet));
+  }
+  .sheet-kicker { font-size: 11px; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; color: var(--purple); }
+  .sheet-title { font-size: 20px; font-weight: 600; margin: 3px 0 0; }
+  .sheet-title small { font-weight: 500; color: var(--muted); font-size: 14px; }
+
+  /* legend */
+  .legend { display: flex; flex-wrap: wrap; gap: 8px 14px; padding: 12px 22px; border-bottom: 1px solid var(--line-soft); }
+  .lg { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); }
+  .dot { width: 9px; height: 9px; border-radius: 3px; }
+
+  /* ===== OPTION A — weekly agenda ===== */
+  .week { display: grid; grid-template-columns: 1fr; }
+  .day { padding: 14px 22px; border-bottom: 1px solid var(--line-soft); }
+  .day:last-child { border-bottom: 0; }
+  .day-name { font-size: 15px; font-weight: 700; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+  .day-name .wk { font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; }
+  .rows { display: flex; flex-direction: column; gap: 5px; }
+  .row { display: grid; grid-template-columns: 62px 1fr; gap: 12px; align-items: center; }
+  .time { font-variant-numeric: tabular-nums; font-size: 12px; font-weight: 700; color: var(--muted); text-align: right; }
+  .block {
+    display: flex; align-items: center; gap: 8px;
+    padding: 7px 12px; border-radius: 10px; font-size: 13.5px;
+    background: color-mix(in srgb, var(--cat) 12%, transparent);
+    color: color-mix(in srgb, var(--cat) 72%, var(--ink));
+    border-left: 3px solid var(--cat);
+  }
+  .block .bi { font-size: 14px; }
+  .block .anchor { margin-left: auto; font-size: 11px; font-weight: 700; color: var(--cat); opacity: .8; }
+
+  /* ===== OPTION B — illustrated cards ===== */
+  .cards-scroll { overflow-x: auto; padding: 20px 22px; }
+  .cards { display: flex; gap: 14px; min-width: min-content; }
+  .card {
+    width: 150px; flex: 0 0 auto; border-radius: 16px; overflow: hidden;
+    border: 1px solid var(--line); background: var(--sheet-2);
+  }
+  .card .art {
+    height: 108px; display: flex; align-items: center; justify-content: center;
+    font-size: 42px; position: relative;
+    background:
+      radial-gradient(120% 90% at 30% 20%, color-mix(in srgb, var(--cat) 45%, transparent), transparent 60%),
+      linear-gradient(160deg, color-mix(in srgb, var(--cat) 26%, var(--sheet)), var(--sheet-2));
+  }
+  .card .art .star { position: absolute; font-size: 14px; opacity: .8; }
+  .card .cap { padding: 10px 12px 12px; }
+  .card .cap .t { font-size: 11px; font-weight: 700; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .card .cap .n { font-size: 14px; font-weight: 600; margin-top: 2px; line-height: 1.25; }
+  .theme-tag {
+    display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted);
+    padding: 0 22px 16px;
+  }
+  .theme-tag b { color: var(--purple); }
+
+  /* ===== OPTION C — checklist ===== */
+  .list { padding: 8px 22px 18px; }
+  .li { display: grid; grid-template-columns: 22px 58px 1fr; gap: 10px; align-items: center; padding: 9px 0; border-bottom: 1px solid var(--line-soft); }
+  .li:last-child { border-bottom: 0; }
+  .box { width: 18px; height: 18px; border-radius: 6px; border: 2px solid color-mix(in srgb, var(--cat) 60%, var(--line)); }
+  .li .time { text-align: left; }
+  .li .lbl { font-size: 14.5px; display: flex; align-items: center; gap: 8px; }
+  .li .lbl .tag { margin-left: auto; font-size: 11px; font-weight: 700; color: var(--cat); }
+
+  .foot { margin-top: 40px; padding: 18px 20px; border-radius: 16px; background: var(--purple-soft); color: var(--ink); font-size: 14px; }
+  .foot b { color: var(--purple-deep); }
+
+  @media (max-width: 560px) {
+    .row { grid-template-columns: 54px 1fr; gap: 8px; }
+    .li { grid-template-columns: 20px 50px 1fr; }
+  }
+</style>
+
+<div class="wrap">
+  <div class="lede">
+    <div class="eyebrow">Kolo · Rotina Visual</div>
+    <h1 class="title serif">A rotina da <em>Gabriella</em>, três jeitos de mostrar</h1>
+    <p class="sub">
+      Montei com o exemplo real que a mãe mandou — <b>dia de aula</b> (acorda 6h, escola até 12:30,
+      vôlei, terapia, estudo em ciclos, autocuidado e tempo de tela). São três formas de entregar o
+      mesmo conteúdo. Me diz qual você aprova (dá pra combinar: uma pro WhatsApp, outra pro app).
+    </p>
+  </div>
+
+  <!-- ============ OPTION A ============ -->
+  <section class="option">
+    <div class="option-head">
+      <span class="badge">Opção A</span>
+      <h2 class="opt-title serif">Agenda da semana (diagramada)</h2>
+    </div>
+    <p class="opt-note">
+      Um <b>PDF pronto pra imprimir</b> e colar na parede — a semana toda, hora a hora, com cor por tipo
+      de atividade. Chega na hora no WhatsApp, sem esperar geração de imagem. <b>Rápido e barato.</b>
+    </p>
+
+    <div class="sheet">
+      <div class="sheet-head">
+        <div class="sheet-kicker">Semana de aula · a partir de 04/ago</div>
+        <div class="sheet-title serif">Gabriella <small>· 14 anos</small></div>
+      </div>
+      <div class="legend">
+        <span class="lg"><span class="dot" style="background:var(--c-escola)"></span>Escola</span>
+        <span class="lg"><span class="dot" style="background:var(--c-estudo)"></span>Estudo</span>
+        <span class="lg"><span class="dot" style="background:var(--c-esporte)"></span>Esporte</span>
+        <span class="lg"><span class="dot" style="background:var(--c-terapia)"></span>Terapia</span>
+        <span class="lg"><span class="dot" style="background:var(--c-cuidado)"></span>Autocuidado</span>
+        <span class="lg"><span class="dot" style="background:var(--c-livre)"></span>Livre / tela</span>
+        <span class="lg"><span class="dot" style="background:var(--c-refeicao)"></span>Refeição</span>
+      </div>
+
+      <div class="week">
+        <!-- SEGUNDA -->
+        <div class="day">
+          <div class="day-name">Segunda <span class="wk">manhã · tarde · noite</span></div>
+          <div class="rows">
+            <div class="row"><div class="time">6:00</div><div class="block" style="--cat:var(--c-cuidado)"><span class="bi">☀️</span> Acordar + skincare</div></div>
+            <div class="row"><div class="time">6:30</div><div class="block" style="--cat:var(--c-refeicao)"><span class="bi">🥣</span> Café da manhã</div></div>
+            <div class="row"><div class="time">7:00</div><div class="block" style="--cat:var(--c-escola)"><span class="bi">🎒</span> Escola <span class="anchor">até 12:30</span></div></div>
+            <div class="row"><div class="time">12:45</div><div class="block" style="--cat:var(--c-refeicao)"><span class="bi">🍽️</span> Almoço</div></div>
+            <div class="row"><div class="time">13:30</div><div class="block" style="--cat:var(--c-livre)"><span class="bi">📱</span> Tempo livre / celular · 1h</div></div>
+            <div class="row"><div class="time">14:30</div><div class="block" style="--cat:var(--c-estudo)"><span class="bi">📝</span> Tarefas</div></div>
+            <div class="row"><div class="time">15:00</div><div class="block" style="--cat:var(--c-estudo)"><span class="bi">⏱️</span> Estudo — ciclo pomodoro 25'</div></div>
+            <div class="row"><div class="time">16:00</div><div class="block" style="--cat:var(--c-esporte)"><span class="bi">🏐</span> Vôlei <span class="anchor">16–17h</span></div></div>
+            <div class="row"><div class="time">18:00</div><div class="block" style="--cat:var(--c-refeicao)"><span class="bi">🍽️</span> Banho + jantar</div></div>
+            <div class="row"><div class="time">19:00</div><div class="block" style="--cat:var(--c-livre)"><span class="bi">📺</span> Tempo livre / celular · 1h</div></div>
+            <div class="row"><div class="time">21:00</div><div class="block" style="--cat:var(--c-cuidado)"><span class="bi">🌙</span> Skincare da noite + dormir</div></div>
+          </div>
+        </div>
+        <!-- TERÇA -->
+        <div class="day">
+          <div class="day-name">Terça</div>
+          <div class="rows">
+            <div class="row"><div class="time">6:00</div><div class="block" style="--cat:var(--c-cuidado)"><span class="bi">☀️</span> Acordar + skincare</div></div>
+            <div class="row"><div class="time">7:00</div><div class="block" style="--cat:var(--c-escola)"><span class="bi">🎒</span> Escola <span class="anchor">até 12:30</span></div></div>
+            <div class="row"><div class="time">14:00</div><div class="block" style="--cat:var(--c-estudo)"><span class="bi">📝</span> Tarefas + pomodoro 25'</div></div>
+            <div class="row"><div class="time">16:00</div><div class="block" style="--cat:var(--c-livre)"><span class="bi">📱</span> Tempo livre / celular</div></div>
+            <div class="row"><div class="time">18:00</div><div class="block" style="--cat:var(--c-terapia)"><span class="bi">💬</span> Terapia <span class="anchor">18h</span></div></div>
+            <div class="row"><div class="time">19:00</div><div class="block" style="--cat:var(--c-esporte)"><span class="bi">🏐</span> Vôlei <span class="anchor">19h</span></div></div>
+            <div class="row"><div class="time">21:00</div><div class="block" style="--cat:var(--c-cuidado)"><span class="bi">🌙</span> Skincare + dormir</div></div>
+          </div>
+        </div>
+        <!-- QUARTA -->
+        <div class="day">
+          <div class="day-name">Quarta</div>
+          <div class="rows">
+            <div class="row"><div class="time">6:00</div><div class="block" style="--cat:var(--c-cuidado)"><span class="bi">☀️</span> Acordar + skincare</div></div>
+            <div class="row"><div class="time">7:00</div><div class="block" style="--cat:var(--c-escola)"><span class="bi">🎒</span> Escola <span class="anchor">até 12:30</span></div></div>
+            <div class="row"><div class="time">13:00</div><div class="block" style="--cat:var(--c-estudo)"><span class="bi">📝</span> Tarefas + pomodoro 25'</div></div>
+            <div class="row"><div class="time">14:00</div><div class="block" style="--cat:var(--c-terapia)"><span class="bi">💬</span> Terapia <span class="anchor">14h</span></div></div>
+            <div class="row"><div class="time">16:00</div><div class="block" style="--cat:var(--c-esporte)"><span class="bi">🏐</span> Vôlei <span class="anchor">16h</span></div></div>
+            <div class="row"><div class="time">18:00</div><div class="block" style="--cat:var(--c-livre)"><span class="bi">📱</span> Jantar + tempo livre</div></div>
+            <div class="row"><div class="time">20:00</div><div class="block" style="--cat:var(--c-refeicao)"><span class="bi">✝️</span> Culto <span class="anchor">20h</span></div></div>
+            <div class="row"><div class="time">21:30</div><div class="block" style="--cat:var(--c-cuidado)"><span class="bi">🌙</span> Skincare + dormir</div></div>
+          </div>
+        </div>
+        <!-- QUINTA -->
+        <div class="day">
+          <div class="day-name">Quinta</div>
+          <div class="rows">
+            <div class="row"><div class="time">6:00</div><div class="block" style="--cat:var(--c-cuidado)"><span class="bi">☀️</span> Acordar + skincare</div></div>
+            <div class="row"><div class="time">7:00</div><div class="block" style="--cat:var(--c-escola)"><span class="bi">🎒</span> Escola <span class="anchor">até 12:30</span></div></div>
+            <div class="row"><div class="time">14:00</div><div class="block" style="--cat:var(--c-estudo)"><span class="bi">📝</span> Tarefas + pomodoro 25'</div></div>
+            <div class="row"><div class="time">17:00</div><div class="block" style="--cat:var(--c-terapia)"><span class="bi">💬</span> Terapia <span class="anchor">17h</span></div></div>
+            <div class="row"><div class="time">19:00</div><div class="block" style="--cat:var(--c-esporte)"><span class="bi">🏐</span> Vôlei <span class="anchor">19h</span></div></div>
+            <div class="row"><div class="time">21:00</div><div class="block" style="--cat:var(--c-cuidado)"><span class="bi">🌙</span> Skincare + dormir</div></div>
+          </div>
+        </div>
+        <!-- SEXTA -->
+        <div class="day">
+          <div class="day-name">Sexta</div>
+          <div class="rows">
+            <div class="row"><div class="time">6:00</div><div class="block" style="--cat:var(--c-cuidado)"><span class="bi">☀️</span> Acordar + skincare</div></div>
+            <div class="row"><div class="time">7:00</div><div class="block" style="--cat:var(--c-escola)"><span class="bi">🎒</span> Escola <span class="anchor">até 12:30</span></div></div>
+            <div class="row"><div class="time">13:00</div><div class="block" style="--cat:var(--c-estudo)"><span class="bi">📝</span> Tarefas + pomodoro 25'</div></div>
+            <div class="row"><div class="time">14:30</div><div class="block" style="--cat:var(--c-estudo)"><span class="bi">🎹</span> Teclado <span class="anchor">14:30–15:10</span></div></div>
+            <div class="row"><div class="time">16:00</div><div class="block" style="--cat:var(--c-livre)"><span class="bi">📱</span> Tempo livre / celular</div></div>
+            <div class="row"><div class="time">21:00</div><div class="block" style="--cat:var(--c-cuidado)"><span class="bi">🌙</span> Skincare + dormir</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ OPTION B ============ -->
+  <section class="option">
+    <div class="option-head">
+      <span class="badge">Opção B</span>
+      <h2 class="opt-title serif">Cartões ilustrados (tema dela)</h2>
+    </div>
+    <p class="opt-note">
+      Cada passo vira um <b>cartão com ilustração no tema que ela ama</b> (K-pop / doramas) — o "uau" do
+      Kolo. Gera ~12 imagens (uns minutos + custo), então o ideal é mandar como <b>um PDF dos cartões</b>.
+      Abaixo, a <b>segunda-feira</b> como exemplo (as artes são simuladas).
+    </p>
+
+    <div class="sheet">
+      <div class="sheet-head">
+        <div class="sheet-kicker">Segunda-feira · cartões do dia</div>
+        <div class="sheet-title serif">Gabriella <small>· tema: K-pop</small></div>
+      </div>
+      <div class="cards-scroll">
+        <div class="cards">
+          <div class="card"><div class="art" style="--cat:var(--c-cuidado)"><span class="star" style="top:12px;left:14px">✨</span>☀️</div><div class="cap"><div class="t">6:00</div><div class="n">Acordar + skincare</div></div></div>
+          <div class="card"><div class="art" style="--cat:var(--c-refeicao)">🥣</div><div class="cap"><div class="t">6:30</div><div class="n">Café da manhã</div></div></div>
+          <div class="card"><div class="art" style="--cat:var(--c-escola)"><span class="star" style="bottom:10px;right:12px">🎧</span>🎒</div><div class="cap"><div class="t">7:00</div><div class="n">Escola até 12:30</div></div></div>
+          <div class="card"><div class="art" style="--cat:var(--c-livre)">📱</div><div class="cap"><div class="t">13:30</div><div class="n">Tempo de celular · 1h</div></div></div>
+          <div class="card"><div class="art" style="--cat:var(--c-estudo)"><span class="star" style="top:12px;right:14px">⭐</span>⏱️</div><div class="cap"><div class="t">15:00</div><div class="n">Estudo · pomodoro 25'</div></div></div>
+          <div class="card"><div class="art" style="--cat:var(--c-esporte)">🏐</div><div class="cap"><div class="t">16:00</div><div class="n">Vôlei</div></div></div>
+          <div class="card"><div class="art" style="--cat:var(--c-cuidado)"><span class="star" style="bottom:10px;left:12px">🌙</span>🧴</div><div class="cap"><div class="t">21:00</div><div class="n">Skincare da noite</div></div></div>
+        </div>
+      </div>
+      <div class="theme-tag">🎨 Tema aplicado: <b>K-pop</b> — o tema é só a aparência dos cartões; o conteúdo da rotina é o mesmo.</div>
+    </div>
+  </section>
+
+  <!-- ============ OPTION C ============ -->
+  <section class="option">
+    <div class="option-head">
+      <span class="badge">Opção C</span>
+      <h2 class="opt-title serif">Lista pra marcar (enxuta)</h2>
+    </div>
+    <p class="opt-note">
+      Sem ilustração — uma <b>checklist limpa</b> que a Gabriella abre no celular e vai marcando. Combina com
+      adolescente que quer autonomia, não "cartão de criança". Leve pro WhatsApp e pro app.
+    </p>
+
+    <div class="sheet">
+      <div class="sheet-head">
+        <div class="sheet-kicker">Segunda-feira</div>
+        <div class="sheet-title serif">Gabriella</div>
+      </div>
+      <div class="list">
+        <div class="li" style="--cat:var(--c-cuidado)"><span class="box"></span><span class="time">6:00</span><span class="lbl">Acordar + skincare <span class="tag">autocuidado</span></span></div>
+        <div class="li" style="--cat:var(--c-refeicao)"><span class="box"></span><span class="time">6:30</span><span class="lbl">Café da manhã</span></div>
+        <div class="li" style="--cat:var(--c-escola)"><span class="box"></span><span class="time">7:00</span><span class="lbl">Escola (até 12:30) <span class="tag">escola</span></span></div>
+        <div class="li" style="--cat:var(--c-livre)"><span class="box"></span><span class="time">13:30</span><span class="lbl">Tempo livre / celular · 1h</span></div>
+        <div class="li" style="--cat:var(--c-estudo)"><span class="box"></span><span class="time">14:30</span><span class="lbl">Tarefas</span></div>
+        <div class="li" style="--cat:var(--c-estudo)"><span class="box"></span><span class="time">15:00</span><span class="lbl">Estudo — pomodoro 25' <span class="tag">estudo</span></span></div>
+        <div class="li" style="--cat:var(--c-esporte)"><span class="box"></span><span class="time">16:00</span><span class="lbl">Vôlei (16–17h) <span class="tag">esporte</span></span></div>
+        <div class="li" style="--cat:var(--c-refeicao)"><span class="box"></span><span class="time">18:00</span><span class="lbl">Banho + jantar</span></div>
+        <div class="li" style="--cat:var(--c-livre)"><span class="box"></span><span class="time">19:00</span><span class="lbl">Tempo livre / celular · 1h</span></div>
+        <div class="li" style="--cat:var(--c-cuidado)"><span class="box"></span><span class="time">21:00</span><span class="lbl">Skincare da noite + dormir</span></div>
+      </div>
+    </div>
+  </section>
+
+  <div class="foot">
+    <b>Como eu leio:</b> a <b>Opção A</b> é a base ideal pro WhatsApp (chega pronta, imprime, entende a semana
+    num olhar). A <b>Opção C</b> é a mesma coisa em modo "marcar", boa pra adolescente. A <b>Opção B</b> é o
+    encanto do Kolo, melhor oferecida sob demanda ("quer os cartões ilustrados?"). Dá pra combinar — me diz
+    o que você aprova e eu construo o fluxo da Ayla em cima disso.
+  </div>
+</div>
+
+<script>
+  // Respeita o toggle de tema do visualizador (data-theme) sobre o prefers-color-scheme.
+  (function () {
+    try {
+      var t = document.documentElement.getAttribute('data-theme');
+      if (!t) return;
+    } catch (e) {}
+  })();
+</script>

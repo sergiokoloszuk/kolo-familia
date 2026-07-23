@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Home nova — protótipo Kolo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --background:#ffffff; --foreground:#1F1338; --muted:#5B4E7A;
+    --purple:#6B1FA8; --purple-dark:#4A1577; --purple-deep:#2E0A52;
+    --yellow:#FFBA00; --yellow-dark:#E5A700;
+    --lilas:#F5EFFB; --lilas2:#FAF5FE;
+    --social:#6B7A4E; --social-bg:#EEF2DE;
+    --foco:#7A5C2E; --foco-bg:#F2EADB;
+    --sensorial:#C77F00; --sensorial-bg:#FFF3D9;
+    --line:rgba(31,19,56,.06);
+    --shadow:0 1px 2px rgba(46,10,82,.04), 0 4px 12px rgba(46,10,82,.03);
+    --shadow-hover:0 4px 12px rgba(46,10,82,.06), 0 12px 28px rgba(46,10,82,.06);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Plus Jakarta Sans',sans-serif;background:#F7F4FB;color:var(--foreground);line-height:1.5;padding:32px 16px 80px}
+  .heading{font-family:'Fraunces',Georgia,serif}
+  .em{color:var(--purple);font-style:normal}
+  .wrap{max-width:880px;margin:0 auto;display:flex;flex-direction:column;gap:28px}
+  .caption{max-width:880px;margin:0 auto 22px;font-size:13px;color:var(--muted);background:#fff;border-radius:14px;padding:14px 18px;box-shadow:var(--shadow);border-left:4px solid var(--yellow)}
+  .caption b{color:var(--foreground)}
+  .eyebrow{font-size:11px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--muted)}
+
+  /* HERO */
+  .hero{position:relative;overflow:hidden;border-radius:24px;border:1px solid rgba(255,186,0,.3);
+    background:linear-gradient(135deg, rgba(255,186,0,.14), rgba(250,245,254,.4) 55%, #fff);
+    padding:30px 32px;box-shadow:var(--shadow)}
+  .hero .bar{position:absolute;inset:0 0 auto 0;height:4px;background:linear-gradient(90deg,var(--yellow),rgba(255,186,0,.5),transparent)}
+  .hero .glow{position:absolute;right:-32px;top:-32px;width:130px;height:130px;border-radius:50%;background:rgba(255,186,0,.25);filter:blur(48px)}
+  .hero h1{font-size:33px;font-weight:500;margin-top:8px;position:relative}
+  .hero .dot{color:var(--yellow)}
+  .hero p{margin-top:10px;max-width:30rem;font-size:14px;color:var(--muted)}
+
+  /* TIRA DE SINAIS (o elemento inspirado no admin) */
+  .strip{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+  @media(max-width:640px){.strip{grid-template-columns:1fr}}
+  .tile{background:#fff;border-radius:22px;padding:18px 18px 20px;box-shadow:var(--shadow);display:flex;flex-direction:column;gap:12px;transition:.2s}
+  .tile:hover{box-shadow:var(--shadow-hover);transform:translateY(-2px)}
+  .plaque{width:40px;height:40px;border-radius:12px;background:var(--yellow);display:flex;align-items:center;justify-content:center;color:var(--purple-deep)}
+  .plaque svg{width:20px;height:20px;stroke-width:1.8}
+  .tile .lbl{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+  .tile .val{font-family:'Fraunces',serif;font-size:21px;font-weight:500;margin-top:3px;line-height:1.25}
+  .tile .sub{font-size:12.5px;color:var(--muted);margin-top:3px}
+
+  /* CARD genérico */
+  .card{position:relative;overflow:hidden;background:#fff;border-radius:24px;padding:24px 28px;box-shadow:var(--shadow)}
+  .card .topbar{position:absolute;inset:0 0 auto 0;height:3px;background:linear-gradient(90deg,var(--yellow),rgba(255,186,0,.4),transparent)}
+  .card.reg{border:1px solid rgba(255,186,0,.3)}
+  .row{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+  .card h2,.card h3{font-family:'Fraunces',serif}
+  .ctitle{font-size:16px;font-weight:600}
+  .cdesc{font-size:13.5px;color:var(--muted);margin-top:2px}
+  .pill{flex-shrink:0;border-radius:999px;background:rgba(255,186,0,.2);padding:5px 11px;font-size:12px;font-weight:600;color:#8B5A00}
+  .fakeinput{margin-top:14px;border:1px dashed rgba(31,19,56,.15);border-radius:16px;padding:16px;color:#9b90b5;font-size:14px}
+
+  /* PORTAS */
+  .portas{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  @media(max-width:640px){.portas{grid-template-columns:1fr}}
+  .porta{position:relative;overflow:hidden;background:#fff;border:1px solid var(--line);border-radius:18px;padding:24px 20px 18px;box-shadow:var(--shadow);display:flex;flex-direction:column;gap:12px;transition:.2s;cursor:pointer}
+  .porta:hover{transform:translateY(-2px);box-shadow:var(--shadow-hover);border-color:rgba(255,186,0,.5)}
+  .porta .ptop{position:absolute;inset:0 0 auto 0;height:4px}
+  .porta .picon{width:48px;height:48px;border-radius:16px;display:flex;align-items:center;justify-content:center}
+  .porta h3{font-size:18px;font-weight:500}
+  .porta .pd{font-size:13.5px;color:var(--muted);margin-top:2px}
+  .porta .pfoot{margin-top:auto;display:flex;align-items:center;justify-content:space-between;gap:8px;padding-top:6px}
+  .porta .psig{border-radius:999px;background:rgba(31,19,56,.04);padding:5px 11px;font-size:12px;font-weight:500;color:rgba(31,19,56,.7)}
+  .porta .arrow{width:36px;height:36px;border-radius:50%;background:var(--yellow);display:flex;align-items:center;justify-content:center;color:var(--purple-dark)}
+
+  /* FOCO + SEMANA fundidos */
+  .foco .ico{width:24px;height:24px;border-radius:7px;background:var(--yellow);display:inline-flex;align-items:center;justify-content:center;color:var(--purple-deep);vertical-align:middle}
+  .foco .ico svg{width:14px;height:14px}
+  .foco h3.manch{font-size:25px;font-weight:500;margin-top:14px;line-height:1.25}
+  .foco p.txt{margin-top:12px;max-width:36rem;font-size:15px;color:var(--muted)}
+  .chips{margin-top:18px;display:flex;gap:8px;flex-wrap:wrap}
+  .chip{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:5px 11px;font-size:12px;font-weight:600}
+  .chip.social{background:var(--social-bg);color:var(--social)}
+  .chip.rotina{background:var(--foco-bg);color:var(--foco)}
+  .chip .cd{width:6px;height:6px;border-radius:50%;background:currentColor}
+  .divider{margin:22px 0;border:0;border-top:1px solid var(--line)}
+  .semana .shead{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+  .semana .shead .si{width:30px;height:30px;border-radius:9px;background:rgba(255,186,0,.12);display:flex;align-items:center;justify-content:center;color:var(--yellow-dark)}
+  .semana .shead h4{font-family:'Fraunces',serif;font-size:16px;font-weight:600}
+  .item{display:flex;gap:14px;align-items:flex-start;padding:13px 0;border-top:1px solid var(--line)}
+  .item:first-of-type{border-top:0}
+  .item .mk{font-family:monospace;font-weight:600;font-size:15px;margin-top:3px;width:14px;flex-shrink:0}
+  .mk.c{color:var(--social)} .mk.d{color:var(--sensorial)} .mk.e{color:var(--foco)}
+  .item .itxt{font-size:15.5px;color:var(--foreground)}
+  .item .imeta{font-size:11px;text-transform:uppercase;letter-spacing:.14em;color:var(--muted);margin-top:3px}
+
+  .label-novo{display:inline-block;background:var(--purple);color:#fff;font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;border-radius:6px;padding:3px 8px;margin-bottom:10px}
+</style>
+</head>
+<body>
+
+<div class="caption">
+  <b>Protótipo da Home nova.</b> Inspirado na calma da tela de admin: <b>(1)</b> uma
+  <b>tira de sinais</b> logo abaixo do hero (a fileira de tiles com a plaquinha amarela), que
+  reúne sinais hoje espalhados pela página — em linguagem editorial, não número de dashboard;
+  <b>(2)</b> o "Foco da semana" e o "O que vem acontecendo" <b>fundidos num bloco só</b>, pra Home
+  respirar mais. O resto da marca (hero amarelo, títulos serif, molduras) é o que já existe.
+</div>
+
+<div class="wrap">
+
+  <!-- HERO -->
+  <header class="hero">
+    <span class="bar"></span><span class="glow"></span>
+    <div class="eyebrow">segunda · 22 de junho</div>
+    <h1 class="heading">Oi, Karina<span class="dot">.</span> <span class="em">Essa semana teve coisas boas.</span></h1>
+    <p>Que bom te ver. Vamos cuidar do dia do Théo?</p>
+  </header>
+
+  <!-- TIRA DE SINAIS — inspirada no admin (IconCard + Stat), mas editorial -->
+  <section>
+    <span class="label-novo">novo</span>
+    <div class="strip">
+      <div class="tile">
+        <span class="plaque"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M7 20h10M10 20c0-7-6-7-6-13 4 0 6 2 6 5M14 20c0-9 6-9 6-15-5 0-6 4-6 7"/></svg></span>
+        <div>
+          <div class="lbl">Perfil do Théo</div>
+          <div class="val heading">Bem montado</div>
+          <div class="sub">75% do retrato vivo preenchido</div>
+        </div>
+      </div>
+      <div class="tile">
+        <span class="plaque"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 2l2.4 4.9 5.4.8-3.9 3.8.9 5.4L12 19l-4.8 2.5.9-5.4L4.2 8.3l5.4-.8z"/></svg></span>
+        <div>
+          <div class="lbl">Esta semana</div>
+          <div class="val heading">4 dias registrados</div>
+          <div class="sub">o dia a dia indo pro papel</div>
+        </div>
+      </div>
+      <div class="tile">
+        <span class="plaque"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 11.5a8.5 8.5 0 0 1-12.5 7.5L3 21l2-5.5A8.5 8.5 0 1 1 21 11.5z"/></svg></span>
+        <div>
+          <div class="lbl">Última conversa</div>
+          <div class="val heading">“Birra na escola”</div>
+          <div class="sub">nas Estratégias, anteontem</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- REGISTRO DO DIA -->
+  <section class="card reg">
+    <span class="topbar"></span>
+    <div class="row">
+      <div>
+        <div class="ctitle heading">Registro do dia</div>
+        <div class="cdesc">Escreva do seu jeito — a Kolo organiza e guarda na Evolução.</div>
+      </div>
+      <span class="pill">4 dias essa semana</span>
+    </div>
+    <div class="fakeinput">Como foi o dia do Théo? Um momento bom, um desafio…</div>
+  </section>
+
+  <!-- PORTAS -->
+  <section class="portas">
+    <div class="porta">
+      <span class="ptop" style="background:var(--social)"></span>
+      <span class="picon" style="background:var(--social-bg);color:var(--social)">
+        <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M7 20h10M10 20c0-7-6-7-6-13 4 0 6 2 6 5M14 20c0-9 6-9 6-15-5 0-6 4-6 7"/></svg>
+      </span>
+      <div><h3 class="heading">Perfil</h3><div class="pd">O jeito de ser do Théo, sempre vivo.</div></div>
+      <div class="pfoot"><span class="psig">75% preenchido</span><span class="arrow">→</span></div>
+    </div>
+    <div class="porta">
+      <span class="ptop" style="background:var(--foco)"></span>
+      <span class="picon" style="background:var(--foco-bg);color:var(--foco)">
+        <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 1 4 10.5c-.7.6-1 1-1 2H9c0-1-.3-1.4-1-2A6 6 0 0 1 12 3z"/></svg>
+      </span>
+      <div><h3 class="heading">Estratégias</h3><div class="pd">Conte um desafio, ache um caminho.</div></div>
+      <div class="pfoot"><span class="psig">última: birra na escola</span><span class="arrow">→</span></div>
+    </div>
+  </section>
+
+  <!-- FOCO + O QUE VEM ACONTECENDO (fundidos) -->
+  <section class="card foco">
+    <span class="topbar"></span>
+    <div>
+      <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v2M12 19v2M5 12H3M21 12h-2M6 6l1.5 1.5M16.5 16.5L18 18M18 6l-1.5 1.5M7.5 16.5L6 18"/><circle cx="12" cy="12" r="3.2"/></svg></span>
+      <span class="eyebrow" style="margin-left:8px">Foco da semana</span>
+    </div>
+    <h3 class="manch heading">Vale manter o que ajudou</h3>
+    <p class="txt">O Théo mostrou algo novo essa semana. Vale <b style="color:var(--foreground)">manter o que ajudou</b> e seguir devagar — sem pressão por mais.</p>
+    <div class="chips">
+      <span class="chip social"><span class="cd"></span>Conquistas</span>
+      <span class="chip rotina"><span class="cd"></span>O que ajudou</span>
+    </div>
+
+    <hr class="divider" />
+
+    <div class="semana">
+      <div class="shead">
+        <span class="si"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l2.4 4.9 5.4.8-3.9 3.8.9 5.4L12 19l-4.8 2.5.9-5.4L4.2 8.3l5.4-.8z"/></svg></span>
+        <h4>O que vem acontecendo</h4>
+      </div>
+      <div class="item"><span class="mk c">✓</span><div><div class="itxt">Comeu sozinho no almoço, sem ajuda</div><div class="imeta">sex · mãe</div></div></div>
+      <div class="item"><span class="mk d">!</span><div><div class="itxt">Difícil sair do parque, chorou bastante</div><div class="imeta">qui · pai</div></div></div>
+      <div class="item"><span class="mk e">›</span><div><div class="itxt">Conversaram sobre “birra na escola”</div><div class="imeta">qua</div></div></div>
+      <div class="item"><span class="mk c">✓</span><div><div class="itxt">Pediu água apontando, palavra nova</div><div class="imeta">ter · mãe</div></div></div>
+    </div>
+  </section>
+
+</div>
+</body>
+</html>
