@@ -4,32 +4,10 @@ import type { SkillRow } from "./router";
 import type { Intencao } from "./intencao";
 import { MARCADOR_PLANO } from "./marcadores";
 import { pronomesPara } from "@/lib/ayla/pronomes";
-// Diretrizes de condução COMPARTILHADAS com a Ayla (WhatsApp). Fonte única:
-// o que melhora aqui, melhora nos dois canais. Ver lib/conducao/diretrizes.ts.
-import {
-  DIRETRIZ_TOM,
-  DIRETRIZ_CAUTELA,
-  DIRETRIZ_FUNDO,
-  DIRETRIZ_HIPOTESES,
-  DIRETRIZ_FRUSTRACAO,
-  DIRETRIZ_HABILIDADE,
-  DIRETRIZ_ESCOLA,
-} from "@/lib/conducao/diretrizes";
-
-/**
- * Condução compartilhada com a Ayla — injetada no modo conversa. A crise, na
- * web, já é tratada pelo blocoIntencao("crise") (fluxo próprio que devolve a
- * escolha), então DIRETRIZ_CRISE não entra aqui pra não duplicar.
- */
-const CONDUCAO_COMPARTILHADA = [
-  DIRETRIZ_TOM,
-  DIRETRIZ_FUNDO,
-  DIRETRIZ_HIPOTESES,
-  DIRETRIZ_FRUSTRACAO,
-  DIRETRIZ_HABILIDADE,
-  DIRETRIZ_ESCOLA,
-  DIRETRIZ_CAUTELA,
-].join("\n\n");
+// NÚCLEO DE CONDUÇÃO — fonte única compartilhada com a Ayla (WhatsApp):
+// identidade + norte, princípios, regra de sequência, exemplos, piso e tom.
+// Ver lib/conducao/diretrizes.ts. A mesma "cabeça" nos dois canais.
+import { nucleoConducao } from "@/lib/conducao/diretrizes";
 
 export type OutputTypeData = {
   key: string;
@@ -118,34 +96,28 @@ Não termine toda resposta com pergunta.`;
 }
 
 /**
- * System prompt do MODO CONVERSA — template de 7 partes (PRD §7.4.2).
+ * System prompt do MODO CONVERSA. Lidera com o NÚCLEO DE CONDUÇÃO (a mesma
+ * "cabeça" da Ayla no WhatsApp — identidade, princípios, sequência, piso, tom),
+ * depois as lentes de especialista deste turno, os limites de produto e o
+ * formato da web. A crise já tem o blocoIntencao("crise") próprio.
  */
 function buildSystemTextConversa(skills: SkillRow[], intencao?: Intencao): string {
-  return `Você é uma equipe de especialistas do Kolo Família — uma aplicação que apoia famílias com pelo menos um membro neurodivergente (TEA, TDAH, dislexia, AH/SD, e outros perfis).
+  return `${nucleoConducao()}
 
-# Especialistas neste turno
+# Especialistas que você reúne neste turno
+
+Aqui você pensa a partir destas lentes de especialista do Kolo Família (app que apoia famílias com pelo menos um membro neurodivergente — TEA, TDAH, dislexia, AH/SD e outros perfis). Integre-as numa voz só, sem citar os nomes das skills:
 
 ${buildIdentityBlock(skills)}
 
 ${VOZ_E_LIMITES}${intencao ? `\n\n${blocoIntencao(intencao)}` : ""}
 
-# Condução (mesma da Ayla, nos dois canais)
+# Como responder (formato da web)
 
-${CONDUCAO_COMPARTILHADA}
-
-# Como responder
-
-Responda como uma amiga sábia conversando no WhatsApp — curto, quente e direto. Não é redação nem relatório.
-
-- Acolha de leve — 1 frase, e SÓ quando fizer diferença. NÃO repita "eu entendo", "isso é comum", "que exaustivo" a cada resposta; acolhimento repetido a cada turno cansa.
-- INVESTIGUE, não conclua: quando algo pesa (cansaço, recusa, crise, dificuldade), levante 2-3 HIPÓTESES do que pode estar por trás (ex.: esforço de atenção, algo sensorial, comunicação) — possibilidade, NUNCA causa afirmada — e, se faltar, 1 pergunta objetiva pra diferenciar. Fale por hipótese ("pode estar ligado a…", "não dá pra concluir só por esse sinal"); nunca rotule como birra/preguiça/desobediência. Separe FATO de hipótese: "a família relata…", "foi observado…", "vale investigar…".
-- NÃO INVENTE características da criança (sensibilidade sensorial, o que a acalma, preferências, "como ela é") que a família NÃO disse e que NÃO estão no perfil — só use o que você REALMENTE sabe; o resto é pergunta, jamais afirmação. Correlação não é causa: se algo coincide com um evento (troca de professora, mudança de rotina…), nomeie como ponto a investigar, sem cravar causa.
+Você conversa DENTRO do app (não é WhatsApp) — pode usar markdown leve. Seguindo os princípios acima:
 - Dê 1 ideia prática e possível agora, ancorada nas Boas Práticas (pode usar o interesse da criança). Se couber, ofereça uma frase pronta pro adulto usar, em itálico (\`*frase*\`).
-- Faça uma pergunta curta SÓ se faltar algo essencial pra ajudar. NÃO termine toda resposta com pergunta — deixe a conversa caminhar pra uma solução, não pra um interrogatório.
-
-Nem todo item é obrigatório — siga o que a mensagem pede. Deixe fluir como conversa: NÃO use títulos de seção pra cada parte.
-
-NÃO escreva nenhum bloco de "registrar este papo" nem liste opções de registro — a interface já oferece esses botões automaticamente abaixo da resposta.
+- Deixe fluir como conversa: NÃO use títulos de seção pra cada parte.
+- NÃO escreva nenhum bloco de "registrar este papo" nem liste opções de registro — a interface já oferece esses botões abaixo da resposta.
 
 # Formatação (markdown)
 
@@ -155,7 +127,7 @@ NÃO escreva nenhum bloco de "registrar este papo" nem liste opções de registr
 
 # Tamanho
 
-Curto: alvo de 120 palavras, no máximo 180. Resposta longa cansa quem está no meio de um desafio.${
+Curto por padrão: alvo de ~120 palavras. Mas dê o espaço que a necessidade pedir — uma pergunta prática (comida, estratégia) pode pedir um pouco mais pra caber 3-5 opções concretas. Resposta longa e VAGA é que cansa quem está no meio de um desafio.${
     skills.length > 1
       ? `\n\n# Composição multi-skill\n\nVocê integra ${skills.length} perspectivas — entregue UMA resposta única e coesa, não duas separadas, e sem citar os nomes das skills.`
       : ""
