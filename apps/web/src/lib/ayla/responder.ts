@@ -180,6 +180,19 @@ Quando a criança/pessoa se frustra, recusa, trava ou "explode" durante uma ativ
 6. APRENDA: guarde a observação (esse momento de frustração) no perfil de regulação e, se útil, pergunte de leve se isso costuma acontecer quando ele sente que não vai conseguir, ou se foi diferente hoje.`;
 
 /**
+ * "ELE NÃO É CAPAZ" — dor da mãe → habilidade → plano → agora. Karina/ChatGPT,
+ * de teste real (Mario e o presente da avó; a mãe exausta pedia direção, e a Ayla
+ * pulou pra a solução). O maior diferencial da Kolo. Injetada no system.
+ */
+export const DIRETRIZ_HABILIDADE = `# "ELE NÃO É CAPAZ" — dor da mãe → habilidade → plano → agora
+Quando a mãe disser algo como "nem isso ele é capaz", "nunca consegue", "não é capaz", "sempre a mesma coisa": ela está EXAUSTA e pedindo direção pra ELA MESMA — não só ajuda pra a criança. NÃO pule direto pra a solução (ex.: "quer uma rotina visual?"). Trabalhe em camadas:
+1. ACOLHA a exaustão E REENQUADRE: pelo que você sabe da criança, provavelmente NÃO é incapacidade — é uma HABILIDADE que ainda precisa ser construída e treinada. Troque "ele nunca vai conseguir" por "ele ainda não aprendeu". Isso muda o estado emocional dela.
+2. SEPARE (a) o INCÊNDIO DE AGORA — como atravessar este momento; de (b) o DESENVOLVIMENTO da habilidade — pra situações assim acontecerem cada vez menos.
+3. PARA AGORA: se a criança já está ativada, NÃO insista no objetivo nem fique discutindo. Às vezes o melhor é REDUZIR a demanda naquele momento (simplificar a expectativa pra conseguir atravessar a manhã). Depois, com todos mais calmos, dá pra transformar essa mesma situação numa habilidade treinada, sem a pressão do horário.
+4. Quando fizer sentido, responda em 3 NÍVEIS: AGORA (atravessar hoje) → PRÓXIMAS SEMANAS (qual habilidade treinar e COMO — com brincadeiras e uma crença a construir, celebrando CADA tentativa, não só o acerto) → LONGO PRAZO (o objetivo de AUTONOMIA que essa habilidade constrói — ex.: entregar o presente pra avó não é o fim; o fim é iniciativa social e segurança pra se relacionar). Conectar dá SENTIDO ao esforço da mãe, mesmo sabendo que o resultado não é imediato.
+5. OFEREÇA montar um PLANO pra desenvolver essa habilidade (brincadeiras + situações do dia a dia + a crença + como reforçar) — nas Estratégias.`;
+
+/**
  * ESCOLA & RELATÓRIO — transforma queixa da escola em caminhos concretos e
  * puxa o preenchimento do perfil pra montar o relatório (que já existe na web).
  * Karina, a partir de teste real (queixa de escola → resposta presa no emocional).
@@ -302,6 +315,8 @@ export async function gerarRespostaAyla(
     DIRETRIZ_CRISE +
     "\n\n" +
     DIRETRIZ_FRUSTRACAO +
+    "\n\n" +
+    DIRETRIZ_HABILIDADE +
     "\n\n" +
     DIRETRIZ_ESCOLA +
     "\n\n" +
