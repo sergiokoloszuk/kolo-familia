@@ -67,6 +67,7 @@ async function handle(request: NextRequest) {
     if (tipo === "repertorio") return await runRepertorio(supabase);
     if (tipo === "seguimento") return await runSeguimento(supabase);
     if (tipo === "recuperacao_plano") return await runRecuperacaoPlano(supabase);
+    if (tipo === "recuperacao_plano_3min") return await runRecuperacaoPlano(supabase, "3min");
     if (tipo === "fim_de_semana") return await runFimDeSemana(supabase);
     if (tipo === "campanhas") return await runCampanhas(supabase);
     if (tipo === "regras") return await runRegras(supabase);
@@ -638,15 +639,24 @@ async function runSeguimento(supabase: AdminClient) {
  * Um por família (o plano mais recente). Travas de proativa + idempotência 24h ficam
  * dentro de sendRecuperacaoPlano. Aciona via ?tipo=recuperacao_plano.
  */
-async function runRecuperacaoPlano(supabase: AdminClient) {
+async function runRecuperacaoPlano(supabase: AdminClient, janela: "hoje" | "3min" = "hoje") {
   const agora = new Date();
-  const inicioHoje = startOfDay(agora);
 
-  const { data: planos } = await supabase
+  // "hoje" = disparo one-off pro backlog do dia. "3min" = toque automático ~3 min
+  // após a entrega (cron a cada poucos min pega a janela 3–30 min atrás; a
+  // idempotência de 24h em sendRecuperacaoPlano evita duplicar).
+  const desde =
+    janela === "3min"
+      ? new Date(agora.getTime() - 30 * 60 * 1000).toISOString()
+      : startOfDay(agora).toISOString();
+  const ate = janela === "3min" ? new Date(agora.getTime() - 3 * 60 * 1000).toISOString() : null;
+
+  let query = supabase
     .from("planos")
     .select("id, family_account_id, membro_atipico_id, tema, created_at")
-    .gte("created_at", inicioHoje.toISOString())
-    .order("created_at", { ascending: false });
+    .gte("created_at", desde);
+  if (ate) query = query.lt("created_at", ate);
+  const { data: planos } = await query.order("created_at", { ascending: false });
 
   // Dedupe por família — o plano mais recente de hoje.
   const porFamilia = new Map<

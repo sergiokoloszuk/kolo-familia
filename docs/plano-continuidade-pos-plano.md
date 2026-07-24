@@ -62,7 +62,7 @@ Existe um seguimento proativo: **3 a 14 dias** depois, a Ayla pergunta *"Lembra 
 
 Depois de entregar o plano, a Ayla deve **retomar a conversa considerando a demanda** — não pra cobrar execução, mas pra:
 
-1. **Saber se foi ÚTIL na percepção dela** — o plano ajudou a **dar direção / ideias**? (percepção de utilidade, NÃO "você testou os passos?"). Uma vez, leve, no dia seguinte.
+1. **Saber se foi ÚTIL na percepção dela** — o plano ajudou a **dar direção / ideias**? (percepção de utilidade, NÃO "você testou os passos?"). Uma vez, leve, **~3 minutos após o envio** (decisão Sérgio — perto o suficiente pra ela ainda estar ali e pra pegar se o PDF não chegou; NÃO "no dia seguinte"). *(Já implementado: `sendRecuperacaoPlano` + cron `?tipo=recuperacao_plano` [backlog de hoje] e `?tipo=recuperacao_plano_3min` [automático].)*
 2. **Abrir conversa sobre o tema** — puxar de volta pra **coletar dados sobre o comportamento da criança** (o que alimenta o Perfil) e **dar mais direcionamento se necessário, fora de um plano** (às vezes a melhor ajuda naquele momento não é outro plano, é conversa).
 3. **Aprender pra melhorar** — usar o "foi útil?" e o que ela contar pra **refinar as próximas sugestões** e o retrato da criança.
 
