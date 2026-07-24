@@ -29,10 +29,14 @@ Devolva APENAS JSON: { "operacao": "adicionar" | "reescrever" | "skip", "texto":
 - "skip" → o fato JÁ está claramente expresso no texto atual (mesmo parafraseado). texto = "".
 - "adicionar" → fato genuinamente novo, sem sobreposição. texto = a frase curta nova (1 frase, do jeito que o fato veio).
 - "reescrever" → o assunto se SOBREPÕE ou CONTRADIZ o existente; é refinamento. texto = TEXTO COMPLETO E COMPACTO da seção, integrando o velho + o novo, SEM repetir.
+- EVOLUÇÃO NO TEMPO: quando o fato novo é um estado mais RECENTE que SUPERA o antigo (ex.: antes tinha regressão/dificuldade, agora progrediu), use "reescrever" e escreva o ESTADO ATUAL (o novo) — NÃO mantenha o antigo contraditório como se ainda valesse hoje. O histórico do que mudou fica preservado na linha do tempo, não aqui.
 
 # Exemplos
 Atual: "Adora dinossauros." | Novo: "Tem hiperfoco em dinossauros e Lego."
 → {"operacao":"reescrever","texto":"Adora dinossauros e Lego — virou hiperfoco."}
+
+Atual: "Passou a não verbalizar nada." | Novo: "Está mais falante e já conta sobre a escola."
+→ {"operacao":"reescrever","texto":"Está mais falante e já consegue contar sobre a escola."}
 
 Atual: "Não come verdura." | Novo: "Recusa verduras de forma consistente — não aceita nenhum tipo."
 → {"operacao":"skip","texto":""}

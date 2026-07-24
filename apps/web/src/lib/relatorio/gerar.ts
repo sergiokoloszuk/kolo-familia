@@ -74,6 +74,11 @@ function blocoEvolucaoMensal(
   return linhas.length >= 2 ? linhas.join("\n") : "";
 }
 
+// Reconciliação (o perfil ao vivo NÃO reescreve conflito, de propósito — é a mãe
+// que revisa; o relatório é o lugar seguro de limpar, sem mutar dado) + nome atual.
+const RECONCILIA_E_NOME = `- RECONCILIE contradições: se as fontes se contradizem sobre a MESMA coisa (ex.: "não verbaliza nada" e "está mais falante"), o estado ATUAL é o MAIS RECENTE — NÃO liste as duas como verdades de hoje. Use as datas de <eventos_linha_do_tempo>/<evolucao_mensal> pra saber o que é mais novo e enquadre como EVOLUÇÃO ("após um período sem verbalizar, a família observa que voltou a falar mais e já conta sobre a escola"). O passado datado fica na Linha do tempo, não no retrato de agora.
+- NOME: use sempre o nome ATUAL da criança. Se algum registro antigo citar OUTRO nome pra a mesma criança (houve troca de nome ao longo do tempo), é a MESMA pessoa — use só o nome atual, nunca o antigo.`;
+
 const SYSTEM_ESCOLA = `Você escreve um GUIA DE BOAS-VINDAS da criança/pessoa, para a família entregar à ESCOLA, em português do Brasil. NÃO é laudo nem relatório de problema — é um guia ACOLHEDOR e PRÁTICO pra o professor CONHECER e AJUDAR. Espírito: "Conhecendo a [nome] — como ajudá-la a aprender, participar e se sentir segura", construído em PARCERIA (família + Kolo).
 
 PRINCÍPIOS:
@@ -82,6 +87,7 @@ PRINCÍPIOS:
 - FATO × HIPÓTESE (sagrado): nas seções factuais, só o que se SABE, com voz de família ("a família relata / observa que…", "até o momento…"). NUNCA apresente interpretação como fato. Se é um padrão de casa ainda não confirmado na escola, escreva o FATO ("a família percebeu esse padrão após a troca de professora") e leve a interpretação/verificação pra a seção "O que gostaríamos de entender melhor". NUNCA diagnostique nem use rótulo clínico como conclusão.
 - EVITE absolutos: "flui melhor com adultos" → "até o momento, a família observa que costuma interagir com mais facilidade com adultos do que com crianças da mesma idade".
 - NÃO invente NADA — use só o que foi dado.
+${RECONCILIA_E_NOME}
 
 ESTRUTURA (use "## ", PULE seção sem informação, NESTA ORDEM):
 ## Quem é a [nome] — 3 linhas calorosas (idade, um traço marcante, o espírito do guia).
@@ -112,6 +118,7 @@ PRINCÍPIOS:
 - Bullets curtos, escaneável — o profissional entende em 2 minutos.
 - FATO × HIPÓTESE separados: fatos nas seções; suposições SÓ em "Questões que merecem investigação".
 - NÃO invente NADA; seção sem dado, PULE (ou escreva "sem dados suficientes").
+${RECONCILIA_E_NOME}
 
 ESTRUTURA (use "## ", PULE seção vazia, NESTA ORDEM):
 ## Motivo deste resumo — 2 linhas (organizar a história pra a consulta/sessão).
