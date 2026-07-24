@@ -3,6 +3,7 @@ import type Stripe from "stripe";
 import { getStripeClient } from "@/lib/stripe/client";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { logEvent, logServerError } from "@/lib/log";
+import { mapStripeStatus, isoFromUnix, getSubPeriodEnd } from "@/lib/stripe/status";
 
 /**
  * Webhook do Stripe — recebe eventos de assinatura e atualiza
@@ -240,44 +241,6 @@ function pickFamilyId(
     return metadata.family_account_id;
   }
   return clientReferenceId ?? null;
-}
-
-function mapStripeStatus(s: Stripe.Subscription.Status): string {
-  // Mapa Stripe → status interno do PRD §5.2
-  switch (s) {
-    case "trialing":
-      return "trialing";
-    case "active":
-      return "active";
-    case "past_due":
-      return "past_due";
-    case "paused":
-      return "paused";
-    case "canceled":
-    case "incomplete_expired":
-      return "canceled";
-    case "incomplete":
-    case "unpaid":
-      return "past_due";
-    default:
-      return "past_due";
-  }
-}
-
-function isoFromUnix(unix: number | null | undefined): string | null {
-  if (!unix) return null;
-  return new Date(unix * 1000).toISOString();
-}
-
-function getSubPeriodEnd(sub: Stripe.Subscription): number | null {
-  // Em diferentes versões da API o período fica em lugares diferentes.
-  // Os types do SDK v17+ removeram do top-level, mas o campo ainda chega
-  // no payload. Acesso defensivo cobre os dois casos.
-  const subEnd = (sub as unknown as { current_period_end?: number }).current_period_end;
-  if (typeof subEnd === "number") return subEnd;
-  const itemEnd = (sub.items?.data?.[0] as unknown as { current_period_end?: number })
-    ?.current_period_end;
-  return typeof itemEnd === "number" ? itemEnd : null;
 }
 
 function getInvoiceSubscriptionId(invoice: Stripe.Invoice): string | null {

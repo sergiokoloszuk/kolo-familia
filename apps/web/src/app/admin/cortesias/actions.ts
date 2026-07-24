@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { requireAdmin } from "@/lib/auth/require-admin";
 import { createServiceRoleClient } from "@/lib/supabase/server";
+import { sincronizarAssinaturaDoStripe } from "@/lib/stripe/sync";
 
 export type ActionResult = { ok: true } | { ok: false; error: string };
 
@@ -103,6 +104,39 @@ export async function revokeCortesia(input: { email: string }): Promise<ActionRe
 
     revalidatePath("/admin/cortesias");
     return { ok: true };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "Erro inesperado" };
+  }
+}
+
+/**
+ * Re-sincroniza a assinatura da conta com o Stripe (fonte da verdade). Conserta
+ * o descompasso quando o webhook não chegou (ex.: pagou no Stripe mas o app ficou
+ * em past_due). NÃO inventa nada — só reflete o que o Stripe diz.
+ */
+export async function sincronizarStripe(
+  input: { email: string },
+): Promise<{ ok: true; resumo: string } | { ok: false; error: string }> {
+  try {
+    await requireAdmin();
+    const email = emailSchema.parse(input.email);
+    const admin = createServiceRoleClient();
+
+    const userId = await findUserIdByEmail(admin, email);
+    if (!userId) return { ok: false, error: `Ninguém com o e-mail '${email}' tem conta.` };
+    const { data: fam } = await admin
+      .from("family_accounts")
+      .select("id")
+      .eq("user_id", userId)
+      .maybeSingle();
+    if (!fam) return { ok: false, error: "Conta sem família inicializada." };
+
+    const r = await sincronizarAssinaturaDoStripe(admin, fam.id as string);
+    if (!r.ok) return { ok: false, error: r.error };
+
+    revalidatePath("/admin/cortesias");
+    const seta = r.mudou ? `${r.antes ?? "—"} → ${r.depois}` : `${r.depois} (já estava certo)`;
+    return { ok: true, resumo: `Stripe: "${r.stripeStatus}" · App: ${seta}` };
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : "Erro inesperado" };
   }
