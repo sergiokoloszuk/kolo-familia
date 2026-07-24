@@ -9,6 +9,7 @@ import { gerarSecoesPlanoMultiCall } from "@/lib/ia/plano";
 import { gerarTituloConversa } from "@/lib/ia/titulo";
 import { trackFeature } from "@/lib/analytics/track";
 import { extrairAtualizacoes, type PropostaAtualizacao } from "@/lib/ia/atualizar";
+import { extrairESalvarEventos } from "@/lib/ayla/eventos";
 import {
   MEMBRO_CAMPOS_TOPLEVEL,
   MEMBRO_CAMPOS_EXTRAS,
@@ -620,6 +621,24 @@ export async function confirmarAtualizacao(
         );
       if (error) return { ok: false, error: `Falha ao salvar no Perfil: ${error.message}` };
       partes.push(`${membroItens.length} ${membroItens.length === 1 ? "item" : "itens"} no Perfil`);
+
+      // Linha do tempo (Livro Vivo): a WEB também alimenta a Evolução/relatório —
+      // se um fato confirmado for uma evolução, grava um marco DATADO (mesmo
+      // extrator do WhatsApp). Em after() + service-role: não trava o "confirmar"
+      // e é bônus (nunca quebra o salvamento).
+      const fatosConfirmados = membroItens.map((it) => it.texto).join("\n");
+      after(async () => {
+        try {
+          await extrairESalvarEventos(
+            createServiceRoleClient(),
+            family.id,
+            membroId,
+            fatosConfirmados,
+          );
+        } catch {
+          /* linha do tempo é bônus */
+        }
+      });
     }
 
     // Kolo Vivo da família — mesma lógica de anexar.
