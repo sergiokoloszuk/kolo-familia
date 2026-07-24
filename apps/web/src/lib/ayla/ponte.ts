@@ -4,6 +4,7 @@ import { classificarIntencao } from "@/lib/ia/intencao";
 import { gerarPlano } from "@/lib/ia/plano";
 import { planoParaPdf } from "@/lib/plano/pdf";
 import { enviarDocumento } from "./whatsappSender";
+import { logEvent, logServerError } from "@/lib/log";
 
 /**
  * Gera o PDF do plano, sobe no Storage (URL assinada, 1h) e envia como
@@ -39,8 +40,19 @@ async function entregarPdfDoPlano(
 
     const fileName = `${(params.titulo || "plano").replace(/[^\w\sÀ-ÿ-]/g, "").slice(0, 50).trim() || "plano"}.pdf`;
     await enviarDocumento({ phoneE164: params.phoneE164, url: signed.signedUrl, fileName });
+    // Sucesso — info (só stdout) pra distinguir "gerou e mandou" de "nem gerou".
+    await logEvent({
+      kind: "ayla_pdf_plano_ok",
+      severity: "info",
+      family_account_id: params.familyId,
+      payload: { bytes: bytes.length },
+    });
   } catch (e) {
-    console.warn("[ayla:ponte] falha ao entregar PDF:", e instanceof Error ? e.message : e);
+    // Falha do PDF é silenciosa pra mãe (o link segue), mas NÃO pode ser cega
+    // pra nós — persiste em eventos_app pra sabermos se o cano quebrou.
+    await logServerError("ayla_pdf_plano_falha", e, {
+      family_account_id: params.familyId,
+    });
   }
 }
 
