@@ -20,6 +20,7 @@ import { detectAndPersist } from "@/lib/ayla/insightEngine";
 import { runRegrasParaFamilia } from "@/lib/regras/engine";
 import { enviarTexto, verificarStatusZapi } from "@/lib/ayla/whatsappSender";
 import { sincronizarAssinaturaDoStripe } from "@/lib/stripe/sync";
+import { assinaturaLiberada } from "@/lib/auth/assinatura";
 
 /**
  * Cron da Ayla — chamado por scheduler externo (n8n, Vercel Cron, etc.).
@@ -272,15 +273,10 @@ async function runRotina(supabase: AdminClient) {
     }
   }
 
-  // Filtra por status de assinatura
-  if (elegiveis.length > 0) {
-    const { data: ativas } = await supabase
-      .from("subscription_accesses")
-      .select("family_account_id, status")
-      .in("family_account_id", elegiveis)
-      .in("status", ["trialing", "active", "past_due"]);
-    const ativasSet = new Set((ativas ?? []).map((a) => a.family_account_id));
-    elegiveis.splice(0, elegiveis.length, ...elegiveis.filter((id) => ativasSet.has(id)));
+  // Só quem tem ACESSO LIBERADO (trial vencido não recebe engajamento proativo).
+  {
+    const comAcesso = await filtrarComAcesso(supabase, elegiveis);
+    elegiveis.splice(0, elegiveis.length, ...comAcesso);
   }
 
   const resultados: Array<{
@@ -590,15 +586,8 @@ async function runRepertorio(supabase: AdminClient) {
     ids.push(p.family_account_id as string);
   }
 
-  if (ids.length > 0) {
-    const { data: ativas } = await supabase
-      .from("subscription_accesses")
-      .select("family_account_id, status")
-      .in("family_account_id", ids)
-      .in("status", ["trialing", "active", "past_due"]);
-    const ativasSet = new Set((ativas ?? []).map((a) => a.family_account_id as string));
-    ids = ids.filter((id) => ativasSet.has(id));
-  }
+  // Só quem tem ACESSO LIBERADO (trial vencido não recebe engajamento proativo).
+  ids = await filtrarComAcesso(supabase, ids);
 
   const resultados: Array<{ familyId: string; enviada: boolean; motivo?: string }> = [];
   for (const familyId of ids) {
@@ -632,6 +621,34 @@ async function runRepertorio(supabase: AdminClient) {
  * sem follow-up enviado. As regras de proativa (janela/cap/consentimento) e
  * a idempotência por plano são garantidas dentro de sendPlanoSeguimento.
  */
+/**
+ * Filtra family_account_ids mantendo só quem tem ACESSO LIBERADO de verdade
+ * (fonte única `assinaturaLiberada` — checa trial_ends_at, cortesia e graça de
+ * past_due, não só o status cru). O filtro antigo `.in("status", ["trialing",
+ * "active", "past_due"])` deixava passar TRIAL VENCIDO (status ainda "trialing",
+ * só a data passou) — era por isso que a Ayla mandava "Sexta chegou / como tá?"
+ * pra quem já tinha perdido o acesso. Engajamento proativo usa isto; o COMERCIAL
+ * (assine) NÃO, porque ele é justamente o convite pra voltar.
+ */
+async function filtrarComAcesso(
+  supabase: AdminClient,
+  ids: string[],
+): Promise<string[]> {
+  if (ids.length === 0) return [];
+  const { data: subs } = await supabase
+    .from("subscription_accesses")
+    .select(
+      "family_account_id, status, trial_ends_at, cortesia, cortesia_ate, pagamento_falhou_em",
+    )
+    .in("family_account_id", ids);
+  const liberadas = new Set(
+    (subs ?? [])
+      .filter((s) => assinaturaLiberada(s))
+      .map((s) => s.family_account_id as string),
+  );
+  return ids.filter((id) => liberadas.has(id));
+}
+
 async function runSeguimento(supabase: AdminClient) {
   const agora = new Date();
   const dia = 24 * 60 * 60 * 1000;
@@ -650,15 +667,8 @@ async function runSeguimento(supabase: AdminClient) {
     ids.push(p.family_account_id as string);
   }
 
-  if (ids.length > 0) {
-    const { data: ativas } = await supabase
-      .from("subscription_accesses")
-      .select("family_account_id, status")
-      .in("family_account_id", ids)
-      .in("status", ["trialing", "active", "past_due"]);
-    const ativasSet = new Set((ativas ?? []).map((a) => a.family_account_id as string));
-    ids = ids.filter((id) => ativasSet.has(id));
-  }
+  // Só quem tem ACESSO LIBERADO (trial vencido não recebe engajamento proativo).
+  ids = await filtrarComAcesso(supabase, ids);
 
   const resultados: Array<{ familyId: string; enviada: boolean; motivo?: string }> = [];
   for (const familyId of ids) {
@@ -821,15 +831,8 @@ async function runFimDeSemana(supabase: AdminClient) {
     }
   }
 
-  if (elegiveis.length > 0) {
-    const { data: ativas } = await supabase
-      .from("subscription_accesses")
-      .select("family_account_id, status")
-      .in("family_account_id", elegiveis)
-      .in("status", ["trialing", "active", "past_due"]);
-    const ativasSet = new Set((ativas ?? []).map((a) => a.family_account_id as string));
-    elegiveis = elegiveis.filter((id) => ativasSet.has(id));
-  }
+  // Só quem tem ACESSO LIBERADO (trial vencido não recebe engajamento proativo).
+  elegiveis = await filtrarComAcesso(supabase, elegiveis);
 
   const resultados: Array<{ familyId: string; enviada: boolean; motivo?: string }> = [];
   for (const familyId of elegiveis) {
