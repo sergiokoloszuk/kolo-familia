@@ -1,85 +1,79 @@
-# Continuidade pós-plano — brief pro ChatGPT
+# Continuidade pós-plano — brief pro ChatGPT (v2)
 
-> **Objetivo:** desenhar o que acontece DEPOIS que a Ayla entrega um plano. Hoje a conversa morre ali: não sabemos se a família gostou, se conseguiu abrir, se testou, e não aprofundamos o tema. Queremos manter a relação viva, fechar o ciclo (funcionou? gostou?) e continuar explorando — de um jeito que agregue e que a Kolo vá aprendendo sobre a criança. Este doc dá TODO o contexto pro ChatGPT (ele não conhece a estrutura do plano nem como ele aparece nos canais).
+> **Objetivo:** desenhar o que acontece DEPOIS que a Ayla entrega um plano. Hoje a conversa morre ali. Não queremos **controlar execução** ("você testou o plano?") — o plano pode ser só uma **inspiração/direção**, e tudo bem. Queremos **retomar o tema**, saber se **foi útil na percepção da família** (deu direção, ideias), **abrir conversa** pra coletar dados sobre o comportamento da criança e dar mais direcionamento se preciso, e usar isso pra **melhorar as próximas sugestões** e o retrato da criança. De um jeito leve, uma vez, sem virar cobrança nem spam.
+>
+> Este doc dá TODO o contexto pro ChatGPT (ele não conhece a estrutura do plano nem como ele aparece nos canais).
 
 ---
 
 ## 1. O que é a Kolo (contexto)
 
-Produto para famílias de crianças/jovens/adultos **neurodivergentes** (autismo, TDAH, etc.). A **Ayla** é a IA que conversa com o cuidador (quase sempre a mãe). Dois canais, **mesma Ayla**:
-- **WhatsApp** — conversa reativa; a Ayla também manda mensagens proativas (com consentimento).
-- **Web (app)** — a seção "Estratégias" (conversa no app) + o "Perfil" (retrato da criança) + "Meus Planos" + "Evolução".
+Produto para famílias de pessoas **neurodivergentes** (autismo, TDAH, etc.) — crianças, jovens e adultos. A **Ayla** é a IA que conversa com o cuidador (quase sempre a mãe). Dois canais, **mesma Ayla**:
+- **WhatsApp** — conversa reativa + mensagens proativas (com consentimento).
+- **Web (app)** — "Estratégias" (conversa no app) + "Perfil" (retrato da criança) + "Meus Planos" + "Evolução".
 
-Princípios da Ayla: acolhe primeiro; ensina o cuidador a **observar** o desenvolvimento; conduz uma jornada (não é um respondedor de perguntas); **não infantiliza** jovem/adulto; adapta tudo à idade.
+Princípios: acolhe primeiro; ensina o cuidador a **observar** o desenvolvimento; conduz uma jornada; **adapta tudo à idade** (não infantiliza jovem/adulto).
 
-## 2. O que é um PLANO (a estrutura)
+## 2. Os DOIS tipos de plano
 
-Um plano é um **documento completo e personalizado** sobre um desafio/habilidade específica da criança. Ele reúne, num só lugar, seções que a família também poderia ver clicando "botões" no app — cada seção com profundidade real. As **seções** (nesta ordem, algumas condicionais):
-
-1. **Entender** — 1-2 parágrafos que acolhem, mostram a força da criança e levantam a **hipótese central** do que pode estar por trás (possibilidade, nunca causa cravada). Termina convidando a observar.
-2. **Crenças** — até 3 crenças da CRIANÇA + 3 da RESPONSÁVEL (hipótese gentil, jamais julgamento) + um reenquadre acolhedor (ex.: "ele não é capaz" → é uma habilidade ainda em construção).
+**(a) Plano oficial (estrutura completa).** Pra desenvolver uma **habilidade** ou superar um **desafio recorrente** — trabalha mindset, crenças, treino. Seções (algumas condicionais):
+1. **Entender** — acolhe + hipótese central do que pode estar por trás.
+2. **Crenças** — crenças da criança + da responsável + reenquadre (ex.: "ele não é capaz" → habilidade em construção).
 3. **O que fazer diferente** — a mudança concreta a testar.
-4. **Rotina** (condicional) — como estruturar o dia/transições, quando o tema pede.
-5. **Brincadeiras** — VÁRIAS (3+), concretas, com materiais e duração. *(Para jovem/adulto: viram "atividades", nunca "brincadeiras".)*
-6. **Atividades** — atividades práticas pra treinar/desenvolver.
-7. **História social** (condicional) — uma historinha curta que ensaia uma situação (transição, regra), quando faz sentido. *(Só criança pequena.)*
-8. **Frases prontas** — frases que o cuidador pode usar exatamente, em situações concretas.
-9. **O que observar** — 1-3 coisas concretas pra reparar nos próximos dias, ligadas à hipótese.
+4. **Rotina** (condicional).
+5. **Brincadeiras** — várias, concretas, com materiais e duração. *(Jovem/adulto → "atividades", nunca "brincadeiras".)*
+6. **Atividades**.
+7. **História social** (condicional; só criança pequena).
+8. **Frases prontas** — frases que o cuidador usa exatamente.
+9. **O que observar** — o que reparar nos próximos dias.
 
-O plano é gerado por IA a partir do **desafio** + do **perfil da criança** (interesses, jeito, sensorial…) + do que já se aprendeu de planos anteriores.
+**(b) Plano de demanda específica (mais leve).** Um **roteiro** pra um pedido pontual — organizar uma festa, um passeio, um fim de semana. **NÃO tem todas as seções** (ex.: não tem "crenças"). É prático e do momento. *(A festa do pijama, no exemplo abaixo, é deste tipo — não é um plano oficial.)*
 
-## 3. Exemplo real de plano (resumido)
+O plano (dos dois tipos) é gerado por IA a partir do **desafio/demanda** + do **perfil da criança** (interesses, jeito, sensorial…) + do que já se aprendeu antes.
 
-Contexto: mãe quis montar uma **festa do pijama** pra filha (6 anos, TEA, adora competição leve, precisa de previsibilidade). Depois de uma conversa rica, a Ayla gerou:
+## 3. Exemplo real (um plano de DEMANDA — a festa do pijama)
 
-- **Entender:** "Uma festa do pijama com as amigas vai ser uma memória enorme — e dá pra deixar tudo gostoso pra ela sem precisar 'gerenciar' ninguém."
-- **O que fazer diferente:** reservar um cantinho quieto (almofadas, luz baixa) pra ela se retirar sem sair da festa.
-- **Roteiro/atividades:** Chegada (20-30 min sem brincadeira estruturada, só se aquecer) → Caça-palavras gigante (cooperativo) → Jogo de memória (competitivo na medida) → Cinema em casa (junto sem interagir o tempo todo) → Desfile de pijama (categorias bobas) → Dormir (luz baixa, rotina preservada).
-- **Frases prontas / o que observar** entram junto.
+> ⚠️ Este é um plano de **demanda específica**, NÃO um plano oficial (não tem crenças).
 
-## 4. Como o plano APARECE (WhatsApp × web) — importante
+Mãe quis montar uma festa do pijama pra filha (6 anos, TEA, adora competição leve, precisa de previsibilidade). Depois de uma conversa rica, a Ayla gerou um **roteiro da noite**: cantinho quieto reservado → Chegada (20-30 min sem brincadeira estruturada) → Caça-palavras gigante (cooperativo) → Jogo de memória (competitivo na medida) → Cinema em casa → Desfile de pijama → Dormir (luz baixa, rotina preservada). + frases e o que observar.
 
-### No WhatsApp
-O fluxo hoje (recém-ajustado): a mãe traz um tema → a Ayla tem uma **conversa rica** (entende, dá ideias concretas, explica) → quando faz sentido trabalhar algo, **oferece**: *"quer que eu monte um plano completo sobre isso, pra você ter salvo e organizado?"* → a mãe diz **"sim"** → a Ayla responde *"tô montando 🌿 já já te mando"* → o sistema gera e entrega:
-- um **PDF** do plano (enviado como documento no WhatsApp);
-- + um **link mágico** que abre o plano no app, já logado, na tela do plano.
+## 4. Como o plano APARECE (WhatsApp × web)
 
-Exemplo de mensagem de entrega:
-> *"Montei um plano completo sobre isso — mandei em PDF aqui em cima 👆 (dá pra salvar e imprimir). E se quiser ver no app, ajustar ou me contar depois como foi, é só abrir: {link}"*
+### WhatsApp
+Fluxo atual: a mãe traz um tema → a Ayla tem uma **conversa rica** (entende, dá ideias, explica) → quando faz sentido, **oferece**: *"quer que eu monte um plano completo sobre isso, pra você ter salvo e organizado?"* → **"sim"** → *"tô montando 🌿 já já te mando"* → entrega: um **PDF** (documento no WhatsApp) + um **link mágico** que abre o plano no app, já logado.
+> *"Montei um plano completo — mandei em PDF aqui em cima 👆. E se quiser ver no app ou me contar depois, é só abrir: {link}"*
 
-**Problema técnico real:** às vezes o PDF/link **não chega** (falha de entrega), e a mãe diz *"não recebi, traz aqui"* — aí a Ayla acaba escrevendo o plano no chat (fallback). Isso corrói a confiança.
+**Problema técnico real:** às vezes o PDF/link **não chega**, e a mãe diz *"não recebi, traz aqui"*. Corrói a confiança.
 
-### Na Web (app)
-Na seção **Estratégias**, a pessoa conversa e o plano é gerado e aberto **dentro do app** (tela "/planos/{id}"): cada seção renderizada (Entender, Crenças, O que fazer diferente, Brincadeiras…), **editável**, com botão de **baixar PDF**. Fica salvo em **"Meus Planos"**.
+### Web (app)
+Na "Estratégias", o plano é gerado e aberto **dentro do app** ("/planos/{id}"): seções renderizadas, **editável**, com **baixar PDF**. Salvo em "Meus Planos".
 
-## 5. O que existe hoje de follow-up (e os limites)
+## 5. O que existe hoje de follow-up (e por que trocar)
 
-Existe UM seguimento proativo: **3 a 14 dias** depois de um plano sem resultado registrado, a Ayla pergunta:
-> *"Lembra do plano sobre {tema}? Você testou? Me conta como foi…"*
+Existe um seguimento proativo: **3 a 14 dias** depois, a Ayla pergunta *"Lembra do plano sobre {tema}? Você testou? Me conta como foi…"*, e registra funcionou/parcial/não-funcionou.
 
-A resposta vira **aprendizado** (funcionou / parcial / não funcionou), que melhora os próximos planos.
-
-**Limites:**
-- É **longe** (3-14 dias) e focado só em "**testou/funcionou?**".
-- Não pergunta logo, de leve, se **gostou / conseguiu abrir** o plano.
-- Não **aprofunda o tema** (não puxa a conversa de volta pra construir mais).
+**Por que trocar:**
+- **Fica chato ficar perguntando "testou?"** — é controle de execução. Deve perguntar **no máximo UMA vez, no dia seguinte**, e leve.
+- O plano pode ser só **inspiração/direção** — não precisamos saber se ela executou passo a passo.
+- Não **retoma o tema** nem **aprofunda**.
 - Se o PDF não chegou, ninguém sabe.
 
-## 6. O problema a resolver
+## 6. O que queremos no lugar (a filosofia)
 
-Depois que a Ayla entrega o plano, **a conversa morre**. A gente não sabe:
-- se o plano **chegou** (o PDF/link abriu?);
-- se a família **gostou**;
-- se **testou** e como foi;
-- e perde a chance de **continuar explorando o tema** (aprofundar, ajustar, aprender mais sobre a criança pro perfil).
+Depois de entregar o plano, a Ayla deve **retomar a conversa considerando a demanda** — não pra cobrar execução, mas pra:
 
-Queremos uma **continuidade pós-plano** que mantenha a relação viva, feche o ciclo e agregue — sem virar spam, sem cobrança, respeitando a janela emocional (nunca insistir se a família está em crise/exausta) e a idade.
+1. **Saber se foi ÚTIL na percepção dela** — o plano ajudou a **dar direção / ideias**? (percepção de utilidade, NÃO "você testou os passos?"). Uma vez, leve, no dia seguinte.
+2. **Abrir conversa sobre o tema** — puxar de volta pra **coletar dados sobre o comportamento da criança** (o que alimenta o Perfil) e **dar mais direcionamento se necessário, fora de um plano** (às vezes a melhor ajuda naquele momento não é outro plano, é conversa).
+3. **Aprender pra melhorar** — usar o "foi útil?" e o que ela contar pra **refinar as próximas sugestões** e o retrato da criança.
+
+Tudo isso **sem virar cobrança nem spam**, respeitando a janela emocional (nunca insistir em crise/exaustão) e a idade.
 
 ## 7. Perguntas pro ChatGPT
 
-1. **Cadência pós-plano:** qual a régua ideal de toques depois de entregar um plano? (ex.: confirmação de recebimento na hora? um "conseguiu abrir/gostou?" no dia seguinte? o "testou/funcionou?" alguns dias depois? aprofundamento do tema?) Quantos toques, com que espaçamento, sem virar spam?
-2. **O "gostou?" curto:** como e quando perguntar se gostou / se conseguiu abrir, de um jeito leve que também **capte se o PDF não chegou**?
-3. **Continuar explorando o tema:** como a Ayla puxa a conversa de volta pra **aprofundar** (não só "funcionou?"), agregando (explicando o desenvolvimento, ajustando o plano, propondo o próximo passo) — e como isso vira **aprendizado pro perfil da criança**?
-4. **Diferença por canal:** o pós-plano deve ser igual no WhatsApp e na web? (No WhatsApp é proativo; na web a pessoa volta quando quer.)
-5. **Fechar o ciclo de aprendizado:** que sinais coletar (gostou, abriu, testou, funcionou, o que ajustaria) e como usá-los pra melhorar os planos seguintes e o retrato da criança?
-6. **Travas:** o que respeitar sempre — não insistir em crise/exaustão, não repetir, adequar à idade, não transformar em cobrança.
+1. **Cadência pós-plano:** qual a régua ideal? (ex.: confirmar recebimento na hora se o PDF pode ter falhado? UM toque leve no dia seguinte de "foi útil / deu uma direção?" — e mais nada de "testou"?) Quantos toques no máximo, sem virar spam?
+2. **O toque do dia seguinte:** como perguntar se **foi útil / deu direção** de um jeito que NÃO soe cobrança de execução — e que de quebra revele se o **PDF não chegou**?
+3. **Retomar o tema (o principal):** como a Ayla puxa a conversa de volta pra **aprofundar o tema e coletar dados do comportamento** da criança (pro Perfil), e **dar mais direção fora de um plano** quando fizer mais sentido que outro plano?
+4. **Distinguir os dois tipos de plano:** o pós-plano deve ser diferente pra plano **oficial** (habilidade/desafio, faz sentido acompanhar a evolução) vs plano de **demanda** (festa/passeio — acabou, no máximo "curtiram?")?
+5. **Por canal:** igual no WhatsApp (proativo) e na web (a pessoa volta quando quer)?
+6. **Aprendizado:** que sinais coletar (foi útil? deu direção? abriu? o que mudaria?) e como usá-los pra melhorar planos futuros + o retrato da criança — sem "controle de execução".
+7. **Travas:** não insistir em crise/exaustão; no máximo 1 toque; adequar à idade; nunca virar cobrança.
