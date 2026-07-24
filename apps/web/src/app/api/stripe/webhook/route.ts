@@ -137,12 +137,32 @@ async function onSubscriptionChanged(sub: Stripe.Subscription, admin: AdminClien
 
   const status = mapStripeStatus(sub.status);
   const patch: Record<string, unknown> = {
-    status,
     stripe_customer_id: typeof sub.customer === "string" ? sub.customer : sub.customer.id,
     stripe_subscription_id: sub.id,
     current_period_end: isoFromUnix(getSubPeriodEnd(sub)),
     cancel_at_period_end: sub.cancel_at_period_end,
   };
+
+  // GUARDA CONTRA CORRIDA DE EVENTOS: um subscription.created/updated atrasado
+  // (ou com status transitório tipo 'incomplete' durante o processamento) NÃO
+  // pode rebaixar um 'active' já confirmado pelo checkout. Quem rebaixa por falta
+  // de pagamento é o invoice.payment_failed (que carimba pagamento_falhou_em);
+  // cancelamento é o subscription.deleted. Sem esta guarda, o pagante paga, o
+  // checkout ativa, e um evento atrasado o tranca em past_due — foi o caso da
+  // Rochelle (current_period_end um mês à frente, mas status past_due).
+  if (status === "past_due") {
+    const { data: atual } = await admin
+      .from("subscription_accesses")
+      .select("status")
+      .eq("family_account_id", familyId)
+      .maybeSingle();
+    if (atual?.status === "active") {
+      await admin.from("subscription_accesses").update(patch).eq("family_account_id", familyId);
+      return;
+    }
+  }
+
+  patch.status = status;
   // Voltou a active (ex.: retentativa deu certo) → limpa o carimbo de falha.
   if (status === "active") patch.pagamento_falhou_em = null;
   await admin.from("subscription_accesses").update(patch).eq("family_account_id", familyId);
