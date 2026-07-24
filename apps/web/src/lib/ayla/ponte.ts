@@ -1,6 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { createServiceRoleClient } from "@/lib/supabase/server";
-import { classificarIntencao } from "@/lib/ia/intencao";
 import { gerarPlano } from "@/lib/ia/plano";
 import { planoParaPdf } from "@/lib/plano/pdf";
 import { enviarDocumento } from "./whatsappSender";
@@ -119,7 +118,6 @@ async function nomeDoMembro(
  * - Falha 100% silenciosa: qualquer erro → null, e a resposta do WhatsApp
  *   segue normal, sem link. A ponte nunca pode quebrar a conversa.
  */
-const JANELA_DEDUP_HORAS = 20;
 /** Freio curto anti-duplicata: nunca gera 2 planos na mesma janela (vale até
  * com forcar=true — rede de segurança contra double-dispatch). */
 const PLANO_COOLDOWN_MIN = 3;
@@ -190,7 +188,7 @@ export async function montarPonteWhatsApp(
     forcar?: boolean;
   },
 ): Promise<string | null> {
-  const { familyId, membroAtipicoId, mensagem, temDesafio, phoneE164, forcar } = params;
+  const { familyId, membroAtipicoId, mensagem, phoneE164, forcar } = params;
 
   try {
     // Freio anti-duplicata (SEMPRE, mesmo com forcar): se acabamos de mandar um
@@ -212,35 +210,15 @@ export async function montarPonteWhatsApp(
       return null;
     }
 
+    // MEIO-TERMO (24/07): a ponte NÃO auto-dispara mais o plano num desafio
+    // solto. Isso pulava a CONVERSA boa (entender + dar ideias in-chat) e, pra
+    // usuário NOVO, gerava plano genérico (perfil raso). O plano agora vem SÓ por
+    // pedido explícito ("me traz um plano") ou pela OFERTA da Ayla + "sim" (1c) —
+    // ambos setam forcar=true. A conversa (gerarRespostaAyla) acontece primeiro e
+    // é onde a Ayla entende a criança antes de propor o plano.
     if (!forcar) {
-      // Gate 1 (barato): só quando ela descreveu um desafio concreto.
-      if (!temDesafio) {
-        console.log("[ayla:ponte] sem plano — gate1: parser não marcou desafio");
-        return null;
-      }
-
-      // Gate 2 (dedup): já mandamos um plano nas últimas ~20h? Não insiste.
-      const desde = new Date(Date.now() - JANELA_DEDUP_HORAS * 3600_000).toISOString();
-      const { data: recentes } = await supabase
-        .from("ayla_messages")
-        .select("id")
-        .eq("family_account_id", familyId)
-        .eq("direcao", "outbound")
-        .gte("enviada_em", desde)
-        .ilike("texto", "%/auth/wa%")
-        .limit(1);
-      if (recentes && recentes.length > 0) {
-        console.log("[ayla:ponte] sem plano — gate2: já enviou um plano nas últimas ~20h");
-        return null;
-      }
-
-      // Gate 3 (intenção): crise/desabafo/dúvida não recebem plano.
-      const intencao = await classificarIntencao({ supabase, familyId, texto: mensagem });
-      console.log(`[ayla:ponte] gate3 intencao=${intencao}`);
-      if (intencao !== "desafio") {
-        console.log("[ayla:ponte] sem plano — gate3: intenção não é 'desafio'");
-        return null;
-      }
+      console.log("[ayla:ponte] sem auto-plano — só por pedido explícito ou oferta+sim");
+      return null;
     }
 
     // Gera o plano completo na hora (single-call) a partir do desafio. Fica
