@@ -1110,8 +1110,43 @@ export async function processInbound(
     }
   }
 
+  // 2b. ASSINATURA (GATE): a Ayla reativa só entrega o serviço pra trial-válido /
+  // assinante / admin — igual à web. Expirado (não-admin) recebe um convite pra
+  // assinar (magic link) em vez do serviço. NUNCA fica em silêncio: a 1ª vez é o
+  // convite completo; se já convidou nas últimas 12h, manda um lembrete CURTO
+  // (não spamma, mas não deixa no vácuo). Comandos (sair/pausar) seguem acima.
+  //
+  // ⚠️ ORDEM IMPORTA: este gate roda ANTES de qualquer handler que GERA
+  // entregável (plano de fim de semana, rotina/PDF, plano via ponte). Se ficar
+  // depois de um deles, o entregável vaza de graça pra trial vencido — foi o que
+  // aconteceu no caso Camile/Gramado: uma oferta de fim de semana pendente fazia
+  // o passo 3a montar o roteiro+PDF antes de o gate ser checado. Só COMANDOS e o
+  // fluxo de ABORDAGEM do CRM (lead ainda não-assinante) podem vir acima daqui.
+  if (!(await aylaServicoLiberado(supabase, family.id))) {
+    const ctxA = await loadFamiliaParaEnvio(supabase, family.id);
+    if (ctxA) {
+      const link = await gerarMagicLink(supabase, { familyId: family.id, next: "/assinatura" });
+      const jaConvidou = await convidouAssinarRecente(supabase, family.id);
+      const texto = jaConvidou
+        ? `🌿 Pra gente continuar, é só assinar aqui:\n${link}`
+        : `Oi, ${ctxA.nomeMae}! Eu adoraria seguir te ajudando 🌿 Mas seu período grátis acabou. Pra a gente continuar — estratégias, rotina, tudo o que você já conhece — é só assinar aqui:\n${link}\n\nO que você me contou fica tudo guardado. 💛`;
+      const resp = await enviarEPersistir(supabase, {
+        family_account_id: family.id,
+        membro_atipico_id: null,
+        phone: ctxA.whatsapp_e164,
+        texto,
+        category: "reativa",
+        tipo: "assinatura_nudge",
+      });
+      return { tratada: true, familia: family.id, resposta: resp };
+    }
+    return { tratada: true, familia: family.id };
+  }
+
   // 3a. Resposta à oferta de fim de semana (Fase 5): se não for recusa,
-  // monta o roteiro leve a partir do que ela contou e manda o link.
+  // monta o roteiro leve a partir do que ela contou e manda o link. Roda DEPOIS
+  // do gate de assinatura (acima) — trial vencido nunca chega aqui, então o
+  // roteiro/PDF não vaza de graça (caso Camile/Gramado).
   if (ofertaFds && !ehRecusaFimDeSemana(inbound.texto)) {
     const ctxFds = await loadFamiliaParaEnvio(supabase, family.id);
     if (ctxFds) {
@@ -1139,32 +1174,6 @@ export async function processInbound(
       }
       // Falhou gerar → cai no fluxo normal (a Ayla ainda responde algo).
     }
-  }
-
-  // 2b. ASSINATURA: a Ayla reativa só entrega o serviço pra trial-válido /
-  // assinante / admin — igual à web. Expirado (não-admin) recebe um convite pra
-  // assinar (magic link) em vez do serviço. NUNCA fica em silêncio: a 1ª vez é o
-  // convite completo; se já convidou nas últimas 12h, manda um lembrete CURTO
-  // (não spamma, mas não deixa no vácuo). Comandos (sair/pausar) seguem acima.
-  if (!(await aylaServicoLiberado(supabase, family.id))) {
-    const ctxA = await loadFamiliaParaEnvio(supabase, family.id);
-    if (ctxA) {
-      const link = await gerarMagicLink(supabase, { familyId: family.id, next: "/assinatura" });
-      const jaConvidou = await convidouAssinarRecente(supabase, family.id);
-      const texto = jaConvidou
-        ? `🌿 Pra gente continuar, é só assinar aqui:\n${link}`
-        : `Oi, ${ctxA.nomeMae}! Eu adoraria seguir te ajudando 🌿 Mas seu período grátis acabou. Pra a gente continuar — estratégias, rotina, tudo o que você já conhece — é só assinar aqui:\n${link}\n\nO que você me contou fica tudo guardado. 💛`;
-      const resp = await enviarEPersistir(supabase, {
-        family_account_id: family.id,
-        membro_atipico_id: null,
-        phone: ctxA.whatsapp_e164,
-        texto,
-        category: "reativa",
-        tipo: "assinatura_nudge",
-      });
-      return { tratada: true, familia: family.id, resposta: resp };
-    }
-    return { tratada: true, familia: family.id };
   }
 
   // INTENÇÃO por IA (entende o que a mãe quer, não só palavra-chave). Sinal
