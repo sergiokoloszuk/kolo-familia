@@ -7,6 +7,39 @@ import { enviarDocumento } from "./whatsappSender";
 import { logEvent, logServerError } from "@/lib/log";
 
 /**
+ * Num pedido de plano EXPLÍCITO ("me traz um plano"), o desafio de verdade está
+ * na CONVERSA — não na frase-gatilho. Puxa as últimas trocas pra o plano focar
+ * EXATAMENTE no que foi discutido, sem virar genérico nem espalhar pra outros
+ * temas/filhos. Falha → devolve a própria mensagem (nunca quebra).
+ */
+async function desafioDaConversa(
+  supabase: SupabaseClient,
+  familyId: string,
+  mensagemAtual: string,
+): Promise<string> {
+  try {
+    const { data } = await supabase
+      .from("ayla_messages")
+      .select("direcao, texto, created_at")
+      .eq("family_account_id", familyId)
+      .order("created_at", { ascending: false })
+      .limit(10);
+    const linhas = ((data ?? []) as Array<{ direcao: string; texto: string | null }>)
+      .reverse()
+      .map((m) => {
+        const t = m.texto?.trim();
+        if (!t) return null;
+        return `${m.direcao === "inbound" ? "Mãe" : "Ayla"}: ${t.slice(0, 500)}`;
+      })
+      .filter((l): l is string => Boolean(l));
+    if (linhas.length === 0) return mensagemAtual;
+    return `A família pediu um plano sobre o que estávamos conversando. O plano deve ser EXCLUSIVAMENTE sobre este assunto — NÃO amplie pra outros temas, outros filhos, viagens ou eventos que não aparecem aqui.\n\nConversa recente:\n${linhas.join("\n")}`;
+  } catch {
+    return mensagemAtual;
+  }
+}
+
+/**
  * Gera o PDF do plano, sobe no Storage (URL assinada, 1h) e envia como
  * documento no WhatsApp. Falha 100% silenciosa — o PDF é um bônus; se falhar,
  * o link segue normal. Z-API baixa o arquivo na hora do envio, então a URL
@@ -213,12 +246,17 @@ export async function montarPonteWhatsApp(
     // Gera o plano completo na hora (single-call) a partir do desafio. Fica
     // salvo em /planos — então o link abre o plano JÁ PRONTO (não precisa
     // clicar em "gerar"), e o PDF vai junto no WhatsApp.
+    // Pedido explícito ("me traz um plano") → o tema real está na CONVERSA, não
+    // na frase-gatilho. Desafio direto → a própria mensagem já é o tema.
+    const desafioReal = forcar
+      ? await desafioDaConversa(supabase, familyId, mensagem)
+      : mensagem;
     console.log(`[ayla:ponte] gerando plano (forcar=${Boolean(forcar)}) membro=${membroAtipicoId ?? "null"}`);
     const plano = await gerarPlano({
       supabase,
       familyId,
       membroAtipicoId,
-      desafio: mensagem,
+      desafio: desafioReal,
       origem: "estrategias",
     });
     console.log(`[ayla:ponte] plano gerado id=${plano.id} secoes=${plano.secoes.length}`);
