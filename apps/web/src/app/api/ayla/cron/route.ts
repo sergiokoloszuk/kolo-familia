@@ -19,6 +19,7 @@ import {
 import { detectAndPersist } from "@/lib/ayla/insightEngine";
 import { runRegrasParaFamilia } from "@/lib/regras/engine";
 import { enviarTexto, verificarStatusZapi } from "@/lib/ayla/whatsappSender";
+import { sincronizarAssinaturaDoStripe } from "@/lib/stripe/sync";
 
 /**
  * Cron da Ayla — chamado por scheduler externo (n8n, Vercel Cron, etc.).
@@ -68,6 +69,7 @@ async function handle(request: NextRequest) {
     if (tipo === "seguimento") return await runSeguimento(supabase);
     if (tipo === "recuperacao_plano") return await runRecuperacaoPlano(supabase);
     if (tipo === "recuperacao_plano_3min") return await runRecuperacaoPlano(supabase, "3min");
+    if (tipo === "alerta_assinatura") return await runAlertaAssinatura(supabase);
     if (tipo === "fim_de_semana") return await runFimDeSemana(supabase);
     if (tipo === "campanhas") return await runCampanhas(supabase);
     if (tipo === "regras") return await runRegras(supabase);
@@ -127,6 +129,79 @@ async function runHealthcheck() {
 }
 
 type AdminClient = ReturnType<typeof createServiceRoleClient>;
+
+/**
+ * ALERTA + AUTO-CONSERTO de assinatura dessincronizada. Roda de hora em hora:
+ * pega quem está em past_due no app e confere o Stripe (fonte da verdade). Se o
+ * Stripe diz que a pessoa PAGA (active/trialing), foi descompasso do webhook —
+ * CONSERTA sozinho (re-sync) e avisa o admin no WhatsApp. O problema morre antes
+ * de a família reclamar. (past_due REAL — com o Stripe também past_due — não
+ * dispara nada; cancelamento idem.)
+ */
+async function runAlertaAssinatura(supabase: AdminClient) {
+  const { data: pastDue } = await supabase
+    .from("subscription_accesses")
+    .select("family_account_id")
+    .eq("status", "past_due");
+
+  const consertadas: Array<{ familyId: string; antes: string | null; depois: string; stripe: string }> = [];
+  for (const p of pastDue ?? []) {
+    const fid = p.family_account_id as string;
+    try {
+      const r = await sincronizarAssinaturaDoStripe(supabase, fid);
+      if (r.ok && r.mudou && (r.depois === "active" || r.depois === "trialing")) {
+        consertadas.push({ familyId: fid, antes: r.antes, depois: r.depois, stripe: r.stripeStatus });
+      }
+    } catch {
+      /* uma família não derruba as outras */
+    }
+  }
+
+  if (consertadas.length > 0) {
+    const emails = await emailsDeFamilias(supabase, consertadas.map((c) => c.familyId));
+    const alerta = process.env.ALERTA_WHATSAPP || process.env.ADMIN_MONITOR_WHATSAPP || "+5511994770067";
+    const linhas = consertadas
+      .map((c) => `• ${emails[c.familyId] ?? c.familyId}: ${c.antes ?? "—"} → ${c.depois} (Stripe: ${c.stripe})`)
+      .join("\n");
+    const msg = `⚠️ Kolo: ${consertadas.length} assinatura(s) estava(m) travada(s) — pagou no Stripe mas o app não tinha liberado. JÁ CORRIGI automaticamente, a(s) pessoa(s) tem acesso agora:\n${linhas}`;
+    try {
+      await enviarTexto({ phoneE164: alerta, texto: msg });
+    } catch (e) {
+      await logServerError("alerta_assinatura_send", e, {});
+    }
+  }
+
+  return NextResponse.json({
+    past_due: pastDue?.length ?? 0,
+    consertadas: consertadas.length,
+    detalhes: consertadas,
+  });
+}
+
+/** E-mails de um conjunto de famílias — pra o alerta ficar legível. */
+async function emailsDeFamilias(
+  admin: AdminClient,
+  familyIds: string[],
+): Promise<Record<string, string>> {
+  const out: Record<string, string> = {};
+  if (familyIds.length === 0) return out;
+  const { data: fams } = await admin
+    .from("family_accounts")
+    .select("id, user_id")
+    .in("id", familyIds);
+  for (const f of fams ?? []) {
+    const uid = f.user_id as string | null;
+    if (!uid) continue;
+    try {
+      const { data } = await admin.auth.admin.getUserById(uid);
+      const email = data?.user?.email;
+      if (email) out[f.id as string] = email;
+    } catch {
+      /* segue sem o e-mail dessa */
+    }
+  }
+  return out;
+}
 
 /**
  * Snapshots mensais da Evolução — roda no início do mês e tira a FOTO do mês
