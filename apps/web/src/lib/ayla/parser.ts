@@ -102,6 +102,9 @@ export async function parseInbound(
     texto: string;
     membros: Array<{ id: string; nome: string }>;
     ultimoMembroFoco?: string | null;
+    /** Últimos turnos da conversa — pra entender respostas curtas em contexto
+     *  ("letra f" depois de falar de vocabulário = progresso na comunicação). */
+    historico?: Array<{ de: "mae" | "ayla"; texto: string }>;
   },
   tracking?: UsageTracking,
 ): Promise<ParserResult> {
@@ -111,13 +114,20 @@ export async function parseInbound(
     .map((m) => `- ${m.nome} (id: ${m.id})`)
     .join("\n");
 
+  const histTxt = (params.historico ?? [])
+    .filter((h) => h.texto?.trim())
+    .map((h) => `${h.de === "mae" ? "Mãe" : "Ayla"}: ${h.texto.slice(0, 400)}`)
+    .join("\n");
+
   const userMsg = `<membros_atipicos>
 ${contextoMembros}
 </membros_atipicos>
-${params.ultimoMembroFoco ? `\n<ultimo_membro_foco>\n${params.ultimoMembroFoco}\n</ultimo_membro_foco>\n` : ""}
+${params.ultimoMembroFoco ? `\n<ultimo_membro_foco>\n${params.ultimoMembroFoco}\n</ultimo_membro_foco>\n` : ""}${histTxt ? `\n<conversa_recente>\n${histTxt}\n</conversa_recente>\n` : ""}
 <mensagem_da_mae>
 ${params.texto}
 </mensagem_da_mae>
+
+IMPORTANTE — use a <conversa_recente> pra ENTENDER a mensagem em contexto: respostas curtas ("adora dançar", "já está na letra f", "sim") só fazem sentido com o que veio antes. E capture EVOLUÇÃO/PROGRESSO, não só dificuldade: se a mãe contar que a criança avançou, aprendeu, passou a fazer algo, entende melhor ou está numa etapa nova (ex.: "já está na letra f" depois de falar de vocabulário, "eu leio e ela entende tudo", "adora dançar"), registre em conquista E, quando for um fato do perfil, em sugestao_kolo_vivo (com o campo/domínio certo). Progresso conta tanto quanto problema.
 
 Devolva o JSON.`;
 

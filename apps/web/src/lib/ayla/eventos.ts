@@ -27,10 +27,16 @@ const TIPOS = [
 const GATILHOS =
   /professora? nov|troc\w+ de professor|mud\w+ de (escola|turma|casa|cidade)|nova escola|come[çc]\w+ (a fazer |na )?(terapia|fono|psic|acompanhamento)|novo rem[eé]dio|come[çc]\w+ (a tomar|com|o) (rem[eé]dio|medica)|mudan[çc]a de (rem[eé]dio|medica|dose)|f[eé]rias|faleceu|perdemos|luto|separ|div[oó]rcio|mudan[çc]a de rotina|passou a andar|come[çc]ou a falar|voltou a|deixou de|parou de/i;
 
-const SYSTEM = `Você extrai EVENTOS IMPORTANTES da vida de uma criança/pessoa a partir de uma mensagem da família, pra uma linha do tempo. Devolva SÓ um array JSON (sem texto fora), no máximo 2 itens, cada um:
+// MARCOS de desenvolvimento (progresso de habilidade) — respostas curtas tipo
+// "letra f" só viram marco com o contexto da conversa, por isso passamos ela.
+const GATILHOS_MARCO =
+  /\bletra [a-zç]\b|vocabul|palavra(s)? nov|aprendeu|conseguiu|progred|evolui|avan[çc]|passou a |come[çc]ou a |j[aá] (consegue|faz|fala|anda|l[eê]|est[aá] na letra)/i;
+
+const SYSTEM = `Você extrai EVENTOS IMPORTANTES da vida de uma criança/pessoa a partir da conversa da família, pra uma linha do tempo. Devolva SÓ um array JSON (sem texto fora), no máximo 2 itens, cada um:
 {"tipo":"<um de: ${TIPOS.join(" | ")}>","descricao":"o evento em 1 frase curta, factual","data":"YYYY-MM-DD ou null se não disse"}
 - Só eventos REAIS e datáveis (uma mudança/marco/perda/início). NÃO extraia sentimentos, dúvidas, rotina do dia, nem hipóteses.
-- Se a mensagem não tiver nenhum evento assim, devolva [].
+- Inclua MARCOS de desenvolvimento (tipo "marco"): quando a criança AVANÇA numa habilidade — fala/vocabulário/letras, leitura, autonomia, motor, social. Ex.: "progrediu da letra B pra F", "passou a formar frases", "começou a aceitar fruta". Use a <conversa_recente> pra entender respostas curtas ("letra f" depois de falar de vocabulário = marco de comunicação). Factual, sem elogio.
+- Se não houver nenhum evento assim, devolva [].
 - descricao factual, sem interpretar causa.`;
 
 type EventoExtraido = { tipo: string; descricao: string; data: string | null };
@@ -64,15 +70,23 @@ export async function extrairESalvarEventos(
   familyId: string,
   membroId: string | null,
   texto: string,
+  historico?: Array<{ de: "mae" | "ayla"; texto: string }>,
 ): Promise<void> {
-  if (!membroId || !texto?.trim() || !GATILHOS.test(texto)) return;
+  if (!membroId || !texto?.trim() || !(GATILHOS.test(texto) || GATILHOS_MARCO.test(texto))) return;
   try {
     const client = getAylaAnthropicClient();
+    const contexto = (historico ?? [])
+      .filter((h) => h.texto?.trim())
+      .map((h) => `${h.de === "mae" ? "Mãe" : "Ayla"}: ${h.texto.slice(0, 300)}`)
+      .join("\n");
+    const userContent = `${
+      contexto ? `<conversa_recente>\n${contexto}\n</conversa_recente>\n\n` : ""
+    }<mensagem_de_agora>\n${texto.slice(0, 1000)}\n</mensagem_de_agora>`;
     const resp = await client.messages.create({
       model: AYLA_MODEL,
       max_tokens: 300,
       system: SYSTEM,
-      messages: [{ role: "user", content: texto.slice(0, 1000) }],
+      messages: [{ role: "user", content: userContent }],
     });
     const b = resp.content[0];
     const eventos = parse(b?.type === "text" ? b.text : "");

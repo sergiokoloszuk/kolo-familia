@@ -1242,11 +1242,17 @@ export async function processInbound(
     : null;
   const ultimoMembroId = (ultimoCheckin?.[0]?.membro_atipico_id as string | null) ?? null;
 
+  // Histórico da conversa PRO PARSER: respostas curtas ("letra f", "adora dançar")
+  // só viram fato se ele entender o contexto. Sem isso o perfil não aprende numa
+  // conversa de verdade (só no fluxo "pergunta do dia → 1 resposta").
+  const historicoParser = await carregarHistorico(supabase, family.id, inbound.texto);
+
   const parsed = await parseInbound(
     {
       texto: inbound.texto,
       membros: ctx.membros,
       ultimoMembroFoco: ultimoNome ?? null,
+      historico: historicoParser,
     },
     { supabase, family_account_id: family.id, feature: "ayla_parser" },
   );
@@ -1421,7 +1427,7 @@ export async function processInbound(
   // Linha do tempo (Livro Vivo): registra eventos importantes mencionados
   // (troca de professora, mudança, medicação, terapia…). Best-effort, só com
   // gatilho — a resposta já foi enviada acima.
-  await extrairESalvarEventos(supabase, family.id, membroContextoId, inbound.texto);
+  await extrairESalvarEventos(supabase, family.id, membroContextoId, inbound.texto, historicoParser);
 
   return { tratada: true, familia: family.id, resposta: resp };
 }
