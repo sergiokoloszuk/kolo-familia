@@ -210,7 +210,7 @@ export async function gerarRespostaAyla(
   }
   if (params.koloVivoResumo.trim()) {
     linhas.push(
-      `\n<o_que_ja_sabemos_da_crianca>\n${params.koloVivoResumo}\n</o_que_ja_sabemos_da_crianca>`,
+      `\n<o_que_ja_sabemos_da_crianca>\n${params.koloVivoResumo}\n</o_que_ja_sabemos_da_crianca>\n(Isto é FUNDO acumulado ao longo do tempo e pode estar DESATUALIZADO: um interesse ou um passeio/evento listado aqui pode já ter passado. NÃO trate como o que está acontecendo agora, e NÃO puxe um interesse/evento daqui por conta própria — use só quando ajudar DE VERDADE o que está sendo falado agora.)`,
     );
   }
   if (params.koloVivoLacunas?.trim()) {
@@ -234,6 +234,9 @@ export async function gerarRespostaAyla(
   linhas.push(`\n<mensagem_de_agora>\n${params.mensagem}\n</mensagem_de_agora>`);
 
   const notas: string[] = [];
+  notas.push(
+    `ANCORE no que está sendo falado AGORA (a <mensagem_de_agora> + a <conversa_recente>), como alguém atenta à conversa — um bom ouvinte. NÃO puxe por conta própria um assunto guardado no perfil que ninguém trouxe agora (um interesse antigo como futebol/Copa, um passeio/viagem que já foi mencionado antes) — o perfil é fundo e pode estar desatualizado. Se a mensagem citar algo que você NÃO conhece, PERGUNTE o que é (com naturalidade) — nunca troque por um fato antigo do perfil nem invente um contexto.`,
+  );
   if (
     /\b(obede|desobed|n[ãa]o\s+(me\s+)?(escuta|ouve|obedece)|birra|malcriad|mal[-\s]criad|teimos|fazer\s+o\s+que\s+(eu\s+)?mando)/i.test(
       params.mensagem,
@@ -250,7 +253,7 @@ export async function gerarRespostaAyla(
   }
   if (params.koloVivoResumo.trim() || (params.estrategiasRecentes?.length ?? 0) > 0) {
     notas.push(
-      `Você acompanha esta família pelo Perfil e pelas Estratégias (blocos acima). Quando ${params.nomeMae} perguntar o que você sabe da criança, pedir um resumo, ou quando ajudar a conversa, MOSTRE que está acompanhando: cite de leve o que importa (idade, perfil, 1-2 desafios principais) e, se houver, uma pergunta recente das Estratégias. Não despeje tudo — escolha o que é relevante pro momento.`,
+      `Você acompanha esta família pelo Perfil (blocos acima). SÓ cite o que sabe quando ${params.nomeMae} perguntar o que você sabe, pedir um resumo, OU quando for de fato relevante ao que está sendo falado agora — aí cite de leve (idade, perfil, 1-2 desafios principais). Nunca traga um interesse ou passeio guardado que não veio ao caso agora, e nunca despeje tudo.`,
     );
   }
   if (params.precisaEscolherMembro) {
