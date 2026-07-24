@@ -223,13 +223,14 @@ export async function gerarPlano(params: {
     origem = "estrategias",
   } = params;
 
-  const { titulo, tema, secoes } = await gerarSecoesPlano({
-    supabase,
-    familyId,
-    membroAtipicoId,
-    desafio,
-    variante,
-  });
+  // Padrão usa o MULTI-CALL (cada seção = o botão real, "crenças" garantida, tudo
+  // preso na criança) — o MESMO gerador da web, com o formato definido. Antes o
+  // WhatsApp usava o single-call de 12k tokens, que com contexto grande (2 filhos,
+  // viagem…) derivava e dropava seções (ex.: crenças). Fim de semana segue single.
+  const { titulo, tema, secoes } =
+    variante === "fim_de_semana"
+      ? await gerarSecoesPlano({ supabase, familyId, membroAtipicoId, desafio, variante })
+      : await gerarSecoesPlanoMultiCall({ supabase, familyId, membroAtipicoId, desafio });
 
   const { data, error } = await supabase
     .from("planos")
