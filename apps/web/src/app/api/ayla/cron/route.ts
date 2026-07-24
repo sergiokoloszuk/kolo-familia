@@ -11,6 +11,7 @@ import {
   sendProximoInsight,
   sendRepertorioSugestao,
   sendPlanoSeguimento,
+  sendRecuperacaoPlano,
   sendOfertaFimDeSemana,
   sendCampanha,
   type CampanhaCategoria,
@@ -65,6 +66,7 @@ async function handle(request: NextRequest) {
     if (tipo === "insights") return await runInsights(supabase);
     if (tipo === "repertorio") return await runRepertorio(supabase);
     if (tipo === "seguimento") return await runSeguimento(supabase);
+    if (tipo === "recuperacao_plano") return await runRecuperacaoPlano(supabase);
     if (tipo === "fim_de_semana") return await runFimDeSemana(supabase);
     if (tipo === "campanhas") return await runCampanhas(supabase);
     if (tipo === "regras") return await runRegras(supabase);
@@ -619,6 +621,74 @@ async function runSeguimento(supabase: AdminClient) {
         enviada: false,
         motivo: e instanceof Error ? e.message : "erro",
       });
+    }
+  }
+
+  return NextResponse.json({
+    processadas: resultados.length,
+    enviadas: resultados.filter((r) => r.enviada).length,
+    detalhes: resultados,
+  });
+}
+
+/**
+ * Recuperação pós-plano (disparo one-off / manual): pega planos criados HOJE cuja
+ * conversa MORREU (a família não respondeu depois) e reabre com sendRecuperacaoPlano
+ * — pergunta se foi útil, oferece continuar o tema, e traz o link se o PDF falhou.
+ * Um por família (o plano mais recente). Travas de proativa + idempotência 24h ficam
+ * dentro de sendRecuperacaoPlano. Aciona via ?tipo=recuperacao_plano.
+ */
+async function runRecuperacaoPlano(supabase: AdminClient) {
+  const agora = new Date();
+  const inicioHoje = startOfDay(agora);
+
+  const { data: planos } = await supabase
+    .from("planos")
+    .select("id, family_account_id, membro_atipico_id, tema, created_at")
+    .gte("created_at", inicioHoje.toISOString())
+    .order("created_at", { ascending: false });
+
+  // Dedupe por família — o plano mais recente de hoje.
+  const porFamilia = new Map<
+    string,
+    { id: string; membro_atipico_id: string | null; tema: string | null; created_at: string }
+  >();
+  for (const p of planos ?? []) {
+    const fid = p.family_account_id as string;
+    if (!porFamilia.has(fid)) {
+      porFamilia.set(fid, {
+        id: p.id as string,
+        membro_atipico_id: (p.membro_atipico_id as string | null) ?? null,
+        tema: (p.tema as string | null) ?? null,
+        created_at: p.created_at as string,
+      });
+    }
+  }
+
+  const resultados: Array<{ familyId: string; enviada: boolean; motivo?: string }> = [];
+  for (const [familyId, plano] of porFamilia) {
+    try {
+      // Conversa morreu? Só recupera quem NÃO respondeu depois do plano.
+      const { data: inboundDepois } = await supabase
+        .from("ayla_messages")
+        .select("id")
+        .eq("family_account_id", familyId)
+        .eq("direcao", "inbound")
+        .gte("created_at", plano.created_at)
+        .limit(1);
+      if ((inboundDepois?.length ?? 0) > 0) {
+        resultados.push({ familyId, enviada: false, motivo: "Já respondeu após o plano." });
+        continue;
+      }
+      const r = await sendRecuperacaoPlano(
+        supabase,
+        familyId,
+        { id: plano.id, tema: plano.tema, membro_atipico_id: plano.membro_atipico_id },
+        agora,
+      );
+      resultados.push({ familyId, enviada: r.enviada, motivo: r.enviada ? undefined : r.motivo });
+    } catch (e) {
+      resultados.push({ familyId, enviada: false, motivo: e instanceof Error ? e.message : "erro" });
     }
   }
 

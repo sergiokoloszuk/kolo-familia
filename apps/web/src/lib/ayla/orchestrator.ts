@@ -300,6 +300,69 @@ export async function sendPlanoSeguimento(
 }
 
 // ============================================================
+// PROATIVA: Recuperação pós-plano — reabre a conversa que morreu
+// ============================================================
+
+/**
+ * Quem recebeu um plano e ficou no vácuo: a Ayla reabre a conversa, pergunta se
+ * foi ÚTIL (deu direção), oferece continuar o tema, e traz o link caso o PDF não
+ * tenha chegado. NÃO cobra execução ("testou?") — o plano pode ser só inspiração.
+ * Base do toque de 3 min e do disparo one-off de recuperação. Idempotente (24h).
+ */
+export async function sendRecuperacaoPlano(
+  supabase: SupabaseClient,
+  familyAccountId: string,
+  plano: { id: string; tema: string | null; membro_atipico_id: string | null },
+  agora: Date = new Date(),
+): Promise<EnvioResultado> {
+  const podeRes = await podeEnviarProativa(
+    supabase,
+    { family_account_id: familyAccountId, agora },
+    "recuperacao_plano",
+  );
+  if (!podeRes.permitido) return { enviada: false, motivo: podeRes.motivo };
+
+  // Idempotência: no máx 1 recuperação por família a cada 24h.
+  const desde = new Date(agora.getTime() - 24 * 60 * 60 * 1000).toISOString();
+  const { data: ja } = await supabase
+    .from("ayla_messages")
+    .select("id")
+    .eq("family_account_id", familyAccountId)
+    .eq("tipo", "recuperacao_plano")
+    .gte("created_at", desde)
+    .limit(1);
+  if ((ja?.length ?? 0) > 0) {
+    return { enviada: false, motivo: "Recuperação já enviada nas últimas 24h." };
+  }
+
+  const ctx = await loadFamiliaParaEnvio(supabase, familyAccountId);
+  if (!ctx) return { enviada: false, motivo: "Sem contexto da família." };
+
+  const membro = plano.membro_atipico_id
+    ? ctx.membros.find((m) => m.id === plano.membro_atipico_id)
+    : null;
+  const tema = (plano.tema ?? "").trim();
+  const refTema = tema ? ` sobre ${tema}` : "";
+  const refMembro = membro?.nome ? ` pra ${membro.nome}` : "";
+  const link = await gerarMagicLink(supabase, {
+    familyId: familyAccountId,
+    next: `/planos/${plano.id}`,
+  });
+  const linhaLink = link ? `\n\n(Se não tiver chegado, é só abrir aqui 👉 ${link})` : "";
+  const texto = `Oi, ${ctx.nomeMae} 🌿 Montei um plano${refTema}${refMembro} hoje. Conseguiu dar uma olhada? Me conta o que você achou — te deu uma direção? E, se quiser, a gente continua conversando sobre isso, sem pressa. 💛${linhaLink}`;
+
+  return enviarEPersistir(supabase, {
+    family_account_id: familyAccountId,
+    membro_atipico_id: plano.membro_atipico_id,
+    phone: ctx.whatsapp_e164,
+    texto,
+    category: "proativa",
+    tipo: "recuperacao_plano",
+    meta: { plano_id: plano.id },
+  });
+}
+
+// ============================================================
 // PROATIVA: Oferta de plano de fim de semana (Fase 5)
 // ============================================================
 
