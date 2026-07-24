@@ -250,6 +250,10 @@ export async function gerarRespostaAyla(
     notas.push(
       `A pessoa está PEDINDO um plano (um roteiro / passo a passo). MUITO IMPORTANTE: NÃO escreva o plano aqui no WhatsApp — nada de passos numerados, listas longas, seções ou plano completo no chat. Responda em 1 ou 2 frases curtas, com carinho, dizendo que você já está montando um plano completo sobre isso e vai mandar pra ela agora — em PDF e com um link pra abrir no app (com ideias práticas, frases pra usar e o que observar). No máximo UMA dica curtinha; o plano de verdade vai no PDF/link, não no chat.`,
     );
+  } else {
+    notas.push(
+      `Se a conversa está construindo material prático pra desenvolver uma HABILIDADE ou lidar com um desafio recorrente (ex.: vocabulário, foco, alimentação, uma rotina) e você já deu ideias concretas, pode OFERECER juntar tudo num plano — UMA vez, de leve, no fim da mensagem: "quer que eu monte um plano completo sobre isso — com as brincadeiras, atividades e até uma historinha — pra você ter salvo e organizado?". Não ofereça o mesmo plano a cada mensagem, nem se você acabou de mandar um. Se ela disser "sim", o sistema entrega o plano — você só confirma que está montando.`,
+    );
   }
   if (params.koloVivoResumo.trim() || (params.estrategiasRecentes?.length ?? 0) > 0) {
     notas.push(

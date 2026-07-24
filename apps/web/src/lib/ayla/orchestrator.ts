@@ -1452,9 +1452,13 @@ async function enviarRespostaEmChunks(
   let erro: string | null = null;
   let primeiro = true;
 
-  // A pessoa pediu um plano? Então a Ayla NÃO escreve o plano no chat —
-  // dá uma resposta curta e o sistema entrega o plano (PDF + link).
-  const querPlano = pedeUmPlano(args.params.mensagem);
+  // A pessoa pediu um plano? Então a Ayla NÃO escreve o plano no chat — dá uma
+  // resposta curta e o sistema entrega o plano (PDF + link). Vale tanto pro pedido
+  // EXPLÍCITO quanto pro "sim" curto logo depois de a Ayla OFERECER um plano (1c).
+  const querPlano =
+    pedeUmPlano(args.params.mensagem) ||
+    (ehAfirmacaoCurta(args.params.mensagem) &&
+      (await ofertouPlanoRecente(supabase, args.family_account_id)));
   args.params.querPlano = querPlano;
 
   // Resposta LENTA (pedido de plano): manda um balão breve de acolhimento na
@@ -2104,6 +2108,22 @@ const AFIRMACOES = new Set([
   "okay", "ta", "ta bom", "adiciona", "adicionar", "pode adicionar",
   "adiciona sim", "manda", "boa", "perfeito", "yes",
 ]);
+
+/** A Ayla ofereceu um plano na última mensagem? Pra um "sim" curto logo depois
+ *  virar pedido de plano (auto-oferta, 1c). Marca por texto na última outbound. */
+async function ofertouPlanoRecente(supabase: SupabaseClient, familyId: string): Promise<boolean> {
+  const desde = new Date(Date.now() - 30 * 60 * 1000).toISOString();
+  const { data } = await supabase
+    .from("ayla_messages")
+    .select("texto")
+    .eq("family_account_id", familyId)
+    .eq("direcao", "outbound")
+    .gte("created_at", desde)
+    .order("created_at", { ascending: false })
+    .limit(1);
+  const t = ((data?.[0]?.texto as string | null) ?? "").toLowerCase();
+  return /monte(i)? um plano|montar (um |esse )?plano|junte.*plano|plano completo|um plano (completo|com|pra|sobre)/.test(t);
+}
 
 /** Mensagem curta que é só um "sim" (sem conteúdo novo pra registrar). */
 function ehAfirmacaoCurta(texto: string): boolean {
