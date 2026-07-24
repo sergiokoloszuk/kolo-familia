@@ -24,12 +24,31 @@
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { horaLocalHHMM } from "@/lib/idade";
+import { assinaturaLiberada } from "@/lib/auth/assinatura";
 import type { AylaTipoProativa } from "./types";
 
 const COMERCIAL: ReadonlyArray<AylaTipoProativa> = [
   "trial_d3",
   "trial_d0",
   "campanha_promocional",
+] as const;
+
+// Proativas de ENGAJAMENTO — só pra quem TEM acesso (trial ativo, assinante,
+// cortesia, ou dunning na graça). Trial VENCIDO sem assinar (status ainda
+// "trialing", só a data passou) ou assinatura inativa → NÃO recebe estas (era o
+// bug: a Ayla voltava a mandar "Sexta chegou / como tá?" pra quem já perdeu o
+// acesso). O COMERCIAL (assine) segue podendo — é justamente o convite a voltar.
+const REQUER_ACESSO: ReadonlyArray<AylaTipoProativa> = [
+  "rotina",
+  "engajamento_2dias",
+  "engajamento_5dias",
+  "insight",
+  "repertorio_sugestao",
+  "emocional_streak",
+  "emocional_conquista",
+  "plano_seguimento",
+  "recuperacao_plano",
+  "fim_de_semana",
 ] as const;
 
 export type RulesContext = {
@@ -69,6 +88,19 @@ export async function podeEnviarProativa(
   }
   if (prefs.pausada_ate && new Date(prefs.pausada_ate) > ctx.agora) {
     return { permitido: false, motivo: "Pausa em vigor." };
+  }
+
+  // 1b. ACESSO: engajamento proativo só pra quem tem acesso liberado (fonte única
+  // assinaturaLiberada — trial vencido, past_due sem graça, canceled → bloqueia).
+  if ((REQUER_ACESSO as ReadonlyArray<string>).includes(tipo)) {
+    const { data: sub } = await supabase
+      .from("subscription_accesses")
+      .select("status, trial_ends_at, cortesia, cortesia_ate, pagamento_falhou_em")
+      .eq("family_account_id", ctx.family_account_id)
+      .maybeSingle();
+    if (!assinaturaLiberada(sub)) {
+      return { permitido: false, motivo: "Sem acesso liberado (trial vencido / assinatura inativa) — engajamento não sai." };
+    }
   }
 
   const inicioDoDia = startOfDay(ctx.agora);
