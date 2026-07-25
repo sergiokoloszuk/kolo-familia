@@ -20,12 +20,15 @@ const SYSTEM = `Você classifica a INTENÇÃO da última mensagem de uma mãe/pa
 Responda com UMA palavra só, minúscula, sem pontuação, uma destas:
 - rotina_criar: quer MONTAR / criar / desenhar / organizar uma rotina visual (de um dia ou da semana). Ex.: "quero uma rotina", "vamos desenhar a rotina do Davi", "me ajuda a organizar melhor os dias dele", "preciso de rotina visual", "poderia montar um quadro pra ele?".
 - rotina_ver: quer VER / que você TRAGA uma rotina JÁ montada de um dia. Ex.: "traz a rotina de hoje", "mostra a de terça", "me manda a rotina de amanhã".
-- rotina_editar: quer AJUSTAR uma rotina que já existe. Ex.: "faltou o lanche na terça", "tira o vôlei da quarta", "muda a rotina de hoje".
+- rotina_editar: está PEDINDO pra você ajustar uma rotina que ela já montou. Ex.: "faltou o lanche na terça", "tira o vôlei da quarta", "muda a rotina de hoje".
 - plano: quer ajuda / estratégia / um plano pra um DESAFIO específico (sono, birra, escola, transição, comida, crise...). Ex.: "me ajuda com o sono dele", "ele não quer ir à escola", "o que faço nas crises?", "a hora do banho tá impossível".
 - outro: qualquer outra coisa — contar como foi o dia, desabafo, dúvida geral, cumprimento, pedir história ou leitura de desenho.
 
 Regras importantes:
 - "a rotina dele tá difícil / bagunçada" NÃO é rotina_criar — é desabafo/pedido de ajuda (plano ou outro). rotina_criar é quando ela quer CONSTRUIR o quadro.
+- CONTAR o que aconteceu NÃO é pedido, mesmo com verbos de mudança. "tive que chamar alguém pra arrumar o vazamento", "mudei o quarto dele", "tirei ele da natação", "hoje já está melhor" = outro. rotina_editar só quando ela pede que VOCÊ mude o quadro de rotina dela.
+- Rotina aqui é só o QUADRO VISUAL de etapas. Falar da rotina da casa, do trabalho, da vida = outro.
+- Na dúvida entre uma intenção de rotina e outro, escolha outro: mexer na rotina dela sem ela pedir é pior do que deixar de mexer.
 - Na dúvida entre plano e outro, escolha outro.
 - Responda SÓ a palavra.`;
 

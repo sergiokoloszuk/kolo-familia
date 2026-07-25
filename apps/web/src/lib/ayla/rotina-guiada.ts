@@ -545,20 +545,60 @@ export async function pedirRotinaDoDia(
 
 // ---------- Editar/corrigir uma rotina pela Ayla ----------
 
-/** Pedido de EDIÇÃO ("faltou o lanche na terça", "tira o vôlei", "muda a rotina de hoje"). */
+/**
+ * Reforço de regex pro gate de EDIÇÃO ("tira o vôlei da rotina", "muda a rotina
+ * de hoje"). A IA de intenção (`intent.ts`) é o sinal primário; aqui a régua é
+ * DELIBERADAMENTE estreita, porque falso positivo neste gate reescreve a rotina
+ * da família sem ela ter pedido nada.
+ *
+ * Incidente 25/07 (rotina do André): um desabafo — "tive que contratar um
+ * prestador pra ARRUMAR um vazamento... HOJE já está melhor" — casava verbo de
+ * edição + dia da semana e a Ayla foi lá e refez o dia. Então:
+ * - dia/"hoje" NÃO basta: a vida da mãe também acontece "hoje";
+ * - precisa citar a rotina (ou cartões/quadro/passos) com essas palavras;
+ * - desabafo é longo e narrativo, pedido de ajuste é curto — texto comprido sai.
+ * Pedido legítimo mas indireto ("faltou o lanche na terça") segue coberto pela
+ * IA de intenção, que é quem deve entender isso.
+ */
 export function pedeEditarRotina(texto: string | null | undefined): boolean {
-  const t = (texto ?? "").toLowerCase();
+  const t = (texto ?? "").trim().toLowerCase();
+  if (!t || t.length > 220) return false;
   const editVerbo =
     /\b(faltou|falta|tira|tirar|tire|remove|remover|remova|adiciona|adicionar|acrescenta|acrescentar|p[õo]e|poe|coloca|colocar|muda|mudar|mude|troca|trocar|corrige|corrigir|arruma|arrumar|inverte|inverter|esqueci)\b/.test(
       t,
     );
   if (!editVerbo) return false;
-  const refDia = /\bhoje\b|\bamanh[ãa]\b|segunda|ter[çc]a|quarta|quinta|sexta|s[áa]bado|domingo/.test(t);
-  const refRotina = /\brotina\b|\bcart[õo]es?\b|nessa rotina|na rotina|dessa rotina|no dia/.test(t);
-  return refDia || refRotina;
+  return /\brotina\b|\bcart[õo]es?\b|\bquadro\b|\bpassos?\b|\betapas?\b/.test(t);
 }
 
-const SYSTEM_EDITAR = `Você edita uma rotina que já existe. Recebe as TAREFAS ATUAIS (JSON) e o PEDIDO da mãe. Devolva APENAS JSON com as tarefas ATUALIZADAS, aplicando o pedido (adicionar / remover / mudar texto / mudar horário / reordenar) e MANTENDO tudo que ela NÃO mencionou. Formato: {"tarefas":[{"texto":"acordar","hora":"6h"}]}. HORÁRIO é opcional (null se não tiver; nunca invente). Encaixe no lugar lógico (ex.: "lanche depois da escola" entra logo após a escola). Texto curto (1-5 palavras). NÃO invente atividades além do que ela pediu.`;
+const SYSTEM_EDITAR = `Você edita uma rotina que já existe. Recebe as TAREFAS ATUAIS (JSON) e o PEDIDO da mãe.
+
+ANTES DE TUDO: confira se a mensagem é MESMO um pedido pra mudar o quadro de rotina. Se ela só está CONTANDO como foi o dia, desabafando, ou falando de algo da vida dela que não é o quadro (uma obra em casa, uma crise, o trabalho), devolva {"tarefas":[]} e nada mais — não invente etapa nenhuma a partir da história dela. Melhor não mexer do que mexer sem ela pedir.
+
+Se for pedido de verdade, devolva APENAS JSON com as tarefas ATUALIZADAS, aplicando o pedido (adicionar / remover / mudar texto / mudar horário / reordenar) e MANTENDO tudo que ela NÃO mencionou. Formato: {"tarefas":[{"texto":"acordar","hora":"6h"}]}. HORÁRIO é opcional (null se não tiver; nunca invente). Encaixe no lugar lógico (ex.: "lanche depois da escola" entra logo após a escola). Texto curto (1-5 palavras). NÃO invente atividades além do que ela pediu.`;
+
+const ACENTOS = new RegExp("[\\u0300-\\u036f]", "g"); // marcas de combinação (pós-NFD)
+
+const normalizarTexto = (s: string) =>
+  s
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(ACENTOS, "")
+    .replace(/\s+/g, " ")
+    .trim();
+
+/**
+ * Backstop determinístico: uma edição de verdade PRESERVA a rotina. Se a lista
+ * nova joga fora mais da metade das etapas que existiam, não foi edição — foi a
+ * IA reescrevendo o quadro a partir de uma mensagem que não era pedido (caso
+ * André, 25/07). Aí é melhor não gravar nada e responder conversando.
+ */
+function edicaoPreservaRotina(atuais: TarefaProposta[], novas: TarefaProposta[]): boolean {
+  if (atuais.length < 3) return true; // rotina curta: qualquer mudança é grande
+  const novos = new Set(novas.map((t) => normalizarTexto(t.texto)));
+  const mantidas = atuais.filter((t) => novos.has(normalizarTexto(t.texto))).length;
+  return mantidas >= Math.ceil(atuais.length / 2);
+}
 
 function sanitizarTarefasSimples(bruto: unknown): TarefaProposta[] {
   if (!Array.isArray(bruto)) return [];
@@ -636,7 +676,17 @@ export async function editarRotina(
     const raw = b?.type === "text" ? b.text : "";
     const parsed = extrairJsonRotina(raw) as { tarefas?: unknown } | null;
     const novas = sanitizarTarefasSimples(parsed?.tarefas);
+    // Vazio = a IA reconheceu que a mensagem não era pedido de mudança.
     if (!novas.length) return null;
+    // E, mesmo dizendo que era, não gravamos uma reescrita que joga a rotina
+    // fora — null aqui devolve a conversa pro fluxo normal (a Ayla responde
+    // o que ela contou, em vez de mexer no quadro).
+    if (!edicaoPreservaRotina(atuais, novas)) {
+      console.warn(
+        `[ayla:rotina-guiada] edição descartada (reescreveria a rotina ${rotinaId}): ${atuais.length} etapas → ${novas.length}`,
+      );
+      return null;
+    }
 
     await supabase.from("rotina_tarefas").delete().eq("rotina_id", rotinaId);
     const rows = novas.slice(0, 25).map((t, i) => ({
