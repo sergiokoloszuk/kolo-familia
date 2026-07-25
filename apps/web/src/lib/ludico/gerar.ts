@@ -121,6 +121,10 @@ export async function ilustrarCards(
     /** Se vier, usa ESTA imagem (o avatar da criança) como personagem dos cards
      *  em vez de gerar um mascote do tema. */
     referenciaUrl?: string;
+    /** Arte que JÁ existe, por índice de card. Índice preenchido não é
+     *  redesenhado — é o caminho da edição pela Ayla, onde só os passos novos
+     *  precisam de imagem (o resto já custou geração e a mãe já viu). */
+    arteExistente?: Array<string | null>;
   },
 ): Promise<{ mascoteUrl: string; imagens: Array<string | null> }> {
   // 1. Personagem de referência: o avatar da criança (se veio referenciaUrl) ou
@@ -140,13 +144,17 @@ export async function ilustrarCards(
   const mascoteBytes = await baixarBytes(supabase, mascoteUrl);
 
   // 2. Ilustra cada card com o mascote como referência (2 paralelas, 1 retry).
+  //    Card que já tem arte passa batido (edição pela Ayla).
   const PARALELAS = 2;
-  const imagens: Array<string | null> = new Array(params.cards.length).fill(null);
+  const imagens: Array<string | null> = params.cards.map(
+    (_, i) => params.arteExistente?.[i] ?? null,
+  );
   let cursor = 0;
   async function worker() {
     while (true) {
       const i = cursor++;
       if (i >= params.cards.length) return;
+      if (imagens[i]) continue; // já ilustrado
       const prompt = montarPromptCard(params.tema, params.cards[i].cena);
       imagens[i] = await ilustrarComRetry(
         supabase,

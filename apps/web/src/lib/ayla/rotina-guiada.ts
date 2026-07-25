@@ -282,14 +282,18 @@ async function entregarPdfDaRotina(
 
 /** Dispara a geração dos cartões (endpoint interno) — a Ayla não gera direto
  * (mundo separado de /lib/ia). Best-effort; roda em segundo plano no app. */
-async function dispararGeracao(rotinaId: string, tema: string): Promise<void> {
+async function dispararGeracao(
+  rotinaId: string,
+  tema: string,
+  opts?: { preservarArte?: boolean },
+): Promise<void> {
   try {
     const base = (process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000").replace(/\/$/, "");
     const secret = process.env.AYLA_WEBHOOK_SECRET;
     await fetch(`${base}/api/ludico/gerar-rotina`, {
       method: "POST",
       headers: { "content-type": "application/json", ...(secret ? { "x-ayla-secret": secret } : {}) },
-      body: JSON.stringify({ rotinaId, tema }),
+      body: JSON.stringify({ rotinaId, tema, preservarArte: opts?.preservarArte === true }),
     });
   } catch (e) {
     console.warn("[ayla:rotina-guiada] disparar geração falhou:", e instanceof Error ? e.message : e);
@@ -600,6 +604,58 @@ function edicaoPreservaRotina(atuais: TarefaProposta[], novas: TarefaProposta[])
   return mantidas >= Math.ceil(atuais.length / 2);
 }
 
+/** Linha de tarefa como ela está no banco — com a arte que já custou imagem. */
+type TarefaLinha = {
+  id: string;
+  texto: string;
+  hora: string | null;
+  ordem: number;
+  imagem_url: string | null;
+};
+
+/**
+ * Casa a lista nova com as linhas que já existem, pelo texto (sem acento/caixa).
+ * Quem casa é ATUALIZADO no lugar — mantém id, `concluida` e, principalmente, a
+ * ILUSTRAÇÃO já gerada. Quem não casa é insert (passo novo) ou delete (passo que
+ * ela pediu pra tirar).
+ *
+ * Antes isso era um delete-tudo + insert-tudo: mudar um horário torrava a arte
+ * dos 8 cards e obrigava a regenerar tudo (caso André, 25/07).
+ */
+function casarTarefas(
+  atuais: TarefaLinha[],
+  novas: TarefaProposta[],
+): {
+  manter: Array<{ id: string; hora: string | null; ordem: number; temArte: boolean }>;
+  inserir: Array<{ texto: string; hora: string | null; ordem: number }>;
+  remover: string[];
+} {
+  const disponiveis = new Map<string, TarefaLinha[]>();
+  for (const t of atuais) {
+    const k = normalizarTexto(t.texto);
+    const lista = disponiveis.get(k);
+    if (lista) lista.push(t);
+    else disponiveis.set(k, [t]);
+  }
+
+  const manter: Array<{ id: string; hora: string | null; ordem: number; temArte: boolean }> = [];
+  const inserir: Array<{ texto: string; hora: string | null; ordem: number }> = [];
+  const usados = new Set<string>();
+
+  novas.forEach((nova, ordem) => {
+    const candidatos = disponiveis.get(normalizarTexto(nova.texto));
+    const casada = candidatos?.shift();
+    if (casada) {
+      usados.add(casada.id);
+      manter.push({ id: casada.id, hora: nova.hora, ordem, temArte: !!casada.imagem_url });
+    } else {
+      inserir.push({ texto: nova.texto, hora: nova.hora, ordem });
+    }
+  });
+
+  return { manter, inserir, remover: atuais.filter((t) => !usados.has(t.id)).map((t) => t.id) };
+}
+
 function sanitizarTarefasSimples(bruto: unknown): TarefaProposta[] {
   if (!Array.isArray(bruto)) return [];
   const out: TarefaProposta[] = [];
@@ -655,10 +711,11 @@ export async function editarRotina(
     const rotinaId = rot.id;
     const { data: tarefas } = await supabase
       .from("rotina_tarefas")
-      .select("texto, hora, ordem")
+      .select("id, texto, hora, ordem, imagem_url")
       .eq("rotina_id", rotinaId)
       .order("ordem", { ascending: true });
-    const atuais = (tarefas ?? []).map((t) => ({ texto: t.texto as string, hora: (t.hora as string | null) ?? null }));
+    const linhas = (tarefas ?? []) as unknown as TarefaLinha[];
+    const atuais = linhas.map((t) => ({ texto: t.texto, hora: t.hora ?? null }));
 
     const client = getAylaAnthropicClient();
     const resp = await client.messages.create({
@@ -688,25 +745,53 @@ export async function editarRotina(
       return null;
     }
 
-    await supabase.from("rotina_tarefas").delete().eq("rotina_id", rotinaId);
-    const rows = novas.slice(0, 25).map((t, i) => ({
-      rotina_id: rotinaId,
-      texto: t.texto.slice(0, 120),
-      hora: t.hora ? t.hora.slice(0, 10) : null,
-      icone: null,
-      ordem: i,
-    }));
-    if (rows.length) await supabase.from("rotina_tarefas").insert(rows);
+    // DIFF, não delete-tudo: passo que continua igual fica onde está, com a
+    // ilustração dele. Só o que ela mexeu vira insert/delete.
+    const { manter, inserir, remover } = casarTarefas(linhas, novas.slice(0, 25));
 
-    // Tinha cartões no tema? A mudança pede regeneração.
-    const tinhaCartoes = rot.tema && (rot.cards_status === "pronto" || rot.cards_status === "gerando");
-    if (tinhaCartoes && rot.tema) {
+    for (const m of manter) {
+      await supabase
+        .from("rotina_tarefas")
+        .update({ hora: m.hora ? m.hora.slice(0, 10) : null, ordem: m.ordem })
+        .eq("id", m.id)
+        .eq("rotina_id", rotinaId);
+    }
+    if (remover.length) {
+      await supabase.from("rotina_tarefas").delete().in("id", remover).eq("rotina_id", rotinaId);
+    }
+    if (inserir.length) {
+      await supabase.from("rotina_tarefas").insert(
+        inserir.map((t) => ({
+          rotina_id: rotinaId,
+          texto: t.texto.slice(0, 120),
+          hora: t.hora ? t.hora.slice(0, 10) : null,
+          icone: null,
+          ordem: t.ordem,
+        })),
+      );
+    }
+
+    // Cartões: só chama o gerador se a mudança REALMENTE pede desenho novo —
+    // passo que entrou (não tem card) ou saiu (a história cita a sequência).
+    // Trocar horário ou reordenar não redesenha nada: a arte vive na linha da
+    // tarefa e acompanha a nova ordem. E a geração PRESERVA o que já existe,
+    // ilustrando só os cards faltantes, com o mesmo mascote.
+    const tinhaCartoes = !!rot.tema && (rot.cards_status === "pronto" || rot.cards_status === "gerando");
+    const precisaDesenho = inserir.length > 0 || remover.length > 0;
+    const vaiRegerar = tinhaCartoes && precisaDesenho;
+    if (vaiRegerar && rot.tema) {
       await supabase.from("rotinas").update({ cards_status: "nenhum" }).eq("id", rotinaId);
-      await dispararGeracao(rotinaId, rot.tema);
+      await dispararGeracao(rotinaId, rot.tema, { preservarArte: true });
     }
 
     const link = await gerarMagicLink(supabase, { familyId: params.familyId, next: `/ludico/rotinas/${rotinaId}` });
-    const regen = tinhaCartoes ? " Tô refazendo os cartões com a mudança (uns minutinhos)." : "";
+    const regen = !vaiRegerar
+      ? ""
+      : inserir.length === 0
+        ? " Tô refazendo a historinha com a mudança (uns minutinhos)."
+        : inserir.length === 1
+          ? " Tô desenhando o cartão novo (uns minutinhos)."
+          : " Tô desenhando os cartões novos (uns minutinhos).";
     const base = `Pronto, ajustei a rotina *${rot.nome}* 🌿${regen}`;
     return link ? `${base}\nAbre aqui:\n${link}` : base;
   } catch (e) {

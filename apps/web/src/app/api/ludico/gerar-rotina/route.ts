@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
 
-  let body: { rotinaId?: string; tema?: string } = {};
+  let body: { rotinaId?: string; tema?: string; preservarArte?: boolean } = {};
   try {
     body = await request.json();
   } catch {
@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
   const svc = createServiceRoleClient();
   const { data: rotina } = await svc
     .from("rotinas")
-    .select("id, nome, family_account_id, cards_status, membros_atipicos(data_nascimento)")
+    .select("id, nome, family_account_id, cards_status, mascote_url, membros_atipicos(data_nascimento)")
     .eq("id", rotinaId)
     .maybeSingle();
   if (!rotina) return NextResponse.json({ error: "rotina não encontrada" }, { status: 404 });
@@ -49,11 +49,22 @@ export async function POST(request: NextRequest) {
   const familyId = rotina.family_account_id as string;
   const { data: tarefasData } = await svc
     .from("rotina_tarefas")
-    .select("id, texto, ordem")
+    .select("id, texto, ordem, nome_tematico, cena, imagem_url")
     .eq("rotina_id", rotinaId)
     .order("ordem", { ascending: true });
   const tarefas = tarefasData ?? [];
   if (!tarefas.length) return NextResponse.json({ error: "rotina sem tarefas" }, { status: 400 });
+
+  // EDIÇÃO pela Ayla: a arte que já existe fica. Só os passos novos são
+  // desenhados, com o MESMO mascote de antes como referência — assim mudar um
+  // passo não torra a rotina inteira nem muda o personagem no meio do caminho.
+  const mascoteAtual = (rotina.mascote_url as string | null) ?? null;
+  const preservar = body.preservarArte === true && !!mascoteAtual;
+  const arteExistente = preservar
+    ? tarefas.map((t) => (t.imagem_url as string | null) ?? null)
+    : undefined;
+  // Se todos os passos já têm arte (só saiu passo), nenhuma imagem é gerada —
+  // o que muda é a história, que cita a sequência.
 
   const rel = rotina.membros_atipicos as
     | { data_nascimento: string | null }
@@ -78,12 +89,16 @@ export async function POST(request: NextRequest) {
         tema,
         mascoteDescricao: roteiro.mascote,
         cards: roteiro.cards,
-        referenciaUrl: undefined,
+        referenciaUrl: preservar ? (mascoteAtual ?? undefined) : undefined,
+        arteExistente,
       });
       await Promise.all(
         tarefaIds.map((id, i) => {
           const card = roteiro.cards[i];
           if (!card) return Promise.resolve();
+          // Card preservado NÃO é reescrito: o nome temático é o que a mãe já
+          // leu no cartão impresso; trocar por um sinônimo novo só confunde.
+          if (preservar && arteExistente?.[i]) return Promise.resolve();
           return svc
             .from("rotina_tarefas")
             .update({ nome_tematico: card.nome_tematico, cena: card.cena, imagem_url: imagens[i] ?? null })
