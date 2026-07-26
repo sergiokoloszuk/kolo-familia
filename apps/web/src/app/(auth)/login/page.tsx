@@ -101,6 +101,14 @@ function LoginPageInner() {
           </Link>
         </form>
 
+        {/* Saída que NÃO depende de e-mail nem de lembrar senha: o público daqui
+            vive no WhatsApp, e o link da Ayla entra direto. Antes, quem tocava
+            num link velho caía nesta tela sem saber o que fazer. */}
+        <p className="rounded-md bg-muted/60 px-3 py-2 text-center text-xs text-muted-foreground">
+          Não lembra a senha? Manda <strong className="font-semibold">“quero entrar”</strong> pra
+          Ayla no WhatsApp — ela te envia um link que abre sem senha.
+        </p>
+
         <p className="text-center text-sm text-muted-foreground">
           Ainda não tem conta?{" "}
           <Link href="/signup" className="font-medium text-foreground underline-offset-4 hover:underline">

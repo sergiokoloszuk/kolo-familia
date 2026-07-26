@@ -4,6 +4,7 @@ import { gerarPlano } from "@/lib/ia/plano";
 import { planoParaPdf } from "@/lib/plano/pdf";
 import { enviarDocumento } from "./whatsappSender";
 import { logEvent, logServerError } from "@/lib/log";
+import { criarLinkAcesso } from "@/lib/auth/acesso-link";
 
 /**
  * Num pedido de plano EXPLÍCITO ("me traz um plano"), o desafio de verdade está
@@ -148,9 +149,6 @@ async function nomeDoMembro(
  * com forcar=true — rede de segurança contra double-dispatch). */
 const PLANO_COOLDOWN_MIN = 3;
 
-function appUrl(): string {
-  return (process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000").replace(/\/$/, "");
-}
 
 /**
  * Mint de um magic-link que abre o app já logado num destino interno.
@@ -167,30 +165,12 @@ export async function gerarMagicLink(
         ? params.next
         : "/estrategias";
 
-    const { data: fam } = await supabase
-      .from("family_accounts")
-      .select("user_id")
-      .eq("id", params.familyId)
-      .maybeSingle();
-    const userId = fam?.user_id as string | undefined;
-    if (!userId) return null;
-
+    // Token NOSSO (acessos_app). Antes isto usava o magic-link do Supabase, e o
+    // GoTrue guarda UM token por usuário: cada link novo matava os anteriores.
+    // A mãe tocava no link de ontem e caía no /login pedindo senha que ela não
+    // tem. Agora vários links valem ao mesmo tempo, por 7 dias.
     const admin = createServiceRoleClient();
-    const { data: userData } = await admin.auth.admin.getUserById(userId);
-    const email = userData?.user?.email;
-    if (!email) return null;
-
-    const { data: linkData, error: linkErr } = await admin.auth.admin.generateLink({
-      type: "magiclink",
-      email,
-      options: { redirectTo: `${appUrl()}/auth/wa` },
-    });
-    const tokenHash = linkData?.properties?.hashed_token;
-    if (linkErr || !tokenHash) return null;
-
-    return `${appUrl()}/auth/wa?token_hash=${encodeURIComponent(
-      tokenHash,
-    )}&next=${encodeURIComponent(next)}`;
+    return await criarLinkAcesso(admin, { familyId: params.familyId, next, criadoPor: "ayla" });
   } catch (e) {
     console.warn(
       "[ayla:ponte] falha ao gerar magic-link:",

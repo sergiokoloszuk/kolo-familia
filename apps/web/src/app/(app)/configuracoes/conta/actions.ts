@@ -169,6 +169,34 @@ export async function atualizarEmailAction(
   }
 }
 
+const senhaSchema = z.object({
+  senha: z.string().min(8, "A senha precisa ter pelo menos 8 caracteres.").max(72),
+});
+
+/**
+ * Define a senha de quem JÁ ESTÁ LOGADA — sem e-mail no meio.
+ *
+ * Quem entrou pelo link da Ayla não tem senha nenhuma (ou não lembra), e o
+ * caminho por e-mail é frágil pra esse público: o endereço pode ter typo, ela
+ * pode não abrir a caixa, e o token do e-mail divide o MESMO slot do link da
+ * Ayla no Supabase — um mata o outro. Logada, nada disso é necessário.
+ */
+export async function definirSenhaAction(
+  input: z.infer<typeof senhaSchema>,
+): Promise<PerfilResult> {
+  try {
+    const { senha } = senhaSchema.parse(input);
+    const { supabase } = await loadFamilyContext();
+    const { error } = await supabase.auth.updateUser({ password: senha });
+    if (error) {
+      return { ok: false, error: `Não consegui salvar agora: ${error.message}` };
+    }
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "Erro inesperado" };
+  }
+}
+
 const schema = z.object({
   confirmacao: z
     .string()

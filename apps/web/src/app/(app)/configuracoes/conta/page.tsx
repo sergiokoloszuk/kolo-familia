@@ -7,13 +7,12 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { buttonVariants } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
 import { loadFamilyContext } from "@/lib/auth/require-user";
 import { ExcluirContaForm } from "./excluir-form";
 import { PerfilForm } from "./perfil-form";
 import { WhatsappForm } from "./whatsapp-form";
 import { EmailForm } from "./email-form";
+import { SenhaForm } from "./senha-form";
 import { IdiomaForm, type Idioma } from "./idioma-form";
 
 export default async function MinhaContaPage() {
@@ -112,18 +111,14 @@ export default async function MinhaContaPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Mudar senha</CardTitle>
+          <CardTitle className="text-base">Sua senha</CardTitle>
           <CardDescription>
-            Mando um link pro seu e-mail e você define uma nova senha lá.
+            Define aqui mesmo, sem esperar e-mail. Serve tanto pra criar a
+            primeira quanto pra trocar a que você já tem.
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Link
-            href="/recuperar-senha"
-            className={cn(buttonVariants({ variant: "outline" }))}
-          >
-            Receber link de redefinição
-          </Link>
+          <SenhaForm />
         </CardContent>
       </Card>
 
