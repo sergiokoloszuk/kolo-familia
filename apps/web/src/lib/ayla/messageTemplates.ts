@@ -10,14 +10,22 @@
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { pronomesVars, type Genero } from "./pronomes";
+import { nomeUsavelCrianca, primeiroNome } from "./crianca-especifica";
 
 type TemplateVars = Record<string, string | number | undefined>;
 
 function fill(template: string, vars: TemplateVars): string {
-  return template.replace(/\{(\w+)\}/g, (_, k) => {
-    const v = vars[k];
-    return v == null ? "" : String(v);
-  });
+  return (
+    template
+      .replace(/\{(\w+)\}/g, (_, k) => {
+        const v = vars[k];
+        return v == null ? "" : String(v);
+      })
+      // Var vazia (ex.: nome que não é nome, omitido de propósito) deixa espaço
+      // dobrado e espaço antes de pontuação — limpa sem mexer nas quebras.
+      .replace(/[ \t]{2,}/g, " ")
+      .replace(/[ \t]+([,.!?;:])/g, "$1")
+  );
 }
 
 /**
@@ -156,9 +164,13 @@ export function templateBoasVindasComDesafio(params: {
   desafio: string;
 }): string {
   const frase = DESAFIO_FRASE[params.desafio] ?? "esse ponto que você marcou";
+  // Só cita a criança quando o nome É nome (o campo aceita recado) e com o
+  // primeiro nome. Sem isso a frase sai "a comunicação da Cuido de Várias
+  // Crianças. Sou Terapeuta! tem pesado" — foi o que aconteceu em 25/07.
+  const nomeCurto = nomeUsavelCrianca(params.nomeMembro) ? primeiroNome(params.nomeMembro) : "";
   const ref =
-    params.nomeMembro && (params.genero === "feminino" || params.genero === "masculino")
-      ? ` ${params.genero === "feminino" ? "da" : "do"} ${params.nomeMembro}`
+    nomeCurto && (params.genero === "feminino" || params.genero === "masculino")
+      ? ` ${params.genero === "feminino" ? "da" : "do"} ${nomeCurto}`
       : "";
   return `Oi, ${params.nomeMae} 💛 Acabamos de nos conhecer aí no app. Vi que ${frase}${ref} tem pesado no dia a dia — me conta rapidinho como está sendo? Pode mandar um *áudio*, do jeito que for mais fácil pra você. Com o que você contar, eu já começo a pensar numa primeira ideia pra vocês. 🌿`;
 }

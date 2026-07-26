@@ -27,7 +27,10 @@ export type AylaTipoProativa =
   | "campanha_informacional"
   | "campanha_promocional"
   | "campanha_avaliacao"
-  | "campanha_operacional";
+  | "campanha_operacional"
+  /** Convite pra definir UMA criança específica (nome + idade) — o campo do
+   *  nome veio com recado em vez de nome. Ver crianca-especifica.ts. */
+  | "crianca_especifica";
 
 export type AylaTipoReativa =
   | "resposta_registro"

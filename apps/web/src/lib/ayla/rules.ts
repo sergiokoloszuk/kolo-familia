@@ -26,6 +26,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { horaLocalHHMM } from "@/lib/idade";
 import { assinaturaLiberada } from "@/lib/auth/assinatura";
 import type { AylaTipoProativa } from "./types";
+import { criancaPendente } from "./crianca-especifica";
 
 const COMERCIAL: ReadonlyArray<AylaTipoProativa> = [
   "trial_d3",
@@ -49,6 +50,23 @@ const REQUER_ACESSO: ReadonlyArray<AylaTipoProativa> = [
   "plano_seguimento",
   "recuperacao_plano",
   "fim_de_semana",
+] as const;
+
+// Proativas que FALAM DA CRIANÇA — não saem enquanto não houver uma criança
+// específica definida. O comercial (trial/assine) e o operacional seguem: não
+// dependem de saber de quem se fala.
+const ENGAJAMENTO_PRECISA_CRIANCA: ReadonlyArray<AylaTipoProativa> = [
+  "rotina",
+  "engajamento_2dias",
+  "engajamento_5dias",
+  "insight",
+  "repertorio_sugestao",
+  "emocional_streak",
+  "emocional_conquista",
+  "plano_seguimento",
+  "recuperacao_plano",
+  "fim_de_semana",
+  "boas_vindas",
 ] as const;
 
 export type RulesContext = {
@@ -100,6 +118,20 @@ export async function podeEnviarProativa(
       .maybeSingle();
     if (!assinaturaLiberada(sub)) {
       return { permitido: false, motivo: "Sem acesso liberado (trial vencido / assinatura inativa) — engajamento não sai." };
+    }
+  }
+
+  // 1c. CRIANÇA DEFINIDA: se nenhum membro tem nome de gente (o campo veio com
+  // recado — "Cuido de Várias Crianças. Sou Terapeuta!"), o engajamento não faz
+  // sentido: falaria de uma criança que não existe. Bloqueia tudo menos o
+  // próprio convite, que é o que destrava a conversa (crianca-especifica.ts).
+  if (tipo !== "crianca_especifica" && (ENGAJAMENTO_PRECISA_CRIANCA as ReadonlyArray<string>).includes(tipo)) {
+    const pendente = await criancaPendente(supabase, ctx.family_account_id);
+    if (pendente) {
+      return {
+        permitido: false,
+        motivo: `Sem criança específica definida (nome="${pendente.nomeCru}") — a Ayla precisa resolver isso primeiro.`,
+      };
     }
   }
 

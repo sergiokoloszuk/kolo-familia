@@ -13,6 +13,8 @@
  * impessoalizar). Quando inevitável, cai pra "essa criança".
  */
 
+import { nomeUsavelCrianca, primeiroNome } from "./crianca-especifica";
+
 export type Genero = "masculino" | "feminino" | "neutro" | null | undefined;
 
 export type Pronomes = {
@@ -145,13 +147,20 @@ export function comPreposicaoCom(p: Pronomes, nome: string): string {
  * Inclui o próprio nome pra simplificar o chamador.
  */
 export function pronomesVars(genero: Genero, nome: string): Record<string, string> {
-  const p = pronomesPara(genero);
+  // O campo do nome aceita qualquer coisa e às vezes vem recado em vez de nome
+  // ("Cuido de Várias Crianças. Sou Terapeuta!"). Nesse caso a Ayla NÃO cita:
+  // as vars de nome ficam vazias e a frase segue sem a referência — melhor uma
+  // frase genérica do que uma frase absurda. Nome válido e composto entra só
+  // pelo primeiro nome, que é como se fala no WhatsApp.
+  const usavel = nomeUsavelCrianca(nome);
+  const curto = usavel ? primeiroNome(nome) : "";
+  const p = usavel ? pronomesPara(genero) : NEUTRO;
   return {
-    nomeMembro: nome,
-    artigoMembro: p.artigo,
+    nomeMembro: curto,
+    artigoMembro: curto ? p.artigo : "",
     possessivoMembro: p.possessivo,
     sujeitoMembro: p.sujeito,
-    deNomeMembro: comPreposicaoDe(p, nome),
-    comNomeMembro: comPreposicaoCom(p, nome),
+    deNomeMembro: curto ? comPreposicaoDe(p, curto) : "",
+    comNomeMembro: curto ? comPreposicaoCom(p, curto) : "",
   };
 }

@@ -48,6 +48,11 @@ import {
   editarRotina,
 } from "./rotina-guiada";
 import { classificarIntencao } from "./intent";
+import {
+  criancaPendente,
+  resolverCriancaPendente,
+  templateConviteCriancaEspecifica,
+} from "./crianca-especifica";
 import { extrairESalvarEventos } from "./eventos";
 import { assinaturaLiberada } from "@/lib/auth/assinatura";
 import { classificarAreasDiario } from "@/lib/ia/classificar-area";
@@ -161,6 +166,71 @@ export async function sendBoasVindas(
 }
 
 // ============================================================
+// PROATIVA: convite pra definir UMA criança específica
+// ============================================================
+
+/** Quantas vezes a Ayla convida antes de deixar em paz, e o intervalo. */
+const CONVITE_MAX = 3;
+const CONVITE_INTERVALO_DIAS = 3;
+
+/**
+ * O campo do nome veio com recado em vez de nome ("Cuido de Várias Crianças.
+ * Sou Terapeuta!")? Então nenhuma proativa de engajamento faz sentido — a Ayla
+ * explica como funciona e convida a pessoa a escolher UMA criança (nome +
+ * idade), inclusive uma que ela atenda ou um caso simulado.
+ *
+ * Devolve null quando NÃO há pendência (a rotina normal segue), ou o resultado
+ * do envio/bloqueio quando há. Convida no máximo CONVITE_MAX vezes, a cada
+ * CONVITE_INTERVALO_DIAS — se ela não quer responder, a Ayla não insiste.
+ */
+async function sendConviteCriancaEspecifica(
+  supabase: SupabaseClient,
+  familyAccountId: string,
+  agora: Date,
+): Promise<EnvioResultado | null> {
+  const pendente = await criancaPendente(supabase, familyAccountId);
+  if (!pendente) return null;
+
+  const podeRes = await podeEnviarProativa(
+    supabase,
+    { family_account_id: familyAccountId, agora },
+    "crianca_especifica",
+  );
+  if (!podeRes.permitido) return { enviada: false, motivo: podeRes.motivo };
+
+  const { data: jaEnviados } = await supabase
+    .from("ayla_messages")
+    .select("created_at")
+    .eq("family_account_id", familyAccountId)
+    .eq("tipo", "crianca_especifica")
+    .order("created_at", { ascending: false });
+  const convites = jaEnviados ?? [];
+  if (convites.length >= CONVITE_MAX) {
+    return { enviada: false, motivo: "Já convidou 3x a definir a criança — não insiste." };
+  }
+  const ultimo = convites[0]?.created_at as string | undefined;
+  if (ultimo) {
+    const dias = (agora.getTime() - new Date(ultimo).getTime()) / (24 * 60 * 60 * 1000);
+    if (dias < CONVITE_INTERVALO_DIAS) {
+      return { enviada: false, motivo: `Convite enviado há ${dias.toFixed(1)} dia(s) — aguardando.` };
+    }
+  }
+
+  const ctx = await loadFamiliaParaEnvio(supabase, familyAccountId);
+  if (!ctx) return { enviada: false, motivo: "Sem contexto da família." };
+
+  return await enviarEPersistir(supabase, {
+    family_account_id: familyAccountId,
+    membro_atipico_id: pendente.membroId,
+    phone: ctx.whatsapp_e164,
+    texto: templateConviteCriancaEspecifica({ nomeMae: ctx.nomeMae, motivo: pendente.motivo }),
+    category: "proativa",
+    tipo: "crianca_especifica",
+    meta: { motivo: pendente.motivo, nome_cru: pendente.nomeCru, tentativa: convites.length + 1 },
+  });
+}
+
+// ============================================================
 // PROATIVA: Rotina diária
 // ============================================================
 
@@ -169,6 +239,13 @@ export async function sendRotinaDiaria(
   familyAccountId: string,
   agora: Date = new Date(),
 ): Promise<EnvioResultado> {
+  // Antes de qualquer engajamento: existe uma criança específica pra falar? Se o
+  // campo do nome veio com recado, a Ayla PERCEBE e conduz — explica como ela
+  // funciona e convida a escolher uma criança (nome + idade). Vai no lugar da
+  // rotina do dia, no mesmo horário que já roda.
+  const convite = await sendConviteCriancaEspecifica(supabase, familyAccountId, agora);
+  if (convite) return convite;
+
   const podeRes = await podeEnviarProativa(
     supabase,
     { family_account_id: familyAccountId, agora },
@@ -1173,6 +1250,31 @@ export async function processInbound(
         return { tratada: true, familia: family.id, resposta: resp };
       }
       // Falhou gerar → cai no fluxo normal (a Ayla ainda responde algo).
+    }
+  }
+
+  // 3b-crianca. A Ayla pediu pra ela escolher UMA criança (nome + idade) e essa
+  // é a resposta? Grava e segue a conversa — auto-incorporação, sem formulário.
+  // Vem ANTES do classificador: "Lucas, 5 anos" não é rotina nem plano, e sem
+  // criança definida nada mais faz sentido.
+  {
+    const pendente = await criancaPendente(supabase, family.id);
+    if (pendente) {
+      const msg = await resolverCriancaPendente(supabase, { pendente, texto: inbound.texto });
+      if (msg) {
+        const ctxC = await loadFamiliaParaEnvio(supabase, family.id);
+        const resp = await enviarEPersistir(supabase, {
+          family_account_id: family.id,
+          membro_atipico_id: pendente.membroId,
+          phone: ctxC?.whatsapp_e164 ?? inbound.phoneE164,
+          texto: msg,
+          category: "reativa",
+          tipo: "resposta_registro",
+        });
+        return { tratada: true, familia: family.id, resposta: resp };
+      }
+      // Não deu nome ainda: segue a conversa normal (a Ayla responde o que ela
+      // trouxe; as vars de nome ficam vazias em vez de citar o recado).
     }
   }
 
