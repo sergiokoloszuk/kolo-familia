@@ -53,7 +53,7 @@ async function entregarPdfDoPlano(
     secoes: Array<{ tipo: string; titulo: string; conteudo_markdown: string }>;
     nomeMembro?: string | null;
   },
-): Promise<void> {
+): Promise<boolean> {
   try {
     const bytes = await planoParaPdf({
       titulo: params.titulo,
@@ -71,20 +71,46 @@ async function entregarPdfDoPlano(
     if (!signed?.signedUrl) throw new Error("sem signed url");
 
     const fileName = `${(params.titulo || "plano").replace(/[^\w\sÀ-ÿ-]/g, "").slice(0, 50).trim() || "plano"}.pdf`;
-    await enviarDocumento({ phoneE164: params.phoneE164, url: signed.signedUrl, fileName });
-    // Sucesso — info (só stdout) pra distinguir "gerou e mandou" de "nem gerou".
+    const envio = await enviarDocumento({
+      phoneE164: params.phoneE164,
+      url: signed.signedUrl,
+      fileName,
+    });
+    // Visibilidade REAL do envio. Antes isto era logEvent com severity "info" —
+    // que nunca persiste (o limiar é warn+), então a gente achava que tinha
+    // visibilidade e não tinha: nem sucesso nem falha apareciam. Agora fica no
+    // ayla_send_log, com o messageId do provedor, que é o que permite cobrar a
+    // Z-API quando ela aceita (200) e não entrega (caso Jacke, 22–24/07).
+    await supabase.from("ayla_send_log").insert({
+      family_account_id: params.familyId,
+      template_key: "plano_pdf",
+      payload: { fileName, bytes: bytes.length, phone: params.phoneE164 },
+      resposta_provider: envio.raw as Record<string, unknown> | null,
+      status: "enviada",
+      erro: null,
+    });
     await logEvent({
       kind: "ayla_pdf_plano_ok",
       severity: "info",
       family_account_id: params.familyId,
-      payload: { bytes: bytes.length },
+      payload: { bytes: bytes.length, messageId: envio.messageId },
     });
+    return true;
   } catch (e) {
-    // Falha do PDF é silenciosa pra mãe (o link segue), mas NÃO pode ser cega
-    // pra nós — persiste em eventos_app pra sabermos se o cano quebrou.
+    // Falha do PDF não quebra a resposta (o link segue), mas NÃO pode ser cega
+    // pra nós nem pra ela: persiste, e quem chama deixa de prometer o PDF.
     await logServerError("ayla_pdf_plano_falha", e, {
       family_account_id: params.familyId,
     });
+    await supabase.from("ayla_send_log").insert({
+      family_account_id: params.familyId,
+      template_key: "plano_pdf",
+      payload: { titulo: params.titulo, phone: params.phoneE164 },
+      resposta_provider: null,
+      status: "falha",
+      erro: e instanceof Error ? e.message.slice(0, 500) : "erro",
+    });
+    return false;
   }
 }
 
@@ -240,7 +266,7 @@ export async function montarPonteWhatsApp(
     console.log(`[ayla:ponte] plano gerado id=${plano.id} secoes=${plano.secoes.length}`);
 
     const nomeMembro = await nomeDoMembro(supabase, familyId, membroAtipicoId);
-    await entregarPdfDoPlano(supabase, {
+    const pdfOk = await entregarPdfDoPlano(supabase, {
       familyId,
       phoneE164,
       titulo: plano.titulo,
@@ -251,8 +277,9 @@ export async function montarPonteWhatsApp(
     const link = await gerarMagicLink(supabase, { familyId, next: `/planos/${plano.id}` });
     console.log(`[ayla:ponte] magic-link ${link ? "ok" : "FALHOU"} → /planos/${plano.id}`);
 
-    const base =
-      "Montei um plano completo sobre isso — mandei em PDF aqui em cima 👆 (dá pra salvar e imprimir).";
+    const base = pdfOk
+      ? "Montei um plano completo sobre isso — mandei em PDF aqui em cima 👆 (dá pra salvar e imprimir)."
+      : "Montei um plano completo sobre isso 🌿";
     if (!link) return base;
     return `${base}\nE se quiser ver no app, ajustar ou me contar depois como foi, é só abrir (já entra direto):\n${link}`;
   } catch (e) {
@@ -294,7 +321,7 @@ export async function montarPlanoFimDeSemana(
       origem: "fim_de_semana",
     });
 
-    await entregarPdfDoPlano(supabase, {
+    const pdfOk = await entregarPdfDoPlano(supabase, {
       familyId: params.familyId,
       phoneE164: params.phoneE164,
       titulo: plano.titulo,
@@ -308,7 +335,9 @@ export async function montarPlanoFimDeSemana(
     });
 
     const ref = params.nomeMembro ? ` pra ${params.nomeMembro}` : "";
-    const base = `Montei um roteiro leve pro fim de semana${ref} — mandei em PDF aqui em cima 👆.`;
+    const base = pdfOk
+      ? `Montei um roteiro leve pro fim de semana${ref} — mandei em PDF aqui em cima 👆.`
+      : `Montei um roteiro leve pro fim de semana${ref} 🌿`;
     if (!link) return base;
     return `${base}\nQuer ver no app ou ajustar? É só abrir (já entra direto):\n${link}`;
   } catch (e) {
@@ -348,7 +377,7 @@ export async function montarPlanoDoRelato(
       origem: "estrategias",
     });
 
-    await entregarPdfDoPlano(supabase, {
+    const pdfOk = await entregarPdfDoPlano(supabase, {
       familyId: params.familyId,
       phoneE164: params.phoneE164,
       titulo: plano.titulo,
@@ -362,7 +391,9 @@ export async function montarPlanoDoRelato(
     });
 
     const ref = params.nomeMembro ? ` pra ${params.nomeMembro}` : "";
-    const base = `Prontinho — montei o plano${ref} com o que você me contou, usando os interesses que a gente já sabe 💛 Mandei em PDF aqui em cima 👆.`;
+    const base = pdfOk
+      ? `Prontinho — montei o plano${ref} com o que você me contou, usando os interesses que a gente já sabe 💛 Mandei em PDF aqui em cima 👆.`
+      : `Prontinho — montei o plano${ref} com o que você me contou, usando os interesses que a gente já sabe 💛`;
     if (!link) return base;
     return `${base}\nSe quiser ver no app ou me contar depois como foi, é só abrir (já entra direto):\n${link}`;
   } catch (e) {
