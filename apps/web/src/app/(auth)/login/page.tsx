@@ -11,9 +11,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { createClient } from "@/lib/supabase/client";
+import { emailCampo } from "@/lib/auth/email-campo";
 
 const schema = z.object({
-  email: z.string().email("E-mail inválido"),
+  email: emailCampo,
   password: z.string().min(8, "Senha deve ter no mínimo 8 caracteres"),
 });
 

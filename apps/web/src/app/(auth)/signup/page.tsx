@@ -10,11 +10,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { createClient } from "@/lib/supabase/client";
+import { emailCampo } from "@/lib/auth/email-campo";
 
 const BETA_GATE = process.env.NEXT_PUBLIC_BETA_GATE_ENABLED === "true";
 
 const schema = z.object({
-  email: z.string().email("E-mail inválido"),
+  email: emailCampo,
   password: z.string().min(8, "Mínimo 8 caracteres"),
   codigo_convite: BETA_GATE
     ? z.string().trim().min(4, "Código de convite obrigatório").max(40)
