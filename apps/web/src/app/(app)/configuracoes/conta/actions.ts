@@ -250,8 +250,35 @@ export async function excluirContaAction(input: {
     }
   }
 
-  // 2. Deleta o user — cascateia
+  // 2. Antes de apagar: registra que este e-mail/número JÁ USOU o teste.
+  //    Só o hash (sha256) vai pra tabela — a exclusão continua sendo exclusão
+  //    de verdade, e ninguém ganha outros 7 dias grátis recadastrando. O hash
+  //    é calculado no banco (fonte única), não aqui, pra não haver divergência
+  //    de normalização.
   const admin = createServiceRoleClient();
+  {
+    const { data: conta } = familyId
+      ? await admin
+          .from("family_accounts")
+          .select("whatsapp_e164")
+          .eq("id", familyId)
+          .maybeSingle()
+      : { data: null };
+    const { error: errReg } = await admin.rpc("registrar_teste_usado", {
+      p_email: user.email ?? null,
+      p_whatsapp: (conta?.whatsapp_e164 as string | null) ?? null,
+      p_origem: "exclusao",
+    });
+    // Falhar aqui NÃO pode impedir a exclusão (direito da pessoa vem primeiro),
+    // mas tem que ficar visível — senão a brecha volta em silêncio.
+    if (errReg) {
+      await logServerError("registrar_teste_usado_falhou", errReg, {
+        user_id: user.id,
+        family_account_id: familyId,
+      });
+    }
+  }
+
   const { error: errDel } = await admin.auth.admin.deleteUser(user.id);
   if (errDel) {
     await logServerError("excluir_conta_delete_user", errDel, {

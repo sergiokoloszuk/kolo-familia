@@ -73,6 +73,26 @@ export function acessoEncerradoSemPagar(sub: AcessoAssinatura | null | undefined
   return false;
 }
 
+/**
+ * O teste JÁ NASCEU vencido — é quem apagou a conta e cadastrou de novo com o
+ * mesmo e-mail/WhatsApp (migração 0065 fecha a brecha dos "7 dias infinitos").
+ * Serve pra falar a verdade na tela: "seu período grátis acabou" confundiria
+ * quem acabou de criar a conta e nunca usou NESSA conta.
+ *
+ * Sinal: trial_ends_at praticamente igual à criação da assinatura (o trigger
+ * grava now() em vez de now() + 7 dias). Tolerância de 1 minuto pro tempo entre
+ * os dois inserts.
+ */
+export function testeJaUsadoAntes(
+  sub: (AcessoAssinatura & { created_at?: string | null }) | null | undefined,
+): boolean {
+  if (!sub?.trial_ends_at || !sub.created_at) return false;
+  const fim = new Date(sub.trial_ends_at).getTime();
+  const criado = new Date(sub.created_at).getTime();
+  if (!Number.isFinite(fim) || !Number.isFinite(criado)) return false;
+  return fim - criado < 60_000;
+}
+
 /** True quando o trial existe mas já venceu (pra mensagem específica). */
 export function trialVencido(sub: AcessoAssinatura | null | undefined): boolean {
   return (

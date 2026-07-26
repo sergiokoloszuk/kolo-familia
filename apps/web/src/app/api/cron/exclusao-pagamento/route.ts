@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { getStripeClient } from "@/lib/stripe/client";
-import { logEvent } from "@/lib/log";
+import { logEvent, logServerError } from "@/lib/log";
 import { RETENCAO_DIAS } from "@/lib/auth/assinatura";
 
 /**
@@ -52,7 +52,7 @@ async function handle(request: NextRequest) {
     const familyId = a.family_account_id as string;
     const { data: fam } = await admin
       .from("family_accounts")
-      .select("user_id")
+      .select("user_id, whatsapp_e164")
       .eq("id", familyId)
       .maybeSingle();
     const userId = fam?.user_id as string | null;
@@ -70,6 +70,23 @@ async function handle(request: NextRequest) {
         /* best-effort */
       }
     }
+    // Registra que este e-mail/número já consumiu o teste (só o hash) — senão
+    // quem some por falta de pagamento volta amanhã com 7 dias grátis novos.
+    {
+      const { data: u } = await admin.auth.admin.getUserById(userId);
+      const { error: errReg } = await admin.rpc("registrar_teste_usado", {
+        p_email: u?.user?.email ?? null,
+        p_whatsapp: (fam?.whatsapp_e164 as string | null) ?? null,
+        p_origem: "dunning",
+      });
+      if (errReg) {
+        await logServerError("registrar_teste_usado_falhou", errReg, {
+          user_id: userId,
+          family_account_id: familyId,
+        });
+      }
+    }
+
     // Apaga o usuário → cascateia tudo (mesma engine da exclusão explícita).
     const { error } = await admin.auth.admin.deleteUser(userId);
     if (!error) {

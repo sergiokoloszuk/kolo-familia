@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 import { differenceInCalendarDays } from "date-fns";
 import { loadFamilyContext } from "@/lib/auth/require-user";
 import { createServiceRoleClient } from "@/lib/supabase/server";
-import { assinaturaLiberada, pagamentoEmFalha, diasAteExclusao, acessoEncerradoSemPagar } from "@/lib/auth/assinatura";
+import { assinaturaLiberada, pagamentoEmFalha, diasAteExclusao, acessoEncerradoSemPagar, testeJaUsadoAntes } from "@/lib/auth/assinatura";
 import { Sidebar } from "./sidebar";
 import { TrialGate } from "./trial-gate";
 import { PagamentoGate } from "./pagamento-gate";
@@ -75,7 +75,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
       .eq("family_account_id", family.id),
     supabase
       .from("subscription_accesses")
-      .select("status, trial_ends_at, cortesia, cortesia_ate, pagamento_falhou_em")
+      .select("status, trial_ends_at, cortesia, cortesia_ate, pagamento_falhou_em, created_at")
       .eq("family_account_id", family.id)
       .maybeSingle(),
   ]);
@@ -90,7 +90,12 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
     if (pagamentoEmFalha(sub)) {
       return <PagamentoGate diasRestantes={diasAteExclusao(sub)} />;
     }
-    return <TrialGate vencido={acessoEncerradoSemPagar(sub)} />;
+    return (
+      <TrialGate
+        vencido={acessoEncerradoSemPagar(sub)}
+        jaUsouAntes={testeJaUsadoAntes(sub)}
+      />
+    );
   }
   const nomeUsuario =
     profile?.como_chamar?.trim() ||
