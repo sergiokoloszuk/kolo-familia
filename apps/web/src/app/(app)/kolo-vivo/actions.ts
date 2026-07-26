@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import { DOMINIOS, membroCampoStorage } from "./dominios";
 import { detectarMarcos } from "@/lib/kolo-vivo/incorporar";
 import { resolveFamily } from "@/lib/auth/current-family";
+import { requireActiveWrite } from "@/lib/auth/require-active-write";
 
 async function requireFamily() {
   const supabase = await createClient();
@@ -15,6 +16,11 @@ async function requireFamily() {
   if (!user) throw new Error("Não autenticado");
   const { data: family } = await resolveFamily(supabase);
   if (!family) throw new Error("Família não inicializada");
+  // Trial vencido / assinatura inativa não escreve nem gera (isto custa IA e
+  // imagem). O TrialGate esconde a TELA, mas server action é endpoint próprio:
+  // aba aberta antes de vencer, ou chamada direta, passava direto. Admin/staff
+  // e cortesia continuam liberados (a regra mora em requireActiveWrite).
+  await requireActiveWrite(family.id);
   return { supabase, user, family };
 }
 

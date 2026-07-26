@@ -5,14 +5,28 @@ import { AssinaturaActions } from "./assinatura/assinatura-actions";
  * Bloqueio de acesso quando o período grátis acabou (ou a assinatura não está
  * ativa) e a pessoa não é admin/analista/cortesia. Tela cheia, sem sidebar.
  * Reusa os botões de checkout do Stripe — assinou, o webhook libera e volta.
+ *
+ * Aqui é o FIM DA LINHA de quem venceu: o layout intercepta antes de qualquer
+ * página, então a `/assinatura` (que mostra planos e valores) é inalcançável
+ * justamente pra quem precisa dela — inclusive quando a Ayla manda o link. Por
+ * isso esta tela precisa mostrar o PREÇO e a diferença entre mensal e anual;
+ * antes eram dois botões sem valor nenhum.
  */
 export function TrialGate({
   vencido,
   jaUsouAntes = false,
+  precoMensal = null,
+  precoAnual = null,
+  economiaAnual = null,
 }: {
   vencido: boolean;
   /** O teste nasceu vencido: já foi usado antes com este e-mail/WhatsApp. */
   jaUsouAntes?: boolean;
+  /** Já formatado (ex.: "R$ 54,90"), da mesma fonte da página de planos. */
+  precoMensal?: string | null;
+  precoAnual?: string | null;
+  /** Quanto o anual economiza no ano, quando dá pra calcular. */
+  economiaAnual?: string | null;
 }) {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-kolo-page px-6 py-12">
@@ -32,9 +46,49 @@ export function TrialGate({
             ? "O teste de 7 dias é uma vez por pessoa, e esse já foi usado com este e-mail ou WhatsApp. Pra entrar de novo e ter tudo à mão, escolha um plano."
             : "Pra continuar acompanhando seu filho na Kolo — o Perfil, as conversas e tudo que você já registrou —, escolha um plano. Seus dados continuam guardados."}
         </p>
+        {(precoMensal || precoAnual) && (
+          <div className="mt-6 flex flex-col gap-2 text-left">
+            {precoMensal && (
+              <div className="flex items-baseline justify-between rounded-xl border border-foreground/[0.08] px-4 py-3">
+                <span className="text-sm text-foreground">Mensal</span>
+                <span className="text-sm font-semibold text-foreground">
+                  {precoMensal}
+                  <span className="font-normal text-muted-foreground">/mês</span>
+                </span>
+              </div>
+            )}
+            {precoAnual && (
+              <div className="flex items-baseline justify-between rounded-xl border border-brand-purple/25 bg-brand-purple/[0.04] px-4 py-3">
+                <span className="text-sm text-foreground">
+                  Anual
+                  {economiaAnual && (
+                    <span className="ml-1 text-xs text-brand-purple">
+                      economiza {economiaAnual}
+                    </span>
+                  )}
+                </span>
+                <span className="text-sm font-semibold text-foreground">
+                  {precoAnual}
+                  <span className="font-normal text-muted-foreground">/ano</span>
+                </span>
+              </div>
+            )}
+          </div>
+        )}
+
         <div className="mt-6 flex justify-center">
-          <AssinaturaActions status="trialing" temCustomerId={false} />
+          <AssinaturaActions
+            status="trialing"
+            temCustomerId={false}
+            precoMensal={precoMensal}
+            precoAnual={precoAnual}
+          />
         </div>
+
+        <p className="mt-5 text-xs text-muted-foreground">
+          Dá pra cancelar quando quiser. Se preferir falar com a gente antes, é só
+          responder a Ayla no WhatsApp.
+        </p>
       </div>
     </div>
   );

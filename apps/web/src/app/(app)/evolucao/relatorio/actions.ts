@@ -2,6 +2,7 @@
 
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
+import { requireActiveWrite } from "@/lib/auth/require-active-write";
 import {
   gerarRelatorio as gerarRelatorioIA,
   ajustarRelatorio as ajustarRelatorioIA,
@@ -20,6 +21,9 @@ async function requireFamily() {
     .eq("user_id", user.id)
     .single();
   if (!family) throw new Error("Família não inicializada");
+  // Trial vencido / assinatura inativa não gera nem escreve (custa IA). O
+  // TrialGate esconde a tela, mas server action é endpoint próprio.
+  await requireActiveWrite(family.id);
   return { supabase, family };
 }
 

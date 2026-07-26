@@ -7,9 +7,17 @@ import { iniciarCheckout, abrirPortal } from "./actions";
 export function AssinaturaActions({
   status,
   temCustomerId,
+  precoMensal = null,
+  precoAnual = null,
 }: {
   status: string;
   temCustomerId: boolean;
+  /** Valor já formatado (ex.: "R$ 54,90"). Entra no rótulo do botão pra a
+   *  pessoa saber o que vai pagar ANTES de abrir o checkout — antes o botão
+   *  dizia só "Assinar mensal" e o preço só aparecia na página de assinatura,
+   *  que é inalcançável pra quem está no bloqueio. */
+  precoMensal?: string | null;
+  precoAnual?: string | null;
 }) {
   const [pending, startTransition] = useTransition();
   const [erro, setErro] = useState<string | null>(null);
@@ -57,10 +65,18 @@ export function AssinaturaActions({
       {podeAssinar && (
         <div className="flex flex-wrap gap-2">
           <Button onClick={() => checkout("mensal")} disabled={pending}>
-            {pendingAcao === "checkout-mensal" ? "Abrindo..." : "Assinar mensal"}
+            {pendingAcao === "checkout-mensal"
+              ? "Abrindo..."
+              : precoMensal
+                ? `Assinar mensal — ${precoMensal}/mês`
+                : "Assinar mensal"}
           </Button>
           <Button variant="outline" onClick={() => checkout("anual")} disabled={pending}>
-            {pendingAcao === "checkout-anual" ? "Abrindo..." : "Assinar anual (com desconto)"}
+            {pendingAcao === "checkout-anual"
+              ? "Abrindo..."
+              : precoAnual
+                ? `Assinar anual — ${precoAnual}/ano`
+                : "Assinar anual (com desconto)"}
           </Button>
         </div>
       )}

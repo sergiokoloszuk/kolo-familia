@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
+import { requireActiveWrite } from "@/lib/auth/require-active-write";
 import { calcularDASS21, type DASS21Resultado } from "@/lib/dass21";
 import { hojeLocalISO } from "@/lib/idade";
 
@@ -18,6 +19,9 @@ async function requireUserAndFamily() {
     .eq("user_id", user.id)
     .single();
   if (!family) throw new Error("Família não inicializada");
+  // Trial vencido / assinatura inativa não gera nem escreve (custa IA). O
+  // TrialGate esconde a tela, mas server action é endpoint próprio.
+  await requireActiveWrite(family.id);
   return { supabase, user, family };
 }
 

@@ -13,6 +13,7 @@ import {
   type TemaSugerido,
 } from "@/lib/ludico/meditacao";
 import { resolveFamily } from "@/lib/auth/current-family";
+import { requireActiveWrite } from "@/lib/auth/require-active-write";
 
 type Ok<T = object> = { ok: true } & T;
 type Fail = { ok: false; error: string };
@@ -25,6 +26,11 @@ async function requireFamily() {
   if (!user) throw new Error("Não autenticado");
   const { data: family } = await resolveFamily(supabase);
   if (!family) throw new Error("Família não inicializada");
+  // Trial vencido / assinatura inativa não escreve nem gera (isto custa IA e
+  // imagem). O TrialGate esconde a TELA, mas server action é endpoint próprio:
+  // aba aberta antes de vencer, ou chamada direta, passava direto. Admin/staff
+  // e cortesia continuam liberados (a regra mora em requireActiveWrite).
+  await requireActiveWrite(family.id);
   return { supabase, family };
 }
 
