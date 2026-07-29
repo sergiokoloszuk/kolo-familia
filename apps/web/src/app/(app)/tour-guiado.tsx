@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 /**
  * Tour de boas-vindas (coach marks): destaca cada item do menu, um a um, com um
@@ -19,7 +19,48 @@ const PASSOS: Passo[] = [
 ];
 
 const STORAGE_KEY = "kolo-tour-v1";
+/** Quantas vezes a pessoa já abriu a Home — pro convite de rever sumir sozinho. */
+const VISITAS_KEY = "kolo-home-visitas";
+/** Até esta visita à Home o botão "ver de novo" aparece. Depois, some. */
+const VISITAS_COM_CONVITE = 3;
+/** Pedido de reabrir o tour. Evento em vez de navegação: a sidebar não remonta. */
+const EVENTO_REABRIR = "kolo:tour";
+
 type Caixa = { top: number; left: number; width: number; height: number };
+
+/**
+ * Convite discreto pra rever o tour — só na Home e só nas 3 primeiras visitas.
+ * O tour roda uma vez e some, e até agora não havia como pedir de novo: o único
+ * jeito era a URL `?tour=1`, que só existe em links do admin. Some depois da
+ * terceira porque quem passou disso já se orientou; insistir vira ruído.
+ */
+export function ReverTour() {
+  const [mostrar, setMostrar] = useState(false);
+  const contado = useRef(false);
+
+  useEffect(() => {
+    if (contado.current) return; // StrictMode chama duas vezes em dev
+    contado.current = true;
+    try {
+      if (localStorage.getItem(STORAGE_KEY) !== "1") return; // ainda vai ver pela 1ª vez
+      const n = Number(localStorage.getItem(VISITAS_KEY) ?? "0") + 1;
+      localStorage.setItem(VISITAS_KEY, String(n));
+      setMostrar(n <= VISITAS_COM_CONVITE);
+    } catch {
+      /* sem localStorage, simplesmente não oferece */
+    }
+  }, []);
+
+  if (!mostrar) return null;
+  return (
+    <button
+      onClick={() => window.dispatchEvent(new Event(EVENTO_REABRIR))}
+      className="text-xs font-medium text-muted-foreground underline-offset-4 transition-colors hover:text-brand-purple hover:underline"
+    >
+      ↺ ver o tour do menu de novo
+    </button>
+  );
+}
 
 export function TourGuiado({ abrirMenu }: { abrirMenu: () => void }) {
   const [ativo, setAtivo] = useState(false);
@@ -43,6 +84,17 @@ export function TourGuiado({ abrirMenu }: { abrirMenu: () => void }) {
       }, 700);
       return () => clearTimeout(t);
     }
+  }, [abrirMenu]);
+
+  // Rever a pedido (botão na Home). Sem espera: ela já sabe o que vem.
+  useEffect(() => {
+    function reabrir() {
+      setI(0);
+      abrirMenu();
+      setAtivo(true);
+    }
+    window.addEventListener(EVENTO_REABRIR, reabrir);
+    return () => window.removeEventListener(EVENTO_REABRIR, reabrir);
   }, [abrirMenu]);
 
   const medir = useCallback(() => {

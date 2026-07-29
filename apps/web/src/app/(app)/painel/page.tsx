@@ -17,6 +17,7 @@ import { BannerGenero } from "./banner-genero";
 import { AtalhosKolo } from "./atalhos-kolo";
 import { PrimeiroPasso, desafiosDoOnboarding } from "./primeiro-passo";
 import { AtivarAylaCard } from "./ativar-ayla";
+import { ReverTour } from "../tour-guiado";
 
 // ============================================================
 // Chips categóricos do Foco da semana
@@ -363,6 +364,10 @@ export default async function PainelPage({
             por onde fizer sentido{nomeCA ? ` pra você e ${deNome(nomeCA, generoCA)}` : ""}.
           </p>
         </header>
+
+        <div className="-mt-4 flex justify-end">
+          <ReverTour />
+        </div>
 
         <PrimeiroPasso nomeCA={nomeCA} desafios={desafiosMarcados} aylaAtiva={aylaAtiva} />
 
@@ -782,6 +787,10 @@ export default async function PainelPage({
             : "Que bom te ver por aqui."}
         </p>
       </header>
+
+      <div className="-mt-4 flex justify-end">
+        <ReverTour />
+      </div>
 
       {/* ============================================================
        * TIRA DE SINAIS — fileira de tiles (plaquinha amarela, IconCard) no
