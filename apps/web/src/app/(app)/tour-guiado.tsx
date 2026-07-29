@@ -10,12 +10,12 @@ import { useCallback, useEffect, useState } from "react";
 type Passo = { target: string; titulo: string; texto: string };
 
 const PASSOS: Passo[] = [
-  { target: "/painel", titulo: "Home", texto: "Seu ponto de partida — o resumo do dia e o que dá pra fazer agora." },
-  { target: "/registrar/diario", titulo: "Registro Diário", texto: "Um respiro do dia em 30 segundos. É daqui que nasce a Evolução." },
-  { target: "/kolo-vivo", titulo: "Perfil", texto: "Tudo o que a Kolo já sabe sobre seu filho — e vai crescendo com vocês." },
-  { target: "/estrategias", titulo: "Estratégias", texto: "Travou num desafio? Peça ajuda — a Kolo devolve um caminho prático." },
-  { target: "/evolucao", titulo: "Evolução", texto: "O caminho ao longo do tempo: o que mudou, o que floresceu." },
-  { target: "/ludico", titulo: "Lúdico", texto: "Histórias, rotina visual com cartões pra imprimir e leitura dos desenhos." },
+  { target: "/painel", titulo: "Home", texto: "Onde o dia começa: o resumo do que está acontecendo e dois ou três caminhos pra seguir agora." },
+  { target: "/registrar/diario", titulo: "Registro Diário", texto: "Conte em 30 segundos como foi o dia — humor, sono, o que pegou. Cada registro vira um ponto na Evolução." },
+  { target: "/kolo-vivo", titulo: "Perfil", texto: "Conte a socialização, a comunicação, o foco — as orientações saem daqui." },
+  { target: "/estrategias", titulo: "Estratégias", texto: "Conte um desafio e receba um plano prático." },
+  { target: "/evolucao", titulo: "Evolução", texto: "Conforme você registra os dias, o que mudou vai aparecendo aqui." },
+  { target: "/ludico", titulo: "Lúdico", texto: "Histórias, rotina visual, leitura dos desenhos e avatar." },
 ];
 
 const STORAGE_KEY = "kolo-tour-v1";

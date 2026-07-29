@@ -14,7 +14,7 @@ type Porta = {
 const PORTAS_BASE: Porta[] = [
   {
     titulo: "Perfil",
-    desc: "O retrato vivo do seu filho. Quanto mais a Kolo conhece, melhor ela ajuda.",
+    desc: "Conte a socialização, a comunicação, o foco — as orientações saem daqui.",
     href: "/kolo-vivo",
     Icon: Sprout,
     bar: "bg-cat-social",
@@ -22,7 +22,7 @@ const PORTAS_BASE: Porta[] = [
   },
   {
     titulo: "Estratégias",
-    desc: "Travou? Conte um desafio e receba um caminho prático.",
+    desc: "Conte um desafio e receba um plano prático.",
     href: "/estrategias",
     Icon: Lightbulb,
     bar: "bg-cat-foco",
@@ -30,7 +30,7 @@ const PORTAS_BASE: Porta[] = [
   },
   {
     titulo: "Lúdico",
-    desc: "Histórias, rotina visual com cartões pra imprimir e leitura dos desenhos.",
+    desc: "Histórias, rotina visual, leitura dos desenhos e avatar.",
     href: "/ludico",
     Icon: Shapes,
     bar: "bg-cat-sensorial",
