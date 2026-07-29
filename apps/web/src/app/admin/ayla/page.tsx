@@ -7,6 +7,8 @@ import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { requireAdmin } from "@/lib/auth/require-admin";
 import { computeKPIs } from "@/lib/ayla/metrics";
+import { CHAVE_AYLA_WHATSAPP, lerConfig } from "@/lib/config/geral";
+import { NumeroAylaForm } from "./numero-form";
 
 const CATEGORY_LABEL: Record<string, string> = {
   proativa: "Proativa",
@@ -17,6 +19,8 @@ const CATEGORY_LABEL: Record<string, string> = {
 
 export default async function AdminAylaPage() {
   const { supabase } = await requireAdmin();
+
+  const numeroAyla = await lerConfig(supabase, CHAVE_AYLA_WHATSAPP);
 
   const [kpis, ultimosLogs, ultimosInsights, templates, prompts] = await Promise.all([
     computeKPIs(supabase, 30),
@@ -50,6 +54,20 @@ export default async function AdminAylaPage() {
           KPIs próprios da Ayla nos últimos {kpis.janelaDias} dias.
         </p>
       </header>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">WhatsApp da Ayla</CardTitle>
+          <CardDescription>
+            O número que as mães veem quando a Ayla escreve. É ele que abre a conversa no botão
+            &ldquo;falar com a Ayla&rdquo;, no fim do cadastro. Pode escrever do jeito que for
+            (com DDD, parênteses ou traço) — guardo só os dígitos, começando pelo 55.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <NumeroAylaForm atual={numeroAyla} />
+        </CardContent>
+      </Card>
 
       <section className="grid gap-4 md:grid-cols-3">
         <Stat

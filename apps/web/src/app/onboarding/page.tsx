@@ -8,6 +8,7 @@ import { lerModo } from "@/lib/onboarding/modo";
 import { carregarCopy } from "@/lib/onboarding/copy-store";
 import { familiasInternas } from "@/lib/analytics/internos";
 import type { RascunhoOnboarding } from "@/lib/onboarding/salvar-conversacional";
+import { whatsappDaAyla } from "@/lib/config/geral";
 import { OnboardingWizard, type InitialState, type Membro } from "./wizard";
 import { OnboardingConversacional } from "./conversacional";
 
@@ -53,9 +54,10 @@ export default async function OnboardingPage() {
       .eq("id", family.id)
       .maybeSingle();
     const rascunho = (rascunhoRow?.onboarding_rascunho as RascunhoOnboarding | null) ?? null;
+    const whatsappAyla = await whatsappDaAyla(admin);
     return (
       <div className="flex flex-col gap-4">
-        <OnboardingConversacional copy={copy} rascunho={rascunho} />
+        <OnboardingConversacional copy={copy} rascunho={rascunho} whatsappAyla={whatsappAyla} />
       </div>
     );
   }

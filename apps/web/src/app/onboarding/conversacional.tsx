@@ -66,9 +66,12 @@ function ancorar(copy: OnboardingCopy, r?: RascunhoOnboarding | null): number {
 export function OnboardingConversacional({
   copy,
   rascunho,
+  whatsappAyla,
 }: {
   copy: OnboardingCopy;
   rascunho?: RascunhoOnboarding | null;
+  /** Número da Ayla (só dígitos), resolvido no servidor. Null = sem link. */
+  whatsappAyla?: string | null;
 }) {
   const router = useRouter();
   // Retomada: se há rascunho, volta pro passo onde parou com as respostas que já
@@ -249,7 +252,7 @@ export function OnboardingConversacional({
 
   if (fase === "garfo") {
     const caminhos = copy.garfo.caminhos ?? [];
-    const linkWhats = linkConversaAyla(primeiraMensagemDaMae(nome));
+    const linkWhats = linkConversaAyla(whatsappAyla ?? null, primeiraMensagemDaMae(nome));
     return (
       <div className="mx-auto flex max-w-md flex-col gap-3 py-6">
         <Bolha lado="ayla">{fill(copy.garfo.titulo, nome, voce)}</Bolha>
