@@ -13,7 +13,9 @@
  * impessoalizar). Quando inevitável, cai pra "essa criança".
  */
 
-import { nomeUsavelCrianca, primeiroNome } from "./crianca-especifica";
+// Do módulo PURO — `crianca-especifica` arrasta o SDK da Anthropic, e este
+// arquivo é usado por componentes de cliente (o build quebra).
+import { nomeUsavelCrianca, primeiroNome } from "./crianca-nome";
 
 export type Genero = "masculino" | "feminino" | "neutro" | null | undefined;
 
