@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { ONBOARDING_COPY_DEFAULT, type OnboardingCopy } from "./copy-default";
+import { ONBOARDING_COPY_DEFAULT, ordenarPassos, type OnboardingCopy } from "./copy-default";
 import { parseCopy } from "./copy-schema";
 
 /**
@@ -24,7 +24,10 @@ export async function carregarCopy(
       .eq("id", ID)
       .maybeSingle();
     const raw = opts?.publicado ? data?.publicado : data?.rascunho;
-    return parseCopy(raw) ?? ONBOARDING_COPY_DEFAULT;
+    const copy = parseCopy(raw) ?? ONBOARDING_COPY_DEFAULT;
+    // A copy publicada carrega a ordem de quando foi publicada; a ordem certa
+    // é a do código. Ver `ordenarPassos`.
+    return { ...copy, passos: ordenarPassos(copy.passos) };
   } catch {
     return ONBOARDING_COPY_DEFAULT;
   }

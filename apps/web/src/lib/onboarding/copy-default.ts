@@ -147,11 +147,6 @@ export const ONBOARDING_COPY_DEFAULT: OnboardingCopy = {
       nota: "É por aqui que eu te mando planos e estratégias pensados pra [NOME]. (O +55 entra automático.)",
     },
     {
-      id: "aceites",
-      ayla: "Antes de seguir, dois combinados rapidinhos:",
-      tipo: "aceites",
-    },
-    {
       id: "voce_nome",
       ayla: "Agora me conta de você: como te chamo?",
       tipo: "texto",
@@ -168,6 +163,11 @@ export const ONBOARDING_COPY_DEFAULT: OnboardingCopy = {
         { value: "avoh", label: "Avô" },
         { value: "outro", label: "Outro(a)", livre: true },
       ],
+    },
+    {
+      id: "aceites",
+      ayla: "Antes de seguir, dois combinados rapidinhos:",
+      tipo: "aceites",
     },
     {
       id: "voce_faixa",
@@ -218,3 +218,23 @@ export const ONBOARDING_COPY_DEFAULT: OnboardingCopy = {
       "Combinado! Vou pensar em [TEMA] com carinho e já te trago as primeiras ideias — aqui e no seu WhatsApp. Me conta, por texto ou áudio, o que mais te preocupa nisso?",
   },
 };
+
+/**
+ * A ORDEM das perguntas é decisão de produto, não de copy — mora aqui, no
+ * código, e é imposta sobre qualquer copy publicada no banco. Sem isso, mudar a
+ * ordem no `ONBOARDING_COPY_DEFAULT` não teria efeito nenhum em produção: a
+ * copy publicada (onboarding_copy.publicado) vence, e ela carrega a ordem
+ * antiga congelada de quando foi publicada.
+ *
+ * O que a ordem protege: `voce_nome`/`voce_relacao` vêm ANTES de `aceites`.
+ * Quem desistia depois de consentir saía sem nome nenhum, e a gente perdia
+ * justamente o lead mais quente do funil — consentiu e não terminou.
+ *
+ * Passos que não existem no default (copy futura) ficam no fim, na ordem em que
+ * vieram — nunca somem.
+ */
+export function ordenarPassos(passos: OnbPasso[]): OnbPasso[] {
+  const pos = new Map(ONBOARDING_COPY_DEFAULT.passos.map((p, i) => [p.id, i]));
+  const fim = Number.MAX_SAFE_INTEGER;
+  return [...passos].sort((a, b) => (pos.get(a.id) ?? fim) - (pos.get(b.id) ?? fim));
+}
