@@ -6,10 +6,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Chip, ChipGroup } from "@/components/ui/chip";
 import { mascararDataBr, dataBrParaIso, idadeAnos } from "@/lib/idade";
-import { exemplosInteressePorIdade, type OnboardingCopy, type OnbPasso, type OnbChip } from "@/lib/onboarding/copy-default";
+import { exemplosInteressePorIdade, type OnboardingCopy, type OnbPasso, type OnbChip, type OnbCaminho } from "@/lib/onboarding/copy-default";
+import { linkConversaAyla, primeiraMensagemDaMae } from "@/lib/ayla/link-conversa";
 import type { MembroInput, RascunhoOnboarding, ResponsavelInput } from "@/lib/onboarding/salvar-conversacional";
 import { salvarMembroAction, salvarWhatsappAction, salvarAceitesAction, concluirAction, salvarRascunhoAction } from "./actions-conversacional";
-import { TourCarrossel, DesafioFluxo } from "@/app/(app)/dashboards/onboarding/preview";
+import { DesafioFluxo } from "@/app/(app)/dashboards/onboarding/preview";
 
 /**
  * Onboarding CONVERSACIONAL real (Fatia 3) — mesma cara do preview, mas guarda
@@ -44,7 +45,7 @@ function opcoesDoPasso(passo: OnbPasso, nascimentoBr: string): OnbChip[] {
   return [...ex, { value: "Outro", label: "Outro", livre: true }];
 }
 
-type Fase = "form" | "salvando" | "garfo" | "tour" | "desafio" | "duplicado" | "erro";
+type Fase = "form" | "salvando" | "garfo" | "desafio" | "duplicado" | "erro";
 
 /**
  * Em que pergunta a retomada começa. Prefere o `passoId` ao número: a lista de
@@ -247,41 +248,44 @@ export function OnboardingConversacional({
     : [];
 
   if (fase === "garfo") {
+    const caminhos = copy.garfo.caminhos ?? [];
+    const linkWhats = linkConversaAyla(primeiraMensagemDaMae(nome));
     return (
       <div className="mx-auto flex max-w-md flex-col gap-3 py-6">
         <Bolha lado="ayla">{fill(copy.garfo.titulo, nome, voce)}</Bolha>
-        {/* Aviso do WhatsApp — todo mundo vê, mesmo quem não abre a conversa. */}
-        <div className="rounded-2xl border border-brand-purple/25 bg-brand-purple/[0.06] p-4 text-sm text-foreground">
-          💬 <strong>É pelo WhatsApp que a Ayla te ajuda de verdade</strong> — dá pra pedir uma{" "}
-          <strong>estratégia</strong> pra um desafio, <strong>montar a rotina do dia</strong> (com
-          cartões ilustrados pra imprimir!), tirar dúvidas e atualizar o perfil{" "}
-          {nome ? `de ${nome}` : "de quem você cuida"}. É onde a experiência fica completa. 🌿
-        </div>
-        <button
-          onClick={() => setFase("desafio")}
-          className="rounded-2xl border border-brand-purple bg-brand-purple/10 px-4 py-3 text-left text-sm font-medium text-brand-purple-dark transition-colors hover:bg-brand-purple/20"
-        >
-          {copy.garfo.ajuda}
-        </button>
-        <button
-          onClick={() => setFase("tour")}
-          className="rounded-2xl border border-kolo-linha bg-white px-4 py-3 text-left text-sm font-medium text-foreground transition-colors hover:border-brand-purple/40"
-        >
-          {copy.garfo.explorar}
-        </button>
-      </div>
-    );
-  }
-  if (fase === "tour") {
-    return (
-      <div className="mx-auto max-w-md py-6">
-        <TourCarrossel
-          copy={copy}
-          nome={nome}
-          onVoltar={() => setFase("garfo")}
-          onReiniciar={() => setFase("garfo")}
-          onEntrar={() => router.push("/painel")}
-        />
+
+        {/* Sem NEXT_PUBLIC_AYLA_WHATSAPP não dá pra abrir a conversa; o aviso
+            de sempre entra no lugar, porque a Ayla escreve mesmo assim. */}
+        {!linkWhats && (
+          <div className="rounded-2xl border border-brand-purple/25 bg-brand-purple/[0.06] p-4 text-sm text-foreground">
+            💬 <strong>É pelo WhatsApp que a Ayla te ajuda de verdade</strong> — dá pra pedir uma{" "}
+            <strong>estratégia</strong> pra um desafio, <strong>montar a rotina do dia</strong> (com
+            cartões ilustrados pra imprimir!), tirar dúvidas e atualizar o perfil{" "}
+            {nome ? `de ${nome}` : "de quem você cuida"}. É onde a experiência fica completa. 🌿
+          </div>
+        )}
+
+        {caminhos.map((c) => {
+          if (c.destino === "whatsapp" && !linkWhats) return null;
+          const conteudo = <CartaoCaminho caminho={c} nome={nome} voce={voce} />;
+          // O WhatsApp é âncora de verdade (sai do app); os outros navegam.
+          return c.destino === "whatsapp" ? (
+            <a key={c.destino} href={linkWhats!} target="_blank" rel="noopener noreferrer" className={classeCaminho(true)}>
+              {conteudo}
+            </a>
+          ) : (
+            <button
+              key={c.destino}
+              onClick={() => {
+                if (c.destino === "estrategia") setFase("desafio");
+                else router.push(c.destino === "perfil" ? "/kolo-vivo" : "/ludico/rotinas");
+              }}
+              className={classeCaminho(false)}
+            >
+              {conteudo}
+            </button>
+          );
+        })}
       </div>
     );
   }
@@ -485,6 +489,37 @@ function Bolha({ lado, children }: { lado: "ayla" | "user"; children: React.Reac
         {children}
       </div>
     </div>
+  );
+}
+
+/** O primeiro cartão (WhatsApp) é o destaque; os outros três são alternativas. */
+function classeCaminho(destaque: boolean): string {
+  return destaque
+    ? "flex items-center gap-3 rounded-2xl border-2 border-brand-purple bg-brand-purple/10 px-4 py-4 text-left transition-colors hover:bg-brand-purple/20"
+    : "flex items-center gap-3 rounded-2xl border border-kolo-linha bg-white px-4 py-3.5 text-left transition-colors hover:border-brand-purple/40";
+}
+
+function CartaoCaminho({
+  caminho,
+  nome,
+  voce,
+}: {
+  caminho: OnbCaminho;
+  nome: string;
+  voce: string;
+}) {
+  return (
+    <>
+      <span className="text-2xl leading-none">{caminho.emoji}</span>
+      <span className="flex flex-col gap-0.5">
+        <span className="text-sm font-semibold text-foreground">
+          {fill(caminho.titulo, nome, voce)}
+        </span>
+        <span className="text-xs leading-relaxed text-muted-foreground">
+          {fill(caminho.texto, nome, voce)}
+        </span>
+      </span>
+    </>
   );
 }
 

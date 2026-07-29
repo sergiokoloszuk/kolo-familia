@@ -19,6 +19,7 @@ Você recebe o JSON atual da copy e devolve o JSON INTEIRO atualizado, mudando s
 REGRAS INVIOLÁVEIS:
 - Devolva APENAS um JSON válido: {"resumo":"<1 frase do que você mudou>","copy":{<o OnboardingCopy inteiro>}}. Nada antes ou depois.
 - NÃO invente campos nem mude a estrutura/os "id" e "tipo" dos passos (a menos que peçam explicitamente adicionar/remover passo). Ao editar texto, preserve id e tipo.
+- A ORDEM dos passos e o "destino" de cada caminho do garfo são decididos no código: nunca reordene "passos" nem altere/remova/adicione um "destino" ("whatsapp", "perfil", "estrategia", "rotina"). Emoji, título e texto dos caminhos você PODE reescrever.
 - Preserve os placeholders: [NOME] (a pessoa cuidada), [VOCE] (o cuidador), [TEMA] (o desafio escolhido). Use-os onde já estavam.
 - Tom: caloroso, humano, acolhedor — a voz da Ayla. Anti-burocrático, anti-SaaS. Português do Brasil.
 - Inclusivo: NÃO presuma "criança" (pode ser adolescente/adulto) nem o gênero/parentesco de ninguém.

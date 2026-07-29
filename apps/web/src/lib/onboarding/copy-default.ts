@@ -31,7 +31,13 @@ export type OnbPasso = {
   opcional?: boolean;
 };
 
-export type OnbTourCard = { emoji: string; titulo: string; texto: string };
+/**
+ * Um dos caminhos do fecho. `destino` é o que o código faz com o toque, não uma
+ * URL editável: a Karina reescreve emoji/título/texto no admin, mas não muda
+ * pra onde vai (nem inventa caminho que não existe).
+ */
+export type OnbCaminhoId = "whatsapp" | "perfil" | "estrategia" | "rotina";
+export type OnbCaminho = { destino: OnbCaminhoId; emoji: string; titulo: string; texto: string };
 
 /**
  * Exemplos de interesse por faixa etária da PESSOA cuidada — pra nunca sugerir
@@ -53,10 +59,12 @@ export function exemplosInteressePorIdade(idade: number | null): string[] {
 export type OnboardingCopy = {
   intro: { titulo: string; subtitulo: string };
   passos: OnbPasso[];
-  /** Fecho: entrega valor na hora — dois caminhos. */
-  garfo: { titulo: string; ajuda: string; explorar: string };
-  /** Caminho "conhecer o app": passeio narrado pela Ayla, um cartão por área. */
-  tour: { titulo: string; final: string; cards: OnbTourCard[] };
+  /**
+   * Fecho: quatro portas, com a conversa no WhatsApp em destaque. Falar com a
+   * Ayla é o que separa quem ativa de quem empaca — dos 15 que concluíram o
+   * cadastro em julho, os 7 que nunca escreveram pra ela ficaram parados.
+   */
+  garfo: { titulo: string; caminhos?: OnbCaminho[] };
   /** Caminho "começar por um desafio": escolhe um tema e a Ayla abre a conversa. */
   desafio: { pergunta: string; abertura: string };
 };
@@ -197,19 +205,31 @@ export const ONBOARDING_COPY_DEFAULT: OnboardingCopy = {
   ],
   garfo: {
     titulo: "Tudo pronto, [VOCE]! Por onde você quer começar?",
-    ajuda: "🎯 Me ajuda com um desafio agora",
-    explorar: "🌿 Quero conhecer o app com calma",
-  },
-  tour: {
-    titulo: "Deixa eu te mostrar o Kolo, rapidinho 🌿",
-    final: "É isso! Estou aqui do seu lado sempre que precisar.",
-    cards: [
-      { emoji: "🏠", titulo: "A sua Home", texto: "Este é o cantinho de vocês — [NOME] de relance e o que dá pra fazer hoje." },
-      { emoji: "💬", titulo: "Falar comigo", texto: "É comigo que você conversa, aqui ou no WhatsApp. Me conta o dia, me pede uma ideia, manda áudio quando for mais fácil." },
-      { emoji: "🌿", titulo: "O Perfil de [NOME]", texto: "Aqui mora tudo sobre [NOME]: o que gosta, o que desafia, o que muda. E, conforme a gente conversa, eu vou atualizando esse perfil sozinha." },
-      { emoji: "🎨", titulo: "Lúdico", texto: "Histórias, rotina visual e a leitura dos desenhos — feitos com a cara de [NOME]." },
-      { emoji: "📈", titulo: "Evolução", texto: "Um registro leve do dia a dia — que ainda vira relatório pra escola ou terapeuta." },
-      { emoji: "📄", titulo: "Planos", texto: "Quando algo aperta, eu monto um plano passo a passo pra [NOME]." },
+    caminhos: [
+      {
+        destino: "whatsapp",
+        emoji: "💬",
+        titulo: "Falar comigo agora no WhatsApp",
+        texto: "Abre a conversa já começada. É por lá que eu te acompanho todo dia.",
+      },
+      {
+        destino: "perfil",
+        emoji: "🌱",
+        titulo: "Completar o perfil de [NOME]",
+        texto: "Você me contou o começo. Quanto mais eu souber, mais minhas ideias combinam com [NOME].",
+      },
+      {
+        destino: "estrategia",
+        emoji: "💡",
+        titulo: "Pedir uma estratégia",
+        texto: "Me conta um desafio e eu devolvo um caminho prático pra testar hoje.",
+      },
+      {
+        destino: "rotina",
+        emoji: "🗓️",
+        titulo: "Montar a rotina visual",
+        texto: "A sequência do dia em cartões pra imprimir. Dá pra montar comigo, conversando.",
+      },
     ],
   },
   desafio: {
@@ -237,4 +257,22 @@ export function ordenarPassos(passos: OnbPasso[]): OnbPasso[] {
   const pos = new Map(ONBOARDING_COPY_DEFAULT.passos.map((p, i) => [p.id, i]));
   const fim = Number.MAX_SAFE_INTEGER;
   return [...passos].sort((a, b) => (pos.get(a.id) ?? fim) - (pos.get(b.id) ?? fim));
+}
+
+/**
+ * Estrutura vem do código, texto vem do banco. Aplica a ordem dos passos e
+ * repõe os caminhos do fecho quando a copy publicada é anterior a eles — assim
+ * uma copy antiga não perde as edições de texto que a Karina já fez.
+ */
+export function normalizarCopy(copy: OnboardingCopy): OnboardingCopy {
+  return {
+    ...copy,
+    passos: ordenarPassos(copy.passos),
+    garfo: {
+      titulo: copy.garfo.titulo,
+      caminhos: copy.garfo.caminhos?.length
+        ? copy.garfo.caminhos
+        : ONBOARDING_COPY_DEFAULT.garfo.caminhos,
+    },
+  };
 }

@@ -40,8 +40,8 @@ export function OnboardingPreview({ copy }: { copy: OnboardingCopy }) {
   const [aceites, setAceites] = useState({ termos: false, ayla: false });
   // Quando a pessoa clica numa resposta pra CORRIGIR, guarda de onde voltar.
   const [retomarEm, setRetomarEm] = useState<number | null>(null);
-  // Caminho escolhido no garfo final: passeio ("tour") ou começar por um desafio.
-  const [caminho, setCaminho] = useState<"tour" | "desafio" | null>(null);
+  // Único caminho do fecho que abre um fluxo aqui dentro; os outros navegam.
+  const [caminho, setCaminho] = useState<"desafio" | null>(null);
 
   const nome = (answers["membro_nome"] as string) ?? "";
   const voce = (answers["voce_nome"] as string) ?? "";
@@ -303,32 +303,34 @@ export function OnboardingPreview({ copy }: { copy: OnboardingCopy }) {
           </div>
         )}
 
-        {/* Fecho / garfo — os dois caminhos da experiência inicial */}
+        {/* Fecho — os 4 caminhos. No preview nenhum navega de verdade (só o de
+            desafio abre o fluxo), pra Karina ler a copy sem sair da simulação. */}
         {terminou && caminho === null && (
           <div className="flex flex-col gap-2">
             <Bolha lado="ayla">{fill(copy.garfo.titulo, nome, voce)}</Bolha>
-            <button
-              onClick={() => setCaminho("desafio")}
-              className="rounded-2xl border border-brand-purple bg-brand-purple/10 px-4 py-3 text-left text-sm font-medium text-brand-purple-dark transition-colors hover:bg-brand-purple/20"
-            >
-              {copy.garfo.ajuda}
-            </button>
-            <button
-              onClick={() => setCaminho("tour")}
-              className="rounded-2xl border border-kolo-linha bg-white px-4 py-3 text-left text-sm font-medium text-foreground transition-colors hover:border-brand-purple/40"
-            >
-              {copy.garfo.explorar}
-            </button>
+            {(copy.garfo.caminhos ?? []).map((c) => (
+              <button
+                key={c.destino}
+                onClick={() => c.destino === "estrategia" && setCaminho("desafio")}
+                className={
+                  c.destino === "whatsapp"
+                    ? "flex items-center gap-3 rounded-2xl border-2 border-brand-purple bg-brand-purple/10 px-4 py-4 text-left transition-colors hover:bg-brand-purple/20"
+                    : "flex items-center gap-3 rounded-2xl border border-kolo-linha bg-white px-4 py-3.5 text-left transition-colors hover:border-brand-purple/40"
+                }
+              >
+                <span className="text-2xl leading-none">{c.emoji}</span>
+                <span className="flex flex-col gap-0.5">
+                  <span className="text-sm font-semibold text-foreground">{fill(c.titulo, nome, voce)}</span>
+                  <span className="text-xs leading-relaxed text-muted-foreground">{fill(c.texto, nome, voce)}</span>
+                </span>
+              </button>
+            ))}
             <div className="pt-1 text-center">
               <button onClick={reiniciar} className="text-xs font-medium text-brand-purple hover:underline">
                 ↺ ver de novo desde o começo
               </button>
             </div>
           </div>
-        )}
-
-        {terminou && caminho === "tour" && (
-          <TourCarrossel copy={copy} nome={nome} onVoltar={() => setCaminho(null)} onReiniciar={reiniciar} />
         )}
 
         {terminou && caminho === "desafio" && (
@@ -340,81 +342,6 @@ export function OnboardingPreview({ copy }: { copy: OnboardingCopy }) {
             onReiniciar={reiniciar}
           />
         )}
-      </div>
-    </div>
-  );
-}
-
-/** Passeio narrado pela Ayla — um cartão por área, visual Kolo. */
-export function TourCarrossel({
-  copy,
-  nome,
-  onVoltar,
-  onReiniciar,
-  onEntrar,
-}: {
-  copy: OnboardingCopy;
-  nome: string;
-  onVoltar: () => void;
-  onReiniciar: () => void;
-  /** No fluxo real, "Entrar no Kolo" navega pro app; no preview fica decorativo. */
-  onEntrar?: () => void;
-}) {
-  const cards = copy.tour.cards;
-  const [i, setI] = useState(0);
-  const fim = i >= cards.length;
-  const card = cards[i];
-
-  return (
-    <div className="flex flex-col gap-3">
-      <Bolha lado="ayla">{fill(copy.tour.titulo, nome, "")}</Bolha>
-
-      {!fim ? (
-        <div className="overflow-hidden rounded-3xl border border-kolo-linha bg-gradient-to-br from-white to-secondary/40 shadow-sm">
-          <div className="flex flex-col items-center gap-3 px-6 py-8 text-center">
-            <div className="flex size-16 items-center justify-center rounded-2xl bg-brand-purple/10 text-3xl">
-              {card.emoji}
-            </div>
-            <p className="font-heading text-xl text-foreground">{fill(card.titulo, nome, "")}</p>
-            <p className="text-sm leading-relaxed text-muted-foreground">{fill(card.texto, nome, "")}</p>
-          </div>
-          {/* progresso */}
-          <div className="flex justify-center gap-1.5 pb-4">
-            {cards.map((_, k) => (
-              <span
-                key={k}
-                className={`h-1.5 rounded-full transition-all ${k === i ? "w-5 bg-brand-purple" : "w-1.5 bg-foreground/15"}`}
-              />
-            ))}
-          </div>
-          <div className="flex items-center justify-between border-t border-kolo-linha px-4 py-3">
-            <button
-              onClick={() => (i === 0 ? onVoltar() : setI((n) => n - 1))}
-              className="text-sm font-medium text-muted-foreground hover:text-foreground"
-            >
-              {i === 0 ? "voltar" : "← anterior"}
-            </button>
-            <Button size="sm" onClick={() => setI((n) => n + 1)}>
-              {i === cards.length - 1 ? "Terminar" : "Próximo"}
-            </Button>
-          </div>
-        </div>
-      ) : (
-        <div className="flex flex-col gap-2">
-          <Bolha lado="ayla">{fill(copy.tour.final, nome, "")}</Bolha>
-          <button
-            onClick={onEntrar}
-            className="rounded-2xl bg-brand-purple px-4 py-3 text-center text-sm font-semibold text-white"
-          >
-            Entrar no Kolo
-          </button>
-        </div>
-      )}
-
-      <div className="pt-1 text-center">
-        <button onClick={onReiniciar} className="text-xs font-medium text-brand-purple hover:underline">
-          ↺ ver a experiência de novo desde o começo
-        </button>
       </div>
     </div>
   );

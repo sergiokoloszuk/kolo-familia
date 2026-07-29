@@ -23,13 +23,21 @@ const passo = z.object({
   opcional: z.boolean().optional(),
 });
 
-const tourCard = z.object({ emoji: z.string(), titulo: z.string(), texto: z.string() });
+const caminho = z.object({
+  destino: z.enum(["whatsapp", "perfil", "estrategia", "rotina"]),
+  emoji: z.string(),
+  titulo: z.string(),
+  texto: z.string(),
+});
 
 export const onboardingCopySchema = z.object({
   intro: z.object({ titulo: z.string(), subtitulo: z.string() }),
   passos: z.array(passo).min(1),
-  garfo: z.object({ titulo: z.string(), ajuda: z.string(), explorar: z.string() }),
-  tour: z.object({ titulo: z.string(), final: z.string(), cards: z.array(tourCard).min(1) }),
+  // `caminhos` é opcional só pra copy PUBLICADA antes dos 4 caminhos existirem
+  // continuar valendo — `normalizarCopy` preenche com o default. Sem isso, a
+  // copy antiga seria rejeitada inteira e a Karina perderia todas as edições de
+  // texto dos passos, não só as do fecho.
+  garfo: z.object({ titulo: z.string(), caminhos: z.array(caminho).min(1).optional() }),
   desafio: z.object({ pergunta: z.string(), abertura: z.string() }),
 });
 
