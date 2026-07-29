@@ -37,6 +37,19 @@ export type SalvarResultado =
   | { ok: true }
   | { ok: false; motivo: "whatsapp_duplicado" | "erro"; mensagem: string };
 
+/**
+ * Rascunho — onde a pessoa está e o que já respondeu, gravado a CADA resposta.
+ * Não é fonte de verdade (isso são os checkpoints abaixo): serve pra retomar de
+ * onde parou e pra saber em qual pergunta ela desistiu. Some ao concluir.
+ */
+export type RascunhoOnboarding = {
+  idx: number;
+  passoId: string | null;
+  answers: Record<string, string | string[]>;
+  outros: Record<string, string>;
+  aceites: { termos: boolean; ayla: boolean };
+};
+
 // Domínios que contam como "tema preenchido" (espelha o tela4 antigo).
 const DOMINIO_KEYS = [
   "sensorial", "nutricional", "comunicacao", "emocional", "foco", "sono",
@@ -68,6 +81,23 @@ function generoDoResponsavel(r: ResponsavelInput): "feminino" | "masculino" | "n
   if (r.relacao === "pai" || r.relacao === "avoh") return "masculino";
   if (r.relacaoOutro) return inferGeneroDePalavra(r.relacaoOutro) ?? null;
   return null;
+}
+
+/**
+ * Grava o rascunho. Nunca estoura e nunca segura o fluxo: se a coluna ainda não
+ * existir (migração 0067 não aplicada), o onboarding segue exatamente como era —
+ * sem retomada, mas sem quebrar.
+ */
+export async function cpRascunho(
+  admin: SupabaseClient,
+  familyId: string,
+  r: RascunhoOnboarding,
+): Promise<void> {
+  try {
+    await admin.from("family_accounts").update({ onboarding_rascunho: r }).eq("id", familyId);
+  } catch {
+    /* rascunho é conveniência — nunca trava o cadastro */
+  }
 }
 
 /** ETAPA 1 — a pessoa cuidada (membro + desafios/interesses). Idempotente. */
@@ -239,6 +269,14 @@ export async function cpConcluir(
       })
       .eq("id", familyId);
     if (error) return { ok: false, motivo: "erro", mensagem: error.message };
+
+    // Concluiu: o rascunho cumpriu o papel dele. Em update separado pra que a
+    // coluna ausente (0067 não aplicada) não derrube a conclusão do onboarding.
+    try {
+      await admin.from("family_accounts").update({ onboarding_rascunho: null }).eq("id", familyId);
+    } catch {
+      /* rascunho órfão não atrapalha nada */
+    }
 
     try {
       const { sendBoasVindas } = await import("@/lib/ayla/orchestrator");

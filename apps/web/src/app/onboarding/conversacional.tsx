@@ -7,8 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Chip, ChipGroup } from "@/components/ui/chip";
 import { mascararDataBr, dataBrParaIso, idadeAnos } from "@/lib/idade";
 import { exemplosInteressePorIdade, type OnboardingCopy, type OnbPasso, type OnbChip } from "@/lib/onboarding/copy-default";
-import type { MembroInput, ResponsavelInput } from "@/lib/onboarding/salvar-conversacional";
-import { salvarMembroAction, salvarWhatsappAction, salvarAceitesAction, concluirAction } from "./actions-conversacional";
+import type { MembroInput, RascunhoOnboarding, ResponsavelInput } from "@/lib/onboarding/salvar-conversacional";
+import { salvarMembroAction, salvarWhatsappAction, salvarAceitesAction, concluirAction, salvarRascunhoAction } from "./actions-conversacional";
 import { TourCarrossel, DesafioFluxo } from "@/app/(app)/dashboards/onboarding/preview";
 
 /**
@@ -46,12 +46,38 @@ function opcoesDoPasso(passo: OnbPasso, nascimentoBr: string): OnbChip[] {
 
 type Fase = "form" | "salvando" | "garfo" | "tour" | "desafio" | "duplicado" | "erro";
 
-export function OnboardingConversacional({ copy }: { copy: OnboardingCopy }) {
+/**
+ * Em que pergunta a retomada começa. Prefere o `passoId` ao número: a lista de
+ * perguntas é editável pelo admin, então um índice salvo ontem pode apontar pra
+ * outra pergunta hoje. Sem rascunho (ou rascunho de um passo que não existe
+ * mais), começa do zero — o comportamento de antes.
+ */
+function ancorar(copy: OnboardingCopy, r?: RascunhoOnboarding | null): number {
+  if (!r) return 0;
+  const ultimo = copy.passos.length - 1;
+  if (r.passoId) {
+    const i = copy.passos.findIndex((p) => p.id === r.passoId);
+    if (i >= 0) return i;
+  }
+  return Math.min(Math.max(r.idx ?? 0, 0), Math.max(ultimo, 0));
+}
+
+export function OnboardingConversacional({
+  copy,
+  rascunho,
+}: {
+  copy: OnboardingCopy;
+  rascunho?: RascunhoOnboarding | null;
+}) {
   const router = useRouter();
-  const [idx, setIdx] = useState(0);
-  const [answers, setAnswers] = useState<Record<string, string | string[]>>({});
-  const [outros, setOutros] = useState<Record<string, string>>({});
-  const [aceites, setAceites] = useState({ termos: false, ayla: false });
+  // Retomada: se há rascunho, volta pro passo onde parou com as respostas que já
+  // deu. O índice é reancorado pelo `passoId` — se a Karina editar a lista de
+  // perguntas no admin, o número antigo apontaria pra pergunta errada.
+  const inicio = ancorar(copy, rascunho);
+  const [idx, setIdx] = useState(inicio);
+  const [answers, setAnswers] = useState<Record<string, string | string[]>>(rascunho?.answers ?? {});
+  const [outros, setOutros] = useState<Record<string, string>>(rascunho?.outros ?? {});
+  const [aceites, setAceites] = useState(rascunho?.aceites ?? { termos: false, ayla: false });
   const [texto, setTexto] = useState("");
   const [multi, setMulti] = useState<string[]>([]);
   const [uni, setUni] = useState<string | null>(null);
@@ -113,6 +139,27 @@ export function OnboardingConversacional({ copy }: { copy: OnboardingCopy }) {
     };
   }
 
+  /**
+   * Rascunho — em segundo plano, a cada resposta. É o que devolve a pessoa pro
+   * lugar certo se a página recarregar, e o que mostra no CRM em qual pergunta
+   * ela desistiu (antes disso, as 7 primeiras eram um bloco cego).
+   */
+  function rascunhar(
+    destino: number,
+    a: Record<string, string | string[]>,
+    o: Record<string, string>,
+  ) {
+    void salvarRascunhoAction({
+      idx: destino,
+      passoId: passos[destino]?.id ?? null,
+      answers: a,
+      outros: o,
+      aceites,
+    }).catch(() => {
+      /* nunca segura o fluxo */
+    });
+  }
+
   async function proximo(next: Record<string, string | string[]>, novoOutro?: { id: string; texto: string }) {
     const merged = { ...answers, ...next };
     const outrosMerged = novoOutro ? { ...outros, [novoOutro.id]: novoOutro.texto } : outros;
@@ -126,11 +173,13 @@ export function OnboardingConversacional({ copy }: { copy: OnboardingCopy }) {
       const back = retomarEm;
       setRetomarEm(null);
       setIdx(back);
+      rascunhar(back, merged, outrosMerged);
       return;
     }
 
     const id = passo?.id;
     const ultimo = idx + 1 >= passos.length;
+    rascunhar(ultimo ? passos.length : idx + 1, merged, outrosMerged);
 
     // Checkpoints — salvam cedo (pro "Parou em" + resgate) e são idempotentes.
     if (id === "membro_interesses") {
@@ -139,6 +188,9 @@ export function OnboardingConversacional({ copy }: { copy: OnboardingCopy }) {
       setFase("salvando");
       const res = await salvarWhatsappAction(telParaE164(strDe(merged, "whatsapp")));
       if (!res.ok && res.motivo === "whatsapp_duplicado") {
+        // Número recusado: o rascunho já tinha avançado. Volta a âncora pro
+        // WhatsApp, senão quem recarregar a página pula a pergunta.
+        rascunhar(idx, merged, outrosMerged);
         setFase("duplicado");
         return;
       }

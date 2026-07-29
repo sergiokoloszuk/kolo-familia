@@ -124,6 +124,29 @@ const TELA_ATUAL: Record<number, string> = {
   7: "Concluiu",
 };
 
+/**
+ * A PERGUNTA exata onde parou, do rascunho (0067). O `onboarding_step` sozinho
+ * é grosso demais: as 7 primeiras perguntas do fluxo conversacional caem todas
+ * em "Preenchendo a pessoa", que é onde 2 em cada 3 abandonos acontecem. Com o
+ * rascunho dá pra saber se ela desistiu no nome da criança ou no laudo — coisas
+ * bem diferentes. Cai no rótulo antigo quando não há rascunho.
+ */
+const PASSO_LABEL: Record<string, string> = {
+  membro_nome: "No nome da criança",
+  membro_genero: "No gênero da criança",
+  membro_nascimento: "Na data de nascimento",
+  membro_laudo: "No laudo",
+  membro_investigacao: "No que está em investigação",
+  desafios: "Nos desafios do dia a dia",
+  membro_interesses: "Nos interesses da criança",
+  whatsapp: "No WhatsApp",
+  aceites: "Nos termos",
+  voce_nome: "No seu nome",
+  voce_relacao: "Na sua relação com a criança",
+  voce_faixa: "Na sua faixa de idade",
+  voce_horario: "No horário de contato",
+};
+
 export type FiltroJornada = { periodo?: string; origem?: string };
 
 /** Janela de datas (por created_at) a partir do filtro de período. */
@@ -273,6 +296,7 @@ export async function carregarJornadaTrial(admin: SupabaseClient): Promise<Jorna
     { data: perfis },
     { data: aylaInbound },
     { data: planos },
+    { data: rascunhos },
   ] = await Promise.all([
     admin
       .from("family_accounts")
@@ -295,6 +319,9 @@ export async function carregarJornadaTrial(admin: SupabaseClient): Promise<Jorna
     admin.from("ayla_messages").select("family_account_id").eq("direcao", "inbound"),
     // Quem já RECEBEU um plano (in-app OU pela Ayla) — o momento de valor = ativação.
     admin.from("planos").select("family_account_id"),
+    // Rascunho do onboarding (0067) — query PRÓPRIA de propósito: se a coluna
+    // ainda não existir, o erro morre aqui em vez de derrubar o dashboard todo.
+    admin.from("family_accounts").select("id, onboarding_rascunho"),
   ]);
 
   const falouComAyla = new Set(
@@ -303,6 +330,17 @@ export async function carregarJornadaTrial(admin: SupabaseClient): Promise<Jorna
   const temPlano = new Set(
     (planos ?? []).map((p) => p.family_account_id as string).filter(Boolean),
   );
+  // Rascunho por família: passo onde parou + nome que a pessoa já digitou.
+  const rascunhoByFam = new Map<string, { passoId: string | null; voceNome: string }>();
+  for (const r of rascunhos ?? []) {
+    const raw = r.onboarding_rascunho as
+      | { passoId?: string | null; answers?: Record<string, unknown> }
+      | null;
+    if (!raw) continue;
+    const nome = typeof raw.answers?.voce_nome === "string" ? raw.answers.voce_nome.trim() : "";
+    rascunhoByFam.set(r.id as string, { passoId: raw.passoId ?? null, voceNome: nome });
+  }
+
   const internas = await familiasInternas(admin);
   const emailPorFam = await emailsPorFamilia(admin);
   const fams = (famsRaw ?? []) as FamRow[];
@@ -397,6 +435,14 @@ export async function carregarJornadaTrial(admin: SupabaseClient): Promise<Jorna
     const step = Math.min(7, Math.max(1, f.onboarding_step ?? 1));
     const concluiuOnb = Boolean(f.onboarding_completed) || step >= 7;
 
+    // Onde parou: a pergunta exata (rascunho) e, faltando ela, a tela grossa.
+    const rasc = rascunhoByFam.get(f.id);
+    const paradoEm = concluiuOnb
+      ? "Concluiu"
+      : (rasc?.passoId ? PASSO_LABEL[rasc.passoId] : null) ?? TELA_ATUAL[step] ?? `Passo ${step}`;
+    // Nome: o perfil salvo vence; senão o que ela digitou antes de sumir.
+    const nomeLead = nomeMaeByFam.get(f.id) || rasc?.voceNome || "";
+
     // Funil cumulativo — só usuários REAIS (o interno fica de fora das contagens).
     if (!interno) {
       cadastrou += 1;
@@ -452,7 +498,7 @@ export async function carregarJornadaTrial(admin: SupabaseClient): Promise<Jorna
     if (!interno) {
       todasFamilias.push({
         id: f.id,
-        nomeMae: nomeMaeByFam.get(f.id) ?? "",
+        nomeMae: nomeLead,
         email: emailPorFam.get(f.id) ?? null,
         diaTrial,
         criadoEm: f.created_at,
@@ -466,7 +512,7 @@ export async function carregarJornadaTrial(admin: SupabaseClient): Promise<Jorna
         ativado: ativadoBool,
         engajado: engajadoBool,
         onboardingStep: step,
-        onboardingLabel: concluiuOnb ? "Concluiu" : TELA_ATUAL[step] ?? `Passo ${step}`,
+        onboardingLabel: paradoEm,
       });
     }
 
@@ -474,7 +520,7 @@ export async function carregarJornadaTrial(admin: SupabaseClient): Promise<Jorna
     if (status === "trialing" && !trialVencido) {
       leads.push({
         id: f.id,
-        nomeMae: nomeMaeByFam.get(f.id) ?? "",
+        nomeMae: nomeLead,
         email: emailPorFam.get(f.id) ?? null,
         diaTrial,
         criadoEm: f.created_at,
@@ -485,7 +531,7 @@ export async function carregarJornadaTrial(admin: SupabaseClient): Promise<Jorna
         campanha: det.campanha,
         criativo: det.criativo,
         fase,
-        onboardingLabel: concluiuOnb ? "Concluiu" : TELA_ATUAL[step] ?? `Passo ${step}`,
+        onboardingLabel: paradoEm,
         temWhatsapp: !!f.whatsapp_e164,
         falouComAyla: falouComAyla.has(f.id),
         interno,

@@ -7,6 +7,7 @@ import { parseDiagnosticosFormais } from "@/lib/onboarding/diagnostico";
 import { lerModo } from "@/lib/onboarding/modo";
 import { carregarCopy } from "@/lib/onboarding/copy-store";
 import { familiasInternas } from "@/lib/analytics/internos";
+import type { RascunhoOnboarding } from "@/lib/onboarding/salvar-conversacional";
 import { OnboardingWizard, type InitialState, type Membro } from "./wizard";
 import { OnboardingConversacional } from "./conversacional";
 
@@ -44,9 +45,17 @@ export default async function OnboardingPage() {
   }
   if (usarNovo) {
     const copy = await carregarCopy(admin, { publicado: true });
+    // Rascunho (0067) — em query própria: se a coluna não existir, o erro fica
+    // contido aqui e o onboarding abre do zero, como antes.
+    const { data: rascunhoRow } = await admin
+      .from("family_accounts")
+      .select("onboarding_rascunho")
+      .eq("id", family.id)
+      .maybeSingle();
+    const rascunho = (rascunhoRow?.onboarding_rascunho as RascunhoOnboarding | null) ?? null;
     return (
       <div className="flex flex-col gap-4">
-        <OnboardingConversacional copy={copy} />
+        <OnboardingConversacional copy={copy} rascunho={rascunho} />
       </div>
     );
   }

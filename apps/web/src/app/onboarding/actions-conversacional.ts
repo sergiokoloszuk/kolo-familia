@@ -6,7 +6,9 @@ import {
   cpWhatsapp,
   cpAceites,
   cpConcluir,
+  cpRascunho,
   type MembroInput,
+  type RascunhoOnboarding,
   type ResponsavelInput,
   type SalvarResultado,
 } from "@/lib/onboarding/salvar-conversacional";
@@ -25,6 +27,17 @@ async function resolverFamilia(): Promise<{ admin: ReturnType<typeof createServi
     .single();
   if (!family) return null;
   return { admin: createServiceRoleClient(), familyId: family.id as string };
+}
+
+/**
+ * Rascunho a cada resposta — dispara em segundo plano, sem `await` na UI. Falha
+ * em silêncio de propósito: perder um rascunho é irrelevante perto de travar a
+ * pessoa no meio do cadastro.
+ */
+export async function salvarRascunhoAction(r: RascunhoOnboarding): Promise<void> {
+  const ctx = await resolverFamilia();
+  if (!ctx) return;
+  await cpRascunho(ctx.admin, ctx.familyId, r);
 }
 
 export async function salvarMembroAction(m: MembroInput, desafios: string[]): Promise<SalvarResultado> {
