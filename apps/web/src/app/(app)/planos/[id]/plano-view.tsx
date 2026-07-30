@@ -43,6 +43,7 @@ export function PlanoView({
   secoes,
   resultado,
   resultadoNota,
+  aviso,
 }: {
   planoId: string;
   titulo: string;
@@ -51,6 +52,9 @@ export function PlanoView({
   secoes: PlanoSecaoView[];
   resultado: "funcionou" | "parcial" | "nao_funcionou" | "nao_testou" | null;
   resultadoNota: string | null;
+  /** Recado no topo — ex.: o ajuste pedido não deu certo e o plano voltou
+   *  como estava. O plano continua inteiro logo abaixo. */
+  aviso?: string | null;
 }) {
   const [filtro, setFiltro] = useState<string>("tudo");
   const tipos = Array.from(new Set(secoes.map((s) => s.tipo)));
@@ -81,6 +85,12 @@ export function PlanoView({
           </button>
         </div>
       </header>
+
+      {aviso && (
+        <p className="rounded-2xl border border-amber-200 bg-amber-50/70 px-4 py-3 text-sm leading-relaxed text-amber-900 print:hidden">
+          {aviso}
+        </p>
+      )}
 
       {/* Filtro — os antigos "botões" viram visões do mesmo plano (0 chamada). */}
       {tipos.length > 1 && (

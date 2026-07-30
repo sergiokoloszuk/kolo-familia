@@ -5,7 +5,7 @@ import { after } from "next/server";
 import { z } from "zod";
 import { createClient, createServiceRoleClient } from "@/lib/supabase/server";
 import { requireActiveWrite } from "@/lib/auth/require-active-write";
-import { gerarSecoesPlanoMultiCall } from "@/lib/ia/plano";
+import { gerarSecoesPlanoMultiCall, PlanoIncompletoError } from "@/lib/ia/plano";
 import { resolveFamily } from "@/lib/auth/current-family";
 
 async function requireFamily() {
@@ -98,11 +98,18 @@ export async function ajustarPlano(
 
     const { data: plano } = await supabase
       .from("planos")
-      .select("id, conversa_id, membro_atipico_id, tema")
+      .select("id, conversa_id, membro_atipico_id, tema, titulo, secoes")
       .eq("id", planoId)
       .eq("family_account_id", family.id)
       .maybeSingle();
     if (!plano) return { ok: false, error: "Plano não encontrado." };
+
+    // Guarda o plano ATUAL: se o ajuste falhar, ela recebe de volta o que já
+    // tinha — pedir um ajuste não pode custar o plano que estava na mão.
+    const anterior = {
+      titulo: (plano.titulo as string | null) ?? "Plano",
+      secoes: (plano.secoes ?? []) as unknown,
+    };
 
     // Desafio original: mensagens da conversa que gerou o plano (se houver).
     let desafioBase = (plano.tema as string | null)?.trim() || "";
@@ -142,6 +149,29 @@ export async function ajustarPlano(
         await admin.from("planos").update({ titulo, tema, secoes }).eq("id", planoId);
       } catch (e) {
         console.error("[plano.ajuste.after]", e);
+        const temAnterior = Array.isArray(anterior.secoes) && anterior.secoes.length > 0;
+        if (temAnterior) {
+          // Devolve o plano original + um aviso no topo, em vez de deixar a
+          // mãe sem nada. O ajuste ela pode pedir de novo.
+          await admin
+            .from("planos")
+            .update({
+              titulo: anterior.titulo,
+              secoes: [
+                {
+                  tipo: "__erro__",
+                  titulo: "",
+                  conteudo_markdown:
+                    e instanceof PlanoIncompletoError
+                      ? "O ajuste não saiu completo desta vez, então mantive o seu plano como estava. Pode pedir o ajuste de novo."
+                      : "Tive um problema ao ajustar este plano, então mantive ele como estava. Tente pedir o ajuste de novo em instantes.",
+                },
+                ...(anterior.secoes as unknown[]),
+              ],
+            })
+            .eq("id", planoId);
+          return;
+        }
         await admin
           .from("planos")
           .update({
@@ -151,7 +181,9 @@ export async function ajustarPlano(
                 tipo: "__erro__",
                 titulo: "",
                 conteudo_markdown:
-                  "Tive um problema ao ajustar este plano. Tente pedir o ajuste de novo em instantes.",
+                  e instanceof PlanoIncompletoError
+                    ? "A parte prática do plano não veio nesta tentativa, e eu não quis te entregar pela metade. Peça o ajuste de novo: costuma sair completo na segunda vez."
+                    : "Tive um problema ao ajustar este plano. Tente pedir o ajuste de novo em instantes.",
               },
             ],
           })

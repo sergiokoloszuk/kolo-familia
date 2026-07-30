@@ -5,7 +5,7 @@ import { after } from "next/server";
 import { z } from "zod";
 import { createClient, createServiceRoleClient } from "@/lib/supabase/server";
 import { respond, respondAsOutputType } from "@/lib/ia/engine";
-import { gerarSecoesPlanoMultiCall } from "@/lib/ia/plano";
+import { gerarSecoesPlanoMultiCall, PlanoIncompletoError } from "@/lib/ia/plano";
 import { gerarTituloConversa } from "@/lib/ia/titulo";
 import { trackFeature } from "@/lib/analytics/track";
 import { extrairAtualizacoes, type PropostaAtualizacao } from "@/lib/ia/atualizar";
@@ -391,6 +391,9 @@ export async function criarPlanoDaConversa(
         await admin.from("planos").update({ titulo, tema, secoes }).eq("id", planoId);
       } catch (e) {
         console.error("[plano.after]", e);
+        // Plano incompleto não é "erro genérico": as seções práticas não vieram
+        // e a gente preferiu não entregar pela metade. Vale dizer isso.
+        const incompleto = e instanceof PlanoIncompletoError;
         await admin
           .from("planos")
           .update({
@@ -399,8 +402,9 @@ export async function criarPlanoDaConversa(
               {
                 tipo: "__erro__",
                 titulo: "",
-                conteudo_markdown:
-                  "Tive um problema ao montar este plano. Volte às Estratégias e tente gerar de novo em instantes.",
+                conteudo_markdown: incompleto
+                  ? "A parte prática do plano — o que fazer no dia a dia — não veio desta vez, e eu não quis te entregar pela metade. Peça de novo nas Estratégias: costuma sair completo na segunda tentativa."
+                  : "Tive um problema ao montar este plano. Volte às Estratégias e tente gerar de novo em instantes.",
               },
             ],
           })

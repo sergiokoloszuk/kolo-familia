@@ -19,6 +19,7 @@ const items = [
   { href: "/admin/padroes", label: "Padrões" },
   { href: "/admin/backfill-areas", label: "Etiquetar histórico" },
   { href: "/admin/snapshots", label: "Fotos mensais" },
+  { href: "/admin/planos-incompletos", label: "Planos sem práticas" },
   { href: "/admin/convites", label: "Convites" },
   { href: "/admin/afiliados", label: "Afiliados" },
   { href: "/admin/cortesias", label: "Cortesias" },

@@ -5,6 +5,7 @@ import { buildContextBlock, VOZ_E_LIMITES } from "./prompt";
 import { loadActiveSkills, routeSkillsAI } from "./router";
 import { respondAsOutputType } from "./engine";
 import { capitalizarNome } from "@/lib/nome";
+import { logEvent } from "@/lib/log";
 
 /**
  * Gerador de PLANO completo (Fase 1) — UMA chamada Sonnet, saída por seções.
@@ -263,6 +264,95 @@ const SECOES_SEMPRE = ["crencas", "diferente", "brincadeiras", "atividades", "fr
 // Estas só entram quando o tema pede (decidido por um classificador leve).
 const SECOES_CONDICIONAIS_MC = ["historia_social", "rotina"] as const;
 
+// ============================================================
+// Robustez do multi-call — medido em 26/07/2026
+//
+// 18 de 60 planos de produção saíram SEM NENHUMA seção prática (só
+// "entender + observar"): as 7 seções rodavam todas em paralelo, cada falha
+// virava `null` em silêncio, e o único guard só disparava se TUDO falhasse.
+// Resultado: plano amputado salvo e entregue como se estivesse completo —
+// enquanto o catálogo da Ayla promete crenças, brincadeiras e frases.
+//
+// Três travas, nesta ordem: (1) menos chamadas ao mesmo tempo, (2) retentativa
+// com espera crescente, (3) nunca salvar plano sem o "o que fazer".
+// ============================================================
+
+/** Quantas seções práticas geram ao mesmo tempo. 7 em paralelo (cada uma =
+ *  1 roteador + 1 Sonnet = 14 chamadas simultâneas) era ímã de rate-limit. */
+const CONCORRENCIA_SECOES = 3;
+/** Tentativas por seção antes de desistir dela. */
+const TENTATIVAS_POR_SECAO = 3;
+/**
+ * Mínimo de seções PRÁTICAS pra o plano poder ser entregue. Abaixo disso a mãe
+ * recebe diagnóstico sem "o que fazer" — que foi exatamente o caso dos 18.
+ * É contagem, não lista fixa: exigir uma seção específica recusaria plano bom
+ * (4 práticas ricas sem uma delas continua sendo um plano).
+ */
+const MINIMO_PRATICAS = 3;
+
+/**
+ * Plano gerado sem as práticas essenciais. Existe como tipo próprio pra quem
+ * chama poder distinguir "não veio completo" (pede pra tentar de novo) de um
+ * erro qualquer (silencioso) — e pra nunca gravar meio plano no lugar.
+ */
+export class PlanoIncompletoError extends Error {
+  readonly geradas: string[];
+  readonly falhas: string[];
+  constructor(geradas: string[], falhas: string[]) {
+    super("Não consegui montar o plano completo agora. Tente de novo em instantes.");
+    this.name = "PlanoIncompletoError";
+    this.geradas = geradas;
+    this.falhas = falhas;
+  }
+}
+
+const espera = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+/** Roda `fn` até `TENTATIVAS_POR_SECAO` vezes, com espera crescente + jitter
+ *  (rate-limit some sozinho em segundos; falhar de primeira não é motivo pra
+ *  entregar plano capenga). Propaga o último erro se todas falharem. */
+async function comRetentativa<T>(rotulo: string, fn: () => Promise<T>): Promise<T> {
+  let ultimo: unknown;
+  for (let tentativa = 1; tentativa <= TENTATIVAS_POR_SECAO; tentativa++) {
+    try {
+      return await fn();
+    } catch (e) {
+      ultimo = e;
+      if (tentativa === TENTATIVAS_POR_SECAO) break;
+      const ms = 700 * 2 ** (tentativa - 1) + Math.floor(Math.random() * 400);
+      console.warn(
+        `[plano.retry] ${rotulo} tentativa ${tentativa}/${TENTATIVAS_POR_SECAO} falhou (${
+          ultimo instanceof Error ? ultimo.message : ultimo
+        }) — nova tentativa em ${ms}ms`,
+      );
+      await espera(ms);
+    }
+  }
+  throw ultimo instanceof Error ? ultimo : new Error(String(ultimo));
+}
+
+/** Promise.all com teto de concorrência, preservando a ordem de entrada. */
+async function mapComLimite<T, R>(
+  itens: readonly T[],
+  limite: number,
+  fn: (item: T) => Promise<R>,
+): Promise<R[]> {
+  const saida = new Array<R>(itens.length);
+  let proximo = 0;
+  const trabalhadores = Array.from(
+    { length: Math.min(limite, itens.length) },
+    async function trabalhar() {
+      for (;;) {
+        const i = proximo++;
+        if (i >= itens.length) return;
+        saida[i] = await fn(itens[i]);
+      }
+    },
+  );
+  await Promise.all(trabalhadores);
+  return saida;
+}
+
 /**
  * Numa chamada Haiku barata: resume o ASSUNTO (pra título do plano) e decide
  * quais seções condicionais entram. Degradação: sem título, inclui história.
@@ -305,17 +395,18 @@ async function gerarEntenderObservar(params: {
 }): Promise<{ entender: string; observar: string }> {
   const { supabase, familyId, membroAtipicoId, desafio } = params;
   try {
-    const skills = await loadActiveSkills(supabase);
-    const roteadas =
-      skills.length > 0 ? await routeSkillsAI(desafio, skills, { maxSkills: 2 }) : [];
-    const ctx = await buildContext(supabase, {
-      familyId,
-      membroAtipicoId,
-      skills: roteadas.map((r) => r.skill),
-      conversaId: null,
-    });
-    const contexto = buildContextBlock(ctx);
-    const system = `Você é a Kolo.
+    return await comRetentativa("entender/observar", async () => {
+      const skills = await loadActiveSkills(supabase);
+      const roteadas =
+        skills.length > 0 ? await routeSkillsAI(desafio, skills, { maxSkills: 2 }) : [];
+      const ctx = await buildContext(supabase, {
+        familyId,
+        membroAtipicoId,
+        skills: roteadas.map((r) => r.skill),
+        conversaId: null,
+      });
+      const contexto = buildContextBlock(ctx);
+      const system = `Você é a Kolo.
 
 ${VOZ_E_LIMITES}
 
@@ -324,23 +415,30 @@ Produza DUAS partes curtas, ESPECÍFICAS e personalizadas (use os dados reais do
 - entender: ${RECEITA_ENTENDER}
 - observar: ${RECEITA_OBSERVAR}
 Responda APENAS JSON válido: {"entender":"...markdown...","observar":"...markdown..."}`;
-    const client = getAnthropicClient();
-    const final = await client.messages.create({
-      model: MODELS.principal,
-      max_tokens: 1600,
-      system: [{ type: "text", text: system, cache_control: { type: "ephemeral" } }],
-      messages: [
-        { role: "user", content: `${contexto}\n\n<desafio>\n${desafio}\n</desafio>\n\nSó o JSON.` },
-      ],
+      const client = getAnthropicClient();
+      const final = await client.messages.create({
+        model: MODELS.principal,
+        max_tokens: 1600,
+        system: [{ type: "text", text: system, cache_control: { type: "ephemeral" } }],
+        messages: [
+          {
+            role: "user",
+            content: `${contexto}\n\n<desafio>\n${desafio}\n</desafio>\n\nSó o JSON.`,
+          },
+        ],
+      });
+      const raw = textoDeResposta(final.content);
+      const m = raw.match(/\{[\s\S]*\}/);
+      const o = m ? (JSON.parse(m[0]) as Record<string, unknown>) : {};
+      const entender = typeof o.entender === "string" ? o.entender.trim() : "";
+      const observar = typeof o.observar === "string" ? o.observar.trim() : "";
+      // Vazio conta como falha (senão a retentativa nunca acontece).
+      if (!entender && !observar) throw new Error("resposta sem entender/observar");
+      return { entender, observar };
     });
-    const raw = textoDeResposta(final.content);
-    const m = raw.match(/\{[\s\S]*\}/);
-    const o = m ? (JSON.parse(m[0]) as Record<string, unknown>) : {};
-    return {
-      entender: typeof o.entender === "string" ? o.entender : "",
-      observar: typeof o.observar === "string" ? o.observar : "",
-    };
   } catch (e) {
+    // Degradação: o plano ainda pode sair com as PRÁTICAS, que é o que a mãe
+    // usa. O guard do multi-call decide se dá pra entregar assim.
     console.warn("[plano.entenderObservar]", e instanceof Error ? e.message : e);
     return { entender: "", observar: "" };
   }
@@ -349,9 +447,13 @@ Responda APENAS JSON válido: {"entender":"...markdown...","observar":"...markdo
 /**
  * Gera o plano com a MESMA qualidade dos botões: cada seção prática é o
  * output_type correspondente (respondAsOutputType — o exato gerador do botão),
- * rodando em PARALELO; entender/observar numa chamada focada; condicionais
- * (história/rotina) só quando o tema pede. Mais caro que a chamada única, mas
- * é a qualidade que a mãe pediu — e roda em 2º plano, então não prende ninguém.
+ * em lotes de 3 com retentativa; entender/observar numa chamada focada;
+ * condicionais (história/rotina) só quando o tema pede. Mais caro que a chamada
+ * única, mas é a qualidade que a mãe pediu — e roda em 2º plano, então não
+ * prende ninguém.
+ *
+ * Lança PlanoIncompletoError quando as práticas não vêm: plano sem "o que
+ * fazer" não é entregue nem gravado.
  */
 export async function gerarSecoesPlanoMultiCall(params: {
   supabase: SupabaseClient;
@@ -376,13 +478,18 @@ export async function gerarSecoesPlanoMultiCall(params: {
     ...SECOES_CONDICIONAIS_MC.filter((t) => conds[t as "historia_social" | "rotina"]),
   ];
 
-  // Cada seção prática = o botão real, em paralelo. + entender/observar.
+  // Cada seção prática = o botão real. Em lotes de CONCORRENCIA_SECOES (não
+  // todas de uma vez) e com retentativa — as práticas são o plano.
+  const falhas: Array<{ tipo: string; motivo: string }> = [];
   const [secoesOutput, framing] = await Promise.all([
-    Promise.all(
-      tiposPraGerar.map(async (tipo) => {
-        const ot = otByKey.get(TIPO_PARA_OUTPUT[tipo]);
-        if (!ot) return null;
-        try {
+    mapComLimite(tiposPraGerar, CONCORRENCIA_SECOES, async (tipo) => {
+      const ot = otByKey.get(TIPO_PARA_OUTPUT[tipo]);
+      if (!ot) {
+        falhas.push({ tipo, motivo: "output_type ausente ou inativo" });
+        return null;
+      }
+      try {
+        return await comRetentativa(tipo, async () => {
           const r = await respondAsOutputType({
             supabase,
             familyId,
@@ -391,16 +498,21 @@ export async function gerarSecoesPlanoMultiCall(params: {
             pedido: desafio,
           });
           const txt = (r.texto ?? "").trim();
-          if (!txt) return null;
+          if (!txt) throw new Error("seção veio vazia");
           return { tipo, titulo: ot.label, conteudo_markdown: txt } as PlanoSecao;
-        } catch (e) {
-          console.warn("[plano.multicall]", tipo, e instanceof Error ? e.message : e);
-          return null;
-        }
-      }),
-    ),
+        });
+      } catch (e) {
+        const motivo = e instanceof Error ? e.message : String(e);
+        console.warn("[plano.multicall]", tipo, motivo);
+        falhas.push({ tipo, motivo: motivo.slice(0, 200) });
+        return null;
+      }
+    }),
     gerarEntenderObservar({ supabase, familyId, membroAtipicoId, desafio }),
   ]);
+  if (!framing.entender && !framing.observar) {
+    falhas.push({ tipo: "entender/observar", motivo: "não veio depois das retentativas" });
+  }
 
   const porTipo = new Map<string, PlanoSecao>();
   if (framing.entender.trim())
@@ -412,8 +524,34 @@ export async function gerarSecoesPlanoMultiCall(params: {
   const secoes = ORDEM_SECOES.map((t) => porTipo.get(t)).filter(
     (s): s is PlanoSecao => Boolean(s),
   );
-  if (secoes.length === 0) {
-    throw new Error("Não consegui montar o plano agora. Tente de novo em instantes.");
+
+  // GUARD: plano sem "o que fazer" não é plano — é diagnóstico. Antes daqui,
+  // 18 de 60 planos saíam só com entender+observar e eram salvos assim mesmo.
+  const praticas = secoes.filter((s) => (SECOES_SEMPRE as readonly string[]).includes(s.tipo));
+  const completo = praticas.length >= MINIMO_PRATICAS;
+
+  if (falhas.length > 0 || !completo) {
+    // severity warn+ persiste em eventos_app — antes isto era só console.warn,
+    // e por isso o problema viveu semanas sem rastro nenhum.
+    await logEvent({
+      kind: completo ? "plano_secoes_falharam" : "plano_incompleto",
+      severity: completo ? "warn" : "error",
+      family_account_id: familyId,
+      message: `${falhas.length} seção(ões) falharam; ${secoes.length} geradas`,
+      payload: {
+        falhas,
+        geradas: secoes.map((s) => s.tipo),
+        praticas: praticas.length,
+        completo,
+      },
+    });
+  }
+
+  if (!completo) {
+    throw new PlanoIncompletoError(
+      secoes.map((s) => s.tipo),
+      falhas.map((f) => f.tipo),
+    );
   }
 
   const nome = (membroRow as { nome?: string } | null)?.nome

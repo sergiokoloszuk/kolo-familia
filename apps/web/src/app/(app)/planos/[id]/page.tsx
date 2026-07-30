@@ -44,9 +44,13 @@ export default async function PlanoPage({
     return <PlanoMontando crianca={nomeCrianca} />;
   }
 
-  // Geração falhou (sentinela __erro__) → mensagem amigável com saída.
+  // Sentinela __erro__: quando é a ÚNICA coisa no plano, a geração falhou e a
+  // tela vira o recado. Quando vem junto de seções de verdade (um ajuste que
+  // não deu certo e devolveu o plano anterior), é só um aviso no topo — o
+  // plano dela continua inteiro.
   const erroSec = secoes.find((s) => s.tipo === "__erro__");
-  if (erroSec) {
+  const secoesReais = secoes.filter((s) => s.tipo !== "__erro__");
+  if (erroSec && secoesReais.length === 0) {
     return (
       <div className="mx-auto flex max-w-md flex-col items-center gap-4 py-16 text-center">
         <h1 className="font-heading text-2xl text-foreground">Não consegui montar o plano</h1>
@@ -69,7 +73,8 @@ export default async function PlanoPage({
       titulo={plano.titulo as string}
       crianca={crianca}
       idade={idade}
-      secoes={secoes}
+      secoes={secoesReais}
+      aviso={erroSec?.conteudo_markdown ?? null}
       resultado={
         (plano.resultado as
           | "funcionou"
