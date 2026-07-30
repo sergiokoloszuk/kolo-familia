@@ -49,6 +49,7 @@ const REQUER_ACESSO: ReadonlyArray<AylaTipoProativa> = [
   "emocional_conquista",
   "plano_seguimento",
   "recuperacao_plano",
+  "recuperacao_rotina",
   "fim_de_semana",
 ] as const;
 
@@ -65,6 +66,7 @@ const ENGAJAMENTO_PRECISA_CRIANCA: ReadonlyArray<AylaTipoProativa> = [
   "emocional_conquista",
   "plano_seguimento",
   "recuperacao_plano",
+  "recuperacao_rotina",
   "fim_de_semana",
   "boas_vindas",
 ] as const;

@@ -20,6 +20,7 @@ export type AylaTipoProativa =
   | "emocional_conquista"
   | "plano_seguimento"
   | "recuperacao_plano"
+  | "recuperacao_rotina"
   | "fim_de_semana"
   | "dass21_convite"
   | "dass21_resultado_moderado"

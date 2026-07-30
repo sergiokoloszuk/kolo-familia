@@ -9,6 +9,7 @@ import {
   type Pronomes,
 } from "./pronomes";
 import { idadeAnos } from "@/lib/idade";
+import { primeiroNome } from "@/lib/nome";
 import { gerarMagicLink } from "./ponte";
 import { carregarCadenciaMap } from "@/lib/crm/ayla-cadencia";
 
@@ -207,7 +208,7 @@ async function loadContext(
   if (!foco) return null;
 
   const nomeMae =
-    profile?.como_chamar?.trim() || profile?.nome_mae?.trim() || "oi";
+    profile?.como_chamar?.trim() || profile?.nome_mae?.trim() || "";
   const p = pronomesPara(foco.genero as Genero);
   const gapsAbertos = GAPS_KV.filter((g) => {
     const sec = (kv as Record<string, { texto?: string } | null> | null)?.[g.campo];
@@ -236,14 +237,19 @@ async function loadContext(
     []
   ).filter((x): x is string => typeof x === "string" && !!x.trim());
 
+  // PRIMEIRO nome, sempre. Com o nome cru, a Ayla escrevia "Ryan Lucas de
+  // Oliveira Feitosa" três vezes na MESMA mensagem (caso real, 27-29/07) —
+  // ninguém chama o filho assim, e soa cadastro, não conversa.
+  const nomeFoco = primeiroNome(foco.nome as string) || (foco.nome as string);
+
   return {
     nomeMae,
-    nomeMembro: foco.nome as string,
+    nomeMembro: nomeFoco,
     generoMembro: foco.genero as Genero,
     idadeMembro: idadeAnos((foco.data_nascimento as string | null) ?? null),
     pronomesMembro: p,
-    comNomeMembro: comPreposicaoCom(p, foco.nome as string),
-    deNomeMembro: comPreposicaoDe(p, foco.nome as string),
+    comNomeMembro: comPreposicaoCom(p, nomeFoco),
+    deNomeMembro: comPreposicaoDe(p, nomeFoco),
     membrosDescritos: (membros as Array<{ nome: string; data_nascimento: string | null }>)
       .map((m) => {
         const idade = idadeAnos(m.data_nascimento);

@@ -22,6 +22,7 @@ import { gerarSugestaoRepertorio } from "./repertorio";
 import { decidirDedup } from "./dedup-kolo-vivo";
 import { decidirDedupDiario } from "./dedup-diario";
 import {
+  limparNomeAusente,
   templateBoasVindas,
   templateBoasVindasComDesafio,
   templateRotinaDiaria,
@@ -37,6 +38,7 @@ import {
 import { gerarMensagemEspontanea } from "./mensagemEspontanea";
 import { traduzirProativa } from "./traduzir";
 import { montarPonteWhatsApp, gerarMagicLink, montarPlanoFimDeSemana } from "./ponte";
+import { aguardarTurnoDaMae, descartarTurnoPendente } from "./lote-inbound";
 import { pedeUmPlano } from "@/lib/ia/pedido-plano";
 import {
   rotinaConversaPendente,
@@ -427,7 +429,7 @@ export async function sendRecuperacaoPlano(
     next: `/planos/${plano.id}`,
   });
   const linhaLink = link ? `\n\n(Se não tiver chegado, é só abrir aqui 👉 ${link})` : "";
-  const texto = `Oi, ${ctx.nomeMae} 🌿 Montei um plano${refTema}${refMembro} hoje. Conseguiu dar uma olhada? Me conta o que você achou — te deu uma direção? E, se quiser, a gente continua conversando sobre isso, sem pressa. 💛${linhaLink}`;
+  const texto = `Oi, ${ctx.nomeMae} 🌿 Montei o plano estratégico${refTema}${refMembro} hoje. Conseguiu abrir? Me conta: você gostou? Acha que vai ajudar no dia a dia de vocês? Se tiver algo que não encaixou, a gente ajusta — e se quiser, seguimos conversando sobre isso sem pressa. 💛${linhaLink}`;
 
   return enviarEPersistir(supabase, {
     family_account_id: familyAccountId,
@@ -437,6 +439,68 @@ export async function sendRecuperacaoPlano(
     category: "proativa",
     tipo: "recuperacao_plano",
     meta: { plano_id: plano.id },
+  });
+}
+
+/**
+ * Recuperação pós-ROTINA VISUAL — espelha a do plano.
+ *
+ * Receber a rotina em cartões ilustrados é o outro momento que ENCANTA (Sérgio,
+ * 29/07) — e o encanto se perde se ela abre sozinha e a conversa morre. Ainda
+ * por cima os cartões demoram a ser gerados: quando ficam prontos, a mãe já
+ * saiu do WhatsApp. Este toque traz ela de volta pra ver o resultado.
+ */
+export async function sendRecuperacaoRotina(
+  supabase: SupabaseClient,
+  familyAccountId: string,
+  rotina: { id: string; nome: string | null; membro_atipico_id: string | null },
+  agora: Date = new Date(),
+): Promise<EnvioResultado> {
+  const podeRes = await podeEnviarProativa(
+    supabase,
+    { family_account_id: familyAccountId, agora },
+    "recuperacao_rotina",
+  );
+  if (!podeRes.permitido) return { enviada: false, motivo: podeRes.motivo };
+
+  // Idempotência 24h — e não empilha com a recuperação do plano no mesmo dia
+  // (duas cobranças de feedback seguidas viram chateação).
+  const desde = new Date(agora.getTime() - 24 * 60 * 60 * 1000).toISOString();
+  const { data: ja } = await supabase
+    .from("ayla_messages")
+    .select("id")
+    .eq("family_account_id", familyAccountId)
+    .in("tipo", ["recuperacao_rotina", "recuperacao_plano"])
+    .gte("created_at", desde)
+    .limit(1);
+  if ((ja?.length ?? 0) > 0) {
+    return { enviada: false, motivo: "Já pedi feedback de material nas últimas 24h." };
+  }
+
+  const ctx = await loadFamiliaParaEnvio(supabase, familyAccountId);
+  if (!ctx) return { enviada: false, motivo: "Sem contexto da família." };
+
+  const membro = rotina.membro_atipico_id
+    ? ctx.membros.find((m) => m.id === rotina.membro_atipico_id)
+    : null;
+  const refNome = (rotina.nome ?? "").trim();
+  const refRotina = refNome ? ` "${refNome}"` : "";
+  const refMembro = membro?.nome ? ` d${membro.nome.endsWith("a") ? "a" : "o"} ${membro.nome}` : "";
+  const link = await gerarMagicLink(supabase, {
+    familyId: familyAccountId,
+    next: `/ludico/rotinas/${rotina.id}`,
+  });
+  const linhaLink = link ? `\n\n(Pra abrir os cartões: ${link})` : "";
+  const texto = `Oi, ${ctx.nomeMae} 🌿 A rotina${refRotina}${refMembro} ficou pronta. Conseguiu ver os cartões? Me conta o que você achou — e se ficou com a cara ${membro?.nome ? `d${membro.nome.endsWith("a") ? "a" : "o"} ${membro.nome}` : "dele(a)"}. Se algum não ficou bom, a gente refaz rapidinho. 💛${linhaLink}`;
+
+  return enviarEPersistir(supabase, {
+    family_account_id: familyAccountId,
+    membro_atipico_id: rotina.membro_atipico_id,
+    phone: ctx.whatsapp_e164,
+    texto,
+    category: "proativa",
+    tipo: "recuperacao_rotina",
+    meta: { rotina_id: rotina.id },
   });
 }
 
@@ -1058,8 +1122,12 @@ async function alertarNaoTitular(
 
 export async function processInbound(
   supabase: SupabaseClient,
-  inbound: InboundWhatsApp,
+  inboundRecebido: InboundWhatsApp,
 ): Promise<{ tratada: boolean; familia?: string; resposta?: EnvioResultado }> {
+  // `let` porque o CONTROLE DE TURNO (mais abaixo) troca o texto pelo lote — as
+  // mensagens que a mãe mandou em sequência viram uma fala só. Todo o resto da
+  // função segue lendo `inbound` normalmente, sem saber se veio 1 ou 4 balões.
+  let inbound = inboundRecebido;
   // 1. Identifica família pelo número — casamento TOLERANTE (BR tem a
   // pegadinha do 9º dígito + variações de formato/país). Comparamos por
   // uma chave normalizada em vez de igualdade exata.
@@ -1151,11 +1219,30 @@ export async function processInbound(
     await supabase.from("ayla_messages").insert(baseInbound);
   }
 
-  // 3. Comando? — antes do parser IA, mais rápido (PAUSAR/SAIR valem mesmo em abordagem)
+  // 3. Comando? — antes do parser IA, mais rápido (PAUSAR/SAIR valem mesmo em
+  // abordagem). Fica ANTES do controle de turno de propósito: comando é
+  // autocontido e tem que valer na hora, sem esperar silêncio nenhum.
   const cmd = detectarComando(inbound.texto);
   if (cmd) {
     const resp = await processarComando(supabase, family.id, cmd);
+    await descartarTurnoPendente(supabase, family.id);
     return { tratada: true, familia: family.id, resposta: resp };
+  }
+
+  // 3a. CONTROLE DE TURNO — a partir daqui, UMA resposta por fala da mãe.
+  // Ela manda 3, 4 mensagens seguidas; sem isto rodavam 3, 4 Aylas em paralelo,
+  // cada uma cega às outras (a mesma pergunta 3× no mesmo minuto, resposta
+  // acolhendo conquista que não existia). Esta execução espera o silêncio e,
+  // se chegou mensagem nova, CEDE A VEZ — quem chegou depois responde por
+  // todas. Ver lib/ayla/lote-inbound.ts.
+  const turno = await aguardarTurnoDaMae(supabase, {
+    familyId: family.id,
+    textoAtual: inbound.texto,
+  });
+  if (!turno) return { tratada: false, familia: family.id };
+  if (turno.quantidade > 1) {
+    // O resto da função (parser, responder, ponte) passa a ver a fala inteira.
+    inbound = { ...inbound, texto: turno.texto };
   }
 
   // 3b. CRM Fase B: se o lead está em ABORDAGEM manual, a Ayla NÃO responde —
@@ -2314,12 +2401,29 @@ const AFIRMACOES = new Set([
   "sim pode", "isso", "isso mesmo", "isso ai", "quero", "quero sim", "ok",
   "okay", "ta", "ta bom", "adiciona", "adicionar", "pode adicionar",
   "adiciona sim", "manda", "boa", "perfeito", "yes",
+  // Jeitos igualmente comuns de dizer sim que ficavam de fora — e um "sim" que
+  // não é reconhecido faz a mãe pedir e não receber nada.
+  "pode ser", "pode montar", "pode mandar", "manda sim", "manda ai", "me manda",
+  "quero muito", "gostaria", "por favor", "sim por favor", "sim quero",
+  "vamos", "bora", "bora la", "aceito", "otimo", "legal", "show", "top",
+  "seria otimo", "adoraria", "com certeza", "certeza", "faz", "faz sim",
+  "monta", "monta sim", "quero ver", "vamos la", "uhum", "aham",
 ]);
 
 /** A Ayla ofereceu um plano na última mensagem? Pra um "sim" curto logo depois
  *  virar pedido de plano (auto-oferta, 1c). Marca por texto na última outbound. */
+/** Frases que caracterizam uma OFERTA de plano feita pela Ayla. Inclui a
+ *  nomenclatura nova ("plano estratégico com atividades"), que existe pra a mãe
+ *  não confundir o material com plano de ASSINATURA. */
+const REGEX_OFERTA_PLANO =
+  /monte(i)? um plano|montar (um |esse |o )?plano|junte.*plano|plano (completo|estrat[ée]gico)|um plano (completo|estrat[ée]gico|com|pra|sobre)/;
+
 async function ofertouPlanoRecente(supabase: SupabaseClient, familyId: string): Promise<boolean> {
   const desde = new Date(Date.now() - 30 * 60 * 1000).toISOString();
+  // Olha as ÚLTIMAS mensagens, não só a última. A Ayla responde em vários
+  // balões e costuma continuar falando depois de oferecer; com limit(1) o "sim"
+  // da mãe já chegava tarde demais e a oferta evaporava. Também cobre o caso
+  // real: ela pergunta o preço, a Ayla esclarece, e só então ela aceita.
   const { data } = await supabase
     .from("ayla_messages")
     .select("texto")
@@ -2327,9 +2431,10 @@ async function ofertouPlanoRecente(supabase: SupabaseClient, familyId: string): 
     .eq("direcao", "outbound")
     .gte("created_at", desde)
     .order("created_at", { ascending: false })
-    .limit(1);
-  const t = ((data?.[0]?.texto as string | null) ?? "").toLowerCase();
-  return /monte(i)? um plano|montar (um |esse )?plano|junte.*plano|plano completo|um plano (completo|com|pra|sobre)/.test(t);
+    .limit(6);
+  return (data ?? []).some((m) =>
+    REGEX_OFERTA_PLANO.test(((m.texto as string | null) ?? "").toLowerCase()),
+  );
 }
 
 /** Mensagem curta que é só um "sim" (sem conteúdo novo pra registrar). */
@@ -2471,7 +2576,7 @@ async function loadFamiliaParaEnvio(
   return {
     family_account_id: familyAccountId,
     whatsapp_e164: family.whatsapp_e164,
-    nomeMae: profile?.como_chamar?.trim() || profile?.nome_mae?.trim() || "oi",
+    nomeMae: profile?.como_chamar?.trim() || profile?.nome_mae?.trim() || "",
     cuidador: descricaoCuidador({
       papel: (profile as { papel?: string | null } | null)?.papel ?? null,
       papelOutro: (profile as { papel_outro?: string | null } | null)?.papel_outro ?? null,
@@ -2498,9 +2603,12 @@ async function enviarEPersistir(
   // família é es/en, traduz AQUI (choke point único) antes de enviar. PT não
   // passa pela tradução — zero custo/latência. A conversa reativa não usa esta
   // função (já sai no idioma de quem escreve).
-  let texto = params.texto;
+  // Nome ausente deixa cicatriz ("Oi, 🌿", "Tô com você, ."). Vários textos
+  // proativos são montados à mão aqui no orchestrator, fora do fill() dos
+  // templates — então a limpeza mora também neste choke point.
+  let texto = limparNomeAusente(params.texto);
   const idioma = await idiomaDaFamilia(supabase, params.family_account_id);
-  if (idioma !== "pt") texto = await traduzirProativa(params.texto, idioma);
+  if (idioma !== "pt") texto = limparNomeAusente(await traduzirProativa(texto, idioma));
 
   let resultado: EnvioResultado;
   let providerResp: unknown = null;

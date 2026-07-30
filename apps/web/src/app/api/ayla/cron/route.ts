@@ -12,6 +12,7 @@ import {
   sendRepertorioSugestao,
   sendPlanoSeguimento,
   sendRecuperacaoPlano,
+  sendRecuperacaoRotina,
   sendOfertaFimDeSemana,
   sendCampanha,
   type CampanhaCategoria,
@@ -787,11 +788,81 @@ async function runRecuperacaoPlano(supabase: AdminClient, janela: "hoje" | "3min
     }
   }
 
+  // A rotina visual é o outro material que encanta — mesma lógica, mesma
+  // janela. A idempotência dentro de sendRecuperacaoRotina impede que a mesma
+  // família receba os dois pedidos de feedback no mesmo dia.
+  const rotinas = await recuperarRotinas(supabase, desde, ate, agora);
+
   return NextResponse.json({
-    processadas: resultados.length,
-    enviadas: resultados.filter((r) => r.enviada).length,
-    detalhes: resultados,
+    processadas: resultados.length + rotinas.length,
+    enviadas:
+      resultados.filter((r) => r.enviada).length + rotinas.filter((r) => r.enviada).length,
+    detalhes: [...resultados, ...rotinas],
   });
+}
+
+/**
+ * Rotinas visuais entregues e não comentadas: reabre pra a mãe ver os cartões
+ * (que ficam prontos DEPOIS, quando ela já saiu do WhatsApp) e dizer o que
+ * achou. Só quem NÃO respondeu depois da entrega. Um por família.
+ */
+async function recuperarRotinas(
+  supabase: AdminClient,
+  desde: string,
+  ate: string | null,
+  agora: Date,
+): Promise<Array<{ familyId: string; enviada: boolean; motivo?: string }>> {
+  let query = supabase
+    .from("rotinas")
+    .select("id, family_account_id, membro_atipico_id, nome, created_at, cards_status")
+    .gte("created_at", desde);
+  if (ate) query = query.lt("created_at", ate);
+  const { data: linhas } = await query.order("created_at", { ascending: false });
+
+  const porFamilia = new Map<
+    string,
+    { id: string; membro_atipico_id: string | null; nome: string | null; created_at: string }
+  >();
+  for (const r of linhas ?? []) {
+    const fid = r.family_account_id as string;
+    if (!fid || porFamilia.has(fid)) continue;
+    // Cartões ainda sendo ilustrados: não adianta chamar ela pra ver agora.
+    // A janela do cron (3–30 min) pega essa rotina numa passada seguinte.
+    if (r.cards_status === "gerando") continue;
+    porFamilia.set(fid, {
+      id: r.id as string,
+      membro_atipico_id: (r.membro_atipico_id as string | null) ?? null,
+      nome: (r.nome as string | null) ?? null,
+      created_at: r.created_at as string,
+    });
+  }
+
+  const out: Array<{ familyId: string; enviada: boolean; motivo?: string }> = [];
+  for (const [familyId, rotina] of porFamilia) {
+    try {
+      const { data: inboundDepois } = await supabase
+        .from("ayla_messages")
+        .select("id")
+        .eq("family_account_id", familyId)
+        .eq("direcao", "inbound")
+        .gte("created_at", rotina.created_at)
+        .limit(1);
+      if ((inboundDepois?.length ?? 0) > 0) {
+        out.push({ familyId, enviada: false, motivo: "Já respondeu após a rotina." });
+        continue;
+      }
+      const r = await sendRecuperacaoRotina(
+        supabase,
+        familyId,
+        { id: rotina.id, nome: rotina.nome, membro_atipico_id: rotina.membro_atipico_id },
+        agora,
+      );
+      out.push({ familyId, enviada: r.enviada, motivo: r.enviada ? undefined : r.motivo });
+    } catch (e) {
+      out.push({ familyId, enviada: false, motivo: e instanceof Error ? e.message : "erro" });
+    }
+  }
+  return out;
 }
 
 /**

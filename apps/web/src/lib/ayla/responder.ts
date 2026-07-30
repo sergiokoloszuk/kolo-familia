@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { getAylaAnthropicClient, AYLA_MODEL_FALLBACK } from "./anthropic";
 import { logarUsoApi } from "@/lib/billing/logar";
+import { logServerError } from "@/lib/log";
 import { pronomesPara, type Genero, type CuidadorDescrito } from "./pronomes";
 // NÚCLEO DE CONDUÇÃO — fonte única compartilhada com as Estratégias (web):
 // identidade + norte, princípios, regra de sequência, exemplos, piso e tom.
@@ -46,6 +47,31 @@ export const FORMATO_WHATSAPP = `# Formato (WhatsApp)
  * dela. Injetado no fim do system (vale pro prompt do banco e pro fallback),
  * então não depende de editar o prompt em produção.
  */
+/**
+ * A mensagem toca em PREÇO/ASSINATURA?
+ *
+ * Precisa pegar o caso real que descarrilhou a conversa do Pietro — "Qual
+ * valor?", duas palavras, sem contexto nenhum — sem disparar no vocabulário
+ * normal da Kolo. Dois cuidados aprendidos: "cartão" NÃO entra (aqui é cartão
+ * de rotina visual), e "valor" sozinho também não ("o valor dela como mãe",
+ * "isso não tem valor pra ele") — só valor perguntado ou de plano/assinatura.
+ */
+export const PERGUNTA_DE_PRECO = new RegExp(
+  [
+    // termos que só existem em conversa de dinheiro
+    "\\b(pre[çc]o|mensalidade|assinatura|assinar|cobran[çc]a|cupom|desconto)\\b",
+    "\\bplano\\s+(mensal|anual)\\b",
+    "\\b(pagar|paguei|pagando|pago|cobra|cobram|cobrar)\\b",
+    "\\bgr[áa]tis\\b",
+    // "quanto custa/é/fica/sai/vou pagar"
+    "\\bquanto\\s+(custa|custam|é|fica|sai|vou\\s+pagar|tenho\\s+que\\s+pagar)\\b",
+    // "valor" só quando é pergunta ou de plano/assinatura
+    "\\b(qual|quais|quanto|que)\\s+(é\\s+)?(o\\s+|os\\s+)?valor(es)?\\b",
+    "\\bvalor(es)?\\s+(do|da|de)\\s+(plano|assinatura|app|aplicativo|kolo|mensalidade)\\b",
+  ].join("|"),
+  "i",
+);
+
 export const DIRETRIZ_IDIOMA = `# Idioma (REGRA QUE PREVALECE — leia por último)
 Esta regra PREVALECE sobre qualquer instrução acima que mande responder "em português do Brasil": aquilo vale SÓ quando a mãe escreve em português. O idioma da resposta é SEMPRE o da mãe.
 Responda SEMPRE no MESMO idioma da última mensagem da mãe (o texto em <mensagem_de_agora>).
@@ -248,11 +274,30 @@ export async function gerarRespostaAyla(
   }
   if (params.querPlano) {
     notas.push(
-      `A pessoa está PEDINDO um plano (um roteiro / passo a passo). MUITO IMPORTANTE: NÃO escreva o plano aqui no WhatsApp — nada de passos numerados, listas longas, seções ou plano completo no chat. Responda em 1 ou 2 frases curtas, com carinho, dizendo que você já está montando um plano completo sobre isso e vai mandar pra ela agora — em PDF e com um link pra abrir no app (com ideias práticas, frases pra usar e o que observar). No máximo UMA dica curtinha; o plano de verdade vai no PDF/link, não no chat.`,
+      `A pessoa está PEDINDO um plano (um roteiro / passo a passo). MUITO IMPORTANTE: NÃO escreva o plano aqui no WhatsApp — nada de passos numerados, listas longas, seções ou plano completo no chat. Responda em 1 ou 2 frases curtas, com carinho, dizendo que você já está montando o plano estratégico com as atividades e vai mandar agora — em PDF e com um link pra abrir no app. Se for a primeira vez que ela recebe um, acrescente que já está incluído, sem custo. No máximo UMA dica curtinha; o plano de verdade vai no PDF/link, não no chat.`,
     );
   } else {
     notas.push(
-      `QUANDO OFERECER UM PLANO — e quando NÃO. Primeiro tenha uma CONVERSA RICA (entenda, acolha, agregue, explique como o cérebro/o desenvolvimento funciona, dê direção com ideias concretas) — e é assim, também, que a Kolo vai CONHECENDO a criança: faça as perguntas que ajudam E que revelam o perfil. O plano só vale quando faz sentido TRABALHAR algo com estrutura: ajustar o mindset / uma crença ("não é capaz" → é habilidade em construção), propor atividades pra desenvolver uma habilidade, superar um desafio ou treinar algo — e só depois de já ter ENTENDIDO o suficiente (pra o plano ser bom, não genérico — importante com quem chegou agora). Se o momento é de conversa que já vale por si (acolher, informar, tirar uma dúvida, dar direção), NÃO force um plano — sustente a conversa. ADEQUE SEMPRE À IDADE: criança pequena → brincadeiras/atividades/historinha; adolescente ou adulto → atividades e estratégias, NUNCA infantilize (nada de "brincadeiras"/"historinha" pra eles). Quando fizer sentido, ofereça UMA vez, de leve, no fim: "quer que eu monte um plano completo sobre isso, pra você ter salvo e organizado?". Não ofereça a cada mensagem nem se acabou de mandar um. Se ela disser "sim", o sistema entrega o plano — você só confirma que está montando.`,
+      `QUANDO OFERECER UM PLANO — e quando NÃO. Primeiro tenha uma CONVERSA RICA (entenda, acolha, agregue, explique como o cérebro/o desenvolvimento funciona, dê direção com ideias concretas) — e é assim, também, que a Kolo vai CONHECENDO a criança: faça as perguntas que ajudam E que revelam o perfil. O plano só vale quando faz sentido TRABALHAR algo com estrutura: ajustar o mindset / uma crença ("não é capaz" → é habilidade em construção), propor atividades pra desenvolver uma habilidade, superar um desafio ou treinar algo — e só depois de já ter ENTENDIDO o suficiente (pra o plano ser bom, não genérico — importante com quem chegou agora). Se o momento é de conversa que já vale por si (acolher, informar, tirar uma dúvida, dar direção), NÃO force um plano — sustente a conversa. ADEQUE SEMPRE À IDADE: criança pequena → brincadeiras/atividades/historinha; adolescente ou adulto → atividades e estratégias, NUNCA infantilize (nada de "brincadeiras"/"historinha" pra eles). Quando fizer sentido, ofereça UMA vez, de leve, no fim — e NUNCA como "um plano" seco (soa plano de ASSINATURA e a mãe pergunta o preço em vez de aceitar). Diga o que É: "quer que eu monte um plano estratégico com atividades pra isso? Vem em PDF aqui e fica salvo no app". NÃO fale em custo/preço na oferta — puxar dinheiro sem ela ter perguntado planta a dúvida que você queria evitar; se ela se confundir e perguntar, aí sim você esclarece. Não ofereça a cada mensagem nem se acabou de mandar um. Se ela disser "sim", o sistema entrega — você só confirma que está montando.`,
+    );
+  }
+  // PREÇO / ASSINATURA — a pergunta que hoje descarrilha a conversa. A Ayla
+  // mandava pra um "suporte" que não existe e nunca dava o link. A página
+  // /precos é pública e lê os valores ao vivo do banco, então nunca desatualiza.
+  if (PERGUNTA_DE_PRECO.test(params.mensagem)) {
+    const base = (process.env.NEXT_PUBLIC_APP_URL || "").replace(/\/$/, "");
+    const link = base ? `${base}/precos` : null;
+    notas.push(
+      [
+        `Ela tocou em PREÇO/ASSINATURA. Não negocie, não invente valor nem desconto — mas RESPONDA.`,
+        // O mal-entendido mais comum: ela achou que o MATERIAL é pago.
+        `Antes de qualquer coisa, cheque na <conversa_recente> se você acabou de oferecer um plano estratégico. Se sim, ela quase certamente achou que o MATERIAL é pago — desfaça isso primeiro, com naturalidade: o plano estratégico é o material sobre a criança, já incluído, sem custo nenhum. E ofereça montar assim mesmo.`,
+        `Durante o teste não se cobra nada, e nenhum material que você entrega é cobrado à parte.`,
+        link
+          ? `Se a dúvida for mesmo sobre a assinatura (quanto custa depois, planos), mande ESTE link, que mostra os valores atualizados: ${link}`
+          : `Se a dúvida for sobre a assinatura, diga que os valores ficam na página de preços do site.`,
+        `NÃO diga que vai chamar alguém, nem que existe "digitar suporte" — isso não existe e a pessoa fica esperando. Se ela quiser mesmo falar com gente, o time responde pelo suporte dentro do app e pelo e-mail de contato.`,
+      ].join(" "),
     );
   }
   if (params.koloVivoResumo.trim() || (params.estrategiasRecentes?.length ?? 0) > 0) {
@@ -349,12 +394,18 @@ Se for uma TAREFA da escola/terapia:
 
   let enviouAlgo = false;
   try {
-    const stream = client.messages.stream({
-      model: AYLA_MODEL_FALLBACK,
-      max_tokens: 900,
-      system: [{ type: "text", text: system, cache_control: { type: "ephemeral" } }],
-      messages: [{ role: "user", content: userContent }],
-    });
+    // Uma retentativa curta antes de desistir. A falha aqui não é rara nem
+    // inofensiva: quando o modelo falha, a mãe recebe o texto fixo do
+    // fallbackSimples ("Que coisa boa de ouvir 🌿") — que apareceu em conversa
+    // real, respondendo a um desabafo. Sobrecarga/rate-limit passa em segundos.
+    const stream = await comRetentativaCurta(() =>
+      client.messages.stream({
+        model: AYLA_MODEL_FALLBACK,
+        max_tokens: 900,
+        system: [{ type: "text", text: system, cache_control: { type: "ephemeral" } }],
+        messages: [{ role: "user", content: userContent }],
+      }),
+    );
 
     if (!onParagrafo) {
       const final = await stream.finalMessage();
@@ -419,6 +470,15 @@ Se for uma TAREFA da escola/terapia:
     return fullTrim;
   } catch (e) {
     console.warn("[ayla:responder] falha do modelo:", e instanceof Error ? e.message : e);
+    // PERSISTE. Antes isto era só console.warn — e por isso ninguém sabia que
+    // mães estavam recebendo o texto fixo do fallback no lugar da Ayla. Sai em
+    // eventos_app (severity error) e aparece na Observabilidade.
+    if (tracking) {
+      await logServerError("ayla_responder_falhou", e, {
+        family_account_id: tracking.family_account_id,
+        payload: { enviouAlgo, usouFallback: !enviouAlgo },
+      }).catch(() => {});
+    }
     const fb = fallbackSimples(params);
     // Só manda o fallback se ainda não enviou nada (evita resposta partida).
     if (onParagrafo && !enviouAlgo) {
@@ -440,17 +500,40 @@ function textoDe(content: Array<{ type: string }>): string {
     .trim();
 }
 
-/** Última linha de defesa: nunca deixar a Ayla muda. */
+/**
+ * Uma retentativa curta pra falha transitória (sobrecarga/rate-limit do
+ * modelo). Só vale antes de qualquer coisa ter sido enviada — depois de a
+ * primeira bolha sair, repetir viraria resposta partida.
+ */
+async function comRetentativaCurta<T>(fn: () => T): Promise<T> {
+  try {
+    return fn();
+  } catch (e) {
+    console.warn(
+      "[ayla:responder] 1ª tentativa falhou, tentando de novo:",
+      e instanceof Error ? e.message : e,
+    );
+    await new Promise((r) => setTimeout(r, 1200));
+    return fn();
+  }
+}
+
+/**
+ * Última linha de defesa: nunca deixar a Ayla muda. Só sai quando o modelo
+ * falhou (ver o logServerError acima) — então tem que ser um texto que não
+ * atrapalhe, em qualquer contexto. Sem vocativo quebrado ("Tô com você, oi") e
+ * sem comemorar nada, porque aqui a Ayla não leu a mensagem de verdade.
+ */
 function fallbackSimples(p: RespostaParams): string {
   const nome = p.nomeMembro ?? pronomesPara(p.generoMembro).sujeito;
+  const voc = p.nomeMae?.trim() ? `, ${p.nomeMae.trim()}` : "";
   if (p.precisaEscolherMembro) {
     return `Tô aqui. Sobre qual deles você quer falar — ${p.precisaEscolherMembro.nomes.join(" ou ")}?`;
   }
   if (p.sinais.desafio) {
-    return `Tô com você, ${p.nomeMae}. Respira fundo — um passo de cada vez. Me conta um pouco mais do que tá acontecendo com ${nome} agora?`;
+    return `Tô com você${voc}. Me conta um pouco mais do que tá acontecendo com ${nome}?`;
   }
-  if (p.sinais.conquista) {
-    return `Que coisa boa de ouvir 🌿 Fico feliz por vocês.`;
-  }
-  return `Tô por aqui, ${p.nomeMae}. Como foi o dia de vocês hoje?`;
+  // Antes isto era "Que coisa boa de ouvir 🌿 Fico feliz por vocês" — e saiu
+  // respondendo a um desabafo, porque a Ayla nem tinha lido a mensagem.
+  return `Tô por aqui${voc} — me conta um pouco mais?`;
 }

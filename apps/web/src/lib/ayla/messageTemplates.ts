@@ -14,17 +14,38 @@ import { nomeUsavelCrianca, primeiroNome } from "./crianca-especifica";
 
 type TemplateVars = Record<string, string | number | undefined>;
 
-function fill(template: string, vars: TemplateVars): string {
+/**
+ * Limpa a cicatriz que um nome AUSENTE deixa no texto.
+ *
+ * Até 29/07/2026 o padrão pra "não sei o nome" era a string literal **"oi"** —
+ * funcionava em "Oi, {nomeMae}" e quebrava em todo o resto: a mãe do Pietro
+ * recebeu "Tô com você, oi" e "Isso é uma conquista real, oi". Agora o padrão é
+ * vazio, e é aqui que os restos (vírgula solta, espaço duplo) somem.
+ *
+ * Exportado porque vale pros dois caminhos: templates (fill) e os textos
+ * montados à mão no orchestrator, que passam pelo envio.
+ */
+export function limparNomeAusente(texto: string): string {
   return (
-    template
-      .replace(/\{(\w+)\}/g, (_, k) => {
-        const v = vars[k];
-        return v == null ? "" : String(v);
-      })
-      // Var vazia (ex.: nome que não é nome, omitido de propósito) deixa espaço
-      // dobrado e espaço antes de pontuação — limpa sem mexer nas quebras.
+    texto
+      // "Tô com você, ." → "Tô com você." | "Oi, !" → "Oi!"
+      .replace(/,\s*([,.!?;:])/g, "$1")
+      // "Oi,\n" → "Oi\n" e vírgula pendurada no fim
+      .replace(/,[ \t]*(?=\n)/g, "")
+      .replace(/,[ \t]*$/g, "")
+      // sobras de espaçamento (sem tocar nas quebras de linha)
       .replace(/[ \t]{2,}/g, " ")
       .replace(/[ \t]+([,.!?;:])/g, "$1")
+      .trim()
+  );
+}
+
+function fill(template: string, vars: TemplateVars): string {
+  return limparNomeAusente(
+    template.replace(/\{(\w+)\}/g, (_, k) => {
+      const v = vars[k];
+      return v == null ? "" : String(v);
+    }),
   );
 }
 
