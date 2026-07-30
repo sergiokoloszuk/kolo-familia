@@ -2,6 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { dataBrParaIso } from "@/lib/idade";
 import { capitalizarNome } from "@/lib/nome";
 import { chaveTelefoneBR } from "@/lib/telefone";
+import { encerrarTrialPorNumeroDeOutraConta } from "@/lib/trial/ledger";
 import { inferGeneroDePalavra } from "@/lib/ayla/pronomes";
 import { perfilPrimario, buildDiagnosticosFormais } from "@/lib/onboarding/diagnostico";
 
@@ -188,12 +189,21 @@ export async function cpWhatsapp(
         (f) => chaveTelefoneBR(f.whatsapp_e164 as string) === chaveNova,
       );
       if (conflito) {
+        // Mesmo número = mesma pessoa: o teste dela já foi usado.
+        await encerrarTrialPorNumeroDeOutraConta(admin, {
+          familyId,
+          contexto: "onboarding_conversacional",
+        });
         return { ok: false, motivo: "whatsapp_duplicado", mensagem: "Já existe uma conta com esse WhatsApp." };
       }
     }
     const { error } = await admin.from("family_accounts").update({ whatsapp_e164: whatsapp }).eq("id", familyId);
     if (error) {
       if (error.code === "23505") {
+        await encerrarTrialPorNumeroDeOutraConta(admin, {
+          familyId,
+          contexto: "onboarding_conversacional/unique",
+        });
         return { ok: false, motivo: "whatsapp_duplicado", mensagem: "Já existe uma conta com esse WhatsApp." };
       }
       return { ok: false, motivo: "erro", mensagem: error.message };

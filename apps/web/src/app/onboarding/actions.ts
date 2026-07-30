@@ -7,6 +7,7 @@ import { createClient, createServiceRoleClient } from "@/lib/supabase/server";
 import { idadeAnos, dataBrParaIso } from "@/lib/idade";
 import { capitalizarNome } from "@/lib/nome";
 import { chaveTelefoneBR } from "@/lib/telefone";
+import { encerrarTrialPorNumeroDeOutraConta } from "@/lib/trial/ledger";
 import {
   perfilPrimario,
   buildDiagnosticosFormais,
@@ -223,6 +224,12 @@ export async function saveTela1(raw: Tela1Input) {
       (f) => chaveTelefoneBR(f.whatsapp_e164 as string) === chaveNova,
     );
     if (conflito) {
+      // Número de outra conta = mesma pessoa voltando com e-mail novo. O teste
+      // dela já foi usado (regra "1 número = 1 teste").
+      await encerrarTrialPorNumeroDeOutraConta(admin, {
+        familyId: family.id,
+        contexto: "onboarding",
+      });
       throw new Error(
         "Esse número de WhatsApp já está em uso por outra conta. Use o número que você usa no WhatsApp, ou fale com o suporte se achar que é um engano.",
       );
@@ -236,6 +243,10 @@ export async function saveTela1(raw: Tela1Input) {
   if (errWhats) {
     // 23505 = unique_violation do índice family_accounts_whatsapp_unico.
     if (errWhats.code === "23505") {
+      await encerrarTrialPorNumeroDeOutraConta(createServiceRoleClient(), {
+        familyId: family.id,
+        contexto: "onboarding/unique",
+      });
       throw new Error(
         "Esse número de WhatsApp já está em uso por outra conta. Use o número que você usa no WhatsApp, ou fale com o suporte se achar que é um engano.",
       );

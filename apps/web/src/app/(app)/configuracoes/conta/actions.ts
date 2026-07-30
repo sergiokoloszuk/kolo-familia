@@ -7,6 +7,7 @@ import { requireUser, loadFamilyContext } from "@/lib/auth/require-user";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { getStripeClient } from "@/lib/stripe/client";
 import { chaveTelefoneBR } from "@/lib/telefone";
+import { encerrarTrialPorNumeroDeOutraConta } from "@/lib/trial/ledger";
 import { logEvent, logServerError } from "@/lib/log";
 
 export type PerfilResult = { ok: true } | { ok: false; error: string };
@@ -88,6 +89,11 @@ export async function atualizarWhatsappAction(
         (f) => chaveTelefoneBR(f.whatsapp_e164 as string) === chaveNova,
       );
       if (conflito) {
+        // Mesmo número de outra conta = mesma pessoa (regra "1 número = 1 teste").
+        await encerrarTrialPorNumeroDeOutraConta(admin, {
+          familyId: family.id,
+          contexto: "configuracoes",
+        });
         return { ok: false, error: "Esse WhatsApp já está em uso por outra conta." };
       }
     }
@@ -99,6 +105,10 @@ export async function atualizarWhatsappAction(
     if (error) {
       // 23505 = unique_violation (índice family_accounts_whatsapp_unico).
       if (error.code === "23505") {
+        await encerrarTrialPorNumeroDeOutraConta(admin, {
+          familyId: family.id,
+          contexto: "configuracoes/unique",
+        });
         return { ok: false, error: "Esse WhatsApp já está em uso por outra conta." };
       }
       return { ok: false, error: `Não consegui salvar: ${error.message}` };
