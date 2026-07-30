@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import type { FamRow, Rank } from "@/lib/analytics/dashboard";
 
@@ -6,17 +7,51 @@ import type { FamRow, Rank } from "@/lib/analytics/dashboard";
  * /admin/comportamento (admin, com nomes) e /dashboards (analista, anônimo).
  */
 
-export function Stat({ label, value, sub }: { label: string; value: number | string; sub?: string }) {
+/**
+ * Número de topo. Com `href`, o card inteiro vira link pro drill-down (quem
+ * são essas pessoas) — o número sozinho não diz o que fazer com ele.
+ * `ativo` marca o card cujo segmento está aberto logo abaixo.
+ */
+export function Stat({
+  label,
+  value,
+  sub,
+  href,
+  ativo,
+}: {
+  label: string;
+  value: number | string;
+  sub?: string;
+  href?: string;
+  ativo?: boolean;
+}) {
+  const corpo = (
+    <CardHeader className="gap-1">
+      <CardDescription className="text-xs uppercase tracking-[0.12em] text-muted-foreground/80">
+        {label}
+      </CardDescription>
+      <CardTitle className="font-heading text-3xl text-foreground">{value}</CardTitle>
+      {sub && <p className="text-xs text-muted-foreground">{sub}</p>}
+      {href && (
+        <p className="text-xs font-medium text-brand-purple">
+          {ativo ? "ver menos ↑" : "ver quem são →"}
+        </p>
+      )}
+    </CardHeader>
+  );
+
+  if (!href) return <Card className="rounded-3xl">{corpo}</Card>;
+
   return (
-    <Card className="rounded-3xl">
-      <CardHeader className="gap-1">
-        <CardDescription className="text-xs uppercase tracking-[0.12em] text-muted-foreground/80">
-          {label}
-        </CardDescription>
-        <CardTitle className="font-heading text-3xl text-foreground">{value}</CardTitle>
-        {sub && <p className="text-xs text-muted-foreground">{sub}</p>}
-      </CardHeader>
-    </Card>
+    <Link href={href} scroll={false} className="block">
+      <Card
+        className={`rounded-3xl transition-colors ${
+          ativo ? "border-brand-purple ring-1 ring-brand-purple" : "hover:border-foreground/20"
+        }`}
+      >
+        {corpo}
+      </Card>
+    </Link>
   );
 }
 

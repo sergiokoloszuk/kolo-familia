@@ -15,7 +15,10 @@ import { ComportamentoDiarioTabela } from "@/components/dashboard/comportamento-
  */
 export const dynamic = "force-dynamic";
 
-const SEGMENTOS: Record<string, { label: string; pred: (f: FamiliaSegmento) => boolean }> = {
+const SEGMENTOS: Record<
+  string,
+  { label: string; desc?: string; pred: (f: FamiliaSegmento) => boolean }
+> = {
   cadastrou: { label: "Cadastrou", pred: () => true },
   ativou_teste: { label: "Ativou o teste", pred: (f) => f.ativou },
   ativado: { label: "Ativado", pred: (f) => f.ativado },
@@ -23,7 +26,21 @@ const SEGMENTOS: Record<string, { label: string; pred: (f: FamiliaSegmento) => b
   convertido: { label: "Converteu", pred: (f) => f.fase === "convertido" },
   em_risco: { label: "Em risco (parou 24h+)", pred: (f) => f.fase === "em_risco" },
   expirado: { label: "Expiraram sem assinar", pred: (f) => f.fase === "expirado" },
+  clicou_assinar: {
+    label: "Clicaram em assinar",
+    desc: "Chegaram a abrir o checkout. Quem clicou e não pagou é a lista mais quente pra abordar — a intenção já foi declarada.",
+    pred: (f) => f.cliquesAssinar > 0,
+  },
+  pagou: {
+    label: "Assinantes",
+    desc: "Quem está pagando agora (status active).",
+    pred: (f) => f.assinaturaStatus === "active",
+  },
 };
+
+/** Segmentos que ganham colunas próprias na tabela (o que importa em cada um). */
+const SEG_CHECKOUT = "clicou_assinar";
+const SEG_PAGOU = "pagou";
 
 export default async function AquisicaoJornadaPage({
   searchParams,
@@ -42,9 +59,17 @@ export default async function AquisicaoJornadaPage({
   const segAtivo = segDef ? sp.seg : null;
   const familiasSeg = segDef ? j.todasFamilias.filter(segDef.pred) : [];
 
+  // O card de "clicaram assinar" conta pela MESMA fonte do drill-down (as
+  // famílias da jornada), senão o número do topo e a lista discordariam.
+  const clicaramAssinar = j.todasFamilias.filter((f) => f.cliquesAssinar > 0);
+  const clicaramSemPagar = clicaramAssinar.filter((f) => f.assinaturaStatus !== "active").length;
+
   // Ficha "o que já fez" de uma família (Fase 2). Admin vê conteúdo; agência
   // co-acesso vê só os sinais.
   const famId = typeof sp.fam === "string" ? sp.fam : null;
+  // Os dados comerciais da ficha (assinatura, cliques em assinar) vêm da mesma
+  // fonte da tabela — assim ficha e lista nunca contam histórias diferentes.
+  const famSeg = famId ? j.todasFamilias.find((f) => f.id === famId) ?? null : null;
   const voltarHref = segAtivo ? `/dashboards?seg=${segAtivo}` : "/dashboards";
   const [ficha, ehAdminView, comportamento] = famId
     ? await Promise.all([
@@ -63,8 +88,24 @@ export default async function AquisicaoJornadaPage({
       <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Stat label="Famílias" value={d.totalFamilias} />
         <Stat label="Ativas 7 dias" value={d.ativas7} sub={`${d.ativas30} em 30 dias`} />
-        <Stat label="Clicaram assinar (30d)" value={d.checkoutFamilias} sub="checkout_iniciado" />
-        <Stat label="Conversão trial→pago" value={`${conversao}%`} sub={`${assinantes} assinantes`} />
+        <Stat
+          label="Clicaram assinar (90d)"
+          value={clicaramAssinar.length}
+          sub={
+            clicaramSemPagar > 0
+              ? `${clicaramSemPagar} clicaram e não pagaram`
+              : "abriram o checkout"
+          }
+          href={segAtivo === SEG_CHECKOUT ? "/dashboards" : `/dashboards?seg=${SEG_CHECKOUT}`}
+          ativo={segAtivo === SEG_CHECKOUT}
+        />
+        <Stat
+          label="Conversão trial→pago"
+          value={`${conversao}%`}
+          sub={`${assinantes} assinantes`}
+          href={segAtivo === SEG_PAGOU ? "/dashboards" : `/dashboards?seg=${SEG_PAGOU}`}
+          ativo={segAtivo === SEG_PAGOU}
+        />
       </section>
 
       {/* Funil de assinatura (status) */}
@@ -186,13 +227,19 @@ export default async function AquisicaoJornadaPage({
       {segDef && (
         <Bloco
           titulo={`Quem está em: ${segDef.label}`}
-          desc={`${familiasSeg.length} família(s). Nome da mãe (ou e-mail quando ainda sem nome).`}
+          desc={`${familiasSeg.length} família(s). ${segDef.desc ?? "Nome da mãe (ou e-mail quando ainda sem nome)."}`}
         >
           <div className="mb-3">
             <Link href="/dashboards" className="text-sm font-medium text-brand-purple hover:underline">
               ← limpar seleção
             </Link>
           </div>
+          {segAtivo === SEG_CHECKOUT && familiasSeg.length > 0 && (
+            <p className="mb-3 rounded-xl border border-amber-200 bg-amber-50/70 px-3 py-2 text-sm text-amber-900">
+              <strong>{clicaramSemPagar}</strong> de {familiasSeg.length} abriram o checkout e não
+              concluíram. Elas já disseram que queriam — vale entender o que travou.
+            </p>
+          )}
           {familiasSeg.length === 0 ? (
             <Vazio texto="Ninguém neste segmento agora." />
           ) : (
@@ -203,6 +250,20 @@ export default async function AquisicaoJornadaPage({
                     <th className="py-2 pr-3 font-medium">Lead</th>
                     <th className="px-3 py-2 font-medium">Dia</th>
                     {segAtivo === "cadastrou" && <th className="px-3 py-2 font-medium">Parou em</th>}
+                    {segAtivo === SEG_CHECKOUT && (
+                      <>
+                        <th className="px-3 py-2 font-medium">Clicou em</th>
+                        <th className="px-3 py-2 font-medium">Tentativas</th>
+                        <th className="px-3 py-2 font-medium">Pagou?</th>
+                      </>
+                    )}
+                    {segAtivo === SEG_PAGOU && (
+                      <>
+                        <th className="px-3 py-2 font-medium">Assinou em</th>
+                        <th className="px-3 py-2 font-medium">Renova em</th>
+                        <th className="px-3 py-2 font-medium">Do clique ao pago</th>
+                      </>
+                    )}
                     <th className="px-3 py-2 font-medium">Origem</th>
                     <th className="px-3 py-2 font-medium">Campanha</th>
                     <th className="px-3 py-2 font-medium">Criativo</th>
@@ -225,6 +286,44 @@ export default async function AquisicaoJornadaPage({
                       <td className="px-3 py-2 text-muted-foreground">{f.diaTrial}/7</td>
                       {segAtivo === "cadastrou" && (
                         <td className="px-3 py-2 text-foreground">{f.onboardingLabel}</td>
+                      )}
+                      {segAtivo === SEG_CHECKOUT && (
+                        <>
+                          <td className="px-3 py-2 text-foreground">
+                            {f.ultimoCliqueAssinar ? dataBR(f.ultimoCliqueAssinar) : "—"}
+                          </td>
+                          <td className="px-3 py-2 text-muted-foreground">
+                            {f.cliquesAssinar}
+                            {f.cliquesAssinar > 1 && (
+                              <span className="ml-1 text-xs text-amber-700">tentou de novo</span>
+                            )}
+                          </td>
+                          <td className="px-3 py-2">
+                            {f.assinaturaStatus === "active" ? (
+                              <span className="font-medium text-emerald-700">✓ pagou</span>
+                            ) : (
+                              <span className="font-medium text-destructive">
+                                não — {rotuloStatus(f.assinaturaStatus)}
+                              </span>
+                            )}
+                          </td>
+                        </>
+                      )}
+                      {segAtivo === SEG_PAGOU && (
+                        <>
+                          <td className="px-3 py-2 text-foreground">
+                            {f.assinouEm ? dataBR(f.assinouEm) : "—"}
+                          </td>
+                          <td className="px-3 py-2 text-muted-foreground">
+                            {f.renovaEm ? dataBR(f.renovaEm) : "—"}
+                            {f.cancelaNoFim && (
+                              <span className="ml-1 text-xs text-destructive">cancela no fim</span>
+                            )}
+                          </td>
+                          <td className="px-3 py-2 text-muted-foreground">
+                            {diasEntre(f.ultimoCliqueAssinar, f.assinouEm)}
+                          </td>
+                        </>
                       )}
                       <td className="px-3 py-2 text-foreground">{f.origemCanal}</td>
                       <td className="px-3 py-2 text-muted-foreground">{f.campanha ?? "—"}</td>
@@ -290,6 +389,44 @@ export default async function AquisicaoJornadaPage({
             </p>
           )}
           <div className="grid gap-3 sm:grid-cols-2">
+            {famSeg && (
+              <FichaCard titulo="💳 Assinatura">
+                <ul className="flex flex-col gap-1">
+                  <li>
+                    <span className="font-medium text-foreground">Situação:</span>{" "}
+                    {famSeg.assinaturaStatus === "active"
+                      ? "assinante ✓"
+                      : rotuloStatus(famSeg.assinaturaStatus)}
+                    {famSeg.cancelaNoFim && " · pediu pra cancelar no fim do período"}
+                  </li>
+                  <li>
+                    <span className="font-medium text-foreground">Clicou em assinar:</span>{" "}
+                    {famSeg.cliquesAssinar === 0
+                      ? "nunca abriu o checkout"
+                      : `${famSeg.cliquesAssinar}× · última em ${dataBR(famSeg.ultimoCliqueAssinar!)}`}
+                  </li>
+                  {famSeg.assinouEm && (
+                    <li>
+                      <span className="font-medium text-foreground">Assinou em:</span>{" "}
+                      {dataBR(famSeg.assinouEm)} (
+                      {diasEntre(famSeg.ultimoCliqueAssinar, famSeg.assinouEm)} depois do clique)
+                    </li>
+                  )}
+                  {famSeg.renovaEm && (
+                    <li>
+                      <span className="font-medium text-foreground">Renova em:</span>{" "}
+                      {dataBR(famSeg.renovaEm)}
+                    </li>
+                  )}
+                  {famSeg.cliquesAssinar > 0 && famSeg.assinaturaStatus !== "active" && (
+                    <li className="text-destructive">
+                      Quis assinar e não concluiu — vale entender o que travou.
+                    </li>
+                  )}
+                </ul>
+              </FichaCard>
+            )}
+
             <FichaCard titulo="💬 Ayla (WhatsApp)">
               {ficha.ayla.mensagens > 0
                 ? `${ficha.ayla.mensagens} mensagem(ns) · última em ${dataBR(ficha.ayla.ultima!)}`
@@ -472,6 +609,33 @@ function FichaCard({ titulo, children }: { titulo: string; children: React.React
       <div className="text-muted-foreground">{children}</div>
     </div>
   );
+}
+
+/** Status cru da assinatura → o que ele significa pra quem vai abordar. */
+function rotuloStatus(status: string | null): string {
+  switch (status) {
+    case "trialing":
+      return "ainda no teste";
+    case "past_due":
+      return "pagamento falhou";
+    case "paused":
+      return "pausada";
+    case "canceled":
+      return "cancelou";
+    default:
+      return "sem assinatura";
+  }
+}
+
+/** Quanto tempo levou entre clicar em assinar e virar pagante. */
+function diasEntre(de: string | null, ate: string | null): string {
+  if (!de || !ate) return "—";
+  const ms = new Date(ate).getTime() - new Date(de).getTime();
+  if (ms < 0) return "—";
+  const horas = Math.round(ms / (60 * 60 * 1000));
+  if (horas < 1) return "na hora";
+  if (horas < 24) return `${horas}h`;
+  return `${Math.round(horas / 24)} dia(s)`;
 }
 
 function dataBR(iso: string): string {

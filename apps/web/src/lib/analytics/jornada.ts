@@ -253,6 +253,14 @@ export type FamiliaSegmento = {
   /** Passo do onboarding (1-7) e a tela onde está parada — pra decompor "Cadastrou". */
   onboardingStep: number;
   onboardingLabel: string;
+  /** Clicou em assinar (evento checkout_iniciado): quantas vezes e a última. */
+  cliquesAssinar: number;
+  ultimoCliqueAssinar: string | null;
+  /** Assinatura: status cru, quando virou pagante e quando renova. */
+  assinaturaStatus: string | null;
+  assinouEm: string | null;
+  renovaEm: string | null;
+  cancelaNoFim: boolean;
 };
 
 export type JornadaData = {
@@ -303,7 +311,11 @@ export async function carregarJornadaTrial(admin: SupabaseClient): Promise<Jorna
       .select(
         "id, created_at, onboarding_completed, onboarding_step, afiliado_id, ref_codigo, utm_source, utm_campaign, utm_content, whatsapp_e164",
       ),
-    admin.from("subscription_accesses").select("family_account_id, status, trial_ends_at"),
+    admin
+      .from("subscription_accesses")
+      .select(
+        "family_account_id, status, trial_ends_at, current_period_end, cancel_at_period_end, updated_at",
+      ),
     admin
       .from("user_events")
       .select("family_account_id, evento, created_at")
@@ -354,12 +366,39 @@ export async function carregarJornadaTrial(admin: SupabaseClient): Promise<Jorna
     ]),
   );
 
-  const subByFam = new Map<string, { status: string | null; trialEnds: string | null }>();
+  const subByFam = new Map<
+    string,
+    {
+      status: string | null;
+      trialEnds: string | null;
+      periodoFim: string | null;
+      cancelaNoFim: boolean;
+      atualizadoEm: string | null;
+    }
+  >();
   for (const s of subs ?? [])
     subByFam.set(s.family_account_id as string, {
       status: (s.status as string) ?? null,
       trialEnds: (s.trial_ends_at as string | null) ?? null,
+      periodoFim: (s.current_period_end as string | null) ?? null,
+      cancelaNoFim: Boolean(s.cancel_at_period_end),
+      atualizadoEm: (s.updated_at as string | null) ?? null,
     });
+
+  // Quem clicou em ASSINAR (checkout_iniciado): quantas vezes e quando foi a
+  // última. É intenção de compra declarada — quem clicou e NÃO pagou é a lista
+  // mais quente que existe pra abordar.
+  const checkoutByFam = new Map<string, { n: number; ultimo: number }>();
+  for (const e of events ?? []) {
+    if (e.evento !== "checkout_iniciado") continue;
+    const fid = e.family_account_id as string | null;
+    if (!fid) continue;
+    const cur = checkoutByFam.get(fid) ?? { n: 0, ultimo: 0 };
+    cur.n += 1;
+    const t = new Date(e.created_at as string).getTime();
+    if (t > cur.ultimo) cur.ultimo = t;
+    checkoutByFam.set(fid, cur);
+  }
 
   const afiliadoNome = new Map(
     (afiliadosRows ?? []).map((a) => [a.id as string, (a.nome as string) ?? (a.codigo_unico as string)]),
@@ -492,6 +531,7 @@ export async function carregarJornadaTrial(admin: SupabaseClient): Promise<Jorna
 
     const det = origemDetalhe(f, afiliadoNome);
     const ultimoUso = at.ultima > 0 ? new Date(at.ultima).toISOString() : null;
+    const checkout = checkoutByFam.get(f.id);
 
     // Drill-down por segmento: todas as famílias REAIS (sem interno, pra bater
     // com as contagens do funil), com marcos + fase.
@@ -513,6 +553,15 @@ export async function carregarJornadaTrial(admin: SupabaseClient): Promise<Jorna
         engajado: engajadoBool,
         onboardingStep: step,
         onboardingLabel: paradoEm,
+        cliquesAssinar: checkout?.n ?? 0,
+        ultimoCliqueAssinar: checkout ? new Date(checkout.ultimo).toISOString() : null,
+        assinaturaStatus: status,
+        // "Assinou em": não há carimbo próprio, mas em quem está `active` o
+        // updated_at da assinatura é o momento em que o webhook do pagamento
+        // virou a chave. Aproximação honesta — só mostramos pra active.
+        assinouEm: status === "active" ? sub?.atualizadoEm ?? null : null,
+        renovaEm: sub?.periodoFim ?? null,
+        cancelaNoFim: Boolean(sub?.cancelaNoFim),
       });
     }
 

@@ -33,7 +33,8 @@ export default async function AdminComportamentoPage() {
         <Stat label="Famílias" value={d.totalFamilias} />
         <Stat label="Ativas 7 dias" value={d.ativas7} sub={`${d.ativas30} em 30 dias`} />
         <Stat label="Completude média do Kolo Vivo" value={`${d.completudeMedia}%`} />
-        <Stat label="Clicaram assinar (30d)" value={d.checkoutFamilias} sub="checkout_iniciado" />
+        {/* A janela é a mesma dos eventos (90 dias); o rótulo dizia 30 e não era. */}
+        <Stat label="Clicaram assinar (90d)" value={d.checkoutFamilias} sub="checkout_iniciado" />
       </section>
 
       <Bloco titulo="Funil de assinatura" desc="Distribuição de status das famílias.">
