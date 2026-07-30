@@ -130,6 +130,15 @@ export type RespostaParams = {
    * canal onde as mães conversam.
    */
   boasPraticas?: string;
+  /**
+   * Conhecimento de apoio da BIA — CONTEXTO COMPLEMENTAR, nada mais. Vem
+   * pronto de `lib/bia/contexto-ayla.ts` (o mesmo serviço que a web usa), já
+   * com cotas, orçamento e instruções de uso. Vazio quando a flag está
+   * desligada, quando a busca não achou nada ou quando falhou — e aí o bloco
+   * simplesmente não existe no prompt. Não decide nada: quem decide o próximo
+   * movimento continua sendo `prontidao-plano.ts`.
+   */
+  bia?: string;
   historico: Array<{ de: "mae" | "ayla"; texto: string }>;
   mensagem: string;
   /** URL de uma FOTO que a pessoa mandou — a Ayla LÊ a imagem (lição, rótulo, agenda…). */
@@ -295,6 +304,12 @@ export async function gerarRespostaAyla(
     linhas.push(
       `\n<boas_praticas>\nOrientações da metodologia Kolo relevantes pra este assunto. INTEGRE as ideias com as suas palavras — nunca copie literalmente.\n${params.boasPraticas}\n</boas_praticas>`,
     );
+  }
+  // Conhecimento de apoio (BIA). O bloco já vem com as próprias instruções de
+  // uso; aqui é só posição. Fica DEPOIS das boas práticas e ANTES da conversa,
+  // como material de fundo — a conversa é que manda.
+  if (params.bia?.trim()) {
+    linhas.push(`\n${params.bia}`);
   }
   if (params.historico.length > 0) {
     const hist = params.historico

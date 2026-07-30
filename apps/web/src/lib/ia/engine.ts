@@ -4,6 +4,9 @@ import { loadActiveSkills, routeSkillsAI, type RoutedSkill } from "./router";
 import { buildContext } from "./context";
 import { assemblePrompt, type Modo, type OutputTypeData } from "./prompt";
 import { classificarIntencao, type Intencao } from "./intencao";
+// BIA — conhecimento de apoio. MESMO serviço que o WhatsApp usa.
+// Desligado por padrão (flag BIA_PROMPT_ENABLED): devolve "" e nada muda.
+import { carregarBlocoBia } from "@/lib/bia/contexto-ayla";
 import {
   runTomValidators,
   runEstruturalValidators,
@@ -68,12 +71,29 @@ export async function respond(params: {
     userInput,
   });
 
+  // BIA — conhecimento de apoio, MESMO serviço do WhatsApp. Só no caminho de
+  // CONVERSA: `respondAsOutputType` (os botões, que alimentam as seções do
+  // plano) fica de fora de propósito, para os planos não mudarem.
+  const bia = await carregarBlocoBia({
+    supabase,
+    canal: "web",
+    familyId,
+    contexto: {
+      idadeAnos: ctx.membroFoco?.idade ?? null,
+      perfil: ctx.membroFoco?.perfil ?? null,
+      textoDaConversa: userInput,
+    },
+    textosBoasPraticas: ctx.boasPraticas.map(
+      (bp) => `${bp.titulo} ${bp.versao_curta} ${bp.versao_conversa ?? ""}`,
+    ),
+  });
+
   let resposta = await callClaude(
     roteadas,
     ctx,
     userInput,
     { kind: "conversa" },
-    { intencao },
+    { intencao, bia },
   );
 
   let validacao = await runFullValidation(resposta.texto, ctx);
@@ -144,12 +164,28 @@ export async function prepararRespostaStream(params: {
     }
   }
 
+  // BIA — mesmo serviço do WhatsApp, só no caminho de conversa.
+  const bia = await carregarBlocoBia({
+    supabase,
+    canal: "web",
+    familyId,
+    contexto: {
+      idadeAnos: ctx.membroFoco?.idade ?? null,
+      perfil: ctx.membroFoco?.perfil ?? null,
+      textoDaConversa: userInput,
+    },
+    textosBoasPraticas: ctx.boasPraticas.map(
+      (bp) => `${bp.titulo} ${bp.versao_curta} ${bp.versao_conversa ?? ""}`,
+    ),
+  });
+
   const { system, messages } = assemblePrompt({
     skills: roteadas.map((r) => r.skill),
     ctx,
     userInput,
     modo: { kind: "conversa" },
     intencao,
+    bia,
   });
 
   return { system, messages, roteadas, intencao };
@@ -270,6 +306,8 @@ async function callClaude(
   options: {
     intencao?: Intencao;
     regeneracao?: { motivo: string; sugestao?: string };
+    /** Bloco da BIA (conhecimento de apoio). Vazio quando a flag está off. */
+    bia?: string;
   } = {},
 ): Promise<{ texto: string; uso: EngineResponse["uso"] }> {
   const client = getAnthropicClient();
@@ -284,6 +322,7 @@ async function callClaude(
     userInput: inputComRegeneracao,
     modo,
     intencao: options.intencao,
+    bia: options.bia,
   });
 
   const stream = client.messages.stream({

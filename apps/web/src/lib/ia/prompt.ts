@@ -311,11 +311,22 @@ export function assemblePrompt(params: {
   userInput: string;
   modo: Modo;
   intencao?: Intencao;
+  /**
+   * Bloco de conhecimento de apoio da BIA, já montado por
+   * `lib/bia/contexto-ayla.ts` — o MESMO serviço que a Ayla do WhatsApp usa.
+   *
+   * Entra no turno do usuário (parte volátil, depois do último breakpoint de
+   * cache), nunca no system: o system é cacheado e conteúdo que muda a cada
+   * turno ali dentro invalidaria o cache do prompt inteiro.
+   *
+   * Ausente/vazio = nada é acrescentado. É o padrão: a flag vem desligada.
+   */
+  bia?: string;
 }): {
   system: Anthropic.TextBlockParam[];
   messages: Anthropic.MessageParam[];
 } {
-  const { skills, ctx, userInput, modo, intencao } = params;
+  const { skills, ctx, userInput, modo, intencao, bia } = params;
 
   const systemText =
     modo.kind === "conversa"
@@ -344,9 +355,13 @@ export function assemblePrompt(params: {
   const wrapper =
     modo.kind === "conversa" ? "mensagem_da_mae" : "pedido_da_mae";
 
-  const userTurnText = contextoBloco
-    ? `${contextoBloco}\n\n<${wrapper}>\n${userInput}\n</${wrapper}>`
-    : `<${wrapper}>\n${userInput}\n</${wrapper}>`;
+  // Ordem: contexto da família → conhecimento de apoio (BIA) → a mensagem.
+  // A BIA é FUNDO: fica antes da fala de agora, que é o que manda.
+  const partesTurno = [contextoBloco, bia?.trim() ? bia : null].filter(Boolean);
+  const userTurnText =
+    partesTurno.length > 0
+      ? `${partesTurno.join("\n\n")}\n\n<${wrapper}>\n${userInput}\n</${wrapper}>`
+      : `<${wrapper}>\n${userInput}\n</${wrapper}>`;
 
   messages.push({ role: "user", content: userTurnText });
 

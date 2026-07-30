@@ -61,6 +61,9 @@ import {
   blocoExperimentos,
 } from "@/lib/kolo-vivo/leitura";
 import { selecionarBoasPraticas, blocoBoasPraticas } from "@/lib/conhecimento/boas-praticas";
+// BIA — conhecimento de apoio. MESMO serviço que a web usa (lib/bia/contexto-ayla.ts).
+// Desligado por padrão (flag BIA_PROMPT_ENABLED); devolve "" e nada muda.
+import { carregarBlocoBia } from "@/lib/bia/contexto-ayla";
 import { criarLinkAcesso, pedeAcessoAoApp } from "@/lib/auth/acesso-link";
 import {
   criancaPendente,
@@ -1696,6 +1699,26 @@ export async function processInbound(
     ? { historia: linkHistoria, rotina: linkRotina, desenho: linkDesenho, avatar: linkAvatar, relatorio: linkRelatorio }
     : null;
 
+  // BIA — conhecimento de apoio. Roda DEPOIS do lote acima porque precisa das
+  // boas práticas já escolhidas para detectar conflito entre as duas fontes
+  // (ex.: BP que prescreve contato visual × BIA que desaconselha forçar olhar).
+  // Com a flag desligada isto custa ZERO: `carregarBlocoBia` sai antes de
+  // qualquer I/O. Falha aqui devolve "" e a conversa segue igual.
+  const blocoBiaTexto = await carregarBlocoBia({
+    supabase,
+    canal: "whatsapp",
+    familyId: family.id,
+    contexto: {
+      idadeAnos: idadeFoco,
+      perfil: membroFoco?.perfil ?? null,
+      dificuldade: parsed.desafio ?? null,
+      textoDaConversa: inbound.texto,
+    },
+    textosBoasPraticas: boasPraticas.map(
+      (bp) => `${bp.titulo} ${bp.versao_curta} ${bp.versao_conversa ?? ""}`,
+    ),
+  });
+
   const resp = await enviarRespostaEmChunks(supabase, {
     family_account_id: family.id,
     membro_atipico_id: membroContextoId,
@@ -1719,6 +1742,7 @@ export async function processInbound(
       eventosLinhaDoTempo: blocoEventos(eventos),
       estrategiasTentadas: blocoExperimentos(experimentos),
       boasPraticas: blocoBoasPraticas(boasPraticas),
+      bia: blocoBiaTexto,
       linksLudico,
       mensagem: inbound.texto,
       imagemUrl: inbound.midiaTipo === "image" ? (inbound.midiaUrl ?? null) : null,
