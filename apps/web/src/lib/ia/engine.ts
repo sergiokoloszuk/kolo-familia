@@ -65,6 +65,7 @@ export async function respond(params: {
     membroAtipicoId,
     skills: roteadas.map((r) => r.skill),
     conversaId,
+    userInput,
   });
 
   let resposta = await callClaude(
@@ -131,6 +132,7 @@ export async function prepararRespostaStream(params: {
     membroAtipicoId,
     skills: roteadas.map((r) => r.skill),
     conversaId,
+    userInput,
   });
 
   // O histórico já inclui a última mensagem do usuário (= userInput);
@@ -185,6 +187,7 @@ export async function respondAsOutputType(params: {
     membroAtipicoId,
     skills: roteadas.map((r) => r.skill),
     conversaId: null,
+    userInput: pedido,
   });
 
   const modo: Modo = { kind: "output_type", outputType };

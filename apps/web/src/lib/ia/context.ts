@@ -3,41 +3,20 @@ import type { SkillRow } from "./router";
 import { idadeAnos } from "@/lib/idade";
 import { descricaoCuidador, type Genero } from "@/lib/ayla/pronomes";
 import { resumirComposicao } from "@/lib/familia/composicao";
+// Leitura do perfil e das memórias datadas — fonte única com a Ayla (WhatsApp).
+import {
+  PERFIL_MEMBRO_SELECT,
+  lerSecoesMembro,
+  carregarEventosRecentes,
+  carregarExperimentos,
+  type EventoLinhaDoTempo,
+  type Experimento,
+} from "@/lib/kolo-vivo/leitura";
+import { selecionarBoasPraticas } from "@/lib/conhecimento/boas-praticas";
 
-// Campos jsonb top-level em perfil_vivo_membro (legados, mantidos)
-const KOLO_VIVO_FIELDS_MEMBRO_TOPLEVEL = [
-  "essencial",
-  "como_e",
-  "corpo_rotina",
-  "desafios_regulacao",
-  "sensorial",
-] as const;
-
-// Chaves dentro de perfil_vivo_membro.categorias_extras (Adendo PRD v1 §6).
-// Skills lêem essas como gavetas espelho. Coletadas pela Ayla via conversa.
-const KOLO_VIVO_FIELDS_MEMBRO_EXTRAS = [
-  "comunicacao",
-  "socializacao",
-  "imitacao",
-  "motor",
-  "autonomia",
-  "aprendizado",
-  "foco",
-  "sono",
-  "nutricional",
-  "tela_midia",
-  "escola",
-  "saude_geral",
-  // Domínios do Retrato vivo (tela Kolo Vivo) gravados em categorias_extras.
-  "emocional",
-  "rotina",
-] as const;
-
-const KOLO_VIVO_FIELDS_MEMBRO = [
-  ...KOLO_VIVO_FIELDS_MEMBRO_TOPLEVEL,
-  ...KOLO_VIVO_FIELDS_MEMBRO_EXTRAS,
-] as const;
-type KoloVivoFieldMembro = (typeof KOLO_VIVO_FIELDS_MEMBRO)[number];
+// Os campos do MEMBRO saíram daqui: viviam nesta lista à mão (19 dos 20 — sem
+// `gostos`) e agora vêm de lib/kolo-vivo/campos.ts via lerSecoesMembro, a mesma
+// fonte da Ayla no WhatsApp. Um domínio novo passa a valer nos dois canais de uma vez.
 
 // Campos jsonb top-level em perfil_vivo_familia (legados, mantidos)
 const KOLO_VIVO_FIELDS_FAMILIA_TOPLEVEL = [
@@ -68,8 +47,18 @@ export type ContextoSkillResposta = {
     idade: number | null;
     perfil: string;
     genero: Genero;
-    secoes: Partial<Record<KoloVivoFieldMembro, string>>;
+    /**
+     * TODOS os domínios do Kolo Vivo com conteúdo. Até 30/07 isto era filtrado
+     * pelos `kolo_vivo_fields` das skills roteadas — o perfil que a Kolo via
+     * MUDAVA conforme o sorteio do roteador, e `gostos` não era lido nunca.
+     * Agora é o mesmo leitor da Ayla do WhatsApp (lib/kolo-vivo/leitura.ts).
+     */
+    secoes: Record<string, string>;
   } | null;
+  /** Linha do tempo DATADA — antes só o relatório lia. */
+  eventos: EventoLinhaDoTempo[];
+  /** O que já foi tentado e como foi — antes só o cron semanal lia. */
+  experimentos: Experimento[];
   /** Quem está falando (cuidador): nome + parentesco + gênero. */
   cuidador: { nome: string; relacao: string; genero: Genero } | null;
   /** Elenco da família — todos os membros atípicos cadastrados, com um
@@ -114,29 +103,19 @@ export async function buildContext(
   params: {
     familyId: string;
     membroAtipicoId: string | null;
+    /**
+     * As skills roteadas do turno. NÃO filtram mais nada aqui — ficam no
+     * parâmetro porque quem monta o prompt (assemblePrompt) as usa como lentes
+     * de especialista. Até 30/07 elas decidiam quais domínios do perfil eram
+     * carregados, e por isso o perfil visível variava por turno.
+     */
     skills: SkillRow[];
     conversaId?: string | null;
+    /** O que a pessoa escreveu agora — usado pra escolher as boas práticas. */
+    userInput?: string;
   },
 ): Promise<ContextoSkillResposta> {
-  const { familyId, membroAtipicoId, skills, conversaId } = params;
-
-  // União dos campos do Kolo Vivo que essas skills consomem
-  const camposMembroAcionados = new Set<string>();
-  for (const s of skills) {
-    for (const f of s.kolo_vivo_fields) {
-      if ((KOLO_VIVO_FIELDS_MEMBRO as readonly string[]).includes(f)) {
-        camposMembroAcionados.add(f);
-      }
-    }
-  }
-  // Sempre incluir essencial — identidade básica do membro.
-  camposMembroAcionados.add("essencial");
-
-  const tagsConhecimento = new Set<string>();
-  for (const s of skills) {
-    for (const t of s.knowledge_tags) tagsConhecimento.add(t);
-  }
-  const skillsNomes = skills.map((s) => s.name);
+  const { familyId, membroAtipicoId, conversaId, userInput } = params;
 
   const dataLimite = new Date();
   dataLimite.setDate(dataLimite.getDate() - 7);
@@ -148,7 +127,8 @@ export async function buildContext(
     familiaResult,
     diariosResult,
     checkinResult,
-    boasPraticasResult,
+    eventos,
+    experimentos,
     historicoResult,
     profileResult,
     membrosResult,
@@ -163,9 +143,7 @@ export async function buildContext(
     membroAtipicoId
       ? supabase
           .from("perfil_vivo_membro")
-          .select(
-            "essencial, como_e, corpo_rotina, desafios_regulacao, sensorial, categorias_extras",
-          )
+          .select(PERFIL_MEMBRO_SELECT)
           .eq("membro_atipico_id", membroAtipicoId)
           .maybeSingle()
       : Promise.resolve({ data: null }),
@@ -189,12 +167,9 @@ export async function buildContext(
       .eq("family_account_id", familyId)
       .order("data", { ascending: false })
       .limit(1),
-    supabase
-      .from("boas_praticas")
-      .select("titulo, versao_curta, versao_conversa, peso_relevancia, skills_relacionadas, tags")
-      .eq("status", "ativo")
-      .order("peso_relevancia", { ascending: false })
-      .limit(20),
+    // Memórias DATADAS — mesma leitura da Ayla no WhatsApp.
+    carregarEventosRecentes(supabase, membroAtipicoId),
+    carregarExperimentos(supabase, membroAtipicoId),
     conversaId
       ? supabase
           .from("mensagens_skill")
@@ -225,12 +200,20 @@ export async function buildContext(
         idade: idadeAnos((membroResult.data as { data_nascimento: string | null }).data_nascimento),
         perfil: (membroResult.data as { perfil: string }).perfil,
         genero: (membroResult.data as { genero: Genero }).genero ?? null,
-        secoes: filterMembroSections(
-          perfilMembroResult.data as Record<string, unknown> | null,
-          camposMembroAcionados,
-        ),
+        // TODOS os domínios (fonte única com o WhatsApp) — sem filtro por skill.
+        secoes: lerSecoesMembro(perfilMembroResult.data as Record<string, unknown> | null),
       }
     : null;
+
+  // Boas práticas: depende da idade e do perfil que acabamos de ler, então roda
+  // depois do lote — uma ida a mais ao banco em troca de respeitar a faixa
+  // etária e o perfil que a própria BP declara.
+  const boasPraticas = await selecionarBoasPraticas(supabase, {
+    assunto: userInput ?? "",
+    idade: membroFoco?.idade ?? null,
+    perfil: membroFoco?.perfil ?? null,
+    limite: 5,
+  });
 
   const familia = extractFamiliaSections(
     familiaResult.data as Record<string, unknown> | null,
@@ -284,23 +267,6 @@ export async function buildContext(
       ? (checkinResult.data[0] as ContextoSkillResposta["ultimoCheckin"])
       : null;
 
-  // Filtro de Boas Práticas relevantes: skills_relacionadas overlap OU tags overlap.
-  // Top 3 por peso_relevancia (já vem ordenado).
-  const boasPraticas = ((boasPraticasResult.data ?? []) as BoaPraticaRow[])
-    .filter((bp) => {
-      const skillsBP = bp.skills_relacionadas ?? [];
-      const tagsBP = bp.tags ?? [];
-      const skillsHit = skillsBP.some((s) => skillsNomes.includes(s));
-      const tagsHit = tagsBP.some((t) => tagsConhecimento.has(t));
-      return skillsHit || tagsHit;
-    })
-    .slice(0, 3)
-    .map((bp) => ({
-      titulo: bp.titulo,
-      versao_curta: bp.versao_curta,
-      versao_conversa: bp.versao_conversa,
-    }));
-
   // Inverte pra ordem cronológica (mais antigo primeiro) ao montar prompt
   const historico = ((historicoResult.data ?? []) as HistoricoRow[])
     .slice()
@@ -309,6 +275,8 @@ export async function buildContext(
 
   return {
     membroFoco,
+    eventos,
+    experimentos,
     cuidador,
     membros,
     familia,
@@ -330,15 +298,6 @@ type DiarioRow = {
   membros_atipicos: { nome: string } | { nome: string }[] | null;
 };
 
-type BoaPraticaRow = {
-  titulo: string;
-  versao_curta: string;
-  versao_conversa: string | null;
-  peso_relevancia: number;
-  skills_relacionadas: string[];
-  tags: string[];
-};
-
 type HistoricoRow = {
   papel: string;
   conteudo: string;
@@ -352,40 +311,9 @@ function nomeFromMembrosAtipicos(
   return m.nome ?? "—";
 }
 
-/**
- * Resolve um campo do Kolo Vivo no schema híbrido (top-level + categorias_extras).
- * Top-level vence (campos legados). Se vazio, busca dentro de categorias_extras.
- */
-function resolveSecaoMembro(
-  json: Record<string, unknown> | null,
-  campo: string,
-): string {
-  if (!json) return "";
-  // Campos legados (top-level)
-  if ((KOLO_VIVO_FIELDS_MEMBRO_TOPLEVEL as readonly string[]).includes(campo)) {
-    const direto = extractTextoFrom(json[campo]);
-    if (direto) return direto;
-  }
-  // Categorias novas (dentro de categorias_extras)
-  const extras = json.categorias_extras as Record<string, unknown> | undefined;
-  if (extras && typeof extras === "object") {
-    return extractTextoFrom(extras[campo]);
-  }
-  return "";
-}
-
-function filterMembroSections(
-  json: Record<string, unknown> | null,
-  campos: Set<string>,
-): Partial<Record<KoloVivoFieldMembro, string>> {
-  if (!json) return {};
-  const out: Partial<Record<KoloVivoFieldMembro, string>> = {};
-  for (const c of campos) {
-    const texto = resolveSecaoMembro(json, c);
-    if (texto) out[c as KoloVivoFieldMembro] = texto;
-  }
-  return out;
-}
+// `resolveSecaoMembro` e `filterMembroSections` foram substituídas por
+// `lerSecoesMembro` (lib/kolo-vivo/leitura.ts): mesma leitura nos dois canais e
+// sem o filtro por skill, que fazia o perfil visível variar por turno.
 
 function extractFamiliaSections(
   json: Record<string, unknown> | null,

@@ -50,6 +50,17 @@ import {
   editarRotina,
 } from "./rotina-guiada";
 import { classificarIntencao } from "./intent";
+import { decidirEntrega } from "./prontidao-plano";
+// Leitura do perfil e das memórias DATADAS — fonte única com a web (Estratégias).
+import {
+  carregarSecoesMembro,
+  resumoRotulado,
+  carregarEventosRecentes,
+  carregarExperimentos,
+  blocoEventos,
+  blocoExperimentos,
+} from "@/lib/kolo-vivo/leitura";
+import { selecionarBoasPraticas, blocoBoasPraticas } from "@/lib/conhecimento/boas-praticas";
 import { criarLinkAcesso, pedeAcessoAoApp } from "@/lib/auth/acesso-link";
 import {
   criancaPendente,
@@ -1648,6 +1659,12 @@ export async function processInbound(
     koloVivoLacunas,
     estrategiasRecentes,
     historico,
+    // As duas memórias DATADAS que existiam no banco e nunca chegavam à conversa
+    // (auditoria 30/07): a linha do tempo e o que já foi tentado com resultado.
+    eventos,
+    experimentos,
+    // A metodologia curada (368 BPs) — o WhatsApp não lia NENHUMA até hoje.
+    boasPraticas,
     linkHistoria,
     linkRotina,
     linkDesenho,
@@ -1657,7 +1674,14 @@ export async function processInbound(
     carregarKoloVivoResumo(supabase, membroContextoId),
     carregarLacunasKoloVivo(supabase, membroContextoId),
     carregarEstrategiasRecentes(supabase, family.id),
-    carregarHistorico(supabase, family.id, inbound.texto),
+    carregarHistorico(supabase, family.id, inbound.texto, membroContextoId),
+    carregarEventosRecentes(supabase, membroContextoId),
+    carregarExperimentos(supabase, membroContextoId),
+    selecionarBoasPraticas(supabase, {
+      assunto: `${inbound.texto} ${parsed.desafio ?? ""}`,
+      idade: idadeFoco,
+      perfil: membroFoco?.perfil ?? null,
+    }),
     ehCrianca ? gerarMagicLink(supabase, { familyId: family.id, next: "/historias/criar" }) : Promise.resolve(null),
     ehCrianca
       ? gerarMagicLink(supabase, { familyId: family.id, next: "/ludico/rotinas/semana" })
@@ -1677,6 +1701,10 @@ export async function processInbound(
     membro_atipico_id: membroContextoId,
     phone: ctx.whatsapp_e164,
     tipo: precisaEscolherMembro ? "clarificacao_identificacao" : "resposta_registro",
+    // O sinal do classificador volta a ser LIDO. Ele já existia e era calculado
+    // a cada mensagem, mas "plano" não era consumido em lugar nenhum — só as
+    // três intenções de rotina eram. Pagávamos o Haiku e jogávamos fora.
+    intentPlano: intent === "plano",
     params: {
       nomeMae: ctx.nomeMae,
       cuidador: ctx.cuidador,
@@ -1688,6 +1716,9 @@ export async function processInbound(
       koloVivoLacunas,
       estrategiasRecentes,
       historico,
+      eventosLinhaDoTempo: blocoEventos(eventos),
+      estrategiasTentadas: blocoExperimentos(experimentos),
+      boasPraticas: blocoBoasPraticas(boasPraticas),
       linksLudico,
       mensagem: inbound.texto,
       imagemUrl: inbound.midiaTipo === "image" ? (inbound.midiaUrl ?? null) : null,
@@ -1739,6 +1770,8 @@ async function enviarRespostaEmChunks(
     phone: string;
     tipo: AylaTipoReativa;
     params: RespostaParams;
+    /** O classificador de intenção leu "plano" nesta mensagem. */
+    intentPlano?: boolean;
   },
 ): Promise<EnvioResultado> {
   let providerResp: unknown = null;
@@ -1755,11 +1788,46 @@ async function enviarRespostaEmChunks(
       (await ofertouPlanoRecente(supabase, args.family_account_id)));
   args.params.querPlano = querPlano;
 
+  // DECISOR DE ENTREGA — roda ANTES da resposta, de propósito.
+  //
+  // Até 30/07 a decisão de entregar vivia dentro da ponte, que só roda DEPOIS
+  // de a Ayla já ter falado. Servia pra disparar o PDF e mais nada — então
+  // "faça só uma pergunta" e "pare de investigar" não tinham como chegar nela,
+  // e a conversa crescia sem nunca concluir (auditoria da conversa da Manu).
+  // Agora a mesma decisão molda a FALA e comanda a ENTREGA. Uma chamada só.
+  //
+  // Pedido explícito já resolvido pelo regex não precisa de decisor: entrega.
+  const decisao = querPlano
+    ? null
+    : await decidirEntrega(supabase, {
+        familyId: args.family_account_id,
+        mensagemAtual: args.params.mensagem,
+        // O classificador de intenção volta a ter efeito: até 30/07 ele
+        // devolvia "plano" e ninguém lia. Aqui ele REFORÇA — quem decide é o
+        // decisor, que tem a conversa inteira na frente (a ressalva certa: nem
+        // toda pergunta de ajuda vira PDF).
+        sinalDePedido: args.intentPlano,
+        criancaIdentificada: Boolean(args.membro_atipico_id && args.params.nomeMembro),
+        perfilComDados: Boolean(args.params.koloVivoResumo?.trim()),
+      });
+  if (decisao) {
+    console.log(
+      `[ayla:entrega] acao=${decisao.acao} score=${decisao.score} tema="${decisao.tema ?? ""}" pedido=${decisao.pedidoExplicito} fechador=${decisao.fechador} faltando=[${decisao.faltando.join("|")}] motivo="${decisao.motivo}"`,
+    );
+    args.params.decisaoEntrega = {
+      acao: decisao.acao,
+      tema: decisao.tema,
+      pergunta: decisao.pergunta,
+      fechador: decisao.fechador,
+    };
+  }
+  const vaiEntregar = querPlano || decisao?.acao === "gerar";
+
   // Resposta LENTA (pedido de plano): manda um balão breve de acolhimento na
   // hora — o Z-API não deixa mostrar "digitando" sozinho, então o balãozinho
   // (com delayTyping) enche o silêncio e mostra que a Ayla está com ela
   // enquanto o plano é montado. Só no caso lento, pra não poluir trocas rápidas.
-  if (querPlano) {
+  if (vaiEntregar) {
     const fillers = [
       "Deixa eu pensar nisso com você 🌿 já já te respondo.",
       "Tô aqui — me dá um segundinho pra montar isso direito 🌿",
@@ -1812,6 +1880,9 @@ async function enviarRespostaEmChunks(
       phoneE164: args.phone,
       // Pedido explícito de plano: fura o dedup/intenção e entrega na hora.
       forcar: querPlano,
+      // A decisão já foi tomada lá em cima (a mesma que moldou a fala) — a
+      // ponte não reavalia nem gasta outra chamada de IA.
+      decisao,
     });
     if (nudge) {
       try {
@@ -2718,47 +2789,16 @@ async function carregarKoloVivoResumo(
   supabase: SupabaseClient,
   membroId: string | null,
 ): Promise<string> {
-  if (!membroId) return "";
-  const { data } = await supabase
-    .from("perfil_vivo_membro")
-    .select("essencial, como_e, corpo_rotina, desafios_regulacao, sensorial, categorias_extras")
-    .eq("membro_atipico_id", membroId)
-    .maybeSingle();
-  if (!data) return "";
-  const row = data as Record<string, unknown>;
-  const labels: Record<string, string> = {
-    essencial: "O essencial",
-    como_e: "Como é / interesses",
-    corpo_rotina: "Corpo e rotina",
-    desafios_regulacao: "Desafios e regulação",
-    sensorial: "Sensorial",
-  };
-  const linhas: string[] = [];
-  for (const [campo, label] of Object.entries(labels)) {
-    const resumo = resumoCampoKV(row[campo]);
-    if (resumo) linhas.push(`${label}: ${resumo}`);
-  }
-  // Domínios novos vivem em categorias_extras (onboarding distribui desafios
-  // por tema; rotina/etc. também ficam aqui). Sem isso a Ayla "não sabe".
-  const extras = row.categorias_extras as Record<string, unknown> | null;
-  if (extras && typeof extras === "object") {
-    const extrasLabels: Record<string, string> = {
-      comunicacao: "Comunicação",
-      socializacao: "Socialização",
-      motor: "Motor",
-      autonomia: "Autonomia",
-      foco: "Foco",
-      sono: "Sono",
-      nutricional: "Alimentação",
-      emocional: "Regulação emocional",
-      rotina: "Rotina",
-    };
-    for (const [campo, label] of Object.entries(extrasLabels)) {
-      const resumo = resumoCampoKV(extras[campo]);
-      if (resumo) linhas.push(`${label}: ${resumo}`);
-    }
-  }
-  return linhas.join("\n");
+  // Fonte ÚNICA (lib/kolo-vivo/leitura.ts), compartilhada com a web.
+  //
+  // Até 30/07 esta função tinha DUAS listas hardcoded (5 top-level + 9 extras =
+  // 14 dos 20 domínios). Ficavam invisíveis pra a Ayla do WhatsApp:
+  // `aprendizado`, `escola`, `saude_geral`, `imitacao`, `tela_midia` e `gostos`
+  // — e `carregarLacunasKoloVivo`, que varre os 20, ainda dizia no prompt "JÁ
+  // TEM no perfil: Aprendizado, Escola…" com a ordem de não re-perguntar. A Ayla
+  // era informada de que sabia o que não podia ver: não sabia e não perguntava.
+  // Agora domínio novo entra em campos.ts e os dois canais veem junto.
+  return resumoRotulado(await carregarSecoesMembro(supabase, membroId));
 }
 
 /**
@@ -2780,40 +2820,28 @@ async function carregarEstrategiasRecentes(
     .filter((t) => t.length > 0);
 }
 
-/**
- * Extrai o texto legível de um campo jsonb do Kolo Vivo. Os campos guardam
- * formas diferentes: { texto } (livre), { interesses: [] } e
- * { desafios_iniciais: [] } (onboarding), { conquista_inicial } (essencial).
- * Antes líamos só `.texto` — por isso a Ayla "não sabia" interesses/desafios.
- */
-function resumoCampoKV(json: unknown): string {
-  if (!json || typeof json !== "object") return "";
-  const o = json as Record<string, unknown>;
-  const partes: string[] = [];
-  if (typeof o.texto === "string" && o.texto.trim()) partes.push(o.texto.trim());
-  for (const k of ["interesses", "desafios_iniciais"]) {
-    const v = o[k];
-    if (Array.isArray(v)) {
-      const itens = v.filter((x): x is string => typeof x === "string" && x.trim().length > 0);
-      if (itens.length) partes.push(itens.join(", "));
-    }
-  }
-  if (typeof o.conquista_inicial === "string" && o.conquista_inicial.trim()) {
-    partes.push(o.conquista_inicial.trim());
-  }
-  return partes.join(" · ");
-}
+// `resumoCampoKV` virou `textoDoCampo` em lib/kolo-vivo/leitura.ts — fonte única
+// compartilhada com a web (a duplicata daqui lia menos domínios que a de lá).
 
 /** Últimos turnos da conversa (pra Ayla não soar amnésica), sem a msg atual. */
 async function carregarHistorico(
   supabase: SupabaseClient,
   familyId: string,
   mensagemAtual: string,
+  /** Criança em foco: em família com 2+ filhos, não mistura os irmãos. */
+  membroId?: string | null,
 ): Promise<Array<{ de: "mae" | "ayla"; texto: string }>> {
-  const { data } = await supabase
+  // Filtro por criança (30/07): a consulta era só por família. Numa família com
+  // dois filhos os 6 últimos turnos podiam ser sobre o OUTRO — e era o vetor mais
+  // provável de "informação da outra criança aparecendo na resposta". Mantemos as
+  // linhas sem membro (as antigas, e as que o parser não soube atribuir): elas
+  // são da conversa e cortá-las deixaria a Ayla amnésica.
+  let q = supabase
     .from("ayla_messages")
     .select("direcao, texto, created_at")
-    .eq("family_account_id", familyId)
+    .eq("family_account_id", familyId);
+  if (membroId) q = q.or(`membro_atipico_id.eq.${membroId},membro_atipico_id.is.null`);
+  const { data } = await q
     .order("created_at", { ascending: false })
     .limit(9);
   const turnos = (data ?? [])

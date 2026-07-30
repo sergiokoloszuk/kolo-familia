@@ -112,6 +112,24 @@ export type RespostaParams = {
   koloVivoLacunas?: string;
   /** Títulos das últimas conversas nas Estratégias (in-app), pra continuidade. */
   estrategiasRecentes?: string[];
+  /**
+   * Linha do tempo DATADA (eventos_membro) — férias, troca de professora,
+   * medicação, marcos. Já vem formatado por lib/kolo-vivo/leitura.ts. Até 30/07
+   * era escrito pela Ayla e lido só pelo relatório: o sistema sabia a data e não
+   * conseguia usar na conversa.
+   */
+  eventosLinhaDoTempo?: string;
+  /**
+   * O que a família JÁ tentou e como foi (com data e resultado). Também era
+   * write-only pra conversa — por isso a Ayla recomendava o que não funcionou.
+   */
+  estrategiasTentadas?: string;
+  /**
+   * Boas práticas curadas relevantes a este turno. O WhatsApp não lia NENHUMA
+   * até 30/07 (só a web carregava) — 368 orientações curadas à mão sem chegar ao
+   * canal onde as mães conversam.
+   */
+  boasPraticas?: string;
   historico: Array<{ de: "mae" | "ayla"; texto: string }>;
   mensagem: string;
   /** URL de uma FOTO que a pessoa mandou — a Ayla LÊ a imagem (lição, rótulo, agenda…). */
@@ -119,6 +137,18 @@ export type RespostaParams = {
   sinais: SinaisResposta;
   /** A pessoa pediu um plano explicitamente — não escreva o plano, ofereça. */
   querPlano?: boolean;
+  /**
+   * O próximo movimento decidido antes da resposta (ver prontidao-plano.ts):
+   * entregar, fazer UMA pergunta, ou seguir conversando. É isto que impede a
+   * conversa infinita — a Ayla não escolhe sozinha investigar pra sempre.
+   */
+  decisaoEntrega?: {
+    acao: "gerar" | "perguntar" | "conversar";
+    tema: string | null;
+    pergunta: string | null;
+    /** A entrega foi forçada porque ela já perguntou demais. */
+    fechador: boolean;
+  } | null;
   precisaEscolherMembro?: { nomes: string[] } | null;
   /**
    * Magic links DIRETOS do Lúdico (só criança) — cada recurso abre já logado
@@ -251,6 +281,21 @@ export async function gerarRespostaAyla(
         .join("\n")}\n</perguntas_recentes_nas_estrategias>`,
     );
   }
+  if (params.eventosLinhaDoTempo?.trim()) {
+    linhas.push(
+      `\n<linha_do_tempo>\n${params.eventosLinhaDoTempo}\n</linha_do_tempo>`,
+    );
+  }
+  if (params.estrategiasTentadas?.trim()) {
+    linhas.push(
+      `\n<ja_tentado_e_como_foi>\n${params.estrategiasTentadas}\n</ja_tentado_e_como_foi>`,
+    );
+  }
+  if (params.boasPraticas?.trim()) {
+    linhas.push(
+      `\n<boas_praticas>\nOrientações da metodologia Kolo relevantes pra este assunto. INTEGRE as ideias com as suas palavras — nunca copie literalmente.\n${params.boasPraticas}\n</boas_praticas>`,
+    );
+  }
   if (params.historico.length > 0) {
     const hist = params.historico
       .map((h) => `${h.de === "mae" ? params.nomeMae : "Ayla"}: ${h.texto}`)
@@ -272,9 +317,23 @@ export async function gerarRespostaAyla(
       `A mãe descreveu o comportamento como DESOBEDIÊNCIA/birra. NÃO valide esse enquadre (não diga "a desobediência", "ela não obedece"). No método Kolo, a criança não está "desobedecendo" — quase sempre está sobrecarregada, desregulada, com medo ou sem conseguir naquele momento. Reenquadre com gentileza e sem julgar a mãe: o que parece desobediência costuma ser o corpo pedindo socorro. O foco é entender o gatilho e co-regular JUNTO — nunca obediência, controle ou "fazer obedecer".`,
     );
   }
-  if (params.querPlano) {
+  const acaoEntrega = params.decisaoEntrega?.acao ?? null;
+  if (params.querPlano || acaoEntrega === "gerar") {
     notas.push(
       `A pessoa está PEDINDO um plano (um roteiro / passo a passo). MUITO IMPORTANTE: NÃO escreva o plano aqui no WhatsApp — nada de passos numerados, listas longas, seções ou plano completo no chat. Responda em 1 ou 2 frases curtas, com carinho, dizendo que você já está montando o plano estratégico com as atividades e vai mandar agora — em PDF e com um link pra abrir no app. Se for a primeira vez que ela recebe um, acrescente que já está incluído, sem custo. No máximo UMA dica curtinha; o plano de verdade vai no PDF/link, não no chat.`,
+    );
+    // Entrega decidida sem ela ter usado a palavra "plano" (score alto ou
+    // fechador). Aí não se PERGUNTA se ela quer — quem já disse "queria
+    // exercitar isso com ela" não precisa confirmar duas vezes. Anuncia.
+    if (!params.querPlano) {
+      notas.push(
+        `IMPORTANTE: ela NÃO pediu um plano com essas palavras — ela contou um desafio e/ou disse o que quer trabalhar${params.decisaoEntrega?.tema ? ` ("${params.decisaoEntrega.tema}")` : ""}. NÃO pergunte "quer que eu monte?": ANUNCIE, natural e curto, que você vai montar. Ex.: "Vou montar uma proposta curta pra vocês testarem esta semana." Se houver sofrimento na fala dela, acolha em UMA frase antes — acolher não substitui entregar.`,
+      );
+    }
+  } else if (acaoEntrega === "perguntar") {
+    notas.push(
+      `MOVIMENTO DESTE TURNO: UMA PERGUNTA, e só. Você já entendeu o suficiente pra estar quase pronta pra montar o material${params.decisaoEntrega?.tema ? ` sobre ${params.decisaoEntrega.tema}` : ""}; falta UM dado pra ele não sair inadequado.${params.decisaoEntrega?.pergunta ? ` Pergunte exatamente isto, com as suas palavras e o seu tom: "${params.decisaoEntrega.pergunta}"` : ""}
+REGRAS DURAS deste turno: no MÁXIMO uma pergunta (nunca duas); NÃO explique como o cérebro funciona; NÃO liste hipóteses nem dê três orientações soltas; NÃO repita o que já disse antes. Uma frase curta de acolhimento (se couber) + a pergunta. Deixe claro, em meia frase, que assim que ela responder você já monta o material — ela precisa saber que isso vai a algum lugar.`,
     );
   } else {
     notas.push(

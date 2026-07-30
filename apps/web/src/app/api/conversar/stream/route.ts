@@ -1,7 +1,9 @@
 import type { NextRequest } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { after } from "next/server";
+import { createClient, createServiceRoleClient } from "@/lib/supabase/server";
 import { getAnthropicClient, MODELS } from "@/lib/ia/anthropic";
 import { prepararRespostaStream } from "@/lib/ia/engine";
+import { aprenderDaConversa } from "@/lib/ia/aprender";
 import { requireActiveWrite } from "@/lib/auth/require-active-write";
 import { resolveFamily } from "@/lib/auth/current-family";
 
@@ -108,6 +110,23 @@ export async function POST(req: NextRequest) {
             metadata: { intencao },
             tokens_input: final.usage.input_tokens,
             tokens_output: final.usage.output_tokens,
+          });
+
+          // APRENDIZADO AUTOMÁTICO — paridade com o WhatsApp. Antes esta rota
+          // gravava a mensagem e nada mais: só o botão "Guardar no Perfil"
+          // escrevia, então a Ayla da web nunca aprendia sozinha. Em after(),
+          // depois de a resposta já ter chegado; best-effort.
+          after(async () => {
+            try {
+              await aprenderDaConversa(createServiceRoleClient(), {
+                familyId: family.id,
+                conversaId,
+                membroId: conversa.membro_atipico_id as string | null,
+                ultimaMensagemUsuario: userInput,
+              });
+            } catch {
+              /* aprendizado é bônus — nunca afeta a conversa */
+            }
           });
 
           controller.close();

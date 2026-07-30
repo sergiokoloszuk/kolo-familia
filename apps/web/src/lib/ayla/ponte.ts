@@ -5,7 +5,7 @@ import { planoParaPdf } from "@/lib/plano/pdf";
 import { enviarDocumento } from "./whatsappSender";
 import { logEvent, logServerError } from "@/lib/log";
 import { criarLinkAcesso } from "@/lib/auth/acesso-link";
-import { avaliarProntidaoParaPlano } from "./prontidao-plano";
+import type { DecisaoEntrega } from "./prontidao-plano";
 
 /**
  * Num pedido de plano EXPLÍCITO ("me traz um plano"), o desafio de verdade está
@@ -165,8 +165,49 @@ const PLANO_COOLDOWN_MIN = 3;
  *  (Pedido explícito da mãe fura este freio — ela pediu.) */
 const JANELA_DEDUP_HORAS = 20;
 /** Mínimo de mensagens da mãe antes de um plano automático. Traduz a
- *  preocupação da Karina: quem mal falou não tem perfil pra um plano bom. */
+ *  preocupação da Karina: quem mal falou não tem perfil pra um plano bom.
+ *  Pedido explícito fura — quem pede, quer. */
 const MIN_MENSAGENS_DA_MAE = 3;
+
+/**
+ * Já entregamos um plano nesta janela?
+ *
+ * Pergunta à tabela `planos`, que é o REGISTRO do que foi entregue. Até 30/07
+ * isto era um `ilike '%/auth/wa%'` em cima das mensagens enviadas — e todo
+ * magic link é /auth/wa: o nudge de assinatura, o "não consigo entrar", os
+ * links do Lúdico que a Ayla cola numa conversa qualquer, as proativas de
+ * seguimento. Bastava a Ayla ter mandado um link de história ontem pra o
+ * auto-plano ficar 20 horas desligado, em silêncio, sem ninguém saber. Numa
+ * família ativa isso era quase sempre — foi um dos motivos de o plano ter
+ * parado de sair sozinho.
+ *
+ * `membroId` restringe à MESMA criança: plano do irmão não bloqueia o desta.
+ */
+async function planoEntregueDesde(
+  supabase: SupabaseClient,
+  params: { familyId: string; membroId?: string | null; desde: Date },
+): Promise<boolean> {
+  try {
+    let q = supabase
+      .from("planos")
+      .select("id")
+      .eq("family_account_id", params.familyId)
+      .gte("created_at", params.desde.toISOString())
+      .limit(1);
+    if (params.membroId) q = q.eq("membro_atipico_id", params.membroId);
+    const { data, error } = await q;
+    if (error) throw error;
+    return (data ?? []).length > 0;
+  } catch (e) {
+    // Na dúvida NÃO bloqueia: o custo de um plano a mais é muito menor que o de
+    // um freio invisível que desliga a feature (a lição do /auth/wa).
+    console.warn(
+      "[ayla:ponte] checagem de plano recente falhou, seguindo:",
+      e instanceof Error ? e.message : e,
+    );
+    return false;
+  }
+}
 
 
 /**
@@ -211,82 +252,64 @@ export async function montarPonteWhatsApp(
     phoneE164: string;
     /** Pedido explícito de plano: pula os gates (dedup/intenção/temDesafio). */
     forcar?: boolean;
+    /**
+     * O que o decisor resolveu ANTES da resposta (lib/ayla/prontidao-plano.ts).
+     * Vem de fora porque a mesma decisão molda a fala da Ayla — decidir aqui,
+     * depois de ela já ter falado, chegaria tarde pra isso.
+     */
+    decisao?: DecisaoEntrega | null;
   },
 ): Promise<string | null> {
-  const { familyId, membroAtipicoId, mensagem, phoneE164, forcar } = params;
+  const { familyId, membroAtipicoId, mensagem, phoneE164, forcar, decisao } = params;
 
   try {
-    // Freio anti-duplicata (SEMPRE, mesmo com forcar): se acabamos de mandar um
-    // plano nos últimos minutos, não manda outro. Rede de segurança contra
+    // Só entrega quando o decisor mandou entregar (ou quando é pedido explícito
+    // já resolvido lá em cima). Sem decisão, silêncio — o caminho de decidir é
+    // um só, e é antes da resposta.
+    if (!forcar && decisao?.acao !== "gerar") return null;
+
+    // Freio anti-duplicata (SEMPRE, mesmo com forcar): se acabamos de gerar um
+    // plano nos últimos minutos, não gera outro. Rede de segurança contra
     // double-dispatch que escape da idempotência do inbound.
-    const cooldownDesde = new Date(
-      Date.now() - PLANO_COOLDOWN_MIN * 60_000,
-    ).toISOString();
-    const { data: recem } = await supabase
-      .from("ayla_messages")
-      .select("id")
-      .eq("family_account_id", familyId)
-      .eq("direcao", "outbound")
-      .gte("enviada_em", cooldownDesde)
-      .ilike("texto", "%/auth/wa%")
-      .limit(1);
-    if (recem && recem.length > 0) {
-      console.log("[ayla:ponte] sem plano — cooldown: plano enviado há poucos minutos");
+    if (
+      await planoEntregueDesde(supabase, {
+        familyId,
+        desde: new Date(Date.now() - PLANO_COOLDOWN_MIN * 60_000),
+      })
+    ) {
+      console.log("[ayla:ponte] sem plano — cooldown: plano gerado há poucos minutos");
       return null;
     }
 
-    // MEIO-TERMO, agora de verdade (29/07). O 6d4e21a tirou o auto-disparo
-    // porque o plano atropelava a conversa e saía genérico pra quem tinha
-    // acabado de chegar — mas o que ficou no lugar foi "a mãe precisa dizer a
-    // palavra plano", e conversas de dias terminavam sem entrega nenhuma.
-    // O que a Karina pediu era "conversa rica → ao ter elementos suficientes,
-    // entregar": três freios baratos + o gate de suficiência.
-    let temaAuto: string | null = null;
+    const temaAuto = forcar ? null : (decisao?.tema ?? null);
     if (!forcar) {
-      // Freio 1 — não insiste: já entregou plano nas últimas 20h?
-      const desdeDedup = new Date(Date.now() - JANELA_DEDUP_HORAS * 3600_000).toISOString();
-      const { data: recentes } = await supabase
-        .from("ayla_messages")
-        .select("id")
-        .eq("family_account_id", familyId)
-        .eq("direcao", "outbound")
-        .gte("enviada_em", desdeDedup)
-        .ilike("texto", "%/auth/wa%")
-        .limit(1);
-      if (recentes && recentes.length > 0) {
+      // Freio 1 — não insiste: já entregou plano PRA ESTA CRIANÇA nas últimas
+      // 20h? (Pedido explícito da mãe fura; ela pediu.)
+      if (
+        await planoEntregueDesde(supabase, {
+          familyId,
+          membroId: membroAtipicoId,
+          desde: new Date(Date.now() - JANELA_DEDUP_HORAS * 3600_000),
+        })
+      ) {
         console.log("[ayla:ponte] sem auto-plano — já entregou um nas últimas 20h");
         return null;
       }
 
       // Freio 2 — a preocupação da Karina: quem acabou de chegar e mal falou
-      // não tem perfil pra um plano bom. Exige conversa de verdade antes.
-      const { count: inbounds } = await supabase
-        .from("ayla_messages")
-        .select("id", { count: "exact", head: true })
-        .eq("family_account_id", familyId)
-        .eq("direcao", "inbound");
-      if ((inbounds ?? 0) < MIN_MENSAGENS_DA_MAE) {
-        console.log(`[ayla:ponte] sem auto-plano — só ${inbounds ?? 0} mensagem(ns) da mãe`);
-        return null;
+      // não tem perfil pra um plano bom. Quem PEDE fura o freio: a mãe que
+      // chega dizendo "quero trabalhar isso com ela" não pode ouvir não.
+      if (!decisao?.pedidoExplicito) {
+        const { count: inbounds } = await supabase
+          .from("ayla_messages")
+          .select("id", { count: "exact", head: true })
+          .eq("family_account_id", familyId)
+          .eq("direcao", "inbound");
+        if ((inbounds ?? 0) < MIN_MENSAGENS_DA_MAE) {
+          console.log(`[ayla:ponte] sem auto-plano — só ${inbounds ?? 0} mensagem(ns) da mãe`);
+          return null;
+        }
       }
-
-      // Freio 3 (barato, antes de gastar IA): mensagem sem substância dificilmente
-      // fecha o critério — e o parser não marcou desafio nenhum.
-      if (!params.temDesafio && mensagem.trim().length < 40) {
-        console.log("[ayla:ponte] sem auto-plano — mensagem curta e sem desafio");
-        return null;
-      }
-
-      // Gate de suficiência: problema + contexto + exemplo concreto.
-      const prontidao = await avaliarProntidaoParaPlano(supabase, {
-        familyId,
-        mensagemAtual: mensagem,
-      });
-      console.log(
-        `[ayla:ponte] prontidão=${prontidao.pronto} tema="${prontidao.tema ?? ""}" motivo="${prontidao.motivo}"`,
-      );
-      if (!prontidao.pronto) return null;
-      temaAuto = prontidao.tema;
     }
 
     // Gera o plano completo na hora (single-call) a partir do desafio. Fica

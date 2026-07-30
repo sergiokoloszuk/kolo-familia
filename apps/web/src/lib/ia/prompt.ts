@@ -8,6 +8,7 @@ import { pronomesPara } from "@/lib/ayla/pronomes";
 // identidade + norte, princípios, regra de sequência, exemplos, piso e tom.
 // Ver lib/conducao/diretrizes.ts. A mesma "cabeça" nos dois canais.
 import { nucleoConducao } from "@/lib/conducao/diretrizes";
+import { blocoEventos, blocoExperimentos } from "@/lib/kolo-vivo/leitura";
 
 export type OutputTypeData = {
   key: string;
@@ -233,6 +234,16 @@ ${Object.entries(ctx.membroFoco.secoes)
 ${familiaEntries.map(([k, v]) => `${k}: ${v}`).join("\n")}
 </contexto_familia>`,
     );
+  }
+
+  // Linha do tempo e estratégias já tentadas — os mesmos blocos que a Ayla
+  // recebe no WhatsApp (lib/kolo-vivo/leitura.ts). Antes nenhum dos dois chegava
+  // a conversa nenhuma: eram lidos só pelo relatório e pelo cron de repertório.
+  {
+    const tl = blocoEventos(ctx.eventos);
+    if (tl) partes.push(`<linha_do_tempo>\n${tl}\n</linha_do_tempo>`);
+    const exp = blocoExperimentos(ctx.experimentos);
+    if (exp) partes.push(`<ja_tentado_e_como_foi>\n${exp}\n</ja_tentado_e_como_foi>`);
   }
 
   if (ctx.diariosRecentes.length > 0) {

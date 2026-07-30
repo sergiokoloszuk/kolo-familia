@@ -13,15 +13,8 @@ import { extrairESalvarEventos } from "@/lib/ayla/eventos";
 import {
   MEMBRO_CAMPOS_TOPLEVEL,
   MEMBRO_CAMPOS_EXTRAS,
-  membroCampoStorage,
 } from "@/lib/kolo-vivo/campos";
-import {
-  subcamposDe,
-  parsearSubcampos,
-  serializarSubcampos,
-  splitItens,
-  joinItens,
-} from "@/lib/kolo-vivo/subcampos";
+import { aplicarPropostaNoPerfil } from "@/lib/kolo-vivo/aplicar";
 import { idadeAnos, hojeLocalISO } from "@/lib/idade";
 import { requireActiveWrite, SubscriptionBlockedError } from "@/lib/auth/require-active-write";
 import { resolveFamily } from "@/lib/auth/current-family";
@@ -504,47 +497,9 @@ const confirmarSchema = z.object({
   desafio: z.string().trim().min(1).nullable().default(null),
 });
 
-const FAMILIA_CAMPOS = ["composicao", "rotina", "recursos", "dinamica"] as const;
-
-/** Anexa um fato curto ao texto da seção, sem substituir o que já existe. */
-function appendFato(prev: string, fato: string): string {
-  const p = (prev ?? "").trim();
-  const f = fato.trim();
-  if (!p) return f;
-  if (p.toLowerCase().includes(f.toLowerCase())) return p;
-  return `${p}\n${f}`;
-}
-
-/**
- * Novo texto de um campo, respeitando sub-campos estruturados. Domínios com
- * sub-campos (ex.: nutricional) recebem o fato NO sub-campo certo (seletor
- * substitui; demais anexam); domínios simples usam o anexo/reescrita normal.
- */
-function aplicarTextoCampo(
-  campo: string,
-  prev: string,
-  it: { subcampo?: string | null; texto: string; operacao: "adicionar" | "reescrever" },
-): string {
-  const subs = subcamposDe(campo);
-  if (!subs) {
-    return it.operacao === "reescrever" ? it.texto : appendFato(prev, it.texto);
-  }
-  const valores = parsearSubcampos(subs, prev);
-  const def =
-    (it.subcampo && subs.find((s) => s.key === it.subcampo)) || subs[subs.length - 1];
-  if (def.opcoes) {
-    valores[def.key] = it.texto; // seletor: substitui pelo valor
-  } else if (def.lista) {
-    // lista: anexa como item(ns), sem duplicar
-    valores[def.key] = joinItens([
-      ...splitItens(valores[def.key] ?? ""),
-      ...splitItens(it.texto),
-    ]);
-  } else {
-    valores[def.key] = appendFato(valores[def.key] ?? "", it.texto);
-  }
-  return serializarSubcampos(subs, valores);
-}
+// `appendFato`, `aplicarTextoCampo` e a escrita no perfil saíram daqui pra
+// lib/kolo-vivo/aplicar.ts — a MESMA lógica agora serve o botão e o aprendizado
+// automático da web (antes o automático não existia; ver lib/ia/aprender.ts).
 
 export async function confirmarAtualizacao(
   input: z.infer<typeof confirmarSchema>,
@@ -564,73 +519,27 @@ export async function confirmarAtualizacao(
     const membroId = conversa.membro_atipico_id as string | null;
 
     const partes: string[] = [];
-    const now = new Date().toISOString();
 
-    const membroItens = data.koloVivo.filter(
-      (it) => it.camada === "camada1" && membroCampoStorage(it.campo) !== null,
-    );
-    const familiaItens = data.koloVivo.filter(
-      (it) => it.camada === "camada2" && (FAMILIA_CAMPOS as readonly string[]).includes(it.campo),
-    );
-
-    // Kolo Vivo do membro — aplica DIRETO (já revisado no preview), anexando ao
-    // texto existente. Campos legados vão em colunas; os domínios novos
-    // (nutricional, sono, comunicacao…) em categorias_extras.
-    if (membroItens.length > 0 && membroId) {
-      const { data: atual } = await supabase
-        .from("perfil_vivo_membro")
-        .select(
-          "essencial, como_e, corpo_rotina, desafios_regulacao, sensorial, categorias_extras",
-        )
-        .eq("membro_atipico_id", membroId)
-        .maybeSingle();
-
-      const toplevel: Record<string, Record<string, unknown>> = {};
-      for (const campo of MEMBRO_CAMPOS_TOPLEVEL) {
-        toplevel[campo] = (atual?.[campo] as Record<string, unknown>) ?? {};
-      }
-      const extras: Record<string, unknown> =
-        (atual?.categorias_extras as Record<string, unknown>) ?? {};
-
-      for (const it of membroItens) {
-        const onde = membroCampoStorage(it.campo);
-        if (onde === "toplevel") {
-          const prev = (toplevel[it.campo].texto as string) ?? "";
-          toplevel[it.campo] = {
-            ...toplevel[it.campo],
-            texto: aplicarTextoCampo(it.campo, prev, it),
-            atualizado_em: now,
-          };
-        } else if (onde === "extras") {
-          const atualCampo = (extras[it.campo] as Record<string, unknown>) ?? {};
-          const prev = (atualCampo.texto as string) ?? "";
-          extras[it.campo] = {
-            ...atualCampo,
-            texto: aplicarTextoCampo(it.campo, prev, it),
-            atualizado_em: now,
-          };
-        }
-      }
-
-      const { error } = await supabase
-        .from("perfil_vivo_membro")
-        .upsert(
-          {
-            membro_atipico_id: membroId,
-            family_account_id: family.id,
-            ...toplevel,
-            categorias_extras: extras,
-          },
-          { onConflict: "membro_atipico_id" },
-        );
-      if (error) return { ok: false, error: `Falha ao salvar no Perfil: ${error.message}` };
-      partes.push(`${membroItens.length} ${membroItens.length === 1 ? "item" : "itens"} no Perfil`);
+    // Aplicador compartilhado (lib/kolo-vivo/aplicar.ts) — a mesma escrita que o
+    // aprendizado automático da web usa. A lógica de merge não mudou.
+    const aplicado = await aplicarPropostaNoPerfil(supabase, {
+      familyId: family.id,
+      membroId,
+      itens: data.koloVivo,
+    });
+    if (aplicado.erro) {
+      return { ok: false, error: `Falha ao salvar no Perfil: ${aplicado.erro}` };
+    }
+    if (aplicado.itensMembro > 0) {
+      partes.push(
+        `${aplicado.itensMembro} ${aplicado.itensMembro === 1 ? "item" : "itens"} no Perfil`,
+      );
 
       // Linha do tempo (Livro Vivo): a WEB também alimenta a Evolução/relatório —
       // se um fato confirmado for uma evolução, grava um marco DATADO (mesmo
       // extrator do WhatsApp). Em after() + service-role: não trava o "confirmar"
       // e é bônus (nunca quebra o salvamento).
-      const fatosConfirmados = membroItens.map((it) => it.texto).join("\n");
+      const fatosConfirmados = aplicado.fatosMembro.join("\n");
       after(async () => {
         try {
           await extrairESalvarEventos(
@@ -644,28 +553,10 @@ export async function confirmarAtualizacao(
         }
       });
     }
-
-    // Kolo Vivo da família — mesma lógica de anexar.
-    if (familiaItens.length > 0) {
-      const { data: atual } = await supabase
-        .from("perfil_vivo_familia")
-        .select("composicao, rotina, recursos, dinamica")
-        .eq("family_account_id", family.id)
-        .maybeSingle();
-      const secoes: Record<string, Record<string, unknown>> = {};
-      for (const campo of FAMILIA_CAMPOS) {
-        secoes[campo] = (atual?.[campo] as Record<string, unknown>) ?? {};
-      }
-      for (const it of familiaItens) {
-        const prev = (secoes[it.campo].texto as string) ?? "";
-        const novoTexto = it.operacao === "reescrever" ? it.texto : appendFato(prev, it.texto);
-        secoes[it.campo] = { ...secoes[it.campo], texto: novoTexto, atualizado_em: now };
-      }
-      const { error } = await supabase
-        .from("perfil_vivo_familia")
-        .upsert({ family_account_id: family.id, ...secoes });
-      if (error) return { ok: false, error: `Falha ao salvar no Perfil da família: ${error.message}` };
-      partes.push(`${familiaItens.length} ${familiaItens.length === 1 ? "item" : "itens"} no Perfil da família`);
+    if (aplicado.itensFamilia > 0) {
+      partes.push(
+        `${aplicado.itensFamilia} ${aplicado.itensFamilia === 1 ? "item" : "itens"} no Perfil da família`,
+      );
     }
 
     // Conquista/desafio → diário (precisa de criança vinculada).
