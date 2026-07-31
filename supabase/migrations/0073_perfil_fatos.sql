@@ -57,6 +57,21 @@ create table if not exists public.perfil_fatos (
   observado_em date not null,
   -- A mãe raramente sabe a data exata. Não forçar precisão que não existe.
   observado_em_preciso boolean not null default false,
+  -- A expressao temporal COMO A FAMILIA DISSE: "desde a troca de professora",
+  -- "faz uns tres meses". `observado_em` e uma data; isto e o que permite
+  -- reinterpretar depois. Perdido na captura, nao volta nunca.
+  tempo_original text,
+
+  -- ---------- GOVERNANCA (marcador minimo) ----------
+  -- Quais dominios de cuidado especial este fato toca: medico, medicacao,
+  -- diagnostico, juridico, escolar, seguranca, sofrimento_emocional,
+  -- neonatal. SEM check: a taxonomia vai crescer e um enum viraria migracao a
+  -- cada termo novo.
+  --
+  -- Isto NAO e o motor de governanca. E a unica coisa que nao da para fazer
+  -- depois: inferir "isto e medico" a posteriori, sobre texto livre, e o pior
+  -- momento possivel para inferir. Marcar na escrita custa uma coluna.
+  dominios_sensiveis text[] not null default '{}',
 
   -- ---------- ESCOPO ----------
   -- Onde o fato vale. `campaign` é o que impede a Neuro Copa de virar traço
@@ -144,6 +159,14 @@ create table if not exists public.perfil_fatos (
   sujeito_classificado text check (sujeito_classificado in (
     'accompanied_member','caregiver','another_person','multiple_or_ambiguous','unknown'
   )),
+  -- SAIDA da quarentena. Sem isto ela nasce aterro: entra fato e nao sai
+  -- nunca, e em seis meses ninguem abre. O fluxo de revisao nao existe ainda -
+  -- o que existe e o lugar para registrar que houve revisao.
+  quarentena_resolucao text check (quarentena_resolucao in (
+    'liberado','descartado','reatribuido','expirado'
+  )),
+  quarentena_resolvido_em timestamptz,
+  quarentena_resolvido_por uuid,
 
   created_at timestamptz not null default now()
 );
@@ -161,9 +184,14 @@ create index if not exists perfil_fatos_membro_idx
   where temporal_status = 'current' and status = 'ativo';
 
 -- Fila de quarentena, para auditoria e reclassificação.
+-- A FILA de quarentena: so o que ainda nao foi revisado.
 create index if not exists perfil_fatos_quarentena_idx
   on public.perfil_fatos (family_account_id, created_at desc)
-  where status = 'quarentena';
+  where status = 'quarentena' and quarentena_resolucao is null;
+
+-- Fatos que tocam dominio de cuidado especial, para auditoria de governanca.
+create index if not exists perfil_fatos_sensivel_idx
+  on public.perfil_fatos using gin(dominios_sensiveis);
 
 -- Linhagem: "o que saiu desta execução?" e "o que veio deste conteúdo?"
 create index if not exists perfil_fatos_run_idx
