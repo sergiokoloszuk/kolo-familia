@@ -67,6 +67,9 @@ const itemSensorial = {
 beforeEach(() => {
   logEvent.mockClear();
   process.env.PERFIL_FATOS_SHADOW_WRITE = "1";
+  // A flag sozinha nao autoriza ninguem desde a barreira da amostra
+  // controlada — a familia precisa estar na lista. Ver ./autorizacao.ts.
+  process.env.PERFIL_FATOS_FAMILIAS = "0a1b2c3d-4e5f-4a6b-8c7d-9e0f1a2b3c4d";
 });
 afterEach(() => {
   delete process.env.PERFIL_FATOS_SHADOW_WRITE;
@@ -77,7 +80,7 @@ describe("fluxo WEB manual (Guardar no Perfil)", () => {
   it("produz fato com pessoa, conceito, canal e status corretos", async () => {
     const { client, fatos } = supabaseFalso();
     await aplicarPropostaNoPerfil(client, {
-      familyId: "fam-1",
+      familyId: "0a1b2c3d-4e5f-4a6b-8c7d-9e0f1a2b3c4d",
       membroId: "membro-1",
       itens: [itemSensorial],
       fatos: {
@@ -104,7 +107,7 @@ describe("fluxo WEB manual (Guardar no Perfil)", () => {
     delete process.env.PERFIL_FATOS_SHADOW_WRITE;
     const { client, fatos } = supabaseFalso();
     await aplicarPropostaNoPerfil(client, {
-      familyId: "fam-1",
+      familyId: "0a1b2c3d-4e5f-4a6b-8c7d-9e0f1a2b3c4d",
       membroId: "membro-1",
       itens: [itemSensorial],
       fatos: { proveniencia: { sourceType: "caregiver_report", channel: "web" } },
@@ -115,7 +118,7 @@ describe("fluxo WEB manual (Guardar no Perfil)", () => {
   it("sem o parâmetro de proveniência, o comportamento é o de antes", async () => {
     const { client, fatos } = supabaseFalso();
     await aplicarPropostaNoPerfil(client, {
-      familyId: "fam-1",
+      familyId: "0a1b2c3d-4e5f-4a6b-8c7d-9e0f1a2b3c4d",
       membroId: "membro-1",
       itens: [itemSensorial],
     });
@@ -127,7 +130,7 @@ describe("fluxo WEB automático (extração da conversa)", () => {
   it("NUNCA grava como reported — a IA recortou, ninguém confirmou", async () => {
     const { client, fatos } = supabaseFalso();
     await aplicarPropostaNoPerfil(client, {
-      familyId: "fam-1",
+      familyId: "0a1b2c3d-4e5f-4a6b-8c7d-9e0f1a2b3c4d",
       membroId: "membro-1",
       itens: [itemSensorial],
       // Exatamente o que `ia/aprender.ts` passa.
@@ -153,7 +156,7 @@ describe("fluxo DIÁRIO", () => {
     const { client, fatos } = supabaseFalso();
     await aplicarItensNoMembro(
       client,
-      "fam-1",
+      "0a1b2c3d-4e5f-4a6b-8c7d-9e0f1a2b3c4d",
       "membro-1",
       [itemSensorial],
       {
@@ -186,8 +189,8 @@ describe("fluxo DIÁRIO", () => {
       },
       observadoEm: "2026-07-31",
     };
-    await aplicarItensNoMembro(client, "fam-1", "membro-1", [itemSensorial], origem);
-    await aplicarItensNoMembro(client, "fam-1", "membro-1", [itemSensorial], origem);
+    await aplicarItensNoMembro(client, "0a1b2c3d-4e5f-4a6b-8c7d-9e0f1a2b3c4d", "membro-1", [itemSensorial], origem);
+    await aplicarItensNoMembro(client, "0a1b2c3d-4e5f-4a6b-8c7d-9e0f1a2b3c4d", "membro-1", [itemSensorial], origem);
     expect(fatos).toHaveLength(1);
   });
 
@@ -198,11 +201,11 @@ describe("fluxo DIÁRIO", () => {
       channel: "diario" as const,
       actorId: "user-42",
     };
-    await aplicarItensNoMembro(client, "fam-1", "membro-1", [itemSensorial], {
+    await aplicarItensNoMembro(client, "0a1b2c3d-4e5f-4a6b-8c7d-9e0f1a2b3c4d", "membro-1", [itemSensorial], {
       proveniencia: prov,
       observadoEm: "2026-07-31",
     });
-    await aplicarItensNoMembro(client, "fam-1", "membro-1", [itemSensorial], {
+    await aplicarItensNoMembro(client, "0a1b2c3d-4e5f-4a6b-8c7d-9e0f1a2b3c4d", "membro-1", [itemSensorial], {
       proveniencia: prov,
       observadoEm: "2026-08-05",
     });
@@ -211,7 +214,7 @@ describe("fluxo DIÁRIO", () => {
 
   it("sem proveniência, o diário continua exatamente como era", async () => {
     const { client, fatos } = supabaseFalso();
-    await aplicarItensNoMembro(client, "fam-1", "membro-1", [itemSensorial]);
+    await aplicarItensNoMembro(client, "0a1b2c3d-4e5f-4a6b-8c7d-9e0f1a2b3c4d", "membro-1", [itemSensorial]);
     expect(fatos).toHaveLength(0);
   });
 });
@@ -221,7 +224,7 @@ describe("escopo de campanha atravessa o fluxo REAL", () => {
     definirResolvedorEscopo(async () => ({ tipo: "campaign", id: "neuro-copa" }));
     const { client, fatos } = supabaseFalso();
     await aplicarPropostaNoPerfil(client, {
-      familyId: "fam-1",
+      familyId: "0a1b2c3d-4e5f-4a6b-8c7d-9e0f1a2b3c4d",
       membroId: "membro-1",
       // Campo real do perfil: o que não é campo válido é filtrado antes de
       // virar fato — foi assim que este teste pegou um erro do próprio teste.
@@ -238,7 +241,7 @@ describe("escopo de campanha atravessa o fluxo REAL", () => {
   it("sem campanha, o escopo é o padrão — sem contaminação", async () => {
     const { client, fatos } = supabaseFalso();
     await aplicarPropostaNoPerfil(client, {
-      familyId: "fam-1",
+      familyId: "0a1b2c3d-4e5f-4a6b-8c7d-9e0f1a2b3c4d",
       membroId: "membro-1",
       itens: [itemSensorial],
       fatos: { proveniencia: { sourceType: "caregiver_report", channel: "web" } },
@@ -250,7 +253,7 @@ describe("escopo de campanha atravessa o fluxo REAL", () => {
   it("o diário também recebe o escopo do resolvedor", async () => {
     definirResolvedorEscopo(async () => ({ tipo: "campaign", id: "neuro-copa" }));
     const { client, fatos } = supabaseFalso();
-    await aplicarItensNoMembro(client, "fam-1", "membro-1", [itemSensorial], {
+    await aplicarItensNoMembro(client, "0a1b2c3d-4e5f-4a6b-8c7d-9e0f1a2b3c4d", "membro-1", [itemSensorial], {
       proveniencia: { sourceType: "manual_entry", channel: "diario", actorId: "u" },
     });
     expect(fatos[0].escopo_tipo).toBe("campaign");
@@ -262,7 +265,7 @@ describe("escopo de campanha atravessa o fluxo REAL", () => {
     });
     const { client, fatos } = supabaseFalso();
     await aplicarPropostaNoPerfil(client, {
-      familyId: "fam-1",
+      familyId: "0a1b2c3d-4e5f-4a6b-8c7d-9e0f1a2b3c4d",
       membroId: "membro-1",
       itens: [itemSensorial],
       fatos: { proveniencia: { sourceType: "caregiver_report", channel: "web" } },
@@ -290,7 +293,7 @@ describe("paridade web × WhatsApp", () => {
     await registrarFatoPerfil(
       client,
       candidatoDeItemKoloVivo({
-        familyId: "fam-1",
+        familyId: "0a1b2c3d-4e5f-4a6b-8c7d-9e0f1a2b3c4d",
         membroId: "membro-1",
         ...mesmaInformacao,
         proveniencia: { sourceType: "caregiver_report", channel: "web" },
@@ -299,7 +302,7 @@ describe("paridade web × WhatsApp", () => {
     await registrarFatoPerfil(
       client,
       candidatoDeItemKoloVivo({
-        familyId: "fam-1",
+        familyId: "0a1b2c3d-4e5f-4a6b-8c7d-9e0f1a2b3c4d",
         membroId: "membro-1",
         ...mesmaInformacao,
         proveniencia: {
@@ -329,7 +332,7 @@ describe("paridade web × WhatsApp", () => {
       await registrarFatoPerfil(
         client,
         candidatoDeItemKoloVivo({
-          familyId: "fam-1",
+          familyId: "0a1b2c3d-4e5f-4a6b-8c7d-9e0f1a2b3c4d",
           membroId: "membro-1",
           campo: "sensorial",
           texto: `Barulho incomoda (${channel})`,
@@ -350,7 +353,7 @@ describe("paridade web × WhatsApp", () => {
       await registrarFatoPerfil(
         client,
         candidatoDeItemKoloVivo({
-          familyId: "fam-1",
+          familyId: "0a1b2c3d-4e5f-4a6b-8c7d-9e0f1a2b3c4d",
           membroId: "membro-1",
           campo: "sensorial",
           subcampo: sub,
@@ -377,7 +380,7 @@ describe("falha da escrita sombra não quebra o caminho principal", () => {
     } as unknown as SupabaseClient;
 
     const r = await aplicarPropostaNoPerfil(client, {
-      familyId: "fam-1",
+      familyId: "0a1b2c3d-4e5f-4a6b-8c7d-9e0f1a2b3c4d",
       membroId: "membro-1",
       itens: [itemSensorial],
       fatos: { proveniencia: { sourceType: "caregiver_report", channel: "web" } },

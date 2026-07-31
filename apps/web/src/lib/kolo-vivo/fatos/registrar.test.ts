@@ -42,7 +42,7 @@ function supabaseFalso() {
 }
 
 const base = {
-  familyId: "fam-1",
+  familyId: "0a1b2c3d-4e5f-4a6b-8c7d-9e0f1a2b3c4d",
   membroId: "membro-1",
   conceito: "interesses.futebol",
   dominio: "interesses",
@@ -53,6 +53,9 @@ const base = {
 beforeEach(() => {
   logEvent.mockClear();
   process.env.PERFIL_FATOS_SHADOW_WRITE = "1";
+  // A flag sozinha nao autoriza ninguem desde a barreira da amostra
+  // controlada — a familia precisa estar na lista. Ver ./autorizacao.ts.
+  process.env.PERFIL_FATOS_FAMILIAS = "0a1b2c3d-4e5f-4a6b-8c7d-9e0f1a2b3c4d";
 });
 afterEach(() => {
   delete process.env.PERFIL_FATOS_SHADOW_WRITE;
@@ -64,7 +67,9 @@ describe("feature flag", () => {
     expect(escritaSombraHabilitada({})).toBe(false);
     const { client, linhas } = supabaseFalso();
     const r = await registrarFatoPerfil(client, base);
-    expect(r).toEqual({ status: "ignorado", motivo: "flag_desligada" });
+    // Um motivo só para os dois lados da barreira: do ponto de vista do
+    // chamador o efeito é idêntico — não se coleta.
+    expect(r).toEqual({ status: "ignorado", motivo: "familia_nao_autorizada" });
     expect(linhas).toHaveLength(0);
     // Nem loga: não houve tentativa.
     expect(logEvent).not.toHaveBeenCalled();

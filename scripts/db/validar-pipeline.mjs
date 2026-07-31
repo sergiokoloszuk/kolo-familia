@@ -109,6 +109,7 @@ const modulos = [
   ["incorporar", "."],
   ["aplicar-whatsapp", "."],
   ["fatos/data-civil", "fatos"],
+  ["fatos/autorizacao", "fatos"],
   ["fatos/dominio-sensivel", "fatos"],
   ["fatos/evidencia", "fatos"],
 ];
@@ -142,6 +143,9 @@ const { marcarDominiosSensiveis } = await carregar("fatos/dominio-sensivel");
 const log = await import(pathToFileURL(join(dir, "_log.mjs")).href);
 console.log("  carregados: aplicar, incorporar, registrar, adaptador, foco-membro");
 
+// A flag sozinha nao autoriza mais ninguem: a barreira da amostra controlada
+// exige a familia na lista. `PERFIL_FATOS_FAMILIAS` e definida logo abaixo,
+// depois que a fixture cria a familia — ver fatos/autorizacao.ts.
 process.env.PERFIL_FATOS_SHADOW_WRITE = "1";
 const registroSql = [];
 const supabase = clienteSupabaseSobrePGlite(db, registroSql);
@@ -154,6 +158,11 @@ const USER = "33333333-3333-3333-3333-333333333333";
 await db.query("insert into auth.users(id, email) values ($1,$2)", [USER, "t@t.t"]);
 const FAM = (await db.query("select id from public.family_accounts where user_id=$1", [USER]))
   .rows[0].id;
+// AUTORIZA A FAMÍLIA DA FIXTURE. Sem isto a barreira da amostra controlada
+// bloqueia tudo — que é o comportamento correto, e é o que estes validadores
+// deixariam de exercitar. A prova de que a barreira BLOQUEIA quem está de fora
+// fica em scripts/db/validar-autorizacao.mjs.
+process.env.PERFIL_FATOS_FAMILIAS = FAM;
 const PEDRO = "22222222-2222-2222-2222-222222222222";
 const ANA = "44444444-4444-4444-4444-444444444444";
 for (const [id, nome] of [

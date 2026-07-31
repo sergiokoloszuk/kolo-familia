@@ -2,6 +2,13 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { createHash } from "node:crypto";
 import { logEvent } from "@/lib/log";
 import { hojeLocalISO } from "@/lib/idade";
+import {
+  FLAG_ENV,
+  LISTA_ENV,
+  escritaSombraHabilitada,
+  familiasAutorizadas,
+  memoriaVivaAutorizada,
+} from "./autorizacao";
 import { extrairTempoOriginal, normalizarDataCivil } from "./data-civil";
 import { marcarDominiosSensiveis } from "./dominio-sensivel";
 import {
@@ -33,19 +40,9 @@ import {
  * maturação — que não existe ainda e não deve ser improvisada aqui.
  */
 
-export const FLAG_ENV = "PERFIL_FATOS_SHADOW_WRITE";
-
-/**
- * Desligada por padrão. Com a flag off o serviço sai ANTES de qualquer I/O —
- * o sistema se comporta exatamente como antes, e o rollback é desligar a
- * variável.
- */
-export function escritaSombraHabilitada(
-  env: Record<string, string | undefined> = process.env,
-): boolean {
-  const v = (env[FLAG_ENV] ?? "").trim().toLowerCase();
-  return v === "1" || v === "true";
-}
+// A flag e a lista de famílias autorizadas vivem em `./autorizacao`. Reexporta
+// para não quebrar quem já importava daqui — a definição é lá.
+export { FLAG_ENV, LISTA_ENV, escritaSombraHabilitada, familiasAutorizadas };
 
 /** Normaliza a afirmação para comparação: sem acento, sem pontuação, caixa única. */
 export function normalizarAfirmacao(texto: string): string {
@@ -98,7 +95,12 @@ export async function registrarFatoPerfil(
   supabase: SupabaseClient,
   candidato: CandidatoFato,
 ): Promise<ResultadoRegistro> {
-  if (!escritaSombraHabilitada()) return { status: "ignorado", motivo: "flag_desligada" };
+  // BARREIRA DA AMOSTRA CONTROLADA — última linha de defesa, e por ela passam
+  // os quatro caminhos de escrita. Sai ANTES de qualquer I/O: família fora da
+  // lista não gera consulta, fato, quarentena nem evento.
+  if (!memoriaVivaAutorizada(candidato.familyId)) {
+    return { status: "ignorado", motivo: "familia_nao_autorizada" };
+  }
 
   // Fato sobre a pessoa acompanhada precisa saber de QUEM é. Sem membro, o
   // risco é associar ao perfil errado — que é uma das falhas de segurança que

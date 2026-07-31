@@ -41,7 +41,7 @@ function bancoFalso() {
   return { client, linhas };
 }
 
-const FAM = "fam-benchmark";
+const FAM = "0b2c3d4e-5f6a-4b7c-8d9e-0f1a2b3c4d5e";
 const MEMBRO = "membro-benchmark";
 
 /** Roda a bateria inteira e devolve os fatos que seriam gravados. */
@@ -78,6 +78,9 @@ async function rodarBateria() {
 beforeEach(() => {
   logEvent.mockClear();
   process.env.PERFIL_FATOS_SHADOW_WRITE = "1";
+  // A flag sozinha nao autoriza ninguem desde a barreira da amostra
+  // controlada — a familia precisa estar na lista. Ver ./autorizacao.ts.
+  process.env.PERFIL_FATOS_FAMILIAS = "0b2c3d4e-5f6a-4b7c-8d9e-0f1a2b3c4d5e";
 });
 
 describe("invariantes — quebrar aqui é regressão", () => {

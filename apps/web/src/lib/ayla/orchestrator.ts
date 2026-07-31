@@ -54,6 +54,7 @@ import { traduzirProativa } from "./traduzir";
 import { montarPonteWhatsApp, gerarMagicLink, montarPlanoFimDeSemana } from "./ponte";
 import { aguardarTurnoDaMae, descartarTurnoPendente } from "./lote-inbound";
 import { registrarLote } from "@/lib/memoria-viva/lote";
+import { memoriaVivaAutorizada } from "@/lib/kolo-vivo/fatos/autorizacao";
 import { pedeUmPlano } from "@/lib/ia/pedido-plano";
 import {
   rotinaConversaPendente,
@@ -1292,7 +1293,11 @@ export async function processInbound(
   // Best-effort de propósito: se falhar, `loteFala` fica nulo e a linhagem cai
   // para o ponteiro antigo. Proveniência incompleta é ruim; turno derrubado
   // porque a proveniência falhou seria pior.
-  const loteFala = turno.mensagens.length
+  //
+  // A BARREIRA DA AMOSTRA vem antes: família fora da lista não paga nem a
+  // escrita do lote. `registrarFatoPerfil` checa de novo — as duas checagens
+  // são necessárias, e a de lá é a que cobre web, diário e incorporação.
+  const loteFala = turno.mensagens.length && memoriaVivaAutorizada(family.id)
     ? await registrarLote(supabase, {
         familyId: family.id,
         canal: "whatsapp",

@@ -133,7 +133,10 @@ export type ResultadoRegistro =
   | { status: "gravado"; id: string }
   | { status: "quarentena"; id: string; motivo: string }
   | { status: "duplicado" }
-  | { status: "ignorado"; motivo: "flag_desligada" | "sem_membro" }
+  // `familia_nao_autorizada` cobre os dois lados da barreira da amostra
+  // controlada — flag desligada ou família fora da lista. Um motivo só, porque
+  // do ponto de vista do chamador o efeito é idêntico: não se coleta.
+  | { status: "ignorado"; motivo: "flag_desligada" | "familia_nao_autorizada" | "sem_membro" }
   | { status: "rejeitado"; motivo: string }
   | { status: "falhou"; erro: string };
 
