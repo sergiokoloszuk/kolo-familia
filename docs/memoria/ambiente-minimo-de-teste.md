@@ -79,3 +79,57 @@ Desktop.** É uma decisão humana, com reinicialização, e não pode ser feita
 daqui.
 
 Nada foi provisionado nesta rodada.
+
+---
+
+## Protocolo executável (Fase 4D)
+
+### Experimento 1 — técnico, dado sintético
+
+```bash
+docker run -d --name kolo-teste -e POSTGRES_PASSWORD=teste -p 55432:5432 postgres:15
+export DATABASE_URL="postgres://postgres:teste@localhost:55432/postgres"
+for f in supabase/migrations/00*.sql; do psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f "$f"; done
+export PERFIL_FATOS_SHADOW_WRITE=1
+# popular perfis controlados e rodar a bateria de __fixtures__/conversas-benchmark.ts
+psql "$DATABASE_URL" -f docs/memoria/auditoria-fact-store.sql
+docker rm -f kolo-teste
+```
+
+Valida SQL, constraints, os 8 índices, o unique de idempotência, quarentena e
+linhagem. **Nenhum dado real.** Repetir é recriar o container.
+
+Inspecionar quarentena:
+
+```sql
+select quarentena_motivo, sujeito_classificado, count(*)
+  from perfil_fatos where status = 'quarentena' group by 1,2 order by 3 desc;
+```
+
+Comparar versões:
+
+```sql
+select extractor_version, status, count(*) from perfil_fatos group by 1,2 order by 1;
+```
+
+### Experimento 2 — linguagem real
+
+Só depois do experimento 1 passar. **1 ou 2 famílias internas, com ciência
+explícita**, 72 h, WhatsApp **e** diário — o diário sozinho não testa o risco
+maior, que é linguagem natural com sujeito implícito e correferência.
+
+Auditoria diária: seções 3, 4 e 8 do kit.
+
+**Interromper** se aparecer: fato da cuidadora na criança; fato de uma criança
+na outra; `confirmed` sem confirmação; `ai_inference` fora de `inferred`;
+duplicação descontrolada; perda de proveniência; escopo diferente de `sempre`;
+reprocessamento não rastreável; **qualquer leitura do fact store**; ou qualquer
+falha que afete a conversa.
+
+**Rollback:** apagar a flag. Preservar os registros — a evidência do erro é o
+produto do experimento. Limpeza seletiva só depois de exportar:
+
+```sql
+delete from perfil_fatos
+ where extractor_version = 'kv-blob-v2' and family_account_id = '<familia>';
+```

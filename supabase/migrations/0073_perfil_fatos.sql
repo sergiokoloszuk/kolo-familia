@@ -82,8 +82,19 @@ create table if not exists public.perfil_fatos (
   source_message_id text,
   source_conversation_id uuid,
 
-  -- Qual versão do processo produziu esta estrutura. É o que permite
-  -- reprocessar depois sem confundir com o que já existia.
+  -- ---------- LINHAGEM ----------
+  -- Identidade do CONTEÚDO de origem, estável entre reprocessamentos. É o que
+  -- responde "de qual conteúdo este fato veio?" quando a mesma mensagem é
+  -- processada por versões diferentes do extrator. Precisa existir ANTES da
+  -- primeira coleta: não há como retrofitar depois.
+  source_content_id text,
+
+  -- Qual EXECUÇÃO de extração produziu este fato. Agrupa tudo que saiu de uma
+  -- mesma passada, e é o que torna um reprocessamento auditável e reversível
+  -- em bloco.
+  extraction_run_id uuid,
+
+  -- Qual versão do processo produziu esta estrutura.
   extractor_version text not null,
   extraction_confidence numeric check (extraction_confidence between 0 and 1),
 
@@ -100,12 +111,39 @@ create table if not exists public.perfil_fatos (
   superseded_by_id uuid references public.perfil_fatos(id) on delete set null,
   superseded_at timestamptz,
 
+  -- ---------- RELAÇÕES ENTRE FATOS ----------
+  -- Três coisas DIFERENTES, e tratá-las como iguais é o erro que apaga
+  -- história:
+  --   supersede  — a situação MUDOU. "Não fala" continua verdadeiro em maio.
+  --   correção   — o relato anterior estava ERRADO. "Tem 6" virou "tem 7".
+  --   invalidação— o fato não deve mais ser usado (pessoa errada, origem ruim).
+  -- Só a invalidação diz que o fato nunca deveria ter existido.
+  supersedes_fact_id  uuid references public.perfil_fatos(id) on delete set null,
+  correction_of_fact_id uuid references public.perfil_fatos(id) on delete set null,
+  invalidates_fact_id uuid references public.perfil_fatos(id) on delete set null,
+  relacao_motivo text,
+  relacao_em timestamptz,
+  relacao_origem text check (relacao_origem in ('sistema','revisao_humana','reprocessamento')),
+
   -- ---------- IDEMPOTÊNCIA ----------
   -- Distingue REPROCESSAMENTO TÉCNICO (mesma mensagem, mesmo conceito, mesma
   -- afirmação, mesma versão de extrator) de REPETIÇÃO LEGÍTIMA (a família
   -- contou de novo, noutro dia). A segunda é evidência nova e TEM de entrar —
   -- é dela que sai a recorrência que um dia promove um padrão a traço.
   idempotency_key text not null,
+
+  -- ---------- QUARENTENA ----------
+  -- A terceira saída, entre persistir e descartar. Um candidato pode ser
+  -- valioso E ter sujeito incerto; rejeitar perde a informação, persistir
+  -- arrisca o perfil errado. Em quarentena ele fica auditável, vinculado à
+  -- origem, e FORA de qualquer leitura — os índices de projeção o excluem.
+  status text not null default 'ativo' check (status in ('ativo','quarentena','invalidado')),
+  quarentena_motivo text,
+  -- Como o sujeito foi classificado na escrita. Guardado para reclassificar
+  -- depois sem reprocessar a mensagem inteira.
+  sujeito_classificado text check (sujeito_classificado in (
+    'accompanied_member','caregiver','another_person','multiple_or_ambiguous','unknown'
+  )),
 
   created_at timestamptz not null default now()
 );
@@ -116,9 +154,23 @@ create unique index if not exists perfil_fatos_idempotency_uk
 
 -- Leitura principal da projeção futura: os fatos atuais de uma pessoa, do mais
 -- recente para o mais antigo.
+-- Leitura da projeção futura: só fato ATIVO e atual. Quarentena e invalidado
+-- ficam fora por construção, não por disciplina de quem consulta.
 create index if not exists perfil_fatos_membro_idx
   on public.perfil_fatos (membro_atipico_id, observado_em desc)
-  where temporal_status = 'current';
+  where temporal_status = 'current' and status = 'ativo';
+
+-- Fila de quarentena, para auditoria e reclassificação.
+create index if not exists perfil_fatos_quarentena_idx
+  on public.perfil_fatos (family_account_id, created_at desc)
+  where status = 'quarentena';
+
+-- Linhagem: "o que saiu desta execução?" e "o que veio deste conteúdo?"
+create index if not exists perfil_fatos_run_idx
+  on public.perfil_fatos (extraction_run_id) where extraction_run_id is not null;
+create index if not exists perfil_fatos_conteudo_idx
+  on public.perfil_fatos (source_content_id, extractor_version)
+  where source_content_id is not null;
 
 -- Recorrência por conceito — é a consulta da maturação (promoção por
 -- repetição). Sem este índice ela varre a pessoa inteira.

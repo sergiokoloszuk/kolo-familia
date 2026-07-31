@@ -88,6 +88,16 @@ export type Proveniencia = {
 };
 
 /** O candidato que o serviço recebe. */
+import type { SujeitoCandidato } from "./sujeito";
+
+/** Linhagem: identidade do conteúdo e da execução que produziram o fato. */
+export type Linhagem = {
+  /** Identidade estável do conteúdo de origem, entre reprocessamentos. */
+  sourceContentId?: string | null;
+  /** Agrupa tudo que saiu de uma mesma passada de extração. */
+  extractionRunId?: string | null;
+};
+
 export type CandidatoFato = {
   familyId: string;
   membroId: string | null;
@@ -104,10 +114,22 @@ export type CandidatoFato = {
   verificationStatus?: VerificationStatus;
   temporalStatus?: TemporalStatus;
   extractionConfidence?: number | null;
+  linhagem?: Linhagem;
+  /**
+   * Resolução do membro (ver `foco-membro.ts`). Quando a decisão é
+   * `quarentena`, o fato é gravado FORA da leitura, com o motivo — em vez de
+   * perdido.
+   */
+  foco?: {
+    decisao: "persistir" | "quarentena" | "rejeitar";
+    motivo: string;
+    sujeito: SujeitoCandidato;
+  };
 };
 
 export type ResultadoRegistro =
   | { status: "gravado"; id: string }
+  | { status: "quarentena"; id: string; motivo: string }
   | { status: "duplicado" }
   | { status: "ignorado"; motivo: "flag_desligada" | "sem_membro" }
   | { status: "rejeitado"; motivo: string }

@@ -123,17 +123,22 @@ export async function registrarFatoPerfil(
   // BARREIRA DE SUJEITO: perder um candidato incerto e preferivel a gravar um
   // fato na pessoa errada. Um fato perdido volta na proxima conversa; um fato
   // no perfil errado fica e e lido como verdade.
-  const sujeito = classificarSujeito({
-    texto: afirmacao,
-    membroSelecionado: Boolean(candidato.membroId),
-  });
-  if (!sujeitoElegivel(sujeito)) {
+  // Quando o chamador resolveu o foco (`foco-membro.ts`), a decisão dele manda:
+  // ela sabe da fonte do membro e do conflito de nomes, que este serviço não vê.
+  // Sem resolução, cai na classificação de sujeito pelo texto.
+  const sujeito =
+    candidato.foco?.sujeito ??
+    classificarSujeito({ texto: afirmacao, membroSelecionado: Boolean(candidato.membroId) });
+  const decisao = candidato.foco?.decisao ?? (sujeitoElegivel(sujeito) ? "persistir" : "rejeitar");
+
+  if (decisao === "rejeitar") {
     await registrar("perfil_fato_rejeitado", "info", candidato, {
-      motivo: "sujeito_nao_elegivel",
+      motivo: candidato.foco?.motivo ?? "sujeito_nao_elegivel",
       sujeito,
     });
     return { status: "rejeitado", motivo: `sujeito:${sujeito}` };
   }
+  const emQuarentena = decisao === "quarentena";
   if (!candidato.conceito?.trim() || !candidato.dominio?.trim()) {
     await registrar("perfil_fato_rejeitado", "info", candidato, { motivo: "sem_conceito" });
     return { status: "rejeitado", motivo: "sem_conceito" };
@@ -168,11 +173,18 @@ export async function registrarFatoPerfil(
     source_channel: candidato.proveniencia.channel ?? null,
     source_message_id: candidato.proveniencia.messageId ?? null,
     source_conversation_id: candidato.proveniencia.conversationId ?? null,
+    source_content_id: candidato.linhagem?.sourceContentId ?? null,
+    extraction_run_id: candidato.linhagem?.extractionRunId ?? null,
     extractor_version: EXTRACTOR_VERSION,
     extraction_confidence: candidato.extractionConfidence ?? null,
     verification_status: verification,
     temporal_status: candidato.temporalStatus ?? "current",
     idempotency_key: chave,
+    // QUARENTENA: gravado, auditável, e fora de toda leitura — os índices de
+    // projeção filtram por `status = 'ativo'`.
+    status: emQuarentena ? "quarentena" : "ativo",
+    quarentena_motivo: emQuarentena ? (candidato.foco?.motivo ?? "sujeito_incerto") : null,
+    sujeito_classificado: sujeito,
   };
 
   try {
@@ -188,6 +200,19 @@ export async function registrarFatoPerfil(
     if (!data || data.length === 0) {
       await registrar("perfil_fato_duplicado", "info", candidato, {});
       return { status: "duplicado" };
+    }
+
+    if (emQuarentena) {
+      await registrar("perfil_fato_quarentena", "info", candidato, {
+        id: data[0].id,
+        motivo: linha.quarentena_motivo,
+        sujeito,
+      });
+      return {
+        status: "quarentena",
+        id: data[0].id as string,
+        motivo: String(linha.quarentena_motivo),
+      };
     }
 
     await registrar("perfil_fato_gravado", "info", candidato, {
