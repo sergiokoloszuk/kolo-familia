@@ -94,17 +94,40 @@ describe("o contato nunca mais se perde", () => {
   });
 });
 
-describe("uma resposta, não duas", () => {
+describe("uma resposta, para sempre", () => {
   it("responde quando é a primeira vez", async () => {
     await atenderDesconhecido(bancoFalso(0), INBOUND);
     expect(enviarTexto).toHaveBeenCalledTimes(1);
     expect(doKind("ayla_desconhecido_respondido")).toHaveLength(1);
   });
 
-  it("NÃO responde de novo dentro da janela", async () => {
+  it("quem já recebeu NUNCA recebe de novo — não há janela de repetição", async () => {
+    // Regra de produto: uma mensagem por número, para sempre. Quem não se
+    // cadastrou entra em silêncio definitivo — o convite é oferta, não
+    // cobrança, e insistir seria perseguir quem já respondeu com o silêncio.
     const r = await atenderDesconhecido(bancoFalso(1), INBOUND);
     expect(r).toMatchObject({ respondido: false, motivo: "ja_respondido" });
     expect(enviarTexto).not.toHaveBeenCalled();
+  });
+
+  it("a consulta de dedup não recorta por data", async () => {
+    // Se alguém puser um `gte("created_at", ...)` aqui, o convite volta a se
+    // repetir depois da janela — que é exatamente o que não pode acontecer.
+    const usados: string[] = [];
+    const banco = {
+      from: () => {
+        const api: Record<string, unknown> = {
+          select: () => api,
+          eq: () => api,
+          gte: () => { usados.push("gte"); return api; },
+          contains: () => api,
+          limit: async () => ({ data: [], error: null }),
+        };
+        return api;
+      },
+    } as unknown as SupabaseClient;
+    await atenderDesconhecido(banco, INBOUND);
+    expect(usados).not.toContain("gte");
   });
 
   it("a dedup é pela chave normalizada — com ou sem o 9º dígito é a mesma pessoa", async () => {
@@ -133,12 +156,14 @@ describe("nunca derruba o webhook", () => {
     expect(doKind("ayla_desconhecido_envio_falhou")).toHaveLength(1);
   });
 
-  it("sem NEXT_PUBLIC_APP_URL não manda convite sem porta", async () => {
+  it("sem NEXT_PUBLIC_APP_URL cai no app de producao, nao no silencio", async () => {
+    // A variavel manda; mas se faltar, o motivo do silencio nao pode ser uma
+    // configuracao de ambiente — cai no endereco conhecido do app.
     delete process.env.NEXT_PUBLIC_APP_URL;
     const r = await atenderDesconhecido(bancoFalso(0), INBOUND);
-    expect(r).toMatchObject({ respondido: false, motivo: "sem_link" });
-    expect(enviarTexto).not.toHaveBeenCalled();
-    expect(primeiro("ayla_desconhecido_sem_link").severity).toBe("error");
+    expect(r).toMatchObject({ respondido: true });
+    const enviado = enviarTexto.mock.calls[0][0] as { texto: string };
+    expect(enviado.texto).toContain("https://kolo-familia-web.vercel.app/signup");
   });
 });
 

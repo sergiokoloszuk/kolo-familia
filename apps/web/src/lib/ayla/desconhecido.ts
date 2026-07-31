@@ -21,9 +21,10 @@ import { logEvent } from "@/lib/log";
  * 1. O CONTATO FICA REGISTRADO. Sem isso não dá para responder "quantas mães
  *    já escreveram e foram ignoradas?" — a resposta estava sendo jogada fora
  *    em tempo real.
- * 2. ELA RECEBE UMA RESPOSTA. Ela escreveu primeiro; responder quem te
- *    procurou é atendimento, não abordagem — a distinção que torna isto
- *    seguro do ponto de vista de LGPD e de reputação do número.
+ * 2. ELA RECEBE UMA RESPOSTA, UMA VEZ SÓ. Ela escreveu primeiro; responder
+ *    quem te procurou é atendimento, não abordagem — a distinção que torna
+ *    isto seguro do ponto de vista de LGPD e de reputação do número. Se não
+ *    se cadastrar, silêncio definitivo: nunca mais recebe nada.
  *
  * O QUE ESTE MÓDULO NÃO FAZ, e é deliberado:
  *
@@ -33,6 +34,8 @@ import { logEvent } from "@/lib/log";
  * - NÃO convida a responder por aqui. Enquanto ela não se cadastrar, uma
  *   resposta dela cairia no mesmo silêncio — pedir que ela conte algo seria
  *   abrir uma porta que não existe.
+ * - NÃO insiste. Uma mensagem por número, para sempre. Quem não se cadastrou
+ *   não recebe lembrete: o convite é oferta, não cobrança.
  * - NÃO promete o teste com número exato de dias. O ledger (`testes_usados`)
  *   hasheia o telefone sem normalizar país nem 9º dígito, então "esse número
  *   já usou o teste?" não é respondível com confiança daqui. Prometer 7 dias
@@ -47,9 +50,16 @@ import { logEvent } from "@/lib/log";
 /** Desligar em produção sem deploy: `AYLA_RESPOSTA_DESCONHECIDO=0`. */
 const ENV_FLAG = "AYLA_RESPOSTA_DESCONHECIDO";
 
-/** Uma resposta por número a cada 7 dias. Ninguém recebe o convite duas vezes
- *  por insistir — e insistir é exatamente o que faz quem não foi respondida. */
-const JANELA_DEDUP_DIAS = 7;
+/**
+ * UMA VEZ POR NÚMERO, PARA SEMPRE (regra de produto, Sérgio, 31/07/2026).
+ *
+ * Não há janela de repetição. Quem recebeu o convite e não se cadastrou entra
+ * em silêncio definitivo: não recebe de novo e não é respondida em mais nada.
+ *
+ * Insistir é justamente o que faz quem não foi atendida — e transformar isso
+ * em mensagem repetida seria a Ayla perseguindo quem já disse não com o
+ * próprio silêncio. O convite é uma oferta, não uma cobrança.
+ */
 
 const KIND_RECEBIDO = "ayla_inbound_desconhecido";
 const KIND_RESPONDIDO = "ayla_desconhecido_respondido";
@@ -59,8 +69,18 @@ function habilitado(env: Record<string, string | undefined> = process.env): bool
   return v !== "0" && v !== "false"; // ligado por padrão
 }
 
+/**
+ * O app em produção. Fica aqui como QUEDA porque a alternativa é pior: sem
+ * `NEXT_PUBLIC_APP_URL` a pessoa não receberia nada, e o motivo do silêncio
+ * seria uma variável de ambiente. O endereço real manda; este é o piso.
+ *
+ * ⚠️ Trocar quando o app ganhar domínio próprio — hoje `kolofamilia.com.br` é
+ * a landing da Base44, não o app.
+ */
+const APP_PADRAO = "https://kolo-familia-web.vercel.app";
+
 function linkDeCadastro(): string {
-  const base = (process.env.NEXT_PUBLIC_APP_URL || "").replace(/\/$/, "");
+  const base = (process.env.NEXT_PUBLIC_APP_URL || APP_PADRAO).replace(/\/$/, "");
   return base ? `${base}/signup` : "";
 }
 
@@ -87,17 +107,16 @@ export function textoParaDesconhecido(link: string): string {
  *  é o teto que ele mesmo autoriza, e basta para reconhecer o assunto. */
 const preview = (t: string | null | undefined) => (t ?? "").trim().slice(0, 60);
 
-async function jaRespondeuRecentemente(
+/** Este número já recebeu o convite alguma vez? Sem recorte de tempo. */
+async function jaRecebeuOConvite(
   supabase: SupabaseClient,
   chave: string,
 ): Promise<boolean> {
   try {
-    const desde = new Date(Date.now() - JANELA_DEDUP_DIAS * 86400_000).toISOString();
     const { data } = await supabase
       .from("eventos_app")
       .select("id")
       .eq("kind", KIND_RESPONDIDO)
-      .gte("created_at", desde)
       .contains("payload", { chave })
       .limit(1);
     return (data?.length ?? 0) > 0;
@@ -115,7 +134,8 @@ export type ResultadoDesconhecido = {
 };
 
 /**
- * Registra o contato e, se for o primeiro em 7 dias, responde com o link.
+ * Registra o contato e, se este número nunca recebeu o convite, responde com
+ * o link. Se já recebeu, registra e cala — para sempre.
  *
  * NUNCA lança: isto roda no caminho do webhook, e uma falha aqui não pode
  * derrubar o processamento de quem VEM depois na mesma execução.
@@ -151,7 +171,7 @@ export async function atenderDesconhecido(
     return { registrado: true, respondido: false, motivo: "sem_link" };
   }
 
-  if (await jaRespondeuRecentemente(supabase, chave)) {
+  if (await jaRecebeuOConvite(supabase, chave)) {
     return { registrado: true, respondido: false, motivo: "ja_respondido" };
   }
 
