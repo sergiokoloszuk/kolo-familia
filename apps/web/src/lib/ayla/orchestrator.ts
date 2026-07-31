@@ -54,6 +54,7 @@ import { traduzirProativa } from "./traduzir";
 import { montarPonteWhatsApp, gerarMagicLink, montarPlanoFimDeSemana } from "./ponte";
 import { aguardarTurnoDaMae, descartarTurnoPendente } from "./lote-inbound";
 import { registrarLote } from "@/lib/memoria-viva/lote";
+import { atenderDesconhecido } from "./desconhecido";
 import { memoriaVivaAutorizada } from "@/lib/kolo-vivo/fatos/autorizacao";
 import { pedeUmPlano } from "@/lib/ia/pedido-plano";
 import {
@@ -1174,9 +1175,14 @@ export async function processInbound(
     (f) => chaveTelefoneBR(f.whatsapp_e164 as string) === chaveIn,
   );
   if (!family) {
-    // Número não reconhecido — loga pra dar pra diagnosticar (antes sumia).
+    // Número não reconhecido. Antes acabava AQUI, num console.warn: a mensagem
+    // não era guardada em lugar nenhum e a pessoa levava silêncio absoluto.
+    // Agora o contato fica REGISTRADO e ela recebe, uma vez, o caminho de
+    // entrada. Ver lib/ayla/desconhecido.ts — nada de IA, nada de conversa.
+    const atendida = await atenderDesconhecido(supabase, inbound);
     console.warn(
-      `[ayla] inbound de número não cadastrado: ${inbound.phoneE164} (chave ${chaveIn})`,
+      `[ayla] inbound de número não cadastrado: ${inbound.phoneE164} (chave ${chaveIn})` +
+        ` — respondido=${atendida.respondido}${atendida.motivo ? ` (${atendida.motivo})` : ""}`,
     );
     return { tratada: false };
   }

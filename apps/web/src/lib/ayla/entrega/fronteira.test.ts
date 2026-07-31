@@ -22,6 +22,12 @@ const PERMITIDOS = new Map<string, string>([
   ["app/admin/familias/actions.ts", "ação manual do admin (bloquear número)"],
   ["app/(app)/dashboards/abordagem/[familyId]/actions.ts", "abordagem manual do CRM"],
   ["app/(app)/painel/ativar-actions.ts", "ativação do WhatsApp pela própria usuária na web"],
+  // O destinatário NÃO é uma família: é quem escreveu sem ter cadastro. A
+  // fronteira pressupõe uma — `ayla_publicacoes.family_account_id` é NOT NULL
+  // com FK, e `publicar()` grava a trava de entrega única lá. Sem família não
+  // há o que travar. A propriedade equivalente existe no módulo: uma resposta
+  // por número a cada 7 dias, e nunca IA.
+  ["lib/ayla/desconhecido.ts", "convite de cadastro para número sem família — publicar() exige família"],
   ["lib/ayla/whatsappSender.ts", "é o próprio módulo"],
 ]);
 
