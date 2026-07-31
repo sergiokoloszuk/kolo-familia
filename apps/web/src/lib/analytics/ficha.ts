@@ -1,5 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { idadeAnos } from "@/lib/idade";
+import { lerSecoesMembro, PERFIL_MEMBRO_SELECT } from "@/lib/kolo-vivo/leitura";
+import { MEMBRO_CAMPOS_TODOS, MEMBRO_CAMPO_LABEL } from "@/lib/kolo-vivo/campos";
 
 /**
  * Ficha "o que já fez" de UMA família — pro drill-down do dashboard (Fase 2).
@@ -9,14 +11,6 @@ import { idadeAnos } from "@/lib/idade";
  * co-acesso vê só os sinais/contagens). Como é server component, o que não é
  * renderizado não chega no navegador da agência.
  */
-
-const KV_LABEL: Record<string, string> = {
-  essencial: "O essencial",
-  como_e: "Como é",
-  corpo_rotina: "Corpo e rotina",
-  desafios_regulacao: "Desafios e regulação",
-  sensorial: "Sensorial",
-};
 
 const EVENTO_LABEL: Record<string, string> = {
   conversa_mensagem: "Conversa (Estratégias)",
@@ -105,17 +99,22 @@ export async function carregarFichaFamilia(
   const campos = new Set<string>();
   const conteudo: { campo: string; texto: string }[] = [];
   if (memberIds.length) {
+    // Até 31/07 esta consulta pedia só as 5 colunas dedicadas e tinha o seu
+    // próprio mapa de rótulos: a ficha mostrava 5 dos 20 domínios, e nem sabia
+    // que os outros 15 existiam. Agora usa a seleção e a leitura canônicas —
+    // sem interpretação própria dos domínios.
     const { data: perfis } = await admin
       .from("perfil_vivo_membro")
-      .select("essencial, como_e, corpo_rotina, desafios_regulacao, sensorial")
+      .select(PERFIL_MEMBRO_SELECT)
       .in("membro_atipico_id", memberIds);
     for (const p of perfis ?? []) {
-      for (const campo of Object.keys(KV_LABEL)) {
-        const val = (p as Record<string, { texto?: string } | null>)[campo];
-        const texto = val?.texto?.trim();
+      const secoes = lerSecoesMembro(p as Record<string, unknown>);
+      for (const campo of MEMBRO_CAMPOS_TODOS) {
+        const texto = secoes[campo];
         if (texto) {
-          campos.add(KV_LABEL[campo]);
-          conteudo.push({ campo: KV_LABEL[campo], texto });
+          const label = MEMBRO_CAMPO_LABEL[campo] ?? campo;
+          campos.add(label);
+          conteudo.push({ campo: label, texto });
         }
       }
     }

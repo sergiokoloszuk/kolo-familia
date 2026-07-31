@@ -12,7 +12,7 @@ import { idadeAnos } from "@/lib/idade";
 import { primeiroNome } from "@/lib/nome";
 import { gerarMagicLink } from "./ponte";
 import { carregarCadenciaMap } from "@/lib/crm/ayla-cadencia";
-import { lerSecoesMembro } from "@/lib/kolo-vivo/leitura";
+import { lerSecoesMembro, PERFIL_MEMBRO_SELECT} from "@/lib/kolo-vivo/leitura";
 import { MEMBRO_CAMPOS_TODOS, MEMBRO_CAMPO_LABEL } from "@/lib/kolo-vivo/campos";
 
 const MS_DIA = 86_400_000;
@@ -260,7 +260,7 @@ async function loadContext(
       .order("created_at", { ascending: true }),
     supabase
       .from("perfil_vivo_membro")
-      .select("essencial, como_e, corpo_rotina, desafios_regulacao, sensorial, categorias_extras")
+      .select(PERFIL_MEMBRO_SELECT)
       .eq("membro_atipico_id", membroFocoId)
       .maybeSingle(),
     supabase.from("planos").select("id").eq("family_account_id", familyId).limit(1),

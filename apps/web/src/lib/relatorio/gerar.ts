@@ -2,6 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { getAnthropicClient, MODELS } from "@/lib/ia/anthropic";
 import { logarUsoApi } from "@/lib/billing/logar";
 import { idadeAnos } from "@/lib/idade";
+import { PERFIL_MEMBRO_SELECT } from "@/lib/kolo-vivo/leitura";
 
 /**
  * Relatório pra ESCOLA/TERAPEUTA — "tradução" do Kolo Vivo + registros recentes
@@ -160,7 +161,7 @@ async function montarContextoRelatorio(
   const { data: pv } = await supabase
     .from("perfil_vivo_membro")
     .select(
-      "essencial, como_e, corpo_rotina, desafios_regulacao, sensorial, categorias_extras",
+      PERFIL_MEMBRO_SELECT,
     )
     .eq("membro_atipico_id", membroId)
     .maybeSingle();

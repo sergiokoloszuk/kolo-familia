@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { PERFIL_MEMBRO_SELECT } from "./leitura";
 import { hojeLocalISO } from "@/lib/idade";
 import { MEMBRO_CAMPOS_TOPLEVEL, membroCampoStorage } from "./campos";
 // FACT STORE (0073) - escrita sombra, atras de flag. Ponto tecnico unico.
@@ -141,7 +142,7 @@ export async function aplicarPropostaNoPerfil(
   if (membroItens.length > 0 && membroId) {
     const { data: atual } = await supabase
       .from("perfil_vivo_membro")
-      .select("essencial, como_e, corpo_rotina, desafios_regulacao, sensorial, categorias_extras")
+      .select(PERFIL_MEMBRO_SELECT)
       .eq("membro_atipico_id", membroId)
       .maybeSingle();
 

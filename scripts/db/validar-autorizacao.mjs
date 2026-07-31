@@ -112,6 +112,7 @@ for (const nome of [
   "fatos/escopo-ativo",
   "fatos/foco-membro",
   "fatos/registrar",
+  "leitura",
   "campos",
   "subcampos",
   "aplicar",

@@ -11,6 +11,7 @@ import { AVATAR_ESTILOS, coerceEstilo } from "@/lib/imagem/avatar-prompt";
 import { pathDeImagem } from "@/lib/storage/imagens";
 import { resolveFamily } from "@/lib/auth/current-family";
 import { trackFeature } from "@/lib/analytics/track";
+import { PERFIL_MEMBRO_SELECT } from "@/lib/kolo-vivo/leitura";
 
 /**
  * Busca os bytes do avatar com retry. O bucket é PRIVADO, então baixa via
@@ -166,7 +167,7 @@ export async function criarHistoria(
     // Lê Kolo Vivo (resumo + gostos) já aqui — o cliente do user ainda está vivo.
     const { data: kv } = await supabase
       .from("perfil_vivo_membro")
-      .select("essencial, como_e, corpo_rotina, desafios_regulacao, sensorial, categorias_extras")
+      .select(PERFIL_MEMBRO_SELECT)
       .eq("membro_atipico_id", data.membroId)
       .maybeSingle();
     const resumo = kv

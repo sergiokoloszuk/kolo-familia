@@ -6,6 +6,7 @@ import { candidatoDeItemKoloVivo } from "./fatos/adaptador";
 import { escopoAtivoDaFamilia } from "./fatos/escopo-ativo";
 import { resolverMembro, type FonteDoFoco } from "./fatos/foco-membro";
 import { idDeEvidencia } from "./fatos/evidencia";
+import { PERFIL_MEMBRO_SELECT } from "./leitura";
 
 type SecaoJson = { texto?: string; atualizado_em?: string } | null;
 
@@ -63,7 +64,7 @@ export async function aplicarSugestaoNoMembro(
   const { data: atual } = await supabase
     .from("perfil_vivo_membro")
     .select(
-      "essencial, como_e, corpo_rotina, desafios_regulacao, sensorial, categorias_extras",
+      PERFIL_MEMBRO_SELECT,
     )
     .eq("membro_atipico_id", membroId)
     .maybeSingle();

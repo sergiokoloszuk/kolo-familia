@@ -103,6 +103,7 @@ const modulos = [
   ["fatos/escopo-ativo", "fatos"],
   ["fatos/foco-membro", "fatos"],
   ["fatos/registrar", "fatos"],
+  ["leitura", "."],
   ["campos", "."],
   ["subcampos", "."],
   ["aplicar", "."],

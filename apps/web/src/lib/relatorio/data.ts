@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { idadeAnos } from "@/lib/idade";
+import { lerSecoesMembro, PERFIL_MEMBRO_SELECT } from "@/lib/kolo-vivo/leitura";
 
 /**
  * Coleta de dados para relatório (PRD §7.17).
@@ -31,6 +32,19 @@ export type ReportData = {
     corpo_rotina: string;
     desafios_regulacao: string;
     sensorial: string;
+    /**
+     * OS 20 DOMÍNIOS do Kolo Vivo, por chave canônica — só os que têm conteúdo.
+     *
+     * Até 31/07 esta camada pedia ao banco só as 5 colunas dedicadas e nem
+     * carregava `categorias_extras`: o relatório que vai para a escola ou para
+     * o terapeuta era cego para 15 domínios, incluindo `aprendizado` e
+     * `escola` — as duas coisas que uma reunião escolar mais precisa saber.
+     *
+     * As 5 chaves acima continuam existindo com o mesmo nome para não mexer na
+     * renderização (components/relatorio/render.tsx). EXIBIR os outros 15 é
+     * decisão de layout, e não foi tomada aqui.
+     */
+    dominios: Record<string, string>;
     composicaoFamilia?: string; // só pra terapeuta
     rotinaFamilia?: string;
     recursosFamilia?: string;
@@ -95,7 +109,7 @@ export async function fetchReportData(
       .single(),
     supabase
       .from("perfil_vivo_membro")
-      .select("essencial, como_e, corpo_rotina, desafios_regulacao, sensorial")
+      .select(PERFIL_MEMBRO_SELECT)
       .eq("membro_atipico_id", opts.membroAtipicoId)
       .maybeSingle(),
     opts.destinatario === "terapeuta"
@@ -151,12 +165,29 @@ export async function fetchReportData(
     .filter(Boolean)
     .slice(0, 8) as string[];
 
+  // Leitura canônica: enxerga os 20 domínios e as formas do onboarding
+  // (`interesses`, `desafios_iniciais`), que `extractTexto` — que lê só
+  // `.texto` — deixava de fora. `extractTexto` segue em uso abaixo, para
+  // `perfil_vivo_familia`, que é outra tabela e não passa por este leitor.
+  const secoesMembro = lerSecoesMembro(perfilMembro as Record<string, unknown> | null);
+
+  // SAÚDE NÃO VAI PARA A ESCOLA. O arquivo já trata `perfil_vivo_familia` como
+  // exclusivo do terapeuta; dado de saúde da criança segue a mesma regra. Sem
+  // isto, corrigir a seleção de colunas mandaria histórico clínico para uma
+  // reunião escolar como efeito colateral de uma limpeza técnica.
+  const dominios: Record<string, string> = {};
+  for (const [campo, texto] of Object.entries(secoesMembro)) {
+    if (campo === "saude_geral" && opts.destinatario !== "terapeuta") continue;
+    dominios[campo] = texto;
+  }
+
   const koloVivo = {
-    essencial: extractTexto(perfilMembro?.essencial),
-    como_e: extractTexto(perfilMembro?.como_e),
-    corpo_rotina: extractTexto(perfilMembro?.corpo_rotina),
-    desafios_regulacao: extractTexto(perfilMembro?.desafios_regulacao),
-    sensorial: extractTexto(perfilMembro?.sensorial),
+    essencial: secoesMembro.essencial ?? "",
+    como_e: secoesMembro.como_e ?? "",
+    corpo_rotina: secoesMembro.corpo_rotina ?? "",
+    desafios_regulacao: secoesMembro.desafios_regulacao ?? "",
+    sensorial: secoesMembro.sensorial ?? "",
+    dominios,
     composicaoFamilia:
       opts.destinatario === "terapeuta"
         ? sanitizarNomes(extractTexto(perfilFamilia?.composicao))

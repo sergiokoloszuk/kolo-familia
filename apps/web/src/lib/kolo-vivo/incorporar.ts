@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { PERFIL_MEMBRO_SELECT } from "./leitura";
 import type { ItemKoloVivo } from "@/lib/ia/atualizar";
 import { MEMBRO_CAMPOS_TOPLEVEL, MEMBRO_CAMPOS_EXTRAS, membroCampoStorage } from "./campos";
 // Fact store (0073) - escrita sombra. Mesmo servico dos outros tres caminhos.
@@ -50,7 +51,7 @@ export async function montarKoloVivoResumo(
     const { data: pvm } = await supabase
       .from("perfil_vivo_membro")
       .select(
-        "essencial, como_e, corpo_rotina, desafios_regulacao, sensorial, categorias_extras",
+        PERFIL_MEMBRO_SELECT,
       )
       .eq("membro_atipico_id", membroId)
       .maybeSingle();
@@ -177,7 +178,7 @@ export async function aplicarItensNoMembro(
   const { data: atual } = await supabase
     .from("perfil_vivo_membro")
     .select(
-      "essencial, como_e, corpo_rotina, desafios_regulacao, sensorial, categorias_extras",
+      PERFIL_MEMBRO_SELECT,
     )
     .eq("membro_atipico_id", membroId)
     .maybeSingle();

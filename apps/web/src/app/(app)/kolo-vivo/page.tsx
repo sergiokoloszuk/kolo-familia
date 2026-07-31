@@ -2,6 +2,7 @@ import { Eyebrow } from "@/components/brand/eyebrow";
 import { loadFamilyContext } from "@/lib/auth/require-user";
 import { resolverCriancaAtivaId } from "@/lib/crianca-ativa";
 import { idadeAnos } from "@/lib/idade";
+import { PERFIL_MEMBRO_SELECT } from "@/lib/kolo-vivo/leitura";
 import { resumirComposicao } from "@/lib/familia/composicao";
 import { resumoDiagnostico } from "@/lib/onboarding/diagnostico";
 import { DOMINIOS, type DominioKey } from "./dominios";
@@ -34,7 +35,7 @@ export default async function KoloVivoPage() {
       supabase
         .from("perfil_vivo_membro")
         .select(
-          "membro_atipico_id, essencial, como_e, corpo_rotina, desafios_regulacao, sensorial, categorias_extras",
+          `membro_atipico_id, ${PERFIL_MEMBRO_SELECT}`,
         )
         .eq("family_account_id", familyId),
       supabase

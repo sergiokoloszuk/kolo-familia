@@ -2,6 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { AREAS_DIARIO } from "@/lib/ia/classificar-area";
 import { familiasInternas } from "./internos";
 import { emailsPorFamilia } from "./emails";
+import { PERFIL_MEMBRO_SELECT } from "@/lib/kolo-vivo/leitura";
 
 /**
  * Carrega e agrega os dados do dashboard de COMPORTAMENTO. Fonte única usada
@@ -124,9 +125,10 @@ export async function carregarComportamento(
     admin.from("subscription_accesses").select("family_account_id, status, trial_ends_at"),
     admin
       .from("perfil_vivo_membro")
-      .select(
-        "family_account_id, completude_pct, essencial, como_e, corpo_rotina, desafios_regulacao, sensorial, categorias_extras",
-      ),
+      // Colunas do consumidor + a seleção canônica do perfil. As métricas de
+      // completude seguem calculadas aqui como antes; só a lista de colunas
+      // deixa de ser repetida.
+      .select(`family_account_id, completude_pct, ${PERFIL_MEMBRO_SELECT}`),
     admin
       .from("diarios")
       .select("family_account_id, desafio_area, created_at")

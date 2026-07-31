@@ -19,6 +19,7 @@ import { idDeEvidencia } from "@/lib/kolo-vivo/fatos/evidencia";
 import { idadeAnos, hojeLocalISO } from "@/lib/idade";
 import { requireActiveWrite, SubscriptionBlockedError } from "@/lib/auth/require-active-write";
 import { resolveFamily } from "@/lib/auth/current-family";
+import { PERFIL_MEMBRO_SELECT } from "@/lib/kolo-vivo/leitura";
 
 /**
  * Em background (after()), gera um título curto e bem-escrito pra conversa e
@@ -624,7 +625,7 @@ async function montarKoloVivoResumo(
     const { data: pvm } = await supabase
       .from("perfil_vivo_membro")
       .select(
-        "essencial, como_e, corpo_rotina, desafios_regulacao, sensorial, categorias_extras",
+        PERFIL_MEMBRO_SELECT,
       )
       .eq("membro_atipico_id", membroId)
       .maybeSingle();

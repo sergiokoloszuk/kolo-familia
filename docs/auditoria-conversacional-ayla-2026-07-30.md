@@ -9,6 +9,43 @@ Onde não houve como provar (produção, banco), está marcado **HIPÓTESE**.
 
 ---
 
+## ⚠️ STATUS DOS ACHADOS — leia antes do resto
+
+> **Este documento é um DIAGNÓSTICO datado, não um retrato do código de hoje.**
+>
+> Em 31/07/2026 o achado nº 1 foi lido como pendente e quase reimplementado — quando já estava
+> corrigido havia um dia. Um diagnóstico correto vira orientação errada assim que o código muda.
+>
+> **Regra para toda auditoria daqui em diante:** cada achado carrega *data do diagnóstico*,
+> *estado atual* e *commit que resolveu*. Auditoria sem status caduca em silêncio.
+
+| # | Achado (30/07/2026) | Estado | Commit |
+|---|---|---|---|
+| 1 | WhatsApp cego para 6 dos 20 domínios | ✅ **RESOLVIDO** | `8e871a3` (leitor único), `cf1a2e9` (resíduos), `#RODADA#` (classe encerrada) |
+| 2 | Nada do que tem data chega à conversa | ✅ **RESOLVIDO** | `8e871a3` — `carregarEventosRecentes` e `carregarExperimentos` entram no prompt |
+| 3 | Perfil é bolha de texto sem data, origem nem status | 🚧 **BLOQUEADO PELO GATE DE RESTORE** | Fact Store construído (`0073`/`0074`), NÃO aplicado; ver `docs/memoria/` |
+| 4 | WhatsApp e web são duas Aylas com memórias diferentes | 🟡 **PARCIALMENTE RESOLVIDO** | Leitura unificada (`8e871a3`, `cf1a2e9`); a memória em si depende do achado 3 |
+| 5 | Sem mecanismo de correção, encerramento ou reatribuição | 🚧 **BLOQUEADO PELO GATE DE RESTORE** | Revisão da quarentena existe (`362c2ef`), sem coleta ativa |
+
+### Histórico do achado nº 1, em detalhe
+
+1. **30/07/2026 — diagnóstico.** `carregarKoloVivoResumo` montava o perfil com duas listas
+   escritas à mão (5 top-level + 9 extras = 14 de 20). Ficavam invisíveis `aprendizado`, `escola`,
+   `saude_geral`, `imitacao`, `tela_midia` e `gostos`.
+2. **30/07/2026 — correção principal (`8e871a3`).** Nasce `lib/kolo-vivo/leitura.ts`, leitor único
+   sobre `MEMBRO_CAMPOS_TODOS`, usado pelos dois canais. **O texto do achado abaixo deixou de valer
+   aqui**, e não foi reescrito — foi o que induziu ao erro de 31/07.
+3. **31/07/2026 — resíduos (`cf1a2e9`).** A mesma falha sobrevivia em duas outras regras:
+   as *lacunas* decidiam "já tem" com um `temConteudo` próprio (dizia "JÁ TEM: Escola" para um jsonb
+   só com `atualizado_em`, enquanto o resumo omitia o domínio); e a *mensagem espontânea* tinha lista
+   própria de 10 domínios, lia só `categorias_extras` (ignorando as 5 colunas dedicadas — `sensorial`
+   nunca podia virar tema) e só `.texto` (ignorando o onboarding).
+4. **31/07/2026 — classe encerrada (`#RODADA#`).** Catorze consumidores repetiam a lista de colunas.
+   Dois deles eram cegos de verdade: **o relatório para escola/terapeuta** e **a ficha do CRM** nem
+   carregavam `categorias_extras` — 5 de 20 domínios. Todos passaram a usar `PERFIL_MEMBRO_SELECT`.
+
+---
+
 ## 0. Contexto do produto (para quem não conhece o app)
 
 Necessário para ler o resto. Quem já conhece pode pular.
@@ -55,6 +92,9 @@ para escolher a estratégia, e atualiza sua compreensão da criança ao longo do
 
 ### #1 — A Ayla do WhatsApp está cega para 6 dos 20 domínios do perfil, e é informada de que os conhece
 
+> ✅ **RESOLVIDO.** Diagnóstico de 30/07/2026; corrigido em `8e871a3`, resíduos em `cf1a2e9`,
+> classe encerrada em `#RODADA#`. **O texto abaixo descreve o código de 30/07, não o de hoje.**
+
 `carregarKoloVivoResumo` ([orchestrator.ts:2762-2807](../apps/web/src/lib/ayla/orchestrator.ts#L2762-L2807))
 monta o bloco de perfil com uma lista **hardcoded** de 5 domínios top-level + 9 extras = **14**.
 Ficam de fora: **`aprendizado`, `escola`, `saude_geral`, `imitacao`, `tela_midia`, `gostos`**.
@@ -74,6 +114,9 @@ literalmente o domínio `aprendizado`, e "a escola não dá suporte" é `escola`
 
 ### #2 — Nada do que tem data chega à conversa
 
+> ✅ **RESOLVIDO** em `8e871a3`: eventos datados e experimentos passaram a entrar no prompt.
+
+
 Três estruturas guardam informação **com data**, e nenhuma delas é lida na hora de responder:
 
 | Estrutura | Tem data? | Quem escreve | Quem lê |
@@ -85,6 +128,10 @@ Três estruturas guardam informação **com data**, e nenhuma delas é lida na h
 O que **de fato** chega à conversa é o perfil — que é **texto corrido sem data nenhuma**. Ver #3.
 
 ### #3 — O perfil é uma bolha de texto sem data, sem origem e sem status
+
+> 🚧 **BLOQUEADO PELO GATE DE RESTORE.** O Fact Store existe (migrações `0073`/`0074`, revisão em
+> `362c2ef`) mas NÃO foi aplicado em produção. Diagnóstico de 30/07/2026 segue válido.
+
 
 Cada domínio é um `jsonb` com uma string: `{ texto: "..." }`. A escrita é `appendFato`
 ([orchestrator.ts:2454-2459](../apps/web/src/lib/ayla/orchestrator.ts#L2454-L2459)) — concatena com
@@ -100,6 +147,10 @@ contexto afirmando.
 derivada, padrão FHIR — desenhado em `docs/` e **não construído**.)
 
 ### #4 — WhatsApp e web são duas Aylas com a mesma cabeça e memórias diferentes
+
+> 🟡 **PARCIALMENTE RESOLVIDO.** A LEITURA é a mesma nos dois canais desde `8e871a3`/`cf1a2e9`.
+> A memória compartilhada depende do achado nº 3.
+
 
 O **Core** (identidade, princípios, sequência, piso, tom) é genuinamente compartilhado:
 `nucleoConducao()` em [diretrizes.ts:126](../apps/web/src/lib/conducao/diretrizes.ts#L126), importado
@@ -117,6 +168,10 @@ A rota de streaming ([api/conversar/stream/route.ts](../apps/web/src/app/api/con
 grava a mensagem e **nada mais** — sem extração de fatos, sem eventos, sem marcos.
 
 ### #5 — Não existe mecanismo de correção, encerramento ou reatribuição
+
+> 🚧 **BLOQUEADO PELO GATE DE RESTORE.** A revisão da quarentena existe (`362c2ef`), mas sem
+> coleta ativa não há o que corrigir. Diagnóstico de 30/07/2026 segue válido.
+
 
 - **"isso mudou / não é mais assim"** → há *instrução de prompt* para atualizar
   ([diretrizes.ts:86](../apps/web/src/lib/conducao/diretrizes.ts#L86)) e há *lógica de reescrita* no

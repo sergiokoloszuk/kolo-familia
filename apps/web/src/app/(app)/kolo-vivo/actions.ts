@@ -7,6 +7,7 @@ import { DOMINIOS, membroCampoStorage } from "./dominios";
 import { detectarMarcos } from "@/lib/kolo-vivo/incorporar";
 import { resolveFamily } from "@/lib/auth/current-family";
 import { requireActiveWrite } from "@/lib/auth/require-active-write";
+import { PERFIL_MEMBRO_SELECT } from "@/lib/kolo-vivo/leitura";
 
 async function requireFamily() {
   const supabase = await createClient();
@@ -130,7 +131,7 @@ export async function saveSecaoMembro(input: z.infer<typeof saveMembroSchema>) {
   const { data: atual } = await supabase
     .from("perfil_vivo_membro")
     .select(
-      "essencial, como_e, corpo_rotina, desafios_regulacao, sensorial, categorias_extras",
+      PERFIL_MEMBRO_SELECT,
     )
     .eq("membro_atipico_id", membro_id)
     .maybeSingle();
