@@ -59,6 +59,14 @@ function montarWhere(filtros, params) {
       });
       return `${cita(f.coluna)} in (${marcadores.join(",")})`;
     }
+    if (f.tipo === "neq") {
+      params.push(f.valor);
+      return `${cita(f.coluna)} <> $${params.length}`;
+    }
+    if (f.tipo === "ilike") {
+      params.push(f.valor);
+      return `${cita(f.coluna)} ilike $${params.length}`;
+    }
     if (f.tipo === "gte" || f.tipo === "lte" || f.tipo === "gt" || f.tipo === "lt") {
       const op = { gte: ">=", lte: "<=", gt: ">", lt: "<" }[f.tipo];
       params.push(f.valor);
@@ -80,6 +88,8 @@ function construtor(db, tabela, registro) {
     ordem: null,
     limite: null,
     unico: null,
+    contar: false,
+    apenasContagem: false,
   };
 
   async function executar() {
@@ -118,7 +128,11 @@ function construtor(db, tabela, registro) {
       sql = `update ${cita(tabela)} set ${sets.join(",")}${montarWhere(estado.filtros, params)}`;
       if (estado.colunas !== null) sql += ` returning ${estado.colunas === "*" ? "*" : estado.colunas}`;
     } else {
-      sql = `select ${estado.colunas} from ${cita(tabela)}${montarWhere(estado.filtros, params)}`;
+      // `select("id", { count: "exact", head: true })` do supabase-js: devolve
+      // { count } sem linhas. Sem isto, `count` volta undefined e vira 0 em
+      // silencio - foi o que quebrou tres validacoes da revisao.
+      const projecao = estado.apenasContagem ? "count(*)::int as __count" : estado.colunas;
+      sql = `select ${projecao} from ${cita(tabela)}${montarWhere(estado.filtros, params)}`;
       if (estado.ordem) sql += ` order by ${cita(estado.ordem.coluna)} ${estado.ordem.asc ? "asc" : "desc"}`;
       if (estado.limite != null) sql += ` limit ${estado.limite}`;
     }
@@ -127,6 +141,12 @@ function construtor(db, tabela, registro) {
     try {
       const r = await db.query(sql, params);
       const linhas = r.rows ?? [];
+      if (estado.apenasContagem) {
+        return { data: null, count: linhas[0]?.__count ?? 0, error: null };
+      }
+      if (estado.contar) {
+        return { data: linhas, count: linhas.length, error: null };
+      }
       if (estado.unico === "maybeSingle") {
         return { data: linhas[0] ?? null, error: null };
       }
@@ -150,8 +170,10 @@ function construtor(db, tabela, registro) {
   }
 
   const api = {
-    select(colunas = "*") {
+    select(colunas = "*", opcoes = {}) {
       estado.colunas = colunas;
+      estado.contar = Boolean(opcoes.count);
+      estado.apenasContagem = Boolean(opcoes.head);
       if (!estado.acao) estado.acao = "select";
       return api;
     },
@@ -196,7 +218,17 @@ function construtor(db, tabela, registro) {
       return api;
     },
     not(coluna, op, valor) {
-      if (op === "is" && valor === null) estado.filtros.push({ tipo: "is", coluna, valor: "not null" });
+      if (op === "is" && valor === null) {
+        estado.filtros.push({ tipo: "is", coluna, valor: "not null" });
+      }
+      return api;
+    },
+    neq(coluna, valor) {
+      estado.filtros.push({ tipo: "neq", coluna, valor });
+      return api;
+    },
+    ilike(coluna, valor) {
+      estado.filtros.push({ tipo: "ilike", coluna, valor });
       return api;
     },
     order(coluna, opcoes = {}) {

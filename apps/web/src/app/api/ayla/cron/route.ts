@@ -1,4 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
+import type { SupabaseClient } from "@supabase/supabase-js";
+import { logEvent } from "@/lib/log";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { logServerError } from "@/lib/log";
 import { horaLocalHHMM, hojeLocalISO } from "@/lib/idade";
@@ -78,6 +80,8 @@ async function handle(request: NextRequest) {
     if (tipo === "cleanup") return await runCleanup(supabase);
     if (tipo === "snapshots") return await runSnapshots(supabase);
     if (tipo === "healthcheck") return await runHealthcheck();
+    if (tipo === "memoria_diaria") return await runMemoriaDiaria(supabase);
+    if (tipo === "memoria_semanal") return await runMemoriaSemanal(supabase);
 
     return NextResponse.json({ error: `tipo inválido: ${tipo}` }, { status: 400 });
   } catch (err) {
@@ -87,6 +91,86 @@ async function handle(request: NextRequest) {
       { status: 500 },
     );
   }
+}
+
+// ============================================================
+// MEMÓRIA VIVA — as tres mensagens da amostra controlada
+// Ver docs/memoria/amostra-controlada.md
+// ============================================================
+
+/**
+ * Diaria, 8h. **So envia quando ha o que fazer.**
+ *
+ * A regra de experiencia da operacao e "se nao chegou mensagem, nao precisa
+ * fazer nada" - e ela so vale se a mensagem verde nao existir. Um resumo
+ * diario que chega todo dia vira ruido, e em duas semanas ninguem abre.
+ *
+ * INCIDENTE tem precedencia sobre a fila: se a barreira falhou, a acao certa
+ * nao e revisar caso, e desligar a coleta.
+ */
+async function runMemoriaDiaria(supabase: SupabaseClient) {
+  const { detectarIncidentes, mensagemDeIncidente, mensagemDiaria } = await import(
+    "@/lib/memoria-viva/incidentes"
+  );
+  const { contarFila } = await import("@/lib/memoria-viva/revisao");
+  const { notificarAdmin } = await import("@/lib/admin/notificacoes");
+
+  const url = `${process.env.NEXT_PUBLIC_SITE_URL ?? ""}/admin/memoria/revisao`;
+
+  const incidentes = await detectarIncidentes(supabase);
+  if (incidentes.length > 0) {
+    await notificarAdmin(mensagemDeIncidente(incidentes, url));
+    await logEvent({
+      kind: "memoria_incidente",
+      severity: "error",
+      payload: { tipos: incidentes.map((i) => i.tipo), total: incidentes.length },
+    }).catch(() => {});
+    return NextResponse.json({ ok: true, incidentes: incidentes.length, fila: null });
+  }
+
+  const fila = await contarFila(supabase);
+  if (fila === 0) {
+    // Silencio deliberado. Ver comentario acima.
+    return NextResponse.json({ ok: true, incidentes: 0, fila: 0, enviada: false });
+  }
+
+  await notificarAdmin(mensagemDiaria(fila, url));
+  return NextResponse.json({ ok: true, incidentes: 0, fila, enviada: true });
+}
+
+/** Sexta, 9h. Curto, com numerador e denominador, e uma recomendacao. */
+async function runMemoriaSemanal(supabase: SupabaseClient) {
+  const { resumoDaSemana, recomendacao } = await import("@/lib/memoria-viva/revisao");
+  const { notificarAdmin } = await import("@/lib/admin/notificacoes");
+
+  const r = await resumoDaSemana(supabase);
+  const url = `${process.env.NEXT_PUBLIC_SITE_URL ?? ""}/admin/memoria/revisao`;
+  const rec = recomendacao(r);
+  const RECOMENDACAO = {
+    continuar: "Continuar normalmente.",
+    atencao: "Continuar com atencao.",
+    pausar: "Pausar a coleta.",
+  } as const;
+
+  const texto = [
+    "Memoria Viva - resumo da semana",
+    "",
+    `Fatos registrados: ${r.total}`,
+    `Ativos: ${r.ativos}`,
+    `Em quarentena: ${r.quarentena}`,
+    `Aprovados: ${r.aprovados}`,
+    `Descartados: ${r.descartados}`,
+    `Perfil errado: ${r.pessoaErrada}`,
+    `Sem decisao: ${r.emDuvida}`,
+    `Falhas: ${r.falhas}`,
+    "",
+    `Situacao: ${RECOMENDACAO[rec]}`,
+    "",
+    url,
+  ].join("\n");
+
+  await notificarAdmin(texto);
+  return NextResponse.json({ ok: true, ...r, recomendacao: rec });
 }
 
 /**
