@@ -45,6 +45,11 @@ export async function aplicarSugestaoNoMembro(
     /** UM run por processamento do turno, compartilhado pelos fatos dele. */
     extractionRunId?: string | null;
     /**
+     * O LOTE que o extrator leu (0074). Quando presente, é ELE a evidência —
+     * `messageId` descreve uma mensagem da rajada, e o extrator leu todas.
+     */
+    loteId?: string | null;
+    /**
      * De onde o chamador tirou o `membroId`. O padrao e `primeiro_da_familia`
      * porque e a VERDADE sobre o orquestrador hoje: ele usa `ctx.membros[0]`.
      * Um padrao otimista aqui mentiria para `resolverMembro`.
@@ -130,17 +135,24 @@ export async function aplicarSugestaoNoMembro(
             messageId: origemFato.messageId ?? null,
           },
           escopo: await escopoAtivoDaFamilia(supabase, familyId),
-          // LINHAGEM. A unidade de evidência do WhatsApp é o TURNO, não a
-          // mensagem: `lote-inbound.ts` agrupa a rajada, e o extrator recebe o
-          // texto consolidado. O id é o da mensagem que levou o turno — dizer
-          // que uma mensagem isolada originou o fato seria falso quando o
-          // turno agrupou três.
-          linhagem: origemFato.messageId
+          // LINHAGEM. A unidade de evidência do WhatsApp é o LOTE: a rajada
+          // que o extrator de fato leu. Apontar para uma mensagem escolhida
+          // entre três descreveria mal o insumo — quem reconstruísse o caso
+          // recuperaria um terço da entrada e culparia o extrator.
+          //
+          // O `whatsapp_turn` continua como QUEDA: se o registro do lote falhou,
+          // uma evidência parcial e honesta vale mais que evidência nenhuma.
+          linhagem: origemFato.loteId
             ? {
-                sourceContentId: idDeEvidencia("whatsapp_turn", origemFato.messageId),
+                sourceContentId: idDeEvidencia("extracao_lote", origemFato.loteId),
                 extractionRunId: origemFato.extractionRunId ?? null,
               }
-            : undefined,
+            : origemFato.messageId
+              ? {
+                  sourceContentId: idDeEvidencia("whatsapp_turn", origemFato.messageId),
+                  extractionRunId: origemFato.extractionRunId ?? null,
+                }
+              : undefined,
         }),
       ].map((c) => ({ ...c, foco })));
     } catch {

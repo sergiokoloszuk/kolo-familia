@@ -110,11 +110,16 @@ function construtor(db, tabela, registro) {
       );
       sql = `insert into ${cita(tabela)} (${cols.map(cita).join(",")}) values ${valores.join(",")}`;
       if (estado.acao === "upsert" && estado.onConflict) {
+        // `onConflict` aceita lista separada por vírgula ("a,b") — chave
+        // composta. Citar a string inteira faria um identificador só, e o
+        // Postgres reclamaria de coluna inexistente.
+        const alvo = estado.onConflict.split(",").map((c) => c.trim());
+        const alvoSql = alvo.map(cita).join(",");
         // Ver CONTRATO_POSTGREST: esta é a tradução assumida.
         sql += estado.ignoreDuplicates
-          ? ` on conflict (${cita(estado.onConflict)}) do nothing`
-          : ` on conflict (${cita(estado.onConflict)}) do update set ${cols
-              .filter((c) => c !== estado.onConflict)
+          ? ` on conflict (${alvoSql}) do nothing`
+          : ` on conflict (${alvoSql}) do update set ${cols
+              .filter((c) => !alvo.includes(c))
               .map((c) => `${cita(c)} = excluded.${cita(c)}`)
               .join(",")}`;
       }

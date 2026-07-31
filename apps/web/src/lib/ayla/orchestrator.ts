@@ -53,6 +53,7 @@ import { gerarMensagemEspontanea } from "./mensagemEspontanea";
 import { traduzirProativa } from "./traduzir";
 import { montarPonteWhatsApp, gerarMagicLink, montarPlanoFimDeSemana } from "./ponte";
 import { aguardarTurnoDaMae, descartarTurnoPendente } from "./lote-inbound";
+import { registrarLote } from "@/lib/memoria-viva/lote";
 import { pedeUmPlano } from "@/lib/ia/pedido-plano";
 import {
   rotinaConversaPendente,
@@ -1283,6 +1284,22 @@ export async function processInbound(
     inbound = { ...inbound, texto: turno.texto };
   }
 
+  // 3a-bis. PROVENIÊNCIA DO INSUMO (0074). O extrator vai ler o texto do turno
+  // inteiro; o lote registra QUAIS mensagens formaram esse texto, na ordem.
+  // Sem isto o fato apontava para uma mensagem escolhida entre as três, e
+  // reconstruir o caso depois devolvia um terço da entrada.
+  //
+  // Best-effort de propósito: se falhar, `loteFala` fica nulo e a linhagem cai
+  // para o ponteiro antigo. Proveniência incompleta é ruim; turno derrubado
+  // porque a proveniência falhou seria pior.
+  const loteFala = turno.mensagens.length
+    ? await registrarLote(supabase, {
+        familyId: family.id,
+        canal: "whatsapp",
+        mensagens: turno.mensagens,
+      })
+    : null;
+
   // 3b. CRM Fase B: se o lead está em ABORDAGEM manual, a Ayla NÃO responde —
   // registra a resposta na thread do CRM, marca "aguardando você" e avisa a
   // Karina no celular. Ela responde pelo CRM. (Encerrar a abordagem devolve o
@@ -1791,7 +1808,13 @@ export async function processInbound(
   // Best-effort: nunca quebra o retorno.
   if (deveRegistrar) {
     try {
-      await persistirRegistro(supabase, family.id, parsed, execucao.sourceMessageId);
+      await persistirRegistro(
+        supabase,
+        family.id,
+        parsed,
+        execucao.sourceMessageId,
+        loteFala?.id ?? null,
+      );
     } catch (e) {
       console.warn(
         "[ayla] persistirRegistro (adiado) falhou:",
@@ -2111,6 +2134,8 @@ async function persistirRegistro(
   p: ParserResult,
   /** A inbound que originou este registro - proveniencia do fact store (0073). */
   sourceMessageId?: string | null,
+  /** O LOTE que o extrator leu (0074). E a evidencia correta quando existe. */
+  loteId?: string | null,
 ): Promise<void> {
   // UM run por turno: todos os fatos deste processamento compartilham.
   const extractionRunId = randomUUID();
@@ -2314,7 +2339,7 @@ async function persistirRegistro(
             campo,
             novoTexto,
             "reescrever",
-            { messageId: sourceMessageId, subcampo: r.campoSub, extractionRunId },
+            { messageId: sourceMessageId, subcampo: r.campoSub, extractionRunId, loteId },
           );
           operacaoLog = "reescrever";
           textoAplicado = novoTexto;
@@ -2334,7 +2359,7 @@ async function persistirRegistro(
             campo,
             decisao.texto,
             decisao.operacao,
-            { messageId: sourceMessageId, extractionRunId },
+            { messageId: sourceMessageId, extractionRunId, loteId },
           );
           textoAplicado = decisao.texto;
           textoParaConflito = decisao.texto;

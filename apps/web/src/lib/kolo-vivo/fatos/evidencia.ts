@@ -29,7 +29,17 @@ export type TipoEvidencia =
   | "web_conversation"
   /** Uma entrada do diário. Vários fatos podem sair da mesma. */
   | "diario_entry"
-  /** Um TURNO do WhatsApp — pode agrupar várias mensagens (ver lote-inbound). */
+  /**
+   * O LOTE que o extrator leu — o conjunto ordenado de mensagens da rajada.
+   * É a unidade correta do WhatsApp e a que deve ser usada daqui em diante.
+   */
+  | "extracao_lote"
+  /**
+   * LEGADO. Uma mensagem só, escolhida entre as da rajada. Descrevia mal o
+   * insumo: reconstruir o caso recuperava um terço da entrada. Continua sendo
+   * resolvido porque é o que sobra quando o registro do lote falha, e porque
+   * evidência antiga tem de continuar legível — mas não se escreve mais.
+   */
   | "whatsapp_turn";
 
 /**
@@ -54,7 +64,9 @@ export function lerIdDeEvidencia(
   const tipo = bruto.slice(0, i) as TipoEvidencia;
   const id = bruto.slice(i + 1);
   if (!id) return null;
-  if (!["web_conversation", "diario_entry", "whatsapp_turn"].includes(tipo)) return null;
+  if (!["web_conversation", "diario_entry", "extracao_lote", "whatsapp_turn"].includes(tipo)) {
+    return null;
+  }
   return { tipo, id };
 }
 
@@ -89,6 +101,14 @@ const ORIGENS: Record<
     unidade: "uma entrada do diário; vários fatos podem sair dela",
     colunaData: "created_at",
     comoRecuperar: "select conquista, desafio, observacao_livre from diarios where id = <id>",
+  },
+  extracao_lote: {
+    tabela: "extracao_lotes",
+    unidade:
+      "o LOTE — o conjunto ordenado de mensagens efetivamente entregue ao extrator (ver memoria-viva/lote.ts)",
+    colunaData: "criado_em",
+    comoRecuperar:
+      "reconstruirTextoDoLote(<id>) — refaz o texto pelas mensagens do lote e confere o texto_hash",
   },
   whatsapp_turn: {
     tabela: "ayla_messages",
@@ -132,6 +152,8 @@ export async function resolverEvidenciaOriginal(
   };
 
   try {
+    // O legado `whatsapp_turn` guarda o id do PROVEDOR; os demais guardam o id
+    // interno da própria linha.
     const coluna = ref.tipo === "whatsapp_turn" ? "zaap_message_id" : "id";
     // `select("*")` e nao uma lista montada: o tipo do supabase-js analisa a
     // string de colunas em tempo de compilacao e nao aceita interpolacao.

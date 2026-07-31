@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { consolidarTextos, type MensagemDoLote } from "@/lib/memoria-viva/lote";
 
 /**
  * CONTROLE DE TURNO — uma resposta por vez de fala da mãe.
@@ -37,13 +38,29 @@ const JANELA_LOTE_MIN = 15;
 
 const dormir = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-type LinhaInbound = { id: string; texto: string | null; created_at: string };
+type LinhaInbound = {
+  id: string;
+  texto: string | null;
+  created_at: string;
+  zaap_message_id: string | null;
+};
 
 export type Lote = {
   /** Texto único do turno — as mensagens da mãe na ordem em que ela escreveu. */
   texto: string;
   /** Quantas mensagens entraram (1 = turno normal). */
   quantidade: number;
+  /**
+   * AS MENSAGENS QUE COMPUSERAM O TURNO, na ordem lida.
+   *
+   * É o insumo real do extrator, e sem isto o fato guardava o ponteiro de uma
+   * mensagem só — reconstruir o caso depois recuperaria um terço da entrada.
+   * Ver lib/memoria-viva/lote.ts.
+   *
+   * Vazio nos caminhos degradados (claim falhou): nesses casos não sabemos qual
+   * foi o conjunto real, e um lote inventado seria pior que lote nenhum.
+   */
+  mensagens: MensagemDoLote[];
 };
 
 /**
@@ -87,13 +104,13 @@ export async function aguardarTurnoDaMae(
       .eq("direcao", "inbound")
       .is("processada_em", null)
       .gte("created_at", desde)
-      .select("id, texto, created_at");
+      .select("id, texto, created_at, zaap_message_id");
 
     if (error) {
       // Coluna ainda não migrada (0070) ou falha inesperada: NÃO travar a Ayla.
       // Degrada pro comportamento antigo — responde só esta mensagem.
       console.warn("[ayla:turno] claim falhou, seguindo sem agrupar:", error.message);
-      return { texto: params.textoAtual, quantidade: 1 };
+      return { texto: params.textoAtual, quantidade: 1, mensagens: [] };
     }
 
     const linhas = ((claimadas ?? []) as LinhaInbound[])
@@ -111,15 +128,29 @@ export async function aguardarTurnoDaMae(
     const textos = linhas
       .map((l) => (l.texto ?? "").trim())
       .filter(Boolean);
-    if (textos.length === 0) return { texto: params.textoAtual, quantidade: 1 };
+    if (textos.length === 0) return { texto: params.textoAtual, quantidade: 1, mensagens: [] };
 
     if (textos.length > 1) {
       console.log(`[ayla:turno] agrupando ${textos.length} mensagens num turno só`);
     }
-    return { texto: textos.join("\n"), quantidade: textos.length };
+
+    // Só as linhas que de fato entraram no texto — `consolidarTextos` descarta
+    // as vazias, e a proveniência tem de refletir o que o extrator LEU, não o
+    // que foi claimado.
+    const comTexto = linhas.filter((l) => (l.texto ?? "").trim());
+    return {
+      texto: consolidarTextos(comTexto.map((l) => l.texto)),
+      quantidade: comTexto.length,
+      mensagens: comTexto.map((l) => ({
+        mensagemId: l.id,
+        provedorMessageId: l.zaap_message_id ?? null,
+        recebidaEm: l.created_at,
+        texto: l.texto,
+      })),
+    };
   } catch (e) {
     console.warn("[ayla:turno] erro inesperado, seguindo sem agrupar:", e instanceof Error ? e.message : e);
-    return { texto: params.textoAtual, quantidade: 1 };
+    return { texto: params.textoAtual, quantidade: 1, mensagens: [] };
   }
 }
 
