@@ -526,14 +526,19 @@ export async function confirmarAtualizacao(
       familyId: family.id,
       membroId,
       itens: data.koloVivo,
-      // A pessoa clicou "Guardar no Perfil": e relato do cuidador, e o clique
-      // e uma confirmacao explicita - por isso `confirmed`, e nao `reported`.
+      // A pessoa clicou "Guardar no Perfil". Isso prova que ela RELATOU a
+      // informacao - nao que a informacao foi validada. `confirmed` fica
+      // reservado para quando alguem validar explicitamente um fato antes
+      // incerto; sem esse fluxo, nenhum caminho atual deve produzi-lo, senao
+      // `confirmed` passa a significar "foi digitado num formulario" e o eixo
+      // epistemologico perde o sentido.
       fatos: {
         proveniencia: {
           sourceType: "caregiver_report",
           channel: "web",
           conversationId: data.conversaId ?? null,
         },
+        verificationStatus: "reported",
       },
     });
     if (aplicado.erro) {

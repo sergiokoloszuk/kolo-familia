@@ -82,7 +82,7 @@ describe("fluxo WEB manual (Guardar no Perfil)", () => {
       itens: [itemSensorial],
       fatos: {
         proveniencia: { sourceType: "caregiver_report", channel: "web" },
-        verificationStatus: "confirmed",
+        verificationStatus: "reported",
       },
     });
 
@@ -93,8 +93,9 @@ describe("fluxo WEB manual (Guardar no Perfil)", () => {
     expect(f.conceito).toBe("sensorial.hipersensibilidade_auditiva");
     expect(f.source_channel).toBe("web");
     expect(f.source_type).toBe("caregiver_report");
-    // Clique explícito em salvar é confirmação.
-    expect(f.verification_status).toBe("confirmed");
+    // Digitar prova que RELATOU, não que foi validado. `confirmed` fica
+    // reservado ao fluxo de validação, que ainda não existe.
+    expect(f.verification_status).toBe("reported");
     expect(f.fact_kind).toBe("statement");
     expect(f.escopo_tipo).toBe("sempre");
   });
@@ -161,7 +162,7 @@ describe("fluxo DIÁRIO", () => {
           channel: "diario",
           actorId: "user-42",
         },
-        verificationStatus: "confirmed",
+        verificationStatus: "reported",
       },
     );
 

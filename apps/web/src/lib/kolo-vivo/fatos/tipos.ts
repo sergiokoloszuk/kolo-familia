@@ -114,8 +114,16 @@ export type ResultadoRegistro =
   | { status: "falhou"; erro: string };
 
 /**
- * Versão do processo que produz os fatos. Muda quando a forma de derivar
- * conceito, tipo ou proveniência muda — é o que permite reprocessar depois sem
- * confundir o que já existia, e faz parte da chave de idempotência.
+ * Versão do processo que produz os fatos. Fonte ÚNICA — nunca repita este
+ * literal em outro arquivo.
+ *
+ * REGRA: incremente a cada mudança que altere sujeito, domínio, subcampo,
+ * conceito, afirmação, natureza, status epistemológico, data observada, escopo,
+ * idempotência ou critério de aceitação/rejeição.
+ *
+ * v1 → v2 (Fase 4A): `confirmed` deixou de ser gravado pelos fluxos atuais,
+ * entrou a barreira de sujeito e o filtro de afirmação sem conteúdo. Sem o
+ * bump, fatos de antes e depois das correções seriam indistinguíveis — foi o
+ * que a auditoria da Fase 3 apontou entre `81aa526` e `dfef78b`.
  */
-export const EXTRACTOR_VERSION = "kv-blob-v1";
+export const EXTRACTOR_VERSION = "kv-blob-v2";

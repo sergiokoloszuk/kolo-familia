@@ -3,6 +3,11 @@ import { createHash } from "node:crypto";
 import { logEvent } from "@/lib/log";
 import { hojeLocalISO } from "@/lib/idade";
 import {
+  afirmacaoTemConteudo,
+  classificarSujeito,
+  sujeitoElegivel,
+} from "./sujeito";
+import {
   EXTRACTOR_VERSION,
   type CandidatoFato,
   type ResultadoRegistro,
@@ -105,6 +110,29 @@ export async function registrarFatoPerfil(
   if (afirmacao.length < MIN_AFIRMACAO) {
     await registrar("perfil_fato_rejeitado", "info", candidato, { motivo: "afirmacao_curta" });
     return { status: "rejeitado", motivo: "afirmacao_curta" };
+  }
+
+  // BARREIRA DE CONTEUDO: elogio puro nao afirma nada verificavel e polui a
+  // projecao para sempre. Piso deterministico - ver sujeito.ts.
+  const conteudo = afirmacaoTemConteudo(afirmacao);
+  if (!conteudo.ok) {
+    await registrar("perfil_fato_rejeitado", "info", candidato, { motivo: conteudo.motivo });
+    return { status: "rejeitado", motivo: conteudo.motivo };
+  }
+
+  // BARREIRA DE SUJEITO: perder um candidato incerto e preferivel a gravar um
+  // fato na pessoa errada. Um fato perdido volta na proxima conversa; um fato
+  // no perfil errado fica e e lido como verdade.
+  const sujeito = classificarSujeito({
+    texto: afirmacao,
+    membroSelecionado: Boolean(candidato.membroId),
+  });
+  if (!sujeitoElegivel(sujeito)) {
+    await registrar("perfil_fato_rejeitado", "info", candidato, {
+      motivo: "sujeito_nao_elegivel",
+      sujeito,
+    });
+    return { status: "rejeitado", motivo: `sujeito:${sujeito}` };
   }
   if (!candidato.conceito?.trim() || !candidato.dominio?.trim()) {
     await registrar("perfil_fato_rejeitado", "info", candidato, { motivo: "sem_conceito" });

@@ -243,17 +243,17 @@ export async function salvarKoloVivoDoDiario(
       family.id,
       membroAtipicoId,
       koloVivo as ItemKoloVivo[],
-      // A pessoa DIGITOU isto na tela do diario: entrada manual, autor
-      // autenticado, e o clique em salvar e uma confirmacao explicita - por
-      // isso `confirmed`, e nao `reported`. Sem messageId: o diario nao tem
-      // mensagem, e inventar um ID artificial quebraria a auditoria.
+      // Entrada manual, autor autenticado. Digitar prova que a pessoa
+      // RELATOU, nao que a informacao foi validada - por isso `reported`, e
+      // nao `confirmed` (ver conversar/actions.ts). Sem messageId: o diario
+      // nao tem mensagem, e inventar um ID quebraria a auditoria.
       {
         proveniencia: {
           sourceType: "manual_entry",
           channel: "diario",
           actorId: user.id,
         },
-        verificationStatus: "confirmed",
+        verificationStatus: "reported",
       },
     );
     revalidatePath("/kolo-vivo");
