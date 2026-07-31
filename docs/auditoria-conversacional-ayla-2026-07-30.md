@@ -21,7 +21,7 @@ Onde não houve como provar (produção, banco), está marcado **HIPÓTESE**.
 
 | # | Achado (30/07/2026) | Estado | Commit |
 |---|---|---|---|
-| 1 | WhatsApp cego para 6 dos 20 domínios | ✅ **RESOLVIDO** | `8e871a3` (leitor único), `cf1a2e9` (resíduos), `#RODADA#` (classe encerrada) |
+| 1 | WhatsApp cego para 6 dos 20 domínios | ✅ **RESOLVIDO** | `8e871a3` (leitor único), `cf1a2e9` (resíduos), `5d05ba8` (classe encerrada) |
 | 2 | Nada do que tem data chega à conversa | ✅ **RESOLVIDO** | `8e871a3` — `carregarEventosRecentes` e `carregarExperimentos` entram no prompt |
 | 3 | Perfil é bolha de texto sem data, origem nem status | 🚧 **BLOQUEADO PELO GATE DE RESTORE** | Fact Store construído (`0073`/`0074`), NÃO aplicado; ver `docs/memoria/` |
 | 4 | WhatsApp e web são duas Aylas com memórias diferentes | 🟡 **PARCIALMENTE RESOLVIDO** | Leitura unificada (`8e871a3`, `cf1a2e9`); a memória em si depende do achado 3 |
@@ -40,7 +40,7 @@ Onde não houve como provar (produção, banco), está marcado **HIPÓTESE**.
    só com `atualizado_em`, enquanto o resumo omitia o domínio); e a *mensagem espontânea* tinha lista
    própria de 10 domínios, lia só `categorias_extras` (ignorando as 5 colunas dedicadas — `sensorial`
    nunca podia virar tema) e só `.texto` (ignorando o onboarding).
-4. **31/07/2026 — classe encerrada (`#RODADA#`).** Catorze consumidores repetiam a lista de colunas.
+4. **31/07/2026 — classe encerrada (`5d05ba8`).** Catorze consumidores repetiam a lista de colunas.
    Dois deles eram cegos de verdade: **o relatório para escola/terapeuta** e **a ficha do CRM** nem
    carregavam `categorias_extras` — 5 de 20 domínios. Todos passaram a usar `PERFIL_MEMBRO_SELECT`.
 
@@ -93,7 +93,7 @@ para escolher a estratégia, e atualiza sua compreensão da criança ao longo do
 ### #1 — A Ayla do WhatsApp está cega para 6 dos 20 domínios do perfil, e é informada de que os conhece
 
 > ✅ **RESOLVIDO.** Diagnóstico de 30/07/2026; corrigido em `8e871a3`, resíduos em `cf1a2e9`,
-> classe encerrada em `#RODADA#`. **O texto abaixo descreve o código de 30/07, não o de hoje.**
+> classe encerrada em `5d05ba8`. **O texto abaixo descreve o código de 30/07, não o de hoje.**
 
 `carregarKoloVivoResumo` ([orchestrator.ts:2762-2807](../apps/web/src/lib/ayla/orchestrator.ts#L2762-L2807))
 monta o bloco de perfil com uma lista **hardcoded** de 5 domínios top-level + 9 extras = **14**.
