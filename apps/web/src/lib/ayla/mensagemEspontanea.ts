@@ -12,22 +12,53 @@ import { idadeAnos } from "@/lib/idade";
 import { primeiroNome } from "@/lib/nome";
 import { gerarMagicLink } from "./ponte";
 import { carregarCadenciaMap } from "@/lib/crm/ayla-cadencia";
+import { lerSecoesMembro } from "@/lib/kolo-vivo/leitura";
+import { MEMBRO_CAMPOS_TODOS, MEMBRO_CAMPO_LABEL } from "@/lib/kolo-vivo/campos";
 
 const MS_DIA = 86_400_000;
 
-/** Domínios do Perfil (categorias_extras) → rótulo humano pras perguntas. */
-const DOMINIO_LABEL: Record<string, string> = {
+/**
+ * Domínios do Perfil → rótulo CONVERSACIONAL. Minúscula e no meio da frase,
+ * porque isto entra numa mensagem de WhatsApp ("queria entender melhor as
+ * emoções e regulação"), não num título de tela — por isso não reusa
+ * `MEMBRO_CAMPO_LABEL`, que é rótulo de UI.
+ *
+ * Cobre os VINTE. Até 31/07 tinha dez, e a espontânea era cega para a outra
+ * metade — inclusive `sensorial`, que ainda por cima era lido do lugar errado
+ * (é coluna dedicada, e a leitura procurava em `categorias_extras`). O
+ * fallback abaixo garante que domínio novo em `campos.ts` nunca volte a nascer
+ * invisível aqui.
+ */
+const DOMINIO_LABEL_ESCRITO: Record<string, string> = {
+  essencial: "o essencial",
+  como_e: "o jeito de ser",
+  corpo_rotina: "corpo e rotina",
+  desafios_regulacao: "os desafios",
+  sensorial: "sensorial",
   comunicacao: "comunicação",
   socializacao: "socialização",
-  foco: "foco e atenção",
-  escola: "escola",
-  sono: "sono",
+  imitacao: "imitação",
+  motor: "movimento e coordenação",
   autonomia: "autonomia",
-  emocional: "emoções e regulação",
+  aprendizado: "aprendizado",
+  foco: "foco e atenção",
+  sono: "sono",
   nutricional: "alimentação",
-  sensorial: "sensorial",
+  tela_midia: "telas",
+  escola: "escola",
+  saude_geral: "saúde",
+  emocional: "emoções e regulação",
   rotina: "rotina",
+  gostos: "gostos e interesses",
 };
+
+/** Rótulo de um domínio; cai no de UI em minúscula se alguém esquecer acima. */
+function rotuloDominio(campo: string): string {
+  const escrito = DOMINIO_LABEL_ESCRITO[campo];
+  if (escrito) return escrito;
+  const ui = MEMBRO_CAMPO_LABEL[campo] ?? campo;
+  return ui.charAt(0).toLowerCase() + ui.slice(1);
+}
 /** Áreas que valem explorar numa CRIANÇA (as que ela pediu + as clássicas). */
 const DOMINIOS_CRIANCA = ["comunicacao", "socializacao", "foco", "escola", "sono", "autonomia", "emocional"];
 
@@ -167,6 +198,41 @@ type Context = {
   interesses: string[];
 };
 
+/**
+ * O que o perfil tem, o que falta, e o que ainda vale explorar.
+ *
+ * Exportada para teste: é a fiação que quebrou por três anos de listas à mão, e
+ * um teste sobre ela vale mais que um sobre a leitura (essa já é coberta em
+ * kolo-vivo/leitura.test.ts).
+ */
+export function derivarTemasDoPerfil(kv: Record<string, unknown> | null): {
+  gapsAbertos: GapKV[];
+  temasComInfo: { dominio: string; label: string; texto: string }[];
+  temasSemInfo: string[];
+} {
+  // LEITOR ÚNICO do perfil (lib/kolo-vivo/leitura.ts), o mesmo do WhatsApp
+  // reativo e da web. Cobre os 20 domínios, sabe quais são coluna dedicada e
+  // quais vivem em `categorias_extras`, e enxerga as formas do onboarding
+  // (`interesses`, `desafios_iniciais`, `conquista_inicial`) — não só `.texto`.
+  const secoes = lerSecoesMembro(kv);
+
+  return {
+    // Gap = domínio SEM nada. Antes lia só `.texto`, então a mãe que contou os
+    // interesses no cadastro recebia, do nada, "me conta uma coisa do jeito de
+    // ser dele que você ama" — como se nunca tivesse dito.
+    gapsAbertos: GAPS_KV.filter((g) => !secoes[g.campo]),
+    // TODOS os domínios com conteúdo, não os dez que estavam listados à mão.
+    temasComInfo: MEMBRO_CAMPOS_TODOS.filter((k) => secoes[k]).map((k) => ({
+      dominio: k,
+      label: rotuloDominio(k),
+      texto: secoes[k],
+    })),
+    // O que ainda vale explorar continua sendo lista CURADA: é escolha
+    // editorial sobre o que se pergunta a uma família, não varredura do schema.
+    temasSemInfo: DOMINIOS_CRIANCA.filter((k) => !secoes[k]).map(rotuloDominio),
+  };
+}
+
 async function loadContext(
   supabase: SupabaseClient,
   familyId: string,
@@ -210,10 +276,9 @@ async function loadContext(
   const nomeMae =
     profile?.como_chamar?.trim() || profile?.nome_mae?.trim() || "";
   const p = pronomesPara(foco.genero as Genero);
-  const gapsAbertos = GAPS_KV.filter((g) => {
-    const sec = (kv as Record<string, { texto?: string } | null> | null)?.[g.campo];
-    return !sec?.texto?.trim();
-  });
+  const { gapsAbertos, temasComInfo, temasSemInfo } = derivarTemasDoPerfil(
+    kv as Record<string, unknown> | null,
+  );
 
   const status = (sub?.status as string | null) ?? null;
   const criado = conta?.created_at ? new Date(conta.created_at as string).getTime() : null;
@@ -223,14 +288,8 @@ async function loadContext(
       : null;
   const idadeFoco = idadeAnos((foco.data_nascimento as string | null) ?? null);
 
-  // Temas (desafios) e interesses do Perfil — pra personalizar e não repetir.
   const extras = ((kv as { categorias_extras?: Record<string, unknown> } | null)?.categorias_extras ??
     {}) as Record<string, unknown>;
-  const textoDe = (k: string) => (extras[k] as { texto?: string } | undefined)?.texto?.trim() ?? "";
-  const temasComInfo = Object.keys(DOMINIO_LABEL)
-    .filter((k) => textoDe(k))
-    .map((k) => ({ dominio: k, label: DOMINIO_LABEL[k], texto: textoDe(k) }));
-  const temasSemInfo = DOMINIOS_CRIANCA.filter((k) => !textoDe(k)).map((k) => DOMINIO_LABEL[k]);
   const interesses = (
     ((extras.preferencias as { temas?: unknown } | undefined)?.temas as string[] | undefined) ??
     ((kv as { como_e?: { interesses?: unknown } } | null)?.como_e?.interesses as string[] | undefined) ??

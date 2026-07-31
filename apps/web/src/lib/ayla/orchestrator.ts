@@ -70,6 +70,8 @@ import { decidirEntrega } from "./prontidao-plano";
 // Leitura do perfil e das memórias DATADAS — fonte única com a web (Estratégias).
 import {
   carregarSecoesMembro,
+  lerSecoesMembro,
+  PERFIL_MEMBRO_SELECT,
   resumoRotulado,
   carregarEventosRecentes,
   carregarExperimentos,
@@ -1060,14 +1062,6 @@ async function criancaDaConversa(supabase: SupabaseClient, familyId: string): Pr
   return (data?.[0]?.membro_atipico_id as string | null) ?? null;
 }
 
-function temConteudo(v: unknown): boolean {
-  if (v == null) return false;
-  if (typeof v === "string") return v.trim().length > 1;
-  if (Array.isArray(v)) return v.length > 0;
-  if (typeof v === "object") return Object.values(v as Record<string, unknown>).some(temConteudo);
-  return Boolean(v);
-}
-
 /**
  * Lacunas do perfil por domínio — o que já tem × o que falta. Dá pra a Ayla
  * "perfil no centro": perguntar só o pertinente, sem repetir, e saber o que
@@ -1079,18 +1073,28 @@ async function carregarLacunasKoloVivo(
 ): Promise<string> {
   if (!membroId) return "";
   try {
+    // UMA regra só para "já tem": a MESMA leitura que monta o resumo
+    // (`carregarSecoesMembro`). Até 31/07 eram duas — as lacunas usavam um
+    // `temConteudo` que dizia "tem" para qualquer jsonb não vazio, inclusive
+    // `{ atualizado_em: "..." }` sem texto nenhum. O prompt então anunciava
+    // "JÁ TEM no perfil: Escola" e mandava não re-perguntar, enquanto nada
+    // sobre escola chegava. É a mesma falha do achado nº 1 da auditoria,
+    // sobrevivendo na outra ponta: a Ayla informada de que sabe o que não viu.
+    //
+    // A consulta fica AQUI, e não em `carregarSecoesMembro`, porque aquela
+    // engole o erro e devolve `{}`: uma falha de rede viraria "o perfil está
+    // vazio, pergunte tudo". O `catch` abaixo mantém o comportamento antigo —
+    // erro devolve string vazia e a Ayla simplesmente não fala de lacunas.
     const { data } = await supabase
       .from("perfil_vivo_membro")
-      .select("essencial, como_e, corpo_rotina, desafios_regulacao, sensorial, categorias_extras")
+      .select(PERFIL_MEMBRO_SELECT)
       .eq("membro_atipico_id", membroId)
       .maybeSingle();
-    const linha = (data ?? {}) as Record<string, unknown>;
-    const extras = (linha.categorias_extras ?? {}) as Record<string, unknown>;
+    const secoes = lerSecoesMembro(data as Record<string, unknown> | null);
     const preenchidos: string[] = [];
     const faltando: string[] = [];
     for (const campo of MEMBRO_CAMPOS_TODOS) {
-      const v = membroCampoStorage(campo) === "toplevel" ? linha[campo] : extras[campo];
-      (temConteudo(v) ? preenchidos : faltando).push(MEMBRO_CAMPO_LABEL[campo] ?? campo);
+      (secoes[campo] ? preenchidos : faltando).push(MEMBRO_CAMPO_LABEL[campo] ?? campo);
     }
     const partes: string[] = [];
     if (preenchidos.length) partes.push(`JÁ TEM no perfil: ${preenchidos.join(", ")}`);
@@ -2311,7 +2315,8 @@ async function persistirRegistro(
       const { data: rowAtual } = await supabase
         .from("perfil_vivo_membro")
         .select(
-          "essencial, como_e, corpo_rotina, desafios_regulacao, sensorial, categorias_extras",
+          // Mesma lista de colunas da fonte canônica — não repetir à mão.
+          PERFIL_MEMBRO_SELECT,
         )
         .eq("membro_atipico_id", p.membro_atipico_id)
         .maybeSingle();
