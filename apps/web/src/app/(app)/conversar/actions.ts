@@ -526,6 +526,15 @@ export async function confirmarAtualizacao(
       familyId: family.id,
       membroId,
       itens: data.koloVivo,
+      // A pessoa clicou "Guardar no Perfil": e relato do cuidador, e o clique
+      // e uma confirmacao explicita - por isso `confirmed`, e nao `reported`.
+      fatos: {
+        proveniencia: {
+          sourceType: "caregiver_report",
+          channel: "web",
+          conversationId: data.conversaId ?? null,
+        },
+      },
     });
     if (aplicado.erro) {
       return { ok: false, error: `Falha ao salvar no Perfil: ${aplicado.erro}` };

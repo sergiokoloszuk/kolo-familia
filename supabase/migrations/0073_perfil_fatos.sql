@@ -1,0 +1,154 @@
+-- FACT STORE do Perfil Vivo (v2, primeiro corte) — ADR/desenho em
+-- docs/perfil-vivo-fatos-versionados.md.
+--
+-- ⚠️ NÃO APLICADA. Ver docs/bia-aplicacao-0071.md para o procedimento; esta
+-- entra depois da 0071 e da 0072 na mesma janela.
+--
+-- POR QUE ESTA TABELA EXISTE
+--
+-- Hoje a memória é destrutiva: `aplicarPropostaNoPerfil` cola texto num blob
+-- jsonb (`perfil_vivo_membro`). Some a data, some quem disse, some o contexto,
+-- e some a diferença entre o que a família relatou e o que a IA inferiu. Um
+-- fato errado incorporado hoje fica indistinguível de um certo, para sempre.
+--
+-- Esta tabela é ESCRITA EM PARALELO, em modo sombra: ninguém a lê ainda. O
+-- objetivo do primeiro corte é um só — parar de perder origem, tempo, contexto
+-- e natureza a partir de agora. Cada dia sem ela é conhecimento que não volta,
+-- porque o blob não guarda o necessário para reconstruir os fatos depois.
+--
+-- Só ACRESCENTA: nenhuma tabela existente é tocada, nenhuma extensão nova.
+
+create table if not exists public.perfil_fatos (
+  id uuid primary key default gen_random_uuid(),
+  family_account_id uuid not null references public.family_accounts(id) on delete cascade,
+  membro_atipico_id uuid references public.membros_atipicos(id) on delete cascade,
+
+  -- ---------- IMUTÁVEIS (nunca sobrescrever depois de criados) ----------
+
+  -- Chave canônica, derivada do domínio + campo do extrator atual. Texto e não
+  -- enum de propósito: a taxonomia vai crescer, e um check aqui viraria uma
+  -- migração a cada conceito novo.
+  conceito text not null,
+  -- Domínio de exibição/agrupamento. Espelha os domínios do Kolo Vivo.
+  dominio text not null,
+  -- O fato em uma frase, como foi capturado.
+  afirmacao text not null,
+  -- "em casa", "na escola", "quando ansiosa". A MESMA habilidade varia por
+  -- contexto sem que exista contradição — é o princípio-síntese do v2.
+  contexto text,
+
+  -- `observation` é o padrão conservador e NÃO estava na lista original: sem
+  -- ele, todo relato extraído viraria `event`, afirmando uma temporalidade que
+  -- o texto não tem ("ele gosta de música" não é um evento). Classificar como
+  -- observação é o único default que não inventa nada.
+  fact_kind text not null default 'observation' check (fact_kind in (
+    'observation','event','pattern','trait','preference','ability',
+    'trigger','support','goal','tested_strategy','milestone'
+  )),
+
+  -- ---------- TEMPO ----------
+  -- Quando a informação foi observada/relatada. NÃO é o mesmo que created_at:
+  -- created_at é quando o sistema gravou.
+  observado_em date not null,
+  -- A mãe raramente sabe a data exata. Não forçar precisão que não existe.
+  observado_em_preciso boolean not null default false,
+
+  -- ---------- ESCOPO ----------
+  -- Onde o fato vale. `campaign` é o que impede a Neuro Copa de virar traço
+  -- permanente: o fato nasce preso à campanha e só ganha permanência se
+  -- reaparecer FORA dela.
+  escopo_tipo text not null default 'sempre' check (escopo_tipo in (
+    'sempre','context','campaign','school','professional','life_phase','conversation'
+  )),
+  escopo_id text,
+
+  -- ---------- PROVENIÊNCIA ----------
+  -- Três coisas diferentes, deliberadamente separadas: o TIPO da fonte, a
+  -- IDENTIDADE de quem originou, e o CANAL de entrada.
+  source_type text not null check (source_type in (
+    'caregiver_report','accompanied_person_report','professional_report',
+    'teacher_report','manual_entry','ai_inference','system_migration'
+  )),
+  source_actor_label text,
+  source_actor_id uuid,
+  source_channel text check (source_channel in ('whatsapp','web','diario','tela','sistema')),
+  -- Referência, NÃO cópia: o texto original já vive em ayla_messages. Duplicar
+  -- aumentaria a superfície de exposição sem ganho.
+  source_message_id text,
+  source_conversation_id uuid,
+
+  -- Qual versão do processo produziu esta estrutura. É o que permite
+  -- reprocessar depois sem confundir com o que já existia.
+  extractor_version text not null,
+  extraction_confidence numeric check (extraction_confidence between 0 and 1),
+
+  -- ---------- CONTROLE (podem mudar; registram estado, não reescrevem) ----------
+  -- Epistemologia SEPARADA de temporalidade: um fato pode ser histórico e
+  -- confirmado, ou atual e incerto. Colapsar os dois faz "não verbalizava em
+  -- maio" virar falso quando ela passa a verbalizar.
+  verification_status text not null default 'reported' check (verification_status in (
+    'reported','observed','inferred','confirmed','uncertain','contested'
+  )),
+  temporal_status text not null default 'current' check (temporal_status in (
+    'current','historical','unknown'
+  )),
+  superseded_by_id uuid references public.perfil_fatos(id) on delete set null,
+  superseded_at timestamptz,
+
+  -- ---------- IDEMPOTÊNCIA ----------
+  -- Distingue REPROCESSAMENTO TÉCNICO (mesma mensagem, mesmo conceito, mesma
+  -- afirmação, mesma versão de extrator) de REPETIÇÃO LEGÍTIMA (a família
+  -- contou de novo, noutro dia). A segunda é evidência nova e TEM de entrar —
+  -- é dela que sai a recorrência que um dia promove um padrão a traço.
+  idempotency_key text not null,
+
+  created_at timestamptz not null default now()
+);
+
+-- A trava. Reprocessar a mesma mensagem não duplica; contar de novo, sim.
+create unique index if not exists perfil_fatos_idempotency_uk
+  on public.perfil_fatos (idempotency_key);
+
+-- Leitura principal da projeção futura: os fatos atuais de uma pessoa, do mais
+-- recente para o mais antigo.
+create index if not exists perfil_fatos_membro_idx
+  on public.perfil_fatos (membro_atipico_id, observado_em desc)
+  where temporal_status = 'current';
+
+-- Recorrência por conceito — é a consulta da maturação (promoção por
+-- repetição). Sem este índice ela varre a pessoa inteira.
+create index if not exists perfil_fatos_conceito_idx
+  on public.perfil_fatos (membro_atipico_id, conceito, observado_em desc);
+
+-- Encerramento de campanha: "tudo que nasceu na Neuro Copa".
+create index if not exists perfil_fatos_escopo_idx
+  on public.perfil_fatos (escopo_tipo, escopo_id)
+  where escopo_tipo <> 'sempre';
+
+-- Auditoria: "de onde veio este fato?" e reprocessamento por mensagem.
+create index if not exists perfil_fatos_origem_idx
+  on public.perfil_fatos (source_message_id)
+  where source_message_id is not null;
+
+create index if not exists perfil_fatos_familia_idx
+  on public.perfil_fatos (family_account_id, created_at desc);
+
+-- Sem trigger de updated_at: o fato ORIGINAL e imutavel. Os campos de
+-- controle (temporal_status, superseded_by_id) registram estado com o proprio
+-- superseded_at; um updated_at generico so mascararia quem mudou o que.
+
+alter table public.perfil_fatos enable row level security;
+
+-- Mesmo padrão do resto do perfil: a família lê/gerencia os fatos dos SEUS
+-- membros; admin vê tudo. A escrita em produção é por service role (a Ayla).
+create policy perfil_fatos_familia on public.perfil_fatos
+  for select to authenticated
+  using (family_account_id = public.current_family_account_id());
+
+create policy perfil_fatos_admin on public.perfil_fatos
+  for all to authenticated
+  using (public.is_admin())
+  with check (public.is_admin());
+
+comment on table public.perfil_fatos is
+  'Fact store do Perfil Vivo: unidades atômicas de conhecimento sobre a pessoa acompanhada, com tempo, proveniência, contexto e escopo. Escrita em modo sombra no primeiro corte — nenhuma resposta depende dela ainda.';

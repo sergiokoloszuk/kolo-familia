@@ -21,6 +21,9 @@ import { gerarRespostaAyla, type RespostaParams } from "./responder";
 // e a Publicacao entrega. `whatsappSender` nao e mais importado aqui.
 import { randomUUID } from "node:crypto";
 import { logEvent } from "@/lib/log";
+// Fact store (0073) - escrita sombra.
+import { registrarFatosPerfil } from "@/lib/kolo-vivo/fatos/registrar";
+import { candidatoDeItemKoloVivo } from "@/lib/kolo-vivo/fatos/adaptador";
 import { montarEntrega } from "./entrega/montagem";
 import { publicarOperacional } from "./entrega/ferramenta";
 import { notificarAdminBruto } from "@/lib/admin/notificacoes";
@@ -1787,7 +1790,7 @@ export async function processInbound(
   // Best-effort: nunca quebra o retorno.
   if (deveRegistrar) {
     try {
-      await persistirRegistro(supabase, family.id, parsed);
+      await persistirRegistro(supabase, family.id, parsed, execucao.sourceMessageId);
     } catch (e) {
       console.warn(
         "[ayla] persistirRegistro (adiado) falhou:",
@@ -2085,6 +2088,8 @@ async function aplicarSugestaoNoMembro(
   campo: string,
   texto: string,
   operacao: "adicionar" | "reescrever" = "adicionar",
+  /** Origem para a escrita sombra no fact store (0073). Ausente = nao grava. */
+  origemFato?: { messageId?: string | null },
 ): Promise<boolean> {
   const storage = membroCampoStorage(campo);
   if (storage === null) return false;
@@ -2127,6 +2132,29 @@ async function aplicarSugestaoNoMembro(
     },
     { onConflict: "membro_atipico_id" },
   );
+
+  // ESCRITA SOMBRA (0073) - depois do upsert do perfil atual. Mesmo servico
+  // usado pela web; a logica nova existe num lugar so.
+  if (!error && origemFato) {
+    try {
+      await registrarFatosPerfil(supabase, [
+        candidatoDeItemKoloVivo({
+          familyId,
+          membroId,
+          campo,
+          texto,
+          proveniencia: {
+            sourceType: "caregiver_report",
+            channel: "whatsapp",
+            messageId: origemFato.messageId ?? null,
+          },
+        }),
+      ]);
+    } catch {
+      // Nunca quebra o turno; o servico ja registra cada falha.
+    }
+  }
+
   return !error;
 }
 
@@ -2157,6 +2185,8 @@ async function persistirRegistro(
   supabase: SupabaseClient,
   familyId: string,
   p: ParserResult,
+  /** A inbound que originou este registro - proveniencia do fact store (0073). */
+  sourceMessageId?: string | null,
 ): Promise<void> {
   if (!p.membro_atipico_id) return;
 
@@ -2358,6 +2388,7 @@ async function persistirRegistro(
             campo,
             novoTexto,
             "reescrever",
+            { messageId: sourceMessageId },
           );
           operacaoLog = "reescrever";
           textoAplicado = novoTexto;
@@ -2377,6 +2408,7 @@ async function persistirRegistro(
             campo,
             decisao.texto,
             decisao.operacao,
+            { messageId: sourceMessageId },
           );
           textoAplicado = decisao.texto;
           textoParaConflito = decisao.texto;

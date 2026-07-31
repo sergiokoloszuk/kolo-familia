@@ -1,6 +1,10 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { hojeLocalISO } from "@/lib/idade";
 import { MEMBRO_CAMPOS_TOPLEVEL, membroCampoStorage } from "./campos";
+// FACT STORE (0073) - escrita sombra, atras de flag. Ponto tecnico unico.
+import { registrarFatosPerfil } from "./fatos/registrar";
+import { candidatoDeItemKoloVivo } from "./fatos/adaptador";
+import type { Escopo, Proveniencia } from "./fatos/tipos";
 import {
   subcamposDe,
   parsearSubcampos,
@@ -24,6 +28,13 @@ import {
  * Não mudou nada aqui — só saiu de dentro da server action pra poder ser
  * chamada com service-role, de dentro de um `after()`.
  */
+
+/** O que o chamador sabe sobre a origem desta incorporacao. */
+export type OrigemFatos = {
+  proveniencia: Proveniencia;
+  escopo?: Escopo;
+  observadoEm?: string | null;
+};
 
 export type ItemProposta = {
   camada: "camada1" | "camada2";
@@ -92,6 +103,13 @@ export async function aplicarPropostaNoPerfil(
     familyId: string;
     membroId: string | null;
     itens: ItemProposta[];
+    /**
+     * Proveniencia para a ESCRITA SOMBRA no fact store (0073). Opcional de
+     * proposito: sem ela o fato ainda e gravado, com origem desconhecida, e
+     * isso vira metrica (`sem_proveniencia`) em vez de quebrar o turno.
+     * Ausente por completo = comportamento identico ao anterior.
+     */
+    fatos?: OrigemFatos;
   },
 ): Promise<ResultadoAplicacao> {
   const { familyId, membroId, itens } = params;
@@ -189,11 +207,57 @@ export async function aplicarPropostaNoPerfil(
     }
   }
 
+  // ESCRITA SOMBRA (0073) - depois de o perfil atual ja ter sido atualizado.
+  // Nunca antes: se falhar aqui, o comportamento de producao ja aconteceu e
+  // nada muda para a familia.
+  await gravarFatosSombra(supabase, {
+    familyId,
+    membroId,
+    itens: membroItens,
+    origem: params.fatos,
+  });
+
   return {
     itensMembro: membroId ? membroItens.length : 0,
     itensFamilia: familiaItens.length,
     fatosMembro,
   };
+}
+
+/**
+ * Ponte para o fact store. Um lugar so - a logica nova nao pode nascer
+ * duplicada como a antiga (tres implementacoes de escrita no perfil).
+ */
+async function gravarFatosSombra(
+  supabase: SupabaseClient,
+  args: {
+    familyId: string;
+    membroId: string | null;
+    itens: ItemProposta[];
+    origem?: OrigemFatos;
+  },
+): Promise<void> {
+  if (!args.origem || args.itens.length === 0) return;
+  try {
+    await registrarFatosPerfil(
+      supabase,
+      args.itens.map((it) =>
+        candidatoDeItemKoloVivo({
+          familyId: args.familyId,
+          membroId: args.membroId,
+          campo: it.campo,
+          subcampo: it.subcampo ?? null,
+          texto: it.texto,
+          proveniencia: args.origem!.proveniencia,
+          escopo: args.origem!.escopo,
+          observadoEm: args.origem!.observadoEm,
+        }),
+      ),
+    );
+  } catch {
+    // Escrita sombra nunca quebra o caminho principal. O servico ja registra
+    // cada falha individualmente; este catch e a ultima rede.
+  }
 }
 
 /**

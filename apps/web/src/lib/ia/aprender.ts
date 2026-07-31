@@ -92,6 +92,16 @@ export async function aprenderDaConversa(
       familyId,
       membroId,
       itens: proposta.koloVivo,
+      // Extraido automaticamente da conversa: o conteudo veio da familia, mas
+      // a captura foi da IA e ninguem confirmou. `uncertain` e o status
+      // honesto - silencio da familia nao e confirmacao.
+      fatos: {
+        proveniencia: {
+          sourceType: "caregiver_report",
+          channel: "web",
+          conversationId: conversaId,
+        },
+      },
     });
 
     let diario: "criado" | "atualizado" | "nada" = "nada";
