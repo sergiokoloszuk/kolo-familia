@@ -24,6 +24,7 @@ import { logEvent } from "@/lib/log";
 // Fact store (0073) - escrita sombra.
 import { registrarFatosPerfil } from "@/lib/kolo-vivo/fatos/registrar";
 import { candidatoDeItemKoloVivo } from "@/lib/kolo-vivo/fatos/adaptador";
+import { escopoAtivoDaFamilia } from "@/lib/kolo-vivo/fatos/escopo-ativo";
 import { montarEntrega } from "./entrega/montagem";
 import { publicarOperacional } from "./entrega/ferramenta";
 import { notificarAdminBruto } from "@/lib/admin/notificacoes";
@@ -2088,8 +2089,14 @@ async function aplicarSugestaoNoMembro(
   campo: string,
   texto: string,
   operacao: "adicionar" | "reescrever" = "adicionar",
-  /** Origem para a escrita sombra no fact store (0073). Ausente = nao grava. */
-  origemFato?: { messageId?: string | null },
+  /**
+   * Origem para a escrita sombra no fact store (0073). Ausente = nao grava.
+   * `subcampo` da a GRANULARIDADE: sem ele o conceito fica igual ao dominio
+   * ("sensorial" em vez de "sensorial.barulho"), e a recorrencia futura mediria
+   * "quantas vezes falamos de sensorial" - inutil para maturacao. Foi o defeito
+   * encontrado na Fase 2.
+   */
+  origemFato?: { messageId?: string | null; subcampo?: string | null },
 ): Promise<boolean> {
   const storage = membroCampoStorage(campo);
   if (storage === null) return false;
@@ -2142,12 +2149,14 @@ async function aplicarSugestaoNoMembro(
           familyId,
           membroId,
           campo,
+          subcampo: origemFato.subcampo ?? null,
           texto,
           proveniencia: {
             sourceType: "caregiver_report",
             channel: "whatsapp",
             messageId: origemFato.messageId ?? null,
           },
+          escopo: await escopoAtivoDaFamilia(supabase, familyId),
         }),
       ]);
     } catch {
@@ -2388,7 +2397,7 @@ async function persistirRegistro(
             campo,
             novoTexto,
             "reescrever",
-            { messageId: sourceMessageId },
+            { messageId: sourceMessageId, subcampo: r.campoSub },
           );
           operacaoLog = "reescrever";
           textoAplicado = novoTexto;

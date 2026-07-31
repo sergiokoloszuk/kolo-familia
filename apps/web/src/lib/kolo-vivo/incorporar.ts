@@ -1,6 +1,11 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { ItemKoloVivo } from "@/lib/ia/atualizar";
 import { MEMBRO_CAMPOS_TOPLEVEL, MEMBRO_CAMPOS_EXTRAS, membroCampoStorage } from "./campos";
+// Fact store (0073) - escrita sombra. Mesmo servico dos outros tres caminhos.
+import { registrarFatosPerfil } from "./fatos/registrar";
+import { candidatoDeItemKoloVivo } from "./fatos/adaptador";
+import { escopoAtivoDaFamilia } from "./fatos/escopo-ativo";
+import type { OrigemFatos } from "./aplicar";
 import {
   subcamposDe,
   parsearSubcampos,
@@ -156,6 +161,12 @@ export async function aplicarItensNoMembro(
   familyId: string,
   membroId: string,
   itens: ItemKoloVivo[],
+  /**
+   * Proveniencia para a ESCRITA SOMBRA no fact store (0073). Opcional, no
+   * mesmo formato de `aplicarPropostaNoPerfil` - a logica nova continua num
+   * servico so; este arquivo nao foi refatorado.
+   */
+  fatos?: OrigemFatos,
 ): Promise<number> {
   const membroItens = itens.filter(
     (it) => it.camada === "camada1" && membroCampoStorage(it.campo) !== null,
@@ -209,6 +220,34 @@ export async function aplicarItensNoMembro(
     { onConflict: "membro_atipico_id" },
   );
   if (error) throw new Error(`Falha ao salvar no Perfil: ${error.message}`);
+  // ESCRITA SOMBRA (0073) - depois de o perfil atual ja ter sido atualizado.
+  // O diario nao tem messageId: NAO inventamos um. Sem ele a chave de
+  // idempotencia cai no DIA, que e o comportamento correto para edicao manual
+  // (salvar duas vezes o mesmo dia nao duplica; a mesma frase amanha e nova).
+  if (fatos) {
+    try {
+      const escopo = fatos.escopo ?? (await escopoAtivoDaFamilia(supabase, familyId));
+      await registrarFatosPerfil(
+        supabase,
+        membroItens.map((it) =>
+          candidatoDeItemKoloVivo({
+            familyId,
+            membroId,
+            campo: it.campo,
+            subcampo: it.subcampo ?? null,
+            texto: it.texto,
+            proveniencia: fatos.proveniencia,
+            escopo,
+            observadoEm: fatos.observadoEm,
+            verificationStatus: fatos.verificationStatus,
+          }),
+        ),
+      );
+    } catch {
+      // Nunca quebra o salvamento do diario.
+    }
+  }
+
   return membroItens.length;
 }
 

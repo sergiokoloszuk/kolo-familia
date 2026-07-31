@@ -101,6 +101,11 @@ export async function aprenderDaConversa(
           channel: "web",
           conversationId: conversaId,
         },
+        // O conteudo veio da familia, mas quem RECORTOU a frase foi a IA e
+        // ninguem confirmou. `uncertain` e o status honesto: silencio da
+        // familia nao e confirmacao. Sem isto, extracao automatica ficava
+        // gravada como se a mae tivesse afirmado - defeito achado na Fase 2.
+        verificationStatus: "uncertain",
       },
     });
 

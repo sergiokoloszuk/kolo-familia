@@ -47,7 +47,7 @@ Um serviço, três pontos:
 |---|---|
 | web manual + web automático | `kolo-vivo/aplicar.ts` → `aplicarPropostaNoPerfil` |
 | WhatsApp | `ayla/orchestrator.ts` → `aplicarSugestaoNoMembro` |
-| diário | *(pendente — ver abaixo)* |
+| diário | `kolo-vivo/incorporar.ts` → `aplicarItensNoMembro` |
 
 A escrita sombra roda **depois** de o perfil atual já ter sido atualizado.
 Falha nela nunca desfaz nada e nunca vira mensagem da Ayla.
@@ -63,6 +63,33 @@ A chave separa **reprocessamento técnico** de **repetição legítima**:
 Se a chave usasse só (membro + conceito + afirmação), a repetição legítima
 seria descartada e a memória nunca acumularia recorrência — o que mataria a
 maturação antes de ela existir.
+
+## Escopo (campanha, escola, contexto)
+
+`fatos/escopo-ativo.ts` é o **único** lugar que decide sob qual escopo um fato
+nasce, e é chamado pelos quatro caminhos. Hoje devolve sempre `sempre`.
+
+**Não existe no repositório uma fonte de participação em programa.** A tabela
+`campanhas` é disparo de mensagens (informacional/promocional/avaliação/
+operacional) com destinatários — usá-la marcaria fatos de uma família só porque
+ela recebeu um comunicado, o que é pior que não ter escopo. Criar essa fonte é
+Fase 8.
+
+O que já existe é o CANAL: quando a fonte existir, o escopo passa a fluir sem
+tocar em nenhum dos quatro caminhos de escrita. Os testes de integração provam
+a travessia injetando o resolvedor.
+
+**Proibido inferir campanha por palavras do texto.** "Ele adorou o jogo" não
+prova participação em nada.
+
+## Proveniência por fluxo
+
+| Fluxo | source_type | canal | status | mensagem |
+| --- | --- | --- | --- | --- |
+| web manual | `caregiver_report` | `web` | `confirmed` (clique explícito) | — |
+| web automático | `caregiver_report` | `web` | `uncertain` (a IA recortou) | — |
+| WhatsApp | `caregiver_report` | `whatsapp` | `reported` | `messageId` |
+| diário | `manual_entry` | `diario` | `confirmed` | — (autor: `user.id`) |
 
 ## O que este corte NÃO faz
 

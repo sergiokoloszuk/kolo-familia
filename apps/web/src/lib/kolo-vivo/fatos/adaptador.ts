@@ -1,4 +1,4 @@
-import type { CandidatoFato, Escopo, Proveniencia } from "./tipos";
+import type { CandidatoFato, Escopo, Proveniencia, VerificationStatus } from "./tipos";
 
 /**
  * ADAPTADOR: o que o extrator já produz → candidato a fato.
@@ -47,12 +47,14 @@ export type EntradaAdaptador = {
   escopo?: Escopo;
   observadoEm?: string | null;
   contexto?: string | null;
+  /** Ausente = default do servico (`reported`, ou `inferred` se a fonte e IA). */
+  verificationStatus?: VerificationStatus;
 };
 
 /**
  * Monta o candidato.
  *
- * Note o que NÃO é decidido aqui: `factKind` fica no default `observation`, e
+ * Note o que NÃO é decidido aqui: `factKind` fica no default `statement`, e
  * `verificationStatus` fica no default `reported` (ou `inferred`, imposto pelo
  * serviço quando a fonte é a IA). Classificar como traço ou preferência exigiria
  * julgamento que este adaptador não tem — e errar para o lado conservador é o
@@ -71,5 +73,6 @@ export function candidatoDeItemKoloVivo(e: EntradaAdaptador): CandidatoFato {
     observadoEmPreciso: false,
     escopo: e.escopo,
     proveniencia: e.proveniencia,
+    verificationStatus: e.verificationStatus,
   };
 }

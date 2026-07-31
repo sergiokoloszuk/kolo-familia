@@ -38,16 +38,20 @@ export type TemporalStatus = "current" | "historical" | "unknown";
 /**
  * O que o fato é.
  *
- * `observation` é o padrão e não estava na taxonomia original — foi
- * acrescentado porque sem ele todo relato extraído viraria `event`, afirmando
- * uma temporalidade que o texto não tem ("ele gosta de música" não é evento).
- * Na dúvida, observação: é o único default que não inventa nada.
+ * `statement` é o padrão e não estava na taxonomia original — foi acrescentado
+ * porque sem um tipo neutro todo relato extraído viraria `event`, afirmando uma
+ * temporalidade que o texto não tem ("ele gosta de música" não é evento).
+ *
+ * O nome NÃO é `observation`: `observed` já é um verification status (o sistema
+ * observou direto), e dois nomes quase iguais em dimensões diferentes se
+ * confundem em revisão. `statement` diz apenas "algo foi afirmado" — sem
+ * implicar confirmação, observação clínica nem verdade consolidada.
  *
  * Nada nesta etapa grava `trait` ou `pattern`. Generalizar exige recorrência, e
  * recorrência é trabalho da maturação, que ainda não existe.
  */
 export type FactKind =
-  | "observation"
+  | "statement"
   | "event"
   | "pattern"
   | "trait"

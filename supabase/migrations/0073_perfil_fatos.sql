@@ -37,12 +37,17 @@ create table if not exists public.perfil_fatos (
   -- contexto sem que exista contradição — é o princípio-síntese do v2.
   contexto text,
 
-  -- `observation` é o padrão conservador e NÃO estava na lista original: sem
-  -- ele, todo relato extraído viraria `event`, afirmando uma temporalidade que
-  -- o texto não tem ("ele gosta de música" não é um evento). Classificar como
-  -- observação é o único default que não inventa nada.
-  fact_kind text not null default 'observation' check (fact_kind in (
-    'observation','event','pattern','trait','preference','ability',
+  -- `statement` é o padrão conservador e NÃO estava na lista original: sem um
+  -- tipo neutro, todo relato extraído viraria `event`, afirmando uma
+  -- temporalidade que o texto não tem ("ele gosta de música" não é evento).
+  --
+  -- O nome é `statement` e não `observation` de propósito: `observed` já é um
+  -- VERIFICATION_STATUS (o sistema observou diretamente), e dois nomes quase
+  -- iguais em dimensões diferentes se confundem. `statement` significa só "algo
+  -- foi afirmado" — não implica confirmação, observação clínica, evento
+  -- temporal nem verdade consolidada.
+  fact_kind text not null default 'statement' check (fact_kind in (
+    'statement','event','pattern','trait','preference','ability',
     'trigger','support','goal','tested_strategy','milestone'
   )),
 

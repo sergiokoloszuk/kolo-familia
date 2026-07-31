@@ -93,7 +93,7 @@ describe("Neuro Copa — cenário 1: durante a campanha", () => {
     expect(f.escopo_tipo).toBe("campaign");
     expect(f.escopo_id).toBe("neuro-copa");
     // O ponto do cenário: conservador. Nunca trait, nunca preference.
-    expect(f.fact_kind).toBe("observation");
+    expect(f.fact_kind).toBe("statement");
     expect(f.observado_em).toBe("2026-06-20");
     expect(f.source_type).toBe("caregiver_report");
     expect(f.source_channel).toBe("whatsapp");
@@ -139,7 +139,7 @@ describe("Neuro Copa — cenário 3: sugestão da Ayla", () => {
 
     expect(linhas[0].verification_status).toBe("inferred");
     expect(linhas[0].source_type).toBe("ai_inference");
-    expect(linhas[0].fact_kind).toBe("observation");
+    expect(linhas[0].fact_kind).toBe("statement");
   });
 });
 

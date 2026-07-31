@@ -129,7 +129,7 @@ export async function registrarFatoPerfil(
     dominio: candidato.dominio.trim(),
     afirmacao,
     contexto: candidato.contexto ?? null,
-    fact_kind: candidato.factKind ?? "observation",
+    fact_kind: candidato.factKind ?? "statement",
     observado_em: observadoEm,
     observado_em_preciso: candidato.observadoEmPreciso ?? false,
     escopo_tipo: candidato.escopo?.tipo ?? "sempre",

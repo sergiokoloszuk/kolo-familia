@@ -3,8 +3,9 @@ import { hojeLocalISO } from "@/lib/idade";
 import { MEMBRO_CAMPOS_TOPLEVEL, membroCampoStorage } from "./campos";
 // FACT STORE (0073) - escrita sombra, atras de flag. Ponto tecnico unico.
 import { registrarFatosPerfil } from "./fatos/registrar";
+import { escopoAtivoDaFamilia } from "./fatos/escopo-ativo";
 import { candidatoDeItemKoloVivo } from "./fatos/adaptador";
-import type { Escopo, Proveniencia } from "./fatos/tipos";
+import type { Escopo, Proveniencia, VerificationStatus } from "./fatos/tipos";
 import {
   subcamposDe,
   parsearSubcampos,
@@ -32,8 +33,15 @@ import {
 /** O que o chamador sabe sobre a origem desta incorporacao. */
 export type OrigemFatos = {
   proveniencia: Proveniencia;
+  /** Sobrepoe o resolvedor de escopo. Use so quando o chamador sabe mais. */
   escopo?: Escopo;
   observadoEm?: string | null;
+  /**
+   * Quanto sabemos. O default do servico e `reported` - correto quando a
+   * familia digitou e confirmou (clique em "Guardar no Perfil"), errado quando
+   * a IA recortou a frase sozinha (aI cabe `uncertain`).
+   */
+  verificationStatus?: VerificationStatus;
 };
 
 export type ItemProposta = {
@@ -239,6 +247,11 @@ async function gravarFatosSombra(
 ): Promise<void> {
   if (!args.origem || args.itens.length === 0) return;
   try {
+    // O escopo vem do resolvedor unico, nao do chamador: se cada caminho
+    // decidisse o proprio, voltariamos a ter quatro regras divergentes. O
+    // chamador so pode SOBREPOR quando sabe algo que o resolvedor nao sabe.
+    const escopo =
+      args.origem.escopo ?? (await escopoAtivoDaFamilia(supabase, args.familyId));
     await registrarFatosPerfil(
       supabase,
       args.itens.map((it) =>
@@ -249,8 +262,9 @@ async function gravarFatosSombra(
           subcampo: it.subcampo ?? null,
           texto: it.texto,
           proveniencia: args.origem!.proveniencia,
-          escopo: args.origem!.escopo,
+          escopo,
           observadoEm: args.origem!.observadoEm,
+          verificationStatus: args.origem!.verificationStatus,
         }),
       ),
     );

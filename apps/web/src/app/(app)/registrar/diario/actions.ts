@@ -236,13 +236,25 @@ export async function salvarKoloVivoDoDiario(
 ): Promise<{ ok: true; count: number } | { ok: false; error: string }> {
   try {
     const { membroAtipicoId, koloVivo } = salvarKvSchema.parse(input);
-    const { supabase, family } = await requireFamily();
+    const { supabase, user, family } = await requireFamily();
     await requireActiveWrite(family.id);
     const count = await aplicarItensNoMembro(
       supabase,
       family.id,
       membroAtipicoId,
       koloVivo as ItemKoloVivo[],
+      // A pessoa DIGITOU isto na tela do diario: entrada manual, autor
+      // autenticado, e o clique em salvar e uma confirmacao explicita - por
+      // isso `confirmed`, e nao `reported`. Sem messageId: o diario nao tem
+      // mensagem, e inventar um ID artificial quebraria a auditoria.
+      {
+        proveniencia: {
+          sourceType: "manual_entry",
+          channel: "diario",
+          actorId: user.id,
+        },
+        verificationStatus: "confirmed",
+      },
     );
     revalidatePath("/kolo-vivo");
     revalidatePath("/painel");
