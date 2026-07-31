@@ -202,6 +202,26 @@ create policy perfil_fatos_familia on public.perfil_fatos
   for select to authenticated
   using (family_account_id = public.current_family_account_id());
 
+-- INSERT para autenticado. Sem esta policy, DOIS dos quatro caminhos de escrita
+-- falham: o diario e o "Guardar no Perfil" da web usam o cliente do USUARIO
+-- (`createClient()`), nao service role - so o WhatsApp e o aprendizado
+-- automatico usam service role e passam por cima do RLS.
+--
+-- E falharia em SILENCIO: o servico captura o erro, registra
+-- `perfil_fato_falhou` e o turno segue. As metricas mostrariam fatos chegando
+-- pelo WhatsApp e ninguem notaria que metade do acervo nunca entrou.
+--
+-- O `with check` restringe a familia da propria pessoa: o pior caso e alguem
+-- forjar fato sobre o proprio filho, o que corrompe so a memoria dela.
+--
+-- FORMA MELHOR, para quando o fact store passar a ser LIDO (Fase 10): o fato e
+-- derivacao do sistema, nao autoria do usuario - a escrita deveria ser sempre
+-- por service role, e esta policy deveria sumir. Fica registrado como decisao
+-- consciente, nao como esquecimento.
+create policy perfil_fatos_insert_familia on public.perfil_fatos
+  for insert to authenticated
+  with check (family_account_id = public.current_family_account_id());
+
 create policy perfil_fatos_admin on public.perfil_fatos
   for all to authenticated
   using (public.is_admin())
