@@ -2,6 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { idadeAnos } from "@/lib/idade";
 import { extrairAtualizacoes } from "./atualizar";
 import { aplicarPropostaNoPerfil, registrarDiarioAutomatico } from "@/lib/kolo-vivo/aplicar";
+import { idDeEvidencia } from "@/lib/kolo-vivo/fatos/evidencia";
 import { extrairESalvarEventos } from "@/lib/ayla/eventos";
 import { carregarSecoesMembro, resumoRotulado } from "@/lib/kolo-vivo/leitura";
 
@@ -45,6 +46,9 @@ export async function aprenderDaConversa(
   },
 ): Promise<ResultadoAprendizado> {
   const { familyId, conversaId, membroId, ultimaMensagemUsuario } = params;
+  // UM run por execucao do extrator, compartilhado por todos os fatos que ela
+  // produzir - nao um por fato.
+  const runId = crypto.randomUUID();
 
   if ((ultimaMensagemUsuario ?? "").trim().length < MIN_CARACTERES_PRA_APRENDER) {
     return { rodou: false, motivo: "fala curta" };
@@ -106,6 +110,13 @@ export async function aprenderDaConversa(
         // familia nao e confirmacao. Sem isto, extracao automatica ficava
         // gravada como se a mae tivesse afirmado - defeito achado na Fase 2.
         verificationStatus: "uncertain",
+        // A unidade de evidencia aqui e a CONVERSA, nao uma mensagem: o
+        // extrator recebe o transcript inteiro. Fingir que uma mensagem
+        // isolada originou o fato seria falso.
+        linhagem: {
+          sourceContentId: idDeEvidencia("web_conversation", conversaId),
+          extractionRunId: runId,
+        },
       },
     });
 

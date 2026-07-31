@@ -5,7 +5,7 @@ import { MEMBRO_CAMPOS_TOPLEVEL, membroCampoStorage } from "./campos";
 import { registrarFatosPerfil } from "./fatos/registrar";
 import { escopoAtivoDaFamilia } from "./fatos/escopo-ativo";
 import { candidatoDeItemKoloVivo } from "./fatos/adaptador";
-import type { Escopo, Proveniencia, VerificationStatus } from "./fatos/tipos";
+import type { Escopo, Linhagem, Proveniencia, VerificationStatus } from "./fatos/tipos";
 import {
   subcamposDe,
   parsearSubcampos,
@@ -42,6 +42,12 @@ export type OrigemFatos = {
    * a IA recortou a frase sozinha (aI cabe `uncertain`).
    */
   verificationStatus?: VerificationStatus;
+  /**
+   * Evidencia original + execucao. `sourceContentId` identifica O QUE foi lido
+   * (estavel entre reprocessamentos); `extractionRunId`, QUANDO foi lido (muda
+   * a cada passada, compartilhado por todos os fatos da mesma).
+   */
+  linhagem?: Linhagem;
 };
 
 export type ItemProposta = {
@@ -265,6 +271,9 @@ async function gravarFatosSombra(
           escopo,
           observadoEm: args.origem!.observadoEm,
           verificationStatus: args.origem!.verificationStatus,
+          // A MESMA linhagem para todos os fatos do lote: veio da mesma
+          // evidencia, na mesma execucao.
+          linhagem: args.origem!.linhagem,
         }),
       ),
     );

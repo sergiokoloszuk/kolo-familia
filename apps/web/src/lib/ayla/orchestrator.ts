@@ -22,9 +22,9 @@ import { gerarRespostaAyla, type RespostaParams } from "./responder";
 import { randomUUID } from "node:crypto";
 import { logEvent } from "@/lib/log";
 // Fact store (0073) - escrita sombra.
-import { registrarFatosPerfil } from "@/lib/kolo-vivo/fatos/registrar";
-import { candidatoDeItemKoloVivo } from "@/lib/kolo-vivo/fatos/adaptador";
-import { escopoAtivoDaFamilia } from "@/lib/kolo-vivo/fatos/escopo-ativo";
+// A escrita do WhatsApp no perfil mora em lib/kolo-vivo: e la que ela pode
+// ser testada contra Postgres. Aqui so a chamada.
+import { aplicarSugestaoNoMembro } from "@/lib/kolo-vivo/aplicar-whatsapp";
 import { montarEntrega } from "./entrega/montagem";
 import { publicarOperacional } from "./entrega/ferramenta";
 import { notificarAdminBruto } from "@/lib/admin/notificacoes";
@@ -2082,91 +2082,6 @@ async function processarComando(
  * Usado tanto pela auto-incorporação (persistirRegistro) quanto pelo
  * fluxo legado "sim" no WhatsApp (confirmarSugestaoPendente).
  */
-async function aplicarSugestaoNoMembro(
-  supabase: SupabaseClient,
-  familyId: string,
-  membroId: string,
-  campo: string,
-  texto: string,
-  operacao: "adicionar" | "reescrever" = "adicionar",
-  /**
-   * Origem para a escrita sombra no fact store (0073). Ausente = nao grava.
-   * `subcampo` da a GRANULARIDADE: sem ele o conceito fica igual ao dominio
-   * ("sensorial" em vez de "sensorial.barulho"), e a recorrencia futura mediria
-   * "quantas vezes falamos de sensorial" - inutil para maturacao. Foi o defeito
-   * encontrado na Fase 2.
-   */
-  origemFato?: { messageId?: string | null; subcampo?: string | null },
-): Promise<boolean> {
-  const storage = membroCampoStorage(campo);
-  if (storage === null) return false;
-
-  const { data: atual } = await supabase
-    .from("perfil_vivo_membro")
-    .select(
-      "essencial, como_e, corpo_rotina, desafios_regulacao, sensorial, categorias_extras",
-    )
-    .eq("membro_atipico_id", membroId)
-    .maybeSingle();
-
-  const now = new Date().toISOString();
-  let patch: Record<string, unknown>;
-  if (storage === "toplevel") {
-    const secaoAtual = (atual as Record<string, SecaoJson> | null)?.[campo] ?? {};
-    const novoTexto =
-      operacao === "reescrever"
-        ? texto.trim()
-        : appendFato(secaoAtual?.texto ?? "", texto);
-    patch = { [campo]: { ...secaoAtual, texto: novoTexto, atualizado_em: now } };
-  } else {
-    const extras = {
-      ...((atual?.categorias_extras as Record<string, unknown>) ?? {}),
-    };
-    const secaoAtual = (extras[campo] as SecaoJson) ?? {};
-    const novoTexto =
-      operacao === "reescrever"
-        ? texto.trim()
-        : appendFato(secaoAtual?.texto ?? "", texto);
-    extras[campo] = { ...secaoAtual, texto: novoTexto, atualizado_em: now };
-    patch = { categorias_extras: extras };
-  }
-
-  const { error } = await supabase.from("perfil_vivo_membro").upsert(
-    {
-      membro_atipico_id: membroId,
-      family_account_id: familyId,
-      ...patch,
-    },
-    { onConflict: "membro_atipico_id" },
-  );
-
-  // ESCRITA SOMBRA (0073) - depois do upsert do perfil atual. Mesmo servico
-  // usado pela web; a logica nova existe num lugar so.
-  if (!error && origemFato) {
-    try {
-      await registrarFatosPerfil(supabase, [
-        candidatoDeItemKoloVivo({
-          familyId,
-          membroId,
-          campo,
-          subcampo: origemFato.subcampo ?? null,
-          texto,
-          proveniencia: {
-            sourceType: "caregiver_report",
-            channel: "whatsapp",
-            messageId: origemFato.messageId ?? null,
-          },
-          escopo: await escopoAtivoDaFamilia(supabase, familyId),
-        }),
-      ]);
-    } catch {
-      // Nunca quebra o turno; o servico ja registra cada falha.
-    }
-  }
-
-  return !error;
-}
-
 /** Lê o texto atual de uma seção, considerando toplevel vs categorias_extras. */
 function lerTextoAtualDaSecao(
   row: Record<string, unknown> | null | undefined,
@@ -2197,6 +2112,8 @@ async function persistirRegistro(
   /** A inbound que originou este registro - proveniencia do fact store (0073). */
   sourceMessageId?: string | null,
 ): Promise<void> {
+  // UM run por turno: todos os fatos deste processamento compartilham.
+  const extractionRunId = randomUUID();
   if (!p.membro_atipico_id) return;
 
   // Tentar algo novo já é conquista: se a mãe contou um experimento e não
@@ -2397,7 +2314,7 @@ async function persistirRegistro(
             campo,
             novoTexto,
             "reescrever",
-            { messageId: sourceMessageId, subcampo: r.campoSub },
+            { messageId: sourceMessageId, subcampo: r.campoSub, extractionRunId },
           );
           operacaoLog = "reescrever";
           textoAplicado = novoTexto;
@@ -2417,7 +2334,7 @@ async function persistirRegistro(
             campo,
             decisao.texto,
             decisao.operacao,
-            { messageId: sourceMessageId },
+            { messageId: sourceMessageId, extractionRunId },
           );
           textoAplicado = decisao.texto;
           textoParaConflito = decisao.texto;

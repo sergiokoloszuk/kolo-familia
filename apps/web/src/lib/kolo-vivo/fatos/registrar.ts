@@ -2,6 +2,8 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { createHash } from "node:crypto";
 import { logEvent } from "@/lib/log";
 import { hojeLocalISO } from "@/lib/idade";
+import { extrairTempoOriginal, normalizarDataCivil } from "./data-civil";
+import { marcarDominiosSensiveis } from "./dominio-sensivel";
 import {
   afirmacaoTemConteudo,
   classificarSujeito,
@@ -144,7 +146,12 @@ export async function registrarFatoPerfil(
     return { status: "rejeitado", motivo: "sem_conceito" };
   }
 
-  const observadoEm = candidato.observadoEm ?? hojeLocalISO();
+  // DATA CIVIL, normalizada aqui e nao pelo Postgres. Um ISO com hora seria
+  // truncado em silencio pelo banco; aqui o truncamento e consciente e fica no
+  // log. Data invalida cai para hoje em vez de derrubar o fato.
+  const norm = normalizarDataCivil(candidato.observadoEm ?? hojeLocalISO());
+  const observadoEm = norm.ok ? norm.data : hojeLocalISO();
+  const truncouData = norm.ok && norm.truncou;
   const chave = chaveIdempotencia(candidato, observadoEm);
 
   // Inferência da IA nunca entra como relato. Se a proveniência diz
@@ -165,6 +172,11 @@ export async function registrarFatoPerfil(
     fact_kind: candidato.factKind ?? "statement",
     observado_em: observadoEm,
     observado_em_preciso: candidato.observadoEmPreciso ?? false,
+    // A expressao como a familia disse. Perdida na captura, nao volta.
+    tempo_original: candidato.tempoOriginal ?? extrairTempoOriginal(afirmacao),
+    // Marcador minimo de governanca. Nao decide nada hoje - so preserva a
+    // possibilidade de identificar estes fatos depois.
+    dominios_sensiveis: marcarDominiosSensiveis(afirmacao, candidato.dominio),
     escopo_tipo: candidato.escopo?.tipo ?? "sempre",
     escopo_id: candidato.escopo?.id ?? null,
     source_type: candidato.proveniencia.sourceType,
@@ -222,6 +234,11 @@ export async function registrarFatoPerfil(
       escopo_tipo: linha.escopo_tipo,
       // Sinal de qualidade da proveniência: quanto disso está entrando cego.
       sem_proveniencia: !linha.source_message_id && !linha.source_actor_label,
+      // Correlacao para auditoria, sem conteudo.
+      source_content_id: linha.source_content_id,
+      extraction_run_id: linha.extraction_run_id,
+      data_truncada: truncouData,
+      sensiveis: linha.dominios_sensiveis,
     });
     return { status: "gravado", id: data[0].id as string };
   } catch (e) {

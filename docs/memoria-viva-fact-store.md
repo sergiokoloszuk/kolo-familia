@@ -106,3 +106,47 @@ Nada grava `trait` nem `pattern`: generalizar exige recorrência, e recorrência
 Cada evento leva membro, conceito, domínio, canal, tipo de fonte e
 `sem_proveniencia`. **Nunca a afirmação** — é conteúdo clínico sobre uma
 criança.
+
+## Quatro identidades, que se confundem com facilidade
+
+| Campo | O que identifica | Muda quando |
+| --- | --- | --- |
+| `source_content_id` | a **evidência** — o conteúdo que o extrator leu | nunca, para a mesma evidência |
+| `extraction_run_id` | a **execução** do extrator | a cada passada; compartilhado pelos fatos da mesma |
+| `source_message_id` | a **mensagem**, quando o canal tem uma | por mensagem; o diário não tem, e inventar seria mentir |
+| `idempotency_key` | o **fato** | distingue reprocessamento de repetição legítima |
+
+**Unidade de evidência por canal** — fingir que é sempre "uma mensagem" seria falso:
+
+| Canal | `source_content_id` | Unidade real |
+| --- | --- | --- |
+| web manual | `web_conversation:<id>` | a conversa; o botão age sobre ela |
+| web automático | `web_conversation:<id>` | a conversa inteira — o extrator lê o transcript |
+| WhatsApp | `whatsapp_turn:<msgId>` | o **turno**, que pode agrupar a rajada |
+| diário | *(pendente)* | a entrada do diário |
+
+`resolverEvidenciaOriginal()` devolve o caminho até o conteúdo e a situação da
+origem — `existente`, `apagada`, `inacessivel`, `desconhecida`. Origem que sumiu
+nunca some em silêncio: o fato fica visivelmente irreprocessável.
+
+## Data civil
+
+`observado_em` é **string `YYYY-MM-DD`, nunca `Date`**. Dois defeitos medidos
+contra Postgres justificam a regra: o banco aceita um ISO com hora e trunca em
+silêncio; e ler `date` como `Date` desloca um dia no Brasil
+(`2026-08-10` → `09/08/2026`). `normalizarDataCivil` trunca **conscientemente**,
+com `truncou: true`; `exibirDataCivil` formata sem passar por `Date`.
+
+`tempo_original` guarda a expressão como a família disse ("desde a troca de
+professora"). Não resolve — preserva. Perdida na captura, não volta.
+
+## Domínio sensível
+
+`dominios_sensiveis text[]`, marcado na escrita por `marcarDominiosSensiveis`.
+**Não é o motor de Governança**: não bloqueia, não cita fonte, não muda resposta.
+Marca porque inferir "isto é médico" depois, sobre texto livre acumulado, é o
+pior momento para inferir. Ausência é `[]`, nunca `null` — array vazio diz
+"avaliado e não é sensível".
+
+Domínio funcional ≠ domínio sensível: `dominio = sono` com
+`dominios_sensiveis = [medical]` é um fato de sono que envolve medicação.

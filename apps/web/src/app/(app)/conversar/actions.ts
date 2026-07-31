@@ -15,6 +15,7 @@ import {
   MEMBRO_CAMPOS_EXTRAS,
 } from "@/lib/kolo-vivo/campos";
 import { aplicarPropostaNoPerfil } from "@/lib/kolo-vivo/aplicar";
+import { idDeEvidencia } from "@/lib/kolo-vivo/fatos/evidencia";
 import { idadeAnos, hojeLocalISO } from "@/lib/idade";
 import { requireActiveWrite, SubscriptionBlockedError } from "@/lib/auth/require-active-write";
 import { resolveFamily } from "@/lib/auth/current-family";
@@ -539,6 +540,12 @@ export async function confirmarAtualizacao(
           conversationId: data.conversaId ?? null,
         },
         verificationStatus: "reported",
+        // A evidencia e a CONVERSA: o "Guardar no Perfil" age sobre ela, nao
+        // sobre uma mensagem. Um run por acao.
+        linhagem: {
+          sourceContentId: idDeEvidencia("web_conversation", data.conversaId),
+          extractionRunId: crypto.randomUUID(),
+        },
       },
     });
     if (aplicado.erro) {

@@ -1,4 +1,4 @@
-import type { CandidatoFato, Escopo, Proveniencia, VerificationStatus } from "./tipos";
+import type { CandidatoFato, Escopo, Linhagem, Proveniencia, VerificationStatus } from "./tipos";
 
 /**
  * ADAPTADOR: o que o extrator já produz → candidato a fato.
@@ -49,6 +49,7 @@ export type EntradaAdaptador = {
   contexto?: string | null;
   /** Ausente = default do servico (`reported`, ou `inferred` se a fonte e IA). */
   verificationStatus?: VerificationStatus;
+  linhagem?: Linhagem;
 };
 
 /**
@@ -74,5 +75,6 @@ export function candidatoDeItemKoloVivo(e: EntradaAdaptador): CandidatoFato {
     escopo: e.escopo,
     proveniencia: e.proveniencia,
     verificationStatus: e.verificationStatus,
+    linhagem: e.linhagem,
   };
 }

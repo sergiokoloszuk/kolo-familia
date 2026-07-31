@@ -1,0 +1,127 @@
+import type { SupabaseClient } from "@supabase/supabase-js";
+import { membroCampoStorage } from "./campos";
+import { appendFato } from "./aplicar";
+import { registrarFatosPerfil } from "./fatos/registrar";
+import { candidatoDeItemKoloVivo } from "./fatos/adaptador";
+import { escopoAtivoDaFamilia } from "./fatos/escopo-ativo";
+import { resolverMembro, type FonteDoFoco } from "./fatos/foco-membro";
+import { idDeEvidencia } from "./fatos/evidencia";
+
+type SecaoJson = { texto?: string; atualizado_em?: string } | null;
+
+/**
+ * ESCRITA DO WHATSAPP NO PERFIL — a fronteira real, agora testavel.
+ *
+ * Estava dentro de `ayla/orchestrator.ts`, privada, num modulo de 2.900 linhas
+ * com dezenas de dependencias. Consequencia: o caminho de MAIOR volume da
+ * memoria so podia ser validado por componentes isolados - nunca ponta a ponta.
+ *
+ * O orquestrador continua chamando ESTA funcao. Nao ha segunda implementacao:
+ * o corpo e o mesmo, movido, e o unico ganho e poder executa-lo contra um
+ * Postgres de verdade num teste.
+ *
+ * O risco conhecido que ela carrega: o `membroId` que chega aqui vem de
+ * `ctx.membros[0]` no orquestrador - o PRIMEIRO filho do array, nao um foco.
+ * Por isso `fonteDoFoco` e parametro: quem chama declara de onde tirou o
+ * membro, e `resolverMembro` decide entre persistir, quarentena e rejeitar.
+ */
+export async function aplicarSugestaoNoMembro(
+  supabase: SupabaseClient,
+  familyId: string,
+  membroId: string,
+  campo: string,
+  texto: string,
+  operacao: "adicionar" | "reescrever" = "adicionar",
+  /**
+   * Origem para a escrita sombra no fact store (0073). Ausente = nao grava.
+   * `subcampo` da a GRANULARIDADE: sem ele o conceito fica igual ao dominio
+   * ("sensorial" em vez de "sensorial.barulho"), e a recorrencia futura mediria
+   * "quantas vezes falamos de sensorial" - inutil para maturacao. Foi o defeito
+   * encontrado na Fase 2.
+   */
+  origemFato?: {
+    messageId?: string | null;
+    subcampo?: string | null;
+    /** UM run por processamento do turno, compartilhado pelos fatos dele. */
+    extractionRunId?: string | null;
+  },
+): Promise<boolean> {
+  const storage = membroCampoStorage(campo);
+  if (storage === null) return false;
+
+  const { data: atual } = await supabase
+    .from("perfil_vivo_membro")
+    .select(
+      "essencial, como_e, corpo_rotina, desafios_regulacao, sensorial, categorias_extras",
+    )
+    .eq("membro_atipico_id", membroId)
+    .maybeSingle();
+
+  const now = new Date().toISOString();
+  let patch: Record<string, unknown>;
+  if (storage === "toplevel") {
+    const secaoAtual = (atual as Record<string, SecaoJson> | null)?.[campo] ?? {};
+    const novoTexto =
+      operacao === "reescrever"
+        ? texto.trim()
+        : appendFato(secaoAtual?.texto ?? "", texto);
+    patch = { [campo]: { ...secaoAtual, texto: novoTexto, atualizado_em: now } };
+  } else {
+    const extras = {
+      ...((atual?.categorias_extras as Record<string, unknown>) ?? {}),
+    };
+    const secaoAtual = (extras[campo] as SecaoJson) ?? {};
+    const novoTexto =
+      operacao === "reescrever"
+        ? texto.trim()
+        : appendFato(secaoAtual?.texto ?? "", texto);
+    extras[campo] = { ...secaoAtual, texto: novoTexto, atualizado_em: now };
+    patch = { categorias_extras: extras };
+  }
+
+  const { error } = await supabase.from("perfil_vivo_membro").upsert(
+    {
+      membro_atipico_id: membroId,
+      family_account_id: familyId,
+      ...patch,
+    },
+    { onConflict: "membro_atipico_id" },
+  );
+
+  // ESCRITA SOMBRA (0073) - depois do upsert do perfil atual. Mesmo servico
+  // usado pela web; a logica nova existe num lugar so.
+  if (!error && origemFato) {
+    try {
+      await registrarFatosPerfil(supabase, [
+        candidatoDeItemKoloVivo({
+          familyId,
+          membroId,
+          campo,
+          subcampo: origemFato.subcampo ?? null,
+          texto,
+          proveniencia: {
+            sourceType: "caregiver_report",
+            channel: "whatsapp",
+            messageId: origemFato.messageId ?? null,
+          },
+          escopo: await escopoAtivoDaFamilia(supabase, familyId),
+          // LINHAGEM. A unidade de evidência do WhatsApp é o TURNO, não a
+          // mensagem: `lote-inbound.ts` agrupa a rajada, e o extrator recebe o
+          // texto consolidado. O id é o da mensagem que levou o turno — dizer
+          // que uma mensagem isolada originou o fato seria falso quando o
+          // turno agrupou três.
+          linhagem: origemFato.messageId
+            ? {
+                sourceContentId: idDeEvidencia("whatsapp_turn", origemFato.messageId),
+                extractionRunId: origemFato.extractionRunId ?? null,
+              }
+            : undefined,
+        }),
+      ]);
+    } catch {
+      // Nunca quebra o turno; o servico ja registra cada falha.
+    }
+  }
+
+  return !error;
+}

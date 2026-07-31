@@ -240,6 +240,7 @@ export async function aplicarItensNoMembro(
             escopo,
             observadoEm: fatos.observadoEm,
             verificationStatus: fatos.verificationStatus,
+            linhagem: fatos.linhagem,
           }),
         ),
       );

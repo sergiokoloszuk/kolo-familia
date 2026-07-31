@@ -109,6 +109,8 @@ export type CandidatoFato = {
   /** Quando foi observado. Ausente = hoje, e `preciso: false`. */
   observadoEm?: string | null;
   observadoEmPreciso?: boolean;
+  /** A expressao temporal como a familia disse. Ausente = extraida do texto. */
+  tempoOriginal?: string | null;
   escopo?: Escopo;
   proveniencia: Proveniencia;
   verificationStatus?: VerificationStatus;

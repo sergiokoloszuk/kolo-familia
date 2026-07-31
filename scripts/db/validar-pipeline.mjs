@@ -107,6 +107,10 @@ const modulos = [
   ["subcampos", "."],
   ["aplicar", "."],
   ["incorporar", "."],
+  ["aplicar-whatsapp", "."],
+  ["fatos/data-civil", "fatos"],
+  ["fatos/dominio-sensivel", "fatos"],
+  ["fatos/evidencia", "fatos"],
 ];
 for (const [nome] of modulos) {
   const js = ts.transpileModule(readFileSync(join(LIB, `${nome}.ts`), "utf8"), {
@@ -131,6 +135,10 @@ const { aplicarItensNoMembro } = await carregar("incorporar");
 const { registrarFatoPerfil } = await carregar("fatos/registrar");
 const { candidatoDeItemKoloVivo } = await carregar("fatos/adaptador");
 const { resolverMembro } = await carregar("fatos/foco-membro");
+const { aplicarSugestaoNoMembro } = await carregar("aplicar-whatsapp");
+const { resolverEvidenciaOriginal } = await carregar("fatos/evidencia");
+const { normalizarDataCivil, exibirDataCivil } = await carregar("fatos/data-civil");
+const { marcarDominiosSensiveis } = await carregar("fatos/dominio-sensivel");
 const log = await import(pathToFileURL(join(dir, "_log.mjs")).href);
 console.log("  carregados: aplicar, incorporar, registrar, adaptador, foco-membro");
 
