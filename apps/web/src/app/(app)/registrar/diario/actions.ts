@@ -3,6 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { after } from "next/server";
 import { z } from "zod";
+import { idDeEvidencia } from "@/lib/kolo-vivo/fatos/evidencia";
+import { hojeLocalISO } from "@/lib/idade";
 import { createClient } from "@/lib/supabase/server";
 import { requireActiveWrite } from "@/lib/auth/require-active-write";
 import { trackFeature } from "@/lib/analytics/track";
@@ -218,6 +220,11 @@ export async function proporKoloVivoDoDiario(
 
 const salvarKvSchema = z.object({
   membroAtipicoId: z.string().uuid(),
+  /** A entrada do diario que originou a proposta. Opcional: quando ausente,
+   *  a acao localiza a entrada do dia (ver `evidenciaDoDiario`). */
+  diarioId: z.string().uuid().optional(),
+  /** Data do registro, para localizar a entrada certa quando nao for hoje. */
+  data: z.string().date().optional(),
   koloVivo: z
     .array(
       z.object({
@@ -231,13 +238,60 @@ const salvarKvSchema = z.object({
     .min(1),
 });
 
+/**
+ * Encontra a entrada do diario que originou estes fatos.
+ *
+ * O caminho ideal seria a UI passar o id, mas `registrarDia` devolve `void` e
+ * mudar isso arrastaria dois componentes. Esta consulta e EXATAMENTE a mesma
+ * que `registrarDia` usa para deduplicar - entao ela identifica a mesma linha,
+ * nao uma aproximacao. Se um dia a UI passar `diarioId`, ele tem precedencia.
+ *
+ * Sem entrada localizada, devolve null: o fato fica sem evidencia e isso
+ * aparece na auditoria, em vez de virar um id inventado.
+ */
+async function evidenciaDoDiario(
+  supabase: Awaited<ReturnType<typeof requireFamily>>["supabase"],
+  familyId: string,
+  membroAtipicoId: string,
+  diarioId: string | undefined,
+  data: string | undefined,
+): Promise<string | null> {
+  if (diarioId) return idDeEvidencia("diario_entry", diarioId);
+  try {
+    const { data: linha } = await supabase
+      .from("diarios")
+      .select("id")
+      .eq("family_account_id", familyId)
+      .eq("membro_atipico_id", membroAtipicoId)
+      .eq("data", data ?? hojeLocalISO())
+      .eq("origem", "app")
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    return linha?.id ? idDeEvidencia("diario_entry", linha.id as string) : null;
+  } catch {
+    return null;
+  }
+}
+
 export async function salvarKoloVivoDoDiario(
   input: z.infer<typeof salvarKvSchema>,
 ): Promise<{ ok: true; count: number } | { ok: false; error: string }> {
   try {
-    const { membroAtipicoId, koloVivo } = salvarKvSchema.parse(input);
+    const { membroAtipicoId, koloVivo, diarioId, data } = salvarKvSchema.parse(input);
     const { supabase, user, family } = await requireFamily();
     await requireActiveWrite(family.id);
+
+    // TODOS os fatos desta proposta compartilham a mesma evidencia (a entrada
+    // do diario) e a mesma execucao - vieram da mesma leitura.
+    const sourceContentId = await evidenciaDoDiario(
+      supabase,
+      family.id,
+      membroAtipicoId,
+      diarioId,
+      data,
+    );
+    const extractionRunId = crypto.randomUUID();
     const count = await aplicarItensNoMembro(
       supabase,
       family.id,
@@ -254,6 +308,7 @@ export async function salvarKoloVivoDoDiario(
           actorId: user.id,
         },
         verificationStatus: "reported",
+        linhagem: { sourceContentId, extractionRunId },
       },
     );
     revalidatePath("/kolo-vivo");

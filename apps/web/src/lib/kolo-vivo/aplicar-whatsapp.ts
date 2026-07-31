@@ -44,6 +44,12 @@ export async function aplicarSugestaoNoMembro(
     subcampo?: string | null;
     /** UM run por processamento do turno, compartilhado pelos fatos dele. */
     extractionRunId?: string | null;
+    /**
+     * De onde o chamador tirou o `membroId`. O padrao e `primeiro_da_familia`
+     * porque e a VERDADE sobre o orquestrador hoje: ele usa `ctx.membros[0]`.
+     * Um padrao otimista aqui mentiria para `resolverMembro`.
+     */
+    fonteDoFoco?: FonteDoFoco;
   },
 ): Promise<boolean> {
   const storage = membroCampoStorage(campo);
@@ -92,6 +98,25 @@ export async function aplicarSugestaoNoMembro(
   // usado pela web; a logica nova existe num lugar so.
   if (!error && origemFato) {
     try {
+      // RESOLUCAO DE FOCO. Sem isto o WhatsApp gravava direto no `membroId`
+      // que recebeu - e ele vem de `ctx.membros[0]`, o primeiro filho do
+      // array. Numa familia com dois filhos, tudo ia para quem estivesse em
+      // primeiro, ativo e em silencio. O teste ponta a ponta expos: os
+      // cenarios 5, 6 e 7 gravavam ATIVO no Pedro.
+      const { data: irmaos } = await supabase
+        .from("membros_atipicos")
+        .select("id, nome")
+        .eq("family_account_id", familyId);
+      const foco = resolverMembro({
+        membroId,
+        fonte: origemFato.fonteDoFoco ?? "primeiro_da_familia",
+        texto,
+        nomesDaFamilia: (irmaos ?? []).map((m) => ({
+          id: m.id as string,
+          nome: (m.nome as string) ?? "",
+        })),
+      });
+
       await registrarFatosPerfil(supabase, [
         candidatoDeItemKoloVivo({
           familyId,
@@ -117,7 +142,7 @@ export async function aplicarSugestaoNoMembro(
               }
             : undefined,
         }),
-      ]);
+      ].map((c) => ({ ...c, foco })));
     } catch {
       // Nunca quebra o turno; o servico ja registra cada falha.
     }
