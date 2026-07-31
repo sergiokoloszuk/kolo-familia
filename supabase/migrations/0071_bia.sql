@@ -130,14 +130,22 @@ create table if not exists public.bia_chunks (
   texto_original text not null,
   -- Full-text em português. Sem extensão, sem dependência: só o dicionário
   -- padrão do Postgres. É o índice que um retriever futuro usaria primeiro.
+  -- ⚠️ NAO usar `array_to_string` aqui. Ela e polimorfica sobre `anyarray` e
+  -- NAO e imutavel, entao o Postgres recusa a coluna gerada inteira com
+  -- "generation expression is not immutable" - a migracao falharia na
+  -- aplicacao, dentro da janela de producao. Descoberto rodando o SQL contra
+  -- um Postgres de verdade; nenhuma revisao estatica tinha pego.
+  --
+  -- As arrays continuam pesquisaveis pelos proprios indices GIN
+  -- (`bia_chunks_situacoes_idx`, `bia_chunks_habilidades_idx`), e a pontuacao
+  -- ja le `situacoes_relacionadas` direto - entao tira-las daqui nao perde
+  -- recuperacao. O cast `::regconfig` fica por clareza.
   texto_busca tsvector generated always as (
     to_tsvector(
-      'portuguese',
+      'portuguese'::regconfig,
       coalesce(titulo, '') || ' ' ||
       coalesce(secao, '') || ' ' ||
       coalesce(subnucleo, '') || ' ' ||
-      coalesce(array_to_string(situacoes_relacionadas, ' '), '') || ' ' ||
-      coalesce(array_to_string(habilidades_relacionadas, ' '), '') || ' ' ||
       texto_original
     )
   ) stored,
