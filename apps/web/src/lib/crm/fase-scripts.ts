@@ -1,16 +1,30 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { FaseTrial } from "@/lib/analytics/jornada";
+import { classificarFase, FASE_INFO, FASE_ORDEM } from "@/lib/analytics/fases";
 
 const MS_DIA = 86_400_000;
 const NAO_USO = new Set(["tela_visitada", "checkout_iniciado", "form_submit"]);
 
 /** Fase de UM lead (mesma lógica do funil/jornada). Pra mostrar a sugestão da fase. */
 export async function faseDoLead(admin: SupabaseClient, familyId: string): Promise<FaseTrial> {
-  const [{ data: fam }, { data: sub }, { data: events }] = await Promise.all([
-    admin.from("family_accounts").select("created_at, onboarding_completed").eq("id", familyId).maybeSingle(),
-    admin.from("subscription_accesses").select("status, trial_ends_at").eq("family_account_id", familyId).maybeSingle(),
-    admin.from("user_events").select("evento, created_at").eq("family_account_id", familyId),
-  ]);
+  const [{ data: fam }, { data: sub }, { data: events }, { data: planos }, { data: aylaInbound }] =
+    await Promise.all([
+      admin.from("family_accounts").select("created_at, onboarding_completed").eq("id", familyId).maybeSingle(),
+      admin.from("subscription_accesses").select("status, trial_ends_at").eq("family_account_id", familyId).maybeSingle(),
+      admin.from("user_events").select("evento, created_at").eq("family_account_id", familyId),
+      // Os MESMOS sinais do funil. Sem eles, `classificarFase` receberia false
+      // e a divergência voltaria por falta de dado — ainda mais difícil de ver
+      // do que por régua diferente.
+      admin.from("planos").select("id").eq("family_account_id", familyId).limit(1),
+      admin
+        .from("ayla_messages")
+        .select("id")
+        .eq("family_account_id", familyId)
+        .eq("direcao", "inbound")
+        .limit(1),
+    ]);
+  const temPlano = (planos?.length ?? 0) > 0;
+  const falouComAyla = (aylaInbound?.length ?? 0) > 0;
   let total = 0;
   let usos = 0;
   let ultima = 0;
@@ -26,45 +40,34 @@ export async function faseDoLead(admin: SupabaseClient, familyId: string): Promi
   const status = (sub?.status as string | null) ?? null;
   const trialEnds = sub?.trial_ends_at ? new Date(sub.trial_ends_at as string).getTime() : null;
   const trialVencido = status === "trialing" && trialEnds != null && trialEnds <= agora;
-  const temAtividade = total > 0;
-  const ativadoBool = !!fam?.onboarding_completed && usos >= 1;
-  const engajadoBool = usos >= 2;
-  const inativo = temAtividade && ultima > 0 && agora - ultima > MS_DIA;
-  if (status === "active") return "convertido";
-  if (trialVencido || status === "canceled" || status === "paused") return "expirado";
-  if (status === "trialing") {
-    if (diaTrial >= 6 && usos >= 1) return "oportunidade";
-    if (inativo && usos >= 1) return "em_risco";
-    if (engajadoBool) return "engajado";
-    if (ativadoBool) return "ativado";
-    if (temAtividade) return "ativou_teste";
-    return "cadastrou";
-  }
-  return "cadastrou";
+  // COLETAR é daqui; DECIDIR é de analytics/fases. Esta função tinha uma
+  // cópia da régua que exigia uso no APP e ignorava plano e conversa com a
+  // Ayla — o mesmo lead aparecia ativado no funil e não aparecia aqui.
+  return classificarFase({
+    concluiuOnboarding: !!fam?.onboarding_completed,
+    usosUltimos90d: usos,
+    temAtividade: total > 0,
+    temPlano,
+    falouComAyla,
+    horasSemAtividade: ultima > 0 ? (agora - ultima) / 3600_000 : null,
+    statusAssinatura: status,
+    trialVencido,
+    diaDoTrial: diaTrial,
+  });
 }
 
 /** Fases em ORDEM CRESCENTE da jornada — usada nas abas Ayla/Abordar/Config. */
-export const FASE_ORDER = [
-  "cadastrou",
-  "ativou_teste",
-  "ativado",
-  "engajado",
-  "oportunidade",
-  "em_risco",
-  "expirado",
-  "convertido",
-] as const;
+export const FASE_ORDER = FASE_ORDEM;
 
-export const FASE_LABEL: Record<string, string> = {
-  cadastrou: "Cadastrou",
-  ativou_teste: "Ativou o teste",
-  ativado: "Ativado",
-  engajado: "Engajado",
-  oportunidade: "Oportunidade",
-  em_risco: "Em risco",
-  expirado: "Expirou sem assinar",
-  convertido: "Converteu",
-};
+/** Rótulo por fase — vem da régua única; renomear lá renomeia aqui. */
+export const FASE_LABEL: Record<string, string> = Object.fromEntries(
+  FASE_ORDEM.map((f) => [f, FASE_INFO[f].label]),
+);
+
+/** A definição que vai PARA A TELA junto do número. Ver conceito-visivel-no-admin. */
+export const FASE_DEFINICAO: Record<string, string> = Object.fromEntries(
+  FASE_ORDEM.map((f) => [f, FASE_INFO[f].definicao]),
+);
 
 export type FaseScript = { fase: string; label: string; textoAyla: string; textoSugestao: string };
 

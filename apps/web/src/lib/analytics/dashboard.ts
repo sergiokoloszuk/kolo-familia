@@ -26,14 +26,6 @@ export type FamRow = {
   ultima: number; // epoch ms (0 = sem atividade conhecida)
 };
 
-export type LeadTrial = {
-  id: string;
-  diaTrial: number; // 1..7
-  diasRestantes: number | null;
-  origem: string;
-  ativado: boolean;
-};
-
 export type ComportamentoData = {
   totalFamilias: number;
   ativas7: number;
@@ -52,8 +44,6 @@ export type ComportamentoData = {
   topEngajadas: FamRow[];
   risco: FamRow[];
   // Funil de trial (pra agência/analista): ativação e ciclo dos leads em teste.
-  ativacao: { trialTotal: number; ativados: number; taxa: number };
-  leadsTrial: LeadTrial[];
 };
 
 // Domínios do Kolo Vivo (key → label, e onde mora). Espelha kolo-vivo/dominios.
@@ -334,44 +324,6 @@ export async function carregarComportamento(
     if (r) convitePorFam.set(u.family_account_id as string, r);
   }
   const statusPorFam = new Map((subs ?? []).map((s) => [s.family_account_id as string, s]));
-  const leadsTrial: LeadTrial[] = [];
-  let ativadosTrial = 0;
-  for (const fa of familiasRows ?? []) {
-    const id = fa.id as string;
-    const sub = statusPorFam.get(id);
-    if ((sub?.status as string) !== "trialing") continue;
-    const diaTrial = Math.min(
-      7,
-      Math.max(1, Math.floor((agora - new Date(fa.created_at as string).getTime()) / MS_DIA) + 1),
-    );
-    const trialEnds = (sub?.trial_ends_at as string | null) ?? null;
-    const diasRestantes = trialEnds
-      ? Math.ceil((new Date(trialEnds).getTime() - agora) / MS_DIA)
-      : null;
-    const ativado = fam.has(id); // teve qualquer atividade registrada
-    if (ativado) ativadosTrial += 1;
-    const afiliadoId = fa.afiliado_id as string | null;
-    const refCodigo = fa.ref_codigo as string | null;
-    const utmSource = fa.utm_source as string | null;
-    const utmCampaign = fa.utm_campaign as string | null;
-    const origem = afiliadoId
-      ? `Afiliado: ${afiliadoPorId.get(afiliadoId) ?? afiliadoId}`
-      : convitePorFam.get(id)
-        ? `Convite: ${convitePorFam.get(id)}`
-        : utmSource
-          ? `${utmSource}${utmCampaign ? ` · ${utmCampaign}` : ""}`
-          : refCodigo
-            ? `Ref: ${refCodigo}`
-            : "Direto";
-    leadsTrial.push({ id, diaTrial, diasRestantes, origem, ativado });
-  }
-  leadsTrial.sort((a, b) => a.diaTrial - b.diaTrial);
-  const trialTotal = leadsTrial.length;
-  const ativacao = {
-    trialTotal,
-    ativados: ativadosTrial,
-    taxa: trialTotal ? Math.round((ativadosTrial / trialTotal) * 100) : 0,
-  };
 
   return {
     totalFamilias,
@@ -390,7 +342,5 @@ export async function carregarComportamento(
     featureRank,
     topEngajadas,
     risco,
-    ativacao,
-    leadsTrial,
   };
 }

@@ -1,6 +1,14 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { familiasInternas } from "./internos";
 import { emailsPorFamilia } from "./emails";
+import {
+  classificarFase,
+  estaAtivado,
+  estaEngajado,
+  FASE_INFO as FASES,
+  type Fase,
+  type SinaisDaFamilia,
+} from "./fases";
 
 /**
  * "Jornada do Trial" — mapeia cada família numa FASE da jornada de trial
@@ -9,27 +17,11 @@ import { emailsPorFamilia } from "./emails";
  * agregado e anônimo. Serve à aba homônima do dashboard da equipe de tráfego.
  */
 
-export type FaseTrial =
-  | "cadastrou"
-  | "ativou_teste"
-  | "ativado"
-  | "engajado"
-  | "em_risco"
-  | "oportunidade"
-  | "convertido"
-  | "expirado";
+/** Alias histórico. A régua única vive em ./fases — não redeclarar aqui. */
+export type FaseTrial = Fase;
 
-/** Rótulo + explicação de cada fase — mostrados no próprio painel. */
-export const FASE_INFO: Record<FaseTrial, { label: string; desc: string }> = {
-  cadastrou: { label: "Cadastrou", desc: "Criou a conta — ainda sem uso." },
-  ativou_teste: { label: "Ativou o teste", desc: "Entrou no app, mas não gerou nada ainda." },
-  ativado: { label: "Ativado", desc: "Teve o 1º valor: recebeu um plano ou conversou com a Ayla." },
-  engajado: { label: "Engajado", desc: "Usou 2 vezes ou mais — pegou o hábito." },
-  em_risco: { label: "Em risco", desc: "Parou — sem atividade há mais de 24h." },
-  oportunidade: { label: "Oportunidade", desc: "Reta final (dia 6-7), já usou, ainda não assinou." },
-  convertido: { label: "Converteu", desc: "Assinou. 🎉" },
-  expirado: { label: "Expirou sem assinar", desc: "O teste acabou sem virar assinatura." },
-};
+/** Reexporta a regua unica — a definicao de cada fase vive em ./fases. */
+export const FASE_INFO = FASES;
 
 const CANAL_LABEL: Record<string, string> = {
   trafego_pago: "Tráfego pago",
@@ -288,7 +280,7 @@ export type JornadaData = {
   leads: JornadaLead[];
   /** Todas as famílias reais com marcos + fase — pro drill-down por segmento. */
   todasFamilias: FamiliaSegmento[];
-  fases: Record<FaseTrial, { label: string; desc: string }>;
+  fases: Record<FaseTrial, { label: string; definicao: string }>;
 };
 
 export async function carregarJornadaTrial(admin: SupabaseClient): Promise<JornadaData> {
@@ -462,14 +454,23 @@ export async function carregarJornadaTrial(admin: SupabaseClient): Promise<Jorna
     const diaTrial = Math.min(7, Math.max(1, Math.floor((agora - criado) / MS_DIA) + 1));
     const usos = at.usos;
     const temAtividade = at.total > 0;
-    // Ativado = concluiu E teve o 1º momento de valor: uso no app, OU recebeu um
-    // plano, OU conversou com a Ayla (a orientação dela também é ativação).
-    const recebeuValor = usos >= 1 || temPlano.has(f.id) || falouComAyla.has(f.id);
-    const ativadoBool = Boolean(f.onboarding_completed) && recebeuValor;
-    const engajadoBool = usos >= 2 || (temPlano.has(f.id) && falouComAyla.has(f.id));
-    const inativo = temAtividade && at.ultima > 0 && agora - at.ultima > MS_DIA;
     const trialEnds = sub?.trialEnds ? new Date(sub.trialEnds).getTime() : null;
-    const trialVencido = status === "trialing" && trialEnds != null && trialEnds <= agora;
+
+    // COLETAR os sinais é trabalho daqui; DECIDIR a fase é de ./fases.
+    // Era aqui que a régua divergia da do drill-down sem ninguém ter escolhido.
+    const sinais: SinaisDaFamilia = {
+      concluiuOnboarding: Boolean(f.onboarding_completed),
+      usosUltimos90d: usos,
+      temAtividade,
+      temPlano: temPlano.has(f.id),
+      falouComAyla: falouComAyla.has(f.id),
+      horasSemAtividade: at.ultima > 0 ? (agora - at.ultima) / 3600_000 : null,
+      statusAssinatura: status,
+      trialVencido: status === "trialing" && trialEnds != null && trialEnds <= agora,
+      diaDoTrial: diaTrial,
+    };
+    const ativadoBool = estaAtivado(sinais);
+    const engajadoBool = estaEngajado(sinais);
 
     const step = Math.min(7, Math.max(1, f.onboarding_step ?? 1));
     const concluiuOnb = Boolean(f.onboarding_completed) || step >= 7;
@@ -498,18 +499,7 @@ export async function carregarJornadaTrial(admin: SupabaseClient): Promise<Jorna
       }
     }
 
-    // Fase atual (estado único, por prioridade).
-    let fase: FaseTrial;
-    if (status === "active") fase = "convertido";
-    else if (trialVencido || status === "canceled" || status === "paused") fase = "expirado";
-    else if (status === "trialing") {
-      if (diaTrial >= 6 && usos >= 1) fase = "oportunidade";
-      else if (inativo && usos >= 1) fase = "em_risco";
-      else if (engajadoBool) fase = "engajado";
-      else if (ativadoBool) fase = "ativado";
-      else if (temAtividade) fase = "ativou_teste";
-      else fase = "cadastrou";
-    } else fase = "cadastrou";
+    const fase = classificarFase(sinais);
 
     const canal = canalDe(f);
     // Contagens (fases + origem/campanha) só de usuários reais.
@@ -566,7 +556,7 @@ export async function carregarJornadaTrial(admin: SupabaseClient): Promise<Jorna
     }
 
     // Lista TODOS (inclusive interno, marcado) — pra validar/testar sem esconder.
-    if (status === "trialing" && !trialVencido) {
+    if (status === "trialing" && !sinais.trialVencido) {
       leads.push({
         id: f.id,
         nomeMae: nomeLead,
@@ -602,11 +592,11 @@ export async function carregarJornadaTrial(admin: SupabaseClient): Promise<Jorna
     .slice(0, 8);
 
   const funil = [
-    { key: "cadastrou", label: "Cadastrou", desc: FASE_INFO.cadastrou.desc, n: cadastrou },
-    { key: "ativou_teste", label: "Ativou o teste", desc: FASE_INFO.ativou_teste.desc, n: ativouTeste },
-    { key: "ativado", label: "Ativado", desc: FASE_INFO.ativado.desc, n: ativadoN },
-    { key: "engajado", label: "Engajado", desc: FASE_INFO.engajado.desc, n: engajadoN },
-    { key: "convertido", label: "Converteu", desc: FASE_INFO.convertido.desc, n: converteuN },
+    { key: "cadastrou", label: FASE_INFO.cadastrou.label, desc: FASE_INFO.cadastrou.definicao, n: cadastrou },
+    { key: "ativou_teste", label: FASE_INFO.ativou_teste.label, desc: FASE_INFO.ativou_teste.definicao, n: ativouTeste },
+    { key: "ativado", label: FASE_INFO.ativado.label, desc: FASE_INFO.ativado.definicao, n: ativadoN },
+    { key: "engajado", label: FASE_INFO.engajado.label, desc: FASE_INFO.engajado.definicao, n: engajadoN },
+    { key: "convertido", label: FASE_INFO.convertido.label, desc: FASE_INFO.convertido.definicao, n: converteuN },
   ];
 
   const porOrigemArr = ["trafego_pago", "afiliado", "convite", "direto"]
@@ -695,6 +685,8 @@ export async function carregarJornadaAdmin(admin: SupabaseClient): Promise<Jorna
     { data: diarios },
     { data: perfis },
     { data: membros },
+    { data: aylaInboundAdmin },
+    { data: planosAdmin },
   ] = await Promise.all([
     admin
       .from("family_accounts")
@@ -718,7 +710,19 @@ export async function carregarJornadaAdmin(admin: SupabaseClient): Promise<Jorna
       .select("family_account_id, nome, created_at")
       .eq("ativo", true)
       .order("created_at", { ascending: true }),
+    // Os MESMOS sinais do funil. Sem estes dois, `classificarFase` receberia
+    // false e a divergência voltaria — agora por falta de dado em vez de por
+    // régua diferente, que é ainda mais difícil de enxergar.
+    admin.from("ayla_messages").select("family_account_id").eq("direcao", "inbound"),
+    admin.from("planos").select("family_account_id"),
   ]);
+
+  const falouComAyla = new Set(
+    (aylaInboundAdmin ?? []).map((m) => m.family_account_id as string).filter(Boolean),
+  );
+  const temPlano = new Set(
+    (planosAdmin ?? []).map((p) => p.family_account_id as string).filter(Boolean),
+  );
 
   const internas = await familiasInternas(admin);
   const fams = (famsRaw ?? []) as FamAdminRow[];
@@ -805,24 +809,21 @@ export async function carregarJornadaAdmin(admin: SupabaseClient): Promise<Jorna
     const criado = new Date(f.created_at).getTime();
     const diaTrial = Math.min(7, Math.max(1, Math.floor((agora - criado) / MS_DIA) + 1));
     const usos = at.usos;
-    const temAtividade = at.total > 0;
-    const ativadoBool = Boolean(f.onboarding_completed) && usos >= 1;
-    const engajadoBool = usos >= 2;
-    const inativo = temAtividade && at.ultima > 0 && agora - at.ultima > MS_DIA;
     const trialEnds = sub?.trialEnds ? new Date(sub.trialEnds).getTime() : null;
-    const trialVencido = status === "trialing" && trialEnds != null && trialEnds <= agora;
 
-    let fase: FaseTrial;
-    if (status === "active") fase = "convertido";
-    else if (trialVencido || status === "canceled" || status === "paused") fase = "expirado";
-    else if (status === "trialing") {
-      if (diaTrial >= 6 && usos >= 1) fase = "oportunidade";
-      else if (inativo && usos >= 1) fase = "em_risco";
-      else if (engajadoBool) fase = "engajado";
-      else if (ativadoBool) fase = "ativado";
-      else if (temAtividade) fase = "ativou_teste";
-      else fase = "cadastrou";
-    } else fase = "cadastrou";
+    // Mesma régua do funil. Antes esta cópia exigia uso no APP e ignorava
+    // plano e conversa com a Ayla — subestimava justamente o canal principal.
+    const fase = classificarFase({
+      concluiuOnboarding: Boolean(f.onboarding_completed),
+      usosUltimos90d: usos,
+      temAtividade: at.total > 0,
+      temPlano: temPlano.has(f.id),
+      falouComAyla: falouComAyla.has(f.id),
+      horasSemAtividade: at.ultima > 0 ? (agora - at.ultima) / 3600_000 : null,
+      statusAssinatura: status,
+      trialVencido: status === "trialing" && trialEnds != null && trialEnds <= agora,
+      diaDoTrial: diaTrial,
+    });
 
     if (!interno) cont[fase] = (cont[fase] ?? 0) + 1; // contagem só de real
 
@@ -847,7 +848,7 @@ export async function carregarJornadaAdmin(admin: SupabaseClient): Promise<Jorna
 
   const funil: { key: FaseTrial; label: string; desc: string; n: number }[] = (
     ["cadastrou", "ativou_teste", "ativado", "engajado", "em_risco", "oportunidade", "convertido", "expirado"] as FaseTrial[]
-  ).map((k) => ({ key: k, label: FASE_INFO[k].label, desc: FASE_INFO[k].desc, n: cont[k] ?? 0 }));
+  ).map((k) => ({ key: k, label: FASE_INFO[k].label, desc: FASE_INFO[k].definicao, n: cont[k] ?? 0 }));
 
   return { funil, porFase };
 }
