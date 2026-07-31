@@ -406,3 +406,51 @@ Efeito colateral encontrado e corrigido no caminho: a pista de socialização
 casava com `sozinh`, então "me sinto sozinha" — a solidão da MÃE — era roteada
 para o conhecimento de socialização da criança. Agora só conta colada a um verbo
 ("brinca sozinho", "fica sozinho no recreio").
+
+## Classificação por seção: normalização e o que ela não resolveu
+
+Os 298 chunks bloqueados em `revisao_pendente` (27% do acervo) caíram para 54
+(4,8%). A causa era de classificação, não de conteúdo — nenhum texto mudou.
+
+**A normalização estrutural do título** (`tituloParaClassificar`, em
+`scripts/bia/chunker.mjs`) tira do começo do título só o que é editorial:
+numeração simples ou hierárquica, ponto, e os separadores em suas variantes
+Unicode (hífen, travessão, meia-risca, barra horizontal, traço de figura, sinal
+de menos, ponto médio, bala, dois-pontos). Uma etapa só, e não um padrão novo
+por formato — assim um formato editorial inédito não volta a quebrar tudo.
+
+Dois cuidados que definem a fronteira entre editorial e conteúdo:
+
+- numeração **simples** só é removida quando vem seguida de ponto, parêntese ou
+  traço. Sem isso, "5 sinais de alerta" perderia o 5;
+- o título **original** continua inteiro no chunk e é ele que entra no `hash`.
+  A forma normalizada existe só para comparar.
+
+`tipoPorSecao` tenta o título cru **antes** do normalizado. Isso preserva
+padrões que dependem da numeração — "4.2 — 3–5 anos" precisa dela para ser
+reconhecida como subseção de faixa etária — e garante que o que já classificava
+certo continue idêntico.
+
+**O que a normalização resolveu, medido: 2 chunks de 296.** O diagnóstico de que
+os prefixos impediam a inferência valia para uma minoria. A maioria dos títulos
+("6.2 — Neurônios-Espelho", "3.5 — Escola", "Aprendizagem Observacional") não
+casava com regra nenhuma por um motivo diferente: são títulos **expositivos**, e
+nunca houve regra para eles porque não há o que inferir de um substantivo.
+
+**O que resolveu de fato: separar "não sei ler" de "material expositivo".** Para
+um título expositivo, `conceito` não é chute — é o tipo correto. Só que aceitar
+isso em bloco correria o risco de uma seção acionável com título idiossincrático
+virar `conceito` em silêncio. Então quem decide não é o título: é o texto
+(`textoPrescreve`). Se o texto dá ordem ao adulto — imperativo, proibição,
+"deve-se", estrutura SE/ENTÃO — o tipo é mesmo incerto e o chunk continua
+bloqueado. Se só descreve, `conceito` está certo e ele é liberado.
+
+O detector é conservador de propósito: na dúvida, considera que prescreve.
+Segurar um chunk descritivo a mais custa zero; liberar um prescritivo mal
+tipado, não.
+
+Efeito na recuperação: nenhum bloco das 10 consultas da bancada mudou. Os
+chunks liberados passaram a aparecer entre os candidatos (um `conceito` de
+autonomia entra em 7º com score 74), mas `conceito` tem o menor peso de tipo na
+pontuação e divide cota com `estrategia` — então mais acervo disponível não
+virou mais ruído no prompt.

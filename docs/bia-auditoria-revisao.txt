@@ -1,0 +1,122 @@
+# Auditoria — chunks em revisao_pendente
+
+Corpus:      1120
+Pendentes:   54  (4.8%)
+Recuperáveis: 1066
+Boas Práticas carregadas: 368
+
+### Por domínio do Kolo Vivo (um chunk pode servir a mais de um)
+
+  autonomia                13  24.1%
+  socializacao             10  18.5%
+  imitacao                  9  16.7%
+  foco                      9  16.7%
+  aprendizado               6  11.1%
+  escola                    6  11.1%
+  comunicacao               2   3.7%
+  motor                     2   3.7%
+  emocional                 2   3.7%
+  (sem domínio mapeado)     1   1.9%
+
+### Por núcleo da BIA
+
+  autonomia — Autonomia e Atividades da Vida Diária                         13  24.1%
+  socializacao — Socialização e Conexões Sociais                            10  18.5%
+  imitacao — Imitação e Aprendizado por Observação                           9  16.7%
+  foco_executivas — Foco, Atenção e Funções Executivas                       9  16.7%
+  aprendizagem — Aprendizagem e Construção do Conhecimento                   6  11.1%
+  comunicacao — Comunicação                                                  2   3.7%
+  motor — Desenvolvimento Motor e Planejamento do Corpo                      2   3.7%
+  pensamentos_crencas — Pensamentos, sentimentos e crenças (transversal)     2   3.7%
+  fundamentos — Fundamentos de condução                                      1   1.9%
+
+### Por tipo de conhecimento
+
+  conceito             52  96.3%
+  interpretacao         1   1.9%
+  regra_operacional     1   1.9%
+
+### Por motivo da marcação
+
+  gabarito de encomenda não preenchido no documento                                                                2   3.7%
+  seção sem tipo ("1. O Que É Autonomia") e texto prescritivo — classificação ambígua                              2   3.7%
+  seção sem tipo ("22. Crenças Da Própria Criança Ou Adolescente") e texto prescritivo — classificação ambígua     2   3.7%
+  seção sem tipo ("10. Monitoramento E Autocorreção") e texto prescritivo — classificação ambígua                  2   3.7%
+  seção sem tipo ("6. Funcionalidades") e texto prescritivo — classificação ambígua                                1   1.9%
+  seção sem tipo ("1.3 — Relação entre imitação e linguagem") e texto prescritivo — classificação ambígua          1   1.9%
+  seção sem tipo ("3.8 — Irmãos") e texto prescritivo — classificação ambígua                                      1   1.9%
+  seção sem tipo ("3.12 — Consultas") e texto prescritivo — classificação ambígua                                  1   1.9%
+  seção sem tipo ("6.3 — Desenvolvimento da Imitação") e texto prescritivo — classificação ambígua                 1   1.9%
+  seção sem tipo ("6.8 — Aprendizagem Explícita") e texto prescritivo — classificação ambígua                      1   1.9%
+  seção sem tipo ("6.9 — Influência da Motivação") e texto prescritivo — classificação ambígua                     1   1.9%
+  seção sem tipo ("6.10 — Influência do Interesse") e texto prescritivo — classificação ambígua                    1   1.9%
+  seção sem tipo ("7.4 — Usar objetos de alto interesse") e texto prescritivo — classificação ambígua              1   1.9%
+  seção sem tipo ("8.5 — "Ele está me ignorando."") e texto prescritivo — classificação ambígua                    1   1.9%
+  seção sem tipo ("1.2 Construção do Vínculo") e texto prescritivo — classificação ambígua                         1   1.9%
+  seção sem tipo ("1.4 Reciprocidade") e texto prescritivo — classificação ambígua                                 1   1.9%
+  seção sem tipo ("1.5 Interação Social") e texto prescritivo — classificação ambígua                              1   1.9%
+  seção sem tipo ("1.7 Motivação Social") e texto prescritivo — classificação ambígua                              1   1.9%
+  seção sem tipo ("1.12 Flexibilidade Social") e texto prescritivo — classificação ambígua                         1   1.9%
+  seção sem tipo ("1.13 Construção da Identidade") e texto prescritivo — classificação ambígua                     1   1.9%
+  seção sem tipo ("3.1 Escola (sala de aula)") e texto prescritivo — classificação ambígua                         1   1.9%
+  seção sem tipo ("3.2 Recreio") e texto prescritivo — classificação ambígua                                       1   1.9%
+  seção sem tipo ("3.7 Irmãos") e texto prescritivo — classificação ambígua                                        1   1.9%
+  seção sem tipo ("10.1 Conhecimentos que fortalecem a família") e texto prescritivo — classificação ambígua       1   1.9%
+  seção sem tipo ("4. Situações Que Preocupam As Famílias") e texto prescritivo — classificação ambígua            1   1.9%
+  seção sem tipo ("8. Relação Com O Sistema Sensorial") e texto prescritivo — classificação ambígua                1   1.9%
+  seção sem tipo ("3.4 Uso do Banheiro") e texto prescritivo — classificação ambígua                               1   1.9%
+  seção sem tipo ("3.12 Autonomia Financeira") e texto prescritivo — classificação ambígua                         1   1.9%
+  seção sem tipo ("5.2 Iniciação") e texto prescritivo — classificação ambígua                                     1   1.9%
+  seção sem tipo ("5.15 Experiências repetidas de fracasso") e texto prescritivo — classificação ambígua           1   1.9%
+  seção sem tipo ("5.16 Ajuda excessiva") e texto prescritivo — classificação ambígua                              1   1.9%
+  seção sem tipo ("5.18 Falta de oportunidade") e texto prescritivo — classificação ambígua                        1   1.9%
+  seção sem tipo ("5.20 Dor, fadiga ou condição médica") e texto prescritivo — classificação ambígua               1   1.9%
+  seção sem tipo ("9. Dependência Aprendida") e texto prescritivo — classificação ambígua                          1   1.9%
+  seção sem tipo ("18. Segurança Sem Suproteção") e texto prescritivo — classificação ambígua                      1   1.9%
+  seção sem tipo ("2. Como O Cérebro Aprende") e texto prescritivo — classificação ambígua                         1   1.9%
+  seção sem tipo ("4.7 Flexibilidade cognitiva") e texto prescritivo — classificação ambígua                       1   1.9%
+  seção sem tipo ("9. Interesses E Hiperfocos Como Pontes") e texto prescritivo — classificação ambígua            1   1.9%
+  seção sem tipo ("17. Aprendizagem E Movimento") e texto prescritivo — classificação ambígua                      1   1.9%
+  seção sem tipo ("19. Aprendizagem E Emoção") e texto prescritivo — classificação ambígua                         1   1.9%
+  seção sem tipo ("31. Crenças Da Criança E Do Adolescente") e texto prescritivo — classificação ambígua           1   1.9%
+  seção sem tipo ("2.1 Alerta E Estado De Prontidão") e texto prescritivo — classificação ambígua                  1   1.9%
+  seção sem tipo ("2.5 Atenção Alternada") e texto prescritivo — classificação ambígua                             1   1.9%
+  seção sem tipo ("2.7 Atenção Compartilhada") e texto prescritivo — classificação ambígua                         1   1.9%
+  seção sem tipo ("13. Tomada De Decisão") e texto prescritivo — classificação ambígua                             1   1.9%
+  seção sem tipo ("16. FUNÇÕES EXECUTIVAS "QUENTES" E "FRIAS"") e texto prescritivo — classificação ambígua        1   1.9%
+  seção sem tipo ("17. O Papel Da Coregulação") e texto prescritivo — classificação ambígua                        1   1.9%
+  seção sem tipo ("22. TDAH, AUTISMO E OUTROS PERFIS") e texto prescritivo — classificação ambígua                 1   1.9%
+  seção sem tipo ("1. O ciclo funcional") e texto prescritivo — classificação ambígua                              1   1.9%
+  seção sem tipo ("8. Cautelas científicas") e texto prescritivo — classificação ambígua                           1   1.9%
+
+### Destaques
+
+  encaminhamento + sinal_de_alerta      0
+  regra_operacional                     1
+  muda_conduta = true                   0
+  cautela alta/muito alta               2
+
+### Conflitos potenciais com Boas Práticas
+
+  chunks pendentes com tensão detectada: 2
+  temas conhecidos no detector: contato_visual, recompensa, exposicao_forcada
+
+### Por tema
+
+  recompensa         1
+  contato_visual     1
+
+  para comparação, chunks JÁ ATIVOS com a mesma tensão: 48
+
+### Ordem recomendada de revisão
+
+  1. SEGURANÇA E CONFLITO           4 chunks
+     encaminhamento, sinal de alerta, cautela alta, tensão com Boa Prática
+  2. MUDA O QUE A MÃE FAZ           1 chunks
+     muda_conduta = true e regra operacional
+  3. DOMÍNIO COM ACERVO MAGRO      19 chunks
+     (sem domínio mapeado) (0 ativos), emocional (18 ativos), comunicacao (22 ativos), foco (74 ativos), imitacao (85 ativos)
+  4. RESTO                         30 chunks
+
+  Soma: 54 / 54
+

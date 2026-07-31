@@ -174,6 +174,91 @@ const TIPO_POR_SECAO = [
   [/atividades?/i, "atividade"],
 ];
 
+// ============================================================
+// Normalização estrutural do título
+// ============================================================
+
+/**
+ * Numeração HIERÁRQUICA ("6.2", "1.7.3"), com ou sem separador depois.
+ * Hierárquica é sempre editorial: ninguém escreve "6.2" como conteúdo.
+ */
+const NUM_HIERARQUICA = /^\s*\d+(?:\.\d+)+\s*\.?\s*[-–—―‒−·•:]?\s*/u;
+
+/**
+ * Numeração SIMPLES ("3."), e só quando vem seguida de marca editorial — ponto,
+ * parêntese ou traço. Sem essa exigência, "5 sinais de alerta" perderia o 5 e
+ * "2026 em revisão" viraria "em revisão": número que é conteúdo ficaria mutilado.
+ */
+const NUM_SIMPLES = /^\s*\d+\s*(?:[.)]|[-–—―‒−])\s*[-–—―‒−·•:]?\s*/u;
+
+/**
+ * O título sem os elementos editoriais do começo — SÓ PARA CLASSIFICAR.
+ *
+ * O título original continua inteiro no chunk (`secao`) e é ele que entra no
+ * `hash`, então normalizar não move nenhum identificador.
+ *
+ * Existe porque os padrões de `TIPO_POR_SECAO` estão ancorados no começo do
+ * texto e recebiam o título com a numeração colada. "1.7 — Tipos de Imitação"
+ * não casava com a regra de "tipos de" por causa do travessão; "24. Como
+ * descobrir onde a aprendizagem se rompe" não casava com a regra equivalente.
+ * O resultado era tipo nulo → `conceito` com `revisao_pendente`, e 296 dos 298
+ * bloqueados vieram daí.
+ *
+ * A alternativa seria repetir cada padrão com prefixos opcionais. Uma
+ * normalização só é menos código e, principalmente, não precisa ser refeita a
+ * cada formato editorial novo que a Karina usar.
+ *
+ * Cobre hífen (-), travessão (—), meia-risca (–), traço de figura (―), traço
+ * de tabela (‒), sinal de menos (−), ponto médio (·), bala (•) e dois-pontos.
+ */
+export function tituloParaClassificar(secao) {
+  if (!secao) return "";
+  const original = String(secao).replace(/\s+/g, " ").trim();
+
+  let t = original.replace(NUM_HIERARQUICA, "");
+  if (t === original) t = original.replace(NUM_SIMPLES, "");
+  t = t.replace(/\s+/g, " ").trim();
+
+  // Sobrou pouco demais: era numeração e mais nada de útil. Fica o original —
+  // classificar por um resto de duas letras seria pior que não classificar.
+  return t.length >= 3 ? t : original;
+}
+
+/**
+ * O texto PRESCREVE alguma coisa ao adulto?
+ *
+ * Serve para separar o que a normalização do título não resolve. Um título como
+ * "6.2 — Neurônios-Espelho" ou "3.5 — Escola" não casa com nenhuma regra de
+ * `TIPO_POR_SECAO` — não por causa do prefixo, mas porque é um título
+ * EXPOSITIVO, e material expositivo é `conceito` por natureza, não por chute.
+ *
+ * O risco de aceitar isso em bloco seria uma seção acionável com título
+ * idiossincrático virar `conceito` silenciosamente. Então quem decide não é o
+ * título: é o CONTEÚDO. Se o texto dá ordem ao adulto (imperativo, proibição,
+ * "sempre/nunca"), o tipo é de fato incerto e o chunk continua bloqueado para
+ * revisão humana. Se o texto só descreve, `conceito` está correto.
+ *
+ * Deliberadamente conservador: na dúvida, PRESCREVE — o custo de segurar um
+ * chunk descritivo a mais é zero, e o de liberar um prescritivo mal tipado não.
+ */
+function textoPrescreve(texto) {
+  return (
+    // Imperativo dirigido ao adulto, começando frase.
+    /(^|[.!?;:\n]\s*)(fa[çc]a|evite|use|ofere[çc]a|permita|reduza|aumente|mantenha|espere|observe|comece|pare|tente|deixe|coloque|retire|prefira|ajuste|antecipe|avise|valide|nomeie|proponha|convide|separe|combine)\b/i.test(
+      texto,
+    ) ||
+    // Proibição / obrigação explícita.
+    /\b(nunca|jamais|sempre)\s+\w+|\bn[ãa]o\s+(fa[çc]a|force|insista|exija|obrigue|corrija|interrompa|castigue)\b/i.test(
+      texto,
+    ) ||
+    /\b(deve[- ]se|é\s+preciso|é\s+necess[áa]rio|recomenda[- ]se|o\s+adulto\s+(deve|precisa))\b/i.test(
+      texto,
+    ) ||
+    // Estrutura de regra explícita, que já tem tratamento próprio.
+    /\bSE\b[^.]{0,120}\bENT[ÃA]O\b/i.test(texto)
+  );
+}
+
 /**
  * @param secao    o título da seção
  * @param contexto o BLOCO em que ela está (ver `contextoDaLinha`). Necessário
@@ -182,11 +267,19 @@ const TIPO_POR_SECAO = [
  *   "Princípios que Sustentam Tudo", seriam indistinguíveis de qualquer outra
  *   seção numerada.
  */
-function tipoPorSecao(secao, contexto) {
+export function tipoPorSecao(secao, contexto) {
   if (!secao) return null;
   if (contexto === "principios" && /^\d{1,2}\.\s/.test(secao)) return "fundamento";
-  for (const [re, tipo] of TIPO_POR_SECAO) {
-    if (re.test(secao)) return tipo;
+
+  // O título CRU primeiro: alguns padrões dependem da numeração (a subseção que
+  // é só faixa etária, "4.2 — 3–5 anos", vira "3–5 anos" depois de normalizada
+  // e deixaria de casar). Assim, o que já classificava certo continua idêntico,
+  // e a normalização só acrescenta.
+  const normalizado = tituloParaClassificar(secao);
+  for (const candidato of normalizado === secao ? [secao] : [secao, normalizado]) {
+    for (const [re, tipo] of TIPO_POR_SECAO) {
+      if (re.test(candidato)) return tipo;
+    }
   }
   return null;
 }
@@ -515,15 +608,17 @@ export function chunkificar(texto, meta) {
       hash: hashDe(documento, fatia.nucleo, fatia.secao, t),
       // Revisão SÓ quando há sinal concreto de problema:
       //  (a) é gabarito de encomenda vazado, ou
-      //  (b) a seção EXISTE e não foi reconhecida (aí o tipo é chute).
-      // Prosa sem seção nenhuma é a abertura do núcleo — conteúdo normal, não
-      // classificação duvidosa. Marcar isso como revisão inflava o número e
-      // afogava os casos que de fato precisam de olho humano.
-      revisao_pendente: gabarito || Boolean(fatia.secao && !tipo),
+      //  (b) a seção existe, nenhuma regra deu o tipo E o texto PRESCREVE algo
+      //      ao adulto — aí `conceito` seria de fato um chute, sobre material
+      //      acionável, que é o caso em que errar custa caro.
+      // Seção sem regra mas com texto só descritivo NÃO é chute: material
+      // expositivo é `conceito` por natureza. Marcar isso como revisão inflava
+      // o número (296 de 298) e afogava os casos que precisam de olho humano.
+      revisao_pendente: gabarito || Boolean(fatia.secao && !tipo && textoPrescreve(t)),
       revisao_motivo: gabarito
         ? "gabarito de encomenda não preenchido no documento"
-        : fatia.secao && !tipo
-          ? `seção não reconhecida ("${fatia.secao.slice(0, 60)}") — tipo inferido como conceito`
+        : fatia.secao && !tipo && textoPrescreve(t)
+          ? `seção sem tipo ("${fatia.secao.slice(0, 60)}") e texto prescritivo — classificação ambígua`
           : null,
       ...extra,
     });
