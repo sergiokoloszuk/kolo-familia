@@ -209,14 +209,23 @@ async function baixarImagemBase64(
 }
 
 /**
- * Gera a resposta da Ayla. Se `onParagrafo` for passado, faz streaming e
- * dispara cada parágrafo assim que fica pronto (pra mandar no WhatsApp em
- * pedaços — efeito de "digitando", primeira parte chega rápido). Sempre
- * devolve o texto completo no fim (pra persistir uma vez só).
+ * Gera a resposta da Ayla e devolve o TEXTO COMPLETO.
+ *
+ * ⚠️ Não publica nada. Até 31/07/2026 esta função recebia um `onParagrafo` e
+ * mandava cada parágrafo ao WhatsApp assim que fechava — então nunca existia um
+ * instante em que a resposta inteira estivesse em memória, e não havia onde
+ * inspecionar o que ia sair. Foi por aí que vazaram "percebi uma inconsistência
+ * no prompt", "orientação da Karina" e "ela respondeu 1", em conversas reais.
+ *
+ * O streaming continua, mas só INTERNO: serve para montar o buffer e para
+ * acompanhar o tempo. Quem publica é `entrega/publicacao.ts`, depois da
+ * Montagem, da Validação e da reconferência de posse (ADR 0001).
+ *
+ * O ritmo da conversa não muda: o efeito "digitando" nunca veio do streaming —
+ * vem do `delayTyping` por bolha, que a Publicação preserva.
  */
 export async function gerarRespostaAyla(
   params: RespostaParams,
-  onParagrafo?: (texto: string) => Promise<void>,
   tracking?: UsageTracking,
 ): Promise<string> {
   const client = getAylaAnthropicClient();
@@ -466,12 +475,11 @@ Se for uma TAREFA da escola/terapia:
     }
   }
 
-  let enviouAlgo = false;
   try {
-    // Uma retentativa curta antes de desistir. A falha aqui não é rara nem
-    // inofensiva: quando o modelo falha, a mãe recebe o texto fixo do
-    // fallbackSimples ("Que coisa boa de ouvir 🌿") — que apareceu em conversa
-    // real, respondendo a um desabafo. Sobrecarga/rate-limit passa em segundos.
+    // Uma retentativa curta antes de desistir. A falha aqui nao e rara nem
+    // inofensiva: quando o modelo falha, a mae recebe o texto fixo do
+    // fallbackSimples, que ja apareceu em conversa real respondendo a um
+    // desabafo. Sobrecarga/rate-limit passa em segundos.
     const stream = await comRetentativaCurta(() =>
       client.messages.stream({
         model: AYLA_MODEL_FALLBACK,
@@ -481,52 +489,17 @@ Se for uma TAREFA da escola/terapia:
       }),
     );
 
-    if (!onParagrafo) {
-      const final = await stream.finalMessage();
-      if (tracking) {
-        await logarUsoApi(tracking.supabase, {
-          family_account_id: tracking.family_account_id,
-          provider: "anthropic",
-          model: AYLA_MODEL_FALLBACK,
-          feature: tracking.feature,
-          input_tokens: final.usage.input_tokens,
-          output_tokens: final.usage.output_tokens,
-        });
-      }
-      const txt = textoDe(final.content);
-      return txt || fallbackSimples(params);
-    }
-
-    // Streaming: manda cada parágrafo (separado por linha em branco) assim
-    // que ele fecha. A primeira parte chega bem mais rápido.
-    let buffer = "";
+    // Streaming INTERNO: consome os deltas so para montar o buffer. Nada sai
+    // daqui para o WhatsApp (ADR 0001).
     let full = "";
     for await (const event of stream) {
-      if (
-        event.type === "content_block_delta" &&
-        event.delta.type === "text_delta"
-      ) {
-        buffer += event.delta.text;
+      if (event.type === "content_block_delta" && event.delta.type === "text_delta") {
         full += event.delta.text;
-        let idx: number;
-        while ((idx = buffer.indexOf("\n\n")) !== -1) {
-          const par = buffer.slice(0, idx).trim();
-          buffer = buffer.slice(idx + 2);
-          if (par) {
-            await onParagrafo(par);
-            enviouAlgo = true;
-          }
-        }
       }
     }
-    const resto = buffer.trim();
-    if (resto) {
-      await onParagrafo(resto);
-      enviouAlgo = true;
-    }
-    const fullTrim = full.trim();
+
+    const final = await stream.finalMessage();
     if (tracking) {
-      const final = await stream.finalMessage();
       await logarUsoApi(tracking.supabase, {
         family_account_id: tracking.family_account_id,
         provider: "anthropic",
@@ -536,33 +509,20 @@ Se for uma TAREFA da escola/terapia:
         output_tokens: final.usage.output_tokens,
       });
     }
-    if (!enviouAlgo) {
-      const fb = fallbackSimples(params);
-      await onParagrafo(fb);
-      return fb;
-    }
-    return fullTrim;
+
+    return full.trim() || textoDe(final.content) || fallbackSimples(params);
   } catch (e) {
     console.warn("[ayla:responder] falha do modelo:", e instanceof Error ? e.message : e);
-    // PERSISTE. Antes isto era só console.warn — e por isso ninguém sabia que
-    // mães estavam recebendo o texto fixo do fallback no lugar da Ayla. Sai em
-    // eventos_app (severity error) e aparece na Observabilidade.
+    // PERSISTE. Antes isto era so console.warn - e por isso ninguem sabia que
+    // maes estavam recebendo o texto fixo do fallback no lugar da Ayla.
     if (tracking) {
       await logServerError("ayla_responder_falhou", e, {
         family_account_id: tracking.family_account_id,
-        payload: { enviouAlgo, usouFallback: !enviouAlgo },
+        payload: { usouFallback: true },
       }).catch(() => {});
     }
-    const fb = fallbackSimples(params);
-    // Só manda o fallback se ainda não enviou nada (evita resposta partida).
-    if (onParagrafo && !enviouAlgo) {
-      try {
-        await onParagrafo(fb);
-      } catch {
-        /* não trava o fluxo */
-      }
-    }
-    return fb;
+    // Sem publicacao aqui: quem decide o que fazer com o fallback e a Montagem.
+    return fallbackSimples(params);
   }
 }
 

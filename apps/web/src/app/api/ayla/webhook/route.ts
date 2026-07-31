@@ -1,6 +1,9 @@
 import { NextResponse, type NextRequest, after } from "next/server";
 import { createServiceRoleClient } from "@/lib/supabase/server";
-import { enviarTexto, parseZapiWebhook } from "@/lib/ayla/whatsappSender";
+import { parseZapiWebhook } from "@/lib/ayla/whatsappSender";
+// Texto operacional tambem passa pela fronteira unica (ADR 0001).
+import { publicarOperacional } from "@/lib/ayla/entrega/ferramenta";
+import { familyIdPorTelefone } from "@/lib/ayla/orchestrator";
 import { processInbound, idiomaPorTelefone } from "@/lib/ayla/orchestrator";
 import { transcreverAudio } from "@/lib/ayla/transcribe";
 
@@ -82,11 +85,15 @@ export async function POST(request: NextRequest) {
         } else {
           console.warn("[ayla webhook] transcrição falhou — enviando fallback");
           try {
-            await enviarTexto({
-              phoneE164: inbound.phoneE164,
-              texto:
-                "Não consegui ouvir o áudio agora 🌿 Pode mandar de novo, ou escrever em texto?",
-            });
+            const fid = await familyIdPorTelefone(supabase, inbound.phoneE164);
+            if (fid) {
+              await publicarOperacional(supabase, {
+                familyId: fid,
+                phoneE164: inbound.phoneE164,
+                texto:
+                  "Não consegui ouvir o áudio agora 🌿 Pode mandar de novo, ou escrever em texto?",
+              });
+            }
           } catch {
             /* fallback é best-effort */
           }

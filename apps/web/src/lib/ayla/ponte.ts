@@ -2,7 +2,10 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { gerarPlano, PlanoIncompletoError } from "@/lib/ia/plano";
 import { planoParaPdf } from "@/lib/plano/pdf";
-import { enviarDocumento } from "./whatsappSender";
+// NAO importa o sender: ferramenta nao publica (ADR 0001). Devolve o anexo
+// e a Montagem entrega junto com o texto, numa entrega so.
+import type { AnexoParaFamilia } from "./entrega/tipos";
+import { publicarAnexoDeFerramenta } from "./entrega/ferramenta";
 import { logEvent, logServerError } from "@/lib/log";
 import { criarLinkAcesso } from "@/lib/auth/acesso-link";
 import type { DecisaoEntrega } from "./prontidao-plano";
@@ -41,8 +44,13 @@ async function desafioDaConversa(
 }
 
 /**
- * Gera o PDF do plano, sobe no Storage (URL assinada, 1h) e envia como
- * documento no WhatsApp. Falha 100% silenciosa — o PDF é um bônus; se falhar,
+ * Gera o PDF do plano, sobe no Storage (URL assinada, 1h) e DEVOLVE o anexo.
+ *
+ * NAO publica: ferramenta nao fala com a familia (ADR 0001). Quem entrega e a
+ * Publicacao, junto com o texto, numa entrega so - antes o PDF saia como uma
+ * mensagem separada, disputando espaco com a resposta.
+ *
+ * Falha 100% silenciosa — o PDF é um bônus; se falhar,
  * o link segue normal. Z-API baixa o arquivo na hora do envio, então a URL
  * curta basta (e mantém o dado privado, sem URL pública permanente).
  */
@@ -55,7 +63,7 @@ async function entregarPdfDoPlano(
     secoes: Array<{ tipo: string; titulo: string; conteudo_markdown: string }>;
     nomeMembro?: string | null;
   },
-): Promise<boolean> {
+): Promise<AnexoParaFamilia | null> {
   try {
     const bytes = await planoParaPdf({
       titulo: params.titulo,
@@ -73,10 +81,23 @@ async function entregarPdfDoPlano(
     if (!signed?.signedUrl) throw new Error("sem signed url");
 
     const fileName = `${(params.titulo || "plano").replace(/[^\w\sÀ-ÿ-]/g, "").slice(0, 50).trim() || "plano"}.pdf`;
-    const envio = await enviarDocumento({
-      phoneE164: params.phoneE164,
+    const anexo: AnexoParaFamilia = {
+      tipo: "documento",
       url: signed.signedUrl,
-      fileName,
+      nomeArquivo: fileName,
+      rotulo: "plano",
+    };
+
+    // LIMITE CONHECIDO (ADR 0001): o ideal e devolver o anexo ao orquestrador e
+    // deixar a Montagem entregar texto e PDF juntos. Aqui ele ainda sai numa
+    // publicacao propria - passa por `publicar()`, entao a fronteira e a
+    // validacao valem, mas nao e a MESMA entrega do texto. Fechar isso exige
+    // mudar o tipo de retorno de `montarPonteWhatsApp` nos tres fluxos internos
+    // que a usam; ficou registrado como pendencia em vez de meio-feito.
+    await publicarAnexoDeFerramenta(supabase, {
+      familyId: params.familyId,
+      phoneE164: params.phoneE164,
+      anexo,
     });
     // Visibilidade REAL do envio. Antes isto era logEvent com severity "info" —
     // que nunca persiste (o limiar é warn+), então a gente achava que tinha
@@ -87,17 +108,17 @@ async function entregarPdfDoPlano(
       family_account_id: params.familyId,
       template_key: "plano_pdf",
       payload: { fileName, bytes: bytes.length, phone: params.phoneE164 },
-      resposta_provider: envio.raw as Record<string, unknown> | null,
-      status: "enviada",
+      resposta_provider: null,
+      status: "montada",
       erro: null,
     });
     await logEvent({
       kind: "ayla_pdf_plano_ok",
       severity: "info",
       family_account_id: params.familyId,
-      payload: { bytes: bytes.length, messageId: envio.messageId },
+      payload: { bytes: bytes.length, fileName },
     });
-    return true;
+    return anexo;
   } catch (e) {
     // Falha do PDF não quebra a resposta (o link segue), mas NÃO pode ser cega
     // pra nós nem pra ela: persiste, e quem chama deixa de prometer o PDF.
@@ -112,7 +133,7 @@ async function entregarPdfDoPlano(
       status: "falha",
       erro: e instanceof Error ? e.message.slice(0, 500) : "erro",
     });
-    return false;
+    return null;
   }
 }
 

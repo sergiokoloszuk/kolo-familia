@@ -10,7 +10,8 @@ import {
   type TarefaProposta,
 } from "@/lib/ludico/rotina-ia-core";
 import { rotinaParaPdf } from "@/lib/ludico/rotina-pdf";
-import { enviarDocumento } from "./whatsappSender";
+// Ferramenta nao publica (ADR 0001) - ver comentario em conduzirRotina.
+import { publicarAnexoDeFerramenta } from "./entrega/ferramenta";
 
 /**
  * Fluxo GUIADO de ROTINA (reativo): quando a pessoa pede uma rotina/planejamento
@@ -274,7 +275,11 @@ async function entregarPdfDaRotina(
     const { data: signed } = await supabase.storage.from("imagens").createSignedUrl(path, 3600);
     if (!signed?.signedUrl) throw new Error("sem signed url");
     const fileName = `rotina-${params.nome}`.replace(/[^\w\sÀ-ÿ-]/g, "").slice(0, 40).trim() + ".pdf";
-    await enviarDocumento({ phoneE164: params.phoneE164, url: signed.signedUrl, fileName });
+    await publicarAnexoDeFerramenta(supabase, {
+      phoneE164: params.phoneE164,
+      familyId: params.familyId,
+      anexo: { tipo: "documento", url: signed.signedUrl, nomeArquivo: fileName, rotulo: "rotina" },
+    });
   } catch (e) {
     console.warn("[ayla:rotina-guiada] falha no PDF:", e instanceof Error ? e.message : e);
   }

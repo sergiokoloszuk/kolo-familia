@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { hojeLocalISO, idadeAnos } from "@/lib/idade";
 import { chaveTelefoneBR } from "@/lib/telefone";
-import { enviarTexto, type InboundWhatsApp } from "./whatsappSender";
+import type { InboundWhatsApp } from "./whatsappSender";
 import { podeEnviarProativa } from "./rules";
 import { parseInbound, detectarComando } from "./parser";
 import {
@@ -17,6 +17,16 @@ import {
 import { detectarConflitoCrossCampo } from "./conflito-kolo-vivo";
 import { rotearFatoSubcampo } from "./incorporar-subcampo";
 import { gerarRespostaAyla, type RespostaParams } from "./responder";
+// CAMADA DE ENTREGA (ADR 0001). O orquestrador NAO fala com o WhatsApp: monta,
+// e a Publicacao entrega. `whatsappSender` nao e mais importado aqui.
+import { randomUUID } from "node:crypto";
+import { logEvent } from "@/lib/log";
+import { montarEntrega } from "./entrega/montagem";
+import { publicarOperacional } from "./entrega/ferramenta";
+import { notificarAdminBruto } from "@/lib/admin/notificacoes";
+import { publicar } from "./entrega/publicacao";
+import { modoValidacao } from "./entrega/validacao";
+import type { ResultadoFerramenta } from "./entrega/tipos";
 import { descricaoCuidador, type CuidadorDescrito, type Genero } from "./pronomes";
 import { gerarSugestaoRepertorio } from "./repertorio";
 import { decidirDedup } from "./dedup-kolo-vivo";
@@ -1122,7 +1132,7 @@ async function alertarNaoTitular(
     const alerta = process.env.ALERTA_WHATSAPP || "+5511994770067";
     const base = (process.env.NEXT_PUBLIC_APP_URL || "").replace(/\/$/, "");
     const msg = `⚠️ Kolo: parece que uma criança ou número errado está conversando com a Ayla.\nNúmero: ${phone}\nDisse: "${texto.slice(0, 80)}"\nConfira e bloqueie se precisar:\n${base}/admin/familias`;
-    await enviarTexto({ phoneE164: alerta, texto: msg });
+    await notificarAdminBruto(alerta, msg);
     await supabase.from("ayla_messages").insert({
       family_account_id: familyId,
       direcao: "outbound",
@@ -1194,6 +1204,16 @@ export async function processInbound(
     family.id,
     inbound.recebidaEm,
   );
+
+  // IDENTIDADE DA EXECUCAO (ADR 0001). Tudo que for publicado neste turno
+  // carrega estes tres campos: qual inbound originou, quem esta respondendo e
+  // desde quando. Sao eles que permitem descartar resposta obsoleta na hora de
+  // publicar, em vez de deixar a de 22h42 aparecer depois da de 23h10.
+  const execucao = {
+    sourceMessageId: inbound.messageId ?? `${family.id}:${inbound.recebidaEm.toISOString()}`,
+    executionId: randomUUID(),
+    iniciadaEm: Date.now(),
+  };
 
   const rotinaConversa = await rotinaConversaPendente(supabase, family.id, inbound.recebidaEm);
 
@@ -1723,6 +1743,9 @@ export async function processInbound(
     family_account_id: family.id,
     membro_atipico_id: membroContextoId,
     phone: ctx.whatsapp_e164,
+    sourceMessageId: execucao.sourceMessageId,
+    executionId: execucao.executionId,
+    iniciadaEm: execucao.iniciadaEm,
     tipo: precisaEscolherMembro ? "clarificacao_identificacao" : "resposta_registro",
     // O sinal do classificador volta a ser LIDO. Ele já existia e era calculado
     // a cada mensagem, mas "plano" não era consumido em lugar nenhum — só as
@@ -1794,14 +1817,16 @@ async function enviarRespostaEmChunks(
     phone: string;
     tipo: AylaTipoReativa;
     params: RespostaParams;
+    /** A inbound que originou esta resposta. Chave de idempotencia. */
+    sourceMessageId: string;
+    /** Quem esta respondendo. Confere posse antes de publicar. */
+    executionId: string;
+    /** Quando esta execucao comecou - para o teto de tempo. */
+    iniciadaEm: number;
     /** O classificador de intenção leu "plano" nesta mensagem. */
     intentPlano?: boolean;
   },
 ): Promise<EnvioResultado> {
-  let providerResp: unknown = null;
-  let messageId = "unknown";
-  let erro: string | null = null;
-  let primeiro = true;
 
   // A pessoa pediu um plano? Então a Ayla NÃO escreve o plano no chat — dá uma
   // resposta curta e o sistema entrega o plano (PDF + link). Vale tanto pro pedido
@@ -1847,79 +1872,105 @@ async function enviarRespostaEmChunks(
   }
   const vaiEntregar = querPlano || decisao?.acao === "gerar";
 
-  // Resposta LENTA (pedido de plano): manda um balão breve de acolhimento na
-  // hora — o Z-API não deixa mostrar "digitando" sozinho, então o balãozinho
-  // (com delayTyping) enche o silêncio e mostra que a Ayla está com ela
-  // enquanto o plano é montado. Só no caso lento, pra não poluir trocas rápidas.
+  // Balao de espera: mensagem OPERACIONAL, texto fixo do repositorio (nada de
+  // modelo). Publicacao propria, de proposito - e a unica coisa que sai antes
+  // da resposta, e sai justamente porque a resposta vai demorar.
   if (vaiEntregar) {
     const fillers = [
-      "Deixa eu pensar nisso com você 🌿 já já te respondo.",
-      "Tô aqui — me dá um segundinho pra montar isso direito 🌿",
-      "Boa. Deixa eu olhar isso com carinho, já te mando.",
+      "Deixa eu pensar nisso com voce 🌿 ja ja te respondo.",
+      "To aqui - me da um segundinho pra montar isso direito 🌿",
+      "Boa. Deixa eu olhar isso com carinho, ja te mando.",
     ];
-    try {
-      await enviarTexto({
-        phoneE164: args.phone,
-        texto: fillers[args.params.mensagem.length % fillers.length],
-        delaySegundos: 2,
-      });
-    } catch {
-      /* filler nunca quebra a resposta */
-    }
+    const espera = montarEntrega({
+      conversationId: args.family_account_id,
+      sourceMessageId: `${args.sourceMessageId}:espera`,
+      executionId: args.executionId,
+      phoneE164: args.phone,
+      textoDoModelo: fillers[args.params.mensagem.length % fillers.length],
+      responseType: "sistema",
+      delayInicialSegundos: 2,
+      operacional: true,
+    });
+    // Sem contexto de posse: o balao de espera nao disputa turno com nada.
+    if (espera.resposta) await publicar(supabase, espera.resposta).catch(() => undefined);
   }
 
-  let textoCompleto = await gerarRespostaAyla(
-    args.params,
-    async (par) => {
-      // "Digitando..." visível antes de cada bolha; tempo ~proporcional ao
-      // tamanho do trecho, pra parecer alguém escrevendo de verdade.
-      const delay = primeiro ? 2 : Math.min(Math.max(Math.round(par.length / 25), 2), 6);
-      primeiro = false;
-      try {
-        const r = await enviarTexto({ phoneE164: args.phone, texto: par, delaySegundos: delay });
-        providerResp = r.raw;
-        messageId = r.messageId;
-      } catch (e) {
-        erro = e instanceof Error ? e.message : "falha no envio";
-      }
-    },
-    { supabase, family_account_id: args.family_account_id, feature: "ayla_responder" },
-  );
+  // GERACAO - buffer completo. Nada sai daqui (ADR 0001).
+  const textoDoModelo = await gerarRespostaAyla(args.params, {
+    supabase,
+    family_account_id: args.family_account_id,
+    feature: "ayla_responder",
+  });
 
-  const enviada = erro == null;
-
-  // Ponte WhatsApp → app (Fase 3): num desafio de verdade, manda um
-  // magic-link que abre o plano completo no app, já logado. Numa crise /
-  // desabafo / dúvida (ou clarificação de membro) não manda — a própria
-  // ponte filtra por intenção. Falha silenciosa: nunca quebra a resposta.
-  console.log(
-    `[ayla:ponte] avaliando — tipo=${args.tipo} enviada=${enviada} querPlano=${querPlano} temDesafio=${Boolean(args.params.sinais.desafio)}`,
-  );
-  if (enviada && args.tipo === "resposta_registro") {
+  // FERRAMENTAS - devolvem resultado ao orquestrador; nenhuma publica.
+  const ferramentas: ResultadoFerramenta[] = [];
+  if (args.tipo === "resposta_registro") {
     const nudge = await montarPonteWhatsApp(supabase, {
       familyId: args.family_account_id,
       membroAtipicoId: args.membro_atipico_id,
       mensagem: args.params.mensagem,
       temDesafio: Boolean(args.params.sinais.desafio),
       phoneE164: args.phone,
-      // Pedido explícito de plano: fura o dedup/intenção e entrega na hora.
       forcar: querPlano,
-      // A decisão já foi tomada lá em cima (a mesma que moldou a fala) — a
-      // ponte não reavalia nem gasta outra chamada de IA.
       decisao,
     });
-    if (nudge) {
-      try {
-        await enviarTexto({ phoneE164: args.phone, texto: nudge, delaySegundos: 3 });
-        textoCompleto = `${textoCompleto}\n\n${nudge}`;
-      } catch (e) {
-        console.warn(
-          "[ayla:ponte] falha ao enviar link no WhatsApp:",
-          e instanceof Error ? e.message : e,
-        );
-      }
-    }
+    if (nudge) ferramentas.push({ tipo: "ponte", textoSugerido: nudge });
   }
+
+  // MONTAGEM -> VALIDACAO (dentro dela) -> PUBLICACAO.
+  const entrega = montarEntrega({
+    conversationId: args.family_account_id,
+    sourceMessageId: args.sourceMessageId,
+    executionId: args.executionId,
+    phoneE164: args.phone,
+    textoDoModelo,
+    ferramentas,
+    responseType: "resposta",
+  });
+
+  if (!entrega.resposta) {
+    await logEvent({
+      kind: "ayla_entrega_sem_conteudo",
+      severity: "warn",
+      family_account_id: args.family_account_id,
+      payload: { ajustes: entrega.ajustes },
+    }).catch(() => {});
+    return { enviada: false, motivo: "sem conteudo publicavel" };
+  }
+
+  const resultado = await publicar(supabase, entrega.resposta, {
+    posse: {
+      familyId: args.family_account_id,
+      sourceMessageId: args.sourceMessageId,
+      executionId: args.executionId,
+      iniciadaEm: args.iniciadaEm,
+    },
+  });
+
+  if (resultado.status === "descartado") {
+    // Obsoleta: silencio, sem fallback (ADR 0001, secao 4).
+    return { enviada: false, motivo: `descartada:${resultado.motivo}` };
+  }
+
+  if (entrega.bloqueada || entrega.ajustes.length > 0) {
+    await logEvent({
+      kind: "ayla_entrega_ajustada",
+      severity: entrega.bloqueada ? "warn" : "info",
+      family_account_id: args.family_account_id,
+      payload: {
+        bloqueada: entrega.bloqueada,
+        ajustes: entrega.ajustes,
+        achados: entrega.achados.map((a) => `${a.camada}:${a.codigo}`),
+        modo: modoValidacao(),
+      },
+    }).catch(() => {});
+  }
+
+  const textoCompleto = entrega.resposta.text ?? "";
+  const enviada = resultado.status === "publicado" || resultado.status === "parcial";
+  const erro = resultado.status === "falha" ? resultado.erro : null;
+  const messageId = resultado.status === "falha" ? "unknown" : resultado.publicationId;
+  const providerResp: unknown = null;
 
   await supabase.from("ayla_send_log").insert({
     family_account_id: args.family_account_id,
@@ -2710,7 +2761,11 @@ async function enviarEPersistir(
   let erro: string | null = null;
 
   try {
-    const r = await enviarTexto({ phoneE164: params.phone, texto });
+    const r = await publicarOperacional(supabase, {
+      familyId: params.family_account_id,
+      phoneE164: params.phone,
+      texto,
+    });
     providerResp = r.raw;
     resultado = { enviada: true, messageId: r.messageId };
   } catch (e) {
@@ -2776,6 +2831,29 @@ async function idiomaDaFamilia(
  * pra dar a dica de idioma certa ao Whisper ANTES de transcrever o áudio.
  * Casa pela chave normalizada (mesmo critério de processInbound).
  */
+/**
+ * Family id a partir do telefone. Existe para o webhook conseguir publicar o
+ * fallback de audio pela fronteira unica (ADR 0001) em vez de chamar o sender.
+ */
+export async function familyIdPorTelefone(
+  supabase: SupabaseClient,
+  phoneE164: string,
+): Promise<string | null> {
+  try {
+    const chave = chaveTelefoneBR(phoneE164);
+    const { data } = await supabase
+      .from("family_accounts")
+      .select("id, whatsapp_e164")
+      .not("whatsapp_e164", "is", null);
+    const f = (data ?? []).find(
+      (r) => chaveTelefoneBR(r.whatsapp_e164 as string) === chave,
+    );
+    return (f?.id as string | undefined) ?? null;
+  } catch {
+    return null;
+  }
+}
+
 export async function idiomaPorTelefone(
   supabase: SupabaseClient,
   phoneE164: string,

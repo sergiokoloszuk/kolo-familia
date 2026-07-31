@@ -4,6 +4,38 @@ import { familiasInternas } from "@/lib/analytics/internos";
 import { idadeAnos } from "@/lib/idade";
 
 /**
+ * CANAL ADMINISTRATIVO - ADR 0001.
+ *
+ * Isto NAO e uma resposta da Ayla. E comunicacao operacional interna: alerta
+ * tecnico, healthcheck, aviso de cadastro, acao manual do admin. Vai para o
+ * WhatsApp da Karina, nao para o de uma familia.
+ *
+ * Diferencas que importam, e que sao a razao de existir separado de `publicar()`:
+ *
+ *   publicar()        -> conversa da familia. Tem conversationId, posse,
+ *                        idempotencia por inbound, validacao de saida e
+ *                        registro de entrega.
+ *   notificarAdmin()  -> operacional. Nao tem conversa, nao disputa turno, nao
+ *                        entra no historico da familia e nao pode ser chamado
+ *                        por ferramenta nem pelo modelo.
+ *
+ * Misturar os dois foi parte do problema original: um alerta operacional
+ * competindo com uma conversa real, e um envio administrativo contando como
+ * "resposta enviada".
+ */
+export async function notificarAdmin(texto: string): Promise<void> {
+  await notificarAdminBruto(ADMIN_WHATSAPP, texto);
+}
+
+/**
+ * Variante com destino explicito - para os alertas que vao a um numero
+ * configurado (monitor, plantao) e nao ao admin padrao.
+ */
+export async function notificarAdminBruto(phoneE164: string, texto: string): Promise<void> {
+  await enviarTexto({ phoneE164, texto });
+}
+
+/**
  * Notificações operacionais pro WhatsApp do admin (Karina):
  *   - notificarNovoCadastro: em tempo real, quando alguém termina o onboarding.
  *   - resumoCadastros: números do dia/semana/mês pro monitor das 8h.
