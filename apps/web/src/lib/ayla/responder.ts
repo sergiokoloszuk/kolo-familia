@@ -9,6 +9,12 @@ import { pronomesPara, type Genero, type CuidadorDescrito } from "./pronomes";
 // (formato e idioma). A identidade agora vive no CÓDIGO (não mais no banco
 // voz_ayla), o que elimina o drift banco×código.
 import { nucleoConducao } from "@/lib/conducao/diretrizes";
+import { acharConclusaoDiagnostica } from "@/lib/conducao/deteccao-diagnostico";
+import {
+  instrucaoRegenerar,
+  respostaSeguraDeDiagnostico,
+} from "@/lib/conducao/recuperacao-diagnostico";
+import { logEvent } from "@/lib/log";
 
 /**
  * Tracking opcional pra logar a chamada em api_calls. Quando ausente, a
@@ -166,6 +172,12 @@ export type RespostaParams = {
     /** A entrega foi forçada porque ela já perguntou demais. */
     fechador: boolean;
   } | null;
+  /**
+   * Preenchido SÓ na segunda passada, quando a primeira atravessou a fronteira
+   * do diagnóstico. Entra como nota interna — o mesmo mecanismo que o resto do
+   * turno usa, sem prompt paralelo.
+   */
+  regenerarPorDiagnostico?: string;
   precisaEscolherMembro?: { nomes: string[] } | null;
   /**
    * Magic links DIRETOS do Lúdico (só criança) — cada recurso abre já logado
@@ -233,6 +245,65 @@ async function baixarImagemBase64(
  * vem do `delayTyping` por bolha, que a Publicação preserva.
  */
 export async function gerarRespostaAyla(
+  params: RespostaParams,
+  tracking?: UsageTracking,
+): Promise<string> {
+  const texto = await gerarUmaVez(params, tracking);
+
+  // ── REDE DA FRONTEIRA DO DIAGNÓSTICO ────────────────────────────────────
+  // O WhatsApp dependia SÓ do prompt: a web tinha regeneração desde sempre
+  // (lib/ia/engine.ts) e aqui não havia nada, num canal onde estão quase todas
+  // as famílias. A camada de Montagem/Validação não serve pra isto de
+  // propósito — ela é portão de PUBLICAÇÃO, aprova ou barra, e barrar mandaria
+  // um acolhimento vazio a quem acabou de perguntar o diagnóstico da filha.
+  //
+  // Então a rede fica ANTES da Montagem, junto de quem gera. Custo zero no
+  // caminho normal: o detector é regex sobre o texto que já está em memória
+  // (o buffer que o ADR 0001 criou). Só há segunda chamada quando vaza.
+  //
+  // UMA tentativa, e é um `if` — não um laço com contador, que é como loops de
+  // regeneração nascem.
+  const achados = acharConclusaoDiagnostica(texto);
+  if (achados.length === 0) return texto;
+
+  await logEvent({
+    kind: "ayla_fronteira_diagnostico_regenerou",
+    severity: "warn",
+    family_account_id: tracking?.family_account_id ?? null,
+    payload: { codigos: achados.map((a) => a.codigo), trecho: achados[0]?.trecho },
+  }).catch(() => {});
+
+  const segunda = await gerarUmaVez(
+    { ...params, regenerarPorDiagnostico: instrucaoRegenerar(achados) },
+    tracking,
+  );
+
+  const aindaVaza = acharConclusaoDiagnostica(segunda);
+  if (aindaVaza.length === 0) return segunda;
+
+  // Falhou duas vezes na mesma pergunta. Aqui NÃO se publica a segunda "porque
+  // já tentamos" — seria publicar sabendo. Entra o piso: uma resposta que
+  // reconhece a pergunta, é honesta sobre o porquê e conduz pro próximo passo.
+  // Texto do repositório, então não pode atravessar a fronteira de novo.
+  await logEvent({
+    kind: "ayla_fronteira_diagnostico_piso",
+    severity: "error",
+    family_account_id: tracking?.family_account_id ?? null,
+    payload: {
+      codigos_1a: achados.map((a) => a.codigo),
+      codigos_2a: aindaVaza.map((a) => a.codigo),
+      trecho_2a: aindaVaza[0]?.trecho,
+    },
+  }).catch(() => {});
+
+  return respostaSeguraDeDiagnostico({
+    nomeCuidador: params.nomeMae,
+    nomeMembro: params.nomeMembro,
+  });
+}
+
+/** Uma passada pelo modelo. A rede acima decide se precisa de outra. */
+async function gerarUmaVez(
   params: RespostaParams,
   tracking?: UsageTracking,
 ): Promise<string> {
@@ -453,6 +524,11 @@ REGRAS DURAS deste turno: no MÁXIMO uma pergunta (nunca duas); NÃO explique co
     notas.push(
       `RECURSOS DO LÚDICO: se ${params.nomeMae} pedir OU claramente se beneficiar — MESMO sem usar essas palavras — convide de leve. Não force nem ofereça se não vier a propósito.\n${partes.join("\n")}`,
     );
+  }
+  // POR ÚLTIMO, de propósito: quando existe, esta nota manda em todas as
+  // outras. É o retorno de uma resposta que já foi barrada.
+  if (params.regenerarPorDiagnostico) {
+    notas.push(params.regenerarPorDiagnostico);
   }
   if (notas.length > 0) {
     linhas.push(`\n<notas_internas>\n${notas.join("\n")}\n</notas_internas>`);

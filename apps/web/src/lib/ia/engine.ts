@@ -7,6 +7,9 @@ import { classificarIntencao, type Intencao } from "./intencao";
 // BIA — conhecimento de apoio. MESMO serviço que o WhatsApp usa.
 // Desligado por padrão (flag BIA_PROMPT_ENABLED): devolve "" e nada muda.
 import { carregarBlocoBia } from "@/lib/bia/contexto-ayla";
+import { acharConclusaoDiagnostica } from "@/lib/conducao/deteccao-diagnostico";
+import { respostaSeguraDeDiagnostico } from "@/lib/conducao/recuperacao-diagnostico";
+import { logEvent } from "@/lib/log";
 import {
   runTomValidators,
   runEstruturalValidators,
@@ -110,6 +113,35 @@ export async function respond(params: {
       { intencao, regeneracao: { motivo: validacao.motivo, sugestao: validacao.sugestao } },
     );
     validacao = await runFullValidation(resposta.texto, ctx);
+  }
+
+  // MESMO PISO DO WHATSAPP. A web publicava a segunda tentativa fosse qual
+  // fosse — o que, pra qualquer outra validação (tom, tamanho, cópia), é a
+  // escolha certa: melhor um texto imperfeito que texto nenhum. Pra a fronteira
+  // do diagnóstico, não: publicar seria publicar sabendo. Só esta classe cai
+  // aqui; as outras seguem como sempre.
+  const vazamento = acharConclusaoDiagnostica(resposta.texto);
+  if (vazamento.length > 0) {
+    await logEvent({
+      kind: "fronteira_diagnostico_piso_web",
+      severity: "error",
+      family_account_id: familyId,
+      payload: { codigos: vazamento.map((v) => v.codigo), trecho: vazamento[0]?.trecho, regenerou },
+    }).catch(() => {});
+    return {
+      texto: respostaSeguraDeDiagnostico({
+        nomeCuidador: ctx.cuidador?.nome ?? null,
+        nomeMembro: ctx.membroFoco?.nome ?? null,
+      }),
+      intencao,
+      skillsAcionadas: roteadas.map((r) => ({
+        name: r.skill.name,
+        display_name: r.skill.display_name,
+        score: r.score,
+      })),
+      validacao: { ok: false, motivo: "fronteira do diagnóstico — piso aplicado", regenerou },
+      uso: resposta.uso,
+    };
   }
 
   return {
