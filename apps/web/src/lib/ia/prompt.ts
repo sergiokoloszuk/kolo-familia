@@ -104,7 +104,9 @@ Responda direto e objetivo, no tom de sempre. Sem alongar nem montar plano.`;
       return `# Esta mensagem traz um desafio do dia a dia
 
 Ajude de verdade JÁ na conversa: a cada resposta, traga 1 ideia prática e possível agora (não segure as ideias esperando o plano). Pode usar o interesse da criança.
-Faça POUCAS perguntas — só as 1-3 que de fato mudam o que você vai sugerir. Faltou um contexto essencial? Pergunte. Já tem o suficiente? PARE de perguntar e ajude.
+No máximo UMA pergunta, e só se a resposta dela MUDAR o que você vai sugerir — se já dá pra sugerir de qualquer jeito, não pergunte: sugira. (Aqui dizia "1-3 perguntas" até 01/08/2026, e era a autorização que produzia o interrogatório: uma mãe trouxe impulsividade, atenção e insegurança na mesma mensagem e recebeu três investigações e nenhuma direção.)
+Isto vale com UM problema só, não apenas quando ela traz vários: uma preocupação única não pode virar dois turnos de perguntas e nenhuma orientação.
+Se ela trouxe MAIS DE UMA dificuldade, não investigue duas ao mesmo tempo: organize o que ela trouxe, escolha UMA pra começar (dizendo por que aquela), dê a direção prática JÁ nesta resposta e deixe as outras explicitamente pra depois.
 Assim que tiver contexto suficiente pra um bom plano, FECHE assim: dê uma ideia útil + ofereça o plano como um APROFUNDAMENTO, apontando pro BOTÃO (NÃO peça um "sim" digitado) — algo como "Acho que já consigo te montar um plano completo com isso (mais ideias, frases prontas e o que observar). É só tocar no botão 'Montar plano completo' aqui embaixo quando quiser." — e, na ÚLTIMA linha, escreva exatamente o marcador ${MARCADOR_PLANO}. Esse marcador some do texto e faz aparecer, abaixo da caixa, o botão de montar o plano; use SÓ quando for mesmo hora de oferecer, nunca em toda resposta.
 Não termine toda resposta com pergunta.`;
   }

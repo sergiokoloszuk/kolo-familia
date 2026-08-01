@@ -360,6 +360,22 @@ ${params.diagnosticoRegistrado.trim()}`);
       `A mãe descreveu o comportamento como DESOBEDIÊNCIA/birra. NÃO valide esse enquadre (não diga "a desobediência", "ela não obedece"). No método Kolo, a criança não está "desobedecendo" — quase sempre está sobrecarregada, desregulada, com medo ou sem conseguir naquele momento. Reenquadre com gentileza e sem julgar a mãe: o que parece desobediência costuma ser o corpo pedindo socorro. O foco é entender o gatilho e co-regular JUNTO — nunca obediência, controle ou "fazer obedecer".`,
     );
   }
+  // REGRA DO TURNO — vale nos TRÊS ramos abaixo, e por isso vem antes deles.
+  //
+  // Até 01/08/2026 o limite duro de perguntas existia SÓ no ramo "perguntar".
+  // O ramo padrão — o que roda numa mensagem comum — não tinha limite nenhum:
+  // sobrava a cláusula "no máximo UMA pergunta por vez" perdida dentro do
+  // FORMATO_WHATSAPP, um bloco de FORMATAÇÃO, competindo com um princípio que
+  // manda mapear o cenário inteiro. Foi assim que uma mãe trouxe TRÊS
+  // dificuldades (impulsividade, atenção, insegurança) e recebeu DUAS
+  // investigações simultâneas e nenhuma direção.
+  //
+  // A regra canônica mora no núcleo (TEMPO ATÉ A DIREÇÃO, em REGRA_SEQUENCIA).
+  // Esta nota é só o lembrete no turno — não uma segunda versão da regra.
+  notas.push(
+    `REGRA DESTE TURNO: a mãe tem que sair daqui com algo concreto. Se já existe uma primeira orientação SEGURA — algo que ajuda e não depende do que ela responder —, ENTREGUE agora; a pergunta vem junto ou depois. No máximo UMA pergunta, e só se a resposta MUDAR o seu próximo passo. Isto vale com UM problema só, não apenas quando ela traz vários. Se ela trouxe MAIS DE UMA dificuldade, não investigue duas ao mesmo tempo: organize o que ela trouxe, escolha UMA pra começar (dizendo por que aquela), dê a direção JÁ nesta resposta e deixe as outras explicitamente pra depois.`,
+  );
+
   if (params.querPlano) {
     notas.push(
       `A pessoa está PEDINDO um plano (um roteiro / passo a passo). MUITO IMPORTANTE: NÃO escreva o plano aqui no WhatsApp — nada de passos numerados, listas longas, seções ou plano completo no chat. Responda em 1 ou 2 frases curtas, com carinho, dizendo que você já está montando o plano estratégico com as atividades e vai mandar agora — em PDF e com um link pra abrir no app. Se for a primeira vez que ela recebe um, acrescente que já está incluído, sem custo. No máximo UMA dica curtinha; o plano de verdade vai no PDF/link, não no chat.`,
