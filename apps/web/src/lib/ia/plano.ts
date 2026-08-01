@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { getAnthropicClient, MODELS } from "./anthropic";
 import { buildContext } from "./context";
-import { buildContextBlock, VOZ_E_LIMITES } from "./prompt";
+import { buildContextBlock, VOZ_LIMITES_E_FRONTEIRA } from "./prompt";
 import { loadActiveSkills, routeSkillsAI } from "./router";
 import { respondAsOutputType } from "./engine";
 import { capitalizarNome } from "@/lib/nome";
@@ -89,7 +89,7 @@ function montarSistemaPlanoCompleto(outputTypes: OutputTypeRow[]): string {
 
   return `Você é a Kolo montando um PLANO completo e personalizado pro adulto responsável por uma criança neurodivergente. O plano REUNE, num documento só, as mesmas seções que a mãe veria nos botões — e cada seção tem a MESMA riqueza e profundidade do botão. NADA de resumo raso ou conselho genérico.
 
-${VOZ_E_LIMITES}
+${VOZ_LIMITES_E_FRONTEIRA}
 
 # Seções do plano — siga a receita de cada uma
 ${blocos}
@@ -108,7 +108,7 @@ ${SAIDA}
 
 const SISTEMA_FIM_DE_SEMANA = `Você é a Kolo montando um ROTEIRO LEVE de fim de semana pro adulto responsável por uma criança neurodivergente.
 
-${VOZ_E_LIMITES}
+${VOZ_LIMITES_E_FRONTEIRA}
 
 # Como montar o roteiro de fim de semana
 - NÃO é uma grade rígida hora a hora. É um roteiro FLEXÍVEL, tecido na rotina real da família, que dá pra encaixar no que o dia trouxer. Ócio e "não fazer nada" também são válidos — não encha o fim de semana.
@@ -408,7 +408,7 @@ async function gerarEntenderObservar(params: {
       const contexto = buildContextBlock(ctx);
       const system = `Você é a Kolo.
 
-${VOZ_E_LIMITES}
+${VOZ_LIMITES_E_FRONTEIRA}
 
 # Tarefa
 Produza DUAS partes curtas, ESPECÍFICAS e personalizadas (use os dados reais do contexto):

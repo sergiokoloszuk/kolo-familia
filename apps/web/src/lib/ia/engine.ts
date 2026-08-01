@@ -8,6 +8,7 @@ import {
   runTomValidators,
   runEstruturalValidators,
   validateAntiSubstituicaoProfissional,
+  validateAntiDiagnostico,
   validateAntiComparacao,
   validateAntiAlarme,
   validateAntiCopy,
@@ -249,6 +250,7 @@ function runAllValidatorsExceptSize(
 ): ValidationResult {
   for (const check of [
     () => validateAntiSubstituicaoProfissional(texto),
+    () => validateAntiDiagnostico(texto),
     () => validateAntiComparacao(texto),
     () => validateAntiAlarme(texto),
     () => validateAntiCopy(texto, bps),
