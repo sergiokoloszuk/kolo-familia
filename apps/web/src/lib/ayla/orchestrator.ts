@@ -18,6 +18,8 @@ import { detectarConflitoCrossCampo } from "./conflito-kolo-vivo";
 import { rotearFatoSubcampo } from "./incorporar-subcampo";
 import { gerarRespostaAyla, type RespostaParams } from "./responder";
 import { blocoDiagnosticoRegistrado } from "@/lib/onboarding/diagnostico";
+import { reservarEnvioProativo, proativaIsentaDeCadencia } from "./cadencia";
+import { logEvent } from "@/lib/log";
 import { descricaoCuidador, type CuidadorDescrito, type Genero } from "./pronomes";
 import { gerarSugestaoRepertorio } from "./repertorio";
 import { decidirDedup } from "./dedup-kolo-vivo";
@@ -2653,6 +2655,27 @@ async function enviarEPersistir(
   // Nome ausente deixa cicatriz ("Oi, 🌿", "Tô com você, ."). Vários textos
   // proativos são montados à mão aqui no orchestrator, fora do fill() dos
   // templates — então a limpeza mora também neste choke point.
+  // CADENCIA — so proativa, e antes de qualquer coisa cara (traducao, envio).
+  // Resposta a mae NUNCA passa por aqui: a trava le `category` e sai.
+  // Ver lib/ayla/cadencia.ts pro caso real (08:00 + 08:01) e pra concorrencia.
+  let reservaId: string | null = null;
+  if (params.category === "proativa" && !proativaIsentaDeCadencia(params.tipo)) {
+    const reserva = await reservarEnvioProativo(supabase, {
+      familyAccountId: params.family_account_id,
+      tipo: params.tipo,
+    });
+    if (!reserva.ok) {
+      await logEvent({
+        kind: "ayla_proativa_bloqueada_por_cadencia",
+        severity: "info",
+        family_account_id: params.family_account_id,
+        payload: { tipo: params.tipo, motivo: reserva.motivo },
+      }).catch(() => {});
+      return { enviada: false, motivo: reserva.motivo };
+    }
+    reservaId = reserva.reservaId || null;
+  }
+
   let texto = limparNomeAusente(params.texto);
   const idioma = await idiomaDaFamilia(supabase, params.family_account_id);
   if (idioma !== "pt") texto = limparNomeAusente(await traduzirProativa(texto, idioma));
@@ -2670,8 +2693,9 @@ async function enviarEPersistir(
     resultado = { enviada: false, motivo: erro };
   }
 
-  // Auditoria
-  await supabase.from("ayla_send_log").insert({
+  // Auditoria. Com reserva, a linha JA existe (foi ela que garantiu a janela) —
+  // atualiza. Sem reserva (reativa, isenta, ou banco fora), insere como antes.
+  const auditoria = {
     family_account_id: params.family_account_id,
     template_key: params.tipo,
     payload: {
@@ -2680,9 +2704,14 @@ async function enviarEPersistir(
       ...(params.meta ? { meta: params.meta } : {}),
     },
     resposta_provider: providerResp as Record<string, unknown> | null,
-    status: resultado.enviada ? "enviada" : "falha",
+    status: resultado.enviada ? "enviada" : ("falha" as const),
     erro,
-  });
+  };
+  if (reservaId) {
+    await supabase.from("ayla_send_log").update(auditoria).eq("id", reservaId);
+  } else {
+    await supabase.from("ayla_send_log").insert(auditoria);
+  }
 
   // Mensagem (mesmo se falhou, pra deixar rastro)
   if (resultado.enviada) {
