@@ -2,11 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { getAylaAnthropicClient, AYLA_MODEL_FALLBACK } from "./anthropic";
 import { logarUsoApi } from "@/lib/billing/logar";
 import { logServerError, logEvent } from "@/lib/log";
-import { acharConclusaoDiagnostica } from "@/lib/conducao/deteccao-diagnostico";
-import {
-  instrucaoRegenerar,
-  respostaSeguraDeDiagnostico,
-} from "@/lib/conducao/recuperacao-diagnostico";
+import { fronteiraAtravessada } from "@/lib/conducao/fronteiras";
 import { pronomesPara, type Genero, type CuidadorDescrito } from "./pronomes";
 // NÚCLEO DE CONDUÇÃO — fonte única compartilhada com as Estratégias (web):
 // identidade + norte, princípios, regra de sequência, exemplos, piso e tom.
@@ -213,14 +209,18 @@ export async function gerarRespostaAyla(
   // Custo zero no caminho normal: o detector é regex sobre o texto que já está
   // em memória. Só há segunda chamada quando vaza. UMA tentativa, e é um `if` —
   // não um laço com contador, que é como loops de regeneração nascem.
-  const achados = acharConclusaoDiagnostica(texto);
-  if (achados.length === 0) return texto;
+  const cruzou = fronteiraAtravessada(texto);
+  if (!cruzou) return texto;
 
   await logEvent({
     kind: "ayla_fronteira_regenerou",
     severity: "warn",
     family_account_id: tracking?.family_account_id ?? null,
-    payload: { codigos: achados.map((a) => a.codigo), trecho: achados[0]?.trecho },
+    payload: {
+      fronteira: cruzou.fronteira.nome,
+      codigos: cruzou.achados.map((a) => a.codigo),
+      trecho: cruzou.achados[0]?.trecho,
+    },
   }).catch(() => {});
 
   // Falha na regeneração NÃO pode deixar a original escapar: se a segunda
@@ -228,14 +228,15 @@ export async function gerarRespostaAyla(
   let segunda: string;
   try {
     segunda = await gerarUmaVez(
-      { ...params, regenerarPorDiagnostico: instrucaoRegenerar(achados) },
+      { ...params, regenerarPorDiagnostico: cruzou.fronteira.instrucao(cruzou.achados) },
       tracking,
     );
   } catch {
     segunda = "";
   }
 
-  if (segunda && acharConclusaoDiagnostica(segunda).length === 0) return segunda;
+  const aindaVaza = segunda ? fronteiraAtravessada(segunda) : null;
+  if (segunda && !aindaVaza) return segunda;
 
   // Falhou duas vezes. Aqui NÃO se publica a segunda "porque já tentamos" —
   // seria publicar sabendo. Entra o piso: texto do repositório, que reconhece a
@@ -244,10 +245,13 @@ export async function gerarRespostaAyla(
     kind: "ayla_fronteira_piso",
     severity: "error",
     family_account_id: tracking?.family_account_id ?? null,
-    payload: { codigos_1a: achados.map((a) => a.codigo) },
+    payload: {
+      fronteira: (aindaVaza ?? cruzou).fronteira.nome,
+      codigos_1a: cruzou.achados.map((a) => a.codigo),
+    },
   }).catch(() => {});
 
-  return respostaSeguraDeDiagnostico({
+  return (aindaVaza ?? cruzou).fronteira.piso({
     nomeCuidador: params.nomeMae,
     nomeMembro: params.nomeMembro,
   });

@@ -7,6 +7,7 @@
 
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { acharConclusaoDiagnostica } from "@/lib/conducao/deteccao-diagnostico";
+import { acharConclusaoClinica } from "@/lib/conducao/deteccao-clinica";
 
 export type ValidationResult =
   | { ok: true }
@@ -48,24 +49,41 @@ export function validateAntiCopy(
 }
 
 /**
- * Anti-substituição-profissional: lista negra de termos clínicos
- * prescritivos. Quando aparecem, redirecionar pra profissional.
+ * Anti-substituição-profissional.
+ *
+ * AUDITORIA DA CLASSE INTEIRA (01/08/2026). A lista original era de PALAVRAS
+ * clínicas, e uma lista de palavras erra nos dois sentidos — sempre. Não era um
+ * problema da palavra "diagnóstico": era do método.
+ *
+ * O que ela BARRAVA e não devia (respostas seguras):
+ *   - "quem fecha um diagnóstico é o médico"            -> a ressalva honesta
+ *   - "leve essa dúvida a quem prescreveu a medicação"  -> a redireção CERTA
+ *   - "quem acompanha o tratamento dele decide isso"    -> a redireção CERTA
+ *   - "não existe cura, e não é disso que se trata"     -> verdadeiro e acolhedor
+ *   - "posso te dar uma receita simples de panqueca"    -> num produto que fala
+ *     de seletividade alimentar o dia inteiro, "receita" é vocabulário comum
+ *
+ * O que ela DEIXAVA PASSAR e é perigoso (nenhuma usa palavra da lista):
+ *   - "pode dar meia dose e ver como ele fica"
+ *   - "experimenta suspender por uns dias"
+ *   - "isso é efeito colateral, com certeza"
+ *   - "melatonina é segura pra criança"
+ *   - "não precisa levar no pronto-socorro"
+ *   - "esse tremor é estereotipia, é do autismo mesmo"
+ *
+ * Ou seja: penalizava a cautela e ignorava a prescrição. Substituída por
+ * detectores de ATO — `validateAntiDiagnostico` e `validateAntiClinico`.
+ *
+ * O que SOBRA aqui são as poucas formas em que a própria construção da frase é
+ * a prescrição, independentemente de contexto — não substantivos.
  */
 const TERMOS_CLINICOS_PRESCRITIVOS = [
-  // O substantivo `diagnóstico` SAIU desta lista de propósito (01/08/2026).
-  // Ele derrubava a frase honesta ("quem fecha um diagnóstico é o médico") e
-  // deixava passar a conclusão de verdade ("aponta com força pro autismo"),
-  // que não usa a palavra. O filtro estava selecionando CONTRA a segurança:
-  // regenerava pedindo "remova os termos clínicos" e o modelo devolvia a mesma
-  // conclusão, agora sem a ressalva. Quem cobre o dano é
-  // `validateAntiDiagnostico`, logo abaixo, que mede a CONCLUSÃO e não a palavra.
   /\bdiagnostiq[ue]/i,
   /\bprognóstico\b/i,
-  /\btratamento\b/i,
-  /\bcura\b/i,
-  /\bmedicaç[ãa]o\b/i,
-  /\breceit[ao]\b/i,
-  /\bvocê deveria (tomar|dar)\b/i,
+  /\b(receito|prescrevo|indico o uso)\b/i,
+  /\bvocê deveria (tomar|dar|administrar)\b/i,
+  /\b(tome|tomem|dê|deem|administre)\s+\d/i,
+  /\bgarant(o|imos) que (vai|isso) (curar?|melhorar?|resolver?)\b/i,
 ];
 
 export function validateAntiSubstituicaoProfissional(
@@ -109,6 +127,28 @@ export function validateAntiDiagnostico(resposta: string): ValidationResult {
       "Continue ajudando: nomeie os sinais que a família já observou, diga que comportamentos assim aparecem em " +
       "perfis diferentes e têm outras explicações, organize o que falta observar e o que levar pra avaliação, e " +
       "trabalhe a dificuldade concreta de hoje.",
+  };
+}
+
+/**
+ * Anti-clínico: a resposta prescreve, conclui causa, gradua gravidade, decide
+ * atendimento, minimiza um sintoma ou explica algo do CORPO pela
+ * neurodivergência?
+ *
+ * A regra mora no prompt (FRONTEIRA CLÍNICA, em `lib/conducao/diretrizes.ts`).
+ * Isto é a rede embaixo — e é o substituto honesto da lista de palavras que
+ * `validateAntiSubstituicaoProfissional` era: mede o ATO, não o vocabulário.
+ */
+export function validateAntiClinico(resposta: string): ValidationResult {
+  const achados = acharConclusaoClinica(resposta);
+  if (achados.length === 0) return { ok: true };
+  return {
+    ok: false,
+    motivo: `Conclusão clínica detectada (${achados.map((a) => a.codigo).join(", ")}): "${achados[0].trecho}"`,
+    sugestao:
+      "Refaça SEM concluir causa, graduar gravidade, decidir atendimento, mandar esperar, mexer em medicação ou " +
+      "explicar sintoma físico pela neurodivergência. Continue ajudando: reconheça a importância, oriente levar a " +
+      "quem avalia, e organize com a família quando começou, o que mudou junto e o que levar pra consulta.",
   };
 }
 
@@ -391,6 +431,7 @@ export async function runTomValidators(
     validateAberturaEmpatica(resposta),
     validateAntiSubstituicaoProfissional(resposta),
     validateAntiDiagnostico(resposta),
+    validateAntiClinico(resposta),
     validateAntiComparacao(resposta),
     validateAntiAlarme(resposta),
     validateNomeLimite(resposta, ctx.nomeCrianca ?? null),
