@@ -19,6 +19,7 @@ import { rotearFatoSubcampo } from "./incorporar-subcampo";
 import { gerarRespostaAyla, type RespostaParams } from "./responder";
 import { blocoDiagnosticoRegistrado } from "@/lib/onboarding/diagnostico";
 import { reservarEnvioProativo, proativaIsentaDeCadencia } from "./cadencia";
+import { agendarEspera } from "./espera";
 import { logEvent } from "@/lib/log";
 import { descricaoCuidador, type CuidadorDescrito, type Genero } from "./pronomes";
 import { gerarSugestaoRepertorio } from "./repertorio";
@@ -1765,50 +1766,12 @@ async function enviarRespostaEmChunks(
       (await ofertouPlanoRecente(supabase, args.family_account_id)));
   args.params.querPlano = querPlano;
 
-  // BALÃO DE ESPERA. O Z-API não deixa mostrar "digitando" sozinho, então este
-  // balãozinho enche o silêncio e mostra que a Ayla está com ela.
-  //
-  // Antes só existia no pedido de plano. Desde 01/08/2026 a resposta comum
-  // também espera: a geração inteira acontece ANTES da primeira bolha, porque é
-  // esse instante que permite inspecionar o que vai sair (ver `responder.ts`).
-  //
-  // Por TEMPO, não por tipo de mensagem: um timer dispara o filler só se a
-  // geração passar de `MS_ATE_FILLER`. Resposta rápida nunca vê filler — era o
-  // risco de poluir trocas curtas. O timer é cancelado antes de publicar, então
-  // ele nunca cai no meio das bolhas.
-  //
-  // O filler NÃO é persistido (não vai pra `ayla_messages` nem `ayla_send_log`),
-  // então não vira fato da criança nem interfere em idempotência.
-  const MS_ATE_FILLER = 4000;
-  const fillersEspera = [
-    "Deixa eu pensar nisso com você 🌿",
-    "Tô aqui — me dá um segundinho.",
-    "Boa. Deixa eu olhar isso com carinho.",
-    "Já te respondo 🌿",
-    "Peraí que eu já volto com isso.",
-  ];
-  let timerFiller: ReturnType<typeof setTimeout> | null = null;
-  // Se o filler chegou a disparar, o envio dele pode estar EM VOO quando a
-  // geração termina — e aí o balãozinho chegaria depois da primeira bolha, fora
-  // de ordem. Guardamos a promessa pra esperar por ela antes de publicar.
-  let fillerEmVoo: Promise<unknown> | null = null;
-  const cancelarFiller = () => {
-    if (timerFiller) clearTimeout(timerFiller);
-    timerFiller = null;
-  };
-  {
-    // Varia por mensagem pra a família não ver a MESMA frase dezenas de vezes.
-    const i = Math.abs(hashSeed(args.params.mensagem)) % fillersEspera.length;
-    const atraso = querPlano ? 0 : MS_ATE_FILLER;
-    timerFiller = setTimeout(() => {
-      fillerEmVoo = enviarTexto({
-        phoneE164: args.phone,
-        texto: fillersEspera[i],
-        delaySegundos: 1,
-      }).catch(() => undefined);
-    }, atraso);
-  }
-
+  // BALÃO DE ESPERA — ver lib/ayla/espera.ts pra os tempos e o porquê de serem
+  // dois. Nada aqui é persistido; a resposta real nunca espera pelo balão.
+  const espera = agendarEspera({
+    enviar: (texto) => enviarTexto({ phoneE164: args.phone, texto, delaySegundos: 1 }),
+    mensagem: args.params.mensagem,
+  });
 
   // GERAÇÃO — buffer completo, com a rede da fronteira por dentro. Nada saiu
   // para o WhatsApp até aqui.
@@ -1820,9 +1783,8 @@ async function enviarRespostaEmChunks(
       feature: "ayla_responder",
     });
   } finally {
-    // Antes de qualquer bolha: o filler não pode cair no meio da resposta.
-    cancelarFiller();
-    if (fillerEmVoo) await (fillerEmVoo as Promise<unknown>).catch(() => undefined);
+    // Antes de qualquer bolha: para os que não saíram e espera os que saíram.
+    await espera.cancelar();
   }
 
   // PUBLICAÇÃO — só agora, e só do texto aprovado. As bolhas e o ritmo são os
