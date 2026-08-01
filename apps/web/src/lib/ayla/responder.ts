@@ -105,6 +105,14 @@ export type RespostaParams = {
   nomeMembro: string | null;
   idadeMembro?: number | null;
   perfilMembro?: string | null;
+  /**
+   * O que a família REGISTROU: diagnóstico confirmado × hipótese em investigação
+   * (bloco pronto de `lib/onboarding/diagnostico.ts`). Sem isto a Ayla só via o
+   * enum `perfil` e não distinguia "tem laudo de TEA" de "estão investigando
+   * TEA" — o que a levou a responder como se não houvesse nada registrado e a
+   * concluir por conta própria (01/08/2026).
+   */
+  diagnosticoRegistrado?: string | null;
   generoMembro?: Genero;
   koloVivoResumo: string;
   /** O que o perfil da criança já tem × o que falta, por domínio — pra a Ayla
@@ -281,6 +289,11 @@ export async function gerarRespostaAyla(
         `Concordância: o gênero de ${params.nomeMembro} não foi informado — refira-se pelo nome e evite "ele/ela" e "dele/dela". Se inevitável, use formas neutras.`,
       );
     }
+  }
+  // ANTES do perfil acumulado, de propósito: o que está oficialmente registrado
+  // enquadra a leitura de tudo o que vem depois.
+  if (params.diagnosticoRegistrado?.trim()) {
+    linhas.push(`\n${params.diagnosticoRegistrado.trim()}`);
   }
   if (params.koloVivoResumo.trim()) {
     linhas.push(

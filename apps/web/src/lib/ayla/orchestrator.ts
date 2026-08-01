@@ -17,6 +17,7 @@ import {
 import { detectarConflitoCrossCampo } from "./conflito-kolo-vivo";
 import { rotearFatoSubcampo } from "./incorporar-subcampo";
 import { gerarRespostaAyla, type RespostaParams } from "./responder";
+import { blocoDiagnosticoRegistrado } from "@/lib/onboarding/diagnostico";
 // CAMADA DE ENTREGA (ADR 0001). O orquestrador NAO fala com o WhatsApp: monta,
 // e a Publicacao entrega. `whatsappSender` nao e mais importado aqui.
 import { randomUUID } from "node:crypto";
@@ -1793,6 +1794,13 @@ export async function processInbound(
       nomeMembro,
       idadeMembro: idadeFoco,
       perfilMembro: membroFoco?.perfil ?? null,
+      diagnosticoRegistrado: membroFoco
+        ? blocoDiagnosticoRegistrado(
+            membroFoco.diagnosticos_formais,
+            membroFoco.perfil,
+            membroFoco.nome,
+          )
+        : null,
       generoMembro: membroFoco?.genero ?? null,
       koloVivoResumo,
       koloVivoLacunas,
@@ -2691,6 +2699,8 @@ type FamiliaEnvio = {
     data_nascimento: string | null;
     perfil: string | null;
     genero: "masculino" | "feminino" | "neutro" | null;
+    /** Confirmados + "Hipótese: X" — a distinção que a conversa não tinha. */
+    diagnosticos_formais?: unknown;
   }>;
 };
 
@@ -2711,7 +2721,7 @@ async function loadFamiliaParaEnvio(
       .maybeSingle(),
     supabase
       .from("membros_atipicos")
-      .select("id, nome, data_nascimento, perfil, genero")
+      .select("id, nome, data_nascimento, perfil, genero, diagnosticos_formais")
       .eq("family_account_id", familyAccountId)
       .eq("ativo", true)
       .order("created_at", { ascending: true }),

@@ -6,6 +6,7 @@
  */
 
 import { createServiceRoleClient } from "@/lib/supabase/server";
+import { acharConclusaoDiagnostica } from "@/lib/conducao/deteccao-diagnostico";
 
 export type ValidationResult =
   | { ok: true }
@@ -51,7 +52,13 @@ export function validateAntiCopy(
  * prescritivos. Quando aparecem, redirecionar pra profissional.
  */
 const TERMOS_CLINICOS_PRESCRITIVOS = [
-  /\bdiagnóstic[oa]\b/i,
+  // O substantivo `diagnóstico` SAIU desta lista de propósito (01/08/2026).
+  // Ele derrubava a frase honesta ("quem fecha um diagnóstico é o médico") e
+  // deixava passar a conclusão de verdade ("aponta com força pro autismo"),
+  // que não usa a palavra. O filtro estava selecionando CONTRA a segurança:
+  // regenerava pedindo "remova os termos clínicos" e o modelo devolvia a mesma
+  // conclusão, agora sem a ressalva. Quem cobre o dano é
+  // `validateAntiDiagnostico`, logo abaixo, que mede a CONCLUSÃO e não a palavra.
   /\bdiagnostiq[ue]/i,
   /\bprognóstico\b/i,
   /\btratamento\b/i,
@@ -76,6 +83,33 @@ export function validateAntiSubstituicaoProfissional(
     }
   }
   return { ok: true };
+}
+
+/**
+ * Anti-diagnóstico: a resposta está entregando uma CONCLUSÃO diagnóstica sobre
+ * a pessoa (afirmando, excluindo, graduando probabilidade ou nível de suporte,
+ * ou minimizando a relevância de um diagnóstico)?
+ *
+ * A regra de verdade mora no prompt (FRONTEIRA DO DIAGNÓSTICO, em
+ * `lib/conducao/diretrizes.ts`). Isto é a rede embaixo: quando dispara, a web
+ * regenera com a instrução de refazer sem concluir. Ver
+ * `lib/conducao/deteccao-diagnostico.ts` pro porquê de medir a forma da
+ * conclusão em vez do vocabulário clínico.
+ */
+export function validateAntiDiagnostico(resposta: string): ValidationResult {
+  const achados = acharConclusaoDiagnostica(resposta);
+  if (achados.length === 0) return { ok: true };
+  return {
+    ok: false,
+    motivo: `Conclusão diagnóstica detectada (${achados
+      .map((a) => a.codigo)
+      .join(", ")}): "${achados[0].trecho}"`,
+    sugestao:
+      "Refaça SEM concluir, sugerir, graduar ou excluir diagnóstico, e sem dizer que um diagnóstico muda pouco. " +
+      "Continue ajudando: nomeie os sinais que a família já observou, diga que comportamentos assim aparecem em " +
+      "perfis diferentes e têm outras explicações, organize o que falta observar e o que levar pra avaliação, e " +
+      "trabalhe a dificuldade concreta de hoje.",
+  };
 }
 
 /**
@@ -356,6 +390,7 @@ export async function runTomValidators(
     validateGlossarioRespeitado(resposta),
     validateAberturaEmpatica(resposta),
     validateAntiSubstituicaoProfissional(resposta),
+    validateAntiDiagnostico(resposta),
     validateAntiComparacao(resposta),
     validateAntiAlarme(resposta),
     validateNomeLimite(resposta, ctx.nomeCrianca ?? null),

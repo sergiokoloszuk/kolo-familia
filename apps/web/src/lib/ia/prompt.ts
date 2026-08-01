@@ -7,7 +7,7 @@ import { pronomesPara } from "@/lib/ayla/pronomes";
 // NÚCLEO DE CONDUÇÃO — fonte única compartilhada com a Ayla (WhatsApp):
 // identidade + norte, princípios, regra de sequência, exemplos, piso e tom.
 // Ver lib/conducao/diretrizes.ts. A mesma "cabeça" nos dois canais.
-import { nucleoConducao } from "@/lib/conducao/diretrizes";
+import { nucleoConducao, FRONTEIRA_DIAGNOSTICO } from "@/lib/conducao/diretrizes";
 import { blocoEventos, blocoExperimentos } from "@/lib/kolo-vivo/leitura";
 
 export type OutputTypeData = {
@@ -59,6 +59,19 @@ export const VOZ_E_LIMITES = `# Voz do produto (PRD §6)
 
 - Não copie literalmente texto das Boas Práticas — integre as ideias com suas próprias palavras.
 - Em caso de dúvida sobre risco real (auto-lesão, ideação suicida, abuso), responda APENAS: "Isso precisa de apoio profissional agora. Procure um profissional de saúde mental ou ligue para o CVV: 188." e pare.`;
+
+/**
+ * Voz + limites PARA OS CAMINHOS QUE NÃO CARREGAM O NÚCLEO DE CONDUÇÃO: os 7
+ * botões de apoio (`buildSystemTextOutputType`) e o gerador de plano
+ * (`lib/ia/plano.ts`). Esses dois montam o system a partir de `VOZ_E_LIMITES`
+ * sozinho — então a fronteira do diagnóstico, que mora no núcleo, não chegava
+ * neles. Eram os dois pontos mais fracos do produto, e são justamente os que
+ * produzem TEXTO LONGO E INDIVIDUALIZADO sobre uma criança específica.
+ *
+ * O modo conversa NÃO usa esta constante: lá a fronteira já vem por dentro do
+ * `nucleoConducao()`, e repetir só gastaria cache.
+ */
+export const VOZ_LIMITES_E_FRONTEIRA = `${VOZ_E_LIMITES}\n\n${FRONTEIRA_DIAGNOSTICO}`;
 
 /**
  * Bloco de comportamento por INTENÇÃO (Fase 2). Molda como a Kolo responde
@@ -150,7 +163,7 @@ function buildSystemTextOutputType(
 
 ${buildIdentityBlock(skills)}
 
-${VOZ_E_LIMITES}
+${VOZ_LIMITES_E_FRONTEIRA}
 
 # Formato da resposta — "${outputType.label}"
 
@@ -195,6 +208,13 @@ Pessoas atípicas cadastradas nesta família — você JÁ sabe quem são, a ida
 ${linhas.join("\n")}
 </familia_membros>`,
     );
+  }
+
+  // O que está REGISTRADO (confirmado × em investigação) vem antes do perfil:
+  // enquadra a leitura de tudo o que vem depois. Mesmo bloco que a Ayla recebe
+  // no WhatsApp — uma regra só, os dois canais.
+  if (ctx.membroFoco?.diagnosticoRegistrado) {
+    partes.push(ctx.membroFoco.diagnosticoRegistrado);
   }
 
   if (ctx.membroFoco) {
