@@ -443,7 +443,7 @@ async function gerarUmaVez(
   // A regra canônica mora no núcleo (TEMPO ATÉ A DIREÇÃO, em REGRA_SEQUENCIA).
   // Esta nota é só o lembrete no turno — não uma segunda versão da regra.
   notas.push(
-    `REGRA DESTE TURNO: no máximo UMA pergunta, e só se a resposta dela mudar o seu próximo passo. Se ela trouxe MAIS DE UMA dificuldade, não investigue duas ao mesmo tempo: organize o que ela trouxe, escolha UMA pra começar (dizendo por que aquela), dê uma direção prática JÁ nesta resposta e deixe as outras explicitamente pra depois.`,
+    `REGRA DESTE TURNO: a mãe tem que sair daqui com algo concreto. Se já existe uma primeira orientação SEGURA — algo que ajuda e não depende do que ela responder —, ENTREGUE agora; a pergunta vem junto ou depois. No máximo UMA pergunta, e só se a resposta MUDAR o seu próximo passo. Isto vale com UM problema só, não apenas quando ela traz vários. Se ela trouxe MAIS DE UMA dificuldade, não investigue duas ao mesmo tempo: organize o que ela trouxe, escolha UMA pra começar (dizendo por que aquela), dê a direção JÁ nesta resposta e deixe as outras explicitamente pra depois.`,
   );
 
   const acaoEntrega = params.decisaoEntrega?.acao ?? null;

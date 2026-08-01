@@ -218,15 +218,34 @@ const PADROES: ReadonlyArray<[string, RegExp]> = [
   ],
 
   // --- Minimizar a comorbidade (o "não muda quase nada") ---
-  // Ancorado no OBJETO. "um palpite meu não muda nada" — a Ayla explicando por
-  // que um chute é inútil — casava com o padrão solto e reprovava uma das
-  // melhores respostas da bancada. O que é proibido é minimizar o DIAGNÓSTICO.
+  // MINIMIZAR A RELEVÂNCIA DA INFORMAÇÃO DIAGNÓSTICA/CLÍNICA.
+  //
+  // Uma FORMA, com três encaixes, e não uma coleção de frases:
+  //
+  //   [informação diagnóstica] + [negação de impacto] + [conduta / o que se faz]
+  //
+  // Duas vezes em produção, com objetos diferentes e a mesma forma:
+  //   "se há TDAH junto, isso não muda quase NADA no que ajuda"        (o incidente)
+  //   "saber o grau ou se há outra condição não muda O QUE VOCÊ PODE FAZER"  (a bancada)
+  //
+  // O primeiro objeto estava coberto; o segundo não, e a rede não disparou. O
+  // que generaliza é a NEGAÇÃO DE IMPACTO ancorada na informação diagnóstica —
+  // o objeto vira opcional, porque "o diagnóstico não importa" já é a violação.
+  //
+  // O que NÃO é violação, e por isso não pode casar: dizer que dá pra começar a
+  // apoiar as dificuldades de hoje sem esperar o esclarecimento. Isso é
+  // afirmação positiva sobre o presente, não negação do valor do diagnóstico.
   [
     "minimiza_diagnostico",
     new RegExp(
-      `\\b(o |esse |um |ter um )?(diagnostico|laudo|rotulo|nome|saber se (ela|ele) tem|${COND})[^.!?]{0,40}\\b(nao (muda|faz|altera) (quase )?(nada|muita coisa|diferenca|tanta diferenca)|pouco importa)\\b` +
-        `|\\bo rotulo (nao )?(importa|muda)\\b` +
-        `|\\b(nao (muda|faz) (quase )?(nada|diferenca|tanta diferenca))\\b[^.!?]{0,30}(o |no )?(diagnostico|laudo|rotulo|tratamento|dia a dia)`,
+      // informação diagnóstica → negação de impacto
+      `\\b(o |esse |um |ter (um|o) |saber (o|se|qual)[^.!?]{0,25})?` +
+        `(diagnostico|laudo|rotulo|nome|grau|nivel de suporte|comorbidade|condicao associada|outra condicao|investigacao|o que (ela|ele) tem|${COND})` +
+        `[^.!?]{0,60}\\b(nao (muda|faz|altera|interfere|impacta|vai mudar)|pouco importa|nao importa|e indiferente|da no mesmo|tanto faz)\\b` +
+        // negação de impacto → conduta (a ordem inversa, que foi a da bancada)
+        `|\\b(nao (muda|faz|altera|vai mudar)|pouco importa|nao importa|da no mesmo|tanto faz)\\b[^.!?]{0,60}` +
+        `(o que (voce|a gente|se) (pode |vai )?(fazer|ajuda|muda)|a conduta|o tratamento|as estrategias|o apoio|o dia a dia|o que ajuda|nada (na|no) pratica)` +
+        `|\\bo rotulo (nao )?(importa|muda)\\b`,
     ),
   ],
 ];
