@@ -1763,44 +1763,81 @@ async function enviarRespostaEmChunks(
       (await ofertouPlanoRecente(supabase, args.family_account_id)));
   args.params.querPlano = querPlano;
 
-  // Resposta LENTA (pedido de plano): manda um balão breve de acolhimento na
-  // hora — o Z-API não deixa mostrar "digitando" sozinho, então o balãozinho
-  // (com delayTyping) enche o silêncio e mostra que a Ayla está com ela
-  // enquanto o plano é montado. Só no caso lento, pra não poluir trocas rápidas.
-  if (querPlano) {
-    const fillers = [
-      "Deixa eu pensar nisso com você 🌿 já já te respondo.",
-      "Tô aqui — me dá um segundinho pra montar isso direito 🌿",
-      "Boa. Deixa eu olhar isso com carinho, já te mando.",
-    ];
-    try {
-      await enviarTexto({
+  // BALÃO DE ESPERA. O Z-API não deixa mostrar "digitando" sozinho, então este
+  // balãozinho enche o silêncio e mostra que a Ayla está com ela.
+  //
+  // Antes só existia no pedido de plano. Desde 01/08/2026 a resposta comum
+  // também espera: a geração inteira acontece ANTES da primeira bolha, porque é
+  // esse instante que permite inspecionar o que vai sair (ver `responder.ts`).
+  //
+  // Por TEMPO, não por tipo de mensagem: um timer dispara o filler só se a
+  // geração passar de `MS_ATE_FILLER`. Resposta rápida nunca vê filler — era o
+  // risco de poluir trocas curtas. O timer é cancelado antes de publicar, então
+  // ele nunca cai no meio das bolhas.
+  //
+  // O filler NÃO é persistido (não vai pra `ayla_messages` nem `ayla_send_log`),
+  // então não vira fato da criança nem interfere em idempotência.
+  const MS_ATE_FILLER = 4000;
+  const fillersEspera = [
+    "Deixa eu pensar nisso com você 🌿",
+    "Tô aqui — me dá um segundinho.",
+    "Boa. Deixa eu olhar isso com carinho.",
+    "Já te respondo 🌿",
+    "Peraí que eu já volto com isso.",
+  ];
+  let timerFiller: ReturnType<typeof setTimeout> | null = null;
+  // Se o filler chegou a disparar, o envio dele pode estar EM VOO quando a
+  // geração termina — e aí o balãozinho chegaria depois da primeira bolha, fora
+  // de ordem. Guardamos a promessa pra esperar por ela antes de publicar.
+  let fillerEmVoo: Promise<unknown> | null = null;
+  const cancelarFiller = () => {
+    if (timerFiller) clearTimeout(timerFiller);
+    timerFiller = null;
+  };
+  {
+    // Varia por mensagem pra a família não ver a MESMA frase dezenas de vezes.
+    const i = Math.abs(hashSeed(args.params.mensagem)) % fillersEspera.length;
+    const atraso = querPlano ? 0 : MS_ATE_FILLER;
+    timerFiller = setTimeout(() => {
+      fillerEmVoo = enviarTexto({
         phoneE164: args.phone,
-        texto: fillers[args.params.mensagem.length % fillers.length],
-        delaySegundos: 2,
-      });
-    } catch {
-      /* filler nunca quebra a resposta */
-    }
+        texto: fillersEspera[i],
+        delaySegundos: 1,
+      }).catch(() => undefined);
+    }, atraso);
   }
 
-  let textoCompleto = await gerarRespostaAyla(
-    args.params,
-    async (par) => {
-      // "Digitando..." visível antes de cada bolha; tempo ~proporcional ao
-      // tamanho do trecho, pra parecer alguém escrevendo de verdade.
-      const delay = primeiro ? 2 : Math.min(Math.max(Math.round(par.length / 25), 2), 6);
-      primeiro = false;
-      try {
-        const r = await enviarTexto({ phoneE164: args.phone, texto: par, delaySegundos: delay });
-        providerResp = r.raw;
-        messageId = r.messageId;
-      } catch (e) {
-        erro = e instanceof Error ? e.message : "falha no envio";
-      }
-    },
-    { supabase, family_account_id: args.family_account_id, feature: "ayla_responder" },
-  );
+
+  // GERAÇÃO — buffer completo, com a rede da fronteira por dentro. Nada saiu
+  // para o WhatsApp até aqui.
+  let textoCompleto: string;
+  try {
+    textoCompleto = await gerarRespostaAyla(args.params, {
+      supabase,
+      family_account_id: args.family_account_id,
+      feature: "ayla_responder",
+    });
+  } finally {
+    // Antes de qualquer bolha: o filler não pode cair no meio da resposta.
+    cancelarFiller();
+    if (fillerEmVoo) await (fillerEmVoo as Promise<unknown>).catch(() => undefined);
+  }
+
+  // PUBLICAÇÃO — só agora, e só do texto aprovado. As bolhas e o ritmo são os
+  // mesmos de antes: o efeito "digitando" nunca veio do streaming, vem do
+  // delaySegundos por bolha.
+  for (const par of textoCompleto.split(/\n{2,}/).map((x) => x.trim()).filter(Boolean)) {
+    const delay = primeiro ? 2 : Math.min(Math.max(Math.round(par.length / 25), 2), 6);
+    primeiro = false;
+    try {
+      const r = await enviarTexto({ phoneE164: args.phone, texto: par, delaySegundos: delay });
+      providerResp = r.raw;
+      messageId = r.messageId;
+    } catch (e) {
+      erro = e instanceof Error ? e.message : "falha no envio";
+      break;
+    }
+  }
 
   const enviada = erro == null;
 

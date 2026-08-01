@@ -1,7 +1,12 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { getAylaAnthropicClient, AYLA_MODEL_FALLBACK } from "./anthropic";
 import { logarUsoApi } from "@/lib/billing/logar";
-import { logServerError } from "@/lib/log";
+import { logServerError, logEvent } from "@/lib/log";
+import { acharConclusaoDiagnostica } from "@/lib/conducao/deteccao-diagnostico";
+import {
+  instrucaoRegenerar,
+  respostaSeguraDeDiagnostico,
+} from "@/lib/conducao/recuperacao-diagnostico";
 import { pronomesPara, type Genero, type CuidadorDescrito } from "./pronomes";
 // NÚCLEO DE CONDUÇÃO — fonte única compartilhada com as Estratégias (web):
 // identidade + norte, princípios, regra de sequência, exemplos, piso e tom.
@@ -127,6 +132,12 @@ export type RespostaParams = {
   sinais: SinaisResposta;
   /** A pessoa pediu um plano explicitamente — não escreva o plano, ofereça. */
   querPlano?: boolean;
+  /**
+   * Preenchido SÓ na segunda passada, quando a primeira atravessou a fronteira
+   * do diagnóstico. Entra como nota interna — o mesmo mecanismo que o resto do
+   * turno usa, sem prompt paralelo.
+   */
+  regenerarPorDiagnostico?: string;
   precisaEscolherMembro?: { nomes: string[] } | null;
   /**
    * Magic links DIRETOS do Lúdico (só criança) — cada recurso abre já logado
@@ -178,14 +189,73 @@ async function baixarImagemBase64(
 }
 
 /**
- * Gera a resposta da Ayla. Se `onParagrafo` for passado, faz streaming e
- * dispara cada parágrafo assim que fica pronto (pra mandar no WhatsApp em
- * pedaços — efeito de "digitando", primeira parte chega rápido). Sempre
- * devolve o texto completo no fim (pra persistir uma vez só).
+ * Gera a resposta da Ayla e devolve o TEXTO COMPLETO — nada é publicado aqui.
+ *
+ * ⚠️ Até 01/08/2026 esta função recebia um `onParagrafo` e mandava cada
+ * parágrafo ao WhatsApp assim que fechava. Nunca existia um instante em que a
+ * resposta inteira estivesse em memória — e sem esse instante NÃO HÁ ONDE
+ * inspecionar o que vai sair. Foi por aí que uma mãe recebeu um diagnóstico
+ * informal da filha, em produção.
+ *
+ * O streaming continua, mas só INTERNO: monta o buffer. Quem publica é o
+ * orquestrador, DEPOIS da rede abaixo.
+ *
+ * O ritmo da conversa não muda: o efeito "digitando" nunca veio do streaming —
+ * vem do `delaySegundos` por bolha, que a publicação preserva.
  */
 export async function gerarRespostaAyla(
   params: RespostaParams,
-  onParagrafo?: (texto: string) => Promise<void>,
+  tracking?: UsageTracking,
+): Promise<string> {
+  const texto = await gerarUmaVez(params, tracking);
+
+  // ── REDE DA FRONTEIRA DO DIAGNÓSTICO ────────────────────────────────────
+  // Custo zero no caminho normal: o detector é regex sobre o texto que já está
+  // em memória. Só há segunda chamada quando vaza. UMA tentativa, e é um `if` —
+  // não um laço com contador, que é como loops de regeneração nascem.
+  const achados = acharConclusaoDiagnostica(texto);
+  if (achados.length === 0) return texto;
+
+  await logEvent({
+    kind: "ayla_fronteira_regenerou",
+    severity: "warn",
+    family_account_id: tracking?.family_account_id ?? null,
+    payload: { codigos: achados.map((a) => a.codigo), trecho: achados[0]?.trecho },
+  }).catch(() => {});
+
+  // Falha na regeneração NÃO pode deixar a original escapar: se a segunda
+  // chamada quebrar, cai no piso, nunca no texto que já foi reprovado.
+  let segunda: string;
+  try {
+    segunda = await gerarUmaVez(
+      { ...params, regenerarPorDiagnostico: instrucaoRegenerar(achados) },
+      tracking,
+    );
+  } catch {
+    segunda = "";
+  }
+
+  if (segunda && acharConclusaoDiagnostica(segunda).length === 0) return segunda;
+
+  // Falhou duas vezes. Aqui NÃO se publica a segunda "porque já tentamos" —
+  // seria publicar sabendo. Entra o piso: texto do repositório, que reconhece a
+  // pergunta, é honesto sobre o porquê e conduz pro próximo passo.
+  await logEvent({
+    kind: "ayla_fronteira_piso",
+    severity: "error",
+    family_account_id: tracking?.family_account_id ?? null,
+    payload: { codigos_1a: achados.map((a) => a.codigo) },
+  }).catch(() => {});
+
+  return respostaSeguraDeDiagnostico({
+    nomeCuidador: params.nomeMae,
+    nomeMembro: params.nomeMembro,
+  });
+}
+
+/** Uma passada pelo modelo. A rede acima decide se precisa de outra. */
+async function gerarUmaVez(
+  params: RespostaParams,
   tracking?: UsageTracking,
 ): Promise<string> {
   const client = getAylaAnthropicClient();
@@ -372,6 +442,11 @@ ${params.diagnosticoRegistrado.trim()}`);
       `RECURSOS DO LÚDICO: se ${params.nomeMae} pedir OU claramente se beneficiar — MESMO sem usar essas palavras — convide de leve. Não force nem ofereça se não vier a propósito.\n${partes.join("\n")}`,
     );
   }
+  // POR ÚLTIMO, de propósito: quando existe, esta nota manda em todas as
+  // outras. É o retorno de uma resposta que já foi barrada.
+  if (params.regenerarPorDiagnostico) {
+    notas.push(params.regenerarPorDiagnostico);
+  }
   if (notas.length > 0) {
     linhas.push(`\n<notas_internas>\n${notas.join("\n")}\n</notas_internas>`);
   }
@@ -406,7 +481,6 @@ Se for uma TAREFA da escola/terapia:
     }
   }
 
-  let enviouAlgo = false;
   try {
     // Uma retentativa curta antes de desistir. A falha aqui não é rara nem
     // inofensiva: quando o modelo falha, a mãe recebe o texto fixo do
@@ -421,52 +495,18 @@ Se for uma TAREFA da escola/terapia:
       }),
     );
 
-    if (!onParagrafo) {
-      const final = await stream.finalMessage();
-      if (tracking) {
-        await logarUsoApi(tracking.supabase, {
-          family_account_id: tracking.family_account_id,
-          provider: "anthropic",
-          model: AYLA_MODEL_FALLBACK,
-          feature: tracking.feature,
-          input_tokens: final.usage.input_tokens,
-          output_tokens: final.usage.output_tokens,
-        });
-      }
-      const txt = textoDe(final.content);
-      return txt || fallbackSimples(params);
-    }
-
-    // Streaming: manda cada parágrafo (separado por linha em branco) assim
-    // que ele fecha. A primeira parte chega bem mais rápido.
-    let buffer = "";
+    // Streaming INTERNO: consome os deltas só para montar o buffer. Nada sai
+    // daqui para o WhatsApp — quem publica é o orquestrador, e só depois da
+    // rede. Antes, cada parágrafo era enviado aqui dentro assim que fechava.
     let full = "";
     for await (const event of stream) {
-      if (
-        event.type === "content_block_delta" &&
-        event.delta.type === "text_delta"
-      ) {
-        buffer += event.delta.text;
+      if (event.type === "content_block_delta" && event.delta.type === "text_delta") {
         full += event.delta.text;
-        let idx: number;
-        while ((idx = buffer.indexOf("\n\n")) !== -1) {
-          const par = buffer.slice(0, idx).trim();
-          buffer = buffer.slice(idx + 2);
-          if (par) {
-            await onParagrafo(par);
-            enviouAlgo = true;
-          }
-        }
       }
     }
-    const resto = buffer.trim();
-    if (resto) {
-      await onParagrafo(resto);
-      enviouAlgo = true;
-    }
-    const fullTrim = full.trim();
+
+    const final = await stream.finalMessage();
     if (tracking) {
-      const final = await stream.finalMessage();
       await logarUsoApi(tracking.supabase, {
         family_account_id: tracking.family_account_id,
         provider: "anthropic",
@@ -476,33 +516,21 @@ Se for uma TAREFA da escola/terapia:
         output_tokens: final.usage.output_tokens,
       });
     }
-    if (!enviouAlgo) {
-      const fb = fallbackSimples(params);
-      await onParagrafo(fb);
-      return fb;
-    }
-    return fullTrim;
+
+    return full.trim() || textoDe(final.content) || fallbackSimples(params);
   } catch (e) {
     console.warn("[ayla:responder] falha do modelo:", e instanceof Error ? e.message : e);
     // PERSISTE. Antes isto era só console.warn — e por isso ninguém sabia que
-    // mães estavam recebendo o texto fixo do fallback no lugar da Ayla. Sai em
-    // eventos_app (severity error) e aparece na Observabilidade.
+    // mães estavam recebendo o texto fixo do fallback no lugar da Ayla.
     if (tracking) {
       await logServerError("ayla_responder_falhou", e, {
         family_account_id: tracking.family_account_id,
-        payload: { enviouAlgo, usouFallback: !enviouAlgo },
+        payload: { usouFallback: true },
       }).catch(() => {});
     }
-    const fb = fallbackSimples(params);
-    // Só manda o fallback se ainda não enviou nada (evita resposta partida).
-    if (onParagrafo && !enviouAlgo) {
-      try {
-        await onParagrafo(fb);
-      } catch {
-        /* não trava o fluxo */
-      }
-    }
-    return fb;
+    // Sem publicação aqui: nada foi enviado ainda, então não há resposta
+    // partida a evitar. Quem decide o que fazer com o fallback é quem publica.
+    return fallbackSimples(params);
   }
 }
 
