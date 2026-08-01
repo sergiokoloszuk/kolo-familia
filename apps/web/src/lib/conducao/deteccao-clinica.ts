@@ -54,7 +54,7 @@ const COND =
  */
 const RECUSA = new RegExp(
   "\\b(nao (consigo|posso|vou|da(ria)? (pra|para)|tenho como|sou eu que|cabe a mim)|eu nao sei|jamais|nunca)\\s+" +
-    "[^.!?]{0,25}(dizer|afirmar|concluir|garantir|saber|avaliar|indicar|receitar|prescrever|ajustar|mudar|mexer|decidir|estimar)" +
+    "[^.!?]{0,25}(dizer|afirmar|concluir|garantir|saber|avaliar|indicar|receitar|prescrever|ajustar|mudar|mexer|decidir|estimar|opinar|escolher|recomendar|validar)" +
     "|\\b(so|somente|apenas) (quem (prescreveu|receitou|acompanha|avalia)|um[a]? (medic|pediatra|neuro|psiquiatra|profissional))" +
     "|\\bquem (prescreveu|receitou|acompanha) (e |que )?(quem |e )?(decide|ajusta|muda|avalia|pode)",
 );
@@ -65,6 +65,34 @@ const CITACAO = new RegExp(
     "(sua|seu) (sogra|mae|pai|irma|marido)[^.!?]{0,20}(diz|disse|acha|falou)|" +
     "(o|a) (pediatra|medic[oa]|professora|neuro)[^.!?]{0,25}(disse|falou|mandou|orientou|indicou|receitou|acha))",
 );
+
+/**
+ * O ATO DE OPINAR sobre uma decisão — validar, escolher, tranquilizar, prever.
+ * Sozinho não quer dizer nada; só conta perto de um contexto de medicação.
+ */
+const ATO_DE_OPINIAO =
+  "\\b(faz sentido|boa (escolha|ideia)|e uma boa|e melhor|melhor opcao|e o ideal|" +
+  "eu daria|eu faria|pode dar|pode sim|vale dar|vale come[cç]ar|nao tem problema|" +
+  "e segur[oa]|tranquil[oa]|isso ajuda|vai ajudar|vai evitar|garante|" +
+  "se complementam|se sobrepoe|se sobrepoem|se anulam|pega o dia|dura o dia)\\b";
+
+/**
+ * CONTEXTO DE MEDICAÇÃO, SEM CATÁLOGO. Nomes de medicamento são infinitos e o
+ * catálogo foi vetado — então o contexto é reconhecido pelo ATO DE ADMINISTRAR
+ * (dar/tomar + horário, dias, "os dois", "junto") e pelos substantivos de
+ * esquema (horário, dose, posologia), além dos nomes que já estavam na lista.
+ *
+ * O verbo SOZINHO não basta, e é isso que separa "faz sentido dar os dois de
+ * manhã" (proibido) de "vale dar um tempinho pra ela se organizar" (normal): o
+ * qualificador de horário/dias é obrigatório.
+ */
+const QUANDO =
+  "(de manha|a noite|antes de dormir|no almoco|de tarde|de manhazinha|junto|juntos|" +
+  "os dois|as duas|nos dias|no fim de semana|domingo|segunda|em jejum|com comida)";
+
+const CONTEXTO_MED =
+  `(?:${REMEDIO}|\\b(horario|esquema|posologia)\\b|` +
+  `\\b(dar|daria|dou|dei|dava|tomar|toma|tomaria|administrar|usar|come[cç]ar|iniciar)\\b[^.!?]{0,25}\\b${QUANDO}\\b)`;
 
 const PADROES: ReadonlyArray<[string, RegExp]> = [
   // ---- 1. PRESCREVER ----
@@ -98,6 +126,37 @@ const PADROES: ReadonlyArray<[string, RegExp]> = [
   [
     "afirma_seguranca",
     new RegExp(`${REMEDIO}[^.!?]{0,25}\\b(e segur[oa]|nao faz mal|nao tem (efeito|risco|problema)|e tranquil[oa]|pode usar sem)\\b`),
+  ],
+
+  // ---- 1b. OPINAR SOBRE A DECISÃO (validar esquema, prever efeito) ----
+  //
+  // O vazamento de 01/08/2026 não foi prescrição: foi CONCORDÂNCIA. A mãe
+  // propôs o esquema e a Ayla respondeu "faz sentido dar os dois de manhã —
+  // assim o efeito de um e do outro se sobrepõem durante o dia e você evita
+  // agitação noturna". Nenhum verbo de mudança, nenhuma dose. Todos os padrões
+  // de prescrição passaram limpo.
+  //
+  // O que se mede aqui é o ATO DE OPINAR sobre uma decisão medicamentosa, em
+  // qualquer das suas formas: validar, escolher, prever efeito, tranquilizar.
+  //
+  // ANCORAGEM SEM CATÁLOGO: nomes de medicamento são infinitos e o catálogo foi
+  // vetado. Então o contexto de medicação é reconhecido pelo ATO DE ADMINISTRAR
+  // — dar/tomar + horário, dias, "os dois", "junto" — além dos nomes que já
+  // estavam na lista. É por isso que "faz sentido dar os dois de manhã" casa sem
+  // que "Concerta" ou "Atentah" precisem ser conhecidos.
+  [
+    "opina_sobre_medicacao",
+    new RegExp(
+      // ATO de opinar ... CONTEXTO de medicação  (ou o inverso)
+      `(?:${ATO_DE_OPINIAO}[^.!?]{0,70}${CONTEXTO_MED})` +
+        `|(?:${CONTEXTO_MED}[^.!?]{0,70}${ATO_DE_OPINIAO})` +
+        // Quando o próprio ATO já traz o verbo de administrar ("pode dar",
+        // "eu daria"), basta o qualificador de horário/dias em seguida —
+        // "pode dar só nos dias de aula", "eu daria de manhã mesmo".
+        `|(?:\\b(pode dar|vale dar|eu daria|eu faria|da (pra|para) dar|pode come[cç]ar|vale come[cç]ar)\\b[^.!?]{0,40}\\b${QUANDO}\\b)` +
+        // Previsão de efeito: é opinião farmacológica mesmo sem verbo de decisão.
+        `|${REMEDIO}[^.!?]{0,45}\\b(pega o dia|dura ate|cobre (o|a)|se sobrepoe|se complementa|evita (a )?(agitacao|insonia)|ajuda a dormir)\\b`,
+    ),
   ],
 
   // ---- 2. CONCLUIR CAUSA ----
