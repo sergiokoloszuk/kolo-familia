@@ -60,7 +60,7 @@ export type AchadoDiagnostico = { codigo: string; trecho: string };
  */
 const RECUSA = new RegExp(
   "\\b(nao (consigo|posso|vou|da(ria)? (pra|para)|tenho como)|eu nao sei|impossivel)\\s+" +
-    "(te )?(dizer|afirmar|concluir|garantir|falar|responder|saber|graduar|estimar|cravar|chutar|apostar)" +
+    "(te )?(dizer|afirmar|concluir|garantir|falar|responder|saber|graduar|estimar|cravar|chutar|apostar|separar|distinguir|diferenciar)" +
     // A mesma fronteira dita pelo outro lado: "só quem pode dizer se ela é
     // autista é um neuropediatra". Sem isto, a frase mais correta da resposta
     // era lida como afirmação de diagnóstico. Visto na bancada.
@@ -174,6 +174,36 @@ const PADROES: ReadonlyArray<[string, RegExp]> = [
   // Nenhum diagnóstico citado, e ainda assim é o perfil da criança comparado com
   // os contornos de duas condições. Ancorado no SUJEITO (o que ela relatou) pra
   // não pegar "vai além" em qualquer outro assunto.
+  // ATRIBUIÇÃO DIFERENCIAL — repartir o que a família relatou entre categorias
+  // diagnósticas ("vamos separar o que é do autismo e o que é outra coisa").
+  //
+  // Veio do caso real de produção (01/08). Não é uma frase a mais na coleção: é
+  // UM conceito, e é o núcleo do diferencial. Reparte-se sem afirmar nada, sem
+  // graduar e sem nomear conclusão — por isso nenhum padrão anterior pegava.
+  //
+  // NÃO foi acrescentado "pode coexistir com o autismo": isolada, essa frase é
+  // informação geral verdadeira, e proibi-la seria começar a colecionar frases.
+  // O que a tornou diagnóstica naquele caso foi o movimento seguinte, que é
+  // exatamente o que este padrão mede.
+  [
+    "atribuicao_diferencial",
+    new RegExp(
+      `\\b(separar|distinguir|diferenciar|entender|saber|descobrir|identificar)\\b[^.!?]{0,40}` +
+        `(o que e o que|o que e de que|o que vem de (onde|cada)|se e (o |do |da )?${COND}|` +
+        `se e (o )?perfil (do|da|de) ${COND}|` +
+        `(o )?(que|quanto) (e|vem) (do|da) ${COND})` +
+        `|\\b(o que e|quanto e|se e) (do|da) ${COND}[^.!?]{0,25}\\be o que e\\b` +
+        `|${COND}[^.!?]{0,30}\\bou (se (tem|ha)|se e) (algo|alguma coisa|outra coisa) (a mais|alem|diferente)\\b`,
+    ),
+  ],
+  // "O CÉREBRO AUTISTA TENDE A…" — explicar o funcionamento de UMA criança pela
+  // categoria. Construção única e específica, não um vocabulário: falar de
+  // "pessoas autistas" no geral continua permitido (é educação, e é desejada);
+  // atribuir a esta criança o comportamento de "o cérebro autista", não.
+  [
+    "cerebro_da_categoria",
+    new RegExp(`\\bo cerebro (autista|(do|de) (autista|tea|tdah)|(com )?(tdah|tea))\\b`),
+  ],
   [
     "encaixe",
     /\b(o que voce (me )?(contou|contava|descreveu|falou)|o que voce vem observando|o perfil (dela|dele)|os sinais que voce (viu|percebeu|descreveu)|esse conjunto)\b[^.!?]{0,90}(vai alem d[aeo]|nao e so (uma )?(questao|coisa|dificuldade) de|nao se limita a|nao se encaixa|se encaixa mais)/,

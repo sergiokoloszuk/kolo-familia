@@ -9,11 +9,7 @@ import { pronomesPara, type Genero, type CuidadorDescrito } from "./pronomes";
 // (formato e idioma). A identidade agora vive no CÓDIGO (não mais no banco
 // voz_ayla), o que elimina o drift banco×código.
 import { nucleoConducao } from "@/lib/conducao/diretrizes";
-import { acharConclusaoDiagnostica } from "@/lib/conducao/deteccao-diagnostico";
-import {
-  instrucaoRegenerar,
-  respostaSeguraDeDiagnostico,
-} from "@/lib/conducao/recuperacao-diagnostico";
+import { fronteiraAtravessada } from "@/lib/conducao/fronteiras";
 import { logEvent } from "@/lib/log";
 
 /**
@@ -263,40 +259,48 @@ export async function gerarRespostaAyla(
   //
   // UMA tentativa, e é um `if` — não um laço com contador, que é como loops de
   // regeneração nascem.
-  const achados = acharConclusaoDiagnostica(texto);
-  if (achados.length === 0) return texto;
+  const cruzou = fronteiraAtravessada(texto);
+  if (!cruzou) return texto;
 
   await logEvent({
-    kind: "ayla_fronteira_diagnostico_regenerou",
+    kind: "ayla_fronteira_regenerou",
     severity: "warn",
     family_account_id: tracking?.family_account_id ?? null,
-    payload: { codigos: achados.map((a) => a.codigo), trecho: achados[0]?.trecho },
+    payload: {
+      fronteira: cruzou.fronteira.nome,
+      codigos: cruzou.achados.map((a) => a.codigo),
+      trecho: cruzou.achados[0]?.trecho,
+    },
   }).catch(() => {});
 
   const segunda = await gerarUmaVez(
-    { ...params, regenerarPorDiagnostico: instrucaoRegenerar(achados) },
+    { ...params, regenerarPorDiagnostico: cruzou.fronteira.instrucao(cruzou.achados) },
     tracking,
   );
 
-  const aindaVaza = acharConclusaoDiagnostica(segunda);
-  if (aindaVaza.length === 0) return segunda;
+  const aindaVaza = fronteiraAtravessada(segunda);
+  if (!aindaVaza) return segunda;
 
   // Falhou duas vezes na mesma pergunta. Aqui NÃO se publica a segunda "porque
   // já tentamos" — seria publicar sabendo. Entra o piso: uma resposta que
   // reconhece a pergunta, é honesta sobre o porquê e conduz pro próximo passo.
   // Texto do repositório, então não pode atravessar a fronteira de novo.
   await logEvent({
-    kind: "ayla_fronteira_diagnostico_piso",
+    kind: "ayla_fronteira_piso",
     severity: "error",
     family_account_id: tracking?.family_account_id ?? null,
     payload: {
-      codigos_1a: achados.map((a) => a.codigo),
-      codigos_2a: aindaVaza.map((a) => a.codigo),
-      trecho_2a: aindaVaza[0]?.trecho,
+      fronteira_1a: cruzou.fronteira.nome,
+      codigos_1a: cruzou.achados.map((a) => a.codigo),
+      fronteira_2a: aindaVaza.fronteira.nome,
+      codigos_2a: aindaVaza.achados.map((a) => a.codigo),
+      trecho_2a: aindaVaza.achados[0]?.trecho,
     },
   }).catch(() => {});
 
-  return respostaSeguraDeDiagnostico({
+  // O piso é o da fronteira que a SEGUNDA resposta atravessou — pode não ser a
+  // mesma da primeira, e o que importa é onde ela está errando agora.
+  return aindaVaza.fronteira.piso({
     nomeCuidador: params.nomeMae,
     nomeMembro: params.nomeMembro,
   });
@@ -425,6 +429,23 @@ async function gerarUmaVez(
       `A mãe descreveu o comportamento como DESOBEDIÊNCIA/birra. NÃO valide esse enquadre (não diga "a desobediência", "ela não obedece"). No método Kolo, a criança não está "desobedecendo" — quase sempre está sobrecarregada, desregulada, com medo ou sem conseguir naquele momento. Reenquadre com gentileza e sem julgar a mãe: o que parece desobediência costuma ser o corpo pedindo socorro. O foco é entender o gatilho e co-regular JUNTO — nunca obediência, controle ou "fazer obedecer".`,
     );
   }
+  // REGRA DO TURNO — vale nos TRÊS ramos abaixo, e por isso vem antes deles.
+  //
+  // Até 01/08/2026 o limite duro de perguntas existia SÓ no ramo "perguntar"
+  // ("no MÁXIMO uma pergunta, nunca duas"). O ramo "conversar" — que é o padrão
+  // e o que roda numa mensagem comum — não tinha limite nenhum: sobrava a
+  // cláusula "no máximo UMA pergunta por vez" perdida dentro do FORMATO_WHATSAPP,
+  // um bloco de FORMATAÇÃO, competindo com um princípio que manda mapear o
+  // cenário inteiro. Foi assim que uma mãe trouxe TRÊS dificuldades
+  // (impulsividade, atenção, insegurança) e recebeu DUAS investigações
+  // simultâneas e nenhuma direção.
+  //
+  // A regra canônica mora no núcleo (TEMPO ATÉ A DIREÇÃO, em REGRA_SEQUENCIA).
+  // Esta nota é só o lembrete no turno — não uma segunda versão da regra.
+  notas.push(
+    `REGRA DESTE TURNO: no máximo UMA pergunta, e só se a resposta dela mudar o seu próximo passo. Se ela trouxe MAIS DE UMA dificuldade, não investigue duas ao mesmo tempo: organize o que ela trouxe, escolha UMA pra começar (dizendo por que aquela), dê uma direção prática JÁ nesta resposta e deixe as outras explicitamente pra depois.`,
+  );
+
   const acaoEntrega = params.decisaoEntrega?.acao ?? null;
   if (params.querPlano || acaoEntrega === "gerar") {
     notas.push(

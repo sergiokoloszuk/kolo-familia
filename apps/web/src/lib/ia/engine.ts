@@ -7,14 +7,14 @@ import { classificarIntencao, type Intencao } from "./intencao";
 // BIA — conhecimento de apoio. MESMO serviço que o WhatsApp usa.
 // Desligado por padrão (flag BIA_PROMPT_ENABLED): devolve "" e nada muda.
 import { carregarBlocoBia } from "@/lib/bia/contexto-ayla";
-import { acharConclusaoDiagnostica } from "@/lib/conducao/deteccao-diagnostico";
-import { respostaSeguraDeDiagnostico } from "@/lib/conducao/recuperacao-diagnostico";
+import { fronteiraAtravessada } from "@/lib/conducao/fronteiras";
 import { logEvent } from "@/lib/log";
 import {
   runTomValidators,
   runEstruturalValidators,
   validateAntiSubstituicaoProfissional,
   validateAntiDiagnostico,
+  validateAntiClinico,
   validateAntiComparacao,
   validateAntiAlarme,
   validateAntiCopy,
@@ -120,16 +120,21 @@ export async function respond(params: {
   // escolha certa: melhor um texto imperfeito que texto nenhum. Pra a fronteira
   // do diagnóstico, não: publicar seria publicar sabendo. Só esta classe cai
   // aqui; as outras seguem como sempre.
-  const vazamento = acharConclusaoDiagnostica(resposta.texto);
-  if (vazamento.length > 0) {
+  const vazamento = fronteiraAtravessada(resposta.texto);
+  if (vazamento) {
     await logEvent({
-      kind: "fronteira_diagnostico_piso_web",
+      kind: "fronteira_piso_web",
       severity: "error",
       family_account_id: familyId,
-      payload: { codigos: vazamento.map((v) => v.codigo), trecho: vazamento[0]?.trecho, regenerou },
+      payload: {
+        fronteira: vazamento.fronteira.nome,
+        codigos: vazamento.achados.map((v) => v.codigo),
+        trecho: vazamento.achados[0]?.trecho,
+        regenerou,
+      },
     }).catch(() => {});
     return {
-      texto: respostaSeguraDeDiagnostico({
+      texto: vazamento.fronteira.piso({
         nomeCuidador: ctx.cuidador?.nome ?? null,
         nomeMembro: ctx.membroFoco?.nome ?? null,
       }),
@@ -139,7 +144,7 @@ export async function respond(params: {
         display_name: r.skill.display_name,
         score: r.score,
       })),
-      validacao: { ok: false, motivo: "fronteira do diagnóstico — piso aplicado", regenerou },
+      validacao: { ok: false, motivo: `fronteira ${vazamento.fronteira.nome} — piso aplicado`, regenerou },
       uso: resposta.uso,
     };
   }
@@ -322,6 +327,7 @@ function runAllValidatorsExceptSize(
   for (const check of [
     () => validateAntiSubstituicaoProfissional(texto),
     () => validateAntiDiagnostico(texto),
+    () => validateAntiClinico(texto),
     () => validateAntiComparacao(texto),
     () => validateAntiAlarme(texto),
     () => validateAntiCopy(texto, bps),
