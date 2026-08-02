@@ -139,7 +139,8 @@ describe("família nova — a introdução ensina o território", () => {
   });
 
   it("delimita o território e pergunta por onde começar", () => {
-    expect(intro).toMatch(/Eu ajudo com isso no dia a dia/);
+    expect(intro).toMatch(/estratégias práticas/);
+    expect(intro).toMatch(/brincadeiras e atividades/);
     expect(intro).toMatch(/Por qual você quer começar\?/);
   });
 
@@ -153,8 +154,11 @@ describe("família nova — a introdução ensina o território", () => {
   });
 
   it("usa o nome da criança e concorda o gênero", () => {
-    expect(intro).toContain("do Théo");
+    // A abertura de 02/08 nomeia a criança na APRESENTAÇÃO ("com o Théo"), e
+    // não mais na frase dos desafios — que ficou mais limpa por isso.
+    expect(intro).toContain("com o Théo");
     expect(intro).toContain("pro Théo");
+    expect(intro).toContain("Eu sou a Ayla");
   });
 
   it("com um desafio só, a frase fica no singular", () => {
@@ -165,7 +169,7 @@ describe("família nova — a introdução ensina o território", () => {
       desafios: ["nutricional"],
     });
     expect(um).toContain("é a alimentação");
-    expect(um).toContain("da Lia");
+    expect(um).toContain("com a Lia");
   });
 
   it("o orquestrador manda a lista inteira, não o [0]", () => {

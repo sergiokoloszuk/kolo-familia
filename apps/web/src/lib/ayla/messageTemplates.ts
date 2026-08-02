@@ -196,15 +196,23 @@ export function templateBoasVindasComDesafio(params: {
   const nomeCurto = nomeUsavelCrianca(params.nomeMembro) ? primeiroNome(params.nomeMembro) : "";
   const artigo = params.genero === "feminino" ? "da" : "do";
   const generoDefinido = params.genero === "feminino" || params.genero === "masculino";
-  const ref = nomeCurto && generoDefinido ? ` ${artigo} ${nomeCurto}` : "";
+  const comCrianca = nomeCurto && generoDefinido ? ` com ${artigo === "da" ? "a" : "o"} ${nomeCurto}` : "";
   const dele = nomeCurto ? ` pro ${nomeCurto}` : "";
 
+  // O NOME DE QUEM FALA passa pelo mesmo detector do nome da criança. Em
+  // 02/08/2026 uma mãe escreveu a apresentação inteira no campo do nome e a
+  // primeira mensagem saiu "Oi, Meu Nome e Gisela Meu Filgo e Davi Ele e
+  // Autista 💛". Sem nome confiável a saudação funciona sem nome — nunca com
+  // o nome da criança no lugar.
+  const nomeQuemFala = nomeUsavelCrianca(params.nomeMae) ? primeiroNome(params.nomeMae) : "";
+  const saudacao = nomeQuemFala ? `Oi, ${nomeQuemFala}!` : "Oi!";
+
   return [
-    `Oi, ${params.nomeMae} 💛 Acabamos de nos conhecer aí no app.`,
+    `${saudacao} Eu sou a Ayla 💛 Estou aqui pra te ajudar nos desafios do dia a dia${comCrianca}.`,
     "",
-    `Pelo que você contou quando entrou, o que mais tem pesado${ref} ${varios ? "são" : "é"} ${frase}.`,
+    `Pelo que você contou quando entrou, o que mais tem pesado ${varios ? "são" : "é"} ${frase}.`,
     "",
-    `Eu ajudo com isso no dia a dia: o que fazer na hora, o que dizer, e atividades que façam sentido${dele}.`,
+    `Posso te ajudar com estratégias práticas, o que fazer e o que falar nas horas difíceis, e também com brincadeiras e atividades pra trabalhar essas habilidades de um jeito mais leve${dele}.`,
     "",
     `Por qual você quer começar? Me conta o que está acontecendo — pode mandar um *áudio*, do jeito que for mais fácil pra você. Com o que você me contar eu já te trago uma primeira ideia prática. 🌿`,
   ].join("\n");

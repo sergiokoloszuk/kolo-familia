@@ -34,6 +34,39 @@ export function nomeUsavelCrianca(nome: string | null | undefined): boolean {
   return motivoNomeNaoNome(nome) === null;
 }
 
+/**
+ * O mesmo detector, aplicado a QUEM CUIDA — `family_profiles.nome_mae` e
+ * `como_chamar`.
+ *
+ * Por que existe (caso real, 02/08/2026): uma mãe escreveu a apresentação
+ * inteira no campo do nome — "Meu Nome e Gisela Meu Filgo e Davi Ele e
+ * Autista" — e a primeira mensagem que ela recebeu começou exatamente assim,
+ * com a frase impressa crua no lugar do nome dela.
+ *
+ * O detector já pegava esse texto ("recado": 48 caracteres, 10 palavras, verbo
+ * em 1ª pessoa). Ele só nunca tinha sido ligado ao campo do cuidador — estava
+ * aplicado apenas ao nome da criança. Isto aqui é a fiação que faltava, e é de
+ * propósito o MESMO detector: um detector paralelo divergiria com o tempo.
+ *
+ * Quando devolve false, quem chama fala SEM nome. Nunca com o nome da criança
+ * no lugar — esse é o outro buraco, e ele é tratado no contexto do responder.
+ */
+export function nomeUsavelCuidador(nome: string | null | undefined): boolean {
+  return motivoNomeNaoNome(nome) === null;
+}
+
+/**
+ * O que a Ayla usa pra chamar quem cuida: o primeiro nome, se o campo for
+ * mesmo um nome. Caso contrário, string vazia — e as templates já sabem
+ * saudar sem nome ("Oi!" em vez de "Oi, !").
+ *
+ * É aqui que os dois funis do WhatsApp (`loadFamiliaParaEnvio` e a mensagem
+ * espontânea) filtram `como_chamar`/`nome_mae`, num lugar só.
+ */
+export function primeiroNomeConfiavel(nome: string | null | undefined): string {
+  return nomeUsavelCuidador(nome) ? primeiroNome(nome) : "";
+}
+
 export function motivoNomeNaoNome(nome: string | null | undefined): MotivoNomeNaoNome {
   const n = (nome ?? "").trim();
   if (!n) return "recado";

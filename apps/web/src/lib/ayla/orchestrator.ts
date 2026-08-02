@@ -55,6 +55,7 @@ import {
 } from "./rotina-guiada";
 import { classificarIntencao } from "./intent";
 import { dividirEmBolhas } from "./bolhas";
+import { primeiroNomeConfiavel } from "./crianca-nome";
 import { TEMAS } from "@/lib/conducao/temas";
 import { criarLinkAcesso, pedeAcessoAoApp } from "@/lib/auth/acesso-link";
 import {
@@ -2698,7 +2699,9 @@ async function loadFamiliaParaEnvio(
   return {
     family_account_id: familyAccountId,
     whatsapp_e164: family.whatsapp_e164,
-    nomeMae: profile?.como_chamar?.trim() || profile?.nome_mae?.trim() || "",
+    // Passa pelo detector: uma frase inteira no campo do nome ("Meu Nome e
+    // Gisela Meu Filgo e Davi Ele e Autista") vira "" e a Ayla fala sem nome.
+    nomeMae: primeiroNomeConfiavel(profile?.como_chamar) || primeiroNomeConfiavel(profile?.nome_mae),
     cuidador: descricaoCuidador({
       papel: (profile as { papel?: string | null } | null)?.papel ?? null,
       papelOutro: (profile as { papel_outro?: string | null } | null)?.papel_outro ?? null,
