@@ -276,9 +276,21 @@ describe("a fronteira clínica está no prompt dos dois canais", () => {
     expect(FRONTEIRA_CLINICA).toMatch(/a de CAUSA você não estabelece/);
   });
 
-  it("encaminhar não encerra a conversa", () => {
-    expect(FRONTEIRA_CLINICA).toMatch(/Encaminhar NÃO encerra a conversa/);
-    expect(FRONTEIRA_CLINICA).toMatch(/CONTINUE no seu território/);
+  it("a fronteira não encerra a condução: LIMITE → DIREÇÃO → AJUDA EXECUTÁVEL", () => {
+    expect(FRONTEIRA_CLINICA).toMatch(/LIMITE → DIREÇÃO → AJUDA EXECUTÁVEL/);
+    expect(FRONTEIRA_CLINICA).toMatch(/1\. LIMITE/);
+    expect(FRONTEIRA_CLINICA).toMatch(/2\. DIREÇÃO/);
+    expect(FRONTEIRA_CLINICA).toMatch(/3\. AJUDA EXECUTÁVEL/);
+  });
+
+  it("insistência não muda o limite, mas não pode virar só recusa", () => {
+    expect(FRONTEIRA_CLINICA).toMatch(/Insistência não muda o limite/);
+    expect(FRONTEIRA_CLINICA).toMatch(/repetir só a recusa é onde a conversa morre/);
+  });
+
+  it("o que ela coleta serve pro profissional, não pra refinar hipótese", () => {
+    expect(FRONTEIRA_CLINICA).toMatch(/ORGANIZAR O RELATO AO PROFISSIONAL/);
+    expect(FRONTEIRA_CLINICA).toMatch(/não cabe na mensagem que ela vai levar/);
   });
 
   it("bebê: mais cautela, NÃO mais avaliação — sem rastreio e sem marcos", () => {
