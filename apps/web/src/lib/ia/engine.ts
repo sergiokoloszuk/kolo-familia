@@ -2,12 +2,16 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { getAnthropicClient, MODELS } from "./anthropic";
 import { loadActiveSkills, routeSkillsAI, type RoutedSkill } from "./router";
 import { buildContext } from "./context";
+import { fronteiraAtravessada } from "@/lib/conducao/fronteiras";
+import { logEvent } from "@/lib/log";
 import { assemblePrompt, type Modo, type OutputTypeData } from "./prompt";
 import { classificarIntencao, type Intencao } from "./intencao";
 import {
   runTomValidators,
   runEstruturalValidators,
   validateAntiSubstituicaoProfissional,
+  validateAntiDiagnostico,
+  validateAntiClinico,
   validateAntiComparacao,
   validateAntiAlarme,
   validateAntiCopy,
@@ -88,6 +92,37 @@ export async function respond(params: {
       { intencao, regeneracao: { motivo: validacao.motivo, sugestao: validacao.sugestao } },
     );
     validacao = await runFullValidation(resposta.texto, ctx);
+  }
+
+  // MESMO PISO DO WHATSAPP. A web publicava a segunda tentativa fosse qual
+  // fosse — certo pra tom/tamanho/cópia (melhor texto imperfeito que nenhum),
+  // errado pras fronteiras: seria publicar sabendo.
+  const vazamento = fronteiraAtravessada(resposta.texto);
+  if (vazamento) {
+    await logEvent({
+      kind: "fronteira_piso_web",
+      severity: "error",
+      family_account_id: familyId,
+      payload: {
+        fronteira: vazamento.fronteira.nome,
+        codigos: vazamento.achados.map((v) => v.codigo),
+        regenerou,
+      },
+    }).catch(() => {});
+    return {
+      texto: vazamento.fronteira.piso({
+        nomeCuidador: ctx.cuidador?.nome ?? null,
+        nomeMembro: ctx.membroFoco?.nome ?? null,
+      }),
+      intencao,
+      skillsAcionadas: roteadas.map((r) => ({
+        name: r.skill.name,
+        display_name: r.skill.display_name,
+        score: r.score,
+      })),
+      validacao: { ok: false, motivo: `fronteira ${vazamento.fronteira.nome} — piso aplicado`, regenerou },
+      uso: resposta.uso,
+    };
   }
 
   return {
@@ -249,6 +284,8 @@ function runAllValidatorsExceptSize(
 ): ValidationResult {
   for (const check of [
     () => validateAntiSubstituicaoProfissional(texto),
+    () => validateAntiDiagnostico(texto),
+    () => validateAntiClinico(texto),
     () => validateAntiComparacao(texto),
     () => validateAntiAlarme(texto),
     () => validateAntiCopy(texto, bps),

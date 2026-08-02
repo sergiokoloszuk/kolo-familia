@@ -1,13 +1,23 @@
 import { getAylaAnthropicClient, AYLA_MODEL } from "./anthropic";
+import { CHAVES_TEMA } from "@/lib/conducao/temas";
 
 /**
- * Classificador de INTENÇÃO da Ayla — entende o que a mãe/pai quer, em vez de
- * casar palavras-chave (que sempre vaza: "vamos desenhar a rotina" ou "queria
- * organizar os dias dele" escapavam do regex). Roda no modelo leve (Haiku).
+ * Classificador do TURNO da Ayla — o que a mãe/pai quer (intenção) e sobre o
+ * que se está falando (tema), em vez de casar palavras-chave (que sempre vaza:
+ * "vamos desenhar a rotina" ou "queria organizar os dias dele" escapavam do
+ * regex). Roda no modelo leve (Haiku).
+ *
+ * O TEMA entrou aqui em 02/08/2026 e NÃO custou chamada nova: esta chamada já
+ * acontecia a cada mensagem. O que ela devolvia era uma palavra; agora devolve
+ * duas. É todo o "tema ativo" — sem tabela, sem coluna, sem migração.
  *
  * Usado como sinal PRIMÁRIO no roteamento do orchestrator; os `pede*` de regex
  * ficam como reforço (OR). Em falha, devolve "outro" e o regex decide.
  */
+
+/** O que o turno é (intenção) E sobre o que ele é (tema). */
+export type TurnoClassificado = { intencao: IntencaoAyla; tema: string | null };
+
 export type IntencaoAyla =
   | "rotina_criar" // montar/criar/desenhar/organizar uma rotina visual
   | "rotina_ver" // ver/trazer uma rotina já existente de um dia
@@ -17,7 +27,9 @@ export type IntencaoAyla =
 
 const SYSTEM = `Você classifica a INTENÇÃO da última mensagem de uma mãe/pai falando com a Ayla (assistente de famílias atípicas), no WhatsApp. Entenda a INTENÇÃO, não palavras exatas.
 
-Responda com UMA palavra só, minúscula, sem pontuação, uma destas:
+Responda em UMA linha, minúscula, no formato: intencao|tema
+
+A INTENÇÃO é uma destas:
 - rotina_criar: quer MONTAR / criar / desenhar / organizar uma rotina visual (de um dia ou da semana). Ex.: "quero uma rotina", "vamos desenhar a rotina do Davi", "me ajuda a organizar melhor os dias dele", "preciso de rotina visual", "poderia montar um quadro pra ele?".
 - rotina_ver: quer VER / que você TRAGA uma rotina JÁ montada de um dia. Ex.: "traz a rotina de hoje", "mostra a de terça", "me manda a rotina de amanhã".
 - rotina_editar: está PEDINDO pra você ajustar uma rotina que ela já montou. Ex.: "faltou o lanche na terça", "tira o vôlei da quarta", "muda a rotina de hoje".
@@ -30,20 +42,45 @@ Regras importantes:
 - Rotina aqui é só o QUADRO VISUAL de etapas. Falar da rotina da casa, do trabalho, da vida = outro.
 - Na dúvida entre uma intenção de rotina e outro, escolha outro: mexer na rotina dela sem ela pedir é pior do que deixar de mexer.
 - Na dúvida entre plano e outro, escolha outro.
-- Responda SÓ a palavra.`;
+- Responda SÓ a linha.
+
+O TEMA é o assunto do desenvolvimento sobre o qual se está falando. Use EXATAMENTE uma destas chaves, ou "-" se nenhuma servir:
+${CHAVES_TEMA.join(", ")}
+
+Regras do tema — errar aqui faz a Ayla perder o fio da conversa:
+- CONTINUIDADE MANDA. Se a mensagem segue o mesmo assunto, ou é curta/ambígua ("sim", "e aí?", "não deu certo", "e de manhã?"), REPITA o tema anterior. Não recomece.
+- Só troque quando ela REALMENTE abrir outro assunto do desenvolvimento.
+- Se ela acabou de ESCOLHER um tema (você ofereceu os desafios dela e ela respondeu "alimentação", "o sono", "vamos pelo foco"), esse é o tema.
+- Assunto que não é do desenvolvimento (preço, acesso ao app, saudação, o dia dela) → "-"; mas se havia tema anterior e isso foi só uma pausa, mantenha o anterior.
+- Nunca invente chave fora da lista.`;
 
 export async function classificarIntencao(params: {
   texto: string;
   /** Última fala da Ayla, se houver — ajuda a entender respostas curtas. */
   ultimaAyla?: string | null;
-}): Promise<IntencaoAyla> {
+  /** Fala anterior da mãe — dá o fio quando a mensagem de agora é curta. */
+  ultimaMae?: string | null;
+  /** Tema do turno anterior. É o que impede o classificador de recomeçar. */
+  temaAnterior?: string | null;
+  /** O que a família marcou no cadastro — o tema costuma nascer daqui. */
+  temasOnboarding?: string[];
+}): Promise<TurnoClassificado> {
   const texto = (params.texto ?? "").trim();
-  if (!texto) return "outro";
+  const anterior = params.temaAnterior ?? null;
+  // Sem texto não há o que classificar — mas o tema não se perde por isso.
+  if (!texto) return { intencao: "outro", tema: anterior };
   try {
     const user = [
+      params.temasOnboarding?.length
+        ? `(No cadastro esta família marcou: ${params.temasOnboarding.join(", ")})`
+        : "",
+      anterior
+        ? `(Tema do turno anterior: ${anterior} — mantenha se a conversa continuar nele)`
+        : "",
+      params.ultimaMae ? `(Antes ela tinha dito: "${params.ultimaMae.slice(0, 220)}")` : "",
       params.ultimaAyla ? `(A Ayla acabou de dizer: "${params.ultimaAyla.slice(0, 220)}")` : "",
       `Mensagem da mãe/pai: "${texto.slice(0, 500)}"`,
-      "Intenção:",
+      "Resposta:",
     ]
       .filter(Boolean)
       .join("\n");
@@ -51,21 +88,37 @@ export async function classificarIntencao(params: {
     const client = getAylaAnthropicClient();
     const resp = await client.messages.create({
       model: AYLA_MODEL,
-      max_tokens: 8,
+      max_tokens: 24,
       system: SYSTEM,
       messages: [{ role: "user", content: user }],
     });
     const b = resp.content[0];
     const raw = (b?.type === "text" ? b.text : "").toLowerCase();
 
+    const [ladoIntencao, ladoTema] = raw.split("|");
+    const i = ladoIntencao ?? raw;
+
     // Ordem importa: checar os específicos antes de "rotina" solto.
-    if (raw.includes("rotina_criar")) return "rotina_criar";
-    if (raw.includes("rotina_ver")) return "rotina_ver";
-    if (raw.includes("rotina_editar")) return "rotina_editar";
-    if (raw.includes("plano")) return "plano";
-    return "outro";
+    const intencao: IntencaoAyla = i.includes("rotina_criar")
+      ? "rotina_criar"
+      : i.includes("rotina_ver")
+        ? "rotina_ver"
+        : i.includes("rotina_editar")
+          ? "rotina_editar"
+          : i.includes("plano")
+            ? "plano"
+            : "outro";
+
+    // Só aceita chave do vocabulário. Fora da lista = como se não tivesse dito
+    // nada, e aí o tema anterior continua valendo: perder o fio é pior do que
+    // ficar um turno com o tema levemente atrasado.
+    const candidata = (ladoTema ?? "").trim().replace(/[^a-z_]/g, "");
+    const tema = CHAVES_TEMA.includes(candidata) ? candidata : anterior;
+
+    return { intencao, tema };
   } catch (e) {
     console.warn("[ayla:intent] classificação falhou:", e instanceof Error ? e.message : e);
-    return "outro"; // fallback seguro — o regex/reativo decide
+    // Fallback seguro: o regex/reativo decide a intenção, e o tema não se perde.
+    return { intencao: "outro", tema: anterior };
   }
 }

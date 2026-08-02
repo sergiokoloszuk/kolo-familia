@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { SkillRow } from "./router";
+import { blocoDiagnosticoRegistrado } from "@/lib/onboarding/diagnostico";
 import { idadeAnos } from "@/lib/idade";
 import { descricaoCuidador, type Genero } from "@/lib/ayla/pronomes";
 import { resumirComposicao } from "@/lib/familia/composicao";
@@ -68,6 +69,13 @@ export type ContextoSkillResposta = {
     idade: number | null;
     perfil: string;
     genero: Genero;
+    /**
+     * Diagnóstico CONFIRMADO x hipótese em investigação, como bloco pronto pro
+     * prompt (`lib/onboarding/diagnostico.ts`). `null` quando não há nada
+     * registrado. É a única coisa no contexto que separa "tem laudo de TEA" de
+     * "estão investigando TEA" — a conversa não tinha essa distinção.
+     */
+    diagnosticoRegistrado: string | null;
     secoes: Partial<Record<KoloVivoFieldMembro, string>>;
   } | null;
   /** Quem está falando (cuidador): nome + parentesco + gênero. */
@@ -156,7 +164,7 @@ export async function buildContext(
     membroAtipicoId
       ? supabase
           .from("membros_atipicos")
-          .select("id, nome, data_nascimento, perfil, genero")
+          .select("id, nome, data_nascimento, perfil, genero, diagnosticos_formais")
           .eq("id", membroAtipicoId)
           .maybeSingle()
       : Promise.resolve({ data: null }),
@@ -224,6 +232,13 @@ export async function buildContext(
         nome: (membroResult.data as { nome: string }).nome,
         idade: idadeAnos((membroResult.data as { data_nascimento: string | null }).data_nascimento),
         perfil: (membroResult.data as { perfil: string }).perfil,
+        // Confirmado x hipótese em investigação — mesma leitura da Ayla no
+        // WhatsApp. Sem isto, a web só via o enum `perfil`.
+        diagnosticoRegistrado: blocoDiagnosticoRegistrado(
+          (membroResult.data as { diagnosticos_formais?: unknown }).diagnosticos_formais,
+          (membroResult.data as { perfil: string }).perfil,
+          (membroResult.data as { nome: string }).nome,
+        ),
         genero: (membroResult.data as { genero: Genero }).genero ?? null,
         secoes: filterMembroSections(
           perfilMembroResult.data as Record<string, unknown> | null,

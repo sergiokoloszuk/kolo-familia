@@ -1,7 +1,8 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { getAylaAnthropicClient, AYLA_MODEL_FALLBACK } from "./anthropic";
 import { logarUsoApi } from "@/lib/billing/logar";
-import { logServerError } from "@/lib/log";
+import { logServerError, logEvent } from "@/lib/log";
+import { fronteiraAtravessada } from "@/lib/conducao/fronteiras";
 import { pronomesPara, type Genero, type CuidadorDescrito } from "./pronomes";
 // NÚCLEO DE CONDUÇÃO — fonte única compartilhada com as Estratégias (web):
 // identidade + norte, princípios, regra de sequência, exemplos, piso e tom.
@@ -9,6 +10,7 @@ import { pronomesPara, type Genero, type CuidadorDescrito } from "./pronomes";
 // (formato e idioma). A identidade agora vive no CÓDIGO (não mais no banco
 // voz_ayla), o que elimina o drift banco×código.
 import { nucleoConducao } from "@/lib/conducao/diretrizes";
+import { formasDeEntrega, INTERESSE_COMO_VEICULO } from "@/lib/conducao/formas";
 
 /**
  * Tracking opcional pra logar a chamada em api_calls. Quando ausente, a
@@ -38,7 +40,8 @@ export const FORMATO_WHATSAPP = `# Formato (WhatsApp)
 - Texto puro de WhatsApp: sem markdown (nada de **, ##, listas com - / •), sem aspas, sem rótulo, sem "Ayla:". Pra destacar uma palavra, *um asterisco só* (negrito do WhatsApp), com muita parcimônia.
 - Curto por padrão — 2 a 4 balões curtos — mas dê o espaço que a necessidade pedir: uma pergunta prática (comida, estratégia) merece 3-5 opções concretas; um desabafo, poucas linhas. No máximo UMA pergunta por vez.
 - Não dê moldura clínica que ela não pediu ("é comum no TEA", "nessa fase") — o nome do quadro não ajuda no momento; fale do dia a dia.
-- ROTINA VISUAL e PLANO completo têm fluxo próprio: NÃO monte a rotina nem escreva um plano passo a passo aqui no chat, e não invente horários. Quando a pessoa pedir, um fluxo guiado assume a rotina, e o plano completo vai em PDF/link.`;
+- ROTINA VISUAL e PLANO completo têm fluxo próprio, com cartões ilustrados e PDF: não é aqui que a rotina inteira da semana é montada. Mas SEMPRE responda a pergunta que ela fez — "que horário encaixo o iPad?", "como você faria a tarde?" — com o que você já sabe da sequência dela; PROPONHA o horário, diga em uma frase por que, e deixe claro que é sugestão e dá pra ajustar. Mandar ela esperar um fluxo em vez de responder é deixá-la sem nada. E o convite do fim é pelo que ela quer MUDAR ou pelo que ela vai reparar testando — NUNCA peça de novo o que já está no contexto ("me conta como é a tarde de vocês" depois de usar a tarde dela na resposta soa como quem não leu).
+- Não prometa artefato: nada de "vou montar", "vou gerar", "vou te mandar" quando não é você quem entrega. Ou já está feito, ou você diz o caminho.`;
 
 /**
  * Espelhamento de idioma. A Ayla responde SEMPRE na língua em que a mãe
@@ -100,11 +103,29 @@ export type SinaisResposta = {
 
 export type RespostaParams = {
   nomeMae: string;
+  /**
+   * Tema do turno (`lib/conducao/temas.ts`), vindo do classificador. Serve pra
+   * priorizar o que do perfil entra na resposta — não pra travar o assunto.
+   */
+  temaAtivo?: string | null;
+  /**
+   * O turno é uma ENTREGA (desafio/pedido de ajuda) ou uma conversa (desabafo,
+   * crise, pergunta pontual, saudação)? Decide se as formas de entrega entram.
+   */
+  intencao?: "plano" | "outro" | "rotina_criar" | "rotina_ver" | "rotina_editar";
   /** Vínculo + gênero do adulto responsável (mãe, pai, avó, tia...). */
   cuidador?: CuidadorDescrito;
   nomeMembro: string | null;
   idadeMembro?: number | null;
   perfilMembro?: string | null;
+  /**
+   * O que a família REGISTROU: diagnóstico confirmado × hipótese em investigação
+   * (bloco pronto de `lib/onboarding/diagnostico.ts`). Sem isto a Ayla só via o
+   * enum `perfil` e não distinguia "tem laudo de TEA" de "estão investigando
+   * TEA" — o que a levou a responder como se não houvesse nada registrado e a
+   * concluir por conta própria (01/08/2026).
+   */
+  diagnosticoRegistrado?: string | null;
   generoMembro?: Genero;
   koloVivoResumo: string;
   /** O que o perfil da criança já tem × o que falta, por domínio — pra a Ayla
@@ -119,6 +140,12 @@ export type RespostaParams = {
   sinais: SinaisResposta;
   /** A pessoa pediu um plano explicitamente — não escreva o plano, ofereça. */
   querPlano?: boolean;
+  /**
+   * Preenchido SÓ na segunda passada, quando a primeira atravessou a fronteira
+   * do diagnóstico. Entra como nota interna — o mesmo mecanismo que o resto do
+   * turno usa, sem prompt paralelo.
+   */
+  regenerarPorDiagnostico?: string;
   precisaEscolherMembro?: { nomes: string[] } | null;
   /**
    * Magic links DIRETOS do Lúdico (só criança) — cada recurso abre já logado
@@ -170,31 +197,143 @@ async function baixarImagemBase64(
 }
 
 /**
- * Gera a resposta da Ayla. Se `onParagrafo` for passado, faz streaming e
- * dispara cada parágrafo assim que fica pronto (pra mandar no WhatsApp em
- * pedaços — efeito de "digitando", primeira parte chega rápido). Sempre
- * devolve o texto completo no fim (pra persistir uma vez só).
+ * Gera a resposta da Ayla e devolve o TEXTO COMPLETO — nada é publicado aqui.
+ *
+ * ⚠️ Até 01/08/2026 esta função recebia um `onParagrafo` e mandava cada
+ * parágrafo ao WhatsApp assim que fechava. Nunca existia um instante em que a
+ * resposta inteira estivesse em memória — e sem esse instante NÃO HÁ ONDE
+ * inspecionar o que vai sair. Foi por aí que uma mãe recebeu um diagnóstico
+ * informal da filha, em produção.
+ *
+ * O streaming continua, mas só INTERNO: monta o buffer. Quem publica é o
+ * orquestrador, DEPOIS da rede abaixo.
+ *
+ * O ritmo da conversa não muda: o efeito "digitando" nunca veio do streaming —
+ * vem do `delaySegundos` por bolha, que a publicação preserva.
  */
 export async function gerarRespostaAyla(
   params: RespostaParams,
-  onParagrafo?: (texto: string) => Promise<void>,
+  tracking?: UsageTracking,
+): Promise<string> {
+  const texto = await gerarUmaVez(params, tracking);
+
+  // ── REDE DA FRONTEIRA DO DIAGNÓSTICO ────────────────────────────────────
+  // Custo zero no caminho normal: o detector é regex sobre o texto que já está
+  // em memória. Só há segunda chamada quando vaza. UMA tentativa, e é um `if` —
+  // não um laço com contador, que é como loops de regeneração nascem.
+  const cruzou = fronteiraAtravessada(texto);
+  if (!cruzou) return texto;
+
+  await logEvent({
+    kind: "ayla_fronteira_regenerou",
+    severity: "warn",
+    family_account_id: tracking?.family_account_id ?? null,
+    payload: {
+      fronteira: cruzou.fronteira.nome,
+      codigos: cruzou.achados.map((a) => a.codigo),
+      trecho: cruzou.achados[0]?.trecho,
+    },
+  }).catch(() => {});
+
+  // Falha na regeneração NÃO pode deixar a original escapar: se a segunda
+  // chamada quebrar, cai no piso, nunca no texto que já foi reprovado.
+  let segunda: string;
+  try {
+    segunda = await gerarUmaVez(
+      { ...params, regenerarPorDiagnostico: cruzou.fronteira.instrucao(cruzou.achados) },
+      tracking,
+    );
+  } catch {
+    segunda = "";
+  }
+
+  const aindaVaza = segunda ? fronteiraAtravessada(segunda) : null;
+  if (segunda && !aindaVaza) return segunda;
+
+  // Falhou duas vezes. Aqui NÃO se publica a segunda "porque já tentamos" —
+  // seria publicar sabendo. Entra o piso: texto do repositório, que reconhece a
+  // pergunta, é honesto sobre o porquê e conduz pro próximo passo.
+  await logEvent({
+    kind: "ayla_fronteira_piso",
+    severity: "error",
+    family_account_id: tracking?.family_account_id ?? null,
+    payload: {
+      fronteira: (aindaVaza ?? cruzou).fronteira.nome,
+      codigos_1a: cruzou.achados.map((a) => a.codigo),
+    },
+  }).catch(() => {});
+
+  return (aindaVaza ?? cruzou).fronteira.piso({
+    nomeCuidador: params.nomeMae,
+    nomeMembro: params.nomeMembro,
+  });
+}
+
+/**
+ * ESTE TURNO PEDE BLOCOS?
+ *
+ * A regra é conservadora de propósito: na dúvida, texto corrido. Uma resposta
+ * boa em prosa nunca incomodou ninguém; um título em cima de um desabafo, sim.
+ *
+ * Fica FORA (texto corrido):
+ *   - desabafo e crise — o sinal `emocao_mae` sem desafio, ou o piso de crise;
+ *   - pergunta pontual — sem desafio detectado e sem pedido de plano;
+ *   - o pedido explícito de plano — ali a resposta é curta e o plano vai no PDF;
+ *   - a segunda passada da rede de fronteiras — regenerar já tem instrução
+ *     própria, e somar formato por cima é competir com ela.
+ *
+ * Fica DENTRO: desafio do dia a dia, que é onde a entrega organizada ajuda.
+ */
+export function ehEntrega(params: RespostaParams): boolean {
+  if (params.regenerarPorDiagnostico) return false;
+  if (params.querPlano) return false;
+  if (params.precisaEscolherMembro) return false;
+  return Boolean(params.sinais?.desafio);
+}
+
+/** Uma passada pelo modelo. A rede acima decide se precisa de outra. */
+async function gerarUmaVez(
+  params: RespostaParams,
   tracking?: UsageTracking,
 ): Promise<string> {
   const client = getAylaAnthropicClient();
-  const system =
-    nucleoConducao() + "\n\n" + FORMATO_WHATSAPP + "\n\n" + DIRETRIZ_IDIOMA;
+  // FORMAS DE ENTREGA — condicional, nunca sempre. Um desabafo com títulos em
+  // negrito é frieza, e uma pergunta pontual com quatro blocos é ruído. Só
+  // entra quando o turno é de fato uma entrega (ver `ehEntrega`).
+  const entrega = ehEntrega(params);
+  const system = [
+    nucleoConducao(),
+    FORMATO_WHATSAPP,
+    ...(entrega
+      ? [formasDeEntrega({ canal: "whatsapp", tema: params.temaAtivo }), INTERESSE_COMO_VEICULO]
+      : []),
+    DIRETRIZ_IDIOMA,
+  ].join("\n\n");
 
   const linhas: string[] = [];
   const relacao = params.cuidador?.relacao;
   const refMembro = params.nomeMembro ?? "quem está em foco";
+  // NOME DE QUEM FALA. Quando `family_profiles.como_chamar` e `nome_mae` estão
+  // vazios, `nomeMae` cai pra "" — e esta linha saía truncada, com vírgula solta
+  // e sem nome: "Você está falando com , mãe de Iasmin." O modelo preenchia o
+  // buraco com o único nome disponível no contexto, o da CRIANÇA, e a mãe recebia
+  // "Oi, Maria Yasmin!" seguido de "sua filha Iasmin" (caso real, 02/08/2026).
+  //
+  // A correção é não emitir a frase com buraco: dizer que o nome é desconhecido
+  // é informação, "" é convite a inventar. `limparNomeAusente` já existia pra
+  // esta classe de cicatriz, mas só roda nas proativas — o reativo não passa
+  // por ele, e de todo jeito ele limparia a vírgula, não o nome inventado.
+  const nomeDeQuemFala = params.nomeMae?.trim() ?? "";
   linhas.push(
-    `Você está falando com ${params.nomeMae}${relacao ? `, ${relacao} de ${refMembro}` : ""}.`,
+    nomeDeQuemFala
+      ? `Você está falando com ${nomeDeQuemFala}${relacao ? `, ${relacao} de ${refMembro}` : ""}.`
+      : `Você NÃO sabe o nome de quem está falando com você${relacao ? ` — só que é ${relacao} de ${refMembro}` : ""}. NÃO invente um nome, NÃO deduza pelo áudio ou pelo texto, e NUNCA use o nome da criança pra se dirigir a quem cuida. Fale sem vocativo ("oi", "tudo bem?") até que ela se apresente.`,
   );
   if (params.cuidador) {
     const pc = pronomesPara(params.cuidador.genero);
     if (pc.generoDefinido) {
       linhas.push(
-        `Trate ${params.nomeMae} no ${
+        `Trate ${nomeDeQuemFala || "quem fala com você"} no ${
           params.cuidador.genero === "feminino" ? "feminino" : "masculino"
         } (ex.: "${
           params.cuidador.genero === "feminino" ? "bem-vinda" : "bem-vindo"
@@ -234,6 +373,12 @@ export async function gerarRespostaAyla(
       );
     }
   }
+  // ANTES do perfil acumulado, de propósito: o que está oficialmente registrado
+  // enquadra a leitura de tudo o que vem depois.
+  if (params.diagnosticoRegistrado?.trim()) {
+    linhas.push(`
+${params.diagnosticoRegistrado.trim()}`);
+  }
   if (params.koloVivoResumo.trim()) {
     linhas.push(
       `\n<o_que_ja_sabemos_da_crianca>\n${params.koloVivoResumo}\n</o_que_ja_sabemos_da_crianca>\n(Isto é FUNDO acumulado ao longo do tempo e pode estar DESATUALIZADO: um interesse ou um passeio/evento listado aqui pode já ter passado. NÃO trate como o que está acontecendo agora, e NÃO puxe um interesse/evento daqui por conta própria — use só quando ajudar DE VERDADE o que está sendo falado agora.)`,
@@ -272,6 +417,22 @@ export async function gerarRespostaAyla(
       `A mãe descreveu o comportamento como DESOBEDIÊNCIA/birra. NÃO valide esse enquadre (não diga "a desobediência", "ela não obedece"). No método Kolo, a criança não está "desobedecendo" — quase sempre está sobrecarregada, desregulada, com medo ou sem conseguir naquele momento. Reenquadre com gentileza e sem julgar a mãe: o que parece desobediência costuma ser o corpo pedindo socorro. O foco é entender o gatilho e co-regular JUNTO — nunca obediência, controle ou "fazer obedecer".`,
     );
   }
+  // REGRA DO TURNO — vale nos TRÊS ramos abaixo, e por isso vem antes deles.
+  //
+  // Até 01/08/2026 o limite duro de perguntas existia SÓ no ramo "perguntar".
+  // O ramo padrão — o que roda numa mensagem comum — não tinha limite nenhum:
+  // sobrava a cláusula "no máximo UMA pergunta por vez" perdida dentro do
+  // FORMATO_WHATSAPP, um bloco de FORMATAÇÃO, competindo com um princípio que
+  // manda mapear o cenário inteiro. Foi assim que uma mãe trouxe TRÊS
+  // dificuldades (impulsividade, atenção, insegurança) e recebeu DUAS
+  // investigações simultâneas e nenhuma direção.
+  //
+  // A regra canônica mora no núcleo (TEMPO ATÉ A DIREÇÃO, em REGRA_SEQUENCIA).
+  // Esta nota é só o lembrete no turno — não uma segunda versão da regra.
+  notas.push(
+    `REGRA DESTE TURNO: a mãe tem que sair daqui com algo concreto. Se já existe uma primeira orientação SEGURA — algo que ajuda e não depende do que ela responder —, ENTREGUE agora; a pergunta vem junto ou depois. No máximo UMA pergunta, e só se a resposta MUDAR o seu próximo passo. Isto vale com UM problema só, não apenas quando ela traz vários. Se ela trouxe MAIS DE UMA dificuldade, não investigue duas ao mesmo tempo: organize o que ela trouxe, escolha UMA pra começar (dizendo por que aquela), dê a direção JÁ nesta resposta e deixe as outras explicitamente pra depois.`,
+  );
+
   if (params.querPlano) {
     notas.push(
       `A pessoa está PEDINDO um plano (um roteiro / passo a passo). MUITO IMPORTANTE: NÃO escreva o plano aqui no WhatsApp — nada de passos numerados, listas longas, seções ou plano completo no chat. Responda em 1 ou 2 frases curtas, com carinho, dizendo que você já está montando o plano estratégico com as atividades e vai mandar agora — em PDF e com um link pra abrir no app. Se for a primeira vez que ela recebe um, acrescente que já está incluído, sem custo. No máximo UMA dica curtinha; o plano de verdade vai no PDF/link, não no chat.`,
@@ -358,6 +519,11 @@ export async function gerarRespostaAyla(
       `RECURSOS DO LÚDICO: se ${params.nomeMae} pedir OU claramente se beneficiar — MESMO sem usar essas palavras — convide de leve. Não force nem ofereça se não vier a propósito.\n${partes.join("\n")}`,
     );
   }
+  // POR ÚLTIMO, de propósito: quando existe, esta nota manda em todas as
+  // outras. É o retorno de uma resposta que já foi barrada.
+  if (params.regenerarPorDiagnostico) {
+    notas.push(params.regenerarPorDiagnostico);
+  }
   if (notas.length > 0) {
     linhas.push(`\n<notas_internas>\n${notas.join("\n")}\n</notas_internas>`);
   }
@@ -392,7 +558,6 @@ Se for uma TAREFA da escola/terapia:
     }
   }
 
-  let enviouAlgo = false;
   try {
     // Uma retentativa curta antes de desistir. A falha aqui não é rara nem
     // inofensiva: quando o modelo falha, a mãe recebe o texto fixo do
@@ -407,52 +572,18 @@ Se for uma TAREFA da escola/terapia:
       }),
     );
 
-    if (!onParagrafo) {
-      const final = await stream.finalMessage();
-      if (tracking) {
-        await logarUsoApi(tracking.supabase, {
-          family_account_id: tracking.family_account_id,
-          provider: "anthropic",
-          model: AYLA_MODEL_FALLBACK,
-          feature: tracking.feature,
-          input_tokens: final.usage.input_tokens,
-          output_tokens: final.usage.output_tokens,
-        });
-      }
-      const txt = textoDe(final.content);
-      return txt || fallbackSimples(params);
-    }
-
-    // Streaming: manda cada parágrafo (separado por linha em branco) assim
-    // que ele fecha. A primeira parte chega bem mais rápido.
-    let buffer = "";
+    // Streaming INTERNO: consome os deltas só para montar o buffer. Nada sai
+    // daqui para o WhatsApp — quem publica é o orquestrador, e só depois da
+    // rede. Antes, cada parágrafo era enviado aqui dentro assim que fechava.
     let full = "";
     for await (const event of stream) {
-      if (
-        event.type === "content_block_delta" &&
-        event.delta.type === "text_delta"
-      ) {
-        buffer += event.delta.text;
+      if (event.type === "content_block_delta" && event.delta.type === "text_delta") {
         full += event.delta.text;
-        let idx: number;
-        while ((idx = buffer.indexOf("\n\n")) !== -1) {
-          const par = buffer.slice(0, idx).trim();
-          buffer = buffer.slice(idx + 2);
-          if (par) {
-            await onParagrafo(par);
-            enviouAlgo = true;
-          }
-        }
       }
     }
-    const resto = buffer.trim();
-    if (resto) {
-      await onParagrafo(resto);
-      enviouAlgo = true;
-    }
-    const fullTrim = full.trim();
+
+    const final = await stream.finalMessage();
     if (tracking) {
-      const final = await stream.finalMessage();
       await logarUsoApi(tracking.supabase, {
         family_account_id: tracking.family_account_id,
         provider: "anthropic",
@@ -462,33 +593,21 @@ Se for uma TAREFA da escola/terapia:
         output_tokens: final.usage.output_tokens,
       });
     }
-    if (!enviouAlgo) {
-      const fb = fallbackSimples(params);
-      await onParagrafo(fb);
-      return fb;
-    }
-    return fullTrim;
+
+    return full.trim() || textoDe(final.content) || fallbackSimples(params);
   } catch (e) {
     console.warn("[ayla:responder] falha do modelo:", e instanceof Error ? e.message : e);
     // PERSISTE. Antes isto era só console.warn — e por isso ninguém sabia que
-    // mães estavam recebendo o texto fixo do fallback no lugar da Ayla. Sai em
-    // eventos_app (severity error) e aparece na Observabilidade.
+    // mães estavam recebendo o texto fixo do fallback no lugar da Ayla.
     if (tracking) {
       await logServerError("ayla_responder_falhou", e, {
         family_account_id: tracking.family_account_id,
-        payload: { enviouAlgo, usouFallback: !enviouAlgo },
+        payload: { usouFallback: true },
       }).catch(() => {});
     }
-    const fb = fallbackSimples(params);
-    // Só manda o fallback se ainda não enviou nada (evita resposta partida).
-    if (onParagrafo && !enviouAlgo) {
-      try {
-        await onParagrafo(fb);
-      } catch {
-        /* não trava o fluxo */
-      }
-    }
-    return fb;
+    // Sem publicação aqui: nada foi enviado ainda, então não há resposta
+    // partida a evitar. Quem decide o que fazer com o fallback é quem publica.
+    return fallbackSimples(params);
   }
 }
 

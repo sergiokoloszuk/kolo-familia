@@ -12,6 +12,7 @@ import { idadeAnos } from "@/lib/idade";
 import { primeiroNome } from "@/lib/nome";
 import { gerarMagicLink } from "./ponte";
 import { carregarCadenciaMap } from "@/lib/crm/ayla-cadencia";
+import { primeiroNomeConfiavel } from "./crianca-nome";
 
 const MS_DIA = 86_400_000;
 
@@ -207,8 +208,10 @@ async function loadContext(
   const foco = membros.find((m) => m.id === membroFocoId);
   if (!foco) return null;
 
+  // Mesmo detector do orquestrador: nome que nao e nome vira "" (a template
+  // ja sabe saudar sem nome), nunca uma frase impressa crua.
   const nomeMae =
-    profile?.como_chamar?.trim() || profile?.nome_mae?.trim() || "";
+    primeiroNomeConfiavel(profile?.como_chamar) || primeiroNomeConfiavel(profile?.nome_mae);
   const p = pronomesPara(foco.genero as Genero);
   const gapsAbertos = GAPS_KV.filter((g) => {
     const sec = (kv as Record<string, { texto?: string } | null> | null)?.[g.campo];

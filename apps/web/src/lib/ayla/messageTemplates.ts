@@ -11,6 +11,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { pronomesVars, type Genero } from "./pronomes";
 import { nomeUsavelCrianca, primeiroNome } from "./crianca-especifica";
+import { fraseDoTema, listarTemas } from "@/lib/conducao/temas";
 
 type TemplateVars = Record<string, string | number | undefined>;
 
@@ -157,43 +158,64 @@ export async function templateBoasVindas(
   return fill(pickVariation(variations, params.seed), vars);
 }
 
-/** Desafio (domínio) → frase natural pra a boas-vindas. */
-const DESAFIO_FRASE: Record<string, string> = {
-  comunicacao: "a comunicação",
-  sono: "o sono",
-  foco: "o foco",
-  nutricional: "a alimentação",
-  socializacao: "a socialização",
-  emocional: "as emoções e as crises",
-  escola: "a escola",
-  autonomia: "a autonomia",
-  rotina: "a rotina e as transições",
-  sensorial: "a parte sensorial",
-  motor: "a parte motora",
-};
-
 /**
- * Boas-vindas PERSONALIZADA: puxa continuidade ("acabamos de nos conhecer no
- * app"), cita o DESAFIO que a pessoa marcou no cadastro, faz UMA pergunta fácil
- * e oferece áudio — o que mais aumenta a chance de ela responder no WhatsApp e
- * cair no fluxo do plano guiado. Sem desafio marcado → cai na template comum.
+ * A PRIMEIRA MENSAGEM — e é ela que ensina a família a usar a Ayla.
+ *
+ * Até 02/08/2026 esta template citava UM desafio (o `[0]` da lista) e fazia uma
+ * pergunta. Funcionava como isca, mas não ensinava nada: a mãe não ficava
+ * sabendo em que a Ayla ajuda, e chegava perguntando de remédio, de amamentação
+ * e de assunto aleatório — porque "uma IA no WhatsApp" não tem território
+ * visível.
+ *
+ * Agora a abertura faz cinco coisas, nesta ordem, e nada além disso:
+ *   1. reconhece que já conheceu um pouco da criança (continuidade);
+ *   2. devolve os desafios que A PRÓPRIA FAMÍLIA marcou — até três, com as
+ *      palavras dela. NÃO é inferência da Ayla, e o texto diz isso;
+ *   3. explica em uma frase o TIPO de ajuda (não o catálogo inteiro);
+ *   4. pergunta por qual começar — e a resposta vira o tema ativo;
+ *   5. convida a contar, por áudio ou texto, prometendo uma primeira ideia
+ *      prática — não um questionário.
+ *
+ * O que ela NÃO faz: listar recursos ("tenho planos, rotinas, relatórios,
+ * histórias"), prometer artefato, nem pedir dado nenhum.
  */
 export function templateBoasVindasComDesafio(params: {
   nomeMae: string;
   nomeMembro: string;
   genero: Genero;
-  desafio: string;
+  /** A lista INTEIRA que a família marcou. Até 3 entram na mensagem. */
+  desafios: string[];
 }): string {
-  const frase = DESAFIO_FRASE[params.desafio] ?? "esse ponto que você marcou";
+  const lista = listarTemas(params.desafios, 3);
+  const frase = lista || fraseDoTema(params.desafios[0] ?? "");
+  const varios = params.desafios.filter((d) => fraseDoTema(d) !== fraseDoTema("")).length > 1;
+
   // Só cita a criança quando o nome É nome (o campo aceita recado) e com o
   // primeiro nome. Sem isso a frase sai "a comunicação da Cuido de Várias
   // Crianças. Sou Terapeuta! tem pesado" — foi o que aconteceu em 25/07.
   const nomeCurto = nomeUsavelCrianca(params.nomeMembro) ? primeiroNome(params.nomeMembro) : "";
-  const ref =
-    nomeCurto && (params.genero === "feminino" || params.genero === "masculino")
-      ? ` ${params.genero === "feminino" ? "da" : "do"} ${nomeCurto}`
-      : "";
-  return `Oi, ${params.nomeMae} 💛 Acabamos de nos conhecer aí no app. Vi que ${frase}${ref} tem pesado no dia a dia — me conta rapidinho como está sendo? Pode mandar um *áudio*, do jeito que for mais fácil pra você. Com o que você contar, eu já começo a pensar numa primeira ideia pra vocês. 🌿`;
+  const artigo = params.genero === "feminino" ? "da" : "do";
+  const generoDefinido = params.genero === "feminino" || params.genero === "masculino";
+  const comCrianca = nomeCurto && generoDefinido ? ` com ${artigo === "da" ? "a" : "o"} ${nomeCurto}` : "";
+  const dele = nomeCurto ? ` pro ${nomeCurto}` : "";
+
+  // O NOME DE QUEM FALA passa pelo mesmo detector do nome da criança. Em
+  // 02/08/2026 uma mãe escreveu a apresentação inteira no campo do nome e a
+  // primeira mensagem saiu "Oi, Meu Nome e Gisela Meu Filgo e Davi Ele e
+  // Autista 💛". Sem nome confiável a saudação funciona sem nome — nunca com
+  // o nome da criança no lugar.
+  const nomeQuemFala = nomeUsavelCrianca(params.nomeMae) ? primeiroNome(params.nomeMae) : "";
+  const saudacao = nomeQuemFala ? `Oi, ${nomeQuemFala}!` : "Oi!";
+
+  return [
+    `${saudacao} Eu sou a Ayla 💛 Estou aqui pra te ajudar nos desafios do dia a dia${comCrianca}.`,
+    "",
+    `Pelo que você contou quando entrou, o que mais tem pesado ${varios ? "são" : "é"} ${frase}.`,
+    "",
+    `Posso te ajudar com estratégias práticas, o que fazer e o que falar nas horas difíceis, e também com brincadeiras e atividades pra trabalhar essas habilidades de um jeito mais leve${dele}.`,
+    "",
+    `Por qual você quer começar? Me conta o que está acontecendo — pode mandar um *áudio*, do jeito que for mais fácil pra você. Com o que você me contar eu já te trago uma primeira ideia prática. 🌿`,
+  ].join("\n");
 }
 
 // ============================================================

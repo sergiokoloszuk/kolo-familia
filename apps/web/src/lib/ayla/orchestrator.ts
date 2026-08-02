@@ -17,6 +17,10 @@ import {
 import { detectarConflitoCrossCampo } from "./conflito-kolo-vivo";
 import { rotearFatoSubcampo } from "./incorporar-subcampo";
 import { gerarRespostaAyla, type RespostaParams } from "./responder";
+import { blocoDiagnosticoRegistrado } from "@/lib/onboarding/diagnostico";
+import { reservarEnvioProativo, proativaIsentaDeCadencia } from "./cadencia";
+import { agendarEspera } from "./espera";
+import { logEvent, logServerError } from "@/lib/log";
 import { descricaoCuidador, type CuidadorDescrito, type Genero } from "./pronomes";
 import { gerarSugestaoRepertorio } from "./repertorio";
 import { decidirDedup } from "./dedup-kolo-vivo";
@@ -50,6 +54,9 @@ import {
   editarRotina,
 } from "./rotina-guiada";
 import { classificarIntencao } from "./intent";
+import { dividirEmBolhas } from "./bolhas";
+import { primeiroNomeConfiavel } from "./crianca-nome";
+import { TEMAS } from "@/lib/conducao/temas";
 import { criarLinkAcesso, pedeAcessoAoApp } from "@/lib/auth/acesso-link";
 import {
   criancaPendente,
@@ -131,25 +138,16 @@ export async function sendBoasVindas(
   // Desafio que a pessoa marcou no cadastro → boas-vindas PERSONALIZADA (cita o
   // problema + pergunta fácil + oferece áudio), pra puxar a resposta no WhatsApp
   // e cair no plano guiado. Sem desafio → template comum.
-  let desafioTop: string | null = null;
-  try {
-    const { data: pv } = await supabase
-      .from("perfil_vivo_membro")
-      .select("categorias_extras")
-      .eq("membro_atipico_id", membroFoco.id)
-      .maybeSingle();
-    const extras = pv?.categorias_extras as { desafios_onboarding?: string[] } | null;
-    desafioTop = extras?.desafios_onboarding?.[0] ?? null;
-  } catch {
-    /* sem desafio, usa a template comum */
-  }
+  // A lista INTEIRA. Antes era so o [0]: a familia marcava tres coisas e a Ayla
+  // se apresentava falando de uma - parecia que nao tinha lido o cadastro.
+  const desafios = await carregarDesafiosOnboarding(supabase, membroFoco.id);
 
-  const texto = desafioTop
+  const texto = desafios.length
     ? templateBoasVindasComDesafio({
         nomeMae: ctx.nomeMae,
         nomeMembro: membroFoco.nome,
         genero: membroFoco.genero,
-        desafio: desafioTop,
+        desafios,
       })
     : await templateBoasVindas(supabase, {
         nomeMae: ctx.nomeMae,
@@ -1063,6 +1061,24 @@ async function carregarLacunasKoloVivo(
       (temConteudo(v) ? preenchidos : faltando).push(MEMBRO_CAMPO_LABEL[campo] ?? campo);
     }
     const partes: string[] = [];
+
+    // OS DESAFIOS QUE A FAMÍLIA MARCOU NO CADASTRO — a lista INTEIRA.
+    // Antes, `desafios_onboarding` só era lido no [0], e só pra escolher a
+    // template de boas-vindas: o resto do que ela contou no cadastro nunca
+    // chegava à conversa. A Ayla re-perguntava o que já sabia.
+    //
+    // Isto é RELATO da família, não diagnóstico e não conclusão da Ayla — o
+    // rótulo abaixo diz isso ao modelo, porque a fronteira diagnóstica vale
+    // igual: saber que a mãe marcou "sono" não autoriza afirmar nada.
+    const desafios = Array.isArray(extras.desafios_onboarding)
+      ? (extras.desafios_onboarding as unknown[]).map(String).filter(Boolean)
+      : [];
+    if (desafios.length) {
+      partes.push(
+        `NO CADASTRO A FAMÍLIA MARCOU estes desafios (relato dela, NÃO diagnóstico e NÃO conclusão sua): ${desafios.join(", ")} — use pra entender o contexto e pra NÃO re-perguntar; não force o assunto se ela trouxe outro`,
+      );
+    }
+
     if (preenchidos.length) partes.push(`JÁ TEM no perfil: ${preenchidos.join(", ")}`);
     if (faltando.length) partes.push(`AINDA FALTA (pergunte só se vier a propósito): ${faltando.join(", ")}`);
     return partes.join(". ");
@@ -1120,6 +1136,69 @@ async function alertarNaoTitular(
   }
 }
 
+/**
+ * BUSCA A FAMÍLIA PELO TELEFONE — e distingue os três desfechos que antes eram um só.
+ *
+ * O bug (02/08/2026): a consulta ignorava o `error`. Com o banco instável, `data`
+ * vinha `undefined`, virava `[]`, e o chamador concluía "número não cadastrado"
+ * para um número que ESTÁ cadastrado. Falha de infraestrutura virava classificação
+ * de negócio. O telefone nunca foi o problema: `chaveTelefoneBR` é simétrica e a
+ * família casa (verificado em produção, 76 famílias, zero colisão de chave).
+ *
+ * ⚠️ LACUNA DE PRODUTO, consciente: quando isto devolve `erro`, A MENSAGEM DA
+ * FAMÍLIA SE PERDE. Não existe fila durável nem reprocessamento de inbound. E não
+ * dá para pedir reentrega à Z-API: o webhook responde 200 dentro de `after()`,
+ * ANTES deste código rodar (`app/api/ayla/webhook/route.ts`) — de propósito, porque
+ * responder devagar fazia a Z-API reenviar e duplicar respostas. Mudar isso é
+ * redesenho, não conserto. Enquanto não houver fila, o melhor possível é o
+ * incidente ficar registrado em vez de virar silêncio inexplicado.
+ *
+ * 💸 DÍVIDA TÉCNICA: carregar TODAS as famílias para achar uma por telefone não
+ * escala. Hoje são 76 e o custo é irrelevante; o teto do PostgREST corta em 1000
+ * por padrão, e acima disso famílias ficariam invisíveis EM SILÊNCIO — a mesma
+ * classe de falha do incidente Thamires. O limite abaixo é explícito e avisa ao
+ * encostar. O desenho certo é buscar pelo registro/candidatos de telefone em vez
+ * de varrer a tabela; não foi feito agora para não mudar a semântica do casamento.
+ */
+export const LIMITE_FAMILIAS = 2000;
+
+export type BuscaFamilia =
+  | { tipo: "erro"; erro: string }
+  | {
+      tipo: "ok";
+      familia: { id: string; whatsapp_e164: string } | null;
+      total: number;
+      truncou: boolean;
+    };
+
+export async function encontrarFamiliaPorTelefone(
+  supabase: SupabaseClient,
+  phoneE164: string,
+): Promise<BuscaFamilia> {
+  const chave = chaveTelefoneBR(phoneE164);
+  const { data, error } = await supabase
+    .from("family_accounts")
+    .select("id, whatsapp_e164")
+    .not("whatsapp_e164", "is", null)
+    .limit(LIMITE_FAMILIAS);
+
+  // O `error` é a única coisa que distingue "banco falhou" de "ninguém casa".
+  if (error) return { tipo: "erro", erro: error.message || "erro desconhecido" };
+  // Sem erro e sem data é resposta malformada — tratar como falha, não como vazio.
+  if (!data) return { tipo: "erro", erro: "consulta sem erro e sem dados" };
+
+  const linhas = data as Array<{ id: string; whatsapp_e164: string }>;
+  const familia =
+    linhas.find((f) => chaveTelefoneBR(f.whatsapp_e164) === chave) ?? null;
+
+  return {
+    tipo: "ok",
+    familia,
+    total: linhas.length,
+    truncou: linhas.length >= LIMITE_FAMILIAS,
+  };
+}
+
 export async function processInbound(
   supabase: SupabaseClient,
   inboundRecebido: InboundWhatsApp,
@@ -1132,15 +1211,36 @@ export async function processInbound(
   // pegadinha do 9º dígito + variações de formato/país). Comparamos por
   // uma chave normalizada em vez de igualdade exata.
   const chaveIn = chaveTelefoneBR(inbound.phoneE164);
-  const { data: familias } = await supabase
-    .from("family_accounts")
-    .select("id, whatsapp_e164")
-    .not("whatsapp_e164", "is", null);
-  const family = (familias ?? []).find(
-    (f) => chaveTelefoneBR(f.whatsapp_e164 as string) === chaveIn,
-  );
+  const busca = await encontrarFamiliaPorTelefone(supabase, inbound.phoneE164);
+
+  if (busca.tipo === "erro") {
+    // FALHA DE BANCO — NÃO é "número não cadastrado". Antes o `error` da consulta
+    // era descartado: `data` vinha undefined, virava [], o find não achava nada e
+    // o código concluía que a pessoa não era cadastrada. Uma instabilidade de
+    // banco ficava indistinguível de um desconhecido — foi o que aconteceu em
+    // 02/08/2026, com 47s entre o parse e o "não cadastrado", num número que ESTÁ
+    // cadastrado. O log agora é inequívoco e a família não é reclassificada.
+    console.error(
+      `[ayla] FALHA AO CONSULTAR FAMÍLIAS (não é número desconhecido): ${busca.erro} | telefone=${inbound.phoneE164} chave=${chaveIn}`,
+    );
+    await logServerError("ayla_lookup_familia_falhou", new Error(busca.erro), {
+      family_account_id: null,
+      payload: { telefone: inbound.phoneE164, chave: chaveIn, texto: inbound.texto.slice(0, 120) },
+    }).catch(() => {});
+    // ⚠️ A MENSAGEM SE PERDE, e isto é uma lacuna conhecida — ver a nota sobre
+    // reentrega em `encontrarFamiliaPorTelefone`. Não há como pedir retry daqui.
+    return { tratada: false };
+  }
+
+  if (busca.truncou) {
+    console.error(
+      `[ayla] LIMITE DE FAMÍLIAS ATINGIDO (${busca.total}) — buscas podem falhar em silêncio. Ver dívida técnica em encontrarFamiliaPorTelefone.`,
+    );
+  }
+
+  const family = busca.familia;
   if (!family) {
-    // Número não reconhecido — loga pra dar pra diagnosticar (antes sumia).
+    // Aqui sim: a consulta funcionou e nenhuma família casa com este número.
     console.warn(
       `[ayla] inbound de número não cadastrado: ${inbound.phoneE164} (chave ${chaveIn})`,
     );
@@ -1398,16 +1498,30 @@ export async function processInbound(
     }
   }
 
-  // INTENÇÃO por IA (entende o que a mãe quer, não só palavra-chave). Sinal
-  // PRIMÁRIO do roteamento abaixo; os `pede*` de regex ficam como reforço (OR).
-  // Só roda aqui (mensagem livre que precisa de rumo) — comandos/registro já
-  // trataram antes. Se uma conversa de rotina está em curso, nem precisa (o
-  // estado `rotinaConversa` conduz).
-  const intent = rotinaConversa ? "outro" : await classificarIntencao({ texto: inbound.texto });
-
   // Criança que a conversa trata AGORA (2+ filhos) — pra rotina/plano seguirem
   // o filho certo e não caírem no membros[0] (bug Manu→Mario).
   const membroConversa = await criancaDaConversa(supabase, family.id);
+
+  // INTENÇÃO + TEMA por IA (entende o que a mãe quer e sobre o que, não só
+  // palavra-chave). Sinal PRIMÁRIO do roteamento abaixo; os `pede*` de regex
+  // ficam como reforço (OR). Só roda aqui (mensagem livre que precisa de rumo)
+  // — comandos/registro já trataram antes. Se uma conversa de rotina está em
+  // curso, nem precisa (o estado `rotinaConversa` conduz).
+  //
+  // CONTINUIDADE DO TEMA sem persistir nada: o carregador do tema é a própria
+  // conversa. As duas últimas falas dizem em que assunto vocês estavam, e os
+  // desafios do cadastro dizem de onde ele provavelmente nasceu. Foi a decisão
+  // consciente de 02/08 — sem coluna, sem migração; se a derivação se mostrar
+  // insuficiente no uso real, aí se discute persistir, com evidência.
+  const turnoClassificado = rotinaConversa
+    ? { intencao: "outro" as const, tema: null }
+    : await classificarIntencao({
+        texto: inbound.texto,
+        ...(await ultimasFalas(supabase, family.id, inbound.texto)),
+        temasOnboarding: await carregarDesafiosOnboarding(supabase, membroConversa),
+      });
+  const intent = turnoClassificado.intencao;
+  const temaAtivo = turnoClassificado.tema;
 
   // 3c-rotina-ver. "Traga a rotina de hoje/terça" — só quando NÃO está montando
   // uma agora (senão o pedido é parte da conversa). Acha o dia, gera se faltar e
@@ -1683,7 +1797,16 @@ export async function processInbound(
       nomeMembro,
       idadeMembro: idadeFoco,
       perfilMembro: membroFoco?.perfil ?? null,
+      diagnosticoRegistrado: membroFoco
+        ? blocoDiagnosticoRegistrado(
+            membroFoco.diagnosticos_formais,
+            membroFoco.perfil,
+            membroFoco.nome,
+          )
+        : null,
       generoMembro: membroFoco?.genero ?? null,
+      temaAtivo,
+      intencao: intent,
       koloVivoResumo,
       koloVivoLacunas,
       estrategiasRecentes,
@@ -1755,44 +1878,42 @@ async function enviarRespostaEmChunks(
       (await ofertouPlanoRecente(supabase, args.family_account_id)));
   args.params.querPlano = querPlano;
 
-  // Resposta LENTA (pedido de plano): manda um balão breve de acolhimento na
-  // hora — o Z-API não deixa mostrar "digitando" sozinho, então o balãozinho
-  // (com delayTyping) enche o silêncio e mostra que a Ayla está com ela
-  // enquanto o plano é montado. Só no caso lento, pra não poluir trocas rápidas.
-  if (querPlano) {
-    const fillers = [
-      "Deixa eu pensar nisso com você 🌿 já já te respondo.",
-      "Tô aqui — me dá um segundinho pra montar isso direito 🌿",
-      "Boa. Deixa eu olhar isso com carinho, já te mando.",
-    ];
-    try {
-      await enviarTexto({
-        phoneE164: args.phone,
-        texto: fillers[args.params.mensagem.length % fillers.length],
-        delaySegundos: 2,
-      });
-    } catch {
-      /* filler nunca quebra a resposta */
-    }
+  // BALÃO DE ESPERA — ver lib/ayla/espera.ts pra os tempos e o porquê de serem
+  // dois. Nada aqui é persistido; a resposta real nunca espera pelo balão.
+  const espera = agendarEspera({
+    enviar: (texto) => enviarTexto({ phoneE164: args.phone, texto, delaySegundos: 1 }),
+    mensagem: args.params.mensagem,
+  });
+
+  // GERAÇÃO — buffer completo, com a rede da fronteira por dentro. Nada saiu
+  // para o WhatsApp até aqui.
+  let textoCompleto: string;
+  try {
+    textoCompleto = await gerarRespostaAyla(args.params, {
+      supabase,
+      family_account_id: args.family_account_id,
+      feature: "ayla_responder",
+    });
+  } finally {
+    // Antes de qualquer bolha: para os que não saíram e espera os que saíram.
+    await espera.cancelar();
   }
 
-  let textoCompleto = await gerarRespostaAyla(
-    args.params,
-    async (par) => {
-      // "Digitando..." visível antes de cada bolha; tempo ~proporcional ao
-      // tamanho do trecho, pra parecer alguém escrevendo de verdade.
-      const delay = primeiro ? 2 : Math.min(Math.max(Math.round(par.length / 25), 2), 6);
-      primeiro = false;
-      try {
-        const r = await enviarTexto({ phoneE164: args.phone, texto: par, delaySegundos: delay });
-        providerResp = r.raw;
-        messageId = r.messageId;
-      } catch (e) {
-        erro = e instanceof Error ? e.message : "falha no envio";
-      }
-    },
-    { supabase, family_account_id: args.family_account_id, feature: "ayla_responder" },
-  );
+  // PUBLICAÇÃO — só agora, e só do texto aprovado. As bolhas e o ritmo são os
+  // mesmos de antes: o efeito "digitando" nunca veio do streaming, vem do
+  // delaySegundos por bolha.
+  for (const par of dividirEmBolhas(textoCompleto)) {
+    const delay = primeiro ? 2 : Math.min(Math.max(Math.round(par.length / 25), 2), 6);
+    primeiro = false;
+    try {
+      const r = await enviarTexto({ phoneE164: args.phone, texto: par, delaySegundos: delay });
+      providerResp = r.raw;
+      messageId = r.messageId;
+    } catch (e) {
+      erro = e instanceof Error ? e.message : "falha no envio";
+      break;
+    }
+  }
 
   const enviada = erro == null;
 
@@ -2546,6 +2667,8 @@ type FamiliaEnvio = {
     data_nascimento: string | null;
     perfil: string | null;
     genero: "masculino" | "feminino" | "neutro" | null;
+    /** Confirmados + "Hipótese: X" — a distinção que a conversa não tinha. */
+    diagnosticos_formais?: unknown;
   }>;
 };
 
@@ -2566,7 +2689,7 @@ async function loadFamiliaParaEnvio(
       .maybeSingle(),
     supabase
       .from("membros_atipicos")
-      .select("id, nome, data_nascimento, perfil, genero")
+      .select("id, nome, data_nascimento, perfil, genero, diagnosticos_formais")
       .eq("family_account_id", familyAccountId)
       .eq("ativo", true)
       .order("created_at", { ascending: true }),
@@ -2576,7 +2699,9 @@ async function loadFamiliaParaEnvio(
   return {
     family_account_id: familyAccountId,
     whatsapp_e164: family.whatsapp_e164,
-    nomeMae: profile?.como_chamar?.trim() || profile?.nome_mae?.trim() || "",
+    // Passa pelo detector: uma frase inteira no campo do nome ("Meu Nome e
+    // Gisela Meu Filgo e Davi Ele e Autista") vira "" e a Ayla fala sem nome.
+    nomeMae: primeiroNomeConfiavel(profile?.como_chamar) || primeiroNomeConfiavel(profile?.nome_mae),
     cuidador: descricaoCuidador({
       papel: (profile as { papel?: string | null } | null)?.papel ?? null,
       papelOutro: (profile as { papel_outro?: string | null } | null)?.papel_outro ?? null,
@@ -2606,6 +2731,27 @@ async function enviarEPersistir(
   // Nome ausente deixa cicatriz ("Oi, 🌿", "Tô com você, ."). Vários textos
   // proativos são montados à mão aqui no orchestrator, fora do fill() dos
   // templates — então a limpeza mora também neste choke point.
+  // CADENCIA — so proativa, e antes de qualquer coisa cara (traducao, envio).
+  // Resposta a mae NUNCA passa por aqui: a trava le `category` e sai.
+  // Ver lib/ayla/cadencia.ts pro caso real (08:00 + 08:01) e pra concorrencia.
+  let reservaId: string | null = null;
+  if (params.category === "proativa" && !proativaIsentaDeCadencia(params.tipo)) {
+    const reserva = await reservarEnvioProativo(supabase, {
+      familyAccountId: params.family_account_id,
+      tipo: params.tipo,
+    });
+    if (!reserva.ok) {
+      await logEvent({
+        kind: "ayla_proativa_bloqueada_por_cadencia",
+        severity: "info",
+        family_account_id: params.family_account_id,
+        payload: { tipo: params.tipo, motivo: reserva.motivo },
+      }).catch(() => {});
+      return { enviada: false, motivo: reserva.motivo };
+    }
+    reservaId = reserva.reservaId || null;
+  }
+
   let texto = limparNomeAusente(params.texto);
   const idioma = await idiomaDaFamilia(supabase, params.family_account_id);
   if (idioma !== "pt") texto = limparNomeAusente(await traduzirProativa(texto, idioma));
@@ -2623,8 +2769,9 @@ async function enviarEPersistir(
     resultado = { enviada: false, motivo: erro };
   }
 
-  // Auditoria
-  await supabase.from("ayla_send_log").insert({
+  // Auditoria. Com reserva, a linha JA existe (foi ela que garantiu a janela) —
+  // atualiza. Sem reserva (reativa, isenta, ou banco fora), insere como antes.
+  const auditoria = {
     family_account_id: params.family_account_id,
     template_key: params.tipo,
     payload: {
@@ -2633,9 +2780,14 @@ async function enviarEPersistir(
       ...(params.meta ? { meta: params.meta } : {}),
     },
     resposta_provider: providerResp as Record<string, unknown> | null,
-    status: resultado.enviada ? "enviada" : "falha",
+    status: resultado.enviada ? "enviada" : ("falha" as const),
     erro,
-  });
+  };
+  if (reservaId) {
+    await supabase.from("ayla_send_log").update(auditoria).eq("id", reservaId);
+  } else {
+    await supabase.from("ayla_send_log").insert(auditoria);
+  }
 
   // Mensagem (mesmo se falhou, pra deixar rastro)
   if (resultado.enviada) {
@@ -2742,20 +2894,13 @@ async function carregarKoloVivoResumo(
   // por tema; rotina/etc. também ficam aqui). Sem isso a Ayla "não sabe".
   const extras = row.categorias_extras as Record<string, unknown> | null;
   if (extras && typeof extras === "object") {
-    const extrasLabels: Record<string, string> = {
-      comunicacao: "Comunicação",
-      socializacao: "Socialização",
-      motor: "Motor",
-      autonomia: "Autonomia",
-      foco: "Foco",
-      sono: "Sono",
-      nutricional: "Alimentação",
-      emocional: "Regulação emocional",
-      rotina: "Rotina",
-    };
-    for (const [campo, label] of Object.entries(extrasLabels)) {
-      const resumo = resumoCampoKV(extras[campo]);
-      if (resumo) linhas.push(`${label}: ${resumo}`);
+    // TEMAS é a fonte única. O mapa manual daqui tinha 9 das 15 chaves: a
+    // família marcava "escola" ou "aprendizado" no cadastro, o onboarding
+    // gravava, e a Ayla no WhatsApp não lia. Agora lê tudo que existe.
+    for (const t of TEMAS) {
+      if (t.storage !== "extras") continue;
+      const resumo = resumoCampoKV(extras[t.chave]);
+      if (resumo) linhas.push(`${t.rotulo}: ${resumo}`);
     }
   }
   return linhas.join("\n");
@@ -2805,6 +2950,50 @@ function resumoCampoKV(json: unknown): string {
 }
 
 /** Últimos turnos da conversa (pra Ayla não soar amnésica), sem a msg atual. */
+/**
+ * As duas últimas falas — o carregador do TEMA ATIVO entre uma mensagem e a
+ * seguinte. Sem isso o classificador trata cada mensagem isoladamente e "e de
+ * manhã?" vira tema nenhum, logo depois da mãe ter escolhido alimentação.
+ */
+async function ultimasFalas(
+  supabase: SupabaseClient,
+  familyId: string,
+  mensagemAtual: string,
+): Promise<{ ultimaMae: string | null; ultimaAyla: string | null }> {
+  try {
+    const h = await carregarHistorico(supabase, familyId, mensagemAtual);
+    return {
+      ultimaMae: [...h].reverse().find((t) => t.de === "mae")?.texto ?? null,
+      ultimaAyla: [...h].reverse().find((t) => t.de === "ayla")?.texto ?? null,
+    };
+  } catch {
+    return { ultimaMae: null, ultimaAyla: null };
+  }
+}
+
+/**
+ * Os desafios que a família marcou no cadastro. São as chaves de TEMAS — é daí
+ * que o tema ativo costuma nascer na primeira conversa, porque a introdução
+ * oferece exatamente esses e a mãe escolhe um.
+ */
+async function carregarDesafiosOnboarding(
+  supabase: SupabaseClient,
+  membroId: string | null,
+): Promise<string[]> {
+  if (!membroId) return [];
+  try {
+    const { data } = await supabase
+      .from("perfil_vivo_membro")
+      .select("categorias_extras")
+      .eq("membro_atipico_id", membroId)
+      .maybeSingle();
+    const extras = data?.categorias_extras as { desafios_onboarding?: string[] } | null;
+    return (extras?.desafios_onboarding ?? []).filter(Boolean);
+  } catch {
+    return [];
+  }
+}
+
 async function carregarHistorico(
   supabase: SupabaseClient,
   familyId: string,

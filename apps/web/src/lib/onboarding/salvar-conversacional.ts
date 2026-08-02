@@ -5,6 +5,7 @@ import { chaveTelefoneBR } from "@/lib/telefone";
 import { encerrarTrialPorNumeroDeOutraConta } from "@/lib/trial/ledger";
 import { inferGeneroDePalavra } from "@/lib/ayla/pronomes";
 import { perfilPrimario, buildDiagnosticosFormais } from "@/lib/onboarding/diagnostico";
+import { CHAVES_TEMA } from "@/lib/conducao/temas";
 
 /**
  * Persistência do onboarding CONVERSACIONAL (Fatia 3) — em ETAPAS (checkpoints),
@@ -51,12 +52,10 @@ export type RascunhoOnboarding = {
   aceites: { termos: boolean; ayla: boolean };
 };
 
-// Domínios que contam como "tema preenchido" (espelha o tela4 antigo).
-const DOMINIO_KEYS = [
-  "sensorial", "nutricional", "comunicacao", "emocional", "foco", "sono",
-  "socializacao", "motor", "rotina", "autonomia", "aprendizado", "imitacao",
-  "tela_midia", "escola", "saude_geral",
-];
+// Domínios que contam como "tema preenchido". A lista vive em
+// lib/conducao/temas.ts — é a MESMA que a Ayla usa pra ler o perfil e pra
+// conversar. Duplicar aqui foi como `escola` sumiu da leitura por meses.
+const DOMINIO_KEYS = CHAVES_TEMA;
 
 // onboarding_step do fluxo NOVO: 2=pessoa, 3=whatsapp, 4=aceite, 7=concluiu.
 async function bumpStep(admin: SupabaseClient, familyId: string, step: number) {
