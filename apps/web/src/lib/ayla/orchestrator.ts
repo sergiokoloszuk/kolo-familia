@@ -1067,6 +1067,24 @@ async function carregarLacunasKoloVivo(
       (temConteudo(v) ? preenchidos : faltando).push(MEMBRO_CAMPO_LABEL[campo] ?? campo);
     }
     const partes: string[] = [];
+
+    // OS DESAFIOS QUE A FAMÍLIA MARCOU NO CADASTRO — a lista INTEIRA.
+    // Antes, `desafios_onboarding` só era lido no [0], e só pra escolher a
+    // template de boas-vindas: o resto do que ela contou no cadastro nunca
+    // chegava à conversa. A Ayla re-perguntava o que já sabia.
+    //
+    // Isto é RELATO da família, não diagnóstico e não conclusão da Ayla — o
+    // rótulo abaixo diz isso ao modelo, porque a fronteira diagnóstica vale
+    // igual: saber que a mãe marcou "sono" não autoriza afirmar nada.
+    const desafios = Array.isArray(extras.desafios_onboarding)
+      ? (extras.desafios_onboarding as unknown[]).map(String).filter(Boolean)
+      : [];
+    if (desafios.length) {
+      partes.push(
+        `NO CADASTRO A FAMÍLIA MARCOU estes desafios (relato dela, NÃO diagnóstico e NÃO conclusão sua): ${desafios.join(", ")} — use pra entender o contexto e pra NÃO re-perguntar; não force o assunto se ela trouxe outro`,
+      );
+    }
+
     if (preenchidos.length) partes.push(`JÁ TEM no perfil: ${preenchidos.join(", ")}`);
     if (faltando.length) partes.push(`AINDA FALTA (pergunte só se vier a propósito): ${faltando.join(", ")}`);
     return partes.join(". ");

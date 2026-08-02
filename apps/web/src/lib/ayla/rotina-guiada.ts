@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { getAylaAnthropicClient, AYLA_MODEL_FALLBACK } from "./anthropic";
+import { nucleoConducao } from "@/lib/conducao/diretrizes";
 import { gerarMagicLink } from "./ponte";
 import { idadeAnos } from "@/lib/idade";
 import {
@@ -69,6 +70,77 @@ export async function rotinaConversaPendente(
   if ((respostas?.length ?? 0) > 0) return null;
 
   return { membroId: (p.membro_atipico_id as string | null) ?? null };
+}
+
+/**
+ * O QUE JÁ SABEMOS — perfil, desafios que a própria família marcou no onboarding,
+ * e a rotina que já existe. Sem isto o condutor só tinha nome, idade e interesses,
+ * e por isso re-perguntava o que a família já tinha contado (caso Maria Iasmin) e
+ * ignorava a rotina que ela mesma acabara de descrever (caso Mateus).
+ *
+ * Tudo best-effort: se uma consulta falhar, o bloco some e a conversa segue.
+ */
+async function carregarOQueJaSabemos(
+  supabase: SupabaseClient,
+  membroId: string,
+): Promise<{ perfil: string; desafios: string[]; rotinaExistente: string }> {
+  const vazio = { perfil: "", desafios: [] as string[], rotinaExistente: "" };
+  try {
+    const [pv, rots] = await Promise.all([
+      supabase
+        .from("perfil_vivo_membro")
+        .select("categorias_extras")
+        .eq("membro_atipico_id", membroId)
+        .maybeSingle(),
+      supabase
+        .from("rotinas")
+        .select("id, nome, dia_semana")
+        .eq("membro_atipico_id", membroId)
+        .order("created_at", { ascending: false })
+        .limit(3),
+    ]);
+
+    const ce = (pv.data?.categorias_extras ?? {}) as Record<string, unknown>;
+    // Os desafios são o que a FAMÍLIA marcou — informação relatada, não
+    // diagnóstico e não inferência da Ayla.
+    const desafios = Array.isArray(ce.desafios_onboarding)
+      ? (ce.desafios_onboarding as unknown[]).map(String).filter(Boolean).slice(0, 6)
+      : [];
+
+    // Um resumo curto do perfil: só o que ajuda a montar um dia.
+    const interessantes = ["rotina", "sono", "alimentacao", "sensorial", "comunicacao", "emocional"];
+    const perfil = interessantes
+      .map((k) => {
+        const v = ce[k];
+        return typeof v === "string" && v.trim() ? `${k}: ${v.trim().slice(0, 180)}` : null;
+      })
+      .filter(Boolean)
+      .join("\n");
+
+    let rotinaExistente = "";
+    const linhas = (rots.data ?? []) as Array<{ id: string; nome: string; dia_semana: number | null }>;
+    if (linhas.length) {
+      const { data: tarefas } = await supabase
+        .from("rotina_tarefas")
+        .select("rotina_id, texto, hora, ordem")
+        .in("rotina_id", linhas.map((r) => r.id))
+        .order("ordem", { ascending: true });
+      rotinaExistente = linhas
+        .map((r) => {
+          const t = ((tarefas ?? []) as Array<{ rotina_id: string; texto: string; hora: string | null }>)
+            .filter((x) => x.rotina_id === r.id)
+            .map((x) => `${x.hora ? `${x.hora} ` : ""}${x.texto}`)
+            .join(" → ");
+          return t ? `${r.nome}: ${t}` : null;
+        })
+        .filter(Boolean)
+        .join("\n");
+    }
+
+    return { perfil, desafios, rotinaExistente };
+  } catch {
+    return vazio;
+  }
 }
 
 /** Interesses conhecidos da criança (pra a Ayla PROPOR um tema). Best-effort. */
@@ -174,29 +246,45 @@ async function salvarTransicoes(
   }
 }
 
-const SYSTEM_CONDUZIR = `Você é a Ayla conduzindo, no WhatsApp, a montagem de uma ROTINA VISUAL com uma mãe/pai. Conduza de forma NATURAL e ESTRATÉGICA — a pessoa deve escrever o MÍNIMO possível.
+/**
+ * O CONTRATO da ferramenta de rotina — e SÓ ele.
+ *
+ * Até 02/08/2026 este arquivo tinha um prompt próprio e completo, que não
+ * carregava `nucleoConducao()`. Era uma segunda Ayla: perguntava demais, falava
+ * diferente do resto da conversa e não herdava "direção antes de investigação".
+ * Metade do texto duplicava o núcleo — "não re-pergunte o que ela já respondeu",
+ * "não invente preferências", "tom quente, curto, NUNCA formulário", "UMA
+ * pergunta por vez", "CONVIRJA" — tudo isso já é princípio 6 e VOZ 2/3/5.
+ *
+ * O que sobrou aqui é o que o núcleo não tem como saber: o formato do JSON, o
+ * shape de `rotinas`/`transicoes`, e o fato de que o sistema anexa PDF e link
+ * quando a ação é "montar".
+ */
+const CONTRATO_ROTINA = `# Você está conduzindo uma ROTINA
 
-REGRAS QUE NÃO PODEM FALHAR:
-- LEIA o que a mãe JÁ disse na conversa e NÃO re-pergunte o que ela já respondeu. Se ela já falou o DIA ("amanhã"), o HORÁRIO ("9h"), quem vai ou as atividades, USE isso — nunca pergunte "é hoje ou amanhã?" se ela já disse.
-- A CRIANÇA é a que a mãe indicou (nome no contexto/na mensagem). Use o NOME certo. NÃO troque de filho.
-- NÃO INVENTE preferências ("pesca é uma coisa que ele adora") nem características que você não sabe — use SÓ os INTERESSES CONHECIDOS do contexto; se não souber, não afirme.
-- FOQUE só NESTA rotina que está sendo montada. IGNORE assuntos anteriores da conversa que não são desta rotina (não misture outro tema, tipo um jogo ou uma dúvida de antes).
+Tudo acima continua valendo — identidade, princípios, fronteiras e VOZ. Isto aqui
+é só o CONTRATO da ferramenta de rotina, não uma segunda Ayla.
 
-Devolva SEMPRE APENAS JSON, sem texto fora dele:
-{"mensagem":"sua próxima fala (WhatsApp, curta e calorosa)","pronto":false,"tema":null,"transicoes":[],"rotinas":[]}
+## Escolha UM desfecho por turno e devolva APENAS JSON, sem texto fora dele:
+{"acao":"responder"|"perguntar"|"montar"|"sair","mensagem":"sua fala (WhatsApp)","tema":null,"transicoes":[],"rotinas":[]}
 
-Conduza nesta ordem, mas com naturalidade — PULE o que já estiver claro na conversa:
-1. ESCOPO: se ainda não sabe, pergunte se é pra um DIA ESPECÍFICO (ex.: "dia com a vovó", "dia do dentista") ou a ROTINA DA SEMANA. Lembre que pode responder por ÁUDIO. (pronto:false)
-2. SEQUÊNCIA: peça como é o dia, na ordem. Se já mandaram uma lista, use-a. Para um dia específico, dê o NOME que a pessoa usou ("Dia com a vovó") — NUNCA "Segunda", a menos que seja mesmo um dia da semana. Para a semana, vá UM DIA POR VEZ ("bora pela segunda… a terça é parecida?").
-3. MOMENTO DIFÍCIL (o pulo do gato — o valor Kolo): se vierem TRANSIÇÕES JÁ CONHECIDAS no contexto, USE-AS proativamente ("o banho costuma pesar pro X — coloquei a música depois de novo, ou quer tentar outra coisa?"). Se não houver, PERGUNTE ABERTAMENTE, antes de chutar: "tem algum momento desse dia que costuma ser mais difícil pra ele — onde uma previsibilidade a mais ajudaria?" (resistência, choro, birra). Deixe a MÃE apontar — ela é a especialista. SÓ se ela não souber, sugira 1-2 passagens comuns (banho, SAIR de um lugar gostoso, dormir, ir pra escola). Quando ela apontar um momento, pergunte "o que costuma acalmar/motivar ele nessa hora?" e encaixe no cartão um apoio (aviso de "já já muda", uma atividade que ele gosta antes/depois, um passo a passo). No MÁXIMO 1-2 perguntas — não interrogue.
-3b. APRENDER + SEMEAR: sempre que descobrir um momento difícil e a estratégia, coloque em "transicoes":[{"momento":"banho","estrategia":"música depois","funcionou":null}] — fica guardado no perfil e você reusa. Se a mãe disser que uma estratégia FUNCIONOU ou NÃO, marque "funcionou":true/false (se não funcionou, ofereça "quer testar algo diferente?"). Se o momento for algo que a ROTINA sozinha NÃO resolve (ex.: ansiedade de separação na hora de dormir, crises intensas, recusa alimentar séria), seja HONESTA em 1 frase: a rotina já ajuda com previsibilidade, MAS isso merece um olhar mais calmo — e você vai voltar depois pra ver como foi e, se ela quiser, montar um PLANO só pra esse momento. Nesse caso marque "merece_plano":true na transição. NÃO tente resolver tudo agora nem transforme a rotina num tratado.
-4. TEMA DOS CARTÕES (SEMPRE pergunte antes de montar, a menos que já tenham dito): proponha PROATIVAMENTE a partir dos INTERESSES conhecidos — INCLUSIVE os do cadastro (ex.: "quer os cartões no tema de dinossauros, que ele ama?"). Se não souber, sugira 1-2 opções (carros, princesas, super-heróis…) ou deixar sem tema. É o que deixa os cartões com a cara dele.
-5. ANTES DE MONTAR — CONFIRME (evita erro e frustração): quando já tiver sequência + momento difícil + tema, MOSTRE a rotina final resumida (a ordem, com horário quando houver) e pergunte "ficou assim, posso montar? 🌿". Nesse momento pronto:false ainda — você está só confirmando.
-6. SÓ ponha pronto:true DEPOIS que a pessoa CONFIRMAR (sim/pode/isso/perfeito/manda/tá bom). Se ela apontar um erro ou pedir mudança, ajuste e confirme de novo. Quando pronto:true, a "mensagem" deve: (a) confirmar CURTO e feliz que montou (ex.: "Prontinho, montei o Dia do Davi! 🌿"); (b) avisar com carinho que os cartões têm IMAGENS e podem levar um tempinho pra aparecer (depende da internet) — mas que VALE muito a pena esperar, ficam lindos; (c) dizer que você quer MUITO saber o que ela achou: "quando abrir, me conta o que você achou? se algo não ficou com a cara dele, a gente ajusta rapidinho 💛". NÃO diga que vai mandar link/PDF nem prometa "vou gerar os cartões" — o sistema já anexa o PDF e o link, e os cartões ilustrados começam sozinhos.
+- "responder" — ela fez uma PERGUNTA sobre a rotina ("qual horário encaixo o iPad?", "como você faria a tarde?"). RESPONDA com o que você já sabe: a sequência que ela contou, os horários, a dificuldade que ela relatou. Proponha, explique em uma frase por que, e diga que dá pra ajustar. NÃO devolva a próxima pergunta do roteiro — isso é ignorar o que ela perguntou.
+- "perguntar" — falta UMA informação que muda a rotina de verdade. Uma só.
+- "montar" — você tem sequência suficiente pra uma primeira versão. Preencha "rotinas".
+- "sair" — a mensagem NÃO é mais sobre a rotina (ela mudou de assunto: pediu atividades, contou outra coisa, trouxe outro problema). Devolva "sair" e deixe "mensagem" vazia — outra parte da Ayla responde. NUNCA diga "antes precisamos terminar a rotina": quem manda no assunto é ela.
 
-Formato de rotinas: [{"nome":"Dia com a vovó","dia_semana":null,"tarefas":[{"texto":"acordar","hora":null}]}]. dia_semana: 0=Seg..6=Dom, ou null pra dia avulso/nomeado. HORÁRIO SEMPRE OPCIONAL (null se não deram; NUNCA invente).
+## AYLA SEMPRE ENTREGA
+Se já dá pra montar uma primeira versão, MONTE — não peça confirmação antes. Ela vê a rotina no texto e ajusta o que quiser depois; é mais rápido corrigir algo pronto do que responder mais perguntas. Horário que ela não deu, você PROPÕE a partir do que sabe (chegada, escola, atividade fixa) e deixa claro que é sugestão. Só não invente horário quando não há nada em que se apoiar.
+Ponha uma dica curta NO PONTO DIFÍCIL — o momento que ela relatou, ou a transição que você já conhece do perfil. Uma ou duas, não uma aula. Quando fizer sentido, uma brincadeira ou atividade simples ancorada nos interesses dele.
+TEMA dos cartões é OPCIONAL e NUNCA atrasa a entrega: se você conhece um interesse, proponha junto; se não, monte sem tema e ofereça depois.
 
-Tom: quente, curto, humano — NUNCA formulário. UMA pergunta por vez. CONVIRJA: se a pessoa já deu a sequência, faça no máximo 1 pergunta de transição + o tema e então monte (pronto:true). Sempre que pedir algo mais longo, lembre que pode mandar ÁUDIO.`;
+## Formato dos dados
+rotinas: [{"nome":"Dia com a vovó","dia_semana":null,"tarefas":[{"texto":"acordar","hora":null}]}]
+dia_semana: 0=Seg..6=Dom, ou null pra dia avulso/nomeado. "hora" é opcional (null quando não houver base).
+transicoes: [{"momento":"banho","estrategia":"música depois","funcionou":null,"merece_plano":false}] — o que você descobriu sobre momentos difíceis fica no perfil e você reusa. Marque "funcionou" quando ela disser que deu certo ou não. Se o momento for algo que a rotina sozinha NÃO resolve (ansiedade de separação, crise intensa, recusa alimentar séria), diga isso em uma frase e marque "merece_plano":true.
+
+## Quando "montar": o sistema JÁ anexa o PDF e o link, e os cartões ilustrados começam sozinhos
+Sua "mensagem" mostra a rotina no texto (a sequência, com os horários) e confirma o que foi feito — no passado, não no futuro. NUNCA escreva "vou montar", "vou gerar", "vou te mandar" ou "vai aparecer": quando você devolve "montar", já está feito. Avise que os cartões podem levar um tempinho pra aparecer e convide-a a te contar o que achou.`;
 
 /** Cria/reusa uma rotina (por nome+dia), aplica o tema e grava as tarefas. */
 async function aplicarRotina(
@@ -326,14 +414,17 @@ export async function conduzirRotina(
 
     // Conversa desta sessão (ambas as direções, últimos 60 min) — pra a IA saber
     // o que já perguntou e o que a mãe já respondeu.
-    const desde = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+    // 12h, não 60min. A janela curta era a causa nº 1 da repetição: numa conversa
+    // de WhatsApp que se estende, tudo que a mãe respondeu antes disso sumia e o
+    // condutor voltava a perguntar "que horas ela acorda?".
+    const desde = new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString();
     const { data: msgs } = await supabase
       .from("ayla_messages")
       .select("texto, direcao, created_at")
       .eq("family_account_id", familyId)
       .gte("created_at", desde)
       .order("created_at", { ascending: true })
-      .limit(24);
+      .limit(40);
     const historico = (msgs ?? [])
       .map((m) => ({
         de: (m.direcao === "inbound" ? "mae" : "kolo") as "mae" | "kolo",
@@ -351,9 +442,20 @@ export async function conduzirRotina(
           .join("; ")
       : "";
 
+    const jaSabemos = await carregarOQueJaSabemos(supabase, params.membroAtipicoId);
+
     const userPrompt = [
       `CRIANÇA/ADOLESCENTE/ADULTO: ${nome}${idade != null ? ` (${idade} anos)` : ""}.`,
       interesses ? `INTERESSES CONHECIDOS (pra propor tema): ${interesses}` : "",
+      jaSabemos.desafios.length
+        ? `DESAFIOS QUE A FAMÍLIA MARCOU NO CADASTRO (relato dela, não diagnóstico): ${jaSabemos.desafios.join(", ")}`
+        : "",
+      jaSabemos.perfil ? `PERFIL (o que já sabemos — NÃO re-pergunte):
+${jaSabemos.perfil}` : "",
+      jaSabemos.rotinaExistente
+        ? `ROTINA QUE JÁ EXISTE (use como base; se ela perguntar sobre a rotina, é ESTA):
+${jaSabemos.rotinaExistente}`
+        : "",
       transicoesTxt ? `TRANSIÇÕES JÁ CONHECIDAS (use proativamente, não re-pergunte): ${transicoesTxt}` : "",
       "CONVERSA (a última fala da mãe é o pedido atual):\n" +
         historico.map((h) => `${h.de === "mae" ? "Mãe" : "Kolo"}: ${h.texto}`).join("\n"),
@@ -365,17 +467,33 @@ export async function conduzirRotina(
     const resp = await client.messages.create({
       model: AYLA_MODEL_FALLBACK,
       max_tokens: 1600,
-      system: SYSTEM_CONDUZIR,
+      system: `${nucleoConducao()}\n\n${CONTRATO_ROTINA}`,
       messages: [{ role: "user", content: userPrompt }],
     });
     const b = resp.content[0];
     const raw = b?.type === "text" ? b.text : "";
     const parsed = extrairJsonRotina(raw) as
-      | { mensagem?: string; pronto?: boolean; tema?: string | null; transicoes?: unknown; rotinas?: unknown }
+      | {
+          acao?: string;
+          mensagem?: string;
+          pronto?: boolean;
+          tema?: string | null;
+          transicoes?: unknown;
+          rotinas?: unknown;
+        }
       | null;
 
+    // "sair" é o que destrava a mudança de assunto: quem sabe se a mensagem
+    // ainda é sobre a rotina é quem está lendo a conversa. Antes, uma rotina
+    // pendente capturava TODA mensagem por 48h — a mãe perguntava de atividades
+    // e a Ayla respondia sobre a rotina.
+    const acao = String(parsed?.acao ?? "").trim().toLowerCase();
+    if (acao === "sair") return null;
+
     let mensagem = (typeof parsed?.mensagem === "string" && parsed.mensagem.trim()) || "";
-    const pronto = parsed?.pronto === true;
+    // `pronto` continua aceito por compatibilidade — se o modelo devolver o
+    // formato antigo, nada quebra.
+    const pronto = acao === "montar" || parsed?.pronto === true;
     const tema = typeof parsed?.tema === "string" && parsed.tema.trim() ? parsed.tema.trim().slice(0, 40) : null;
     const rotinas = sanitizarRotinas(parsed?.rotinas);
 
