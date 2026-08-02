@@ -20,7 +20,7 @@ import { gerarRespostaAyla, type RespostaParams } from "./responder";
 import { blocoDiagnosticoRegistrado } from "@/lib/onboarding/diagnostico";
 import { reservarEnvioProativo, proativaIsentaDeCadencia } from "./cadencia";
 import { agendarEspera } from "./espera";
-import { logEvent } from "@/lib/log";
+import { logEvent, logServerError } from "@/lib/log";
 import { descricaoCuidador, type CuidadorDescrito, type Genero } from "./pronomes";
 import { gerarSugestaoRepertorio } from "./repertorio";
 import { decidirDedup } from "./dedup-kolo-vivo";
@@ -1124,6 +1124,69 @@ async function alertarNaoTitular(
   }
 }
 
+/**
+ * BUSCA A FAMÍLIA PELO TELEFONE — e distingue os três desfechos que antes eram um só.
+ *
+ * O bug (02/08/2026): a consulta ignorava o `error`. Com o banco instável, `data`
+ * vinha `undefined`, virava `[]`, e o chamador concluía "número não cadastrado"
+ * para um número que ESTÁ cadastrado. Falha de infraestrutura virava classificação
+ * de negócio. O telefone nunca foi o problema: `chaveTelefoneBR` é simétrica e a
+ * família casa (verificado em produção, 76 famílias, zero colisão de chave).
+ *
+ * ⚠️ LACUNA DE PRODUTO, consciente: quando isto devolve `erro`, A MENSAGEM DA
+ * FAMÍLIA SE PERDE. Não existe fila durável nem reprocessamento de inbound. E não
+ * dá para pedir reentrega à Z-API: o webhook responde 200 dentro de `after()`,
+ * ANTES deste código rodar (`app/api/ayla/webhook/route.ts`) — de propósito, porque
+ * responder devagar fazia a Z-API reenviar e duplicar respostas. Mudar isso é
+ * redesenho, não conserto. Enquanto não houver fila, o melhor possível é o
+ * incidente ficar registrado em vez de virar silêncio inexplicado.
+ *
+ * 💸 DÍVIDA TÉCNICA: carregar TODAS as famílias para achar uma por telefone não
+ * escala. Hoje são 76 e o custo é irrelevante; o teto do PostgREST corta em 1000
+ * por padrão, e acima disso famílias ficariam invisíveis EM SILÊNCIO — a mesma
+ * classe de falha do incidente Thamires. O limite abaixo é explícito e avisa ao
+ * encostar. O desenho certo é buscar pelo registro/candidatos de telefone em vez
+ * de varrer a tabela; não foi feito agora para não mudar a semântica do casamento.
+ */
+export const LIMITE_FAMILIAS = 2000;
+
+export type BuscaFamilia =
+  | { tipo: "erro"; erro: string }
+  | {
+      tipo: "ok";
+      familia: { id: string; whatsapp_e164: string } | null;
+      total: number;
+      truncou: boolean;
+    };
+
+export async function encontrarFamiliaPorTelefone(
+  supabase: SupabaseClient,
+  phoneE164: string,
+): Promise<BuscaFamilia> {
+  const chave = chaveTelefoneBR(phoneE164);
+  const { data, error } = await supabase
+    .from("family_accounts")
+    .select("id, whatsapp_e164")
+    .not("whatsapp_e164", "is", null)
+    .limit(LIMITE_FAMILIAS);
+
+  // O `error` é a única coisa que distingue "banco falhou" de "ninguém casa".
+  if (error) return { tipo: "erro", erro: error.message || "erro desconhecido" };
+  // Sem erro e sem data é resposta malformada — tratar como falha, não como vazio.
+  if (!data) return { tipo: "erro", erro: "consulta sem erro e sem dados" };
+
+  const linhas = data as Array<{ id: string; whatsapp_e164: string }>;
+  const familia =
+    linhas.find((f) => chaveTelefoneBR(f.whatsapp_e164) === chave) ?? null;
+
+  return {
+    tipo: "ok",
+    familia,
+    total: linhas.length,
+    truncou: linhas.length >= LIMITE_FAMILIAS,
+  };
+}
+
 export async function processInbound(
   supabase: SupabaseClient,
   inboundRecebido: InboundWhatsApp,
@@ -1136,15 +1199,36 @@ export async function processInbound(
   // pegadinha do 9º dígito + variações de formato/país). Comparamos por
   // uma chave normalizada em vez de igualdade exata.
   const chaveIn = chaveTelefoneBR(inbound.phoneE164);
-  const { data: familias } = await supabase
-    .from("family_accounts")
-    .select("id, whatsapp_e164")
-    .not("whatsapp_e164", "is", null);
-  const family = (familias ?? []).find(
-    (f) => chaveTelefoneBR(f.whatsapp_e164 as string) === chaveIn,
-  );
+  const busca = await encontrarFamiliaPorTelefone(supabase, inbound.phoneE164);
+
+  if (busca.tipo === "erro") {
+    // FALHA DE BANCO — NÃO é "número não cadastrado". Antes o `error` da consulta
+    // era descartado: `data` vinha undefined, virava [], o find não achava nada e
+    // o código concluía que a pessoa não era cadastrada. Uma instabilidade de
+    // banco ficava indistinguível de um desconhecido — foi o que aconteceu em
+    // 02/08/2026, com 47s entre o parse e o "não cadastrado", num número que ESTÁ
+    // cadastrado. O log agora é inequívoco e a família não é reclassificada.
+    console.error(
+      `[ayla] FALHA AO CONSULTAR FAMÍLIAS (não é número desconhecido): ${busca.erro} | telefone=${inbound.phoneE164} chave=${chaveIn}`,
+    );
+    await logServerError("ayla_lookup_familia_falhou", new Error(busca.erro), {
+      family_account_id: null,
+      payload: { telefone: inbound.phoneE164, chave: chaveIn, texto: inbound.texto.slice(0, 120) },
+    }).catch(() => {});
+    // ⚠️ A MENSAGEM SE PERDE, e isto é uma lacuna conhecida — ver a nota sobre
+    // reentrega em `encontrarFamiliaPorTelefone`. Não há como pedir retry daqui.
+    return { tratada: false };
+  }
+
+  if (busca.truncou) {
+    console.error(
+      `[ayla] LIMITE DE FAMÍLIAS ATINGIDO (${busca.total}) — buscas podem falhar em silêncio. Ver dívida técnica em encontrarFamiliaPorTelefone.`,
+    );
+  }
+
+  const family = busca.familia;
   if (!family) {
-    // Número não reconhecido — loga pra dar pra diagnosticar (antes sumia).
+    // Aqui sim: a consulta funcionou e nenhuma família casa com este número.
     console.warn(
       `[ayla] inbound de número não cadastrado: ${inbound.phoneE164} (chave ${chaveIn})`,
     );
