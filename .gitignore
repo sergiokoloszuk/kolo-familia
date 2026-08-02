@@ -82,3 +82,5 @@ n8n/.n8n/
 
 # Vídeos pesados (assets grandes não entram no git — servir por CDN/host)
 apps/web/public/video/
+scripts/bancada/saida-experiencia.txt
+scripts/bancada/ultima-experiencia.json
