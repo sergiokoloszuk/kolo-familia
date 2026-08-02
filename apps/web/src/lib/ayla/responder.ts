@@ -10,6 +10,7 @@ import { pronomesPara, type Genero, type CuidadorDescrito } from "./pronomes";
 // (formato e idioma). A identidade agora vive no CÓDIGO (não mais no banco
 // voz_ayla), o que elimina o drift banco×código.
 import { nucleoConducao } from "@/lib/conducao/diretrizes";
+import { formasDeEntrega, INTERESSE_COMO_VEICULO } from "@/lib/conducao/formas";
 
 /**
  * Tracking opcional pra logar a chamada em api_calls. Quando ausente, a
@@ -102,6 +103,16 @@ export type SinaisResposta = {
 
 export type RespostaParams = {
   nomeMae: string;
+  /**
+   * Tema do turno (`lib/conducao/temas.ts`), vindo do classificador. Serve pra
+   * priorizar o que do perfil entra na resposta — não pra travar o assunto.
+   */
+  temaAtivo?: string | null;
+  /**
+   * O turno é uma ENTREGA (desafio/pedido de ajuda) ou uma conversa (desabafo,
+   * crise, pergunta pontual, saudação)? Decide se as formas de entrega entram.
+   */
+  intencao?: "plano" | "outro" | "rotina_criar" | "rotina_ver" | "rotina_editar";
   /** Vínculo + gênero do adulto responsável (mãe, pai, avó, tia...). */
   cuidador?: CuidadorDescrito;
   nomeMembro: string | null;
@@ -258,14 +269,46 @@ export async function gerarRespostaAyla(
   });
 }
 
+/**
+ * ESTE TURNO PEDE BLOCOS?
+ *
+ * A regra é conservadora de propósito: na dúvida, texto corrido. Uma resposta
+ * boa em prosa nunca incomodou ninguém; um título em cima de um desabafo, sim.
+ *
+ * Fica FORA (texto corrido):
+ *   - desabafo e crise — o sinal `emocao_mae` sem desafio, ou o piso de crise;
+ *   - pergunta pontual — sem desafio detectado e sem pedido de plano;
+ *   - o pedido explícito de plano — ali a resposta é curta e o plano vai no PDF;
+ *   - a segunda passada da rede de fronteiras — regenerar já tem instrução
+ *     própria, e somar formato por cima é competir com ela.
+ *
+ * Fica DENTRO: desafio do dia a dia, que é onde a entrega organizada ajuda.
+ */
+export function ehEntrega(params: RespostaParams): boolean {
+  if (params.regenerarPorDiagnostico) return false;
+  if (params.querPlano) return false;
+  if (params.precisaEscolherMembro) return false;
+  return Boolean(params.sinais?.desafio);
+}
+
 /** Uma passada pelo modelo. A rede acima decide se precisa de outra. */
 async function gerarUmaVez(
   params: RespostaParams,
   tracking?: UsageTracking,
 ): Promise<string> {
   const client = getAylaAnthropicClient();
-  const system =
-    nucleoConducao() + "\n\n" + FORMATO_WHATSAPP + "\n\n" + DIRETRIZ_IDIOMA;
+  // FORMAS DE ENTREGA — condicional, nunca sempre. Um desabafo com títulos em
+  // negrito é frieza, e uma pergunta pontual com quatro blocos é ruído. Só
+  // entra quando o turno é de fato uma entrega (ver `ehEntrega`).
+  const entrega = ehEntrega(params);
+  const system = [
+    nucleoConducao(),
+    FORMATO_WHATSAPP,
+    ...(entrega
+      ? [formasDeEntrega({ canal: "whatsapp", tema: params.temaAtivo }), INTERESSE_COMO_VEICULO]
+      : []),
+    DIRETRIZ_IDIOMA,
+  ].join("\n\n");
 
   const linhas: string[] = [];
   const relacao = params.cuidador?.relacao;

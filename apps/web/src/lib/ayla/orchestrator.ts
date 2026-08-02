@@ -54,6 +54,8 @@ import {
   editarRotina,
 } from "./rotina-guiada";
 import { classificarIntencao } from "./intent";
+import { dividirEmBolhas } from "./bolhas";
+import { TEMAS } from "@/lib/conducao/temas";
 import { criarLinkAcesso, pedeAcessoAoApp } from "@/lib/auth/acesso-link";
 import {
   criancaPendente,
@@ -135,25 +137,16 @@ export async function sendBoasVindas(
   // Desafio que a pessoa marcou no cadastro → boas-vindas PERSONALIZADA (cita o
   // problema + pergunta fácil + oferece áudio), pra puxar a resposta no WhatsApp
   // e cair no plano guiado. Sem desafio → template comum.
-  let desafioTop: string | null = null;
-  try {
-    const { data: pv } = await supabase
-      .from("perfil_vivo_membro")
-      .select("categorias_extras")
-      .eq("membro_atipico_id", membroFoco.id)
-      .maybeSingle();
-    const extras = pv?.categorias_extras as { desafios_onboarding?: string[] } | null;
-    desafioTop = extras?.desafios_onboarding?.[0] ?? null;
-  } catch {
-    /* sem desafio, usa a template comum */
-  }
+  // A lista INTEIRA. Antes era so o [0]: a familia marcava tres coisas e a Ayla
+  // se apresentava falando de uma - parecia que nao tinha lido o cadastro.
+  const desafios = await carregarDesafiosOnboarding(supabase, membroFoco.id);
 
-  const texto = desafioTop
+  const texto = desafios.length
     ? templateBoasVindasComDesafio({
         nomeMae: ctx.nomeMae,
         nomeMembro: membroFoco.nome,
         genero: membroFoco.genero,
-        desafio: desafioTop,
+        desafios,
       })
     : await templateBoasVindas(supabase, {
         nomeMae: ctx.nomeMae,
@@ -1504,16 +1497,30 @@ export async function processInbound(
     }
   }
 
-  // INTENÇÃO por IA (entende o que a mãe quer, não só palavra-chave). Sinal
-  // PRIMÁRIO do roteamento abaixo; os `pede*` de regex ficam como reforço (OR).
-  // Só roda aqui (mensagem livre que precisa de rumo) — comandos/registro já
-  // trataram antes. Se uma conversa de rotina está em curso, nem precisa (o
-  // estado `rotinaConversa` conduz).
-  const intent = rotinaConversa ? "outro" : await classificarIntencao({ texto: inbound.texto });
-
   // Criança que a conversa trata AGORA (2+ filhos) — pra rotina/plano seguirem
   // o filho certo e não caírem no membros[0] (bug Manu→Mario).
   const membroConversa = await criancaDaConversa(supabase, family.id);
+
+  // INTENÇÃO + TEMA por IA (entende o que a mãe quer e sobre o que, não só
+  // palavra-chave). Sinal PRIMÁRIO do roteamento abaixo; os `pede*` de regex
+  // ficam como reforço (OR). Só roda aqui (mensagem livre que precisa de rumo)
+  // — comandos/registro já trataram antes. Se uma conversa de rotina está em
+  // curso, nem precisa (o estado `rotinaConversa` conduz).
+  //
+  // CONTINUIDADE DO TEMA sem persistir nada: o carregador do tema é a própria
+  // conversa. As duas últimas falas dizem em que assunto vocês estavam, e os
+  // desafios do cadastro dizem de onde ele provavelmente nasceu. Foi a decisão
+  // consciente de 02/08 — sem coluna, sem migração; se a derivação se mostrar
+  // insuficiente no uso real, aí se discute persistir, com evidência.
+  const turnoClassificado = rotinaConversa
+    ? { intencao: "outro" as const, tema: null }
+    : await classificarIntencao({
+        texto: inbound.texto,
+        ...(await ultimasFalas(supabase, family.id, inbound.texto)),
+        temasOnboarding: await carregarDesafiosOnboarding(supabase, membroConversa),
+      });
+  const intent = turnoClassificado.intencao;
+  const temaAtivo = turnoClassificado.tema;
 
   // 3c-rotina-ver. "Traga a rotina de hoje/terça" — só quando NÃO está montando
   // uma agora (senão o pedido é parte da conversa). Acha o dia, gera se faltar e
@@ -1797,6 +1804,8 @@ export async function processInbound(
           )
         : null,
       generoMembro: membroFoco?.genero ?? null,
+      temaAtivo,
+      intencao: intent,
       koloVivoResumo,
       koloVivoLacunas,
       estrategiasRecentes,
@@ -1892,7 +1901,7 @@ async function enviarRespostaEmChunks(
   // PUBLICAÇÃO — só agora, e só do texto aprovado. As bolhas e o ritmo são os
   // mesmos de antes: o efeito "digitando" nunca veio do streaming, vem do
   // delaySegundos por bolha.
-  for (const par of textoCompleto.split(/\n{2,}/).map((x) => x.trim()).filter(Boolean)) {
+  for (const par of dividirEmBolhas(textoCompleto)) {
     const delay = primeiro ? 2 : Math.min(Math.max(Math.round(par.length / 25), 2), 6);
     primeiro = false;
     try {
@@ -2882,20 +2891,13 @@ async function carregarKoloVivoResumo(
   // por tema; rotina/etc. também ficam aqui). Sem isso a Ayla "não sabe".
   const extras = row.categorias_extras as Record<string, unknown> | null;
   if (extras && typeof extras === "object") {
-    const extrasLabels: Record<string, string> = {
-      comunicacao: "Comunicação",
-      socializacao: "Socialização",
-      motor: "Motor",
-      autonomia: "Autonomia",
-      foco: "Foco",
-      sono: "Sono",
-      nutricional: "Alimentação",
-      emocional: "Regulação emocional",
-      rotina: "Rotina",
-    };
-    for (const [campo, label] of Object.entries(extrasLabels)) {
-      const resumo = resumoCampoKV(extras[campo]);
-      if (resumo) linhas.push(`${label}: ${resumo}`);
+    // TEMAS é a fonte única. O mapa manual daqui tinha 9 das 15 chaves: a
+    // família marcava "escola" ou "aprendizado" no cadastro, o onboarding
+    // gravava, e a Ayla no WhatsApp não lia. Agora lê tudo que existe.
+    for (const t of TEMAS) {
+      if (t.storage !== "extras") continue;
+      const resumo = resumoCampoKV(extras[t.chave]);
+      if (resumo) linhas.push(`${t.rotulo}: ${resumo}`);
     }
   }
   return linhas.join("\n");
@@ -2945,6 +2947,50 @@ function resumoCampoKV(json: unknown): string {
 }
 
 /** Últimos turnos da conversa (pra Ayla não soar amnésica), sem a msg atual. */
+/**
+ * As duas últimas falas — o carregador do TEMA ATIVO entre uma mensagem e a
+ * seguinte. Sem isso o classificador trata cada mensagem isoladamente e "e de
+ * manhã?" vira tema nenhum, logo depois da mãe ter escolhido alimentação.
+ */
+async function ultimasFalas(
+  supabase: SupabaseClient,
+  familyId: string,
+  mensagemAtual: string,
+): Promise<{ ultimaMae: string | null; ultimaAyla: string | null }> {
+  try {
+    const h = await carregarHistorico(supabase, familyId, mensagemAtual);
+    return {
+      ultimaMae: [...h].reverse().find((t) => t.de === "mae")?.texto ?? null,
+      ultimaAyla: [...h].reverse().find((t) => t.de === "ayla")?.texto ?? null,
+    };
+  } catch {
+    return { ultimaMae: null, ultimaAyla: null };
+  }
+}
+
+/**
+ * Os desafios que a família marcou no cadastro. São as chaves de TEMAS — é daí
+ * que o tema ativo costuma nascer na primeira conversa, porque a introdução
+ * oferece exatamente esses e a mãe escolhe um.
+ */
+async function carregarDesafiosOnboarding(
+  supabase: SupabaseClient,
+  membroId: string | null,
+): Promise<string[]> {
+  if (!membroId) return [];
+  try {
+    const { data } = await supabase
+      .from("perfil_vivo_membro")
+      .select("categorias_extras")
+      .eq("membro_atipico_id", membroId)
+      .maybeSingle();
+    const extras = data?.categorias_extras as { desafios_onboarding?: string[] } | null;
+    return (extras?.desafios_onboarding ?? []).filter(Boolean);
+  } catch {
+    return [];
+  }
+}
+
 async function carregarHistorico(
   supabase: SupabaseClient,
   familyId: string,

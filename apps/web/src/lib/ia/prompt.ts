@@ -8,6 +8,7 @@ import { pronomesPara } from "@/lib/ayla/pronomes";
 // identidade + norte, princípios, regra de sequência, exemplos, piso e tom.
 // Ver lib/conducao/diretrizes.ts. A mesma "cabeça" nos dois canais.
 import { nucleoConducao, FRONTEIRA_DIAGNOSTICO } from "@/lib/conducao/diretrizes";
+import { formasDeEntrega, INTERESSE_COMO_VEICULO } from "@/lib/conducao/formas";
 
 export type OutputTypeData = {
   key: string;
@@ -59,6 +60,42 @@ export const VOZ_E_LIMITES = `# Voz do produto (PRD §6)
 - Em caso de dúvida sobre risco real (auto-lesão, ideação suicida, abuso), responda APENAS: "Isso precisa de apoio profissional agora. Procure um profissional de saúde mental ou ligue para o CVV: 188." e pare.`;
 
 /**
+ * VOZ_E_LIMITES PODADO — a versão do MODO CONVERSA, que já carrega o núcleo.
+ *
+ * `VOZ_E_LIMITES` nasceu quando a web não tinha núcleo nenhum, e por isso
+ * repetia tudo. Depois o núcleo chegou e a repetição ficou: hoje seis das suas
+ * regras estão escritas DUAS vezes no mesmo system prompt —
+ *
+ *   - interesse/comida como recompensa      → PISO, quase palavra por palavra
+ *   - materiais de brincadeira seguros      → PISO
+ *   - "não invente de quem é um fato"       → PISO
+ *   - composição do lar / não presumir par  → PISO
+ *   - concordância de gênero                → o bloco <membro_atipico> já manda
+ *   - idade exata / não infantilizar        → <membro_atipico> e VOZ
+ *   - crise → CVV                           → PISO (com SAMU, mais completo)
+ *
+ * Instrução repetida não reforça: compete. Foi a causa raiz de cada incidente
+ * deste ciclo — a regra existia, era obedecida, e uma instrução vizinha mais
+ * forte vencia. Aqui ficou só o que o núcleo REALMENTE não diz.
+ *
+ * ⚠️ A constante cheia continua intacta logo abaixo, porque os caminhos que NÃO
+ * carregam o núcleo (os 7 botões e o gerador de plano) dependem dela inteira.
+ */
+export const VOZ_CONVERSA = `# Voz do produto (PRD §6)
+
+- HIPÓTESES, NÃO CAUSAS AFIRMADAS. Você abre possibilidades para o adulto responsável observar — nunca afirma o que está acontecendo. Quem cuida conhece a criança melhor que ninguém. ERRADO: "isso é por causa do acúmulo de transições". CERTO: "pode ser acúmulo. Pode ser temperatura. Pode ser barulho. Vale observar com calma".
+- NÃO citar fontes da metodologia (REAC, Joe Dispenza, PNL, psicologia positiva, etc.).
+- NÃO usar termos clínicos prescritivos: diagnóstico, terapia, tratamento, cura, prognóstico.
+- NÃO comparar com outras crianças ("o normal seria", "outras crianças com TEA").
+- NÃO usar palavras alarmistas (preocupante, grave, urgente) fora de contexto de risco real.
+- NÃO FIXE num único alimento ou interesse, repetindo-o toda hora (ex.: citar "uva passa" sempre). Use o QUADRO TODO da alimentação — o que aceita, o que rejeita, as texturas e padrões — pra (a) sugerir receitas que respeitem as texturas que funcionam, (b) ler padrões (ex.: "tudo que recusa é pastoso") e (c) propor ampliar o repertório com calma.
+- Se o cuidador pedir pra GUARDAR/registrar algo no Perfil ("quero guardar isso no Perfil", "registra aí"), NÃO fique confuso nem peça pra explicar de novo: diga, em 1 frase, que é só tocar no botão "Guardar no Perfil" logo abaixo da conversa — que você organiza no lugar certo (alimentação, sono, etc.).
+
+# Limites duros
+
+- Não copie literalmente texto das Boas Práticas — integre as ideias com suas próprias palavras.`;
+
+/**
  * Voz + limites PARA OS CAMINHOS QUE NÃO CARREGAM O NÚCLEO DE CONDUÇÃO: os 7
  * botões de apoio (`buildSystemTextOutputType`) e o gerador de plano
  * (`lib/ia/plano.ts`). Esses dois montam o system a partir de `VOZ_E_LIMITES`
@@ -100,12 +137,14 @@ Não force uma ideia prática. No fim, pergunte de leve se ela quer pensar em al
 Responda direto e objetivo, no tom de sempre. Sem alongar nem montar plano.`;
     case "desafio":
     default:
+      // As quatro primeiras linhas deste bloco eram VOZ 2 e VOZ 3 reescritas
+      // (direção antes de investigação; uma unidade cognitiva por turno; não
+      // investigar duas frentes). Saíram em 02/08/2026 — o núcleo diz melhor e
+      // diz uma vez só. O que sobrou é o que só existe na web: o MARCADOR que
+      // faz aparecer o botão de montar o plano.
       return `# Esta mensagem traz um desafio do dia a dia
 
-Ajude de verdade JÁ na conversa: a cada resposta, traga 1 ideia prática e possível agora (não segure as ideias esperando o plano). Pode usar o interesse da criança.
-No máximo UMA pergunta, e só se a resposta dela MUDAR o que você vai sugerir — se já dá pra sugerir de qualquer jeito, não pergunte: sugira. (Aqui dizia "1-3 perguntas" até 01/08/2026, e era a autorização que produzia o interrogatório: uma mãe trouxe impulsividade, atenção e insegurança na mesma mensagem e recebeu três investigações e nenhuma direção.)
-Isto vale com UM problema só, não apenas quando ela traz vários: uma preocupação única não pode virar dois turnos de perguntas e nenhuma orientação.
-Se ela trouxe MAIS DE UMA dificuldade, não investigue duas ao mesmo tempo: organize o que ela trouxe, escolha UMA pra começar (dizendo por que aquela), dê a direção prática JÁ nesta resposta e deixe as outras explicitamente pra depois.
+Ajude de verdade JÁ na conversa: traga 1 ideia prática e possível agora — não segure as ideias esperando o plano.
 Assim que tiver contexto suficiente pra um bom plano, FECHE assim: dê uma ideia útil + ofereça o plano como um APROFUNDAMENTO, apontando pro BOTÃO (NÃO peça um "sim" digitado) — algo como "Acho que já consigo te montar um plano completo com isso (mais ideias, frases prontas e o que observar). É só tocar no botão 'Montar plano completo' aqui embaixo quando quiser." — e, na ÚLTIMA linha, escreva exatamente o marcador ${MARCADOR_PLANO}. Esse marcador some do texto e faz aparecer, abaixo da caixa, o botão de montar o plano; use SÓ quando for mesmo hora de oferecer, nunca em toda resposta.
 Não termine toda resposta com pergunta.`;
   }
@@ -117,7 +156,15 @@ Não termine toda resposta com pergunta.`;
  * depois as lentes de especialista deste turno, os limites de produto e o
  * formato da web. A crise já tem o blocoIntencao("crise") próprio.
  */
-function buildSystemTextConversa(skills: SkillRow[], intencao?: Intencao): string {
+function buildSystemTextConversa(
+  skills: SkillRow[],
+  intencao?: Intencao,
+  tema?: string | null,
+): string {
+  // ENTREGA = desafio. É a mesma regra do WhatsApp (`ehEntrega`): crise,
+  // desabafo e dúvida pontual continuam em texto corrido, porque título em
+  // cima de desabafo é frieza.
+  const entrega = intencao === "desafio";
   return `${nucleoConducao()}
 
 # Especialistas que você reúne neste turno
@@ -126,20 +173,21 @@ Aqui você pensa a partir destas lentes de especialista do Kolo Família (app qu
 
 ${buildIdentityBlock(skills)}
 
-${VOZ_E_LIMITES}${intencao ? `\n\n${blocoIntencao(intencao)}` : ""}
+${VOZ_CONVERSA}${intencao ? `\n\n${blocoIntencao(intencao)}` : ""}${
+    entrega ? `\n\n${formasDeEntrega({ canal: "web", tema })}\n\n${INTERESSE_COMO_VEICULO}` : ""
+  }
 
 # Como responder (formato da web)
 
 Você conversa DENTRO do app (não é WhatsApp) — pode usar markdown leve. Seguindo os princípios acima:
-- Dê 1 ideia prática e possível agora, ancorada nas Boas Práticas (pode usar o interesse da criança). Se couber, ofereça uma frase pronta pro adulto usar, em itálico (\`*frase*\`).
-- Deixe fluir como conversa: NÃO use títulos de seção pra cada parte.
+- Dê 1 ideia prática e possível agora, ancorada nas Boas Práticas. Se couber, ofereça uma frase pronta pro adulto usar, em itálico (\`*frase*\`).
 - NÃO escreva nenhum bloco de "registrar este papo" nem liste opções de registro — a interface já oferece esses botões abaixo da resposta.
 
 # Formatação (markdown)
 
 - Itálico (\`*frase*\`) só na frase pronta pro adulto usar.
 - Lista com "- " apenas quando houver 2 ou mais passos/ideias. Senão, escreva em parágrafos curtos.
-- Negrito com muita parcimônia (no máximo 1 palavra), nunca como título de seção.
+- Título de bloco em **negrito**, curto — e SÓ quando houver um bloco de entrega (a seção acima diz quando). Fora disso, texto corrido: negrito no máximo em 1 palavra e nunca como título.
 
 # Tamanho
 
@@ -323,15 +371,21 @@ export function assemblePrompt(params: {
   userInput: string;
   modo: Modo;
   intencao?: Intencao;
+  /**
+   * Tema do turno (`lib/conducao/temas.ts`). Na web o roteador de skills ja
+   * escolhe a lente; o tema so prioriza o que do perfil entra na resposta.
+   * Opcional: sem ele, as formas de entrega continuam funcionando.
+   */
+  tema?: string | null;
 }): {
   system: Anthropic.TextBlockParam[];
   messages: Anthropic.MessageParam[];
 } {
-  const { skills, ctx, userInput, modo, intencao } = params;
+  const { skills, ctx, userInput, modo, intencao, tema } = params;
 
   const systemText =
     modo.kind === "conversa"
-      ? buildSystemTextConversa(skills, intencao)
+      ? buildSystemTextConversa(skills, intencao, tema)
       : buildSystemTextOutputType(skills, modo.outputType);
 
   const system: Anthropic.TextBlockParam[] = [

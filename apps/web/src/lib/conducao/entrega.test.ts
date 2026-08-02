@@ -1,0 +1,388 @@
+import { describe, it, expect } from "vitest";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
+import { formasDeEntrega, INTERESSE_COMO_VEICULO } from "./formas";
+import { TEMAS, CHAVES_TEMA, fraseDoTema, rotuloDoTema, listarTemas } from "./temas";
+import { nucleoConducao } from "./diretrizes";
+import { dividirEmBolhas, ehSoTitulo } from "@/lib/ayla/bolhas";
+import { templateBoasVindasComDesafio } from "@/lib/ayla/messageTemplates";
+import { VOZ_CONVERSA, VOZ_E_LIMITES, blocoIntencao } from "@/lib/ia/prompt";
+
+/**
+ * A EXPERIÊNCIA CONVERSACIONAL — o DNA do Kolo antigo trazido pra uma Ayla só.
+ *
+ * Os casos abaixo são os que a auditoria comparativa nomeou. Cada um existe
+ * porque um mecanismo do sistema antigo produzia algo melhor, e a Ayla atual
+ * tinha perdido: tema ativo, abertura que conhece a criança, entrega em blocos,
+ * atividade ancorada em interesse, crença, futuro possível.
+ */
+
+const RESPONDER = readFileSync(resolve(__dirname, "../ayla/responder.ts"), "utf8");
+const PROMPT_WEB = readFileSync(resolve(__dirname, "../ia/prompt.ts"), "utf8");
+const ORCHESTRATOR = readFileSync(resolve(__dirname, "../ayla/orchestrator.ts"), "utf8");
+
+// ============================================================
+// BOLHAS — o divisor não pode picotar um bloco
+// ============================================================
+
+describe("montagem das bolhas", () => {
+  it("título sozinho NÃO vira bolha — viaja com o conteúdo", () => {
+    const texto = [
+      "*O que eu faria primeiro*",
+      "",
+      "Tire a comida nova do prato dele.",
+      "",
+      "*Uma ideia pro fim de semana*",
+      "",
+      "Deixe ele lavar o que vai pro prato dos outros.",
+    ].join("\n");
+
+    const bolhas = dividirEmBolhas(texto);
+    expect(bolhas).toHaveLength(2);
+    expect(bolhas[0]).toBe("*O que eu faria primeiro*\nTire a comida nova do prato dele.");
+    expect(bolhas[1]).toContain("*Uma ideia pro fim de semana*\n");
+  });
+
+  it("uma resposta de 4 blocos cabe em 4 bolhas, não em 8", () => {
+    const texto = ["*A*", "", "um", "", "*B*", "", "dois", "", "*C*", "", "três", "", "*D*", "", "quatro"].join("\n");
+    expect(dividirEmBolhas(texto)).toHaveLength(4);
+  });
+
+  it("prosa corrida continua se dividindo como sempre — nada regrediu", () => {
+    const texto = "Primeira ideia.\n\nSegunda ideia.\n\nTerceira.";
+    expect(dividirEmBolhas(texto)).toEqual(["Primeira ideia.", "Segunda ideia.", "Terceira."]);
+  });
+
+  it("título com emoji também gruda", () => {
+    const bolhas = dividirEmBolhas("🎬 *Uma ideia usando algo que ela ama*\n\nEscrever a cena.");
+    expect(bolhas).toHaveLength(1);
+  });
+
+  it("uma FRASE inteira em negrito não é título — pode ficar sozinha", () => {
+    // Ênfase legítima. Se tratássemos como título, grudaríamos coisas que a
+    // Ayla separou de propósito.
+    expect(ehSoTitulo("*Isso não é culpa sua, e eu quero que você ouça isso com calma*")).toBe(false);
+  });
+
+  it("título no fim do texto não engole o conteúdo nem some", () => {
+    const bolhas = dividirEmBolhas("Alguma coisa.\n\n*Título órfão*");
+    expect(bolhas).toEqual(["Alguma coisa.", "*Título órfão*"]);
+  });
+
+  it("o orquestrador usa o divisor — não o split cru", () => {
+    expect(ORCHESTRATOR).toMatch(/dividirEmBolhas\(textoCompleto\)/);
+    expect(ORCHESTRATOR).not.toMatch(/textoCompleto\.split\(/);
+  });
+});
+
+// ============================================================
+// VOCABULÁRIO — uma fonte, quatro consumidores
+// ============================================================
+
+describe("vocabulário canônico de temas", () => {
+  it("tem as 15 chaves, e as chaves são as do onboarding", () => {
+    expect(CHAVES_TEMA).toHaveLength(15);
+    for (const k of ["sensorial", "nutricional", "escola", "aprendizado", "saude_geral"]) {
+      expect(CHAVES_TEMA).toContain(k);
+    }
+  });
+
+  it("escola e aprendizado agora são LIDOS do perfil — a lacuna que existia", () => {
+    // O mapa antigo do orquestrador tinha 9 chaves: a família marcava "escola"
+    // no cadastro, o onboarding gravava, e a Ayla não enxergava.
+    expect(rotuloDoTema("escola")).toBe("Escola");
+    expect(rotuloDoTema("aprendizado")).toBe("Aprendizado");
+    expect(ORCHESTRATOR).not.toMatch(/const extrasLabels/);
+    expect(ORCHESTRATOR).toMatch(/for \(const t of TEMAS\)/);
+  });
+
+  it("toda chave tem rótulo e frase — nada sai vazio numa mensagem", () => {
+    for (const t of TEMAS) {
+      expect(t.rotulo.length).toBeGreaterThan(2);
+      expect(t.frase.length).toBeGreaterThan(2);
+    }
+  });
+
+  it("chave desconhecida não quebra a frase", () => {
+    expect(fraseDoTema("chave_que_nao_existe")).toBe("esse ponto que você marcou");
+  });
+
+  it("lista até 3 temas em português natural", () => {
+    expect(listarTemas(["nutricional", "foco", "rotina"])).toBe(
+      "a alimentação, o foco e a rotina e as transições",
+    );
+    expect(listarTemas(["sono"])).toBe("o sono");
+    expect(listarTemas(["sono", "foco", "escola", "motor"])).not.toContain("a parte motora");
+  });
+});
+
+// ============================================================
+// D — FAMÍLIA NOVA: a introdução
+// ============================================================
+
+describe("família nova — a introdução ensina o território", () => {
+  const intro = templateBoasVindasComDesafio({
+    nomeMae: "Carla",
+    nomeMembro: "Théo",
+    genero: "masculino",
+    desafios: ["rotina", "sono", "emocional"],
+  });
+
+  it("cita os TRÊS desafios que a família marcou", () => {
+    expect(intro).toContain("a rotina e as transições");
+    expect(intro).toContain("o sono");
+    expect(intro).toContain("as emoções e as crises");
+  });
+
+  it("deixa claro que veio do que ELA contou — não é inferência da Ayla", () => {
+    expect(intro).toMatch(/Pelo que você contou quando entrou/);
+  });
+
+  it("delimita o território e pergunta por onde começar", () => {
+    expect(intro).toMatch(/Eu ajudo com isso no dia a dia/);
+    expect(intro).toMatch(/Por qual você quer começar\?/);
+  });
+
+  it("promete uma primeira ideia prática, não um questionário", () => {
+    expect(intro).toMatch(/primeira ideia prática/);
+    expect(intro).toContain("*áudio*");
+  });
+
+  it("NÃO lista o catálogo de recursos nem promete artefato", () => {
+    expect(intro).not.toMatch(/relatório|PDF|história|plano estratégico/i);
+  });
+
+  it("usa o nome da criança e concorda o gênero", () => {
+    expect(intro).toContain("do Théo");
+    expect(intro).toContain("pro Théo");
+  });
+
+  it("com um desafio só, a frase fica no singular", () => {
+    const um = templateBoasVindasComDesafio({
+      nomeMae: "Ana",
+      nomeMembro: "Lia",
+      genero: "feminino",
+      desafios: ["nutricional"],
+    });
+    expect(um).toContain("é a alimentação");
+    expect(um).toContain("da Lia");
+  });
+
+  it("o orquestrador manda a lista inteira, não o [0]", () => {
+    expect(ORCHESTRATOR).not.toMatch(/desafios_onboarding\?\.\[0\]/);
+    expect(ORCHESTRATOR).toMatch(/carregarDesafiosOnboarding/);
+  });
+});
+
+// ============================================================
+// TEMA ATIVO — nasce no onboarding, continua pela conversa
+// ============================================================
+
+describe("tema ativo", () => {
+  const INTENT = readFileSync(resolve(__dirname, "../ayla/intent.ts"), "utf8");
+
+  it("o classificador devolve intenção E tema na MESMA chamada", () => {
+    expect(INTENT).toMatch(/intencao\|tema/);
+    expect(INTENT).toMatch(/TurnoClassificado = \{ intencao: IntencaoAyla; tema: string \| null \}/);
+  });
+
+  it("considera o que a família marcou no cadastro", () => {
+    expect(INTENT).toMatch(/temasOnboarding/);
+    expect(INTENT).toMatch(/No cadastro esta família marcou/);
+  });
+
+  it("considera as duas últimas falas e manda continuar no mesmo tema", () => {
+    expect(INTENT).toMatch(/ultimaMae/);
+    expect(INTENT).toMatch(/ultimaAyla/);
+    expect(INTENT).toMatch(/CONTINUIDADE MANDA/);
+  });
+
+  it("mensagem curta e ambígua NÃO reseta o tema", () => {
+    expect(INTENT).toMatch(/"e de manhã\?"\), REPITA o tema anterior/);
+  });
+
+  it("tema inválido cai no anterior — perder o fio é pior que atrasar", () => {
+    expect(INTENT).toMatch(/CHAVES_TEMA\.includes\(candidata\) \? candidata : anterior/);
+  });
+
+  it("falha do classificador não perde o tema", () => {
+    expect(INTENT).toMatch(/return \{ intencao: "outro", tema: anterior \};/);
+  });
+
+  it("nada foi persistido — sem tabela, sem coluna", () => {
+    expect(ORCHESTRATOR).not.toMatch(/tema_ativo/);
+    expect(INTENT).not.toMatch(/from\("/);
+  });
+
+  it("o orquestrador carrega as falas anteriores pra dar continuidade", () => {
+    expect(ORCHESTRATOR).toMatch(/async function ultimasFalas/);
+    expect(ORCHESTRATOR).toMatch(/await ultimasFalas\(supabase, family\.id, inbound\.texto\)/);
+  });
+});
+
+// ============================================================
+// FORMAS DE ENTREGA — 2 a 4 blocos, na MESMA frente
+// ============================================================
+
+describe("formas de entrega", () => {
+  const wa = formasDeEntrega({ canal: "whatsapp", tema: null });
+  const web = formasDeEntrega({ canal: "web", tema: "nutricional" });
+
+  it("pede de 2 a 4 blocos — não 6 obrigatórios", () => {
+    expect(wa).toMatch(/de 2 a 4 blocos curtos/);
+    expect(wa).toMatch(/nunca use todos/);
+  });
+
+  it("NÃO reabre a resposta multi-frente que fechamos em 01/08", () => {
+    // Este é o risco número um da camada inteira.
+    expect(wa).toMatch(/FORMAS DIFERENTES DE AJUDAR NA MESMA FRENTE/);
+    expect(wa).toMatch(/NÃO autorizam abrir duas dificuldades no mesmo turno/);
+  });
+
+  it("um tipo de ajuda só = texto corrido, sem título nenhum", () => {
+    expect(wa).toMatch(/escreva em texto corrido e não use título nenhum/);
+  });
+
+  it("negrito certo em cada canal", () => {
+    expect(wa).toContain("*Assim*");
+    expect(wa).not.toContain("**Assim**");
+    expect(web).toContain("**Assim**");
+  });
+
+  it("proíbe título burocrático", () => {
+    expect(wa).toMatch(/Nada de "BLOCO 1"/);
+  });
+
+  it("segura o emoji", () => {
+    expect(wa).toMatch(/No máximo um emoji por resposta/);
+  });
+
+  it("o tema ativo prioriza o perfil sem travar o assunto", () => {
+    expect(web).toMatch(/O assunto desta conversa é ALIMENTAÇÃO/);
+    expect(wa).not.toMatch(/O assunto desta conversa/);
+  });
+
+  it("cabe no teto de ~1.000 caracteres — senão virou um segundo prompt", () => {
+    expect(wa.length).toBeLessThan(1600);
+  });
+});
+
+// ============================================================
+// CRENÇA e FUTURO — opcionais, com forma obrigatória
+// ============================================================
+
+describe("crença e futuro possível", () => {
+  const wa = formasDeEntrega({ canal: "whatsapp", tema: null });
+
+  it("crença existe como forma, e só quando aparece na fala", () => {
+    expect(wa).toMatch(/Uma ideia que pode estar pesando/);
+    expect(wa).toMatch(/uma crença, quando aparece na fala dela/);
+  });
+
+  it("NUNCA a forma de nomear crença como diagnóstico", () => {
+    expect(wa).not.toMatch(/crença limitante/i);
+  });
+
+  it("futuro é realidade + possibilidade + passo — não promessa", () => {
+    expect(wa).toMatch(/realidade de hoje \+ o que é possível \+ o passo/);
+  });
+
+  it("o núcleo continua proibindo prever resultado — a base do freio", () => {
+    const n = nucleoConducao();
+    expect(n).toMatch(/não promete resultado/);
+  });
+});
+
+// ============================================================
+// INTERESSE — veículo, não assunto
+// ============================================================
+
+describe("interesse da criança", () => {
+  it("liberado como VEÍCULO de brincadeira, atividade, metáfora, adaptação", () => {
+    expect(INTERESSE_COMO_VEICULO).toMatch(/brincadeira, uma atividade, uma metáfora, uma adaptação/);
+    expect(INTERESSE_COMO_VEICULO).toMatch(/USE o interesse dele/);
+  });
+
+  it("continua proibido puxar assunto ou exibir memória", () => {
+    expect(INTERESSE_COMO_VEICULO).toMatch(/continua proibido puxar o interesse pra abrir assunto/);
+    expect(INTERESSE_COMO_VEICULO).toMatch(/pra mostrar que você lembra/);
+  });
+
+  it("dado antigo vem com checagem leve DENTRO da frase", () => {
+    expect(INTERESSE_COMO_VEICULO).toMatch(/se ele ainda estiver nessa fase de Lego/);
+    expect(INTERESSE_COMO_VEICULO).toMatch(/ela te corrige sem constrangimento/);
+  });
+
+  it("o freio original continua no contexto — não foi removido", () => {
+    expect(RESPONDER).toMatch(/NÃO puxe por conta própria um assunto guardado no perfil/);
+  });
+});
+
+// ============================================================
+// QUANDO NÃO USAR — os casos que exigem texto corrido
+// ============================================================
+
+describe("quando os blocos NÃO entram", () => {
+  it("a regra do WhatsApp existe e é conservadora", () => {
+    expect(RESPONDER).toMatch(/export function ehEntrega/);
+    expect(RESPONDER).toMatch(/na dúvida, texto corrido/);
+  });
+
+  it("desabafo e pergunta simples: sem desafio detectado, sem blocos", () => {
+    expect(RESPONDER).toMatch(/return Boolean\(params\.sinais\?\.desafio\);/);
+  });
+
+  it("pedido explícito de plano não ganha blocos — a resposta ali é curta", () => {
+    expect(RESPONDER).toMatch(/if \(params\.querPlano\) return false;/);
+  });
+
+  it("a segunda passada da rede de fronteiras nunca ganha formato por cima", () => {
+    expect(RESPONDER).toMatch(/if \(params\.regenerarPorDiagnostico\) return false;/);
+  });
+
+  it("na web, só 'desafio' — crise, desabafo e dúvida ficam em prosa", () => {
+    expect(PROMPT_WEB).toMatch(/const entrega = intencao === "desafio";/);
+  });
+
+  it("a web deixou de PROIBIR título, mas só libera dentro da entrega", () => {
+    expect(PROMPT_WEB).not.toMatch(/NÃO use títulos de seção pra cada parte/);
+    expect(PROMPT_WEB).toMatch(/SÓ quando houver um bloco de entrega/);
+  });
+});
+
+// ============================================================
+// SALDO — a camada nova tem que ser paga
+// ============================================================
+
+describe("simplificação: o prompt não pode crescer", () => {
+  it("a duplicação do VOZ_E_LIMITES saiu do caminho conversa", () => {
+    expect(VOZ_CONVERSA.length).toBeLessThan(VOZ_E_LIMITES.length);
+    // O que saiu está no PISO — não sumiu do produto.
+    for (const some of ["RECOMPENSA", "MATERIAIS DE BRINCADEIRA", "CONCORDÂNCIA DE GÊNERO"]) {
+      expect(VOZ_CONVERSA).not.toContain(some);
+    }
+    expect(VOZ_E_LIMITES).toContain("RECOMPENSA");
+  });
+
+  it("os caminhos SEM núcleo continuam com a voz inteira", () => {
+    // Os 7 botões e o gerador de plano dependem dela — podá-los seria remover
+    // proteção de verdade, não duplicação.
+    expect(PROMPT_WEB).toMatch(/VOZ_LIMITES_E_FRONTEIRA = `\$\{VOZ_E_LIMITES\}/);
+    expect(PROMPT_WEB).toMatch(/\$\{VOZ_LIMITES_E_FRONTEIRA\}/);
+  });
+
+  it("blocoIntencao('desafio') não repete mais VOZ 2 e VOZ 3", () => {
+    const b = blocoIntencao("desafio");
+    expect(b).not.toMatch(/No máximo UMA pergunta/);
+    expect(b).not.toMatch(/não investigue duas ao mesmo tempo/);
+    // O que só existe na web fica: o marcador que faz aparecer o botão.
+    expect(b).toMatch(/MARCADOR|marcador/);
+  });
+
+  it("o núcleo não engordou — as formas ficaram FORA dele", () => {
+    const n = nucleoConducao();
+    expect(n).not.toContain("O que eu faria primeiro");
+    expect(n).not.toContain("de 2 a 4 blocos");
+    expect(n.length).toBeLessThan(47_000);
+  });
+});
