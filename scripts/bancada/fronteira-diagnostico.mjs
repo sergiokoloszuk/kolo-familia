@@ -73,7 +73,7 @@ const NUCLEO = [
   constanteTs(D, "FRONTEIRA_DIAGNOSTICO"),
   constanteTs(D, "FRONTEIRA_CLINICA"),
   constanteTs(D, "CATALOGO"),
-  constanteTs(D, "TOM"),
+  constanteTs(D, "VOZ"),
 ].join("\n\n");
 
 // A "REGRA DESTE TURNO" do WhatsApp vive nas <notas_internas> que

@@ -218,11 +218,11 @@ const SUGESTAO_PADRAO =
   "Reescreva sem essa expressão. O acolhimento mora na precisão da informação.";
 
 const VETOS_FALLBACK: VetoEntry[] = [
-  // Performar empatia
-  { regex: /\bquerida m[ãa]e\b/i, categoria: "performar empatia" },
-  { regex: /\bcompreendo perfeitamente\b/i, categoria: "performar empatia" },
-  { regex: /\bque situa[çc][ãa]o delicada\b/i, categoria: "performar empatia" },
-  { regex: /\bentendo perfeitamente sua (ang[úu]stia|dor|preocupa[çc][ãa]o)\b/i, categoria: "performar empatia" },
+  // Os vetos de "performar empatia" saíram em 02/08/2026: eram frases literais
+  // ("querida mãe", "compreendo perfeitamente"), o mesmo método que falhou no
+  // validador clínico — pega a frase, não o ato. O princípio 1 da VOZ ("acolho
+  // mostrando que entendi") resolve na origem, e vale nos DOIS canais; estes
+  // vetos só rodavam na web.
   // Clichês de maternidade
   { regex: /\bguerreira\b/i, categoria: "clichê de maternidade" },
   { regex: /\bsuperm[ãa]e\b/i, categoria: "clichê de maternidade" },
