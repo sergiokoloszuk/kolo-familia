@@ -111,7 +111,12 @@ describe("saúde de QUEM CUIDA — puerpério/amamentação (caso real 02/08/202
 
   it("a fronteira cobre o cuidador, não só a criança", () => {
     expect(FRONTEIRA_CLINICA).toMatch(/DA CRIANÇA OU DO CUIDADOR/);
-    expect(FRONTEIRA_CLINICA).toMatch(/puerpério, amamentação/);
+    expect(FRONTEIRA_CLINICA).toMatch(/Puerpério, amamentação[^.]*são EXEMPLOS/);
+    // O escopo não pode ficar preso ao território materno: uma queixa da
+    // própria mãe sobre concentração ou memória cai na mesma regra.
+    expect(FRONTEIRA_CLINICA).toMatch(/concentração, memória, sono, dor ou humor/);
+    // ...mas isso não faz da Ayla uma clínica geral.
+    expect(FRONTEIRA_CLINICA).toMatch(/você não vira clínica geral/);
     expect(FRONTEIRA_CLINICA).toMatch(/O corpo de quem cuida também é corpo/);
   });
 

@@ -135,9 +135,15 @@ const PADROES: ReadonlyArray<[string, RegExp]> = [
     new RegExp(`\\b(tem|e) (um |o )?(perfil|quadro|caso) (classico |tipico |claro )?(de|do|da) ${COND}`),
   ],
   ["criterios", new RegExp(`\\b(preenche|bate com|fecha) (os )?criterios\\b`)],
+  // O sujeito e o verbo não vêm sempre colados: "isso QUE VOCÊ SENTE é
+  // ansiedade" passava limpo. E o sujeito pode ser QUEM CUIDA — a fronteira
+  // clínica cobre a saúde do cuidador, então o detector também precisa cobrir.
   [
     "isso_e_condicao",
-    new RegExp(`\\b(isso|isto|o caso dela|o caso dele|o que ela tem|o que ele tem) (e|parece ser|seria|deve ser) (um |uma |o |a )?${COND}`),
+    new RegExp(
+      `\\b(isso|isto|o caso dela|o caso dele|o que (ela|ele|voce) (tem|sente|esta sentindo|ta sentindo|descreve|descreveu|esta descrevendo|ta descrevendo|esta contando|contou))` +
+        `[^.!?]{0,22}\\b(e|parece ser|seria|deve ser|pode ser) (um |uma |o |a )?${COND}`,
+    ),
   ],
 
   // --- Excluir também é diagnosticar ---

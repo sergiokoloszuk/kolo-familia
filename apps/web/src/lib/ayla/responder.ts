@@ -269,14 +269,27 @@ async function gerarUmaVez(
   const linhas: string[] = [];
   const relacao = params.cuidador?.relacao;
   const refMembro = params.nomeMembro ?? "quem está em foco";
+  // NOME DE QUEM FALA. Quando `family_profiles.como_chamar` e `nome_mae` estão
+  // vazios, `nomeMae` cai pra "" — e esta linha saía truncada, com vírgula solta
+  // e sem nome: "Você está falando com , mãe de Iasmin." O modelo preenchia o
+  // buraco com o único nome disponível no contexto, o da CRIANÇA, e a mãe recebia
+  // "Oi, Maria Yasmin!" seguido de "sua filha Iasmin" (caso real, 02/08/2026).
+  //
+  // A correção é não emitir a frase com buraco: dizer que o nome é desconhecido
+  // é informação, "" é convite a inventar. `limparNomeAusente` já existia pra
+  // esta classe de cicatriz, mas só roda nas proativas — o reativo não passa
+  // por ele, e de todo jeito ele limparia a vírgula, não o nome inventado.
+  const nomeDeQuemFala = params.nomeMae?.trim() ?? "";
   linhas.push(
-    `Você está falando com ${params.nomeMae}${relacao ? `, ${relacao} de ${refMembro}` : ""}.`,
+    nomeDeQuemFala
+      ? `Você está falando com ${nomeDeQuemFala}${relacao ? `, ${relacao} de ${refMembro}` : ""}.`
+      : `Você NÃO sabe o nome de quem está falando com você${relacao ? ` — só que é ${relacao} de ${refMembro}` : ""}. NÃO invente um nome, NÃO deduza pelo áudio ou pelo texto, e NUNCA use o nome da criança pra se dirigir a quem cuida. Fale sem vocativo ("oi", "tudo bem?") até que ela se apresente.`,
   );
   if (params.cuidador) {
     const pc = pronomesPara(params.cuidador.genero);
     if (pc.generoDefinido) {
       linhas.push(
-        `Trate ${params.nomeMae} no ${
+        `Trate ${nomeDeQuemFala || "quem fala com você"} no ${
           params.cuidador.genero === "feminino" ? "feminino" : "masculino"
         } (ex.: "${
           params.cuidador.genero === "feminino" ? "bem-vinda" : "bem-vindo"
