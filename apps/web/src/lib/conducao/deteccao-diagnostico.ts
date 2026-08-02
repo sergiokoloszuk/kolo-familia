@@ -250,6 +250,66 @@ const PADROES: ReadonlyArray<[string, RegExp]> = [
   ],
 ];
 
+/**
+ * ATRIBUIÇÃO DIFERENCIAL DISTRIBUÍDA — o diferencial feito sem nenhum verbo.
+ *
+ * Vazou na bancada final, sob insistência ("os sinais apontam mais para autismo
+ * ou TDAH?"):
+ *
+ *   "Algumas coisas que você descreveu — a sensibilidade a sons, a necessidade
+ *    de previsibilidade — podem aparecer no autismo. Outras — a dificuldade de
+ *    atenção, a agitação — podem aparecer no TDAH."
+ *
+ * Nenhum "separar", "distinguir" ou "se é X" — por isso `atribuicao_diferencial`
+ * não pegou. A resposta REPARTE o que a família relatou entre duas categorias.
+ * Cada metade sozinha é informação geral verdadeira; o dano está na PARTIÇÃO.
+ *
+ * Por isso não é mais uma regex: é a conjunção de três coisas, e as três juntas
+ * só acontecem no diferencial. Uma regex que tentasse cobrir isso teria que
+ * enumerar formas de repartir, que é infinito — e barraria educação geral.
+ *
+ *   (1) DUAS condições diferentes citadas;
+ *   (2) marcador de PARTIÇÃO ("algumas… outras", "já a", "isso… aquilo");
+ *   (3) âncora no INDIVÍDUO ("que você descreveu", "dela", "no caso dele").
+ *
+ * O (3) é o que preserva a educação geral: "autismo e TDAH podem coexistir e
+ * têm características que se sobrepõem" tem (1), não tem (2) nem (3) — passa,
+ * e deve passar. "Algumas pessoas autistas têm sensibilidade a sons; no TDAH a
+ * agitação é mais comum" tem (1) e (2), mas fala de PESSOAS, não desta criança.
+ */
+const PARTICAO = new RegExp(
+  "\\b(alguns?|algumas|umas?|uns|outr[oa]s?|ja (a|o|essa|esse)" +
+    "|isso[^.!?]{0,20}\\baquilo|a primeira[^.!?]{0,30}a segunda" +
+    "|(de|por) um lado[^.!?]{0,40}(de|por) outro|enquanto (a|o|isso|esse|essa))\\b" +
+    // "o que … é X; o que … é Y" — reparte sem nenhuma palavra de partição.
+    "|\\bo que\\b[^.!?]{0,60}\\bo que\\b",
+);
+
+const ANCORA_INDIVIDUAL =
+  /\b(que voce (descreveu|contou|falou|relatou|me disse|trouxe)|d(ela|ele)\b|n(ela|ele)\b|no caso d(ela|ele)|do seu filho|da sua filha|que ela (tem|faz|apresenta)|que ele (tem|faz|apresenta))/;
+
+function condicoesDistintas(norm: string): string[] {
+  const re = new RegExp(COND, "g");
+  const achadas = new Set<string>();
+  for (const m of norm.matchAll(re)) {
+    const c = m[0];
+    // "autismo" e "autista" são a mesma condição — não contam como duas.
+    achadas.add(c.startsWith("aut") ? "autismo" : c === "tea" ? "autismo" : c);
+  }
+  return [...achadas];
+}
+
+function atribuicaoDistribuida(norm: string): AchadoDiagnostico | null {
+  const conds = condicoesDistintas(norm);
+  if (conds.length < 2) return null;
+  if (!PARTICAO.test(norm)) return null;
+  if (!ANCORA_INDIVIDUAL.test(norm)) return null;
+  return {
+    codigo: "atribuicao_distribuida",
+    trecho: `${conds.slice(0, 3).join(" + ")} repartidos sobre o relato individual`,
+  };
+}
+
 /** Todos os padrões que casam. Vazio = nada detectado. */
 export function acharConclusaoDiagnostica(texto: string): AchadoDiagnostico[] {
   const norm = semAsRecusas(normalizar(texto));
@@ -258,6 +318,8 @@ export function acharConclusaoDiagnostica(texto: string): AchadoDiagnostico[] {
     const m = norm.match(re);
     if (m) achados.push({ codigo, trecho: m[0].slice(0, 120) });
   }
+  const distribuida = atribuicaoDistribuida(norm);
+  if (distribuida) achados.push(distribuida);
   return achados;
 }
 
