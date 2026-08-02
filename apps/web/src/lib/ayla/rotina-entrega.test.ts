@@ -61,6 +61,15 @@ describe("MATEUS — pergunta feita é pergunta respondida", () => {
     expect(RESPONDER).toMatch(/Mandar ela esperar um fluxo em vez de responder/);
   });
 
+  it("o convite do fim não recolhe o que já está no contexto", () => {
+    // Bancada de 02/08: a Ayla respondeu certo o horário e FECHOU com "me conta
+    // como é a tarde de vocês" — com a tarde dela no contexto e usada na
+    // própria resposta. Não era o bug antigo (respondeu primeiro), mas é a
+    // mesma pergunta, e falhava um critério de aceitação explícito.
+    expect(RESPONDER).toMatch(/NUNCA peça de novo o que já está no contexto/);
+    expect(RESPONDER).toMatch(/o convite do fim é pelo que ela quer MUDAR ou pelo que ela vai reparar testando/);
+  });
+
   it("a proibição antiga de propor horário no chat não existe mais", () => {
     // "não invente horários" fazia a Ayla se recusar a responder a pergunta
     // dela. Propor com base no que ela contou não é inventar.
