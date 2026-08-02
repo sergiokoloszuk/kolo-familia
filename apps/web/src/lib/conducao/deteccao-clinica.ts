@@ -42,6 +42,26 @@ function normalizar(s: string): string {
 const REMEDIO =
   "(remedi[oa]s?|medicac[ao]\\w*|medicament\\w*|dose|comprimido|gotas|ritalina|venvanse|concerta|risperidona|aripiprazol|melatonina|fluoxetina|sertralina|clonidina|depakote|neuleptil)";
 
+/**
+ * O CORPO DE QUEM CUIDA, no contexto do cuidado da criança.
+ *
+ * Não é lista de doenças (isso foi vetado e seria infinito): é o TERRITÓRIO —
+ * amamentação e puerpério —, que é pequeno, fechado e o único onde a saúde do
+ * adulto se mistura com a do bebê a ponto de uma orientação individual afetar os
+ * dois. Fora dele, saúde de adulto não é assunto da Kolo.
+ */
+const CORPO_CUIDADO =
+  "(mama|mamas|peito|peitos|seio|seios|bico|bicos|aureola|mamilo|mamada|mamadas|amament\\w*|leite|ordenha|pega|puerp\\w*|pos.parto|parto|cesare\\w*|utero|lóquios|loquios)";
+
+/**
+ * Os quadros que a conversa de amamentação/puerpério envolve. Serve só para
+ * ancorar os ATOS (concluir, normalizar, diferenciar) — não é catálogo clínico,
+ * e nenhuma regra depende de conhecer qual quadro é qual.
+ */
+const DOMINIO_MATERNO =
+  "(ingurgitament\\w*|mastite|fissura\\w*|candidiase|abscesso|pega (incorreta|errada|ruim|rasa)|" +
+  "baixa producao|producao de leite|apojadura|ducto (entupido|obstruido)|bloqueio de ducto)";
+
 /** Nomes de condição — usados só pra pegar "sintoma explicado pelo diagnóstico". */
 const COND =
   "(autismo|autista|tea|tdah|neurodivergenc\\w*|neurodivergente|dislexia|ansiedade|transtorno)";
@@ -156,6 +176,63 @@ const PADROES: ReadonlyArray<[string, RegExp]> = [
         `|(?:\\b(pode dar|vale dar|eu daria|eu faria|da (pra|para) dar|pode come[cç]ar|vale come[cç]ar)\\b[^.!?]{0,40}\\b${QUANDO}\\b)` +
         // Previsão de efeito: é opinião farmacológica mesmo sem verbo de decisão.
         `|${REMEDIO}[^.!?]{0,45}\\b(pega o dia|dura ate|cobre (o|a)|se sobrepoe|se complementa|evita (a )?(agitacao|insonia)|ajuda a dormir)\\b`,
+    ),
+  ],
+
+  // ---- 1c. SAÚDE DE QUEM CUIDA (puerpério, amamentação) ----
+  //
+  // Caso real (02/08/2026): mãe no puerpério, bebê de 15 dias, dor numa mama.
+  // A Ayla entregou manejo clínico completo — "é o ingurgitamento clássico",
+  // "pode ser fissura, pega incorreta ou começo de mastite", "o espaçamento é
+  // completamente esperado", "esse coletor estimula produção" — e depois passou
+  // a fazer anamnese pra diferenciar as hipóteses.
+  //
+  // Os 8 trechos reais passaram limpo por TODOS os padrões anteriores, porque
+  // eles estavam ancorados em sintoma DA CRIANÇA e em medicação. O corpo de quem
+  // cuida não existia no detector.
+  //
+  // NÃO É LISTA DE DOENÇAS — isso foi vetado e seria infinito. O que ancora é o
+  // TERRITÓRIO (amamentação/puerpério, um domínio pequeno e fechado) cruzado com
+  // os mesmos ATOS que já medimos em outros lugares: concluir causa, normalizar,
+  // fazer diferencial e explicar mecanismo aplicado ao caso.
+  [
+    "conclui_sobre_corpo_de_quem_cuida",
+    new RegExp(
+      `${CORPO_CUIDADO}[^.!?]{0,60}\\b(e|e o|e a|e um|e uma|parece|sao) (o |a |um |uma )?(classic|tipic|sinal de|quadro de|caso de)\\w*` +
+        `|\\b(e|sao|parece[m]?|deve ser|pode ser|podem ser) (o |a |um |uma )?(sinal de |quadro de |comeco de )?${DOMINIO_MATERNO}` +
+        `|${DOMINIO_MATERNO}[^.!?]{0,40}\\b(classic|tipic)\\w*`,
+    ),
+  ],
+  [
+    "diferencial_corporal",
+    // "pode ser A, B ou até C" — lista de causas candidatas para o sintoma DELA.
+    new RegExp(
+      `\\b(pode ser|podem ser|talvez seja|seria)\\b[^.!?]{0,50}\\b(ou|,)\\b[^.!?]{0,50}\\b(ou (ate )?)\\b[^.!?]{0,40}` +
+        `|${DOMINIO_MATERNO}[^.!?]{0,40}\\b(ou|,)[^.!?]{0,30}${DOMINIO_MATERNO}`,
+    ),
+  ],
+  [
+    "normaliza_quadro_clinico",
+    // "é completamente esperado", "é totalmente normal" sobre o corpo dela.
+    new RegExp(
+      `\\b(e|sao) (completamente|totalmente|super|bem|perfeitamente|absolutamente)? ?(esperad|normal|comum|natural)\\w*` +
+        `[^.!?]{0,50}(${CORPO_CUIDADO}|${DOMINIO_MATERNO})` +
+        `|(${CORPO_CUIDADO}|${DOMINIO_MATERNO})[^.!?]{0,50}\\b(e|sao) (completamente|totalmente|super|bem|perfeitamente|absolutamente)? ?(esperad|normal|comum|natural)\\w*`,
+    ),
+  ],
+  [
+    "mecanismo_fisiologico_aplicado",
+    // O gêmeo clínico do "neuroexplicar": explicar o mecanismo do corpo DELA
+    // para justificar uma conduta. "isso estimula produção", "o risco aumenta".
+    new RegExp(
+      `\\b(isso|isto|ele|ela|esse|essa)\\b[^.!?]{0,30}\\b(estimula|aumenta|reduz|diminui|melhora|piora|cria|provoca|evita)\\b[^.!?]{0,40}` +
+        `(${DOMINIO_MATERNO}|producao|risco de|ciclo de)` +
+        `|\\bo risco de\\b[^.!?]{0,40}\\b(aumenta|diminui|cresce)\\b` +
+        // PREVISÃO de como o corpo vai se comportar — mesmo ato, sem pronome e
+        // às vezes negada ("não vai criar aquele ciclo de mais estímulo").
+        `|\\b(nao )?(vai|vao|passa a|passam a|tende a|tendem a|comeca a|comecam a)\\b[^.!?]{0,45}` +
+        `\\b(criar|estimular|aumentar|reduzir|diminuir|esvaziar|drenar|acumular|retirar|sugar)\\b` +
+        `[^.!?]{0,45}(${CORPO_CUIDADO}|${DOMINIO_MATERNO}|producao|estimulo|ciclo)`,
     ),
   ],
 
