@@ -10,7 +10,11 @@ import { pronomesPara, type Genero, type CuidadorDescrito } from "./pronomes";
 // (formato e idioma). A identidade agora vive no CÓDIGO (não mais no banco
 // voz_ayla), o que elimina o drift banco×código.
 import { nucleoConducao } from "@/lib/conducao/diretrizes";
-import { formasDeEntrega, INTERESSE_COMO_VEICULO } from "@/lib/conducao/formas";
+import {
+  formasDeEntrega,
+  INTERESSE_COMO_VEICULO,
+  A_CRIANCA_ANTES_DO_ROTULO,
+} from "@/lib/conducao/formas";
 
 /**
  * Tracking opcional pra logar a chamada em api_calls. Quando ausente, a
@@ -311,7 +315,11 @@ async function gerarUmaVez(
     nucleoConducao(),
     FORMATO_WHATSAPP,
     ...(entrega
-      ? [formasDeEntrega({ canal: "whatsapp", tema: params.temaAtivo }), INTERESSE_COMO_VEICULO]
+      ? [
+          formasDeEntrega({ canal: "whatsapp", tema: params.temaAtivo }),
+          INTERESSE_COMO_VEICULO,
+          A_CRIANCA_ANTES_DO_ROTULO,
+        ]
       : []),
     DIRETRIZ_IDIOMA,
   ].join("\n\n");

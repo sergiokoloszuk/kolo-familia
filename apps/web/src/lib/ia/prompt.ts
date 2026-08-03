@@ -8,7 +8,11 @@ import { pronomesPara } from "@/lib/ayla/pronomes";
 // identidade + norte, princípios, regra de sequência, exemplos, piso e tom.
 // Ver lib/conducao/diretrizes.ts. A mesma "cabeça" nos dois canais.
 import { nucleoConducao, FRONTEIRA_DIAGNOSTICO } from "@/lib/conducao/diretrizes";
-import { formasDeEntrega, INTERESSE_COMO_VEICULO } from "@/lib/conducao/formas";
+import {
+  formasDeEntrega,
+  INTERESSE_COMO_VEICULO,
+  A_CRIANCA_ANTES_DO_ROTULO,
+} from "@/lib/conducao/formas";
 
 export type OutputTypeData = {
   key: string;
@@ -174,7 +178,9 @@ Aqui você pensa a partir destas lentes de especialista do Kolo Família (app qu
 ${buildIdentityBlock(skills)}
 
 ${VOZ_CONVERSA}${intencao ? `\n\n${blocoIntencao(intencao)}` : ""}${
-    entrega ? `\n\n${formasDeEntrega({ canal: "web", tema })}\n\n${INTERESSE_COMO_VEICULO}` : ""
+    entrega
+      ? `\n\n${formasDeEntrega({ canal: "web", tema })}\n\n${INTERESSE_COMO_VEICULO}\n\n${A_CRIANCA_ANTES_DO_ROTULO}`
+      : ""
   }
 
 # Como responder (formato da web)
