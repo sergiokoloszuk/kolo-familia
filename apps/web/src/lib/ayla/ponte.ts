@@ -306,6 +306,9 @@ export async function montarPonteWhatsApp(
       membroAtipicoId,
       desafio: desafioReal,
       origem: "estrategias",
+      // O tema que a prontidão validou — fallback do título quando
+      // `analisarDesafio` devolve algo que admite falta de contexto.
+      temaValidado: temaAuto,
     });
     console.log(`[ayla:ponte] plano gerado id=${plano.id} secoes=${plano.secoes.length}`);
 
