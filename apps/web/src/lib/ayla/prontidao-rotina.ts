@@ -92,6 +92,7 @@ Responda APENAS JSON, sem texto fora dele:
 
 - "suficiente": dá pra montar algo útil agora. pergunta=null.
 - "falta_escopo": ela pediu rotina mas não disse O QUE quer organizar ("preciso de uma rotina", "tá tudo bagunçado", "quero organizar ele", "vi que vocês fazem rotina"). NÃO é falta de dado — é falta de rumo. pergunta=null: quem oferece os caminhos é a Ayla, do jeito dela.
+  ⚠️ "O DIA INTEIRO" JÁ É ESCOPO. "quero a rotina do dia inteiro", "quero organizar o dia todo", "a manhã", "a tarde", "a noite", "antes de dormir" — todos já disseram o pedaço do dia. Não devolva "falta_escopo" pra nenhum deles: o que falta aí é a SEQUÊNCIA, então é "falta", e a pergunta é como o dia acontece hoje.
 - "falta": o escopo está claro, mas falta UM dado que muda o artefato. Escreva em "pergunta" a pergunta curta e direta que você faria — UMA SÓ, do jeito que uma pessoa perguntaria.
 - "nao_e_rotina": o pedido não é de organizar o dia. Explique em "motivo" o que ela realmente quer.
 - "limite_atuacao": a rotina pedida depende de decisão clínica que não é da Kolo. Escreva em "parteClinica" QUAL parte é do profissional (ex.: "frequência e duração das mamadas"). Isso NÃO impede organizar o resto.

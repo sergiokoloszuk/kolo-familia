@@ -85,3 +85,5 @@ apps/web/public/video/
 scripts/bancada/saida-experiencia.txt
 scripts/bancada/ultima-experiencia.json
 scripts/bancada/saida2.txt
+scripts/bancada/*.pdf
+scripts/bancada/*.png
