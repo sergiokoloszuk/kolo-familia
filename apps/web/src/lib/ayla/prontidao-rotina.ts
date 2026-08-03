@@ -53,6 +53,30 @@ Você NÃO decide, pra esta criança: intervalo entre mamadas ou refeições, du
 
 Quando a rotina DEPENDER de um desses dados, não invente e não desista: pergunte o que o profissional já orientou ("o que a pediatra orientou sobre as mamadas?") e encaixe a resposta dela na rotina como dado relatado. Se ela não souber, monte o resto — o que dá pra organizar já ajuda — e diga com clareza que essa parte fica com a pediatra.`;
 
+/**
+ * O TAMANHO DA AJUDA — a menor que resolve.
+ *
+ * A decisão existia, mas ninguém a tomava: quando a mãe trazia "todo dia dá
+ * briga pra sair do videogame", o porteiro devolvia `nao_e_rotina` e a conversa
+ * seguia. Podia até sair boa — mas por omissão, não por escolha. E do outro
+ * lado, quem entrava no fluxo só tinha um tamanho: rotina inteira, com PDF e
+ * cartões, mesmo quando a passagem era uma só.
+ *
+ * Três tamanhos, e o critério em português pra Karina ajustar sem caçar prompt.
+ */
+export const CRITERIO_TAMANHO_ROTINA = `QUAL O TAMANHO DA AJUDA? A melhor intervenção não é a que usa mais recursos — é a MENOR que resolve.
+
+- "orientacao": o adulto consegue resolver conduzindo a passagem. Uma transição só, e a criança entende quando a mãe fala. Entrega: o que fazer ANTES, DURANTE e DEPOIS. Nada é montado, nada é impresso.
+- "mini": VER a sequência acrescenta — a criança precisa consultar o que vem agora e o que vem depois, em vez de a mãe repetir toda vez. É uma passagem ou um trecho curto: 2 a 4 etapas.
+- "rotina": várias atividades de um período ou de um dia (a tarde, a manhã até sair, a noite, sábado). Aqui a organização é o que ajuda.
+
+COMO ESCOLHER: comece pelo menor que possa resolver e só suba quando houver motivo. Sobe pra "mini" quando a família relata que apoio visual ajuda, quando a transição se repete todo dia, quando falar não basta, ou quando a criança precisa de previsibilidade. Sobe pra "rotina" quando são várias atividades em sequência.
+
+⚠️ PEDIDO EXPLÍCITO NÃO SE REBAIXA. "quero uma rotina", "monta a rotina da tarde", "quero organizar o dia", "quero uma rotina visual" → é "rotina", mesmo que você ache que uma sequência curta bastaria. Se achar, DIGA isso na conversa e deixe a família escolher; não troque o pedido dela por baixo.`;
+
+/** orientacao < mini < rotina. Na dúvida, o maior — nunca reduzir por acidente. */
+export type TamanhoRotina = "orientacao" | "mini" | "rotina";
+
 export type DesfechoRotina =
   /** Dá pra gerar agora. */
   | "suficiente"
@@ -66,6 +90,10 @@ export type DesfechoRotina =
 
 export type ProntidaoRotina = {
   desfecho: DesfechoRotina;
+  /** A menor ajuda que resolve. Só significa algo quando desfecho=suficiente. */
+  tamanho: TamanhoRotina;
+  /** VER a sequência acrescenta pra ESTA criança? Manda nos cartões. */
+  visual: boolean;
   /** Preenchido quando desfecho = "falta": a ÚNICA pergunta que muda a rotina. */
   pergunta: string | null;
   /** Preenchido quando desfecho = "limite_atuacao": o que é da pediatra. */
@@ -76,6 +104,10 @@ export type ProntidaoRotina = {
 
 const SEGURO = (motivo: string): ProntidaoRotina => ({
   desfecho: "falta",
+  // Falha nunca reduz a ajuda: "rotina" é o fallback, e "falta" não gera nada
+  // mesmo. Reduzir por acidente seria entregar menos do que a família pediu.
+  tamanho: "rotina",
+  visual: false,
   pergunta: null,
   parteClinica: null,
   motivo,
@@ -87,14 +119,19 @@ ${CRITERIO_SUFICIENCIA_ROTINA}
 
 ${LIMITE_DE_ATUACAO_ROTINA}
 
+${CRITERIO_TAMANHO_ROTINA}
+
 Responda APENAS JSON, sem texto fora dele:
-{"desfecho":"suficiente"|"falta_escopo"|"falta"|"nao_e_rotina"|"limite_atuacao","pergunta":"...","parteClinica":"...","motivo":"..."}
+{"desfecho":"suficiente"|"falta_escopo"|"falta"|"nao_e_rotina"|"limite_atuacao","tamanho":"orientacao"|"mini"|"rotina","visual":true|false,"pergunta":"...","parteClinica":"...","motivo":"..."}
 
 - "suficiente": dá pra montar algo útil agora. pergunta=null.
 - "falta_escopo": ela pediu rotina mas não disse O QUE quer organizar ("preciso de uma rotina", "tá tudo bagunçado", "quero organizar ele", "vi que vocês fazem rotina"). NÃO é falta de dado — é falta de rumo. pergunta=null: quem oferece os caminhos é a Ayla, do jeito dela.
   ⚠️ "O DIA INTEIRO" JÁ É ESCOPO. "quero a rotina do dia inteiro", "quero organizar o dia todo", "a manhã", "a tarde", "a noite", "antes de dormir" — todos já disseram o pedaço do dia. Não devolva "falta_escopo" pra nenhum deles: o que falta aí é a SEQUÊNCIA, então é "falta", e a pergunta é como o dia acontece hoje.
 - "falta": o escopo está claro, mas falta UM dado que muda o artefato. Escreva em "pergunta" a pergunta curta e direta que você faria — UMA SÓ, do jeito que uma pessoa perguntaria.
-- "nao_e_rotina": o pedido não é de organizar o dia. Explique em "motivo" o que ela realmente quer.
+- "nao_e_rotina": não é caso de organizar o dia NEM de conduzir uma passagem — é conversa, desabafo, dúvida sobre comportamento, alimentação, escola. Explique em "motivo" o que ela realmente quer.
+  ⚠️ UMA TRANSIÇÃO DIFÍCIL NÃO É "nao_e_rotina". "todo dia dá briga pra sair do videogame e ir pro banho" é caso de ajudar AGORA: devolva "suficiente" com tamanho="orientacao" (ou "mini", se ver a sequência acrescentar). Antes isso caía fora e a família ficava sem a ajuda concreta da passagem.
+- "tamanho": aplique o critério acima. Só importa quando desfecho="suficiente".
+- "visual": true quando VER a sequência ajuda ESTA criança — a família já relatou que apoio visual funciona, a criança precisa consultar agora/depois, ou falar não basta. Não marque true só porque existe um interesse ou um tema bonito: tema não é motivo pra cartão.
 - "limite_atuacao": a rotina pedida depende de decisão clínica que não é da Kolo. Escreva em "parteClinica" QUAL parte é do profissional (ex.: "frequência e duração das mamadas"). Isso NÃO impede organizar o resto.
 - motivo: uma frase curta, pra log.
 
@@ -152,6 +189,14 @@ export async function avaliarProntidaoParaRotina(params: {
         ? d
         : "falta";
 
+    // TAMANHO INVÁLIDO OU AUSENTE NUNCA REDUZ. Um campo que some, um modelo que
+    // devolve "pequena", uma versão antiga do prompt — tudo isso cai em
+    // "rotina". O erro barato é entregar mais; o caro é a mãe pedir a rotina da
+    // tarde e receber três linhas de conselho.
+    const t = String(o.tamanho ?? "").trim();
+    const tamanho: TamanhoRotina =
+      t === "orientacao" || t === "mini" || t === "rotina" ? t : "rotina";
+
     const texto = (v: unknown) => (typeof v === "string" && v.trim() ? v.trim() : null);
     const pergunta = texto(o.pergunta);
 
@@ -159,6 +204,10 @@ export async function avaliarProntidaoParaRotina(params: {
     // perguntar. Sem ela, deixa a conversa seguir normal.
     return {
       desfecho,
+      tamanho,
+      // Cartão é decisão de necessidade. "mini" É uma sequência visual — sem o
+      // visual ela não existe. Nos outros, quem manda é o julgamento explícito.
+      visual: tamanho === "mini" ? true : o.visual === true,
       pergunta: desfecho === "falta" ? pergunta : null,
       parteClinica: desfecho === "limite_atuacao" ? texto(o.parteClinica) : null,
       motivo: texto(o.motivo) ?? "-",

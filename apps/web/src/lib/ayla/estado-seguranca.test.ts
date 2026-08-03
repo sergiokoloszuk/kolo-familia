@@ -157,7 +157,9 @@ describe("nota de segurança", () => {
 
 describe("durante a segurança, artefato nenhum dispara", () => {
   it("rotina — criar, ver e editar", () => {
-    expect(ORCH).toMatch(/!seguranca\.aberta && \(rotinaConversa \|\| intent === "rotina_criar"/);
+    // A condição virou multilinha quando o pedido explícito entrou; o que
+    // importa é a segurança continuar sendo o PRIMEIRO termo do gate.
+    expect(ORCH).toMatch(/!seguranca\.aberta &&\n\s*\(rotinaConversa \|\|\n\s*intent === "rotina_criar"/);
     expect(ORCH).toMatch(/!seguranca\.aberta && !rotinaConversa && \(intent === "rotina_ver"/);
     expect(ORCH).toMatch(/!seguranca\.aberta && !rotinaConversa && \(intent === "rotina_editar"/);
   });

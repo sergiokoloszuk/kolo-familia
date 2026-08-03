@@ -60,6 +60,12 @@ export async function gerarRotina(
     contexto?: string;
     /** O ponto difícil que a conversa revelou — muda a granularidade. */
     pontoDificil?: string | null;
+    /**
+     * O tamanho decidido pelo porteiro. "mini" é a MESMA rotina com menos
+     * etapas — mesmo gerador, mesma validação, mesma estrutura. Um segundo
+     * gerador aqui seria repetir exatamente o erro que este serviço matou.
+     */
+    tamanho?: "orientacao" | "mini" | "rotina";
     /** Ajuste de uma proposta já mostrada (o app usa nas idas e vindas). */
     propostaAtual?: RotinaProposta[] | null;
     /** Pula a prontidão: o app quando a mãe já está no assistente e ajustando. */
@@ -95,15 +101,23 @@ export async function gerarRotina(
   // O PONTO DIFÍCIL entra aqui e não num campo novo do schema: ele muda a
   // granularidade das etapas (uma preparação antes do momento que trava) e a
   // explicação que acompanha a rotina. Era coletado e jogado fora.
-  const historico = params.pontoDificil
-    ? [
-        ...params.historico,
-        {
-          de: "mae" as const,
-          texto: `(o que mais trava no dia: ${params.pontoDificil} — quebre esse momento em passos menores, com uma etapa de preparação antes dele)`,
-        },
-      ]
-    : params.historico;
+  const notas: Array<{ de: "mae"; texto: string }> = [];
+  if (params.pontoDificil) {
+    notas.push({
+      de: "mae",
+      texto: `(o que mais trava no dia: ${params.pontoDificil} — quebre esse momento em passos menores, com uma etapa de preparação antes dele)`,
+    });
+  }
+  // MINI entra pelo mesmo canal do ponto difícil, e de propósito: é instrução
+  // ao gerador, não um tipo novo de artefato.
+  if (params.tamanho === "mini") {
+    notas.push({
+      de: "mae",
+      texto:
+        "(monte SÓ a passagem que trava, de 2 a 4 etapas — não estenda pro resto do dia, mesmo sabendo como ele é)",
+    });
+  }
+  const historico = notas.length ? [...params.historico, ...notas] : params.historico;
 
   const proposta = await interpretarRotina(supabase, {
     familyId: params.familyId,

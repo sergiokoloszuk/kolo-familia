@@ -46,6 +46,7 @@ import { aguardarTurnoDaMae, descartarTurnoPendente } from "./lote-inbound";
 import { pedeUmPlano } from "@/lib/ia/pedido-plano";
 import {
   rotinaConversaPendente,
+  pediuRotinaExplicitamente,
   conduzirRotina,
   pedeRotina,
   pedeRotinaDeUmDia,
@@ -497,7 +498,10 @@ export async function sendRecuperacaoRotina(
     next: `/ludico/rotinas/${rotina.id}`,
   });
   const linhaLink = link ? `\n\n(Pra abrir os cartões: ${link})` : "";
-  const texto = `Oi, ${ctx.nomeMae} 🌿 A rotina${refRotina}${refMembro} ficou pronta. Conseguiu ver os cartões? Me conta o que você achou — e se ficou com a cara ${membro?.nome ? `d${membro.nome.endsWith("a") ? "a" : "o"} ${membro.nome}` : "dele(a)"}. Se algum não ficou bom, a gente refaz rapidinho. 💛${linhaLink}`;
+  // "Gostou?" não devolve nada aproveitável. O que a gente precisa saber é ONDE
+  // funcionou e ONDE ainda travou — é isso que preserva o que deu certo e muda
+  // só o ponto necessário, e é isso que o campo `transicoes[].funcionou` espera.
+  const texto = `Oi, ${ctx.nomeMae} 🌿 Conseguiram usar a rotina${refRotina}${refMembro}? Me conta duas coisas: onde funcionou, e onde ainda travou. O que estiver bom eu mantenho, e a gente mexe só no ponto que precisa. 💛${linhaLink}`;
 
   return enviarEPersistir(supabase, {
     family_account_id: familyAccountId,
@@ -1653,7 +1657,17 @@ export async function processInbound(
   // A Ayla conduz a conversa (escopo dia×semana → sequência → transições → tema)
   // e, quando tem o suficiente, monta + manda PDF + link. Enquanto não, faz a
   // próxima pergunta (tipo="rotina_conversa"). Estado inferido do histórico.
-  if (!seguranca.aberta && (rotinaConversa || intent === "rotina_criar" || pedeRotina(inbound.texto))) {
+  // `pedeRotina` exige a PALAVRA "rotina" — e "quero organizar a tarde da Manu"
+  // não a tem. Medido em 03/08/2026: essa frase dá false no detector E "outro"
+  // no classificador, ou seja, o pedido mais explícito que existe não entrava no
+  // fluxo. `pediuRotinaExplicitamente` cobre o período nomeado sem a palavra.
+  if (
+    !seguranca.aberta &&
+    (rotinaConversa ||
+      intent === "rotina_criar" ||
+      pedeRotina(inbound.texto) ||
+      pediuRotinaExplicitamente(inbound.texto))
+  ) {
     const ctxR = await loadFamiliaParaEnvio(supabase, family.id);
     const alvo = alvoDaRotina(ctxR, rotinaConversa?.membroId ?? membroConversa);
     if (alvo.ambiguo) return await perguntarQualCrianca(supabase, family, ctxR, alvo.ambiguo);

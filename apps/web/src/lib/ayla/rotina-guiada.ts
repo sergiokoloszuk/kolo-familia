@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { getAylaAnthropicClient, AYLA_MODEL_FALLBACK } from "./anthropic";
 import { nucleoConducao } from "@/lib/conducao/diretrizes";
+import { ORIENTACAO_DE_TRANSICAO } from "@/lib/conducao/formas";
 import { gerarMagicLink } from "./ponte";
 import { gerarRotina } from "@/lib/ludico/rotina-servico";
 import { idadeAnos } from "@/lib/idade";
@@ -41,6 +42,47 @@ export function pedeRotina(texto: string | null | undefined): boolean {
     /\b(quer|gostar|precis|ajud|pod[ei]|mont|prepar|organiz|planej)/.test(t) ||
     /\bcri(ar|a|e)\b/.test(t) ||
     /\bfaz|\bfa[çc]a/.test(t)
+  );
+}
+
+/**
+ * A FAMÍLIA PEDIU UMA ROTINA COM ESSAS PALAVRAS?
+ *
+ * Piso determinístico do tamanho. `pedeRotina` é largo de propósito (pega quem
+ * chega perdido, "tá tudo bagunçado"); este é estreito: só quem NOMEOU a rotina
+ * ou disse que quer organizar um período. Quem pede assim não pode receber três
+ * linhas de conselho porque o modelo achou que bastava — ela pediu o quadro.
+ *
+ * A Ayla ainda pode SUGERIR que uma sequência curta resolveria melhor. Sugerir
+ * é conversa; rebaixar por baixo é trocar o pedido dela.
+ */
+export function pediuRotinaExplicitamente(texto: string | null | undefined): boolean {
+  const t = (texto ?? "").toLowerCase();
+  if (/rotina visual|quadro (de|da) rotina|planejamento da semana|cronograma/.test(t)) return true;
+  // "organizar a tarde/manhã/noite/o dia/a semana" — período nomeado.
+  if (
+    /\b(organiz|mont|arrum|estrutur)\w*\s+(a|o|as|os|minha|meu|nossa|nosso)?\s*(tarde|manh[ãa]|noite|dia|semana|rotina)\b/.test(
+      t,
+    )
+  ) {
+    return true;
+  }
+  // "quero/preciso de uma rotina", "faz a rotina da tarde"
+  return /\brotina\b/.test(t) && /\b(quer|gostar|precis|ajud|pod[ei]|mont|faz|fa[çc]a|cri(ar|a|e))/.test(t);
+}
+
+/**
+ * A FAMÍLIA QUER IMPRIMIR?
+ *
+ * Decisão de produto (Sérgio, 03/08/2026): toda Rotina tem entrega concreta,
+ * mas nem toda Rotina precisa de PDF. A rotina no app JÁ é o artefato. O PDF
+ * era automático só porque o canal era WhatsApp — e isso é gerar arquivo pra
+ * provar que gerou.
+ */
+export function pediuParaImprimir(texto: string | null | undefined): boolean {
+  const t = (texto ?? "").toLowerCase();
+  return /imprim|impress|pdf|papel|colar|(na|pra|para a) (parede|geladeira)|plastific/.test(
+    t,
   );
 }
 
@@ -315,18 +357,20 @@ ANTES DE MONTAR (só quando já dá pra montar), diga em duas ou três linhas o 
 
 DEPOIS QUE EXISTE, mostre o que foi personalizado — os dias, a sequência, os horários que ELA deu, e a transição difícil quando houver. Não invente sumário: só cite o que está mesmo lá.
 
-## AYLA SEMPRE ENTREGA
+## AYLA SEMPRE ENTREGA — ajuda útil, não necessariamente artefato
+"Sempre entrega" quer dizer que a família NUNCA fica sem nada de concreto. NÃO quer dizer gerar um quadro em toda conversa. A melhor ajuda é a MENOR que resolve: às vezes é conduzir uma passagem (antes/durante/depois), às vezes é uma sequência curta de 2 a 4 etapas, às vezes é o período inteiro organizado. Quem decide o tamanho é o porteiro, e ele já decidiu quando você chega aqui.
 Se já dá pra montar uma primeira versão, MONTE — não peça confirmação antes. Ela vê a rotina no texto e ajusta o que quiser depois; é mais rápido corrigir algo pronto do que responder mais perguntas. Horário que ela não deu, você PROPÕE a partir do que sabe (chegada, escola, atividade fixa) e deixa claro que é sugestão. Só não invente horário quando não há nada em que se apoiar.
 Ponha uma dica curta NO PONTO DIFÍCIL — o momento que ela relatou, ou a transição que você já conhece do perfil. Uma ou duas, não uma aula. Quando fizer sentido, uma brincadeira ou atividade simples ancorada nos interesses dele.
-TEMA dos cartões é OPCIONAL e NUNCA atrasa a entrega: se você conhece um interesse, proponha junto; se não, monte sem tema e ofereça depois.
+TEMA dos cartões é OPCIONAL e NUNCA atrasa a entrega: se você conhece um interesse, proponha junto; se não, monte sem tema e ofereça depois. E tema NÃO é motivo pra existir cartão — o cartão existe quando VER a sequência ajuda a criança; o tema só personaliza o que já ia existir. A atividade tem que continuar reconhecível: primeiro se entende que é BANHO, depois é que ele é um dinossauro.
 
 ## Formato dos dados
 rotinas: [{"nome":"Dia com a vovó","dia_semana":null,"tarefas":[{"texto":"acordar","hora":null}]}]
 dia_semana: 0=Seg..6=Dom, ou null pra dia avulso/nomeado. "hora" é opcional (null quando não houver base).
 transicoes: [{"momento":"banho","estrategia":"música depois","funcionou":null,"merece_plano":false}] — o que você descobriu sobre momentos difíceis fica no perfil e você reusa. Marque "funcionou" quando ela disser que deu certo ou não. Se o momento for algo que a rotina sozinha NÃO resolve (ansiedade de separação, crise intensa, recusa alimentar séria), diga isso em uma frase e marque "merece_plano":true.
 
-## Quando "montar": o sistema JÁ anexa o PDF e o link, e os cartões ilustrados começam sozinhos
-Sua "mensagem" mostra a rotina no texto (a sequência, com os horários) e confirma o que foi feito — no passado, não no futuro. NUNCA escreva "vou montar", "vou gerar", "vou te mandar" ou "vai aparecer": quando você devolve "montar", já está feito. Avise que os cartões podem levar um tempinho pra aparecer e convide-a a te contar o que achou.`;
+## Quando "montar": o sistema anexa o link, e cuida sozinho de cartões e PDF
+Sua "mensagem" mostra a rotina no texto (a sequência, com os horários) e confirma o que foi feito — no passado, não no futuro. NUNCA escreva "vou montar", "vou gerar", "vou te mandar" ou "vai aparecer": quando você devolve "montar", já está feito.
+NÃO diga que mandou PDF, nem que os cartões estão sendo gerados: isso depende da necessidade e do que ela pediu, e o sistema acrescenta a frase certa depois da sua. Se você anunciar um arquivo que não saiu, ela vai procurar no celular e não vai achar. A entrega concreta é a ROTINA — o PDF é opção de impressão pra quem quer colar na parede.`;
 
 /** Cria/reusa uma rotina (por nome+dia), aplica o tema e grava as tarefas. */
 async function aplicarRotina(
@@ -530,12 +574,26 @@ export async function conduzirRotina(
       contexto: [jaSabemos.perfil, jaSabemos.rotinaExistente, transicoesTxt].filter(Boolean).join("\n"),
       idadeMeses: idadeEmMeses((membro.data_nascimento as string | null) ?? null),
     });
+    // ── PISO DO TAMANHO ────────────────────────────────────────────────────
+    // Quem pediu a rotina com todas as letras recebe rotina. O modelo pode
+    // achar que uma sequência curta bastaria — e pode DIZER isso na conversa —,
+    // mas não troca o pedido dela por baixo.
+    const pedidoExplicito = pediuRotinaExplicitamente(params.contexto);
+    const tamanho = pedidoExplicito ? "rotina" : prontidao.tamanho;
     console.log(
-      `[ayla:rotina] prontidão=${prontidao.desfecho} motivo="${prontidao.motivo}"`,
+      `[ayla:rotina] prontidão=${prontidao.desfecho} tamanho=${tamanho}${
+        pedidoExplicito && prontidao.tamanho !== "rotina" ? ` (piso: modelo disse ${prontidao.tamanho})` : ""
+      } visual=${prontidao.visual} motivo="${prontidao.motivo}"`,
     );
 
     // Não é rotina: sai e deixa o reativo responder. Mesmo caminho do "sair".
     if (prontidao.desfecho === "nao_e_rotina") return null;
+
+    // ── ORIENTAÇÃO: A MENOR AJUDA ──────────────────────────────────────────
+    // A passagem se resolve com o adulto conduzindo. Nada é montado, nada é
+    // persistido, nada é impresso — e a família não fica sem resposta, que era
+    // o que acontecia quando isto caía em `nao_e_rotina`.
+    const soOrientacao = tamanho === "orientacao" && prontidao.desfecho === "suficiente";
 
     const userPrompt = [
       prontidao.desfecho === "falta_escopo"
@@ -543,6 +601,10 @@ export async function conduzirRotina(
         : "",
       prontidao.desfecho === "falta" && prontidao.pergunta
         ? `AINDA FALTA UMA COISA pra montar: ${prontidao.pergunta}\nFaça ESSA pergunta, do seu jeito — UMA só —, e NÃO monte a rotina neste turno (acao="perguntar").`
+        : "",
+      soOrientacao ? ORIENTACAO_DE_TRANSICAO : "",
+      tamanho === "mini" && prontidao.desfecho === "suficiente"
+        ? `TAMANHO: SEQUÊNCIA CURTA. O que ajuda aqui é a criança VER a passagem, não o dia inteiro organizado. Monte de 2 a 4 etapas, só o trecho que trava (ex.: videogame → guardar → banho → pijama). Não estenda pro resto do dia, mesmo que você saiba como ele é. acao="montar".`
         : "",
       prontidao.desfecho === "limite_atuacao"
         ? `LIMITE DE ATUAÇÃO — esta parte é de quem acompanha a criança, não sua: ${prontidao.parteClinica ?? "decisão clínica"}.\nOrganize TUDO o que é organização (sequência, banho, trocas, descanso, registros, logística) e NÃO decida a parte clínica. Pergunte o que o profissional já orientou e use como a família contar, sem reinterpretar. Não desista da rotina por causa disso — o que dá pra organizar já ajuda.`
@@ -595,7 +657,9 @@ ${jaSabemos.rotinaExistente}`
     let mensagem = (typeof parsed?.mensagem === "string" && parsed.mensagem.trim()) || "";
     // `pronto` continua aceito por compatibilidade — se o modelo devolver o
     // formato antigo, nada quebra.
-    const pronto = acao === "montar" || parsed?.pronto === true;
+    // Em ORIENTAÇÃO nada é montado, aconteça o que acontecer com o "acao": o
+    // tamanho foi decidido pelo porteiro, não pelo modelo que está escrevendo.
+    const pronto = !soOrientacao && (acao === "montar" || parsed?.pronto === true);
     let tema = typeof parsed?.tema === "string" && parsed.tema.trim() ? parsed.tema.trim().slice(0, 40) : null;
 
     // ── A AYLA NÃO É MAIS O GERADOR ────────────────────────────────────────
@@ -625,6 +689,7 @@ ${jaSabemos.rotinaExistente}`
         mensagem: params.contexto,
         contexto: [jaSabemos.perfil, jaSabemos.rotinaExistente, transicoesTxt].filter(Boolean).join("\n"),
         pontoDificil: pontoDificilDoTurno,
+        tamanho,
         // A prontidão já rodou lá em cima, antes do turno de conversa.
         pularProntidao: true,
         // A guarda de identidade precisa da família inteira pra comparar o
@@ -697,7 +762,10 @@ ${jaSabemos.rotinaExistente}`
         const id = await aplicarRotina(supabase, familyId, params.membroAtipicoId, r, tema);
         if (id) ids.push(id);
       }
-      if (params.phoneE164) {
+      // PDF só quando imprimir serve: ela pediu, ou já pediu em algum momento
+      // desta conversa (o "manda em PDF" costuma vir um turno depois).
+      const querImprimir = historico.some((h) => h.de === "mae" && pediuParaImprimir(h.texto));
+      if (params.phoneE164 && querImprimir) {
         await entregarPdfDaRotina(supabase, {
           familyId,
           phoneE164: params.phoneE164,
@@ -719,19 +787,32 @@ ${jaSabemos.rotinaExistente}`
 
       // Auto-gerar DIA ÚNICO (tema): a mãe abre e já está gerando/pronto. A
       // semana fica sob demanda (a mãe pede "a rotina de terça" — ver pedirRotinaDoDia).
+      // CARTÕES POR NECESSIDADE, NÃO POR TEMA. Antes bastava existir um tema
+      // pra a geração disparar — o interesse virava gatilho de artefato. A
+      // ordem certa é a inversa: o visual entra quando VER ajuda, e o tema
+      // personaliza depois, se houver.
       let autoGerou = false;
-      if (!temSemana && tema && ids.length) {
-        for (const id of ids) await dispararGeracao(id, tema);
+      if (!temSemana && prontidao.visual && ids.length) {
+        // Sem tema não é motivo pra não gerar: o cartão ilustrado vale por si,
+        // e o tema é personalização de quem tem um interesse conhecido.
+        for (const id of ids) await dispararGeracao(id, tema ?? "");
         autoGerou = true;
       }
 
       const link = await gerarMagicLink(supabase, { familyId, next });
       const fechamento = mensagem || `Prontinho — montei a rotina do(a) ${nome} 🌿`;
-      const orient = autoGerou
-        ? ` Já comecei a gerar os cartões no tema *${tema}* — eles levam *1-2 minutinhos* pra ficar prontos, então pode abrir que vão aparecendo sozinhos 🌿 Te mandei também um *PDF pra imprimir*.`
-        : ` Te mandei um *PDF pra imprimir* (com quadradinhos pra marcar). No app dá pra ajustar${tema ? ` e gerar os cartões no tema *${tema}*` : " e gerar os cartões ilustrados"}.`;
-      const dica =
-        "\n\nSe quiser mudar uma etapa ou um horário, é só me falar aqui que eu ajusto.";
+      // A ENTREGA CONCRETA é a rotina no app. O PDF é opção de impressão, e a
+      // frase tem que dizer a verdade sobre o que existe agora.
+      const cartoes = autoGerou
+        ? ` Já comecei a gerar os cartões${tema ? ` no tema *${tema}*` : ""} — eles levam *1-2 minutinhos*, então pode abrir que vão aparecendo sozinhos 🌿`
+        : "";
+      const impresso = querImprimir
+        ? " Te mandei também um *PDF pra imprimir* (com quadradinhos pra marcar)."
+        : "";
+      const orient = `${cartoes}${impresso}`;
+      const dica = querImprimir
+        ? "\n\nSe quiser mudar uma etapa ou um horário, é só me falar aqui que eu ajusto."
+        : "\n\nSe quiser mudar uma etapa ou um horário, é só me falar. E se quiser imprimir pra colar na parede, eu te mando em PDF.";
       mensagem = link
         ? `${fechamento}${orient}\n\nAbre aqui (já entra direto):\n${link}${dica}`
         : `${fechamento}${orient}${dica}`;
