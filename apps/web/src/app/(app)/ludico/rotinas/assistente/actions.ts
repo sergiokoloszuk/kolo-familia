@@ -96,8 +96,10 @@ export async function montarRotinaIA(
     // Os desfechos que NÃO geram viram uma fala na tela — a mesma política do
     // WhatsApp, interface diferente. Nada é persistido, nada é publicado.
     const fala =
-      r.desfecho === "falta"
-        ? (r.pergunta ?? "Me conta como é essa parte do dia de vocês, na ordem que acontece?")
+      r.desfecho === "falta_escopo"
+        ? "Consigo sim 💛 O que você quer organizar primeiro: um período do dia (a manhã até sair, a tarde depois da escola, a noite), o dia inteiro, ou um momento específico que costuma travar? Me diz qual e a gente começa por aí."
+        : r.desfecho === "falta"
+          ? (r.pergunta ?? "Me conta como é essa parte do dia de vocês, na ordem que acontece?")
         : r.desfecho === "limite_atuacao"
           ? `Consigo organizar bastante coisa aqui — a sequência, o banho, as trocas, o descanso, o que vale anotar. Só a parte de ${r.parteClinica ?? "manejo clínico"} eu não decido: isso segue com quem acompanha ${(membro.nome as string) ?? "a criança"}. Me conta o que a pediatra já orientou? Aí eu encaixo do jeito que ela falou.`
           : r.desfecho === "nao_e_rotina"

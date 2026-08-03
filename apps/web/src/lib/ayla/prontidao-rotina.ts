@@ -21,18 +21,18 @@ import { getAylaAnthropicClient, AYLA_MODEL } from "./anthropic";
  */
 
 /** O que precisa estar na mesa pra uma rotina sair ÚTIL (e não genérica). */
-export const CRITERIO_SUFICIENCIA_ROTINA = `Uma rotina só vale a pena quando você JÁ SABE, ao mesmo tempo:
-1. QUAL PEDAÇO DO DIA — a tarde depois da escola, a manhã até sair, a hora de dormir, um dia específico. "O dia todo", sem nada mais, não é um pedaço.
-2. UMA SEQUÊNCIA REAL — o que acontece, na ordem, com as palavras da família ("chega 12h40, almoça, descansa, faz lição, futebol 15h30"). Não precisa de horário em tudo; precisa de ordem.
-3. O PONTO DIFÍCIL — onde trava, o que vira briga, o que a família quer melhorar. Uma rotina sem ponto difícil é um cartaz bonito que ninguém usa.
+export const CRITERIO_SUFICIENCIA_ROTINA = `A PERGUNTA CENTRAL É UMA SÓ: com o que eu já sei, consigo gerar uma rotina útil e coerente? Se sim, GERE. Não continue investigando pra enriquecer.
+
+O MÍNIMO pra gerar são DUAS coisas:
+1. QUAL PEDAÇO DO DIA — a tarde depois da escola, a manhã até sair, a noite, o dia inteiro, um dia específico.
+2. UMA SEQUÊNCIA — o que acontece, na ordem, com as palavras da família ("chega 12h40, almoça, descansa, faz lição, futebol 15h30"). Bagunçada serve: organizar é seu trabalho. Não precisa de horário em tudo; precisa de ordem.
+
+O PONTO DIFÍCIL (onde trava, o que vira briga) ENRIQUECE muito, mas NÃO é requisito. Se você sabe, use — muda a granularidade das etapas. Se não sabe e já tem escopo e sequência, GERE assim mesmo. Segurar uma rotina pra descobrir onde trava é interrogatório.
 
 NÃO é caso de gerar rotina quando:
 - a pessoa não pediu organização do dia — pediu ajuda com um comportamento ("ele bate quando tiro o objeto"), com alimentação, com escola. Isso é conversa, e às vezes plano; rotina não resolve.
 - é crise acontecendo agora, desabafo ou sofrimento do adulto.
-- a família falou de várias crianças e não ficou claro de quem é o dia.
-- ela só disse "quero uma rotina" e mais nada: aí falta a sequência, e uma rotina inventada seria pior que nenhuma.
-
-FALTA UMA INFORMAÇÃO quando existe UM dado — um só — que muda a rotina de verdade e você não tem. Pergunte só esse. Se a resposta não mudaria nada do que você montaria, você já tem o suficiente: não pergunte.`;
+- a família falou de várias crianças e não ficou claro de quem é o dia.`;
 
 /**
  * O LIMITE DE ATUAÇÃO — separado da suficiência de propósito.
@@ -53,7 +53,16 @@ Você NÃO decide, pra esta criança: intervalo entre mamadas ou refeições, du
 
 Quando a rotina DEPENDER de um desses dados, não invente e não desista: pergunte o que o profissional já orientou ("o que a pediatra orientou sobre as mamadas?") e encaixe a resposta dela na rotina como dado relatado. Se ela não souber, monte o resto — o que dá pra organizar já ajuda — e diga com clareza que essa parte fica com a pediatra.`;
 
-export type DesfechoRotina = "suficiente" | "falta" | "nao_e_rotina" | "limite_atuacao";
+export type DesfechoRotina =
+  /** Dá pra gerar agora. */
+  | "suficiente"
+  /** Pedido genérico: a família não disse O QUE quer organizar. NÃO é pergunta
+   *  de dado — é hora de oferecer caminhos e deixar ela escolher. */
+  | "falta_escopo"
+  /** Escopo claro, mas falta UM dado que muda o artefato. */
+  | "falta"
+  | "nao_e_rotina"
+  | "limite_atuacao";
 
 export type ProntidaoRotina = {
   desfecho: DesfechoRotina;
@@ -79,15 +88,18 @@ ${CRITERIO_SUFICIENCIA_ROTINA}
 ${LIMITE_DE_ATUACAO_ROTINA}
 
 Responda APENAS JSON, sem texto fora dele:
-{"desfecho":"suficiente"|"falta"|"nao_e_rotina"|"limite_atuacao","pergunta":"...","parteClinica":"...","motivo":"..."}
+{"desfecho":"suficiente"|"falta_escopo"|"falta"|"nao_e_rotina"|"limite_atuacao","pergunta":"...","parteClinica":"...","motivo":"..."}
 
 - "suficiente": dá pra montar algo útil agora. pergunta=null.
-- "falta": falta UM dado indispensável. Escreva em "pergunta" a pergunta curta e direta que você faria — uma só, do jeito que uma pessoa perguntaria.
+- "falta_escopo": ela pediu rotina mas não disse O QUE quer organizar ("preciso de uma rotina", "tá tudo bagunçado", "quero organizar ele", "vi que vocês fazem rotina"). NÃO é falta de dado — é falta de rumo. pergunta=null: quem oferece os caminhos é a Ayla, do jeito dela.
+- "falta": o escopo está claro, mas falta UM dado que muda o artefato. Escreva em "pergunta" a pergunta curta e direta que você faria — UMA SÓ, do jeito que uma pessoa perguntaria.
 - "nao_e_rotina": o pedido não é de organizar o dia. Explique em "motivo" o que ela realmente quer.
 - "limite_atuacao": a rotina pedida depende de decisão clínica que não é da Kolo. Escreva em "parteClinica" QUAL parte é do profissional (ex.: "frequência e duração das mamadas"). Isso NÃO impede organizar o resto.
 - motivo: uma frase curta, pra log.
 
-Na dúvida entre "suficiente" e "falta", escolha "falta": rotina inventada é pior que uma pergunta.
+NUNCA PERGUNTE O QUE VOCÊ JÁ TEM. Idade, nome e qual criança estão no contexto — perguntar isso queima a confiança da família ("eu já não te falei?"). Antes de escrever qualquer pergunta, releia O QUE JÁ SABEMOS e a conversa: se a resposta está lá, você não precisa dela. E UMA pergunta por vez: nunca junte duas ("qual a idade e qual parte do dia?").
+
+Na dúvida entre "suficiente" e "falta", escolha SUFICIENTE quando você já tiver escopo + sequência: uma primeira rotina que a família ajusta vale mais que mais um turno de perguntas.
 Na dúvida entre "falta" e "limite_atuacao", escolha "limite_atuacao": é mais seguro devolver a decisão clínica a quem acompanha a criança.`;
 
 /**
@@ -135,7 +147,9 @@ export async function avaliarProntidaoParaRotina(params: {
     const o = JSON.parse(m[0]) as Record<string, unknown>;
     const d = String(o.desfecho ?? "").trim();
     const desfecho: DesfechoRotina =
-      d === "suficiente" || d === "nao_e_rotina" || d === "limite_atuacao" ? d : "falta";
+      d === "suficiente" || d === "falta_escopo" || d === "nao_e_rotina" || d === "limite_atuacao"
+        ? d
+        : "falta";
 
     const texto = (v: unknown) => (typeof v === "string" && v.trim() ? v.trim() : null);
     const pergunta = texto(o.pergunta);

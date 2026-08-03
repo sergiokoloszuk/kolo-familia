@@ -492,8 +492,11 @@ export async function conduzirRotina(
     if (prontidao.desfecho === "nao_e_rotina") return null;
 
     const userPrompt = [
+      prontidao.desfecho === "falta_escopo"
+        ? `ELA AINDA NÃO DISSE O QUE QUER ORGANIZAR. NÃO pergunte dado nenhum — nem idade, nem horário, nem qual criança. OFEREÇA CAMINHOS, do jeito descrito acima, e espere ela escolher. acao="perguntar".`
+        : "",
       prontidao.desfecho === "falta" && prontidao.pergunta
-        ? `AINDA FALTA UMA COISA pra montar: ${prontidao.pergunta}\nFaça ESSA pergunta, do seu jeito, e NÃO monte a rotina neste turno (acao="perguntar").`
+        ? `AINDA FALTA UMA COISA pra montar: ${prontidao.pergunta}\nFaça ESSA pergunta, do seu jeito — UMA só —, e NÃO monte a rotina neste turno (acao="perguntar").`
         : "",
       prontidao.desfecho === "limite_atuacao"
         ? `LIMITE DE ATUAÇÃO — esta parte é de quem acompanha a criança, não sua: ${prontidao.parteClinica ?? "decisão clínica"}.\nOrganize TUDO o que é organização (sequência, banho, trocas, descanso, registros, logística) e NÃO decida a parte clínica. Pergunte o que o profissional já orientou e use como a família contar, sem reinterpretar. Não desista da rotina por causa disso — o que dá pra organizar já ajuda.`

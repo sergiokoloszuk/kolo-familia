@@ -36,6 +36,7 @@ import type { RotinaProposta } from "./rotina-ia-core";
 export type ResultadoRotina =
   | { desfecho: "gerou"; rotinas: RotinaProposta[]; tema: string | null; resposta: string }
   | { desfecho: "falta"; pergunta: string | null; motivo: string }
+  | { desfecho: "falta_escopo"; motivo: string }
   | { desfecho: "nao_e_rotina"; motivo: string }
   | { desfecho: "limite_atuacao"; parteClinica: string | null; motivo: string }
   | { desfecho: "barrada"; falhas: FalhaRotina[]; motivo: string };
@@ -77,6 +78,7 @@ export async function gerarRotina(
     console.log(`[rotina:servico] prontidão=${p.desfecho} motivo="${p.motivo}"`);
 
     if (p.desfecho === "nao_e_rotina") return { desfecho: "nao_e_rotina", motivo: p.motivo };
+    if (p.desfecho === "falta_escopo") return { desfecho: "falta_escopo", motivo: p.motivo };
     if (p.desfecho === "falta") return { desfecho: "falta", pergunta: p.pergunta, motivo: p.motivo };
     if (p.desfecho === "limite_atuacao") {
       return { desfecho: "limite_atuacao", parteClinica: p.parteClinica, motivo: p.motivo };
