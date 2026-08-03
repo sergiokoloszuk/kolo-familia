@@ -595,6 +595,13 @@ export async function conduzirRotina(
     // o que acontecia quando isto caía em `nao_e_rotina`.
     const soOrientacao = tamanho === "orientacao" && prontidao.desfecho === "suficiente";
 
+    // ── UMA DECISÃO SÓ ─────────────────────────────────────────────────────
+    // Havia duas: a prontidão dizia "suficiente" e o condutor ainda escolhia
+    // entre perguntar e montar. Foi assim que o Caso 1 gastou um turno a mais
+    // pedindo o horário do banho depois de a mãe já ter dado a sequência — e é
+    // a porta pela qual o interrogatório de 35 turnos volta.
+    const deveMontar = prontidao.desfecho === "suficiente" && !soOrientacao;
+
     const userPrompt = [
       prontidao.desfecho === "falta_escopo"
         ? `ELA AINDA NÃO DISSE O QUE QUER ORGANIZAR. NÃO pergunte dado nenhum — nem idade, nem horário, nem qual criança. OFEREÇA CAMINHOS, do jeito descrito acima, e espere ela escolher. acao="perguntar".`
@@ -603,6 +610,9 @@ export async function conduzirRotina(
         ? `AINDA FALTA UMA COISA pra montar: ${prontidao.pergunta}\nFaça ESSA pergunta, do seu jeito — UMA só —, e NÃO monte a rotina neste turno (acao="perguntar").`
         : "",
       soOrientacao ? ORIENTACAO_DE_TRANSICAO : "",
+      deveMontar
+        ? `JÁ DÁ PRA MONTAR — a criança, o pedaço do dia e a sequência já estão na mesa. acao="montar", obrigatoriamente. NÃO faça mais nenhuma pergunta neste turno: horário, ponto difícil, tema e transição enriquecem, mas NÃO seguram a entrega. O que faltar, ela ajusta depois em cima do que já existe.`
+        : "",
       tamanho === "mini" && prontidao.desfecho === "suficiente"
         ? `TAMANHO: SEQUÊNCIA CURTA. O que ajuda aqui é a criança VER a passagem, não o dia inteiro organizado. Monte de 2 a 4 etapas, só o trecho que trava (ex.: videogame → guardar → banho → pijama). Não estenda pro resto do dia, mesmo que você saiba como ele é. acao="montar".`
         : "",
@@ -659,7 +669,13 @@ ${jaSabemos.rotinaExistente}`
     // formato antigo, nada quebra.
     // Em ORIENTAÇÃO nada é montado, aconteça o que acontecer com o "acao": o
     // tamanho foi decidido pelo porteiro, não pelo modelo que está escrevendo.
-    const pronto = !soOrientacao && (acao === "montar" || parsed?.pronto === true);
+    const pronto = !soOrientacao && (deveMontar || acao === "montar" || parsed?.pronto === true);
+    if (deveMontar && acao !== "montar") {
+      // O modelo perguntou mesmo assim. Montamos, e a pergunta dele não vai
+      // junto: sairia uma mensagem que pergunta e entrega ao mesmo tempo.
+      console.warn(`[ayla:rotina] condutor pediu "${acao}" com prontidão suficiente — montando assim mesmo`);
+      mensagem = "";
+    }
     let tema = typeof parsed?.tema === "string" && parsed.tema.trim() ? parsed.tema.trim().slice(0, 40) : null;
 
     // ── A AYLA NÃO É MAIS O GERADOR ────────────────────────────────────────

@@ -1665,6 +1665,11 @@ export async function processInbound(
     !seguranca.aberta &&
     (rotinaConversa ||
       intent === "rotina_criar" ||
+      // "organizacao" entra na MESMA capacidade — e é por isso que ela existe.
+      // O classificador diz que o assunto é sequência/previsibilidade/passagem;
+      // NÃO diz que precisa de rotina. Quem escolhe entre orientação, sequência
+      // curta e o período inteiro é a prontidão, um passo adiante.
+      intent === "organizacao" ||
       pedeRotina(inbound.texto) ||
       pediuRotinaExplicitamente(inbound.texto))
   ) {

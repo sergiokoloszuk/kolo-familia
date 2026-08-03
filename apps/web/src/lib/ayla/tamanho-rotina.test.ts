@@ -132,9 +132,7 @@ describe("orientação não gera artefato nenhum", () => {
   });
 
   it("`pronto` é forçado a false: quem decide o tamanho não é quem escreve", () => {
-    expect(GUIADA).toMatch(
-      /const pronto = !soOrientacao && \(acao === "montar" \|\| parsed\?\.pronto === true\)/,
-    );
+    expect(GUIADA).toMatch(/const pronto = !soOrientacao &&/);
   });
 
   it("a forma vive em formas.ts, fora do núcleo", () => {
@@ -236,5 +234,79 @@ describe("a pergunta depois do uso", () => {
 
   it("promete preservar o que funcionou", () => {
     expect(ORCH).toMatch(/O que estiver bom eu mantenho, e a gente mexe só no ponto que precisa/);
+  });
+});
+
+// ============================================================
+// UMA DECISÃO SÓ — suficiente monta, ponto
+// ============================================================
+
+describe("suficiente gera, sem segundo julgamento", () => {
+  it("deveMontar nasce da prontidão, não do condutor", () => {
+    expect(GUIADA).toMatch(
+      /const deveMontar = prontidao\.desfecho === "suficiente" && !soOrientacao/,
+    );
+    expect(GUIADA).toMatch(/const pronto = !soOrientacao && \(deveMontar \|\|/);
+  });
+
+  it("a instrução proíbe perguntar quando já dá pra montar", () => {
+    expect(GUIADA).toMatch(/acao="montar", obrigatoriamente/);
+    expect(GUIADA).toMatch(/NÃO faça mais nenhuma pergunta neste turno/);
+    expect(GUIADA).toMatch(/enriquecem, mas NÃO seguram a entrega/);
+  });
+
+  it("se o modelo perguntar mesmo assim, a pergunta não vai junto da entrega", () => {
+    expect(GUIADA).toMatch(/if \(deveMontar && acao !== "montar"\)/);
+    expect(GUIADA).toMatch(/montando assim mesmo/);
+  });
+
+  it("orientação continua imune — ali `pronto` nunca é true", () => {
+    // deveMontar exclui orientação por construção; sem isso, o piso de
+    // "suficiente" passaria por cima do menor tamanho.
+    expect(GUIADA).toMatch(/deveMontar = prontidao\.desfecho === "suficiente" && !soOrientacao/);
+  });
+});
+
+// ============================================================
+// O CLASSIFICADOR — reconhece a necessidade, não decide a ferramenta
+// ============================================================
+
+describe("intenção de organização", () => {
+  const INTENT = readFileSync(resolve(__dirname, "intent.ts"), "utf8");
+  const ORCH = readFileSync(resolve(__dirname, "orchestrator.ts"), "utf8");
+
+  it("existe como intenção, com os exemplos reais", () => {
+    expect(INTENT).toMatch(/\| "organizacao"/);
+    expect(INTENT).toMatch(/ele não entende o que vem depois/);
+    expect(INTENT).toMatch(/preciso que ele veja primeiro banho e depois história/);
+  });
+
+  it("NÃO decide que precisa de rotina — diz só qual é o assunto", () => {
+    expect(INTENT).toMatch(/Isto NÃO decide que ela precisa de uma rotina/);
+    expect(INTENT).toMatch(/Quem escolhe é a etapa seguinte/);
+  });
+
+  it("episódio isolado continua sendo conversa", () => {
+    expect(INTENT).toMatch(/ele fez uma birra enorme no banho hoje.*= outro/);
+    expect(INTENT).toMatch(/padrão que se repete é organizacao/);
+  });
+
+  it("entra na MESMA capacidade — não abre uma segunda", () => {
+    expect(ORCH).toMatch(/intent === "organizacao" \|\|/);
+    // Um só bloco de rotina no roteamento: se houvesse dois, seriam duas portas.
+    expect(ORCH.match(/const r = await conduzirRotina\(/g)?.length).toBe(1);
+  });
+});
+
+describe("caso 4 — quem já trouxe a situação não recebe menu", () => {
+  it("o critério corrige a semântica de falta_escopo", () => {
+    expect(PRONTIDAO).toMatch(/"falta_escopo" É SÓ PRA QUEM PEDIU E NÃO DISSE O QUÊ/);
+    expect(PRONTIDAO).toMatch(/ela demora pra sair de casa, mas quando aviso antes ela vai/);
+    expect(PRONTIDAO).toMatch(/vender ferramenta em vez de ajudar/);
+  });
+
+  it("a orientação preserva o que a família já descobriu", () => {
+    expect(ORIENTACAO_DE_TRANSICAO).toMatch(/SE ELA JÁ CONTOU ALGO QUE FUNCIONA/);
+    expect(ORIENTACAO_DE_TRANSICAO).toMatch(/não acrescentaria quadro nenhum agora/);
   });
 });

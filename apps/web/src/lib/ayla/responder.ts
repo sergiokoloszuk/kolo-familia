@@ -116,7 +116,7 @@ export type RespostaParams = {
    * O turno é uma ENTREGA (desafio/pedido de ajuda) ou uma conversa (desabafo,
    * crise, pergunta pontual, saudação)? Decide se as formas de entrega entram.
    */
-  intencao?: "plano" | "outro" | "rotina_criar" | "rotina_ver" | "rotina_editar";
+  intencao?: "plano" | "outro" | "rotina_criar" | "rotina_ver" | "rotina_editar" | "organizacao";
   /**
    * Preenchido quando há SITUAÇÃO DE SEGURANÇA ABERTA. Vai pras notas internas
    * e prevalece: a prioridade continua sendo o risco, mesmo que esta mensagem

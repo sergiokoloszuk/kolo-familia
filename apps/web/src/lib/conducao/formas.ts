@@ -103,6 +103,8 @@ ANTES — o que preparar ou avisar pra chegada não ser de surpresa.
 DURANTE — o que fazer e o que dizer na hora. Dê a frase pronta, curta, do jeito que ela falaria.
 DEPOIS — como fechar a passagem e deixar visível o que vem em seguida.
 
+SE ELA JÁ CONTOU ALGO QUE FUNCIONA ("quando aviso antes, ela vai"), comece dizendo que não acrescentaria quadro nenhum agora — o que ela achou já é a pista. Aí os três momentos servem pra tornar aquilo mais previsível, não pra substituir.
+
 Uma linha ou duas em cada. Nada de explicar como o cérebro funciona: ela precisa do que fazer hoje à noite. Se a passagem se repete todo dia e você acha que VER a sequência ajudaria mais que ouvir, diga isso em uma frase no fim e deixe ela escolher — não monte por conta própria.`;
 
 /**
