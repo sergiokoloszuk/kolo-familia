@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createClient, createServiceRoleClient } from "@/lib/supabase/server";
 import { resolverLinkAcesso } from "@/lib/auth/acesso-link";
+import { destinoDaFamilia, normalizarDestino } from "@/lib/auth/destino-link";
 
 /**
  * Aterrissagem do link que a Ayla manda no WhatsApp.
@@ -59,19 +60,35 @@ export async function GET(request: NextRequest) {
   }
 
   const supabase = await createClient();
+  const admin = createServiceRoleClient();
 
-  // (1) Já logada: o token não importa.
+  // O DESTINO MORA NO TOKEN, e é lido ANTES de qualquer coisa.
+  //
+  // Até 03/08/2026 este bloco ficava depois do "já logada", e o caminho de quem
+  // tinha sessão ativa retornava com o `next` da QUERY STRING — que a Ayla não
+  // manda. Sem `?next=`, caía no default `/estrategias`, e o destino gravado no
+  // token nunca era lido. A mãe pedia o relatório, recebia o link certo
+  // (`/evolucao/relatorio` estava salvo em `acessos_app`) e caía em Estratégias.
+  //
+  // O MESMO TOKEN PRECISA LEVAR AO MESMO LUGAR, com ou sem sessão.
+  const acesso = tokenNosso ? await resolverLinkAcesso(admin, tokenNosso) : null;
+  const destinoBruto = nextUrl !== "/estrategias" ? nextUrl : (acesso?.next ?? nextUrl);
+  // E o artefato no destino precisa ser DESTA família — o token é da família, o
+  // id dentro do caminho não era conferido por ninguém.
+  const destino = acesso
+    ? await destinoDaFamilia(admin, { destino: destinoBruto, familyId: acesso.familyId })
+    : normalizarDestino(destinoBruto);
+
+  // (1) Já logada: pula a autenticação, mas NÃO pula o destino.
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (user) return NextResponse.redirect(`${origin}${nextUrl}`);
+  if (user) return NextResponse.redirect(`${origin}${destino}`);
 
   // (2) Token nosso: troca por sessão. Como a gente gera e consome o magic-link
   //     do Supabase no MESMO request, não sobra token pendente pra ser morto por
   //     um link futuro.
   if (tokenNosso) {
-    const admin = createServiceRoleClient();
-    const acesso = await resolverLinkAcesso(admin, tokenNosso);
     if (acesso) {
       const { data: fam } = await admin
         .from("family_accounts")
@@ -95,7 +112,7 @@ export async function GET(request: NextRequest) {
               token_hash: hash,
             });
             if (!error) {
-              const destino = nextUrl !== "/estrategias" ? nextUrl : acesso.next;
+              // Mesmo `destino` do caminho de sessão ativa — calculado uma vez.
               return NextResponse.redirect(`${origin}${destino}`);
             }
           }
@@ -107,7 +124,7 @@ export async function GET(request: NextRequest) {
   // (3) Link antigo (magic-link do Supabase).
   if (tokenHash) {
     const { error } = await supabase.auth.verifyOtp({ type: "magiclink", token_hash: tokenHash });
-    if (!error) return NextResponse.redirect(`${origin}${nextUrl}`);
+    if (!error) return NextResponse.redirect(`${origin}${destino}`);
   }
 
   // (4) Nada funcionou. Diz o que aconteceu e dá o caminho de volta.

@@ -503,7 +503,7 @@ ${params.diagnosticoRegistrado.trim()}`);
     if (l.desenho) partes.push(`DESENHO (leitura de um desenho) → ESTE link: ${l.desenho}`);
     if (l.relatorio)
       partes.push(
-        `RELATÓRIO da criança (pra escola/professora/terapeuta) → quando a mãe precisar apresentar a criança, preparar reunião ou trocar de escola, ofereça montar um relatório. A web já GERA o relatório a partir do que a gente sabe da criança (Perfil + registros), editável e em PDF. Mande ESTE link quando tiver o essencial preenchido: ${l.relatorio} — no app: *Evolução* → *Relatório*.`,
+        `RELATÓRIO da criança (pra escola/professora/terapeuta/médico) → quando a mãe precisar apresentar a criança, preparar reunião, consulta ou trocar de escola, ofereça. ATENÇÃO AO QUE VOCÊ PROMETE: o relatório é gerado POR ELA, NO APP — você NÃO gera aqui e NÃO manda o PDF pelo WhatsApp. Se ela pedir "gera e manda aqui", diga a verdade com naturalidade: você já organiza aqui os pontos principais, e o relatório em si ela gera no app, onde dá pra revisar e editar antes de baixar. Este link abre DIRETO na tela de Relatório: ${l.relatorio} — no app: *Evolução* → *Relatório*. NUNCA diga ou insinue que já gerou, que está gerando, ou que o arquivo vem depois.`,
       );
     partes.push(
       `Regras dos links: mande SEMPRE o link DIRETO do recurso (nunca um genérico) — a pessoa já cai na tela certa. O link JÁ loga ela; mas SE pedir e-mail/senha (às vezes acontece), depois de entrar ela chega no mesmo lugar.`,

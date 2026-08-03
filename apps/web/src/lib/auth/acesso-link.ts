@@ -1,4 +1,5 @@
 import { randomBytes } from "node:crypto";
+import { normalizarDestino } from "./destino-link";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 /**
@@ -35,8 +36,11 @@ function appUrl(): string {
 
 /** Só caminho interno — nunca deixa virar redirect pra fora. */
 function destinoSeguro(next: string | null | undefined): string {
-  const n = (next ?? "").trim();
-  return n.startsWith("/") && !n.startsWith("//") ? n : "/painel";
+  // A allowlist vive em `destino-link.ts`. Aceitar qualquer "/" bloqueava open
+  // redirect externo — o risco grave — mas deixava passar rota interna que não
+  // existe, e a família caía num 404 depois de clicar num link que a Ayla
+  // prometeu. Destino inválido agora vira a volta mais próxima que existe.
+  return normalizarDestino(next);
 }
 
 /**
