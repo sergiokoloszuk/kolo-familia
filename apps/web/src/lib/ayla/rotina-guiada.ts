@@ -2,7 +2,10 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { getAylaAnthropicClient, AYLA_MODEL_FALLBACK } from "./anthropic";
 import { nucleoConducao } from "@/lib/conducao/diretrizes";
 import { gerarMagicLink } from "./ponte";
+import { gerarRotina } from "@/lib/ludico/rotina-servico";
 import { idadeAnos } from "@/lib/idade";
+import { avaliarProntidaoParaRotina } from "./prontidao-rotina";
+import { validarRotina, resumirFalhas } from "./validacao-rotina";
 import {
   DIAS_LABEL,
   extrairJsonRotina,
@@ -143,6 +146,19 @@ async function carregarOQueJaSabemos(
   }
 }
 
+/**
+ * Idade em MESES. `idadeAnos` devolve 0 pra bebê de 18 dias e pra bebê de 11
+ * meses igualmente — e a diferença entre os dois é justamente o que decide se
+ * uma pergunta de rotina é, no fundo, clínica.
+ */
+function idadeEmMeses(nascimento: string | null): number | null {
+  if (!nascimento) return null;
+  const d = new Date(nascimento);
+  if (Number.isNaN(d.getTime())) return null;
+  const meses = (Date.now() - d.getTime()) / (1000 * 60 * 60 * 24 * 30.44);
+  return meses < 0 || meses > 1200 ? null : Math.floor(meses);
+}
+
 /** Interesses conhecidos da criança (pra a Ayla PROPOR um tema). Best-effort. */
 async function carregarInteresses(supabase: SupabaseClient, membroId: string): Promise<string | null> {
   try {
@@ -272,6 +288,17 @@ Tudo acima continua valendo — identidade, princípios, fronteiras e VOZ. Isto 
 - "perguntar" — falta UMA informação que muda a rotina de verdade. Uma só.
 - "montar" — você tem sequência suficiente pra uma primeira versão. Preencha "rotinas".
 - "sair" — a mensagem NÃO é mais sobre a rotina (ela mudou de assunto: pediu atividades, contou outra coisa, trouxe outro problema). Devolva "sair" e deixe "mensagem" vazia — outra parte da Ayla responde. NUNCA diga "antes precisamos terminar a rotina": quem manda no assunto é ela.
+
+## A FAMÍLIA NÃO SABE O QUE PEDIR — quem guia é você
+Ninguém chega dizendo "quero uma rotina visual semanal". Chega dizendo "preciso de uma rotina", "tá tudo bagunçado aqui", "ele não tem rotina nenhuma", "não sei nem por onde começar". Ela não conhece o produto, e não deveria precisar conhecer.
+
+PEDIDO GENÉRICO → ofereça caminhos concretos, em linguagem de gente, e espere ela escolher. Nada de menu numerado rígido nem jargão: são possibilidades numa frase cada — organizar um período do dia (manhã, depois da escola, noite), o dia inteiro, um momento difícil específico (sair do celular, começar a lição, ir dormir), ou um dia especial (passeio, festa, médico). Escolha as que fazem sentido pra ESTA família; não recite as quatro sempre.
+
+PEDIDO JÁ CLARO → NÃO mostre caminho nenhum. "quero organizar a tarde depois da escola" já disse tudo: vá direto.
+
+DEPOIS QUE ELA ESCOLHE, ensine o mínimo — sem virar formulário. Diga o que você precisa saber, em uma frase, e tire dela o peso de organizar: "me conta como é hoje, mesmo bagunçado — pode mandar áudio, que eu organizo". Pra um dia inteiro, o que importa é a sequência do que acontece, os horários que realmente mandam (escola, terapia, atividade fixa) e onde costuma travar. Diga isso do jeito que uma pessoa diria, não como três campos.
+
+E ANTES DE PERGUNTAR QUALQUER COISA, olhe o que você já tem. A frase que a família precisa ouvir é "eu já sei X e Y, só me falta Z" — nunca "me conta a rotina toda de novo". Se o perfil já traz o horário da escola e o ponto difícil, isso não se pergunta.
 
 ## AYLA SEMPRE ENTREGA
 Se já dá pra montar uma primeira versão, MONTE — não peça confirmação antes. Ela vê a rotina no texto e ajusta o que quiser depois; é mais rápido corrigir algo pronto do que responder mais perguntas. Horário que ela não deu, você PROPÕE a partir do que sabe (chegada, escola, atividade fixa) e deixa claro que é sugestão. Só não invente horário quando não há nada em que se apoiar.
@@ -444,7 +471,33 @@ export async function conduzirRotina(
 
     const jaSabemos = await carregarOQueJaSabemos(supabase, params.membroAtipicoId);
 
+    // ── PORTÃO 1: ISTO DEVE VIRAR ROTINA AGORA? ────────────────────────────
+    // Roda ANTES de qualquer montagem. Até 03/08/2026 quem decidia era o
+    // próprio modelo, no meio da geração — e foi assim que uma bebê de 18 dias
+    // ganhou uma rotina com intervalo entre mamadas, em PDF.
+    const conversaTxt = historico
+      .map((h) => `${h.de === "mae" ? "Mãe" : "Ayla"}: ${h.texto}`)
+      .join("\n");
+    const prontidao = await avaliarProntidaoParaRotina({
+      mensagem: params.contexto,
+      conversa: conversaTxt,
+      contexto: [jaSabemos.perfil, jaSabemos.rotinaExistente, transicoesTxt].filter(Boolean).join("\n"),
+      idadeMeses: idadeEmMeses((membro.data_nascimento as string | null) ?? null),
+    });
+    console.log(
+      `[ayla:rotina] prontidão=${prontidao.desfecho} motivo="${prontidao.motivo}"`,
+    );
+
+    // Não é rotina: sai e deixa o reativo responder. Mesmo caminho do "sair".
+    if (prontidao.desfecho === "nao_e_rotina") return null;
+
     const userPrompt = [
+      prontidao.desfecho === "falta" && prontidao.pergunta
+        ? `AINDA FALTA UMA COISA pra montar: ${prontidao.pergunta}\nFaça ESSA pergunta, do seu jeito, e NÃO monte a rotina neste turno (acao="perguntar").`
+        : "",
+      prontidao.desfecho === "limite_atuacao"
+        ? `LIMITE DE ATUAÇÃO — esta parte é de quem acompanha a criança, não sua: ${prontidao.parteClinica ?? "decisão clínica"}.\nOrganize TUDO o que é organização (sequência, banho, trocas, descanso, registros, logística) e NÃO decida a parte clínica. Pergunte o que o profissional já orientou e use como a família contar, sem reinterpretar. Não desista da rotina por causa disso — o que dá pra organizar já ajuda.`
+        : "",
       `CRIANÇA/ADOLESCENTE/ADULTO: ${nome}${idade != null ? ` (${idade} anos)` : ""}.`,
       interesses ? `INTERESSES CONHECIDOS (pra propor tema): ${interesses}` : "",
       jaSabemos.desafios.length
@@ -494,8 +547,54 @@ ${jaSabemos.rotinaExistente}`
     // `pronto` continua aceito por compatibilidade — se o modelo devolver o
     // formato antigo, nada quebra.
     const pronto = acao === "montar" || parsed?.pronto === true;
-    const tema = typeof parsed?.tema === "string" && parsed.tema.trim() ? parsed.tema.trim().slice(0, 40) : null;
-    const rotinas = sanitizarRotinas(parsed?.rotinas);
+    let tema = typeof parsed?.tema === "string" && parsed.tema.trim() ? parsed.tema.trim().slice(0, 40) : null;
+
+    // ── A AYLA NÃO É MAIS O GERADOR ────────────────────────────────────────
+    // Quando decide que dá pra montar, ela DELEGA ao serviço oficial — o mesmo
+    // que o app usa. Antes ela montava aqui, com as próprias regras, e as duas
+    // implementações se contradiziam (a dela propunha horário; a do app
+    // proibia). O que sobra pra ela é o que sempre foi seu: conduzir a
+    // conversa, perceber quando é hora, e explicar o que foi montado.
+    let rotinas: ReturnType<typeof sanitizarRotinas> = [];
+    if (pronto) {
+      const r = await gerarRotina(supabase, {
+        familyId,
+        membroAtipicoId: params.membroAtipicoId,
+        nome,
+        idade,
+        idadeMeses: idadeEmMeses((membro.data_nascimento as string | null) ?? null),
+        historico,
+        mensagem: params.contexto,
+        contexto: [jaSabemos.perfil, jaSabemos.rotinaExistente, transicoesTxt].filter(Boolean).join("\n"),
+        // O PONTO DIFÍCIL sai do que a conversa acabou de revelar, ou do que já
+        // estava no perfil. Era coletado e jogado fora; agora chega ao gerador.
+        pontoDificil:
+          (Array.isArray(parsed?.transicoes) && parsed.transicoes.length
+            ? String((parsed.transicoes[0] as { momento?: unknown })?.momento ?? "")
+            : "") ||
+          transicoesConhecidas[0]?.momento ||
+          null,
+        // A prontidão já rodou lá em cima, antes do turno de conversa.
+        pularProntidao: true,
+      });
+
+      if (r.desfecho === "gerou") {
+        rotinas = sanitizarRotinas(r.rotinas);
+        tema = tema ?? r.tema;
+      } else {
+        // Barrada, ou o gerador não devolveu nada: NÃO publica. A Ayla continua
+        // conversando — o comportamento seguro em falha é texto, nunca um
+        // artefato degradado.
+        console.warn(`[ayla:rotina] serviço não gerou — ${r.desfecho}: ${r.motivo}`);
+        const clinico = r.desfecho === "barrada" && r.falhas.some((f) => f.codigo === "manejo_clinico");
+        return {
+          mensagem: clinico
+            ? `Consigo organizar bastante coisa do dia — a sequência, o banho, as trocas, o descanso, e o que vale anotar. Só a parte de horários e quantidades de mamada/alimentação eu não decido: isso segue com quem acompanha ${nome}. Me conta o que a pediatra já orientou sobre isso? Aí eu encaixo do jeito que ela falou e monto o resto em volta.`
+            : `Montei aqui, mas ficou uma coisa que eu prefiro confirmar com você antes de mandar o quadro. Me conta como é essa parte do dia de vocês, na ordem que acontece — aí eu monto em cima do real, e não do que eu imaginei.`,
+          pronto: false,
+        };
+      }
+    }
 
     // Aprendizado: guarda no Kolo Vivo as transições difíceis + estratégia.
     if (Array.isArray(parsed?.transicoes) && parsed.transicoes.length) {
@@ -515,7 +614,30 @@ ${jaSabemos.rotinaExistente}`
       await salvarTransicoes(supabase, params.membroAtipicoId, aprendidas);
     }
 
+    // ── PORTÃO 2: ISTO PODE SER PUBLICADO? ─────────────────────────────────
+    // Depois da montagem, antes de gravar/PDF/link. Não existe "piso" de
+    // rotina: ou ela está boa, ou não se publica. Em falha a Ayla CONVERSA —
+    // organiza o que dá e devolve a parte clínica a quem acompanha a criança.
     if (pronto && rotinas.length) {
+      const tarefas = rotinas.flatMap((r) =>
+        (r.tarefas ?? []).map((t) => ({ texto: t.texto, hora: t.hora })),
+      );
+      const veredito = validarRotina({ tarefas, baseDeHorarios: `${conversaTxt}\n${jaSabemos.rotinaExistente}` });
+      if (!veredito.ok) {
+        console.warn(
+          `[ayla:rotina] PUBLICAÇÃO BARRADA — ${resumirFalhas(veredito.falhas)}`,
+        );
+        const clinico = veredito.falhas.some((f) => f.codigo === "manejo_clinico");
+        // Nada é gravado, nenhum PDF sai, nenhum link é mandado como se
+        // estivesse pronto. A Ayla continua útil pelo texto.
+        return {
+          mensagem: clinico
+            ? `Consigo te ajudar a organizar bastante coisa do dia ${nome ? `${nome === "seu filho" ? "" : "d"}${nome === "seu filho" ? "" : "a "}` : ""}— a sequência, o banho, as trocas, o descanso, e o que vale anotar. Só que a parte de horários e quantidades de mamada/alimentação eu não decido: isso segue com quem acompanha ${nome}. Me conta o que a pediatra já orientou sobre isso? Aí eu encaixo do jeito que ela falou e monto o resto em volta.`
+            : `Montei aqui, mas ficou uma coisa que eu prefiro confirmar com você antes de mandar o quadro. Me conta como é essa parte do dia de vocês, na ordem que acontece — aí eu monto em cima do real e não do que eu imaginei.`,
+          pronto: false,
+        };
+      }
+
       const ids: string[] = [];
       for (const r of rotinas) {
         const id = await aplicarRotina(supabase, familyId, params.membroAtipicoId, r, tema);

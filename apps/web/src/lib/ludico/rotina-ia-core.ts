@@ -28,7 +28,7 @@ Regras:
 - NOME LIVRE: use um nome que faça sentido ("Segunda", "Segunda de aula", "Manhã", "Dia de terapia"). Se a pessoa distingue cenários (aula/férias), reflita no nome.
 - VÁRIAS VERSÕES DO MESMO DIA são permitidas (ex.: "Segunda de aula" e "Segunda de férias" — duas rotinas com dia_semana=0).
 - "X é igual a Y": copie as tarefas de Y para X.
-- HORÁRIO É OPCIONAL: se a pessoa não deu hora, deixe "hora":null. NUNCA invente horário.
+- HORÁRIO — política única (vale no app e no WhatsApp): use a hora que a família DEU. Pode derivar a hora de um compromisso fixo que ela mesma citou ("futebol 15h30" → a etapa anterior cabe antes disso). Fora isso, "hora":null. NUNCA invente precisão pra preencher o quadro: rotina sem horário funciona, rotina com horário errado a família tenta cumprir e falha. Sugerir um horário é conversa; registrar como fato é outra coisa.
 - Monte um dia COERENTE: encaixe âncoras fixas (escola, terapia, esporte, curso) no horário certo; blocos que se repetem todo dia (estudo, tarefas, autocuidado) entram nos dias aplicáveis; inclua manhã (acordar/higiene/refeição) e noite (jantar/autocuidado/dormir) quando fizer sentido. Ordene por horário quando houver.
 - Tarefa curta e clara (1-5 palavras). Para adolescente/adulto, sem infantilizar.
 - NÃO invente atividades que a pessoa não mencionou além do esqueleto natural do dia (acordar/refeições/dormir).

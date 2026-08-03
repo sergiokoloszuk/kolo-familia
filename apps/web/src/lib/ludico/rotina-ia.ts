@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { getAnthropicClient, MODELS } from "@/lib/ia/anthropic";
 import { logarUsoApi } from "@/lib/billing/logar";
+import { nucleoConducao } from "@/lib/conducao/diretrizes";
 import {
   SYSTEM_ROTINA,
   montarUserPromptRotina,
@@ -31,7 +32,14 @@ export async function interpretarRotina(
   const msg = await client.messages.create({
     model: MODELS.principal,
     max_tokens: 2200,
-    system: SYSTEM_ROTINA,
+    // O gerador oficial carrega o NÚCLEO. Até 03/08/2026 `SYSTEM_ROTINA` era um
+    // prompt solto: sem identidade, sem piso, sem fronteira diagnóstica nem
+    // clínica. Era a mesma "segunda Ayla" que matamos no condutor do WhatsApp,
+    // viva do lado do app — e é por ali que a rotina da Clarinha teria passado
+    // ainda mais desprotegida.
+    system: `${nucleoConducao()}
+
+${SYSTEM_ROTINA}`,
     messages: [{ role: "user", content: montarUserPromptRotina(params) }],
   });
 
