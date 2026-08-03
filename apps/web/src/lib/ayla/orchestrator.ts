@@ -27,6 +27,7 @@ import { decidirDedupDiario } from "./dedup-diario";
 import {
   limparNomeAusente,
   templateBoasVindas,
+  templateClarificacaoMembro,
   templateBoasVindasComDesafio,
   templateRotinaDiaria,
   templateEngajamento,
@@ -54,6 +55,7 @@ import {
 } from "./rotina-guiada";
 import { classificarIntencao } from "./intent";
 import { dividirEmBolhas } from "./bolhas";
+import { resolverMembroAlvo } from "./membro-alvo";
 import { primeiroNomeConfiavel } from "./crianca-nome";
 import { TEMAS } from "@/lib/conducao/temas";
 import { criarLinkAcesso, pedeAcessoAoApp } from "@/lib/auth/acesso-link";
@@ -1522,12 +1524,64 @@ export async function processInbound(
   const intent = turnoClassificado.intencao;
   const temaAtivo = turnoClassificado.tema;
 
+  /**
+   * AMBÍGUO PERGUNTA — não chuta. Reusa `templateClarificacaoMembro` e o tipo
+   * `clarificacao_identificacao` que já existiam pra o parser: a peça estava
+   * pronta e só não era chamada no caminho da rotina.
+   */
+  const perguntarQualCrianca = async (
+    sb: SupabaseClient,
+    fam: { id: string },
+    ctxR: { whatsapp_e164: string } | null,
+    candidatos: Array<{ id: string; nome?: string | null }>,
+  ) => {
+    const nomes = candidatos.map((c) => ({ nome: (c.nome ?? "").trim() })).filter((c) => c.nome);
+    const texto = await templateClarificacaoMembro(sb, { membros: nomes });
+    const resp = ctxR
+      ? await enviarEPersistir(sb, {
+          family_account_id: fam.id,
+          membro_atipico_id: null,
+          phone: ctxR.whatsapp_e164,
+          texto,
+          category: "reativa",
+          tipo: "clarificacao_identificacao",
+        })
+      : undefined;
+    return { tratada: true as const, familia: fam.id, resposta: resp ?? undefined };
+  };
+
+  /**
+   * De quem é este pedido de rotina? Uma decisão só, com a política de
+   * `membro-alvo.ts`. Devolve null quando é AMBÍGUO — e aí o handler pergunta
+   * em vez de chutar.
+   *
+   * O `?? ctxR.membros[0]?.id` que existia aqui foi o que pôs a rotina da
+   * consulta médica da Manu dentro do Mario: a mãe escreveu "levar ELA no
+   * médico", a regex de nome não achou nada, e a cadeia caiu no irmão.
+   */
+  const alvoDaRotina = (
+    ctxR: { membros: Array<{ id: string; nome?: string | null; genero?: Genero }> } | null,
+    contexto: string | null,
+  ): { membroId: string | null; ambiguo: Array<{ id: string; nome?: string | null }> | null } => {
+    if (!ctxR?.membros?.length) return { membroId: null, ambiguo: null };
+    const r = resolverMembroAlvo({
+      texto: inbound.texto,
+      membros: ctxR.membros,
+      membroContexto: contexto,
+    });
+    if (r.tipo === "resolvido") return { membroId: r.membroId, ambiguo: null };
+    if (r.tipo === "ambiguo") return { membroId: null, ambiguo: r.candidatos };
+    return { membroId: null, ambiguo: null };
+  };
+
   // 3c-rotina-ver. "Traga a rotina de hoje/terça" — só quando NÃO está montando
   // uma agora (senão o pedido é parte da conversa). Acha o dia, gera se faltar e
   // manda o link certo.
   if (!rotinaConversa && (intent === "rotina_ver" || pedeRotinaDeUmDia(inbound.texto))) {
     const ctxR = await loadFamiliaParaEnvio(supabase, family.id);
-    const membroId = (ctxR?.membros ? membroMencionado(inbound.texto, ctxR.membros) : null) ?? membroConversa ?? ctxR?.membros[0]?.id ?? null;
+    const alvo = alvoDaRotina(ctxR, membroConversa);
+    if (alvo.ambiguo) return await perguntarQualCrianca(supabase, family, ctxR, alvo.ambiguo);
+    const membroId = alvo.membroId;
     if (ctxR && membroId) {
       const msg = await pedirRotinaDoDia(supabase, {
         familyId: family.id,
@@ -1553,7 +1607,9 @@ export async function processInbound(
   // de hoje" → ajusta a rotina existente (só quando NÃO está montando uma agora).
   if (!rotinaConversa && (intent === "rotina_editar" || pedeEditarRotina(inbound.texto))) {
     const ctxR = await loadFamiliaParaEnvio(supabase, family.id);
-    const membroId = (ctxR?.membros ? membroMencionado(inbound.texto, ctxR.membros) : null) ?? membroConversa ?? ctxR?.membros[0]?.id ?? null;
+    const alvo = alvoDaRotina(ctxR, membroConversa);
+    if (alvo.ambiguo) return await perguntarQualCrianca(supabase, family, ctxR, alvo.ambiguo);
+    const membroId = alvo.membroId;
     if (ctxR && membroId) {
       const msg = await editarRotina(supabase, {
         familyId: family.id,
@@ -1582,7 +1638,9 @@ export async function processInbound(
   // próxima pergunta (tipo="rotina_conversa"). Estado inferido do histórico.
   if (rotinaConversa || intent === "rotina_criar" || pedeRotina(inbound.texto)) {
     const ctxR = await loadFamiliaParaEnvio(supabase, family.id);
-    const membroId = (ctxR?.membros ? membroMencionado(inbound.texto, ctxR.membros) : null) ?? rotinaConversa?.membroId ?? membroConversa ?? ctxR?.membros[0]?.id ?? null;
+    const alvo = alvoDaRotina(ctxR, rotinaConversa?.membroId ?? membroConversa);
+    if (alvo.ambiguo) return await perguntarQualCrianca(supabase, family, ctxR, alvo.ambiguo);
+    const membroId = alvo.membroId;
     if (ctxR && membroId) {
       const r = await conduzirRotina(supabase, {
         familyId: family.id,

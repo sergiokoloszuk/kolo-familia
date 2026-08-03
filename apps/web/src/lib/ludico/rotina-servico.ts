@@ -2,6 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { avaliarProntidaoParaRotina } from "@/lib/ayla/prontidao-rotina";
 import { validarRotina, resumirFalhas, type FalhaRotina } from "@/lib/ayla/validacao-rotina";
 import { interpretarRotina } from "./rotina-ia";
+import { conflitoDeIdentidade } from "@/lib/ayla/membro-alvo";
 import type { RotinaProposta } from "./rotina-ia-core";
 
 /**
@@ -39,7 +40,9 @@ export type ResultadoRotina =
   | { desfecho: "falta_escopo"; motivo: string }
   | { desfecho: "nao_e_rotina"; motivo: string }
   | { desfecho: "limite_atuacao"; parteClinica: string | null; motivo: string }
-  | { desfecho: "barrada"; falhas: FalhaRotina[]; motivo: string };
+  | { desfecho: "barrada"; falhas: FalhaRotina[]; motivo: string }
+  /** O conteúdo gerado fala de OUTRA criança da família. Não publica. */
+  | { desfecho: "conflito_identidade"; citado: { id: string; nome?: string | null }; motivo: string };
 
 export async function gerarRotina(
   supabase: SupabaseClient,
@@ -61,6 +64,9 @@ export async function gerarRotina(
     propostaAtual?: RotinaProposta[] | null;
     /** Pula a prontidão: o app quando a mãe já está no assistente e ajustando. */
     pularProntidao?: boolean;
+    /** Todos os membros da família — pra guarda de identidade. Sem eles, a
+     *  guarda não roda (e quem chama fica sabendo que não rodou). */
+    membrosDaFamilia?: ReadonlyArray<{ id: string; nome?: string | null }>;
   },
 ): Promise<ResultadoRotina> {
   const conversa = params.historico
@@ -130,6 +136,36 @@ export async function gerarRotina(
       pergunta: proposta.pergunta ?? null,
       motivo: "gerador não devolveu rotina",
     };
+  }
+
+  // ── 2b. GUARDA DE IDENTIDADE ───────────────────────────────────────────
+  // A identidade era decidida DUAS vezes — por regex antes da geração e pelo
+  // modelo durante ela — e ninguém comparava. Foi assim que a rotina da
+  // consulta médica da Manu foi salva no Mario: a mãe escreveu "levar ELA no
+  // médico", o modelo entendeu e escreveu tudo sobre a menina, e o id que foi
+  // pro banco era o do irmão.
+  //
+  // Aqui, no ponto compartilhado: vale igual no WhatsApp e no app.
+  if (params.membrosDaFamilia?.length) {
+    const textoGerado = [
+      proposta.resposta ?? "",
+      ...proposta.rotinas.flatMap((r) => [r.nome ?? "", ...(r.tarefas ?? []).map((t) => t.texto)]),
+    ].join(" ");
+    const citado = conflitoDeIdentidade({
+      texto: textoGerado,
+      membroEscolhido: params.membroAtipicoId,
+      membros: params.membrosDaFamilia,
+    });
+    if (citado) {
+      console.warn(
+        `[rotina:servico] CONFLITO DE IDENTIDADE — texto cita "${citado.nome}" (${citado.id}), artefato iria pra ${params.membroAtipicoId}`,
+      );
+      return {
+        desfecho: "conflito_identidade",
+        citado,
+        motivo: `texto sobre ${citado.nome}, artefato em outro membro`,
+      };
+    }
   }
 
   // ── 3. VALIDAÇÃO — antes de qualquer persistência ou publicação ────────

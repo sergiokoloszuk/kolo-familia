@@ -509,6 +509,14 @@ export async function conduzirRotina(
 
     const jaSabemos = await carregarOQueJaSabemos(supabase, params.membroAtipicoId);
 
+    // Todos os membros da família — só pra guarda de identidade comparar nomes.
+    const { data: irmaosRaw } = await supabase
+      .from("membros_atipicos")
+      .select("id, nome")
+      .eq("family_account_id", familyId)
+      .eq("ativo", true);
+    const irmaos = (irmaosRaw ?? []) as Array<{ id: string; nome: string | null }>;
+
     // ── PORTÃO 1: ISTO DEVE VIRAR ROTINA AGORA? ────────────────────────────
     // Roda ANTES de qualquer montagem. Até 03/08/2026 quem decidia era o
     // próprio modelo, no meio da geração — e foi assim que uma bebê de 18 dias
@@ -619,6 +627,9 @@ ${jaSabemos.rotinaExistente}`
         pontoDificil: pontoDificilDoTurno,
         // A prontidão já rodou lá em cima, antes do turno de conversa.
         pularProntidao: true,
+        // A guarda de identidade precisa da família inteira pra comparar o
+        // texto gerado com o membro escolhido.
+        membrosDaFamilia: irmaos,
       });
 
       if (r.desfecho === "gerou") {
