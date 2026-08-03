@@ -108,6 +108,62 @@ const PADROES: ReadonlyArray<[string, RegExp]> = [
   ],
   ["aponta_com_forca", new RegExp(`\\baponta(m|r|ria)? (com (muita )?forca|fortemente|bastante|claramente|mais)\\b`)],
 
+  // --- Os quatro buracos fechados em 03/08/2026 ---
+  // Achados ao testar a rede contra frases que o PROMPT já proibia: as quatro
+  // passavam. A primeira ("tudo aponta pro autismo") está listada no núcleo
+  // como frase que "já saiu de verdade e não pode voltar" — e a rede não a
+  // pegaria. São CLASSES, não as quatro frases exatas.
+
+  // 1. CONVERGÊNCIA sem intensificador. `aponta_com_forca` exigia "com força",
+  //    "fortemente", "claramente" — "tudo aponta pro autismo" não tem nenhum.
+  [
+    "converge_para",
+    new RegExp(
+      `\\b(tudo|isso|os sinais|o quadro|as caracteristicas|o conjunto|o padrao)\\s+` +
+        `(aponta|apontam|leva|levam|caminha|caminham|converge|convergem|indica|indicam)\\s+` +
+        `(pra|para|pro|ao|a)\\s+(o |um |a )?${COND}`,
+    ),
+  ],
+
+  // 2. CONFIRMAÇÃO — não existia padrão nenhum para "confirma".
+  [
+    "confirma_condicao",
+    new RegExp(
+      `\\b(confirma|confirmam|comprova|comprovam|fecha|fecham|sela|selam|` +
+        `e (a )?prova|caracteriza|caracterizam)\\b[^.!?]{0,40}${COND}`,
+    ),
+  ],
+
+  // 3. CAUSALIDADE diagnóstico → comportamento. O diagnóstico pode existir e
+  //    ser verdadeiro; ele não explica o episódio de hoje. A forma PERMITIDA
+  //    ("pode ter relação com características do autismo") não casa, porque
+  //    estes padrões exigem causa afirmada.
+  [
+    "causa_pelo_diagnostico",
+    new RegExp(
+      // O pronome é OPCIONAL: "porque é autista" (sujeito oculto) é a forma
+      // mais comum em português falado, e era exatamente a que escapava.
+      `\\b(por causa d|porque (ela |ele )?(e|tem) |devido a|em funcao d|efeito d)\\s*(o |a |um |uma )?${COND}`,
+    ),
+  ],
+  [
+    "isso_e_do_quadro",
+    new RegExp(
+      `\\b(isso|esse comportamento|essa reacao|essa crise|isso tudo) (e|vem d|veio d)(o |a |os |as )?${COND}`,
+    ),
+  ],
+
+  // 4. NEUROEXPLICAÇÃO afirmada sobre o INDIVÍDUO. Exige o possessivo ("o
+  //    cérebro DELE") — falar de cérebro no geral continua livre, que é o que
+  //    diferencia educação de conclusão.
+  [
+    "mecanismo_do_individuo",
+    new RegExp(
+      `\\b(o |a )?(cerebro|sistema nervoso|neuronios?)\\s+(dela|dele)\\s+` +
+        `(ja |so |nao )?(chegou|esta|ficou|entrou|reage|reagiu|precisa|encheu|saturou|desligou|travou|aguenta|consegue)`,
+    ),
+  ],
+
   // --- Graduar probabilidade / apostar ---
   [
     "probabilidade",
