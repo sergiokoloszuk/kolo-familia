@@ -86,6 +86,23 @@ export function pediuParaImprimir(texto: string | null | undefined): boolean {
   );
 }
 
+/**
+ * A FAMÍLIA PEDIU O APOIO VISUAL COM ESSAS PALAVRAS?
+ *
+ * Piso do `visual`, irmão do piso do tamanho. Quem diz "rotina visual" ou
+ * "cartões" está pedindo o apoio visual, e isso não se discute com o modelo.
+ *
+ * O caminho contrário NÃO existe: não pedir com essas palavras não zera nada —
+ * a evidência no perfil ("ele entende melhor quando vê") continua valendo.
+ */
+export function pediuApoioVisual(texto: string | null | undefined): boolean {
+  const t = (texto ?? "").toLowerCase();
+  // `\b` não basta pra "card": "cardápio" tem fronteira antes do á.
+  return /visual|cart(ão|ões|ao|oes)|\bcards?(?![a-zà-ú])|figurinha|pictogram|com (figuras|imagens|desenhos)/.test(
+    t,
+  );
+}
+
 /** Há uma conversa de rotina em andamento? (último outbound tipo=rotina_conversa sem resposta ainda) */
 export async function rotinaConversaPendente(
   supabase: SupabaseClient,
@@ -579,7 +596,14 @@ export async function conduzirRotina(
     // achar que uma sequência curta bastaria — e pode DIZER isso na conversa —,
     // mas não troca o pedido dela por baixo.
     const pedidoExplicito = pediuRotinaExplicitamente(params.contexto);
+    // Em qualquer momento da conversa: o "manda com os cartões" costuma vir um
+    // turno depois do pedido da rotina.
+    const historicoPediuVisual = historico.some((h) => h.de === "mae" && pediuApoioVisual(h.texto));
     const tamanho = pedidoExplicito ? "rotina" : prontidao.tamanho;
+    // O apoio visual segue a NECESSIDADE, com um piso: quem pediu "rotina
+    // visual" ou "cartões" recebe. Pedir rotina, sozinho, não pede cartão —
+    // a rotina no app já é a entrega, e imagem que não serve custa e polui.
+    const visual = prontidao.visual || historicoPediuVisual;
     console.log(
       `[ayla:rotina] prontidão=${prontidao.desfecho} tamanho=${tamanho}${
         pedidoExplicito && prontidao.tamanho !== "rotina" ? ` (piso: modelo disse ${prontidao.tamanho})` : ""
@@ -808,7 +832,7 @@ ${jaSabemos.rotinaExistente}`
       // ordem certa é a inversa: o visual entra quando VER ajuda, e o tema
       // personaliza depois, se houver.
       let autoGerou = false;
-      if (!temSemana && prontidao.visual && ids.length) {
+      if (!temSemana && visual && ids.length) {
         // Sem tema não é motivo pra não gerar: o cartão ilustrado vale por si,
         // e o tema é personalização de quem tem um interesse conhecido.
         for (const id of ids) await dispararGeracao(id, tema ?? "");

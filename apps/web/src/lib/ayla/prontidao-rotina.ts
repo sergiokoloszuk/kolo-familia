@@ -132,7 +132,15 @@ Responda APENAS JSON, sem texto fora dele:
 - "nao_e_rotina": não é caso de organizar o dia NEM de conduzir uma passagem — é conversa, desabafo, dúvida sobre comportamento, alimentação, escola. Explique em "motivo" o que ela realmente quer.
   ⚠️ UMA TRANSIÇÃO DIFÍCIL NÃO É "nao_e_rotina". "todo dia dá briga pra sair do videogame e ir pro banho" é caso de ajudar AGORA: devolva "suficiente" com tamanho="orientacao" (ou "mini", se ver a sequência acrescentar). Antes isso caía fora e a família ficava sem a ajuda concreta da passagem.
 - "tamanho": aplique o critério acima. Só importa quando desfecho="suficiente".
-- "visual": true quando VER a sequência ajuda ESTA criança — a família já relatou que apoio visual funciona, a criança precisa consultar agora/depois, ou falar não basta. Não marque true só porque existe um interesse ou um tema bonito: tema não é motivo pra cartão.
+- "visual": os cartões ilustrados custam geração de imagem e enchem a tela quando não servem. Só marque true se houver EVIDÊNCIA de que ver ajuda ESTA criança:
+  • a família relatou que apoio visual funciona com ela;
+  • a criança precisa consultar "agora/depois" sozinha, em vez de a mãe repetir;
+  • ela não lê, ou falar não basta (a própria mãe diz isso);
+  • ela pediu com essas palavras — "rotina visual", "cartões", "quadro", "figuras".
+  ⚠️ NÃO INFIRA DO DIAGNÓSTICO. "criança com TEA se beneficia de apoio visual" é o rótulo explicando a criança, e não vale como evidência: há muita criança autista que lê e se organiza melhor com a lista escrita. Sem evidência, false — a rotina no app já é a entrega, e a mãe pede os cartões depois se quiser.
+  ⚠️ TRANSIÇÃO DIFÍCIL TAMBÉM NÃO É EVIDÊNCIA DE VISUAL. Que o banho seja briga diz onde trava, não que ela precise VER. A evidência tem que estar na fala da família ou no perfil, com estas palavras: ela entende melhor quando vê, ele consulta o quadro sozinho, falar não adianta, ela não lê. Se você não consegue apontar ONDE leu isso, é false.
+  Concreto: "quero organizar a tarde da Manu" + "o banho costuma ser difícil" → visual FALSE. Há escopo, sequência e ponto difícil, e nada disso é evidência de que ver ajuda.
+  ⚠️ PEDIR ROTINA NÃO É PEDIR CARTÃO. "quero organizar a tarde" pede organização; o visual é outra decisão. Tema e interesse também não são motivo: tema personaliza cartão que já ia existir.
 - "limite_atuacao": a rotina pedida depende de decisão clínica que não é da Kolo. Escreva em "parteClinica" QUAL parte é do profissional (ex.: "frequência e duração das mamadas"). Isso NÃO impede organizar o resto.
 - motivo: uma frase curta, pra log.
 

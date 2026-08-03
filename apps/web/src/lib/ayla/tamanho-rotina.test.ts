@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { CRITERIO_TAMANHO_ROTINA } from "./prontidao-rotina";
-import { pediuRotinaExplicitamente, pediuParaImprimir } from "./rotina-guiada";
+import { pediuRotinaExplicitamente, pediuParaImprimir, pediuApoioVisual } from "./rotina-guiada";
 import { ORIENTACAO_DE_TRANSICAO } from "@/lib/conducao/formas";
 
 /**
@@ -40,7 +40,7 @@ describe("o critério de tamanho", () => {
   });
 
   it("tema não é motivo pra cartão, e está escrito no critério do visual", () => {
-    expect(PRONTIDAO).toMatch(/Não marque true só porque existe um interesse/);
+    expect(PRONTIDAO).toMatch(/Tema e interesse também não são motivo/);
   });
 });
 
@@ -193,7 +193,7 @@ describe("PDF deixou de ser automático", () => {
 
 describe("cartões saem por necessidade visual, não por tema", () => {
   it("o gatilho é `visual`", () => {
-    expect(GUIADA).toMatch(/if \(!temSemana && prontidao\.visual && ids\.length\)/);
+    expect(GUIADA).toMatch(/if \(!temSemana && visual && ids\.length\)/);
     expect(GUIADA).not.toMatch(/if \(!temSemana && tema && ids\.length\)/);
   });
 
@@ -308,5 +308,44 @@ describe("caso 4 — quem já trouxe a situação não recebe menu", () => {
   it("a orientação preserva o que a família já descobriu", () => {
     expect(ORIENTACAO_DE_TRANSICAO).toMatch(/SE ELA JÁ CONTOU ALGO QUE FUNCIONA/);
     expect(ORIENTACAO_DE_TRANSICAO).toMatch(/não acrescentaria quadro nenhum agora/);
+  });
+});
+
+// ============================================================
+// PEDIR ROTINA NÃO É PEDIR CARTÃO
+// ============================================================
+
+describe("o visual é decisão própria", () => {
+  it("o critério proíbe inferir do diagnóstico e da transição difícil", () => {
+    expect(PRONTIDAO).toMatch(/NÃO INFIRA DO DIAGNÓSTICO/);
+    expect(PRONTIDAO).toMatch(/criança com TEA se beneficia de apoio visual" é o rótulo explicando a criança/);
+    expect(PRONTIDAO).toMatch(/TRANSIÇÃO DIFÍCIL TAMBÉM NÃO É EVIDÊNCIA DE VISUAL/);
+    expect(PRONTIDAO).toMatch(/PEDIR ROTINA NÃO É PEDIR CARTÃO/);
+  });
+
+  it("exige poder apontar onde a evidência está escrita", () => {
+    expect(PRONTIDAO).toMatch(/Se você não consegue apontar ONDE leu isso, é false/);
+    // O contraexemplo é o caso real que disparou cartões sem motivo.
+    expect(PRONTIDAO).toMatch(/o banho costuma ser difícil" → visual FALSE/);
+  });
+
+  const PEDE_VISUAL = ["quero uma rotina visual da manhã", "manda com os cartões", "pode ser com figuras?", "quero em cards"];
+  for (const t of PEDE_VISUAL) {
+    it(`piso do visual em ${JSON.stringify(t)}`, () => expect(pediuApoioVisual(t)).toBe(true));
+  }
+
+  const NAO_PEDE = ["quero organizar a tarde da Manu", "monta a rotina da tarde", "o cardápio dele é curto", "ele descarta a comida nova"];
+  for (const t of NAO_PEDE) {
+    it(`sem piso do visual em ${JSON.stringify(t)}`, () => expect(pediuApoioVisual(t)).toBe(false));
+  }
+
+  it("o piso SOMA, nunca zera a evidência do perfil", () => {
+    expect(GUIADA).toMatch(/const visual = prontidao.visual || historicoPediuVisual/);
+    expect(GUIADA).toMatch(/não pedir com essas palavras não zera nada/);
+  });
+
+  it("os cartões disparam pelo visual resolvido, não pelo campo cru", () => {
+    expect(GUIADA).toMatch(/if \(!temSemana && visual && ids\.length\)/);
+    expect(GUIADA).not.toMatch(/if \(!temSemana && prontidao\.visual/);
   });
 });
