@@ -173,6 +173,36 @@ describe("durante a segurança, artefato nenhum dispara", () => {
   });
 });
 
+describe("proativa não chega no meio de uma crise", () => {
+  const CAD = readFileSync(resolve(__dirname, "cadencia.ts"), "utf8");
+
+  it("a cadência consulta a segurança antes de reservar o envio", () => {
+    expect(CAD).toMatch(/const cri = await segurancaAberta\(supabase, params\.familyAccountId, agora\)/);
+    expect(CAD).toMatch(/return \{ ok: false, motivo: "seguranca_aberta" \}/);
+  });
+
+  it("a checagem vem ANTES do insert da reserva", () => {
+    expect(CAD.indexOf("segurancaAberta(supabase")).toBeLessThan(CAD.indexOf('status: "enfileirada"'));
+  });
+
+  it("vale até pros tipos isentos de cadência", () => {
+    // A isenção existe pra boas-vindas não ser engolida por rotina — não pra
+    // furar uma crise. O gate fica antes de qualquer verificação de isenção.
+    expect(CAD.indexOf("seguranca_aberta")).toBeLessThan(
+      CAD.indexOf("!proativaIsentaDeCadencia((l as LinhaReserva).template_key)"),
+    );
+  });
+
+  it("falha de consulta não trava as proativas do produto inteiro", () => {
+    expect(CAD).toMatch(/Falha na consulta não pode travar toda proativa do produto/);
+  });
+
+  it("suprime o envio, mas NÃO encerra o estado", () => {
+    expect(CAD).toMatch(/SUPRIME o envio; não encerra nem apaga o estado/);
+    expect(CAD).not.toMatch(/seguranca_encerrada/);
+  });
+});
+
 describe("abre com DUAS condições, fecha com evidência", () => {
   it("orientar emergência sozinho não abre — precisa de risco atual", () => {
     expect(ORCH).toMatch(/respostaOrientouEmergencia\(textoCompleto\)/);
