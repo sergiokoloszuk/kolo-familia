@@ -140,10 +140,13 @@ describe("mudança de assunto — a rotina não sequestra a conversa", () => {
     // "reativa", o que FECHA o gate de rotina pendente na próxima mensagem.
     const trecho = ORCHESTRATOR.slice(
       ORCHESTRATOR.indexOf("const r = await conduzirRotina"),
-      ORCHESTRATOR.indexOf("const r = await conduzirRotina") + 700,
+      ORCHESTRATOR.indexOf("const r = await conduzirRotina") + 1400,
     );
     expect(trecho).toMatch(/if \(r\) \{/);
-    expect(trecho).toMatch(/tipo: r\.pronto \? "resposta_registro" : "rotina_conversa"/);
+    // "rotina_pronta", não "resposta_registro": aquele tipo dispara a ponte do
+    // PLANO, e uma rotina entregue com ele fazia a mãe receber um PDF de plano
+    // por cima da rotina que ela pediu (caso real, 03/08/2026).
+    expect(trecho).toMatch(/tipo: r\.pronto \? "rotina_pronta" : "rotina_conversa"/);
   });
 
   it("o formato antigo (`pronto`) continua aceito", () => {

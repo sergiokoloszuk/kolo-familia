@@ -1597,7 +1597,13 @@ export async function processInbound(
           phone: ctxR.whatsapp_e164,
           texto: r.mensagem,
           category: "reativa",
-          tipo: r.pronto ? "resposta_registro" : "rotina_conversa",
+          // "rotina_pronta", NÃO "resposta_registro". A ponte do PLANO dispara
+          // em resposta_registro — então a rotina ficar pronta ACIONAVA o
+          // gerador de plano. Caso real (03/08, 00:33): a mãe pediu a rotina da
+          // tarde, recebeu a rotina, e logo depois "vou mandar agora o plano
+          // estratégico em PDF" com um PDF de PLANO. Ela pediu rotina e recebeu
+          // outro artefato.
+          tipo: r.pronto ? "rotina_pronta" : "rotina_conversa",
         });
         return { tratada: true, familia: family.id, resposta: resp };
       }
@@ -1932,6 +1938,8 @@ async function enviarRespostaEmChunks(
   console.log(
     `[ayla:ponte] avaliando — tipo=${args.tipo} enviada=${enviada} querPlano=${querPlano} temDesafio=${Boolean(args.params.sinais.desafio)}`,
   );
+  // PEDIU ROTINA → RECEBE ROTINA. A ponte do plano só entra em conversa comum;
+  // quem acabou de receber uma rotina não pode ganhar um plano por cima.
   if (enviada && args.tipo === "resposta_registro") {
     const nudge = await montarPonteWhatsApp(supabase, {
       familyId: args.family_account_id,

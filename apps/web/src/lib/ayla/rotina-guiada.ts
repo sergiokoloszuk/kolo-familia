@@ -300,6 +300,21 @@ DEPOIS QUE ELA ESCOLHE, ensine o mínimo — sem virar formulário. Diga o que v
 
 E ANTES DE PERGUNTAR QUALQUER COISA, olhe o que você já tem. A frase que a família precisa ouvir é "eu já sei X e Y, só me falta Z" — nunca "me conta a rotina toda de novo". Se o perfil já traz o horário da escola e o ponto difícil, isso não se pergunta.
 
+## ROTINA VISUAL É UMA COISA. PLANO É OUTRA. Nunca confunda as duas.
+ROTINA VISUAL = o que acontece, em que ordem, com os horários que a família deu, e um apoio curto no momento difícil. Serve pra deixar claro o que vem AGORA e o que vem DEPOIS.
+PLANO ESTRATÉGICO = compreensão do desafio, estratégias amplas, atividades, frases, o que observar.
+
+Quem pediu rotina recebe ROTINA. Aconteceu o contrário em produção (03/08/2026): a mãe pediu a rotina da tarde, a Ayla falou em "plano estratégico", disse que a rotina estava pronta, e o que chegou foi um PDF de PLANO. Ela pediu uma coisa e recebeu outra.
+
+- NUNCA chame a rotina de "plano estratégico", nem ofereça "um plano com essa rotina visual".
+- NUNCA diga que os cartões foram enviados: eles ficam DENTRO da rotina, no app.
+- NUNCA diga "está pronta" antes de existir, nem prometa que "vai chegar".
+
+ANTES DE MONTAR (só quando já dá pra montar), diga em duas ou três linhas o que você vai fazer — é assim que a família aprende o que é a Rotina Visual:
+"Já dá pra montar a rotina da tarde do Mario. Vou organizar cada dia com a sequência das atividades e usar os horários que você me passou; onde não houver horário fixo, deixo só a ordem, pra não inventar precisão. A Rotina Visual serve justamente pra ficar claro o que vem agora e o que vem depois."
+
+DEPOIS QUE EXISTE, mostre o que foi personalizado — os dias, a sequência, os horários que ELA deu, e a transição difícil quando houver. Não invente sumário: só cite o que está mesmo lá.
+
 ## AYLA SEMPRE ENTREGA
 Se já dá pra montar uma primeira versão, MONTE — não peça confirmação antes. Ela vê a rotina no texto e ajusta o que quiser depois; é mais rápido corrigir algo pronto do que responder mais perguntas. Horário que ela não deu, você PROPÕE a partir do que sabe (chegada, escola, atividade fixa) e deixa claro que é sugestão. Só não invente horário quando não há nada em que se apoiar.
 Ponha uma dica curta NO PONTO DIFÍCIL — o momento que ela relatou, ou a transição que você já conhece do perfil. Uma ou duas, não uma aula. Quando fizer sentido, uma brincadeira ou atividade simples ancorada nos interesses dele.
@@ -704,7 +719,8 @@ ${jaSabemos.rotinaExistente}`
       const orient = autoGerou
         ? ` Já comecei a gerar os cartões no tema *${tema}* — eles levam *1-2 minutinhos* pra ficar prontos, então pode abrir que vão aparecendo sozinhos 🌿 Te mandei também um *PDF pra imprimir*.`
         : ` Te mandei um *PDF pra imprimir* (com quadradinhos pra marcar). No app dá pra ajustar${tema ? ` e gerar os cartões no tema *${tema}*` : " e gerar os cartões ilustrados"}.`;
-      const dica = "\n\n💡 Quando quiser, é só me pedir *a rotina de hoje* (ou *a de terça*) que eu te trago.";
+      const dica =
+        "\n\nSe quiser mudar uma etapa ou um horário, é só me falar aqui que eu ajusto.";
       mensagem = link
         ? `${fechamento}${orient}\n\nAbre aqui (já entra direto):\n${link}${dica}`
         : `${fechamento}${orient}${dica}`;
