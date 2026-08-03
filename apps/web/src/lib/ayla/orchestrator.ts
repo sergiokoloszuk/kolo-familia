@@ -19,7 +19,6 @@ import { rotearFatoSubcampo } from "./incorporar-subcampo";
 import { gerarRespostaAyla, type RespostaParams } from "./responder";
 import { blocoDiagnosticoRegistrado } from "@/lib/onboarding/diagnostico";
 import { reservarEnvioProativo, proativaIsentaDeCadencia } from "./cadencia";
-import { agendarEspera } from "./espera";
 import { logEvent, logServerError } from "@/lib/log";
 import { descricaoCuidador, type CuidadorDescrito, type Genero } from "./pronomes";
 import { gerarSugestaoRepertorio } from "./repertorio";
@@ -1878,26 +1877,35 @@ async function enviarRespostaEmChunks(
       (await ofertouPlanoRecente(supabase, args.family_account_id)));
   args.params.querPlano = querPlano;
 
-  // BALÃO DE ESPERA — ver lib/ayla/espera.ts pra os tempos e o porquê de serem
-  // dois. Nada aqui é persistido; a resposta real nunca espera pelo balão.
-  const espera = agendarEspera({
-    enviar: (texto) => enviarTexto({ phoneE164: args.phone, texto, delaySegundos: 1 }),
-    mensagem: args.params.mensagem,
-  });
+  // ⚠️ O BALÃO DE ESPERA FOI DESLIGADO em 03/08/2026.
+  //
+  // `agendarEspera` mandava dois balões, aos 2,8 s e 7,5 s, pra cobrir o
+  // silêncio da geração ("Deixa eu pensar nisso com você 🌿", "Tô montando
+  // aqui, já te mando 🌿"). A intenção era boa e a medição de latência que
+  // escolheu os tempos estava certa. O efeito em produção não foi:
+  //
+  //   - apareceu em TRÊS testes reais seguidos, sempre as mesmas 8 frases —
+  //     não é ocasional, é toda resposta que passa de 2,8 s;
+  //   - dobra o número de bolhas de cada turno;
+  //   - simula trabalho futuro, que é exatamente o que o CATÁLOGO proíbe
+  //     ("nunca anuncie arquivo no futuro", "não prometa artefato");
+  //   - e uma mãe que já mandou a pergunta não quer saber que a Ayla está
+  //     pensando. Quer a resposta.
+  //
+  // A regra agora é simples: a PRIMEIRA bolha que a família recebe já tem
+  // conteúdo útil. Silêncio honesto é melhor que ruído de sala de espera.
+  //
+  // `espera.ts` continua no repositório, sem uso, com seus testes — remover o
+  // módulo agora só aumentaria o diff sem ganho. Se o silêncio se provar um
+  // problema real, a saída é reduzir a latência, não fingir conversa.
 
   // GERAÇÃO — buffer completo, com a rede da fronteira por dentro. Nada saiu
   // para o WhatsApp até aqui.
-  let textoCompleto: string;
-  try {
-    textoCompleto = await gerarRespostaAyla(args.params, {
-      supabase,
-      family_account_id: args.family_account_id,
-      feature: "ayla_responder",
-    });
-  } finally {
-    // Antes de qualquer bolha: para os que não saíram e espera os que saíram.
-    await espera.cancelar();
-  }
+  let textoCompleto = await gerarRespostaAyla(args.params, {
+    supabase,
+    family_account_id: args.family_account_id,
+    feature: "ayla_responder",
+  });
 
   // PUBLICAÇÃO — só agora, e só do texto aprovado. As bolhas e o ritmo são os
   // mesmos de antes: o efeito "digitando" nunca veio do streaming, vem do

@@ -42,6 +42,8 @@ Regras importantes:
 - Rotina aqui é só o QUADRO VISUAL de etapas. Falar da rotina da casa, do trabalho, da vida = outro.
 - Na dúvida entre uma intenção de rotina e outro, escolha outro: mexer na rotina dela sem ela pedir é pior do que deixar de mexer.
 - Na dúvida entre plano e outro, escolha outro.
+- RESPOSTA A UMA PERGUNTA NÃO É PEDIDO. Se a Ayla acabou de perguntar algo e a mensagem é curta ("sim", "não", "às vezes", "depois que ele já fez", "na escola", "ele grita"), ela está RESPONDENDO — a intenção é "outro", sempre. Uma mensagem sem verbo de pedido não abre ferramenta nenhuma. Caso real (02/08/2026): a Ayla perguntou "ele já fez xixi quando pega a fralda?", a mãe respondeu "Depois q ele já fez", e isso virou rotina_editar — no meio de uma conversa sobre desfralde ela recebeu "não achei uma rotina pra ajustar".
+- Os TEMAS listados no contexto (o que a família marcou no cadastro) servem SÓ para escolher o tema. Eles NUNCA indicam intenção: ver a palavra "rotina" na lista de temas não significa que ela está pedindo uma rotina agora.
 - Responda SÓ a linha.
 
 O TEMA é o assunto do desenvolvimento sobre o qual se está falando. Use EXATAMENTE uma destas chaves, ou "-" se nenhuma servir:
@@ -71,8 +73,14 @@ export async function classificarIntencao(params: {
   if (!texto) return { intencao: "outro", tema: anterior };
   try {
     const user = [
+      // ⚠️ Rotulado com força de propósito. Sem o rótulo, esta linha derrubava
+      // a classificação: com os 6 desafios de uma família real no prompt, a
+      // mensagem "Depois q ele já fez" era classificada como ferramenta em 13
+      // de 20 execuções (plano 11x, rotina_editar 1x, rotina_ver 1x). Ver a
+      // palavra "rotina" na lista bastava para o modelo achar que a mãe pedia
+      // uma rotina. Com o rótulo, a lista volta a servir só ao tema.
       params.temasOnboarding?.length
-        ? `(No cadastro esta família marcou: ${params.temasOnboarding.join(", ")})`
+        ? `(TEMAS que a família marcou no cadastro — servem SÓ pra escolher o tema, NUNCA indicam que ela está pedindo algo agora: ${params.temasOnboarding.join(", ")})`
         : "",
       anterior
         ? `(Tema do turno anterior: ${anterior} — mantenha se a conversa continuar nele)`

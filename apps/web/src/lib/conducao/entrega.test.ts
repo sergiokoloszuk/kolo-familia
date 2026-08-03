@@ -192,7 +192,7 @@ describe("tema ativo", () => {
 
   it("considera o que a família marcou no cadastro", () => {
     expect(INTENT).toMatch(/temasOnboarding/);
-    expect(INTENT).toMatch(/No cadastro esta família marcou/);
+    expect(INTENT).toMatch(/TEMAS que a família marcou no cadastro/);
   });
 
   it("considera as duas últimas falas e manda continuar no mesmo tema", () => {
@@ -383,10 +383,23 @@ describe("simplificação: o prompt não pode crescer", () => {
     expect(b).toMatch(/MARCADOR|marcador/);
   });
 
-  it("o núcleo não engordou — as formas ficaram FORA dele", () => {
+  it("as formas de entrega ficaram FORA do núcleo", () => {
     const n = nucleoConducao();
     expect(n).not.toContain("O que eu faria primeiro");
     expect(n).not.toContain("de 2 a 4 blocos");
-    expect(n.length).toBeLessThan(47_000);
+  });
+
+  it("o núcleo tem um teto — e o teto é consciente", () => {
+    // 46.793 em 02/08. Em 03/08 subiu para ~50,5k com três regras que vieram
+    // de falhas reais em produção: a distinção diagnóstico conhecido × novo ×
+    // causa, a proibição de declarar o mecanismo cerebral da criança, e a de
+    // decidir pela família o que não precisa ser decidido.
+    //
+    // É crescimento, e é reconhecido como custo. A poda cirúrgica do núcleo
+    // está adiada de propósito até a experiência ser validada com famílias —
+    // mexer nele antes de saber o que melhorou seria trocar de problema.
+    // O teto existe pra que o próximo aumento seja uma DECISÃO, não um
+    // acúmulo silencioso.
+    expect(nucleoConducao().length).toBeLessThan(52_000);
   });
 });
