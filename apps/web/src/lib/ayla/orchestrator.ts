@@ -56,6 +56,13 @@ import {
 import { classificarIntencao } from "./intent";
 import { dividirEmBolhas } from "./bolhas";
 import { resolverMembroAlvo } from "./membro-alvo";
+import {
+  segurancaAberta,
+  notaDeSeguranca,
+  respostaOrientouEmergencia,
+  riscoEhAtual,
+  segurancaFoiEncaminhada,
+} from "./estado-seguranca";
 import { primeiroNomeConfiavel } from "./crianca-nome";
 import { TEMAS } from "@/lib/conducao/temas";
 import { criarLinkAcesso, pedeAcessoAoApp } from "@/lib/auth/acesso-link";
@@ -1499,6 +1506,16 @@ export async function processInbound(
     }
   }
 
+  // ── SEGURANÇA ABERTA? ───────────────────────────────────────────────────
+  // Lido ANTES de qualquer roteamento. Caso real (03/08): uma mãe relatou a
+  // tentativa de suicídio da filha, a Ayla acertou o primeiro turno — e voltou
+  // a ser conversa comum na mensagem seguinte, organizando a rotina da casa
+  // cinco minutos depois. Cada turno reentrava do zero porque não havia estado.
+  const seguranca = await segurancaAberta(supabase, family.id, inbound.recebidaEm);
+  if (seguranca.aberta) {
+    console.log(`[ayla:seguranca] ABERTA desde ${seguranca.desde} (checar=${seguranca.precisaChecar})`);
+  }
+
   // Criança que a conversa trata AGORA (2+ filhos) — pra rotina/plano seguirem
   // o filho certo e não caírem no membros[0] (bug Manu→Mario).
   const membroConversa = await criancaDaConversa(supabase, family.id);
@@ -1577,7 +1594,7 @@ export async function processInbound(
   // 3c-rotina-ver. "Traga a rotina de hoje/terça" — só quando NÃO está montando
   // uma agora (senão o pedido é parte da conversa). Acha o dia, gera se faltar e
   // manda o link certo.
-  if (!rotinaConversa && (intent === "rotina_ver" || pedeRotinaDeUmDia(inbound.texto))) {
+  if (!seguranca.aberta && !rotinaConversa && (intent === "rotina_ver" || pedeRotinaDeUmDia(inbound.texto))) {
     const ctxR = await loadFamiliaParaEnvio(supabase, family.id);
     const alvo = alvoDaRotina(ctxR, membroConversa);
     if (alvo.ambiguo) return await perguntarQualCrianca(supabase, family, ctxR, alvo.ambiguo);
@@ -1605,7 +1622,7 @@ export async function processInbound(
 
   // 3c-rotina-editar. "faltou o lanche na terça", "tira o vôlei", "muda a rotina
   // de hoje" → ajusta a rotina existente (só quando NÃO está montando uma agora).
-  if (!rotinaConversa && (intent === "rotina_editar" || pedeEditarRotina(inbound.texto))) {
+  if (!seguranca.aberta && !rotinaConversa && (intent === "rotina_editar" || pedeEditarRotina(inbound.texto))) {
     const ctxR = await loadFamiliaParaEnvio(supabase, family.id);
     const alvo = alvoDaRotina(ctxR, membroConversa);
     if (alvo.ambiguo) return await perguntarQualCrianca(supabase, family, ctxR, alvo.ambiguo);
@@ -1636,7 +1653,7 @@ export async function processInbound(
   // A Ayla conduz a conversa (escopo dia×semana → sequência → transições → tema)
   // e, quando tem o suficiente, monta + manda PDF + link. Enquanto não, faz a
   // próxima pergunta (tipo="rotina_conversa"). Estado inferido do histórico.
-  if (rotinaConversa || intent === "rotina_criar" || pedeRotina(inbound.texto)) {
+  if (!seguranca.aberta && (rotinaConversa || intent === "rotina_criar" || pedeRotina(inbound.texto))) {
     const ctxR = await loadFamiliaParaEnvio(supabase, family.id);
     const alvo = alvoDaRotina(ctxR, rotinaConversa?.membroId ?? membroConversa);
     if (alvo.ambiguo) return await perguntarQualCrianca(supabase, family, ctxR, alvo.ambiguo);
@@ -1870,6 +1887,7 @@ export async function processInbound(
       generoMembro: membroFoco?.genero ?? null,
       temaAtivo,
       intencao: intent,
+      notaDeSeguranca: seguranca.aberta ? notaDeSeguranca({ precisaChecar: seguranca.precisaChecar }) : null,
       koloVivoResumo,
       koloVivoLacunas,
       estrategiasRecentes,
@@ -1971,6 +1989,34 @@ async function enviarRespostaEmChunks(
     feature: "ayla_responder",
   });
 
+  // ── ABRE OU FECHA O ESTADO DE SEGURANÇA ────────────────────────────────
+  // Duas condições pra ABRIR, e as duas precisam ser verdadeiras:
+  //   1. a resposta orientou emergência (CVV/SAMU/CAPS) — determinístico;
+  //   2. o risco é ATUAL, não histórico — classificador.
+  // Só a primeira não basta: a Ayla cita CVV ao falar de um fato de 5 anos
+  // atrás, e isso não pode abrir estado. Só a segunda também não: sem a
+  // primeira, o classificador rodaria em toda mensagem, de graça.
+  //
+  // Pra FECHAR, só serve a família confirmar que conseguiu atendimento. Mudar
+  // de assunto não fecha — foi exatamente assim que a conversa da Adelly
+  // voltou a ser comum cinco minutos depois da crise.
+  let tipoFinal: AylaTipoReativa = args.tipo;
+  const conversaCurta = args.params.historico
+    .map((h) => `${h.de === "mae" ? "Mãe" : "Ayla"}: ${h.texto}`)
+    .join("\n");
+
+  if (args.params.notaDeSeguranca) {
+    // Estado já aberto: só a confirmação de atendimento encerra.
+    const fim = await segurancaFoiEncaminhada({ mensagem: args.params.mensagem, conversa: conversaCurta });
+    console.log(`[ayla:seguranca] encerrar? ${fim.encaminhada} — ${fim.motivo}`);
+    tipoFinal = fim.encaminhada ? "seguranca_encerrada" : "seguranca";
+  } else if (respostaOrientouEmergencia(textoCompleto)) {
+    const risco = await riscoEhAtual({ mensagem: args.params.mensagem, conversa: conversaCurta });
+    console.log(`[ayla:seguranca] risco atual? ${risco.atual} — ${risco.motivo}`);
+    if (risco.atual) tipoFinal = "seguranca";
+  }
+  args.tipo = tipoFinal;
+
   // PUBLICAÇÃO — só agora, e só do texto aprovado. As bolhas e o ritmo são os
   // mesmos de antes: o efeito "digitando" nunca veio do streaming, vem do
   // delaySegundos por bolha.
@@ -1998,7 +2044,7 @@ async function enviarRespostaEmChunks(
   );
   // PEDIU ROTINA → RECEBE ROTINA. A ponte do plano só entra em conversa comum;
   // quem acabou de receber uma rotina não pode ganhar um plano por cima.
-  if (enviada && args.tipo === "resposta_registro") {
+  if (enviada && args.tipo === "resposta_registro" && !args.params.notaDeSeguranca) {
     const nudge = await montarPonteWhatsApp(supabase, {
       familyId: args.family_account_id,
       membroAtipicoId: args.membro_atipico_id,

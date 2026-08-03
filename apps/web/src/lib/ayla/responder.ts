@@ -113,6 +113,12 @@ export type RespostaParams = {
    * crise, pergunta pontual, saudação)? Decide se as formas de entrega entram.
    */
   intencao?: "plano" | "outro" | "rotina_criar" | "rotina_ver" | "rotina_editar";
+  /**
+   * Preenchido quando há SITUAÇÃO DE SEGURANÇA ABERTA. Vai pras notas internas
+   * e prevalece: a prioridade continua sendo o risco, mesmo que esta mensagem
+   * fale de outra coisa. Ver `estado-seguranca.ts`.
+   */
+  notaDeSeguranca?: string | null;
   /** Vínculo + gênero do adulto responsável (mãe, pai, avó, tia...). */
   cuidador?: CuidadorDescrito;
   nomeMembro: string | null;
@@ -519,6 +525,12 @@ ${params.diagnosticoRegistrado.trim()}`);
       `RECURSOS DO LÚDICO: se ${params.nomeMae} pedir OU claramente se beneficiar — MESMO sem usar essas palavras — convide de leve. Não force nem ofereça se não vier a propósito.\n${partes.join("\n")}`,
     );
   }
+  // SEGURANÇA ABERTA — vem depois das outras notas de propósito: quando existe,
+  // ela manda em tudo que veio antes (recursos do Lúdico, oferta de plano...).
+  if (params.notaDeSeguranca) {
+    notas.push(params.notaDeSeguranca);
+  }
+
   // POR ÚLTIMO, de propósito: quando existe, esta nota manda em todas as
   // outras. É o retorno de uma resposta que já foi barrada.
   if (params.regenerarPorDiagnostico) {
