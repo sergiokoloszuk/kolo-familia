@@ -106,6 +106,86 @@ const INSEGURO: ReadonlyArray<[FalhaRotina["codigo"], RegExp]> = [
 /** Uma hora plausível? Aceita "7h", "07:30", "7:30". */
 const HORA = /^([01]?\d|2[0-3])\s*[:h]?\s*([0-5]\d)?$/;
 
+const POR_EXTENSO: Record<string, number> = {
+  uma: 1, duas: 2, tres: 3, quatro: 4, cinco: 5, seis: 6, sete: 7, oito: 8,
+  nove: 9, dez: 10, onze: 11, doze: 12, treze: 13, quatorze: 14, catorze: 14,
+  quinze: 15, dezesseis: 16, dezessete: 17, dezoito: 18, dezenove: 19, vinte: 20,
+  // Dezenas — "meio dia e QUARENTA" era o caso real que escapava.
+  trinta: 30, quarenta: 40, cinquenta: 50, "cinquenta e cinco": 55,
+  "vinte e cinco": 25, "trinta e cinco": 35, "quarenta e cinco": 45,
+};
+
+/**
+ * TODAS AS HORAS QUE A FAMÍLIA MENCIONOU, em minutos desde a meia-noite.
+ *
+ * Existe porque a primeira versão só procurava dígitos, e barrou uma rotina
+ * inteira que estava CERTA: a mãe escreveu "ele chega meio dia e quarenta" e
+ * "terça e quinta tem futebol as 3 e meia", o gerador normalizou pra 12h40 e
+ * 15h30, e o validador chamou os dois de horário inventado. Punia justamente
+ * quem se explicou bem.
+ *
+ * Mães escrevem hora como falam. Quem tem que entender é o código.
+ */
+export function horasMencionadas(texto: string): number[] {
+  const t = norm(texto);
+  const achados: number[] = [];
+  const pm = (h: number, tarde: boolean) => (tarde && h < 12 ? h + 12 : h);
+
+  // 12h40 · 15:30 · 8h · 07:05
+  for (const m of t.matchAll(/\b([01]?\d|2[0-3])\s*[:h]\s*([0-5]\d)?\b/g)) {
+    achados.push(Number(m[1]) * 60 + Number(m[2] ?? 0));
+  }
+  // meio-dia / meia-noite (com ou sem "e quarenta")
+  for (const m of t.matchAll(/\bmeio ?dia(\s*e\s*(\w+))?/g)) {
+    achados.push(12 * 60 + minutosDe(m[2]));
+  }
+  for (const m of t.matchAll(/\bmeia ?noite(\s*e\s*(\w+))?/g)) {
+    achados.push(minutosDe(m[2]));
+  }
+  // "as 3 e meia", "sete da manhã", "oito e quinze", "por volta das seis"
+  const NUM = "(\\d{1,2}|" + Object.keys(POR_EXTENSO).join("|") + ")";
+  const re = new RegExp(
+    `\\b(?:as|às|pras|pra|por volta d[ae]s?|umas|la pelas)?\\s*${NUM}` +
+      `(?:\\s*e\\s*(\\w+))?\\s*(?:d[ao]\\s*(manha|tarde|noite))?\\b`,
+    "g",
+  );
+  for (const m of t.matchAll(re)) {
+    const h = /^\d+$/.test(m[1]) ? Number(m[1]) : POR_EXTENSO[m[1]];
+    if (h == null || h > 23) continue;
+    const periodo = m[3];
+    // Sem período e sem "e X", um número solto é ruído ("3 vezes", "2 filhos").
+    if (!periodo && !m[2]) continue;
+    const mm = minutosDe(m[2]);
+    if (periodo) {
+      achados.push(pm(h, periodo === "tarde" || periodo === "noite") * 60 + mm);
+    } else if (h <= 12) {
+      // Relógio de 12 horas sem período: "as 3 e meia" pode ser 3h30 ou 15h30, e
+      // a família não disse. Como isto é um VALIDADOR (não um parser), as duas
+      // leituras viram âncora — barrar por ambiguidade puniria quem falou
+      // normal. Quem decide qual é a certa é o gerador, com o resto do dia.
+      achados.push(h * 60 + mm, (h + 12) * 60 + mm);
+    } else {
+      achados.push(h * 60 + mm);
+    }
+  }
+  return [...new Set(achados)].sort((a, b) => a - b);
+}
+
+function minutosDe(palavra: string | undefined): number {
+  if (!palavra) return 0;
+  const p = norm(palavra);
+  if (p === "meia") return 30;
+  if (/^\d{1,2}$/.test(p)) return Number(p) <= 59 ? Number(p) : 0;
+  const n = POR_EXTENSO[p];
+  return n != null && n <= 59 ? n : 0;
+}
+
+/** "14h15" → minutos. null quando não é hora. */
+function emMinutos(hora: string): number | null {
+  const m = norm(hora).match(/^([01]?\d|2[0-3])\s*[:h]?\s*([0-5]\d)?$/);
+  return m ? Number(m[1]) * 60 + Number(m[2] ?? 0) : null;
+}
+
 export type TarefaParaValidar = { texto: string; hora?: string | null };
 
 /**
@@ -134,17 +214,20 @@ export function validarRotina(params: {
       }
     }
 
-    // HORÁRIO SEM BASE: só checa quando a família não deu base nenhuma de
-    // horário. Se ela contou horários, propor um horário vizinho é justamente
-    // o que a Ayla deve fazer (e o FORMATO_WHATSAPP manda fazer).
+    // HORÁRIO SEM BASE — a política de produto, não uma regra de sintaxe:
+    //   fornecido pela família        → passa
+    //   derivável entre duas âncoras  → passa (é o que a Ayla deve fazer)
+    //   fora disso                    → inventado, barra
     const h = (t.hora ?? "").trim();
-    if (h && !base) {
-      falhas.push({ codigo: "horario_sem_base", trecho: `${h} — ${t.texto.slice(0, 80)}` });
-    } else if (h && base && HORA.test(h)) {
-      const hh = h.replace(/[^\d]/g, "").slice(0, 2);
-      // A família falou de ALGUM horário? Se falou, a Ayla pode propor os
-      // vizinhos. Se não falou nenhum e mesmo assim veio hora, é invenção.
-      if (!/\d\s*[:h]/.test(base) && !base.includes(hh)) {
+    const min = h ? emMinutos(h) : null;
+    if (h && min != null) {
+      const ancoras = horasMencionadas(params.baseDeHorarios ?? "");
+      const bate = ancoras.some((a) => Math.abs(a - min) <= 5);
+      // Entre a primeira e a última âncora, a Ayla está encaixando etapas num
+      // intervalo que a própria família delimitou. Fora dele, inventou.
+      const dentro =
+        ancoras.length >= 2 && min >= ancoras[0] && min <= ancoras[ancoras.length - 1];
+      if (!bate && !dentro) {
         falhas.push({ codigo: "horario_sem_base", trecho: `${h} — ${t.texto.slice(0, 80)}` });
       }
     }

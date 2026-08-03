@@ -107,6 +107,23 @@ export async function gerarRotina(
     propostaAtual: params.propostaAtual ?? null,
   });
 
+  // REDE CONTRA MULTIPLICAÇÃO. O prompt já pede uma rotina por pedido, mas o
+  // caso real (1 tarde → 5 rotinas de 33 etapas) mostra que a instrução sozinha
+  // não segura. Rotinas com a MESMA sequência de tarefas são a mesma rotina.
+  if (proposta.rotinas?.length > 1) {
+    const vistas = new Map<string, (typeof proposta.rotinas)[number]>();
+    for (const r of proposta.rotinas) {
+      const chave = (r.tarefas ?? []).map((t) => t.texto.trim().toLowerCase()).join("|");
+      if (!vistas.has(chave)) vistas.set(chave, r);
+    }
+    if (vistas.size < proposta.rotinas.length) {
+      console.warn(
+        `[rotina:servico] colapsou ${proposta.rotinas.length} → ${vistas.size} rotina(s) idênticas`,
+      );
+      proposta.rotinas = [...vistas.values()];
+    }
+  }
+
   if (!proposta.rotinas?.length) {
     return {
       desfecho: "falta",

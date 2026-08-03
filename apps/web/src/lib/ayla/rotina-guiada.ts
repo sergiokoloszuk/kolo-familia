@@ -364,7 +364,19 @@ async function aplicarRotina(
 /** Gera o PDF da rotina, sobe no Storage e manda como documento. Silencioso. */
 async function entregarPdfDaRotina(
   supabase: SupabaseClient,
-  params: { familyId: string; phoneE164: string; nome: string; tema: string | null; rotinas: RotinaProposta[] },
+  params: {
+    familyId: string;
+    phoneE164: string;
+    nome: string;
+    tema: string | null;
+    rotinas: RotinaProposta[];
+    /** O momento que a família relatou como difícil. Vem da conversa. */
+    pontoDificil?: string | null;
+    /** A estratégia que a Ayla já definiu pra esse momento — NÃO é um texto
+     *  novo: é a mesma `transicoes[].estrategia` que ela guarda no Kolo Vivo.
+     *  Reaproveitar evita uma segunda fonte de verdade. */
+    fraseDeApoio?: string | null;
+  },
 ): Promise<void> {
   try {
     const comDia = params.rotinas.filter((r) => r.dia_semana != null);
@@ -379,7 +391,18 @@ async function entregarPdfDaRotina(
     }));
     const semana = comDia.length > 0;
     const titulo = semana ? "Rotina da semana" : ordenadas[0]?.nome || "Rotina";
-    const bytes = await rotinaParaPdf({ titulo, nome: params.nome, tema: params.tema, dias });
+    const bytes = await rotinaParaPdf({
+      titulo,
+      nome: params.nome,
+      tema: params.tema,
+      // A PERSONALIZAÇÃO CHEGA AO ARTEFATO. Até aqui o ponto difícil era
+      // coletado, ia pro gerador, e parava — o bloco "UMA AJUDA NESTA
+      // TRANSIÇÃO" existia no layout e nunca era preenchido em produção. A mãe
+      // percebia a personalização na conversa e não a via no PDF.
+      pontoDificil: params.pontoDificil ?? null,
+      fraseDeApoio: params.fraseDeApoio ?? null,
+      dias,
+    });
 
     const path = `${params.familyId}/rotina/${crypto.randomUUID()}.pdf`;
     const { error: upErr } = await supabase.storage
@@ -558,6 +581,15 @@ ${jaSabemos.rotinaExistente}`
     // implementações se contradiziam (a dela propunha horário; a do app
     // proibia). O que sobra pra ela é o que sempre foi seu: conduzir a
     // conversa, perceber quando é hora, e explicar o que foi montado.
+    // UMA fonte só pro ponto difícil e pra estratégia: o que a conversa acabou
+    // de revelar, ou o que já estava no perfil. Serve ao gerador E ao PDF.
+    const trAgora = Array.isArray(parsed?.transicoes) ? (parsed.transicoes as unknown[]) : [];
+    const t0 = (trAgora[0] ?? null) as { momento?: unknown; estrategia?: unknown } | null;
+    const pontoDificilDoTurno =
+      (t0?.momento ? String(t0.momento) : "") || transicoesConhecidas[0]?.momento || null;
+    const estrategiaDoTurno =
+      (t0?.estrategia ? String(t0.estrategia) : "") || transicoesConhecidas[0]?.estrategia || null;
+
     let rotinas: ReturnType<typeof sanitizarRotinas> = [];
     if (pronto) {
       const r = await gerarRotina(supabase, {
@@ -569,14 +601,7 @@ ${jaSabemos.rotinaExistente}`
         historico,
         mensagem: params.contexto,
         contexto: [jaSabemos.perfil, jaSabemos.rotinaExistente, transicoesTxt].filter(Boolean).join("\n"),
-        // O PONTO DIFÍCIL sai do que a conversa acabou de revelar, ou do que já
-        // estava no perfil. Era coletado e jogado fora; agora chega ao gerador.
-        pontoDificil:
-          (Array.isArray(parsed?.transicoes) && parsed.transicoes.length
-            ? String((parsed.transicoes[0] as { momento?: unknown })?.momento ?? "")
-            : "") ||
-          transicoesConhecidas[0]?.momento ||
-          null,
+        pontoDificil: pontoDificilDoTurno,
         // A prontidão já rodou lá em cima, antes do turno de conversa.
         pularProntidao: true,
       });
@@ -647,7 +672,15 @@ ${jaSabemos.rotinaExistente}`
         if (id) ids.push(id);
       }
       if (params.phoneE164) {
-        await entregarPdfDaRotina(supabase, { familyId, phoneE164: params.phoneE164, nome, tema, rotinas });
+        await entregarPdfDaRotina(supabase, {
+          familyId,
+          phoneE164: params.phoneE164,
+          nome,
+          tema,
+          rotinas,
+          pontoDificil: pontoDificilDoTurno,
+          fraseDeApoio: estrategiaDoTurno,
+        });
       }
       // Destino do link: rotina de DIA DA SEMANA → tabela da semana; UM dia avulso
       // ("Dia do circo") → aquela rotina; vários avulsos → a lista de rotinas.
