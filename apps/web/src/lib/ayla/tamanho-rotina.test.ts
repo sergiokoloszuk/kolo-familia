@@ -353,3 +353,29 @@ describe("o visual é decisão própria", () => {
     expect(GUIADA).not.toMatch(/if \(!temSemana && prontidao\.visual/);
   });
 });
+
+// ============================================================
+// O CASO DA DOCERIA — 04/08/2026
+// ============================================================
+
+describe("a mãe pediu visual e a oferta saiu dobrada", () => {
+  it("o piso pega o PLURAL — foi assim que ela pediu", () => {
+    // "Quero uma sequência de atividades visuais": /visual/ não casa com
+    // "visuais", e o piso determinístico não disparou.
+    expect(pediuApoioVisual("Quero uma sequência de atividades visuais")).toBe(true);
+    expect(pediuApoioVisual("quero uma rotina visual")).toBe(true);
+    // E o falso-positivo que já estava fechado continua fechado.
+    expect(pediuApoioVisual("o cardápio dele é curto")).toBe(false);
+  });
+
+  it("se a Ayla já perguntou o tema, o sistema não pergunta de novo", () => {
+    expect(GUIADA).toContain("i.test(mensagem)");
+    expect(GUIADA).toContain("(faltaTema || ofereceCartoes) &&");
+    expect(GUIADA).toMatch(/não pergunte de novo/);
+  });
+
+  it("nada de 'dele(a)' à mostra na fala", () => {
+    expect(GUIADA).not.toMatch(/ele\(a\) ama/);
+    expect(GUIADA).not.toMatch(/a cara dele\(a\)/);
+  });
+});
