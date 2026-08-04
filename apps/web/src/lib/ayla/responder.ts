@@ -10,7 +10,11 @@ import { pronomesPara, type Genero, type CuidadorDescrito } from "./pronomes";
 // (formato e idioma). A identidade agora vive no CÓDIGO (não mais no banco
 // voz_ayla), o que elimina o drift banco×código.
 import { nucleoConducao } from "@/lib/conducao/diretrizes";
-import { formasDeEntrega, INTERESSE_COMO_VEICULO } from "@/lib/conducao/formas";
+import {
+  formasDeEntrega,
+  INTERESSE_COMO_VEICULO,
+  A_CRIANCA_ANTES_DO_ROTULO,
+} from "@/lib/conducao/formas";
 
 /**
  * Tracking opcional pra logar a chamada em api_calls. Quando ausente, a
@@ -112,7 +116,13 @@ export type RespostaParams = {
    * O turno é uma ENTREGA (desafio/pedido de ajuda) ou uma conversa (desabafo,
    * crise, pergunta pontual, saudação)? Decide se as formas de entrega entram.
    */
-  intencao?: "plano" | "outro" | "rotina_criar" | "rotina_ver" | "rotina_editar";
+  intencao?: "plano" | "outro" | "rotina_criar" | "rotina_ver" | "rotina_editar" | "organizacao";
+  /**
+   * Preenchido quando há SITUAÇÃO DE SEGURANÇA ABERTA. Vai pras notas internas
+   * e prevalece: a prioridade continua sendo o risco, mesmo que esta mensagem
+   * fale de outra coisa. Ver `estado-seguranca.ts`.
+   */
+  notaDeSeguranca?: string | null;
   /** Vínculo + gênero do adulto responsável (mãe, pai, avó, tia...). */
   cuidador?: CuidadorDescrito;
   nomeMembro: string | null;
@@ -305,7 +315,11 @@ async function gerarUmaVez(
     nucleoConducao(),
     FORMATO_WHATSAPP,
     ...(entrega
-      ? [formasDeEntrega({ canal: "whatsapp", tema: params.temaAtivo }), INTERESSE_COMO_VEICULO]
+      ? [
+          formasDeEntrega({ canal: "whatsapp", tema: params.temaAtivo }),
+          INTERESSE_COMO_VEICULO,
+          A_CRIANCA_ANTES_DO_ROTULO,
+        ]
       : []),
     DIRETRIZ_IDIOMA,
   ].join("\n\n");
@@ -503,7 +517,7 @@ ${params.diagnosticoRegistrado.trim()}`);
     if (l.desenho) partes.push(`DESENHO (leitura de um desenho) → ESTE link: ${l.desenho}`);
     if (l.relatorio)
       partes.push(
-        `RELATÓRIO da criança (pra escola/professora/terapeuta) → quando a mãe precisar apresentar a criança, preparar reunião ou trocar de escola, ofereça montar um relatório. A web já GERA o relatório a partir do que a gente sabe da criança (Perfil + registros), editável e em PDF. Mande ESTE link quando tiver o essencial preenchido: ${l.relatorio} — no app: *Evolução* → *Relatório*.`,
+        `RELATÓRIO da criança (pra escola/professora/terapeuta/médico) → quando a mãe precisar apresentar a criança, preparar reunião, consulta ou trocar de escola, ofereça. ATENÇÃO AO QUE VOCÊ PROMETE: o relatório é gerado POR ELA, NO APP — você NÃO gera aqui e NÃO manda o PDF pelo WhatsApp. Se ela pedir "gera e manda aqui", diga a verdade com naturalidade: você já organiza aqui os pontos principais, e o relatório em si ela gera no app, onde dá pra revisar e editar antes de baixar. Este link abre DIRETO na tela de Relatório: ${l.relatorio} — no app: *Evolução* → *Relatório*. NUNCA diga ou insinue que já gerou, que está gerando, ou que o arquivo vem depois.`,
       );
     partes.push(
       `Regras dos links: mande SEMPRE o link DIRETO do recurso (nunca um genérico) — a pessoa já cai na tela certa. O link JÁ loga ela; mas SE pedir e-mail/senha (às vezes acontece), depois de entrar ela chega no mesmo lugar.`,
@@ -519,6 +533,12 @@ ${params.diagnosticoRegistrado.trim()}`);
       `RECURSOS DO LÚDICO: se ${params.nomeMae} pedir OU claramente se beneficiar — MESMO sem usar essas palavras — convide de leve. Não force nem ofereça se não vier a propósito.\n${partes.join("\n")}`,
     );
   }
+  // SEGURANÇA ABERTA — vem depois das outras notas de propósito: quando existe,
+  // ela manda em tudo que veio antes (recursos do Lúdico, oferta de plano...).
+  if (params.notaDeSeguranca) {
+    notas.push(params.notaDeSeguranca);
+  }
+
   // POR ÚLTIMO, de propósito: quando existe, esta nota manda em todas as
   // outras. É o retorno de uma resposta que já foi barrada.
   if (params.regenerarPorDiagnostico) {

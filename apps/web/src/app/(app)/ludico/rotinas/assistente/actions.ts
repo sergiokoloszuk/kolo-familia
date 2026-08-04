@@ -6,7 +6,18 @@ import { createClient } from "@/lib/supabase/server";
 import { resolveFamily } from "@/lib/auth/current-family";
 import { requireActiveWrite } from "@/lib/auth/require-active-write";
 import { idadeAnos } from "@/lib/idade";
-import { interpretarRotina, type PropostaRotina } from "@/lib/ludico/rotina-ia";
+import { type PropostaRotina } from "@/lib/ludico/rotina-ia";
+import { gerarRotina } from "@/lib/ludico/rotina-servico";
+
+/** Idade em meses — `idadeAnos` devolve 0 pra bebê de 18 dias e pra bebê de 11
+ *  meses igualmente, e a diferença decide se a pergunta é clínica. */
+function idadeEmMesesDe(nascimento: string | null): number | null {
+  if (!nascimento) return null;
+  const d = new Date(nascimento);
+  if (Number.isNaN(d.getTime())) return null;
+  const m = (Date.now() - d.getTime()) / (1000 * 60 * 60 * 24 * 30.44);
+  return m < 0 || m > 1200 ? null : Math.floor(m);
+}
 
 type Ok<T = object> = { ok: true } & T;
 type Fail = { ok: false; error: string };
@@ -57,14 +68,44 @@ export async function montarRotinaIA(
       .maybeSingle();
     if (!membro) return { ok: false, error: "Membro não encontrado." };
 
-    const proposta = await interpretarRotina(supabase, {
+    // O app passa pelo MESMO serviço do WhatsApp: prontidão → gerador único →
+    // validação. Antes chamava `interpretarRotina` direto, sem portão nenhum —
+    // e por isso o pedido da mãe da Clarinha (bebê de 18 dias) teria produzido
+    // manejo clínico aqui também, com menos proteção ainda que no WhatsApp.
+    const ultima = [...historico].reverse().find((h) => h.de === "mae")?.texto ?? "";
+    const r = await gerarRotina(supabase, {
       familyId: family.id,
+      membroAtipicoId: membro.id as string,
       nome: (membro.nome as string) ?? "seu filho",
       idade: idadeAnos((membro.data_nascimento as string | null) ?? null),
+      idadeMeses: idadeEmMesesDe((membro.data_nascimento as string | null) ?? null),
       historico,
+      mensagem: ultima,
       propostaAtual: propostaAtual ?? null,
+      // A mãe já está DENTRO do assistente e ajustando uma proposta: a
+      // prontidão já foi respondida por ela ter chegado aqui e escrito o dia.
+      pularProntidao: Boolean(propostaAtual?.length),
     });
-    return { ok: true, proposta };
+
+    if (r.desfecho === "gerou") {
+      return {
+        ok: true,
+        proposta: { resposta: r.resposta, pergunta: null, tema: r.tema, rotinas: r.rotinas },
+      };
+    }
+    // Os desfechos que NÃO geram viram uma fala na tela — a mesma política do
+    // WhatsApp, interface diferente. Nada é persistido, nada é publicado.
+    const fala =
+      r.desfecho === "falta_escopo"
+        ? "Consigo sim 💛 O que você quer organizar primeiro: um período do dia (a manhã até sair, a tarde depois da escola, a noite), o dia inteiro, ou um momento específico que costuma travar? Me diz qual e a gente começa por aí."
+        : r.desfecho === "falta"
+          ? (r.pergunta ?? "Me conta como é essa parte do dia de vocês, na ordem que acontece?")
+        : r.desfecho === "limite_atuacao"
+          ? `Consigo organizar bastante coisa aqui — a sequência, o banho, as trocas, o descanso, o que vale anotar. Só a parte de ${r.parteClinica ?? "manejo clínico"} eu não decido: isso segue com quem acompanha ${(membro.nome as string) ?? "a criança"}. Me conta o que a pediatra já orientou? Aí eu encaixo do jeito que ela falou.`
+          : r.desfecho === "nao_e_rotina"
+            ? "Isso aqui não é bem uma questão de organizar o dia — me conta mais que a gente resolve pela conversa, sem quadro."
+            : "Montei aqui, mas ficou uma parte que prefiro confirmar com você antes. Me conta como é essa parte do dia, na ordem que acontece?";
+    return { ok: true, proposta: { resposta: fala, pergunta: null, tema: null, rotinas: [] } };
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : "Erro inesperado" };
   }

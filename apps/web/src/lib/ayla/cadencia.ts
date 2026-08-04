@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { segurancaAberta } from "./estado-seguranca";
 import type { AylaTipoProativa } from "./types";
 
 /**
@@ -115,6 +116,26 @@ export async function reservarEnvioProativo(
 ): Promise<Reserva> {
   const agora = params.agora ?? new Date();
   const janela = params.janelaMs ?? JANELA_CADENCIA_MS;
+
+  // ── SEGURANÇA ABERTA SILENCIA A PROATIVA ───────────────────────────────
+  // Uma criança em risco, a mãe tentando falar com o psiquiatra — e a Ayla
+  // chegando com "que tal montar a rotina da semana?". O bloqueio do fluxo
+  // reativo não alcançava os crons, que entram por aqui.
+  //
+  // SUPRIME o envio; não encerra nem apaga o estado. E vale pra TODOS os
+  // tipos, inclusive os isentos de cadência: a isenção existe pra que uma
+  // boas-vindas não seja engolida por uma rotina, não pra furar uma crise.
+  try {
+    const cri = await segurancaAberta(supabase, params.familyAccountId, agora);
+    if (cri.aberta) {
+      console.warn(
+        `[ayla:cadencia] proativa "${params.tipo}" SUPRIMIDA — segurança aberta desde ${cri.desde}`,
+      );
+      return { ok: false, motivo: "seguranca_aberta" };
+    }
+  } catch {
+    // Falha na consulta não pode travar toda proativa do produto.
+  }
 
   try {
     const { data: minha, error } = await supabase

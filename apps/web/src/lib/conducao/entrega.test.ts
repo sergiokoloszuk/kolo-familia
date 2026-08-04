@@ -1,7 +1,11 @@
 import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { formasDeEntrega, INTERESSE_COMO_VEICULO } from "./formas";
+import {
+  formasDeEntrega,
+  INTERESSE_COMO_VEICULO,
+  A_CRIANCA_ANTES_DO_ROTULO as ROTULO,
+} from "./formas";
 import { TEMAS, CHAVES_TEMA, fraseDoTema, rotuloDoTema, listarTemas } from "./temas";
 import { nucleoConducao } from "./diretrizes";
 import { dividirEmBolhas, ehSoTitulo } from "@/lib/ayla/bolhas";
@@ -401,5 +405,76 @@ describe("simplificação: o prompt não pode crescer", () => {
     // O teto existe pra que o próximo aumento seja uma DECISÃO, não um
     // acúmulo silencioso.
     expect(nucleoConducao().length).toBeLessThan(52_000);
+  });
+});
+
+/**
+ * A CRIANÇA ANTES DO RÓTULO — bancada de experiência, 03/08/2026.
+ *
+ * Três de dez casos explicaram o comportamento pelo diagnóstico tendo dado
+ * melhor à mão. O pior: "isso é bem comum no TDAH: a cabeça antecipa a perda",
+ * com "antecipa o pior" já registrado no perfil da própria Isabela.
+ */
+describe("a criança antes do rótulo", () => {
+  const PROMPT = readFileSync(resolve(__dirname, "../ia/prompt.ts"), "utf8");
+
+  it("manda usar relato → perfil → diagnóstico, nessa ordem", () => {
+    expect(ROTULO).toMatch(/1\) o que a família acabou de relatar/);
+    expect(ROTULO).toMatch(/2\) o que já está observado no perfil DELA/);
+    expect(ROTULO).toMatch(/3\) o diagnóstico — e só se acrescentar/);
+  });
+
+  it("nomeia o atalho exato que apareceu na bancada", () => {
+    expect(ROTULO).toMatch(/"é comum no autismo\/TDAH" como a razão de ESTA criança/);
+  });
+
+  // NEGATIVO 1 — não pode virar mordaça: informação geral útil segue liberada.
+  it("NÃO proíbe toda menção a diagnóstico", () => {
+    expect(ROTULO).toMatch(/Mencionar o diagnóstico continua permitido/);
+    expect(ROTULO).toMatch(/isso também aparece em pessoas com TDAH/);
+    expect(ROTULO).not.toMatch(/nunca (cite|mencione) o diagnóstico/i);
+  });
+
+  // NEGATIVO 2 — sem dado individual, possibilidade geral continua valendo.
+  it("sem base, oferece a saída em vez de calar", () => {
+    expect(ROTULO).toMatch(/uma possibilidade que vale observar/);
+  });
+
+  // NEGATIVO 3 — com dado individual, o dado vence.
+  it("com relato ou perfil, o diagnóstico não entra", () => {
+    expect(ROTULO).toMatch(/Se 1 ou 2 já explicam, o diagnóstico não entra/);
+    expect(ROTULO).toMatch(/pelo que a gente já viu nele/);
+  });
+
+  it("crença precisa de base — deduzir do diagnóstico não vale", () => {
+    expect(ROTULO).toMatch(/fala da criança, fala da família, ou padrão observado/);
+    expect(ROTULO).toMatch(/Crença deduzida do diagnóstico não vale/);
+  });
+
+  it("futuro descreve ação, e traz o caso Enzo como contraexemplo", () => {
+    expect(ROTULO).toMatch(/descreva a AÇÃO, não o resultado/);
+    expect(ROTULO).toMatch(/dá pra ampliar o repertório dele aos poucos/);
+    // Segunda passada da bancada: o modelo trocou a promessa por prognóstico.
+    expect(ROTULO).toMatch(/seletividade costuma melhorar quando…" é promessa disfarçada/);
+  });
+
+  // Cobrar lastro fez a Ayla recitar o perfil e pedir confirmação do que já
+  // sabia — 5 falhas novas em `mudanca_tema`. O antídoto mora no mesmo bloco.
+  it("usar o dado não é recitar o dado nem confirmá-lo", () => {
+    expect(ROTULO).toMatch(/RACIOCINAR com eles e ir direto pra ajuda/);
+    expect(ROTULO).toMatch(/não é recitá-los de volta, nem pedir confirmação/);
+    expect(ROTULO).toMatch(/ele é ponto de partida, não pergunta/);
+  });
+
+  it("entra nos DOIS canais, e só quando há entrega", () => {
+    expect(RESPONDER).toMatch(/A_CRIANCA_ANTES_DO_ROTULO,\n\s*\]/);
+    expect(PROMPT).toMatch(/\$\{A_CRIANCA_ANTES_DO_ROTULO\}/);
+    // Desabafo não recebe: quem pede bloco interpretativo é a entrega.
+    expect(RESPONDER).toMatch(/\.\.\.\(entrega/);
+    expect(PROMPT).toMatch(/entrega\n\s*\? `/);
+  });
+
+  it("fica fora do núcleo — que é carregado em todo turno de toda ferramenta", () => {
+    expect(nucleoConducao()).not.toContain("De onde vem a sua explicação");
   });
 });

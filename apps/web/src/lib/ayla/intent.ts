@@ -22,6 +22,13 @@ export type IntencaoAyla =
   | "rotina_criar" // montar/criar/desenhar/organizar uma rotina visual
   | "rotina_ver" // ver/trazer uma rotina já existente de um dia
   | "rotina_editar" // ajustar uma rotina existente
+  /**
+   * Precisa de ORGANIZAÇÃO: sequência, previsibilidade, saber o que vem
+   * depois, atravessar uma passagem que trava. NÃO diz que precisa de rotina —
+   * diz que o assunto é este. Quem decide o tamanho (orientação, sequência
+   * curta ou o período inteiro) é a prontidão, depois.
+   */
+  | "organizacao"
   | "plano" // ajuda/estratégia/plano pra um desafio específico
   | "outro"; // desabafo, contar o dia, dúvida, cumprimento, história, desenho
 
@@ -33,6 +40,9 @@ A INTENÇÃO é uma destas:
 - rotina_criar: quer MONTAR / criar / desenhar / organizar uma rotina visual (de um dia ou da semana). Ex.: "quero uma rotina", "vamos desenhar a rotina do Davi", "me ajuda a organizar melhor os dias dele", "preciso de rotina visual", "poderia montar um quadro pra ele?".
 - rotina_ver: quer VER / que você TRAGA uma rotina JÁ montada de um dia. Ex.: "traz a rotina de hoje", "mostra a de terça", "me manda a rotina de amanhã".
 - rotina_editar: está PEDINDO pra você ajustar uma rotina que ela já montou. Ex.: "faltou o lanche na terça", "tira o vôlei da quarta", "muda a rotina de hoje".
+- organizacao: traz uma NECESSIDADE DE ORGANIZAÇÃO — previsibilidade, sequência, saber o que vem agora e depois, atravessar a passagem de uma atividade pra outra, enxergar o que vai acontecer. Ela não precisa falar "rotina". Ex.: "ele não entende o que vem depois", "queria mostrar pra ela o que vai acontecer", "quando sai do videogame pro banho vira uma briga", "preciso que ele veja primeiro banho e depois história", "como faço pra ela saber o que vem depois?", "ela demora pra sair, mas quando aviso antes ela vai".
+  ⚠️ Isto NÃO decide que ela precisa de uma rotina. A maioria destes casos se resolve com orientação; outros com uma sequência curta. Quem escolhe é a etapa seguinte — você só está dizendo que o assunto é organização/transição.
+  ⚠️ CONTAR UM EPISÓDIO NÃO É ISSO. "ele fez uma birra enorme no banho hoje", "hoje foi horrível", "ela chorou na escola" = outro. Aqui ela está contando o dia, e a conversa comum é a resposta certa. "organizacao" é quando há um PADRÃO ("todo dia", "toda vez", "sempre que") ou um pedido de previsibilidade.
 - plano: quer ajuda / estratégia / um plano pra um DESAFIO específico (sono, birra, escola, transição, comida, crise...). Ex.: "me ajuda com o sono dele", "ele não quer ir à escola", "o que faço nas crises?", "a hora do banho tá impossível".
 - outro: qualquer outra coisa — contar como foi o dia, desabafo, dúvida geral, cumprimento, pedir história ou leitura de desenho.
 
@@ -42,6 +52,11 @@ Regras importantes:
 - Rotina aqui é só o QUADRO VISUAL de etapas. Falar da rotina da casa, do trabalho, da vida = outro.
 - Na dúvida entre uma intenção de rotina e outro, escolha outro: mexer na rotina dela sem ela pedir é pior do que deixar de mexer.
 - Na dúvida entre plano e outro, escolha outro.
+- "organizacao" × "plano" — o teste é UM: a mensagem localiza a dificuldade NO MOMENTO DE MUDAR de uma coisa pra outra? Ela aparece como "de X pra Y", "quando acaba o", "na hora de sair/ir", "depois que chega", "quando aviso que vai", "se perde na ordem". Se sim, organizacao. Se a dificuldade é descrita DENTRO de uma atividade só, é o comportamento, e é plano.
+  Compare, que é a mesma cena: "toda hora do banho ele bate e grita" → PLANO (o que trava é o banho em si; nenhuma passagem foi nomeada). "toda vez que precisa parar de brincar e ir pro banho ele bate e grita" → ORGANIZACAO (a briga está na passagem brincar → banho).
+  Vale mesmo quando a reação é forte: "ela fica agressiva quando aviso que é hora de sair de casa" é organizacao — a agressão está amarrada no aviso da mudança. "ela está agressiva ultimamente" é plano.
+  E vale ao contrário: "não consegue fazer tarefa, perde o foco" é plano (habilidade); "não consegue COMEÇAR a tarefa depois que chega da escola" é organizacao (a passagem escola → tarefa).
+- Na dúvida entre "organizacao" e "outro": episódio isolado é outro; padrão que se repete é organizacao.
 - RESPOSTA A UMA PERGUNTA NÃO É PEDIDO. Se a Ayla acabou de perguntar algo e a mensagem é curta ("sim", "não", "às vezes", "depois que ele já fez", "na escola", "ele grita"), ela está RESPONDENDO — a intenção é "outro", sempre. Uma mensagem sem verbo de pedido não abre ferramenta nenhuma. Caso real (02/08/2026): a Ayla perguntou "ele já fez xixi quando pega a fralda?", a mãe respondeu "Depois q ele já fez", e isso virou rotina_editar — no meio de uma conversa sobre desfralde ela recebeu "não achei uma rotina pra ajustar".
 - Os TEMAS listados no contexto (o que a família marcou no cadastro) servem SÓ para escolher o tema. Eles NUNCA indicam intenção: ver a palavra "rotina" na lista de temas não significa que ela está pedindo uma rotina agora.
 - Responda SÓ a linha.
@@ -113,9 +128,11 @@ export async function classificarIntencao(params: {
         ? "rotina_ver"
         : i.includes("rotina_editar")
           ? "rotina_editar"
-          : i.includes("plano")
-            ? "plano"
-            : "outro";
+          : i.includes("organizacao") || i.includes("organização")
+            ? "organizacao"
+            : i.includes("plano")
+              ? "plano"
+              : "outro";
 
     // Só aceita chave do vocabulário. Fora da lista = como se não tivesse dito
     // nada, e aí o tema anterior continua valendo: perder o fio é pior do que

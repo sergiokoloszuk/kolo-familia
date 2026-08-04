@@ -1,4 +1,10 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import {
+  escolherTitulo,
+  validarPlano,
+  resumirFalhasPlano,
+  PlanoSemSubstanciaError,
+} from "./validacao-plano";
 import { getAnthropicClient, MODELS } from "./anthropic";
 import { buildContext } from "./context";
 import { buildContextBlock, VOZ_LIMITES_E_FRONTEIRA } from "./prompt";
@@ -213,6 +219,12 @@ export async function gerarPlano(params: {
   conversaId?: string | null;
   variante?: VariantePlano;
   origem?: string;
+  /**
+   * O tema que a PRONTIDÃO já validou a partir da conversa. É o fallback do
+   * título quando `analisarDesafio` — que é outra chamada, sobre o mesmo
+   * material — devolve algo que admite falta de contexto.
+   */
+  temaValidado?: string | null;
 }): Promise<{ id: string; titulo: string; secoes: PlanoSecao[] }> {
   const {
     supabase,
@@ -222,6 +234,7 @@ export async function gerarPlano(params: {
     conversaId,
     variante = "padrao",
     origem = "estrategias",
+    temaValidado = null,
   } = params;
 
   // Padrão usa o MULTI-CALL (cada seção = o botão real, "crenças" garantida, tudo
@@ -233,13 +246,38 @@ export async function gerarPlano(params: {
       ? await gerarSecoesPlano({ supabase, familyId, membroAtipicoId, desafio, variante })
       : await gerarSecoesPlanoMultiCall({ supabase, familyId, membroAtipicoId, desafio });
 
+  // ── TÍTULO: uma fonte, e um plano bom não morre por causa dele ─────────
+  // `analisarDesafio` é uma chamada SEPARADA que olha o mesmo material e pode
+  // discordar. Foi assim que saiu um PDF chamado "Aguardando a situação
+  // específica de Adelly" com sete seções boas dentro. O título é consertável;
+  // o conteúdo não. Então o título ruim cai pro tema já validado.
+  const escolha = escolherTitulo({ gerado: titulo, temaValidado: temaValidado ?? tema, nome: null });
+  if (escolha.trocado) {
+    console.warn(`[plano] título trocado — ${escolha.motivo} → "${escolha.titulo}"`);
+  }
+  const tituloFinal = escolha.titulo;
+
+  // ── PORTÃO: nada é persistido, nem vira PDF ou link, sem substância ────
+  const veredito = validarPlano({ titulo: tituloFinal, secoes });
+  if (!veredito.ok) {
+    console.warn(`[plano] BARRADO — ${resumirFalhasPlano(veredito.falhas)}`);
+    await logEvent({
+      kind: "plano_sem_substancia",
+      severity: "error",
+      family_account_id: familyId,
+      message: resumirFalhasPlano(veredito.falhas),
+      payload: { titulo: tituloFinal, secoes: secoes.map((x) => x.tipo) },
+    });
+    throw new PlanoSemSubstanciaError(veredito.falhas);
+  }
+
   const { data, error } = await supabase
     .from("planos")
     .insert({
       family_account_id: familyId,
       membro_atipico_id: membroAtipicoId,
       conversa_id: conversaId ?? null,
-      titulo,
+      titulo: tituloFinal,
       tema,
       secoes,
       origem,
@@ -248,7 +286,7 @@ export async function gerarPlano(params: {
     .single();
   if (error) throw new Error(`Erro ao salvar o plano: ${error.message}`);
 
-  return { id: (data as { id: string }).id, titulo, secoes };
+  return { id: (data as { id: string }).id, titulo: tituloFinal, secoes };
 }
 
 function textoDeResposta(content: Array<{ type: string }>): string {

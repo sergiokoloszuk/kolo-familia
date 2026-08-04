@@ -1,0 +1,182 @@
+
+████████████████████████████████████████████████████████████████████████████
+JORNADA 1 — PEDIDO GENÉRICO
+████████████████████████████████████████████████████████████████████████████
+
+──▶ MÃE (turno 1):
+Preciso de uma rotina.
+(node:19004) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///D:/Projetos/Kolo%20Fam%C3%ADlia/apps/web/src/lib/conducao/diretrizes.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to D:\Projetos\Kolo Família\apps\web\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+   [prontidão: falta_escopo]
+
+◀── AYLA  [acao=perguntar]
+Entendi. Dá pra organizar de alguns jeitos diferentes — depende do que tá mais pesado agora:
+
+Posso montar a rotina de um período específico do dia (tipo a tarde depois da escola, que é quando a lição costuma aparecer), o dia inteiro dele, ou focar num momento difícil específico (como começar a lição, que você já me contou que trava).
+
+O que faria mais diferença agora?
+
+──▶ MÃE (turno 2):
+Quero organizar a tarde depois da escola.
+   [prontidão: falta — "Como é a tarde dele agora? Que horas chega da escola, o que faz primeiro, quando é a lição, e o que mais acontece até a hora de dormir?"]
+
+◀── AYLA  [acao=perguntar]
+Perfeito. Pra montar a tarde do Mateus, me conta como é hoje — que horas ele chega da escola, o que costuma fazer primeiro, quando entra a lição, e o que mais acontece até a hora de dormir?
+
+Pode mandar áudio se for mais fácil, que eu organizo.
+
+──▶ MÃE (turno 3):
+ele chega meio dia e quarenta, come, fica de bobeira no celular, ai eu tenho q brigar pra fazer a licao, as vezes so faz de noite. terça e quinta tem futebol as 3 e meia. banho e janta depois
+   [prontidão: suficiente]
+
+◀── AYLA  [acao=montar]
+Organizei a tarde do Mateus a partir do que você contou. Coloquei a lição logo depois do almoço, antes do tempo livre — como você já sabe que ele trava pra começar, inverter a ordem costuma ajudar: primeiro o que é mais difícil, quando a energia ainda tá alta, e o celular vira o respiro depois.
+
+Nos dias de futebol, a lição fica antes também, mas com menos tempo (só o essencial, ou metade). Nos outros dias, depois da lição tem um tempo livre maior.
+
+Coloquei uma dica no momento da lição, que é onde costuma travar.
+
+Os horários de banho e jantar eu sugeri a partir da sequência — você ajusta pro que faz sentido aí. E os cartões ilustrados vão aparecer daqui a pouquinho.
+
+Me conta o que achou, e a gente ajusta o que precisar.
+[billing] exceção ao logar uso API (ludico_rotina_ia/claude-sonnet-4-6): sem banco na bancada
+
+   [GERADOR: 2 rotina(s), 10 etapas | validação: OK]
+   [PDF: j1-generico.pdf — 4168 bytes]
+
+   ESTRUTURA GERADA:
+     Tarde (dias sem futebol): 12h40 Chegar e almoçar → Lição de casa → Tempo livre / celular → Banho → Jantar
+     Tarde (futebol — terça e quinta): 12h40 Chegar e almoçar → Lição de casa (o essencial) → 15h30 Futebol → Banho → Jantar
+
+████████████████████████████████████████████████████████████████████████████
+JORNADA 2 — DIA INTEIRO
+████████████████████████████████████████████████████████████████████████████
+
+──▶ MÃE (turno 1):
+Quero uma rotina completa do dia inteiro.
+   [prontidão: falta — "Como é o dia de Mateus agora — desde que acorda até dormir? Me conta na ordem: horários ou só a sequência mesmo, o que ele faz, onde estuda, quando tem lição, tudo que vier."]
+
+◀── AYLA  [acao=perguntar]
+Perfeito, vou montar o dia inteiro do Mateus. Pra isso, me conta como é hoje — pode mandar áudio se preferir, que eu organizo:
+
+Da hora que ele acorda até a noite: o que ele faz, os horários que são fixos (escola, almoço, jantar, dormir), se tem alguma atividade ou terapia, quando costuma ter lição… pode ser bagunçado, pode ser "mais ou menos tal hora" — eu monto a partir do que você contar.
+
+──▶ MÃE (turno 2):
+Ele acorda 6h30, toma café, se troca, escova os dentes e vai pra escola. Volta 12h40, almoça, descansa, faz lição, futebol 15h30, banho, jantar, lê e dorme 20h30.
+   [prontidão: suficiente]
+
+◀── AYLA  [acao=montar]
+Pronto, montei o dia do Mateus — desde acordar até dormir, com uma dica no momento da lição, que é onde ele costuma travar.
+
+Dá uma olhada na sequência: se quiser trocar algum horário, mudar a ordem ou ajustar qualquer coisa, é só me dizer. Os cartões ilustrados vão aparecer em instantes.
+[billing] exceção ao logar uso API (ludico_rotina_ia/claude-sonnet-4-6): sem banco na bancada
+
+   [GERADOR: 1 rotina(s), 14 etapas | validação: OK]
+   [PDF: j2-dia-inteiro.pdf — 4128 bytes]
+
+   ESTRUTURA GERADA:
+     Dia: 6h30 Acordar → Café da manhã → Trocar de roupa → Escovar os dentes → Ir para a escola → 12h40 Chegar em casa → Almoçar → Descansar → Fazer lição → 15h30 Futebol → Banho → Jantar → Leitura → 20h30 Dormir
+
+████████████████████████████████████████████████████████████████████████████
+JORNADA 3 — MARIO / ESCOLA
+████████████████████████████████████████████████████████████████████████████
+
+──▶ MÃE (turno 1):
+Ele não quer ir para escola. Preciso de ajuda para organizar a rotina dele.
+   [prontidão: falta — "Como é o dia dele desde que acorda até sair de casa? O que acontece, na ordem — acordar, banho, roupa, café, escovar dente, sair?"]
+
+◀── AYLA  [acao=perguntar]
+Vou te ajudar a organizar a manhã dele. Me conta: como é desde que o Mario acorda até vocês saírem às 7h? Pode ser do jeito que vier — acordar, trocar, café, escovar dente… o que rola, na ordem mesmo.
+
+──▶ MÃE (turno 2):
+acorda umas 6h20, custa a levantar, tem que trocar de roupa umas 3 vezes, toma leite, escova os dentes e a gente sai correndo 7h
+   [prontidão: suficiente]
+
+◀── AYLA  [acao=montar]
+Montei a rotina da manhã do Mario — desde acordar até sair pra escola. Coloquei um tempinho a mais antes de trocar de roupa, que é onde costuma travar, e uma dica sobre as roupas sem etiqueta separadas na noite anterior.
+
+O PDF e o link já estão aí em cima. Os cartões ilustrados podem levar um tempinho pra aparecer — quando chegarem, me conta o que achou e a gente ajusta o que precisar.
+[billing] exceção ao logar uso API (ludico_rotina_ia/claude-sonnet-4-6): sem banco na bancada
+
+   [GERADOR: 1 rotina(s), 6 etapas | validação: OK]
+   [PDF: j3-escola.pdf — 2539 bytes]
+
+   ESTRUTURA GERADA:
+     Manhã de aula: 6h20 Acordar → Ficar na cama um pouco (respirar, acordar de verdade) → Trocar de roupa (roupa separada desde a noite antes) → Tomar leite → Escovar os dentes → 7h Pegar a mochila e sair
+
+████████████████████████████████████████████████████████████████████████████
+JORNADA 4 — JÁ TE CONTEI
+████████████████████████████████████████████████████████████████████████████
+
+──▶ MÃE (turno 1):
+Já te contei os horários dele. Agora monta a rotina.
+   [prontidão: suficiente]
+
+◀── AYLA  [acao=montar]
+Pronto! Organizei o dia do Mateus assim:
+
+**12h40** — chega da escola
+**13h** — almoço
+**13h30** — descansa (pode ser tela, brincar livre, deitar)
+**14h** — lição de casa
+**15h30** — futebol (terças e quintas)
+**17h** — banho
+**18h** — jantar
+**20h30** — dormir
+
+Nos dias sem futebol, ele tem mais tempo depois da lição — dá pra encaixar brincadeira ou algo que ele curta antes do banho.
+
+**No momento da lição** (que é onde costuma travar): antes de começar, deixa o material já separado na mesa e combina com ele "quando o timer tocar 10 minutos, você para" — começar sabendo que tem fim ajuda a desgrudar. Se travar mesmo assim, vale tentar: ele escolhe por qual matéria começa, ou você fica por perto sem falar nada nos primeiros 5 minutos, só a presença.
+
+Os cartões ilustrados vão aparecer em instantes. Me conta o que achou — a gente ajusta o que precisar.
+[billing] exceção ao logar uso API (ludico_rotina_ia/claude-sonnet-4-6): sem banco na bancada
+
+   [GERADOR: 1 rotina(s), 8 etapas | validação: OK]
+   [PDF: j4-ja-contei.pdf — 3520 bytes]
+
+   ESTRUTURA GERADA:
+     Tarde: 12h40 chega da escola → 13h almoço → 13h30 descansa (tela, brincar, deitar) → 14h lição de casa → 15h30 futebol (terça e quinta) → 17h banho → 18h jantar → 20h30 dormir
+
+████████████████████████████████████████████████████████████████████████████
+JORNADA 5 — TEMA / DINOSSAUROS
+████████████████████████████████████████████████████████████████████████████
+
+──▶ MÃE (turno 1):
+Quero uma rotina usando dinossauros porque ele ama.
+   [prontidão: suficiente]
+
+◀── AYLA  [acao=montar]
+Montei a rotina do dia do Theo com o tema de dinossauros nos cartões, porque você disse que ele ama. Ficou assim:
+
+**Rotina do Theo**
+7h — acordar
+7h15 — café da manhã
+8h — ir pra escola
+12h — voltar da escola
+12h30 — almoçar
+13h — brincar
+18h30 — jantar
+19h — banho
+20h — dormir
+
+Os cartões ilustrados com dinossauros podem levar um tempinho pra aparecer, mas já estão sendo preparados. Me conta o que você achou, e a gente ajusta o que precisar — horário, algum momento que ficou faltando, ou qualquer coisa que não combine com o dia de vocês.
+[billing] exceção ao logar uso API (ludico_rotina_ia/claude-sonnet-4-6): sem banco na bancada
+
+   [GERADOR: 1 rotina(s), 9 etapas | validação: OK]
+   [PDF: j5-tema.pdf — 3388 bytes]
+
+   ESTRUTURA GERADA:
+     Rotina do Theo: 7h acordar → 7h15 café da manhã → 8h ir pra escola → 12h voltar da escola → 12h30 almoçar → 13h brincar → 18h30 jantar → 19h banho → 20h dormir
+
+
+════════════════════════════════════════════════════════════════════════════
+RESUMO
+════════════════════════════════════════════════════════════════════════════
+jornada         turnos  gerou   prontidões
+1-generico      3       SIM     falta_escopo → falta → suficiente
+2-dia-inteiro   2       SIM     falta → suficiente
+3-escola        2       SIM     falta → suficiente
+4-ja-contei     1       SIM     suficiente
+5-tema          1       SIM     suficiente

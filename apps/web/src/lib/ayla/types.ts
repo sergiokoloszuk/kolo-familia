@@ -42,6 +42,17 @@ export type AylaTipoReativa =
   | "plano_pergunta"
   | "rotina_pergunta"
   | "rotina_conversa"
+  /** A rotina FICOU PRONTA e foi entregue. Tipo próprio de propósito: a ponte
+   *  do plano dispara em "resposta_registro", e uma rotina entregue com aquele
+   *  tipo acionava o gerador de PLANO logo em seguida — a mãe pedia rotina e
+   *  recebia um PDF de plano por cima (caso real, 03/08/2026). */
+  | "rotina_pronta"
+  /** O PISO acionou por risco ATUAL à vida. É o marcador operacional de que há
+   *  uma situação de segurança ABERTA — ver `estado-seguranca.ts`. Enquanto
+   *  aberta, artefatos não disparam e a condução prioriza o próximo passo. */
+  | "seguranca"
+  /** A família confirmou atendimento/contato. Fecha o estado. */
+  | "seguranca_encerrada"
   | "assinatura_nudge";
 
 export type AylaTipo = AylaTipoProativa | AylaTipoReativa;
