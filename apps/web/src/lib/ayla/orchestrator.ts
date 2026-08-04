@@ -1697,7 +1697,11 @@ export async function processInbound(
           // tarde, recebeu a rotina, e logo depois "vou mandar agora o plano
           // estratégico em PDF" com um PDF de PLANO. Ela pediu rotina e recebeu
           // outro artefato.
-          tipo: r.pronto ? "rotina_pronta" : "rotina_conversa",
+          // Rotina montada mas esperando o tema dos cartões: a conversa fica
+          // ABERTA, senão o "pode ser dinossauros" dela cai na conversa comum
+          // e os cartões nunca saem. A ponte do Plano segue bloqueada, que é o
+          // que "rotina_pronta" protegia.
+          tipo: r.pronto && !r.aguardandoTema ? "rotina_pronta" : "rotina_conversa",
         });
         return { tratada: true, familia: family.id, resposta: resp };
       }

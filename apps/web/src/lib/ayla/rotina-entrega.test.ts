@@ -146,7 +146,12 @@ describe("mudança de assunto — a rotina não sequestra a conversa", () => {
     // "rotina_pronta", não "resposta_registro": aquele tipo dispara a ponte do
     // PLANO, e uma rotina entregue com ele fazia a mãe receber um PDF de plano
     // por cima da rotina que ela pediu (caso real, 03/08/2026).
-    expect(trecho).toMatch(/tipo: r\.pronto \? "rotina_pronta" : "rotina_conversa"/);
+    // `!r.aguardandoTema` entrou depois: rotina montada esperando o tema dos
+    // cartões mantém a conversa aberta. O que este teste protege é o que NÃO
+    // pode voltar — "resposta_registro" — e "rotina_pronta" continuar exigindo
+    // `r.pronto`.
+    expect(trecho).toMatch(/tipo: r\.pronto && !r\.aguardandoTema \? "rotina_pronta" : "rotina_conversa"/);
+    expect(trecho).not.toMatch(/tipo: "resposta_registro"/);
   });
 
   it("o formato antigo (`pronto`) continua aceito", () => {

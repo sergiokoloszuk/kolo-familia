@@ -523,7 +523,7 @@ async function dispararGeracao(
 export async function conduzirRotina(
   supabase: SupabaseClient,
   params: { familyId: string; membroAtipicoId: string; contexto: string; phoneE164?: string | null },
-): Promise<{ mensagem: string; pronto: boolean } | null> {
+): Promise<{ mensagem: string; pronto: boolean; aguardandoTema?: boolean } | null> {
   try {
     if (!params.contexto.trim()) return null;
 
@@ -634,6 +634,14 @@ export async function conduzirRotina(
         ? `AINDA FALTA UMA COISA pra montar: ${prontidao.pergunta}\nFaça ESSA pergunta, do seu jeito — UMA só —, e NÃO monte a rotina neste turno (acao="perguntar").`
         : "",
       soOrientacao ? ORIENTACAO_DE_TRANSICAO : "",
+      // VAI HAVER CARTÃO. Então o tema volta a ser proposto — de verdade, com
+      // o interesse na mão. A frente ROTINA tirou o passo "SEMPRE pergunte o
+      // tema antes de montar" porque ele SEGURAVA a entrega; junto foi embora
+      // o "proponha proativamente", e o resultado em produção foi cartão sem
+      // tema — ou, pior, cartão nenhum, já que o disparo dependia dele.
+      visual
+        ? `OS CARTÕES ILUSTRADOS VÃO SAIR nesta rotina. PROPONHA O TEMA na mesma mensagem em que entrega, sem segurar nada e sem pedir confirmação: puxe do que ele ama${interesses ? ` (você já sabe: ${interesses})` : ""} e escreva no campo "tema". Se você não conhece nenhum interesse, ofereça uma ou duas ideias na fala ("quer no tema de dinossauros ou de carrinhos?") e deixe "tema" null — a mãe responde e o sistema aplica. O tema é o que faz os cartões terem a cara dele; entregar sem propor é entregar menos.`
+        : "",
       deveMontar
         ? `JÁ DÁ PRA MONTAR — a criança, o pedaço do dia e a sequência já estão na mesa. acao="montar", obrigatoriamente. NÃO faça mais nenhuma pergunta neste turno: horário, ponto difícil, tema e transição enriquecem, mas NÃO seguram a entrega. O que faltar, ela ajusta depois em cima do que já existe.`
         : "",
@@ -718,6 +726,7 @@ ${jaSabemos.rotinaExistente}`
       (t0?.estrategia ? String(t0.estrategia) : "") || transicoesConhecidas[0]?.estrategia || null;
 
     let rotinas: ReturnType<typeof sanitizarRotinas> = [];
+    let faltaTemaFinal = false;
     if (pronto) {
       const r = await gerarRotina(supabase, {
         familyId,
@@ -831,12 +840,21 @@ ${jaSabemos.rotinaExistente}`
       // pra a geração disparar — o interesse virava gatilho de artefato. A
       // ordem certa é a inversa: o visual entra quando VER ajuda, e o tema
       // personaliza depois, se houver.
+      // O gerador de cartões EXIGE tema (>= 2 caracteres) — sem ele a chamada
+      // volta 400 e nenhuma imagem sai, em silêncio. Então aqui o disparo é
+      // condicionado de verdade, e o caso "precisa de cartão mas não temos
+      // tema" vira uma pergunta na mensagem, nunca um silêncio.
       let autoGerou = false;
-      if (!temSemana && visual && ids.length) {
-        // Sem tema não é motivo pra não gerar: o cartão ilustrado vale por si,
-        // e o tema é personalização de quem tem um interesse conhecido.
-        for (const id of ids) await dispararGeracao(id, tema ?? "");
+      const faltaTema = !temSemana && visual && ids.length > 0 && !tema;
+      faltaTemaFinal = faltaTema;
+      if (!temSemana && visual && tema && ids.length) {
+        for (const id of ids) await dispararGeracao(id, tema);
         autoGerou = true;
+      }
+      if (faltaTema) {
+        console.warn(
+          `[ayla:rotina] visual=true sem tema — cartões NÃO disparados, pedindo o tema na mensagem`,
+        );
       }
 
       const link = await gerarMagicLink(supabase, { familyId, next });
@@ -844,8 +862,10 @@ ${jaSabemos.rotinaExistente}`
       // A ENTREGA CONCRETA é a rotina no app. O PDF é opção de impressão, e a
       // frase tem que dizer a verdade sobre o que existe agora.
       const cartoes = autoGerou
-        ? ` Já comecei a gerar os cartões${tema ? ` no tema *${tema}*` : ""} — eles levam *1-2 minutinhos*, então pode abrir que vão aparecendo sozinhos 🌿`
-        : "";
+        ? ` Já comecei a gerar os cartões no tema *${tema}* — eles levam *1-2 minutinhos*, então pode abrir que vão aparecendo sozinhos 🌿`
+        : faltaTema
+          ? ` Os cartões ilustrados eu gero assim que você escolher o tema${interesses ? ` — quer no tema de *${interesses.split(/[,;]/)[0]?.trim()}*?` : " — me diz o que ele ama que eu faço com a cara dele."}`
+          : "";
       const impresso = querImprimir
         ? " Te mandei também um *PDF pra imprimir* (com quadradinhos pra marcar)."
         : "";
@@ -859,7 +879,12 @@ ${jaSabemos.rotinaExistente}`
     }
 
     if (!mensagem) return null;
-    return { mensagem, pronto: pronto && rotinas.length > 0 };
+    // AGUARDANDO O TEMA: a rotina existe, mas os cartões dependem de uma
+    // palavra que ainda não veio. A conversa fica ABERTA (tipo rotina_conversa)
+    // pra que a próxima mensagem dela — "pode ser dinossauros" — volte pra cá
+    // e o tema seja aplicado. Se fechássemos com "rotina_pronta", a resposta
+    // dela cairia na conversa comum e o tema morreria ali, sem cartão nenhum.
+    return { mensagem, pronto: pronto && rotinas.length > 0, aguardandoTema: faltaTemaFinal };
   } catch (e) {
     console.warn("[ayla:rotina-guiada] falha:", e instanceof Error ? e.message : e);
     return null;

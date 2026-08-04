@@ -193,12 +193,16 @@ describe("PDF deixou de ser automático", () => {
 
 describe("cartões saem por necessidade visual, não por tema", () => {
   it("o gatilho é `visual`", () => {
-    expect(GUIADA).toMatch(/if \(!temSemana && visual && ids\.length\)/);
+    expect(GUIADA).toMatch(/if \(!temSemana && visual && tema && ids\.length\)/);
+    // O gatilho antigo era o tema sozinho — o interesse virando artefato.
     expect(GUIADA).not.toMatch(/if \(!temSemana && tema && ids\.length\)/);
   });
 
-  it("sem tema o cartão ainda existe — tema é personalização", () => {
-    expect(GUIADA).toMatch(/dispararGeracao\(id, tema \?\? ""\)/);
+  it("sem tema o cartão NÃO sai em silêncio — vira pergunta", () => {
+    // O gerador recusa tema com menos de 2 caracteres. Disparar sem tema era
+    // um 400 silencioso: a mãe esperava as imagens e elas nunca chegavam.
+    expect(GUIADA).toMatch(/const faltaTema = !temSemana && visual && ids\.length > 0 && !tema/);
+    expect(GUIADA).toMatch(/Os cartões ilustrados eu gero assim que você escolher o tema/);
     expect(GUIADA).toMatch(/o cartão existe quando VER a sequência ajuda/);
   });
 
@@ -345,7 +349,7 @@ describe("o visual é decisão própria", () => {
   });
 
   it("os cartões disparam pelo visual resolvido, não pelo campo cru", () => {
-    expect(GUIADA).toMatch(/if \(!temSemana && visual && ids\.length\)/);
+    expect(GUIADA).toMatch(/if \(!temSemana && visual && tema && ids\.length\)/);
     expect(GUIADA).not.toMatch(/if \(!temSemana && prontidao\.visual/);
   });
 });
