@@ -24,6 +24,13 @@ export function AssistenteChat({ membroId, nome }: { membroId: string; nome: str
   const [pronto, setPronto] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
 
+  // A Ayla acabou de perguntar alguma coisa? Então o campo tem que CONVIDAR a
+  // responder. Com o rótulo fixo em "escreva como são os dias", uma mãe olhou a
+  // pergunta na tela e disse "não tem onde eu responder" (04/08/2026): o campo
+  // estava ali, habilitado, e não parecia servir pra aquilo.
+  const ultima = mensagens[mensagens.length - 1];
+  const aguardandoResposta = ultima?.de === "kolo" && (ultima.texto ?? "").includes("?");
+
   async function enviar() {
     const t = texto.trim();
     if (!t || pensando) return;
@@ -99,7 +106,8 @@ export function AssistenteChat({ membroId, nome }: { membroId: string; nome: str
         {/* Campo em destaque — onde a mãe escreve */}
         <div className="rounded-2xl border-2 border-brand-purple/35 bg-brand-purple/[0.05] p-3">
           <p className="mb-2 flex items-center gap-1.5 text-sm font-semibold text-brand-purple-dark">
-            <Sparkles className="size-4" aria-hidden /> Escreva aqui como são os dias
+            <Sparkles className="size-4" aria-hidden />{" "}
+            {aguardandoResposta ? "Responda aqui" : "Escreva aqui como são os dias"}
           </p>
           <div className="flex items-end gap-2">
             <textarea
@@ -113,7 +121,11 @@ export function AssistenteChat({ membroId, nome }: { membroId: string; nome: str
               }}
               rows={3}
               autoFocus
-              placeholder="Ex.: acorda 6h, escola até 12:30, segunda tem vôlei 16h, quinta é igual à segunda, skincare de manhã e de noite…"
+              placeholder={
+                aguardandoResposta
+                  ? "Escreva sua resposta…"
+                  : "Ex.: acorda 6h, escola até 12:30, segunda tem vôlei 16h, quinta é igual à segunda, skincare de manhã e de noite…"
+              }
               className="flex-1 resize-none rounded-xl border border-brand-purple/25 bg-white px-3 py-2 text-sm placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-brand-purple/30"
               disabled={pensando}
             />
