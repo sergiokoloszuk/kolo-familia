@@ -98,7 +98,7 @@ export function pediuParaImprimir(texto: string | null | undefined): boolean {
 export function pediuApoioVisual(texto: string | null | undefined): boolean {
   const t = (texto ?? "").toLowerCase();
   // `\b` não basta pra "card": "cardápio" tem fronteira antes do á.
-  return /visual|cart(ão|ões|ao|oes)|\bcards?(?![a-zà-ú])|figurinha|pictogram|com (figuras|imagens|desenhos)/.test(
+  return /visua(l|is)|cart(ão|ões|ao|oes)|\bcards?(?![a-zà-ú])|figurinha|pictogram|com (figuras|imagens|desenhos)/.test(
     t,
   );
 }
@@ -943,8 +943,11 @@ ${jaSabemos.rotinaExistente}`
       if (ofereceCartoes) faltaTemaFinal = true;
       const cartoes = autoGerou
         ? ` Já comecei a gerar os cartões no tema *${tema}* — eles levam *1-2 minutinhos*, então pode abrir que vão aparecendo sozinhos 🌿`
-        : faltaTema || ofereceCartoes
-          ? ` Se quiser, eu transformo isso em cartões ilustrados pra ${nome} acompanhar o dia${interesses ? ` — posso fazer no tema de *${interesses.split(/[,;]/)[0]?.trim()}*, que eu sei que ${nome} gosta. Quer?` : ". Me fala um tema que ele(a) ama — animais, princesas, fundo do mar, algum personagem — que eu faço com a cara dele(a)."}`
+        : // A Ayla já perguntou o tema na fala dela? Então não pergunte de novo:
+          // em 04/08/2026 a mãe recebeu as duas ofertas coladas, e a segunda
+          // ainda trazia um "dele(a)" de template à mostra.
+          (faltaTema || ofereceCartoes) && !/\btema\b|cart(ão|ões|oes)/i.test(mensagem)
+          ? ` Se quiser, eu transformo isso em cartões ilustrados pra ${nome} acompanhar${interesses ? ` — posso fazer no tema de *${interesses.split(/[,;]/)[0]?.trim()}*, que eu sei que ${nome} gosta. Quer?` : `. Me fala um tema que ${nome} ama — animais, dinossauros, fundo do mar, um personagem — que eu faço com a cara ${nome ? `d${nome}` : "dele"}.`}`
           : "";
       const impresso = querImprimir
         ? " Te mandei também um *PDF pra imprimir* (com quadradinhos pra marcar)."
