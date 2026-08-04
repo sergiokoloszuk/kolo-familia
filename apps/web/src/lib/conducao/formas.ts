@@ -27,6 +27,7 @@ import { rotuloDoTema } from "./temas";
 /** Só as formas. Uma linha cada, sem exemplo longo — o exemplo é o que incha. */
 const REPERTORIO = [
   "O que estou percebendo (só se reorganiza algo que ela não tinha juntado)",
+  "Por onde eu começaria (os pontos que vejo + qual eu pegaria primeiro, e por quê)",
   "O que eu faria primeiro",
   "O que você pode dizer (uma fala pronta, curta)",
   "Uma atividade / uma brincadeira",
