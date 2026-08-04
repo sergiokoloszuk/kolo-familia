@@ -18,7 +18,11 @@ const OCASIOES = [
   "Natal",
   "Páscoa",
   "Praia / verão",
-  "Fantasia de super-herói",
+  // O chip de fantasia de herói nomeado saiu: o modelo resolvia desenhando um
+  // personagem conhecido e a moderação de imagem barrava o resultado (Mario,
+  // 04/08/2026). "Capa de herói" pede a mesma coisa sem convocar licenciado.
+  "Capa de herói",
+  "Dia de chuva",
 ];
 
 /**

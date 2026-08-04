@@ -54,6 +54,32 @@ export type GerarImagemResult = {
   storage_path: string;
 };
 
+
+/**
+ * O ERRO DE IMAGEM QUE A FAMÍLIA LÊ.
+ *
+ * A mensagem crua da OpenAI ia direto pra tela: em 04/08/2026 uma mãe viu
+ * `OpenAI imagem(ref) 400: {"error":{"message":"Your request was rejected by
+ * the safety system…","code":"moderation_blocked"…` na página do avatar. Ela
+ * não fez nada errado, e um JSON em inglês não diz o que fazer.
+ *
+ * A moderação de imagem é estrita com personagem infantil, e o bloqueio quase
+ * sempre é do RESULTADO, não do pedido — costuma bastar tentar outra descrição.
+ * O detalhe técnico continua no log; o que muda é o que ela lê.
+ */
+function erroDeImagem(status: number, corpo: string, onde: string): Error {
+  console.warn(`[imagem] ${onde} ${status}: ${corpo.slice(0, 500)}`);
+  if (/moderation_blocked|safety system/i.test(corpo)) {
+    return new Error(
+      "A geração dessa imagem foi bloqueada pelo filtro de conteúdo — costuma acontecer com fantasias e personagens conhecidos, e não é nada que você tenha feito de errado. Tente descrever de outro jeito (por exemplo, \"capa de super-herói\" em vez do nome de um personagem).",
+    );
+  }
+  if (status === 429 || status >= 500) {
+    return new Error("O gerador de imagens está congestionado agora. Tenta de novo em um minutinho?");
+  }
+  return new Error("Não consegui gerar a imagem agora. Tenta de novo — e se continuar, me avisa.");
+}
+
 export async function gerarImagem(
   supabase: SupabaseClient,
   params: GerarImagemParams,
@@ -87,7 +113,7 @@ export async function gerarImagem(
 
   if (!genRes.ok) {
     const t = await genRes.text().catch(() => "");
-    throw new Error(`OpenAI imagem ${genRes.status}: ${t.slice(0, 500)}`);
+    throw erroDeImagem(genRes.status, t, "geração");
   }
 
   const genJson = (await genRes.json()) as {
@@ -160,7 +186,7 @@ export async function gerarImagemComReferencia(
   });
   if (!res.ok) {
     const t = await res.text().catch(() => "");
-    throw new Error(`OpenAI imagem(ref) ${res.status}: ${t.slice(0, 500)}`);
+    throw erroDeImagem(res.status, t, "geração com referência");
   }
   const json = (await res.json()) as { data: Array<{ b64_json?: string }> };
   const b64 = json.data?.[0]?.b64_json;
