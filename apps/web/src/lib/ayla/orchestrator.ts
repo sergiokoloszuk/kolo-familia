@@ -1860,6 +1860,13 @@ export async function processInbound(
   // logo antes da chamada mais cara — a voz). O magic link do Lúdico (só
   // criança) vem junto, pra Ayla mandar se pedirem história/rotina/desenho.
   const ehCrianca = idadeFoco != null && idadeFoco <= 12;
+  // PEDIDO DE PLANO NÃO RECEBE OS LINKS DO LÚDICO. Eles não têm relação com o
+  // Plano — e num caso real (03/08/2026) o modelo, sem um link de plano na
+  // mão, colou o do Relatório pra professora. Quem entrega o Plano é a ponte,
+  // com o link de /planos/{id}. De quebra, param de nascer 5 tokens por turno
+  // que ninguém vai usar.
+  const pedidoDePlano = pedeUmPlano(inbound.texto);
+  const ofereceLudico = ehCrianca && !pedidoDePlano;
   const [
     koloVivoResumo,
     koloVivoLacunas,
@@ -1875,17 +1882,17 @@ export async function processInbound(
     carregarLacunasKoloVivo(supabase, membroContextoId),
     carregarEstrategiasRecentes(supabase, family.id),
     carregarHistorico(supabase, family.id, inbound.texto),
-    ehCrianca ? gerarMagicLink(supabase, { familyId: family.id, next: "/historias/criar" }) : Promise.resolve(null),
-    ehCrianca
+    ofereceLudico ? gerarMagicLink(supabase, { familyId: family.id, next: "/historias/criar" }) : Promise.resolve(null),
+    ofereceLudico
       ? gerarMagicLink(supabase, { familyId: family.id, next: "/ludico/rotinas/semana" })
       : Promise.resolve(null),
-    ehCrianca ? gerarMagicLink(supabase, { familyId: family.id, next: "/ludico/desenhos" }) : Promise.resolve(null),
-    ehCrianca
+    ofereceLudico ? gerarMagicLink(supabase, { familyId: family.id, next: "/ludico/desenhos" }) : Promise.resolve(null),
+    ofereceLudico
       ? gerarMagicLink(supabase, { familyId: family.id, next: "/configuracoes/avatar" })
       : Promise.resolve(null),
-    ehCrianca ? gerarMagicLink(supabase, { familyId: family.id, next: "/evolucao/relatorio" }) : Promise.resolve(null),
+    ofereceLudico ? gerarMagicLink(supabase, { familyId: family.id, next: "/evolucao/relatorio" }) : Promise.resolve(null),
   ]);
-  const linksLudico = ehCrianca
+  const linksLudico = ofereceLudico
     ? { historia: linkHistoria, rotina: linkRotina, desenho: linkDesenho, avatar: linkAvatar, relatorio: linkRelatorio }
     : null;
 

@@ -19,10 +19,17 @@ async function desafioDaConversa(
   mensagemAtual: string,
 ): Promise<string> {
   try {
+    // JANELA. Antes eram as 10 últimas mensagens, sem recorte de tempo nenhum —
+    // e num caso real (03/08/2026) elas alcançaram uma conversa de 9h25 antes,
+    // sobre arrumar o quarto. O bloco inteiro virou o "desafio", e o plano de
+    // pinça e pegada do lápis saiu com o título "Guardar brinquedos com modelo
+    // junto". Conteúdo certo, identidade de outro assunto.
+    const desde = new Date(Date.now() - 45 * 60 * 1000).toISOString();
     const { data } = await supabase
       .from("ayla_messages")
       .select("direcao, texto, created_at")
       .eq("family_account_id", familyId)
+      .gte("created_at", desde)
       .order("created_at", { ascending: false })
       .limit(10);
     const linhas = ((data ?? []) as Array<{ direcao: string; texto: string | null }>)
@@ -33,8 +40,10 @@ async function desafioDaConversa(
         return `${m.direcao === "inbound" ? "Mãe" : "Ayla"}: ${t.slice(0, 500)}`;
       })
       .filter((l): l is string => Boolean(l));
+    // Sem conversa recente, o pedido de agora é o desafio — nunca um assunto
+    // antigo que por acaso ficou sendo a última coisa no banco.
     if (linhas.length === 0) return mensagemAtual;
-    return `A família pediu um plano sobre o que estávamos conversando. O plano deve ser EXCLUSIVAMENTE sobre este assunto — NÃO amplie pra outros temas, outros filhos, viagens ou eventos que não aparecem aqui.\n\nConversa recente:\n${linhas.join("\n")}`;
+    return `A família pediu um plano. O PEDIDO DE AGORA é este: "${mensagemAtual.slice(0, 500)}" — o plano é sobre ISSO, e o título tem que refletir ISSO.\n\nA conversa abaixo serve pra você entender melhor a criança e o contexto. NÃO amplie pra outros temas, outros filhos, viagens ou eventos que aparecem nela: se o assunto da conversa for outro, ele é contexto, não é o plano.\n\nConversa recente:\n${linhas.join("\n")}`;
   } catch {
     return mensagemAtual;
   }
