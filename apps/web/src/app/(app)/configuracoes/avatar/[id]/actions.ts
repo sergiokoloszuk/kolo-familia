@@ -166,7 +166,11 @@ export async function vestirAvatar(
     const bytes = Buffer.from(await file.arrayBuffer());
 
     const estiloDef = AVATAR_ESTILOS.find((e) => e.value === base.estilo) ?? AVATAR_ESTILOS[0];
-    const prompt = `${estiloDef.prompt}. Mantenha EXATAMENTE o mesmo personagem da imagem de referência — mesmo rosto, cabelo, tom de pele e identidade visual. Mude APENAS a roupa/figurino para: ${ocasiao}. Corpo inteiro, expressão acolhedora, postura natural, fundo neutro claro, sem texto, sem letras, sem logotipos, ilustração 2D, NÃO fotorrealista.`;
+    // "Fantasia de super-herói" é um dos chips sugeridos, e é justamente o tipo
+    // de pedido que o modelo resolve desenhando um personagem conhecido — o que
+    // faz a moderação de imagem barrar o RESULTADO (04/08/2026, avatar do
+    // Mario). A roupa é genérica e original, sempre.
+    const prompt = `${estiloDef.prompt}. Mantenha EXATAMENTE o mesmo personagem da imagem de referência — mesmo rosto, cabelo, tom de pele e identidade visual. Mude APENAS a roupa/figurino para: ${ocasiao}. A roupa deve ser GENÉRICA e ORIGINAL: nada de personagens de filmes, desenhos, quadrinhos ou jogos, nem logotipos, símbolos ou uniformes de marcas e times reais. Corpo inteiro, expressão acolhedora, postura natural, fundo neutro claro, sem texto, sem letras, sem logotipos, ilustração 2D, NÃO fotorrealista.`;
 
     const result = await gerarImagemComReferencia(admin, {
       prompt,
