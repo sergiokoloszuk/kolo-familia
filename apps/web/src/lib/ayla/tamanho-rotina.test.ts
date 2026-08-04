@@ -379,3 +379,42 @@ describe("a mãe pediu visual e a oferta saiu dobrada", () => {
     expect(GUIADA).not.toMatch(/a cara dele\(a\)/);
   });
 });
+
+// ============================================================
+// AVATAR — entrega primeiro, personagem depois
+// ============================================================
+
+describe("o avatar entra depois, com o cartão já na mão", () => {
+  const ROTA = readFileSync(
+    resolve(__dirname, "../../app/api/ludico/gerar-rotina/route.ts"),
+    "utf8",
+  );
+
+  it("o caminho da Ayla deixou de passar usarAvatar:false fixo", () => {
+    expect(ROTA).toMatch(/\{ tema, atividades, idade, nomeRotina, usarAvatar \}/);
+    expect(ROTA).not.toMatch(/usarAvatar: false/);
+  });
+
+  it("se a criança tem avatar, ela é o personagem — sem pedir nada", () => {
+    expect(ROTA).toMatch(/const usarAvatar = Boolean\(avatarUrl\)/);
+    expect(ROTA).toMatch(/referenciaUrl: preservar \? \(mascoteAtual \?\? undefined\) : \(avatarUrl \?\? undefined\)/);
+  });
+
+  it("sem avatar, nada muda — ninguém fica sem cartão por isso", () => {
+    expect(ROTA).toMatch(/se não existe, nada muda e o\n\s*\/\/ mascote temático continua/);
+  });
+
+  it("a edição preserva o personagem antigo — não troca no meio do caminho", () => {
+    expect(ROTA).toMatch(/if \(membroId && !preservar\)/);
+  });
+
+  it("o convite só sai DEPOIS dos cartões, e só pra quem não tem avatar", () => {
+    expect(GUIADA).toMatch(/autoGerou && !temAvatar/);
+    expect(GUIADA).toMatch(/pode ser o personagem dos cartões/);
+    expect(GUIADA).toMatch(/Pôr a criação do\n\s*\/\/ avatar ANTES da rotina seria uma etapa de setup/);
+  });
+
+  it("em falha da consulta, NÃO convida — sugerir criar o que existe é pior", () => {
+    expect(GUIADA).toMatch(/Sem saber, NÃO convida/);
+  });
+});

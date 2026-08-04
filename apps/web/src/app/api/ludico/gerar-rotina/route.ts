@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
   const svc = createServiceRoleClient();
   const { data: rotina } = await svc
     .from("rotinas")
-    .select("id, nome, family_account_id, cards_status, mascote_url, membros_atipicos(data_nascimento)")
+    .select("id, nome, family_account_id, membro_atipico_id, cards_status, mascote_url, membros_atipicos(data_nascimento)")
     .eq("id", rotinaId)
     .maybeSingle();
   if (!rotina) return NextResponse.json({ error: "rotina não encontrada" }, { status: 404 });
@@ -76,12 +76,34 @@ export async function POST(request: NextRequest) {
   const atividades = tarefas.map((t) => t.texto as string);
   const tarefaIds = tarefas.map((t) => t.id as string);
 
+  // O AVATAR DA CRIANÇA COMO PERSONAGEM. O caminho do app já fazia isso; o da
+  // Ayla passava usarAvatar:false fixo, então o cartão saía com um mascote do
+  // tema mesmo quando a família tinha o avatar pronto. Aqui é oportunista: se
+  // existe avatar, a criança vira o personagem; se não existe, nada muda e o
+  // mascote temático continua — ninguém fica sem cartão por causa disso.
+  let avatarUrl: string | null = null;
+  const membroId = (rotina.membro_atipico_id as string | null) ?? null;
+  if (membroId && !preservar) {
+    const { data: av } = await svc
+      .from("avatares_membros_atipicos")
+      .select("imagem_url")
+      .eq("membro_atipico_id", membroId)
+      .eq("family_account_id", familyId)
+      .order("selecionado", { ascending: false })
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    avatarUrl = (av?.imagem_url as string | null) ?? null;
+  }
+  const usarAvatar = Boolean(avatarUrl);
+  if (usarAvatar) console.log("[rotina:cards] avatar da criança como personagem");
+
   await svc.from("rotinas").update({ tema, cards_status: "gerando" }).eq("id", rotinaId);
 
   after(async () => {
     try {
       const roteiro = await gerarRoteiroRotina(
-        { tema, atividades, idade, nomeRotina, usarAvatar: false },
+        { tema, atividades, idade, nomeRotina, usarAvatar },
         { supabase: svc, family_account_id: familyId },
       );
       const { mascoteUrl, imagens } = await ilustrarCards(svc, {
@@ -89,7 +111,7 @@ export async function POST(request: NextRequest) {
         tema,
         mascoteDescricao: roteiro.mascote,
         cards: roteiro.cards,
-        referenciaUrl: preservar ? (mascoteAtual ?? undefined) : undefined,
+        referenciaUrl: preservar ? (mascoteAtual ?? undefined) : (avatarUrl ?? undefined),
         arteExistente,
       });
       await Promise.all(
