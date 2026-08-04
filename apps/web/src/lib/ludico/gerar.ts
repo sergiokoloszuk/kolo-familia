@@ -34,26 +34,53 @@ export type RoteiroRotina = {
   cards: CardRoteiro[];
 };
 
-const SYSTEM = `Você cria ROTINAS VISUAIS LÚDICAS para crianças neurodivergentes, em português do Brasil. A família te dá um TEMA e a LISTA DE ATIVIDADES da rotina, NA ORDEM que ela definiu. Você NÃO inventa, NÃO remove e NÃO reordena atividades — apenas VESTE cada uma no universo do tema e escreve uma historinha curta.
+/**
+ * ⚠️ O TEMA VESTE, NÃO SUBSTITUI. Foi a instrução daqui que quebrou o "Dia do
+ * dentista" (04/08/2026): o prompt mandava "VESTIR cada atividade no universo
+ * do tema" e dava como exemplo renomear as etapas (POSTO DOS CAMPEÕES,
+ * LAVA-RÁPIDO TURBO). Resultado: o dentista virou "mago do sorriso", o carro
+ * virou carruagem e a cadeira do dentista virou cadeira mágica.
+ *
+ * A rotina visual existe pra PREVISIBILIDADE. Se a criança chega no consultório
+ * esperando um mago e encontra um dentista, o quadro fez o oposto do que devia.
+ * A princesa pode estar lá — o dentista continua dentista.
+ */
+const SYSTEM = `Você cria ROTINAS VISUAIS para crianças neurodivergentes, em português do Brasil. A família te dá um TEMA e a LISTA DE ETAPAS, NA ORDEM que ela definiu. Você NÃO inventa, NÃO remove e NÃO reordena etapas.
 
 Devolva APENAS um JSON, sem nada antes ou depois:
 {
-  "historia": "história curta, calorosa e REPETÍVEL (pra ler todo dia), na voz pro adulto ler pra criança. Abre com boas-vindas no tema, passa por cada etapa amarrada aos cards na ordem, e fecha tranquilo no descanso/dormir. Aventura e previsibilidade — NUNCA recompensa, prêmio ou obediência.",
-  "mascote": "descrição visual de UM personagem-mascote do tema que aparece em TODOS os cards (ex.: 'um carrinho de corrida vermelho, fofo, olhos grandes e sorriso amigável'). Um só personagem, coerente.",
+  "historia": "uma historinha curta que PREPARA a criança pro que vai acontecer — ver as regras da história abaixo",
+  "mascote": "descrição visual de UM personagem do tema que aparece em TODOS os cards (ex.: 'uma princesa de vestido lilás, cabelo cacheado, sorriso amigável'). Um só, coerente do começo ao fim.",
   "cards": [
     {
-      "atividade": "a atividade original, IDÊNTICA à recebida",
-      "nome_tematico": "nome curto no universo do tema, em CAIXA ALTA (ex.: POSTO DOS CAMPEÕES, LAVA-RÁPIDO TURBO)",
-      "cena": "descrição VISUAL da cena do card: o mascote fazendo a atividade, com objetos concretos e reconhecíveis (ex.: prato com frutas e copo; escova e pasta de dente), fundo limpo. Em português. NÃO inclua texto na cena."
+      "atividade": "a etapa original, IDÊNTICA à recebida",
+      "nome_tematico": "o nome da etapa, curto e em CAIXA ALTA, dizendo O QUE ACONTECE DE VERDADE (ex.: CADEIRA DO DENTISTA, HORA DO BANHO, CAFÉ DA MANHÃ)",
+      "cena": "descrição VISUAL da cena: o personagem do tema vivendo aquela etapa, com os objetos REAIS e reconhecíveis da situação, fundo limpo. Em português. NÃO inclua texto na cena."
     }
   ]
 }
 
-Regras:
-- Use EXATAMENTE as atividades recebidas, na MESMA ordem e na mesma quantidade.
-- ANTI-ABA: nada de recompensa por concluir, nada de "se fizer ganha", nada de comida ou interesse como prêmio.
-- História curta e repetível; tom calmo, concreto, afetuoso.
-- 'cena' concreta e ilustrável; o MESMO mascote em todas.`;
+⚠️ REGRA PRINCIPAL — O TEMA VESTE, NÃO SUBSTITUI A REALIDADE.
+O tema entra no PERSONAGEM, nas roupas, nas cores e no clima do desenho. Ele NUNCA troca o que a criança vai encontrar de verdade.
+- dentista continua dentista (não "mago do sorriso", não "fada dos dentes");
+- consultório continua consultório, cadeira do dentista continua cadeira do dentista;
+- carro continua carro (não carruagem), escola continua escola, banheiro continua banheiro.
+Pode existir uma princesa indo ao dentista, de vestido, num carro. Não pode existir um mago numa carruagem quando a criança vai de carro ao dentista.
+Se a criança chega ao lugar esperando o que viu no card e encontra outra coisa, o quadro fez o contrário do que existe pra fazer.
+
+Regras dos cards:
+- Use EXATAMENTE as etapas recebidas, na MESMA ordem e na mesma quantidade.
+- "nome_tematico" nomeia o que acontece, não uma fantasia. Se a etapa é "Sento na cadeira" num dia de dentista, é CADEIRA DO DENTISTA — nunca CADEIRA MÁGICA.
+- "cena" concreta e ilustrável, com os objetos daquela situação real; o MESMO personagem em todas.
+
+Regras da HISTÓRIA:
+- Ela COMPLEMENTA os cards, não os repete. Os cards mostram o que acontece; a história ajuda a criança a entender e a se preparar por dentro.
+- Curta, concreta, na voz de um adulto lendo pra criança, adequada à idade.
+- Diga o que ela vai encontrar, o que pode acontecer, o que ela pode fazer, e como pedir ajuda ou avisar que não está gostando, quando fizer sentido.
+- Deixe claro que existe começo, meio e FIM ("depois acaba, e a gente vai pra casa").
+- NUNCA prometa resultado: nada de "você vai ficar calmo", "não vai doer", "vai ser rápido", "vai adorar". Prometer o que você não controla quebra a confiança na próxima vez.
+- Não termine sempre em dormir: a rotina pode ser um passeio, uma consulta, um momento. Feche onde ela realmente termina.
+- ANTI-ABA: nada de recompensa por concluir, nada de "se fizer ganha", nada de comida ou interesse como prêmio.`;
 
 export async function gerarRoteiroRotina(
   params: {

@@ -34,23 +34,46 @@ const EXEMPLO = [
   "Termino e vou embora",
   "Volto para casa",
 ];
-/** Quantos passos aparecem antes de "ver exemplo completo". Onze de cara faz a
- *  tela parecer trabalho; seis ensinam a mesma coisa. */
+/**
+ * O exemplo começa FECHADO. Onze passos abertos dominam a tela e fazem a
+ * criação parecer trabalho — quem já sabe o que quer escrever passa direto,
+ * quem não sabe abre e entende que a rotina visual também prepara pra uma
+ * experiência, não só representa a agenda do dia.
+ */
 const EXEMPLO_CURTO = 6;
 
 const LINHAS_INICIAIS = 4;
+
+/**
+ * Sugestões pra quem não tem interesse registrado no perfil — ou tem, mas
+ * quer outro. Não é catálogo nem categoria: tema é só uma instrução visual, e
+ * "princesas" não é mais especial que "dinossauros".
+ */
+const TEMAS_POPULARES = [
+  "Princesas",
+  "Dinossauros",
+  "Animais",
+  "Futebol",
+  "Espaço",
+  "Carros",
+  "Super-heróis",
+  "Natureza",
+];
 
 export function CriarRotinaVisual({
   membroId,
   nomeMembro,
   interesses,
   temAvatar,
+  avatarUrl,
 }: {
   membroId: string;
   nomeMembro: string;
   /** Interesses reais DESTA criança. Vazio = só "outro tema". */
   interesses: string[];
   temAvatar: boolean;
+  /** Miniatura do personagem já criado, quando existe. */
+  avatarUrl?: string | null;
 }) {
   const router = useRouter();
   const [nome, setNome] = useState("");
@@ -58,11 +81,21 @@ export function CriarRotinaVisual({
   const [tema, setTema] = useState("");
   const [temaLivre, setTemaLivre] = useState("");
   const [usarAvatar, setUsarAvatar] = useState(temAvatar);
-  const [verTudo, setVerTudo] = useState(false);
+  const [verExemplo, setVerExemplo] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
   const [enviando, iniciar] = useTransition();
 
   const passos = useMemo(() => linhas.map((l) => l.trim()).filter(Boolean), [linhas]);
+
+  /**
+   * Os interesses REAIS da criança vêm primeiro — é o que faz o cartão ter a
+   * cara dela. Os populares entram depois, pra quem não tem nada registrado
+   * não ficar diante de um campo vazio. Sem repetir o que já apareceu.
+   */
+  const sugestoes = useMemo(() => {
+    const vistos = new Set(interesses.map((i) => i.toLowerCase()));
+    return [...interesses, ...TEMAS_POPULARES.filter((t) => !vistos.has(t.toLowerCase()))].slice(0, 9);
+  }, [interesses]);
   const podeGerar = passos.length > 0 && !enviando;
 
   /**
@@ -105,7 +138,7 @@ export function CriarRotinaVisual({
     });
   }
 
-  const exemploVisivel = verTudo ? EXEMPLO : EXEMPLO.slice(0, EXEMPLO_CURTO);
+
 
   return (
     <div className="flex max-w-2xl flex-col gap-8">
@@ -134,30 +167,38 @@ export function CriarRotinaVisual({
           Coloque na ordem o que {nomeMembro} vai vivenciar — uma coisa por linha.
         </p>
 
-        <div className="flex flex-col gap-3 rounded-2xl border border-dashed border-brand-purple/50 bg-brand-purple/[0.05] p-4">
-          <p className="text-[11.5px] font-bold uppercase tracking-[0.1em] text-brand-purple-dark">
-            Exemplo · Dia do dentista
-          </p>
-          <ol className="flex flex-col gap-1 text-[15px] text-foreground">
-            {exemploVisivel.map((p) => (
-              <li key={p}>{p}</li>
-            ))}
-          </ol>
-          {!verTudo && (
+        {!verExemplo ? (
+          <button
+            type="button"
+            onClick={() => setVerExemplo(true)}
+            className="w-fit text-sm font-semibold text-brand-purple hover:underline"
+          >
+            Ver exemplo · Dia do dentista →
+          </button>
+        ) : (
+          <div className="flex flex-col gap-3 rounded-2xl border border-dashed border-brand-purple/50 bg-brand-purple/[0.05] p-4">
+            <p className="text-[11.5px] font-bold uppercase tracking-[0.1em] text-brand-purple-dark">
+              Exemplo · Dia do dentista
+            </p>
+            <ol className="flex flex-col gap-1 text-[15px] text-foreground">
+              {EXEMPLO.map((p) => (
+                <li key={p}>{p}</li>
+              ))}
+            </ol>
+            <p className="text-sm italic text-muted-foreground">
+              Uma rotina visual também prepara {nomeMembro || "a criança"} pra uma experiência —
+              não é só a agenda do dia. Pense nos passos que ela precisa conhecer pra entender o
+              que vai acontecer do começo ao fim.
+            </p>
             <button
               type="button"
-              onClick={() => setVerTudo(true)}
+              onClick={() => setVerExemplo(false)}
               className="w-fit text-sm font-semibold text-brand-purple hover:underline"
             >
-              Ver exemplo completo →
+              Fechar exemplo
             </button>
-          )}
-          <p className="text-sm italic text-muted-foreground">
-            Pense nos passos que {nomeMembro} precisa conhecer pra entender o que vai acontecer do
-            começo ao fim. Serve pro dia inteiro, pra um passeio ou pra um momento difícil — é
-            sempre uma sequência.
-          </p>
-        </div>
+          </div>
+        )}
 
         <div className="flex flex-col gap-2">
           {linhas.map((valor, i) => (
@@ -210,7 +251,7 @@ export function CriarRotinaVisual({
             : "É a cara dos cartões."}
         </p>
         <div className="flex flex-wrap gap-2">
-          {interesses.map((it) => (
+          {sugestoes.map((it) => (
             <Chip key={it} sel={tema === it} onClick={() => setTema(tema === it ? "" : it)}>
               {it}
             </Chip>
@@ -220,31 +261,55 @@ export function CriarRotinaVisual({
           </Chip>
         </div>
         {tema === "__outro" && (
+          <label className="flex max-w-sm flex-col gap-1.5 text-sm text-muted-foreground">
+            Qual tema você quer?
           <input
             value={temaLivre}
             onChange={(e) => setTemaLivre(e.target.value)}
-            placeholder="Ex.: fundo do mar, princesas, carrinhos…"
+            placeholder="Ex.: fundo do mar, cavalos, trens, unicórnios…"
             maxLength={40}
             autoFocus
-            className="max-w-sm rounded-xl border border-kolo-linha bg-white px-4 py-2.5 text-[15px] placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-brand-purple/30"
+            className="rounded-xl border border-kolo-linha bg-white px-4 py-2.5 text-[15px] text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-brand-purple/30"
           />
+          </label>
         )}
       </div>
 
-      {/* PERSONAGEM — separado do tema de propósito: o tema é o cenário, o
-          personagem é quem aparece. Só existe quando a criança tem avatar. */}
-      {temAvatar && (
+      {/* QUEM APARECE NOS CARTÕES — decisão diferente do tema (que é o cenário).
+          "Avatar" é palavra do produto, não da família: quem nunca usou não sabe
+          o que é. A pergunta é pelo nome da criança. */}
+      {temAvatar ? (
         <div className="flex flex-col gap-3">
-          <p className="text-[15px] font-semibold text-foreground">Personagem dos cartões</p>
-          <div className="flex flex-wrap gap-2">
+          <p className="text-[15px] font-semibold text-foreground">
+            Quer que {nomeMembro || "a criança"} apareça nos cartões?
+          </p>
+          <div className="flex flex-wrap items-center gap-2">
+            {avatarUrl && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={avatarUrl}
+                alt=""
+                className="size-12 shrink-0 rounded-full border border-kolo-linha object-cover"
+              />
+            )}
             <Chip sel={usarAvatar} onClick={() => setUsarAvatar(true)}>
-              Avatar {nomeMembro ? `d${nomeMembro.endsWith("a") ? "a" : "o"} ${nomeMembro}` : ""}
+              Sim, usar {nomeMembro || "a criança"} como personagem
             </Chip>
             <Chip sel={!usarAvatar} onClick={() => setUsarAvatar(false)}>
-              Personagem do tema
+              Não, usar personagens do tema
             </Chip>
           </div>
         </div>
+      ) : (
+        <p className="text-sm text-muted-foreground">
+          Quer que {nomeMembro || "a criança"} seja personagem dos cartões?{" "}
+          <a
+            href="/configuracoes/avatar"
+            className="font-semibold text-brand-purple hover:underline"
+          >
+            Criar personagem {nomeMembro ? `d${nomeMembro.endsWith("a") ? "a" : "o"} ${nomeMembro}` : ""} →
+          </a>
+        </p>
       )}
 
       {erro && (
