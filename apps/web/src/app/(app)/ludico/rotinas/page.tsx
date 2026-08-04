@@ -5,7 +5,8 @@ import { resolverCriancaAtivaId } from "@/lib/crianca-ativa";
 import { capitalizarNome } from "@/lib/nome";
 import { idadeAnos } from "@/lib/idade";
 import { Eyebrow } from "@/components/brand/eyebrow";
-import { NovaRotina } from "./nova-rotina";
+import { CriarRotinaVisual } from "./criar-rotina-visual";
+import { interessesDaCrianca, avatarDaCrianca } from "@/lib/ludico/interesses";
 import { SeletorCrianca } from "../../seletor-crianca";
 
 export default async function RotinasPage() {
@@ -51,6 +52,24 @@ export default async function RotinasPage() {
 
   // Criança ativa (cookie): lista e nova rotina já são dela.
   const ativaId = (await resolverCriancaAtivaId(membros ?? [])) ?? null;
+
+  // Chips de tema e personagem: SEMPRE da criança ativa, filtrados por família.
+  // Um interesse ou avatar que vaza de outro filho é o mesmo erro que pôs a
+  // rotina da consulta médica no irmão — só que ninguém repara.
+  const [interesses, avatarUrl] = ativaId
+    ? await Promise.all([
+        interessesDaCrianca(supabase, { membroId: ativaId, familyId }),
+        avatarDaCrianca(supabase, { membroId: ativaId, familyId }),
+      ])
+    : [[] as string[], null];
+
+  // A semana continua existindo pra quem já montou lá — só deixou de ser porta
+  // de criação. O atalho aparece apenas pra quem tem rotina de dia da semana.
+  const temSemana = (rotinas ?? []).some(
+    (r) =>
+      (r.dia_semana as number | null) != null &&
+      (!ativaId || (r.membro_atipico_id as string | null) === ativaId),
+  );
   const rotinasVisiveis = (rotinas ?? []).filter(
     (r) =>
       (r.dia_semana as number | null) == null && // rotinas de dia vivem na "Rotina da semana"
@@ -72,9 +91,11 @@ export default async function RotinasPage() {
           A sequência do dia, <em className="not-italic text-brand-purple">do jeito de cada um</em>
         </h1>
         <p className="mt-4 text-base leading-relaxed text-muted-foreground md:text-lg">
-          Mostra <em className="not-italic text-foreground">o que vem agora e o que vem depois</em> — e isso tira o
-          peso do desconhecido, que é o que mais desregula. Pode ser a semana toda ou um dia do seu jeito
-          (dia do dentista, do parque…).
+          Você escreve o que vai acontecer.{" "}
+          <em className="not-italic text-foreground">A Kolo transforma a sequência em cartões ilustrados</em>{" "}
+          pra criança acompanhar. Serve pro dia inteiro, pro dia do dentista ou pra um momento
+          difícil — mostrar o que vem agora e o que vem depois tira o peso do desconhecido, que é o
+          que mais desregula.
         </p>
       </header>
 
@@ -93,54 +114,21 @@ export default async function RotinasPage() {
           Cadastre uma pessoa no Perfil pra criar uma rotina.
         </p>
       ) : (
-        <div className="flex max-w-3xl flex-col gap-4">
-          <p className="text-xs font-bold uppercase tracking-[0.16em] text-muted-foreground">
-            Por onde quer começar?
-          </p>
-          <Link
-            href="/ludico/rotinas/assistente"
-            className="group flex items-center justify-between gap-4 rounded-3xl border-2 border-brand-purple/40 bg-brand-purple/[0.06] px-6 py-7 transition-colors hover:border-brand-purple/70 hover:bg-brand-purple/[0.1]"
-          >
-            <span className="flex items-center gap-4">
-              <span className="flex size-14 shrink-0 items-center justify-center rounded-2xl bg-brand-purple/15 text-3xl">
-                ✨
-              </span>
-              <span>
-                <span className="block font-heading text-xl font-medium text-foreground md:text-2xl">
-                  Montar com a Kolo
-                </span>
-                <span className="mt-1 block text-sm text-muted-foreground md:text-base">
-                  Você conta como são os dias e a Kolo organiza pra você. O jeito mais fácil.
-                </span>
-              </span>
-            </span>
-            <span className="shrink-0 rounded-full bg-brand-purple px-5 py-2.5 text-sm font-semibold text-white transition-transform group-hover:translate-x-0.5">
-              Conversar →
-            </span>
-          </Link>
-          <Link
-            href="/ludico/rotinas/semana"
-            className="group flex items-center justify-between gap-4 rounded-3xl border-2 border-brand-purple/25 bg-kolo-lilas-bg-2/50 px-6 py-7 transition-colors hover:border-brand-purple/50 hover:bg-kolo-lilas-bg-2/70"
-          >
-            <span className="flex items-center gap-4">
-              <span className="flex size-14 shrink-0 items-center justify-center rounded-2xl bg-brand-purple/15 text-3xl">
-                🗓️
-              </span>
-              <span>
-                <span className="block font-heading text-xl font-medium text-foreground md:text-2xl">
-                  Rotina da semana
-                </span>
-                <span className="mt-1 block text-sm text-muted-foreground md:text-base">
-                  A semana toda (Seg–Dom), dia por dia, no tema do interesse.
-                </span>
-              </span>
-            </span>
-            <span className="shrink-0 rounded-full bg-brand-purple px-5 py-2.5 text-sm font-semibold text-white transition-transform group-hover:translate-x-0.5">
-              Abrir →
-            </span>
-          </Link>
-          <NovaRotina membros={membrosList.map((m) => ({ id: m.id, nome: m.nome }))} ativaId={ativaId} />
-        </div>
+        <CriarRotinaVisual
+          membroId={ativaId ?? membrosList[0]!.id}
+          nomeMembro={nomePorMembro.get(ativaId ?? membrosList[0]!.id)?.nome ?? ""}
+          interesses={interesses}
+          temAvatar={Boolean(avatarUrl)}
+        />
+      )}
+
+      {temSemana && (
+        <Link
+          href="/ludico/rotinas/semana"
+          className="flex w-fit items-center gap-2 rounded-full border border-kolo-linha bg-white px-4 py-2 text-sm text-muted-foreground transition-colors hover:border-brand-purple/40 hover:text-foreground"
+        >
+          🗓️ Ver a rotina da semana que você já montou
+        </Link>
       )}
 
       {rotinasVisiveis.length > 0 && (
