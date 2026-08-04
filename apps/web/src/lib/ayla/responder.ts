@@ -449,7 +449,8 @@ ${params.diagnosticoRegistrado.trim()}`);
 
   if (params.querPlano) {
     notas.push(
-      `A pessoa está PEDINDO um plano (um roteiro / passo a passo). MUITO IMPORTANTE: NÃO escreva o plano aqui no WhatsApp — nada de passos numerados, listas longas, seções ou plano completo no chat. Responda em 1 ou 2 frases curtas, com carinho, dizendo que você já está montando o plano estratégico com as atividades e vai mandar agora — em PDF e com um link pra abrir no app. Se for a primeira vez que ela recebe um, acrescente que já está incluído, sem custo. No máximo UMA dica curtinha; o plano de verdade vai no PDF/link, não no chat.`,
+      `A pessoa está PEDINDO um plano (um roteiro / passo a passo). MUITO IMPORTANTE: NÃO escreva o plano aqui no WhatsApp — nada de passos numerados, listas longas, seções ou plano completo no chat. Responda em 1 ou 2 frases curtas, com carinho, mostrando que entendeu o que ela quer trabalhar. No máximo UMA dica curtinha.
+QUEM ENTREGA O PLANO NÃO É VOCÊ, É O SISTEMA — logo depois desta sua fala, e numa mensagem própria, com o PDF e o link certo. Então nesta mensagem: NÃO mande link nenhum, NÃO diga que o PDF está vindo, NÃO diga que já montou, NÃO dê caminho de menu no app. Caso real (03/08/2026): você anunciou o PDF e colou um link que abria o Relatório pra professora — a mãe recebeu duas entregas, e a primeira era de outro recurso. Se você anunciar, ela vai procurar algo que ainda não existe.`,
     );
   } else {
     notas.push(
@@ -523,7 +524,8 @@ ${params.diagnosticoRegistrado.trim()}`);
       `Regras dos links: mande SEMPRE o link DIRETO do recurso (nunca um genérico) — a pessoa já cai na tela certa. O link JÁ loga ela; mas SE pedir e-mail/senha (às vezes acontece), depois de entrar ela chega no mesmo lugar.`,
     );
     partes.push(
-      `SEMPRE mande TAMBÉM o CAMINHO pelo app em palavras, curtinho, além do link — assim ela acha mesmo se o link falhar. Use o menu: "no app: *Lúdico* → *Histórias* → *Criar história*" (rotina: "*Lúdico* → *Rotinas visuais* → *Montar a rotina da semana*"; desenho: "*Lúdico* → *O que o desenho conta?*"). O menu Lúdico aparece como "Lúdico (Histórias, Rotina…)".`,
+      `Mande TAMBÉM o CAMINHO pelo app em palavras, curtinho, além do link — assim ela acha mesmo se o link falhar. Use SÓ estes caminhos, que são os que existem de verdade: "no app: *Lúdico* → *Histórias* → *Criar história*" (rotina: "*Lúdico* → *Rotinas visuais* → *Montar a rotina da semana*"; desenho: "*Lúdico* → *O que o desenho conta?*"; relatório: "*Evolução* → *Relatório*"). O menu Lúdico aparece como "Lúdico (Histórias, Rotina…)". NUNCA invente um caminho seguindo o padrão destes — se o recurso não está nesta lista, mande só o link.
+E o caminho é pra CRIAR algo que ainda não existe. Se o artefato JÁ foi criado, o link específico é a navegação: não mande a mãe pra uma tela de criação depois que a coisa já está pronta.`,
     );
     if (l.avatar)
       partes.push(
