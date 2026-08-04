@@ -169,3 +169,42 @@ describe("a decisão do visual chega ao artefato e à tela", () => {
     expect(PAGE).toMatch(/rotina\.modo_exibicao/);
   });
 });
+
+// ============================================================
+// O ASSISTENTE DA WEB — 04/08/2026
+// ============================================================
+
+describe("a sequência inteira dispensa a pergunta de escopo", () => {
+  it("de acordar a dormir É o dia inteiro — não é falta_escopo", () => {
+    // A regra mora na explicação de "falta_escopo", que é onde ela age.
+    expect(PRONTIDAO).toMatch(/A SEQUÊNCIA PODE DIZER O ESCOPO SOZINHA/);
+    expect(PRONTIDAO).toMatch(/é "suficiente", não "falta_escopo"/);
+    expect(PRONTIDAO).toMatch(/pra quem acabou de descrever o dia inteiro é não ter lido/);
+  });
+});
+
+describe("o campo da web convida a responder", () => {
+  const CHAT = readFileSync(
+    resolve(__dirname, "../../app/(app)/ludico/rotinas/assistente/assistente-chat.tsx"),
+    "utf8",
+  );
+
+  it("o rótulo segue a conversa em vez de ficar fixo", () => {
+    expect(CHAT).toMatch(/aguardandoResposta \? "Responda aqui" : "Escreva aqui como são os dias"/);
+  });
+
+  it("o exemplo do dia sai da frente quando é hora de responder", () => {
+    expect(CHAT).toMatch(/aguardandoResposta\n\s*\? "Escreva sua resposta…"/);
+  });
+
+  it("a detecção é a última fala da Ayla com pergunta", () => {
+    expect(CHAT).toMatch(
+      /const aguardandoResposta = ultima\?\.de === "kolo" && \(ultima\.texto \?\? ""\)\.includes\("\?"\)/,
+    );
+  });
+
+  it("o campo nunca esteve desabilitado — o que faltava era o convite", () => {
+    expect(CHAT).toMatch(/disabled=\{pensando\}/);
+    expect(CHAT).toMatch(/não tem onde eu responder/);
+  });
+});
