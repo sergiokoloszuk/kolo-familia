@@ -45,6 +45,7 @@ import {
   criarRotinaDia,
   definirModoExibicao,
   excluirRotina,
+  editarTarefa,
   excluirTarefa,
   gerarCardsVisuais,
   renomearRotina,
@@ -219,6 +220,26 @@ export function RotinaEditor({
     start(async () => setErroFrom(await excluirTarefa({ rotinaId, tarefaId: id })));
   }
 
+  /**
+   * TROCAR A PALAVRA DELA. `editarTarefa` existia na action desde sempre e o
+   * editor nunca a importou: dava pra reordenar e apagar um passo, nunca pra
+   * corrigir o texto. A mãe que escreveu "tomar banho" e queria "hora do banho"
+   * tinha que apagar e escrever de novo.
+   *
+   * Otimista na tela e salvo no servidor — se falhar, o erro aparece e o texto
+   * dela continua ali pra tentar de novo.
+   */
+  function renomearPasso(id: string, texto: string) {
+    const t = texto.trim();
+    if (!t) return;
+    const atual = tarefas.find((x) => x.id === id);
+    if (!atual || atual.texto === t) return;
+    setTarefas((ts) => ts.map((x) => (x.id === id ? { ...x, texto: t } : x)));
+    start(async () =>
+      setErroFrom(await editarTarefa({ rotinaId, tarefaId: id, texto: t, icone: atual.icone })),
+    );
+  }
+
   function adicionar(texto: string, icone: string | null, hora: string | null, repeteDias: number[]) {
     start(async () => {
       const r = await adicionarTarefa({ rotinaId, texto, icone, hora });
@@ -351,6 +372,15 @@ export function RotinaEditor({
 
       {editando ? (
         <>
+          {tarefas.length > 0 && (
+            <ListaEditavel
+              tarefas={tarefas}
+              onRenomear={renomearPasso}
+              onMover={mover}
+              onRemover={remover}
+            />
+          )}
+
           <AddTarefa
             rotinaId={rotinaId}
             visual={visual}
@@ -533,6 +563,75 @@ function CabecalhoRotina({
 }
 
 /* ---------- Cartões visuais (criança) ---------- */
+/* ---------- Lista editável (modo edição) ---------- */
+
+/**
+ * OS PASSOS COM AS PALAVRAS DELA, editáveis.
+ *
+ * Em modo edição a tela mostrava os CARTÕES — dava pra subir, descer e apagar,
+ * mas não pra trocar uma palavra. Quem escreveu "tomar banho" e queria "hora do
+ * banho" tinha que apagar o passo e escrever de novo, perdendo a arte já gerada.
+ *
+ * Aqui o texto dela está num campo, do jeito que ela escreveu. Salva ao sair do
+ * campo ou no Enter — sem botão de salvar, que é mais uma coisa pra ela lembrar.
+ */
+function ListaEditavel({
+  tarefas,
+  onRenomear,
+  onMover,
+  onRemover,
+}: {
+  tarefas: Tarefa[];
+  onRenomear: (id: string, texto: string) => void;
+  onMover: (i: number, dir: -1 | 1) => void;
+  onRemover: (id: string) => void;
+}) {
+  return (
+    <div className="flex flex-col gap-2 print:hidden">
+      <p className="text-sm font-semibold text-foreground">Os passos</p>
+      <p className="text-sm text-muted-foreground">
+        Toque num passo pra mudar as palavras. Dá pra reordenar e apagar também.
+      </p>
+      <ul className="flex flex-col gap-2">
+        {tarefas.map((t, i) => (
+          <li
+            key={t.id}
+            className="flex items-center gap-2 rounded-xl border border-kolo-linha bg-white px-3 py-2 focus-within:ring-2 focus-within:ring-brand-purple/30"
+          >
+            <span className="w-5 shrink-0 text-sm font-bold tabular-nums text-brand-purple">
+              {i + 1}
+            </span>
+            <input
+              defaultValue={t.texto}
+              onBlur={(e) => onRenomear(t.id, e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") e.currentTarget.blur();
+                if (e.key === "Escape") {
+                  e.currentTarget.value = t.texto;
+                  e.currentTarget.blur();
+                }
+              }}
+              maxLength={120}
+              aria-label={`Passo ${i + 1}`}
+              className="min-w-0 flex-1 bg-transparent text-[15px] focus:outline-none"
+            />
+            <span className="flex shrink-0 items-center gap-1">
+              <Mini icone={ArrowUp} onClick={() => onMover(i, -1)} disabled={i === 0} label="Subir" />
+              <Mini
+                icone={ArrowDown}
+                onClick={() => onMover(i, 1)}
+                disabled={i === tarefas.length - 1}
+                label="Descer"
+              />
+              <Mini icone={X} onClick={() => onRemover(t.id)} disabled={false} label="Apagar" />
+            </span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
 function ViewCartoes({
   tarefas,
   onToggle,

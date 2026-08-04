@@ -240,3 +240,50 @@ describe("reusa o que já funcionava", () => {
     expect(ACTIONS).toMatch(/dia_semana: null/);
   });
 });
+
+// ============================================================
+// EDIÇÃO COMPLETA — as palavras dela voltam editáveis
+// ============================================================
+
+describe("editar devolve a lista com as palavras da mãe", () => {
+  const EDITOR = readFileSync(
+    resolve(__dirname, "../../app/(app)/ludico/rotinas/[id]/rotina-editor.tsx"),
+    "utf8",
+  );
+
+  it("o editor finalmente importa `editarTarefa`", () => {
+    // A action existia desde sempre e nunca tinha sido ligada: dava pra
+    // reordenar e apagar um passo, nunca pra corrigir o texto.
+    expect(EDITOR).toMatch(/^\s*editarTarefa,$/m);
+    expect(EDITOR).toMatch(/function renomearPasso\(id: string, texto: string\)/);
+  });
+
+  it("a lista editável aparece em modo edição, antes de adicionar", () => {
+    expect(EDITOR).toMatch(/\{editando \? \(\n\s*<>\n\s*\{tarefas\.length > 0 && \(\n\s*<ListaEditavel/);
+  });
+
+  it("cada passo é um campo com o texto dela", () => {
+    expect(EDITOR).toMatch(/defaultValue=\{t\.texto\}/);
+    expect(EDITOR).toMatch(/onBlur=\{\(e\) => onRenomear\(t\.id, e\.target\.value\)\}/);
+  });
+
+  it("Enter salva e Escape desiste — sem botão de salvar", () => {
+    expect(EDITOR).toMatch(/if \(e\.key === "Enter"\) e\.currentTarget\.blur\(\)/);
+    expect(EDITOR).toMatch(/if \(e\.key === "Escape"\)/);
+    expect(EDITOR).toMatch(/sem botão de salvar, que é mais uma coisa pra ela lembrar/);
+  });
+
+  it("reordenar e apagar continuam ali, na mesma linha", () => {
+    expect(EDITOR).toMatch(/onMover\(i, -1\)/);
+    expect(EDITOR).toMatch(/onMover\(i, 1\)/);
+    expect(EDITOR).toMatch(/onRemover\(t\.id\)/);
+  });
+
+  it("texto vazio não apaga o passo por acidente", () => {
+    expect(EDITOR).toMatch(/const t = texto\.trim\(\);\n\s*if \(!t\) return;/);
+  });
+
+  it("texto igual não gasta uma escrita no banco", () => {
+    expect(EDITOR).toMatch(/if \(!atual \|\| atual\.texto === t\) return;/);
+  });
+});
