@@ -103,6 +103,24 @@ export function pediuApoioVisual(texto: string | null | undefined): boolean {
   );
 }
 
+/**
+ * A criança já tem avatar? Só pra decidir se vale CONVIDAR a criar um — a
+ * geração em si é oportunista do outro lado (se existe, usa).
+ */
+async function membroTemAvatar(supabase: SupabaseClient, membroId: string): Promise<boolean> {
+  try {
+    const { data } = await supabase
+      .from("avatares_membros_atipicos")
+      .select("id")
+      .eq("membro_atipico_id", membroId)
+      .limit(1);
+    return (data?.length ?? 0) > 0;
+  } catch {
+    // Sem saber, NÃO convida: sugerir criar um avatar que já existe é pior.
+    return true;
+  }
+}
+
 /** Há uma conversa de rotina em andamento? (último outbound tipo=rotina_conversa sem resposta ainda) */
 export async function rotinaConversaPendente(
   supabase: SupabaseClient,
@@ -941,6 +959,17 @@ ${jaSabemos.rotinaExistente}`
       // A conversa segue ABERTA enquanto a resposta dela ainda pode virar
       // imagem — vale pro tema que falta e pra oferta que acabou de sair.
       if (ofereceCartoes) faltaTemaFinal = true;
+      // AVATAR: a oferta vem DEPOIS, com os cartões já na mão. Pôr a criação do
+      // avatar ANTES da rotina seria uma etapa de setup antes da primeira
+      // entrega — e quem não terminasse ficaria sem rotina nenhuma. Com o
+      // cartão na tela, o valor é óbvio: "ele podia ser o personagem".
+      const temAvatar = await membroTemAvatar(supabase, params.membroAtipicoId);
+      const convidaAvatar =
+        autoGerou && !temAvatar
+          ? `
+
+Ah — se quiser, o próprio ${nome} pode ser o personagem dos cartões em vez de um desenho genérico. É só criar o avatar dele uma vez (Configurações → Avatar): fica salvo e vale pras histórias também. Aí eu refaço os cartões com a cara dele.`
+          : "";
       const cartoes = autoGerou
         ? ` Já comecei a gerar os cartões no tema *${tema}* — eles levam *1-2 minutinhos*, então pode abrir que vão aparecendo sozinhos 🌿`
         : // A Ayla já perguntou o tema na fala dela? Então não pergunte de novo:
