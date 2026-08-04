@@ -214,7 +214,10 @@ export function templateBoasVindasComDesafio(params: {
     "",
     `Posso te ajudar com estratégias práticas, o que fazer e o que falar nas horas difíceis, e também com brincadeiras e atividades pra trabalhar essas habilidades de um jeito mais leve${dele}.`,
     "",
-    `Por qual você quer começar? Me conta o que está acontecendo — pode mandar um *áudio*, do jeito que for mais fácil pra você. Com o que você me contar eu já te trago uma primeira ideia prática. 🌿`,
+    // "Você não precisa saber o que pedir" é a frase que destrava quem chega
+    // sem conhecer o produto: a família não sabe que existe Plano, Rotina ou
+    // História — e não deveria precisar saber. Quem conduz é a Ayla.
+    `Você não precisa saber o que pedir: me conta o que está acontecendo, do seu jeito. Por qual você quer começar? Pode mandar um *áudio*, se for mais fácil — com o que você me contar eu já te trago uma primeira ideia prática. 🌿`,
   ].join("\n");
 }
 
