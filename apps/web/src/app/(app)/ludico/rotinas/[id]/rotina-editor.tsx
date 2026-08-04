@@ -333,7 +333,7 @@ export function RotinaEditor({
         </p>
       )}
 
-      {historia && <HistoriaPanel historia={historia} />}
+      {historia && <HistoriaPanel historia={historia} nomeMembro={nomeMembro} />}
 
       {!visual && (
         <p className="flex items-center gap-2 text-xs text-muted-foreground print:hidden">
@@ -978,7 +978,11 @@ function Mini({
   );
 }
 
-function HistoriaPanel({ historia }: { historia: string }) {
+/**
+ * "A história da rotina" não dizia pra que ela serve. A função é PREPARAR a
+ * criança pro que vai acontecer — e é isso que o título passa a dizer.
+ */
+function HistoriaPanel({ historia, nomeMembro }: { historia: string; nomeMembro?: string | null }) {
   const [aberto, setAberto] = useState(true);
   return (
     <div className="rounded-2xl border border-brand-yellow/40 bg-brand-yellow/[0.07] p-4">
@@ -988,7 +992,9 @@ function HistoriaPanel({ historia }: { historia: string }) {
         className="flex w-full items-center gap-2 text-left print:hidden"
       >
         <BookOpen className="size-4 text-[#8B5A00]" aria-hidden />
-        <span className="font-heading text-base font-medium text-foreground">A história da rotina</span>
+        <span className="font-heading text-base font-medium text-foreground">
+          {nomeMembro ? `Uma historinha pra preparar ${nomeMembro}` : "Uma historinha pra preparar"}
+        </span>
         <span className="ml-auto text-xs text-muted-foreground">{aberto ? "ocultar" : "ler"}</span>
       </button>
       {aberto && (

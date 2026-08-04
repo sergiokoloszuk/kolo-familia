@@ -91,13 +91,13 @@ describe("uma porta só", () => {
   });
 
   it("a promessa da tela cabe em uma frase", () => {
-    expect(PAGE).toMatch(/Você escreve o que vai acontecer/);
-    expect(PAGE).toMatch(/A Kolo transforma a sequência em cartões ilustrados/);
+    expect(PAGE).toMatch(/Escreva o que vai acontecer, na ordem/);
+    expect(PAGE).toMatch(/A Kolo transforma em cartões ilustrados/);
   });
 
   it("não pergunta o tipo de rotina — é sempre uma sequência", () => {
     expect(FORM).toMatch(/não se pergunta o tipo/);
-    expect(FORM).toMatch(/Serve pro dia inteiro, pra um passeio ou pra um momento difícil/);
+    expect(FORM).toMatch(/também prepara .{0,40}pra uma experiência/);
   });
 });
 
@@ -115,10 +115,10 @@ describe("sem horário em todo o caminho novo", () => {
 });
 
 describe("o exemplo do dentista ensina sem assustar", () => {
-  it("mostra 6 passos e esconde o resto atrás de 'ver completo'", () => {
-    expect(FORM).toMatch(/const EXEMPLO_CURTO = 6/);
-    expect(FORM).toMatch(/Ver exemplo completo/);
-    expect(FORM).toMatch(/Onze de cara faz a\n \* {2}tela parecer trabalho/);
+  it("começa fechado — onze passos abertos dominam a tela", () => {
+    expect(FORM).toMatch(/Ver exemplo · Dia do dentista →/);
+    expect(FORM).toMatch(/Onze passos abertos dominam a tela/);
+    expect(FORM).toMatch(/Onze passos abertos dominam a tela/);
   });
 
   it("os 11 passos são os do dentista, e ensinam previsibilidade", () => {
@@ -134,16 +134,16 @@ describe("o exemplo do dentista ensina sem assustar", () => {
 
 describe("tema e personagem são coisas diferentes", () => {
   it("o avatar NÃO é um chip de tema", () => {
-    expect(FORM).toMatch(/Personagem dos cartões/);
-    expect(FORM).toMatch(/o tema é o cenário, o\n {10}personagem é quem aparece/);
+    expect(FORM).toMatch(/apareça nos cartões/);
+    expect(FORM).toContain("decisão diferente do tema (que é o cenário)");
   });
 
   it("a opção de personagem só existe quando a criança tem avatar", () => {
-    expect(FORM).toMatch(/\{temAvatar && \(/);
+    expect(FORM).toMatch(/\{temAvatar \? \(/);
   });
 
   it("os chips de tema vêm dos interesses reais, com 'outro' sempre", () => {
-    expect(FORM).toMatch(/interesses\.map\(\(it\) =>/);
+    expect(FORM).toMatch(/sugestoes\.map\(\(it\) =>/);
     expect(FORM).toMatch(/Outro tema/);
   });
 });
@@ -285,5 +285,143 @@ describe("editar devolve a lista com as palavras da mãe", () => {
 
   it("texto igual não gasta uma escrita no banco", () => {
     expect(EDITOR).toMatch(/if \(!atual \|\| atual\.texto === t\) return;/);
+  });
+});
+
+// ============================================================
+// O TEMA VESTE, NÃO SUBSTITUI — 04/08/2026
+// ============================================================
+
+describe("a fantasia não pode trocar o que a criança vai encontrar", () => {
+  const GERAR = readFileSync(resolve(__dirname, "gerar.ts"), "utf8");
+
+  it("a instrução que quebrou o Dia do dentista saiu", () => {
+    // O prompt mandava "VESTIR cada atividade no universo do tema" e dava como
+    // exemplo renomear as etapas: POSTO DOS CAMPEÕES, LAVA-RÁPIDO TURBO.
+    // Só sobrevivem no comentário que explica o incidente, nunca na instrução.
+    const prompt = GERAR.slice(GERAR.indexOf("const SYSTEM = "));
+    expect(prompt).not.toMatch(/POSTO DOS CAMPEÕES|LAVA-RÁPIDO TURBO/);
+    expect(prompt).not.toMatch(/VESTE cada uma no universo do tema/);
+  });
+
+  it("a regra principal está escrita, com os exemplos reais", () => {
+    expect(GERAR).toMatch(/O TEMA VESTE, NÃO SUBSTITUI A REALIDADE/);
+    expect(GERAR).toMatch(/dentista continua dentista/);
+    expect(GERAR).toMatch(/carro continua carro \(não carruagem\)/);
+    expect(GERAR).toMatch(/cadeira do dentista continua cadeira do dentista/);
+  });
+
+  it("permite a princesa, proíbe o mago na carruagem", () => {
+    expect(GERAR).toMatch(/Pode existir uma princesa indo ao dentista/);
+    expect(GERAR).toMatch(/Não pode existir um mago numa carruagem/);
+  });
+
+  it("o nome do card diz o que acontece de verdade", () => {
+    expect(GERAR).toMatch(/dizendo O QUE ACONTECE DE VERDADE/);
+    expect(GERAR).toMatch(/é CADEIRA DO DENTISTA — nunca CADEIRA MÁGICA/);
+  });
+
+  it("a cena carrega os objetos reais da situação", () => {
+    expect(GERAR).toMatch(/com os objetos REAIS e reconhecíveis da situação/);
+  });
+});
+
+describe("a história prepara, não repete os cartões", () => {
+  const GERAR = readFileSync(resolve(__dirname, "gerar.ts"), "utf8");
+
+  it("complementa em vez de repetir", () => {
+    expect(GERAR).toMatch(/Ela COMPLEMENTA os cards, não os repete/);
+    expect(GERAR).toMatch(/ajuda a criança a entender e a se preparar por dentro/);
+  });
+
+  it("diz o que ela pode fazer e como pedir ajuda", () => {
+    expect(GERAR).toMatch(/como pedir ajuda ou avisar que não está gostando/);
+    expect(GERAR).toMatch(/existe começo, meio e FIM/);
+  });
+
+  it("NUNCA promete resultado", () => {
+    expect(GERAR).toMatch(/NUNCA prometa resultado/);
+    expect(GERAR).toMatch(/nada de "você vai ficar calmo", "não vai doer"/);
+  });
+
+  it("não termina sempre em dormir — nem toda rotina é um dia", () => {
+    expect(GERAR).toMatch(/Não termine sempre em dormir/);
+    expect(GERAR).not.toMatch(/fecha tranquilo no descanso\/dormir/);
+  });
+
+  it("o anti-ABA continua de pé", () => {
+    expect(GERAR).toMatch(/ANTI-ABA/);
+  });
+
+  it("o título diz pra que ela serve", () => {
+    const EDITOR = readFileSync(
+      resolve(__dirname, "../../app/(app)/ludico/rotinas/[id]/rotina-editor.tsx"),
+      "utf8",
+    );
+    expect(EDITOR).toMatch(/Uma historinha pra preparar/);
+    // O rótulo antigo só pode sobreviver no comentário que explica a troca.
+    expect(EDITOR).not.toMatch(/>A história da rotina</);
+  });
+});
+
+// ============================================================
+// A TELA, SIMPLIFICADA
+// ============================================================
+
+describe("a tela é ferramenta, não landing", () => {
+  it("o topo é curto e diz o que a página faz", () => {
+    expect(PAGE).toMatch(/Crie uma rotina visual/);
+    expect(PAGE).toMatch(/Escreva o que vai acontecer, na ordem/);
+    // A teoria sobre desregulação saiu do topo.
+    expect(PAGE).not.toMatch(/o que mais desregula/);
+  });
+
+  it("o exemplo começa fechado", () => {
+    expect(FORM).toMatch(/const \[verExemplo, setVerExemplo\] = useState\(false\)/);
+    expect(FORM).toMatch(/Ver exemplo · Dia do dentista →/);
+  });
+
+  it("o exemplo ensina que também serve pra preparar uma experiência", () => {
+    expect(FORM).toMatch(/também prepara \{nomeMembro \|\| "a criança"\} pra uma experiência/);
+  });
+
+  it("temas: interesses primeiro, populares depois, sem repetir", () => {
+    expect(FORM).toMatch(/const sugestoes = useMemo/);
+    expect(FORM).toMatch(/TEMAS_POPULARES\.filter\(\(t\) => !vistos\.has\(t\.toLowerCase\(\)\)\)/);
+    expect(FORM).toMatch(/"Princesas"/);
+  });
+
+  it("princesa não é categoria especial — é tema como qualquer outro", () => {
+    expect(FORM).not.toMatch(/Contos e princesas/);
+    expect(FORM).toMatch(/Não é catálogo nem categoria/);
+  });
+
+  it('"Outro tema" abre campo livre com a pergunta', () => {
+    expect(FORM).toMatch(/Qual tema você quer\?/);
+    expect(FORM).toMatch(/cavalos, trens, unicórnios/);
+  });
+
+  it("a palavra 'avatar' não aparece pra família", () => {
+    const visivel = FORM.split("\n").filter((l) => !l.trim().startsWith("*") && !l.trim().startsWith("//"));
+    const texto = visivel.join("\n");
+    expect(texto).not.toMatch(/>Avatar d|Avatar da |Avatar do /);
+    expect(FORM).toMatch(/Quer que \{nomeMembro \|\| "a criança"\} apareça nos cartões\?/);
+    expect(FORM).toMatch(/Sim, usar \{nomeMembro \|\| "a criança"\} como personagem/);
+  });
+
+  it("sem personagem criado, oferece criar — e não uma opção quebrada", () => {
+    expect(FORM).toMatch(/Criar personagem/);
+    expect(FORM).toMatch(/href="\/configuracoes\/avatar"/);
+  });
+
+  it("a miniatura do personagem aparece quando existe", () => {
+    expect(FORM).toMatch(/src=\{avatarUrl\}/);
+  });
+
+  it("o atalho da semana não compete com o CTA — fica depois da lista", () => {
+    const iBotao = PAGE.indexOf("CriarRotinaVisual");
+    const iSemana = PAGE.indexOf("Ver a rotina da semana");
+    expect(iSemana).toBeGreaterThan(iBotao);
+    expect(PAGE).toMatch(/não pode competir com a fórmula nova/);
   });
 });

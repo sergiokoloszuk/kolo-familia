@@ -65,6 +65,8 @@ export default async function RotinasPage() {
 
   // A semana continua existindo pra quem já montou lá — só deixou de ser porta
   // de criação. O atalho aparece apenas pra quem tem rotina de dia da semana.
+  const nomeAtivo = nomePorMembro.get(ativaId ?? "")?.nome ?? null;
+
   const temSemana = (rotinas ?? []).some(
     (r) =>
       (r.dia_semana as number | null) != null &&
@@ -87,15 +89,12 @@ export default async function RotinasPage() {
 
       <header className="max-w-2xl">
         <Eyebrow>Rotina Visual</Eyebrow>
-        <h1 className="mt-2 font-heading text-4xl leading-[1.05] text-foreground md:text-5xl">
-          A sequência do dia, <em className="not-italic text-brand-purple">do jeito de cada um</em>
+        <h1 className="mt-2 font-heading text-3xl leading-[1.1] text-foreground md:text-4xl">
+          Crie uma rotina visual
         </h1>
-        <p className="mt-4 text-base leading-relaxed text-muted-foreground md:text-lg">
-          Você escreve o que vai acontecer.{" "}
-          <em className="not-italic text-foreground">A Kolo transforma a sequência em cartões ilustrados</em>{" "}
-          pra criança acompanhar. Serve pro dia inteiro, pro dia do dentista ou pra um momento
-          difícil — mostrar o que vem agora e o que vem depois tira o peso do desconhecido, que é o
-          que mais desregula.
+        <p className="mt-3 text-base leading-relaxed text-muted-foreground">
+          Escreva o que vai acontecer, na ordem. A Kolo transforma em cartões ilustrados
+          {nomeAtivo ? ` pra ${nomeAtivo} acompanhar` : " pra criança acompanhar"}.
         </p>
       </header>
 
@@ -119,16 +118,8 @@ export default async function RotinasPage() {
           nomeMembro={nomePorMembro.get(ativaId ?? membrosList[0]!.id)?.nome ?? ""}
           interesses={interesses}
           temAvatar={Boolean(avatarUrl)}
+          avatarUrl={avatarUrl}
         />
-      )}
-
-      {temSemana && (
-        <Link
-          href="/ludico/rotinas/semana"
-          className="flex w-fit items-center gap-2 rounded-full border border-kolo-linha bg-white px-4 py-2 text-sm text-muted-foreground transition-colors hover:border-brand-purple/40 hover:text-foreground"
-        >
-          🗓️ Ver a rotina da semana que você já montou
-        </Link>
       )}
 
       {rotinasVisiveis.length > 0 && (
@@ -164,6 +155,16 @@ export default async function RotinasPage() {
             })}
           </ul>
         </section>
+      )}
+      {/* Legado: quem já montou a semana continua chegando lá. Fica DEPOIS da
+          lista, longe do botão de criar — não pode competir com a fórmula nova. */}
+      {temSemana && (
+        <Link
+          href="/ludico/rotinas/semana"
+          className="flex w-fit items-center gap-2 rounded-full border border-kolo-linha bg-white px-4 py-2 text-sm text-muted-foreground transition-colors hover:border-brand-purple/40 hover:text-foreground"
+        >
+          🗓️ Ver a rotina da semana que você já montou
+        </Link>
       )}
     </div>
   );
