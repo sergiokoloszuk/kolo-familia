@@ -191,7 +191,7 @@ describe("tema ativo", () => {
 
   it("o classificador devolve intenção E tema na MESMA chamada", () => {
     expect(INTENT).toMatch(/intencao\|tema/);
-    expect(INTENT).toMatch(/TurnoClassificado = \{ intencao: IntencaoAyla; tema: string \| null \}/);
+    expect(INTENT).toMatch(/TurnoClassificado = \{\n  intencao: IntencaoAyla;\n  tema: string \| null;/);
   });
 
   it("considera o que a família marcou no cadastro", () => {
@@ -214,7 +214,7 @@ describe("tema ativo", () => {
   });
 
   it("falha do classificador não perde o tema", () => {
-    expect(INTENT).toMatch(/return \{ intencao: "outro", tema: anterior \};/);
+    expect(INTENT).toMatch(/return \{ intencao: "outro", tema: anterior, aceite: null \};/);
   });
 
   it("nada foi persistido — sem tabela, sem coluna", () => {

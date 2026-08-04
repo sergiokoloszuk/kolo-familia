@@ -202,7 +202,7 @@ describe("cartões saem por necessidade visual, não por tema", () => {
     // O gerador recusa tema com menos de 2 caracteres. Disparar sem tema era
     // um 400 silencioso: a mãe esperava as imagens e elas nunca chegavam.
     expect(GUIADA).toMatch(/const faltaTema = !temSemana && visual && ids\.length > 0 && !tema/);
-    expect(GUIADA).toMatch(/Os cartões ilustrados eu gero assim que você escolher o tema/);
+    expect(GUIADA).toMatch(/eu transformo isso em cartões ilustrados/);
     expect(GUIADA).toMatch(/o cartão existe quando VER a sequência ajuda/);
   });
 

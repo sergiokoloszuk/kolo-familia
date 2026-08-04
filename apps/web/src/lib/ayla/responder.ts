@@ -150,6 +150,8 @@ export type RespostaParams = {
   sinais: SinaisResposta;
   /** A pessoa pediu um plano explicitamente — não escreva o plano, ofereça. */
   querPlano?: boolean;
+  /** O que a mãe acabou de ACEITAR, quando o turno é um aceite de oferta. */
+  aceite?: string | null;
   /**
    * Preenchido SÓ na segunda passada, quando a primeira atravessou a fronteira
    * do diagnóstico. Entra como nota interna — o mesmo mecanismo que o resto do
@@ -446,6 +448,17 @@ ${params.diagnosticoRegistrado.trim()}`);
   notas.push(
     `REGRA DESTE TURNO: a mãe tem que sair daqui com algo concreto. Se já existe uma primeira orientação SEGURA — algo que ajuda e não depende do que ela responder —, ENTREGUE agora; a pergunta vem junto ou depois. No máximo UMA pergunta, e só se a resposta MUDAR o seu próximo passo. Isto vale com UM problema só, não apenas quando ela traz vários. Se ela trouxe MAIS DE UMA dificuldade, não investigue duas ao mesmo tempo: organize o que ela trouxe, escolha UMA pra começar (dizendo por que aquela), dê a direção JÁ nesta resposta e deixe as outras explicitamente pra depois.`,
   );
+
+  // ELA ACEITOU O QUE VOCÊ OFERECEU. Vem antes de tudo porque "sim" não carrega
+  // conteúdo: sem o referente resolvido, o modelo reconstrói o turno a partir da
+  // conversa inteira e responde outra coisa — foi assim que "Sim. Vamos montar
+  // uma história." recebeu uma resposta sobre diagnóstico (04/08/2026).
+  if (params.aceite) {
+    notas.push(
+      `ELA ESTÁ ACEITANDO O QUE VOCÊ OFERECEU no seu último turno: ${params.aceite}. FAÇA ISSO AGORA, neste turno. Não reabra o assunto geral da conversa, não volte a "por onde a gente começa?", não peça pra ela repetir o pedido, não pergunte de novo o que você já sabe. Se for algo que ela faz no app, mande o link direto e diga o que ela vai encontrar lá; se for algo seu, entregue. Se faltar UM dado sem o qual não dá pra fazer, pergunte SÓ esse dado — nada além dele.
+HISTÓRIA é um destes casos: quem monta é ela, no app, e é rápido — você manda o link de Histórias, diz que o tema já vai do jeito que vocês combinaram aqui, e conta que dá pra criar o avatar pra criança virar o personagem. Não descreva a história inteira no WhatsApp nem prometa gerar você mesma.`,
+    );
+  }
 
   if (params.querPlano) {
     notas.push(

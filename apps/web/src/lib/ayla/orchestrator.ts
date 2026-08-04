@@ -1536,7 +1536,7 @@ export async function processInbound(
   // consciente de 02/08 — sem coluna, sem migração; se a derivação se mostrar
   // insuficiente no uso real, aí se discute persistir, com evidência.
   const turnoClassificado = rotinaConversa
-    ? { intencao: "outro" as const, tema: null }
+    ? { intencao: "outro" as const, tema: null, aceite: null }
     : await classificarIntencao({
         texto: inbound.texto,
         ...(await ultimasFalas(supabase, family.id, inbound.texto)),
@@ -1544,6 +1544,11 @@ export async function processInbound(
       });
   const intent = turnoClassificado.intencao;
   const temaAtivo = turnoClassificado.tema;
+  // O QUE ELA ACEITOU. "sim" não carrega conteúdo — sem referente resolvido, o
+  // modelo reconstrói o turno a partir da conversa inteira. Foi assim que um
+  // "Sim. Vamos montar uma história." virou uma resposta sobre diagnóstico
+  // (04/08/2026): a fronteira barrou duas vezes e o piso foi ao ar.
+  const aceite = turnoClassificado.aceite;
 
   /**
    * AMBÍGUO PERGUNTA — não chuta. Reusa `templateClarificacaoMembro` e o tipo
@@ -1917,6 +1922,7 @@ export async function processInbound(
       generoMembro: membroFoco?.genero ?? null,
       temaAtivo,
       intencao: intent,
+      aceite,
       notaDeSeguranca: seguranca.aberta ? notaDeSeguranca({ precisaChecar: seguranca.precisaChecar }) : null,
       koloVivoResumo,
       koloVivoLacunas,
