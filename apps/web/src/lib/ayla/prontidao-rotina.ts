@@ -27,6 +27,11 @@ O MÍNIMO pra gerar são DUAS coisas:
 1. QUAL PEDAÇO DO DIA — a tarde depois da escola, a manhã até sair, a noite, o dia inteiro, um dia específico.
 2. UMA SEQUÊNCIA — o que acontece, na ordem, com as palavras da família ("chega 12h40, almoça, descansa, faz lição, futebol 15h30"). Bagunçada serve: organizar é seu trabalho. Não precisa de horário em tudo; precisa de ordem.
 
+⚠️ A SEQUÊNCIA TEM QUE SER DESTA ROTINA. O que a família contou antes, sobre outro dia ou outro assunto, e a rotina que já existe no perfil, são CONHECIMENTO PRÉVIO: enriquecem (uma transição difícil, um horário fixo, um interesse) e NÃO valem como a sequência de agora. "Quero organizar a tarde da Manu" tem escopo e não tem sequência — mesmo que você saiba de cor a manhã dela, mesmo que ela tenha descrito o sábado passado inteiro. Isso é "falta", e a pergunta é a sequência.
+Caso real (03/08/2026): esse pedido virou 14 etapas com passeio de barco e protetor solar, tudo herdado de uma conversa de horas antes. A mãe recebeu a rotina de um dia que ela não pediu.
+
+⚠️ MAS QUANDO ELA MANDA USAR O QUE JÁ CONTOU, USE. "Já te contei os horários, agora monta", "usa o que eu te falei", "é aquela que acabei de passar", "monta com o que te mandei" — aí o histórico recente É a sequência, e segurar seria fazê-la repetir tudo. O que separa os dois casos é UMA coisa: ela APONTOU pro que já disse, ou você é que foi buscar?
+
 O PONTO DIFÍCIL (onde trava, o que vira briga) ENRIQUECE muito, mas NÃO é requisito. Se você sabe, use — muda a granularidade das etapas. Se não sabe e já tem escopo e sequência, GERE assim mesmo. Segurar uma rotina pra descobrir onde trava é interrogatório.
 
 NÃO é caso de gerar rotina quando:
@@ -94,6 +99,11 @@ export type ProntidaoRotina = {
   tamanho: TamanhoRotina;
   /** VER a sequência acrescenta pra ESTA criança? Manda nos cartões. */
   visual: boolean;
+  /**
+   * A família APONTOU pro que já contou ("já te falei, agora monta")? Só então
+   * o histórico anterior pode compor a sequência. Sem isso ele é contexto.
+   */
+  reusaHistorico: boolean;
   /** Preenchido quando desfecho = "falta": a ÚNICA pergunta que muda a rotina. */
   pergunta: string | null;
   /** Preenchido quando desfecho = "limite_atuacao": o que é da pediatra. */
@@ -108,6 +118,7 @@ const SEGURO = (motivo: string): ProntidaoRotina => ({
   // mesmo. Reduzir por acidente seria entregar menos do que a família pediu.
   tamanho: "rotina",
   visual: false,
+  reusaHistorico: false,
   pergunta: null,
   parteClinica: null,
   motivo,
@@ -122,7 +133,7 @@ ${LIMITE_DE_ATUACAO_ROTINA}
 ${CRITERIO_TAMANHO_ROTINA}
 
 Responda APENAS JSON, sem texto fora dele:
-{"desfecho":"suficiente"|"falta_escopo"|"falta"|"nao_e_rotina"|"limite_atuacao","tamanho":"orientacao"|"mini"|"rotina","visual":true|false,"pergunta":"...","parteClinica":"...","motivo":"..."}
+{"desfecho":"suficiente"|"falta_escopo"|"falta"|"nao_e_rotina"|"limite_atuacao","tamanho":"orientacao"|"mini"|"rotina","visual":true|false,"reusaHistorico":true|false,"pergunta":"...","parteClinica":"...","motivo":"..."}
 
 - "suficiente": dá pra montar algo útil agora. pergunta=null.
 - "falta_escopo": ela pediu rotina mas não disse O QUE quer organizar ("preciso de uma rotina", "tá tudo bagunçado", "quero organizar ele", "vi que vocês fazem rotina"). NÃO é falta de dado — é falta de rumo. pergunta=null: quem oferece os caminhos é a Ayla, do jeito dela.
@@ -132,6 +143,7 @@ Responda APENAS JSON, sem texto fora dele:
 - "nao_e_rotina": não é caso de organizar o dia NEM de conduzir uma passagem — é conversa, desabafo, dúvida sobre comportamento, alimentação, escola. Explique em "motivo" o que ela realmente quer.
   ⚠️ UMA TRANSIÇÃO DIFÍCIL NÃO É "nao_e_rotina". "todo dia dá briga pra sair do videogame e ir pro banho" é caso de ajudar AGORA: devolva "suficiente" com tamanho="orientacao" (ou "mini", se ver a sequência acrescentar). Antes isso caía fora e a família ficava sem a ajuda concreta da passagem.
 - "tamanho": aplique o critério acima. Só importa quando desfecho="suficiente".
+- "reusaHistorico": true SÓ quando a mensagem de agora APONTA pro que ela já contou ("já te falei os horários, agora monta", "usa o que eu te mandei", "é aquela mesma"). É o que autoriza o histórico anterior a virar a sequência. Se ela só pediu a rotina e o histórico por acaso tem material, é false — você é que foi buscar, ela não mandou.
 - "visual": os cartões ilustrados custam geração de imagem e enchem a tela quando não servem. Só marque true se houver EVIDÊNCIA de que ver ajuda ESTA criança:
   • a família relatou que apoio visual funciona com ela;
   • a criança precisa consultar "agora/depois" sozinha, em vez de a mãe repetir;
@@ -217,6 +229,7 @@ export async function avaliarProntidaoParaRotina(params: {
       // Cartão é decisão de necessidade. "mini" É uma sequência visual — sem o
       // visual ela não existe. Nos outros, quem manda é o julgamento explícito.
       visual: tamanho === "mini" ? true : o.visual === true,
+      reusaHistorico: o.reusaHistorico === true,
       pergunta: desfecho === "falta" ? pergunta : null,
       parteClinica: desfecho === "limite_atuacao" ? texto(o.parteClinica) : null,
       motivo: texto(o.motivo) ?? "-",

@@ -33,6 +33,8 @@ Regras:
 - Monte um dia COERENTE: encaixe âncoras fixas (escola, terapia, esporte, curso) no horário certo; blocos que se repetem todo dia (estudo, tarefas, autocuidado) entram nos dias aplicáveis; inclua manhã (acordar/higiene/refeição) e noite (jantar/autocuidado/dormir) quando fizer sentido. Ordene por horário quando houver.
 - Tarefa curta e clara (1-5 palavras). Para adolescente/adulto, sem infantilizar.
 - NÃO invente atividades que a pessoa não mencionou além do esqueleto natural do dia (acordar/refeições/dormir).
+- A SEQUÊNCIA É SÓ DO PEDIDO EM CURSO. Compõe as etapas apenas o que pertence à rotina que está sendo montada AGORA. Assunto anterior da conversa serve pra CONHECER a criança — uma dificuldade, uma transição, um interesse, um horário fixo —, nunca pra virar etapa. Caso real (03/08/2026): a mãe pediu "quero organizar a tarde da Manu" e recebeu 14 etapas com preparação para passeio, protetor solar e passeio de barco — tudo isso ela tinha mesmo dito, horas antes, sobre outro dia. A regra "não invente o que não foi mencionado" foi obedecida e ainda assim a rotina saiu errada: mencionado ANTES, em outro assunto, não é mencionado AGORA.
+- Se o pedido em curso não trouxer a sequência, NÃO preencha com o que você leu no histórico: devolva "rotinas":[] e uma "pergunta" pedindo a sequência.
 - Só use "pergunta" (uma, curtinha) se faltar algo REALMENTE essencial pra montar; caso contrário, monte com o que tem e deixe "pergunta":null.
 - Se a pessoa PEDIR AJUSTE numa proposta anterior, devolva a semana inteira já ajustada (não só a mudança).`;
 

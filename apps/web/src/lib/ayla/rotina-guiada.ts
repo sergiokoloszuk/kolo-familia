@@ -396,6 +396,13 @@ async function aplicarRotina(
   membroAtipicoId: string,
   r: RotinaProposta,
   tema: string | null,
+  /**
+   * A rotina abre em cartões ou em lista? Até 03/08/2026 a Ayla não escrevia
+   * este campo, e a tela caía no default "cartoes" — então TODA rotina abria
+   * numa grade de cartões vazios, com o cabeçalho dizendo "Rotina Visual",
+   * mesmo quando ninguém tinha decidido que ali cabia apoio visual.
+   */
+  visual = false,
 ): Promise<string | undefined> {
   const nome = r.nome.trim() || "Rotina";
   let q = supabase
@@ -416,13 +423,21 @@ async function aplicarRotina(
         nome,
         dia_semana: r.dia_semana,
         tema: tema || null,
+        modo_exibicao: visual ? "cartoes" : "lista",
       })
       .select("id")
       .single();
     rotinaId = nova?.id as string | undefined;
   } else if (tema) {
     // tema mudou → cartões (temáticos) precisam ser regerados
-    await supabase.from("rotinas").update({ tema, cards_status: "nenhum" }).eq("id", rotinaId);
+    await supabase
+      .from("rotinas")
+      .update({ tema, cards_status: "nenhum", modo_exibicao: visual ? "cartoes" : "lista" })
+      .eq("id", rotinaId);
+  } else if (visual) {
+    // Virou visual numa rodada seguinte: a tela acompanha. O caminho contrário
+    // não existe — se a mãe já escolheu ver em cartões, não desfazemos.
+    await supabase.from("rotinas").update({ modo_exibicao: "cartoes" }).eq("id", rotinaId);
   }
   if (!rotinaId) return undefined;
   await supabase.from("rotina_tarefas").delete().eq("rotina_id", rotinaId);
@@ -546,7 +561,7 @@ export async function conduzirRotina(
     const desde = new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString();
     const { data: msgs } = await supabase
       .from("ayla_messages")
-      .select("texto, direcao, created_at")
+      .select("texto, direcao, tipo, created_at")
       .eq("family_account_id", familyId)
       .gte("created_at", desde)
       .order("created_at", { ascending: true })
@@ -555,11 +570,31 @@ export async function conduzirRotina(
       .map((m) => ({
         de: (m.direcao === "inbound" ? "mae" : "kolo") as "mae" | "kolo",
         texto: ((m.texto as string) ?? "").trim(),
+        tipo: (m.tipo as string | null) ?? null,
       }))
       .filter((h) => h.texto);
     if (!historico.some((h) => h.de === "mae" && h.texto === params.contexto.trim())) {
-      historico.push({ de: "mae", texto: params.contexto.trim() });
+      historico.push({ de: "mae", texto: params.contexto.trim(), tipo: null });
     }
+
+    // ── O QUE PERTENCE A ESTA ROTINA ───────────────────────────────────────
+    // As 12h existem pra a Ayla não re-perguntar o que a mãe já respondeu NESTA
+    // conversa. Só que tudo dentro delas virava matéria-prima da rotina — e foi
+    // assim que "quero organizar a tarde da Manu" saiu com passeio de barco e
+    // protetor solar, herdados de uma conversa de horas antes.
+    //
+    // A fronteira: a conversa de rotina em curso começa depois da última fala
+    // da Ayla que NÃO era de rotina. O que veio antes disso é outro assunto —
+    // conhece a criança, não compõe o dia.
+    let inicio = 0;
+    for (let i = historico.length - 1; i >= 0; i--) {
+      const h = historico[i]!;
+      if (h.de === "kolo" && h.tipo && h.tipo !== "rotina_conversa") {
+        inicio = i + 1;
+        break;
+      }
+    }
+    const historicoDaRotina = historico.slice(inicio);
 
     const transicoesConhecidas = await carregarTransicoes(supabase, params.membroAtipicoId);
     const transicoesTxt = transicoesConhecidas.length
@@ -582,13 +617,26 @@ export async function conduzirRotina(
     // Roda ANTES de qualquer montagem. Até 03/08/2026 quem decidia era o
     // próprio modelo, no meio da geração — e foi assim que uma bebê de 18 dias
     // ganhou uma rotina com intervalo entre mamadas, em PDF.
-    const conversaTxt = historico
-      .map((h) => `${h.de === "mae" ? "Mãe" : "Ayla"}: ${h.texto}`)
-      .join("\n");
+    const linhas = (hs: typeof historico) =>
+      hs.map((h) => `${h.de === "mae" ? "Mãe" : "Ayla"}: ${h.texto}`).join("\n");
+    const conversaTxt = linhas(historicoDaRotina);
+    // O que veio ANTES desta conversa entra rotulado como o que é: contexto.
+    // Assim a prontidão consegue julgar "ela apontou pro que já contou?" sem
+    // confundir aquilo com a sequência de agora.
+    const anteriorTxt = inicio > 0 ? linhas(historico.slice(0, inicio)) : "";
     const prontidao = await avaliarProntidaoParaRotina({
       mensagem: params.contexto,
       conversa: conversaTxt,
-      contexto: [jaSabemos.perfil, jaSabemos.rotinaExistente, transicoesTxt].filter(Boolean).join("\n"),
+      contexto: [
+        jaSabemos.perfil,
+        jaSabemos.rotinaExistente,
+        transicoesTxt,
+        anteriorTxt
+          ? `CONVERSA ANTERIOR (outro assunto — contexto, NÃO é a sequência de agora):\n${anteriorTxt}`
+          : "",
+      ]
+        .filter(Boolean)
+        .join("\n"),
       idadeMeses: idadeEmMeses((membro.data_nascimento as string | null) ?? null),
     });
     // ── PISO DO TAMANHO ────────────────────────────────────────────────────
@@ -598,7 +646,11 @@ export async function conduzirRotina(
     const pedidoExplicito = pediuRotinaExplicitamente(params.contexto);
     // Em qualquer momento da conversa: o "manda com os cartões" costuma vir um
     // turno depois do pedido da rotina.
-    const historicoPediuVisual = historico.some((h) => h.de === "mae" && pediuApoioVisual(h.texto));
+    // SÓ O PEDIDO EM CURSO. Varria as 12h — e "cartões" dito três horas antes,
+    // em outro assunto, ligava o visual de uma rotina que ninguém pediu visual.
+    const historicoPediuVisual = historicoDaRotina.some(
+      (h) => h.de === "mae" && pediuApoioVisual(h.texto),
+    );
     const tamanho = pedidoExplicito ? "rotina" : prontidao.tamanho;
     // O apoio visual segue a NECESSIDADE, com um piso: quem pediu "rotina
     // visual" ou "cartões" recebe. Pedir rotina, sozinho, não pede cartão —
@@ -734,7 +786,9 @@ ${jaSabemos.rotinaExistente}`
         nome,
         idade,
         idadeMeses: idadeEmMeses((membro.data_nascimento as string | null) ?? null),
-        historico,
+        // O gerador compõe a sequência SÓ com o pedido em curso. A janela
+        // inteira volta apenas quando a mãe mandou usar o que já contou.
+        historico: prontidao.reusaHistorico ? historico : historicoDaRotina,
         mensagem: params.contexto,
         contexto: [jaSabemos.perfil, jaSabemos.rotinaExistente, transicoesTxt].filter(Boolean).join("\n"),
         pontoDificil: pontoDificilDoTurno,
@@ -808,12 +862,15 @@ ${jaSabemos.rotinaExistente}`
 
       const ids: string[] = [];
       for (const r of rotinas) {
-        const id = await aplicarRotina(supabase, familyId, params.membroAtipicoId, r, tema);
+        const id = await aplicarRotina(supabase, familyId, params.membroAtipicoId, r, tema, visual);
         if (id) ids.push(id);
       }
       // PDF só quando imprimir serve: ela pediu, ou já pediu em algum momento
       // desta conversa (o "manda em PDF" costuma vir um turno depois).
-      const querImprimir = historico.some((h) => h.de === "mae" && pediuParaImprimir(h.texto));
+      // Mesma fronteira do visual: "imprimir" de outro assunto não manda PDF.
+      const querImprimir = historicoDaRotina.some(
+        (h) => h.de === "mae" && pediuParaImprimir(h.texto),
+      );
       if (params.phoneE164 && querImprimir) {
         await entregarPdfDaRotina(supabase, {
           familyId,

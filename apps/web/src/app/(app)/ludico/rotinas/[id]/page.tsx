@@ -38,6 +38,9 @@ export default async function RotinaPage({
   const membro = rel ? (Array.isArray(rel) ? rel[0] ?? null : rel) : null;
   const nomeMembro = membro?.nome ? capitalizarNome(membro.nome) : null;
   const idade = idadeAnos(membro?.data_nascimento ?? null);
+  // O default continua "cartoes" pra não mexer no que já existe no banco; quem
+  // nasce pela Ayla agora chega com o modo já decidido.
+  const modoInicial = ((rotina.modo_exibicao as string | null) ?? "cartoes") as "cartoes" | "lista";
 
   // #2: avatares da criança (pra oferecer "usar o avatar nos cards" + escolher qual)
   const membroId = rotina.membro_atipico_id as string | null;
@@ -81,7 +84,9 @@ export default async function RotinaPage({
       </Link>
 
       <div className="print:hidden">
-        <Eyebrow>Rotina Visual</Eyebrow>
+        {/* O rótulo segue o MODO. Dizer "Rotina Visual" sempre era prometer
+            cartões ilustrados numa rotina que nunca ia ter nenhum. */}
+        <Eyebrow>{modoInicial === "cartoes" ? "Rotina Visual" : "Rotina"}</Eyebrow>
         {nomeMembro && (
           <p className="mt-1 text-sm text-muted-foreground">
             {nomeMembro}
@@ -96,7 +101,7 @@ export default async function RotinaPage({
         membroAtipicoId={membroId as string}
         diaSemana={(rotina.dia_semana as number | null) ?? null}
         nomeInicial={rotina.nome as string}
-        modoInicial={((rotina.modo_exibicao as string | null) ?? "cartoes") as "cartoes" | "lista"}
+        modoInicial={modoInicial}
         nomeMembro={nomeMembro}
         avatares={avataresMembro}
         tema={(rotina.tema as string | null) ?? null}
