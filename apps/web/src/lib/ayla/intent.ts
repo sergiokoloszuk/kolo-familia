@@ -16,7 +16,18 @@ import { CHAVES_TEMA } from "@/lib/conducao/temas";
  */
 
 /** O que o turno é (intenção) E sobre o que ele é (tema). */
-export type TurnoClassificado = { intencao: IntencaoAyla; tema: string | null };
+export type TurnoClassificado = {
+  intencao: IntencaoAyla;
+  tema: string | null;
+  /**
+   * A mãe está ACEITANDO algo que a Ayla acabou de oferecer? Vem em UMA frase,
+   * com o que foi aceito ("montar uma história social sobre chegar num grupo").
+   *
+   * Existe porque "sim" não carrega conteúdo: sem referente resolvido, o modelo
+   * reconstrói o turno a partir da conversa inteira e responde outra coisa.
+   */
+  aceite: string | null;
+};
 
 export type IntencaoAyla =
   | "rotina_criar" // montar/criar/desenhar/organizar uma rotina visual
@@ -34,7 +45,8 @@ export type IntencaoAyla =
 
 const SYSTEM = `Você classifica a INTENÇÃO da última mensagem de uma mãe/pai falando com a Ayla (assistente de famílias atípicas), no WhatsApp. Entenda a INTENÇÃO, não palavras exatas.
 
-Responda em UMA linha, minúscula, no formato: intencao|tema
+Responda em UMA linha, no formato: intencao|tema|aceite
+(a intenção e o tema em minúscula; o aceite em texto normal, ou "-" quando não houver)
 
 A INTENÇÃO é uma destas:
 - rotina_criar: quer MONTAR / criar / desenhar / organizar uma rotina visual (de um dia ou da semana). Ex.: "quero uma rotina", "vamos desenhar a rotina do Davi", "me ajuda a organizar melhor os dias dele", "preciso de rotina visual", "poderia montar um quadro pra ele?".
@@ -57,6 +69,11 @@ Regras importantes:
   Vale mesmo quando a reação é forte: "ela fica agressiva quando aviso que é hora de sair de casa" é organizacao — a agressão está amarrada no aviso da mudança. "ela está agressiva ultimamente" é plano.
   E vale ao contrário: "não consegue fazer tarefa, perde o foco" é plano (habilidade); "não consegue COMEÇAR a tarefa depois que chega da escola" é organizacao (a passagem escola → tarefa).
 - Na dúvida entre "organizacao" e "outro": episódio isolado é outro; padrão que se repete é organizacao.
+- ACEITAR UMA OFERTA É DIFERENTE DE RESPONDER UMA PERGUNTA — e este é o teste: na última fala, a Ayla OFERECEU fazer alguma coisa ("se quiser, eu monto…", "quer que eu…", "posso montar…"), ou PERGUNTOU pra entender melhor?
+  Se ofereceu e a mensagem de agora aceita ("sim", "quero", "vamos", "pode fazer", "faz", "sim, por favor", "vamos montar uma história"), então: a INTENÇÃO é a da coisa oferecida — mas SÓ quando a oferta era de um ARTEFATO: ofereceu montar a rotina visual → rotina_criar; ofereceu o PLANO estratégico (o PDF) → plano. Oferecer "pensar numa estratégia", "uma ideia", "uma história", "te ajudar com isso" é CONVERSA: intencao = "outro", e o aceite diz o que era. Aceitar uma ideia não pode abrir uma ferramenta que ela não pediu, e o campo "aceite" descreve em uma frase O QUE ela aceitou, puxando da própria oferta ("montar uma história social sobre chegar num grupo de crianças").
+  Caso real (04/08/2026): a Ayla ofereceu montar uma história pro Gustavo, a mãe respondeu "Sim. Vamos montar uma história." — e recebeu uma resposta sobre não poder dar diagnóstico. O "sim" não tinha referente, e o modelo respondeu a conversa inteira em vez do que ela aceitou.
+  ⚠️ A FALA DA AYLA QUASE SEMPRE TEM AS DUAS COISAS — ela pergunta E oferece na mesma mensagem ("Me conta o que você reparar. E se quiser, a gente pode montar uma história…"). Nesse caso, olhe pro que a MÃE respondeu: se ela retomou a COISA OFERECIDA ("vamos montar uma história", "quero a rotina", "pode fazer o plano"), é ACEITE — mesmo que a Ayla também tenha perguntado algo. Só é resposta-a-pergunta quando ela responde o CONTEÚDO da pergunta ("ele grita", "na escola", "depois que ele já fez").
+  ⚠️ OFERTA COM DUAS OPÇÕES + "sim" É AMBÍGUO: aceite = "-" e intencao = "outro". Quem pergunta qual das duas é a Ayla, na resposta.
 - RESPOSTA A UMA PERGUNTA NÃO É PEDIDO. Se a Ayla acabou de perguntar algo e a mensagem é curta ("sim", "não", "às vezes", "depois que ele já fez", "na escola", "ele grita"), ela está RESPONDENDO — a intenção é "outro", sempre. Uma mensagem sem verbo de pedido não abre ferramenta nenhuma. Caso real (02/08/2026): a Ayla perguntou "ele já fez xixi quando pega a fralda?", a mãe respondeu "Depois q ele já fez", e isso virou rotina_editar — no meio de uma conversa sobre desfralde ela recebeu "não achei uma rotina pra ajustar".
 - Os TEMAS listados no contexto (o que a família marcou no cadastro) servem SÓ para escolher o tema. Eles NUNCA indicam intenção: ver a palavra "rotina" na lista de temas não significa que ela está pedindo uma rotina agora.
 - Responda SÓ a linha.
@@ -85,7 +102,7 @@ export async function classificarIntencao(params: {
   const texto = (params.texto ?? "").trim();
   const anterior = params.temaAnterior ?? null;
   // Sem texto não há o que classificar — mas o tema não se perde por isso.
-  if (!texto) return { intencao: "outro", tema: anterior };
+  if (!texto) return { intencao: "outro", tema: anterior, aceite: null };
   try {
     const user = [
       // ⚠️ Rotulado com força de propósito. Sem o rótulo, esta linha derrubava
@@ -111,14 +128,16 @@ export async function classificarIntencao(params: {
     const client = getAylaAnthropicClient();
     const resp = await client.messages.create({
       model: AYLA_MODEL,
-      max_tokens: 24,
+      // 24 bastavam pra "intencao|tema". Com o "aceite" — uma frase — a
+      // resposta era cortada no meio e o campo saía com sobra de raciocínio.
+      max_tokens: 100,
       system: SYSTEM,
       messages: [{ role: "user", content: user }],
     });
     const b = resp.content[0];
     const raw = (b?.type === "text" ? b.text : "").toLowerCase();
 
-    const [ladoIntencao, ladoTema] = raw.split("|");
+    const [ladoIntencao, ladoTema, ladoAceite] = raw.split("|");
     const i = ladoIntencao ?? raw;
 
     // Ordem importa: checar os específicos antes de "rotina" solto.
@@ -140,10 +159,13 @@ export async function classificarIntencao(params: {
     const candidata = (ladoTema ?? "").trim().replace(/[^a-z_]/g, "");
     const tema = CHAVES_TEMA.includes(candidata) ? candidata : anterior;
 
-    return { intencao, tema };
+    const bruto = (ladoAceite ?? "").trim();
+    const aceite = bruto && bruto !== "-" && bruto.length > 3 ? bruto.slice(0, 200) : null;
+
+    return { intencao, tema, aceite };
   } catch (e) {
     console.warn("[ayla:intent] classificação falhou:", e instanceof Error ? e.message : e);
     // Fallback seguro: o regex/reativo decide a intenção, e o tema não se perde.
-    return { intencao: "outro", tema: anterior };
+    return { intencao: "outro", tema: anterior, aceite: null };
   }
 }

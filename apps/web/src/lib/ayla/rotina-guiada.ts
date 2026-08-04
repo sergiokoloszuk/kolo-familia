@@ -629,7 +629,15 @@ export async function conduzirRotina(
       conversa: conversaTxt,
       contexto: [
         jaSabemos.perfil,
-        jaSabemos.rotinaExistente,
+        // ROTULADA, como a conversa anterior — e pelo mesmo motivo. Entrando
+        // crua, uma rotina de ontem ("Tarde da Manu: Almoço → Tarefa → Brincar
+        // → Banho…") era lida como a sequência de AGORA: em 04/08/2026 a mãe
+        // disse só "quero organizar a rotina do dia da Manu" e o porteiro
+        // devolveu "suficiente". O gerador inventou o dia, o validador barrou,
+        // e ela recebeu "montei aqui, mas prefiro confirmar".
+        jaSabemos.rotinaExistente
+          ? `ROTINA QUE JÁ EXISTE (de outro pedido — serve pra conhecer a criança; NÃO é a sequência de agora e NÃO conta como sequência informada):\n${jaSabemos.rotinaExistente}`
+          : "",
         transicoesTxt,
         anteriorTxt
           ? `CONVERSA ANTERIOR (outro assunto — contexto, NÃO é a sequência de agora):\n${anteriorTxt}`
@@ -684,6 +692,9 @@ export async function conduzirRotina(
         : "",
       prontidao.desfecho === "falta" && prontidao.pergunta
         ? `AINDA FALTA UMA COISA pra montar: ${prontidao.pergunta}\nFaça ESSA pergunta, do seu jeito — UMA só —, e NÃO monte a rotina neste turno (acao="perguntar").`
+        : "",
+      prontidao.desfecho === "falta" && /sequ[êe]ncia|ordem|o que acontece|como (é|e) (a|o)/i.test(prontidao.pergunta ?? "")
+        ? `O QUE FALTA É A SEQUÊNCIA — e o jeito de pedir ENSINA a mãe a usar você. Peça as atividades na ordem em que acontecem e MOSTRE como é simples, com um exemplo curto ("café → escola → almoço → brincar → banho → jantar → dormir"). Diga que horário é OPCIONAL e ofereça o áudio. Uma frase, do seu jeito, sem virar formulário — e NÃO peça mais nada além da sequência (nem horário, nem ponto difícil, nem idade).`
         : "",
       soOrientacao ? ORIENTACAO_DE_TRANSICAO : "",
       // VAI HAVER CARTÃO. Então o tema volta a ser proposto — de verdade, com
@@ -812,7 +823,7 @@ ${jaSabemos.rotinaExistente}`
         return {
           mensagem: clinico
             ? `Consigo organizar bastante coisa do dia — a sequência, o banho, as trocas, o descanso, e o que vale anotar. Só a parte de horários e quantidades de mamada/alimentação eu não decido: isso segue com quem acompanha ${nome}. Me conta o que a pediatra já orientou sobre isso? Aí eu encaixo do jeito que ela falou e monto o resto em volta.`
-            : `Montei aqui, mas ficou uma coisa que eu prefiro confirmar com você antes de mandar o quadro. Me conta como é essa parte do dia de vocês, na ordem que acontece — aí eu monto em cima do real, e não do que eu imaginei.`,
+            : `Pra montar esse quadro eu preciso da sequência do jeito que ela acontece aí — eu organizo, mas quem sabe o dia de vocês é você. Me manda na ordem, simples assim: café → escola → almoço → brincar → banho → jantar → dormir. Horário é opcional, e pode mandar áudio que eu transcrevo.`,
           pronto: false,
         };
       }
@@ -855,7 +866,7 @@ ${jaSabemos.rotinaExistente}`
         return {
           mensagem: clinico
             ? `Consigo te ajudar a organizar bastante coisa do dia ${nome ? `${nome === "seu filho" ? "" : "d"}${nome === "seu filho" ? "" : "a "}` : ""}— a sequência, o banho, as trocas, o descanso, e o que vale anotar. Só que a parte de horários e quantidades de mamada/alimentação eu não decido: isso segue com quem acompanha ${nome}. Me conta o que a pediatra já orientou sobre isso? Aí eu encaixo do jeito que ela falou e monto o resto em volta.`
-            : `Montei aqui, mas ficou uma coisa que eu prefiro confirmar com você antes de mandar o quadro. Me conta como é essa parte do dia de vocês, na ordem que acontece — aí eu monto em cima do real e não do que eu imaginei.`,
+            : `Pra montar esse quadro eu preciso da sequência do jeito que ela acontece aí — eu organizo, mas quem sabe o dia de vocês é você. Me manda na ordem, simples assim: café → escola → almoço → brincar → banho → jantar → dormir. Horário é opcional, e pode mandar áudio que eu transcrevo.`,
           pronto: false,
         };
       }
@@ -918,10 +929,22 @@ ${jaSabemos.rotinaExistente}`
       const fechamento = mensagem || `Prontinho — montei a rotina do(a) ${nome} 🌿`;
       // A ENTREGA CONCRETA é a rotina no app. O PDF é opção de impressão, e a
       // frase tem que dizer a verdade sobre o que existe agora.
+      // ROTINA COMPLETA PEDIDA → OS CARTÕES SÃO O PRODUTO. Uma coisa é a mãe
+      // trazer uma transição difícil (aí a menor ajuda resolve, e empurrar
+      // cartão é vender ferramenta). Outra é ela pedir "quero organizar a
+      // rotina do dia" e mandar a sequência inteira: aí a Kolo agrega ao
+      // transformar aquilo em algo que a criança usa. Decisão do Sérgio,
+      // 04/08/2026 — e a oferta vem DEPOIS de organizar, nunca na primeira
+      // fala: perguntar tema antes de entender o dia é formulário.
+      const ofereceCartoes =
+        !autoGerou && !faltaTema && pedidoExplicito && tamanho === "rotina" && !temSemana;
+      // A conversa segue ABERTA enquanto a resposta dela ainda pode virar
+      // imagem — vale pro tema que falta e pra oferta que acabou de sair.
+      if (ofereceCartoes) faltaTemaFinal = true;
       const cartoes = autoGerou
         ? ` Já comecei a gerar os cartões no tema *${tema}* — eles levam *1-2 minutinhos*, então pode abrir que vão aparecendo sozinhos 🌿`
-        : faltaTema
-          ? ` Os cartões ilustrados eu gero assim que você escolher o tema${interesses ? ` — quer no tema de *${interesses.split(/[,;]/)[0]?.trim()}*?` : " — me diz o que ele ama que eu faço com a cara dele."}`
+        : faltaTema || ofereceCartoes
+          ? ` Se quiser, eu transformo isso em cartões ilustrados pra ${nome} acompanhar o dia${interesses ? ` — posso fazer no tema de *${interesses.split(/[,;]/)[0]?.trim()}*, que eu sei que ${nome} gosta. Quer?` : ". Me fala um tema que ele(a) ama — animais, princesas, fundo do mar, algum personagem — que eu faço com a cara dele(a)."}`
           : "";
       const impresso = querImprimir
         ? " Te mandei também um *PDF pra imprimir* (com quadradinhos pra marcar)."
