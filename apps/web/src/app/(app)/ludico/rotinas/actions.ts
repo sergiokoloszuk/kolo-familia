@@ -10,6 +10,7 @@ import { resolveFamily } from "@/lib/auth/current-family";
 import { requireActiveWrite } from "@/lib/auth/require-active-write";
 import { trackFeature } from "@/lib/analytics/track";
 import { DIAS_SEMANA } from "./dias";
+import { avatarDaCrianca, nomeAPartirDosPassos } from "@/lib/ludico/interesses";
 
 type Ok<T = object> = { ok: true } & T;
 type Fail = { ok: false; error: string };
@@ -733,6 +734,155 @@ export async function gerarCardsVisuais(
     });
 
     return { ok: true };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "Erro inesperado" };
+  }
+}
+
+// ============================================================
+// A FÓRMULA ÚNICA — nome (opcional) + passos + tema + personagem
+//
+// Substitui as três portas antigas (assistente, criar dia, nova rotina). Não é
+// um segundo sistema: reusa `gerarRoteiroRotina` e `ilustrarCards`, que já são
+// os mesmos que a Ayla usa. O que sai daqui é o que sempre saiu — cartões,
+// historinha e PDF —, só que num passo.
+//
+// Sem horário, de propósito: o campo era a maior fonte de rotina barrada
+// (o gerador inventava "18h — Banho" e o validador cortava). Sem hora não há
+// o que validar, e a mãe não precisa saber a que horas nada acontece.
+// ============================================================
+
+const criarVisualSchema = z.object({
+  membroAtipicoId: z.string().uuid(),
+  nome: z.string().max(80).optional().default(""),
+  passos: z.array(z.string().min(1).max(120)).min(1).max(40),
+  tema: z.string().max(40).optional().default(""),
+  usarAvatar: z.boolean().optional().default(false),
+});
+
+export async function criarRotinaVisual(
+  input: z.infer<typeof criarVisualSchema>,
+): Promise<Ok<{ rotinaId: string }> | Fail> {
+  try {
+    const { membroAtipicoId, nome, passos, tema, usarAvatar } = criarVisualSchema.parse(input);
+    const { supabase, family } = await requireFamily();
+
+    // ⚠️ ISOLAMENTO. O membro tem que ser DESTA família — sem isso, um id
+    // colado de outra conta criaria rotina na criança errada. É a mesma classe
+    // de erro que pôs a rotina da consulta médica no irmão.
+    const { data: membro } = await supabase
+      .from("membros_atipicos")
+      .select("id, nome, data_nascimento")
+      .eq("id", membroAtipicoId)
+      .eq("family_account_id", family.id)
+      .maybeSingle();
+    if (!membro) return { ok: false, error: "Não encontrei essa criança na sua conta." };
+
+    const limpos = passos.map((p) => p.trim()).filter(Boolean).slice(0, 40);
+    if (!limpos.length) return { ok: false, error: "Escreva pelo menos um passo." };
+
+    const titulo = nome.trim() || nomeAPartirDosPassos(limpos);
+
+    // Avatar só vale se for DESTA criança — a consulta já filtra por membro e
+    // família, e sem imagem a opção simplesmente não se aplica.
+    const avatarUrl = usarAvatar
+      ? await avatarDaCrianca(supabase, { membroId: membroAtipicoId, familyId: family.id })
+      : null;
+
+    const { data: nova, error: insErr } = await supabase
+      .from("rotinas")
+      .insert({
+        family_account_id: family.id,
+        membro_atipico_id: membroAtipicoId,
+        nome: titulo,
+        // dia_semana null = rotina avulsa. A tabela da semana continua
+        // existindo pra quem já montou lá, mas nada novo nasce nela.
+        dia_semana: null,
+        tema: tema.trim() || null,
+        modo_exibicao: "cartoes",
+        cards_status: "nenhum",
+      })
+      .select("id")
+      .single();
+    if (insErr || !nova) return { ok: false, error: "Não consegui criar a rotina agora." };
+    const rotinaId = nova.id as string;
+
+    await supabase.from("rotina_tarefas").insert(
+      limpos.map((texto, i) => ({
+        rotina_id: rotinaId,
+        texto,
+        // SEM HORA. Ver o comentário do bloco.
+        hora: null,
+        icone: null,
+        ordem: i,
+      })),
+    );
+
+    revalidatePath("/ludico/rotinas");
+    after(() =>
+      trackFeature({ familyId: family.id, evento: "ludico_gerado", detalhe: { tipo: "rotina" } }),
+    );
+
+    // Só ilustra quando há tema OU avatar — o gerador precisa de um dos dois
+    // pra ter o que desenhar. Sem eles a rotina existe como lista, e a mãe
+    // escolhe o tema depois na própria tela.
+    const temaParaRoteiro = tema.trim() || (avatarUrl ? "do dia a dia" : "");
+    if (temaParaRoteiro) {
+      const familyId = family.id;
+      const idade = idadeAnos((membro.data_nascimento as string | null) ?? null);
+      await supabase.from("rotinas").update({ cards_status: "gerando" }).eq("id", rotinaId);
+
+      after(async () => {
+        const svc = createServiceRoleClient();
+        try {
+          const roteiro = await gerarRoteiroRotina(
+            {
+              tema: temaParaRoteiro,
+              atividades: limpos,
+              idade,
+              nomeRotina: titulo,
+              usarAvatar: Boolean(avatarUrl),
+            },
+            { supabase: svc, family_account_id: familyId },
+          );
+          const { mascoteUrl, imagens } = await ilustrarCards(svc, {
+            familyAccountId: familyId,
+            tema: temaParaRoteiro,
+            mascoteDescricao: roteiro.mascote,
+            cards: roteiro.cards,
+            referenciaUrl: avatarUrl ?? undefined,
+          });
+          const { data: linhas } = await svc
+            .from("rotina_tarefas")
+            .select("id, ordem")
+            .eq("rotina_id", rotinaId)
+            .order("ordem", { ascending: true });
+          await Promise.all(
+            (linhas ?? []).map((l, i) => {
+              const card = roteiro.cards[i];
+              if (!card) return Promise.resolve();
+              return svc
+                .from("rotina_tarefas")
+                .update({
+                  nome_tematico: card.nome_tematico,
+                  cena: card.cena,
+                  imagem_url: imagens[i] ?? null,
+                })
+                .eq("id", l.id as string);
+            }),
+          );
+          await svc
+            .from("rotinas")
+            .update({ historia: roteiro.historia, mascote_url: mascoteUrl, cards_status: "pronto" })
+            .eq("id", rotinaId);
+        } catch (e) {
+          console.warn("[rotina:visual] ilustração falhou:", e instanceof Error ? e.message : e);
+          await svc.from("rotinas").update({ cards_status: "erro" }).eq("id", rotinaId);
+        }
+      });
+    }
+
+    return { ok: true, rotinaId };
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : "Erro inesperado" };
   }
