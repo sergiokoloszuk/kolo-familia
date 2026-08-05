@@ -18,6 +18,7 @@ import { AtalhosKolo } from "./atalhos-kolo";
 import { PrimeiroPasso, desafiosDoOnboarding } from "./primeiro-passo";
 import { AtivarAylaCard } from "./ativar-ayla";
 import { ReverTour } from "../tour-guiado";
+import { CardVideoGuia } from "@/components/video-guia";
 
 // ============================================================
 // Chips categóricos do Foco da semana
@@ -791,6 +792,16 @@ export default async function PainelPage({
       <div className="-mt-4 flex justify-end">
         <ReverTour />
       </div>
+
+      {/* ============================================================
+       * O GUIA EM VÍDEO — hierarquia SECUNDÁRIA de propósito. Fica depois das
+       * boas-vindas e antes dos sinais, e não pode competir com o Registro do
+       * dia nem com o banner do trial. Existe pra uma pergunta só: "não
+       * entendeu a Kolo? o guia está aqui". A auditoria do trial (04/08/2026)
+       * achou 21 de 42 famílias chegando ao fim do teste sem nunca ter escrito
+       * pra Ayla — elas não descobriram o que dava pra pedir.
+       * ============================================================ */}
+      <CardVideoGuia />
 
       {/* ============================================================
        * TIRA DE SINAIS — fileira de tiles (plaquinha amarela, IconCard) no

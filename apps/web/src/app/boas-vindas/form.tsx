@@ -2,8 +2,11 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { useEffect } from "react";
+import { PlayerGuia } from "@/components/video-guia";
+import { track } from "@/lib/analytics/track-client";
 import { Sparkles, MessageCircle, BookHeart, ArrowRight, Sunrise, Sun, CloudSun, Moon } from "lucide-react";
-import { salvarBoasVindas, type JanelaKey } from "./actions";
+import { salvarBoasVindas, pularBoasVindas, type JanelaKey } from "./actions";
 import { capitalizarNome } from "@/lib/nome";
 
 type Janela = {
@@ -23,14 +26,22 @@ const JANELAS: Janela[] = [
 export function BoasVindasForm({
   nome,
   primeiraCrianca,
+  periodo,
 }: {
   nome: string;
   primeiraCrianca: { id: string; nome: string } | null;
+  /** Duração REAL do período gratuito. Null quando já é assinante. */
+  periodo: { dias: number; cortesia: boolean } | null;
 }) {
   const router = useRouter();
   const [janela, setJanela] = useState<JanelaKey | null>(null);
   const [erro, setErro] = useState<string | null>(null);
   const [pending, start] = useTransition();
+
+  // Quantas famílias novas chegam a ver o guia — e quantas seguem sem ver.
+  useEffect(() => {
+    track("onboarding_video_exibido");
+  }, []);
 
   const saudacao = nome
     ? `Que bom que você chegou, ${capitalizarNome(nome)}.`
@@ -66,6 +77,25 @@ export function BoasVindasForm({
           quando é melhor pra eu te mandar uma mensagem rápida no WhatsApp?
         </p>
       </header>
+
+      {/* O PERÍODO GRATUITO E O GUIA EM VÍDEO.
+          A auditoria do trial mostrou metade das famílias chegando ao fim do
+          teste sem nunca ter escrito pra Ayla: elas não descobrem o que dá pra
+          pedir. O vídeo é a explicação principal — e ninguém é obrigado a ver. */}
+      {periodo && (
+        <p className="-mt-4 text-center text-sm font-semibold text-brand-purple">
+          Seu período {periodo.cortesia ? "de cortesia" : "gratuito"} de {periodo.dias}{" "}
+          {periodo.dias === 1 ? "dia" : "dias"} começa agora.
+        </p>
+      )}
+
+      <section className="flex flex-col gap-3">
+        <p className="text-center text-sm text-muted-foreground">
+          Você não precisa saber exatamente o que pedir — a Kolo vai te ajudando a encontrar
+          caminhos para os desafios do dia a dia. Este vídeo curto mostra como.
+        </p>
+        <PlayerGuia titulo="Como usar a Kolo Família — guia completo" />
+      </section>
 
       {/* Janela WhatsApp — 4 chips */}
       <section className="flex flex-col gap-3">
@@ -154,6 +184,19 @@ export function BoasVindasForm({
           {pending ? "Abrindo…" : "Dá pra fazer as duas — escolha por onde começar."}
         </p>
       </section>
+
+      {/* PULAR — a ação já existia e nunca tinha sido ligada a um botão: até
+          hoje a mãe era obrigada a escolher janela e porta pra entrar. Ninguém
+          é obrigado a assistir nem a decidir agora. */}
+      <form action={pularBoasVindas}>
+        <button
+          type="submit"
+          onClick={() => track("onboarding_video_pulado")}
+          className="mx-auto flex items-center gap-1 text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+        >
+          Pular por enquanto <ArrowRight className="size-3.5" aria-hidden />
+        </button>
+      </form>
 
       {erro && (
         <p className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
