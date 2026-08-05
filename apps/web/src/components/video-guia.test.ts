@@ -107,8 +107,10 @@ describe("eventos — sem schema novo", () => {
     expect(FORM_BV).toMatch(/track\("onboarding_video_pulado"\)/);
   });
 
-  it("aberto, na Home", () => {
-    expect(VIDEO).toMatch(/track\("home_video_aberto"\)/);
+  it("aberto — a porta usada vira o evento", () => {
+    expect(VIDEO).toMatch(/track\(evento\)/);
+    expect(VIDEO).toMatch(/evento = "home_video_aberto"/);
+    expect(VIDEO).toMatch(/"home_video_aberto" \| "onboarding_video_aberto"/);
   });
 
   it("NÃO inventa 'concluído' — o embed não expõe isso de forma confiável", () => {
@@ -183,13 +185,18 @@ describe("analytics reaproveitando /api/track", () => {
 });
 
 describe("o guia foi pro lugar que a família realmente vê", () => {
-  it("está na última tela do onboarding", () => {
-    expect(TELA6).toMatch(/<PlayerGuia titulo="Como usar a Kolo Família — guia completo" \/>/);
+  it("está na última tela do onboarding, e RECOLHIDO", () => {
+    expect(TELA6).toMatch(/<CardVideoGuia/);
+    expect(TELA6).toMatch(/evento="onboarding_video_aberto"/);
+    expect(TELA6).toMatch(/Quer ver como a Kolo funciona por dentro\?/);
+    // Player aberto por padrão deixava a última tela do cadastro comprida no
+    // celular, logo antes do botão que conclui.
+    expect(TELA6).not.toMatch(/<PlayerGuia/);
   });
 
   it("o comentário registra por que não fica na /boas-vindas", () => {
-    expect(TELA6).toMatch(/A \/boas-vindas foi FUNDIDA nesta tela/);
-    expect(TELA6).toMatch(/0 de 82 famílias com o campo nulo/);
+    expect(TELA6).toMatch(/aquela tela foi FUNDIDA nesta/);
+    expect(TELA6).toMatch(/0 de 82 famílias/);
   });
 });
 
@@ -200,8 +207,12 @@ describe("a Ayla oferece o vídeo uma vez, e por último", () => {
   });
 
   it("o sinal é o CLIQUE, não a exibição — não inventa 'assistiu'", () => {
-    expect(ORCH).toMatch(/\.eq\("evento", "home_video_aberto"\)/);
-    expect(ORCH).not.toMatch(/eq\("evento", "onboarding_video_exibido"\)/);
+    // As DUAS portas contam — quem viu no onboarding e nunca voltou à Home
+    // ficaria de fora se só a Home contasse.
+    expect(ORCH).toMatch(/\.in\("evento", \["home_video_aberto", "onboarding_video_aberto"\]\)/);
+    // O evento só pode aparecer no comentário que o exclui, nunca numa query.
+    expect(ORCH).not.toMatch(/"evento", "onboarding_video_exibido"/);
+    expect(ORCH).toMatch(/`onboarding_video_exibido` NÃO entra/);
     expect(ORCH).toMatch(/só diz que o\n   \* player esteve na tela — não que ela assistiu/);
   });
 

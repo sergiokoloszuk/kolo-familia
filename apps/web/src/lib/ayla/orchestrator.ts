@@ -105,7 +105,12 @@ export type EnvioResultado =
 const LINK_GUIA_KOLO = "https://www.tella.tv/video/como-usar-a-kolo-familia-guia-completo-gy18";
 
 /**
- * A família CLICOU pra ver o guia no app? Só o clique conta.
+ * A família CLICOU pra ver o guia no app? Só o clique conta, e vale nas DUAS
+ * portas: o card do fim do cadastro e o da Home. Considerar só a Home deixaria
+ * de fora justamente quem viu no onboarding e nunca voltou lá.
+ *
+ * `onboarding_video_exibido` NÃO entra: ele só prova que a tela carregou.
+ *
  * Em falha, assume que SIM — mandar o link de novo pra quem já viu incomoda
  * mais do que deixar de mandar pra quem não viu.
  */
@@ -115,7 +120,7 @@ async function abriuGuiaNoApp(supabase: SupabaseClient, familyId: string): Promi
       .from("user_events")
       .select("id")
       .eq("family_account_id", familyId)
-      .eq("evento", "home_video_aberto")
+      .in("evento", ["home_video_aberto", "onboarding_video_aberto"])
       .limit(1);
     return (data?.length ?? 0) > 0;
   } catch {
