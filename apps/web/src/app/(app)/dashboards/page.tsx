@@ -231,7 +231,7 @@ export default async function AquisicaoJornadaPage({
         >
           <div className="mb-3">
             <Link href="/dashboards" className="text-sm font-medium text-brand-purple hover:underline">
-              ← limpar seleção
+              ← Voltar para a visão geral
             </Link>
           </div>
           {segAtivo === SEG_CHECKOUT && familiasSeg.length > 0 && (
@@ -526,7 +526,14 @@ export default async function AquisicaoJornadaPage({
         <BarList items={j.dorRank} />
       </Bloco>
 
-      {/* Leads em trial */}
+      {/* Leads em trial — ESCONDIDA enquanto um recorte está aberto.
+          Uma família em trial no estágio "Cadastrou" satisfaz as duas listas:
+          com o drill-down aberto ela aparecia aqui também, e parecia duplicada
+          (05/08/2026). Não há duplicidade nenhuma — a auditoria fechou 150
+          usuários, 150 famílias, 1:1 em toda tabela relevante. São duas listas
+          com propósitos diferentes, e quem abriu um recorte quer ver o recorte.
+          Nada aqui muda dado, contagem ou query: só o que fica na tela. */}
+      {!segDef && (
       <Bloco titulo="Leads em trial" desc="Cada lead, sua origem e a fase atual. Anônimo.">
         {j.leads.length === 0 ? (
           <Vazio texto="Nenhum lead em trial agora." />
@@ -598,6 +605,7 @@ export default async function AquisicaoJornadaPage({
           </div>
         )}
       </Bloco>
+      )}
     </div>
   );
 }
