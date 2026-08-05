@@ -42,11 +42,22 @@ export function PlayerGuia({ titulo, src }: { titulo: string; src?: string }) {
  *
  * Abre em modal — a pessoa assiste sem sair da plataforma.
  */
-export function CardVideoGuia() {
+export function CardVideoGuia({
+  titulo = "Conheça tudo o que você pode fazer na Kolo",
+  descricao = "Em poucos minutos: como conversar com a Ayla, criar planos, rotinas e histórias, registrar o dia e acompanhar a evolução.",
+  rotulo = "Assistir ao vídeo",
+  evento = "home_video_aberto",
+}: {
+  titulo?: string;
+  descricao?: string;
+  rotulo?: string;
+  /** Qual porta foi usada. É o que a Ayla lê pra não repetir a oferta. */
+  evento?: "home_video_aberto" | "onboarding_video_aberto";
+} = {}) {
   const [aberto, setAberto] = useState(false);
 
   function abrir() {
-    track("home_video_aberto");
+    track(evento);
     setAberto(true);
   }
 
@@ -58,13 +69,8 @@ export function CardVideoGuia() {
             <Play className="size-4" aria-hidden />
           </span>
           <div>
-            <p className="font-heading text-base font-medium text-foreground">
-              Conheça tudo o que você pode fazer na Kolo
-            </p>
-            <p className="mt-0.5 text-sm text-muted-foreground">
-              Em poucos minutos: como conversar com a Ayla, criar planos, rotinas e histórias,
-              registrar o dia e acompanhar a evolução.
-            </p>
+            <p className="font-heading text-base font-medium text-foreground">{titulo}</p>
+            <p className="mt-0.5 text-sm text-muted-foreground">{descricao}</p>
           </div>
         </div>
         <button
@@ -72,7 +78,7 @@ export function CardVideoGuia() {
           onClick={abrir}
           className="shrink-0 self-start rounded-full border border-brand-purple/30 px-4 py-2 text-sm font-semibold text-brand-purple transition-colors hover:bg-brand-purple/5 md:self-auto"
         >
-          Assistir ao vídeo
+          {rotulo}
         </button>
       </section>
 
