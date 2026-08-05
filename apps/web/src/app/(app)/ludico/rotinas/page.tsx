@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { VideoAjuda } from "@/components/video-guia";
 import { ChevronLeft, ListChecks } from "lucide-react";
 import { loadFamilyContext } from "@/lib/auth/require-user";
 import { resolverCriancaAtivaId } from "@/lib/crianca-ativa";
@@ -97,6 +98,9 @@ export default async function RotinasPage() {
           {nomeAtivo ? ` pra ${nomeAtivo} acompanhar` : " pra criança acompanhar"}.
         </p>
       </header>
+
+      {/* Ajuda contextual — invisível enquanto não houver URL em lib/video-ajuda. */}
+      <VideoAjuda area="rotina_visual" />
 
       {membrosList.length > 1 && ativaId && (
         <div className="w-fit">

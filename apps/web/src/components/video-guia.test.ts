@@ -116,3 +116,112 @@ describe("eventos — sem schema novo", () => {
     expect(FORM_BV).not.toMatch(/onboarding_video_concluido/);
   });
 });
+
+// ============================================================
+// SEGUNDA CAMADA — vídeos de ajuda por área (05/08/2026)
+// ============================================================
+
+import { VIDEOS_AJUDA, videoDaArea } from "@/lib/video-ajuda";
+
+const CONFIG = readFileSync(resolve(__dirname, "../lib/video-ajuda.ts"), "utf8");
+const ORCH = readFileSync(resolve(__dirname, "../lib/ayla/orchestrator.ts"), "utf8");
+const TEMPLATES = readFileSync(resolve(__dirname, "../lib/ayla/messageTemplates.ts"), "utf8");
+const TELA6 = readFileSync(
+  resolve(__dirname, "../app/onboarding/steps/tela-6-confirmacao.tsx"),
+  "utf8",
+);
+
+describe("as 10 áreas estão configuradas e INVISÍVEIS hoje", () => {
+  const AREAS = [
+    "registro_diario", "perfil", "estrategias", "meus_planos", "evolucao",
+    "ludico", "avatar", "historias", "rotina_visual", "desenho",
+  ] as const;
+
+  it("todas as 10 existem na configuração central", () => {
+    for (const a of AREAS) expect(VIDEOS_AJUDA[a]).toBeDefined();
+    expect(Object.keys(VIDEOS_AJUDA)).toHaveLength(10);
+  });
+
+  it("TODAS com url null — nada aparece em nenhuma página hoje", () => {
+    for (const a of AREAS) expect(VIDEOS_AJUDA[a].url).toBeNull();
+    for (const a of AREAS) expect(videoDaArea(a)).toBeNull();
+  });
+
+  it("cada uma já tem a chamada escrita — amanhã é só trocar o null", () => {
+    for (const a of AREAS) expect(VIDEOS_AJUDA[a].chamada.length).toBeGreaterThan(10);
+  });
+
+  it("url null não renderiza nada — nem placeholder, nem 'em breve'", () => {
+    expect(VIDEO).toMatch(/if \(!video\) return null/);
+    expect(CONFIG).toMatch(/Sem card, sem espaço vazio, sem\n \* "em breve"/);
+    // "em breve" só pode existir no comentário que o proíbe, nunca em JSX.
+    const emBreve = VIDEO.split("\n").filter((l) => /em breve/i.test(l));
+    for (const l of emBreve) expect(l.trim()).toMatch(/^(\*|\/\/|\/\*)/);
+  });
+});
+
+describe("um player só no produto", () => {
+  it("a ajuda contextual usa o MESMO PlayerGuia do institucional", () => {
+    expect(VIDEO).toMatch(/<PlayerGuia titulo=\{video\.chamada\} src=\{video\.url!\} \/>/);
+    expect(VIDEO.match(/<iframe/g)?.length).toBe(1);
+  });
+
+  it("abre em modal, como na Home", () => {
+    const modais = VIDEO.match(/role="dialog"/g) ?? [];
+    expect(modais.length).toBe(2);
+  });
+
+  it("é link discreto, não card grande — o vídeo é ajuda", () => {
+    expect(VIDEO).toMatch(/text-sm font-medium text-brand-purple underline-offset-4/);
+  });
+});
+
+describe("analytics reaproveitando /api/track", () => {
+  it("registra a área que foi aberta", () => {
+    expect(VIDEO).toMatch(/track\("video_ajuda_aberto", \{ pagina: area \}\)/);
+  });
+});
+
+describe("o guia foi pro lugar que a família realmente vê", () => {
+  it("está na última tela do onboarding", () => {
+    expect(TELA6).toMatch(/<PlayerGuia titulo="Como usar a Kolo Família — guia completo" \/>/);
+  });
+
+  it("o comentário registra por que não fica na /boas-vindas", () => {
+    expect(TELA6).toMatch(/A \/boas-vindas foi FUNDIDA nesta tela/);
+    expect(TELA6).toMatch(/0 de 82 famílias com o campo nulo/);
+  });
+});
+
+describe("a Ayla oferece o vídeo uma vez, e por último", () => {
+  it("só quem NÃO clicou pra ver no app recebe o link", () => {
+    expect(ORCH).toMatch(/const jaAbriuVideo = await abriuGuiaNoApp\(supabase, familyAccountId\)/);
+    expect(ORCH).toMatch(/linkGuia: jaAbriuVideo \? null : LINK_GUIA_KOLO/);
+  });
+
+  it("o sinal é o CLIQUE, não a exibição — não inventa 'assistiu'", () => {
+    expect(ORCH).toMatch(/\.eq\("evento", "home_video_aberto"\)/);
+    expect(ORCH).not.toMatch(/eq\("evento", "onboarding_video_exibido"\)/);
+    expect(ORCH).toMatch(/só diz que o\n   \* player esteve na tela — não que ela assistiu/);
+  });
+
+  it('"uma vez" sai de graça: a boas-vindas já é idempotente', () => {
+    expect(ORCH).toMatch(/Boas-vindas já enviada\./);
+    expect(ORCH).toMatch(/sem coluna nova e sem estado novo/);
+  });
+
+  it("em falha da consulta, NÃO manda — repetir pra quem já viu incomoda mais", () => {
+    expect(ORCH).toMatch(/\} catch \{\n    return true;\n  \}/);
+  });
+
+  it("o link vem DEPOIS da ajuda, nunca antes", () => {
+    const iAjuda = TEMPLATES.indexOf("Você não precisa saber o que pedir");
+    const iLink = TEMPLATES.indexOf("params.linkGuia");
+    expect(iLink).toBeGreaterThan(iAjuda);
+    expect(TEMPLATES).toMatch(/se ela\n    \/\/ abrir com "assista nosso vídeo", virou propaganda/);
+  });
+
+  it("sem link, a mensagem continua exatamente como era", () => {
+    expect(TEMPLATES).toMatch(/linkGuia\?: string \| null;/);
+  });
+});

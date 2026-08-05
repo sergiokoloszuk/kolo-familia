@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { VideoAjuda } from "@/components/video-guia";
 import {
   ArrowRight,
   BookOpen,
@@ -115,6 +116,9 @@ export default async function LudicoPage() {
           </div>
         )}
       </header>
+
+      {/* Ajuda contextual — invisível enquanto não houver URL em lib/video-ajuda. */}
+      <VideoAjuda area="ludico" />
 
       <ul className="grid gap-4 md:grid-cols-2">
         {CARDS.map((c) => {

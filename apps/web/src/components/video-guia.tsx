@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Play, X } from "lucide-react";
 import { track } from "@/lib/analytics/track-client";
+import { videoDaArea, type AreaAjuda } from "@/lib/video-ajuda";
 
 /**
  * O GUIA DA KOLO EM VÍDEO.
@@ -17,12 +18,12 @@ import { track } from "@/lib/analytics/track-client";
 const EMBED = "https://www.tella.tv/video/vid_cmsens8k600sl04l150o8gy18/embed";
 
 /** O player em si. Proporção fixa pra não pular no mobile. */
-export function PlayerGuia({ titulo }: { titulo: string }) {
+export function PlayerGuia({ titulo, src }: { titulo: string; src?: string }) {
   return (
     <div className="w-full overflow-hidden rounded-2xl border border-kolo-linha bg-black/[0.04]">
       <div className="relative w-full" style={{ aspectRatio: "16 / 9" }}>
         <iframe
-          src={EMBED}
+          src={src ?? EMBED}
           title={titulo}
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
           allowFullScreen
@@ -95,6 +96,63 @@ export function CardVideoGuia() {
               <X className="size-4" aria-hidden /> Fechar
             </button>
             <PlayerGuia titulo="Como usar a Kolo Família — guia completo" />
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
+
+/**
+ * A AJUDA CONTEXTUAL DE UMA ÁREA.
+ *
+ * Mesma base do card da Home — um player só no produto, um modal só. O que
+ * muda é o tamanho: aqui é um link discreto perto do título, porque o vídeo é
+ * AJUDA e não o conteúdo da página.
+ *
+ * ⚠️ Sem URL configurada, retorna null: nada é renderizado, nem espaço, nem
+ * "em breve". A página fica exatamente como está hoje.
+ */
+export function VideoAjuda({ area }: { area: AreaAjuda }) {
+  const [aberto, setAberto] = useState(false);
+  const video = videoDaArea(area);
+  if (!video) return null;
+
+  function abrir() {
+    track("video_ajuda_aberto", { pagina: area });
+    setAberto(true);
+  }
+
+  return (
+    <>
+      <button
+        type="button"
+        onClick={abrir}
+        className="flex w-fit items-center gap-1.5 text-sm font-medium text-brand-purple underline-offset-4 hover:underline"
+      >
+        <Play className="size-3.5" aria-hidden /> {video.chamada}
+      </button>
+
+      {aberto && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label={video.chamada}
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
+          onClick={() => setAberto(false)}
+        >
+          <div
+            className="flex w-full max-w-3xl flex-col gap-3"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              type="button"
+              onClick={() => setAberto(false)}
+              className="flex items-center gap-1.5 self-end rounded-full bg-white/90 px-3 py-1.5 text-sm font-semibold text-foreground"
+            >
+              <X className="size-4" aria-hidden /> Fechar
+            </button>
+            <PlayerGuia titulo={video.chamada} src={video.url!} />
           </div>
         </div>
       )}

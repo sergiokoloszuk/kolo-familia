@@ -1,4 +1,5 @@
 import { Card, CardContent } from "@/components/ui/card";
+import { VideoAjuda } from "@/components/video-guia";
 import { Eyebrow } from "@/components/brand/eyebrow";
 import { loadFamilyContext } from "@/lib/auth/require-user";
 import { resolverCriancaAtivaId } from "@/lib/crianca-ativa";
@@ -42,6 +43,9 @@ export default async function RegistrarDiarioPage() {
           </div>
         )}
       </header>
+
+      {/* Ajuda contextual — invisível enquanto não houver URL em lib/video-ajuda. */}
+      <VideoAjuda area="registro_diario" />
 
       <Card>
         <CardContent className="pt-6">

@@ -101,6 +101,28 @@ export type EnvioResultado =
 // PROATIVA: Boas-vindas — primeira mensagem após onboarding
 // ============================================================
 
+/** O guia da plataforma. Mesmo vídeo do app — uma URL só no produto. */
+const LINK_GUIA_KOLO = "https://www.tella.tv/video/como-usar-a-kolo-familia-guia-completo-gy18";
+
+/**
+ * A família CLICOU pra ver o guia no app? Só o clique conta.
+ * Em falha, assume que SIM — mandar o link de novo pra quem já viu incomoda
+ * mais do que deixar de mandar pra quem não viu.
+ */
+async function abriuGuiaNoApp(supabase: SupabaseClient, familyId: string): Promise<boolean> {
+  try {
+    const { data } = await supabase
+      .from("user_events")
+      .select("id")
+      .eq("family_account_id", familyId)
+      .eq("evento", "home_video_aberto")
+      .limit(1);
+    return (data?.length ?? 0) > 0;
+  } catch {
+    return true;
+  }
+}
+
 export async function sendBoasVindas(
   supabase: SupabaseClient,
   familyAccountId: string,
@@ -151,12 +173,28 @@ export async function sendBoasVindas(
   // se apresentava falando de uma - parecia que nao tinha lido o cadastro.
   const desafios = await carregarDesafiosOnboarding(supabase, membroFoco.id);
 
+  /**
+   * O GUIA EM VÍDEO — segunda chance de onboarding, UMA vez.
+   *
+   * Quem já abriu o vídeo no app não precisa receber o link de novo. Quem não
+   * abriu recebe aqui — e só aqui: a boas-vindas é enviada uma única vez por
+   * família (a idempotência acima garante), então "oferecer uma vez" sai de
+   * graça, sem coluna nova e sem estado novo.
+   *
+   * ⚠️ O QUE CADA EVENTO PROVA. `onboarding_video_exibido` só diz que o
+   * player esteve na tela — não que ela assistiu. `home_video_aberto` diz que
+   * ela CLICOU pra ver. Só o segundo conta como "já teve o vídeo nas mãos";
+   * tratar o primeiro como "assistiu" seria inventar um dado que não temos.
+   */
+  const jaAbriuVideo = await abriuGuiaNoApp(supabase, familyAccountId);
+
   const texto = desafios.length
     ? templateBoasVindasComDesafio({
         nomeMae: ctx.nomeMae,
         nomeMembro: membroFoco.nome,
         genero: membroFoco.genero,
         desafios,
+        linkGuia: jaAbriuVideo ? null : LINK_GUIA_KOLO,
       })
     : await templateBoasVindas(supabase, {
         nomeMae: ctx.nomeMae,

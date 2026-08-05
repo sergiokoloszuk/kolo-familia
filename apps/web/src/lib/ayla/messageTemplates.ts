@@ -185,6 +185,12 @@ export function templateBoasVindasComDesafio(params: {
   genero: Genero;
   /** A lista INTEIRA que a família marcou. Até 3 entram na mensagem. */
   desafios: string[];
+  /**
+   * O guia da plataforma em vídeo, quando ela ainda não abriu no app. Vem por
+   * ÚLTIMO de propósito: a primeira mensagem da Ayla ajuda antes de apresentar
+   * o produto. Null = não menciona.
+   */
+  linkGuia?: string | null;
 }): string {
   const lista = listarTemas(params.desafios, 3);
   const frase = lista || fraseDoTema(params.desafios[0] ?? "");
@@ -218,7 +224,16 @@ export function templateBoasVindasComDesafio(params: {
     // sem conhecer o produto: a família não sabe que existe Plano, Rotina ou
     // História — e não deveria precisar saber. Quem conduz é a Ayla.
     `Você não precisa saber o que pedir: me conta o que está acontecendo, do seu jeito. Por qual você quer começar? Pode mandar um *áudio*, se for mais fácil — com o que você me contar eu já te trago uma primeira ideia prática. 🌿`,
-  ].join("\n");
+    // O GUIA VEM POR ÚLTIMO, e só pra quem ainda não abriu o vídeo no app. A
+    // primeira mensagem da Ayla AJUDA antes de apresentar a plataforma: se ela
+    // abrir com "assista nosso vídeo", virou propaganda.
+    params.linkGuia
+      ? `\nE se quiser conhecer rapidinho tudo o que dá pra fazer na Kolo, tem um vídeo curto mostrando a plataforma por dentro:\n${params.linkGuia}`
+      : "",
+  ]
+    .filter((l) => l !== "" || true)
+    .join("\n")
+    .trimEnd();
 }
 
 // ============================================================
