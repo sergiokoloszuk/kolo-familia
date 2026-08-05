@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { VideoAjuda } from "@/components/video-guia";
 import { ChevronRight, FileText } from "lucide-react";
 import { Eyebrow } from "@/components/brand/eyebrow";
 import { loadFamilyContext } from "@/lib/auth/require-user";
@@ -51,6 +52,9 @@ export default async function PlanosPage() {
           </div>
         )}
       </header>
+
+      {/* Ajuda contextual — invisível enquanto não houver URL em lib/video-ajuda. */}
+      <VideoAjuda area="meus_planos" />
 
       {lista.length === 0 ? (
         <p className="max-w-xl text-sm leading-relaxed text-muted-foreground">

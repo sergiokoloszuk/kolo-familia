@@ -1,6 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { PlayerGuia } from "@/components/video-guia";
+import { track } from "@/lib/analytics/track-client";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Chip, ChipGroup } from "@/components/ui/chip";
@@ -32,12 +34,31 @@ export function Tela6Confirmacao({
 }) {
   const [janela, setJanela] = useState<JanelaKey | null>(null);
 
+  // Quantas famílias novas chegam a ver o guia. NÃO prova que assistiu — prova
+  // que o player esteve na tela dela.
+  useEffect(() => {
+    track("onboarding_video_exibido");
+  }, []);
+
   // Quem autorizou a Ayla precisa escolher um horário antes de seguir.
   const faltaJanela = aylaAutorizada && !janela;
   const bloqueado = pending || faltaJanela;
 
   return (
     <div className="flex flex-col gap-6">
+      {/* O GUIA EM VÍDEO — aqui, e não na /boas-vindas.
+          A /boas-vindas foi FUNDIDA nesta tela: `completeOnboarding` grava
+          `boas_vindas_vista_at` junto com `onboarding_completed`, então
+          aquela rota nunca aparece (0 de 82 famílias com o campo nulo). Esta é
+          a última tela que a família realmente vê antes de entrar. */}
+      <section className="flex flex-col gap-3">
+        <p className="text-sm text-muted-foreground">
+          Você não precisa saber exatamente o que pedir — a Kolo vai te ajudando a encontrar
+          caminhos para os desafios do dia a dia. Este vídeo curto mostra como.
+        </p>
+        <PlayerGuia titulo="Como usar a Kolo Família — guia completo" />
+      </section>
+
       <div className="rounded-md border bg-muted/30 p-5">
         <div className="flex items-start gap-3">
           <span

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { VideoAjuda } from "@/components/video-guia";
 import { Sparkles, Wand2, BookOpen } from "lucide-react";
 import { loadFamilyContext } from "@/lib/auth/require-user";
 import { resolverCriancaAtivaId } from "@/lib/crianca-ativa";
@@ -99,6 +100,11 @@ export default async function HistoriasPage() {
               Pra antecipar um momento difícil, ensaiar uma situação nova ou celebrar
               uma conquista — sempre com quem você cuida como protagonista.
             </p>
+            {/* Ajuda contextual — invisível enquanto não houver URL em lib/video-ajuda.
+                Sobre o hero escuro, o link herda a cor clara do bloco. */}
+            <div className="mt-3 [&_button]:text-brand-yellow">
+              <VideoAjuda area="historias" />
+            </div>
             {lista.length > 0 && (
               <span className="mt-5 inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1.5 text-xs font-semibold text-white/85 backdrop-blur">
                 <BookOpen className="size-3.5 text-brand-yellow" />

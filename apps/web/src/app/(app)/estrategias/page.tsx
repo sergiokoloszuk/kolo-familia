@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { VideoAjuda } from "@/components/video-guia";
 import { Eyebrow } from "@/components/brand/eyebrow";
 import { loadFamilyContext } from "@/lib/auth/require-user";
 import { resolverCriancaAtivaId } from "@/lib/crianca-ativa";
@@ -70,6 +71,9 @@ export default async function EstrategiasPage({
           Escreva do seu jeito; quanto mais do dia real, mais certeira eu fico.
         </p>
       </header>
+
+      {/* Ajuda contextual — invisível enquanto não houver URL em lib/video-ajuda. */}
+      <VideoAjuda area="estrategias" />
 
       {/* Dicas pra perto de onde importam (saíram do cabeçalho): o que incluir
           + o plano de fim de semana, numa linha discreta acima do campo. */}

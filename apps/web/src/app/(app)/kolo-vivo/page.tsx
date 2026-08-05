@@ -1,4 +1,5 @@
 import { Eyebrow } from "@/components/brand/eyebrow";
+import { VideoAjuda } from "@/components/video-guia";
 import { loadFamilyContext } from "@/lib/auth/require-user";
 import { resolverCriancaAtivaId } from "@/lib/crianca-ativa";
 import { idadeAnos } from "@/lib/idade";
@@ -136,6 +137,9 @@ export default async function KoloVivoPage() {
           enchendo com o uso.
         </p>
       </header>
+
+      {/* Ajuda contextual — invisível enquanto não houver URL em lib/video-ajuda. */}
+      <VideoAjuda area="perfil" />
 
       <KoloVivoWrapper
         familyId={familyId}

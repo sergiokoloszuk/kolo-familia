@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { VideoAjuda } from "@/components/video-guia";
 import { ChevronLeft } from "lucide-react";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Eyebrow } from "@/components/brand/eyebrow";
@@ -126,6 +127,9 @@ export default async function AvataresIndexPage() {
           </Link>
         </div>
       </header>
+
+      {/* Ajuda contextual — invisível enquanto não houver URL em lib/video-ajuda. */}
+      <VideoAjuda area="avatar" />
 
       {secoes.length > 0 ? (
         <div className="flex flex-col gap-5">

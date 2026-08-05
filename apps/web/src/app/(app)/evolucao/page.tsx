@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { VideoAjuda } from "@/components/video-guia";
 import { differenceInCalendarDays } from "date-fns";
 import { ArrowRight, FileText, Sprout } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
@@ -444,6 +445,9 @@ export default async function EvolucaoPage() {
           </div>
         )}
       </header>
+
+      {/* Ajuda contextual — invisível enquanto não houver URL em lib/video-ajuda. */}
+      <VideoAjuda area="evolucao" />
 
       {/* COMO O MARIO ESTÁ — síntese por regra + números do mês */}
       <section className="relative overflow-hidden rounded-3xl border border-brand-yellow/30 bg-gradient-to-br from-brand-yellow/[0.08] to-white px-6 py-6 shadow-[0_1px_2px_rgba(46,10,82,0.04),_0_4px_16px_rgba(46,10,82,0.04)] md:px-8 md:py-7">

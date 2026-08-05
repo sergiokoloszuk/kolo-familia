@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { VideoAjuda } from "@/components/video-guia";
 import { ChevronLeft } from "lucide-react";
 import { loadFamilyContext } from "@/lib/auth/require-user";
 import { assinarImagens } from "@/lib/storage/imagens";
@@ -68,6 +69,9 @@ export default async function DesenhosPage() {
           pra vocês acompanharem a evolução ao longo do tempo.
         </p>
       </header>
+
+      {/* Ajuda contextual — invisível enquanto não houver URL em lib/video-ajuda. */}
+      <VideoAjuda area="desenho" />
 
       {membrosList.length === 0 ? (
         <p className="text-sm text-muted-foreground">
