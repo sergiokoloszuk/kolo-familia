@@ -237,7 +237,11 @@ export async function gerarRespostaAyla(
   // Custo zero no caminho normal: o detector é regex sobre o texto que já está
   // em memória. Só há segunda chamada quando vaza. UMA tentativa, e é um `if` —
   // não um laço com contador, que é como loops de regeneração nascem.
-  const cruzou = fronteiraAtravessada(texto);
+  // O MESMO bloco que o modelo recebeu (ver `params.diagnosticoRegistrado`, que
+  // entra no prompt logo abaixo). Sem ele, o detector proibia justamente o que
+  // o núcleo manda fazer: falar com naturalidade do diagnóstico que a família
+  // cadastrou.
+  const cruzou = fronteiraAtravessada(texto, params.diagnosticoRegistrado);
   if (!cruzou) return texto;
 
   await logEvent({
@@ -263,7 +267,9 @@ export async function gerarRespostaAyla(
     segunda = "";
   }
 
-  const aindaVaza = segunda ? fronteiraAtravessada(segunda) : null;
+  const aindaVaza = segunda
+    ? fronteiraAtravessada(segunda, params.diagnosticoRegistrado)
+    : null;
   if (segunda && !aindaVaza) return segunda;
 
   // Falhou duas vezes. Aqui NÃO se publica a segunda "porque já tentamos" —

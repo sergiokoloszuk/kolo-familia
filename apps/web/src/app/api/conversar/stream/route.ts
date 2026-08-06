@@ -123,7 +123,13 @@ export async function POST(req: NextRequest) {
           // o texto) é o exemplo documentado de filtro que selecionava CONTRA
           // a segurança: ele punia a ressalva honesta e deixava passar a
           // conclusão.
-          const vazamento = fronteiraAtravessada(bruto);
+          // Mesmo bloco de diagnóstico que `buildContext` já montou e que foi
+          // pro system — detector e prompt precisam ler a mesma fonte, senão
+          // o código volta a proibir o que o prompt manda fazer.
+          const vazamento = fronteiraAtravessada(
+            bruto,
+            ctx.membroFoco?.diagnosticoRegistrado,
+          );
           let texto = bruto;
           if (vazamento) {
             await logEvent({
