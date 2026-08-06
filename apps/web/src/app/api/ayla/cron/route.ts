@@ -7,6 +7,7 @@ import {
   sendRotinaDiaria,
   sendEngajamento,
   sendTrial,
+  sendVideoGuia,
   sendEmocionalStreak,
   sendProximoInsight,
   sendRepertorioSugestao,
@@ -72,6 +73,7 @@ async function handle(request: NextRequest) {
     if (tipo === "recuperacao_plano") return await runRecuperacaoPlano(supabase);
     if (tipo === "recuperacao_plano_3min") return await runRecuperacaoPlano(supabase, "3min");
     if (tipo === "alerta_assinatura") return await runAlertaAssinatura(supabase);
+    if (tipo === "video_guia") return await runVideoGuia(supabase);
     if (tipo === "fim_de_semana") return await runFimDeSemana(supabase);
     if (tipo === "campanhas") return await runCampanhas(supabase);
     if (tipo === "regras") return await runRegras(supabase);
@@ -240,6 +242,81 @@ async function runSnapshots(supabase: AdminClient) {
   }
 
   return NextResponse.json({ ok: true, tipo: "snapshots", periodo, gerados, pulados });
+}
+
+/**
+ * CAMPANHA ÚNICA DO VÍDEO INSTITUCIONAL — 06/08/2026.
+ *
+ * Reusa a MESMA seleção por janela da rotina diária, de propósito: o cron já
+ * roda às 11, 15, 18 e 22 UTC, que em Brasília é 08h, 12h, 15h e 19h — as
+ * quatro janelas que as famílias escolhem. Assim cada uma recebe dentro da
+ * janela DELA, sem cron novo e sem horário fixo.
+ *
+ * Isso resolve a contradição do pedido: "amanhã cedo" valeria para 5 das 17
+ * famílias elegíveis; as outras 12 escolheram 12h, 15h ou 19h. A janela ganha.
+ *
+ * A dedup NÃO mora aqui — mora em `sendVideoGuia`, verificada imediatamente
+ * antes do envio. Este runner pode rodar quantas vezes quiser.
+ */
+async function runVideoGuia(supabase: AdminClient) {
+  const agora = new Date();
+  const horaAtualLocal = horaLocalHHMM(agora);
+
+  const { data: candidatas } = await supabase
+    .from("ayla_preferences")
+    .select(
+      "family_account_id, horario_preferido_inicio, horario_preferido_fim, desativada, pausada_ate, consentimento_em",
+    )
+    .not("consentimento_em", "is", null)
+    .eq("desativada", false);
+
+  const naJanela: string[] = [];
+  for (const p of candidatas ?? []) {
+    if (p.pausada_ate && new Date(p.pausada_ate) > agora) continue;
+    const inicio = (p.horario_preferido_inicio as string)?.slice(0, 5);
+    const fim = (p.horario_preferido_fim as string)?.slice(0, 5);
+    if (inicio && fim && horaAtualLocal >= inicio && horaAtualLocal <= fim) {
+      naJanela.push(p.family_account_id);
+    }
+  }
+
+  // Só TRIAL ATIVO. `filtrarComAcesso` deixaria passar assinante e past_due —
+  // esta campanha é de ativação de quem está testando, e a coorte real é bem
+  // menor que o `status` sugere: 114 famílias estão como `trialing` com o
+  // trial já vencido (pendência separada, registrada, não tratada aqui).
+  const { data: acessos } = await supabase
+    .from("subscription_accesses")
+    .select("family_account_id, status, trial_ends_at")
+    .eq("status", "trialing")
+    .in("family_account_id", naJanela);
+
+  const elegiveis = (acessos ?? [])
+    .filter((a) => !a.trial_ends_at || new Date(a.trial_ends_at as string) >= agora)
+    .map((a) => a.family_account_id as string);
+
+  const resultados: Array<{ familyId: string; enviada: boolean; motivo?: string }> = [];
+  for (const familyId of elegiveis) {
+    try {
+      const r = await sendVideoGuia(supabase, familyId, agora);
+      resultados.push({ familyId, enviada: r.enviada, motivo: r.enviada ? undefined : r.motivo });
+    } catch (e) {
+      resultados.push({
+        familyId,
+        enviada: false,
+        motivo: e instanceof Error ? e.message : "erro",
+      });
+    }
+  }
+
+  return NextResponse.json({
+    ok: true,
+    tipo: "video_guia",
+    hora_local: horaAtualLocal,
+    na_janela: naJanela.length,
+    elegiveis: elegiveis.length,
+    enviadas: resultados.filter((r) => r.enviada).length,
+    resultados,
+  });
 }
 
 /**
