@@ -2,7 +2,7 @@ import type { NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import {
   gerarConversacional,
-  providerConversacionalAtivo,
+  providerConversacionalParaFamilia,
   MODELO_CONVERSA,
 } from "@/lib/ia/provider";
 import { prepararRespostaStream } from "@/lib/ia/engine";
@@ -72,7 +72,11 @@ export async function POST(req: NextRequest) {
     // O PROVIDER É UMA VARIÁVEL DE AMBIENTE, e o modelo vem dele — nunca uma
     // constante escrita aqui. É o que permite a volta atrás sem deploy e o que
     // garante que o billing abaixo registre o que REALMENTE respondeu.
-    const provider = providerConversacionalAtivo();
+    //
+    // Mesma função que `responder.ts` (WhatsApp) chama, com o mesmo id: no modo
+    // de teste, a família autorizada tem que receber GPT nos DOIS canais, e a
+    // não autorizada, Claude nos dois.
+    const provider = providerConversacionalParaFamilia(family.id);
     const model = MODELO_CONVERSA[provider];
     const encoder = new TextEncoder();
 

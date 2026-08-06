@@ -101,7 +101,9 @@ describe("seletor de provider", () => {
       ["rota web", ROTA_WEB],
       ["responder do WhatsApp", RESPONDER],
     ] as const) {
-      expect(src, nome).toMatch(/providerConversacionalAtivo\(\)/);
+      // A decisão por família é a de `rollout-conversacional.test.ts`; aqui só
+      // importa que o canal NÃO decide sozinho e que o modelo segue o provider.
+      expect(src, nome).toMatch(/providerConversacionalParaFamilia\(/);
       expect(src, nome).toMatch(/MODELO_CONVERSA\[provider\]/);
     }
   });

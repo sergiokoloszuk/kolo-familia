@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import {
   gerarConversacional,
-  providerConversacionalAtivo,
+  providerConversacionalParaFamilia,
   MODELO_CONVERSA,
 } from "@/lib/ia/provider";
 import { logarUsoApi } from "@/lib/billing/logar";
@@ -316,7 +316,16 @@ async function gerarUmaVez(
   // classificador de intenção, a prontidão, o roteador e os artefatos seguem no
   // Claude, cada um com o seu cliente. Aqui a variável é o MODELO, e só ele: o
   // `system` montado abaixo é o mesmo nos dois braços, por construção.
-  const provider = providerConversacionalAtivo();
+  //
+  // A DECISÃO NÃO MORA AQUI — mora em `providerConversacionalParaFamilia`, que
+  // é a mesma função que a rota da web chama. Sem isso, uma família poderia
+  // receber GPT no WhatsApp e Claude nas Estratégias na mesma conversa.
+  //
+  // O id vem do `tracking`, que é o único lugar desta função que conhece a
+  // família. Quando ele não vem (chamada sem tracking), o id é null e a regra
+  // devolve Claude — fail closed, sem exceção: o rollout de teste não pode ser
+  // decidido por um id que a gente não tem.
+  const provider = providerConversacionalParaFamilia(tracking?.family_account_id);
   const model = MODELO_CONVERSA[provider];
   // FORMAS DE ENTREGA — condicional, nunca sempre. Um desabafo com títulos em
   // negrito é frieza, e uma pergunta pontual com quatro blocos é ruído. Só

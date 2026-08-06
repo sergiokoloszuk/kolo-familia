@@ -3,6 +3,7 @@ import { ehAdmin } from "@/lib/auth/require-admin";
 import {
   gerarConversacional,
   providerConversacionalAtivo,
+  modoConversacional,
   MODELO_CONVERSA,
   type Provider,
 } from "@/lib/ia/provider";
@@ -50,10 +51,22 @@ export async function GET(req: Request) {
   const envDaChave = provider === "openai" ? "OPENAI_API_KEY" : "ANTHROPIC_API_KEY";
   const chavePresente = Boolean(process.env[envDaChave]);
 
+  // Quantas famílias estão autorizadas — o NÚMERO, nunca os ids. Ver a lista
+  // inteira numa resposta HTTP não ajuda a operar e espalha identificador de
+  // família por log de proxy. Zero sob `openai_teste` é o dado que importa:
+  // significa que ninguém está no GPT, por mais que a chave funcione.
+  const modo = modoConversacional();
+  const autorizadas = (process.env.OPENAI_TEST_FAMILY_IDS ?? "")
+    .split(/[,\s]+/)
+    .filter(Boolean).length;
+
   const base = {
+    modo_de_rollout: modo,
     provider_pedido: provider,
+    /** O que uma família FORA da allowlist recebe. Em `openai_teste`: anthropic. */
     provider_ativo_no_ambiente: providerConversacionalAtivo(),
     ia_provider_env: process.env.IA_PROVIDER ?? null,
+    familias_autorizadas_no_teste: modo === "openai_teste" ? autorizadas : null,
     modelo_configurado: model,
     chave_presente: chavePresente,
   };

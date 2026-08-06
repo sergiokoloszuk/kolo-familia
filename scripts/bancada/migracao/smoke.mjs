@@ -61,8 +61,12 @@ const mod = (p) => import(new URL(`../../../apps/web/src/${p}`, import.meta.url)
 
 // ⚠️ TUDO DAQUI PRA BAIXO É MÓDULO DE PRODUÇÃO. Nada é reimplementado: uma
 // bancada que remonta o prompt mede um produto que não existe.
-const { gerarConversacional, providerConversacionalAtivo, MODELO_CONVERSA } =
-  await mod("lib/ia/provider.ts");
+const {
+  gerarConversacional,
+  providerConversacionalAtivo,
+  providerConversacionalParaFamilia,
+  MODELO_CONVERSA,
+} = await mod("lib/ia/provider.ts");
 const { nucleoConducao } = await mod("lib/conducao/diretrizes.ts");
 const { FORMATO_WHATSAPP, DIRETRIZ_IDIOMA } = await mod("lib/ayla/responder.ts");
 const { fronteiraAtravessada } = await mod("lib/conducao/fronteiras.ts");
@@ -239,26 +243,47 @@ for (const p of PROVIDERS) {
   }
 }
 
-// ── 4. ROLLBACK — antes de gastar um token, porque é o teste mais barato ─
-console.log("\n═══ ROLLBACK (IA_PROVIDER) ═══");
+// ── 4. ROLLOUT + ROLLBACK — antes de gastar token, é o teste mais barato ─
+//
+// Os três estados, com a família de teste e uma de fora, porque o que precisa
+// ficar provado não é "o seletor funciona": é que NINGUÉM entra no GPT sem
+// estar na lista, e que a lista vazia não promove todo mundo.
+console.log("\n═══ ROLLOUT (IA_PROVIDER + OPENAI_TEST_FAMILY_IDS) ═══");
 const antesEnv = process.env.IA_PROVIDER;
+const antesIds = process.env.OPENAI_TEST_FAMILY_IDS;
+const NA_LISTA = "a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d";
+const FORA = "f9e8d7c6-b5a4-4938-8271-6f5e4d3c2b1a";
 const rollback = [];
-for (const [valor, esperado] of [
-  ["openai", "openai"],
-  ["anthropic", "anthropic"],
-  ["opemai", "anthropic"], // typo não pode desligar a conversa
-  ["", "anthropic"],
-  [undefined, "anthropic"],
+for (const [modo, ids, espLista, espFora] of [
+  [undefined, undefined, "anthropic", "anthropic"], // desligado
+  ["anthropic", NA_LISTA, "anthropic", "anthropic"], // lista esquecida não liga
+  ["openai_teste", NA_LISTA, "openai", "anthropic"], // ⭐ o estado de teste
+  ["openai_teste", ` ${NA_LISTA} , `, "openai", "anthropic"], // espaço acidental
+  ["openai_teste", "", "anthropic", "anthropic"], // ⭐ lista vazia = ninguém
+  ["openai_teste", undefined, "anthropic", "anthropic"], // ⭐ variável apagada
+  ["opemai", NA_LISTA, "anthropic", "anthropic"], // typo
+  ["openai", undefined, "openai", "openai"], // 100%
 ]) {
-  if (valor === undefined) delete process.env.IA_PROVIDER;
-  else process.env.IA_PROVIDER = valor;
-  const obtido = providerConversacionalAtivo();
-  const ok = obtido === esperado;
-  rollback.push({ valor: valor ?? "(ausente)", esperado, obtido, ok });
-  console.log(`  ${ok ? "✓" : "✗"} IA_PROVIDER=${JSON.stringify(valor ?? null)} → ${obtido}`);
+  if (modo === undefined) delete process.env.IA_PROVIDER;
+  else process.env.IA_PROVIDER = modo;
+  if (ids === undefined) delete process.env.OPENAI_TEST_FAMILY_IDS;
+  else process.env.OPENAI_TEST_FAMILY_IDS = ids;
+
+  const naLista = providerConversacionalParaFamilia(NA_LISTA);
+  const fora = providerConversacionalParaFamilia(FORA);
+  const semId = providerConversacionalParaFamilia(null);
+  // Sem id nunca pode ser mais permissivo que estar fora da lista.
+  const ok = naLista === espLista && fora === espFora && semId === providerConversacionalAtivo();
+  rollback.push({ modo: modo ?? "(ausente)", ids: ids ?? "(ausente)", naLista, fora, semId, ok });
+  console.log(
+    `  ${ok ? "✓" : "✗"} IA_PROVIDER=${String(modo ?? "—").padEnd(13)} lista=${String(ids ?? "—").padEnd(40)} ` +
+      `na lista:${naLista.padEnd(10)} fora:${fora.padEnd(10)} sem id:${semId}`,
+  );
 }
 if (antesEnv === undefined) delete process.env.IA_PROVIDER;
 else process.env.IA_PROVIDER = antesEnv;
+if (antesIds === undefined) delete process.env.OPENAI_TEST_FAMILY_IDS;
+else process.env.OPENAI_TEST_FAMILY_IDS = antesIds;
 
 // ── 1-3. OS CASOS ──────────────────────────────────────────────────────
 const resultados = [];

@@ -106,19 +106,82 @@ export const MODELO_CONVERSA: Record<Provider, string> = {
 };
 
 /**
- * QUAL PROVIDER A CAMADA CONVERSACIONAL USA — o botão de rollback.
+ * OS TRÊS ESTADOS DO ROLLOUT — uma variável só, e nenhum estado ambíguo.
  *
- * Vive em env (`IA_PROVIDER`) e não em código porque a volta atrás precisa ser
- * imediata: mudar a variável e reiniciar, sem build, sem deploy, sem PR. É a
- * diferença entre uma migração reversível em minutos e uma que exige alguém
- * disponível pra abrir o editor.
+ *   (ausente) | anthropic | qualquer outra coisa → TODAS as famílias no Claude
+ *   openai_teste                                 → SÓ a allowlist no GPT
+ *   openai                                       → TODAS as famílias no GPT
  *
- * Valor desconhecido cai em "anthropic" DE PROPÓSITO: um typo (`IA_PROVIDER=opemai`)
- * não pode desligar a conversa das famílias — o pior caso tem que ser "continua
- * como estava", nunca "para de responder".
+ * ⚠️ POR QUE O ESTADO DE TESTE É UM VALOR PRÓPRIO, e não "openai + uma lista
+ * que restringe". A segunda forma é menor de escrever e é uma armadilha: a
+ * lista passa a ser o que SEGURA o rollout, então esvaziar a variável por
+ * engano — apagar, renomear, um deploy que não a carrega — promove todas as
+ * famílias pra 100% em silêncio. O acidente mais provável vira o resultado
+ * mais perigoso.
+ *
+ * Aqui é o contrário: sob `openai_teste`, lista vazia = ninguém no GPT. Ir pra
+ * 100% exige alguém digitar `openai`, que é uma decisão, não um descuido.
+ *
+ * O valor é comparado com o texto EXATO (só espaços em volta são tolerados,
+ * porque espaço invisível colado num painel não é decisão de ninguém).
+ * "OpenAI", "gpt", "opemai" caem no Claude — pior caso é "continua como
+ * estava", nunca "para de responder" nem "vai pra todo mundo".
+ */
+export type ModoConversacional = "anthropic" | "openai_teste" | "openai";
+
+export function modoConversacional(): ModoConversacional {
+  const v = (process.env.IA_PROVIDER ?? "").trim();
+  if (v === "openai") return "openai";
+  if (v === "openai_teste") return "openai_teste";
+  return "anthropic";
+}
+
+/**
+ * As famílias autorizadas no modo de teste — por `family_account_id`, que é o
+ * identificador ESTRUTURAL. Nunca por nome, telefone ou qualquer coisa que o
+ * modelo possa inferir: a lista precisa ser conferível por quem a escreveu.
+ *
+ * Separadores aceitos: vírgula, espaço, quebra de linha. Entradas vazias caem
+ * fora — "id1,,id2 " é uma lista de dois, e uma lista só de vírgulas é vazia.
+ */
+function familiasDeTeste(): string[] {
+  return (process.env.OPENAI_TEST_FAMILY_IDS ?? "")
+    .split(/[,\s]+/)
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
+
+/**
+ * A DECISÃO, em um lugar só — os dois canais (WhatsApp e Estratégias) chamam
+ * ESTA função. Regra duplicada em `responder.ts` e na rota da web seria a
+ * forma mais fácil de uma família receber GPT num canal e Claude no outro,
+ * dentro da mesma conversa.
+ *
+ * FAIL CLOSED, sem exceção: id ausente, vazio, não-string ou fora da lista →
+ * Claude. Não se escolhe GPT por inferência, e a dúvida sempre resolve pro
+ * lado de quem já está funcionando.
+ */
+export function providerConversacionalParaFamilia(
+  familyAccountId?: string | null,
+): Provider {
+  const modo = modoConversacional();
+  if (modo === "anthropic") return "anthropic";
+  if (modo === "openai") return "openai";
+
+  // openai_teste — daqui pra baixo, só entra quem está explicitamente na lista.
+  const id = typeof familyAccountId === "string" ? familyAccountId.trim() : "";
+  if (!id) return "anthropic";
+  return familiasDeTeste().includes(id) ? "openai" : "anthropic";
+}
+
+/**
+ * O provider do rollout GLOBAL — o que uma família sem id identificada recebe.
+ * Serve pra contexto sem família (o /api/admin/provider-check) e é a MESMA
+ * regra, não uma segunda: no modo de teste devolve Claude, porque é isso que
+ * qualquer um fora da lista recebe.
  */
 export function providerConversacionalAtivo(): Provider {
-  return process.env.IA_PROVIDER === "openai" ? "openai" : "anthropic";
+  return providerConversacionalParaFamilia(null);
 }
 
 class ErroDeProvider extends Error {
