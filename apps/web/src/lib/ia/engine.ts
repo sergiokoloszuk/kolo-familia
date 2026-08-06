@@ -33,110 +33,21 @@ export type EngineResponse = {
 };
 
 /**
- * SpecialistPromptEngine — peça central do produto (PRD §7.4).
+ * ⚠️ `respond()` FOI REMOVIDA EM 06/08/2026 — era arquitetura paralela morta.
  *
- * Modo conversa:
- *   input + contexto da família
- *     → router decide skill(s) por keywords + priority
- *     → context builder traz Kolo Vivo, Diário, Boas Práticas, histórico
- *     → prompt assembler monta system (cacheável) + messages
- *     → Claude Sonnet com adaptive thinking, streaming
- *     → validators (anti-cópia, anti-substituição-profissional, etc.)
- *     → se falha: regenera 1× com prompt ajustado.
+ * Ela existia desde antes do streaming e carregava o pipeline completo de
+ * validação (tom, estrutural, validador por IA, regeneração, piso). Só que
+ * NENHUM `.tsx` a chamava: o único caller era `enviarMensagem`, que também não
+ * era chamada por ninguém desde que a conversa migrou pro streaming.
+ *
+ * O efeito prático era o pior possível — a leitura do código dizia que a web
+ * tinha rede de segurança, e a conversa real não tinha nenhuma. Consertar as
+ * duas teria mantido dois motores divergindo; a rede de fronteiras foi pro
+ * caminho VIVO (`/api/conversar/stream`), e este aqui saiu junto com o
+ * `runFullValidation` que só ela usava.
+ *
+ * `respondAsOutputType` (os 7 botões de apoio) continua e é usada de verdade.
  */
-export async function respond(params: {
-  supabase: SupabaseClient;
-  familyId: string;
-  membroAtipicoId: string | null;
-  conversaId: string | null;
-  userInput: string;
-}): Promise<EngineResponse> {
-  const { supabase, familyId, membroAtipicoId, conversaId, userInput } = params;
-
-  const skills = await loadActiveSkills(supabase);
-  if (skills.length === 0) {
-    throw new Error(
-      "Nenhuma skill ativa cadastrada. Aplique a migração 0003_seed.sql no Supabase.",
-    );
-  }
-  const [roteadas, intencao] = await Promise.all([
-    routeSkillsAI(userInput, skills),
-    classificarIntencao({ supabase, familyId, texto: userInput }),
-  ]);
-
-  const ctx = await buildContext(supabase, {
-    familyId,
-    membroAtipicoId,
-    skills: roteadas.map((r) => r.skill),
-    conversaId,
-  });
-
-  let resposta = await callClaude(
-    roteadas,
-    ctx,
-    userInput,
-    { kind: "conversa" },
-    { intencao },
-  );
-
-  let validacao = await runFullValidation(resposta.texto, ctx);
-  let regenerou = false;
-
-  if (!validacao.ok) {
-    regenerou = true;
-    resposta = await callClaude(
-      roteadas,
-      ctx,
-      userInput,
-      { kind: "conversa" },
-      { intencao, regeneracao: { motivo: validacao.motivo, sugestao: validacao.sugestao } },
-    );
-    validacao = await runFullValidation(resposta.texto, ctx);
-  }
-
-  // MESMO PISO DO WHATSAPP. A web publicava a segunda tentativa fosse qual
-  // fosse — certo pra tom/tamanho/cópia (melhor texto imperfeito que nenhum),
-  // errado pras fronteiras: seria publicar sabendo.
-  const vazamento = fronteiraAtravessada(resposta.texto);
-  if (vazamento) {
-    await logEvent({
-      kind: "fronteira_piso_web",
-      severity: "error",
-      family_account_id: familyId,
-      payload: {
-        fronteira: vazamento.fronteira.nome,
-        codigos: vazamento.achados.map((v) => v.codigo),
-        regenerou,
-      },
-    }).catch(() => {});
-    return {
-      texto: vazamento.fronteira.piso({
-        nomeCuidador: ctx.cuidador?.nome ?? null,
-        nomeMembro: ctx.membroFoco?.nome ?? null,
-      }),
-      intencao,
-      skillsAcionadas: roteadas.map((r) => ({
-        name: r.skill.name,
-        display_name: r.skill.display_name,
-        score: r.score,
-      })),
-      validacao: { ok: false, motivo: `fronteira ${vazamento.fronteira.nome} — piso aplicado`, regenerou },
-      uso: resposta.uso,
-    };
-  }
-
-  return {
-    texto: resposta.texto,
-    intencao,
-    skillsAcionadas: roteadas.map((r) => ({
-      name: r.skill.name,
-      display_name: r.skill.display_name,
-      score: r.score,
-    })),
-    validacao: validacao.ok ? { ok: true } : { ok: false, motivo: validacao.motivo, regenerou },
-    uso: resposta.uso,
-  };
-}
 
 /**
  * Modo conversa em STREAMING — prepara routing/contexto/prompt para a
@@ -156,17 +67,34 @@ export async function prepararRespostaStream(params: {
   if (skills.length === 0) {
     throw new Error("Nenhuma skill ativa cadastrada.");
   }
-  const [roteadas, intencao] = await Promise.all([
+  // O CLASSIFICADOR PRECISA DA CONVERSA. Até 06/08/2026 ele era chamado só com
+  // o texto do turno — `classificarIntencao({supabase, familyId, texto})` e mais
+  // nada. O parâmetro `historico` existia e nenhum caller o preenchia, então no
+  // meio de uma conversa "Sim." chegava nele como se fosse a primeira mensagem,
+  // o referente sumia e a Kolo respondia outra coisa.
+  //
+  // O histórico é carregado EM PARALELO com o roteamento, e a classificação em
+  // paralelo com o contexto: a correção não custa uma ida a mais no relógio.
+  const [roteadas, anterior] = await Promise.all([
     routeSkillsAI(userInput, skills),
-    classificarIntencao({ supabase, familyId, texto: userInput }),
+    carregarTurnosAnteriores(supabase, conversaId, userInput),
   ]);
 
-  const ctx = await buildContext(supabase, {
-    familyId,
-    membroAtipicoId,
-    skills: roteadas.map((r) => r.skill),
-    conversaId,
-  });
+  const [ctx, turno] = await Promise.all([
+    buildContext(supabase, {
+      familyId,
+      membroAtipicoId,
+      skills: roteadas.map((r) => r.skill),
+      conversaId,
+    }),
+    classificarIntencao({
+      supabase,
+      familyId,
+      texto: userInput,
+      historico: anterior.historico,
+      temaAnterior: anterior.tema,
+    }),
+  ]);
 
   // O histórico já inclui a última mensagem do usuário (= userInput);
   // remover pra não duplicar no prompt.
@@ -182,10 +110,60 @@ export async function prepararRespostaStream(params: {
     ctx,
     userInput,
     modo: { kind: "conversa" },
-    intencao,
+    intencao: turno.intencao,
+    tema: turno.tema,
+    aceite: turno.aceite,
   });
 
-  return { system, messages, roteadas, intencao };
+  return { system, messages, roteadas, intencao: turno.intencao, tema: turno.tema, ctx };
+}
+
+/**
+ * Os turnos anteriores desta conversa, e o TEMA em que ela estava.
+ *
+ * O tema vive em `mensagens_skill.metadata` — a mesma coluna jsonb que já
+ * guardava a intenção. Sem tabela nova, sem coluna nova, sem migração: era essa
+ * a alternativa a fazer a Kolo reconstruir o assunto da conversa inteira a
+ * partir da última frase, a cada turno.
+ *
+ * 12 mensagens (≈6 turnos) — a mesma janela que o WhatsApp usa. A web enxergava
+ * 6 mensagens, metade do outro canal, e a mãe não sabe que existem dois canais.
+ */
+async function carregarTurnosAnteriores(
+  supabase: SupabaseClient,
+  conversaId: string | null,
+  userInput: string,
+): Promise<{
+  historico: Array<{ papel: "user" | "assistant"; conteudo: string }>;
+  tema: string | null;
+}> {
+  if (!conversaId) return { historico: [], tema: null };
+  const { data } = await supabase
+    .from("mensagens_skill")
+    .select("papel, conteudo, metadata, created_at")
+    .eq("conversa_id", conversaId)
+    .order("created_at", { ascending: false })
+    .limit(12);
+
+  const linhas = (data ?? []) as Array<{
+    papel: string;
+    conteudo: string;
+    metadata: { tema?: string | null } | null;
+  }>;
+  const tema =
+    linhas.find((l) => l.papel === "assistant" && l.metadata?.tema)?.metadata?.tema ?? null;
+
+  const historico = linhas
+    .slice()
+    .reverse()
+    .map((l) => ({ papel: l.papel as "user" | "assistant", conteudo: l.conteudo }));
+
+  // A mensagem que estamos respondendo já entra separada no classificador,
+  // como "última mensagem" — aqui ela sairia duplicada.
+  const ultima = historico[historico.length - 1];
+  if (ultima?.papel === "user" && ultima.conteudo === userInput) historico.pop();
+
+  return { historico, tema };
 }
 
 /**
@@ -242,40 +220,6 @@ export async function respondAsOutputType(params: {
       : { ok: false, motivo: validacao.motivo, regenerou: false },
     uso: resposta.uso,
   };
-}
-
-/**
- * Pipeline completo de validação — Adendo PRD §4.
- *
- *   1. Tom (Grupo C, regex)        → falha = regenera
- *   2. Estrutural (tamanho + cópia) → falha = regenera
- *   3. IA Validator (Grupos A + B)  → 2+ falhas = regenera, 1 falha tolera
- *
- * Custo: o IA Validator adiciona +15-18% por mensagem. Vale pra zerar
- * vazamentos de tom/personalização que regex não captura.
- */
-async function runFullValidation(
-  resposta: string,
-  ctx: Awaited<ReturnType<typeof buildContext>>,
-): Promise<ValidationResult> {
-  const nomeCrianca = ctx.membroFoco?.nome ?? null;
-
-  // 1. Tom (eliminatório)
-  const tom = await runTomValidators(resposta, { nomeCrianca });
-  if (!tom.ok) return tom;
-
-  // 2. Estrutural
-  const estrutural = runEstruturalValidators(resposta, ctx.boasPraticas);
-  if (!estrutural.ok) return estrutural;
-
-  // 3. IA Validator (semântico)
-  return validateWithAI(resposta, {
-    nome_crianca: nomeCrianca,
-    idade: ctx.membroFoco?.idade ?? null,
-    perfil: ctx.membroFoco?.perfil ?? null,
-    interesses: ctx.membroFoco?.secoes?.como_e ?? null,
-    desafios: ctx.membroFoco?.secoes?.desafios_regulacao ?? null,
-  });
 }
 
 function runAllValidatorsExceptSize(

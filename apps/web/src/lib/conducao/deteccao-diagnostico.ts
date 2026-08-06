@@ -27,23 +27,26 @@
  * a rede embaixo — e o oráculo dos testes adversariais.
  */
 
-/** Sem acento, sem markdown, caixa única, espaço colapsado. */
-function normalizar(s: string): string {
-  return s
-    .normalize("NFD")
-    .replace(/\p{Diacritic}/gu, "")
-    .replace(/[*_`~#>]/g, "")
-    .replace(/\s+/g, " ")
-    .toLowerCase()
-    .trim();
-}
+// O ESCOPO (quem fala, em que modo, e se a frase está negada) é compartilhado
+// com a fronteira clínica — ver `escopo.ts`. O vocabulário diagnóstico é daqui.
+import { acharPadroes, textoAsseverado, type Padrao } from "./escopo";
 
 /**
  * Nomes de condição, como as famílias e a Ayla escrevem. Só serve para ancorar
  * os padrões — nenhuma regra é específica de um diagnóstico.
  */
+/**
+ * ⚠️ AS FRONTEIRAS DE PALAVRA SÃO OBRIGATÓRIAS (corrigido em 06/08/2026).
+ *
+ * Sem elas, "tod" casava dentro de TODO/TODA/TODOS, "tea" dentro de TEATRO e
+ * ATEAR, e "tag" dentro de VANTAGEM. `condicoesDistintas` varre o texto com
+ * este grupo solto, então "todo dia é a mesma novela" contava como uma segunda
+ * condição e `atribuicao_distribuida` acusava "tdah + tod repartidos sobre o
+ * relato individual" numa resposta que não citava TOD nenhuma vez — foram 7 dos
+ * 12 disparos que sobraram na medição das 180 respostas da bancada.
+ */
 const COND =
-  "(autismo|autista|tea|tdah|dislexia|discalculia|tod|tag|ansiedade|depressao|apraxia|dispraxia|deficiencia intelectual|atraso global|atraso de linguagem|transtorno de linguagem|altas habilidades|superdotacao|regressao|tpsn?|transtorno)";
+  "\\b(autismo|autista|tea|tdah|dislexia|discalculia|tod|tag|ansiedade|depressao|apraxia|dispraxia|deficiencia intelectual|atraso global|atraso de linguagem|transtorno de linguagem|altas habilidades|superdotacao|regressao|tpsn?|transtorno)\\b";
 
 export type AchadoDiagnostico = { codigo: string; trecho: string };
 
@@ -87,19 +90,10 @@ const CITACAO = new RegExp(
     "(ouvir|escutar|dizem|falam)[^.!?]{0,12}(e so (uma )?fase|nao (e|tem) nada))",
 );
 
-/**
- * Recorta as orações em que a Ayla está ENUNCIANDO a fronteira ou CITANDO a
- * fala de outra pessoa, pra elas não serem lidas como conclusão dela.
- * Conservador de propósito: descarta a oração inteira e nada além disso.
- */
-function semAsRecusas(norm: string): string {
-  return norm
-    .split(/(?<=[.!?;\n])/)
-    .filter((frase) => !RECUSA.test(frase) && !CITACAO.test(frase))
-    .join(" ");
-}
+// `normalizar` e `semAsRecusas` viviam aqui e foram pro `escopo.ts` (06/08/2026):
+// os dois detectores tinham cópias quase iguais que já divergiam entre si.
 
-const PADROES: ReadonlyArray<[string, RegExp]> = [
+const PADROES: readonly Padrao[] = [
   // --- As frases que saíram de verdade (01/08/2026) ---
   ["ideia_clara", /\b(uma )?ideia (bastante |bem |muito )?clara\b/],
   [
@@ -372,15 +366,20 @@ function atribuicaoDistribuida(norm: string): AchadoDiagnostico | null {
   };
 }
 
-/** Todos os padrões que casam. Vazio = nada detectado. */
+/**
+ * Todos os padrões que casam. Vazio = nada detectado.
+ *
+ * O recorte de escopo — recusa, citação, fala de personagem dentro de uma
+ * história, metalinguagem ("não diga que ela tem X") e negação — mora em
+ * `escopo.ts` e é o MESMO da fronteira clínica. Antes cada detector tinha a
+ * própria cópia de RECUSA/CITACAO e elas já divergiam; agora as daqui entram
+ * como molduras extras e o vocabulário continua sendo de cada fronteira.
+ */
 export function acharConclusaoDiagnostica(texto: string): AchadoDiagnostico[] {
-  const norm = semAsRecusas(normalizar(texto));
-  const achados: AchadoDiagnostico[] = [];
-  for (const [codigo, re] of PADROES) {
-    const m = norm.match(re);
-    if (m) achados.push({ codigo, trecho: m[0].slice(0, 120) });
-  }
-  const distribuida = atribuicaoDistribuida(norm);
+  const molduras = { recusa: RECUSA, citacao: CITACAO };
+  const achados = acharPadroes(texto, PADROES, molduras);
+  // Separador neutro: esta é uma análise de DOCUMENTO, não de proximidade.
+  const distribuida = atribuicaoDistribuida(textoAsseverado(texto, molduras, " "));
   if (distribuida) achados.push(distribuida);
   return achados;
 }

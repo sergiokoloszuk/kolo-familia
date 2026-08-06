@@ -40,11 +40,43 @@ describe("caminhos de começo — sem virar menu de funcionalidades", () => {
     expect(NUCLEO).toMatch(/inventar prioridade pra parecer que conhece a criança/);
   });
 
-  it("fecha recomendando, não devolvendo escolha — e a proibição do menu fica", () => {
-    expect(NUCLEO).toMatch(/recomende por onde começar e diga o porquê/);
-    expect(NUCLEO).toMatch(/deixando a porta aberta pra ela trocar/);
-    // O que gerou a regra original não pode voltar.
-    expect(NUCLEO).toMatch(/Não jogue a decisão de volta como menu de opções/);
+  /**
+   * ⚠️ ESTE TESTE MUDOU EM 06/08/2026, e a mudança é de produto.
+   *
+   * Antes ele exigia a proibição categórica do menu ("Não jogue a decisão de
+   * volta como menu de opções"). Essa regra convivia, três linhas acima, com
+   * outra que MANDA organizar em 3-4 pontos — e a contradição produzia os dois
+   * modos de falha: a Ayla escolhendo calada pela mãe, ou perguntando sem
+   * organizar nada.
+   *
+   * A proibição não sumiu: virou uma DISTINÇÃO. Menu que substitui a resposta
+   * continua errado; menu que organiza um problema grande é o comportamento
+   * desejado, e é literalmente o exemplo que o Sérgio deu como experiência boa.
+   */
+  it("distingue o menu que organiza do menu que foge", () => {
+    expect(NUCLEO).toMatch(/OFERECER CAMINHOS NÃO É JOGAR A DECISÃO DE VOLTA/);
+    // o modo de falha continua nomeado
+    expect(NUCLEO).toMatch(/RUIM é o menu que substitui a resposta/);
+    expect(NUCLEO).toMatch(/quando você podia simplesmente responder/);
+    // e o comportamento desejado ficou explícito
+    expect(NUCLEO).toMatch(/BOM é o menu que ORGANIZA/);
+    expect(NUCLEO).toMatch(/Qual está pesando mais agora/);
+    expect(NUCLEO).toMatch(/recomendar por onde começar deixando ela trocar/);
+  });
+
+  it("pergunta é ferramenta, não ritual", () => {
+    expect(NUCLEO).toMatch(/PERGUNTA É FERRAMENTA, NÃO RITUAL/);
+    expect(NUCLEO).toMatch(/terminar sem pergunta é frequentemente o certo/);
+  });
+
+  it("ajuda antes de investigação infinita", () => {
+    expect(NUCLEO).toMatch(/HAVENDO INFORMAÇÃO PARA UM PRIMEIRO PASSO SEGURO, DÊ O PRIMEIRO PASSO/);
+    expect(NUCLEO).toMatch(/não colete porque mais informação seria interessante/);
+  });
+
+  it("acolhimento não é obrigação de abertura", () => {
+    expect(NUCLEO).toMatch(/NÃO PRECISO ACOLHER ANTES DE TODA RESPOSTA/);
+    expect(NUCLEO).toMatch(/Parágrafo de acolhimento que não acrescenta nada é enrolação/);
   });
 
   it('responde "o que você faz?" por problema, não por funcionalidade', () => {

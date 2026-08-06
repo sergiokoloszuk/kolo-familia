@@ -404,7 +404,18 @@ describe("simplificação: o prompt não pode crescer", () => {
     // mexer nele antes de saber o que melhorou seria trocar de problema.
     // O teto existe pra que o próximo aumento seja uma DECISÃO, não um
     // acúmulo silencioso.
-    expect(nucleoConducao().length).toBeLessThan(52_000);
+    //
+    // 06/08/2026 — A DECISÃO, registrada como o teto pede. Subiu pra 52.500
+    // para caber quatro mudanças de condução pedidas na frente de correção
+    // estrutural: a distinção entre o menu que ORGANIZA e o menu que foge, o
+    // "dê o primeiro passo quando já dá", "pergunta é ferramenta, não ritual"
+    // e o fim da obrigação de acolher antes de toda resposta.
+    //
+    // O crescimento LÍQUIDO foi de ~300 caracteres, porque as quatro foram
+    // pagas removendo duplicação real: a coreografia de ritmo estava escrita
+    // duas vezes (REGRA_SEQUENCIA e VOZ 3) e o bloco de ampliar a percepção
+    // repetia os próprios exemplos. Regra nenhuma foi perdida.
+    expect(nucleoConducao().length).toBeLessThan(52_500);
   });
 });
 

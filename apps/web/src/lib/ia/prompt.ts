@@ -126,15 +126,20 @@ export function blocoIntencao(intencao: Intencao): string {
 
 Antes de qualquer coisa, ACOLHA: 1-2 frases curtas que mostram que você entende o peso deste momento. Não minimize, não dê lição, não corra pra resolver.
 NÃO despeje um plano nem uma lista de soluções agora — no meio de uma crise isso sobrecarrega.
-Depois de acolher, devolva a escolha pra ela numa única pergunta: ela prefere entender agora o que pode ter desencadeado, ou só respirar e olhar isso com calma depois? Quem manda no ritmo é ela.
-Se ela quiser entender, levante NO MÁXIMO 1-2 possíveis "suspeitos" a partir do que você sabe da criança (sensorial, transição, fome, sono, excesso de estímulo) — sempre como hipótese, nunca causa afirmada.
+Depois de acolher, dê o que ajuda AGORA: um ou dois passos pra atravessar o momento. Quem manda no ritmo é ela, e você pode dizer isso — mas não devolva a decisão como pergunta obrigatória. (Até 06/08/2026 este bloco MANDAVA terminar perguntando se ela preferia entender agora ou depois. No meio de uma crise, isso era mais uma tarefa pra quem já não estava dando conta.)
+Se fizer sentido entender o que desencadeou, levante NO MÁXIMO 1-2 possíveis "suspeitos" a partir do que você sabe da criança (sensorial, transição, fome, sono, excesso de estímulo) — sempre como hipótese, nunca causa afirmada.
 SEGURANÇA: se houver RISCO à integridade de alguém (autolesão, agressão que machuca, risco de acidente, ou o adulto mencionar se machucar/não aguentar mais), você é APOIO, não emergência — oriente claro a buscar ajuda imediata: emergência médica SAMU 192; e pra sofrimento intenso/risco à vida, o CVV pelo 188 (24h, gratuito, sigiloso). Não minimize nem prometa resolver sozinha.
 Termine gentil e curto.`;
     case "desabafo":
+      // ⚠️ AQUI HAVIA UMA PERGUNTA OBRIGATÓRIA (removida em 06/08/2026):
+      // "No fim, pergunte de leve se ela quer pensar em algo concreto agora ou
+      // se hoje é só pra colocar pra fora." Era pergunta por decreto, no canal
+      // onde a mãe chegou justamente pedindo ajuda — e o bloco de crise tinha
+      // a mesma coisa ("devolva a escolha numa única pergunta").
       return `# Esta mensagem parece um desabafo
 
-Ela quer ser ouvida, não necessariamente resolvida. ACOLHA e valide o que ela sente, sem correr pra solução.
-Não force uma ideia prática. No fim, pergunte de leve se ela quer pensar em algo concreto agora ou se hoje é só pra colocar pra fora.`;
+Ela quer ser ouvida, não necessariamente resolvida. Acolha mostrando que entendeu — reorganizando com clareza o que ela está vivendo, não nomeando a emoção dela.
+Não force uma ideia prática nem transforme isso numa investigação. Se um caminho concreto se oferecer naturalmente, pode deixá-lo na mesa em uma frase; se não, terminar sem pergunta está certo.`;
     case "duvida":
       return `# Esta mensagem é uma dúvida pontual
 
@@ -160,7 +165,11 @@ Não termine toda resposta com pergunta.`;
  * depois as lentes de especialista deste turno, os limites de produto e o
  * formato da web. A crise já tem o blocoIntencao("crise") próprio.
  */
-function buildSystemTextConversa(
+/**
+ * Exportada pra a bancada montar o system EXATAMENTE como produção monta.
+ * Sem isto a bancada reconstrói o prompt e mede um produto que não existe.
+ */
+export function buildSystemTextConversa(
   skills: SkillRow[],
   intencao?: Intencao,
   tema?: string | null,
@@ -197,7 +206,13 @@ Você conversa DENTRO do app (não é WhatsApp) — pode usar markdown leve. Seg
 
 # Tamanho
 
-Curto por padrão: alvo de ~120 palavras. Mas dê o espaço que a necessidade pedir — uma pergunta prática (comida, estratégia) pode pedir um pouco mais pra caber 3-5 opções concretas. Resposta longa e VAGA é que cansa quem está no meio de um desafio.${
+O TAMANHO É O DA AJUDA — não há alvo de palavras.
+
+Uma dúvida pontual se resolve em duas ou três frases, e alongar é ruído. Uma mãe que chega com quatro frentes precisa de espaço pra você mostrar que entendeu, organizar as frentes, dar a primeira direção e oferecer por onde começar — cortar isso pela metade pra caber num limite entrega meia ajuda.
+
+O que cansa não é o texto longo: é o texto VAGO. Corte o que não muda o próximo passo dela, e mantenha tudo o que muda.
+
+(Até 06/08/2026 havia aqui um "alvo de ~120 palavras". Não cabia organizar quatro frentes e ainda dar a primeira estratégia, e era o teto que impedia exatamente a resposta que o produto quer.)${
     skills.length > 1
       ? `\n\n# Composição multi-skill\n\nVocê integra ${skills.length} perspectivas — entregue UMA resposta única e coesa, não duas separadas, e sem citar os nomes das skills.`
       : ""
@@ -383,11 +398,17 @@ export function assemblePrompt(params: {
    * Opcional: sem ele, as formas de entrega continuam funcionando.
    */
   tema?: string | null;
+  /**
+   * O que ela acabou de ACEITAR, quando a Kolo ofereceu algo no turno anterior.
+   * Vem do classificador (`lib/ia/intencao.ts`). Entra como nota do TURNO, e
+   * não no system: é fato desta mensagem, não regra do produto.
+   */
+  aceite?: string | null;
 }): {
   system: Anthropic.TextBlockParam[];
   messages: Anthropic.MessageParam[];
 } {
-  const { skills, ctx, userInput, modo, intencao, tema } = params;
+  const { skills, ctx, userInput, modo, intencao, tema, aceite } = params;
 
   const systemText =
     modo.kind === "conversa"
@@ -416,9 +437,17 @@ export function assemblePrompt(params: {
   const wrapper =
     modo.kind === "conversa" ? "mensagem_da_mae" : "pedido_da_mae";
 
+  // ELA ACEITOU O QUE VOCÊ OFERECEU. Vem ANTES da mensagem porque "sim" não
+  // carrega conteúdo: sem o referente resolvido, o modelo reconstrói o turno a
+  // partir da conversa inteira e responde outra coisa. O WhatsApp já tinha
+  // esta nota desde 04/08; a web não tinha nada equivalente.
+  const notaAceite = aceite
+    ? `<nota_do_turno>\nELA ESTÁ ACEITANDO O QUE VOCÊ OFERECEU no seu último turno: ${aceite}. FAÇA ISSO AGORA, neste turno. Não reabra o assunto geral da conversa, não peça pra ela repetir o pedido, não pergunte de novo o que você já sabe. Se faltar UM dado sem o qual não dá pra fazer, pergunte SÓ esse dado — nada além dele.\n</nota_do_turno>\n\n`
+    : "";
+
   const userTurnText = contextoBloco
-    ? `${contextoBloco}\n\n<${wrapper}>\n${userInput}\n</${wrapper}>`
-    : `<${wrapper}>\n${userInput}\n</${wrapper}>`;
+    ? `${contextoBloco}\n\n${notaAceite}<${wrapper}>\n${userInput}\n</${wrapper}>`
+    : `${notaAceite}<${wrapper}>\n${userInput}\n</${wrapper}>`;
 
   messages.push({ role: "user", content: userTurnText });
 
