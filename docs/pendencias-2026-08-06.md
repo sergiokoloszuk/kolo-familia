@@ -47,11 +47,11 @@ laudo antigo.
 
 | # | Pendência | Estado |
 |---|-----------|--------|
-| 16 | Avaliação cega nunca preenchida — 20 critérios + 10 de jornada, telas prontas | ⬜ aberto — **1h do Sérgio; é a evidência humana que sustenta a decisão** |
+| 16 | Avaliação cega nunca preenchida — 20 critérios + 10 de jornada, telas prontas | ⬜ aberto — **NÃO é bloqueador de ativação** (decisão de produto, 06/08). Bancada e telas seguem no repositório; pode ser preenchida depois |
 | 17 | GPT repete 22% (34,9% na web) — mitigação definida, não implementada | ✅ **IMPLEMENTADO** — `VOZ 7` ("a cada turno, avance a conversa"), uma linha só, sem teto/pergunta obrigatória/blacklist. Efeito não medido ainda |
 | 18 | Visão e artefatos sem evidência — a bancada mediu só conversa | 🟡 **parcial** — smoke `foto` passa nos 2 providers (envelope + resposta). Artefatos (plano, rotina) seguem no Claude e não foram medidos |
 | 19 | Cache no billing — subestima Claude, superestima GPT (1,5× medido × 19× real) | ⬜ aberto — a PRICE_TABLE não modela cache; `cache_read` já vai no `meta` do `api_calls` da web |
-| 20 | Chave de produção é `sk-proj-*` — acesso a texto provado só na chave local | ⬜ aberto — **bloqueia ligar `IA_PROVIDER=openai` em produção** |
+| 20 | Chave de produção é `sk-proj-*` — acesso a texto provado só na chave local | ⬜ aberto — **ÚNICO bloqueador de ativação**. Ferramenta pronta: `GET /api/admin/provider-check?p=openai` (admin-only, chave nunca sai da rota). Precisa estar deployado |
 | 21 | `OPENAI_MODEL_LEVE` não definido — sem evidência para escolher | ⬜ aberto (não bloqueia: os auxiliares seguem no Claude) |
 | 22 | Grupo D — quais dos 28 auxiliares não deveriam usar LLM (não classificado) | ⬜ aberto |
 
@@ -68,15 +68,29 @@ laudo antigo.
 
 ## Onde a migração parou
 
-**Fase A e Fase B implementadas** (suíte 979 verde, typecheck e build verdes,
-zero migração de banco). **GPT continua desligado**: `IA_PROVIDER` ausente =
-Claude, que é o estado atual de produção.
+**Fase A e Fase B commitadas em `ada8129`** (suíte 979 verde, typecheck e build
+verdes, smoke 22/22, zero migração de banco). **GPT continua desligado**:
+`IA_PROVIDER` ausente = Claude, que é o estado atual de produção.
 
-O que falta pra liberar para famílias reais:
+Decisão de produto de 06/08: OpenAI é o provider oficial da camada
+conversacional. Não se reabre a comparação, e a avaliação cega saiu do portão.
 
-1. #20 — provar acesso a texto na chave de produção `sk-proj-*`
-2. #16 — a avaliação cega preenchida (evidência humana, não só automática)
-3. decidir #5/#6 — entram antes da Fase B ir pro ar, ou depois?
+O que falta pra ativar, nesta ordem:
+
+1. **deploy** — a prova da chave roda dentro de produção, então precisa estar lá
+2. **#20** — `GET /api/admin/provider-check?p=openai` retornando `ok: true`.
+   Se falhar: PARAR, não mexer em `IA_PROVIDER`
+3. **`IA_PROVIDER=openai`** no ambiente — ativação controlada
+4. **smoke no ambiente real** com conta de teste (12 situações), verificando
+   histórico, membro, contexto, provider, modelo, tokens, custo, imagem, e
+   nenhuma resposta de fallback
+
+Rollback em qualquer ponto: remover `IA_PROVIDER`. Sem deploy, sem build.
+
+O que NÃO entra nesta frente: tuning de prompt. Achado ruim no smoke se
+classifica antes de corrigir (MODELO / PROMPT / CONTEXTO / ORQUESTRADOR /
+INTEGRAÇÃO), pra o prompt não virar depósito de correção de bug de arquitetura.
+A qualidade da conversa vira uma frente própria depois.
 
 Ligar: `IA_PROVIDER=openai` no ambiente. Desligar: remover a variável. Sem
 deploy, sem build, sem PR — e valor inválido cai no Claude de propósito.
