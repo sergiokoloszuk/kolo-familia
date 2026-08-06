@@ -24,9 +24,50 @@ export type Provider = "anthropic" | "openai";
 
 export type MensagemConversa = {
   role: "user" | "assistant";
-  /** Texto puro, ou blocos multimodais no formato de cada provider. */
+  /**
+   * Texto puro, ou blocos multimodais NO FORMATO ANTHROPIC — que é o formato
+   * canônico do produto, porque foi nele que o código nasceu. O provider
+   * traduz para a OpenAI; quem chama não precisa saber com quem está falando.
+   */
   content: unknown;
 };
+
+/** Bloco de imagem como `responder.ts` monta hoje. */
+type BlocoImagemAnthropic = {
+  type: "image";
+  source: { type: "base64"; media_type: string; data: string };
+};
+
+/**
+ * TRADUZ CONTEÚDO MULTIMODAL — Anthropic → OpenAI.
+ *
+ * ⚠️ SEM ISTO, TODA MENSAGEM COM FOTO QUEBRA. A Ayla enxerga imagem desde
+ * julho: a mãe manda a lição da escola ou o rótulo de um alimento e recebe
+ * ajuda sobre AQUILO. `responder.ts` monta o bloco no formato da Anthropic
+ * (`{type:"image", source:{type:"base64", media_type, data}}`); a OpenAI usa
+ * `{type:"image_url", image_url:{url:"data:<mime>;base64,<dados>"}}`.
+ *
+ * Repassar cru devolveria 400 do provedor — e a mãe receberia o texto de
+ * fallback no lugar de uma resposta sobre a foto dela.
+ *
+ * O que esta função NÃO faz: mudar como a imagem é interpretada. Ela troca o
+ * envelope, nada mais. O prompt que ensina a Ayla a ler a foto continua em
+ * `responder.ts`, igual para os dois providers.
+ */
+function conteudoParaOpenAI(content: unknown): unknown {
+  if (typeof content === "string" || !Array.isArray(content)) return content;
+  return content.map((bloco) => {
+    if (!bloco || typeof bloco !== "object") return bloco;
+    const b = bloco as Partial<BlocoImagemAnthropic> & { type?: string };
+    if (b.type !== "image" || b.source?.type !== "base64") return bloco;
+    const { media_type, data } = b.source;
+    // Sem mime ou sem dados o bloco é inútil dos dois lados — deixa passar
+    // como estava, e o provedor reclama de forma legível em vez de a gente
+    // montar um data-URI quebrado.
+    if (!media_type || !data) return bloco;
+    return { type: "image_url", image_url: { url: `data:${media_type};base64,${data}` } };
+  });
+}
 
 export type EntradaConversacional = {
   provider: Provider;
@@ -125,7 +166,11 @@ async function chamarOpenAI(e: EntradaConversacional): Promise<SaidaConversacion
       // raciocínio, que são cobrados como saída e não aparecem no texto.
       max_completion_tokens: e.maxTokens,
       // O system vira uma MENSAGEM — não é parâmetro separado como na Anthropic.
-      messages: [{ role: "system", content: e.system }, ...e.messages],
+      // E o conteúdo multimodal muda de envelope: ver `conteudoParaOpenAI`.
+      messages: [
+        { role: "system", content: e.system },
+        ...e.messages.map((m) => ({ role: m.role, content: conteudoParaOpenAI(m.content) })),
+      ],
     }),
   });
   const j = (await r.json()) as Record<string, any>;

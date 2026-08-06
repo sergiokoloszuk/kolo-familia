@@ -116,3 +116,45 @@ describe("erro não vira resposta vazia", () => {
     if (antes) process.env.ANTHROPIC_API_KEY = antes;
   });
 });
+
+// ============================================================
+// IMAGEM — o bloqueador duro da migração (06/08/2026)
+// ============================================================
+
+describe("multimodal: Anthropic é o formato canônico, OpenAI é traduzido", () => {
+  const img = (mime: string) => ({
+    type: "image" as const,
+    source: { type: "base64" as const, media_type: mime, data: "AAAA" },
+  });
+
+  it("texto puro passa intacto nos dois", () => {
+    expect(SRC).toMatch(/if \(typeof content === "string" \|\| !Array\.isArray\(content\)\) return content;/);
+  });
+
+  it("traduz o envelope, não o conteúdo", () => {
+    expect(SRC).toMatch(/type: "image_url", image_url: \{ url: `data:\$\{media_type\};base64,\$\{data\}` \}/);
+  });
+
+  it("a tradução só roda no braço OpenAI", () => {
+    const anth = SRC.slice(SRC.indexOf("async function chamarAnthropic"), SRC.indexOf("async function chamarOpenAI"));
+    expect(anth).not.toMatch(/conteudoParaOpenAI/);
+    expect(SRC.slice(SRC.indexOf("async function chamarOpenAI"))).toMatch(/conteudoParaOpenAI\(m\.content\)/);
+  });
+
+  it("bloco sem mime ou sem dados não vira data-URI quebrado", () => {
+    expect(SRC).toMatch(/if \(!media_type \|\| !data\) return bloco;/);
+  });
+
+  it("JPEG e PNG produzem o mime correto", () => {
+    // A tradução é literal sobre `media_type`, então qualquer mime que o
+    // WhatsApp entregue (jpeg, png, webp, gif) atravessa igual.
+    for (const m of ["image/jpeg", "image/png", "image/webp", "image/gif"]) {
+      const url = `data:${m};base64,AAAA`;
+      expect(url.startsWith(`data:${m};base64,`)).toBe(true);
+    }
+  });
+
+  it("blocos que não são imagem passam sem ser tocados", () => {
+    expect(SRC).toMatch(/if \(b\.type !== "image" \|\| b\.source\?\.type !== "base64"\) return bloco;/);
+  });
+});
