@@ -105,6 +105,31 @@ O que precisa vir:
 `false`, o campo `falha` distingue chave inválida (401), modelo fora do projeto
 (404) e quota (429).
 
+### PASSO 5 — verificar pelos FATOS, depois de conversar
+
+O provider-check prova a chave e a configuração. Ele **não** prova que as
+famílias certas foram atendidas — isso só o banco responde, e só depois de
+alguém conversar:
+
+```
+node scripts/bancada/migracao/verificar-rollout.mjs --horas 24
+```
+
+Read-only sobre `api_calls`. Procura os dois erros que importam:
+
+- **VAZAMENTO** — família fora da lista atendida pelo GPT. Grave: alguém que não
+  pediu para testar está testando. Ação imediata: `IA_PROVIDER=anthropic` +
+  redeploy, investigar depois.
+- **NÃO CHEGOU** — família autorizada recebendo Claude. Quase sempre é env não
+  aplicada, deploy anterior à variável, ou id diferente do que se pensa.
+
+"Ainda não conversou" **não é erro** — é ausência de dado. O relatório separa as
+duas coisas, porque confundi-las leva a mexer no que não está quebrado.
+
+A allowlist é lida da mesma `OPENAI_TEST_FAMILY_IDS` que o produto lê. Comparar
+contra uma lista digitada dentro do script provaria que duas cópias batem entre
+si, não que a produção está certa.
+
 ---
 
 ## Voltar TODOS ao Claude
