@@ -34,6 +34,16 @@ function getZapiConfig(): ZapiConfig {
 /**
  * Envia uma mensagem de texto via Z-API.
  * Retorna o messageId / zaapId que a Z-API devolve, ou lança em erro.
+ *
+ * ⚠️ O QUE `messageId` PROVA, E O QUE ELE NÃO PROVA. Ele prova que a Z-API
+ * ACEITOU a mensagem (HTTP 200 + id). Não prova entrega no aparelho, não prova
+ * que a pessoa recebeu e não prova que leu — isso viria de webhook de status,
+ * que não escutamos. Quem for usar este valor: chame de "aceito pelo provedor".
+ *
+ * `null` quando a Z-API responde 200 sem id nenhum. Antes isto virava a string
+ * "unknown", que é pior que nada em dois sentidos: mente sobre existir um id, e
+ * colide no índice ÚNICO de `ayla_messages.zaap_message_id` (0053) na segunda
+ * ocorrência — o que derrubaria o registro da mensagem.
  */
 export async function enviarTexto(params: {
   phoneE164: string;
@@ -44,7 +54,7 @@ export async function enviarTexto(params: {
    * silêncio (não confundir — usar delayTyping).
    */
   delaySegundos?: number;
-}): Promise<{ messageId: string; raw: unknown }> {
+}): Promise<{ messageId: string | null; raw: unknown }> {
   const { instanceId, token, clientToken } = getZapiConfig();
 
   // Z-API espera o telefone sem o '+', no formato E.164 sem prefixo.
@@ -70,14 +80,16 @@ export async function enviarTexto(params: {
   }
 
   const json = (await res.json()) as { messageId?: string; zaapId?: string };
-  const messageId = json.messageId ?? json.zaapId ?? "unknown";
-  return { messageId, raw: json };
+  return { messageId: json.messageId ?? json.zaapId ?? null, raw: json };
 }
 
 /**
  * Envia um DOCUMENTO (ex.: PDF do plano) via Z-API.
  * Endpoint: POST /send-document/{extensao}  body { phone, document, fileName }.
  * `document` aceita uma URL pública ou data URI base64.
+ *
+ * Mesma leitura de `messageId` do `enviarTexto`: aceito pelo provedor, não
+ * entregue. E `null` quando não vem id — nunca "unknown".
  */
 export async function enviarDocumento(params: {
   phoneE164: string;
@@ -85,7 +97,7 @@ export async function enviarDocumento(params: {
   fileName: string;
   extensao?: string;
   caption?: string;
-}): Promise<{ messageId: string; raw: unknown }> {
+}): Promise<{ messageId: string | null; raw: unknown }> {
   const { instanceId, token, clientToken } = getZapiConfig();
   const phone = params.phoneE164.replace(/^\+/, "");
   const ext = params.extensao ?? "pdf";
@@ -108,7 +120,7 @@ export async function enviarDocumento(params: {
     throw new Error(`Z-API send-document ${res.status}: ${text.slice(0, 500)}`);
   }
   const json = (await res.json()) as { messageId?: string; zaapId?: string };
-  return { messageId: json.messageId ?? json.zaapId ?? "unknown", raw: json };
+  return { messageId: json.messageId ?? json.zaapId ?? null, raw: json };
 }
 
 /**

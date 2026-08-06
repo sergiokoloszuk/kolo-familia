@@ -94,7 +94,13 @@ import type { AylaTipoProativa, AylaTipoReativa, ParserResult } from "./types";
  */
 
 export type EnvioResultado =
-  | { enviada: true; messageId: string }
+  /**
+   * `enviada: true` = a Z-API ACEITOU (HTTP 200). Não é entrega, não é
+   * recebimento e não é leitura — ver `whatsappSender.enviarTexto`. E
+   * `messageId` pode ser null: 200 sem id acontece, e inventar um id ("unknown")
+   * é pior que assumir que não veio.
+   */
+  | { enviada: true; messageId: string | null }
   | { enviada: false; motivo: string };
 
 // ============================================================
@@ -2138,7 +2144,13 @@ async function enviarRespostaEmChunks(
   },
 ): Promise<EnvioResultado> {
   let providerResp: unknown = null;
-  let messageId = "unknown";
+  // VERDADE OPERACIONAL (06/08/2026). Um turno da Ayla vira VÁRIAS bolhas no
+  // WhatsApp e UM registro em `ayla_messages` — então guardamos o id de cada
+  // bolha, não só o da última. Antes isto era `messageId = "unknown"` e nada
+  // disso chegava ao banco: na conversa da Vitória, 27 de 27 mensagens de saída
+  // ficaram com `zaap_message_id` nulo, e por isso a Ayla pôde dizer "Chegou!"
+  // sem ter como saber.
+  const idsBolhas: Array<string | null> = [];
   let erro: string | null = null;
   let primeiro = true;
 
@@ -2218,7 +2230,7 @@ async function enviarRespostaEmChunks(
     try {
       const r = await enviarTexto({ phoneE164: args.phone, texto: par, delaySegundos: delay });
       providerResp = r.raw;
-      messageId = r.messageId;
+      idsBolhas.push(r.messageId);
     } catch (e) {
       erro = e instanceof Error ? e.message : "falha no envio";
       break;
@@ -2248,7 +2260,8 @@ async function enviarRespostaEmChunks(
     });
     if (nudge) {
       try {
-        await enviarTexto({ phoneE164: args.phone, texto: nudge, delaySegundos: 3 });
+        const r = await enviarTexto({ phoneE164: args.phone, texto: nudge, delaySegundos: 3 });
+        idsBolhas.push(r.messageId);
         textoCompleto = `${textoCompleto}\n\n${nudge}`;
       } catch (e) {
         console.warn(
@@ -2277,12 +2290,13 @@ async function enviarRespostaEmChunks(
       tipo: args.tipo,
       texto: textoCompleto,
       enviada_em: new Date().toISOString(),
+      ...registroDeEnvio(idsBolhas),
     });
     await supabase
       .from("ayla_preferences")
       .update({ ultima_mensagem_em: new Date().toISOString() })
       .eq("family_account_id", args.family_account_id);
-    return { enviada: true, messageId };
+    return { enviada: true, messageId: idsBolhas.find(Boolean) ?? null };
   }
   return { enviada: false, motivo: erro ?? "falha" };
 }
@@ -3023,6 +3037,42 @@ async function loadFamiliaParaEnvio(
   };
 }
 
+/**
+ * O QUE O SISTEMA SABE SOBRE O PRÓPRIO ENVIO — os campos de `ayla_messages` que
+ * já existiam desde a 0001 e que ninguém preenchia (nenhuma migração aqui).
+ *
+ * ⚠️ LEIA ISTO ANTES DE USAR O DADO. `zaap_message_id` e `entrega.aceito_em`
+ * provam UMA coisa: a Z-API respondeu 200 e devolveu um id. Não provam entrega
+ * no aparelho, não provam recebimento e não provam leitura — status de entrega
+ * viria de webhook, que não escutamos. Em telas, relatório ou prompt, isto se
+ * chama "aceito pelo provedor". Chamar de "entregue" seria trocar um nulo
+ * honesto por um número errado, que é o pior dos dois mundos.
+ *
+ * `zaap_message_id` recebe o id da PRIMEIRA bolha porque a coluna tem índice
+ * único (0053, a trava de idempotência do inbound) e o turno tem uma linha só;
+ * os demais ids ficam em `metadata.entrega.ids`, sem restrição de unicidade.
+ * Nunca gravamos a string "unknown" ali: além de mentir, a segunda ocorrência
+ * violaria o índice e derrubaria o registro inteiro da mensagem.
+ */
+function registroDeEnvio(ids: Array<string | null>): {
+  zaap_message_id: string | null;
+  metadata: Record<string, unknown>;
+} {
+  return {
+    zaap_message_id: ids.find(Boolean) ?? null,
+    metadata: {
+      entrega: {
+        canal: "z-api",
+        // O nome do campo é o que ele prova. Não renomeie pra "entregue".
+        aceito_pelo_provedor: ids.length > 0,
+        aceito_em: new Date().toISOString(),
+        bolhas: ids.length,
+        ids,
+      },
+    },
+  };
+}
+
 async function enviarEPersistir(
   supabase: SupabaseClient,
   params: {
@@ -3071,10 +3121,12 @@ async function enviarEPersistir(
   let resultado: EnvioResultado;
   let providerResp: unknown = null;
   let erro: string | null = null;
+  const idsBolhas: Array<string | null> = [];
 
   try {
     const r = await enviarTexto({ phoneE164: params.phone, texto });
     providerResp = r.raw;
+    idsBolhas.push(r.messageId);
     resultado = { enviada: true, messageId: r.messageId };
   } catch (e) {
     erro = e instanceof Error ? e.message : "Falha desconhecida";
@@ -3111,6 +3163,7 @@ async function enviarEPersistir(
       tipo: params.tipo,
       texto,
       enviada_em: new Date().toISOString(),
+      ...registroDeEnvio(idsBolhas),
     });
 
     await supabase

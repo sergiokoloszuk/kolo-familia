@@ -105,6 +105,22 @@ export const MODELO_CONVERSA: Record<Provider, string> = {
   openai: process.env.OPENAI_MODEL_PRINCIPAL || "gpt-5.6-luna",
 };
 
+/**
+ * QUAL PROVIDER A CAMADA CONVERSACIONAL USA — o botão de rollback.
+ *
+ * Vive em env (`IA_PROVIDER`) e não em código porque a volta atrás precisa ser
+ * imediata: mudar a variável e reiniciar, sem build, sem deploy, sem PR. É a
+ * diferença entre uma migração reversível em minutos e uma que exige alguém
+ * disponível pra abrir o editor.
+ *
+ * Valor desconhecido cai em "anthropic" DE PROPÓSITO: um typo (`IA_PROVIDER=opemai`)
+ * não pode desligar a conversa das famílias — o pior caso tem que ser "continua
+ * como estava", nunca "para de responder".
+ */
+export function providerConversacionalAtivo(): Provider {
+  return process.env.IA_PROVIDER === "openai" ? "openai" : "anthropic";
+}
+
 class ErroDeProvider extends Error {
   constructor(provider: Provider, status: number | string, detalhe: string) {
     super(`${provider} ${status}: ${detalhe.slice(0, 300)}`);

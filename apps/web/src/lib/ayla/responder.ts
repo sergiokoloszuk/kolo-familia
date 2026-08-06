@@ -1,5 +1,9 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { getAylaAnthropicClient, AYLA_MODEL_FALLBACK } from "./anthropic";
+import {
+  gerarConversacional,
+  providerConversacionalAtivo,
+  MODELO_CONVERSA,
+} from "@/lib/ia/provider";
 import { logarUsoApi } from "@/lib/billing/logar";
 import { logServerError, logEvent } from "@/lib/log";
 import { fronteiraAtravessada } from "@/lib/conducao/fronteiras";
@@ -308,7 +312,12 @@ async function gerarUmaVez(
   params: RespostaParams,
   tracking?: UsageTracking,
 ): Promise<string> {
-  const client = getAylaAnthropicClient();
+  // QUEM RESPONDE. Só a camada conversacional muda de provider — o parser, o
+  // classificador de intenção, a prontidão, o roteador e os artefatos seguem no
+  // Claude, cada um com o seu cliente. Aqui a variável é o MODELO, e só ele: o
+  // `system` montado abaixo é o mesmo nos dois braços, por construção.
+  const provider = providerConversacionalAtivo();
+  const model = MODELO_CONVERSA[provider];
   // FORMAS DE ENTREGA — condicional, nunca sempre. Um desabafo com títulos em
   // negrito é frieza, e uma pergunta pontual com quatro blocos é ruído. Só
   // entra quando o turno é de fato uma entrega (ver `ehEntrega`).
@@ -598,38 +607,39 @@ Se for uma TAREFA da escola/terapia:
     // inofensiva: quando o modelo falha, a mãe recebe o texto fixo do
     // fallbackSimples ("Que coisa boa de ouvir 🌿") — que apareceu em conversa
     // real, respondendo a um desabafo. Sobrecarga/rate-limit passa em segundos.
-    const stream = await comRetentativaCurta(() =>
-      client.messages.stream({
-        model: AYLA_MODEL_FALLBACK,
-        max_tokens: 900,
-        system: [{ type: "text", text: system, cache_control: { type: "ephemeral" } }],
+    // O streaming saiu daqui. Ele já era INTERNO — os deltas só enchiam um
+    // buffer, porque nada pode sair pro WhatsApp antes da rede de fronteiras
+    // (quem publica é o orquestrador). Sem ninguém consumindo os deltas ao
+    // vivo, uma chamada única entrega exatamente o mesmo texto e é o que
+    // permite os dois providers pelo mesmo caminho.
+    const r = await comRetentativaCurta(() =>
+      gerarConversacional({
+        provider,
+        model,
+        system,
         messages: [{ role: "user", content: userContent }],
+        maxTokens: 900,
+        // Só a Anthropic marca cache explicitamente; na OpenAI é automático e o
+        // provider ignora o campo. Mantém o desconto que esta chamada já tinha.
+        cacheSystem: true,
       }),
     );
 
-    // Streaming INTERNO: consome os deltas só para montar o buffer. Nada sai
-    // daqui para o WhatsApp — quem publica é o orquestrador, e só depois da
-    // rede. Antes, cada parágrafo era enviado aqui dentro assim que fechava.
-    let full = "";
-    for await (const event of stream) {
-      if (event.type === "content_block_delta" && event.delta.type === "text_delta") {
-        full += event.delta.text;
-      }
-    }
-
-    const final = await stream.finalMessage();
     if (tracking) {
       await logarUsoApi(tracking.supabase, {
         family_account_id: tracking.family_account_id,
-        provider: "anthropic",
-        model: AYLA_MODEL_FALLBACK,
+        // Do RETORNO, nunca de uma constante: com o provider vindo de env, um
+        // literal aqui faria o /admin/uso-api cobrar o custo do modelo errado
+        // no dia seguinte a um rollback.
+        provider: r.provider,
+        model: r.model,
         feature: tracking.feature,
-        input_tokens: final.usage.input_tokens,
-        output_tokens: final.usage.output_tokens,
+        input_tokens: r.tokensIn,
+        output_tokens: r.tokensOut,
       });
     }
 
-    return full.trim() || textoDe(final.content) || fallbackSimples(params);
+    return r.texto.trim() || fallbackSimples(params);
   } catch (e) {
     console.warn("[ayla:responder] falha do modelo:", e instanceof Error ? e.message : e);
     // PERSISTE. Antes isto era só console.warn — e por isso ninguém sabia que
@@ -646,22 +656,20 @@ Se for uma TAREFA da escola/terapia:
   }
 }
 
-function textoDe(content: Array<{ type: string }>): string {
-  return (content as Array<{ type: string; text?: string }>)
-    .filter((b) => b.type === "text")
-    .map((b) => b.text ?? "")
-    .join("")
-    .trim();
-}
-
 /**
  * Uma retentativa curta pra falha transitória (sobrecarga/rate-limit do
  * modelo). Só vale antes de qualquer coisa ter sido enviada — depois de a
  * primeira bolha sair, repetir viraria resposta partida.
+ *
+ * ⚠️ `return await`, e não `return`. Sem o await, a promessa rejeitada saía da
+ * função ANTES do catch e a retentativa nunca rodava — só pegava erro lançado
+ * de forma síncrona, que é justamente o que uma falha de rede não é. O
+ * `fallbackSimples` ("Que coisa boa de ouvir 🌿" em cima de um desabafo) saía na
+ * primeira falha, sempre.
  */
-async function comRetentativaCurta<T>(fn: () => T): Promise<T> {
+async function comRetentativaCurta<T>(fn: () => T | Promise<T>): Promise<T> {
   try {
-    return fn();
+    return await fn();
   } catch (e) {
     console.warn(
       "[ayla:responder] 1ª tentativa falhou, tentando de novo:",
