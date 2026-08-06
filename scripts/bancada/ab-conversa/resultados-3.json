@@ -1,0 +1,1504 @@
+{
+  "gerado_em": "2026-08-06T02:41:08.560Z",
+  "modelo_claude": "claude-sonnet-4-6",
+  "modelo_gpt": "gpt-5.6-luna",
+  "casos": [
+    {
+      "id": "01_quero_ela_bem",
+      "titulo": "1. Aberto e emocional — 'quero ver ela bem'",
+      "canal": "whatsapp",
+      "crianca": "Isabela",
+      "perfil": "Isabela, 15 anos, feminino. Diagnóstico informado pela família: TDAH (laudo).\nComo é / interesses: cinema, desenhar. Grupo de 4 amigas da escola desde os 8 anos.\nRegulação emocional: fica ansiosa antes de coisas novas; costuma antecipar o pior.\nEscola: vai bem em humanas; sofre com prazos.",
+      "historico": [],
+      "msg": "Eu quero ajudar minha filha, quero ver ela bem.",
+      "olhar": "Não há problema nomeado. A boa resposta ORGANIZA o que já se sabe e oferece caminhos — a ruim vira 'me conta mais sobre o que te preocupa'.",
+      "ordem_cega": [
+        "claude",
+        "gpt_a",
+        "gpt_b"
+      ],
+      "tamanho_system": {
+        "producao": 55278,
+        "limpo": 34065
+      },
+      "respostas": {
+        "claude": {
+          "texto": "Que bom que você veio, e que bonito isso — querer ver ela bem é um ponto de partida muito real.\n\nPra eu conseguir ajudar de verdade, me conta: o que está pesando mais pra vocês agora? O que você mais gostaria de ver diferente na vida da Isabela?",
+          "metricas": {
+            "palavras": 49,
+            "perguntas": 2,
+            "ajuda_concreta_juiz_claude": false,
+            "ajuda_concreta_juiz_gpt": false,
+            "ajuda_concreta_consenso": false,
+            "latencia_ms": 3496,
+            "tokens_in": 577,
+            "tokens_out": 81,
+            "tokens_raciocinio": 0,
+            "cache_read": 18067,
+            "cache_write": 0,
+            "custo_usd": 0.0066351
+          }
+        },
+        "gpt_a": {
+          "texto": "Você não precisa resolver tudo de uma vez para ajudar Isabela. O primeiro passo é ela sentir que você está ao lado dela, não apenas cobrando que dê conta.\n\nVocê pode dizer: “Eu quero te ajudar a ficar bem. Não preciso que você me explique tudo agora; quero entender qual parte está mais difícil e pensar em um passo pequeno com você.”\n\nComeçaria pelo que mais está atrapalhando a vida dela neste momento, porque apoiar uma dificuldade concreta costuma devolver segurança mais rápido. Hoje, o que preocupa mais: a ansiedade, os prazos da escola ou outra coisa?",
+          "metricas": {
+            "palavras": 97,
+            "perguntas": 1,
+            "ajuda_concreta_juiz_claude": false,
+            "ajuda_concreta_juiz_gpt": true,
+            "ajuda_concreta_consenso": null,
+            "latencia_ms": 4359,
+            "tokens_in": 14219,
+            "tokens_out": 275,
+            "tokens_raciocinio": 148,
+            "cache_read": 14216,
+            "cache_write": 0,
+            "custo_usd": null
+          }
+        },
+        "gpt_b": {
+          "texto": "Você não precisa resolver tudo de uma vez para começar a ajudá-la. Eu começaria pelos *prazos*, porque quando as tarefas ficam acumuladas a ansiedade costuma ganhar força também.\n\nEm um momento tranquilo, diga:\n\n“Eu não quero te cobrar mais. Quero entender o que está dificultando e pensar em um jeito de deixar isso menos pesado. O que trava mais: começar, saber por onde ir ou lembrar até quando precisa entregar?”\n\nDepois, para a próxima tarefa, ajude Isabela a transformar o prazo em três passos pequenos:\n\n1. abrir a atividade e marcar o que precisa ser feito;  \n2. escolher uma primeira parte que leve poucos minutos;  \n3. combinar um próximo momento curto para continuar.\n\nSem fazer por ela e sem usar desenho ou cinema como prêmio: esses interesses podem ser caminhos de conexão, por exemplo, pedir que ela explique uma ideia usando uma cena ou imagem — mas a ajuda principal é tornar o começo mais claro e possível.\n\nSe quiser, eu posso montar um *plano estratégico com atividades para Isabela* focado em prazos e na ansiedade diante de coisas novas.",
+          "metricas": {
+            "palavras": 180,
+            "perguntas": 1,
+            "ajuda_concreta_juiz_claude": true,
+            "ajuda_concreta_juiz_gpt": true,
+            "ajuda_concreta_consenso": true,
+            "latencia_ms": 5210,
+            "tokens_in": 8693,
+            "tokens_out": 353,
+            "tokens_raciocinio": 121,
+            "cache_read": 8690,
+            "cache_write": 0,
+            "custo_usd": null
+          }
+        }
+      }
+    },
+    {
+      "id": "02_vergonha_atendente",
+      "titulo": "2. Socialização — falar com atendente, vergonha",
+      "canal": "whatsapp",
+      "crianca": "Davi",
+      "perfil": "Davi, 5 anos, masculino. Em investigação (sem laudo).\nComunicação: fala bem em casa; quase não fala com quem não conhece.\nComo é / interesses: ônibus, mapas.\nRegulação: chora quando alguém desconhecido fala com ele.",
+      "historico": [],
+      "msg": "Queria saber como ajudar ele a ir nos lugares e falar com atendente, não ter tanta vergonha.",
+      "olhar": "Pedido claro e específico. Já dá pra dar estratégia hoje. Perguntar antes de ajudar aqui é falha.",
+      "ordem_cega": [
+        "gpt_a",
+        "gpt_b",
+        "claude"
+      ],
+      "tamanho_system": {
+        "producao": 58993,
+        "limpo": 34065
+      },
+      "respostas": {
+        "claude": {
+          "texto": "Essa é uma habilidade que dá pra construir aos poucos, e cinco anos é uma boa idade pra começar — o Davi já tem a fala, o que ele precisa é de prática em doses pequenas, nos lugares certos.\n\n*O que costuma acontecer*\nCrianças que falam bem em casa mas travam com desconhecidos geralmente não estão com vergonha no sentido de timidez — elas precisam de mais tempo e previsibilidade pra se sentir seguras fora do ambiente conhecido. A fala volta quando o ambiente vira algo familiar.\n\n*Por onde eu começaria*\nAntes de pedir que ele fale com um atendente, vale criar situações menores, onde o risco é baixo. Por exemplo: deixar ele segurar o dinheiro ou o cartão, escolher entre duas opções que você já sabe que tem, ou só ficar do seu lado enquanto você faz o pedido — sem cobrar nada dele ainda.\n\nA ideia é ele ir ao lugar várias vezes até aquilo deixar de ser novidade. Na quinta vez que ele entrar na mesma padaria, o atendente já não é desconhecido.\n\n*Uma ideia pra testar essa semana*\nNum lugar pequeno e calmo — pode ser uma banca, um mercadinho — você faz o pedido mas faz uma pausa antes de uma parte pequena e fácil, tipo \"qual sabor você quer?\" e deixa ele responder diretamente pro atendente. Só uma palavra já conta.\n\nMe conta: tem algum lugar que vocês frequentam com regularidade, que ele já conhece um pouco?",
+          "metricas": {
+            "palavras": 243,
+            "perguntas": 2,
+            "ajuda_concreta_juiz_claude": false,
+            "ajuda_concreta_juiz_gpt": true,
+            "ajuda_concreta_consenso": null,
+            "latencia_ms": 11588,
+            "tokens_in": 560,
+            "tokens_out": 402,
+            "tokens_raciocinio": 0,
+            "cache_read": 19303,
+            "cache_write": 0,
+            "custo_usd": 0.011820899999999999
+          }
+        },
+        "gpt_a": {
+          "texto": "*Por onde eu começaria*\n\nEu não começaria exigindo que Davi fale com o atendente. Quando uma pessoa desconhecida fala com ele e ele chora, a interação parece estar pesada demais; primeiro ele precisa viver esses lugares com previsibilidade e pequenos passos.\n\n*O que fazer primeiro*\n\nEm casa, brinquem de “linha de ônibus”: você faz o papel do atendente e ele pode começar só apontando um mapa ou entregando um cartão. Depois, acrescentem uma fala curta, como “oi”, “quero esse” ou “obrigado”. Use ônibus e mapas como caminho para treinar, não como prêmio.\n\nNos lugares, avise antes: “Vamos entrar, olhar o mapa e pedir o suco. Eu falo primeiro; você pode apontar ou falar quando estiver pronto.” Dê alguns segundos para ele responder. Se não conseguir, aceite apontar ou sussurrar sem transformar aquilo numa disputa.\n\n*O que observar*\n\nPor alguns dias, repare qual passo ele tolera melhor: ficar perto do atendente, olhar para o pedido, apontar, falar baixinho ou responder depois que você modela. O avanço não é apenas falar; é conseguir permanecer e participar com menos ajuda. Depois me conte qual desses passos apareceu primeiro.",
+          "metricas": {
+            "palavras": 185,
+            "perguntas": 0,
+            "ajuda_concreta_juiz_claude": true,
+            "ajuda_concreta_juiz_gpt": true,
+            "ajuda_concreta_consenso": true,
+            "latencia_ms": 5970,
+            "tokens_in": 15161,
+            "tokens_out": 429,
+            "tokens_raciocinio": 159,
+            "cache_read": 15158,
+            "cache_write": 0,
+            "custo_usd": null
+          }
+        },
+        "gpt_b": {
+          "texto": "Dá para ajudar Davi sem colocá-lo de repente diante de um desconhecido. O objetivo inicial não é fazê-lo “perder a vergonha”, e sim tornar a situação previsível e dar a ele formas seguras de participar.\n\n*Comece pelo menor passo possível:*\n\n1. *Treinem em casa* com você fazendo o papel do atendente. Use frases curtas:\n   - “Oi.”\n   - “Quero um suco, por favor.”\n   - “Quanto custa?”\n   - “Tchau.”\n   \n   Como ele gosta de ônibus e mapas, vocês podem brincar de comprar uma passagem ou pedir uma informação sobre um mapa — não como prêmio, mas como um contexto que ele já compreende.\n\n2. *Na saída, combine uma escada de participação:*\n   - primeiro, ele fica ao seu lado enquanto você fala;\n   - depois, ele entrega o objeto ou aponta o que quer;\n   - em seguida, fala apenas “oi” ou “tchau”;\n   - só mais adiante, faz o pedido completo.\n\n3. *Dê uma frase pronta e tempo para responder.* Evite perguntar várias vezes “fala”, “cumprimenta” ou responder imediatamente por ele. Espere alguns segundos e diga ao atendente: “Ele precisa de um tempinho para responder.” Se não conseguir falar, apontar, mostrar uma imagem ou você dizer a frase junto também conta como participação.\n\nAntes de entrar, avise exatamente o que vai acontecer: *“Vamos pedir o suco. Eu vou falar primeiro. Depois você pode dizer ‘obrigado’ ou só acenar.”* Comecem em locais tranquilos e com atendentes que aceitem interações rápidas; terminem antes de ele ficar muito angustiado. Se ele chorar, não insista naquele momento: reduza a fala, afaste-se um pouco do estímulo e retome em outra ocasião com um passo menor.\n\nComo isso acontece com pessoas que ele não conhece e já limita a ida a lugares, vale levar essa observação ao pediatra e a um profissional que avalie comunicação e desenvolvimento. Não é preciso esperar um diagnóstico para apoiá-lo. Anote quais situações ele tolera, se consegue falar depois de algum tempo e qual nível de ajuda permite que participe.\n\n*Para a próxima saída, eu começaria apenas com ele entregar o pedido e dizer “tchau” — ou acenar, se falar ainda for demais.*",
+          "metricas": {
+            "palavras": 346,
+            "perguntas": 1,
+            "ajuda_concreta_juiz_claude": true,
+            "ajuda_concreta_juiz_gpt": true,
+            "ajuda_concreta_consenso": true,
+            "latencia_ms": 7961,
+            "tokens_in": 8681,
+            "tokens_out": 693,
+            "tokens_raciocinio": 189,
+            "cache_read": 8678,
+            "cache_write": 0,
+            "custo_usd": null
+          }
+        }
+      }
+    },
+    {
+      "id": "03_pinca_plano",
+      "titulo": "3. Pedido explícito de plano + habilidade motora",
+      "canal": "whatsapp",
+      "crianca": "Laura",
+      "perfil": "Laura, 7 anos, feminino. Diagnóstico informado pela família: TEA (laudo).\nMotor fino: pega o lápis com a mão fechada; cansa rápido ao escrever.\nComo é / interesses: massinha, bichos, desenhar com o dedo na areia.\nRotina: dorme bem; manhãs tranquilas.",
+      "historico": [],
+      "msg": "Minha filha precisa desenvolver pinça. Pegar melhor no lápis. Que brincadeiras e atividades sugere. Quero um plano.",
+      "olhar": "Ela pediu DUAS coisas: ideias agora e o plano. O gate de produção manda não escrever o plano no chat — mede-se se a resposta ainda assim ajuda, ou se vira só 'já vou montar'.",
+      "ordem_cega": [
+        "gpt_b",
+        "claude",
+        "gpt_a"
+      ],
+      "tamanho_system": {
+        "producao": 55278,
+        "limpo": 34065
+      },
+      "respostas": {
+        "claude": {
+          "texto": "Boa pedida — pinça é exatamente o que vai mudar a relação dela com o lápis.\n\nComo a Laura gosta de massinha e de desenhar na areia, já tem uma porta aberta ótima: essas texturas trabalham a musculatura dos dedos sem parecer \"treino\".\n\nTrês coisas que funcionam bem pra começar ainda hoje:\n\nMassinha com objetos pequenos — pedir pra ela esconder feijões ou contas grandes dentro da massinha e achar com os dedos. O movimento de pinçar e retirar é exatamente o que fortalece o que ela precisa.\n\nDesenhar com pincel fino em água numa lousa ou folha escura — ela já gosta de desenhar com o dedo; o pincel é o próximo passo natural, e a água seca rápido, então não tem erro.\n\nPrender prendedores de roupa coloridos na borda de uma tigela ou caixinha — parece brincadeira simples, mas exige a mesma musculatura da pinça, e dá pra virar um joguinho de velocidade ou de cor.\n\nO plano estratégico com a sequência completa de atividades pra ela já está sendo preparado — vai chegar aqui em instantes.\n\nUma coisa que vale você observar nos primeiros dias: quando ela pega o lápis com a mão fechada, é porque cansa rápido ou porque parece mais fácil desde o início? Isso me ajuda a calibrar bem o plano pra ela.",
+          "metricas": {
+            "palavras": 219,
+            "perguntas": 1,
+            "ajuda_concreta_juiz_claude": true,
+            "ajuda_concreta_juiz_gpt": true,
+            "ajuda_concreta_consenso": true,
+            "latencia_ms": 10424,
+            "tokens_in": 515,
+            "tokens_out": 375,
+            "tokens_raciocinio": 0,
+            "cache_read": 18067,
+            "cache_write": 0,
+            "custo_usd": 0.011045099999999999
+          }
+        },
+        "gpt_a": {
+          "texto": "Vamos começar pela *pinça e pela resistência da mão*, antes de exigir que Laura escreva mais. Como ela cansa rápido e já gosta de massinha, areia e bichos, essas atividades podem treinar sem transformar o lápis numa disputa:\n\n1. Fazer bolinhas pequenas de massinha usando polegar e indicador; depois “alimentar” bichinhos com elas.\n2. Esconder miniaturas de bichos na massinha ou na areia e tirá-las usando só polegar e indicador.\n3. Fazer caminhos na areia com o dedo indicador e polegar, apertando pequenos montinhos para formar pegadas.\n4. Desenhar por períodos curtos com giz grosso ou lápis triangular, apoiando o antebraço na mesa e parando antes de ela se cansar.\n\nA pinça ajuda a organizar os dedos para o lápis, mas não precisa aparecer perfeita de imediato. No começo, observe se ela consegue manter a atividade por alguns minutos com menos força e menos cansaço. O plano estratégico com atividades para desenvolver a pinça e o uso do lápis vai seguir essa sequência, respeitando o que já desperta o interesse dela.",
+          "metricas": {
+            "palavras": 171,
+            "perguntas": 0,
+            "ajuda_concreta_juiz_claude": true,
+            "ajuda_concreta_juiz_gpt": true,
+            "ajuda_concreta_consenso": true,
+            "latencia_ms": 4525,
+            "tokens_in": 14179,
+            "tokens_out": 374,
+            "tokens_raciocinio": 127,
+            "cache_read": 14176,
+            "cache_write": 0,
+            "custo_usd": null
+          }
+        },
+        "gpt_b": {
+          "texto": "Entendi. Para Laura, o foco não será apenas “segurar o lápis certo”, mas fortalecer os dedos, desenvolver a pinça e ajudar a mão a trabalhar com menos esforço. Vou direcionar as atividades para o que ela já gosta — massinha, bichos e areia — e incluir formas de evitar que ela se canse rápido ao desenhar.",
+          "metricas": {
+            "palavras": 56,
+            "perguntas": 0,
+            "ajuda_concreta_juiz_claude": true,
+            "ajuda_concreta_juiz_gpt": false,
+            "ajuda_concreta_consenso": null,
+            "latencia_ms": 3576,
+            "tokens_in": 8760,
+            "tokens_out": 247,
+            "tokens_raciocinio": 165,
+            "cache_read": 8757,
+            "cache_write": 0,
+            "custo_usd": null
+          }
+        }
+      }
+    },
+    {
+      "id": "04_tres_problemas",
+      "titulo": "4. Três problemas de uma vez",
+      "canal": "whatsapp",
+      "crianca": "Helena",
+      "perfil": "Helena, 11 anos, feminino. Diagnóstico informado pela família: TEA (laudo) e TDAH (laudo).\nAutonomia: precisa de ajuda pra se organizar de manhã; a mãe faz quase tudo.\nComo é / interesses: música, K-pop.\nEscola: quinta série; boa em matemática.",
+      "historico": [],
+      "msg": "Tá difícil aqui. Ela explode por qualquer coisa, briga com o irmão o dia todo, não faz nada da rotina sem eu mandar mil vezes e ainda dorme tarde e acorda quebrada. Não sei mais o que fazer.",
+      "olhar": "O caso do exemplo do Sérgio. A boa resposta ORGANIZA em frentes nomeadas pela vida dela e conduz. A ruim escolhe uma calada, ou abre duas investigações.",
+      "ordem_cega": [
+        "claude",
+        "gpt_b",
+        "gpt_a"
+      ],
+      "tamanho_system": {
+        "producao": 59103,
+        "limpo": 34065
+      },
+      "respostas": {
+        "claude": {
+          "texto": "Que cansaço acumulado. Você descreveu uma espiral que esgota qualquer um: explosões, brigas, rotina travada e sono que não restaura. E tudo junto.\n\nTem quatro coisas aí — as explosões, as brigas com o irmão, a rotina que não anda e o sono. Eu começaria pelo sono, porque ele costuma estar por baixo de tudo. Criança que dorme tarde e acorda quebrada já começa o dia com o limite de regulação bem menor. Aí qualquer coisa vira explosão, qualquer fricção com o irmão vira briga, qualquer pedido da rotina vira batalha.\n\n*O que eu faria primeiro*\nAntes de mudar qualquer outra coisa, tentaria recuar o horário de dormir aos poucos — 15 a 20 minutos mais cedo a cada dois ou três dias, sem pular etapas. E nesta semana, o foco seria só isso: não brigar por rotina, não entrar em guerra por explosão. Só o sono.\n\n*Uma pequena mudança na rotina*\nUma hora antes de dormir, tela apagada e algo calmo — pode ser música (K-pop no fone em volume baixo funciona bem, se for o estilo dela de desacelerar). O objetivo não é silêncio total, é sinal claro pro sistema nervoso de que o dia está terminando.\n\nMe conta: o sono desregulado é recente, ou já faz tempo que ela dorme tarde?",
+          "metricas": {
+            "palavras": 214,
+            "perguntas": 1,
+            "ajuda_concreta_juiz_claude": false,
+            "ajuda_concreta_juiz_gpt": true,
+            "ajuda_concreta_consenso": null,
+            "latencia_ms": 11513,
+            "tokens_in": 600,
+            "tokens_out": 376,
+            "tokens_raciocinio": 0,
+            "cache_read": 19340,
+            "cache_write": 0,
+            "custo_usd": 0.011442
+          }
+        },
+        "gpt_a": {
+          "texto": "*Por onde eu começaria*\n\nTem quatro coisas se alimentando: explosões, brigas, rotina travada e sono ruim. Eu começaria pela *rotina com menos repetição*, porque mil comandos aumentam o desgaste de vocês e não ensinam Helena a iniciar sozinha.\n\nEscolha só 3 passos da manhã. Escreva ou desenhe: vestir, higiene, mochila. Dê uma instrução por vez, aponte o passo e espere alguns segundos antes de repetir.\n\n*O que você pode dizer*\n\nHelena, agora é vestir. Quando terminar, me mostra.\n\nEvite explicar, ameaçar ou repetir muitas vezes. A repetição longa vira um fundo de cobrança; uma instrução curta e sempre igual deixa mais claro o que ela precisa fazer. Por enquanto, ajude apenas no passo em que ela travar, sem fazer a sequência inteira por ela.\n\n*O que observar*\n\nPor três dias, repare em qual dos três passos ela para e se começa melhor quando você aponta em vez de falar. O sono também merece ser levado ao pediatra, especialmente porque ela está dormindo tarde e acordando quebrada; não dá para concluir daqui o que está causando isso. As brigas com o irmão ficam como a próxima frente — primeiro vamos diminuir essa batalha da rotina.",
+          "metricas": {
+            "palavras": 194,
+            "perguntas": 0,
+            "ajuda_concreta_juiz_claude": true,
+            "ajuda_concreta_juiz_gpt": true,
+            "ajuda_concreta_consenso": true,
+            "latencia_ms": 7564,
+            "tokens_in": 15226,
+            "tokens_out": 625,
+            "tokens_raciocinio": 352,
+            "cache_read": 15223,
+            "cache_write": 0,
+            "custo_usd": null
+          }
+        },
+        "gpt_b": {
+          "texto": "Você não precisa tentar consertar quatro problemas ao mesmo tempo. *Eu começaria pelo sono e pela rotina da manhã*, porque acordar quebrada costuma deixar mais difícil frear impulsos, tolerar frustrações e iniciar tarefas — sem ser a única explicação para tudo.\n\n*Para testar já:*\n\n1. *Troque “mil vezes” por uma sequência visível de 4 passos*: levantar → banheiro/vestir → comer → mochila. Dê apenas o próximo passo, aponte para o cartão e espere. Se necessário, ajude a iniciar, mas não faça a etapa inteira por ela.\n\n2. *Use a música como guia, não como prêmio*: uma música curta para cada etapa da manhã. Quando terminar a música, vocês conferem o passo seguinte. Isso dá começo, duração e fim sem depender de muitas ordens.\n\n3. *Na explosão, reduza a fala*: afaste o irmão e objetos que possam machucar, fique por perto e diga apenas: “Eu não vou deixar ninguém se machucar. Vamos acalmar primeiro; depois conversamos.” Não tente ensinar ou discutir no auge. Quando ela se reorganizar, faça uma pergunta concreta: “Foi difícil parar a brincadeira, ouvir não ou dividir com seu irmão?”\n\n4. *Sobre o sono*, anote por alguns dias o horário em que ela realmente dorme, acorda e como fica ao longo do dia. Mantenha uma sequência previsível para desacelerar — higiene, luz mais baixa, atividade calma, cama — e leve esse registro ao pediatra se ela continuar dormindo tarde e acordando muito cansada. Sono ruim merece ser olhado também pelo lado da saúde, não apenas como comportamento.\n\nCom o irmão, por enquanto, a meta não precisa ser “eles não brigarem”: é *interromper antes de machucar, separar, acalmar e depois reparar* — por exemplo, cada um dizer o que precisa e escolher uma forma segura de retomar a convivência.\n\nEu começaria por essa sequência da manhã e pelo registro do sono. Depois, dá para transformar isso num *plano estratégico com atividades para a Helena*, incluindo frases e passos para as explosões e para as brigas com o irmão.",
+          "metricas": {
+            "palavras": 329,
+            "perguntas": 1,
+            "ajuda_concreta_juiz_claude": true,
+            "ajuda_concreta_juiz_gpt": true,
+            "ajuda_concreta_consenso": true,
+            "latencia_ms": 9508,
+            "tokens_in": 8718,
+            "tokens_out": 978,
+            "tokens_raciocinio": 512,
+            "cache_read": 8715,
+            "cache_write": 0,
+            "custo_usd": null
+          }
+        }
+      }
+    },
+    {
+      "id": "05_sim_a_oferta",
+      "titulo": "5. 'Sim' a uma oferta — referente no turno anterior",
+      "canal": "whatsapp",
+      "crianca": "Gustavo",
+      "perfil": "Gustavo, 4 anos, masculino. Em investigação de TEA (sem laudo).\nComunicação: fala pouco; usa palavras soltas e puxa pela mão.\nComo é / interesses: água, blocos de montar, girar as rodinhas dos carrinhos.\nSensorial: incomoda-se com secador e liquidificador.",
+      "historico": [
+        {
+          "de": "mae",
+          "texto": "Ele chora muito quando chega gente em casa, ontem foi terrível"
+        },
+        {
+          "de": "kolo",
+          "texto": "Chegada de gente muda a casa inteira de uma vez — som, cheiro, gente falando alto — e ele não tem como perguntar o que está acontecendo. Uma coisa que ajuda é avisar antes, com o que vai acontecer em ordem. Me conta o que você reparar da próxima vez. E se quiser, a gente pode montar uma historinha sobre a visita chegando, com ele de protagonista."
+        }
+      ],
+      "msg": "Sim. Vamos montar uma história.",
+      "olhar": "Incidente real de 04/08. O 'sim' não carrega conteúdo. A boa resposta FAZ aquilo. A ruim responde a conversa inteira.",
+      "ordem_cega": [
+        "gpt_b",
+        "gpt_a",
+        "claude"
+      ],
+      "tamanho_system": {
+        "producao": 55278,
+        "limpo": 34065
+      },
+      "respostas": {
+        "claude": {
+          "texto": "Ótimo! A história fica linda no app — ela se chama Histórias e você cria lá em poucos minutos:\n\nhttps://app.kolofamilia.com.br/historias/criar\n\nO tema já é esse que a gente conversou: a visita chegando em casa, com o Gustavo como protagonista. Lá dá pra criar o avatar dele e montar a sequência do jeito que faz sentido pra rotina de vocês.\n\nMe conta como ficou quando ele ver pela primeira vez!",
+          "metricas": {
+            "palavras": 69,
+            "perguntas": 0,
+            "ajuda_concreta_juiz_claude": false,
+            "ajuda_concreta_juiz_gpt": false,
+            "ajuda_concreta_consenso": false,
+            "latencia_ms": 4698,
+            "tokens_in": 976,
+            "tokens_out": 129,
+            "tokens_raciocinio": 0,
+            "cache_read": 18067,
+            "cache_write": 0,
+            "custo_usd": 0.0073551
+          }
+        },
+        "gpt_a": {
+          "texto": "Vamos fazer com a visita chegando em casa, com o Gustavo como personagem e uma sequência bem previsível: avisar, a pessoa chegar, ele poder ficar perto de você e depois a casa voltar ao normal.\n\nCrie a história aqui: https://app.kolofamilia.com.br/historias/criar  \nO tema já vai seguir o que combinamos, e você pode criar um avatar para o Gustavo virar o personagem.\n\nEnquanto isso, antes da próxima visita, mostre a sequência com frases curtas: “Vai chegar uma pessoa. Eu vou ficar com você. Depois ela vai embora.” Isso ajuda a transformar uma mudança grande em passos que ele consegue acompanhar.",
+          "metricas": {
+            "palavras": 98,
+            "perguntas": 0,
+            "ajuda_concreta_juiz_claude": true,
+            "ajuda_concreta_juiz_gpt": true,
+            "ajuda_concreta_consenso": true,
+            "latencia_ms": 2804,
+            "tokens_in": 14528,
+            "tokens_out": 221,
+            "tokens_raciocinio": 77,
+            "cache_read": 14525,
+            "cache_write": 0,
+            "custo_usd": null
+          }
+        },
+        "gpt_b": {
+          "texto": "Vamos fazer, sim. A história já está preparada com o tema *Gustavo recebendo visitas em casa*.\n\nAcesse aqui: https://app.kolofamilia.com.br/historias/criar\n\nLá, você pode criar um avatar para o Gustavo virar o personagem da história.",
+          "metricas": {
+            "palavras": 33,
+            "perguntas": 0,
+            "ajuda_concreta_juiz_claude": false,
+            "ajuda_concreta_juiz_gpt": false,
+            "ajuda_concreta_consenso": false,
+            "latencia_ms": 1849,
+            "tokens_in": 9017,
+            "tokens_out": 64,
+            "tokens_raciocinio": 0,
+            "cache_read": 9014,
+            "cache_write": 0,
+            "custo_usd": null
+          }
+        }
+      }
+    },
+    {
+      "id": "06_historia_depois",
+      "titulo": "6. Pede história depois de conversar sobre a dificuldade",
+      "canal": "whatsapp",
+      "crianca": "Enzo",
+      "perfil": "Enzo, 6 anos, masculino. Diagnóstico informado pela família: TEA (laudo).\nAlimentação: aceita arroz, macarrão sem molho, pão, banana, iogurte. Recusa o que é misturado ou com molho.\nSensorial: incomoda-se com cheiro forte.\nComo é / interesses: dinossauros, carrinhos.",
+      "historico": [
+        {
+          "de": "mae",
+          "texto": "o dentista semana que vem tá me tirando o sono, ele surta em consultório"
+        },
+        {
+          "de": "kolo",
+          "texto": "Consultório junta tudo o que costuma pesar: cheiro forte, luz na cara, alguém encostando nele sem ele saber o que vem. Uma coisa que ajuda muito é ele saber a sequência antes de entrar."
+        }
+      ],
+      "msg": "tem como fazer uma historinha disso pra ele?",
+      "olhar": "Ferramenta pedida por nome. Quem monta é ela, no app. Mede-se se a resposta conduz sem prometer o que a Ayla não faz.",
+      "ordem_cega": [
+        "gpt_a",
+        "claude",
+        "gpt_b"
+      ],
+      "tamanho_system": {
+        "producao": 55278,
+        "limpo": 34065
+      },
+      "respostas": {
+        "claude": {
+          "texto": "Dá sim! Fica assim:\n\n---\n\n*O Enzo vai ao dentista*\n\nO Enzo vai ao dentista hoje.\n\nO consultório tem um cheirinho diferente. Tá tudo bem, é só o cheiro do consultório.\n\nA dentista vai acender uma luzinha pra ver os dentes dele. A luz é forte, mas passa rápido.\n\nEla vai colocar um instrumento pequenininho na boca dele pra contar os dentes. Ele pode sentir a pressão.\n\nSe incomodar, ele pode levantar a mão e a dentista para.\n\nQuando acabar, ele sai. Fim.\n\n---\n\nLê com ele hoje e amanhã, de preferência sem pressa, como se fosse uma história normal. Quanto mais vezes ele ouvir antes de ir, mais o cérebro dele vai reconhecer a situação quando chegar lá, em vez de processar tudo como novidade ao mesmo tempo.\n\nTem algo específico que você acha que vai ser o momento mais difícil pra ele? Boca aberta por tempo longo, o barulho de algum equipamento, o cheiro? Posso ajustar a história nesse ponto.",
+          "metricas": {
+            "palavras": 162,
+            "perguntas": 2,
+            "ajuda_concreta_juiz_claude": true,
+            "ajuda_concreta_juiz_gpt": true,
+            "ajuda_concreta_consenso": true,
+            "latencia_ms": 8557,
+            "tokens_in": 672,
+            "tokens_out": 298,
+            "tokens_raciocinio": 0,
+            "cache_read": 18067,
+            "cache_write": 0,
+            "custo_usd": 0.009890099999999999
+          }
+        },
+        "gpt_a": {
+          "texto": "Sim. Você pode ler esta história com ele algumas vezes antes da consulta, usando voz tranquila e mostrando as imagens, se quiser:\n\n*Enzo vai ao dentista*\n\nNa próxima semana, Enzo vai ao consultório do dentista.\n\nO dentista cuida dos dentes. Primeiro, Enzo entra e espera um pouco.\n\nDepois, o dentista vai conversar com Enzo e mostrar o que vai fazer.\n\nEnzo pode sentar na cadeira. A cadeira pode subir e descer.\n\nO dentista pode olhar os dentes, usar uma luz e encostar nos dentes por alguns instantes. Alguns aparelhos podem fazer barulho e o consultório pode ter cheiros diferentes.\n\nEnzo pode abrir a boca quando estiver pronto. Se precisar de uma pausa, pode levantar a mão e dizer: “pausa, por favor”.\n\nO dentista pode esperar e explicar novamente. Enzo não precisa fazer tudo de uma vez.\n\nDepois, a consulta termina e Enzo sai do consultório com a mamãe.\n\nPara ajudar, treine hoje só a sequência: entrar, sentar, abrir a boca, fazer uma pausa e terminar. Repare se ele tolera melhor quando você avisa cada passo antes, porque isso mostra qual parte da consulta precisa de mais preparação.",
+          "metricas": {
+            "palavras": 187,
+            "perguntas": 0,
+            "ajuda_concreta_juiz_claude": true,
+            "ajuda_concreta_juiz_gpt": true,
+            "ajuda_concreta_consenso": true,
+            "latencia_ms": 5474,
+            "tokens_in": 14298,
+            "tokens_out": 426,
+            "tokens_raciocinio": 163,
+            "cache_read": 14295,
+            "cache_write": 0,
+            "custo_usd": null
+          }
+        },
+        "gpt_b": {
+          "texto": "Claro. Você pode ler com ele e mostrar as imagens na ordem, usando um carrinho ou dinossauro de brinquedo apenas para representar cada etapa — não como prêmio.\n\n*Enzo vai ao dentista*\n\nNa semana que vem, Enzo vai conhecer o dentista.  \nO dentista cuida dos dentes e ajuda a mantê-los fortes.\n\nQuando chegarmos, vou entrar com Enzo no consultório.  \nPode haver luz forte, cheiros diferentes e sons de aparelhos.  \nSe algum cheiro ou som incomodar, Enzo pode falar:\n\n*“Está muito forte.”*  \n*“Preciso de uma pausa.”*\n\nPrimeiro, o dentista vai conversar com Enzo.  \nDepois, pode pedir para ele sentar na cadeira.\n\nA cadeira pode subir e descer devagar.  \nO dentista vai olhar os dentes com uma luz e um espelhinho.  \nTalvez encoste nos dentes para examiná-los.\n\nAntes de fazer cada parte, Enzo pode perguntar:\n\n*“O que você vai fazer?”*\n\nEnzo pode combinar um sinal para pedir pausa: levantar a mão.  \nQuando Enzo levantar a mão, os adultos vão parar e explicar o que está acontecendo.\n\nEnzo não precisa adivinhar.  \nEle pode ouvir, perguntar, respirar e pedir ajuda.\n\nA mamãe estará por perto.  \nO dentista e a mamãe vão ajudar Enzo a entender cada passo.\n\nDepois que o exame terminar, o dentista vai avisar:  \n*“Terminamos.”*\n\nEnzo não precisa gostar de todos os sons, cheiros ou toques.  \nEle pode contar como está se sentindo e participar do jeito que conseguir.\n\n*Frase para ensaiar com ele:*  \n“Dentista, me explica primeiro. Se eu levantar a mão, preciso de uma pausa.”\n\nPara aumentar a previsibilidade, vale mandar ao consultório antes uma mensagem perguntando se podem explicar cada etapa, reduzir cheiros fortes e combinar o sinal de pausa. Também ajuda fazer um ensaio curto em casa: abrir a boca, contar até cinco e parar — sem insistir quando ele pedir para interromper.",
+          "metricas": {
+            "palavras": 295,
+            "perguntas": 1,
+            "ajuda_concreta_juiz_claude": true,
+            "ajuda_concreta_juiz_gpt": true,
+            "ajuda_concreta_consenso": true,
+            "latencia_ms": 7726,
+            "tokens_in": 8772,
+            "tokens_out": 639,
+            "tokens_raciocinio": 195,
+            "cache_read": 8769,
+            "cache_write": 0,
+            "custo_usd": null
+          }
+        }
+      }
+    },
+    {
+      "id": "07_ja_da_pra_estrategia",
+      "titulo": "7. Já há informação suficiente pra uma primeira estratégia",
+      "canal": "whatsapp",
+      "crianca": "Mateus",
+      "perfil": "Mateus, 9 anos, masculino. Diagnóstico informado pela família: TDAH (laudo).\nRotina: chega da escola 12h40. Futebol terças e quintas às 15h30.\nFoco: trava pra COMEÇAR a lição; depois que começa, vai.\nComo é / interesses: futebol, Minecraft.",
+      "historico": [],
+      "msg": "Todo dia é a mesma novela pra ele começar a lição. Ele senta, levanta, vai no banheiro, pega água, mexe no lápis. Uma hora depois não escreveu nada.",
+      "olhar": "O perfil JÁ diz 'trava pra começar'. Perguntar 'em que momento ele trava?' aqui é re-perguntar o que já está no sistema.",
+      "ordem_cega": [
+        "claude",
+        "gpt_a",
+        "gpt_b"
+      ],
+      "tamanho_system": {
+        "producao": 59088,
+        "limpo": 34065
+      },
+      "respostas": {
+        "claude": {
+          "texto": "Clássico TDAH na largada — o problema não é preguiça nem birra, é que o cérebro dele trava justamente na hora de *iniciar*. Depois que entra no fluxo, vai. Esse é o padrão.\n\n*O que costuma ajudar na largada*\n\nEm vez de \"vai fazer a lição\", tente uma entrada menor: \"abre o caderno e me mostra qual é a primeira tarefa.\" Só isso. Você não está pedindo pra ele fazer — está pedindo pra ele olhar. Muitas vezes é o suficiente pra o motor pegar.\n\n*Uma estrutura que tira o peso da decisão*\n\nColoca um temporizador de 10 minutos visível pra ele. Fala assim: \"você trabalha 10 minutos, depois pode levantar.\" Prazo curto + permissão pra pausar diminui a resistência de entrar. O banheiro e a água viram pausa combinada, não fuga.\n\n*O que evitar*\n\nFicar repetindo \"vai, começa, senta\" aumenta o travamento — o cérebro dele associa a lição a pressão, e pressão congela mais ainda.\n\nMe conta: quando você fala pra começar, ele resiste em silêncio ou reclama em voz alta? Isso me ajuda a entender se o que trava é mais ansiedade ou mesmo dificuldade de ativar.",
+          "metricas": {
+            "palavras": 190,
+            "perguntas": 1,
+            "ajuda_concreta_juiz_claude": true,
+            "ajuda_concreta_juiz_gpt": true,
+            "ajuda_concreta_consenso": true,
+            "latencia_ms": 10273,
+            "tokens_in": 599,
+            "tokens_out": 357,
+            "tokens_raciocinio": 0,
+            "cache_read": 19336,
+            "cache_write": 0,
+            "custo_usd": 0.011155799999999999
+          }
+        },
+        "gpt_a": {
+          "texto": "*O que estou percebendo*\n\nA dificuldade principal não parece ser fazer a lição: é atravessar o começo. Ele se senta, encontra várias pequenas saídas e, quando percebe, a tarefa ainda nem começou. Então eu começaria pela *iniciação*, não por cobrar mais tempo sentado.\n\n*O que eu faria primeiro*\n\nDeixe caderno, lápis e a primeira questão já abertos. Depois de um intervalo curto ao chegar, diga apenas:\n\n“Mateus, agora é a missão de começar: vamos fazer só a primeira questão. Eu fico aqui.”\n\nUse um timer de 5 minutos. Nesse período, não peça a lição inteira nem repita várias vezes; ajude-o a dar o primeiro passo. Quando terminar o tempo, vocês observam se ele já engatou — pelo que você contou, depois que começa ele costuma seguir.\n\n*O que observar*\n\nPor alguns dias, repare em qual parte pesa mais: sentar, entender o que precisa fazer ou escolher por onde começar. Essa diferença mostra se o apoio deve ser mais na transição, na organização ou na compreensão da tarefa.",
+          "metricas": {
+            "palavras": 167,
+            "perguntas": 0,
+            "ajuda_concreta_juiz_claude": true,
+            "ajuda_concreta_juiz_gpt": true,
+            "ajuda_concreta_consenso": true,
+            "latencia_ms": 5398,
+            "tokens_in": 15223,
+            "tokens_out": 391,
+            "tokens_raciocinio": 154,
+            "cache_read": 15220,
+            "cache_write": 0,
+            "custo_usd": null
+          }
+        },
+        "gpt_b": {
+          "texto": "Isso não parece falta de vontade: o “começar” está virando uma tarefa grande demais para ele, então ele cria pequenas saídas antes de entrar nela. Como depois que começa ele consegue seguir, eu começaria trabalhando *apenas os primeiros minutos*, não a lição inteira.\n\nTeste assim por alguns dias:\n\n*1. Prepare o início antes de chamar*  \nDeixe na mesa somente o caderno, o lápis e a primeira atividade. O restante fica guardado para não aumentar as decisões.\n\n*2. Dê uma sequência curta e visível*  \nEm um papel, escreva:\n\n1. Ir ao banheiro  \n2. Pegar água  \n3. Sentar  \n4. Escrever o nome e a data  \n5. Fazer a primeira questão  \n\nNão diga “vai fazer a lição”. Diga:  \n*“Mateus, agora é só sentar e escrever o nome. Depois eu volto para ver a primeira questão com você.”*\n\n*3. Fique perto no primeiro passo*  \nSente ao lado por dois ou três minutos, sem explicar tudo nem cobrar velocidade. A ajuda é para atravessar a largada. Quando ele escrever o nome, diga apenas:  \n*“Você começou. Agora vamos olhar só a primeira questão.”*\n\n*4. Diminua a entrada da tarefa*  \nSe a folha tiver muitas questões, cubra as seguintes com outra folha e deixe visível apenas a primeira. Depois que ele iniciar, descubra a próxima.\n\n*5. Não transforme água, banheiro e lápis em uma negociação longa*  \nAntes da lição, faça uma “preparação de dois minutos”: banheiro, água e material. Se ele levantar depois, responda com calma:  \n*“Você já fez essa parte. Agora voltamos para o passo 4: escrever o nome.”*\n\nObserve uma coisa importante: *quanto tempo ele leva entre sentar e fazer o primeiro registro* e qual é o ponto exato em que trava — entender o enunciado, escolher por onde começar, medo de errar ou simplesmente sair da cadeira. Isso mostra qual apoio ajustar, sem esperar que ele “aprenda a se organizar” sozinho.\n\nEu começaria por essa rotina de largada, porque o problema relatado está no início; não é necessário intervir na lição inteira quando ele já consegue continuar depois que começa.",
+          "metricas": {
+            "palavras": 336,
+            "perguntas": 0,
+            "ajuda_concreta_juiz_claude": true,
+            "ajuda_concreta_juiz_gpt": true,
+            "ajuda_concreta_consenso": true,
+            "latencia_ms": 7054,
+            "tokens_in": 8718,
+            "tokens_out": 610,
+            "tokens_raciocinio": 120,
+            "cache_read": 8715,
+            "cache_write": 0,
+            "custo_usd": null
+          }
+        }
+      }
+    },
+    {
+      "id": "08_uma_pergunta_muda",
+      "titulo": "8. UMA pergunta realmente muda a estratégia",
+      "canal": "whatsapp",
+      "crianca": "Isabela",
+      "perfil": "Isabela, 15 anos, feminino. Diagnóstico informado pela família: TDAH (laudo).\nComo é / interesses: cinema, desenhar. Grupo de 4 amigas da escola desde os 8 anos.\nRegulação emocional: fica ansiosa antes de coisas novas; costuma antecipar o pior.\nEscola: vai bem em humanas; sofre com prazos.",
+      "historico": [],
+      "msg": "Ela não quer mais ir pra escola. Faz duas semanas que é choro toda manhã.",
+      "olhar": "Recusa escolar nova numa adolescente pode ser social, acadêmica ou algo que aconteceu. A pergunta muda tudo — mas ela precisa vir COM alguma ajuda, não no lugar dela.",
+      "ordem_cega": [
+        "gpt_a",
+        "gpt_b",
+        "claude"
+      ],
+      "tamanho_system": {
+        "producao": 59090,
+        "limpo": 34065
+      },
+      "respostas": {
+        "claude": {
+          "texto": "Duas semanas de choro toda manhã é sinal real de que alguma coisa está pesando muito pra ela — não é frescura nem birra de adolescente.\n\nAntes de qualquer estratégia, preciso entender melhor pra não errar o caminho. Você tem alguma ideia do que começou há duas semanas? Alguma coisa mudou na escola, com as amigas, ou em casa nessa época?",
+          "metricas": {
+            "palavras": 61,
+            "perguntas": 2,
+            "ajuda_concreta_juiz_claude": false,
+            "ajuda_concreta_juiz_gpt": false,
+            "ajuda_concreta_consenso": false,
+            "latencia_ms": 3898,
+            "tokens_in": 584,
+            "tokens_out": 108,
+            "tokens_raciocinio": 0,
+            "cache_read": 19335,
+            "cache_write": 0,
+            "custo_usd": 0.0074205
+          }
+        },
+        "gpt_a": {
+          "texto": "*O que estou percebendo*\n\nDuas semanas de choro toda manhã mostram que ir à escola virou uma experiência muito difícil para Isabela, e não algo para tratar como preguiça ou falta de vontade. Eu começaria entendendo *o que acontece na escola*, sem tentar convencê-la a aguentar sozinha.\n\n*O que fazer agora*\n\nEm um momento calmo, diga: “Eu não vou brigar nem te obrigar a explicar tudo agora. Quero entender o que está ficando impossível: chegar, alguma pessoa, uma aula, trabalhos, o recreio ou outra coisa?”\n\nAvise a coordenação ainda hoje e peça uma conversa objetiva, com um adulto de referência para recebê-la e investigar situações concretas: mudanças no comportamento, conflitos, isolamento, cobranças, prazos e algum momento específico em que ela piora. A escola precisa observar, não apenas dizer se ela “quer” ou “não quer” ir.\n\n*Próximo passo*\n\nComo isso já dura duas semanas, também vale organizar esse relato para levar ao profissional que acompanha Isabela. Anote quando começou, o que ela fala antes de sair, sintomas físicos, faltas e o que acontece depois que consegue ou não ir.\n\nQuando ela fala do motivo, aponta alguma pessoa, aula ou situação específica — ou só diz que não consegue ir?",
+          "metricas": {
+            "palavras": 198,
+            "perguntas": 2,
+            "ajuda_concreta_juiz_claude": true,
+            "ajuda_concreta_juiz_gpt": true,
+            "ajuda_concreta_consenso": true,
+            "latencia_ms": 6547,
+            "tokens_in": 15205,
+            "tokens_out": 611,
+            "tokens_raciocinio": 331,
+            "cache_read": 15202,
+            "cache_write": 0,
+            "custo_usd": null
+          }
+        },
+        "gpt_b": {
+          "texto": "Duas semanas de choro e recusa da escola merecem ser levadas a sério — não é algo para resolver apenas insistindo ou retirando a exigência. Pode haver algo acontecendo na escola, na rotina, no corpo ou no estado emocional dela, e isso precisa ser olhado com a própria Isabela, pela escola e por um profissional de saúde.\n\n*Para a próxima conversa com ela:* escolha um momento sem pressa e diga:  \n“Eu não vou brigar nem te obrigar a explicar tudo agora. Quero entender o que está tornando a escola difícil: alguém, alguma situação, as aulas, os prazos, o barulho, o caminho ou como você tem se sentido?”\n\nEvite perguntas amplas como “por que você não quer ir?”; ofereça opções e aceite que ela responda por mensagem ou desenhando, se falar estiver difícil. Anote as palavras exatas dela, quando o choro começa, o que acontece antes e se houve alguma mudança recente.\n\n*Com a escola, vale perguntar objetivamente:*\n- Aconteceu algo com colegas, professores ou nas redes?\n- Como ela tem ficado nos intervalos e nas mudanças de aula?\n- Houve queda, faltas, conflitos ou dificuldade diferente com prazos e atividades?\n- Algum adulto percebeu uma mudança específica nas últimas semanas?\n\nMarque também uma conversa com a pediatra, psicóloga ou profissional que acompanha a Isabela, levando esse registro. O diagnóstico de TDAH já informado entra como contexto, mas não explica sozinho uma mudança tão recente.\n\nPreciso checar uma coisa importante: *Isabela falou em se machucar, desaparecer, morrer ou que não aguenta mais viver?* Se sim, permaneça com ela, retire meios de risco e procure ajuda imediata; em emergência médica, SAMU 192. Em sofrimento intenso ou risco à vida, CVV 188.",
+          "metricas": {
+            "palavras": 279,
+            "perguntas": 7,
+            "ajuda_concreta_juiz_claude": true,
+            "ajuda_concreta_juiz_gpt": true,
+            "ajuda_concreta_consenso": true,
+            "latencia_ms": 6677,
+            "tokens_in": 8700,
+            "tokens_out": 614,
+            "tokens_raciocinio": 220,
+            "cache_read": 8697,
+            "cache_write": 0,
+            "custo_usd": null
+          }
+        }
+      }
+    },
+    {
+      "id": "09_perdida",
+      "titulo": "9. Perdida, sem saber por onde começar",
+      "canal": "whatsapp",
+      "crianca": "Gustavo",
+      "perfil": "(Nenhum perfil preenchido além do nome e da idade.)",
+      "historico": [],
+      "msg": "oi… descobri semana passada que ele provavelmente é autista e tô completamente perdida, não sei nem o que te perguntar",
+      "olhar": "Perfil vazio, mãe recém-chegada. Aqui o núcleo manda ENTREGAR e proíbe menu — e também proíbe inventar prioridade que não está salva. Mede-se o que a resposta faz com essa contradição.",
+      "ordem_cega": [
+        "gpt_b",
+        "claude",
+        "gpt_a"
+      ],
+      "tamanho_system": {
+        "producao": 55278,
+        "limpo": 34065
+      },
+      "respostas": {
+        "claude": {
+          "texto": "Oi. Que semana pesada essa foi.\n\nNão saber nem o que perguntar é exatamente onde a maioria das mães está nesse momento — não é falta de você, é muita coisa chegando de uma vez.\n\nPode começar pelo começo: o que aconteceu semana passada? Foi uma consulta, uma avaliação, alguém da escola disse algo?",
+          "metricas": {
+            "palavras": 54,
+            "perguntas": 2,
+            "ajuda_concreta_juiz_claude": false,
+            "ajuda_concreta_juiz_gpt": false,
+            "ajuda_concreta_consenso": false,
+            "latencia_ms": 3635,
+            "tokens_in": 505,
+            "tokens_out": 98,
+            "tokens_raciocinio": 0,
+            "cache_read": 18067,
+            "cache_write": 0,
+            "custo_usd": 0.0068901
+          }
+        },
+        "gpt_a": {
+          "texto": "Oi. Você não precisa saber o que perguntar agora. Quando aparece uma possibilidade nova, a primeira tarefa não é entender tudo: é organizar o que levou vocês até essa preocupação.\n\nEu não consigo dizer, por conversa, se Gustavo é autista ou não. Essa conclusão depende de uma avaliação profissional. Mas já dá para fazer algo importante: anotar exemplos concretos do que vocês observaram, em quais situações acontece, quanto atrapalha a rotina e o que ajuda. Isso evita que a consulta fique só em “ele é diferente” e ajuda o profissional a conhecer o Gustavo de verdade.\n\nPor onde eu começaria: idade dele e o que aconteceu na semana passada que fez vocês levantarem essa possibilidade?",
+          "metricas": {
+            "palavras": 115,
+            "perguntas": 1,
+            "ajuda_concreta_juiz_claude": false,
+            "ajuda_concreta_juiz_gpt": false,
+            "ajuda_concreta_consenso": false,
+            "latencia_ms": 3897,
+            "tokens_in": 14167,
+            "tokens_out": 282,
+            "tokens_raciocinio": 132,
+            "cache_read": 14164,
+            "cache_write": 0,
+            "custo_usd": null
+          }
+        },
+        "gpt_b": {
+          "texto": "Oi. Você não precisa chegar aqui sabendo o que perguntar. Quando aparece uma suspeita, o primeiro passo não é tentar decidir o diagnóstico — é transformar a confusão em um caminho.\n\n*Por onde começar:*\n1. *Confirme de onde veio essa suspeita* e marque uma conversa com o pediatra ou com um profissional habilitado para avaliação do desenvolvimento. “Provavelmente” ainda não é um diagnóstico, e eu não consigo confirmar nem descartar isso por conversa.\n2. *Registre exemplos concretos*, sem interpretar: o que Gustavo faz, em quais situações, desde quando, o que facilita e o que costuma desencadear dificuldades. Se ele fazia alguma coisa e deixou de fazer, anote isso com prioridade.\n3. *Não espere um nome para ajudá-lo.* Já dá para apoiar comunicação, previsibilidade, transições, participação e regulação no cotidiano, respeitando o que ele consegue fazer agora.\n\nPara a consulta, você pode levar estas perguntas:\n- O que precisa ser observado e avaliado no desenvolvimento dele?\n- Quais profissionais podem participar dessa avaliação?\n- O que podemos fazer em casa enquanto ela acontece?\n- Há alguma perda de habilidade ou mudança recente que devemos relatar com prioridade?\n\nEu posso começar por você agora de um jeito bem prático: organizar um resumo do que já foi observado sobre Gustavo para levar ao profissional, sem transformar esses comportamentos em diagnóstico.",
+          "metricas": {
+            "palavras": 217,
+            "perguntas": 4,
+            "ajuda_concreta_juiz_claude": false,
+            "ajuda_concreta_juiz_gpt": true,
+            "ajuda_concreta_consenso": null,
+            "latencia_ms": 4976,
+            "tokens_in": 8642,
+            "tokens_out": 407,
+            "tokens_raciocinio": 116,
+            "cache_read": 8639,
+            "cache_write": 0,
+            "custo_usd": null
+          }
+        }
+      }
+    },
+    {
+      "id": "10_funcionou",
+      "titulo": "10. Já tentou algo e FUNCIONOU",
+      "canal": "whatsapp",
+      "crianca": "Enzo",
+      "perfil": "Enzo, 6 anos, masculino. Diagnóstico informado pela família: TEA (laudo).\nAlimentação: aceita arroz, macarrão sem molho, pão, banana, iogurte. Recusa o que é misturado ou com molho.\nSensorial: incomoda-se com cheiro forte.\nComo é / interesses: dinossauros, carrinhos.",
+      "historico": [],
+      "msg": "Deu certo! Botei o macarrão separado num potinho do lado e ele encostou no molho com o dedo. Não comeu mas encostou.",
+      "olhar": "Conquista pequena. A boa resposta reconhece o que exatamente funcionou e dá o próximo degrau. A ruim celebra genérico ou emenda outra estratégia por cima.",
+      "ordem_cega": [
+        "claude",
+        "gpt_b",
+        "gpt_a"
+      ],
+      "tamanho_system": {
+        "producao": 55278,
+        "limpo": 34065
+      },
+      "respostas": {
+        "claude": {
+          "texto": "Isso é enorme! Encostou o dedo no molho — pra quem tem aversão sensorial, essa é exatamente a primeira fronteira que precisava cair.\n\nO próximo passo natural é deixar esse contato virar hábito antes de pedir qualquer coisa a mais. Nos próximos dias, continua com o potinho separado do lado. Se ele encostar de novo, ótimo — não precisa comentar nem elogiar com entusiasmo, só segue o jantar normalmente. A leveza aqui é o que deixa ele voltar.\n\nO que você reparou: foi ele que foi até o molho, ou você sugeriu?",
+          "metricas": {
+            "palavras": 92,
+            "perguntas": 1,
+            "ajuda_concreta_juiz_claude": false,
+            "ajuda_concreta_juiz_gpt": true,
+            "ajuda_concreta_consenso": null,
+            "latencia_ms": 5281,
+            "tokens_in": 596,
+            "tokens_out": 166,
+            "tokens_raciocinio": 0,
+            "cache_read": 18067,
+            "cache_write": 0,
+            "custo_usd": 0.0079101
+          }
+        },
+        "gpt_a": {
+          "texto": "Isso é um avanço importante: ele conseguiu se aproximar do molho sem precisar comer. Encostar já amplia a tolerância à presença, ao cheiro e à textura, sem transformar a refeição numa disputa.\n\nRepete esse mesmo formato nas próximas vezes: macarrão separado, molho em um potinho à parte e nenhuma pressão para provar. Se ele tocar de novo, você pode dizer só: “Você encostou no molho” — sem pedir mais. O que vale observar agora é se ele volta a tocar por iniciativa própria ou se tolera ficar perto do molho por mais tempo.",
+          "metricas": {
+            "palavras": 93,
+            "perguntas": 0,
+            "ajuda_concreta_juiz_claude": false,
+            "ajuda_concreta_juiz_gpt": true,
+            "ajuda_concreta_consenso": null,
+            "latencia_ms": 2952,
+            "tokens_in": 14244,
+            "tokens_out": 197,
+            "tokens_raciocinio": 70,
+            "cache_read": 14241,
+            "cache_write": 0,
+            "custo_usd": null
+          }
+        },
+        "gpt_b": {
+          "texto": "Isso é um avanço importante: ele conseguiu *tolerar e explorar* o molho sem precisar comê-lo. Para uma criança que costuma recusar misturas, encostar já mostra que a aproximação está ficando mais segura.\n\nNa próxima vez, repita exatamente essa montagem, sem pedir que ele prove. Você pode dizer apenas: *“O molho está aqui. Você pode olhar, cheirar ou encostar.”* Se ele quiser tocar de novo, deixe; se não quiser, retire sem insistir.\n\nO próximo passo não é comer: é aceitar o molho cada vez mais perto e continuar explorando.",
+          "metricas": {
+            "palavras": 88,
+            "perguntas": 0,
+            "ajuda_concreta_juiz_claude": true,
+            "ajuda_concreta_juiz_gpt": true,
+            "ajuda_concreta_consenso": true,
+            "latencia_ms": 2687,
+            "tokens_in": 8718,
+            "tokens_out": 175,
+            "tokens_raciocinio": 43,
+            "cache_read": 8715,
+            "cache_write": 0,
+            "custo_usd": null
+          }
+        }
+      }
+    },
+    {
+      "id": "11_nao_funcionou",
+      "titulo": "11. Já tentou algo e NÃO funcionou",
+      "canal": "whatsapp",
+      "crianca": "Mateus",
+      "perfil": "Mateus, 9 anos, masculino. Diagnóstico informado pela família: TDAH (laudo).\nRotina: chega da escola 12h40. Futebol terças e quintas às 15h30.\nFoco: trava pra COMEÇAR a lição; depois que começa, vai.\nComo é / interesses: futebol, Minecraft.",
+      "historico": [
+        {
+          "de": "kolo",
+          "texto": "Uma coisa que costuma ajudar quem trava no começo é diminuir o tamanho da primeira tarefa: em vez de 'faz a lição', 'faz só a primeira linha e me mostra'."
+        }
+      ],
+      "msg": "tentei isso ontem e hoje e não deu em nada, ele nem a primeira linha faz",
+      "olhar": "A estratégia era da própria Ayla. Mede-se se ela investiga o que aconteceu, ajusta, ou repete a mesma ideia com outras palavras.",
+      "ordem_cega": [
+        "gpt_b",
+        "gpt_a",
+        "claude"
+      ],
+      "tamanho_system": {
+        "producao": 59088,
+        "limpo": 34065
+      },
+      "respostas": {
+        "claude": {
+          "texto": "Entendido — duas tentativas e nada, frustrante demais.\n\nQuando nem a primeira linha sai, o travamento costuma não ser sobre o tamanho da tarefa, mas sobre o *arrancar*. O cérebro dele precisa de algo que funcione como ignição — um gatilho externo, não só uma instrução menor.\n\n*O que eu tentaria agora*\n\nAntes de sentar, 2 minutinhos de movimento com ele: rebater uma bola, pular, correr no corredor. Soa estranho, mas isso ativa o sistema de atenção de verdade — depois é muito mais fácil o motor pegar. Aí sim, \"primeira linha\".\n\n*Uma variação que às vezes quebra o trava*\n\nEm vez de pedir a primeira linha, você senta do lado, pega a caneta e diz: \"eu escrevo o número 1, você escreve o resto.\" Só isso. Ele completa — e a lição já começou sem ele ter \"decidido\" começar.\n\nMe conta: quando ele trava, ele fica em silêncio, se levanta, ou começa a enrolar com outra coisa? Isso me ajuda a entender se o que está pesando mais é a ativação ou alguma coisa ligada à tarefa em si.",
+          "metricas": {
+            "palavras": 180,
+            "perguntas": 1,
+            "ajuda_concreta_juiz_claude": true,
+            "ajuda_concreta_juiz_gpt": true,
+            "ajuda_concreta_consenso": true,
+            "latencia_ms": 9617,
+            "tokens_in": 643,
+            "tokens_out": 321,
+            "tokens_raciocinio": 0,
+            "cache_read": 19336,
+            "cache_write": 0,
+            "custo_usd": 0.0106158
+          }
+        },
+        "gpt_a": {
+          "texto": "*O que isso mostra*\n\nA primeira linha ainda está exigindo que ele pare, organize o material e descubra como começar. Como isso não funcionou por dois dias, eu não insistiria em diminuir mais a tarefa; mudaria o tipo de ajuda.\n\n*O que eu faria primeiro*\n\nSente ao lado, abra a lição e diga: “Eu começo com você. Você só vai me mostrar onde é a primeira questão.” Depois leia o enunciado em voz alta e peça apenas: “Qual palavra você entendeu aqui?” Quando ele responder, conduza para escreverem juntos a primeira parte.\n\nA presença compartilhada tira, por alguns minutos, o peso de iniciar tudo sozinho. O objetivo não é fazer por ele, mas emprestar a largada até ele entrar na atividade.\n\n*O que observar*\n\nRepara se ele trava antes mesmo de abrir o caderno, quando vê a quantidade de questões ou quando precisa entender o enunciado. Essa diferença mostra qual parte do começo está pesando mais.",
+          "metricas": {
+            "palavras": 156,
+            "perguntas": 1,
+            "ajuda_concreta_juiz_claude": true,
+            "ajuda_concreta_juiz_gpt": true,
+            "ajuda_concreta_consenso": true,
+            "latencia_ms": 5854,
+            "tokens_in": 15254,
+            "tokens_out": 499,
+            "tokens_raciocinio": 285,
+            "cache_read": 15251,
+            "cache_write": 0,
+            "custo_usd": null
+          }
+        },
+        "gpt_b": {
+          "texto": "Então eu mudaria a estratégia: *não é mais diminuir a lição; é ajudar Mateus a atravessar o momento de início*. Se ele nem a primeira linha faz, insistir na mesma instrução tende a aumentar o bloqueio.\n\nTente assim na próxima vez:\n\n1. *Faça uma transição curta antes da lição*: guardar mochila, beber água e fazer 2 minutos de movimento — por exemplo, 10 chutes em uma bola ou alongamento. Sem transformar isso em prêmio; é só uma ponte entre escola e tarefa.\n2. Depois, sente ao lado e deixe o material já aberto na página certa. Diga apenas: *“Eu vou ficar aqui. Primeiro vamos descobrir juntos o que a questão está pedindo.”*\n3. Não peça imediatamente para escrever. Comece por algo que ele possa *apontar ou falar*: “É para responder, calcular ou copiar?” Depois você escreve a primeira palavra e ele continua — ou ele dita e você registra a primeira resposta.\n4. Se ele travar, ofereça duas formas de começar: *“Você quer ler a questão ou que eu leia?”* / *“Quer fazer a questão 1 ou a 2 primeiro?”* Duas opções, não uma pergunta aberta.\n5. Se houver recusa, encerre a fala longa: *“A lição continua sendo necessária. Vou te ajudar a começar.”* Faça uma pausa breve, reduza a conversa e tente novamente com presença ao lado.\n\nObserve uma coisa importante: *o que acontece exatamente quando ele trava?* Ele foge, fica irritado, diz que não sabe, se distrai, reclama da dificuldade ou parece não conseguir organizar o primeiro passo? Essa diferença mostra se o próximo apoio deve ser mais de compreensão da tarefa, organização ou regulação.",
+          "metricas": {
+            "palavras": 267,
+            "perguntas": 5,
+            "ajuda_concreta_juiz_claude": true,
+            "ajuda_concreta_juiz_gpt": true,
+            "ajuda_concreta_consenso": true,
+            "latencia_ms": 7657,
+            "tokens_in": 8749,
+            "tokens_out": 656,
+            "tokens_raciocinio": 282,
+            "cache_read": 8746,
+            "cache_write": 0,
+            "custo_usd": null
+          }
+        }
+      }
+    },
+    {
+      "id": "12_socializacao",
+      "titulo": "12. Socialização",
+      "canal": "web",
+      "crianca": "Davi",
+      "perfil": "Davi, 5 anos, masculino. Em investigação (sem laudo).\nComunicação: fala bem em casa; quase não fala com quem não conhece.\nComo é / interesses: ônibus, mapas.\nRegulação: chora quando alguém desconhecido fala com ele.",
+      "historico": [],
+      "msg": "as crianças chamam ele pra brincar no parquinho e ele fica só olhando, perto mas sem entrar. me dói ver isso",
+      "olhar": "Tem dor da mãe + questão da criança. A boa resposta não gasta o turno inteiro na dor nem ignora ela.",
+      "ordem_cega": [
+        "gpt_a",
+        "claude",
+        "gpt_b"
+      ],
+      "tamanho_system": {
+        "producao": 59054,
+        "limpo": 34021
+      },
+      "respostas": {
+        "claude": {
+          "texto": "Essa cena dói mesmo — ele tão perto, e ao mesmo tempo tão longe do que você queria pra ele.\n\nO que vale saber: o que você está descrevendo tem um nome no desenvolvimento — é o **brincar paralelo e observacional**. Ele não está sendo excluído nem rejeitando as crianças. Ele está *estudando*. Processando o grupo, os movimentos, as regras não ditas. Para muitas crianças com o perfil do Davi, isso é o jeito dele de chegar — de longe, com calma, no próprio tempo.\n\n**O que você pode fazer agora**\n\nSe tiver oportunidade, posicione-se um pouco afastada — perto o suficiente pra ele saber que você está, longe o suficiente pra não virar rota de saída. Sem empurrar, sem \"vai lá\", sem apresentar ele pra turma. Só estar.\n\nÀs vezes o que rompe o gelo não é incentivo — é um ônibus passando na rua do lado e ele virar pra falar com você sobre isso. E de repente uma criança curiosa ouviu.\n\n**O que observar**\n\nNos próximos parquinhos: ele fica no mesmo ponto ou vai chegando um pouco mais perto com o tempo? Isso diz muito sobre como ele está processando — e vai me ajudar a entender o próximo passo com você.",
+          "metricas": {
+            "palavras": 205,
+            "perguntas": 1,
+            "ajuda_concreta_juiz_claude": true,
+            "ajuda_concreta_juiz_gpt": true,
+            "ajuda_concreta_consenso": true,
+            "latencia_ms": 11058,
+            "tokens_in": 185,
+            "tokens_out": 357,
+            "tokens_raciocinio": 0,
+            "cache_read": 19329,
+            "cache_write": 0,
+            "custo_usd": 0.0111537
+          }
+        },
+        "gpt_a": {
+          "texto": "**O que estou percebendo**  \nDavi fica perto e observa, mas ainda não consegue transformar esse convite em entrada na brincadeira. Isso não significa necessariamente que ele não queira participar; observar pode ser o jeito que encontrou de entender a situação e ganhar segurança.\n\n**O que eu faria primeiro**  \nEm vez de pedir “vai brincar”, faça uma ponte com *uma* criança e uma atividade pequena. Se ele ainda estiver interessado em ônibus e mapas, você pode desenhar uma “rota” no chão com giz: *“O ônibus vai até o escorregador. Quer fazer a primeira parada?”* A outra criança pode ser convidada a seguir a rota, sem exigir que Davi fale.\n\n**O que observar**  \nRepare se ele tolera melhor quando há uma criança só, quando o convite vem por uma atividade concreta ou quando você permanece perto sem falar por ele. Isso mostra qual apoio torna a aproximação possível.\n\nAcho que já consigo montar um plano estratégico com atividades, frases prontas e passos graduais para ele entrar nas brincadeiras. Toque no botão **“Montar plano completo”** quando quiser.\n\n[[PRONTO_PLANO]]",
+          "metricas": {
+            "palavras": 175,
+            "perguntas": 1,
+            "ajuda_concreta_juiz_claude": true,
+            "ajuda_concreta_juiz_gpt": true,
+            "ajuda_concreta_consenso": true,
+            "latencia_ms": 5839,
+            "tokens_in": 14852,
+            "tokens_out": 533,
+            "tokens_raciocinio": 287,
+            "cache_read": 14849,
+            "cache_write": 0,
+            "custo_usd": null
+          }
+        },
+        "gpt_b": {
+          "texto": "Dá para ajudar sem empurrá-lo para dentro da brincadeira. Muitas crianças conseguem ficar perto e observar, mas ainda não sabem como entrar ou precisam de mais tempo para se sentir seguras.\n\n**No parquinho, tente assim:**\n\n1. **Comece pela observação.** Fique ao lado dele e narre pouco:  \n   *“Você está vendo as crianças correrem. Eu fico aqui com você.”*\n\n2. **Faça uma ponte pequena, não um convite aberto.** Em vez de “vai brincar?”, tente:  \n   *“Vamos empurrar o carrinho até o escorregador?”*  \n   ou *“Quer mostrar para aquela criança como o ônibus passa por aqui?”*  \n   Use ônibus e mapas para criar conexão, não como prêmio.\n\n3. **Aproxime uma criança por vez.** Uma criança tranquila pode receber uma orientação simples:  \n   *“Ele gosta de ônibus. Você pode brincar de fazer uma linha com ele?”*  \n   Uma atividade paralela — cada um com um carrinho, por exemplo — costuma ser uma entrada mais fácil do que exigir uma brincadeira conjunta.\n\n4. **Dê uma saída segura.** Se ele apenas olhar, aceite:  \n   *“Você pode observar. Quando quiser, me mostra onde o ônibus vai.”*  \n   Evite insistir, falar por ele repetidamente ou dizer “ele não quer brincar”. O objetivo inicial é ele descobrir que pode se aproximar sem ser pressionado.\n\nObserve quando a aproximação fica mais possível: com uma criança conhecida, em brincadeiras com regras claras, depois de alguns minutos olhando ou quando um adulto faz a ponte. Esses detalhes serão úteis na avaliação, que vale buscar porque essa dificuldade de entrar nas interações e o choro diante de desconhecidos estão afetando a participação dele — sem significarem, sozinhos, um diagnóstico.\n\nPara a próxima ida, escolha apenas uma meta: **ficar perto de uma criança e participar de uma ação curta**, mesmo que por poucos instantes. Isso já é uma habilidade sendo construída.",
+          "metricas": {
+            "palavras": 290,
+            "perguntas": 4,
+            "ajuda_concreta_juiz_claude": true,
+            "ajuda_concreta_juiz_gpt": true,
+            "ajuda_concreta_consenso": true,
+            "latencia_ms": 7577,
+            "tokens_in": 8655,
+            "tokens_out": 639,
+            "tokens_raciocinio": 207,
+            "cache_read": 8652,
+            "cache_write": 0,
+            "custo_usd": null
+          }
+        }
+      }
+    },
+    {
+      "id": "13_desregulacao",
+      "titulo": "13. Comportamento / desregulação",
+      "canal": "web",
+      "crianca": "Helena",
+      "perfil": "Helena, 11 anos, feminino. Diagnóstico informado pela família: TEA (laudo) e TDAH (laudo).\nAutonomia: precisa de ajuda pra se organizar de manhã; a mãe faz quase tudo.\nComo é / interesses: música, K-pop.\nEscola: quinta série; boa em matemática.",
+      "historico": [],
+      "msg": "ontem ela jogou o prato no chão porque eu falei que não ia ter sobremesa. gritou comigo por meia hora. eu perdi a paciência e gritei também, aí me senti péssima",
+      "olhar": "Culpa da mãe + episódio. Mede-se se acolhe sem parágrafo vazio e se dá o que fazer na próxima.",
+      "ordem_cega": [
+        "claude",
+        "gpt_a",
+        "gpt_b"
+      ],
+      "tamanho_system": {
+        "producao": 59054,
+        "limpo": 34021
+      },
+      "respostas": {
+        "claude": {
+          "texto": "**O que estou percebendo**\n\nVocê segurou muito antes de perder a paciência — meia hora de grito é exaustivo. E o fato de você se sentir péssima depois mostra o quanto se importa, não o quanto errou.\n\nO que provavelmente aconteceu: o \"não\" chegou de repente, sem aviso. Para a Helena, uma transição assim — a expectativa da sobremesa que simplesmente some — pode ser muito mais difícil de absorver do que parece. Não é manha: é o sistema dela ainda aprendendo a lidar com o que não esperava.\n\n**O que eu testaria da próxima vez**\n\nAntes do jantar, plante o aviso:\n\n*\"Helena, hoje não vai ter sobremesa depois.\"*\n\nSó isso, em uma frase, no começo. Ela processa melhor quando sabe o que vem — a explosão costuma ser menor quando a mudança não chega de surpresa.\n\n**Se a crise já começou**\n\nMenos palavras, não mais. Quando ela está no pico, explicar ou negociar não chega. O que ajuda é presença calma e silêncio — você perto, sem alimentar o ciclo.\n\nNos próximos dias, repara se as explosões aparecem mais quando a mudança é surpresa ou se tem outro gatilho — isso vai nos dizer muito sobre o que trabalhar com ela.",
+          "metricas": {
+            "palavras": 202,
+            "perguntas": 0,
+            "ajuda_concreta_juiz_claude": false,
+            "ajuda_concreta_juiz_gpt": true,
+            "ajuda_concreta_consenso": null,
+            "latencia_ms": 10400,
+            "tokens_in": 212,
+            "tokens_out": 348,
+            "tokens_raciocinio": 0,
+            "cache_read": 19329,
+            "cache_write": 0,
+            "custo_usd": 0.011018700000000001
+          }
+        },
+        "gpt_a": {
+          "texto": "**O que estou percebendo**  \nA sequência virou uma escalada: a frustração com a sobremesa levou ao prato no chão, o grito dela aumentou, você gritou também, e depois ficou carregando a culpa. O limite pode continuar existindo sem a conversa durar meia hora.\n\n**O que fazer primeiro**  \nNa próxima vez, use poucas palavras e afaste objetos que possam ser jogados: *“Eu sei que você queria sobremesa. Não vou deixar pratos no chão. Vou ficar aqui, mas conversamos quando sua voz estiver mais calma.”* Não tente convencer enquanto ela grita; isso costuma prolongar a disputa.\n\nQuando as duas estiverem calmas, repare a relação sem retirar o limite: *“Eu gritei e isso não foi bom. Desculpa. Ainda assim, jogar o prato não é seguro. Vamos pensar em outra forma de mostrar que você ficou frustrada.”*\n\n**O que observar**  \nAnote o que aconteceu antes, o que ela esperava e o que ajudou a crise a terminar. Isso mostra se o ponto principal foi a mudança inesperada, a sobremesa ou a forma como o limite foi comunicado.\n\nAcho que já consigo te montar um plano estratégico com atividades, frases prontas e o que observar para essas explosões. É só tocar no botão **“Montar plano completo”** aqui embaixo.\n\n[[PRONTO_PLANO]]",
+          "metricas": {
+            "palavras": 204,
+            "perguntas": 0,
+            "ajuda_concreta_juiz_claude": true,
+            "ajuda_concreta_juiz_gpt": true,
+            "ajuda_concreta_consenso": true,
+            "latencia_ms": 5524,
+            "tokens_in": 14881,
+            "tokens_out": 537,
+            "tokens_raciocinio": 239,
+            "cache_read": 14878,
+            "cache_write": 0,
+            "custo_usd": null
+          }
+        },
+        "gpt_b": {
+          "texto": "Você não precisa se condenar pelo grito; houve uma escalada dos dois lados. Dá para reparar a relação e preparar melhor a próxima situação.\n\n**O que fazer agora**\n\nConverse quando as duas estiverem reguladas, sem retomar a discussão sobre a sobremesa:\n\n*“Ontem nós duas gritamos. Eu não deveria ter gritado com você, e sinto muito. Jogar o prato também não é seguro. Quando você ficar muito brava, vamos encontrar outro jeito de me mostrar.”*\n\nNão é preciso retirar o limite nem transformar a sobremesa em prêmio. O foco é separar as coisas: ela pode ficar frustrada; não pode jogar objetos ou machucar alguém.\n\n**Na próxima explosão**\n\n- Use poucas palavras e voz baixa: *“Você está muito brava. Eu não vou discutir enquanto houver gritos.”*\n- Afaste pratos e objetos que possam quebrar ou machucar, mantendo distância segura.\n- Evite explicar, negociar ou insistir naquele momento.\n- Quando houver espaço para ouvir, ofereça duas formas de comunicar: “Você quer dizer ‘estou brava’ ou pedir uma pausa?”\n- Só retome o assunto depois, inclusive para combinar como reparar o que foi quebrado ou sujado — sem humilhação.\n\nComo Helena já tem 11 anos, vale construir esse combinado com ela quando estiver tranquila: um sinal para “pausa”, um lugar seguro para se afastar e uma frase curta que você usará sempre. Música pode entrar como parte da pausa se ajudar a regular, não como recompensa por ela parar.\n\nTambém anote o que veio antes: o que ela esperava, como recebeu a negativa, sinais de que estava começando a subir e o que ajudou a voltar. Isso mostra se o ponto principal foi a frustração, uma expectativa que mudou, cansaço, fome, barulho ou outro fator — sem presumir a causa.\n\nSe voltar a acontecer com frequência, houver objetos lançados contra pessoas, ferimentos ou você perceber que não consegue manter a segurança, leve esses registros ao profissional que acompanha Helena para ajustarem o suporte.",
+          "metricas": {
+            "palavras": 319,
+            "perguntas": 1,
+            "ajuda_concreta_juiz_claude": true,
+            "ajuda_concreta_juiz_gpt": true,
+            "ajuda_concreta_consenso": true,
+            "latencia_ms": 7916,
+            "tokens_in": 8684,
+            "tokens_out": 675,
+            "tokens_raciocinio": 238,
+            "cache_read": 8681,
+            "cache_write": 0,
+            "custo_usd": null
+          }
+        }
+      }
+    },
+    {
+      "id": "14_foco",
+      "titulo": "14. Foco",
+      "canal": "web",
+      "crianca": "Mateus",
+      "perfil": "Mateus, 9 anos, masculino. Diagnóstico informado pela família: TDAH (laudo).\nRotina: chega da escola 12h40. Futebol terças e quintas às 15h30.\nFoco: trava pra COMEÇAR a lição; depois que começa, vai.\nComo é / interesses: futebol, Minecraft.",
+      "historico": [],
+      "msg": "como faço pra ele conseguir prestar atenção mais tempo?",
+      "olhar": "Pergunta ampla e genérica. Mede-se se a resposta personaliza pelo perfil ou devolve o genérico de internet.",
+      "ordem_cega": [
+        "gpt_a",
+        "gpt_b",
+        "claude"
+      ],
+      "tamanho_system": {
+        "producao": 59054,
+        "limpo": 34021
+      },
+      "respostas": {
+        "claude": {
+          "texto": "**O que estou percebendo**\n\nEle trava no começo — mas depois que engaja, a atenção vem. Isso é um dado importante: o problema não é a atenção em si, é a **largada**.\n\nNo TDAH, o cérebro precisa de um \"gatilho\" pra acionar o foco. Quando a tarefa não tem esse empurrão inicial, trava — não é falta de esforço, é como o sistema funciona.\n\n**O que eu faria**\n\nAntes da lição, uma micro-tarefa de 2 minutos relacionada ao Minecraft ou futebol — resolver um problema rápido, escolher uma jogada, qualquer coisa que já acione o cérebro. Depois, emenda direto na lição enquanto o motor ainda está ligado.\n\nDurante a lição, sessões curtas com pausa combinada:\n\n- 10 minutos de foco\n- 2 minutos de pausa real (não tela)\n- repete\n\nIsso respeita o ritmo dele em vez de brigar com ele.\n\n**O que você pode dizer antes de começar**\n\n*\"Vamos fazer um desafio rápido de futebol e depois a lição — 10 minutos e você pode pausar.\"*\n\n**O que observar**\n\nRepara se ele trava mais em certas matérias ou em todas. Às vezes o travamento tem a ver com a dificuldade do conteúdo, não só com a atenção — e aí o caminho muda um pouco.\n\nMe conta como foi se quiser tentar essa semana.",
+          "metricas": {
+            "palavras": 215,
+            "perguntas": 0,
+            "ajuda_concreta_juiz_claude": true,
+            "ajuda_concreta_juiz_gpt": true,
+            "ajuda_concreta_consenso": true,
+            "latencia_ms": 10663,
+            "tokens_in": 181,
+            "tokens_out": 393,
+            "tokens_raciocinio": 0,
+            "cache_read": 19329,
+            "cache_write": 0,
+            "custo_usd": 0.011693700000000001
+          }
+        },
+        "gpt_a": {
+          "texto": "**Por onde eu começaria**  \nComo Mateus consegue seguir depois que começa, eu não tentaria aumentar a atenção de uma vez. Primeiro, reduziria o “peso” do início: lição aberta, lápis separado e apenas a primeira questão destacada.\n\n**O que fazer primeiro**  \nAvise: “Daqui a pouco começamos”. Na hora, peça só: *“Vamos fazer a primeira juntos; depois você continua mais duas.”* Use um timer curto e faça uma pausa breve antes de ele se esgotar. Instruções pequenas ajudam porque começar exige organização, não apenas vontade.\n\n**O que observar**  \nPor alguns dias, repare se ele inicia melhor com você por perto, com a primeira questão já indicada ou após uma pausa ao chegar da escola. Isso mostra qual apoio realmente destrava o começo.\n\nAcho que já consigo montar um plano estratégico com atividades, frases prontas e estratégias para a lição. É só tocar no botão **“Montar plano completo”** aqui embaixo quando quiser.\n\n[[PRONTO_PLANO]]",
+          "metricas": {
+            "palavras": 150,
+            "perguntas": 0,
+            "ajuda_concreta_juiz_claude": true,
+            "ajuda_concreta_juiz_gpt": true,
+            "ajuda_concreta_consenso": true,
+            "latencia_ms": 4518,
+            "tokens_in": 14853,
+            "tokens_out": 382,
+            "tokens_raciocinio": 156,
+            "cache_read": 14850,
+            "cache_write": 0,
+            "custo_usd": null
+          }
+        },
+        "gpt_b": {
+          "texto": "Para o Mateus, eu começaria **não tentando aumentar a atenção de uma vez**, mas facilitando o começo e ensinando o cérebro dele a perceber quanto tempo falta.\n\n**Teste assim na lição:**\n\n1. **Antes de sentar, deixe tudo pronto:** caderno, lápis e apenas a primeira atividade visível. Quanto menos decisões no início, melhor.\n2. Diga uma instrução bem concreta: *“Vamos fazer só a questão 1. Depois você me mostra.”*\n3. Use um timer visual ou um timer comum por **10 minutos**. Nesse período, ele trabalha; depois faz uma pausa curta para levantar, beber água ou se movimentar.\n4. Volte para mais 10 minutos. Se estiver funcionando, aumente aos poucos para 12 ou 15 — não precisa prolongar quando ele já está esgotado.\n5. Ao terminar cada bloco, marque o que foi feito numa lista simples:  \n   - ☐ questões 1 a 3  \n   - ☐ leitura  \n   - ☐ corrigir  \n\nA pausa não precisa ser prêmio. Ela faz parte da organização da tarefa, como uma parada planejada no futebol entre momentos de esforço.\n\n**Uma frase que costuma ajudar:**\n\n*“Você não precisa terminar tudo agora. Só precisa começar pela primeira questão; eu fico perto enquanto você entra na tarefa.”*\n\nComo ele gosta de futebol, você pode apresentar a lição como **etapas de treino** — “aquecimento”, “primeiro bloco” e “intervalo” —, sem usar futebol ou Minecraft como moeda de troca. O interesse serve para tornar a estrutura mais compreensível.\n\nObserve por alguns dias três coisas: **quanto tempo leva para começar, em que tipo de tarefa ele se perde e o que acontece antes de abandonar**. Isso mostra se o obstáculo é a quantidade, a leitura, a escrita, o cansaço ou a organização — e ajuda a ajustar o apoio em vez de apenas pedir que ele “preste mais atenção”.",
+          "metricas": {
+            "palavras": 293,
+            "perguntas": 0,
+            "ajuda_concreta_juiz_claude": true,
+            "ajuda_concreta_juiz_gpt": true,
+            "ajuda_concreta_consenso": true,
+            "latencia_ms": 5912,
+            "tokens_in": 8656,
+            "tokens_out": 553,
+            "tokens_raciocinio": 133,
+            "cache_read": 8653,
+            "cache_write": 0,
+            "custo_usd": null
+          }
+        }
+      }
+    },
+    {
+      "id": "15_transicao",
+      "titulo": "15. Rotina / transição",
+      "canal": "whatsapp",
+      "crianca": "Enzo",
+      "perfil": "Enzo, 6 anos, masculino. Diagnóstico informado pela família: TEA (laudo).\nAlimentação: aceita arroz, macarrão sem molho, pão, banana, iogurte. Recusa o que é misturado ou com molho.\nSensorial: incomoda-se com cheiro forte.\nComo é / interesses: dinossauros, carrinhos.",
+      "historico": [],
+      "msg": "toda vez que precisa parar de brincar e ir pro banho ele bate e grita",
+      "olhar": "É o caso canônico de 'organizacao'. A menor ajuda suficiente é conduzir a passagem, não montar o dia.",
+      "ordem_cega": [
+        "gpt_b",
+        "claude",
+        "gpt_a"
+      ],
+      "tamanho_system": {
+        "producao": 59090,
+        "limpo": 34065
+      },
+      "respostas": {
+        "claude": {
+          "texto": "Isso é clássico da transição — pra ele, parar de brincar é quase uma perda brusca, sem aviso, sem preparo.\n\n*O que costuma ajudar*\n\nAvise antes, não na hora. Uns cinco minutos antes do banho, fala: \"Enzo, daqui a pouco vai ser hora do banho. Você tem mais um pouquinho.\" Isso não elimina a resistência de uma vez, mas dá ao cérebro dele um tempo pra começar a se despedir da brincadeira.\n\n*Uma fala simples pra usar*\n\nNa hora de chamar, evita o \"para agora\" — tenta algo como: \"Os dinossauros vão descansar aqui te esperando. Quando sair do banho, eles estão do mesmo jeito.\"\n\nIsso não é promessa vazia — é real, e dá a ele um ponto de retorno, o que torna a saída menos definitiva.\n\n*O que observar nesses próximos dias*\n\nRepara se o aviso de cinco minutos já reduz a intensidade da reação, mesmo que ele ainda reclame. Essa é a primeira informação que a gente precisa — se o \"despreparo\" é a maior parte do problema, ou se tem outra coisa pesando.\n\nMe conta como foi?",
+          "metricas": {
+            "palavras": 181,
+            "perguntas": 1,
+            "ajuda_concreta_juiz_claude": true,
+            "ajuda_concreta_juiz_gpt": true,
+            "ajuda_concreta_consenso": true,
+            "latencia_ms": 9551,
+            "tokens_in": 575,
+            "tokens_out": 326,
+            "tokens_raciocinio": 0,
+            "cache_read": 19336,
+            "cache_write": 0,
+            "custo_usd": 0.010690799999999999
+          }
+        },
+        "gpt_a": {
+          "texto": "*O que estou percebendo*\n\nA dificuldade aparece na passagem: Enzo está brincando, você pede para parar, e a mudança termina em grito e batida. Eu começaria por essa transição, porque é ali que dá para prevenir antes da crise crescer.\n\n*Como conduzir essa passagem*\n\nAvise com antecedência: “Enzo, faltam 5 minutos para o banho”. Depois: “Mais uma rodada e vamos guardar”. Use um timer ou mostre dois cartões: brincar → banho. Na hora, fale pouco: “Eu sei que você queria continuar. Agora é banho”.\n\nSe ele bater, afaste seu corpo e bloqueie a batida com calma, sem discutir: “Não vou deixar bater. Vou te ajudar a ficar seguro”. Reduza as palavras e mantenha o limite. A previsibilidade ajuda porque ele não precisa descobrir a mudança no meio do momento.\n\n*Uma ideia com o que ele ama*\n\nAntes de ir, façam o dinossauro ou carrinho “estacionar” num lugar combinado para esperar o retorno. Não como prêmio, mas como uma forma de mostrar que a brincadeira não desapareceu: ela foi pausada e poderá continuar depois.\n\nNos próximos dias, observe se ele bate já no aviso, quando precisa guardar ou só ao entrar no banho. Essa diferença mostra em qual pedaço da passagem vamos mexer primeiro.",
+          "metricas": {
+            "palavras": 203,
+            "perguntas": 0,
+            "ajuda_concreta_juiz_claude": true,
+            "ajuda_concreta_juiz_gpt": true,
+            "ajuda_concreta_consenso": true,
+            "latencia_ms": 5655,
+            "tokens_in": 15205,
+            "tokens_out": 498,
+            "tokens_raciocinio": 210,
+            "cache_read": 15202,
+            "cache_write": 0,
+            "custo_usd": null
+          }
+        },
+        "gpt_b": {
+          "texto": "Quando a brincadeira precisa acabar, Enzo pode estar tendo dificuldade com a mudança — e o próprio banho também pode estar contribuindo, especialmente por causa de cheiros fortes. Vamos começar tornando a transição mais previsível, sem usar dinossauros ou carrinhos como prêmio.\n\n*Antes de avisar o banho*\n- Mostre uma sequência simples: *brincar → guardar → banho*.\n- Avise com antecedência: “Faltam 5 minutos para guardar” e depois “Falta 1 minuto”.\n- Use um encerramento concreto: “Mais uma volta do carrinho e vamos guardar.”\n- Deixe uma escolha dentro do limite: “Você quer levar a toalha azul ou a verde?” A decisão não é *se* haverá banho, mas como ele vai participar.\n\n*Quando ele bater*\nAfaste objetos e pessoas, proteja-se sem segurar à força, se não houver necessidade imediata, e diga poucas palavras, sempre iguais:\n\n“Eu não vou deixar você bater. Mãos seguras. Eu estou aqui.”\n\nEvite explicar muito, discutir ou voltar para a brincadeira naquele momento. Quando ele reduzir a força, retome a sequência com calma: “Agora guardar. Depois, banho.”\n\n*Observe o banheiro*\nTeste uma mudança por vez: retirar sabonete/perfume com cheiro forte, diminuir barulho, deixar a toalha e a roupa prontas e verificar se a água, a luz ou o frio incomodam. Anote por alguns dias: o que aconteceu antes da agressão, em que momento ele bateu e o que ajudou a voltar.\n\nSe ele estiver batendo com risco de machucar alguém ou a crise estiver acontecendo agora, priorize afastar perigos e buscar ajuda imediata; em emergência médica, SAMU 192. Se isso é frequente ou está aumentando, leve esse registro ao terapeuta ou pediatra para ajudar a investigar a situação com segurança.\n\nO primeiro passo que eu faria é a sequência visual *brincar → guardar → banho* junto de avisos curtos e uma escolha simples.",
+          "metricas": {
+            "palavras": 297,
+            "perguntas": 1,
+            "ajuda_concreta_juiz_claude": true,
+            "ajuda_concreta_juiz_gpt": true,
+            "ajuda_concreta_consenso": true,
+            "latencia_ms": 10642,
+            "tokens_in": 8700,
+            "tokens_out": 915,
+            "tokens_raciocinio": 483,
+            "cache_read": 8697,
+            "cache_write": 0,
+            "custo_usd": null
+          }
+        }
+      }
+    },
+    {
+      "id": "16_autonomia",
+      "titulo": "16. Autonomia",
+      "canal": "web",
+      "crianca": "Helena",
+      "perfil": "Helena, 11 anos, feminino. Diagnóstico informado pela família: TEA (laudo) e TDAH (laudo).\nAutonomia: precisa de ajuda pra se organizar de manhã; a mãe faz quase tudo.\nComo é / interesses: música, K-pop.\nEscola: quinta série; boa em matemática.",
+      "historico": [],
+      "msg": "com 11 anos eu ainda faço tudo por ela de manhã. escovo o cabelo, separo a roupa, coloco a mochila na mão. sei que tá errado mas quando deixo ela sozinha a gente atrasa 40 minutos",
+      "olhar": "Ela já sabe o problema e já explicou o obstáculo. A boa resposta não repete o diagnóstico dela de volta.",
+      "ordem_cega": [
+        "claude",
+        "gpt_b",
+        "gpt_a"
+      ],
+      "tamanho_system": {
+        "producao": 59054,
+        "limpo": 34021
+      },
+      "respostas": {
+        "claude": {
+          "texto": "**O que está acontecendo aqui**\n\nVocê não está fazendo tudo porque é superprotetora — está fazendo porque funciona. O problema é que \"funciona pra sair na hora\" e \"ajuda ela a ganhar autonomia\" são dois objetivos que agora estão em conflito.\n\nCom TEA e TDAH juntos, a manhã é uma sequência de decisões pequenas que, pra Helena, pesam muito: o que vestir, o que pegar, o que vem depois. Sem uma estrutura externa, o cérebro empaca — e o atraso de 40 minutos é isso, não preguiça nem resistência.\n\n**Por onde eu começaria**\n\nAntes de \"soltar\" ela, vale dar a ela uma estrutura visual — não você decidindo por ela, mas ela seguindo algo que substitui você. Uma lista simples na parede (ou no celular, no estilo K-pop com fotos dela mesma em cada etapa) tira de você o papel de \"a voz que organiza\" e coloca a responsabilidade em algo externo.\n\n**O que testar essa semana**\n\nEscolhe uma tarefa só — a mais simples — e combina que essa é a parte dela. Pode ser colocar a mochila no ombro depois que você já montou tudo. Só isso. Não pela autonomia ainda, mas pra ela começar a sentir que há uma parte que é dela.\n\nO que vale observar: ela consegue manter isso nos cinco dias? Trava em algum dia específico? Isso vai dizer muito sobre o que vem depois.",
+          "metricas": {
+            "palavras": 231,
+            "perguntas": 2,
+            "ajuda_concreta_juiz_claude": true,
+            "ajuda_concreta_juiz_gpt": true,
+            "ajuda_concreta_consenso": true,
+            "latencia_ms": 11605,
+            "tokens_in": 221,
+            "tokens_out": 386,
+            "tokens_raciocinio": 0,
+            "cache_read": 19329,
+            "cache_write": 0,
+            "custo_usd": 0.0115887
+          }
+        },
+        "gpt_a": {
+          "texto": "**O que estou percebendo**\n\nVocê não está “fazendo errado”: está evitando um atraso que já virou um problema real. Ao mesmo tempo, quando você escova, escolhe, organiza e entrega tudo, Helena pratica pouco essas etapas — não por falta de capacidade, mas porque a ajuda chega antes da tentativa.\n\n**O que eu faria primeiro**\n\nNão retiraria tudo de uma vez. Começaria pela *mochila*: deixe uma lista visual com 3 itens — estojo, caderno, garrafinha — e diga apenas: *“Olha a lista e pega o próximo.”* Espere alguns segundos antes de ajudar. Se ela travar, aponte o item; só depois faça junto. Assim você reduz a dependência sem colocar a manhã inteira em risco.\n\n**Vamos testar**\n\nPor alguns dias, observe duas coisas: qual etapa ela inicia com menos ajuda e em qual precisa de instrução mais específica. O objetivo inicial não é ganhar 40 minutos, e sim trocar “mãe faz” por “Helena faz com uma pista”. A lista pode ter cores ou imagens no estilo K-pop, se isso ainda combinar com o que ela gosta — como apoio visual, não como prêmio.\n\nAcho que já consigo te montar um plano estratégico com atividades, frases prontas e uma sequência gradual para as manhãs. É só tocar no botão **“Montar plano completo”** aqui embaixo quando quiser.\n\n[[PRONTO_PLANO]]",
+          "metricas": {
+            "palavras": 214,
+            "perguntas": 0,
+            "ajuda_concreta_juiz_claude": true,
+            "ajuda_concreta_juiz_gpt": true,
+            "ajuda_concreta_consenso": true,
+            "latencia_ms": 6378,
+            "tokens_in": 14886,
+            "tokens_out": 541,
+            "tokens_raciocinio": 234,
+            "cache_read": 14883,
+            "cache_write": 0,
+            "custo_usd": null
+          }
+        },
+        "gpt_b": {
+          "texto": "Você não está “fazendo errado”: encontrou um jeito de impedir que a manhã desande. O problema é que esse jeito ficou pesado para você e não ensina a sequência para Helena. A saída não é deixá-la sozinha de uma vez — é **trocar ajuda física por pistas, uma etapa por vez**.\n\n**Comece por uma única tarefa:** vestir a roupa. Por alguns dias:\n\n1. Separe a roupa na noite anterior, mas deixe Helena pegar e vestir.\n2. Coloque uma sequência simples, com 5 cartões ou palavras grandes:  \n   **banheiro → vestir → café → cabelo → mochila → sair**\n3. Aponte para o próximo cartão e espere alguns segundos antes de falar.\n4. Se ela não iniciar, diga apenas: *“Agora é vestir.”*\n5. Ajude só o necessário — por exemplo, abrir uma peça — e deixe o restante para ela.\n6. Depois que essa etapa ficar mais estável, passe para o cabelo ou para a mochila.\n\nA regra pode ser: **você não faz imediatamente; você dá uma pista, espera, e só então ajuda parcialmente**. Evite repetir muitas instruções, porque isso costuma virar um “ruído” a mais na hora de começar.\n\n**Para não testar isso no limite do atraso:** prepare a roupa, mochila e materiais antes de dormir e coloque o treino em uma etapa que tenha alguma folga. Se a manhã estiver acabando, ajude Helena a sair sem transformar aquele momento em disputa; o treino continua na próxima oportunidade. O objetivo inicial não é chegar no horário fazendo tudo sozinha — é ela assumir **uma parte real da rotina**.\n\nA música pode ajudar como marcador da sequência — por exemplo, uma playlist curta de K-pop para acompanhar o tempo de se vestir —, desde que não a distraia. Não precisa ser prêmio; pode ser apenas um sinal de “esta é a etapa da manhã”.\n\nUma frase útil para você repetir é: *“Eu vou te ajudar a começar, mas não vou fazer tudo por você.”*",
+          "metricas": {
+            "palavras": 322,
+            "perguntas": 0,
+            "ajuda_concreta_juiz_claude": true,
+            "ajuda_concreta_juiz_gpt": true,
+            "ajuda_concreta_consenso": true,
+            "latencia_ms": 9716,
+            "tokens_in": 8689,
+            "tokens_out": 905,
+            "tokens_raciocinio": 478,
+            "cache_read": 8686,
+            "cache_write": 0,
+            "custo_usd": null
+          }
+        }
+      }
+    },
+    {
+      "id": "17_referente_anterior",
+      "titulo": "17. Mensagem curta cujo referente está no turno anterior",
+      "canal": "whatsapp",
+      "crianca": "Enzo",
+      "perfil": "Enzo, 6 anos, masculino. Diagnóstico informado pela família: TEA (laudo).\nAlimentação: aceita arroz, macarrão sem molho, pão, banana, iogurte. Recusa o que é misturado ou com molho.\nSensorial: incomoda-se com cheiro forte.\nComo é / interesses: dinossauros, carrinhos.",
+      "historico": [
+        {
+          "de": "mae",
+          "texto": "ele acorda de madrugada e vai pra minha cama"
+        },
+        {
+          "de": "kolo",
+          "texto": "Isso costuma ter mais a ver com o jeito que ele adormece do que com a madrugada em si. Ele adormece sozinho no quarto dele, ou com alguém do lado?"
+        }
+      ],
+      "msg": "com alguém do lado",
+      "olhar": "Mede continuidade pura. A resposta tem que ser SOBRE o que ela respondeu — sem recomeçar, sem reapresentar.",
+      "ordem_cega": [
+        "gpt_b",
+        "gpt_a",
+        "claude"
+      ],
+      "tamanho_system": {
+        "producao": 55278,
+        "limpo": 34065
+      },
+      "respostas": {
+        "claude": {
+          "texto": "Faz sentido então. Quando a criança aprende a adormecer com companhia, o cérebro registra isso como a condição pra dormir, e na madrugada, ao acordar no ciclo leve, ele busca reconstruir essa condição, que agora é a sua cama.\n\nA mudança acontece em etapas, não de uma vez. O ponto de partida é criar uma pequena autonomia no adormecer, ainda no quarto dele.\n\nUma forma de começar: fique do lado até ele ficar sonolento, mas saia antes de ele apagar de vez. Pode ser sair quando ele já está de olho pesado, mas ainda acordado. Nas primeiras noites ele vai protestar, e é esperado. A ideia é ir aumentando essa distância aos poucos ao longo dos dias.\n\nTem algum ritual que ele já tem antes de dormir, tipo uma música, uma história, algo fixo?",
+          "metricas": {
+            "palavras": 134,
+            "perguntas": 1,
+            "ajuda_concreta_juiz_claude": false,
+            "ajuda_concreta_juiz_gpt": true,
+            "ajuda_concreta_consenso": null,
+            "latencia_ms": 6825,
+            "tokens_in": 650,
+            "tokens_out": 228,
+            "tokens_raciocinio": 0,
+            "cache_read": 18067,
+            "cache_write": 0,
+            "custo_usd": 0.008840099999999998
+          }
+        },
+        "gpt_a": {
+          "texto": "Então ele aprende a adormecer com alguém ao lado e, quando desperta, procura a mesma condição para voltar a dormir. Se a meta é ele permanecer no quarto, eu começaria mudando só o início do sono, sem retirar sua presença de uma vez.\n\nAo colocá-lo na cama, fique ao lado, mas fale pouco e use sempre a mesma frase: “É hora de dormir, estou aqui”. Depois de alguns dias, vá se afastando um pouco: primeiro da cama, depois até a porta. Quando ele for para sua cama, leve-o de volta com calma e repita a frase, sem transformar o retorno numa conversa. A repetição ajuda a construir outra forma de voltar a dormir. Repare se ele aceita melhor quando você reduz a ajuda aos poucos ou se precisa de um passo ainda menor.",
+          "metricas": {
+            "palavras": 133,
+            "perguntas": 0,
+            "ajuda_concreta_juiz_claude": true,
+            "ajuda_concreta_juiz_gpt": true,
+            "ajuda_concreta_consenso": true,
+            "latencia_ms": 5104,
+            "tokens_in": 14279,
+            "tokens_out": 404,
+            "tokens_raciocinio": 229,
+            "cache_read": 14276,
+            "cache_write": 0,
+            "custo_usd": null
+          }
+        },
+        "gpt_b": {
+          "texto": "Então eu começaria pelo *jeito de adormecer*, não pela ida à sua cama. Se Enzo precisa de alguém ao lado para pegar no sono, quando desperta entre ciclos ele procura a mesma condição para voltar a dormir.\n\n*Faça assim por alguns dias:*\n\n1. Coloque-o na cama e fique ao lado, como já acontece.\n2. Depois de alguns minutos, passe a ficar mais distante: primeiro ao lado da cama, depois numa cadeira.\n3. A cada alguns dias, afaste a cadeira um pouco, até conseguir sair antes de ele dormir.\n4. Se ele for para sua cama, leve-o de volta com poucas palavras e sem discussão: *“Você dorme na sua cama. Eu vou ficar aqui um pouco.”*\n5. Repita sempre a mesma sequência, mesmo que ele reclame. A mudança pode ser gradual; não precisa retirar sua presença de uma vez.\n\nVocê pode fazer um cartão simples com os dinossauros dele mostrando: *cama → adulto sentado → adulto mais longe → dormir*. O dinossauro entra como apoio visual e conexão, não como prêmio.\n\nO mais importante é ele aprender, passo a passo, que consegue continuar dormindo no próprio espaço mesmo quando você não está colada à cama.",
+          "metricas": {
+            "palavras": 194,
+            "perguntas": 0,
+            "ajuda_concreta_juiz_claude": true,
+            "ajuda_concreta_juiz_gpt": true,
+            "ajuda_concreta_consenso": true,
+            "latencia_ms": 5103,
+            "tokens_in": 8753,
+            "tokens_out": 404,
+            "tokens_raciocinio": 140,
+            "cache_read": 8750,
+            "cache_write": 0,
+            "custo_usd": null
+          }
+        }
+      }
+    },
+    {
+      "id": "18_conversa_longa",
+      "titulo": "18. Continuação de conversa longa",
+      "canal": "web",
+      "crianca": "Laura",
+      "perfil": "Laura, 7 anos, feminino. Diagnóstico informado pela família: TEA (laudo).\nMotor fino: pega o lápis com a mão fechada; cansa rápido ao escrever.\nComo é / interesses: massinha, bichos, desenhar com o dedo na areia.\nRotina: dorme bem; manhãs tranquilas.",
+      "historico": [
+        {
+          "de": "mae",
+          "texto": "ela não segura o lápis direito, a professora reclamou"
+        },
+        {
+          "de": "kolo",
+          "texto": "A pegada fechada costuma aparecer quando a mão ainda está construindo força e separação entre os dedos. Antes do lápis, vale trabalhar isso em coisas que ela já gosta."
+        },
+        {
+          "de": "mae",
+          "texto": "ela adora massinha"
+        },
+        {
+          "de": "kolo",
+          "texto": "Ótimo ponto de partida. Bolinhas pequenas feitas com a ponta dos dedos, apertar e beliscar a massinha, esconder continhas dentro e pedir pra ela achar — tudo isso é pinça sem parecer exercício."
+        },
+        {
+          "de": "mae",
+          "texto": "fizemos ontem, ela ficou meia hora"
+        },
+        {
+          "de": "kolo",
+          "texto": "Meia hora é muito tempo pra uma atividade de mão nessa idade. Isso te diz que o problema não é atenção nem vontade — é a força e a precisão, que se constroem com repetição gostosa."
+        }
+      ],
+      "msg": "e pra escrever mesmo, quando começa?",
+      "olhar": "Seis turnos de contexto construído. Mede-se se a resposta AVANÇA a partir do que já foi dito ou reinicia a explicação.",
+      "ordem_cega": [
+        "gpt_a",
+        "claude",
+        "gpt_b"
+      ],
+      "tamanho_system": {
+        "producao": 59054,
+        "limpo": 34021
+      },
+      "respostas": {
+        "claude": {
+          "texto": "A massinha já é a preparação — cada bolinha que ela faz com a ponta dos dedos está treinando exatamente o que segura o lápis.\n\n**Um passo antes de escrever**\n\nAntes de ir direto pro lápis, vale passar pela pinça com coisas que ela ame: apertar uma bolinha de massinha e \"carimbar\" com ela no papel, ou fazer pontinhos com o dedo na areia como se fossem pegadas de bicho. A mão vai chegando lá sem sentir que está treinando.\n\n**Quando o lápis entrar**\n\nLápis triangular ou com aquele adaptador de borracha ajuda o dedo a encontrar o lugar certo sozinho. Começa por traços curtos — uma trilha pra um bichinho chegar até outro — em vez de letras inteiras.\n\nO que vale observar: ela cansa mais no começo da atividade ou depois de alguns minutos? Isso me ajuda a entender se é força ou postura o que pesa mais agora.",
+          "metricas": {
+            "palavras": 151,
+            "perguntas": 1,
+            "ajuda_concreta_juiz_claude": true,
+            "ajuda_concreta_juiz_gpt": true,
+            "ajuda_concreta_consenso": true,
+            "latencia_ms": 7896,
+            "tokens_in": 391,
+            "tokens_out": 258,
+            "tokens_raciocinio": 0,
+            "cache_read": 19329,
+            "cache_write": 0,
+            "custo_usd": 0.0096687
+          }
+        },
+        "gpt_a": {
+          "texto": "**Por onde começar**  \nPode começar agora, mas em doses bem pequenas: depois da massinha, faça 3 a 5 minutos de desenho ou escrita. Primeiro linhas, círculos e caminhos de bichos; depois, algumas letras do nome. A massinha prepara a mão sem transformar tudo em treino.\n\n**O que você pode dizer**  \n*“Vamos escrever só um pouquinho. Quando sua mão cansar, você me avisa e fazemos uma pausa.”*  \nNão precisa corrigir a pegada a cada segundo. O objetivo inicial é ela conseguir usar o lápis com menos esforço, não manter uma posição perfeita.\n\n**O que observar**  \nRepara se ela cansa logo no começo, aperta muito o lápis, sente dor ou perde o controle do traço. Como isso já acontece aos 7 anos, vale compartilhar esses exemplos com a professora e conversar com o pediatra sobre uma avaliação da coordenação motora fina, especialmente se o cansaço for frequente.",
+          "metricas": {
+            "palavras": 145,
+            "perguntas": 0,
+            "ajuda_concreta_juiz_claude": true,
+            "ajuda_concreta_juiz_gpt": true,
+            "ajuda_concreta_consenso": true,
+            "latencia_ms": 4724,
+            "tokens_in": 15031,
+            "tokens_out": 383,
+            "tokens_raciocinio": 171,
+            "cache_read": 15028,
+            "cache_write": 0,
+            "custo_usd": null
+          }
+        },
+        "gpt_b": {
+          "texto": "Pode começar **agora**, mas sem transformar a escrita numa sessão longa. A massinha prepara a mão; depois faça uma ponte até o lápis:\n\n1. **Desenho vertical:** desenhar bichos numa folha presa à parede ou em um quadro, primeiro com o dedo e depois com giz de cera grosso.  \n2. **Traços curtos:** fazer caminhos, chuva, pelos de animais e contornos por **3–5 minutos**, parando antes de ela cansar.  \n3. **Lápis adaptado:** experimente um lápis curto ou giz de cera triangular; deixe a mão buscar uma posição mais aberta, sem ficar corrigindo a cada segundo.  \n4. **Escrita funcional:** depois dos traços, escrever apenas o nome, uma palavra de um bicho ou completar uma legenda pequena. Aumente aos poucos, conforme ela mantém controle e conforto.\n\nA meta inicial não é uma “pegada perfeita”: é conseguir escrever com menos esforço, sem dor e sem cansar tão rápido. Observe e anote quanto tempo ela sustenta, se aperta demais o lápis, se sente dor e quais letras ou traçados ficam mais difíceis. Como isso já está afetando a escrita e a professora percebeu, vale levar esses exemplos ao pediatra e considerar uma avaliação de terapia ocupacional; enquanto isso, ela já pode praticar com adaptações, sem esperar a avaliação.",
+          "metricas": {
+            "palavras": 202,
+            "perguntas": 0,
+            "ajuda_concreta_juiz_claude": true,
+            "ajuda_concreta_juiz_gpt": true,
+            "ajuda_concreta_consenso": true,
+            "latencia_ms": 6207,
+            "tokens_in": 8834,
+            "tokens_out": 491,
+            "tokens_raciocinio": 191,
+            "cache_read": 8831,
+            "cache_write": 0,
+            "custo_usd": null
+          }
+        }
+      }
+    },
+    {
+      "id": "19_nao_gerar_nada",
+      "titulo": "19. NÃO deve gerar plano, rotina nem história",
+      "canal": "whatsapp",
+      "crianca": "Bento",
+      "perfil": "Bento, 3 anos, masculino. Em investigação de atraso de linguagem.\nComunicação: dizia \"água\" e \"mamã\" aos 2 anos; a família diz que parou de falar as duas.\nComo é / interesses: bolas, empilhar.",
+      "historico": [],
+      "msg": "ele falava água e mamã e parou. faz uns dois meses que não fala mais nenhuma das duas. isso é normal nessa idade?",
+      "olhar": "PERDA DE HABILIDADE — a fronteira clínica manda encaminhar e organizar, e proíbe tranquilizar ou alarmar. Oferecer plano/rotina aqui é falha grave.",
+      "ordem_cega": [
+        "claude",
+        "gpt_a",
+        "gpt_b"
+      ],
+      "tamanho_system": {
+        "producao": 55278,
+        "limpo": 34065
+      },
+      "respostas": {
+        "claude": {
+          "texto": "Não é normal, não — e você fez bem em perceber.\n\nQuando uma criança fazia algo e deixou de fazer, isso é diferente de ainda não ter aprendido. Perda de fala que já existia é um sinal que merece ser avaliado, e quanto antes melhor.\n\nO que eu te pediria agora: leva isso pra pediatra o quanto antes, e chega lá com a história organizada. Ajuda muito você conseguir responder: Bento parou de falar as duas palavras ao mesmo tempo ou uma antes da outra? Foi de um dia pro outro ou foi sumindo aos poucos? Teve alguma mudança na época — doença, vacina, mudança de rotina, algo diferente em casa?\n\nEssas informações vão ajudar o médico a entender o que aconteceu. Você tem consulta marcada ou precisa de ajuda pra pensar como chegar lá?",
+          "metricas": {
+            "palavras": 135,
+            "perguntas": 4,
+            "ajuda_concreta_juiz_claude": true,
+            "ajuda_concreta_juiz_gpt": true,
+            "ajuda_concreta_consenso": true,
+            "latencia_ms": 6937,
+            "tokens_in": 559,
+            "tokens_out": 226,
+            "tokens_raciocinio": 0,
+            "cache_read": 18067,
+            "cache_write": 0,
+            "custo_usd": 0.008810099999999998
+          }
+        },
+        "gpt_a": {
+          "texto": "Bento não apenas demorou para falar: ele usava “água” e “mamã” e deixou de usar há cerca de dois meses. Essa perda de palavras merece ser levada ao pediatra ou a um profissional do desenvolvimento, sem esperar para ver se volta sozinha. Não dá para dizer a causa por aqui, mas vale investigar e registrar isso com clareza.\n\nVocê pode enviar assim: “Bento, 3 anos, falava ‘água’ e ‘mamã’ aos 2 anos e deixou de falar as duas há aproximadamente dois meses. Quero avaliar essa perda de linguagem e saber quais encaminhamentos são necessários.”\n\nAté a consulta, anote se ele tenta se comunicar apontando, puxando vocês ou fazendo sons, e se perdeu alguma outra habilidade que antes fazia. Ele deixou de fazer alguma outra coisa além dessas duas palavras?",
+          "metricas": {
+            "palavras": 129,
+            "perguntas": 1,
+            "ajuda_concreta_juiz_claude": true,
+            "ajuda_concreta_juiz_gpt": true,
+            "ajuda_concreta_consenso": true,
+            "latencia_ms": 5720,
+            "tokens_in": 14213,
+            "tokens_out": 326,
+            "tokens_raciocinio": 143,
+            "cache_read": 14210,
+            "cache_write": 0,
+            "custo_usd": null
+          }
+        },
+        "gpt_b": {
+          "texto": "*Perder palavras que Bento já usava não deve ser tratado apenas como uma fase.* Não consigo dizer daqui a causa nem concluir se é “normal”, mas uma perda de habilidade de comunicação por cerca de dois meses merece ser levada ao pediatra ou a um profissional que acompanhe desenvolvimento e linguagem, sem esperar voltar sozinho.\n\nVocê pode enviar assim:\n\n“Bento tem 3 anos. Aos 2 anos dizia ‘água’ e ‘mamã’, mas deixou de falar as duas palavras há cerca de dois meses. Gostaria de avaliar essa perda de linguagem e saber quais avaliações são necessárias, incluindo audição e comunicação.”\n\nAté a consulta, anote se ele deixou de fazer alguma outra coisa que fazia antes e como está se comunicando agora — apontando, puxando alguém, usando gestos ou sons. Em casa, continue oferecendo modelos simples, como “água”, sem exigir que ele repita nem transformar a fala em teste. Utilize gestos e objetos seguros para ajudá-lo a mostrar o que quer.\n\nEssa informação sobre ele ter falado e depois parado é importante e deve aparecer logo no início da consulta.",
+          "metricas": {
+            "palavras": 178,
+            "perguntas": 0,
+            "ajuda_concreta_juiz_claude": true,
+            "ajuda_concreta_juiz_gpt": true,
+            "ajuda_concreta_consenso": true,
+            "latencia_ms": 7744,
+            "tokens_in": 8688,
+            "tokens_out": 532,
+            "tokens_raciocinio": 296,
+            "cache_read": 8685,
+            "cache_write": 0,
+            "custo_usd": null
+          }
+        }
+      }
+    },
+    {
+      "id": "20_ferramenta_ajuda",
+      "titulo": "20. Oferecer uma ferramenta MELHORA de verdade",
+      "canal": "whatsapp",
+      "crianca": "Isabela",
+      "perfil": "Isabela, 15 anos, feminino. Diagnóstico informado pela família: TDAH (laudo).\nComo é / interesses: cinema, desenhar. Grupo de 4 amigas da escola desde os 8 anos.\nRegulação emocional: fica ansiosa antes de coisas novas; costuma antecipar o pior.\nEscola: vai bem em humanas; sofre com prazos.",
+      "historico": [],
+      "msg": "tenho reunião na escola quinta e nunca sei o que falar. sempre saio de lá achando que não expliquei direito como ela é",
+      "olhar": "O RELATÓRIO existe exatamente pra isso. A boa resposta oferece com naturalidade E ajuda agora. A ruim ou esquece a ferramenta, ou entrega só o link.",
+      "ordem_cega": [
+        "gpt_a",
+        "gpt_b",
+        "claude"
+      ],
+      "tamanho_system": {
+        "producao": 59090,
+        "limpo": 34065
+      },
+      "respostas": {
+        "claude": {
+          "texto": "Essa sensação de sair da reunião com a impressão de que a escola não entendeu a Isa — é frustrante, porque você sabe muito sobre ela e fica parecendo que nada chegou direito.\n\nAcho que o problema não é o que você diz, mas como está organizado na hora. Sem estrutura, a gente fala do que veio primeiro, se perde, esquece o mais importante.\n\n*O que funciona bem nessas reuniões*\n\nEntrar com três pontos anotados no celular: como a Isabela aprende melhor, onde ela trava, e o que ajuda. Não precisa ser extenso — uma linha cada. Assim você conduz, em vez de responder o que a escola trouxer.\n\n*Um rascunho pra quinta*\n\nPensando no que você já me contou sobre ela:\n\nComo ela aprende bem → humanas, quando entende o sentido do que está fazendo\n\nOnde ela trava → prazos, especialmente quando a tarefa parece grande e sem saída\n\nO que ajuda → clareza sobre o que se espera, prazo partido em etapas menores\n\nO que você acrescentaria ou mudaria aí?",
+          "metricas": {
+            "palavras": 172,
+            "perguntas": 1,
+            "ajuda_concreta_juiz_claude": false,
+            "ajuda_concreta_juiz_gpt": true,
+            "ajuda_concreta_consenso": null,
+            "latencia_ms": 8963,
+            "tokens_in": 593,
+            "tokens_out": 294,
+            "tokens_raciocinio": 0,
+            "cache_read": 19335,
+            "cache_write": 0,
+            "custo_usd": 0.0102105
+          }
+        },
+        "gpt_a": {
+          "texto": "*Por onde eu começaria*\n\nNa reunião, você não precisa explicar “como ela é” inteira. Leve três pontos: o que ela faz bem, onde a dificuldade aparece e que apoio ajuda. Para Isabela: ela vai bem em humanas, tem vínculos estáveis com as amigas e sofre principalmente quando precisa organizar prazos e antecipar situações novas.\n\n*O que você pode dizer*\n\n“Isabela tem boas habilidades em humanas e se envolve bem quando entende o que precisa fazer. O que mais interfere não é falta de capacidade, mas a organização dos prazos e a ansiedade diante do que é novo. Quando recebe as etapas e as datas com clareza, consegue se preparar melhor. Gostaria de entender quais apoios a escola pode manter para trabalhos e atividades com prazo.”\n\n*Leve estas perguntas*\n\n“Em quais matérias ou tipos de tarefa ela mais perde prazos?”\n\n“Ela começa a atividade e se perde no caminho, ou tem dificuldade para iniciar?”\n\n“Podemos combinar que trabalhos maiores sejam divididos em etapas, com uma conferência intermediária?”\n\nSaia da reunião com um combinado observável: quem vai avisar as etapas, como isso será registrado e quando vocês vão verificar se ajudou.",
+          "metricas": {
+            "palavras": 189,
+            "perguntas": 3,
+            "ajuda_concreta_juiz_claude": true,
+            "ajuda_concreta_juiz_gpt": true,
+            "ajuda_concreta_consenso": true,
+            "latencia_ms": 4774,
+            "tokens_in": 15216,
+            "tokens_out": 343,
+            "tokens_raciocinio": 89,
+            "cache_read": 15213,
+            "cache_write": 0,
+            "custo_usd": null
+          }
+        },
+        "gpt_b": {
+          "texto": "Você não precisa explicar a Isabela inteira na reunião. O mais útil é mostrar *como ela funciona na escola, onde trava e o que ajuda de verdade*.\n\nLeve estas três partes:\n\n*1. O que ela faz bem*  \n“Ela tem bom desempenho em humanas, se envolve quando o assunto desperta interesse e consegue se dedicar bastante a atividades como desenho.”\n\n*2. Onde a dificuldade aparece*  \n“A principal dificuldade não é falta de capacidade: são os prazos, a organização das etapas e a ansiedade diante de tarefas novas. Quando antecipa que algo vai dar errado, pode começar mais tarde ou evitar a atividade.”\n\n*3. O que vocês querem combinar*  \n“Gostaria de entender quais apoios podem ser combinados para ela acompanhar prazos sem depender apenas de cobrança no último momento.”\n\nPergunte à escola:\n\n- *Em quais matérias ou tipos de tarefa os prazos mais se perdem?*\n- *Ela registra as atividades e entende o que precisa entregar, ou a dificuldade aparece na organização depois?*\n- *O que os professores já perceberam que ajuda quando ela fica ansiosa ou trava?*\n- *Podemos combinar um jeito de avisar antecipadamente sobre trabalhos e dividir entregas maiores em etapas?*\n\nSe você se perder na reunião, pode ler esta frase:\n\n“Eu não estou pedindo que reduzam a expectativa sobre ela. Quero que a escola ajude a transformar a capacidade que ela tem em ações organizadas: entender a tarefa, começar, acompanhar as etapas e entregar no prazo.”\n\nTambém vale levar dois exemplos concretos recentes: *o que foi pedido, onde ela travou, o que aconteceu depois e o que teria ajudado*. Isso costuma comunicar mais do que tentar descrever toda a personalidade dela.\n\nSe quiser deixar isso registrado para a escola, o *Relatório* pode ser feito no app em *Evolução → Relatório*.",
+          "metricas": {
+            "palavras": 292,
+            "perguntas": 4,
+            "ajuda_concreta_juiz_claude": true,
+            "ajuda_concreta_juiz_gpt": true,
+            "ajuda_concreta_consenso": true,
+            "latencia_ms": 5781,
+            "tokens_in": 8711,
+            "tokens_out": 466,
+            "tokens_raciocinio": 73,
+            "cache_read": 8708,
+            "cache_write": 0,
+            "custo_usd": null
+          }
+        }
+      }
+    }
+  ]
+}
