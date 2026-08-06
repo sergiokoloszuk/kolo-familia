@@ -8,6 +8,7 @@ import {
   type Provider,
 } from "@/lib/ia/provider";
 import { calcularCustoTokens } from "@/lib/billing/prices";
+import { contarAutorizadas, classificarFalha } from "./diagnostico";
 
 /**
  * PROVA A CHAVE DO AMBIENTE — o bloqueador da ativação (06/08/2026).
@@ -55,10 +56,13 @@ export async function GET(req: Request) {
   // inteira numa resposta HTTP não ajuda a operar e espalha identificador de
   // família por log de proxy. Zero sob `openai_teste` é o dado que importa:
   // significa que ninguém está no GPT, por mais que a chave funcione.
+  //
+  // ÚNICOS, não entradas. Um id repetido na variável (copiar-colar, um id
+  // acrescentado duas vezes) faria a contagem dizer 4 quando são 3 — e a
+  // conferência "bate com o que eu configurei?" passaria a mentir justamente
+  // no caso em que alguém errou a lista.
   const modo = modoConversacional();
-  const autorizadas = (process.env.OPENAI_TEST_FAMILY_IDS ?? "")
-    .split(/[,\s]+/)
-    .filter(Boolean).length;
+  const autorizadas = contarAutorizadas(process.env.OPENAI_TEST_FAMILY_IDS);
 
   const base = {
     modo_de_rollout: modo,
@@ -104,7 +108,7 @@ export async function GET(req: Request) {
       // Custo zero com resposta válida = modelo fora da PRICE_TABLE. O
       // /admin/uso-api mostraria a migração como se fosse de graça.
       custo_calculavel: custo > 0,
-      ms: r.ms,
+      latencia_ms: r.ms,
     });
   } catch (e) {
     const msg = e instanceof Error ? e.message : "erro desconhecido";
@@ -112,8 +116,10 @@ export async function GET(req: Request) {
       {
         ...base,
         ok: false,
-        // Vem de `error.message` do provedor (401 invalid_api_key, 404 model
-        // not found, 429 quota…) — é o que distingue os modos de falha.
+        classe: classificarFalha(msg),
+        // Vem de `error.message` do provedor — que o `ErroDeProvider` monta a
+        // partir de `error.message` da API, nunca do header. A chave não passa
+        // por aqui em nenhum caminho.
         falha: msg.slice(0, 300),
       },
       { status: 502 },
