@@ -756,6 +756,119 @@ export async function sendTrial(
 }
 
 // ============================================================
+// CAMPANHA ÚNICA: o vídeo institucional
+// ============================================================
+
+/**
+ * ESTA FAMÍLIA JÁ RECEBEU O LINK DO GUIA PELO WHATSAPP?
+ *
+ * A prova sai do PRÓPRIO TEXTO já enviado. O link institucional é literal e
+ * único no produto, então procurá-lo em `ayla_messages` responde a pergunta
+ * sem coluna nova, sem tabela nova e sem migração — e cobre também quem
+ * recebeu pela boas-vindas, que manda o mesmo link por outro caminho.
+ *
+ * Em falha da consulta devolve `true` (não envia). Repetir para quem já viu
+ * incomoda mais do que deixar de mandar para quem não viu.
+ */
+async function jaRecebeuVideoGuia(
+  supabase: SupabaseClient,
+  familyAccountId: string,
+): Promise<boolean> {
+  try {
+    const { data } = await supabase
+      .from("ayla_messages")
+      .select("id")
+      .eq("family_account_id", familyAccountId)
+      .eq("direcao", "outbound")
+      .ilike("texto", "%tella.tv/video/como-usar-a-kolo%")
+      .limit(1);
+    return (data?.length ?? 0) > 0;
+  } catch {
+    return true;
+  }
+}
+
+/**
+ * O texto da campanha. É ATIVAÇÃO, não lembrete de trial: nada de preço, nada
+ * de "seu teste acaba em X dias", e sem pergunta no fim — se ela responder, a
+ * Ayla conversa; se não responder, o vídeo trabalha sozinho.
+ *
+ * ⚠️ GÊNERO: a frase sobre a evolução é NEUTRA de propósito ("acompanhar a
+ * evolução", nunca "a evolução dele"). O nome da criança só entra quando
+ * existe, e sem pronome — assim a mensagem não erra o gênero de ninguém,
+ * inclusive nas famílias onde o campo não está preenchido.
+ */
+export function textoVideoGuia(params: {
+  nomeMae: string | null;
+  nomeMembro: string | null;
+}): string {
+  const ola = params.nomeMae?.trim() ? `Oi, ${params.nomeMae.trim()} 💛` : "Oi 💛";
+  const daCrianca = params.nomeMembro?.trim() ? ` do ${params.nomeMembro.trim()}` : "";
+  const aCrianca = params.nomeMembro?.trim() ? ` sobre ${params.nomeMembro.trim()}` : "";
+  return `${ola}
+
+Quero te mostrar uma coisa rápida que pode ajudar nesses dias de teste.
+
+Gravamos um vídeo curto mostrando a Kolo por dentro: como conversar comigo, criar planos e rotinas visuais, montar histórias${daCrianca}, registrar o que acontece no dia e acompanhar a evolução.
+
+🎥 ${LINK_GUIA_KOLO}
+
+E o mais importante: você não precisa saber qual ferramenta usar. Me conta uma situação que está acontecendo${aCrianca} — por texto ou por áudio, do jeito que for mais fácil — que eu te ajudo a achar um caminho.`;
+}
+
+/**
+ * Envia a campanha do vídeo institucional para UMA família.
+ *
+ * Ordem das guardas, e cada uma existe por um motivo:
+ *   1. `podeEnviarProativa` — consentimento, desativada, pausada, limite
+ *      diário, estado de segurança aberto e cadência. É o funil único.
+ *   2. `abriuGuiaNoApp` — quem já CLICOU no vídeo (onboarding ou Home) não
+ *      precisa do link. `onboarding_video_exibido` NÃO conta: a página ter
+ *      carregado não diz que a pessoa assistiu.
+ *   3. `jaRecebeuVideoGuia` — a dedup que faz o cron poder rodar 4× por dia
+ *      sem mandar 4 mensagens.
+ *
+ * A 3 é verificada IMEDIATAMENTE antes do envio, e não só na seleção: entre
+ * montar a lista e despachar existe uma janela em que a boas-vindas de uma
+ * família nova pode ter mandado o mesmo link.
+ */
+export async function sendVideoGuia(
+  supabase: SupabaseClient,
+  familyAccountId: string,
+  agora: Date = new Date(),
+): Promise<EnvioResultado> {
+  const podeRes = await podeEnviarProativa(
+    supabase,
+    { family_account_id: familyAccountId, agora },
+    "video_guia",
+  );
+  if (!podeRes.permitido) return { enviada: false, motivo: podeRes.motivo };
+
+  if (await abriuGuiaNoApp(supabase, familyAccountId)) {
+    return { enviada: false, motivo: "já abriu o vídeo no app" };
+  }
+  if (await jaRecebeuVideoGuia(supabase, familyAccountId)) {
+    return { enviada: false, motivo: "já recebeu o link por WhatsApp" };
+  }
+
+  const ctx = await loadFamiliaParaEnvio(supabase, familyAccountId);
+  if (!ctx) return { enviada: false, motivo: "Sem contexto da família." };
+  if (!ctx.whatsapp_e164) return { enviada: false, motivo: "sem WhatsApp" };
+
+  return enviarEPersistir(supabase, {
+    family_account_id: familyAccountId,
+    membro_atipico_id: null,
+    phone: ctx.whatsapp_e164,
+    texto: textoVideoGuia({
+      nomeMae: ctx.nomeMae,
+      nomeMembro: ctx.membros?.[0]?.nome ?? null,
+    }),
+    category: "proativa",
+    tipo: "video_guia",
+  });
+}
+
+// ============================================================
 // PROATIVA: Emocional streak 7 dias
 // ============================================================
 

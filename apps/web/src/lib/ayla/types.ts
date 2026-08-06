@@ -22,6 +22,12 @@ export type AylaTipoProativa =
   | "recuperacao_plano"
   | "recuperacao_rotina"
   | "fim_de_semana"
+  /**
+   * Campanha única do vídeo institucional (06/08/2026). Não é recorrente:
+   * cada família recebe UMA vez, e a prova disso é o próprio link no texto
+   * já enviado — ver `jaRecebeuVideoGuia`.
+   */
+  | "video_guia"
   | "dass21_convite"
   | "dass21_resultado_moderado"
   | "dass21_resultado_severo"
