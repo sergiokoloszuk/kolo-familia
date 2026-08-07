@@ -27,6 +27,7 @@ import { ORIENTACAO_DE_TRANSICAO } from "@/lib/conducao/formas";
 const GUIADA = readFileSync(resolve(__dirname, "rotina-guiada.ts"), "utf8");
 const PRONTIDAO = readFileSync(resolve(__dirname, "prontidao-rotina.ts"), "utf8");
 const ORCH = readFileSync(resolve(__dirname, "orchestrator.ts"), "utf8");
+const CORE = readFileSync(resolve(__dirname, "../ludico/rotina-ia-core.ts"), "utf8");
 const MIGRACAO = readFileSync(
   resolve(__dirname, "../../../../../supabase/migrations/0075_rotina_resultado.sql"),
   "utf8",
@@ -167,7 +168,11 @@ describe("visão da semana", () => {
 
   it("não promete calendário visual que não existe — reusa os dias", () => {
     // A estrutura semanal é 7 rotinas (uma por dia). Nada de produto novo.
-    expect(GUIADA).toMatch(/dia_semana: 0=Seg\.\.6=Dom/);
+    // A regra vive no GERADOR desde 08/08/2026: o condutor deixou de compor,
+    // então descrever o formato do dado no contrato dele era regra duplicada —
+    // e as duas versões já divergiam sobre o que é "dia avulso".
+    expect(CORE).toMatch(/dia_semana: 0=Segunda/);
+    expect(GUIADA).not.toMatch(/dia_semana: 0=Seg\.\.6=Dom/);
   });
 });
 
@@ -287,7 +292,11 @@ describe("o tema é escolha da família, com sugestão da Ayla", () => {
 describe("o título diz o que acontece no dia", () => {
   it("não aceita 'Amanhã' nem o nome do dia sozinho", () => {
     // "Amanhã" não diz nada quando a mãe abre a lista três dias depois.
-    expect(GUIADA).toMatch(/O "nome" DIZ O QUE ACONTECE NAQUELE DIA, não a data/);
-    expect(GUIADA).toMatch(/nunca "Amanhã" ou "Sábado" sozinhos/);
+    // A regra MUDOU DE LUGAR em 08/08/2026, junto com a autoria: quem nomeia é
+    // quem compõe. E o gerador dizia o CONTRÁRIO — sugeria "Segunda" como bom
+    // nome, enquanto o condutor proibia. Uma regra, no lugar que decide.
+    expect(CORE).toMatch(/O NOME DIZ O QUE ACONTECE NAQUELE DIA, não a data/);
+    expect(CORE).toMatch(/nunca "Amanhã" ou "Sábado" sozinhos/);
+    expect(CORE).not.toMatch(/NOME LIVRE/);
   });
 });

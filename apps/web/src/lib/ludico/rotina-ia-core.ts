@@ -25,7 +25,7 @@ Devolva APENAS JSON, sem texto fora dele:
 Regras:
 - "tema": se a pessoa mencionar um interesse que vira TEMA visual dos cartões (kpop, carros, dinossauros, princesas, futebol…), coloque em "tema" (1-2 palavras). Senão null. NUNCA é uma tarefa.
 - dia_semana: 0=Segunda,1=Terça,2=Quarta,3=Quinta,4=Sexta,5=Sábado,6=Domingo, ou null (rotina avulsa/sem dia fixo, ex.: "dia do dentista").
-- NOME LIVRE: use um nome que faça sentido ("Segunda", "Segunda de aula", "Manhã", "Dia de terapia"). Se a pessoa distingue cenários (aula/férias), reflita no nome.
+- O NOME DIZ O QUE ACONTECE NAQUELE DIA, não a data: "Passeio com a amiga", "Dia na casa da avó", "Manhã de escola", "Dia de terapia" — nunca "Amanhã" ou "Sábado" sozinhos, que não dizem nada quando a mãe abre a lista três dias depois. Só use o dia da semana no nome quando ele for mesmo a identidade daquele dia na grade ("Segunda de aula" × "Segunda de férias"). Se a pessoa distingue cenários, reflita no nome.
 - UMA ROTINA POR PEDIDO, por padrão. Se a pessoa pediu "a tarde", devolva UMA rotina de tarde — não uma por dia da semana. Atividade que só acontece em alguns dias entra COMO TEXTO na etapa ("futebol (terça e quinta)"), não vira rotina separada. Caso real: um pedido de UMA tarde virou 5 rotinas e 33 etapas porque a mãe disse "terça e quinta tem futebol" — a família receberia cinco quadros quase idênticos.
 - Só crie rotinas SEPARADAS quando os dias forem ESTRUTURALMENTE diferentes (sequência de etapas diferente, não uma atividade a mais) ou quando a pessoa pedir a semana inteira explicitamente. Aí sim, ex.: "Segunda de aula" e "Segunda de férias".
 - "X é igual a Y": copie as tarefas de Y para X.

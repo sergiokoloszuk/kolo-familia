@@ -42,6 +42,66 @@ describe("contrato estruturado do condutor", () => {
 });
 
 /**
+ * FONTE ÚNICA DA VERDADE (08/08/2026).
+ *
+ * O condutor escrevia a lista de etapas na própria fala, de cabeça, ANTES de
+ * `gerarRotina` compor o quadro. Duas composições independentes do mesmo
+ * pedido: em 07/08 a mãe leu 12 etapas e a criança recebeu 9, com a visita à
+ * pessoa nova — o motivo do pedido — colapsada num cartão genérico.
+ *
+ * O gerador é a autoridade desde a consolidação de 03/08 (`rotina-servico.ts`).
+ * O que sai agora é a SEGUNDA composição, que nunca teve autoridade nenhuma.
+ */
+describe("uma composição só", () => {
+  it("o condutor NÃO tem campo de rotinas na ferramenta", () => {
+    const schema = GUIADA.slice(
+      GUIADA.indexOf("const FERRAMENTA_CONDUTOR"),
+      GUIADA.indexOf("type BlocoResposta"),
+    );
+    expect(schema).not.toMatch(/rotinas: \{/);
+    expect(schema).toMatch(/NÃO existe campo `rotinas` aqui/);
+    // `transicoes` FICA: é lido e vira aprendizado no perfil.
+    expect(schema).toMatch(/transicoes: \{/);
+  });
+
+  it("nada lê `parsed.rotinas` — o campo morto não volta", () => {
+    // Só CÓDIGO: o comentário que explica por que o campo saiu cita o nome.
+    const semComentarios = GUIADA.split("\n")
+      .filter((l) => !/^\s*(\/\/|\*|\/\*)/.test(l))
+      .join("\n");
+    expect(semComentarios).not.toMatch(/parsed\??\.rotinas/);
+  });
+
+  it("o contrato PROÍBE narrar a sequência na fala", () => {
+    expect(GUIADA).toMatch(/NÃO escreva a sequência na sua "mensagem"/);
+    expect(GUIADA).not.toMatch(/Sua "mensagem" mostra a rotina no texto/);
+  });
+
+  it("a sequência da fala é lida do BANCO, não do modelo", () => {
+    expect(GUIADA).toMatch(/async function sequenciaDoQuadro/);
+    expect(GUIADA).toMatch(/from\("rotina_tarefas"\)[\s\S]{0,120}\.in\("rotina_id", ids\)/);
+    expect(GUIADA).toMatch(/const sequencia = await sequenciaDoQuadro\(supabase, ids\)/);
+    expect(GUIADA).toMatch(/\$\{fechamento\}\$\{quadro\}/);
+  });
+
+  it("se a leitura falhar, a fala sai SEM lista — nunca com uma inventada", () => {
+    const fn = GUIADA.slice(
+      GUIADA.indexOf("async function sequenciaDoQuadro"),
+      GUIADA.indexOf("/** Rotinas criadas com cartões pedidos"),
+    );
+    expect(fn).toMatch(/console\.error/);
+    expect(fn).toMatch(/return "";/);
+  });
+
+  it("a regra de nomear o dia vive no gerador, que é quem compõe", () => {
+    const CORE = readFileSync(new URL("../ludico/rotina-ia-core.ts", import.meta.url), "utf8");
+    expect(CORE).toMatch(/O NOME DIZ O QUE ACONTECE NAQUELE DIA/);
+    // E o contrato do condutor não descreve mais o formato do dado.
+    expect(GUIADA).not.toMatch(/rotinas: \[\{"nome"/);
+  });
+});
+
+/**
  * A resposta "princesas" é o gatilho do turno inteiro. Se ela precisasse
  * sobreviver a uma ida ao modelo e a um parser, seria a mesma falha de novo.
  */
