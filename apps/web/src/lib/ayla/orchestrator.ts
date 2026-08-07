@@ -61,6 +61,7 @@ import { recuperarBoasPraticas, blocoBoasPraticas } from "@/lib/conhecimento/rec
 import { dividirEmBolhas, ritmoDasBolhas, TETO_ESPERA_SEGUNDOS } from "./bolhas";
 import { semOutrosMembros } from "./membro-escopo";
 import { classificarFeedbackRotina } from "./rotina-feedback";
+import { avaliarAlvoKolo } from "./escopo-kolo";
 import { resolverMembroAlvo } from "./membro-alvo";
 import {
   segurancaAberta,
@@ -2290,11 +2291,33 @@ async function enviarRespostaEmChunks(
   // A pessoa pediu um plano? Então a Ayla NÃO escreve o plano no chat — dá uma
   // resposta curta e o sistema entrega o plano (PDF + link). Vale tanto pro pedido
   // EXPLÍCITO quanto pro "sim" curto logo depois de a Ayla OFERECER um plano (1c).
+  // ── ESCOPO ANTES DE ENTRAR EM MODO PLANO ──────────────────────────────
+  // `pedeUmPlano` só vê "plano" + verbo de pedido, então "quero um plano de
+  // aposentadoria" passava — e como pedido explícito entra na ponte com
+  // `forcar`, que pula o gate de suficiência, saía um Plano Kolo sobre
+  // previdência, em PDF, com link.
+  //
+  // A verificação vem AQUI, e não na ponte, porque é `querPlano` que manda a
+  // Ayla dar a resposta curta de "o sistema já está entregando". Barrar só lá
+  // embaixo consertaria o arquivo e deixaria a promessa: ela anunciaria um
+  // plano que nunca chega. Pedido explícito dispensa perguntar "quer que eu
+  // monte?"; não dispensa saber se é isso que se monta.
+  const pediuPlanoExplicito = pedeUmPlano(args.params.mensagem);
+  const escopo = pediuPlanoExplicito
+    ? await avaliarAlvoKolo(supabase, {
+        mensagem: args.params.mensagem,
+        nomesDosMembros: [args.params.nomeMembro ?? ""].filter(Boolean),
+      })
+    : { temAlvo: true, ponte: "" };
+
   const querPlano =
-    pedeUmPlano(args.params.mensagem) ||
+    (pediuPlanoExplicito && escopo.temAlvo) ||
     (ehAfirmacaoCurta(args.params.mensagem) &&
       (await ofertouPlanoRecente(supabase, args.family_account_id)));
   args.params.querPlano = querPlano;
+  // A ponte de volta ao que é da Kolo — a família não é mandada embora, é
+  // reconduzida. Vazia quando o pedido está no escopo.
+  args.params.ponteDeEscopo = escopo.temAlvo ? undefined : escopo.ponte || undefined;
 
   // ⚠️ O BALÃO DE ESPERA FOI DESLIGADO em 03/08/2026.
   //
