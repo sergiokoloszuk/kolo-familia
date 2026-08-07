@@ -9,6 +9,7 @@ import { getAnthropicClient, MODELS } from "./anthropic";
 import { buildContext } from "./context";
 import { buildContextBlock, VOZ_LIMITES_E_FRONTEIRA } from "./prompt";
 import { loadActiveSkills, routeSkillsAI } from "./router";
+import { blocoAntiRepeticao, recursosConcretos, PAPEL_DA_SECAO } from "./plano-recursos";
 import { respondAsOutputType } from "./engine";
 import { capitalizarNome } from "@/lib/nome";
 import { logEvent } from "@/lib/log";
@@ -23,6 +24,17 @@ export type PlanoSecao = { tipo: string; titulo: string; conteudo_markdown: stri
 
 /** Tipos de seção que a tela sabe renderizar/filtrar (ordem narrativa). */
 export const PLANO_TIPOS = [
+  // O ARCO (uma chamada só, no fim): objetivo → progressão → evitar →
+  // incentivar → avaliar → ajustar. São seis papéis que precisam nascer
+  // JUNTOS pra formar um caminho; seis chamadas independentes produziriam
+  // seis listas soltas — o mesmo defeito que fez metade dos planos repetir
+  // "almofada" em três seções.
+  "objetivo",
+  "progressao",
+  "evitar",
+  "incentivar",
+  "avaliar",
+  "ajustar",
   "entender",
   "crencas",
   "diferente",
@@ -58,16 +70,26 @@ const TIPO_PARA_OUTPUT: Record<string, string> = {
   frases: "frases_prontas",
 };
 // ordem narrativa do plano completo
+// A ordem em que a família LÊ. Objetivo abre (pra que serve isto), a
+// estratégia central vem logo depois do entendimento, e o arco de avaliação e
+// ajuste fecha — é o que transforma o PDF em intervenção com continuidade, em
+// vez de uma coleção de seções.
 const ORDEM_SECOES = [
+  "objetivo",
   "entender",
-  "crencas",
   "diferente",
+  "progressao",
   "rotina",
   "brincadeiras",
   "atividades",
   "historia_social",
   "frases",
+  "evitar",
+  "crencas",
+  "incentivar",
   "observar",
+  "avaliar",
+  "ajustar",
 ] as const;
 // só estas entram condicionalmente; o resto é SEMPRE
 const SECOES_CONDICIONAIS = new Set<string>(["rotina", "historia_social"]);
@@ -298,7 +320,12 @@ function textoDeResposta(content: Array<{ type: string }>): string {
 }
 
 // Seções práticas SEMPRE no plano (cada uma = o botão correspondente).
-const SECOES_SEMPRE = ["crencas", "diferente", "brincadeiras", "atividades", "frases"] as const;
+/** A ESTRATÉGIA CENTRAL. Fora do lote de propósito: é gerada ANTES e alimenta
+ *  todas as outras. Era opcional e faltava em 18% dos planos — justamente a
+ *  seção que define o caminho. */
+const SECAO_ESTRATEGIA = "diferente";
+/** As práticas que rodam depois dela, já sabendo o que ela disse. */
+const SECOES_SEMPRE = ["crencas", "brincadeiras", "atividades", "frases"] as const;
 // Estas só entram quando o tema pede (decidido por um classificador leve).
 const SECOES_CONDICIONAIS_MC = ["historia_social", "rotina"] as const;
 
@@ -326,7 +353,18 @@ const TENTATIVAS_POR_SECAO = 3;
  * É contagem, não lista fixa: exigir uma seção específica recusaria plano bom
  * (4 práticas ricas sem uma delas continua sendo um plano).
  */
-const MINIMO_PRATICAS = 3;
+/**
+ * O GUARD, e por que deixou de ser contagem.
+ *
+ * Era "3 de 5 práticas". Um plano passava sem `diferente` — sem o caminho —
+ * desde que tivesse três seções quaisquer. A auditoria achou isso em 18% dos
+ * planos reais: cheios de atividades, sem dizer o que mudar.
+ *
+ * Agora é substância. Sem estratégia central, progressão e critério de
+ * avaliação não existe intervenção: existe material.
+ */
+const SECOES_OBRIGATORIAS = ["diferente", "progressao", "avaliar"] as const;
+const MINIMO_PRATICAS = 2;
 
 /**
  * Plano gerado sem as práticas essenciais. Existe como tipo próprio pra quem
@@ -493,6 +531,113 @@ Responda APENAS JSON válido: {"entender":"...markdown...","observar":"...markdo
  * Lança PlanoIncompletoError quando as práticas não vêm: plano sem "o que
  * fazer" não é entregue nem gravado.
  */
+/**
+ * O ARCO — uma chamada, seis papéis, um caminho só.
+ *
+ * ⚠️ POR QUE UMA E NÃO SEIS. Objetivo, progressão, o que evitar, como
+ * incentivar, como avaliar e quando ajustar são a mesma linha vista de seis
+ * ângulos: o degrau de avanço tem que ser o mesmo que o critério de avaliação
+ * mede, e o que se evita tem que ser o oposto do que se incentiva. Geradas
+ * separadamente, sairiam seis listas que não se encaixam — e o plano passaria
+ * de 7-9 para 13-15 chamadas, dobrando custo e latência no canal onde a espera
+ * acabou de ser cortada de 14s pra 4s.
+ *
+ * Ela recebe o plano JÁ PRONTO. É a única chamada que enxerga tudo, e é por
+ * isso que ela consegue apontar o próximo degrau de verdade em vez de repetir
+ * a estratégia com outras palavras.
+ */
+async function gerarArcoDoPlano(params: {
+  supabase: SupabaseClient;
+  familyId: string;
+  membroAtipicoId: string | null;
+  desafio: string;
+  estrategiaCentral: string;
+  secoesProntas: readonly PlanoSecao[];
+}): Promise<PlanoSecao[]> {
+  const { supabase, familyId, membroAtipicoId, desafio, estrategiaCentral } = params;
+  const corpo = params.secoesProntas
+    .map((x) => `## ${x.titulo || x.tipo}\n${x.conteudo_markdown.slice(0, 1400)}`)
+    .join("\n\n");
+  try {
+    return await comRetentativa("arco", async () => {
+      const skills = await loadActiveSkills(supabase);
+      const roteadas =
+        skills.length > 0 ? await routeSkillsAI(desafio, skills, { maxSkills: 2 }) : [];
+      const ctx = await buildContext(supabase, {
+        familyId,
+        membroAtipicoId,
+        skills: roteadas.map((r) => r.skill),
+        conversaId: null,
+      });
+      const system = `Você é a Kolo.
+
+${VOZ_LIMITES_E_FRONTEIRA}
+
+# Tarefa
+Você recebe um plano JÁ ESCRITO e fecha o arco que falta. São SEIS partes, e elas têm que formar UM caminho: o degrau que a progressão propõe é o mesmo que a avaliação mede, e o que se evita é o oposto do que se incentiva.
+
+- objetivo: o que vai ficar mais fácil, mais funcional ou mais autônomo. FUNCIONAL e OBSERVÁVEL ("começar a lição sem alguém do lado"), nunca abstrato ("melhorar o foco"). Uma ou duas frases.
+- progressao: por onde começar e como avançar. O PRIMEIRO DEGRAU tem que ser pequeno o bastante pra acontecer esta semana. Diga como reduzir ajuda e como aumentar a exigência, nessa ordem.
+- evitar: o que costuma manter o problema de pé. Condutas concretas, ditas sem culpar quem cuida — quem faz isso está tentando ajudar.
+- incentivar: como sustentar tentativa e participação SEM criar dependência de elogio nem virar recompensa por obedecer.
+- avaliar: como saber que está funcionando, em sinais que dá pra ver em duas semanas. NUNCA "melhorou/não melhorou": precisa de menos ajuda, começa mais rápido, permanece mais tempo, aceita uma etapa nova, se recupera antes, consegue em outro contexto.
+- ajustar: o que fazer quando funcionou, quando funcionou em parte, quando não funcionou e quando ficou fácil demais. Um caminho pra cada, em uma linha.
+
+NÃO repita o que o plano já diz — você fecha, não resume. Nada de reapresentar as atividades ou as frases que já estão lá.
+Markdown curto em cada parte. Responda APENAS JSON válido:
+{"objetivo":"...","progressao":"...","evitar":"...","incentivar":"...","avaliar":"...","ajustar":"..."}`;
+      const client = getAnthropicClient();
+      const final = await client.messages.create({
+        model: MODELS.principal,
+        max_tokens: 2200,
+        system: [{ type: "text", text: system, cache_control: { type: "ephemeral" } }],
+        messages: [
+          {
+            role: "user",
+            content: `${buildContextBlock(ctx)}
+
+<desafio>
+${desafio}
+</desafio>
+
+<estrategia_central>
+${estrategiaCentral.slice(0, 1500)}
+</estrategia_central>
+
+<plano_ja_escrito>
+${corpo}
+</plano_ja_escrito>
+
+Só o JSON.`,
+          },
+        ],
+      });
+      const raw = textoDeResposta(final.content);
+      const m = raw.match(/\{[\s\S]*\}/);
+      if (!m) throw new Error("arco sem JSON");
+      const o = JSON.parse(m[0]) as Record<string, unknown>;
+      const rotulos: Record<string, string> = {
+        objetivo: "Objetivo",
+        progressao: "Como avançar",
+        evitar: "O que evitar",
+        incentivar: "Como incentivar",
+        avaliar: "Como saber se está funcionando",
+        ajustar: "Quando ajustar",
+      };
+      const out: PlanoSecao[] = [];
+      for (const [tipo, titulo] of Object.entries(rotulos)) {
+        const txt = typeof o[tipo] === "string" ? (o[tipo] as string).trim() : "";
+        if (txt) out.push({ tipo, titulo, conteudo_markdown: txt });
+      }
+      if (out.length === 0) throw new Error("arco veio vazio");
+      return out;
+    });
+  } catch (e) {
+    console.warn("[plano.arco]", e instanceof Error ? e.message : e);
+    return [];
+  }
+}
+
 export async function gerarSecoesPlanoMultiCall(params: {
   supabase: SupabaseClient;
   familyId: string;
@@ -519,32 +664,63 @@ export async function gerarSecoesPlanoMultiCall(params: {
   // Cada seção prática = o botão real. Em lotes de CONCORRENCIA_SECOES (não
   // todas de uma vez) e com retentativa — as práticas são o plano.
   const falhas: Array<{ tipo: string; motivo: string }> = [];
+
+  // ── 1. A ESTRATÉGIA CENTRAL, SOZINHA E PRIMEIRO ───────────────────────
+  // Ela define o caminho, então tudo depois dela precisa vê-la. Era só mais
+  // uma no lote, e faltava em 18% dos planos: saíam cheios de atividades sem
+  // dizer o que mudar.
+  const gerarSecao = async (tipo: string, extra: string): Promise<PlanoSecao | null> => {
+    const ot = otByKey.get(TIPO_PARA_OUTPUT[tipo]);
+    if (!ot) {
+      falhas.push({ tipo, motivo: "output_type ausente ou inativo" });
+      return null;
+    }
+    try {
+      return await comRetentativa(tipo, async () => {
+        const r = await respondAsOutputType({
+          supabase,
+          familyId,
+          membroAtipicoId,
+          outputType: { key: ot.key, label: ot.label, prompt_template: ot.prompt_template },
+          pedido: extra ? `${desafio}\n\n${extra}` : desafio,
+        });
+        const txt = (r.texto ?? "").trim();
+        if (!txt) throw new Error("seção veio vazia");
+        return { tipo, titulo: ot.label, conteudo_markdown: txt } as PlanoSecao;
+      });
+    } catch (e) {
+      const motivo = e instanceof Error ? e.message : String(e);
+      console.warn("[plano.multicall]", tipo, motivo);
+      falhas.push({ tipo, motivo: motivo.slice(0, 200) });
+      return null;
+    }
+  };
+
+  const estrategia = await gerarSecao(
+    SECAO_ESTRATEGIA,
+    blocoAntiRepeticao({ jaUsados: [], papel: PAPEL_DA_SECAO[SECAO_ESTRATEGIA] }),
+  );
+  const estrategiaTexto = estrategia?.conteudo_markdown ?? "";
+
+  // ── 2. AS DEMAIS, JÁ SABENDO O QUE EXISTE ─────────────────────────────
+  // `usados` acumula durante o lote: cada seção que termina publica os
+  // recursos concretos que gastou, e as que ainda não começaram já os evitam.
+  // Com concorrência 3 a ordem não é determinística — mas o pior caso é o
+  // comportamento antigo, e o caso comum é bem melhor.
+  const usados = new Set<string>(recursosConcretos(estrategiaTexto));
   const [secoesOutput, framing] = await Promise.all([
     mapComLimite(tiposPraGerar, CONCORRENCIA_SECOES, async (tipo) => {
-      const ot = otByKey.get(TIPO_PARA_OUTPUT[tipo]);
-      if (!ot) {
-        falhas.push({ tipo, motivo: "output_type ausente ou inativo" });
-        return null;
-      }
-      try {
-        return await comRetentativa(tipo, async () => {
-          const r = await respondAsOutputType({
-            supabase,
-            familyId,
-            membroAtipicoId,
-            outputType: { key: ot.key, label: ot.label, prompt_template: ot.prompt_template },
-            pedido: desafio,
-          });
-          const txt = (r.texto ?? "").trim();
-          if (!txt) throw new Error("seção veio vazia");
-          return { tipo, titulo: ot.label, conteudo_markdown: txt } as PlanoSecao;
-        });
-      } catch (e) {
-        const motivo = e instanceof Error ? e.message : String(e);
-        console.warn("[plano.multicall]", tipo, motivo);
-        falhas.push({ tipo, motivo: motivo.slice(0, 200) });
-        return null;
-      }
+      const secao = await gerarSecao(
+        tipo,
+        blocoAntiRepeticao({
+          estrategiaCentral: estrategiaTexto,
+          jaUsados: [...usados],
+          papel: PAPEL_DA_SECAO[tipo],
+        }),
+      );
+      // Publica o que gastou pra quem ainda não começou.
+      if (secao) for (const r of recursosConcretos(secao.conteudo_markdown)) usados.add(r);
+      return secao;
     }),
     gerarEntenderObservar({ supabase, familyId, membroAtipicoId, desafio }),
   ]);
@@ -559,14 +735,40 @@ export async function gerarSecoesPlanoMultiCall(params: {
     porTipo.set("observar", { tipo: "observar", titulo: "", conteudo_markdown: framing.observar });
   for (const s of secoesOutput) if (s) porTipo.set(s.tipo, s);
 
+  if (estrategia) porTipo.set(estrategia.tipo, estrategia);
+
+  // ── 3. O ARCO, vendo o plano inteiro ──────────────────────────────────
+  // Só roda se houve estratégia: fechar um caminho que não existe produziria
+  // objetivo e progressão sobre o nada.
+  if (estrategiaTexto) {
+    const arco = await gerarArcoDoPlano({
+      supabase,
+      familyId,
+      membroAtipicoId,
+      desafio,
+      estrategiaCentral: estrategiaTexto,
+      secoesProntas: [...porTipo.values()],
+    });
+    for (const a of arco) porTipo.set(a.tipo, a);
+    if (arco.length === 0) falhas.push({ tipo: "arco", motivo: "fechamento não veio" });
+  }
+
   const secoes = ORDEM_SECOES.map((t) => porTipo.get(t)).filter(
     (s): s is PlanoSecao => Boolean(s),
   );
 
-  // GUARD: plano sem "o que fazer" não é plano — é diagnóstico. Antes daqui,
-  // 18 de 60 planos saíam só com entender+observar e eram salvos assim mesmo.
+  // ── O GUARD, por SUBSTÂNCIA ───────────────────────────────────────────
+  // Era contagem ("3 de 5 práticas") e deixava passar plano sem `diferente` —
+  // sem o caminho. Agora: sem estratégia central, progressão e critério de
+  // avaliação não existe intervenção, existe material. As práticas continuam
+  // tendo um piso, mas ele deixou de ser o critério principal.
+  const tipos = new Set(secoes.map((s) => s.tipo));
+  const faltandoObrigatoria = SECOES_OBRIGATORIAS.filter((t) => !tipos.has(t));
   const praticas = secoes.filter((s) => (SECOES_SEMPRE as readonly string[]).includes(s.tipo));
-  const completo = praticas.length >= MINIMO_PRATICAS;
+  const completo = faltandoObrigatoria.length === 0 && praticas.length >= MINIMO_PRATICAS;
+  if (faltandoObrigatoria.length > 0) {
+    for (const t of faltandoObrigatoria) falhas.push({ tipo: t, motivo: "obrigatória e ausente" });
+  }
 
   if (falhas.length > 0 || !completo) {
     // severity warn+ persiste em eventos_app — antes isto era só console.warn,

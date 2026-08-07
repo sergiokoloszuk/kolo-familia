@@ -76,14 +76,21 @@ export default async function EstrategiasPage({
       <VideoAjuda area="estrategias" />
 
       {/* Dicas pra perto de onde importam (saíram do cabeçalho): o que incluir
-          + o plano de fim de semana, numa linha discreta acima do campo. */}
+          + o fim de semana organizado, numa linha discreta acima do campo.
+          ⚠️ NÃO chamar de "plano": Plano Kolo virou um contrato específico
+          (objetivo, estratégia central, progressão, avaliação, quando ajustar).
+          O fim de semana é outra entrega — organiza dois dias, não constrói uma
+          habilidade — e o mesmo nome pra duas coisas foi metade da variação de
+          profundidade que a auditoria mediu. A oferta no WhatsApp já dizia
+          "roteiro leve", e o título gerado já é "Fim de semana leve — Nome";
+          esta linha era o último lugar que dizia "plano". */}
       <div className="flex flex-col gap-3">
         <p className="max-w-2xl text-sm leading-relaxed text-muted-foreground">
           <span className="font-medium text-foreground">Ajuda incluir:</span> o que acontece e
           quando, como {nomesFmt} {reageVerbo} e o que parece disparar, e o que você já tentou.
-          Também monto{" "}
-          <span className="font-medium text-foreground">plano de fim de semana ou férias</span> — é
-          só contar a programação.
+          Também organizo o{" "}
+          <span className="font-medium text-foreground">fim de semana ou as férias</span> — é só
+          contar a programação.
         </p>
         <ConversarForm
           membros={membros ?? []}
