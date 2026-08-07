@@ -5,6 +5,7 @@ import {
   pedeArtefatoImprimivel,
   alvoDoPedido,
   pedeReenvio,
+  apontaProRecente,
   RESPOSTA_PDF,
 } from "./rotina-pdf-rota";
 
@@ -183,5 +184,54 @@ describe("o PDF simples reusa o gerador que já existia", () => {
       .filter((l) => !l.trim().startsWith("//"))
       .join("\n");
     expect(codigo).not.toMatch(/cards_status/);
+  });
+});
+
+// ============================================================
+// A CONVERSA GANHA DO BANCO — a regressão da Manu (07/08/2026)
+// ============================================================
+
+describe("referente recente: a rota sai da frente", () => {
+  const SEQUENCIA = `Para a Manu, eu deixaria o dia em uma sequência curta:
+1. Sair com a amiga
+2. Ir ao mercado
+3. Ir para a casa da avó
+4. Conhecer a avó
+5. Brincar ou descansar
+6. Voltar para casa`;
+
+  it("A. o pedido REAL que causou o bug aponta pro recente", () => {
+    expect(
+      apontaProRecente(
+        "Mas queria uns cartões visuais para eu mostrar o que vai acontecer e em que ordem",
+        SEQUENCIA,
+      ),
+    ).toBe(true);
+  });
+
+  it("B. 'quero um novo pois será para amanhã. O que te contei'", () => {
+    expect(apontaProRecente("Quero um novo pois sera para amanha. O que te contei", null)).toBe(
+      true,
+    );
+  });
+
+  it("C. demonstrativo basta, mesmo sem sequência anterior", () => {
+    for (const t of ["quero cartões disso", "quero imprimir essa", "faz o pdf disso"])
+      expect(apontaProRecente(t, null)).toBe(true);
+  });
+
+  it("D. sem referente recente, a rota determinística continua valendo", () => {
+    // É o caso pra que ela foi feita: "quero o pdf" seco, com rotinas salvas.
+    expect(apontaProRecente("Quero o pdf", null)).toBe(false);
+    expect(apontaProRecente("manda pra imprimir", "Bom dia! Como foi a noite?")).toBe(false);
+  });
+
+  it("E. sequência numerada curta demais não conta como referente", () => {
+    expect(apontaProRecente("quero o pdf", "1. banho\n2. jantar")).toBe(false);
+  });
+
+  it("o gate do orquestrador respeita o referente recente", () => {
+    expect(ORCH).toMatch(/!apontaRecente &&\s*\n?\s*pedeArtefatoImprimivel/);
+    expect(ORCH).toMatch(/const apontaRecente = apontaProRecente\(/);
   });
 });
