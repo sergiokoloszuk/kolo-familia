@@ -419,7 +419,7 @@ TEMA dos cartões é OPCIONAL e NUNCA atrasa a entrega: se você conhece um inte
 
 ## Formato dos dados
 rotinas: [{"nome":"Dia com a vovó","dia_semana":null,"tarefas":[{"texto":"acordar","hora":null}]}]
-dia_semana: 0=Seg..6=Dom, ou null pra dia avulso/nomeado. "hora" é opcional (null quando não houver base).
+dia_semana: 0=Seg..6=Dom, ou null pra dia avulso/nomeado. ⚠️ O "nome" DIZ O QUE ACONTECE NAQUELE DIA, não a data: "Passeio com a amiga", "Dia na casa da avó", "Manhã de escola" — nunca "Amanhã" ou "Sábado" sozinhos, que não dizem nada quando a mãe abre a lista três dias depois. "hora" é opcional (null quando não houver base).
 transicoes: [{"momento":"banho","estrategia":"música depois","funcionou":null,"merece_plano":false}] — o que você descobriu sobre momentos difíceis fica no perfil e você reusa. Marque "funcionou" quando ela disser que deu certo ou não. Se o momento for algo que a rotina sozinha NÃO resolve (ansiedade de separação, crise intensa, recusa alimentar séria), diga isso em uma frase e marque "merece_plano":true.
 
 ## Quando "montar": o sistema anexa o link, e cuida sozinho de cartões e PDF
@@ -775,7 +775,11 @@ Exemplo do formato (não copie o conteúdo): "Eu não faria uma rotina do dia in
       // o "proponha proativamente", e o resultado em produção foi cartão sem
       // tema — ou, pior, cartão nenhum, já que o disparo dependia dele.
       visual
-        ? `OS CARTÕES ILUSTRADOS VÃO SAIR nesta rotina. PROPONHA O TEMA na mesma mensagem em que entrega, sem segurar nada e sem pedir confirmação: puxe do que ele ama${interesses ? ` (você já sabe: ${interesses})` : ""} e escreva no campo "tema". Se você não conhece nenhum interesse, ofereça uma ou duas ideias na fala ("quer no tema de dinossauros ou de carrinhos?") e deixe "tema" null — a mãe responde e o sistema aplica. O tema é o que faz os cartões terem a cara dele; entregar sem propor é entregar menos.`
+        ? `OS CARTÕES ILUSTRADOS VÃO SAIR nesta rotina.${
+            interesses
+              ? ` VOCÊ JÁ SABE do que ${nome} gosta: ${interesses}. ESCOLHA UM e escreva no campo "tema" — não pergunte, não peça confirmação, não escreva "quer?". Na fala, diga que já fez ("fiz no tema de princesas, que ela ama") — se ela preferir outro, muda depois em um toque. ⚠️ Tema nulo = NENHUM cartão é gerado, e a mãe recebe cards em branco. Conhecendo o interesse, deixar nulo é entregar quebrado.`
+              : ` Você não conhece um interesse dele. Ofereça DUAS ideias na fala ("quer no tema de dinossauros ou de carrinhos?") e deixe "tema" null — a mãe responde e o sistema aplica.`
+          }`
         : "",
       deveMontar
         ? `JÁ DÁ PRA MONTAR — a criança, o pedaço do dia e a sequência já estão na mesa. acao="montar", obrigatoriamente. NÃO faça mais nenhuma pergunta neste turno: horário, ponto difícil, tema e transição enriquecem, mas NÃO seguram a entrega. O que faltar, ela ajusta depois em cima do que já existe.`
