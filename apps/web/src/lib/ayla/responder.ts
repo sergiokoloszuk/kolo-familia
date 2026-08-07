@@ -153,7 +153,8 @@ export type RespostaParams = {
   repertorio?: string;
   /** Títulos das últimas conversas nas Estratégias (in-app), pra continuidade. */
   estrategiasRecentes?: string[];
-  historico: Array<{ de: "mae" | "ayla"; texto: string }>;
+  /** `sobre` = nome de OUTRA criança da família, quando o turno não é do membro em foco. */
+  historico: Array<{ de: "mae" | "ayla"; texto: string; sobre?: string }>;
   mensagem: string;
   /** URL de uma FOTO que a pessoa mandou — a Ayla LÊ a imagem (lição, rótulo, agenda…). */
   imagemUrl?: string | null;
@@ -449,10 +450,23 @@ ${params.diagnosticoRegistrado.trim()}`);
     );
   }
   if (params.historico.length > 0) {
+    // `sobre` só vem quando o turno é de OUTRA criança da mesma família.
+    const temOutroMembro = params.historico.some((h) => h.sobre);
     const hist = params.historico
-      .map((h) => `${h.de === "mae" ? params.nomeMae : "Ayla"}: ${h.texto}`)
+      .map((h) => {
+        const quem = h.de === "mae" ? params.nomeMae : "Ayla";
+        return h.sobre ? `${quem} (sobre ${h.sobre}): ${h.texto}` : `${quem}: ${h.texto}`;
+      })
       .join("\n");
-    linhas.push(`\n<conversa_recente>\n${hist}\n</conversa_recente>`);
+    linhas.push(
+      `\n<conversa_recente>\n${hist}\n</conversa_recente>` +
+        // ⚠️ A REGRA QUE FALTAVA. Sem ela, a Ayla disse a uma mãe que a Manu
+        // "já mostrou que se concentra melhor com as mãos ocupadas" — o que
+        // quem tinha mostrado era o irmão, o Mario.
+        (temOutroMembro
+          ? `\n(⚠️ As linhas marcadas "(sobre NOME)" são de OUTRA criança desta família. O que foi observado nela NÃO é fato sobre ${params.nomeMembro ?? "a criança de agora"} — não transfira característica, preferência nem estratégia de um irmão para o outro. Se precisar, pergunte.)`
+          : ""),
+    );
   }
   linhas.push(`\n<mensagem_de_agora>\n${params.mensagem}\n</mensagem_de_agora>`);
 

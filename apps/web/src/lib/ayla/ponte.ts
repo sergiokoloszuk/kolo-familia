@@ -6,6 +6,7 @@ import { enviarDocumento } from "./whatsappSender";
 import { logEvent, logServerError } from "@/lib/log";
 import { criarLinkAcesso } from "@/lib/auth/acesso-link";
 import { avaliarProntidaoParaPlano } from "./prontidao-plano";
+import { semOutrosMembros } from "./membro-escopo";
 
 /**
  * Num pedido de plano EXPLÍCITO ("me traz um plano"), o desafio de verdade está
@@ -17,6 +18,7 @@ async function desafioDaConversa(
   supabase: SupabaseClient,
   familyId: string,
   mensagemAtual: string,
+  membroAtipicoId: string | null,
 ): Promise<string> {
   try {
     // JANELA. Antes eram as 10 últimas mensagens, sem recorte de tempo nenhum —
@@ -27,12 +29,20 @@ async function desafioDaConversa(
     const desde = new Date(Date.now() - 45 * 60 * 1000).toISOString();
     const { data } = await supabase
       .from("ayla_messages")
-      .select("direcao, texto, created_at")
+      .select("direcao, texto, created_at, membro_atipico_id")
       .eq("family_account_id", familyId)
       .gte("created_at", desde)
       .order("created_at", { ascending: false })
       .limit(10);
-    const linhas = ((data ?? []) as Array<{ direcao: string; texto: string | null }>)
+    // ⚠️ IDENTIDADE, NÃO SÓ TEMPO. A janela de 45 min foi posta pra impedir que
+    // um assunto de 9h antes virasse o plano — mas tempo não diz DE QUEM é a
+    // informação. Numa família com dois filhos, a conversa sobre o irmão estava
+    // dentro da janela e entrava no desafio: o plano saía com o nome de uma
+    // criança e o conteúdo da outra, em PDF, entregue. Ver `membro-escopo.ts`.
+    const linhas = semOutrosMembros(
+      (data ?? []) as Array<{ direcao: string; texto: string | null; membro_atipico_id?: string | null }>,
+      membroAtipicoId,
+    )
       .reverse()
       .map((m) => {
         const t = m.texto?.trim();
@@ -317,8 +327,8 @@ export async function montarPonteWhatsApp(
     // No caminho automático o tema vem do gate (o desafio que a conversa
     // construiu), então o plano nasce focado nele — e não na última frase solta.
     const desafioReal = forcar
-      ? await desafioDaConversa(supabase, familyId, mensagem)
-      : `${await desafioDaConversa(supabase, familyId, mensagem)}\n\n<foco_do_plano>\n${temaAuto}\n</foco_do_plano>\nO plano deve ser EXCLUSIVAMENTE sobre esse foco.`;
+      ? await desafioDaConversa(supabase, familyId, mensagem, membroAtipicoId)
+      : `${await desafioDaConversa(supabase, familyId, mensagem, membroAtipicoId)}\n\n<foco_do_plano>\n${temaAuto}\n</foco_do_plano>\nO plano deve ser EXCLUSIVAMENTE sobre esse foco.`;
     console.log(`[ayla:ponte] gerando plano (forcar=${Boolean(forcar)}) membro=${membroAtipicoId ?? "null"}`);
     const plano = await gerarPlano({
       supabase,

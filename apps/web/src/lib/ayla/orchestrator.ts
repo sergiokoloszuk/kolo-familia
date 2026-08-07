@@ -58,6 +58,7 @@ import { classificarIntencao } from "./intent";
 import { carregarCatalogoSkills } from "./catalogo-skills";
 import { recuperarBoasPraticas, blocoBoasPraticas } from "@/lib/conhecimento/recuperar";
 import { dividirEmBolhas, ritmoDasBolhas, TETO_ESPERA_SEGUNDOS } from "./bolhas";
+import { semOutrosMembros } from "./membro-escopo";
 import { resolverMembroAlvo } from "./membro-alvo";
 import {
   segurancaAberta,
@@ -1929,6 +1930,10 @@ export async function processInbound(
   // Histórico da conversa PRO PARSER: respostas curtas ("letra f", "adora dançar")
   // só viram fato se ele entender o contexto. Sem isso o perfil não aprende numa
   // conversa de verdade (só no fluxo "pergunta do dia → 1 resposta").
+  // Sem recorte de membro, DE PROPÓSITO: é este parser que descobre de quem a
+  // mensagem fala (`parsed.membro_atipico_id` alimenta a resolução lá embaixo).
+  // Filtrar aqui seria circular — precisaríamos do membro pra achar o membro.
+  // O recorte acontece onde o dano é permanente: na ESCRITA do Kolo Vivo.
   const historicoParser = await carregarHistorico(supabase, family.id, inbound.texto);
 
   const parsed = await parseInbound(
@@ -2024,6 +2029,19 @@ export async function processInbound(
     ultimoMembroId ??
     (ctx.membros.length === 1 ? ctx.membros[0].id : null);
 
+  // DE QUEM É CADA FALA. O inbound é gravado antes de sabermos o membro (a
+  // trava de idempotência precisa vir primeiro), então a atribuição acontece
+  // aqui, assim que ele é resolvido. Sem isto o histórico volta sem dono e
+  // observação de um irmão vira fato sobre o outro — o caso Mario→Manu.
+  const nomePorMembro = new Map(ctx.membros.map((m) => [m.id, m.nome]));
+  if (membroContextoId && inbound.messageId) {
+    await supabase
+      .from("ayla_messages")
+      .update({ membro_atipico_id: membroContextoId })
+      .eq("zaap_message_id", inbound.messageId)
+      .then(undefined, () => {});
+  }
+
   const membroFoco = membroContextoId
     ? (ctx.membros.find((m) => m.id === membroContextoId) ?? null)
     : null;
@@ -2053,8 +2071,8 @@ export async function processInbound(
   ] = await Promise.all([
     carregarKoloVivoResumo(supabase, membroContextoId),
     carregarLacunasKoloVivo(supabase, membroContextoId),
-    carregarEstrategiasRecentes(supabase, family.id),
-    carregarHistorico(supabase, family.id, inbound.texto),
+    carregarEstrategiasRecentes(supabase, family.id, membroContextoId),
+    carregarHistorico(supabase, family.id, inbound.texto, membroContextoId, nomePorMembro),
     ofereceLudico ? gerarMagicLink(supabase, { familyId: family.id, next: "/historias/criar" }) : Promise.resolve(null),
     ofereceLudico
       ? gerarMagicLink(supabase, { familyId: family.id, next: "/ludico/rotinas/semana" })
@@ -2141,7 +2159,14 @@ export async function processInbound(
   // Linha do tempo (Livro Vivo): registra eventos importantes mencionados
   // (troca de professora, mudança, medicação, terapia…). Best-effort, só com
   // gatilho — a resposta já foi enviada acima.
-  await extrairESalvarEventos(supabase, family.id, membroContextoId, inbound.texto, historicoParser);
+  // ⚠️ RECORTE POR MEMBRO ANTES DE ESCREVER. Daqui sai evento no Kolo Vivo, e
+  // evento fica: "se concentra melhor com as mãos ocupadas" era do Mario e
+  // virou fato da Manu (07/08/2026). Sai o que se SABE ser de outro filho;
+  // turno sem dono continua entrando, senão a família perderia todo o acervo
+  // anterior a esta correção (o inbound nunca gravava membro). Ver
+  // `membro-escopo.ts` — a decisão de não confiar em janela de tempo.
+  const historicoDoMembro = semOutrosMembros(historicoParser, membroContextoId);
+  await extrairESalvarEventos(supabase, family.id, membroContextoId, inbound.texto, historicoDoMembro);
 
   return { tratada: true, familia: family.id, resposta: resp };
 }
@@ -3302,14 +3327,32 @@ async function carregarKoloVivoResumo(
  * Últimas perguntas que a mãe fez nas Estratégias (in-app), pra a Ayla
  * mostrar que acompanha os dois canais — não só o WhatsApp.
  */
+/**
+ * Os últimos títulos de Estratégia — servem pra Ayla não repetir o que já
+ * entregou.
+ *
+ * ⚠️ É dado de UMA criança, não da família: uma Estratégia é gerada para um
+ * membro, e `conversas.membro_atipico_id` guarda qual. Sem o recorte, a Ayla
+ * evitava repetir pra Manu um plano que tinha dado pro Mario — e o título do
+ * irmão entrava no prompt como se fosse coisa dela.
+ *
+ * O recorte vai na CONSULTA, não depois: com `.limit(3)` antes do filtro, três
+ * planos recentes do irmão apagariam as Estratégias da criança da vez.
+ * Registro antigo sem membro continua entrando — ver `membro-escopo.ts`.
+ */
 async function carregarEstrategiasRecentes(
   supabase: SupabaseClient,
   familyId: string,
+  membroAtipicoId?: string | null,
 ): Promise<string[]> {
-  const { data } = await supabase
+  let q = supabase
     .from("conversas")
     .select("titulo, created_at")
-    .eq("family_account_id", familyId)
+    .eq("family_account_id", familyId);
+  if (membroAtipicoId) {
+    q = q.or(`membro_atipico_id.eq.${membroAtipicoId},membro_atipico_id.is.null`);
+  }
+  const { data } = await q
     .order("created_at", { ascending: false })
     .limit(3);
   return (data ?? [])
@@ -3386,24 +3429,55 @@ async function carregarDesafiosOnboarding(
   }
 }
 
+/**
+ * O HISTÓRICO, COM DE QUEM É CADA FALA.
+ *
+ * ⚠️ POR QUE `sobre` EXISTE (07/08/2026, conversa real): a mãe contou que o
+ * MARIO presta mais atenção com algo nas mãos, depois escreveu "A Manu começa a
+ * lição mas 5 min depois já quer fazer outra coisa" — e a Ayla respondeu sobre
+ * a Manu dizendo "como ela já mostrou que se concentra melhor quando as mãos
+ * estão ocupadas".
+ *
+ * A causa não era o modelo. Esta função selecionava `direcao, texto` e mais
+ * nada: o histórico chegava como um fluxo único, sem dizer de qual filho era
+ * cada frase, com `nomeMembro` = Manu no prompt. Tudo que a mãe tinha dito
+ * virava, para o modelo, informação sobre a criança da vez.
+ *
+ * A coluna `membro_atipico_id` já existia em `ayla_messages`. Só não era lida.
+ */
 async function carregarHistorico(
   supabase: SupabaseClient,
   familyId: string,
   mensagemAtual: string,
-): Promise<Array<{ de: "mae" | "ayla"; texto: string }>> {
+  membroFocoId?: string | null,
+  nomePorMembro?: Map<string, string>,
+  // `membro_atipico_id` volta em cada turno pra que quem ESCREVE fato possa
+  // recortar depois, com o membro já resolvido — ver `extrairESalvarEventos`.
+): Promise<
+  Array<{ de: "mae" | "ayla"; texto: string; sobre?: string; membro_atipico_id: string | null }>
+> {
   const { data } = await supabase
     .from("ayla_messages")
-    .select("direcao, texto, created_at")
+    .select("direcao, texto, created_at, membro_atipico_id")
     .eq("family_account_id", familyId)
     .order("created_at", { ascending: false })
     .limit(9);
   const turnos = (data ?? [])
     .reverse()
     .filter((m) => typeof m.texto === "string" && m.texto.trim())
-    .map((m) => ({
-      de: (m.direcao === "inbound" ? "mae" : "ayla") as "mae" | "ayla",
-      texto: m.texto as string,
-    }));
+    .map((m) => {
+      const id = (m as { membro_atipico_id?: string | null }).membro_atipico_id ?? null;
+      // Só marca quando o turno é sobre OUTRA criança. Marcar o membro da vez
+      // em toda linha viraria ruído e ensinaria o modelo a repetir o nome.
+      const sobre =
+        id && membroFocoId && id !== membroFocoId ? nomePorMembro?.get(id) : undefined;
+      return {
+        de: (m.direcao === "inbound" ? "mae" : "ayla") as "mae" | "ayla",
+        texto: m.texto as string,
+        membro_atipico_id: id,
+        ...(sobre ? { sobre } : {}),
+      };
+    });
   // Remove a própria mensagem recém-inserida do fim, pra não duplicar.
   if (turnos.length > 0) {
     const ultimo = turnos[turnos.length - 1];
