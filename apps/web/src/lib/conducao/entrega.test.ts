@@ -237,18 +237,18 @@ describe("formas de entrega", () => {
   const web = formasDeEntrega({ canal: "web", tema: "nutricional" });
 
   it("pede de 2 a 4 blocos — não 6 obrigatórios", () => {
-    expect(wa).toMatch(/de 2 a 4 blocos curtos/);
+    expect(wa).toMatch(/QUANTOS BLOCOS: os que o caso pedir/);
     expect(wa).toMatch(/nunca use todos/);
   });
 
   it("NÃO reabre a resposta multi-frente que fechamos em 01/08", () => {
     // Este é o risco número um da camada inteira.
     expect(wa).toMatch(/FORMAS DIFERENTES DE AJUDAR NA MESMA FRENTE/);
-    expect(wa).toMatch(/NÃO autorizam abrir duas dificuldades no mesmo turno/);
+    expect(wa).toMatch(/escolha UM e entregue bem/);
   });
 
   it("um tipo de ajuda só = texto corrido, sem título nenhum", () => {
-    expect(wa).toMatch(/escreva em texto corrido e não use título nenhum/);
+    expect(wa).toMatch(/Nenhum dos dois tamanhos é o padrão/);
   });
 
   it("negrito certo em cada canal", () => {
@@ -262,7 +262,7 @@ describe("formas de entrega", () => {
   });
 
   it("segura o emoji", () => {
-    expect(wa).toMatch(/No máximo um emoji por resposta/);
+    expect(wa).toMatch(/Emoji marca mudança de tipo/);
   });
 
   it("o tema ativo prioriza o perfil sem travar o assunto", () => {
@@ -271,7 +271,20 @@ describe("formas de entrega", () => {
   });
 
   it("cabe no teto de ~1.000 caracteres — senão virou um segundo prompt", () => {
-    expect(wa.length).toBeLessThan(1600);
+    // 07/08/2026 — sobe pra 2.400 por QUATRO entradas, e nada além delas. Todas
+    // vieram da mesma constatação: a Ayla achava um bom caminho, explicava em
+    // duas linhas e encerrava.
+    //   quantos blocos (~330) — o teto era FIXO ("2 a 4 blocos de duas ou três
+    //     linhas") e valia igual pra "não quer tomar banho" e pra "recusa
+    //     educação física há meses". Era ele que produzia a secura.
+    //   atividade tem nome (~230) — "faça brincadeiras motoras" não vira nada;
+    //     "Missão dos cones" a família repete e depois diz que funcionou.
+    //   próximo degrau (~150) — transforma sugestão solta em caminho.
+    //   acolhimento ancorado (~180) — o corte da bajulação levou junto a
+    //     ligação com o que a mãe contou.
+    // Os exemplos concretos NÃO foram cortados de propósito: sem eles a regra
+    // vira exortação, e exortação foi o que não segurou na VOZ 7.
+    expect(wa.length).toBeLessThan(2400);
   });
 });
 

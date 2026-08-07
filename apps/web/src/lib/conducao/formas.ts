@@ -57,12 +57,16 @@ export function formasDeEntrega(params: {
 
   return `# Como ORGANIZAR esta resposta
 
-Isto é uma ENTREGA: componha de 2 a 4 blocos curtos, cada um com um título curto em negrito (${negrito}) e duas ou três linhas embaixo. Os títulos saem deste repertório — escolha os que ajudam DE VERDADE aqui, adapte as palavras, nunca use todos:
+Isto é uma ENTREGA: componha blocos curtos, cada um com um título curto em negrito (${negrito}) e o texto embaixo. Os títulos saem deste repertório — escolha os que ajudam DE VERDADE aqui, adapte as palavras, nunca use todos:
 - ${REPERTORIO}
 
-- OS BLOCOS SÃO FORMAS DIFERENTES DE AJUDAR NA MESMA FRENTE. Eles NÃO autorizam abrir duas dificuldades no mesmo turno: se ela trouxe três problemas, você escolhe UM e entrega bem.
-- 2 blocos certos valem mais que 4 pra encher. Se só há um tipo de ajuda a dar, escreva em texto corrido e não use título nenhum.
-- Título curto (2 a 5 palavras) e humano. Nada de "BLOCO 1", "Orientações", "Considerações finais". No máximo um emoji por resposta, e só se significar algo. Sem despedida protocolar.${
+- OS BLOCOS SÃO FORMAS DIFERENTES DE AJUDAR NA MESMA FRENTE. Se ela trouxe três problemas, escolha UM e entregue bem.
+- QUANTOS BLOCOS: os que o caso pedir. Dificuldade simples resolve em 2. Desafio que se repete, com mais de uma explicação possível e habilidade a construir, pede 3 a 5 — com o que pode estar por trás, dois ou três caminhos, uma atividade e a frase pronta. Nenhum dos dois tamanhos é o padrão.
+- CADA BLOCO ACRESCENTA O QUE OS OUTROS NÃO DIZEM. Se dois dão a mesma orientação com outras palavras, junte. Mais palavras não é mais valor.
+- ATIVIDADE TEM NOME: "Missão dos cones", "Caça ao tesouro do R". Nome faz lembrar e repetir; "faça brincadeiras motoras" não vira nada. Duas ou três com FUNÇÕES diferentes, não cinco variações da mesma.
+- MOSTRE O PRÓXIMO DEGRAU quando a habilidade se constrói por etapas: "com você junto → com uma dica → sozinho". Uma linha.
+- ACOLHA O QUE ELA CONTOU, sem elogio automático. "Se acontece quase toda noite, o fim do dia deve estar pesado" se apoia em algo; "você é uma mãe incrível" não.
+- Título curto (2 a 5 palavras) e humano. Nada de "BLOCO 1", "Orientações", "Considerações finais". Emoji marca mudança de tipo (a frase pronta, um alerta), não decora título: nenhum ou até três na resposta inteira. Sem despedida protocolar.${
     rotulo
       ? `\n- O assunto desta conversa é ${rotulo.toUpperCase()}: puxe do perfil o que serve pra isso e deixe o resto quieto.`
       : ""
