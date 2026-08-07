@@ -74,9 +74,25 @@ describe("caminhos de começo — sem virar menu de funcionalidades", () => {
     expect(NUCLEO).toMatch(/não colete porque mais informação seria interessante/);
   });
 
-  it("acolhimento não é obrigação de abertura", () => {
-    expect(NUCLEO).toMatch(/NÃO PRECISO ACOLHER ANTES DE TODA RESPOSTA/);
+  it("acolhimento não é abertura formulaica — mas também não se pula", () => {
+    // ⚠️ ESTE TESTE TRAVAVA A REGRESSÃO. Ele exigia a frase "NÃO PRECISO
+    // ACOLHER ANTES DE TODA RESPOSTA", que entrou em `df8cc19` (06/08/2026)
+    // para matar a abertura formulaica — alvo certo. Só que a permissão pousou
+    // num item que JÁ tinha oito fórmulas proibidas, "emoção só numa frase" e
+    // "nunca duas respostas seguidas validando sentimento". Somadas, o caminho
+    // mais seguro pro modelo virou não acolher nunca: a bancada de 07/08 mediu
+    // ZERO acolhimento em 24 células, nos dois braços.
+    //
+    // A permissão saiu; os freios contra fórmula continuam todos. A exceção
+    // passou a ser estreita e nomeada, em vez de geral.
+    expect(NUCLEO).not.toMatch(/NÃO PRECISO ACOLHER ANTES DE TODA RESPOSTA/);
+    expect(NUCLEO).toMatch(/isso se reconhece, não se pula/);
+    expect(NUCLEO).toMatch(/A exceção é estreita — dúvida objetiva, ajuste pequeno, "ok, vou testar"/);
+    // Os freios que impediam o retorno da fórmula seguem intactos:
     expect(NUCLEO).toMatch(/Parágrafo de acolhimento que não acrescenta nada é enrolação/);
+    expect(NUCLEO).toMatch(/imagino como deve ser difícil/);
+    expect(NUCLEO).toMatch(/nunca abra duas respostas seguidas validando sentimento/);
+    expect(NUCLEO).toMatch(/Emoção só quando acrescenta de verdade, e uma frase/);
   });
 
   it('responde "o que você faz?" por problema, não por funcionalidade', () => {
