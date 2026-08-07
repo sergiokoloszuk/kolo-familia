@@ -1,5 +1,5 @@
 -- ============================================================
--- Kolo Família — Migração 0071
+-- Kolo Família — Migração 0075
 --   A rotina passa a ter RESULTADO, como o plano já tem.
 --
 -- POR QUE, e por que não deu pra evitar:
@@ -30,6 +30,12 @@
 --     drop column if exists resultado_nota,
 --     drop column if exists resultado_em,
 --     drop column if exists seguimento_enviado_em;
+--
+-- NUMERAÇÃO: nasceu como 0071 e virou 0075. Os números 0071-0074 já estão
+--   reivindicados por branches que ainda não entraram na main (0071/0072 =
+--   BIA, 0073/0074 = Memória Viva) e nenhum deles foi aplicado em produção.
+--   Pegar 0071 criaria duas migrações com o mesmo número dependendo da ordem
+--   de merge. 0075 fica acima de todas e é seguro em qualquer ordem.
 -- ============================================================
 
 alter table public.rotinas
@@ -48,5 +54,5 @@ create index if not exists rotinas_seguimento_idx
 notify pgrst, 'reload schema';
 
 -- ============================================================
--- FIM da migração 0071.
+-- FIM da migração 0075.
 -- ============================================================

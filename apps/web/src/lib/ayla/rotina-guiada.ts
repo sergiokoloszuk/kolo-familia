@@ -16,6 +16,12 @@ import {
 } from "@/lib/ludico/rotina-ia-core";
 import { rotinaParaPdf } from "@/lib/ludico/rotina-pdf";
 import { enviarDocumento } from "./whatsappSender";
+import {
+  classificarFeedbackRotina,
+  falaDoQuadro,
+  instrucaoDeAjuste,
+  type FeedbackRotina,
+} from "./rotina-feedback";
 
 /**
  * Fluxo GUIADO de ROTINA (reativo): quando a pessoa pede uma rotina/planejamento
@@ -1265,9 +1271,60 @@ function sanitizarTarefasSimples(bruto: unknown): TarefaProposta[] {
  * as tarefas atuais, aplica a mudança (IA) e regrava. Se tinha cartões no tema,
  * regenera. Devolve confirmação + link.
  */
+/**
+ * A mensagem é FEEDBACK sobre uma rotina que já existe?
+ *
+ * ⚠️ A ÂNCORA É O PONTO. "Não funcionou" é das frases mais ambíguas do
+ * produto: pode ser sobre a rotina, um plano, um remédio, a escola. Tirar
+ * cartão por palavra-chave solta custa à família o quadro que ela montou.
+ *
+ * Então exige DUAS coisas, não uma: uma leitura confiável do que ela disse E
+ * que a fala toque no quadro daquele membro — pelo nome (rotina, cartões,
+ * sequência) ou por uma etapa que está lá dentro. Sem as duas, devolve null e
+ * a mensagem segue como conversa normal.
+ */
+export async function lerFeedbackDaRotina(
+  supabase: SupabaseClient,
+  params: { familyId: string; membroAtipicoId: string; texto: string },
+): Promise<FeedbackRotina | null> {
+  const feedback = classificarFeedbackRotina(params.texto);
+  if (!feedback) return null;
+  try {
+    const { data: rot } = await supabase
+      .from("rotinas")
+      .select("id")
+      .eq("family_account_id", params.familyId)
+      .eq("membro_atipico_id", params.membroAtipicoId)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (!rot) return null;
+    const { data: tarefas } = await supabase
+      .from("rotina_tarefas")
+      .select("texto")
+      .eq("rotina_id", (rot as { id: string }).id);
+    const etapas = ((tarefas ?? []) as Array<{ texto: string }>).map((t) => t.texto);
+    return falaDoQuadro(params.texto, etapas) ? feedback : null;
+  } catch {
+    return null;
+  }
+}
+
 export async function editarRotina(
   supabase: SupabaseClient,
-  params: { familyId: string; membroAtipicoId: string; texto: string; timezone?: string | null; phoneE164?: string | null },
+  params: {
+    familyId: string;
+    membroAtipicoId: string;
+    texto: string;
+    timezone?: string | null;
+    phoneE164?: string | null;
+    /**
+     * Quando a mensagem foi FEEDBACK ("já faz sozinho", "não funcionou até o
+     * jantar") e não pedido de edição. Muda a instrução do editor e registra o
+     * resultado na rotina — ver `rotina-feedback.ts`.
+     */
+    feedback?: FeedbackRotina | null;
+  },
 ): Promise<string | null> {
   try {
     const dia = resolverDia(params.texto, params.timezone);
@@ -1308,11 +1365,32 @@ export async function editarRotina(
     const linhas = (tarefas ?? []) as unknown as TarefaLinha[];
     const atuais = linhas.map((t) => ({ texto: t.texto, hora: t.hora ?? null }));
 
+    // FEEDBACK É RESULTADO, mesmo que a edição não saia. Grava antes: é isto
+    // que tira a rotina da fila do follow-up e evita a mãe receber "você
+    // chegou a testar?" no dia seguinte a ter contado que funcionou.
+    if (params.feedback) {
+      await supabase
+        .from("rotinas")
+        .update({
+          resultado: params.feedback.resultado,
+          resultado_nota: params.texto.slice(0, 500),
+          resultado_em: new Date().toISOString(),
+        })
+        .eq("id", rotinaId)
+        .then(undefined, () => {});
+      // "Não funcionou, mas não sei onde" não edita nada — pergunta.
+      if (params.feedback.acao === "investigar" || params.feedback.acao === "nenhum") return null;
+    }
+
     const client = getAylaAnthropicClient();
     const resp = await client.messages.create({
       model: AYLA_MODEL_FALLBACK,
       max_tokens: 1200,
-      system: SYSTEM_EDITAR,
+      system: params.feedback
+        ? `${SYSTEM_EDITAR}
+
+${instrucaoDeAjuste(params.feedback)}`
+        : SYSTEM_EDITAR,
       messages: [
         {
           role: "user",

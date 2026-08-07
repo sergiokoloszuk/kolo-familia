@@ -52,6 +52,7 @@ import {
   pedeRotinaDeUmDia,
   pedirRotinaDoDia,
   pedeEditarRotina,
+  lerFeedbackDaRotina,
   editarRotina,
 } from "./rotina-guiada";
 import { classificarIntencao } from "./intent";
@@ -59,6 +60,7 @@ import { carregarCatalogoSkills } from "./catalogo-skills";
 import { recuperarBoasPraticas, blocoBoasPraticas } from "@/lib/conhecimento/recuperar";
 import { dividirEmBolhas, ritmoDasBolhas, TETO_ESPERA_SEGUNDOS } from "./bolhas";
 import { semOutrosMembros } from "./membro-escopo";
+import { classificarFeedbackRotina } from "./rotina-feedback";
 import { resolverMembroAlvo } from "./membro-alvo";
 import {
   segurancaAberta,
@@ -446,7 +448,7 @@ export async function sendPlanoSeguimento(
  * e não tinha nenhuma volta. A família montava a sequência e nunca mais se
  * falava nela — nem quando parava de ser necessária.
  *
- * A garantia de "no máximo uma retomada" é `seguimento_enviado_em` (0071),
+ * A garantia de "no máximo uma retomada" é `seguimento_enviado_em` (0075),
  * marcado no envio. Quem já contou espontaneamente que funcionou tem
  * `resultado` preenchido e sai da fila antes de chegar aqui — é assim que a
  * mãe não recebe "você chegou a testar?" no dia seguinte a ter dito que deu
@@ -1867,18 +1869,40 @@ export async function processInbound(
 
   // 3c-rotina-editar. "faltou o lanche na terça", "tira o vôlei", "muda a rotina
   // de hoje" → ajusta a rotina existente (só quando NÃO está montando uma agora).
-  if (!seguranca.aberta && !rotinaConversa && (intent === "rotina_editar" || pedeEditarRotina(inbound.texto))) {
+  // Entra também por FEEDBACK ("já faz sozinho", "não funcionou até o jantar"):
+  // a família não pede edição com essas palavras, mas é edição que ela precisa.
+  // `lerFeedbackDaRotina` exige âncora no quadro daquele membro antes de mexer.
+  const ehFeedbackDeRotina =
+    !seguranca.aberta && !rotinaConversa && classificarFeedbackRotina(inbound.texto) !== null;
+  if (
+    !seguranca.aberta &&
+    !rotinaConversa &&
+    (intent === "rotina_editar" || pedeEditarRotina(inbound.texto) || ehFeedbackDeRotina)
+  ) {
     const ctxR = await loadFamiliaParaEnvio(supabase, family.id);
     const alvo = alvoDaRotina(ctxR, membroConversa);
     if (alvo.ambiguo) return await perguntarQualCrianca(supabase, family, ctxR, alvo.ambiguo);
     const membroId = alvo.membroId;
     if (ctxR && membroId) {
-      const msg = await editarRotina(supabase, {
+      // O membro vem de `alvoDaRotina`, então a rotina lida e o resultado
+      // gravado são SEMPRE do filho em foco — feedback de um não mexe no outro.
+      const feedback = await lerFeedbackDaRotina(supabase, {
+        familyId: family.id,
+        membroAtipicoId: membroId,
+        texto: inbound.texto,
+      });
+      // Leitura de feedback sem âncora no quadro: não é edição. `msg` volta
+      // null e o fluxo cai na conversa normal, logo abaixo — mesmo caminho de
+      // quando o editor reconhece que a mensagem não pedia mudança.
+      const semAncora =
+        ehFeedbackDeRotina && !feedback && intent !== "rotina_editar" && !pedeEditarRotina(inbound.texto);
+      const msg = semAncora ? null : await editarRotina(supabase, {
         familyId: family.id,
         membroAtipicoId: membroId,
         texto: inbound.texto,
         timezone: null,
         phoneE164: ctxR.whatsapp_e164,
+        feedback,
       });
       if (msg) {
         const resp = await enviarEPersistir(supabase, {
