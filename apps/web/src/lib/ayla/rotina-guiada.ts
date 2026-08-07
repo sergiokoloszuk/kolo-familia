@@ -1271,7 +1271,18 @@ ${jaSabemos.rotinaExistente}`
         );
       }
 
-      const link = await gerarMagicLink(supabase, { familyId, next });
+      // ── UM OBJETIVO POR TURNO ──────────────────────────────────────────
+      // Enquanto falta o tema, a Ayla quer UMA palavra e mais nada. Em
+      // 07/08/2026 o turno saiu com três chamadas à ação coladas — escolha um
+      // tema, abra o link, peça o PDF — e o link levava a uma rotina em
+      // `aguardando`, ou seja, a cartões que ainda nem tinham sido
+      // encomendados. Abrir ali não acrescentava nada e competia com a única
+      // resposta que destrava a geração.
+      //
+      // Nem geramos o token: um magic link não usado é mais uma URL válida
+      // solta no histórico da conversa — e o modelo já foi visto repescando
+      // link antigo de turnos anteriores.
+      const link = faltaTema ? null : await gerarMagicLink(supabase, { familyId, next });
       const fechamento = mensagem || `Prontinho — montei a rotina do(a) ${nome} 🌿`;
       // A ENTREGA CONCRETA é a rotina no app. O PDF é opção de impressão, e a
       // frase tem que dizer a verdade sobre o que existe agora.
@@ -1318,9 +1329,16 @@ Ah — se quiser, o próprio ${nome} pode ser o personagem dos cartões em vez d
         ? " Te mandei também um *PDF pra imprimir* (com quadradinhos pra marcar)."
         : "";
       const orient = `${cartoes}${impresso}`;
-      const dica = querImprimir
-        ? "\n\nSe quiser mudar uma etapa ou um horário, é só me falar aqui que eu ajusto."
-        : "\n\nSe quiser mudar uma etapa ou um horário, é só me falar. E se quiser imprimir pra colar na parede, eu te mando em PDF.";
+      // A dica OFERECE duas coisas (editar e imprimir). Enquanto falta o tema
+      // ela some junto com o link, pelo mesmo motivo: neste turno a Ayla tem um
+      // objetivo só. Editar e imprimir continuam existindo — entram no turno
+      // seguinte, quando os cartões já estão a caminho e há o que abrir.
+      // `impresso` fica: é fato consumado (o PDF já foi enviado), não oferta.
+      const dica = faltaTema
+        ? ""
+        : querImprimir
+          ? "\n\nSe quiser mudar uma etapa ou um horário, é só me falar aqui que eu ajusto."
+          : "\n\nSe quiser mudar uma etapa ou um horário, é só me falar. E se quiser imprimir pra colar na parede, eu te mando em PDF.";
       mensagem = link
         ? `${fechamento}${orient}\n\nAbre aqui (já entra direto):\n${link}${dica}`
         : `${fechamento}${orient}${dica}`;
