@@ -1,8 +1,13 @@
 import type { NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { getAnthropicClient, MODELS } from "@/lib/ia/anthropic";
+import {
+  gerarConversacional,
+  providerConversacionalParaFamilia,
+  MODELO_CONVERSA,
+} from "@/lib/ia/provider";
 import { prepararRespostaStream } from "@/lib/ia/engine";
 import { fronteiraAtravessada } from "@/lib/conducao/fronteiras";
+import { logarUsoApi } from "@/lib/billing/logar";
 import { logEvent } from "@/lib/log";
 import { requireActiveWrite } from "@/lib/auth/require-active-write";
 import { resolveFamily } from "@/lib/auth/current-family";
@@ -64,23 +69,19 @@ export async function POST(req: NextRequest) {
       userInput,
     });
 
-    const client = getAnthropicClient();
+    // O PROVIDER É UMA VARIÁVEL DE AMBIENTE, e o modelo vem dele — nunca uma
+    // constante escrita aqui. É o que permite a volta atrás sem deploy e o que
+    // garante que o billing abaixo registre o que REALMENTE respondeu.
+    //
+    // Mesma função que `responder.ts` (WhatsApp) chama, com o mesmo id: no modo
+    // de teste, a família autorizada tem que receber GPT nos DOIS canais, e a
+    // não autorizada, Claude nos dois.
+    const provider = providerConversacionalParaFamilia(family.id);
+    const model = MODELO_CONVERSA[provider];
     const encoder = new TextEncoder();
 
     const readable = new ReadableStream<Uint8Array>({
       async start(controller) {
-        const stream = client.messages.stream({
-          model: MODELS.principal,
-          max_tokens: 2048,
-          // Sem extended thinking nesta rota: o "thinking" é silencioso e
-          // atrasava o 1º token visível de 3 a 10s (medido). Desligado, a
-          // resposta começa a aparecer em ~1s — o que importa no chat. A
-          // qualidade segue alta (Sonnet + contexto rico do Kolo Vivo).
-          thinking: { type: "disabled" },
-          system,
-          messages,
-        });
-
         // ⚠️ O TEXTO NÃO SAI ENQUANTO NÃO FOR INSPECIONADO (06/08/2026).
         //
         // Esta rota é a conversa REAL da web, e até hoje ela não passava por
@@ -96,21 +97,24 @@ export async function POST(req: NextRequest) {
         // inspecionar o que vai sair. Foi por aí que uma mãe recebeu um
         // diagnóstico informal da filha, em produção."
         //
-        // Custo: a mãe deixa de ver a resposta nascendo token a token e passa a
-        // recebê-la de uma vez. É a mesma troca já feita no outro canal, e a
-        // única forma de não publicar sabendo.
-        let buffer = "";
-        stream.on("text", (delta: string) => {
-          buffer += delta;
-        });
-
+        // Como a resposta já era publicada de uma vez, o streaming do SDK só
+        // enchia um buffer que ninguém lia deltas de — então trocar por uma
+        // chamada única (`gerarConversacional`) não muda nada do que a mãe vê,
+        // e é o que torna esta rota portável entre providers.
         try {
-          const final = await stream.finalMessage();
-          const bruto = final.content
-            .filter((b): b is Extract<typeof b, { type: "text" }> => b.type === "text")
-            .map((b) => b.text)
-            .join("")
-            .trim();
+          const r = await gerarConversacional({
+            provider,
+            model,
+            // `assemblePrompt` devolve o system em blocos da Anthropic (hoje um
+            // só, já marcado pra cache). O provider recebe TEXTO e decide como
+            // cada API quer receber isso — então o achatamento é aqui, e
+            // `cacheSystem` preserva o desconto que esta rota já tinha.
+            system: system.map((b) => b.text).join("\n\n"),
+            messages,
+            maxTokens: 2048,
+            cacheSystem: true,
+          });
+          const bruto = r.texto.trim();
 
           // SÓ A REDE DE FRONTEIRAS. Os outros validadores de `engine.ts`
           // ficaram DE FORA de propósito — a classificação está em
@@ -119,7 +123,13 @@ export async function POST(req: NextRequest) {
           // o texto) é o exemplo documentado de filtro que selecionava CONTRA
           // a segurança: ele punia a ressalva honesta e deixava passar a
           // conclusão.
-          const vazamento = fronteiraAtravessada(bruto);
+          // Mesmo bloco de diagnóstico que `buildContext` já montou e que foi
+          // pro system — detector e prompt precisam ler a mesma fonte, senão
+          // o código volta a proibir o que o prompt manda fazer.
+          const vazamento = fronteiraAtravessada(
+            bruto,
+            ctx.membroFoco?.diagnosticoRegistrado,
+          );
           let texto = bruto;
           if (vazamento) {
             await logEvent({
@@ -149,17 +159,40 @@ export async function POST(req: NextRequest) {
             family_account_id: family.id,
             papel: "assistant",
             conteudo: texto,
-            skills_acionadas: roteadas.map((r) => ({
-              name: r.skill.name,
-              display_name: r.skill.display_name,
-              score: r.score,
+            skills_acionadas: roteadas.map((s) => ({
+              name: s.skill.name,
+              display_name: s.skill.display_name,
+              score: s.score,
             })),
             // `tema` entra aqui pra o PRÓXIMO turno saber em que assunto a
             // conversa estava. É o que evita reconstruir o tema da conversa
             // inteira a partir da última frase — sem coluna nova.
-            metadata: { intencao, tema, fronteira: vazamento?.fronteira.nome ?? null },
-            tokens_input: final.usage.input_tokens,
-            tokens_output: final.usage.output_tokens,
+            metadata: {
+              intencao,
+              tema,
+              fronteira: vazamento?.fronteira.nome ?? null,
+              // Quem respondeu ESTE turno. Sem isto, uma migração com rollback
+              // no meio deixa um histórico em que não dá pra saber qual modelo
+              // escreveu o quê — e a avaliação da troca fica sem chão.
+              provider: r.provider,
+              model: r.model,
+            },
+            tokens_input: r.tokensIn,
+            tokens_output: r.tokensOut,
+          });
+
+          // BILLING — esta rota é a conversa da web e NÃO logava nada até hoje:
+          // todo o custo dela estava fora do /admin/uso-api. Provider e modelo
+          // saem do RETORNO da chamada, nunca de uma constante local: é o único
+          // jeito de o número continuar certo quando o env muda.
+          await logarUsoApi(supabase, {
+            family_account_id: family.id,
+            provider: r.provider,
+            model: r.model,
+            feature: "conversa_web",
+            input_tokens: r.tokensIn,
+            output_tokens: r.tokensOut,
+            meta: { conversa_id: conversaId, ms: r.ms, cache_read: r.cacheRead },
           });
 
           controller.close();

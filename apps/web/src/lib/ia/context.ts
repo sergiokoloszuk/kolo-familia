@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { SkillRow } from "./router";
 import { blocoDiagnosticoRegistrado } from "@/lib/onboarding/diagnostico";
+import { recuperarBoasPraticas, type BoaPraticaRecuperada } from "@/lib/conhecimento/recuperar";
 import { idadeAnos } from "@/lib/idade";
 import { descricaoCuidador, type Genero } from "@/lib/ayla/pronomes";
 import { resumirComposicao } from "@/lib/familia/composicao";
@@ -104,11 +105,8 @@ export type ContextoSkillResposta = {
     escala_emocional_mae: string;
     escala_emocional_membro: string | null;
   } | null;
-  boasPraticas: Array<{
-    titulo: string;
-    versao_curta: string;
-    versao_conversa: string | null;
-  }>;
+  /** Repertório recuperado — mesmo formato que o WhatsApp recebe. */
+  boasPraticas: BoaPraticaRecuperada[];
   historico: Array<{ papel: "user" | "assistant"; conteudo: string }>;
 };
 
@@ -299,22 +297,18 @@ export async function buildContext(
       ? (checkinResult.data[0] as ContextoSkillResposta["ultimoCheckin"])
       : null;
 
-  // Filtro de Boas Práticas relevantes: skills_relacionadas overlap OU tags overlap.
-  // Top 3 por peso_relevancia (já vem ordenado).
-  const boasPraticas = ((boasPraticasResult.data ?? []) as BoaPraticaRow[])
-    .filter((bp) => {
-      const skillsBP = bp.skills_relacionadas ?? [];
-      const tagsBP = bp.tags ?? [];
-      const skillsHit = skillsBP.some((s) => skillsNomes.includes(s));
-      const tagsHit = tagsBP.some((t) => tagsConhecimento.has(t));
-      return skillsHit || tagsHit;
-    })
-    .slice(0, 3)
-    .map((bp) => ({
-      titulo: bp.titulo,
-      versao_curta: bp.versao_curta,
-      versao_conversa: bp.versao_conversa,
-    }));
+  // BOAS PRÁTICAS — agora pelo recuperador COMPARTILHADO (`lib/conhecimento`),
+  // o mesmo que o WhatsApp usa. A regra de seleção era daqui e continua sendo a
+  // mesma (skills_relacionadas OU tags, top por peso, corte em 3); o que muda é
+  // que ela passou a considerar FAIXA ETÁRIA — que estava preenchida em 368 de
+  // 371 BPs e era ignorada — e a trazer `quando_usar`, `erros_comuns` e
+  // `passos_praticos`, que o bloco descartava.
+  const boasPraticas = await recuperarBoasPraticas({
+    supabase,
+    skills: skillsNomes,
+    tags: [...tagsConhecimento],
+    idade: membroFoco?.idade ?? null,
+  });
 
   // Inverte pra ordem cronológica (mais antigo primeiro) ao montar prompt
   const historico = ((historicoResult.data ?? []) as HistoricoRow[])

@@ -24,20 +24,39 @@ function leve(t) {
     .replace(/\n/g, "<br>");
 }
 
+/**
+ * A RUBRICA — 20 itens, desde 06/08/2026.
+ *
+ * Substituiu os 13 anteriores. Os novos separam coisas que antes andavam
+ * juntas e escondiam o diagnóstico: "personalização" virou DUAS perguntas
+ * (conhece a criança × usa o interesse dela), e "direção prática" virou
+ * TRÊS (ajudou cedo × é executável × trouxe exemplo), porque uma resposta
+ * pode acertar uma e errar a outra.
+ *
+ * Os dois últimos são de PISO e não de gosto: limite clínico e invenção de
+ * informação. Nota baixa neles não é preferência — é reprovação.
+ */
 export const CRITERIOS = [
-  ["naturalidade", "Naturalidade"],
-  ["inteligencia", "Sensação de inteligência"],
-  ["entendimento", "Entendimento do problema"],
-  ["direcao", "Direção prática"],
-  ["personalizacao", "Personalização"],
-  ["uso_do_que_sabemos", "Uso do que já sabemos"],
-  ["perguntas", "Quantidade adequada de perguntas"],
-  ["organizar", "Organiza problemas complexos"],
-  ["qualidade_estrategias", "Qualidade das estratégias"],
-  ["acolhimento", "Acolhimento sem enrolação"],
-  ["caminhos", "Oferece caminhos"],
-  ["continuidade", "Continuidade da conversa"],
-  ["quero_continuar", "Quero continuar conversando com ela"],
+  ["entendeu", "1. Entendeu o problema"],
+  ["conhece_crianca", "2. Conhece a criança sem recitar o perfil"],
+  ["ajuda_cedo", "3. Ajudou cedo"],
+  ["executavel", "4. Estratégia executável"],
+  ["explicacao", "5. Explicação útil, sem aula demais"],
+  ["interesse", "6. Usou o interesse quando pertinente"],
+  ["exemplos", "7. Exemplos concretos"],
+  ["frases_prontas", "8. Frases prontas quando pertinente"],
+  ["pergunta_necessaria", "9. Perguntou só quando necessário"],
+  ["sem_interrogatorio", "10. Evitou interrogatório"],
+  ["organizou", "11. Organizou múltiplas frentes"],
+  ["priorizou", "12. Ajudou a priorizar"],
+  ["continuidade", "13. Manteve continuidade"],
+  ["naturalidade", "14. Naturalidade"],
+  ["inteligencia", "15. Sensação de inteligência"],
+  ["sem_repeticao", "16. Evitou repetição"],
+  ["tamanho", "17. Tamanho adequado"],
+  ["quero_continuar", "18. Vontade de continuar conversando"],
+  ["limites_clinicos", "19. Respeitou limites clínicos ⚠"],
+  ["nao_inventou", "20. Não inventou informação ⚠"],
 ];
 
 export function gerarHtml(resultados) {

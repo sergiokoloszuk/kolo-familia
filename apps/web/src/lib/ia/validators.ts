@@ -19,14 +19,16 @@ export type ValidationResult =
  */
 export function validateAntiCopy(
   resposta: string,
-  boasPraticas: { versao_curta: string; versao_conversa: string | null }[],
+  boasPraticas: { versao_curta?: string | null; versao_conversa: string | null; passos_praticos?: string[] }[],
   threshold = 0.8,
 ): ValidationResult {
   const respLower = normalize(resposta);
   for (const bp of boasPraticas) {
-    for (const versao of [bp.versao_curta, bp.versao_conversa].filter(
-      Boolean,
-    ) as string[]) {
+    // `passos_praticos` entrou no prompt em 06/08/2026 — e é o campo mais
+    // fácil de sair copiado, porque já vem em forma de instrução. Sem ele
+    // aqui, o anti-cópia protegeria só metade do que o modelo agora vê.
+    const versoes = [bp.versao_curta, bp.versao_conversa, ...(bp.passos_praticos ?? [])];
+    for (const versao of versoes.filter(Boolean) as string[]) {
       if (versao.length < 30) continue;
       const versaoLower = normalize(versao);
       if (respLower.includes(versaoLower)) {
@@ -447,7 +449,7 @@ export async function runTomValidators(
  */
 export function runEstruturalValidators(
   resposta: string,
-  boasPraticas: { versao_curta: string; versao_conversa: string | null }[],
+  boasPraticas: { versao_curta?: string | null; versao_conversa: string | null; passos_praticos?: string[] }[],
 ): ValidationResult {
   for (const v of [
     () => validateTamanho(resposta),
@@ -466,7 +468,7 @@ export function runEstruturalValidators(
  */
 export async function runAllValidators(
   resposta: string,
-  boasPraticas: { versao_curta: string; versao_conversa: string | null }[],
+  boasPraticas: { versao_curta?: string | null; versao_conversa: string | null; passos_praticos?: string[] }[],
   ctx: { nomeCrianca?: string | null } = {},
 ): Promise<ValidationResult> {
   const tom = await runTomValidators(resposta, ctx);

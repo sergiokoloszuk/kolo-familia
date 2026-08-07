@@ -1,5 +1,9 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { getAylaAnthropicClient, AYLA_MODEL_FALLBACK } from "./anthropic";
+import {
+  gerarConversacional,
+  providerConversacionalParaFamilia,
+  MODELO_CONVERSA,
+} from "@/lib/ia/provider";
 import { logarUsoApi } from "@/lib/billing/logar";
 import { logServerError, logEvent } from "@/lib/log";
 import { fronteiraAtravessada } from "@/lib/conducao/fronteiras";
@@ -141,6 +145,12 @@ export type RespostaParams = {
   /** O que o perfil da criança já tem × o que falta, por domínio — pra a Ayla
    *  perguntar só o pertinente (sem repetir) e saber o que falta pro relatório. */
   koloVivoLacunas?: string;
+  /**
+   * Bloco `<repertorio_kolo>` já montado por `lib/conhecimento/recuperar`. É a
+   * MESMA função que serve as Estratégias — o canal muda a apresentação, nunca
+   * o repertório.
+   */
+  repertorio?: string;
   /** Títulos das últimas conversas nas Estratégias (in-app), pra continuidade. */
   estrategiasRecentes?: string[];
   historico: Array<{ de: "mae" | "ayla"; texto: string }>;
@@ -233,7 +243,11 @@ export async function gerarRespostaAyla(
   // Custo zero no caminho normal: o detector é regex sobre o texto que já está
   // em memória. Só há segunda chamada quando vaza. UMA tentativa, e é um `if` —
   // não um laço com contador, que é como loops de regeneração nascem.
-  const cruzou = fronteiraAtravessada(texto);
+  // O MESMO bloco que o modelo recebeu (ver `params.diagnosticoRegistrado`, que
+  // entra no prompt logo abaixo). Sem ele, o detector proibia justamente o que
+  // o núcleo manda fazer: falar com naturalidade do diagnóstico que a família
+  // cadastrou.
+  const cruzou = fronteiraAtravessada(texto, params.diagnosticoRegistrado);
   if (!cruzou) return texto;
 
   await logEvent({
@@ -259,7 +273,9 @@ export async function gerarRespostaAyla(
     segunda = "";
   }
 
-  const aindaVaza = segunda ? fronteiraAtravessada(segunda) : null;
+  const aindaVaza = segunda
+    ? fronteiraAtravessada(segunda, params.diagnosticoRegistrado)
+    : null;
   if (segunda && !aindaVaza) return segunda;
 
   // Falhou duas vezes. Aqui NÃO se publica a segunda "porque já tentamos" —
@@ -308,7 +324,21 @@ async function gerarUmaVez(
   params: RespostaParams,
   tracking?: UsageTracking,
 ): Promise<string> {
-  const client = getAylaAnthropicClient();
+  // QUEM RESPONDE. Só a camada conversacional muda de provider — o parser, o
+  // classificador de intenção, a prontidão, o roteador e os artefatos seguem no
+  // Claude, cada um com o seu cliente. Aqui a variável é o MODELO, e só ele: o
+  // `system` montado abaixo é o mesmo nos dois braços, por construção.
+  //
+  // A DECISÃO NÃO MORA AQUI — mora em `providerConversacionalParaFamilia`, que
+  // é a mesma função que a rota da web chama. Sem isso, uma família poderia
+  // receber GPT no WhatsApp e Claude nas Estratégias na mesma conversa.
+  //
+  // O id vem do `tracking`, que é o único lugar desta função que conhece a
+  // família. Quando ele não vem (chamada sem tracking), o id é null e a regra
+  // devolve Claude — fail closed, sem exceção: o rollout de teste não pode ser
+  // decidido por um id que a gente não tem.
+  const provider = providerConversacionalParaFamilia(tracking?.family_account_id);
+  const model = MODELO_CONVERSA[provider];
   // FORMAS DE ENTREGA — condicional, nunca sempre. Um desabafo com títulos em
   // negrito é frieza, e uma pergunta pontual com quatro blocos é ruído. Só
   // entra quando o turno é de fato uma entrega (ver `ehEntrega`).
@@ -404,6 +434,12 @@ ${params.diagnosticoRegistrado.trim()}`);
     linhas.push(
       `\n<lacunas_do_perfil>\n${params.koloVivoLacunas}\nUse isto pra perguntar só o PERTINENTE (não re-pergunte o que já tem) e pra saber o que ainda falta antes de montar um relatório.\n</lacunas_do_perfil>`,
     );
+  }
+  // REPERTÓRIO DA KOLO — a Camada 2, que até 06/08/2026 não chegava ao WhatsApp
+  // em nenhum turno. Vem do MESMO recuperador que a web usa, escolhido pela
+  // skill que a classificação de intenção já devolveu — sem chamada extra.
+  if (params.repertorio?.trim()) {
+    linhas.push(`\n${params.repertorio}`);
   }
   if (params.estrategiasRecentes && params.estrategiasRecentes.length > 0) {
     linhas.push(
@@ -598,38 +634,39 @@ Se for uma TAREFA da escola/terapia:
     // inofensiva: quando o modelo falha, a mãe recebe o texto fixo do
     // fallbackSimples ("Que coisa boa de ouvir 🌿") — que apareceu em conversa
     // real, respondendo a um desabafo. Sobrecarga/rate-limit passa em segundos.
-    const stream = await comRetentativaCurta(() =>
-      client.messages.stream({
-        model: AYLA_MODEL_FALLBACK,
-        max_tokens: 900,
-        system: [{ type: "text", text: system, cache_control: { type: "ephemeral" } }],
+    // O streaming saiu daqui. Ele já era INTERNO — os deltas só enchiam um
+    // buffer, porque nada pode sair pro WhatsApp antes da rede de fronteiras
+    // (quem publica é o orquestrador). Sem ninguém consumindo os deltas ao
+    // vivo, uma chamada única entrega exatamente o mesmo texto e é o que
+    // permite os dois providers pelo mesmo caminho.
+    const r = await comRetentativaCurta(() =>
+      gerarConversacional({
+        provider,
+        model,
+        system,
         messages: [{ role: "user", content: userContent }],
+        maxTokens: 900,
+        // Só a Anthropic marca cache explicitamente; na OpenAI é automático e o
+        // provider ignora o campo. Mantém o desconto que esta chamada já tinha.
+        cacheSystem: true,
       }),
     );
 
-    // Streaming INTERNO: consome os deltas só para montar o buffer. Nada sai
-    // daqui para o WhatsApp — quem publica é o orquestrador, e só depois da
-    // rede. Antes, cada parágrafo era enviado aqui dentro assim que fechava.
-    let full = "";
-    for await (const event of stream) {
-      if (event.type === "content_block_delta" && event.delta.type === "text_delta") {
-        full += event.delta.text;
-      }
-    }
-
-    const final = await stream.finalMessage();
     if (tracking) {
       await logarUsoApi(tracking.supabase, {
         family_account_id: tracking.family_account_id,
-        provider: "anthropic",
-        model: AYLA_MODEL_FALLBACK,
+        // Do RETORNO, nunca de uma constante: com o provider vindo de env, um
+        // literal aqui faria o /admin/uso-api cobrar o custo do modelo errado
+        // no dia seguinte a um rollback.
+        provider: r.provider,
+        model: r.model,
         feature: tracking.feature,
-        input_tokens: final.usage.input_tokens,
-        output_tokens: final.usage.output_tokens,
+        input_tokens: r.tokensIn,
+        output_tokens: r.tokensOut,
       });
     }
 
-    return full.trim() || textoDe(final.content) || fallbackSimples(params);
+    return r.texto.trim() || fallbackSimples(params);
   } catch (e) {
     console.warn("[ayla:responder] falha do modelo:", e instanceof Error ? e.message : e);
     // PERSISTE. Antes isto era só console.warn — e por isso ninguém sabia que
@@ -646,22 +683,20 @@ Se for uma TAREFA da escola/terapia:
   }
 }
 
-function textoDe(content: Array<{ type: string }>): string {
-  return (content as Array<{ type: string; text?: string }>)
-    .filter((b) => b.type === "text")
-    .map((b) => b.text ?? "")
-    .join("")
-    .trim();
-}
-
 /**
  * Uma retentativa curta pra falha transitória (sobrecarga/rate-limit do
  * modelo). Só vale antes de qualquer coisa ter sido enviada — depois de a
  * primeira bolha sair, repetir viraria resposta partida.
+ *
+ * ⚠️ `return await`, e não `return`. Sem o await, a promessa rejeitada saía da
+ * função ANTES do catch e a retentativa nunca rodava — só pegava erro lançado
+ * de forma síncrona, que é justamente o que uma falha de rede não é. O
+ * `fallbackSimples` ("Que coisa boa de ouvir 🌿" em cima de um desabafo) saía na
+ * primeira falha, sempre.
  */
-async function comRetentativaCurta<T>(fn: () => T): Promise<T> {
+async function comRetentativaCurta<T>(fn: () => T | Promise<T>): Promise<T> {
   try {
-    return fn();
+    return await fn();
   } catch (e) {
     console.warn(
       "[ayla:responder] 1ª tentativa falhou, tentando de novo:",

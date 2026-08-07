@@ -214,7 +214,7 @@ describe("tema ativo", () => {
   });
 
   it("falha do classificador não perde o tema", () => {
-    expect(INTENT).toMatch(/return \{ intencao: "outro", tema: anterior, aceite: null \};/);
+    expect(INTENT).toMatch(/return \{ intencao: "outro", tema: anterior, aceite: null, skills: \[\] \};/);
   });
 
   it("nada foi persistido — sem tabela, sem coluna", () => {
@@ -415,7 +415,25 @@ describe("simplificação: o prompt não pode crescer", () => {
     // pagas removendo duplicação real: a coreografia de ritmo estava escrita
     // duas vezes (REGRA_SEQUENCIA e VOZ 3) e o bloco de ampliar a percepção
     // repetia os próprios exemplos. Regra nenhuma foi perdida.
-    expect(nucleoConducao().length).toBeLessThan(52_500);
+    //
+    // 06/08/2026 (2ª decisão do dia) — sobe pra 54.000 por DUAS entradas da
+    // migração conversacional, e nada além delas:
+    //
+    //   CONTRATO_DE_VERDADE (~1.300) — a Ayla disse "já atualizo aqui",
+    //   "anotado" e "Chegou!" sem que nada disso tivesse acontecido (conversa
+    //   da Vitória). É a única regra da base que fica PIOR com um modelo
+    //   melhor: um modelo mais fluente narra o estado falso de forma mais
+    //   convincente. Entra junto com a troca de provider, de propósito.
+    //
+    //   VOZ 7, avanço a cada turno (~250) — o GPT repetiu 22% das explicações
+    //   na bancada (34,9% na web). A mitigação inteira é UMA linha: sem teto de
+    //   palavras, sem pergunta obrigatória, sem blacklist de frases — porque
+    //   regra que compete por atenção com outra é como a falha do diagnóstico
+    //   aconteceu.
+    //
+    // Desta vez o crescimento NÃO foi pago com poda: a poda cirúrgica segue
+    // adiada até a experiência nova ser validada com famílias.
+    expect(nucleoConducao().length).toBeLessThan(54_000);
   });
 });
 

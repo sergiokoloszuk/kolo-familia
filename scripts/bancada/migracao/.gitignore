@@ -1,0 +1,5 @@
+# A saída do smoke é EVIDÊNCIA DE UMA EXECUÇÃO, não código. Fica no disco de
+# quem rodou (o caminho sai no fim da execução) e não entra no repositório: são
+# respostas de modelo, geradas de novo a cada rodada, e commitá-las faria o diff
+# de uma migração carregar texto que ninguém revisa.
+resultados.json

@@ -30,7 +30,11 @@ describe("o classificador resolve o referente do 'sim'", () => {
   it("devolve o aceite na MESMA chamada — sem roteador novo", () => {
     expect(INTENT).toMatch(/intencao\|tema\|aceite/);
     expect(INTENT).toMatch(/aceite: string \| null;/);
-    expect(INTENT).toMatch(/const \[ladoIntencao, ladoTema, ladoAceite\] = raw\.split\("\|"\)/);
+    // 06/08/2026: o campo `skills` entrou como QUARTO, e a separação passou a
+    // ser `separarCampos` — que protege o aceite do erro real do Haiku (emitir
+    // 3 campos e pôr a skill no lugar do aceite). A posição do aceite não mudou.
+    expect(INTENT).toMatch(/let aceite = p\[2\] \?\? "";/);
+    expect(INTENT).toMatch(/aceite = ""; \/\/ não havia aceite/);
   });
 
   it("separa ACEITAR uma oferta de RESPONDER uma pergunta", () => {
@@ -72,7 +76,7 @@ describe("o classificador resolve o referente do 'sim'", () => {
   });
 
   it("em falha, nada de aceite — nunca executa por acidente", () => {
-    expect(INTENT).toMatch(/return \{ intencao: "outro", tema: anterior, aceite: null \}/);
+    expect(INTENT).toMatch(/return \{ intencao: "outro", tema: anterior, aceite: null, skills: \[\] \}/);
   });
 });
 

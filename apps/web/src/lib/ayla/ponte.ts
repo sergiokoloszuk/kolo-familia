@@ -95,7 +95,18 @@ async function entregarPdfDoPlano(
     await supabase.from("ayla_send_log").insert({
       family_account_id: params.familyId,
       template_key: "plano_pdf",
-      payload: { fileName, bytes: bytes.length, phone: params.phoneE164 },
+      payload: {
+        fileName,
+        bytes: bytes.length,
+        phone: params.phoneE164,
+        // ONDE O ARQUIVO ESTÁ, de verdade. A URL que a Z-API recebeu é assinada
+        // e morre em 1h — guardá-la não responderia "que PDF a família recebeu?"
+        // no dia seguinte. O caminho no Storage responde, e permite reassinar.
+        midia_path: path,
+        midia_tipo: "application/pdf",
+        // Aceito pelo provedor, NÃO entregue — mesma leitura de `enviarTexto`.
+        zaap_message_id: envio.messageId,
+      },
       resposta_provider: envio.raw as Record<string, unknown> | null,
       status: "enviada",
       erro: null,

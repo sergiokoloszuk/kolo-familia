@@ -51,6 +51,77 @@ const COND =
 export type AchadoDiagnostico = { codigo: string; trecho: string };
 
 /**
+ * O QUE A FAMÍLIA JÁ INFORMOU — a distinção que faltava aqui e que o prompt já
+ * fazia (06/08/2026).
+ *
+ * A seção "TRÊS PERGUNTAS DIFERENTES" do núcleo separa (A) diagnóstico já
+ * REGISTRADO, que a Ayla pode e deve usar como contexto, de (B) diagnóstico
+ * NOVO, que continua proibido. O detector não conhecia essa diferença: rodava
+ * sobre o texto puro e tratava as duas iguais.
+ *
+ * O preço apareceu em produção. Uma mãe mandou o laudo da filha e a Ayla
+ * respondeu "confirmam o que já tínhamos no perfil dela: TEA" — a leitura
+ * correta de um documento oficial, sobre um diagnóstico que a própria família
+ * cadastrou. O detector derrubou, a regeneração também, e o piso respondeu uma
+ * pergunta que ninguém tinha feito. Duas vezes na mesma conversa.
+ *
+ * ⚠️ SÓ O CONFIRMADO ENTRA. Hipótese e "em investigação" ficam de fora de
+ * propósito: são exatamente o caso (B), e usá-las aqui autorizaria a Ayla a
+ * fechar o diagnóstico que a família ainda está investigando — o dano original.
+ */
+export type ContextoDeteccao = {
+  /**
+   * Condições CONFIRMADAS pela família, normalizadas (sem acento, minúsculas).
+   * Vazio ou ausente = detector se comporta exatamente como antes.
+   */
+  confirmados?: string[];
+};
+
+/**
+ * Extrai as condições confirmadas do bloco `<diagnostico_registrado>` que os
+ * dois canais já montam e já mandam pro modelo.
+ *
+ * Ler o MESMO bloco que o prompt lê é o ponto: se detector e prompt lessem
+ * fontes diferentes, voltariam a discordar — que é o bug que isto corrige.
+ * Só a linha "CONFIRMADO pela família:" é lida; a de "EM INVESTIGAÇÃO", não.
+ */
+export function confirmadosDoBloco(bloco: string | null | undefined): string[] {
+  if (!bloco) return [];
+  const linha = bloco.split("\n").find((l) => /CONFIRMADO pela fam/i.test(l));
+  if (!linha) return [];
+  const depois = linha.slice(linha.indexOf(":") + 1);
+  // "nenhum" é a forma explícita de dizer que não há diagnóstico fechado.
+  const norm = normalizarCond(depois);
+  if (/^\s*nenhum/.test(norm)) return [];
+  const re = new RegExp(COND, "g");
+  const achadas = new Set<string>();
+  for (const m of norm.matchAll(re)) achadas.add(canonizarCond(m[0]));
+  return [...achadas];
+}
+
+function normalizarCond(s: string): string {
+  return s
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "")
+    .toLowerCase();
+}
+
+/** "tea", "autismo" e "autista" são a mesma condição escrita de três jeitos. */
+function canonizarCond(c: string): string {
+  return c.startsWith("aut") || c === "tea" ? "autismo" : c;
+}
+
+/** Toda condição citada no trecho já foi informada pela família? */
+function todasConhecidas(texto: string, confirmados: string[]): boolean {
+  if (confirmados.length === 0) return false;
+  const norm = normalizarCond(texto);
+  const citadas = new Set<string>();
+  for (const m of norm.matchAll(new RegExp(COND, "g"))) citadas.add(canonizarCond(m[0]));
+  if (citadas.size === 0) return false;
+  return [...citadas].every((c) => confirmados.includes(c));
+}
+
+/**
  * A FRONTEIRA DITA EM VOZ ALTA — e por isso não pode ser confundida com o dano.
  *
  * "eu não consigo dizer se é ou não é autismo" contém, literalmente, "não é
@@ -355,9 +426,67 @@ function condicoesDistintas(norm: string): string[] {
   return [...achadas];
 }
 
-function atribuicaoDistribuida(norm: string): AchadoDiagnostico | null {
+/**
+ * A GRADUAÇÃO É CITADA OU É DA AYLA? — a distinção que `nivel_suporte` não fazia.
+ *
+ * "nível 1", "nível 2", "leve", "moderado" é o vocabulário PADRÃO de um laudo
+ * brasileiro de TEA. A regra existe pra impedir que a Ayla GRADUE uma criança;
+ * ela estava impedindo a Ayla de LER o que um médico escreveu — e foi o segundo
+ * piso da conversa de 06/08, com o trecho «nivel 1» vindo do laudo que a mãe
+ * acabara de mandar.
+ *
+ * A regra é sobre a FONTE, não sobre uma frase específica ("o laudo diz" como
+ * exceção literal seria uma lista infinita). Por sentença:
+ *
+ *   afirmação própria  ("ela é nível 1", "parece nível 1", "eu diria nível 1")
+ *     → é graduação da Ayla, dispara. Vence a fonte: citar o laudo e concluir
+ *       na mesma frase continua sendo concluir.
+ *   fonte declarada    (laudo, relatório, avaliação, consta, registrado, perfil)
+ *     → é leitura de documento, não dispara.
+ *   nenhuma das duas   → dispara, como antes. Na dúvida, a fronteira vale.
+ */
+const GRADUACAO = /\b(nivel|grau) (1|2|3|um|dois|tres|leve|moderado|severo)\b/;
+
+const FONTE_DECLARADA = new RegExp(
+  "\\b(laudo|relatorio|parecer|documento|avaliacao|diagnostico formal|atestado|" +
+    "consta|registrad[oa]|informad[oa]|no perfil|no cadastro|" +
+    "voces (informaram|contaram|registraram)|voce (informou|contou|registrou)|" +
+    "(a|o) (medica|medico|neuro|neurologista|neuropediatra|psiquiatra|psicologa|psicologo)" +
+    ")\\b",
+);
+
+const AFIRMACAO_PROPRIA = new RegExp(
+  "\\b(e|esta|parece|seria|deve ser|fica|classifico|classificaria|eu diria|diria que|" +
+    "avalio|considero|acho que|pelo (que|comportamento|relato|jeito))\\b[^.!?]{0,30}" +
+    "(nivel|grau) (1|2|3|um|dois|tres|leve|moderado|severo)",
+);
+
+/**
+ * Toda sentença que gradua está citando uma fonte? Só então a graduação sai.
+ */
+function graduacaoSoCitada(norm: string): boolean {
+  const sentencas = norm.split(/[.!?;\n]+/).filter((s) => GRADUACAO.test(s));
+  if (sentencas.length === 0) return false;
+  return sentencas.every((s) => FONTE_DECLARADA.test(s) && !AFIRMACAO_PROPRIA.test(s));
+}
+
+function atribuicaoDistribuida(
+  norm: string,
+  confirmados: string[] = [],
+): AchadoDiagnostico | null {
   const conds = condicoesDistintas(norm);
   if (conds.length < 2) return null;
+  // CONDIÇÃO JÁ INFORMADA NÃO É ATRIBUIÇÃO NOVA. A regra mede a Ayla REPARTINDO
+  // o relato entre categorias que ela mesma escolheu; quando TODAS as categorias
+  // são as que a família cadastrou, falar das duas é usar o perfil, não
+  // diagnosticar. Era 18 dos 55 disparos — o código mais ruidoso do detector.
+  //
+  // ⚠️ TODAS, não "as que sobram". Filtrar as conhecidas antes de contar deixava
+  // passar o caso pior: repartir o relato entre um diagnóstico registrado e um
+  // que ninguém informou é exatamente como uma condição nova entra pela porta
+  // lateral. Basta UMA desconhecida pra continuar sendo atribuição. (Pego pelo
+  // par de testes; a primeira versão desta função errava aqui.)
+  if (confirmados.length > 0 && conds.every((c) => confirmados.includes(c))) return null;
   if (!PARTICAO.test(norm)) return null;
   if (!ANCORA_INDIVIDUAL.test(norm)) return null;
   return {
@@ -375,16 +504,41 @@ function atribuicaoDistribuida(norm: string): AchadoDiagnostico | null {
  * própria cópia de RECUSA/CITACAO e elas já divergiam; agora as daqui entram
  * como molduras extras e o vocabulário continua sendo de cada fronteira.
  */
-export function acharConclusaoDiagnostica(texto: string): AchadoDiagnostico[] {
+export function acharConclusaoDiagnostica(
+  texto: string,
+  contexto?: ContextoDeteccao,
+): AchadoDiagnostico[] {
   const molduras = { recusa: RECUSA, citacao: CITACAO };
-  const achados = acharPadroes(texto, PADROES, molduras);
+  const confirmados = contexto?.confirmados ?? [];
   // Separador neutro: esta é uma análise de DOCUMENTO, não de proximidade.
-  const distribuida = atribuicaoDistribuida(textoAsseverado(texto, molduras, " "));
+  const asseverado = textoAsseverado(texto, molduras, " ");
+
+  const achados = acharPadroes(texto, PADROES, molduras).filter((a) => {
+    // (A) do prompt: confirmar o que a família registrou é o comportamento
+    // CERTO — "o laudo confirma o TEA que já estava no perfil". Continua
+    // disparando quando a condição confirmada não é a que está na frase.
+    if (a.codigo === "confirma_condicao" && todasConhecidas(a.trecho, confirmados)) {
+      return false;
+    }
+    // Graduar é da avaliação; CITAR a graduação de um laudo é leitura.
+    if (
+      (a.codigo === "nivel_suporte" || a.codigo === "caso_graduado") &&
+      graduacaoSoCitada(asseverado)
+    ) {
+      return false;
+    }
+    return true;
+  });
+
+  const distribuida = atribuicaoDistribuida(asseverado, confirmados);
   if (distribuida) achados.push(distribuida);
   return achados;
 }
 
 /** Atalho booleano — a resposta contém conclusão diagnóstica? */
-export function temConclusaoDiagnostica(texto: string): boolean {
-  return acharConclusaoDiagnostica(texto).length > 0;
+export function temConclusaoDiagnostica(
+  texto: string,
+  contexto?: ContextoDeteccao,
+): boolean {
+  return acharConclusaoDiagnostica(texto, contexto).length > 0;
 }

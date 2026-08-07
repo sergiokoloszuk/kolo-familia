@@ -55,6 +55,8 @@ import {
   editarRotina,
 } from "./rotina-guiada";
 import { classificarIntencao } from "./intent";
+import { carregarCatalogoSkills } from "./catalogo-skills";
+import { recuperarBoasPraticas, blocoBoasPraticas } from "@/lib/conhecimento/recuperar";
 import { dividirEmBolhas } from "./bolhas";
 import { resolverMembroAlvo } from "./membro-alvo";
 import {
@@ -94,7 +96,13 @@ import type { AylaTipoProativa, AylaTipoReativa, ParserResult } from "./types";
  */
 
 export type EnvioResultado =
-  | { enviada: true; messageId: string }
+  /**
+   * `enviada: true` = a Z-API ACEITOU (HTTP 200). Não é entrega, não é
+   * recebimento e não é leitura — ver `whatsappSender.enviarTexto`. E
+   * `messageId` pode ser null: 200 sem id acontece, e inventar um id ("unknown")
+   * é pior que assumir que não veio.
+   */
+  | { enviada: true; messageId: string | null }
   | { enviada: false; motivo: string };
 
 // ============================================================
@@ -1692,11 +1700,15 @@ export async function processInbound(
   // consciente de 02/08 — sem coluna, sem migração; se a derivação se mostrar
   // insuficiente no uso real, aí se discute persistir, com evidência.
   const turnoClassificado = rotinaConversa
-    ? { intencao: "outro" as const, tema: null, aceite: null }
+    ? { intencao: "outro" as const, tema: null, aceite: null, skills: [] as string[] }
     : await classificarIntencao({
         texto: inbound.texto,
         ...(await ultimasFalas(supabase, family.id, inbound.texto)),
         temasOnboarding: await carregarDesafiosOnboarding(supabase, membroConversa),
+        // QUAL REPERTÓRIO CONSULTAR — decidido na MESMA chamada que já classifica
+        // intenção e tema. Zero chamada de LLM a mais: o campo é o quarto de uma
+        // linha que já vinha com três. Só entram as skills `ativo=true`.
+        catalogoSkills: await carregarCatalogoSkills(supabase),
       });
   const intent = turnoClassificado.intencao;
   const temaAtivo = turnoClassificado.tema;
@@ -2057,6 +2069,17 @@ export async function processInbound(
     ? { historia: linkHistoria, rotina: linkRotina, desenho: linkDesenho, avatar: linkAvatar, relatorio: linkRelatorio }
     : null;
 
+  // REPERTÓRIO — a Camada 2 chegando ao WhatsApp pela primeira vez. A skill já
+  // veio do classificador (4º campo, sem chamada extra); aqui só se busca o
+  // conteúdo. Falha silenciosa: sem repertório, a conversa segue como sempre.
+  const repertorio = blocoBoasPraticas(
+    await recuperarBoasPraticas({
+      supabase,
+      skills: turnoClassificado.skills,
+      idade: idadeFoco,
+    }),
+  );
+
   const resp = await enviarRespostaEmChunks(supabase, {
     family_account_id: family.id,
     membro_atipico_id: membroContextoId,
@@ -2085,6 +2108,7 @@ export async function processInbound(
       estrategiasRecentes,
       historico,
       linksLudico,
+      repertorio,
       mensagem: inbound.texto,
       imagemUrl: inbound.midiaTipo === "image" ? (inbound.midiaUrl ?? null) : null,
       sinais: {
@@ -2138,7 +2162,13 @@ async function enviarRespostaEmChunks(
   },
 ): Promise<EnvioResultado> {
   let providerResp: unknown = null;
-  let messageId = "unknown";
+  // VERDADE OPERACIONAL (06/08/2026). Um turno da Ayla vira VÁRIAS bolhas no
+  // WhatsApp e UM registro em `ayla_messages` — então guardamos o id de cada
+  // bolha, não só o da última. Antes isto era `messageId = "unknown"` e nada
+  // disso chegava ao banco: na conversa da Vitória, 27 de 27 mensagens de saída
+  // ficaram com `zaap_message_id` nulo, e por isso a Ayla pôde dizer "Chegou!"
+  // sem ter como saber.
+  const idsBolhas: Array<string | null> = [];
   let erro: string | null = null;
   let primeiro = true;
 
@@ -2218,7 +2248,7 @@ async function enviarRespostaEmChunks(
     try {
       const r = await enviarTexto({ phoneE164: args.phone, texto: par, delaySegundos: delay });
       providerResp = r.raw;
-      messageId = r.messageId;
+      idsBolhas.push(r.messageId);
     } catch (e) {
       erro = e instanceof Error ? e.message : "falha no envio";
       break;
@@ -2248,7 +2278,8 @@ async function enviarRespostaEmChunks(
     });
     if (nudge) {
       try {
-        await enviarTexto({ phoneE164: args.phone, texto: nudge, delaySegundos: 3 });
+        const r = await enviarTexto({ phoneE164: args.phone, texto: nudge, delaySegundos: 3 });
+        idsBolhas.push(r.messageId);
         textoCompleto = `${textoCompleto}\n\n${nudge}`;
       } catch (e) {
         console.warn(
@@ -2277,12 +2308,13 @@ async function enviarRespostaEmChunks(
       tipo: args.tipo,
       texto: textoCompleto,
       enviada_em: new Date().toISOString(),
+      ...registroDeEnvio(idsBolhas),
     });
     await supabase
       .from("ayla_preferences")
       .update({ ultima_mensagem_em: new Date().toISOString() })
       .eq("family_account_id", args.family_account_id);
-    return { enviada: true, messageId };
+    return { enviada: true, messageId: idsBolhas.find(Boolean) ?? null };
   }
   return { enviada: false, motivo: erro ?? "falha" };
 }
@@ -3023,6 +3055,42 @@ async function loadFamiliaParaEnvio(
   };
 }
 
+/**
+ * O QUE O SISTEMA SABE SOBRE O PRÓPRIO ENVIO — os campos de `ayla_messages` que
+ * já existiam desde a 0001 e que ninguém preenchia (nenhuma migração aqui).
+ *
+ * ⚠️ LEIA ISTO ANTES DE USAR O DADO. `zaap_message_id` e `entrega.aceito_em`
+ * provam UMA coisa: a Z-API respondeu 200 e devolveu um id. Não provam entrega
+ * no aparelho, não provam recebimento e não provam leitura — status de entrega
+ * viria de webhook, que não escutamos. Em telas, relatório ou prompt, isto se
+ * chama "aceito pelo provedor". Chamar de "entregue" seria trocar um nulo
+ * honesto por um número errado, que é o pior dos dois mundos.
+ *
+ * `zaap_message_id` recebe o id da PRIMEIRA bolha porque a coluna tem índice
+ * único (0053, a trava de idempotência do inbound) e o turno tem uma linha só;
+ * os demais ids ficam em `metadata.entrega.ids`, sem restrição de unicidade.
+ * Nunca gravamos a string "unknown" ali: além de mentir, a segunda ocorrência
+ * violaria o índice e derrubaria o registro inteiro da mensagem.
+ */
+function registroDeEnvio(ids: Array<string | null>): {
+  zaap_message_id: string | null;
+  metadata: Record<string, unknown>;
+} {
+  return {
+    zaap_message_id: ids.find(Boolean) ?? null,
+    metadata: {
+      entrega: {
+        canal: "z-api",
+        // O nome do campo é o que ele prova. Não renomeie pra "entregue".
+        aceito_pelo_provedor: ids.length > 0,
+        aceito_em: new Date().toISOString(),
+        bolhas: ids.length,
+        ids,
+      },
+    },
+  };
+}
+
 async function enviarEPersistir(
   supabase: SupabaseClient,
   params: {
@@ -3071,10 +3139,12 @@ async function enviarEPersistir(
   let resultado: EnvioResultado;
   let providerResp: unknown = null;
   let erro: string | null = null;
+  const idsBolhas: Array<string | null> = [];
 
   try {
     const r = await enviarTexto({ phoneE164: params.phone, texto });
     providerResp = r.raw;
+    idsBolhas.push(r.messageId);
     resultado = { enviada: true, messageId: r.messageId };
   } catch (e) {
     erro = e instanceof Error ? e.message : "Falha desconhecida";
@@ -3111,6 +3181,7 @@ async function enviarEPersistir(
       tipo: params.tipo,
       texto,
       enviada_em: new Date().toISOString(),
+      ...registroDeEnvio(idsBolhas),
     });
 
     await supabase

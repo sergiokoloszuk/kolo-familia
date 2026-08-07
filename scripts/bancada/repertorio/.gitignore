@@ -1,0 +1,3 @@
+# A lista de ids publicados é EVIDÊNCIA DE UMA EXECUÇÃO (rollback), não código.
+# Fica no disco de quem publicou; o repositório não precisa dela.
+publicados-backup.json

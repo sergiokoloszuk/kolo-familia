@@ -27,6 +27,24 @@ export type TurnoClassificado = {
    * reconstrói o turno a partir da conversa inteira e responde outra coisa.
    */
   aceite: string | null;
+  /**
+   * QUAL REPERTÓRIO CONSULTAR — a skill principal, e no máximo uma
+   * complementar. `[]` quando não há catálogo, quando o modelo não teve
+   * confiança, ou quando o campo veio inválido.
+   *
+   * ⚠️ Isto NÃO é a Camada 1 da skill. Aqui só se decide ONDE buscar; o
+   * `objective`/`tone`/`scope`/`limits` entram depois, na conversa, quando a
+   * skill já foi escolhida. Por isso o classificador recebe apenas
+   * `name` + `routing_keywords` — mandar a filosofia inteira seria pagar
+   * raciocínio de domínio para uma decisão de roteamento.
+   */
+  skills: string[];
+};
+
+/** O que o classificador precisa saber de cada skill — e nada além disso. */
+export type SkillDoCatalogo = {
+  name: string;
+  routing_keywords: string[];
 };
 
 export type IntencaoAyla =
@@ -43,10 +61,114 @@ export type IntencaoAyla =
   | "plano" // ajuda/estratégia/plano pra um desafio específico
   | "outro"; // desabafo, contar o dia, dúvida, cumprimento, história, desenho
 
-const SYSTEM = `Você classifica a INTENÇÃO da última mensagem de uma mãe/pai falando com a Ayla (assistente de famílias atípicas), no WhatsApp. Entenda a INTENÇÃO, não palavras exatas.
+/**
+ * O 4º CAMPO, isolado numa função pura — porque ele é o novo e os outros três
+ * já decidem a conversa de famílias reais.
+ *
+ * REGRA DE OURO: nada aqui pode lançar, e nada aqui pode devolver um nome que
+ * não esteja no catálogo. Qualquer entrada estranha vira `[]`, e `[]` significa
+ * "não consulte repertório nenhum" — que é o comportamento de hoje, antes deste
+ * campo existir. O pior caso do campo novo é o produto de ontem.
+ *
+ * O catálogo é `permitidas` de propósito: em runtime só chegam as skills
+ * `ativo=true`, então uma skill desligada nomeada pelo modelo é descartada aqui,
+ * sem precisar de um segundo filtro lá na frente.
+ */
+export function parseSkills(bruto: string | undefined, permitidas: readonly string[]): string[] {
+  if (!bruto || permitidas.length === 0) return [];
+  const validas = new Set(permitidas);
+  const vistos = new Set<string>();
+  const out: string[] = [];
+  // Vírgula é o separador combinado, mas o modelo às vezes usa "e" ou "/".
+  // Aceitar os três é barato; o filtro contra o catálogo é que dá a segurança.
+  for (const parte of bruto.split(/[,/;]|\se\s/)) {
+    // Só letras e underscore: mata pontuação, aspas, numeração e sobra de
+    // raciocínio ("skills: foco"), sem precisar prever cada formato.
+    const nome = parte.trim().replace(/[^a-z_]/g, "");
+    if (!nome || !validas.has(nome) || vistos.has(nome)) continue;
+    vistos.add(nome);
+    out.push(nome);
+    // Uma principal + no máximo uma complementar. Três skills é sinal de que o
+    // modelo listou tudo que encostou no assunto, e aí o repertório recuperado
+    // deixa de ser sobre o problema da família.
+    if (out.length === 2) break;
+  }
+  return out;
+}
 
-Responda em UMA linha, no formato: intencao|tema|aceite
-(a intenção e o tema em minúscula; o aceite em texto normal, ou "-" quando não houver)
+/**
+ * SEPARA OS QUATRO CAMPOS — e conserta o erro que o Haiku comete de verdade.
+ *
+ * Medido em chamadas reais (06/08/2026), com o campo novo no prompt: o modelo
+ * às vezes emite só TRÊS campos e coloca a skill onde deveria estar o aceite.
+ *
+ *   «outro|aprendizado|motor»     → aceite virava "motor", e a skill sumia
+ *   «plano|motor|foco|-»          → aceite virava "foco"
+ *   «plano|autonomia|—|autonomia» → correto
+ *
+ * O primeiro caso é o grave: `aceite` é campo VIVO, lido pelo orquestrador pra
+ * resolver o referente de um "sim". Um aceite falso ("motor") faz a Ayla
+ * responder a coisa errada — que é o incidente de 04/08 de novo, por outra
+ * porta.
+ *
+ * O conserto usa o CATÁLOGO como desambiguador, e é seguro por construção: um
+ * aceite de verdade é uma FRASE ("montar uma história social sobre chegar num
+ * grupo"), nunca um nome solto de skill. Se vieram só três campos e o terceiro é
+ * exatamente um nome do catálogo, aquilo é a skill deslocada — não um aceite.
+ *
+ * ⚠️ Só age quando faltam campos. Com os quatro presentes, cada um fica onde
+ * está: o comportamento dos três antigos não muda.
+ */
+export function separarCampos(
+  raw: string,
+  permitidas: readonly string[],
+): { intencao: string; tema: string; aceite: string; skills: string[] } {
+  const p = raw.split("|");
+  const intencao = p[0] ?? raw;
+  const tema = p[1] ?? "";
+  let aceite = p[2] ?? "";
+  let skills = parseSkills(p[3], permitidas);
+
+  // Três campos e o terceiro é um nome de skill puro → a skill escorregou.
+  if (p.length === 3 && skills.length === 0) {
+    const deslocada = parseSkills(aceite, permitidas);
+    if (deslocada.length > 0) {
+      skills = deslocada;
+      aceite = ""; // não havia aceite; havia skill no lugar errado
+    }
+  }
+  return { intencao, tema, aceite, skills };
+}
+
+/** O bloco de skills do prompt — só nome e keywords, nunca a Camada 1. */
+function blocoSkills(catalogo: readonly SkillDoCatalogo[]): string {
+  if (catalogo.length === 0) return "";
+  const linhas = catalogo
+    .map((s) => `- ${s.name}: ${(s.routing_keywords ?? []).slice(0, 15).join("; ")}`)
+    .join("\n");
+  return `
+
+O QUARTO CAMPO é a SKILL — qual repertório a Ayla deve consultar pra ajudar nesta situação.
+
+${linhas}
+
+Regras da skill:
+- SEMPRE QUATRO CAMPOS. Se não houver aceite, escreva "-" no TERCEIRO campo e a skill no QUARTO. Nunca pule um campo: "outro|aprendizado|motor" está ERRADO — o certo é "outro|aprendizado|-|motor".
+- As frases acima são EXEMPLOS do que as famílias dizem, não uma lista pra casar palavra. Escolha pelo SIGNIFICADO da situação. "fica muito tempo desenhando, mas na lição levanta" é foco, mesmo sem bater com nenhuma frase.
+- Devolva UMA skill (a principal — a que melhor organiza o problema AGORA).
+- Devolva uma SEGUNDA, separada por vírgula, SÓ quando ela acrescentar repertório realmente necessário. Ex.: "reconhece as letras mas não controla o lápis" → motor,aprendizado. Não escolha duas por segurança.
+- Nunca mais que duas.
+- Se nenhuma servir, ou se você não tiver confiança, deixe o campo VAZIO. Campo vazio é melhor que skill errada.
+- Use EXATAMENTE os nomes da lista, em minúscula. Nunca invente nome.`;
+}
+
+export function montarSystem(catalogo: readonly SkillDoCatalogo[]): string {
+  const comSkills = catalogo.length > 0;
+  return (
+    `Você classifica a INTENÇÃO da última mensagem de uma mãe/pai falando com a Ayla (assistente de famílias atípicas), no WhatsApp. Entenda a INTENÇÃO, não palavras exatas.
+
+Responda em UMA linha, no formato: ${comSkills ? "intencao|tema|aceite|skills" : "intencao|tema|aceite"}
+(a intenção e o tema em minúscula; o aceite em texto normal, ou "-" quando não houver${comSkills ? "; a skill em minúscula, ou vazio quando não houver" : ""})
 
 A INTENÇÃO é uma destas:
 - rotina_criar: quer MONTAR / criar / desenhar / organizar uma rotina visual (de um dia ou da semana). Ex.: "quero uma rotina", "vamos desenhar a rotina do Davi", "me ajuda a organizar melhor os dias dele", "preciso de rotina visual", "poderia montar um quadro pra ele?".
@@ -86,7 +208,9 @@ Regras do tema — errar aqui faz a Ayla perder o fio da conversa:
 - Só troque quando ela REALMENTE abrir outro assunto do desenvolvimento.
 - Se ela acabou de ESCOLHER um tema (você ofereceu os desafios dela e ela respondeu "alimentação", "o sono", "vamos pelo foco"), esse é o tema.
 - Assunto que não é do desenvolvimento (preço, acesso ao app, saudação, o dia dela) → "-"; mas se havia tema anterior e isso foi só uma pausa, mantenha o anterior.
-- Nunca invente chave fora da lista.`;
+- Nunca invente chave fora da lista.` + blocoSkills(catalogo)
+  );
+}
 
 export async function classificarIntencao(params: {
   texto: string;
@@ -98,11 +222,25 @@ export async function classificarIntencao(params: {
   temaAnterior?: string | null;
   /** O que a família marcou no cadastro — o tema costuma nascer daqui. */
   temasOnboarding?: string[];
+  /**
+   * As skills que este turno PODE escolher — `name` + `routing_keywords`, e
+   * nada além disso.
+   *
+   * Em runtime o chamador passa só as `ativo=true`: uma skill desligada nem
+   * chega ao prompt, então não há como ser roteada pra família real. Em teste,
+   * o conjunto pode ser explícito (incluindo as inativas) pra medir o desenho.
+   *
+   * Ausente ou vazio = o campo de skill nem entra no prompt, e o retorno é
+   * `skills: []` — exatamente o comportamento anterior a este campo existir.
+   */
+  catalogoSkills?: readonly SkillDoCatalogo[];
 }): Promise<TurnoClassificado> {
   const texto = (params.texto ?? "").trim();
   const anterior = params.temaAnterior ?? null;
+  const catalogo = params.catalogoSkills ?? [];
+  const permitidas = catalogo.map((s) => s.name);
   // Sem texto não há o que classificar — mas o tema não se perde por isso.
-  if (!texto) return { intencao: "outro", tema: anterior, aceite: null };
+  if (!texto) return { intencao: "outro", tema: anterior, aceite: null, skills: [] };
   try {
     const user = [
       // ⚠️ Rotulado com força de propósito. Sem o rótulo, esta linha derrubava
@@ -131,13 +269,21 @@ export async function classificarIntencao(params: {
       // 24 bastavam pra "intencao|tema". Com o "aceite" — uma frase — a
       // resposta era cortada no meio e o campo saía com sobra de raciocínio.
       max_tokens: 100,
-      system: SYSTEM,
+      system: montarSystem(catalogo),
       messages: [{ role: "user", content: user }],
     });
     const b = resp.content[0];
     const raw = (b?.type === "text" ? b.text : "").toLowerCase();
 
-    const [ladoIntencao, ladoTema, ladoAceite] = raw.split("|");
+    // ⚠️ A ORDEM DOS TRÊS PRIMEIROS NÃO MUDA. `skills` entrou como QUARTO campo
+    // justamente pra que a posição de intenção, tema e aceite continue a mesma.
+    // `separarCampos` ainda corrige o caso, medido em produção, em que o modelo
+    // emite três campos e põe a skill no lugar do aceite — protegendo o aceite
+    // de virar "motor" ou "foco".
+    const campos = separarCampos(raw, permitidas);
+    const ladoIntencao = campos.intencao;
+    const ladoTema = campos.tema;
+    const ladoAceite = campos.aceite;
     const i = ladoIntencao ?? raw;
 
     // Ordem importa: checar os específicos antes de "rotina" solto.
@@ -162,10 +308,10 @@ export async function classificarIntencao(params: {
     const bruto = (ladoAceite ?? "").trim();
     const aceite = bruto && bruto !== "-" && bruto.length > 3 ? bruto.slice(0, 200) : null;
 
-    return { intencao, tema, aceite };
+    return { intencao, tema, aceite, skills: campos.skills };
   } catch (e) {
     console.warn("[ayla:intent] classificação falhou:", e instanceof Error ? e.message : e);
     // Fallback seguro: o regex/reativo decide a intenção, e o tema não se perde.
-    return { intencao: "outro", tema: anterior, aceite: null };
+    return { intencao: "outro", tema: anterior, aceite: null, skills: [] };
   }
 }

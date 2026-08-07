@@ -22,7 +22,9 @@
 
 import {
   acharConclusaoDiagnostica,
+  confirmadosDoBloco,
   type AchadoDiagnostico,
+  type ContextoDeteccao,
 } from "./deteccao-diagnostico";
 import { acharConclusaoClinica } from "./deteccao-clinica";
 import {
@@ -39,7 +41,7 @@ export type DadosDoPiso = {
 export type Fronteira = {
   /** Vai pro log — é por aqui que se acompanha qual fronteira dispara mais. */
   nome: string;
-  achar: (texto: string) => AchadoDiagnostico[];
+  achar: (texto: string, contexto?: ContextoDeteccao) => AchadoDiagnostico[];
   instrucao: (achados: AchadoDiagnostico[]) => string;
   piso: (dados: DadosDoPiso) => string;
 };
@@ -47,6 +49,8 @@ export type Fronteira = {
 export const FRONTEIRAS: readonly Fronteira[] = [
   {
     nome: "clinica",
+    // A clínica não usa o contexto: o corpo não fica seguro porque um
+    // diagnóstico está cadastrado. Assinatura compatível, e só.
     achar: acharConclusaoClinica,
     instrucao: instrucaoRegenerarClinica,
     piso: respostaSeguraClinica,
@@ -73,9 +77,22 @@ export type Atravessamento = {
  * proíbem — e, na prática, quem atravessa a clínica costuma atravessar a de
  * diagnóstico pelo mesmo motivo.
  */
-export function fronteiraAtravessada(texto: string): Atravessamento | null {
+export function fronteiraAtravessada(
+  texto: string,
+  /**
+   * O bloco `<diagnostico_registrado>` que o canal já monta e já manda pro
+   * modelo. Passar o MESMO texto que o prompt lê é o ponto: enquanto o detector
+   * lia só a resposta, ele proibia o que o prompt mandava fazer — confirmar um
+   * diagnóstico que a própria família cadastrou. Omitir mantém o comportamento
+   * antigo, que é o mais restritivo.
+   */
+  diagnosticoRegistrado?: string | null,
+): Atravessamento | null {
+  const contexto: ContextoDeteccao = {
+    confirmados: confirmadosDoBloco(diagnosticoRegistrado),
+  };
   for (const fronteira of FRONTEIRAS) {
-    const achados = fronteira.achar(texto);
+    const achados = fronteira.achar(texto, contexto);
     if (achados.length > 0) return { fronteira, achados };
   }
   return null;
