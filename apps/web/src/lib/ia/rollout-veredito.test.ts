@@ -1,6 +1,11 @@
 import { describe, it, expect } from "vitest";
-// @ts-expect-error — módulo de bancada em .mjs, fora do build do app.
-import { ehConversacional, agruparPorFamilia, veredito } from "../../../../../scripts/bancada/migracao/rollout-veredito.mjs";
+// Módulo de bancada: `.mjs` pra rodar no node, com tipos em `.d.mts` pra o
+// typecheck valer aqui — ver o cabeçalho daquele arquivo.
+import {
+  ehConversacional,
+  agruparPorFamilia,
+  veredito,
+} from "../../../../../scripts/bancada/migracao/rollout-veredito.mjs";
 
 /**
  * O VERIFICADOR DE ROLLOUT não pode gritar vazamento por causa de áudio.
@@ -48,7 +53,7 @@ describe("os seis casos do verificador", () => {
 
   it("2. NÃO-autorizada no GPT conversando = VAZAMENTO", () => {
     const g = agruparPorFamilia([chamada(FORA, "openai", "conversa_web")]);
-    expect(veredito(g, autorizadas).vazamentos.map(([id]: [string]) => id)).toEqual([FORA]);
+    expect(veredito(g, autorizadas).vazamentos.map(([id]) => id)).toEqual([FORA]);
   });
 
   it("3. NÃO-autorizada usando whisper NÃO é vazamento", () => {
@@ -65,7 +70,7 @@ describe("os seis casos do verificador", () => {
   it("4. autorizada recebendo Claude = NÃO CHEGOU (config que não valeu)", () => {
     const g = agruparPorFamilia([chamada(AUT, "anthropic", "ayla_responder")]);
     const v = veredito(g, autorizadas);
-    expect(v.naoChegou.map(([id]: [string]) => id)).toEqual([AUT]);
+    expect(v.naoChegou.map(([id]) => id)).toEqual([AUT]);
     expect(v.vazamentos).toHaveLength(0);
   });
 
@@ -95,6 +100,7 @@ describe("a contagem por família", () => {
       chamada(AUT, "openai", "ayla_audio", "whisper-1"),
     ]);
     const f = g.get(AUT);
+    if (!f) throw new Error("a família autorizada tinha que estar no mapa");
     expect(f.openai).toBe(2);
     expect([...f.canais].sort()).toEqual(["web", "whatsapp"]);
     expect([...f.modelos]).not.toContain("whisper-1");
