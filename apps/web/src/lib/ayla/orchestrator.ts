@@ -57,7 +57,7 @@ import {
 import { classificarIntencao } from "./intent";
 import { carregarCatalogoSkills } from "./catalogo-skills";
 import { recuperarBoasPraticas, blocoBoasPraticas } from "@/lib/conhecimento/recuperar";
-import { dividirEmBolhas } from "./bolhas";
+import { dividirEmBolhas, ritmoDasBolhas, TETO_ESPERA_SEGUNDOS } from "./bolhas";
 import { resolverMembroAlvo } from "./membro-alvo";
 import {
   segurancaAberta,
@@ -2170,7 +2170,6 @@ async function enviarRespostaEmChunks(
   // sem ter como saber.
   const idsBolhas: Array<string | null> = [];
   let erro: string | null = null;
-  let primeiro = true;
 
   // A pessoa pediu um plano? Então a Ayla NÃO escreve o plano no chat — dá uma
   // resposta curta e o sistema entrega o plano (PDF + link). Vale tanto pro pedido
@@ -2242,9 +2241,14 @@ async function enviarRespostaEmChunks(
   // PUBLICAÇÃO — só agora, e só do texto aprovado. As bolhas e o ritmo são os
   // mesmos de antes: o efeito "digitando" nunca veio do streaming, vem do
   // delaySegundos por bolha.
-  for (const par of dividirEmBolhas(textoCompleto)) {
-    const delay = primeiro ? 2 : Math.min(Math.max(Math.round(par.length / 25), 2), 6);
-    primeiro = false;
+  // RITMO COM TETO. A fórmula antiga somava 13-14 s numa resposta de 3 bolhas —
+  // mais que o pipeline inteiro. Ver `ritmoDasBolhas`. O orçamento é comum a
+  // estas bolhas E ao link do plano, logo abaixo: os dois saem da mesma conta.
+  const bolhas = dividirEmBolhas(textoCompleto);
+  const ritmo = ritmoDasBolhas(bolhas);
+  let esperaGasta = ritmo.reduce((a, b) => a + b, 0);
+  for (const [i, par] of bolhas.entries()) {
+    const delay = ritmo[i];
     try {
       const r = await enviarTexto({ phoneE164: args.phone, texto: par, delaySegundos: delay });
       providerResp = r.raw;
@@ -2278,7 +2282,12 @@ async function enviarRespostaEmChunks(
     });
     if (nudge) {
       try {
-        const r = await enviarTexto({ phoneE164: args.phone, texto: nudge, delaySegundos: 3 });
+        // O link do plano é a última bolha do turno, e antes custava 3 s fixos
+        // POR CIMA das outras. Entra no mesmo orçamento: se a resposta já
+        // consumiu o teto, ele sai sem espera.
+        const delayNudge = Math.min(1, Math.max(0, TETO_ESPERA_SEGUNDOS - esperaGasta));
+        esperaGasta += delayNudge;
+        const r = await enviarTexto({ phoneE164: args.phone, texto: nudge, delaySegundos: delayNudge });
         idsBolhas.push(r.messageId);
         textoCompleto = `${textoCompleto}\n\n${nudge}`;
       } catch (e) {
