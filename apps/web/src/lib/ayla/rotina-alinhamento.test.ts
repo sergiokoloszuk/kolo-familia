@@ -243,3 +243,41 @@ describe("verdade operacional", () => {
     expect(GUIADA).toMatch(/no passado, não no futuro/);
   });
 });
+
+// ============================================================
+// A ROTINA QUE CHEGOU EM BRANCO (Manu, 07/08/2026)
+// ============================================================
+
+describe("o tema não é pergunta quando o interesse é conhecido", () => {
+  it("com interesse conhecido, ESCOLHE e escreve o tema", () => {
+    // O caso real: a Ayla escreveu "posso fazer no tema de contos e princesas,
+    // que eu sei que Manu gosta. Quer?" — e deixou `tema` nulo esperando o sim.
+    // Tema nulo não dispara geração: a mãe abriu a rotina e viu cards vazios.
+    expect(GUIADA).toMatch(/VOCÊ JÁ SABE do que \$\{nome\} gosta/);
+    expect(GUIADA).toMatch(/não pergunte, não peça confirmação, não escreva "quer\?"/);
+  });
+
+  it("diz o custo de deixar nulo, com todas as letras", () => {
+    expect(GUIADA).toMatch(/Tema nulo = NENHUM cartão é gerado/);
+    expect(GUIADA).toMatch(/deixar nulo é entregar quebrado/);
+  });
+
+  it("SEM interesse conhecido, aí sim oferece duas ideias", () => {
+    // A escapatória continua existindo — só deixou de valer quando a Ayla
+    // já sabe do que a criança gosta.
+    expect(GUIADA).toMatch(/Você não conhece um interesse dele/);
+    expect(GUIADA).toMatch(/deixe "tema" null/);
+  });
+
+  it("a geração só dispara com tema — é isso que a regra protege", () => {
+    expect(GUIADA).toMatch(/if \(!temSemana && visual && tema && ids\.length\)/);
+  });
+});
+
+describe("o título diz o que acontece no dia", () => {
+  it("não aceita 'Amanhã' nem o nome do dia sozinho", () => {
+    // "Amanhã" não diz nada quando a mãe abre a lista três dias depois.
+    expect(GUIADA).toMatch(/O "nome" DIZ O QUE ACONTECE NAQUELE DIA, não a data/);
+    expect(GUIADA).toMatch(/nunca "Amanhã" ou "Sábado" sozinhos/);
+  });
+});
