@@ -6,6 +6,7 @@ import { encerrarTrialPorNumeroDeOutraConta } from "@/lib/trial/ledger";
 import { inferGeneroDePalavra } from "@/lib/ayla/pronomes";
 import { perfilPrimario, buildDiagnosticosFormais } from "@/lib/onboarding/diagnostico";
 import { CHAVES_TEMA } from "@/lib/conducao/temas";
+import { checarLimiteDeCriancas } from "@/lib/familia/limite-criancas";
 
 /**
  * Persistência do onboarding CONVERSACIONAL (Fatia 3) — em ETAPAS (checkpoints),
@@ -37,7 +38,7 @@ export type ResponsavelInput = {
 
 export type SalvarResultado =
   | { ok: true }
-  | { ok: false; motivo: "whatsapp_duplicado" | "erro"; mensagem: string };
+  | { ok: false; motivo: "whatsapp_duplicado" | "limite" | "erro"; mensagem: string };
 
 /**
  * Rascunho — onde a pessoa está e o que já respondeu, gravado a CADA resposta.
@@ -136,6 +137,14 @@ export async function cpMembro(
     if (membroId) {
       await admin.from("membros_atipicos").update(campos).eq("id", membroId);
     } else {
+      // UMA CRIANÇA POR FAMÍLIA (não-admin). Este caminho já é idempotente —
+      // reusa o membro existente e só insere quando não há nenhum —, então a
+      // trava aqui não muda comportamento nenhum hoje. Ela existe pra que a
+      // regra viva no CAMINHO DE CRIAÇÃO, não na idempotência: se alguém
+      // reescrever este bloco amanhã, a regra continua de pé.
+      const limite = await checarLimiteDeCriancas(admin, { familyId, novos: 1 });
+      if (!limite.ok) return { ok: false, motivo: "limite", mensagem: limite.mensagem };
+
       const { data: novo, error } = await admin
         .from("membros_atipicos")
         .insert({ family_account_id: familyId, ...campos })
