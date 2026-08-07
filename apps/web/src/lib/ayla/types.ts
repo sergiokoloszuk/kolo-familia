@@ -19,6 +19,8 @@ export type AylaTipoProativa =
   | "emocional_streak"
   | "emocional_conquista"
   | "plano_seguimento"
+  /** "aquela sequência ajudou?" — UMA vez por rotina, ver 0075. */
+  | "rotina_seguimento"
   | "recuperacao_plano"
   | "recuperacao_rotina"
   | "fim_de_semana"

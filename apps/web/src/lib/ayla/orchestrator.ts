@@ -52,6 +52,7 @@ import {
   pedeRotinaDeUmDia,
   pedirRotinaDoDia,
   pedeEditarRotina,
+  lerFeedbackDaRotina,
   editarRotina,
 } from "./rotina-guiada";
 import { classificarIntencao } from "./intent";
@@ -59,6 +60,7 @@ import { carregarCatalogoSkills } from "./catalogo-skills";
 import { recuperarBoasPraticas, blocoBoasPraticas } from "@/lib/conhecimento/recuperar";
 import { dividirEmBolhas, ritmoDasBolhas, TETO_ESPERA_SEGUNDOS } from "./bolhas";
 import { semOutrosMembros } from "./membro-escopo";
+import { classificarFeedbackRotina } from "./rotina-feedback";
 import { resolverMembroAlvo } from "./membro-alvo";
 import {
   segurancaAberta,
@@ -434,6 +436,73 @@ export async function sendPlanoSeguimento(
       .from("planos")
       .update({ seguimento_enviado_em: agora.toISOString() })
       .eq("id", plano.id);
+  }
+  return r;
+}
+
+/**
+ * PROATIVA: a sequência ajudou? — UMA vez, e só uma.
+ *
+ * Irmã de `sendPlanoSeguimento`, e de propósito: a rotina virou artefato tanto
+ * quanto o plano (vira linhas, cartões e um PDF que a família cola na parede)
+ * e não tinha nenhuma volta. A família montava a sequência e nunca mais se
+ * falava nela — nem quando parava de ser necessária.
+ *
+ * A garantia de "no máximo uma retomada" é `seguimento_enviado_em` (0075),
+ * marcado no envio. Quem já contou espontaneamente que funcionou tem
+ * `resultado` preenchido e sai da fila antes de chegar aqui — é assim que a
+ * mãe não recebe "você chegou a testar?" no dia seguinte a ter dito que deu
+ * certo.
+ */
+export async function sendRotinaSeguimento(
+  supabase: SupabaseClient,
+  familyAccountId: string,
+  rotina: { id: string; nome: string | null; membro_atipico_id: string | null },
+  agora: Date = new Date(),
+): Promise<EnvioResultado> {
+  const podeRes = await podeEnviarProativa(
+    supabase,
+    { family_account_id: familyAccountId, agora },
+    "rotina_seguimento",
+  );
+  if (!podeRes.permitido) return { enviada: false, motivo: podeRes.motivo };
+
+  const ctx = await loadFamiliaParaEnvio(supabase, familyAccountId);
+  if (!ctx) return { enviada: false, motivo: "Sem contexto da família." };
+
+  const link = await gerarMagicLink(supabase, {
+    familyId: familyAccountId,
+    next: `/ludico/rotinas/${rotina.id}`,
+  });
+  // Sem link não se manda: a pergunta pede que ela olhe a sequência, e mandar
+  // sem o caminho pra ela vira cobrança.
+  if (!link) return { enviada: false, motivo: "Não consegui gerar o link da rotina." };
+
+  const membro = rotina.membro_atipico_id
+    ? ctx.membros.find((m) => m.id === rotina.membro_atipico_id)
+    : null;
+  const nome = (rotina.nome ?? "").trim();
+  const refRotina = nome ? ` de ${nome.toLowerCase()}` : "";
+  const refMembro = membro?.nome ? ` do ${membro.nome}` : "";
+  // Pergunta o que MUDOU, não se gostou: é isso que muda a próxima orientação.
+  const texto = `Oi, ${ctx.nomeMae}! Vocês chegaram a usar aquela sequência${refRotina}${refMembro}? Queria saber se ela facilitou alguma parte — ou se tem algum trecho que a gente precisa ajustar. É só tocar aqui:
+${link}`;
+
+  const r = await enviarEPersistir(supabase, {
+    family_account_id: familyAccountId,
+    membro_atipico_id: rotina.membro_atipico_id,
+    phone: ctx.whatsapp_e164,
+    texto,
+    category: "proativa",
+    tipo: "rotina_seguimento",
+    meta: { rotina_id: rotina.id },
+  });
+
+  if (r.enviada) {
+    await supabase
+      .from("rotinas")
+      .update({ seguimento_enviado_em: agora.toISOString() })
+      .eq("id", rotina.id);
   }
   return r;
 }
@@ -1800,18 +1869,40 @@ export async function processInbound(
 
   // 3c-rotina-editar. "faltou o lanche na terça", "tira o vôlei", "muda a rotina
   // de hoje" → ajusta a rotina existente (só quando NÃO está montando uma agora).
-  if (!seguranca.aberta && !rotinaConversa && (intent === "rotina_editar" || pedeEditarRotina(inbound.texto))) {
+  // Entra também por FEEDBACK ("já faz sozinho", "não funcionou até o jantar"):
+  // a família não pede edição com essas palavras, mas é edição que ela precisa.
+  // `lerFeedbackDaRotina` exige âncora no quadro daquele membro antes de mexer.
+  const ehFeedbackDeRotina =
+    !seguranca.aberta && !rotinaConversa && classificarFeedbackRotina(inbound.texto) !== null;
+  if (
+    !seguranca.aberta &&
+    !rotinaConversa &&
+    (intent === "rotina_editar" || pedeEditarRotina(inbound.texto) || ehFeedbackDeRotina)
+  ) {
     const ctxR = await loadFamiliaParaEnvio(supabase, family.id);
     const alvo = alvoDaRotina(ctxR, membroConversa);
     if (alvo.ambiguo) return await perguntarQualCrianca(supabase, family, ctxR, alvo.ambiguo);
     const membroId = alvo.membroId;
     if (ctxR && membroId) {
-      const msg = await editarRotina(supabase, {
+      // O membro vem de `alvoDaRotina`, então a rotina lida e o resultado
+      // gravado são SEMPRE do filho em foco — feedback de um não mexe no outro.
+      const feedback = await lerFeedbackDaRotina(supabase, {
+        familyId: family.id,
+        membroAtipicoId: membroId,
+        texto: inbound.texto,
+      });
+      // Leitura de feedback sem âncora no quadro: não é edição. `msg` volta
+      // null e o fluxo cai na conversa normal, logo abaixo — mesmo caminho de
+      // quando o editor reconhece que a mensagem não pedia mudança.
+      const semAncora =
+        ehFeedbackDeRotina && !feedback && intent !== "rotina_editar" && !pedeEditarRotina(inbound.texto);
+      const msg = semAncora ? null : await editarRotina(supabase, {
         familyId: family.id,
         membroAtipicoId: membroId,
         texto: inbound.texto,
         timezone: null,
         phoneE164: ctxR.whatsapp_e164,
+        feedback,
       });
       if (msg) {
         const resp = await enviarEPersistir(supabase, {
