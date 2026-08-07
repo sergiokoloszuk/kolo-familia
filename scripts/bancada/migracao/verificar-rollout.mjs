@@ -27,7 +27,7 @@ import { fileURLToPath } from "node:url";
 import { createClient } from "@supabase/supabase-js";
 // O veredito mora fora daqui porque é testado — ver rollout-veredito.mjs e o
 // caso do whisper-1 que virou alarme falso de vazamento.
-import { FEATURES_CONVERSA, agruparPorFamilia, veredito } from "./rollout-veredito.mjs";
+import { FEATURES_CONVERSA, agruparPorFamilia, veredito, semAllowlist } from "./rollout-veredito.mjs";
 
 const AQUI = dirname(fileURLToPath(import.meta.url));
 const RAIZ = resolve(AQUI, "../../..");
@@ -60,6 +60,26 @@ const modo = (process.env.IA_PROVIDER ?? "").trim() || "(ausente)";
 console.log(`\nmodo (IA_PROVIDER) ........ ${modo}`);
 console.log(`famílias autorizadas ...... ${autorizadas.size}`);
 console.log(`janela .................... últimas ${HORAS}h\n`);
+
+// ⚠️ NÃO VERIFICÁVEL É UM ESTADO, e é diferente dos outros dois. As variáveis
+// do rollout vivem no ambiente da VERCEL, não no `.env.local`: rodando daqui a
+// allowlist vem vazia, e lista vazia faria TODA família no GPT parecer intrusa.
+// Foi o segundo alarme falso de 07/08 — o relatório mandou dar rollback de uma
+// família que estava autorizada. Melhor não responder do que responder errado.
+if (semAllowlist(autorizadas)) {
+  console.log("═══ NÃO VERIFICÁVEL ═══");
+  console.log("  Falta OPENAI_TEST_FAMILY_IDS neste ambiente — sem ela não dá pra");
+  console.log("  dizer quem está autorizado, e ausência de lista NÃO é vazamento.");
+  console.log("  Ela vive nas Environment Variables da Vercel (Production).");
+  console.log("  Rode com a lista à mão, sem gravar em arquivo nenhum:");
+  console.log(
+    '    OPENAI_TEST_FAMILY_IDS="id1,id2,id3" node scripts/bancada/migracao/verificar-rollout.mjs\n',
+  );
+  // 2, e não 1: falha de configuração não pode ser confundida com veredito
+  // negativo por quem só olha o código de saída.
+  process.exitCode = 2;
+  process.exit();
+}
 
 const desde = new Date(Date.now() - HORAS * 3600_000).toISOString();
 const { data, error } = await sb

@@ -9,6 +9,7 @@ import { pronomesPara } from "@/lib/ayla/pronomes";
 // Ver lib/conducao/diretrizes.ts. A mesma "cabeça" nos dois canais.
 import { nucleoConducao, FRONTEIRA_DIAGNOSTICO } from "@/lib/conducao/diretrizes";
 import { blocoBoasPraticas } from "@/lib/conhecimento/recuperar";
+import { angulosUsados, blocoProgressao } from "@/lib/conducao/angulos";
 import {
   formasDeEntrega,
   INTERESSE_COMO_VEICULO,
@@ -425,6 +426,14 @@ export function assemblePrompt(params: {
     for (const h of ctx.historico) {
       messages.push({ role: h.papel, content: h.conteudo });
     }
+    // PROGRESSÃO — o mesmo freio do WhatsApp. Aqui o histórico vem como turnos
+    // de verdade (role user/assistant), então os turnos DELA são os
+    // `assistant`. A web tem a mesma tendência a reoferecer a orientação que
+    // já deu; a regra é dos dois canais, não de um.
+    const progressao = blocoProgressao(
+      angulosUsados(ctx.historico.filter((h) => h.papel === "assistant").map((h) => h.conteudo)),
+    );
+    if (progressao) messages.push({ role: "user", content: progressao });
   }
 
   const wrapper =

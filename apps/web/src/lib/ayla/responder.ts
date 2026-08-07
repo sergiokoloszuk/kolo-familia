@@ -14,6 +14,7 @@ import { pronomesPara, type Genero, type CuidadorDescrito } from "./pronomes";
 // (formato e idioma). A identidade agora vive no CÓDIGO (não mais no banco
 // voz_ayla), o que elimina o drift banco×código.
 import { nucleoConducao } from "@/lib/conducao/diretrizes";
+import { angulosUsados, blocoProgressao } from "@/lib/conducao/angulos";
 import {
   formasDeEntrega,
   INTERESSE_COMO_VEICULO,
@@ -458,8 +459,19 @@ ${params.diagnosticoRegistrado.trim()}`);
         return h.sobre ? `${quem} (sobre ${h.sobre}): ${h.texto}` : `${quem}: ${h.texto}`;
       })
       .join("\n");
+    // PROGRESSÃO. A regra da VOZ ("avance a conversa") não segurou: em dois
+    // turnos seguidos a Ayla repetiu sair da loja / falar pouco / pressão, com
+    // a própria resposta anterior no histórico e tudo. Aqui ela recebe a lista
+    // do que já orientou — concreto é mais difícil de atropelar que exortação.
+    // Só os turnos DELA, e nunca os que são sobre outro irmão.
+    const progressao = blocoProgressao(
+      angulosUsados(
+        params.historico.filter((h) => h.de === "ayla" && !h.sobre).map((h) => h.texto),
+      ),
+    );
     linhas.push(
       `\n<conversa_recente>\n${hist}\n</conversa_recente>` +
+        (progressao ? `\n${progressao}` : "") +
         // ⚠️ A REGRA QUE FALTAVA. Sem ela, a Ayla disse a uma mãe que a Manu
         // "já mostrou que se concentra melhor com as mãos ocupadas" — o que
         // quem tinha mostrado era o irmão, o Mario.

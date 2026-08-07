@@ -1,10 +1,13 @@
 import { describe, it, expect } from "vitest";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 // Módulo de bancada: `.mjs` pra rodar no node, com tipos em `.d.mts` pra o
 // typecheck valer aqui — ver o cabeçalho daquele arquivo.
 import {
   ehConversacional,
   agruparPorFamilia,
   veredito,
+  semAllowlist,
 } from "../../../../../scripts/bancada/migracao/rollout-veredito.mjs";
 
 /**
@@ -89,6 +92,51 @@ describe("os seis casos do verificador", () => {
     const v = veredito(g, autorizadas);
     expect(v.vazamentos).toHaveLength(0);
     expect(v.semDado).toHaveLength(2); // ninguém conversou de fato
+  });
+});
+
+describe("sem allowlist não existe veredito", () => {
+  it("lista vazia é reconhecida como 'não sei', não como 'ninguém autorizado'", () => {
+    expect(semAllowlist(new Set())).toBe(true);
+    expect(semAllowlist(autorizadas)).toBe(false);
+  });
+
+  it("o veredito RECUSA responder em vez de acusar a família toda", () => {
+    // O segundo alarme falso: rodado da máquina local, onde
+    // OPENAI_TEST_FAMILY_IDS não existe, toda família no GPT virava intrusa e
+    // o relatório mandava dar rollback. A família era autorizada.
+    const g = agruparPorFamilia([chamada(AUT, "openai", "ayla_responder")]);
+    expect(() => veredito(g, new Set())).toThrow(/allowlist vazia/);
+  });
+});
+
+describe("o script declara NÃO VERIFICÁVEL antes de tentar o veredito", () => {
+  // Este teste existe porque o guard JÁ se perdeu uma vez: o import de
+  // `semAllowlist` entrou no commit e o bloco que o usa não. O script ficou
+  // importando uma função que nunca chamava — e, em vez da mensagem, estourava
+  // exceção. Fonte-texto é feio, mas pega exatamente esse tipo de perda.
+  const SCRIPT = readFileSync(
+    resolve(__dirname, "../../../../../scripts/bancada/migracao/verificar-rollout.mjs"),
+    "utf8",
+  );
+
+  it("chama o guard, e não só importa", () => {
+    expect(SCRIPT).toMatch(/if \(semAllowlist\(autorizadas\)\)/);
+  });
+
+  it("o guard vem ANTES de qualquer veredito", () => {
+    expect(SCRIPT.indexOf("if (semAllowlist(autorizadas))")).toBeLessThan(
+      SCRIPT.indexOf("veredito(porFamilia"),
+    );
+  });
+
+  it("sai com código próprio — configuração faltando não é veredito negativo", () => {
+    expect(SCRIPT).toMatch(/NÃO VERIFICÁVEL/);
+    expect(SCRIPT).toMatch(/process\.exitCode = 2/);
+  });
+
+  it("a mensagem diz, com todas as letras, que ausência de lista não é vazamento", () => {
+    expect(SCRIPT).toMatch(/ausência de lista NÃO é vazamento/);
   });
 });
 
