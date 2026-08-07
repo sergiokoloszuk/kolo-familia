@@ -48,10 +48,34 @@ export function agruparPorFamilia(chamadas) {
 }
 
 /**
+ * Sem allowlist, NÃO EXISTE veredito.
+ *
+ * ⚠️ SEGUNDO ALARME FALSO (07/08/2026, minutos depois do primeiro): rodei o
+ * verificador da minha máquina. `OPENAI_TEST_FAMILY_IDS` vive no ambiente da
+ * Vercel, não no `.env.local` — então a lista veio vazia, TODA família no GPT
+ * pareceu não-autorizada, e o relatório mandou dar rollback. A família era
+ * autorizada.
+ *
+ * Lista vazia significa "não sei quem pode", e não sei nunca pode virar
+ * acusação. Quem chama tem que parar antes de ler o veredito.
+ */
+export function semAllowlist(autorizadas) {
+  return autorizadas.size === 0;
+}
+
+/**
  * Os dois erros que importam, e a diferença entre "está errado" e "ninguém
  * escreveu ainda" — que é a confusão que faz mexer no que não está quebrado.
+ *
+ * Lança se a allowlist estiver vazia: devolver `vazamentos` cheio ali seria
+ * mentir com a cara de dado.
  */
 export function veredito(porFamilia, autorizadas) {
+  if (semAllowlist(autorizadas)) {
+    throw new Error(
+      "allowlist vazia — sem OPENAI_TEST_FAMILY_IDS não dá pra dizer quem está autorizado",
+    );
+  }
   const lista = [...porFamilia];
   return {
     // GRAVE: família que não pediu pra testar está no GPT.
