@@ -25,6 +25,9 @@ import { readFileSync, existsSync } from "node:fs";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { createClient } from "@supabase/supabase-js";
+// O veredito mora fora daqui porque é testado — ver rollout-veredito.mjs e o
+// caso do whisper-1 que virou alarme falso de vazamento.
+import { FEATURES_CONVERSA, agruparPorFamilia, veredito } from "./rollout-veredito.mjs";
 
 const AQUI = dirname(fileURLToPath(import.meta.url));
 const RAIZ = resolve(AQUI, "../../..");
@@ -48,9 +51,6 @@ const sb = createClient(
   { auth: { persistSession: false } },
 );
 
-// A conversa, e só ela. Se um destes aparecer no OpenAI, algo além da camada
-// conversacional migrou — e isso é um achado, não um detalhe.
-const FEATURES_CONVERSA = ["ayla_responder", "conversa_web"];
 
 const autorizadas = new Set(
   (process.env.OPENAI_TEST_FAMILY_IDS ?? "").split(/[,\s]+/).map((s) => s.trim()).filter(Boolean),
@@ -73,29 +73,10 @@ if (error) {
 }
 
 const chamadas = data ?? [];
-const porFamilia = new Map();
-for (const r of chamadas) {
-  const f = porFamilia.get(r.family_account_id) ?? {
-    openai: 0,
-    anthropic: 0,
-    usd: 0,
-    modelos: new Set(),
-    canais: new Set(),
-  };
-  f[r.provider] = (f[r.provider] ?? 0) + 1;
-  f.usd += Number(r.custo_usd ?? 0);
-  f.modelos.add(r.model);
-  f.canais.add(r.feature === "conversa_web" ? "web" : "whatsapp");
-  porFamilia.set(r.family_account_id, f);
-}
-
-// ── OS DOIS ERROS QUE IMPORTAM ─────────────────────────────────────────
-// VAZAMENTO: família não autorizada atendida pelo GPT. É o erro grave — alguém
-// que não pediu pra testar está testando.
-const vazamentos = [...porFamilia].filter(([id, f]) => f.openai > 0 && !autorizadas.has(id));
-// NÃO CHEGOU: família autorizada que conversou e recebeu Claude. Configuração
-// que não valeu (env não aplicada, deploy velho, id errado).
-const naoChegou = [...porFamilia].filter(([id, f]) => autorizadas.has(id) && f.anthropic > 0);
+// O agrupador refiltra por feature de propósito: a `.in()` acima é otimização,
+// não é a garantia. Áudio (whisper-1) no OpenAI é normal e nunca conta.
+const porFamilia = agruparPorFamilia(chamadas);
+const { vazamentos, naoChegou, semDado } = veredito(porFamilia, autorizadas);
 
 console.log("── FAMÍLIAS AUTORIZADAS");
 for (const id of autorizadas) {
@@ -128,7 +109,6 @@ if (naoChegou.length) {
   for (const [id, f] of naoChegou) console.log(`      ${id}  claude:${f.anthropic}`);
   console.log("    Provável: env não aplicada, deploy anterior à variável, ou id diferente.");
 }
-const semDado = [...autorizadas].filter((id) => !porFamilia.has(id));
 if (!vazamentos.length && !naoChegou.length) {
   console.log(`  ✓ nenhum vazamento e nenhuma autorizada no Claude`);
   if (semDado.length === autorizadas.size)
