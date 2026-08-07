@@ -15,6 +15,7 @@ import {
   type TarefaProposta,
 } from "@/lib/ludico/rotina-ia-core";
 import { rotinaParaPdf } from "@/lib/ludico/rotina-pdf";
+import { alvoDoPedido, RESPOSTA_PDF } from "./rotina-pdf-rota";
 import { enviarDocumento } from "./whatsappSender";
 import {
   classificarFeedbackRotina,
@@ -488,8 +489,17 @@ async function aplicarRotina(
   return rotinaId;
 }
 
-/** Gera o PDF da rotina, sobe no Storage e manda como documento. Silencioso. */
-async function entregarPdfDaRotina(
+/**
+ * Gera o PDF da rotina, sobe no Storage e manda como documento.
+ *
+ * ⚠️ DEVOLVE SE ENVIOU. Era `void` e engolia a falha em silêncio — bastava
+ * enquanto o PDF era um brinde no fim da montagem. Deixou de bastar quando a
+ * mãe passou a PEDIR o PDF: sem retorno, quem responde não sabe se pode dizer
+ * "enviei", e foi assim que a Ayla afirmou um envio que não aconteceu
+ * (Rosângela, 07/08/2026). Os chamadores antigos ignoram o retorno e seguem
+ * iguais.
+ */
+export async function entregarPdfDaRotina(
   supabase: SupabaseClient,
   params: {
     familyId: string;
@@ -504,7 +514,7 @@ async function entregarPdfDaRotina(
      *  Reaproveitar evita uma segunda fonte de verdade. */
     fraseDeApoio?: string | null;
   },
-): Promise<void> {
+): Promise<boolean> {
   try {
     const comDia = params.rotinas.filter((r) => r.dia_semana != null);
     const semDia = params.rotinas.filter((r) => r.dia_semana == null);
@@ -539,9 +549,17 @@ async function entregarPdfDaRotina(
     const { data: signed } = await supabase.storage.from("imagens").createSignedUrl(path, 3600);
     if (!signed?.signedUrl) throw new Error("sem signed url");
     const fileName = `rotina-${params.nome}`.replace(/[^\w\sÀ-ÿ-]/g, "").slice(0, 40).trim() + ".pdf";
-    await enviarDocumento({ phoneE164: params.phoneE164, url: signed.signedUrl, fileName });
+    const envio = await enviarDocumento({
+      phoneE164: params.phoneE164,
+      url: signed.signedUrl,
+      fileName,
+    });
+    // `messageId` é o mais forte que existe aqui: prova que a Z-API ACEITOU o
+    // arquivo. Não prova entrega nem leitura — e a copy não diz isso.
+    return Boolean(envio?.messageId);
   } catch (e) {
     console.warn("[ayla:rotina-guiada] falha no PDF:", e instanceof Error ? e.message : e);
+    return false;
   }
 }
 
@@ -1283,6 +1301,99 @@ function sanitizarTarefasSimples(bruto: unknown): TarefaProposta[] {
  * sequência) ou por uma etapa que está lá dentro. Sem as duas, devolve null e
  * a mensagem segue como conversa normal.
  */
+/**
+ * ENTREGA O ARTEFATO IMPRIMÍVEL — e devolve SÓ o que aconteceu de verdade.
+ *
+ * Devolve `null` quando não há nada determinístico a fazer (nenhuma rotina pra
+ * apontar já é tratado com texto próprio; `null` fica pro caso de erro de
+ * leitura). Nunca devolve uma frase de sucesso sem o envio ter sido aceito.
+ */
+export async function entregarArtefatoImprimivel(
+  supabase: SupabaseClient,
+  params: {
+    familyId: string;
+    membroAtipicoId: string;
+    texto: string;
+    phoneE164: string;
+    nome: string;
+  },
+): Promise<string | null> {
+  try {
+    const { data: rots } = await supabase
+      .from("rotinas")
+      .select("id, nome, tema, cards_status, dia_semana, created_at")
+      .eq("family_account_id", params.familyId)
+      .eq("membro_atipico_id", params.membroAtipicoId)
+      .order("created_at", { ascending: false })
+      .limit(5);
+    const lista = (rots ?? []) as Array<{
+      id: string;
+      nome: string;
+      tema: string | null;
+      cards_status: string | null;
+      dia_semana: number | null;
+    }>;
+    if (lista.length === 0) return RESPOSTA_PDF.semRotina;
+
+    // DUAS PLAUSÍVEIS: uma pergunta curta, e só. Nada de pedir a sequência de
+    // novo — ela já deu, e repetir foi metade do estrago do caso real.
+    const recentes = lista.filter((r) => r.dia_semana == null);
+    const candidatas = recentes.length > 0 ? recentes : lista;
+    if (candidatas.length > 1 && candidatas[0].nome !== candidatas[1].nome) {
+      return RESPOSTA_PDF.qualDelas([candidatas[0].nome, candidatas[1].nome]);
+    }
+    const rot = candidatas[0];
+
+    if (alvoDoPedido(params.texto) === "cartoes") {
+      const status = rot.cards_status ?? "nenhum";
+      const link =
+        (await gerarMagicLink(supabase, {
+          familyId: params.familyId,
+          next: `/ludico/rotinas/${rot.id}`,
+        })) ?? "";
+      if (status === "pronto") {
+        // Os cartões existem: o PDF deles existe, e vive na rota do app.
+        return link
+          ? `Os cartões dessa rotina estão prontos 💛 O PDF pra recortar tá aqui:
+${link}`
+          : RESPOSTA_PDF.falhou;
+      }
+      if (status === "gerando") return RESPOSTA_PDF.cartoesJaGerando(link);
+      if (!rot.tema) {
+        // Sem tema não há cartão — e inventar um seria decidir pela família.
+        return `Pra fazer os cartões eu preciso de um tema pra ilustrar 🌿 Do que ${params.nome} gosta mais?`;
+      }
+      await dispararGeracao(rot.id, rot.tema);
+      return RESPOSTA_PDF.cartoesGerando(link);
+    }
+
+    // PDF SIMPLES: imediato, e NÃO depende de cards_status.
+    const { data: tarefas } = await supabase
+      .from("rotina_tarefas")
+      .select("texto, hora, ordem")
+      .eq("rotina_id", rot.id)
+      .order("ordem", { ascending: true });
+    const linhas = ((tarefas ?? []) as Array<{ texto: string; hora: string | null }>).map((t) => ({
+      texto: t.texto,
+      hora: t.hora ?? null,
+    }));
+    if (linhas.length === 0) return RESPOSTA_PDF.semRotina;
+
+    const enviou = await entregarPdfDaRotina(supabase, {
+      familyId: params.familyId,
+      phoneE164: params.phoneE164,
+      nome: params.nome,
+      tema: rot.tema,
+      rotinas: [{ nome: rot.nome, dia_semana: rot.dia_semana, tarefas: linhas }],
+    });
+    // A ÚNICA linha que autoriza dizer "enviei".
+    return enviou ? RESPOSTA_PDF.enviado : RESPOSTA_PDF.falhou;
+  } catch (e) {
+    console.warn("[ayla:pdf-rota]", e instanceof Error ? e.message : e);
+    return RESPOSTA_PDF.falhou;
+  }
+}
+
 export async function lerFeedbackDaRotina(
   supabase: SupabaseClient,
   params: { familyId: string; membroAtipicoId: string; texto: string },
