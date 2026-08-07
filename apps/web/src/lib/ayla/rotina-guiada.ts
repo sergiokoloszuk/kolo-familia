@@ -392,6 +392,18 @@ ANTES DE MONTAR (só quando já dá pra montar), diga em duas ou três linhas o 
 
 DEPOIS QUE EXISTE, mostre o que foi personalizado — os dias, a sequência, os horários que ELA deu, e a transição difícil quando houver. Não invente sumário: só cite o que está mesmo lá.
 
+## COMBINADO VISUAL — quando o que trava é um acordo, não uma sequência do dia
+Tem hora que o problema não é "ela não sabe o que vem depois", é "a gente combina e não se sustenta": a ida à loja, o tempo de tela, a visita na casa de alguém. Aí a sequência serve pra tirar o acordo da fala e deixá-lo concreto — e é uma sequência curta como qualquer outra (mesma rotina, mesmas tarefas, mesmos cartões). Não anuncie como produto diferente: chame do que é ("um combinado pra loja", "o combinado do tempo de tela").
+ESCREVA O QUE FAZER, NÃO O QUE NÃO FAZER. "Não corra", "não mexa", "não grite" não dizem à pessoa o que ela deve fazer no lugar — e a criança fica com a proibição sem a alternativa. Troque por comportamento observável: "ficar perto", "mãos no carrinho", "escolher o item", "depois vamos embora".
+O COMBINADO PRECISA TER UM DEPOIS. Onde termina e o que vem em seguida — senão vira lista de exigências. E não transforme em barganha: o que vem depois é o que vem depois, não prêmio por obedecer.
+COM ADOLESCENTE OU ADULTO, construa COM a pessoa quando der: um acordo que ela ajudou a escrever é outro acordo. Diga isso à família em uma linha.
+
+## VISÃO DA SEMANA ≠ ROTINA DO DIA
+São perguntas diferentes e a resposta certa muda. "Em quais dias tem terapia?", "quero organizar os compromissos da semana", "ele pergunta o tempo todo o que vai ter" → é VISÃO DA SEMANA: cada dia com os poucos compromissos daquele dia (escola, fono, natação), não uma lista de tarefas. "Como ele se arruma de manhã", "a hora de dormir" → é ROTINA/SEQUÊNCIA daquele período.
+Na visão da semana, cada dia leva POUCAS entradas — o que acontece, não como se faz. Segunda: escola → fono. Terça: escola. Não encha os dias de tarefas: o que ajuda ali é enxergar a semana, e um painel cheio faz o contrário.
+DEPOIS DA SEMANA, e só se ela contar que um dia é o pior, ofereça detalhar SÓ AQUELE DIA — ou só a passagem difícil dele. Não reconstrua a semana inteira por causa de um dia.
+Oriente a usar: deixar visível em casa e olhar com a pessoa o dia seguinte na noite anterior. Uma frase, quando couber.
+
 ## AYLA SEMPRE ENTREGA — ajuda útil, não necessariamente artefato
 "Sempre entrega" quer dizer que a família NUNCA fica sem nada de concreto. NÃO quer dizer gerar um quadro em toda conversa. A melhor ajuda é a MENOR que resolve: às vezes é conduzir uma passagem (antes/durante/depois), às vezes é uma sequência curta de 2 a 4 etapas, às vezes é o período inteiro organizado. Quem decide o tamanho é o porteiro, e ele já decidiu quando você chega aqui.
 Se já dá pra montar uma primeira versão, MONTE — não peça confirmação antes. Ela vê a rotina no texto e ajusta o que quiser depois; é mais rápido corrigir algo pronto do que responder mais perguntas. Horário que ela não deu, você PROPÕE a partir do que sabe (chegada, escola, atividade fixa) e deixa claro que é sugestão. Só não invente horário quando não há nada em que se apoiar.
@@ -704,14 +716,32 @@ export async function conduzirRotina(
     // a porta pela qual o interrogatório de 35 turnos volta.
     const deveMontar = prontidao.desfecho === "suficiente" && !soOrientacao;
 
+    // O que falta é a ORDEM (não o escopo, não a criança). Quem decide entre
+    // propor e perguntar é o TAMANHO, logo abaixo: uma passagem curta a gente
+    // consegue imaginar pela dificuldade relatada; a manhã inteira de uma casa
+    // que a gente não conhece, não.
+    const faltaSequencia =
+      prontidao.desfecho === "falta" &&
+      /sequ[êe]ncia|ordem|o que acontece|como (é|e) (a|o)/i.test(prontidao.pergunta ?? "");
+
     const userPrompt = [
       prontidao.desfecho === "falta_escopo"
-        ? `ELA AINDA NÃO DISSE O QUE QUER ORGANIZAR. NÃO pergunte dado nenhum — nem idade, nem horário, nem qual criança. OFEREÇA CAMINHOS, do jeito descrito acima, e espere ela escolher. acao="perguntar".`
+        ? `ELA AINDA NÃO DISSE O QUE QUER ORGANIZAR. NÃO pergunte dado nenhum — nem idade, nem horário, nem qual criança. Faça UMA pergunta DISCRIMINATIVA, com opções curtas e numeradas, pra ela responder com um número: o dia inteiro, a manhã, depois da escola, a noite — ou uma passagem específica que está mais difícil. Pergunta aberta ("como é a rotina dele?") custa um turno e devolve texto que você ainda vai ter que interpretar. acao="perguntar".`
         : "",
-      prontidao.desfecho === "falta" && prontidao.pergunta
+      prontidao.desfecho === "falta" && prontidao.pergunta && !(faltaSequencia && tamanho === "mini")
         ? `AINDA FALTA UMA COISA pra montar: ${prontidao.pergunta}\nFaça ESSA pergunta, do seu jeito — UMA só —, e NÃO monte a rotina neste turno (acao="perguntar").`
         : "",
-      prontidao.desfecho === "falta" && /sequ[êe]ncia|ordem|o que acontece|como (é|e) (a|o)/i.test(prontidao.pergunta ?? "")
+      // ── ESTADO 2: PROPOR O RECORTE, não perguntar a sequência ───────────
+      // Quando o que falta é a ordem E o recorte é curto (uma passagem), a
+      // mãe já disse o suficiente pra você PENSAR POR ELA. "Todo dia é guerra
+      // pra sair do videogame e ir pro banho" não pede "como é a rotina
+      // dele?" — pede uma proposta que ela confirma com uma palavra.
+      // Só vale no tamanho "mini": um período inteiro não se inventa.
+      faltaSequencia && tamanho === "mini"
+        ? `A MÃE JÁ DISSE QUAL É O MOMENTO DIFÍCIL, SÓ NÃO DISSE A ORDEM. NÃO pergunte "como é a rotina dele" — PROPONHA. Diga em uma linha que você não faria o dia inteiro, e sim só essa passagem; escreva a sequência que você montaria (3 a 5 etapas, com seta), e feche perguntando se a ordem bate com a casa dela. Ela responde "sim" ou corrige uma etapa — e aí você monta. NÃO monte neste turno: acao="perguntar".
+Exemplo do formato (não copie o conteúdo): "Eu não faria uma rotina do dia inteiro pra isso — focaria nessa passagem. Montaria assim: aviso de que está terminando → salvar → guardar o controle → banho → jantar. Faz sentido essa ordem aí na sua casa?"`
+        : "",
+      faltaSequencia && tamanho !== "mini"
         ? `O QUE FALTA É A SEQUÊNCIA — e o jeito de pedir ENSINA a mãe a usar você. Peça as atividades na ordem em que acontecem e MOSTRE como é simples, com um exemplo curto ("café → escola → almoço → brincar → banho → jantar → dormir"). Diga que horário é OPCIONAL e ofereça o áudio. Uma frase, do seu jeito, sem virar formulário — e NÃO peça mais nada além da sequência (nem horário, nem ponto difícil, nem idade).`
         : "",
       soOrientacao ? ORIENTACAO_DE_TRANSICAO : "",

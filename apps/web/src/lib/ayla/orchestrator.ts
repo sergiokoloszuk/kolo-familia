@@ -438,6 +438,73 @@ export async function sendPlanoSeguimento(
   return r;
 }
 
+/**
+ * PROATIVA: a sequência ajudou? — UMA vez, e só uma.
+ *
+ * Irmã de `sendPlanoSeguimento`, e de propósito: a rotina virou artefato tanto
+ * quanto o plano (vira linhas, cartões e um PDF que a família cola na parede)
+ * e não tinha nenhuma volta. A família montava a sequência e nunca mais se
+ * falava nela — nem quando parava de ser necessária.
+ *
+ * A garantia de "no máximo uma retomada" é `seguimento_enviado_em` (0071),
+ * marcado no envio. Quem já contou espontaneamente que funcionou tem
+ * `resultado` preenchido e sai da fila antes de chegar aqui — é assim que a
+ * mãe não recebe "você chegou a testar?" no dia seguinte a ter dito que deu
+ * certo.
+ */
+export async function sendRotinaSeguimento(
+  supabase: SupabaseClient,
+  familyAccountId: string,
+  rotina: { id: string; nome: string | null; membro_atipico_id: string | null },
+  agora: Date = new Date(),
+): Promise<EnvioResultado> {
+  const podeRes = await podeEnviarProativa(
+    supabase,
+    { family_account_id: familyAccountId, agora },
+    "rotina_seguimento",
+  );
+  if (!podeRes.permitido) return { enviada: false, motivo: podeRes.motivo };
+
+  const ctx = await loadFamiliaParaEnvio(supabase, familyAccountId);
+  if (!ctx) return { enviada: false, motivo: "Sem contexto da família." };
+
+  const link = await gerarMagicLink(supabase, {
+    familyId: familyAccountId,
+    next: `/ludico/rotinas/${rotina.id}`,
+  });
+  // Sem link não se manda: a pergunta pede que ela olhe a sequência, e mandar
+  // sem o caminho pra ela vira cobrança.
+  if (!link) return { enviada: false, motivo: "Não consegui gerar o link da rotina." };
+
+  const membro = rotina.membro_atipico_id
+    ? ctx.membros.find((m) => m.id === rotina.membro_atipico_id)
+    : null;
+  const nome = (rotina.nome ?? "").trim();
+  const refRotina = nome ? ` de ${nome.toLowerCase()}` : "";
+  const refMembro = membro?.nome ? ` do ${membro.nome}` : "";
+  // Pergunta o que MUDOU, não se gostou: é isso que muda a próxima orientação.
+  const texto = `Oi, ${ctx.nomeMae}! Vocês chegaram a usar aquela sequência${refRotina}${refMembro}? Queria saber se ela facilitou alguma parte — ou se tem algum trecho que a gente precisa ajustar. É só tocar aqui:
+${link}`;
+
+  const r = await enviarEPersistir(supabase, {
+    family_account_id: familyAccountId,
+    membro_atipico_id: rotina.membro_atipico_id,
+    phone: ctx.whatsapp_e164,
+    texto,
+    category: "proativa",
+    tipo: "rotina_seguimento",
+    meta: { rotina_id: rotina.id },
+  });
+
+  if (r.enviada) {
+    await supabase
+      .from("rotinas")
+      .update({ seguimento_enviado_em: agora.toISOString() })
+      .eq("id", rotina.id);
+  }
+  return r;
+}
+
 // ============================================================
 // PROATIVA: Recuperação pós-plano — reabre a conversa que morreu
 // ============================================================
