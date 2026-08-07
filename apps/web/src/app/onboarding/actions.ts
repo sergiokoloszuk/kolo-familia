@@ -8,6 +8,7 @@ import { idadeAnos, dataBrParaIso } from "@/lib/idade";
 import { capitalizarNome } from "@/lib/nome";
 import { chaveTelefoneBR } from "@/lib/telefone";
 import { encerrarTrialPorNumeroDeOutraConta } from "@/lib/trial/ledger";
+import { checarLimiteDeCriancas } from "@/lib/familia/limite-criancas";
 import {
   perfilPrimario,
   buildDiagnosticosFormais,
@@ -317,6 +318,15 @@ export async function saveTela2(raw: Tela2Input) {
   const existentes = data.membros.filter((m) => m.id);
 
   if (novos.length > 0) {
+    // UMA CRIANÇA POR FAMÍLIA (não-admin). No servidor, antes do insert: este
+    // formulário manda um ARRAY, então é por aqui que uma segunda criança
+    // entrava — sem nenhum obstáculo até 08/08/2026.
+    const limite = await checarLimiteDeCriancas(supabase, {
+      familyId: family.id,
+      novos: novos.length,
+    });
+    if (!limite.ok) throw new Error(limite.mensagem);
+
     const { error } = await supabase
       .from("membros_atipicos")
       .insert(novos.map((m) => ({ family_account_id: family.id, ...camposMembro(m) })));
