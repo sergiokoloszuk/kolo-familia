@@ -162,6 +162,12 @@ export type RespostaParams = {
   sinais: SinaisResposta;
   /** A pessoa pediu um plano explicitamente — não escreva o plano, ofereça. */
   querPlano?: boolean;
+  /**
+   * O pedido tinha a palavra "plano" mas não tinha alvo Kolo (aposentadoria,
+   * negócios, decisão conjugal). Traz a virada de volta pro que é da Kolo —
+   * ver `escopo-kolo.ts`.
+   */
+  ponteDeEscopo?: string;
   /** O que a mãe acabou de ACEITAR, quando o turno é um aceite de oferta. */
   aceite?: string | null;
   /**
@@ -478,6 +484,14 @@ ${params.diagnosticoRegistrado.trim()}`);
         (temOutroMembro
           ? `\n(⚠️ As linhas marcadas "(sobre NOME)" são de OUTRA criança desta família. O que foi observado nela NÃO é fato sobre ${params.nomeMembro ?? "a criança de agora"} — não transfira característica, preferência nem estratégia de um irmão para o outro. Se precisar, pergunte.)`
           : ""),
+    );
+  }
+  if (params.ponteDeEscopo) {
+    // ⚠️ NÃO É RECUSA. A pessoa escreveu "plano" sobre algo que não é da Kolo
+    // (aposentadoria, negócios, decisão do casal). Mandar embora por causa de
+    // uma palavra é pior que organizar algo a mais — ela veio pedir ajuda.
+    linhas.push(
+      `\n(⚠️ ESTE PEDIDO NÃO É DA KOLO — não vai sair plano nenhum, e você NÃO pode dizer que vai montar, organizar ou enviar material sobre isso. Não opine sobre a parte que não é sua: dinheiro, trabalho, decisão do casal, jurídico. Acolha em uma linha e vire pro que você faz: ${params.ponteDeEscopo}. Ofereça essa ajuda com naturalidade e deixe a pessoa escolher.)`,
     );
   }
   linhas.push(`\n<mensagem_de_agora>\n${params.mensagem}\n</mensagem_de_agora>`);
