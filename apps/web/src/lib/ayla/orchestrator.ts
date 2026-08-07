@@ -52,6 +52,7 @@ import {
   pedeRotinaDeUmDia,
   pedirRotinaDoDia,
   pedeEditarRotina,
+  entregarArtefatoImprimivel,
   lerFeedbackDaRotina,
   editarRotina,
 } from "./rotina-guiada";
@@ -61,6 +62,7 @@ import { recuperarBoasPraticas, blocoBoasPraticas } from "@/lib/conhecimento/rec
 import { dividirEmBolhas, ritmoDasBolhas, TETO_ESPERA_SEGUNDOS } from "./bolhas";
 import { semOutrosMembros } from "./membro-escopo";
 import { classificarFeedbackRotina } from "./rotina-feedback";
+import { pedeArtefatoImprimivel } from "./rotina-pdf-rota";
 import { resolverMembroAlvo } from "./membro-alvo";
 import {
   segurancaAberta,
@@ -1925,6 +1927,44 @@ export async function processInbound(
   // `pedeRotina` exige a PALAVRA "rotina" — e "quero organizar a tarde da Manu"
   // não a tem. Medido em 03/08/2026: essa frase dá false no detector E "outro"
   // no classificador, ou seja, o pedido mais explícito que existe não entrava no
+  // ── PDF / CARTÕES: ANTES do construtor, e isso é obrigatório ──────────
+  // "Eu já mandei e você montou a rotina. Só preciso do PDF" contém a palavra
+  // ROTINA, e `pedeRotina` casa com ela. Registrada depois do gate abaixo,
+  // esta rota nunca veria a mensagem: o construtor captura, pede a sequência
+  // de novo e duplica o artefato — foi exatamente o que aconteceu com a
+  // Rosângela em 07/08/2026. A ordem aqui É a correção.
+  if (
+    !seguranca.aberta &&
+    !rotinaConversa &&
+    pedeArtefatoImprimivel(inbound.texto)
+  ) {
+    const ctxP = await loadFamiliaParaEnvio(supabase, family.id);
+    const alvoP = alvoDaRotina(ctxP, membroConversa);
+    if (alvoP.ambiguo) return await perguntarQualCrianca(supabase, family, ctxP, alvoP.ambiguo);
+    if (ctxP && alvoP.membroId) {
+      const r = await entregarArtefatoImprimivel(supabase, {
+        familyId: family.id,
+        membroAtipicoId: alvoP.membroId,
+        texto: inbound.texto,
+        phoneE164: ctxP.whatsapp_e164,
+        nome: ctxP.membros.find((m) => m.id === alvoP.membroId)?.nome ?? "",
+      });
+      // `null` = não havia o que entregar de forma determinística; a conversa
+      // segue normal, sem promessa nenhuma.
+      if (r) {
+        const resp = await enviarEPersistir(supabase, {
+          family_account_id: family.id,
+          membro_atipico_id: alvoP.membroId,
+          phone: ctxP.whatsapp_e164,
+          texto: r,
+          category: "reativa",
+          tipo: "resposta_registro",
+        });
+        return { tratada: true, resposta: resp };
+      }
+    }
+  }
+
   // fluxo. `pediuRotinaExplicitamente` cobre o período nomeado sem a palavra.
   if (
     !seguranca.aberta &&
