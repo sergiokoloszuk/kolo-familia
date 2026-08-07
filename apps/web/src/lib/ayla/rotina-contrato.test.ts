@@ -96,6 +96,17 @@ describe("estado verdadeiro dos cartões", () => {
     expect(GUIADA).toMatch(/Os cartões ainda não começaram a ser desenhados/);
   });
 
+  /**
+   * Conversa real de 07/08/2026 (Manu, "Boneca de pano"): o turno que pedia o
+   * tema saiu com TRÊS chamadas à ação coladas — escolha um tema, abra o link,
+   * peça o PDF — e o link levava a uma rotina em `aguardando`, sem cartão
+   * nenhum pra ver. Neste turno a Ayla tem um objetivo só.
+   */
+  it("no turno que pede o tema não sai link nem oferta de PDF", () => {
+    expect(GUIADA).toMatch(/const link = faltaTema \? null : await gerarMagicLink/);
+    expect(GUIADA).toMatch(/const dica = faltaTema\s*\n?\s*\? ""/);
+  });
+
   it("o tema é perguntado com no máximo DUAS sugestões, e a escolha é da família", () => {
     expect(GUIADA).toMatch(/QUEM ESCOLHE É A FAMÍLIA/);
     expect(GUIADA).toMatch(/NÃO decida por ela/);
