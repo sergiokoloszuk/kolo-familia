@@ -433,7 +433,32 @@ describe("simplificação: o prompt não pode crescer", () => {
     //
     // Desta vez o crescimento NÃO foi pago com poda: a poda cirúrgica segue
     // adiada até a experiência nova ser validada com famílias.
-    expect(nucleoConducao().length).toBeLessThan(54_000);
+    //
+    // 07/08/2026 — sobe pra 57.000 por DUAS entradas, ambas nascidas da
+    // comparação com o app anterior (conversa da Karina sobre o Mario):
+    //
+    //   EXPLICACAO (~2.200) — a Ayla nova ficou segura e SECA: perguntaram
+    //   como acalmar uma criança agitada em loja e ela devolveu só direção,
+    //   nenhuma compreensão. O app antigo explicava — e por isso parecia mais
+    //   inteligente — mas afirmava mecanismo sobre aquela criança ("o corpo se
+    //   move mais rápido do que o cérebro consegue planejar"). A regra separa
+    //   as duas coisas: conhecimento geral pode; certeza individual não.
+    //   Não cabe em uma linha porque o valor dela está nas FORMAS concretas
+    //   ("para algumas crianças" ↔ "o cérebro dele precisa") e nos quatro
+    //   movimentos — sem os exemplos, vira exortação, que é exatamente o que
+    //   não segurou na VOZ 7.
+    //
+    //   TRÊS NÍVEIS no PISO (~700) — "risco de acidente" era gatilho largo
+    //   demais: "pode derrubar coisas em lojas" virava resposta de crise, com
+    //   afastar objetos, "não vou deixar você se machucar" e emergência. O
+    //   eixo do adulto já tinha o seu piso na linha de cima desde sempre
+    //   (assinatura ≠ ideação); o do comportamento da criança, não.
+    //
+    // A repetição, que é o outro achado do mesmo dia, NÃO virou texto de
+    // núcleo: virou código em `angulos.ts`. VOZ 7 já era a exortação, e ela
+    // falhou com a resposta anterior no histórico — a lista concreta do que
+    // ela mesma já orientou custa zero caractere aqui.
+    expect(nucleoConducao().length).toBeLessThan(57_000);
   });
 });
 
