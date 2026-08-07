@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest, after } from "next/server";
+import { timingSafeEqual, createHash } from "node:crypto";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { gerarRoteiroRotina, ilustrarCards } from "@/lib/ludico/gerar";
 import { idadeAnos } from "@/lib/idade";
@@ -14,9 +15,39 @@ import { idadeAnos } from "@/lib/idade";
  */
 export const maxDuration = 300;
 
+/**
+ * Compara em tempo constante, sem vazar o segredo por tamanho. O hash iguala o
+ * comprimento — `timingSafeEqual` estoura com buffers de tamanhos diferentes.
+ */
+function segredoConfere(enviado: string | null, esperado: string): boolean {
+  if (!enviado) return false;
+  const a = createHash("sha256").update(enviado).digest();
+  const b = createHash("sha256").update(esperado).digest();
+  return timingSafeEqual(a, b);
+}
+
 export async function POST(request: NextRequest) {
-  const secret = process.env.AYLA_WEBHOOK_SECRET;
-  if (secret && request.headers.get("x-ayla-secret") !== secret) {
+  // FAIL-CLOSED. Era `if (secret && ...)`: sem a variável no ambiente, o
+  // endpoint ficava ABERTO — e em 07/08/2026 produção respondia 404 (não 401)
+  // a um POST sem credencial nenhuma, ou seja, qualquer um com um `rotinaId`
+  // disparava geração de imagem PAGA na conta de outra família. Sem segredo
+  // configurado, agora não gera pra ninguém.
+  //
+  // SEGREDO PRÓPRIO, não o `AYLA_WEBHOOK_SECRET`. Aquele nome já tem dois
+  // consumidores — o webhook de ENTRADA da Z-API (que é fail-open hoje) e o
+  // HMAC do cookie de ativação. Reaproveitá-lo faria uma única variável mudar
+  // três comportamentos de uma vez, e um deles é a porta por onde chega toda
+  // mensagem de WhatsApp: criá-la ligaria a exigência de header no inbound e
+  // emudeceria a Ayla se o painel da Z-API não estivesse configurado igual.
+  // Fechar aquele webhook é uma frente própria, com passo manual no painel.
+  const secret = process.env.KOLO_GERACAO_SECRET;
+  if (!secret) {
+    console.error(
+      "[ludico:gerar-rotina] KOLO_GERACAO_SECRET ausente no ambiente — geração recusada",
+    );
+    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  }
+  if (!segredoConfere(request.headers.get("x-ayla-secret"), secret)) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
 
