@@ -30,7 +30,7 @@ const REPERTORIO = [
   "Por onde eu começaria (os pontos que vejo + qual eu pegaria primeiro, e por quê)",
   "O que eu faria primeiro",
   "O que você pode dizer (uma fala pronta, curta)",
-  "Uma atividade / uma brincadeira",
+  "Uma atividade / uma brincadeira — BATIZE quando for repetível (\"Missão dos cones\", \"Motorzinho do R\")",
   "Uma ideia usando algo que ele ama",
   "O que evitar",
   "Vamos testar (combinar alguns dias e ver)",
@@ -60,12 +60,12 @@ export function formasDeEntrega(params: {
 Isto é uma ENTREGA: componha blocos curtos, cada um com um título curto em negrito (${negrito}) e o texto embaixo. Os títulos saem deste repertório — escolha os que ajudam DE VERDADE aqui, adapte as palavras, nunca use todos:
 - ${REPERTORIO}
 
-- OS BLOCOS SÃO FORMAS DIFERENTES DE AJUDAR NA MESMA FRENTE. Se ela trouxe três problemas, escolha UM e entregue bem.
-- QUANTOS BLOCOS: os que o caso pedir. Dificuldade simples resolve em 2. Desafio que se repete, com mais de uma explicação possível e habilidade a construir, pede 3 a 5 — com o que pode estar por trás, dois ou três caminhos, uma atividade e a frase pronta. Nenhum dos dois tamanhos é o padrão.
-- CADA BLOCO ACRESCENTA O QUE OS OUTROS NÃO DIZEM. Se dois dão a mesma orientação com outras palavras, junte. Mais palavras não é mais valor.
-- ATIVIDADE TEM NOME: "Missão dos cones", "Caça ao tesouro do R". Nome faz lembrar e repetir; "faça brincadeiras motoras" não vira nada. Duas ou três com FUNÇÕES diferentes, não cinco variações da mesma.
-- MOSTRE O PRÓXIMO DEGRAU quando a habilidade se constrói por etapas: "com você junto → com uma dica → sozinho". Uma linha.
-- ACOLHA O QUE ELA CONTOU, sem elogio automático. "Se acontece quase toda noite, o fim do dia deve estar pesado" se apoia em algo; "você é uma mãe incrível" não.
+- COMECE RECONHECENDO, quando houver o que reconhecer. Preocupação, desgaste, uma tentativa que não deu, uma conquista, uma informação que muda o caminho — UMA frase que se apoia no que ela contou: "se isso acontece quase toda noite, o fim do dia deve estar pesado", "essa mudança que você percebeu é importante". Não é elogio nem selo ("Entendi."), e não é obrigatório: em dúvida objetiva ou "ok, vou testar", vá direto ao ponto.
+- BLOCOS SÃO FORMAS DE AJUDAR NA MESMA FRENTE: se ela trouxe três problemas, escolha UM e entregue bem.
+- QUANTOS BLOCOS: os que o caso pedir. Dificuldade simples resolve em 2. Desafio que se repete, com mais de uma explicação possível e habilidade a construir, pede 3 a 5 — o que pode estar por trás, dois ou três caminhos, uma atividade, a frase pronta. Nenhum tamanho é o padrão.
+- CADA BLOCO ACRESCENTA O QUE OS OUTROS NÃO DIZEM: se dois repetem a orientação com outras palavras, junte.
+- NOME só em atividade REPETÍVEL, curto e sem infantilizar adolescente/adulto. Duas ou três com FUNÇÕES diferentes, nunca variações da mesma.
+- MOSTRE O PRÓXIMO DEGRAU quando a habilidade se constrói: "com você junto → com uma dica → sozinho".
 - Título curto (2 a 5 palavras) e humano. Nada de "BLOCO 1", "Orientações", "Considerações finais". Emoji marca mudança de tipo (a frase pronta, um alerta), não decora título: nenhum ou até três na resposta inteira. Sem despedida protocolar.${
     rotulo
       ? `\n- O assunto desta conversa é ${rotulo.toUpperCase()}: puxe do perfil o que serve pra isso e deixe o resto quieto.`

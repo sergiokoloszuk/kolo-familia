@@ -122,3 +122,58 @@ export const RESPOSTA_PDF = {
   qualDelas: (nomes: readonly string[]) =>
     `Você quer o PDF de qual delas: ${nomes.join(" ou ")}?`,
 } as const;
+
+/**
+ * A CONVERSA GANHA DO BANCO — a regressão de 07/08/2026, e ela foi minha.
+ *
+ * A Ayla acabou de escrever, na conversa, a sequência do passeio de amanhã.
+ * A mãe pediu "uns cartões visuais para eu mostrar o que vai acontecer e em
+ * que ordem". `pedeArtefatoImprimivel` casou em "cartões", a rota consultou as
+ * rotinas SALVAS e perguntou: "Você quer o PDF de qual delas: Tarde e noite ou
+ * Dia do dentista?".
+ *
+ * O alvo não estava no banco. Estava no turno anterior.
+ *
+ * Nenhuma frase mais calorosa consertaria isso — "Entendo perfeitamente 💛" na
+ * frente da mesma pergunta continuaria péssimo. O que quebrou a sensação de
+ * cuidado foi fazer a mãe repetir o que ela tinha acabado de dizer.
+ *
+ * ⚠️ ESTA É A MITIGAÇÃO, não a solução inteira. A solução é a rota RESOLVER o
+ * referente recente e montar a partir dele. Aqui ela apenas SAI DA FRENTE
+ * quando percebe que o alvo é recente — e deixa o construtor de rotina, que já
+ * sabe montar a partir da conversa, fazer o trabalho. Menos ambicioso e
+ * reversível; tira a família da linha de tiro hoje.
+ */
+
+/** Aponta pra algo que acabou de ser dito, não pra um arquivo salvo.
+ *
+ * `essa`/`esse`/`isso` soltos entram aqui e NÃO são perigosos: esta função só
+ * é consultada depois de `pedeArtefatoImprimivel`, ou seja, a mensagem já fala
+ * de PDF, cartões ou impressão. O demonstrativo já chega ancorado. */
+const REFERENTE_RECENTE =
+  /\b(disso|dessa|desse|dess[ae]s|nisso|essa|esse|isso|o que te contei|o que eu contei|que voc[êe] (montou|organizou|escreveu))\b|\bpra? (amanh[ãa]|hoje|s[áa]bado|domingo|segunda|ter[çc]a|quarta|quinta|sexta)\b|\bum novo\b|\buma nova\b/i;
+
+/**
+ * O pedido aponta pro que acabou de ser construído na conversa?
+ *
+ * Duas evidências, e basta UMA:
+ *   · a mãe usa demonstrativo ou fala de um dia futuro ("cartões disso",
+ *     "um novo pra amanhã", "o que te contei");
+ *   · a última fala da Ayla trouxe uma SEQUÊNCIA numerada — o objeto que a
+ *     mãe está apontando.
+ *
+ * Conservador de propósito: quando devolve `true`, a rota determinística
+ * apenas SAI, e o pedido segue pro construtor. O pior caso é o comportamento
+ * de antes desta rota existir; o melhor é a família não repetir nada.
+ */
+export function apontaProRecente(
+  texto: string,
+  ultimaFalaDaAyla: string | null | undefined,
+): boolean {
+  if (REFERENTE_RECENTE.test(texto)) return true;
+  const anterior = (ultimaFalaDaAyla ?? "").trim();
+  if (!anterior) return false;
+  // Sequência numerada com 3+ passos: "1. sair com a amiga\n2. mercado…"
+  const passos = anterior.match(/^\s*\d[.)]\s+\S/gm) ?? [];
+  return passos.length >= 3;
+}

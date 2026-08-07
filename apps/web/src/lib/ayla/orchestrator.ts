@@ -62,7 +62,7 @@ import { recuperarBoasPraticas, blocoBoasPraticas } from "@/lib/conhecimento/rec
 import { dividirEmBolhas, ritmoDasBolhas, TETO_ESPERA_SEGUNDOS } from "./bolhas";
 import { semOutrosMembros } from "./membro-escopo";
 import { classificarFeedbackRotina } from "./rotina-feedback";
-import { pedeArtefatoImprimivel } from "./rotina-pdf-rota";
+import { pedeArtefatoImprimivel, apontaProRecente } from "./rotina-pdf-rota";
 import { resolverMembroAlvo } from "./membro-alvo";
 import {
   segurancaAberta,
@@ -1933,9 +1933,27 @@ export async function processInbound(
   // esta rota nunca veria a mensagem: o construtor captura, pede a sequência
   // de novo e duplica o artefato — foi exatamente o que aconteceu com a
   // Rosângela em 07/08/2026. A ordem aqui É a correção.
+  // ⚠️ E A CONVERSA GANHA DO BANCO. Se o pedido aponta pro que a Ayla ACABOU
+  // de construir ("cartões disso", "um novo pra amanhã", ou simplesmente uma
+  // sequência numerada no turno anterior), esta rota SAI DA FRENTE: o alvo não
+  // está salvo, e perguntar "qual das rotinas antigas?" é o que fez a mãe da
+  // Manu repetir o que ela mesma tinha acabado de dizer (07/08/2026).
+  const { data: ultimaAyla } = await supabase
+    .from("ayla_messages")
+    .select("texto")
+    .eq("family_account_id", family.id)
+    .eq("direcao", "outbound")
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  const apontaRecente = apontaProRecente(
+    inbound.texto,
+    (ultimaAyla as { texto?: string } | null)?.texto ?? null,
+  );
   if (
     !seguranca.aberta &&
     !rotinaConversa &&
+    !apontaRecente &&
     pedeArtefatoImprimivel(inbound.texto)
   ) {
     const ctxP = await loadFamiliaParaEnvio(supabase, family.id);

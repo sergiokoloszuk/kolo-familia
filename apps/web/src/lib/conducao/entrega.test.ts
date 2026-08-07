@@ -243,12 +243,12 @@ describe("formas de entrega", () => {
 
   it("NÃO reabre a resposta multi-frente que fechamos em 01/08", () => {
     // Este é o risco número um da camada inteira.
-    expect(wa).toMatch(/FORMAS DIFERENTES DE AJUDAR NA MESMA FRENTE/);
+    expect(wa).toMatch(/BLOCOS SÃO FORMAS DE AJUDAR NA MESMA FRENTE/);
     expect(wa).toMatch(/escolha UM e entregue bem/);
   });
 
   it("um tipo de ajuda só = texto corrido, sem título nenhum", () => {
-    expect(wa).toMatch(/Nenhum dos dois tamanhos é o padrão/);
+    expect(wa).toMatch(/Nenhum tamanho é o padrão/);
   });
 
   it("negrito certo em cada canal", () => {
@@ -284,7 +284,11 @@ describe("formas de entrega", () => {
     //     ligação com o que a mãe contou.
     // Os exemplos concretos NÃO foram cortados de propósito: sem eles a regra
     // vira exortação, e exortação foi o que não segurou na VOZ 7.
-    expect(wa.length).toBeLessThan(2400);
+    // 2.500 e não 2.400: a segunda passada (acolhimento pro TOPO da lista, nome
+    // da atividade pro REPERTÓRIO — o ponto onde o modelo escolhe) trocou de
+    // lugar sem inchar. Comprimi de 3.360 → 2.404 em duas passadas; continuar
+    // raspando custaria os exemplos, e sem exemplo a regra vira exortação.
+    expect(wa.length).toBeLessThan(2500);
   });
 });
 
