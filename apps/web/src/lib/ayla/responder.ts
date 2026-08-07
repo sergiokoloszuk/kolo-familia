@@ -145,6 +145,12 @@ export type RespostaParams = {
   /** O que o perfil da criança já tem × o que falta, por domínio — pra a Ayla
    *  perguntar só o pertinente (sem repetir) e saber o que falta pro relatório. */
   koloVivoLacunas?: string;
+  /**
+   * Bloco `<repertorio_kolo>` já montado por `lib/conhecimento/recuperar`. É a
+   * MESMA função que serve as Estratégias — o canal muda a apresentação, nunca
+   * o repertório.
+   */
+  repertorio?: string;
   /** Títulos das últimas conversas nas Estratégias (in-app), pra continuidade. */
   estrategiasRecentes?: string[];
   historico: Array<{ de: "mae" | "ayla"; texto: string }>;
@@ -428,6 +434,12 @@ ${params.diagnosticoRegistrado.trim()}`);
     linhas.push(
       `\n<lacunas_do_perfil>\n${params.koloVivoLacunas}\nUse isto pra perguntar só o PERTINENTE (não re-pergunte o que já tem) e pra saber o que ainda falta antes de montar um relatório.\n</lacunas_do_perfil>`,
     );
+  }
+  // REPERTÓRIO DA KOLO — a Camada 2, que até 06/08/2026 não chegava ao WhatsApp
+  // em nenhum turno. Vem do MESMO recuperador que a web usa, escolhido pela
+  // skill que a classificação de intenção já devolveu — sem chamada extra.
+  if (params.repertorio?.trim()) {
+    linhas.push(`\n${params.repertorio}`);
   }
   if (params.estrategiasRecentes && params.estrategiasRecentes.length > 0) {
     linhas.push(

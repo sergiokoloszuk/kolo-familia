@@ -8,6 +8,7 @@ import { pronomesPara } from "@/lib/ayla/pronomes";
 // identidade + norte, princípios, regra de sequência, exemplos, piso e tom.
 // Ver lib/conducao/diretrizes.ts. A mesma "cabeça" nos dois canais.
 import { nucleoConducao, FRONTEIRA_DIAGNOSTICO } from "@/lib/conducao/diretrizes";
+import { blocoBoasPraticas } from "@/lib/conhecimento/recuperar";
 import {
   formasDeEntrega,
   INTERESSE_COMO_VEICULO,
@@ -359,20 +360,12 @@ ${ctx.ultimoCheckin.data} — responsável: ${ctx.ultimoCheckin.escala_emocional
     );
   }
 
-  if (ctx.boasPraticas.length > 0) {
-    partes.push(
-      `<boas_praticas>
-${ctx.boasPraticas
-  .map(
-    (bp, i) =>
-      `${i + 1}. ${bp.titulo}\n   curta: ${bp.versao_curta}${
-        bp.versao_conversa ? `\n   conversa: ${bp.versao_conversa}` : ""
-      }`,
-  )
-  .join("\n")}
-</boas_praticas>`,
-    );
-  }
+  // O MESMO bloco que o WhatsApp recebe, montado pela função compartilhada.
+  // Antes daqui saía só título + versão curta + versão conversa: `quando_usar`,
+  // `erros_comuns` e `passos_praticos` eram carregados do banco e descartados
+  // na montagem — a parte executável do acervo nunca chegava ao modelo.
+  const repertorio = blocoBoasPraticas(ctx.boasPraticas);
+  if (repertorio) partes.push(repertorio);
 
   return partes.join("\n\n");
 }

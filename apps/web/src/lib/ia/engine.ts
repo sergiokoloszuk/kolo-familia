@@ -224,7 +224,7 @@ export async function respondAsOutputType(params: {
 
 function runAllValidatorsExceptSize(
   texto: string,
-  bps: { versao_curta: string; versao_conversa: string | null }[],
+  bps: { versao_curta?: string | null; versao_conversa: string | null; passos_praticos?: string[] }[],
 ): ValidationResult {
   for (const check of [
     () => validateAntiSubstituicaoProfissional(texto),

@@ -55,6 +55,8 @@ import {
   editarRotina,
 } from "./rotina-guiada";
 import { classificarIntencao } from "./intent";
+import { carregarCatalogoSkills } from "./catalogo-skills";
+import { recuperarBoasPraticas, blocoBoasPraticas } from "@/lib/conhecimento/recuperar";
 import { dividirEmBolhas } from "./bolhas";
 import { resolverMembroAlvo } from "./membro-alvo";
 import {
@@ -1698,11 +1700,15 @@ export async function processInbound(
   // consciente de 02/08 — sem coluna, sem migração; se a derivação se mostrar
   // insuficiente no uso real, aí se discute persistir, com evidência.
   const turnoClassificado = rotinaConversa
-    ? { intencao: "outro" as const, tema: null, aceite: null }
+    ? { intencao: "outro" as const, tema: null, aceite: null, skills: [] as string[] }
     : await classificarIntencao({
         texto: inbound.texto,
         ...(await ultimasFalas(supabase, family.id, inbound.texto)),
         temasOnboarding: await carregarDesafiosOnboarding(supabase, membroConversa),
+        // QUAL REPERTÓRIO CONSULTAR — decidido na MESMA chamada que já classifica
+        // intenção e tema. Zero chamada de LLM a mais: o campo é o quarto de uma
+        // linha que já vinha com três. Só entram as skills `ativo=true`.
+        catalogoSkills: await carregarCatalogoSkills(supabase),
       });
   const intent = turnoClassificado.intencao;
   const temaAtivo = turnoClassificado.tema;
@@ -2063,6 +2069,17 @@ export async function processInbound(
     ? { historia: linkHistoria, rotina: linkRotina, desenho: linkDesenho, avatar: linkAvatar, relatorio: linkRelatorio }
     : null;
 
+  // REPERTÓRIO — a Camada 2 chegando ao WhatsApp pela primeira vez. A skill já
+  // veio do classificador (4º campo, sem chamada extra); aqui só se busca o
+  // conteúdo. Falha silenciosa: sem repertório, a conversa segue como sempre.
+  const repertorio = blocoBoasPraticas(
+    await recuperarBoasPraticas({
+      supabase,
+      skills: turnoClassificado.skills,
+      idade: idadeFoco,
+    }),
+  );
+
   const resp = await enviarRespostaEmChunks(supabase, {
     family_account_id: family.id,
     membro_atipico_id: membroContextoId,
@@ -2091,6 +2108,7 @@ export async function processInbound(
       estrategiasRecentes,
       historico,
       linksLudico,
+      repertorio,
       mensagem: inbound.texto,
       imagemUrl: inbound.midiaTipo === "image" ? (inbound.midiaUrl ?? null) : null,
       sinais: {

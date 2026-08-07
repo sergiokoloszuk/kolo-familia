@@ -214,7 +214,7 @@ describe("tema ativo", () => {
   });
 
   it("falha do classificador não perde o tema", () => {
-    expect(INTENT).toMatch(/return \{ intencao: "outro", tema: anterior, aceite: null \};/);
+    expect(INTENT).toMatch(/return \{ intencao: "outro", tema: anterior, aceite: null, skills: \[\] \};/);
   });
 
   it("nada foi persistido — sem tabela, sem coluna", () => {
