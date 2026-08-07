@@ -49,7 +49,11 @@ describe("uma Ayla só — o condutor herda o núcleo", () => {
 
 describe("MATEUS — pergunta feita é pergunta respondida", () => {
   it("o contrato tem um desfecho 'responder', separado de 'perguntar'", () => {
-    expect(ROTINA).toMatch(/"responder"\|"perguntar"\|"montar"\|"sair"/);
+    // O desfecho agora vive no enum da ferramenta (tool use) e continua
+    // descrito no contrato — a intenção é a mesma: 'responder' é um caminho
+    // próprio, não um apelido de 'perguntar'.
+    expect(ROTINA).toMatch(/enum: \["responder", "perguntar", "montar", "sair"\]/);
+    expect(ROTINA).toMatch(/acao = "responder"\|"perguntar"\|"montar"\|"sair"/);
   });
 
   it("'responder' proíbe devolver a próxima pergunta do roteiro", () => {

@@ -248,25 +248,35 @@ describe("verdade operacional", () => {
 // A ROTINA QUE CHEGOU EM BRANCO (Manu, 07/08/2026)
 // ============================================================
 
-describe("o tema não é pergunta quando o interesse é conhecido", () => {
-  it("com interesse conhecido, ESCOLHE e escreve o tema", () => {
-    // O caso real: a Ayla escreveu "posso fazer no tema de contos e princesas,
-    // que eu sei que Manu gosta. Quer?" — e deixou `tema` nulo esperando o sim.
-    // Tema nulo não dispara geração: a mãe abriu a rotina e viu cards vazios.
-    expect(GUIADA).toMatch(/VOCÊ JÁ SABE do que \$\{nome\} gosta/);
-    expect(GUIADA).toMatch(/não pergunte, não peça confirmação, não escreva "quer\?"/);
+/**
+ * ⚠️ ESTE BLOCO MUDOU DE LADO EM 08/08/2026, de propósito.
+ *
+ * Ele travava a política de 03/08: com interesse conhecido, a Ayla ESCOLHIA o
+ * tema calada. A política foi revertida pelo Sérgio — o tema é da ROTINA, não
+ * atributo fixo da criança, e o interesse serve pra SUGERIR, não pra decidir
+ * pela família (restaura a decisão de 22/07, validada em role-play com a
+ * Karina). O que fazia "perguntar" ser ruim não era a pergunta: era `tema=null`
+ * significar abandono silencioso. Isso agora tem estado ('aguardando') e
+ * gatilho determinístico, então a pergunta deixou de ser um beco sem saída.
+ */
+describe("o tema é escolha da família, com sugestão da Ayla", () => {
+  it("com interesse conhecido, SUGERE no máximo duas e não decide", () => {
+    expect(GUIADA).toMatch(/QUEM ESCOLHE É A FAMÍLIA/);
+    expect(GUIADA).toMatch(/Ofereça no máximo DUAS dessas como sugestão/);
+    expect(GUIADA).toMatch(/NÃO decida por ela e NÃO preencha o campo "tema"/);
   });
 
-  it("diz o custo de deixar nulo, com todas as letras", () => {
-    expect(GUIADA).toMatch(/Tema nulo = NENHUM cartão é gerado/);
-    expect(GUIADA).toMatch(/deixar nulo é entregar quebrado/);
+  it("deixa claro que ela pode escolher qualquer outro tema", () => {
+    expect(GUIADA).toMatch(/pode escolher qualquer outro que \$\{nome\} esteja gostando agora/);
   });
 
-  it("SEM interesse conhecido, aí sim oferece duas ideias", () => {
-    // A escapatória continua existindo — só deixou de valer quando a Ayla
-    // já sabe do que a criança gosta.
+  it("nunca anuncia arte que não começou", () => {
+    expect(GUIADA).toMatch(/NUNCA diga que os cartões já estão sendo desenhados/);
+  });
+
+  it("SEM interesse conhecido, oferece duas ideias genéricas", () => {
     expect(GUIADA).toMatch(/Você não conhece um interesse dele/);
-    expect(GUIADA).toMatch(/deixe "tema" null/);
+    expect(GUIADA).toMatch(/deixe "tema" vazio/);
   });
 
   it("a geração só dispara com tema — é isso que a regra protege", () => {

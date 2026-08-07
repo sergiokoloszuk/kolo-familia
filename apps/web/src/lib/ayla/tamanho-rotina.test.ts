@@ -198,11 +198,15 @@ describe("cartões saem por necessidade visual, não por tema", () => {
     expect(GUIADA).not.toMatch(/if \(!temSemana && tema && ids\.length\)/);
   });
 
-  it("sem tema o cartão NÃO sai em silêncio — vira pergunta", () => {
+  it("sem tema o cartão NÃO sai em silêncio — vira pergunta COM estado", () => {
     // O gerador recusa tema com menos de 2 caracteres. Disparar sem tema era
     // um 400 silencioso: a mãe esperava as imagens e elas nunca chegavam.
+    // Desde 08/08/2026 a pergunta também deixa rastro no banco: a rotina fica
+    // em 'aguardando', que é o que distingue "falta escolher o tema" de
+    // "ninguém pediu cartão" — antes as duas eram 'nenhum'.
     expect(GUIADA).toMatch(/const faltaTema = !temSemana && visual && ids\.length > 0 && !tema/);
-    expect(GUIADA).toMatch(/eu transformo isso em cartões ilustrados/);
+    expect(GUIADA).toMatch(/Falta só escolher o tema dos cartões/);
+    expect(GUIADA).toMatch(/await marcarAguardandoTema\(supabase, ids\)/);
     expect(GUIADA).toMatch(/o cartão existe quando VER a sequência ajuda/);
   });
 

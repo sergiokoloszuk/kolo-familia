@@ -55,7 +55,15 @@ import {
   toggleTarefa,
 } from "../actions";
 
-type CardsStatus = "nenhum" | "gerando" | "pronto" | "erro";
+/**
+ * O ESTADO OPERACIONAL DOS CARTÕES, inteiro e verdadeiro.
+ *
+ * "aguardando" entrou em 08/08/2026: até então, cartões pedidos mas sem tema
+ * ficavam em "nenhum" — indistinguível de "ninguém pediu cartão". A tela abria
+ * em modo cartões, mostrava ícone e não dizia nada, então a família ficava
+ * esperando uma arte que nunca tinha sido encomendada.
+ */
+type CardsStatus = "nenhum" | "aguardando" | "gerando" | "pronto" | "erro";
 
 /** Ícones curados pros passos visuais. A chave é guardada em rotina_tarefas.icone. */
 const ICONES: Record<string, LucideIcon> = {
@@ -327,6 +335,15 @@ export function RotinaEditor({
       </div>
 
       {cardsStatus === "gerando" && <CardGerando />}
+      {/* ESPERANDO A ESCOLHA, não esperando a arte. A diferença importa: aqui
+          nada foi encomendado ainda, e a tela precisa dizer isso em vez de
+          deixar a família olhando ícone achando que a imagem está a caminho. */}
+      {cardsStatus === "aguardando" && (
+        <p className="rounded-2xl border border-brand-purple/20 bg-brand-purple/5 px-4 py-3 text-sm text-foreground/80 print:hidden">
+          Os cartões desta rotina ainda não começaram — falta escolher o tema. Você pode
+          responder à Ayla no WhatsApp ou escolher aqui mesmo, embaixo.
+        </p>
+      )}
       {cardsStatus === "erro" && (
         <p className="rounded-2xl border border-amber-300/60 bg-amber-50 px-4 py-3 text-sm text-amber-800 print:hidden">
           Algo falhou ao montar os cards. Dá pra tentar de novo abaixo.
@@ -414,7 +431,8 @@ export function RotinaEditor({
         <>
           {/* O "Gerar cartões" aparece aqui quando ainda não há cartões (senão
               ficaria escondido atrás de "Editar"). A espera já está no topo. */}
-          {visual && (cardsStatus === "nenhum" || cardsStatus === "erro") && (
+          {visual &&
+            (cardsStatus === "nenhum" || cardsStatus === "aguardando" || cardsStatus === "erro") && (
             <GerarCards
               rotinaId={rotinaId}
               temaInicial={tema}

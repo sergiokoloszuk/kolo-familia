@@ -73,6 +73,7 @@ Em `apps/web/.env.local`:
 | `ZAPI_TOKEN` | Token Z-API | só pra Ayla |
 | `ZAPI_CLIENT_TOKEN` | Token de cliente Z-API | só pra Ayla |
 | `AYLA_WEBHOOK_SECRET` | Header `x-ayla-secret` no webhook | só pra Ayla |
+| `KOLO_GERACAO_SECRET` | Header `x-ayla-secret` da chamada interna que gera os cartões da rotina | **obrigatório** — sem ele nenhum cartão sai |
 | `CRON_SECRET` | `Authorization: Bearer` em `/api/ayla/cron` | só pra cron |
 | `BETA_GATE_ENABLED` | `true` exige convite no signup | opcional |
 | `NEXT_PUBLIC_BETA_GATE_ENABLED` | Mesmo valor, exposto ao client | opcional |

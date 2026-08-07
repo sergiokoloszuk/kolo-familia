@@ -365,8 +365,12 @@ const CONTRATO_ROTINA = `# Você está conduzindo uma ROTINA
 Tudo acima continua valendo — identidade, princípios, fronteiras e VOZ. Isto aqui
 é só o CONTRATO da ferramenta de rotina, não uma segunda Ayla.
 
-## Escolha UM desfecho por turno e devolva APENAS JSON, sem texto fora dele:
-{"acao":"responder"|"perguntar"|"montar"|"sair","mensagem":"sua fala (WhatsApp)","tema":null,"transicoes":[],"rotinas":[]}
+## Escolha UM desfecho por turno e devolva pela ferramenta \`conduzir_rotina\`:
+acao = "responder"|"perguntar"|"montar"|"sair" · mensagem = sua fala (WhatsApp) · tema · transicoes · rotinas
+
+Escreva a "mensagem" como você falaria: aspas, travessões, quebras de linha e emoji
+são bem-vindos. A ferramenta serializa o texto por você — não existe caractere
+que você precise evitar, e você NUNCA deve escapar nada à mão.
 
 - "responder" — ela fez uma PERGUNTA sobre a rotina ("qual horário encaixo o iPad?", "como você faria a tarde?"). RESPONDA com o que você já sabe: a sequência que ela contou, os horários, a dificuldade que ela relatou. Proponha, explique em uma frase por que, e diga que dá pra ajustar. NÃO devolva a próxima pergunta do roteiro — isso é ignorar o que ela perguntou.
 - "perguntar" — falta UMA informação que muda a rotina de verdade. Uma só.
@@ -569,18 +573,215 @@ async function dispararGeracao(
   rotinaId: string,
   tema: string,
   opts?: { preservarArte?: boolean },
-): Promise<void> {
+): Promise<boolean> {
   try {
     const base = (process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000").replace(/\/$/, "");
-    const secret = process.env.AYLA_WEBHOOK_SECRET;
-    await fetch(`${base}/api/ludico/gerar-rotina`, {
+    // Segredo PRÓPRIO da geração — ver a nota no route.ts: o
+    // `AYLA_WEBHOOK_SECRET` serve o inbound da Z-API e o cookie de ativação, e
+    // reaproveitá-lo acoplaria a rotina à porta de entrada da Ayla.
+    const secret = process.env.KOLO_GERACAO_SECRET;
+    // O endpoint é fail-closed desde 08/08/2026. Sem o segredo aqui, TODO
+    // cartão para de sair — e antes isso seria um 401 engolido pelo catch.
+    if (!secret) {
+      console.error(
+        "[ayla:rotina] KOLO_GERACAO_SECRET ausente — nenhum cartão será gerado. Configure o ambiente.",
+      );
+      return false;
+    }
+    const r = await fetch(`${base}/api/ludico/gerar-rotina`, {
       method: "POST",
-      headers: { "content-type": "application/json", ...(secret ? { "x-ayla-secret": secret } : {}) },
+      headers: { "content-type": "application/json", "x-ayla-secret": secret },
       body: JSON.stringify({ rotinaId, tema, preservarArte: opts?.preservarArte === true }),
     });
+    // DEVOLVE SE COMEÇOU. O endpoint grava `cards_status='gerando'` antes de
+    // responder, então um 200 aqui significa que a geração está mesmo em curso
+    // — e é só com isso na mão que a Ayla pode dizer "já comecei". Best-effort
+    // continua, mas deixa de ser MUDO: o disparo que falha era a diferença
+    // entre "gerando" e a mãe olhando ícone pra sempre.
+    if (!r.ok) {
+      console.error(`[ayla:rotina] disparo recusado pelo gerador — HTTP ${r.status} (rotina ${rotinaId})`);
+      return false;
+    }
+    return true;
   } catch (e) {
-    console.warn("[ayla:rotina-guiada] disparar geração falhou:", e instanceof Error ? e.message : e);
+    console.error("[ayla:rotina] disparar geração falhou:", e instanceof Error ? e.message : e);
+    return false;
   }
+}
+
+/** Rotinas criadas com cartões pedidos, esperando só a escolha do tema. */
+async function marcarAguardandoTema(supabase: SupabaseClient, ids: string[]): Promise<void> {
+  if (!ids.length) return;
+  try {
+    await supabase.from("rotinas").update({ cards_status: "aguardando" }).in("id", ids);
+  } catch (e) {
+    console.error("[ayla:rotina] falha ao marcar 'aguardando':", e instanceof Error ? e.message : e);
+  }
+}
+
+/** A rotina mais recente deste membro que está esperando um tema. */
+async function rotinaAguardandoTema(
+  supabase: SupabaseClient,
+  familyId: string,
+  membroId: string,
+): Promise<{ id: string; nome: string } | null> {
+  try {
+    const { data } = await supabase
+      .from("rotinas")
+      .select("id, nome")
+      .eq("family_account_id", familyId)
+      .eq("membro_atipico_id", membroId)
+      .eq("cards_status", "aguardando")
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    return data ? { id: data.id as string, nome: (data.nome as string) ?? "" } : null;
+  } catch {
+    return null;
+  }
+}
+
+/** A família desistiu dos cartões desta rotina? */
+function recusouTema(t: string): boolean {
+  return /\b(n[ãa]o quero|sem cart|sem tema|deixa (pra l[áa]|assim)|depois eu|agora n[ãa]o|nenhum)\b/i.test(t);
+}
+
+/**
+ * A MENSAGEM É A ESCOLHA DO TEMA?
+ *
+ * Determinístico de propósito. A resposta "princesas" é o gatilho do turno
+ * inteiro — se ela precisasse sobreviver a uma ida ao modelo e a um parser,
+ * estaríamos reconstruindo exatamente a falha de 07/08/2026.
+ *
+ * Conservador: só reconhece resposta CURTA e sem verbo de edição. Qualquer
+ * outra coisa devolve null e segue o fluxo normal, onde o condutor decide.
+ */
+export function lerTemaEscolhido(texto: string | null | undefined): string | null {
+  const bruto = (texto ?? "").trim();
+  if (!bruto || bruto.length > 60) return null;
+  if (recusouTema(bruto)) return null;
+  // Pedido de mudança na rotina não é escolha de tema.
+  if (/\b(muda|troca|tira|apaga|acrescenta|inclui|adiciona|edita|imprim|pdf)\w*\b/i.test(bruto)) return null;
+  if (/\?$/.test(bruto)) return null;
+
+  const limpo = bruto
+    .replace(/^(pode ser|podia ser|prefiro|quero|queria|vamos de|faz(er)? (de|em|no|na)?|escolho|acho que|talvez|ah,?|sim,?)\s+/i, "")
+    .replace(/^(no |na |em |de |do |da |o |a )?tema (de |do |da |em )?/i, "")
+    .replace(/^(de|do|da|em|no|na)\s+/i, "")
+    .replace(/[.!]+$/, "")
+    .trim();
+  if (limpo.length < 2 || limpo.length > 40) return null;
+  // Uma ou duas palavras é tema; uma frase é outra coisa.
+  if (limpo.split(/\s+/).length > 4) return null;
+  return limpo;
+}
+
+/**
+ * O CONTRATO DO CONDUTOR, COMO FERRAMENTA — não como JSON em texto.
+ *
+ * Em 07/08/2026 a Ayla devolveu o turno certo (`acao:"montar"`, tema
+ * "princesas") e o sistema perdeu tudo: a fala dela citava a frase que a mãe
+ * deveria usar — "agora vamos ao mercado" — e as aspas não escapadas quebraram
+ * o `JSON.parse`. O extrator devolvia `null` em silêncio, `acao` virava "",
+ * `tema` sumia, e os cartões nunca eram disparados. Três de três execuções.
+ *
+ * A causa não era ESTE JSON: era pedir a um modelo que escreve português
+ * natural que também fosse serializador. Com tool use quem serializa é a API,
+ * e a fala pode ter aspas, quebra de linha e emoji à vontade.
+ */
+const FERRAMENTA_CONDUTOR = {
+  name: "conduzir_rotina",
+  description:
+    "Devolve o desfecho deste turno da conversa de rotina: o que fazer, a fala pra família e, quando for montar, a rotina em si.",
+  input_schema: {
+    type: "object" as const,
+    properties: {
+      acao: {
+        type: "string",
+        enum: ["responder", "perguntar", "montar", "sair"],
+        description: "O desfecho deste turno.",
+      },
+      mensagem: {
+        type: "string",
+        description:
+          "Sua fala pra família, como no WhatsApp. Escreva natural: aspas, travessões, quebras de linha e emoji são bem-vindos e NÃO precisam ser escapados.",
+      },
+      tema: {
+        type: "string",
+        description:
+          "Tema dos cartões, quando a família JÁ escolheu um nesta conversa. Se ainda não escolheu, omita.",
+      },
+      transicoes: {
+        type: "array",
+        description: "Momentos difíceis aprendidos nesta conversa.",
+        items: {
+          type: "object",
+          properties: {
+            momento: { type: "string" },
+            estrategia: { type: "string" },
+            funcionou: { type: "boolean" },
+            merece_plano: { type: "boolean" },
+          },
+          required: ["momento"],
+        },
+      },
+      rotinas: {
+        type: "array",
+        description: 'Preenchido só quando acao="montar".',
+        items: {
+          type: "object",
+          properties: {
+            nome: { type: "string" },
+            dia_semana: {
+              type: ["integer", "null"],
+              description: "0=segunda … 6=domingo. null para um dia avulso.",
+            },
+            tarefas: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  texto: { type: "string" },
+                  hora: { type: ["string", "null"] },
+                },
+                required: ["texto"],
+              },
+            },
+          },
+          required: ["nome", "tarefas"],
+        },
+      },
+    },
+    required: ["acao", "mensagem"],
+  },
+};
+
+/** Bloco de resposta da API que interessa aqui — evita casar o tipo inteiro. */
+type BlocoResposta = { type: string; text?: string; name?: string; input?: unknown };
+
+/**
+ * Lê o desfecho do condutor. Caminho normal: o bloco `tool_use`, já validado
+ * pela API. Degradação: o modelo respondeu em prosa — aí ainda tentamos o
+ * parser antigo, mas GRITANDO no log. A falha silenciosa foi o que fez este
+ * defeito sobreviver semanas em produção; ela não volta.
+ */
+function lerDesfechoDoCondutor(resp: { content: BlocoResposta[] }): unknown {
+  const ferramenta = resp.content.find(
+    (b) => b.type === "tool_use" && b.name === FERRAMENTA_CONDUTOR.name,
+  );
+  if (ferramenta?.input && typeof ferramenta.input === "object") return ferramenta.input;
+
+  const raw = resp.content
+    .filter((b) => b.type === "text")
+    .map((b) => b.text ?? "")
+    .join("");
+  const recuperado = extrairJsonRotina(raw);
+  console.error(
+    `[ayla:rotina] condutor não usou a ferramenta — ${
+      recuperado ? "recuperado pelo parser de texto" : "DESFECHO PERDIDO"
+    } (${raw.length} chars)`,
+  );
+  return recuperado;
 }
 
 /**
@@ -606,6 +807,62 @@ export async function conduzirRotina(
     const nome = (membro.nome as string) ?? "seu filho";
     const idade = idadeAnos((membro.data_nascimento as string | null) ?? null);
     const interesses = await carregarInteresses(supabase, params.membroAtipicoId);
+    // NO MÁXIMO DUAS. O interesse conhecido vira SUGESTÃO, nunca escolha — o
+    // tema é da rotina, não atributo fixo da criança. Despejar a lista inteira
+    // vira formulário; oferecer uma só vira decisão disfarçada de pergunta.
+    const sugestoesDeTema = (interesses ?? "")
+      .split(/[,;]/)
+      .map((s) => s.trim())
+      .filter(Boolean)
+      .slice(0, 2)
+      .join("* ou *");
+
+    // ── GATILHO DETERMINÍSTICO DO TEMA ─────────────────────────────────────
+    // A rotina existe e espera só uma palavra. Essa palavra NÃO passa por
+    // modelo nem por parser: em 07/08/2026 foi exatamente assim que a escolha
+    // certa ("princesas") se perdeu no caminho e os cartões nunca saíram.
+    // Aqui ela vira UPDATE + disparo, direto.
+    const pendente = await rotinaAguardandoTema(supabase, familyId, params.membroAtipicoId);
+    if (pendente) {
+      if (recusouTema(params.contexto)) {
+        // Desistir também é um desfecho — e precisa apagar o estado, senão a
+        // rotina fica "aguardando" pra sempre e a tela mente.
+        await supabase
+          .from("rotinas")
+          .update({ cards_status: "nenhum", modo_exibicao: "lista" })
+          .eq("id", pendente.id);
+        console.log(`[ayla:rotina] tema recusado — rotina ${pendente.id} volta a lista`);
+        return {
+          mensagem: `Tranquilo — deixei *${pendente.nome}* como lista mesmo, sem os cartões. Se mudar de ideia, é só me dizer um tema que eu desenho.`,
+          pronto: true,
+        };
+      }
+      const escolhido = lerTemaEscolhido(params.contexto);
+      if (escolhido) {
+        await supabase.from("rotinas").update({ tema: escolhido }).eq("id", pendente.id);
+        const comecou = await dispararGeracao(pendente.id, escolhido);
+        const link = await gerarMagicLink(supabase, {
+          familyId,
+          next: `/ludico/rotinas/${pendente.id}`,
+        });
+        console.log(
+          `[ayla:rotina] tema "${escolhido}" aplicado em ${pendente.id} — geração ${comecou ? "iniciada" : "NÃO iniciada"}`,
+        );
+        // A fala reflete o estado real. Sem 200 do gerador, ninguém promete arte.
+        const corpo = comecou
+          ? `Perfeito — vou usar *${escolhido}* nesta rotina 🌿 Já comecei a desenhar os cartões; eles levam *1-2 minutinhos* e vão aparecendo sozinhos.`
+          : `Anotei o tema *${escolhido}* nesta rotina. Os cartões ainda não começaram a ser desenhados — me chama daqui a pouco que eu tento de novo.`;
+        const comoUsar = comecou
+          ? `\n\nQuando estiverem prontos, mostre um de cada vez e vá antecipando: "agora vamos ao mercado; depois a gente volta pra casa."`
+          : "";
+        return {
+          mensagem: link
+            ? `${corpo}\n\nAbre aqui (já entra direto):\n${link}${comoUsar}`
+            : `${corpo}${comoUsar}`,
+          pronto: true,
+        };
+      }
+    }
 
     // Conversa desta sessão (ambas as direções, últimos 60 min) — pra a IA saber
     // o que já perguntou e o que a mãe já respondeu.
@@ -769,17 +1026,22 @@ Exemplo do formato (não copie o conteúdo): "Eu não faria uma rotina do dia in
         ? `O QUE FALTA É A SEQUÊNCIA — e o jeito de pedir ENSINA a mãe a usar você. Peça as atividades na ordem em que acontecem e MOSTRE como é simples, com um exemplo curto ("café → escola → almoço → brincar → banho → jantar → dormir"). Diga que horário é OPCIONAL e ofereça o áudio. Uma frase, do seu jeito, sem virar formulário — e NÃO peça mais nada além da sequência (nem horário, nem ponto difícil, nem idade).`
         : "",
       soOrientacao ? ORIENTACAO_DE_TRANSICAO : "",
-      // VAI HAVER CARTÃO. Então o tema volta a ser proposto — de verdade, com
-      // o interesse na mão. A frente ROTINA tirou o passo "SEMPRE pergunte o
-      // tema antes de montar" porque ele SEGURAVA a entrega; junto foi embora
-      // o "proponha proativamente", e o resultado em produção foi cartão sem
-      // tema — ou, pior, cartão nenhum, já que o disparo dependia dele.
+      // VAI HAVER CARTÃO. O TEMA É PERGUNTADO — decisão de 22/07/2026,
+      // validada em role-play com a Karina, e reconfirmada pelo Sérgio em
+      // 08/08. O interesse da criança serve pra a Ayla SUGERIR, não pra tirar
+      // a escolha da família: o tema é da ROTINA, não atributo fixo da criança
+      // (a mesma Manu tem rotina de dinossauros e rotina de princesas).
+      //
+      // Perguntar tinha sido removido em 03/08 porque SEGURAVA a entrega — mas
+      // o que segurava não era a pergunta: era `tema=null` significar abandono
+      // silencioso, sem estado e sem segunda chance. Com `cards_status
+      // 'aguardando'` a pergunta deixou de ser um beco sem saída.
       visual
-        ? `OS CARTÕES ILUSTRADOS VÃO SAIR nesta rotina.${
+        ? `OS CARTÕES DESTA ROTINA PRECISAM DE UM TEMA, E QUEM ESCOLHE É A FAMÍLIA.${
             interesses
-              ? ` VOCÊ JÁ SABE do que ${nome} gosta: ${interesses}. ESCOLHA UM e escreva no campo "tema" — não pergunte, não peça confirmação, não escreva "quer?". Na fala, diga que já fez ("fiz no tema de princesas, que ela ama") — se ela preferir outro, muda depois em um toque. ⚠️ Tema nulo = NENHUM cartão é gerado, e a mãe recebe cards em branco. Conhecendo o interesse, deixar nulo é entregar quebrado.`
-              : ` Você não conhece um interesse dele. Ofereça DUAS ideias na fala ("quer no tema de dinossauros ou de carrinhos?") e deixe "tema" null — a mãe responde e o sistema aplica.`
-          }`
+              ? ` Você conhece ${nome}: ${interesses}. Ofereça no máximo DUAS dessas como sugestão ("posso fazer em X ou Y") e deixe claro que ela pode escolher qualquer outro que ${nome} esteja gostando agora. NÃO decida por ela e NÃO preencha o campo "tema" — ele só se preenche quando ela responder.`
+              : ` Você não conhece um interesse dele. Ofereça DUAS ideias na fala ("quer no tema de dinossauros ou de carrinhos?") e deixe "tema" vazio — a mãe responde e o sistema aplica.`
+          } NUNCA diga que os cartões já estão sendo desenhados: eles só começam depois que ela escolher.`
         : "",
       deveMontar
         ? `JÁ DÁ PRA MONTAR — a criança, o pedaço do dia e a sequência já estão na mesa. acao="montar", obrigatoriamente. NÃO faça mais nenhuma pergunta neste turno: horário, ponto difícil, tema e transição enriquecem, mas NÃO seguram a entrega. O que faltar, ela ajusta depois em cima do que já existe.`
@@ -813,11 +1075,13 @@ ${jaSabemos.rotinaExistente}`
       model: AYLA_MODEL_FALLBACK,
       max_tokens: 1600,
       system: `${nucleoConducao()}\n\n${CONTRATO_ROTINA}`,
+      tools: [FERRAMENTA_CONDUTOR],
+      // Força a ferramenta: o turno SEMPRE volta estruturado, nunca como prosa
+      // que alguém precise reinterpretar.
+      tool_choice: { type: "tool", name: FERRAMENTA_CONDUTOR.name },
       messages: [{ role: "user", content: userPrompt }],
     });
-    const b = resp.content[0];
-    const raw = b?.type === "text" ? b.text : "";
-    const parsed = extrairJsonRotina(raw) as
+    const parsed = lerDesfechoDoCondutor(resp) as
       | {
           acao?: string;
           mensagem?: string;
@@ -996,8 +1260,14 @@ ${jaSabemos.rotinaExistente}`
         autoGerou = true;
       }
       if (faltaTema) {
+        // ESTADO OPERACIONAL VERDADEIRO. Antes ficava `cards_status="nenhum"`,
+        // indistinguível de "ninguém pediu cartão" — e a tela abria em modo
+        // cartões mostrando ícone, calada, pra sempre. `aguardando` diz o que
+        // realmente acontece: os cartões existem no plano, falta ela escolher
+        // o tema. É o que permite perguntar sem abandonar.
+        await marcarAguardandoTema(supabase, ids);
         console.warn(
-          `[ayla:rotina] visual=true sem tema — cartões NÃO disparados, pedindo o tema na mensagem`,
+          `[ayla:rotina] cartões pedidos sem tema — rotina(s) em 'aguardando', tema perguntado na mensagem`,
         );
       }
 
@@ -1028,13 +1298,21 @@ ${jaSabemos.rotinaExistente}`
 
 Ah — se quiser, o próprio ${nome} pode ser o personagem dos cartões em vez de um desenho genérico. É só criar o avatar dele uma vez (Configurações → Avatar): fica salvo e vale pras histórias também. Aí eu refaço os cartões com a cara dele.`
           : "";
+      // A FRASE SEGUE O ESTADO OPERACIONAL, não a intenção. "Já comecei a
+      // gerar" só é verdade quando o disparo aconteceu; enquanto falta o tema,
+      // o que existe é uma pergunta em aberto — e dizer outra coisa é prometer
+      // arte que ninguém pediu pra desenhar ainda.
       const cartoes = autoGerou
         ? ` Já comecei a gerar os cartões no tema *${tema}* — eles levam *1-2 minutinhos*, então pode abrir que vão aparecendo sozinhos 🌿`
         : // A Ayla já perguntou o tema na fala dela? Então não pergunte de novo:
           // em 04/08/2026 a mãe recebeu as duas ofertas coladas, e a segunda
           // ainda trazia um "dele(a)" de template à mostra.
           (faltaTema || ofereceCartoes) && !/\btema\b|cart(ão|ões|oes)/i.test(mensagem)
-          ? ` Se quiser, eu transformo isso em cartões ilustrados pra ${nome} acompanhar${interesses ? ` — posso fazer no tema de *${interesses.split(/[,;]/)[0]?.trim()}*, que eu sei que ${nome} gosta. Quer?` : `. Me fala um tema que ${nome} ama — animais, dinossauros, fundo do mar, um personagem — que eu faço com a cara ${nome ? `d${nome}` : "dele"}.`}`
+          ? ` Falta só escolher o tema dos cartões${
+              sugestoesDeTema
+                ? `: posso fazer em *${sugestoesDeTema}* — ou qualquer outro que ${nome} esteja gostando agora.`
+                : `. Me fala um tema que ${nome} ama — animais, dinossauros, fundo do mar, um personagem — que eu desenho em cima disso.`
+            }`
           : "";
       const impresso = querImprimir
         ? " Te mandei também um *PDF pra imprimir* (com quadradinhos pra marcar)."
@@ -1198,7 +1476,36 @@ const SYSTEM_EDITAR = `Você edita uma rotina que já existe. Recebe as TAREFAS 
 
 ANTES DE TUDO: confira se a mensagem é MESMO um pedido pra mudar o quadro de rotina. Se ela só está CONTANDO como foi o dia, desabafando, ou falando de algo da vida dela que não é o quadro (uma obra em casa, uma crise, o trabalho), devolva {"tarefas":[]} e nada mais — não invente etapa nenhuma a partir da história dela. Melhor não mexer do que mexer sem ela pedir.
 
-Se for pedido de verdade, devolva APENAS JSON com as tarefas ATUALIZADAS, aplicando o pedido (adicionar / remover / mudar texto / mudar horário / reordenar) e MANTENDO tudo que ela NÃO mencionou. Formato: {"tarefas":[{"texto":"acordar","hora":"6h"}]}. HORÁRIO é opcional (null se não tiver; nunca invente). Encaixe no lugar lógico (ex.: "lanche depois da escola" entra logo após a escola). Texto curto (1-5 palavras). NÃO invente atividades além do que ela pediu.`;
+Se for pedido de verdade, devolva pela ferramenta \`reescrever_tarefas\` as tarefas ATUALIZADAS, aplicando o pedido (adicionar / remover / mudar texto / mudar horário / reordenar) e MANTENDO tudo que ela NÃO mencionou. HORÁRIO é opcional (null se não tiver; nunca invente). Encaixe no lugar lógico (ex.: "lanche depois da escola" entra logo após a escola). Texto curto (1-5 palavras). NÃO invente atividades além do que ela pediu. Se NÃO for pedido de mudança, devolva a lista vazia.`;
+
+/**
+ * Mesmo contrato-como-ferramenta do condutor, pelo mesmo motivo — e aqui não é
+ * hipótese: existe rotina em produção com a etapa `Aviso: "logo vamos embora
+ * do circo"`. Uma aspa dentro do texto de um passo derrubava a edição inteira,
+ * e `sanitizarTarefasSimples(null)` devolvia lista vazia, que este fluxo lê
+ * como "não era pedido de mudança". A mãe pedia, e nada acontecia.
+ */
+const FERRAMENTA_EDITAR = {
+  name: "reescrever_tarefas",
+  description: "Devolve a lista completa de tarefas da rotina depois de aplicar o pedido da família.",
+  input_schema: {
+    type: "object" as const,
+    properties: {
+      tarefas: {
+        type: "array",
+        items: {
+          type: "object",
+          properties: {
+            texto: { type: "string", description: "Curto. Pode conter aspas — não escape nada." },
+            hora: { type: ["string", "null"] },
+          },
+          required: ["texto"],
+        },
+      },
+    },
+    required: ["tarefas"],
+  },
+};
 
 const ACENTOS = new RegExp("[\\u0300-\\u036f]", "g"); // marcas de combinação (pós-NFD)
 
@@ -1506,6 +1813,8 @@ export async function editarRotina(
 
 ${instrucaoDeAjuste(params.feedback)}`
         : SYSTEM_EDITAR,
+      tools: [FERRAMENTA_EDITAR],
+      tool_choice: { type: "tool", name: FERRAMENTA_EDITAR.name },
       messages: [
         {
           role: "user",
@@ -1513,9 +1822,19 @@ ${instrucaoDeAjuste(params.feedback)}`
         },
       ],
     });
-    const b = resp.content[0];
-    const raw = b?.type === "text" ? b.text : "";
-    const parsed = extrairJsonRotina(raw) as { tarefas?: unknown } | null;
+    const usou = resp.content.find(
+      (b) => b.type === "tool_use" && b.name === FERRAMENTA_EDITAR.name,
+    ) as { input?: unknown } | undefined;
+    let parsed = (usou?.input ?? null) as { tarefas?: unknown } | null;
+    if (!parsed) {
+      const raw = resp.content
+        .map((b) => (b.type === "text" ? b.text : ""))
+        .join("");
+      parsed = extrairJsonRotina(raw) as { tarefas?: unknown } | null;
+      console.error(
+        `[ayla:rotina] editor não usou a ferramenta — ${parsed ? "recuperado" : "PEDIDO PERDIDO"}`,
+      );
+    }
     const novas = sanitizarTarefasSimples(parsed?.tarefas);
     // Vazio = a IA reconheceu que a mensagem não era pedido de mudança.
     if (!novas.length) return null;

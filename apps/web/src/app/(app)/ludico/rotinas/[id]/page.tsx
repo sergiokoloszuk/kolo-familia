@@ -108,6 +108,7 @@ export default async function RotinaPage({
         historia={(rotina.historia as string | null) ?? null}
         cardsStatus={((rotina.cards_status as string | null) ?? "nenhum") as
           | "nenhum"
+          | "aguardando"
           | "gerando"
           | "pronto"
           | "erro"}
