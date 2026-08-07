@@ -28,7 +28,7 @@ const GUIADA = readFileSync(resolve(__dirname, "rotina-guiada.ts"), "utf8");
 const PRONTIDAO = readFileSync(resolve(__dirname, "prontidao-rotina.ts"), "utf8");
 const ORCH = readFileSync(resolve(__dirname, "orchestrator.ts"), "utf8");
 const MIGRACAO = readFileSync(
-  resolve(__dirname, "../../../../../supabase/migrations/0071_rotina_resultado.sql"),
+  resolve(__dirname, "../../../../../supabase/migrations/0075_rotina_resultado.sql"),
   "utf8",
 );
 
@@ -200,7 +200,7 @@ describe("a sequência ajudou? — no máximo uma retomada", () => {
   });
 });
 
-describe("a migração 0071", () => {
+describe("a migração 0075", () => {
   it("é aditiva e anulável — nenhuma linha existente muda", () => {
     expect(MIGRACAO).toMatch(/add column if not exists resultado text/);
     expect(MIGRACAO).toMatch(/add column if not exists seguimento_enviado_em timestamptz/);

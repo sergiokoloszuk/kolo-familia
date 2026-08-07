@@ -161,7 +161,14 @@ describe("durante a segurança, artefato nenhum dispara", () => {
     // importa é a segurança continuar sendo o PRIMEIRO termo do gate.
     expect(ORCH).toMatch(/!seguranca\.aberta &&\n\s*\(rotinaConversa \|\|\n\s*intent === "rotina_criar"/);
     expect(ORCH).toMatch(/!seguranca\.aberta && !rotinaConversa && \(intent === "rotina_ver"/);
-    expect(ORCH).toMatch(/!seguranca\.aberta && !rotinaConversa && \(intent === "rotina_editar"/);
+    // O gate de editar virou multilinha quando o FEEDBACK passou a entrar por
+    // ele ("já faz sozinho", "não funcionou até o jantar"). A exigência é a
+    // mesma e não afrouxou: segurança continua sendo o primeiro termo, e o
+    // `ehFeedbackDeRotina` que entrou na disjunção também nasce com ela.
+    expect(ORCH).toMatch(
+      /!seguranca\.aberta &&\s*\n?\s*!rotinaConversa &&\s*\n?\s*\(intent === "rotina_editar"/,
+    );
+    expect(ORCH).toMatch(/const ehFeedbackDeRotina =\s*\n?\s*!seguranca\.aberta && !rotinaConversa/);
   });
 
   it("a ponte do Plano", () => {
