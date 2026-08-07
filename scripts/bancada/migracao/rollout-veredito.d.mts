@@ -34,6 +34,7 @@ export type Veredito = {
 };
 
 export declare const FEATURES_CONVERSA: string[];
+export declare function semAllowlist(autorizadas: Set<string>): boolean;
 export declare function ehConversacional(feature?: string): boolean;
 export declare function agruparPorFamilia(
   chamadas: readonly ChamadaApi[],

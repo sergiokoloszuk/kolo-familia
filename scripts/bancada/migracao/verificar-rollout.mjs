@@ -27,7 +27,7 @@ import { fileURLToPath } from "node:url";
 import { createClient } from "@supabase/supabase-js";
 // O veredito mora fora daqui porque é testado — ver rollout-veredito.mjs e o
 // caso do whisper-1 que virou alarme falso de vazamento.
-import { FEATURES_CONVERSA, agruparPorFamilia, veredito } from "./rollout-veredito.mjs";
+import { FEATURES_CONVERSA, agruparPorFamilia, veredito, semAllowlist } from "./rollout-veredito.mjs";
 
 const AQUI = dirname(fileURLToPath(import.meta.url));
 const RAIZ = resolve(AQUI, "../../..");

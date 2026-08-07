@@ -5,6 +5,7 @@ import {
   ehConversacional,
   agruparPorFamilia,
   veredito,
+  semAllowlist,
 } from "../../../../../scripts/bancada/migracao/rollout-veredito.mjs";
 
 /**
@@ -89,6 +90,21 @@ describe("os seis casos do verificador", () => {
     const v = veredito(g, autorizadas);
     expect(v.vazamentos).toHaveLength(0);
     expect(v.semDado).toHaveLength(2); // ninguém conversou de fato
+  });
+});
+
+describe("sem allowlist não existe veredito", () => {
+  it("lista vazia é reconhecida como 'não sei', não como 'ninguém autorizado'", () => {
+    expect(semAllowlist(new Set())).toBe(true);
+    expect(semAllowlist(autorizadas)).toBe(false);
+  });
+
+  it("o veredito RECUSA responder em vez de acusar a família toda", () => {
+    // O segundo alarme falso: rodado da máquina local, onde
+    // OPENAI_TEST_FAMILY_IDS não existe, toda família no GPT virava intrusa e
+    // o relatório mandava dar rollback. A família era autorizada.
+    const g = agruparPorFamilia([chamada(AUT, "openai", "ayla_responder")]);
+    expect(() => veredito(g, new Set())).toThrow(/allowlist vazia/);
   });
 });
 
