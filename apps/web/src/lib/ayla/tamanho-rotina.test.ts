@@ -220,11 +220,11 @@ describe("cartões saem por necessidade visual, não por tema", () => {
 // ============================================================
 
 describe("entregar é resolver, não é gerar artefato", () => {
-  it("o contrato diz as duas coisas — e continua mandando montar quando dá", () => {
-    expect(GUIADA).toMatch(/AYLA SEMPRE ENTREGA — ajuda útil, não necessariamente artefato/);
-    expect(GUIADA).toMatch(/NÃO quer dizer gerar um quadro em toda conversa/);
-    // A metade que matou o interrogatório NÃO pode ter sumido.
-    expect(GUIADA).toMatch(/Se já dá pra montar uma primeira versão, MONTE/);
+  // ATUALIZADO em 08/08/2026 (D-R1): "monta quando dá" passou a valer para a
+  // sequência que a família deu. Ver `rotina-confirmacao.test.ts`.
+  it("o contrato diz as duas coisas — e continua mandando montar quando a sequência é dela", () => {
+    expect(GUIADA).toMatch(/a MENOR que resolve/);
+    expect(GUIADA).toMatch(/MONTE, sem pedir confirmação/i);
   });
 });
 
