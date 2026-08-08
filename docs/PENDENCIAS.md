@@ -27,7 +27,7 @@ Só o que está aberto. 🔒 = bloqueada.
 | [PEND-018](#pend-018) | Memória e retrato da criança | **C · Memória** | P1 | ABERTA | desenhar junto com A |
 | [PEND-021](#pend-021) | Jornada dos 7 dias e conversão | G · Comercial | P1 | ABERTA | preencher o DESEJADO |
 | [PEND-022](#pend-022) | Fontes confiáveis, limites e escalonamento | F · Limites | P2 | ABERTA | preencher o DESEJADO |
-| [PEND-004](#pend-004) | Rotina/Sequência Visual | D · Entregas | P2 | ABERTA | completar o DESEJADO (parte já existe) |
+| [PEND-004](#pend-004) | Rotina/Sequência Visual | D · Entregas | P2 | ABERTA | **decisões fechadas — implementar em fatias** |
 | [PEND-019](#pend-019) | Estratégias que a família consegue usar | D · Entregas | P2 | ABERTA | depende de A+B+C |
 | [PEND-020](#pend-020) | Relatórios para escola, terapeuta e médico | D · Entregas | P2 | ABERTA | depende de C |
 | [PEND-023](#pend-023) | Feedback da família e aprendizado | E · Feedback | P2 | ABERTA | depende de D |
@@ -53,7 +53,7 @@ inteligência é o retrabalho mais caro que existe aqui.
 | **A · Condução** | PEND-016 | INVESTIGAR/DESENHAR JUNTO com B e C |
 | **B · Conhecimento** | PEND-017 | INVESTIGAR/DESENHAR JUNTO com A |
 | **C · Memória da criança** | PEND-018 | INVESTIGAR/DESENHAR JUNTO com A |
-| **D · Entregas** | PEND-004 (rotina) · PEND-019 (estratégias) · PEND-020 (relatórios) | DEPENDE DE A+B+C |
+| **D · Entregas** | PEND-004 (rotina) · PEND-019 (estratégias) · PEND-020 (relatórios) | **PEND-004 NÃO depende mais** (decisões fechadas em 08/08); as outras duas sim |
 | **E · Feedback** | PEND-023 | DEPENDE DE D · alimenta A e C |
 | **F · Limites** | PEND-022 | PODE SER DESENHADA SEPARADAMENTE, aplica-se a A |
 | **G · Comercial** | PEND-021 · PEND-001 · PEND-002 | PODE ANDAR EM PARALELO |
@@ -405,6 +405,12 @@ Aberta em: 2026-08-08 · Origem: pedido do Sérgio na missão da PEND-004
 - **O trabalho é um MAPA DE IMPACTO, não telas.** Para cada frente: o que a
   equipe precisa ver · para decidir o quê · com que frequência · e se isso já
   existe em algum canto do Admin. **A prioridade sai do mapa**, não antes dele.
+- **IMPACTOS DA ROTINA, levantados pela auditoria de 2026-08-08** (PEND-004):
+  ver rotinas geradas por família · **criança** · título · data · **origem**
+  (veio da conversa? de qual?) · **status dos cartões** (`nenhum`/`aguardando`/
+  `gerando`/`pronto`/`erro` — o `erro` hoje não é visível para ninguém) ·
+  **feedback da mãe** quando D-R5 estiver no ar · e **quantas rotinas a mesma
+  família tem para o mesmo momento**, que passa a acontecer por decisão (D-R3).
 - **Já sabido, das fichas existentes:** PEND-004 rotinas geradas (criança,
   título, data, origem, status, feedback, erro de geração) · PEND-016 *por que*
   a Ayla decidiu o que decidiu · PEND-017 administrar acervo e ver o que foi
@@ -424,7 +430,7 @@ Aberta em: 2026-08-08 · Origem: pedido do Sérgio na missão da PEND-004
 
 ### PEND-004
 **Rotina/Sequência Visual — auditar o fluxo atual antes de redesenhar**
-Categoria: Produto · Prioridade: **P2** · Estado: **ABERTA**
+Categoria: Produto · Prioridade: **P2** · Estado: **ABERTA — pronta para IMPLEMENTAR**
 Aberta em: 2026-08-08 · Origem: decisão de produto (2026-08-08)
 
 - **Impacto:** é a funcionalidade escolhida para validar o
@@ -461,27 +467,37 @@ Aberta em: 2026-08-08 · Origem: decisão de produto (2026-08-08)
   4. o botão **Imprimir só aparece em modo `cartoes`** — rotina em lista não imprime;
   5. **evento único não é escopo válido** (*"o Mario vem jantar"*): o critério
      exige "qual pedaço do dia". É o Caso C, e não está coberto.
-- **DUAS DIVERGÊNCIAS ENTRE O DESEJADO E DECISÕES JÁ TOMADAS** — não resolver em
-  silêncio, em nenhuma direção:
-  - **D-R1 · confirmar antes de gerar.** `rotina-guiada.ts:422` diz
-    *"MONTE — não peça confirmação antes"*, com o argumento escrito. O desejado
-    pede confirmação. Recomendação registrada na SPEC: confirmar quando a Ayla
-    **inferiu** a sequência, gerar direto quando a mãe a ditou.
-  - **D-R2 · o que conta como evidência de que VER ajuda.** O código exige que a
-    família tenha dito; o desejado sugere que transição recorrente basta.
-- **DESEJADO — AINDA A DEFINIR COM PRODUTO:** segunda rotina para o mesmo
-  momento (substituir/versionar/duplicar — **duplicar é o mais seguro**, porque
-  a família pode já ter impresso e colado) · evento especial é rotina? (D-R4) ·
-  onde vive o feedback (depende de PEND-023).
+- **AS CINCO DECISÕES DE PRODUTO — TOMADAS em 2026-08-08.** Não resta decisão
+  bloqueadora; a SPEC traz a redação de cada uma.
+  - **D-R1 · confirmação seletiva.** Sequência que a **mãe ditou** → gerar sem
+    confirmação redundante. Sequência que a **Ayla inferiu, acrescentou ou
+    reorganizou** → apresentar e confirmar.
+  - **D-R2 · oferta pelo contexto.** Cai a exigência de evidência prévia de que
+    "visual funciona para esta criança". Fica a distinção que não pode se
+    perder: *transição difícil ≠ esta criança precisa de apoio visual*; significa
+    que **apoio visual é possibilidade relevante a oferecer**. Não virar regra
+    por palavra-chave.
+  - **D-R3 · nunca substituir em silêncio** (provisório). Preserva a anterior;
+    não apagar artefato que a família possa já ter impresso.
+  - **D-R4 · evento único gera rotina.** O critério deixa de ser "pedaço
+    recorrente do dia" e passa a ser a **sequência de acontecimentos**.
+  - **D-R5 · feedback não espera PEND-023.** Primeira versão guarda rotina,
+    criança, timestamp e resposta.
+- **⚠️ D-R1 e D-R2 REVERTEM DECISÕES DELIBERADAS DE 03/08 — e as antigas não
+  eram erro.** A exigência de evidência para o visual continha cartão gerado sem
+  necessidade; o "MONTE, não peça confirmação" evitava mais um turno de
+  perguntas. Ao implementar, **preservar o comentário datado e o motivo
+  originais** no código, acrescentando a decisão nova. Apagar a genealogia é o
+  que tornou a auditoria de identidade tão cara.
 - **Depende de:** PEND-016, PEND-017 e PEND-018 para a parte de inteligência;
   PEND-023 para o feedback. A execução técnica não começa antes do DESEJADO
   desses blocos.
 - **Admin:** ADMIN PRECISA DE AJUSTE — visualizar rotinas geradas por família,
   com criança, título, data, origem, status e feedback. **Registrado em PEND-026**;
   não se implementa aqui.
-- **Próximo passo:** **decidir D-R1 e D-R2** (Sérgio/Karina) — são as duas que
-  mudam o comportamento em produção. As lacunas 1 a 4 do app **não dependem de
-  A+B+C** e podem ser implementadas assim que houver aval.
+- **Estado: PRONTA PARA IMPLEMENTAR.** Nenhuma dependência de A+B+C, nenhuma
+  decisão de produto pendente. A execução deve ser fatiada (ver SPEC §5) —
+  começando pelo que não toca a condução em produção.
 - **Critério de conclusão:** SPEC da Rotina Visual em `docs/specs/` com os oito
   portões respondidos e o corpus de disparo preenchido. Implementação é frente
   seguinte, não faz parte desta baixa.
@@ -1332,6 +1348,12 @@ Aberta em: 2026-08-08 · Origem: consolidação da PEND-010 +
      período observado, criança, tipo;
   2. como a tela e a Ayla distinguem "a professora relatou" de "a Ayla inferiu";
   3. o que acontece quando duas informações se contradizem.
+- **APRENDIZADO A INCORPORAR (2026-08-08, vindo da PEND-004):** *desejado novo
+  que contradiz uma decisão antiga documentada exige **decisão explícita de
+  produto** — não se sobrescreve em silêncio nem se preserva o legado por
+  inércia.* Na Rotina, duas cláusulas do desejado revertiam decisões de 03/08
+  que **não eram erro** e traziam o motivo escrito no código. Viraram D-R1 e
+  D-R2, foram decididas, e a genealogia antiga fica preservada junto da nova.
 - **Já desenhado, não recomeçar:** `docs/perfil-vivo-fatos-versionados.md`
   (fatos datados + proveniência + visão derivada) — decidido e **não construído**.
 - **Evidência de produção (amostra de 15 conversas, 2026-08-08):** a memória
