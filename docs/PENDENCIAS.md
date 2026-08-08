@@ -16,7 +16,7 @@ Só o que está aberto. 🔒 = bloqueada.
 | ID | Pendência | Categoria | Prio | Estado | Próximo passo |
 |---|---|---|---|---|---|
 | [PEND-007](#pend-007) | Ativação do GPT parada na prova da chave de produção | Ayla/IA | P1 | ABERTA 🔒 | publicar e rodar `provider-check` |
-| [PEND-003](#pend-003) | Preview da Vercel vermelho há vários PRs | Infra/Deploy | P1 | ABERTA 🔒 | ler o log do primeiro preview que falhou |
+| [PEND-003](#pend-003) | Preview da Vercel vermelho — causa raiz provada | Infra/Deploy | P1 | PRONTA PARA EXECUTAR 🔒 | Sérgio: 2 variáveis públicas no ambiente Preview |
 | [PEND-002](#pend-002) | Pagamento confirmado no Stripe sem acesso na Kolo | Pagamento/Acesso | P1 | AGUARDANDO VALIDAÇÃO | esperar a primeira assinatura real e conferir os 5 pontos |
 | [PEND-001](#pend-001) | Cooldown do convite de assinatura | Pagamento/Acesso | P1 | AGUARDANDO VALIDAÇÃO | esperar o próximo convite real e conferir o número |
 | [PEND-004](#pend-004) | Rotina/Sequência Visual — auditar antes de redesenhar | Produto | P2 | ABERTA | missão INVESTIGAR do fluxo atual |
@@ -256,8 +256,8 @@ Aberta em: 2026-08-08 · Origem: incidente Rochelle (2026-07-23) → Fase 0B
 ---
 
 ### PEND-003
-**Preview da Vercel vermelho há vários PRs**
-Categoria: Infra/Deploy · Prioridade: **P1** · Estado: **ABERTA** 🔒
+**Preview da Vercel vermelho — causa raiz provada, correção depende do painel**
+Categoria: Infra/Deploy · Prioridade: **P1** · Estado: **PRONTA PARA EXECUTAR** 🔒
 Aberta em: 2026-08-08 · Origem: relato do Sérgio (2026-08-08)
 
 - **Impacto:** se o preview falha em todo PR, ele para de significar alguma
@@ -268,15 +268,65 @@ Aberta em: 2026-08-08 · Origem: relato do Sérgio (2026-08-08)
   dia falharam (`f872831` às 13:57Z, `31a54de` às 12:59Z). O `build` do GitHub
   Actions passa. Ou seja: **produção está publicando normalmente**; o que está
   quebrado é o sinal que deveria pegar regressão **antes** do merge.
-  A causa da falha do preview segue **não** investigada.
-- **Bloqueio:** sem acesso ao painel da Vercel.
-  *Por quê:* a causa está no log do build remoto.
-  *Onde obter:* Vercel → Deployments → primeiro preview vermelho → Build Logs.
+- **CAUSA RAIZ (2026-08-08) — provada por reprodução local, não por suposição:**
+  o build do Next **prerenderiza páginas que instanciam o cliente Supabase**, e
+  isso exige `NEXT_PUBLIC_SUPABASE_URL` e `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+  **no momento do build**. Sem elas o build morre no export:
+  `@supabase/ssr: Your project's URL and API key are required to create a
+  Supabase client!` → *"Export encountered an error on /boas-vindas/page"* e
+  *"/(app)/ludico/desenhos"*.
+  Como o prerender roda **independente do que mudou**, um commit só de markdown
+  falha igual — que é exatamente o padrão observado.
+- **Experimento que fecha a causa (local, sem tocar em produção):**
+  1. `.env.local` removido → build **falha**, com o erro acima;
+  2. `.env.local` contendo **apenas as duas variáveis públicas do Supabase** →
+     build **passa inteiro** (104 páginas).
+  Ou seja: **o build precisa de exatamente duas variáveis**, e as duas são
+  `NEXT_PUBLIC_*` — a anon key é pública por construção e protegida por RLS.
+  Todo o resto (service role, Stripe, Z-API, provedores de IA, `CRON_SECRET`)
+  é **só de runtime**.
+- **Corroboração:** a falha é determinística e independente de conteúdo, o
+  `build` do GitHub Actions passa (ele não faz deploy), e Production — mesmo
+  código — publica verde. Isso casa com "variável presente só em Production".
+- **Classificação das variáveis** (nomes, nunca valores):
+
+  | Variável | Necessária no build? | Vai para Preview? |
+  |---|---|---|
+  | `NEXT_PUBLIC_SUPABASE_URL` | **SIM** | **sim** — pública |
+  | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | **SIM** | **sim** — pública, protegida por RLS |
+  | `NEXT_PUBLIC_APP_URL`, `NEXT_PUBLIC_APP_NAME` | não | opcional (afeta links gerados) |
+  | `SUPABASE_SERVICE_ROLE_KEY` | não | **NÃO** — bypassa RLS |
+  | `STRIPE_*`, `ZAPI_*`, `ANTHROPIC_*`, `OPENAI_*` | não | **NÃO** — dinheiro, WhatsApp e API paga |
+  | `CRON_SECRET` | não | ver risco abaixo |
+
+- **Bloqueio:** aplicar a correção exige o **painel da Vercel** (escopo de
+  variáveis por ambiente), que o agente não tem. Não improvisei alternativa em
+  código: tirar o prerender dessas páginas seria decisão de arquitetura, e
+  fallback de env no build mascararia o problema.
   *Destrava:* Sérgio.
-- **Próximo passo:** trazer o log do primeiro preview que falhou.
-- **Critério de conclusão:** um PR novo com preview verde, e a causa registrada
-  em uma frase (para não voltar).
-- **Agente recomendado:** INVESTIGAR
+- **Próximo passo (proposta):** adicionar **as duas variáveis públicas** ao
+  ambiente **Preview** do projeto `kolo-familia-web` (root `apps/web`), **e
+  nada além disso**. Depois, abrir um PR qualquer e conferir o preview.
+- **Decisão de segurança que acompanha a correção:** com essas duas variáveis, o
+  Preview passa a servir o app apontando para o **banco de produção**. Sem
+  service role e com RLS, ele não enxerga dado de família sem sessão — mas a
+  URL de preview passa a ser um app funcional contra dados reais. Recomendação:
+  ligar/conferir a **Deployment Protection** da Vercel para previews antes de
+  adicionar as variáveis. Alternativa estrutural (Supabase de staging) é frente
+  própria, não esta.
+- **Riscos desta frente, com destino:**
+
+  | Risco | Destino | Motivo |
+  |---|---|---|
+  | Preview passa a apontar para o banco de produção | **MANTER NA PEND-003** | é o efeito direto da correção; mitigar com Deployment Protection antes de aplicar |
+  | `CRON_SECRET` ausente deixa o cron **fail-open** (`if (expectedSecret)`) — no Preview, sem o segredo, os crons ficariam abertos na URL | **MANTER NA PEND-003** | com Deployment Protection ligada, a URL não é pública; sem service role o cron falharia de qualquer forma. Mas o padrão fail-open é real e vale corrigir junto |
+  | Copiar variáveis sensíveis para o Preview "para ficar verde" | **DESCARTADO, com evidência** | o experimento mostra que **só as duas públicas** são necessárias; nenhuma chave de Stripe, Z-API ou service role entra |
+  | Tirar o prerender das páginas para não precisar de env | **RISCO ACEITO — não fazer** | seria decisão de arquitetura e perderia otimização estática para resolver um problema de configuração |
+
+- **Critério de conclusão:** um PR novo com **preview verde**, URL de preview
+  abrindo, Production seguindo verde, `build` do Actions verde, e **nenhuma
+  variável sensível** adicionada ao Preview.
+- **Agente recomendado:** EXECUTAR (com Sérgio no painel)
 
 ---
 
@@ -573,7 +623,14 @@ PEND-002 (Etapas 1, 2 e 3), 2026-08-08
   14. **teste antigo que quebra porque o comportamento mudou de propósito se
       revisa, não se apaga.** Reescrever a *asserção* preservando a *intenção*:
       "sem ruído" deixou de ser "nada persiste" e virou "só o pulso persiste".
-      Apagar teria removido a única guarda contra o pulso virar spam.
+      Apagar teria removido a única guarda contra o pulso virar spam;
+  15. **patch que aplica sem conflito de git não está semanticamente
+      revalidado.** O git diz "aplica limpo" em segundos; o que importa é
+      conferir as premissas que o patch assume sobre código **fora do próprio
+      diff**. Pergunta fixa: *"em que este patch acredita que não está nele?"*;
+  16. **trabalho ainda não publicado é a melhor hora para corrigir fato
+      histórico e comentário errado**, antes que virem referência permanente —
+      depois de publicado, mexer em mensagem de commit é caro e arriscado.
 - **Próximo passo:** decidir item a item o que entra, com você.
 - **Critério de conclusão:** `AI-ENGINEERING-PROTOCOL.md` alterado com as
   decisões aprovadas, ou cada item recusado registrado com motivo. Nenhum item
