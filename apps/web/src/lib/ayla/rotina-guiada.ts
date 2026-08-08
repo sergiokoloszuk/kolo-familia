@@ -1752,6 +1752,7 @@ export async function entregarArtefatoImprimivel(
       tema: string | null;
       cards_status: string | null;
       dia_semana: number | null;
+      created_at: string;
     }>;
     if (lista.length === 0) return RESPOSTA_PDF.semRotina;
 
@@ -1759,7 +1760,14 @@ export async function entregarArtefatoImprimivel(
     // novo — ela já deu, e repetir foi metade do estrago do caso real.
     const recentes = lista.filter((r) => r.dia_semana == null);
     const candidatas = recentes.length > 0 ? recentes : lista;
-    if (candidatas.length > 1 && candidatas[0].nome !== candidatas[1].nome) {
+    // ACABOU DE SAIR = É ESSA. Quando a rotina mais nova nasceu há minutos, ela
+    // é o referente do "PDF" que veio logo depois — perguntar "qual delas?"
+    // seria fazer a família repetir o que acabou de acontecer na tela dela.
+    // Só há dúvida de verdade quando nenhuma é claramente a da conversa.
+    const idadeMin =
+      (Date.now() - new Date(candidatas[0].created_at).getTime()) / 60_000;
+    const acabouDeSair = idadeMin <= 30;
+    if (!acabouDeSair && candidatas.length > 1 && candidatas[0].nome !== candidatas[1].nome) {
       return RESPOSTA_PDF.qualDelas([candidatas[0].nome, candidatas[1].nome]);
     }
     const rot = candidatas[0];
