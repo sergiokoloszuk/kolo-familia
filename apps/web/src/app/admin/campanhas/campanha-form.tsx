@@ -6,6 +6,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { saveCampanha, type SaveCampanhaInput } from "./actions";
+import {
+  SEGMENTOS_ASSINATURA,
+  SEGMENTOS_DEFAULT,
+} from "@/lib/admin/campanha-target";
 
 const CATEGORIAS = [
   { value: "informacional", label: "Informacional" },
@@ -14,13 +18,9 @@ const CATEGORIAS = [
   { value: "operacional", label: "Operacional (sem opt-out)" },
 ] as const;
 
-const STATUS_ASSINATURA = [
-  { value: "trialing", label: "Em trial" },
-  { value: "active", label: "Ativa" },
-  { value: "past_due", label: "Em atraso" },
-  { value: "canceled", label: "Cancelada" },
-  { value: "incomplete", label: "Incompleta" },
-] as const;
+// Os segmentos e suas definições vêm da MESMA fonte que resolve o público —
+// rótulo na tela e regra no código não podem divergir.
+const STATUS_ASSINATURA = SEGMENTOS_ASSINATURA;
 
 export type CampanhaInicial = {
   id?: string;
@@ -45,7 +45,7 @@ export function CampanhaForm({ inicial }: { inicial: CampanhaInicial }) {
     categoria: inicial.categoria ?? "informacional",
     canais: inicial.canais ?? ["whatsapp"],
     segmentacao: inicial.segmentacao ?? {
-      assinatura: ["trialing", "active", "past_due"],
+      assinatura: [...SEGMENTOS_DEFAULT],
       exigir_consentimento_ayla: true,
     },
     conteudo_whatsapp: inicial.conteudo_whatsapp ?? "",
@@ -186,16 +186,20 @@ export function CampanhaForm({ inicial }: { inicial: CampanhaInicial }) {
         <legend className="px-1 text-sm font-medium">Segmentação</legend>
 
         <div className="flex flex-col gap-1.5">
-          <Label>Status da assinatura</Label>
-          <div className="flex flex-wrap gap-3 text-sm">
+          <Label>Quem recebe</Label>
+          <div className="flex flex-col gap-1.5 text-sm">
             {STATUS_ASSINATURA.map((s) => (
-              <label key={s.value} className="flex items-center gap-1.5">
+              <label key={s.value} className="flex items-start gap-1.5">
                 <input
                   type="checkbox"
+                  className="mt-1"
                   checked={(form.segmentacao.assinatura ?? []).includes(s.value)}
                   onChange={() => toggleStatus(s.value)}
                 />
-                {s.label}
+                <span>
+                  {s.label}
+                  <span className="text-muted-foreground"> — {s.definicao}</span>
+                </span>
               </label>
             ))}
           </div>

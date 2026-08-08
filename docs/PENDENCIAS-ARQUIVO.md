@@ -12,6 +12,33 @@ Ordem cronológica inversa: a mais recente no topo.
 
 ## 2026
 
+### PEND-008 · Contagens e segmentações usando `status` cru de assinatura
+Dados/Banco · P2 · **CONCLUÍDA**
+Aberta em: 2026-08-08 · Concluída em: 2026-08-08
+
+- **Causa raiz:** o trial não expira sozinho no banco — a linha continua
+  `status = 'trialing'` depois de `trial_ends_at` passar, e quem decide acesso é
+  `assinaturaLiberada`, que confere a data. Medido em produção: **163 linhas
+  `trialing`, 121 com o trial já vencido**.
+- **O que resolveu:** parar de derivar leitura do `status` cru, em vez de
+  corrigir o dado em lote — um UPDATE consertaria o retrato de hoje e voltaria a
+  divergir amanhã. Duas frentes, uma regra: o **funil** (`/dashboards` e
+  `/admin/comportamento`) separa "em teste" de "trial vencido"; a **segmentação
+  de campanha** ganhou segmentos semânticos, com "Trial vencido" como público
+  próprio para retomada. Os dois usam `trialValido`, extraída em
+  `lib/auth/assinatura.ts` — a mesma função do gate de acesso.
+- **Evidência final:** a tela dizia **"163 em teste"**; passa a dizer **42 em
+  teste · 121 trial vencido · 2 assinante**, com a soma dos baldes igual ao
+  total. 25 testes novos, todos conferidos por mutação. Publicado em `f22e43e`
+  (funil) e no merge da segmentação, ambos com Production `success`.
+  Zero escrita no banco.
+- **Aprendizado:** a mesma causa técnica em dois lugares não merece o mesmo
+  tratamento — na contagem, o erro mostra um número errado; na segmentação, ele
+  manda mensagem errada para a casa da família. O corte de escopo que funcionou
+  foi por **quem sofre o efeito**, não pela causa. E o caso que ninguém tinha
+  previsto (`trialing` sem data) apareceu porque um teste cruzava duas fontes
+  que deveriam concordar, em vez de conferir um número esperado.
+
 ### PEND-003 · Preview da Vercel vermelho há vários PRs
 Infra/Deploy · P1 · **CONCLUÍDA**
 Aberta em: 2026-08-08 · Concluída em: 2026-08-08
