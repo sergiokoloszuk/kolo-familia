@@ -4,7 +4,16 @@ Regras obrigatórias para qualquer agente de IA que trabalhe neste repositório.
 Não substitui julgamento; substitui o hábito de começar a mexer no código
 assim que se lê a descrição de um problema.
 
-Este documento é a **fonte única**. `AGENTS.md` (raiz) aponta para cá.
+Este documento é a **fonte única** de COMO trabalhar com segurança.
+`AGENTS.md` (raiz) aponta para cá.
+
+Documentos irmãos, que não repetem nada daqui:
+
+- [FEATURE-DELIVERY-PROTOCOL.md](FEATURE-DELIVERY-PROTOCOL.md) — **o que provar**
+  para uma funcionalidade ser considerada pronta. Vale quando a mudança cria ou
+  altera algo que uma família percebe.
+- [PENDENCIAS.md](PENDENCIAS.md) — **fonte oficial** do que está aberto, com ID
+  estável. Memória de agente não é fonte de estado.
 
 ---
 
@@ -47,6 +56,10 @@ Três episódios reais deste repositório, que o protocolo inteiro tenta evitar:
 
 Antes de editar, mapear o fluxo **real** — não o fluxo que o nome das funções
 sugere.
+
+Antes disso, ler as pendências abertas da categoria e dos arquivos que a missão
+toca ([PENDENCIAS.md](PENDENCIAS.md)). Pendência já registrada sobre o mesmo
+assunto **é** investigação anterior — com data, estado e evidência.
 
 Identificar, quando couber: ponto de entrada · funções · prompts · decisões ·
 APIs · banco · tabelas · leituras · escritas · integrações externas · filas ·
@@ -137,6 +150,12 @@ alternativas descartadas · rollback · testes necessários.
 Se a missão exige aprovação, **PARAR aqui**.
 
 > Investigação não é autorização. Ter descoberto a causa não autoriza corrigir.
+
+Achado **fora do escopo** da missão não se corrige em silêncio nem amplia a
+missão: vira pendência registrada em [PENDENCIAS.md](PENDENCIAS.md), a missão
+original segue se for seguro, e o ID entra no relatório. Exceção única: achado
+P0 **ativo** — família perdendo acesso ou dado agora — em que parar e avisar
+vale mais do que terminar.
 
 ---
 
@@ -378,6 +397,11 @@ Régua de qualidade: *a sofisticação de hoje com a confiabilidade de junho.*
 Uma resposta sofisticada que chega errada é pior que uma resposta simples que
 chega certa.
 
+> Quando a mudança **cria ou altera uma funcionalidade**, experiência tem
+> portões próprios, obrigatórios: ver
+> [FEATURE-DELIVERY-PROTOCOL.md](FEATURE-DELIVERY-PROTOCOL.md) — em especial
+> "funciona para quem não sabe que existe?" e "o que acontece amanhã?".
+
 ---
 
 ## 15. Ayla: contexto e conhecimento
@@ -510,7 +534,8 @@ Ao terminar missão técnica relevante, informar:
 14. OBSERVABILIDADE
 15. SEGURANÇA
 16. ROLLBACK
-17. RISCOS/PENDÊNCIAS RESTANTES
+17. RISCOS/PENDÊNCIAS RESTANTES — **por ID** (`PEND-XXX`), dizendo quais foram
+    criadas, atualizadas ou concluídas
 18. COMMIT/BRANCH
 19. DEPLOY
 20. VEREDITO
@@ -544,8 +569,9 @@ Frente crítica só fecha depois de avaliar os quinze:
 15. VEREDITO
 
 Portão que não puder ser comprovado é registrado como **NÃO VALIDADO** ou
-**BLOQUEADO**, com o motivo. Portão não comprovado **não** vira portão
-aprovado por omissão.
+**BLOQUEADO**, com o motivo, **e vira pendência com ID** em
+[PENDENCIAS.md](PENDENCIAS.md) — senão morre no relatório. Portão não
+comprovado **não** vira portão aprovado por omissão.
 
 **Teste verde não é produto bom.** Os portões medem se a correção é
 verdadeira; a régua de §14 mede se ela vale a pena.
