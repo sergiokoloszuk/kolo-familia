@@ -988,6 +988,60 @@ regra caiu por dado, não por opinião.
   ⚠️ **"Fato vencido" continua separado de "lacuna preenchida"** — a uva-passa
   mostrou que são causas diferentes: uma inventa o que não sabe, a outra confia
   demais no que sabia (a segunda é PEND-018).
+- **CLASSIFICAÇÃO DOS GUARDRAILS — primeira passada, 2026-08-08.** A pergunta
+  aplicada a cada regra do núcleo foi: *se memória, conhecimento, ferramenta e
+  infraestrutura fossem ideais, eu ainda precisaria desta regra?* Serve para
+  saber **o que nunca sai do prompt** e **o que só está ali por falta de
+  estrutura**. É leitura de código com genealogia datada — não é decisão.
+  - **PERMANENTE — fica no prompt mesmo com tudo ideal.**
+    `FRONTEIRA_DIAGNOSTICO`: nenhuma quantidade de conhecimento ou memória
+    remove a tentação — **mais informação a agrava**, e o próprio comentário
+    registra que a regra antiga foi obedecida e a falha veio assim mesmo ·
+    `FRONTEIRA_CLINICA` (mesma família; o caso de 02/08 mostra que o furo era
+    de **escopo do sujeito**, não de dado) · o **piso de três níveis**
+    (cotidiano × dificuldade crescente × risco), que é calibragem de
+    julgamento · `EXPLICACAO` (geral pode afirmar, mecanismo individual não) ·
+    o método (**interesse não é moeda de troca**) — que é identidade da Kolo,
+    e permanece **apesar de** não ter sido a correção do caso que a motivou.
+  - **COMPENSATÓRIO — está no prompt porque falta estrutura.**
+    - **`CATALOGO`** — a Ayla inventa documento porque **não tem registro do
+      que existe nem ferramenta que entregue**. Um catálogo de entregas de
+      verdade dissolve a maior parte destas linhas.
+    - **"NÃO presuma a HORA nem a refeição"** (PISO) — **verificado: o prompt
+      não recebe hora local nenhuma** (`responder.ts`). A regra pede ao modelo
+      que não adivinhe um dado que o sistema tem e não manda. Correção
+      estrutural disponível e barata.
+    - **"não presuma co-cuidador / que os dois pais moram juntos"** — o perfil
+      não carrega composição da casa. É lacuna de memória escrita como
+      proibição de comportamento (PEND-018).
+    - **A advertência do bloco de perfil** (`responder.ts:432`: *"pode estar
+      DESATUALIZADO… não puxe um interesse daqui por conta própria"*) — é o
+      remendo da uva-passa **no prompt**, porque a memória não tem validade,
+      revogação nem proveniência. Com a memória da PEND-018, some.
+    - **A advertência de irmãos** (`responder.ts:479`) — idem: escopo por
+      membro pedido ao modelo em vez de garantido na recuperação.
+  - **MISTO — princípio permanente, formulação compensatória.**
+    - **`PISO` · confirmar significado antes de acionar crise.** O princípio
+      (*não escalar sem confirmar sentido*) é permanente. A **lista quase
+      literal de frases** do caso de 23/07 (*"acabando meus dias", "meu teste
+      tá acabando", "não tenho dinheiro pra continuar"*) é compensatória — e de
+      um dado que **o sistema conhece**: o estado do teste e da assinatura
+      daquela família. Regra que decora frases envelhece com o vocabulário;
+      contexto injetado, não.
+    - **`CONTRATO_DE_VERDADE`.** Compensa **ausência de ferramenta**: a Ayla
+      diz "anotado" porque não pode anotar, e diz "chegou" porque ninguém lhe
+      conta se chegou — naquela conversa, 27 de 27 saídas sem
+      `zaap_message_id`, o que é **furo de infraestrutura**. Com ferramenta
+      real, vira "relate o que a ferramenta devolveu". O resíduo permanente é
+      pequeno e importante: **nunca suavizar nem completar o estado**.
+  - **SEM FUNDAMENTO ENCONTRADO — nenhum caso localizado na produção.**
+    As quatro regras de "preencher lacuna" já registradas acima. Mantidas como
+    princípio de precisão, **não promovidas**.
+  - **⚠️ O QUE ESTA CLASSIFICAÇÃO NÃO AUTORIZA.** Nada sai do prompt agora.
+    Regra compensatória **só cai depois** que a estrutura que a substitui está
+    no ar **e provada** — remover antes é trocar um remendo por um buraco. A
+    ordem é: construir a estrutura → provar → **então** podar, com teste que
+    morde. E a poda do núcleo já está adiada até validar com famílias.
 - **Depende de:** PEND-017 e PEND-018 — **desenhar junto**. Absorve PEND-009
   (primeira conversa) dentro do DESEJADO.
 - **Admin:** ADMIN PRECISA DE AJUSTE — hoje não dá para ver *por que* a Ayla
