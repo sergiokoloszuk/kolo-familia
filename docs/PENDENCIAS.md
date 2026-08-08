@@ -17,7 +17,7 @@ Só o que está aberto. 🔒 = bloqueada.
 |---|---|---|---|---|---|
 | [PEND-007](#pend-007) | Ativação do GPT parada na prova da chave de produção | Ayla/IA | P1 | ABERTA 🔒 | publicar e rodar `provider-check` |
 | [PEND-003](#pend-003) | Preview da Vercel vermelho há vários PRs | Infra/Deploy | P1 | ABERTA 🔒 | ler o log do primeiro preview que falhou |
-| [PEND-002](#pend-002) | Pagamento confirmado no Stripe sem acesso na Kolo | Pagamento/Acesso | P1 | AGUARDANDO VALIDAÇÃO | dar pulso observável à reconciliação (risco 9) |
+| [PEND-002](#pend-002) | Pagamento confirmado no Stripe sem acesso na Kolo | Pagamento/Acesso | P1 | AGUARDANDO VALIDAÇÃO | esperar a primeira assinatura real e conferir os 5 pontos |
 | [PEND-001](#pend-001) | Cooldown do convite de assinatura não publicado | Pagamento/Acesso | P1 | EM EXECUÇÃO | revisar o diff, abrir PR, publicar, smoke |
 | [PEND-004](#pend-004) | Rotina/Sequência Visual — auditar antes de redesenhar | Produto | P2 | ABERTA | missão INVESTIGAR do fluxo atual |
 | [PEND-008](#pend-008) | 118 famílias em `trialing` com trial vencido | Dados/Banco | P2 | ABERTA | decidir a regra e corrigir a contagem |
@@ -136,22 +136,25 @@ Aberta em: 2026-08-08 · Origem: incidente Rochelle (2026-07-23) → Fase 0B
   `past_due` = 0 → divergência = 0. O ganho é de **cobertura**, não de volume.
 - **Etapa 3 PUBLICADA (2026-08-08):** commit `8107a26`, PR #41, merge
   `2f3a216`. Deployment de **Production** com **success** às 15:34:34Z.
-- **⚠️ Validação da Etapa 3 NÃO comprovada — e o motivo virou achado.** A
-  execução limpa da reconciliação (0 candidatas) registra tudo com severidade
-  `info`, e `logEvent` só persiste `warn+`. Confirmado por leitura em
-  2026-08-08: **zero** linhas de `reconciliacao_divergencia` em `eventos_app`
-  (a tabela está saudável — 132 registros, o último de 07/08). Ou seja: **do
-  lado de fora, "rodou e estava tudo certo" é indistinguível de "não rodou"**.
-  É exatamente a pergunta obrigatória do §11 do protocolo de engenharia,
-  virada contra o próprio conserto. Ver risco 9.
-  A tentativa de provar a vivacidade chamando o cron em produção com o
-  `CRON_SECRET` (seguro: com 0 candidatas o laço não executa, logo 0 chamadas
-  ao Stripe, 0 escritas, 0 WhatsApp) foi **bloqueada pelo sandbox do agente** —
-  não por regra do projeto.
-- **Próximo passo:** **dar um pulso observável à reconciliação** — persistir o
-  resumo uma vez por dia (mesmo padrão de janela já usado na trava de 12h do
-  alerta), para que "o cron rodou e não havia divergência" deixe rastro. Sem
-  isso, a Etapa 3 não tem como ser validada sem esperar uma divergência real.
+- **PULSO DE SAÚDE implementado e publicado (2026-08-08):** commit `f7f1bdd`,
+  PR #43, merge `14a7696`, Production **success** às 15:55:30Z. A execução
+  limpa registrava tudo em `info` e `logEvent` só persiste `warn+` — de fora,
+  "rodou e estava tudo certo" era indistinguível de "não rodou". Agora
+  persiste **um pulso por janela de 20h** (20h e não 24h: com cron horário, uma
+  janela de 24h anda para frente e acaba pulando um dia), reusando a mesma
+  trava de janela do alerta operacional, sem tabela nova e sem migração.
+  Divergência e erro seguem persistindo **na hora**; o pulso não dispara
+  WhatsApp. 6 testes novos, conferidos por mutação. Suíte 1356 → **1362**.
+- **✅ RECONCILIAÇÃO COMPROVADA VIVA EM PRODUÇÃO (2026-08-08T16:00:11.754Z).**
+  Primeira execução agendada depois do deploy, sem provocar nada e sem tocar em
+  família alguma. Registro real em `eventos_app`:
+  `reconciliacao_pulso` · `warn` · *"reconciliação viva — executou e não havia
+  divergência"* · `com_vinculo: 2` · `candidatas: 0` · `chamadas_stripe: 0` ·
+  `corrigidas: 0` · `nao_corrigidas: 0` · `verificadas_sem_acesso: 0`.
+  Os números batem com o baseline lido às 15:13Z. A lógica nova está no ar,
+  calculou a população e **não chamou o Stripe à toa**.
+- **Próximo passo:** aguardar a **primeira assinatura real** (smoke já descrito
+  abaixo). Não há mais trabalho técnico pendente nesta frente — só evidência.
 - **Riscos, com destino explícito (reavaliados em 2026-08-08):**
 
   | # | Risco | Destino | Motivo |
@@ -164,7 +167,7 @@ Aberta em: 2026-08-08 · Origem: incidente Rochelle (2026-07-23) → Fase 0B
   | 6 | `registrarEvento` roda depois dos handlers, e `invoice.*` fica fora da tabela `assinaturas` | **MANTER NA PEND-002** | é a auditoria do mesmo fluxo; abrir pendência separada fragmentaria uma causa só |
   | 7 | População real = 0 | **NÃO É RISCO — é limitação de validação** | a lógica nova nunca foi exercida com dado real. Não vira pendência; vira o que falta para a baixa |
   | 8 | Webhook passa a devolver 500 onde devolvia 200 | **MANTER NA PEND-002** | efeito desejado, mas novo: reentregas do Stripe devem aparecer e precisam ser observadas |
-  | 9 | **Execução limpa da reconciliação não deixa rastro persistido** | **MANTER NA PEND-002 — é o próximo passo** | sem pulso observável, "rodou e estava tudo certo" é indistinguível de "não rodou" |
+  | 9 | Execução limpa da reconciliação não deixa rastro persistido | **RESOLVIDO** (2026-08-08, `f7f1bdd`) | pulso de saúde por janela de 20h, comprovado em produção às 16:00:11Z |
 
   Detalhe dos itens 3 e 4 (Etapa 4 — recência pelo relógio do Stripe; **não**
   autorizada, exige migração):
@@ -202,9 +205,9 @@ Aberta em: 2026-08-08 · Origem: incidente Rochelle (2026-07-23) → Fase 0B
   (1356 verdes, 50 novos nesta frente) · Regressão **OK** (suíte completa) ·
   Build **OK** · Publicado **OK** — Etapas 1 e 2 em `c61d540`, Etapa 3 em
   `2f3a216`, ambas com Production success · Configuração **N/A** — nenhuma
-  configuração nova · **Reconciliação exercida em produção: PENDENTE** (ver
-  risco 9) · **Smoke de pagamento real: PENDENTE** · **Validado em produção com
-  pagamento real: PENDENTE** · **Evidência final: PENDENTE**.
+  configuração nova · **Reconciliação exercida em produção: OK** (pulso de
+  16:00:11.754Z) · **Smoke de pagamento real: PENDENTE** · **Validado em
+  produção com pagamento real: PENDENTE** · **Evidência final: PENDENTE**.
   **Etapa 4 (recência entre evidências fortes) não implementada — riscos 3 e 4.**
 - **A PRIMEIRA ASSINATURA REAL depois de 2026-08-08 é smoke monitorado.**
   Conferir, nesta ordem: (1) pagamento confirmado no Stripe; (2) a linha da
@@ -513,6 +516,20 @@ PEND-002 (Etapas 1, 2 e 3), 2026-08-08
      nova pendência · aceito · descartado), nunca só uma linha no relatório;
   8. **manter o `AGENTS.md` curto e operacional** e o protocolo grande como
      referência — o que é seguido sozinho é o que cabe numa tela.
+  9. **perguntar também: "quando a correção FUNCIONAR em silêncio, que
+     evidência fica?"** O §11 pergunta se descobrimos a falha; ninguém pergunta
+     se conseguimos ver o conserto funcionando. A Etapa 3 nasceu invisível
+     exatamente por isso, e precisou de uma correção só para poder ser
+     validada;
+  10. **diferenciar "reduzir ruído" de "eliminar sinal"** — escolher `info`
+      para não poluir produziu um sistema mudo. O padrão que resolve os dois já
+      existia no repositório: janela de deduplicação (heartbeat);
+  11. **portão cuja prova depende de acesso ou capacidade externa precisa de
+      plano B declarado** — a prova de execução em produção esbarrou num
+      bloqueio de sandbox que só apareceu na hora;
+  12. **antes de discutir um risco, verificar se ele é mensurável agora** — o
+      risco do `stripe_customer_id` compartilhado andou três missões como
+      hipótese e uma leitura de dez segundos o resolveu.
 - **Próximo passo:** decidir item a item o que entra, com você.
 - **Critério de conclusão:** `AI-ENGINEERING-PROTOCOL.md` alterado com as
   decisões aprovadas, ou cada item recusado registrado com motivo. Nenhum item
