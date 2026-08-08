@@ -891,7 +891,7 @@ export async function conduzirRotina(
         );
         // A fala reflete o estado real. Sem 200 do gerador, ninguém promete arte.
         const corpo = comecou
-          ? `Perfeito — vou usar *${escolhido}* nesta rotina 🌿 Já comecei a desenhar os cartões; eles levam *1-2 minutinhos* e vão aparecendo sozinhos.`
+          ? `Perfeito — vou usar *${escolhido}* nesta rotina 🌿 Já comecei a preparar os cartões; eles vão aparecendo aí conforme ficarem prontos.`
           : `Anotei o tema *${escolhido}* nesta rotina. Os cartões ainda não começaram a ser desenhados — me chama daqui a pouco que eu tento de novo.`;
         const comoUsar = comecou
           ? // Sem exemplo fixo: "agora vamos ao mercado" saía até em rotina de
@@ -1383,6 +1383,11 @@ ${jaSabemos.rotinaExistente}`
 
 Ah — se quiser, o próprio ${nome} pode ser o personagem dos cartões em vez de um desenho genérico. É só criar o avatar dele uma vez (Configurações → Avatar): fica salvo e vale pras histórias também. Aí eu refaço os cartões com a cara dele.`
           : "";
+      // E NÃO PROMETE PRAZO. "1-2 minutinhos" era uma promessa que a gente
+      // quebrava: as gerações medidas em 08/08/2026 levaram 2min18, 2min38 e
+      // 3min08. Dizer que aparecem "conforme ficarem prontos" é verdade em
+      // qualquer duração — e a mãe não fica olhando o relógio.
+      //
       // A FRASE SEGUE O ESTADO OPERACIONAL, não a intenção. "Já comecei a
       // gerar" só é verdade quando o disparo aconteceu; enquanto falta o tema,
       // o que existe é uma pergunta em aberto — e dizer outra coisa é prometer
@@ -1398,7 +1403,7 @@ Ah — se quiser, o próprio ${nome} pode ser o personagem dos cartões em vez d
       // chips de tema na web. Onde o interesse existe como dado, a sugestão é
       // dela; onde só existe como prosa no perfil, cai no convite aberto.
       const cartoes = autoGerou
-        ? ` Já comecei a gerar os cartões no tema *${tema}* — eles levam *1-2 minutinhos*, então pode abrir que vão aparecendo sozinhos 🌿`
+        ? ` Já comecei a preparar os cartões no tema *${tema}* — eles vão aparecendo nesta rotina conforme ficarem prontos 🌿`
         : faltaTema || ofereceCartoes
           ? `\n\nFalta só escolher o tema dos cartões${
               sugestoesDeTema

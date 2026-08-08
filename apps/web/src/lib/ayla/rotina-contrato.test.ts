@@ -8,6 +8,13 @@ const ROTA = readFileSync(
   "utf8",
 );
 
+/** Só o CÓDIGO: os comentários citam de propósito as frases que saíram. */
+const semComentarios = (fonte: string) =>
+  fonte
+    .split(/\r?\n/)
+    .filter((l) => !/^\s*(\/\/|\*|\/\*)/.test(l))
+    .join("\n");
+
 /**
  * O DEFEITO DE 07/08/2026, travado.
  *
@@ -66,10 +73,7 @@ describe("uma composição só", () => {
 
   it("nada lê `parsed.rotinas` — o campo morto não volta", () => {
     // Só CÓDIGO: o comentário que explica por que o campo saiu cita o nome.
-    const semComentarios = GUIADA.split("\n")
-      .filter((l) => !/^\s*(\/\/|\*|\/\*)/.test(l))
-      .join("\n");
-    expect(semComentarios).not.toMatch(/parsed\??\.rotinas/);
+    expect(semComentarios(GUIADA)).not.toMatch(/parsed\??\.rotinas/);
   });
 
   it("o contrato PROÍBE narrar a sequência na fala", () => {
@@ -231,7 +235,7 @@ describe("ordem da entrega quando falta tema", () => {
     expect(BLOCO).toMatch(/const link = faltaTema \? null/);
     expect(BLOCO).toMatch(/const dica = faltaTema\s*\n?\s*\? ""/);
     // "já comecei a gerar" só existe no ramo do disparo confirmado
-    expect(BLOCO).toMatch(/autoGerou\s*\n?\s*\? ` Já comecei a gerar/);
+    expect(BLOCO).toMatch(/autoGerou\s*\n?\s*\? ` Já comecei a preparar/);
   });
 });
 
@@ -258,5 +262,22 @@ describe("recorrência", () => {
 
   it("a regra some dos prompts — não é mais coisa que o modelo interpreta", () => {
     expect(GUIADA).not.toMatch(/dia_semana: 0=Seg\.\.6=Dom/);
+  });
+});
+
+/**
+ * A COPY NÃO PROMETE PRAZO QUE A GENTE NÃO CUMPRE.
+ * Gerações medidas em 08/08/2026: 2min18, 2min38, 3min08 — todas acima do
+ * "1-2 minutinhos" que a Ayla anunciava.
+ */
+describe("verdade operacional na copy", () => {
+  it("não promete 1-2 minutinhos na geração de cartões", () => {
+    // Só CÓDIGO: o comentário que explica a mudança cita a promessa antiga.
+    const codigo = semComentarios(GUIADA);
+    expect(codigo).not.toMatch(/1-2 minutinhos/);
+  });
+
+  it("diz o que é verdade em qualquer duração", () => {
+    expect(GUIADA).toMatch(/conforme ficarem prontos/);
   });
 });
