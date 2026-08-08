@@ -13,21 +13,84 @@ As regras de uso estão no fim deste documento.
 
 Só o que está aberto. 🔒 = bloqueada.
 
-| ID | Pendência | Categoria | Prio | Estado | Próximo passo |
+| ID | Pendência | Bloco | Prio | Estado | Próximo passo |
 |---|---|---|---|---|---|
-| [PEND-015](#pend-015) | Revisar exposição e governança de secrets no Easypanel | Segurança | **a definir** | ABERTA | investigar o risco antes de priorizar |
-| [PEND-007](#pend-007) | Ativação do GPT parada na prova da chave de produção | Ayla/IA | P1 | ABERTA 🔒 | publicar e rodar `provider-check` |
-| [PEND-002](#pend-002) | Pagamento confirmado no Stripe sem acesso na Kolo | Pagamento/Acesso | P1 | AGUARDANDO VALIDAÇÃO | esperar a primeira assinatura real e conferir os 5 pontos |
-| [PEND-001](#pend-001) | Cooldown do convite de assinatura | Pagamento/Acesso | P1 | AGUARDANDO VALIDAÇÃO | esperar o próximo convite real e conferir o número |
-| [PEND-004](#pend-004) | Rotina/Sequência Visual — auditar antes de redesenhar | Produto | P2 | ABERTA | missão INVESTIGAR do fluxo atual |
-| [PEND-009](#pend-009) | Primeira conversa da Ayla — spec sem construção | Ayla/IA | P2 | ABERTA | levar a spec para PROPOR |
-| [PEND-010](#pend-010) | Triar as 26 pendências do laudo de 06/08 | Documentação | P2 | ABERTA | conferir item a item contra o código |
-| [PEND-005](#pend-005) | `MEMORY.md` perto do limite de leitura | Documentação | P2 | ABERTA | compactar o índice |
-| [PEND-006](#pend-006) | Dois arquivos não rastreados em `lib/conducao/` | Ayla/IA | P2 | ABERTA | identificar a frente dona e decidir |
-| [PEND-012](#pend-012) | RUNBOOK — como operar a Kolo com segurança | Documentação | P2 | ABERTA | levantar o que hoje só existe em memória de agente |
-| [PEND-011](#pend-011) | README aponta para três documentos inexistentes | Documentação | P3 | ABERTA | restaurar os arquivos ou corrigir os links |
-| [PEND-014](#pend-014) | Revisar o protocolo de engenharia com o aprendizado das missões reais | Documentação | P2 | ABERTA | decidir os níveis de risco para correção |
-| [PEND-013](#pend-013) | Mapa do sistema — onde vivem os componentes | Documentação | P3 | ABERTA | listar os fluxos que merecem ponteiro |
+| [PEND-015](#pend-015) | Exposição de secrets no Easypanel | H · Governança | a definir | ABERTA | investigar o risco antes de priorizar |
+| [PEND-007](#pend-007) | Ativação do GPT parada na prova da chave | H · Governança | P1 | ABERTA 🔒 | publicar e rodar `provider-check` |
+| [PEND-002](#pend-002) | Pagamento confirmado sem acesso na Kolo | G · Comercial | P1 | AGUARDANDO VALIDAÇÃO | esperar a primeira assinatura real |
+| [PEND-001](#pend-001) | Cooldown do convite de assinatura | G · Comercial | P1 | AGUARDANDO VALIDAÇÃO | esperar o próximo convite real |
+| [PEND-016](#pend-016) | Condução da Ayla — o que ela diz e por quê | **A · Condução** | P1 | ABERTA | **preencher o DESEJADO com a Karina** |
+| [PEND-017](#pend-017) | Conhecimento: acervo, recuperação e uso | **B · Conhecimento** | P1 | ABERTA | desenhar junto com A |
+| [PEND-018](#pend-018) | Memória e retrato da criança | **C · Memória** | P1 | ABERTA | desenhar junto com A |
+| [PEND-021](#pend-021) | Jornada dos 7 dias e conversão | G · Comercial | P1 | ABERTA | preencher o DESEJADO |
+| [PEND-022](#pend-022) | Fontes confiáveis, limites e escalonamento | F · Limites | P2 | ABERTA | preencher o DESEJADO |
+| [PEND-004](#pend-004) | Rotina/Sequência Visual | D · Entregas | P2 | ABERTA | completar o DESEJADO (parte já existe) |
+| [PEND-019](#pend-019) | Estratégias que a família consegue usar | D · Entregas | P2 | ABERTA | depende de A+B+C |
+| [PEND-020](#pend-020) | Relatórios para escola, terapeuta e médico | D · Entregas | P2 | ABERTA | depende de C |
+| [PEND-023](#pend-023) | Feedback da família e aprendizado | E · Feedback | P2 | ABERTA | depende de D |
+| [PEND-009](#pend-009) | Primeira conversa da Ayla | A · Condução | P2 | ABERTA | entra no DESEJADO de PEND-016 |
+| [PEND-012](#pend-012) | RUNBOOK — como operar a Kolo com segurança | H · Governança | P2 | ABERTA | levantar o que só existe em memória |
+| [PEND-005](#pend-005) | `MEMORY.md` perto do limite de leitura | H · Governança | P2 | ABERTA | compactar o índice |
+| [PEND-006](#pend-006) | Dois arquivos não rastreados em `lib/conducao/` | H · Governança | P2 | ABERTA | identificar a frente dona |
+| [PEND-014](#pend-014) | Revisar o protocolo de engenharia | H · Governança | P2 | ABERTA | decidir os níveis de risco |
+| [PEND-011](#pend-011) | README aponta para documentos inexistentes | H · Governança | P3 | ABERTA | restaurar ou corrigir os links |
+| [PEND-013](#pend-013) | Mapa do sistema | H · Governança | P3 | ABERTA | listar os fluxos que merecem ponteiro |
+
+---
+
+## Blocos e dependências
+
+O registro deixou de ser uma lista plana em 2026-08-08. Funcionalidades que
+compartilham **cérebro, memória, recuperação ou decisão** não podem ser
+investigadas como se fossem independentes — implementar duas vezes a mesma
+inteligência é o retrabalho mais caro que existe aqui.
+
+| Bloco | Pendências | Natureza |
+|---|---|---|
+| **A · Condução** | PEND-016 | INVESTIGAR/DESENHAR JUNTO com B e C |
+| **B · Conhecimento** | PEND-017 | INVESTIGAR/DESENHAR JUNTO com A |
+| **C · Memória da criança** | PEND-018 | INVESTIGAR/DESENHAR JUNTO com A |
+| **D · Entregas** | PEND-004 (rotina) · PEND-019 (estratégias) · PEND-020 (relatórios) | DEPENDE DE A+B+C |
+| **E · Feedback** | PEND-023 | DEPENDE DE D · alimenta A e C |
+| **F · Limites** | PEND-022 | PODE SER DESENHADA SEPARADAMENTE, aplica-se a A |
+| **G · Comercial** | PEND-021 · PEND-001 · PEND-002 | PODE ANDAR EM PARALELO |
+| **H · Governança/Infra** | PEND-005 · PEND-006 · PEND-007 · PEND-011 · PEND-012 · PEND-013 · PEND-014 · PEND-015 | INFRAESTRUTURA/GOVERNANÇA |
+
+### Ordem por dependência
+
+```
+A · Condução ──┐
+B · Conhecimento ──┼──> D · Entregas ──> E · Feedback ──┐
+C · Memória ───┘                                        │
+      ^                                                 │
+      └─────────────── aprende com ────────────────────┘
+
+F · Limites  → atravessa A (desenhar junto, implementar depois)
+G · Comercial → paralelo (não depende de A/B/C para andar)
+H · Governança → destrava as outras, nunca é destravada por elas
+```
+
+**A, B e C são um desenho só.** A Ayla escolher o que dizer (A) depende do que
+ela consegue recuperar (B) e do que sabe da criança (C). Desenhar A sem B
+produz prompt melhor sobre acervo inalcançável; desenhar B sem C produz
+recuperação genérica.
+
+**D não começa antes de A+B+C terem DESEJADO definido** — rotina, estratégia e
+relatório são as três saídas do mesmo cérebro, e hoje cada uma tem o seu.
+
+**E fecha o ciclo:** sem feedback, A e C não têm como melhorar a próxima
+recomendação para aquela criança.
+
+### Portão do DESEJADO
+
+> Pendência de produto/experiência **não** vai para investigação técnica
+> profunda antes de o comportamento desejado estar suficientemente definido.
+> A investigação compara **ATUAL × DESEJADO** e aponta lacunas e dependências —
+> ela não inventa o produto.
+
+Ficha de produto tem seção `DESEJADO`. Quando depender de decisão da Karina,
+ela fica marcada **`DESEJADO A DEFINIR COM PRODUTO`** com a lista do que
+precisa ser decidido antes.
 
 ---
 
@@ -267,8 +330,25 @@ Aberta em: 2026-08-08 · Origem: decisão de produto (2026-08-08)
   e correções posteriores em `docs/correcao-rotina-manu-2026-08-03.md`. **O
   conteúdo desses laudos não foi conferido contra o código atual nesta sessão**
   — pode haver achado já resolvido.
-- **Próximo passo:** missão INVESTIGAR do fluxo atual, começando por conferir
-  o laudo de 2026-08-03 contra o código de hoje.
+- **DESEJADO — parcialmente definido.** Já decidido, não se rediscute:
+  a mãe **não precisa conhecer a funcionalidade** · a Ayla identifica a
+  necessidade pela conversa · também reconhece menção direta (rotina visual,
+  sequência, cartões) · identifica a criança pelo contexto e **só confirma se
+  houver dúvida real** · perguntas necessárias, de preferência agrupadas · gera
+  a sequência · gera imagens/cartões · permite **imprimir o PDF logo após
+  gerar** · experiência clara no app · salvar e reencontrar · editar e reutilizar
+  · feedback da mãe sobre qualidade e utilidade.
+- **DESEJADO — A DEFINIR COM PRODUTO:** o que a Ayla precisa saber da criança
+  para a sequência ser dela e não genérica (é onde PEND-018 entra) · o que
+  acontece quando a mãe pede uma segunda rotina para o mesmo momento · como a
+  rotina aparece de novo dias depois.
+- **Depende de:** PEND-016, PEND-017 e PEND-018 para a parte de inteligência;
+  PEND-023 para o feedback. A execução técnica não começa antes do DESEJADO
+  desses blocos.
+- **Admin:** ADMIN PRECISA DE AJUSTE — visualizar rotinas geradas por família.
+- **Próximo passo:** completar o DESEJADO com a Karina; só então a missão
+  INVESTIGAR do fluxo atual, começando por conferir o laudo de 2026-08-03
+  contra o código de hoje.
 - **Critério de conclusão:** SPEC da Rotina Visual em `docs/specs/` com os oito
   portões respondidos e o corpus de disparo preenchido. Implementação é frente
   seguinte, não faz parte desta baixa.
@@ -340,6 +420,12 @@ Aberta em: 2026-08-08 · Origem: `docs/pendencias-2026-08-06.md` item 20
 - **Critério de conclusão:** `provider-check` retornando `ok: true` em
   produção, `IA_PROVIDER=openai` aplicado e smoke no ambiente real com conta de
   teste. Rollback: remover a variável.
+- **Absorve os resíduos da migração (laudo 06/08), sem virar pendência
+  separada:** cache não modelado na PRICE_TABLE, o que subestima o Claude e
+  superestima o GPT (#19) · `OPENAI_MODEL_LEVE` sem evidência para escolher
+  (#21) · Grupo D — quais dos 28 auxiliares não deveriam usar LLM (#22).
+  Nenhum deles bloqueia a ativação.
+- **Admin:** ADMIN JÁ SUPORTA — a rota `provider-check` é a tela da prova.
 - **Depende de:** nada neste arquivo.
 - **Agente recomendado:** EXECUTAR (com Sérgio no ambiente)
 
@@ -356,34 +442,17 @@ Aberta em: 2026-08-08 · Origem: `docs/pendencia-primeira-conversa-ayla.md`
 - **Evidência (2026-08-08):** o documento existe (110 linhas) e está declarado
   como **não construído**. **Não conferido nesta sessão** se algum trabalho
   posterior implementou parte do desenho.
-- **Próximo passo:** conferir o desenho contra o código atual e levar para
-  PROPOR.
+- **Consolidada no bloco A (2026-08-08):** o DESEJADO desta primeira conversa
+  entra no DESEJADO da PEND-016 — é a mesma decisão de condução, e desenhar as
+  duas separadas produziria duas Aylas. A ficha continua aberta como escopo
+  próprio, mas não se investiga sozinha.
+- **Depende de:** PEND-016.
+- **Admin:** ADMIN SEM IMPACTO.
+- **Próximo passo:** entra no DESEJADO da PEND-016; depois, conferir o desenho
+  contra o código atual.
 - **Critério de conclusão:** SPEC em `docs/specs/` com os portões respondidos,
   **ou** cancelamento com motivo escrito.
 - **Agente recomendado:** INVESTIGAR → PROPOR
-
----
-
-### PEND-010
-**Triar as 26 pendências do laudo de 06/08 e cadastrar as que seguem abertas**
-Categoria: Documentação · Prioridade: **P2** · Estado: **ABERTA**
-Aberta em: 2026-08-08 · Origem: `docs/pendencias-2026-08-06.md`
-
-- **Impacto:** o laudo tem 26 itens com estado marcado em 2026-08-06; dois já
-  entraram aqui como PEND-007 e PEND-008. Os demais continuam fora deste
-  arquivo — e este arquivo é a fonte oficial. Enquanto a triagem não acontecer,
-  há duas listas.
-- **Evidência (2026-08-08):** o laudo existe e marca cada item com ✅ corrigido,
-  🟡 parcial ou ⬜ aberto. **Nenhum dos itens ⬜ foi conferido contra o código
-  atual nesta sessão** — por isso não foram cadastrados: cadastrar sem conferir
-  seria transportar estado de dois dias atrás como se fosse de hoje, que é
-  exatamente o erro que a regra de auditoria proíbe.
-- **Próximo passo:** missão AUDITAR, item a item, com data/estado/commit; o que
-  seguir aberto vira ficha aqui; o que estiver resolvido vai para o arquivo.
-- **Critério de conclusão:** todo item ⬜ ou 🟡 do laudo com destino — ficha
-  aberta aqui, ou entrada em [PENDENCIAS-ARQUIVO.md](PENDENCIAS-ARQUIVO.md)
-  com evidência. Feito isso, o laudo vira documento histórico.
-- **Agente recomendado:** AUDITAR
 
 ---
 
@@ -548,6 +617,15 @@ PEND-002 (Etapas 1, 2 e 3), 2026-08-08
       incidente. Não corrigir o código nesta fase; quando o RUNBOOK
       ([[PEND-012]]) existir, a mesma regra vira entrada operacional
       ("não remover `CRON_SECRET`").
+  22. **pendência de produto/experiência precisa do comportamento desejado
+      suficientemente definido ANTES da investigação técnica profunda.** A
+      investigação compara **ATUAL × DESEJADO** e aponta lacunas e dependências
+      — ela não inventa o produto. Ficha de produto sem DESEJADO não vai para
+      execução;
+  23. **além de prioridade, toda frente relevante declara dependências e o que
+      compartilha com outras** (cérebro, memória, recuperação, decisão). Sem
+      isso, duas frentes implementam a mesma inteligência em paralelo e a
+      terceira herda as duas;
   19. **teste que cruza duas fontes que deveriam concordar acha o que teste de
       número fixo não acha.** O caso `trialing` sem data não estava em laudo
       nenhum: apareceu porque uma asserção comparava a contagem do funil com a
@@ -610,6 +688,222 @@ PEND-003 (2026-08-08), reportado em vez de tratado
   prioridade atribuída com justificativa, e uma decisão registrada para cada
   categoria de secret (mascarar · mover · rotacionar · aceitar).
 - **Agente recomendado:** INVESTIGAR
+
+---
+
+### PEND-016
+**Condução da Ayla — o que ela diz, e por quê**
+Bloco: **A · Condução** · Prioridade: **P1** · Estado: **ABERTA**
+Aberta em: 2026-08-08 · Origem: consolidação da PEND-010 (itens 3, 4, 12, 13, 15
+do laudo de 06/08) + `docs/auditoria-ayla-prompt.md`
+
+- **Impacto:** é o produto. Tudo que a família recebe passa por aqui — se a
+  condução pergunta demais, responde raso ou erra um fato da criança, nenhuma
+  entrega adiante salva a conversa.
+- **DESEJADO — A DEFINIR COM PRODUTO.** Decisões que precisam vir **antes** de
+  qualquer investigação técnica:
+  1. como a Ayla escolhe **um** foco quando a mãe traz três problemas;
+  2. quantas perguntas são aceitáveis antes de entregar algo de valor;
+  3. o que é "direção prática" — o que fazer, o que falar, que atividade;
+  4. quando ela muda de estratégia porque a anterior não funcionou, e como sabe;
+  5. o que muda entre WhatsApp e Web (ritmo, tamanho, o que só existe num canal);
+  6. como retoma contexto de dias atrás sem repetir pergunta já respondida.
+- **Já existe, não recomeçar do zero:** `lib/conducao/diretrizes.ts`
+  (`nucleoConducao`, fonte única dos 2 canais) · `docs/auditoria-ayla-prompt.md`
+  · decisor de entrega e fechador já no ar.
+- **Achados herdados, com estado do laudo (06/08), NÃO reconferidos:** idade
+  calculada pelo modelo em vez do dado (#3) · ambiguidade estrutural resolvida
+  em silêncio (#4) · `atribuicao_distribuida` é o código mais ruidoso do
+  detector (#12) · fala sobre sono ainda dispara medicação (#13) · respostas da
+  web 40% mais longas sem o teto de 120 palavras (#15).
+- **Depende de:** PEND-017 e PEND-018 — **desenhar junto**. Absorve PEND-009
+  (primeira conversa) dentro do DESEJADO.
+- **Admin:** ADMIN PRECISA DE AJUSTE — hoje não dá para ver *por que* a Ayla
+  disse o que disse (decisão, contexto recuperado, conteúdo usado).
+- **Critério de conclusão:** DESEJADO preenchido e aprovado; investigação
+  ATUAL × DESEJADO concluída com lacunas nomeadas. Execução é frente seguinte.
+- **Agente recomendado:** PROPOR (depois do DESEJADO)
+
+---
+
+### PEND-017
+**Conhecimento: o que existe, o que é recuperado, o que chega ao modelo**
+Bloco: **B · Conhecimento** · Prioridade: **P1** · Estado: **ABERTA**
+Aberta em: 2026-08-08 · Origem: consolidação da PEND-010 +
+`docs/cowork-frente-1-skills.md`, `docs/cowork-frente-2-boas-praticas.md`,
+`docs/frente-import-documentos.md`
+
+- **Impacto:** a Ayla responder por conhecimento genérico existindo material
+  melhor no acervo é o desperdício mais caro da Kolo — paga-se para escrever
+  conteúdo que não chega à família.
+- **DESEJADO — A DEFINIR COM PRODUTO** (parte de curadoria):
+  1. o que entra no acervo (livro, guia, artigo, conteúdo próprio), com autoria,
+     versão e data;
+  2. quem aprova, e o que acontece com conteúdo antigo, duplicado ou conflitante;
+  3. quando a Ayla **deve** citar a fonte para a mãe.
+- **A investigar (ATUAL), quando o DESEJADO fechar:** o que existe · como está
+  indexado · como é recuperado · o que é injetado · **o que efetivamente chega
+  ao modelo** · o que é usado na resposta. São camadas diferentes que falham por
+  motivos diferentes (§15 do protocolo de engenharia).
+- **Estado conhecido, não reconferido:** parte do acervo estaria inalcançável
+  por skills inativas, e o WhatsApp não leria boas práticas. A **BIA**
+  (biblioteca) existe **fora da `main`**: conferido em 2026-08-08 — **zero
+  arquivos de BIA em `origin/main`**, só no branch `bia/ciclo-tecnico`, com
+  migrações nunca aplicadas.
+- **Inclui o pipeline de Admin** (upload → extração → classificação → proposta
+  da IA → revisão humana → aprovação → disponível para a Ayla), já desenhado em
+  `docs/frente-import-documentos.md`.
+- **Depende de:** desenhar junto com PEND-016 e PEND-018.
+- **Admin:** ADMIN PRECISA DE AJUSTE — administrar acervo, e ver o que foi
+  recuperado e o que foi usado.
+- **Critério de conclusão:** DESEJADO da curadoria aprovado; auditoria das seis
+  camadas com números; decisão sobre a BIA (entra na `main` ou é descartada).
+- **Agente recomendado:** PROPOR (curadoria) → AUDITAR (camadas)
+
+---
+
+### PEND-018
+**Memória e retrato da criança**
+Bloco: **C · Memória** · Prioridade: **P1** · Estado: **ABERTA**
+Aberta em: 2026-08-08 · Origem: consolidação da PEND-010 +
+`docs/perfil-vivo-fatos-versionados.md`
+
+- **Impacto:** é o que faz a orientação ser *daquela* criança. Sem separar fato,
+  relato de terceiro e inferência da IA, tudo vira "a Kolo disse" — e um
+  relatório para escola ou médico não pode nascer assim.
+- **Separação conceitual que precisa existir, e hoje não tem clareza:**
+  1. **base de conhecimento da Kolo** (geral, serve a muitas crianças);
+  2. **memória da criança** (o que a família contou);
+  3. **evidência externa** (professora, terapeuta, laudo — com autor e data);
+  4. **histórico de intervenção e resultado** (o que foi tentado, o que funcionou).
+- **DESEJADO — A DEFINIR COM PRODUTO:**
+  1. como entra informação de professora/escola/terapeuta: origem, autor, data,
+     período observado, criança, tipo;
+  2. como a tela e a Ayla distinguem "a professora relatou" de "a Ayla inferiu";
+  3. o que acontece quando duas informações se contradizem.
+- **Já desenhado, não recomeçar:** `docs/perfil-vivo-fatos-versionados.md`
+  (fatos datados + proveniência + visão derivada) — decidido e **não construído**.
+- **Depende de:** desenhar junto com PEND-016 e PEND-017. **Bloqueia** PEND-020.
+- **Admin:** ADMIN PRECISA DE AJUSTE — ver o retrato da criança e a procedência
+  de cada informação.
+- **Critério de conclusão:** DESEJADO aprovado; modelo de dados decidido (o de
+  `perfil-vivo-fatos-versionados` confirmado ou substituído).
+- **Agente recomendado:** PROPOR
+
+---
+
+### PEND-019
+**Estratégias que a família consegue usar**
+Bloco: **D · Entregas** · Prioridade: **P2** · Estado: **ABERTA**
+Aberta em: 2026-08-08 · Origem: consolidação da PEND-010 (itens 5 e 6) +
+`docs/plano-estrategias-ayla.md`
+
+- **Impacto:** é a entrega que a mãe leva para o dia. Plano genérico gasta a
+  confiança dela sem devolver nada.
+- **DESEJADO — A DEFINIR COM PRODUTO:** como a Ayla escolhe a intervenção; o que
+  precisa usar da criança (interesses, sensibilidades, idade, histórico); o que
+  é "direção concreta"; e se/como acompanha o resultado.
+- **Achados herdados (laudo 06/08, não reconferidos):** planos nasceram de "Sim"
+  e "Cadê?" — 3 planos sem pedido (#5) · `tema` corrompido com andaime de prompt
+  virando título de PDF na casa da família (#6). Registrado também: planos
+  saindo **sem seção prática** por falha silenciosa em chamadas paralelas.
+- **Depende de:** PEND-016 (escolha) + PEND-017 (repertório) + PEND-018
+  (criança). Não começa antes do DESEJADO de A/B/C.
+- **Admin:** ADMIN PRECISA DE AJUSTE — ver estratégias entregues e o que foi
+  usado para montá-las.
+- **Critério de conclusão:** DESEJADO aprovado e investigação ATUAL × DESEJADO
+  concluída.
+- **Agente recomendado:** PROPOR (depois de A/B/C)
+
+---
+
+### PEND-020
+**Relatórios para escola, terapeuta e médico**
+Bloco: **D · Entregas** · Prioridade: **P2** · Estado: **ABERTA**
+Aberta em: 2026-08-08 · Origem: consolidação da PEND-010
+
+- **Impacto:** é o documento que sai da Kolo e entra numa reunião de escola ou
+  num consultório. Errar procedência aqui custa mais que errar em qualquer tela.
+- **DESEJADO — A DEFINIR COM PRODUTO:** que dados entram e de que período; como
+  o documento **separa fato, relato externo e inferência da IA**; o que a mãe
+  edita; como se guarda e se compartilha.
+- **Depende de:** **PEND-018** — sem proveniência na memória, o relatório não
+  tem como marcar o que é de quem.
+- **Admin:** ADMIN PRECISA DE AJUSTE — ver relatórios gerados.
+- **Critério de conclusão:** DESEJADO aprovado; dependência de PEND-018
+  resolvida ou explicitamente contornada.
+- **Agente recomendado:** PROPOR (depois de PEND-018)
+
+---
+
+### PEND-021
+**Jornada dos 7 dias de teste e conversão**
+Bloco: **G · Comercial** · Prioridade: **P1** · Estado: **ABERTA**
+Aberta em: 2026-08-08 · Origem: consolidação da PEND-010 (itens 23, 24, 25) +
+`docs/plano-trial-encantamento.md`
+
+- **Impacto:** é a frente comercial. Medido em 2026-08-08: **42 famílias em
+  teste válido e 121 que já saíram dele**. A conversão acontece ou não acontece
+  aqui.
+- **DESEJADO — A DEFINIR COM PRODUTO.** ⚠️ Explicitamente **não** é "desenhar
+  sete mensagens fixas": a jornada deve orquestrar as melhores experiências da
+  Kolo conforme aquela família. Decisões necessárias:
+  1. o que caracteriza valor entregue no dia 1, e como isso muda por família;
+  2. como a Ayla apresenta uma funcionalidade no momento em que ela serve;
+  3. o que acontece no aviso de término, na retrospectiva e no convite;
+  4. o que muda depois de assinar — e depois de **não** assinar.
+- **Estado conhecido:** não existe jornada por dia (só gatilhos por estado);
+  quem se engaja recebe **menos** proativa; a celebração é inalcançável.
+- **Depende de:** nada de A/B/C para começar o desenho — **pode andar em
+  paralelo**. Liga-se a PEND-001 e PEND-002, já publicadas.
+- **Admin:** ADMIN PRECISA DE AJUSTE — acompanhar a jornada e a conversão por
+  família. O funil já separa "em teste × trial vencido" (PEND-008, concluída).
+- **Critério de conclusão:** DESEJADO aprovado; investigação ATUAL × DESEJADO
+  com o número de conversão de antes.
+- **Agente recomendado:** PROPOR
+
+---
+
+### PEND-022
+**Fontes confiáveis, limites e escalonamento para humano**
+Bloco: **F · Limites** · Prioridade: **P2** · Estado: **ABERTA**
+Aberta em: 2026-08-08 · Origem: consolidação da PEND-010
+
+- **Impacto:** saúde, diagnóstico, medicação, direito escolar e laudo são temas
+  em que uma frase com falsa certeza faz estrago real na vida de uma família.
+- **DESEJADO — A DEFINIR COM PRODUTO:** o que a Ayla pode e não pode afirmar em
+  cada tema; quando busca fonte externa; quando cita e como apresenta
+  (procedência, data, versão); o que ela diz quando **não** há fonte confiável;
+  quando recomenda profissional; **quando escala para humano**.
+- **Estado conhecido:** os freios de tom estão no ar (não afirmar direito ou
+  saúde com falsa certeza). O **escalonamento para humano não existe**: a Ayla
+  desvia assunto de cupom/preço/cancelamento e ninguém é notificado.
+- **Depende de:** aplica-se a PEND-016 — desenhar junto, implementar depois.
+- **Admin:** ADMIN PRECISA DE AJUSTE — receber e tratar escalonamento.
+- **Critério de conclusão:** DESEJADO aprovado, com a lista do que nunca se
+  afirma e o caminho de escalonamento definido.
+- **Agente recomendado:** PROPOR
+
+---
+
+### PEND-023
+**Feedback da família e aprendizado**
+Bloco: **E · Feedback** · Prioridade: **P2** · Estado: **ABERTA**
+Aberta em: 2026-08-08 · Origem: consolidação da PEND-010
+
+- **Impacto:** sem isto, a Ayla recomenda amanhã a mesma coisa que não funcionou
+  ontem — e a família percebe antes da gente.
+- **DESEJADO — A DEFINIR COM PRODUTO:** onde a mãe diz "ajudou / não ajudou /
+  funcionou / quero ajustar"; e — o ponto que não pode ser esquecido — **como
+  isso vira histórico da intervenção e muda a próxima recomendação para aquela
+  criança**. Não é pesquisa de satisfação.
+- **Depende de:** PEND-019 e PEND-004 (precisa existir entrega para avaliar).
+  **Alimenta** PEND-016 e PEND-018.
+- **Admin:** ADMIN PRECISA DE AJUSTE — consultar feedback por família e por tipo
+  de entrega.
+- **Critério de conclusão:** DESEJADO aprovado, incluindo o caminho de volta
+  para a memória da criança.
+- **Agente recomendado:** PROPOR (depois de D)
 
 ---
 
@@ -713,7 +1007,7 @@ trimestralmente, o que vier antes.
 
 ---
 
-**Próximo ID livre: PEND-016.**
+**Próximo ID livre: PEND-024.**
 
 > Conferir contra `origin/main`, não contra o seu branch. Dois branches podem
 > reivindicar o mesmo número — o conflito de merge nesta linha é o alarme.
