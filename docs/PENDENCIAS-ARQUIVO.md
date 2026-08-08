@@ -12,6 +12,38 @@ Ordem cronológica inversa: a mais recente no topo.
 
 ## 2026
 
+### PEND-010 · Triar as 26 pendências do laudo de 06/08
+Documentação · P2 · **CONCLUÍDA**
+Aberta em: 2026-08-08 · Concluída em: 2026-08-08
+
+- **O que resolveu:** o laudo `docs/pendencias-2026-08-06.md` deixou de ser uma
+  segunda lista de verdade. Cada item recebeu destino, e o registro passou a
+  organizar as frentes por **bloco e dependência** em vez de lista plana —
+  porque funcionalidades que compartilham cérebro, memória, recuperação ou
+  decisão não podem ser investigadas como independentes.
+- **Destino dos 26 itens:**
+
+  | Itens | Destino |
+  |---|---|
+  | 1, 2, 17 | **já resolvidos** — o próprio laudo os marcava ✅ |
+  | 10, 26 | **já resolvidos** — viraram PEND-008 (funil + segmentação), concluída em 2026-08-08 |
+  | 20 | **já coberto** — é a PEND-007 |
+  | 19, 21, 22 | **incorporados à PEND-007** (resíduos da migração OpenAI, nenhum bloqueia ativação) |
+  | 3, 4, 12, 13, 15 | **incorporados à PEND-016** (condução) |
+  | 5, 6 | **incorporados à PEND-019** (estratégias) |
+  | 8 | **incorporado à PEND-019** — a causa dos 3 planos é o item 5 |
+  | 23, 24, 25 | **incorporados à PEND-021** (jornada e conversão) |
+  | 11, 14 | **incorporados à PEND-016** como dívida de precisão e de UX da web |
+  | 7, 9 | **mantidos como não reproduzidos** — destino do fluxo `/auth/wa` e causa 2019→2002; ficam em PEND-016 sem prometer investigação própria |
+  | 16, 18 | **obsoletos como bloqueador** — decisão de produto de 06/08 tirou a avaliação cega do portão; o que resta de artefatos entra em PEND-017 |
+
+- **Aprendizado:** consolidar não é transformar cada item antigo numa pendência.
+  Dos 26, **cinco** já estavam resolvidos e **dezesseis** pertenciam a cinco
+  frentes que compartilham o mesmo cérebro. Tratá-los como 26 pendências
+  independentes teria produzido implementações paralelas da mesma inteligência —
+  o retrabalho mais caro que existe aqui.
+
+
 ### PEND-008 · Contagens e segmentações usando `status` cru de assinatura
 Dados/Banco · P2 · **CONCLUÍDA**
 Aberta em: 2026-08-08 · Concluída em: 2026-08-08
