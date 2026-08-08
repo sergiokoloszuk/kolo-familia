@@ -114,9 +114,13 @@ describe("MARIA IASMIN — não re-perguntar o que a família já contou", () =>
 });
 
 describe("PRIMEIRA EXPERIÊNCIA — sai com rotina, não com formulário", () => {
-  it("montar não espera confirmação", () => {
-    expect(ROTINA).toMatch(/Se já dá pra montar uma primeira versão, MONTE/);
-    expect(ROTINA).toMatch(/não peça confirmação antes/);
+  // ATUALIZADO em 08/08/2026 (D-R1): a regra não caiu, ganhou escopo. Ela vale
+  // para a sequência que a FAMÍLIA deu; quando a Ayla infere, a proposta é
+  // mostrada antes de virar quadro. Os dois lados têm teste próprio em
+  // `rotina-confirmacao.test.ts`.
+  it("sequência ditada pela mãe não espera confirmação", () => {
+    expect(ROTINA).toMatch(/ELA DITOU A SEQUÊNCIA/);
+    expect(ROTINA).toMatch(/MONTE, sem pedir confirmação/i);
   });
 
   it("horário sem base é PROPOSTO, e dito como sugestão", () => {
