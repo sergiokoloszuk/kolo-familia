@@ -15,8 +15,8 @@ Só o que está aberto. 🔒 = bloqueada.
 
 | ID | Pendência | Categoria | Prio | Estado | Próximo passo |
 |---|---|---|---|---|---|
+| [PEND-015](#pend-015) | Revisar exposição e governança de secrets no Easypanel | Segurança | **a definir** | ABERTA | investigar o risco antes de priorizar |
 | [PEND-007](#pend-007) | Ativação do GPT parada na prova da chave de produção | Ayla/IA | P1 | ABERTA 🔒 | publicar e rodar `provider-check` |
-| [PEND-003](#pend-003) | Preview da Vercel vermelho — causa raiz provada | Infra/Deploy | P1 | PRONTA PARA EXECUTAR 🔒 | Sérgio: 2 variáveis públicas no ambiente Preview |
 | [PEND-002](#pend-002) | Pagamento confirmado no Stripe sem acesso na Kolo | Pagamento/Acesso | P1 | AGUARDANDO VALIDAÇÃO | esperar a primeira assinatura real e conferir os 5 pontos |
 | [PEND-001](#pend-001) | Cooldown do convite de assinatura | Pagamento/Acesso | P1 | AGUARDANDO VALIDAÇÃO | esperar o próximo convite real e conferir o número |
 | [PEND-004](#pend-004) | Rotina/Sequência Visual — auditar antes de redesenhar | Produto | P2 | ABERTA | missão INVESTIGAR do fluxo atual |
@@ -73,22 +73,22 @@ Aberta em: 2026-08-08 · Origem: Fase 0A
 - **Baixa (2026-08-08):** Implementado **OK** · Testado **OK** (17 testes, com
   mutação) · Regressão **OK** (suíte 1379) · Build **OK** · Publicado **OK**
   (`050cf87`, Production success) · Configuração **N/A** — não usa env nova ·
-  **Preview verde: BLOQUEADO** (ver abaixo) · **Smoke: PENDENTE** ·
+  **Preview funcional: OK** (PEND-003 concluída) · **Smoke: PENDENTE** ·
   **Validado em produção com número: PENDENTE**.
-- **⚠️ Por que NÃO recebeu baixa** — o critério cadastrado na abertura pede três
-  coisas que ainda não existem:
-  1. **"preview verde"** — impossível hoje: **depende da PEND-003**, que é uma
-     frente separada. O `build` do GitHub Actions passou (2m1s), mas o critério
-     escrito diz preview. Não reescrevi o critério para caber no que consegui:
-     isso é decisão sua — ou emendar o critério para aceitar o `build` do
-     Actions, ou manter bloqueado até a PEND-003 fechar.
-  2. **smoke mostrando que o segundo convite dentro da janela não sai** — exige
+- **⚠️ Por que NÃO recebeu baixa** — faltam duas coisas, e as duas dependem de
+  tráfego real:
+  1. **smoke mostrando que o segundo convite dentro da janela não sai** — exige
      uma família sem acesso mandando duas mensagens. Não dá para fabricar sem
      WhatsApp real ou conta de QA dedicada.
-  3. **número antes → depois em produção** — exige tráfego real. Medição de
-     hoje: **0 reservas** (`assinatura_nudge_reserva`) gravadas desde o deploy,
-     o que é o esperado 5 minutos depois.
-- **Depende de:** PEND-003 (só para a cláusula "preview verde")
+  2. **número antes → depois em produção** — exige tráfego. Medição do dia da
+     publicação: **0 reservas** (`assinatura_nudge_reserva`) gravadas desde o
+     deploy, o esperado poucos minutos depois.
+- **Infraestrutura de Preview: SATISFEITA (2026-08-08).** A cláusula "preview
+  verde" estava bloqueada pela PEND-003, agora **concluída** — o Preview builda
+  e abre. Decisão registrada: **não se fabrica um PR novo** só para obter outro
+  check verde da mesma alteração já publicada e testada; o requisito era de
+  infraestrutura, e a infraestrutura está comprovada.
+- **Depende de:** ~~PEND-003~~ — resolvida em 2026-08-08.
 - **Como conferir quando acontecer:** contar `ayla_messages` com
   `tipo='assinatura_nudge'` por família na janela, e conferir se existe reserva
   correspondente em `ayla_send_log` (`template_key='assinatura_nudge_reserva'`).
@@ -252,81 +252,6 @@ Aberta em: 2026-08-08 · Origem: incidente Rochelle (2026-07-23) → Fase 0B
   `eventos_app` (`stripe_checkout_completed` com `resultado: ok`). Passando os
   cinco, é a primeira validação real das Etapas 1 e 2.
 - **Agente recomendado:** EXECUTAR (Etapa 3)
-
----
-
-### PEND-003
-**Preview da Vercel vermelho — causa raiz provada, correção depende do painel**
-Categoria: Infra/Deploy · Prioridade: **P1** · Estado: **PRONTA PARA EXECUTAR** 🔒
-Aberta em: 2026-08-08 · Origem: relato do Sérgio (2026-08-08)
-
-- **Impacto:** se o preview falha em todo PR, ele para de significar alguma
-  coisa — e a checagem que deveria pegar regressão antes do merge vira ruído.
-- **Evidência (2026-08-08, pela API de deployments do GitHub):** a falha é
-  **só de Preview**. Os deployments de **Production observados concluíram com
-  sucesso** — `cad4876` às 13:06Z e `b3020b9` às 04:40Z. Os de Preview do mesmo
-  dia falharam (`f872831` às 13:57Z, `31a54de` às 12:59Z). O `build` do GitHub
-  Actions passa. Ou seja: **produção está publicando normalmente**; o que está
-  quebrado é o sinal que deveria pegar regressão **antes** do merge.
-- **CAUSA RAIZ (2026-08-08) — provada por reprodução local, não por suposição:**
-  o build do Next **prerenderiza páginas que instanciam o cliente Supabase**, e
-  isso exige `NEXT_PUBLIC_SUPABASE_URL` e `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-  **no momento do build**. Sem elas o build morre no export:
-  `@supabase/ssr: Your project's URL and API key are required to create a
-  Supabase client!` → *"Export encountered an error on /boas-vindas/page"* e
-  *"/(app)/ludico/desenhos"*.
-  Como o prerender roda **independente do que mudou**, um commit só de markdown
-  falha igual — que é exatamente o padrão observado.
-- **Experimento que fecha a causa (local, sem tocar em produção):**
-  1. `.env.local` removido → build **falha**, com o erro acima;
-  2. `.env.local` contendo **apenas as duas variáveis públicas do Supabase** →
-     build **passa inteiro** (104 páginas).
-  Ou seja: **o build precisa de exatamente duas variáveis**, e as duas são
-  `NEXT_PUBLIC_*` — a anon key é pública por construção e protegida por RLS.
-  Todo o resto (service role, Stripe, Z-API, provedores de IA, `CRON_SECRET`)
-  é **só de runtime**.
-- **Corroboração:** a falha é determinística e independente de conteúdo, o
-  `build` do GitHub Actions passa (ele não faz deploy), e Production — mesmo
-  código — publica verde. Isso casa com "variável presente só em Production".
-- **Classificação das variáveis** (nomes, nunca valores):
-
-  | Variável | Necessária no build? | Vai para Preview? |
-  |---|---|---|
-  | `NEXT_PUBLIC_SUPABASE_URL` | **SIM** | **sim** — pública |
-  | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | **SIM** | **sim** — pública, protegida por RLS |
-  | `NEXT_PUBLIC_APP_URL`, `NEXT_PUBLIC_APP_NAME` | não | opcional (afeta links gerados) |
-  | `SUPABASE_SERVICE_ROLE_KEY` | não | **NÃO** — bypassa RLS |
-  | `STRIPE_*`, `ZAPI_*`, `ANTHROPIC_*`, `OPENAI_*` | não | **NÃO** — dinheiro, WhatsApp e API paga |
-  | `CRON_SECRET` | não | ver risco abaixo |
-
-- **Bloqueio:** aplicar a correção exige o **painel da Vercel** (escopo de
-  variáveis por ambiente), que o agente não tem. Não improvisei alternativa em
-  código: tirar o prerender dessas páginas seria decisão de arquitetura, e
-  fallback de env no build mascararia o problema.
-  *Destrava:* Sérgio.
-- **Próximo passo (proposta):** adicionar **as duas variáveis públicas** ao
-  ambiente **Preview** do projeto `kolo-familia-web` (root `apps/web`), **e
-  nada além disso**. Depois, abrir um PR qualquer e conferir o preview.
-- **Decisão de segurança que acompanha a correção:** com essas duas variáveis, o
-  Preview passa a servir o app apontando para o **banco de produção**. Sem
-  service role e com RLS, ele não enxerga dado de família sem sessão — mas a
-  URL de preview passa a ser um app funcional contra dados reais. Recomendação:
-  ligar/conferir a **Deployment Protection** da Vercel para previews antes de
-  adicionar as variáveis. Alternativa estrutural (Supabase de staging) é frente
-  própria, não esta.
-- **Riscos desta frente, com destino:**
-
-  | Risco | Destino | Motivo |
-  |---|---|---|
-  | Preview passa a apontar para o banco de produção | **MANTER NA PEND-003** | é o efeito direto da correção; mitigar com Deployment Protection antes de aplicar |
-  | `CRON_SECRET` ausente deixa o cron **fail-open** (`if (expectedSecret)`) — no Preview, sem o segredo, os crons ficariam abertos na URL | **MANTER NA PEND-003** | com Deployment Protection ligada, a URL não é pública; sem service role o cron falharia de qualquer forma. Mas o padrão fail-open é real e vale corrigir junto |
-  | Copiar variáveis sensíveis para o Preview "para ficar verde" | **DESCARTADO, com evidência** | o experimento mostra que **só as duas públicas** são necessárias; nenhuma chave de Stripe, Z-API ou service role entra |
-  | Tirar o prerender das páginas para não precisar de env | **RISCO ACEITO — não fazer** | seria decisão de arquitetura e perderia otimização estática para resolver um problema de configuração |
-
-- **Critério de conclusão:** um PR novo com **preview verde**, URL de preview
-  abrindo, Production seguindo verde, `build` do Actions verde, e **nenhuma
-  variável sensível** adicionada ao Preview.
-- **Agente recomendado:** EXECUTAR (com Sérgio no painel)
 
 ---
 
@@ -630,13 +555,73 @@ PEND-002 (Etapas 1, 2 e 3), 2026-08-08
       diff**. Pergunta fixa: *"em que este patch acredita que não está nele?"*;
   16. **trabalho ainda não publicado é a melhor hora para corrigir fato
       histórico e comentário errado**, antes que virem referência permanente —
-      depois de publicado, mexer em mensagem de commit é caro e arriscado.
+      depois de publicado, mexer em mensagem de commit é caro e arriscado;
+  17. **configuração crítica ausente deve falhar FECHADA.** Regra candidata:
+      *"autenticação/autorização crítica não deve depender de secret opcional
+      de forma fail-open; ausência de configuração obrigatória deve falhar
+      fechada."*
+      Origem: `if (expectedSecret) { ... }` nos crons
+      (`api/ayla/cron/route.ts` e `api/cron/exclusao-pagamento/route.ts`) — se a
+      variável sumir, a proteção some junto, em silêncio.
+      **Estado de fato, medido em 2026-08-08:** `CRON_SECRET` **existe** em
+      Production **e** em Preview (desde 09/05), e a Vercel só dispara cron
+      contra Production — portanto **não há exposição ativa hoje**. A premissa
+      anterior ("ausente no Preview") era inferência minha a partir do código e
+      **estava errada**. O que sobrevive é a fragilidade arquitetural, não um
+      incidente. Não corrigir o código nesta fase; quando o RUNBOOK
+      ([[PEND-012]]) existir, a mesma regra vira entrada operacional
+      ("não remover `CRON_SECRET`").
+  18. **medir o estado do ambiente NO ambiente**, não inferir do código-fonte —
+      já registrado no item 5, e agora com **três ocorrências na mesma semana**
+      (o "0–1 segundo" da Vercel; o `CRON_SECRET` supostamente ausente; as
+      variáveis de Preview). Pela regra deste registro, três repetições é o
+      sinal de que virou padrão: **candidato forte a regra permanente**, não
+      mais a observação.
 - **Próximo passo:** decidir item a item o que entra, com você.
 - **Critério de conclusão:** `AI-ENGINEERING-PROTOCOL.md` alterado com as
   decisões aprovadas, ou cada item recusado registrado com motivo. Nenhum item
   fica sem destino.
 - **Não bloqueia a PEND-002.**
 - **Agente recomendado:** PROPOR
+
+---
+
+### PEND-015
+**Revisar exposição e governança de secrets no Easypanel**
+Categoria: Segurança · Prioridade: **a definir após investigação de risco** ·
+Estado: **ABERTA**
+Aberta em: 2026-08-08 · Origem: achado fora de escopo durante a correção da
+PEND-003 (2026-08-08), reportado em vez de tratado
+
+- **Evidência observada:** o painel Easypanel **autenticado** apresenta, em
+  texto legível e sem máscara, variáveis sensíveis do Supabase self-hosted —
+  categorias: **service role · senha do Postgres · JWT secret · senha de
+  dashboard · secret key base · chave de vault**. Difere da Vercel, que oculta
+  valores marcados como *Sensitive*.
+  ⚠️ **Nenhum valor foi copiado para esta documentação, e nada foi alterado.**
+- **Por que a prioridade não está definida:** o raio de alcance é grande — a
+  service role bypassa RLS, ou seja, alcança dado de saúde e comportamento de
+  criança de todas as famílias — mas não há evidência de exposição fora do
+  painel autenticado. Severidade sem as respostas abaixo seria chute, e a régua
+  deste arquivo é que prioridade se mede.
+- **A investigação precisa responder, antes de classificar:**
+  1. quem consegue acessar o painel hoje;
+  2. que autenticação/MFA existe;
+  3. há histórico ou auditoria de acesso;
+  4. os valores podem ser mascarados;
+  5. podem ser movidos para secret store ou mecanismo mais seguro;
+  6. quais serviços dependem de cada secret;
+  7. impacto de comprometimento por categoria;
+  8. quais realmente precisariam de rotação;
+  9. como rotacionar sem derrubar produção;
+  10. há backup e caminho de recuperação;
+  11. existe exposição além do painel autenticado.
+- **Proibido nesta fase:** rotacionar qualquer segredo, alterar o Easypanel,
+  copiar valores para documento, ticket ou log.
+- **Critério de conclusão:** as 11 perguntas respondidas com evidência, uma
+  prioridade atribuída com justificativa, e uma decisão registrada para cada
+  categoria de secret (mascarar · mover · rotacionar · aceitar).
+- **Agente recomendado:** INVESTIGAR
 
 ---
 
@@ -740,7 +725,7 @@ trimestralmente, o que vier antes.
 
 ---
 
-**Próximo ID livre: PEND-015.**
+**Próximo ID livre: PEND-016.**
 
 > Conferir contra `origin/main`, não contra o seu branch. Dois branches podem
 > reivindicar o mesmo número — o conflito de merge nesta linha é o alarme.
