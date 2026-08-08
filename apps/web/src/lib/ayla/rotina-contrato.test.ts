@@ -235,7 +235,7 @@ describe("ordem da entrega quando falta tema", () => {
     expect(BLOCO).toMatch(/const link = faltaTema \? null/);
     expect(BLOCO).toMatch(/const dica = faltaTema\s*\n?\s*\? ""/);
     // "já comecei a gerar" só existe no ramo do disparo confirmado
-    expect(BLOCO).toMatch(/autoGerou\s*\n?\s*\? ` Já comecei a preparar/);
+    expect(BLOCO).toContain("? `\\n\\nJá comecei a preparar");
   });
 });
 
@@ -279,5 +279,42 @@ describe("verdade operacional na copy", () => {
 
   it("diz o que é verdade em qualquer duração", () => {
     expect(GUIADA).toMatch(/conforme ficarem prontos/);
+  });
+});
+
+/**
+ * A PORTA DO TEMA, FECHADA DE VEZ.
+ *
+ * Em 08/08/2026 eu tirei o tema do contrato e do gerador, e DEIXEI o campo no
+ * schema da ferramenta. O condutor pescou "boneca de pano" da conversa do dia
+ * anterior e gerou 11 cartões de uma ida ao CINEMA nesse tema — sem perguntar
+ * nada, sem a mãe validar. Remoção pela metade é porta aberta.
+ */
+describe("tema: uma porta só", () => {
+  it("o condutor NÃO tem campo de tema na ferramenta", () => {
+    const schema = GUIADA.slice(
+      GUIADA.indexOf("const FERRAMENTA_CONDUTOR"),
+      GUIADA.indexOf("type BlocoResposta"),
+    );
+    expect(schema).not.toMatch(/^\s*tema: \{/m);
+    expect(schema).toMatch(/NÃO existe campo `tema` aqui/);
+  });
+
+  it("o código não lê tema do modelo em lugar nenhum", () => {
+    expect(semComentarios(GUIADA)).not.toMatch(/parsed\??\.tema/);
+    expect(GUIADA).toMatch(/const tema: string \| null = null;/);
+  });
+
+  it("sem tema do modelo, todo pedido visual passa pela pergunta", () => {
+    // `faltaTema = visual && ids.length > 0 && !tema` — com tema sempre null
+    // nesta função, quem quer cartão sempre é perguntado.
+    expect(GUIADA).toMatch(/const faltaTema = visual && ids\.length > 0 && !tema/);
+  });
+
+  it("os cartões não colam na última etapa da lista", () => {
+    // A lista agora vem antes; sem a quebra, "11. Chegar em casa 🏠" colava
+    // com "Já comecei a preparar os cartões" na mesma linha (Karina, 08/08).
+    expect(GUIADA).toContain("? `\\n\\nJá comecei a preparar os cartões");
+    expect(GUIADA).toContain('? "\\n\\nTe mandei também um *PDF pra imprimir*');
   });
 });
