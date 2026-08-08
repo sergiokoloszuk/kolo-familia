@@ -700,9 +700,47 @@ do laudo de 06/08) + `docs/auditoria-ayla-prompt.md`
 - **Impacto:** é o produto. Tudo que a família recebe passa por aqui — se a
   condução pergunta demais, responde raso ou erra um fato da criança, nenhuma
   entrega adiante salva a conversa.
-- **DESEJADO — A DEFINIR COM PRODUTO.** Decisões que precisam vir **antes** de
-  qualquer investigação técnica:
-  1. como a Ayla escolhe **um** foco quando a mãe traz três problemas;
+### DESEJADO — em construção com produto (sessão de 2026-08-08)
+
+> **Experiência desejada, que rege todas as decisões deste bloco:** a pessoa
+> sente que a Ayla **ouviu o conjunto, organizou o caos e sabe por onde
+> começar** — sem tirar dela o controle.
+
+**D1 · Vários problemas ao mesmo tempo (APROVADA 2026-08-08).**
+São **dois passos separados**, não uma hierarquia só. Misturá-los faz um
+compromisso de amanhã sequestrar uma conversa que precisa tratar o hoje.
+
+1. **PRESERVAÇÃO — o que não pode se perder.**
+   *Risco* (segurança da criança ou da mãe, crise aguda) e *compromissos com
+   hora marcada* (consulta, reunião na escola). **Preservar não é virar foco:**
+   risco que exige ação imediata assume a conversa; risco sem ação imediata e
+   compromisso futuro são **nomeados e guardados em voz alta** — *"a consulta de
+   amanhã eu não vou deixar passar"* —, para a mãe não ficar com medo de que se
+   perderam.
+   ⚠️ O que conta como risco e o que se faz com ele é **dependência da
+   PEND-022** — não definido aqui.
+2. **FOCO DA CONVERSA AGORA.** Não havendo risco que exija ação imediata, o foco
+   é a **raiz provável**: o problema cuja melhora alivia os outros (sono, dor,
+   fome e sobrecarga sensorial quase sempre estão embaixo de "comportamento").
+   Empate desfaz-se pelo **alívio mais rápido** — o que pode melhorar em 24–48h.
+   Confiança se constrói com uma coisa que funcionou, não com o plano mais
+   completo.
+
+**Forma (a parte que impede isso de virar interrogatório):**
+- **a Ayla escolhe e assume a escolha** — não devolve a priorização para quem
+  está em sobrecarga (*"por qual você quer começar?"* cobra uma decisão cara e
+  gasta um turno antes da primeira ajuda);
+- **o porquê cabe em uma linha.** Se precisa de parágrafo, a escolha está fraca;
+- **trocar custa uma palavra** — *"me diz numa palavra que eu troco"*: a mãe
+  mantém o controle sem pagar um turno por isso;
+- **devolver o conjunto organizado, agrupando em até três frentes sempre que
+  possível.** Não é regra rígida: a intenção é **não reproduzir o caos**, e nada
+  importante que a pessoa trouxe pode ser omitido — em especial compromisso
+  futuro.
+
+**Decisões seguintes deste bloco, ainda a definir com produto:**
+  1. ~~como a Ayla escolhe **um** foco quando a mãe traz três problemas;~~
+     **decidido em D1**;
   2. quantas perguntas são aceitáveis antes de entregar algo de valor;
   3. o que é "direção prática" — o que fazer, o que falar, que atividade;
   4. quando ela muda de estratégia porque a anterior não funcionou, e como sabe;
@@ -720,6 +758,8 @@ do laudo de 06/08) + `docs/auditoria-ayla-prompt.md`
   (primeira conversa) dentro do DESEJADO.
 - **Admin:** ADMIN PRECISA DE AJUSTE — hoje não dá para ver *por que* a Ayla
   disse o que disse (decisão, contexto recuperado, conteúdo usado).
+  **Nasceu da D1:** registrar **qual foco ela escolheu, com que critério, e o
+  que foi preservado** — sem isso não há como revisar uma condução ruim depois.
 - **Critério de conclusão:** DESEJADO preenchido e aprovado; investigação
   ATUAL × DESEJADO concluída com lacunas nomeadas. Execução é frente seguinte.
 - **Agente recomendado:** PROPOR (depois do DESEJADO)
@@ -783,6 +823,10 @@ Aberta em: 2026-08-08 · Origem: consolidação da PEND-010 +
   3. o que acontece quando duas informações se contradizem.
 - **Já desenhado, não recomeçar:** `docs/perfil-vivo-fatos-versionados.md`
   (fatos datados + proveniência + visão derivada) — decidido e **não construído**.
+- **Requisito herdado de PEND-016 · D1 (2026-08-08):** para escolher a **raiz
+  provável**, a Ayla precisa saber o que **já foi tentado** e o que já se sabe
+  de sono, dor, alimentação e sensorial daquela criança. Sem isso na memória, o
+  critério de foco vira chute.
 - **Depende de:** desenhar junto com PEND-016 e PEND-017. **Bloqueia** PEND-020.
 - **Admin:** ADMIN PRECISA DE AJUSTE — ver o retrato da criança e a procedência
   de cada informação.
@@ -807,6 +851,9 @@ Aberta em: 2026-08-08 · Origem: consolidação da PEND-010 (itens 5 e 6) +
   e "Cadê?" — 3 planos sem pedido (#5) · `tema` corrompido com andaime de prompt
   virando título de PDF na casa da família (#6). Registrado também: planos
   saindo **sem seção prática** por falha silenciosa em chamadas paralelas.
+- **Requisito herdado de PEND-016 · D1 (2026-08-08):** o foco escolhido na
+  conversa é o que define qual estratégia é entregue — a entrega não escolhe o
+  próprio tema.
 - **Depende de:** PEND-016 (escolha) + PEND-017 (repertório) + PEND-018
   (criança). Não começa antes do DESEJADO de A/B/C.
 - **Admin:** ADMIN PRECISA DE AJUSTE — ver estratégias entregues e o que foi
@@ -878,6 +925,10 @@ Aberta em: 2026-08-08 · Origem: consolidação da PEND-010
 - **Estado conhecido:** os freios de tom estão no ar (não afirmar direito ou
   saúde com falsa certeza). O **escalonamento para humano não existe**: a Ayla
   desvia assunto de cupom/preço/cancelamento e ninguém é notificado.
+- **Requisito herdado de PEND-016 · D1 (2026-08-08):** o passo de
+  **preservação** depende desta ficha para saber **o que conta como risco** e o
+  que a Ayla faz quando o identifica. Enquanto não estiver definido, a condução
+  trata risco como "assume a conversa" sem política escrita.
 - **Depende de:** aplica-se a PEND-016 — desenhar junto, implementar depois.
 - **Admin:** ADMIN PRECISA DE AJUSTE — receber e tratar escalonamento.
 - **Critério de conclusão:** DESEJADO aprovado, com a lista do que nunca se
