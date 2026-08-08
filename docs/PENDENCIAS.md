@@ -24,7 +24,7 @@ Só o que está aberto. 🔒 = bloqueada.
 | [PEND-018](#pend-018) | Memória e retrato da criança | **C · Memória** | P1 | ABERTA | desenhar junto com A |
 | [PEND-021](#pend-021) | Jornada dos 7 dias e conversão | G · Comercial | P1 | ABERTA | preencher o DESEJADO |
 | [PEND-022](#pend-022) | Fontes confiáveis, limites e escalonamento | F · Limites | P2 | ABERTA | preencher o DESEJADO |
-| [PEND-004](#pend-004) | Rotina/Sequência Visual | D · Entregas | P2 | ABERTA | **decisões fechadas — implementar em fatias** |
+| [PEND-004](#pend-004) | Rotina/Sequência Visual | D · Entregas | P2 | AGUARDANDO VALIDAÇÃO | 4 fatias no ar; falta conversa real |
 | [PEND-019](#pend-019) | Estratégias que a família consegue usar | D · Entregas | P2 | ABERTA | depende de A+B+C |
 | [PEND-020](#pend-020) | Relatórios para escola, terapeuta e médico | D · Entregas | P2 | ABERTA | depende de C |
 | [PEND-023](#pend-023) | Feedback da família e aprendizado | E · Feedback | P2 | ABERTA | depende de D |
@@ -341,6 +341,17 @@ Aberta em: 2026-08-08 · Origem: pedido do Sérgio na missão da PEND-004
   `gerando`/`pronto`/`erro` — o `erro` hoje não é visível para ninguém) ·
   **feedback da mãe** quando D-R5 estiver no ar · e **quantas rotinas a mesma
   família tem para o mesmo momento**, que passa a acontecer por decisão (D-R3).
+- **DESCOBERTO NA EXECUÇÃO DA ROTINA (2026-08-08), com caso em produção:**
+  - **Erro de geração de cartão não é visível para ninguém.** O baseline achou
+    **1 rotina com `cards_status = 'erro'`** em produção. A família vê um aviso
+    na tela; a equipe não vê nada, não há alerta, e não há como saber que
+    aconteceu sem varrer a tabela à mão. É o exemplo mais concreto de por que
+    esta ficha existe.
+  - **Feedback da rotina** agora existe e precisa ser lido por família e por
+    tipo de resposta — inclusive "quero ajustar", que é pedido de mudança.
+  - **Rotina em modo `lista` é quase inexistente** (2 de 73). Se continuar
+    assim, é sinal de que o modo existe e ninguém acha — coisa que só se
+    percebe olhando o conjunto.
 - **Já sabido, das fichas existentes:** PEND-004 rotinas geradas (criança,
   título, data, origem, status, feedback, erro de geração) · PEND-016 *por que*
   a Ayla decidiu o que decidiu · PEND-017 administrar acervo e ver o que foi
@@ -361,7 +372,7 @@ Aberta em: 2026-08-08 · Origem: pedido do Sérgio na missão da PEND-004
 
 ### PEND-004
 **Rotina/Sequência Visual — auditar o fluxo atual antes de redesenhar**
-Categoria: Produto · Prioridade: **P2** · Estado: **ABERTA — pronta para IMPLEMENTAR**
+Categoria: Produto · Prioridade: **P2** · Estado: **AGUARDANDO VALIDAÇÃO**
 Aberta em: 2026-08-08 · Origem: decisão de produto (2026-08-08)
 
 - **Impacto:** é a funcionalidade escolhida para validar o
@@ -426,9 +437,61 @@ Aberta em: 2026-08-08 · Origem: decisão de produto (2026-08-08)
 - **Admin:** ADMIN PRECISA DE AJUSTE — visualizar rotinas geradas por família,
   com criança, título, data, origem, status e feedback. **Registrado em PEND-026**;
   não se implementa aqui.
-- **Estado: PRONTA PARA IMPLEMENTAR.** Nenhuma dependência de A+B+C, nenhuma
-  decisão de produto pendente. A execução deve ser fatiada (ver SPEC §5) —
-  começando pelo que não toca a condução em produção.
+- **AS QUATRO FATIAS FORAM IMPLEMENTADAS E PUBLICADAS EM 2026-08-08.** Cada uma
+  saiu da `origin/main` atualizada, com branch, commit, testes, PR, checks e
+  merge próprios — para saber exatamente qual mudança produziu qual efeito.
+
+  | Fatia | O que entrou | PR | Testes |
+  |---|---|---|---|
+  | 1 · app | progresso e etapa de agora · "como usar" nos dois modos · imprimir fora do modo cartões | [#53](https://github.com/sergiokoloszuk/kolo-familia/pull/53) | 11 novos · 2 sabotagens |
+  | 2 · feedback | "essa rotina ajudou?" na página, **sem migração** | [#54](https://github.com/sergiokoloszuk/kolo-familia/pull/54) | 12 novos · 2 sabotagens |
+  | 3 · oferta | evento único (D-R4) · visual pelo contexto (D-R2) | [#55](https://github.com/sergiokoloszuk/kolo-familia/pull/55) | 17 novos · 3 sabotagens |
+  | 4 · confirmação | confirmação seletiva (D-R1) | [#56](https://github.com/sergiokoloszuk/kolo-familia/pull/56) | 18 novos · 2 sabotagens |
+
+  Suíte ao final: **1462 passando**, `tsc` limpo, `npm run build` ok, todos os
+  checks verdes, tudo em Production.
+- **A FATIA 2 NÃO PRECISOU DE MIGRAÇÃO — e isso é o achado da frente.** A 0075
+  já dera à rotina as mesmas quatro colunas de resultado do plano, **e está
+  aplicada em produção** (conferido por leitura). O feedback da página só
+  traduz os quatro botões para os quatro valores que o banco aceita, e um teste
+  lê o SQL da migração para impedir que alguém acrescente botão sem valor.
+  Efeito colateral que não custou código: quem responde no app sai da fila do
+  follow-up da Ayla e **não recebe a mesma pergunta pelo WhatsApp depois**.
+- **O PRÓXIMO NÚMERO DE MIGRAÇÃO LIVRE É 0077**, não 0076 — a 0076
+  (`plano_versionamento`) já está reivindicada pela branch
+  `feat/plano-kolo-estrutura`. Conferido contra todas as branches, locais e
+  remotas, antes de decidir que a fatia 2 não precisava de migração.
+- **BASELINE CONGELADO ANTES DA FATIA 3** (2026-08-08, antes de tocar a
+  condução): 73 rotinas em 15 famílias · 30 nos últimos 7 dias, 51 em 14, 65 em
+  30 · cartões: 26 prontos, 46 nenhum, **1 erro** · modo: 71 cartões, 2 lista ·
+  38 de dia da semana, 35 avulsas · **0 respostas de resultado** (o feedback
+  acabara de nascer) · 294 mensagens de rotina no WhatsApp em 14 dias.
+  **Não comparar volume ainda:** a base é pequena e a fatia 3 saiu no mesmo dia.
+- **VALIDAÇÃO INTEGRADA — o que está provado e o que não está.**
+  Provado por teste e por leitura de código, sem comunicação real: a página
+  ensina, destaca a etapa de agora, imprime nos dois modos, edita, salva,
+  reencontra pela lista filtrada por criança, e grava o feedback com escrita
+  conferida. Os contratos cobrem os casos A a G da SPEC.
+  **NÃO validado:** o comportamento do modelo diante dos contratos novos. Todos
+  os testes das fatias 3 e 4 prendem o TEXTO da decisão, não o que o modelo faz
+  com ele — é o limite conhecido desse tipo de teste, e está dito nos arquivos.
+- **⚠️ ESTADO: AGUARDANDO VALIDAÇÃO.** Falta exatamente uma evidência, e ela
+  não se fabrica: **uma conversa real, de uma família real, exercitando os
+  casos B (necessidade implícita), C (evento único) e a confirmação seletiva.**
+  Não criei tráfego nem família de teste para conseguir a baixa. O caminho
+  honesto é a bancada com chamada real ao modelo, ou o uso orgânico das
+  próximas famílias — e aí comparar com o baseline acima.
+- **RISCOS QUE FICAM.**
+  1. **A D-R2 aumenta a oferta de cartões.** É deliberado, e é seguro porque
+     `visual: true` só faz a Ayla PERGUNTAR o tema (a mãe recusa com
+     `recusouTema`). Mas o custo de imagem sobe se muita gente aceitar.
+     **ACEITO com justificativa**, e mensurável contra o baseline.
+  2. **Erro de geração de cartão é invisível.** Já há 1 em produção e ninguém
+     soube. → **PEND-026**.
+  3. **Lint pré-existente** (`set-state-in-effect` no rascunho do AddTarefa)
+     continua no arquivo, idêntico à `main`. **ACEITO** — não é desta frente e
+     não se corrige em silêncio.
+- **Critério de conclusão restante:** só a validação orgânica acima.
 - **Critério de conclusão:** SPEC da Rotina Visual em `docs/specs/` com os oito
   portões respondidos e o corpus de disparo preenchido. Implementação é frente
   seguinte, não faz parte desta baixa.
@@ -867,6 +930,21 @@ Aberta em: 2026-08-08 · Origem: consolidação da PEND-010 +
   inércia.* Na Rotina, duas cláusulas do desejado revertiam decisões de 03/08
   que **não eram erro** e traziam o motivo escrito no código. Viraram D-R1 e
   D-R2, foram decididas, e a genealogia antiga fica preservada junto da nova.
+- **APRENDIZADOS DA EXECUÇÃO EM FATIAS (2026-08-08, PEND-004):**
+  1. *Antes de criar tabela ou coluna, procurar a migração que já resolveu o
+     problema ao lado.* A fatia de feedback ia nascer com migração; a 0075 já
+     tinha as quatro colunas certas, aplicadas em produção. **Zero schema
+     novo.** O reflexo de "feature nova, tabela nova" custa caro.
+  2. *Teste de regressão pega o autor mudando o que não devia — duas vezes na
+     mesma missão.* Ao reescrever um bloco de critério, derrubei junto duas
+     regras que a decisão NÃO revogava (tema não é motivo pra cartão; horário
+     proposto). Nos dois casos o teste antigo é que avisou, e a correção foi no
+     código, não no teste. **Quando um teste antigo falha, a primeira pergunta
+     é se a decisão o revogou — não como fazê-lo passar.**
+  3. *Decisão de produto que vive em texto precisa ser exportada para poder ser
+     testada.* Dois contratos passaram a ser exportados nesta frente, sem mudar
+     comportamento. Sem isso, a única forma de prender a decisão seria chamada
+     real ao modelo — e a regra antiga voltaria no primeiro merge distraído.
 - **Já desenhado, não recomeçar:** `docs/perfil-vivo-fatos-versionados.md`
   (fatos datados + proveniência + visão derivada) — decidido e **não construído**.
 - **Depende de:** desenhar junto com PEND-016 e PEND-017. **Bloqueia** PEND-020.
