@@ -17,6 +17,7 @@ Só o que está aberto. 🔒 = bloqueada.
 |---|---|---|---|---|---|
 | [PEND-015](#pend-015) | Exposição de secrets no Easypanel | H · Governança | a definir | ABERTA | investigar o risco antes de priorizar |
 | [PEND-007](#pend-007) | Ativação do GPT parada na prova da chave | H · Governança | P1 | ABERTA 🔒 | publicar e rodar `provider-check` |
+| [PEND-024](#pend-024) | Portão: comparar arquitetura de IA atual × OpenAI antes de implementar | H · Governança | P2 ⚑ | ABERTA | esperar D1–D12; então montar o benchmark |
 | [PEND-002](#pend-002) | Pagamento confirmado sem acesso na Kolo | G · Comercial | P1 | AGUARDANDO VALIDAÇÃO | esperar a primeira assinatura real |
 | [PEND-001](#pend-001) | Cooldown do convite de assinatura | G · Comercial | P1 | AGUARDANDO VALIDAÇÃO | esperar o próximo convite real |
 | [PEND-016](#pend-016) | Condução da Ayla — o que ela diz e por quê | **A · Condução** | P1 | ABERTA | **preencher o DESEJADO com a Karina** |
@@ -1006,6 +1007,53 @@ Aberta em: 2026-08-08 · Origem: consolidação da PEND-010
 
 ---
 
+### PEND-024
+**Portão de arquitetura: comparar a camada de IA atual × OpenAI antes das implementações transversais**
+Bloco: **H · Governança** · Prioridade: **P2 ⚑** (sobe para P1 no gatilho abaixo)
+· Estado: **ABERTA**
+Aberta em: 2026-08-08 · Origem: nota arquitetural do Sérgio durante a sessão de
+desenho do bloco A+B+C
+
+- **O que estamos decidindo — e o que NÃO estamos.** Não se decide hoje "vamos
+  migrar". Decide-se hoje **"não vamos avançar cegamente sem testar isso"**. A
+  migração, se acontecer, acontece **depois da prova** — nunca por percepção
+  subjetiva de que um modelo "parece melhor".
+- **Por que é um portão e não uma tarefa:** condução, memória, estratégias e
+  ferramentas são implementações **transversais**. Construí-las inteiras sobre
+  uma arquitetura e depois migrar significa refazer o mesmo trabalho duas vezes
+  — o retrabalho mais caro previsto no mapa de blocos.
+- **Gatilho de prioridade:** sobe para **P1 no momento em que a primeira
+  implementação transversal de A/B/C for autorizada**. Antes disso, é registro;
+  depois disso, é bloqueio.
+- **As decisões D1–D12 são o benchmark.** Elas não mudam por causa da
+  arquitetura — ao contrário: viram os **casos e critérios de aceitação** contra
+  os quais as duas opções são medidas. Comparar "qual modelo é melhor" sem
+  critério de aceitação é exatamente a percepção subjetiva que este portão
+  existe para impedir.
+- **Como comparar, quando chegar a hora:** mesmos casos, mesmos critérios,
+  medida antes de opinião. Ligações úteis: a bancada e o `provider-check` já
+  existem (PEND-007), e a Fase A+B da migração já está commitada e **desligada**
+  — a infraestrutura de comparação não precisa ser criada do zero.
+- **⚠️ A investigação técnica NÃO deve ser antecipada.** Tanto a arquitetura
+  atual quanto a oferta da OpenAI mudam rápido; levantar isso agora produz um
+  laudo vencido no dia em que for usado. **Investigar com informação atualizada
+  no momento da comparação** — é o mesmo princípio de "medir o ambiente no
+  ambiente", aplicado a fornecedor externo.
+- **Depende de:** D1–D12 da PEND-016 (para existir benchmark) · PEND-007
+  (chave provada, se a comparação exigir rodar em produção).
+- **Bloqueia (quando o gatilho disparar):** implementação transversal de
+  PEND-016, PEND-017, PEND-018 e das entregas do bloco D.
+- **Admin:** ADMIN DEPENDE DO DESEJADO — se houver comparação em produção, o
+  Admin precisa mostrar qual provider respondeu o quê. `provider-check` já
+  cobre parte.
+- **Critério de conclusão:** benchmark executado com os casos de D1–D12,
+  resultado registrado com números, e **decisão explícita** (migrar · não migrar
+  · migrar em parte), com o motivo escrito. Portão fechado por decisão, não por
+  cansaço.
+- **Agente recomendado:** PROPOR (depois de D1–D12)
+
+---
+
 ## Como usar este arquivo
 
 ### Estados
@@ -1106,7 +1154,7 @@ trimestralmente, o que vier antes.
 
 ---
 
-**Próximo ID livre: PEND-024.**
+**Próximo ID livre: PEND-025.**
 
 > Conferir contra `origin/main`, não contra o seu branch. Dois branches podem
 > reivindicar o mesmo número — o conflito de merge nesta linha é o alarme.
