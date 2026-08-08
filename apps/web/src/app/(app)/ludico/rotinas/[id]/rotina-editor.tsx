@@ -41,6 +41,10 @@ import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { progressoDaRotina, resumoDoProgresso } from "@/lib/ludico/rotina-progresso";
 import {
+  RESPOSTAS_FEEDBACK,
+  type RespostaFeedback,
+} from "@/lib/ludico/rotina-resultado";
+import {
   adicionarTarefa,
   adicionarVariasTarefas,
   criarRotinaDia,
@@ -52,6 +56,7 @@ import {
   renomearRotina,
   reordenarTarefas,
   repetirTarefaEmDias,
+  registrarResultadoRotina,
   resetarRotina,
   toggleTarefa,
 } from "../actions";
@@ -147,6 +152,7 @@ export function RotinaEditor({
   tema,
   historia,
   cardsStatus,
+  resultadoInicial,
   tarefasIniciais,
 }: {
   rotinaId: string;
@@ -160,6 +166,8 @@ export function RotinaEditor({
   tema: string | null;
   historia: string | null;
   cardsStatus: CardsStatus;
+  /** O que a família já respondeu sobre esta rotina, se respondeu. */
+  resultadoInicial: string | null;
   tarefasIniciais: Tarefa[];
 }) {
   const router = useRouter();
@@ -387,6 +395,17 @@ export function RotinaEditor({
           onToggle={toggle}
           onMover={mover}
           onRemover={remover}
+        />
+      )}
+
+      {/* "ESSA ROTINA AJUDOU?" — depois da sequência, nunca antes: perguntar
+          se ajudou acima do quadro é pedir opinião sobre algo que ela ainda
+          não olhou. Só aparece quando há o que avaliar. */}
+      {tarefas.length > 0 && (
+        <FeedbackRotina
+          rotinaId={rotinaId}
+          resultadoInicial={resultadoInicial}
+          onQuerAjustar={() => setEditando(true)}
         />
       )}
 
@@ -677,6 +696,83 @@ function ComoUsar({ visual, nomeMembro }: { visual: boolean; nomeMembro: string 
           <Pencil className="size-3.5" /> Errou uma etapa? Dá pra editar em “Editar”
         </span>
       </p>
+    </div>
+  );
+}
+
+/**
+ * A PERGUNTA QUE FECHA O CICLO — leve, e uma vez.
+ *
+ * Quatro botões e nada de texto livre: a mãe está com a criança na frente, e
+ * caixa de texto aqui é a diferença entre responder e não responder. As
+ * palavras dela continuam chegando pelo WhatsApp, que é onde ela já escreve.
+ *
+ * "Quero ajustar" não é só um rótulo: ele abre a edição na hora. Quem clica
+ * ali está pedindo para mudar a sequência, e devolver só um "obrigada pelo
+ * retorno" seria fingir que a resposta foi ouvida.
+ */
+function FeedbackRotina({
+  rotinaId,
+  resultadoInicial,
+  onQuerAjustar,
+}: {
+  rotinaId: string;
+  resultadoInicial: string | null;
+  onQuerAjustar: () => void;
+}) {
+  const [resultado, setResultado] = useState<string | null>(resultadoInicial);
+  const [erro, setErro] = useState<string | null>(null);
+  const [, start] = useTransition();
+
+  function responder(r: RespostaFeedback, valor: string) {
+    const anterior = resultado;
+    setResultado(valor);
+    setErro(null);
+    if (r === "quero_ajustar") onQuerAjustar();
+    start(async () => {
+      const res = await registrarResultadoRotina({ rotinaId, resposta: r });
+      // A escrita é conferida do outro lado; se não gravou, a marca volta
+      // atrás. Deixar o botão aceso por uma resposta que não existe no banco
+      // seria mentir para a mãe sobre algo que ela acabou de fazer.
+      if (!res.ok) {
+        setResultado(anterior);
+        setErro("Não consegui guardar sua resposta. Dá pra tentar de novo.");
+      }
+    });
+  }
+
+  return (
+    <div className="flex flex-col gap-2 rounded-2xl border border-kolo-linha bg-white px-4 py-3 print:hidden">
+      <p className="text-sm font-semibold text-foreground">Essa rotina ajudou?</p>
+      <div className="flex flex-wrap gap-2">
+        {RESPOSTAS_FEEDBACK.map((op) => {
+          const marcada = resultado === op.resultado;
+          return (
+            <button
+              key={op.chave}
+              type="button"
+              aria-pressed={marcada}
+              onClick={() => responder(op.chave, op.resultado)}
+              className={cn(
+                "rounded-full border px-3 py-1.5 text-sm font-medium transition-colors",
+                marcada
+                  ? "border-brand-purple bg-brand-purple text-white"
+                  : "border-foreground/15 bg-white text-foreground/70 hover:border-brand-purple/40 hover:text-brand-purple",
+              )}
+            >
+              {op.rotulo}
+            </button>
+          );
+        })}
+      </div>
+      {erro ? (
+        <p className="text-xs text-destructive">{erro}</p>
+      ) : resultado ? (
+        <p className="text-xs text-muted-foreground">
+          Obrigada — isso ajuda a Ayla a acertar a próxima. Dá pra mudar sua resposta a
+          qualquer momento.
+        </p>
+      ) : null}
     </div>
   );
 }

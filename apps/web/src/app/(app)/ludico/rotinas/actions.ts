@@ -7,6 +7,7 @@ import { createClient, createServiceRoleClient } from "@/lib/supabase/server";
 import { idadeAnos } from "@/lib/idade";
 import { gerarRoteiroRotina, ilustrarCards } from "@/lib/ludico/gerar";
 import { resolveFamily } from "@/lib/auth/current-family";
+import { gravarResultadoDaRotina } from "@/lib/ludico/rotina-resultado";
 import { requireActiveWrite } from "@/lib/auth/require-active-write";
 import { trackFeature } from "@/lib/analytics/track";
 import { DIAS_SEMANA } from "./dias";
@@ -560,6 +561,37 @@ export async function definirModoExibicao(
       .eq("id", rotinaId)
       .eq("family_account_id", family.id);
     if (error) return { ok: false, error: error.message };
+    revalidatePath(`/ludico/rotinas/${rotinaId}`);
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "Erro inesperado" };
+  }
+}
+
+const resultadoSchema = z.object({
+  rotinaId: z.string().uuid(),
+  resposta: z.enum(["ajudou", "ajudou_em_parte", "nao_usamos", "quero_ajustar"]),
+});
+
+/**
+ * "ESSA ROTINA AJUDOU?" respondida na própria página.
+ *
+ * Reusa as colunas de resultado que a 0075 já criou — as mesmas do plano. Não
+ * há tabela nem coluna nova nesta frente; ver `lib/ludico/rotina-resultado.ts`,
+ * onde vive a tradução e a escrita conferida.
+ */
+export async function registrarResultadoRotina(
+  input: z.infer<typeof resultadoSchema>,
+): Promise<Ok | Fail> {
+  try {
+    const { rotinaId, resposta } = resultadoSchema.parse(input);
+    const { supabase, family } = await requireFamily();
+    const r = await gravarResultadoDaRotina(supabase, {
+      rotinaId,
+      familyId: family.id,
+      resposta,
+    });
+    if (!r.ok) return r;
     revalidatePath(`/ludico/rotinas/${rotinaId}`);
     return { ok: true };
   } catch (e) {
