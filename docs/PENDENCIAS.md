@@ -1153,6 +1153,41 @@ Aberta em: 2026-08-08 · Origem: consolidação da PEND-010 +
   MENSAGEM → CONHECIMENTO RECUPERADO → CONHECIMENTO DESEJÁVEL → RESPOSTA →
   **o erro foi de conhecimento, de raciocínio ou de condução?** Sem isso,
   corrige-se com prompt um problema que nasce na recuperação.
+- **📄 LAUDO COMPLETO: [laudo-recuperacao-conhecimento.md](laudo-recuperacao-conhecimento.md)**
+  (2026-08-08, missão INVESTIGAR). AS-IS das 10 etapas · query real · causa do
+  ranking inerte · Web × WhatsApp · o que personaliza · rastreabilidade ·
+  critérios · dataset · opções de arquitetura · decisões que dependem do Sérgio.
+  **Nada implementado.** O resumo abaixo é ponteiro; o laudo é a fonte.
+  - **⚠️ CORREÇÃO de um enunciado meu de 2026-08-08:** eu escrevi *"mesma skill
+    → mesmo bloco para toda família, toda vez"*. **É forte demais.** A idade
+    filtra de verdade e filtra bem. O correto: **o bloco é fixo por (skill,
+    faixa etária)** — não varia com a família, o perfil, o histórico nem com o
+    que a mensagem diz.
+  - **A causa do ranking inerte não é descuido de curadoria.** `peso_relevancia`
+    nasceu em `0001_init.sql:352` sob o comentário `-- Aprendizado contínuo`:
+    era para ser **sinal aprendido com o uso**, e esse mecanismo **nunca foi
+    construído**. Nenhum código calcula o valor, o Admin **não expõe o campo no
+    formulário**, e as três BPs com peso ≠ 0,5 são **as três linhas de
+    demonstração do seed de 23/05** — não são curadoria. Por isso elas ocupam o
+    topo de `comunicacao` e `sensorial` desde sempre.
+  - **Quanto do acervo circula, somando TODAS as faixas etárias:** `comunicacao`
+    5 títulos de 66 (**8%**) · `emocional` 11 de 75 · `sono` 11 de 31 (35%).
+    **65% a 92% do acervo nunca chega a ninguém** — não por juízo, por empate.
+  - **`meu_bem_estar` é skill ATIVA com ZERO boas práticas.** No assunto mais
+    frequente de desabafo (44 casos, 17 famílias) o repertório vem **vazio** e
+    nada registra isso. Liga esta ficha à frente de desabafo da PEND-016.
+  - **A assimetria entre canais é drift, não decisão:** falta `knowledge_tags`
+    no `.select()` de `lib/ayla/catalogo-skills.ts`. Mesma tabela, mesma linha.
+    Impacto hoje: muda o bloco em **1 de 12** skills — **e isso é sintoma**, não
+    alívio: as tags não mudam nada porque o ranqueamento não funciona. Consertar
+    o ranking faz a assimetria virar diferença real. **Andam juntas.**
+  - **Correção de dado antigo:** a nota de 30/07 sobre ~55% do acervo
+    inalcançável por skills inativas **não vale mais** — 13 das 14 skills estão
+    ativas e 100% das BPs ativas têm skill no catálogo. A inalcançabilidade de
+    hoje é do **ranking**, não do catálogo.
+  - **Campos pagos e não usados na consulta:** `perfis_aplicaveis`, `nivel`,
+    `versao` e `updated_at`. Não há como preferir conteúdo novo nem excluir
+    vencido.
 - **RECUPERAÇÃO AS-IS — MEDIDA EM 2026-08-08** (leitura de código e do banco de
   produção; nada alterado). Responde à pergunta central desta sub-frente.
   - **Fonte única, um módulo:** `lib/conhecimento/recuperar.ts`, neutro de
@@ -1207,7 +1242,10 @@ Aberta em: 2026-08-08 · Origem: consolidação da PEND-010 +
 - **Admin:** ADMIN PRECISA DE AJUSTE — administrar acervo, e ver o que foi
   recuperado e o que foi usado.
 - **Critério de conclusão:** DESEJADO da curadoria aprovado; auditoria das seis
-  camadas com números; decisão sobre a BIA (entra na `main` ou é descartada).
+  camadas com números; decisão sobre a BIA (entra na `main` ou é descartada);
+  **e a validação por conversas reais** — que hoje está **BLOQUEADA pela falta
+  de rastreabilidade** (ver E no laudo). Sem rastro não há baseline, e sem
+  baseline esta ficha não fecha.
 - **Agente recomendado:** PROPOR (curadoria) → AUDITAR (camadas)
 
 ---
