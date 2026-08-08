@@ -978,6 +978,16 @@ regra caiu por dado, não por opinião.
   em silêncio (#4) · `atribuicao_distribuida` é o código mais ruidoso do
   detector (#12) · fala sobre sono ainda dispara medicação (#13) · respostas da
   web 40% mais longas sem o teto de 120 palavras (#15).
+- **REGRAS DE "PREENCHER LACUNA" — decisão provisória (2026-08-08).** Quatro
+  regras do núcleo (não presumir horário/refeição · não presumir co-cuidador ·
+  não inventar de quem é o fato · não inventar alimento/interesse) **não têm
+  caso encontrado na produção**, e o Sérgio não recorda incidente. **Não são
+  promovidas a guardrail por memória.** Ficam como **princípio de precisão** —
+  manifestações de um só: *não transformar suposição em fato*. Reavaliar se
+  aparecer incidente real.
+  ⚠️ **"Fato vencido" continua separado de "lacuna preenchida"** — a uva-passa
+  mostrou que são causas diferentes: uma inventa o que não sabe, a outra confia
+  demais no que sabia (a segunda é PEND-018).
 - **Depende de:** PEND-017 e PEND-018 — **desenhar junto**. Absorve PEND-009
   (primeira conversa) dentro do DESEJADO.
 - **Admin:** ADMIN PRECISA DE AJUSTE — hoje não dá para ver *por que* a Ayla
@@ -1219,6 +1229,63 @@ Aberta em: 2026-08-08 · Origem: consolidação da PEND-010
   cada tema; quando busca fonte externa; quando cita e como apresenta
   (procedência, data, versão); o que ela diz quando **não** há fonte confiável;
   quando recomenda profissional; **quando escala para humano**.
+**DECISÕES DE PRODUTO PROVISÓRIAS (2026-08-08) — sujeitas ao fechamento
+jurídico/limites desta ficha.**
+
+**1 · Fronteira do escopo jurídico — conceitual, não lista.**
+> **A Ayla pode ORGANIZAR A REALIDADE DA FAMÍLIA. Não pode DEFINIR ESTRATÉGIA
+> JURÍDICA.**
+
+*Dentro:* organizar fatos e cronologia · ajudar a listar dúvidas para
+advogado/Defensoria/perícia · organizar documentos que a família já tem ·
+preparar informações sobre a criança · formular comunicação **neutra e factual**
+quando o objetivo é **comunicação cotidiana sobre a criança**.
+
+*Fora:* dizer qual medida judicial tomar · nomear estratégia processual ·
+afirmar "há base" ou "tem direito" sem fonte e sem escopo · avaliar mérito ·
+dizer como cobrar decisão judicial · recomendar multa, petição, recurso ou
+pedido ao juiz · **redigir comunicação entre partes de um litígio quando o
+conteúdo possa ter efeito jurídico ou estratégico** · assumir papel de
+advogada, previdenciarista ou especialista legal.
+
+**Casos reais que a fronteira julga** (localizados em 2026-08-08):
+- 01/08 — *"esse caminho legal precisa de advogado ou Defensoria; o que eu posso
+  te ajudar é no dia a dia"* → **dentro**, é o comportamento desejado;
+- 07/08 — *"isso é descumprimento de ordem judicial… podem pedir multa"* →
+  **fora**;
+- 07/08 — *"há base pra apresentar"* (BPC) → **fora**, é mérito;
+- 14–17/07 — Ayla redigiu a mensagem da mãe ao pai em processo judicializado →
+  **depende**: logística factual sobre a criança é aceitável; disputa,
+  negociação, acusação, cobrança ou posicionamento no litígio é **fora**.
+⚠️ Nada disso vira lista de "não faço" dentro da conversa. É fronteira
+conceitual. E **só fecha depois** de fontes, atualidade e rastreabilidade
+(PEND-017 + sub-frente de recuperação).
+
+**2 · Relatório usado em processo — "relatório é relatório".**
+Não se cria "modo judicial" sem necessidade comprovada. O uso que a família dá
+ao documento não o transforma em laudo, parecer ou prova técnica.
+**Verificação feita em 2026-08-08** (`lib/relatorio/`): diz o que é
+(*"NÃO é laudo, NÃO diagnostica, NÃO substitui avaliação"*) ✔ · assina a autoria
+(*"a família relata/observa"*) ✔ · fecha com a frase de limite ✔ · filtro que
+bloqueia termos clínicos em `narrativa.ts` ✔ · não promete validade jurídica ✔.
+**Não verificado:** o prompt diz *"a data a tela põe"* — não confirmei na tela.
+
+**3 · Conflito — reposicionamento leve, nunca recusa burocrática.**
+Diante de *"eu estou certa?"*: não aceitar o papel de juiz · não fugir da ajuda ·
+não tomar partido · **transformar julgamento de pessoas em análise de fatos,
+necessidades da criança e próximos passos**. Modelo de tom, **não bordão**:
+*"não consigo dizer quem está certa só por esse recorte, mas posso te ajudar a
+separar o que aconteceu, o que importa para a criança e o que vale levar para a
+conversa com ele."* ⚠️ Não repetir "não vou julgar" em toda conversa — é
+princípio de condução.
+*Caso real (05/07): a mãe pediu veredito com print e a Ayla respondeu "a gente
+avalia juntas" — aceitou o papel.*
+
+**4 · A ficha trata SEPARADAMENTE cinco coisas** que hoje andam juntas:
+**detecção · resposta · escalonamento · confirmação de recebimento · registro e
+auditoria do evento.** Resposta conversacional correta não implica sistema
+correto.
+
 - **DOIS CASOS REAIS DE RISCO, que NÃO podem ser tratados como um só**
   (localizados na produção em 2026-08-08):
   1. **23/07 — falso positivo.** A mãe escreveu sobre o fim do teste
@@ -1229,10 +1296,12 @@ Aberta em: 2026-08-08 · Origem: consolidação da PEND-010
   **São os dois testes obrigatórios de qualquer solução futura:** não gerar
   falso positivo grosseiro **e** não perder positivo real.
   ⚠️ **Não afrouxar a proteção de crise para resolver o falso positivo.**
-- **⚠️ EVIDÊNCIA OPERACIONAL (03/08):** a resposta conversacional pode ter sido
-  adequada **e o sistema ter falhado assim mesmo** — não há registro de que o
-  evento tenha chegado a um humano, porque **o canal de escalonamento não
-  existe**. Falha operacional, não de condução.
+- **⚠️ EVIDÊNCIA OPERACIONAL (03/08) — PERGUNTA EM ABERTO:** a resposta
+  conversacional pode ter sido adequada **e o sistema ter falhado assim mesmo**.
+  **Falta saber se o evento chegou a um humano.** Se NÃO chegou, isto vira
+  evidência prioritária desta ficha, e o escalonamento deixa de ser item para
+  virar frente própria. *Pergunta feita ao Sérgio em 2026-08-08 e ainda sem
+  resposta — não presumir nenhum dos dois lados.*
 - **Estado conhecido:** os freios de tom estão no ar (não afirmar direito ou
   saúde com falsa certeza). O **escalonamento para humano não existe**: a Ayla
   desvia assunto de cupom/preço/cancelamento e ninguém é notificado.
