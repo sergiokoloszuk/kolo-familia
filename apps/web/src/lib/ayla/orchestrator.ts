@@ -1263,6 +1263,34 @@ function membroMencionado(
  * cair no `membros[0]` e trocar de filho no meio (bug Manu→Mario). Null = sem
  * pista recente (aí o handler usa o default).
  */
+/**
+ * Nasceu uma rotina agora nesta conversa?
+ *
+ * O sinal de que o "PDF" seco tem referente óbvio. É FATO no banco, não
+ * formato de mensagem — foi o formato que quebrou quando a Fase 1 passou a
+ * escrever a lista numerada sempre.
+ */
+async function existeRotinaRecente(
+  supabase: SupabaseClient,
+  familyId: string,
+  membroId: string | null,
+): Promise<boolean> {
+  try {
+    const desde = new Date(Date.now() - 30 * 60 * 1000).toISOString();
+    let q = supabase
+      .from("rotinas")
+      .select("id")
+      .eq("family_account_id", familyId)
+      .gte("created_at", desde)
+      .limit(1);
+    if (membroId) q = q.eq("membro_atipico_id", membroId);
+    const { data } = await q;
+    return (data?.length ?? 0) > 0;
+  } catch {
+    return false;
+  }
+}
+
 async function criancaDaConversa(supabase: SupabaseClient, familyId: string): Promise<string | null> {
   const desde = new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString();
   const { data } = await supabase
@@ -2031,6 +2059,25 @@ export async function processInbound(
     .order("created_at", { ascending: false })
     .limit(1)
     .maybeSingle();
+  // ── EXISTE ARTEFATO? ENTÃO A ROTA VALE ─────────────────────────────────
+  // `apontaProRecente` protege um caso real: "quero cartões disso" sobre uma
+  // sequência CONVERSADA e ainda não persistida não pode pescar uma rotina
+  // antiga — ali quem tem o contexto é a conversa. Continua valendo.
+  //
+  // O que quebrou foi uma das evidências dele: "a última fala da Ayla tem 3+
+  // passos numerados". A Fase 1 (08/08/2026) passou a escrever essa lista
+  // SEMPRE, direto do banco. De sinal ocasional virou constante, e a rota
+  // determinística ficou desligada em todo turno logo depois de uma rotina —
+  // que é exatamente quando a mãe pede o PDF. Karina, 08/08: entregou o
+  // zoológico, ela disse "Pdf", e a Ayla terminou dizendo que "daqui não
+  // consigo gerar o arquivo", com `rotinaParaPdf` pronto ao lado.
+  //
+  // O discriminador certo não é o FORMATO da mensagem, é um FATO: a rotina
+  // existe? Se nasceu agora, ela é o referente e não há o que adivinhar.
+  const pedeImprimivel = pedeArtefatoImprimivel(inbound.texto);
+  const temRotinaRecem = pedeImprimivel
+    ? await existeRotinaRecente(supabase, family.id, membroConversa)
+    : false;
   const apontaRecente = apontaProRecente(
     inbound.texto,
     (ultimaAyla as { texto?: string } | null)?.texto ?? null,
@@ -2038,8 +2085,8 @@ export async function processInbound(
   if (
     !seguranca.aberta &&
     !rotinaConversa &&
-    !apontaRecente &&
-    pedeArtefatoImprimivel(inbound.texto)
+    pedeImprimivel &&
+    (temRotinaRecem || !apontaRecente)
   ) {
     const ctxP = await loadFamiliaParaEnvio(supabase, family.id);
     const alvoP = alvoDaRotina(ctxP, membroConversa);

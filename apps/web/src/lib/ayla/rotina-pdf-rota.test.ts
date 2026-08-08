@@ -230,8 +230,20 @@ describe("referente recente: a rota sai da frente", () => {
     expect(apontaProRecente("quero o pdf", "1. banho\n2. jantar")).toBe(false);
   });
 
-  it("o gate do orquestrador respeita o referente recente", () => {
-    expect(ORCH).toMatch(/!apontaRecente &&\s*\n?\s*pedeArtefatoImprimivel/);
+  it("o gate respeita o referente recente — MAS não quando a rotina acabou de nascer", () => {
+    // 08/08/2026: a Fase 1 passou a escrever a lista numerada SEMPRE (do
+    // banco), e a evidência "3+ passos na última fala" virou constante. A rota
+    // determinística ficava desligada em todo turno logo depois de uma rotina
+    // — exatamente quando a mãe pede o PDF. O discriminador passou a ser um
+    // FATO (a rotina existe?) em vez do formato da mensagem.
     expect(ORCH).toMatch(/const apontaRecente = apontaProRecente\(/);
+    expect(ORCH).toMatch(/\(temRotinaRecem \|\| !apontaRecente\)/);
+    expect(ORCH).toMatch(/async function existeRotinaRecente/);
+  });
+
+  it("a rota deixa de perguntar 'qual delas' quando uma acabou de sair", () => {
+    const GUIADA = readFileSync(resolve(__dirname, "rotina-guiada.ts"), "utf8");
+    expect(GUIADA).toMatch(/const acabouDeSair = idadeMin <= 30/);
+    expect(GUIADA).toMatch(/if \(!acabouDeSair && candidatas\.length > 1/);
   });
 });
