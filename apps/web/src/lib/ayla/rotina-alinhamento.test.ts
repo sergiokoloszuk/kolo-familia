@@ -264,28 +264,39 @@ describe("verdade operacional", () => {
  * significar abandono silencioso. Isso agora tem estado ('aguardando') e
  * gatilho determinístico, então a pergunta deixou de ser um beco sem saída.
  */
-describe("o tema é escolha da família, com sugestão da Ayla", () => {
-  it("com interesse conhecido, SUGERE no máximo duas e não decide", () => {
-    expect(GUIADA).toMatch(/QUEM ESCOLHE É A FAMÍLIA/);
-    expect(GUIADA).toMatch(/Ofereça no máximo DUAS dessas como sugestão/);
-    expect(GUIADA).toMatch(/NÃO decida por ela e NÃO preencha o campo "tema"/);
+describe("o tema é escolha da família — e quem pergunta é o CÓDIGO", () => {
+  /**
+   * ⚠️ MUDOU DE DONO EM 08/08/2026. Este bloco travava as instruções que
+   * mandavam o MODELO propor o tema. Mas "falta tema?" é estado do artefato,
+   * não decisão conversacional — e com dois donos a pergunta saía na fala do
+   * modelo, ANTES da sequência. Agora o modelo está proibido de tocar no
+   * assunto e a pergunta é do código, depois do quadro.
+   */
+  it("o modelo NÃO pergunta tema", () => {
+    expect(GUIADA).toMatch(/TEMA dos cartões NÃO é assunto seu/);
+    expect(GUIADA).toMatch(/Você não oferece tema, não pergunta tema/);
+    expect(GUIADA).not.toMatch(/Ofereça no máximo DUAS dessas como sugestão/);
+  });
+
+  it("o código pergunta, com no máximo duas sugestões dos interesses REAIS", () => {
+    expect(GUIADA).toMatch(/Falta só escolher o tema dos cartões/);
+    expect(GUIADA).toMatch(/sugestoesDeTema/);
+    expect(GUIADA).toMatch(/\.slice\(0, 2\)/);
   });
 
   it("deixa claro que ela pode escolher qualquer outro tema", () => {
-    expect(GUIADA).toMatch(/pode escolher qualquer outro que \$\{nome\} esteja gostando agora/);
+    expect(GUIADA).toMatch(/ou qualquer outro que \$\{nome\} esteja gostando agora/);
   });
 
-  it("nunca anuncia arte que não começou", () => {
-    expect(GUIADA).toMatch(/NUNCA diga que os cartões já estão sendo desenhados/);
+  it("sem interesse conhecido, o convite fica aberto", () => {
+    expect(GUIADA).toMatch(/Me fala um tema que \$\{nome\} ama/);
   });
 
-  it("SEM interesse conhecido, oferece duas ideias genéricas", () => {
-    expect(GUIADA).toMatch(/Você não conhece um interesse dele/);
-    expect(GUIADA).toMatch(/deixe "tema" vazio/);
-  });
-
-  it("a geração só dispara com tema — é isso que a regra protege", () => {
-    expect(GUIADA).toMatch(/if \(!temSemana && visual && tema && ids\.length\)/);
+  it("a geração dispara com tema — e pela MESMA condição que pergunta", () => {
+    expect(GUIADA).toMatch(/const faltaTema = visual && ids\.length > 0 && !tema/);
+    expect(GUIADA).toMatch(/if \(visual && tema && ids\.length\)/);
+    // o `!temSemana` era o buraco: perguntava e não guardava pendência
+    expect(GUIADA).not.toMatch(/!temSemana && visual && tema/);
   });
 });
 

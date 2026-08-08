@@ -366,7 +366,9 @@ Tudo acima continua valendo — identidade, princípios, fronteiras e VOZ. Isto 
 é só o CONTRATO da ferramenta de rotina, não uma segunda Ayla.
 
 ## Escolha UM desfecho por turno e devolva pela ferramenta \`conduzir_rotina\`:
-acao = "responder"|"perguntar"|"montar"|"sair" · mensagem = sua fala (WhatsApp) · tema · transicoes · rotinas
+acao = "responder"|"perguntar"|"montar"|"sair" · mensagem = sua fala (WhatsApp) · recorrente · transicoes
+
+recorrente: este pedido é sobre a GRADE DA SEMANA (dias que se repetem), ou é UM acontecimento? "Domingo é dia dos pais" é um acontecimento — false —, mesmo dizendo "domingo". "Quero organizar as segundas" é grade — true.
 
 Escreva a "mensagem" como você falaria: aspas, travessões, quebras de linha e emoji
 são bem-vindos. A ferramenta serializa o texto por você — não existe caractere
@@ -419,7 +421,7 @@ Oriente a usar: deixar visível em casa e olhar com a pessoa o dia seguinte na n
 "Sempre entrega" quer dizer que a família NUNCA fica sem nada de concreto. NÃO quer dizer gerar um quadro em toda conversa. A melhor ajuda é a MENOR que resolve: às vezes é conduzir uma passagem (antes/durante/depois), às vezes é uma sequência curta de 2 a 4 etapas, às vezes é o período inteiro organizado. Quem decide o tamanho é o porteiro, e ele já decidiu quando você chega aqui.
 Se já dá pra montar uma primeira versão, MONTE — não peça confirmação antes. Ela vê a rotina no texto e ajusta o que quiser depois; é mais rápido corrigir algo pronto do que responder mais perguntas. Horário que ela não deu, você PROPÕE a partir do que sabe (chegada, escola, atividade fixa) e deixa claro que é sugestão. Só não invente horário quando não há nada em que se apoiar.
 Ponha uma dica curta NO PONTO DIFÍCIL — o momento que ela relatou, ou a transição que você já conhece do perfil. Uma ou duas, não uma aula. Quando fizer sentido, uma brincadeira ou atividade simples ancorada nos interesses dele.
-TEMA dos cartões é OPCIONAL e NUNCA atrasa a entrega: se você conhece um interesse, proponha junto; se não, monte sem tema e ofereça depois. E tema NÃO é motivo pra existir cartão — o cartão existe quando VER a sequência ajuda a criança; o tema só personaliza o que já ia existir. A atividade tem que continuar reconhecível: primeiro se entende que é BANHO, depois é que ele é um dinossauro.
+TEMA dos cartões NÃO é assunto seu: o sistema pergunta, no lugar certo, com os interesses que já conhece. Você não oferece tema, não pergunta tema, não escreve "quer no tema de...". E tema NUNCA é motivo pra existir cartão — o cartão existe quando VER a sequência ajuda a criança; o tema só personaliza o que já ia existir. A atividade tem que continuar reconhecível: primeiro se entende que é BANHO, depois é que ele é um dinossauro.
 
 ## Formato dos dados
 transicoes: [{"momento":"banho","estrategia":"música depois","funcionou":null,"merece_plano":false}] — o que você descobriu sobre momentos difíceis fica no perfil e você reusa. Marque "funcionou" quando ela disser que deu certo ou não. Se o momento for algo que a rotina sozinha NÃO resolve (ansiedade de separação, crise intensa, recusa alimentar séria), diga isso em uma frase e marque "merece_plano":true.
@@ -680,7 +682,11 @@ async function rotinaAguardandoTema(
       .eq("family_account_id", familyId)
       .eq("membro_atipico_id", membroId)
       .eq("cards_status", "aguardando")
-      .order("created_at", { ascending: false })
+      // RECENTE. Uma rotina esquecida em `aguardando` semanas atrás não pode
+      // capturar a próxima palavra solta que a mãe mandar — apareceu no teste
+      // de 08/08, quando um "Carrinho" foi parar numa rotina de outra conversa.
+      .gte("updated_at", new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString())
+      .order("updated_at", { ascending: false })
       .limit(1)
       .maybeSingle();
     return data ? { id: data.id as string, nome: (data.nome as string) ?? "" } : null;
@@ -753,6 +759,11 @@ const FERRAMENTA_CONDUTOR = {
         type: "string",
         description:
           "Sua fala pra família, como no WhatsApp. Escreva natural: aspas, travessões, quebras de linha e emoji são bem-vindos e NÃO precisam ser escapados.",
+      },
+      recorrente: {
+        type: "boolean",
+        description:
+          "true SÓ quando o pedido é sobre a GRADE DA SEMANA — dias que se repetem toda semana ('as segundas', 'a semana inteira', 'organizar os dias da semana'). Um acontecimento ÚNICO é false, mesmo citando o nome do dia: 'domingo dia dos pais', 'sábado na casa da vó', 'segunda tenho dentista', 'dia 9', 'amanhã'. Na dúvida, false.",
       },
       tema: {
         type: "string",
@@ -883,7 +894,9 @@ export async function conduzirRotina(
           ? `Perfeito — vou usar *${escolhido}* nesta rotina 🌿 Já comecei a desenhar os cartões; eles levam *1-2 minutinhos* e vão aparecendo sozinhos.`
           : `Anotei o tema *${escolhido}* nesta rotina. Os cartões ainda não começaram a ser desenhados — me chama daqui a pouco que eu tento de novo.`;
         const comoUsar = comecou
-          ? `\n\nQuando estiverem prontos, mostre um de cada vez e vá antecipando: "agora vamos ao mercado; depois a gente volta pra casa."`
+          ? // Sem exemplo fixo: "agora vamos ao mercado" saía até em rotina de
+            // viagem pra casa da avó. Se é frase de modelo, tem que servir.
+            `\n\nQuando estiverem prontos, mostre um de cada vez e vá dizendo o que é agora e o que vem depois.`
           : "";
         return {
           mensagem: link
@@ -1066,13 +1079,10 @@ Exemplo do formato (não copie o conteúdo): "Eu não faria uma rotina do dia in
       // o que segurava não era a pergunta: era `tema=null` significar abandono
       // silencioso, sem estado e sem segunda chance. Com `cards_status
       // 'aguardando'` a pergunta deixou de ser um beco sem saída.
-      visual
-        ? `OS CARTÕES DESTA ROTINA PRECISAM DE UM TEMA, E QUEM ESCOLHE É A FAMÍLIA.${
-            interesses
-              ? ` Você conhece ${nome}: ${interesses}. Ofereça no máximo DUAS dessas como sugestão ("posso fazer em X ou Y") e deixe claro que ela pode escolher qualquer outro que ${nome} esteja gostando agora. NÃO decida por ela e NÃO preencha o campo "tema" — ele só se preenche quando ela responder.`
-              : ` Você não conhece um interesse dele. Ofereça DUAS ideias na fala ("quer no tema de dinossauros ou de carrinhos?") e deixe "tema" vazio — a mãe responde e o sistema aplica.`
-          } NUNCA diga que os cartões já estão sendo desenhados: eles só começam depois que ela escolher.`
-        : "",
+      // TEMA NÃO É DECISÃO DO MODELO. "Falta tema?" é estado do artefato, e
+      // quem sabe disso é o código — que também conhece os interesses e faz a
+      // pergunta depois da sequência, no lugar certo. Deixar os dois donos
+      // perguntando foi o que produziu a pergunta ANTES da lista, em 08/08.
       deveMontar
         ? `JÁ DÁ PRA MONTAR — a criança, o pedaço do dia e a sequência já estão na mesa. acao="montar", obrigatoriamente. NÃO faça mais nenhuma pergunta neste turno: horário, ponto difícil, tema e transição enriquecem, mas NÃO seguram a entrega. O que faltar, ela ajusta depois em cima do que já existe.`
         : "",
@@ -1117,6 +1127,7 @@ ${jaSabemos.rotinaExistente}`
           mensagem?: string;
           pronto?: boolean;
           tema?: string | null;
+          recorrente?: boolean;
           transicoes?: unknown;
         }
       | null;
@@ -1182,7 +1193,28 @@ ${jaSabemos.rotinaExistente}`
 
       if (r.desfecho === "gerou") {
         rotinas = sanitizarRotinas(r.rotinas);
-        tema = tema ?? r.tema;
+        // ── RECORRÊNCIA É PROPRIEDADE DO PEDIDO, NÃO DA PALAVRA ──────────
+        // O gerador lia "domingo" no texto e escrevia dia_semana=6 — e um
+        // acontecimento único virava grade semanal. Só em 3 semanas foram 18
+        // de 22 pedidos: cada um perdeu o link (ia pra grade em vez da
+        // rotina), perdeu a pergunta do tema e terminou com ZERO cartões.
+        //
+        // Agora quem decide é o pedido, declarado num campo. E duas ou mais
+        // rotinas num pedido só podem ser grade — ninguém pede dois
+        // acontecimentos únicos de uma vez —, então isso confirma sozinho.
+        const recorrente = parsed?.recorrente === true || rotinas.length > 1;
+        if (!recorrente) {
+          const tinhaDia = rotinas.filter((x) => x.dia_semana != null).length;
+          if (tinhaDia) {
+            console.log(`[ayla:rotina] acontecimento único — ${tinhaDia} dia(s) de semana descartado(s)`);
+          }
+          rotinas = rotinas.map((x) => ({ ...x, dia_semana: null }));
+        }
+        // TEMA TEM UM DONO SÓ: A FAMÍLIA. O gerador também extraía um — e em
+        // 08/08/2026 devolveu "Dia dos Pais" como TEMA VISUAL de uma rotina
+        // do Dia dos Pais. Não é interesse da criança, é o nome do evento; e
+        // bastava existir pra pular a pergunta e queimar 13 ilustrações num
+        // tema que ninguém escolheu.
       } else {
         // Barrada, ou o gerador não devolveu nada: NÃO publica. A Ayla continua
         // conversando — o comportamento seguro em falha é texto, nunca um
@@ -1281,10 +1313,20 @@ ${jaSabemos.rotinaExistente}`
       // volta 400 e nenhuma imagem sai, em silêncio. Então aqui o disparo é
       // condicionado de verdade, e o caso "precisa de cartão mas não temos
       // tema" vira uma pergunta na mensagem, nunca um silêncio.
+      // ── ESTADO DERIVADO DO ARTEFATO, NÃO DO RAMO ──────────────────────
+      // `faltaTema` tinha um `!temSemana` na frente. Era o buraco: numa rotina
+      // marcada como semanal a fala PERGUNTAVA o tema e o estado não guardava
+      // pendência nenhuma — a mensagem saía como `rotina_pronta`, a conversa
+      // fechava, e a resposta da mãe ("Carrinho") caía no reativo genérico e
+      // virava carrinho de supermercado. Karina, 07/08/2026.
+      //
+      // A condição agora é só o que descreve o artefato: quer cartão, existe
+      // rotina, não tem tema. Se perguntamos, esperamos — e se esperamos,
+      // geramos quando ela responder. As duas pontas usam a MESMA condição.
       let autoGerou = false;
-      const faltaTema = !temSemana && visual && ids.length > 0 && !tema;
+      const faltaTema = visual && ids.length > 0 && !tema;
       faltaTemaFinal = faltaTema;
-      if (!temSemana && visual && tema && ids.length) {
+      if (visual && tema && ids.length) {
         for (const id of ids) await dispararGeracao(id, tema);
         autoGerou = true;
       }
@@ -1345,13 +1387,20 @@ Ah — se quiser, o próprio ${nome} pode ser o personagem dos cartões em vez d
       // gerar" só é verdade quando o disparo aconteceu; enquanto falta o tema,
       // o que existe é uma pergunta em aberto — e dizer outra coisa é prometer
       // arte que ninguém pediu pra desenhar ainda.
+      // DONO ÚNICO. Antes o código só perguntava SE o modelo não tivesse
+      // perguntado (`!/tema|cartões/.test(mensagem)`) — dois donos, e a ordem
+      // saía torta: a pergunta vinha na fala do modelo, ANTES da sequência.
+      // Agora o modelo está proibido de tocar no assunto e a pergunta é daqui,
+      // depois do quadro, sempre no mesmo lugar.
+      //
+      // A personalização não se perdeu: `sugestoesDeTema` sai dos interesses
+      // reais da criança (`carregarInteresses`), a mesma fonte que alimenta os
+      // chips de tema na web. Onde o interesse existe como dado, a sugestão é
+      // dela; onde só existe como prosa no perfil, cai no convite aberto.
       const cartoes = autoGerou
         ? ` Já comecei a gerar os cartões no tema *${tema}* — eles levam *1-2 minutinhos*, então pode abrir que vão aparecendo sozinhos 🌿`
-        : // A Ayla já perguntou o tema na fala dela? Então não pergunte de novo:
-          // em 04/08/2026 a mãe recebeu as duas ofertas coladas, e a segunda
-          // ainda trazia um "dele(a)" de template à mostra.
-          (faltaTema || ofereceCartoes) && !/\btema\b|cart(ão|ões|oes)/i.test(mensagem)
-          ? ` Falta só escolher o tema dos cartões${
+        : faltaTema || ofereceCartoes
+          ? `\n\nFalta só escolher o tema dos cartões${
               sugestoesDeTema
                 ? `: posso fazer em *${sugestoesDeTema}* — ou qualquer outro que ${nome} esteja gostando agora.`
                 : `. Me fala um tema que ${nome} ama — animais, dinossauros, fundo do mar, um personagem — que eu desenho em cima disso.`

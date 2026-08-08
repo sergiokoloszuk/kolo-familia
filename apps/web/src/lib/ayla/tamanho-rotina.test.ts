@@ -193,7 +193,7 @@ describe("PDF deixou de ser automático", () => {
 
 describe("cartões saem por necessidade visual, não por tema", () => {
   it("o gatilho é `visual`", () => {
-    expect(GUIADA).toMatch(/if \(!temSemana && visual && tema && ids\.length\)/);
+    expect(GUIADA).toMatch(/if \(visual && tema && ids\.length\)/);
     // O gatilho antigo era o tema sozinho — o interesse virando artefato.
     expect(GUIADA).not.toMatch(/if \(!temSemana && tema && ids\.length\)/);
   });
@@ -204,7 +204,7 @@ describe("cartões saem por necessidade visual, não por tema", () => {
     // Desde 08/08/2026 a pergunta também deixa rastro no banco: a rotina fica
     // em 'aguardando', que é o que distingue "falta escolher o tema" de
     // "ninguém pediu cartão" — antes as duas eram 'nenhum'.
-    expect(GUIADA).toMatch(/const faltaTema = !temSemana && visual && ids\.length > 0 && !tema/);
+    expect(GUIADA).toMatch(/const faltaTema = visual && ids\.length > 0 && !tema/);
     expect(GUIADA).toMatch(/Falta só escolher o tema dos cartões/);
     expect(GUIADA).toMatch(/await marcarAguardandoTema\(supabase, ids\)/);
     expect(GUIADA).toMatch(/o cartão existe quando VER a sequência ajuda/);
@@ -353,7 +353,7 @@ describe("o visual é decisão própria", () => {
   });
 
   it("os cartões disparam pelo visual resolvido, não pelo campo cru", () => {
-    expect(GUIADA).toMatch(/if \(!temSemana && visual && tema && ids\.length\)/);
+    expect(GUIADA).toMatch(/if \(visual && tema && ids\.length\)/);
     expect(GUIADA).not.toMatch(/if \(!temSemana && prontidao\.visual/);
   });
 });
@@ -372,10 +372,12 @@ describe("a mãe pediu visual e a oferta saiu dobrada", () => {
     expect(pediuApoioVisual("o cardápio dele é curto")).toBe(false);
   });
 
-  it("se a Ayla já perguntou o tema, o sistema não pergunta de novo", () => {
-    expect(GUIADA).toContain("i.test(mensagem)");
-    expect(GUIADA).toContain("(faltaTema || ofereceCartoes) &&");
-    expect(GUIADA).toMatch(/não pergunte de novo/);
+  it("um dono só: o modelo não pergunta, então o sistema não precisa checar", () => {
+    // Era `!/tema|cartões/i.test(mensagem)` — o código só falava se o modelo
+    // tivesse ficado calado. A condicional existia porque havia DOIS donos.
+    // Com o modelo proibido de propor tema, ela virou código morto.
+    expect(GUIADA).not.toContain("i.test(mensagem)");
+    expect(GUIADA).toMatch(/TEMA dos cartões NÃO é assunto seu/);
   });
 
   it("nada de 'dele(a)' à mostra na fala", () => {
