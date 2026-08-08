@@ -1,7 +1,58 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { AREAS_DIARIO } from "@/lib/ia/classificar-area";
+import { trialValido, type AcessoAssinatura } from "@/lib/auth/assinatura";
 import { familiasInternas } from "./internos";
 import { emailsPorFamilia } from "./emails";
+
+/** Balde derivado: `trialing` cujo `trial_ends_at` já passou. */
+export const TRIAL_VENCIDO = "trialing_vencido";
+
+/**
+ * Os baldes do funil, com a DEFINIÇÃO junto — as duas telas leem daqui, então
+ * não podem divergir. A definição fica visível no card de propósito: já
+ * aconteceu aqui de a palavra "ativado" significar três coisas diferentes no
+ * admin por não ter isso escrito na tela.
+ */
+export const FUNIL_ASSINATURA = [
+  { chave: "trialing", rotulo: "em teste", definicao: "dentro do prazo do trial" },
+  { chave: TRIAL_VENCIDO, rotulo: "trial vencido", definicao: "passou da data (ou sem data), sem assinar" },
+  { chave: "active", rotulo: "assinante", definicao: "assinatura em dia" },
+  { chave: "past_due", rotulo: "pagamento falhou", definicao: "cobrança recusada" },
+  { chave: "paused", rotulo: "pausada", definicao: "assinatura suspensa" },
+  { chave: "canceled", rotulo: "cancelada", definicao: "encerrou a assinatura" },
+] as const;
+
+/**
+ * FUNIL DE ASSINATURA — por que `trialing` não pode ser contado cru.
+ *
+ * O trial não expira sozinho: a linha continua com `status = 'trialing'` depois
+ * de `trial_ends_at` passar, e quem decide o acesso é `assinaturaLiberada`, que
+ * confere a data. Medido em produção em 2026-08-08: **163 linhas `trialing`, e
+ * 121 delas com o trial já vencido**. Um funil que soma o `status` cru mostra
+ * "163 em teste" quando 42 estão em teste — e essa distorção contamina toda
+ * leitura que parta daí.
+ *
+ * A correção não inventa estado nem escreve no banco: separa o balde na
+ * LEITURA, reusando `trialValido` — a MESMA função que o gate de acesso usa,
+ * para a contagem não poder divergir da regra. A soma dos baldes continua igual
+ * ao total de linhas.
+ *
+ * `trialing` sem `trial_ends_at` cai no balde vencido: não libera acesso, então
+ * chamá-lo de "em teste" repetiria a mesma mentira. Hoje não existe nenhum
+ * assim em produção (medido), mas o caminho existe no código.
+ */
+export function contarStatusAssinatura(
+  subs: ReadonlyArray<Record<string, unknown>>,
+): Record<string, number> {
+  const contagem: Record<string, number> = {};
+  for (const s of subs) {
+    const st = (s.status as string) ?? "—";
+    const balde =
+      st === "trialing" && !trialValido(s as unknown as AcessoAssinatura) ? TRIAL_VENCIDO : st;
+    contagem[balde] = (contagem[balde] ?? 0) + 1;
+  }
+  return contagem;
+}
 
 /**
  * Carrega e agrega os dados do dashboard de COMPORTAMENTO. Fonte única usada
@@ -172,11 +223,7 @@ export async function carregarComportamento(
   const totalFamilias = (familiasRows ?? []).length;
 
   // Funil
-  const statusCount: Record<string, number> = {};
-  for (const s of subs ?? []) {
-    const st = (s.status as string) ?? "—";
-    statusCount[st] = (statusCount[st] ?? 0) + 1;
-  }
+  const statusCount = contarStatusAssinatura(subs ?? []);
   const checkoutFamilias = new Set(
     (events ?? []).filter((e) => e.evento === "checkout_iniciado").map((e) => e.family_account_id),
   ).size;

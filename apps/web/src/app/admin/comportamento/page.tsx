@@ -1,7 +1,7 @@
 import { requireAdmin } from "@/lib/auth/require-admin";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { capitalizarNome } from "@/lib/nome";
-import { carregarComportamento, type FamRow } from "@/lib/analytics/dashboard";
+import { carregarComportamento, FUNIL_ASSINATURA, type FamRow } from "@/lib/analytics/dashboard";
 import { Eyebrow } from "@/components/brand/eyebrow";
 import { Bloco, BarList, Stat, TabelaFamilias, Vazio } from "@/components/dashboard/blocos";
 
@@ -37,12 +37,16 @@ export default async function AdminComportamentoPage() {
         <Stat label="Clicaram assinar (90d)" value={d.checkoutFamilias} sub="checkout_iniciado" />
       </section>
 
-      <Bloco titulo="Funil de assinatura" desc="Distribuição de status das famílias.">
+      <Bloco
+        titulo="Funil de assinatura"
+        desc="Distribuição das famílias. O trial não expira sozinho no banco: quem passou da data aparece em “trial vencido”, não em “trialing”."
+      >
         <div className="flex flex-wrap gap-3">
-          {(["trialing", "active", "past_due", "paused", "canceled"] as const).map((st) => (
-            <div key={st} className="rounded-xl border border-foreground/[0.08] bg-white px-4 py-3">
-              <p className="text-xs uppercase tracking-wide text-muted-foreground">{st}</p>
-              <p className="font-heading text-2xl text-foreground">{d.statusCount[st] ?? 0}</p>
+          {FUNIL_ASSINATURA.map(({ chave, rotulo, definicao }) => (
+            <div key={chave} className="rounded-xl border border-foreground/[0.08] bg-white px-4 py-3">
+              <p className="text-xs uppercase tracking-wide text-muted-foreground">{rotulo}</p>
+              <p className="font-heading text-2xl text-foreground">{d.statusCount[chave] ?? 0}</p>
+              <p className="mt-0.5 text-[11px] leading-tight text-muted-foreground">{definicao}</p>
             </div>
           ))}
         </div>
