@@ -17,7 +17,7 @@ Só o que está aberto. 🔒 = bloqueada.
 |---|---|---|---|---|---|
 | [PEND-007](#pend-007) | Ativação do GPT parada na prova da chave de produção | Ayla/IA | P1 | ABERTA 🔒 | publicar e rodar `provider-check` |
 | [PEND-003](#pend-003) | Preview da Vercel vermelho há vários PRs | Infra/Deploy | P1 | ABERTA 🔒 | ler o log do primeiro preview que falhou |
-| [PEND-002](#pend-002) | Pagamento confirmado no Stripe sem acesso na Kolo | Pagamento/Acesso | P1 | AGUARDANDO VALIDAÇÃO | implementar a Etapa 3 — reconciliação automática |
+| [PEND-002](#pend-002) | Pagamento confirmado no Stripe sem acesso na Kolo | Pagamento/Acesso | P1 | EM EXECUÇÃO | publicar a Etapa 3 e validar a reconciliação em produção |
 | [PEND-001](#pend-001) | Cooldown do convite de assinatura não publicado | Pagamento/Acesso | P1 | EM EXECUÇÃO | revisar o diff, abrir PR, publicar, smoke |
 | [PEND-004](#pend-004) | Rotina/Sequência Visual — auditar antes de redesenhar | Produto | P2 | ABERTA | missão INVESTIGAR do fluxo atual |
 | [PEND-008](#pend-008) | 118 famílias em `trialing` com trial vencido | Dados/Banco | P2 | ABERTA | decidir a regra e corrigir a contagem |
@@ -62,8 +62,13 @@ Aberta em: 2026-08-08 · Origem: Fase 0A
 
 ### PEND-002
 **Pagamento confirmado no Stripe sem acesso na Kolo (classe Rochelle)**
-Categoria: Pagamento/Acesso · Prioridade: **P1** · Estado: **AGUARDANDO VALIDAÇÃO**
+Categoria: Pagamento/Acesso · Prioridade: **P1** · Estado: **EM EXECUÇÃO**
 Aberta em: 2026-08-08 · Origem: incidente Rochelle (2026-07-23) → Fase 0B
+
+> Estado voltou de AGUARDANDO VALIDAÇÃO para EM EXECUÇÃO em 2026-08-08: as
+> Etapas 1 e 2 estão publicadas e aguardando pagamento real, mas a **Etapa 3
+> está implementada e ainda não publicada**. Havendo código não publicado na
+> frente, o estado honesto é EM EXECUÇÃO.
 
 - **Impacto:** família paga e continua sem acesso, sem ninguém descobrir até
   ela reclamar. Hoje o dano é **potencial, não ativo** — ver evidência.
@@ -109,10 +114,30 @@ Aberta em: 2026-08-08 · Origem: incidente Rochelle (2026-07-23) → Fase 0B
   build verdes.
 - **Branch/commit/PR:** `fix/stripe-escrita-e-autoridade` · `25ca617` · PR #39 ·
   merge `c61d540`
-- **Próximo passo:** **implementar a Etapa 3 — reconciliação automática e
-  detecção de divergência Stripe → Kolo**, em branch isolada. A primeira
-  assinatura real futura é evidência adicional, **não** pré-requisito para
-  começar.
+- **Etapa 3 IMPLEMENTADA (2026-08-08, branch `fix/reconciliacao-divergencia`,
+  NÃO publicada):** o reconciliador deixa de perguntar "quem está em
+  `past_due`?" e passa a perguntar "existe família que deveria ter acesso
+  segundo o Stripe e a Kolo não está concedendo?". A população é **vínculo
+  Stripe** (filtrado no banco) **+ sem acesso por `assinaturaLiberada`**
+  (filtrado em memória) — as duas condições **antes** de qualquer chamada ao
+  Stripe. Reusa `sincronizarAssinaturaDoStripe` sem duplicar lógica.
+  Acrescenta: erro no SELECT da população **lança** em vez de virar
+  "0 encontrados"; falha de sincronização acumula em `naoCorrigidas` com motivo
+  (antes sumia num `catch {}` vazio) e gera **alerta operacional** novo, com
+  trava de 12h para não virar 24 mensagens por dia. Classificação de conserto
+  passou a ser "**a família tem acesso agora?**" pela fonte única, e não
+  "mudou o status?" — o critério antigo contava `trialing` sobre trial vencido
+  como conserto, que é falso positivo. 24 testes novos; suíte 1332 → **1356**;
+  typecheck e build verdes; testes conferidos por mutação.
+- **Baseline da população nova (leitura pura, 2026-08-08T15:13:20Z):** 163
+  linhas · 2 com vínculo Stripe, **ambas com acesso** · 118 sem acesso, **todas
+  sem vínculo** · **população candidata = 0**, ou seja **0 chamadas ao Stripe**
+  por execução hoje. Antes → depois desta mudança na população varrida:
+  `past_due` = 0 → divergência = 0. O ganho é de **cobertura**, não de volume.
+- **Próximo passo:** **publicar a Etapa 3 e validar a reconciliação em produção
+  sem depender de nova assinatura** — a execução horária do cron já produz
+  evidência observável (`reconciliacao_divergencia`, resumo com candidatas e
+  chamadas ao Stripe).
 - **Riscos conhecidos que seguem abertos nesta pendência** (Etapa 4 — recência
   pelo relógio do Stripe; **não** autorizada, exige migração):
   1. **Ordem/recência entre evidências fortes** — um `subscription.updated`
@@ -132,17 +157,26 @@ Aberta em: 2026-08-08 · Origem: incidente Rochelle (2026-07-23) → Fase 0B
   6. **Mudança de comportamento a observar em produção:** o webhook passa a
      devolver 500 onde antes devolvia 200, então reentregas do Stripe devem
      aparecer. É o efeito desejado, mas é novo.
+  7. **A reconciliação só enxerga quem tem vínculo Stripe gravado.** Família que
+     pagou e cujo `stripe_customer_id` nunca chegou ao banco continua invisível.
+     Cobrir isso exige a varredura no sentido Stripe → Kolo
+     (`subscriptions.list`), que **não** foi implementada. Hoje o risco é
+     mitigado pela Etapa 2: o evento neutro grava o vínculo mesmo sem conceder
+     acesso.
+  8. **O alerta operacional tem trava de 12h.** Se uma segunda família travar
+     dentro da janela, ela entra no relatório do cron e no `eventos_app`, mas
+     não gera mensagem nova até a janela virar.
 - **Critério de conclusão:** replay determinístico da classe verde na suíte;
   falha de persistência não termina em 2xx; dunning legítimo preservado
   (`invoice.payment_failed` continua produzindo `past_due` + carimbo + graça);
   publicado e exercido em produção.
-- **Baixa (2026-08-08):** Implementado **OK** (Etapas 1 e 2) · Testado **OK**
-  (1332 verdes, 26 novos, incluindo o replay da classe) · Regressão **OK**
-  (suíte completa) · Build **OK** · Publicado **OK** (`c61d540`, Production
-  success) · Configuração **N/A** — nenhuma configuração nova · **Smoke de
-  pagamento real: PENDENTE** · **Validado em produção com pagamento real:
-  PENDENTE** · **Evidência final: PENDENTE**.
-  **Etapa 3 (reconciliação por divergência) segue não implementada.**
+- **Baixa (2026-08-08):** Implementado **OK** (Etapas 1, 2 e 3) · Testado **OK**
+  (1356 verdes, 50 novos nesta frente) · Regressão **OK** (suíte completa) ·
+  Build **OK** · Publicado **PARCIAL** — Etapas 1 e 2 em `c61d540` com
+  Production success; **Etapa 3 PENDENTE** · Configuração **N/A** — nenhuma
+  configuração nova · **Smoke de pagamento real: PENDENTE** · **Validado em
+  produção com pagamento real: PENDENTE** · **Evidência final: PENDENTE**.
+  **Etapa 4 (recência entre evidências fortes) não implementada — ver riscos.**
 - **A PRIMEIRA ASSINATURA REAL depois de 2026-08-08 é smoke monitorado.**
   Conferir, nesta ordem: (1) pagamento confirmado no Stripe; (2) a linha da
   família ficou `active`; (3) acesso liberado em `/admin/familias`; (4) não

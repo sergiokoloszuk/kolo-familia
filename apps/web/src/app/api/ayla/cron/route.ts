@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createServiceRoleClient } from "@/lib/supabase/server";
-import { logServerError } from "@/lib/log";
+import { logServerError, logEvent } from "@/lib/log";
 import { horaLocalHHMM, hojeLocalISO } from "@/lib/idade";
 import { gerarSnapshotMensal } from "@/lib/evolucao/snapshot";
 import {
@@ -21,7 +21,11 @@ import {
 import { detectAndPersist } from "@/lib/ayla/insightEngine";
 import { runRegrasParaFamilia } from "@/lib/regras/engine";
 import { enviarTexto, verificarStatusZapi } from "@/lib/ayla/whatsappSender";
-import { sincronizarAssinaturaDoStripe } from "@/lib/stripe/sync";
+import {
+  reconciliarDivergencias,
+  alertaOperacionalRecente,
+  KIND_ALERTA_OPERACIONAL,
+} from "@/lib/stripe/reconciliacao";
 import { assinaturaLiberada } from "@/lib/auth/assinatura";
 
 /**
@@ -135,39 +139,27 @@ async function runHealthcheck() {
 type AdminClient = ReturnType<typeof createServiceRoleClient>;
 
 /**
- * ALERTA + AUTO-CONSERTO de assinatura dessincronizada. Roda de hora em hora:
- * pega quem está em past_due no app e confere o Stripe (fonte da verdade). Se o
- * Stripe diz que a pessoa PAGA (active/trialing), foi descompasso do webhook —
- * CONSERTA sozinho (re-sync) e avisa o admin no WhatsApp. O problema morre antes
- * de a família reclamar. (past_due REAL — com o Stripe também past_due — não
- * dispara nada; cancelamento idem.)
+ * RECONCILIAÇÃO POR DIVERGÊNCIA + ALERTA. Roda de hora em hora e pergunta uma
+ * coisa só: existe família que DEVERIA ter acesso segundo o Stripe e a Kolo não
+ * está concedendo? Antes a pergunta era "quem está em past_due?" — reagia a um
+ * estado específico e não enxergava a classe do incidente Rochelle, que era
+ * `trialing` vencida.
+ *
+ * A regra está em `lib/stripe/reconciliacao.ts`; aqui ficam só os avisos.
+ * Bloqueio correto (o Stripe confirma que não há direito) NÃO gera alerta.
  */
 async function runAlertaAssinatura(supabase: AdminClient) {
-  const { data: pastDue } = await supabase
-    .from("subscription_accesses")
-    .select("family_account_id")
-    .eq("status", "past_due");
+  const r = await reconciliarDivergencias(supabase);
 
-  const consertadas: Array<{ familyId: string; antes: string | null; depois: string; stripe: string }> = [];
-  for (const p of pastDue ?? []) {
-    const fid = p.family_account_id as string;
-    try {
-      const r = await sincronizarAssinaturaDoStripe(supabase, fid);
-      if (r.ok && r.mudou && (r.depois === "active" || r.depois === "trialing")) {
-        consertadas.push({ familyId: fid, antes: r.antes, depois: r.depois, stripe: r.stripeStatus });
-      }
-    } catch {
-      /* uma família não derruba as outras */
-    }
-  }
+  const alerta =
+    process.env.ALERTA_WHATSAPP || process.env.ADMIN_MONITOR_WHATSAPP || "+5511994770067";
 
-  if (consertadas.length > 0) {
-    const emails = await emailsDeFamilias(supabase, consertadas.map((c) => c.familyId));
-    const alerta = process.env.ALERTA_WHATSAPP || process.env.ADMIN_MONITOR_WHATSAPP || "+5511994770067";
-    const linhas = consertadas
+  if (r.corrigidas.length > 0) {
+    const emails = await emailsDeFamilias(supabase, r.corrigidas.map((c) => c.familyId));
+    const linhas = r.corrigidas
       .map((c) => `• ${emails[c.familyId] ?? c.familyId}: ${c.antes ?? "—"} → ${c.depois} (Stripe: ${c.stripe})`)
       .join("\n");
-    const msg = `⚠️ Kolo: ${consertadas.length} assinatura(s) estava(m) travada(s) — pagou no Stripe mas o app não tinha liberado. JÁ CORRIGI automaticamente, a(s) pessoa(s) tem acesso agora:\n${linhas}`;
+    const msg = `⚠️ Kolo: ${r.corrigidas.length} assinatura(s) estava(m) travada(s) — pagou no Stripe mas o app não tinha liberado. JÁ CORRIGI automaticamente, a(s) pessoa(s) tem acesso agora:\n${linhas}`;
     try {
       await enviarTexto({ phoneE164: alerta, texto: msg });
     } catch (e) {
@@ -175,10 +167,41 @@ async function runAlertaAssinatura(supabase: AdminClient) {
     }
   }
 
+  // Alerta OPERACIONAL: divergência que o reconciliador não conseguiu resolver.
+  // Antes isso sumia num `catch {}` vazio — família com vínculo e sem acesso,
+  // e ninguém sabendo. Com trava de 12h: o problema PERSISTE entre execuções, e
+  // sem ela uma família travada mandaria 24 mensagens por dia.
+  let alertaOperacionalEnviado = false;
+  if (r.naoCorrigidas.length > 0 && !(await alertaOperacionalRecente(supabase))) {
+    const emails = await emailsDeFamilias(supabase, r.naoCorrigidas.map((c) => c.familyId));
+    const linhas = r.naoCorrigidas
+      .map((c) => `• ${emails[c.familyId] ?? c.familyId} (${c.statusAnterior ?? "—"}): ${c.motivo}`)
+      .join("\n");
+    const msg = `🚨 Kolo: ${r.naoCorrigidas.length} família(s) com vínculo no Stripe e SEM acesso que eu NÃO consegui resolver sozinho. Precisa de olho humano:\n${linhas}`;
+    try {
+      await enviarTexto({ phoneE164: alerta, texto: msg });
+      alertaOperacionalEnviado = true;
+      // O registro é a própria trava das próximas 12h.
+      await logEvent({
+        kind: KIND_ALERTA_OPERACIONAL,
+        severity: "warn",
+        message: `alerta operacional enviado: ${r.naoCorrigidas.length} família(s) não reconciliada(s)`,
+        payload: { nao_corrigidas: r.naoCorrigidas.length },
+      });
+    } catch (e) {
+      await logServerError("alerta_assinatura_send", e, {});
+    }
+  }
+
   return NextResponse.json({
-    past_due: pastDue?.length ?? 0,
-    consertadas: consertadas.length,
-    detalhes: consertadas,
+    candidatas: r.candidatas,
+    corrigidas: r.corrigidas.length,
+    verificadas_sem_acesso: r.verificadasSemAcesso,
+    nao_corrigidas: r.naoCorrigidas.length,
+    chamadas_stripe: r.chamadasStripe,
+    alerta_operacional_enviado: alertaOperacionalEnviado,
+    detalhes: r.corrigidas,
+    pendentes: r.naoCorrigidas,
   });
 }
 
