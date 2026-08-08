@@ -25,7 +25,9 @@ Só o que está aberto. 🔒 = bloqueada.
 | [PEND-010](#pend-010) | Triar as 26 pendências do laudo de 06/08 | Documentação | P2 | ABERTA | conferir item a item contra o código |
 | [PEND-005](#pend-005) | `MEMORY.md` perto do limite de leitura | Documentação | P2 | ABERTA | compactar o índice |
 | [PEND-006](#pend-006) | Dois arquivos não rastreados em `lib/conducao/` | Ayla/IA | P2 | ABERTA | identificar a frente dona e decidir |
+| [PEND-012](#pend-012) | RUNBOOK — como operar a Kolo com segurança | Documentação | P2 | ABERTA | levantar o que hoje só existe em memória de agente |
 | [PEND-011](#pend-011) | README aponta para três documentos inexistentes | Documentação | P3 | ABERTA | restaurar os arquivos ou corrigir os links |
+| [PEND-013](#pend-013) | Mapa do sistema — onde vivem os componentes | Documentação | P3 | ABERTA | listar os fluxos que merecem ponteiro |
 
 ---
 
@@ -299,6 +301,71 @@ Aberta em: 2026-08-08 · Origem: conferência de links na missão de governança
 
 ---
 
+### PEND-012
+**RUNBOOK — documento operacional de como operar a Kolo com segurança**
+Categoria: Documentação · Prioridade: **P2** · Estado: **ABERTA**
+Aberta em: 2026-08-08 · Origem: decisão de governança (2026-08-08)
+
+- **Impacto:** o conhecimento mais perigoso do projeto — o que **não** se pode
+  fazer em produção — hoje não está versionado. Ele vive em memória de agente
+  (que esta própria semana provou envelhecer) e espalhado por documentos de
+  uma frente só. Quem não souber, descobre errando: já houve redeploy que zerou
+  o banco, e a recuperação dependeu de backup externo.
+- **Evidência (2026-08-08):** existe procedimento escrito para **um** caso —
+  `docs/migracoes-chrome-prompt.md` (aplicar migração pelo Supabase Studio),
+  citado no README. Não há documento equivalente para deploy, rollback,
+  variáveis, crons ou smoke. **Não levantado** o que já existe espalhado em
+  outros documentos.
+- **Próximo passo:** levantar o que hoje só existe em memória de agente e em
+  conversa, e decidir o escopo mínimo do documento.
+- **Escopo pretendido, quando for escrito:** produção · Vercel · Supabase ·
+  EasyPanel · Hostinger · Stripe · variáveis e segredos · migrações · crons ·
+  deploy · rollback · smoke · procedimentos operacionais.
+- **Critério de conclusão:** existe `docs/RUNBOOK.md` cobrindo, para cada item
+  do escopo acima que se aplicar: **como fazer**, **como desfazer** e **o que
+  nunca fazer**. Cada procedimento perigoso com o aviso na frente. Um
+  procedimento crítico exercido de ponta a ponta seguindo o texto — documento
+  operacional que ninguém testou não é procedimento, é intenção. Item que não
+  se aplicar recebe N/A com motivo.
+  ⚠️ **Nenhum segredo no documento** (§16 do protocolo de engenharia): nomes de
+  variáveis sim, valores nunca.
+- **Nota:** a criação **não está autorizada** — esta ficha registra a decisão
+  de fazer depois, não a permissão de fazer agora.
+- **Agente recomendado:** PROPOR
+
+---
+
+### PEND-013
+**Mapa do sistema — onde vivem os principais componentes**
+Categoria: Documentação · Prioridade: **P3** · Estado: **ABERTA**
+Aberta em: 2026-08-08 · Origem: decisão de governança (2026-08-08)
+
+- **Impacto:** o §1 do protocolo de engenharia manda mapear o fluxo real antes
+  de alterar, e não dá nenhum ponto de partida. Cada missão redescobre a mesma
+  arquitetura — custo repetido, e risco de implementação paralela que o §4
+  tenta impedir.
+- **Evidência (2026-08-08):** não existe documento com essa função no
+  repositório. O README descreve a stack e a árvore de pastas, não os fluxos.
+- **Próximo passo:** listar quais fluxos merecem ponteiro, sem escrever o
+  documento.
+- **Escopo pretendido, quando for escrito:** Ayla · WhatsApp · Web/App · Admin ·
+  autenticação · famílias e crianças · memória · artefatos · pagamento e
+  acesso · Stripe · Supabase · providers de IA · jobs e crons ·
+  observabilidade · principais arquivos e pastas.
+- **Critério de conclusão:** existe `docs/MAPA-DO-SISTEMA.md` em que cada item
+  do escopo tem **uma linha com o arquivo de entrada** — onde começa e quem
+  decide. Todo caminho citado resolve, conferido por script. Teste prático: um
+  agente sem contexto acha o dono de um fluxo qualquer sem varrer o
+  repositório.
+  ⚠️ **Só ponteiros, nunca prosa explicativa.** Prosa apodrece em silêncio;
+  ponteiro quebra de forma visível — e é isso que o mantém honesto.
+- **Nota:** a criação **não está autorizada** — ficha de decisão, não de
+  permissão.
+- **Depende de:** nada. Não bloqueia nada.
+- **Agente recomendado:** PROPOR
+
+---
+
 ## Como usar este arquivo
 
 ### Estados
@@ -399,7 +466,7 @@ trimestralmente, o que vier antes.
 
 ---
 
-**Próximo ID livre: PEND-012.**
+**Próximo ID livre: PEND-014.**
 
 > Conferir contra `origin/main`, não contra o seu branch. Dois branches podem
 > reivindicar o mesmo número — o conflito de merge nesta linha é o alarme.
