@@ -738,10 +738,42 @@ compromisso de amanhã sequestrar uma conversa que precisa tratar o hoje.
   importante que a pessoa trouxe pode ser omitido — em especial compromisso
   futuro.
 
+**D2 · Quando perguntar e quando já orientar (APROVADA 2026-08-08).**
+
+> **Princípio:** *cada pergunta precisa justificar o turno que custa.*
+
+**Orientar é o padrão. Perguntar é a exceção, e precisa comprar uma mudança
+real de conduta.** Uma pergunta só se paga quando passa nos três filtros:
+
+1. **a resposta mudaria a orientação** — se os dois caminhos levam ao mesmo
+   conselho, a pergunta é custo puro;
+2. **a bifurcação não cabe de forma simples na própria resposta** — se cada
+   braço cabe numa frase, entregue os dois; se cada braço é um protocolo,
+   pergunte;
+3. **a Ayla ainda não sabe** — se está no perfil, na conversa de ontem ou já foi
+   dito nesta conversa, não é pergunta: é **falha de memória**, e o conserto é
+   na PEND-018, não na condução.
+
+**Forma:**
+- **valor antes de cobrar esforço** — a primeira resposta entrega algo antes de
+  pedir. Mas esse valor **não precisa ser uma orientação prática**: pode ser
+  organizar o que foi dito, mostrar o que foi compreendido, dar a orientação
+  segura que já é possível, ou contextualizar a única pergunta necessária.
+  ⚠️ **Não dar orientação prematura só para cumprir a regra de orientar antes de
+  perguntar** — conselho apressado custa mais confiança do que uma pergunta bem
+  colocada;
+- **uma pergunta por vez** — duas já é formulário;
+- **confirmar quando houver evidência suficiente para uma hipótese**
+  (*"pelo que você me contou, ele acorda e não volta a dormir — é isso?"*);
+  **não havendo**, fazer uma pergunta **curta e discriminante, sem induzir a
+  resposta**;
+- **nunca perguntar de novo** algo disponível na conversa ou na memória.
+
 **Decisões seguintes deste bloco, ainda a definir com produto:**
   1. ~~como a Ayla escolhe **um** foco quando a mãe traz três problemas;~~
      **decidido em D1**;
-  2. quantas perguntas são aceitáveis antes de entregar algo de valor;
+  2. ~~quando perguntar e quando orientar;~~ **decidido em D2**;
+  2b. quantas interações são aceitáveis antes da primeira ajuda prática;
   3. o que é "direção prática" — o que fazer, o que falar, que atividade;
   4. quando ela muda de estratégia porque a anterior não funcionou, e como sabe;
   5. o que muda entre WhatsApp e Web (ritmo, tamanho, o que só existe num canal);
@@ -760,6 +792,9 @@ compromisso de amanhã sequestrar uma conversa que precisa tratar o hoje.
   disse o que disse (decisão, contexto recuperado, conteúdo usado).
   **Nasceu da D1:** registrar **qual foco ela escolheu, com que critério, e o
   que foi preservado** — sem isso não há como revisar uma condução ruim depois.
+  **Nasceu da D2:** contar **quantas perguntas** antecederam a primeira ajuda e
+  **quantas eram repetidas** de algo já sabido — é o indicador que denuncia
+  interrogatório sem ninguém precisar ler conversa por conversa.
 - **Critério de conclusão:** DESEJADO preenchido e aprovado; investigação
   ATUAL × DESEJADO concluída com lacunas nomeadas. Execução é frente seguinte.
 - **Agente recomendado:** PROPOR (depois do DESEJADO)
@@ -793,6 +828,11 @@ Aberta em: 2026-08-08 · Origem: consolidação da PEND-010 +
 - **Inclui o pipeline de Admin** (upload → extração → classificação → proposta
   da IA → revisão humana → aprovação → disponível para a Ayla), já desenhado em
   `docs/frente-import-documentos.md`.
+- **Requisito herdado de PEND-016 · D2 (2026-08-08):** o filtro "a bifurcação
+  cabe na resposta?" só funciona se o acervo trouxer a orientação **com os
+  braços já escritos** (*se a criança faz X, isto; se faz Y, aquilo*). Conteúdo
+  que só existe na versão genérica **obriga a Ayla a perguntar** — ou seja, a
+  qualidade do acervo determina quantas perguntas a família responde.
 - **Depende de:** desenhar junto com PEND-016 e PEND-018.
 - **Admin:** ADMIN PRECISA DE AJUSTE — administrar acervo, e ver o que foi
   recuperado e o que foi usado.
@@ -823,6 +863,10 @@ Aberta em: 2026-08-08 · Origem: consolidação da PEND-010 +
   3. o que acontece quando duas informações se contradizem.
 - **Já desenhado, não recomeçar:** `docs/perfil-vivo-fatos-versionados.md`
   (fatos datados + proveniência + visão derivada) — decidido e **não construído**.
+- **Requisito herdado de PEND-016 · D2 (2026-08-08):** pergunta repetida sobre
+  algo que a família já contou **é falha desta ficha, não da condução** — e é
+  mensurável: dá para contar quantas perguntas da Ayla tinham resposta
+  disponível na memória.
 - **Requisito herdado de PEND-016 · D1 (2026-08-08):** para escolher a **raiz
   provável**, a Ayla precisa saber o que **já foi tentado** e o que já se sabe
   de sono, dor, alimentação e sensorial daquela criança. Sem isso na memória, o
@@ -925,6 +969,10 @@ Aberta em: 2026-08-08 · Origem: consolidação da PEND-010
 - **Estado conhecido:** os freios de tom estão no ar (não afirmar direito ou
   saúde com falsa certeza). O **escalonamento para humano não existe**: a Ayla
   desvia assunto de cupom/preço/cancelamento e ninguém é notificado.
+- **Requisito herdado de PEND-016 · D2 (2026-08-08):** em tema de saúde,
+  medicação ou risco pode haver **pergunta obrigatória por segurança**, mesmo
+  que ela não mude a conduta — a exceção ao filtro 1 nasce aqui, não na
+  condução.
 - **Requisito herdado de PEND-016 · D1 (2026-08-08):** o passo de
   **preservação** depende desta ficha para saber **o que conta como risco** e o
   que a Ayla faz quando o identifica. Enquanto não estiver definido, a condução
