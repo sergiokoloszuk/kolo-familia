@@ -18,13 +18,37 @@ import { getAylaAnthropicClient, AYLA_MODEL } from "./anthropic";
  * O critério de produto está em `CRITERIO_SUFICIENCIA_ROTINA`, num lugar só e em
  * português, de propósito: é conteúdo pra Karina ler e ajustar sem caçar prompt.
  * Mesma decisão do Plano.
+ *
+ * ── MUDANÇA DELIBERADA DE PRODUTO, 08/08/2026 (D-R2 e D-R4 da SPEC) ──────────
+ *
+ * Duas regras escritas em 03/08 mudaram. Elas NÃO eram erro, e o que valia
+ * nelas continua valendo:
+ *
+ *   • O ESCOPO exigia "qual PEDAÇO DO DIA", e isso deixava de fora o
+ *     acontecimento único — "o Mario vem jantar hoje" caía em `falta_escopo`,
+ *     que é o caso C da SPEC. Agora o recorte pode ser um evento. O motivo da
+ *     regra antiga (não montar rotina no vazio) segue inteiro: o que mudou é
+ *     que evento TAMBÉM é recorte, não que recorte deixou de ser exigido.
+ *
+ *   • O VISUAL exigia evidência prévia de que ver ajuda AQUELA criança, e
+ *     dizia explicitamente que transição difícil não era evidência. Aquilo
+ *     continha cartão gerado sem necessidade — custo de imagem e ruído na
+ *     tela — e era um problema real. O que mudou foi a escolha: prefere-se
+ *     OFERECER e deixar a família decidir a recusar apoio visual a quem não
+ *     sabe pedir. Isso só é seguro porque `visual: true` não gera nada: ele
+ *     faz a Ayla perguntar o tema, e `recusouTema` é a saída da mãe. A
+ *     distinção que sobrou da regra antiga é a que importa — indício não é
+ *     conclusão: transição difícil sugere OFERECER, nunca conclui que aquela
+ *     criança precisa de apoio visual.
  */
 
 /** O que precisa estar na mesa pra uma rotina sair ÚTIL (e não genérica). */
 export const CRITERIO_SUFICIENCIA_ROTINA = `A PERGUNTA CENTRAL É UMA SÓ: com o que eu já sei, consigo gerar uma rotina útil e coerente? Se sim, GERE. Não continue investigando pra enriquecer.
 
 O MÍNIMO pra gerar são DUAS coisas:
-1. QUAL PEDAÇO DO DIA — a tarde depois da escola, a manhã até sair, a noite, o dia inteiro, um dia específico.
+1. QUAL RECORTE — e ele pode ser de dois tipos:
+   • um PEDAÇO DO DIA: a tarde depois da escola, a manhã até sair, a noite, o dia inteiro, um dia específico;
+   • ou um ACONTECIMENTO, mesmo que aconteça UMA VEZ SÓ: um amigo que vem jantar, dentista, consulta médica, viagem, festa, visita, primeiro dia num lugar novo, mudança de casa. NÃO exija que se repita. A pergunta é sempre a mesma: existe uma sequência de acontecimentos em que ENXERGAR o que vem depois deixa a coisa mais previsível pra criança? Se existe, é caso de rotina — "o Mario vem jantar hoje" tem recorte, e o recorte é o evento.
 2. UMA SEQUÊNCIA — o que acontece, na ordem, com as palavras da família ("chega 12h40, almoça, descansa, faz lição, futebol 15h30"). Bagunçada serve: organizar é seu trabalho. Não precisa de horário em tudo; precisa de ordem.
 
 ⚠️ A SEQUÊNCIA TEM QUE SER DESTA ROTINA. O que a família contou antes, sobre outro dia ou outro assunto, e a rotina que já existe no perfil, são CONHECIMENTO PRÉVIO: enriquecem (uma transição difícil, um horário fixo, um interesse) e NÃO valem como a sequência de agora. "Quero organizar a tarde da Manu" tem escopo e não tem sequência — mesmo que você saiba de cor a manhã dela, mesmo que ela tenha descrito o sábado passado inteiro. Isso é "falta", e a pergunta é a sequência.
@@ -36,6 +60,7 @@ O PONTO DIFÍCIL (onde trava, o que vira briga) ENRIQUECE muito, mas NÃO é req
 
 NÃO é caso de gerar rotina quando:
 - a pessoa não pediu organização do dia — pediu ajuda com um comportamento ("ele bate quando tiro o objeto"), com alimentação, com escola. Isso é conversa, e às vezes plano; rotina não resolve.
+- o que trava NÃO é a sequência. Uma desregulação no mercado por barulho, luz e gente demais é sobrecarga sensorial: a criança sabe perfeitamente o que vem depois, e um quadro não muda nada. Empurrar rotina aí é oferecer a ferramenta que você tem em vez da ajuda que ela precisa. Ajude pelo caminho certo — e só ofereça a sequência se aparecer um pedaço que a previsibilidade resolva (a hora de ir embora, por exemplo).
 - é crise acontecendo agora, desabafo ou sofrimento do adulto.
 - a família falou de várias crianças e não ficou claro de quem é o dia.`;
 
@@ -124,7 +149,14 @@ const SEGURO = (motivo: string): ProntidaoRotina => ({
   motivo,
 });
 
-const SYSTEM = `Você decide se a Ayla já pode MONTAR uma rotina visual pra uma família, ou se falta algo.
+/**
+ * O CONTRATO DO PORTEIRO, exportado para poder ser testado.
+ *
+ * Ele carrega decisões de produto (D-R2, D-R4) que só existem como texto. Sem
+ * exportar, a única forma de prender essas decisões seria uma chamada real ao
+ * modelo — cara, instável, e fora da suíte. Exportar não muda comportamento.
+ */
+export const CONTRATO_PRONTIDAO_ROTINA = `Você decide se a Ayla já pode MONTAR uma rotina visual pra uma família, ou se falta algo.
 
 ${CRITERIO_SUFICIENCIA_ROTINA}
 
@@ -139,21 +171,25 @@ Responda APENAS JSON, sem texto fora dele:
 - "falta_escopo": ela pediu rotina mas não disse O QUE quer organizar ("preciso de uma rotina", "tá tudo bagunçado", "quero organizar ele", "vi que vocês fazem rotina"). NÃO é falta de dado — é falta de rumo. pergunta=null: quem oferece os caminhos é a Ayla, do jeito dela.
   ⚠️ "falta_escopo" É SÓ PRA QUEM PEDIU E NÃO DISSE O QUÊ. Se ela NÃO pediu organização nenhuma e trouxe uma situação concreta ("ela demora pra sair de casa, mas quando aviso antes ela vai"), isso é "suficiente" com tamanho="orientacao" — já há situação, dificuldade e às vezes até algo que funciona. Oferecer "um período / o dia inteiro / um momento" pra quem já trouxe o momento é vender ferramenta em vez de ajudar. Quando ela já contou o que funciona, a ajuda é preservar isso e deixar a passagem mais previsível.
   ⚠️ A SEQUÊNCIA PODE DIZER O ESCOPO SOZINHA. Se ela já listou de ACORDAR a DORMIR ("acorda 6h, escola 7h30, almoço 12h, fono terça e sexta 14h, natação quarta 16h, jantar 20h, dormir 21h"), o escopo é o DIA INTEIRO e você tem tudo: é "suficiente", não "falta_escopo". Perguntar "quer o dia inteiro ou um período?" pra quem acabou de descrever o dia inteiro é não ter lido (caso real, 04/08/2026).
+  ⚠️ UM ACONTECIMENTO JÁ É ESCOPO. "o Mario vem jantar hoje", "temos dentista quinta", "vamos viajar sábado" dizem QUAL é o recorte — o evento. Não devolva "falta_escopo" pra eles; o que falta ali é a sequência (o que acontece, na ordem), então é "falta".
   ⚠️ "O DIA INTEIRO" JÁ É ESCOPO. "quero a rotina do dia inteiro", "quero organizar o dia todo", "a manhã", "a tarde", "a noite", "antes de dormir" — todos já disseram o pedaço do dia. Não devolva "falta_escopo" pra nenhum deles: o que falta aí é a SEQUÊNCIA, então é "falta", e a pergunta é como o dia acontece hoje.
 - "falta": o escopo está claro, mas falta UM dado que muda o artefato. Escreva em "pergunta" a pergunta curta e direta que você faria — UMA SÓ, do jeito que uma pessoa perguntaria.
 - "nao_e_rotina": não é caso de organizar o dia NEM de conduzir uma passagem — é conversa, desabafo, dúvida sobre comportamento, alimentação, escola. Explique em "motivo" o que ela realmente quer.
   ⚠️ UMA TRANSIÇÃO DIFÍCIL NÃO É "nao_e_rotina". "todo dia dá briga pra sair do videogame e ir pro banho" é caso de ajudar AGORA: devolva "suficiente" com tamanho="orientacao" (ou "mini", se ver a sequência acrescentar). Antes isso caía fora e a família ficava sem a ajuda concreta da passagem.
 - "tamanho": aplique o critério acima. Só importa quando desfecho="suficiente".
 - "reusaHistorico": true SÓ quando a mensagem de agora APONTA pro que ela já contou ("já te falei os horários, agora monta", "usa o que eu te mandei", "é aquela mesma"). É o que autoriza o histórico anterior a virar a sequência. Se ela só pediu a rotina e o histórico por acaso tem material, é false — você é que foi buscar, ela não mandou.
-- "visual": os cartões ilustrados custam geração de imagem e enchem a tela quando não servem. Só marque true se houver EVIDÊNCIA de que ver ajuda ESTA criança:
+- "visual": marcar true é OFERECER o apoio visual — o sistema pergunta o tema e a família pode dizer que não quer. Não é gerar cartão à revelia. Marque true quando o contexto indicar que VER a sequência pode ajudar:
   • a família relatou que apoio visual funciona com ela;
   • a criança precisa consultar "agora/depois" sozinha, em vez de a mãe repetir;
   • ela não lê, ou falar não basta (a própria mãe diz isso);
-  • ela pediu com essas palavras — "rotina visual", "cartões", "quadro", "figuras".
-  ⚠️ NÃO INFIRA DO DIAGNÓSTICO. "criança com TEA se beneficia de apoio visual" é o rótulo explicando a criança, e não vale como evidência: há muita criança autista que lê e se organiza melhor com a lista escrita. Sem evidência, false — a rotina no app já é a entrega, e a mãe pede os cartões depois se quiser.
-  ⚠️ TRANSIÇÃO DIFÍCIL TAMBÉM NÃO É EVIDÊNCIA DE VISUAL. Que o banho seja briga diz onde trava, não que ela precise VER. A evidência tem que estar na fala da família ou no perfil, com estas palavras: ela entende melhor quando vê, ele consulta o quadro sozinho, falar não adianta, ela não lê. Se você não consegue apontar ONDE leu isso, é false.
-  Concreto: "quero organizar a tarde da Manu" + "o banho costuma ser difícil" → visual FALSE. Há escopo, sequência e ponto difícil, e nada disso é evidência de que ver ajuda.
-  ⚠️ PEDIR ROTINA NÃO É PEDIR CARTÃO. "quero organizar a tarde" pede organização; o visual é outra decisão. Tema e interesse também não são motivo: tema personaliza cartão que já ia existir.
+  • ela pediu com essas palavras — "rotina visual", "cartões", "quadro", "figuras";
+  • a passagem se repete todo dia e vira briga (sair de casa, banho, dormir, desligar a tela, trocar de atividade);
+  • é situação NOVA ou especial, em que ninguém sabe o que vem depois (médico, dentista, viagem, festa, visita, primeiro dia);
+  • a mãe está repetindo instrução verbal o tempo todo, ou quer que a criança dê conta sozinha de mais etapas.
+  ⚠️ INDÍCIO NÃO É CONCLUSÃO. Que a transição seja difícil NÃO significa "esta criança precisa de apoio visual" — significa que apoio visual é uma possibilidade relevante a OFERECER. Quem decide é o conjunto: o que você sabe da criança, o histórico, o que a família já tentou, e o que ela está trazendo agora. Se houver sinal de que ver NÃO ajuda aquela criança (ela lê bem e se organiza melhor com lista, já disseram que quadro não funcionou), respeite isso.
+  ⚠️ NÃO INFIRA DO DIAGNÓSTICO. "criança com TEA se beneficia de apoio visual" é o rótulo explicando a criança: há muita criança autista que lê e se organiza melhor com a lista escrita. O rótulo nunca é o motivo; o contexto é.
+  ⚠️ PEDIR ROTINA NÃO É PEDIR CARTÃO, e Tema e interesse também não são motivo: tema personaliza cartão que já ia existir. Esta parte NÃO mudou — quem decide o visual é a necessidade, nunca a vontade de deixar bonito.
+  ⚠️ NÃO VIRE ISTO NUMA LISTA DE PALAVRAS. Os exemplos acima são famílias de situação, não gatilhos. "banho" na frase não liga o visual sozinho, e uma situação que não está na lista pode pedir o visual do mesmo jeito.
 - "limite_atuacao": a rotina pedida depende de decisão clínica que não é da Kolo. Escreva em "parteClinica" QUAL parte é do profissional (ex.: "frequência e duração das mamadas"). Isso NÃO impede organizar o resto.
 - motivo: uma frase curta, pra log.
 
@@ -196,7 +232,7 @@ export async function avaliarProntidaoParaRotina(params: {
     const resp = await client.messages.create({
       model: AYLA_MODEL,
       max_tokens: 300,
-      system: SYSTEM,
+      system: CONTRATO_PRONTIDAO_ROTINA,
       messages: [{ role: "user", content: user }],
     });
     const b = resp.content[0];
