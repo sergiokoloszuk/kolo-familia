@@ -39,6 +39,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
+import { progressoDaRotina, resumoDoProgresso } from "@/lib/ludico/rotina-progresso";
 import {
   adicionarTarefa,
   adicionarVariasTarefas,
@@ -303,7 +304,6 @@ export function RotinaEditor({
         nome={nome}
         onRename={salvarNome}
         onReset={resetar}
-        visual={visual}
         rotinaId={rotinaId}
       />
 
@@ -352,23 +352,14 @@ export function RotinaEditor({
 
       {historia && <HistoriaPanel historia={historia} nomeMembro={nomeMembro} />}
 
-      {!visual && (
-        <p className="flex items-center gap-2 text-xs text-muted-foreground print:hidden">
-          <Smartphone className="size-3.5" /> Dá pra abrir no celular e ir marcando.
-        </p>
-      )}
+      {/* COMO USAR — nos DOIS modos. Antes só o modo cartões explicava; quem
+          abria em lista recebia uma linha solta ("dá pra abrir no celular") e
+          tinha que deduzir o resto. Uma mãe que nunca usou cartões precisa
+          saber as três coisas: dá pra usar na tela, dá pra imprimir, e dá pra
+          mudar o que estiver errado. */}
+      <ComoUsar visual={visual} nomeMembro={nomeMembro} />
 
-      {visual && (
-        <div className="rounded-2xl border border-brand-yellow/30 bg-brand-yellow/[0.07] px-4 py-3 print:hidden">
-          <p className="text-sm leading-relaxed text-foreground">
-            <strong className="font-semibold">Como usar:</strong> a cada etapa concluída,{" "}
-            <strong className="font-semibold">toquem juntos no card</strong> pra marcar como
-            feito. Ele fica colorido até concluir e esmaece ao marcar — assim fica claro o que
-            já passou e qual é a próxima. É esse “marquei!” que ajuda a entender a sequência.
-            Tocou sem querer? Toque de novo que ele volta.
-          </p>
-        </div>
-      )}
+      <ProgressoDaRotina tarefas={tarefas} />
 
       {visual && cardsStatus === "pronto" && (
         <a
@@ -382,9 +373,21 @@ export function RotinaEditor({
       )}
 
       {visual ? (
-        <ViewCartoes tarefas={tarefas} onToggle={toggle} onMover={mover} onRemover={remover} />
+        <ViewCartoes
+          tarefas={tarefas}
+          agoraId={progressoDaRotina(tarefas).agoraId}
+          onToggle={toggle}
+          onMover={mover}
+          onRemover={remover}
+        />
       ) : (
-        <ViewChecklist tarefas={tarefas} onToggle={toggle} onMover={mover} onRemover={remover} />
+        <ViewChecklist
+          tarefas={tarefas}
+          agoraId={progressoDaRotina(tarefas).agoraId}
+          onToggle={toggle}
+          onMover={mover}
+          onRemover={remover}
+        />
       )}
 
       {editando ? (
@@ -474,13 +477,11 @@ function CabecalhoRotina({
   nome,
   onRename,
   onReset,
-  visual,
   rotinaId,
 }: {
   nome: string;
   onRename: (n: string) => void;
   onReset: () => void;
-  visual: boolean;
   rotinaId: string;
 }) {
   const router = useRouter();
@@ -523,15 +524,18 @@ function CabecalhoRotina({
           </button>
         )}
         <div className="flex gap-2 print:hidden">
-          {visual && (
-            <button
-              type="button"
-              onClick={() => window.print()}
-              className="inline-flex items-center gap-1.5 rounded-full border border-foreground/10 bg-white px-3 py-1.5 text-xs font-semibold text-foreground/70 hover:bg-kolo-lilas-bg-2 hover:text-brand-purple"
-            >
-              <Printer className="size-3.5" /> Imprimir
-            </button>
-          )}
+          {/* IMPRIMIR VALE NOS DOIS MODOS. Ficava atrás de `visual` — quem
+              abrisse a rotina em lista não tinha como imprimir, embora a lista
+              seja perfeitamente imprimível (o `print:hidden` está só nos
+              controles, nunca no conteúdo). A mãe que quer colar na geladeira
+              não deveria precisar descobrir que existe um modo "Cartões". */}
+          <button
+            type="button"
+            onClick={() => window.print()}
+            className="inline-flex items-center gap-1.5 rounded-full border border-foreground/10 bg-white px-3 py-1.5 text-xs font-semibold text-foreground/70 hover:bg-kolo-lilas-bg-2 hover:text-brand-purple"
+          >
+            <Printer className="size-3.5" /> Imprimir
+          </button>
           <button
             type="button"
             onClick={onReset}
@@ -593,6 +597,90 @@ function CabecalhoRotina({
  * Aqui o texto dela está num campo, do jeito que ela escreveu. Salva ao sair do
  * campo ou no Enter — sem botão de salvar, que é mais uma coisa pra ela lembrar.
  */
+/**
+ * O QUE JÁ PASSOU, O QUE É AGORA, O QUE FALTA.
+ *
+ * A tela sabia responder só a primeira. As outras duas são o que torna a
+ * sequência previsível pra criança — e são justamente as que ela não consegue
+ * deduzir sozinha olhando cartões todos iguais.
+ *
+ * Some da impressão: no papel a sequência é a ordem, e "agora" muda a cada
+ * hora. Uma folha colada na parede dizendo "agora: jantar" ficaria errada na
+ * manhã seguinte.
+ */
+function ProgressoDaRotina({ tarefas }: { tarefas: Tarefa[] }) {
+  const p = progressoDaRotina(tarefas);
+  if (p.total === 0) return null;
+  const agora = tarefas.find((t) => t.id === p.agoraId);
+  const pct = Math.round((p.feitas / p.total) * 100);
+  return (
+    <div className="flex flex-col gap-2 print:hidden" aria-live="polite">
+      <p className="text-sm font-medium text-foreground">
+        {resumoDoProgresso(p, agora?.nomeTematico ?? agora?.texto ?? null)}
+      </p>
+      <div
+        className="h-1.5 w-full max-w-md overflow-hidden rounded-full bg-foreground/10"
+        role="progressbar"
+        aria-valuemin={0}
+        aria-valuemax={p.total}
+        aria-valuenow={p.feitas}
+        aria-label="Etapas concluídas"
+      >
+        <div
+          className={cn(
+            "h-full rounded-full transition-all",
+            p.completa ? "bg-emerald-500" : "bg-brand-purple",
+          )}
+          style={{ width: `${pct}%` }}
+        />
+      </div>
+    </div>
+  );
+}
+
+/**
+ * A PÁGINA PRECISA ENSINAR — e em três frases, não num manual.
+ *
+ * Vale nos dois modos. O texto muda porque o gesto muda (tocar no card × marcar
+ * na lista), mas as três informações são as mesmas: usar na tela, imprimir,
+ * corrigir.
+ */
+function ComoUsar({ visual, nomeMembro }: { visual: boolean; nomeMembro: string | null }) {
+  const dono = nomeMembro ? `com ${nomeMembro}` : "com a criança";
+  return (
+    <div className="rounded-2xl border border-brand-yellow/30 bg-brand-yellow/[0.07] px-4 py-3 print:hidden">
+      <p className="text-sm leading-relaxed text-foreground">
+        <strong className="font-semibold">Como usar:</strong>{" "}
+        {visual ? (
+          <>
+            a cada etapa concluída, <strong className="font-semibold">toquem juntos no card</strong>{" "}
+            pra marcar como feito. Ele esmaece ao marcar, e a etapa de agora fica destacada — assim{" "}
+            {dono} enxerga o que já passou, o que é agora e o que ainda falta. Tocou sem querer?
+            Toque de novo que ele volta.
+          </>
+        ) : (
+          <>
+            vá <strong className="font-semibold">marcando cada etapa</strong> conforme acontece. A
+            etapa de agora fica destacada, e as marcadas saem do caminho — assim {dono} enxerga o
+            que já passou, o que é agora e o que ainda falta.
+          </>
+        )}
+      </p>
+      <p className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
+        <span className="flex items-center gap-1.5">
+          <Smartphone className="size-3.5" /> Dá pra abrir no celular e ir marcando
+        </span>
+        <span className="flex items-center gap-1.5">
+          <Printer className="size-3.5" /> Ou imprimir e colar na parede
+        </span>
+        <span className="flex items-center gap-1.5">
+          <Pencil className="size-3.5" /> Errou uma etapa? Dá pra editar em “Editar”
+        </span>
+      </p>
+    </div>
+  );
+}
+
 function ListaEditavel({
   tarefas,
   onRenomear,
@@ -652,11 +740,14 @@ function ListaEditavel({
 
 function ViewCartoes({
   tarefas,
+  agoraId,
   onToggle,
   onMover,
   onRemover,
 }: {
   tarefas: Tarefa[];
+  /** A etapa de AGORA. Ganha destaque na tela e nenhum no papel. */
+  agoraId: string | null;
   onToggle: (id: string) => void;
   onMover: (i: number, dir: -1 | 1) => void;
   onRemover: (id: string) => void;
@@ -666,18 +757,30 @@ function ViewCartoes({
     <ol className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 print:grid-cols-3 print:gap-2">
       {tarefas.map((t, i) => {
         const Icon = IconeDe(t.icone);
+        const agora = t.id === agoraId;
         return (
           <li key={t.id} className="group relative print:break-inside-avoid">
             <button
               type="button"
               onClick={() => onToggle(t.id)}
+              aria-current={agora ? "step" : undefined}
               className={cn(
                 "flex w-full flex-col items-center gap-3 rounded-3xl border-2 p-5 text-center transition-all",
                 t.concluida
                   ? "border-foreground/10 bg-foreground/[0.03] opacity-60"
-                  : "border-brand-purple/15 bg-white hover:border-brand-purple/40",
+                  : agora
+                    ? // O destaque não pode depender só de cor: a borda mais
+                      // grossa e o rótulo "AGORA" sobrevivem a daltonismo e à
+                      // impressão em preto e branco.
+                      "border-brand-purple bg-brand-purple/[0.06] ring-2 ring-brand-purple/25"
+                    : "border-brand-purple/15 bg-white hover:border-brand-purple/40",
               )}
             >
+              {agora && (
+                <span className="rounded-full bg-brand-purple px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.14em] text-white print:hidden">
+                  Agora
+                </span>
+              )}
               <span className="text-[11px] font-bold uppercase tracking-[0.14em] text-muted-foreground">
                 {i + 1}º
               </span>
@@ -741,11 +844,14 @@ function ViewCartoes({
 /* ---------- Checklist (adolescente/adulto) ---------- */
 function ViewChecklist({
   tarefas,
+  agoraId,
   onToggle,
   onMover,
   onRemover,
 }: {
   tarefas: Tarefa[];
+  /** A etapa de AGORA. Ganha destaque na tela e nenhum no papel. */
+  agoraId: string | null;
   onToggle: (id: string) => void;
   onMover: (i: number, dir: -1 | 1) => void;
   onRemover: (id: string) => void;
@@ -756,7 +862,12 @@ function ViewChecklist({
       {tarefas.map((t, i) => (
         <li
           key={t.id}
-          className={cn("flex items-center gap-3 py-3", i > 0 && "border-t border-foreground/[0.06]")}
+          aria-current={t.id === agoraId ? "step" : undefined}
+          className={cn(
+            "flex items-center gap-3 py-3",
+            i > 0 && "border-t border-foreground/[0.06]",
+            t.id === agoraId && "-mx-5 border-l-4 border-l-brand-purple bg-brand-purple/[0.05] pl-4 pr-5 print:mx-0 print:border-l-0 print:bg-transparent print:pl-0",
+          )}
         >
           <button
             type="button"
