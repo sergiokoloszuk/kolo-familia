@@ -18,7 +18,7 @@ Só o que está aberto. 🔒 = bloqueada.
 | [PEND-007](#pend-007) | Ativação do GPT parada na prova da chave de produção | Ayla/IA | P1 | ABERTA 🔒 | publicar e rodar `provider-check` |
 | [PEND-003](#pend-003) | Preview da Vercel vermelho há vários PRs | Infra/Deploy | P1 | ABERTA 🔒 | ler o log do primeiro preview que falhou |
 | [PEND-002](#pend-002) | Pagamento confirmado no Stripe sem acesso na Kolo | Pagamento/Acesso | P1 | AGUARDANDO VALIDAÇÃO | esperar a primeira assinatura real e conferir os 5 pontos |
-| [PEND-001](#pend-001) | Cooldown do convite de assinatura não publicado | Pagamento/Acesso | P1 | EM EXECUÇÃO | revisar o diff, abrir PR, publicar, smoke |
+| [PEND-001](#pend-001) | Cooldown do convite de assinatura | Pagamento/Acesso | P1 | AGUARDANDO VALIDAÇÃO | esperar o próximo convite real e conferir o número |
 | [PEND-004](#pend-004) | Rotina/Sequência Visual — auditar antes de redesenhar | Produto | P2 | ABERTA | missão INVESTIGAR do fluxo atual |
 | [PEND-008](#pend-008) | 118 famílias em `trialing` com trial vencido | Dados/Banco | P2 | ABERTA | decidir a regra e corrigir a contagem |
 | [PEND-009](#pend-009) | Primeira conversa da Ayla — spec sem construção | Ayla/IA | P2 | ABERTA | levar a spec para PROPOR |
@@ -35,29 +35,65 @@ Só o que está aberto. 🔒 = bloqueada.
 ## Fichas
 
 ### PEND-001
-**Cooldown do convite de assinatura implementado, não publicado**
-Categoria: Pagamento/Acesso · Prioridade: **P1** · Estado: **EM EXECUÇÃO**
+**Cooldown do convite de assinatura — publicado, aguardando tráfego real**
+Categoria: Pagamento/Acesso · Prioridade: **P1** · Estado: **AGUARDANDO VALIDAÇÃO**
 Aberta em: 2026-08-08 · Origem: Fase 0A
 
-- **Impacto:** enquanto não publicar, o convite para assinar segue sem cooldown
-  real em produção — a correção existe e não protege ninguém.
-- **Evidência (2026-08-08):** commit `27fcab4` ("fix(assinatura): o convite
-  para assinar tem cooldown de verdade", 2026-08-08) toca
-  `apps/web/src/lib/ayla/orchestrator.ts` e acrescenta
-  `apps/web/src/lib/ayla/nudge-cooldown.test.ts` (254 linhas). Conferido:
-  **não é ancestral de `origin/main`** e **não existe branch remota**
-  correspondente — o trabalho está só no repositório local.
-  O conteúdo do diff não foi auditado nesta sessão.
-- **Branch:** `fix/nudge-cooldown` (local, 1 commit à frente de `origin/main`)
-- **Próximo passo:** revisar o diff, rebasear sobre `origin/main`, abrir PR,
-  publicar, smoke.
+- **Impacto:** a Ayla repetia o convite para assinar a cada mensagem de quem
+  está sem acesso — 15 convites em 3h41 no pior caso, quatro deles em seis
+  segundos. Publicado, o dano cessa; falta comprovar com tráfego real.
+- **REVALIDADA E PUBLICADA (2026-08-08):** commit `9e6a468` (o `27fcab4`
+  original, trazido para a `main` atual), PR #45, merge `050cf87`, Production
+  **success** às 16:19:43Z.
+- **Revalidação semântica, não só de git:** `orchestrator.ts` **não mudou**
+  entre a base do commit antigo e a `main` de hoje. Reconferido que as três
+  premissas da correção continuam verdadeiras: `enviarEPersistir` só grava em
+  `ayla_messages` **quando o envio sai** (é o que sustenta a janela de 12h);
+  `ayla_send_log` tem `template_key`/`status` com o `check` que a reserva usa;
+  e `convidouAssinarRecente` não tinha outro chamador.
+- **Replay read-only refeito contra o histórico real (2026-08-08):**
+  30 → **9** convites (−70%), um por família · Rochelle (`7c764314`) 15 → 1 ·
+  **nenhuma das 9 famílias deixa de receber convite** · 16 convites vieram a
+  menos de 2min do anterior, que é o que a reserva pega. Os números do laudo
+  original se confirmaram.
+- **O bug estava vivo até 3 dias atrás:** em 2026-08-05 a família `9e68a369`
+  recebeu **3 convites em 22 segundos** (18:03:44, 18:03:54, 18:04:06).
+- **Correção de fato:** o commit original atribuía o caso à "Simone". A família
+  de 15 convites é `7c764314`, que este registro identifica como **Rochelle** —
+  a mesma da PEND-002. Corrigido no código, nos testes e na mensagem do commit.
+- **Testes:** 17, conferidos por mutação — desligar o cooldown de 12h derruba 3;
+  desligar a reserva de rajada derruba outros 3. Suíte 1362 → **1379**,
+  typecheck e build verdes.
+- **Próximo passo:** aguardar o próximo convite legítimo em produção e comparar
+  o número. O último convite foi em 2026-08-05 (~3 dias antes da publicação),
+  então isto leva dias, não minutos.
 - **Critério de conclusão:** publicado em `origin/main`, preview verde, e smoke
   mostrando que o segundo convite dentro da janela **não** sai. Validação em
   produção com número: convites enviados na janela, antes → depois.
-- **Baixa:** Implementado OK · Testado PENDENTE (existe teste; não executado
-  nesta sessão) · Regressão PENDENTE · Build PENDENTE · Publicado PENDENTE ·
-  Configuração N/A (não usa env nova) · Smoke PENDENTE · Validado PENDENTE
-- **Agente recomendado:** EXECUTAR
+- **Baixa (2026-08-08):** Implementado **OK** · Testado **OK** (17 testes, com
+  mutação) · Regressão **OK** (suíte 1379) · Build **OK** · Publicado **OK**
+  (`050cf87`, Production success) · Configuração **N/A** — não usa env nova ·
+  **Preview verde: BLOQUEADO** (ver abaixo) · **Smoke: PENDENTE** ·
+  **Validado em produção com número: PENDENTE**.
+- **⚠️ Por que NÃO recebeu baixa** — o critério cadastrado na abertura pede três
+  coisas que ainda não existem:
+  1. **"preview verde"** — impossível hoje: **depende da PEND-003**, que é uma
+     frente separada. O `build` do GitHub Actions passou (2m1s), mas o critério
+     escrito diz preview. Não reescrevi o critério para caber no que consegui:
+     isso é decisão sua — ou emendar o critério para aceitar o `build` do
+     Actions, ou manter bloqueado até a PEND-003 fechar.
+  2. **smoke mostrando que o segundo convite dentro da janela não sai** — exige
+     uma família sem acesso mandando duas mensagens. Não dá para fabricar sem
+     WhatsApp real ou conta de QA dedicada.
+  3. **número antes → depois em produção** — exige tráfego real. Medição de
+     hoje: **0 reservas** (`assinatura_nudge_reserva`) gravadas desde o deploy,
+     o que é o esperado 5 minutos depois.
+- **Depende de:** PEND-003 (só para a cláusula "preview verde")
+- **Como conferir quando acontecer:** contar `ayla_messages` com
+  `tipo='assinatura_nudge'` por família na janela, e conferir se existe reserva
+  correspondente em `ayla_send_log` (`template_key='assinatura_nudge_reserva'`).
+  Esperado: no máximo **um** convite por família a cada 12h.
+- **Agente recomendado:** EXECUTAR (só a conferência, quando houver tráfego)
 
 ---
 
@@ -529,7 +565,15 @@ PEND-002 (Etapas 1, 2 e 3), 2026-08-08
       bloqueio de sandbox que só apareceu na hora;
   12. **antes de discutir um risco, verificar se ele é mensurável agora** — o
       risco do `stripe_customer_id` compartilhado andou três missões como
-      hipótese e uma leitura de dez segundos o resolveu.
+      hipótese e uma leitura de dez segundos o resolveu;
+  13. **validar pode revelar que falta instrumentação para provar que a
+      correção funciona.** Isso é parte natural do ciclo, não retrabalho: a
+      missão que ia validar a Etapa 3 virou a missão que a tornou verificável.
+      O protocolo deve prever esse desvio em vez de tratá-lo como falha;
+  14. **teste antigo que quebra porque o comportamento mudou de propósito se
+      revisa, não se apaga.** Reescrever a *asserção* preservando a *intenção*:
+      "sem ruído" deixou de ser "nada persiste" e virou "só o pulso persiste".
+      Apagar teria removido a única guarda contra o pulso virar spam.
 - **Próximo passo:** decidir item a item o que entra, com você.
 - **Critério de conclusão:** `AI-ENGINEERING-PROTOCOL.md` alterado com as
   decisões aprovadas, ou cada item recusado registrado com motivo. Nenhum item
