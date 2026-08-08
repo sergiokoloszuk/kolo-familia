@@ -20,7 +20,7 @@ Só o que está aberto. 🔒 = bloqueada.
 | [PEND-002](#pend-002) | Pagamento confirmado no Stripe sem acesso na Kolo | Pagamento/Acesso | P1 | AGUARDANDO VALIDAÇÃO | esperar a primeira assinatura real e conferir os 5 pontos |
 | [PEND-001](#pend-001) | Cooldown do convite de assinatura | Pagamento/Acesso | P1 | AGUARDANDO VALIDAÇÃO | esperar o próximo convite real e conferir o número |
 | [PEND-004](#pend-004) | Rotina/Sequência Visual — auditar antes de redesenhar | Produto | P2 | ABERTA | missão INVESTIGAR do fluxo atual |
-| [PEND-008](#pend-008) | 118 famílias em `trialing` com trial vencido | Dados/Banco | P2 | ABERTA | decidir a regra e corrigir a contagem |
+| [PEND-008](#pend-008) | Contagens/segmentações com `status` cru de assinatura | Dados/Banco | P2 | EM EXECUÇÃO | decidir a segmentação de campanha (alcança família) |
 | [PEND-009](#pend-009) | Primeira conversa da Ayla — spec sem construção | Ayla/IA | P2 | ABERTA | levar a spec para PROPOR |
 | [PEND-010](#pend-010) | Triar as 26 pendências do laudo de 06/08 | Documentação | P2 | ABERTA | conferir item a item contra o código |
 | [PEND-005](#pend-005) | `MEMORY.md` perto do limite de leitura | Documentação | P2 | ABERTA | compactar o índice |
@@ -347,7 +347,7 @@ Aberta em: 2026-08-08 · Origem: `docs/pendencias-2026-08-06.md` item 20
 ---
 
 ### PEND-008
-**118 famílias em `trialing` com o trial vencido**
+**Contagens e segmentações que usam `status` cru (trial que não expira sozinho)**
 Categoria: Dados/Banco · Tags: `observabilidade` · Prioridade: **P2** · Estado: **ABERTA**
 Aberta em: 2026-08-08 · Origem: `docs/pendencias-2026-08-06.md` item 10,
 reconfirmada por leitura de produção em 2026-08-08
@@ -359,12 +359,35 @@ reconfirmada por leitura de produção em 2026-08-08
   **118 estão em `trialing` com `trial_ends_at` no passado** e sem acesso pela
   regra de `assinaturaLiberada`. O laudo de 2026-08-06 registrava 114; a
   diferença é coerente com cadastros novos no período.
-- **Próximo passo:** decidir a regra (corrigir o `status` em lote, ou derivar
-  sempre o acesso da função e nunca do `status` bruto) e aplicar à contagem.
-  ⚠️ Escrita em produção — exige autorização própria e §17 (rollback).
-- **Critério de conclusão:** nenhuma contagem do produto usando `status` bruto,
-  **ou** `status` coerente com a regra de acesso, com número antes → depois.
-- **Agente recomendado:** PROPOR
+- **Regra decidida e METADE APLICADA (2026-08-08):** entre "corrigir o `status`
+  em lote" e "nunca derivar leitura do `status` bruto", vale a **segunda** — ela
+  não escreve em produção, não é destrutiva e conserta a leitura na origem. Um
+  UPDATE em lote consertaria o retrato de hoje e voltaria a divergir amanhã,
+  porque o trial continua não expirando sozinho.
+- **O que foi feito:** o funil de assinatura passou a separar **em teste** de
+  **trial vencido**, usando `trialValido` — a **mesma** função que o gate de
+  acesso usa, extraída em `lib/auth/assinatura.ts` para não existirem duas
+  regras. Vale nas **duas** telas que mostravam o funil (`/dashboards` e
+  `/admin/comportamento`), e cada balde agora exibe a **definição na tela**.
+  Nenhuma linha do banco foi alterada.
+- **Antes → depois (medido em 2026-08-08):** 165 linhas, 163 `trialing`. A tela
+  dizia **"163 em teste"**; passa a dizer **42 em teste · 121 trial vencido ·
+  2 assinante**. Casos sem `trial_ends_at`: **0** hoje — mas o caminho existe no
+  código e cai no balde vencido, porque também não dá acesso.
+- **Riscos desta frente, com destino:**
+
+  | Risco | Destino | Motivo |
+  |---|---|---|
+  | **Campanhas segmentam por `status` cru** (`lib/admin/campanha-target.ts`, default `['trialing','active','past_due']`) — uma campanha para "trialing" alcançaria as 121 famílias com trial vencido | **MANTER NA PEND-008 — precisa da sua decisão** | é a mesma causa, mas **alcança família**: mudar altera quem recebe mensagem. E há decisão de produto embutida — campanha de retomada *talvez queira* incluir quem venceu. Não decidi sozinho |
+  | Família com **cortesia** e trial vencido aparece em "trial vencido" mesmo tendo acesso | **ACEITO** | o funil é de status de assinatura, e cortesia é um campo à parte (3 casos hoje). Antes ela aparecia como "em teste", que era pior |
+  | `campanha-target` aceita `'incomplete'`, que não existe no `check` da coluna | **ACEITO** | filtro que nunca casa; inofensivo, corrigir junto com o item acima |
+  | Corrigir o `status` em lote no banco | **DESCARTADO, com evidência** | voltaria a divergir sozinho; a leitura derivada resolve na origem |
+
+- **Próximo passo:** decidir se a segmentação de campanha deve excluir trial
+  vencido (e se a exclusão vale para toda campanha ou só para as de teste).
+- **Critério de conclusão:** nenhuma contagem **nem segmentação** do produto
+  usando `status` bruto. A parte de contagem está feita; falta a segmentação.
+- **Agente recomendado:** PROPOR (só a segmentação de campanha)
 
 ---
 

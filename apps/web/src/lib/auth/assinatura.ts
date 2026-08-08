@@ -51,13 +51,27 @@ export function assinaturaLiberada(sub: AcessoAssinatura | null | undefined): bo
     return dias < GRACA_DIAS;
   }
 
-  if (sub.status === "trialing") {
-    // Trial vale só até a data. Sem data válida no futuro → BLOQUEIA.
-    // (Antes um trialing sem trial_ends_at liberava pra sempre.)
-    return !!sub.trial_ends_at && new Date(sub.trial_ends_at).getTime() > agora;
-  }
+  if (sub.status === "trialing") return trialValido(sub, agora);
 
   return false;
+}
+
+/**
+ * O TESTE AINDA VALE? Predicado positivo do trial, em um lugar só.
+ *
+ * `trialVencido` responde "passou da data" e exige que a data exista — então
+ * `trialing` SEM data não é "vencido" por ela, mas também não libera nada. Quem
+ * precisa saber "esta família está em teste de verdade?" (o gate de acesso e a
+ * contagem do funil) tem que fazer a mesma pergunta, e é esta função.
+ *
+ * Sem isto, uma contagem por `status` conta como "em teste" quem já saiu dele.
+ */
+export function trialValido(
+  sub: AcessoAssinatura | null | undefined,
+  agora: number = Date.now(),
+): boolean {
+  if (sub?.status !== "trialing") return false;
+  return !!sub.trial_ends_at && new Date(sub.trial_ends_at).getTime() > agora;
 }
 
 /**
