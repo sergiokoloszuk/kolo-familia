@@ -1043,7 +1043,7 @@ Aberta em: 2026-08-08 · Origem: consolidação da PEND-010 +
   braços já escritos** (*se a criança faz X, isto; se faz Y, aquilo*). Conteúdo
   que só existe na versão genérica **obriga a Ayla a perguntar** — ou seja, a
   qualidade do acervo determina quantas perguntas a família responde.
-- **SUB-FRENTE: ARQUITETURA DE RECUPERAÇÃO — não auditada (2026-08-08).**
+- **SUB-FRENTE: ARQUITETURA DE RECUPERAÇÃO — AUDITADA AS-IS em 2026-08-08.**
   Esta ficha cobre **curadoria** (o que entra no acervo); a linha "como é
   recuperado" não tem escopo nem critério próprios. A arquitetura de leitura é
   problema distinto, com método distinto (AUDITAR técnico, não PROPOR de
@@ -1065,6 +1065,56 @@ Aberta em: 2026-08-08 · Origem: consolidação da PEND-010 +
   MENSAGEM → CONHECIMENTO RECUPERADO → CONHECIMENTO DESEJÁVEL → RESPOSTA →
   **o erro foi de conhecimento, de raciocínio ou de condução?** Sem isso,
   corrige-se com prompt um problema que nasce na recuperação.
+- **RECUPERAÇÃO AS-IS — MEDIDA EM 2026-08-08** (leitura de código e do banco de
+  produção; nada alterado). Responde à pergunta central desta sub-frente.
+  - **Fonte única, um módulo:** `lib/conhecimento/recuperar.ts`, neutro de
+    canal, usado pelos dois. Não há segunda fonte em produção — a BIA segue
+    fora da `main`.
+  - **Quem decide o que buscar:** o classificador de intenção, pelo rótulo de
+    **skill**. A consulta **não usa a mensagem**, nem perfil, nem histórico,
+    nem tema ativo, nem o que já foi tentado com aquela criança.
+  - **Como busca:** nem semântica nem lexical — `skills_relacionadas @> [skill]`
+    OU `tags @> [tag]`. É **seleção fixa por rótulo**.
+  - **Como ranqueia:** `peso_relevancia DESC` — e **367 das 370 BPs ativas
+    (99%) têm 0,5, que é o `default` da coluna** (`0001_init.sql:352`). Só três
+    linhas do acervo inteiro foram curadas. **O ranqueamento é um no-op:** quem
+    escolhe as três entradas é a ordem física da tabela.
+  - **Consequência medida:** rodando a query real de produção duas vezes por
+    skill, o bloco vem **idêntico e determinístico**. `sono` entrega, em 2º e
+    3º, BPs sobre auto-regulação e validar a raiva; `nutricional` entrega três
+    BPs escritas para adolescente. **Mesma skill → mesmo bloco, sempre, para
+    toda família.**
+  - **Único eixo de personalização: idade** (`idadeElegivel`), aplicada em
+    memória sobre as 40 candidatas e tolerante de propósito (idade ausente não
+    elimina). Perfil, histórico e foco da conversa: **influência zero**.
+  - **Teto de 40 linhas antes do filtro de idade:** `emocional` (75 BPs) e
+    `comunicacao` (66) têm 35 e 26 entradas que dependem de sobrar vaga — e,
+    com 99% empatadas no mesmo peso, **quem entra nas 40 não tem critério**.
+  - **A assimetria entre canais não acabou:** a web manda `skills` **+ tags**;
+    o WhatsApp manda **só skills** (o classificador não devolve tags). A mesma
+    pergunta nos dois canais pode recuperar repertório diferente. "Uma Ayla só"
+    vale para a norma (`nucleoConducao`), **não para o conhecimento**.
+  - **Como sabe que não encontrou o suficiente: não sabe.** A falha é engolida
+    (`catch → console.warn → return []`), e `console.warn` **não é `logEvent`**
+    — não persiste. Bloco vazio e recuperação quebrada são indistinguíveis, e
+    nenhum dos dois aparece em lugar algum (§7 e §11 do protocolo).
+  - **Rastreabilidade: inexistente.** Não se registra quais BPs entraram numa
+    resposta. **Isto bloqueia a validação de 10–15 casos exigida acima** — hoje
+    é impossível reconstruir que conhecimento sustentou uma resposta real, e
+    sem isso não dá para separar erro de conhecimento de erro de raciocínio.
+  - **RESPOSTA À PERGUNTA CENTRAL: nenhuma das duas.** Não recupera texto
+    parecido com a mensagem (não há busca alguma sobre o texto) nem o
+    conhecimento necessário para aquela criança (nada da criança entra na
+    consulta, exceto a idade). Recupera **uma amostra arbitrária e fixa de um
+    rótulo de tema**.
+  - **ACHADO CAUSAL — não atribuir ao prompt.** "Repete" e "usa pouco o
+    acervo", dois sintomas da fila de utilidade da Ayla, têm explicação
+    mecânica aqui: mesma skill, mesmo bloco, toda vez. **Nenhuma redação
+    conserta isso.**
+  - **O barato antes do caro:** três achados são de infraestrutura, não de
+    desenho — peso nunca curado, ausência de rastro e assimetria de tags. Não
+    decidem o DESEJADO, mas **o DESEJADO não pode ser validado sem o rastro**.
+    Registrado como constatação; a ordem de execução é decisão de produto.
 - **Depende de:** desenhar junto com PEND-016 e PEND-018.
 - **Admin:** ADMIN PRECISA DE AJUSTE — administrar acervo, e ver o que foi
   recuperado e o que foi usado.
@@ -1296,12 +1346,31 @@ correto.
   **São os dois testes obrigatórios de qualquer solução futura:** não gerar
   falso positivo grosseiro **e** não perder positivo real.
   ⚠️ **Não afrouxar a proteção de crise para resolver o falso positivo.**
-- **⚠️ EVIDÊNCIA OPERACIONAL (03/08) — PERGUNTA EM ABERTO:** a resposta
-  conversacional pode ter sido adequada **e o sistema ter falhado assim mesmo**.
-  **Falta saber se o evento chegou a um humano.** Se NÃO chegou, isto vira
-  evidência prioritária desta ficha, e o escalonamento deixa de ser item para
-  virar frente própria. *Pergunta feita ao Sérgio em 2026-08-08 e ainda sem
-  resposta — não presumir nenhum dos dois lados.*
+- **⚠️ EVIDÊNCIA OPERACIONAL (03/08) — VERIFICADA EM 2026-08-08.** Duas
+  perguntas diferentes, e só uma tem resposta:
+  - **ALGUÉM VIU? — NÃO VERIFICADO.** Não encontrei evidência de escalonamento.
+    Isso **não** é o mesmo que "ninguém viu": qualquer pessoa com acesso ao
+    painel da Z-API pode ter lido a conversa, e isso não deixaria rastro. O
+    Sérgio não recorda. *Não presumir nenhum dos dois lados.*
+  - **EXISTE MECANISMO? — NÃO, e isto está PROVADO.** Busca exaustiva nos
+    caminhos de notificação: `lib/admin/notificacoes.ts` exporta quatro
+    (`notificarNovoCadastro`, `notificarFeedback`, `notificarRespostaLead`,
+    `resumoCadastros`) e o orquestrador tem um só (`alertarNaoTitular`, para
+    número/criança errada); o cron tem healthcheck e alerta de assinatura.
+    **Nenhum é sobre risco.** `eventos_app` tem 8 tipos de evento em 133
+    registros e **nenhum** é de risco; nos 15 eventos de 03/08 só há
+    `ayla_fronteira_regenerou`, `ayla_responder_falhou` e `client_error`.
+    `ayla_send_log` de 03–04/08 tem 11 tipos de mensagem, nenhum de alerta.
+  - **CONCLUSÃO:** a Ayla **reconhece** risco (respondeu com o CVV) e o sistema
+    **não faz nada** com esse reconhecimento — não registra, não escala, não
+    confirma recebimento. A detecção morre dentro do turno. Um caso de ideação
+    real fica indistinguível de qualquer outra mensagem, para sempre.
+  - **ACHADO CRÍTICO — merece frente própria, não item.** É ausência
+    estrutural, não regulagem de sensibilidade: nenhuma melhora de detecção ou
+    de redação muda esse resultado. **Não implementar antes do DESEJADO** — a
+    quem escala, em que prazo, o que a família recebe e o que se registra são
+    decisões de produto, e escalonamento mal desenhado cria dever de cuidado
+    que a Kolo pode não conseguir honrar.
 - **Estado conhecido:** os freios de tom estão no ar (não afirmar direito ou
   saúde com falsa certeza). O **escalonamento para humano não existe**: a Ayla
   desvia assunto de cupom/preço/cancelamento e ninguém é notificado.
