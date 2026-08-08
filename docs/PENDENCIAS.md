@@ -19,6 +19,7 @@ Só o que está aberto. 🔒 = bloqueada.
 | [PEND-007](#pend-007) | Ativação do GPT parada na prova da chave | H · Governança | P1 | ABERTA 🔒 | publicar e rodar `provider-check` |
 | [PEND-024](#pend-024) | Portão: comparar arquitetura de IA atual × OpenAI antes de implementar | H · Governança | P2 ⚑ | ABERTA | esperar D1–D12; então montar o benchmark |
 | [PEND-025](#pend-025) | Método de revisão a partir de um caso real | H · Governança | P2 | ABERTA | desenhar o intake e testar em seco contra 3 casos |
+| [PEND-026](#pend-026) | Impacto das funcionalidades no Admin (equipe/agência) | H · Governança | a definir | ABERTA | montar o mapa de impacto; prioridade sai dele |
 | [PEND-002](#pend-002) | Pagamento confirmado sem acesso na Kolo | G · Comercial | P1 | AGUARDANDO VALIDAÇÃO | esperar a primeira assinatura real |
 | [PEND-001](#pend-001) | Cooldown do convite de assinatura | G · Comercial | P1 | AGUARDANDO VALIDAÇÃO | esperar o próximo convite real |
 | [PEND-016](#pend-016) | Condução da Ayla — o que ela diz e por quê | **A · Condução** | P1 | ABERTA | **preencher o DESEJADO com a Karina** |
@@ -387,6 +388,40 @@ de 2026-08-08
 
 ---
 
+### PEND-026
+**Impacto das funcionalidades no Admin — o que a equipe precisa enxergar**
+Bloco: **H · Governança** · Prioridade: **a definir** · Estado: **ABERTA**
+Aberta em: 2026-08-08 · Origem: pedido do Sérgio na missão da PEND-004
+
+- **Impacto:** doze fichas deste registro já carregam uma linha *"Admin precisa
+  de ajuste"*, cada uma pensada isolada. **Não existe ficha que olhe o
+  conjunto** — então o Admin cresce por acréscimo, uma tela por frente, e a
+  equipe fica sem o que precisa justamente quando o produto fica mais
+  sofisticado.
+- **DESEJADO — A DEFINIR.** Avaliar o que a equipe/agência precisa **ver e
+  administrar** à medida que evoluem: condução da Ayla · conhecimento
+  recuperado e usado · memória da criança · Rotina · Estratégias · Relatórios ·
+  Trial · feedback · fontes · escalonamentos.
+- **O trabalho é um MAPA DE IMPACTO, não telas.** Para cada frente: o que a
+  equipe precisa ver · para decidir o quê · com que frequência · e se isso já
+  existe em algum canto do Admin. **A prioridade sai do mapa**, não antes dele.
+- **Já sabido, das fichas existentes:** PEND-004 rotinas geradas (criança,
+  título, data, origem, status, feedback, erro de geração) · PEND-016 *por que*
+  a Ayla decidiu o que decidiu · PEND-017 administrar acervo e ver o que foi
+  recuperado · PEND-018 retrato da criança e procedência · PEND-019 estratégias
+  entregues · PEND-020 relatórios gerados · PEND-021 jornada e conversão ·
+  PEND-022 **receber e tratar escalonamento** · PEND-023 feedback por família ·
+  PEND-025 por onde um caso entra.
+- **⚠️ Um princípio já vale aqui:** *conceito visível no Admin* — todo indicador
+  mostra a própria definição na tela. "Ativado" virou três conceitos por falta
+  disso.
+- **Depende de:** nada para começar o mapa. **Não bloqueia** nenhuma frente.
+- **Critério de conclusão:** mapa de impacto escrito, com prioridade proposta e
+  aprovada.
+- **Agente recomendado:** AUDITAR → PROPOR
+
+---
+
 ### PEND-004
 **Rotina/Sequência Visual — auditar o fluxo atual antes de redesenhar**
 Categoria: Produto · Prioridade: **P2** · Estado: **ABERTA**
@@ -408,17 +443,45 @@ Aberta em: 2026-08-08 · Origem: decisão de produto (2026-08-08)
   a sequência · gera imagens/cartões · permite **imprimir o PDF logo após
   gerar** · experiência clara no app · salvar e reencontrar · editar e reutilizar
   · feedback da mãe sobre qualidade e utilidade.
-- **DESEJADO — A DEFINIR COM PRODUTO:** o que a Ayla precisa saber da criança
-  para a sequência ser dela e não genérica (é onde PEND-018 entra) · o que
-  acontece quando a mãe pede uma segunda rotina para o mesmo momento · como a
-  rotina aparece de novo dias depois.
+- **📄 SPEC: [specs/rotina-visual.md](specs/rotina-visual.md)** — DESEJADO
+  consolidado (2026-08-08) + ATUAL × DESEJADO auditado contra o código de hoje +
+  as cinco decisões abertas. **Nada implementado.**
+- **A ROTINA ESTÁ MUITO MAIS MADURA DO QUE O DESEJADO PRESSUPUNHA.** A auditoria
+  de 2026-08-08 encontrou já implementados, com genealogia datada no código:
+  detecção implícita (intenção `organizacao` + `prontidao-rotina.ts`), recusa de
+  gerar para birra/desabafo, identificação da criança, "nunca pergunte o que
+  você já tem", antes/durante/depois (é o tamanho `orientacao`), tema por estado
+  `aguardando`, e **entrega por link com PDF só a pedido** — que era decisão de
+  03/08 e coincide com o desejado.
+- **AS LACUNAS REAIS SÃO QUASE TODAS DO APP, NÃO DA CONDUÇÃO:**
+  1. a página **não ensina** — tem olho, nome e idade, e nenhum "como usar";
+  2. a execução marca etapa concluída mas **não destaca a próxima** nem o que falta;
+  3. **não existe feedback na página** (`rotina-feedback.ts` classifica fala no
+     WhatsApp — é outra coisa);
+  4. o botão **Imprimir só aparece em modo `cartoes`** — rotina em lista não imprime;
+  5. **evento único não é escopo válido** (*"o Mario vem jantar"*): o critério
+     exige "qual pedaço do dia". É o Caso C, e não está coberto.
+- **DUAS DIVERGÊNCIAS ENTRE O DESEJADO E DECISÕES JÁ TOMADAS** — não resolver em
+  silêncio, em nenhuma direção:
+  - **D-R1 · confirmar antes de gerar.** `rotina-guiada.ts:422` diz
+    *"MONTE — não peça confirmação antes"*, com o argumento escrito. O desejado
+    pede confirmação. Recomendação registrada na SPEC: confirmar quando a Ayla
+    **inferiu** a sequência, gerar direto quando a mãe a ditou.
+  - **D-R2 · o que conta como evidência de que VER ajuda.** O código exige que a
+    família tenha dito; o desejado sugere que transição recorrente basta.
+- **DESEJADO — AINDA A DEFINIR COM PRODUTO:** segunda rotina para o mesmo
+  momento (substituir/versionar/duplicar — **duplicar é o mais seguro**, porque
+  a família pode já ter impresso e colado) · evento especial é rotina? (D-R4) ·
+  onde vive o feedback (depende de PEND-023).
 - **Depende de:** PEND-016, PEND-017 e PEND-018 para a parte de inteligência;
   PEND-023 para o feedback. A execução técnica não começa antes do DESEJADO
   desses blocos.
-- **Admin:** ADMIN PRECISA DE AJUSTE — visualizar rotinas geradas por família.
-- **Próximo passo:** completar o DESEJADO com a Karina; só então a missão
-  INVESTIGAR do fluxo atual, começando por conferir o laudo de 2026-08-03
-  contra o código de hoje.
+- **Admin:** ADMIN PRECISA DE AJUSTE — visualizar rotinas geradas por família,
+  com criança, título, data, origem, status e feedback. **Registrado em PEND-026**;
+  não se implementa aqui.
+- **Próximo passo:** **decidir D-R1 e D-R2** (Sérgio/Karina) — são as duas que
+  mudam o comportamento em produção. As lacunas 1 a 4 do app **não dependem de
+  A+B+C** e podem ser implementadas assim que houver aval.
 - **Critério de conclusão:** SPEC da Rotina Visual em `docs/specs/` com os oito
   portões respondidos e o corpus de disparo preenchido. Implementação é frente
   seguinte, não faz parte desta baixa.
@@ -1691,7 +1754,7 @@ trimestralmente, o que vier antes.
 
 ---
 
-**Próximo ID livre: PEND-026.**
+**Próximo ID livre: PEND-027.**
 
 > Conferir contra `origin/main`, não contra o seu branch. Dois branches podem
 > reivindicar o mesmo número — o conflito de merge nesta linha é o alarme.
