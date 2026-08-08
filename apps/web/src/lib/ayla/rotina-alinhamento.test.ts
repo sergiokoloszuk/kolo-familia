@@ -69,8 +69,13 @@ describe("preservado: a menor ajuda que resolve", () => {
     expect(VALIDACAO).toMatch(/manejo_clinico/);
   });
 
-  it("o portão de suficiência continua exigindo pedaço do dia + sequência", () => {
-    expect(PRONTIDAO).toMatch(/QUAL PEDAÇO DO DIA/);
+  // ATUALIZADO em 08/08/2026 (D-R4): o recorte deixou de ser só "pedaço do
+  // dia" e passou a aceitar acontecimento único. A exigência em si NÃO caiu —
+  // continua sendo recorte + sequência, e é isso que este teste guarda.
+  it("o portão de suficiência continua exigindo recorte + sequência", () => {
+    expect(PRONTIDAO).toMatch(/QUAL RECORTE/);
+    expect(PRONTIDAO).toMatch(/PEDAÇO DO DIA/);
+    expect(PRONTIDAO).toMatch(/ACONTECIMENTO/);
     expect(PRONTIDAO).toMatch(/UMA SEQUÊNCIA/);
   });
 });

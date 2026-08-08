@@ -324,17 +324,23 @@ describe("caso 4 — quem já trouxe a situação não recebe menu", () => {
 // ============================================================
 
 describe("o visual é decisão própria", () => {
-  it("o critério proíbe inferir do diagnóstico e da transição difícil", () => {
+  // ATUALIZADO em 08/08/2026 (D-R2). O diagnóstico continua não valendo como
+  // motivo — essa parte não foi revogada e segue testada aqui. O que mudou foi
+  // a exigência de EVIDÊNCIA PRÉVIA: transição difícil passou de "não é
+  // evidência" para "é indício, e indício se OFERECE". A troca é deliberada e
+  // está registrada na SPEC; o que sobrou dela — indício não é conclusão — tem
+  // teste próprio em `prontidao-rotina-oferta.test.ts`.
+  it("o critério proíbe inferir do diagnóstico, e o rótulo nunca é o motivo", () => {
     expect(PRONTIDAO).toMatch(/NÃO INFIRA DO DIAGNÓSTICO/);
     expect(PRONTIDAO).toMatch(/criança com TEA se beneficia de apoio visual" é o rótulo explicando a criança/);
-    expect(PRONTIDAO).toMatch(/TRANSIÇÃO DIFÍCIL TAMBÉM NÃO É EVIDÊNCIA DE VISUAL/);
     expect(PRONTIDAO).toMatch(/PEDIR ROTINA NÃO É PEDIR CARTÃO/);
   });
 
-  it("exige poder apontar onde a evidência está escrita", () => {
-    expect(PRONTIDAO).toMatch(/Se você não consegue apontar ONDE leu isso, é false/);
-    // O contraexemplo é o caso real que disparou cartões sem motivo.
-    expect(PRONTIDAO).toMatch(/o banho costuma ser difícil" → visual FALSE/);
+  it("indício não vira conclusão sobre a criança", () => {
+    expect(PRONTIDAO).toMatch(/INDÍCIO NÃO É CONCLUSÃO/);
+    expect(PRONTIDAO).toMatch(/possibilidade relevante a OFERECER/);
+    // E se houver sinal de que ver NÃO ajuda, isso continua mandando.
+    expect(PRONTIDAO).toMatch(/sinal de que ver NÃO ajuda aquela criança/);
   });
 
   const PEDE_VISUAL = ["quero uma rotina visual da manhã", "manda com os cartões", "pode ser com figuras?", "quero em cards"];
