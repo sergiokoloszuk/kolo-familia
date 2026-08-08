@@ -1447,6 +1447,67 @@ export async function encontrarFamiliaPorTelefone(
   };
 }
 
+/**
+ * A RESPOSTA DE UMA CLARIFICAÇÃO RETOMA O PEDIDO QUE A CAUSOU.
+ *
+ * Guarda-se o texto original no `metadata` da própria pergunta — sem tabela
+ * nova, sem migração. Se a última fala da Ayla foi "Mario ou Manu?" e esta
+ * mensagem nomeia uma das crianças, devolvemos o pedido inteiro de volta ao
+ * roteamento, já com a criança resolvida.
+ *
+ * Conservador de propósito: só retoma quando a resposta é CURTA e casa com o
+ * nome de um membro. "Manu" retoma; "deixa pra lá, me conta outra coisa" não.
+ */
+async function retomarPedidoAposClarificacao(
+  supabase: SupabaseClient,
+  familyId: string,
+  resposta: string,
+): Promise<{ pedido: string; membroId: string; membroNome: string; quandoISO: string } | null> {
+  const t = (resposta ?? "").trim();
+  if (!t || t.length > 60) return null;
+  try {
+    const { data: ultima } = await supabase
+      .from("ayla_messages")
+      .select("created_at, tipo, metadata")
+      .eq("family_account_id", familyId)
+      .eq("direcao", "outbound")
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (!ultima || ultima.tipo !== "clarificacao_identificacao") return null;
+
+    const pedido = ((ultima.metadata as Record<string, unknown> | null)?.pedido as string | null) ?? null;
+    if (!pedido) return null;
+    // Uma pergunta de identificação envelhece: passadas horas, a resposta curta
+    // provavelmente é sobre outra coisa.
+    const idadeH = (Date.now() - new Date(ultima.created_at as string).getTime()) / 3_600_000;
+    if (idadeH > 3) return null;
+
+    const { data: membros } = await supabase
+      .from("membros_atipicos")
+      .select("id, nome")
+      .eq("family_account_id", familyId)
+      .eq("ativo", true);
+    const norm = (s: string) =>
+      s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+    const alvo = (membros ?? []).find((m) => {
+      const nome = norm(String(m.nome ?? "").trim());
+      return nome.length > 1 && norm(t).includes(nome.split(/\s+/)[0]!);
+    });
+    if (!alvo) return null;
+
+    return {
+      pedido,
+      membroId: alvo.id as string,
+      membroNome: String(alvo.nome ?? ""),
+      quandoISO: String(ultima.created_at),
+    };
+  } catch (e) {
+    console.error("[ayla:clarificacao] falha ao retomar:", e instanceof Error ? e.message : e);
+    return null;
+  }
+}
+
 export async function processInbound(
   supabase: SupabaseClient,
   inboundRecebido: InboundWhatsApp,
@@ -1756,9 +1817,29 @@ export async function processInbound(
     console.log(`[ayla:seguranca] ABERTA desde ${seguranca.desde} (checar=${seguranca.precisaChecar})`);
   }
 
+  // ── A RESPOSTA DE "MARIO OU MANU?" RETOMA O PEDIDO ──────────────────────
+  // Karina, 08/08/2026: pediu a rotina do Dia dos Pais com cartões; a Ayla
+  // perguntou de qual filha; ela respondeu "Manu" — e o pedido morreu ali.
+  // "Manu" não parece pedido de rotina pro classificador, então a mensagem caiu
+  // no reativo, que respondeu bonito e NÃO criou artefato nenhum. Nenhuma
+  // rotina foi criada; dois turnos depois a Ayla oferecia PDF de rotinas
+  // antigas.
+  //
+  // Mesma invariante do tema: pergunta que a Ayla faz pra concluir o artefato
+  // não pode fechar o estado. A retomada devolve o TEXTO ORIGINAL e o
+  // roteamento normal decide de novo — sem caso especial, sem segunda máquina
+  // de estado. Quem perguntou tem que estar pronto pra ouvir a resposta.
+  const retomada = await retomarPedidoAposClarificacao(supabase, family.id, inbound.texto);
+  if (retomada) {
+    console.log(
+      `[ayla:clarificacao] "${inbound.texto}" retoma o pedido de ${retomada.quandoISO} — criança ${retomada.membroNome}`,
+    );
+    inbound = { ...inbound, texto: retomada.pedido };
+  }
+
   // Criança que a conversa trata AGORA (2+ filhos) — pra rotina/plano seguirem
   // o filho certo e não caírem no membros[0] (bug Manu→Mario).
-  const membroConversa = await criancaDaConversa(supabase, family.id);
+  const membroConversa = retomada?.membroId ?? (await criancaDaConversa(supabase, family.id));
 
   // INTENÇÃO + TEMA por IA (entende o que a mãe quer e sobre o que, não só
   // palavra-chave). Sinal PRIMÁRIO do roteamento abaixo; os `pede*` de regex
@@ -1811,6 +1892,10 @@ export async function processInbound(
           texto,
           category: "reativa",
           tipo: "clarificacao_identificacao",
+          // O PEDIDO VIAJA COM A PERGUNTA. Sem isto, a resposta ("Manu") chega
+          // sozinha e o pedido de rotina que a originou se perde — foi o que
+          // aconteceu com a Karina em 08/08/2026.
+          metadataMensagem: { pedido: inbound.texto },
         })
       : undefined;
     return { tratada: true as const, familia: fam.id, resposta: resp ?? undefined };
@@ -3285,6 +3370,12 @@ async function enviarEPersistir(
     tipo: AylaTipoProativa | AylaTipoReativa;
     /** Metadados opcionais que vão pro ayla_send_log.payload.meta (auditoria). */
     meta?: Record<string, unknown>;
+    /**
+     * Vai pro `ayla_messages.metadata` — estado que a PRÓXIMA mensagem precisa
+     * ler. É onde a clarificação guarda o pedido que a originou, pra resposta
+     * da mãe retomar o fluxo em vez de virar assunto novo.
+     */
+    metadataMensagem?: Record<string, unknown>;
   },
 ): Promise<EnvioResultado> {
   // Idioma da família: todo texto proativo/template é gerado em PT; se a
@@ -3364,6 +3455,7 @@ async function enviarEPersistir(
       tipo: params.tipo,
       texto,
       enviada_em: new Date().toISOString(),
+      ...(params.metadataMensagem ? { metadata: params.metadataMensagem } : {}),
       ...registroDeEnvio(idsBolhas),
     });
 
