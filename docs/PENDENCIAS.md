@@ -701,7 +701,7 @@ do laudo de 06/08) + `docs/auditoria-ayla-prompt.md`
 - **Impacto:** é o produto. Tudo que a família recebe passa por aqui — se a
   condução pergunta demais, responde raso ou erra um fato da criança, nenhuma
   entrega adiante salva a conversa.
-### DESEJADO — em construção com produto (sessão de 2026-08-08)
+**DESEJADO — em construção com produto (sessão de 2026-08-08)**
 
 > **Experiência desejada, que rege todas as decisões deste bloco:** a pessoa
 > sente que a Ayla **ouviu o conjunto, organizou o caos e sabe por onde
