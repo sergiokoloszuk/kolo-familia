@@ -3,6 +3,7 @@ import {
   reconciliarDivergencias,
   alertaOperacionalRecente,
   KIND_ALERTA_OPERACIONAL,
+  KIND_PULSO,
 } from "./reconciliacao";
 import { assinaturaLiberada } from "@/lib/auth/assinatura";
 import type { SyncResult } from "./sync";
@@ -22,10 +23,24 @@ import type { SyncResult } from "./sync";
  *      tocado nem custar uma chamada ao Stripe.
  */
 
-const logs: Array<{ kind: string; severity?: string; message?: string }> = [];
+type LogCapturado = {
+  kind: string;
+  severity?: string;
+  message?: string;
+  payload?: Record<string, unknown>;
+};
+const logs: LogCapturado[] = [];
+
+/**
+ * O mock imita a regra real do `logEvent`: só `warn+` PERSISTE em
+ * `eventos_app`. Isso importa aqui porque a janela do pulso lê exatamente essa
+ * tabela — um mock que persistisse tudo esconderia o bug que motivou o pulso.
+ */
+let bancoAtual: { persistir: (e: LogCapturado) => void } | null = null;
 vi.mock("@/lib/log", () => ({
-  logEvent: async (e: { kind: string; severity?: string; message?: string }) => {
+  logEvent: async (e: LogCapturado) => {
     logs.push(e);
+    if (["warn", "error", "fatal"].includes(e.severity ?? "info")) bancoAtual?.persistir(e);
   },
   logServerError: async () => {},
 }));
@@ -37,11 +52,16 @@ vi.mock("@/lib/log", () => ({
 
 type Linha = Record<string, unknown>;
 
-function criarBanco(linhas: Linha[]) {
+function criarBanco(linhas: Linha[], eventos: Linha[] = []) {
   let erroNoSelect: { message: string } | null = null;
-  const lidas: string[] = [];
+  const tabelas: Record<string, Linha[]> = {
+    subscription_accesses: linhas,
+    eventos_app: eventos,
+  };
+  let relogio = Date.now();
 
-  function from(_tabela: string) {
+  function from(tabela: string) {
+    const alvo = tabelas[tabela] ?? [];
     const filtros: Array<(l: Linha) => boolean> = [];
     const builder = {
       select: () => builder,
@@ -62,27 +82,38 @@ function criarBanco(linhas: Linha[]) {
       limit: () => builder,
       maybeSingle: async () => {
         if (erroNoSelect) return { data: null, error: erroNoSelect };
-        return { data: linhas.filter((l) => filtros.every((f) => f(l)))[0] ?? null, error: null };
+        return { data: alvo.filter((l) => filtros.every((f) => f(l)))[0] ?? null, error: null };
       },
       then(resolver: (v: unknown) => unknown, rejeitar?: (e: unknown) => unknown) {
         const resultado = erroNoSelect
           ? { data: null, error: erroNoSelect }
-          : { data: linhas.filter((l) => filtros.every((f) => f(l))), error: null };
-        if (!erroNoSelect) lidas.push("populacao");
+          : { data: alvo.filter((l) => filtros.every((f) => f(l))), error: null };
         return Promise.resolve(resultado).then(resolver, rejeitar);
       },
     };
     return builder;
   }
 
-  return {
+  const api = {
     from,
     linhas,
+    eventos,
     linha: (id: string) => linhas.find((l) => l.family_account_id === id),
     falharSelect(message: string) {
       erroNoSelect = { message };
     },
+    /** Chamado pelo mock do logEvent quando a severidade persiste. */
+    persistir(e: { kind: string; payload?: Record<string, unknown> }) {
+      eventos.push({ id: `ev_${eventos.length + 1}`, kind: e.kind, created_at: new Date(relogio).toISOString(), payload: e.payload });
+    },
+    /** Move o relógio das gravações, para exercitar a janela. */
+    avancarHoras(h: number) {
+      relogio += h * 60 * 60 * 1000;
+    },
   };
+  // Todo banco criado vira o "atual" para o mock do logEvent persistir nele.
+  bancoAtual = api;
+  return api;
 }
 
 const DIA = 24 * 60 * 60 * 1000;
@@ -399,8 +430,10 @@ describe("sinais para o alerta", () => {
 
     expect(r.corrigidas).toHaveLength(0);
     expect(r.naoCorrigidas).toHaveLength(0);
-    // Execução limpa não persiste resumo — senão vira ruído de hora em hora.
-    expect(logs.filter((l) => l.severity === "warn")).toHaveLength(0);
+    // O único registro persistido de uma execução limpa é o pulso — o resumo
+    // detalhado fica em stdout, senão seriam 24 linhas por dia.
+    const persistidos = logs.filter((l) => l.severity === "warn" || l.severity === "error");
+    expect(persistidos.map((l) => l.kind)).toEqual([KIND_PULSO]);
   });
 
   it("correção real produz o dado do alerta de correção", async () => {
@@ -424,6 +457,115 @@ describe("sinais para o alerta", () => {
 });
 
 // ============================================================
+// PULSO DE SAÚDE — a prova de que a reconciliação está viva
+// ============================================================
+
+describe("pulso: execução limpa deixa rastro, sem virar ruído", () => {
+  const pulsos = (b: ReturnType<typeof criarBanco>) =>
+    b.eventos.filter((e) => e.kind === KIND_PULSO);
+
+  it("população 0 produz pulso válido, com os números da execução", async () => {
+    // É o caso REAL de produção hoje: 2 linhas com vínculo, ambas com acesso.
+    const banco = criarBanco([
+      familia("ok1", { ...COM_VINCULO, status: "active" }),
+      familia("ok2", { ...COM_VINCULO, status: "active" }),
+    ]);
+    const sync = sincronizadorQueEscreve(banco, {});
+
+    const r = await reconciliarDivergencias(comoAdmin(banco), {
+      sincronizar: sync.fn,
+      agora: AGORA,
+    });
+
+    expect(r.candidatas).toBe(0);
+    expect(pulsos(banco)).toHaveLength(1);
+    // O pulso responde às perguntas do §11 sem precisar de mais nada.
+    expect(pulsos(banco)[0].payload).toMatchObject({
+      resultado: "pulso",
+      com_vinculo: 2,
+      candidatas: 0,
+      chamadas_stripe: 0,
+      corrigidas: 0,
+      nao_corrigidas: 0,
+    });
+  });
+
+  it("execuções seguintes na mesma janela NÃO poluem", async () => {
+    const banco = criarBanco([familia("ok", { ...COM_VINCULO, status: "active" })]);
+    const sync = sincronizadorQueEscreve(banco, {});
+
+    for (const h of [0, 1, 2, 5, 11, 19]) {
+      await reconciliarDivergencias(comoAdmin(banco), {
+        sincronizar: sync.fn,
+        agora: AGORA + h * 60 * 60 * 1000,
+      });
+    }
+
+    // Seis execuções dentro da janela, UM registro.
+    expect(pulsos(banco)).toHaveLength(1);
+  });
+
+  it("nova janela permite novo pulso — pelo menos um por dia", async () => {
+    const banco = criarBanco([familia("ok", { ...COM_VINCULO, status: "active" })]);
+    const sync = sincronizadorQueEscreve(banco, {});
+
+    await reconciliarDivergencias(comoAdmin(banco), { sincronizar: sync.fn, agora: AGORA });
+    banco.avancarHoras(21);
+    await reconciliarDivergencias(comoAdmin(banco), {
+      sincronizar: sync.fn,
+      agora: AGORA + 21 * 60 * 60 * 1000,
+    });
+
+    expect(pulsos(banco)).toHaveLength(2);
+  });
+
+  it("erro continua persistindo NA HORA, sem esperar janela nenhuma", async () => {
+    const banco = criarBanco([familia("f1", COM_VINCULO)]);
+    const sync = sincronizadorQueEscreve(banco, { f1: { erro: "timeout" } });
+
+    await reconciliarDivergencias(comoAdmin(banco), { sincronizar: sync.fn, agora: AGORA });
+    await reconciliarDivergencias(comoAdmin(banco), {
+      sincronizar: sync.fn,
+      agora: AGORA + 60 * 60 * 1000,
+    });
+
+    // Duas execuções, dois registros de erro — a janela não silencia falha.
+    const erros = logs.filter((l) => l.severity === "error");
+    expect(erros.length).toBeGreaterThanOrEqual(2);
+  });
+
+  it("divergência corrigida persiste na hora, e não gasta o pulso", async () => {
+    const banco = criarBanco([familia("f1", COM_VINCULO)]);
+    const sync = sincronizadorQueEscreve(banco, { f1: { status: "active", stripeStatus: "active" } });
+
+    const r = await reconciliarDivergencias(comoAdmin(banco), {
+      sincronizar: sync.fn,
+      agora: AGORA,
+    });
+
+    expect(r.corrigidas).toHaveLength(1);
+    // O resumo já persistiu e prova a execução; o pulso não repete.
+    expect(pulsos(banco)).toHaveLength(0);
+    expect(banco.eventos.some((e) => e.kind === "reconciliacao_divergencia")).toBe(true);
+  });
+
+  it("o pulso NÃO dispara WhatsApp — as duas condições do cron seguem falsas", async () => {
+    const banco = criarBanco([familia("ok", { ...COM_VINCULO, status: "active" })]);
+    const sync = sincronizadorQueEscreve(banco, {});
+
+    const r = await reconciliarDivergencias(comoAdmin(banco), {
+      sincronizar: sync.fn,
+      agora: AGORA,
+    });
+
+    expect(pulsos(banco)).toHaveLength(1);
+    // O cron só envia se uma destas for > 0.
+    expect(r.corrigidas).toHaveLength(0);
+    expect(r.naoCorrigidas).toHaveLength(0);
+  });
+});
+
+// ============================================================
 // ANTI-SPAM DO ALERTA OPERACIONAL
 // ============================================================
 
@@ -440,17 +582,17 @@ describe("o alerta operacional não vira spam de hora em hora", () => {
   });
 
   it("alerta enviado há 1 hora → NÃO alerta de novo (o problema é o mesmo)", async () => {
-    const banco = criarBanco([evento(1)]);
+    const banco = criarBanco([], [evento(1)]);
     expect(await alertaOperacionalRecente(comoAdmin(banco), AGORA)).toBe(true);
   });
 
   it("passadas 12 horas, volta a alertar — o problema segue de pé", async () => {
-    const banco = criarBanco([evento(13)]);
+    const banco = criarBanco([], [evento(13)]);
     expect(await alertaOperacionalRecente(comoAdmin(banco), AGORA)).toBe(false);
   });
 
   it("erro na leitura da trava → ALERTA mesmo assim; emudecer é pior que repetir", async () => {
-    const banco = criarBanco([evento(1)]);
+    const banco = criarBanco([], [evento(1)]);
     banco.falharSelect("timeout");
     expect(await alertaOperacionalRecente(comoAdmin(banco), AGORA)).toBe(false);
   });
