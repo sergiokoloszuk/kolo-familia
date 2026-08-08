@@ -1,7 +1,7 @@
 import type Stripe from "stripe";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { getStripeClient } from "./client";
-import { mapStripeStatus, isoFromUnix, getSubPeriodEnd } from "./status";
+import { mapStripeStatus, isoFromUnix, getSubPeriodEnd, forcaDaEvidencia } from "./status";
 
 export type SyncResult =
   | {
@@ -75,16 +75,23 @@ export async function sincronizarAssinaturaDoStripe(
   }
   if (!sub) return { ok: false, error: "Nenhuma assinatura encontrada no Stripe pra este cliente." };
 
-  const status = mapStripeStatus(sub.status);
+  // MESMA regra de autoridade do webhook — uma política só, não duas. Um
+  // `incomplete` no Stripe (checkout em curso) não afirma nada sobre direito de
+  // uso: sincroniza os vínculos e deixa o status como está.
+  const forca = forcaDaEvidencia(sub.status);
+  const status =
+    forca === "neutra" ? antes ?? mapStripeStatus(sub.status) : mapStripeStatus(sub.status);
   const patch: Record<string, unknown> = {
-    status,
     stripe_customer_id: typeof sub.customer === "string" ? sub.customer : sub.customer.id,
     stripe_subscription_id: sub.id,
     current_period_end: isoFromUnix(getSubPeriodEnd(sub)),
     cancel_at_period_end: sub.cancel_at_period_end,
   };
-  // Voltou/está active → limpa o carimbo de falha (mesma lógica do webhook).
-  if (status === "active") patch.pagamento_falhou_em = null;
+  if (forca !== "neutra") {
+    patch.status = status;
+    // Voltou/está active → limpa o carimbo de falha (mesma lógica do webhook).
+    if (status === "active") patch.pagamento_falhou_em = null;
+  }
 
   const { error } = await admin
     .from("subscription_accesses")

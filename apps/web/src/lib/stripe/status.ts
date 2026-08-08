@@ -25,6 +25,46 @@ export function mapStripeStatus(s: Stripe.Subscription.Status): string {
   }
 }
 
+/**
+ * FORÇA DA EVIDÊNCIA — a autoridade de um evento do Stripe sobre o acesso.
+ *
+ * `mapStripeStatus` responde "que status interno este status do Stripe
+ * significa?". Ela não responde "este evento tem autoridade para decidir?" —
+ * e era essa a pergunta que faltava.
+ *
+ *   paga     o Stripe afirma que há direito de uso (active/trialing)
+ *   neutra   checkout EM CURSO: `incomplete` não afirma nada sobre direito.
+ *            Status desconhecido também não decide — antes caía em past_due
+ *            por `default`, ou seja, um status novo do Stripe tirava acesso.
+ *   negativa o Stripe afirma que o direito acabou ou falhou
+ *
+ * Por que isto existe: `incomplete` é transitório e aparece em TODO checkout.
+ * Traduzido para `past_due`, ele fazia todo pagamento passar, por alguns
+ * segundos, por um estado que a Kolo lê como inadimplência — e, se o evento
+ * positivo não chegasse ou não gravasse, a família ficava trancada ali. Foi o
+ * caso da Rochelle: `trialing` vencida quando o `incomplete` chegou, e a guarda
+ * de então só protegia quem já estava `active`.
+ */
+export type ForcaEvidencia = "paga" | "neutra" | "negativa";
+
+export function forcaDaEvidencia(s: Stripe.Subscription.Status): ForcaEvidencia {
+  switch (s) {
+    case "active":
+    case "trialing":
+      return "paga";
+    case "incomplete":
+      return "neutra";
+    case "past_due":
+    case "unpaid":
+    case "paused":
+    case "canceled":
+    case "incomplete_expired":
+      return "negativa";
+    default:
+      return "neutra";
+  }
+}
+
 export function isoFromUnix(unix: number | null | undefined): string | null {
   if (!unix) return null;
   return new Date(unix * 1000).toISOString();
