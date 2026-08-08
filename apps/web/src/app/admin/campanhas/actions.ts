@@ -24,9 +24,24 @@ const categoriaEnum = z.enum([
 ]);
 
 const segmentacaoSchema = z.object({
+  // Segmentos semânticos. Os nomes de status antigos seguem aceitos só para não
+  // quebrar rascunho de tela antiga — `normalizarSegmentos` os traduz, e a
+  // tradução só estreita o público. Ver lib/admin/campanha-target.ts.
   assinatura: z
     .array(
-      z.enum(["trialing", "active", "past_due", "canceled", "incomplete"]),
+      z.enum([
+        "em_teste",
+        "trial_vencido",
+        "assinante",
+        "pagamento_falhou",
+        "pausada",
+        "cancelada",
+        "trialing",
+        "active",
+        "past_due",
+        "paused",
+        "canceled",
+      ]),
     )
     .optional(),
   exigir_consentimento_ayla: z.boolean().optional(),
