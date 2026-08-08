@@ -194,6 +194,7 @@ async function runAlertaAssinatura(supabase: AdminClient) {
   }
 
   return NextResponse.json({
+    com_vinculo: r.comVinculo,
     candidatas: r.candidatas,
     corrigidas: r.corrigidas.length,
     verificadas_sem_acesso: r.verificadasSemAcesso,

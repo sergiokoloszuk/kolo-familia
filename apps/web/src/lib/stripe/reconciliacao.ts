@@ -49,6 +49,8 @@ export type NaoCorrigida = {
 };
 
 export type ResultadoReconciliacao = {
+  /** Linhas com vínculo Stripe avaliadas — o universo antes do filtro de acesso. */
+  comVinculo: number;
   /** Famílias que entraram na população (vínculo + sem acesso). */
   candidatas: number;
   /** Divergência real: o Stripe dizia que havia direito e a Kolo não concedia. */
@@ -64,11 +66,45 @@ export type ResultadoReconciliacao = {
 type Dependencias = {
   /** Injetável só para teste; em produção é sempre o re-sync de verdade. */
   sincronizar?: typeof sincronizarAssinaturaDoStripe;
+  /** Relógio injetável só para teste da janela do pulso. */
+  agora?: number;
 };
 
 /** Marca, em `eventos_app`, que o alerta operacional foi disparado. */
 export const KIND_ALERTA_OPERACIONAL = "reconciliacao_alerta_operacional";
 const JANELA_ALERTA_HORAS = 12;
+
+/** Pulso de saúde: prova de que a reconciliação rodou mesmo sem nada a fazer. */
+export const KIND_PULSO = "reconciliacao_pulso";
+/**
+ * 20h, não 24: com o cron de hora em hora, uma janela de 24h "anda" pra frente
+ * a cada dia e acaba pulando um dia. 20h garante pelo menos um pulso por dia.
+ */
+const JANELA_PULSO_HORAS = 20;
+
+/**
+ * Janela de deduplicação sobre `eventos_app` — o estado de coordenação vive no
+ * banco (§8: ambiente serverless não tem memória entre invocações), sem tabela
+ * nova. Na dúvida (erro na leitura), responde "não houve registro recente":
+ * para o alerta, emudecer é pior que repetir; para o pulso, um registro a mais
+ * não faz mal.
+ */
+async function registroRecente(
+  admin: ClienteAdmin,
+  kind: string,
+  janelaHoras: number,
+  agora: number,
+): Promise<boolean> {
+  const desde = new Date(agora - janelaHoras * 60 * 60 * 1000).toISOString();
+  const { data, error } = await admin
+    .from("eventos_app")
+    .select("id")
+    .eq("kind", kind)
+    .gte("created_at", desde)
+    .limit(1);
+  if (error) return false;
+  return (data ?? []).length > 0;
+}
 
 /**
  * ANTI-SPAM do alerta operacional. A divergência que o reconciliador não
@@ -76,24 +112,20 @@ const JANELA_ALERTA_HORAS = 12;
  * hora. Sem esta trava, uma única família travada mandaria 24 mensagens por
  * dia, indefinidamente, e a pessoa aprenderia a ignorar o alerta justamente
  * quando ele estivesse certo.
- *
- * O estado de coordenação vive no banco (§8: ambiente serverless não tem
- * memória entre invocações), reusando `eventos_app` — sem tabela nova.
- * Na dúvida (erro na leitura), ALERTA: emudecer é pior que repetir.
  */
 export async function alertaOperacionalRecente(
   admin: ClienteAdmin,
   agora: number = Date.now(),
 ): Promise<boolean> {
-  const desde = new Date(agora - JANELA_ALERTA_HORAS * 60 * 60 * 1000).toISOString();
-  const { data, error } = await admin
-    .from("eventos_app")
-    .select("id")
-    .eq("kind", KIND_ALERTA_OPERACIONAL)
-    .gte("created_at", desde)
-    .limit(1);
-  if (error) return false;
-  return (data ?? []).length > 0;
+  return registroRecente(admin, KIND_ALERTA_OPERACIONAL, JANELA_ALERTA_HORAS, agora);
+}
+
+/** Já houve pulso na janela? Se sim, a execução limpa não registra de novo. */
+export async function pulsoRecente(
+  admin: ClienteAdmin,
+  agora: number = Date.now(),
+): Promise<boolean> {
+  return registroRecente(admin, KIND_PULSO, JANELA_PULSO_HORAS, agora);
 }
 
 export async function reconciliarDivergencias(
@@ -101,6 +133,7 @@ export async function reconciliarDivergencias(
   deps: Dependencias = {},
 ): Promise<ResultadoReconciliacao> {
   const sincronizar = deps.sincronizar ?? sincronizarAssinaturaDoStripe;
+  const agora = deps.agora ?? Date.now();
 
   // Filtro 1 (no banco): só quem tem vínculo com o Stripe. Sem isto, a varredura
   // leria todas as famílias — e nenhuma delas pode ser resolvida sem vínculo.
@@ -130,6 +163,7 @@ export async function reconciliarDivergencias(
   );
 
   const resultado: ResultadoReconciliacao = {
+    comVinculo: (data ?? []).length,
     candidatas: candidatas.length,
     corrigidas: [],
     verificadasSemAcesso: 0,
@@ -226,22 +260,41 @@ export async function reconciliarDivergencias(
     }
   }
 
+  const numeros = {
+    com_vinculo: resultado.comVinculo,
+    candidatas: resultado.candidatas,
+    corrigidas: resultado.corrigidas.length,
+    verificadas_sem_acesso: resultado.verificadasSemAcesso,
+    nao_corrigidas: resultado.naoCorrigidas.length,
+    chamadas_stripe: resultado.chamadasStripe,
+  };
+  const houveOQueContar =
+    resultado.corrigidas.length > 0 || resultado.naoCorrigidas.length > 0;
+
   await logEvent({
     kind: "reconciliacao_divergencia",
-    // Só vira registro persistido quando houve o que contar. Execução limpa não
-    // polui `eventos_app` de hora em hora.
-    severity:
-      resultado.corrigidas.length > 0 || resultado.naoCorrigidas.length > 0 ? "warn" : "info",
+    // Divergência e falha persistem NA HORA. Execução limpa fica em stdout —
+    // quem prova que ela aconteceu é o pulso, logo abaixo.
+    severity: houveOQueContar ? "warn" : "info",
     message: `reconciliação concluída: ${resultado.corrigidas.length} corrigida(s), ${resultado.naoCorrigidas.length} não corrigida(s)`,
-    payload: {
-      resultado: "resumo",
-      candidatas: resultado.candidatas,
-      corrigidas: resultado.corrigidas.length,
-      verificadas_sem_acesso: resultado.verificadasSemAcesso,
-      nao_corrigidas: resultado.naoCorrigidas.length,
-      chamadas_stripe: resultado.chamadasStripe,
-    },
+    payload: { resultado: "resumo", ...numeros },
   });
+
+  // PULSO DE SAÚDE. Sem ele, uma execução limpa não deixa rastro nenhum — e,
+  // de fora, "rodou e estava tudo certo" fica indistinguível de "não rodou".
+  // Persistir as 24 execuções do dia seria o outro extremo: ruído que ninguém
+  // lê. Um por janela resolve os dois — sinal sem ruído.
+  //
+  // Quando houve o que contar, o próprio resumo acima já persistiu e prova a
+  // execução; o pulso não repete a informação.
+  if (!houveOQueContar && !(await pulsoRecente(admin, agora))) {
+    await logEvent({
+      kind: KIND_PULSO,
+      severity: "warn", // `warn` é o piso que persiste em eventos_app
+      message: "reconciliação viva — executou e não havia divergência",
+      payload: { resultado: "pulso", ...numeros },
+    });
+  }
 
   return resultado;
 }
