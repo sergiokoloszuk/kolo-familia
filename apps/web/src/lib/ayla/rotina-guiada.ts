@@ -765,11 +765,11 @@ const FERRAMENTA_CONDUTOR = {
         description:
           "true SÓ quando o pedido é sobre a GRADE DA SEMANA — dias que se repetem toda semana ('as segundas', 'a semana inteira', 'organizar os dias da semana'). Um acontecimento ÚNICO é false, mesmo citando o nome do dia: 'domingo dia dos pais', 'sábado na casa da vó', 'segunda tenho dentista', 'dia 9', 'amanhã'. Na dúvida, false.",
       },
-      tema: {
-        type: "string",
-        description:
-          "Tema dos cartões, quando a família JÁ escolheu um nesta conversa. Se ainda não escolheu, omita.",
-      },
+      // NÃO existe campo `tema` aqui, pelo mesmo motivo que não existe
+      // `rotinas`: o tema é escolha da FAMÍLIA, capturada pelo código quando
+      // ela responde. Deixar o campo era deixar a porta aberta — em 08/08/2026
+      // o condutor pescou "boneca de pano" da conversa do dia anterior e
+      // gerou 11 cartões de uma ida ao CINEMA nesse tema, sem perguntar nada.
       transicoes: {
         type: "array",
         description: "Momentos difíceis aprendidos nesta conversa.",
@@ -1126,7 +1126,6 @@ ${jaSabemos.rotinaExistente}`
           acao?: string;
           mensagem?: string;
           pronto?: boolean;
-          tema?: string | null;
           recorrente?: boolean;
           transicoes?: unknown;
         }
@@ -1151,7 +1150,9 @@ ${jaSabemos.rotinaExistente}`
       console.warn(`[ayla:rotina] condutor pediu "${acao}" com prontidão suficiente — montando assim mesmo`);
       mensagem = "";
     }
-    let tema = typeof parsed?.tema === "string" && parsed.tema.trim() ? parsed.tema.trim().slice(0, 40) : null;
+    // O tema NÃO vem do modelo. Nesta função ele é sempre null: quando a
+    // família escolhe, quem grava é o gatilho determinístico, direto no banco.
+    const tema: string | null = null;
 
     // ── A AYLA NÃO É MAIS O GERADOR ────────────────────────────────────────
     // Quando decide que dá pra montar, ela DELEGA ao serviço oficial — o mesmo
@@ -1403,7 +1404,7 @@ Ah — se quiser, o próprio ${nome} pode ser o personagem dos cartões em vez d
       // chips de tema na web. Onde o interesse existe como dado, a sugestão é
       // dela; onde só existe como prosa no perfil, cai no convite aberto.
       const cartoes = autoGerou
-        ? ` Já comecei a preparar os cartões no tema *${tema}* — eles vão aparecendo nesta rotina conforme ficarem prontos 🌿`
+        ? `\n\nJá comecei a preparar os cartões no tema *${tema}* — eles vão aparecendo nesta rotina conforme ficarem prontos 🌿`
         : faltaTema || ofereceCartoes
           ? `\n\nFalta só escolher o tema dos cartões${
               sugestoesDeTema
@@ -1412,7 +1413,7 @@ Ah — se quiser, o próprio ${nome} pode ser o personagem dos cartões em vez d
             }`
           : "";
       const impresso = querImprimir
-        ? " Te mandei também um *PDF pra imprimir* (com quadradinhos pra marcar)."
+        ? "\n\nTe mandei também um *PDF pra imprimir* (com quadradinhos pra marcar)."
         : "";
       const orient = `${cartoes}${impresso}`;
       // A dica OFERECE duas coisas (editar e imprimir). Enquanto falta o tema
