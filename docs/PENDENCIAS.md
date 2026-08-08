@@ -17,7 +17,7 @@ Só o que está aberto. 🔒 = bloqueada.
 |---|---|---|---|---|---|
 | [PEND-007](#pend-007) | Ativação do GPT parada na prova da chave de produção | Ayla/IA | P1 | ABERTA 🔒 | publicar e rodar `provider-check` |
 | [PEND-003](#pend-003) | Preview da Vercel vermelho há vários PRs | Infra/Deploy | P1 | ABERTA 🔒 | ler o log do primeiro preview que falhou |
-| [PEND-002](#pend-002) | Pagamento confirmado no Stripe sem acesso na Kolo | Pagamento/Acesso | P1 | EM EXECUÇÃO | Etapas 1 e 2 implementadas — falta publicar e validar |
+| [PEND-002](#pend-002) | Pagamento confirmado no Stripe sem acesso na Kolo | Pagamento/Acesso | P1 | AGUARDANDO VALIDAÇÃO | implementar a Etapa 3 — reconciliação automática |
 | [PEND-001](#pend-001) | Cooldown do convite de assinatura não publicado | Pagamento/Acesso | P1 | EM EXECUÇÃO | revisar o diff, abrir PR, publicar, smoke |
 | [PEND-004](#pend-004) | Rotina/Sequência Visual — auditar antes de redesenhar | Produto | P2 | ABERTA | missão INVESTIGAR do fluxo atual |
 | [PEND-008](#pend-008) | 118 famílias em `trialing` com trial vencido | Dados/Banco | P2 | ABERTA | decidir a regra e corrigir a contagem |
@@ -62,7 +62,7 @@ Aberta em: 2026-08-08 · Origem: Fase 0A
 
 ### PEND-002
 **Pagamento confirmado no Stripe sem acesso na Kolo (classe Rochelle)**
-Categoria: Pagamento/Acesso · Prioridade: **P1** · Estado: **EM EXECUÇÃO**
+Categoria: Pagamento/Acesso · Prioridade: **P1** · Estado: **AGUARDANDO VALIDAÇÃO**
 Aberta em: 2026-08-08 · Origem: incidente Rochelle (2026-07-23) → Fase 0B
 
 - **Impacto:** família paga e continua sem acesso, sem ninguém descobrir até
@@ -94,31 +94,62 @@ Aberta em: 2026-08-08 · Origem: incidente Rochelle (2026-07-23) → Fase 0B
     `past_due` — mas continua **cego para família presa em `trialing`**;
   - situação operacional declarada: **pode vender com monitoramento manual de
     cada nova assinatura** (🟡), não sem ele.
-- **Etapas 1 e 2 IMPLEMENTADAS (2026-08-08, branch abaixo, não publicado):**
+- **Etapas 1 e 2 PUBLICADAS (2026-08-08):** commit `25ca617`, PR #39, merge
+  `c61d540`. Deployment de **Production** do merge concluiu com **success**
+  (14:28Z). Smoke sem cobrança: app responde 200, `/precos` 200, `/admin` 200 e
+  `GET /api/stripe/webhook` devolve **405** — assinatura saudável de rota
+  só-POST, sem criar nenhum evento no Stripe. **Nenhuma variável de ambiente
+  alterada.**
+- **Etapas 1 e 2 IMPLEMENTADAS (2026-08-08):**
   escritas críticas do webhook agora conferem `error` **e** linhas afetadas;
   pagamento sem família resolvível falha de forma visível em vez de retornar
   calado; `incomplete` virou evidência **neutra** e não rebaixa mais ninguém;
   `invoice.payment_failed`, dunning, graça e cancelamento real preservados e
   cobertos por teste. Suíte: 1306 → **1332** (26 testes novos), typecheck e
   build verdes.
-- **Branch:** `fix/stripe-escrita-e-autoridade` (a partir de `origin/main`)
-- **Próximo passo:** revisar, abrir PR, publicar e validar em produção com a
-  primeira assinatura real (tratada como smoke).
-- **Fora do escopo autorizado, na mesma frente** — não corrigir sem
-  autorização: eventos `invoice.*` nunca entram na tabela `assinaturas`
-  (objetos `Invoice` não carregam `metadata.family_account_id`), então a
-  trilha de auditoria tem buraco justamente nos eventos de dinheiro.
+- **Branch/commit/PR:** `fix/stripe-escrita-e-autoridade` · `25ca617` · PR #39 ·
+  merge `c61d540`
+- **Próximo passo:** **implementar a Etapa 3 — reconciliação automática e
+  detecção de divergência Stripe → Kolo**, em branch isolada. A primeira
+  assinatura real futura é evidência adicional, **não** pré-requisito para
+  começar.
+- **Riscos conhecidos que seguem abertos nesta pendência** (Etapa 4 — recência
+  pelo relógio do Stripe; **não** autorizada, exige migração):
+  1. **Ordem/recência entre evidências fortes** — um `subscription.updated`
+     genuinamente `past_due` que chegue depois de um evento positivo ainda pode
+     rebaixar quem não estiver `active` no instante da leitura. O caso neutro
+     (`incomplete`, o da Rochelle) é imune por construção.
+  2. **Concorrência entre evento positivo e negativo real** — os dois leem o
+     estado antes de qualquer escrita; o resultado final depende de quem grava
+     por último.
+  3. **`invoice.payment_failed` casa por `stripe_customer_id`** — dois vínculos
+     no mesmo customer rebaixariam ambos. Pré-existente.
+  4. **`registrarEvento` roda depois dos handlers** — handler que estoura não
+     deixa registro na auditoria. Pré-existente.
+  5. **Eventos `invoice.*` nunca entram na tabela `assinaturas`** (objetos
+     `Invoice` não carregam `metadata.family_account_id`) — a trilha de
+     auditoria tem buraco justamente nos eventos de dinheiro.
+  6. **Mudança de comportamento a observar em produção:** o webhook passa a
+     devolver 500 onde antes devolvia 200, então reentregas do Stripe devem
+     aparecer. É o efeito desejado, mas é novo.
 - **Critério de conclusão:** replay determinístico da classe verde na suíte;
   falha de persistência não termina em 2xx; dunning legítimo preservado
   (`invoice.payment_failed` continua produzindo `past_due` + carimbo + graça);
   publicado e exercido em produção.
 - **Baixa (2026-08-08):** Implementado **OK** (Etapas 1 e 2) · Testado **OK**
   (1332 verdes, 26 novos, incluindo o replay da classe) · Regressão **OK**
-  (suíte completa) · Build **OK** · Publicado **PENDENTE** · Configuração
-  **N/A** (nenhuma variável nova) · Smoke **PENDENTE** · Validado em produção
-  **PENDENTE** · Evidência **parcial** (local sim, produção não).
+  (suíte completa) · Build **OK** · Publicado **OK** (`c61d540`, Production
+  success) · Configuração **N/A** — nenhuma configuração nova · **Smoke de
+  pagamento real: PENDENTE** · **Validado em produção com pagamento real:
+  PENDENTE** · **Evidência final: PENDENTE**.
   **Etapa 3 (reconciliação por divergência) segue não implementada.**
-- **Agente recomendado:** EXECUTAR (publicação) · PROPOR (Etapa 3)
+- **A PRIMEIRA ASSINATURA REAL depois de 2026-08-08 é smoke monitorado.**
+  Conferir, nesta ordem: (1) pagamento confirmado no Stripe; (2) a linha da
+  família ficou `active`; (3) acesso liberado em `/admin/familias`; (4) não
+  houve erro nem retry anormal; (5) evidência observável da escrita nova em
+  `eventos_app` (`stripe_checkout_completed` com `resultado: ok`). Passando os
+  cinco, é a primeira validação real das Etapas 1 e 2.
+- **Agente recomendado:** EXECUTAR (Etapa 3)
 
 ---
 
