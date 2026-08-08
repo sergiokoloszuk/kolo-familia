@@ -366,7 +366,9 @@ Tudo acima continua valendo — identidade, princípios, fronteiras e VOZ. Isto 
 é só o CONTRATO da ferramenta de rotina, não uma segunda Ayla.
 
 ## Escolha UM desfecho por turno e devolva pela ferramenta \`conduzir_rotina\`:
-acao = "responder"|"perguntar"|"montar"|"sair" · mensagem = sua fala (WhatsApp) · tema · transicoes · rotinas
+acao = "responder"|"perguntar"|"montar"|"sair" · mensagem = sua fala (WhatsApp) · recorrente · transicoes
+
+recorrente: este pedido é sobre a GRADE DA SEMANA (dias que se repetem), ou é UM acontecimento? "Domingo é dia dos pais" é um acontecimento — false —, mesmo dizendo "domingo". "Quero organizar as segundas" é grade — true.
 
 Escreva a "mensagem" como você falaria: aspas, travessões, quebras de linha e emoji
 são bem-vindos. A ferramenta serializa o texto por você — não existe caractere
@@ -374,7 +376,7 @@ que você precise evitar, e você NUNCA deve escapar nada à mão.
 
 - "responder" — ela fez uma PERGUNTA sobre a rotina ("qual horário encaixo o iPad?", "como você faria a tarde?"). RESPONDA com o que você já sabe: a sequência que ela contou, os horários, a dificuldade que ela relatou. Proponha, explique em uma frase por que, e diga que dá pra ajustar. NÃO devolva a próxima pergunta do roteiro — isso é ignorar o que ela perguntou.
 - "perguntar" — falta UMA informação que muda a rotina de verdade. Uma só.
-- "montar" — você tem sequência suficiente pra uma primeira versão. Preencha "rotinas".
+- "montar" — você tem sequência suficiente pra uma primeira versão. Quem MONTA o quadro é o sistema; você decide que é hora.
 - "sair" — a mensagem NÃO é mais sobre a rotina (ela mudou de assunto: pediu atividades, contou outra coisa, trouxe outro problema). Devolva "sair" e deixe "mensagem" vazia — outra parte da Ayla responde. NUNCA diga "antes precisamos terminar a rotina": quem manda no assunto é ela.
 
 ## A FAMÍLIA NÃO SABE O QUE PEDIR — quem guia é você
@@ -401,7 +403,7 @@ Quem pediu rotina recebe ROTINA. Aconteceu o contrário em produção (03/08/202
 ANTES DE MONTAR (só quando já dá pra montar), diga em duas ou três linhas o que você vai fazer — é assim que a família aprende o que é a Rotina Visual:
 "Já dá pra montar a rotina da tarde do Mario. Vou organizar cada dia com a sequência das atividades e usar os horários que você me passou; onde não houver horário fixo, deixo só a ordem, pra não inventar precisão. A Rotina Visual serve justamente pra ficar claro o que vem agora e o que vem depois."
 
-DEPOIS QUE EXISTE, mostre o que foi personalizado — os dias, a sequência, os horários que ELA deu, e a transição difícil quando houver. Não invente sumário: só cite o que está mesmo lá.
+DEPOIS QUE EXISTE, comente o que foi personalizado — a transição difícil, o horário que ELA deu, o que você encaixou por causa do que ela contou. Sem listar as etapas: elas aparecem logo abaixo, do jeito que ficaram.
 
 ## COMBINADO VISUAL — quando o que trava é um acordo, não uma sequência do dia
 Tem hora que o problema não é "ela não sabe o que vem depois", é "a gente combina e não se sustenta": a ida à loja, o tempo de tela, a visita na casa de alguém. Aí a sequência serve pra tirar o acordo da fala e deixá-lo concreto — e é uma sequência curta como qualquer outra (mesma rotina, mesmas tarefas, mesmos cartões). Não anuncie como produto diferente: chame do que é ("um combinado pra loja", "o combinado do tempo de tela").
@@ -419,15 +421,13 @@ Oriente a usar: deixar visível em casa e olhar com a pessoa o dia seguinte na n
 "Sempre entrega" quer dizer que a família NUNCA fica sem nada de concreto. NÃO quer dizer gerar um quadro em toda conversa. A melhor ajuda é a MENOR que resolve: às vezes é conduzir uma passagem (antes/durante/depois), às vezes é uma sequência curta de 2 a 4 etapas, às vezes é o período inteiro organizado. Quem decide o tamanho é o porteiro, e ele já decidiu quando você chega aqui.
 Se já dá pra montar uma primeira versão, MONTE — não peça confirmação antes. Ela vê a rotina no texto e ajusta o que quiser depois; é mais rápido corrigir algo pronto do que responder mais perguntas. Horário que ela não deu, você PROPÕE a partir do que sabe (chegada, escola, atividade fixa) e deixa claro que é sugestão. Só não invente horário quando não há nada em que se apoiar.
 Ponha uma dica curta NO PONTO DIFÍCIL — o momento que ela relatou, ou a transição que você já conhece do perfil. Uma ou duas, não uma aula. Quando fizer sentido, uma brincadeira ou atividade simples ancorada nos interesses dele.
-TEMA dos cartões é OPCIONAL e NUNCA atrasa a entrega: se você conhece um interesse, proponha junto; se não, monte sem tema e ofereça depois. E tema NÃO é motivo pra existir cartão — o cartão existe quando VER a sequência ajuda a criança; o tema só personaliza o que já ia existir. A atividade tem que continuar reconhecível: primeiro se entende que é BANHO, depois é que ele é um dinossauro.
+TEMA dos cartões NÃO é assunto seu: o sistema pergunta, no lugar certo, com os interesses que já conhece. Você não oferece tema, não pergunta tema, não escreve "quer no tema de...". E tema NUNCA é motivo pra existir cartão — o cartão existe quando VER a sequência ajuda a criança; o tema só personaliza o que já ia existir. A atividade tem que continuar reconhecível: primeiro se entende que é BANHO, depois é que ele é um dinossauro.
 
 ## Formato dos dados
-rotinas: [{"nome":"Dia com a vovó","dia_semana":null,"tarefas":[{"texto":"acordar","hora":null}]}]
-dia_semana: 0=Seg..6=Dom, ou null pra dia avulso/nomeado. ⚠️ O "nome" DIZ O QUE ACONTECE NAQUELE DIA, não a data: "Passeio com a amiga", "Dia na casa da avó", "Manhã de escola" — nunca "Amanhã" ou "Sábado" sozinhos, que não dizem nada quando a mãe abre a lista três dias depois. "hora" é opcional (null quando não houver base).
 transicoes: [{"momento":"banho","estrategia":"música depois","funcionou":null,"merece_plano":false}] — o que você descobriu sobre momentos difíceis fica no perfil e você reusa. Marque "funcionou" quando ela disser que deu certo ou não. Se o momento for algo que a rotina sozinha NÃO resolve (ansiedade de separação, crise intensa, recusa alimentar séria), diga isso em uma frase e marque "merece_plano":true.
 
 ## Quando "montar": o sistema anexa o link, e cuida sozinho de cartões e PDF
-Sua "mensagem" mostra a rotina no texto (a sequência, com os horários) e confirma o que foi feito — no passado, não no futuro. NUNCA escreva "vou montar", "vou gerar", "vou te mandar" ou "vai aparecer": quando você devolve "montar", já está feito.
+NÃO escreva a sequência na sua "mensagem": o sistema mostra as etapas exatamente como ficaram no quadro, logo abaixo da sua fala. Sua parte é o que só você sabe fazer — dizer o que entendeu, a dica no ponto difícil, a frase de antecipação. Confirme no passado, não no futuro. NUNCA escreva "vou montar", "vou gerar", "vou te mandar" ou "vai aparecer": quando você devolve "montar", já está feito.
 NÃO diga que mandou PDF, nem que os cartões estão sendo gerados: isso depende da necessidade e do que ela pediu, e o sistema acrescenta a frase certa depois da sua. Se você anunciar um arquivo que não saiu, ela vai procurar no celular e não vai achar. A entrega concreta é a ROTINA — o PDF é opção de impressão pra quem quer colar na parede.`;
 
 /** Cria/reusa uma rotina (por nome+dia), aplica o tema e grava as tarefas. */
@@ -609,6 +609,56 @@ async function dispararGeracao(
   }
 }
 
+/**
+ * A SEQUÊNCIA NA FALA É UMA VIEW DO QUE FOI GRAVADO.
+ *
+ * Até 08/08/2026 o condutor escrevia a lista de etapas na própria mensagem —
+ * de cabeça, ANTES de `gerarRotina` existir o quadro. Eram duas composições
+ * independentes do mesmo pedido, e elas divergiam: em 07/08 a mãe leu 12
+ * etapas e a criança recebeu 9, com a visita à pessoa nova (o motivo do
+ * pedido) colapsada num cartão genérico.
+ *
+ * Lendo do banco, divergir deixa de ser possível. Não é uma regra a mais no
+ * prompt pedindo coerência: é a mesma lista, uma vez só.
+ */
+async function sequenciaDoQuadro(
+  supabase: SupabaseClient,
+  ids: string[],
+): Promise<string> {
+  if (!ids.length) return "";
+  try {
+    const { data: rots } = await supabase
+      .from("rotinas")
+      .select("id, nome, dia_semana")
+      .in("id", ids);
+    const { data: tarefas } = await supabase
+      .from("rotina_tarefas")
+      .select("rotina_id, texto, hora, ordem")
+      .in("rotina_id", ids)
+      .order("ordem", { ascending: true });
+    if (!tarefas?.length) return "";
+
+    const ordemDosIds = ids;
+    const blocos: string[] = [];
+    for (const id of ordemDosIds) {
+      const r = (rots ?? []).find((x) => x.id === id);
+      const minhas = (tarefas ?? []).filter((t) => t.rotina_id === id);
+      if (!minhas.length) continue;
+      const linhas = minhas
+        .map((t, i) => `${i + 1}. ${t.texto}${t.hora ? ` — ${t.hora}` : ""}`)
+        .join("\n");
+      // Com uma rotina só, o nome já está na fala da Ayla; com várias (semana),
+      // cada bloco precisa dizer de que dia é.
+      blocos.push(ordemDosIds.length > 1 && r?.nome ? `*${r.nome}*\n${linhas}` : linhas);
+    }
+    return blocos.join("\n\n");
+  } catch (e) {
+    // Best-effort: sem a view, a fala sai sem a lista — nunca com uma inventada.
+    console.error("[ayla:rotina] falha ao ler a sequência do quadro:", e instanceof Error ? e.message : e);
+    return "";
+  }
+}
+
 /** Rotinas criadas com cartões pedidos, esperando só a escolha do tema. */
 async function marcarAguardandoTema(supabase: SupabaseClient, ids: string[]): Promise<void> {
   if (!ids.length) return;
@@ -632,7 +682,11 @@ async function rotinaAguardandoTema(
       .eq("family_account_id", familyId)
       .eq("membro_atipico_id", membroId)
       .eq("cards_status", "aguardando")
-      .order("created_at", { ascending: false })
+      // RECENTE. Uma rotina esquecida em `aguardando` semanas atrás não pode
+      // capturar a próxima palavra solta que a mãe mandar — apareceu no teste
+      // de 08/08, quando um "Carrinho" foi parar numa rotina de outra conversa.
+      .gte("updated_at", new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString())
+      .order("updated_at", { ascending: false })
       .limit(1)
       .maybeSingle();
     return data ? { id: data.id as string, nome: (data.nome as string) ?? "" } : null;
@@ -706,6 +760,11 @@ const FERRAMENTA_CONDUTOR = {
         description:
           "Sua fala pra família, como no WhatsApp. Escreva natural: aspas, travessões, quebras de linha e emoji são bem-vindos e NÃO precisam ser escapados.",
       },
+      recorrente: {
+        type: "boolean",
+        description:
+          "true SÓ quando o pedido é sobre a GRADE DA SEMANA — dias que se repetem toda semana ('as segundas', 'a semana inteira', 'organizar os dias da semana'). Um acontecimento ÚNICO é false, mesmo citando o nome do dia: 'domingo dia dos pais', 'sábado na casa da vó', 'segunda tenho dentista', 'dia 9', 'amanhã'. Na dúvida, false.",
+      },
       tema: {
         type: "string",
         description:
@@ -725,32 +784,14 @@ const FERRAMENTA_CONDUTOR = {
           required: ["momento"],
         },
       },
-      rotinas: {
-        type: "array",
-        description: 'Preenchido só quando acao="montar".',
-        items: {
-          type: "object",
-          properties: {
-            nome: { type: "string" },
-            dia_semana: {
-              type: ["integer", "null"],
-              description: "0=segunda … 6=domingo. null para um dia avulso.",
-            },
-            tarefas: {
-              type: "array",
-              items: {
-                type: "object",
-                properties: {
-                  texto: { type: "string" },
-                  hora: { type: ["string", "null"] },
-                },
-                required: ["texto"],
-              },
-            },
-          },
-          required: ["nome", "tarefas"],
-        },
-      },
+      // NÃO existe campo `rotinas` aqui. O condutor NÃO compõe o artefato —
+      // quem compõe é `gerarRotina`, gerador único desde a consolidação de
+      // 03/08/2026 (`rotina-servico.ts`), pelos dois canais.
+      //
+      // O campo existia como fóssil dessa época: o modelo gastava tokens
+      // preenchendo uma sequência que `conduzirRotina` descartava sem nunca
+      // ler (`parsed.rotinas`: zero ocorrências). Era a segunda composição —
+      // a que prometeu 12 etapas enquanto o quadro recebia 9.
     },
     required: ["acao", "mensagem"],
   },
@@ -850,10 +891,12 @@ export async function conduzirRotina(
         );
         // A fala reflete o estado real. Sem 200 do gerador, ninguém promete arte.
         const corpo = comecou
-          ? `Perfeito — vou usar *${escolhido}* nesta rotina 🌿 Já comecei a desenhar os cartões; eles levam *1-2 minutinhos* e vão aparecendo sozinhos.`
+          ? `Perfeito — vou usar *${escolhido}* nesta rotina 🌿 Já comecei a preparar os cartões; eles vão aparecendo aí conforme ficarem prontos.`
           : `Anotei o tema *${escolhido}* nesta rotina. Os cartões ainda não começaram a ser desenhados — me chama daqui a pouco que eu tento de novo.`;
         const comoUsar = comecou
-          ? `\n\nQuando estiverem prontos, mostre um de cada vez e vá antecipando: "agora vamos ao mercado; depois a gente volta pra casa."`
+          ? // Sem exemplo fixo: "agora vamos ao mercado" saía até em rotina de
+            // viagem pra casa da avó. Se é frase de modelo, tem que servir.
+            `\n\nQuando estiverem prontos, mostre um de cada vez e vá dizendo o que é agora e o que vem depois.`
           : "";
         return {
           mensagem: link
@@ -1036,13 +1079,10 @@ Exemplo do formato (não copie o conteúdo): "Eu não faria uma rotina do dia in
       // o que segurava não era a pergunta: era `tema=null` significar abandono
       // silencioso, sem estado e sem segunda chance. Com `cards_status
       // 'aguardando'` a pergunta deixou de ser um beco sem saída.
-      visual
-        ? `OS CARTÕES DESTA ROTINA PRECISAM DE UM TEMA, E QUEM ESCOLHE É A FAMÍLIA.${
-            interesses
-              ? ` Você conhece ${nome}: ${interesses}. Ofereça no máximo DUAS dessas como sugestão ("posso fazer em X ou Y") e deixe claro que ela pode escolher qualquer outro que ${nome} esteja gostando agora. NÃO decida por ela e NÃO preencha o campo "tema" — ele só se preenche quando ela responder.`
-              : ` Você não conhece um interesse dele. Ofereça DUAS ideias na fala ("quer no tema de dinossauros ou de carrinhos?") e deixe "tema" vazio — a mãe responde e o sistema aplica.`
-          } NUNCA diga que os cartões já estão sendo desenhados: eles só começam depois que ela escolher.`
-        : "",
+      // TEMA NÃO É DECISÃO DO MODELO. "Falta tema?" é estado do artefato, e
+      // quem sabe disso é o código — que também conhece os interesses e faz a
+      // pergunta depois da sequência, no lugar certo. Deixar os dois donos
+      // perguntando foi o que produziu a pergunta ANTES da lista, em 08/08.
       deveMontar
         ? `JÁ DÁ PRA MONTAR — a criança, o pedaço do dia e a sequência já estão na mesa. acao="montar", obrigatoriamente. NÃO faça mais nenhuma pergunta neste turno: horário, ponto difícil, tema e transição enriquecem, mas NÃO seguram a entrega. O que faltar, ela ajusta depois em cima do que já existe.`
         : "",
@@ -1087,8 +1127,8 @@ ${jaSabemos.rotinaExistente}`
           mensagem?: string;
           pronto?: boolean;
           tema?: string | null;
+          recorrente?: boolean;
           transicoes?: unknown;
-          rotinas?: unknown;
         }
       | null;
 
@@ -1153,7 +1193,28 @@ ${jaSabemos.rotinaExistente}`
 
       if (r.desfecho === "gerou") {
         rotinas = sanitizarRotinas(r.rotinas);
-        tema = tema ?? r.tema;
+        // ── RECORRÊNCIA É PROPRIEDADE DO PEDIDO, NÃO DA PALAVRA ──────────
+        // O gerador lia "domingo" no texto e escrevia dia_semana=6 — e um
+        // acontecimento único virava grade semanal. Só em 3 semanas foram 18
+        // de 22 pedidos: cada um perdeu o link (ia pra grade em vez da
+        // rotina), perdeu a pergunta do tema e terminou com ZERO cartões.
+        //
+        // Agora quem decide é o pedido, declarado num campo. E duas ou mais
+        // rotinas num pedido só podem ser grade — ninguém pede dois
+        // acontecimentos únicos de uma vez —, então isso confirma sozinho.
+        const recorrente = parsed?.recorrente === true || rotinas.length > 1;
+        if (!recorrente) {
+          const tinhaDia = rotinas.filter((x) => x.dia_semana != null).length;
+          if (tinhaDia) {
+            console.log(`[ayla:rotina] acontecimento único — ${tinhaDia} dia(s) de semana descartado(s)`);
+          }
+          rotinas = rotinas.map((x) => ({ ...x, dia_semana: null }));
+        }
+        // TEMA TEM UM DONO SÓ: A FAMÍLIA. O gerador também extraía um — e em
+        // 08/08/2026 devolveu "Dia dos Pais" como TEMA VISUAL de uma rotina
+        // do Dia dos Pais. Não é interesse da criança, é o nome do evento; e
+        // bastava existir pra pular a pergunta e queimar 13 ilustrações num
+        // tema que ninguém escolheu.
       } else {
         // Barrada, ou o gerador não devolveu nada: NÃO publica. A Ayla continua
         // conversando — o comportamento seguro em falha é texto, nunca um
@@ -1252,10 +1313,20 @@ ${jaSabemos.rotinaExistente}`
       // volta 400 e nenhuma imagem sai, em silêncio. Então aqui o disparo é
       // condicionado de verdade, e o caso "precisa de cartão mas não temos
       // tema" vira uma pergunta na mensagem, nunca um silêncio.
+      // ── ESTADO DERIVADO DO ARTEFATO, NÃO DO RAMO ──────────────────────
+      // `faltaTema` tinha um `!temSemana` na frente. Era o buraco: numa rotina
+      // marcada como semanal a fala PERGUNTAVA o tema e o estado não guardava
+      // pendência nenhuma — a mensagem saía como `rotina_pronta`, a conversa
+      // fechava, e a resposta da mãe ("Carrinho") caía no reativo genérico e
+      // virava carrinho de supermercado. Karina, 07/08/2026.
+      //
+      // A condição agora é só o que descreve o artefato: quer cartão, existe
+      // rotina, não tem tema. Se perguntamos, esperamos — e se esperamos,
+      // geramos quando ela responder. As duas pontas usam a MESMA condição.
       let autoGerou = false;
-      const faltaTema = !temSemana && visual && ids.length > 0 && !tema;
+      const faltaTema = visual && ids.length > 0 && !tema;
       faltaTemaFinal = faltaTema;
-      if (!temSemana && visual && tema && ids.length) {
+      if (visual && tema && ids.length) {
         for (const id of ids) await dispararGeracao(id, tema);
         autoGerou = true;
       }
@@ -1284,6 +1355,9 @@ ${jaSabemos.rotinaExistente}`
       // link antigo de turnos anteriores.
       const link = faltaTema ? null : await gerarMagicLink(supabase, { familyId, next });
       const fechamento = mensagem || `Prontinho — montei a rotina do(a) ${nome} 🌿`;
+      // As etapas, lidas do quadro. A fala do condutor vem antes (o que ele
+      // entendeu, a dica, a frase de antecipação); a lista vem daqui.
+      const sequencia = await sequenciaDoQuadro(supabase, ids);
       // A ENTREGA CONCRETA é a rotina no app. O PDF é opção de impressão, e a
       // frase tem que dizer a verdade sobre o que existe agora.
       // ROTINA COMPLETA PEDIDA → OS CARTÕES SÃO O PRODUTO. Uma coisa é a mãe
@@ -1309,17 +1383,29 @@ ${jaSabemos.rotinaExistente}`
 
 Ah — se quiser, o próprio ${nome} pode ser o personagem dos cartões em vez de um desenho genérico. É só criar o avatar dele uma vez (Configurações → Avatar): fica salvo e vale pras histórias também. Aí eu refaço os cartões com a cara dele.`
           : "";
+      // E NÃO PROMETE PRAZO. "1-2 minutinhos" era uma promessa que a gente
+      // quebrava: as gerações medidas em 08/08/2026 levaram 2min18, 2min38 e
+      // 3min08. Dizer que aparecem "conforme ficarem prontos" é verdade em
+      // qualquer duração — e a mãe não fica olhando o relógio.
+      //
       // A FRASE SEGUE O ESTADO OPERACIONAL, não a intenção. "Já comecei a
       // gerar" só é verdade quando o disparo aconteceu; enquanto falta o tema,
       // o que existe é uma pergunta em aberto — e dizer outra coisa é prometer
       // arte que ninguém pediu pra desenhar ainda.
+      // DONO ÚNICO. Antes o código só perguntava SE o modelo não tivesse
+      // perguntado (`!/tema|cartões/.test(mensagem)`) — dois donos, e a ordem
+      // saía torta: a pergunta vinha na fala do modelo, ANTES da sequência.
+      // Agora o modelo está proibido de tocar no assunto e a pergunta é daqui,
+      // depois do quadro, sempre no mesmo lugar.
+      //
+      // A personalização não se perdeu: `sugestoesDeTema` sai dos interesses
+      // reais da criança (`carregarInteresses`), a mesma fonte que alimenta os
+      // chips de tema na web. Onde o interesse existe como dado, a sugestão é
+      // dela; onde só existe como prosa no perfil, cai no convite aberto.
       const cartoes = autoGerou
-        ? ` Já comecei a gerar os cartões no tema *${tema}* — eles levam *1-2 minutinhos*, então pode abrir que vão aparecendo sozinhos 🌿`
-        : // A Ayla já perguntou o tema na fala dela? Então não pergunte de novo:
-          // em 04/08/2026 a mãe recebeu as duas ofertas coladas, e a segunda
-          // ainda trazia um "dele(a)" de template à mostra.
-          (faltaTema || ofereceCartoes) && !/\btema\b|cart(ão|ões|oes)/i.test(mensagem)
-          ? ` Falta só escolher o tema dos cartões${
+        ? ` Já comecei a preparar os cartões no tema *${tema}* — eles vão aparecendo nesta rotina conforme ficarem prontos 🌿`
+        : faltaTema || ofereceCartoes
+          ? `\n\nFalta só escolher o tema dos cartões${
               sugestoesDeTema
                 ? `: posso fazer em *${sugestoesDeTema}* — ou qualquer outro que ${nome} esteja gostando agora.`
                 : `. Me fala um tema que ${nome} ama — animais, dinossauros, fundo do mar, um personagem — que eu desenho em cima disso.`
@@ -1339,9 +1425,13 @@ Ah — se quiser, o próprio ${nome} pode ser o personagem dos cartões em vez d
         : querImprimir
           ? "\n\nSe quiser mudar uma etapa ou um horário, é só me falar aqui que eu ajusto."
           : "\n\nSe quiser mudar uma etapa ou um horário, é só me falar. E se quiser imprimir pra colar na parede, eu te mando em PDF.";
+      // A sequência entra ENTRE a fala e o resto: a mãe lê o que a Ayla
+      // entendeu, vê o quadro exatamente como ficou, e só então os cartões, o
+      // link e as opções.
+      const quadro = sequencia ? `\n\n${sequencia}` : "";
       mensagem = link
-        ? `${fechamento}${orient}\n\nAbre aqui (já entra direto):\n${link}${dica}`
-        : `${fechamento}${orient}${dica}`;
+        ? `${fechamento}${quadro}${orient}\n\nAbre aqui (já entra direto):\n${link}${dica}`
+        : `${fechamento}${quadro}${orient}${dica}`;
     }
 
     if (!mensagem) return null;

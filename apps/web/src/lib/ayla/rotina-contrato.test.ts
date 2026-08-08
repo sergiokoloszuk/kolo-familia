@@ -8,6 +8,13 @@ const ROTA = readFileSync(
   "utf8",
 );
 
+/** Só o CÓDIGO: os comentários citam de propósito as frases que saíram. */
+const semComentarios = (fonte: string) =>
+  fonte
+    .split(/\r?\n/)
+    .filter((l) => !/^\s*(\/\/|\*|\/\*)/.test(l))
+    .join("\n");
+
 /**
  * O DEFEITO DE 07/08/2026, travado.
  *
@@ -38,6 +45,63 @@ describe("contrato estruturado do condutor", () => {
     );
     expect(fn).toMatch(/console\.error/);
     expect(fn).toMatch(/DESFECHO PERDIDO/);
+  });
+});
+
+/**
+ * FONTE ÚNICA DA VERDADE (08/08/2026).
+ *
+ * O condutor escrevia a lista de etapas na própria fala, de cabeça, ANTES de
+ * `gerarRotina` compor o quadro. Duas composições independentes do mesmo
+ * pedido: em 07/08 a mãe leu 12 etapas e a criança recebeu 9, com a visita à
+ * pessoa nova — o motivo do pedido — colapsada num cartão genérico.
+ *
+ * O gerador é a autoridade desde a consolidação de 03/08 (`rotina-servico.ts`).
+ * O que sai agora é a SEGUNDA composição, que nunca teve autoridade nenhuma.
+ */
+describe("uma composição só", () => {
+  it("o condutor NÃO tem campo de rotinas na ferramenta", () => {
+    const schema = GUIADA.slice(
+      GUIADA.indexOf("const FERRAMENTA_CONDUTOR"),
+      GUIADA.indexOf("type BlocoResposta"),
+    );
+    expect(schema).not.toMatch(/rotinas: \{/);
+    expect(schema).toMatch(/NÃO existe campo `rotinas` aqui/);
+    // `transicoes` FICA: é lido e vira aprendizado no perfil.
+    expect(schema).toMatch(/transicoes: \{/);
+  });
+
+  it("nada lê `parsed.rotinas` — o campo morto não volta", () => {
+    // Só CÓDIGO: o comentário que explica por que o campo saiu cita o nome.
+    expect(semComentarios(GUIADA)).not.toMatch(/parsed\??\.rotinas/);
+  });
+
+  it("o contrato PROÍBE narrar a sequência na fala", () => {
+    expect(GUIADA).toMatch(/NÃO escreva a sequência na sua "mensagem"/);
+    expect(GUIADA).not.toMatch(/Sua "mensagem" mostra a rotina no texto/);
+  });
+
+  it("a sequência da fala é lida do BANCO, não do modelo", () => {
+    expect(GUIADA).toMatch(/async function sequenciaDoQuadro/);
+    expect(GUIADA).toMatch(/from\("rotina_tarefas"\)[\s\S]{0,120}\.in\("rotina_id", ids\)/);
+    expect(GUIADA).toMatch(/const sequencia = await sequenciaDoQuadro\(supabase, ids\)/);
+    expect(GUIADA).toMatch(/\$\{fechamento\}\$\{quadro\}/);
+  });
+
+  it("se a leitura falhar, a fala sai SEM lista — nunca com uma inventada", () => {
+    const fn = GUIADA.slice(
+      GUIADA.indexOf("async function sequenciaDoQuadro"),
+      GUIADA.indexOf("/** Rotinas criadas com cartões pedidos"),
+    );
+    expect(fn).toMatch(/console\.error/);
+    expect(fn).toMatch(/return "";/);
+  });
+
+  it("a regra de nomear o dia vive no gerador, que é quem compõe", () => {
+    const CORE = readFileSync(new URL("../ludico/rotina-ia-core.ts", import.meta.url), "utf8");
+    expect(CORE).toMatch(/O NOME DIZ O QUE ACONTECE NAQUELE DIA/);
+    // E o contrato do condutor não descreve mais o formato do dado.
+    expect(GUIADA).not.toMatch(/rotinas: \[\{"nome"/);
   });
 });
 
@@ -107,10 +171,10 @@ describe("estado verdadeiro dos cartões", () => {
     expect(GUIADA).toMatch(/const dica = faltaTema\s*\n?\s*\? ""/);
   });
 
-  it("o tema é perguntado com no máximo DUAS sugestões, e a escolha é da família", () => {
-    expect(GUIADA).toMatch(/QUEM ESCOLHE É A FAMÍLIA/);
-    expect(GUIADA).toMatch(/NÃO decida por ela/);
+  it("o tema é perguntado pelo CÓDIGO, com no máximo duas sugestões reais", () => {
+    expect(GUIADA).toMatch(/Falta só escolher o tema dos cartões/);
     expect(GUIADA).toMatch(/\.slice\(0, 2\)/);
+    expect(GUIADA).toMatch(/TEMA dos cartões NÃO é assunto seu/);
   });
 });
 
@@ -137,5 +201,83 @@ describe("endpoint de geração paga", () => {
     expect(ROTA).not.toMatch(/process\.env\.AYLA_WEBHOOK_SECRET/);
     expect(GUIADA).toMatch(/process\.env\.KOLO_GERACAO_SECRET/);
     expect(GUIADA).not.toMatch(/process\.env\.AYLA_WEBHOOK_SECRET/);
+  });
+});
+
+/**
+ * A ORDEM É DETERMINÍSTICA — e é o que faltava no caso da Karina.
+ *
+ * fala útil → sequência REAL persistida → pergunta do tema.
+ * E, enquanto o tema estiver pendente: nada de link, PDF ou "já comecei".
+ */
+describe("ordem da entrega quando falta tema", () => {
+  const BLOCO = GUIADA.slice(
+    GUIADA.indexOf("const link = faltaTema ? null"),
+    GUIADA.indexOf("return { mensagem, pronto:"),
+  );
+
+  it("a sequência vem ANTES da pergunta do tema", () => {
+    expect(BLOCO.indexOf("sequenciaDoQuadro")).toBeLessThan(
+      BLOCO.indexOf("Falta só escolher o tema dos cartões"),
+    );
+  });
+
+  it("a mensagem monta na ordem fala → quadro → tema/cartões → link", () => {
+    const molde = BLOCO.slice(BLOCO.indexOf("mensagem = link"));
+    const pos = (t: string) => molde.indexOf(t);
+    expect(pos("${fechamento}")).toBeGreaterThanOrEqual(0);
+    expect(pos("${fechamento}")).toBeLessThan(pos("${quadro}"));
+    expect(pos("${quadro}")).toBeLessThan(pos("${orient}"));
+    expect(pos("${orient}")).toBeLessThan(pos("${link}"));
+  });
+
+  it("com tema pendente não sai link, nem PDF, nem promessa de arte", () => {
+    expect(BLOCO).toMatch(/const link = faltaTema \? null/);
+    expect(BLOCO).toMatch(/const dica = faltaTema\s*\n?\s*\? ""/);
+    // "já comecei a gerar" só existe no ramo do disparo confirmado
+    expect(BLOCO).toMatch(/autoGerou\s*\n?\s*\? ` Já comecei a preparar/);
+  });
+});
+
+/**
+ * RECORRÊNCIA É PROPRIEDADE DO PEDIDO, NÃO DA PALAVRA.
+ *
+ * 18 de 22 pedidos com dia_semana em 3 semanas eram dia único. Cada um perdeu
+ * o link, perdeu a pergunta do tema e terminou com zero cartões.
+ */
+describe("recorrência", () => {
+  it("é um campo declarado do pedido, não inferido do nome gerado", () => {
+    expect(GUIADA).toMatch(/recorrente: \{\s*\n\s*type: "boolean"/);
+    expect(GUIADA).toMatch(/domingo dia dos pais[\s\S]*sábado na casa da vó/i);
+  });
+
+  it("acontecimento único zera dia_semana, mesmo citando o dia", () => {
+    expect(GUIADA).toMatch(/const recorrente = parsed\?\.recorrente === true \|\| rotinas\.length > 1/);
+    expect(GUIADA).toMatch(/rotinas = rotinas\.map\(\(x\) => \(\{ \.\.\.x, dia_semana: null \}\)\)/);
+  });
+
+  it("duas ou mais rotinas confirmam a grade sozinhas", () => {
+    expect(GUIADA).toMatch(/\|\| rotinas\.length > 1/);
+  });
+
+  it("a regra some dos prompts — não é mais coisa que o modelo interpreta", () => {
+    expect(GUIADA).not.toMatch(/dia_semana: 0=Seg\.\.6=Dom/);
+  });
+});
+
+/**
+ * A COPY NÃO PROMETE PRAZO QUE A GENTE NÃO CUMPRE.
+ * Gerações medidas em 08/08/2026: 2min18, 2min38, 3min08 — todas acima do
+ * "1-2 minutinhos" que a Ayla anunciava.
+ */
+describe("verdade operacional na copy", () => {
+  it("não promete 1-2 minutinhos na geração de cartões", () => {
+    // Só CÓDIGO: o comentário que explica a mudança cita a promessa antiga.
+    const codigo = semComentarios(GUIADA);
+    expect(codigo).not.toMatch(/1-2 minutinhos/);
+  });
+
+  it("diz o que é verdade em qualquer duração", () => {
+    expect(GUIADA).toMatch(/conforme ficarem prontos/);
   });
 });

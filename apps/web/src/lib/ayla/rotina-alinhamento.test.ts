@@ -27,6 +27,7 @@ import { ORIENTACAO_DE_TRANSICAO } from "@/lib/conducao/formas";
 const GUIADA = readFileSync(resolve(__dirname, "rotina-guiada.ts"), "utf8");
 const PRONTIDAO = readFileSync(resolve(__dirname, "prontidao-rotina.ts"), "utf8");
 const ORCH = readFileSync(resolve(__dirname, "orchestrator.ts"), "utf8");
+const CORE = readFileSync(resolve(__dirname, "../ludico/rotina-ia-core.ts"), "utf8");
 const MIGRACAO = readFileSync(
   resolve(__dirname, "../../../../../supabase/migrations/0075_rotina_resultado.sql"),
   "utf8",
@@ -167,7 +168,11 @@ describe("visão da semana", () => {
 
   it("não promete calendário visual que não existe — reusa os dias", () => {
     // A estrutura semanal é 7 rotinas (uma por dia). Nada de produto novo.
-    expect(GUIADA).toMatch(/dia_semana: 0=Seg\.\.6=Dom/);
+    // A regra vive no GERADOR desde 08/08/2026: o condutor deixou de compor,
+    // então descrever o formato do dado no contrato dele era regra duplicada —
+    // e as duas versões já divergiam sobre o que é "dia avulso".
+    expect(CORE).toMatch(/dia_semana: 0=Segunda/);
+    expect(GUIADA).not.toMatch(/dia_semana: 0=Seg\.\.6=Dom/);
   });
 });
 
@@ -259,35 +264,50 @@ describe("verdade operacional", () => {
  * significar abandono silencioso. Isso agora tem estado ('aguardando') e
  * gatilho determinístico, então a pergunta deixou de ser um beco sem saída.
  */
-describe("o tema é escolha da família, com sugestão da Ayla", () => {
-  it("com interesse conhecido, SUGERE no máximo duas e não decide", () => {
-    expect(GUIADA).toMatch(/QUEM ESCOLHE É A FAMÍLIA/);
-    expect(GUIADA).toMatch(/Ofereça no máximo DUAS dessas como sugestão/);
-    expect(GUIADA).toMatch(/NÃO decida por ela e NÃO preencha o campo "tema"/);
+describe("o tema é escolha da família — e quem pergunta é o CÓDIGO", () => {
+  /**
+   * ⚠️ MUDOU DE DONO EM 08/08/2026. Este bloco travava as instruções que
+   * mandavam o MODELO propor o tema. Mas "falta tema?" é estado do artefato,
+   * não decisão conversacional — e com dois donos a pergunta saía na fala do
+   * modelo, ANTES da sequência. Agora o modelo está proibido de tocar no
+   * assunto e a pergunta é do código, depois do quadro.
+   */
+  it("o modelo NÃO pergunta tema", () => {
+    expect(GUIADA).toMatch(/TEMA dos cartões NÃO é assunto seu/);
+    expect(GUIADA).toMatch(/Você não oferece tema, não pergunta tema/);
+    expect(GUIADA).not.toMatch(/Ofereça no máximo DUAS dessas como sugestão/);
+  });
+
+  it("o código pergunta, com no máximo duas sugestões dos interesses REAIS", () => {
+    expect(GUIADA).toMatch(/Falta só escolher o tema dos cartões/);
+    expect(GUIADA).toMatch(/sugestoesDeTema/);
+    expect(GUIADA).toMatch(/\.slice\(0, 2\)/);
   });
 
   it("deixa claro que ela pode escolher qualquer outro tema", () => {
-    expect(GUIADA).toMatch(/pode escolher qualquer outro que \$\{nome\} esteja gostando agora/);
+    expect(GUIADA).toMatch(/ou qualquer outro que \$\{nome\} esteja gostando agora/);
   });
 
-  it("nunca anuncia arte que não começou", () => {
-    expect(GUIADA).toMatch(/NUNCA diga que os cartões já estão sendo desenhados/);
+  it("sem interesse conhecido, o convite fica aberto", () => {
+    expect(GUIADA).toMatch(/Me fala um tema que \$\{nome\} ama/);
   });
 
-  it("SEM interesse conhecido, oferece duas ideias genéricas", () => {
-    expect(GUIADA).toMatch(/Você não conhece um interesse dele/);
-    expect(GUIADA).toMatch(/deixe "tema" vazio/);
-  });
-
-  it("a geração só dispara com tema — é isso que a regra protege", () => {
-    expect(GUIADA).toMatch(/if \(!temSemana && visual && tema && ids\.length\)/);
+  it("a geração dispara com tema — e pela MESMA condição que pergunta", () => {
+    expect(GUIADA).toMatch(/const faltaTema = visual && ids\.length > 0 && !tema/);
+    expect(GUIADA).toMatch(/if \(visual && tema && ids\.length\)/);
+    // o `!temSemana` era o buraco: perguntava e não guardava pendência
+    expect(GUIADA).not.toMatch(/!temSemana && visual && tema/);
   });
 });
 
 describe("o título diz o que acontece no dia", () => {
   it("não aceita 'Amanhã' nem o nome do dia sozinho", () => {
     // "Amanhã" não diz nada quando a mãe abre a lista três dias depois.
-    expect(GUIADA).toMatch(/O "nome" DIZ O QUE ACONTECE NAQUELE DIA, não a data/);
-    expect(GUIADA).toMatch(/nunca "Amanhã" ou "Sábado" sozinhos/);
+    // A regra MUDOU DE LUGAR em 08/08/2026, junto com a autoria: quem nomeia é
+    // quem compõe. E o gerador dizia o CONTRÁRIO — sugeria "Segunda" como bom
+    // nome, enquanto o condutor proibia. Uma regra, no lugar que decide.
+    expect(CORE).toMatch(/O NOME DIZ O QUE ACONTECE NAQUELE DIA, não a data/);
+    expect(CORE).toMatch(/nunca "Amanhã" ou "Sábado" sozinhos/);
+    expect(CORE).not.toMatch(/NOME LIVRE/);
   });
 });

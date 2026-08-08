@@ -125,7 +125,8 @@ describe("PRIMEIRA EXPERIÊNCIA — sai com rotina, não com formulário", () =>
   });
 
   it("o tema dos cartões nunca atrasa a entrega", () => {
-    expect(ROTINA).toMatch(/TEMA dos cartões é OPCIONAL e NUNCA atrasa a entrega/);
+    expect(ROTINA).toMatch(/TEMA dos cartões NÃO é assunto seu/);
+    expect(ROTINA).toMatch(/tema NUNCA é motivo pra existir cartão/);
   });
 });
 
