@@ -17,7 +17,7 @@ Só o que está aberto. 🔒 = bloqueada.
 |---|---|---|---|---|---|
 | [PEND-007](#pend-007) | Ativação do GPT parada na prova da chave de produção | Ayla/IA | P1 | ABERTA 🔒 | publicar e rodar `provider-check` |
 | [PEND-003](#pend-003) | Preview da Vercel vermelho há vários PRs | Infra/Deploy | P1 | ABERTA 🔒 | ler o log do primeiro preview que falhou |
-| [PEND-002](#pend-002) | Pagamento confirmado no Stripe sem acesso na Kolo | Pagamento/Acesso | P1 | EM EXECUÇÃO | publicar a Etapa 3 e validar a reconciliação em produção |
+| [PEND-002](#pend-002) | Pagamento confirmado no Stripe sem acesso na Kolo | Pagamento/Acesso | P1 | AGUARDANDO VALIDAÇÃO | dar pulso observável à reconciliação (risco 9) |
 | [PEND-001](#pend-001) | Cooldown do convite de assinatura não publicado | Pagamento/Acesso | P1 | EM EXECUÇÃO | revisar o diff, abrir PR, publicar, smoke |
 | [PEND-004](#pend-004) | Rotina/Sequência Visual — auditar antes de redesenhar | Produto | P2 | ABERTA | missão INVESTIGAR do fluxo atual |
 | [PEND-008](#pend-008) | 118 famílias em `trialing` com trial vencido | Dados/Banco | P2 | ABERTA | decidir a regra e corrigir a contagem |
@@ -27,6 +27,7 @@ Só o que está aberto. 🔒 = bloqueada.
 | [PEND-006](#pend-006) | Dois arquivos não rastreados em `lib/conducao/` | Ayla/IA | P2 | ABERTA | identificar a frente dona e decidir |
 | [PEND-012](#pend-012) | RUNBOOK — como operar a Kolo com segurança | Documentação | P2 | ABERTA | levantar o que hoje só existe em memória de agente |
 | [PEND-011](#pend-011) | README aponta para três documentos inexistentes | Documentação | P3 | ABERTA | restaurar os arquivos ou corrigir os links |
+| [PEND-014](#pend-014) | Revisar o protocolo de engenharia com o aprendizado das missões reais | Documentação | P2 | ABERTA | decidir os níveis de risco para correção |
 | [PEND-013](#pend-013) | Mapa do sistema — onde vivem os componentes | Documentação | P3 | ABERTA | listar os fluxos que merecem ponteiro |
 
 ---
@@ -62,13 +63,12 @@ Aberta em: 2026-08-08 · Origem: Fase 0A
 
 ### PEND-002
 **Pagamento confirmado no Stripe sem acesso na Kolo (classe Rochelle)**
-Categoria: Pagamento/Acesso · Prioridade: **P1** · Estado: **EM EXECUÇÃO**
+Categoria: Pagamento/Acesso · Prioridade: **P1** · Estado: **AGUARDANDO VALIDAÇÃO**
 Aberta em: 2026-08-08 · Origem: incidente Rochelle (2026-07-23) → Fase 0B
 
-> Estado voltou de AGUARDANDO VALIDAÇÃO para EM EXECUÇÃO em 2026-08-08: as
-> Etapas 1 e 2 estão publicadas e aguardando pagamento real, mas a **Etapa 3
-> está implementada e ainda não publicada**. Havendo código não publicado na
-> frente, o estado honesto é EM EXECUÇÃO.
+> Etapas 1, 2 e 3 publicadas em 2026-08-08. Não há mais código não publicado
+> nesta frente — só falta evidência real. A Etapa 4 é risco registrado, não
+> trabalho em curso.
 
 - **Impacto:** família paga e continua sem acesso, sem ninguém descobrir até
   ela reclamar. Hoje o dano é **potencial, não ativo** — ver evidência.
@@ -88,7 +88,8 @@ Aberta em: 2026-08-08 · Origem: incidente Rochelle (2026-07-23) → Fase 0B
   *Por quê:* confirmar a ordem exata dos eventos da família `7c764314`.
   *Onde obter:* tabela `assinaturas` no Supabase (guarda `evento`, `payload` e
   `created_at`), ou Stripe → Developers → Events.
-  *Não bloqueia* as Etapas 1 e 2; **bloqueia** a autorização da Etapa 3.
+  *Não bloqueou* nenhuma das três etapas — todas foram feitas sem esse dado.
+  Segue útil só para reconstruir o timeline histórico do incidente.
 - **Evidência operacional (2026-08-08, investigação do "posso vender hoje?"):**
   - existem **três eventos positivos independentes** capazes de conceder acesso
     (`checkout.session.completed`, `invoice.payment_succeeded` e
@@ -114,8 +115,7 @@ Aberta em: 2026-08-08 · Origem: incidente Rochelle (2026-07-23) → Fase 0B
   build verdes.
 - **Branch/commit/PR:** `fix/stripe-escrita-e-autoridade` · `25ca617` · PR #39 ·
   merge `c61d540`
-- **Etapa 3 IMPLEMENTADA (2026-08-08, branch `fix/reconciliacao-divergencia`,
-  NÃO publicada):** o reconciliador deixa de perguntar "quem está em
+- **Etapa 3 IMPLEMENTADA (2026-08-08):** o reconciliador deixa de perguntar "quem está em
   `past_due`?" e passa a perguntar "existe família que deveria ter acesso
   segundo o Stripe e a Kolo não está concedendo?". A população é **vínculo
   Stripe** (filtrado no banco) **+ sem acesso por `assinaturaLiberada`**
@@ -134,12 +134,40 @@ Aberta em: 2026-08-08 · Origem: incidente Rochelle (2026-07-23) → Fase 0B
   sem vínculo** · **população candidata = 0**, ou seja **0 chamadas ao Stripe**
   por execução hoje. Antes → depois desta mudança na população varrida:
   `past_due` = 0 → divergência = 0. O ganho é de **cobertura**, não de volume.
-- **Próximo passo:** **publicar a Etapa 3 e validar a reconciliação em produção
-  sem depender de nova assinatura** — a execução horária do cron já produz
-  evidência observável (`reconciliacao_divergencia`, resumo com candidatas e
-  chamadas ao Stripe).
-- **Riscos conhecidos que seguem abertos nesta pendência** (Etapa 4 — recência
-  pelo relógio do Stripe; **não** autorizada, exige migração):
+- **Etapa 3 PUBLICADA (2026-08-08):** commit `8107a26`, PR #41, merge
+  `2f3a216`. Deployment de **Production** com **success** às 15:34:34Z.
+- **⚠️ Validação da Etapa 3 NÃO comprovada — e o motivo virou achado.** A
+  execução limpa da reconciliação (0 candidatas) registra tudo com severidade
+  `info`, e `logEvent` só persiste `warn+`. Confirmado por leitura em
+  2026-08-08: **zero** linhas de `reconciliacao_divergencia` em `eventos_app`
+  (a tabela está saudável — 132 registros, o último de 07/08). Ou seja: **do
+  lado de fora, "rodou e estava tudo certo" é indistinguível de "não rodou"**.
+  É exatamente a pergunta obrigatória do §11 do protocolo de engenharia,
+  virada contra o próprio conserto. Ver risco 9.
+  A tentativa de provar a vivacidade chamando o cron em produção com o
+  `CRON_SECRET` (seguro: com 0 candidatas o laço não executa, logo 0 chamadas
+  ao Stripe, 0 escritas, 0 WhatsApp) foi **bloqueada pelo sandbox do agente** —
+  não por regra do projeto.
+- **Próximo passo:** **dar um pulso observável à reconciliação** — persistir o
+  resumo uma vez por dia (mesmo padrão de janela já usado na trava de 12h do
+  alerta), para que "o cron rodou e não havia divergência" deixe rastro. Sem
+  isso, a Etapa 3 não tem como ser validada sem esperar uma divergência real.
+- **Riscos, com destino explícito (reavaliados em 2026-08-08):**
+
+  | # | Risco | Destino | Motivo |
+  |---|---|---|---|
+  | 1 | Família sem vínculo Stripe gravado é invisível à reconciliação | **MANTER NA PEND-002** | mesma causa; mitigado pela Etapa 2, que grava o vínculo mesmo em evento neutro. Resolver exige varredura Stripe→Kolo, não autorizada |
+  | 2 | Trava de 12h agrupa várias famílias num alerta só | **RISCO ACEITO** | o alerta é gatilho para olhar, não relatório: a resposta do cron e o `eventos_app` listam cada família. Sem a trava, uma família travada geraria 24 mensagens/dia e o alerta seria ignorado quando importasse |
+  | 3 | Recência entre evidências fortes (Etapa 4) | **MANTER NA PEND-002** | exige migração; não autorizada |
+  | 4 | Concorrência entre evento positivo e negativo real | **MANTER NA PEND-002** | mesma causa do 3 — não fragmentar |
+  | 5 | `invoice.payment_failed` casa por `stripe_customer_id` | **RISCO ACEITO, com medição** | leitura de 2026-08-08: 2 linhas com customer, **2 customers distintos, 0 compartilhados**. Cada família ganha o seu no checkout; compartilhar exigiria intervenção manual |
+  | 6 | `registrarEvento` roda depois dos handlers, e `invoice.*` fica fora da tabela `assinaturas` | **MANTER NA PEND-002** | é a auditoria do mesmo fluxo; abrir pendência separada fragmentaria uma causa só |
+  | 7 | População real = 0 | **NÃO É RISCO — é limitação de validação** | a lógica nova nunca foi exercida com dado real. Não vira pendência; vira o que falta para a baixa |
+  | 8 | Webhook passa a devolver 500 onde devolvia 200 | **MANTER NA PEND-002** | efeito desejado, mas novo: reentregas do Stripe devem aparecer e precisam ser observadas |
+  | 9 | **Execução limpa da reconciliação não deixa rastro persistido** | **MANTER NA PEND-002 — é o próximo passo** | sem pulso observável, "rodou e estava tudo certo" é indistinguível de "não rodou" |
+
+  Detalhe dos itens 3 e 4 (Etapa 4 — recência pelo relógio do Stripe; **não**
+  autorizada, exige migração):
   1. **Ordem/recência entre evidências fortes** — um `subscription.updated`
      genuinamente `past_due` que chegue depois de um evento positivo ainda pode
      rebaixar quem não estiver `active` no instante da leitura. O caso neutro
@@ -172,11 +200,12 @@ Aberta em: 2026-08-08 · Origem: incidente Rochelle (2026-07-23) → Fase 0B
   publicado e exercido em produção.
 - **Baixa (2026-08-08):** Implementado **OK** (Etapas 1, 2 e 3) · Testado **OK**
   (1356 verdes, 50 novos nesta frente) · Regressão **OK** (suíte completa) ·
-  Build **OK** · Publicado **PARCIAL** — Etapas 1 e 2 em `c61d540` com
-  Production success; **Etapa 3 PENDENTE** · Configuração **N/A** — nenhuma
-  configuração nova · **Smoke de pagamento real: PENDENTE** · **Validado em
-  produção com pagamento real: PENDENTE** · **Evidência final: PENDENTE**.
-  **Etapa 4 (recência entre evidências fortes) não implementada — ver riscos.**
+  Build **OK** · Publicado **OK** — Etapas 1 e 2 em `c61d540`, Etapa 3 em
+  `2f3a216`, ambas com Production success · Configuração **N/A** — nenhuma
+  configuração nova · **Reconciliação exercida em produção: PENDENTE** (ver
+  risco 9) · **Smoke de pagamento real: PENDENTE** · **Validado em produção com
+  pagamento real: PENDENTE** · **Evidência final: PENDENTE**.
+  **Etapa 4 (recência entre evidências fortes) não implementada — riscos 3 e 4.**
 - **A PRIMEIRA ASSINATURA REAL depois de 2026-08-08 é smoke monitorado.**
   Conferir, nesta ordem: (1) pagamento confirmado no Stripe; (2) a linha da
   família ficou `active`; (3) acesso liberado em `/admin/familias`; (4) não
@@ -451,6 +480,48 @@ Aberta em: 2026-08-08 · Origem: decisão de governança (2026-08-08)
 
 ---
 
+### PEND-014
+**Revisar o AI-ENGINEERING-PROTOCOL com o aprendizado das primeiras missões reais**
+Categoria: Documentação · Prioridade: **P2** · Estado: **ABERTA**
+Aberta em: 2026-08-08 · Origem: reflexão de processo ao fim das missões da
+PEND-002 (Etapas 1, 2 e 3), 2026-08-08
+
+- **Impacto:** o protocolo trata uma correção de acesso a pagamento e um ajuste
+  de texto com o mesmo peso. Isso empurra para dois lados ruins ao mesmo tempo:
+  cerimônia demais no pequeno, e leitura de menos no grande — porque um
+  documento que cobra tudo de todos passa a ser consultado só quando alguém
+  cobra.
+- **Evidência:** as missões da PEND-002 rodaram o ciclo completo três vezes.
+  Cada item abaixo veio de um custo ou de um erro observado, não de teoria.
+- **Itens a decidir** (nada implementado):
+  1. **Níveis de risco para correção**, como já existe para funcionalidade —
+     evitando ciclo completo em mudança pequena;
+  2. **manter o ciclo completo** para dinheiro, acesso, dado de criança,
+     segurança e integração crítica;
+  3. **fundir o relatório final (§20) e os portões (§21)**, que hoje cobrem o
+     mesmo terreno duas vezes;
+  4. **exigir "teste que morde"**: demonstrar que ao menos um teste relevante
+     falha quando a correção é revertida ou sabotada. Nesta frente isso foi
+     feito por iniciativa própria e pegou o que teste verde não pega;
+  5. **antes de investigar produção, confirmar que o código analisado é o que
+     está publicado** — nesta semana a análise correu horas antes de alguém
+     verificar que produção estava deployando;
+  6. **não tratar métrica ou timestamp de integração externa como medida** sem
+     entender como é produzida — usei tempo de deployment como evidência e era
+     artefato de quando a Vercel cria o registro;
+  7. **todo risco identificado recebe destino explícito** (resolvido · manter ·
+     nova pendência · aceito · descartado), nunca só uma linha no relatório;
+  8. **manter o `AGENTS.md` curto e operacional** e o protocolo grande como
+     referência — o que é seguido sozinho é o que cabe numa tela.
+- **Próximo passo:** decidir item a item o que entra, com você.
+- **Critério de conclusão:** `AI-ENGINEERING-PROTOCOL.md` alterado com as
+  decisões aprovadas, ou cada item recusado registrado com motivo. Nenhum item
+  fica sem destino.
+- **Não bloqueia a PEND-002.**
+- **Agente recomendado:** PROPOR
+
+---
+
 ## Como usar este arquivo
 
 ### Estados
@@ -551,7 +622,7 @@ trimestralmente, o que vier antes.
 
 ---
 
-**Próximo ID livre: PEND-014.**
+**Próximo ID livre: PEND-015.**
 
 > Conferir contra `origin/main`, não contra o seu branch. Dois branches podem
 > reivindicar o mesmo número — o conflito de merge nesta linha é o alarme.
