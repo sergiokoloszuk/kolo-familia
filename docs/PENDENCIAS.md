@@ -618,6 +618,23 @@ PEND-002 (Etapas 1, 2 e 3), 2026-08-08
       incidente. Não corrigir o código nesta fase; quando o RUNBOOK
       ([[PEND-012]]) existir, a mesma regra vira entrada operacional
       ("não remover `CRON_SECRET`").
+  24. **REGRA DOS CINCO — antes de escrever qualquer regra nova, responder:**
+      (1) que problema **comprovado** estamos resolvendo? · (2) qual evidência
+      temos? · (3) **o núcleo já resolve?** · (4) se resolve em parte, qual é
+      exatamente o **delta**? · (5) isso precisa virar regra, ou pode continuar
+      sendo inteligência contextual?
+      **Só depois surge uma decisão.** Nasceu da auditoria genealógica de
+      2026-08-08: das doze regras que escrevemos em D1–D3, **oito já eram
+      norma** — algumas em formulação melhor que a nossa. A regra existe porque
+      a falha histórica desta base não é rigidez, é **competição entre regras**:
+      `FRONTEIRA_DIAGNOSTICO` documenta que a proibição antiga *foi obedecida* e
+      a falha aconteceu assim mesmo, porque seis instruções fortes empurravam no
+      sentido contrário. Regra nova que compete com regra existente perde;
+  25. **consolidar onde a evidência já é forte é mais seguro do que abrir nova
+      investigação.** Método completo fica reservado a quatro casos: dúvida real
+      de produto · muito volume com pouca compreensão · impacto arquitetural
+      transversal · inferência sobre produção sem prova. Fora deles, continuar
+      investigando é **procrastinação metodológica**;
   22. **pendência de produto/experiência precisa do comportamento desejado
       suficientemente definido ANTES da investigação técnica profunda.** A
       investigação compara **ATUAL × DESEJADO** e aponta lacunas e dependências
@@ -707,6 +724,17 @@ do laudo de 06/08) + `docs/auditoria-ayla-prompt.md`
 > sente que a Ayla **ouviu o conjunto, organizou o caos e sabe por onde
 > começar** — sem tirar dela o controle.
 
+> ⚠️ **AUDITORIA GENEALÓGICA (2026-08-08) — leia antes de usar D1–D3.**
+> Comparadas ao núcleo que **já roda em produção** (`lib/conducao/diretrizes.ts`),
+> das doze regras aqui **oito eram duplicação** e uma era **regressão**.
+> **Sobrevivem como delta real apenas três**, marcadas ✅ abaixo:
+> preservação × foco (D1) · "a bifurcação cabe na resposta?" (D2) · modo
+> "aceitou uma oferta" (D3). Mais duas como **evidência**, não regra: os modos
+> de interação e a refutação do teto de turnos.
+> Os números que escrevemos aqui (uma pergunta, três frentes, uma linha, uma
+> palavra, 24–48h) **não são norma** — são estilo, e estão riscados no lugar em
+> vez de apagados, para o aprendizado não se perder.
+
 **D1 · Vários problemas ao mesmo tempo (APROVADA 2026-08-08).**
 São **dois passos separados**, não uma hierarquia só. Misturá-los faz um
 compromisso de amanhã sequestrar uma conversa que precisa tratar o hoje.
@@ -720,22 +748,27 @@ compromisso de amanhã sequestrar uma conversa que precisa tratar o hoje.
    perderam.
    ⚠️ O que conta como risco e o que se faz com ele é **dependência da
    PEND-022** — não definido aqui.
-2. **FOCO DA CONVERSA AGORA.** Não havendo risco que exija ação imediata, o foco
+2. ✅ **FOCO DA CONVERSA AGORA** — *delta real: desempata a tensão entre
+   `REGRA_SEQUENCIA:53` ("perguntar qual pesa mais **ou** recomendar") e
+   `PRINCÍPIO 7` ("PODE e DEVE recomendar com convicção").* Não havendo risco que exija ação imediata, o foco
    é a **raiz provável**: o problema cuja melhora alivia os outros (sono, dor,
    fome e sobrecarga sensorial quase sempre estão embaixo de "comportamento").
-   Empate desfaz-se pelo **alívio mais rápido** — o que pode melhorar em 24–48h.
+   Empate desfaz-se pelo **alívio mais rápido**. ~~24–48h~~ — precisão
+   inventada, não medida: sai como norma.
    Confiança se constrói com uma coisa que funcionou, não com o plano mais
    completo.
 
 **Forma (a parte que impede isso de virar interrogatório):**
 - **a Ayla escolhe e assume a escolha** — não devolve a priorização para quem
-  está em sobrecarga (*"por qual você quer começar?"* cobra uma decisão cara e
+  está em sobrecarga. ⚠️ **JÁ EXISTIA** no `PRINCÍPIO 7`; aqui é
+  desambiguação, não regra nova (*"por qual você quer começar?"* cobra uma decisão cara e
   gasta um turno antes da primeira ajuda);
-- **o porquê cabe em uma linha.** Se precisa de parágrafo, a escolha está fraca;
-- **trocar custa uma palavra** — *"me diz numa palavra que eu troco"*: a mãe
-  mantém o controle sem pagar um turno por isso;
-- **devolver o conjunto organizado, agrupando em até três frentes sempre que
-  possível.** Não é regra rígida: a intenção é **não reproduzir o caos**, e nada
+- ~~o porquê cabe em uma linha~~ → **ESTILO**. A intenção (não justificar em
+  parágrafo) vale; o limite era arbitrário;
+- **trocar precisa ser barato** — princípio. ~~"me diz numa palavra que eu
+  troco"~~ → **ESTILO**: virando frase fixa, vira tique;
+- **devolver o conjunto organizado.** ~~em até três frentes~~ → o número é
+  arbitrário; a intenção é **não reproduzir o caos**. Não é regra rígida: a intenção é **não reproduzir o caos**, e nada
   importante que a pessoa trouxe pode ser omitido — em especial compromisso
   futuro.
 
@@ -746,14 +779,14 @@ compromisso de amanhã sequestrar uma conversa que precisa tratar o hoje.
 **Orientar é o padrão. Perguntar é a exceção, e precisa comprar uma mudança
 real de conduta.** Uma pergunta só se paga quando passa nos três filtros:
 
-1. **a resposta mudaria a orientação** — se os dois caminhos levam ao mesmo
-   conselho, a pergunta é custo puro;
-2. **a bifurcação não cabe de forma simples na própria resposta** — se cada
+1. **a resposta mudaria a orientação** ⚠️ **JÁ EXISTIA** — é o FREIO
+   ANTI-ANAMNESE do `MAPA_FUNCIONAL` e a `VOZ:2`;
+2. ✅ **a bifurcação não cabe de forma simples na própria resposta** — se cada
    braço cabe numa frase, entregue os dois; se cada braço é um protocolo,
-   pergunte;
-3. **a Ayla ainda não sabe** — se está no perfil, na conversa de ontem ou já foi
-   dito nesta conversa, não é pergunta: é **falha de memória**, e o conserto é
-   na PEND-018, não na condução.
+   pergunte. *Delta real: não existe no núcleo.*
+3. **a Ayla ainda não sabe** ⚠️ **JÁ EXISTIA** — `PRINCÍPIO 6` e `VOZ:2`
+   ("ela já respondeu? está no perfil?"). Segue valendo que pergunta repetida é
+   **falha de memória** (PEND-018), não de condução.
 
 **Forma:**
 - **valor antes de cobrar esforço** — a primeira resposta entrega algo antes de
@@ -763,7 +796,10 @@ real de conduta.** Uma pergunta só se paga quando passa nos três filtros:
   ⚠️ **Não dar orientação prematura só para cumprir a regra de orientar antes de
   perguntar** — conselho apressado custa mais confiança do que uma pergunta bem
   colocada;
-- **uma pergunta por vez** — duas já é formulário;
+- ~~uma pergunta por vez~~ **REMOVIDA — era REGRESSÃO.** A `VOZ:2` já diz, e
+  melhor: *"não é contar interrogações: 'uma pergunta por turno' durante cinco
+  turnos cansa igual. O que se mede é quanto ela demora pra sair com algo na
+  mão."* Contar perguntas é a métrica errada;
 - **confirmar quando houver evidência suficiente para uma hipótese**
   (*"pelo que você me contou, ele acorda e não volta a dormir — é isso?"*);
   **não havendo**, fazer uma pergunta **curta e discriminante, sem induzir a
@@ -783,7 +819,9 @@ vinte mensagens, e a conversa mais grave (criança que se machuca para comunicar
 precisou de profundidade. O teto teria estragado as duas. Fica registrado que a
 regra caiu por dado, não por opinião.
 
-1. **Toda resposta entrega valor — INVARIANTE.** Vale como valor: entendimento ·
+1. **Toda resposta entrega valor — INVARIANTE.** *(lista ILUSTRATIVA, não
+   exaustiva; a taxonomia canônica é `VOZ:4` — fazer/falar/observar/testar)*
+   Vale como valor: entendimento ·
    organização · explicação · orientação · estratégia · recurso · reconhecimento
    de evolução · recuperação de memória relevante · execução de uma entrega · ou
    uma pergunta discriminante contextualizada. **Nunca apenas coleta sem ganho
@@ -792,7 +830,9 @@ regra caiu por dado, não por opinião.
    aprofundamento, memória, explicação, estratégia, feedback, ajuste, novas
    descobertas e entregas sucessivas justificam duração. **O indicador de
    problema não é a duração — é a estagnação.**
-3. **O teto é de PERGUNTAS SEM ENTREGA.** Duas perguntas consecutivas sem
+3. **O teto é de PERGUNTAS SEM ENTREGA** ⚠️ **JÁ EXISTIA melhor** — `VOZ:3`,
+   *"uma unidade cognitiva por turno… nunca abra duas investigações na mesma
+   resposta"*. Fica como ponteiro, não como regra nova. Duas perguntas consecutivas sem
    nenhum valor entre elas é sinal forte de falha de condução — regra forte e
    **auditável**, não proibição técnica absoluta (segurança pode exigir
    exceção, ver PEND-022). *Perguntar é permitido quando compra precisão;
@@ -812,7 +852,8 @@ regra caiu por dado, não por opinião.
    a uma entrega específica, a um compromisso, a uma conquista ou ao próprio uso
    do produto. *Evidência:* na amostra, uma resposta que cuidou da mãe **e** da
    criança foi melhor do que trazer a criança de volta à força.
-7. **Modo "aceitou uma oferta" tem regra própria.** A evidência mostrou que
+7. ✅ **Modo "aceitou uma oferta" tem regra própria** — *delta real, nascido da
+   evidência de produção; não existe no núcleo.* A evidência mostrou que
    responder *"sim"/"pode ser"* a uma oferta da Ayla é **o modo mais frequente**
    — e nele a entrega **não pode nascer do zero**. Antes de gerar, usar o que já
    se sabe: aquela criança · o desafio atual · histórico · preferências ·
@@ -820,8 +861,9 @@ regra caiu por dado, não por opinião.
    informação suficiente, **reconhecer a limitação** ou fazer a mínima pergunta
    que realmente altere o resultado. → registrado também em PEND-019, com
    dependência de PEND-018.
-8. **Comportamentos de encanto — PRINCÍPIOS DE QUALIDADE, esperados quando
-   aplicáveis** (⚠️ nenhum deles vira tique obrigatório; o encantamento vem da
+8. **Comportamentos de encanto → ESTILO.** Três dos quatro já estão na `VOZ:1`
+   e `VOZ:4`; o único delta é (d), pedir consentimento para guardar. Não são
+   comportamentos esperados em toda conversa (⚠️ nenhum deles vira tique obrigatório; o encantamento vem da
    **pertinência**):
    a. recuperar um detalhe específico e pertinente daquela criança, com
       naturalidade;
@@ -847,6 +889,18 @@ regra caiu por dado, não por opinião.
   4. quando ela muda de estratégia porque a anterior não funcionou, e como sabe;
   5. o que muda entre WhatsApp e Web (ritmo, tamanho, o que só existe num canal);
   6. como retoma contexto de dias atrás sem repetir pergunta já respondida.
+- **A CONSOLIDAÇÃO CANDIDATA DO NÚCLEO deve declarar duas lacunas** — sem elas o
+  documento seria lido como "arquitetura completa da inteligência", e não é:
+  1. **CONDUÇÃO PROATIVA** — **74% dos blocos de conversa** são iniciados pela
+     Ayla (681 de 914, medido em 2026-08-08) e **não existe uma única regra de
+     condução proativa** no núcleo. Investigação aberta.
+  2. **USO E RECUPERAÇÃO DA BASE DE CONHECIMENTO** — *"o núcleo define como a
+     Ayla deve raciocinar, mas ainda não foi verificado se o conhecimento certo
+     chega a esse raciocínio, no momento certo e com o contexto certo."*
+     Não auditado nesta frente. → PEND-017.
+  ⚠️ O candidato nasce marcado **CANDIDATO — NÃO NORMATIVO**, mora num lugar só
+  e tem data de decisão. Candidato sem prazo vira fonte paralela — foi assim que
+  `voz_ayla` virou 4 KB de identidade morta e ativa no banco.
 - **Já existe, não recomeçar do zero:** `lib/conducao/diretrizes.ts`
   (`nucleoConducao`, fonte única dos 2 canais) · `docs/auditoria-ayla-prompt.md`
   · decisor de entrega e fechador já no ar.
@@ -910,6 +964,28 @@ Aberta em: 2026-08-08 · Origem: consolidação da PEND-010 +
   braços já escritos** (*se a criança faz X, isto; se faz Y, aquilo*). Conteúdo
   que só existe na versão genérica **obriga a Ayla a perguntar** — ou seja, a
   qualidade do acervo determina quantas perguntas a família responde.
+- **SUB-FRENTE: ARQUITETURA DE RECUPERAÇÃO — não auditada (2026-08-08).**
+  Esta ficha cobre **curadoria** (o que entra no acervo); a linha "como é
+  recuperado" não tem escopo nem critério próprios. A arquitetura de leitura é
+  problema distinto, com método distinto (AUDITAR técnico, não PROPOR de
+  produto) — mas **mesma causa**, então fica aqui em vez de virar ficha nova.
+  **A pergunta central:** *a busca atual recupera **texto parecido com a
+  mensagem**, ou o **conhecimento necessário para raciocinar sobre a necessidade
+  daquela criança**?* A diferença é enorme — e é o mesmo erro das ferramentas:
+  não deixar uma palavra-chave escolher cedo demais.
+  **A investigar:** fontes existentes · quais rodam em produção · Web × WhatsApp
+  · quando ocorre a recuperação · como a consulta é formada e **quem decide o
+  que buscar** · quantos trechos entram e como são ranqueados · busca semântica,
+  lexical, híbrida ou seleção fixa · se perfil, histórico, idade e foco da
+  conversa influenciam · se o modelo vê fonte/título/tema ou só texto · como
+  resolve conteúdo conflitante · como sabe que **não** encontrou o suficiente ·
+  conteúdo que nunca é recuperado · quando responde de conhecimento próprio
+  existindo material melhor · **rastreabilidade: dá para saber que conhecimento
+  sustentou uma resposta?**
+  **Validação exigida, com conversas reais:** para 10–15 casos já auditados —
+  MENSAGEM → CONHECIMENTO RECUPERADO → CONHECIMENTO DESEJÁVEL → RESPOSTA →
+  **o erro foi de conhecimento, de raciocínio ou de condução?** Sem isso,
+  corrige-se com prompt um problema que nasce na recuperação.
 - **Depende de:** desenhar junto com PEND-016 e PEND-018.
 - **Admin:** ADMIN PRECISA DE AJUSTE — administrar acervo, e ver o que foi
   recuperado e o que foi usado.
