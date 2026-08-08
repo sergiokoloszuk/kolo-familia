@@ -988,6 +988,40 @@ regra caiu por dado, não por opinião.
   ⚠️ **"Fato vencido" continua separado de "lacuna preenchida"** — a uva-passa
   mostrou que são causas diferentes: uma inventa o que não sabe, a outra confia
   demais no que sabia (a segunda é PEND-018).
+- **DESABAFO × MISSÃO — leitura de conversas reais, 2026-08-08.** 44 mensagens
+  de estado do adulto **sem pedido explícito**, em 17 famílias. Sem contagem de
+  turno e sem procurar frase fixa, como a D3 exige.
+  - **A dicotomia não existe no material.** Quase todo desabafo vem **com um
+    fato sobre a criança dentro** (*"a Manu tem chegado muito cansada da escola,
+    acho que esta escola não é boa"*). Tratar "desabafo" e "pedido de ajuda"
+    como dois modos a escolher é uma divisão que os dados não sustentam — a
+    pergunta útil não é *qual dos dois é*, e sim **o que fazer com o fato que
+    veio junto do cansaço**.
+  - **CONTRAEXEMPLO FORTE (22/07) — o desabafo AUMENTOU depois de acolher e
+    investigar.** A mãe abre com o cansaço da filha; a Ayla acolhe e faz três
+    perguntas; a mãe responde com um dado bom (*mudou de professora há dois
+    meses*); a Ayla acolhe de novo e pergunta mais; e aí vem **"Não aguento
+    mais. Vou tirar ela desta escola amanhã"**. Só então entra algo concreto.
+    **"Não aguento mais" apareceu DEPOIS de dois turnos de investigação, não
+    antes.** É correlação, não prova — mas é exatamente o caso que qualquer
+    desenho de desabafo precisa explicar, e desmente a leitura de que investigar
+    é neutro enquanto se acolhe.
+  - **CASO POSITIVO — o piso funcionou como projetado (24/07).** Diante de
+    *"não aguento mais, acho que vou desistir de tudo"*, a Ayla **não** disparou
+    o CVV: pediu para entender. A resposta seguinte foi *"nada dá certo na minha
+    vida"*. É o "confirme o significado antes de acionar crise" produzindo o
+    comportamento certo num caso ambíguo de verdade. **Vale como terceiro caso
+    de risco desta base** — e, como os outros dois, **não escalou para ninguém**
+    (PEND-022).
+  - **⚠️ O CORTE QUANTITATIVO FALHOU, e isso fica registrado.** Classifiquei as
+    respostas por presença de conteúdo prático usando marcadores de formatação
+    (lista, passo numerado) — **e o WhatsApp entrega orientação em prosa**.
+    Respostas com orientação clara ("deixa ele escolher um objeto antes de
+    sair") foram contadas como "sem prático". **Os quatro grupos que esse corte
+    produziu não valem nada** e não devem ser reaproveitados. O segundo
+    indicador, "a mãe voltou depois?", ficou entre 89% e 100% em **todos** os
+    grupos: não discrimina. **Medir desabafo por forma da resposta não funciona;
+    exige leitura.**
 - **CLASSIFICAÇÃO DOS GUARDRAILS — primeira passada, 2026-08-08.** A pergunta
   aplicada a cada regra do núcleo foi: *se memória, conhecimento, ferramenta e
   infraestrutura fossem ideais, eu ainda precisaria desta regra?* Serve para
