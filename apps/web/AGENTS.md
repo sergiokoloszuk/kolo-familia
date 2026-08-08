@@ -17,3 +17,10 @@ deploy e fechamento de frente — estão em
 É leitura obrigatória antes de qualquer alteração relevante, e vale também
 para quem estiver trabalhando só dentro de `apps/web/`.
 
+Junto com ele, dois documentos permanentes valem aqui dentro do mesmo jeito:
+[../../docs/PENDENCIAS.md](../../docs/PENDENCIAS.md) (fonte oficial do que está
+aberto — consultar antes, registrar achado fora de escopo durante, informar os
+IDs no final) e
+[../../docs/FEATURE-DELIVERY-PROTOCOL.md](../../docs/FEATURE-DELIVERY-PROTOCOL.md)
+(obrigatório quando a mudança cria ou altera algo que uma família percebe).
+

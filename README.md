@@ -7,6 +7,9 @@ para terapeutas e escola.
 ## Documentação
 
 - **Protocolo de engenharia (humanos e agentes de IA):** [docs/AI-ENGINEERING-PROTOCOL.md](docs/AI-ENGINEERING-PROTOCOL.md) — obrigatório antes de mexer no código.
+- **Protocolo de entrega de funcionalidade:** [docs/FEATURE-DELIVERY-PROTOCOL.md](docs/FEATURE-DELIVERY-PROTOCOL.md) — o que provar para dizer que está pronta.
+- **Pendências abertas (fonte oficial):** [docs/PENDENCIAS.md](docs/PENDENCIAS.md) · histórico em [docs/PENDENCIAS-ARQUIVO.md](docs/PENDENCIAS-ARQUIVO.md)
+- **Comportamento de cada funcionalidade:** [docs/specs/](docs/specs/)
 - **PRD do produto pleno:** [docs/PRD_Kolo_Familia_v3.1.md](docs/PRD_Kolo_Familia_v3.1.md)
 - **Roadmap de implantação:** [docs/Roadmap_Implantacao_v2.md](docs/Roadmap_Implantacao_v2.md) — 15 fases.
 - **Explicação das funcionalidades:** [docs/Explicacao_Funcionalidades.md](docs/Explicacao_Funcionalidades.md)

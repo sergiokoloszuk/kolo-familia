@@ -10,6 +10,33 @@ observabilidade, segurança, validação, deploy e fechamento de frente.
 Ler antes de começar qualquer alteração relevante. O resumo abaixo não
 substitui o documento.
 
+## Os outros dois documentos permanentes
+
+**[docs/PENDENCIAS.md](docs/PENDENCIAS.md)** é a **fonte oficial** do que está
+aberto — memória de agente, conversa e relatório ajudam no contexto, mas o
+estado válido está lá. Em toda missão:
+
+- **ANTES:** consultar as pendências da categoria e dos arquivos que a missão
+  toca. Pendência registrada é investigação anterior, com data e evidência.
+- **DURANTE:** achado relevante fora do escopo vira pendência registrada — não
+  correção silenciosa, e não ampliação da missão.
+- **NO FINAL:** informar quais `PEND-XXX` foram criadas, atualizadas ou
+  concluídas. Baixa só com o critério de conclusão comprovado.
+
+**[docs/FEATURE-DELIVERY-PROTOCOL.md](docs/FEATURE-DELIVERY-PROTOCOL.md)** vale
+**quando a missão cria ou altera algo que uma família percebe** — e aí é de
+leitura obrigatória antes de começar. Correção de defeito, refatoração e
+investigação seguem só o protocolo de engenharia.
+
+São oito portões — problema e dono · descoberta · conversa mínima e dados ·
+jornada e canais · identidade e alvo · continuidade · quando dá errado · prova
+e entrega — com dois níveis de escrutínio acima do mínimo (MÉDIA e CRÍTICA), e
+duas perguntas que mandam no resto: **"funciona para quem não sabe que
+existe?"** e **"o que acontece amanhã?"**. `IMPLEMENTADA ≠ PRONTA`.
+
+O comportamento de cada funcionalidade específica vive em
+[docs/specs/](docs/specs/).
+
 ## O que ele exige, em uma tela
 
 - **Investigar antes de alterar.** A ordem é INVESTIGAR → BASELINE → CAUSA
