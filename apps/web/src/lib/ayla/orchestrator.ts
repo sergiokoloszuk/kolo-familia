@@ -1363,10 +1363,48 @@ async function carregarLacunasKoloVivo(
   }
 }
 
-/** Já convidou essa família pra assinar nas últimas 12h? (dedup do convite) */
-async function convidouAssinarRecente(supabase: SupabaseClient, familyId: string): Promise<boolean> {
-  const desde = new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString();
-  const { data } = await supabase
+/** Marca de reserva do convite — vive em `ayla_send_log`, fora do fluxo de envio. */
+const RESERVA_NUDGE = "assinatura_nudge_reserva";
+const JANELA_NUDGE_MS = 12 * 60 * 60 * 1000;
+/**
+ * A reserva olha para trás só o tempo de uma rajada, NÃO as 12h.
+ *
+ * `ayla_messages` só ganha linha quando o envio de fato sai (ver
+ * `enviarEPersistir`), então é ele que sustenta o cooldown — e um envio que
+ * falha volta a ser elegível na mensagem seguinte, como deve. Se a reserva
+ * também olhasse 12h, uma reserva órfã (o envio falhou depois dela) silenciaria
+ * a família por 12h por um convite que nunca chegou.
+ */
+const JANELA_RAJADA_MS = 2 * 60 * 1000;
+
+/**
+ * PODE CONVIDAR ESTA FAMÍLIA PRA ASSINAR AGORA?
+ *
+ * O nome antigo (`convidouAssinarRecente`) dizia "dedup do convite" e não
+ * deduplicava nada: o retorno só escolhia entre o texto longo e o curto, e o
+ * envio saía sempre. Toda mensagem que entrava de uma família sem acesso virava
+ * um convite.
+ *
+ * Simone, 23/07/2026: 4 convites em 6 SEGUNDOS (uma rajada de 4 desabafos), e
+ * 15 no dia. Onze deles depois de ela já ter pago — porque o acesso só foi
+ * gravado 19h depois (isso é outra frente; aqui o que se corrige é a repetição).
+ *
+ * A checagem tem que sobreviver a invocações simultâneas: numa rajada, as 4
+ * leituras podem acontecer antes de qualquer escrita. Por isso o padrão é o
+ * mesmo de `reservarEnvioProativo` — RESERVAR primeiro, depois conferir quem
+ * chegou antes. A função de lá não serve direto: ela checa segurança, compete
+ * contra todas as proativas da janela e aplica isenções de cadência, então o
+ * convite bloquearia proativas e seria bloqueado por elas.
+ */
+export async function reservarConviteAssinatura(
+  supabase: SupabaseClient,
+  familyId: string,
+): Promise<boolean> {
+  const agora = Date.now();
+  const desde = new Date(agora - JANELA_NUDGE_MS).toISOString();
+
+  // Convite REALMENTE enviado na janela — cobre o histórico e o caso comum.
+  const { data: enviados } = await supabase
     .from("ayla_messages")
     .select("id")
     .eq("family_account_id", familyId)
@@ -1374,7 +1412,46 @@ async function convidouAssinarRecente(supabase: SupabaseClient, familyId: string
     .eq("tipo", "assinatura_nudge")
     .gte("created_at", desde)
     .limit(1);
-  return (data?.length ?? 0) > 0;
+  if ((enviados?.length ?? 0) > 0) return false;
+
+  try {
+    const { data: minha, error } = await supabase
+      .from("ayla_send_log")
+      .insert({
+        family_account_id: familyId,
+        template_key: RESERVA_NUDGE,
+        status: "enfileirada",
+        payload: { reservadoEm: new Date().toISOString() },
+      })
+      .select("id, created_at")
+      .single();
+    // Sem reserva não dá pra resolver corrida — envia, que é o comportamento
+    // legítimo (família sem acesso). Repetir é menos grave que emudecer.
+    if (error || !minha) return true;
+
+    const { data: naJanela } = await supabase
+      .from("ayla_send_log")
+      .select("id, created_at")
+      .eq("family_account_id", familyId)
+      .eq("template_key", RESERVA_NUDGE)
+      .gte("created_at", new Date(agora - JANELA_RAJADA_MS).toISOString());
+
+    const perdi = (naJanela ?? []).some(
+      (o) =>
+        o.id !== minha.id &&
+        (String(o.created_at) < String(minha.created_at) ||
+          (String(o.created_at) === String(minha.created_at) && String(o.id) < String(minha.id))),
+    );
+    if (perdi) {
+      // Some com a própria reserva: ela não virou envio, e deixá-la para trás
+      // bloquearia a janela seguinte por um convite que nunca existiu.
+      await supabase.from("ayla_send_log").delete().eq("id", minha.id);
+      return false;
+    }
+    return true;
+  } catch {
+    return true;
+  }
 }
 
 /** Avisa a admin (WhatsApp) que um número parece errado/criança, com o número e
@@ -1727,11 +1804,21 @@ export async function processInbound(
   if (!(await aylaServicoLiberado(supabase, family.id))) {
     const ctxA = await loadFamiliaParaEnvio(supabase, family.id);
     if (ctxA) {
+      // COOLDOWN REAL: um convite por família a cada 12h. O gate de acesso
+      // continua valendo (a conversa não segue sem assinatura) — o que para de
+      // acontecer é o convite se repetir a cada mensagem.
+      const podeConvidar = await reservarConviteAssinatura(supabase, family.id);
+      if (!podeConvidar) {
+        console.log(`[ayla:assinatura] convite suprimido pelo cooldown de 12h — família ${family.id}`);
+        return { tratada: true, familia: family.id };
+      }
       const link = await gerarMagicLink(supabase, { familyId: family.id, next: "/assinatura" });
-      const jaConvidou = await convidouAssinarRecente(supabase, family.id);
-      const texto = jaConvidou
-        ? `🌿 Pra gente continuar, é só assinar aqui:\n${link}`
-        : `Oi, ${ctxA.nomeMae}! Eu adoraria seguir te ajudando 🌿 Mas seu período grátis acabou. Pra a gente continuar — estratégias, rotina, tudo o que você já conhece — é só assinar aqui:\n${link}\n\nO que você me contou fica tudo guardado. 💛`;
+      // A variante curta ("🌿 Pra gente continuar…") existia para o convite
+      // REPETIDO dentro das 12h. Com o cooldown, esse convite não acontece
+      // mais — o ramo virou inalcançável, então sai. Nenhuma mensagem que a
+      // família recebia deixa de existir: fora da janela, o texto sempre foi
+      // este. Se um segundo convite precisar de outra voz, isso é política.
+      const texto = `Oi, ${ctxA.nomeMae}! Eu adoraria seguir te ajudando 🌿 Mas seu período grátis acabou. Pra a gente continuar — estratégias, rotina, tudo o que você já conhece — é só assinar aqui:\n${link}\n\nO que você me contou fica tudo guardado. 💛`;
       const resp = await enviarEPersistir(supabase, {
         family_account_id: family.id,
         membro_atipico_id: null,
