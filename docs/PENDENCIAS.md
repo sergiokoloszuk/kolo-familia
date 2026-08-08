@@ -770,11 +770,79 @@ real de conduta.** Uma pergunta só se paga quando passa nos três filtros:
   resposta**;
 - **nunca perguntar de novo** algo disponível na conversa ou na memória.
 
+**D3 · Tempo até valor, e o que conta como avanço (APROVADA 2026-08-08,
+depois de validação contra 15 conversas reais).**
+
+> **MISSÃO ESTÁVEL · CONDUÇÃO ADAPTATIVA · O CAMINHO MAIS CURTO QUE AINDA SERVE
+> ÀQUELA FAMÍLIA NAQUELE MOMENTO.**
+
+⚠️ **A hipótese original desta decisão foi refutada pela evidência.** Havia um
+"teto de 3 turnos". A amostra mostrou que **as melhores conversas são longas** —
+a única manifestação espontânea de satisfação do conjunto apareceu depois de
+vinte mensagens, e a conversa mais grave (criança que se machuca para comunicar)
+precisou de profundidade. O teto teria estragado as duas. Fica registrado que a
+regra caiu por dado, não por opinião.
+
+1. **Toda resposta entrega valor — INVARIANTE.** Vale como valor: entendimento ·
+   organização · explicação · orientação · estratégia · recurso · reconhecimento
+   de evolução · recuperação de memória relevante · execução de uma entrega · ou
+   uma pergunta discriminante contextualizada. **Nunca apenas coleta sem ganho
+   perceptível para o usuário.**
+2. **Não existe teto de turnos.** Conversa longa não é falha por definição:
+   aprofundamento, memória, explicação, estratégia, feedback, ajuste, novas
+   descobertas e entregas sucessivas justificam duração. **O indicador de
+   problema não é a duração — é a estagnação.**
+3. **O teto é de PERGUNTAS SEM ENTREGA.** Duas perguntas consecutivas sem
+   nenhum valor entre elas é sinal forte de falha de condução — regra forte e
+   **auditável**, não proibição técnica absoluta (segurança pode exigir
+   exceção, ver PEND-022). *Perguntar é permitido quando compra precisão;
+   interrogar não.*
+4. **Enquanto não há avanço, cada resposta encurta a distância até ele.** A Ayla
+   precisa saber responder internamente: o que já entendi · o que já posso
+   entregar · o que ainda falta · essa informação muda mesmo o próximo passo ·
+   estou mais perto de algo útil ou só acumulando dados. Faltando algo
+   essencial, **declarar** — *"tem uma coisa que muda bastante o que faz sentido
+   tentar aqui…"* é melhor que continuar coletando sem mostrar direção.
+5. **Desabafo muda o ritmo, não a missão — HEURÍSTICA**, não fluxo obrigatório.
+   Acolher quando necessário, sem transformar o acolhimento em destino
+   permanente, e **sem forçar a criança artificialmente** para dentro do
+   assunto. A missão é norte disponível; a ponte precisa ser natural.
+6. **Criança como eixo é HEURÍSTICA, não regra cega.** Há momentos em que o
+   melhor atendimento responde à necessidade da mãe, a uma questão operacional,
+   a uma entrega específica, a um compromisso, a uma conquista ou ao próprio uso
+   do produto. *Evidência:* na amostra, uma resposta que cuidou da mãe **e** da
+   criança foi melhor do que trazer a criança de volta à força.
+7. **Modo "aceitou uma oferta" tem regra própria.** A evidência mostrou que
+   responder *"sim"/"pode ser"* a uma oferta da Ayla é **o modo mais frequente**
+   — e nele a entrega **não pode nascer do zero**. Antes de gerar, usar o que já
+   se sabe: aquela criança · o desafio atual · histórico · preferências ·
+   estratégias anteriores · respostas anteriores · contexto recente. Sem
+   informação suficiente, **reconhecer a limitação** ou fazer a mínima pergunta
+   que realmente altere o resultado. → registrado também em PEND-019, com
+   dependência de PEND-018.
+8. **Comportamentos de encanto — PRINCÍPIOS DE QUALIDADE, esperados quando
+   aplicáveis** (⚠️ nenhum deles vira tique obrigatório; o encantamento vem da
+   **pertinência**):
+   a. recuperar um detalhe específico e pertinente daquela criança, com
+      naturalidade;
+   b. reconhecer com precisão o que a mãe percebeu ou fez bem — não elogio
+      genérico;
+   c. explicar o porquê no nível do funcionamento da criança, em vez de só
+      prescrever;
+   d. surgindo descoberta nova e relevante, **pedir consentimento para guardar**
+      e depois tornar visível que foi incorporada.
+9. **Modos de interação observados (evidência, não taxonomia):** aceitação de
+   oferta proativa · pedido concreto · relato de conquista · pergunta
+   operacional sobre o produto · sobrecarga/gravidade · comando direto.
+   Registrado como prova de que **uma única condução não serve a todas as
+   conversas** — a taxonomia final fica para decisão futura.
+
 **Decisões seguintes deste bloco, ainda a definir com produto:**
   1. ~~como a Ayla escolhe **um** foco quando a mãe traz três problemas;~~
      **decidido em D1**;
   2. ~~quando perguntar e quando orientar;~~ **decidido em D2**;
-  2b. quantas interações são aceitáveis antes da primeira ajuda prática;
+  2b. ~~quantas interações antes da primeira ajuda prática;~~ **decidido em
+     D3 — não há teto de turnos; o teto é de perguntas sem entrega**;
   3. o que é "direção prática" — o que fazer, o que falar, que atividade;
   4. quando ela muda de estratégia porque a anterior não funcionou, e como sabe;
   5. o que muda entre WhatsApp e Web (ritmo, tamanho, o que só existe num canal);
@@ -796,6 +864,14 @@ real de conduta.** Uma pergunta só se paga quando passa nos três filtros:
   **Nasceu da D2:** contar **quantas perguntas** antecederam a primeira ajuda e
   **quantas eram repetidas** de algo já sabido — é o indicador que denuncia
   interrogatório sem ninguém precisar ler conversa por conversa.
+  **Nasceu da D3 (métricas):** perguntas **consecutivas** antes de qualquer
+  entrega · perguntas repetidas sobre informação já conhecida · turnos até a
+  primeira entrega relevante · entregas nascidas de *"sim/pode ser"* e **quanto
+  usaram contexto real da criança** · perda ou troca de identidade da criança ·
+  atraso entre promessa e entrega · uso efetivo de memória · retorno da família
+  depois de uma estratégia ou artefato.
+  ⚠️ **Não medir "conversa longa" como problema isolado** — é preciso
+  distinguir **profundidade de estagnação**.
 - **Critério de conclusão:** DESEJADO preenchido e aprovado; investigação
   ATUAL × DESEJADO concluída com lacunas nomeadas. Execução é frente seguinte.
 - **Agente recomendado:** PROPOR (depois do DESEJADO)
@@ -864,6 +940,15 @@ Aberta em: 2026-08-08 · Origem: consolidação da PEND-010 +
   3. o que acontece quando duas informações se contradizem.
 - **Já desenhado, não recomeçar:** `docs/perfil-vivo-fatos-versionados.md`
   (fatos datados + proveniência + visão derivada) — decidido e **não construído**.
+- **Evidência de produção (amostra de 15 conversas, 2026-08-08):** a memória
+  funcionando é o que mais encanta — retomar um detalhe específico da criança, e
+  pedir consentimento para guardar uma descoberta nova, apareceram como os
+  melhores momentos do conjunto. E a **troca de identidade da criança apareceu
+  em conversa real**: a tela mostrava um irmão enquanto a conversa tratava da
+  outra criança. É desta ficha, não da condução.
+- **Requisito herdado de PEND-016 · D3 (2026-08-08):** a regra 7 (entrega
+  nascida de *"sim"*) só é cumprível se houver o que recuperar sobre a criança.
+  Sem isso, a entrega mais frequente da Kolo é genérica por construção.
 - **Requisito herdado de PEND-016 · D2 (2026-08-08):** pergunta repetida sobre
   algo que a família já contou **é falha desta ficha, não da condução** — e é
   mensurável: dá para contar quantas perguntas da Ayla tinham resposta
@@ -896,6 +981,14 @@ Aberta em: 2026-08-08 · Origem: consolidação da PEND-010 (itens 5 e 6) +
   e "Cadê?" — 3 planos sem pedido (#5) · `tema` corrompido com andaime de prompt
   virando título de PDF na casa da família (#6). Registrado também: planos
   saindo **sem seção prática** por falha silenciosa em chamadas paralelas.
+- **Evidência de produção (amostra, 2026-08-08) — dois achados com destino
+  aqui:** (a) **entrega genérica nascida de "sim"** — o modo mais frequente da
+  amostra é a mãe aceitar uma oferta com uma palavra, e o artefato nascer sem
+  nada que ela tenha contado naquele momento; a regra 7 da D3 exige usar o que
+  já se sabe da criança antes de gerar (**depende de PEND-018**); (b)
+  **latência** — há conversas em que a mãe espera, cobra a entrega e recebe
+  pedido de desculpas pela demora. Promessa sem entrega no mesmo fôlego é dívida
+  desta ficha.
 - **Requisito herdado de PEND-016 · D1 (2026-08-08):** o foco escolhido na
   conversa é o que define qual estratégia é entregue — a entrega não escolhe o
   próprio tema.
@@ -944,6 +1037,11 @@ Aberta em: 2026-08-08 · Origem: consolidação da PEND-010 (itens 23, 24, 25) +
   2. como a Ayla apresenta uma funcionalidade no momento em que ela serve;
   3. o que acontece no aviso de término, na retrospectiva e no convite;
   4. o que muda depois de assinar — e depois de **não** assinar.
+- **Evidência de produção (amostra, 2026-08-08):** aparecem **duas mensagens
+  proativas seguidas antes de qualquer resposta da mãe** em vários blocos — é
+  ruído de cadência, e acontece antes de qualquer regra de condução. Some-se a
+  isto que **74% dos blocos de conversa são iniciados pela Ayla** (681 de 914):
+  a jornada proativa é, em volume, o produto principal — e é a menos desenhada.
 - **Estado conhecido:** não existe jornada por dia (só gatilhos por estado);
   quem se engaja recebe **menos** proativa; a celebração é inalcançável.
 - **Depende de:** nada de A/B/C para começar o desenho — **pode andar em
@@ -993,6 +1091,13 @@ Aberta em: 2026-08-08 · Origem: consolidação da PEND-010
 
 - **Impacto:** sem isto, a Ayla recomenda amanhã a mesma coisa que não funcionou
   ontem — e a família percebe antes da gente.
+- **Evidência que reposiciona esta ficha (2026-08-08):** existem **três** tabelas
+  de feedback no banco — `feedbacks`, `avaliacao_maes` e `feedback_beta` — e as
+  **três estão vazias**. Não há um único registro de família dizendo se algo
+  ajudou. Isso não é dívida futura do ciclo de aprendizado: é a razão pela qual
+  a análise de 2026-08-08 **não conseguiu responder "o que encanta"** por
+  medida, só por leitura de conversa. Enquanto seguir assim, toda decisão de
+  qualidade depende de amostra manual.
 - **DESEJADO — A DEFINIR COM PRODUTO:** onde a mãe diz "ajudou / não ajudou /
   funcionou / quero ajustar"; e — o ponto que não pode ser esquecido — **como
   isso vira histórico da intervenção e muda a próxima recomendação para aquela
