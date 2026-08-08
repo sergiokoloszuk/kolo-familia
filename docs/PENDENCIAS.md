@@ -334,6 +334,18 @@ de 2026-08-08
 - **O caso é o ativo; a regra é derivada.** Hoje se preserva a regra e se perde o
   caso — que é o contrário do que serve daqui a seis meses.
 - **DESEJADO — A DEFINIR COM PRODUTO.** Esqueleto proposto, a validar:
+  0. **O QUE O SÉRGIO MANDA:** o trecho ou print · quando aconteceu, se souber ·
+     uma frase — *"isso me incomodou porque…"*. Nada além disso.
+     **O QUE ELE APROVA, antes de qualquer regra existir:**
+     **CASO REAL → DIAGNÓSTICO CAUSAL → CONDUTA DESEJADA.**
+     ⚠️ Aprovar só o diagnóstico não basta: *dá para concordar sobre a causa e
+     ainda escolher a conduta errada.* Foi o que aconteceu na uva-passa — o
+     diagnóstico ("detalhe reusado fora de contexto") estava certo e a conduta
+     escolhida ("interesse nunca como recompensa") não protegia o caso.
+     **Só depois** o agente determina: camada que muda · se já existe proteção ·
+     princípio/guardrail/heurística/estilo/código/memória/conhecimento/
+     ferramenta/**nada** · formulação · teste.
+     **A regra é sempre DERIVADA, nunca o ponto de partida.**
   1. **REGISTRAR O CASO ANTES DE ESCREVER A REGRA** — episódio cru, data, o que
      a Ayla disse, o que se esperava. Sem isso, a intenção se perde e sobra a
      formulação.
@@ -1079,6 +1091,15 @@ Aberta em: 2026-08-08 · Origem: consolidação da PEND-010 +
   melhores momentos do conjunto. E a **troca de identidade da criança apareceu
   em conversa real**: a tela mostrava um irmão enquanto a conversa tratava da
   outra criança. É desta ficha, não da condução.
+- **CASO UVA-PASSA — a metade que é DESTA ficha (arqueologia 2026-08-08).**
+  Reconstituído na produção: 25/05 a mãe conta a preferência · **08/06 ela diz
+  que a criança não quer mais** · **24/07 a Ayla afirma "ela já ama uva passa"**
+  · 03/08 usa a preferência em contexto de passeio.
+  **São dois erros distintos e não devem voltar a ser uma regra só:**
+  **(A) reuso fora do contexto original** → raciocínio/condução (PEND-016);
+  **(B) fato REVOGADO pela família continuando a valer** → **memória, é aqui**.
+  ⚠️ Preencher lacuna e usar fato vencido são falhas diferentes: uma inventa o
+  que não sabe, a outra confia demais no que sabia. Fundi-las perderia a segunda.
 - **Requisito herdado de PEND-016 · D3 (2026-08-08):** a regra 7 (entrega
   nascida de *"sim"*) só é cumprível se houver o que recuperar sobre a criança.
   Sem isso, a entrega mais frequente da Kolo é genérica por construção.
@@ -1198,6 +1219,20 @@ Aberta em: 2026-08-08 · Origem: consolidação da PEND-010
   cada tema; quando busca fonte externa; quando cita e como apresenta
   (procedência, data, versão); o que ela diz quando **não** há fonte confiável;
   quando recomenda profissional; **quando escala para humano**.
+- **DOIS CASOS REAIS DE RISCO, que NÃO podem ser tratados como um só**
+  (localizados na produção em 2026-08-08):
+  1. **23/07 — falso positivo.** A mãe escreveu sobre o fim do teste
+     (*"acabando os meus dias aqui… não tenho dinheiro para continuar"*) e a
+     Ayla ofereceu o CVV. O `PISO` hoje cita essas frases quase literalmente.
+  2. **03/08 — positivo real.** Uma mensagem de **ideação suicida explícita e
+     inequívoca**, e a Ayla ofereceu o CVV.
+  **São os dois testes obrigatórios de qualquer solução futura:** não gerar
+  falso positivo grosseiro **e** não perder positivo real.
+  ⚠️ **Não afrouxar a proteção de crise para resolver o falso positivo.**
+- **⚠️ EVIDÊNCIA OPERACIONAL (03/08):** a resposta conversacional pode ter sido
+  adequada **e o sistema ter falhado assim mesmo** — não há registro de que o
+  evento tenha chegado a um humano, porque **o canal de escalonamento não
+  existe**. Falha operacional, não de condução.
 - **Estado conhecido:** os freios de tom estão no ar (não afirmar direito ou
   saúde com falsa certeza). O **escalonamento para humano não existe**: a Ayla
   desvia assunto de cupom/preço/cancelamento e ninguém é notificado.
