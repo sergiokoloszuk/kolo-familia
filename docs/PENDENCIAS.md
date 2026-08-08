@@ -18,6 +18,7 @@ Só o que está aberto. 🔒 = bloqueada.
 | [PEND-015](#pend-015) | Exposição de secrets no Easypanel | H · Governança | a definir | ABERTA | investigar o risco antes de priorizar |
 | [PEND-007](#pend-007) | Ativação do GPT parada na prova da chave | H · Governança | P1 | ABERTA 🔒 | publicar e rodar `provider-check` |
 | [PEND-024](#pend-024) | Portão: comparar arquitetura de IA atual × OpenAI antes de implementar | H · Governança | P2 ⚑ | ABERTA | esperar D1–D12; então montar o benchmark |
+| [PEND-025](#pend-025) | Método de revisão a partir de um caso real | H · Governança | P2 | ABERTA | desenhar o intake e testar em seco contra 3 casos |
 | [PEND-002](#pend-002) | Pagamento confirmado sem acesso na Kolo | G · Comercial | P1 | AGUARDANDO VALIDAÇÃO | esperar a primeira assinatura real |
 | [PEND-001](#pend-001) | Cooldown do convite de assinatura | G · Comercial | P1 | AGUARDANDO VALIDAÇÃO | esperar o próximo convite real |
 | [PEND-016](#pend-016) | Condução da Ayla — o que ela diz e por quê | **A · Condução** | P1 | ABERTA | **preencher o DESEJADO com a Karina** |
@@ -315,6 +316,62 @@ Aberta em: 2026-08-08 · Origem: incidente Rochelle (2026-07-23) → Fase 0B
   `eventos_app` (`stripe_checkout_completed` com `resultado: ok`). Passando os
   cinco, é a primeira validação real das Etapas 1 e 2.
 - **Agente recomendado:** EXECUTAR (Etapa 3)
+
+---
+
+### PEND-025
+**Método de revisão a partir de um caso real (intake de incidente)**
+Bloco: **H · Governança** · Prioridade: **P2** · Estado: **ABERTA**
+Aberta em: 2026-08-08 · Origem: pedido do Sérgio ao fim da auditoria genealógica
+de 2026-08-08
+
+- **Impacto:** hoje o caminho é *"aconteceu algo → peço um ajuste isolado → nasce
+  uma regra"*. Foi assim que a colcha se formou, e a auditoria de 08/08 mediu o
+  estrago: **cinco regras diferentes** para o mesmo problema (perguntar demais),
+  uma proibição ampla derivada de um episódio estreito (a uva-passa), e origem
+  perdida — foi preciso **arqueologia** para reconstruir por que várias regras
+  existiam. Sem método de entrada, cada caso novo engorda a colcha.
+- **O caso é o ativo; a regra é derivada.** Hoje se preserva a regra e se perde o
+  caso — que é o contrário do que serve daqui a seis meses.
+- **DESEJADO — A DEFINIR COM PRODUTO.** Esqueleto proposto, a validar:
+  1. **REGISTRAR O CASO ANTES DE ESCREVER A REGRA** — episódio cru, data, o que
+     a Ayla disse, o que se esperava. Sem isso, a intenção se perde e sobra a
+     formulação.
+  2. **ISOLAR A CAMADA CAUSAL** — *mensagem → contexto disponível → conhecimento
+     recuperado → conhecimento desejável → raciocínio/decisão → resposta.*
+     **Não atribuir ao prompt** erro que nasce em memória, conhecimento,
+     ferramenta ou falha técnica.
+  3. **REGRA DOS CINCO** (PEND-014, item 24).
+  4. **TESTE DE LARGURA** — a formulação é tão estreita quanto o incidente?
+     *A uva-passa reprova aqui:* o episódio era "preferência aprendida virou
+     recurso universal"; a regra escrita foi "interesse nunca como recompensa".
+  5. **TESTE DE COMPETIÇÃO** — que regra existente já fala disso, e **qual
+     ganha**? Precedência declarada, nunca empate. *(`FRONTEIRA_DIAGNOSTICO`
+     documenta que a proibição antiga foi obedecida e a falha veio assim mesmo,
+     porque seis instruções empurravam no sentido contrário.)*
+  6. **TESTE DE PROTEÇÃO** — se esta regra já existisse, o caso teria sido
+     evitado? *A uva-passa reprova de novo:* bastava enquadrar como "ponte" e o
+     comportamento passava por `INTERESSE_COMO_VEICULO`.
+  7. **ESCOLHER O NÍVEL** — guardrail · heurística · princípio · estilo · **ou
+     nada** (segue como inteligência contextual).
+  8. **GENEALOGIA OBRIGATÓRIA** — caso, data, o que deu errado, risco real, o
+     que foi absorvido. Vive **no comentário do código**, ao lado da regra: é o
+     formato que já funciona neste repositório e a única razão pela qual a
+     arqueologia de 08/08 foi possível.
+  9. **TESTE QUE MORDE reproduzindo o caso** — se a regra for revertida, o teste
+     falha.
+- **Critério de conclusão:** método escrito e **testado em seco contra três
+  casos históricos** — uva-passa, Copa/Fortaleza e o "anotado" da Vitória —
+  mostrando, para cada um, se teria produzido formulação **diferente** da que
+  temos hoje e por quê. Depois disso, incorporado ao protocolo **via PEND-014**.
+- **Por que não é item da PEND-014:** aquela ficha decide sobre um documento que
+  já existe; esta **desenha um mecanismo** e o valida contra casos. Trabalho
+  diferente, critério diferente. O destino final é o protocolo, e está declarado.
+- **Depende de:** PEND-014 (destino) · usa a ressalva metodológica registrada em
+  PEND-016 (não atribuir ao prompt erro de camada não isolada).
+- **Admin:** ADMIN DEPENDE DO DESEJADO — pode precisar de um lugar por onde o
+  caso entre, com o trecho da conversa e a data.
+- **Agente recomendado:** PROPOR
 
 ---
 
@@ -1335,7 +1392,7 @@ trimestralmente, o que vier antes.
 
 ---
 
-**Próximo ID livre: PEND-025.**
+**Próximo ID livre: PEND-026.**
 
 > Conferir contra `origin/main`, não contra o seu branch. Dois branches podem
 > reivindicar o mesmo número — o conflito de merge nesta linha é o alarme.
