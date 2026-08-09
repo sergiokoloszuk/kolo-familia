@@ -1391,6 +1391,44 @@ Aberta em: 2026-08-08 · Origem: consolidação da PEND-010 +
     que precisa ser concluído — é um retrato que a Ayla vai completando
     enquanto ajuda"*, e *"perguntar para ajudar agora; guardar para não
     precisar perguntar amanhã."*
+- **MAPA TEMA → PERGUNTAS DO PERFIL — AUDITADO EM 2026-08-09. ELE EXISTE.**
+  `lib/kolo-vivo/subcampos.ts` traz **111 subcampos estruturados em 16
+  domínios**, com `label`, `opcoes` (chips), `lista` e `mostrarSe`
+  (condicional). É o mapa de perguntas por tema que a frente procurava.
+  - **⛔ NÃO HÁ CONDICIONAMENTO POR IDADE.** `mostrarSe` condiciona por
+    **resposta de outro campo**, nunca por faixa etária. As 14 menções a idade
+    no arquivo são texto de placeholder. **Este é o furo central do requisito
+    "idade não é decoração"**: nem o perfil nem os `.md` permitem filtrar
+    pergunta por faixa hoje.
+  - **AS RESPOSTAS NÃO SÃO CAMPOS CONSULTÁVEIS.** Os 111 subcampos são
+    **serializados como rótulos dentro de UM texto por domínio** em
+    `perfil_vivo_membro` (`Aceita bem: … / Rejeita: …`). Decisão consciente para
+    não reescrever o backend — mas a consequência é que *"este campo está
+    vazio?"* não tem resposta programática. **Sem isso, "consultar antes de
+    perguntar" não se implementa.**
+  - **QUEM PREENCHE:** a tela do Kolo Vivo (web). Pelo WhatsApp, o caminho é
+    indireto — a auto-incorporação grava em `sugestao_perfil_vivos`
+    (**200+ linhas, camada1, `origem` ∈ {ayla, skill}, status aprovada/
+    rejeitada**). **O WhatsApp não escreve subcampo diretamente.**
+  - **NÃO DISTINGUE "não sabemos" DE RESPOSTA NEGATIVA** — tudo é texto.
+  - **DATA E FONTE:** `sugestao_perfil_vivos` tem `origem` e `decidido_em`; o
+    texto final no perfil **não carrega nem data nem fonte**. `origem` diz se
+    veio da Ayla ou de uma skill — **não** se é relato da família ou inferência
+    dela. É meio caminho, não a distinção pedida.
+  - **HISTÓRICO:** não há. Resposta nova **sobrescreve** a anterior.
+  - **O PLANO** consome o texto do perfil via `buildContext`, como qualquer
+    outro contexto.
+- **COMPARAÇÃO PERFIL × `docs/skills` — as três situações previstas, todas
+  confirmadas (2026-08-09):**
+  1. **Sobrepõem na função, não no conteúdo.** Os dois têm perguntas: as do
+     perfil são **estruturais e estáticas** (o que queremos saber sempre); as
+     dos `.md` são **diagnósticas e condicionais** (o que muda a conduta agora).
+     **Unificar a função, não fundir os textos.**
+  2. **Os `.md` têm perguntas excelentes que não são campo de perfil.** As oito
+     dimensões do `LEITURA — MAPA DE RACIOCÍNIO` não existem em `subcampos.ts`.
+     **Decisão pendente:** quais delas merecem virar campo persistente.
+  3. **O perfil tem campos que os `.md` não mencionam** — e continuam
+     necessários para conhecer a criança.
 - **Depende de:** desenhar junto com PEND-016 e PEND-017. **Bloqueia** PEND-020.
 - **Admin:** ADMIN PRECISA DE AJUSTE — ver o retrato da criança e a procedência
   de cada informação.
