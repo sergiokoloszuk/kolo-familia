@@ -1429,6 +1429,57 @@ Aberta em: 2026-08-08 · Origem: consolidação da PEND-010 +
      **Decisão pendente:** quais delas merecem virar campo persistente.
   3. **O perfil tem campos que os `.md` não mencionam** — e continuam
      necessários para conhecer a criança.
+- **TABELA A · IDADE — evidência levantada em 2026-08-09, para decisão.**
+  Varredura dos sete `.md` procurando diferenciação etária com substância
+  (descartando placeholder e exemplo):
+
+  | arquivo | diferencia hoje? | evidência real |
+  |---|---|---|
+  | aprendizado | **pouco** | uma marca explícita: `Adolescente/adulto:` (linha 486) |
+  | autonomia | **não** | só exemplos (*"meu filho de 6 anos não se veste"*) |
+  | foco | **não** | menciona "tarefa escolar", que é contexto, não faixa |
+  | motor | **não** | só exemplo (*"meu filho de 5 anos"*) |
+  | imitação · nutricional · socialização | **não** | nenhuma marca estrutural |
+
+  - **LEITURA DO ACHADO — e ela muda a proposta:** o material é
+    **deliberadamente agnóstico de idade**, porque descreve **mecanismos**
+    (o que trava, como diferenciar), não currículo por faixa. As poucas marcas
+    aparecem onde o mecanismo realmente muda — adolescente/adulto em
+    aprendizado.
+  - **PROPOSTA MÍNIMA, a decidir:** **não** criar faixa por seção. Marcar
+    apenas onde o material **já** distingue, com uma linha de metadado por
+    seção (`faixa: adolescente+`), deixando o resto como universal — que é o
+    que ele é. **Qualquer marcação além disso é taxonomia inventada** e está
+    fora do que a evidência sustenta.
+  - ⚠️ Enquanto esta decisão não existir, **nenhuma resposta pode ser declarada
+    "adaptada por faixa etária"** do lado editorial. A idade continua atuando
+    só no filtro das `boas_praticas` (`faixa_etaria_min/max`) e como contexto
+    no prompt.
+- **TABELA B · PERSISTÊNCIA — evidência levantada em 2026-08-09, para decisão.**
+  Perguntas editoriais reais confrontadas com os subcampos reais do perfil:
+
+  | pergunta editorial | origem | serve à condução? | já existe campo? | vale lembrar? |
+  |---|---|---|---|---|
+  | *ele dorme no próprio quarto?* | golden case sono | sim | **não existe** | **sim** — descreve o arranjo, não muda toda hora |
+  | *você fica até ele adormecer?* | golden case sono | sim | **sim** — `sono · Como adormece` | sim |
+  | *quanto tempo leva pra pegar no sono?* | golden case sono | sim | **sim** — campo homônimo | sim |
+  | *medo de quê?* | golden case sono | sim | parcial — `sono · O que atrapalha` | sim |
+  | *junta as sílabas? troca palavras? perde a linha?* | `LEITURA — MAPA DE RACIOCÍNIO` | **muito** | **não existe** — `aprendizado` só tem campos genéricos | **sim**, é estável e evita repergunta |
+  | *sustenta no que gosta mas não na tarefa?* | `foco · TRIAGEM INICIAL` | sim | **sim** — `foco · Como é o foco` + `O que prende a atenção` | sim |
+  | *o que aconteceu logo antes?* | condução de regulação | sim | **sim** — `emocional · Gatilhos` | sim |
+  | *ele topou a estratégia que sugeri?* | seguimento | sim | **não** | **NÃO persistir como fato da criança** — é resultado de estratégia, outra coisa |
+
+  - **CRITÉRIO PROPOSTO, coerente com a direção do Sérgio:** persistir quando a
+    informação **descreve a criança**, tende a seguir valendo e **evita uma
+    pergunta futura**. Não persistir quando for circunstancial, hipótese da
+    Ayla, interpretação causal, ou conteúdo da própria estratégia.
+  - **O QUE A EVIDÊNCIA SUSTENTA HOJE:** os campos de `sono`, `foco`,
+    `emocional` e `sensorial` **já cobrem** a maior parte das perguntas de alto
+    valor — **não é preciso criar campo para elas**. A lacuna real é
+    concentrada: **as dimensões de leitura/escrita** (o mapa de raciocínio não
+    tem par no perfil) e **"onde dorme"**.
+  - ⚠️ **Nenhum campo novo antes desta decisão.** Duas ou três adições
+    específicas ≠ transformar toda pergunta editorial em campo.
 - **Depende de:** desenhar junto com PEND-016 e PEND-017. **Bloqueia** PEND-020.
 - **Admin:** ADMIN PRECISA DE AJUSTE — ver o retrato da criança e a procedência
   de cada informação.
