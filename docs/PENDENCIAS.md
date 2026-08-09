@@ -1310,6 +1310,56 @@ Aberta em: 2026-08-08 · Origem: consolidação da PEND-010 +
     É lacuna de curadoria, e o veredito honesto é *"a base ainda não tem
     repertório para responder isso com a qualidade que queremos"*.
   - **Uso efetivo: não observável**, em todos os quatro.
+- **ROADMAP DA NOVA EXPERIÊNCIA (nomes acordados em 2026-08-09):**
+  **BASE 1 · PERFIL DA CRIANÇA** (Kolo Vivo / subcampos) ·
+  **BASE 2 · PERGUNTAS E ORIENTAÇÕES POR TEMA** (`docs/skills/*.md`) ·
+  **BASE 3 · ATIVIDADES, BRINCADEIRAS E BOAS PRÁTICAS** (`boas_praticas`).
+
+  | fase | o quê | estado |
+  |---|---|---|
+  | 1 | BASE 1 consultável campo a campo | **CONCLUÍDA** ([#71](https://github.com/sergiokoloszuk/kolo-familia/pull/71)) |
+  | 2 | BASE 2 seletivamente acessível | **CONCLUÍDA** ([#72](https://github.com/sergiokoloszuk/kolo-familia/pull/72)) |
+  | 3 | BASE 3 · ranking por aderência ao subtema | PRÓXIMA |
+  | 4 | nova experiência em **Estratégias** | marco de produto |
+  | 5 | WhatsApp | só após aprovação da Karina |
+- **✅ FASE 2 · BASE 2 SELETIVA — NO AR (2026-08-09).** O patrimônio editorial
+  deixou de ser inalcançável. **Nada mudou para as famílias**: esta fase cria
+  disponibilidade, não comportamento.
+  - **188 seções parseadas dos 7 temas**, pelos títulos que o material já tem —
+    nenhuma taxonomia paralela. Cada seção guarda tema · seção · título ·
+    subtema · estado · **id estável** (`aprendizado/leitura-mapa-de-raciocinio`).
+  - **GERADO EM BUILD, não lido em runtime.** Os `.md` vivem em `docs/`, fora de
+    `apps/web`; ler disco em produção dependeria de a Vercel empacotar arquivo
+    de fora do app, e falharia em silêncio no pior lugar. O módulo gerado é
+    importado como código: **zero I/O e zero chamada de IA por turno**.
+  - **🐛 ACHADO: o material não é formatado de maneira uniforme.**
+    `nutricional.md` **não usa `#` nos títulos** — escreve em caixa alta. Na
+    primeira geração ele saiu com **zero seções**. O gerador passou a aceitar os
+    dois formatos, mas fica registrado: **quem escrever material novo precisa
+    saber que o formato importa**, e um `.md` mal formatado desaparece em
+    silêncio. O teste de defasagem cobre a regressão.
+  - **CUSTO — o problema estava aqui:** os 7 arquivos somam **~21 162 tokens**;
+    `aprendizado.md` inteiro, ~3 271. O **bloco entregue tem ~523 tokens**
+    (3 seções) e o mapa de leitura sozinho, **~142**. Redução de **97,5%**
+    contra mandar o material todo.
+  - **LATÊNCIA:** 1000 consultas em **49,6 ms** (0,05 ms cada); uma consulta com
+    bloco montado, **0,145 ms**. **Nenhuma chamada de IA acrescentada** —
+    requisito cumprido.
+  - **GOLDEN CASE DE LEITURA, provado com o conteúdo REAL:** `tema=aprendizado,
+    subtema=leitura, estado=investigacao` devolve
+    `aprendizado/leitura-mapa-de-raciocinio` em primeiro, com as sete
+    diferenciações do material — e **sem** trazer os mapas de escrita e
+    matemática. O trecho *"junta as sílabas, mas se perde"* e a conduta *"não
+    volte para vamos ensinar as letras"* estão recuperáveis.
+  - **⚠️ BASE 2 INDISPONÍVEL PARA: sono · emocional · sensorial · comunicação ·
+    rotina.** Cinco dos temas mais frequentes da conversa **não têm material de
+    condução** — inclusive **sono**, que é o golden case da frente. Nenhum
+    conteúdo foi inventado. **É achado, e é grande:** a Fase 4 vai conduzir com
+    BASE 2 em aprendizado, foco, autonomia, imitação, motor, nutricional e
+    socialização — e **sem ela** nos outros cinco.
+  - **Testes:** 20 novos, com o conteúdo real como prova. Três sabotagens:
+    perder o reconhecimento de subtema quebra 3 · devolver o tema inteiro quebra
+    6 · deixar o módulo gerado defasar quebra 2.
 - **Depende de:** desenhar junto com PEND-016 e PEND-018.
 - **Admin:** ADMIN PRECISA DE AJUSTE — administrar acervo, e ver o que foi
   recuperado e o que foi usado.
