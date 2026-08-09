@@ -19,6 +19,8 @@ import type { SupabaseClient } from "@supabase/supabase-js";
  */
 
 export type BoaPraticaRecuperada = {
+  /** Id estável da BP. É o que o rastro registra — nunca o texto. */
+  id: string;
   titulo: string;
   versao_conversa: string | null;
   quando_usar: string | null;
@@ -27,6 +29,7 @@ export type BoaPraticaRecuperada = {
 };
 
 type Linha = {
+  id: string;
   titulo: string | null;
   versao_curta: string | null;
   versao_conversa: string | null;
@@ -84,6 +87,14 @@ export type ParamsRecuperar = {
    * parâmetro. Nenhum caminho de produto o passa.
    */
   statusAceitos?: readonly string[];
+  /**
+   * Avisa que a consulta FALHOU — sem mudar o comportamento (a função continua
+   * devolvendo `[]` e a conversa continua). Existe só para o rastro poder
+   * distinguir "o acervo não tinha nada" de "a consulta quebrou": hoje os dois
+   * produzem exatamente o mesmo bloco vazio, e essa confusão é o que impede
+   * descobrir uma recuperação quebrada em produção.
+   */
+  aoFalhar?: (motivo: string) => void;
 };
 
 /**
@@ -120,7 +131,7 @@ export async function recuperarBoasPraticas(
     const { data, error } = await p.supabase
       .from("boas_praticas")
       .select(
-        "titulo, versao_curta, versao_conversa, quando_usar, erros_comuns, passos_praticos, skills_relacionadas, tags, peso_relevancia, faixa_etaria_min, faixa_etaria_max",
+        "id, titulo, versao_curta, versao_conversa, quando_usar, erros_comuns, passos_praticos, skills_relacionadas, tags, peso_relevancia, faixa_etaria_min, faixa_etaria_max",
       )
       .in("status", p.statusAceitos ?? ["ativo"])
       .or(clausulas.join(","))
@@ -146,6 +157,7 @@ export async function recuperarBoasPraticas(
       : candidatas;
 
     return ordenadas.slice(0, p.limite ?? 3).map((bp) => ({
+      id: String(bp.id),
       titulo: String(bp.titulo ?? "").trim(),
       // `versao_curta` só entra quando não há `versao_conversa` — mandar as duas
       // seria repetir a mesma orientação com outras palavras dentro do prompt.
@@ -155,7 +167,15 @@ export async function recuperarBoasPraticas(
       passos_praticos: lista(bp.passos_praticos),
     }));
   } catch (e) {
-    console.warn("[conhecimento] recuperação falhou:", e instanceof Error ? e.message : e);
+    const motivo = e instanceof Error ? e.message : String(e);
+    console.warn("[conhecimento] recuperação falhou:", motivo);
+    // O aviso não pode ser o caminho da falha: um callback que lança levaria
+    // embora a conversa por causa de um log.
+    try {
+      p.aoFalhar?.(motivo);
+    } catch {
+      /* ignorado de propósito */
+    }
     return [];
   }
 }
