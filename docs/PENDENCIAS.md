@@ -1219,8 +1219,8 @@ do laudo de 06/08) + `docs/auditoria-ayla-prompt.md`
     *"escola"*, *"auge"*, *"perceber"*). Os dois invisíveis têm títulos bonitos e
     sem nenhuma palavra do relato. **Registro bem escrito com título poético é
     conteúdo que não existe.**
-  - **Custo:** corpo médio de ~2.400 caracteres, ~600 tokens por registro. Três
-    por turno custam ~1.800 tokens de contexto. É o preço do repertório; a
+  - **Custo:** corpo médio de ~1.400 caracteres, ~355 tokens por registro. Três
+    por turno custam ~1.060 tokens de contexto. É o preço do repertório; a
     resposta continua seletiva.
   - **Proveniência preservada sem criar base de livro.** `origem` tem CHECK
     constraint no banco e só aceita `admin`; a linha AUTOR/CIÊNCIA/KOLO foi para
