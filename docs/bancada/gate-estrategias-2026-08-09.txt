@@ -1,0 +1,161 @@
+
+██████████████████████████████████████████████████████████████████████████████
+curta · dúvida pontual
+"Ele pode dormir com a luz acesa?"
+
+8989ms · 3070tok · 756ch · PLANO: não ofereceu
+MARKDOWN: 0 títulos · 1 negritos · 0 itens de lista · 0 citações
+
+Pode sim.
+
+Se ele dorme melhor assim, não tem problema nenhum. O sono acontece quando o corpo relaxa o suficiente — e pra algumas crianças, o escuro traz medo, insegurança ou desconforto sensorial que atrapalha muito mais do que a luz.
+
+Pode ser luz fraca, abajur, luz noturna que muda de cor devagar... o que funcionar melhor. O importante é que ele **se sinta seguro** e consiga relaxar.
+
+Se você quiser, dá pra ir testando aos poucos: começa com a luz que ele precisa, e mais pra frente, quando ele estiver dormindo bem assim há um tempo, vocês podem experimentar ir deixando mais fraca — mas sem pressa, sem forçar. Tem criança que precisa de luz acesa durante anos, e tá tudo bem.
+
+O sono bom do Téo vale mais do que qualquer regra sobre escuro total.
+
+██████████████████████████████████████████████████████████████████████████████
+média · uma frente
+"Meu filho bate na irmã quando é contrariado."
+
+5495ms · 2741tok · 428ch · PLANO: não ofereceu
+MARKDOWN: 0 títulos · 1 negritos · 0 itens de lista · 0 citações
+
+Oi! Sei que é difícil quando isso acontece. Vou te ajudar a entender melhor o que está por trás disso.
+
+Antes de mais nada: **quantos anos tem ele e a irmã?** Isso muda bastante o caminho que a gente segue.
+
+E me conta uma coisa — quando você diz "contrariado", o que costuma acontecer? Ela pega um brinquedo dele, você diz não pra algo que ele quer, ele perde num jogo? Queria entender o tipo de situação que costuma vir antes.
+
+██████████████████████████████████████████████████████████████████████████████
+rica · várias frentes
+"Ele explode no fim da tarde, briga com a irmã, não quer tomar banho e ainda tem a lição pra fazer. Todo dia é uma guerra e eu não sei por onde começar."
+
+15252ms · 3249tok · 1318ch · PLANO: não ofereceu
+MARKDOWN: 3 títulos · 4 negritos · 2 itens de lista · 1 citações
+
+## Parece que o problema é o banho e a lição, mas não é
+
+O que você descreve tem um padrão: sempre fim da tarde, sempre várias coisas ao mesmo tempo. A questão não é "por que ele não quer tomar banho" — é **o que já aconteceu antes dele chegar nesse horário**.
+
+Crianças atípicas costumam gastar muito mais energia que as outras para aguentar o dia: manter o corpo quieto, esperar, seguir instrução, lidar com barulho, processar informação social. Quando sobra pouco, qualquer coisa vira gatilho. O banho não é o problema — é só o último item de uma conta que já estava alta.
+
+## O que fazer hoje, antes de entender tudo
+
+**Tire UMA exigência desse horário.** Não três — uma. Escolha a que parece mais negociável: lição vai para depois do jantar, ou banho vai para de manhã, ou a irmã fica em outro cômodo meia hora. 
+
+O objetivo não é resolver o dia inteiro de uma vez. É **dar margem onde não tem**.
+
+> "Hoje a lição fica pra depois do jantar. Agora você come alguma coisa e fica aí um pouco."
+
+## O que observar nos próximos três dias
+
+Anote só duas coisas:
+- Que horas fica difícil
+- O que aconteceu nas duas horas antes
+
+Não precisa entender ainda — só juntar. Quando o horário se repete, o gatilho aparente quase nunca é a causa real.
+
+**Onde você quer começar: pela lição, pelo banho ou pela briga com a irmã?**
+
+██████████████████████████████████████████████████████████████████████████████
+atividade · leitura
+"Ele junta as sílabas mas perde a palavra inteira. Queria uma forma de treinar isso em casa."
+
+21637ms · 2717tok · 2059ch · PLANO: não ofereceu
+MARKDOWN: 3 títulos · 6 negritos · 6 itens de lista · 0 citações
+
+## O que você está descrevendo
+
+Bento já faz o trabalho difícil — decodifica sílaba a sílaba. Mas quando chega no final, a palavra inteira escorreu. É como se ele montasse as peças uma por uma e, ao colocar a última, já tivesse esquecido as primeiras.
+
+Isso é bem comum nessa fase. A memória de trabalho está segurando muita coisa ao mesmo tempo: lembrar de cada som, juntar, segurar o resultado enquanto decodifica a próxima sílaba. Quando a palavra é longa, o esforço consome tudo.
+
+---
+
+## Treino que funciona em casa
+
+**Palavra com ponte sonora**
+
+Você fala a palavra inteira ANTES dele tentar ler. Assim:
+
+1. Você mostra a palavra escrita.
+2. Fala a palavra completa, naturalmente: "dinossauro".
+3. Ele lê, sílaba a sílaba.
+4. No final, você pergunta: "o que era mesmo?"
+
+A ponte sonora dá um destino para o trabalho de decodificação. Em vez de juntar no vazio, ele junta *em direção* a algo que já ouviu. Diminui a carga na memória.
+
+Isso não é cola — é treino da conexão entre som e escrita, com apoio.
+
+---
+
+**Palavras curtas primeiro, dentro do interesse dele**
+
+Monte cartõezinhos ou use papel comum. Comece com palavras de 2 sílabas sobre **dinossauros** — os que ele já conhece de cor.
+
+Exemplos:
+- RAPTOR
+- TRICERA (parte de Triceratops, você pode brincar de "adivinha qual é")
+
+Você fala o nome do dinossauro, ele lê, reconhece. Depois de algumas rodadas, ele vai começando a segurar a palavra sozinho.
+
+Quando 2 sílabas ficarem confortáveis, sobe para 3. Sempre dentro do universo que ele domina — isso reduz ansiedade e aumenta chance de sucesso.
+
+---
+
+## Ajuste conforme a resposta
+
+Se ele continuar perdendo mesmo com palavra curta + ponte, pode ser que precise de **mais repetição da mesma palavra**, ou de **pausa entre as sílabas** (você aponta, espera ele falar, aponta a próxima).
+
+Se ele começar a acertar sozinho, diminua a ponte: fale a palavra só na primeira vez, depois deixe ele tentar.
+
+---
+
+O Bento já sabe nomes difíceis de dinossauros de memória. Quando ele conseguir **ler** esses nomes que já ama, vai ser uma virada grande.
+
+██████████████████████████████████████████████████████████████████████████████
+brincadeira · pedido explícito
+"Queria uma brincadeira pra ajudar ele a perceber quando está começando a ficar bravo."
+
+12596ms · 3267tok · 1079ch · PLANO: não ofereceu
+MARKDOWN: 2 títulos · 4 negritos · 0 itens de lista · 0 citações
+
+# Caça ao sinal no desenho
+
+Vocês vão assistir ao episódio favorito dele e virar detetives de emoção — pausando pra descobrir **quando dá pra saber que o personagem vai explodir**.
+
+Como funciona: assistam normalmente. Quando aparecer alguém começando a ficar irritado (antes de gritar ou fazer bagunça), você pausa e pergunta: **"dá pra ver que ele vai explodir? Como você viu?"**
+
+Deixe ele apontar — a voz ficou diferente, a cara fechou, ele ficou mais rápido. Qualquer coisa que ele notar está certa. Depois volta pro episódio. Não precisa acertar tudo nem fazer com toda cena — isso é brincadeira, não prova.
+
+**Por que isso funciona:** reconhecer de fora é muito mais fácil do que reconhecer em si mesmo. E personagem que ele já ama é o melhor professor que existe — ele conhece cada expressão.
+
+---
+
+## O próximo passo vem depois
+
+Quando ele ficar bom em reconhecer no personagem, aí vocês vão poder combinar **o sinal dele** — aquele jeitinho que o corpo do Téo avisa que está começando a ficar difícil.
+
+Mas isso é depois. Por enquanto, treinem só no desenho.
+
+Funciona?
+
+██████████████████████████████████████████████████████████████████████████████
+pedido de plano
+"Você consegue me montar um plano pra essa semana?"
+
+5978ms · 2683tok · 524ch · PLANO: não ofereceu
+MARKDOWN: 0 títulos · 0 negritos · 0 itens de lista · 0 citações
+
+Oi! Claro que consigo — mas antes de montar, me ajuda com uma coisa: o que você gostaria que esse plano organizasse?
+
+Pergunto porque plano funciona melhor quando a gente sabe o que precisa caber nele — pode ser lidar com um desafio específico que está aparecendo agora (tipo birras na hora de dormir, dificuldade com transições), pode ser organizar várias coisas que vocês querem experimentar ao longo dos próximos dias, ou pode ser dar continuidade a algo que vocês já começaram.
+
+O que você está precisando nesse momento?
+
+
+##############################################################################
+LATÊNCIA · p50 12596ms · p90 21637ms · pior 21637ms

@@ -1508,6 +1508,55 @@ do laudo de 06/08) + `docs/auditoria-ayla-prompt.md`
   para a bancada com o `blocoIntencao` real.
 - **⏳ PEND: PDF + link do Plano**, e a inconsistência entre Web e WhatsApp. Não
   auditado nesta missão.
+- **✅ FORMATAÇÃO CHEGA À TELA — PROVADO (2026-08-09).** 6 respostas geradas com
+  o bloco novo, em [bancada/gate-estrategias-2026-08-09.txt](bancada/gate-estrategias-2026-08-09.txt).
+  **A estrutura escala com a necessidade, que era exatamente o pedido:**
+  | resposta | títulos | negritos | lista | citação |
+  |---|---|---|---|---|
+  | dúvida pontual (756ch) | 0 | 1 | 0 | 0 |
+  | uma frente (428ch) | 0 | 1 | 0 | 0 |
+  | várias frentes (1.318ch) | **3** | 4 | 2 | **1** |
+  | atividade (2.059ch) | **3** | 6 | **6** | 0 |
+  | brincadeira (1.079ch) | 2 | 4 | 0 | 0 |
+  Resposta curta continuou sem título; resposta com várias frentes ganhou três.
+  **Nenhum gabarito fixo apareceu.**
+- **🐛 OFERTA DE PLANO — corrigida DUAS vezes, a segunda não verificada.**
+  A regra antiga (*"assim que tiver contexto suficiente, FECHE assim"*) virou
+  *"transformar isto num plano acrescenta algo que esta conversa sozinha não
+  entrega? Se não, não ofereça"*. **Medido: 0 ofertas em 6 casos** — inclusive no
+  **pedido explícito** *"você consegue me montar um plano pra essa semana?"*, em
+  que a Ayla perguntou o que o plano deveria organizar **e não ofereceu o
+  botão**. Isso é super-correção minha: fazer a mãe pedir duas vezes.
+  Acrescentei *"quando a família pedir, o pedido basta — ofereça o botão na
+  mesma resposta"*. **NÃO reverifiquei**: a bancada com streaming quebrou no
+  parse e eu não insisti. Fica como o único item do gate sem prova.
+- **⚠️ LATÊNCIA DA WEB NÃO ESTÁ PROVADA.** Medi **total de geração**: p50 12,6 s,
+  pior 21,6 s. **Mas a web faz streaming** (`client.messages.stream`), então o
+  que a mãe espera é o TTFT, não o total — e **o TTFT eu não consegui medir**.
+  Sem esse número, não afirmo que a latência da Web está aceitável. É o que
+  falta para o gate fechar.
+- **⏳ P0 — LATÊNCIA E RETOMADA CONVERSACIONAL DO WHATSAPP.** Diagnóstico
+  completo, nenhuma alteração feita. **O comentário da função diz "streaming,
+  manda cada parágrafo assim que fica pronto"; o código diz "buffer completo,
+  nada saiu para o WhatsApp até aqui".** Os dois discordam e o código é o que
+  roda: **TTFT no WhatsApp = tempo total**.
+  - **3 chamadas de IA sempre** (`classificarIntencao` → `gerarRespostaAyla` →
+    `extrairESalvarEventos`) e **até 4 condicionais**, todas em série.
+  - Três leituras de banco serializadas **dentro da lista de argumentos** de
+    `classificarIntencao` — `ultimasFalas`, `carregarDesafiosOnboarding`,
+    `carregarCatalogoSkills`. Candidatas óbvias a `Promise.all`.
+  - `TETO_ESPERA_SEGUNDOS = 4` de atraso **artificial**, somado depois de tudo
+    pronto.
+  - `extrairESalvarEventos` roda **antes** do `return` — a família espera por uma
+    extração que não muda a resposta.
+  - Ordem proposta: instrumentar → primeira bolha antes do fim da geração →
+    `Promise.all` → mover a extração para depois → rediscutir os 4 s → só então
+    abertura/retomada e o caso Mario.
+- **⏳ ABERTURA E RETOMADA (caso "Oi, tudo bem?").** Missão recebida, **não
+  iniciada**. Regra a implementar: **memória é contexto, não pauta**. Hipótese a
+  verificar primeiro: o comportamento pode vir de `gerarSugestaoRepertorio`
+  (`orchestrator.ts:1115`) ou de `gerarMensagemEspontanea` (`:358`) — se for,
+  o conserto é na fronteira entre abertura e mensagem espontânea, não no prompt.
 - **Depende de:** PEND-017 e PEND-018 — **desenhar junto**. Absorve PEND-009
   (primeira conversa) dentro do DESEJADO.
 - **Admin:** ADMIN PRECISA DE AJUSTE — hoje não dá para ver *por que* a Ayla

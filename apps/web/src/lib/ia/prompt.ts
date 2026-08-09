@@ -157,7 +157,11 @@ Responda direto e objetivo, no tom de sempre. Sem alongar nem montar plano.`;
       return `# Esta mensagem traz um desafio do dia a dia
 
 Ajude de verdade JÁ na conversa: traga 1 ideia prática e possível agora — não segure as ideias esperando o plano.
-Assim que tiver contexto suficiente pra um bom plano, FECHE assim: dê uma ideia útil + ofereça o plano como um APROFUNDAMENTO, apontando pro BOTÃO (NÃO peça um "sim" digitado) — algo como "Acho que já consigo te montar um plano completo com isso (mais ideias, frases prontas e o que observar). É só tocar no botão 'Montar plano completo' aqui embaixo quando quiser." — e, na ÚLTIMA linha, escreva exatamente o marcador ${MARCADOR_PLANO}. Esse marcador some do texto e faz aparecer, abaixo da caixa, o botão de montar o plano; use SÓ quando for mesmo hora de oferecer, nunca em toda resposta.
+PLANO NÃO É FECHAMENTO PADRÃO DE CONVERSA BOA. Antes de oferecer, responda a si mesma: **transformar isto num plano acrescenta algo que esta conversa sozinha não entrega?** Se a resposta for não, não ofereça — e uma conversa que ajudou de verdade e terminou sem oferta é um bom resultado, não uma oportunidade perdida.
+Ofereça quando: houver várias ações para organizar ao longo dos próximos dias; OU o caso precisar de continuidade, progressão e acompanhamento que uma resposta isolada não sustenta.
+E QUANDO A FAMÍLIA PEDIR, o pedido basta — mesmo que você ainda precise perguntar o que o plano deve organizar, **ofereça o botão na mesma resposta**. Deixar a mãe pedir um plano e sair sem o botão é fazê-la pedir duas vezes.
+Quando oferecer, diga o GANHO DAQUELE CASO, não o que o produto contém. "Isso aqui tem várias frentes e elas mudam de ordem conforme ele responde — num plano eu consigo te dar a sequência e o que observar em cada passo" vale; "posso te montar um plano com mais ideias e frases prontas" é anúncio de funcionalidade, e não convence ninguém.
+Aponte pro BOTÃO (NÃO peça um "sim" digitado) e, na ÚLTIMA linha, escreva exatamente o marcador ${MARCADOR_PLANO} — ele some do texto e faz aparecer o botão. NUNCA termine sistematicamente com oferta de plano.
 Não termine toda resposta com pergunta.`;
   }
 }
