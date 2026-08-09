@@ -365,6 +365,56 @@ ${ctx.ultimoCheckin.data} — responsável: ${ctx.ultimoCheckin.escala_emocional
   // Antes daqui saía só título + versão curta + versão conversa: `quando_usar`,
   // `erros_comuns` e `passos_praticos` eram carregados do banco e descartados
   // na montagem — a parte executável do acervo nunca chegava ao modelo.
+  // FASE 4A.1 · O QUE JÁ SABEMOS — perfil campo a campo, com ESTADO.
+  //
+  // O bloco de Kolo Vivo que já existe manda o conteúdo. Este manda a outra
+  // metade: o que está vazio, e sobretudo o que é NEGATIVO — "não tem
+  // sensibilidade a som" é informação, e sem essa distinção o modelo trata
+  // vazio e negativo igual, e volta a perguntar o que a família já respondeu.
+  if (ctx.perfilConsultavel) {
+    const p = ctx.perfilConsultavel;
+    const linhas: string[] = [];
+    for (const d of p.dominios.values()) {
+      const preenchidos = d.campos.filter((c) => c.estado === "preenchido");
+      const negativos = d.campos.filter((c) => c.estado === "negativo");
+      const vazios = d.campos.filter((c) => c.estado === "vazio");
+      if (!preenchidos.length && !negativos.length) continue;
+      const parte = [
+        preenchidos.length ? `sabemos: ${preenchidos.map((c) => c.label).join(", ")}` : null,
+        negativos.length ? `NÃO se aplica: ${negativos.map((c) => c.label).join(", ")}` : null,
+        vazios.length ? `ainda não sabemos: ${vazios.map((c) => c.label).join(", ")}` : null,
+      ]
+        .filter(Boolean)
+        .join(" · ");
+      linhas.push(`- ${d.label}: ${parte}`);
+    }
+    if (linhas.length) {
+      partes.push(
+        `<o_que_ja_sabemos>
+NÃO pergunte o que está em "sabemos" nem o que está em "NÃO se aplica" — a
+família já respondeu, e repetir a pergunta desfaz a confiança de ter contado.
+${linhas.join("\n")}
+</o_que_ja_sabemos>`,
+      );
+    }
+  }
+
+  // FASE 4A.1 · BASE 2 — como compreender ANTES de orientar.
+  //
+  // Material interno: são as bifurcações e a pergunta de alto valor do tema.
+  // Vai marcado como material de raciocínio porque a única coisa pior que não
+  // ter o mapa é despejá-lo na conversa como se fosse resposta.
+  if (ctx.base2.length) {
+    partes.push(
+      `<como_compreender_este_tema>
+Material INTERNO de raciocínio — não repita nada disto para a família e não
+transforme as bifurcações em questionário. Use para decidir O QUE ainda muda a
+conduta, e faça no máximo UMA pergunta: a que separa os caminhos.
+${ctx.base2.map((s) => `### ${s.titulo}\n${s.conteudo}`).join("\n\n")}
+</como_compreender_este_tema>`,
+    );
+  }
+
   const repertorio = blocoBoasPraticas(ctx.boasPraticas);
   if (repertorio) partes.push(repertorio);
 

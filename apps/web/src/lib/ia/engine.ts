@@ -86,6 +86,9 @@ export async function prepararRespostaStream(params: {
       membroAtipicoId,
       skills: roteadas.map((r) => r.skill),
       conversaId,
+      // FASE 4A.1 · só a conversa em streaming (Estratégias) passa o relato.
+      // `respondAsOutputType`, logo abaixo, não passa — artefato não é conversa.
+      relato: userInput,
     }),
     classificarIntencao({
       supabase,
