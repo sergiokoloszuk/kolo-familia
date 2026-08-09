@@ -1,0 +1,128 @@
+
+############################################################################
+1 · bate na irmã   (6a · skill=emocional)
+"Meu filho bate na irmã quando é contrariado"
+
+  BASE 3 ANTES (por peso)     305ms
+     1. Crianças pequenas não têm capacidade neurológica de se auto-re
+     2. O cérebro tem andares: tronco cerebral (sobrevivência), sistem
+     3. Momentos de quietude estruturados (sem pressão para fazer nada
+  BASE 3 DEPOIS (aderência)   204ms
+     1.* Quando a criança entra em crise (choro intenso, agressividade,
+     2.* Bater, morder, chutar, gritar: todas formas de comunicação ant
+     3.* Explosões de raiva — bate, grita, joga coisas Identifique gati
+  → 3 de 3 trocaram
+  BASE 2                      0ms · 3 seções: PRINCÍPIO CENTRAL | ANTES DE ORIENTAR, DIFERENCIE — QU | PERGUNTA DE ALTO VALOR — GOLDEN CA
+  chars enviados: BASE 3 2014 · BASE 2 1738
+
+############################################################################
+2 · explode depois da escola   (6a · skill=emocional)
+"Ele explode por qualquer coisa no fim da tarde, depois da escola"
+
+  BASE 3 ANTES (por peso)     87ms
+     1. Crianças pequenas não têm capacidade neurológica de se auto-re
+     2. O cérebro tem andares: tronco cerebral (sobrevivência), sistem
+     3. Momentos de quietude estruturados (sem pressão para fazer nada
+  BASE 3 DEPOIS (aderência)   63ms
+     1.  Crianças pequenas não têm capacidade neurológica de se auto-re
+     2.  O cérebro tem andares: tronco cerebral (sobrevivência), sistem
+     3.  Momentos de quietude estruturados (sem pressão para fazer nada
+  → 0 de 3 trocaram
+  BASE 2                      0ms · 3 seções: PRINCÍPIO CENTRAL | ANTES DE ORIENTAR, DIFERENCIE — QU | PERGUNTA DE ALTO VALOR — GOLDEN CA
+  chars enviados: BASE 3 2102 · BASE 2 1738
+
+############################################################################
+3 · não começa matemática   (8a · skill=foco)
+"Ele não começa a lição de matemática, fica olhando pra folha"
+
+  BASE 3 ANTES (por peso)     91ms
+     1. O cérebro tem andares: tronco cerebral (sobrevivência), sistem
+     2. Ambiente dedicado para estudo/atividades focadas, sem TV, celu
+     3. Quebra de atividades em blocos menores com movimento entre —…
+  BASE 3 DEPOIS (aderência)   87ms
+     1.* Criança 7-12 foca melhor em ambiente previsível, sem distraçõe
+     2.* O cérebro tem andares: tronco cerebral (sobrevivência), sistem
+     3.* Ambiente dedicado para estudo/atividades focadas, sem TV, celu
+  → 1 de 3 trocaram
+  BASE 2                      0ms · 3 seções: PRINCÍPIO CENTRAL | REGRA DE CONDUÇÃO | TRIAGEM INICIAL — DUAS PERGUNTAS Q
+  chars enviados: BASE 3 1794 · BASE 2 2349
+
+############################################################################
+4 · junta sílabas, perde a palavra   (7a · skill=aprendizado)
+"Ele junta as sílabas mas na hora de falar a palavra inteira se perde"
+
+  BASE 3 ANTES (por peso)     73ms
+     1. O cérebro tem andares: tronco cerebral (sobrevivência), sistem
+     2. Apoio à autonomia nos estudos, ajudando a organizar materiais 
+     3. Incentivo à leitura diversificada, oferecendo múltiplos gênero
+  BASE 3 DEPOIS (aderência)   68ms
+     1.* Incentivo à leitura diversificada, oferecendo múltiplos gênero
+     2.* O cérebro tem andares: tronco cerebral (sobrevivência), sistem
+     3.* Apoio à autonomia nos estudos, ajudando a organizar materiais 
+  → 0 de 3 trocaram
+  BASE 2                      0ms · 3 seções: PRINCÍPIO CENTRAL | REGRA DE CONDUÇÃO | ESCRITA — MAPA DE RACIOCÍNIO
+  chars enviados: BASE 3 1976 · BASE 2 1555
+
+############################################################################
+5 · sono com medo + presença   (8a · skill=sono)
+"Ele diz que está com medo e eu fico até dormir, se saio ele levanta"
+
+  BASE 3 ANTES (por peso)     83ms
+     1. Corte de dever 2h antes de dormir — não é…
+     2. Caixa de dormir para dispositivos — não em quarto separado…
+     3. Sono é necessidade biológica, não prêmio ou castigo — mantenha
+  BASE 3 DEPOIS (aderência)   95ms
+     1.  Corte de dever 2h antes de dormir — não é…
+     2.  Caixa de dormir para dispositivos — não em quarto separado…
+     3.  Sono é necessidade biológica, não prêmio ou castigo — mantenha
+  → 0 de 3 trocaram
+  BASE 2                      0ms · 3 seções: PRINCÍPIO CENTRAL | ANTES DE ORIENTAR, DIFERENCIE — QU | PERGUNTA DE ALTO VALOR — GOLDEN CA
+  chars enviados: BASE 3 1806 · BASE 2 2098
+
+############################################################################
+6 · sensorial em festa   (6a · skill=sensorial)
+"Na festa ele começa bem e depois tapa os ouvidos e quer ir embora"
+
+  BASE 3 ANTES (por peso)     61ms
+     1. Baixar o estímulo antes de tentar conversar
+     2. Busca constantemente abraços apertados, quer ficar embaixo de 
+     3. Diferentes texturas, movimentos e sons podem gerar respostas i
+  BASE 3 DEPOIS (aderência)   56ms
+     1.* Bater, morder, chutar, gritar: todas formas de comunicação ant
+     2.* Crises em ambientes com muitos estímulos (festas, shoppings, e
+     3.* Quando a criança entra em crise (choro intenso, agressividade,
+  → 3 de 3 trocaram
+  BASE 2                      0ms · 3 seções: PRINCÍPIO CENTRAL | ANTES DE ORIENTAR, DIFERENCIE — QU | PERGUNTA DE ALTO VALOR — GOLDEN CA
+  chars enviados: BASE 3 2066 · BASE 2 1703
+
+############################################################################
+7 · puxa pela mão   (4a · skill=comunicacao)
+"Ele me puxa pela mão pra pegar as coisas mas quase não pede sozinho"
+
+  BASE 3 ANTES (por peso)     54ms
+     1. Aviso prévio de 5 minutos com linguagem concreta
+     2. Limite firme + acolhimento na mesma frase
+     3. Crianças pequenas não têm capacidade neurológica de se auto-re
+  BASE 3 DEPOIS (aderência)   57ms
+     1.  Aviso prévio de 5 minutos com linguagem concreta
+     2.  Limite firme + acolhimento na mesma frase
+     3.  Crianças pequenas não têm capacidade neurológica de se auto-re
+  → 0 de 3 trocaram
+  BASE 2                      0ms · 3 seções: PRINCÍPIO CENTRAL | ANTES DE ORIENTAR, DIFERENCIE — QU | PERGUNTA DE ALTO VALOR — GOLDEN CA
+  chars enviados: BASE 3 1303 · BASE 2 1848
+
+############################################################################
+8 · relato insuficiente   (6a · skill=emocional)
+"Ele tem tido umas crises"
+
+  BASE 3 ANTES (por peso)     53ms
+     1. Crianças pequenas não têm capacidade neurológica de se auto-re
+     2. O cérebro tem andares: tronco cerebral (sobrevivência), sistem
+     3. Momentos de quietude estruturados (sem pressão para fazer nada
+  BASE 3 DEPOIS (aderência)   67ms
+     1.  Crianças pequenas não têm capacidade neurológica de se auto-re
+     2.  O cérebro tem andares: tronco cerebral (sobrevivência), sistem
+     3.  Momentos de quietude estruturados (sem pressão para fazer nada
+  → 0 de 3 trocaram
+  BASE 2                      0ms · 3 seções: PRINCÍPIO CENTRAL | ANTES DE ORIENTAR, DIFERENCIE — QU | PERGUNTA DE ALTO VALOR — GOLDEN CA
+  chars enviados: BASE 3 2102 · BASE 2 1738

@@ -1301,6 +1301,46 @@ do laudo de 06/08) + `docs/auditoria-ayla-prompt.md`
   não rodou a suíte naquele PR** e eu não conferi antes de mergear. O teste 4
   foi invertido para guardar o que passou a valer: os cinco temas existem **e**
   são recuperáveis por estado.
+- **📌 CORREÇÃO DE NOMENCLATURA (2026-08-09).** Eu chamei as Fases 1, 2 e 3 de
+  **CONCLUÍDAS** em vários relatórios. Medindo consumidores reais no código
+  mergeado, as três tinham **ZERO**. O termo certo é **construída/testada →
+  ligada só na 4A.1**. A imprecisão poderia ter feito o Sérgio acreditar que a
+  Fase 4A era menor do que é: ela liga **quatro módulos que nunca rodaram
+  juntos**, não um.
+- **✅ FASE 4A.1 — as três leituras ligadas atrás de flag (2026-08-09).**
+  `KOLO_PILOTO_ESTRATEGIAS=1`. Ausente ou qualquer outro valor mantém o fluxo
+  antigo. Medição em [bancada/4a1-ranking-2026-08-09.txt](bancada/4a1-ranking-2026-08-09.txt).
+  - **O ranking mudou o trio em 3 dos 8 casos, e onde mudou foi decisivo.**
+    *"Bate na irmã"*: **3 de 3 trocaram** — saía *"o cérebro tem andares"* e
+    *"crianças pequenas não têm capacidade neurológica"*; passou a sair
+    *"Explosões de raiva — bate, grita, joga coisas"*. *"Festa/sensorial"*:
+    **3 de 3**, e entrou *"Crises em ambientes com muitos estímulos (festas,
+    shoppings)"*. Foco/matemática: 1 de 3.
+  - **Nos outros 5 o ranking foi INERTE — e isso confirma a Fase 3C, não
+    contradiz o ranking.** Sono, comunicação e sobrecarga são exatamente os
+    subproblemas medidos com zero boa prática aderente. O ranking não inventa
+    conteúdo que o acervo não tem.
+  - **O caso 2 melhoraria hoje se os 10 rascunhos estivessem ativos** — eles
+    foram escritos para ele. Isso é a 4A.3, e a medição já mostra o ganho
+    esperando.
+  - **Custo praticamente zero.** BASE 2 custa **0 ms** (módulo gerado em build,
+    zero I/O). O ranking roda sobre candidatas já em memória: 204 ms contra
+    305 ms no caso 1 — dentro do ruído. **Nenhuma chamada de IA nova.**
+  - **Tokens:** a BASE 2 acrescenta ~1.500 a 2.350 caracteres (~400–600 tokens).
+    A BASE 3 não mudou de tamanho, mudou de conteúdo.
+  - **Isolamento por construção:** o ranking é **opt-in por parâmetro** em
+    `recuperarBoasPraticas` — omitir devolve o comportamento byte a byte. O
+    WhatsApp não passa `relato` e não passa por `buildContext`. **12 testes, 3
+    sabotagens mordem.**
+- **⏳ PEND: reconciliar o `main` local.** Backup em
+  `backup/main-local-2026-08-09`. 5 commits não publicados, 117 atrás do
+  `origin/main`, **97 arquivos divergentes**. Classificação por conteúdo:
+  `068af16` já incorporado · `0e53a91` e `d97811d` parcialmente (a migração
+  local `0071_rotina_resultado` virou `0075` no origin) · `1506aa1` e `33d0894`
+  trazem **6 arquivos que não existem no origin/main**:
+  `escopo-kolo.ts`, `escopo-kolo.test.ts`, `plano-recursos.ts`,
+  `plano-estrutura.test.ts`, `0071_rotina_resultado.sql`,
+  `0076_plano_versionamento.sql`. **Nenhum foi aplicado.** Missão própria.
 - **Depende de:** PEND-017 e PEND-018 — **desenhar junto**. Absorve PEND-009
   (primeira conversa) dentro do DESEJADO.
 - **Admin:** ADMIN PRECISA DE AJUSTE — hoje não dá para ver *por que* a Ayla

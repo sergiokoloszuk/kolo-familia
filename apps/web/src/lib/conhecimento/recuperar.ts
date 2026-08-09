@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { ordenarPorAderencia } from "./aderencia";
 
 /**
  * RECUPERAÇÃO DE REPERTÓRIO — a Camada 2, uma fonte só para os dois canais.
@@ -78,6 +79,19 @@ export type ParamsRecuperar = {
   idade?: number | null;
   /** Quantas BPs no bloco. 3 é o padrão medido; 4 só com ganho demonstrado. */
   limite?: number;
+  /**
+   * O RELATO DA FAMÍLIA, quando quem chama quiser o ranking por aderência.
+   *
+   * **Omitir mantém o comportamento anterior byte a byte** — é assim que o
+   * WhatsApp continua intocado enquanto a web experimenta. Passar liga
+   * `ordenarPorAderencia` ANTES do corte, para que a escolha das 3 leve em
+   * conta o que a família escreveu, e não só o peso e a skill.
+   *
+   * Sem isto, o corte é sempre o mesmo trio para qualquer relato dentro da
+   * mesma skill e faixa etária: a ordenação é por `peso_relevancia`, que não
+   * conhece o caso.
+   */
+  relato?: string | null;
   /**
    * Quais status entram. O padrão — e o de produção — é só `ativo`.
    *
@@ -167,7 +181,32 @@ export async function recuperarBoasPraticas(
         ]
       : candidatas;
 
-    return ordenadas.slice(0, p.limite ?? 3).map((bp) => ({
+    // ADERÊNCIA AO RELATO — só quando quem chama pede.
+    //
+    // Entra AQUI, e não depois: `recuperarBoasPraticas` devolve 3, e ranquear
+    // 3 itens já escolhidos não escolheria nada. O ganho está em ordenar as
+    // dezenas de candidatas elegíveis antes do corte.
+    //
+    // `ordenarPorAderencia` é conservador por desenho: abaixo do piso ele
+    // devolve a ordem que recebeu. Então, num relato sem aderência nenhuma, o
+    // resultado é idêntico ao de antes — passar `relato` nunca piora a ordem
+    // por acidente, só deixa de ajudar.
+    const finais = p.relato?.trim()
+      ? ordenarPorAderencia(
+          ordenadas.map((bp) => ({
+            id: String(bp.id),
+            titulo: String(bp.titulo ?? ""),
+            versao_conversa: bp.versao_conversa ?? bp.versao_curta ?? null,
+            quando_usar: bp.quando_usar ?? null,
+            passos_praticos: bp.passos_praticos,
+            tags: bp.tags,
+            _original: bp,
+          })),
+          p.relato,
+        ).itens.map((x) => x._original)
+      : ordenadas;
+
+    return finais.slice(0, p.limite ?? 3).map((bp) => ({
       id: String(bp.id),
       titulo: String(bp.titulo ?? "").trim(),
       // `versao_curta` só entra quando não há `versao_conversa` — mandar as duas

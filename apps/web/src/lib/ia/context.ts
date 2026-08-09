@@ -2,6 +2,12 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { SkillRow } from "./router";
 import { blocoDiagnosticoRegistrado } from "@/lib/onboarding/diagnostico";
 import { recuperarBoasPraticas, type BoaPraticaRecuperada } from "@/lib/conhecimento/recuperar";
+import { pilotoEstrategiasLigado } from "@/lib/conducao/piloto";
+import { secoesDe, temMaterial, type SecaoBase2 } from "@/lib/conducao/base2";
+import {
+  carregarPerfilConsultavel,
+  type PerfilConsultavel,
+} from "@/lib/kolo-vivo/consultar";
 import { montarRastro, registrarRastroConhecimento } from "@/lib/conhecimento/rastro";
 import { idadeAnos } from "@/lib/idade";
 import { descricaoCuidador, type Genero } from "@/lib/ayla/pronomes";
@@ -108,6 +114,10 @@ export type ContextoSkillResposta = {
   } | null;
   /** Repertório recuperado — mesmo formato que o WhatsApp recebe. */
   boasPraticas: BoaPraticaRecuperada[];
+  /** FASE 4A.1 · seções de investigação da BASE 2. Vazio fora do piloto. */
+  base2: readonly SecaoBase2[];
+  /** FASE 4A.1 · perfil campo a campo, com estado. `null` fora do piloto. */
+  perfilConsultavel: PerfilConsultavel | null;
   historico: Array<{ papel: "user" | "assistant"; conteudo: string }>;
 };
 
@@ -123,9 +133,20 @@ export async function buildContext(
     membroAtipicoId: string | null;
     skills: SkillRow[];
     conversaId?: string | null;
+    /**
+     * O que a família acabou de escrever.
+     *
+     * Só o piloto de Estratégias passa (FASE 4A.1). Sem ele, tudo abaixo se
+     * comporta como antes — é assim que o WhatsApp e o resto da web ficam
+     * intocados enquanto isto é medido.
+     */
+    relato?: string | null;
   },
 ): Promise<ContextoSkillResposta> {
   const { familyId, membroAtipicoId, skills, conversaId } = params;
+  // A flag decide, e o relato é a condição técnica: sem texto não há o que
+  // ranquear nem tema que recuperar.
+  const piloto = pilotoEstrategiasLigado() && Boolean(params.relato?.trim());
 
   // União dos campos do Kolo Vivo que essas skills consomem
   const camposMembroAcionados = new Set<string>();
@@ -310,10 +331,42 @@ export async function buildContext(
     skills: skillsNomes,
     tags: [...tagsConhecimento],
     idade: membroFoco?.idade ?? null,
+    // FASE 4A.1 · o ranking por aderência. Fora do piloto isto é `undefined`, e
+    // `recuperarBoasPraticas` volta a escolher as 3 por peso — que é o que ele
+    // sempre fez e o que o WhatsApp continua recebendo.
+    relato: piloto ? params.relato : undefined,
     aoFalhar: () => {
       erroNaConsulta = true;
     },
   });
+
+  // FASE 4A.1 · BASE 2 — como COMPREENDER antes de orientar.
+  //
+  // Construída na Fase 2 e, até 09/08/2026, sem nenhum consumidor: a conversa
+  // web nunca leu uma linha de `docs/skills`. O tema vem da skill roteada, que
+  // já é o nome do arquivo canônico.
+  //
+  // `estado: "investigacao"` é o único que entra por enquanto. Decidir que há
+  // suficiência para orientar é trabalho da 4A.2 — aqui a Ayla ganha o mapa de
+  // diferenciação, não a permissão de concluir.
+  const base2 =
+    piloto && skillsNomes[0] && temMaterial(skillsNomes[0])
+      ? secoesDe({ tema: skillsNomes[0], estado: "investigacao", limite: 3 })
+      : [];
+
+  // FASE 4A.1 · PERFIL CONSULTÁVEL — o que já sabemos desta criança.
+  //
+  // Também construído (Fase 1) e sem consumidor. Ele NÃO substitui o bloco de
+  // Kolo Vivo que já existe: entra para dizer o que está preenchido, o que está
+  // vazio e o que é NEGATIVO — a distinção que evita perguntar de novo.
+  const perfilConsultavel =
+    piloto && membroAtipicoId
+      ? await carregarPerfilConsultavel(supabase, { membroId: membroAtipicoId, familyId }).catch(
+          // Leitura acessória: se falhar, a conversa segue sem ela. O que não
+          // pode é derrubar o turno por causa de um enriquecimento.
+          () => null,
+        )
+      : null;
   // RASTRO — o mesmo do WhatsApp, no módulo compartilhado. Aqui `enviadas` é
   // igual a `recuperadas` porque `buildContextBlock` monta o bloco com o array
   // inteiro; o dia em que alguém filtrar no meio, o rastro mostra.
@@ -338,6 +391,8 @@ export async function buildContext(
     .map((h) => ({ papel: h.papel as "user" | "assistant", conteudo: h.conteudo }));
 
   return {
+    base2,
+    perfilConsultavel,
     membroFoco,
     cuidador,
     membros,
