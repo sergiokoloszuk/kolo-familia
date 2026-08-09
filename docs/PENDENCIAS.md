@@ -359,6 +359,15 @@ Aberta em: 2026-08-08 · Origem: pedido do Sérgio na missão da PEND-004
   do que o modelo emitiu no campo `tarefas`, nem de quantas etapas a mensagem
   narrava. **Para a equipe, conversa e artefato são dois mundos que ninguém
   cruza.** É o mesmo buraco do erro de cartão, uma camada acima.
+- **O RASTRO DO CONHECIMENTO JÁ EXISTE — falta a tela (2026-08-08).** Desde a
+  etapa 1 da PEND-017, cada turno grava em `eventos_app` o que foi consultado,
+  o que foi recuperado e o que chegou ao modelo. **O dado está estruturado; o
+  Admin ainda não sabe mostrá-lo.** O que a tela precisará juntar, numa
+  conversa: o que a mãe disse · o que a Ayla entendeu · que dados da criança
+  existiam · que conteúdos foram recuperados · quais chegaram ao modelo · que
+  resposta saiu · que artefato saiu. **E precisa exibir "uso efetivo: não
+  observável" como tal** — uma tela que insinue que a resposta se apoiou nas
+  BPs listadas mentiria com dado verdadeiro.
 - **Já sabido, das fichas existentes:** PEND-004 rotinas geradas (criança,
   título, data, origem, status, feedback, erro de geração) · PEND-016 *por que*
   a Ayla decidiu o que decidiu · PEND-017 administrar acervo e ver o que foi
@@ -523,6 +532,16 @@ Aberta em: 2026-08-08 · Origem: decisão de produto (2026-08-08)
     condutor que houve reorganização — **campo novo em `ProntidaoRotina`**, o
     que é mudança estrutural, não ajuste localizado. **Não implementado; precisa
     de decisão.**
+- **DECISÃO DE PRODUTO REGISTRADA (2026-08-08), NÃO IMPLEMENTADA — D-R6.**
+  > **Se a Ayla alterar materialmente uma sequência fornecida pela família —
+  > inclusive mudar a ORDEM — deve apresentar a sequência alterada e confirmar
+  > antes de gerar.**
+  Fecha o buraco que a bancada encontrou e que **repetiu 2 de 2**: quando a mãe
+  ditou *dormir, jantar, chega*, a Ayla corrigiu a ordem e montou sem
+  confirmar. A D-R1 cobria acrescentar e completar; **reordenar** ficou fora.
+  ⚠️ A correção provável exige o porteiro informar ao condutor que houve
+  reorganização — **campo novo em `ProntidaoRotina`**, mudança estrutural, não
+  ajuste de texto. **Destino: próxima fatia de execução da PEND-004.**
 - **⚠️ ESTADO: AGUARDANDO VALIDAÇÃO.** Falta exatamente uma evidência, e ela
   não se fabrica: **uma conversa real, de uma família real, exercitando os
   casos B (necessidade implícita), C (evento único) e a confirmação seletiva.**
@@ -941,6 +960,37 @@ Aberta em: 2026-08-08 · Origem: consolidação da PEND-010 +
   (biblioteca) existe **fora da `main`**: conferido em 2026-08-08 — **zero
   arquivos de BIA em `origin/main`**, só no branch `bia/ciclo-tecnico`, com
   migrações nunca aplicadas.
+- **✅ ETAPA 1 — RASTREABILIDADE, NO AR desde 2026-08-08**
+  ([#60](https://github.com/sergiokoloszuk/kolo-familia/pull/60)). *Enxergar
+  antes de melhorar: nada de ranking, conteúdo, seleção ou prompt foi tocado.*
+  - **PASSOU A SER OBSERVÁVEL**, por turno e nos dois canais, em `eventos_app`
+    (`kind = conhecimento_consultado`): canal · família · criança · skills
+    roteadas · quantas tags entraram · idade usada · **IDs recuperados** ·
+    **IDs enviados ao modelo** · se o bloco saiu vazio · **por que**. Só id,
+    contagem e rótulo — nenhum texto de BP, de família, de prompt ou de
+    resposta, que já vivem em outro lugar.
+  - **VAZIO DEIXOU DE SER UM ESTADO SÓ:** `sem_skill` (nem se consultou) ·
+    `acervo_vazio` (consultou e não havia) · `erro_na_consulta` (a consulta
+    quebrou, e a falha era engolida num `console.warn` que não persiste). Os
+    três produziam exatamente o mesmo bloco ausente.
+  - **CONTINUA NÃO OBSERVÁVEL, de propósito: o USO.** Ter a boa prática no
+    contexto não prova que ela sustentou a resposta. O evento grava
+    `uso_efetivo: "nao_observavel"` por extenso, para que ninguém conclua o
+    contrário depois. Provar uso exige outra coisa — o modelo citar o id, ou um
+    juiz comparando resposta e conteúdo — e **é decisão de etapa futura**.
+  - **A observabilidade não mudou o que mede:** seleção, ordem, bloco, prompt e
+    resposta idênticos. O registro não é esperado (`void`) e tem duas camadas
+    de `catch` — nenhuma família perde resposta por uma linha de log.
+  - **`logEvent` ganhou `persistir`**: nem todo evento que precisa sobreviver é
+    um problema, e marcar operação normal como `warn` envenenaria a severidade.
+  - **Validação:** 19 testes, três sabotagens provadas (perder a associação com
+    a família quebra 1; perder a detecção de vazio quebra 4; confundir erro com
+    acervo vazio quebra 2). **Zero rastros gravados até agora** — não houve
+    conversa depois do deploy, e **não fabriquei tráfego**. A primeira conversa
+    real produz a evidência.
+  - **O que isto desbloqueia:** a validação por conversas reais que esta ficha
+    exige, e a separação entre erro de conhecimento e erro de raciocínio que a
+    PEND-016 vai precisar.
 - **Inclui o pipeline de Admin** (upload → extração → classificação → proposta
   da IA → revisão humana → aprovação → disponível para a Ayla), já desenhado em
   `docs/frente-import-documentos.md`.
