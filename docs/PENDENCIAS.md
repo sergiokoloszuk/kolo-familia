@@ -1074,6 +1074,26 @@ do laudo de 06/08) + `docs/auditoria-ayla-prompt.md`
   - **A riqueza da base deve aumentar a QUALIDADE das perguntas, não a
     quantidade.** E `docs/skills` já tem a formulação melhor: onde houver
     pergunta canônica, ela ganha da que a Ayla inventaria.
+- **ONDE A VOZ MORA HOJE — auditado em 2026-08-09.** A voz canônica está em
+  `lib/conducao/diretrizes.ts` (`nucleoConducao`, compartilhado pelos dois
+  canais). Ao redor dela há regra de forma espalhada: `FORMATO_WHATSAPP` em
+  `responder.ts`, `formas.ts`, `angulos.ts`, e `VOZ_LIMITES_E_FRONTEIRA` em
+  `lib/ia/prompt.ts` (web). **`nucleoConducao` é o lugar certo do padrão
+  editorial** — não criar um sexto arquivo de voz.
+- **⚠️ TERCEIRO PATRIMÔNIO ADORMECIDO: `lib/ayla/manual/`.** Quinze arquivos
+  TypeScript, *"tradução estrutural do Manual Operacional da Ayla (Karina,
+  18/05/2026)"*, com o próprio README dizendo *"esta pasta NÃO contém
+  comportamento ativo"*. **Nada importa esses arquivos.** Junta-se aos
+  `docs/skills` na mesma constatação: a Kolo tem mais construído do que usa.
+- **GOLDEN CASES — proposta de destino, não construída.** Devem viver
+  **versionados e fora do prompt de produção**, como referência e como teste —
+  nunca enviados a cada turno. Destino proposto: `docs/specs/golden-cases/`
+  para o texto, com testes comportamentais lendo dali. O critério do Sérgio
+  fica registrado: *conteúdo em `docs/skills` + `boas_praticas`; criança em
+  perfil/memória; voz num contrato curto e estável; exemplos em Golden Cases
+  versionados.* Os exemplos existem para dizer **"é assim que uma boa Ayla
+  soa"**, e os testes para impedir que uma alteração futura a faça voltar a
+  soar genérica.
 - **Depende de:** PEND-017 e PEND-018 — **desenhar junto**. Absorve PEND-009
   (primeira conversa) dentro do DESEJADO.
 - **Admin:** ADMIN PRECISA DE AJUSTE — hoje não dá para ver *por que* a Ayla
@@ -1268,6 +1288,28 @@ Aberta em: 2026-08-08 · Origem: consolidação da PEND-010 +
     (84 647 chars ÷ 4) — inviável. **Uma seção** custa 300 a 900 tokens, na
     ordem do bloco de repertório atual (3 739 chars no caso medido). O parsing
     dos `.md` deve ser feito **em build ou cache**, não por turno.
+- **BANCADA COM CASOS REAIS — 2026-08-09.** Quatro relatos de produção, sem
+  escolher os que favorecem a arquitetura. **Existe · elegível · recuperado ·
+  enviado · função · uso observável** por caso:
+
+  | caso real | no tema | na faixa | **aderentes** | chegam hoje |
+  |---|---|---|---|---|
+  | escrita: *"copia perfeito se olhar, sem o modelo não escreve"* (18a) | 39 | 11 | 3 | **1** |
+  | foco: *"não consegue se concentrar"* (relato vago, 8a) | 35 | 9 | 5 | **2** |
+  | agressividade: *"é agressivo demais, não sossega"* (sem idade) | 75 | 75 | 6 | **0** |
+  | recusa alimentar após mudar de escola (7a) | 27 | 4 | **0** | — |
+
+  - **O pior é o terceiro.** Existem *"Agressão física é comunicação de
+    frustração sem palavras"* e *"Explosões de raiva — bate, grita, joga coisas:
+    identifique gatilhos"*, e **nenhum dos dois chega**. Entram no lugar
+    "discussões abertas sobre notícias" e "o cérebro tem andares".
+  - **⚠️ O QUARTO É O CASO DE BASE INSUFICIENTE**, e ele importa tanto quanto os
+    outros: recusa alimentar ligada a **mudança de contexto** não tem nenhum
+    conteúdo aderente em `nutricional` para 7 anos — só 4 BPs sobrevivem ao
+    filtro de idade, e nenhuma fala do assunto. **Aqui nenhum ranking resolve.**
+    É lacuna de curadoria, e o veredito honesto é *"a base ainda não tem
+    repertório para responder isso com a qualidade que queremos"*.
+  - **Uso efetivo: não observável**, em todos os quatro.
 - **Depende de:** desenhar junto com PEND-016 e PEND-018.
 - **Admin:** ADMIN PRECISA DE AJUSTE — administrar acervo, e ver o que foi
   recuperado e o que foi usado.
