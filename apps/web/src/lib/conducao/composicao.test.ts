@@ -38,12 +38,50 @@ describe("licença generativa", () => {
     expect(LICENCA_GENERATIVA).toMatch(/ponte para a experiência/i);
   });
 
+  it("4b. a âncora manda USAR o que já sabemos, não só evitar reperguntar", () => {
+    // Medido em 09/08/2026: no caso "bate na irmã" o Perfil trazia os sinais
+    // precoces e a resposta os ignorou em 4 de 5 rodadas. A âncora era só
+    // negativa — proibia reperguntar e nunca mandava construir a pergunta EM
+    // CIMA do que já se sabe. Investigar não é começar do zero.
+    expect(ANCORA_PERFIL).toMatch(/MESMO QUANDO VOCÊ AINDA ESTIVER INVESTIGANDO/);
+    expect(ANCORA_PERFIL).toMatch(/Investigar não é começar do zero/);
+    expect(ANCORA_PERFIL).toMatch(/A mesma pergunta, ancorada, vale muito mais/);
+  });
+
+  it("4c. MORDE: a defesa contra invenção é ESTRUTURAL, não uma lista de frases", () => {
+    // A versão anterior proibia "o cérebro dela está dizendo…" citando a frase
+    // exata — e o modelo produziu três variantes assim mesmo. Lista de frases
+    // proibidas não escala: existe uma infinidade de maneiras de dizer o mesmo.
+    //
+    // A regra que substituiu é sobre QUEM É O SUJEITO da oração: o cérebro não
+    // pode ser sujeito de verbo de intenção. Isso cobre as variantes que ainda
+    // não foram escritas.
+    expect(LICENCA_GENERATIVA).toMatch(/REGRA DE SUJEITO/);
+    expect(LICENCA_GENERATIVA).toMatch(/quem faz as coisas é A CRIANÇA ou A SITUAÇÃO/i);
+    for (const verbo of ["diz", "quer", "decide", "pede", "entende", "manda", "acha"]) {
+      expect(LICENCA_GENERATIVA, `o verbo "${verbo}" saiu da regra`).toMatch(
+        new RegExp(`não ${verbo}\\b`),
+      );
+    }
+  });
+
+  it("4d. os três registros legítimos continuam permitidos — e nomeados", () => {
+    // A correção não pode empobrecer a Ayla. Conhecimento geral hedgeado,
+    // hipótese marcada e analogia anunciada seguem valendo; o que sai é o
+    // quarto registro, a atribuição inventada.
+    expect(LICENCA_GENERATIVA).toMatch(/conhecimento geral, hedgeado/);
+    expect(LICENCA_GENERATIVA).toMatch(/hipótese sobre ESTA criança, marcada como hipótese/);
+    expect(LICENCA_GENERATIVA).toMatch(/analogia que se anuncia como analogia/);
+    expect(LICENCA_GENERATIVA).toMatch(/copo quase cheio/);
+  });
+
   it("5. MORDE: a cláusula anti-invenção não pode sumir — foi ela que falhou", () => {
     // Caso real da bancada: com licença e sem repertório aderente, o modelo
     // escreveu "o cérebro dela está dizendo…". O exemplo ficou no texto de
     // propósito, porque proibição abstrata não pegou.
     expect(LICENCA_GENERATIVA).toMatch(/VOCÊ CRIA A FORMA, NÃO O FATO/);
     expect(LICENCA_GENERATIVA).toMatch(/o cérebro dela está dizendo/);
+    expect(LICENCA_GENERATIVA).toMatch(/nunca o cérebro/);
     expect(LICENCA_GENERATIVA).toMatch(/eficácia garantida/);
     expect(LICENCA_GENERATIVA).toMatch(/característica da criança que ninguém informou/);
   });

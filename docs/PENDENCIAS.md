@@ -1418,6 +1418,52 @@ do laudo de 06/08) + `docs/auditoria-ayla-prompt.md`
   - **NÃO EXISTE:** progressão explícita como campo.
   - **Só implementar depois que a Karina aprovar Estratégias Web**, para não
     replicar uma arquitetura em calibração.
+- **✅ PRÉ-GO (2026-08-09).** Três correções, todas medidas em 5 rodadas do
+  mesmo caso por condição. Dados em
+  [bancada/prego-3vs2-bps-2026-08-09.txt](bancada/prego-3vs2-bps-2026-08-09.txt).
+  - **🐛 A LATÊNCIA NÃO ERA CONTEXTO — É TAMANHO DE RESPOSTA.** Minha hipótese
+    era que 3 BPs afogavam o Perfil e inchavam o prompt. **Errada.** Cortar para
+    2 economiza só 200 tokens. O que a medição mostrou é outra coisa: 225
+    caracteres de resposta → 3,2 s; 1.002 caracteres → 12,4 s. **A latência
+    acompanha o que o modelo ESCREVE, não o que ele lê** — e mais repertório
+    convida a escrever mais.
+  - **Mesmo assim, 2 BPs vence nos três eixos:** pior caso **5,9 s contra
+    17,3 s**, Perfil usado em **3 de 5 contra 1 de 5**, invenção igual. Aplicado
+    só dentro do piloto (`limite: piloto ? 2 : undefined`); fora dele continua 3.
+  - **🐛 A ÂNCORA ERA SÓ NEGATIVA.** Ela proibia reperguntar e nunca mandava
+    construir a pergunta EM CIMA do que já se sabe — por isso, em modo de
+    investigação, o Perfil não mudava nada. A regra nova diz: *"investigar não é
+    começar do zero"*, com o exemplo de ancorar a pergunta no dado registrado.
+  - **✅ ANTI-INVENÇÃO RESOLVIDA ESTRUTURALMENTE: 0 em 10 rodadas** (era 1 em 5).
+    A defesa não é outra lista de frases proibidas — é uma **regra de sujeito**:
+    quem faz as coisas é a criança ou a situação, **nunca o cérebro**. O cérebro
+    não diz, não quer, não decide, não pede, não entende, não manda, não acha.
+    Isso cobre as variantes que ninguém escreveu ainda, que era a falha da lista.
+    E os **três registros legítimos ficaram nomeados** — conhecimento geral
+    hedgeado, hipótese marcada e analogia anunciada —, para a correção não
+    empobrecer a Ayla.
+  - **⚠️ PERSONALIZAÇÃO AINDA É 3 EM 5.** Melhorou, e não está resolvida. Fica
+    como o item mais fraco do piloto, e é justamente o tipo de coisa que o olho
+    da Karina pega melhor que a minha régua.
+- **✅ FORMATAÇÃO DE ESTRATÉGIAS (2026-08-09).**
+  - **LIMITE DE TEXTO: não existia teto de caracteres.** O prompt já dizia *"O
+    TAMANHO É O DA AJUDA — não há alvo de palavras"*, e `max_tokens: 2048`
+    (~8.000 caracteres) nunca chegou perto de cortar: as respostas medidas
+    ficaram entre 99 e 1.609. **Nada foi removido, porque não havia o que
+    remover.** O `slice` em `resposta-markdown.tsx` só apara um rodapé de
+    "registrar este papo".
+  - **🐛 A FORMATAÇÃO SE PERDIA NO PROMPT, NÃO NA TELA.** O renderizador já
+    suporta `#`…`######`, `**negrito**`, `- `, `1. `, `> ` e `---`. **O prompt é
+    que proibia**: dizia *"negrito no máximo em 1 palavra e nunca como título"*.
+    A tela sabia desenhar o que o modelo estava proibido de escrever.
+  - **A condicionalidade foi PRESERVADA, e um teste existente me impediu de
+    quebrá-la.** A regra `const entrega = intencao === "desafio"` mantém crise,
+    desabafo e dúvida em prosa — quem desabafa não quer documento organizado.
+    Minha primeira versão liberava estrutura para todo mundo; o teste mordeu.
+    Agora os dois ramos são explícitos e uma sabotagem prova que não podem virar
+    um só.
+- **⏳ PEND: levar o mesmo padrão visual para o Plano Kolo**, depois da aprovação
+  da Karina. Junto com a pendência da inteligência conversacional no Plano.
 - **Depende de:** PEND-017 e PEND-018 — **desenhar junto**. Absorve PEND-009
   (primeira conversa) dentro do DESEJADO.
 - **Admin:** ADMIN PRECISA DE AJUSTE — hoje não dá para ver *por que* a Ayla

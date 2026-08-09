@@ -352,9 +352,29 @@ describe("quando os blocos NÃO entram", () => {
     expect(PROMPT_WEB).toMatch(/const entrega = intencao === "desafio";/);
   });
 
-  it("a web deixou de PROIBIR título, mas só libera dentro da entrega", () => {
+  it("a estrutura visual continua condicionada à entrega — e agora nos DOIS ramos", () => {
+    // A regra não mudou: crise, desabafo e dúvida seguem em prosa. O que mudou
+    // em 09/08/2026 é que o ramo da ENTREGA deixou de proibir estrutura e passou
+    // a ensiná-la — antes ele dizia "negrito no máximo em 1 palavra e nunca como
+    // título", e por isso a resposta chegava à tela como parágrafo corrido
+    // mesmo quando havia três frentes pra organizar.
     expect(PROMPT_WEB).not.toMatch(/NÃO use títulos de seção pra cada parte/);
-    expect(PROMPT_WEB).toMatch(/SÓ quando houver um bloco de entrega/);
+    // O ramo com entrega ENSINA a estrutura que a tela sabe renderizar.
+    expect(PROMPT_WEB).toMatch(/A tela renderiza markdown de verdade/);
+    expect(PROMPT_WEB).toMatch(/A estrutura nasce do raciocínio, não de um gabarito/);
+    // E o ramo SEM entrega continua proibindo — este é o guarda que importa.
+    expect(PROMPT_WEB).toMatch(/Aqui a resposta é TEXTO CORRIDO/);
+    expect(PROMPT_WEB).toMatch(/Sem títulos de seção, sem listas, sem divisórias/);
+  });
+
+  it("MORDE: os dois ramos não podem virar um só", () => {
+    // Se alguém remover a condicional e liberar estrutura pra todo mundo, quem
+    // está desabafando passa a receber um documento organizado.
+    const iEntrega = PROMPT_WEB.indexOf("A tela renderiza markdown de verdade");
+    const iProsa = PROMPT_WEB.indexOf("Aqui a resposta é TEXTO CORRIDO");
+    expect(iEntrega).toBeGreaterThan(-1);
+    expect(iProsa).toBeGreaterThan(-1);
+    expect(PROMPT_WEB).toMatch(/entrega\s*\?/);
   });
 });
 

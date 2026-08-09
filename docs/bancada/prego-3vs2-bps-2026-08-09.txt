@@ -1,0 +1,42 @@
+PRÉ-GO · 3 BPs contra 2, no caso que falhou em personalização
+
+"Meu filho bate na irmã quando é contrariado. Ontem ela pegou o brinquedo dele e ele partiu pra cima."
+
+
+##############################################################################
+3 BPs  ·  44pts Quando a criança entra em crise (choro i | 35pts Bater, morder, chutar, gritar: todas for | 21pts Explosões de raiva — bate, grita, joga c
+
+  rodada 1: 2902ms · 3095tok · 99ch · perfil usado: NENHUM
+
+    ┌─ resposta da rodada 1
+    │ O que aconteceu logo depois — você conseguiu conversar com ele, ou ele estava muito alterado ainda?
+    └─
+
+  rodada 2: 2260ms · 3095tok · 122ch · perfil usado: NENHUM
+  rodada 3: 17307ms · 3095tok · 1609ch · perfil usado: NENHUM
+  rodada 4: 9656ms · 3095tok · 870ch · perfil usado: sinais precoces, depois
+  rodada 5: 4197ms · 3095tok · 334ch · perfil usado: NENHUM
+
+  → mediana 4197ms · pior 17307ms · entrada 3095tok
+  → usou o Perfil em 1/5 · inventou mecanismo em 0/5
+
+##############################################################################
+2 BPs  ·  44pts Quando a criança entra em crise (choro i | 35pts Bater, morder, chutar, gritar: todas for
+
+  rodada 1: 5390ms · 2895tok · 443ch · perfil usado: depois
+
+    ┌─ resposta da rodada 1
+    │ Boa tarde! Entendo, é angustiante ver isso acontecendo.
+    │ 
+    │ Antes de pensar no que fazer, preciso entender melhor o momento. Quando você diz que ela pegou o brinquedo dele e ele "partiu pra cima" — **você percebeu alguma coisa diferente nele antes disso?** Tipo: ele já estava mais irritado, cansado, ou foi do nada mesmo?
+    │ 
+    │ E outra coisa: depois que aconteceu, como ele ficou? Continuou bravo, chorou, pediu o brinquedo de volta, ficou quieto...?
+    └─
+
+  rodada 2: 3345ms · 2895tok · 220ch · perfil usado: NENHUM
+  rodada 3: 2654ms · 2895tok · 147ch · perfil usado: sinais precoces
+  rodada 4: 4151ms · 2895tok · 299ch · perfil usado: NENHUM
+  rodada 5: 5956ms · 2895tok · 388ch · perfil usado: sinais precoces, depois
+
+  → mediana 4151ms · pior 5956ms · entrada 2895tok
+  → usou o Perfil em 3/5 · inventou mecanismo em 0/5
