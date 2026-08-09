@@ -951,6 +951,55 @@ do laudo de 06/08) + `docs/auditoria-ayla-prompt.md`
     do onboarding quebra 13 · interpretar número sem respeitar o menu quebra 5 ·
     entrada concreta cair no menu quebra 8 · misturar desafio de outra família
     quebra 13.
+- **TESTE REAL DA ENTRADA GUIADA — 2026-08-09, conversa da Karina.** Primeira
+  evidência orgânica depois da fatia 1. **O menu funcionou; a condução depois
+  dele é o problema.**
+  - **LATÊNCIA CONVERSACIONAL: quatro trocas até o valor forte.**
+    `5` → `Tarefas` → `Começar/Matemática` → `Ele não quer fazer lição`. Só a
+    última trouxe *o que eu faria primeiro* + explicação + frase pronta. As três
+    anteriores **já traziam orientação concreta** — não foi interrogatório puro —
+    mas cada uma **fechava com mais uma pergunta de afunilamento**, e é isso que
+    faz a mãe sentir que ainda não chegou.
+  - **TEMA ESCOLHIDO VIROU ORIENTAÇÃO SOBRE HIPÓTESE NÃO IDENTIFICADA.** Com
+    `sensorial`, a Ayla abriu por pressão/movimento/barulho — o conteúdo médio
+    do tema, não o problema daquela família. **Tema escolhido não é autorização
+    para despejar o tema**, e também não é começo de interrogatório: o que falta
+    é oferecer **situações concretas reconhecíveis** para a mãe se identificar.
+  - **A SUFICIÊNCIA NÃO É DECIDIDA POR NINGUÉM.** Diferente da Rotina e do Plano,
+    a conversa livre **não tem porteiro**: nada avalia *"já dá pra ajudar de
+    verdade?"* antes de responder. `Começar + Matemática` já bastava.
+  - **FORMA DA RESPOSTA — auditada em 2026-08-09.** As respostas saem em blocos
+    uniformes de prosa. A mãe não consegue bater o olho e achar *o que tentar ·
+    o que falar · uma ideia prática · qual o próximo caminho*. **Âncoras curtas
+    em negrito** (`*assim*`, que é a sintaxe que o WhatsApp renderiza e que a
+    Ayla já usa) devem aparecer **quando ajudarem a leitura** — nunca como
+    template fixo em toda resposta.
+  - **PRINCÍPIO REGISTRADO:** *uma boa resposta Kolo não apenas explica o
+    comportamento — ela deixa a mãe com alguma coisa concreta para experimentar.*
+    Quando houver repertório, ir além do óbvio: **orientação + frase +
+    brincadeira/atividade/missão + alternativas**, conforme o caso.
+    ⚠️ **Isto NÃO vira a regra "criança não quer tarefa → gamificar".** A
+    intervenção nasce da situação + dados da criança + interesses + o que já
+    funcionou + repertório recuperado. Sem saber o que funciona com aquela
+    criança, a saída é **oferecer 2–3 jeitos com o como-fazer de cada um** e
+    deixar a mãe escolher — ela não precisa saber de antemão o que serve.
+  - **DESEJADO, registrado e NÃO construído:** (a) a escolha do número deve
+    **aumentar o valor imediatamente**; (b) não orientar sobre hipótese ainda não
+    identificada; (c) sem pergunta de afunilamento quando já dá para ajudar;
+    (d) **depois de entregar ajuda**, oferecer 2–4 caminhos concretos (outras
+    estratégias · atividade/missão · analisar foto · Rotina Visual · Plano Kolo ·
+    História), **nunca menu fixo**; (e) **artefato não substitui orientação** —
+    *se retirarmos o artefato desta conversa, a família ainda aprendeu algo útil
+    para fazer ou falar?*
+  - **CRITÉRIO CONCEITUAL DE ARTEFATO — hipótese a validar, não implementada:**
+    **Rotina Visual** quando há sequência concreta e ver "agora/depois" ajuda ·
+    **Plano Kolo** quando o desafio é recorrente e vale trabalhar ao longo do
+    tempo · **História** quando antecipar/ensaiar ajuda · **orientação primeiro**
+    quando ainda se está entendendo o problema. ⚠️ **Não ampliar a oferta de
+    Plano enquanto a PEND-017 não avançar** — a auditoria de 08/08 mostrou que o
+    conteúdo dele tem liberdade excessiva do modelo.
+  - **Estado: ABERTA.** A fatia 2 não começou e o mecanismo mínimo que produziria
+    esse comportamento ainda não foi desenhado.
 - **Depende de:** PEND-017 e PEND-018 — **desenhar junto**. Absorve PEND-009
   (primeira conversa) dentro do DESEJADO.
 - **Admin:** ADMIN PRECISA DE AJUSTE — hoje não dá para ver *por que* a Ayla
@@ -1024,6 +1073,38 @@ Aberta em: 2026-08-08 · Origem: consolidação da PEND-010 +
   devolve nenhuma. O rastro da etapa 1 mostra esse roteamento como qualquer
   outro. **Isto não resolve nada desta ficha** — ranking, peso e seleção
   continuam como estavam, e a qualidade do que é recuperado segue em aberto.
+- **EVIDÊNCIA REAL — conversa da Karina, 2026-08-09.** O rastro da etapa 1
+  produziu o primeiro laudo por turno desta base.
+  - `5`/sensorial → **3 recuperadas, 3 enviadas**, `idade=18`. **Pertinentes:**
+    o Mario **tem 18 anos**, e vieram BPs de faixa 13-18 sobre autorregulação
+    sensorial em adolescente.
+  - `Tarefas` → **3 recuperadas, 3 enviadas, `idade=null`** — e aí entraram
+    *"Música e dança livre… ritmo"* (faixa 1-3) e *"Sustentação cervical cresce
+    entre 3-5 meses"* (faixa 0-1) **para um adolescente**.
+  - `Começar/Matemática` e `Ele não quer fazer lição` → skill `foco`, `idade=18`,
+    3 de 3, faixa adequada. **Pertinentes.**
+  - **🐛 ACHADO: a idade desaparece entre turnos.** Três turnos com `idade=18` e
+    um, no meio, com `null`. Quando a idade some, a regra tolerante de
+    `idadeElegivel` — **deliberada e certa** para família sem data de nascimento
+    — deixa entrar conteúdo de bebê. **O defeito não é o filtro: é a idade
+    sumir.** Causa provável: `membroConversa` oscila entre turnos da mesma
+    conversa. **NÃO corrigido:** exige entender a oscilação, e mexer às cegas na
+    resolução de criança é território do isolamento entre irmãos.
+    **Destino: investigação própria nesta ficha, com o rastro como baseline.**
+  - **🔴 O ACERVO NÃO TEM O QUE A CONDUÇÃO PRECISARIA — medido em 2026-08-09.**
+    Perguntou-se se faltava criatividade à Ayla ou conteúdo à base. **É
+    conteúdo.** Na skill `foco`: 35 BPs ativas, 33 com passos práticos, **6 com
+    linguagem lúdica** (missão · jogo · brincadeira · desafio) — e **ZERO delas
+    elegível para 18 anos**. As seis são de faixa infantil.
+    Respondendo item a item: **existiam?** sim, seis · **elegíveis?** não,
+    nenhuma · **recuperadas?** não · **chegaram ao modelo?** não · **apareceram
+    na resposta?** não — e é exatamente por isso que a resposta ficou em
+    *"reduza, pause, observe"*.
+    **Consequência para o desenho:** pedir à Ayla que "seja mais criativa com
+    missões" para um adolescente seria pedir que ela **invente**, não que use a
+    base. **Não é bug de recuperação; é lacuna de curadoria** — e some junto com
+    `meu_bem_estar` na lista do que o acervo não cobre.
+  - **Uso efetivo continua não observável.**
 - **Depende de:** desenhar junto com PEND-016 e PEND-018.
 - **Admin:** ADMIN PRECISA DE AJUSTE — administrar acervo, e ver o que foi
   recuperado e o que foi usado.
@@ -1052,6 +1133,21 @@ Aberta em: 2026-08-08 · Origem: consolidação da PEND-010 +
      período observado, criança, tipo;
   2. como a tela e a Ayla distinguem "a professora relatou" de "a Ayla inferiu";
   3. o que acontece quando duas informações se contradizem.
+- **APRENDIZADOS DE 2026-08-09 (auditoria do teste real da entrada guiada):**
+  1. **Latência técnica e latência conversacional são métricas diferentes, e as
+     duas precisam ser medidas.** A percepção de "quase um minuto" somava o
+     tempo de digitação da mãe ao da Ayla; **medido, o técnico foi de 10 a 25
+     segundos por resposta**. O que incomodava era a outra: **quatro trocas até
+     a ajuda forte**. Otimizar a errada custaria dias e não mudaria a sensação.
+  2. **Rastro de conhecimento prova PRESENÇA no contexto, não USO pelo modelo.**
+     Confirmado na prática: dá para afirmar que três boas práticas de faixa
+     13-18 chegaram ao prompt; **não dá para afirmar que a resposta se apoiou
+     nelas.**
+  3. **Conferir o dado antes de reportar o alarme.** Vi `idade=18` no rastro e
+     quase reportei bug grave de faixa etária — o Mario **tem** 18 anos e a
+     recuperação estava certa. O bug verdadeiro era outro e menor (a idade sumir
+     num turno), e só apareceu porque conferi a data de nascimento antes de
+     escrever.
 - **APRENDIZADO A INCORPORAR (2026-08-08, vindo da PEND-004):** *desejado novo
   que contradiz uma decisão antiga documentada exige **decisão explícita de
   produto** — não se sobrescreve em silêncio nem se preserva o legado por
@@ -1087,6 +1183,22 @@ Aberta em: 2026-08-08 · Origem: consolidação da PEND-010 +
   - Nome que não é nome passa pelo mesmo detector que já evitou *"Oi, Meu Nome
     e Gisela Meu Filgo e Davi"* — sem nome confiável, a saudação funciona sem
     nome.
+- **ORIGEM DA FRASE "referência visual" — RASTREADA em 2026-08-09.** A Ayla
+  disse *"Como ele copia bem quando tem referência visual…"*. Classificação:
+  **A — fato real do perfil**, não inferência. Procedência:
+  `perfil_vivo_membro.categorias_extras`, texto literal *"Copia palavras com
+  perfeição quando vê o modelo, mas não consegue escrever sem referência
+  visual — força em processamento visual, fraqueza em evocação de grafia."*
+  **A memória funcionou, e funcionou bem.**
+  - **⚠️ MAS O FATO FOI USADO FORA DO ESCOPO EM QUE FOI REGISTRADO.** O que está
+    guardado é sobre **escrita e grafia**; a Ayla o aplicou a **matemática**,
+    para justificar o exemplo resolvido ao lado. A extensão é plausível e pode
+    até estar certa — **mas não é o que a família contou**, e saiu na voz de
+    quem afirma algo sabido.
+  - **É a mesma família de falha da uva-passa:** detalhe verdadeiro reusado fora
+    do contexto original. Reforça que o problema não é a memória guardar errado,
+    e sim **não carregar o escopo do que foi observado**. Requisito para o
+    desenho desta ficha: **um fato precisa saber sobre o que ele fala.**
 - **Depende de:** desenhar junto com PEND-016 e PEND-017. **Bloqueia** PEND-020.
 - **Admin:** ADMIN PRECISA DE AJUSTE — ver o retrato da criança e a procedência
   de cada informação.
@@ -1166,6 +1278,16 @@ Aberta em: 2026-08-08 · Origem: consolidação da PEND-010 (itens 23, 24, 25) +
   a mãe frequentemente não sabe que a Kolo ajuda com aquilo. A entrada guiada
   (fatia 1, no ar) é a primeira peça disso.
   ⚠️ **As mensagens D1–D7 continuam não existindo** e não foram criadas aqui.
+- **TEMPO ATÉ O PRIMEIRO VALOR — critério do trial, registrado em 2026-08-09.**
+  A entrada guiada reduziu o esforço da primeira resposta (a mãe responde um
+  número), **mas o teste real mostrou quatro trocas até a ajuda forte**. Reduzir
+  o esforço de responder não adianta se a ajuda ainda demora a chegar.
+  - **A entrada guiada precisa virar ajuda útil rápido**, e a descoberta de
+    funcionalidades deve acontecer **pelo contexto**, quando a situação pede —
+    nunca como catálogo.
+  - **Medível a partir de agora:** o rastro e `ayla_messages` permitem contar
+    quantas trocas separam a primeira mensagem da primeira orientação concreta.
+  - Segue valendo: **as mensagens D1–D7 não existem** e não foram criadas.
 - **Depende de:** nada de A/B/C para começar o desenho — **pode andar em
   paralelo**. Liga-se a PEND-001 e PEND-002, já publicadas.
 - **Admin:** ADMIN PRECISA DE AJUSTE — acompanhar a jornada e a conversão por
