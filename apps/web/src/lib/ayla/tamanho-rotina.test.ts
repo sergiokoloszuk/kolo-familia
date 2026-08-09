@@ -257,10 +257,11 @@ describe("suficiente gera, sem segundo julgamento", () => {
     expect(GUIADA).toMatch(/const pronto = !soOrientacao && \(deveMontar \|\|/);
   });
 
-  it("a instrução proíbe perguntar quando já dá pra montar", () => {
-    expect(GUIADA).toMatch(/acao="montar", obrigatoriamente/);
-    expect(GUIADA).toMatch(/NÃO faça mais nenhuma pergunta neste turno/);
-    expect(GUIADA).toMatch(/enriquecem, mas NÃO seguram a entrega/);
+  // ATUALIZADO em 08/08/2026 (D-R1): proíbe pergunta de DADO, e abre a saída
+  // de confirmar quando a Ayla completou a sequência.
+  it("a instrução proíbe perguntar DADO quando já dá pra montar", () => {
+    expect(GUIADA).toMatch(/NÃO faça mais nenhuma pergunta de dado neste turno/);
+    expect(GUIADA).toMatch(/SÓ DUAS SAÍDAS AQUI/);
   });
 
   it("se o modelo perguntar mesmo assim, a pergunta não vai junto da entrega", () => {

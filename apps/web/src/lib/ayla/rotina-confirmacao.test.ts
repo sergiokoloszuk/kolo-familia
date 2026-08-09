@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import { CONTRATO_ROTINA } from "./rotina-guiada";
 
@@ -108,5 +110,103 @@ describe("o que a mudança NÃO pode ter derrubado", () => {
 
   it("18. duas crianças: o tema continua não sendo assunto da Ayla", () => {
     expect(CONTRATO_ROTINA).toMatch(/TEMA dos cartões NÃO é assunto seu/);
+  });
+});
+
+/**
+ * A INSTRUÇÃO DE RUNTIME não pode contradizer o contrato.
+ *
+ * Achado da bancada com chamada real (08/08/2026): o bloco injetado quando a
+ * prontidão diz "suficiente" mandava `acao="montar", obrigatoriamente` e
+ * "NÃO faça mais nenhuma pergunta". Diante de uma sequência que ela precisava
+ * COMPLETAR, a Ayla obedecia à parte certa (não montar em cima de suposição) e
+ * errava a forma: devolvia uma pergunta de investigação — "o Mario é alguém
+ * que ele conhece bem?" — em vez da proposta numerada.
+ *
+ * Duas instruções fortes se contradizendo produzem exatamente isso: o modelo
+ * escolhe uma saída que não é nenhuma das duas.
+ */
+describe("a instrução injetada quando dá pra montar", () => {
+  const GUIADA = readFileSync(resolve(__dirname, "rotina-guiada.ts"), "utf8");
+
+  it("19. não manda mais montar incondicionalmente", () => {
+    expect(GUIADA).not.toMatch(/acao="montar", obrigatoriamente/);
+  });
+
+  it("20. oferece as duas saídas, e aponta pra regra que decide", () => {
+    expect(GUIADA).toMatch(/SÓ DUAS SAÍDAS AQUI/);
+    expect(GUIADA).toMatch(/a regra CONFIRMAR OU MONTAR decide qual/);
+  });
+
+  it("21. completar a sequência devolve PROPOSTA NUMERADA, não pergunta", () => {
+    expect(GUIADA).toMatch(/você está COMPLETANDO a sequência/);
+    expect(GUIADA).toMatch(/PROPOSTA NUMERADA inteira mais UMA pergunta/);
+  });
+
+  it("22. proíbe explicitamente a pergunta de investigação no lugar da proposta", () => {
+    expect(GUIADA).toMatch(/PROPOR NÃO É PERGUNTAR MAIS/);
+    expect(GUIADA).toMatch(/pergunta de investigação/);
+  });
+
+  it("23. continua barrando pergunta de DADO quando já dá pra montar", () => {
+    // O que a regra antiga protegia — não segurar a entrega por horário, tema
+    // ou ponto difícil — não pode ter se perdido no conserto.
+    expect(GUIADA).toMatch(/NÃO faça mais nenhuma pergunta de dado neste turno/);
+    expect(GUIADA).toMatch(/NÃO seguram a entrega/);
+  });
+});
+
+/**
+ * A SEQUÊNCIA DO QUADRO É A DA FAMÍLIA — caso real de 08/08/2026.
+ *
+ * A mãe deu cinco etapas ("chega · cumprimenta todos · senta para estudar ·
+ * faz a lição · agradece e dá tchau"). A Ayla narrou as cinco corretamente na
+ * fala e, no MESMO turno, sugeriu um ensaio de três passos para a entrada.
+ * O quadro persistido — "Entrada no Leônidas" — saiu com os TRÊS dela.
+ *
+ * Duas coisas empurraram para isso, e as duas estão consertadas aqui:
+ *   1. nada dizia que, havendo duas listas no turno, a do quadro é a da FAMÍLIA;
+ *   2. a instrução de tamanho "mini" mandava montar "de 2 a 4 etapas, só o
+ *      trecho que trava" — sem excluir a sequência que a família ditou.
+ */
+describe("caso real 08/08 · a orientação complementar não pode virar o quadro", () => {
+  const GUIADA2 = readFileSync(resolve(__dirname, "rotina-guiada.ts"), "utf8");
+
+  it("A · sequência ditada vai INTEIRA para o artefato", () => {
+    expect(GUIADA2).toMatch(/A SEQUÊNCIA DO QUADRO É A DA FAMÍLIA/);
+    expect(GUIADA2).toMatch(/elas são o artefato, inteiras e na ordem dela/i);
+  });
+
+  it("B · a dica da Ayla vive na fala, nunca nas etapas", () => {
+    expect(GUIADA2).toMatch(/ORIENTAÇÃO COMPLEMENTAR VIVE NA SUA FALA, NUNCA NAS ETAPAS/);
+    expect(GUIADA2).toMatch(/Se houver duas listas no turno, a que vai pro quadro é SEMPRE a dela/i);
+  });
+
+  it("C · as quatro perdas silenciosas estão proibidas por nome", () => {
+    for (const perda of [/trocar por outra sequência/i, /apagar etapa/i, /cortar o fim/i, /reduzir a lista dela/i]) {
+      expect(GUIADA2, `falta proibir ${perda}`).toMatch(perda);
+    }
+  });
+
+  it("D · acrescentar etapa exige propor, não entra calado", () => {
+    expect(GUIADA2).toMatch(/não acrescente calado/i);
+    expect(GUIADA2).toMatch(/proponha, mostre a lista inteira com o acréscimo, e pergunte/i);
+  });
+
+  it("E · 'mini' não trunca o que a família ditou", () => {
+    expect(GUIADA2).toMatch(/SE A FAMÍLIA JÁ DITOU A SEQUÊNCIA, ELA VAI INTEIRA/);
+    expect(GUIADA2).toMatch(/Cinco etapas ditadas viram cinco etapas no quadro/i);
+  });
+
+  it("F · o limite de 2 a 4 continua valendo pro que a Ayla inventaria", () => {
+    // A regra do "mini" não foi revogada — foi escopada. Perder isso traria de
+    // volta o dia inteiro montado quando bastava a passagem.
+    expect(GUIADA2).toMatch(/Monte de 2 a 4 etapas, só o trecho que trava/);
+    expect(GUIADA2).toMatch(/vale pro que VOCÊ inventaria/i);
+  });
+
+  it("G · o caso real ficou registrado junto da regra", () => {
+    expect(GUIADA2).toMatch(/08\/08\/2026, caso real/);
+    expect(GUIADA2).toMatch(/A família perdeu as etapas dela e ninguém percebeu/i);
   });
 });

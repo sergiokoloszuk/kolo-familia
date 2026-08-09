@@ -57,10 +57,13 @@ describe("preservado: a menor ajuda que resolve", () => {
     expect(GUIADA).toMatch(/Não estenda pro resto do dia/);
   });
 
-  it("pedido explícito não se rebaixa nem pede confirmação redundante", () => {
-    // Testes 3, 4 e 15 do briefing: quem já disse os cards recebe os cards.
-    expect(CRITERIO_TAMANHO_ROTINA).toMatch(/PEDIDO EXPLÍCITO NÃO SE REBAIXA/);
-    expect(GUIADA).toMatch(/JÁ DÁ PRA MONTAR[\s\S]{0,200}NÃO faça mais nenhuma pergunta neste turno/);
+  // ATUALIZADO em 08/08/2026: a instrução deixou de ser "montar,
+  // obrigatoriamente" e passou a ter duas saídas (D-R1). O que ela protegia —
+  // não segurar a entrega por dado — continua, e tem teste em
+  // `rotina-confirmacao.test.ts`.
+  it("pedido explícito não se rebaixa, e dado não segura a entrega", () => {
+    expect(PRONTIDAO).toMatch(/PEDIDO EXPLÍCITO NÃO SE REBAIXA/);
+    expect(GUIADA).toMatch(/NÃO faça mais nenhuma pergunta de dado neste turno/);
   });
 
   it("o portão de publicação continua: ou está boa, ou não se publica", () => {
