@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
   ordenarPorAderencia,
@@ -176,5 +178,67 @@ describe("rastreabilidade do ranking", () => {
       r2.aderencias.get("a")!.pontos,
     );
     expect(r2.interferiu).toBe(false);
+  });
+});
+
+describe("FASE 3b · conceitos e fronteira de palavra", () => {
+  const termos = termosDoRelato("Minha filha bate na irmã quando é contrariada");
+
+  it("18. o acervo fala 'agressão' e 'recusas'; a mãe fala 'bate' e 'contrariada'", () => {
+    // O caso A: só a palavra "bate" coincide literalmente. Sem conceito, esta
+    // BP — a mais aderente do acervo — pontuava ZERO.
+    const real = pontuarItem(
+      bp("explosoes", "Explosões de raiva — bate, grita, joga coisas", {
+        quando_usar: "Durante crises de raiva, agressão, transições, após recusas.",
+      }),
+      termos,
+    );
+    expect(real.pontos).toBeGreaterThanOrEqual(PISO_ADERENCIA);
+    expect(real.termos).toContain("#bate");
+    expect(real.termos).toContain("#contrari");
+  });
+
+  it("19. MORDE: sem conceito, 'contrariada' nunca alcança 'recusas'", () => {
+    const so = pontuarItem(bp("x", "Após recusas, valide a emoção"), termosDoRelato("ela fica contrariada"));
+    expect(so.termos).toContain("#contrari");
+  });
+
+  it("20. MORDE a fronteira: 'porta' não pode casar dentro de 'importante'", () => {
+    // Caso negativo real: "port" casava em "importante"/"suporte" e fazia
+    // subir conteúdo de crise emocional num relato sobre bater a porta.
+    const t = termosDoRelato("Ele bate a porta quando sai do quarto");
+    const falso = pontuarItem(
+      bp("f", "Em crise emocional, conecte primeiro", {
+        versao_conversa: "é importante dar suporte e criar oportunidade de fala",
+      }),
+      t,
+    );
+    expect(falso.termos).not.toContain("port");
+    expect(falso.pontos).toBeLessThan(PISO_ADERENCIA);
+  });
+
+  it("21. mas 'porta' casa com 'porta' e 'portão'", () => {
+    const t = termosDoRelato("Ele bate a porta quando sai do quarto");
+    const certo = pontuarItem(bp("c", "Quando bate a porta e sai do quarto correndo"), t);
+    expect(certo.termos.some((x) => x === "port")).toBe(true);
+  });
+
+  it("22. conceito não infla convergência: 'bate' e 'bater' são a MESMA ideia", () => {
+    const p = pontuarItem(bp("y", "Bater e bate são a mesma coisa aqui"), termosDoRelato("ele bate e bater"));
+    expect(p.termos).toEqual(["#bate"]);
+    expect(p.pontos).toBe(0);
+  });
+});
+
+describe("FASE 3b · o teto de candidatos", () => {
+  it("23. MORDE: o teto não pode voltar a 40 — era ele que matava o conteúdo", () => {
+    // Medido em 09/08/2026: com 40, 51 boas práticas elegíveis para uma
+    // criança de 5 anos morriam antes do ranking (24 em `emocional`, 19 em
+    // `comunicacao`). E buscar a skill inteira custa o mesmo — 91 ms contra
+    // 90 ms. O 200 é teto de segurança, não critério de seleção.
+    const src = readFileSync(resolve(__dirname, "recuperar.ts"), "utf8");
+    expect(src).not.toMatch(/\.limit\(40\)/);
+    expect(src).toMatch(/\.limit\(200\)/);
+    expect(src).toMatch(/TETO DE SEGURANÇA, não critério de seleção/);
   });
 });

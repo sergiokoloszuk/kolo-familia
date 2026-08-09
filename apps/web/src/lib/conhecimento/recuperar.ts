@@ -136,7 +136,18 @@ export async function recuperarBoasPraticas(
       .in("status", p.statusAceitos ?? ["ativo"])
       .or(clausulas.join(","))
       .order("peso_relevancia", { ascending: false })
-      .limit(40);
+      // TETO DE SEGURANÇA, não critério de seleção.
+      //
+      // Era 40, e 40 descartava conteúdo elegível ANTES de qualquer
+      // ranqueamento: medido em 09/08/2026, 51 boas práticas elegíveis para
+      // uma criança de 5 anos morriam aqui — 24 só em `emocional` e 19 em
+      // `comunicacao`. Como o peso está empatado em 367 de 370, quem ficava
+      // de fora era decidido pela ordem física da tabela.
+      //
+      // Buscar a skill inteira custa o mesmo: medido, 40 linhas em 91 ms e 75
+      // em 90 ms. O teto sobe para 200 apenas para que um acervo dez vezes
+      // maior não traga uma resposta ilimitada — não para escolher nada.
+      .limit(200);
     if (error) throw new Error(error.message);
 
     // A idade continua sendo filtrada aqui: a regra é tolerante (BP sem faixa

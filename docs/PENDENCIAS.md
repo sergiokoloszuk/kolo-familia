@@ -1320,7 +1320,8 @@ Aberta em: 2026-08-08 · Origem: consolidação da PEND-010 +
   | 1 | BASE 1 consultável campo a campo | **CONCLUÍDA** ([#71](https://github.com/sergiokoloszuk/kolo-familia/pull/71)) |
   | 2 | BASE 2 seletivamente acessível | **CONCLUÍDA** ([#72](https://github.com/sergiokoloszuk/kolo-familia/pull/72)) |
   | 3 | BASE 3 · ranking por aderência ao relato | **CONCLUÍDA** ([#74](https://github.com/sergiokoloszuk/kolo-familia/pull/74)) — construída, provada, **não ligada** |
-  | 3b | BASE 3 · **o universo de candidatos** (o `.limit(40)` por peso inerte) | **NOVA** — é ela que resolve os casos A e C |
+  | 3b | BASE 3 · o conteúdo certo chega ao ranking | **CONCLUÍDA** ([#75](https://github.com/sergiokoloszuk/kolo-familia/pull/75)) — **não ligada** |
+  | 4A | piloto em **Estratégias** | próxima · começar por aprendizado/leitura e foco |
   | 4 | nova experiência em **Estratégias** | marco de produto |
   | 5 | WhatsApp | só após aprovação da Karina |
 - **✅ FASE 2 · BASE 2 SELETIVA — NO AR (2026-08-09).** O patrimônio editorial
@@ -1402,6 +1403,50 @@ Aberta em: 2026-08-08 · Origem: consolidação da PEND-010 +
   devem ficar presas a uma origem única**. Conhecimento aprovado vindo de
   livros, materiais Kolo, artigos ou especialistas poderá alimentar as mesmas
   camadas — e **a origem precisa ser preservável**. Nenhuma ingestão nesta fase.
+- **✅ FASE 3b · O CONTEÚDO CERTO CHEGA AO RANKING (2026-08-09).** Construída e
+  provada. **Continua não ligada** — nenhum caminho de produção chama o ranking.
+  - **⚠️ CORRIJO O QUE EU MESMO REPORTEI NA FASE 3.** Eu escrevi que
+    *"Explosões de raiva: bate, grita, joga coisas"* **não estava entre os
+    elegíveis**. **Estava** — posição 17 de 75, faixa 4-6, elegível para a
+    criança de 5 anos. Eu inferi a causa sem verificar. A causa real era outra,
+    e é mais interessante: **só a palavra "bate" coincidia.** A boa prática fala
+    de *"agressão"* e *"após recusas"*; a mãe escreveu *"bate"* e
+    *"contrariada"*. Um termo sozinho não passa a convergência, então **o
+    conteúdo mais aderente do acervo pontuava zero**.
+  - **DUAS CAUSAS DISTINTAS, as duas corrigidas:**
+    1. **A distância entre o vocabulário da mãe e o do acervo.** Resolvida com
+       um mapa de **conceitos** — oito grupos pequenos e revisáveis (bater ≈
+       agressão · contrariar ≈ recusa/frustração · começar ≈ iniciar · irmã ≈
+       irmão · ler ≈ leitura/sílaba · dormir ≈ sono · barulho ≈ sensorial ·
+       manter ≈ terminar). **É decisão editorial, não técnica**, e está
+       comentada como tal.
+    2. **O corte de candidatos.** `.limit(40)` descartava, medido, **51 boas
+       práticas elegíveis** para uma criança de 5 anos — 24 em `emocional`, 19
+       em `comunicacao`, 4 em `rotina`. Subiu para **200**, que é **teto de
+       segurança, não critério**: buscar a skill inteira custa **o mesmo**
+       (91 ms com 40, 90 ms com 75).
+  - **🐛 O CASO NEGATIVO PEGOU UM BUG REAL:** o radical `port` (de "porta")
+    casava dentro de **"importante"**, **"suporte"**, **"oportunidade"** — e
+    fazia subir conteúdo de crise emocional num relato sobre bater a porta.
+    Corrigido com fronteira de início de palavra.
+  - **FUNIL, antes × depois** (caso A): skill 75 → elegíveis **10 → 34** → com
+    pontuação **4** → top-3.
+    | | top-3 |
+    |---|---|
+    | **antes** | "cérebro tem andares" · "crianças pequenas não têm capacidade" · "momentos de quietude" |
+    | **depois** | "quando a criança entra em crise (agressividade, recusa)" **44pts** · "bater, morder, chutar: formas de comunicação" **35pts** · "explosões de raiva — bate, grita" **21pts** |
+    Os quatro golden cases passaram a interferir. Os **dois negativos** —
+    "bate a porta" e "lê livro à noite" — voltaram a **não interferir**.
+  - **Latência:** 0,7 a 4,3 ms de ranking; consulta ao banco **inalterada**.
+    Zero chamada de modelo.
+  - **Testes:** 23 no total (6 novos na 3b). Três sabotagens: tirar os
+    conceitos quebra 3 · tirar a fronteira de palavra quebra 1 · voltar o teto
+    para 40 quebra 1.
+- **📌 REGISTRO QUE NÃO PODE SE PERDER:** *ranking bom não corrige candidato que
+  morreu antes do ranking* — **e diagnóstico rápido não substitui verificação**.
+  Nesta frente as duas coisas apareceram juntas: o corte era real, mas **não era
+  a causa do caso A**, e eu só descobri porque medi a posição da boa prática em
+  vez de confiar no que tinha escrito.
 - **Depende de:** desenhar junto com PEND-016 e PEND-018.
 - **Admin:** ADMIN PRECISA DE AJUSTE — administrar acervo, e ver o que foi
   recuperado e o que foi usado.
@@ -1430,6 +1475,11 @@ Aberta em: 2026-08-08 · Origem: consolidação da PEND-010 +
      período observado, criança, tipo;
   2. como a tela e a Ayla distinguem "a professora relatou" de "a Ayla inferiu";
   3. o que acontece quando duas informações se contradizem.
+- **APRENDIZADO DE 2026-08-09 (Fase 3b): não reportar causa que não foi
+  medida.** Na Fase 3 afirmei que a boa prática certa "não estava entre os
+  elegíveis". Estava — posição 17 de 75. A causa real era outra, e a inferência
+  errada quase gerou uma fase inteira resolvendo o problema errado. **O corte de
+  candidatos existia e valia corrigir; só não era o que eu disse que era.**
 - **APRENDIZADO DE 2026-08-09 (Fase 3): sabotagem que não morde é teste que não
   existe.** Duas das três sabotagens da Fase 3 passaram na primeira tentativa —
   não porque o código resistia, mas porque **os testes não cobriam aquelas

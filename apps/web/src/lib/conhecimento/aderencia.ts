@@ -100,6 +100,82 @@ export function termosDoRelato(relato: string): string[] {
   return out;
 }
 
+/**
+ * CONCEITOS DA KOLO — o vocabulário da mãe e o do acervo não são o mesmo.
+ *
+ * Descoberto medindo o caso A em 09/08/2026. A mãe escreve *"bate na irmã
+ * quando é contrariada"*; a boa prática certa diz *"Explosões de raiva — bate,
+ * grita"* e *"durante crises de raiva, agressão, transições, após recusas"*.
+ * Só a palavra **bate** coincide — e um termo sozinho não passa a convergência,
+ * então o conteúdo mais aderente do acervo pontuava ZERO.
+ *
+ * O problema não era o corte de candidatos (a BP estava na posição 17 de 75,
+ * elegível): era a distância entre "contrariada" e "recusas".
+ *
+ * ⚠️ ISTO É DECISÃO EDITORIAL, não técnica. Cada grupo diz que duas palavras
+ * significam a mesma coisa **para a Kolo** — e ampliar demais traz de volta o
+ * falso positivo que o piso existe para barrar. Grupos pequenos, e só onde a
+ * equivalência é evidente para quem lê.
+ */
+const CONCEITOS: ReadonlyArray<readonly string[]> = [
+  // Bater, morder, empurrar: a família descreve o ato; o acervo costuma
+  // escrever "agressão" ou "agressividade".
+  ["bate", "bater", "batia", "morde", "morder", "agress", "chuta", "empurr", "belisc", "tapa"],
+  // "Contrariar" quase nunca aparece no acervo — lá é "recusa", "negar", "não
+  // pode", "frustração".
+  ["contrari", "recus", "neg", "frustr", "nao pode", "recusas"],
+  // Entrar na tarefa.
+  ["comec", "inici", "arranc", "entrar", "partida"],
+  // Permanecer nela.
+  ["mant", "sustent", "termin", "conclu", "acab", "finaliz"],
+  // Quem está do outro lado do conflito em casa.
+  ["irma", "irmao", "irmaos", "irmas"],
+  // Ler.
+  ["ler", "leitur", "silab", "decodific", "alfabetiz", "palavr"],
+  // Dormir.
+  ["dorm", "sono", "adormec", "madrugad", "noturn"],
+  // O corpo percebendo o mundo.
+  ["barulh", "som", "ruid", "textur", "toqu", "luz", "cheir", "sensorial"],
+];
+
+/**
+ * Expande um termo nos conceitos a que ele pertence. Termo sem conceito
+ * continua valendo por si — a maior parte do vocabulário não precisa de mapa.
+ */
+function conceitosDe(termo: string): string[] {
+  const grupos = CONCEITOS.filter((g) => g.some((p) => termo.startsWith(p) || p.startsWith(termo)));
+  return grupos.length ? grupos.map((g) => `#${g[0]}`) : [termo];
+}
+
+/**
+ * O termo aparece no texto COMO INÍCIO DE PALAVRA?
+ *
+ * `includes` puro não serve, e o caso negativo provou: "porta" vira o radical
+ * "port", que casa dentro de **importante**, portanto, suporte, oportunidade.
+ * Num relato sobre bater a porta, isso fazia subir conteúdo de crise emocional
+ * por causa da palavra "importante" no meio do texto.
+ *
+ * A fronteira é só no começo: o fim fica aberto de propósito, porque o radical
+ * já é curto e precisa casar com as flexões ("dorm" → dormir, dorme, dormindo).
+ */
+function apareceComoPalavra(texto: string, termo: string): boolean {
+  if (termo.length < 3) return false;
+  let i = texto.indexOf(termo);
+  while (i !== -1) {
+    const antes = i === 0 ? " " : texto[i - 1];
+    if (!/[a-z0-9]/.test(antes)) return true;
+    i = texto.indexOf(termo, i + 1);
+  }
+  return false;
+}
+
+/** Um campo satisfaz o conceito se qualquer palavra do grupo aparecer nele. */
+function campoTem(texto: string, chave: string): boolean {
+  if (!chave.startsWith("#")) return apareceComoPalavra(texto, chave);
+  const grupo = CONCEITOS.find((g) => `#${g[0]}` === chave);
+  return grupo ? grupo.some((p) => apareceComoPalavra(texto, p)) : false;
+}
+
 /** Peso de cada campo. Título e "quando usar" dizem do que a BP trata. */
 const PESO_CAMPO = { titulo: 5, quando: 4, tags: 3, corpo: 2 } as const;
 
@@ -129,12 +205,15 @@ export function pontuarItem(item: ItemRankeavel, termos: readonly string[]): Ade
   if (termos.length === 0) return { id: item.id, pontos: 0, termos: [] };
   let pontos = 0;
   const achados = new Set<string>();
+  // Conceitos, não palavras: a convergência conta ideias distintas, senão
+  // "bate" e "bater" no mesmo texto passariam por duas evidências.
+  const chaves = [...new Set(termos.flatMap(conceitosDe))];
 
   for (const [texto, peso] of campos(item)) {
     if (!texto) continue;
     const noCampo: string[] = [];
-    for (const t of termos) {
-      if (texto.includes(t)) {
+    for (const t of chaves) {
+      if (campoTem(texto, t)) {
         noCampo.push(t);
         achados.add(t);
       }
