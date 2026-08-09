@@ -2,6 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { SkillRow } from "./router";
 import { blocoDiagnosticoRegistrado } from "@/lib/onboarding/diagnostico";
 import { recuperarBoasPraticas, type BoaPraticaRecuperada } from "@/lib/conhecimento/recuperar";
+import { montarRastro, registrarRastroConhecimento } from "@/lib/conhecimento/rastro";
 import { idadeAnos } from "@/lib/idade";
 import { descricaoCuidador, type Genero } from "@/lib/ayla/pronomes";
 import { resumirComposicao } from "@/lib/familia/composicao";
@@ -303,12 +304,32 @@ export async function buildContext(
   // que ela passou a considerar FAIXA ETÁRIA — que estava preenchida em 368 de
   // 371 BPs e era ignorada — e a trazer `quando_usar`, `erros_comuns` e
   // `passos_praticos`, que o bloco descartava.
+  let erroNaConsulta = false;
   const boasPraticas = await recuperarBoasPraticas({
     supabase,
     skills: skillsNomes,
     tags: [...tagsConhecimento],
     idade: membroFoco?.idade ?? null,
+    aoFalhar: () => {
+      erroNaConsulta = true;
+    },
   });
+  // RASTRO — o mesmo do WhatsApp, no módulo compartilhado. Aqui `enviadas` é
+  // igual a `recuperadas` porque `buildContextBlock` monta o bloco com o array
+  // inteiro; o dia em que alguém filtrar no meio, o rastro mostra.
+  void registrarRastroConhecimento(
+    montarRastro({
+      canal: "web",
+      familyId,
+      membroId: membroAtipicoId,
+      skills: skillsNomes,
+      tags: tagsConhecimento.size,
+      idade: membroFoco?.idade ?? null,
+      recuperadas: boasPraticas,
+      enviadas: boasPraticas,
+      erroNaConsulta,
+    }),
+  );
 
   // Inverte pra ordem cronológica (mais antigo primeiro) ao montar prompt
   const historico = ((historicoResult.data ?? []) as HistoricoRow[])

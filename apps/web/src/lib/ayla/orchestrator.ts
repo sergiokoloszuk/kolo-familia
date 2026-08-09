@@ -59,6 +59,7 @@ import {
 import { classificarIntencao } from "./intent";
 import { carregarCatalogoSkills } from "./catalogo-skills";
 import { recuperarBoasPraticas, blocoBoasPraticas } from "@/lib/conhecimento/recuperar";
+import { montarRastro, registrarRastroConhecimento } from "@/lib/conhecimento/rastro";
 import { dividirEmBolhas, ritmoDasBolhas, TETO_ESPERA_SEGUNDOS } from "./bolhas";
 import { semOutrosMembros } from "./membro-escopo";
 import { classificarFeedbackRotina } from "./rotina-feedback";
@@ -2458,11 +2459,32 @@ export async function processInbound(
   // REPERTÓRIO — a Camada 2 chegando ao WhatsApp pela primeira vez. A skill já
   // veio do classificador (4º campo, sem chamada extra); aqui só se busca o
   // conteúdo. Falha silenciosa: sem repertório, a conversa segue como sempre.
-  const repertorio = blocoBoasPraticas(
-    await recuperarBoasPraticas({
-      supabase,
+  // RASTRO: registra o que foi consultado e o que chegou ao prompt. Não muda
+  // nada do que é escolhido nem do que é enviado — só deixa de ser invisível.
+  let erroNaConsulta = false;
+  const bpsRecuperadas = await recuperarBoasPraticas({
+    supabase,
+    skills: turnoClassificado.skills,
+    idade: idadeFoco,
+    aoFalhar: () => {
+      erroNaConsulta = true;
+    },
+  });
+  const repertorio = blocoBoasPraticas(bpsRecuperadas);
+  void registrarRastroConhecimento(
+    montarRastro({
+      canal: "whatsapp",
+      familyId: family.id,
+      membroId: membroContextoId,
       skills: turnoClassificado.skills,
+      // O WhatsApp não manda tags: o classificador devolve só nomes de skill.
+      // Registrar o zero é o que torna a assimetria com a web mensurável.
+      tags: 0,
       idade: idadeFoco,
+      recuperadas: bpsRecuperadas,
+      // O bloco leva tudo o que foi recuperado; vazio quando não há bloco.
+      enviadas: repertorio ? bpsRecuperadas : [],
+      erroNaConsulta,
     }),
   );
 

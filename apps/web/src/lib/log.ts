@@ -20,6 +20,16 @@ export type LogEvent = {
   user_id?: string | null;
   message?: string;
   payload?: Record<string, unknown>;
+  /**
+   * Persiste mesmo em `info`.
+   *
+   * Existe porque nem todo evento que precisa sobreviver é um problema. O
+   * rastro do conhecimento é operação NORMAL — marcá-lo como `warn` só pra ele
+   * não sumir com a retenção da Vercel envenenaria a severidade, e daí a
+   * pergunta "o que deu errado ontem?" passaria a devolver centenas de turnos
+   * saudáveis.
+   */
+  persistir?: boolean;
 };
 
 const PERSIST_THRESHOLD: ReadonlyArray<Severity> = [
@@ -44,7 +54,7 @@ export async function logEvent(evt: LogEvent): Promise<void> {
   const out = sev === "error" || sev === "fatal" ? console.error : console.log;
   out(JSON.stringify(line));
 
-  if (!(PERSIST_THRESHOLD as ReadonlyArray<string>).includes(sev)) return;
+  if (!evt.persistir && !(PERSIST_THRESHOLD as ReadonlyArray<string>).includes(sev)) return;
 
   try {
     const supabase = createServiceRoleClient();
