@@ -1000,6 +1000,44 @@ do laudo de 06/08) + `docs/auditoria-ayla-prompt.md`
     conteúdo dele tem liberdade excessiva do modelo.
   - **Estado: ABERTA.** A fatia 2 não começou e o mecanismo mínimo que produziria
     esse comportamento ainda não foi desenhado.
+- **DESEJADO DA CONDUÇÃO — DECISÕES FECHADAS EM 2026-08-09.**
+  - **O PISO é UMA AÇÃO CONCRETA E EXECUTÁVEL HOJE**, sempre que houver contexto
+    suficiente. Frase pronta e treino em momento calmo **são recursos
+    selecionáveis, não piso.**
+  - Depois do piso, escolher **1 ou 2 recursos** que mais aumentem o valor
+    naquele caso: frase pronta · treino em momento tranquilo · brincadeira/missão
+    · sequência curta de verbos · alternativa · recurso simples para montar ·
+    adaptação para outro ambiente · próximo caminho da Kolo.
+  - **Régua: 2 a 3 elementos úteis por intervenção**, sem obrigar categoria
+    nenhuma.
+  - **PRINCÍPIO:** *poucas coisas, executáveis hoje e fáceis de lembrar.*
+  - **FORMA:** hierarquia, não blocos. No WhatsApp, **âncoras curtas em
+    `*negrito*`** (a sintaxe que o canal renderiza), listas simples e espaço.
+    **Nada de "BLOCO 1/2/3" nem tabelas** — a tabela vaza como texto cru, e há
+    print do app antigo provando isso.
+  - **Nomear a estratégia e comprimir em verbos** (*Diminuir → Escolher →
+    Começar*) quando ajudar a lembrar — **não batizar toda intervenção**, senão
+    o nome vira tique e perde força.
+  - **PRÓXIMOS CAMINHOS NÃO SÃO SÓ PLANO/ROTINA/HISTÓRIA.** A condução deve
+    reconhecer capacidades que a Kolo já tem quando forem continuação natural —
+    em especial **Registro Diário / Evolução**. Achado do "Diário dos Sinais" do
+    app antigo: aquilo era um pedido solto no texto; aqui já existe funcionalidade.
+- **APRENDIZADOS DA PROTOTIPAÇÃO CONVERSACIONAL (2026-08-09, 4 casos simulados).**
+  - **A suficiência chega antes do que se supunha: TEMA + ONDE já basta.**
+    Prototipando, "Foco" + "Lição" já sustenta uma intervenção concreta. A
+    dificuldade específica (começar × manter × terminar) **enriquece e não
+    bloqueia** — é a mesma regra que a Rotina já aprendeu em 03/08.
+  - **O segundo nível NÃO precisa de árvore.** O que a escolha do tema pede não
+    é um submenu fixo: é a Ayla **nomear 3 ou 4 situações reconhecíveis** daquele
+    tema para a mãe se identificar em uma. É gerado do tema + do que se sabe da
+    criança, não hardcoded — e é o mecanismo mínimo da fatia 2.
+  - **A ausência de dado muda o RECURSO, não a entrega.** Sem interesses
+    conhecidos, não se inventa a missão da nave: entrega-se a ação concreta e
+    oferecem-se **2 ou 3 jeitos com o como-fazer de cada um**, para a mãe
+    escolher sem precisar saber de antemão o que funciona com o filho.
+  - **A oferta de artefato cabe na MESMA mensagem da orientação, em uma linha.**
+    Virar turno próprio ("quer uma rotina visual?") gasta uma troca e empurra o
+    artefato para o lugar da ajuda.
 - **Depende de:** PEND-017 e PEND-018 — **desenhar junto**. Absorve PEND-009
   (primeira conversa) dentro do DESEJADO.
 - **Admin:** ADMIN PRECISA DE AJUSTE — hoje não dá para ver *por que* a Ayla
@@ -1133,6 +1171,18 @@ Aberta em: 2026-08-08 · Origem: consolidação da PEND-010 +
      período observado, criança, tipo;
   2. como a tela e a Ayla distinguem "a professora relatou" de "a Ayla inferiu";
   3. o que acontece quando duas informações se contradizem.
+- **APRENDIZADOS DE 2026-08-09 (prototipação e medição de latência):**
+  1. **Protótipo conversacional escrito à mão é diagnóstico barato.** Escrever as
+     quatro conversas como a mãe as veria expôs, em minutos, que o segundo nível
+     não precisa de árvore e que a suficiência chega mais cedo — duas coisas que
+     nenhuma leitura de código tinha mostrado. **Prototipar a experiência antes
+     de desenhar o mecanismo** evita construir a árvore que não era necessária.
+  2. **Decompor a latência desmente a suspeita.** Medido: catálogo 204 ms ·
+     classificação 2 172 ms · recuperação **97 ms** · modelo 2 408 ms. A
+     recuperação, que era a suspeita natural, é a etapa **mais barata de todas**.
+     O custo está em **encadear chamadas de modelo** (até três por turno) e nos
+     **4 s de "digitando"** — nenhum dos dois aparece se a gente otimizar no
+     escuro.
 - **APRENDIZADOS DE 2026-08-09 (auditoria do teste real da entrada guiada):**
   1. **Latência técnica e latência conversacional são métricas diferentes, e as
      duas precisam ser medidas.** A percepção de "quase um minuto" somava o
