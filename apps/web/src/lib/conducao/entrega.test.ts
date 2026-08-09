@@ -532,3 +532,38 @@ describe("a criança antes do rótulo", () => {
     expect(nucleoConducao()).not.toContain("De onde vem a sua explicação");
   });
 });
+
+/**
+ * RECOMPENSA — a regra revista em 09/08/2026.
+ *
+ * A proibição antiga nasceu do caso da uva-passa: a Ayla oferecia repetidamente
+ * um alimento preferido como prêmio por comportamento. A regra funcionou, e
+ * ficou larga demais — chegou a proibir "reforço estilo ABA" por nome, o que é
+ * oposição a uma técnica, não escolha de intervenção.
+ *
+ * O que a revisão preserva é a linha que importa: não comprar comportamento, e
+ * nunca condicionar o que a criança não pode perder.
+ */
+describe("recompensa: compreender antes de premiar", () => {
+  const nucleo = nucleoConducao();
+
+  it("R1. o princípio é compreender a barreira, não proibir prêmio", () => {
+    expect(nucleo).toMatch(/RECOMPENSA NÃO SUBSTITUI COMPREENSÃO/);
+    expect(nucleo).toMatch(/entenda o que dificulta a ação antes/i);
+  });
+
+  it("R2. o que não pode ser moeda continua protegido", () => {
+    expect(nucleo).toMatch(/NUNCA condicione afeto, comida, segurança ou necessidade básica/);
+    expect(nucleo).toMatch(/nem troque objeto por obediência/);
+  });
+
+  it("R3. interesse conecta — e a distinção está no exemplo", () => {
+    expect(nucleo).toMatch(/Interesse serve pra CONECTAR/);
+    expect(nucleo).toMatch(/missão de dinossauros é bom; dar o dinossauro por ter lido, não/);
+  });
+
+  it("R4. MORDE: a oposição ideológica a uma técnica não pode voltar", () => {
+    expect(nucleo).not.toMatch(/estilo ABA/i);
+    expect(nucleo).not.toMatch(/não é o método Kolo/i);
+  });
+});

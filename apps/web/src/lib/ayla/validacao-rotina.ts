@@ -91,10 +91,21 @@ const INSEGURO: ReadonlyArray<[FalhaRotina["codigo"], RegExp]> = [
     "instrucao_insegura",
     /\b(faca|tesoura|agulha|isqueiro|fosforo|fogao aceso|panela quente|ferro de passar|tomada|produto de limpeza|alvejante|remedio ao alcance)\b/,
   ],
-  // Recompensa/suborno — é lógica de reforço, e o método Kolo não usa.
+  // SUBORNO — coisa dada em troca de OBEDECER. Não é "toda menção a ganhar".
+  //
+  // O padrão anterior era largo demais e barrava justamente o que a Kolo quer
+  // produzir. Medido em 09/08/2026, ele bloqueava "cada conta resolvida ganha
+  // uma peça da nave", "cada palavra encontrada ganha um fóssil" e "se ele
+  // terminar antes, sobra tempo pra brincar" — uma mecânica de brincadeira,
+  // uma missão lúdica e uma consequência natural. Três falsos positivos para
+  // dois bloqueios legítimos.
+  //
+  // A diferença não está na palavra "ganha": está no que se compra. Objeto
+  // trocado por obediência é suborno; a peça da nave que aparece dentro da
+  // própria brincadeira é a brincadeira.
   [
     "instrucao_insegura",
-    /\b(se (ele|ela) (fizer|obedecer|terminar|comer)|como premio|de recompensa|ganha (um|uma) )\b/,
+    /(como premio por|de recompensa por|em troca de (obed|bom comportamento)|se (ele|ela) (obedecer|se comportar|ficar quietin)|ganha \w+ se (ele|ela))/,
   ],
   // Deixar a criança sozinha em situação de risco.
   [

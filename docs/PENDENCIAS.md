@@ -1094,6 +1094,37 @@ do laudo de 06/08) + `docs/auditoria-ayla-prompt.md`
   versionados.* Os exemplos existem para dizer **"é assim que uma boa Ayla
   soa"**, e os testes para impedir que uma alteração futura a faça voltar a
   soar genérica.
+- **✅ REGRA DE RECOMPENSA REVISTA (2026-08-09).** A proibição ampla saiu; o que
+  ela protegia ficou.
+  - **ORIGEM:** a regra nasceu do caso da uva-passa — a Ayla oferecia
+    repetidamente um alimento preferido como prêmio por comportamento. Resolveu
+    aquilo e ficou larga demais, ao ponto de proibir *"reforço estilo ABA"* pelo
+    nome. **Oposição a uma técnica não é escolha de intervenção.**
+  - **🐛 O CUSTO ERA MEDÍVEL, e ninguém tinha medido.** O validador de rotina
+    (`validacao-rotina.ts`) bloqueava por regex, e o regex barrava **três
+    coisas legítimas para cada duas ilegítimas**: *"cada conta resolvida ganha
+    uma peça da nave"*, *"cada palavra encontrada ganha um fóssil"* e *"se ele
+    terminar antes, sobra tempo pra brincar"* — mecânica de brincadeira, missão
+    lúdica e consequência natural. **A "Missão dos Fósseis" que o Sérgio pediu
+    como exemplo de densidade desejada era bloqueada pelo próprio sistema.**
+  - **A distinção que passou a valer:** não está na palavra "ganha", está no que
+    se compra. **Objeto trocado por obediência é suborno; a peça da nave que
+    aparece dentro da brincadeira é a brincadeira.** O detector novo acerta
+    10 de 10 casos de teste.
+  - **A regra no PISO virou:** *"RECOMPENSA NÃO SUBSTITUI COMPREENSÃO: entenda o
+    que dificulta a ação antes de propor consequência externa. NUNCA condicione
+    afeto, comida, segurança ou necessidade básica, nem troque objeto por
+    obediência. Interesse serve pra CONECTAR — virar a leitura numa missão de
+    dinossauros é bom; dar o dinossauro por ter lido, não."* Mesma revisão na
+    web (`lib/ia/prompt.ts`), que duplicava a regra quase palavra por palavra.
+  - **O TETO DO NÚCLEO PEGOU A PRIMEIRA VERSÃO.** A redação inicial estourou o
+    limite de 57 mil caracteres e o teste falhou — a regra foi cortada de 588
+    para 322 caracteres, **menos que a versão antiga que ela substitui**. O teto
+    funcionou como se pretendia: obrigou a regra a caber.
+  - **Habilita o raciocínio funcional** que os novos materiais de emocional e
+    rotina usam (antes → durante → depois; o que o comportamento produz), sem
+    autorizar prêmio automático.
+  - 4 testes novos, incluindo o que **morde** se a oposição ideológica voltar.
 - **Depende de:** PEND-017 e PEND-018 — **desenhar junto**. Absorve PEND-009
   (primeira conversa) dentro do DESEJADO.
 - **Admin:** ADMIN PRECISA DE AJUSTE — hoje não dá para ver *por que* a Ayla
