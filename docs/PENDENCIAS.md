@@ -352,6 +352,13 @@ Aberta em: 2026-08-08 · Origem: pedido do Sérgio na missão da PEND-004
   - **Rotina em modo `lista` é quase inexistente** (2 de 73). Se continuar
     assim, é sinal de que o modo existe e ninguém acha — coisa que só se
     percebe olhando o conjunto.
+- **RASTREABILIDADE DO QUE A AYLA DECIDIU × O QUE O ARTEFATO RECEBEU** (caso
+  "Entrada no Leônidas", 08/08/2026). O quadro saiu com três etapas quando a
+  mãe tinha ditado cinco, e **nada no sistema registrou a divergência**: só se
+  descobriu porque uma pessoa leu a conversa e abriu o artefato. Não há registro
+  do que o modelo emitiu no campo `tarefas`, nem de quantas etapas a mensagem
+  narrava. **Para a equipe, conversa e artefato são dois mundos que ninguém
+  cruza.** É o mesmo buraco do erro de cartão, uma camada acima.
 - **Já sabido, das fichas existentes:** PEND-004 rotinas geradas (criança,
   título, data, origem, status, feedback, erro de geração) · PEND-016 *por que*
   a Ayla decidiu o que decidiu · PEND-017 administrar acervo e ver o que foi
