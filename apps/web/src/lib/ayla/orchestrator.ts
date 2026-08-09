@@ -74,6 +74,12 @@ import {
 } from "./estado-seguranca";
 import { primeiroNomeConfiavel } from "./crianca-nome";
 import { TEMAS } from "@/lib/conducao/temas";
+import {
+  deveMostrarMenu,
+  escolhaDoMenu,
+  montarTextoDoMenu,
+  TIPO_ENTRADA_GUIADA,
+} from "./entrada-guiada-estado";
 import { criarLinkAcesso, pedeAcessoAoApp } from "@/lib/auth/acesso-link";
 import {
   criancaPendente,
@@ -1957,6 +1963,49 @@ export async function processInbound(
   // o filho certo e não caírem no membros[0] (bug Manu→Mario).
   const membroConversa = retomada?.membroId ?? (await criancaDaConversa(supabase, family.id));
 
+  // ENTRADA GUIADA — a rampa de quem chega sem saber o que contar.
+  //
+  // Vem ANTES da classificação de propósito: "oi" não tem o que classificar, e
+  // gastar uma chamada de modelo para descobrir isso é desperdício. Situação
+  // concreta não passa por aqui (ver `ehEntradaVaga`), então quem já contou o
+  // que está acontecendo continua sendo atendida na hora.
+  const desafiosOnboarding = await carregarDesafiosOnboarding(supabase, membroConversa);
+  if (
+    !rotinaConversa &&
+    (await deveMostrarMenu(supabase, {
+      familyId: family.id,
+      texto: inbound.texto,
+      membroId: membroConversa,
+    }))
+  ) {
+    const ctxMenu = await loadFamiliaParaEnvio(supabase, family.id);
+    if (ctxMenu) {
+      const bruto = ctxMenu.membros.find((m) => m.id === membroConversa)?.nome ?? "";
+      const resp = await enviarEPersistir(supabase, {
+        family_account_id: family.id,
+        membro_atipico_id: membroConversa,
+        phone: ctxMenu.whatsapp_e164,
+        texto: montarTextoDoMenu({
+          desafiosOnboarding,
+          nomeMae: primeiroNomeConfiavel(ctxMenu.nomeMae) || null,
+          // O mesmo detector do nome da criança: o campo aceita recado, e um
+          // recado inteiro no lugar do nome já saiu para família real.
+          nomeCrianca: primeiroNomeConfiavel(bruto) || null,
+        }),
+        category: "reativa",
+        tipo: TIPO_ENTRADA_GUIADA,
+      });
+      return { tratada: true, familia: family.id, resposta: resp };
+    }
+  }
+
+  // A MÃE RESPONDEU O NÚMERO. O tema sai do menu que ela VIU, não de uma
+  // adivinhação do modelo sobre o que "2" quer dizer — e a skill correspondente
+  // vai junto, porque a chave do tema é a mesma chave da skill.
+  const escolha = rotinaConversa
+    ? null
+    : await escolhaDoMenu(supabase, family.id, inbound.texto);
+
   // INTENÇÃO + TEMA por IA (entende o que a mãe quer e sobre o que, não só
   // palavra-chave). Sinal PRIMÁRIO do roteamento abaixo; os `pede*` de regex
   // ficam como reforço (OR). Só roda aqui (mensagem livre que precisa de rumo)
@@ -1980,7 +2029,15 @@ export async function processInbound(
         catalogoSkills: await carregarCatalogoSkills(supabase),
       });
   const intent = turnoClassificado.intencao;
-  const temaAtivo = turnoClassificado.tema;
+  // A escolha do menu MANDA no tema: ela é explícita, o classificador é
+  // inferência. Duas fontes para a mesma decisão sempre divergem, e aqui a
+  // dona é a família.
+  const temaAtivo = escolha?.chaves[0] ?? turnoClassificado.tema;
+  if (escolha && escolha.chaves.length > 0 && turnoClassificado.skills.length === 0) {
+    // Sem isto, "2" chegaria à recuperação sem skill nenhuma e a resposta
+    // sairia sem repertório — o elo que esta fatia precisava ligar.
+    turnoClassificado.skills.push(...escolha.chaves.slice(0, 2));
+  }
   // O QUE ELA ACEITOU. "sim" não carrega conteúdo — sem referente resolvido, o
   // modelo reconstrói o turno a partir da conversa inteira. Foi assim que um
   // "Sim. Vamos montar uma história." virou uma resposta sobre diagnóstico
