@@ -1063,6 +1063,17 @@ do laudo de 06/08) + `docs/auditoria-ayla-prompt.md`
   **A régua de 2–3 elementos não é preferência editorial — é o limite físico da
   tela.** Se divergir, **que a web ganhe profundidade, nunca que o WhatsApp
   ganhe comprimento.**
+- **GOLDEN CASE DO SONO (Sérgio, 2026-08-09) — o tom desejado quando falta
+  contexto.** Não é template de Sono: é a lógica em dez passos — acolhimento
+  curto · mostrar que entendeu · organizar os fatos já conhecidos · considerar a
+  idade · reconhecer a lacuna · **1 ou 2 perguntas de alto valor** · dar
+  exemplos que ajudem a mãe a responder · permitir texto ou áudio · não
+  diagnosticar · não entregar solução genérica cedo demais.
+  - **Os dois extremos proibidos:** a Ayla rasa (dica genérica sabendo pouco) e
+    a Ayla questionário (oito perguntas antes de qualquer ajuda).
+  - **A riqueza da base deve aumentar a QUALIDADE das perguntas, não a
+    quantidade.** E `docs/skills` já tem a formulação melhor: onde houver
+    pergunta canônica, ela ganha da que a Ayla inventaria.
 - **Depende de:** PEND-017 e PEND-018 — **desenhar junto**. Absorve PEND-009
   (primeira conversa) dentro do DESEJADO.
 - **Admin:** ADMIN PRECISA DE AJUSTE — hoje não dá para ver *por que* a Ayla
@@ -1216,6 +1227,47 @@ Aberta em: 2026-08-08 · Origem: consolidação da PEND-010 +
     ranking é o gargalo** · (h) **não**, os canais recebem repertório diferente.
   - **PODEMOS PROVAR QUE FOI USADO?** Não. Continua **não observável** — o
     rastro prova envio, nunca uso.
+- **ANATOMIA DOS `docs/skills/*.md` — AUDITADA EM 2026-08-09.** Os arquivos têm
+  estrutura funcional consistente, **com nomes de seção próprios** — não é
+  preciso impor taxonomia nova:
+  `MISSÃO` · `PRINCÍPIO CENTRAL` · `REGRA DE CONDUÇÃO` ·
+  **`TRIAGEM INICIAL — DUAS PERGUNTAS QUE SEPARAM CAMINHOS`** (foco) ·
+  **`PERGUNTA DE ALTO VALOR`** (autonomia, imitação) ·
+  **`ANTES DE ORIENTAR, DIFERENCIE`** com cenários numerados (8 em aprendizado,
+  18 em foco) · **`<SUBTEMA> — MAPA DE RACIOCÍNIO`** (aprendizado tem ESCRITA,
+  LEITURA e MATEMÁTICA) · `ATIVIDADES` · `FRASES PARA O CUIDADOR` ·
+  `ERROS COMUNS` · `O QUE OBSERVAR` · `PROGRESSÃO` · `USO DE INTERESSES` ·
+  `RESULTADO ESPERADO`.
+  - **O MAPA DE PERGUNTAS QUE ESTA FRENTE IA CRIAR JÁ ESTÁ ESCRITO.**
+    `LEITURA — MAPA DE RACIOCÍNIO` traz exatamente as dimensões pedidas —
+    reconhece letras · conhece sons · junta sílabas · junta e perde a palavra ·
+    decodifica sem compreender · compreende quando leem para ele · trava em
+    texto longo · é mais atenção que decodificação — **e traz o caso
+    "junta as sílabas mas se perde" com a conduta pronta** (revelar uma sílaba
+    por vez, reduzir campo visual, reconstruir a palavra ao final).
+  - **A IDADE ESTÁ NOS ARQUIVOS**, mas em prosa: 10 a 31 menções por arquivo,
+    **sem marcação estrutural**. Dá para ler, não dá para filtrar. **Lacuna
+    documentada** — e é a razão pela qual "idade muda o repertório" ainda não
+    se sustenta do lado editorial.
+  - **A CAMADA 1 EXISTE E FOI CARREGADA; A CAMADA 2 NUNCA TEVE DESTINO.** Cada
+    `.md` termina com um bloco YAML *"destilação para
+    `specialist_prompt_templates`"* — e é isso que está no banco. Os outros ~95%
+    do arquivo (mapas, cenários, atividades, frases) **não têm para onde ir**.
+    Não é conteúdo perdido: é conteúdo sem tubulação.
+  - **SOBREPOSIÇÃO COM `boas_praticas`: ZERO.** Testadas 8 frases de `foco.md`
+    contra as 370 boas práticas — **nenhuma existe lá**. Os dois acervos são
+    **complementares**, e a hipótese está confirmada por medição:
+    **`docs/skills` = como conduzir e o que compreender** ·
+    **`boas_praticas` = o que sugerir e como executar.**
+  - **MELHOR PONTO DE INTEGRAÇÃO:** o mesmo de `recuperarBoasPraticas` — o
+    módulo já é neutro de canal e serve os dois. O material editorial entra como
+    **segunda fonte no mesmo bloco**, com **recuperação seletiva por seção**
+    (sem contexto → `MAPA DE RACIOCÍNIO`/`TRIAGEM`; com suficiência →
+    `ATIVIDADES`/`FRASES`/orientações). **Não despejar arquivo inteiro.**
+  - **CUSTO ESTIMADO:** o arquivo inteiro custaria ~21 mil tokens por turno
+    (84 647 chars ÷ 4) — inviável. **Uma seção** custa 300 a 900 tokens, na
+    ordem do bloco de repertório atual (3 739 chars no caso medido). O parsing
+    dos `.md` deve ser feito **em build ou cache**, não por turno.
 - **Depende de:** desenhar junto com PEND-016 e PEND-018.
 - **Admin:** ADMIN PRECISA DE AJUSTE — administrar acervo, e ver o que foi
   recuperado e o que foi usado.
@@ -1322,6 +1374,23 @@ Aberta em: 2026-08-08 · Origem: consolidação da PEND-010 +
     do contexto original. Reforça que o problema não é a memória guardar errado,
     e sim **não carregar o escopo do que foi observado**. Requisito para o
     desenho desta ficha: **um fato precisa saber sobre o que ele fala.**
+- **PERFIL VIVO — ESTRUTURA ATUAL, AUDITADA EM 2026-08-09.**
+  `perfil_vivo_membro` tem seis campos de conteúdo (`essencial`, `como_e`,
+  `corpo_rotina`, `desafios_regulacao`, `sensorial`, `completude_pct`) mais o
+  saco `categorias_extras` em jsonb, onde vivem as 26 categorias e os
+  `desafios_onboarding`.
+  - **NÃO HÁ NADA que distinga**, na estrutura, **relato explícito da família ·
+    observação · hipótese da Ayla · estratégia sugerida · estratégia testada ·
+    resultado relatado.** Tudo vira texto no mesmo campo. É a causa estrutural
+    dos dois casos já registrados: a uva-passa (fato revogado que continuou
+    valendo) e a "referência visual" (fato verdadeiro usado fora do escopo).
+  - **Requisito registrado, não construído:** perfil temático progressivo ·
+    consultar antes de perguntar · não repetir pergunta já respondida ·
+    **fato ≠ inferência** · estratégia sugerida ≠ testada · registrar resultado.
+  - **REGRA DE PRODUTO (Sérgio, 2026-08-09):** *"o perfil não é um formulário
+    que precisa ser concluído — é um retrato que a Ayla vai completando
+    enquanto ajuda"*, e *"perguntar para ajudar agora; guardar para não
+    precisar perguntar amanhã."*
 - **Depende de:** desenhar junto com PEND-016 e PEND-017. **Bloqueia** PEND-020.
 - **Admin:** ADMIN PRECISA DE AJUSTE — ver o retrato da criança e a procedência
   de cada informação.
