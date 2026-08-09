@@ -42,6 +42,9 @@ export type AylaTipoProativa =
   | "crianca_especifica";
 
 export type AylaTipoReativa =
+  /** O menu de temas da entrada guiada. Tipo próprio porque o texto dele É o
+   *  estado: é dele que sai a numeração quando a mãe responde só "2". */
+  | "entrada_guiada"
   | "resposta_registro"
   | "clarificacao_identificacao"
   | "clarificacao_conteudo"
