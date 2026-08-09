@@ -1170,6 +1170,37 @@ do laudo de 06/08) + `docs/auditoria-ayla-prompt.md`
   - **SONO é o pior**: para 8 anos sobram 5 boas práticas, e as duas que sobem
     falam de dever de casa e de caixa para celular. Zero repertório para presença
     do cuidador ao adormecer, que é o núcleo do caso.
+- **✅ FASE 3C — MAPA DAS LACUNAS DA BASE 3 (2026-08-09).** Laudo completo em
+  [lacunas-base3-fase-3c.md](lacunas-base3-fase-3c.md). 20 subproblemas tirados
+  das bifurcações da BASE 2 nova, medidos contra 370 boas práticas ativas.
+  - **🐛 SETE DOS VINTE SUBPROBLEMAS TÊM ZERO BOA PRÁTICA ADERENTE.** Não é
+    falta de volume: `comunicacao` tem 32 elegíveis para 4 anos e **nenhuma**
+    responde ao caso-ouro do próprio tema.
+  - **⚠️ ISSO MUDA A PREMISSA DO PILOTO.** Eu havia recomendado emocional por
+    ser o tema mais bem servido — medindo **por tema**. Medindo **por
+    subproblema**, emocional é bom em dois e **cego em dois**: *sobrecarga
+    acumulada* (0 aderentes) e *sinais precoces / ponto de entrada* (0
+    aderentes). E esses dois são exatamente onde a BASE 2 nova é mais forte —
+    *"qual é o primeiro sinal de que está começando a ficar difícil?"* é a
+    melhor pergunta do documento, e **não há repertório para a resposta**.
+  - **Duas lacunas transversais de verdade, no acervo inteiro:** `treino em
+    momento calmo` **7 de 370** e `próximo passo` **4 de 370**. A primeira é o
+    mecanismo mais citado pela BASE 2 nova; a segunda é o que impede a Ayla de
+    sustentar uma frente por mais de um dia.
+  - **CORREÇÃO de laudo meu de hoje mais cedo:** eu disse que `uso de interesse`
+    estava *ausente nos cinco temas*. O acervo tem **32** — elas não sobrevivem
+    ao filtro de idade nem alcançam o piso nesses temas. A frase certa é: existe
+    repertório de interesse e ele não chega nestes casos.
+  - **52 registros novos estimados**, em P0/P1/P2, mais três conteúdos
+    existentes que estão a uma frase de servir e valem melhoria em vez de
+    duplicação.
+  - **Critério objetivo de pronto** definido no laudo, com o item que evita a
+    armadilha principal: cada conteúdo novo é validado pelo caso-ouro do seu
+    subproblema. **Escrever não é cobrir.**
+- **⏳ FASE 4A — não iniciada.** Autorizada como piloto de EMOCIONAL em
+  Estratégias Web. Bloqueio conhecido antes de começar: dos quatro subproblemas
+  de emocional, dois não têm o que entregar. A bancada precisa incluí-los e
+  esperar que falhem — senão o piloto mede só a metade boa do tema.
 - **Depende de:** PEND-017 e PEND-018 — **desenhar junto**. Absorve PEND-009
   (primeira conversa) dentro do DESEJADO.
 - **Admin:** ADMIN PRECISA DE AJUSTE — hoje não dá para ver *por que* a Ayla
