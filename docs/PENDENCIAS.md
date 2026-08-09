@@ -1038,6 +1038,31 @@ do laudo de 06/08) + `docs/auditoria-ayla-prompt.md`
   - **A oferta de artefato cabe na MESMA mensagem da orientação, em uma linha.**
     Virar turno próprio ("quer uma rotina visual?") gasta uma troca e empurra o
     artefato para o lugar da ajuda.
+- **REQUISITOS DA CONDUÇÃO ACUMULADOS ATÉ 2026-08-09 — nenhum some por não ter
+  chegado a hora.** Condução por tema **e faixa etária** · coleta progressiva
+  sem interrogatório · **consultar o que já sabemos antes de perguntar** ·
+  guardar o fato novo no retrato temático da criança · **separar relato da
+  família de inferência da Ayla** · atividades e brincadeiras apresentadas de
+  forma rica e atraente · explicação do mecanismo quando for útil **e
+  sustentada** · frases prontas · treino em momento calmo quando pertinente ·
+  foto e áudio quando ajudarem · **oferta contextual** de Plano Kolo, Rotina
+  Visual, História e demais recursos · latência sob investigação ·
+  rastreabilidade do que foi recuperado e enviado.
+- **REGRA DE OURO DA CONDUÇÃO POR MENU (Sérgio, 2026-08-09):**
+  > **O número serve apenas para abrir uma porta. A primeira informação
+  > concreta que a mãe trouxer passa a comandar a conversa.**
+  Resolve sozinho o caso *"6 · a escola está cobrando laudo"*: sem ela, qualquer
+  submenu vira trilho e a Ayla ganha cara de robô.
+- **O MAPA DE INVESTIGAÇÃO POR TEMA JÁ EXISTE E NÃO PRECISA SER CRIADO.**
+  `docs/skills/*.md` traz, por tema, as dimensões que esta frente ia redesenhar
+  (em `foco.md`, doze motivos distintos para "não presta atenção"). **Não
+  reconstruir**: o trabalho é fazer aquilo chegar. Ver PEND-017.
+- **LIMITE DE CANAL, medido no protótipo de 2026-08-09:** a web aguenta **uma
+  seção a mais** que o WhatsApp. A mesma intervenção que na web cabe em três
+  blocos vira **três bolhas** no celular, e a quarta é onde a mãe rola a tela.
+  **A régua de 2–3 elementos não é preferência editorial — é o limite físico da
+  tela.** Se divergir, **que a web ganhe profundidade, nunca que o WhatsApp
+  ganhe comprimento.**
 - **Depende de:** PEND-017 e PEND-018 — **desenhar junto**. Absorve PEND-009
   (primeira conversa) dentro do DESEJADO.
 - **Admin:** ADMIN PRECISA DE AJUSTE — hoje não dá para ver *por que* a Ayla
@@ -1143,6 +1168,54 @@ Aberta em: 2026-08-08 · Origem: consolidação da PEND-010 +
     base. **Não é bug de recuperação; é lacuna de curadoria** — e some junto com
     `meu_bem_estar` na lista do que o acervo não cobre.
   - **Uso efetivo continua não observável.**
+- **🔴 AUDITORIA DOS DOIS ACERVOS — 2026-08-09. O MATERIAL EXISTE E NÃO CHEGA.**
+  - **ACERVO 1 · `boas_praticas`** — 370 ativas, 15 temas, faixa etária em 368.
+    Campos ricos: `versao_conversa`, `quando_usar`, `erros_comuns`,
+    `passos_praticos`, `tags`, `perfis_aplicaveis`, `nivel`.
+  - **ACERVO 2 · `docs/skills/*.md`** — **84 647 caracteres** de conteúdo
+    editorial aprovado, marcado *"FONTE CANÔNICA EDITORIAL — salvo VERBATIM"*,
+    em 7 arquivos (aprendizado, autonomia, foco, imitação, motor, nutricional,
+    socialização). Contém **exatamente o mapa de investigação por tema** que
+    esta frente ia redesenhar: `foco.md` diferencia **doze** motivos distintos
+    para "não presta atenção" e lista dezesseis situações de entrada.
+    **⚠️ NENHUM CÓDIGO LÊ ESSES ARQUIVOS.** Grep exaustivo em `apps/web/src` e
+    `scripts`: zero referências. Os `.md` estão no repositório e **nunca
+    chegaram a lugar nenhum**.
+  - **O QUE ESTÁ NO BANCO É 13× MENOR.** `specialist_prompt_templates` guarda
+    14 skills com quatro campos curtos cada (`objective`/`tone`/`scope`/
+    `limits`) — **6 507 caracteres somando as catorze**, contra 84 647 no
+    markdown das sete.
+  - **E NO WHATSAPP NEM ESSES 6 507 CHEGAM.** A web injeta `objective` no prompt
+    (`lib/ia/prompt.ts:34`); no WhatsApp a skill é **apenas chave de
+    recuperação** — nada do conteúdo editorial dela entra no prompt. É uma
+    assimetria maior que a das tags.
+  - **QUATRO CASOS DE BANCADA — o material certo existe e não é escolhido:**
+
+    | caso (idade) | no tema | na faixa | falam do subtema | recuperados | do subtema **fora** |
+    |---|---|---|---|---|---|
+    | leitura (8) | 39 | 13 | 3 | 3 | 2 |
+    | bate na irmã (5) | 75 | 34 | **11** | 3 | **10** |
+    | não começa a lição (8) | 35 | 9 | 6 | 3 | 4 |
+    | sensorial na tarefa (8) | 38 | 11 | 6 | 3 | 4 |
+
+    No caso da irmã, ficaram de fora *"Explosões de raiva — bate, grita, joga
+    coisas: identifique gatilhos"* e *"Valide emoções: 'vejo que você está bravo
+    porque…'"* — **os dois conteúdos que descrevem literalmente o caso.**
+  - **DOIS MODOS DE FALHA, AGORA DISTINGUÍVEIS.** (1) *o conteúdo não existe*
+    para aquela faixa — foi o caso do lúdico para adolescente, medido em 08/08;
+    (2) *o conteúdo existe e não é escolhido* — é este, e é o mais comum.
+    **A causa do (2) é o ranking empatado**: como o peso não ordena, a seleção
+    ignora o subtema e devolve os três primeiros da ordem física.
+  - **RESPOSTAS DIRETAS:** (a) a idade **influencia** a recuperação (filtro em
+    memória), mas **não** o ranking · (b) o subtema — leitura, bater, começar —
+    **não influencia nada**: a consulta é por rótulo, e o texto da mensagem não
+    entra · (c) as perguntas por tema/idade **não chegam ao condutor**, porque
+    ninguém lê os `.md` · (d,e) atividades, frases e orientações só chegam se
+    caírem por acaso no top-3 · (f) **três itens no total, sem tipagem** — o
+    sistema não sabe distinguir orientação de brincadeira · (g) **sim, o
+    ranking é o gargalo** · (h) **não**, os canais recebem repertório diferente.
+  - **PODEMOS PROVAR QUE FOI USADO?** Não. Continua **não observável** — o
+    rastro prova envio, nunca uso.
 - **Depende de:** desenhar junto com PEND-016 e PEND-018.
 - **Admin:** ADMIN PRECISA DE AJUSTE — administrar acervo, e ver o que foi
   recuperado e o que foi usado.
