@@ -141,8 +141,24 @@ function parsear(tema, texto) {
   return secoes;
 }
 
+/**
+ * SÓ DOCUMENTO CANÔNICO ENTRA — e o critério é uma lista, não uma heurística.
+ *
+ * Duas tentativas mais espertas falharam, cada uma por um motivo que vale
+ * guardar. Procurar a marca "FONTE CANÔNICA" em qualquer lugar do texto pegou
+ * o próprio guia de escrita, que cita a marca dentro do esqueleto de exemplo.
+ * Exigi-la na primeira linha derrubou `imitacao.md`, que começa direto no
+ * título — os documentos também não são uniformes no cabeçalho.
+ *
+ * Uma lista de exceções é menos elegante e mais honesta: quem fica de fora é
+ * decisão explícita, e todo arquivo novo em `docs/skills/` é skill até que
+ * alguém diga o contrário.
+ */
+const NAO_SAO_SKILL = new Set(["README.md", "COMO-ESCREVER.md"]);
+
 const arquivos = readdirSync(ORIGEM)
-  .filter((f) => f.endsWith(".md") && f !== "README.md")
+  .filter((f) => f.endsWith(".md"))
+  .filter((f) => !NAO_SAO_SKILL.has(f))
   .sort();
 
 const todas = [];

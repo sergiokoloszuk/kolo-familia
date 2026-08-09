@@ -1319,7 +1319,8 @@ Aberta em: 2026-08-08 · Origem: consolidação da PEND-010 +
   |---|---|---|
   | 1 | BASE 1 consultável campo a campo | **CONCLUÍDA** ([#71](https://github.com/sergiokoloszuk/kolo-familia/pull/71)) |
   | 2 | BASE 2 seletivamente acessível | **CONCLUÍDA** ([#72](https://github.com/sergiokoloszuk/kolo-familia/pull/72)) |
-  | 3 | BASE 3 · ranking por aderência ao subtema | PRÓXIMA |
+  | 3 | BASE 3 · ranking por aderência ao relato | **CONCLUÍDA** ([#74](https://github.com/sergiokoloszuk/kolo-familia/pull/74)) — construída, provada, **não ligada** |
+  | 3b | BASE 3 · **o universo de candidatos** (o `.limit(40)` por peso inerte) | **NOVA** — é ela que resolve os casos A e C |
   | 4 | nova experiência em **Estratégias** | marco de produto |
   | 5 | WhatsApp | só após aprovação da Karina |
 - **✅ FASE 2 · BASE 2 SELETIVA — NO AR (2026-08-09).** O patrimônio editorial
@@ -1360,6 +1361,47 @@ Aberta em: 2026-08-08 · Origem: consolidação da PEND-010 +
   - **Testes:** 20 novos, com o conteúdo real como prova. Três sabotagens:
     perder o reconhecimento de subtema quebra 3 · devolver o tema inteiro quebra
     6 · deixar o módulo gerado defasar quebra 2.
+- **✅ FASE 3 · BASE 3 — ADERÊNCIA AO RELATO (2026-08-09). CONSTRUÍDA E
+  PROVADA, MAS NÃO LIGADA.** Como nas Fases 1 e 2, nada mudou para as famílias:
+  a função existe, tem teste e **nenhum caminho de produção a chama**. Ligar é
+  decisão da Fase 4.
+  - **O que faz:** dentro do conjunto **já elegível** (skill · tags · status ·
+    faixa etária intactos), ordena por aderência ao relato. Determinística,
+    **zero chamada de modelo**, 0,3 a 5 ms por caso.
+  - **Três defesas contra caça-palavra:** um termo sozinho **zera** (não é
+    aparado) · dois termos no mesmo campo valem mais que a soma · **piso de 10**,
+    abaixo do qual o ranking **se abstém** e devolve a ordem que já viria.
+  - **🔴 O ACHADO QUE MUDA A CONCLUSÃO DA FASE: reordenar não resolve o caso
+    que motivou a fase.** No caso *"bate na irmã quando é contrariada"* o
+    ranking **não interferiu** — porque *"Explosões de raiva: bate, grita, joga
+    coisas"* **não estava entre os 10 elegíveis**. O corte de `.limit(40)` no
+    banco, feito por um peso que não ordena, **já tinha excluído o conteúdo
+    certo antes de qualquer ranking**.
+    | caso | elegíveis | interferiu? |
+    |---|---|---|
+    | bate na irmã (5a) | 10 | **não** — o conteúdo certo não é candidato |
+    | leitura silabando (8a) | 13 | **não** — mesma causa |
+    | não começa a lição (8a) | 9 | **sim** |
+    | sensorial na tarefa (8a) | 11 | **sim**, e bem (25 e 18 pontos) |
+    **A causa raiz é a montante: o universo de candidatos.** Fica registrado
+    como **FASE 3b**, e é ela que resolve os casos A e C.
+  - **CASOS NEGATIVOS calibraram o piso, e isso não foi teórico.** Com piso 8,
+    *"ele bate a porta quando sai do quarto"* subia um conteúdo sobre **medo**
+    (porta + quarto convergindo num texto de outro assunto). Em 10, os dois
+    negativos deixam de interferir e os positivos seguem passando.
+  - **DIVERSIDADE FUNCIONAL — medida, não corrigida.** Nos quatro casos havia
+    orientação, atividade, brincadeira e frase entre os candidatos; o top-3
+    **antes** entregava 2 funções distintas, e **depois** 3 no caso sensorial.
+    **Três itens tematicamente certos e funcionalmente idênticos ainda produzem
+    resposta rasa** — registrado para a Fase 4, sem diversidade forçada agora.
+  - **IDADE:** o ranking roda **depois** da elegibilidade; nada semanticamente
+    ótimo mas fora de faixa consegue subir. Coberto por teste.
+  - **Testes:** 17 novos. Três sabotagens: tirar a convergência quebra 1 ·
+    baixar o piso quebra 1 · ignorar o relato quebra 4.
+- **REQUISITO ARQUITETURAL REGISTRADO, sem implementar:** BASE 2 e BASE 3 **não
+  devem ficar presas a uma origem única**. Conhecimento aprovado vindo de
+  livros, materiais Kolo, artigos ou especialistas poderá alimentar as mesmas
+  camadas — e **a origem precisa ser preservável**. Nenhuma ingestão nesta fase.
 - **Depende de:** desenhar junto com PEND-016 e PEND-018.
 - **Admin:** ADMIN PRECISA DE AJUSTE — administrar acervo, e ver o que foi
   recuperado e o que foi usado.
@@ -1388,6 +1430,13 @@ Aberta em: 2026-08-08 · Origem: consolidação da PEND-010 +
      período observado, criança, tipo;
   2. como a tela e a Ayla distinguem "a professora relatou" de "a Ayla inferiu";
   3. o que acontece quando duas informações se contradizem.
+- **APRENDIZADO DE 2026-08-09 (Fase 3): sabotagem que não morde é teste que não
+  existe.** Duas das três sabotagens da Fase 3 passaram na primeira tentativa —
+  não porque o código resistia, mas porque **os testes não cobriam aquelas
+  regras**. Uma delas expôs um defeito real de desenho: o clamp de convergência
+  usava `PISO - 1`, então baixar o piso produzia pontuação negativa e mascarava
+  a própria sabotagem. **Duas regras independentes não podem depender uma da
+  outra** — e foi a sabotagem, não a leitura do código, que revelou isso.
 - **APRENDIZADOS DE 2026-08-09 (prototipação e medição de latência):**
   1. **Protótipo conversacional escrito à mão é diagnóstico barato.** Escrever as
      quatro conversas como a mãe as veria expôs, em minutos, que o segundo nível
