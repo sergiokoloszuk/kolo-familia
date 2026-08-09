@@ -26,25 +26,36 @@ describe("o módulo gerado não pode ficar defasado", () => {
 });
 
 describe("cobertura da BASE 2", () => {
-  it("3. os sete temas foram parseados, inclusive o de formato diferente", () => {
+  it("3. os doze temas foram parseados, inclusive o de formato diferente", () => {
     expect(TEMAS_BASE2).toEqual([
       "aprendizado",
       "autonomia",
+      "comunicacao",
+      "emocional",
       "foco",
       "imitacao",
       "motor",
       "nutricional",
+      "rotina",
+      "sensorial",
       "socializacao",
+      "sono",
     ]);
     // `nutricional.md` não usa `#` nos títulos; sem suporte a caixa alta ele
     // saía com zero seções.
     expect(BASE2.filter((s) => s.tema === "nutricional").length).toBeGreaterThan(10);
   });
 
-  it("4. BASE 2 INDISPONÍVEL para temas sem material — e isso é achado, não erro", () => {
+  it("4. os cinco temas que faltavam agora têm material — e ele é recuperável", () => {
+    // Este teste dizia o contrário até 09/08/2026: os cinco eram lacuna
+    // declarada. O PR #77 os escreveu, e a asserção inverteu junto. O que ele
+    // guarda agora é que o material EXISTE e é recortável por estado — não
+    // basta o arquivo estar no disco.
     for (const tema of ["sono", "emocional", "sensorial", "comunicacao", "rotina"]) {
-      expect(temMaterial(tema), `${tema} não deveria ter material`).toBe(false);
-      expect(secoesDe({ tema })).toEqual([]);
+      expect(temMaterial(tema), `${tema} deveria ter material`).toBe(true);
+      const inv = secoesDe({ tema, estado: "investigacao" });
+      expect(inv.length, `${tema} sem seção de investigação`).toBeGreaterThan(0);
+      expect(inv.every((s) => s.conteudo.trim().length > 0)).toBe(true);
     }
   });
 });

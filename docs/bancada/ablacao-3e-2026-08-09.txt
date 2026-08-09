@@ -1,0 +1,219 @@
+##############################################################################
+(1) SEQUESTRO — quem sobe no top-3 de mais de um subproblema
+
+Uma BP que vence em muitos casos diferentes nao e versatil: e generica o
+bastante pra caber em qualquer lugar, e empurra o especifico pra fora.
+
+  18 subproblemas medidos, 5 temas
+
+   4x  temas=emocional,sensorial                pts 44/35/23/17
+      Bater, morder, chutar, gritar: todas formas de comunicação antes da…
+   4x  temas=emocional,sensorial                pts 29/44/10/17
+      Quando a criança entra em crise (choro intenso, agressividade, recusa)
+   2x  temas=emocional                          pts 24/21
+      Explosões de raiva — bate, grita, joga coisas Identifique gatilhos…
+   2x  temas=rotina                             pts 17/17
+      Transição (fim de brincadeira, mudança de atividade, saída de casa)…
+
+  (10 BPs venceram em exatamente 1 subproblema — essas sao especificas)
+
+
+██████████████████████████████████████████████████████████████████████████████
+CASO: bate na irmã (o caso que PIOROU)
+"Meu filho bate na irmã quando é contrariado. Ontem ela pegou o brinquedo dele e ele partiu pra cima."
+
+  BASE 3 ANTIGA: 44pts Quando a criança entra em crise (choro i | 35pts Bater, morder, chutar, gritar: todas for | 21pts Explosões de raiva — bate, grita, joga c
+  BASE 3 NOVA:   12pts Uma coisa por vez quando o dia já foi de
+
+──────────────────────────────────────────────────────────────────────────────
+C  · Perfil + BASE 2   3673ms · 862tok entrada · 189 chars
+
+Oi! Entendo que essa situação te preocupa 💙
+
+Quando ele bateu ontem, você viu se ele tentou fazer alguma outra coisa antes? Tipo falar, pedir de volta, gritar, te chamar...
+
+Ou foi direto?
+
+──────────────────────────────────────────────────────────────────────────────
+D1 · + BASE 3 antiga   6445ms · 1683tok entrada · 311 chars
+
+Olha, isso que você descreve é bem comum, mas sei que não torna mais fácil quando acontece 😔
+
+Antes de a gente pensar em como lidar, preciso entender melhor *o que acontece* exatamente.
+
+Quando ele "partiu pra cima" — ele consegue usar palavras nessa hora? Tipo, grita "É MEU!" ou já vai direto sem falar nada?
+
+──────────────────────────────────────────────────────────────────────────────
+D1a· + BASE 3 antiga + ÂNCORA   5635ms · 1817tok entrada · 468 chars
+
+Entendo. Essa situação entre irmãos é bem intensa mesmo, né? 
+
+Vou te perguntar algo importante: *quando o Téo partiu pra cima*, você conseguiu perceber se ele já vinha irritado antes disso, ou foi só a irmã pegar o brinquedo que desencadeou tudo?
+
+Pergunto porque às vezes a gente vê a "gota d'água" (ela pegou o brinquedo), mas pode ter um cansaço ou frustração já acumulada ali. Outras vezes é mesmo aquele momento específico que detona.
+
+O que você percebeu ontem?
+
+──────────────────────────────────────────────────────────────────────────────
+E1 · + antiga + âncora + licença   4926ms · 1997tok entrada · 342 chars
+
+Oi! Que situação difícil. E é tão rápido que às vezes a gente nem consegue evitar, né?
+
+Deixa eu entender melhor o que rola: quando isso acontece, você percebe algum sinal no Téo *antes* dele partir pra cima? 
+
+Tipo — ele fica mais agitado, fala mais alto, começa a andar rápido... ou é bem direto mesmo, vê o brinquedo sendo pego e já reage?
+
+──────────────────────────────────────────────────────────────────────────────
+E2 · + NOVA + âncora + licença   5656ms · 1555tok entrada · 371 chars
+
+Oi. Deve ser bem difícil ver isso acontecendo, né? E imagino que você fica sem saber se interfere na hora ou como fazer depois.
+
+Antes de a gente pensar no que ajuda, preciso entender melhor uma coisa: **quando o Téo bate na irmã, o que geralmente muda logo depois?** 
+
+Ela devolve o brinquedo? Você chega e separa? Ele consegue o que queria ou fica ainda mais frustrado?
+
+
+██████████████████████████████████████████████████████████████████████████████
+CASO: sobrecarga
+"Ele explode por qualquer coisa no fim da tarde, principalmente depois da escola. Hoje foi porque a meia estava do lado errado."
+
+  BASE 3 ANTIGA: 18pts Quando a criança entra em crise (choro i | 12pts Em crise emocional, conecte primeiro (cé | 10pts Valide emoções: 'Vejo que você está brav
+  BASE 3 NOVA:   98pts A conta do dia: quando a explosão do fim | 80pts Pouso da volta da escola: meia hora sem  | 26pts O termômetro do dia: medir a carga junto
+
+──────────────────────────────────────────────────────────────────────────────
+C  · Perfil + BASE 2   4375ms · 857tok entrada · 181 chars
+
+Ah, essa hora do dia é *bem* comum pra isso aparecer 💙
+
+Me conta uma coisa: quando o Téo chega da escola, como ele costuma estar? Mais quieto, agitado, falante, já meio nervoso...?
+
+──────────────────────────────────────────────────────────────────────────────
+D1 · + BASE 3 antiga   8001ms · 1654tok entrada · 634 chars
+
+Oi! 💙
+
+Eu imagino o quanto isso é cansativo pra você — chegar no fim do dia e sentir que qualquer detalhe vira uma explosão enorme.
+
+E olha, fim da tarde depois da escola é um dos momentos *mais críticos* pra muitas crianças atípicas. O Téo passou o dia inteiro se regulando, seguindo rotinas, lidando com barulho, luz, demandas sociais... quando chega em casa, é como se a bateria tivesse zerado.
+
+A meia do lado errado pode ter sido só *a gota*. O copo já vinha cheio desde antes.
+
+Uma coisa que ajuda muito a entender: como é a rotina dele na escola? Ele fica muito tempo lá? Tem intervalo, educação física, refeitório barulhento?
+
+──────────────────────────────────────────────────────────────────────────────
+D1a· + BASE 3 antiga + ÂNCORA   9759ms · 1788tok entrada · 760 chars
+
+Entendo. A meia virou o estopim, mas aposto que não era *só* a meia, né?
+
+Fim de tarde, depois da escola... o Téo já vem segurando um monte de coisa o dia inteiro. A escola pede regulação constante — barulho, luz, ter que seguir regras, gente perto, transições. Quando chega em casa, ele finalmente *pode* desabar. E aí qualquer coisinha (a meia, um copo, uma pergunta) vira o gatilho.
+
+É tipo aqueles dias que *você* mesma aguenta tudo no trabalho e quando chega em casa explode com a porta que não abre de primeira. Sabe?
+
+Com o Téo, você já percebeu se ele chega mais acelerado da escola? Falando mais rápido, andando de um lado pro outro (aqueles sinais que você mencionou)? Ou ele já chega meio "apagado", silencioso, e a explosão vem uns 20-30min depois?
+
+──────────────────────────────────────────────────────────────────────────────
+E1 · + antiga + âncora + licença   14094ms · 1968tok entrada · 1074 chars
+
+Oi! Entendo completamente. Fim de tarde é um horário crítico mesmo — especialmente depois da escola.
+
+A meia virou o gatilho visível, mas provavelmente *não é sobre a meia*. É sobre tudo que acumulou ao longo do dia: barulho da escola, esforço de ficar sentado, seguir instruções, interagir socialmente, controlar impulsos, processar informação sensorial sem parar.
+
+Quando chega em casa, o corpo do Téo está no limite. A bateria acabou. E aí qualquer coisa pequena — a textura da meia, uma etiqueta, um plano que muda — vira a gota.
+
+**O que pode ajudar:**
+
+- Criar um *ritual de descompressão* logo que chega: 20-30 min sem demanda nenhuma. Pode ser luz baixa, ele deitado, talvez com você perto (sem conversar muito), ou alguma coisa que ele curte fazer sozinho
+- Adiar qualquer coisa que exija decisão, troca de roupa, "vamos fazer X" para depois desse tempo
+- Se a meia incomoda mesmo, deixar ele descalço ou com chinelo até se reorganizar
+
+Me conta: *vocês já têm algum momento de pausa quando ele chega*, ou geralmente a rotina continua direto (lanche, banho, lição)?
+
+──────────────────────────────────────────────────────────────────────────────
+E2 · + NOVA + âncora + licença   11018ms · 2778tok entrada · 1261 chars
+
+Ah, a meia do lado errado. Eu imagino o quanto deve ser difícil ver o Téo desmoronar por algo que parece tão pequeno, né?
+
+A verdade é que a meia quase nunca é sobre a meia. Ela foi só a última gota de um copo que já tava transbordando — e a escola costuma encher esse copo *todinha*.
+
+Pensa comigo: o Téo passou o dia inteiro segurando. Segurando o corpo quieto na cadeira. Segurando o barulho que incomoda. Segurando a vontade de falar sobre as estações da linha azul quando a conversa era sobre outra coisa. Segurando até o erro que dá gatilho nele.
+
+Quando ele chega em casa, não sobrou quase nada. Aí vem a meia — que em qualquer outro momento do dia seria só uma meia — e é ela que recebe toda a conta do dia.
+
+---
+
+**A conta do dia inteiro**
+
+Vamos tentar uma coisa: pelos próximos três ou quatro dias, anota só duas coisas:
+- Que horas ficou difícil
+- O que tinha acontecido nas *duas horas antes* disso
+
+Não precisa entender nada ainda — só juntar. Depois a gente olha se o horário se repete. Porque quando ele se repete, a causa quase nunca é o gatilho aparente: ele foi só o último item de uma conta que já estava alta.
+
+---
+
+Me conta: **ele já vinha mais irritado, mais rápido ou mais sensível antes da meia?** Ou parecia estar bem até esse momento?
+
+
+██████████████████████████████████████████████████████████████████████████████
+CASO: chora e se fecha
+"Ela não explode, ela chora muito e some pro quarto. Fica lá sozinha e não deixa eu entrar."
+
+  BASE 3 ANTIGA: 17pts Luz, som, toque, cheiro, movimento, text | 16pts Quando a criança entra em crise (choro i | 14pts Medos são reais para o cérebro dele. Val
+  BASE 3 NOVA:   20pts Pouso da volta da escola: meia hora sem  | 14pts O termômetro do dia: medir a carga junto | 12pts Caça ao sinal nos personagens: reconhece
+
+──────────────────────────────────────────────────────────────────────────────
+C  · Perfil + BASE 2   5288ms · 856tok entrada · 273 chars
+
+Ah, então é bem diferente mesmo. Ela se *retira* quando fica difícil.
+
+E quando ela está lá no quarto, você consegue ouvir se está chorando ainda, ou fica em silêncio? 
+
+(Às vezes ajuda saber se ela está procurando se acalmar sozinha ou se ainda está no meio da onda forte)
+
+──────────────────────────────────────────────────────────────────────────────
+D1 · + BASE 3 antiga   6625ms · 1688tok entrada · 523 chars
+
+Ah, então é bem diferente de explosão mesmo. Ela *se retira*.
+
+Isso costuma ser bem típico quando a sobrecarga vem mais de dentro — quando tem muita coisa acontecendo no corpo ou na cabeça dela e ela precisa *parar tudo*.
+
+O quarto vira um refúgio, não uma punição.
+
+Me conta uma coisa: quando isso acontece, você já percebeu se ela já vinha mais cansada, irritada ou sensível *antes* de ir pro quarto? Tipo... o choro e a retirada são a primeira coisa que você vê, ou já dava pra notar que ela tava ficando sobrecarregada?
+
+──────────────────────────────────────────────────────────────────────────────
+D1a· + BASE 3 antiga + ÂNCORA   3524ms · 1822tok entrada · 186 chars
+
+Ah, entendi. Então não é explosão — é *recolhimento*. 
+
+E me conta: quando ela vai pro quarto assim, quanto tempo costuma ficar? E depois, quando sai ou deixa você entrar, como ela está?
+
+──────────────────────────────────────────────────────────────────────────────
+E1 · + antiga + âncora + licença   7638ms · 2002tok entrada · 715 chars
+
+Ah, isso muda tudo.
+
+Quando a criança *explode*, a gente pensa em desregulação alta, agressividade. Mas quando ela **se recolhe e chora sozinha**, geralmente é outra coisa: pode ser sobrecarga que ela está tentando processar do jeito dela, pode ser tristeza ou vergonha, pode ser que o quarto seja o único lugar onde ela se sente segura pra sentir.
+
+E quando não deixa você entrar, não é rejeição — é que *naquele momento* ela precisa de controle sobre o espaço dela. O cérebro dela está dizendo: "aqui eu consigo me reorganizar".
+
+Queria entender um pouco mais: 
+
+**Depois que ela sai do quarto, como ela volta?** Ela procura você? Volta como se nada tivesse acontecido? Ainda está triste? Ou meio cansada, quieta?
+
+──────────────────────────────────────────────────────────────────────────────
+E2 · + NOVA + âncora + licença   9037ms · 2606tok entrada · 805 chars
+
+Entendi. Não é explosão — é **recolhimento**. Ela se protege indo embora.
+
+E aí você fica ali do lado de fora da porta, sem saber se insiste, se espera, se fala alguma coisa... né?
+
+Uma coisa que pode ajudar: ela precisa **saber que você não foi embora**, mas sem precisar te responder ainda.
+
+Pode ser só você sentar perto da porta (do lado de fora mesmo) e dizer baixinho: *"Tô aqui. Quando você quiser, me chama."* E ficar ali fazendo outra coisa — mexendo no celular, lendo, só existindo perto.
+
+Não é pra forçar conversa. É só pra ela **não precisar escolher entre ficar sozinha OU ter você perto** — porque às vezes ela quer as duas coisas ao mesmo tempo.
+
+---
+
+Me conta: quando ela sai do quarto depois, como ela sai? Quieta? Volta como se nada tivesse acontecido? Ou ainda tá visivelmente abalada?
