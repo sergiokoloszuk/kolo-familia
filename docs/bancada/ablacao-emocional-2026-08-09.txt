@@ -1,0 +1,226 @@
+
+
+██████████████████████████████████████████████████████████████████████████████
+CASO 1-agressao
+"Meu filho bate na irmã quando é contrariado. Ontem ela pegou o brinquedo dele e ele partiu pra cima."
+
+BASE 3 recuperada (3): 44pts Quando a criança entra em crise (choro inten | 35pts Bater, morder, chutar, gritar: todas formas  | 21pts Explosões de raiva — bate, grita, joga coisa
+
+──────────────────────────────────────────────────────────────────────────────
+A · modelo sozinho   5999ms · entrada 145tok · saída 156tok · 479 chars
+
+Ai, que situação difícil! 😔 
+
+Imagino o quanto isso mexe com você... ver essa reação dele e ao mesmo tempo precisar proteger a irmã, né?
+
+Quando ele partiu pra cima dela ontem, você conseguiu perceber se foi no impulso do momento ou se rolou alguma coisa antes - tipo ele tentou pedir o brinquedo de volta, fez algum barulho, te chamou... ou foi direto pra agressão?
+
+(Pergunto porque às vezes a gente descobre que tem sinais ali que a gente não tava vendo no calor da situação)
+
+──────────────────────────────────────────────────────────────────────────────
+B · + Perfil   3240ms · entrada 421tok · saída 64tok · 165 chars
+
+Que difícil testemunhar isso 💙
+
+E imagino que tenha sido um turbilhão — preocupação com ela, com ele, aquele nó de "e agora?"
+
+Me conta: **o que você fez na hora?**
+
+──────────────────────────────────────────────────────────────────────────────
+C · + BASE 2   4520ms · entrada 921tok · saída 144tok · 406 chars
+
+Ah, que situação difícil 💙
+
+Entendo que deve ser cansativo e preocupante ver isso acontecer, ainda mais entre irmãos.
+
+Deixa eu entender melhor o que aconteceu ontem: 
+
+*Quando a irmã pegou o brinquedo, você viu o Téo começar a ficar acelerado, falar mais alto, andar de um lado pro outro* (aqueles sinais que você já conhece dele)... ou ele partiu pra cima direto, sem aquele "aviso" que ele costuma dar?
+
+──────────────────────────────────────────────────────────────────────────────
+D · + BASE 3   6144ms · entrada 1746tok · saída 99tok · 300 chars
+
+Entendo... deve ser tão difícil ver isso acontecendo 😔
+
+Quando ele partiu pra cima da irmã ontem, *o que você fez naquele momento*? E como ele ficou depois?
+
+(Quero entender melhor o que acontece logo em seguida, porque isso me ajuda a ver o que está funcionando como gatilho e como ele se recupera)
+
+──────────────────────────────────────────────────────────────────────────────
+E · + licença generativa   9808ms · entrada 2043tok · saída 125tok · 352 chars
+
+Oi! Imagino como isso seja difícil pra vocês 💙
+
+Deixa eu entender melhor o que aconteceu ontem: quando a irmã pegou o brinquedo, o Téo já vinha mais irritado antes? Ou foi tipo um dia comum e aí de repente explodiu?
+
+(Pergunto porque às vezes parece que foi "só por causa do brinquedo", mas o Téo pode já estar acumulando alguma coisa desde mais cedo)
+
+
+██████████████████████████████████████████████████████████████████████████████
+CASO 2-sobrecarga
+"Ele explode por qualquer coisa no fim da tarde, principalmente depois da escola. Hoje foi porque a meia estava do lado errado."
+
+BASE 3 recuperada (3): 98pts A conta do dia: quando a explosão do fim da  | 80pts Pouso da volta da escola: meia hora sem perg | 26pts O termômetro do dia: medir a carga junto, an
+
+──────────────────────────────────────────────────────────────────────────────
+A · modelo sozinho   5043ms · entrada 140tok · saída 128tok · 385 chars
+
+Oi! 💙
+
+Ah, o fim da tarde... esse horário é punk mesmo, né? E escola no meio disso tudo complica ainda mais.
+
+Essa explosão por causa da meia - que pra gente parece "qualquer coisa" - pra ele naquele momento era *tudo*. O copinho dele já tava transbordando.
+
+Me conta uma coisa: como é o dia dele antes dessas explosões? Tipo, da hora que acorda até chegar nesse fim de tarde crítico?
+
+──────────────────────────────────────────────────────────────────────────────
+B · + Perfil   4840ms · entrada 416tok · saída 112tok · 321 chars
+
+Oi! Que cansativo isso, né? 😔
+
+Final de tarde é punk mesmo. E olha, meia do lado errado pode parecer bobagem pra gente, mas pro Téo naquele momento... era *tudo*.
+
+Deixa eu entender melhor uma coisa: quando ele chega da escola, como é? Ele já vem meio tenso ou vai acumulando até explodir com alguma coisa (tipo a meia)?
+
+──────────────────────────────────────────────────────────────────────────────
+C · + BASE 2   5531ms · entrada 916tok · saída 106tok · 330 chars
+
+Ah, entendo. O fim da tarde é um momento bem carregado mesmo, especialmente depois da escola.
+
+Me conta uma coisa: quando o Téo chega da escola, **como ele costuma estar?** Vem falando, agitado, quieto, cansado?
+
+E antes desse episódio da meia hoje — ele já tinha tido algum outro momento difícil no dia, ou a meia foi o primeiro?
+
+──────────────────────────────────────────────────────────────────────────────
+D · + BASE 3   5462ms · entrada 2527tok · saída 134tok · 420 chars
+
+Oi! Entendo que é desgastante — e confuso também, né? Porque parece que não faz sentido explodir por causa de uma meia.
+
+A boa notícia é que *provavelmente não é sobre a meia*. A meia foi só o último item de uma conta que já estava alta o dia inteiro.
+
+Deixa eu te perguntar: **nos últimos dias, quando ele explodiu, era sempre no mesmo horário?** Tipo, sempre depois da escola, sempre fim de tarde... ou varia bastante?
+
+──────────────────────────────────────────────────────────────────────────────
+E · + licença generativa   4390ms · entrada 2824tok · saída 98tok · 286 chars
+
+Ah, a meia. Claro que foi a meia.
+
+Mas não foi a meia, né? A meia foi só o último item de uma conta que já estava alta quando vocês chegaram em casa.
+
+Deixa eu te perguntar: **a que horas isso costuma acontecer?** E nas duas horas antes — o que o Téo tinha feito, onde ele tinha estado?
+
+
+██████████████████████████████████████████████████████████████████████████████
+CASO 3-sinais
+"Quando eu percebo já é tarde, ele já está no auge e não adianta falar nada."
+
+BASE 3 recuperada (3): 113pts Entrar antes do auge: perceber o primeiro si | 32pts A conta do dia: quando a explosão do fim da  | 19pts O sinal combinado: um gesto que ela usa ante
+
+──────────────────────────────────────────────────────────────────────────────
+A · modelo sozinho   3998ms · entrada 133tok · saída 101tok · 302 chars
+
+Ai, que familiar isso que você tá dizendo... 😔
+
+Parece que quando você percebe, já passou aquele momento em que dava pra "desviar" da crise, né? E aí qualquer palavra só piora.
+
+Eu tô curiosa... quando ele já tá no auge assim, o que você costuma fazer? Ou melhor, o que você consegue fazer nessa hora?
+
+──────────────────────────────────────────────────────────────────────────────
+B · + Perfil   4292ms · entrada 409tok · saída 118tok · 331 chars
+
+Oi! Que sufoco, né? Quando a gente percebe, já é o furacão todo instalado 😮‍💨
+
+Você falou "quando eu percebo já é tarde"... me conta uma coisa: **em que momento do dia isso costuma acontecer mais?** 
+
+Porque às vezes a gente consegue mapear uns horários-armadilha, sabe? Tipo, antes do almoço, na volta da escola, fim de tarde...
+
+──────────────────────────────────────────────────────────────────────────────
+C · + BASE 2   4895ms · entrada 909tok · saída 133tok · 388 chars
+
+Ah, isso é bem duro mesmo. Você fica ali querendo ajudar e qualquer palavra parece piorar, né?
+
+Me conta uma coisa: quando você olha pra trás, *antes* dele chegar no auge, teve algum sinal? Tipo... ele já tava mais agitado? Mais quieto que o normal? Falando diferente?
+
+(Às vezes a gente só consegue ver esses sinais quando já aconteceu algumas vezes e a gente começa a reparar no padrão)
+
+──────────────────────────────────────────────────────────────────────────────
+D · + BASE 3   8455ms · entrada 2713tok · saída 219tok · 686 chars
+
+Entendo. É muito comum isso acontecer — a gente só percebe quando já está difícil demais pra qualquer palavra funcionar.
+
+Vou te contar uma coisa: quase sempre *existe um sinal antes*, só que ele é pequeno demais pra chamar atenção no meio da correria. Pode ser a voz que muda, o corpo que fica mais rápido, umaresposta que não vem... mas como não grita nem quebra nada, a gente deixa passar.
+
+Me conta uma coisa: pensando nos últimos dois ou três episódios com o Téo, **qual foi a última coisa que você percebeu antes dele já estar explodindo?** 
+
+Não precisa ser nada óbvio — às vezes é só "ele parou de me responder" ou "começou a andar de um lado pro outro". Qualquer detalhe serve.
+
+──────────────────────────────────────────────────────────────────────────────
+E · + licença generativa   11426ms · entrada 3010tok · saída 315tok · 935 chars
+
+Isso é *muito* comum — e não é porque você está demorando pra perceber. É que o primeiro sinal do Téo provavelmente ainda é silencioso demais perto do tamanho da explosão.
+
+A boa notícia: quando a gente acha esse sinal cedo, uma coisa pequenininha já resolve. No auge, nem técnica milagrosa funciona. Então o trabalho é voltar no tempo.
+
+---
+
+**Nos próximos dois ou três episódios**, tenta fazer isso depois que passar:
+
+Rebobina a fita. Qual foi a *última* coisa que você percebeu antes do auge? 
+
+Não a mais chamativa — a *primeira*.
+
+A voz dele mudou? Parou de responder? Começou a andar mais rápido, ficar mais quieto, grudou em você? Ficou *rápido demais* em alguma coisa?
+
+Anota essa primeira coisa. Em pouco tempo vai aparecer um sinal que se repete. 
+
+Esse é o seu ponto de entrada — onde ainda dá pra falar "vem cá comigo um minutinho" e ele vir.
+
+---
+
+Você já reparou se tem alguma coisa que muda *antes* de ficar impossível?
+
+
+██████████████████████████████████████████████████████████████████████████████
+CASO 4-insuficiente
+"Ele tem tido umas crises."
+
+BASE 3 recuperada (0): nada acima do piso
+
+──────────────────────────────────────────────────────────────────────────────
+A · modelo sozinho   4583ms · entrada 118tok · saída 68tok · 214 chars
+
+Oi! Que difícil quando as crises aparecem ou aumentam, né? 💙
+
+Me conta um pouco mais... essas crises mudaram de alguma forma? Ficaram mais frequentes, mais intensas, ou apareceram em situações diferentes do usual?
+
+──────────────────────────────────────────────────────────────────────────────
+B · + Perfil   3621ms · entrada 394tok · saída 68tok · 200 chars
+
+Oi! Que difícil quando isso acontece, né? 💙
+
+Me conta um pouco mais... essas crises estão parecidas com o que o Téo já costuma ter (aquelas que você descreveu antes), ou tem algo diferente dessa vez?
+
+──────────────────────────────────────────────────────────────────────────────
+C · + BASE 2   2901ms · entrada 894tok · saída 42tok · 103 chars
+
+Oi! Deve estar difícil pra vocês 💙
+
+Conta um pouco: o que você chama de crise? Como é quando acontece?
+
+──────────────────────────────────────────────────────────────────────────────
+D · + BASE 3   4005ms · entrada 894tok · saída 112tok · 327 chars
+
+Oi! Entendo que deve estar preocupada. 
+
+Me conta um pouco mais: **quando você diz "crises", o que exatamente acontece?** É grito, choro, ele bate, joga coisas... ou várias coisas juntas?
+
+(Pergunto porque às vezes a mesma palavra significa coisas bem diferentes, e isso ajuda a gente entender melhor o que o Téo está passando)
+
+──────────────────────────────────────────────────────────────────────────────
+E · + licença generativa   4861ms · entrada 1191tok · saída 96tok · 286 chars
+
+Oi! Deve estar difícil ver essas crises, né? 
+
+Antes de a gente pensar junto no que pode ajudar, me conta: **quando isso costuma acontecer?** Tem algum momento do dia ou situação que você percebe que vem mais?
+
+(E se quiser me contar como foi uma crise recente, ajuda a entender melhor)

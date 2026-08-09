@@ -1233,6 +1233,37 @@ do laudo de 06/08) + `docs/auditoria-ayla-prompt.md`
   - **⏳ PENDENTE:** ativar (`status = ativo`) só quando a Fase 4A estiver pronta
     para medir; corrigir os dois títulos invisíveis; decidir se o enum de
     `origem` merece migração para carregar proveniência estruturada.
+- **✅ ABLAÇÃO A–E EXECUTADA COM MODELO REAL (2026-08-09).** 4 casos × 5
+  condições, 20 chamadas. Transcrição integral em
+  [bancada/ablacao-emocional-2026-08-09.txt](bancada/ablacao-emocional-2026-08-09.txt).
+  Perfil sintético, nenhuma família real, nada enviado a ninguém.
+  - **A licença generativa NÃO é ruído — é a diferença.** A pergunta do Sérgio
+    era: se D e E saírem iguais, o modelo já faz a síntese sozinho. **Não
+    saíram.** No caso dos sinais precoces, D faz uma pergunta melhor e para
+    aí; **E entrega o método**: *"rebobina a fita — qual foi a última coisa que
+    você percebeu antes do auge? Não a mais chamativa, a primeira. Anota. Em
+    pouco tempo vai aparecer um sinal que se repete. Esse é o seu ponto de
+    entrada."* Só o E dá à mãe algo para fazer hoje à noite.
+    **"Criatividade com lastro" precisa ser arquitetura, não expectativa.**
+  - **🐛 ACHADO NEGATIVO: A BASE 3 PIOROU UM CASO.** Em *"bate na irmã"*, a
+    condição C (Perfil + BASE 2) citou os sinais que o Perfil já registrava —
+    *"aqueles sinais que você já conhece dele"*. A condição D, com BASE 3, **jogou
+    fora essa personalização** e fez uma pergunta genérica. O conteúdo
+    recuperado eram as BPs antigas de crise (44/35/21 pontos), e elas **diluíram
+    o Perfil**. Repertório ruim não é neutro: compete com o que já funcionava.
+  - **Onde a BASE 3 nova funcionou, funcionou visivelmente.** Em sobrecarga, D e
+    E reproduzem a chave do registro novo — *"não foi a meia; a meia foi o
+    último item de uma conta que já estava alta"* — e perguntam pelo horário e
+    pelas duas horas anteriores, que é a operação do registro.
+  - **Caso insuficiente ("ele tem tido umas crises"): as cinco condições pediram
+    esclarecimento e nenhuma inventou nada.** O piso de aderência devolveu zero e
+    o sistema não forçou repertório. É o comportamento correto.
+  - **Custo medido:** entrada de **145 tokens (A) → 3.010 (E)**, ~20×. Latência
+    de **4,0s (A) → 11,4s (E)** no pior caso; mediana de E em torno de 5s. O
+    ganho tem preço e ele é conhecido.
+- **📌 DECISÃO REGISTRADA (Sérgio, 09/08/2026): títulos humanos ficam.** Os dois
+  registros invisíveis da Fase 3D **não** serão reescritos para otimizar ranking.
+  Se causar problema real, corrige-se com evidência.
 - **Depende de:** PEND-017 e PEND-018 — **desenhar junto**. Absorve PEND-009
   (primeira conversa) dentro do DESEJADO.
 - **Admin:** ADMIN PRECISA DE AJUSTE — hoje não dá para ver *por que* a Ayla
