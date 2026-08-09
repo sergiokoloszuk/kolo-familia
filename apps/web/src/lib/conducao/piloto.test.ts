@@ -121,6 +121,15 @@ describe("o que a 4A.1 NÃO liga", () => {
 describe("o bloco do perfil", () => {
   const prompt = src("ia/prompt.ts");
 
+  it("10b. dentro do piloto são DUAS boas práticas, não três", () => {
+    // 5 rodadas do mesmo caso em cada condição, 09/08/2026: com 3 BPs o pior
+    // caso foi 17,3 s e o Perfil apareceu em 1 de 5; com 2, o pior caso caiu
+    // para 5,9 s e o Perfil apareceu em 3 de 5.
+    expect(src("ia/context.ts")).toMatch(/limite: piloto \? 2 : undefined/);
+    // Fora do piloto, o padrão do recuperador continua 3.
+    expect(src("conhecimento/recuperar.ts")).toMatch(/p\.limite \?\? 3/);
+  });
+
   it("11. distingue vazio de NEGATIVO — é a distinção que evita repergunta", () => {
     expect(prompt).toMatch(/NÃO se aplica:/);
     expect(prompt).toMatch(/ainda não sabemos:/);

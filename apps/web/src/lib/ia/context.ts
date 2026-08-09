@@ -342,6 +342,18 @@ export async function buildContext(
     // `statusAceitos` foi criado exatamente para isto: os 10 registros
     // continuam invisíveis para produção e visíveis para quem opta.
     statusAceitos: piloto ? ["ativo", "rascunho"] : undefined,
+    // DUAS, e não três, dentro do piloto.
+    //
+    // Medido em 09/08/2026, 5 rodadas do mesmo caso em cada condição: com 3 BPs
+    // o pior caso foi 17,3 s e o Perfil apareceu na resposta em 1 de 5; com 2,
+    // o pior caso caiu para 5,9 s e o Perfil apareceu em 3 de 5. A terceira BP
+    // custa quase 200 tokens e, com o ranking ligado, ela é a que menos adere —
+    // some no meio e ainda empurra o Perfil para fora.
+    //
+    // A economia de tokens é o efeito menor. O que importa é que a latência
+    // acompanha o TAMANHO DA RESPOSTA, e mais repertório convida o modelo a
+    // escrever mais. Fora do piloto continua 3, como sempre foi.
+    limite: piloto ? 2 : undefined,
     aoFalhar: () => {
       erroNaConsulta = true;
     },
