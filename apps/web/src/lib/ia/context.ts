@@ -335,6 +335,13 @@ export async function buildContext(
     // `recuperarBoasPraticas` volta a escolher as 3 por peso — que é o que ele
     // sempre fez e o que o WhatsApp continua recebendo.
     relato: piloto ? params.relato : undefined,
+    // FASE 4A.3 · o repertório novo entra SÓ no piloto, e sem sair do rascunho.
+    //
+    // Publicar (status = ativo) para poder testar exporia o WhatsApp e toda a
+    // web ao conteúdo de uma vez — e ele ainda não foi revisto pela Karina.
+    // `statusAceitos` foi criado exatamente para isto: os 10 registros
+    // continuam invisíveis para produção e visíveis para quem opta.
+    statusAceitos: piloto ? ["ativo", "rascunho"] : undefined,
     aoFalhar: () => {
       erroNaConsulta = true;
     },

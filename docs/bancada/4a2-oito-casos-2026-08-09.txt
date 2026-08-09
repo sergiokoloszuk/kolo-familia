@@ -1,0 +1,157 @@
+BANCADA 4A.2 · COM COMPOSIÇÃO COMPLETA
+
+
+██████████████████████████████████████████████████████████████████████████████
+1 · bate na irmã   (6a · emocional)
+RELATO: "Meu filho bate na irmã quando é contrariado. Ontem ela pegou o brinquedo dele e ele partiu pra cima."
+BASE 2: PRINCÍPIO CENTRAL | 1. Antes × durante × depois | 2. Frustração × sobrecarga
+BASE 3: 44pts Quando a criança entra em crise (choro intenso | 35pts Bater, morder, chutar, gritar: todas formas de | 21pts Explosões de raiva — bate, grita, joga coisas 
+
+2264 tok entrada · 77 saída · 3965ms · 228 chars
+
+Entendo. Isso é bem difícil de ver acontecendo, né? 
+
+Me conta uma coisa: quando você chegou perto, ele já estava batendo ou deu pra ver ele ficando nervoso antes? Tipo, ele falou algo, tentou pegar de volta, ficou mais agitado?
+
+██████████████████████████████████████████████████████████████████████████████
+2 · explode depois da escola   (6a · emocional)
+RELATO: "Ele explode por qualquer coisa no fim da tarde, principalmente depois da escola. Hoje foi porque a meia estava do lado errado."
+BASE 2: PRINCÍPIO CENTRAL | 1. Antes × durante × depois | 2. Frustração × sobrecarga
+BASE 3: 98pts A conta do dia: quando a explosão do fim da ta | 80pts Pouso da volta da escola: meia hora sem pergun | 26pts O termômetro do dia: medir a carga junto, ante
+
+2963 tok entrada · 271 saída · 11238ms · 828 chars
+
+A meia pode ter sido só a gota, sabe? Quando a explosão é muito maior que o motivo, normalmente o que vemos é o *fim* de uma conta que já estava cheia — não o começo.
+
+O Téo passou o dia inteiro na escola, que pra ele já é um tanto: barulho, gente, imprevistos, segurar as coisas que incomodam. Quando chega em casa, não sobrou quase nada pra segurar mais uma frustração, mesmo pequenininha.
+
+Vou te propor uma coisa simples só pra a gente entender melhor: 
+
+**Por uns três dias, anota duas coisas: que horas ficou difícil e o que tinha rolado nas duas horas antes.** Não precisa entender ainda — só juntar. Aposto que o horário vai se repetir.
+
+Quando o horário se repete, a meia não é o problema. Ela foi só o último item.
+
+---
+
+Uma pergunta: ele já chega de lá mais irritado, ou parece que tá bem até que algo pequeno detona?
+
+██████████████████████████████████████████████████████████████████████████████
+3 · não começa matemática   (8a · foco)
+RELATO: "Ele não começa a lição de matemática. Fica olhando pra folha, levanta, vai beber água, e eu perco a paciência. Acho que é preguiça."
+BASE 2: PRINCÍPIO CENTRAL | REGRA DE CONDUÇÃO | TRIAGEM INICIAL — DUAS PERGUNTAS QUE SEPARAM CAMINHOS RAPIDAMENTE
+BASE 3: 24pts Criança 7-12 foca melhor em ambiente previsíve | 0pts O cérebro tem andares: tronco cerebral (sobrev | 0pts Ambiente dedicado para estudo/atividades focad
+
+2511 tok entrada · 436 saída · 14622ms · 1290 chars
+
+Não acho que seja preguiça, não. 
+
+A Nina trava. E travar não é falta de vontade — é o cérebro dela dizendo "não sei por onde começar", "e se eu errar?", "isso parece difícil demais".
+
+Você já percebeu que quando alguém faz a primeira parte junto, ela destrava e consegue continuar, né? É porque o cérebro dela precisa de um *empurrãozinho* pra sair da paralisia. Não é falta de esforço — é como se o motor dela não pegasse sozinho.
+
+E matemática é especialmente travante: tem números, tem "jeito certo", tem chance de errar. Pra uma criança que frustra quando erra, a folha em branco vira ameaça.
+
+---
+
+**O que pode ajudar:**
+
+**1. Você faz o primeiro junto, depois solta.**  
+Literalmente: senta do lado, pega o lápis, faz o primeiro exercício JUNTO — sua mão e a dela no mesmo lápis, ou você fazendo metade e ela terminando. Não explica antes — *faz junto*. Aí você sai e ela continua. 
+
+Não é fazer por ela. É dar ignição.
+
+---
+
+**2. Transforma a primeira conta em algo pequeno e bobinho.**  
+"Vamos só armar a primeira conta. Nem precisa resolver." Ou: "Vamos só copiar o número aqui." Quanto menor o primeiro passo, mais fácil começar.
+
+---
+
+**Uma pergunta:**  
+Quando ela emperra assim, você consegue perceber se é *"não sei fazer"* ou *"tenho medo de errar"*? Ou os dois vêm juntos?
+
+██████████████████████████████████████████████████████████████████████████████
+4 · junta sílabas, perde a palavra   (7a · aprendizado)
+RELATO: "Ele junta as sílabas mas na hora de falar a palavra inteira se perde e começa de novo."
+BASE 2: PRINCÍPIO CENTRAL | REGRA DE CONDUÇÃO | 1. NÃO RECONHECE A HABILIDADE
+BASE 3: 20pts Incentivo à leitura diversificada, oferecendo  | 0pts O cérebro tem andares: tronco cerebral (sobrev | 0pts Apoio à autonomia nos estudos, ajudando a orga
+
+2137 tok entrada · 279 saída · 11682ms · 790 chars
+
+Ah, entendi. Ele consegue ler *ca-sa*, mas quando tenta juntar pra falar "casa", perde e volta pro começo?
+
+É comum nessa fase — o cérebro dele ainda não automatizou a fusão. Ele decodifica certinho, mas não junta rápido o suficiente pra palavra "nascer" antes da memória apagar o início.
+
+**O que ajuda:**
+
+Você lê com ele — mas *você* faz a fusão em voz alta.
+
+Você aponta as sílabas e fala arrastado: "caaaa-saaaa... casa!" 
+
+Ele só acompanha.
+
+Faz isso com palavras de dinossauro que ele já conhece de cor: *ti-ra-nos-sau-ro*. Ele já sabe o que é, então o cérebro dele vai começando a fazer a ponte entre decodificar e *reconhecer*.
+
+Depois de algumas semanas fazendo junto, você para de arrastar. Só aponta. E deixa ele tentar.
+
+---
+
+Quantas vezes por semana vocês costumam ler juntos?
+
+██████████████████████████████████████████████████████████████████████████████
+5 · sono com medo + presença   (8a · sono)
+RELATO: "Ele demora pra dormir, me chama várias vezes, diz que está com medo, e eu fico até ele dormir porque se eu saio ele levanta."
+BASE 2: PRINCÍPIO CENTRAL | 1. Início × manutenção do sono | 2. Horário × resistência
+BASE 3: 20pts Corte de dever 2h antes de dormir — não é… | 20pts Caixa de dormir para dispositivos — não em qua | 0pts Sono é necessidade biológica, não prêmio ou ca
+
+2141 tok entrada · 128 saída · 5242ms · 372 chars
+
+Oi! Tô aqui.
+
+Então, ele chama várias vezes e diz que está com medo. Quando você fica ali, o medo diminui ou ele continua dizendo que está assustado mesmo com você do lado?
+
+Tô perguntando porque às vezes o medo é da gente sair — aí a presença resolve. Outras vezes, tem algo mais difuso deixando ele alerta, e a gente perto ajuda *um pouco*, mas não tira a sensação toda.
+
+██████████████████████████████████████████████████████████████████████████████
+6 · sensorial em festa   (6a · sensorial)
+RELATO: "Toda vez que vamos a um aniversário ele começa bem, depois fica irritado, tapa os ouvidos e quer ir embora."
+BASE 2: PRINCÍPIO CENTRAL | 1. Sensorial é hipótese contextual | 2. Canal importa
+BASE 3: 23pts Bater, morder, chutar, gritar: todas formas de | 17pts Quando a criança entra em crise (choro intenso | 12pts Luz, som, toque, cheiro, movimento, textura: c
+
+2205 tok entrada · 383 saída · 14496ms · 1162 chars
+
+Ana gosta de festa no começo e depois não aguenta mais — isso faz muito sentido.
+
+Festa tem *tudo* ao mesmo tempo: música alta, gente falando junto, luz forte, movimento, cheiro de comida, gente encostando. No começo ela tá interessada, animada. Aí o sistema sensorial dela vai enchendo — como um copo que recebe água. Quando transborda, ela avisa do jeito que consegue: tapa os ouvidos, fica irritada, pede pra sair.
+
+**O que muda a experiência:**
+
+Você já sabe que em 10 minutos fora do lugar cheio ela melhora. Então: planejar a saída *antes* de transbordar. Chegar, ficar um tempo gostoso, sair enquanto ainda tá bom.
+
+E na festa: criar um cantinho mais quieto pra onde ela pode ir quando precisar — longe da caixa de som, talvez um corredor, o quarto, o quintal. Um lugar que ela conhece antes, que é "base segura". Tipo: "olha, se ficar muito barulho, a gente vem aqui".
+
+Se ela gostar, leva fone abafador de ruído — não pra ficar o tempo todo, mas pra quando o som apertar.
+
+**Uma pergunta:** você consegue perceber *quando* ela começa a ficar desconfortável, antes de tapar os ouvidos? Tipo: ela muda o jeito de brincar, fica mais parada, franze a testa?
+
+██████████████████████████████████████████████████████████████████████████████
+7 · puxa pela mão   (4a · comunicacao)
+RELATO: "Ele me puxa pela mão pra pegar as coisas mas quase não pede sozinho."
+BASE 2: PRINCÍPIO CENTRAL | 1. Fala ≠ comunicação funcional | 2. Receptiva × expressiva
+BASE 3: 0pts Aviso prévio de 5 minutos com linguagem concre | 0pts Limite firme + acolhimento na mesma frase | 0pts Crianças pequenas não têm capacidade neurológi
+
+1807 tok entrada · 98 saída · 4165ms · 287 chars
+
+Isso é super comum — ele descobriu que puxar pela mão funciona, e funciona mesmo. É comunicação, só que ainda sem palavras.
+
+A questão agora é: *quando* ele conseguiria pedir de outro jeito? Tipo, se você segura a bolacha perto e espera, ele olha pra você? Tenta alcançar? Faz algum som?
+
+██████████████████████████████████████████████████████████████████████████████
+8 · relato insuficiente   (6a · emocional)
+RELATO: "Ele tem tido umas crises."
+BASE 2: PRINCÍPIO CENTRAL | 1. Antes × durante × depois | 2. Frustração × sobrecarga
+BASE 3: 0pts Entrar antes do auge: perceber o primeiro sina | 0pts A conta do dia: quando a explosão do fim da ta | 0pts O sinal combinado: um gesto que ela usa antes 
+
+3067 tok entrada · 44 saída · 2896ms · 104 chars
+
+Entendi. E me conta uma coisa — nessas crises, o que ele faz? Grita, bate, chora, fica parado... como é?

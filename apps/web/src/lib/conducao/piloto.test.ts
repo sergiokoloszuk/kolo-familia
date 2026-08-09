@@ -80,18 +80,39 @@ describe("o WhatsApp não mudou", () => {
 });
 
 describe("o que a 4A.1 NÃO liga", () => {
-  it("9. MORDE: a licença generativa e a âncora ficam fora", () => {
-    // Elas são a 4A.2. Se entrarem aqui, a medição de "o que muda só porque a
-    // Ayla enxerga melhor" fica impossível de separar.
-    for (const f of ["ia/context.ts", "ia/prompt.ts", "ia/engine.ts"]) {
-      expect(src(f), `${f} importou composicao`).not.toMatch(/conducao\/composicao/);
-    }
+  it("9. a âncora e a licença entraram na 4A.2 — e só no prompt", () => {
+    // Este teste guardava a AUSÊNCIA na 4A.1, para que a medição de "o que muda
+    // só porque a Ayla enxerga melhor" fosse separável. A 4A.1 foi medida, e
+    // agora ele guarda o oposto: as duas peças existem, e existem no prompt.
+    expect(src("ia/prompt.ts")).toMatch(/conducao\/composicao/);
+    expect(src("ia/prompt.ts")).toMatch(/ANCORA_PERFIL/);
+    expect(src("ia/prompt.ts")).toMatch(/LICENCA_GENERATIVA/);
+  });
+
+  it("9b. MORDE: a licença só entra se houver material sobre o que operar", () => {
+    // Sem perfil, sem BASE 2 e sem repertório, a licença sozinha só aumenta a
+    // invenção — foi exatamente o que a bancada pegou.
+    expect(src("ia/prompt.ts")).toMatch(
+      /if \(ctx\.perfilConsultavel \|\| ctx\.base2\.length \|\| ctx\.boasPraticas\.length\)/,
+    );
+  });
+
+  it("9c. MORDE: nada disto pode vazar para o núcleo compartilhado", () => {
+    expect(src("conducao/diretrizes.ts")).not.toMatch(/LASTRO, NÃO TEXTO PARA COPIAR/);
+    expect(src("conducao/diretrizes.ts")).not.toMatch(/O PERFIL É ÂNCORA/);
   });
 
   it("10. MORDE: nenhum caminho de produto ativa os 10 rascunhos", () => {
     const rec = src("conhecimento/recuperar.ts");
     expect(rec).toMatch(/p\.statusAceitos \?\? \["ativo"\]/);
-    for (const f of ["ia/context.ts", "ayla/orchestrator.ts", "ayla/responder.ts"]) {
+    // FASE 4A.3 · a web passa `statusAceitos` — mas SÓ dentro do piloto, e os
+    // registros continuam em `rascunho` no banco. Nenhum caminho de produção
+    // publica nada; desligar a flag basta para eles sumirem.
+    expect(src("ia/context.ts")).toMatch(
+      /statusAceitos: piloto \? \["ativo", "rascunho"\] : undefined/,
+    );
+    // O WhatsApp continua sem passar nada.
+    for (const f of ["ayla/orchestrator.ts", "ayla/responder.ts"]) {
       expect(src(f), `${f} passou statusAceitos`).not.toMatch(/statusAceitos/);
     }
   });

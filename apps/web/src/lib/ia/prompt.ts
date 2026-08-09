@@ -9,6 +9,7 @@ import { pronomesPara } from "@/lib/ayla/pronomes";
 // Ver lib/conducao/diretrizes.ts. A mesma "cabeça" nos dois canais.
 import { nucleoConducao, FRONTEIRA_DIAGNOSTICO } from "@/lib/conducao/diretrizes";
 import { blocoBoasPraticas } from "@/lib/conhecimento/recuperar";
+import { ANCORA_PERFIL, LICENCA_GENERATIVA } from "@/lib/conducao/composicao";
 import { angulosUsados, blocoProgressao } from "@/lib/conducao/angulos";
 import {
   formasDeEntrega,
@@ -390,7 +391,14 @@ ${ctx.ultimoCheckin.data} — responsável: ${ctx.ultimoCheckin.escala_emocional
     }
     if (linhas.length) {
       partes.push(
+        // FASE 4A.2 · a âncora vem COLADA no perfil, e não no fim.
+        //
+        // Medido em 09/08/2026: sem instrução de precedência, a BASE 3 genérica
+        // apagava o que o perfil registrava — a resposta citava os sinais da
+        // criança SEM repertório e virava conselho padrão COM ele. E a âncora
+        // colocada depois do repertório chegava tarde demais para valer.
         `<o_que_ja_sabemos>
+${ANCORA_PERFIL}
 NÃO pergunte o que está em "sabemos" nem o que está em "NÃO se aplica" — a
 família já respondeu, e repetir a pergunta desfaz a confiança de ter contado.
 ${linhas.join("\n")}
@@ -417,6 +425,17 @@ ${ctx.base2.map((s) => `### ${s.titulo}\n${s.conteudo}`).join("\n\n")}
 
   const repertorio = blocoBoasPraticas(ctx.boasPraticas);
   if (repertorio) partes.push(repertorio);
+
+  // FASE 4A.2 · a licença generativa fecha o contexto.
+  //
+  // Vem por último de propósito: ela fala SOBRE o material acima, e sem material
+  // acima só aumentaria o risco de invenção — foi o que a bancada de 09/08/2026
+  // pegou num caso sem repertório aderente, onde o modelo escreveu "o cérebro
+  // dela está dizendo…". Por isso a guarda é a presença de perfil, raciocínio OU
+  // repertório, e não a flag sozinha.
+  if (ctx.perfilConsultavel || ctx.base2.length || ctx.boasPraticas.length) {
+    partes.push(LICENCA_GENERATIVA);
+  }
 
   return partes.join("\n\n");
 }
