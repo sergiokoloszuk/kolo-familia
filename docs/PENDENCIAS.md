@@ -1125,6 +1125,51 @@ do laudo de 06/08) + `docs/auditoria-ayla-prompt.md`
     rotina usam (antes → durante → depois; o que o comportamento produz), sem
     autorizar prêmio automático.
   - 4 testes novos, incluindo o que **morde** se a oposição ideológica voltar.
+- **✅ BASE 2 COMPLETA (2026-08-09).** Os cinco temas que faltavam viraram
+  documento canônico: `sono.md`, `rotina.md`, `emocional.md`, `sensorial.md`,
+  `comunicacao.md`. **255 seções de 12 temas**, contra 188 de 7. Material
+  produzido externamente e entregue pelo Sérgio em PDF consolidado.
+  - **🐛 DEFEITO ESTRUTURAL NO MATERIAL RECEBIDO, corrigido antes de entrar.**
+    Em **quatro dos cinco temas** (rotina, emocional, sensorial, comunicação) os
+    títulos *"Campos do Perfil que devem ser consultados primeiro"* e *"Fronteira
+    e segurança"* estavam com o conteúdo **trocado entre si** — a seção de Perfil
+    listava limites clínicos (*"não usar diagnóstico como causa automática"*) e a
+    de Fronteira listava campos do Perfil (*"Transições"*, *"Gatilhos"*). Só
+    `sono` estava certo. Incorporado como veio, o sistema consultaria um limite
+    de segurança como se fosse campo do Perfil.
+  - **🐛 CAMPOS DO PERFIL INVENTADOS, substituídos pelos reais.** As listas do
+    documento eram desejo, não schema. Em `sensorial` a divergência é quase
+    total — o documento pedia *"Sensibilidades conhecidas"*, *"Ambientes
+    difíceis"*; o Perfil real é organizado **por canal** (Reação a sons, Reação a
+    toques, Texturas, Luz, Cheiros, Movimento), que é **exatamente** a distinção
+    que o próprio material diz ser a central. O schema existente era melhor que a
+    lista proposta.
+  - **Duas lacunas de Perfil ficam registradas, não inventadas:** `sono` não tem
+    campo para *onde a criança dorme*, ambiente do quarto nem medos;
+    `comunicacao` não distingue **uso espontâneo de uso provocado**, que é a
+    bifurcação central do tema. Até existirem, a informação vai para "Outras
+    observações". **Não criar campo sem decisão de produto.**
+  - Sete seções do PDF que duplicavam tema canônico (foco, aprendizado,
+    autonomia, motor, imitação, socialização, alimentação) **não** foram
+    incorporadas: eram resumos de uma página de documentos com 10 a 14 mil
+    caracteres, e duas fontes competindo é pior que uma lacuna.
+- **🐛 LACUNA SISTÊMICA DA BASE 3 (2026-08-09), medida nos cinco casos-ouro.**
+  Não é falta de volume; é falta de **variedade funcional**.
+  - **`uso de interesse`, `progressão` e `observar` estão AUSENTES nos cinco
+    temas.** Nenhuma boa prática usa o interesse da criança como ponte. A
+    revisão do PR #76 destravou o validador que barrava a "Missão dos Fósseis" —
+    e **não há repertório para entregar no lugar**. Destravar não bastou.
+  - **Por caso** (acervo → elegíveis na idade → quantas pontuaram):
+    sono 31→5→2 · rotina 45→13→2 · sensorial 38→10→3 · emocional 75→34→4 ·
+    comunicação 66→32→**1**.
+  - **CORREÇÃO de laudo anterior:** eu havia relatado comunicação como bem
+    servida (17 pontuando). Aquilo usou um relato longo. Com o **caso-ouro real**
+    — *"me puxa pela mão pra pegar as coisas mas quase não pede sozinho"* —
+    pontua **1**. O acervo de comunicação tem volume e não tem aderência ao
+    relato curto.
+  - **SONO é o pior**: para 8 anos sobram 5 boas práticas, e as duas que sobem
+    falam de dever de casa e de caixa para celular. Zero repertório para presença
+    do cuidador ao adormecer, que é o núcleo do caso.
 - **Depende de:** PEND-017 e PEND-018 — **desenhar junto**. Absorve PEND-009
   (primeira conversa) dentro do DESEJADO.
 - **Admin:** ADMIN PRECISA DE AJUSTE — hoje não dá para ver *por que* a Ayla

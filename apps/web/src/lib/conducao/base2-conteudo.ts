@@ -602,6 +602,276 @@ export const BASE2: readonly SecaoBase2[] = [
     "conteudo": "A família deve deixar de pensar:\n\n“Ele depende de mim para tudo.”\n\ne conseguir perceber:\n\n“Ele já faz várias etapas. A ajuda está concentrada aqui.”\n\nA próxima intervenção deve reduzir UMA camada de ajuda, não retirar todo o suporte.\n\n---"
   },
   {
+    "id": "comunicacao/missao",
+    "tema": "comunicacao",
+    "secao": "MISSÃO",
+    "titulo": "MISSÃO",
+    "nivel": 1,
+    "subtema": null,
+    "estado": "contexto",
+    "conteudo": "Ajudar a família a mapear o que a criança já compreende, o que consegue\ncomunicar e por qual via — para descobrir qual é o próximo degrau funcional.\n\nAtua quando o relato fala de: poucas palavras; fala que não vira pedido;\npuxar o adulto pela mão; repetição de frases; não responder ao que é\nperguntado; falar bem mas não sustentar conversa.\n\nO objetivo NÃO é contar palavras nem reduzir comunicação a fala.\n\nA pergunta funcional é:\n\n\"O que a criança quer comunicar, o que ela compreende e qual via consegue usar\nespontaneamente naquele contexto?\"\n\nO objetivo é localizar a barreira antes de orientar. O mesmo relato pode\nesconder mecanismos diferentes."
+  },
+  {
+    "id": "comunicacao/principio-central",
+    "tema": "comunicacao",
+    "secao": "PRINCÍPIO CENTRAL",
+    "titulo": "PRINCÍPIO CENTRAL",
+    "nivel": 1,
+    "subtema": null,
+    "estado": "investigacao",
+    "conteudo": "Grandes bifurcações — o relato parece igual, mas precisamos distinguir:\n\n- \"Fala, mas não pede\" → vocabulário × função comunicativa × espontaneidade ×\n  acesso à fala no contexto\n- \"Puxa pela mão\" → gesto funcional × falta de alternativa eficiente ×\n  compreensão × iniciativa\n- \"Não responde\" → não compreendeu × precisa de tempo × atenção/contexto ×\n  forma da pergunta\n- \"Repete frases\" → repetição com função × ecolalia sem função aparente ×\n  script útil × dificuldade de gerar linguagem nova\n- \"Fala bem, mas não conversa\" → linguagem estrutural × pragmática ×\n  reciprocidade × narrativa × inferência"
+  },
+  {
+    "id": "comunicacao/1-fala-comunicacao-funcional",
+    "tema": "comunicacao",
+    "secao": "PRINCÍPIO CENTRAL",
+    "titulo": "1. Fala ≠ comunicação funcional",
+    "nivel": 2,
+    "subtema": null,
+    "estado": "investigacao",
+    "conteudo": "Ter palavras não garante conseguir pedir ajuda, recusar, comentar, explicar\ndesconforto ou compartilhar experiência no momento necessário."
+  },
+  {
+    "id": "comunicacao/2-receptiva-expressiva",
+    "tema": "comunicacao",
+    "secao": "PRINCÍPIO CENTRAL",
+    "titulo": "2. Receptiva × expressiva",
+    "nivel": 2,
+    "subtema": null,
+    "estado": "investigacao",
+    "conteudo": "Separar o que a criança compreende do que consegue expressar. Uma instrução\nlonga pode falhar por compreensão, memória de trabalho ou contexto, e não por\noposição."
+  },
+  {
+    "id": "comunicacao/3-espontaneo-provocado",
+    "tema": "comunicacao",
+    "secao": "PRINCÍPIO CENTRAL",
+    "titulo": "3. Espontâneo × provocado",
+    "nivel": 2,
+    "subtema": null,
+    "estado": "investigacao",
+    "conteudo": "Pergunta: \"Sem você perguntar ou dar a primeira palavra, ele usa palavra,\ngesto, imagem ou outro recurso sozinho para pedir o que precisa?\"\n\nEssa diferença ajuda a localizar independência comunicativa."
+  },
+  {
+    "id": "comunicacao/4-forma-disponivel-no-momento",
+    "tema": "comunicacao",
+    "secao": "PRINCÍPIO CENTRAL",
+    "titulo": "4. Forma disponível no momento",
+    "nivel": 2,
+    "subtema": null,
+    "estado": "investigacao",
+    "conteudo": "A comunicação pode mudar com cansaço, sobrecarga, ambiente social e exigência.\nA pergunta não é apenas \"ele fala?\", mas \"o que ele consegue usar aqui e\nagora?\"."
+  },
+  {
+    "id": "comunicacao/5-comunicacao-como-alternativa-antes-da-escalada",
+    "tema": "comunicacao",
+    "secao": "PRINCÍPIO CENTRAL",
+    "titulo": "5. Comunicação como alternativa antes da escalada",
+    "nivel": 2,
+    "subtema": null,
+    "estado": "investigacao",
+    "conteudo": "Se um comportamento intenso está funcionando como \"pare\", \"me ajuda\", \"quero\nsair\" ou \"não entendi\", a condução deve procurar uma forma mais acessível de\ncomunicar a mesma necessidade — sem presumir intenção manipulativa."
+  },
+  {
+    "id": "comunicacao/6-cruzamento-com-aprendizagem",
+    "tema": "comunicacao",
+    "secao": "PRINCÍPIO CENTRAL",
+    "titulo": "6. Cruzamento com aprendizagem",
+    "nivel": 2,
+    "subtema": null,
+    "estado": "investigacao",
+    "conteudo": "Dificuldade de leitura/escrita, instruções em etapas ou narrativa pode exigir\nrecuperar Aprendizado/Foco junto, conforme o problema real."
+  },
+  {
+    "id": "comunicacao/antes-de-orientar-diferencie-quando-comunicacao-nao-e-o-tema-principal",
+    "tema": "comunicacao",
+    "secao": "ANTES DE ORIENTAR, DIFERENCIE — QUANDO COMUNICAÇÃO NÃO É O TEMA PRINCIPAL",
+    "titulo": "ANTES DE ORIENTAR, DIFERENCIE — QUANDO COMUNICAÇÃO NÃO É O TEMA PRINCIPAL",
+    "nivel": 1,
+    "subtema": null,
+    "estado": "investigacao",
+    "conteudo": "- Se a criança compreende e comunica bem, mas trava por medo/sobrecarga,\n  recuperar Emocional/Sensorial.\n- Se o problema é seguir etapas e iniciar, recuperar Foco/Rotina.\n- Se a dificuldade é leitura/escrita, recuperar Aprendizado.\n- Se a fala muda apenas em situações específicas, investigar contexto antes de\n  concluir déficit global."
+  },
+  {
+    "id": "comunicacao/pergunta-de-alto-valor-golden-case",
+    "tema": "comunicacao",
+    "secao": "PERGUNTA DE ALTO VALOR — GOLDEN CASE",
+    "titulo": "PERGUNTA DE ALTO VALOR — GOLDEN CASE",
+    "nivel": 1,
+    "subtema": null,
+    "estado": "investigacao",
+    "conteudo": "\"Ele me puxa pela mão para pegar as coisas, mas quase não pede sozinho.\"\n\nJá sabemos:\n\n- há intenção comunicativa\n- há uma estratégia funcional já usada: puxar pela mão\n- o pedido verbal/gestual espontâneo parece limitado\n\nAinda precisamos diferenciar:\n\n- o que ele compreende\n- quais formas usa espontaneamente\n- se há palavras/gestos quando recebe modelo\n- em quais contextos perde ou ganha comunicação\n\nPergunta de maior valor:\n\n\"Sem você perguntar, ele usa alguma palavra, gesto ou imagem sozinho para pedir\n— ou normalmente precisa puxar você/esperar ajuda?\"\n\nComo ler a resposta:\n\n- Usa espontaneamente em alguns contextos: comparar onde funciona e transferir\n  condições.\n- Só usa com modelo: investigar apoio necessário e reduzir dependência\n  gradualmente.\n- Puxar pela mão é consistente: tratar como comunicação existente e construir\n  alternativa mais clara, não como ausência de comunicação."
+  },
+  {
+    "id": "comunicacao/regra-de-conducao-o-que-nao-perguntar-se-o-relato-ja-respondeu",
+    "tema": "comunicacao",
+    "secao": "REGRA DE CONDUÇÃO — O QUE NÃO PERGUNTAR SE O RELATO JÁ RESPONDEU",
+    "titulo": "REGRA DE CONDUÇÃO — O QUE NÃO PERGUNTAR SE O RELATO JÁ RESPONDEU",
+    "nivel": 1,
+    "subtema": null,
+    "estado": "investigacao",
+    "conteudo": "- Não perguntar \"ele se comunica?\" se o relato já mostra uma forma\n  comunicativa.\n- Não reduzir comunicação a fala.\n- Não assumir que comportamento intenso é \"sem motivo\" quando pode cumprir\n  função comunicativa."
+  },
+  {
+    "id": "comunicacao/triagem-inicial-o-que-consultar-no-perfil-primeiro",
+    "tema": "comunicacao",
+    "secao": "TRIAGEM INICIAL — O QUE CONSULTAR NO PERFIL PRIMEIRO",
+    "titulo": "TRIAGEM INICIAL — O QUE CONSULTAR NO PERFIL PRIMEIRO",
+    "nivel": 1,
+    "subtema": null,
+    "estado": "investigacao",
+    "conteudo": "Campos que existem hoje no Perfil, em `comunicacao`:\n\n- Como se comunica\n- Como mostra o que quer\n- Como demonstra que entende\n- Vocabulário e fala\n- Ecolalia / repetições\n- Conversa e argumentação\n- Entende o contexto\n- Contato visual e gestos\n- Comunicação alternativa (CAA)\n\nLacuna de Perfil conhecida: não existe campo que distinga **uso espontâneo de\nuso provocado**, que é a bifurcação central deste tema. Enquanto não existir, a\ninformação entra em \"Outras observações\"."
+  },
+  {
+    "id": "comunicacao/seguranca-e-limites",
+    "tema": "comunicacao",
+    "secao": "SEGURANÇA E LIMITES",
+    "titulo": "SEGURANÇA E LIMITES",
+    "nivel": 1,
+    "subtema": null,
+    "estado": "contexto",
+    "conteudo": "- Perda de habilidades previamente adquiridas ou mudança súbita merece\n  avaliação.\n- Não prometer que comunicação alternativa fará a fala surgir.\n- Não usar sequência rígida de pré-requisitos para impedir avanços."
+  },
+  {
+    "id": "comunicacao/resultado-esperado",
+    "tema": "comunicacao",
+    "secao": "RESULTADO ESPERADO",
+    "titulo": "RESULTADO ESPERADO",
+    "nivel": 1,
+    "subtema": null,
+    "estado": "contexto",
+    "conteudo": "A família consegue dizer: \"eu sei o que ele já comunica e por qual via\" e \"eu\nsei qual é o próximo degrau, sem esperar a fala chegar primeiro\".\n\n---"
+  },
+  {
+    "id": "emocional/missao",
+    "tema": "emocional",
+    "secao": "MISSÃO",
+    "titulo": "MISSÃO",
+    "nivel": 1,
+    "subtema": null,
+    "estado": "contexto",
+    "conteudo": "Ajudar a família a entender o que uma reação intensa está tentando resolver, e\nonde ainda dá para entrar antes do pico.\n\nAtua quando o relato fala de: bater, gritar, morder, jogar objetos; explosões\ndiante de contrariedade; choro difícil de acalmar; recusa que escala;\ndificuldade de conversar durante o episódio.\n\nO objetivo NÃO é nomear o que a criança \"tem\" a partir de um episódio.\n\nA pergunta funcional é:\n\n\"O que esta reação está tentando resolver, e em que ponto da escalada ainda dá\npara entrar?\"\n\nO objetivo é localizar a barreira antes de orientar. O mesmo relato pode\nesconder mecanismos diferentes."
+  },
+  {
+    "id": "emocional/principio-central",
+    "tema": "emocional",
+    "secao": "PRINCÍPIO CENTRAL",
+    "titulo": "PRINCÍPIO CENTRAL",
+    "nivel": 1,
+    "subtema": null,
+    "estado": "investigacao",
+    "conteudo": "Grandes bifurcações — o relato parece igual, mas precisamos distinguir:\n\n- \"Bate/grita/morde\" → frustração × sobrecarga × medo × fuga de demanda ×\n  comunicação × impulso\n- \"Explode por pouca coisa\" → gatilho isolado × carga acumulada\n- \"Não aceita não\" → perda/frustração × demanda × compreensão × padrão de\n  consequência\n- \"Fica impossível conversar\" → protesto ainda comunicativo × escalada × pico\n- \"Depois fica bem\" → alívio após mudança × recuperação fisiológica ×\n  acesso/saída × reparação"
+  },
+  {
+    "id": "emocional/1-antes-durante-depois",
+    "tema": "emocional",
+    "secao": "PRINCÍPIO CENTRAL",
+    "titulo": "1. Antes × durante × depois",
+    "nivel": 2,
+    "subtema": null,
+    "estado": "investigacao",
+    "conteudo": "Antes: pedido, limite, erro, espera, interrupção, barulho, conflito social,\ncansaço, dificuldade de comunicação. Durante: protesto, fuga, agressão, choro,\ncongelamento, perda progressiva de possibilidade de conversar. Depois: observar\no que mudou e como a criança se recupera.\n\nPergunta: \"O que costuma acontecer logo antes e logo depois?\""
+  },
+  {
+    "id": "emocional/2-frustracao-sobrecarga",
+    "tema": "emocional",
+    "secao": "PRINCÍPIO CENTRAL",
+    "titulo": "2. Frustração × sobrecarga",
+    "nivel": 2,
+    "subtema": null,
+    "estado": "investigacao",
+    "conteudo": "Frustração se organiza em torno de algo específico que não aconteceu como\nesperado. Sobrecarga pode ser acúmulo; o último evento não explica sozinho a\nintensidade.\n\nPergunta: \"Ela já vinha mais irritada, cansada ou sensível antes disso?\""
+  },
+  {
+    "id": "emocional/3-funcao-sem-rotular-manipulacao",
+    "tema": "emocional",
+    "secao": "PRINCÍPIO CENTRAL",
+    "titulo": "3. Função sem rotular manipulação",
+    "nivel": 2,
+    "subtema": null,
+    "estado": "investigacao",
+    "conteudo": "Um comportamento pode terminar demanda, produzir ajuda, proximidade, acesso ou\nmudança do ambiente. Observar isso não significa chamar a criança de\nmanipuladora.\n\nRegra: compreender o que o comportamento produz não é o mesmo que usar prêmio\nou suborno."
+  },
+  {
+    "id": "emocional/4-ponto-de-entrada",
+    "tema": "emocional",
+    "secao": "PRINCÍPIO CENTRAL",
+    "titulo": "4. Ponto de entrada",
+    "nivel": 2,
+    "subtema": null,
+    "estado": "investigacao",
+    "conteudo": "Procurar o primeiro sinal de que está ficando difícil. Estratégias possíveis no\ninício podem não funcionar no pico.\n\nPergunta: \"Qual é o primeiro sinal de que está começando a ficar difícil?\""
+  },
+  {
+    "id": "emocional/5-co-regulacao",
+    "tema": "emocional",
+    "secao": "PRINCÍPIO CENTRAL",
+    "titulo": "5. Co-regulação",
+    "nivel": 2,
+    "subtema": null,
+    "estado": "investigacao",
+    "conteudo": "O comportamento do adulto entra na sequência. Explicar demais, repetir, elevar\na voz, negociar ou aproximar-se podem ter efeitos diferentes conforme o\nmomento.\n\nPergunta: \"Quando ela começa a se alterar, o que vocês costumam fazer em\nseguida?\""
+  },
+  {
+    "id": "emocional/antes-de-orientar-diferencie-quando-emocional-nao-e-o-tema-principal",
+    "tema": "emocional",
+    "secao": "ANTES DE ORIENTAR, DIFERENCIE — QUANDO EMOCIONAL NÃO É O TEMA PRINCIPAL",
+    "titulo": "ANTES DE ORIENTAR, DIFERENCIE — QUANDO EMOCIONAL NÃO É O TEMA PRINCIPAL",
+    "nivel": 1,
+    "subtema": null,
+    "estado": "investigacao",
+    "conteudo": "- Se a reação aparece ligada a ruído, textura, multidão ou estímulo específico\n  e muda quando o ambiente muda, recuperar Sensorial.\n- Se a crise ocorre porque não compreendeu ou não consegue pedir/recusar,\n  recuperar Comunicação.\n- Se o problema central é interromper/iniciar uma sequência, recuperar\n  Rotina/Foco.\n- Se a dificuldade é habilidade ainda não adquirida, não tratar apenas como\n  regulação."
+  },
+  {
+    "id": "emocional/pergunta-de-alto-valor-golden-case",
+    "tema": "emocional",
+    "secao": "PERGUNTA DE ALTO VALOR — GOLDEN CASE",
+    "titulo": "PERGUNTA DE ALTO VALOR — GOLDEN CASE",
+    "nivel": 1,
+    "subtema": null,
+    "estado": "investigacao",
+    "conteudo": "\"Quando é contrariada, grita, bate e às vezes morde.\"\n\nJá sabemos:\n\n- há uma reação intensa após contrariedade\n- há agressão física em alguns episódios\n\nAinda precisamos diferenciar:\n\n- perda de algo desejado × demanda indesejada × sobrecarga prévia\n- primeiros sinais da escalada\n- o que acontece depois\n- formas de comunicação disponíveis naquele momento\n\nPergunta de maior valor:\n\n\"Isso acontece mais quando ela perde algo que queria, quando precisa fazer algo\nque não quer, ou também quando parece já estar sobrecarregada antes?\"\n\nComo ler a resposta:\n\n- Perda específica: aprofundar frustração e tolerância à perda/espera.\n- Demanda: investigar dificuldade da tarefa, fuga e comunicação de pausa/ajuda.\n- Sobrecarga: investigar acúmulo e sinais precoces.\n- Vários caminhos: manter hipótese aberta e observar antes/durante/depois."
+  },
+  {
+    "id": "emocional/regra-de-conducao-o-que-nao-perguntar-se-o-relato-ja-respondeu",
+    "tema": "emocional",
+    "secao": "REGRA DE CONDUÇÃO — O QUE NÃO PERGUNTAR SE O RELATO JÁ RESPONDEU",
+    "titulo": "REGRA DE CONDUÇÃO — O QUE NÃO PERGUNTAR SE O RELATO JÁ RESPONDEU",
+    "nivel": 1,
+    "subtema": null,
+    "estado": "investigacao",
+    "conteudo": "- Não perguntar idade se o Perfil já contém.\n- Não perguntar \"ela fica brava?\" se o relato já descreveu a reação.\n- Não chamar de desregulação, ansiedade, TOD ou manipulação como explicação\n  fechada."
+  },
+  {
+    "id": "emocional/triagem-inicial-o-que-consultar-no-perfil-primeiro",
+    "tema": "emocional",
+    "secao": "TRIAGEM INICIAL — O QUE CONSULTAR NO PERFIL PRIMEIRO",
+    "titulo": "TRIAGEM INICIAL — O QUE CONSULTAR NO PERFIL PRIMEIRO",
+    "nivel": 1,
+    "subtema": null,
+    "estado": "investigacao",
+    "conteudo": "Campos que existem hoje no Perfil, em `emocional` — e que cobrem o mapa\nantes/durante/depois quase campo a campo:\n\n- Como costuma ser\n- Gatilhos\n- Sinais de que vem vindo\n- Como se manifesta\n- O que ajuda a passar\n- O que NÃO ajuda / piora\n- Depois\n\nSe o Perfil já traz gatilhos e sinais precoces, não perguntar de novo: usar o\nque está lá e perguntar só o que falta."
+  },
+  {
+    "id": "emocional/seguranca-e-limites",
+    "tema": "emocional",
+    "secao": "SEGURANÇA E LIMITES",
+    "titulo": "SEGURANÇA E LIMITES",
+    "nivel": 1,
+    "subtema": null,
+    "estado": "contexto",
+    "conteudo": "- Agressão com risco imediato exige prioridade à segurança.\n- Mudança abrupta/intensa de comportamento ou sofrimento persistente pode\n  exigir avaliação profissional.\n- Não diagnosticar função, transtorno ou causa a partir de um relato isolado."
+  },
+  {
+    "id": "emocional/resultado-esperado",
+    "tema": "emocional",
+    "secao": "RESULTADO ESPERADO",
+    "titulo": "RESULTADO ESPERADO",
+    "nivel": 1,
+    "subtema": null,
+    "estado": "contexto",
+    "conteudo": "A família consegue dizer: \"eu sei o que costuma disparar\" e \"eu sei em que\nmomento ainda dá para entrar\".\n\n---"
+  },
+  {
     "id": "foco/missao",
     "tema": "foco",
     "secao": "MISSÃO",
@@ -1612,6 +1882,266 @@ export const BASE2: readonly SecaoBase2[] = [
     "conteudo": "Mãe:\n\n“Meu filho só come umas cinco coisas.”\n\nAyla:\n\n“Vamos começar pelo que ele já aceita, porque isso pode mostrar o caminho. Quais são essas cinco coisas? Se tiverem textura ou aparência parecidas, dá para escolher um alimento novo bem próximo em vez de tentar algo completamente diferente.”\n\nMãe:\n\n“Nugget, batata frita, pão, biscoito e torrada.”\n\nAyla:\n\n“Tem uma pista boa aí: quase tudo é seco, firme/crocante e bastante previsível na textura. Eu não começaria por fruta molhada ou comida misturada. Escolheria uma novidade que preserve parte dessas características.”\n\nE então dar uma experiência prática.\n\nIsso é muito mais interessante do que simplesmente listar “10 dicas para seletividade”.\n\nE um ponto importante para a Ayla\n\nEla não precisa transformar toda conversa sobre alimentação em aula de seletividade alimentar.\n\nA lógica é:\n\nentender rapidamente o padrão → escolher a hipótese mais útil → entregar uma ação → observar o resultado → avançar.\n\nEssa é a mesma filosofia que estamos construindo em Foco e Aprendizado: menos questionário e mais inteligência na escolha do próximo passo.\n\n---"
   },
   {
+    "id": "rotina/missao",
+    "tema": "rotina",
+    "secao": "MISSÃO",
+    "titulo": "MISSÃO",
+    "nivel": 1,
+    "subtema": null,
+    "estado": "contexto",
+    "conteudo": "Ajudar a família a descobrir onde exatamente uma passagem do dia trava.\n\nAtua quando o relato fala de: dificuldade para sair de uma atividade; avisos\nque precisam ser repetidos; recusa da atividade seguinte; resistência a\nmudanças; dificuldade para começar algo; pedido explícito de \"mais rotina\".\n\nO objetivo NÃO é montar um quadro de rotina antes de saber qual é a barreira.\n\nA pergunta funcional é:\n\n\"Onde a passagem trava, e o que a criança precisa saber, conseguir ou tolerar\npara atravessá-la?\"\n\nO objetivo é localizar a barreira antes de orientar. O mesmo relato pode\nesconder mecanismos diferentes."
+  },
+  {
+    "id": "rotina/principio-central",
+    "tema": "rotina",
+    "secao": "PRINCÍPIO CENTRAL",
+    "titulo": "PRINCÍPIO CENTRAL",
+    "nivel": 1,
+    "subtema": null,
+    "estado": "investigacao",
+    "conteudo": "Grandes bifurcações — o relato parece igual, mas precisamos distinguir:\n\n- \"Não para de brincar\" → não quer parar × tem dificuldade de interromper × não\n  percebe o fim\n- \"Tenho que pedir dez vezes\" → não ouviu/processou × ouviu e adiou × ouviu e\n  não iniciou\n- \"Não aceita mudanças\" → mudança imprevisível × atividade seguinte indesejada\n  × sequência rígida\n- \"Não começa\" → não sabe como × não quer × não consegue engatar × espera ajuda\n- \"Precisa de rotina\" → precisa saber o que vem × quando muda × como fazer ×\n  quanto falta"
+  },
+  {
+    "id": "rotina/1-sair-de-a-entrar-em-b",
+    "tema": "rotina",
+    "secao": "PRINCÍPIO CENTRAL",
+    "titulo": "1. Sair de A ≠ entrar em B",
+    "nivel": 2,
+    "subtema": null,
+    "estado": "investigacao",
+    "conteudo": "Uma criança pode aceitar a próxima atividade e ainda assim travar para\ninterromper a anterior. Também pode encerrar bem e travar apenas na iniciação.\n\nPergunta: \"Depois que a atividade anterior acaba de verdade, ele consegue\ncomeçar a próxima?\""
+  },
+  {
+    "id": "rotina/2-previsibilidade-tem-dimensoes",
+    "tema": "rotina",
+    "secao": "PRINCÍPIO CENTRAL",
+    "titulo": "2. Previsibilidade tem dimensões",
+    "nivel": 2,
+    "subtema": null,
+    "estado": "investigacao",
+    "conteudo": "Não basta dizer \"precisa de previsibilidade\". Pode faltar saber o próximo\nevento, o momento da mudança ou as etapas da próxima ação.\n\nPergunta interna: o que está imprevisível — o próximo evento, o momento da\nmudança ou as etapas?"
+  },
+  {
+    "id": "rotina/3-mudanca-inesperada-mudanca-indesejada",
+    "tema": "rotina",
+    "secao": "PRINCÍPIO CENTRAL",
+    "titulo": "3. Mudança inesperada × mudança indesejada",
+    "nivel": 2,
+    "subtema": null,
+    "estado": "investigacao",
+    "conteudo": "Trocar o caminho da escola e desligar um videogame para fazer tarefa são\nsituações diferentes. A segunda pode ser perda de algo preferido + entrada em\natividade pouco desejada, e não uma dificuldade geral com mudança."
+  },
+  {
+    "id": "rotina/4-iniciacao",
+    "tema": "rotina",
+    "secao": "PRINCÍPIO CENTRAL",
+    "titulo": "4. Iniciação",
+    "nivel": 2,
+    "subtema": null,
+    "estado": "investigacao",
+    "conteudo": "Se a atividade anterior já terminou e a criança continua sem começar, olhar\npara compreensão, primeiro passo, autonomia, tamanho da demanda,\nfoco/iniciação e necessidade de ajuda."
+  },
+  {
+    "id": "rotina/5-repeticao-dos-avisos",
+    "tema": "rotina",
+    "secao": "PRINCÍPIO CENTRAL",
+    "titulo": "5. Repetição dos avisos",
+    "nivel": 2,
+    "subtema": null,
+    "estado": "investigacao",
+    "conteudo": "Se os primeiros avisos nunca produzem ação, a família pode ter aprendido uma\nsequência em que apenas o último aviso significa \"agora\". Isso é diferente de\nincapacidade de compreender a rotina."
+  },
+  {
+    "id": "rotina/antes-de-orientar-diferencie-quando-rotina-nao-e-o-tema-principal",
+    "tema": "rotina",
+    "secao": "ANTES DE ORIENTAR, DIFERENCIE — QUANDO ROTINA NÃO É O TEMA PRINCIPAL",
+    "titulo": "ANTES DE ORIENTAR, DIFERENCIE — QUANDO ROTINA NÃO É O TEMA PRINCIPAL",
+    "nivel": 1,
+    "subtema": null,
+    "estado": "investigacao",
+    "conteudo": "- Se trava apenas em banho/roupa/escovar dentes por características do\n  estímulo, recuperar Sensorial.\n- Se aceita a mudança mas não executa etapas, recuperar Autonomia.\n- Se sabe o que fazer, quer fazer, mas não inicia, recuperar Foco/Iniciação.\n- Se a passagem está ligada a medo/separação, recuperar Emocional.\n- Se não está claro se compreendeu a instrução, recuperar Comunicação."
+  },
+  {
+    "id": "rotina/pergunta-de-alto-valor-golden-case",
+    "tema": "rotina",
+    "secao": "PERGUNTA DE ALTO VALOR — GOLDEN CASE",
+    "titulo": "PERGUNTA DE ALTO VALOR — GOLDEN CASE",
+    "nivel": 1,
+    "subtema": null,
+    "estado": "investigacao",
+    "conteudo": "\"Todo dia é uma luta para ir tomar banho. Eu aviso várias vezes, mas ele\ncontinua brincando. Quando digo que acabou, reclama e às vezes chora.\"\n\nJá sabemos:\n\n- há atividade precedente envolvente\n- há vários avisos\n- a resistência cresce no encerramento\n\nAinda precisamos diferenciar:\n\n- se o gargalo é sair da brincadeira\n- se o banho em si é aversivo\n- se existe dificuldade de iniciação\n- se a sequência do banho exige ajuda\n\nPergunta de maior valor:\n\n\"Depois que ele entra no banho, fica bem ou continua querendo sair?\"\n\nComo ler a resposta:\n\n- Fica bem: aumenta peso de transição/encerramento.\n- Continua querendo sair: investigar banho/sensorial/medo/experiência.\n- Nem chega a iniciar: investigar primeiro passo, compreensão e iniciação.\n- Só acontece ao sair de atividades preferidas: diferenciar perda do preferido\n  de dificuldade ampla de mudança."
+  },
+  {
+    "id": "rotina/regra-de-conducao-o-que-nao-perguntar-se-o-relato-ja-respondeu",
+    "tema": "rotina",
+    "secao": "REGRA DE CONDUÇÃO — O QUE NÃO PERGUNTAR SE O RELATO JÁ RESPONDEU",
+    "titulo": "REGRA DE CONDUÇÃO — O QUE NÃO PERGUNTAR SE O RELATO JÁ RESPONDEU",
+    "nivel": 1,
+    "subtema": null,
+    "estado": "investigacao",
+    "conteudo": "- Não perguntar \"ele não gosta de rotina?\" se o problema já foi descrito como\n  uma transição específica.\n- Não perguntar novamente qual atividade estava fazendo se isso já foi dito.\n- Não presumir que resistência significa rigidez do autismo."
+  },
+  {
+    "id": "rotina/triagem-inicial-o-que-consultar-no-perfil-primeiro",
+    "tema": "rotina",
+    "secao": "TRIAGEM INICIAL — O QUE CONSULTAR NO PERFIL PRIMEIRO",
+    "titulo": "TRIAGEM INICIAL — O QUE CONSULTAR NO PERFIL PRIMEIRO",
+    "nivel": 1,
+    "subtema": null,
+    "estado": "investigacao",
+    "conteudo": "Campos que existem hoje no Perfil, em `rotina`:\n\n- Como lida com a rotina\n- O que ajuda nas transições\n- Rotinas-âncora\n- Como você avisa mudanças\n- Sinais quando a rotina quebra\n\nVale também consultar, em outros domínios: autonomia nas etapas, compreensão\nde instruções e interesses de alta preferência."
+  },
+  {
+    "id": "rotina/seguranca-e-limites",
+    "tema": "rotina",
+    "secao": "SEGURANÇA E LIMITES",
+    "titulo": "SEGURANÇA E LIMITES",
+    "nivel": 1,
+    "subtema": null,
+    "estado": "contexto",
+    "conteudo": "- Mudança súbita e importante de funcionamento merece olhar mais amplo.\n- Não usar diagnóstico como causa automática.\n- Rotina visual é ferramenta possível, não solução universal."
+  },
+  {
+    "id": "rotina/resultado-esperado",
+    "tema": "rotina",
+    "secao": "RESULTADO ESPERADO",
+    "titulo": "RESULTADO ESPERADO",
+    "nivel": 1,
+    "subtema": null,
+    "estado": "contexto",
+    "conteudo": "A família consegue dizer: \"eu sei se o difícil é sair, entrar ou começar\" e \"eu\nsei o que testar amanhã nessa passagem específica\".\n\n---"
+  },
+  {
+    "id": "sensorial/missao",
+    "tema": "sensorial",
+    "secao": "MISSÃO",
+    "titulo": "MISSÃO",
+    "nivel": 1,
+    "subtema": null,
+    "estado": "contexto",
+    "conteudo": "Ajudar a família a identificar qual canal sensorial está envolvido, em que\ndireção, e o que muda quando o estímulo ou o ambiente muda.\n\nAtua quando o relato fala de: reação a sons, luz, cheiros, texturas ou toque;\ndificuldade em ambientes cheios; recusa de roupa, banho ou corte de cabelo;\nbusca constante de movimento, pressão ou estímulo oral.\n\nO objetivo NÃO é transformar \"sensorial\" em explicação para tudo.\n\nA pergunta funcional é:\n\n\"Qual canal está pesando ou faltando, e o que muda quando o estímulo ou o\nambiente muda?\"\n\nO objetivo é localizar a barreira antes de orientar. O mesmo relato pode\nesconder mecanismos diferentes."
+  },
+  {
+    "id": "sensorial/principio-central",
+    "tema": "sensorial",
+    "secao": "PRINCÍPIO CENTRAL",
+    "titulo": "PRINCÍPIO CENTRAL",
+    "nivel": 1,
+    "subtema": null,
+    "estado": "investigacao",
+    "conteudo": "Grandes bifurcações — o relato parece igual, mas precisamos distinguir:\n\n- \"É sensível\" → qual canal × qual contexto × intensidade × efeito funcional\n- \"Grita no mercado\" → sobrecarga sensorial × espera × frustração ×\n  fome/cansaço × desejo de sair/obter algo\n- \"Não lava o cabelo\" → água/rosto × temperatura × couro cabeludo × medo ×\n  transição × experiência anterior\n- \"Só usa a mesma roupa\" → textura/costura × temperatura × previsibilidade ×\n  preferência × resistência à mudança\n- \"Precisa se mexer\" → busca sensorial × necessidade motora × tédio ×\n  autorregulação × contexto da tarefa"
+  },
+  {
+    "id": "sensorial/1-sensorial-e-hipotese-contextual",
+    "tema": "sensorial",
+    "secao": "PRINCÍPIO CENTRAL",
+    "titulo": "1. Sensorial é hipótese contextual",
+    "nivel": 2,
+    "subtema": null,
+    "estado": "investigacao",
+    "conteudo": "Não usar TEA/TDAH como atalho causal. Localizar modalidade e observar mudança\nquando a variável muda."
+  },
+  {
+    "id": "sensorial/2-canal-importa",
+    "tema": "sensorial",
+    "secao": "PRINCÍPIO CENTRAL",
+    "titulo": "2. Canal importa",
+    "nivel": 2,
+    "subtema": null,
+    "estado": "investigacao",
+    "conteudo": "- auditivo\n- visual\n- tátil\n- gustativo/olfativo\n- vestibular/movimento\n- proprioceptivo\n- oral\n\nPergunta: \"O que exatamente estava acontecendo no ambiente quando ela reagiu?\""
+  },
+  {
+    "id": "sensorial/3-estimulo-pontual-carga-acumulada",
+    "tema": "sensorial",
+    "secao": "PRINCÍPIO CENTRAL",
+    "titulo": "3. Estímulo pontual × carga acumulada",
+    "nivel": 2,
+    "subtema": null,
+    "estado": "investigacao",
+    "conteudo": "Reação imediata a um estímulo específico é diferente de irritação depois de\nlongo tempo em ambiente intenso.\n\nPergunta: \"Isso acontece assim que o estímulo aparece ou depois de algum tempo\nnaquele ambiente?\""
+  },
+  {
+    "id": "sensorial/4-melhor-teste-funcional-mudar-uma-variavel",
+    "tema": "sensorial",
+    "secao": "PRINCÍPIO CENTRAL",
+    "titulo": "4. Melhor teste funcional: mudar uma variável",
+    "nivel": 2,
+    "subtema": null,
+    "estado": "investigacao",
+    "conteudo": "Se uma mudança específica no ambiente altera consistentemente a reação, a\nhipótese sensorial ganha força. Ex.: com secador há grande desconforto; sem\nsecador a situação se torna tolerável."
+  },
+  {
+    "id": "sensorial/5-evitar-universais",
+    "tema": "sensorial",
+    "secao": "PRINCÍPIO CENTRAL",
+    "titulo": "5. Evitar universais",
+    "nivel": 2,
+    "subtema": null,
+    "estado": "investigacao",
+    "conteudo": "Não afirmar que pressão profunda, movimento ou qualquer estímulo \"acalma\nautistas\". Perguntar o que acontece depois daquele estímulo naquela criança."
+  },
+  {
+    "id": "sensorial/antes-de-orientar-diferencie-quando-sensorial-nao-e-o-tema-principal",
+    "tema": "sensorial",
+    "secao": "ANTES DE ORIENTAR, DIFERENCIE — QUANDO SENSORIAL NÃO É O TEMA PRINCIPAL",
+    "titulo": "ANTES DE ORIENTAR, DIFERENCIE — QUANDO SENSORIAL NÃO É O TEMA PRINCIPAL",
+    "nivel": 1,
+    "subtema": null,
+    "estado": "investigacao",
+    "conteudo": "- Se a reação não muda quando o estímulo muda, reduzir o peso da hipótese\n  sensorial.\n- Se o problema aparece principalmente em espera, limite ou perda, recuperar\n  Emocional/Rotina.\n- Se a criança não compreende o que vai acontecer, recuperar\n  Comunicação/Rotina.\n- Se há dificuldade motora ou de autonomia, recuperar Motor/Autonomia."
+  },
+  {
+    "id": "sensorial/pergunta-de-alto-valor-golden-case",
+    "tema": "sensorial",
+    "secao": "PERGUNTA DE ALTO VALOR — GOLDEN CASE",
+    "titulo": "PERGUNTA DE ALTO VALOR — GOLDEN CASE",
+    "nivel": 1,
+    "subtema": null,
+    "estado": "investigacao",
+    "conteudo": "\"Toda vez que vamos a um aniversário ele começa bem, depois fica irritado, tapa\nos ouvidos e quer ir embora.\"\n\nJá sabemos:\n\n- o início do evento é tolerável\n- a dificuldade aparece depois de algum tempo\n- há sinal auditivo possível\n- há desejo de sair\n\nAinda precisamos diferenciar:\n\n- ruído específico × carga acumulada\n- cansaço/social/demanda\n- se sair ou reduzir ruído muda rapidamente a reação\n\nPergunta de maior valor:\n\n\"Isso acontece por causa de algum som específico ou vai aparecendo depois de um\ntempo, mesmo sem um barulho novo?\"\n\nComo ler a resposta:\n\n- Som específico + melhora ao reduzir: sensorial auditivo ganha peso.\n- Aparece só após tempo: investigar carga acumulada e outros fatores.\n- Não melhora ao sair/reduzir ruído: manter outras hipóteses abertas."
+  },
+  {
+    "id": "sensorial/regra-de-conducao-o-que-nao-perguntar-se-o-relato-ja-respondeu",
+    "tema": "sensorial",
+    "secao": "REGRA DE CONDUÇÃO — O QUE NÃO PERGUNTAR SE O RELATO JÁ RESPONDEU",
+    "titulo": "REGRA DE CONDUÇÃO — O QUE NÃO PERGUNTAR SE O RELATO JÁ RESPONDEU",
+    "nivel": 1,
+    "subtema": null,
+    "estado": "investigacao",
+    "conteudo": "- Não perguntar genericamente \"ele tem sensibilidade sensorial?\"\n- Não concluir \"é sensorial\" só porque tapa os ouvidos.\n- Não recomendar estímulo regulador universal sem saber a resposta individual."
+  },
+  {
+    "id": "sensorial/triagem-inicial-o-que-consultar-no-perfil-primeiro",
+    "tema": "sensorial",
+    "secao": "TRIAGEM INICIAL — O QUE CONSULTAR NO PERFIL PRIMEIRO",
+    "titulo": "TRIAGEM INICIAL — O QUE CONSULTAR NO PERFIL PRIMEIRO",
+    "nivel": 1,
+    "subtema": null,
+    "estado": "investigacao",
+    "conteudo": "O Perfil já é organizado **por canal**, que é exatamente a distinção que este\ntema exige. Campos em `sensorial`:\n\n- Perfil sensorial\n- Reação a sons\n- Reação a toques\n- Texturas (roupas, objetos)\n- Luz\n- Cheiros\n- Movimento\n\nAntes de perguntar qual canal está envolvido, ler o canal correspondente. Se\n\"Reação a sons\" já está preenchido, a pergunta seguinte é sobre carga e\ncontexto, não sobre sensibilidade auditiva."
+  },
+  {
+    "id": "sensorial/seguranca-e-limites",
+    "tema": "sensorial",
+    "secao": "SEGURANÇA E LIMITES",
+    "titulo": "SEGURANÇA E LIMITES",
+    "nivel": 1,
+    "subtema": null,
+    "estado": "contexto",
+    "conteudo": "- Dor, perda auditiva suspeita, reação física intensa ou mudança súbita pedem\n  avaliação adequada.\n- Não prescrever Integração Sensorial/Ayres como dica cotidiana.\n- Priorizar adaptações ambientais seguras e observáveis."
+  },
+  {
+    "id": "sensorial/resultado-esperado",
+    "tema": "sensorial",
+    "secao": "RESULTADO ESPERADO",
+    "titulo": "RESULTADO ESPERADO",
+    "nivel": 1,
+    "subtema": null,
+    "estado": "contexto",
+    "conteudo": "A família consegue dizer: \"eu sei qual canal e qual contexto pesam\" e \"eu sei\nqual variável mudar para testar\".\n\n---"
+  },
+  {
     "id": "socializacao/missao",
     "tema": "socializacao",
     "secao": "MISSÃO",
@@ -1900,5 +2430,145 @@ export const BASE2: readonly SecaoBase2[] = [
     "subtema": null,
     "estado": "contexto",
     "conteudo": "A família deve sair de:\n\n“Meu filho não socializa.”\n\npara algo mais preciso, como:\n\n“Ele quer brincar. O que ainda precisa aprender é como entrar sem pegar o objeto.”\n\nou:\n\n“Ele entra bem. O problema começa quando outra criança muda a regra.”\n\nou:\n\n“Ele sabe brincar individualmente; grupos grandes é que ficam difíceis.”\n\nE então receber UMA primeira ação compatível com esse ponto.\n\n---"
+  },
+  {
+    "id": "sono/missao",
+    "tema": "sono",
+    "secao": "MISSÃO",
+    "titulo": "MISSÃO",
+    "nivel": 1,
+    "subtema": null,
+    "estado": "contexto",
+    "conteudo": "Ajudar a família a entender o que está impedindo a criança de adormecer, de\npermanecer dormindo ou de voltar a dormir.\n\nAtua quando o relato fala de: demora para pegar no sono; despertares noturnos;\nchamados repetidos; pedidos que adiam a hora de dormir; medo na hora de dormir;\nnecessidade da presença do adulto para adormecer.\n\nO objetivo NÃO é aplicar higiene do sono genérica antes de saber qual é a\nbarreira.\n\nA pergunta funcional é:\n\n\"O que está impedindo esta criança de adormecer, permanecer dormindo ou voltar\na dormir com segurança e autonomia?\"\n\nO objetivo é localizar a barreira antes de orientar. O mesmo relato pode\nesconder mecanismos diferentes."
+  },
+  {
+    "id": "sono/principio-central",
+    "tema": "sono",
+    "secao": "PRINCÍPIO CENTRAL",
+    "titulo": "PRINCÍPIO CENTRAL",
+    "nivel": 1,
+    "subtema": null,
+    "estado": "investigacao",
+    "conteudo": "Grandes bifurcações — o relato parece igual, mas precisamos distinguir:\n\n- \"Demora para dormir\" → horário/ritmo × preocupação/medo × condição para\n  adormecer × ambiente × transição\n- \"Só dorme comigo\" → preferência × presença como segurança × condição habitual\n  × ajuda para desacelerar\n- \"Acorda toda hora\" → desperta e volta sozinho × desperta e chama ×\n  desconforto/ambiente × sinal que merece avaliação\n- \"Pede água/banheiro\" → necessidade real × adiamento × busca de\n  presença/segurança\n- \"Diz que está com medo\" → medo identificável × sensação sem nome × medo\n  ligado à separação × outro contexto emocional"
+  },
+  {
+    "id": "sono/1-inicio-manutencao-do-sono",
+    "tema": "sono",
+    "secao": "PRINCÍPIO CENTRAL",
+    "titulo": "1. Início × manutenção do sono",
+    "nivel": 2,
+    "subtema": null,
+    "estado": "investigacao",
+    "conteudo": "Pergunta: \"Depois que finalmente dorme, como costuma ser o restante da noite?\"\n\nSe demora para dormir, mas depois dorme bem, o foco está principalmente no\ninício. Se também desperta e precisa recriar a mesma condição, início e\nmanutenção podem estar ligados."
+  },
+  {
+    "id": "sono/2-horario-resistencia",
+    "tema": "sono",
+    "secao": "PRINCÍPIO CENTRAL",
+    "titulo": "2. Horário × resistência",
+    "nivel": 2,
+    "subtema": null,
+    "estado": "investigacao",
+    "conteudo": "Uma criança acordada por muito tempo pode simplesmente não estar pronta para\ndormir naquele horário. Observar o que faz enquanto está acordada ajuda:\ntranquila e brincando sugere caminho diferente de tensa, chamando ou relatando\nmedo.\n\nPergunta: \"Enquanto demora para dormir, ele fica tranquilo ou parece\nincomodado/angustiado?\""
+  },
+  {
+    "id": "sono/3-presenca-para-adormecer",
+    "tema": "sono",
+    "secao": "PRINCÍPIO CENTRAL",
+    "titulo": "3. Presença para adormecer",
+    "nivel": 2,
+    "subtema": null,
+    "estado": "investigacao",
+    "conteudo": "\"Só dorme se eu ficar\" ainda não explica por quê. Pode haver medo, dificuldade\nde separação, ajuda para desacelerar, preferência ou uma condição muito\nespecífica de adormecimento.\n\nPergunta: \"Se você fica no quarto, mas sem deitar junto ou interagir, ele\nconsegue dormir?\""
+  },
+  {
+    "id": "sono/4-pedidos-repetidos",
+    "tema": "sono",
+    "secao": "PRINCÍPIO CENTRAL",
+    "titulo": "4. Pedidos repetidos",
+    "nivel": 2,
+    "subtema": null,
+    "estado": "investigacao",
+    "conteudo": "Água, banheiro, abraço e \"mais uma coisa\" não devem ser chamados\nautomaticamente de manha ou manipulação. Observe o que acontece quando um\npedido é atendido.\n\nPergunta: \"Quando os pedidos terminam, ele consegue ficar tranquilo ou continua\nrealmente incomodado?\""
+  },
+  {
+    "id": "sono/5-medo",
+    "tema": "sono",
+    "secao": "PRINCÍPIO CENTRAL",
+    "titulo": "5. Medo",
+    "nivel": 2,
+    "subtema": null,
+    "estado": "investigacao",
+    "conteudo": "Não converter automaticamente \"estou com medo\" em ansiedade. Primeiro localizar\no conteúdo, o momento e a extensão do medo.\n\nPergunta: \"Quando ele fala que está com medo, consegue dizer do quê ou é mais\numa sensação que ele não sabe explicar?\""
+  },
+  {
+    "id": "sono/6-cruzamentos",
+    "tema": "sono",
+    "secao": "PRINCÍPIO CENTRAL",
+    "titulo": "6. Cruzamentos",
+    "nivel": 2,
+    "subtema": null,
+    "estado": "investigacao",
+    "conteudo": "- Sono × Rotina: o difícil pode ser chegar até a cama, não dormir.\n- Sono × Sensorial: testar se mudança específica de ambiente muda claramente o\n  fenômeno.\n- Sono × Emocional: pensamentos e medos podem dominar o momento sem autorizar\n  diagnóstico.\n- Sono × Comunicação: criança pode não conseguir explicar desconforto, medo ou\n  necessidade."
+  },
+  {
+    "id": "sono/antes-de-orientar-diferencie-quando-sono-nao-e-o-tema-principal",
+    "tema": "sono",
+    "secao": "ANTES DE ORIENTAR, DIFERENCIE — QUANDO SONO NÃO É O TEMA PRINCIPAL",
+    "titulo": "ANTES DE ORIENTAR, DIFERENCIE — QUANDO SONO NÃO É O TEMA PRINCIPAL",
+    "nivel": 1,
+    "subtema": null,
+    "estado": "investigacao",
+    "conteudo": "- Se a maior dificuldade é encerrar videogame, banho, pijama e chegar à cama,\n  recuperar Rotina junto.\n- Se uma variável ambiental específica muda consistentemente o sono, recuperar\n  Sensorial.\n- Se medo/preocupação aparece também em outros momentos, recuperar Emocional.\n- Se o problema é expressar desconforto ou necessidade, recuperar Comunicação."
+  },
+  {
+    "id": "sono/pergunta-de-alto-valor-golden-case",
+    "tema": "sono",
+    "secao": "PERGUNTA DE ALTO VALOR — GOLDEN CASE",
+    "titulo": "PERGUNTA DE ALTO VALOR — GOLDEN CASE",
+    "nivel": 1,
+    "subtema": null,
+    "estado": "investigacao",
+    "conteudo": "\"Ele demora para dormir, me chama várias vezes, às vezes diz que está com medo,\npede água, quer ir ao banheiro; eu fico até ele dormir porque, se saio, ele\nlevanta.\"\n\nJá sabemos:\n\n- início do sono está difícil\n- há chamados e pedidos repetidos\n- há relato ocasional de medo\n- a presença do adulto faz parte da sequência\n- a saída do adulto está associada a levantar\n\nAinda precisamos diferenciar:\n\n- qual é o conteúdo do medo\n- se a presença, o contato ou a interação são necessários\n- se depois que adormece a noite segue bem\n- se há fatores de ambiente/ritmo relevantes\n\nPergunta de maior valor:\n\n\"Quando ele diz que está com medo, consegue dizer do quê? E depois que\nfinalmente dorme, como costuma ser o restante da noite?\"\n\nComo ler a resposta:\n\n- Medo específico + noite estável: aprofundar segurança/medo e início do sono.\n- Sem medo claro + adormece com presença: investigar qual condição da presença\n  é necessária.\n- Desperta e procura a mesma condição: considerar que início e manutenção\n  compartilham o mesmo padrão.\n- Sinais físicos/respiratórios ou mudança importante: sair do manejo simples e\n  orientar avaliação."
+  },
+  {
+    "id": "sono/regra-de-conducao-o-que-nao-perguntar-se-o-relato-ja-respondeu",
+    "tema": "sono",
+    "secao": "REGRA DE CONDUÇÃO — O QUE NÃO PERGUNTAR SE O RELATO JÁ RESPONDEU",
+    "titulo": "REGRA DE CONDUÇÃO — O QUE NÃO PERGUNTAR SE O RELATO JÁ RESPONDEU",
+    "nivel": 1,
+    "subtema": null,
+    "estado": "investigacao",
+    "conteudo": "- Se a mãe já disse que fica até dormir, não perguntar se ela fica no quarto.\n- Se já disse que ele chama várias vezes, não perguntar se chama.\n- Se já disse que levanta quando ela sai, não perguntar se consegue ficar\n  sozinho."
+  },
+  {
+    "id": "sono/triagem-inicial-o-que-consultar-no-perfil-primeiro",
+    "tema": "sono",
+    "secao": "TRIAGEM INICIAL — O QUE CONSULTAR NO PERFIL PRIMEIRO",
+    "titulo": "TRIAGEM INICIAL — O QUE CONSULTAR NO PERFIL PRIMEIRO",
+    "nivel": 1,
+    "subtema": null,
+    "estado": "investigacao",
+    "conteudo": "Campos que existem hoje no Perfil, em `sono`:\n\n- Como costuma ser o sono\n- Como adormece\n- Quanto tempo leva pra pegar no sono\n- Despertares\n- Horários\n- O que atrapalha\n\nLacunas de Perfil conhecidas neste tema — **não** consultar como se\nexistissem: onde a criança dorme; rotina da hora de dormir; ambiente do quarto;\nmedos e preocupações. Quando a conversa trouxer essa informação, ela entra em\n\"Outras observações\" até existir campo próprio."
+  },
+  {
+    "id": "sono/seguranca-e-limites",
+    "tema": "sono",
+    "secao": "SEGURANÇA E LIMITES",
+    "titulo": "SEGURANÇA E LIMITES",
+    "nivel": 1,
+    "subtema": null,
+    "estado": "contexto",
+    "conteudo": "Orientar avaliação profissional diante de:\n\n- ronco frequente/importante, pausas respiratórias, engasgos ou dificuldade\n  respiratória\n- sonolência diurna excessiva sem explicação clara\n- movimentos/desconforto persistente nas pernas\n- mudança importante e inexplicada do padrão de sono\n- perda relevante de funcionamento associada ao sono"
+  },
+  {
+    "id": "sono/resultado-esperado",
+    "tema": "sono",
+    "secao": "RESULTADO ESPERADO",
+    "titulo": "RESULTADO ESPERADO",
+    "nivel": 1,
+    "subtema": null,
+    "estado": "contexto",
+    "conteudo": "A família consegue dizer: \"eu sei em que parte da noite está a dificuldade\" e\n\"eu sei qual é a próxima coisa a observar ou testar\".\n\n---"
   }
 ] as const;
