@@ -926,6 +926,31 @@ do laudo de 06/08) + `docs/auditoria-ayla-prompt.md`
   em silêncio (#4) · `atribuicao_distribuida` é o código mais ruidoso do
   detector (#12) · fala sobre sono ainda dispara medicação (#13) · respostas da
   web 40% mais longas sem o teto de 120 palavras (#15).
+- **✅ ENTRADA GUIADA — FATIA 1 NO AR (2026-08-08)**
+  ([#62](https://github.com/sergiokoloszuk/kolo-familia/pull/62)). Quem chega
+  sem saber o que contar recebe **caminhos numerados**, não uma pergunta aberta.
+  - **Menos dependência de pergunta aberta.** A entrada anterior já recuperava
+    os desafios do onboarding, mas em **prosa** — *"o que mais tem pesado é a
+    comunicação e o sono. Por qual você quer começar?"* — e isso ainda exigia
+    que a mãe formulasse a resposta. Agora ela responde **um número**.
+  - **RESPOSTA POR ESCOLHA, e a escolha manda.** O tema vem do menu, não da
+    inferência do classificador: *a escolha é explícita, o classificador é
+    inferência, e duas fontes para a mesma decisão sempre divergem.* A skill
+    correspondente vai junto — sem isso, "2" chegaria à recuperação sem skill
+    e a resposta sairia sem repertório.
+  - **SITUAÇÃO CONCRETA TEM PRIORIDADE, e é a regra que mais importa.** Quem
+    escreve *"meu filho não quer fazer lição"* é atendida na hora. A detecção é
+    por **lista fechada de aberturas vazias**, nunca por tamanho — *"ele morde"*
+    tem dez caracteres e é uma situação. **O erro caro não é deixar de mostrar o
+    menu; é mostrá-lo a quem já disse o que está acontecendo.**
+  - **O número vale pelo menu que ela VIU:** o estado sai do texto da mensagem
+    já persistida, sem coluna e sem migração, espelhando o padrão da Rotina.
+  - **Fatia 2 (segundo nível por tema) NÃO entrou** — decisão de produto ainda
+    aberta.
+  - **Prova:** 41 testes (casos A–I) e **quatro sabotagens**: tirar a prioridade
+    do onboarding quebra 13 · interpretar número sem respeitar o menu quebra 5 ·
+    entrada concreta cair no menu quebra 8 · misturar desafio de outra família
+    quebra 13.
 - **Depende de:** PEND-017 e PEND-018 — **desenhar junto**. Absorve PEND-009
   (primeira conversa) dentro do DESEJADO.
 - **Admin:** ADMIN PRECISA DE AJUSTE — hoje não dá para ver *por que* a Ayla
@@ -994,6 +1019,11 @@ Aberta em: 2026-08-08 · Origem: consolidação da PEND-010 +
 - **Inclui o pipeline de Admin** (upload → extração → classificação → proposta
   da IA → revisão humana → aprovação → disponível para a Ayla), já desenhado em
   `docs/frente-import-documentos.md`.
+- **EVIDÊNCIA NOVA SOBRE ROTEAMENTO (2026-08-08):** com a entrada guiada, a
+  escolha numérica passa a **semear a skill** quando o classificador não
+  devolve nenhuma. O rastro da etapa 1 mostra esse roteamento como qualquer
+  outro. **Isto não resolve nada desta ficha** — ranking, peso e seleção
+  continuam como estavam, e a qualidade do que é recuperado segue em aberto.
 - **Depende de:** desenhar junto com PEND-016 e PEND-018.
 - **Admin:** ADMIN PRECISA DE AJUSTE — administrar acervo, e ver o que foi
   recuperado e o que foi usado.
@@ -1045,6 +1075,18 @@ Aberta em: 2026-08-08 · Origem: consolidação da PEND-010 +
      real ao modelo — e a regra antiga voltaria no primeiro merge distraído.
 - **Já desenhado, não recomeçar:** `docs/perfil-vivo-fatos-versionados.md`
   (fatos datados + proveniência + visão derivada) — decidido e **não construído**.
+- **✅ OS DESAFIOS REAIS DO ONBOARDING CONDUZEM A ENTRADA (2026-08-08).** A
+  entrada guiada lê `perfil_vivo_membro.categorias_extras.desafios_onboarding`
+  e os apresenta **primeiro**, com o vocabulário canônico de
+  `lib/conducao/temas.ts` — sem catálogo paralelo.
+  - **AUSÊNCIA NUNCA É PREENCHIDA POR INFERÊNCIA.** Três desafios → mostra três.
+    Um → mostra um. Nenhum → mostra os temas gerais **sem dizer "você me
+    contou"**. Chave desconhecida (lixo, tema renomeado) é **descartada** em vez
+    de virar uma linha sem rótulo: melhor um menu com dois itens verdadeiros do
+    que três com um inventado.
+  - Nome que não é nome passa pelo mesmo detector que já evitou *"Oi, Meu Nome
+    e Gisela Meu Filgo e Davi"* — sem nome confiável, a saudação funciona sem
+    nome.
 - **Depende de:** desenhar junto com PEND-016 e PEND-017. **Bloqueia** PEND-020.
 - **Admin:** ADMIN PRECISA DE AJUSTE — ver o retrato da criança e a procedência
   de cada informação.
@@ -1116,6 +1158,14 @@ Aberta em: 2026-08-08 · Origem: consolidação da PEND-010 (itens 23, 24, 25) +
   4. o que muda depois de assinar — e depois de **não** assinar.
 - **Estado conhecido:** não existe jornada por dia (só gatilhos por estado);
   quem se engaja recebe **menos** proativa; a celebração é inalcançável.
+- **PRINCÍPIO DO INÍCIO DO TRIAL, registrado em 2026-08-08 (não é a jornada).**
+  > **O início do trial deve reduzir o esforço da família e ajudá-la a
+  > descobrir rapidamente onde a Kolo pode ser útil.**
+  Os **3 desafios do onboarding** são apresentados primeiro, porque provam que a
+  Ayla já sabe algo daquela criança; os **demais temas também aparecem**, porque
+  a mãe frequentemente não sabe que a Kolo ajuda com aquilo. A entrada guiada
+  (fatia 1, no ar) é a primeira peça disso.
+  ⚠️ **As mensagens D1–D7 continuam não existindo** e não foram criadas aqui.
 - **Depende de:** nada de A/B/C para começar o desenho — **pode andar em
   paralelo**. Liga-se a PEND-001 e PEND-002, já publicadas.
 - **Admin:** ADMIN PRECISA DE AJUSTE — acompanhar a jornada e a conversão por
