@@ -1264,6 +1264,43 @@ do laudo de 06/08) + `docs/auditoria-ayla-prompt.md`
 - **📌 DECISÃO REGISTRADA (Sérgio, 09/08/2026): títulos humanos ficam.** Os dois
   registros invisíveis da Fase 3D **não** serão reescritos para otimizar ranking.
   Se causar problema real, corrige-se com evidência.
+- **✅ FASE 3E (2026-08-09).** Duas medições e uma correção de arquitetura.
+  Transcrições em [bancada/ablacao-3e-2026-08-09.txt](bancada/ablacao-3e-2026-08-09.txt).
+  - **A CAUSA DA DILUIÇÃO NÃO ERA A BASE 3 — era a falta de instrução de
+    precedência.** Rodando o caso "bate na irmã" em cinco condições: com Perfil
+    + BASE 2 a Ayla citava os sinais registrados; acrescentar BASE 3 antiga
+    tornava a resposta genérica; **acrescentar a âncora do Perfil trouxe a
+    personalização de volta** — a condição E1 nomeou literalmente os sinais do
+    Perfil ("fica mais agitado, fala mais alto, começa a andar rápido").
+    Não é preciso remover repertório: é preciso dizer quem ganha.
+  - **🐛 SEQUESTRO MEDIDO.** Em 18 subproblemas de 5 temas, **duas boas práticas
+    antigas ocupam 8 das vagas de top-3**: *"Bater, morder, chutar, gritar:
+    todas formas de comunicação"* (4×) e *"Quando a criança entra em crise"*
+    (4×) — e as duas atravessam `emocional` **e** `sensorial`. Só 10 BPs
+    venceram em exatamente um subproblema. **Classificação: RESTRINGIR
+    SUBTEMA** para as duas; nenhuma alteração feita ainda, porque a âncora
+    resolveu o sintoma sem precisar mexer no acervo.
+  - **Repertório específico vence genérico, com licença nos dois lados.** Em
+    sobrecarga, E2 (BASE 3 nova) usou o interesse do Perfil para explicar —
+    *"segurando a vontade de falar sobre as estações da linha azul"* — e
+    entregou o método do registro. E1 (BASE 3 antiga) ficou bom e genérico.
+  - **🐛 RISCO NOVO: a licença aumenta a invenção.** No caso sem repertório
+    aderente, o modelo escreveu *"o cérebro dela está dizendo: aqui eu consigo
+    me reorganizar"* — mecanismo inventado. Por isso a cláusula anti-invenção de
+    `LICENCA_GENERATIVA` cita **o exemplo real**, e não uma proibição abstrata:
+    proibição abstrata competiu com ser prestativo e perdeu.
+  - **Onde ficou:** `lib/conducao/composicao.ts`, **fora de `nucleoConducao`**.
+    O núcleo é compartilhado com o WhatsApp e a missão proíbe alterá-lo. Um teste
+    **morde** se alguém colar a licença no núcleo, e outro **morde** se o módulo
+    ganhar consumidor — hoje ele não tem nenhum.
+  - **Custo:** entrada de 857 (C) → 2.778 tokens (E2). Latência de 3,5s a
+    **14,1s** no pior caso. A latência é o item mais frágil do conjunto.
+- **🐛 FALHA MINHA, corrigida (09/08/2026).** O PR #77 foi mergeado com dois
+  testes quebrados em `base2.test.ts` — as asserções diziam "os sete temas" e
+  "sono não deveria ter material", e o próprio PR tornou as duas falsas. **O CI
+  não rodou a suíte naquele PR** e eu não conferi antes de mergear. O teste 4
+  foi invertido para guardar o que passou a valer: os cinco temas existem **e**
+  são recuperáveis por estado.
 - **Depende de:** PEND-017 e PEND-018 — **desenhar junto**. Absorve PEND-009
   (primeira conversa) dentro do DESEJADO.
 - **Admin:** ADMIN PRECISA DE AJUSTE — hoje não dá para ver *por que* a Ayla

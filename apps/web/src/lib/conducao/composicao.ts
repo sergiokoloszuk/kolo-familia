@@ -1,0 +1,79 @@
+/**
+ * COMPOSIÇÃO DO CONTEXTO — âncora do Perfil e licença generativa.
+ *
+ * NÃO ESTÁ LIGADO EM NENHUM CANAL. Existe para a Fase 4A montar o contexto de
+ * Estratégias Web, e só. Fica **fora** de `nucleoConducao` de propósito: o
+ * núcleo é compartilhado com o WhatsApp, e a missão da Fase 3E diz por escrito
+ * para não alterar o WhatsApp. Quem quiser estas duas peças as pede.
+ *
+ * ── por que elas existem ──────────────────────────────────────────────────
+ *
+ * A ablação de 09/08/2026 (`docs/bancada/`) mediu duas coisas que este arquivo
+ * resolve.
+ *
+ * **A BASE 3 apagava o Perfil.** No caso "bate na irmã", a condição com Perfil
+ * + BASE 2 citava os sinais que o Perfil já registrava. Acrescentar BASE 3
+ * fazia a resposta virar genérica — o repertório recuperado competia com o que
+ * já sabíamos da criança, e ganhava. Com `ANCORA_PERFIL` no contexto, a mesma
+ * condição voltou a nomear os sinais registrados ("fica mais agitado, fala mais
+ * alto, começa a andar rápido"). **A causa não era a existência da BASE 3: era
+ * a falta de uma instrução de precedência.**
+ *
+ * **Sem licença, o repertório não vira ajuda.** As condições D e E diferiram
+ * de verdade: D fazia uma pergunta melhor e parava; E entregava o método. Só o
+ * E dava à mãe alguma coisa para fazer naquela noite.
+ *
+ * ── o risco que veio junto ────────────────────────────────────────────────
+ *
+ * A licença aumenta a invenção. Na mesma bancada, num caso sem repertório
+ * aderente, o modelo escreveu "o cérebro dela está dizendo: aqui eu consigo me
+ * reorganizar" — mecanismo inventado, exatamente o que a licença proíbe. Por
+ * isso a cláusula de invenção é a parte mais longa de `LICENCA_GENERATIVA`, e
+ * não a mais curta.
+ */
+
+/**
+ * O Perfil tem precedência sobre orientação geral.
+ *
+ * Vai **antes** do repertório no contexto, e diz explicitamente o que fazer no
+ * conflito — porque a bancada mostrou que, sem dizer, o genérico ganha.
+ */
+export const ANCORA_PERFIL = `O PERFIL É ÂNCORA. Ele é o que sabemos DESTA criança e tem precedência sobre qualquer orientação geral.
+NÃO descarte informação específica do Perfil em favor de recomendação padrão: se o Perfil já diz quais são os sinais, os gatilhos, o que ajuda e o que piora para esta criança, use ESSES — não pergunte de novo nem substitua por conselho genérico.
+O repertório é subsidiário: serve quando acrescenta ao que já sabemos, não quando repete pior.`;
+
+/**
+ * As bases são lastro, não texto para copiar.
+ *
+ * A ordem interna importa: primeiro o que ela PODE criar, depois o que não pode
+ * inventar. A segunda metade é mais longa porque foi ela que falhou no teste.
+ */
+export const LICENCA_GENERATIVA = `AS BASES SÃO LASTRO, NÃO TEXTO PARA COPIAR. Raciocine sobre o repertório e crie a melhor intervenção para ESTA criança e ESTA família — a resposta boa costuma ser melhor que qualquer trecho isolado.
+Você pode: combinar conhecimentos compatíveis, adaptar ao Perfil, transformar orientação em aplicação concreta, criar uma frase que uma mãe realmente diria, criar atividade ou brincadeira, dar um nome memorável quando o nome ajudar a lembrar, ajustar materiais e dificuldade, e propor um próximo passo.
+Use o interesse da criança para CRIAR: se ela gosta de trens, a atividade é sobre trens. Interesse é ponte para a experiência — nunca prêmio por obediência.
+VOCÊ CRIA A FORMA, NÃO O FATO. Não invente: mecanismo cerebral ("o cérebro dela está dizendo…", "isso ativa o córtex"), evidência científica, diagnóstico, causa, eficácia garantida, nem característica da criança que ninguém informou. Quando quiser explicar o porquê, use linguagem funcional — "quando ele precisa acompanhar muita coisa ao mesmo tempo, fica mais fácil perder o fio" vale mais que qualquer nome de área do cérebro.
+DOSE: uma leitura curta do que parece estar acontecendo, uma orientação, e um ou dois recursos. Não despeje tudo o que sabe.`;
+
+/** Ordem medida: Perfil → âncora → raciocínio → repertório → licença. */
+export type BlocosContexto = {
+  perfil?: string | null;
+  base2?: string | null;
+  base3?: string | null;
+};
+
+/**
+ * Monta o contexto na ordem que a bancada validou.
+ *
+ * A âncora entra **colada no Perfil**, e não no fim — quando ela ficava depois
+ * do repertório, a precedência chegava tarde demais para valer.
+ */
+export function montarContexto(b: BlocosContexto): string {
+  const partes: string[] = [];
+  if (b.perfil?.trim()) partes.push(`${b.perfil.trim()}\n\n${ANCORA_PERFIL}`);
+  if (b.base2?.trim()) partes.push(`COMO COMPREENDER ESTE TEMA (material interno — não repita para a família):\n${b.base2.trim()}`);
+  if (b.base3?.trim()) partes.push(`REPERTÓRIO DISPONÍVEL (material interno):\n${b.base3.trim()}`);
+  // Sem repertório nem perfil, a licença não tem sobre o que operar — e sozinha
+  // ela só aumenta o risco de invenção, que foi o que a bancada pegou.
+  if (partes.length) partes.push(LICENCA_GENERATIVA);
+  return partes.join("\n\n---\n\n");
+}
