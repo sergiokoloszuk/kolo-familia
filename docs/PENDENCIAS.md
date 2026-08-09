@@ -1201,6 +1201,38 @@ do laudo de 06/08) + `docs/auditoria-ayla-prompt.md`
   Estratégias Web. Bloqueio conhecido antes de começar: dos quatro subproblemas
   de emocional, dois não têm o que entregar. A bancada precisa incluí-los e
   esperar que falhem — senão o piloto mede só a metade boa do tema.
+- **✅ FASE 3D — AMOSTRA DE NOVA GERAÇÃO DA BASE 3 (2026-08-09).** Dez registros
+  para os dois subproblemas cegos de emocional, em
+  `scripts/base3-emocional-nova-geracao.mjs`. **Gravados como `rascunho`** —
+  `recuperar.ts` filtra `status = ativo`, então nada chega a família nenhuma.
+  - **A cobertura foi resolvida, e está medida.** Sobrecarga acumulada: **0 → 2**
+    aderentes. Sinais precoces: **0 → 7**. Os dois buracos da Fase 3C fecharam.
+  - **🐛 MAS SÓ 6 DOS 10 SOBEM NO CASO PARA O QUAL FORAM ESCRITOS**, pelo critério
+    que eu mesmo defini na 3C. Testando cada um contra um relato irmão do mesmo
+    subproblema, **oito** são recuperáveis em algum lugar — e **dois são
+    invisíveis**: *"Uma coisa por vez quando o dia já foi demais"* e *"O que
+    fazer no sinal"*.
+  - **A causa é a mesma nos dois, e vale como regra para os 42 restantes: o
+    título é a superfície de recuperação.** O ranking pesa título 5, quando_usar
+    4, tags 3, corpo 2 — e exige dois conceitos convergindo. Os que sobem têm no
+    título as palavras que a mãe usa (*"explosão"*, *"fim da tarde"*,
+    *"escola"*, *"auge"*, *"perceber"*). Os dois invisíveis têm títulos bonitos e
+    sem nenhuma palavra do relato. **Registro bem escrito com título poético é
+    conteúdo que não existe.**
+  - **Custo:** corpo médio de ~2.400 caracteres, ~600 tokens por registro. Três
+    por turno custam ~1.800 tokens de contexto. É o preço do repertório; a
+    resposta continua seletiva.
+  - **Proveniência preservada sem criar base de livro.** `origem` tem CHECK
+    constraint no banco e só aceita `admin`; a linha AUTOR/CIÊNCIA/KOLO foi para
+    `referencia_bibliografica`. Nenhum registro repete metáfora neuroanatômica
+    como fato — não há "cérebro de cima" nem "hemisfério direito emocional".
+  - **Duplicação evitada:** *"Contar o dia depois"* quase colidiu com
+    *"Capacidade de se observar"*, que já existe e sobe no mesmo relato. Ficaram
+    porque atacam momentos diferentes (reconstruir o episódio × perceber-se
+    durante), mas a proximidade está registrada.
+  - **⏳ PENDENTE:** ativar (`status = ativo`) só quando a Fase 4A estiver pronta
+    para medir; corrigir os dois títulos invisíveis; decidir se o enum de
+    `origem` merece migração para carregar proveniência estruturada.
 - **Depende de:** PEND-017 e PEND-018 — **desenhar junto**. Absorve PEND-009
   (primeira conversa) dentro do DESEJADO.
 - **Admin:** ADMIN PRECISA DE AJUSTE — hoje não dá para ver *por que* a Ayla
