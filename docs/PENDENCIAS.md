@@ -1341,6 +1341,29 @@ do laudo de 06/08) + `docs/auditoria-ayla-prompt.md`
   `escopo-kolo.ts`, `escopo-kolo.test.ts`, `plano-recursos.ts`,
   `plano-estrutura.test.ts`, `0071_rotina_resultado.sql`,
   `0076_plano_versionamento.sql`. **Nenhum foi aplicado.** Missão própria.
+- **✅ ROTINA PRESERVADA NA 4A.1 — PROVADO (2026-08-09).** Auditoria específica,
+  pedida antes de aprovar a fatia.
+  - **Por execução:** os 11 arquivos de teste da Rotina — 322 testes — rodam
+    **idênticos antes e depois**. Revertendo os quatro arquivos da 4A.1 para o
+    commit anterior (`1ab817a`) e rodando a mesma seleção: **322 passando**. Com
+    a 4A.1: **322 passando**. Nenhum teste mudou de resultado.
+  - **Por leitura:** nenhum dos sete módulos da Rotina — `gerar.ts`,
+    `rotina-guiada.ts`, `prontidao-rotina.ts`, `validacao-rotina.ts`,
+    `rotina-progresso.ts`, `rotina-resultado.ts`, `api/ludico/gerar-rotina` —
+    importa `context.ts`, `prompt.ts`, `engine.ts` ou `piloto.ts`. **A Rotina não
+    passa por `buildContext`.**
+  - **A flag não alcança a Rotina nem ligada.** O recuperador **não lê a flag**:
+    a decisão é de quem chama, e o caminho da Rotina não passa `relato`. Um
+    `if (pilotoLigado())` dentro de `recuperarBoasPraticas` atingiria todo mundo
+    — é a sabotagem 2, e ela morde.
+  - **8 testes novos de fronteira** em `rotina-isolamento-4a1.test.ts`, com 3
+    sabotagens verificadas. Eles guardam a fronteira nos **dois sentidos**:
+    a Rotina não importar o que a 4A tocou, e o que a 4A tocou não importar a
+    Rotina.
+  - **As correções caras continuam escritas:** "A SEQUÊNCIA DO QUADRO É A DA
+    FAMÍLIA", "CONFIRMAR OU MONTAR" e "QUAL RECORTE".
+  - **Os 5 commits locais não foram usados.** Os seis arquivos exclusivos deles
+    continuam ausentes do `origin/main`, e o backup segue em `33d0894`.
 - **Depende de:** PEND-017 e PEND-018 — **desenhar junto**. Absorve PEND-009
   (primeira conversa) dentro do DESEJADO.
 - **Admin:** ADMIN PRECISA DE AJUSTE — hoje não dá para ver *por que* a Ayla
