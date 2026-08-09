@@ -472,9 +472,50 @@ Aberta em: 2026-08-08 · Origem: decisão de produto (2026-08-08)
   ensina, destaca a etapa de agora, imprime nos dois modos, edita, salva,
   reencontra pela lista filtrada por criança, e grava o feedback com escrita
   conferida. Os contratos cobrem os casos A a G da SPEC.
-  **NÃO validado:** o comportamento do modelo diante dos contratos novos. Todos
+  **Validado por bancada em 08/08** (ver abaixo) e **corrigido um defeito real
+  de produção**. **Continua NÃO validado:** o comportamento com famílias reais
+  depois da correção. Todos
   os testes das fatias 3 e 4 prendem o TEXTO da decisão, não o que o modelo faz
   com ele — é o limite conhecido desse tipo de teste, e está dito nos arquivos.
+- **⚠️ CASO REAL DE PRODUÇÃO — 08/08/2026, "Entrada no Leônidas". CORRIGIDO E
+  PUBLICADO ([#58](https://github.com/sergiokoloszuk/kolo-familia/pull/58)).**
+  A mãe ditou cinco etapas (*chega · cumprimenta todos · senta para estudar ·
+  faz a lição · agradece e dá tchau*). A Ayla narrou as cinco corretamente na
+  fala e, **no mesmo turno**, sugeriu um ensaio de três passos para a parte
+  mais pesada. **O quadro saiu com os três dela.**
+  - **Rastreio:** a rotina foi criada às `00:01:54`, dois segundos antes da
+    mensagem das `00:01:56` — mesma chamada ao modelo. **As cinco etapas nunca
+    entraram no caminho estruturado**; só existem como texto em
+    `ayla_messages`. Não é o gerador, nem o serviço, nem a persistência:
+    3 etapas → 3 cartões → 3 gerados, sem erro, na ordem certa. A perda é
+    anterior a tudo isso, na escolha do que ia no campo `tarefas`.
+  - **Duas causas:** (1) nada declarava que, havendo duas listas no turno, a do
+    quadro é a da FAMÍLIA; (2) a instrução de tamanho `mini` mandava montar
+    *"de 2 a 4 etapas, só o trecho que trava"* **sem excluir a sequência
+    ditada** — e o nome que a rotina recebeu, *"Entrada no Leônidas"*, é a
+    assinatura desse recorte.
+  - **Prova comportamental, não só de texto:** com a correção, **3 de 3**
+    execuções com chamada real devolveram as cinco etapas exatas. **Sem ela**,
+    uma de duas fundiu *"senta para estudar"* e *"faz a lição"* numa só.
+- **BANCADA COM CHAMADA REAL — 08/08/2026** (casos B, C e G da SPEC; sem banco,
+  sem WhatsApp, sem família real). **Aprovados:** B (necessidade implícita →
+  `suficiente`/`orientacao`) · C (evento único → **não** caiu em `falta_escopo`;
+  pediu a sequência, que é o desenhado) · C2 dentista (`suficiente`/`mini`) ·
+  G (sequência ditada → `montar`, sem confirmação) · **contracaso** (sobrecarga
+  sensorial no mercado → `nao_e_rotina`, com o raciocínio certo: *"a
+  previsibilidade da sequência não resolve"*). **A D-R2 não virou automática.**
+  - **Reprovado e corrigido:** a instrução injetada quando dava pra montar
+    dizia `acao="montar", obrigatoriamente` e *"não faça mais nenhuma
+    pergunta"*, **contradizendo a D-R1**. Diante de uma sequência que precisava
+    completar, a Ayla devolvia **pergunta de investigação** (*"o Mario é alguém
+    que ele conhece bem?"*) em vez da proposta numerada. Duas instruções fortes
+    em contradição produzem uma saída que não é nenhuma das duas.
+  - **AINDA EM ABERTO, e repetiu 2 de 2:** quando a Ayla **reorganiza** a ordem
+    que a mãe deu (ela disse *dormir, jantar, chega*), a Ayla corrige a ordem e
+    **monta sem confirmar**. A correção provável exige o porteiro informar ao
+    condutor que houve reorganização — **campo novo em `ProntidaoRotina`**, o
+    que é mudança estrutural, não ajuste localizado. **Não implementado; precisa
+    de decisão.**
 - **⚠️ ESTADO: AGUARDANDO VALIDAÇÃO.** Falta exatamente uma evidência, e ela
   não se fabrica: **uma conversa real, de uma família real, exercitando os
   casos B (necessidade implícita), C (evento único) e a confirmação seletiva.**
