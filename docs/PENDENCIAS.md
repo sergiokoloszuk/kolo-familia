@@ -1364,6 +1364,60 @@ do laudo de 06/08) + `docs/auditoria-ayla-prompt.md`
     FAMÍLIA", "CONFIRMAR OU MONTAR" e "QUAL RECORTE".
   - **Os 5 commits locais não foram usados.** Os seis arquivos exclusivos deles
     continuam ausentes do `origin/main`, e o backup segue em `33d0894`.
+- **✅ FASE 4A.2 + 4A.3 (2026-08-09).** Âncora, licença e os 10 registros novos
+  ligados no piloto. 8 casos com modelo real em
+  [bancada/4a2-oito-casos-2026-08-09.txt](bancada/4a2-oito-casos-2026-08-09.txt).
+  - **O Perfil passou a mudar a resposta, não só a evitar pergunta.** No caso da
+    leitura, a Ayla usou o interesse por dinossauros **funcionalmente**:
+    *"use palavras de dinossauro que ele já conhece de cor — TIRANOSSAURO. Ele
+    sabe essa palavra dormindo. Como ele já sabe o destino, fica mais fácil
+    juntar. É treino de leitura com rede de segurança."* Isso é composição, não
+    citação do perfil.
+  - **Reenquadramento do cuidador aconteceu sozinho.** A mãe disse *"acho que é
+    preguiça"*; a resposta foi *"não é preguiça, é travamento de início"*, com o
+    experimento concreto junto (fazer o primeiro exercício em voz alta e devolver
+    o segundo). Nenhuma linha do prompt pede reenquadramento — ele emergiu do
+    Perfil + licença.
+  - **Mecanismo explicado em linguagem de casa:** *"é como carregar balde furado
+    — quando enche, já vazou metade"*.
+  - **🐛 A CLÁUSULA ANTI-INVENÇÃO NÃO SEGUROU.** `LICENCA_GENERATIVA` proíbe
+    *"o cérebro dela está dizendo…"* **citando a frase exata**, e o modelo
+    produziu três variantes mesmo assim: *"o cérebro dela tá dizendo isso é
+    difícil demais"*, *"o cérebro dele precisa desse tempo pra voltar"*, *"o
+    cérebro dele vai somando tudo isso"*. São metáforas, não afirmação de
+    evidência — mas **proibir citando o exemplo não bastou**. Fica registrado
+    como o achado que a 4A.2 não resolveu.
+  - **🐛 O CASO 1 NÃO USOU O PERFIL.** Em *"bate na irmã"*, o Perfil registrava
+    os sinais precoces e a resposta não os mencionou — enquanto na ablação de
+    03/08 a mesma configuração os nomeava. **Personalização inconsistente entre
+    casos**, e não sei ainda por quê.
+  - **4A.3 é ganho limpo.** Em sobrecarga, com os registros novos (98/80/26 pts
+    contra 18/12/10), a resposta passou a entregar o método —
+    *"por uns três dias, anota duas coisas: que horas ficou difícil e o que
+    tinha rolado nas duas horas antes"* — ficou **828 caracteres contra 1.179**,
+    e **não inventou mecanismo nenhum**. Mais útil, mais curta, mais segura.
+  - **Os 10 registros continuam em `rascunho`.** O piloto os alcança por
+    `statusAceitos: ["ativo","rascunho"]`, não por publicação — desligar a flag
+    os faz sumir, e o WhatsApp nunca os vê.
+  - **Custo:** 1.807 a 2.963 tokens de entrada · 4,0 s a 13,9 s. **A latência é o
+    item que ainda não está resolvido.**
+  - **Dois testes-guarda foram INVERTIDOS de propósito** — eles guardavam a
+    ausência de consumidor na 4A.1 e agora guardam a presença, com a mesma
+    severidade (exatamente um consumidor, e é o prompt da web).
+- **⏳ PLANO KOLO — levar a inteligência conversacional aprovada para a geração
+  e o acompanhamento do Plano.** Auditoria de 09/08/2026 sobre `lib/ia/plano.ts`:
+  - **JÁ EXISTE E ESTÁ LIGADO:** contexto do Perfil (via `buildContext`), uso de
+    interesses, "o que observar", próximo passo, e leitura do resultado anterior.
+  - **EXISTE MAS NÃO ESTÁ LIGADO:** perfil consultável campo a campo · BASE 2 ·
+    ranking por aderência · licença generativa. **O Plano chama `buildContext`
+    mas NÃO passa `relato`** — então `piloto` é sempre `false` ali, e ele recebe
+    zero da inteligência nova, mesmo com a flag ligada.
+  - **DIVERGÊNCIA:** o Plano usa `VOZ_LIMITES_E_FRONTEIRA`, **não** o
+    `nucleoConducao`. Ele tem uma voz própria, não a voz da Ayla — o que
+    contradiz o que se acreditava sobre "a mesma cabeça nos dois canais".
+  - **NÃO EXISTE:** progressão explícita como campo.
+  - **Só implementar depois que a Karina aprovar Estratégias Web**, para não
+    replicar uma arquitetura em calibração.
 - **Depende de:** PEND-017 e PEND-018 — **desenhar junto**. Absorve PEND-009
   (primeira conversa) dentro do DESEJADO.
 - **Admin:** ADMIN PRECISA DE AJUSTE — hoje não dá para ver *por que* a Ayla
