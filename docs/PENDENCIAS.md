@@ -1464,6 +1464,50 @@ do laudo de 06/08) + `docs/auditoria-ayla-prompt.md`
     um só.
 - **⏳ PEND: levar o mesmo padrão visual para o Plano Kolo**, depois da aprovação
   da Karina. Junto com a pendência da inteligência conversacional no Plano.
+- **✅ AUDITORIA DA ENTREGA (2026-08-09).** Duas perguntas que podiam bloquear o
+  piloto. Transcrições em
+  [bancada/entrega-estrategia-atividade-brincadeira-2026-08-09.txt](bancada/entrega-estrategia-atividade-brincadeira-2026-08-09.txt).
+  - **✅ A IA DISTINGUE OS TRÊS — e com folga.** Em 3 desafios, pedindo
+    separadamente estratégia, atividade e brincadeira, as três respostas
+    compartilharam **3, 2 e 1 palavra de conteúdo**. Não é a mesma orientação com
+    títulos diferentes.
+    - *Estratégia* (leitura): o dedo da criança embaixo da sílaba e o adulto
+      repetindo a palavra inteira por cima do mesmo caminho — muda a atuação do
+      adulto, não propõe atividade.
+    - *Atividade*: "Leitura em duas passadas", com etapas e progressão de duas
+      sílabas em diante. Sem nome fantasioso, como deve ser.
+    - *Brincadeira*: "Caçada de Dinossauro Perdido" — o dino só "acorda" se o
+      nome inteiro for falado. **Não existe no banco**: é criação com lastro no
+      mecanismo, usando o interesse como ponte e explicando o que treina.
+    - E no caso dos sinais precoces saiu o "Semáforo do Maquinista", com a criança
+      de maquinista e o adulto de torre de controle. **Interesse como ponte, não
+      como prêmio.**
+  - **🐛 BASE 3 — A CLASSIFICAÇÃO NÃO É CONFIÁVEL PORQUE NÃO EXISTE.** Não há
+    campo de tipo: as colunas são `nivel` (nulo em 378 de 381), `tags`,
+    `atividades_praticas` e texto. A palavra "brincadeira" aparece no texto de
+    **87 registros**, e ao tentar classificá-los semanticamente descobri que a
+    minha própria heurística não separa — ela marcou *"Corte de dever 2h antes
+    de dormir"* como brincadeira. **A conclusão honesta não é "a taxonomia está
+    errada"; é que taxonomia não há.** O que existe são tags soltas
+    (`brincadeira`, `jogo`, `atividade`, `jogo-paralelo`) sem critério.
+  - **CONSEQUÊNCIA PARA O PILOTO: nenhuma.** A distinção que importa é a que a
+    IA faz na hora de entregar, e essa passou. A reclassificação do acervo é
+    trabalho de conteúdo, não bloqueio de experiência.
+- **⏳ PEND: taxonomia funcional da BASE 3** — decidir se estratégia · atividade ·
+  brincadeira viram campo, e com que critério. **Não migrar em massa antes da
+  decisão editorial.** Hoje 87 registros mencionam brincadeira e não se sabe
+  quantos são.
+- **⏳ PEND: regra de oferta do Plano.** O prompt web diz *"assim que tiver
+  contexto suficiente pra um bom plano, FECHE assim"* e *"use SÓ quando for
+  mesmo hora de oferecer, nunca em toda resposta"*. A decisão de produto do
+  Sérgio é mais estrita: **Plano não é CTA padrão** — a oferta acontece quando a
+  conversa já produziu compreensão E há vantagem real em organizar os próximos
+  dias, e ela precisa **explicar por quê**, não anunciar funcionalidade. A
+  redação atual descreve o que o Plano contém ("mais ideias, frases prontas"),
+  não por que vale naquele caso. **Não medi a frequência real de oferta** — fica
+  para a bancada com o `blocoIntencao` real.
+- **⏳ PEND: PDF + link do Plano**, e a inconsistência entre Web e WhatsApp. Não
+  auditado nesta missão.
 - **Depende de:** PEND-017 e PEND-018 — **desenhar junto**. Absorve PEND-009
   (primeira conversa) dentro do DESEJADO.
 - **Admin:** ADMIN PRECISA DE AJUSTE — hoje não dá para ver *por que* a Ayla
