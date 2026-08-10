@@ -106,12 +106,17 @@ describe("o WhatsApp não muda", () => {
     expect(n).not.toMatch(/O PERFIL É ÂNCORA/);
   });
 
-  it("9. na 4A.2 ele ganhou UM consumidor: o prompt da conversa web", () => {
-    // Até a 4A.1 este teste guardava a AUSÊNCIA de consumidor — era assim que
-    // se provava que a composição existia sem afetar ninguém. A 4A.2 a ligou,
-    // e agora ele guarda o oposto, com a mesma severidade: exatamente um
-    // consumidor, e é o prompt da web. Se aparecer um segundo, alguém levou a
-    // licença para um canal que ninguém mediu.
+  it("9. os consumidores são EXATAMENTE os dois canais — nenhum a mais", () => {
+    // A genealogia deste teste, inteira, porque ela é a história da frente:
+    //   4A.1 — guardava a AUSÊNCIA de consumidor. Era assim que se provava que
+    //          a composição existia sem afetar ninguém.
+    //   4A.2 — passou a exigir UM: o prompt da web. "Se aparecer um segundo,
+    //          alguém levou a licença para um canal que ninguém mediu."
+    //   10/08 — o segundo canal foi medido e DECIDIDO: o piloto leva a mesma
+    //          compreensão ao WhatsApp. Agora são dois, e continuam sendo
+    //          exatamente dois. Um terceiro (Plano, Rotina, História) seria
+    //          alguém estendendo a licença a um artefato sem medição — e a
+    //          PEND-027 diz explicitamente que o Plano não muda nesta missão.
     const raiz = resolve(__dirname, "../..");
     const { execSync } = require("node:child_process") as typeof import("node:child_process");
     const saida = execSync(`git grep -l "conducao/composicao" -- "*.ts" "*.tsx" || true`, {
@@ -125,7 +130,8 @@ describe("o WhatsApp não muda", () => {
       .filter((f) => !f.endsWith(".test.ts"));
     // `git grep` imprime o caminho relativo ao CWD em algumas versões e ao topo
     // do repositório em outras — o que importa é quantos são e qual é.
-    expect(consumidores).toHaveLength(1);
-    expect(consumidores[0]).toMatch(/lib[\/\\]ia[\/\\]prompt\.ts$/);
+    expect(consumidores).toHaveLength(2);
+    expect(consumidores.some((f) => /lib[\/\\]ia[\/\\]prompt\.ts$/.test(f))).toBe(true);
+    expect(consumidores.some((f) => /lib[\/\\]ayla[\/\\]responder\.ts$/.test(f))).toBe(true);
   });
 });

@@ -1,7 +1,11 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
-import { FLAG_PILOTO, pilotoEstrategiasLigado } from "@/lib/conducao/piloto";
+import {
+  FLAG_PILOTO_4A,
+  FLAG_PILOTO_4A_FAMILIAS,
+  pilotoQuatroA,
+} from "@/lib/conducao/piloto";
 import { recuperarBoasPraticas } from "@/lib/conhecimento/recuperar";
 
 /**
@@ -38,7 +42,8 @@ const CAMINHO_DA_ROTINA = [
 ];
 
 afterEach(() => {
-  delete process.env[FLAG_PILOTO];
+  delete process.env[FLAG_PILOTO_4A];
+  delete process.env[FLAG_PILOTO_4A_FAMILIAS];
 });
 
 describe("a Rotina não passa pelo caminho da 4A.1", () => {
@@ -56,7 +61,7 @@ describe("a Rotina não passa pelo caminho da 4A.1", () => {
 
   it("2. MORDE: a flag não é lida em lugar nenhum da Rotina", () => {
     for (const f of CAMINHO_DA_ROTINA) {
-      expect(src(f), `${f} leu a flag do piloto`).not.toMatch(/KOLO_PILOTO_ESTRATEGIAS|pilotoEstrategiasLigado/);
+      expect(src(f), `${f} leu a flag do piloto`).not.toMatch(/KOLO_PILOTO_4A|pilotoQuatroA/);
     }
   });
 
@@ -84,13 +89,15 @@ describe("o ranking não alcança a Rotina", () => {
     // E a flag não é sequer consultada dentro do recuperador — a decisão é de
     // quem chama. Um `if (pilotoLigado())` aqui dentro atingiria todo mundo.
     expect(rec, "o recuperador passou a ler a flag").not.toMatch(
-      /KOLO_PILOTO_ESTRATEGIAS|pilotoEstrategiasLigado/,
+      /KOLO_PILOTO_4A|pilotoQuatroA/,
     );
   });
 
-  it("5. flag ON não muda a assinatura de quem não passa relato", () => {
-    process.env[FLAG_PILOTO] = "1";
-    expect(pilotoEstrategiasLigado()).toBe(true);
+  it("5. piloto no máximo (`on`) não muda a assinatura de quem não passa relato", () => {
+    // `on` é o estado mais permissivo que existe — se nem ele alcança a Rotina,
+    // nenhum outro alcança.
+    process.env[FLAG_PILOTO_4A] = "on";
+    expect(pilotoQuatroA("qualquer-familia")).toBe(true);
     // A função continua sendo chamável exatamente como a Rotina a chama.
     expect(typeof recuperarBoasPraticas).toBe("function");
     expect(recuperarBoasPraticas.length).toBe(1);

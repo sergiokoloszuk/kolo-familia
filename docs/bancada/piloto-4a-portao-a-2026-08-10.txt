@@ -1,0 +1,264 @@
+PORTÃO A · 8 casos funcionais · pipeline REAL da web
+provider da família sintética: openai · 4A: true
+assemblePrompt + gerarConversacional — o par exato de app/api/conversar/stream/route.ts
+
+
+██████████████████████████████████████████████████████████████████████████████
+1 · PERFIL CONTRADIZ BP
+"Ele bate na irmã quando é contrariado e eu não sei como agir na hora."
+esperado: usa trens/metrô ou nada; NUNCA dinossauro ou futebol
+
+  intenção ....... desafio  ·  tema: emocional
+  BASE 2 ......... 3 seções: PRINCÍPIO CENTRAL | ANTES DE ORIENTAR, DIFERENCIE — QUANDO EMO | PERGUNTA DE ALTO VALOR — GOLDEN CASE
+  BPs candidatas . 3 sem ranking: Crianças pequenas não têm capacidade neu | O cérebro tem andares: tronco cerebral ( | Momentos de quietude estruturados (sem p
+  BPs ENVIADAS ... 2 com ranking: Quando a criança entra em crise (choro i | Bater, morder, chutar, gritar: todas for
+  ranking trocou o conjunto? SIM
+
+  provider ....... openai / gpt-5.6-luna
+  system ......... 66937 ch · contexto 9219 ch · tokens in 19047 out 473
+  resposta ....... 1417 ch · 7486 ms · 0 pergunta(s)
+  usou perfil? SIM · citou aversão? não · ofereceu Plano? não
+
+  ┌─ resposta
+  │ ## Na hora
+  │ 
+  │ A prioridade é **proteger a irmã sem transformar o momento numa discussão**. Fique perto, bloqueie a batida com calma e afaste os dois por um instante, usando poucas palavras:
+  │ 
+  │ > “Eu não vou deixar você bater. Vou ficar aqui. Quando seu corpo acalmar, eu te ajudo.”
+  │ 
+  │ Como você já percebeu que Téo fica mais rápido e fala mais alto antes de explodir, intervenha nesse começo: presença próxima, voz baixa e sem exigir que ele explique.
+  │ 
+  │ ## Depois que baixar
+  │ 
+  │ Não tente ensinar no auge. Quando ele estiver mais tranquilo, retome em uma frase: “Você ficou contrariado e bateu. Bater machuca. Da próxima vez, pode dizer ‘pausa’, ‘me ajuda’ ou apontar para o que precisa.” Treinar essas alternativas fora do conflito ajuda porque, sob muita frustração, falar e escolher uma resposta ficam mais difíceis.
+  │ 
+  │ O interesse por trens pode virar ensaio: faça uma brincadeira curta de “estação da pausa” — quando o trem fica rápido demais, ele para na estação, respira ou pede ajuda, e só depois continua. Não é prêmio por não bater; é uma forma concreta de praticar a sequência.
+  │ 
+  │ ## O que observar
+  │ 
+  │ Nos próximos episódios, repare se acontece mais quando ele **perde algo que queria**, quando precisa fazer algo que não quer, ou quando já vinha ficando acelerado. Essa diferença ajuda a escolher o treino certo. Por enquanto, comece sempre pelo mesmo caminho: **bloquear, afastar com calma, poucas palavras e presença**.
+  └─
+
+
+██████████████████████████████████████████████████████████████████████████████
+2 · RELATO AMBÍGUO
+"Ele tem chorado muito ultimamente, não sei o que está acontecendo."
+esperado: compreende/diferencia antes de orientar; no máximo 1 pergunta de alto valor
+
+  intenção ....... desabafo  ·  tema: emocional
+  BASE 2 ......... 3 seções: PRINCÍPIO CENTRAL | ANTES DE ORIENTAR, DIFERENCIE — QUANDO EMO | PERGUNTA DE ALTO VALOR — GOLDEN CASE
+  BPs candidatas . 3 sem ranking: Crianças pequenas não têm capacidade neu | O cérebro tem andares: tronco cerebral ( | Momentos de quietude estruturados (sem p
+  BPs ENVIADAS ... 2 com ranking: Entrar antes do auge: perceber o primeir | O sinal combinado: um gesto que ela usa 
+  ranking trocou o conjunto? SIM
+
+  provider ....... openai / gpt-5.6-luna
+  system ......... 61093 ch · contexto 10948 ch · tokens in 17947 out 408
+  resposta ....... 979 ch · 5735 ms · 0 pergunta(s)
+  usou perfil? não · citou aversão? não · ofereceu Plano? não
+
+  ┌─ resposta
+  │ Você percebeu uma mudança: o choro do Téo aumentou, mas ainda não está claro se ele está tentando comunicar dor, cansaço, frustração ou alguma dificuldade que ficou grande demais. Como é algo novo ou mais intenso, não vale explicar automaticamente pelo autismo; observe também mudanças no sono, apetite, disposição ou sinais de desconforto e, se continuar, leve esse relato ao pediatra.
+  │ 
+  │ Por enquanto, quando ele começar a ficar mais rápido e falar mais alto — os sinais que você já reconhece — fique perto, fale pouco e reduza a exigência. *“Eu estou aqui. Vamos fazer uma pausa.”* Para algumas crianças, menos palavras nesse ponto ajuda porque conversar muito pode aumentar a dificuldade de se reorganizar.
+  │ 
+  │ Nos próximos episódios, tente anotar só uma coisa: o que aconteceu imediatamente antes do choro e o que ajudou a diminuir. Não precisa descobrir tudo agora; esse pequeno registro já pode mostrar um padrão e ajudar vocês a entenderem o que o Téo está tentando comunicar.
+  └─
+
+
+██████████████████████████████████████████████████████████████████████████████
+3 · MÚLTIPLOS TEMAS
+"Ele não fala o que quer, não para quieto na lição, não se veste sozinho e não brinca com as outras crianças. É tudo ao mesmo tempo."
+esperado: organiza as frentes e pergunta por qual começar; não resolve tudo; não empurra Plano
+
+  intenção ....... desafio  ·  tema: comunicacao
+  BASE 2 ......... 3 seções: PRINCÍPIO CENTRAL | ANTES DE ORIENTAR, DIFERENCIE — QUANDO EMO | PERGUNTA DE ALTO VALOR — GOLDEN CASE
+  BPs candidatas . 3 sem ranking: Crianças pequenas não têm capacidade neu | O cérebro tem andares: tronco cerebral ( | Momentos de quietude estruturados (sem p
+  BPs ENVIADAS ... 2 com ranking: Quando criança chega com queixa de outra | O termômetro do dia: medir a carga junto
+  ranking trocou o conjunto? SIM
+
+  provider ....... openai / gpt-5.6-luna
+  system ......... 66929 ch · contexto 10031 ch · tokens in 19242 out 988
+  resposta ....... 1990 ch · 11620 ms · 4 pergunta(s)
+  usou perfil? SIM · citou aversão? não · ofereceu Plano? SIM
+
+  ┌─ resposta
+  │ ## Por onde eu começaria
+  │ 
+  │ Você está vendo quatro habilidades diferentes ao mesmo tempo: **pedir o que quer, permanecer na lição, vestir-se e entrar nas brincadeiras**. Para não virar uma montanha, eu começaria pela **comunicação funcional** — ajudar Téo a mostrar “quero”, “não quero”, “ajuda” ou “pausa”. Isso pode facilitar outros momentos porque ele passa a ter uma forma mais clara de participar, sem precisar depender só de se afastar ou se agitar.
+  │ 
+  │ ## O que eu faria primeiro
+  │ 
+  │ Na próxima atividade, não pergunte de forma aberta “o que você quer?”. Mostre **duas opções reais ou desenhadas** e fale pouco:
+  │ 
+  │ > “Téo, você quer lápis ou canetinha? Pode apontar.”
+  │ 
+  │ Aceite apontar, pegar, olhar ou falar. Depois, modele uma palavra curta: **“canetinha”**, sem exigir que ele repita. Escolher entre duas opções costuma ser mais fácil do que encontrar sozinho as palavras para explicar um desejo.
+  │ 
+  │ ## Uma ideia com trens
+  │ 
+  │ Faça um pequeno “painel da viagem” com três cartões: **quero**, **ajuda** e **pausa**. Ele pode apontar para o cartão durante a lição ou numa brincadeira com trens. O objetivo não é ganhar um trem por obedecer; é usar o interesse dele como ponte para praticar uma mensagem que seja útil de verdade.
+  │ 
+  │ Se ele começar a ficar mais rápido e falar mais alto, fique perto e reduza as palavras, como já funciona com ele. Nesse momento, você pode mostrar apenas **“pausa?”** e esperar, em vez de continuar explicando.
+  │ 
+  │ ## Vamos testar
+  │ 
+  │ Por alguns dias, observe só uma coisa: **em quais situações Téo consegue escolher ou pedir quando você oferece duas opções — e qual forma ele usa: aponta, pega, olha ou fala?** Esse registro ajuda a construir o próximo passo sem tentar corrigir tudo ao mesmo tempo.
+  │ 
+  │ Como há várias frentes que precisam de sequência — comunicação, lição, vestir-se e interação — um plano estratégico com atividades para Téo pode organizar o que trabalhar primeiro e o que observar em cada etapa. Toque no botão abaixo para pedir esse plano.  
+  │ [[PRONTO_PLANO]]
+  └─
+
+
+██████████████████████████████████████████████████████████████████████████████
+4 · PEDIDO SIMPLES
+"Ele pode dormir com a luz acesa?"
+esperado: responde direto, curto, sem interrogatório
+
+  intenção ....... duvida  ·  tema: sono
+  BASE 2 ......... 3 seções: PRINCÍPIO CENTRAL | ANTES DE ORIENTAR, DIFERENCIE — QUANDO SON | PERGUNTA DE ALTO VALOR — GOLDEN CASE
+  BPs candidatas . 3 sem ranking: Crianças pequenas não têm capacidade neu | Valide emoções: 'Vejo que você está brav | Quadros visuais agora podem incluir mais
+  BPs ENVIADAS ... 2 com ranking: Sono é momento de segurança, não batalha | Mapa do coração na cama — antes de dormi
+  ranking trocou o conjunto? SIM
+
+  provider ....... openai / gpt-5.6-luna
+  system ......... 60805 ch · contexto 9716 ch · tokens in 17596 out 83
+  resposta ....... 317 ch · 2377 ms · 0 pergunta(s)
+  usou perfil? não · citou aversão? não · ofereceu Plano? não
+
+  ┌─ resposta
+  │ Pode, sim. Se a luz acesa ajuda o Téo a se sentir seguro, deixe uma luz fraca e indireta, sem transformar isso numa disputa; o objetivo agora é ele conseguir descansar. Mais adiante, se vocês quiserem reduzir, dá para ir diminuindo aos poucos, sem pressa. *“A luz fica acesa para você descansar; eu estou por perto.”*
+  └─
+
+
+██████████████████████████████████████████████████████████████████████████████
+5 · DADO JÁ CONHECIDO
+"Hoje ele explodiu de novo no fim da tarde. O que eu faço?"
+esperado: usa os sinais e o que ajuda que JÁ estão no perfil; não pergunta o que já sabemos
+
+  intenção ....... crise  ·  tema: emocional
+  BASE 2 ......... 3 seções: PRINCÍPIO CENTRAL | ANTES DE ORIENTAR, DIFERENCIE — QUANDO EMO | PERGUNTA DE ALTO VALOR — GOLDEN CASE
+  BPs candidatas . 3 sem ranking: Crianças pequenas não têm capacidade neu | O cérebro tem andares: tronco cerebral ( | Momentos de quietude estruturados (sem p
+  BPs ENVIADAS ... 2 com ranking: A conta do dia: quando a explosão do fim | Entrar antes do auge: perceber o primeir
+  ranking trocou o conjunto? SIM
+
+  provider ....... openai / gpt-5.6-luna
+  system ......... 62021 ch · contexto 11360 ch · tokens in 18294 out 194
+  resposta ....... 871 ch · 3326 ms · 0 pergunta(s)
+  usou perfil? SIM · citou aversão? não · ofereceu Plano? não
+
+  ┌─ resposta
+  │ No fim da tarde, talvez ele já esteja chegando com pouca margem depois de tudo que viveu — e o último pedido pode ser só o que fez a reação aparecer. Como você já sabe que ele fica mais rápido e fala mais alto antes de explodir, entre nesse sinal, não espere o auge: fique perto, fale pouco e reduza a próxima exigência.
+  │ 
+  │ Você pode dizer: *“Eu vi que ficou difícil. Vem ficar comigo um minutinho.”* Não tente explicar, perguntar muito ou discutir naquele momento; a presença calma ajuda porque deixa menos coisas para ele processar enquanto tenta se reorganizar.
+  │ 
+  │ Por alguns dias, anote apenas o horário em que começou e o que aconteceu nas duas horas anteriores. Repare se o padrão se repete e se, nos dias mais tranquilos, havia alguma diferença. Isso ajuda a descobrir se vale aliviar uma demanda antes desse horário, em vez de tentar resolver tudo durante a explosão.
+  └─
+
+
+██████████████████████████████████████████████████████████████████████████████
+6 · CRISE
+"SOCORRO ele está se jogando no chão e gritando agora, não sei o que fazer"
+esperado: curta, acolhe, 1-2 passos para atravessar; sem relatório e sem plano
+
+  intenção ....... crise  ·  tema: emocional
+  BASE 2 ......... 3 seções: PRINCÍPIO CENTRAL | ANTES DE ORIENTAR, DIFERENCIE — QUANDO EMO | PERGUNTA DE ALTO VALOR — GOLDEN CASE
+  BPs candidatas . 3 sem ranking: Crianças pequenas não têm capacidade neu | O cérebro tem andares: tronco cerebral ( | Momentos de quietude estruturados (sem p
+  BPs ENVIADAS ... 2 com ranking: Explosões de raiva — bate, grita, joga c | Em crise emocional, conecte primeiro (cé
+  ranking trocou o conjunto? SIM
+
+  provider ....... openai / gpt-5.6-luna
+  system ......... 62021 ch · contexto 9022 ch · tokens in 17728 out 226
+  resposta ....... 560 ch · 3647 ms · 0 pergunta(s)
+  usou perfil? não · citou aversão? não · ofereceu Plano? não
+
+  ┌─ resposta
+  │ Fica com ele e fale o mínimo possível. Como você já percebeu que a sua presença calma ajuda o Téo, aproxime-se sem tentar levantá-lo à força, afaste apenas o que possa machucá-lo e diga baixo: *“Eu estou aqui. Você está seguro. Quando conseguir, eu te ajudo.”*
+  │ 
+  │ Não tente explicar, convencer ou fazer perguntas agora; quando a emoção está muito alta, muitas palavras podem aumentar a dificuldade. Espere a intensidade baixar, mantendo-se por perto. Se ele começar a bater a cabeça, fugir ou alguém correr risco de se machucar, busque ajuda imediata — SAMU 192.
+  └─
+
+
+██████████████████████████████████████████████████████████████████████████████
+7 · OPORTUNIDADE REAL DE PLANO
+"As explosões no fim da tarde acontecem todo dia há uns dois meses. Eu queria trabalhar isso ao longo das próximas semanas, de forma organizada, e ir acompanhando se melhora."
+esperado: OFERECE o plano (marcador), com o ganho daquele caso
+
+  intenção ....... desafio  ·  tema: emocional
+  BASE 2 ......... 3 seções: PRINCÍPIO CENTRAL | ANTES DE ORIENTAR, DIFERENCIE — QUANDO EMO | PERGUNTA DE ALTO VALOR — GOLDEN CASE
+  BPs candidatas . 3 sem ranking: Crianças pequenas não têm capacidade neu | O cérebro tem andares: tronco cerebral ( | Momentos de quietude estruturados (sem p
+  BPs ENVIADAS ... 2 com ranking: A conta do dia: quando a explosão do fim | O termômetro do dia: medir a carga junto
+  ranking trocou o conjunto? SIM
+
+  provider ....... openai / gpt-5.6-luna
+  system ......... 66937 ch · contexto 10966 ch · tokens in 19464 out 550
+  resposta ....... 1463 ch · 7837 ms · 1 pergunta(s)
+  usou perfil? SIM · citou aversão? não · ofereceu Plano? SIM
+
+  ┌─ resposta
+  │ ## Por onde eu começaria
+  │ 
+  │ Como isso acontece **todos os dias no fim da tarde há cerca de dois meses**, eu começaria entendendo a carga que Téo traz para esse horário — não apenas o último pedido que desencadeia a explosão. Por 3 dias, anote só:
+  │ 
+  │ - horário em que começou a ficar difícil;
+  │ - o que aconteceu nas duas horas anteriores;
+  │ - se ele ficou mais rápido e falou mais alto antes.
+  │ 
+  │ Esse registro ajuda a descobrir se existe uma janela previsível e o que pode ser reduzido **antes do pico**.
+  │ 
+  │ ## O que fazer primeiro
+  │ 
+  │ Quando você perceber esses sinais, fique perto e fale pouco, como já sabemos que ajuda Téo:
+  │ 
+  │ > “Eu vi que está ficando difícil. Vou ficar aqui com você.”
+  │ 
+  │ Evite perguntar “o que foi?” ou explicar demais nesse momento. Quando a reação já está subindo, muitas palavras podem virar mais uma exigência; a presença calma dá espaço para ele recuperar o controle sem precisar responder imediatamente.
+  │ 
+  │ ## O que vamos acompanhar
+  │ 
+  │ Ao longo das próximas semanas, dá para organizar uma sequência: primeiro observar o padrão, depois antecipar esse horário com uma pausa ou uma transição mais previsível, e só então ensinar Téo a avisar que está chegando ao limite — talvez usando uma “linha do metrô” com estações como **tranquilo**, **mais rápido** e **preciso de pausa**.
+  │ 
+  │ Um plano estratégico com atividades para o Téo pode organizar essa progressão, as frases e o que observar em cada etapa. O botão para solicitar fica logo abaixo.
+  │ 
+  │ [[PRONTO_PLANO]]
+  └─
+
+
+██████████████████████████████████████████████████████████████████████████████
+8 · NÃO É CASO DE PLANO
+"Só queria te contar que hoje ele conseguiu esperar a vez dele sem chorar. Fiquei feliz."
+esperado: celebra junto; NÃO oferece plano
+
+  intenção ....... desabafo  ·  tema: socializacao
+  BASE 2 ......... 3 seções: PRINCÍPIO CENTRAL | ANTES DE ORIENTAR, DIFERENCIE — QUANDO EMO | PERGUNTA DE ALTO VALOR — GOLDEN CASE
+  BPs candidatas . 3 sem ranking: Crianças pequenas não têm capacidade neu | O cérebro tem andares: tronco cerebral ( | Momentos de quietude estruturados (sem p
+  BPs ENVIADAS ... 2 com ranking: Entrar antes do auge: perceber o primeir | O sinal combinado: um gesto que ela usa 
+  ranking trocou o conjunto? SIM
+
+  provider ....... openai / gpt-5.6-luna
+  system ......... 61093 ch · contexto 10969 ch · tokens in 17952 out 280
+  resposta ....... 557 ch · 4311 ms · 0 pergunta(s)
+  usou perfil? não · citou aversão? não · ofereceu Plano? não
+
+  ┌─ resposta
+  │ Que conquista bonita, Ana. Ele conseguiu atravessar uma espera que antes podia ser difícil — e isso mostra uma habilidade em construção, não apenas “não ter chorado”.
+  │ 
+  │ Vale reparar no que ajudou hoje: se ele sabia quanto tempo esperaria, se você ficou por perto, se recebeu poucas palavras ou se a vez estava bem previsível. Quando algo parecido acontecer de novo, você pode dizer: *“Você esperou sua vez. Foi difícil e você conseguiu.”* O elogio destaca a habilidade que ele está aprendendo, sem transformar a espera em cobrança para repetir perfeitamente.
+  └─
+
+
+
+██████████████████████████████████████████████████████████████████████████████
+RESUMO
+
+caso                              int       B2  rank  ch    ?   perfil  plano
+1 · PERFIL CONTRADIZ BP           desafio   3   trocou1417  0   usou    -
+2 · RELATO AMBÍGUO                desabafo  3   trocou979   0   -       -
+3 · MÚLTIPLOS TEMAS               desafio   3   trocou1990  4   usou    OFERECEU
+4 · PEDIDO SIMPLES                duvida    3   trocou317   0   -       -
+5 · DADO JÁ CONHECIDO             crise     3   trocou871   0   usou    -
+6 · CRISE                         crise     3   trocou560   0   -       -
+7 · OPORTUNIDADE REAL DE PLANO    desafio   3   trocou1463  1   usou    OFERECEU
+8 · NÃO É CASO DE PLANO           desabafo  3   trocou557   0   -       -
+
+tokens: 147270 in · 3202 out · latência mediana 5735 ms
+citou aversão do perfil em algum caso? NÃO

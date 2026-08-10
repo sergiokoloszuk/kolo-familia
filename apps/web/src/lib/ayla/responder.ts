@@ -14,6 +14,15 @@ import { pronomesPara, type Genero, type CuidadorDescrito } from "./pronomes";
 // (formato e idioma). A identidade agora vive no CÓDIGO (não mais no banco
 // voz_ayla), o que elimina o drift banco×código.
 import { nucleoConducao } from "@/lib/conducao/diretrizes";
+// FASE 4A · as MESMAS constantes que `lib/ia/prompt.ts` injeta na web. Uma
+// redação só para os dois canais: se a precedência do perfil mudar, muda nos
+// dois no mesmo commit.
+import { ANCORA_PERFIL, LICENCA_GENERATIVA } from "@/lib/conducao/composicao";
+import type { SecaoBase2 } from "@/lib/conducao/base2";
+import {
+  linhasDoPerfilConsultavel,
+  type PerfilConsultavel,
+} from "@/lib/kolo-vivo/consultar";
 import { angulosUsados, blocoProgressao } from "@/lib/conducao/angulos";
 import {
   formasDeEntrega,
@@ -153,6 +162,30 @@ export type RespostaParams = {
    * o repertório.
    */
   repertorio?: string;
+  /**
+   * FASE 4A · o perfil campo a campo, com ESTADO (preenchido / negativo /
+   * vazio). `null` fora do piloto.
+   *
+   * Não substitui `koloVivoResumo`, que continua mandando o CONTEÚDO. Este
+   * manda a outra metade: o que está vazio e sobretudo o que é NEGATIVO — "não
+   * tem sensibilidade a som" é informação, e sem essa distinção o modelo trata
+   * vazio e negativo igual, e volta a perguntar o que a família já respondeu.
+   */
+  perfilConsultavel?: PerfilConsultavel | null;
+  /**
+   * FASE 4A · esta família está no piloto? Decidido por `pilotoQuatroA` no
+   * orquestrador — aqui só se OBEDECE, nunca se recalcula: duas fontes para a
+   * mesma decisão sempre divergem.
+   *
+   * Existe como campo próprio porque a licença generativa não pode ser inferida
+   * da presença de material neste canal (ver o comentário na injeção).
+   */
+  piloto4A?: boolean;
+  /**
+   * FASE 4A · as seções de investigação da BASE 2 (`docs/skills`) do tema deste
+   * turno. Vazio fora do piloto.
+   */
+  base2?: readonly SecaoBase2[];
   /** Títulos das últimas conversas nas Estratégias (in-app), pra continuidade. */
   estrategiasRecentes?: string[];
   /** `sobre` = nome de OUTRA criança da família, quando o turno não é do membro em foco. */
@@ -443,11 +476,41 @@ ${params.diagnosticoRegistrado.trim()}`);
       `\n<lacunas_do_perfil>\n${params.koloVivoLacunas}\nUse isto pra perguntar só o PERTINENTE (não re-pergunte o que já tem) e pra saber o que ainda falta antes de montar um relatório.\n</lacunas_do_perfil>`,
     );
   }
+  // ── FASE 4A (10/08/2026) ────────────────────────────────────────────────
+  // A âncora vem COLADA no perfil, e não no fim — medido na web em 09/08: sem
+  // instrução de precedência, o repertório genérico apagava o que o perfil
+  // registrava, e a âncora colocada depois do repertório chegava tarde demais.
+  const blocoPerfil4A = linhasDoPerfilConsultavel(params.perfilConsultavel);
+  if (blocoPerfil4A) {
+    linhas.push(
+      `\n<o_que_ja_sabemos>\n${ANCORA_PERFIL}\nNÃO pergunte o que está em "sabemos" nem o que está em "NÃO se aplica" — a família já respondeu, e repetir a pergunta desfaz a confiança de ter contado.\n${blocoPerfil4A}\n</o_que_ja_sabemos>`,
+    );
+  }
+  if (params.base2?.length) {
+    linhas.push(
+      `\n<como_compreender_este_tema>\nMaterial INTERNO de raciocínio — não repita nada disto para a família e não transforme as bifurcações em questionário. Use para decidir O QUE ainda muda a conduta, e faça no máximo UMA pergunta: a que separa os caminhos.\n${params.base2
+        .map((s) => `### ${s.titulo}\n${s.conteudo}`)
+        .join("\n\n")}\n</como_compreender_este_tema>`,
+    );
+  }
   // REPERTÓRIO DA KOLO — a Camada 2, que até 06/08/2026 não chegava ao WhatsApp
   // em nenhum turno. Vem do MESMO recuperador que a web usa, escolhido pela
   // skill que a classificação de intenção já devolveu — sem chamada extra.
   if (params.repertorio?.trim()) {
     linhas.push(`\n${params.repertorio}`);
+  }
+  // FASE 4A · a licença generativa fecha o contexto, e vem por último de
+  // propósito: ela fala SOBRE o material acima. Sem material acima, só
+  // aumentaria o risco de invenção — a bancada de 09/08 pegou exatamente isso
+  // num caso sem repertório aderente. Daí a guarda dupla:
+  //
+  //   1. `piloto4A` — SEM ISTO A LICENÇA VAZA. O WhatsApp entrega repertório a
+  //      TODA família desde 06/08, então uma guarda só por "há material" ligaria
+  //      a licença para as 55 famílias de fora. Este canal não tem o equivalente
+  //      da web, onde a licença já vale para todos desde a 4A.2.
+  //   2. presença de material — a mesma regra da web, pelo mesmo motivo.
+  if (params.piloto4A && (blocoPerfil4A || params.base2?.length || params.repertorio?.trim())) {
+    linhas.push(`\n${LICENCA_GENERATIVA}`);
   }
   if (params.estrategiasRecentes && params.estrategiasRecentes.length > 0) {
     linhas.push(

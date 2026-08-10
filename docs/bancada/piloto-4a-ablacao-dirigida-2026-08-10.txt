@@ -1,0 +1,254 @@
+ABLAÇÃO DIRIGIDA · golden case de SONO · critérios 6 e 7
+relato: "Ele demora para dormir, me chama várias vezes, às vezes diz que está com medo, pede água, quer ir ao banheiro; eu fico até ele dormir porque, se saio, ele levanta."
+intenção desafio · tema sono
+
+BRAÇO A · BASE 2: 3 seções (PRINCÍPIO CENTRAL | ANTES DE ORIENTAR, DIFERENCIE — QUANDO | PERGUNTA DE ALTO VALOR — GOLDEN CASE)
+BRAÇO A · BPs (ranking): Imagem assustadora vira cômica com humor: 'e se a múmia…
+                         Mapa do coração na cama — antes de dormir sozinha,…
+
+BRAÇO B · BASE 2: nenhuma
+BRAÇO B · BPs (peso, antigo): Crianças pequenas não têm capacidade neurológica de se auto-
+                              Valide emoções: 'Vejo que você está bravo porque não consegu
+                              Quadros visuais agora podem incluir mais detalhes.
+
+BPs em comum entre os braços: 0 de 2
+
+
+██████████████████████████████████████████████████████████████████████████████
+BRAÇO A · execução 1 · 1197 ch · 6998 ms
+
+  │ ## O que estou percebendo
+  │ 
+  │ A presença dela virou parte do caminho até dormir: quando você sai, Nina levanta. Os pedidos de água, banheiro e o medo podem ter funções diferentes — necessidade real, adiamento ou busca de segurança — então eu não tentaria cortar tudo de uma vez.
+  │ 
+  │ ## O que eu faria primeiro
+  │ 
+  │ Antes de deitar, façam uma sequência curta e igual: **banheiro, água, história, cama**. Depois, deixe na cama um desenho de gatinho feito por vocês com a frase:
+  │ 
+  │ > “O gatinho fica aqui com você. Eu vou sair, e volto para conferir quando terminar esta história.”
+  │ 
+  │ No começo, você pode ficar ao lado, mas sem conversar até ela dormir: conte a história, avise que vai permanecer em silêncio e faça saídas bem pequenas, retornando como combinado. Isso cria uma ponte entre “mamãe fica até eu dormir” e “mamãe vai embora e eu continuo segura”, sem transformar a mudança numa separação brusca.
+  │ 
+  │ ## O que observar
+  │ 
+  │ Quando Nina diz que está com medo, ela consegue dizer **do que**? E, depois que finalmente dorme, como costuma ser o restante da noite? Essas duas informações ajudam a separar o medo específico do padrão de precisar da sua presença para adormecer e indicam qual será o próximo ajuste.
+
+██████████████████████████████████████████████████████████████████████████████
+BRAÇO A · execução 2 · 1359 ch · 5943 ms
+
+  │ ## O que estou percebendo
+  │ 
+  │ A hora de dormir virou uma sequência de chamados — medo, água, banheiro — e a sua permanência ao lado passou a fazer parte do jeito que Nina consegue adormecer. Isso não é culpa sua: ficar com ela resolve naquele momento, mas também pode fazer com que ela dependa da sua presença para continuar na cama.
+  │ 
+  │ ## O que eu faria primeiro
+  │ 
+  │ Antes de deitar, façam **água e banheiro** e combinem uma história curta de gatos. Depois, diga:
+  │ 
+  │ > “Agora está tudo pronto: água, banheiro e história. Eu vou ficar aqui enquanto você se acalma. Depois vou me afastar um pouquinho, e o coração da mamãe fica com você.”
+  │ 
+  │ Deixe um desenho de coração feito por você — ou um objeto seguro que represente sua presença — na cama dela. Nos primeiros dias, não precisa sair de uma vez: fique ao lado, mas interaja cada vez menos; depois passe a sentar um pouco mais distante. A ideia é trocar gradualmente a sua presença física por uma referência que continue com ela.
+  │ 
+  │ ## O que observar
+  │ 
+  │ Quando Nina disser que está com medo, tente não responder apenas “não precisa ter medo”. Acolher e descobrir o que ela está tentando comunicar ajuda a diferenciar medo de algo específico, necessidade real ou pedido de continuar perto.
+  │ 
+  │ Quando ela diz que está com medo, consegue explicar **do que**? E, depois que finalmente dorme, como costuma ser o restante da noite?
+
+██████████████████████████████████████████████████████████████████████████████
+BRAÇO A · execução 3 · 1398 ch · 6509 ms
+
+  │ ## O que estou percebendo
+  │ 
+  │ A dificuldade não está só em “demorar a dormir”: há uma sequência de chamados — medo, água, banheiro — e a presença da mãe virou parte do caminho até o sono. Esses pedidos podem misturar necessidade real, adiamento ou busca de segurança; não dá para escolher uma explicação sem observar.
+  │ 
+  │ ## O que eu faria primeiro
+  │ 
+  │ Antes de apagar a luz, façam um pequeno “checklist do gato”: banheiro, água ao alcance e uma história curta. Depois, quando ela chamar, responda com poucas palavras e repita a mesma sequência:
+  │ 
+  │ > “Você está segura. Água e banheiro já foram combinados. Agora é hora de descansar; eu vou ficar aqui pertinho.”
+  │ 
+  │ Como Nina já adormece com você ao lado, eu não tentaria sair de repente. Primeiro, fique sentada perto sem conversar até ela dormir; depois, em outro momento, passe a ficar um pouco mais distante. Um desenho pequeno de gato ou um objeto seguro na cama pode representar sua presença, sem exigir que você permaneça até ela apagar.
+  │ 
+  │ ## O que observar
+  │ 
+  │ Repare se ela consegue explicar **do que** tem medo e se, depois que finalmente dorme, o restante da noite costuma ser tranquilo ou se ela acorda e chama novamente. Essa diferença ajuda a entender se o foco inicial é o medo, a condição para adormecer ou os despertares.
+  │ 
+  │ Quando ela diz que está com medo, consegue dizer do quê? E depois que finalmente dorme, como costuma ser o restante da noite?
+
+██████████████████████████████████████████████████████████████████████████████
+BRAÇO B · execução 1 · 1729 ch · 7008 ms
+
+  │ ## O que estou percebendo
+  │ 
+  │ A Nina parece depender da sua presença para conseguir permanecer no quarto: quando você sai, ela levanta; quando chama, você volta e fica até dormir. Isso não significa que ela esteja fazendo “manha” — o medo pode ser real, e água ou banheiro também podem ser formas de prolongar a sua presença.
+  │ 
+  │ ## O que eu faria primeiro
+  │ 
+  │ Eu começaria por **não sair de repente**, mas tornar sua presença cada vez mais previsível e um pouco menor:
+  │ 
+  │ 1. Antes de deitar: água e banheiro, para tirar essas necessidades do caminho.  
+  │ 2. Conte uma história curta de gatos, sempre com o mesmo final: “A história acabou, agora é hora de descansar.”  
+  │ 3. Fique ao lado, mas combine: “Vou ficar sentada aqui. Não vou conversar; vou voltar para te olhar daqui a pouco.”  
+  │ 4. Depois de alguns dias, afaste a cadeira um pouco. Se ela chamar, responda com poucas palavras e volte ao combinado, sem reiniciar a história ou a rotina.
+  │ 
+  │ > “Você está com medo. Eu estou aqui e vou te olhar de novo. Agora é hora de ficar na cama e descansar.”
+  │ 
+  │ A ideia é ensinar, aos poucos, que ela pode permanecer no quarto mesmo sem você colada à cama. O primeiro objetivo não precisa ser dormir sozinha imediatamente; pode ser **ficar na cama com você um pouco mais distante**.
+  │ 
+  │ ## O que observar
+  │ 
+  │ Por alguns dias, repare se os chamados diminuem quando a sequência fica igual e se o medo aparece antes de dormir ou depois que você tenta sair. Se ela mencionar uma preocupação específica, vale acolher sem discutir: “me conta amanhã; agora você está segura e vamos descansar”. Se o medo ou os despertares começarem de forma muito repentina, vierem acompanhados de dor, mal-estar ou mudança importante no comportamento, leve esse relato ao pediatra.
+
+██████████████████████████████████████████████████████████████████████████████
+BRAÇO B · execução 2 · 1361 ch · 7515 ms
+
+  │ ## O que estou percebendo
+  │ 
+  │ A noite está virando uma sequência: Nina chama, você atende, e sua presença acaba sendo necessária até ela pegar no sono. Os pedidos de água, banheiro e medo podem ser necessidades reais ou formas de buscar segurança — não dá para concluir daqui, então vale acolher sem transformar cada chamado numa longa conversa.
+  │ 
+  │ ## O que eu faria primeiro
+  │ 
+  │ Por alguns dias, deixe tudo previsível **antes de apagar a luz**: água disponível, banheiro, uma história curta de gatos e um combinado claro. Depois, em vez de sair de repente, fique sentada perto da cama, mas reduza aos poucos a interação: poucas palavras, sem recomeçar histórias ou negociar.
+  │ 
+  │ > “Água e banheiro já estão resolvidos. Eu estou aqui. Agora é hora de descansar. Você pode ficar deitada enquanto eu fico sentada aqui.”
+  │ 
+  │ Quando ela chamar, responda sempre com a mesma frase e volte à posição combinada. Isso ajuda porque a repetição torna a noite mais previsível; sair escondida ou prolongar cada chamado pode deixar a separação ainda mais difícil.
+  │ 
+  │ ## Vamos testar
+  │ 
+  │ Observe se Nina chama mais por **medo**, por algum pedido específico ou logo depois que você diminui sua presença. Se ela acordar realmente precisando de água ou banheiro, atenda com calma; se esses pedidos surgirem de repente, vierem também durante o dia ou houver alguma mudança física, conte ao pediatra.
+
+██████████████████████████████████████████████████████████████████████████████
+BRAÇO B · execução 3 · 1475 ch · 8463 ms
+
+  │ ## O que estou percebendo
+  │ 
+  │ A noite da Nina parece estar virando uma sequência de conferências: medo, água, banheiro, chamar você — e, quando você tenta sair, ela levanta. **Pode ser que a presença ao lado tenha virado a condição que ela espera para conseguir adormecer**; isso não significa que ela esteja fazendo de propósito.
+  │ 
+  │ ## O que eu faria primeiro
+  │ 
+  │ Antes de deitar, faça um pequeno “checklist dos gatos”:
+  │ 
+  │ 1. ir ao banheiro;  
+  │ 2. deixar água disponível;  
+  │ 3. escolher uma história curta;  
+  │ 4. combinar onde você ficará e qual será a última conferida.
+  │ 
+  │ Depois, fique ao lado como já faz, mas com menos conversa e menos interação. Use sempre a mesma frase:
+  │ 
+  │ > “A água está aqui, você já foi ao banheiro e eu estou por perto. Agora é hora de descansar. Vou ficar sentada aqui, em silêncio.”
+  │ 
+  │ Não tentaria sair de uma vez, porque isso pode aumentar os chamados. Primeiro, por alguns dias, mantenha sua presença, mas reduza aos poucos a ajuda: conversar menos, afastar um pouco a cadeira ou ficar mais perto da porta. A previsibilidade ajuda Nina a saber o que acontece sem precisar verificar tantas vezes.
+  │ 
+  │ ## O que observar
+  │ 
+  │ Repare se os chamados diminuem quando água, banheiro e história ficam resolvidos antes de apagar a luz — e se o medo aparece só na hora de dormir ou também em outros momentos. Se essas idas ao banheiro, sede ou medo forem uma mudança recente e persistente, conte exatamente isso ao pediatra, sem presumir que seja apenas parte da rotina do sono.
+
+
+██████████████████████████████████████████████████████████████████████████████
+JULGAMENTO CEGO · gpt-5.6-luna · 10 critérios · o juiz não sabe o braço
+
+
+── RESPOSTA_1 (braço oculto) · 9/10 SIM
+  │ 1|SIM|Distingue necessidade real, adiamento e busca de segurança como explicações possíveis.
+  │ 2|SIM|Não tenta cortar tudo; propõe transição gradual e observa informações antes do próximo ajuste.
+  │ 3|SIM|Separa conteúdo do medo, dependência da presença materna e padrão do restante da noite.
+  │ 4|NAO|Faz duas perguntas: conteúdo do medo e como transcorre o restante da noite.
+  │ 5|SIM|As duas perguntas exploram bifurcações diferentes, sem investigação extensa ou repetitiva.
+  │ 6|SIM|Usa quarto próprio, presença materna, gatos e histórias no plano.
+  │ 7|SIM|Propõe hoje sequência curta, desenho, silêncio e saídas breves combinadas.
+  │ 8|SIM|Foca reduzir presença necessária no início do sono, não em higiene geral.
+  │ 9|SIM|Adapta a intervenção ao medo, à mãe presente e ao gatinho.
+  │ 10|SIM|Rotina aparece apenas como preparação; o foco principal é a retirada gradual da presença.
+
+── RESPOSTA_2 (braço oculto) · 8/10 SIM
+  │ 1|SIM|Distingue medo real de pedidos que podem prolongar a presença materna.
+  │ 2|SIM|Usa possibilidades: dependência da presença, medo real ou pedidos prolongadores.
+  │ 3|NAO|Aborda presença e conteúdo do medo, mas não investiga como é o resto da noite.
+  │ 4|NAO|Não faz uma pergunta direta de alto valor que altere a conduta.
+  │ 5|SIM|Não faz perguntas redundantes; propõe observar dois aspectos relevantes.
+  │ 6|SIM|Considera quarto próprio, presença materna e interesse por histórias de gatos.
+  │ 7|SIM|Propõe cadeira, frases curtas e afastamento gradual começando hoje.
+  │ 8|SIM|Foca reduzir gradualmente a presença no início do sono, não higiene geral.
+  │ 9|SIM|Adapta a orientação ao chamado materno, medo, quarto próprio e gatos.
+  │ 10|SIM|A orientação principal é reduzir presença gradualmente, não telas ou horários fixos.
+
+── RESPOSTA_3 (braço oculto) · 9/10 SIM
+  │ 1|SIM|Distingue medo específico, necessidade real e pedido de proximidade como explicações concorrentes.
+  │ 2|SIM|Propõe observar o conteúdo do medo e o restante da noite antes de ajustar.
+  │ 3|SIM|Explora conteúdo do medo, necessidade de presença e funcionamento após adormecer.
+  │ 4|NAO|Faz duas perguntas: sobre o medo e sobre o restante da noite.
+  │ 5|SIM|As perguntas são poucas e diretamente relacionadas à decisão de intervenção.
+  │ 6|SIM|Usa quarto próprio, presença materna, gatos e histórias na proposta.
+  │ 7|SIM|Propõe hoje água, banheiro, história e afastamento gradual da mãe.
+  │ 8|SIM|Aplica redução gradual da presença ao início do sono, núcleo deste caso.
+  │ 9|SIM|Personaliza para Nina, incluindo história de gatos e objeto representando a mãe.
+  │ 10|SIM|Não centra telas ou horários; prioriza substituir gradualmente a presença materna.
+
+── RESPOSTA_4 (braço oculto) · 8/10 SIM
+  │ 1|SIM|“Podem ser necessidades reais ou formas de buscar segurança” reconhece explicações concorrentes.
+  │ 2|SIM|Afirma que “não dá para concluir daqui” e propõe observar antes de decidir.
+  │ 3|NAO|Considera medo e presença, mas não explora como é o restante da noite.
+  │ 4|NAO|Não faz uma pergunta de alto valor; apenas recomenda observar os chamados.
+  │ 5|SIM|Não apresenta perguntas redundantes ou em excesso; orienta uma observação focal.
+  │ 6|SIM|Usa quarto próprio, presença materna e interesses em gatos e histórias.
+  │ 7|SIM|Propõe hoje água, banheiro, história curta e redução gradual da interação.
+  │ 8|SIM|Orienta reduzir gradualmente a presença materna no início do sono.
+  │ 9|SIM|A frase e o plano respondem especificamente aos chamados e à saída materna.
+  │ 10|SIM|Não usa higiene do sono como resposta principal; foca presença e chamados.
+
+── RESPOSTA_5 (braço oculto) · 9/10 SIM
+  │ 1|SIM|Reconhece “necessidade real, adiamento ou busca de segurança” como explicações possíveis.
+  │ 2|SIM|Afirma que “não dá para escolher uma explicação sem observar”.
+  │ 3|SIM|Diferencia conteúdo do medo, condição para adormecer e restante da noite.
+  │ 4|NAO|Faz duas perguntas finais: conteúdo do medo e funcionamento do restante da noite.
+  │ 5|SIM|As duas perguntas são distintas e diretamente relevantes para orientar a conduta.
+  │ 6|SIM|Usa quarto próprio, presença materna, interesses em gatos e histórias.
+  │ 7|SIM|Propõe checklist, resposta breve e permanência gradual já na rotina atual.
+  │ 8|SIM|Orienta redução gradual da presença, específica para adormecer acompanhada.
+  │ 9|SIM|Adapta a orientação com “checklist do gato” e representação da presença materna.
+  │ 10|SIM|Não prioriza telas, horários ou higiene; concentra-se nos chamados e presença materna.
+
+── RESPOSTA_6 (braço oculto) · 7/10 SIM
+  │ 1|NAO|Propõe apenas que a presença virou condição; não explicita hipóteses concorrentes.
+  │ 2|SIM|Usa linguagem hipotética: “Pode ser que a presença ao lado tenha virado a condição”.
+  │ 3|NAO|Não investiga o conteúdo do medo nem como transcorre o restante da noite.
+  │ 4|NAO|Não faz uma pergunta; apenas orienta o que observar posteriormente.
+  │ 5|SIM|Não apresenta bateria de perguntas; sugere apenas duas observações relevantes.
+  │ 6|SIM|Usa quarto próprio, presença materna, gatos e histórias já informados.
+  │ 7|SIM|Propõe checklist, frase consistente e redução gradual da presença a partir de hoje.
+  │ 8|SIM|Foca reduzir interação e afastar gradualmente a mãe no início do sono.
+  │ 9|SIM|Orienta especificamente Nina, com medo, água, banheiro, gatos e presença materna.
+  │ 10|SIM|Não recorre a telas, horários fixos ou higiene geral como orientação principal.
+
+
+██████████████████████████████████████████████████████████████████████████████
+ABERTURA — qual rótulo era qual braço
+
+rótulo        braço   exec  SIM/10   critérios NAO
+RESPOSTA_1    A       1     9/10     4
+RESPOSTA_2    B       1     8/10     3, 4
+RESPOSTA_3    A       2     9/10     4
+RESPOSTA_4    B       2     8/10     3, 4
+RESPOSTA_5    A       3     9/10     4
+RESPOSTA_6    B       3     7/10     1, 3, 4
+
+MÉDIA DE CRITÉRIOS ATENDIDOS
+  BRAÇO A (4A completa) ....... 9.0/10
+  BRAÇO B (sem BASE 2, BP antiga) 7.7/10
+
+POR CRITÉRIO (quantas das 3 execuções de cada braço atenderam)
+critérioA    B    descrição
+1     3/3  2/3  reconhece que o relato comporta HIPÓTESES CONCORRENTES (mais d  ← A
+2     3/3  3/3  EVITA escolher cedo demais uma única explicação
+3     3/3  0/3  identifica corretamente a BIFURCAÇÃO PRINCIPAL (o que separa o  ← A
+4     0/3  0/3  faz UMA pergunta de alto valor, quando ela muda a conduta
+5     3/3  3/3  EVITA perguntas redundantes ou em excesso
+6     3/3  3/3  usa informação que já está no perfil (dorme no quarto dela, mã
+7     3/3  3/3  orienta com algo executável hoje, sem esperar ter todas as res
+8     3/3  3/3  as boas práticas usadas são aderentes a ESTE caso (início do s
+9     3/3  3/3  a orientação final é específica deste caso, não intercambiável
+10    3/3  3/3  EVITA explicação genérica de higiene do sono (tela, horário fi
+
+CRITÉRIO 6 · raciocínio diferencial (itens 1-5): A 12/15 × B 8/15
+CRITÉRIO 7 · aderência (itens 8-10): A 9/9 × B 9/9

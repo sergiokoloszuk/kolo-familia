@@ -10,6 +10,7 @@ import { pronomesPara } from "@/lib/ayla/pronomes";
 import { nucleoConducao, FRONTEIRA_DIAGNOSTICO } from "@/lib/conducao/diretrizes";
 import { blocoBoasPraticas } from "@/lib/conhecimento/recuperar";
 import { ANCORA_PERFIL, LICENCA_GENERATIVA } from "@/lib/conducao/composicao";
+import { linhasDoPerfilConsultavel } from "@/lib/kolo-vivo/consultar";
 import { FATOS_COMERCIAIS } from "@/lib/billing/fatos-comerciais";
 import { angulosUsados, blocoProgressao } from "@/lib/conducao/angulos";
 import {
@@ -394,23 +395,11 @@ ${ctx.ultimoCheckin.data} — responsável: ${ctx.ultimoCheckin.escala_emocional
   // sensibilidade a som" é informação, e sem essa distinção o modelo trata
   // vazio e negativo igual, e volta a perguntar o que a família já respondeu.
   if (ctx.perfilConsultavel) {
-    const p = ctx.perfilConsultavel;
-    const linhas: string[] = [];
-    for (const d of p.dominios.values()) {
-      const preenchidos = d.campos.filter((c) => c.estado === "preenchido");
-      const negativos = d.campos.filter((c) => c.estado === "negativo");
-      const vazios = d.campos.filter((c) => c.estado === "vazio");
-      if (!preenchidos.length && !negativos.length) continue;
-      const parte = [
-        preenchidos.length ? `sabemos: ${preenchidos.map((c) => c.label).join(", ")}` : null,
-        negativos.length ? `NÃO se aplica: ${negativos.map((c) => c.label).join(", ")}` : null,
-        vazios.length ? `ainda não sabemos: ${vazios.map((c) => c.label).join(", ")}` : null,
-      ]
-        .filter(Boolean)
-        .join(" · ");
-      linhas.push(`- ${d.label}: ${parte}`);
-    }
-    if (linhas.length) {
+    // A montagem das linhas saiu daqui em 10/08/2026 para
+    // `lib/kolo-vivo/consultar.ts`, quando o WhatsApp passou a receber o mesmo
+    // bloco: duas cópias da mesma redação divergiriam. O texto é idêntico.
+    const linhas = linhasDoPerfilConsultavel(ctx.perfilConsultavel);
+    if (linhas) {
       partes.push(
         // FASE 4A.2 · a âncora vem COLADA no perfil, e não no fim.
         //
@@ -422,7 +411,7 @@ ${ctx.ultimoCheckin.data} — responsável: ${ctx.ultimoCheckin.escala_emocional
 ${ANCORA_PERFIL}
 NÃO pergunte o que está em "sabemos" nem o que está em "NÃO se aplica" — a
 família já respondeu, e repetir a pergunta desfaz a confiança de ter contado.
-${linhas.join("\n")}
+${linhas}
 </o_que_ja_sabemos>`,
       );
     }

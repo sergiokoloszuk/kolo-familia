@@ -2,7 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { SkillRow } from "./router";
 import { blocoDiagnosticoRegistrado } from "@/lib/onboarding/diagnostico";
 import { recuperarBoasPraticas, type BoaPraticaRecuperada } from "@/lib/conhecimento/recuperar";
-import { pilotoEstrategiasLigado } from "@/lib/conducao/piloto";
+import { pilotoQuatroA } from "@/lib/conducao/piloto";
 import { secoesDe, temMaterial, type SecaoBase2 } from "@/lib/conducao/base2";
 import {
   carregarPerfilConsultavel,
@@ -144,9 +144,13 @@ export async function buildContext(
   },
 ): Promise<ContextoSkillResposta> {
   const { familyId, membroAtipicoId, skills, conversaId } = params;
-  // A flag decide, e o relato é a condição técnica: sem texto não há o que
-  // ranquear nem tema que recuperar.
-  const piloto = pilotoEstrategiasLigado() && Boolean(params.relato?.trim());
+  // O rollout decide QUEM, e o relato é a condição técnica: sem texto não há o
+  // que ranquear nem tema que recuperar.
+  //
+  // ⚠️ Até 10/08/2026 a primeira metade era `pilotoEstrategiasLigado()`, sem
+  // argumento — um booleano global que alcançava as 172 famílias de uma vez.
+  // O piloto restrito exigiu granularidade por família; ver `conducao/piloto.ts`.
+  const piloto = pilotoQuatroA(familyId) && Boolean(params.relato?.trim());
 
   // União dos campos do Kolo Vivo que essas skills consomem
   const camposMembroAcionados = new Set<string>();
