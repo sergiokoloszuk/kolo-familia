@@ -1557,6 +1557,39 @@ do laudo de 06/08) + `docs/auditoria-ayla-prompt.md`
   verificar primeiro: o comportamento pode vir de `gerarSugestaoRepertorio`
   (`orchestrator.ts:1115`) ou de `gerarMensagemEspontanea` (`:358`) — se for,
   o conserto é na fronteira entre abertura e mensagem espontânea, não no prompt.
+- **✅ TTFT DA WEB MEDIDO — resolve a dúvida da latência (2026-08-09).**
+  12 execuções com streaming, em [bancada/ttft-web-2026-08-09.txt](bancada/ttft-web-2026-08-09.txt).
+  **TTFT: mediana 1.222 ms · p90 1.766 ms · pior 1.979 ms.** Total de geração:
+  mediana 8,4 s, pior 21,1 s. **A mãe começa a ler em pouco mais de um segundo** —
+  o total só importa para custo. A Web **não** tem o problema do WhatsApp, e a
+  razão é estrutural: `messages.stream()` no engine contra buffer completo no
+  orquestrador.
+  - **A causa do bench quebrado era boba e vale registrar:** `r.body` entrega
+    pedaços de rede, não linhas. Um `data: {...}` chega partido entre dois
+    chunks, e dividir chunk a chunk parte o JSON no meio. A correção é um buffer
+    que só consome linhas completas.
+- **🐛 OFERTA DE PLANO — FALHOU, e a regressão é minha (2026-08-09).**
+  **0 ofertas em 8 rodadas** dos dois casos em que deveria oferecer.
+  - **Caso A · pedido explícito** — *"você consegue me montar um plano pra essa
+    semana?"*. A Ayla responde *"Consigo sim! Mas antes de montar, me conta: o
+    que você quer organizar nesse plano?"* — **atende a intenção e não emite o
+    marcador**. A mãe pede plano e não recebe botão.
+  - **Caso B · quatro frentes** — explode no fim da tarde, briga com a irmã, não
+    quer banho, tem lição. A resposta é boa e longa, e **termina com "você não
+    precisa de um plano gigante"**. Ela argumenta CONTRA o plano no caso que
+    mais o justifica.
+  - **CAUSA, e é o padrão que este repositório já conhece:** a proibição lidera
+    o bloco e está em termos absolutos — *"PLANO NÃO É FECHAMENTO PADRÃO"*,
+    *"se a resposta for não, não ofereça"* — e as autorizações vêm depois, como
+    orações subordinadas. **Instrução que compete com uma vizinha mais forte
+    perde**, e a mais forte aqui é a que proíbe.
+  - **MENOR CORREÇÃO PROPOSTA (não aplicada):** não acrescentar texto — **mudar
+    a ordem**. O pedido explícito vira portão que curto-circuita ANTES da
+    avaliação: *"Se a família pediu plano, ofereça o botão. Ponto — não passe
+    pela avaliação abaixo."* E "várias frentes" precisa virar gatilho afirmativo
+    no início, não item de lista depois da proibição.
+  - **É regressão em relação ao comportamento anterior**, que oferecia demais mas
+    nunca deixava pedido explícito sem botão. **Bloqueia o piloto.**
 - **Depende de:** PEND-017 e PEND-018 — **desenhar junto**. Absorve PEND-009
   (primeira conversa) dentro do DESEJADO.
 - **Admin:** ADMIN PRECISA DE AJUSTE — hoje não dá para ver *por que* a Ayla
