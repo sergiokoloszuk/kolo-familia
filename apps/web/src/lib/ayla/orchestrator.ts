@@ -59,6 +59,16 @@ import {
 import { classificarIntencao } from "./intent";
 import { carregarCatalogoSkills } from "./catalogo-skills";
 import { recuperarBoasPraticas, blocoBoasPraticas } from "@/lib/conhecimento/recuperar";
+// FASE 4A NO WHATSAPP (10/08/2026) — os MESMOS módulos que a web usa, chamados
+// daqui. Nenhum deles é web-only: `carregarPerfilConsultavel`, `secoesDe` e as
+// duas constantes de composição vivem em módulos neutros, exatamente como
+// `recuperarBoasPraticas` acima, que o WhatsApp já compartilha desde 06/08.
+// O que NÃO se reusa é `lib/ia/context.ts` — aquele é o montador da web, com
+// dependências (linhas de `skills`, `mensagens_skill`, diários, check-in) que
+// este canal não tem. Montador é de cada canal; inteligência é compartilhada.
+import { pilotoQuatroA } from "@/lib/conducao/piloto";
+import { carregarPerfilConsultavel } from "@/lib/kolo-vivo/consultar";
+import { secoesDe, temMaterial } from "@/lib/conducao/base2";
 import { montarRastro, registrarRastroConhecimento } from "@/lib/conhecimento/rastro";
 import { dividirEmBolhas, ritmoDasBolhas, TETO_ESPERA_SEGUNDOS } from "./bolhas";
 import { semOutrosMembros } from "./membro-escopo";
@@ -2518,16 +2528,46 @@ export async function processInbound(
   // conteúdo. Falha silenciosa: sem repertório, a conversa segue como sempre.
   // RASTRO: registra o que foi consultado e o que chegou ao prompt. Não muda
   // nada do que é escolhido nem do que é enviado — só deixa de ser invisível.
+  //
+  // ⚠️ FASE 4A · 10/08/2026. Até aqui esta chamada era deliberadamente CRUA — o
+  // teste 7 de `piloto.test.ts` mordia se alguém passasse `relato`, e o motivo
+  // era bom: em 4A.1 o ranking ainda não tinha sido medido, e ligá-lo no
+  // WhatsApp sem medição teria escondido a causa de qualquer mudança. A medição
+  // aconteceu (bancada de 09/08, `docs/bancada/4a1-ranking-2026-08-09.txt`), e a
+  // decisão mudou. O teste mudou junto, e continua mordendo — agora garantindo
+  // que os parâmetros só entrem DENTRO do piloto.
+  const noPiloto4A = pilotoQuatroA(family.id);
   let erroNaConsulta = false;
   const bpsRecuperadas = await recuperarBoasPraticas({
     supabase,
     skills: turnoClassificado.skills,
     idade: idadeFoco,
+    // Fora do piloto os três são `undefined`, e o recuperador volta a escolher
+    // 3 por peso — byte a byte o que este canal sempre recebeu.
+    relato: noPiloto4A ? inbound.texto : undefined,
+    statusAceitos: noPiloto4A ? ["ativo", "rascunho"] : undefined,
+    limite: noPiloto4A ? 2 : undefined,
     aoFalhar: () => {
       erroNaConsulta = true;
     },
   });
   const repertorio = blocoBoasPraticas(bpsRecuperadas);
+
+  // PERFIL CONSULTÁVEL e BASE 2 — as duas leituras que faltavam a este canal.
+  // Leituras ACESSÓRIAS: se falharem, a conversa segue sem elas. O que não pode
+  // é derrubar o turno por causa de um enriquecimento.
+  const perfilConsultavel4A =
+    noPiloto4A && membroContextoId
+      ? await carregarPerfilConsultavel(supabase, {
+          membroId: membroContextoId,
+          familyId: family.id,
+        }).catch(() => null)
+      : null;
+  const temaBase2 = turnoClassificado.skills[0] ?? null;
+  const base2Secoes =
+    noPiloto4A && temaBase2 && temMaterial(temaBase2)
+      ? secoesDe({ tema: temaBase2, estado: "investigacao", limite: 3 })
+      : [];
   void registrarRastroConhecimento(
     montarRastro({
       canal: "whatsapp",
@@ -2574,6 +2614,10 @@ export async function processInbound(
       historico,
       linksLudico,
       repertorio,
+      // FASE 4A · vazios fora do piloto, e aí o prompt sai idêntico ao de antes.
+      piloto4A: noPiloto4A,
+      perfilConsultavel: perfilConsultavel4A,
+      base2: base2Secoes,
       mensagem: inbound.texto,
       imagemUrl: inbound.midiaTipo === "image" ? (inbound.midiaUrl ?? null) : null,
       sinais: {

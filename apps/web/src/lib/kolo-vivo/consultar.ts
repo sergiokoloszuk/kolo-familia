@@ -193,3 +193,42 @@ export function resumoDoDominio(d: DominioPerfil | undefined): string {
   if (!d || d.conhecidos.length === 0) return "";
   return d.conhecidos.map((c) => `${c.label}: ${c.valor}`).join("\n");
 }
+
+/**
+ * AS LINHAS DO BLOCO `<o_que_ja_sabemos>` — uma redação só para os dois canais.
+ *
+ * Nasceu inline em `lib/ia/prompt.ts` (Fase 4A.1, web). Quando o WhatsApp
+ * passou a receber o mesmo bloco (10/08/2026), a escolha era copiar quinze
+ * linhas ou trazê-las para cá. Copiar significaria duas redações do mesmo
+ * conceito divergindo com o tempo — que é exatamente o que este piloto existe
+ * para não fazer.
+ *
+ * A distinção que estas linhas carregam é a razão de o bloco existir: separar
+ * **vazio** de **NEGATIVO**. "Não tem sensibilidade a som" é informação; sem
+ * a distinção o modelo trata os dois igual e volta a perguntar o que a família
+ * já respondeu.
+ *
+ * Devolve `""` quando não há nada preenchido nem negativo em domínio nenhum —
+ * um cabeçalho seguido de nada ensina o modelo a preencher formulário.
+ */
+export function linhasDoPerfilConsultavel(
+  perfil: PerfilConsultavel | null | undefined,
+): string {
+  if (!perfil) return "";
+  const linhas: string[] = [];
+  for (const d of perfil.dominios.values()) {
+    const preenchidos = d.campos.filter((c) => c.estado === "preenchido");
+    const negativos = d.campos.filter((c) => c.estado === "negativo");
+    const vazios = d.campos.filter((c) => c.estado === "vazio");
+    if (!preenchidos.length && !negativos.length) continue;
+    const parte = [
+      preenchidos.length ? `sabemos: ${preenchidos.map((c) => c.label).join(", ")}` : null,
+      negativos.length ? `NÃO se aplica: ${negativos.map((c) => c.label).join(", ")}` : null,
+      vazios.length ? `ainda não sabemos: ${vazios.map((c) => c.label).join(", ")}` : null,
+    ]
+      .filter(Boolean)
+      .join(" · ");
+    linhas.push(`- ${d.label}: ${parte}`);
+  }
+  return linhas.join("\n");
+}

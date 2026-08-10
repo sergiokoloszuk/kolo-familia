@@ -1,0 +1,197 @@
+PORTÃO B · Web × WhatsApp · mesmos casos, mesmo perfil
+
+
+██████████████████████████████████████████████████████████████████████████████
+1 · PERFIL × BP
+"Ele bate na irmã quando é contrariado e eu não sei como agir na hora."
+
+  COMPREENSÃO COMPARTILHADA (idêntica por construção — mesmos módulos):
+    intenção desafio · tema emocional · BASE 2 3 seções
+    BPs ranqueadas: Quando a criança entra em crise (choro intenso | Bater, morder, chutar, gritar: todas formas de
+
+  WEB ......... 1219 ch · 6061 ms · 0? · 2 títulos '##' · perfil SIM · aversão não
+  WHATSAPP .... 1015 ch · 7153 ms · 0? · 2 títulos '*..*' · perfil SIM · aversão não
+  razão WhatsApp/Web: 0.83×  (menor — desejado)
+  markdown vazando pro WhatsApp? não
+
+  ┌─ WEB
+  │ ## O que fazer na hora
+  │ 
+  │ Primeiro, **proteja a irmã sem transformar o momento numa discussão**. Aproxime-se, bloqueie a batida com calma e afaste os dois o suficiente para ninguém se machucar. Como você já percebeu que Téo fica mais rápido e fala mais alto antes de explodir, intervenha nesse sinal — não espere a agressão.
+  │ 
+  │ > “Eu não vou deixar você bater. Estou aqui. Vamos ficar juntos até seu corpo desacelerar.”
+  │ 
+  │ Use poucas palavras e fique perto, sem exigir que ele explique ou peça desculpas naquele instante. Quando a reação está no pico, conversar muito costuma aumentar a dificuldade de ele frear a resposta; a presença silenciosa que já ajuda Téo pode funcionar melhor.
+  │ 
+  │ ## Depois que ele se acalmar
+  │ 
+  │ Só então retome em uma frase: **“Você ficou bravo porque foi contrariado. Bater machuca. Quando acontecer, diga ‘pausa’ ou venha ficar perto de mim.”** Treinem isso fora da explosão, brincando de trens: você anuncia que o metrô vai parar, ele pratica mostrar um cartão ou falar “pausa”, e você espera alguns segundos antes de continuar.
+  │ 
+  │ Observe nos próximos episódios se você consegue agir quando ele começa a ficar mais rápido e falar alto — e se a irmã se recupera melhor quando é afastada logo no início.
+  └─
+
+  ┌─ WHATSAPP
+  │ *Na hora*
+  │ 
+  │ Fique entre os dois, afaste a irmã com calma e bloqueie outro golpe sem gritar. Diga poucas palavras: “Eu não vou deixar bater. Estou aqui.” Como você já percebeu que ficar perto e falar pouco ajuda o Téo, use exatamente isso; explicações longas podem aumentar a disputa enquanto ele está muito acelerado.
+  │ 
+  │ Cuide primeiro da irmã. Quando Téo reduzir o ritmo, não peça desculpas imediatamente nem faça sermão. Diga: “Você ficou bravo porque ouviu não. Bater machuca. Da próxima vez, fala ‘me ajuda’ ou ‘pausa’.” Depois, ajude-o a reparar de um jeito simples, como buscar gelo se ela se machucou ou perguntar se ela está bem.
+  │ 
+  │ *O que observar*
+  │ 
+  │ Anote se isso acontece mais quando ele perde algo que queria, quando precisa fazer algo que não quer, ou quando já chega acelerado. Essa diferença mostra qual habilidade treinar primeiro. Na próxima vez, observe se os sinais de ficar mais rápido e falar mais alto aparecem antes — aí você pode intervir antes da batida com: “Você está acelerando. Pausa comigo.”
+  └─
+
+
+██████████████████████████████████████████████████████████████████████████████
+3 · MÚLTIPLOS TEMAS
+"Ele não fala o que quer, não para quieto na lição, não se veste sozinho e não brinca com as outras crianças. É tudo ao mesmo tempo."
+
+  COMPREENSÃO COMPARTILHADA (idêntica por construção — mesmos módulos):
+    intenção desafio · tema autonomia · BASE 2 3 seções
+    BPs ranqueadas: Quando criança chega com queixa de outra, vale | O termômetro do dia: medir a carga junto, ante
+
+  WEB ......... 1502 ch · 9442 ms · 1? · 3 títulos '##' · perfil SIM · aversão não
+  WHATSAPP .... 1050 ch · 7328 ms · 1? · 3 títulos '*..*' · perfil SIM · aversão não
+  razão WhatsApp/Web: 0.70×  (menor — desejado)
+  markdown vazando pro WhatsApp? não
+
+  ┌─ WEB
+  │ ## Por onde começar
+  │ 
+  │ Você está vendo **quatro frentes diferentes**: comunicar o que quer, participar da lição, vestir-se e brincar com outras crianças. Tentar trabalhar tudo ao mesmo tempo costuma deixar a família sem saber o que medir. Eu começaria pela **comunicação funcional**, porque conseguir pedir, recusar ou escolher dá mais autonomia em vários momentos do dia — e não precisa começar pela fala.
+  │ 
+  │ ## O que eu faria primeiro
+  │ 
+  │ Em um momento tranquilo, ofereça **duas opções visíveis**: dois lápis, duas roupas ou duas atividades. Diga apenas:
+  │ 
+  │ > “Téo, você quer este ou este?”
+  │ 
+  │ Aceite apontar, olhar, pegar ou levar você até o que quer. Depois, modele uma palavra curta — “lápis”, “camisa”, “pausa” — sem exigir que ele repita. Para algumas crianças, ter uma forma clara de mostrar a escolha diminui a frustração e cria um caminho para a fala ou para outras formas de comunicação.
+  │ 
+  │ Se ele ainda estiver nessa fase de gostar de trens e metrô, vocês podem chamar cada escolha de uma “estação”: **Estação lápis** ou **Estação canetinha**. O trem é a ponte para a atividade, não um prêmio por ele obedecer.
+  │ 
+  │ ## O que observar
+  │ 
+  │ Por alguns dias, repare **em quais situações ele tenta comunicar algo sozinho**: quando quer um objeto, escapar de uma tarefa, pedir ajuda ou escolher entre duas coisas. Observe também qual forma ele usa primeiro — olhar, apontar, pegar, puxar sua mão ou falar alguma palavra. Esse será o ponto de partida para ensinar a próxima forma de pedir, sem exigir tudo de uma vez.
+  └─
+
+  ┌─ WHATSAPP
+  │ *Por onde eu começaria*
+  │ 
+  │ Você não precisa resolver as quatro frentes ao mesmo tempo. Eu começaria pela comunicação do que ele quer, porque ter um jeito claro de pedir ajuda, pausa ou objetos pode diminuir muitas situações em que os adultos precisam adivinhar.
+  │ 
+  │ *O que fazer primeiro*
+  │ 
+  │ Escolha duas opções reais e mostre-as: “Você quer isso ou isso?”. Aceite apontar, olhar, entregar a figura ou levar você até o objeto — não espere que ele fale para atender. Depois modele uma frase curta: “quero água”, “ajuda” ou “pausa”, sem exigir que ele repita.
+  │ 
+  │ Se trens ainda estiverem interessando ao Téo, você pode usar dois cartões simples, como “trem” e “pausa”, durante uma atividade com esse tema. O interesse entra como ponte para ele praticar pedir, não como prêmio por obedecer.
+  │ 
+  │ *O que observar*
+  │ 
+  │ Por alguns dias, repare em qual forma ele usa primeiro para pedir e em que momentos ele fica mais rápido e fala mais alto antes de precisar de algo. Depois avançamos para a lição, o vestir-se e a aproximação das outras crianças, uma habilidade por vez.
+  └─
+
+
+██████████████████████████████████████████████████████████████████████████████
+4 · PEDIDO SIMPLES
+"Ele pode dormir com a luz acesa?"
+
+  COMPREENSÃO COMPARTILHADA (idêntica por construção — mesmos módulos):
+    intenção duvida · tema sono · BASE 2 3 seções
+    BPs ranqueadas: Sono é momento de segurança, não batalha de po | Mapa do coração na cama — antes de dormir sozi
+
+  WEB ......... 454 ch · 2312 ms · 0? · 0 títulos '##' · perfil não · aversão não
+  WHATSAPP .... 411 ch · 2701 ms · 0? · 0 títulos '*..*' · perfil não · aversão não
+  razão WhatsApp/Web: 0.91×  (menor — desejado)
+  markdown vazando pro WhatsApp? não
+
+  ┌─ WEB
+  │ Pode, sim. Se a luz acesa ajuda o Téo a se sentir mais seguro e não atrapalha o sono, deixe uma luz fraca e indireta, de preferência fora do alcance dele. Isso não “estraga” o hábito de dormir; por enquanto, o mais importante é ele conseguir relaxar.
+  │ 
+  │ Você pode dizer: *“A luz vai ficar acesa. Agora é hora de descansar; eu estou perto.”* Repare se ele dorme melhor com a luz mais baixa ou mais distante e, se um dia quiser reduzir, faça isso aos poucos.
+  └─
+
+  ┌─ WHATSAPP
+  │ Pode, Ana. Se a luz acesa ajuda o Téo a se sentir seguro e adormecer, não há problema em mantê-la.
+  │ 
+  │ Prefira uma luz fraca e indireta, sem ficar apontada para os olhos. Você pode combinar: “A luz fica acesa, e agora é hora de descansar.” Assim, ela vira parte previsível da rotina, não uma negociação.
+  │ 
+  │ Observe se ele dorme melhor com a luz mais fraca ou mais forte; se quiser, depois dá para reduzir aos poucos.
+  └─
+
+
+██████████████████████████████████████████████████████████████████████████████
+5 · DADO JÁ CONHECIDO
+"Hoje ele explodiu de novo no fim da tarde. O que eu faço?"
+
+  COMPREENSÃO COMPARTILHADA (idêntica por construção — mesmos módulos):
+    intenção crise · tema emocional · BASE 2 3 seções
+    BPs ranqueadas: A conta do dia: quando a explosão do fim da ta | Entrar antes do auge: perceber o primeiro sina
+
+  WEB ......... 641 ch · 4529 ms · 0? · 0 títulos '##' · perfil SIM · aversão não
+  WHATSAPP .... 947 ch · 5638 ms · 0? · 2 títulos '*..*' · perfil SIM · aversão não
+  razão WhatsApp/Web: 1.48×  *** MAIOR — investigar ***
+  markdown vazando pro WhatsApp? não
+
+  ┌─ WEB
+  │ No fim da tarde, quando ele fica mais rápido e fala mais alto, entre **antes do auge**: reduza as exigências, fique perto e fale pouco. *“Eu estou aqui. Vamos fazer uma pausa.”* Não tente explicar, negociar ou perguntar o motivo enquanto ele estiver explodindo; a presença calma pode ajudar mais do que muitas palavras.
+  │ 
+  │ Pode ser que ele esteja chegando com pouca margem depois do dia, mas não precisamos descobrir a causa agora para ajudá-lo. Quando passar, anote apenas o horário e o que aconteceu nas duas horas anteriores. Por alguns dias, isso pode mostrar se existe um padrão — e, se houver, a gente antecipa a pausa antes da explosão.
+  └─
+
+  ┌─ WHATSAPP
+  │ *O que fazer agora*
+  │ 
+  │ Se ele ainda estiver alterado, fique perto como já ajuda o Téo, fale pouco e reduza o que está sendo pedido. Use uma frase só: “Eu estou aqui. Vamos esperar passar.” Não tente explicar, negociar ou perguntar o motivo no auge — quando a reação está subindo, conversar costuma exigir mais do que ele consegue naquele momento.
+  │ 
+  │ *Depois que baixar*
+  │ 
+  │ Não faça sermão nem peça que ele explique tudo. Ofereça uma retomada simples: água, um lugar mais tranquilo e uma atividade sem muita exigência. Como isso voltou a aparecer no fim da tarde, vale diminuir uma demanda desse período por alguns dias e observar o que aconteceu nas duas horas anteriores: escola, espera, mudança, tarefa ou cansaço.
+  │ 
+  │ O sinal de entrada do Téo parece ser ficar mais rápido e falar mais alto. Quando você perceber isso, entre antes do pico: aproxime-se, reduza a fala e ofereça uma pausa. Repare se essa entrada antecipada muda a intensidade da explosão.
+  └─
+
+
+██████████████████████████████████████████████████████████████████████████████
+6 · CRISE
+"SOCORRO ele está se jogando no chão e gritando agora, não sei o que fazer"
+
+  COMPREENSÃO COMPARTILHADA (idêntica por construção — mesmos módulos):
+    intenção crise · tema emocional · BASE 2 3 seções
+    BPs ranqueadas: Explosões de raiva — bate, grita, joga coisas  | Em crise emocional, conecte primeiro (cérebro 
+
+  WEB ......... 670 ch · 4881 ms · 0? · 0 títulos '##' · perfil não · aversão não
+  WHATSAPP .... 507 ch · 4597 ms · 1? · 0 títulos '*..*' · perfil não · aversão não
+  razão WhatsApp/Web: 0.76×  (menor — desejado)
+  markdown vazando pro WhatsApp? não
+
+  ┌─ WEB
+  │ Fica com ele — agora não é hora de explicar nem pedir que pare. Como você já percebeu que a sua presença com poucas palavras ajuda o Téo, aproxime-se com calma, afaste objetos duros do alcance e diga apenas: *“Eu estou aqui. Você está seguro. Vou esperar com você.”*
+  │ 
+  │ Não tente levantá-lo à força nem faça muitas perguntas; reduza o que estiver acontecendo ao redor e mantenha distância suficiente para ninguém se machucar. Quando os gritos diminuírem, continue em silêncio por mais um pouco antes de falar sobre o que aconteceu.
+  │ 
+  │ Se ele estiver batendo a cabeça, se machucando, machucando alguém ou houver risco de acidente agora, procure ajuda imediata pelo SAMU, 192.
+  └─
+
+  ┌─ WHATSAPP
+  │ Ana, agora faça só o necessário: afaste objetos que possam machucá-lo e fique perto, com voz baixa e poucas palavras. Como você já percebeu que a sua presença sem falar muito ajuda o Téo, permaneça ali sem tentar explicar, convencer ou fazer perguntas.
+  │ 
+  │ Diga apenas: “Eu estou aqui. Você está seguro.” Espere a intensidade baixar antes de conversar sobre o que aconteceu.
+  │ 
+  │ Ele está se machucando ou em risco de bater a cabeça agora? Se houver risco físico imediato, chame ajuda presencial e o SAMU pelo 192.
+  └─
+
+
+██████████████████████████████████████████████████████████████████████████████
+RESUMO — tamanho por canal
+
+caso                    WEB ch   WA ch    razão   WA markdown
+1 · PERFIL × BP         1219     1015     0.83×   limpo
+3 · MÚLTIPLOS TEMAS     1502     1050     0.70×   limpo
+4 · PEDIDO SIMPLES      454      411      0.91×   limpo
+5 · DADO JÁ CONHECIDO   641      947      1.48×   limpo
+6 · CRISE               670      507      0.76×   limpo
+
+WhatsApp menor que a web em 4/5 casos
+aversão do perfil citada em algum canal: NÃO

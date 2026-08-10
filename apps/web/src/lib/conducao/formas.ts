@@ -9,7 +9,8 @@ import { rotuloDoTema } from "./temas";
  * forma. Uma resposta boa e uma resposta rasa passaram a ter a mesma cara.
  *
  * Aqui NÃO voltam os blocos fixos. Volta o repertório: o modelo escolhe 2 a 4
- * formas que realmente ajudam naquele caso, e escreve título curto em negrito.
+ * formas que realmente ajudam naquele caso, e escreve um título curto para cada
+ * uma. QUAL sintaxe esse título usa é decisão do canal, não deste arquivo.
  *
  * ⚠️ POR QUE ISTO NÃO VIVE NO NÚCLEO. O núcleo é carregado em todo turno de
  * todo canal e de toda ferramenta (inclusive o condutor de rotina). Forma de
@@ -44,20 +45,30 @@ const REPERTORIO = [
 ].join("\n- ");
 
 /**
- * O bloco condicional. Recebe o tema ativo (se houver) e o canal, porque o
- * negrito é diferente nos dois: WhatsApp usa `*um asterisco*`, a web usa
- * markdown. A mesma forma, dois renderizadores.
+ * O bloco condicional. Recebe o tema ativo (se houver) e o canal, porque a
+ * sintaxe do título é do canal — e cada canal tem UMA.
+ *
+ * ⚠️ POR QUE A WEB MUDOU DE `**Assim**` PARA `## Assim` (09/08/2026). Este
+ * arquivo dizia "título curto em negrito" e a seção de Formatação do prompt da
+ * web dizia `## título`. Duas sintaxes para o mesmo elemento, no mesmo system —
+ * e o modelo obedecia esta, que vem antes e traz o repertório junto: 0 `##` em
+ * 10 rodadas contra títulos em negrito em 10/10, nos dois providers. A tela
+ * sabia desenhar `##` como `<h3>`, e nunca recebia um.
+ *
+ * No WhatsApp nada muda, e não pode mudar: `FORMATO_WHATSAPP` proíbe `##` e
+ * `**` porque o canal não os renderiza. Lá o título continua sendo o negrito de
+ * um asterisco só.
  */
 export function formasDeEntrega(params: {
   canal: "whatsapp" | "web";
   tema?: string | null;
 }): string {
-  const negrito = params.canal === "whatsapp" ? "*Assim*" : "**Assim**";
+  const tituloSintaxe = params.canal === "whatsapp" ? "*Assim*" : "## Assim";
   const rotulo = params.tema ? rotuloDoTema(params.tema) : null;
 
   return `# Como ORGANIZAR esta resposta
 
-Isto é uma ENTREGA: componha de 2 a 4 blocos curtos, cada um com um título curto em negrito (${negrito}) e duas ou três linhas embaixo. Os títulos saem deste repertório — escolha os que ajudam DE VERDADE aqui, adapte as palavras, nunca use todos:
+Isto é uma ENTREGA: componha de 2 a 4 blocos curtos, cada um com um título curto (${tituloSintaxe}) e duas ou três linhas embaixo. Os títulos saem deste repertório — escolha os que ajudam DE VERDADE aqui, adapte as palavras, nunca use todos:
 - ${REPERTORIO}
 
 - OS BLOCOS SÃO FORMAS DIFERENTES DE AJUDAR NA MESMA FRENTE. Eles NÃO autorizam abrir duas dificuldades no mesmo turno: se ela trouxe três problemas, você escolhe UM e entrega bem.

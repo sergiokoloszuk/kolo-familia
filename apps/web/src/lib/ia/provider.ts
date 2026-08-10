@@ -143,6 +143,18 @@ export function modoConversacional(): ModoConversacional {
  *
  * Separadores aceitos: vírgula, espaço, quebra de linha. Entradas vazias caem
  * fora — "id1,,id2 " é uma lista de dois, e uma lista só de vírgulas é vazia.
+ *
+ * ⚠️ DUPLICAÇÃO DELIBERADA, e é bom que esteja escrita. Em 10/08/2026 a Fase
+ * 4A precisou do mesmo comportamento e extraiu o padrão para
+ * `lib/conducao/rollout.ts` (`listaDeFamilias`, `estadoDeRollout`,
+ * `alcancaFamilia`). Importá-lo daqui foi tentado e REVERTIDO: este arquivo é
+ * defendido por teste como transporte puro, com ZERO imports, e a razão é a
+ * lição desta base — quando o provider ganha vizinhos, o produto ganha duas
+ * Aylas. Reusar o PADRÃO sem importar a função é o que §4 do protocolo chama
+ * de reuso quando a função carrega semântica que não serve.
+ *
+ * Se estas seis linhas mudarem, mudar as duas. O teste 8 de
+ * `conducao/piloto.test.ts` guarda que as duas existem e não divergiram.
  */
 function familiasDeTeste(): string[] {
   return (process.env.OPENAI_TEST_FAMILY_IDS ?? "")

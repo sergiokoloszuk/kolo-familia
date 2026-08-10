@@ -24,6 +24,8 @@ Só o que está aberto. 🔒 = bloqueada.
 | [PEND-018](#pend-018) | Memória e retrato da criança | **C · Memória** | P1 | ABERTA | desenhar junto com A |
 | [PEND-021](#pend-021) | Jornada dos 7 dias e conversão | G · Comercial | P1 | ABERTA | preencher o DESEJADO |
 | [PEND-022](#pend-022) | Fontes confiáveis, limites e escalonamento | F · Limites | P2 | ABERTA | preencher o DESEJADO |
+| [PEND-028](#pend-028) | Piloto 4A — o que a bancada deixou em aberto | **A · Condução** | P2 | ABERTA | não bloqueia o piloto; medir depois do uso real |
+| [PEND-027](#pend-027) | Plano Kolo — contexto, conhecimento e aprendizado | **D · Entregas** | P1 | ABERTA | P0 interno: fazer o feedback chegar ao Plano seguinte |
 | [PEND-004](#pend-004) | Rotina/Sequência Visual | D · Entregas | P2 | AGUARDANDO VALIDAÇÃO | 4 fatias no ar; falta conversa real |
 | [PEND-019](#pend-019) | Estratégias que a família consegue usar | D · Entregas | P2 | ABERTA | depende de A+B+C |
 | [PEND-020](#pend-020) | Relatórios para escola, terapeuta e médico | D · Entregas | P2 | ABERTA | depende de C |
@@ -51,7 +53,7 @@ inteligência é o retrabalho mais caro que existe aqui.
 | **A · Condução** | PEND-016 | INVESTIGAR/DESENHAR JUNTO com B e C |
 | **B · Conhecimento** | PEND-017 | INVESTIGAR/DESENHAR JUNTO com A |
 | **C · Memória da criança** | PEND-018 | INVESTIGAR/DESENHAR JUNTO com A |
-| **D · Entregas** | PEND-004 (rotina) · PEND-019 (estratégias) · PEND-020 (relatórios) | **PEND-004 NÃO depende mais** (decisões fechadas em 08/08); as outras duas sim |
+| **D · Entregas** | PEND-004 (rotina) · PEND-019 (estratégias) · PEND-020 (relatórios) · **PEND-027 (plano)** | **PEND-004 NÃO depende mais** (decisões fechadas em 08/08); as outras três sim. **PEND-027 é a prova de que D é a mesma inteligência três vezes** — o Plano é cego para o que Estratégias já enxerga |
 | **E · Feedback** | PEND-023 | DEPENDE DE D · alimenta A e C |
 | **F · Limites** | PEND-022 | PODE SER DESENHADA SEPARADAMENTE, aplica-se a A |
 | **G · Comercial** | PEND-021 · PEND-001 · PEND-002 | PODE ANDAR EM PARALELO |
@@ -383,6 +385,230 @@ Aberta em: 2026-08-08 · Origem: pedido do Sérgio na missão da PEND-004
 - **Critério de conclusão:** mapa de impacto escrito, com prioridade proposta e
   aprovada.
 - **Agente recomendado:** AUDITAR → PROPOR
+
+---
+
+### PEND-028
+**Piloto 4A — os quatro achados que a bancada de 10/08 deixou em aberto**
+Bloco: **A · Condução** · Prioridade: **P2** · Estado: **ABERTA**
+Aberta em: 2026-08-10 · Origem: bancada do piloto 4A (portões A–D + ablação dirigida)
+
+> **Nenhum destes bloqueia o piloto restrito.** São achados de medição, com
+> evidência, guardados para depois do uso real das três famílias.
+
+- **1 · A PERGUNTA DE ALTO VALOR NÃO É FEITA — 0 de 6 execuções, nos DOIS
+  braços.** No golden case de sono, a BASE 2 fez o modelo **identificar** a
+  bifurcação principal (3/3 no braço com BASE 2 × 0/3 sem ela), mas **nenhuma
+  execução formulou a pergunta que a separa** — a que o próprio material
+  canônico traz pronta: *"quando ele diz que está com medo, consegue dizer do
+  quê? E depois que finalmente dorme, como costuma ser o restante da noite?"*.
+  A camada de compreensão está entrando como leitura e não como conduta.
+  **Não é regressão** — as respostas orientam bem e não interrogam. É o teto
+  atual da 4A, e o lugar onde ela ainda pode render.
+- **2 · O RANKING NÃO FOI DISCRIMINADO — efeito-teto, não ausência de efeito.**
+  Na ablação dirigida, aderência das BPs e especificidade da orientação deram
+  **9/9 nos dois braços**. O ranking **troca** o conjunto (8/8 casos no Portão A,
+  com material mais específico por idade), mas o caso escolhido não era duro o
+  bastante nesse eixo para separar os braços. Medir exige um caso em que o
+  acervo tenha BP claramente aderente **e** claramente não aderente ao mesmo
+  tema — e a Fase 3C já mapeou que sono, comunicação e sobrecarga têm zero BP
+  aderente, o que é candidato natural.
+- **3 · CLASSIFICAÇÃO `crise` LARGA.** *"Hoje ele explodiu de novo no fim da
+  tarde. O que eu faço?"* — relato no passado — foi classificado como `crise`.
+  A resposta saiu adequada, então o dano é nulo hoje; mas `crise` suprime as
+  formas de entrega e a oferta de plano, e uma classificação larga desliga
+  silenciosamente o que o turno pedia.
+- **4 · INVERSÃO DE TAMANHO WEB × WHATSAPP.** No caso "dado já conhecido", o
+  WhatsApp saiu **1,48× maior** que a web (947 × 641 caracteres). Não é longo em
+  absoluto e não houve vazamento de markdown em caso nenhum, mas contraria a
+  régua registrada em PEND-016: *se divergir, que a web ganhe profundidade,
+  nunca que o WhatsApp ganhe comprimento*.
+- **Também registrado, de outra frente:** a conversa da Web não chega ao
+  `/admin/uso-api` — `api_calls` com `feature=conversa_web` tem **zero** linhas
+  em todo o histórico, enquanto `mensagens_skill.metadata` tem 8 turnos
+  instrumentados desde 07/08. Causa provável: a rota usa o cliente RLS-scoped
+  e o insert é barrado, com `logarUsoApi` engolindo o erro por design.
+  **Consequência prática:** o custo do piloto na Web fica invisível justamente
+  quando se quer medi-lo.
+- **Método que estas medições fixaram, e vale para as próximas:** julgamento
+  **cego** (o juiz não sabe o braço, as respostas vão embaralhadas), critérios
+  explícitos em vez de regex, e 3 execuções por braço. A primeira tentativa de
+  ablação (Portão D) falhou por método — a informação estava duplicada entre o
+  `koloVivoResumo` e o perfil consultável, então remover uma camada não removia
+  o dado. **Ablação só isola o que não está redundante.**
+- **Depende de:** uso real das três famílias do piloto.
+- **Critério de conclusão:** cada um dos quatro com destino escrito.
+- **Agente recomendado:** INVESTIGAR (depois do piloto)
+
+---
+
+### PEND-027
+**Plano Kolo — o que ele sabe da criança, o que recupera e o que aprende**
+Bloco: **D · Entregas** · Prioridade: **P1** · Estado: **ABERTA**
+Aberta em: 2026-08-10 · Origem: auditoria vertical do Plano (2026-08-10)
+
+📄 **LAUDO COMPLETO: [auditoria-plano-2026-08-10.md](auditoria-plano-2026-08-10.md)**
+— pipeline, tabelas de evidência por camada, bancada sintética e teste de
+conflito. Esta ficha é o registro de estado; o laudo é a prova.
+
+> **Missão de investigação. NADA foi corrigido**, e de propósito: os mecanismos
+> que faltam ao Plano já existem construídos para Estratégias, e implementá-los
+> aqui seria a terceira versão da mesma inteligência.
+
+- **Impacto:** o Plano é o artefato mais longo, mais individualizado e mais
+  caro do produto — vira PDF, vai para a parede da casa, e é o que a família
+  guarda. É também o que menos recebe do que a Kolo já construiu.
+- **O que a auditoria NÃO encontrou, e vale dizer primeiro:** o Plano **não** é
+  genérico. Bancada com três perfis fictícios e o mesmo objetivo produziu três
+  intervenções de natureza diferente — modelar gesto (criança de poucas
+  palavras), nomear o pedido mínimo (criança verbal), cartão de imagem
+  (criança que usa imagens/gestos). **A personalização existe; ela só não vem
+  de mecanismo — vem do modelo, a partir do pouco que chega.**
+
+#### Os achados, por camada
+
+1. **BASE 2 · O PLANO NÃO USA A CAMADA DE COMPREENSÃO TEMÁTICA.** Zero
+   referência a `base2` em qualquer caminho do Plano. `ctx.base2` só é
+   preenchido sob `pilotoEstrategiasLigado() && relato`, e **nenhum caminho do
+   Plano passa `relato`** — são **duas barreiras independentes**, então ligar
+   `KOLO_PILOTO_ESTRATEGIAS` sozinho não mudaria nada aqui.
+2. **BASE 3 · boas práticas pelo mecanismo ANTIGO.** Top-**3** por
+   `peso_relevancia`, filtradas por `skills_relacionadas`/`tags` e faixa etária.
+   **Sem ranking por aderência ao relato**, **sem `statusAceitos`**, **sem
+   `ANCORA_PERFIL`**, sem `LICENCA_GENERATIVA`. Consequência: **o repertório é
+   escolhido pelo TEMA, não pelo caso** — duas famílias com problemas
+   diferentes dentro da mesma skill recebem as mesmas 3 BPs, na mesma ordem.
+3. **PERFIL · chega só em parte.** O Plano recebe `<membro_atipico>` (nome,
+   idade, gênero, `perfil`, `diagnosticoRegistrado`) e as seções do Kolo Vivo
+   **filtradas pelos `kolo_vivo_fields` da skill roteada** — um plano de
+   comunicação não vê sono, alimentação nem sensorial, mesmo preenchidos.
+   **Não recebe o perfil consultável campo a campo**, e portanto **os negativos
+   não têm garantia de chegar**: eles só aparecem se alguém os tiver escrito em
+   prosa dentro do campo de texto.
+   - ⚠️ **Nuance medida, para não virar alarme falso:** no teste de conflito
+     (BP mandando usar dinossauros × perfil dizendo "não gosta de dinossauros"),
+     o modelo respeitou o perfil em **3 de 3 rodadas**, sem `ANCORA_PERFIL`.
+     O risco não é o modelo desobedecer o negativo — **é o negativo não chegar.**
+4. **🔴 APRENDIZADO LONGITUDINAL — A LACUNA MAIS CARA.**
+   `carregarAprendizado` (lê `planos.resultado` / `resultado_nota` e monta
+   `<o_que_ja_funcionou>`) e `SISTEMA_APRENDIZADO` (a instrução de priorizar o
+   que funcionou e não repetir o que não funcionou) **existem e funcionam** —
+   mas vivem no gerador **single-call** `gerarSecoesPlano`, que hoje só roda
+   para `variante = "fim_de_semana"`.
+   **Todo plano normal, nos dois canais, passa por
+   `gerarSecoesPlanoMultiCall`, que não chama nenhum dos dois.**
+   > **Consequência comprovada:** a família responde "não funcionou", o dado é
+   > gravado em `planos.resultado`/`resultado_nota`, e **o próximo Plano normal
+   > não o vê**. Feedback coletado que não retorna a lugar nenhum.
+   Esta é a classe que o protocolo manda caçar: **função existe, execução não
+   acontece.**
+5. **OBJETIVO DA CONVERSA · a Web perde o refinamento.** No WhatsApp,
+   `desafioDaConversa` monta o desafio com **os dois lados** da conversa dos
+   últimos 45 min (com isolamento por membro), então o objetivo funcional que a
+   Ayla nomeou entra. Na Web, o desafio é a concatenação **apenas das mensagens
+   `papel = "user"`** — **as falas da Ayla são descartadas**, e é justamente ali
+   que o objetivo costuma ser refinado ("o problema é pedir ajuda"). Quando a
+   conversa funcionou, é o resultado dela que se perde.
+   - O `tema` e o `aceite` que `classificarIntencao` já resolveu **não são
+     passados** ao Plano em canal nenhum. `temaValidado` existe, mas só no
+     WhatsApp e **só para escolher o título**.
+6. **HISTÓRICO · a geração não recebe a conversa.** Todos os caminhos chamam
+   `buildContext` com **`conversaId: null`**, então `ctx.historico` é sempre
+   vazio. O que o Plano sabe da conversa é só o que veio empacotado no
+   `desafio` (item 5). Conversas anteriores, planos anteriores e objetivos
+   anteriores: **nada chega**.
+7. **ACOMPANHAMENTO · capacidades parciais e assimétricas, sem integração.**
+   Ajuste do plano existe **só na Web**; seguimento "como foi?" existe **só no
+   WhatsApp** (cron, uma vez por plano, guardado por `seguimento_enviado_em`);
+   feedback existe nos dois. **Mas a Ayla conversacional não tem conhecimento
+   integrado do Plano ativo** — não há bloco de planos em prompt de conversa
+   nenhum, nos dois canais. Sem isso não existe "manter / ajustar / trocar",
+   não existe status ativo/concluído, não existe noção de progresso e **não há
+   dedup por tema e criança**.
+8. **ESTRUTURA · crença NÃO é obrigatória.** O guard é **contagem**
+   (`MINIMO_PRATICAS = 3` sobre as cinco de `SECOES_SEMPRE`), com o motivo
+   escrito no código: *"exigir uma seção específica recusaria plano bom"*.
+   `validarPlano` exige `entender` e `observar` (estruturais) e duas seções de
+   conteúdo com ≥200 caracteres. **Nada quebra se `crencas` não vier** — entra
+   em `falhas` e gera `logEvent` `plano_secoes_falharam`.
+   - **Registrado à parte, para avaliação futura — NÃO corrigir agora:** a
+     receita atual de `crencas` (no banco, 119 caracteres) pede *"2 a 3
+     crenças/mitos comuns **sobre o tema**"* — sobre o tema, não sobre aquela
+     criança. Merece avaliação de **estrutura fixa × modular**, junto com o
+     resto das seções: cinco das sete são especificadas por **uma frase de
+     ~120 caracteres** (`atividades` 112 · `crencas` 119 · `rotinas` 119 ·
+     `o_que_fazer_diferente` 137 · `frases_prontas` 141 · `brincadeiras` 164;
+     só `historias_sociais` tem 1.485).
+   - O contrato `{tipo, titulo, conteudo_markdown}[]` **já suporta** núcleo
+     estável + módulos opcionais, e as condicionais já provam que "entra quando
+     o caso pede" funciona. O que falta não é arquitetura — é decidir **quem
+     escolhe os módulos e com que informação**. Hoje é uma chamada Haiku
+     (`analisarDesafio`) com duas saídas booleanas.
+9. **IDENTIDADE/CONDUÇÃO · nenhuma seção do Plano recebe `nucleoConducao()`.**
+   O system de cada seção é `buildSystemTextOutputType` — identidade curta +
+   `buildIdentityBlock(skills)` + `VOZ_LIMITES_E_FRONTEIRA` + a receita do
+   botão. Sem núcleo, sem `blocoIntencao`, sem `formasDeEntrega`.
+   **Registrado como lacuna de composição. NÃO se conclui aqui qual parte do
+   núcleo deve ser compartilhada** — parte dele é de conversa e não faria
+   sentido num artefato. A decisão pertence ao DESEJADO do bloco A.
+   - Achado vizinho, da mesma causa: as 7 seções são chamadas independentes que
+     não se enxergam, e a regra **"cada ideia mora em UMA seção só, não repita
+     entre seções"** existe apenas no system **single-call** — no multi-call ela
+     **não existe em lugar nenhum**. A regra foi perdida junto com o gerador que
+     a carregava.
+10. **TRIAL · não existe comportamento específico de Plano por `diaTrial`.**
+    Registrado como **FATO, não como bug.** `diaTrial` aparece só em
+    `lib/analytics/*` e na cadência proativa geral. Não há oferta antecipada,
+    demonstração automática, limite, CTA próprio nem retrospectiva. Plano é
+    idêntico para quem testa e para quem assina. **Esta ficha não conclui que
+    deveria ser diferente.**
+
+#### ⚠️ Princípio arquitetural desta pendência
+
+> **NÃO reimplementar dentro de `plano.ts` os mecanismos já construídos para
+> Estratégias.** Perfil consultável, `ANCORA_PERFIL`, BASE 2 e ranking por
+> aderência já existem, medidos, na Fase 4A. Construir equivalentes aqui seria
+> a **terceira** implementação da mesma inteligência (WhatsApp · Estratégias ·
+> Plano) — exatamente o retrabalho que o desenho por blocos existe para evitar.
+> **Antes de implementar, avaliar reutilização do pipeline comum.**
+
+- **O achado técnico que sustenta a hipótese:** **`buildContext` já aceita
+  `relato`.**
+- **HIPÓTESE A VALIDAR — `INFERIDO`, não solução comprovada:** passar o
+  desafio/relato real ao `buildContext` do Plano talvez permita reutilizar, de
+  uma vez e sem código novo, **BASE 2 · perfil consultável · ranking por
+  aderência · `ANCORA_PERFIL`**. **Não implementado, não testado, não medido.**
+  Riscos conhecidos a checar antes: são 7 `buildContext` por plano (o custo
+  multiplicaria), o limite de 2 BPs do piloto foi calibrado para conversa e não
+  para artefato, e a `LICENCA_GENERATIVA` num texto longo é outra situação.
+
+#### Prioridade interna
+
+| Prio | O quê |
+|---|---|
+| **P0** | garantir que o feedback "funcionou / não funcionou" chegue ao Plano seguinte (achado 4) |
+| **P1** | fazer o Plano consumir o objetivo/relato específico que o originou (achado 5) |
+| **P1** | conectar o Plano à camada compartilhada de contexto, evitando duplicação (princípio acima) |
+| **P1** | BASE 2 + perfil consultável + ranking/âncora, **preferencialmente por reutilização** (achados 1, 2, 3) |
+| **P2** | integrar conhecimento de Plano ativo/seguimento à conversa (achado 7) |
+| **P2** | avaliar estrutura fixa × modular, inclusive a seção de crenças (achado 8) |
+| **P3** | avaliar experiência específica de Plano no trial — **só depois** de o mecanismo central estar correto (achado 10) |
+
+- **Depende de:** PEND-016, PEND-017 e PEND-018 para a parte de inteligência —
+  o Plano é a terceira saída do mesmo cérebro. **O P0 é a exceção defensável:**
+  é localizado, reversível e não depende do DESEJADO de ninguém.
+- **Admin:** ADMIN PRECISA DE AJUSTE — o Plano deixa **7 rastros de
+  conhecimento por plano** (um por seção, via `registrarRastroConhecimento`) e
+  nada os agrupa por plano. Registrado em **PEND-026**; não se implementa aqui.
+- **Não conferido nesta auditoria (`NÃO SEI`):** quantos campos do perfil o
+  filtro por skill corta em média num perfil real; se `runRecuperacaoPlano`
+  está agendada no `vercel.json`; se o Admin consegue ler os rastros por plano.
+- **Critério de conclusão:** cada um dos 10 achados com destino escrito —
+  corrigido, aceito com motivo, ou movido para outra ficha. O P0 exige prova
+  comportamental: um plano gerado **depois** de um `resultado = nao_funcionou`
+  registrado, mostrando que a estratégia recusada não reaparece.
+- **Agente recomendado:** PROPOR (o desenho, junto com A·B·C) → EXECUTAR (o P0,
+  isolado)
 
 ---
 
@@ -968,12 +1194,26 @@ do laudo de 06/08) + `docs/auditoria-ayla-prompt.md`
   - **A SUFICIÊNCIA NÃO É DECIDIDA POR NINGUÉM.** Diferente da Rotina e do Plano,
     a conversa livre **não tem porteiro**: nada avalia *"já dá pra ajudar de
     verdade?"* antes de responder. `Começar + Matemática` já bastava.
-  - **FORMA DA RESPOSTA — auditada em 2026-08-09.** As respostas saem em blocos
-    uniformes de prosa. A mãe não consegue bater o olho e achar *o que tentar ·
-    o que falar · uma ideia prática · qual o próximo caminho*. **Âncoras curtas
-    em negrito** (`*assim*`, que é a sintaxe que o WhatsApp renderiza e que a
-    Ayla já usa) devem aparecer **quando ajudarem a leitura** — nunca como
-    template fixo em toda resposta.
+  - ~~**FORMA DA RESPOSTA — auditada em 2026-08-09.** As respostas saem em
+    blocos uniformes de prosa.~~ **ACHADO FALSO, RETIRADO EM 2026-08-09 (fim do
+    dia).** As 12 respostas auditadas tinham **2 a 4 títulos cada**, em negrito.
+    A auditoria contou apenas `##`, não achou nenhum e concluiu ausência de
+    estrutura. **Lição metodológica, que vale para toda auditoria daqui em
+    diante: não se conclui ausência de comportamento procurando UMA sintaxe.**
+    Medir a sintaxe e medir o comportamento são duas medições, e a segunda não
+    se deduz da primeira.
+  - **FORMA DA RESPOSTA — o que era verdade, medido em 2026-08-09.** Havia
+    estrutura, e havia **duas instruções concorrentes** produzindo-a:
+    `formas.ts` mandava "título curto em negrito" e a seção de Formatação de
+    `prompt.ts` (PR #85) mandava `## título`, no mesmo system. O modelo obedecia
+    a primeira — **0 `##` em 10 rodadas, GPT e Claude**, títulos em negrito em
+    10/10 — e a tela, que desenha `##` como `<h3>`, nunca recebia um.
+    **CORRIGIDO:** a sintaxe do título passou a ser do canal (`## Assim` na web,
+    `*Assim*` no WhatsApp, que não renderiza markdown), o negrito virou âncora
+    dentro do texto, e a frase pronta perdeu a sintaxe concorrente em itálico.
+    Depois: **`##` em 9 de 10 rodadas** e `**Título**` em 0 de 10 — a décima é
+    uma resposta curta que ficou em prosa, que é o comportamento desejado.
+    Dúvida, desabafo e crise não mudaram.
   - **PRINCÍPIO REGISTRADO:** *uma boa resposta Kolo não apenas explica o
     comportamento — ela deixa a mãe com alguma coisa concreta para experimentar.*
     Quando houver repertório, ir além do óbvio: **orientação + frase +
@@ -1568,8 +1808,12 @@ do laudo de 06/08) + `docs/auditoria-ayla-prompt.md`
     pedaços de rede, não linhas. Um `data: {...}` chega partido entre dois
     chunks, e dividir chunk a chunk parte o JSON no meio. A correção é um buffer
     que só consome linhas completas.
-- **🐛 OFERTA DE PLANO — FALHOU, e a regressão é minha (2026-08-09).**
-  **0 ofertas em 8 rodadas** dos dois casos em que deveria oferecer.
+- **⚠️ OFERTA DE PLANO — POSSÍVEL PROBLEMA, NÃO REGRESSÃO COMPROVADA.**
+  **RECLASSIFICADO EM 2026-08-10** — ver "A MEDIÇÃO NÃO VALE COMO PROVA" no fim
+  deste bloco. O número abaixo (**0 ofertas em 8 rodadas**) foi obtido com um
+  system reconstruído à mão, e **não** reproduz o pipeline real. O achado
+  continua aberto; o que cai é o status de regressão comprovada do produto.
+  Os dois casos em que deveria oferecer:
   - **Caso A · pedido explícito** — *"você consegue me montar um plano pra essa
     semana?"*. A Ayla responde *"Consigo sim! Mas antes de montar, me conta: o
     que você quer organizar nesse plano?"* — **atende a intenção e não emite o
@@ -1588,8 +1832,52 @@ do laudo de 06/08) + `docs/auditoria-ayla-prompt.md`
     avaliação: *"Se a família pediu plano, ofereça o botão. Ponto — não passe
     pela avaliação abaixo."* E "várias frentes" precisa virar gatilho afirmativo
     no início, não item de lista depois da proibição.
-  - **É regressão em relação ao comportamento anterior**, que oferecia demais mas
-    nunca deixava pedido explícito sem botão. **Bloqueia o piloto.**
+  - ~~**É regressão em relação ao comportamento anterior**, que oferecia demais
+    mas nunca deixava pedido explícito sem botão. **Bloqueia o piloto.**~~
+    **RETIRADO EM 2026-08-10** — ver abaixo.
+  - **⚠️ A MEDIÇÃO NÃO VALE COMO PROVA (correção metodológica, 2026-08-10).**
+    Os dois benches que produziram estes números — `scripts/ttft-web.mjs` e
+    `scripts/gate-estrategias.mjs` — **reconstroem o system prompt à mão** em
+    vez de chamar `buildSystemTextConversa`. O que eles mediram difere do
+    produto em cinco pontos, todos verificados no código dos scripts:
+    1. **núcleo simplificado** — um `NUCLEO` de três linhas escrito no script,
+       no lugar de `nucleoConducao()` inteiro;
+    2. **sem `VOZ_CONVERSA`**;
+    3. **sem as skills** (`buildIdentityBlock`) e sem `FATOS_COMERCIAIS`;
+    4. **sem `formasDeEntrega`**, `INTERESSE_COMO_VEICULO` e
+       `A_CRIANCA_ANTES_DO_ROTULO`;
+    5. **modelo diferente do alvo** — `claude-sonnet-4-5-20250929` no script
+       contra `MODELO_CONVERSA.anthropic` (`claude-sonnet-4-6`) em produção.
+    Some-se a isso que **a intenção foi fixada à mão**: nenhum dos dois rodou
+    `classificarIntencao`, e é ela que decide se o bloco `desafio` — o único
+    que carrega a instrução do marcador — chega ao modelo. Classificado como
+    `duvida`, o caso A **não teria como** emitir o marcador, e isso não seria
+    regressão nenhuma: seria roteamento.
+    > O comentário de `buildSystemTextConversa` já avisava, em `prompt.ts`:
+    > *"exportada pra a bancada montar o system EXATAMENTE como produção monta.
+    > Sem isto a bancada reconstrói o prompt e mede um produto que não existe."*
+    > O harness que faz certo **já existia** (`scripts/bancada/*/rodar.mjs`, com
+    > o resolvedor de `@/`) e não foi reusado. É §4 do protocolo — reutilizar
+    > antes de criar — cobrando o preço na medição, não no código.
+  - **ESTADO CORRETO HOJE: "possível problema de oferta de Plano — necessita
+    nova validação pelo pipeline real".** Não é baixa: o comportamento descrito
+    (pedido explícito sem botão) pode muito bem ser verdadeiro, e a leitura de
+    código que atribui a causa à ordem das instruções continua de pé. O que não
+    se pode mais afirmar é que **foi medido**.
+  - **✅ BAIXA DA SUSPEITA DE REGRESSÃO (2026-08-10).** Medido pelo pipeline
+    REAL — `assemblePrompt` + `gerarConversacional`, o par exato da rota de
+    produção, com `classificarIntencao` real e `gpt-5.6-luna`, em
+    [bancada/piloto-4a-portao-a-2026-08-10.txt](bancada/piloto-4a-portao-a-2026-08-10.txt).
+    **A Ayla ofereceu o Plano em 2 de 2 casos pertinentes e em 0 de 6
+    impertinentes** — inclusive emitindo o marcador com o ganho daquele caso
+    ("num plano eu consigo organizar essa progressão, as frases e o que
+    observar em cada etapa"). Não há regressão de oferta.
+  - **O que fica desta linha, e não é o número:** a lição metodológica. O
+    "0 em 8" era real como medição e falso como conclusão, porque media outro
+    produto. **Bancada que reconstrói prompt não vale como evidência de
+    comportamento** — e o harness que faz certo (`scripts/bancada/*/rodar.mjs`)
+    já existia. `scripts/bancada/oferta-plano/rodar.mjs`, escrito para este fim,
+    ficou obsoleto: o Portão A o cobre com fidelidade maior.
 - **🐛 TRIAL DE 30 DIAS — corrigido, e a causa raiz não era o texto
   (2026-08-09).** Uma família em teste de **7 dias** podia receber, pelo
   WhatsApp: *"te lembrando que seus 30 dias grátis terminam em 3 dias"*.
@@ -2446,7 +2734,7 @@ trimestralmente, o que vier antes.
 
 ---
 
-**Próximo ID livre: PEND-027. *(024 e 025 reservadas por frentes ainda não publicadas.)***
+**Próximo ID livre: PEND-029. *(024 e 025 reservadas por frentes ainda não publicadas.)***
 
 > Conferir contra `origin/main`, não contra o seu branch. Dois branches podem
 > reivindicar o mesmo número — o conflito de merge nesta linha é o alarme.

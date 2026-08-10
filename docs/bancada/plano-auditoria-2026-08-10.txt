@@ -1,0 +1,233 @@
+AUDITORIA DO PLANO · seções geradas pelo caminho REAL (assemblePrompt, modo output_type)
+modelo: claude-sonnet-4-6 · perfis FICTÍCIOS · sem banco, sem PDF, sem persistência
+mesmo objetivo nos três: "Ele não pede ajuda. Quando trava, desiste ou chora. Quero trabalhar isso."
+
+
+██████████████████████████████████████████████████████████████████████████████
+SEÇÃO "brincadeiras" — receita do banco (164 caracteres):
+"Sugira 2 a 3 brincadeiras concretas alinhadas ao perfil sensorial e interesses do membro atípico em foco. Inclua materiais simples e duração estimada para cada uma."
+
+
+  ┌─ A · poucas palavras, puxa pela mão
+  │ A boa notícia: Téo já tem uma forma de pedir — puxar pela mão. Isso é comunicação real. A brincadeira pode usar exatamente isso como ponto de partida, e os carrinhos entram como motor da atividade.
+  │ 
+  │ ---
+  │ 
+  │ **🚗 Pista com obstáculo**
+  │ Monte uma pista simples no chão com fita crepe, livros ou caixinhas. Coloque um carrinho favorito dentro de uma caixa fechada (tampa encaixada, não com força). Téo vai querer — e vai precisar de ajuda pra abrir. Nessa hora, você modela: "me ajuda". Diz e abre junto. Da próxima vez, espera um segundo antes de abrir. Não precisa de palavra perfeita — qualquer som intencional ou gesto conta como pedido.
+  │ ⏱ 10 a 15 minutos
+  │ 
+  │ ---
+  │ 
+  │ **🚗 Carrinhos um por vez**
+  │ Separe 4 ou 5 carrinhos numa caixinha do seu lado. Dê um pra Téo. Quando ele quiser mais, segure o próximo levemente visível — não entregue ainda. Espere. Se puxar sua mão, diga "me ajuda" e entregue na hora. O objetivo não é a frase: é criar o ciclo pedir → acontece algo bom.
+  │ ⏱ 10 minutos
+  │ 
+  │ ---
+  │ 
+  │ **🚗 Carrinho preso**
+  │ Amarre um carrinho numa fita longa, deixando preso longe do alcance. Téo vai puxar, tentar — e pode travar. Esse é o momento: chegue perto, diga "me ajuda" com calma, e resolva junto. Repetir a situação algumas vezes ajuda a frase a ganhar sentido real.
+  │ ⏱ 5 a 10 minutos
+  │ 
+  │ ---
+  │ 
+  │ **Uma dica que atravessa as três:** quando Téo travar ou chorar, em vez de esperar a crise passar, entre antes — próximo, com voz baixa, e ofereça o modelo curto. A ajuda que chega rápida depois do pedido é o que vai fazendo o pedido valer a pena.
+  └─
+
+  ┌─ B · verbal, dificuldade é pedir ajuda/recusar
+  │ A dificuldade de pedir ajuda costuma aparecer antes da situação difícil em si — Bento pode travar porque ainda não tem um caminho curto e confiável pra sair do aperto. Treinar isso em brincadeira, com baixo risco de erro, abre esse caminho aos poucos.
+  │ 
+  │ ---
+  │ 
+  │ **1. A missão do quadrinista travado**
+  │ 📦 Materiais: papel, caneta ou lápis de cor
+  │ ⏱️ 10–15 min
+  │ 
+  │ Você e Bento criam um quadrinho juntos — mas de propósito você "trava": "não sei desenhar a nave, me ajuda?". Mostre o pedido curto em ação. Depois troque os papéis: deixe Bento com uma parte difícil e espere. Se travar, diga: "tô aqui. Uma palavra já serve." Quando vier — mesmo um gesto, um olhar — responda na hora. O objetivo é que o pedido funcione de verdade, não que saia perfeito.
+  │ 
+  │ ---
+  │ 
+  │ **2. O roteiro do personagem que pede**
+  │ 📦 Materiais: papel, caneta
+  │ ⏱️ 10 min
+  │ 
+  │ Criem juntos um personagem (herói, vilão, criatura) que tem um superpoder mas que às vezes precisa de ajuda. Bento decide quando o personagem pede e o que ele fala. É ficção, então fica mais fácil experimentar a frase sem o peso do momento real. Você pode perguntar: "o que esse personagem fala quando trava?" — e guardar essa frase como a frase de Bento também.
+  │ 
+  │ ---
+  │ 
+  │ **3. Caixinha "parte minha / parte sua"**
+  │ 📦 Materiais: uma folha dividida ao meio, lápis
+  │ ⏱️ 5–10 min
+  │ 
+  │ Numa atividade de desenho que Bento escolhe, combinem antes: tem uma parte que é dele e uma que é sua. Quando chegar na parte sua, ele precisa te chamar. Começar com divisão pequena (80% dele, 20% sua) e ir ajustando. Isso treina o momento de pedir dentro de algo que Bento já domina e gosta.
+  │ 
+  │ ---
+  │ 
+  │ Uma coisa que ajuda nas três: quando o pedido vier, responda rápido. É isso que vai ensinando que pedir vale a pena.
+  └─
+
+  ┌─ C · imagens/gestos, sensibilidade auditiva, NÃO gosta de carrinhos
+  │ Lia trava e desiste — faz sentido querer trabalhar isso. A ideia é criar situações em que pedir ajuda funciona de verdade, usando o que Lia já gosta.
+  │ 
+  │ ---
+  │ 
+  │ **🫧 Brincadeira da Água com Pote Fechado**
+  │ Encha potes com tampas de diferentes tipos e coloque água, bolhas de sabão ou brinquedos dentro. Lia vai querer abrir — e aí a tampa resistindo cria a oportunidade natural de pedir ajuda.
+  │ - **Materiais:** potes com tampa, água, bolhas de sabão, almofada ou tapete macio embaixo
+  │ - **Como funciona:** quando Lia travar, aponte o pote, diga "me ajuda" e já abra junto — sem esperar fala, sem esperar frase completa. O pedido tem resultado imediato.
+  │ - **Duração:** 10–15 min
+  │ 
+  │ ---
+  │ 
+  │ **🧣 Caixinha de Tecidos Misteriosos**
+  │ Coloque pedaços de tecido macio dentro de uma caixa de papelão com abertura pequena — Lia vai querer tirar, mas alguns ficam presos ou enrolados.
+  │ - **Materiais:** caixa de papelão, retalhos de tecidos macios (flanela, moletom, veludo)
+  │ - **Como funciona:** quando Lia puxar e não sair, fique perto, espere um segundo e modele: pegue a mão de Lia, toque na sua mão e diga "me ajuda". Ajude na hora. Repetição natural e prazerosa.
+  │ - **Duração:** 10 min
+  │ 
+  │ ---
+  │ 
+  │ **💧 Jogo da Esponja**
+  │ Numa bacia com água, coloque esponjas e potes. Espremer a esponja dentro do pote pode ser difícil sozinho — mão pequena, esponja grande.
+  │ - **Materiais:** bacia, água, esponjas, potes de plástico
+  │ - **Como funciona:** escolha uma esponja maior que a mão de Lia. Quando ela travar ou jogar fora, modele o gesto de pedir (mão estendida em direção a você) e responda imediatamente ajudando a espremer juntos.
+  │ - **Duração:** 10–15 min
+  │ 
+  │ ---
+  │ 
+  │ O segredo das três é o mesmo: **a dificuldade é intencional, a ajuda é garantida e imediata.** Lia aprende que pedir vale a pena — porque sempre funciona.
+  └─
+
+██████████████████████████████████████████████████████████████████████████████
+SEÇÃO "atividades" — receita do banco (112 caracteres):
+"Sugira 2 a 3 atividades do dia a dia que apoiam o neurodesenvolvimento, alinhadas ao perfil e à rotina familiar."
+
+
+  ┌─ A · poucas palavras, puxa pela mão
+  │ Esse padrão — travar, desistir ou chorar em vez de pedir — aparece muito quando a criança ainda não tem uma forma clara de comunicar "preciso de você". A boa notícia é que dá pra construir isso no dia a dia, com situações simples e intencionais.
+  │ 
+  │ ---
+  │ 
+  │ **Atividade 1 — A pista do carrinho emperrado**
+  │ 
+  │ Pegue um carrinho e coloque dentro de uma caixa fechada ou embaixo de algo que Téo não consiga tirar sozinho. Espere. Quando Téo tentar e não conseguir, agache no nível dele, mostre sua mão e diga com calma: **"me ajuda."** Não espere Téo falar — se Téo tocar na sua mão ou olhar pra você, já responda e abra juntos. O objetivo é mostrar que o pedido funciona, antes de qualquer palavra.
+  │ 
+  │ Repita em momentos parecidos ao longo da semana: pote fechado, carrinho encalhado, caixinha travada. Sempre a mesma frase curta: *me ajuda.*
+  │ 
+  │ ---
+  │ 
+  │ **Atividade 2 — Um carrinho por vez**
+  │ 
+  │ Separe alguns carrinhos e deixe fora do alcance de Téo, mas visíveis. Entregue um. Quando Téo demonstrar interesse nos outros — olhar, apontar, ir em direção — modele: **"me ajuda"**, e entregue o próximo imediatamente. Téo aprende que o pedido tem resultado rápido, e a vontade pelo carrinho sustenta a atenção no momento.
+  │ 
+  │ ---
+  │ 
+  │ **O que ajuda nos dois casos:**
+  │ 
+  │ - **Responda na hora.** O pedido precisa funcionar sempre que aparecer — mesmo que seja só um olhar ou um toque na mão. A resposta imediata é o que ensina.
+  │ - **Frase curta.** Só "me ajuda" — sem exigir mais antes de ajudar.
+  │ - **Não espere a crise.** Intervenha quando Téo começar a travar, antes do choro.
+  │ 
+  │ Com o tempo, a sequência "trava → pede → recebe ajuda" vai substituindo "trava → chora → desiste". É um processo gradual — fique de olho nos momentos em que Téo usar qualquer forma de pedido e responda com tudo.
+  └─
+
+  ┌─ B · verbal, dificuldade é pedir ajuda/recusar
+  │ ## Pedir ajuda é uma habilidade — e dá pra treinar
+  │ 
+  │ Bento fala muito e tem vocabulário amplo, mas quando trava, a fala some. Pode ser que nessa hora a demanda pareça grande demais e a saída mais fácil seja desistir ou explodir — não preguiça, não teimosia. A boa notícia: dá pra criar situações em que pedir ajuda funciona, e aí o hábito vai se instalando.
+  │ 
+  │ ---
+  │ 
+  │ **1. O pedido mínimo**
+  │ 
+  │ Escolha uma situação do dia em que Bento costuma travar — um quebra-cabeça, lição, uma trava no desenho. Antes que ele desista, chegue perto e diga com naturalidade: *"Quando quiser, é só falar 'me ajuda'."*
+  │ 
+  │ Se falar, ajude na hora — sem comentário, sem elogio exagerado, só a ajuda. O pedido precisa funcionar para que ele repita. Com o tempo, Bento vai perceber que pedir resolve, e a frase curta vira atalho real.
+  │ 
+  │ ---
+  │ 
+  │ **2. A história que pede ajuda**
+  │ 
+  │ Como Bento gosta de desenho e quadrinhos, proponha criar um quadrinho juntos — você começa uma história e deixa um espaço em branco de propósito: um balão vazio, um personagem sem nome, um fundo que "falta alguma coisa".
+  │ 
+  │ Quando ele travar no espaço em branco, espere um pouco. Se não vier pedido, modele: *"Eu diria 'me ajuda com o nome dele'."* Aí você ajuda e a história continua.
+  │ 
+  │ A vantagem aqui é que a situação é leve, sem pressão de certo/errado — e ele está no assunto que mais gosta.
+  │ 
+  │ ---
+  │ 
+  │ **3. Combinar um sinal antes da explosão**
+  │ 
+  │ Se Bento costuma explodir antes de conseguir pedir, vale criar um sinal combinado com ele — um gesto, uma palavra-código tirada de algum personagem que ele goste. Algo que signifique *"tô travado, preciso de ajuda"* sem precisar montar a frase inteira no meio da crise.
+  │ 
+  │ Combine quando ele estiver calmo, fora do momento difícil. Pergunte a ele qual seria — criança de 8 anos com gosto por quadrinhos quase sempre tem uma sugestão boa.
+  └─
+
+  ┌─ C · imagens/gestos, sensibilidade auditiva, NÃO gosta de carrinhos
+  │ Faz todo sentido querer trabalhar isso — pedir ajuda é uma habilidade, e Lia pode aprender a usar esse "canal" antes de chegar no ponto de crise.
+  │ 
+  │ ---
+  │ 
+  │ **1. A imagem do "me ajuda"**
+  │ 
+  │ Crie um cartão pequeno com uma imagem simples de mãos juntas (ou qualquer símbolo que faça sentido pra Lia) e deixe perto das atividades do dia. Quando ela travar, aponte pro cartão antes de agir por ela — dê um segundo, depois ajude imediatamente. O pedido precisa ter resultado rápido pra valer a pena pra Lia.
+  │ 
+  │ Com o tempo, você vai esperando um pouquinho mais antes de ajudar, mas sem deixar chegar na crise.
+  │ 
+  │ ---
+  │ 
+  │ **2. Brincadeira com água e o pedido embutido**
+  │ 
+  │ Numa bacia com água, ofereça potes, copinhos e panos de diferentes texturas — coisas que Lia gosta. Coloque parte dos materiais fora do alcance. Quando ela quiser algo, aponte pro cartão de pedir ajuda (ou mostre o gesto) e entregue na hora que ela usar. Aqui o pedido acontece dentro de um contexto que ela já ama, então a motivação é real.
+  │ 
+  │ ---
+  │ 
+  │ **3. Tecido como recompensa de processo**
+  │ 
+  │ Se Lia travar numa atividade e usar o pedido — mesmo que só apontar pro cartão ou puxar sua mão com intenção clara —, ofereça um momento com o tecido favorito dela enquanto você resolve juntas. Isso não é prêmio por obedecer: é uma pausa sensorial que ajuda a regular depois do esforço de comunicar.
+  │ 
+  │ ---
+  │ 
+  │ **Uma dica geral:** modele o pedido em voz alta e com gesto em momentos neutros, não só nas crises — "olha, eu não consigo abrir isso, vou pedir ajuda". Lia observa mais do que parece.
+  └─
+
+
+██████████████████████████████████████████████████████████████████████████████
+CONFLITO PERFIL × BOA PRÁTICA
+BP entregue: "Brincadeira com dinossauros para ampliar o repertório"
+Perfil C diz: "NÃO gosta de carrinhos e NÃO gosta de dinossauros"
+Sem ANCORA_PERFIL — que só existe no piloto de Estratégias, não no Plano.
+
+  rodada 1: dinossauro=não · carrinho=não · 1769ch
+
+  ┌─ rodada 1
+  │ Lia já mostra o que precisa — só ainda não tem um jeito de pedir. A ideia é criar situações pequenas, onde travar seja natural e a saída seja um gesto ou imagem simples. Água e tecidos são a porta de entrada perfeita.
+  │ 
+  │ ---
+  │ 
+  │ **🫧 Brincadeira da bolha presa**
+  │ Encha um pote com água e um pouquinho de detergente. Deixe um canudinho perto de Lia — mas feche o pote com a tampa antes. Quando Lia tentar e não conseguir abrir, é a hora: chegue perto, coloque sua mão sobre a dela e diga "me ajuda" enquanto faz o gesto (ou mostra a imagem de ajuda que vocês já usam). Abra na hora. Curto e com resultado imediato.
+  │ **Materiais:** pote com tampa, água, detergente, canudinho
+  │ **Duração:** 10 a 15 min
+  │ 
+  │ ---
+  │ 
+  │ **🧺 Caixa do tecido escondido**
+  │ Coloque alguns pedaços de tecido macio dentro de uma caixa de papelão fechada com uma fita adesiva (não muito firme). Lia vai querer abrir — e pode travar na fita. Esse é o momento. Fique perto, ofereça sua mão e modele o pedido: "me ajuda". Ajude na hora. Depois deixe Lia explorar os tecidos à vontade.
+  │ **Materiais:** caixa de papelão, fita adesiva, retalhos de tecido macio
+  │ **Duração:** 10 a 20 min
+  │ 
+  │ ---
+  │ 
+  │ **💧 Transfere a água**
+  │ Dois potes: um cheio d'água e um copo pequeno. A missão é transferir com uma colher ou concha. Deixe a concha dentro de um pote fechado por um elástico — difícil de tirar sozinha. Quando Lia tentar e parar, modele o gesto ou a imagem de "ajuda" e responda imediatamente. Repita algumas vezes de formas diferentes.
+  │ **Materiais:** dois potes, água, colher ou concha, elástico
+  │ **Duração:** 10 a 15 min
+  │ 
+  │ ---
+  │ 
+  │ **Uma coisa importante:** não espere a palavra — gesto, imagem ou qualquer sinal intencional já conta como pedido e merece resposta imediata. O que importa agora é que Lia descubra que pedir funciona.
+  └─
+
+  rodada 2: dinossauro=não · carrinho=não · 1326ch
+  rodada 3: dinossauro=não · carrinho=não · 1814ch
