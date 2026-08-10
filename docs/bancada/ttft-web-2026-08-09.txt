@@ -1,0 +1,98 @@
+
+██████████████████████████████████████████████████████████████████████████████
+A · pedido EXPLÍCITO de plano
+"Você consegue me montar um plano pra essa semana?"
+esperado: OFERECER
+
+  rodada 1: TTFT 1099ms · total 4109ms · 2568tok · 314ch · não ofereceu
+
+    ┌─ rodada 1
+    │ Consigo sim! 
+    │ 
+    │ Mas antes de montar, me conta: **o que você quer organizar nesse plano?** 
+    │ 
+    │ Pode ser algo que você já vem tentando e quer estruturar melhor, alguma coisa nova que quer começar, uma dificuldade que precisa de passos mais claros... O que faria essa semana ficar mais fácil ou mais produtiva pra vocês?
+    └─
+
+  rodada 2: TTFT 1120ms · total 4314ms · 2568tok · 381ch · não ofereceu
+  rodada 3: TTFT 936ms · total 5415ms · 2568tok · 525ch · não ofereceu
+  rodada 4: TTFT 1222ms · total 4458ms · 2568tok · 421ch · não ofereceu
+  → ofertas 0/4 · FAIL
+
+██████████████████████████████████████████████████████████████████████████████
+B · várias frentes, Plano AGREGA
+"Ele explode no fim da tarde, briga com a irmã, não quer tomar banho e ainda tem a lição. Todo dia é uma guerra e eu não sei por onde começar."
+esperado: OFERECER
+
+  rodada 1: TTFT 1718ms · total 13836ms · 3105tok · 1641ch · não ofereceu
+
+    ┌─ rodada 1
+    │ Fim de tarde é horário clássico de explosão — e quase sempre vem da soma do dia inteiro, não só do que aconteceu naquele momento.
+    │ 
+    │ **O que parece estar acontecendo:**  
+    │ Ele chega em casa com o tanque já baixo. Escola pede atenção, controle, cumprimento de regra, contenção de impulso. Quando acaba, ele não está descansado — está no limite. Aí vem a irmã, o banho, a lição, e qualquer coisa detona porque não sobrou margem.
+    │ 
+    │ A boa notícia: você não precisa resolver todos os problemas de uma vez. Precisa reduzir a carga **antes** que chegue na explosão.
+    │ 
+    │ ---
+    │ 
+    │ ## Uma coisa para começar agora
+    │ 
+    │ **Pouso da volta:** nos primeiros 30 minutos em casa, nada de pergunta sobre o dia, nada de tarefa, nada de escolha.  
+    │ 
+    │ Comida na mão, um lugar tranquilo, companhia de vocês sem demanda. As perguntas sobre a escola e a lição ficam para depois do banho — e costumam vir melhores.
+    │ 
+    │ Se ele gosta de trens, esse é o único assunto que pode entrar nessa meia hora. Não é prêmio: é descanso.
+    │ 
+    │ ---
+    │ 
+    │ ## Ordem importa
+    │ 
+    │ Quando o horário de explosão se repete, tire a demanda mais difícil **de dentro daquela janela**.  
+    │ 
+    │ - Lição depois do banho funciona melhor que antes.  
+    │ - Banho antes de brincar com a irmã costuma evitar briga.  
+    │ - E se a lição puder ser menor ou dividida em dois momentos, uma parte antes do jantar e outra depois, você tira pressão do pico.
+    │ 
+    │ ---
+    │ 
+    │ **O que observar nos próximos dias:**  
+    │ Nos dias em que ele não explodiu, o que estava diferente? Tinha chegado mais cedo? Brincou sozinho antes de ver a irmã? Fez menos lição?
+    │ 
+    │ Você não precisa de um plano gigante. Precisa de **uma exigência a menos naquele horário** — e ver o que muda.
+    └─
+
+  rodada 2: TTFT 1517ms · total 11669ms · 3105tok · 1386ch · não ofereceu
+  rodada 3: TTFT 1979ms · total 15831ms · 3105tok · 1610ch · não ofereceu
+  rodada 4: TTFT 1766ms · total 21090ms · 3105tok · 2368ch · não ofereceu
+  → ofertas 0/4 · FAIL
+
+██████████████████████████████████████████████████████████████████████████████
+C · dúvida pontual, Plano NÃO agrega
+"Ele pode dormir com a luz acesa?"
+esperado: NÃO OFERECER
+
+  rodada 1: TTFT 1079ms · total 8291ms · 2939tok · 745ch · não ofereceu
+
+    ┌─ rodada 1
+    │ Pode. E muitas vezes ajuda.
+    │ 
+    │ Se ele dorme melhor com a luz acesa — ou com uma luz fraca que deixe o quarto visível — não há problema nenhum. O que importa é que ele durma, e durma com segurança. Não é mimo, não é fugir do medo: é dar condição para que o corpo relaxe.
+    │ 
+    │ Dá pra começar com a luz que ele pede e, se quiser, ir ajustando aos poucos — luz um pouco mais fraca, mais longe, menor a cada semana. Mas isso só se fizer sentido para vocês. Se a luz acesa resolve e todo mundo dorme, pode ficar assim.
+    │ 
+    │ O corpo precisa de escuro para produzir melatonina? Precisa. Mas precisa muito mais de sono de qualidade — e uma luz fraca não vai competir com o efeito de dormir a noite toda em vez de acordar assustado.
+    │ 
+    │ Se ele pede a luz, deixa acesa.
+    └─
+
+  rodada 2: TTFT 1209ms · total 11034ms · 2939tok · 1023ch · não ofereceu
+  rodada 3: TTFT 824ms · total 8374ms · 2939tok · 772ch · não ofereceu
+  rodada 4: TTFT 1622ms · total 8128ms · 2939tok · 729ch · não ofereceu
+  → ofertas 0/4 · PASS
+
+
+##############################################################################
+TTFT  (o que a mãe espera pra começar a ler) · mediana 1222ms · p90 1766ms · pior 1979ms
+TOTAL (geração inteira)                      · mediana 8374ms · pior 21090ms
+amostra: 12 execuções
