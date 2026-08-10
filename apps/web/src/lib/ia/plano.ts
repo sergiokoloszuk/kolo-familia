@@ -501,12 +501,21 @@ export async function gerarSecoesPlanoMultiCall(params: {
 }): Promise<{ titulo: string; tema: string; secoes: PlanoSecao[] }> {
   const { supabase, familyId, membroAtipicoId, desafio } = params;
 
-  const [{ data: otsRaw }, { data: membroRow }, analise] = await Promise.all([
+  const [{ data: otsRaw }, { data: membroRow }, analise, aprendizado] = await Promise.all([
     supabase.from("output_types").select("key, label, prompt_template").eq("ativo", true),
     membroAtipicoId
       ? supabase.from("membros_atipicos").select("nome").eq("id", membroAtipicoId).maybeSingle()
       : Promise.resolve({ data: null }),
     analisarDesafio(desafio),
+    // ⚠️ O APRENDIZADO NÃO CHEGAVA A PLANO NENHUM — auditado em 10/08/2026
+    // (PEND-027, achado 4). `carregarAprendizado` e `SISTEMA_APRENDIZADO`
+    // existem desde a Fase 4 e funcionam, mas vivem em `gerarSecoesPlano`, o
+    // gerador single-call, que hoje só roda para `variante = "fim_de_semana"`.
+    // Todo plano normal passa por AQUI e não chamava nenhum dos dois: a família
+    // respondia "não funcionou", o dado era gravado em `planos.resultado`, e o
+    // plano seguinte não o via. Função existe, execução não acontece — a classe
+    // que o protocolo manda caçar.
+    carregarAprendizado(supabase, familyId, membroAtipicoId),
   ]);
   const conds = { historia_social: analise.historia_social, rotina: analise.rotina };
   const otByKey = new Map((otsRaw ?? []).map((o) => [o.key as string, o as OutputTypeRow]));
@@ -515,6 +524,25 @@ export async function gerarSecoesPlanoMultiCall(params: {
     ...SECOES_SEMPRE,
     ...SECOES_CONDICIONAIS_MC.filter((t) => conds[t as "historia_social" | "rotina"]),
   ];
+
+  // O LASTRO COMUM DAS SETE SEÇÕES.
+  //
+  // O `desafio` é o que chega a TODAS as chamadas — como `pedido` de cada
+  // `respondAsOutputType` e como entrada de `gerarEntenderObservar`. Anexar o
+  // aprendizado aqui, UMA vez, faz ele alcançar as sete sem mudar assinatura
+  // nenhuma e sem uma segunda consulta por seção.
+  //
+  // A repetição do bloco nos sete prompts é DESEJADA, não desperdício: cada
+  // seção escolhe estratégia por conta própria, e uma seção que não sabe o que
+  // já falhou vai propor de novo. O que não pode é o dado chegar sem a regra —
+  // por isso `SISTEMA_APRENDIZADO` viaja junto, no mesmo texto. Ele vivia no
+  // system do single-call, que este caminho não carrega.
+  //
+  // Sem aprendizado registrado, `desafioComLastro` é o `desafio` original,
+  // byte a byte — a família sem histórico gera o plano exatamente como antes.
+  const desafioComLastro = aprendizado
+    ? `${desafio}\n\n${aprendizado}\n${SISTEMA_APRENDIZADO}`
+    : desafio;
 
   // Cada seção prática = o botão real. Em lotes de CONCORRENCIA_SECOES (não
   // todas de uma vez) e com retentativa — as práticas são o plano.
@@ -533,7 +561,7 @@ export async function gerarSecoesPlanoMultiCall(params: {
             familyId,
             membroAtipicoId,
             outputType: { key: ot.key, label: ot.label, prompt_template: ot.prompt_template },
-            pedido: desafio,
+            pedido: desafioComLastro,
           });
           const txt = (r.texto ?? "").trim();
           if (!txt) throw new Error("seção veio vazia");
@@ -546,7 +574,7 @@ export async function gerarSecoesPlanoMultiCall(params: {
         return null;
       }
     }),
-    gerarEntenderObservar({ supabase, familyId, membroAtipicoId, desafio }),
+    gerarEntenderObservar({ supabase, familyId, membroAtipicoId, desafio: desafioComLastro }),
   ]);
   if (!framing.entender && !framing.observar) {
     falhas.push({ tipo: "entender/observar", motivo: "não veio depois das retentativas" });

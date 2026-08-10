@@ -24,6 +24,7 @@ Só o que está aberto. 🔒 = bloqueada.
 | [PEND-018](#pend-018) | Memória e retrato da criança | **C · Memória** | P1 | ABERTA | desenhar junto com A |
 | [PEND-021](#pend-021) | Jornada dos 7 dias e conversão | G · Comercial | P1 | ABERTA | preencher o DESEJADO |
 | [PEND-022](#pend-022) | Fontes confiáveis, limites e escalonamento | F · Limites | P2 | ABERTA | preencher o DESEJADO |
+| [PEND-029](#pend-029) | Aprendizado do Plano sabe o resultado, não a intervenção | D · Entregas | P2 | ABERTA | medir quantas notas são descritivas |
 | [PEND-028](#pend-028) | Piloto 4A — o que a bancada deixou em aberto | **A · Condução** | P2 | ABERTA | não bloqueia o piloto; medir depois do uso real |
 | [PEND-027](#pend-027) | Plano Kolo — contexto, conhecimento e aprendizado | **D · Entregas** | P1 | ABERTA | P0 interno: fazer o feedback chegar ao Plano seguinte |
 | [PEND-004](#pend-004) | Rotina/Sequência Visual | D · Entregas | P2 | AGUARDANDO VALIDAÇÃO | 4 fatias no ar; falta conversa real |
@@ -83,6 +84,52 @@ relatório são as três saídas do mesmo cérebro, e hoje cada uma tem o seu.
 
 **E fecha o ciclo:** sem feedback, A e C não têm como melhorar a próxima
 recomendação para aquela criança.
+
+### Princípio de desenho: CAPACIDADES, NÃO CHECKLIST
+
+> Registrado em 2026-08-10, depois de medir o gabarito da conversa e antes de
+> desenhar as fatias 2 a 4 do Plano.
+
+Manejar · desenvolver · brincar · treinar · modelar · adaptar · generalizar ·
+observar são **capacidades disponíveis**, não etapas de uma resposta. Nenhuma
+precisa aparecer só porque existe.
+
+**As duas formas de errar, e a segunda é a mais tentadora:**
+
+1. **Receita de bolo textual** — mandar a lista inteira em todo turno. Já
+   aconteceu e foi medido: 15 formas de entrega em lista ordenada viraram
+   **3 títulos em 77% dos usos** e **6 nunca usados**. Lista ordenada de opções
+   não é leque, é funil — o modelo pega o topo.
+2. **Receita de bolo PROGRAMADA** — `if comunicação → brincadeira`,
+   `if foco → treino`. Troca o gabarito de texto por um gabarito de código, e
+   fica pior: some a possibilidade de o modelo perceber que aquele caso pedia
+   outra coisa.
+
+**O desenho que vale:**
+
+```
+ESTADO/CONTEXTO
+  → disponibiliza conhecimento e capacidades RELEVANTES àquele turno
+  → modelo raciocina sobre mecanismo e finalidade
+  → escolhe a menor combinação útil
+  → resposta natural
+```
+
+**Fronteira entre código e modelo:** o código controla *disponibilidade,
+gatilho, segurança, escopo e contexto*; o modelo compõe dentro disso. Já há
+precedente que funciona — `ORIENTACAO_DE_TRANSICAO` e `formasDeEntrega` só
+entram quando o estado diz que cabem, e quem decide é código lendo estado.
+
+**Corolário que fecha a porta do inchaço:** capacidade nova que chega em TODO
+turno vira obrigação por presença. Se não tem gatilho próprio, ou vive noutro
+lugar, ou não deve existir. `formasDeEntrega` tem teto de 1.600 caracteres e
+está em 1.560 — **não cabe mais nada lá**, e isso é proteção, não limitação.
+
+**E a generalização vem do MECANISMO, não da categoria.** O acervo não deve
+ensinar "mercadinho para comunicação", e sim "brincadeira de papéis cria motivo
+real para iniciar, responder e encerrar" — é o que permite trocar mercadinho
+por veterinário, oficina ou entrevista pós-jogo mantendo a habilidade-alvo.
+Nomear mecanismo generaliza; nomear categoria vira taxonomia.
 
 ### Portão do DESEJADO
 
@@ -388,6 +435,33 @@ Aberta em: 2026-08-08 · Origem: pedido do Sérgio na missão da PEND-004
 
 ---
 
+### PEND-029
+**O aprendizado do Plano sabe o RESULTADO, não a INTERVENÇÃO que o recebeu**
+Bloco: **D · Entregas** · Prioridade: **P2** · Estado: **ABERTA**
+Aberta em: 2026-08-10 · Origem: prova comportamental da Fatia 1 (PEND-027 · achado 4)
+
+- **O que a Fatia 1 resolveu, e o que ela não resolve.** O bloco
+  `<o_que_ja_funcionou>` agora chega ao plano normal e funciona — 3/3 em bancada.
+  Mas `carregarAprendizado` seleciona apenas
+  `tema, resultado, resultado_nota`: **não traz o conteúdo do plano anterior.**
+- **Consequência:** a Ayla só consegue evitar repetir aquilo que a **nota da
+  mãe descreve**. Se ela tocar "não funcionou" sem escrever o que tentou — que é
+  o caminho de menor esforço na tela — o mecanismo sabe que algo falhou e não
+  sabe o quê. Na melhor hipótese ignora; na pior, evita o tema inteiro.
+- **A bancada só passou porque as notas eram descritivas** (*"tentei os cartões
+  de escolha com figuras, ela ignorou"*). **NÃO SEI** que proporção das notas
+  reais tem esse nível de detalhe — medir é o primeiro passo, e é leitura pura
+  de `planos.resultado_nota`.
+- **Caminhos possíveis, nenhum decidido:** juntar as `secoes` do plano avaliado
+  ao bloco (dado já existe na mesma tabela, sem migração) · ou pedir na tela um
+  detalhe quando a resposta for "não funcionou". O primeiro é código; o segundo
+  é produto e tem custo de fricção.
+- **Depende de:** nada. **Não bloqueia** nada.
+- **Critério de conclusão:** medir a proporção de notas descritivas e decidir.
+- **Agente recomendado:** INVESTIGAR (a medição primeiro)
+
+---
+
 ### PEND-028
 **Piloto 4A — os quatro achados que a bancada de 10/08 deixou em aberto**
 Bloco: **A · Condução** · Prioridade: **P2** · Estado: **ABERTA**
@@ -485,11 +559,37 @@ conflito. Esta ficha é o registro de estado; o laudo é a prova.
    **Não recebe o perfil consultável campo a campo**, e portanto **os negativos
    não têm garantia de chegar**: eles só aparecem se alguém os tiver escrito em
    prosa dentro do campo de texto.
+   - **🔁 REDEMONSTRADO EM 10/08/2026, pela bancada da Fatia 1.** Nos quatro
+     braços, a seção que escolhe estratégia propôs **apontar e figuras** para
+     uma criança cujo perfil marca `usa figuras/apontar` como NEGATIVO. A
+     correção de renderização feita no mesmo dia (`a família já disse que NÃO é
+     o caso: …`) **não alcança o Plano**, porque ele nunca recebe o perfil
+     consultável. É a consequência prática deste achado, e é o argumento mais
+     forte para a Fatia 3. **Não corrigido aqui.**
    - ⚠️ **Nuance medida, para não virar alarme falso:** no teste de conflito
      (BP mandando usar dinossauros × perfil dizendo "não gosta de dinossauros"),
      o modelo respeitou o perfil em **3 de 3 rodadas**, sem `ANCORA_PERFIL`.
      O risco não é o modelo desobedecer o negativo — **é o negativo não chegar.**
-4. **🔴 APRENDIZADO LONGITUDINAL — A LACUNA MAIS CARA.**
+4. **✅ APRENDIZADO LONGITUDINAL — BAIXA DADA EM 10/08/2026 (Fatia 1).**
+   **Implementado:** `carregarAprendizado` entrou no `Promise.all` que já existia
+   em `gerarSecoesPlanoMultiCall`, e o bloco `<o_que_ja_funcionou>` + a regra
+   `SISTEMA_APRENDIZADO` são anexados ao `desafio` **uma vez, antes do fan-out**
+   — como o `desafio` é o que vira `pedido` de cada `respondAsOutputType` e a
+   entrada de `gerarEntenderObservar`, o lastro alcança as sete seções sem mudar
+   assinatura nenhuma. **Nada de mecanismo novo:** as duas peças já existiam e
+   foram reusadas intactas.
+   **Prova comportamental 3/3** (juízo cego e semântico, cada braço isolado,
+   `gpt-5.6-luna`, em
+   [bancada/plano-fatia1-aprendizado-2026-08-10.txt](bancada/plano-fatia1-aprendizado-2026-08-10.txt)):
+   *não funcionou* → abandonou os cartões e trocou o mecanismo · *funcionou* →
+   preservou a frase combinada e a tornou central · *misto* → manteve o
+   mercadinho e criou degraus até a padaria. Não foi troca de palavras: o
+   mecanismo mudou, foi amplificado e ganhou progressão, respectivamente.
+   **Custo medido:** +1 query e ~961 tokens por plano (~137 por seção).
+   **12 testes, 3 sabotagens conferidas.** Suíte 1687.
+   **⚠️ LIMITAÇÃO RESIDUAL, registrada e NÃO corrigida — ver PEND-029.**
+   *(texto original do achado, preservado:)*
+   **🔴 APRENDIZADO LONGITUDINAL — A LACUNA MAIS CARA.**
    `carregarAprendizado` (lê `planos.resultado` / `resultado_nota` e monta
    `<o_que_ja_funcionou>`) e `SISTEMA_APRENDIZADO` (a instrução de priorizar o
    que funcionou e não repetir o que não funcionou) **existem e funcionam** —
@@ -2734,7 +2834,7 @@ trimestralmente, o que vier antes.
 
 ---
 
-**Próximo ID livre: PEND-029. *(024 e 025 reservadas por frentes ainda não publicadas.)***
+**Próximo ID livre: PEND-030. *(024 e 025 reservadas por frentes ainda não publicadas.)***
 
 > Conferir contra `origin/main`, não contra o seu branch. Dois branches podem
 > reivindicar o mesmo número — o conflito de merge nesta linha é o alarme.
