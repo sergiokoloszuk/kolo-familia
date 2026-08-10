@@ -4,12 +4,13 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { requireAdmin } from "@/lib/auth/require-admin";
 import { createServiceRoleClient } from "@/lib/supabase/server";
+import { TRIAL_DIAS } from "@/lib/billing/fatos-comerciais";
 
 export type ActionResult = { ok: true } | { ok: false; error: string };
 
 type Admin = ReturnType<typeof createServiceRoleClient>;
 
-const TRIAL_DIAS = 7;
+
 
 /**
  * Recria a família do usuário do zero: apaga a linha de family_accounts

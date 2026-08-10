@@ -20,6 +20,7 @@ import {
   INTERESSE_COMO_VEICULO,
   A_CRIANCA_ANTES_DO_ROTULO,
 } from "@/lib/conducao/formas";
+import { FATOS_COMERCIAIS } from "@/lib/billing/fatos-comerciais";
 
 /**
  * Tracking opcional pra logar a chamada em api_calls. Quando ausente, a
@@ -347,6 +348,11 @@ async function gerarUmaVez(
   const entrega = ehEntrega(params);
   const system = [
     nucleoConducao(),
+    // FATO COMERCIAL — fora do núcleo de propósito. O núcleo guarda voz e
+    // segurança universais; prazo de teste é regra de produto, e é injetada
+    // por quem fala com a família. Sem isto, perguntada quanto dura o teste,
+    // ela chutava — e chutou 30 dias, que é o palpite de mercado.
+    FATOS_COMERCIAIS,
     FORMATO_WHATSAPP,
     ...(entrega
       ? [

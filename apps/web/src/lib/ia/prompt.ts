@@ -10,6 +10,7 @@ import { pronomesPara } from "@/lib/ayla/pronomes";
 import { nucleoConducao, FRONTEIRA_DIAGNOSTICO } from "@/lib/conducao/diretrizes";
 import { blocoBoasPraticas } from "@/lib/conhecimento/recuperar";
 import { ANCORA_PERFIL, LICENCA_GENERATIVA } from "@/lib/conducao/composicao";
+import { FATOS_COMERCIAIS } from "@/lib/billing/fatos-comerciais";
 import { angulosUsados, blocoProgressao } from "@/lib/conducao/angulos";
 import {
   formasDeEntrega,
@@ -186,6 +187,8 @@ export function buildSystemTextConversa(
   // cima de desabafo é frieza.
   const entrega = intencao === "desafio";
   return `${nucleoConducao()}
+
+# ${FATOS_COMERCIAIS}
 
 # Especialistas que você reúne neste turno
 

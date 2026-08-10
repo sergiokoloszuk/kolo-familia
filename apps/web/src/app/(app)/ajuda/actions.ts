@@ -5,6 +5,7 @@ import { getAnthropicClient, MODELS } from "@/lib/ia/anthropic";
 import { createClient, createServiceRoleClient } from "@/lib/supabase/server";
 import { logServerError } from "@/lib/log";
 import { notificarFeedback } from "@/lib/admin/notificacoes";
+import { TRIAL_DIAS } from "@/lib/billing/fatos-comerciais";
 
 /**
  * Guia de uso do app — a pessoa diz o que quer fazer e a IA responde em
@@ -69,7 +70,7 @@ Regras:
 - Devolva APENAS JSON, sem texto antes/depois:
 {"resposta":"resposta em markdown (passos com - quando forem vários; pra feedback, um agradecimento/acolhida curto)","rota":"/uma-das-rotas-do-mapa-ou-null","tipo":"duvida|elogio|sugestao|reclamacao"}`;
 
-const TRIAL_DIAS = 7;
+
 
 /** System prompt com fatos AO VIVO (preço vem da tabela; não fica velho). */
 function montarSystem(precos: { mensal: string | null; anual: string | null }): string {
