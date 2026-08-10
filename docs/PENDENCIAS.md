@@ -1590,6 +1590,43 @@ do laudo de 06/08) + `docs/auditoria-ayla-prompt.md`
     no início, não item de lista depois da proibição.
   - **É regressão em relação ao comportamento anterior**, que oferecia demais mas
     nunca deixava pedido explícito sem botão. **Bloqueia o piloto.**
+- **🐛 TRIAL DE 30 DIAS — corrigido, e a causa raiz não era o texto
+  (2026-08-09).** Uma família em teste de **7 dias** podia receber, pelo
+  WhatsApp: *"te lembrando que seus 30 dias grátis terminam em 3 dias"*.
+  - **ORIGEM 1, a visível:** o template `trial_d3` nasceu na migração 0010,
+    quando o trial era de 30 dias. As migrações **0047 e 0051 encurtaram para
+    7 e ninguém voltou no texto.** Duas variações, **uma errada** — metade das
+    mães avisadas lia 30. `ativo = true`, **disparado pelo cron**
+    (`api/ayla/cron/route.ts:520`).
+    **Corrigido em produção** (`versao 4`), tirando o número em vez de trocá-lo:
+    *"seu período grátis termina em 3 dias"* continua verdadeiro se o trial
+    mudar de novo. **Número repetido em texto é número que defasa.**
+  - **🐛 ORIGEM 2, a grave: A AYLA NUNCA SOUBE QUANTO DURA O TRIAL.** Nenhum
+    prompt de conversa — nem web, nem WhatsApp — informava a duração.
+    Perguntada, ela **inferia**, e 30 dias é o palpite de mercado. O único lugar
+    que fazia certo era o `/ajuda`, com um bloco *"use estes valores; NÃO
+    invente"* que ninguém tinha generalizado.
+  - **A constante estava em TRÊS arquivos**, cada um com a sua cópia:
+    `ajuda/actions.ts`, `admin/familias/page.tsx`, `admin/teste/actions.ts`.
+    Agora existe **uma** fonte: `lib/billing/fatos-comerciais.ts`.
+  - **REGRA NOVA: informação comercial e estrutural não é generativa.** A Ayla
+    pode inventar uma brincadeira; não pode decidir prazo de teste, preço ou
+    funcionamento de cobrança.
+  - **E os dois "30 dias" ficaram nomeados no mesmo arquivo**, para não se
+    contaminarem: `TRIAL_DIAS = 7` é o teste comercial; a duração de um **Plano
+    Kolo** é outra entidade e pode ser 30.
+  - **Varredura do banco:** `ayla_message_templates` (13), `ai_prompts` (7),
+    `specialist_prompt_templates` (14) e as **381 boas práticas** — **só o
+    `trial_d3`** afirmava duração.
+  - **6 testes, 2 sabotagens mordem.**
+- **📌 O TETO DO NÚCLEO NÃO FOI AUMENTADO — e a tentativa foi o achado.**
+  Eu havia subido de 57.000 para 57.300 para caber o fato comercial. **O Sérgio
+  vetou, e tinha razão pelo motivo certo:** pela classificação dele, fato
+  comercial é **REGRA DE PRODUTO**, não regra universal de voz — **não pertence
+  ao núcleo.** O bloco saiu de `diretrizes.ts` e passou a ser injetado pelos
+  dois canais (`ia/prompt.ts` e `ayla/responder.ts`). **O teto voltou a 57.000**,
+  e um teste morde se o fato voltar para o núcleo.
+  **O teto estourar era sinal arquitetural, não obstáculo.**
 - **Depende de:** PEND-017 e PEND-018 — **desenhar junto**. Absorve PEND-009
   (primeira conversa) dentro do DESEJADO.
 - **Admin:** ADMIN PRECISA DE AJUSTE — hoje não dá para ver *por que* a Ayla

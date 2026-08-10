@@ -6,6 +6,7 @@ import { createServiceRoleClient } from "@/lib/supabase/server";
 import { capitalizarNome } from "@/lib/nome";
 import { assinaturaLiberada } from "@/lib/auth/assinatura";
 import { BloquearBtn } from "./bloquear-btn";
+import { TRIAL_DIAS } from "@/lib/billing/fatos-comerciais";
 
 /**
  * Famílias / Leads — lista única com origem, momento do trial, e se assinou.
@@ -14,7 +15,7 @@ import { BloquearBtn } from "./bloquear-btn";
  */
 export const dynamic = "force-dynamic";
 
-const TRIAL_DIAS = 7;
+
 
 const STATUS_LABEL: Record<string, string> = {
   trialing: "Em trial",
