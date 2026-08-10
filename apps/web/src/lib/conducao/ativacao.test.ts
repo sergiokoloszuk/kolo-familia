@@ -88,7 +88,10 @@ describe("caminhos de começo — sem virar menu de funcionalidades", () => {
 
   it("a forma existe no repertório — e é entrega, não conversa solta", () => {
     const bloco = formasDeEntrega({ canal: "whatsapp" });
-    expect(bloco).toMatch(/Por onde eu começaria \(os pontos que vejo \+ qual eu pegaria primeiro, e por quê\)/);
+    // O rótulo "Por onde eu começaria" saiu em 10/08/2026 — era um dos três
+    // que viravam gabarito. O que este teste guarda é a FORMA de organizar
+    // várias frentes, que continua existindo como tipo de ajuda.
+    expect(bloco).toMatch(/comparar caminhos/);
   });
 
   it("vive no núcleo, que é compartilhado — não é uma segunda Ayla", () => {

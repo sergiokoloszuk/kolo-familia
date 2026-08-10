@@ -236,19 +236,30 @@ describe("formas de entrega", () => {
   const wa = formasDeEntrega({ canal: "whatsapp", tema: null });
   const web = formasDeEntrega({ canal: "web", tema: "nutricional" });
 
-  it("pede de 2 a 4 blocos — não 6 obrigatórios", () => {
-    expect(wa).toMatch(/de 2 a 4 blocos curtos/);
-    expect(wa).toMatch(/nunca use todos/);
+  it("NÃO obriga número de blocos — a forma nasce do que há a dizer", () => {
+    // ⚠️ ESTE TESTE SE INVERTEU EM 10/08/2026, e a versão antiga não era erro.
+    // Ele exigia "de 2 a 4 blocos" — que era o desenho de 02/08, quando o
+    // problema era resposta rasa sem forma nenhuma. Medido sobre 70 títulos
+    // das bancadas do piloto, aquele número virou o gabarito: 74% dos títulos
+    // eram itens do repertório copiados, e três deles concentravam 77% dos
+    // usos. Agora o teste guarda o oposto — que NÃO existe número obrigatório.
+    expect(wa).not.toMatch(/de 2 a 4 blocos/);
+    expect(wa).toMatch(/A FORMA NASCE DO QUE VOCÊ TEM A DIZER/);
+    expect(wa).toMatch(/nenhum é obrigatório/);
+    expect(wa).toMatch(/Na dúvida, prosa/);
   });
 
   it("NÃO reabre a resposta multi-frente que fechamos em 01/08", () => {
     // Este é o risco número um da camada inteira.
-    expect(wa).toMatch(/FORMAS DIFERENTES DE AJUDAR NA MESMA FRENTE/);
-    expect(wa).toMatch(/NÃO autorizam abrir duas dificuldades no mesmo turno/);
+    expect(wa).toMatch(/NÃO abra duas dificuldades no turno/);
+    expect(wa).toMatch(/escolha UM e entregue bem/);
   });
 
   it("um tipo de ajuda só = texto corrido, sem título nenhum", () => {
-    expect(wa).toMatch(/escreva em texto corrido e não use título nenhum/);
+    // A válvula de escape virou a regra: título só quando separa naturezas
+    // diferentes. "Na dúvida, prosa" é a instrução, não a exceção.
+    expect(wa).toMatch(/Na dúvida, prosa/);
+    expect(wa).toMatch(/são um parágrafo/);
   });
 
   it("a sintaxe do título é a do canal — e cada canal tem UMA", () => {
@@ -264,11 +275,11 @@ describe("formas de entrega", () => {
   });
 
   it("proíbe título burocrático", () => {
-    expect(wa).toMatch(/Nada de "BLOCO 1"/);
+    expect(wa).toMatch(/Se parecer rótulo de seção/);
   });
 
   it("segura o emoji", () => {
-    expect(wa).toMatch(/No máximo um emoji por resposta/);
+    expect(wa).toMatch(/No máximo um emoji/);
   });
 
   it("o tema ativo prioriza o perfil sem travar o assunto", () => {
@@ -276,7 +287,12 @@ describe("formas de entrega", () => {
     expect(wa).not.toMatch(/O assunto desta conversa/);
   });
 
-  it("cabe no teto de ~1.000 caracteres — senão virou um segundo prompt", () => {
+  it("cabe no teto — senão virou um segundo prompt", () => {
+    // O nome antigo dizia "~1.000" e a asserção cobrava 1600; o bloco real
+    // vinha ocupando ~1612 com a interpolação do tema. A reescrita de
+    // 10/08/2026 (fim do gabarito) o deixou em ~1318 — 18% menor, com mais
+    // liberdade de forma e menos texto. Instrução que encolhe e libera é o
+    // sinal de que a regra estava no lugar errado, não faltando.
     expect(wa.length).toBeLessThan(1600);
   });
 });
@@ -289,8 +305,12 @@ describe("crença e futuro possível", () => {
   const wa = formasDeEntrega({ canal: "whatsapp", tema: null });
 
   it("crença existe como forma, e só quando aparece na fala", () => {
-    expect(wa).toMatch(/Uma ideia que pode estar pesando/);
-    expect(wa).toMatch(/uma crença, quando aparece na fala dela/);
+    // ⚠️ O RÓTULO saiu do repertório em 10/08/2026 (ele era um dos seis que
+    // NUNCA foram usados em 70 títulos medidos). A REGRA não saiu: ela vive em
+    // `A_CRIANCA_ANTES_DO_ROTULO`, que entra nos dois canais junto com esta
+    // camada. O teste passou a guardar a regra, que é o que protege a família.
+    expect(ROTULO).toMatch(/CRENÇA só quando houver base/);
+    expect(ROTULO).toMatch(/Sem base, não nomeie crença/);
   });
 
   it("NUNCA a forma de nomear crença como diagnóstico", () => {
@@ -298,7 +318,9 @@ describe("crença e futuro possível", () => {
   });
 
   it("futuro é realidade + possibilidade + passo — não promessa", () => {
-    expect(wa).toMatch(/realidade de hoje \+ o que é possível \+ o passo/);
+    // Mesma história do rótulo de crença: a regra do futuro vive na constante.
+    expect(ROTULO).toMatch(/descreva a AÇÃO, não o resultado/);
+    expect(ROTULO).toMatch(/promessa disfarçada de informação/);
   });
 
   it("o núcleo continua proibindo prever resultado — a base do freio", () => {

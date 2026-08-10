@@ -25,23 +25,32 @@ import { rotuloDoTema } from "./temas";
  * e vai brigar com a VOZ.
  */
 
-/** Só as formas. Uma linha cada, sem exemplo longo — o exemplo é o que incha. */
-const REPERTORIO = [
-  "O que estou percebendo (só se reorganiza algo que ela não tinha juntado)",
-  "Por onde eu começaria (os pontos que vejo + qual eu pegaria primeiro, e por quê)",
-  "O que eu faria primeiro",
-  "O que você pode dizer (uma fala pronta, curta)",
-  "Uma atividade / uma brincadeira",
-  "Uma ideia usando algo que ele ama",
-  "O que evitar",
-  "Vamos testar (combinar alguns dias e ver)",
-  "O que observar",
-  "Uma pequena mudança na rotina",
-  "Como conduzir essa passagem (antes / durante / depois)",
-  "Uma ideia que pode estar pesando (uma crença, quando aparece na fala dela)",
-  "Outra forma de olhar para isso",
-  "O que estamos construindo (realidade de hoje + o que é possível + o passo)",
-  "Próximo passo",
+/**
+ * OS TIPOS DE AJUDA — e por que isto deixou de ser uma lista linear.
+ *
+ * ⚠️ MEDIDO EM 10/08/2026, sobre 70 títulos das bancadas do piloto: **74% dos
+ * títulos eram itens desta lista copiados quase palavra por palavra**, apesar
+ * da instrução mandar adaptar. Pior, a distribuição colapsou — três itens
+ * concentravam 77% dos usos, na ordem em que estavam escritos:
+ * "O que estou percebendo" (1º da lista) → "O que eu faria primeiro" (3º) →
+ * "O que observar" (9º). Era exatamente o gabarito que as famílias sentiram.
+ *
+ * E SEIS DOS QUINZE NUNCA FORAM USADOS — inclusive "uma atividade / uma
+ * brincadeira", que é uma das melhores formas de ajudar uma criança. O
+ * repertório existia e o modelo não chegava nele: lista ordenada mais viés de
+ * posição é um funil, não um leque.
+ *
+ * A correção não é trocar as palavras: é tirar a forma de LISTA. Agrupado por
+ * TIPO DE AJUDA, o modelo escolhe o tipo pelo que o caso pede, e escreve o
+ * título com as palavras dele. Nenhum tipo é obrigatório, e a ordem aqui não
+ * é ordem de preferência.
+ */
+const TIPOS_DE_AJUDA = [
+  "orientar agora · dar a fala pronta · adaptar o ambiente",
+  "propor brincadeira, atividade ou treino — quando praticar vale mais que explicar",
+  "ajudar a compreender · oferecer outro olhar",
+  "perguntar para diferenciar — só quando a resposta muda a conduta",
+  "comparar caminhos · conduzir uma passagem · observar e testar",
 ].join("\n- ");
 
 /**
@@ -66,14 +75,16 @@ export function formasDeEntrega(params: {
   const tituloSintaxe = params.canal === "whatsapp" ? "*Assim*" : "## Assim";
   const rotulo = params.tema ? rotuloDoTema(params.tema) : null;
 
-  return `# Como ORGANIZAR esta resposta
+  return `# Que forma esta resposta pede
 
-Isto é uma ENTREGA: componha de 2 a 4 blocos curtos, cada um com um título curto (${tituloSintaxe}) e duas ou três linhas embaixo. Os títulos saem deste repertório — escolha os que ajudam DE VERDADE aqui, adapte as palavras, nunca use todos:
-- ${REPERTORIO}
+A FORMA NASCE DO QUE VOCÊ TEM A DIZER. Não há formato padrão: pode ser um parágrafo direto, uma orientação e uma pergunta, uma frase pronta, uma brincadeira explicada, dois caminhos comparados. Escolha o tipo de ajuda que ESTE caso pede — nenhum é obrigatório, a ordem não é preferência, e a maioria dos turnos pede um só:
+- ${TIPOS_DE_AJUDA}
 
-- OS BLOCOS SÃO FORMAS DIFERENTES DE AJUDAR NA MESMA FRENTE. Eles NÃO autorizam abrir duas dificuldades no mesmo turno: se ela trouxe três problemas, você escolhe UM e entrega bem.
-- 2 blocos certos valem mais que 4 pra encher. Se só há um tipo de ajuda a dar, escreva em texto corrido e não use título nenhum.
-- Título curto (2 a 5 palavras) e humano. Nada de "BLOCO 1", "Orientações", "Considerações finais". No máximo um emoji por resposta, e só se significar algo. Sem despedida protocolar.${
+- TÍTULO (${tituloSintaxe}) SÓ QUANDO SEPARA COISAS DE NATUREZA DIFERENTE — orientação × brincadeira, hoje × próximos dias. Frases sobre o mesmo assunto são um parágrafo. Na dúvida, prosa.
+- TÍTULO COM AS SUAS PALAVRAS, sobre o que ele abre. Se parecer rótulo de seção ("O que eu faria primeiro", "O que observar"), não está dizendo nada e a resposta virou formulário.
+- A MENOR FORMA QUE AJUDA VENCE. Numerar passos e fechar com "o que observar" é o gabarito de novo, sem título — não é o formato padrão. Numere só se a ordem importa; observe só se há algo a decidir depois. Se cabe em três frases, são três frases.
+- NÃO abra duas dificuldades no turno: se ela trouxe três problemas, escolha UM e entregue bem.
+- No máximo um emoji, e só se significar algo. Sem despedida protocolar.${
     rotulo
       ? `\n- O assunto desta conversa é ${rotulo.toUpperCase()}: puxe do perfil o que serve pra isso e deixe o resto quieto.`
       : ""

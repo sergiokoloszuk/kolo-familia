@@ -295,7 +295,7 @@ describe("o bloco do perfil", () => {
     // `kolo-vivo/consultar.ts` quando o WhatsApp passou a receber o mesmo bloco.
     // O teste seguiu a redação — o que ele guarda é a DISTINÇÃO, não o arquivo.
     const consultar = src("kolo-vivo/consultar.ts");
-    expect(consultar).toMatch(/NÃO se aplica:/);
+    expect(consultar).toMatch(/a família já disse que NÃO é o caso:/);
     expect(consultar).toMatch(/ainda não sabemos:/);
     // A instrução de não reperguntar fica em quem monta o bloco — nos DOIS canais.
     for (const f of ["ia/prompt.ts", "ayla/responder.ts"]) {

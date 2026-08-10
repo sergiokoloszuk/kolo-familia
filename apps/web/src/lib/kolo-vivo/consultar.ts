@@ -223,7 +223,14 @@ export function linhasDoPerfilConsultavel(
     if (!preenchidos.length && !negativos.length) continue;
     const parte = [
       preenchidos.length ? `sabemos: ${preenchidos.map((c) => c.label).join(", ")}` : null,
-      negativos.length ? `NÃO se aplica: ${negativos.map((c) => c.label).join(", ")}` : null,
+      // ⚠️ "NÃO se aplica" era ambíguo e custou caro (medido em 10/08/2026):
+      // lia-se tanto como "a criança NÃO faz isso" quanto como "este campo não
+      // foi perguntado". No golden case da criança verbal, `usa figuras/apontar`
+      // estava marcado como negativo e a resposta sugeriu apontar assim mesmo.
+      // A redação agora diz de quem é a negação e de onde ela veio.
+      negativos.length
+        ? `a família já disse que NÃO é o caso: ${negativos.map((c) => c.label).join(", ")}`
+        : null,
       vazios.length ? `ainda não sabemos: ${vazios.map((c) => c.label).join(", ")}` : null,
     ]
       .filter(Boolean)
