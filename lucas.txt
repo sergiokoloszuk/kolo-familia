@@ -1,0 +1,80 @@
+
+██████████████████████████████████████████████████████████████████████████████
+A · sem Perfil (controle)
+
+  rodada 1: 9460ms · 450ch · usou: NADA DO PERFIL
+
+    │ Oi Sanábia! 
+    │ 
+    │ Olha, primeiro quero que você saiba que o Lucas já conquistou muita coisa. Estar conversando já é enorme, viu?
+    │ 
+    │ Agora, sobre essas habilidades que faltam... a boa notícia é que *tudo isso se aprende vivendo*, sabe? Não precisa virar professora dele.
+    │ 
+    │ Me conta uma coisa: como são as conversas de vocês no dia a dia? Tipo, quando você pergunta algo pro Lucas, ele responde e pronto, ou às vezes ele continua o assunto, pergunta de volta?
+
+  rodada 2: 5861ms · 522ch · usou: NADA DO PERFIL
+  rodada 3: 5807ms · 478ch · usou: NADA DO PERFIL
+  ── placar em 3 rodadas:
+     0/3  começa pelo detalhe / não dá contexto
+     0/3  ironia/figurado já conhecido
+     0/3  interesse: personagens
+     0/3  interesse: telas
+
+██████████████████████████████████████████████████████████████████████████████
+B · com Perfil, SEM âncora (o que roda hoje)
+
+  rodada 1: 8117ms · 657ch · usou: NADA DO PERFIL
+
+    │ Oi Sanábia! 
+    │ 
+    │ Olha, o Lucas já tá num ponto muito bom — ele já *quer* conversar, isso é o principal. Agora é afinar esse instrumento, sabe?
+    │ 
+    │ Uma coisa que funciona muito bem: você virar *intérprete* dele no dia a dia. 
+    │ 
+    │ Tipo assim: ele chega e fala "o dinossauro morreu". Aí você devolve organizando: "Ah, você tava brincando com o dinossauro e aconteceu alguma coisa com ele? Me conta o que você tava fazendo antes?"
+    │ 
+    │ Você vai *modelando* como se monta uma história, sem cobrar. Vai mostrando que pra outra pessoa entender, precisa de um pouquinho mais de informação.
+    │ 
+    │ Funciona assim com vocês? Ele aceita quando você faz essas perguntas ou fica frustrado?
+
+  rodada 2: 11091ms · 1039ch · usou: começa pelo detalhe / não dá contexto
+  rodada 3: 19338ms · 1835ch · usou: começa pelo detalhe / não dá contexto + interesse: personagens
+  ── placar em 3 rodadas:
+     2/3  começa pelo detalhe / não dá contexto
+     0/3  ironia/figurado já conhecido
+     1/3  interesse: personagens
+     0/3  interesse: telas
+
+██████████████████████████████████████████████████████████████████████████████
+C · com Perfil E âncora (a correção)
+
+  rodada 1: 13388ms · 1120ch · usou: NADA DO PERFIL
+
+    │ Oi, Sanábia!
+    │ 
+    │ Olha, eu sei que essa lista parece enorme — e pode dar aquela sensação de "preciso treinar tudo isso". Mas na prática, a gente não ensina essas coisas separadas. Elas vão melhorando juntas, no dia a dia, quando a gente cria espaço pra ele *usar* a fala de um jeito mais completo.
+    │ 
+    │ Vou te dar um caminho que funciona bem com crianças como o Lucas:
+    │ 
+    │ *1. Ajude ele a contar o que aconteceu — com você como parceira*
+    │ 
+    │ Quando ele chegar da escola ou quiser te contar algo, em vez de só ouvir ou aceitar o pedacinho que ele diz, você "puxa" o resto junto com ele. Tipo:
+    │ 
+    │ — Ele: "A professora brigou!"  
+    │ — Você: "Brigou com quem? Com você?"  
+    │ — Ele responde.  
+    │ — Você: "E por que ela brigou?"  
+    │ — Ele tenta explicar (mesmo que mal).  
+    │ — Você reformula: "Ah, então você tava fazendo X, aí ela pediu pra parar, e você não parou… foi isso?"
+    │ 
+    │ Você vai *modelando* a narrativa com ele. Não pra corrigir, mas pra mostrar como se organiza uma história. Com o tempo, ele vai pegando a estrutura.
+    │ 
+    │ Antes de eu te dar o próximo, me conta: vocês já fazem isso no dia a dia, ou geralmente você aceita o que ele fala e pronto?
+
+  rodada 2: 15206ms · 1448ch · usou: começa pelo detalhe / não dá contexto
+  rodada 3: 7279ms · 645ch · usou: NADA DO PERFIL
+  ── placar em 3 rodadas:
+     1/3  começa pelo detalhe / não dá contexto
+     0/3  ironia/figurado já conhecido
+     0/3  interesse: personagens
+     0/3  interesse: telas
