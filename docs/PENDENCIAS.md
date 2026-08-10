@@ -968,12 +968,26 @@ do laudo de 06/08) + `docs/auditoria-ayla-prompt.md`
   - **A SUFICIÊNCIA NÃO É DECIDIDA POR NINGUÉM.** Diferente da Rotina e do Plano,
     a conversa livre **não tem porteiro**: nada avalia *"já dá pra ajudar de
     verdade?"* antes de responder. `Começar + Matemática` já bastava.
-  - **FORMA DA RESPOSTA — auditada em 2026-08-09.** As respostas saem em blocos
-    uniformes de prosa. A mãe não consegue bater o olho e achar *o que tentar ·
-    o que falar · uma ideia prática · qual o próximo caminho*. **Âncoras curtas
-    em negrito** (`*assim*`, que é a sintaxe que o WhatsApp renderiza e que a
-    Ayla já usa) devem aparecer **quando ajudarem a leitura** — nunca como
-    template fixo em toda resposta.
+  - ~~**FORMA DA RESPOSTA — auditada em 2026-08-09.** As respostas saem em
+    blocos uniformes de prosa.~~ **ACHADO FALSO, RETIRADO EM 2026-08-09 (fim do
+    dia).** As 12 respostas auditadas tinham **2 a 4 títulos cada**, em negrito.
+    A auditoria contou apenas `##`, não achou nenhum e concluiu ausência de
+    estrutura. **Lição metodológica, que vale para toda auditoria daqui em
+    diante: não se conclui ausência de comportamento procurando UMA sintaxe.**
+    Medir a sintaxe e medir o comportamento são duas medições, e a segunda não
+    se deduz da primeira.
+  - **FORMA DA RESPOSTA — o que era verdade, medido em 2026-08-09.** Havia
+    estrutura, e havia **duas instruções concorrentes** produzindo-a:
+    `formas.ts` mandava "título curto em negrito" e a seção de Formatação de
+    `prompt.ts` (PR #85) mandava `## título`, no mesmo system. O modelo obedecia
+    a primeira — **0 `##` em 10 rodadas, GPT e Claude**, títulos em negrito em
+    10/10 — e a tela, que desenha `##` como `<h3>`, nunca recebia um.
+    **CORRIGIDO:** a sintaxe do título passou a ser do canal (`## Assim` na web,
+    `*Assim*` no WhatsApp, que não renderiza markdown), o negrito virou âncora
+    dentro do texto, e a frase pronta perdeu a sintaxe concorrente em itálico.
+    Depois: **`##` em 9 de 10 rodadas** e `**Título**` em 0 de 10 — a décima é
+    uma resposta curta que ficou em prosa, que é o comportamento desejado.
+    Dúvida, desabafo e crise não mudaram.
   - **PRINCÍPIO REGISTRADO:** *uma boa resposta Kolo não apenas explica o
     comportamento — ela deixa a mãe com alguma coisa concreta para experimentar.*
     Quando houver repertório, ir além do óbvio: **orientação + frase +

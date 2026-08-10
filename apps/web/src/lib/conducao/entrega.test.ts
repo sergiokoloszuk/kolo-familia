@@ -251,10 +251,16 @@ describe("formas de entrega", () => {
     expect(wa).toMatch(/escreva em texto corrido e não use título nenhum/);
   });
 
-  it("negrito certo em cada canal", () => {
+  it("a sintaxe do título é a do canal — e cada canal tem UMA", () => {
+    // WhatsApp não renderiza markdown: lá o título é o negrito de um asterisco.
     expect(wa).toContain("*Assim*");
     expect(wa).not.toContain("**Assim**");
-    expect(web).toContain("**Assim**");
+    expect(wa).not.toContain("##");
+    // A web renderiza `##` como <h3>. Enquanto este bloco pedia `**Assim**` e a
+    // seção de Formatação pedia `## título`, o modelo obedecia este e a
+    // hierarquia sumia (0 `##` em 10 rodadas, 09/08/2026).
+    expect(web).toContain("## Assim");
+    expect(web).not.toContain("**Assim**");
   });
 
   it("proíbe título burocrático", () => {
