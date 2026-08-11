@@ -27,6 +27,7 @@ import {
   KIND_ALERTA_OPERACIONAL,
 } from "@/lib/stripe/reconciliacao";
 import { assinaturaLiberada } from "@/lib/auth/assinatura";
+import { familiasDeStaff } from "@/lib/auth/acesso";
 
 /**
  * Cron da Ayla — chamado por scheduler externo (n8n, Vercel Cron, etc.).
@@ -737,6 +738,17 @@ async function filtrarComAcesso(
   ids: string[],
 ): Promise<string[]> {
   if (ids.length === 0) return [];
+  // ⚠️ STAFF ENTRA AQUI DESDE 10/08/2026, e a ausência disto era um bug.
+  //
+  // Este filtro decide quem a Ayla PROCURA. Os portões que decidem quem ela
+  // ATENDE (painel, escrita na web, conversa no WhatsApp) já isentavam staff;
+  // este não, e nem `rules.ts`. Uma operadora com trial vencido era atendida
+  // sempre e procurada nunca — parou de receber a mensagem diária no dia exato
+  // do vencimento, e nada acusou. Ver `lib/auth/acesso.ts`.
+  //
+  // Em LOTE de propósito: uma consulta por família seria N idas ao banco a cada
+  // ciclo do cron.
+  const staff = await familiasDeStaff(supabase, ids);
   const { data: subs } = await supabase
     .from("subscription_accesses")
     .select(
@@ -748,7 +760,7 @@ async function filtrarComAcesso(
       .filter((s) => assinaturaLiberada(s))
       .map((s) => s.family_account_id as string),
   );
-  return ids.filter((id) => liberadas.has(id));
+  return ids.filter((id) => staff.has(id) || liberadas.has(id));
 }
 
 async function runSeguimento(supabase: AdminClient) {

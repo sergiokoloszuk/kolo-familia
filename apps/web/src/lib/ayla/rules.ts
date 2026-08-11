@@ -25,6 +25,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { horaLocalHHMM } from "@/lib/idade";
 import { assinaturaLiberada } from "@/lib/auth/assinatura";
+import { familiaEhDeStaff } from "@/lib/auth/acesso";
 import type { AylaTipoProativa } from "./types";
 import { criancaPendente } from "./crianca-especifica";
 
@@ -113,13 +114,24 @@ export async function podeEnviarProativa(
   // 1b. ACESSO: engajamento proativo só pra quem tem acesso liberado (fonte única
   // assinaturaLiberada — trial vencido, past_due sem graça, canceled → bloqueia).
   if ((REQUER_ACESSO as ReadonlyArray<string>).includes(tipo)) {
-    const { data: sub } = await supabase
-      .from("subscription_accesses")
-      .select("status, trial_ends_at, cortesia, cortesia_ate, pagamento_falhou_em")
-      .eq("family_account_id", ctx.family_account_id)
-      .maybeSingle();
-    if (!assinaturaLiberada(sub)) {
-      return { permitido: false, motivo: "Sem acesso liberado (trial vencido / assinatura inativa) — engajamento não sai." };
+    // ⚠️ STAFF ENTRA AQUI DESDE 10/08/2026. Quem opera a Kolo usa o produto de
+    // verdade — é assim que se testa o que as famílias recebem. Sem esta linha,
+    // a operadora era ATENDIDA quando escrevia (o portão do orquestrador já a
+    // isentava) e nunca PROCURADA, porque este bloqueava. Ver `lib/auth/acesso.ts`.
+    //
+    // Só o engajamento de PRODUTO passa por aqui: o comercial fica fora de
+    // `REQUER_ACESSO` de propósito (é justamente o convite a voltar), então
+    // isentar staff não gera convite de assinatura para a equipe.
+    const ehStaff = await familiaEhDeStaff(supabase, ctx.family_account_id);
+    if (!ehStaff) {
+      const { data: sub } = await supabase
+        .from("subscription_accesses")
+        .select("status, trial_ends_at, cortesia, cortesia_ate, pagamento_falhou_em")
+        .eq("family_account_id", ctx.family_account_id)
+        .maybeSingle();
+      if (!assinaturaLiberada(sub)) {
+        return { permitido: false, motivo: "Sem acesso liberado (trial vencido / assinatura inativa) — engajamento não sai." };
+      }
     }
   }
 

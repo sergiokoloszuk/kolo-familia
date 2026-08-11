@@ -97,7 +97,7 @@ import {
   templateConviteCriancaEspecifica,
 } from "./crianca-especifica";
 import { extrairESalvarEventos } from "./eventos";
-import { assinaturaLiberada } from "@/lib/auth/assinatura";
+import { acessoLiberado } from "@/lib/auth/acesso";
 import { classificarAreasDiario } from "@/lib/ia/classificar-area";
 import type { AylaTipoProativa, AylaTipoReativa, ParserResult } from "./types";
 
@@ -1233,25 +1233,11 @@ function pareceCrianca(texto: string | null | undefined): boolean {
  * é bloqueado. Expirado recebe um convite gentil pra assinar (não o serviço).
  */
 async function aylaServicoLiberado(supabase: SupabaseClient, familyId: string): Promise<boolean> {
-  const { data: fam } = await supabase
-    .from("family_accounts")
-    .select("user_id")
-    .eq("id", familyId)
-    .maybeSingle();
-  if (fam?.user_id) {
-    const { data: acesso } = await supabase
-      .from("controle_acessos")
-      .select("ativo")
-      .eq("user_id", fam.user_id as string)
-      .maybeSingle();
-    if (acesso?.ativo) return true;
-  }
-  const { data: sub } = await supabase
-    .from("subscription_accesses")
-    .select("status, trial_ends_at, cortesia, cortesia_ate, pagamento_falhou_em")
-    .eq("family_account_id", familyId)
-    .maybeSingle();
-  return assinaturaLiberada(sub);
+  // A regra saiu daqui em 10/08/2026 para `lib/auth/acesso.ts`. Ela estava
+  // escrita corretamente NESTE portão e em mais dois — e faltando em outros
+  // dois, que foi como uma operadora com trial vencido virou atendida-e-nunca-
+  // procurada. Cinco cópias, duas envelhecidas. O comportamento aqui não muda.
+  return acessoLiberado(supabase, familyId);
 }
 
 /**
