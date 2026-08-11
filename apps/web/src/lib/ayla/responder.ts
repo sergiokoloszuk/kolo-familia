@@ -43,7 +43,86 @@ export type UsageTracking = {
   supabase: SupabaseClient;
   family_account_id: string | null;
   feature: string;
+  /**
+   * O TURNO — nasce UMA vez em `processInbound` e desce por todas as chamadas.
+   *
+   * ⚠️ Sem ele não dá para responder "quanto tempo de IA este turno consumiu?".
+   * Medido em 11/08/2026: **1 de 2.788 chamadas** tinha duração registrada, e
+   * era a conversa web instrumentada no mesmo dia. A latência percebida do
+   * WhatsApp é **P50 22,4 s · P95 57,7 s**, e não havia como saber quanto disso
+   * é modelo e quanto é arquitetura.
+   *
+   * É `crypto.randomUUID()`, e NÃO o id da mensagem: o id do inbound existe na
+   * hora certa, mas nasce CONDICIONALMENTE — dois caminhos de exceção (falha do
+   * claim de idempotência, e webhook sem `messageId`) não o produzem. Um
+   * correlacionador que às vezes é nulo abre exatamente o buraco que esta
+   * instrumentação existe para fechar.
+   */
+  turn_id?: string;
+  /**
+   * A mensagem que originou o turno, quando existir — `ayla_messages.id`.
+   *
+   * NÃO é o correlacionador (isso é o `turn_id`). Serve para chegar ao texto
+   * real sem persistir texto novo: é o que permite abrir os turnos que ficaram
+   * sem repertório (PEND-042) sem duplicar o que a família escreveu.
+   */
+  message_id?: string | null;
+  /**
+   * A criança de quem o turno trata — quando já resolvida NAQUELE ponto.
+   *
+   * ⚠️ NUNCA INFERIDO PARA PREENCHER TELEMETRIA. Numa família com dois filhos,
+   * um membro chutado no rastro é pior que um campo vazio: leva a auditoria
+   * futura a atribuir o turno à criança errada, e é exatamente o tipo de
+   * mistura que `membro-escopo.ts` existe para impedir. Onde o membro ainda não
+   * estiver resolvido, o valor é `null` — e a lacuna fica visível.
+   */
+  membro_atipico_id?: string | null;
+  /**
+   * A EXECUÇÃO PROATIVA — quando a chamada NÃO pertence a um turno.
+   *
+   * ⚠️ `ayla_repertorio` roda por cron, 1× por semana, com cadência própria.
+   * Não há inbound, não há mensagem da família, não há turno. Dar-lhe um
+   * `turn_id` inventaria um turno que nunca aconteceu e faria a soma "tempo de
+   * IA por turno" incluir uma chamada que nenhuma família esperou.
+   *
+   * DECISÃO DE ARQUITETURA (11/08/2026): cada unidade real recebe o
+   * identificador coerente com sua natureza —
+   *   `turn_id`    processamento conversacional reativo
+   *   `envio_id`   execução proativa
+   *   `inbound_id` evento recebido antes do turno (a fatia A3 decide)
+   * Um `correlation_id` genérico por cima das três só entra se um dia
+   * precisarmos consultar tudo por um eixo só. Unificar agora esconderia
+   * diferenças reais do sistema.
+   */
+  envio_id?: string;
+  /** De onde a chamada veio. Ausente = turno reativo. */
+  origem?: "proativo";
 };
+
+/** Os campos de correlação, no formato que vai para `api_calls.meta`. */
+export function metaDoTurno(
+  t: UsageTracking | undefined,
+  extra: Record<string, unknown>,
+): Record<string, unknown> {
+  // ⚠️ NO PROATIVO O `turn_id` FICA AUSENTE, e não `null`. A diferença importa:
+  // `null` é indistinguível de "esqueci de propagar" — e é justamente esse
+  // esquecimento silencioso que o contrato obrigatório existe para eliminar.
+  // Ausência é uma afirmação: esta chamada não pertence a turno nenhum.
+  if (t?.origem === "proativo") {
+    return {
+      envio_id: t.envio_id ?? null,
+      origem: "proativo",
+      membro_atipico_id: t.membro_atipico_id ?? null,
+      ...extra,
+    };
+  }
+  return {
+    turn_id: t?.turn_id ?? null,
+    message_id: t?.message_id ?? null,
+    membro_atipico_id: t?.membro_atipico_id ?? null,
+    ...extra,
+  };
+}
 
 /**
  * A VOZ da Ayla — gera a resposta que a mãe lê no WhatsApp.
@@ -738,18 +817,37 @@ Se for uma TAREFA da escola/terapia:
     // (quem publica é o orquestrador). Sem ninguém consumindo os deltas ao
     // vivo, uma chamada única entrega exatamente o mesmo texto e é o que
     // permite os dois providers pelo mesmo caminho.
-    const r = await comRetentativaCurta(() =>
-      gerarConversacional({
-        provider,
-        model,
-        system,
-        messages: [{ role: "user", content: userContent }],
-        maxTokens: 900,
-        // Só a Anthropic marca cache explicitamente; na OpenAI é automático e o
-        // provider ignora o campo. Mantém o desconto que esta chamada já tinha.
-        cacheSystem: true,
-      }),
-    );
+    // ⚠️ O CRONÔMETRO FICA DENTRO DO CALLBACK, e não em volta do
+    // `comRetentativaCurta`. Entre as duas tentativas há um `sleep(1200)`:
+    // envolver a função inteira mediria a ESPERA junto com o modelo, e a
+    // pergunta que esta medição existe para responder é justamente separar
+    // "modelo lento" de "arquitetura lenta".
+    //
+    // `msModelo` soma TODAS as tentativas, de propósito. Registrar só a última
+    // subestimaria exatamente o caso lento — o que mais interessa numa
+    // investigação de latência. `tentativas` ao lado revela a composição.
+    let msModelo = 0;
+    let tentativas = 0;
+    const r = await comRetentativaCurta(async () => {
+      tentativas++;
+      const t0 = Date.now();
+      try {
+        return await gerarConversacional({
+          provider,
+          model,
+          system,
+          messages: [{ role: "user", content: userContent }],
+          maxTokens: 900,
+          // Só a Anthropic marca cache explicitamente; na OpenAI é automático e
+          // o provider ignora o campo. Mantém o desconto que esta chamada já
+          // tinha.
+          cacheSystem: true,
+        });
+      } finally {
+        // `finally`: a tentativa que FALHOU também consumiu tempo do turno.
+        msModelo += Date.now() - t0;
+      }
+    });
 
     if (tracking) {
       await logarUsoApi(tracking.supabase, {
@@ -762,6 +860,7 @@ Se for uma TAREFA da escola/terapia:
         feature: tracking.feature,
         input_tokens: r.tokensIn,
         output_tokens: r.tokensOut,
+        meta: metaDoTurno(tracking, { ms: msModelo, tentativas }),
       });
     }
 

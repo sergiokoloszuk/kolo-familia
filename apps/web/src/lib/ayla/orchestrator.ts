@@ -1065,6 +1065,13 @@ export async function sendRepertorioSugestao(
   familyAccountId: string,
   agora: Date = new Date(),
 ): Promise<EnvioResultado> {
+  // ⚠️ A UNIDADE AQUI É O ENVIO, NÃO UM TURNO. Esta função roda por cron, 1× por
+  // semana, sem inbound e sem mensagem da família. Ver `envio_id` em
+  // `UsageTracking`: forçar um `turn_id` inventaria um turno que nunca
+  // aconteceu. O id nasce DENTRO da função porque a função É a unidade — e por
+  // isso a assinatura não muda e não há chamador para esquecer de propagar.
+  const envioId = crypto.randomUUID();
+
   const podeRes = await podeEnviarProativa(
     supabase,
     { family_account_id: familyAccountId, agora },
@@ -1132,7 +1139,16 @@ export async function sendRepertorioSugestao(
       evitar,
       jaTentados,
     },
-    { supabase, family_account_id: familyAccountId, feature: "ayla_repertorio" },
+    {
+      supabase,
+      family_account_id: familyAccountId,
+      feature: "ayla_repertorio",
+      envio_id: envioId,
+      origem: "proativo",
+      // O membro do round-robin da semana — resolvido pela própria função,
+      // acima. Nenhuma inferência para preencher telemetria.
+      membro_atipico_id: membroFoco.id,
+    },
   );
 
   return enviarEPersistir(supabase, {
@@ -1624,6 +1640,27 @@ export async function processInbound(
   // mensagens que a mãe mandou em sequência viram uma fala só. Todo o resto da
   // função segue lendo `inbound` normalmente, sem saber se veio 1 ou 4 balões.
   let inbound = inboundRecebido;
+
+  // ⚠️ O TURNO NASCE AQUI, UMA VEZ SÓ, e desce por todas as chamadas de IA.
+  //
+  // Sem ele não há como responder "quanto tempo de IA este turno consumiu?" —
+  // medido em 11/08/2026: **1 de 2.788 chamadas** tinha duração registrada, e
+  // era a conversa web instrumentada no mesmo dia. A latência percebida deste
+  // canal é **P50 22,4 s · P95 57,7 s**, e o turno mediano dispara 4 a 5
+  // chamadas de modelo — sem saber qual gasta o quê.
+  //
+  // `const`, e no topo da função: se algum ramo gerasse um id próprio, as
+  // chamadas do MESMO turno viriam com correlacionadores diferentes e a soma
+  // por turno passaria a mentir sem avisar.
+  // A correlação viaja como UM objeto e é OBRIGATÓRIA nas funções internas —
+  // ver `Correlacao`. Opcional, um chamador esquecido compilaria e gravaria
+  // `turn_id: null` em silêncio: o modo de falha que esta instrumentação
+  // existe para eliminar. Obrigatório, o compilador é o teste.
+  const turnId = crypto.randomUUID();
+  // O id do inbound, quando existir. Preenchido logo depois da persistência —
+  // ele NÃO é o correlacionador (nasce condicionalmente), é a ponte para o
+  // texto real sem duplicar o que a família escreveu.
+  let inboundMessageId: string | null = null;
   // 1. Identifica família pelo número — casamento TOLERANTE (BR tem a
   // pegadinha do 9º dígito + variações de formato/país). Comparamos por
   // uma chave normalizada em vez de igualdade exata.
@@ -1720,6 +1757,8 @@ export async function processInbound(
         { onConflict: "zaap_message_id", ignoreDuplicates: true },
       )
       .select("id");
+    // A ponte para o texto real — quando existir. Ver `inboundMessageId`.
+    inboundMessageId = (claim?.[0]?.id as string | undefined) ?? null;
     if (claimErr) {
       // Falha inesperada (ex.: coluna ainda não migrada) — NÃO trava a Ayla:
       // insere normal e segue (sem dedup nesse caso).
@@ -2365,7 +2404,13 @@ export async function processInbound(
       ultimoMembroFoco: ultimoNome ?? null,
       historico: historicoParser,
     },
-    { supabase, family_account_id: family.id, feature: "ayla_parser" },
+    {
+      supabase,
+      family_account_id: family.id,
+      feature: "ayla_parser",
+      turn_id: turnId,
+      message_id: inboundMessageId,
+    },
   );
 
   // Família com 1 membro: se o parser não cravou quem é, é o único possível.
@@ -2574,6 +2619,8 @@ export async function processInbound(
   const resp = await enviarRespostaEmChunks(supabase, {
     family_account_id: family.id,
     membro_atipico_id: membroContextoId,
+    turn_id: turnId,
+    message_id: inboundMessageId,
     phone: ctx.whatsapp_e164,
     tipo: precisaEscolherMembro ? "clarificacao_identificacao" : "resposta_registro",
     params: {
@@ -2624,7 +2671,13 @@ export async function processInbound(
   // Best-effort: nunca quebra o retorno.
   if (deveRegistrar) {
     try {
-      await persistirRegistro(supabase, family.id, parsed);
+      await persistirRegistro(supabase, family.id, parsed, {
+        turn_id: turnId,
+        message_id: inboundMessageId,
+        // `persistirRegistro` só roda com membro resolvido — ela começa com
+        // `if (!p.membro_atipico_id) return`. Não há inferência aqui.
+        membro_atipico_id: parsed.membro_atipico_id,
+      });
     } catch (e) {
       console.warn(
         "[ayla] persistirRegistro (adiado) falhou:",
@@ -2661,6 +2714,9 @@ async function enviarRespostaEmChunks(
     phone: string;
     tipo: AylaTipoReativa;
     params: RespostaParams;
+    /** Correlação do turno — ver `turnId` em `processInbound`. */
+    turn_id?: string;
+    message_id?: string | null;
   },
 ): Promise<EnvioResultado> {
   let providerResp: unknown = null;
@@ -2710,6 +2766,8 @@ async function enviarRespostaEmChunks(
     supabase,
     family_account_id: args.family_account_id,
     feature: "ayla_responder",
+    turn_id: args.turn_id,
+    message_id: args.message_id ?? null,
   });
 
   // ── ABRE OU FECHA O ESTADO DE SEGURANÇA ────────────────────────────────
@@ -2983,10 +3041,25 @@ function lerTextoAtualDaSecao(
 // Persistência de registro derivado do parser
 // ============================================================
 
+/**
+ * A IDENTIDADE MÍNIMA DE UM TURNO — obrigatória, para que ninguém a esqueça.
+ *
+ * `turn_id` nunca é nulo: ele nasce em `processInbound` e existe sempre.
+ * `message_id` pode ser nulo (dois caminhos de exceção não produzem o id do
+ * inbound). `membro_atipico_id` pode ser nulo quando o membro ainda não foi
+ * resolvido naquele ponto — e nunca é inferido só para preencher o rastro.
+ */
+type Correlacao = {
+  turn_id: string;
+  message_id: string | null;
+  membro_atipico_id: string | null;
+};
+
 async function persistirRegistro(
   supabase: SupabaseClient,
   familyId: string,
   p: ParserResult,
+  correlacao: Correlacao,
 ): Promise<void> {
   if (!p.membro_atipico_id) return;
 
@@ -3059,7 +3132,12 @@ async function persistirRegistro(
             gatilho: (r.possivel_gatilho as string | null) ?? null,
           })),
         },
-        { supabase, family_account_id: familyId, feature: "ayla_dedup_diario" },
+        {
+          supabase,
+          family_account_id: familyId,
+          feature: "ayla_dedup_diario",
+          ...correlacao,
+        },
       );
 
       if (decisao.acao === "merge") {
@@ -3174,7 +3252,12 @@ async function persistirRegistro(
         const valoresAtuais = parsearSubcampos(subcampos, textoAtual);
         const r = await rotearFatoSubcampo(
           { subcampos, valoresAtuais, fato: p.texto_kolo_vivo_sugerido },
-          { supabase, family_account_id: familyId, feature: "ayla_rotear_kv" },
+          {
+            supabase,
+            family_account_id: familyId,
+            feature: "ayla_rotear_kv",
+            ...correlacao,
+          },
         );
         if (!r.skip && r.campoSub && r.valor.trim()) {
           const novoTexto = serializarSubcampos(subcampos, {
@@ -3197,7 +3280,12 @@ async function persistirRegistro(
         // Domínio de texto livre: dedup semântico consolida velho + novo.
         const decisao = await decidirDedup(
           { campo, textoSugerido: p.texto_kolo_vivo_sugerido, textoAtual },
-          { supabase, family_account_id: familyId, feature: "ayla_dedup" },
+          {
+            supabase,
+            family_account_id: familyId,
+            feature: "ayla_dedup",
+            ...correlacao,
+          },
         );
         if (decisao.operacao !== "skip" && decisao.texto.trim()) {
           aplicou = await aplicarSugestaoNoMembro(
@@ -3224,6 +3312,7 @@ async function persistirRegistro(
           campo,
           textoParaConflito,
           rowAtual,
+          correlacao,
         );
       }
 
@@ -3261,6 +3350,7 @@ async function sinalizarConflitoCrossCampo(
   campo: string,
   textoNovo: string,
   rowAtual: Record<string, unknown> | null | undefined,
+  correlacao: Correlacao,
 ): Promise<void> {
   try {
     const outros = MEMBRO_CAMPOS_TODOS.filter((c) => c !== campo).map((c) => ({
@@ -3276,7 +3366,12 @@ async function sinalizarConflitoCrossCampo(
         textoNovo,
         outros,
       },
-      { supabase, family_account_id: familyId, feature: "ayla_conflito_kv" },
+      {
+        supabase,
+        family_account_id: familyId,
+        feature: "ayla_conflito_kv",
+        ...correlacao,
+      },
     );
     if (!conflito) return;
 

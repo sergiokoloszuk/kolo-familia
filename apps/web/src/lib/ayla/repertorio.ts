@@ -1,7 +1,7 @@
 import { getAylaAnthropicClient, AYLA_MODEL_FALLBACK } from "./anthropic";
 import { getSystemPrompt } from "@/lib/ai/prompts";
 import { logarUsoApi } from "@/lib/billing/logar";
-import type { UsageTracking } from "./responder";
+import { metaDoTurno, type UsageTracking } from "./responder";
 
 /**
  * Sugestão de EXPANSÃO DE REPERTÓRIO (Fatia 3.3b) — a Ayla propõe, de leve,
@@ -66,6 +66,9 @@ export async function gerarSugestaoRepertorio(
     .join("\n");
 
   try {
+    // O cronômetro fecha na resposta do modelo — o padrão provado em
+    // `parser.ts`. Aqui não há pós-processamento pesado, mas a regra é a mesma.
+    const t0 = Date.now();
     const stream = client.messages.stream({
       model: AYLA_MODEL_FALLBACK,
       max_tokens: 400,
@@ -73,6 +76,7 @@ export async function gerarSugestaoRepertorio(
       messages: [{ role: "user", content: userMsg }],
     });
     const final = await stream.finalMessage();
+    const msModelo = Date.now() - t0;
     if (tracking) {
       await logarUsoApi(tracking.supabase, {
         family_account_id: tracking.family_account_id,
@@ -81,6 +85,7 @@ export async function gerarSugestaoRepertorio(
         feature: tracking.feature,
         input_tokens: final.usage.input_tokens,
         output_tokens: final.usage.output_tokens,
+        meta: metaDoTurno(tracking, { ms: msModelo, tentativas: 1 }),
       });
     }
     const txt = final.content
