@@ -24,13 +24,15 @@ Só o que está aberto. 🔒 = bloqueada.
 | [PEND-018](#pend-018) | Memória e retrato da criança | **C · Memória** | P1 | ABERTA | desenhar junto com A |
 | [PEND-021](#pend-021) | Jornada dos 7 dias e conversão | G · Comercial | P1 | ABERTA | preencher o DESEJADO |
 | [PEND-022](#pend-022) | Fontes confiáveis, limites e escalonamento | F · Limites | P2 | ABERTA | preencher o DESEJADO |
-| [PEND-038](#pend-038) | Latência percebida no WhatsApp e resposta em vários balões | A · Condução | P1 | NÃO MEDIDA | medir as três latências antes de otimizar |
+| [PEND-040](#pend-040) | Observabilidade de IA — conversa Web e Plano não existem em `api_calls` | H · Governança | P1 | ABERTA | achar por que a instrumentação atual não grava |
+| [PEND-042](#pend-042) | 58% dos turnos de WhatsApp sem repertório | B · Conhecimento | P1 | MEDIDA | separar os 5 motivos antes de tocar em base ou prompt |
+| [PEND-041](#pend-041) | Rastro web não separa conversa de artefato | H · Governança | P2 | ABERTA | carregar a origem no evento |
+| [PEND-038](#pend-038) | Latência percebida no WhatsApp e resposta em vários balões | A · Condução | P1 pós-rollout | NÃO MEDIDA EM PRODUÇÃO | os 56s são bancada do Plano; depende de [PEND-040] |
 | [PEND-039](#pend-039) | Bancada permanente de golden cases (Manu · LEGO · Bia · vago) | A · Condução | P1 | DESENHADA | construir antes da próxima fase do Plano |
-| [PEND-035](#pend-035) | O Plano confunde BARREIRA com OBJETIVO FINAL | D · Entregas | P1 | ABERTA | provar a origem na Fatia 2 (`objetivo.ts`) |
-| [PEND-036](#pend-036) | O Plano reoferece o que a conversa acabou de descartar | D · Entregas | P1 | ABERTA | provar por que a restrição não chega |
-| [PEND-033](#pend-033) | Perfil consultável lia vazio de todas as crianças | A · Condução | P0 | BAIXA RECOMENDADA | provada com 112 registros reais; falta o deploy |
+| [PEND-043](#pend-043) | Ter objetivo ≠ gerar Plano — falta decisão de valor | D · Entregas | P1 | ABERTA | separar suficiência de valor de consolidação |
+| [PEND-044](#pend-044) | A Kolo terceiriza antes de tentar ajudar | A · Condução | P1 | ABERTA | classe funcional, não regra de palavra |
+| [PEND-036](#pend-036) | O Plano reoferece o que a conversa acabou de descartar | D · Entregas | P1 | DESCONTAMINADA | medida sozinha após a 035; é defeito próprio |
 | [PEND-037](#pend-037) | O Plano afirma causas sem fonte rastreável | D · Entregas | P2 | ABERTA | classificar PERFIL/BASE/INFERÊNCIA/SEM FONTE |
-| [PEND-034](#pend-034) | Negativo do perfil não tinha semântica, só entrega | D · Entregas | P1 | BAIXA RECOMENDADA | 2/3 → 0/3; A/B/C/D 8/8; falta o deploy |
 | [PEND-032](#pend-032) | Bancada instável entre execuções — método, não produto | A · Condução | P3 | MÉTODO | só é achado o que se repete |
 | [PEND-031](#pend-031) | Repetição entre seções do Plano — medida, e anterior à 3a | D · Entregas | P2 | MEDIDA | 7 ideias repetidas JÁ sem a 4A; tratar na Fatia 4 |
 | [PEND-030](#pend-030) | Confirmações curtas e continuidade do objetivo | D · Entregas | P3 | VALIDAÇÃO NO PILOTO | observar conversas reais antes de ajustar |
@@ -445,6 +447,193 @@ Aberta em: 2026-08-08 · Origem: pedido do Sérgio na missão da PEND-004
 
 ---
 
+### PEND-044
+**A Kolo manda a família para fora antes de tentar ajudar diretamente**
+Bloco: **A · Condução** · Prioridade: **P1** · Estado: **ABERTA**
+Aberta em: 2026-08-11 · Origem: caso real (lição que a criança não sabia fazer)
+
+> ⚠️ **Esta ficha NÃO é "pedir foto".** Foto é um dos meios; o defeito é de
+> ordem — a Ayla terceiriza antes de verificar se ela própria resolve.
+
+- **O caso.** A família disse, em essência, *"tem uma lição que ele não sabe
+  fazer"*. A Ayla propôs dividir a tarefa, trabalhar autonomia, **mandar
+  mensagem para um colega** e **depois para a professora/coordenação**. A ação
+  mais direta não apareceu: *"me manda uma foto da lição — eu olho com você o
+  que está sendo pedido e ajudo a pensar em como explicar para ele"*.
+- **TRÊS CAMADAS, e elas têm donos diferentes:**
+  1. **Princípio de condução** — antes de mandar procurar professora, colega ou
+     terapeuta, verificar se a Kolo consegue ajudar com o que já tem.
+     **VI NO CÓDIGO: este princípio não existe.** Procurado em
+     `conducao/diretrizes.ts`, `formas.ts`, `composicao.ts` e `ia/prompt.ts`.
+  2. **WhatsApp** — recebe e lê imagem (`ayla/responder.ts`, base64 ao modelo),
+     e tem um bloco `<foto>` muito bom. Mas ele é **condicional a
+     `params.imagemUrl`**: só entra quando a foto JÁ chegou. **A Ayla descobre
+     que pode ver uma lição depois que a lição chegou** — o inverso do útil.
+  3. **Web** — **não recebe imagem**. Nem rota, nem upload. Prometer "me manda
+     uma foto" na web seria promessa falsa, e é por isso que a regra não pode
+     ser só de prompt.
+- **⚠️ NÃO CRIAR "se aparecer 'lição', peça foto".** A classe funcional é
+  **"o obstáculo é um artefato que existe e pode ser inspecionado"**. Casos de
+  contraste que a regra precisa separar: *"não entendemos esta questão"* (foto
+  ajuda) · *"recebi este comunicado e não entendi"* (ajuda) · *"não sei quando
+  é a prova"* (não resolve) · *"ele não consegue fazer amigos"* (inadequado) ·
+  *"ele fez este desenho e fiquei preocupada"* (relevante, com os limites que
+  já existem).
+- **O comportamento desejado**, e ele é condicional ao canal: *"Você tem a
+  lição aí? Se estiver falando comigo pelo WhatsApp, tira uma foto e me
+  manda."* — só quando ver o material realmente mudar a qualidade da
+  orientação.
+- **Ligada a** [PEND-037] (a mesma resposta trouxe afirmações não rastreadas).
+- **Critério de baixa:** os cinco casos de contraste passando em bancada
+  semântica, nos DOIS canais, com a web não prometendo o que não pode cumprir.
+- **Agente recomendado:** INVESTIGAR
+
+---
+
+### PEND-043
+**Ter objetivo ≠ gerar Plano — falta decisão compartilhada de valor**
+Bloco: **D · Entregas** · Prioridade: **P1** · Estado: **ABERTA**
+Aberta em: 2026-08-11 · Origem: portão da PEND-035
+
+> **O Plano deve ser artefato de CONSOLIDAÇÃO, não resposta automática a toda
+> dificuldade relatada.**
+
+- **São DUAS perguntas, e hoje só existe meia resposta para uma delas:**
+  1. **SUFICIÊNCIA** — "temos informação para gerar um Plano útil?"
+  2. **VALOR DE CONSOLIDAÇÃO** — "há valor em organizar isto num artefato, em
+     vez de continuar na conversa?"
+- **O QUE EXISTE HOJE (VI NO CÓDIGO), e os canais discordam:**
+  - **Web** (`conversar/actions.ts`): **nenhum gate**. A mãe clica, o Plano
+    nasce, sobre o que quer que o objetivo tenha elegido.
+  - **WhatsApp** (`ayla/ponte.ts`): quatro freios de ENVIO (cooldown, janela de
+    20h, mínimo de mensagens, mensagem curta) **mais** um gate de suficiência
+    real — `avaliarProntidaoParaPlano`, com `CRITERIO_SUFICIENCIA` escrito em
+    linguagem de produto num lugar só. Pedido explícito pula tudo.
+  - **Nenhum dos dois responde a pergunta 2.** Suficiência ≠ valor.
+- **Critério de valor a investigar — sem virar checklist obrigatório:** outra
+  forma de enxergar o problema · padrões observados · competências já
+  existentes · barreiras · crenças envolvidas (sem tratá-las como fatos) ·
+  estratégias · brincadeiras · atividades · frases · o que observar ·
+  progressão ao longo de dias. **Não exigir todas.**
+- **Resolve-se na conversa, e não vira Plano:** uma ideia · uma frase · um
+  ajuste simples · interpretar uma situação · entender uma tarefa · decidir o
+  próximo passo.
+- **⚠️ PEDIDO EXPLÍCITO NÃO PODE VIRAR BUROCRACIA.** Se a mãe pede o Plano, a
+  resposta não é negar: é **ajudar primeiro, fazer UMA pergunta de alto valor
+  se faltar um dado decisivo, e gerar em seguida**. Prontidão governa a
+  OFERTA espontânea; não é veto contra quem pediu.
+- **⚠️ E não transportar política de ENVIO do WhatsApp para a Web.** Cooldown e
+  janela de 20h são regras de proatividade, não de valor do artefato. Confundir
+  as duas faria um clique herdar um cooldown que não faz sentido.
+- **Dono provável:** um `lib/conducao/prontidao.ts` puro (`Turno[] → Prontidao`)
+  ao lado de `objetivo.ts` — a mesma dupla, os mesmos dois canais.
+- **Ligada a** [PEND-035] (fechada), [PEND-039]. **Depende de:** nada.
+- **Critério de baixa:** os casos "problema simples" e "caso que merece Plano"
+  decididos igual nos dois canais, provados por execução, e o pedido explícito
+  nunca bloqueado.
+- **Agente recomendado:** INVESTIGAR
+
+---
+
+### PEND-042
+**58% dos turnos de WhatsApp saem sem uma linha de repertório**
+Bloco: **B · Conhecimento** · Prioridade: **P1** · Estado: **ABERTA · MEDIDA, CAUSA DESCONHECIDA**
+Aberta em: 2026-08-11 · Origem: leitura pós-rollout de `eventos_app`
+
+- **MEDIDO**, últimas 24h antes do rollout geral: dos **64** eventos
+  `conhecimento_consultado` no canal WhatsApp, **37 saíram com zero boas
+  práticas** — `motivo_vazio: sem_skill` em **31**, `acervo_vazio` em **6**. A
+  Ayla respondeu sem uma linha do acervo em mais da metade das conversas.
+- **⚠️ NÃO CONCLUIR QUE FALTA CONTEÚDO.** O número diz que o repertório não
+  chegou; não diz por quê. Trocar prompt ou mexer na base agora seria corrigir
+  um sintoma cuja causa ninguém olhou — e `sem_skill` sequer é sobre acervo: é
+  sobre a etapa anterior, o roteamento.
+- **A investigação tem que separar cinco coisas**, que hoje estão somadas num
+  contador só:
+  1. **`sem_skill`** — o turno não roteou para skill nenhuma. Por quê? Fala
+     curta? Confirmação? Desabafo (onde o vazio é correto, ver
+     [PEND-BIA-desabafo] na base BIA)? Ou falha do classificador?
+  2. **`acervo_vazio`** — roteou, e não havia BP para aquela skill+faixa etária.
+  3. **falha de roteamento** — roteou para a skill errada e o vazio é
+     consequência.
+  4. **recuperação e filtros** — faixa etária, `statusAceitos`, `limite` e o
+     ranking podem estar cortando material que existe.
+  5. **ausência real de material adequado** — a única das cinco que justifica
+     mexer na base.
+- **Anterior ao rollout**, e portanto não é regressão dele. Mas é grande demais
+  para seguir sem ficha.
+- **Critério de baixa:** os 37 casos classificados nos cinco motivos acima, com
+  contagem por motivo; e, para os que forem defeito, a causa localizada no
+  código. Um número que continue somando cinco fenômenos não fecha nada.
+- **Ligada a** [PEND-017]. **Depende de:** nada.
+- **Agente recomendado:** INVESTIGAR
+
+---
+
+### PEND-041
+**O rastro do canal web não distingue conversa de geração de artefato**
+Bloco: **H · Governança** · Prioridade: **P2** · Estado: **ABERTA**
+Aberta em: 2026-08-11 · Origem: leitura pós-rollout de `eventos_app`
+
+- **O caso, e ele quase virou um laudo errado.** Lendo o rastro de 11/08, os 68
+  eventos do canal `web` apareciam com `n_enviados: 3` enquanto a MESMA família
+  aparecia com `2` no WhatsApp. Dois BPs é o corte da 4A; três é o
+  comportamento sem ela. A leitura direta seria "a 4A está ligada num canal e
+  desligada no outro para a mesma família" — divergência grave.
+- **Não era.** Foi preciso ler o código para desfazer: os eventos web em rajada
+  (quatro no mesmo segundo) são geração de artefato, que passa por
+  `respondAsOutputType` e não passava `relato`. Conversa e artefato compartilham
+  o rótulo `canal: "web"` em `montarRastro`, e nada no evento os separa.
+- **O custo disto não é teórico:** um rastro que exige leitura de código para
+  ser interpretado não serve para o que ele existe — descobrir o que aconteceu
+  sem depender da reclamação de uma família.
+- **Critério de baixa:** o evento carrega o que o originou (conversa em
+  streaming · artefato/output type · Plano), e uma consulta consegue separar os
+  três sem abrir o código.
+- **Ligada a** [PEND-040]. **Depende de:** nada.
+- **Agente recomendado:** VS Code
+
+---
+
+### PEND-040
+**Observabilidade de IA — a conversa Web e o Plano não existem em `api_calls`**
+Bloco: **H · Governança** · Prioridade: **P1** · Estado: **ABERTA**
+Aberta em: 2026-08-11 · Origem: prova pós-rollout que não pôde ser feita
+
+> **É o que impede provar em produção o que se acabou de liberar.** O rollout
+> geral de 11/08 (GPT + 4A para todos) não pode ser confirmado por dado: o
+> canal onde ele mais aparece é justamente o que não registra nada.
+
+- **MEDIDO:** `api_calls` com `feature = "conversa_web"` em **todo o histórico:
+  ZERO**. E não é falta de uso — no mesmo período há **68 eventos de
+  conhecimento no canal web**. As conversas acontecem; o registro de provider,
+  modelo e custo não chega ao banco.
+- **VI NO CÓDIGO** que a rota de streaming *pretende* registrar: `feature:
+  "conversa_web"` está em `app/api/conversar/stream/route.ts`. **NÃO SEI** por
+  que a linha não produz registro — pode ser o `tracking` não chegar, o
+  `logarUsoApi` engolir o erro por design, o caminho de streaming terminar antes
+  da gravação, ou a resposta sair por outro ramo. **A causa não foi
+  investigada.**
+- **MEDIDO, e é o mesmo defeito com outra cara:** `api_calls` de **Plano:
+  ZERO**, em todo o histórico. O Plano gasta **8 chamadas Claude por geração** e
+  nenhuma é contabilizada. Some do custo real e some da prova de que ele
+  continua em Claude — que é uma das garantias que este rollout deu por escrito.
+- **O que se quer poder provar, por chamada:** canal · feature · provider ·
+  modelo · duração · sucesso ou falha · fallback · tokens · custo quando
+  disponível · família e conversa quando aplicável. Hoje o WhatsApp entrega
+  parte disso e os outros dois não entregam nada.
+- **⚠️ NÃO IMPLEMENTAR AINDA.** Primeiro descobrir por que a instrumentação que
+  já existe não grava — acrescentar uma segunda instrumentação por cima de uma
+  que falha em silêncio seria repetir o erro que a [PEND-033] documentou.
+- **Critério de baixa:** uma conversa web real e uma geração de Plano real
+  aparecendo em `api_calls` com provider, modelo e duração, conferidas contra o
+  horário do turno.
+- **Ligada a** [PEND-038], [PEND-041]. **Bloqueia:** a prova pós-rollout de
+  provider na Web e no Plano.
+- **Agente recomendado:** INVESTIGAR
+
+---
+
 ### PEND-039
 **Bancada permanente de golden cases — quatro casos que medem sete coisas de uma vez**
 Bloco: **A · Condução** · Prioridade: **P1** · Estado: **ABERTA · DESENHADA**
@@ -482,7 +671,7 @@ Aberta em: 2026-08-11 · Origem: decisão de 11/08/2026
 
 ### PEND-038
 **Latência percebida no WhatsApp — e a resposta que chega em vários balões**
-Bloco: **A · Condução** · Prioridade: **P1** · Estado: **ABERTA · NÃO MEDIDA**
+Bloco: **A · Condução** · Prioridade: **P1 pós-rollout** · Estado: **ABERTA · NÃO MEDIDA EM PRODUÇÃO**
 Aberta em: 2026-08-11 · Origem: teste real (Karina/Manu, 11:25–11:28)
 
 > **Paralela à 3b, não depois dela.** Não adianta a inteligência melhorar se a
@@ -496,9 +685,18 @@ Aberta em: 2026-08-11 · Origem: teste real (Karina/Manu, 11:25–11:28)
   **número de balões**.
 - **E separar as três latências**, que hoje se confundem numa só queixa:
   a da conversa · a da geração do Plano · a do PDF e do envio.
-- **Já medido em bancada (11/08), como ponto de partida:** o Plano completo
-  levou **44,0 s** sem 4A e **56,0 s** com 4A — 8 chamadas ao modelo Claude com
-  `thinking`, em lotes. Isto é o **piso**: não inclui PDF nem envio.
+- **⚠️ O NÚMERO QUE CIRCULA É DE BANCADA, E É DO PLANO — não da conversa.** Os
+  **44,0 s** (sem 4A) e **56,0 s** (com 4A) medidos em 11/08 são a geração de um
+  Plano completo em bancada: 8 chamadas ao modelo Claude com `thinking`, em
+  lotes, sem PDF e sem envio. **Não explicam a demora que a família sente na
+  conversa**, e usá-los para isso mandaria a investigação para o lugar errado.
+- **CONTINUAM NÃO MEDIDAS, depois do rollout geral de 11/08:** latência da
+  conversa **Web**, latência da conversa **WhatsApp** e latência do **Plano
+  real** em produção. Até 16:39Z do dia do rollout não houve um único turno
+  posterior ao redeploy — `api_calls` e `eventos_app` vazios no período.
+- **E há um obstáculo material para medir**, que precisa cair antes: a conversa
+  Web e o Plano não registram nada em `api_calls` ([PEND-040]). Sem isso, "tempo
+  de resposta em produção" não tem de onde sair.
 - **⚠️ Não otimizar por hipótese.** Primeiro medir.
 - **Trilha PARALELA de performance.** Não espera a inteligência do Plano ficar
   pronta, e não é medida junto com ela — as duas frentes se atrapalham quando
@@ -527,6 +725,21 @@ Aberta em: 2026-08-11 · Origem: teste real (Karina/Manu)
   manter o objetivo certo, respeitar o que acabou de ser aprendido e não
   repetir a mesma ideia sete vezes. **O problema do Plano não é mais falta
   de conteúdo.** Provar a origem antes de alterar prompt ou código.
+- **🆕 CASO MÁRIO (11/08/2026) — evidência AINDA NÃO RASTREADA.** Numa resposta
+  real sobre uma lição, a Ayla afirmou que *"quando algo parece longo ou
+  abstrato o Mário trava antes de começar"* e que *"a preocupação com errar pode
+  fazer até pedir ajuda parecer arriscado"*. **NÃO SEI** de onde vieram: não
+  tenho o turno, o perfil nem o rastro. Cada afirmação precisa ser classificada
+  em **DADO DA FAMÍLIA · DADO DO PERFIL · HIPÓTESE MARCADA · CONHECIMENTO
+  GENÉRICO · INVENÇÃO/EXTRAPOLAÇÃO** — e não se racionaliza depois.
+- **⚠️ O NOME DO DEFEITO MUDA A CORREÇÃO.** O que a bancada mediu (2 de 4 casos)
+  não é "hipótese apresentada como fato": é **EXTRAPOLAÇÃO** — `interesse →
+  competência` ("gosta de brincar de caixa" virou "domina o papel de caixa"),
+  `ocorrência → preferência` (a corrida apareceu na situação e virou "adora
+  correr"), `comportamento → função` ("a corrida regula seu corpo"). Uma regra
+  contra "não invente" não alcança nenhum dos três: o modelo não inventou do
+  nada — ele **promoveu um dado de categoria**.
+- **Ligada a** [PEND-044] (o caso Mário veio da mesma resposta).
 - **Agente recomendado:** VS Code
 
 ---
@@ -557,8 +770,9 @@ Aberta em: 2026-08-11 · Origem: teste real (Karina/Manu)
 ---
 
 ### PEND-035
-**O objetivo do Plano confunde BARREIRA com OBJETIVO FINAL**
-Bloco: **D · Entregas** · Prioridade: **P1** · Estado: **ABERTA**
+**✅ BAIXADA · O objetivo do Plano confundia BARREIRA com OBJETIVO FINAL**
+Bloco: **D · Entregas** · Prioridade: **P1** · Estado: **CORRIGIDA · AGUARDANDO DEPLOY**
+Baixada em: 2026-08-11 · working tree, ainda não commitada
 Aberta em: 2026-08-11 · Origem: teste real (Karina/Manu)
 
 - **O caso.** A conversa começou em *"quero ler com ela e ela não fica
@@ -576,6 +790,36 @@ Aberta em: 2026-08-11 · Origem: teste real (Karina/Manu)
   já chega ao Plano, e chega estreito. A 3b enriquece o contexto; não conserta
   um alvo errado — e alvo errado com contexto rico produz um documento melhor
   sobre a coisa errada.
+- **✅ CORRIGIDA EM 11/08/2026 — o contrato de TRÊS NÍVEIS.** `objetivo.ts`
+  distingue **objetivo-raiz** (só muda por decisão: vontade, escolha,
+  prioridade, mudança ou aceite de oferta), **focoAtual** (só por confirmação;
+  `null` é o padrão e é correto) e **barreiras** (tudo o que a família
+  descreveu, rotulado e entregue ao Plano como material de estratégia). A regra
+  deixou de ser *"a fala mais recente vence"* e passou a ser **"a DECISÃO mais
+  recente vence"**.
+- **PROVAS:** 30/30 casos semânticos (tangente, dispensa, mudança real,
+  prioridade, conversa longa, contrato aditivo) · **SABOTAGEM**: restaurada a
+  regra antiga, **7 testes ficam vermelhos** · **PIPELINE COMPLETO** (conversa →
+  objetivo → enquadramento → 8 chamadas do Plano):
+
+  | | ANTES | DEPOIS |
+  |---|---|---|
+  | objetivo eleito | "Quando anda, ja comeca correr" | "Mas eu quero ler…" |
+  | título do plano | "Quando anda, já começa a correr" | **"Ler junto com a criança"** |
+  | `OBJETIVO_PRESERVADO` | NAO | **SIM** |
+  | útil para a mãe | **1/5** | **3/5** |
+  | veredito | FAIL | PASS_PARCIAL |
+
+- **SEM REGRESSÃO:** Tito, Bia e relato vago seguem PASS.
+- **O que NÃO foi atribuído a esta correção**, de propósito: `CARA_DE: CATALOGO`
+  e repetição 5 continuam iguais — são priorização e [PEND-031].
+- **🔓 DESCONTAMINOU a [PEND-036]:** com o objetivo certo, o plano ainda
+  reoferece movimento depois de a mãe dizer que andar vira corrida. Deixou de
+  ser efeito colateral e virou defeito próprio, medido.
+- **Dois defeitos meus, achados por teste:** `` não fecha depois de "vê"
+  (acento não é caractere de palavra em JS) e um `^não` genérico classificava
+  *"Não durmo desde que ele nasceu"* como dispensa.
+- **⚠️ Falta o deploy.** A correção vive no working tree.
 - **Ligada a** [PEND-027], [PEND-036]. **Depende de:** nada.
 - **Fase:** próxima fase de inteligência do Plano — selecionar melhor,
   manter o objetivo certo, respeitar o que acabou de ser aprendido e não
@@ -586,8 +830,9 @@ Aberta em: 2026-08-11 · Origem: teste real (Karina/Manu)
 ---
 
 ### PEND-034
-**CORRIGIDA · O negativo do perfil não tinha semântica, só entrega**
-Bloco: **D · Entregas** · Prioridade: **P1** · Estado: **BAIXA RECOMENDADA · AGUARDANDO DEPLOY**
+**✅ BAIXADA · O negativo do perfil não tinha semântica, só entrega**
+Bloco: **D · Entregas** · Prioridade: **P1** · Estado: **CONCLUÍDA · EM PRODUÇÃO**
+Baixada em: 2026-08-11 · `8cc2945` (PR #91)
 Aberta em: 2026-08-11 · Origem: Fatia 3b, camada 2
 
 - **O caso, medido.** Perfil da criança sintética: `Reação a sons: não` e
@@ -660,15 +905,21 @@ Aberta em: 2026-08-11 · Origem: Fatia 3b, camada 2
   objetivo, mesmo pipeline, mesma configuração. As execuções 1 e 2 saíram de
   `COMO_HIPOTESE_ORIENTADA` para **`COMO_INVESTIGAR`**: o tema continua vivo,
   deixou de orientar. É exatamente a distinção que a ficha pedia.
-- **⚠️ Baixa condicionada ao deploy**, como a [PEND-033].
+- **✅ PUBLICADA EM 2026-08-11.** Commit `0e5ca03`, PR #91, `main` =
+  **`8cc2945`**, Production no mesmo SHA. Conferido por diff do conteúdo
+  publicado: a `ANCORA_PERFIL` em `origin/main` contém a precedência do
+  negativo e o "não basta não afirmar: também NÃO ORIENTE como se fosse
+  verdade". Alcança os três destinos pelo mesmo texto — web, WhatsApp e as 8
+  seções do Plano.
 - **Ligada a** [PEND-027], [PEND-039]. **Depende de:** nada.
 - **Agente recomendado:** VS Code
 
 ---
 
 ### PEND-033
-**CORRIGIDA E PROVADA · O perfil consultável lia vazio de TODAS as crianças**
-Bloco: **A · Condução** · Prioridade: **P0** · Estado: **BAIXA RECOMENDADA · AGUARDANDO DEPLOY**
+**✅ BAIXADA · O perfil consultável lia vazio de TODAS as crianças**
+Bloco: **A · Condução** · Prioridade: **P0** · Estado: **CONCLUÍDA · EM PRODUÇÃO**
+Baixada em: 2026-08-11 · `8cc2945` (PR #91)
 Aberta em: 2026-08-11 · Origem: Fatia 3b, prova por execução
 
 > **A camada existia, era chamada, não derrubava nada e não entregava uma
@@ -718,9 +969,16 @@ Aberta em: 2026-08-11 · Origem: Fatia 3b, prova por execução
   - **SABOTAGEM:** com `extrairTexto` de volta ao comportamento antigo, 5 provas
     caem, incluindo as três de dado real. **O teste morde o defeito que
     existia.**
-- **⚠️ E falta o deploy.** Até ele, produção segue sem perfil consultável — a
-  correção existe no working tree e em lugar nenhum além dele. **A baixa é
-  recomendada; a ficha só fecha com o deploy.**
+- **✅ PUBLICADA EM 2026-08-11.** Commit `fbd66e0`, mergeado pelo PR #91 em
+  `main` = **`8cc2945`**; deployment de Production da Vercel no MESMO SHA,
+  estado `success`, aplicação respondendo 200 em `/`, `/precos` e `/login`.
+  Conferido por **diff do conteúdo publicado**, não por ancestralidade
+  (`git show origin/main:…/consultar.ts` traz o `extrairTexto` corrigido) —
+  ancestralidade prova que o commit está na linha, não que o conteúdo é o que
+  se pensa.
+- **O que isso muda HOJE:** só para as famílias do piloto, que são as únicas com
+  a 4A ligada. Para elas, as crianças com perfil preenchido passam a ser
+  enxergadas — antes o bloco `<o_que_ja_sabemos>` não existia para ninguém.
 - **Ligada a** [PEND-027], [PEND-017]. **Depende de:** nada.
 - **Agente recomendado:** VS Code
 

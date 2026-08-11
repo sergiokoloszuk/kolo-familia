@@ -1,0 +1,324 @@
+██████████████████████████████████████████████████████████████████████████████
+PEND-039 · BANCADA PERMANENTE — 3 caso(s)
+██████████████████████████████████████████████████████████████████████████████
+modelo da conversa: gpt-5.6-luna · modelo do Plano: MODELS.principal (Claude)
+KOLO_PILOTO_4A=on · família e crianças SINTÉTICAS · zero escrita
+
+
+██████████████████████████████████████████████████████████████████████████████
+B · TITO — a competência que contradiz a queixa
+██████████████████████████████████████████████████████████████████████████████
+
+OBJETIVO ESCOLHIDO PELO CÓDIGO (`objetivoDaConversa`):
+  origem: familia
+  │ "Ele não consegue focar."
+
+RESPOSTA GERADA · 985 ch
+  │ Pelo que você já percebeu, o foco do Tito não desaparece em todas as situações: ele consegue ficar duas horas no LEGO. A dificuldade parece aparecer principalmente quando a atividade é a lição, ele precisa usar o lápis e não escolheu a tarefa — então eu não começaria cobrando “mais atenção”, e sim mudando a entrada.
+  │ 
+  │ Na próxima lição, deixe só uma questão visível e transforme parte dela em algo que ele possa fazer com as mãos: montar palavras ou contas com peças, separar cartões, apontar a resposta e só depois registrar no lápis. Combine um trecho bem curto antes de começar: *“Vamos fazer esta parte juntos; quando terminar, você levanta, estica o corpo e voltamos para a próxima.”* Para algumas crianças, dividir a demanda e incluir ação concreta ajuda a sustentar o envolvimento sem transformar o LEGO em prêmio.
+  │ 
+  │ Observe apenas uma coisa: ele abandona quando a tarefa fica difícil, quando fica longa ou mesmo quando sabe fazer? Essa diferença mostra qual ajuste fazer depois.
+
+██████████████████████████████████████████████████████████████████████████████
+JUÍZO · B · TITO — a competência que contradiz a queixa
+
+  │ OBJETIVO_PRESERVADO: SIM — o alvo continua sendo entender e apoiar o foco na lição, não aumentar foco genericamente
+  │ COMPETENCIA_RECONHECIDA: SIM — reconhece que Tito sustenta duas horas no LEGO e usa essa capacidade como ponto de partida
+  │ CONTRADICAO_UTIL: SIM — contrasta a dificuldade na lição com o foco prolongado no LEGO sem confrontar a mãe
+  │ NEGATIVO_RESPEITADO: NAO_HA — a família não informou nenhum aspecto explicitamente negado
+  │ NIVEL_RESPEITADO: SIM — parte do que Tito já faz e propõe adaptar a entrada da tarefa
+  │ FATO_X_HIPOTESE: SEPARADOS — usa “parece” para a explicação contextual e apresenta a observação como pergunta
+  │ INVENTOU: SIM — trata como dado que Tito não escolheu a tarefa, embora isso não tenha sido informado diretamente
+  │ PERSONALIZACAO: FUNCIONAL — o histórico de LEGO, aprendizagem prática e dificuldade com lápis muda a mecânica proposta
+  │ EVIDENCIA_PERSONALIZACAO: “transforme parte dela em algo que ele possa fazer com as mãos” e “apontar a resposta e só depois registrar no lápis”
+  │ USO_DAS_BASES: CONHECIMENTO — transforma as evidências do perfil em uma estratégia contextualizada
+  │ DIVERSIDADE: 2 propostas funcionalmente distintas; grupo 1: substituir ou anteceder o registro escrito por ação concreta; grupo 2: fracionar a demanda com pausas de movimento
+  │ REPETICAO: 2 — ação concreta aparece na transformação da questão e nos exemplos de montar/separar/apontar; fracionamento aparece em “uma questão”, “trecho bem curto” e “próxima”
+  │ EXECUTAVEL: SIM — a mãe consegue selecionar uma questão, usar peças ou cartões e combinar a sequência no dia seguinte
+  │ ENSINA_COMO: SIM — mostra etapas concretas e oferece uma fala para conduzir a atividade
+  │ AVANCA_SEM_INTERROGATORIO: SIM — entrega um plano aplicável antes de fazer a pergunta de refinamento
+  │ CARA_DE: PLANO_PERSONALIZADO — a estratégia é construída a partir do padrão LEGO-lição-lápis de Tito
+  │ UTIL_PARA_A_MAE: 5 — reconhece uma capacidade invisível no momento e oferece uma adaptação prática para a próxima lição
+  │ VEREDITO: PASS — reconhece atenção contextual, usa a competência demonstrada como alavanca e evita técnicas genéricas para uma suposta incapacidade global
+
+██████████████████████████████████████████████████████████████████████████████
+C · BIA — negativo explícito e nível demonstrado
+██████████████████████████████████████████████████████████████████████████████
+
+OBJETIVO ESCOLHIDO PELO CÓDIGO (`objetivoDaConversa`):
+  origem: familia
+  │ "Bia quase não fala com as crianças da escola. Quero ajudar ela a iniciar e sustentar pequenas interações sociais com outras pessoas."
+
+PLANO GERADO · "Iniciar e sustentar interações sociais" · 8 seções · 10493 ch
+  │ TÍTULO DO PLANO: "Iniciar e sustentar interações sociais"
+  │ 
+  │ ## entender
+  │ Bia tem um jeito muito próprio de se relacionar com o mundo — ela fala, argumenta, mantém conversa com adultos conhecidos e adora organizar as coisas com uma lógica que é dela. Esse repertório todo existe. O que parece acontecer com as crianças da escola é uma coisa diferente: não necessariamente falta de interesse, mas talvez uma lacuna entre querer (ou poder querer) e saber como dar o primeiro passo naquele formato — crianças são imprevisíveis, mudam de assunto sem avisar, entram e saem das brincadeiras sem seguir uma ordem clara. Pode ser que o silêncio de Bia com os colegas seja menos desinteresse e mais uma espécie de espera — ela não encontra a porta de entrada que faça sentido pra ela. Vale observar com calma, sem pressa de concluir.
+  │ 
+  │ ## Crenças
+  │ ## Crenças comuns sobre socialização com outras crianças
+  │ 
+  │ **"Se ela não fala com as crianças, é porque não quer estar com elas."**
+  │ Nem sempre. Ficar em silêncio pode ser a forma que Bia encontrou de estar perto sem o risco de não saber o que vem a seguir. Querer e conseguir são coisas diferentes — vale observar se ela olha, se se aproxima, se acompanha de longe. Esses sinais dizem muito sobre o interesse que existe, mesmo sem fala.
+  │ 
+  │ ---
+  │ 
+  │ **"Ela vai aprender a se socializar naturalmente, de tanto conviver com outras crianças."**
+  │ A convivência ajuda, mas sozinha raramente é suficiente quando a criança ainda não tem ferramentas para entrar numa interação. Sem saber *como* chegar, ficar junto pode virar só coexistência — cada uma no seu canto. O que tende a funcionar melhor é criar situações menores e mais previsíveis do que a escola: uma criança, um contexto com começo e fim claro, e um tema que Bia já domina — como o mercadinho. Quando ela conhece o terreno, a chance de uma troca acontecer é maior.
+  │ 
+  │ ---
+  │ 
+  │ **"Interação social tem que começar com conversa."**
+  │ Não necessariamente. Muitas interações entre crianças pequenas começam pela ação — oferecer um objeto, entrar numa brincadeira paralela, imitar o que a outra faz. Para Bia, que já fala bem com adultos conhecidos, o silêncio com crianças pode ter mais a ver com não saber *por onde começar* do que com falta de linguagem. Uma "entrada" pela brincadeira (e não pela conversa) pode ser um caminho mais leve para ela.
+  │ 
+  │ ## O que fazer diferente
+  │ ## O que fazer diferente
+  │ 
+  │ **Traga o mercadinho para dentro da interação com pares — antes da escola.**
+  │ 
+  │ Bia já conversa e mantém o vai-e-vem com adultos conhecidos. Com crianças da idade dela, ela fica em silêncio — pode ser que o formato da interação entre pares seja menos previsível, sem o "script" que ela já aprendeu com adultos.
+  │ 
+  │ O que muda: em vez de esperar que a interação aconteça no recreio, você pode ensaiar o formato em casa.
+  │ 
+  │ **Como fazer:**
+  │ - Chame uma criança conhecida (primo, filha de amiga, vizinha) para uma sessão de mercadinho com a Bia. Não precisa ser longa — 20 minutos já são suficientes.
+  │ - Deixe a Bia ser a caixa. É o papel que ela domina, tem começo e fim claro, e ela sabe o que fazer ali. A outra criança chega com os produtos, ela registra e entrega.
+  │ - Não interfira na interação — fique perto só por segurança. Se travar, você pode dar uma deixa simples ("quanto fica?") sem tomar o lugar dela.
+  │ 
+  │ **Por que esse formato pode ajudar:**
+  │ A brincadeira de mercadinho já tem uma estrutura: tem turno, tem fala esperada, tem um papel definido pra cada um. Isso pode tornar o contato com outra criança menos aberto e imprevisível — que é justamente o que costuma dificultar a entrada.
+  │ 
+  │ **Na escola, um próximo passo pequeno:**
+  │ Pode ser útil contar pra professora que Bia gosta de mercadinho e organizar coisas — e perguntar se há algum momento do dia (arrumação da sala, distribuição de material) em que ela poderia ter um papel ativo ao lado de outra criança, sem precisar "iniciar conversa" do zero.
+  │ 
+  │ Vale observar: ela fica em silêncio com as crianças, mas acompanha o que elas fazem? Isso pode ajudar a entender se ela quer entrar e não sabe como, ou se ainda está num momento de observar de longe.
+  │ 
+  │ ## Brincadeiras
+  │ O mercadinho é um ótimo ponto de entrada — Bia já conhece bem esse território, e território familiar deixa mais espaço pra ela prestar atenção em quem está do lado.
+  │ 
+  │ ---
+  │ 
+  │ **🛒 Mercadinho em dupla**
+  │ Montar uma "lojinha" em casa com produtos de embalagem vazia, caixinhas e tampinhas. Bia escolhe o que vender e organiza as prateleiras — papel que ela domina. Você (ou outra criança conhecida) entra como cliente e espera ela atender. O roteiro é simples: "quanto custa?", "tem troco?". Começa com você, depois convida uma colega que ela já conheça ao menos de vista.
+  │ *Materiais:* embalagens vazias, tampinhas, caixas pequenas, uma sacola.
+  │ *Duração:* 15–20 min.
+  │ 
+  │ ---
+  │ 
+  │ **📦 A caixa organizadora**
+  │ Misture objetos variados (tampinhas, prendedores, botões grandes, carrinhos) numa caixa e peça pra ela criar as categorias e separar. Com outra criança, cada uma separa uma parte e depois comparam. Não tem regra fixa — quem organiza dita a lógica, e isso dá a Bia um papel confortável de especialista.
+  │ *Materiais:* uma caixa, objetos do dia a dia misturados.
+  │ *Duração:* 10–15 min.
+  │ 
+  │ ---
+  │ 
+  │ **🎟️ Fila do caixa**
+  │ Bia é a caixeira. Você ou outra criança faz a fila, coloca os itens no "balcão" (uma mesa) e ela registra — pode ser com papel e caneta, ou só falar o preço. O combinado é que o cliente espera a vez e agradece. Pequeno, mas treina os dois lados: ela fala, o outro espera e responde.
+  │ *Materiais:* papel, caneta, itens quaisquer pra "comprar".
+  │ *Duração:* 10–15 min.
+  │ 
+  │ ---
+  │ 
+  │ A ideia é que ela entre sempre pelo papel que já sabe fazer. A interação vem junto — não como exigência, mas como consequência natural de ter alguém do outro lado.
+  │ 
+  │ ## Atividades
+  │ O mercadinho é um ponto de partida forte. Bia já tem o vai-e-vem com adultos — o que falta é um jeito de entrar na interação com crianças sem depender de improvisar na hora.
+  │ 
+  │ ---
+  │ 
+  │ **1. Mercadinho em casa com um convidado**
+  │ 
+  │ Convide uma criança conhecida (prima, vizinha, colega) pra brincar de mercadinho com a Bia — com ela no papel de caixa ou dona da loja. O papel tem uma função clara: a caixa recebe, cobra, organiza. Isso reduz a demanda social de "o que eu falo agora?" porque a brincadeira já diz o que vem. Com o tempo, dá pra ir trocando os papéis.
+  │ 
+  │ ---
+  │ 
+  │ **2. Ensaia a frase de entrada**
+  │ 
+  │ Na escola, entrar numa brincadeira exige uma frasezinha — e para a Bia, ter uma pronta pode ajudar. Em casa, brinquem de simular: você faz de conta que é uma criança brincando, e ela pratica chegar e dizer algo simples, como "eu posso brincar junto?" ou "eu sou a caixa". Faça isso como parte do mercadinho, não como treino separado. A ideia é que a frase vire familiar antes de precisar usá-la de verdade.
+  │ 
+  │ ---
+  │ 
+  │ **3. Missão de um contato por vez**
+  │ 
+  │ Em vez de "brinque com as crianças", proponha algo menor: uma fala, com uma criança, num momento estruturado (fila do lanche, atividade em dupla). Depois em casa, você pergunta: "Você falou com alguém hoje?" — sem cobrança, só curiosidade. Isso ajuda a Bia a notar quando acontece, e ajuda você a entender em quais situações ela consegue dar o passo.
+  │ 
+  │ ---
+  │ 
+  │ Se quiser, você pode perguntar à professora em quais momentos do dia Bia parece mais à vontade — às vezes tem um contexto específico onde já dá pra observar uma abertura.
+  │ 
+  │ ## Histórias sociais
+  │ # 🛒 Tito, o Caixa Corajoso
+  │ 
+  │ Tito era uma caixinha registradora pequenininha, cheia de botões coloridos.
+  │ 
+  │ Ele adorava contar moedas — *tilin, tilin* — e organizar tudo direitinho no lugar.
+  │ 
+  │ Todo dia, Tito ficava no cantinho do mercadinho, bem quietinho, olhando as outras caixinhas brincando juntas.
+  │ 
+  │ Ele queria brincar também. Mas as palavras ficavam presas lá dentro, sem sair.
+  │ 
+  │ Até que um dia, uma caixinha azul chegou perto.
+  │ 
+  │ Tito respirou fundo e disse bem baixinho:
+  │ **"Quer brincar de mercadinho comigo?"**
+  │ 
+  │ A caixinha azul sorriu e respondeu: "Quero!"
+  │ 
+  │ E os dois organizaram as prateleiras, contaram as moedas — *tilin, tilin* — e fizeram a fila dos clientes.
+  │ 
+  │ Quando ficou difícil, Tito respirou fundo e perguntou de novo:
+  │ **"Quer brincar de mercadinho comigo?"**
+  │ 
+  │ E sempre aparecia alguém que queria.
+  │ 
+  │ No final do dia, Tito brilhou todos os seus botões de alegria.
+  │ 
+  │ Porque uma palavra pequenininha pode abrir uma brincadeira grandona.
+  │ 
+  │ ---
+  │ 
+  │ **Para você, adulto:**
+  │ 
+  │ - **Ensaie a frasinha em casa** antes da escola — brinque de mercadinho com a Bia e, na hora de entrar no jogo, peça que *ela* convide você: "Quer brincar de mercadinho comigo?" Repetir em casa deixa a frase mais fácil de sair lá fora.
+  │ - **Conecte ao personagem**: quando ela estiver na escola, você pode lembrar antes de entrar: *"Igual ao Tito — se quiser brincar, é só perguntar."*
+  │ - **Comece com uma criança, não com um grupo.** A frasinha funciona melhor em dupla — e mercadinho tem papel natural pra duas pessoas: um que vende, um que compra.
+  │ 
+  │ ## Frases prontas
+  │ ## Frases que a Bia pode usar com outras crianças
+  │ 
+  │ Frases curtas, concretas e fáceis de lembrar — todas ligadas ao que ela já domina: propor, organizar, jogar junto.
+  │ 
+  │ ---
+  │ 
+  │ **Para entrar numa brincadeira:**
+  │ - **"Posso brincar junto?"**
+  │ - **"Eu quero ser do seu time."**
+  │ 
+  │ **Para propor algo (usando o que ela ama):**
+  │ - **"Vamos brincar de mercadinho? Eu sou a caixa."**
+  │ - **"Você quer comprar na minha loja?"**
+  │ 
+  │ **Para manter a brincadeira andando:**
+  │ - **"Agora é a sua vez."**
+  │ - **"O que você quer comprar?"**
+  │ 
+  │ **Para quando travar e não saber o que dizer:**
+  │ - **"Legal."** *(simples, funciona em quase qualquer resposta que receber)*
+  │ 
+  │ ---
+  │ 
+  │ **Como praticar em casa:**
+  │ Antes de chegar lá, ensaia com a Bia — você faz de conta que é uma coleguinha nova, e ela treina as frases em voz alta. Quanto mais vezes ela ouvir a própria voz dizendo isso, mais natural fica na hora real.
+  │ 
+  │ ## observar
+  │ Nos próximos dias, vale reparar em três coisas:
+  │ 
+  │ 1. **Ela olha ou se aproxima de outras crianças sem falar?** Esse movimento — observar de perto, acompanhar sem entrar — é diferente de indiferença total. Se acontecer, é um dado importante.
+  │ 
+  │ 2. **Em algum momento ela tenta entrar numa brincadeira e recua?** Pode ser um passo em direção ao grupo que para no meio, ou uma frase que começa e não sai. Vale anotar *quando* isso aconteceu e o que estava acontecendo ao redor.
+  │ 
+  │ 3. **Quando o assunto é mercadinho ou organizar coisas, ela responde a outra criança que toca no tema?** O interesse dela pode ser uma janela — se alguma criança mencionar algo parecido e Bia reagir diferente, isso diz muito sobre por onde começar.
+
+██████████████████████████████████████████████████████████████████████████████
+JUÍZO · C · BIA — negativo explícito e nível demonstrado
+
+  │ OBJETIVO_PRESERVADO: SIM — mantém como alvo iniciar e sustentar interações faladas com pares, sem trocar o foco por sensorialidade ou comunicação alternativa.
+  │ COMPETENCIA_RECONHECIDA: SIM — reconhece que Bia fala frases e mantém vai-e-vem com adultos conhecidos, usando essa fala como ponto de partida.
+  │ CONTRADICAO_UTIL: SIM — identifica a diferença entre conversar com adultos e ficar em silêncio com pares e a usa como pista para trabalhar o formato da interação.
+  │ NEGATIVO_RESPEITADO: NAO_HA — não se apoia em sensibilidade sonora, sensibilidade luminosa ou CAA.
+  │ NIVEL_RESPEITADO: SIM — propõe frases, conversa e papéis sociais compatíveis com uma criança que já fala, sem rebaixá-la a apontar ou trocar figuras.
+  │ FATO_X_HIPOTESE: SEPARADOS — diferencia fatos do perfil de hipóteses como “pode ser” e “parece acontecer”.
+  │ INVENTOU: SIM — atribui que Bia “argumenta” e que domina o papel de caixa/sabe exatamente o que fazer nele, capacidades não informadas explicitamente.
+  │ PERSONALIZACAO: FUNCIONAL — os interesses por mercadinho e organização e a diferença entre adultos e pares mudam a mecânica para papéis estruturados, turnos e frases de entrada.
+  │ EVIDENCIA_PERSONALIZACAO: “Deixe a Bia ser a caixa. É o papel que ela domina” e “uma criança, um contexto com começo e fim claro, e um tema que Bia já domina — como o mercadinho”.
+  │ USO_DAS_BASES: CONHECIMENTO — transforma os dados sobre fala, pares, mercadinho e organização em uma estratégia de interação estruturada.
+  │ DIVERSIDADE: 4 propostas funcionalmente distintas; grupos: mercadinho estruturado em dupla, organização cooperativa de objetos, ensaio de frases de entrada/manutenção e missão de um contato por vez; as duas primeiras e o ensaio reaparecem com variações de cenário.
+  │ REPETICAO: 2 — mercadinho estruturado com papéis e turnos; ensaio/uso de frases prontas para iniciar a brincadeira.
+  │ EXECUTAVEL: SIM — uma mãe consegue preparar as atividades em casa com embalagens, objetos cotidianos, papel e caneta e convidar uma criança conhecida.
+  │ ENSINA_COMO: SIM — explica como montar a situação, distribuir papéis, oferecer uma deixa e ensaiar frases sem tomar o lugar de Bia.
+  │ AVANCA_SEM_INTERROGATORIO: SIM — entrega atividades, frases e passos concretos, embora também sugira observações opcionais.
+  │ CARA_DE: PLANO_PERSONALIZADO — organiza uma sequência prática baseada nos interesses e no perfil comunicativo específico de Bia.
+  │ UTIL_PARA_A_MAE: 4 — oferece várias formas imediatamente aplicáveis de criar e sustentar interações faladas, mas é excessivamente repetitivo e contém algumas suposições.
+  │ VEREDITO: PASS — preserva o objetivo, trabalha a partir da fala existente e não introduz nenhum dos apoios ou rebaixamentos explicitamente proibidos.
+
+██████████████████████████████████████████████████████████████████████████████
+D · RELATO VAGO — pouca informação, e mesmo assim ajudar
+██████████████████████████████████████████████████████████████████████████████
+
+OBJETIVO ESCOLHIDO PELO CÓDIGO (`objetivoDaConversa`):
+  origem: familia
+  │ "Quero trabalhar o foco dela. Ela se distrai muito e não faz o que eu peço."
+
+RESPOSTA GERADA · 1190 ch
+  │ Quando você diz que a Nina se distrai e não faz o que você pede, podem estar misturadas duas coisas: ela não começar, não entender uma instrução longa ou começar e perder o fio. Por isso, eu não começaria cobrando “presta atenção”; começaria deixando o pedido bem pequeno e visível.
+  │ 
+  │ Hoje, escolha uma tarefa simples e dê **uma instrução por vez**, acompanhada de um gesto ou objeto: *“Nina, pega o lápis.”* Quando ela fizer, diga o próximo passo: *“Agora coloca na mesa.”* Mostre também o começo e o fim: *“Primeiro dois desenhos, depois guardar.”* Instruções curtas reduzem o esforço de organizar várias etapas, e a sequência ajuda a atividade a não parecer interminável.
+  │ 
+  │ Antes de pedir, diminua o que estiver chamando a atenção dela e espere alguns segundos sem repetir muitas vezes. Observe se ela não começa, se começa e abandona, ou se continua melhor quando está mexendo em algo com as mãos. Esse detalhe vai mostrar se o próximo treino deve focar mais em iniciar, sustentar ou compreender a tarefa.
+  │ 
+  │ Uma pergunta que separa bem os caminhos: quando a Nina está fazendo algo de que gosta, como desenhar, montar ou outra brincadeira, ela consegue ficar concentrada por bastante tempo?
+
+██████████████████████████████████████████████████████████████████████████████
+JUÍZO · D · RELATO VAGO — pouca informação, e mesmo assim ajudar
+
+  │ OBJETIVO_PRESERVADO: SIM — mantém o foco em ajudar Nina a sustentar e iniciar uma tarefa, sem trocar o objetivo por outro tema.
+  │ COMPETENCIA_RECONHECIDA: NAO_SE_APLICA — o perfil não informa nenhuma competência a reconhecer.
+  │ CONTRADICAO_UTIL: NAO_SE_APLICA — não há informação de perfil que contradiga o relato.
+  │ NEGATIVO_RESPEITADO: NAO_HA — a família não informou algo que não fosse o caso.
+  │ NIVEL_RESPEITADO: NAO_SE_APLICA — não há informação sobre o nível atual da criança.
+  │ FATO_X_HIPOTESE: SEPARADOS — apresenta possibilidades como possibilidades: “podem estar misturadas duas coisas” e “observe se”.
+  │ INVENTOU: NAO — não atribui habilidade, interesse, causa ou contexto como fato; os exemplos são explicitamente hipotéticos.
+  │ PERSONALIZACAO: AUSENTE — o nome é usado, mas nenhuma informação conhecida da criança muda a mecânica da proposta.
+  │ EVIDENCIA_PERSONALIZACAO: “Nina, 6 anos” e “Nina, pega o lápis” apenas nomeiam a criança; as estratégias serviriam igualmente para qualquer criança.
+  │ USO_DAS_BASES: CONHECIMENTO — princípios como instrução em etapas, apoio visual e redução de distrações viram raciocínio e orientação prática.
+  │ DIVERSIDADE: 3 propostas funcionalmente distintas, 0 mesma ideia com outra roupa — instrução de uma etapa com gesto/objeto; sequência explícita de começo e fim; redução de distrações com espera antes do pedido.
+  │ REPETICAO: 0 — nenhuma ideia aparece em mais de um lugar com função equivalente.
+  │ EXECUTAVEL: SIM — a mãe consegue testar amanhã usando lápis, mesa, desenhos e instruções curtas.
+  │ ENSINA_COMO: SIM — fornece frases concretas, ordem dos passos, uso de gesto/objeto, espera e observação do padrão.
+  │ AVANCA_SEM_INTERROGATORIO: SIM — entrega um procedimento utilizável e faz apenas uma pergunta que pode mudar a próxima conduta.
+  │ CARA_DE: CONTEUDO_GENERICO — é uma orientação coerente e prática, mas não personalizada além do nome.
+  │ UTIL_PARA_A_MAE: 4 — oferece um primeiro teste seguro e observáveis úteis sem presumir a causa da distração.
+  │ VEREDITO: PASS — não inventa características nem causa, entrega um plano aplicável hoje e pede apenas informação que realmente diferencia os próximos caminhos.
+
+██████████████████████████████████████████████████████████████████████████████
+PLACAR — PEND-039
+██████████████████████████████████████████████████████████████████████████████
+
+B · TITO — a competência que contradiz a queixa   (9.1s)
+   OBJETIVO_PRESERVADO        SIM
+   COMPETENCIA_RECONHECIDA    SIM
+   NEGATIVO_RESPEITADO        NAO_HA
+   NIVEL_RESPEITADO           SIM
+   FATO_X_HIPOTESE            SEPARADOS
+   INVENTOU                   SIM
+   PERSONALIZACAO             FUNCIONAL
+   CARA_DE                    PLANO_PERSONALIZADO
+   VEREDITO                   PASS
+   REPETICAO                  2 — ação concreta aparece na transformação da questão e nos exemplos d
+
+C · BIA — negativo explícito e nível demonstrado   (41.5s)
+   OBJETIVO_PRESERVADO        SIM
+   COMPETENCIA_RECONHECIDA    SIM
+   NEGATIVO_RESPEITADO        NAO_HA
+   NIVEL_RESPEITADO           SIM
+   FATO_X_HIPOTESE            SEPARADOS
+   INVENTOU                   SIM
+   PERSONALIZACAO             FUNCIONAL
+   CARA_DE                    PLANO_PERSONALIZADO
+   VEREDITO                   PASS
+   REPETICAO                  2 — mercadinho estruturado com papéis e turnos; ensaio/uso de frases p
+
+D · RELATO VAGO — pouca informação, e mesmo assim ajudar   (6.8s)
+   OBJETIVO_PRESERVADO        SIM
+   COMPETENCIA_RECONHECIDA    NAO_SE_APLICA
+   NEGATIVO_RESPEITADO        NAO_HA
+   NIVEL_RESPEITADO           NAO_SE_APLICA
+   FATO_X_HIPOTESE            SEPARADOS
+   INVENTOU                   NAO
+   PERSONALIZACAO             AUSENTE
+   CARA_DE                    CONTEUDO_GENERICO
+   VEREDITO                   PASS
+   REPETICAO                  0 — nenhuma ideia aparece em mais de um lugar com função equivalente.
+
+██████████████████████████████████████████████████████████████████████████████
