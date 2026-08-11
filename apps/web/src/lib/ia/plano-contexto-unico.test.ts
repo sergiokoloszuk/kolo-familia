@@ -16,10 +16,15 @@ import { describe, expect, it } from "vitest";
  * podiam raciocinar sobre contextos diferentes — e uma delas, `entender`,
  * roteava para DUAS skills enquanto as outras roteavam para uma.
  *
- * Esta fatia isola a mudança ARQUITETURAL: o contexto passa a ser único, e
- * nenhuma capacidade nova é ligada. A 4A (perfil consultável, BASE 2, ranking,
- * âncora, licença) é a 3b — separada de propósito, para que uma mudança de
- * conteúdo seja atribuível.
+ * A 3a isolou a mudança ARQUITETURAL: o contexto passou a ser único, e nenhuma
+ * capacidade nova foi ligada — de propósito, para que uma mudança de conteúdo
+ * fosse atribuível a UMA causa.
+ *
+ * A FATIA 3b (11/08/2026) liga a 4A, e por uma linha só: `relato`. Perfil
+ * consultável, negativos, BASE 2, ranking por aderência, `ANCORA_PERFIL` e
+ * `LICENCA_GENERATIVA` entram todos por essa porta, montados por
+ * `lib/ia/context.ts` — o MESMO montador que serve a conversa. O `plano.ts` não
+ * conhece nenhum desses nomes, e o portão por família tem um dono só.
  */
 
 const src = (p: string) => readFileSync(resolve(__dirname, "..", p), "utf8");
@@ -89,35 +94,48 @@ describe("o resto do produto não muda", () => {
   });
 });
 
-describe("o que a Fatia 3a NÃO liga — a 4A fica para a 3b", () => {
-  it("7. MORDE: `relato` continua fora do buildContext do Plano", () => {
-    // Passá-lo ligaria perfil consultável, BASE 2 e ranking de uma vez — e aí
-    // não daria para saber se uma mudança de conteúdo veio da 4A ou de o
-    // contexto ter passado a ser único.
+describe("Fatia 3b — a 4A chega ao Plano pelo mecanismo compartilhado", () => {
+  it("7. MORDE: o montador passa `relato`, e o texto é o MESMO que roteou a skill", () => {
+    // `relato` é a porta única da 4A: perfil consultável, negativos, BASE 2,
+    // ranking por aderência, âncora e licença entram todos por ele.
     const fn = corpo(ENGINE, "export async function montarContextoDeSecoes");
-    expect(fn).not.toMatch(/\brelato\s*:/);
-    const chamadas = PLANO.split("buildContext(").slice(1);
-    for (const c of chamadas) {
-      const args = c.slice(0, c.indexOf("})"));
-      expect(args, "plano.ts passou relato").not.toMatch(/\brelato\s*:/);
-    }
+    expect(fn).toMatch(/relato: params\.pedido,/);
+    // Ranquear o repertório por um texto e rotear a skill por outro escolheria
+    // a BP para uma pergunta que não é a do plano.
+    expect(fn).toMatch(/routeSkillsAI\(params\.pedido,/);
   });
 
   it("8. MORDE: o Plano continua sem importar a inteligência 4A", () => {
+    // A 3b não pode virar uma segunda implementação da 4A dentro do Plano: o
+    // `plano.ts` não conhece nenhum desses nomes, nem o do próprio rollout.
     expect(PLANO).not.toMatch(
       /carregarPerfilConsultavel|secoesDe\(|ordenarPorAderencia|ANCORA_PERFIL|LICENCA_GENERATIVA|pilotoQuatroA/,
+    );
+  });
+
+  it("9. MORDE: o portão tem UM dono — `buildContext`, não o montador", () => {
+    // Duas fontes para a mesma decisão sempre divergem. Se o montador voltar a
+    // checar o rollout por conta própria, passa a existir um segundo lugar
+    // onde a 4A pode vazar (ou ser bloqueada) por engano.
+    const fn = corpo(ENGINE, "export async function montarContextoDeSecoes");
+    expect(fn).not.toMatch(/pilotoQuatroA\(/);
+    // E não é só o corpo: o engine inteiro não conhece o módulo do rollout.
+    expect(ENGINE).not.toMatch(/from ["'][^"']*conducao\/piloto["']/);
+    const ctxSrc = src("ia/context.ts");
+    expect(ctxSrc).toMatch(
+      /const piloto = pilotoQuatroA\(familyId\) && Boolean\(params\.relato\?\.trim\(\)\)/,
     );
   });
 });
 
 describe("as duas fatias anteriores continuam de pé", () => {
-  it("9. MORDE: o objetivo da conversa (Fatia 2) segue alimentando o Plano", () => {
+  it("10. MORDE: o objetivo da conversa (Fatia 2) segue alimentando o Plano", () => {
     const acoes = src("../app/(app)/conversar/actions.ts");
     expect(acoes).toMatch(/objetivoDaConversa\(turnos\)/);
     expect(acoes).toMatch(/enquadrarObjetivo\(alvo\)/);
   });
 
-  it("10. MORDE: o aprendizado (Fatia 1) segue chegando às oito seções", () => {
+  it("11. MORDE: o aprendizado (Fatia 1) segue chegando às oito seções", () => {
     expect(MULTICALL).toMatch(/carregarAprendizado\(supabase, familyId, membroAtipicoId\)/);
     expect(MULTICALL).toMatch(/\$\{aprendizado\}\\n\$\{SISTEMA_APRENDIZADO\}/);
     // E o lastro é o que vai para o montador do contexto, não o desafio cru —
@@ -125,14 +143,14 @@ describe("as duas fatias anteriores continuam de pé", () => {
     expect(MULTICALL).toMatch(/pedido: desafioComLastro,\s*\n\s*\}\);/);
   });
 
-  it("11. MORDE: título e tema seguem saindo do desafio ORIGINAL", () => {
+  it("12. MORDE: título e tema seguem saindo do desafio ORIGINAL", () => {
     expect(MULTICALL).toMatch(/analisarDesafio\(desafio\)/);
     expect(MULTICALL).not.toMatch(/analisarDesafio\(desafioComLastro\)/);
   });
 });
 
 describe("isolamento entre famílias e crianças", () => {
-  it("12. MORDE: o contexto único é montado COM o id da criança e da família", () => {
+  it("13. MORDE: o contexto único é montado COM o id da criança e da família", () => {
     // Um contexto compartilhado entre seções não pode virar contexto
     // compartilhado entre crianças: o montador recebe os dois ids e é chamado
     // dentro do escopo de um plano só.

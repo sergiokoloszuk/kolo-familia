@@ -193,15 +193,37 @@ export async function montarContextoDeSecoes(
     );
   }
   const roteadas = await routeSkillsAI(params.pedido, skills, { maxSkills: 1 });
+  // ⚠️ FATIA 3b (11/08/2026) · O PLANO PASSA A ENXERGAR COMO A CONVERSA.
+  //
+  // `relato` é a porta única: passá-lo liga, de uma vez e pelo mecanismo
+  // COMPARTILHADO, o perfil consultável (com os negativos), a BASE 2, o ranking
+  // por aderência, a `ANCORA_PERFIL` e a `LICENCA_GENERATIVA`. Nada disso é
+  // importado aqui nem em `plano.ts` — quem monta é `lib/ia/context.ts`, o
+  // mesmo que serve a conversa. Uma terceira implementação da mesma
+  // inteligência é exatamente o que esta frente existe para não fazer.
+  //
+  // O QUE ISTO CONSERTA, medido em 11/08 (Golden Case L): sem o perfil
+  // consultável, **cinco de seis** propostas do Plano exigiam nível pré-verbal
+  // — e nenhum dos perfis dizia isso. Na ausência do dado o Plano descia; com o
+  // dado disponível (a criança que fala com adultos conhecidos) ele descia
+  // igual. O `estado: "negativo"` e a âncora são o que dizem "o nível já
+  // demonstrado é o piso".
+  //
+  // ATRÁS DO ROLLOUT POR FAMÍLIA — e o portão fica num DONO SÓ. Quem decide se
+  // a 4A vale é `buildContext`, que já cruza o rollout com a existência do
+  // relato. Repetir a checagem aqui criaria um segundo lugar para errar, e duas
+  // fontes para a mesma decisão sempre divergem. Fora do piloto o `relato`
+  // chega e é ignorado: o contexto sai igual ao da 3a.
+  //
+  // O texto passado é `pedido` — o mesmo `desafioComLastro` que o roteador
+  // acabou de ver. Ranquear o repertório por um texto e rotear a skill por
+  // outro seria escolher a BP para uma pergunta que não é a do plano.
   const ctx = await buildContext(supabase, {
     familyId: params.familyId,
     membroAtipicoId: params.membroAtipicoId,
     skills: roteadas.map((r) => r.skill),
     conversaId: null,
-    // ⚠️ `relato` FICA DE FORA NA FATIA 3a, de propósito. Passá-lo ligaria
-    // perfil consultável, BASE 2 e ranking de uma vez — e aí não daria para
-    // saber se uma mudança no conteúdo veio da 4A ou de o contexto ter passado
-    // a ser único. Esta fatia isola a arquitetura; a 4A é a 3b.
+    relato: params.pedido,
   });
   return { ctx, roteadas };
 }
