@@ -6,6 +6,8 @@ import { z } from "zod";
 import { createClient, createServiceRoleClient } from "@/lib/supabase/server";
 import { requireActiveWrite } from "@/lib/auth/require-active-write";
 import { gerarSecoesPlanoMultiCall, PlanoIncompletoError } from "@/lib/ia/plano";
+import { objetivoDaConversa, enquadrarObjetivo } from "@/lib/conducao/objetivo";
+import { ofereceuPlano } from "@/lib/ia/marcadores";
 import { resolveFamily } from "@/lib/auth/current-family";
 
 async function requireFamily() {
@@ -119,12 +121,19 @@ export async function ajustarPlano(
         .select("papel, conteudo")
         .eq("conversa_id", plano.conversa_id as string)
         .order("created_at", { ascending: true });
-      const doUsuario = (msgs ?? [])
-        .filter((m) => m.papel === "user")
-        .map((m) => m.conteudo as string)
-        .join("\n")
-        .slice(0, 1800);
-      if (doUsuario) desafioBase = doUsuario;
+      // MESMA REGRA DA CRIAÇÃO (11/08/2026). Ajustar um plano tem que partir do
+      // mesmo objetivo que o gerou — se aqui voltasse a concatenar as falas da
+      // mãe, o ajuste reconstruiria o plano sobre um alvo diferente do original,
+      // e a família veria o tema mudar sozinho ao pedir uma correção.
+      const turnos = (msgs ?? [])
+        .map((m) => ({
+          de: (m.papel === "user" ? "familia" : "ayla") as "familia" | "ayla",
+          texto: (m.conteudo as string) ?? "",
+          ofereceuPlano: m.papel === "assistant" && ofereceuPlano(m.conteudo as string),
+        }))
+        .filter((t) => t.texto.trim());
+      const alvo = objetivoDaConversa(turnos);
+      if (alvo) desafioBase = enquadrarObjetivo(alvo);
     }
     const desafio = `${desafioBase}\n\n<ajuste_pedido_pela_mae>\n${instrucao}\n</ajuste_pedido_pela_mae>\nRefaça o plano levando esse ajuste em conta.`;
     const membroAtipicoId = plano.membro_atipico_id as string | null;

@@ -9,6 +9,8 @@ import { gerarSecoesPlanoMultiCall, PlanoIncompletoError } from "@/lib/ia/plano"
 import { gerarTituloConversa } from "@/lib/ia/titulo";
 import { trackFeature } from "@/lib/analytics/track";
 import { extrairAtualizacoes, type PropostaAtualizacao } from "@/lib/ia/atualizar";
+import { objetivoDaConversa, enquadrarObjetivo } from "@/lib/conducao/objetivo";
+import { ofereceuPlano } from "@/lib/ia/marcadores";
 import { extrairESalvarEventos } from "@/lib/ayla/eventos";
 import {
   MEMBRO_CAMPOS_TOPLEVEL,
@@ -280,12 +282,28 @@ export async function criarPlanoDaConversa(
       .select("papel, conteudo")
       .eq("conversa_id", conversaId)
       .order("created_at", { ascending: true });
-    const desafio =
-      (msgs ?? [])
-        .filter((m) => m.papel === "user")
-        .map((m) => m.conteudo as string)
-        .join("\n")
-        .slice(0, 1800) || "Sobre o tema desta conversa.";
+
+    // ⚠️ ATÉ 11/08/2026 ISTO ERA `.filter(papel === "user").join().slice(0,1800)`.
+    //
+    // Três coisas se perdiam, e a auditoria de PEND-027 mediu as três: o
+    // REFINAMENTO construído na conversa (a frase que nomeia o problema real
+    // costuma ser da Ayla), o peso do ACEITE ("sim" entrava com o mesmo peso de
+    // tudo) e a MUDANÇA DE DIREÇÃO (objetivo antigo e novo competiam sem
+    // hierarquia). Numa conversa longa, o corte de 1.800 ainda podia decapitar
+    // justamente a última decisão da família.
+    //
+    // A regra agora está em `lib/conducao/objetivo.ts`, e o enquadramento —
+    // objetivo em destaque, resto subordinado — é a semântica que o WhatsApp já
+    // usa desde 03/08. A SELEÇÃO das mensagens continua sendo de cada canal.
+    const turnos = (msgs ?? [])
+      .map((m) => ({
+        de: (m.papel === "user" ? "familia" : "ayla") as "familia" | "ayla",
+        texto: (m.conteudo as string) ?? "",
+        ofereceuPlano: m.papel === "assistant" && ofereceuPlano(m.conteudo as string),
+      }))
+      .filter((t) => t.texto.trim());
+    const alvo = objetivoDaConversa(turnos);
+    const desafio = alvo ? enquadrarObjetivo(alvo) : "Sobre o tema desta conversa.";
 
     const membroAtipicoId = conversa.membro_atipico_id as string | null;
 

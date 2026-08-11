@@ -24,6 +24,7 @@ Só o que está aberto. 🔒 = bloqueada.
 | [PEND-018](#pend-018) | Memória e retrato da criança | **C · Memória** | P1 | ABERTA | desenhar junto com A |
 | [PEND-021](#pend-021) | Jornada dos 7 dias e conversão | G · Comercial | P1 | ABERTA | preencher o DESEJADO |
 | [PEND-022](#pend-022) | Fontes confiáveis, limites e escalonamento | F · Limites | P2 | ABERTA | preencher o DESEJADO |
+| [PEND-030](#pend-030) | Confirmações curtas e continuidade do objetivo | D · Entregas | P3 | VALIDAÇÃO NO PILOTO | observar conversas reais antes de ajustar |
 | [PEND-029](#pend-029) | Aprendizado do Plano sabe o resultado, não a intervenção | D · Entregas | P2 | ABERTA | medir quantas notas são descritivas |
 | [PEND-028](#pend-028) | Piloto 4A — o que a bancada deixou em aberto | **A · Condução** | P2 | ABERTA | não bloqueia o piloto; medir depois do uso real |
 | [PEND-027](#pend-027) | Plano Kolo — contexto, conhecimento e aprendizado | **D · Entregas** | P1 | ABERTA | P0 interno: fazer o feedback chegar ao Plano seguinte |
@@ -432,6 +433,34 @@ Aberta em: 2026-08-08 · Origem: pedido do Sérgio na missão da PEND-004
 - **Critério de conclusão:** mapa de impacto escrito, com prioridade proposta e
   aprovada.
 - **Agente recomendado:** AUDITAR → PROPOR
+
+---
+
+### PEND-030
+**Confirmações curtas e continuidade do objetivo — validar no piloto**
+Bloco: **D · Entregas** · Prioridade: **P3** · Estado: **ABERTA · VALIDAÇÃO NO PILOTO**
+Aberta em: 2026-08-11 · Origem: Fatia 2 de PEND-027
+
+> **NÃO bloqueia a Fatia 2.** É observação de uso real, não defeito conhecido.
+
+- **O que observar.** Quando a família responde curto — *sim · isso · exatamente ·
+  pode ser · quero · vamos · bora · é isso mesmo · vamos nessa* e as formas
+  naturais que só o uso revela —, a Ayla precisa relacionar a confirmação ao
+  objetivo que estava sendo discutido, e não tratar a palavra solta como alvo do
+  Plano.
+- **A regra hoje** (`lib/conducao/objetivo.ts`): lista fechada de aceites, e a
+  oferta da Ayla só vale como objetivo se a família confirmou **dentro de 3
+  turnos**. Os dois números são escolhas, não medições.
+- **⚠️ NÃO AMPLIAR A LISTA NEM A JANELA POR HIPÓTESE.** Medir conversas reais
+  primeiro; havendo falha, registrar o caso concreto e só então propor ajuste.
+  Ampliar preventivamente é como se constrói o próximo falso positivo — a lista
+  é conservadora de propósito (erra para tratar como substantivo, que é o erro
+  barato: no pior caso o objetivo fica mais específico do que precisava).
+- **Como medir:** ler conversas do piloto em que houve criação de Plano e
+  conferir se o objetivo gravado em `planos.tema` corresponde ao que a família
+  decidiu — comparação humana, não regex.
+- **Depende de:** uso real das três famílias do piloto.
+- **Agente recomendado:** INVESTIGAR (depois do piloto)
 
 ---
 
@@ -2834,7 +2863,7 @@ trimestralmente, o que vier antes.
 
 ---
 
-**Próximo ID livre: PEND-030. *(024 e 025 reservadas por frentes ainda não publicadas.)***
+**Próximo ID livre: PEND-031. *(024 e 025 reservadas por frentes ainda não publicadas.)***
 
 > Conferir contra `origin/main`, não contra o seu branch. Dois branches podem
 > reivindicar o mesmo número — o conflito de merge nesta linha é o alarme.
