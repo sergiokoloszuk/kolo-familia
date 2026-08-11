@@ -67,6 +67,16 @@ export type UsageTracking = {
    * sem repertório (PEND-042) sem duplicar o que a família escreveu.
    */
   message_id?: string | null;
+  /**
+   * A criança de quem o turno trata — quando já resolvida NAQUELE ponto.
+   *
+   * ⚠️ NUNCA INFERIDO PARA PREENCHER TELEMETRIA. Numa família com dois filhos,
+   * um membro chutado no rastro é pior que um campo vazio: leva a auditoria
+   * futura a atribuir o turno à criança errada, e é exatamente o tipo de
+   * mistura que `membro-escopo.ts` existe para impedir. Onde o membro ainda não
+   * estiver resolvido, o valor é `null` — e a lacuna fica visível.
+   */
+  membro_atipico_id?: string | null;
 };
 
 /** Os campos de correlação, no formato que vai para `api_calls.meta`. */
@@ -74,7 +84,12 @@ export function metaDoTurno(
   t: UsageTracking | undefined,
   extra: Record<string, unknown>,
 ): Record<string, unknown> {
-  return { turn_id: t?.turn_id ?? null, message_id: t?.message_id ?? null, ...extra };
+  return {
+    turn_id: t?.turn_id ?? null,
+    message_id: t?.message_id ?? null,
+    membro_atipico_id: t?.membro_atipico_id ?? null,
+    ...extra,
+  };
 }
 
 /**
