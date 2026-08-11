@@ -26,10 +26,10 @@ Só o que está aberto. 🔒 = bloqueada.
 | [PEND-022](#pend-022) | Fontes confiáveis, limites e escalonamento | F · Limites | P2 | ABERTA | preencher o DESEJADO |
 | [PEND-040](#pend-040) | Observabilidade de IA — conversa Web e Plano não existem em `api_calls` | H · Governança | P1 | ABERTA | achar por que a instrumentação atual não grava |
 | [PEND-042](#pend-042) | 58% dos turnos de WhatsApp sem repertório | B · Conhecimento | P1 | MEDIDA | separar os 5 motivos antes de tocar em base ou prompt |
-| [PEND-041](#pend-041) | Rastro web não separa conversa de artefato | H · Governança | P2 | ABERTA | carregar a origem no evento |
 | [PEND-038](#pend-038) | Latência percebida no WhatsApp e resposta em vários balões | A · Condução | P1 pós-rollout | NÃO MEDIDA EM PRODUÇÃO | os 56s são bancada do Plano; depende de [PEND-040] |
 | [PEND-039](#pend-039) | Bancada permanente de golden cases (Manu · LEGO · Bia · vago) | A · Condução | P1 | DESENHADA | construir antes da próxima fase do Plano |
 | [PEND-043](#pend-043) | Ter objetivo ≠ gerar Plano — falta decisão de valor | D · Entregas | P1 | ABERTA | separar suficiência de valor de consolidação |
+| [PEND-045](#pend-045) | Pronome perde a criança logo após ação sobre ela | A · Condução | P1 | CAUSA PROVADA | âncora na ação anterior, sem heurística de pronome |
 | [PEND-044](#pend-044) | A Kolo terceiriza antes de tentar ajudar | A · Condução | P1 | ABERTA | classe funcional, não regra de palavra |
 | [PEND-036](#pend-036) | O Plano reoferece o que a conversa acabou de descartar | D · Entregas | P1 | DESCONTAMINADA | medida sozinha após a 035; é defeito próprio |
 | [PEND-037](#pend-037) | O Plano afirma causas sem fonte rastreável | D · Entregas | P2 | ABERTA | classificar PERFIL/BASE/INFERÊNCIA/SEM FONTE |
@@ -447,6 +447,53 @@ Aberta em: 2026-08-08 · Origem: pedido do Sérgio na missão da PEND-004
 
 ---
 
+### PEND-045
+**O pronome perde a criança logo depois de uma ação inequívoca sobre ela**
+Bloco: **A · Condução** · Prioridade: **P1** · Estado: **ABERTA · CAUSA PROVADA**
+Aberta em: 2026-08-11 · Origem: auditoria do caso Mário (WhatsApp, produção)
+
+> **A Ayla acabou de gerar um Plano para uma criança e, 41 segundos depois,
+> perguntou de qual das duas a mãe estava falando.**
+
+- **A LINHA DO TEMPO REAL**, lida em `ayla_messages` e `planos` (família com dois
+  filhos, Mário e Manu):
+
+  ```
+  19:08:32  MÃE   membro=MARIO  "plano para melhorar a comunicação do Mário"
+  19:09:54        ── plano criado, planos.membro_atipico_id = MARIO ──
+  19:09:57  AYLA  membro=MARIO  "Vamos trabalhar a comunicação do Mario…"
+  19:10:35  MÃE   membro=NULL   "…você salvou o que sobre ELE?"
+  19:10:53  AYLA  membro=NULL   "você está falando do Mário ou da Manu?"
+  ```
+
+- **O plano estava CERTO.** Conferido no banco, não pelo título:
+  `planos.membro_atipico_id = MARIO`. O que se perdeu foi o turno seguinte.
+- **CAUSA (VI NO CÓDIGO).** `resolverMembroAlvo({ texto, membros,
+  membroContexto })` resolve pelo NOME no texto; o contexto vem de
+  `criancaDaConversa`, que devolve a última mensagem com membro não nulo nas
+  **últimas 2 horas**. Às 19:10 essa janela alcançava Mário (19:09:57) **e**
+  Manu (18:34:23), e o pronome "ele" não desempata.
+- **⚠️ O DEFEITO NÃO É A JANELA.** É que **a ação que a Ayla acabou de executar
+  não conta como contexto**. Gerar um Plano para o Mário é o sinal mais forte
+  possível de quem é o assunto — e a resolução do turno seguinte não olha para
+  ele. Aumentar a janela pioraria: alcançaria mais o irmão, não menos.
+- **Alcance:** qualquer família com dois filhos em que a mãe use pronome depois
+  de uma ação sobre um deles. **WhatsApp** — na web o membro vem da conversa,
+  que é fixa por `conversa_id`.
+- **⚠️ O QUE A CORREÇÃO NÃO PODE SER:** regex de "ele/ela" apontando para o
+  último filho; janela maior; "o último membro mencionado sempre vence". Duas
+  crianças do mesmo gênero derrubam a primeira; as outras duas aumentam o risco
+  de **contaminar um irmão com o contexto do outro**, que é a regra mais dura
+  desta base (`membro-escopo.ts`).
+- **Critério de baixa:** os sete golden cases (nomeado · ação anterior ·
+  mudança explícita · dois alvos na mesma frase · ambiguidade real · mesmo
+  gênero · português informal) passando, com sabotagem: **remover a âncora da
+  ação anterior tem que fazer o caso Mário falhar de novo**.
+- **Ligada a** [PEND-037] (mesmo turno, achado diferente). **Depende de:** nada.
+- **Agente recomendado:** VS Code
+
+---
+
 ### PEND-044
 **A Kolo manda a família para fora antes de tentar ajudar diretamente**
 Bloco: **A · Condução** · Prioridade: **P1** · Estado: **ABERTA**
@@ -562,17 +609,37 @@ Aberta em: 2026-08-11 · Origem: leitura pós-rollout de `eventos_app`
      mexer na base.
 - **Anterior ao rollout**, e portanto não é regressão dele. Mas é grande demais
   para seguir sem ficha.
-- **Critério de baixa:** os 37 casos classificados nos cinco motivos acima, com
-  contagem por motivo; e, para os que forem defeito, a causa localizada no
-  código. Um número que continue somando cinco fenômenos não fecha nada.
+- **📊 MEDIDO EM 11/08/2026, e o quadro mudou.** Ampliado para 7 dias: **222
+  eventos, 85 vazios (38%)**. Classificados pela causa real, não pelo rótulo:
+
+  | causa | n | onde |
+  |---|---|---|
+  | **não houve skill real** | **54** | **100% WhatsApp** |
+  | acervo sem material (`meu_bem_estar`, 0 BPs) | 19 | WhatsApp |
+  | filtro de idade zerou | 12 | ambos |
+
+- **Os canais não têm a mesma causa:** WhatsApp **63%** de vazios em 120 turnos;
+  web **10%** em 105 — e **zero** "sem skill" na web.
+- **O filtro de idade é real mas minoritário** (14% dos vazios). Ainda assim
+  descarta muito: aos 8 anos, `sono` perde **89%** do acervo, `nutricional` 85%,
+  `sensorial` 82%.
+- **`organizacao` NÃO é skill** — é rótulo de intenção. Consultar o recuperador
+  com ele devolve vazio porque não existe skill com esse nome.
+- **⚠️ Os 54 continuam FECHADOS.** `conhecimento_consultado` não guarda relato
+  nem intenção detectada — sem isso não dá para separar roteamento × contexto
+  perdido × fluxo especial. **Depende de [PEND-040].**
+- **Critério de baixa:** os 54 classificados por causa, com evidência; e, para os
+  que forem defeito, a causa localizada no código. Um número que continue
+  somando fenômenos diferentes não fecha nada.
 - **Ligada a** [PEND-017]. **Depende de:** nada.
 - **Agente recomendado:** INVESTIGAR
 
 ---
 
 ### PEND-041
-**O rastro do canal web não distingue conversa de geração de artefato**
-Bloco: **H · Governança** · Prioridade: **P2** · Estado: **ABERTA**
+**✅ BAIXADA · O rastro do canal web não distinguia conversa de artefato**
+Bloco: **H · Governança** · Prioridade: **P2** · Estado: **CONCLUÍDA · EM PRODUÇÃO**
+Baixada em: 2026-08-11 · `dbb3c59` (PR #93)
 Aberta em: 2026-08-11 · Origem: leitura pós-rollout de `eventos_app`
 
 - **O caso, e ele quase virou um laudo errado.** Lendo o rastro de 11/08, os 68
@@ -587,9 +654,15 @@ Aberta em: 2026-08-11 · Origem: leitura pós-rollout de `eventos_app`
 - **O custo disto não é teórico:** um rastro que exige leitura de código para
   ser interpretado não serve para o que ele existe — descobrir o que aconteceu
   sem depender da reclamação de uma família.
-- **Critério de baixa:** o evento carrega o que o originou (conversa em
-  streaming · artefato/output type · Plano), e uma consulta consegue separar os
-  três sem abrir o código.
+- **✅ PROVADO EM PRODUÇÃO (11/08/2026).** Conversa web real às 16:31:39 BRT,
+  correlacionada por horário e pelo título da conversa. O registro em
+  `api_calls` traz `feature: "conversa_web"` **e** `meta.origem: "conversa"` —
+  "web" diz por onde entrou, "conversa" diz o que era. Baseline antes do teste:
+  **zero registros de `conversa_web` em todo o histórico**.
+- **⚠️ O QUE A BAIXA NÃO COBRE.** A distinção existe em `api_calls`. No rastro
+  `conhecimento_consultado` (`eventos_app`) o rótulo continua sendo só o canal —
+  e foi lá que a ambiguidade quase produziu um laudo errado. Essa metade vive
+  em [PEND-040], que segue aberta.
 - **Ligada a** [PEND-040]. **Depende de:** nada.
 - **Agente recomendado:** VS Code
 
@@ -622,9 +695,25 @@ Aberta em: 2026-08-11 · Origem: prova pós-rollout que não pôde ser feita
   modelo · duração · sucesso ou falha · fallback · tokens · custo quando
   disponível · família e conversa quando aplicável. Hoje o WhatsApp entrega
   parte disso e os outros dois não entregam nada.
-- **⚠️ NÃO IMPLEMENTAR AINDA.** Primeiro descobrir por que a instrumentação que
-  já existe não grava — acrescentar uma segunda instrumentação por cima de uma
-  que falha em silêncio seria repetir o erro que a [PEND-033] documentou.
+- **✅ CAUSA PROVADA E METADE CORRIGIDA (11/08/2026).** A rota web chamava
+  `logarUsoApi` com o cliente da **sessão da família** (anon key); `api_calls` é
+  tabela de auditoria e a RLS recusa o insert. O erro voltava em `error` e o
+  `console.warn` morria com a retenção do stdout. O WhatsApp nunca teve o
+  problema porque roda em service role. Corrigido em `dbb3c59`: o privilégio
+  ficou numa linha (só o billing), e a falha passou a persistir como
+  `billing_nao_gravou` via `logEvent`. **Provado em produção**: conversa web
+  real às 16:31:39 BRT, `openai/gpt-5.6-luna`, `ms=20111`.
+- **🔎 O PRÓPRIO MECANISMO ACHOU O SEGUINTE, no mesmo turno:**
+  `classificar_intencao` falha pela MESMA RLS (19:31:18Z, registrado). Roda em
+  todo turno de conversa web e nunca foi contabilizada. **Não corrigido.**
+- **⏱️ INSTRUMENTAÇÃO DO TURNO DO WHATSAPP, em três fatias:** piloto
+  (`parser` + `responder`, `af52fa9`), A1 (quatro auxiliares, `2cb24ba`), A2
+  (proativo com `envio_id`, `cd49c59`). **6 dos 9 call-sites** do turno gravam
+  `ms`, `tentativas` e correlação. Falta a **A3** — `classificar-area` e
+  `ayla_audio`, este último rodando ANTES de `processInbound`.
+- **⚠️ O RESTO SÓ DEPOIS DE MEDIR.** Acrescentar instrumentação por cima de uma
+  que falha em silêncio seria repetir o erro que a [PEND-033] documentou — foi
+  por isso que a causa veio antes da correção.
 - **Critério de baixa:** uma conversa web real e uma geração de Plano real
   aparecendo em `api_calls` com provider, modelo e duração, conferidas contra o
   horário do turno.
@@ -725,13 +814,32 @@ Aberta em: 2026-08-11 · Origem: teste real (Karina/Manu)
   manter o objetivo certo, respeitar o que acabou de ser aprendido e não
   repetir a mesma ideia sete vezes. **O problema do Plano não é mais falta
   de conteúdo.** Provar a origem antes de alterar prompt ou código.
-- **🆕 CASO MÁRIO (11/08/2026) — evidência AINDA NÃO RASTREADA.** Numa resposta
-  real sobre uma lição, a Ayla afirmou que *"quando algo parece longo ou
-  abstrato o Mário trava antes de começar"* e que *"a preocupação com errar pode
-  fazer até pedir ajuda parecer arriscado"*. **NÃO SEI** de onde vieram: não
-  tenho o turno, o perfil nem o rastro. Cada afirmação precisa ser classificada
-  em **DADO DA FAMÍLIA · DADO DO PERFIL · HIPÓTESE MARCADA · CONHECIMENTO
-  GENÉRICO · INVENÇÃO/EXTRAPOLAÇÃO** — e não se racionaliza depois.
+- **❌ CASO MÁRIO — FALSO POSITIVO, DESCARTADO POR INVESTIGAÇÃO (11/08/2026).**
+  Eu havia registrado aqui as afirmações sobre o Mário (*"trava antes de
+  começar"*, *"a preocupação com errar"*) como suspeita de extrapolação.
+  **Rastreei o perfil real e não é extrapolação — é leitura do que a família
+  registrou.** O campo `comunicacao` do perfil dele diz, textualmente:
+
+  > *"Conversa bem… Antecipa falha em interações com estranhos (porteiro,
+  > jardineiro, merendeira) e não tenta; crença limitante que protege
+  > autoimagem. Copia palavras com perfeição quando vê o modelo, mas não
+  > consegue escrever sem referência visual."*
+
+  E `foco` diz *"Funciona melhor em passos curtos"*. As cinco afirmações
+  auditadas — *conversa bem · copia modelos visuais · sensação de que vai
+  falhar · passos curtos · referências visuais* — são **FATO**, quase verbatim.
+  Até a "estratégia de proteção" está escrita no perfil.
+- **O que sobra do caso é de REDAÇÃO, não de origem:** o Plano deu voz de
+  primeira pessoa (*"eu acredito que vou falhar"*) a algo que a família
+  registrou em terceira. Isso é a PEND-043/superprompt, não extrapolação.
+- **⚠️ E fica a lição de método:** eu suspeitei pelo padrão medido em outros
+  casos e quase deixei uma ficha apontando para o lugar errado. **Ficha errada
+  custa mais caro que ficha ausente** — foi por isso que este achado foi
+  removido em vez de amaciado.
+- **A ficha continua aberta SOMENTE pelos casos medidos**, que são outros:
+  *"gosta de brincar de caixa"* → *"domina o papel de caixa"*, e a corrida da
+  Manu virando *"adora correr"* / *"a corrida regula seu corpo"* (2 de 4 na
+  bancada de 11/08).
 - **⚠️ O NOME DO DEFEITO MUDA A CORREÇÃO.** O que a bancada mediu (2 de 4 casos)
   não é "hipótese apresentada como fato": é **EXTRAPOLAÇÃO** — `interesse →
   competência` ("gosta de brincar de caixa" virou "domina o papel de caixa"),
@@ -771,8 +879,8 @@ Aberta em: 2026-08-11 · Origem: teste real (Karina/Manu)
 
 ### PEND-035
 **✅ BAIXADA · O objetivo do Plano confundia BARREIRA com OBJETIVO FINAL**
-Bloco: **D · Entregas** · Prioridade: **P1** · Estado: **CORRIGIDA · AGUARDANDO DEPLOY**
-Baixada em: 2026-08-11 · working tree, ainda não commitada
+Bloco: **D · Entregas** · Prioridade: **P1** · Estado: **CONCLUÍDA · EM PRODUÇÃO**
+Baixada em: 2026-08-11 · `09d5aa2` (PR #92)
 Aberta em: 2026-08-11 · Origem: teste real (Karina/Manu)
 
 - **O caso.** A conversa começou em *"quero ler com ela e ela não fica
@@ -819,7 +927,16 @@ Aberta em: 2026-08-11 · Origem: teste real (Karina/Manu)
 - **Dois defeitos meus, achados por teste:** `` não fecha depois de "vê"
   (acento não é caractere de palavra em JS) e um `^não` genérico classificava
   *"Não durmo desde que ele nasceu"* como dispensa.
-- **⚠️ Falta o deploy.** A correção vive no working tree.
+- **✅ EM PRODUÇÃO desde 11/08/2026.** Commit `9bae45a`, PR #92, `main` =
+  **`09d5aa2`**; deployment de Production no MESMO SHA, estado `success`,
+  aplicação respondendo 200. Conferido por **diff do conteúdo publicado**:
+  `git show origin/main:…/objetivo.ts` traz `declaraObjetivo`, `focoAtual` e
+  `barreiras`, e a linha `if (declaraObjetivo(t.texto)) return monta(...)` que
+  substituiu a regra antiga.
+- **Alcance:** a web (conversa e ajuste de Plano). O **WhatsApp não usa
+  `objetivo.ts`** — tem caminho próprio (`ayla/ponte.ts` → `desafioDaConversa`)
+  e **continua com a regra antiga**. Não é regressão desta correção; é a
+  divergência entre canais já registrada na [PEND-043].
 - **Ligada a** [PEND-027], [PEND-036]. **Depende de:** nada.
 - **Fase:** próxima fase de inteligência do Plano — selecionar melhor,
   manter o objetivo certo, respeitar o que acabou de ser aprendido e não
