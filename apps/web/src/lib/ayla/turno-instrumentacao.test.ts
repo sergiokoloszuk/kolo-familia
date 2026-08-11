@@ -53,9 +53,16 @@ describe("B · o formato do meta", () => {
     feature: "ayla_parser",
   };
 
-  it("4. carrega turn_id e message_id, e preserva o resto", () => {
-    const m = metaDoTurno({ ...base, turn_id: "t-1", message_id: "m-1" }, { ms: 900, tentativas: 1 });
-    expect(m).toEqual({ turn_id: "t-1", message_id: "m-1", ms: 900, tentativas: 1 });
+  it("4. carrega a identidade do turno e preserva o resto", () => {
+    // ⚠️ `membro_atipico_id` entrou na FATIA A1 (11/08). A asserção mudou
+    // porque o CONTRATO cresceu — não para ficar verde.
+    const m = metaDoTurno(
+      { ...base, turn_id: "t-1", message_id: "m-1", membro_atipico_id: "bia" },
+      { ms: 900, tentativas: 1 },
+    );
+    expect(m).toEqual({
+      turn_id: "t-1", message_id: "m-1", membro_atipico_id: "bia", ms: 900, tentativas: 1,
+    });
   });
 
   it("5. MORDE: message_id ausente vira null e NÃO derruba a correlação", () => {
@@ -65,7 +72,9 @@ describe("B · o formato do meta", () => {
   });
 
   it("6. tracking sem nada ainda produz as chaves — o buraco fica visível", () => {
-    expect(metaDoTurno(undefined, { ms: 1 })).toEqual({ turn_id: null, message_id: null, ms: 1 });
+    expect(metaDoTurno(undefined, { ms: 1 })).toEqual({
+      turn_id: null, message_id: null, membro_atipico_id: null, ms: 1,
+    });
   });
 });
 
@@ -80,6 +89,10 @@ describe("C · o `ms` mede a chamada ao modelo, e só ela", () => {
     expect(i, "t0 sumiu").toBeGreaterThan(-1);
     expect(j, "t1 sumiu").toBeGreaterThan(i);
     expect(k, "o fecho tem que vir DEPOIS da resposta do modelo").toBeLessThan(j);
+    // ⚠️ E o t0 tem que vir ANTES dela. Sem esta linha o teste aceitava o
+    // cronômetro inteiro DEPOIS do modelo — `ms` daria ~0 e pareceria ótimo.
+    // Achado por sabotagem dirigida, não por revisão.
+    expect(i, "t0 depois da chamada — o ms mediria zero").toBeLessThan(k);
     // e antes de qualquer parse
     const parse = PARSER.indexOf("JSON.parse", j);
     expect(parse, "o cronômetro fechou depois do parse").toBeGreaterThan(j);
@@ -159,5 +172,81 @@ describe("D · nada de comportamento mudou", () => {
     expect(RESPONDER).toMatch(/cacheSystem: true/);
     // a retentativa continua sendo UMA
     expect(RESPONDER).toMatch(/await new Promise\(\(r\) => setTimeout\(r, 1200\)\)/);
+  });
+});
+
+describe("E · FATIA A1 — as quatro features auxiliares do turno", () => {
+  /**
+   * ⚠️ O CONTRATO É OBRIGATÓRIO, e isso é a prova principal. `Correlacao` não
+   * tem campo opcional: um chamador que esqueça de propagar NÃO COMPILA. Com
+   * parâmetro opcional, ele compilaria e gravaria `turn_id: null` em silêncio —
+   * o modo de falha que esta instrumentação existe para eliminar.
+   *
+   * Aconteceu de verdade durante a implementação: ao acrescentar `correlacao` a
+   * `sinalizarConflitoCrossCampo`, o `tsc` reprovou a chamada interna com
+   * "Expected 7 arguments, but got 6". O compilador pegou antes de qualquer
+   * teste rodar.
+   */
+  it("13. MORDE: `Correlacao` não admite campo opcional", () => {
+    const tipo = ORCH.slice(ORCH.indexOf("type Correlacao = {"), ORCH.indexOf("async function persistirRegistro"));
+    expect(tipo).toMatch(/turn_id: string;/);
+    expect(tipo, "turn_id virou opcional — o esquecimento voltaria a ser silencioso").not.toMatch(/turn_id\?:/);
+    expect(tipo).toMatch(/message_id: string \| null;/);
+    expect(tipo).toMatch(/membro_atipico_id: string \| null;/);
+  });
+
+  it("14. MORDE: as duas funções internas EXIGEM a correlação", () => {
+    expect(ORCH).toMatch(/async function persistirRegistro\([\s\S]{0,200}?correlacao: Correlacao,\s*\n\): Promise<void>/);
+    expect(ORCH).toMatch(/async function sinalizarConflitoCrossCampo\([\s\S]{0,300}?correlacao: Correlacao,\s*\n\): Promise<void>/);
+  });
+
+  it("15. MORDE: o chamador propaga o turno, e o membro NÃO é inferido", () => {
+    // `persistirRegistro` começa com `if (!p.membro_atipico_id) return` — ela só
+    // roda com o membro já resolvido. A telemetria usa esse mesmo valor, nunca
+    // um palpite: numa família com dois filhos, um membro chutado no rastro
+    // levaria a auditoria a atribuir o turno à criança errada.
+    expect(ORCH).toMatch(/persistirRegistro\(supabase, family\.id, parsed, \{\s*\n\s*turn_id: turnId,/);
+    expect(ORCH).toMatch(/membro_atipico_id: parsed\.membro_atipico_id,/);
+    expect(ORCH).toMatch(/if \(!p\.membro_atipico_id\) return;/);
+  });
+
+  it("16. MORDE: as 4 features recebem a MESMA correlação, por spread", () => {
+    for (const f of ["ayla_dedup_diario", "ayla_rotear_kv", "ayla_dedup", "ayla_conflito_kv"]) {
+      const i = ORCH.indexOf(`feature: "${f}",`);
+      expect(i, `${f} sumiu`).toBeGreaterThan(-1);
+      expect(ORCH.slice(i, i + 120), `${f} não recebe a correlação`).toMatch(/\.\.\.correlacao,/);
+    }
+  });
+
+  it("17. MORDE: os 4 call-sites medem só a chamada ao modelo", () => {
+    for (const arq of ["dedup-diario", "incorporar-subcampo", "dedup-kolo-vivo", "conflito-kolo-vivo"]) {
+      const f = src(`ayla/${arq}.ts`);
+      const t0 = f.indexOf("const t0 = Date.now()");
+      const fim = f.indexOf("const msModelo = Date.now() - t0");
+      const modelo = f.indexOf("stream.finalMessage()");
+      expect(t0, `${arq}: t0 sumiu`).toBeGreaterThan(-1);
+      expect(modelo, `${arq}: o fecho tem que vir depois da resposta`).toBeLessThan(fim);
+      // O t0 ANTES da chamada — senão o `ms` mede zero e parece excelente.
+      expect(t0, `${arq}: t0 depois da chamada`).toBeLessThan(modelo);
+      expect(f.indexOf("JSON.parse", fim), `${arq}: cronômetro fechou depois do parse`).toBeGreaterThan(fim);
+      expect(f, `${arq}: tentativas ausente`).toMatch(/ms: msModelo, tentativas: 1/);
+    }
+  });
+
+  it("18. o meta carrega os três campos de identidade", () => {
+    const m = metaDoTurno(
+      { supabase: {} as never, family_account_id: "f", feature: "ayla_dedup", turn_id: "t", message_id: "m", membro_atipico_id: "bia" },
+      { ms: 90, tentativas: 1 },
+    );
+    expect(m).toEqual({ turn_id: "t", message_id: "m", membro_atipico_id: "bia", ms: 90, tentativas: 1 });
+  });
+
+  it("19. MORDE: membro não resolvido vira null, nunca um palpite", () => {
+    const m = metaDoTurno(
+      { supabase: {} as never, family_account_id: "f", feature: "ayla_dedup", turn_id: "t" },
+      { ms: 1 },
+    );
+    expect(m.membro_atipico_id).toBeNull();
+    expect(m.turn_id, "a lacuna do membro não pode custar a correlação do turno").toBe("t");
   });
 });

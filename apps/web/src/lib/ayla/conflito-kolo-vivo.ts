@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { getAylaAnthropicClient, AYLA_MODEL, AYLA_MODEL_FALLBACK } from "./anthropic";
 import { logarUsoApi } from "@/lib/billing/logar";
-import type { UsageTracking } from "./responder";
+import { metaDoTurno, type UsageTracking } from "./responder";
 
 /**
  * Detector de CONFLITO ENTRE CAMPOS do Kolo Vivo.
@@ -71,6 +71,9 @@ Devolva o JSON.`;
 
   const tentar = async (model: string): Promise<z.infer<typeof Schema> | null> => {
     try {
+      // O cronômetro fecha na resposta do modelo — o `JSON.parse` acontece
+      // depois, fora deste bloco. Ver `parser.ts`, onde o padrão foi provado.
+      const t0 = Date.now();
       const stream = client.messages.stream({
         model,
         max_tokens: 300,
@@ -78,6 +81,7 @@ Devolva o JSON.`;
         messages: [{ role: "user", content: userMsg }],
       });
       const finalMessage = await stream.finalMessage();
+      const msModelo = Date.now() - t0;
       const raw = finalMessage.content
         .filter((b): b is Extract<typeof b, { type: "text" }> => b.type === "text")
         .map((b) => b.text)
@@ -90,6 +94,7 @@ Devolva o JSON.`;
           feature: tracking.feature,
           input_tokens: finalMessage.usage.input_tokens,
           output_tokens: finalMessage.usage.output_tokens,
+          meta: metaDoTurno(tracking, { ms: msModelo, tentativas: 1 }),
         });
       }
       const json = parseJsonLoose(raw);
