@@ -43,7 +43,39 @@ export type UsageTracking = {
   supabase: SupabaseClient;
   family_account_id: string | null;
   feature: string;
+  /**
+   * O TURNO — nasce UMA vez em `processInbound` e desce por todas as chamadas.
+   *
+   * ⚠️ Sem ele não dá para responder "quanto tempo de IA este turno consumiu?".
+   * Medido em 11/08/2026: **1 de 2.788 chamadas** tinha duração registrada, e
+   * era a conversa web instrumentada no mesmo dia. A latência percebida do
+   * WhatsApp é **P50 22,4 s · P95 57,7 s**, e não havia como saber quanto disso
+   * é modelo e quanto é arquitetura.
+   *
+   * É `crypto.randomUUID()`, e NÃO o id da mensagem: o id do inbound existe na
+   * hora certa, mas nasce CONDICIONALMENTE — dois caminhos de exceção (falha do
+   * claim de idempotência, e webhook sem `messageId`) não o produzem. Um
+   * correlacionador que às vezes é nulo abre exatamente o buraco que esta
+   * instrumentação existe para fechar.
+   */
+  turn_id?: string;
+  /**
+   * A mensagem que originou o turno, quando existir — `ayla_messages.id`.
+   *
+   * NÃO é o correlacionador (isso é o `turn_id`). Serve para chegar ao texto
+   * real sem persistir texto novo: é o que permite abrir os turnos que ficaram
+   * sem repertório (PEND-042) sem duplicar o que a família escreveu.
+   */
+  message_id?: string | null;
 };
+
+/** Os campos de correlação, no formato que vai para `api_calls.meta`. */
+export function metaDoTurno(
+  t: UsageTracking | undefined,
+  extra: Record<string, unknown>,
+): Record<string, unknown> {
+  return { turn_id: t?.turn_id ?? null, message_id: t?.message_id ?? null, ...extra };
+}
 
 /**
  * A VOZ da Ayla — gera a resposta que a mãe lê no WhatsApp.
@@ -738,18 +770,37 @@ Se for uma TAREFA da escola/terapia:
     // (quem publica é o orquestrador). Sem ninguém consumindo os deltas ao
     // vivo, uma chamada única entrega exatamente o mesmo texto e é o que
     // permite os dois providers pelo mesmo caminho.
-    const r = await comRetentativaCurta(() =>
-      gerarConversacional({
-        provider,
-        model,
-        system,
-        messages: [{ role: "user", content: userContent }],
-        maxTokens: 900,
-        // Só a Anthropic marca cache explicitamente; na OpenAI é automático e o
-        // provider ignora o campo. Mantém o desconto que esta chamada já tinha.
-        cacheSystem: true,
-      }),
-    );
+    // ⚠️ O CRONÔMETRO FICA DENTRO DO CALLBACK, e não em volta do
+    // `comRetentativaCurta`. Entre as duas tentativas há um `sleep(1200)`:
+    // envolver a função inteira mediria a ESPERA junto com o modelo, e a
+    // pergunta que esta medição existe para responder é justamente separar
+    // "modelo lento" de "arquitetura lenta".
+    //
+    // `msModelo` soma TODAS as tentativas, de propósito. Registrar só a última
+    // subestimaria exatamente o caso lento — o que mais interessa numa
+    // investigação de latência. `tentativas` ao lado revela a composição.
+    let msModelo = 0;
+    let tentativas = 0;
+    const r = await comRetentativaCurta(async () => {
+      tentativas++;
+      const t0 = Date.now();
+      try {
+        return await gerarConversacional({
+          provider,
+          model,
+          system,
+          messages: [{ role: "user", content: userContent }],
+          maxTokens: 900,
+          // Só a Anthropic marca cache explicitamente; na OpenAI é automático e
+          // o provider ignora o campo. Mantém o desconto que esta chamada já
+          // tinha.
+          cacheSystem: true,
+        });
+      } finally {
+        // `finally`: a tentativa que FALHOU também consumiu tempo do turno.
+        msModelo += Date.now() - t0;
+      }
+    });
 
     if (tracking) {
       await logarUsoApi(tracking.supabase, {
@@ -762,6 +813,7 @@ Se for uma TAREFA da escola/terapia:
         feature: tracking.feature,
         input_tokens: r.tokensIn,
         output_tokens: r.tokensOut,
+        meta: metaDoTurno(tracking, { ms: msModelo, tentativas }),
       });
     }
 
