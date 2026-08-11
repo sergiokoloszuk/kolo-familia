@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { assinaturaLiberada, trialVencido } from "@/lib/auth/assinatura";
+import { ehStaffPorUserId } from "@/lib/auth/acesso";
 
 /**
  * Bloqueia escrita quando a assinatura não permite operações novas.
@@ -35,14 +36,11 @@ export async function requireActiveWrite(familyAccountId: string): Promise<void>
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (user) {
-    const { data: acesso } = await supabase
-      .from("controle_acessos")
-      .select("ativo")
-      .eq("user_id", user.id)
-      .maybeSingle();
-    if (acesso?.ativo) return;
-  }
+  // ⚠️ AQUI a checagem é pelo USUÁRIO da sessão, não pela família — é o único
+  // portão que já tem o `user` em mãos e não precisa resolvê-lo pelo id da
+  // família. Por isso usa `ehStaffPorUserId` e não `acessoLiberado`: a regra é a
+  // mesma (`lib/auth/acesso.ts`), o caminho até ela é que é mais curto.
+  if (await ehStaffPorUserId(supabase, user?.id)) return;
 
   const { data } = await supabase
     .from("subscription_accesses")

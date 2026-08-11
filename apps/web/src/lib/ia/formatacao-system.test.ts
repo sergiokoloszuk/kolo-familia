@@ -53,10 +53,17 @@ describe("CASO B · desafio — `##` é o título, e é o ÚNICO", () => {
     expect(s).toMatch(/Negrito é âncora DENTRO do texto, nunca título de seção/);
   });
 
-  it("4. o repertório de formas continua vivo — a correção é de sintaxe, não de conteúdo", () => {
-    expect(s).toContain("O que eu faria primeiro");
-    expect(s).toContain("O que você pode dizer");
-    expect(s).toMatch(/nunca use todos/);
+  it("4. o repertório de formas continua vivo — agora como TIPOS, não como títulos prontos", () => {
+    // ⚠️ MUDOU EM 10/08/2026, e a versão antiga não era erro: em 09/08 a
+    // correção era só de sintaxe, e guardar os rótulos fazia sentido. Depois
+    // mediu-se o efeito deles — 74% dos títulos das bancadas eram itens da
+    // lista copiados, três deles em 77% dos usos, e 6 dos 15 nunca usados.
+    // Os rótulos eram o gabarito. O repertório continua; a lista de títulos
+    // prontos, não.
+    expect(s).toContain("orientar agora");
+    expect(s).toContain("propor brincadeira, atividade ou treino");
+    expect(s).toContain("perguntar para diferenciar");
+    expect(s).not.toContain("O que eu faria primeiro (");
   });
 });
 
@@ -80,7 +87,10 @@ describe("CASO C e D · lista e frase pronta", () => {
 describe("CASO A e E · o que NÃO muda", () => {
   it("7. desafio não obriga estrutura — um tipo de ajuda só volta a ser prosa", () => {
     const s = sys("desafio");
-    expect(s).toMatch(/escreva em texto corrido e não use título nenhum/);
+    // A válvula de escape virou a regra: "na dúvida, prosa" está no bloco de
+    // formas, e a seção de Formatação continua dizendo que a estrutura nasce
+    // do raciocínio. As duas agora dizem a MESMA coisa — antes competiam.
+    expect(s).toMatch(/Na dúvida, prosa/);
     expect(s).toMatch(/A estrutura nasce do raciocínio, não de um gabarito/);
   });
 

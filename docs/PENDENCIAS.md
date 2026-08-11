@@ -24,6 +24,17 @@ Só o que está aberto. 🔒 = bloqueada.
 | [PEND-018](#pend-018) | Memória e retrato da criança | **C · Memória** | P1 | ABERTA | desenhar junto com A |
 | [PEND-021](#pend-021) | Jornada dos 7 dias e conversão | G · Comercial | P1 | ABERTA | preencher o DESEJADO |
 | [PEND-022](#pend-022) | Fontes confiáveis, limites e escalonamento | F · Limites | P2 | ABERTA | preencher o DESEJADO |
+| [PEND-038](#pend-038) | Latência percebida no WhatsApp e resposta em vários balões | A · Condução | P1 | NÃO MEDIDA | medir as três latências antes de otimizar |
+| [PEND-039](#pend-039) | Bancada permanente de golden cases (Manu · LEGO · Bia · vago) | A · Condução | P1 | DESENHADA | construir antes da próxima fase do Plano |
+| [PEND-035](#pend-035) | O Plano confunde BARREIRA com OBJETIVO FINAL | D · Entregas | P1 | ABERTA | provar a origem na Fatia 2 (`objetivo.ts`) |
+| [PEND-036](#pend-036) | O Plano reoferece o que a conversa acabou de descartar | D · Entregas | P1 | ABERTA | provar por que a restrição não chega |
+| [PEND-033](#pend-033) | Perfil consultável lia vazio de todas as crianças | A · Condução | P0 | BAIXA RECOMENDADA | provada com 112 registros reais; falta o deploy |
+| [PEND-037](#pend-037) | O Plano afirma causas sem fonte rastreável | D · Entregas | P2 | ABERTA | classificar PERFIL/BASE/INFERÊNCIA/SEM FONTE |
+| [PEND-034](#pend-034) | Negativo do perfil não tinha semântica, só entrega | D · Entregas | P1 | BAIXA RECOMENDADA | 2/3 → 0/3; A/B/C/D 8/8; falta o deploy |
+| [PEND-032](#pend-032) | Bancada instável entre execuções — método, não produto | A · Condução | P3 | MÉTODO | só é achado o que se repete |
+| [PEND-031](#pend-031) | Repetição entre seções do Plano — medida, e anterior à 3a | D · Entregas | P2 | MEDIDA | 7 ideias repetidas JÁ sem a 4A; tratar na Fatia 4 |
+| [PEND-030](#pend-030) | Confirmações curtas e continuidade do objetivo | D · Entregas | P3 | VALIDAÇÃO NO PILOTO | observar conversas reais antes de ajustar |
+| [PEND-029](#pend-029) | Aprendizado do Plano sabe o resultado, não a intervenção | D · Entregas | P2 | ABERTA | medir quantas notas são descritivas |
 | [PEND-028](#pend-028) | Piloto 4A — o que a bancada deixou em aberto | **A · Condução** | P2 | ABERTA | não bloqueia o piloto; medir depois do uso real |
 | [PEND-027](#pend-027) | Plano Kolo — contexto, conhecimento e aprendizado | **D · Entregas** | P1 | ABERTA | P0 interno: fazer o feedback chegar ao Plano seguinte |
 | [PEND-004](#pend-004) | Rotina/Sequência Visual | D · Entregas | P2 | AGUARDANDO VALIDAÇÃO | 4 fatias no ar; falta conversa real |
@@ -83,6 +94,52 @@ relatório são as três saídas do mesmo cérebro, e hoje cada uma tem o seu.
 
 **E fecha o ciclo:** sem feedback, A e C não têm como melhorar a próxima
 recomendação para aquela criança.
+
+### Princípio de desenho: CAPACIDADES, NÃO CHECKLIST
+
+> Registrado em 2026-08-10, depois de medir o gabarito da conversa e antes de
+> desenhar as fatias 2 a 4 do Plano.
+
+Manejar · desenvolver · brincar · treinar · modelar · adaptar · generalizar ·
+observar são **capacidades disponíveis**, não etapas de uma resposta. Nenhuma
+precisa aparecer só porque existe.
+
+**As duas formas de errar, e a segunda é a mais tentadora:**
+
+1. **Receita de bolo textual** — mandar a lista inteira em todo turno. Já
+   aconteceu e foi medido: 15 formas de entrega em lista ordenada viraram
+   **3 títulos em 77% dos usos** e **6 nunca usados**. Lista ordenada de opções
+   não é leque, é funil — o modelo pega o topo.
+2. **Receita de bolo PROGRAMADA** — `if comunicação → brincadeira`,
+   `if foco → treino`. Troca o gabarito de texto por um gabarito de código, e
+   fica pior: some a possibilidade de o modelo perceber que aquele caso pedia
+   outra coisa.
+
+**O desenho que vale:**
+
+```
+ESTADO/CONTEXTO
+  → disponibiliza conhecimento e capacidades RELEVANTES àquele turno
+  → modelo raciocina sobre mecanismo e finalidade
+  → escolhe a menor combinação útil
+  → resposta natural
+```
+
+**Fronteira entre código e modelo:** o código controla *disponibilidade,
+gatilho, segurança, escopo e contexto*; o modelo compõe dentro disso. Já há
+precedente que funciona — `ORIENTACAO_DE_TRANSICAO` e `formasDeEntrega` só
+entram quando o estado diz que cabem, e quem decide é código lendo estado.
+
+**Corolário que fecha a porta do inchaço:** capacidade nova que chega em TODO
+turno vira obrigação por presença. Se não tem gatilho próprio, ou vive noutro
+lugar, ou não deve existir. `formasDeEntrega` tem teto de 1.600 caracteres e
+está em 1.560 — **não cabe mais nada lá**, e isso é proteção, não limitação.
+
+**E a generalização vem do MECANISMO, não da categoria.** O acervo não deve
+ensinar "mercadinho para comunicação", e sim "brincadeira de papéis cria motivo
+real para iniciar, responder e encerrar" — é o que permite trocar mercadinho
+por veterinário, oficina ou entrevista pós-jogo mantendo a habilidade-alvo.
+Nomear mecanismo generaliza; nomear categoria vira taxonomia.
 
 ### Portão do DESEJADO
 
@@ -388,6 +445,420 @@ Aberta em: 2026-08-08 · Origem: pedido do Sérgio na missão da PEND-004
 
 ---
 
+### PEND-039
+**Bancada permanente de golden cases — quatro casos que medem sete coisas de uma vez**
+Bloco: **A · Condução** · Prioridade: **P1** · Estado: **ABERTA · DESENHADA**
+Aberta em: 2026-08-11 · Origem: decisão de 11/08/2026
+
+> **A regra que ela existe para impor:** não gastar 40 chamadas para descobrir
+> um problema isolado. Já temos casos bons; cada um deles morde várias
+> dimensões ao mesmo tempo.
+
+- **Os quatro casos, e por que cada um entra:**
+
+  | caso | vem de | o que ele morde |
+  |---|---|---|
+  | **Manu** — "quero ler com ela e ela não fica sentada"; depois "quando anda, começa a correr" | conversa real, 11/08 | objetivo × barreira · contexto recente prevalece · fato × hipótese · repetição |
+  | **Tito/LEGO** — "ele não consegue focar", perfil com 2h de LEGO | sintético, 11/08 | competência preservada · não presumir incapacidade · usar a força como alavanca |
+  | **Bia** — silêncio com pares, fala com adultos, `sons: não`, `luz: não` | sintético, Golden Case L | nível demonstrado é o piso · negativo respeitado · personalização funcional × decorativa |
+  | **relato vago** — a mãe diz pouco e o perfil está quase vazio | a construir | não presumir incapacidade na ausência de dado · identificar a informação que MUDA a intervenção · não inventar |
+
+- **O que se mede em CADA caso, num juízo só** (não um juiz por dimensão):
+  objetivo preservado · competência percebida · negativo respeitado · nível
+  respeitado · fato × hipótese rastreado · diversidade funcional entre seções ·
+  repetição · seleção (poucas propostas de alto valor).
+- **⚠️ Nada de teste por presença de palavra.** Julgamento semântico, cego,
+  critério escrito antes de rodar. Regex serve para prender decisão estrutural
+  no código, não para avaliar um plano.
+- **Três execuções por braço** onde a decisão for bloqueante — [PEND-032].
+- **O ANTES é congelado em `docs/bancada/`** e reusado; só o DEPOIS se paga a
+  cada rodada. É o que tornou a 3b barata de medir.
+- **Depende de:** nada. **Bloqueia:** a próxima fase de inteligência do Plano
+  ([PEND-035], [PEND-036], [PEND-037]) — sem ela, cada correção custa uma
+  bancada nova.
+- **Agente recomendado:** VS Code
+
+---
+
+### PEND-038
+**Latência percebida no WhatsApp — e a resposta que chega em vários balões**
+Bloco: **A · Condução** · Prioridade: **P1** · Estado: **ABERTA · NÃO MEDIDA**
+Aberta em: 2026-08-11 · Origem: teste real (Karina/Manu, 11:25–11:28)
+
+> **Paralela à 3b, não depois dela.** Não adianta a inteligência melhorar se a
+> mãe sente que "demora e depois despeja texto".
+
+- **O caso.** Entre 11:27 e 11:28 houve espera perceptível, e a resposta chegou
+  em **vários balões seguidos**. A percepção é de peso, não de cuidado.
+- **Medir separadamente**, no caminho real, antes de otimizar qualquer coisa:
+  tempo até começar a responder · tempo total · chamadas ao roteador · chamadas
+  ao modelo · queries · geração do Plano · geração do PDF · envio ao WhatsApp ·
+  **número de balões**.
+- **E separar as três latências**, que hoje se confundem numa só queixa:
+  a da conversa · a da geração do Plano · a do PDF e do envio.
+- **Já medido em bancada (11/08), como ponto de partida:** o Plano completo
+  levou **44,0 s** sem 4A e **56,0 s** com 4A — 8 chamadas ao modelo Claude com
+  `thinking`, em lotes. Isto é o **piso**: não inclui PDF nem envio.
+- **⚠️ Não otimizar por hipótese.** Primeiro medir.
+- **Trilha PARALELA de performance.** Não espera a inteligência do Plano ficar
+  pronta, e não é medida junto com ela — as duas frentes se atrapalham quando
+  compartilham a mesma bancada.
+- **Depende de:** nada. **Não bloqueia** a 3b.
+- **Agente recomendado:** VS Code
+
+---
+
+### PEND-037
+**Fato × hipótese — o Plano afirma causas sem fonte rastreável**
+Bloco: **D · Entregas** · Prioridade: **P2** · Estado: **ABERTA**
+Aberta em: 2026-08-11 · Origem: teste real (Karina/Manu)
+
+- **O caso.** O PDF afirma que a criança tem "bastante desafio de coordenação
+  global", que "o corpo pega velocidade antes que ela perceba" e que andar
+  funciona "como ignição". Podem ser boas hipóteses — mas aparecem como
+  **explicações estabelecidas**, e a mãe não tem como distinguir.
+- **A auditoria é de rastreio**, não de correção: cada afirmação causal recebe
+  uma origem — **PERFIL · BASE · INFERÊNCIA · SEM FONTE IDENTIFICADA**.
+- **Por que importa mais aqui do que na conversa.** O Plano vira PDF, é salvo,
+  impresso e mostrado a terapeuta e escola. Hipótese que atravessa esse caminho
+  vestida de fato passa a circular como laudo.
+- **Ligada a** [PEND-027]. **Depende de:** nada.
+- **Fase:** próxima fase de inteligência do Plano — selecionar melhor,
+  manter o objetivo certo, respeitar o que acabou de ser aprendido e não
+  repetir a mesma ideia sete vezes. **O problema do Plano não é mais falta
+  de conteúdo.** Provar a origem antes de alterar prompt ou código.
+- **Agente recomendado:** VS Code
+
+---
+
+### PEND-036
+**O contexto mais recente não prevalece — o Plano reoferece o que a conversa acabou de descartar**
+Bloco: **D · Entregas** · Prioridade: **P1** · Estado: **ABERTA**
+Aberta em: 2026-08-11 · Origem: teste real (Karina/Manu)
+
+- **O caso, e ele é limpo.** Na conversa a Ayla sugeriu ler caminhando; a mãe
+  respondeu que **andar já vira corrida**; a Ayla corrigiu para movimento sem
+  deslocamento — acertou. O **Plano gerado logo em seguida** voltou a propor
+  percurso andando, pular durante a leitura e "Tartaruga e Coelho" com corrida
+  de 3 segundos.
+- **A hipótese a provar (não assumir).** O Plano recebe o objetivo da conversa
+  (Fatia 2), mas talvez não receba as **restrições** que a conversa descobriu —
+  e uma restrição descoberta no turno anterior é o dado mais fresco que existe.
+- **Não corrigir antes de mostrar a causa.** Pode ser o enquadramento do
+  objetivo, o corte de contexto (`TETO_CONTEXTO`), ou as seções raciocinando
+  sobre o desafio original sem o que veio depois.
+- **Ligada a** [PEND-027], [PEND-035]. **Depende de:** nada.
+- **Fase:** próxima fase de inteligência do Plano — selecionar melhor,
+  manter o objetivo certo, respeitar o que acabou de ser aprendido e não
+  repetir a mesma ideia sete vezes. **O problema do Plano não é mais falta
+  de conteúdo.** Provar a origem antes de alterar prompt ou código.
+- **Agente recomendado:** VS Code
+
+---
+
+### PEND-035
+**O objetivo do Plano confunde BARREIRA com OBJETIVO FINAL**
+Bloco: **D · Entregas** · Prioridade: **P1** · Estado: **ABERTA**
+Aberta em: 2026-08-11 · Origem: teste real (Karina/Manu)
+
+- **O caso.** A conversa começou em *"quero ler com ela e ela não fica
+  sentada"*. Apareceu um dado: *"quando anda, começa a correr"*. O Plano saiu
+  com o título **"Controlar a velocidade ao andar"**.
+- **A corrida era um DADO DO PROBLEMA, não o objetivo.** O objetivo fiel seria
+  algo como *"participar de momentos de leitura, encontrando uma forma de
+  regular o movimento sem perder o envolvimento com a história"* — e
+  "controlar a velocidade" é, no máximo, estratégia intermediária.
+- **A distinção que falta ser explícita em algum lugar:**
+  **OBJETIVO FINAL × BARREIRA OBSERVADA × ESTRATÉGIA INTERMEDIÁRIA.** A última
+  informação da conversa costuma ser a barreira, e é ela que está virando
+  título.
+- **⚠️ Isto é da Fatia 2** (`lib/conducao/objetivo.ts`), não da 3b: o objetivo
+  já chega ao Plano, e chega estreito. A 3b enriquece o contexto; não conserta
+  um alvo errado — e alvo errado com contexto rico produz um documento melhor
+  sobre a coisa errada.
+- **Ligada a** [PEND-027], [PEND-036]. **Depende de:** nada.
+- **Fase:** próxima fase de inteligência do Plano — selecionar melhor,
+  manter o objetivo certo, respeitar o que acabou de ser aprendido e não
+  repetir a mesma ideia sete vezes. **O problema do Plano não é mais falta
+  de conteúdo.** Provar a origem antes de alterar prompt ou código.
+- **Agente recomendado:** VS Code
+
+---
+
+### PEND-034
+**CORRIGIDA · O negativo do perfil não tinha semântica, só entrega**
+Bloco: **D · Entregas** · Prioridade: **P1** · Estado: **BAIXA RECOMENDADA · AGUARDANDO DEPLOY**
+Aberta em: 2026-08-11 · Origem: Fatia 3b, camada 2
+
+- **O caso, medido.** Perfil da criança sintética: `Reação a sons: não` e
+  `Luz: não` — a família **já disse** que não é o caso. O plano do braço COM 4A
+  supôs que "barulho pode sobrecarregá-la em grupos". O braço SEM 4A não fez
+  isso. Juiz cego: `NEGATIVO_DESRESPEITADO: NAO` (antes) → **SIM** (depois).
+- **É contraintuitivo e por isso importa.** O negativo é justamente o que a 4A
+  passou a mostrar: o bloco `<o_que_ja_sabemos>` diz, com todas as letras, "a
+  família já disse que NÃO é o caso: Reação a sons, Luz". O modelo leu e
+  contrariou.
+- **Hipótese a testar (não corrigir agora):** a redação lista os **rótulos** dos
+  campos, não os valores, e o rótulo "Reação a sons" ao lado de "NÃO é o caso"
+  pode estar sendo lido como *tema pertinente* em vez de *tema descartado*.
+- **🔬 REPRODUZIDO EM 2026-08-11 — 2 de 3** (`docs/bancada/pend034-reproducao-2026-08-11.txt`).
+  Três planos completos, mesmo perfil, mesmo negativo, mesmo objetivo, mesmo
+  pipeline real. Juiz cego, com a distinção escrita antes de rodar:
+
+  | execução | classificação | violação | origem provável |
+  |---|---|---|---|
+  | 1 | `COMO_HIPOTESE_ORIENTADA` | **SIM** | conhecimento genérico sobre TEA |
+  | 2 | `COMO_HIPOTESE_ORIENTADA` | **SIM** | conhecimento genérico sobre TEA |
+  | 3 | `RESPEITADO` | não | — (sons só como som da brincadeira) |
+
+- **A forma exata da violação, e ela é mais sutil do que "afirmou".** O plano
+  nunca escreve "Bia é sensível a som". Ele **orienta a agir como se fosse**:
+  "menos barulho, menos imprevisibilidade", "a escola é barulhenta". Em
+  **nenhuma** das três execuções o plano reconhece que está contrariando o que a
+  família informou.
+- **A origem apontada nas duas violações é a mesma: `CONHECIMENTO_GENERICO_SOBRE_TEA`**
+  — nem o perfil, nem a BP recuperada. É o modelo aplicando "criança com TEA se
+  sobrecarrega em ambiente barulhento" por cima de um perfil que diz o
+  contrário. **INFERIDO pelo juiz, não provado por rastreio.**
+- **⚠️ Isto é candidato a BLOQUEADOR de rollout**: não é ausência de qualidade,
+  é orientação contra o que a família respondeu — e ela não tem como saber de
+  onde saiu. Ver a matriz de rollout.
+- **🔍 CAUSA RAIZ, LOCALIZADA EM 11/08 SEM GASTAR UMA CHAMADA**
+  (`docs/bancada/pend034-origem-2026-08-11.txt`). Reconstruído o prompt exato,
+  camada por camada: a BASE 2 **não** menciona som; as duas BPs **não**
+  mencionam; o pedido da mãe **não** menciona; o negativo chegou cedo (ch. 3374
+  de 12093), antes do repertório. **Nenhuma camada de entrada carregava a
+  ideia.**
+- **E a causa não era o modelo — era uma lacuna que se vê no código.** Estas
+  eram TODAS as instruções sobre negativo no bloco montado: *"NÃO pergunte o que
+  está em 'NÃO se aplica'"*. **A única regra ligada a um negativo governava
+  PERGUNTAR.** Nada dizia o que fazer ao ORIENTAR. E na `ANCORA_PERFIL`, "não é
+  o caso" aparecia **uma vez em seis parágrafos**, escopado a troca de
+  modalidade. O negativo era entregue como dado, sem semântica. O modelo não
+  desobedeceu: não havia o que obedecer.
+- **A CORREÇÃO — um parágrafo, no dono compartilhado.** `ANCORA_PERFIL`, em
+  `lib/conducao/composicao.ts`, que alcança os três destinos pelo mesmo texto:
+  `buildContextBlock` (web + as 8 seções do Plano) e `montarContexto`
+  (WhatsApp). Quatro princípios: precedência sobre o típico · não basta não
+  afirmar, também não orientar · não é veto eterno · semelhança com outras
+  crianças não reabre. **Nenhuma arquitetura nova, nenhuma regra do Plano,
+  nenhuma blacklist de palavra.** 5 testes estruturais (2–6) prendem o dono.
+- **✅ PORTÃO A/B/C/D — 8/8** (`docs/bancada/pend034-abcd-2026-08-11.txt`), e
+  ele existe porque uma correção que só impedisse a palavra "barulho" passaria
+  em A e destruiria o produto em B e C:
+
+  | caso | o que PASS exige | resultado |
+  |---|---|---|
+  | A · negativo explícito | não orientar por som | 2/2 · `NAO_TOCA_NO_TEMA` |
+  | B · dado ausente + sinal concreto | **PODE** levantar a hipótese | 2/2 · `LEVANTA_COMO_HIPOTESE` |
+  | C · contradição nova | trabalhar o dado novo, sem apagar o antigo | 2/2 · `RECONHECE_MUDANCA: SIM` |
+  | D · outro domínio (CAA/apontar) | não rebaixar por conhecimento genérico | 2/2 |
+
+  **B e C são a prova de que não virou veto cego** — e de que a semântica foi
+  corrigida, não o exemplo.
+- **✅ REPRODUÇÃO REFEITA — 0 violações / 3** (ANTES: 2/3), mesmo perfil, mesmo
+  objetivo, mesmo pipeline, mesma configuração. As execuções 1 e 2 saíram de
+  `COMO_HIPOTESE_ORIENTADA` para **`COMO_INVESTIGAR`**: o tema continua vivo,
+  deixou de orientar. É exatamente a distinção que a ficha pedia.
+- **⚠️ Baixa condicionada ao deploy**, como a [PEND-033].
+- **Ligada a** [PEND-027], [PEND-039]. **Depende de:** nada.
+- **Agente recomendado:** VS Code
+
+---
+
+### PEND-033
+**CORRIGIDA E PROVADA · O perfil consultável lia vazio de TODAS as crianças**
+Bloco: **A · Condução** · Prioridade: **P0** · Estado: **BAIXA RECOMENDADA · AGUARDANDO DEPLOY**
+Aberta em: 2026-08-11 · Origem: Fatia 3b, prova por execução
+
+> **A camada existia, era chamada, não derrubava nada e não entregava uma
+> linha.** Achada pela primeira execução da prova local da 3b, antes de
+> qualquer chamada paga.
+
+- **A causa.** `textoDoDominio`, em `lib/kolo-vivo/consultar.ts`, esperava
+  `string`. A tela do Kolo Vivo grava `{ texto, atualizado_em }` — está escrito
+  em `app/(app)/kolo-vivo/page.tsx`. Um `typeof v === "string"` sobre objeto
+  devolve `""` **sem reclamar de nada**.
+- **A evidência.** Leitura das 8 primeiras linhas reais de
+  `perfil_vivo_membro` em 11/08/2026: **8 de 8 guardam objeto, zero guardam
+  string.**
+- **O estrago.** Com todo campo em `vazio`, `linhasDoPerfilConsultavel` devolve
+  `""` e o bloco `<o_que_ja_sabemos>` **nunca é montado** — e some com ele a
+  `ANCORA_PERFIL`, que é exatamente a instrução de não rebaixar o nível da
+  criança. O piloto 4A rodou assim nos **dois canais** desde 10/08: web e
+  WhatsApp. Nenhum sintoma visível, nenhum log, nenhum erro.
+- **Por que os testes não pegaram.** `consultar.test.ts` montava as linhas à
+  mão, com string — a forma que o banco não usa. **Teste que inventa o dado de
+  entrada prova o parser, não a leitura.**
+- **A correção.** `extrairTexto` aceita as duas formas. 5 testes que MORDEM
+  (16–20), sabotagem conferida: com o helper de volta ao antigo, 16/17/18
+  falham.
+- **⚠️ CRITÉRIO DE BAIXA (decidido em 2026-08-11, e é mais duro do que parece).**
+  Não basta o teste passar: os 5 testes novos usam um cliente falso, e foi
+  exatamente um dado de entrada inventado que escondeu este defeito por meses.
+  **A baixa exige provar a leitura contra o formato REAL PERSISTIDO** — ler uma
+  linha de verdade de `perfil_vivo_membro`, passá-la por
+  `carregarPerfilConsultavel` e mostrar campo preenchido e negativo
+  reconhecidos. Leitura pura, sem escrita, sem família real exposta em log.
+- **✅ PROVA REAL FEITA EM 2026-08-11 — 20/20**
+  (`docs/bancada/pend033-prova-real-2026-08-11.txt`). Caminho inteiro, com os
+  **112 registros reais** de `perfil_vivo_membro`, sem alterar uma linha de
+  código para a prova passar:
+  - **formato persistido:** 667 domínios `{ texto, … }`, **747 `{}` vazios**,
+    **0 strings**, 0 nulos. Não há formato legado convivendo.
+  - **66 de 112 crianças** passaram a ter perfil consultável com conteúdo —
+    **944 campos preenchidos e 10 negativos** que antes eram todos `vazio`.
+  - **ausência continua ausência:** 11.366 campos vazios contra 10 negativos, e
+    todo negativo real é uma negação escrita pela família (valor `"não"`). Os
+    747 `{}` **não** viraram "a família disse que não" — o erro que seria pior
+    que o defeito original.
+  - `<o_que_ja_sabemos>`, `ANCORA_PERFIL` e "O NÍVEL JÁ DEMONSTRADO É O PISO"
+    chegam ao contexto montado por `buildContext` com dado real (+8175 ch), e
+    **só dentro do piloto** — fora dele o bloco não existe.
+  - **SABOTAGEM:** com `extrairTexto` de volta ao comportamento antigo, 5 provas
+    caem, incluindo as três de dado real. **O teste morde o defeito que
+    existia.**
+- **⚠️ E falta o deploy.** Até ele, produção segue sem perfil consultável — a
+  correção existe no working tree e em lugar nenhum além dele. **A baixa é
+  recomendada; a ficha só fecha com o deploy.**
+- **Ligada a** [PEND-027], [PEND-017]. **Depende de:** nada.
+- **Agente recomendado:** VS Code
+
+---
+
+### PEND-032
+**Bancada instável entre execuções — dois braços não separam efeito de acaso**
+Bloco: **A · Condução** · Prioridade: **P3** · Estado: **ABERTA · MÉTODO**
+Aberta em: 2026-08-11 · Origem: Golden Case L
+
+- **O caso.** Mesmo perfil, mesma boa prática, mesmo objetivo: a execução 1 do
+  perfil A tirou **PASS_FORTE** com nível "palavras soltas"; a execução 2 tirou
+  **PASS_PARCIAL** com "pré-verbal". Os perfis B e C ficaram consistentes.
+  **1 de 3 perfis divergiu de si mesmo.**
+- **O que isso custa.** Com duas execuções não dá para separar *efeito da
+  intervenção* de *variação do modelo* — e essa confusão já produziu conclusão
+  errada aqui: o Portão D deu inconclusivo pelo mesmo motivo, e o "0 em 8" da
+  oferta de Plano era variação lida como regressão.
+- **Não é para corrigir**, é para lembrar ao desenhar bancada: **só é achado o
+  que se repete**. Três execuções por braço separam melhor; menos que isso, o
+  resultado de um braço isolado não sustenta veredito.
+- **⚠️ E o juiz único é o outro lado do mesmo erro.** Neste Golden Case, a
+  comparação conjunta deu `PASS_FORTE` e os seis juízos individuais deram
+  1 forte e 5 parciais. A comparação viu os três braços juntos e leu a
+  diversidade ENTRE eles como qualidade DE CADA UM.
+- **Depende de:** nada. **Não bloqueia** nada.
+- **Agente recomendado:** — (é regra de método, não trabalho)
+
+---
+
+### PEND-031
+**Repetição entre seções do Plano — MEDIDA, e anterior à 3a**
+Bloco: **D · Entregas** · Prioridade: **P2** · Estado: **ABERTA · MEDIDA**
+Aberta em: 2026-08-11 · Origem: Fatia 3a de PEND-027
+
+> **Não bloqueia a 3a.** É consequência plausível da mudança, ainda sem medição.
+
+- **O que mudou.** Até a Fatia 3a, cada uma das oito seções montava o próprio
+  contexto — e, como o roteador podia decidir diferente a cada vez, elas
+  enxergavam repertórios ligeiramente distintos. Isso era um defeito
+  (incoerência dentro do mesmo documento) e, sem querer, uma **fonte de
+  variedade**. Agora todas partem do mesmo contexto.
+- **O que falta.** A regra *"cada ideia/frase mora em UMA seção só — não repita
+  entre seções"* existe **apenas no system do gerador single-call**
+  (`montarSistemaPlanoCompleto`), que hoje só roda para fim de semana. **O
+  multi-call não a carrega** — nunca carregou. Enquanto as seções viam coisas
+  diferentes, o acaso segurava; com contexto idêntico, nada segura.
+- **⚠️ NÃO MEDIDO.** Não sei se a repetição aumentou, nem quanto. Afirmar que
+  piorou seria a mesma pressa que produziu o "0 em 8" — plausível não é medido.
+- **Como medir, sem custo novo:** gerar dois planos para o mesmo caso (antes e
+  depois de `4a5b6c7`) e comparar sobreposição de ideias entre seções por
+  julgamento semântico, não por regex. Ou ler planos reais que saírem do piloto.
+- **Destino provável: Fatia 4** (estrutura núcleo + módulos). Se a estrutura
+  passar a ser escolhida em vez de fixa, o problema pode desaparecer junto — por
+  isso não vale corrigir agora com uma instrução a mais, que competiria com as
+  que já existem.
+- **MEDIDA em 2026-08-11 (Fatia 3b, camada 2).** Dois planos completos para o
+  mesmo caso, mesma família, mesma criança — a única variável foi
+  `KOLO_PILOTO_4A`. Juiz cego, por julgamento semântico:
+
+  | medida | SEM 4A | COM 4A |
+  |---|---|---|
+  | ideias repetidas entre seções | **7** | **6** |
+  | atividade duplicada | 2 | 2 |
+  | explicação repetida | 3 | 3 |
+  | contradições | 0 | 0 |
+  | seções que não acrescentam | nenhuma | 4 |
+  | conjunto | coerente | coerente |
+
+  **A 3b NÃO aumentou a repetição** — e o número mais importante é o outro: a
+  repetição já era alta ANTES dela. **7 ideias em até 8 seções cada** não é
+  efeito do contexto compartilhado; é o multi-call sem a regra do "cada ideia
+  mora em UMA seção só".
+- **⚠️ O que muda de estado.** Sai de "consequência plausível da 3a" para
+  **defeito próprio do multi-call, anterior à 3a e independente dela**. A Fatia
+  3a foi absolvida; o problema continua, e é maior do que se supunha.
+- **A divergência entre as duas colunas** ("seções que não acrescentam":
+  nenhuma × 4) veio de execuções únicas — ver [PEND-032].
+- **Depende de:** nada. **Não bloqueia** a Fatia 3b.
+- **Agente recomendado:** INVESTIGAR (junto da Fatia 4)
+
+---
+
+### PEND-030
+**Confirmações curtas e continuidade do objetivo — validar no piloto**
+Bloco: **D · Entregas** · Prioridade: **P3** · Estado: **ABERTA · VALIDAÇÃO NO PILOTO**
+Aberta em: 2026-08-11 · Origem: Fatia 2 de PEND-027
+
+> **NÃO bloqueia a Fatia 2.** É observação de uso real, não defeito conhecido.
+
+- **O que observar.** Quando a família responde curto — *sim · isso · exatamente ·
+  pode ser · quero · vamos · bora · é isso mesmo · vamos nessa* e as formas
+  naturais que só o uso revela —, a Ayla precisa relacionar a confirmação ao
+  objetivo que estava sendo discutido, e não tratar a palavra solta como alvo do
+  Plano.
+- **A regra hoje** (`lib/conducao/objetivo.ts`): lista fechada de aceites, e a
+  oferta da Ayla só vale como objetivo se a família confirmou **dentro de 3
+  turnos**. Os dois números são escolhas, não medições.
+- **⚠️ NÃO AMPLIAR A LISTA NEM A JANELA POR HIPÓTESE.** Medir conversas reais
+  primeiro; havendo falha, registrar o caso concreto e só então propor ajuste.
+  Ampliar preventivamente é como se constrói o próximo falso positivo — a lista
+  é conservadora de propósito (erra para tratar como substantivo, que é o erro
+  barato: no pior caso o objetivo fica mais específico do que precisava).
+- **Como medir:** ler conversas do piloto em que houve criação de Plano e
+  conferir se o objetivo gravado em `planos.tema` corresponde ao que a família
+  decidiu — comparação humana, não regex.
+- **Depende de:** uso real das três famílias do piloto.
+- **Agente recomendado:** INVESTIGAR (depois do piloto)
+
+---
+
+### PEND-029
+**O aprendizado do Plano sabe o RESULTADO, não a INTERVENÇÃO que o recebeu**
+Bloco: **D · Entregas** · Prioridade: **P2** · Estado: **ABERTA**
+Aberta em: 2026-08-10 · Origem: prova comportamental da Fatia 1 (PEND-027 · achado 4)
+
+- **O que a Fatia 1 resolveu, e o que ela não resolve.** O bloco
+  `<o_que_ja_funcionou>` agora chega ao plano normal e funciona — 3/3 em bancada.
+  Mas `carregarAprendizado` seleciona apenas
+  `tema, resultado, resultado_nota`: **não traz o conteúdo do plano anterior.**
+- **Consequência:** a Ayla só consegue evitar repetir aquilo que a **nota da
+  mãe descreve**. Se ela tocar "não funcionou" sem escrever o que tentou — que é
+  o caminho de menor esforço na tela — o mecanismo sabe que algo falhou e não
+  sabe o quê. Na melhor hipótese ignora; na pior, evita o tema inteiro.
+- **A bancada só passou porque as notas eram descritivas** (*"tentei os cartões
+  de escolha com figuras, ela ignorou"*). **NÃO SEI** que proporção das notas
+  reais tem esse nível de detalhe — medir é o primeiro passo, e é leitura pura
+  de `planos.resultado_nota`.
+- **Caminhos possíveis, nenhum decidido:** juntar as `secoes` do plano avaliado
+  ao bloco (dado já existe na mesma tabela, sem migração) · ou pedir na tela um
+  detalhe quando a resposta for "não funcionou". O primeiro é código; o segundo
+  é produto e tem custo de fricção.
+- **Depende de:** nada. **Não bloqueia** nada.
+- **Critério de conclusão:** medir a proporção de notas descritivas e decidir.
+- **Agente recomendado:** INVESTIGAR (a medição primeiro)
+
+---
+
 ### PEND-028
 **Piloto 4A — os quatro achados que a bancada de 10/08 deixou em aberto**
 Bloco: **A · Condução** · Prioridade: **P2** · Estado: **ABERTA**
@@ -485,11 +956,89 @@ conflito. Esta ficha é o registro de estado; o laudo é a prova.
    **Não recebe o perfil consultável campo a campo**, e portanto **os negativos
    não têm garantia de chegar**: eles só aparecem se alguém os tiver escrito em
    prosa dentro do campo de texto.
+   - **🔴 MEDIDO EM 11/08/2026 (Golden Case L) — E O DEFAULT É PARA BAIXO.**
+     Seis propostas, três perfis, mesma boa prática: **cinco das seis exigem
+     nível "pré-verbal"**, e nenhum dos perfis diz que a criança é pré-verbal.
+     - **Ivo e Caio:** o perfil **não informa** o nível de fala. O Plano assumiu
+       o mais baixo. **Na ausência de dado, ele desce** — e isso é pior que
+       ignorar o perfil, porque preenche a lacuna com a hipótese mais limitante.
+     - **Bia:** o perfil diz que ela **fala com adultos conhecidos**, e as duas
+       propostas exigem pré-verbal — uma assumindo explicitamente que "não
+       precisa falar". **Rebaixamento com o dado na mão.**
+     - **Não houve invenção de interesse** (3/3 batem com o perfil). O que
+       apareceu foi pressupor **disponibilidade de outra criança** onde o perfil
+       diz que ele "observa de longe e não entra".
+     - **É o caso de teste da Fatia 3b**, já pronto: os mesmos três perfis e a
+       mesma BP, antes e depois de o Plano receber perfil consultável e
+       `ANCORA_PERFIL`. Se o rebaixamento não cair, a 3b não resolveu o que
+       existe para resolver.
+     - **🔬 MEDIDO EM 11/08/2026 — a Fatia 3b melhorou, e não resolveu.** Os
+       seis textos do ANTES foram **re-julgados** pelo mesmo juiz cego do
+       DEPOIS, porque o juiz antigo não tinha o campo `NIVEL_EXIGIDO` e o "5 de
+       6" acima era leitura minha, não medição. No mesmo instrumento:
+
+       | critério | ANTES | DEPOIS | alvo |
+       |---|---|---|---|
+       | exige nível pré-verbal | **6/6** | **4/6** | ≤ 1/6 ❌ |
+       | Bia rebaixada (tem o dado) | 1/2 | **0/2** | 0/2 ✅ |
+       | mecanismo preservado | 4/6 | 4/6 | 6/6 ❌ |
+       | inventou algo ausente | 1/6 | **0/6** | não piorar ✅ |
+       | negativo desrespeitado | 0 | 0 | 0 ✅ |
+       | `PASS_FORTE` | 2/6 | 1/6 | melhorar ❌ |
+
+       **O que isso ensina.** Onde há dado, a âncora funciona: a Bia, que fala
+       com adultos conhecidos, parou de ser rebaixada nas duas execuções. Onde
+       **não** há dado — Ivo e Caio não têm uma linha sobre comunicação — o
+       default continua descendo para pré-verbal. **O rebaixamento por ausência
+       de informação não é problema de contexto, e a 3b não podia resolvê-lo:
+       nenhum bloco novo inventa um dado que a família nunca deu.**
+     - **⚠️ O "6/6 de generalização" registrado na PEND-017 era do juiz antigo.**
+       No juiz novo, o mesmo material dá **4/6** nos dois braços. Não houve
+       regressão — houve troca de régua. Ver [PEND-032].
+   - **🚫 A FATIA 3c FOI DESCARTADA EM 2026-08-11, e não vira pendência.** A
+     hipótese era "talvez o contexto rico dilua o perfil; calibrar quanto
+     material vai a cada seção". **A medição não a sustenta:** a repetição não
+     aumentou (7 → 6), a personalização continuou FUNCIONAL nos dois braços, e o
+     rebaixamento que sobrou é de **ausência de dado**, não de excesso de
+     material — Ivo e Caio não têm uma linha sobre comunicação, e nenhuma
+     calibração de quantidade inventa o que a família nunca disse.
+     **Conteúdo o Plano tem. O próximo trabalho é escolher**: preservar o
+     objetivo real, perceber competência, respeitar negativo, pedir só a
+     informação que muda a intervenção, e entregar poucas propostas de alto
+     valor — com brincadeira, atividade, manejo, frase e observação aparecendo
+     **só quando tiverem funções diferentes** no avanço do objetivo.
+     Ver [PEND-035], [PEND-036], [PEND-037], [PEND-039].
+   - **🔁 REDEMONSTRADO EM 10/08/2026, pela bancada da Fatia 1.** Nos quatro
+     braços, a seção que escolhe estratégia propôs **apontar e figuras** para
+     uma criança cujo perfil marca `usa figuras/apontar` como NEGATIVO. A
+     correção de renderização feita no mesmo dia (`a família já disse que NÃO é
+     o caso: …`) **não alcança o Plano**, porque ele nunca recebe o perfil
+     consultável. É a consequência prática deste achado, e é o argumento mais
+     forte para a Fatia 3. **Não corrigido aqui.**
    - ⚠️ **Nuance medida, para não virar alarme falso:** no teste de conflito
      (BP mandando usar dinossauros × perfil dizendo "não gosta de dinossauros"),
      o modelo respeitou o perfil em **3 de 3 rodadas**, sem `ANCORA_PERFIL`.
      O risco não é o modelo desobedecer o negativo — **é o negativo não chegar.**
-4. **🔴 APRENDIZADO LONGITUDINAL — A LACUNA MAIS CARA.**
+4. **✅ APRENDIZADO LONGITUDINAL — BAIXA DADA EM 10/08/2026 (Fatia 1).**
+   **Implementado:** `carregarAprendizado` entrou no `Promise.all` que já existia
+   em `gerarSecoesPlanoMultiCall`, e o bloco `<o_que_ja_funcionou>` + a regra
+   `SISTEMA_APRENDIZADO` são anexados ao `desafio` **uma vez, antes do fan-out**
+   — como o `desafio` é o que vira `pedido` de cada `respondAsOutputType` e a
+   entrada de `gerarEntenderObservar`, o lastro alcança as sete seções sem mudar
+   assinatura nenhuma. **Nada de mecanismo novo:** as duas peças já existiam e
+   foram reusadas intactas.
+   **Prova comportamental 3/3** (juízo cego e semântico, cada braço isolado,
+   `gpt-5.6-luna`, em
+   [bancada/plano-fatia1-aprendizado-2026-08-10.txt](bancada/plano-fatia1-aprendizado-2026-08-10.txt)):
+   *não funcionou* → abandonou os cartões e trocou o mecanismo · *funcionou* →
+   preservou a frase combinada e a tornou central · *misto* → manteve o
+   mercadinho e criou degraus até a padaria. Não foi troca de palavras: o
+   mecanismo mudou, foi amplificado e ganhou progressão, respectivamente.
+   **Custo medido:** +1 query e ~961 tokens por plano (~137 por seção).
+   **12 testes, 3 sabotagens conferidas.** Suíte 1687.
+   **⚠️ LIMITAÇÃO RESIDUAL, registrada e NÃO corrigida — ver PEND-029.**
+   *(texto original do achado, preservado:)*
+   **🔴 APRENDIZADO LONGITUDINAL — A LACUNA MAIS CARA.**
    `carregarAprendizado` (lê `planos.resultado` / `resultado_nota` e monta
    `<o_que_ja_funcionou>`) e `SISTEMA_APRENDIZADO` (a instrução de priorizar o
    que funcionou e não repetir o que não funcionou) **existem e funcionam** —
@@ -1932,6 +2481,29 @@ Aberta em: 2026-08-08 · Origem: consolidação da PEND-010 +
 `docs/cowork-frente-1-skills.md`, `docs/cowork-frente-2-boas-praticas.md`,
 `docs/frente-import-documentos.md`
 
+- **✅ A BASE 3 SUSTENTA GENERALIZAÇÃO POR MECANISMO — medido em 11/08/2026
+  (Golden Case L, `docs/bancada/golden-case-l-*`).** Uma boa prática real do
+  acervo (brincadeira de papéis, `imitacao`+`socializacao`), **sem nenhum
+  `passos_praticos` preenchido**, entregue idêntica a três perfis com o mesmo
+  objetivo, produziu **generalização em 6 de 6 execuções**: o modelo abstraiu o
+  princípio ("criança lidera", reciprocidade, turnos, motivo real para falar) e
+  recriou a experiência em três formatos funcionalmente distintos — mediação
+  por desenho, turnos motores com a bola, alternância de papéis com apoio
+  visual. Não copiou o médico da BP em nenhuma.
+  - **Veredito: PASS PARCIAL.** Generalização 6/6, mas 1 PASS_FORTE contra 5
+    parciais, decoração residual em 4/6, e um perfil instável entre execuções
+    (ver PEND-032).
+  - **⚠️ CONCLUSÃO QUE FECHA UMA PORTA, DE PROPÓSITO:** das 370 BPs ativas,
+    **apenas 7 têm formato de atividade proposta** e 67% têm `passos_praticos`.
+    **Isso NÃO é deficiência comprovada.** A BP que gerou as três intervenções
+    é uma ORIENTAÇÃO, sem passos — e bastou. **Não há evidência para criar
+    catálogo de atividades nem taxonomia nova**, e criar seria consertar o que
+    não quebrou. Se algum dia houver, que venha de um caso que falhe, não de
+    uma contagem.
+  - **NÃO SEI** se BPs menos explícitas sobre mecanismo generalizam igual —
+    testei o melhor caso do acervo, deliberadamente. O gargalo medido está no
+    CONTEXTO (o Plano não recebe perfil consultável nem âncora), não na base.
+
 - **Impacto:** a Ayla responder por conhecimento genérico existindo material
   melhor no acervo é o desperdício mais caro da Kolo — paga-se para escrever
   conteúdo que não chega à família.
@@ -2734,7 +3306,7 @@ trimestralmente, o que vier antes.
 
 ---
 
-**Próximo ID livre: PEND-029. *(024 e 025 reservadas por frentes ainda não publicadas.)***
+**Próximo ID livre: PEND-033. *(024 e 025 reservadas por frentes ainda não publicadas.)***
 
 > Conferir contra `origin/main`, não contra o seu branch. Dois branches podem
 > reivindicar o mesmo número — o conflito de merge nesta linha é o alarme.

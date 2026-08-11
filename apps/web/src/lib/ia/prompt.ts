@@ -9,7 +9,11 @@ import { pronomesPara } from "@/lib/ayla/pronomes";
 // Ver lib/conducao/diretrizes.ts. A mesma "cabeça" nos dois canais.
 import { nucleoConducao, FRONTEIRA_DIAGNOSTICO } from "@/lib/conducao/diretrizes";
 import { blocoBoasPraticas } from "@/lib/conhecimento/recuperar";
-import { ANCORA_PERFIL, LICENCA_GENERATIVA } from "@/lib/conducao/composicao";
+import {
+  ANCORA_PERFIL,
+  LACUNA_NAO_E_PERGUNTA,
+  LICENCA_GENERATIVA,
+} from "@/lib/conducao/composicao";
 import { linhasDoPerfilConsultavel } from "@/lib/kolo-vivo/consultar";
 import { FATOS_COMERCIAIS } from "@/lib/billing/fatos-comerciais";
 import { angulosUsados, blocoProgressao } from "@/lib/conducao/angulos";
@@ -412,6 +416,8 @@ ${ANCORA_PERFIL}
 NÃO pergunte o que está em "sabemos" nem o que está em "NÃO se aplica" — a
 família já respondeu, e repetir a pergunta desfaz a confiança de ter contado.
 ${linhas}
+
+${LACUNA_NAO_E_PERGUNTA}
 </o_que_ja_sabemos>`,
       );
     }

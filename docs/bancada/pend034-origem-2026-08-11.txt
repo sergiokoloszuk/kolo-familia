@@ -1,0 +1,53 @@
+██████████████████████████████████████████████████████████████████████████████
+PEND-034 · DE ONDE NASCE A HIPÓTESE SONORA
+██████████████████████████████████████████████████████████████████████████████
+
+1-2. O NEGATIVO CHEGOU, E ONDE
+
+   <o_que_ja_sabemos> começa no caractere 1340 de 12093
+   o negativo aparece no caractere 3374
+   <repertorio_kolo> começa no caractere 7701
+   → o negativo chega ANTES do repertório
+
+   a linha exata:
+     - Sensorial: sabemos: Perfil sensorial, Texturas (roupas, objetos) · a família já disse que NÃO é o caso: Reação a sons, Luz · ainda não sabemos: Reação a toques, Cheiros, Movimento, Outras observações sensoriais
+
+3. BASE 2 ENTREGUE
+
+   3 seções: PRINCÍPIO CENTRAL · MISSÃO · PRIMEIRA PERGUNTA DE ALTO VALOR
+   menciona som/barulho/estímulo/sobrecarga? NÃO
+
+4-5. BOAS PRÁTICAS ENTREGUES
+
+   · Escola tem dinâmica social diferente de casa (mais crianças, regras,…
+     menciona som/estímulo/sobrecarga? NÃO
+   · Empatia não é instalada ao nascer; é desenvolvida por observação…
+     menciona som/estímulo/sobrecarga? NÃO
+
+6. O PEDIDO / OBJETIVO
+
+   "Bia quase não fala com as crianças da escola. Quero ajudar ela a iniciar e sustentar pequenas interações sociais com outras pessoas."
+   contém gatilho sensorial? NÃO
+   contém "escola"? SIM — e a violação 2 falou da escola
+
+7. O SYSTEM PROMPT (17137 ch)
+
+   linhas com gatilho sensorial: 7
+     · - HIPÓTESES, NÃO CAUSAS AFIRMADAS. Você abre possibilidades para o adulto responsável observar — nunca afirma o que está acontecendo. Quem cuida conhe
+     · - PRIMEIRO COMPREENDA A BARREIRA; RECOMPENSA NÃO SUBSTITUI COMPREENSÃO. Antes de propor consequência externa, entenda o que dificulta a ação (compreen
+     · - RACIOCINAR SOBRE O ENCAIXE — diferencial disfarçado de explicação, e o mais difícil de perceber. NÃO explique por que ESTA criança se encaixa (ou de
+     · 2. EXPLICAR NO GERAL — permitido e bom. "Isso pode acontecer no autismo?", "quais sinais costumam aparecer no TDAH?" são perguntas EDUCATIVAS e você r
+     · 4. OUTROS CONTEXTOS, QUANDO FIZER SENTIDO. Casa não é o único lugar onde a criança existe — escola, creche e outros cuidadores veem o que ninguém vê e
+     · 6. NÃO ESPERAR O DIAGNÓSTICO PRA AJUDAR. Nunca transmita que sem diagnóstico não há o que fazer. Dificuldade que já existe já pode ser apoiada agora —
+     · E depois disso VOLTE RÁPIDO PRA DIREÇÃO. A pergunta sobre a causa quase nunca é o que resolve o dia: em vez de descobrir de onde vem o mau humor, ajud
+
+9-10. O QUE A ANCORA_PERFIL DIZ SOBRE NEGATIVO
+
+   parágrafos da âncora que citam um "não é o caso": 1 de 6
+
+   parágrafo 5, e o contexto em que a frase está:
+  │ O NÍVEL JÁ DEMONSTRADO É O PISO. Trabalhe a dificuldade A PARTIR do que a criança já faz — nunca proponha um apoio mais básico do que o que ela já demonstrou, e nunca rebaixe o objetivo da família para um alvo mais simples. Dificuldade em iniciar, sustentar, falar com quem é de fora ou responder socialmente é dificuldade NAQUILO, não falta da habilidade de base. Outra modalidade (visual, gesto, escrita) pode entrar quando houver razão funcional para ESTE caso — nunca como substituta do que ela já domina, e nunca contra um "não é o caso" que a família já disse.
+
+   TODAS as instruções do bloco que falam de negativo:
+     · NÃO pergunte o que está em "sabemos" nem o que está em "NÃO se aplica" — a
+     · - Sensorial: sabemos: Perfil sensorial, Texturas (roupas, objetos) · a família já disse que NÃO é o caso: Reação a sons, Luz · ainda não sabemos: Reação a toques, Cheiros, Movimento, Outras observações sensoriais

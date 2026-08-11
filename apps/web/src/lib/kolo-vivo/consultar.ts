@@ -79,6 +79,42 @@ export function classificarValor(bruto: string | null | undefined): {
   return { estado: "preenchido", valor: v };
 }
 
+/**
+ * O TEXTO DE UM DOMÍNIO, NA FORMA EM QUE ELE REALMENTE ESTÁ GRAVADO.
+ *
+ * ⚠️ INCIDENTE (11/08/2026) — este helper leu `""` de TODAS as crianças desde
+ * que nasceu, e ninguém percebeu.
+ *
+ * A tela do Kolo Vivo grava cada domínio como `{ texto, atualizado_em }` —
+ * está dito por extenso em `app/(app)/kolo-vivo/page.tsx`. Aqui esperava-se
+ * `string`, e um `typeof v === "string"` sobre um objeto devolve `""` sem
+ * reclamar de nada. Conferido por leitura das 8 primeiras linhas reais de
+ * `perfil_vivo_membro` em 11/08/2026: **8 de 8** guardam objeto, zero guardam
+ * string.
+ *
+ * A consequência é maior do que parece. Com todo campo em `vazio`,
+ * `linhasDoPerfilConsultavel` devolve `""`, e o bloco `<o_que_ja_sabemos>`
+ * NUNCA é montado — junto com ele some a `ANCORA_PERFIL`, que é justamente a
+ * instrução de não rebaixar o nível da criança. O piloto 4A rodou assim desde
+ * 10/08 nos dois canais: a camada existia, era chamada, não derrubava nada e
+ * não entregava uma linha.
+ *
+ * Por que os testes não pegaram: `consultar.test.ts` monta as linhas à mão, com
+ * string — a forma que o banco não usa. Teste que inventa o dado de entrada
+ * prova o parser, não a leitura.
+ *
+ * As DUAS formas passam a ser aceitas. A string não é hipotética: é o que os
+ * testes e as bancadas usam, e tirá-la agora trocaria um defeito por outro.
+ */
+function extrairTexto(v: unknown): string {
+  if (typeof v === "string") return v;
+  if (v && typeof v === "object") {
+    const t = (v as { texto?: unknown }).texto;
+    if (typeof t === "string") return t;
+  }
+  return "";
+}
+
 /** Onde o texto daquele domínio mora: coluna própria ou dentro do saco jsonb. */
 function textoDoDominio(
   linha: Record<string, unknown> | null,
@@ -88,12 +124,12 @@ function textoDoDominio(
   const def = DOMINIOS.find((d) => d.key === dominio);
   if (!def) return "";
   if (def.storage === "toplevel") {
-    const direto = linha[def.key] ?? (def.legacyFallback ? linha[def.legacyFallback] : null);
-    return typeof direto === "string" ? direto : "";
+    const direto = extrairTexto(linha[def.key]);
+    if (direto) return direto;
+    return def.legacyFallback ? extrairTexto(linha[def.legacyFallback]) : "";
   }
   const extras = (linha.categorias_extras ?? {}) as Record<string, unknown>;
-  const v = extras[def.key];
-  return typeof v === "string" ? v : "";
+  return extrairTexto(extras[def.key]);
 }
 
 function montarDominio(
@@ -223,7 +259,14 @@ export function linhasDoPerfilConsultavel(
     if (!preenchidos.length && !negativos.length) continue;
     const parte = [
       preenchidos.length ? `sabemos: ${preenchidos.map((c) => c.label).join(", ")}` : null,
-      negativos.length ? `NÃO se aplica: ${negativos.map((c) => c.label).join(", ")}` : null,
+      // ⚠️ "NÃO se aplica" era ambíguo e custou caro (medido em 10/08/2026):
+      // lia-se tanto como "a criança NÃO faz isso" quanto como "este campo não
+      // foi perguntado". No golden case da criança verbal, `usa figuras/apontar`
+      // estava marcado como negativo e a resposta sugeriu apontar assim mesmo.
+      // A redação agora diz de quem é a negação e de onde ela veio.
+      negativos.length
+        ? `a família já disse que NÃO é o caso: ${negativos.map((c) => c.label).join(", ")}`
+        : null,
       vazios.length ? `ainda não sabemos: ${vazios.map((c) => c.label).join(", ")}` : null,
     ]
       .filter(Boolean)

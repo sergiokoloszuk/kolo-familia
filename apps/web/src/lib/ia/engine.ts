@@ -2,6 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { getAnthropicClient, MODELS } from "./anthropic";
 import { loadActiveSkills, routeSkillsAI, type RoutedSkill } from "./router";
 import { buildContext } from "./context";
+import type { ContextoSkillResposta } from "./context";
 import { fronteiraAtravessada } from "@/lib/conducao/fronteiras";
 import { logEvent } from "@/lib/log";
 import { assemblePrompt, type Modo, type OutputTypeData } from "./prompt";
@@ -170,6 +171,64 @@ async function carregarTurnosAnteriores(
 }
 
 /**
+ * O CONTEXTO COMUM DE UM DOCUMENTO DE VÁRIAS SEÇÕES — montado UMA vez.
+ *
+ * Vive aqui, e não em `plano.ts`, porque é exatamente o par que
+ * `respondAsOutputType` monta internamente: roteia a skill e coleta o contexto.
+ * Se o Plano remontasse esse par por conta própria, passariam a existir duas
+ * definições de "o que é o contexto de uma seção" — e elas divergiriam no
+ * primeiro dia em que alguém mexesse numa delas.
+ *
+ * O chamador passa o resultado de volta em `contextoPronto`. Sem isso, cada
+ * seção refaz tudo: eram ~80 consultas e 8 chamadas do roteador por plano.
+ */
+export async function montarContextoDeSecoes(
+  supabase: SupabaseClient,
+  params: { familyId: string; membroAtipicoId: string | null; pedido: string },
+): Promise<{ ctx: ContextoSkillResposta; roteadas: RoutedSkill[] }> {
+  const skills = await loadActiveSkills(supabase);
+  if (skills.length === 0) {
+    throw new Error(
+      "Nenhuma skill ativa cadastrada. Aplique a migração 0003_seed.sql no Supabase.",
+    );
+  }
+  const roteadas = await routeSkillsAI(params.pedido, skills, { maxSkills: 1 });
+  // ⚠️ FATIA 3b (11/08/2026) · O PLANO PASSA A ENXERGAR COMO A CONVERSA.
+  //
+  // `relato` é a porta única: passá-lo liga, de uma vez e pelo mecanismo
+  // COMPARTILHADO, o perfil consultável (com os negativos), a BASE 2, o ranking
+  // por aderência, a `ANCORA_PERFIL` e a `LICENCA_GENERATIVA`. Nada disso é
+  // importado aqui nem em `plano.ts` — quem monta é `lib/ia/context.ts`, o
+  // mesmo que serve a conversa. Uma terceira implementação da mesma
+  // inteligência é exatamente o que esta frente existe para não fazer.
+  //
+  // O QUE ISTO CONSERTA, medido em 11/08 (Golden Case L): sem o perfil
+  // consultável, **cinco de seis** propostas do Plano exigiam nível pré-verbal
+  // — e nenhum dos perfis dizia isso. Na ausência do dado o Plano descia; com o
+  // dado disponível (a criança que fala com adultos conhecidos) ele descia
+  // igual. O `estado: "negativo"` e a âncora são o que dizem "o nível já
+  // demonstrado é o piso".
+  //
+  // ATRÁS DO ROLLOUT POR FAMÍLIA — e o portão fica num DONO SÓ. Quem decide se
+  // a 4A vale é `buildContext`, que já cruza o rollout com a existência do
+  // relato. Repetir a checagem aqui criaria um segundo lugar para errar, e duas
+  // fontes para a mesma decisão sempre divergem. Fora do piloto o `relato`
+  // chega e é ignorado: o contexto sai igual ao da 3a.
+  //
+  // O texto passado é `pedido` — o mesmo `desafioComLastro` que o roteador
+  // acabou de ver. Ranquear o repertório por um texto e rotear a skill por
+  // outro seria escolher a BP para uma pergunta que não é a do plano.
+  const ctx = await buildContext(supabase, {
+    familyId: params.familyId,
+    membroAtipicoId: params.membroAtipicoId,
+    skills: roteadas.map((r) => r.skill),
+    conversaId: null,
+    relato: params.pedido,
+  });
+  return { ctx, roteadas };
+}
+
+/**
  * Modo OUTPUT_TYPE — atalhos dos 7 botões de apoio (PRD §7.12).
  *
  * Diferente de respond():
@@ -184,24 +243,47 @@ export async function respondAsOutputType(params: {
   membroAtipicoId: string | null;
   outputType: OutputTypeData;
   pedido: string;
+  /**
+   * CONTEXTO JÁ MONTADO — só quem gera VÁRIAS seções sobre o MESMO pedido usa.
+   *
+   * ⚠️ POR QUE ISTO EXISTE (11/08/2026). O Plano faz oito chamadas a esta
+   * função, todas com o mesmo `pedido`. Sem este parâmetro, cada uma refazia
+   * `loadActiveSkills` + `routeSkillsAI` + `buildContext` por conta própria:
+   * **~80 consultas ao banco e 8 chamadas do roteador por plano**, com o
+   * roteador decidindo oito vezes sobre o mesmo texto.
+   *
+   * Pior que o custo era a CONSISTÊNCIA: nada garantia que as oito seções
+   * tinham visto o mesmo perfil e o mesmo repertório. Duas seções do mesmo
+   * documento podiam raciocinar sobre contextos diferentes.
+   *
+   * Quando ausente, o comportamento é exatamente o de antes — os 7 botões de
+   * apoio e qualquer outro chamador seguem montando o próprio contexto, que é o
+   * certo para eles: cada pedido ali é independente.
+   */
+  contextoPronto?: { ctx: ContextoSkillResposta; roteadas: RoutedSkill[] };
 }): Promise<EngineResponse> {
   const { supabase, familyId, membroAtipicoId, outputType, pedido } = params;
 
-  const skills = await loadActiveSkills(supabase);
-  if (skills.length === 0) {
-    throw new Error(
-      "Nenhuma skill ativa cadastrada. Aplique a migração 0003_seed.sql no Supabase.",
-    );
+  let roteadas: RoutedSkill[];
+  let ctx: ContextoSkillResposta;
+  if (params.contextoPronto) {
+    ({ ctx, roteadas } = params.contextoPronto);
+  } else {
+    const skills = await loadActiveSkills(supabase);
+    if (skills.length === 0) {
+      throw new Error(
+        "Nenhuma skill ativa cadastrada. Aplique a migração 0003_seed.sql no Supabase.",
+      );
+    }
+    // Aciona só a skill mais relevante (output_type já dita o formato)
+    roteadas = await routeSkillsAI(pedido, skills, { maxSkills: 1 });
+    ctx = await buildContext(supabase, {
+      familyId,
+      membroAtipicoId,
+      skills: roteadas.map((r) => r.skill),
+      conversaId: null,
+    });
   }
-  // Aciona só a skill mais relevante (output_type já dita o formato)
-  const roteadas = await routeSkillsAI(pedido, skills, { maxSkills: 1 });
-
-  const ctx = await buildContext(supabase, {
-    familyId,
-    membroAtipicoId,
-    skills: roteadas.map((r) => r.skill),
-    conversaId: null,
-  });
 
   const modo: Modo = { kind: "output_type", outputType };
 

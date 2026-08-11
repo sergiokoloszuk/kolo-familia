@@ -1,0 +1,228 @@
+██████████████████████████████████████████████████████████████████████████████
+FATIA 3b — PROVA POR EXECUÇÃO (zero chamada paga, zero escrita)
+██████████████████████████████████████████████████████████████████████████████
+
+1. COM O PILOTO OFF, O CONTEXTO CONTINUA COMO ANTES
+
+  ✓ ctx(piloto OFF) é idêntico ao ctx da 3a (buildContext sem relato)
+      4474 caracteres de cada lado
+  ✓ piloto OFF: nenhum perfil consultável
+  ✓ piloto OFF: nenhuma BASE 2
+  ✓ piloto OFF: 3 boas práticas, como sempre foi
+      recebeu 3
+
+2. COM O PILOTO EM `teste`, FAMÍLIA FORA DA LISTA NÃO RECEBE 4A
+
+  ✓ família fora da lista: perfil consultável ausente
+  ✓ família fora da lista: BASE 2 ausente
+  ✓ família fora da lista: 3 boas práticas (sem o corte da 4A)
+      recebeu 3
+  ✓ família fora da lista: contexto idêntico ao da 3a
+      mesma criança, mesmo perfil — só o id da família muda
+
+3. A FAMÍLIA DO PILOTO RECEBE `relato` — E ELE CHEGA AO buildContext
+
+  ✓ piloto: perfil consultável carregado
+  ✓ piloto: BASE 2 recuperada
+      3 seções: PRINCÍPIO CENTRAL · MISSÃO · PRIMEIRA PERGUNTA DE ALTO VALOR
+  ✓ piloto: DUAS boas práticas (o corte da 4A)
+      recebeu 2
+  ✓ piloto: o contexto MUDOU em relação à 3a
+
+4. PERFIL CONSULTÁVEL E NEGATIVOS CHEGAM AO BLOCO QUE VAI AO MODELO
+
+  ✓ bloco do piloto tem <o_que_ja_sabemos>
+  ✓ bloco do piloto declara o NEGATIVO da família
+      a família já disse que NÃO é o caso: Reação a sons, Luz · ainda não sabemos: Reação a toques, Cheiros, Movimento, Outras observações sensoriais
+  ✓ o negativo nomeia sons E luz
+  ✓ o perfil consultável nomeia os campos que a família JÁ respondeu
+  ✓ a ÂNCORA do perfil está no bloco
+  ✓ o VALOR do nível chega ao modelo (via Kolo Vivo, não via 4A)
+      no bloco fora do piloto ele TAMBÉM está
+  ✓ BASE 2 está no bloco
+  ✓ fora do piloto, nada disso está no bloco
+
+   bloco fora do piloto: 6883 caracteres
+   bloco no piloto:      12475 caracteres  (+5592)
+
+   licença generativa fora do piloto: JÁ ESTAVA LÁ
+
+5. A 4A ENTRA PELO MECANISMO COMPARTILHADO, NÃO POR CÓPIA NO PLANO
+
+  ✓ plano.ts não conhece um único nome da 4A
+  ✓ engine.ts não chama um único nome da 4A
+  ✓ engine.ts não importa o módulo do rollout
+  ✓ quem monta tudo é lib/ia/context.ts — o mesmo montador da conversa
+
+6. O RANKING POR ADERÊNCIA USA O TEXTO — não só o peso da BP
+
+  ✓ dois relatos diferentes escolhem repertórios diferentes
+      A: Escola tem dinâmica social diferente de casa (mais crianças, regras,… · Empatia não é instalada ao nascer; é desenvolvida por observação…
+      B: Durante brincadeira com outro criança, observe e comente sem interromper:… · Você faz papel: 'Sou o médico, vou ouvir seu coração'.…
+  ✓ com relato, a escolha difere do puro peso
+      sem relato: Durante brincadeira com outro criança, observe e comente sem interromper:… · Você faz papel: 'Sou o médico, vou ouvir seu coração'.…
+
+7. A LICENÇA GENERATIVA — presente, mas não é novidade da 3b
+
+  ✓ licença no bloco do piloto
+  ✓ licença TAMBÉM no bloco de fora do piloto (não é da 3b)
+      a guarda é a presença de material, não a flag — ver lib/ia/prompt.ts
+
+8. AS FATIAS 1, 2 E 3a CONTINUAM DE PÉ
+
+  ✓ Fatia 2: o objetivo da conversa segue alimentando o Plano
+  ✓ Fatia 1: o aprendizado segue sendo carregado no multi-call
+  ✓ Fatia 1: e segue viajando com a REGRA junto (SISTEMA_APRENDIZADO)
+  ✓ Fatia 1: é o desafio COM lastro que vai ao montador do contexto
+  ✓ Fatia 3a: o montador é chamado UMA vez por plano
+  ✓ Fatia 3a: as 8 seções recebem o MESMO contexto
+
+██████████████████████████████████████████████████████████████████████████████
+PLACAR: 34/34 provas
+██████████████████████████████████████████████████████████████████████████████
+
+██████████████████████████████████████████████████████████████████████████████
+O BLOCO 4A QUE O PLANO PASSA A RECEBER (o que a 3b acrescenta)
+██████████████████████████████████████████████████████████████████████████████
+  │ <cuidador>
+  │ Você está falando com Ana, mãe de Bia. O que Ana conta em primeira pessoa ("eu tenho", "lá em casa") é sobre ela mesma. NÃO atribua um fato a outra pessoa (pai, mãe, avó…) a menos que o contexto diga explicitamente de quem é.
+  │ </cuidador>
+  │ 
+  │ <familia_membros>
+  │ Pessoas atípicas cadastradas nesta família — você JÁ sabe quem são, a idade e o básico de cada uma. NÃO pergunte quem são nem a idade; quando o cuidador citar um destes nomes, é esta pessoa. Use a idade EXATA (nunca chute):
+  │ - Bia, 5 anos (ela) — TEA
+  │ </familia_membros>
+  │ 
+  │ <diagnostico_registrado>
+  │ CONFIRMADO pela família: TEA. Isto Bia tem — a família informou. Fale disso com naturalidade e planeje em cima; nunca responda "não posso falar de diagnóstico" sobre o que ela mesma registrou.
+  │ Esta é a lista COMPLETA do que está registrado. O que não está aqui, não foi diagnosticado — e você não preenche a lacuna com dedução sua.
+  │ </diagnostico_registrado>
+  │ 
+  │ <membro_atipico>
+  │ nome: Bia
+  │ idade: 5 anos
+  │ perfil: TEA
+  │ genero: feminino (trate como "ela/dela", artigo "a")
+  │ tratamento: Bia tem EXATAMENTE 5 anos. NUNCA cite uma idade diferente de 5.
+  │ essencial: Bia, 5 anos. Adora brincar de mercadinho, caixa registradora e organizar as coisas.
+  │ socializacao: Como é socializar pra ele(a): Curte em doses
+  │ Interage com outras pessoas (pares): Raramente
+  │ Com quem flui melhor: Adultos
+  │ Divide e espera a vez: Às vezes
+  │ Iniciativa e reciprocidade: Com adulto conhecido ela inicia e mantém o vai-e-vem. Com crianças da idade dela, fica em silêncio e observa.
+  │ comunicacao: Como se comunica: Fala frases
+  │ Vocabulário e fala: Vocabulário grande. Conta o que aconteceu no dia inteiro.
+  │ Conversa e argumentação: Mantém o vai-e-vem com adulto. Negocia e argumenta.
+  │ </membro_atipico>
+  │ 
+  │ <o_que_ja_sabemos>
+  │ O PERFIL É ÂNCORA. Ele é o que sabemos DESTA criança e tem precedência sobre qualquer orientação geral.
+  │ NÃO descarte informação específica do Perfil em favor de recomendação padrão: se o Perfil já diz quais são os sinais, os gatilhos, o que ajuda e o que piora para esta criança, use ESSES — não pergunte de novo nem substitua por conselho genérico.
+  │ E MESMO QUANDO VOCÊ AINDA ESTIVER INVESTIGANDO, A PERGUNTA SE APOIA NO QUE JÁ SABEMOS. Investigar não é começar do zero: é continuar de onde a família já contou. Antes de perguntar, procure no Perfil um dado que torne a SUA pergunta mais precisa — e cite-o, para que a família reconheça que foi ouvida. Em vez de "o que aconteceu antes?", pergunte pelo que já está registrado: "você me contou que ele fica mais rápido e fala mais alto antes — ontem deu pra perceber isso, ou foi direto?". A mesma pergunta, ancorada, vale muito mais.
+  │ O repertório é subsidiário: serve quando acrescenta ao que já sabemos, não quando repete pior.
+  │ O NÍVEL JÁ DEMONSTRADO É O PISO. Trabalhe a dificuldade A PARTIR do que a criança já faz — nunca proponha um apoio mais básico do que o que ela já demonstrou, e nunca rebaixe o objetivo da família para um alvo mais simples. Dificuldade em iniciar, sustentar, falar com quem é de fora ou responder socialmente é dificuldade NAQUILO, não falta da habilidade de base. Outra modalidade (visual, gesto, escrita) pode entrar quando houver razão funcional para ESTE caso — nunca como substituta do que ela já domina, e nunca contra um "não é o caso" que a família já disse.
+  │ USAR O PERFIL NÃO É RECITÁ-LO. A mãe percebe que você conhece a criança pela qualidade da proposta, não por ouvir de volta o que ela contou. Devolver a lista do que você sabe soa a relatório e gasta o turno; deixe o dado aparecer DENTRO da ideia.
+  │ NÃO pergunte o que está em "sabemos" nem o que está em "NÃO se aplica" — a
+  │ família já respondeu, e repetir a pergunta desfaz a confiança de ter contado.
+  │ - Sensorial: sabemos: Perfil sensorial, Texturas (roupas, objetos) · a família já disse que NÃO é o caso: Reação a sons, Luz · ainda não sabemos: Reação a toques, Cheiros, Movimento, Outras observações sensoriais
+  │ - Comunicação: sabemos: Como se comunica, Vocabulário e fala, Conversa e argumentação · ainda não sabemos: Como mostra o que quer, Como demonstra que entende, Ecolalia / repetições, Entende o contexto, Lê lábios / pistas visuais, Mostra o que quer ou espera?, Contato visual e gestos, Comunicação alternativa (CAA), Outras observações
+  │ - Socialização: sabemos: Como é socializar pra ele(a), Interage com outras pessoas (pares), Com quem flui melhor, Divide e espera a vez, Iniciativa e reciprocidade · ainda não sabemos: Sozinho ou acompanhado, Vínculos e conflitos, Outras observações
+  │ 
+  │ SABER QUE FALTA UM DADO NÃO É MOTIVO PARA PERGUNTAR.
+  │ Antes de perguntar qualquer coisa, faça o teste: **a resposta mudaria a hipótese, a estratégia, o nível da intervenção ou a personalização?** Se não mudaria, não pergunte — mesmo que o campo esteja vazio no perfil. Lacuna que não muda conduta é lacuna que pode ficar aberta.
+  │ SE JÁ DÁ PRA AJUDAR, AJUDE PRIMEIRO. Entregar algo executável hoje vale mais que completar o retrato. E se a família está numa situação imediata ("estou indo ao mercado agora"), o que serve é o que ela consegue usar em minutos — perfil se completa depois.
+  │ QUANDO A LACUNA É DECISIVA, pergunte: UMA pergunta de alto valor, ou 2 a 3 agrupadas quando elas se respondem juntas — sempre DEPOIS de já ter entregue alguma ajuda, nunca no lugar dela.
+  │ RESUMIR O QUE VOCÊ SABE É EXCEÇÃO, NÃO ABERTURA. Só cabe em quatro situações: a família perguntou o que você sabe ("com o que você já sabe dele…"); há informação contraditória para alinhar; a decisão depende de mostrar o que se sabe contra o que falta; ou ela demonstrou dúvida sobre o que você conhece. **Fora desses casos, não devolva o perfil** — nem como abertura, nem como justificativa da sua ideia. Quando couber, cite só os fatos que mudam ESTA decisão, não o retrato inteiro.
+  │ </o_que_ja_sabemos>
+  │ 
+  │ <como_compreender_este_tema>
+  │ Material INTERNO de raciocínio — não repita nada disto para a família e não
+  │ transforme as bifurcações em questionário. Use para decidir O QUE ainda muda a
+  │ conduta, e faça no máximo UMA pergunta: a que separa os caminhos.
+  │ ### PRINCÍPIO CENTRAL
+  │ “Não socializa” não é uma informação suficiente.
+  │ 
+  │ Antes de orientar, diferencie:
+  │ 
+  │ 1. não demonstra interesse em participar;
+  │ 2. quer participar, mas não sabe como entrar;
+  │ 3. entra, mas não consegue permanecer;
+  │ 4. permanece apenas se controlar a brincadeira;
+  │ 5. tem dificuldade com turnos;
+  │ 6. tem dificuldade em compartilhar;
+  │ 7. não percebe sinais do outro;
+  │ 8. não sabe o que dizer;
+  │ 9. fica sobrecarregado em grupos;
+  │ 10. funciona melhor com uma criança do que com várias;
+  │ 11. aproxima-se de forma intensa;
+  │ 12. conflito aparece quando recebe um “não”;
+  │ 13. consegue socializar em temas de interesse, mas não fora deles;
+  │ 14. tem habilidade social, mas ansiedade/insegurança impede participação.
+  │ 
+  │ Cada situação pede uma estratégia diferente.
+  │ 
+  │ ### MISSÃO
+  │ Ajudar a família a entender em qual parte da interação social está a dificuldade e oferecer estratégias práticas para aumentar participação, conexão e autonomia social.
+  │ 
+  │ Esta skill pode atuar quando a família relata:
+  │ 
+  │ - não brinca com outras crianças;
+  │ - prefere brincar sozinho;
+  │ - quer brincar, mas não sabe chegar;
+  │ - chega de forma inadequada;
+  │ - pega brinquedos;
+  │ - não compartilha;
+  │ - quer mandar na brincadeira;
+  │ - não aceita perder;
+  │ - se irrita quando outra criança muda a brincadeira;
+  │ - fica de fora do grupo;
+  │ - acompanha outras crianças sem participar;
+  │ - fala muito sobre o próprio interesse;
+  │ - interrompe;
+  │ - não percebe quando o outro não está interessado;
+  │ - não sabe manter conversa;
+  │ - tem dificuldade em festa;
+  │ - conflitos com irmãos;
+  │ - dificuldade para fazer ou manter amizades;
+  │ - aproximação física inadequada;
+  │ - dificuldade com turnos;
+  │ - imita comportamentos para tentar pertencer.
+  │ 
+  │ ### PRIMEIRA PERGUNTA DE ALTO VALOR
+  │ Quando a família disser:
+  │ 
+  │ “Ele não brinca com outras crianças.”
+  │ 
+  │ Uma pergunta especialmente útil é:
+  │ 
+  │ “Ele parece querer participar e não sabe como chegar, ou fica bem brincando sozinho e não demonstra vontade de entrar?”
+  │ 
+  │ Isso separa duas situações completamente diferentes.
+  │ 
+  │ Não assumir que brincar sozinho significa sofrimento ou déficit.
+  │ </como_compreender_este_tema>
+  │ 
+  │ <repertorio_kolo>
+  │ Isto é REPERTÓRIO da Kolo pra você raciocinar — não é roteiro e não se cita.
+  │ 
+  │ - Use "QUANDO SERVE" pra decidir se aquilo cabe MESMO nesta situação. Se não couber, ignore aquela entrada; trazer conteúdo que não serve é pior do que não trazer.
+  │ - "EVITE" é o que NÃO recomendar. Não vire isso em aula sobre erros.
+  │ - "DÁ PRA FAZER" é o que a família consegue executar hoje — adapte à idade e aos interesses da criança que você já conhece, em vez de repetir o passo literal.
+  │ - NUNCA escreva "quando usar", "erros comuns" ou "passos" como seções da resposta, e nunca despeje as 2 entradas. Escolha o que ajuda AGORA e transforme em conversa.
+  │ 
+  │ 1. Escola tem dinâmica social diferente de casa (mais crianças, regras,…
+  │    Antes de começar escola, vale preparar conversa em casa. Lê livros sobre escola, conversa sobre o que vai acontecer, leva pra visitar o lugar antes do primeiro dia. Normaliza ter vários amigos (não 'um melhor'), seguir instruções de outro adulto, respeitar regras coletivas. Não é programar tudo — é familiarizar com o tipo de dinâmica social que vai aparecer. Criança que chega preparada socializa mais leve. Criança que chega sem preparo gasta os primeiros dias só processando o ambiente. E vale conversar nas primeiras semanas: como foi? Conheceu alguém? Teve algo difícil? Casa continua sendo o laboratório seguro pra processar a escola.
+  │    QUANDO SERVE: Antes de começar escola e durante primeiras semanas.
+  │ 
+  │ 2. Empatia não é instalada ao nascer; é desenvolvida por observação…
+  │    Tem um padrão bem comum aqui: empatia não é instalada ao nascer; é desenvolvida por observação e experiência. E também: criança aprende empatia vendo adultos responder com empatia a ela Você vai notar isso especialmente se criança é insensível com colegas; muda assunto alguém está triste; ri irmão chora; não nota sentimentos de outros. Na prática, comece assim: Narrar emoções de outros. Ler histórias e pausar para conversar sobre sentimentos. Seu modelo com compaixão quando alguém está triste. Role-play. Ajudar alguém: cuidar de animal, levar algo a alguém, ajudar colega. Evita ficar presa em: forçar pedido de desculpas sem compreensão Vale observar o que funciona com sua criança e ajustar conforme a resposta dela.
+  │    QUANDO SERVE: Criança é insensível com colegas; muda assunto quando alguém está triste; ri quando irmão chora; não nota sentimentos de outros.
+  │ </repertorio_kolo>
+  │ 
+  │ AS BASES SÃO LASTRO, NÃO TEXTO PARA COPIAR. Raciocine sobre o repertório e crie a melhor intervenção para ESTA criança e ESTA família — a resposta boa costuma ser melhor que qualquer trecho isolado.
+  │ Você pode: combinar conhecimentos compatíveis, adaptar ao Perfil, transformar orientação em aplicação concreta, criar uma frase que uma mãe realmente diria, criar atividade ou brincadeira, dar um nome memorável quando o nome ajudar a lembrar, ajustar materiais e dificuldade, e propor um próximo passo.
+  │ Use o interesse da criança para CRIAR: se ela gosta de trens, a atividade é sobre trens. Interesse é ponte para a experiência — nunca prêmio por obediência.
+  │ VOCÊ CRIA A FORMA, NÃO O FATO. Não invente evidência científica, diagnóstico, causa, eficácia garantida nem característica da criança que ninguém informou.
+  │ E HÁ UMA REGRA DE SUJEITO, que vale para toda explicação de mecanismo: quem faz as coisas é A CRIANÇA ou A SITUAÇÃO — nunca o cérebro. O cérebro não diz, não quer, não decide, não pede, não entende, não manda, não acha e não está dizendo nada. Escrever "o cérebro dela está dizendo que é difícil demais" transforma uma metáfora sua em leitura da cabeça de uma criança que você nunca viu. Diga o que se observa: "ela trava antes de começar, principalmente quando acha que pode errar".
+  │ Você PODE explicar mecanismo, e deve, quando isso ajudar a família a entender — mas em um dos três registros, sempre distinguíveis: (a) conhecimento geral, hedgeado — "quando a demanda aumenta, costuma ficar mais difícil frear uma resposta rápida"; (b) hipótese sobre ESTA criança, marcada como hipótese — "pode ser que ela chegue nesse momento já com pouca margem"; (c) analogia que se anuncia como analogia — "é como chegar com o copo quase cheio". O que não existe é o quarto registro: afirmar o que se passa dentro da cabeça dela como se você tivesse visto.
+  │ DOSE: uma leitura curta do que parece estar acontecendo, uma orientação, e um ou dois recursos. Não despeje tudo o que sabe.

@@ -1,0 +1,124 @@
+SISTEMA_APRENDIZADO (verbatim do código):
+  - Se houver um bloco <o_que_ja_funcionou>, APRENDA com ele: priorize abordagens parecidas com o que funcionou e NÃO repita o que a família já disse que não funcionou. Não cite o bloco nem diga "da última vez" — só deixe o plano mais certeiro.
+
+BPs recuperadas (mecanismo atual do Plano, top-3 por peso):
+  - Aviso prévio de 5 minutos com linguagem concreta
+  - Limite firme + acolhimento na mesma frase
+  - Crianças pequenas não têm capacidade neurológica de se auto-regular.
+
+██████████████████████████████████████████████████████████████████████████████
+BRAÇO D  (BASELINE — sem histórico)
+
+
+  │ ## O que fazer diferente
+  │ 
+  │ Em vez de pedir que Manu “fale com as pessoas”, tente **criar uma ponte gradual entre quem ela já conhece e pessoas de fora**. Como ela fala em casa e com a prima, pode ser que a presença de desconhecidos deixe a comunicação mais difícil — vale observar sem pressionar.
+  │ 
+  │ - **Comece pelo mercadinho:** brinque com Manu e a prima, usando frases curtas que ela já possa repetir: “quero maçã”, “é minha vez”, “quanto custa?”. Depois, convide uma pessoa conhecida para participar por poucos minutos.
+  │ - **Aceite outros jeitos de responder:** apontar, entregar um objeto, acenar, usar cartão/desenho ou falar baixinho também são formas de comunicação. A fala pode aparecer com mais segurança quando ela não sente que precisa “provar” nada.
+  │ - **Combine uma frase de saída:** ensaie em casa algo como “não quero falar agora” ou “mamãe responde”. Assim, ela não precisa ficar sem recurso diante de alguém novo.
+  │ - **Peça aos adultos uma abordagem mais leve:** em vez de “fala oi” ou fazer muitas perguntas, a pessoa pode comentar sobre o que Manu está fazendo: “Você escolheu o gato branco”. Depois, esperar — sem insistir.
+  │ - **Reconheça a tentativa, não apenas a fala:** “Você mostrou o que queria; eu entendi” ou “Você respondeu do seu jeito”.
+  │ 
+  │ Faça exposições pequenas, previsíveis e repetidas, terminando antes de ela ficar muito desconfortável. Se isso estiver limitando bastante a escola, passeios ou relações, vale levar esse relato à pediatra e a um profissional que acompanhe comunicação, para pensar em apoios adequados.
+
+██████████████████████████████████████████████████████████████████████████████
+BRAÇO A
+feedback: - comunicação: NÃO funcionou — "tentei os cartões de escolha com figuras, ela ignorou completamente e ficou irritada"
+
+  │ ## O que fazer diferente
+  │ 
+  │ Em vez de pedir que Manu “fale com as pessoas”, treine **pequenas falas previsíveis**, em situações de brincadeira e sem cobrança.
+  │ 
+  │ - **Comece pelo mercadinho:** você pode ser a cliente e usar sempre as mesmas frases:  
+  │   “Bom dia.” · “Quero comprar maçã.” · “Quanto custa?”  
+  │   Manu pode responder falando, apontando ou entregando o objeto. O objetivo inicial é ela participar, não falar perfeitamente.
+  │ 
+  │ - **Faça uma ponte gradual:** depois de praticar com você, inclua alguém com quem ela já fala, como a prima. Só mais tarde convide uma pessoa de fora para entrar na brincadeira, por poucos minutos. Evite colocá-la de repente no centro da atenção.
+  │ 
+  │ - **Dê um roteiro curto antes:**  
+  │   “Quando a moça perguntar seu nome, você pode dizer ‘Manu’ ou acenar. Eu fico perto.”  
+  │   Ter uma resposta pronta pode diminuir a pressão de inventar o que dizer na hora.
+  │ 
+  │ - **Não insista depois do silêncio:** se ela travar, diga com naturalidade:  
+  │   “Você pode responder acenando. Eu te ajudo.”  
+  │   E fale por ela apenas o necessário, sem transformar o momento numa tentativa repetida de fazê-la falar.
+  │ 
+  │ - **Use interesses para criar encontros, não como prêmio:** uma visita curta a uma loja de brinquedos de gatos ou uma brincadeira de mercadinho com outra pessoa pode ser mais confortável do que uma conversa direta.
+  │ 
+  │ Observe **com quem, onde e em quais situações** ela consegue se comunicar melhor — por exemplo, quando a pessoa brinca ao lado, quando não há perguntas diretas ou quando ela sabe exatamente o que vai acontecer. Esses detalhes ajudam a ajustar o próximo passo.
+  │ 
+  │ Se essa dificuldade estiver limitando a participação dela na escola ou em outros ambientes, vale levar esse registro à pediatra e a um profissional de comunicação, para pensarem juntos em apoios adequados.
+
+██████████████████████████████████████████████████████████████████████████████
+BRAÇO B
+feedback: - comunicação: funcionou — "combinar uma frase curta antes de sair de casa ajudou muito, ela usou no parque"
+
+  │ ## O que fazer diferente
+  │ 
+  │ Em vez de esperar que Manu fale espontaneamente com pessoas de fora, **prepare uma frase curta e crie uma pequena ponte até a conversa**, sem exigir que ela responda na hora.
+  │ 
+  │ - **Antes de sair**, combine uma frase funcional ligada ao lugar:  
+  │   “Oi, eu quero brincar.” / “Quero ver os gatos.” / “Pode me ajudar?”  
+  │   Brinquem de mercadinho em casa e ensaiem a frase com você, depois com uma pessoa conhecida e só então em situações menos familiares.
+  │ 
+  │ - **Dê uma opção de comunicação sem fala**: ela pode apontar, acenar, mostrar um cartão com a frase ou dizer apenas uma palavra. Isso mantém a participação enquanto a fala vai ficando mais possível.
+  │ 
+  │ - **Peça ajuda às pessoas de fora para reduzir a pressão**:  
+  │   “Fale com ela devagar e faça uma pergunta de escolha, como: ‘gato ou cachorro?’. Espere um pouco e não peça para ela repetir.”
+  │ 
+  │ - **Use uma sequência previsível**: você inicia — “A Manu quer saber onde ficam os gatos” — e ela completa apenas se quiser. Com o tempo, você pode falar menos.
+  │ 
+  │ Pode ser que a trava aumente quando há muita atenção sobre ela, medo de errar ou uma situação pouco previsível. Vale observar **com quem ela consegue falar, em quais lugares e se responde melhor por escolha, gesto ou frase pronta**. Assim, o próximo desafio pode ser pequeno e específico, como usar uma frase com uma única pessoa conhecida.
+
+██████████████████████████████████████████████████████████████████████████████
+BRAÇO C
+feedback: - comunicação: funcionou mais ou menos — "brincar de mercadinho em casa ela adorou e falou bastante, mas na padaria de verdade travou de novo"
+
+  │ ## O que fazer diferente
+  │ 
+  │ Em vez de esperar que a Manu passe diretamente do **mercadinho em casa** para falar na padaria, crie uma **ponte em etapas**, mantendo a brincadeira e reduzindo a pressão.
+  │ 
+  │ - **Treinem uma cena bem curta**, como comprar um pão: você faz de atendente, e a Manu pode responder falando, apontando ou usando um cartão com “pão, por favor”. O objetivo inicial é **participar da troca**, não necessariamente falar.
+  │ - Depois, levem o mesmo roteiro para uma situação mais fácil: uma padaria vazia, um atendente conhecido ou apenas entrar, escolher e sair. Você pode falar por ela no começo:  
+  │   **“A Manu quer este pão. Ela pode apontar.”**
+  │ - Combine uma frase simples para você dizer antes:  
+  │   **“Você pode falar, apontar ou me mostrar. Eu vou te ajudar.”**  
+  │   Isso mostra que ela não precisa escolher entre falar sob pressão ou não participar.
+  │ - Quando ela conseguir se comunicar fora de casa, reconheça de forma específica e tranquila:  
+  │   **“Você mostrou o que queria para a moça. Eu entendi.”**
+  │ 
+  │ Pode ser que o ambiente real, a presença de pessoas desconhecidas ou a imprevisibilidade deixem a fala mais difícil, mesmo quando ela domina a brincadeira em casa. Vale observar qual etapa ela tolera melhor: entrar na padaria, olhar os produtos, apontar, entregar o dinheiro ou responder ao atendente.
+  │ 
+  │ O próximo passo pode ser escolher **uma única ação comunicativa** para praticar nesta semana — por exemplo, apontar o produto — sem transformar a fala em condição para comprar ou sair.
+
+
+██████████████████████████████████████████████████████████████████████████████
+JUÍZO SEMÂNTICO
+
+  │ ### P1
+  │ MECANISMO: Exposição gradual com roteiros previsíveis e baixa pressão social
+  │ PRESERVOU: Mercadinho, ponte gradual, respostas não verbais e frase de saída
+  │ ABANDONOU: Cartões de figuras como recurso principal
+  │ EVOLUIU: Tornou as falas mais curtas e observáveis em brincadeiras
+  │ USOU_O_FEEDBACK: SIM — retirou os cartões após a irritação e ignorância
+  │ REPETE_O_QUE_FALHOU: NAO — não depende dos cartões rejeitados
+  │ VEREDITO: PASS — adapta a estratégia sem pressionar a fala e remove o recurso que falhou.
+  │ 
+  │ ### P2
+  │ MECANISMO: Preparação antecipada de frase funcional com apoio gradual à interação
+  │ PRESERVOU: Frase ensaiada, ponte gradual, participação sem exigir fala
+  │ ABANDONOU: Nada
+  │ EVOLUIU: Organizou uma sequência previsível e reduziu perguntas diretas
+  │ USOU_O_FEEDBACK: SIM — amplia a estratégia da frase curta que funcionou
+  │ REPETE_O_QUE_FALHOU: SIM — reintroduz cartões, embora como opção, após terem sido ignorados
+  │ VEREDITO: FAIL — a estratégia central evolui, mas reincide no recurso visual que a família relatou como irritante e ineficaz.
+  │ 
+  │ ### P3
+  │ MECANISMO: Generalização gradual do faz-de-conta para contextos reais menos exigentes
+  │ PRESERVOU: Mercadinho, brincadeira, comunicação não verbal e apoio do adulto
+  │ ABANDONOU: A expectativa de transferência direta para a padaria
+  │ EVOLUIU: Criou etapas intermediárias e uma meta comunicativa única
+  │ USOU_O_FEEDBACK: SIM — responde diretamente ao contraste entre falar em casa e travar na padaria
+  │ REPETE_O_QUE_FALHOU: SIM — volta a propor cartão, apesar de esse recurso ter sido rejeitado
+  │ VEREDITO: FAIL — a progressão para o ambiente real é bem ajustada, mas repete um apoio visual já malsucedido.

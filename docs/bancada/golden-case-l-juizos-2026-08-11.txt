@@ -1,0 +1,130 @@
+reaproveitadas 6 gerações do laudo — nenhuma foi refeita
+
+
+██████████████████████████████████████████████████████████████████████████████
+A · desenho e personagens · execução 1  (o juiz não sabe disto)
+
+  │ HABILIDADE_ALVO: Iniciar e sustentar trocas sociais breves usando personagens e ações compartilhadas.
+  │ RELACAO_COM_O_OBJETIVO: SIM — a habilidade trabalha diretamente o início e a continuidade de interações breves.
+  │ MECANISMOS_DA_BP_PRESERVADOS: assumir papel/perspectiva, iniciar, responder, manter a troca, reagir ao outro, reciprocidade, criança lidera
+  │ COMO_FUNCIONA_NA_PRATICA: Adulto entra no desenho, oferece comentário ou ação conjunta, espera resposta; Ivo escolhe desenhar, narrar, agir, observar e envolver outra criança.
+  │ GENERALIZACAO: SIM — o princípio de interação imaginativa compartilhada foi reaplicado em desenho, gibis e missões sociais graduais.
+  │ DECORACAO: Gibis, desenhos e caixa de papelão são sobretudo materiais e cenário; o desenho de personagens mantém função de mediação.
+  │ PRESSUPOE_SOBRE_A_CRIANCA: interesse por desenho, gibis ou personagens; capacidade de escolher entre formas de participação; possibilidade de responder por fala, gesto, olhar ou desenho; tolerância a encontros curtos e previsíveis; disponibilidade para participar ao lado de outras pessoas
+  │ NIVEL_EXIGIDO: palavras soltas
+  │ VEREDITO: PASS_FORTE
+  │ JUSTIFICATIVA: A proposta preserva a improvisação compartilhada e a reciprocidade, oferecendo oportunidades reais e graduais para a criança iniciar, responder e prolongar contatos sociais.
+
+██████████████████████████████████████████████████████████████████████████████
+A · desenho e personagens · execução 2  (o juiz não sabe disto)
+
+  │ HABILIDADE_ALVO: Iniciar e sustentar trocas sociais por desenho, fala, turnos e personagens
+  │ RELACAO_COM_O_OBJETIVO: SIM — a habilidade favorece iniciar e manter interações com adultos e outras crianças
+  │ MECANISMOS_DA_BP_PRESERVADOS: assumir papel/perspectiva, motivo real para falar, iniciar, responder, manter a troca, reagir ao outro, reciprocidade, criança lidera
+  │ COMO_FUNCIONA_NA_PRATICA: Adulto e criança constroem desenho ou história alternadamente; o adulto pergunta, comenta e responde, enquanto a criança escolhe quanto participar.
+  │ GENERALIZACAO: SIM — reaplica improvisação compartilhada, alternância e liderança infantil em desenho e histórias, não apenas nos papéis sociais originais
+  │ DECORACAO: cidade, planeta, gibi, Capitão e demais cenários ou personagens específicos; nada disso é essencial ao mecanismo
+  │ PRESSUPOE_SOBRE_A_CRIANCA: interesse por desenho ou gibis; tolerância a compartilhar materiais e turnos; capacidade de apontar, desenhar ou falar; preferência por interação individual; possibilidade de escolher e liderar; necessidade de baixa pressão; acesso a uma criança conhecida
+  │ NIVEL_EXIGIDO: pré-verbal
+  │ VEREDITO: PASS_PARCIAL
+  │ JUSTIFICATIVA: A proposta preserva troca improvisada e liderança infantil, mas a participação pode permanecer não verbal, observadora e pouco exigente quanto à iniciativa social efetiva.
+
+██████████████████████████████████████████████████████████████████████████████
+B · futebol e movimento · execução 1  (o juiz não sabe disto)
+
+  │ HABILIDADE_ALVO: Iniciar e manter trocas sociais breves usando movimento e brincadeiras com bola
+  │ RELACAO_COM_O_OBJETIVO: SIM — a habilidade trabalha cumprimentos, turnos, respostas e continuidade de pequenas interações
+  │ MECANISMOS_DA_BP_PRESERVADOS: motivo real para falar, responder, manter a troca, reagir ao outro, reciprocidade, criança lidera
+  │ COMO_FUNCIONA_NA_PRATICA: Adulto ou criança rola, chuta ou busca a bola; Caio responde, troca turnos, cumprimenta, escolhe participantes ou narra.
+  │ GENERALIZACAO: SIM — o princípio de interação compartilhada e flexível foi reaplicado em brincadeiras motoras, não apenas reproduzido
+  │ DECORACAO: Bola, futebol, cones, gol e cabine são tema, objetos e cenário; o movimento também facilita funcionalmente a participação
+  │ PRESSUPOE_SOBRE_A_CRIANCA: Interesse por futebol ou movimento; tolera proximidade e participação com outras pessoas; entende turnos e instruções simples; pode responder por gesto, som ou palavra; consegue devolver, chutar ou entregar a bola; aceita mudanças de função
+  │ NIVEL_EXIGIDO: pré-verbal
+  │ VEREDITO: PASS_PARCIAL
+  │ JUSTIFICATIVA: A proposta cria oportunidades recíprocas e acessíveis de troca, mas deixa a iniciativa social principalmente nas mãos do adulto ou parceiro.
+
+██████████████████████████████████████████████████████████████████████████████
+B · futebol e movimento · execução 2  (o juiz não sabe disto)
+
+  │ HABILIDADE_ALVO: Iniciar, responder e sustentar trocas sociais breves com pares
+  │ RELACAO_COM_O_OBJETIVO: SIM — a habilidade serve diretamente para iniciar e manter pequenas interações sociais
+  │ MECANISMOS_DA_BP_PRESERVADOS: motivo real para falar, iniciar, responder, manter a troca, reagir ao outro, reciprocidade, criança lidera
+  │ COMO_FUNCIONA_NA_PRATICA: Adulto organiza turnos com outra criança; Caio chama, olha, passa, espera, devolve, aponta o próximo ou escolhe a ação.
+  │ GENERALIZACAO: SIM — reaplica reciprocidade, iniciativa e liderança infantil em brincadeiras motoras, embora reduza a improvisação
+  │ DECORACAO: nada
+  │ PRESSUPOE_SOBRE_A_CRIANCA: interesse ou tolerância por bolas e movimento; aceita participar com outra criança; consegue esperar brevemente; pode iniciar por olhar, aproximar, chamar, devolver ou apontar; pode afastar-se e retornar; beneficia-se de pouco barulho e uma atividade disponível
+  │ NIVEL_EXIGIDO: pré-verbal
+  │ VEREDITO: PASS_PARCIAL
+  │ JUSTIFICATIVA: A proposta cria oportunidades funcionais de troca e alguma escolha infantil, mas sua estrutura previsível e conduzida limita a espontaneidade e a liderança compartilhada.
+
+██████████████████████████████████████████████████████████████████████████████
+C · mercadinho e faz-de-conta · execução 1  (o juiz não sabe disto)
+
+  │ HABILIDADE_ALVO: Iniciar e sustentar trocas sociais recíprocas usando fala, gestos ou ações
+  │ RELACAO_COM_O_OBJETIVO: SIM — a habilidade trabalhada corresponde diretamente a iniciar e manter pequenas interações
+  │ MECANISMOS_DA_BP_PRESERVADOS: assumir papel/perspectiva, motivo real para falar, iniciar, responder, manter a troca, reagir ao outro, reciprocidade, criança lidera
+  │ COMO_FUNCIONA_NA_PRATICA: Adulto e criança alternam papéis, fazem pedidos, respondem falando, apontando ou entregando objetos, e ampliam a brincadeira com outra criança.
+  │ GENERALIZACAO: SIM — reaplica a troca recíproca e a liderança infantil em contexto de mercado, embora com maior estruturação
+  │ DECORACAO: Mercadinho, caixas, sacolas, cartões, calculadora e frases de compra são elementos temáticos; os cartões também organizam funcionalmente os turnos.
+  │ PRESSUPOE_SOBRE_A_CRIANCA: Assume que Bia tolera brincadeiras compartilhadas, aceita objetos e pessoas conhecidas, compreende alternância de turnos, pode escolher ações, beneficia-se de previsibilidade e não precisa falar; pressupõe interesse ou tolerância por objetos de mercado.
+  │ NIVEL_EXIGIDO: pré-verbal
+  │ VEREDITO: PASS_PARCIAL
+  │ JUSTIFICATIVA: A proposta sustenta trocas reais e acessíveis, mas a estrutura de turnos e frases reduz a improvisação e a experimentação espontânea valorizadas na prática original.
+
+██████████████████████████████████████████████████████████████████████████████
+C · mercadinho e faz-de-conta · execução 2  (o juiz não sabe disto)
+
+  │ HABILIDADE_ALVO: Iniciar e sustentar trocas sociais breves com parceiros
+  │ RELACAO_COM_O_OBJETIVO: SIM — a habilidade trabalha entradas, respostas e continuidade em interações sociais
+  │ MECANISMOS_DA_BP_PRESERVADOS: assumir papel/perspectiva, motivo real para falar, iniciar, responder, manter a troca, experimentar vocabulário/gesto, reagir ao outro, reciprocidade
+  │ COMO_FUNCIONA_NA_PRATICA: Adulto ou criança assume papel, escolhe ou entrega objetos, cumprimenta, faz pedidos, responde e alterna turnos com apoio visual ou gestual.
+  │ GENERALIZACAO: SIM — reaplica a interação de papéis e a improvisação social em compras, entregas e trocas
+  │ DECORACAO: nada
+  │ PRESSUPOE_SOBRE_A_CRIANCA: interesse ou tolerância por mercadinho e entregas; aceita parceiros conhecidos; consegue escolher, apontar, entregar ou receber objetos; compreende instruções e alternância de turnos; tolera perguntas e participação de outra criança; beneficia-se de interação previsível; pode permanecer em atividade curta
+  │ NIVEL_EXIGIDO: pré-verbal
+  │ VEREDITO: PASS_PARCIAL
+  │ JUSTIFICATIVA: A proposta cria oportunidades funcionais e acessíveis de troca, mas os roteiros, papéis fixos e condução adulta reduzem a liderança e a espontaneidade da criança.
+
+
+██████████████████████████████████████████████████████████████████████████████
+PLACAR DOS JUÍZOS INDIVIDUAIS
+
+braço                           ex  generaliz  objetivo  nível exigido   veredito
+A · desenho e personagens       1   SIM        SIM       palavras soltas PASS_FORTE
+A · desenho e personagens       2   SIM        SIM       pré-verbal      PASS_PARCIAL
+B · futebol e movimento         1   SIM        SIM       pré-verbal      PASS_PARCIAL
+B · futebol e movimento         2   SIM        SIM       pré-verbal      PASS_PARCIAL
+C · mercadinho e faz-de-conta   1   SIM        SIM       pré-verbal      PASS_PARCIAL
+C · mercadinho e faz-de-conta   2   SIM        SIM       pré-verbal      PASS_PARCIAL
+
+── DECORAÇÃO apontada por braço ──
+  A · desenho e personagens #1: Gibis, desenhos e caixa de papelão são sobretudo materiais e cenário; o desenho de personagens mantém função de mediação.
+  A · desenho e personagens #2: cidade, planeta, gibi, Capitão e demais cenários ou personagens específicos; nada disso é essencial ao mecanismo
+  B · futebol e movimento #1: Bola, futebol, cones, gol e cabine são tema, objetos e cenário; o movimento também facilita funcionalmente a participação
+  B · futebol e movimento #2: nada
+  C · mercadinho e faz-de-conta #1: Mercadinho, caixas, sacolas, cartões, calculadora e frases de compra são elementos temáticos; os cartões também organizam funcionalmente os turnos.
+  C · mercadinho e faz-de-conta #2: nada
+
+── PRESSUPOSTOS (comparo com os perfis reais fora do modelo) ──
+  A · desenho e personagens #1: interesse por desenho, gibis ou personagens; capacidade de escolher entre formas de participação; possibilidade de responder por fala, gesto, olhar ou desenho; tolerância a encontros curtos e previsíveis; disponibilidade para participar ao lado de outras pessoas
+  A · desenho e personagens #2: interesse por desenho ou gibis; tolerância a compartilhar materiais e turnos; capacidade de apontar, desenhar ou falar; preferência por interação individual; possibilidade de escolher e liderar; necessidade de baixa pressão; acesso a uma criança conhecida
+  B · futebol e movimento #1: Interesse por futebol ou movimento; tolera proximidade e participação com outras pessoas; entende turnos e instruções simples; pode responder por gesto, som ou palavra; consegue devolver, chutar ou entregar a bola; aceita mudanças de função
+  B · futebol e movimento #2: interesse ou tolerância por bolas e movimento; aceita participar com outra criança; consegue esperar brevemente; pode iniciar por olhar, aproximar, chamar, devolver ou apontar; pode afastar-se e retornar; beneficia-se de pouco barulho e uma atividade disponível
+  C · mercadinho e faz-de-conta #1: Assume que Bia tolera brincadeiras compartilhadas, aceita objetos e pessoas conhecidas, compreende alternância de turnos, pode escolher ações, beneficia-se de previsibilidade e não precisa falar; pressupõe interesse ou tolerância por objetos de mercado.
+  C · mercadinho e faz-de-conta #2: interesse ou tolerância por mercadinho e entregas; aceita parceiros conhecidos; consegue escolher, apontar, entregar ou receber objetos; compreende instruções e alternância de turnos; tolera perguntas e participação de outra criança; beneficia-se de interação previsível; pode permanecer em atividade curta
+
+── MECANISMOS PRESERVADOS ──
+  A · desenho e personagens #1: assumir papel/perspectiva, iniciar, responder, manter a troca, reagir ao outro, reciprocidade, criança lidera
+  A · desenho e personagens #2: assumir papel/perspectiva, motivo real para falar, iniciar, responder, manter a troca, reagir ao outro, reciprocidade, criança lidera
+  B · futebol e movimento #1: motivo real para falar, responder, manter a troca, reagir ao outro, reciprocidade, criança lidera
+  B · futebol e movimento #2: motivo real para falar, iniciar, responder, manter a troca, reagir ao outro, reciprocidade, criança lidera
+  C · mercadinho e faz-de-conta #1: assumir papel/perspectiva, motivo real para falar, iniciar, responder, manter a troca, reagir ao outro, reciprocidade, criança lidera
+  C · mercadinho e faz-de-conta #2: assumir papel/perspectiva, motivo real para falar, iniciar, responder, manter a troca, experimentar vocabulário/gesto, reagir ao outro, reciprocidade
+
+── COMO FUNCIONA NA PRÁTICA ──
+  A · desenho e personagens #1: Adulto entra no desenho, oferece comentário ou ação conjunta, espera resposta; Ivo escolhe desenhar, narrar, agir, observar e envolver outra criança.
+  A · desenho e personagens #2: Adulto e criança constroem desenho ou história alternadamente; o adulto pergunta, comenta e responde, enquanto a criança escolhe quanto participar.
+  B · futebol e movimento #1: Adulto ou criança rola, chuta ou busca a bola; Caio responde, troca turnos, cumprimenta, escolhe participantes ou narra.
+  B · futebol e movimento #2: Adulto organiza turnos com outra criança; Caio chama, olha, passa, espera, devolve, aponta o próximo ou escolhe a ação.
+  C · mercadinho e faz-de-conta #1: Adulto e criança alternam papéis, fazem pedidos, respondem falando, apontando ou entregando objetos, e ampliam a brincadeira com outra criança.
+  C · mercadinho e faz-de-conta #2: Adulto ou criança assume papel, escolhe ou entrega objetos, cumprimenta, faz pedidos, responde e alterna turnos com apoio visual ou gestual.

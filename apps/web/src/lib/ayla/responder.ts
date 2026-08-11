@@ -17,7 +17,11 @@ import { nucleoConducao } from "@/lib/conducao/diretrizes";
 // FASE 4A · as MESMAS constantes que `lib/ia/prompt.ts` injeta na web. Uma
 // redação só para os dois canais: se a precedência do perfil mudar, muda nos
 // dois no mesmo commit.
-import { ANCORA_PERFIL, LICENCA_GENERATIVA } from "@/lib/conducao/composicao";
+import {
+  ANCORA_PERFIL,
+  LACUNA_NAO_E_PERGUNTA,
+  LICENCA_GENERATIVA,
+} from "@/lib/conducao/composicao";
 import type { SecaoBase2 } from "@/lib/conducao/base2";
 import {
   linhasDoPerfilConsultavel,
