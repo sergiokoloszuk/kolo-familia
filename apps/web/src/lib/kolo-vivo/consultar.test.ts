@@ -202,3 +202,67 @@ describe("F · o que já sabemos impede a pergunta repetida", () => {
     expect(p.sabemos("sono", "adormece")).toBe(false);
   });
 });
+
+describe("F · a FORMA REAL do banco — o incidente de 11/08/2026", () => {
+  /**
+   * A tela grava `{ texto, atualizado_em }`, nunca `string`. Conferido por
+   * leitura das 8 primeiras linhas reais de `perfil_vivo_membro`: 8 de 8 são
+   * objeto. Enquanto este helper só aceitava string, TODA criança voltava com
+   * todo campo vazio — e o bloco `<o_que_ja_sabemos>`, com a `ANCORA_PERFIL`
+   * dentro, simplesmente não era montado.
+   */
+  const linhaReal = {
+    membro_atipico_id: A,
+    family_account_id: FAM,
+    // `sensorial` é coluna própria (storage toplevel); `socializacao` mora no
+    // saco jsonb. As duas formas de armazenamento, na forma real das duas.
+    sensorial: { texto: "Perfil sensorial: Misto\nReação a sons: não", atualizado_em: "2026-08-01" },
+    categorias_extras: {
+      sono: { texto: SONO_A, atualizado_em: "2026-08-01" },
+      comunicacao: { texto: "Como se comunica: Fala frases" },
+    },
+  };
+
+  it("16. MORDE: domínio gravado como { texto } é lido", async () => {
+    const p = await carregarPerfilConsultavel(fakeSupabase([linhaReal]), {
+      membroId: A,
+      familyId: FAM,
+    });
+    expect(p.valorDe("sono", "adormece")).toContain("ficar no quarto");
+    expect(p.valorDe("comunicacao", "forma")).toBe("Fala frases");
+  });
+
+  it("17. MORDE: coluna própria gravada como { texto } também é lida", async () => {
+    const p = await carregarPerfilConsultavel(fakeSupabase([linhaReal]), {
+      membroId: A,
+      familyId: FAM,
+    });
+    expect(p.valorDe("sensorial", "perfil")).toBe("Misto");
+  });
+
+  it("18. MORDE: o NEGATIVO sobrevive à forma real — é ele que evita repetir a pergunta", async () => {
+    const p = await carregarPerfilConsultavel(fakeSupabase([linhaReal]), {
+      membroId: A,
+      familyId: FAM,
+    });
+    const sons = p.dominios.get("sensorial")?.campos.find((c) => c.key === "sons");
+    expect(sons?.estado).toBe("negativo");
+  });
+
+  it("19. a forma antiga (string) continua valendo — testes e bancadas usam", async () => {
+    const p = await carregarPerfilConsultavel(fakeSupabase([linhaA]), {
+      membroId: A,
+      familyId: FAM,
+    });
+    expect(p.valorDe("sono", "adormece")).toContain("ficar no quarto");
+  });
+
+  it("20. objeto sem `texto` não vira lixo no prompt", async () => {
+    const p = await carregarPerfilConsultavel(
+      fakeSupabase([{ membro_atipico_id: A, family_account_id: FAM, categorias_extras: { sono: {} } }]),
+      { membroId: A, familyId: FAM },
+    );
+    expect(p.sabemos("sono", "adormece")).toBe(false);
+    expect(resumoDoDominio(p.dominios.get("sono"))).toBe("");
+  });
+});
