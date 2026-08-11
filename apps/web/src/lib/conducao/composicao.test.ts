@@ -135,3 +135,53 @@ describe("o WhatsApp não muda", () => {
     expect(consumidores.some((f) => /lib[\/\\]ayla[\/\\]responder\.ts$/.test(f))).toBe(true);
   });
 });
+
+describe("PEND-034 · a semântica do NEGATIVO tem dono, e é a âncora", () => {
+  /**
+   * ⚠️ O DEFEITO QUE ESTES TESTES PRENDEM (11/08/2026). Em 2 de 3 planos, o
+   * perfil dizia `Reação a sons: não` e o documento orientava "menos barulho,
+   * menos imprevisibilidade". Rastreado: nem a BASE 2, nem as duas BPs, nem o
+   * pedido da mãe carregavam a ideia sonora — e a ÚNICA instrução do bloco
+   * ligada a um negativo governava PERGUNTAR ("não pergunte o que está em
+   * 'NÃO se aplica'"). Nada dizia o que fazer ao ORIENTAR.
+   *
+   * Isto aqui é teste de texto, e sabe disso: prende a decisão estrutural de
+   * onde a regra mora. Que ela FUNCIONA é a bancada semântica que prova.
+   */
+  it("2. MORDE: o negativo prevalece sobre o típico do diagnóstico", () => {
+    expect(ANCORA_PERFIL).toMatch(/NÃO É O CASO.*(TÍPICO|típico)/i);
+    expect(ANCORA_PERFIL).toMatch(/associação típica|exemplo da base|conhecimento geral/i);
+  });
+
+  it("3. MORDE: não basta não afirmar — também não orientar", () => {
+    // Era exatamente esta a brecha: o plano nunca escreveu "ela é sensível a
+    // som", e mesmo assim mandou procurar lugar mais quieto.
+    expect(ANCORA_PERFIL).toMatch(/não basta não afirmar/i);
+    expect(ANCORA_PERFIL).toMatch(/N[ÃA]O ORIENTE como se fosse verdade/i);
+  });
+
+  it("4. MORDE: o negativo NÃO vira veto eterno", () => {
+    // O risco do conserto é o oposto do defeito: a Ayla ficar cega a um sinal
+    // novo porque o perfil antigo disse que não.
+    expect(ANCORA_PERFIL).toMatch(/não fecha o assunto para sempre/i);
+    expect(ANCORA_PERFIL).toMatch(/informação nova e específica DESTA criança/i);
+    expect(ANCORA_PERFIL).toMatch(/nunca apagando em silêncio/i);
+  });
+
+  it("5. MORDE: semelhança com outras crianças não reabre a hipótese", () => {
+    expect(ANCORA_PERFIL).toMatch(/comum em crianças de perfil parecido/i);
+  });
+
+  it("6. MORDE: a regra vale para os TRÊS canais, por morar num lugar só", () => {
+    // Se alguém copiar isto para o Plano ou para o WhatsApp, passam a existir
+    // duas redações da mesma semântica — e elas divergem no primeiro dia.
+    const src = (p: string) => readFileSync(resolve(__dirname, "..", p), "utf8");
+    for (const arquivo of ["ia/plano.ts", "ia/engine.ts", "ayla/orchestrator.ts"]) {
+      expect(src(arquivo), `${arquivo} recriou a regra do negativo`).not.toMatch(
+        /NÃO É O CASO.*típico|não basta não afirmar/i,
+      );
+    }
+    // E o texto chega ao Plano pelo mesmo `buildContextBlock` da conversa.
+    expect(src("ia/prompt.ts")).toMatch(/ANCORA_PERFIL/);
+  });
+});
