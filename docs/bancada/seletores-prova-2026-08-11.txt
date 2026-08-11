@@ -1,0 +1,44 @@
+██████████████████████████████████████████████████████████████████████████████
+OS DOIS SELETORES — PROVA POR EXECUÇÃO (zero chamada, zero família real)
+██████████████████████████████████████████████████████████████████████████████
+
+PROVA A · GPT — quem responde
+
+  ✓ IA_PROVIDER=anthropic → anthropic, para quem estiver na lista ou fora   a lista não vaza quando o modo é anthropic
+  ✓ IA_PROVIDER=openai_teste + id DENTRO → openai
+  ✓ IA_PROVIDER=openai_teste + id FORA → anthropic
+  ✓ IA_PROVIDER=openai → openai para QUALQUER id, e sem lista nenhuma   com lista ausente: openai, openai, openai
+  ✓ IA_PROVIDER=openai → openai TAMBÉM sem id (vazio, null, undefined)   vazio/null/undefined: openai, openai, openai
+  ✓ grafia errada de IA_PROVIDER → anthropic (fail-closed)   'openai_ON', 'OPENAI' e ausente → todos anthropic
+
+PROVA B · 4A — com o que ela pensa
+
+  ✓ KOLO_PILOTO_4A=off → ninguém, nem quem está na lista
+  ✓ KOLO_PILOTO_4A=teste + id DENTRO → true
+  ✓ KOLO_PILOTO_4A=teste + id FORA → false
+  ✓ KOLO_PILOTO_4A=on → true para QUALQUER id, e a lista deixa de importar   inclusive para quem NÃO está na lista — é isto que 'para todos' significa
+  ✓ KOLO_PILOTO_4A=teste + lista VAZIA → ninguém (o acidente não promove)
+  ✓ valor inválido → fail-closed (cai em off)   só 'teste' e 'on' ligam; 'teste ' com espaço é tolerado, o resto cai em off
+  ✓ sob `on`, id ausente/vazio também recebe
+  ✓ sob `teste`, id ausente/vazio NÃO recebe
+
+PROVA C · INDEPENDÊNCIA — as quatro combinações
+
+  combinação          provider      4A
+  GPT ON  + 4A OFF    openai        false
+  ✓ GPT ON  + 4A OFF → provider=openai, 4A=false
+  GPT OFF + 4A ON     anthropic     true
+  ✓ GPT OFF + 4A ON  → provider=anthropic, 4A=true
+  GPT ON  + 4A ON     openai        true
+  ✓ GPT ON  + 4A ON  → provider=openai, 4A=true
+  GPT OFF + 4A OFF    anthropic     false
+  ✓ GPT OFF + 4A OFF → provider=anthropic, 4A=false
+  ✓ mudar IA_PROVIDER nos 4 valores NÃO move a 4A   4A: true, true, true, true
+  ✓ mudar KOLO_PILOTO_4A nos 4 valores NÃO move o provider   provider: openai, openai, openai, openai
+
+██████████████████████████████████████████████████████████████████████████████
+PLACAR: 20/20
+
+estado do piloto NESTE processo, ao final: teste
+(o ambiente foi restaurado a cada caso — nada vazou entre cenários)
+██████████████████████████████████████████████████████████████████████████████
