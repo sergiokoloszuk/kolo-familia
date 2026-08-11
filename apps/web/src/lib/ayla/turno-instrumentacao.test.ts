@@ -26,7 +26,12 @@ describe("A · o turno tem UM id, e ele nasce uma vez", () => {
     // Se algum ramo gerasse o próprio id, as chamadas do MESMO turno viriam com
     // correlacionadores diferentes e a soma por turno mentiria sem avisar.
     expect(ORCH).toMatch(/const turnId = crypto\.randomUUID\(\)/);
-    expect(ORCH.split("crypto.randomUUID()").length - 1, "há mais de uma origem de turn_id").toBe(1);
+    // ⚠️ A asserção mede a origem do TURN_ID, não quantos UUIDs existem no
+    // arquivo. Ela dizia `randomUUID() === 1` e quebrou na fatia A2, quando o
+    // `envioId` entrou — um id de OUTRA natureza, com outro propósito. Contar
+    // UUIDs teria transformado cada unidade nova numa falsa regressão.
+    expect(ORCH.split("const turnId = crypto.randomUUID()").length - 1,
+      "há mais de uma origem de turn_id").toBe(1);
   });
 
   it("2. MORDE: parser e responder recebem o MESMO turnId", () => {
@@ -248,5 +253,101 @@ describe("E · FATIA A1 — as quatro features auxiliares do turno", () => {
     );
     expect(m.membro_atipico_id).toBeNull();
     expect(m.turn_id, "a lacuna do membro não pode custar a correlação do turno").toBe("t");
+  });
+});
+
+describe("F · FATIA A2 — a execução PROATIVA não é um turno", () => {
+  /**
+   * ⚠️ DECISÃO DE ARQUITETURA (11/08/2026), registrada aqui porque é o teste
+   * que a mantém honesta: cada unidade real recebe o identificador coerente com
+   * sua natureza — `turn_id` para o reativo, `envio_id` para o proativo,
+   * `inbound_id` para o evento anterior ao turno (fatia A3). Um
+   * `correlation_id` genérico por cima das três esconderia diferenças reais.
+   */
+  const REPERTORIO = src("ayla/repertorio.ts");
+
+  it("20. MORDE: no proativo, `turn_id` fica AUSENTE — e não null", () => {
+    // `null` é indistinguível de "esqueci de propagar". Ausência é uma
+    // afirmação: esta chamada não pertence a turno nenhum.
+    const m = metaDoTurno(
+      { supabase: {} as never, family_account_id: "f", feature: "ayla_repertorio",
+        envio_id: "e-1", origem: "proativo", membro_atipico_id: "bia" },
+      { ms: 400, tentativas: 1 },
+    );
+    expect(m).not.toHaveProperty("turn_id");
+    expect(m).not.toHaveProperty("message_id");
+    expect(m.envio_id).toBe("e-1");
+    expect(m.origem).toBe("proativo");
+    expect(m.membro_atipico_id).toBe("bia");
+    expect(m.ms).toBe(400);
+    expect(m.tentativas).toBe(1);
+  });
+
+  it("21. MORDE: o reativo continua com turn_id e SEM envio_id", () => {
+    const m = metaDoTurno(
+      { supabase: {} as never, family_account_id: "f", feature: "ayla_parser",
+        turn_id: "t-1", message_id: "m-1", membro_atipico_id: "bia" },
+      { ms: 100, tentativas: 1 },
+    );
+    expect(m.turn_id).toBe("t-1");
+    expect(m).not.toHaveProperty("envio_id");
+    expect(m).not.toHaveProperty("origem");
+  });
+
+  it("22. MORDE: o envio_id nasce DENTRO da função — a assinatura não muda", () => {
+    // A função É a unidade. Sem parâmetro novo, não há chamador para esquecer
+    // de propagar — e o cron continua chamando com três argumentos.
+    expect(ORCH).toMatch(/const envioId = crypto\.randomUUID\(\);/);
+    expect(ORCH).toMatch(
+      /export async function sendRepertorioSugestao\(\s*\n\s*supabase: SupabaseClient,\s*\n\s*familyAccountId: string,\s*\n\s*agora: Date = new Date\(\),\s*\n\): Promise<EnvioResultado>/,
+    );
+  });
+
+  it("23. MORDE: dois envios geram ids diferentes", () => {
+    // `crypto.randomUUID()` por invocação. O teste guarda a propriedade, não a
+    // implementação: dois envios não podem compartilhar id.
+    const a = crypto.randomUUID();
+    const b = crypto.randomUUID();
+    expect(a).not.toBe(b);
+    // e há exatamente UMA origem de envio_id no arquivo
+    expect(ORCH.split("const envioId = crypto.randomUUID()").length - 1).toBe(1);
+  });
+
+  it("24. MORDE: o tracking do repertório declara origem e membro resolvido", () => {
+    const i = ORCH.indexOf('feature: "ayla_repertorio",');
+    expect(i).toBeGreaterThan(-1);
+    const bloco = ORCH.slice(i, i + 400);
+    expect(bloco).toMatch(/envio_id: envioId,/);
+    expect(bloco).toMatch(/origem: "proativo",/);
+    expect(bloco).toMatch(/membro_atipico_id: membroFoco\.id,/);
+    // ⚠️ E NUNCA UM turn_id — em NENHUM ponto da função, não só depois do
+    // `feature`. A primeira versão deste teste olhava só para frente, e uma
+    // sabotagem que inseria `turn_id` ANTES da linha passou verde. Achado pela
+    // sabotagem, não pela revisão.
+    const fn = ORCH.slice(
+      ORCH.indexOf("export async function sendRepertorioSugestao"),
+      ORCH.indexOf('feature: "ayla_repertorio",') + 400,
+    );
+    // A regra é sobre CÓDIGO, não sobre prosa: o comentário da própria função
+    // explica por que ela NÃO usa `turn_id`, e essa explicação precisa poder
+    // existir. Comentários fora antes de olhar.
+    const codigo = fn.replace(/\/\*[\s\S]*?\*\/|\/\/.*/g, "");
+    expect(codigo, "o proativo ganhou turn_id — ele não pode se passar por turno")
+      .not.toMatch(/turn_id/);
+  });
+
+  it("25. MORDE: o repertório mede só a chamada ao modelo", () => {
+    const t0 = REPERTORIO.indexOf("const t0 = Date.now()");
+    const modelo = REPERTORIO.indexOf("stream.finalMessage()");
+    const fim = REPERTORIO.indexOf("const msModelo = Date.now() - t0");
+    expect(t0, "t0 sumiu").toBeGreaterThan(-1);
+    expect(t0, "t0 depois da chamada — o ms mediria zero").toBeLessThan(modelo);
+    expect(fim, "o fecho tem que vir depois da resposta").toBeGreaterThan(modelo);
+    expect(REPERTORIO).toMatch(/ms: msModelo, tentativas: 1/);
+  });
+
+  it("26. nada do repertório mudou além da instrumentação", () => {
+    expect(REPERTORIO).toMatch(/model: AYLA_MODEL_FALLBACK/);
+    expect(REPERTORIO).toMatch(/max_tokens: 400/);
   });
 });

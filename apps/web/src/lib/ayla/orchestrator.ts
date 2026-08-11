@@ -1065,6 +1065,13 @@ export async function sendRepertorioSugestao(
   familyAccountId: string,
   agora: Date = new Date(),
 ): Promise<EnvioResultado> {
+  // ⚠️ A UNIDADE AQUI É O ENVIO, NÃO UM TURNO. Esta função roda por cron, 1× por
+  // semana, sem inbound e sem mensagem da família. Ver `envio_id` em
+  // `UsageTracking`: forçar um `turn_id` inventaria um turno que nunca
+  // aconteceu. O id nasce DENTRO da função porque a função É a unidade — e por
+  // isso a assinatura não muda e não há chamador para esquecer de propagar.
+  const envioId = crypto.randomUUID();
+
   const podeRes = await podeEnviarProativa(
     supabase,
     { family_account_id: familyAccountId, agora },
@@ -1132,7 +1139,16 @@ export async function sendRepertorioSugestao(
       evitar,
       jaTentados,
     },
-    { supabase, family_account_id: familyAccountId, feature: "ayla_repertorio" },
+    {
+      supabase,
+      family_account_id: familyAccountId,
+      feature: "ayla_repertorio",
+      envio_id: envioId,
+      origem: "proativo",
+      // O membro do round-robin da semana — resolvido pela própria função,
+      // acima. Nenhuma inferência para preencher telemetria.
+      membro_atipico_id: membroFoco.id,
+    },
   );
 
   return enviarEPersistir(supabase, {
