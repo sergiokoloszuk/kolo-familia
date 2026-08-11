@@ -1636,6 +1636,10 @@ export async function processInbound(
   // `const`, e no topo da função: se algum ramo gerasse um id próprio, as
   // chamadas do MESMO turno viriam com correlacionadores diferentes e a soma
   // por turno passaria a mentir sem avisar.
+  // A correlação viaja como UM objeto e é OBRIGATÓRIA nas funções internas —
+  // ver `Correlacao`. Opcional, um chamador esquecido compilaria e gravaria
+  // `turn_id: null` em silêncio: o modo de falha que esta instrumentação
+  // existe para eliminar. Obrigatório, o compilador é o teste.
   const turnId = crypto.randomUUID();
   // O id do inbound, quando existir. Preenchido logo depois da persistência —
   // ele NÃO é o correlacionador (nasce condicionalmente), é a ponte para o
@@ -2651,7 +2655,13 @@ export async function processInbound(
   // Best-effort: nunca quebra o retorno.
   if (deveRegistrar) {
     try {
-      await persistirRegistro(supabase, family.id, parsed);
+      await persistirRegistro(supabase, family.id, parsed, {
+        turn_id: turnId,
+        message_id: inboundMessageId,
+        // `persistirRegistro` só roda com membro resolvido — ela começa com
+        // `if (!p.membro_atipico_id) return`. Não há inferência aqui.
+        membro_atipico_id: parsed.membro_atipico_id,
+      });
     } catch (e) {
       console.warn(
         "[ayla] persistirRegistro (adiado) falhou:",
@@ -3015,10 +3025,25 @@ function lerTextoAtualDaSecao(
 // Persistência de registro derivado do parser
 // ============================================================
 
+/**
+ * A IDENTIDADE MÍNIMA DE UM TURNO — obrigatória, para que ninguém a esqueça.
+ *
+ * `turn_id` nunca é nulo: ele nasce em `processInbound` e existe sempre.
+ * `message_id` pode ser nulo (dois caminhos de exceção não produzem o id do
+ * inbound). `membro_atipico_id` pode ser nulo quando o membro ainda não foi
+ * resolvido naquele ponto — e nunca é inferido só para preencher o rastro.
+ */
+type Correlacao = {
+  turn_id: string;
+  message_id: string | null;
+  membro_atipico_id: string | null;
+};
+
 async function persistirRegistro(
   supabase: SupabaseClient,
   familyId: string,
   p: ParserResult,
+  correlacao: Correlacao,
 ): Promise<void> {
   if (!p.membro_atipico_id) return;
 
@@ -3091,7 +3116,12 @@ async function persistirRegistro(
             gatilho: (r.possivel_gatilho as string | null) ?? null,
           })),
         },
-        { supabase, family_account_id: familyId, feature: "ayla_dedup_diario" },
+        {
+          supabase,
+          family_account_id: familyId,
+          feature: "ayla_dedup_diario",
+          ...correlacao,
+        },
       );
 
       if (decisao.acao === "merge") {
@@ -3206,7 +3236,12 @@ async function persistirRegistro(
         const valoresAtuais = parsearSubcampos(subcampos, textoAtual);
         const r = await rotearFatoSubcampo(
           { subcampos, valoresAtuais, fato: p.texto_kolo_vivo_sugerido },
-          { supabase, family_account_id: familyId, feature: "ayla_rotear_kv" },
+          {
+            supabase,
+            family_account_id: familyId,
+            feature: "ayla_rotear_kv",
+            ...correlacao,
+          },
         );
         if (!r.skip && r.campoSub && r.valor.trim()) {
           const novoTexto = serializarSubcampos(subcampos, {
@@ -3229,7 +3264,12 @@ async function persistirRegistro(
         // Domínio de texto livre: dedup semântico consolida velho + novo.
         const decisao = await decidirDedup(
           { campo, textoSugerido: p.texto_kolo_vivo_sugerido, textoAtual },
-          { supabase, family_account_id: familyId, feature: "ayla_dedup" },
+          {
+            supabase,
+            family_account_id: familyId,
+            feature: "ayla_dedup",
+            ...correlacao,
+          },
         );
         if (decisao.operacao !== "skip" && decisao.texto.trim()) {
           aplicou = await aplicarSugestaoNoMembro(
@@ -3256,6 +3296,7 @@ async function persistirRegistro(
           campo,
           textoParaConflito,
           rowAtual,
+          correlacao,
         );
       }
 
@@ -3293,6 +3334,7 @@ async function sinalizarConflitoCrossCampo(
   campo: string,
   textoNovo: string,
   rowAtual: Record<string, unknown> | null | undefined,
+  correlacao: Correlacao,
 ): Promise<void> {
   try {
     const outros = MEMBRO_CAMPOS_TODOS.filter((c) => c !== campo).map((c) => ({
@@ -3308,7 +3350,12 @@ async function sinalizarConflitoCrossCampo(
         textoNovo,
         outros,
       },
-      { supabase, family_account_id: familyId, feature: "ayla_conflito_kv" },
+      {
+        supabase,
+        family_account_id: familyId,
+        feature: "ayla_conflito_kv",
+        ...correlacao,
+      },
     );
     if (!conflito) return;
 
