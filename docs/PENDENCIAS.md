@@ -24,6 +24,7 @@ Só o que está aberto. 🔒 = bloqueada.
 | [PEND-018](#pend-018) | Memória e retrato da criança | **C · Memória** | P1 | ABERTA | desenhar junto com A |
 | [PEND-021](#pend-021) | Jornada dos 7 dias e conversão | G · Comercial | P1 | ABERTA | preencher o DESEJADO |
 | [PEND-022](#pend-022) | Fontes confiáveis, limites e escalonamento | F · Limites | P2 | ABERTA | preencher o DESEJADO |
+| [PEND-031](#pend-031) | Repetição entre seções do Plano após contexto compartilhado | D · Entregas | P2 | NÃO MEDIDA | medir junto da Fatia 4 |
 | [PEND-030](#pend-030) | Confirmações curtas e continuidade do objetivo | D · Entregas | P3 | VALIDAÇÃO NO PILOTO | observar conversas reais antes de ajustar |
 | [PEND-029](#pend-029) | Aprendizado do Plano sabe o resultado, não a intervenção | D · Entregas | P2 | ABERTA | medir quantas notas são descritivas |
 | [PEND-028](#pend-028) | Piloto 4A — o que a bancada deixou em aberto | **A · Condução** | P2 | ABERTA | não bloqueia o piloto; medir depois do uso real |
@@ -433,6 +434,37 @@ Aberta em: 2026-08-08 · Origem: pedido do Sérgio na missão da PEND-004
 - **Critério de conclusão:** mapa de impacto escrito, com prioridade proposta e
   aprovada.
 - **Agente recomendado:** AUDITAR → PROPOR
+
+---
+
+### PEND-031
+**Possível repetição entre seções do Plano depois do contexto compartilhado**
+Bloco: **D · Entregas** · Prioridade: **P2** · Estado: **ABERTA · NÃO MEDIDA**
+Aberta em: 2026-08-11 · Origem: Fatia 3a de PEND-027
+
+> **Não bloqueia a 3a.** É consequência plausível da mudança, ainda sem medição.
+
+- **O que mudou.** Até a Fatia 3a, cada uma das oito seções montava o próprio
+  contexto — e, como o roteador podia decidir diferente a cada vez, elas
+  enxergavam repertórios ligeiramente distintos. Isso era um defeito
+  (incoerência dentro do mesmo documento) e, sem querer, uma **fonte de
+  variedade**. Agora todas partem do mesmo contexto.
+- **O que falta.** A regra *"cada ideia/frase mora em UMA seção só — não repita
+  entre seções"* existe **apenas no system do gerador single-call**
+  (`montarSistemaPlanoCompleto`), que hoje só roda para fim de semana. **O
+  multi-call não a carrega** — nunca carregou. Enquanto as seções viam coisas
+  diferentes, o acaso segurava; com contexto idêntico, nada segura.
+- **⚠️ NÃO MEDIDO.** Não sei se a repetição aumentou, nem quanto. Afirmar que
+  piorou seria a mesma pressa que produziu o "0 em 8" — plausível não é medido.
+- **Como medir, sem custo novo:** gerar dois planos para o mesmo caso (antes e
+  depois de `4a5b6c7`) e comparar sobreposição de ideias entre seções por
+  julgamento semântico, não por regex. Ou ler planos reais que saírem do piloto.
+- **Destino provável: Fatia 4** (estrutura núcleo + módulos). Se a estrutura
+  passar a ser escolhida em vez de fixa, o problema pode desaparecer junto — por
+  isso não vale corrigir agora com uma instrução a mais, que competiria com as
+  que já existem.
+- **Depende de:** nada. **Não bloqueia** a Fatia 3b.
+- **Agente recomendado:** INVESTIGAR (junto da Fatia 4)
 
 ---
 
@@ -2863,7 +2895,7 @@ trimestralmente, o que vier antes.
 
 ---
 
-**Próximo ID livre: PEND-031. *(024 e 025 reservadas por frentes ainda não publicadas.)***
+**Próximo ID livre: PEND-032. *(024 e 025 reservadas por frentes ainda não publicadas.)***
 
 > Conferir contra `origin/main`, não contra o seu branch. Dois branches podem
 > reivindicar o mesmo número — o conflito de merge nesta linha é o alarme.

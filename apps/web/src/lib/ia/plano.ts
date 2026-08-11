@@ -7,9 +7,10 @@ import {
 } from "./validacao-plano";
 import { getAnthropicClient, MODELS } from "./anthropic";
 import { buildContext } from "./context";
+import type { ContextoSkillResposta } from "./context";
 import { buildContextBlock, VOZ_LIMITES_E_FRONTEIRA } from "./prompt";
-import { loadActiveSkills, routeSkillsAI } from "./router";
-import { respondAsOutputType } from "./engine";
+import { loadActiveSkills, routeSkillsAI, type RoutedSkill } from "./router";
+import { respondAsOutputType, montarContextoDeSecoes } from "./engine";
 import { capitalizarNome } from "@/lib/nome";
 import { logEvent } from "@/lib/log";
 
@@ -430,20 +431,22 @@ async function gerarEntenderObservar(params: {
   familyId: string;
   membroAtipicoId: string | null;
   desafio: string;
+  /** O mesmo contexto das outras seções — ver `montarContextoDeSecoes`. */
+  contextoPronto: { ctx: ContextoSkillResposta; roteadas: RoutedSkill[] };
 }): Promise<{ entender: string; observar: string }> {
-  const { supabase, familyId, membroAtipicoId, desafio } = params;
+  const { supabase, desafio, contextoPronto } = params;
   try {
     return await comRetentativa("entender/observar", async () => {
-      const skills = await loadActiveSkills(supabase);
-      const roteadas =
-        skills.length > 0 ? await routeSkillsAI(desafio, skills, { maxSkills: 2 }) : [];
-      const ctx = await buildContext(supabase, {
-        familyId,
-        membroAtipicoId,
-        skills: roteadas.map((r) => r.skill),
-        conversaId: null,
-      });
-      const contexto = buildContextBlock(ctx);
+      // ⚠️ ANTES ESTA FUNÇÃO MONTAVA O PRÓPRIO CONTEXTO (11/08/2026), com um
+      // detalhe que ninguém tinha notado: ela roteava para `maxSkills: 2`,
+      // enquanto as sete seções práticas roteavam para 1. A abertura do plano
+      // enxergava um repertório diferente do resto do documento — e o
+      // `entender` é justamente quem levanta a hipótese que as outras seções
+      // deveriam estar desenvolvendo.
+      //
+      // Agora todas partem do mesmo contexto. A perda da segunda skill é
+      // deliberada e vale menos que a coerência do documento.
+      const contexto = buildContextBlock(contextoPronto.ctx);
       const system = `Você é a Kolo.
 
 ${VOZ_LIMITES_E_FRONTEIRA}
@@ -544,6 +547,23 @@ export async function gerarSecoesPlanoMultiCall(params: {
     ? `${desafio}\n\n${aprendizado}\n${SISTEMA_APRENDIZADO}`
     : desafio;
 
+  // ⚠️ O CONTEXTO É MONTADO UMA VEZ (FATIA 3a · 11/08/2026).
+  //
+  // Antes, cada uma das oito chamadas refazia `loadActiveSkills` +
+  // `routeSkillsAI` + `buildContext`: **~80 consultas ao banco e 8 chamadas do
+  // roteador por plano**, com o roteador decidindo oito vezes sobre o mesmo
+  // texto. E o custo era o menor dos problemas — nada garantia que as oito
+  // seções tinham visto o mesmo perfil e o mesmo repertório.
+  //
+  // O montador vive em `engine.ts`, ao lado de quem o consome, e não aqui: é o
+  // mesmo par que `respondAsOutputType` monta internamente, e duas definições
+  // de "o contexto de uma seção" divergiriam no primeiro dia.
+  const contextoPronto = await montarContextoDeSecoes(supabase, {
+    familyId,
+    membroAtipicoId,
+    pedido: desafioComLastro,
+  });
+
   // Cada seção prática = o botão real. Em lotes de CONCORRENCIA_SECOES (não
   // todas de uma vez) e com retentativa — as práticas são o plano.
   const falhas: Array<{ tipo: string; motivo: string }> = [];
@@ -562,6 +582,7 @@ export async function gerarSecoesPlanoMultiCall(params: {
             membroAtipicoId,
             outputType: { key: ot.key, label: ot.label, prompt_template: ot.prompt_template },
             pedido: desafioComLastro,
+            contextoPronto,
           });
           const txt = (r.texto ?? "").trim();
           if (!txt) throw new Error("seção veio vazia");
@@ -574,7 +595,13 @@ export async function gerarSecoesPlanoMultiCall(params: {
         return null;
       }
     }),
-    gerarEntenderObservar({ supabase, familyId, membroAtipicoId, desafio: desafioComLastro }),
+    gerarEntenderObservar({
+      supabase,
+      familyId,
+      membroAtipicoId,
+      desafio: desafioComLastro,
+      contextoPronto,
+    }),
   ]);
   if (!framing.entender && !framing.observar) {
     falhas.push({ tipo: "entender/observar", motivo: "não veio depois das retentativas" });
