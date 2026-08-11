@@ -2,7 +2,7 @@ import { z } from "zod";
 import { getAylaAnthropicClient, AYLA_MODEL, AYLA_MODEL_FALLBACK } from "./anthropic";
 import { getSystemPrompt } from "@/lib/ai/prompts";
 import { logarUsoApi } from "@/lib/billing/logar";
-import type { UsageTracking } from "./responder";
+import { metaDoTurno, type UsageTracking } from "./responder";
 import type { ParserResult } from "./types";
 
 const ParserSchema = z.object({
@@ -138,6 +138,11 @@ Devolva o JSON.`;
   const tentar = async (model: string): Promise<ParserResult | null> => {
     let raw: string;
     try {
+      // ⚠️ O CRONÔMETRO FECHA NA RESPOSTA DO MODELO, antes do `JSON.parse` que
+      // acontece bem depois (fora deste bloco). Medir a função inteira somaria
+      // pós-processamento ao tempo de IA — e é justamente essa separação que a
+      // investigação de latência precisa.
+      const t0 = Date.now();
       const stream = client.messages.stream({
         model,
         max_tokens: 1024,
@@ -145,6 +150,7 @@ Devolva o JSON.`;
         messages: [{ role: "user", content: userMsg }],
       });
       const finalMessage = await stream.finalMessage();
+      const msModelo = Date.now() - t0;
       raw = finalMessage.content
         .filter((b): b is Extract<typeof b, { type: "text" }> => b.type === "text")
         .map((b) => b.text)
@@ -157,6 +163,12 @@ Devolva o JSON.`;
           feature: tracking.feature,
           input_tokens: finalMessage.usage.input_tokens,
           output_tokens: finalMessage.usage.output_tokens,
+          // `tentativas: 1` SEMPRE, e não é descuido: o fallback do parser
+          // (leve → principal) chama `tentar` de novo, e CADA chamada grava a
+          // própria linha, com o próprio modelo. Uma linha é uma tentativa.
+          // Somá-las aqui esconderia qual modelo gastou o quê — que é a
+          // informação mais útil deste call-site.
+          meta: metaDoTurno(tracking, { ms: msModelo, tentativas: 1 }),
         });
       }
     } catch (e) {
