@@ -77,6 +77,26 @@ export type UsageTracking = {
    * estiver resolvido, o valor é `null` — e a lacuna fica visível.
    */
   membro_atipico_id?: string | null;
+  /**
+   * A EXECUÇÃO PROATIVA — quando a chamada NÃO pertence a um turno.
+   *
+   * ⚠️ `ayla_repertorio` roda por cron, 1× por semana, com cadência própria.
+   * Não há inbound, não há mensagem da família, não há turno. Dar-lhe um
+   * `turn_id` inventaria um turno que nunca aconteceu e faria a soma "tempo de
+   * IA por turno" incluir uma chamada que nenhuma família esperou.
+   *
+   * DECISÃO DE ARQUITETURA (11/08/2026): cada unidade real recebe o
+   * identificador coerente com sua natureza —
+   *   `turn_id`    processamento conversacional reativo
+   *   `envio_id`   execução proativa
+   *   `inbound_id` evento recebido antes do turno (a fatia A3 decide)
+   * Um `correlation_id` genérico por cima das três só entra se um dia
+   * precisarmos consultar tudo por um eixo só. Unificar agora esconderia
+   * diferenças reais do sistema.
+   */
+  envio_id?: string;
+  /** De onde a chamada veio. Ausente = turno reativo. */
+  origem?: "proativo";
 };
 
 /** Os campos de correlação, no formato que vai para `api_calls.meta`. */
@@ -84,6 +104,18 @@ export function metaDoTurno(
   t: UsageTracking | undefined,
   extra: Record<string, unknown>,
 ): Record<string, unknown> {
+  // ⚠️ NO PROATIVO O `turn_id` FICA AUSENTE, e não `null`. A diferença importa:
+  // `null` é indistinguível de "esqueci de propagar" — e é justamente esse
+  // esquecimento silencioso que o contrato obrigatório existe para eliminar.
+  // Ausência é uma afirmação: esta chamada não pertence a turno nenhum.
+  if (t?.origem === "proativo") {
+    return {
+      envio_id: t.envio_id ?? null,
+      origem: "proativo",
+      membro_atipico_id: t.membro_atipico_id ?? null,
+      ...extra,
+    };
+  }
   return {
     turn_id: t?.turn_id ?? null,
     message_id: t?.message_id ?? null,
