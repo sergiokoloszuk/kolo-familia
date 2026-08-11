@@ -1,14 +1,27 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { calcularCustoTokens, calcularCustoPorChamada } from "./prices";
+import { logEvent } from "@/lib/log";
 
 /**
  * Loga uma chamada de API (Anthropic / OpenAI) na tabela api_calls. Esse
  * registro alimenta o dashboard /admin/uso-api — custo total, custo por
  * família, custo por feature.
  *
- * Falha silenciosamente: nunca quebra o fluxo principal. Se a inserção
- * der erro, loga warn no console mas devolve normal — a feature do
- * usuário não pode quebrar porque a auditoria falhou.
+ * Nunca quebra o fluxo principal: se a inserção falhar, a resposta da família
+ * segue normalmente. O que MUDOU em 11/08/2026 é que a falha deixa de sumir.
+ *
+ * ⚠️ POR QUE. A conversa da web chamava esta função com os dados certos desde
+ * que foi instrumentada — e `api_calls` tinha ZERO registros de `conversa_web`
+ * em todo o histórico, enquanto o WhatsApp tinha milhares. A rota web usa
+ * `createClient()` (sessão do usuário, sujeito a RLS); o `INSERT` batia na
+ * política, o erro voltava em `error`, e o `console.warn` daqui morria com a
+ * retenção do stdout da Vercel. Meses de custo da conversa web fora do
+ * `/admin/uso-api`, e ninguém tinha como saber.
+ *
+ * O cliente continua vindo de QUEM CHAMA — de propósito. Construir um
+ * service-role aqui dentro consertaria a web e quebraria as bancadas, que
+ * passam um stub que ESTOURA justamente para garantir que nada seja gravado
+ * em produção durante um teste. Privilégio é decisão de quem chama.
  *
  * Para LLMs: passe input_tokens / output_tokens (lidos de resp.usage do
  * SDK Anthropic ou equivalente). O custo é calculado pela PRICE_TABLE.
@@ -60,16 +73,33 @@ export async function logarUsoApi(
       meta: params.meta ?? null,
     });
 
-    if (error) {
-      console.warn(
-        `[billing] falha ao logar uso API (${params.feature}/${params.model}):`,
-        error.message,
-      );
-    }
+    if (error) await naoGravou(params, error.message);
   } catch (e) {
-    console.warn(
-      `[billing] exceção ao logar uso API (${params.feature}/${params.model}):`,
-      e instanceof Error ? e.message : e,
-    );
+    await naoGravou(params, e instanceof Error ? e.message : String(e));
   }
+}
+
+/**
+ * A FALHA DE TELEMETRIA NÃO PODE SUMIR — e também não pode derrubar a conversa.
+ *
+ * Reusa `logEvent` com severidade `error`, que já persiste em `eventos_app` por
+ * service role. Nenhum mecanismo de alerta novo: o que faltava não era um canal,
+ * era usar o que existe. `logEvent` tem o próprio `try/catch`, então uma falha
+ * aqui continua sendo invisível para a família — só deixa de ser invisível para
+ * nós.
+ *
+ * ⚠️ O `await` é deliberado. Sem ele, numa rota que fecha o stream logo em
+ * seguida, o registro pode nunca sair — seria trocar um silêncio por outro.
+ */
+async function naoGravou(
+  params: { feature: string; model: string; provider: string; family_account_id?: string | null },
+  motivo: string,
+): Promise<void> {
+  await logEvent({
+    kind: "billing_nao_gravou",
+    severity: "error",
+    family_account_id: params.family_account_id ?? null,
+    message: `api_calls não gravou ${params.feature} (${params.provider}/${params.model}): ${motivo.slice(0, 200)}`,
+    payload: { feature: params.feature, provider: params.provider, model: params.model, motivo: motivo.slice(0, 400) },
+  });
 }

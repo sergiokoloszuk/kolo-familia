@@ -1,5 +1,5 @@
 import type { NextRequest } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createServiceRoleClient } from "@/lib/supabase/server";
 import {
   gerarConversacional,
   providerConversacionalParaFamilia,
@@ -181,18 +181,37 @@ export async function POST(req: NextRequest) {
             tokens_output: r.tokensOut,
           });
 
-          // BILLING — esta rota é a conversa da web e NÃO logava nada até hoje:
-          // todo o custo dela estava fora do /admin/uso-api. Provider e modelo
-          // saem do RETORNO da chamada, nunca de uma constante local: é o único
-          // jeito de o número continuar certo quando o env muda.
-          await logarUsoApi(supabase, {
+          // BILLING — esta rota é a conversa da web. Provider e modelo saem do
+          // RETORNO da chamada, nunca de uma constante local: é o único jeito
+          // de o número continuar certo quando o env muda.
+          //
+          // ⚠️ SERVICE ROLE, E SÓ AQUI (11/08/2026). O `supabase` desta rota é o
+          // da SESSÃO DA FAMÍLIA, e `api_calls` é tabela de auditoria: a RLS não
+          // deixa um usuário comum inserir. Resultado medido: **zero registros
+          // de `conversa_web` em todo o histórico**, enquanto o WhatsApp — que
+          // roda em service role — tinha milhares. A chamada existia, os dados
+          // estavam certos, e o INSERT era recusado em silêncio.
+          //
+          // O privilégio fica NESTA linha, não na rota: tudo o mais que esta
+          // requisição faz continua passando pela RLS da família, que é onde o
+          // isolamento entre famílias mora.
+          await logarUsoApi(createServiceRoleClient(), {
             family_account_id: family.id,
             provider: r.provider,
             model: r.model,
             feature: "conversa_web",
             input_tokens: r.tokensIn,
             output_tokens: r.tokensOut,
-            meta: { conversa_id: conversaId, ms: r.ms, cache_read: r.cacheRead },
+            meta: {
+              conversa_id: conversaId,
+              membro_atipico_id: (conversa.membro_atipico_id as string | null) ?? null,
+              // PEND-041: canal e ORIGEM são coisas diferentes. "web" diz por
+              // onde entrou; "conversa" diz o que era. Sem o segundo, uma
+              // geração de Plano e um turno de conversa ficam indistinguíveis.
+              origem: "conversa",
+              ms: r.ms,
+              cache_read: r.cacheRead,
+            },
           });
 
           controller.close();
