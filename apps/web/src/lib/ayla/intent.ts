@@ -119,15 +119,49 @@ export function parseSkills(bruto: string | undefined, permitidas: readonly stri
  * ⚠️ Só age quando faltam campos. Com os quatro presentes, cada um fica onde
  * está: o comportamento dos três antigos não muda.
  */
+/**
+ * O VÍNCULO COM O PLANO EM PREPARAÇÃO — o quinto campo.
+ *
+ * ⚠️ ELE RESPONDE UMA PERGUNTA SÓ: "esta mensagem tem a ver com a pergunta que
+ * ficou pendente?". Não é intenção, não é tema, e não decide artefato nenhum.
+ *
+ * `nao_sei` e `mudou_assunto` são desfechos distintos de propósito: o primeiro
+ * é ausência de leitura, o segundo é uma leitura. Os dois levam ao mesmo lugar
+ * hoje — não capturar —, e separá-los é o que permite medir depois quantas
+ * vezes o classificador simplesmente não soube.
+ */
+export type VinculoComPlano = "responde" | "continua" | "mudou_assunto" | "cancela" | "nao_sei";
+
+const VINCULOS: readonly string[] = ["responde", "continua", "mudou_assunto", "cancela", "nao_sei"];
+
+/**
+ * ⚠️ NA DÚVIDA, `nao_sei` — e nunca `responde`. Capturar uma mensagem para o
+ * Plano errado é pior que perder uma retomada: a mãe teria uma informação sobre
+ * o sono virando dado de um plano de comunicação, ou pior, do irmão.
+ */
+function parseVinculo(bruto: string | undefined): VinculoComPlano {
+  const v = (bruto ?? "").trim().toLowerCase();
+  return (VINCULOS as string[]).includes(v) ? (v as VinculoComPlano) : "nao_sei";
+}
+
 export function separarCampos(
   raw: string,
   permitidas: readonly string[],
-): { intencao: string; tema: string; aceite: string; skills: string[] } {
+): {
+  intencao: string;
+  tema: string;
+  aceite: string;
+  skills: string[];
+  vinculo: VinculoComPlano;
+} {
   const p = raw.split("|");
   const intencao = p[0] ?? raw;
   const tema = p[1] ?? "";
   let aceite = p[2] ?? "";
   let skills = parseSkills(p[3], permitidas);
+  // ⚠️ ADITIVO: só existe quando o turno perguntou algo do Plano. Modelo antigo,
+  // 4 campos, campo ausente ou lixo → `nao_sei`, e `nao_sei` não captura nada.
+  const vinculo = parseVinculo(p[4]);
 
   // Três campos e o terceiro é um nome de skill puro → a skill escorregou.
   if (p.length === 3 && skills.length === 0) {
@@ -137,7 +171,7 @@ export function separarCampos(
       aceite = ""; // não havia aceite; havia skill no lugar errado
     }
   }
-  return { intencao, tema, aceite, skills };
+  return { intencao, tema, aceite, skills, vinculo };
 }
 
 /** O bloco de skills do prompt — só nome e keywords, nunca a Camada 1. */
