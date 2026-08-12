@@ -510,8 +510,15 @@ Aberta em: 2026-08-11 · Origem: fatia de autoridade do Plano (5490c24)
 
 ### PEND-054
 **A janela de lote custa 7 segundos em TODO turno do WhatsApp**
-Bloco: **A · Condução** · Prioridade: **P0** · Estado: **ABERTA — consulta pronta, aguardando dado de produção**
+Bloco: **A · Condução** · Prioridade: **P0 de EXPERIÊNCIA** · Estado: **ABERTA — consulta pronta, aguardando dado de produção**
 Aberta em: 2026-08-13 · Origem: missão de latência (97d0765)
+
+> ⚠️ **P0 aqui é de experiência/performance, não de segurança.** Os outros P0
+> desta lista são clínicos ou de acesso — família perdendo dado, criança em
+> risco, mãe sem entrar. Este é "afeta todo turno do WhatsApp e degrada o
+> produto inteiro", e não deve competir por urgência com aqueles. Ler os dois
+> como a mesma coisa foi o que já transformou "ativado" em três conceitos
+> diferentes neste repositório.
 
 > **`lote-inbound.ts:62` dorme 7 segundos fixos antes de qualquer
 > processamento, e é o maior componente isolado da latência percebida.**
