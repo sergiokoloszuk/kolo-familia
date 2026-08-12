@@ -673,6 +673,39 @@ Aberta em: 2026-08-13 · Origem: achado ao corrigir o gatilho do aceite (oferta 
   tempo — e o caso legítimo (dois pedidos separados por horas) continua
   gerando dois.
 
+### PEND-061
+**Mensagem só-de-mídia some da memória da Ayla**
+Bloco: **A · Condução** · Prioridade: **P1 de EXPERIÊNCIA** · Estado: **ABERTA — achado de produção, investigação antes de qualquer alteração**
+Aberta em: 2026-08-13 · Origem: achado ao abrir o caminho do vídeo
+
+> **A foto entra, a Ayla responde a ela no turno, e no turno seguinte aquilo
+> nunca aconteceu.**
+
+- CAUSA, **VI NO CÓDIGO**: `carregarHistorico` (`orchestrator.ts`) filtra
+  `typeof m.texto === "string" && m.texto.trim()`. Mensagem sem texto não entra
+  no histórico que vai ao modelo — e mídia sem legenda é gravada com
+  `texto = ''`.
+- **MEDI em produção: 97 das 100 mensagens com imagem têm `texto` vazio.**
+  Ou seja, praticamente toda foto que uma família mandou é invisível para a
+  Ayla no turno seguinte. Áudio não sofre (a transcrição vira texto).
+- Com o vídeo aberto (13/08), o mesmo buraco passa a valer para ele: o registro
+  fica em `ayla_messages` com `midia_tipo='video'`, mas some do histórico.
+- ⚠️ **NÃO CORRIGIR ÀS CEGAS.** As três saídas óbvias são armadilhas:
+  - **texto sintético** (`"[foto]"` na coluna `texto`) polui o que a mãe
+    escreveu, entra em `carregarHistorico`, no parser, no lote e na busca — e
+    vira um fato falso atribuído a ela;
+  - **schema novo** antes de saber o que a memória precisa representar;
+  - **mudar só o filtro** faria turnos vazios entrarem no prompt como falas em
+    branco.
+- A missão desta pendência é INVESTIGAR primeiro: **como a mídia deve aparecer
+  na memória** (um marcador na montagem do histórico? um campo derivado? o
+  próprio `midia_tipo` lido na hora de montar?), e só então decidir. Verificar
+  o que já existe — `midia_url` e `midia_tipo` já são gravados e ninguém os lê
+  na recuperação.
+- Critério de conclusão: depois de mandar uma foto (ou vídeo) sem legenda, a
+  Ayla ainda sabe no turno seguinte que aquilo chegou, sem que nenhum texto
+  inventado tenha sido atribuído à mãe.
+
 ### PEND-052
 **Patrimônio dos especialistas do app anterior — auditar o que não migrou**
 Bloco: **A · Condução** · Prioridade: **P2** · Estado: **ABERTA**
