@@ -33,15 +33,54 @@ NÃO está pronto quando:
 - a conversa está sobre outra coisa (preço, acesso ao app, agradecimento, assunto do time humano);
 - a família está falando de várias crianças e ainda não ficou claro de quem é o desafio (quando O QUE JÁ SABEMOS identifica a criança, isto deixa de valer).`;
 
+/**
+ * OS CINCO DESFECHOS — a forma que a Rotina já tinha, e o Plano não.
+ *
+ * ⚠️ O BOOLEANO ESCONDIA TRÊS COISAS DIFERENTES dentro de `pronto: false`:
+ * "falta um dado", "não sei nem sobre o quê é" e "isso a conversa resolve". As
+ * três viravam a MESMA resposta — `null` na ponte, silêncio para a mãe. Uma
+ * mãe que pediu um plano e recebeu nada não tem como saber se foi ignorada.
+ *
+ * `prontidao-rotina.ts` já separa `falta_escopo` de `falta` pelo mesmo motivo:
+ * "você não disse o que quer organizar" pede caminhos, não pergunta de dado.
+ */
+export type EstadoDoPlano =
+  /** Dá pra gerar agora. */
+  | "suficiente"
+  /** A família quer, mas não ficou claro SOBRE O QUÊ. Ofereça caminhos. */
+  | "falta_escopo"
+  /** Escopo claro, falta UM dado que muda o plano. */
+  | "falta"
+  /** A conversa resolve melhor. Orientar — e não tratar o pedido como erro. */
+  | "orientacao"
+  | "nao_e_plano";
+
 export type Prontidao = {
-  pronto: boolean;
+  estado: EstadoDoPlano;
   /** O tema específico do plano, nas palavras da conversa. */
   tema: string | null;
-  /** Por que sim/não — vai pro log, ajuda a calibrar o critério. */
+  /**
+   * A ÚNICA pergunta que muda o plano. Só significa algo em `falta`.
+   *
+   * ⚠️ SINGULAR, como na Rotina. Uma lista de lacunas vira, mais cedo ou mais
+   * tarde, duas perguntas no mesmo balão — e aí a mãe está num formulário.
+   */
+  pergunta: string | null;
+  /** Por que — vai pro log, ajuda a calibrar o critério. */
   motivo: string;
 };
 
-const NAO = (motivo: string): Prontidao => ({ pronto: false, tema: null, motivo });
+/**
+ * ⚠️ NA DÚVIDA, `nao_e_plano` — e não `falta`. Falha de rede não é sinal de que
+ * falta informação: é ausência de sinal. Prometer pergunta que ninguém formulou
+ * seria inventar condução a partir de um erro.
+ */
+const NAO = (motivo: string): Prontidao => ({
+  estado: "nao_e_plano",
+  tema: null,
+  pergunta: null,
+  motivo,
+});
 
 /**
  * Lê as últimas trocas e decide. Chamada leve (Haiku) — roda só quando a ponte
@@ -108,10 +147,20 @@ O que vier em O QUE JÁ SABEMOS e em O QUE JÁ FUNCIONOU **conta como informaç�
 
 ${CRITERIO_SUFICIENCIA}
 
-Responda APENAS JSON: {"pronto":true|false,"tema":"...","motivo":"..."}
-- tema: o desafio específico, em 3 a 8 palavras, nas palavras da própria conversa (ex.: "parar atividade antes de terminar"). null se não estiver pronto.
+Responda APENAS JSON: {"estado":"...","tema":"...","pergunta":"...","motivo":"..."}
+
+ESTADOS:
+- "suficiente": dá pra montar um plano específico agora.
+- "falta": o assunto está claro, mas falta UM dado que MUDA o plano (a estratégia, a progressão, a adaptação). Só use quando a resposta realmente mudaria o que vai ser escrito.
+- "falta_escopo": ela quer ajuda, mas ainda não ficou claro SOBRE O QUÊ trabalhar.
+- "orientacao": isso se resolve melhor na própria conversa agora — é dúvida pontual ou desabafo, não material de plano.
+- "nao_e_plano": a conversa é sobre outra coisa (preço, acesso, agradecimento, assunto do time humano).
+
+- tema: o desafio específico, em 3 a 8 palavras, nas palavras da própria conversa (ex.: "parar atividade antes de terminar"). null quando não houver.
+- pergunta: SÓ em "falta" — UMA pergunta curta, natural, que a mãe responde em uma frase. Nunca duas perguntas. NUNCA pergunte o que já está em O QUE JÁ SABEMOS ou em O QUE JÁ FUNCIONOU.
 - motivo: no máximo 12 palavras.
-Seja CRITERIOSO: na dúvida, responda false. É melhor conversar mais uma vez do que entregar um plano genérico.`;
+
+Seja CRITERIOSO com "suficiente": é melhor perguntar uma coisa do que entregar um plano genérico. Mas NÃO use "falta" por conforto — se a resposta não mudaria o plano, não vale uma pergunta.`;
 
     const client = getAnthropicClient();
     const final = await client.messages.create({
@@ -146,13 +195,28 @@ Seja CRITERIOSO: na dúvida, responda false. É melhor conversar mais uma vez do
     const m = raw.match(/\{[\s\S]*\}/);
     if (!m) return NAO("resposta ilegível do classificador");
     const o = JSON.parse(m[0]) as Record<string, unknown>;
-    const pronto = o.pronto === true;
+    const bruto = String(o.estado ?? "").trim();
+    const VALIDOS: EstadoDoPlano[] = ["suficiente", "falta_escopo", "falta", "orientacao", "nao_e_plano"];
+    // Estado que o modelo inventou não vira desfecho: vira "não é plano". O
+    // mesmo rigor da Rotina — o contrato é do código, não da resposta.
+    const estado = (VALIDOS as string[]).includes(bruto) ? (bruto as EstadoDoPlano) : "nao_e_plano";
     const tema = typeof o.tema === "string" && o.tema.trim() ? o.tema.trim() : null;
+    const pergunta = typeof o.pergunta === "string" && o.pergunta.trim() ? o.pergunta.trim() : null;
     const motivo = typeof o.motivo === "string" ? o.motivo.slice(0, 120) : "";
+
     // Sem tema não há plano focado — e plano sem foco é o genérico que a
-    // Karina não quer.
-    if (pronto && !tema) return NAO("pronto sem tema definido");
-    return { pronto, tema, motivo };
+    // Karina não quer. Isso vira FALTA_ESCOPO, não silêncio: a mãe pediu, e
+    // quem não sabe sobre o quê é pergunta o quê, não some.
+    if (estado === "suficiente" && !tema) {
+      return { estado: "falta_escopo", tema: null, pergunta: null, motivo: "suficiente sem tema" };
+    }
+    // `falta` sem pergunta é o pior dos mundos: não gera E não pergunta. Se o
+    // modelo não formulou a pergunta, ele não sabe o que falta — trate como
+    // escopo, que tem desfecho conversacional próprio.
+    if (estado === "falta" && !pergunta) {
+      return { estado: "falta_escopo", tema, pergunta: null, motivo: "falta sem pergunta" };
+    }
+    return { estado, tema, pergunta, motivo };
   } catch (e) {
     return NAO(`falha: ${e instanceof Error ? e.message : "erro"}`);
   }

@@ -391,9 +391,15 @@ export async function montarPonteWhatsApp(
         aprendizado,
       });
       console.log(
-        `[ayla:ponte] prontidão=${prontidao.pronto} tema="${prontidao.tema ?? ""}" motivo="${prontidao.motivo}"`,
+        `[ayla:ponte] prontidão=${prontidao.estado} tema="${prontidao.tema ?? ""}" motivo="${prontidao.motivo}"`,
       );
-      if (!prontidao.pronto) return null;
+      // ⚠️ SÓ `suficiente` GERA, e os outros quatro continuam devolvendo null
+      // NESTA FATIA — comportamento idêntico ao booleano de antes. Dar voz a
+      // `falta` (perguntar) e a `orientacao` (orientar) exige o estado
+      // conversacional `plano_conversa`, que é a fatia seguinte. Entregar a
+      // pergunta antes de existir retomada produziria a mesma pergunta a cada
+      // turno, que é pior que o silêncio de hoje.
+      if (prontidao.estado !== "suficiente") return null;
       temaAuto = prontidao.tema;
     }
 
