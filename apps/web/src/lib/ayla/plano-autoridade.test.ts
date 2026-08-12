@@ -95,8 +95,12 @@ describe("o portão real do orquestrador", () => {
   it("7. MORDE: a oferta aceita continua valendo sem o ato", () => {
     // "sim" / "pode fazer" depois de a Ayla OFERECER. Exigir o ato ali
     // obrigaria a mãe a repetir o pedido por extenso.
+    //
+    // 13/08/2026: `ofertouPlanoRecente` virou `ofertaDePlanoPendente` e passou
+    // a receber a criança do turno — o comportamento defendido aqui (o "sim"
+    // curto abre sem o ato) não mudou.
     expect(ORCH).toMatch(
-      /ehAfirmacaoCurta\(args\.params\.mensagem\) &&\s*\n\s*\(await ofertouPlanoRecente\(supabase, args\.family_account_id\)\)/,
+      /ehAfirmacaoCurta\(args\.params\.mensagem\) &&\s*\n\s*\(await ofertaDePlanoPendente\(\s*\n\s*supabase,\s*\n\s*args\.family_account_id,\s*\n\s*args\.membro_atipico_id,\s*\n\s*\)\)/,
     );
   });
 

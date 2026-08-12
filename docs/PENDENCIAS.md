@@ -634,6 +634,45 @@ Aberta em: 2026-08-13 · Origem: M3.2, regra de contradição perfil × relato
 - Critério de conclusão: os quatro casos acima provados de ponta a ponta —
   gravação correta, e recuperação no turno seguinte.
 
+### PEND-060
+**Dois Planos em segundos: a rajada fura o cooldown de 3 min**
+Bloco: **A · Condução** · Prioridade: **P1 de EXPERIÊNCIA** · Estado: **ABERTA — causa identificada, sem solução proposta**
+Aberta em: 2026-08-13 · Origem: achado ao corrigir o gatilho do aceite (oferta pendente × cumprida)
+
+> **O cooldown de 3 minutos da ponte existe e está correto. Ele não pega
+> turnos CONCORRENTES: as duas leituras acontecem antes da primeira escrita.**
+
+- MEDIDO em produção (145 Planos, 53 famílias): **15 pares de Planos da mesma
+  família a menos de 10 min** um do outro. Sete deles **abaixo de 120 s** —
+  3 s, 4 s, 9 s, 16 s, 21 s, 32 s, 76 s. Todos os 15 são da **mesma criança**.
+- **Caso Theo** (0b319cbe, 12/08, 18:08:45 → 18:08:55, **9 s**): dois inbounds
+  a 15 s de distância (*"Ele comia bastante banana, uva…"* / *"Na escola tem
+  comido melancia"*) abriram dois turnos concorrentes. **Nenhum dos dois era
+  um "Ok"** — não passa pelo gatilho do aceite, e por isso não foi corrigido
+  na fatia de 13/08.
+- **Caso Matheo** (4135061b, 11/08, 13:30:27 → 13:30:59, **32 s**): mesmo
+  mecanismo, com dois "Ok" a 34 s de distância. Os outros dois duplicados dele
+  (13:26 e 13:30) eram o gatilho do aceite e **estão corrigidos**.
+- CAUSA RAIZ, **VI NO CÓDIGO** (`ponte.ts`, freio anti-duplicata): o cooldown
+  faz `select` em `ayla_messages` procurando `/auth/wa` nos últimos 3 min, e a
+  mensagem que ele procura só é gravada **no fim** do turno
+  (`enviarRespostaEmChunks`). Em duas invocações simultâneas, ambas leem antes
+  de qualquer uma escrever. É o padrão do §8 do protocolo: *ler antes de
+  escrever não basta numa rajada*.
+- O caminho já existe no repositório e **não deve ser reinventado**:
+  `reservarEnvioProativo` (`cadencia.ts`) e `reservarConviteAssinatura`
+  (`orchestrator.ts`) — **reservar primeiro, resolver quem chegou antes**, e
+  quem perde apaga a própria reserva. ⚠️ Atenção à janela da reserva: se ela
+  for tão longa quanto o cooldown, uma reserva órfã silencia o fluxo por 3 min
+  por uma geração que nunca aconteceu.
+- ⚠️ **Não confundir com o gatilho do aceite.** Aquele era semântico (a entrega
+  se reoferecia sozinha) e está resolvido; este é de concorrência e sobrevive
+  a ele. Corrigir um não corrige o outro.
+- Critério de conclusão: dois turnos concorrentes da mesma família produzem
+  **um** Plano, provado por execução com as duas invocações em voo ao mesmo
+  tempo — e o caso legítimo (dois pedidos separados por horas) continua
+  gerando dois.
+
 ### PEND-052
 **Patrimônio dos especialistas do app anterior — auditar o que não migrou**
 Bloco: **A · Condução** · Prioridade: **P2** · Estado: **ABERTA**
