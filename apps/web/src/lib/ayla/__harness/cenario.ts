@@ -53,6 +53,24 @@ export type PerfilSintetico = {
   extras?: Record<string, unknown>;
 };
 
+/**
+ * O FORMATO REAL DO PERFIL — `{ texto: "..." }`, não string pura.
+ *
+ * ⚠️ `resumoCampoKV` começa com `if (typeof json !== "object") return ""`. Uma
+ * string cai fora em silêncio: o dado existe na linha, e o resumo sai vazio. Foi
+ * o segundo engano desta fixture (11/08/2026) — eu já tinha errado o LUGAR
+ * (extras × coluna) e depois errei a FORMA. As duas vezes o teste acusou o
+ * produto, e as duas vezes o erro era meu.
+ *
+ * É a mesma forma que a PEND-033 documentou, e é por isso que o cenário escreve
+ * como o banco escreve, e não como seria mais cômodo escrever.
+ */
+function embrulhar(o: Record<string, unknown>): Record<string, unknown> {
+  const r: Record<string, unknown> = {};
+  for (const [k, v] of Object.entries(o)) r[k] = typeof v === "string" ? { texto: v } : v;
+  return r;
+}
+
 export function montarMundo(params: {
   telefone?: string;
   nomeMae?: string;
@@ -115,8 +133,8 @@ export function montarMundo(params: {
         {
           membro_atipico_id: id,
           family_account_id: familyId,
-          ...(c.sabe ?? {}),
-          categorias_extras: c.extras ?? {},
+          ...embrulhar(c.sabe ?? {}),
+          categorias_extras: embrulhar(c.extras ?? {}),
         },
       ]);
     }
