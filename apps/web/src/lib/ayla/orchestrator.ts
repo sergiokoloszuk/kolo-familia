@@ -2774,6 +2774,18 @@ async function enviarRespostaEmChunks(
   // sem ter como saber.
   const idsBolhas: Array<string | null> = [];
   let erro: string | null = null;
+  /**
+   * O PLANO QUE ESTE TURNO ENTREGOU — a âncora de `reenviar` e `editar`.
+   *
+   * ⚠️ Antes disto (PEND-050) o id do Plano só existia dentro da URL do
+   * magic-link, no meio do texto. Recuperá-lo exigiria parsear a própria fala da
+   * Ayla — o mesmo tipo de acoplamento frágil que já derruba o aceite da oferta
+   * (`ofertouPlanoRecente` casa regex no texto dela mesma).
+   *
+   * Fica `null` quando o turno não entregou plano nenhum, que é a esmagadora
+   * maioria dos turnos.
+   */
+  let planoEntregueId: string | null = null;
 
   // A pessoa pediu um plano? Então a Ayla NÃO escreve o plano no chat — dá uma
   // resposta curta e o sistema entrega o plano (PDF + link). Vale tanto pro pedido
@@ -2916,9 +2928,16 @@ async function enviarRespostaEmChunks(
         // consumiu o teto, ele sai sem espera.
         const delayNudge = Math.min(1, Math.max(0, TETO_ESPERA_SEGUNDOS - esperaGasta));
         esperaGasta += delayNudge;
-        const r = await enviarTexto({ phoneE164: args.phone, texto: nudge, delaySegundos: delayNudge });
+        const r = await enviarTexto({
+          phoneE164: args.phone,
+          texto: nudge.texto,
+          delaySegundos: delayNudge,
+        });
         idsBolhas.push(r.messageId);
-        textoCompleto = `${textoCompleto}\n\n${nudge}`;
+        textoCompleto = `${textoCompleto}\n\n${nudge.texto}`;
+        // ⚠️ A ÂNCORA DO ARTEFATO (11/08/2026, PEND-050). Só se grava depois do
+        // envio dar certo: mensagem que não saiu não ancorou nada.
+        planoEntregueId = nudge.planoId;
       } catch (e) {
         console.warn(
           "[ayla:ponte] falha ao enviar link no WhatsApp:",
@@ -2946,7 +2965,10 @@ async function enviarRespostaEmChunks(
       tipo: args.tipo,
       texto: textoCompleto,
       enviada_em: new Date().toISOString(),
-      ...registroDeEnvio(idsBolhas),
+      // ⚠️ SÓ `plano_id`, e o membro NÃO entra aqui: a própria linha já tem a
+      // coluna `membro_atipico_id`, e duplicar um dado é criar duas fontes que
+      // um dia divergem. Quem quiser a criança do plano lê `planos`.
+      ...registroDeEnvio(idsBolhas, planoEntregueId ? { plano_id: planoEntregueId } : undefined),
     });
     await supabase
       .from("ayla_preferences")
@@ -3747,13 +3769,27 @@ async function loadFamiliaParaEnvio(
  * Nunca gravamos a string "unknown" ali: além de mentir, a segunda ocorrência
  * violaria o índice e derrubaria o registro inteiro da mensagem.
  */
-function registroDeEnvio(ids: Array<string | null>): {
+/**
+ * ⚠️ `metadata` TEM DONO ÚNICO NA LINHA, e é esta função. Quem quiser
+ * acrescentar algo passa em `extras` — não escreve um segundo `metadata` no
+ * mesmo objeto.
+ *
+ * Foi exatamente o erro que a âncora do plano cometeu ao nascer (11/08/2026):
+ * o `metadata: { plano_id }` ficava ANTES deste spread, e `entrega` o apagava
+ * inteiro. O turno gravava a mensagem, o teste lia `null`, e nada no código
+ * dizia que os dois disputavam a mesma chave.
+ */
+function registroDeEnvio(
+  ids: Array<string | null>,
+  extras?: Record<string, unknown>,
+): {
   zaap_message_id: string | null;
   metadata: Record<string, unknown>;
 } {
   return {
     zaap_message_id: ids.find(Boolean) ?? null,
     metadata: {
+      ...(extras ?? {}),
       entrega: {
         canal: "z-api",
         // O nome do campo é o que ele prova. Não renomeie pra "entregue".
