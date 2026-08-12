@@ -221,7 +221,18 @@ describe("E/F. follow-up preservado", () => {
 
 describe("I/J/K. o que já existia continua", () => {
   it("pedido explícito de edição segue funcionando sem feedback", () => {
-    expect(ORCH).toMatch(/intent === "rotina_editar" \|\| pedeEditarRotina\(inbound\.texto\)/);
+    // O que este teste defende é o CAMINHO: um pedido explícito de edição entra
+    // sozinho, sem depender de o texto ser lido como feedback.
+    //
+    // ⚠️ 11/08/2026: o pedido explícito deixou de ser `pedeEditarRotina` puro e
+    // passou a exigir o ATO de editar — porque medido, sozinho ele abria para 4
+    // de 6 usos conceituais ("qdo muda a rotina ela fica mal"). O termo continua
+    // no gate e continua nascendo daquela função; o que mudou é que agora ele
+    // exige que a mãe esteja PEDINDO.
+    expect(ORCH).toMatch(
+      /const pedidoDeEditarRotina =\s*\n\s*pedeEditarRotina\(inbound\.texto\) && atoSobreArtefato\(inbound\.texto\) === "editar";/,
+    );
+    expect(ORCH).toMatch(/intent === "rotina_editar" \|\| pedidoDeEditarRotina \|\| ehFeedbackDeRotina/);
   });
 
   it("feedback sem âncora devolve a conversa ao fluxo normal", () => {

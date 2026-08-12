@@ -114,7 +114,18 @@ const NARRATIVA = /^(quando|qdo|se|toda vez|sempre que|todas as vezes|as vezes|d
  * rotina ela fica mal" passava por imperativo por causa do `qdo` na frente.
  * O erro apareceu no próprio corpus, antes de qualquer commit.
  */
-const COMECA_COM_VERBO = (t: string, verbo: RegExp) => verbo.test(t.split(" ")[0] ?? "");
+const COMECA_COM_VERBO = (t: string, verbo: RegExp) => {
+  const p = t.split(" ")[0] ?? "";
+  // ⚠️ INFINITIVO NÃO É IMPERATIVO (11/08/2026, medido). "mudar a rotina dela é
+  // sempre difícil" abria o portão de edição: `mudar` é a primeira palavra, e a
+  // regra do imperativo casou. Só que infinitivo inicial em português é NOME —
+  // é o sujeito da frase ("mudar é difícil"), não uma ordem para quem lê.
+  // Imperativo e presente ("muda", "tira", "manda") continuam valendo; a forma
+  // em -ar/-er/-ir passa a exigir a moldura de pedido ("quero mudar", "pode
+  // montar"), que é como um pedido real chega mesmo.
+  if (/(ar|er|ir)$/.test(p)) return false;
+  return verbo.test(p);
+};
 
 const pedidoDirigido = (t: string, verbo: RegExp) => {
   if (NARRATIVA.test(t)) return false;
