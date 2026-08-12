@@ -569,7 +569,29 @@ describe("simplificação: o prompt não pode crescer", () => {
     // por turno e ficam fora do núcleo — inclusive o bloco novo de integração
     // entre domínios, que vive no envelope da lente justamente para não ser
     // pago nos 44% de turnos sem skill.
-    expect(nucleoConducao().length).toBeLessThan(67_000);
+    // 12/08/2026 (terceira subida) — 70.000, por duas entradas que nasceram de
+    // conversa medida, não de vontade de escrever:
+    //
+    //   A FORMA DA INTERAÇÃO É UMA ALAVANCA (~1.100) — o patrimônio do antigo
+    //   KoloDiálogo Afetivo. A auditoria mostrou que o Core já tinha o CARDÁPIO
+    //   de formas (gesto, demonstrar, fazer junto, antecipar) mas não o
+    //   PRINCÍPIO: olhar a interação entre criança, adulto, demanda e ambiente,
+    //   e não só o comportamento da criança. Faltavam também `ritmo da fala` e
+    //   `atenção antes da instrução`, ausentes em Core, VOZ e lentes.
+    //
+    //   INVESTIGAR TAMBÉM É AJUDAR A MÃE A PENSAR (~1.700) — medido no caso A:
+    //   "Ele não quer entrar na escola" recebeu UMA pergunta aberta e nada
+    //   mais. Correto pela regra (faltava contexto), e pobre como produto: a
+    //   mãe não sabe o que é relevante observar. O bloco troca a pergunta
+    //   aberta por hipóteses plausíveis que ela reconhece, geradas pela IA a
+    //   partir DAQUELE caso — e exige ajuda útil na mesma mensagem.
+    //
+    // ⚠️ O RISCO DESTE ÚLTIMO É VIRAR TABELA. Ele traz dois exemplos, e os
+    // exemplos são a FORMA, nunca o conteúdo: "as opções são geradas por você,
+    // a partir daquele caso — não existe lista fixa por assunto". Se algum dia
+    // aparecer aqui um mapa "se escola → mostre as opções X", é o paredão de
+    // regras voltando pela porta dos fundos.
+    expect(nucleoConducao().length).toBeLessThan(70_000);
   });
 });
 
