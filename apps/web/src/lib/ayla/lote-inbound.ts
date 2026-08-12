@@ -24,9 +24,34 @@ import type { SupabaseClient } from "@supabase/supabase-js";
  * de segundos pra responder, e uma resposta coerente compensa muito a espera.
  */
 
-/** Silêncio esperado antes de responder. Cobre o intervalo típico entre
- *  mensagens de uma mesma fala; acima disso a pessoa está mesmo esperando. */
-const JANELA_SILENCIO_MS = 7000;
+/**
+ * Silêncio esperado antes de responder.
+ *
+ * ⚠️ 7000 → 3000 EM 13/08/2026, e o número saiu de DADO DE PRODUÇÃO, não de
+ * intuição. Medido sobre 60 dias — 5.329 mensagens, 1.834 turnos, com o
+ * recorte certo (entradas consecutivas SEM resposta da Ayla no meio):
+ *
+ *   86,3% dos turnos têm UM balão só — a janela não faz nada por eles,
+ *          e mesmo assim cobrava a espera inteira.
+ *   252 turnos são multi-balão. A janela de 7s capturava 69 deles (27,4%);
+ *          a de 3s captura 33 (13,1%).
+ *   O corte 7s → 3s deixa de agrupar 36 bursts = 1,96% de TODOS os turnos,
+ *          e devolve 4 SEGUNDOS a 100% deles.
+ *
+ * ⚠️ E O ACHADO QUE MAIS IMPORTA, que a mesma medição revelou: a mediana do
+ * intervalo dentro de um burst é 11,2 SEGUNDOS (p75 18,6 · p90 34). Ou seja, a
+ * janela de 7s JÁ NÃO ALCANÇAVA 72,6% dos casos que existe para resolver —
+ * resposta partida em turno multi-balão já era comum antes desta mudança, e
+ * ninguém tinha medido. Esticar a janela não resolveria: para cobrir o p90
+ * seriam 34 segundos de espera para todo mundo. Ver PEND-058.
+ *
+ * A LEITURA QUALITATIVA sustenta que o mecanismo é bom e a calibragem é que
+ * estava errada: os bursts que só 7s capturava são mesmo o mesmo pensamento
+ * ("Tem dificuldade de Tomar" + "De engolir"), inclusive correção de digitação
+ * ("Ela e raida" + "Rapida"). Perder 1,96% desses é o preço aceito, com
+ * conhecimento de causa, por 4 segundos em cada turno.
+ */
+const JANELA_SILENCIO_MS = 3000;
 
 /** Teto de mensagens no lote — rajada absurda não vira prompt gigante. */
 const MAX_MENSAGENS_LOTE = 12;
