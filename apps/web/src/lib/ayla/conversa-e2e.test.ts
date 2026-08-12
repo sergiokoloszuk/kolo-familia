@@ -338,20 +338,30 @@ describe("M · dois irmãos", () => {
 });
 
 describe("PARTE 10 · a base de conhecimento chega ao turno?", () => {
-  it("MEDIDO: não chega — e o motivo fica declarado, não silencioso", async () => {
+  /**
+   * ⚠️ CORREÇÃO DE UMA AFIRMAÇÃO MINHA (11/08/2026). Eu registrei "a base não
+   * chega ao WhatsApp" como achado de produto medido aqui. **Não é.**
+   *
+   * `turnoClassificado.skills` sai do QUARTO campo do classificador de intenção
+   * (`intent.ts`), e o duplo deste arquivo devolve "{}" para essa chamada —
+   * então `skills: []` por CONSTRUÇÃO, e `motivoVazio` sai `sem_skill` sem que
+   * o produto tenha decidido nada. O harness não pode provar isto.
+   *
+   * A medição real de repertório vazio no WhatsApp vem da auditoria de produção
+   * anterior (turnos reais), e continua valendo. Esta aqui, não.
+   *
+   * O que este teste trava, então, é só o CONTRATO: sem skill roteada não há
+   * bloco de repertório. É pouco — e é o que dá para provar sem um duplo que
+   * classifique intenção de verdade.
+   */
+  it("o contrato: sem skill roteada, não há bloco de repertório", async () => {
     const m = familiaAnaEGeovanna();
     await turno(m, "ela tá difícil na hora de dormir, não sei mais o que fazer");
     const tudo = m.chamadas.map((c) => c.prompt).join("\n");
-    // ⚠️ ISTO NÃO É UM TESTE DE "ESTÁ CERTO". É um teste de ESTADO ATUAL, que
-    // trava o que foi medido: neste turno o bloco `<repertorio_kolo>` NÃO chega
-    // ao modelo, e o log do turno declara o motivo (`vazio: sem_skill`).
-    //
-    // As três leituras possíveis são diferentes e não podem ser confundidas:
-    // acervo inexistente · recuperação que não roda · recuperação que roda e não
-    // acha. Aqui o motivo declarado é o terceiro tipo — não houve skill roteada.
-    //
-    // Quando a recuperação passar a servir o WhatsApp, este teste QUEBRA. É o
-    // objetivo: ele é o alarme de que o estado mudou.
+    // Com `skills: []` (imposto pelo duplo do classificador), o recuperador não
+    // monta bloco nenhum. As três leituras possíveis continuam distintas —
+    // acervo inexistente · recuperação que não roda · recuperação que roda e
+    // não acha — e ESTE teste não distingue nenhuma delas.
     expect(tudo).not.toContain("repertorio_kolo");
   });
 });
