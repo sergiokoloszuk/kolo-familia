@@ -240,6 +240,47 @@ export async function gerarMagicLink(
  * `planoId` é null quando a ponte fala sem ter criado nada (o recado de plano
  * incompleto). Texto sem artefato é caso legítimo, e continua sendo.
  */
+/**
+ * REENTREGAR UM PLANO QUE JÁ EXISTE — o destino do ato `reenviar` (PEND-050).
+ *
+ * ⚠️ NÃO CHAMA `gerarPlano`. É a diferença inteira: até 11/08/2026 "manda o
+ * plano de novo" produzia um artefato NOVO, e a mãe terminava com dois planos
+ * para administrar em vez do que tinha pedido.
+ *
+ * Reusa as duas entregas que já existiam — o PDF e o magic-link —, e é por isso
+ * que mora aqui e não num módulo próprio: quem entrega plano é a ponte.
+ */
+export async function reentregarPlano(
+  supabase: SupabaseClient,
+  params: {
+    familyId: string;
+    phoneE164: string;
+    plano: { id: string; titulo: string; tema: string | null; secoes: Array<{ tipo: string; titulo: string; conteudo_markdown: string }> };
+    nomeMembro?: string | null;
+  },
+): Promise<string> {
+  const { plano } = params;
+  const pdfOk = await entregarPdfDoPlano(supabase, {
+    familyId: params.familyId,
+    phoneE164: params.phoneE164,
+    titulo: plano.titulo,
+    secoes: plano.secoes,
+    nomeMembro: params.nomeMembro,
+  });
+  const link = await gerarMagicLink(supabase, { familyId: params.familyId, next: `/planos/${plano.id}` });
+  const sobre = (plano.tema ?? "").trim();
+  // "Aqui está de novo", nunca "montei" — ela pediu o que já tinha, e dizer que
+  // montou seria afirmar um trabalho que não aconteceu.
+  const base = sobre
+    ? `Aqui está de novo o plano sobre ${sobre} 🌿`
+    : `Aqui está de novo o plano que montei pra vocês 🌿`;
+  const comPdf = pdfOk ? `${base}
+Mandei o PDF aqui em cima 👆` : base;
+  if (!link) return comPdf;
+  return `${comPdf}
+Pra ver no app (já entra direto): ${link}`;
+}
+
 export type PonteDoPlano = { texto: string; planoId: string | null };
 
 export async function montarPonteWhatsApp(
