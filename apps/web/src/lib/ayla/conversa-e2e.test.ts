@@ -406,3 +406,141 @@ describe("PARTE 17 · uma pergunta pendente captura a conversa seguinte?", () =>
     expect(t2.tipo).toBe("rotina_conversa");
   });
 });
+
+/**
+ * CORE PROFISSIONAL · A FIAÇÃO, não a função (12/08/2026).
+ *
+ * ⚠️ POR QUE ESTE BLOCO NÃO ESTÁ EM `conducao/*.test.ts`. Lá eu provaria que
+ * `nucleoConducao()` devolve uma string com o texto dentro — o que é teste da
+ * FUNÇÃO. A lição desta frente é que três sabotagens já passaram verdes assim:
+ * a função certa existia e ninguém provava que alguém a CHAMAVA com os dados
+ * certos.
+ *
+ * O que se lê aqui é o `system` que chegou a `gerarConversacional` depois de
+ * `processInbound` inteiro — lote de inbound, família, criança, intenção, cinco
+ * portões. Se alguém remover `CORE_PROFISSIONAL` de `nucleoConducao()`, ou
+ * remover `nucleoConducao()` da montagem do `responder.ts`, ESTE teste cai. O
+ * teste de `nucleoConducao().length` sozinho não cairia no segundo caso.
+ */
+describe("CORE PROFISSIONAL · chega ao produtor pelo fluxo real", () => {
+  /** O `system` que de fato foi para o produtor conversacional neste turno. */
+  function systemQueChegou(m: Mundo): string {
+    const conversa = m.chamadas.filter((c) => c.quem === "conversa");
+    expect(conversa.length, "o produtor conversacional não foi chamado").toBeGreaterThan(0);
+    const p = JSON.parse(conversa[conversa.length - 1].prompt) as { system?: string };
+    // ⚠️ Guarda anti-teste-vazio: `system` ausente faria todo `toContain`
+    // abaixo falhar por motivo errado, e `not.toContain` passar por motivo
+    // nenhum. Sem esta linha, um payload sem `system` daria verde nos negativos.
+    expect(typeof p.system, "o payload do produtor não trouxe `system`").toBe("string");
+    return p.system as string;
+  }
+
+  /**
+   * S1 — a diretriz inteira. Uma frase de cada PARÁGRAFO que carrega peso, e
+   * não uma só: removendo o bloco todo qualquer uma bastaria, mas quem poda um
+   * parágrafo "que parecia redundante" precisa ser pego também.
+   */
+  it("S1 · a diretriz de raciocínio profissional chega ao modelo", async () => {
+    const m = familiaAnaEGeovanna();
+    await turno(m, "ela tá colocando tudo na boca, papel, planta, plástico");
+    const s = systemQueChegou(m);
+    expect(s, "o bloco de raciocínio sumiu da fiação").toContain(
+      "# Como você raciocina (por dentro, antes de escrever)",
+    );
+    expect(s, "a lista de disciplinas sumiu").toContain("processamento sensorial");
+    expect(s, "o freio do jargão sumiu — ela volta a citar disciplina").toContain(
+      "ISSO É FONTE DE RACIOCÍNIO, NUNCA PAUTA DA RESPOSTA",
+    );
+    expect(s, "o procedimento silencioso sumiu").toContain("PERCORRA POR DENTRO");
+    expect(s, "a independência do acervo sumiu").toContain(
+      "O ACERVO SOMA, NÃO SUBSTITUI VOCÊ",
+    );
+  });
+
+  /** S2 — ajude primeiro / no máximo uma pergunta / não repergunte o que já sabe. */
+  it("S2 · o 'ajude primeiro' e o freio da repergunta chegam ao modelo", async () => {
+    const m = familiaAnaEGeovanna();
+    await turno(m, "ela tá colocando tudo na boca, papel, planta, plástico");
+    const s = systemQueChegou(m);
+    expect(s, "'AJUDE PRIMEIRO' sumiu — a Ayla volta ao interrogatório").toContain(
+      "AJUDE PRIMEIRO.",
+    );
+    expect(s, "o limite de UMA pergunta sumiu").toContain("UMA pergunta útil");
+    expect(s, "o freio da repergunta sumiu — ela volta a pedir nome/idade/diagnóstico").toContain(
+      "NUNCA pergunte de novo o que você já tem: nome, idade, diagnóstico",
+    );
+  });
+
+  /** S3 — fato × hipótese × causa, e a segurança antes da explicação. */
+  it("S3 · a separação fato × hipótese e a segurança primeiro chegam ao modelo", async () => {
+    const m = familiaAnaEGeovanna();
+    await turno(m, "ela tá colocando tudo na boca, papel, planta, plástico");
+    const s = systemQueChegou(m);
+    expect(s, "a separação fato × hipótese sumiu — volta a declarar causa").toContain(
+      "FATO ≠ HIPÓTESE ≠ CAUSA",
+    );
+    expect(s, "a regra de não fechar causa no 1º turno sumiu").toContain(
+      "NÃO feche em causa no primeiro turno",
+    );
+    expect(s, "a segurança-antes-da-compreensão sumiu — o caso Daniel volta").toContain(
+      "SEGURANÇA PRÁTICA VEM ANTES DA COMPREENSÃO",
+    );
+    expect(s, "a lista de risco concreto sumiu").toContain("levar à boca o que não é comida");
+  });
+
+  /** A fronteira jurídica, que entrou na mesma fatia. */
+  it("a fronteira jurídica chega — e não juridica a escola", async () => {
+    const m = familiaAnaEGeovanna();
+    await turno(m, "a escola disse que não tem obrigação de dar mediadora pra ela");
+    const s = systemQueChegou(m);
+    expect(s, "a fronteira jurídica sumiu").toContain("# Fronteira jurídica");
+    expect(s, "o freio contra inventar lei sumiu").toContain("NUNCA inventa lei");
+    expect(s, "a proteção do território escolar sumiu").toContain(
+      "NÃO TRANSFORME ESCOLA EM CASO JURÍDICO",
+    );
+  });
+});
+
+/**
+ * REGRESSÃO ESSENCIAL da fatia do Core — só o que a missão pediu proteger, e
+ * só o que este harness CONSEGUE provar.
+ *
+ * ⚠️ O QUE ESTES TESTES NÃO PROVAM: a qualidade do texto. O duplo devolve
+ * "[resposta da Ayla]". O que eles protegem é o ROTEAMENTO — que a mudança de
+ * núcleo não passou a produzir artefato onde antes havia conversa. Um núcleo
+ * que ensina a "ajudar primeiro" é exatamente o tipo de mudança que poderia
+ * empurrar um relato comum para dentro de um fluxo de entrega.
+ */
+describe("REGRESSÃO · o Core não transformou conversa em artefato", () => {
+  it("F · 'ele rasga papel' continua conversa — sem rotina e sem plano", async () => {
+    roteiro.prontidaoRotina = "suficiente";
+    const m = familiaAnaEGeovanna();
+    const r = await turno(m, "ele rasga papel o tempo todo, não sei o que fazer");
+    expect(r.rotinasCriadas, "um relato comum virou rotina").toBe(0);
+    expect(r.planosCriados, "um relato comum virou plano").toBe(0);
+  });
+
+  it("A · relato de dificuldade com segurança continua conversa", async () => {
+    roteiro.prontidaoRotina = "suficiente";
+    const m = familiaAnaEGeovanna();
+    const r = await turno(m, "ela tá colocando tudo na boca, papel, planta, plástico");
+    // A regra nova manda PROTEGER primeiro. Proteger é FALA, não artefato: se
+    // "segurança" passar a abrir um fluxo de entrega, é aqui que aparece.
+    expect(r.rotinasCriadas, "o gatilho de segurança abriu o fluxo da rotina").toBe(0);
+    expect(r.planosCriados, "o gatilho de segurança abriu o fluxo do plano").toBe(0);
+  });
+
+  it("E · falar SOBRE o PDF não gera PDF nem plano", async () => {
+    const m = familiaAnaEGeovanna();
+    const r = await turno(m, "aquele PDF que você mandou ficou muito bom, obrigada");
+    expect(r.planosCriados, "elogiar o PDF gerou outro plano").toBe(0);
+    expect(r.rotinasCriadas, "elogiar o PDF gerou uma rotina").toBe(0);
+  });
+
+  it("assunto jurídico da escola continua conversa — não vira artefato", async () => {
+    const m = familiaAnaEGeovanna();
+    const r = await turno(m, "a escola disse que não tem obrigação de dar mediadora pra ela");
+    expect(r.planosCriados, "a conversa sobre a escola gerou plano").toBe(0);
+    expect(r.rotinasCriadas, "a conversa sobre a escola gerou rotina").toBe(0);
+  });
+});

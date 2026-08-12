@@ -506,7 +506,33 @@ describe("simplificação: o prompt não pode crescer", () => {
     // núcleo: virou código em `angulos.ts`. VOZ 7 já era a exortação, e ela
     // falhou com a resposta anterior no histórico — a lista concreta do que
     // ela mesma já orientou custa zero caractere aqui.
-    expect(nucleoConducao().length).toBeLessThan(57_000);
+    // 12/08/2026 — sobe pra 63.000 por DUAS entradas, e desta vez o
+    // crescimento foi MEDIDO contra o comportamento real antes de ser pedido
+    // (prova paga em `ayla/prova-core-real.test.ts`, caso Daniel).
+    //
+    //   CORE_PROFISSIONAL (~5.400) — as duas falhas do caso Daniel não vieram
+    //   de falta de proibição. "É o sistema sensorial pedindo input" viola a
+    //   VOZ 5 e a EXPLICACAO, que ESTAVAM no prompt e perderam; e a resposta
+    //   inteira ignorou planta e plástico porque o PISO só cobre CRISE, e um
+    //   relato cotidiano com risco concreto não é crise. Regra que falha em
+    //   prompt se corrige estruturalmente, e a estrutura que faltava não era
+    //   mais uma proibição: era o MOVIMENTO SUBSTITUTO — várias hipóteses no
+    //   lugar da causa declarada, e proteger antes de explicar. Sem os
+    //   exemplos concretos ("é o sistema sensorial pedindo" ↔ "pode estar
+    //   funcionando como uma forma de regulação") vira exortação, que é
+    //   exatamente o que já não segurou.
+    //
+    //   FRONTEIRA_JURIDICA (~1.100) — o que existia era um exemplo em
+    //   EXEMPLOS e uma linha na VOZ 5 sobre não prever benefício. Nenhum dos
+    //   dois cobre inventar artigo de lei ou jurisprudência, que é o modo de
+    //   falha específico de um modelo neste assunto. O exemplo antigo de
+    //   EXEMPLOS foi REMOVIDO e consolidado aqui — o teto pagou parte do
+    //   crescimento com poda, não só com número novo.
+    //
+    // O que este teto NÃO autoriza: as lentes especializadas (Sensorial,
+    // Emocional, Comunicação). Elas são conteúdo POR TURNO e não podem entrar
+    // no núcleo, que todo turno paga.
+    expect(nucleoConducao().length).toBeLessThan(63_000);
   });
 });
 
