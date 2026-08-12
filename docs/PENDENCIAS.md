@@ -29,6 +29,7 @@ Só o que está aberto. 🔒 = bloqueada.
 | [PEND-038](#pend-038) | Latência percebida no WhatsApp e resposta em vários balões | A · Condução | P1 pós-rollout | NÃO MEDIDA EM PRODUÇÃO | os 56s são bancada do Plano; depende de [PEND-040] |
 | [PEND-039](#pend-039) | Bancada permanente de golden cases (Manu · LEGO · Bia · vago) | A · Condução | P1 | DESENHADA | construir antes da próxima fase do Plano |
 | [PEND-043](#pend-043) | Ter objetivo ≠ gerar Plano — falta decisão de valor | D · Entregas | P1 | ABERTA | separar suficiência de valor de consolidação |
+| [PEND-046](#pend-046) | Turno seguinte não enxerga a resposta ainda em voo | A · Condução | P1 | CAUSA PROVADA | avaliar junto com [PEND-038]; não aumentar a janela |
 | [PEND-045](#pend-045) | Pronome perde a criança logo após ação sobre ela | A · Condução | P1 | CAUSA PROVADA | âncora na ação anterior, sem heurística de pronome |
 | [PEND-044](#pend-044) | A Kolo terceiriza antes de tentar ajudar | A · Condução | P1 | ABERTA | classe funcional, não regra de palavra |
 | [PEND-036](#pend-036) | O Plano reoferece o que a conversa acabou de descartar | D · Entregas | P1 | DESCONTAMINADA | medida sozinha após a 035; é defeito próprio |
@@ -444,6 +445,172 @@ Aberta em: 2026-08-08 · Origem: pedido do Sérgio na missão da PEND-004
 - **Critério de conclusão:** mapa de impacto escrito, com prioridade proposta e
   aprovada.
 - **Agente recomendado:** AUDITAR → PROPOR
+
+---
+
+### PEND-049
+**A retomada da Rotina fica de pé por 48 horas — e o portão pula o ato**
+Bloco: **A · Condução** · Prioridade: **P2** · Estado: **ABERTA · MEDIDA, DECISÃO DE PRODUTO PENDENTE**
+Aberta em: 2026-08-11 · Origem: mapeamento da Rotina (fases 1-4 da missão de artefatos)
+
+> **Uma pergunta da Ayla sem resposta reabre o fluxo da Rotina dois dias
+> depois, num assunto qualquer.**
+
+- **PROVEI POR EXECUÇÃO** (duplo de banco, sem produção). `rotinaConversaPendente`
+  não guarda estado: ele DERIVA do histórico — último outbound
+  `tipo="rotina_conversa"` nas últimas **48 h** sem nenhum inbound depois.
+  Medido: pendente com 1 h → abre · já respondida → fecha · **40 h sem resposta
+  → abre** · 47h59 → abre · 49 h → fecha.
+- **E o que abre por aí não passa pelo ato.** `rotinaConversa` entra no portão
+  ANTES de `pedidoDeRotina`, de propósito: é continuação de uma montagem em
+  curso, e exigir o ato mataria a resposta curta da mãe ("as 7h", "sim"). O
+  efeito colateral é que, na janela de 48 h, qualquer mensagem entra pelo fluxo
+  da Rotina.
+- **O que segura hoje:** o modelo, um passo adiante —
+  `prontidao.desfecho === "nao_e_rotina"` faz `conduzirRotina` devolver null e a
+  conversa cai no reativo. **INFERI** que é isso que evita o estrago na maior
+  parte dos casos; **NÃO MEDI** com que frequência ele erra.
+- **⚠️ ISTO É DECISÃO DE PRODUTO, NÃO DE ENGENHARIA**, e é por isso que não
+  corrigi: encurtar a janela troca *estado fantasma* por *retomada perdida*. Uma
+  mãe que responde no dia seguinte é comum. Não invento o número — **48 h, 12 h
+  ou "só até a próxima mensagem dela"** são três produtos diferentes.
+- **Critério de conclusão:** janela decidida por escrito, com o caso da mãe que
+  some e volta considerado, e teste que morde nos dois lados (retomada legítima
+  preservada · assunto novo não entra pelo fluxo antigo).
+- **Depende de:** decisão do Sérgio.
+- **Agente recomendado:** PROPOR
+
+---
+
+### PEND-050
+**Plano não tem caminho de editar nem de reenviar**
+Bloco: **A · Condução** · Prioridade: **P2** · Estado: **ABERTA · LACUNA PROVADA**
+Aberta em: 2026-08-11 · Origem: fatia de autoridade do Plano (5490c24)
+
+> **Depois de 5490c24, "ajusta aquele plano" e "manda o plano de novo" não
+> geram mais um plano indevido — e também não fazem nada.**
+
+- **VI NO CÓDIGO:** a ponte (`montarPonteWhatsApp`) só sabe GERAR. Não existe
+  caminho de edição de Plano nem de reenvio do PDF/link já produzido — ao
+  contrário da Rotina, que tem `editarRotina` e `entregarArtefatoImprimivel`.
+- **MEDIDO, antes da correção:** `pedeUmPlano` devolvia `true` para
+  "manda o plano de novo" e o turno gerava um plano **NOVO**. Ou seja: o
+  reenvio nunca funcionou; ele era mascarado por uma geração duplicada.
+- **Por isso `editar` NÃO abre o portão de criação do Plano** — deixá-lo abrir
+  produziria um plano a mais em vez de ajustar o que existe. A correção trocou
+  um comportamento errado por uma lacuna honesta, e a lacuna fica registrada.
+- **Hoje esses dois atos caem na conversa**: a Ayla responde por texto, sem
+  entregar nada. **NÃO MEDI** o que ela diz nesse caso.
+- **Critério de conclusão:** os dois atos com desfecho próprio — reenviar o
+  artefato existente, e alterar sem duplicar —, provados pelo fluxo real.
+- **Depende de:** nada. **Deve ser avaliada com:** [PEND-044].
+- **Agente recomendado:** PROPOR
+
+---
+
+### PEND-051
+**A conversa nunca tinha sido executada em teste — e dois cenários seguem sem prova**
+Bloco: **A · Condução** · Prioridade: **P1** · Estado: **ABERTA · CAUSA NÃO LOCALIZADA**
+Aberta em: 2026-08-11 · Origem: harness end-to-end (e64da15)
+
+> **Pelo fluxo real, um pedido explícito de Rotina termina como
+> `resposta_registro`, e o perfil da criança não aparece em chamada nenhuma.**
+
+- **O harness existe agora** (`__harness/`, `conversa-e2e.test.ts`):
+  `processInbound` rodando de verdade, banco em memória, modelo falso, nenhum
+  envio. Antes dele, **nenhum teste executava a conversa** — os que existiam
+  liam o arquivo com `readFileSync`.
+- **PROVEI PELO FLUXO REAL (5):** relato conceitual não cria artefato · falar de
+  rotina existente não cria outra · a pergunta do caso Mário não gera plano · a
+  recusa não gera plano · troca de criança não vaza perfil do irmão.
+- **NÃO CONSEGUI PROVAR (2), e é isto que esta ficha guarda:**
+  1. "me ajuda a montar uma rotina para a manhã dela?" — **MEDIDO por função**,
+     o portão ABRE (piso + ato `criar`); **pelo fluxo real** o turno sai como
+     `resposta_registro`. Alguma coisa antes do portão decide.
+  2. `perfil_vivo_membro.sensorial` não chega a chamada nenhuma, enquanto o
+     **nome** da criança chega.
+- **⚠️ AS DUAS LEITURAS, e nenhuma provada:** (a) lacuna do harness —
+  `loadFamiliaParaEnvio` devolvendo null porque a fixture não tem os campos que
+  ele lê, e o bloco caindo fora em silêncio; (b) defeito real de roteamento e de
+  recuperação. **A hipótese (a) já foi descartada uma vez** neste mesmo teste (a
+  fixture escrevia em `categorias_extras`, que só é lido para chaves de TEMAS) e
+  o resultado não mudou — então ela não pode ser assumida de novo por
+  conveniência.
+- **Os dois cenários estão `it.skip` com a dúvida escrita no corpo**, não
+  apagados. Nada deve ser corrigido com base neles antes da causa localizada.
+- **⚠️ ENQUANTO ISTO NÃO FECHAR, a Rotina NÃO está provada de ponta a ponta** —
+  só nos portões.
+- **Critério de conclusão:** causa localizada e etiquetada (harness × produto);
+  se for produto, correção com regressão; se for harness, fixture corrigida e os
+  dois cenários verdes.
+- **Depende de:** nada.
+- **Agente recomendado:** INVESTIGAR
+
+---
+
+### PEND-046
+**O turno seguinte não enxerga a resposta ainda em voo**
+Bloco: **A · Condução** · Prioridade: **P1** · Estado: **ABERTA · CAUSA PROVADA**
+Aberta em: 2026-08-11 · Origem: caso Mário (WhatsApp, produção)
+
+> **A Ayla repetiu a orientação inteira e reabriu a identidade porque, no
+> momento em que montou o contexto, a própria resposta anterior ainda não
+> existia no banco.**
+
+- **EVIDÊNCIA — timestamps reais, correlacionados por `processada_em` e não por
+  proximidade:**
+
+  ```
+  19:53:22.977  INBOUND A   "não quer sair do quarto, sonolento"
+  19:53:34.161  A CLAIMA    (dormiu os 7 s da janela; nada mais novo)
+  19:53:38.301  INBOUND B   "Sim"        ← 4,1 s DEPOIS do claim de A
+  19:53:46.119  B CLAIMA    (nada mais novo — turno legítimo e separado)
+  19:53:54.309  OUTBOUND 1  resposta de A é ENVIADA e persistida
+  19:54:03.974  OUTBOUND 2  resposta de B
+  ```
+
+  **B montou o contexto 8,2 segundos ANTES de a resposta de A existir.** Para
+  B, aquilo nunca tinha sido dito — então ela reofereceu a mesma estratégia
+  ("missão curta", "portão") e reabriu "estamos falando do Mario?".
+
+- **⚠️ O QUE ISTO NÃO É**, e cada uma dessas leituras foi descartada por prova:
+  - **não é duplicidade de webhook** — dois `zaap_message_id` distintos, dois
+    textos distintos da mãe;
+  - **não são dois produtores do mesmo turno** — o claim atômico funcionou:
+    A → OUTBOUND 1, B → OUTBOUND 2, um inbound para cada resposta;
+  - **não é falha do lote** — `JANELA_SILENCIO_MS = 7000` e B chegou **15,3 s**
+    depois de A. Dois turnos genuinamente separados;
+  - **não é erro do modelo** — ele respondeu bem ao contexto que recebeu; o
+    contexto é que estava incompleto no tempo.
+- **CLASSE CORRETA: leitura temporalmente incompleta do histórico enquanto
+  existe resposta em voo.** O lote protege contra *dois processarem a mesma
+  mensagem*; **nada protege contra um processar sem ver a resposta em voo**.
+- **⚠️ AUMENTAR `JANELA_SILENCIO_MS` NÃO É SOLUÇÃO ACEITA.** Agrupar A e B
+  exigiria uma janela de 16 s, e isso faria **toda família** esperar 16 s por
+  qualquer resposta. Duplicação não se resolve com atraso artificial para
+  todos — a latência percebida já é P50 22,4 s.
+- **A correção provável toca ORDENAÇÃO/COORDENAÇÃO** entre processamento e
+  persistência: persistir o outbound antes de liberar o claim seguinte, ou o
+  claim esperar enquanto houver processamento em voo para a mesma família.
+  **Nenhuma das duas foi investigada.**
+- **⚠️ BLAST RADIUS ALTO, e há uma dependência de ordem:** a correção mexe no
+  **caminho crítico de latência**, que está sendo instrumentado e medido agora.
+  Qualquer mudança aqui **precisa ser avaliada junto com [PEND-038]** — pode
+  aumentar ou reduzir o tempo percebido, e mexer nele antes de ter os dados
+  alteraria o próprio objeto da medição.
+- **Relação com [PEND-045], e são DEFEITOS INDEPENDENTES que se somaram:** na
+  mesma conversa houve **três** reaberturas de identidade. Duas (19:10 e 19:51)
+  aconteceram **sem concorrência nenhuma** e são da PEND-045 (pronome perde a
+  criança). A terceira (19:54) é desta ficha. Se a identidade estivesse
+  perfeita, a repetição de CONTEÚDO ("missão curta", "portão") teria acontecido
+  do mesmo jeito.
+- **CRITÉRIO DE BAIXA:** reproduzir dois turnos legítimos próximos, com o
+  segundo chegando **enquanto o primeiro ainda está gerando**, e provar que o
+  segundo **enxerga a resposta anterior**, **ou espera de forma controlada**,
+  **ou invalida e recalcula o contexto** — sem criar atraso artificial para
+  todos os turnos.
+- **Depende de:** nada. **Deve ser avaliada com:** [PEND-038].
+- **Agente recomendado:** INVESTIGAR
 
 ---
 
