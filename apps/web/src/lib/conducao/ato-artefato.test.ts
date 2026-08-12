@@ -51,6 +51,17 @@ const CORPUS: Array<[AtoSobreArtefato, string]> = [
   ["ambiguo", "Ela sabe toda a rotina e mesmo assim trava"],
 ];
 
+describe("o verbo que entrou por regressão medida", () => {
+  it("MORDE: 'organizar' é pedido quando a mãe pede, e narrativa quando não é", () => {
+    // Entrou porque a fatia da Rotina o teria silenciado (ver o comentário em
+    // CRIAR). O par abaixo é o que impede que ele volte a criar por menção.
+    expect(atoSobreArtefato("me ajuda a organizar a rotina dela?")).toBe("criar");
+    expect(atoSobreArtefato("quero organizar a rotina da manhã")).toBe("criar");
+    expect(atoSobreArtefato("a escola organiza a rotina da sala")).toBe("ambiguo");
+    expect(atoSobreArtefato("quando organiza a rotina ela reclama")).toBe("ambiguo");
+  });
+});
+
 describe("o ato sobre o artefato — seis atos, não um booleano", () => {
   it("1. MORDE: o corpus inteiro classifica como esperado", () => {
     const erros: string[] = [];
