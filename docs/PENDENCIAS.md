@@ -509,8 +509,8 @@ Aberta em: 2026-08-11 · Origem: fatia de autoridade do Plano (5490c24)
 ---
 
 ### PEND-051
-**A conversa nunca tinha sido executada em teste — e dois cenários seguem sem prova**
-Bloco: **A · Condução** · Prioridade: **P1** · Estado: **ABERTA · CAUSA NÃO LOCALIZADA**
+**A conversa nunca tinha sido executada em teste**
+Bloco: **A · Condução** · Prioridade: **P1** · Estado: **CONCLUÍDA em 2026-08-11 (8c42a53)**
 Aberta em: 2026-08-11 · Origem: harness end-to-end (e64da15)
 
 > **Pelo fluxo real, um pedido explícito de Rotina termina como
@@ -540,7 +540,24 @@ Aberta em: 2026-08-11 · Origem: harness end-to-end (e64da15)
   apagados. Nada deve ser corrigido com base neles antes da causa localizada.
 - **⚠️ ENQUANTO ISTO NÃO FECHAR, a Rotina NÃO está provada de ponta a ponta** —
   só nos portões.
-- **Critério de conclusão:** causa localizada e etiquetada (harness × produto);
+- **✅ BAIXA (2026-08-11, 8c42a53).** Causa localizada e etiquetada: **os dois
+  itens eram do HARNESS**, e a hipótese de defeito de produto está **REFUTADA**.
+  - Item 1 — `client.messages.create is not a function`. O duplo só implementava
+    `.stream()`; intenção, prontidão e condutor usam `.create()`. **O portão da
+    Rotina TINHA aberto** — a prontidão só é chamada lá dentro. Rastreado pelo
+    log real do turno.
+  - Item 2 — duas falhas em sequência na fixture: o **lugar** (`categorias_extras`
+    só é lido para chaves de TEMAS) e a **forma** (`resumoCampoKV` exige
+    `{ texto }`; string pura cai fora em silêncio — a mesma forma da PEND-033).
+    **PROVEI POR EXECUÇÃO** que o perfil chega: `<o_que_ja_sabemos_da_crianca>`
+    com "barulho alto" e "acorda 6h30".
+- **⚠️ E A SABOTAGEM DESMENTIU O PRÓPRIO ARQUIVO:** reverter o portão de criar ao
+  piso puro mantinha os cenários VERDES — com a prontidão no padrão, o modelo
+  devolvia "orientação" e nada era publicado. O teste media o MODELO, não o
+  portão. Corrigido: A e E forçam `prontidao="suficiente"`, e a sabotagem morde.
+- **Fica aberto em outra ficha, não nesta:** deixar uma pergunta PENDENTE pelo
+  fluxo real exige um duplo que escreva a fala do condutor — ver [PEND-049].
+- **Critério de conclusão (cumprido):** causa localizada e etiquetada (harness × produto);
   se for produto, correção com regressão; se for harness, fixture corrigida e os
   dois cenários verdes.
 - **Depende de:** nada.
