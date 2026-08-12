@@ -2,7 +2,8 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import { abreFluxoDeArtefato, atoSobreArtefato } from "@/lib/conducao/ato-artefato";
-import { pedeRotina, pediuRotinaExplicitamente } from "./rotina-guiada";
+import { pedeEditarRotina, pedeRotina, pediuRotinaExplicitamente } from "./rotina-guiada";
+import { classificarFeedbackRotina } from "./rotina-feedback";
 
 /**
  * AUTORIDADE SOBRE O ARTEFATO ROTINA — falar sobre ≠ pedir para criar.
@@ -106,5 +107,50 @@ describe("o portão real do orquestrador", () => {
     // não registra intenção. Quando registrar (PEND-040), decide-se com dado.
     const i = ORCH.indexOf("const pedidoDeRotina =");
     expect(ORCH.slice(i, i + 900)).toMatch(/intent === "organizacao" \|\|/);
+  });
+});
+
+// ============================================================
+// O PORTÃO DE EDITAR — o caminho REAL do caso Ana/Geovanna
+// ============================================================
+
+/**
+ * ⚠️ A frase "Não achei uma rotina pra ajustar 🌿" nasce em `editarRotina`, e
+ * quem abriu a porta foi `pedeEditarRotina` — NÃO o portão de criar. A primeira
+ * fatia (ad59254) corrigiu o portão errado para este caso específico.
+ *
+ * MEDIDO: como gatilho isolado, `pedeEditarRotina` abre para 4 de 6 usos
+ * conceituais de "mudar a rotina" e para só 2 dos 8 pedidos legítimos de
+ * edição — os outros entram por `intent` ou pelo feedback.
+ */
+const abreEdicao = (t: string) => pedeEditarRotina(t) && atoSobreArtefato(t) === "editar";
+
+describe("editar rotina", () => {
+  it("10. MORDE: o pedido real de edição continua entrando", () => {
+    for (const t of ["muda a rotina de hoje", "quero mudar aquela rotina que fizemos"]) {
+      expect(abreEdicao(t), `"${t}" foi BLOQUEADO`).toBe(true);
+    }
+  });
+
+  it("11. MORDE: os quatro usos conceituais que abriam a edição", () => {
+    for (const t of [
+      "Quando é preciso mudar a rotina de repente ela sente",
+      "qdo muda a rotina ela fica mal",
+      "ele nao aceita mudar a rotina",
+      // Infinitivo inicial é NOME, não imperativo — "mudar é difícil".
+      "mudar a rotina dela é sempre difícil",
+    ]) {
+      expect(pedeEditarRotina(t), `"${t}" nem chega no piso — o caso perdeu a graça`).toBe(true);
+      expect(abreEdicao(t), `"${t}" ABRIU a edição`).toBe(false);
+    }
+  });
+
+  it("12. MORDE: o feedback NÃO passa pelo ato — é edição por necessidade", () => {
+    // "já faz sozinho" é `ambiguo` para o classificador, e tem que continuar
+    // entrando: quem decide ali é `classificarFeedbackRotina`, não o ato.
+    for (const t of ["já faz sozinho", "não funcionou até o jantar"]) {
+      expect(atoSobreArtefato(t)).toBe("ambiguo");
+      expect(classificarFeedbackRotina(t), `"${t}" deixou de ser feedback`).not.toBeNull();
+    }
   });
 });
