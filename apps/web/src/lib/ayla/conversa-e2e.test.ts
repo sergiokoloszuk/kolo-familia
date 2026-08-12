@@ -786,8 +786,9 @@ describe("LENTES · a lente do turno chega ao produtor pelo fluxo real", () => {
       "PROCURE A HABILIDADE POR TRÁS DA CENA",
     );
     expect(s, "sumiu a distinção cena × habilidade — a saída não transfere").toContain(
-      "nomeie a habilidade no nível que TRANSFERE",
+      "NOMEIE A HABILIDADE NO NÍVEL QUE TRANSFERE",
     );
+    expect(s, "sumiu a separação agora × aprendizado").toContain("AGORA × APRENDIZADO");
     expect(s, "sumiu o freio contra virar tudo em déficit").toContain("NÃO PRESUMA DÉFICIT");
     expect(s, "sumiu a porta de esclarecer a palavra").toContain(
       "A TERCEIRA PORTA: ESCLARECER A PALAVRA",

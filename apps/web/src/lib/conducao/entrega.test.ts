@@ -650,7 +650,30 @@ describe("simplificação: o prompt não pode crescer", () => {
     // foi o que as LENTES fizeram: conteúdo condicional saiu do núcleo e passou
     // a ser escolhido por turno. Antes da próxima entrada, o trabalho certo é
     // esse, e está registrado como pendência.
-    expect(nucleoConducao().length).toBeLessThan(74_500);
+    // 13/08/2026 — ⬇️ DESCE de 74.500 para 73.000. É a primeira vez que este
+    // teto BAIXA, e baixar é o ponto: sem isso, cada poda só abre espaço para
+    // a próxima entrada, e a esteira continua.
+    //
+    // A poda que permitiu: `CORE_PROFISSIONAL` tinha 18.707 (25% do núcleo) e
+    // 47 parágrafos escritos em CINCO missões, nenhuma lendo as outras. O que
+    // saiu não foi regra — foi repetição:
+    //   · "PROCURE A HABILIDADE" + "SEPARE A CENA" + "SEPARE AGORA ×
+    //     APRENDIZADO" diziam a mesma coisa em três parágrafos (1.258 → 2);
+    //   · "A FORMA DA INTERAÇÃO" e "COMO ESTA CRIANÇA RECEBE" traziam a MESMA
+    //     lista de formas de apresentar, duas vezes (1.334 → 2 parágrafos);
+    //   · "INTERESSE E HIPERFOCO" duplicava `INTERESSE_COMO_VEICULO`, que já
+    //     existe em `formas.ts` — e lá é CONDICIONAL, pago só na entrega. Saiu
+    //     do núcleo e a parte que faltava foi para lá;
+    //   · o bloco de fechamento e o de opções numeradas foram comprimidos sem
+    //     perder nenhuma regra.
+    //
+    // Nenhuma proibição foi removida. O que se perdeu foi o eco.
+    //
+    // ⚠️ A LIÇÃO, pra quem for acrescentar depois: o núcleo cresce por adição
+    // sem leitura. Antes de escrever um bloco novo, leia os 40 que já estão
+    // aqui — há grande chance de o seu já existir com outro nome. E se o teto
+    // apertar, a resposta certa é consolidar, não subir o número.
+    expect(nucleoConducao().length).toBeLessThan(73_000);
   });
 });
 

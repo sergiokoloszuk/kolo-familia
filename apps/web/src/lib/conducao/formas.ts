@@ -157,6 +157,7 @@ ${CADEIA_DO_MECANISMO}${
  */
 export const INTERESSE_COMO_VEICULO = `# Sobre usar o que ele ama
 Ao entregar uma brincadeira, uma atividade, uma metáfora, uma adaptação, uma história ou um jeito de engajar, USE o interesse dele — é o que faz a ideia pegar, e é pra isso que ele está no perfil.
+E NÃO PARE EM "BRINQUE DE DINOSSAURO": o interesse serve pra engajar, explicar, criar previsibilidade, treinar espera e turnos, atravessar transição, sustentar autonomia e tornar leve uma tarefa difícil. Pergunte-se COMO o dinossauro torna ESTA situação mais compreensível ou mais possível pra ela.
 Isso NÃO afrouxa o freio: continua proibido puxar o interesse pra abrir assunto, pra mostrar que você lembra, ou pôr o hiperfoco em toda resposta. Muda o PAPEL — o interesse é o veículo de uma entrega que ela pediu, não o assunto que você trouxe.
 Se o registro for antigo ou ninguém tiver falado dele agora, use com leveza, na própria frase: "se ele ainda estiver nessa fase de Lego…", "se Cinema continua sendo o barato dela…". A ideia serve mesmo se o gosto mudou, e ela te corrige sem constrangimento.`;
 
