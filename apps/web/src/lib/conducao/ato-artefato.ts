@@ -168,15 +168,26 @@ const CRIAR =
  * "eu preciso".
  */
 const PEDIDO_DE_COISA =
-  /\b(quero|queria|preciso|precisava|gostaria|to precisando|estou precisando|me ajuda com|me arruma|me da|me de) (de )?(um|uma|uns|umas)\b/;
+  /\b(quero|queria|preciso|precisava|gostaria|to precisando|estou precisando|me ajuda com|me arruma|me da|me de) (de )?(um|uma|uns|umas|o|a|os|as|esse|essa|este|esta)\b/;
 
 /** VERBO DE ALTERAR o que já existe. */
 const EDITAR =
-  /\b(ajusta|ajuste|ajustar|muda|mude|mudar|troca|troque|trocar|corrige|corrija|corrigir|arruma|arrume|arrumar|tira|tire|tirar|remove|remover|acrescenta|acrescentar|adiciona|adicionar|inclui|incluir|refaz|refazer|atualiza|atualizar)\b/;
+  /\b(ajusta|ajuste|ajustar|muda|mude|mudar|troca|troque|trocar|corrige|corrija|corrigir|arruma|arrume|arrumar|tira|tire|tirar|remove|remover|acrescenta|acrescentar|adiciona|adicionar|inclui|incluir|refaz|refazer|atualiza|atualizar|transforma|transforme|transformar|converte|converta|converter)\b/;
 
 /** VERBO DE ENTREGA — quer receber de volta o que já existe. */
+/**
+ * VERBO DE ENTREGA — quer receber de volta o que já existe.
+ *
+ * ⚠️ `imprimir` entrou por MEDIÇÃO (11/08/2026, caso Juliana/Daniel). "pode
+ * imprimir pra mim?" era `ambiguo`: a moldura de pedido estava lá, e faltava o
+ * verbo. Imprimir é ENTREGAR — pede-se a coisa que já existe, num formato.
+ *
+ * Não abre porta nova: "a escola imprime as atividades" e "imprimir tudo não
+ * resolveu" continuam fora, porque o verbo só decide junto da moldura, e
+ * infinitivo inicial não é imperativo.
+ */
 const ENTREGAR =
-  /\b(manda|mande|mandar|envia|envie|enviar|traz|traga|trazer|mostra|mostre|mostrar|passa|passe|passar|reenvia|reenviar|me ve|reenvie)\b/;
+  /\b(manda|mande|mandar|envia|envie|enviar|traz|traga|trazer|mostra|mostre|mostrar|passa|passe|passar|reenvia|reenviar|me ve|reenvie|imprime|imprima|imprimir)\b/;
 
 /**
  * O ATO DA FAMÍLIA SOBRE UM ARTEFATO.
@@ -210,6 +221,13 @@ export function atoSobreArtefato(texto: string | null | undefined): AtoSobreArte
   if (jaExiste) {
     if (EDITAR.test(t) && pedidoDirigido(t, EDITAR)) return "editar";
     if (ENTREGAR.test(t) && pedidoDirigido(t, ENTREGAR)) return "reenviar";
+    // ⚠️ PEDIR UMA VERSÃO DO QUE JÁ EXISTE TAMBÉM É PEDIDO (11/08/2026).
+    // "quero essa rotina visual" caía em `conversar_sobre`: o artefato existe,
+    // nenhum verbo de alterar ou entregar apareceu, e a moldura de pedido nunca
+    // era consultada neste ramo. É alteração — a mãe quer o mesmo conteúdo em
+    // outra forma —, por isso `editar` e não `criar`: criar produziria um
+    // segundo artefato onde ela pediu uma versão do primeiro.
+    if (!NARRATIVA.test(t) && PEDIDO_DE_COISA.test(t)) return "editar";
     return "conversar_sobre";
   }
 
