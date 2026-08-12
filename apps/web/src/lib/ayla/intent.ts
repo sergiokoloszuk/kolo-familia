@@ -196,12 +196,34 @@ Regras da skill:
 - Use EXATAMENTE os nomes da lista, em minúscula. Nunca invente nome.`;
 }
 
-export function montarSystem(catalogo: readonly SkillDoCatalogo[]): string {
+/**
+ * O CONTEXTO MÍNIMO DO PLANO EM PREPARAÇÃO.
+ *
+ * ⚠️ SÓ A PERGUNTA, e isso é a regra inteira desta fiação. O classificador não
+ * precisa do Plano, das nove seções, do perfil, da Base Kolo nem dos planos
+ * anteriores para responder "esta mensagem tem a ver com o que eu perguntei?".
+ * Mandar mais seria pagar tokens em toda classificação de todo turno — e a
+ * frente de latência já mostrou 4 a 5 chamadas por turno.
+ *
+ * O `tema` entra porque distingue "responde" de "continua": uma fala pode ser
+ * do mesmo assunto sem responder a pergunta.
+ */
+export type PlanoEmPreparacao = {
+  membroAtipicoId: string;
+  tema: string | null;
+  pergunta: string;
+};
+
+export function montarSystem(
+  catalogo: readonly SkillDoCatalogo[],
+  planoPendente?: PlanoEmPreparacao | null,
+): string {
   const comSkills = catalogo.length > 0;
+  const comPlano = Boolean(planoPendente?.pergunta?.trim());
   return (
     `Você classifica a INTENÇÃO da última mensagem de uma mãe/pai falando com a Ayla (assistente de famílias atípicas), no WhatsApp. Entenda a INTENÇÃO, não palavras exatas.
 
-Responda em UMA linha, no formato: ${comSkills ? "intencao|tema|aceite|skills" : "intencao|tema|aceite"}
+Responda em UMA linha, no formato: ${comSkills ? "intencao|tema|aceite|skills" : "intencao|tema|aceite"}${comPlano ? "|vinculo" : ""}
 (a intenção e o tema em minúscula; o aceite em texto normal, ou "-" quando não houver${comSkills ? "; a skill em minúscula, ou vazio quando não houver" : ""})
 
 A INTENÇÃO é uma destas:
@@ -242,8 +264,37 @@ Regras do tema — errar aqui faz a Ayla perder o fio da conversa:
 - Só troque quando ela REALMENTE abrir outro assunto do desenvolvimento.
 - Se ela acabou de ESCOLHER um tema (você ofereceu os desafios dela e ela respondeu "alimentação", "o sono", "vamos pelo foco"), esse é o tema.
 - Assunto que não é do desenvolvimento (preço, acesso ao app, saudação, o dia dela) → "-"; mas se havia tema anterior e isso foi só uma pausa, mantenha o anterior.
-- Nunca invente chave fora da lista.` + blocoSkills(catalogo)
+- Nunca invente chave fora da lista.` +
+    blocoSkills(catalogo) +
+    blocoVinculo(planoPendente, comPlano)
   );
+}
+
+/**
+ * O BLOCO DO VÍNCULO — só existe quando há uma pergunta pendente de Plano.
+ *
+ * ⚠️ ADITIVO E CONDICIONAL. Sem Plano em preparação, o prompt sai byte a byte
+ * como antes: nenhum turno paga tokens por um estado que não existe.
+ */
+function blocoVinculo(p: PlanoEmPreparacao | null | undefined, ativo: boolean): string {
+  if (!ativo || !p) return "";
+  return `
+
+O CAMPO "vinculo" — e ele NÃO altera nenhum dos campos acima.
+
+Você acabou de perguntar isto à família${p.tema ? `, enquanto preparava um plano sobre "${p.tema}"` : ""}:
+"${p.pergunta.slice(0, 300)}"
+
+Diga o que a mensagem de agora é EM RELAÇÃO A ESSA PERGUNTA:
+- responde: ela respondeu, mesmo que curto ou parcial ("quando precisa começar", "o segundo", "na escola").
+- continua: fala do mesmo assunto, mas não responde a pergunta.
+- mudou_assunto: trouxe outra coisa ("hoje ele não dormiu nada").
+- cancela: pediu pra deixar o plano pra depois, ou disse que não quer.
+- nao_sei: você não consegue dizer com segurança.
+
+⚠️ NA DÚVIDA, "nao_sei" — nunca "responde". Tratar uma fala qualquer como
+resposta faria a informação errada entrar no plano, e às vezes no filho errado.
+Um "sim" solto, sem dar pra saber a QUE ela disse sim, é "nao_sei".`;
 }
 
 export async function classificarIntencao(params: {
@@ -268,6 +319,11 @@ export async function classificarIntencao(params: {
    * `skills: []` — exatamente o comportamento anterior a este campo existir.
    */
   catalogoSkills?: readonly SkillDoCatalogo[];
+  /**
+   * O Plano em preparação, quando existe. Só a pergunta pendente entra no
+   * prompt — ver `PlanoEmPreparacao`. Ausente = prompt idêntico ao de antes.
+   */
+  planoPendente?: PlanoEmPreparacao | null;
 }): Promise<TurnoClassificado> {
   const texto = (params.texto ?? "").trim();
   const anterior = params.temaAnterior ?? null;
@@ -303,7 +359,7 @@ export async function classificarIntencao(params: {
       // 24 bastavam pra "intencao|tema". Com o "aceite" — uma frase — a
       // resposta era cortada no meio e o campo saía com sobra de raciocínio.
       max_tokens: 100,
-      system: montarSystem(catalogo),
+      system: montarSystem(catalogo, params.planoPendente),
       messages: [{ role: "user", content: user }],
     });
     const b = resp.content[0];
