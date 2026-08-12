@@ -2863,8 +2863,11 @@ async function enviarRespostaEmChunks(
    *
    * ⚠️ Antes disto (PEND-050) o id do Plano só existia dentro da URL do
    * magic-link, no meio do texto. Recuperá-lo exigiria parsear a própria fala da
-   * Ayla — o mesmo tipo de acoplamento frágil que já derruba o aceite da oferta
-   * (`ofertouPlanoRecente` casa regex no texto dela mesma).
+   * Ayla — o mesmo acoplamento frágil que derrubava o aceite da oferta.
+   *
+   * E é esta âncora que passou a decidir o aceite: `ofertaDePlanoPendente` lê
+   * `metadata.plano_id` para saber que uma mensagem ENTREGOU um Plano, em vez
+   * de perguntar ao texto dela. Guardar o id aqui deixou de ser só rastro.
    *
    * Fica `null` quando o turno não entregou plano nenhum, que é a esmagadora
    * maioria dos turnos.
@@ -2900,7 +2903,11 @@ async function enviarRespostaEmChunks(
     texto: args.params.mensagem,
     ofertaAceitaAgora:
       ehAfirmacaoCurta(args.params.mensagem) &&
-      (await ofertouPlanoRecente(supabase, args.family_account_id)),
+      (await ofertaDePlanoPendente(
+        supabase,
+        args.family_account_id,
+        args.membro_atipico_id,
+      )),
   });
   // ⚠️ `querPlano` continua existindo porque ele responde uma quinta pergunta,
   // de OUTRA natureza: "a Ayla deve escrever o plano no chat?" — e a resposta é
@@ -3665,15 +3672,88 @@ const AFIRMACOES = new Set([
   "monta", "monta sim", "quero ver", "vamos la", "uhum", "aham",
 ]);
 
-/** A Ayla ofereceu um plano na última mensagem? Pra um "sim" curto logo depois
- *  virar pedido de plano (auto-oferta, 1c). Marca por texto na última outbound. */
 /** Frases que caracterizam uma OFERTA de plano feita pela Ayla. Inclui a
  *  nomenclatura nova ("plano estratégico com atividades"), que existe pra a mãe
- *  não confundir o material com plano de ASSINATURA. */
+ *  não confundir o material com plano de ASSINATURA.
+ *
+ *  ⚠️ ELA NÃO DISTINGUE OFERTA DE ENTREGA, e não é ela que precisa distinguir.
+ *  "Montei um plano estratégico com atividades" — o texto FIXO da entrega, em
+ *  `ponte.ts` — casa aqui por dois caminhos. Quem separa os dois estados é a
+ *  âncora estrutural, abaixo. */
 const REGEX_OFERTA_PLANO =
   /monte(i)? um plano|montar (um |esse |o )?plano|junte.*plano|plano (completo|estrat[ée]gico)|um plano (completo|estrat[ée]gico|com|pra|sobre)/;
 
-async function ofertouPlanoRecente(supabase: SupabaseClient, familyId: string): Promise<boolean> {
+/**
+ * Quantas mensagens de saída entram na janela de 30 min.
+ *
+ * ⚠️ ERA 6, e 6 bastava enquanto a pergunta era "existe alguma oferta aqui?".
+ * Agora a pergunta é sobre a ORDEM entre duas mensagens — a oferta e a entrega
+ * que a cumpriu —, e as duas precisam caber na mesma leitura. Entre elas cabe
+ * uma conversa inteira: no caso Matheo (11/08/2026) foram 6 balões em 4 min.
+ */
+const JANELA_OFERTA_MENSAGENS = 30;
+
+type SaidaDaJanela = {
+  texto: string | null;
+  metadata: unknown;
+  membro_atipico_id: string | null;
+};
+
+/**
+ * ESTA MENSAGEM É UMA ENTREGA? — perguntado à âncora, não ao texto.
+ *
+ * `metadata.plano_id` é gravado por `enviarRespostaEmChunks` **só depois** de o
+ * envio dar certo (a âncora da PEND-050). Mensagem com âncora entregou um
+ * Plano; é fato registrado, não interpretação de fala.
+ */
+function ehEntregaDePlano(m: SaidaDaJanela): boolean {
+  const meta = m.metadata as { plano_id?: unknown } | null | undefined;
+  return typeof meta?.plano_id === "string" && meta.plano_id.length > 0;
+}
+
+/**
+ * EXISTE UMA OFERTA DE PLANO AINDA NÃO CUMPRIDA? — o gatilho do "Ok".
+ *
+ * ⚠️ O CASO MATHEO (11/08/2026). A mãe recebeu o Plano, respondeu "Ok" três
+ * vezes ao longo de nove minutos e ganhou mais três Planos. A pergunta antiga
+ * era "alguma das últimas 6 mensagens PARECE uma oferta?" — e a mensagem que
+ * ENTREGA o Plano ("Montei um plano estratégico…") parece. A entrega se
+ * reoferecia sozinha, para sempre.
+ *
+ * ⚠️ POR QUE NÃO SE RESOLVE POR TIMESTAMP. Comparar "última oferta" com "último
+ * Plano" em `planos` não funciona: a linha em `planos` nasce dentro de
+ * `gerarPlano`, e a mensagem que a anuncia só é persistida no fim do turno.
+ * MEDIDO em produção sobre 97 Planos: a mensagem vem 0-8 s DEPOIS da linha
+ * (mediana 3 s), zero exceções. O plano que cumpriu a oferta é sempre mais
+ * VELHO que o texto que a "reoferece" — a comparação diria "pendente" sempre.
+ *
+ * O que resolve é a ORDEM na própria timeline de saída, com os dois estados
+ * marcados por naturezas diferentes: a oferta por texto, a entrega por âncora.
+ * Varrendo do mais novo para o mais velho, a primeira mensagem RELEVANTE
+ * decide, e isso é exatamente "não há entrega depois da última oferta":
+ *
+ *   oferta …………………………………… pendente  → o "Ok" gera
+ *   oferta → entrega …………… cumprida  → o "Ok" não gera
+ *   oferta → entrega → oferta  pendente  → a oferta NOVA vale por si
+ *
+ * ⚠️ ZERO CONSULTA A `planos`. A timeline de `ayla_messages` já carrega os dois
+ * fatos; perguntar a outra tabela seria uma segunda fonte para a mesma decisão.
+ *
+ * ESCOPO: por criança quando o turno sabe de quem se fala, por família quando
+ * não sabe. Mensagem sem dono entra nos dois casos — é o mesmo recorte de
+ * `carregarEstrategiasRecentes` ("deste membro OU sem membro"), e sem ele os
+ * 6 Planos e as 2 ofertas com `membro_atipico_id` nulo que existem hoje em
+ * produção sumiriam da janela, e o "sim" da mãe não geraria nada.
+ *
+ * O recorte é feito em JS, não na consulta: `or()` do duplo de banco não filtra
+ * de propósito, e um cenário que dependesse dele para EXCLUIR o irmão passaria
+ * verde sem provar nada.
+ */
+export async function ofertaDePlanoPendente(
+  supabase: SupabaseClient,
+  familyId: string,
+  membroAtipicoId: string | null,
+): Promise<boolean> {
   const desde = new Date(Date.now() - 30 * 60 * 1000).toISOString();
   // Olha as ÚLTIMAS mensagens, não só a última. A Ayla responde em vários
   // balões e costuma continuar falando depois de oferecer; com limit(1) o "sim"
@@ -3681,19 +3761,30 @@ async function ofertouPlanoRecente(supabase: SupabaseClient, familyId: string): 
   // real: ela pergunta o preço, a Ayla esclarece, e só então ela aceita.
   const { data } = await supabase
     .from("ayla_messages")
-    .select("texto")
+    .select("texto, metadata, membro_atipico_id")
     .eq("family_account_id", familyId)
     .eq("direcao", "outbound")
     .gte("created_at", desde)
     .order("created_at", { ascending: false })
-    .limit(6);
-  return (data ?? []).some((m) =>
-    REGEX_OFERTA_PLANO.test(((m.texto as string | null) ?? "").toLowerCase()),
-  );
+    .limit(JANELA_OFERTA_MENSAGENS);
+
+  for (const m of (data ?? []) as SaidaDaJanela[]) {
+    // Do irmão: não é oferta minha nem entrega minha. Sai da conta inteira.
+    if (membroAtipicoId && m.membro_atipico_id && m.membro_atipico_id !== membroAtipicoId) {
+      continue;
+    }
+    // A ÂNCORA VENCE O TEXTO, e é a inversão que corrige o caso Matheo: a
+    // mensagem de entrega casa a regex, mas é entrega, e entrega fecha a oferta.
+    if (ehEntregaDePlano(m)) return false;
+    if (REGEX_OFERTA_PLANO.test((m.texto ?? "").toLowerCase())) return true;
+  }
+  return false;
 }
 
-/** Mensagem curta que é só um "sim" (sem conteúdo novo pra registrar). */
-function ehAfirmacaoCurta(texto: string): boolean {
+/** Mensagem curta que é só um "sim" (sem conteúdo novo pra registrar).
+ *  Exportada para que o aceite possa ser exercitado COMPOSTO, do jeito que a
+ *  produção o compõe — "Ok vou ler" e "Obrigada" morrem aqui, não na oferta. */
+export function ehAfirmacaoCurta(texto: string): boolean {
   const norm = texto
     .toLowerCase()
     .normalize("NFD")

@@ -26,10 +26,11 @@ Só o que está aberto. 🔒 = bloqueada.
 | [PEND-022](#pend-022) | Fontes confiáveis, limites e escalonamento | F · Limites | P2 | ABERTA | preencher o DESEJADO |
 | [PEND-040](#pend-040) | Observabilidade de IA — conversa Web e Plano não existem em `api_calls` | H · Governança | P1 | ABERTA | achar por que a instrumentação atual não grava |
 | [PEND-042](#pend-042) | 58% dos turnos de WhatsApp sem repertório | B · Conhecimento | P1 | MEDIDA | separar os 5 motivos antes de tocar em base ou prompt |
-| [PEND-041](#pend-041) | Rastro web não separa conversa de artefato | H · Governança | P2 | ABERTA | carregar a origem no evento |
 | [PEND-038](#pend-038) | Latência percebida no WhatsApp e resposta em vários balões | A · Condução | P1 pós-rollout | NÃO MEDIDA EM PRODUÇÃO | os 56s são bancada do Plano; depende de [PEND-040] |
 | [PEND-039](#pend-039) | Bancada permanente de golden cases (Manu · LEGO · Bia · vago) | A · Condução | P1 | DESENHADA | construir antes da próxima fase do Plano |
 | [PEND-043](#pend-043) | Ter objetivo ≠ gerar Plano — falta decisão de valor | D · Entregas | P1 | ABERTA | separar suficiência de valor de consolidação |
+| [PEND-046](#pend-046) | Turno seguinte não enxerga a resposta ainda em voo | A · Condução | P1 | CAUSA PROVADA | avaliar junto com [PEND-038]; não aumentar a janela |
+| [PEND-045](#pend-045) | Pronome perde a criança logo após ação sobre ela | A · Condução | P1 | CAUSA PROVADA | âncora na ação anterior, sem heurística de pronome |
 | [PEND-044](#pend-044) | A Kolo terceiriza antes de tentar ajudar | A · Condução | P1 | ABERTA | classe funcional, não regra de palavra |
 | [PEND-036](#pend-036) | O Plano reoferece o que a conversa acabou de descartar | D · Entregas | P1 | DESCONTAMINADA | medida sozinha após a 035; é defeito próprio |
 | [PEND-037](#pend-037) | O Plano afirma causas sem fonte rastreável | D · Entregas | P2 | ABERTA | classificar PERFIL/BASE/INFERÊNCIA/SEM FONTE |
@@ -447,6 +448,440 @@ Aberta em: 2026-08-08 · Origem: pedido do Sérgio na missão da PEND-004
 
 ---
 
+### PEND-049
+**A retomada da Rotina fica de pé por 48 horas — e o portão pula o ato**
+Bloco: **A · Condução** · Prioridade: **P2** · Estado: **ABERTA · MEDIDA, DECISÃO DE PRODUTO PENDENTE**
+Aberta em: 2026-08-11 · Origem: mapeamento da Rotina (fases 1-4 da missão de artefatos)
+
+> **Uma pergunta da Ayla sem resposta reabre o fluxo da Rotina dois dias
+> depois, num assunto qualquer.**
+
+- **PROVEI POR EXECUÇÃO** (duplo de banco, sem produção). `rotinaConversaPendente`
+  não guarda estado: ele DERIVA do histórico — último outbound
+  `tipo="rotina_conversa"` nas últimas **48 h** sem nenhum inbound depois.
+  Medido: pendente com 1 h → abre · já respondida → fecha · **40 h sem resposta
+  → abre** · 47h59 → abre · 49 h → fecha.
+- **E o que abre por aí não passa pelo ato.** `rotinaConversa` entra no portão
+  ANTES de `pedidoDeRotina`, de propósito: é continuação de uma montagem em
+  curso, e exigir o ato mataria a resposta curta da mãe ("as 7h", "sim"). O
+  efeito colateral é que, na janela de 48 h, qualquer mensagem entra pelo fluxo
+  da Rotina.
+- **O que segura hoje:** o modelo, um passo adiante —
+  `prontidao.desfecho === "nao_e_rotina"` faz `conduzirRotina` devolver null e a
+  conversa cai no reativo. **INFERI** que é isso que evita o estrago na maior
+  parte dos casos; **NÃO MEDI** com que frequência ele erra.
+- **⚠️ ISTO É DECISÃO DE PRODUTO, NÃO DE ENGENHARIA**, e é por isso que não
+  corrigi: encurtar a janela troca *estado fantasma* por *retomada perdida*. Uma
+  mãe que responde no dia seguinte é comum. Não invento o número — **48 h, 12 h
+  ou "só até a próxima mensagem dela"** são três produtos diferentes.
+- **Critério de conclusão:** janela decidida por escrito, com o caso da mãe que
+  some e volta considerado, e teste que morde nos dois lados (retomada legítima
+  preservada · assunto novo não entra pelo fluxo antigo).
+- **Depende de:** decisão do Sérgio.
+- **Agente recomendado:** PROPOR
+
+---
+
+### PEND-050
+**Plano não tem caminho de editar nem de reenviar**
+Bloco: **A · Condução** · Prioridade: **P2** · Estado: **ABERTA · LACUNA PROVADA**
+Aberta em: 2026-08-11 · Origem: fatia de autoridade do Plano (5490c24)
+
+> **Depois de 5490c24, "ajusta aquele plano" e "manda o plano de novo" não
+> geram mais um plano indevido — e também não fazem nada.**
+
+- **VI NO CÓDIGO:** a ponte (`montarPonteWhatsApp`) só sabe GERAR. Não existe
+  caminho de edição de Plano nem de reenvio do PDF/link já produzido — ao
+  contrário da Rotina, que tem `editarRotina` e `entregarArtefatoImprimivel`.
+- **MEDIDO, antes da correção:** `pedeUmPlano` devolvia `true` para
+  "manda o plano de novo" e o turno gerava um plano **NOVO**. Ou seja: o
+  reenvio nunca funcionou; ele era mascarado por uma geração duplicada.
+- **Por isso `editar` NÃO abre o portão de criação do Plano** — deixá-lo abrir
+  produziria um plano a mais em vez de ajustar o que existe. A correção trocou
+  um comportamento errado por uma lacuna honesta, e a lacuna fica registrada.
+- **Hoje esses dois atos caem na conversa**: a Ayla responde por texto, sem
+  entregar nada. **NÃO MEDI** o que ela diz nesse caso.
+- **Critério de conclusão:** os dois atos com desfecho próprio — reenviar o
+  artefato existente, e alterar sem duplicar —, provados pelo fluxo real.
+- **Depende de:** nada. **Deve ser avaliada com:** [PEND-044].
+- **Agente recomendado:** PROPOR
+
+---
+
+### PEND-054
+**A janela de lote custa 7 segundos em TODO turno do WhatsApp**
+Bloco: **A · Condução** · Prioridade: **P0 de EXPERIÊNCIA** · Estado: **CONCLUÍDA em 2026-08-13 (05ca5b2)**
+Aberta em: 2026-08-13 · Origem: missão de latência (97d0765)
+
+> ⚠️ **P0 aqui é de experiência/performance, não de segurança.** Os outros P0
+> desta lista são clínicos ou de acesso — família perdendo dado, criança em
+> risco, mãe sem entrar. Este é "afeta todo turno do WhatsApp e degrada o
+> produto inteiro", e não deve competir por urgência com aqueles. Ler os dois
+> como a mesma coisa foi o que já transformou "ativado" em três conceitos
+> diferentes neste repositório.
+
+> **`lote-inbound.ts:62` dorme 7 segundos fixos antes de qualquer
+> processamento, e é o maior componente isolado da latência percebida.**
+
+- MEDIDO local (n=5), sem contar a janela: até a mãe ver algo, p50 **12,9s**.
+  Somando os 7s: **~20s** no turno limpo, **~25s** com o fallback do parser.
+- A janela é decisão de produto, não defeito: junta balões que a mãe manda em
+  sequência, e o próprio arquivo assume o custo por escrito.
+- Consulta somente-leitura pronta em `docs/bancada/janela-lote-consulta.sql`,
+  com o recorte certo (burst ANTES da resposta da Ayla, não intervalo entre
+  mensagens consecutivas).
+- **Régua de decisão já acordada:** 3s se os casos entre 3-7s forem assunto
+  novo; 4s se houver complemento real perdido em 3s; manter 5-7s só se a
+  amostra qualitativa provar que junta frases do mesmo pensamento.
+- Critério de conclusão: janela ajustada com base no dado, e nova medição do
+  fluxo real depois.
+
+### PEND-055
+**O parser cai no modelo de fallback em parte dos turnos, e custa ~6s**
+Bloco: **A · Condução** · Prioridade: **P1** · Estado: **ABERTA — não investigada**
+Aberta em: 2026-08-13 · Origem: missão de latência
+
+> **`parser.ts:197` tenta o modelo leve e, se vier null, tenta o grande EM
+> SÉRIE. Disparou em 2 de 5 turnos medidos.**
+
+- A primeira medição acusou 4 de 5, mas **era artefato de fixture**: o
+  `novoId` do harness devolvia `membro-0016` e o `ParserSchema` exige
+  `z.string().uuid()`. Corrigido em `0bae762`; o índice caiu pela metade.
+- **NÃO SEI** por que ainda dispara nos 2 restantes: `tentar()` devolve null
+  por erro de rede, JSON inválido OU schema reprovado, e não distingui.
+  `prova-parser-real.test.ts` captura a resposta crua e serve pra isso.
+- Só investigar DEPOIS da janela (PEND-054) e de nova medição — pode deixar de
+  ser o maior gargalo.
+
+### PEND-056
+**As conquistas chegam ao prompt e a Ayla não as usa**
+Bloco: **A · Condução** · Prioridade: **P2** · Estado: **ABERTA — observação de 1 caso**
+Aberta em: 2026-08-13 · Origem: M1 (2cb06d6)
+
+> **Duas conquistas relevantes foram semeadas e nenhuma foi usada nos 5 turnos
+> do âncora — inclusive uma que era ponte perfeita.**
+
+- "Contou pela primeira vez o que tinha acontecido na aula" estava disponível
+  no turno em que a mãe disse "ela não consegue falar sobre isso". A Ayla
+  passou por cima.
+- A FIAÇÃO está provada (`conversa-e2e.test.ts`): o bloco `<ja_conquistou>`
+  chega, com a instrução de uso colada. O que não aconteceu foi o USO.
+- Amostra de 1. **Não corrigir com mais prompt antes de ver se repete** — o
+  padrão desta base é que regra somada a regra faz a nova perder.
+
+### PEND-057
+**Paralelizar parser e classificador esbarra em nove saídas antecipadas**
+Bloco: **A · Condução** · Prioridade: **P3** · Estado: **ABERTA — adiada por decisão**
+Aberta em: 2026-08-13 · Origem: missão de latência
+
+> **A independência está provada; a posição no fluxo é que não é gratuita.**
+
+- Entre o classificador (linha ~2060) e o parser (~2530) há **9 `return`
+  antecipados** (rotina, plano, PDF, aceite). Disparar o parser cedo paga uma
+  chamada de Haiku descartada nesses turnos, e deixa promise órfã em serverless.
+- Ganho: ~0,9s (serial 0,9+2,2=3,1s → paralelo 2,2s). Contra 4s sem custo na
+  janela — um oitavo do ganho com toda a complexidade.
+- Reavaliar só depois de PEND-054 e PEND-055.
+
+### PEND-058
+**Fragmentação multi-balão: a janela já não captura 72,6% dos bursts**
+Bloco: **A · Condução** · Prioridade: **P1 de EXPERIÊNCIA** · Estado: **ABERTA — achado de produção, sem solução proposta**
+Aberta em: 2026-08-13 · Origem: medição da PEND-054
+
+> **A mediana do intervalo entre balões do mesmo turno é 11,2 segundos. A
+> janela era de 7s e agora é de 3s — nos dois casos, a maioria das
+> continuações chega DEPOIS que a Ayla já respondeu.**
+
+- MEDIDO em produção (60 dias, 1.834 turnos): 252 são multi-balão. A janela de
+  7s capturava 69 (27,4%); a de 3s captura 33 (13,1%). p75 = 18,6s · p90 = 34s.
+- **Consequência que ninguém tinha medido:** ~10% dos turnos já recebiam
+  resposta partida ANTES da mudança — a mãe manda *"Tem dificuldade de Tomar"*,
+  a Ayla responde, e 11 segundos depois chega *"De engolir"* como turno novo.
+  Com 3s isso vai a ~12%.
+- **Esticar a janela NÃO é a solução:** cobrir o p90 exigiria 34 segundos de
+  espera para 100% dos turnos, sendo que 86,3% têm um balão só.
+- O caminho a investigar é outro: **tratar a mensagem que chega DEPOIS da
+  resposta como continuação**, e não como turno novo — a Ayla já tem o
+  histórico e poderia emendar em vez de recomeçar. Não implementar sem
+  desenho: mexe em como o turno é definido.
+- Critério de conclusão: a continuação tardia deixa de produzir duas respostas
+  desconexas, sem impor espera longa a quem manda um balão só.
+
+### PEND-059
+**Contradição percebida, mas ainda não persistida — a segunda metade da fatia**
+Bloco: **A · Condução** · Prioridade: **P1** · Estado: **ABERTA — depende da [PEND-053]**
+Aberta em: 2026-08-13 · Origem: M3.2, regra de contradição perfil × relato
+
+> **A Ayla passou a PERCEBER e CHECAR a contradição. Ela ainda não ATUALIZA o
+> perfil nem USA a correção depois.**
+
+- O que foi entregue e está provado: `PERCEBER → CHECAR`. Com o perfil dizendo
+  "não fala", a Ayla responde *"pelo que você contou antes, a Manu não fala com
+  palavras… quando você diz que ela falou, como foi isso?"*.
+- O que **falta**, e é o que faz a mãe sentir que a Kolo aprende:
+  `→ ATUALIZAR O PERFIL → USAR DEPOIS`. Comportamento desejado, por caso:
+  - confirmou **evolução** → registrar o novo fato **com data**, sem apagar a
+    história anterior (o perfil é uma linha do tempo, não um estado);
+  - a mãe corrige (*"falei errado, ela não fala"*) → corrigir o dado incorreto;
+  - "falou" era **apontar/gesto/prancha** → NÃO alterar para verbal;
+  - ficou **ambíguo** → não salvar como fato.
+- ⚠️ **NÃO é mecanismo paralelo.** Depende da [PEND-053]: o parser hoje não
+  consegue endereçar boa parte dos domínios (lista manual de 9 de 20), então
+  não há por onde gravar. Resolver a 053 primeiro; esta é a continuação.
+- **NÃO SEI** se o mecanismo atual sabe corrigir ou remover um fato com
+  segurança — só provei INSERT. Se não souber, isso vira decisão de produto
+  antes de virar código.
+- Critério de conclusão: os quatro casos acima provados de ponta a ponta —
+  gravação correta, e recuperação no turno seguinte.
+
+### PEND-060
+**Dois Planos em segundos: a rajada fura o cooldown de 3 min**
+Bloco: **A · Condução** · Prioridade: **P1 de EXPERIÊNCIA** · Estado: **ABERTA — causa identificada, sem solução proposta**
+Aberta em: 2026-08-13 · Origem: achado ao corrigir o gatilho do aceite (oferta pendente × cumprida)
+
+> **O cooldown de 3 minutos da ponte existe e está correto. Ele não pega
+> turnos CONCORRENTES: as duas leituras acontecem antes da primeira escrita.**
+
+- MEDIDO em produção (145 Planos, 53 famílias): **15 pares de Planos da mesma
+  família a menos de 10 min** um do outro. Sete deles **abaixo de 120 s** —
+  3 s, 4 s, 9 s, 16 s, 21 s, 32 s, 76 s. Todos os 15 são da **mesma criança**.
+- **Caso Theo** (0b319cbe, 12/08, 18:08:45 → 18:08:55, **9 s**): dois inbounds
+  a 15 s de distância (*"Ele comia bastante banana, uva…"* / *"Na escola tem
+  comido melancia"*) abriram dois turnos concorrentes. **Nenhum dos dois era
+  um "Ok"** — não passa pelo gatilho do aceite, e por isso não foi corrigido
+  na fatia de 13/08.
+- **Caso Matheo** (4135061b, 11/08, 13:30:27 → 13:30:59, **32 s**): mesmo
+  mecanismo, com dois "Ok" a 34 s de distância. Os outros dois duplicados dele
+  (13:26 e 13:30) eram o gatilho do aceite e **estão corrigidos**.
+- CAUSA RAIZ, **VI NO CÓDIGO** (`ponte.ts`, freio anti-duplicata): o cooldown
+  faz `select` em `ayla_messages` procurando `/auth/wa` nos últimos 3 min, e a
+  mensagem que ele procura só é gravada **no fim** do turno
+  (`enviarRespostaEmChunks`). Em duas invocações simultâneas, ambas leem antes
+  de qualquer uma escrever. É o padrão do §8 do protocolo: *ler antes de
+  escrever não basta numa rajada*.
+- O caminho já existe no repositório e **não deve ser reinventado**:
+  `reservarEnvioProativo` (`cadencia.ts`) e `reservarConviteAssinatura`
+  (`orchestrator.ts`) — **reservar primeiro, resolver quem chegou antes**, e
+  quem perde apaga a própria reserva. ⚠️ Atenção à janela da reserva: se ela
+  for tão longa quanto o cooldown, uma reserva órfã silencia o fluxo por 3 min
+  por uma geração que nunca aconteceu.
+- ⚠️ **Não confundir com o gatilho do aceite.** Aquele era semântico (a entrega
+  se reoferecia sozinha) e está resolvido; este é de concorrência e sobrevive
+  a ele. Corrigir um não corrige o outro.
+- Critério de conclusão: dois turnos concorrentes da mesma família produzem
+  **um** Plano, provado por execução com as duas invocações em voo ao mesmo
+  tempo — e o caso legítimo (dois pedidos separados por horas) continua
+  gerando dois.
+
+### PEND-052
+**Patrimônio dos especialistas do app anterior — auditar o que não migrou**
+Bloco: **A · Condução** · Prioridade: **P2** · Estado: **ABERTA**
+Aberta em: 2026-08-12 · Origem: missão do Core transversal (897f36b)
+
+> **Os prompts dos antigos especialistas do Kolo Materno nunca foram
+> comparados, item a item, com a Base Kolo atual.**
+
+- O app anterior tinha agentes por domínio com estratégias práticas,
+  atividades, formas de condução, crenças, rituais, frases prontas e perguntas
+  de investigação. Parte disso virou `docs/skills/` e `boas_praticas`; **não se
+  sabe o que ficou pelo caminho.**
+- **NÃO É** copiar o app antigo, nem engrossar o prompt: é identificar
+  patrimônio intelectual útil que possa ter se perdido na migração, e só então
+  decidir onde ele entra (BP, skill, Plano — não necessariamente o núcleo).
+- Critério de conclusão: uma lista, por domínio, do que existe lá e não existe
+  aqui, com recomendação de destino para cada item — ou a constatação, com
+  evidência, de que não há lacuna.
+
+### PEND-053
+**Aprendizado longitudinal sobre COMO a criança recebe melhor a informação**
+Bloco: **A · Condução** · Prioridade: **P1** · Estado: **ABERTA — não investigada**
+Aberta em: 2026-08-12 · Origem: missão do Core transversal (897f36b)
+
+> **Se a mãe descobre "quando eu mostro primeiro e falo depois, ele entende
+> muito melhor", isso chega ao próximo turno?**
+
+- O núcleo passou a mandar a Ayla propor testes pequenos ("vamos experimentar
+  mostrar em vez de falar?") e aprender com a resposta da criança. **A metade
+  que fecha o ciclo — guardar a descoberta e reusá-la — NÃO foi verificada.**
+- `perfil_vivo_membro` tem `aprendizado` e `como_e`, e existe incorporação
+  automática (`incorporar.ts`); mas **NÃO SEI** se uma descoberta sobre FORMA
+  DE INTERAÇÃO é reconhecida, classificada e gravada, nem em qual campo.
+- Se não chegar, é lacuna estrutural alinhada ao diferencial da Kolo: a
+  descoberta mais valiosa da conversa morre nela.
+- Critério de conclusão: prova por execução de que a descoberta é gravada e
+  volta ao prompt no turno seguinte — ou o desenho do menor mecanismo que faça
+  isso, sem memória nova.
+
+### PEND-051
+**A conversa nunca tinha sido executada em teste**
+Bloco: **A · Condução** · Prioridade: **P1** · Estado: **CONCLUÍDA em 2026-08-11 (8c42a53)**
+Aberta em: 2026-08-11 · Origem: harness end-to-end (e64da15)
+
+> **Pelo fluxo real, um pedido explícito de Rotina termina como
+> `resposta_registro`, e o perfil da criança não aparece em chamada nenhuma.**
+
+- **O harness existe agora** (`__harness/`, `conversa-e2e.test.ts`):
+  `processInbound` rodando de verdade, banco em memória, modelo falso, nenhum
+  envio. Antes dele, **nenhum teste executava a conversa** — os que existiam
+  liam o arquivo com `readFileSync`.
+- **PROVEI PELO FLUXO REAL (5):** relato conceitual não cria artefato · falar de
+  rotina existente não cria outra · a pergunta do caso Mário não gera plano · a
+  recusa não gera plano · troca de criança não vaza perfil do irmão.
+- **NÃO CONSEGUI PROVAR (2), e é isto que esta ficha guarda:**
+  1. "me ajuda a montar uma rotina para a manhã dela?" — **MEDIDO por função**,
+     o portão ABRE (piso + ato `criar`); **pelo fluxo real** o turno sai como
+     `resposta_registro`. Alguma coisa antes do portão decide.
+  2. `perfil_vivo_membro.sensorial` não chega a chamada nenhuma, enquanto o
+     **nome** da criança chega.
+- **⚠️ AS DUAS LEITURAS, e nenhuma provada:** (a) lacuna do harness —
+  `loadFamiliaParaEnvio` devolvendo null porque a fixture não tem os campos que
+  ele lê, e o bloco caindo fora em silêncio; (b) defeito real de roteamento e de
+  recuperação. **A hipótese (a) já foi descartada uma vez** neste mesmo teste (a
+  fixture escrevia em `categorias_extras`, que só é lido para chaves de TEMAS) e
+  o resultado não mudou — então ela não pode ser assumida de novo por
+  conveniência.
+- **Os dois cenários estão `it.skip` com a dúvida escrita no corpo**, não
+  apagados. Nada deve ser corrigido com base neles antes da causa localizada.
+- **⚠️ ENQUANTO ISTO NÃO FECHAR, a Rotina NÃO está provada de ponta a ponta** —
+  só nos portões.
+- **✅ BAIXA (2026-08-11, 8c42a53).** Causa localizada e etiquetada: **os dois
+  itens eram do HARNESS**, e a hipótese de defeito de produto está **REFUTADA**.
+  - Item 1 — `client.messages.create is not a function`. O duplo só implementava
+    `.stream()`; intenção, prontidão e condutor usam `.create()`. **O portão da
+    Rotina TINHA aberto** — a prontidão só é chamada lá dentro. Rastreado pelo
+    log real do turno.
+  - Item 2 — duas falhas em sequência na fixture: o **lugar** (`categorias_extras`
+    só é lido para chaves de TEMAS) e a **forma** (`resumoCampoKV` exige
+    `{ texto }`; string pura cai fora em silêncio — a mesma forma da PEND-033).
+    **PROVEI POR EXECUÇÃO** que o perfil chega: `<o_que_ja_sabemos_da_crianca>`
+    com "barulho alto" e "acorda 6h30".
+- **⚠️ E A SABOTAGEM DESMENTIU O PRÓPRIO ARQUIVO:** reverter o portão de criar ao
+  piso puro mantinha os cenários VERDES — com a prontidão no padrão, o modelo
+  devolvia "orientação" e nada era publicado. O teste media o MODELO, não o
+  portão. Corrigido: A e E forçam `prontidao="suficiente"`, e a sabotagem morde.
+- **Fica aberto em outra ficha, não nesta:** deixar uma pergunta PENDENTE pelo
+  fluxo real exige um duplo que escreva a fala do condutor — ver [PEND-049].
+- **Critério de conclusão (cumprido):** causa localizada e etiquetada (harness × produto);
+  se for produto, correção com regressão; se for harness, fixture corrigida e os
+  dois cenários verdes.
+- **Depende de:** nada.
+- **Agente recomendado:** INVESTIGAR
+
+---
+
+### PEND-046
+**O turno seguinte não enxerga a resposta ainda em voo**
+Bloco: **A · Condução** · Prioridade: **P1** · Estado: **ABERTA · CAUSA PROVADA**
+Aberta em: 2026-08-11 · Origem: caso Mário (WhatsApp, produção)
+
+> **A Ayla repetiu a orientação inteira e reabriu a identidade porque, no
+> momento em que montou o contexto, a própria resposta anterior ainda não
+> existia no banco.**
+
+- **EVIDÊNCIA — timestamps reais, correlacionados por `processada_em` e não por
+  proximidade:**
+
+  ```
+  19:53:22.977  INBOUND A   "não quer sair do quarto, sonolento"
+  19:53:34.161  A CLAIMA    (dormiu os 7 s da janela; nada mais novo)
+  19:53:38.301  INBOUND B   "Sim"        ← 4,1 s DEPOIS do claim de A
+  19:53:46.119  B CLAIMA    (nada mais novo — turno legítimo e separado)
+  19:53:54.309  OUTBOUND 1  resposta de A é ENVIADA e persistida
+  19:54:03.974  OUTBOUND 2  resposta de B
+  ```
+
+  **B montou o contexto 8,2 segundos ANTES de a resposta de A existir.** Para
+  B, aquilo nunca tinha sido dito — então ela reofereceu a mesma estratégia
+  ("missão curta", "portão") e reabriu "estamos falando do Mario?".
+
+- **⚠️ O QUE ISTO NÃO É**, e cada uma dessas leituras foi descartada por prova:
+  - **não é duplicidade de webhook** — dois `zaap_message_id` distintos, dois
+    textos distintos da mãe;
+  - **não são dois produtores do mesmo turno** — o claim atômico funcionou:
+    A → OUTBOUND 1, B → OUTBOUND 2, um inbound para cada resposta;
+  - **não é falha do lote** — `JANELA_SILENCIO_MS = 7000` e B chegou **15,3 s**
+    depois de A. Dois turnos genuinamente separados;
+  - **não é erro do modelo** — ele respondeu bem ao contexto que recebeu; o
+    contexto é que estava incompleto no tempo.
+- **CLASSE CORRETA: leitura temporalmente incompleta do histórico enquanto
+  existe resposta em voo.** O lote protege contra *dois processarem a mesma
+  mensagem*; **nada protege contra um processar sem ver a resposta em voo**.
+- **⚠️ AUMENTAR `JANELA_SILENCIO_MS` NÃO É SOLUÇÃO ACEITA.** Agrupar A e B
+  exigiria uma janela de 16 s, e isso faria **toda família** esperar 16 s por
+  qualquer resposta. Duplicação não se resolve com atraso artificial para
+  todos — a latência percebida já é P50 22,4 s.
+- **A correção provável toca ORDENAÇÃO/COORDENAÇÃO** entre processamento e
+  persistência: persistir o outbound antes de liberar o claim seguinte, ou o
+  claim esperar enquanto houver processamento em voo para a mesma família.
+  **Nenhuma das duas foi investigada.**
+- **⚠️ BLAST RADIUS ALTO, e há uma dependência de ordem:** a correção mexe no
+  **caminho crítico de latência**, que está sendo instrumentado e medido agora.
+  Qualquer mudança aqui **precisa ser avaliada junto com [PEND-038]** — pode
+  aumentar ou reduzir o tempo percebido, e mexer nele antes de ter os dados
+  alteraria o próprio objeto da medição.
+- **Relação com [PEND-045], e são DEFEITOS INDEPENDENTES que se somaram:** na
+  mesma conversa houve **três** reaberturas de identidade. Duas (19:10 e 19:51)
+  aconteceram **sem concorrência nenhuma** e são da PEND-045 (pronome perde a
+  criança). A terceira (19:54) é desta ficha. Se a identidade estivesse
+  perfeita, a repetição de CONTEÚDO ("missão curta", "portão") teria acontecido
+  do mesmo jeito.
+- **CRITÉRIO DE BAIXA:** reproduzir dois turnos legítimos próximos, com o
+  segundo chegando **enquanto o primeiro ainda está gerando**, e provar que o
+  segundo **enxerga a resposta anterior**, **ou espera de forma controlada**,
+  **ou invalida e recalcula o contexto** — sem criar atraso artificial para
+  todos os turnos.
+- **Depende de:** nada. **Deve ser avaliada com:** [PEND-038].
+- **Agente recomendado:** INVESTIGAR
+
+---
+
+### PEND-045
+**O pronome perde a criança logo depois de uma ação inequívoca sobre ela**
+Bloco: **A · Condução** · Prioridade: **P1** · Estado: **ABERTA · CAUSA PROVADA**
+Aberta em: 2026-08-11 · Origem: auditoria do caso Mário (WhatsApp, produção)
+
+> **A Ayla acabou de gerar um Plano para uma criança e, 41 segundos depois,
+> perguntou de qual das duas a mãe estava falando.**
+
+- **A LINHA DO TEMPO REAL**, lida em `ayla_messages` e `planos` (família com dois
+  filhos, Mário e Manu):
+
+  ```
+  19:08:32  MÃE   membro=MARIO  "plano para melhorar a comunicação do Mário"
+  19:09:54        ── plano criado, planos.membro_atipico_id = MARIO ──
+  19:09:57  AYLA  membro=MARIO  "Vamos trabalhar a comunicação do Mario…"
+  19:10:35  MÃE   membro=NULL   "…você salvou o que sobre ELE?"
+  19:10:53  AYLA  membro=NULL   "você está falando do Mário ou da Manu?"
+  ```
+
+- **O plano estava CERTO.** Conferido no banco, não pelo título:
+  `planos.membro_atipico_id = MARIO`. O que se perdeu foi o turno seguinte.
+- **CAUSA (VI NO CÓDIGO).** `resolverMembroAlvo({ texto, membros,
+  membroContexto })` resolve pelo NOME no texto; o contexto vem de
+  `criancaDaConversa`, que devolve a última mensagem com membro não nulo nas
+  **últimas 2 horas**. Às 19:10 essa janela alcançava Mário (19:09:57) **e**
+  Manu (18:34:23), e o pronome "ele" não desempata.
+- **⚠️ O DEFEITO NÃO É A JANELA.** É que **a ação que a Ayla acabou de executar
+  não conta como contexto**. Gerar um Plano para o Mário é o sinal mais forte
+  possível de quem é o assunto — e a resolução do turno seguinte não olha para
+  ele. Aumentar a janela pioraria: alcançaria mais o irmão, não menos.
+- **Alcance:** qualquer família com dois filhos em que a mãe use pronome depois
+  de uma ação sobre um deles. **WhatsApp** — na web o membro vem da conversa,
+  que é fixa por `conversa_id`.
+- **⚠️ O QUE A CORREÇÃO NÃO PODE SER:** regex de "ele/ela" apontando para o
+  último filho; janela maior; "o último membro mencionado sempre vence". Duas
+  crianças do mesmo gênero derrubam a primeira; as outras duas aumentam o risco
+  de **contaminar um irmão com o contexto do outro**, que é a regra mais dura
+  desta base (`membro-escopo.ts`).
+- **Critério de baixa:** os sete golden cases (nomeado · ação anterior ·
+  mudança explícita · dois alvos na mesma frase · ambiguidade real · mesmo
+  gênero · português informal) passando, com sabotagem: **remover a âncora da
+  ação anterior tem que fazer o caso Mário falhar de novo**.
+- **Ligada a** [PEND-037] (mesmo turno, achado diferente). **Depende de:** nada.
+- **Agente recomendado:** VS Code
+
+---
+
 ### PEND-044
 **A Kolo manda a família para fora antes de tentar ajudar diretamente**
 Bloco: **A · Condução** · Prioridade: **P1** · Estado: **ABERTA**
@@ -562,17 +997,37 @@ Aberta em: 2026-08-11 · Origem: leitura pós-rollout de `eventos_app`
      mexer na base.
 - **Anterior ao rollout**, e portanto não é regressão dele. Mas é grande demais
   para seguir sem ficha.
-- **Critério de baixa:** os 37 casos classificados nos cinco motivos acima, com
-  contagem por motivo; e, para os que forem defeito, a causa localizada no
-  código. Um número que continue somando cinco fenômenos não fecha nada.
+- **📊 MEDIDO EM 11/08/2026, e o quadro mudou.** Ampliado para 7 dias: **222
+  eventos, 85 vazios (38%)**. Classificados pela causa real, não pelo rótulo:
+
+  | causa | n | onde |
+  |---|---|---|
+  | **não houve skill real** | **54** | **100% WhatsApp** |
+  | acervo sem material (`meu_bem_estar`, 0 BPs) | 19 | WhatsApp |
+  | filtro de idade zerou | 12 | ambos |
+
+- **Os canais não têm a mesma causa:** WhatsApp **63%** de vazios em 120 turnos;
+  web **10%** em 105 — e **zero** "sem skill" na web.
+- **O filtro de idade é real mas minoritário** (14% dos vazios). Ainda assim
+  descarta muito: aos 8 anos, `sono` perde **89%** do acervo, `nutricional` 85%,
+  `sensorial` 82%.
+- **`organizacao` NÃO é skill** — é rótulo de intenção. Consultar o recuperador
+  com ele devolve vazio porque não existe skill com esse nome.
+- **⚠️ Os 54 continuam FECHADOS.** `conhecimento_consultado` não guarda relato
+  nem intenção detectada — sem isso não dá para separar roteamento × contexto
+  perdido × fluxo especial. **Depende de [PEND-040].**
+- **Critério de baixa:** os 54 classificados por causa, com evidência; e, para os
+  que forem defeito, a causa localizada no código. Um número que continue
+  somando fenômenos diferentes não fecha nada.
 - **Ligada a** [PEND-017]. **Depende de:** nada.
 - **Agente recomendado:** INVESTIGAR
 
 ---
 
 ### PEND-041
-**O rastro do canal web não distingue conversa de geração de artefato**
-Bloco: **H · Governança** · Prioridade: **P2** · Estado: **ABERTA**
+**✅ BAIXADA · O rastro do canal web não distinguia conversa de artefato**
+Bloco: **H · Governança** · Prioridade: **P2** · Estado: **CONCLUÍDA · EM PRODUÇÃO**
+Baixada em: 2026-08-11 · `dbb3c59` (PR #93)
 Aberta em: 2026-08-11 · Origem: leitura pós-rollout de `eventos_app`
 
 - **O caso, e ele quase virou um laudo errado.** Lendo o rastro de 11/08, os 68
@@ -587,9 +1042,15 @@ Aberta em: 2026-08-11 · Origem: leitura pós-rollout de `eventos_app`
 - **O custo disto não é teórico:** um rastro que exige leitura de código para
   ser interpretado não serve para o que ele existe — descobrir o que aconteceu
   sem depender da reclamação de uma família.
-- **Critério de baixa:** o evento carrega o que o originou (conversa em
-  streaming · artefato/output type · Plano), e uma consulta consegue separar os
-  três sem abrir o código.
+- **✅ PROVADO EM PRODUÇÃO (11/08/2026).** Conversa web real às 16:31:39 BRT,
+  correlacionada por horário e pelo título da conversa. O registro em
+  `api_calls` traz `feature: "conversa_web"` **e** `meta.origem: "conversa"` —
+  "web" diz por onde entrou, "conversa" diz o que era. Baseline antes do teste:
+  **zero registros de `conversa_web` em todo o histórico**.
+- **⚠️ O QUE A BAIXA NÃO COBRE.** A distinção existe em `api_calls`. No rastro
+  `conhecimento_consultado` (`eventos_app`) o rótulo continua sendo só o canal —
+  e foi lá que a ambiguidade quase produziu um laudo errado. Essa metade vive
+  em [PEND-040], que segue aberta.
 - **Ligada a** [PEND-040]. **Depende de:** nada.
 - **Agente recomendado:** VS Code
 
@@ -622,9 +1083,25 @@ Aberta em: 2026-08-11 · Origem: prova pós-rollout que não pôde ser feita
   modelo · duração · sucesso ou falha · fallback · tokens · custo quando
   disponível · família e conversa quando aplicável. Hoje o WhatsApp entrega
   parte disso e os outros dois não entregam nada.
-- **⚠️ NÃO IMPLEMENTAR AINDA.** Primeiro descobrir por que a instrumentação que
-  já existe não grava — acrescentar uma segunda instrumentação por cima de uma
-  que falha em silêncio seria repetir o erro que a [PEND-033] documentou.
+- **✅ CAUSA PROVADA E METADE CORRIGIDA (11/08/2026).** A rota web chamava
+  `logarUsoApi` com o cliente da **sessão da família** (anon key); `api_calls` é
+  tabela de auditoria e a RLS recusa o insert. O erro voltava em `error` e o
+  `console.warn` morria com a retenção do stdout. O WhatsApp nunca teve o
+  problema porque roda em service role. Corrigido em `dbb3c59`: o privilégio
+  ficou numa linha (só o billing), e a falha passou a persistir como
+  `billing_nao_gravou` via `logEvent`. **Provado em produção**: conversa web
+  real às 16:31:39 BRT, `openai/gpt-5.6-luna`, `ms=20111`.
+- **🔎 O PRÓPRIO MECANISMO ACHOU O SEGUINTE, no mesmo turno:**
+  `classificar_intencao` falha pela MESMA RLS (19:31:18Z, registrado). Roda em
+  todo turno de conversa web e nunca foi contabilizada. **Não corrigido.**
+- **⏱️ INSTRUMENTAÇÃO DO TURNO DO WHATSAPP, em três fatias:** piloto
+  (`parser` + `responder`, `af52fa9`), A1 (quatro auxiliares, `2cb24ba`), A2
+  (proativo com `envio_id`, `cd49c59`). **6 dos 9 call-sites** do turno gravam
+  `ms`, `tentativas` e correlação. Falta a **A3** — `classificar-area` e
+  `ayla_audio`, este último rodando ANTES de `processInbound`.
+- **⚠️ O RESTO SÓ DEPOIS DE MEDIR.** Acrescentar instrumentação por cima de uma
+  que falha em silêncio seria repetir o erro que a [PEND-033] documentou — foi
+  por isso que a causa veio antes da correção.
 - **Critério de baixa:** uma conversa web real e uma geração de Plano real
   aparecendo em `api_calls` com provider, modelo e duração, conferidas contra o
   horário do turno.
@@ -725,13 +1202,32 @@ Aberta em: 2026-08-11 · Origem: teste real (Karina/Manu)
   manter o objetivo certo, respeitar o que acabou de ser aprendido e não
   repetir a mesma ideia sete vezes. **O problema do Plano não é mais falta
   de conteúdo.** Provar a origem antes de alterar prompt ou código.
-- **🆕 CASO MÁRIO (11/08/2026) — evidência AINDA NÃO RASTREADA.** Numa resposta
-  real sobre uma lição, a Ayla afirmou que *"quando algo parece longo ou
-  abstrato o Mário trava antes de começar"* e que *"a preocupação com errar pode
-  fazer até pedir ajuda parecer arriscado"*. **NÃO SEI** de onde vieram: não
-  tenho o turno, o perfil nem o rastro. Cada afirmação precisa ser classificada
-  em **DADO DA FAMÍLIA · DADO DO PERFIL · HIPÓTESE MARCADA · CONHECIMENTO
-  GENÉRICO · INVENÇÃO/EXTRAPOLAÇÃO** — e não se racionaliza depois.
+- **❌ CASO MÁRIO — FALSO POSITIVO, DESCARTADO POR INVESTIGAÇÃO (11/08/2026).**
+  Eu havia registrado aqui as afirmações sobre o Mário (*"trava antes de
+  começar"*, *"a preocupação com errar"*) como suspeita de extrapolação.
+  **Rastreei o perfil real e não é extrapolação — é leitura do que a família
+  registrou.** O campo `comunicacao` do perfil dele diz, textualmente:
+
+  > *"Conversa bem… Antecipa falha em interações com estranhos (porteiro,
+  > jardineiro, merendeira) e não tenta; crença limitante que protege
+  > autoimagem. Copia palavras com perfeição quando vê o modelo, mas não
+  > consegue escrever sem referência visual."*
+
+  E `foco` diz *"Funciona melhor em passos curtos"*. As cinco afirmações
+  auditadas — *conversa bem · copia modelos visuais · sensação de que vai
+  falhar · passos curtos · referências visuais* — são **FATO**, quase verbatim.
+  Até a "estratégia de proteção" está escrita no perfil.
+- **O que sobra do caso é de REDAÇÃO, não de origem:** o Plano deu voz de
+  primeira pessoa (*"eu acredito que vou falhar"*) a algo que a família
+  registrou em terceira. Isso é a PEND-043/superprompt, não extrapolação.
+- **⚠️ E fica a lição de método:** eu suspeitei pelo padrão medido em outros
+  casos e quase deixei uma ficha apontando para o lugar errado. **Ficha errada
+  custa mais caro que ficha ausente** — foi por isso que este achado foi
+  removido em vez de amaciado.
+- **A ficha continua aberta SOMENTE pelos casos medidos**, que são outros:
+  *"gosta de brincar de caixa"* → *"domina o papel de caixa"*, e a corrida da
+  Manu virando *"adora correr"* / *"a corrida regula seu corpo"* (2 de 4 na
+  bancada de 11/08).
 - **⚠️ O NOME DO DEFEITO MUDA A CORREÇÃO.** O que a bancada mediu (2 de 4 casos)
   não é "hipótese apresentada como fato": é **EXTRAPOLAÇÃO** — `interesse →
   competência` ("gosta de brincar de caixa" virou "domina o papel de caixa"),
@@ -771,8 +1267,8 @@ Aberta em: 2026-08-11 · Origem: teste real (Karina/Manu)
 
 ### PEND-035
 **✅ BAIXADA · O objetivo do Plano confundia BARREIRA com OBJETIVO FINAL**
-Bloco: **D · Entregas** · Prioridade: **P1** · Estado: **CORRIGIDA · AGUARDANDO DEPLOY**
-Baixada em: 2026-08-11 · working tree, ainda não commitada
+Bloco: **D · Entregas** · Prioridade: **P1** · Estado: **CONCLUÍDA · EM PRODUÇÃO**
+Baixada em: 2026-08-11 · `09d5aa2` (PR #92)
 Aberta em: 2026-08-11 · Origem: teste real (Karina/Manu)
 
 - **O caso.** A conversa começou em *"quero ler com ela e ela não fica
@@ -819,7 +1315,16 @@ Aberta em: 2026-08-11 · Origem: teste real (Karina/Manu)
 - **Dois defeitos meus, achados por teste:** `` não fecha depois de "vê"
   (acento não é caractere de palavra em JS) e um `^não` genérico classificava
   *"Não durmo desde que ele nasceu"* como dispensa.
-- **⚠️ Falta o deploy.** A correção vive no working tree.
+- **✅ EM PRODUÇÃO desde 11/08/2026.** Commit `9bae45a`, PR #92, `main` =
+  **`09d5aa2`**; deployment de Production no MESMO SHA, estado `success`,
+  aplicação respondendo 200. Conferido por **diff do conteúdo publicado**:
+  `git show origin/main:…/objetivo.ts` traz `declaraObjetivo`, `focoAtual` e
+  `barreiras`, e a linha `if (declaraObjetivo(t.texto)) return monta(...)` que
+  substituiu a regra antiga.
+- **Alcance:** a web (conversa e ajuste de Plano). O **WhatsApp não usa
+  `objetivo.ts`** — tem caminho próprio (`ayla/ponte.ts` → `desafioDaConversa`)
+  e **continua com a regra antiga**. Não é regressão desta correção; é a
+  divergência entre canais já registrada na [PEND-043].
 - **Ligada a** [PEND-027], [PEND-036]. **Depende de:** nada.
 - **Fase:** próxima fase de inteligência do Plano — selecionar melhor,
   manter o objetivo certo, respeitar o que acabou de ser aprendido e não
