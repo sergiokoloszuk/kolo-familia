@@ -121,7 +121,11 @@ export function lenteDoTurno(skills: readonly string[] | null | undefined): stri
   }
   if (escolhidas.length === 0) return "";
   return `<lente_profissional>
-Assim pensa um profissional deste domínio ANTES de responder. É raciocínio SILENCIOSO: nada disto vira seção, título, lista ou aula na sua resposta, e você não anuncia que está usando uma lente. Considere só o que couber NESTE turno — a maior parte não vai caber, e está certo. Continue valendo tudo do seu núcleo: ajude primeiro, no máximo uma pergunta, hipótese nunca vira causa, e segurança vem antes de explicar.
+Assim pensa um profissional deste domínio ANTES de responder. É raciocínio SILENCIOSO: nada disto vira seção, título, lista ou aula na sua resposta, e você não anuncia que está usando uma lente. Considere só o que couber NESTE turno — a maior parte não vai caber, e está certo. Continue valendo tudo do seu núcleo: proporcionalidade, no máximo uma pergunta, hipótese nunca vira causa, e segurança vem antes de explicar.
+
+⚠️ A LENTE É O PONTO DE PARTIDA, NÃO UMA CAIXA. Ela diz por onde começar a olhar; ela NÃO limita o seu raciocínio àquele domínio. Você conhece a criança INTEIRA — o perfil que chegou traz todos os domínios, não só este —, e deve integrar outro aspecto quando ele for materialmente relevante para ESTE caso.
+Relações que costumam existir, como POSSIBILIDADES a investigar e nunca como causas presumidas: sensorial ↔ emocional · sono ↔ atenção · comunicação ↔ comportamento e frustração · previsibilidade e transições ↔ ansiedade · autonomia ↔ funções executivas · motor ↔ autonomia · alimentação ↔ sensorial · socialização ↔ comunicação · interesses ↔ aprendizagem · regulação ↔ capacidade de comunicar e de aprender.
+NÃO force integração. Cruzar domínios porque a lista permite produz resposta inchada e genérica — o oposto do que se quer. Integre quando os dados daquela criança ou o seu conhecimento profissional tornarem a relação plausível E útil agora; caso contrário, fique no domínio principal e responda curto.
 
 ${escolhidas.join("\n\n")}
 </lente_profissional>`;

@@ -40,6 +40,13 @@ const KOLO_VIVO_FIELDS_MEMBRO_EXTRAS = [
   // Domínios do Retrato vivo (tela Kolo Vivo) gravados em categorias_extras.
   "emocional",
   "rotina",
+  // ⚠️ FALTAVA, e a falta era simétrica nos dois canais (medido em
+  // 12/08/2026). `gostos` guarda filmes, arte, brincadeiras favoritas,
+  // HIPERFOCOS e "o que NÃO gosta" — a família preenche na tela, a história
+  // social e a meditação já leem, e a conversa não lia em canal nenhum.
+  // É justamente o material que o núcleo manda usar como veículo: explicar,
+  // antecipar, atravessar o difícil pelo que a criança ama.
+  "gostos",
 ] as const;
 
 const KOLO_VIVO_FIELDS_MEMBRO = [

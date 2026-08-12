@@ -184,7 +184,17 @@ function familiaAnaEGeovanna() {
           sensorial: "não tolera barulho alto; incomoda-se com etiqueta na roupa",
           corpo_rotina: "acorda 6h30, escola de manhã, dorme tarde nos dias de terapia",
         },
-        extras: { desafios_onboarding: ["transições", "hora de dormir"] },
+        extras: {
+          desafios_onboarding: ["transições", "hora de dormir"],
+          // ⚠️ `gostos` ESTÁ AQUI PARA PROVAR UMA AUSÊNCIA QUE ERA REAL. Até
+          // 12/08/2026 este domínio — hiperfocos, filmes, brincadeiras, o que
+          // NÃO gosta — nunca chegava ao produtor conversacional em canal
+          // nenhum: o laço do WhatsApp varria TEMAS (que são desafios) e
+          // `gostos` não é desafio; a lista da web simplesmente não o tinha.
+          // Medido pelo fluxo real: 19 dos 20 domínios chegavam, e o ausente
+          // era sempre este.
+          gostos: "adora dinossauros e água; detesta massinha",
+        },
       },
     ],
   });
@@ -476,18 +486,35 @@ describe("CORE PROFISSIONAL · chega ao produtor pelo fluxo real", () => {
     );
   });
 
-  /** S2 — ajude primeiro / no máximo uma pergunta / não repergunte o que já sabe. */
-  it("S2 · o 'ajude primeiro' e o freio da repergunta chegam ao modelo", async () => {
+  /**
+   * S2 — a regra de orientar × perguntar, e o freio da repergunta.
+   *
+   * ⚠️ MUDOU EM 12/08/2026, e a mudança foi de PRODUTO, não de teste. A versão
+   * anterior guardava a string "AJUDE PRIMEIRO." — uma regra rígida de ajudar
+   * antes de perguntar. Ela custou caro na observação com modelo real: "ele não
+   * quer entrar na escola" recebeu 28 palavras e duas perguntas, sem nenhuma
+   * ajuda, porque a Ayla não tinha como saber que ali perguntar ERA o certo (a
+   * causa muda tudo: separação, transição, sobrecarga, medo, algo que
+   * aconteceu). A regra virou os seis passos, e a trava real deixou de ser
+   * "ajude antes" e passou a ser "confira o que já sabemos antes de perguntar".
+   * O teste guarda a trava nova.
+   */
+  it("S2 · a regra de orientar × perguntar e o freio da repergunta chegam ao modelo", async () => {
     const m = familiaAnaEGeovanna();
     await turno(m, "ela tá colocando tudo na boca, papel, planta, plástico");
     const s = systemQueChegou(m);
-    expect(s, "'AJUDE PRIMEIRO' sumiu — a Ayla volta ao interrogatório").toContain(
-      "AJUDE PRIMEIRO.",
+    expect(s, "a regra de orientar × perguntar sumiu").toContain("ORIENTAR OU PERGUNTAR");
+    expect(s, "o passo 1 sumiu — ela volta a perguntar sem ler o que já sabemos").toContain(
+      "Leia primeiro TUDO que já sabemos",
     );
-    expect(s, "o limite de UMA pergunta sumiu").toContain("UMA pergunta útil");
+    expect(s, "o critério da pergunta sumiu — pergunta vira ritual").toContain(
+      "MUDARIA materialmente a orientação",
+    );
     expect(s, "o freio da repergunta sumiu — ela volta a pedir nome/idade/diagnóstico").toContain(
-      "NUNCA pergunte de novo o que você já tem: nome, idade, diagnóstico",
+      "nunca fazer a família repetir o que ela já contou: nome, idade, diagnóstico",
     );
+    // E a proporção, que é o que impede a conversa de virar um Plano em miniatura.
+    expect(s, "a regra de proporção sumiu").toContain("a conversa não é o Plano");
   });
 
   /** S3 — fato × hipótese × causa, e a segurança antes da explicação. */
@@ -601,6 +628,45 @@ describe("LENTES · a lente do turno chega ao produtor pelo fluxo real", () => {
     const r = await turno(m, "ela tá colocando tudo na boca, papel, planta, plástico");
     expect(systemMaisTurno(m)).not.toContain("lente_profissional");
     expect(r.ultimoTexto).toBeTruthy();
+  });
+
+  /**
+   * ⚠️ O PERFIL CHEGA INTEIRO, INDEPENDENTEMENTE DA LENTE — é o que sustenta a
+   * regra de que a lente é ponto de partida e não caixa. De nada adiantaria
+   * mandar a Ayla integrar outros domínios se só o domínio da lente chegasse.
+   *
+   * Auditado por execução em 12/08/2026 nos sete cenários (sensorial,
+   * emocional, comunicação, autonomia, rotina, foco e SEM skill): 19 dos 20
+   * domínios chegavam em todos, sem nenhuma filtragem por lente ou tema. O
+   * vigésimo — `gostos` — não chegava em nenhum, e é o que o teste abaixo
+   * passa a guardar.
+   */
+  it("com lente sensorial, o perfil INTEIRO chega — inclusive gostos e domínios de outros temas", async () => {
+    roteiro.skills = ["sensorial"];
+    const m = familiaComCatalogo();
+    await turno(m, "ela tá colocando tudo na boca, papel, planta, plástico");
+    const p = systemMaisTurno(m);
+    // O domínio da lente.
+    expect(p).toContain("não tolera barulho alto");
+    // Domínios de OUTROS temas, que a lente não cobre.
+    expect(p, "o corpo/rotina não chegou").toContain("acorda 6h30");
+    expect(p, "o essencial não chegou").toContain("autista");
+    // E os interesses — a ausência que esta fatia corrigiu.
+    expect(p, "GOSTOS não chegou: o interesse não pode virar veículo").toContain(
+      "adora dinossauros e água",
+    );
+    expect(p, "o rótulo do bloco de gostos sumiu").toContain("Gostos e interesses");
+  });
+
+  it("sem lente nenhuma, o perfil inteiro continua chegando", async () => {
+    roteiro.skills = undefined;
+    const m = familiaComCatalogo();
+    await turno(m, "ela tá colocando tudo na boca, papel, planta, plástico");
+    const p = systemMaisTurno(m);
+    expect(p).not.toContain("lente_profissional");
+    // Sem skill não há lente — mas a criança inteira continua na mão da Ayla.
+    expect(p, "sem lente o perfil encolheu").toContain("adora dinossauros e água");
+    expect(p).toContain("não tolera barulho alto");
   });
 
   it("a lente NÃO cria artefato — não é portão e não tem autoridade", async () => {

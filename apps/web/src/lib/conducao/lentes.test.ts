@@ -73,9 +73,38 @@ describe("lenteDoTurno: o contrato", () => {
     const r = lenteDoTurno(["sensorial"]);
     expect(r).toContain("<lente_profissional>");
     expect(r).toContain("raciocínio SILENCIOSO");
-    expect(r).toContain("ajude primeiro");
+    expect(r).toContain("proporcionalidade");
     expect(r).toContain("hipótese nunca vira causa");
     expect(r).toContain("segurança vem antes de explicar");
+  });
+
+  /**
+   * ⚠️ A LENTE NÃO PODE VIRAR CAIXA — é o objeto da fatia de 12/08/2026.
+   *
+   * A auditoria provou que o perfil chega INTEIRO (19 de 20 domínios, em todos
+   * os cenários, inclusive sem skill): a Ayla tem a criança toda na mão. O que
+   * faltava era dizer que a lente é ponto de partida e não fronteira — senão
+   * o material transversal chega e não é usado.
+   *
+   * O par de asserções é deliberado: a permissão de integrar SEM o freio de
+   * não forçar produziria resposta inchada, que é o modo de falha oposto e
+   * igualmente ruim.
+   */
+  it("o envelope diz que a lente é ponto de partida, e freia a integração forçada", () => {
+    const r = lenteDoTurno(["sensorial"]);
+    expect(r, "a lente virou caixa — o resto do perfil deixa de ser usado").toContain(
+      "A LENTE É O PONTO DE PARTIDA, NÃO UMA CAIXA",
+    );
+    expect(r, "sumiu a afirmação de que ela conhece a criança inteira").toContain(
+      "Você conhece a criança INTEIRA",
+    );
+    expect(r, "as relações entre domínios sumiram").toContain("sono ↔ atenção");
+    expect(r, "as relações viraram causa presumida").toContain(
+      "POSSIBILIDADES a investigar e nunca como causas presumidas",
+    );
+    expect(r, "o freio da integração forçada sumiu — a resposta incha").toContain(
+      "NÃO force integração",
+    );
   });
 });
 
@@ -103,13 +132,17 @@ describe("custo: a lente é do TURNO, não do núcleo", () => {
         SKILLS_COM_LENTE.filter((b) => b !== a).map((b) => lenteDoTurno([a, b]).length),
       ),
     );
-    // Medido em 12/08/2026: núcleo 62.048 · 1 lente entre 945 e 1.374 (média
-    // 1.107) · 2 lentes no máximo 2.166 — pior caso total 64.214, +3,5% sobre
-    // o que o turno já pagava. Os tetos abaixo são ~2× o pior caso de hoje:
-    // dão espaço para reescrever uma lente sem soltar o freio, e barram a
-    // lente que virou documento.
-    expect(uma, `pior lente sozinha: ${uma}`).toBeLessThan(2_000);
-    expect(duas, `pior par de lentes: ${duas}`).toBeLessThan(4_000);
+    // ⚠️ OS NÚMEROS SUBIRAM EM 12/08/2026, e o crescimento é do ENVELOPE, não
+    // das lentes. O bloco "a lente é ponto de partida, não caixa" + as relações
+    // entre domínios custam ~1.250 caracteres, pagos UMA vez por turno com
+    // lente, independentemente de serem uma ou duas. O conteúdo de cada lente
+    // não mudou (continua sob o teto de 1.400 do teste abaixo).
+    //
+    // Foi uma escolha: o texto poderia ter ido para o núcleo, onde seria pago
+    // em TODO turno, inclusive nos 44% sem skill — que não têm lente nenhuma
+    // para transbordar. Aqui ele só existe quando há lente para transbordar.
+    expect(uma, `pior lente sozinha: ${uma}`).toBeLessThan(3_000);
+    expect(duas, `pior par de lentes: ${duas}`).toBeLessThan(4_500);
     // E o conjunto continua sendo uma fração do que o turno já paga.
     expect(duas).toBeLessThan(base * 0.1);
   });

@@ -532,7 +532,44 @@ describe("simplificação: o prompt não pode crescer", () => {
     // O que este teto NÃO autoriza: as lentes especializadas (Sensorial,
     // Emocional, Comunicação). Elas são conteúdo POR TURNO e não podem entrar
     // no núcleo, que todo turno paga.
-    expect(nucleoConducao().length).toBeLessThan(63_000);
+    // 12/08/2026 (segunda subida do dia) — sobe pra 67.000. Todo o crescimento
+    // é do CORE_PROFISSIONAL, e cada entrada nasceu de comportamento medido no
+    // fluxo real, não de vontade de escrever mais:
+    //
+    //   ORIENTAR OU PERGUNTAR (~1.100) — SUBSTITUI o "AJUDE PRIMEIRO" rígido,
+    //   que custou caro: em 12 conversas reais, "ele não quer entrar na escola"
+    //   recebeu 28 palavras e duas perguntas sem nenhuma ajuda. A regra antiga
+    //   não sabia que ali perguntar ERA o certo — separação, transição,
+    //   sobrecarga, medo e conflito pedem condutas diferentes. A trava mudou de
+    //   "ajude antes" para "confira o que já sabemos antes de perguntar".
+    //
+    //   PROPORÇÃO (~450) — a conversa não é o Plano. Decisão da Karina: a
+    //   riqueza estrutural (compreensão, estratégias, atividades, crenças,
+    //   acompanhamento) mora no Plano, e o turno de WhatsApp responde no
+    //   tamanho do que a mãe trouxe. Sem isto, tudo o mais que entrou aqui
+    //   empurraria a conversa para virar um plano em miniatura.
+    //
+    //   CADA CRIANÇA É ÚNICA (~500) — REVERTE uma leitura estreita. Explicar
+    //   pelo diagnóstico ("isso acontece com muitas crianças autistas") é
+    //   legítimo e ajuda; o erro é ENCERRAR ali. Quatro das 12 respostas reais
+    //   abriam generalizando e não voltavam para a criança — o defeito era a
+    //   volta que faltava, não a explicação.
+    //
+    //   COMO ESTA CRIANÇA RECEBE (~550) e INTERESSE É FERRAMENTA (~500) — o
+    //   segundo só passou a fazer sentido agora: a auditoria descobriu que o
+    //   domínio `gostos` (hiperfocos, filmes, brincadeiras) NUNCA chegava ao
+    //   produtor em canal nenhum. Instruir a usar interesse sem o dado teria
+    //   sido instrução morta; as duas coisas entram juntas.
+    //
+    //   CRENÇAS (~700) — expansão do parágrafo que já existia, com as leituras
+    //   que aparecem de verdade ("tudo vira uma luta", "tenho medo do futuro
+    //   dele") e os deslocamentos que a Kolo quer produzir.
+    //
+    // O que este teto continua NÃO autorizando: as lentes. Elas são conteúdo
+    // por turno e ficam fora do núcleo — inclusive o bloco novo de integração
+    // entre domínios, que vive no envelope da lente justamente para não ser
+    // pago nos 44% de turnos sem skill.
+    expect(nucleoConducao().length).toBeLessThan(67_000);
   });
 });
 

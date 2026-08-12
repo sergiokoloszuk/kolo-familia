@@ -4101,6 +4101,23 @@ async function carregarKoloVivoResumo(
       const resumo = resumoCampoKV(extras[t.chave]);
       if (resumo) linhas.push(`${t.rotulo}: ${resumo}`);
     }
+    // ⚠️ `gostos` NÃO É TEMA, e por isso o laço acima nunca o alcançou.
+    //
+    // TEMAS lista DESAFIOS (sensorial, sono, foco…), e gosto não é desafio —
+    // então o domínio inteiro do Retrato vivo com filmes, arte, brincadeiras
+    // favoritas, HIPERFOCOS e "o que NÃO gosta" ficava invisível para a Ayla
+    // conversacional. Medido em 12/08/2026 pelo fluxo real: 19 dos 20 domínios
+    // chegavam ao produtor, em todos os cenários; o único ausente era este.
+    //
+    // A família preenche isso na tela, e o produto já o usa — história social,
+    // meditação guiada e o plano guiado leem `gostos`. Só a conversa não lia,
+    // que é justamente onde o interesse serve de veículo (ver o núcleo: usar o
+    // que a criança ama para explicar, antecipar, ensinar e atravessar o
+    // difícil, não só para sugerir brincadeira).
+    //
+    // Custo zero de consulta: `categorias_extras` já vem no `select` acima.
+    const gostos = resumoCampoKV(extras.gostos);
+    if (gostos) linhas.push(`Gostos e interesses: ${gostos}`);
   }
   return linhas.join("\n");
 }
