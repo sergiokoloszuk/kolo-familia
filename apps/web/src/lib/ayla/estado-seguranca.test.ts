@@ -159,7 +159,14 @@ describe("durante a segurança, artefato nenhum dispara", () => {
   it("rotina — criar, ver e editar", () => {
     // A condição virou multilinha quando o pedido explícito entrou; o que
     // importa é a segurança continuar sendo o PRIMEIRO termo do gate.
-    expect(ORCH).toMatch(/!seguranca\.aberta &&\n\s*\(rotinaConversa \|\|\n\s*intent === "rotina_criar"/);
+    // ⚠️ A assertiva tolera COMENTÁRIO entre os operandos (11/08/2026): quando o
+    // ato sobre o artefato entrou na disjunção, a explicação de por que
+    // `organizacao` continua ali ficou no meio do gate. O que ela mede continua
+    // sendo o que o comentário acima diz — segurança como PRIMEIRO termo — e
+    // não a ausência de prosa entre as linhas.
+    expect(ORCH).toMatch(
+      /!seguranca\.aberta &&[\s\S]{0,400}?\(rotinaConversa \|\|[\s\S]{0,400}?intent === "rotina_criar"/,
+    );
     expect(ORCH).toMatch(/!seguranca\.aberta && !rotinaConversa && \(intent === "rotina_ver"/);
     // O gate de editar virou multilinha quando o FEEDBACK passou a entrar por
     // ele ("já faz sozinho", "não funcionou até o jantar"). A exigência é a
