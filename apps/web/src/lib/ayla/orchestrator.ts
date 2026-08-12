@@ -2778,8 +2778,31 @@ async function enviarRespostaEmChunks(
   // A pessoa pediu um plano? Então a Ayla NÃO escreve o plano no chat — dá uma
   // resposta curta e o sistema entrega o plano (PDF + link). Vale tanto pro pedido
   // EXPLÍCITO quanto pro "sim" curto logo depois de a Ayla OFERECER um plano (1c).
+  // ⚠️ O CASO MÁRIO (11/08/2026, PEND-044). "Você já tinha informação
+  // suficiente para montar um plano? Dentro de perfil, você salvou o que sobre
+  // ele?" — a mãe estava AUDITANDO o plano que acabara de receber. `montar`
+  // casou, `querPlano` ficou true, e as três consequências vieram juntas: a
+  // ponte foi FORÇADA (`forcar: querPlano`, furando dedup e intenção), a
+  // resposta encolheu para duas frases, e o prompt recebeu a nota "a pessoa
+  // está PEDINDO um plano". Ela recebeu um segundo Plano por ter perguntado
+  // sobre o primeiro.
+  //
+  // MEDIDO no corpus real: `pedeUmPlano` sozinho abre para `conversar_sobre`
+  // (os dois casos do Mário), para `reenviar` ("manda o plano de novo" gerava
+  // um plano NOVO) e para `recusar` ("não quero outro plano" gerava um plano).
+  // Três dos seis atos errados, todos na direção de criar o que ninguém pediu.
+  //
+  // ⚠️ SÓ `criar` ABRE — `editar` não entra aqui de propósito. Não existe
+  // caminho de edição de Plano (a ponte só sabe gerar um novo), então deixar
+  // `editar` abrir produziria um plano a mais em vez de ajustar o que existe.
+  // "ajusta aquele plano" já não abria antes desta mudança; continua igual.
+  //
+  // A OFERTA ACEITA continua intocada: "sim"/"pode fazer" logo depois de a Ayla
+  // oferecer um plano segue valendo como aceite — é a continuação da conversa,
+  // e exigir o ato ali obrigaria a mãe a repetir o pedido por extenso.
   const querPlano =
-    pedeUmPlano(args.params.mensagem) ||
+    (pedeUmPlano(args.params.mensagem) &&
+      atoSobreArtefato(args.params.mensagem) === "criar") ||
     (ehAfirmacaoCurta(args.params.mensagem) &&
       (await ofertouPlanoRecente(supabase, args.family_account_id)));
   args.params.querPlano = querPlano;

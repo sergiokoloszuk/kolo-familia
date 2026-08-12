@@ -151,6 +151,25 @@ const SOBRE_O_PASSADO =
 const CRIAR =
   /\b(faz|faca|fazer|monta|monte|montar|cria|crie|criar|organiza|organize|organizar|prepara|prepare|preparar|elabora|elabore|elaborar|gera|gere|gerar|quero um|queria um|quero uma|queria uma|me faz|me monta|me cria)\b/;
 
+/**
+ * PEDIR A COISA, EM VEZ DE MANDAR PRODUZI-LA.
+ *
+ * ⚠️ MEDIDO (11/08/2026): 3 de 10 pedidos legítimos de Plano caíam em
+ * `ambiguo` — "preciso de um plano pra ele dormir sozinho", "gostaria de um
+ * plano de ação", "me ajuda com um plano pra socialização". Nenhum tem verbo de
+ * PRODUZIR; todos têm o artefato como OBJETO de um pedido em primeira pessoa.
+ *
+ * `quero um` e `queria um` já estavam dentro de CRIAR — este é o mesmo padrão,
+ * escrito uma vez em vez de enumerado caso a caso. Não é lista de verbos maior:
+ * é a moldura de pedido + artigo indefinido, que é como se pede uma coisa.
+ *
+ * PRIMEIRA PESSOA, e isso é o que segura o portão: "ela precisa de uma rotina"
+ * é a mãe narrando a necessidade da filha, não pedindo à Kolo. Quem pede diz
+ * "eu preciso".
+ */
+const PEDIDO_DE_COISA =
+  /\b(quero|queria|preciso|precisava|gostaria|to precisando|estou precisando|me ajuda com|me arruma|me da|me de) (de )?(um|uma|uns|umas)\b/;
+
 /** VERBO DE ALTERAR o que já existe. */
 const EDITAR =
   /\b(ajusta|ajuste|ajustar|muda|mude|mudar|troca|troque|trocar|corrige|corrija|corrigir|arruma|arrume|arrumar|tira|tire|tirar|remove|remover|acrescenta|acrescentar|adiciona|adicionar|inclui|incluir|refaz|refazer|atualiza|atualizar)\b/;
@@ -197,6 +216,9 @@ export function atoSobreArtefato(texto: string | null | undefined): AtoSobreArte
   // 4 · NÃO EXISTE (ou não se sabe): o verbo só decide COM a moldura de pedido.
   //     Sem ela, o verbo está narrando a vida da criança.
   if (CRIAR.test(t) && pedidoDirigido(t, CRIAR)) return "criar";
+  // Pedir a coisa também é pedir que ela exista. Passa pelo mesmo freio da
+  // narrativa — "quando ela quer uma rotina nova" continua sendo relato.
+  if (!NARRATIVA.test(t) && PEDIDO_DE_COISA.test(t)) return "criar";
   // "ajusta a rotina" sem referência a uma existente ainda é alteração — o
   // fluxo de edição sabe lidar com "não achei nenhuma".
   if (EDITAR.test(t) && pedidoDirigido(t, EDITAR)) return "editar";
