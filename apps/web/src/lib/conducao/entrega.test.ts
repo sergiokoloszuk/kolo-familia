@@ -305,7 +305,7 @@ describe("formas de entrega", () => {
     // ⚠️ ESTE TETO MEDE O WHATSAPP, QUE É O MENOR. A web soma ainda a ENTREGA
     // MADURA — se um dia alguém quiser saber o custo real do canal grande, é
     // `formasDeEntrega({canal:"web"})` que precisa ser medido, não este.
-    expect(wa.length).toBeLessThan(2_400);
+    expect(wa.length).toBeLessThan(2_600); // M3.2: +130 pela regra de numerar por facilidade de resposta, e nao so por ordem — o conflito que suprimia a lista
   });
 });
 
@@ -626,7 +626,31 @@ describe("simplificação: o prompt não pode crescer", () => {
     // EXEMPLOS herdados das 11 diretrizes antigas, e a sobreposição entre
     // VOZ 2 e o "ORIENTAR OU PERGUNTAR". A poda foi adiada até a experiência
     // nova ser validada com famílias; quando for, é a primeira coisa a fazer.
-    expect(nucleoConducao().length).toBeLessThan(74_000);
+    // 13/08/2026 (M3.2) — 74.500, e esta subida vem DEPOIS de ~1.400 de poda
+    // real, não no lugar dela. O que entrou:
+    //
+    //   PROPORÇÃO NÃO É BREVIDADE + NÃO EXISTE ROTEIRO FIXO (~800) — a
+    //   correção de um efeito MEDIDO. Em 6 casos com modelo real, a lista
+    //   numerada saiu zero vezes e a cadeia zero vezes, com as duas escritas
+    //   no prompt: as regras categóricas de brevidade venciam as permissivas.
+    //   AGORA × APRENDIZADO (~200) — o caso da Marcinha resolveu a cena
+    //   ("o foco fica só em atravessar a entrada") e perdeu a habilidade.
+    //
+    // O que saiu para pagar: a lista de "onde olhar" POR DIAGNÓSTICO do
+    // MAPA_FUNCIONAL (411) — substituída pelas 12 lentes, que são escolhidas
+    // por turno e cobrem o mesmo muito melhor; compressão do QUANDO NÃO
+    // LISTAR, dos quatro movimentos da EXPLICACAO, do PARE de investigar e do
+    // bloco de esgotamento. Mais quatro CONTRADIÇÕES resolvidas (ver o commit).
+    //
+    // ⚠️ ESTE TETO VIROU ESTEIRA: 54 → 57 → 63 → 67 → 70 → 74 → 74,5 em três
+    // dias. Cada subida foi justificada e várias foram pagas com poda, mas a
+    // tendência é o sintoma, não o problema. O problema é que o NÚCLEO faz
+    // demais: ele é pago em todo turno, e boa parte do que está aqui só se
+    // aplica a alguns. A saída estrutural já existe e já foi provada uma vez —
+    // foi o que as LENTES fizeram: conteúdo condicional saiu do núcleo e passou
+    // a ser escolhido por turno. Antes da próxima entrada, o trabalho certo é
+    // esse, e está registrado como pendência.
+    expect(nucleoConducao().length).toBeLessThan(74_500);
   });
 });
 
@@ -775,9 +799,25 @@ describe("entrega madura: a porta estreita, e só na web", () => {
     expect(web).toContain("não da resposta");
   });
 
-  it("a régua geral continua sendo a forma menor", () => {
+  /**
+   * ⚠️ A RÉGUA MUDOU EM 13/08/2026, e a mudança foi medida. "A MENOR FORMA QUE
+   * AJUDA VENCE" era categórica e vencia as instruções permissivas ao redor:
+   * em 6 casos com modelo real, a lista numerada saiu ZERO vezes e a cadeia
+   * ZERO vezes, mesmo com as duas escritas no prompt. Regra proibitiva ganha de
+   * regra permissiva — o padrão que esta base já documenta desde a fronteira do
+   * diagnóstico.
+   *
+   * A régua passou a ser a forma mais SIMPLES que entrega valor SUFICIENTE. O
+   * alvo continua sendo o gabarito, que é o que de fato incomodava as famílias
+   * — não o tamanho.
+   */
+  it("a régua geral é a forma simples que basta — e o alvo é o gabarito, não o tamanho", () => {
     const web = formasDeEntrega({ canal: "web" });
     expect(web, "o freio geral sumiu — toda resposta vira documento").toContain(
+      "A FORMA MAIS SIMPLES QUE ENTREGA VALOR SUFICIENTE",
+    );
+    expect(web, "sumiu o alvo real do freio").toContain("O que se combate é o GABARITO");
+    expect(web, "voltou a régua categórica que suprimia lista e cadeia").not.toContain(
       "A MENOR FORMA QUE AJUDA VENCE",
     );
   });

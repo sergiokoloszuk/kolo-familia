@@ -514,7 +514,10 @@ describe("CORE PROFISSIONAL · chega ao produtor pelo fluxo real", () => {
       "nunca fazer a família repetir o que ela já contou: nome, idade, diagnóstico",
     );
     // E a proporção, que é o que impede a conversa de virar um Plano em miniatura.
-    expect(s, "a regra de proporção sumiu").toContain("a conversa não é o Plano");
+    expect(s, "a regra de proporção sumiu").toContain("PROPORÇÃO NÃO É BREVIDADE");
+    expect(s, "a conversa voltou a poder virar um plano em miniatura").toContain(
+      "A CONVERSA NÃO É O PLANO",
+    );
   });
 
   /** S3 — fato × hipótese × causa, e a segurança antes da explicação. */

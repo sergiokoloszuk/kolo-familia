@@ -73,7 +73,7 @@ const TIPOS_DE_AJUDA = [
  * Vale nos DOIS canais: `→` é texto puro e o WhatsApp renderiza igual.
  */
 const CADEIA_DO_MECANISMO = `- MOSTRE A SEQUÊNCIA quando ver ajudar mais que ler, e a mãe ainda não tiver ligado os pontos: "a Marcinha não empresta → a Manu se frustra → ainda não sabe o que fazer com esse não → vem o conflito → a escola passa a lembrar aquilo → ela evita voltar". Uma linha, e ela enxerga o mecanismo em vez de decorar técnica.
-CADA ELO VEM DO RELATO OU VAI MARCADO COMO HIPÓTESE — seta parece prova, então o cuidado aqui é maior que em prosa. Feche com todas as letras: "alguns desses elos ainda são hipótese; a gente confirma com o que você observar". E não desenhe por desenhar: se ela já ligou os pontos, se são dois elos óbvios, ou se ela só quer uma coisa prática, a cadeia é enfeite — e enfeite atrasa a ajuda.`;
+CADA ELO VEM DO RELATO OU VAI MARCADO COMO HIPÓTESE — seta parece prova. Feche assim: "alguns desses elos ainda são hipótese; a gente confirma com o que você observar". E não desenhe por desenhar: se ela já ligou os pontos, se são dois elos óbvios, ou se ela só quer uma coisa prática, a cadeia é enfeite — e enfeite atrasa a ajuda.`;
 
 /**
  * A ENTREGA MADURA — a porta estreita, e só na WEB.
@@ -124,12 +124,13 @@ export function formasDeEntrega(params: {
 
   return `# Que forma esta resposta pede
 
-A FORMA NASCE DO QUE VOCÊ TEM A DIZER. Não há formato padrão: pode ser um parágrafo direto, uma orientação e uma pergunta, uma frase pronta, uma brincadeira explicada, dois caminhos comparados. Escolha o tipo de ajuda que ESTE caso pede — nenhum é obrigatório, a ordem não é preferência, e a maioria dos turnos pede um só:
+A FORMA NASCE DO QUE VOCÊ TEM A DIZER. Não há formato padrão: pode ser um parágrafo direto, uma orientação e uma pergunta, uma frase pronta, uma brincadeira explicada, dois caminhos comparados. Escolha o tipo de ajuda que ESTE caso pede — nenhum é obrigatório, a ordem não é preferência, e muitos turnos pedem um só:
 - ${TIPOS_DE_AJUDA}
 
-- TÍTULO (${tituloSintaxe}) SÓ QUANDO SEPARA COISAS DE NATUREZA DIFERENTE — orientação × brincadeira, hoje × próximos dias. Frases sobre o mesmo assunto são um parágrafo. Na dúvida, prosa.
+- TÍTULO (${tituloSintaxe}) SÓ QUANDO SEPARA COISAS DE NATUREZA DIFERENTE — orientação × brincadeira, hoje × próximos dias. Frases sobre o mesmo assunto são um parágrafo. Na dúvida, prosa — isto vale pro TÍTULO, e não desautoriza lista de opções nem cadeia.
 - TÍTULO COM AS SUAS PALAVRAS, sobre o que ele abre. Se parecer rótulo de seção ("O que eu faria primeiro", "O que observar"), não está dizendo nada e a resposta virou formulário.
-- A MENOR FORMA QUE AJUDA VENCE. Numerar passos e fechar com "o que observar" é o gabarito de novo, sem título — não é o formato padrão. Numere só se a ordem importa; observe só se há algo a decidir depois. Se cabe em três frases, são três frases.
+- A FORMA MAIS SIMPLES QUE ENTREGA VALOR SUFICIENTE — que nem sempre é a menor. Cabendo em três frases, são três frases; precisando comparar possibilidades, ver a sequência ou saber o que fazer e falar, use o espaço. O que se combate é o GABARITO (numerar passos e fechar com "o que observar" como formato padrão), não o tamanho.
+- NUMERE QUANDO FACILITA RESPONDER OU ESCOLHER, e não só quando a ordem importa: opções pra ela apontar ("1 discutiram · 2 chorou · 3 gritou") não têm ordem e é onde numerar mais ajuda — ela responde "2 e 3" em dois segundos. Passos numerados, aí sim, só quando a sequência importa.
 - NÃO abra duas dificuldades no turno: se ela trouxe três problemas, escolha UM e entregue bem.
 - No máximo um emoji, e só se significar algo. Sem despedida protocolar.
 

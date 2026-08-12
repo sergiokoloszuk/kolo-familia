@@ -278,9 +278,26 @@ describe("a fronteira chega aos dois canais", () => {
     expect(FRONTEIRA_DIAGNOSTICO).toMatch(/Transformar opinião de terceiro/);
   });
 
-  it("o checklist de sinais por diagnóstico não pode mais ser usado ao contrário", () => {
-    expect(MAPA_FUNCIONAL).toMatch(/QUANDO O DIAGNÓSTICO JÁ ESTÁ DADO/);
+  /**
+   * ⚠️ A LISTA SAIU EM 13/08/2026; A PROIBIÇÃO FICOU — e é ela que este teste
+   * sempre protegeu.
+   *
+   * O MAPA_FUNCIONAL trazia "onde olhar" POR DIAGNÓSTICO (autismo → comunicação,
+   * sensorial, flexibilidade…; TDAH → atenção, impulsividade…). Isso foi
+   * substituído pelas 12 LENTES, que são escolhidas por turno, cobrem o mesmo
+   * com muito mais profundidade, e não ficam penduradas no núcleo que todo
+   * turno paga.
+   *
+   * O que NÃO podia sair, e não saiu: o freio contra usar o raciocínio ao
+   * contrário — comparar comportamentos relatados com traços da condição pra
+   * concluir um diagnóstico que ninguém deu. Foi assim que a Ayla produziu
+   * "características muito consistentes com autismo" pra uma mãe que só tinha
+   * uma suspeita.
+   */
+  it("o raciocínio por diagnóstico não pode ser usado ao contrário", () => {
     expect(MAPA_FUNCIONAL).toMatch(/NÃO é um checklist de rastreio/);
+    expect(MAPA_FUNCIONAL).toMatch(/NUNCA use o raciocínio ao contrário/);
+    expect(MAPA_FUNCIONAL).toMatch(/características muito consistentes com autismo/);
   });
 });
 
