@@ -28,7 +28,26 @@ type Filtro =
 
 let seq = 0;
 /** Ids estáveis e legíveis — `Math.random` não entra em teste. */
-export const novoId = (p = "id") => `${p}-${(++seq).toString().padStart(4, "0")}`;
+/**
+ * ⚠️ ID LEGÍVEL, MAS COM FORMA DE UUID — e a segunda metade não é estética.
+ *
+ * A versão anterior devolvia `membro-0016`. Isso passou meses sem incomodar,
+ * até a medição de latência de 13/08/2026: o `ParserSchema` exige
+ * `z.string().uuid()` no `membro_atipico_id`, então TODO turno do harness com
+ * modelo real reprovava no schema, devolvia null e caía no modelo de fallback.
+ * O resultado foi uma medição que atribuía ~6s por turno a um "defeito de
+ * produto" que era da fixture — e em produção, onde o id É uuid, não acontece.
+ *
+ * O prefixo continua legível no meio do uuid (`membro-0016` vira
+ * `6d656d62-0016-4000-8000-...`) porque ler o cenário quebrado importa; mas a
+ * FORMA agora é a de produção. Fixture que não imita o formato do banco não
+ * prova nada sobre o banco.
+ */
+export const novoId = (p = "id") => {
+  const n = (++seq).toString().padStart(4, "0");
+  const hex = Buffer.from(p).toString("hex").padEnd(8, "0").slice(0, 8);
+  return `${hex}-${n}-4000-8000-${n.padStart(12, "0")}`;
+};
 
 export class BancoMemoria {
   readonly tabelas = new Map<string, Linha[]>();
