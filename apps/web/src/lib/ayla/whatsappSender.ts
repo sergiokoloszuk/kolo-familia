@@ -183,6 +183,11 @@ export function parseZapiWebhook(payload: unknown): InboundWhatsApp | null {
     // Legenda de imagem — a Z-API manda em image.caption (antes a foto+legenda
     // virava "sem texto" e a mensagem inteira era IGNORADA).
     pickString((p.image as Record<string, unknown> | undefined)?.caption) ??
+    // ⚠️ A LEGENDA DO VÍDEO FALTAVA AQUI (13/08/2026). A mãe que escrevia junto
+    // do vídeo perdia o próprio texto: a mensagem virava "sem texto" e sumia
+    // inteira. Era o pior dos casos — ela disse o que queria e não houve
+    // resposta nenhuma.
+    pickString((p.video as Record<string, unknown> | undefined)?.caption) ??
     pickString(p.caption) ??
     "";
 
@@ -190,17 +195,35 @@ export function parseZapiWebhook(payload: unknown): InboundWhatsApp | null {
   const midiaUrl =
     pickString(p.mediaUrl) ??
     pickString((p.image as Record<string, unknown> | undefined)?.imageUrl) ??
-    pickString((p.audio as Record<string, unknown> | undefined)?.audioUrl);
-  const midiaTipo = midiaUrl
-    ? (typeof p.mediaType === "string" && p.mediaType) ||
-      (p.image ? "image" : p.audio ? "audio" : "outro")
-    : undefined;
+    pickString((p.audio as Record<string, unknown> | undefined)?.audioUrl) ??
+    pickString((p.video as Record<string, unknown> | undefined)?.videoUrl);
+  // ⚠️ O TIPO DEIXOU DE DEPENDER DA URL (13/08/2026). Um vídeo com metadata
+  // incompleta — sem `videoUrl` — continua sendo um vídeo, e a família continua
+  // merecendo resposta. Antes ele saía daqui como `undefined` e morria calado.
+  const midiaTipo =
+    (typeof p.mediaType === "string" && p.mediaType) ||
+    (p.image
+      ? "image"
+      : p.audio
+        ? "audio"
+        : p.video
+          ? "video"
+          : midiaUrl
+            ? "outro"
+            : undefined);
 
   // Aceita mensagem se tem texto OU áudio (transcrito downstream) OU IMAGEM
-  // (a Ayla lê a foto — lição, rótulo, agenda). Vídeo sem legenda segue ignorado.
-  const ehAudio = midiaUrl && midiaTipo === "audio";
-  const ehImagem = midiaUrl && midiaTipo === "image";
-  if (!texto.trim() && !ehAudio && !ehImagem) return null;
+  // (a Ayla lê a foto — lição, rótulo, agenda) OU VÍDEO.
+  //
+  // ⚠️ VÍDEO ENTRA, E ENTRA ATÉ SEM URL. Não é para assistir — a Kolo não baixa
+  // nem analisa vídeo. É para não emudecer: até 13/08/2026 este `return null`
+  // fazia o webhook responder `{skipped:true}` e a mãe que mandou o filho em
+  // crise não recebia nem um "recebi". Áudio e imagem seguem exigindo URL,
+  // porque para eles a URL é o conteúdo.
+  const ehAudio = Boolean(midiaUrl) && midiaTipo === "audio";
+  const ehImagem = Boolean(midiaUrl) && midiaTipo === "image";
+  const ehVideo = midiaTipo === "video";
+  if (!texto.trim() && !ehAudio && !ehImagem && !ehVideo) return null;
 
   // Timestamp
   const tsMs =

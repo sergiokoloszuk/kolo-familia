@@ -22,6 +22,7 @@ type Linha = Record<string, unknown>;
 type Filtro =
   | { op: "eq" | "neq" | "gt" | "gte" | "lt" | "lte"; col: string; val: unknown }
   | { op: "in"; col: string; val: unknown[] }
+  | { op: "ilike"; col: string; val: string }
   | { op: "is"; col: string; val: null }
   | { op: "not"; col: string; val: unknown };
 
@@ -89,6 +90,21 @@ function passa(l: Linha, f: Filtro): boolean {
       return v !== f.val;
     case "in":
       return f.val.includes(v);
+    case "ilike": {
+      // `%` é o curinga do PostgREST. O cooldown do plano depende disto
+      // (`ilike("texto", "%/auth/wa%")`), e sem ele a ponte morria na consulta
+      // e devolvia null — o turno inteiro parecia "não gerou plano".
+      const alvo = String(v ?? "").toLowerCase();
+      const partes = f.val.toLowerCase().split("%");
+      let i = 0;
+      for (const parte of partes) {
+        if (!parte) continue;
+        const acha = alvo.indexOf(parte, i);
+        if (acha < 0) return false;
+        i = acha + parte.length;
+      }
+      return true;
+    }
     case "gt":
       return String(v) > String(f.val);
     case "gte":
@@ -112,15 +128,21 @@ class Consulta implements PromiseLike<{ data: unknown; error: unknown }> {
   private carga: Linha[] = [];
   private umSo = false;
   private colunas = "*";
+  private contar = false;
+  /** Colunas do `onConflict` quando o upsert pediu `ignoreDuplicates`. */
+  private conflito: string[] | null = null;
 
   constructor(
     private readonly db: BancoMemoria,
     private readonly tabela: string,
   ) {}
 
-  select(cols = "*") {
+  select(cols = "*", opts?: { count?: string; head?: boolean }) {
     this.colunas = cols;
-    if (this.modo === "select") this.modo = "select";
+    // `select("id", { count: "exact", head: true })` — o freio de profundidade
+    // da ponte conta mensagens da mãe assim. Sem `count`, ele lia `undefined` e
+    // barrava toda família como "conversou pouco".
+    if (opts?.count) this.contar = true;
     return this;
   }
   eq(col: string, val: unknown) {
@@ -149,6 +171,10 @@ class Consulta implements PromiseLike<{ data: unknown; error: unknown }> {
   }
   in(col: string, val: unknown[]) {
     this.filtros.push({ op: "in", col, val });
+    return this;
+  }
+  ilike(col: string, val: string) {
+    this.filtros.push({ op: "ilike", col, val });
     return this;
   }
   is(col: string, val: null) {
@@ -191,9 +217,18 @@ class Consulta implements PromiseLike<{ data: unknown; error: unknown }> {
     this.carga = Array.isArray(linha) ? linha : [linha];
     return this;
   }
-  upsert(linha: Linha | Linha[], _opts?: unknown) {
+  upsert(linha: Linha | Linha[], opts?: { onConflict?: string; ignoreDuplicates?: boolean }) {
     this.modo = "upsert";
     this.carga = Array.isArray(linha) ? linha : [linha];
+    // ⚠️ SÓ `ignoreDuplicates` É HONRADO, e de propósito. Ele existe num lugar
+    // só do produto — a trava de idempotência do inbound (`zaap_message_id`) —
+    // e sem ele o duplo inseria a linha repetida e devolvia sucesso: a Z-API
+    // reentregando o mesmo webhook passava VERDE em qualquer teste.
+    // O upsert que MESCLA (sem `ignoreDuplicates`) continua inserindo como
+    // antes; implementar merge mudaria o resultado de cenários já provados.
+    if (opts?.ignoreDuplicates && opts.onConflict) {
+      this.conflito = opts.onConflict.split(",").map((c) => c.trim());
+    }
     return this;
   }
   update(linha: Linha) {
@@ -229,6 +264,20 @@ class Consulta implements PromiseLike<{ data: unknown; error: unknown }> {
     switch (this.modo) {
       case "insert":
       case "upsert": {
+        // Conflito com linha existente + `ignoreDuplicates` → PostgREST não
+        // insere e devolve ZERO linhas. É esse array vazio que o orquestrador
+        // lê para saber "webhook repetido, já tratei" e sair sem responder.
+        if (this.conflito) {
+          const existentes = this.db.linhas(this.tabela);
+          const carga = this.carga.filter(
+            (nova) =>
+              !existentes.some((velha) =>
+                this.conflito!.every((col) => velha[col] != null && velha[col] === nova[col]),
+              ),
+          );
+          if (carga.length === 0) return { data: [], error: null };
+          this.carga = carga;
+        }
         const criadas = this.carga.map((l) => ({
           id: novoId(this.tabela),
           created_at: new Date().toISOString(),
@@ -259,6 +308,7 @@ class Consulta implements PromiseLike<{ data: unknown; error: unknown }> {
       }
       default: {
         const r = this.filtradas();
+        if (this.contar) return { data: r, error: null, count: r.length } as never;
         return { data: this.umSo ? (r[0] ?? null) : r, error: null };
       }
     }
