@@ -2991,6 +2991,10 @@ async function enviarRespostaEmChunks(
       temDesafio: Boolean(args.params.sinais.desafio),
       phoneE164: args.phone,
       decisao: decisaoPlano,
+      // ZERO CONSULTA A MAIS: este resumo já foi carregado neste turno para a
+      // resposta conversacional. Quem decide se sabemos o suficiente passa a
+      // ver o mesmo que quem escreve a resposta.
+      perfilResumo: args.params.koloVivoResumo,
     });
     if (nudge) {
       try {

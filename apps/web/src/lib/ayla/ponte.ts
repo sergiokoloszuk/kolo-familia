@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { DecisaoDePlano } from "./plano-decisao";
 import { createServiceRoleClient } from "@/lib/supabase/server";
-import { gerarPlano, PlanoIncompletoError } from "@/lib/ia/plano";
+import { gerarPlano, PlanoIncompletoError, carregarAprendizado } from "@/lib/ia/plano";
 import { planoParaPdf } from "@/lib/plano/pdf";
 import { enviarDocumento } from "./whatsappSender";
 import { logEvent, logServerError } from "@/lib/log";
@@ -299,6 +299,11 @@ export async function montarPonteWhatsApp(
      * `forcar`, que respondia sozinho por autoridade, suficiência e dedup.
      */
     decisao: DecisaoDePlano;
+    /**
+     * O `<o_que_ja_sabemos_da_crianca>` que o turno JÁ montou para a resposta
+     * conversacional. Vem de cima para a prontidão não repetir a consulta.
+     */
+    perfilResumo?: string | null;
   },
 ): Promise<PonteDoPlano | null> {
   const { familyId, membroAtipicoId, mensagem, phoneE164, decisao } = params;
@@ -373,9 +378,17 @@ export async function montarPonteWhatsApp(
       }
 
       // Gate de suficiência: problema + contexto + exemplo concreto.
+      // O aprendizado de planos anteriores DESTA criança — a mesma leitura que
+      // o gerador faz mais adiante. Aqui ela custa uma consulta indexada e
+      // muda a decisão: quem já recebeu plano sobre o tema não precisa provar
+      // de novo, na conversa, que o tema existe.
+      const aprendizado = await carregarAprendizado(supabase, familyId, membroAtipicoId);
       const prontidao = await avaliarProntidaoParaPlano(supabase, {
         familyId,
         mensagemAtual: mensagem,
+        membroAtipicoId,
+        perfilResumo: params.perfilResumo,
+        aprendizado,
       });
       console.log(
         `[ayla:ponte] prontidão=${prontidao.pronto} tema="${prontidao.tema ?? ""}" motivo="${prontidao.motivo}"`,

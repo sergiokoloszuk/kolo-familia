@@ -663,7 +663,7 @@ export async function gerarSecoesPlanoMultiCall(params: {
  * desta criança. Vira um bloco curto pra o modelo priorizar o que funcionou
  * e evitar o que não funcionou.
  */
-async function carregarAprendizado(
+export async function carregarAprendizado(
   supabase: SupabaseClient,
   familyId: string,
   membroAtipicoId: string | null,
