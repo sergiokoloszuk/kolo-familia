@@ -35,10 +35,10 @@ vi.mock("./whatsappSender", () => ({
   enviarImagem: async () => ({ ok: true, messageId: "img" }),
   enviarDocumento: async () => ({ ok: true, messageId: "doc" }),
 }));
-vi.mock("./lote-inbound", () => ({
-  aguardarTurnoDaMae: async (_s: unknown, p: { textoAtual: string }) => ({ texto: p.textoAtual, ids: [] }),
-  descartarTurnoPendente: async () => {},
-}));
+// ⚠️ O LOTE NÃO É MOCKADO AQUI, e é a diferença que faz esta medição valer.
+// Todos os outros arquivos o substituem — por isso a janela, que é o maior
+// componente isolado da latência do WhatsApp, nunca aparecia em medição
+// nenhuma. Aqui ela roda com relógio de verdade.
 vi.mock("@/lib/ai/prompts", () => ({ getSystemPrompt: async (_k: string, f: string) => f }));
 vi.mock("@/lib/ludico/rotina-servico", () => ({
   gerarRotina: async () => ({ desfecho: "nao_gerou", rotinas: [], fala: null }),

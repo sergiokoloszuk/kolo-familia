@@ -510,7 +510,7 @@ Aberta em: 2026-08-11 · Origem: fatia de autoridade do Plano (5490c24)
 
 ### PEND-054
 **A janela de lote custa 7 segundos em TODO turno do WhatsApp**
-Bloco: **A · Condução** · Prioridade: **P0 de EXPERIÊNCIA** · Estado: **ABERTA — consulta pronta, aguardando dado de produção**
+Bloco: **A · Condução** · Prioridade: **P0 de EXPERIÊNCIA** · Estado: **CONCLUÍDA em 2026-08-13 (05ca5b2)**
 Aberta em: 2026-08-13 · Origem: missão de latência (97d0765)
 
 > ⚠️ **P0 aqui é de experiência/performance, não de segurança.** Os outros P0
@@ -582,6 +582,30 @@ Aberta em: 2026-08-13 · Origem: missão de latência
 - Ganho: ~0,9s (serial 0,9+2,2=3,1s → paralelo 2,2s). Contra 4s sem custo na
   janela — um oitavo do ganho com toda a complexidade.
 - Reavaliar só depois de PEND-054 e PEND-055.
+
+### PEND-058
+**Fragmentação multi-balão: a janela já não captura 72,6% dos bursts**
+Bloco: **A · Condução** · Prioridade: **P1 de EXPERIÊNCIA** · Estado: **ABERTA — achado de produção, sem solução proposta**
+Aberta em: 2026-08-13 · Origem: medição da PEND-054
+
+> **A mediana do intervalo entre balões do mesmo turno é 11,2 segundos. A
+> janela era de 7s e agora é de 3s — nos dois casos, a maioria das
+> continuações chega DEPOIS que a Ayla já respondeu.**
+
+- MEDIDO em produção (60 dias, 1.834 turnos): 252 são multi-balão. A janela de
+  7s capturava 69 (27,4%); a de 3s captura 33 (13,1%). p75 = 18,6s · p90 = 34s.
+- **Consequência que ninguém tinha medido:** ~10% dos turnos já recebiam
+  resposta partida ANTES da mudança — a mãe manda *"Tem dificuldade de Tomar"*,
+  a Ayla responde, e 11 segundos depois chega *"De engolir"* como turno novo.
+  Com 3s isso vai a ~12%.
+- **Esticar a janela NÃO é a solução:** cobrir o p90 exigiria 34 segundos de
+  espera para 100% dos turnos, sendo que 86,3% têm um balão só.
+- O caminho a investigar é outro: **tratar a mensagem que chega DEPOIS da
+  resposta como continuação**, e não como turno novo — a Ayla já tem o
+  histórico e poderia emendar em vez de recomeçar. Não implementar sem
+  desenho: mexe em como o turno é definido.
+- Critério de conclusão: a continuação tardia deixa de produzir duas respostas
+  desconexas, sem impor espera longa a quem manda um balão só.
 
 ### PEND-052
 **Patrimônio dos especialistas do app anterior — auditar o que não migrou**
