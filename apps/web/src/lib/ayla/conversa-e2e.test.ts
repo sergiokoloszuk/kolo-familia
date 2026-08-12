@@ -148,7 +148,7 @@ vi.mock("@/lib/ludico/rotina-servico", () => ({
 
 /**
  * ⚠️ O LOTE DE INBOUND É SUBSTITUÍDO, e o motivo importa: `aguardarTurnoDaMae`
- * DORME 7 segundos de propósito, para juntar os balões que a mãe manda em
+ * DORME 3 segundos de propósito (eram 7 até 05ca5b2), para juntar os balões que a mãe manda em
  * sequência. Ele não decide nada sobre artefato — decide QUEM responde quando
  * chegam duas mensagens juntas. Aqui cada cenário manda uma fala por vez, então
  * o duplo devolve "segue com o seu texto", que é o resultado real desse caso.
