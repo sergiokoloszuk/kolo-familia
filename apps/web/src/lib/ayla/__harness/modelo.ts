@@ -28,6 +28,18 @@ export type Roteiro = {
   prontidaoRotina?: "suficiente" | "falta" | "orientacao" | "nao_e_rotina";
   /** A sequência que o gerador da rotina deve devolver. */
   rotinaGerada?: unknown;
+  /**
+   * As skills que o classificador de intenção deve rotear neste turno.
+   *
+   * ⚠️ SEM ISTO NÃO SE PROVA A LENTE. O duplo devolvia "{}" para a chamada de
+   * intenção, e `parseSkills` traduz isso em `[]` — então repertório e lente
+   * ficavam vazios POR CONSTRUÇÃO, e um teste de presença mediria o duplo.
+   * Quem quiser rotear tem que dizer, por escrito, qual skill roteou.
+   *
+   * Os nomes precisam existir em `specialist_prompt_templates` no cenário:
+   * `parseSkills` valida contra o catálogo e descarta o que não conhece.
+   */
+  skills?: readonly string[];
 };
 
 const texto = (s: unknown): string => {
@@ -66,6 +78,13 @@ export function responder(system: string, user: string, r: Roteiro): string {
       sugestao_kolo_vivo: false,
       confianca: 90,
     });
+  }
+
+  // CLASSIFICADOR DE INTENÇÃO — devolve UMA LINHA, `intencao|tema|aceite|skills`.
+  // Só responde quando o cenário pediu skills; sem isso continua caindo no "{}"
+  // de antes, e nada do comportamento já medido muda.
+  if (r.skills?.length && /intencao\|tema/.test(s)) {
+    return `outro|-|-|${r.skills.join(", ")}`;
   }
 
   // PRONTIDÃO DA ROTINA — o portão que decide montar, orientar ou sair.

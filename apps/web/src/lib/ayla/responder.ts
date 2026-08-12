@@ -14,6 +14,7 @@ import { pronomesPara, type Genero, type CuidadorDescrito } from "./pronomes";
 // (formato e idioma). A identidade agora vive no CÓDIGO (não mais no banco
 // voz_ayla), o que elimina o drift banco×código.
 import { nucleoConducao } from "@/lib/conducao/diretrizes";
+import { lenteDoTurno } from "@/lib/conducao/lentes";
 // FASE 4A · as MESMAS constantes que `lib/ia/prompt.ts` injeta na web. Uma
 // redação só para os dois canais: se a precedência do perfil mudar, muda nos
 // dois no mesmo commit.
@@ -245,6 +246,15 @@ export type RespostaParams = {
    * o repertório.
    */
   repertorio?: string;
+  /**
+   * As skills que o classificador de intenção já devolveu — as MESMAS que
+   * escolheram o repertório, sem chamada nova. Viram a LENTE PROFISSIONAL do
+   * turno (`lib/conducao/lentes.ts`), no máximo duas e na ordem em que vieram.
+   *
+   * Vazio é caminho normal, não erro: sem skill não há lente, e o Core
+   * responde sozinho.
+   */
+  skills?: readonly string[];
   /**
    * FASE 4A · o perfil campo a campo, com ESTADO (preenchido / negativo /
    * vazio). `null` fora do piloto.
@@ -576,6 +586,20 @@ ${params.diagnosticoRegistrado.trim()}`);
         .join("\n\n")}\n</como_compreender_este_tema>`,
     );
   }
+  // LENTE PROFISSIONAL — o raciocínio do domínio, escolhido pelas MESMAS skills
+  // que já escolheram o repertório. Zero chamada nova.
+  //
+  // ⚠️ VAI AQUI, NO TURNO, E NÃO NO `system`. O system deste canal é enviado
+  // com cache explícito (`cacheSystem: true`, e o cache read está medido:
+  // 19.812 tokens no 2º turno da prova). Conteúdo que muda de mensagem pra
+  // mensagem no meio dele invalidaria o prefixo e a conversa inteira passaria
+  // a pagar preço cheio. Fica junto do `<repertorio_kolo>` e do
+  // `<como_compreender_este_tema>`, que são material do turno pelo mesmo motivo.
+  //
+  // ANTES do repertório de propósito: a lente diz COMO OLHAR, e as BPs são o
+  // que se olha. Na ordem inversa o modelo lê o material antes do critério.
+  const lente = lenteDoTurno(params.skills);
+  if (lente) linhas.push(`\n${lente}`);
   // REPERTÓRIO DA KOLO — a Camada 2, que até 06/08/2026 não chegava ao WhatsApp
   // em nenhum turno. Vem do MESMO recuperador que a web usa, escolhido pela
   // skill que a classificação de intenção já devolveu — sem chamada extra.

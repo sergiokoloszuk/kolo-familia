@@ -2777,6 +2777,11 @@ export async function processInbound(
       historico,
       linksLudico,
       repertorio,
+      // AS MESMAS skills que acabaram de escolher o repertório logo acima —
+      // não uma segunda classificação, não uma chamada nova. Viram a lente
+      // profissional do turno. Lista vazia é caminho normal: sem skill, o Core
+      // responde sozinho.
+      skills: turnoClassificado.skills,
       // FASE 4A · vazios fora do piloto, e aí o prompt sai idêntico ao de antes.
       piloto4A: noPiloto4A,
       perfilConsultavel: perfilConsultavel4A,

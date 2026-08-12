@@ -114,6 +114,35 @@ export function montarMundo(params: {
     },
   ]);
 
+  // ⚠️ O CATÁLOGO DE SKILLS VAI EM TODO CENÁRIO, E NÃO SÓ NOS QUE ROTEIAM.
+  //
+  // `carregarCatalogoSkills` guarda um cache DE MÓDULO, com TTL de 5 minutos.
+  // Numa suíte, o PRIMEIRO cenário que rodar define o catálogo de todos os
+  // outros: se ele não tivesse a tabela, o cache guardaria `[]`, e aí
+  // `parseSkills` — que valida contra o catálogo — descartaria toda skill
+  // roteada pelos cenários seguintes. Os testes de lente passariam a medir a
+  // ordem dos testes, não o produto.
+  //
+  // Os nomes são os REAIS (`docs/skills/*.md`), pelo mesmo motivo de sempre:
+  // um catálogo sintético provaria um vocabulário que não existe.
+  db.semear(
+    "specialist_prompt_templates",
+    [
+      "sensorial",
+      "comunicacao",
+      "socializacao",
+      "imitacao",
+      "motor",
+      "autonomia",
+      "aprendizado",
+      "foco",
+      "rotina",
+      "sono",
+      "nutricional",
+      "emocional",
+    ].map((name) => ({ name, routing_keywords: [], ativo: true })),
+  );
+
   const membros: Record<string, string> = {};
   for (const c of params.criancas) {
     const id = novoId("membro");

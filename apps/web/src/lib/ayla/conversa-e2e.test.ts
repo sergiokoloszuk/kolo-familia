@@ -3,7 +3,11 @@ import { estadoDoTurno, inboundDe, montarMundo, type Mundo } from "./__harness/c
 import { clienteFalso, type Registro } from "./__harness/modelo";
 
 const registros: Registro[] = [];
-const roteiro: { prontidaoRotina?: "suficiente" | "orientacao" | "falta" } = {};
+const roteiro: {
+  prontidaoRotina?: "suficiente" | "orientacao" | "falta";
+  /** As skills que o classificador deve rotear — ver `Roteiro` em __harness/modelo. */
+  skills?: readonly string[];
+} = {};
 
 /**
  * A CONVERSA INTEIRA, PELO FLUXO REAL — `processInbound` executado de verdade.
@@ -97,7 +101,16 @@ vi.mock("./anthropic", () => ({
   AYLA_MODEL: "claude-haiku-4-5",
   AYLA_MODEL_FALLBACK: "claude-sonnet-4-6",
   getAylaAnthropicClient: () =>
-    clienteFalso({ alvo: mundoRef.alvo, prontidaoRotina: roteiro.prontidaoRotina }, registros),
+    clienteFalso(
+      {
+        alvo: mundoRef.alvo,
+        prontidaoRotina: roteiro.prontidaoRotina,
+        // Sem repassar isto, `roteiro.skills` seria escrito pelos cenários e
+        // ignorado pelo duplo — os testes de lente passariam medindo o nada.
+        skills: roteiro.skills,
+      },
+      registros,
+    ),
 }));
 
 /**
@@ -212,6 +225,12 @@ async function turno(m: Mundo, texto: string, alvo?: string) {
 beforeEach(() => {
   mundoRef.atual = null;
   mundoRef.alvo = null;
+  // ⚠️ O ROTEIRO É GLOBAL DO ARQUIVO e não era zerado. Um cenário que roteia
+  // `sensorial` deixaria a skill ligada para todos os testes seguintes, e um
+  // teste de AUSÊNCIA passaria (ou falharia) pela ordem de execução. Zerar aqui
+  // é o que mantém cada cenário dizendo só o que ele mesmo montou.
+  roteiro.prontidaoRotina = undefined;
+  roteiro.skills = undefined;
 });
 
 describe("A · a família só relata dificuldade com rotina", () => {
@@ -511,6 +530,89 @@ describe("CORE PROFISSIONAL · chega ao produtor pelo fluxo real", () => {
  * que ensina a "ajudar primeiro" é exatamente o tipo de mudança que poderia
  * empurrar um relato comum para dentro de um fluxo de entrega.
  */
+/**
+ * LENTES PROFISSIONAIS · A FIAÇÃO (12/08/2026).
+ *
+ * ⚠️ A PRESENÇA SÓ SE PROVA COM O DUPLO ROTEANDO. Até aqui o duplo devolvia
+ * "{}" para a chamada de intenção, e `parseSkills` traduz isso em `[]` — então
+ * repertório e lente ficavam vazios POR CONSTRUÇÃO. Um teste de presença
+ * escrito sem `roteiro.skills` mediria o duplo, não o produto: foi assim que
+ * três sabotagens desta frente passaram verdes.
+ *
+ * Por isso o cenário abaixo semeia `specialist_prompt_templates` (o catálogo
+ * contra o qual `parseSkills` valida) e DIZ, por escrito, qual skill roteou.
+ */
+describe("LENTES · a lente do turno chega ao produtor pelo fluxo real", () => {
+  // O catálogo já vem de `montarMundo` (ver o comentário lá: o cache de módulo
+  // de `carregarCatalogoSkills` obriga TODO cenário a tê-lo). Semear de novo
+  // aqui duplicaria as linhas sem provar nada a mais.
+  const familiaComCatalogo = familiaAnaEGeovanna;
+
+  function systemMaisTurno(m: Mundo): string {
+    const conversa = m.chamadas.filter((c) => c.quem === "conversa");
+    expect(conversa.length, "o produtor conversacional não foi chamado").toBeGreaterThan(0);
+    // O payload INTEIRO: a lente vai no conteúdo do TURNO, não no `system`
+    // (o system é cacheado). Olhar só `system` faria o teste falhar por
+    // motivo errado — e um `not.toContain` passar por motivo nenhum.
+    return conversa[conversa.length - 1].prompt;
+  }
+
+  it("skill roteada → a lente correspondente chega", async () => {
+    roteiro.skills = ["sensorial"];
+    const m = familiaComCatalogo();
+    await turno(m, "ela tá colocando tudo na boca, papel, planta, plástico");
+    const p = systemMaisTurno(m);
+    expect(p, "a lente não chegou ao produtor").toContain("lente_profissional");
+    expect(p, "chegou a lente errada").toContain("SENSORIAL.");
+    expect(p, "a lente não reafirmou o núcleo").toContain("hipótese nunca vira causa");
+  });
+
+  it("duas skills → no máximo duas lentes, na ordem do roteamento", async () => {
+    roteiro.skills = ["sensorial", "emocional", "sono"];
+    const m = familiaComCatalogo();
+    await turno(m, "ela tá colocando tudo na boca e chora muito à noite");
+    const p = systemMaisTurno(m);
+    expect(p).toContain("SENSORIAL.");
+    expect(p).toContain("EMOCIONAL E RELAÇÃO.");
+    expect(p, "entrou uma terceira lente no turno real").not.toContain("SONO. OLHE:");
+  });
+
+  /**
+   * ⚠️ O TESTE QUE MAIS IMPORTA DESTA FATIA. A regra de produto é que a lente
+   * NÃO É PORTÃO: sem skill, o turno tem que continuar exatamente como antes,
+   * com o Core respondendo sozinho. Se algum dia a ausência de lente passar a
+   * emudecer o turno, é aqui que aparece.
+   */
+  it("sem skill → nenhuma lente, e o turno responde do mesmo jeito", async () => {
+    roteiro.skills = undefined;
+    const m = familiaComCatalogo();
+    const r = await turno(m, "ela tá colocando tudo na boca, papel, planta, plástico");
+    const p = systemMaisTurno(m);
+    expect(p, "apareceu lente sem skill roteada").not.toContain("lente_profissional");
+    // O Core continua chegando inteiro — é ele que responde neste turno.
+    expect(p).toContain("Como você raciocina (por dentro, antes de escrever)");
+    // E o turno respondeu: as guardas de `turno()` já cobrem, esta é explícita.
+    expect(r.ultimoTexto, "sem lente o turno emudeceu").toBeTruthy();
+  });
+
+  it("skill fora da taxonomia → sem lente, e sem quebrar o turno", async () => {
+    roteiro.skills = ["skill_que_nao_existe"];
+    const m = familiaComCatalogo();
+    const r = await turno(m, "ela tá colocando tudo na boca, papel, planta, plástico");
+    expect(systemMaisTurno(m)).not.toContain("lente_profissional");
+    expect(r.ultimoTexto).toBeTruthy();
+  });
+
+  it("a lente NÃO cria artefato — não é portão e não tem autoridade", async () => {
+    roteiro.skills = ["sensorial"];
+    roteiro.prontidaoRotina = "suficiente";
+    const m = familiaComCatalogo();
+    const r = await turno(m, "ela tá colocando tudo na boca, papel, planta, plástico");
+    expect(r.rotinasCriadas, "a lente abriu o fluxo da rotina").toBe(0);
+    expect(r.planosCriados, "a lente abriu o fluxo do plano").toBe(0);
+  });
+});
+
 describe("REGRESSÃO · o Core não transformou conversa em artefato", () => {
   it("F · 'ele rasga papel' continua conversa — sem rotina e sem plano", async () => {
     roteiro.prontidaoRotina = "suficiente";

@@ -8,6 +8,12 @@ import { pronomesPara } from "@/lib/ayla/pronomes";
 // identidade + norte, princípios, regra de sequência, exemplos, piso e tom.
 // Ver lib/conducao/diretrizes.ts. A mesma "cabeça" nos dois canais.
 import { nucleoConducao, FRONTEIRA_DIAGNOSTICO } from "@/lib/conducao/diretrizes";
+// A MESMA lente do WhatsApp. A Camada 1 acima (`buildIdentityBlock`) vem do
+// banco e é a CONFIGURAÇÃO da skill — objetivo, tom, escopo, limites, editáveis
+// pela Karina. Esta aqui é o RACIOCÍNIO do domínio, vive no código junto do
+// núcleo e é idêntica nos dois canais. As duas convivem de propósito: aquela o
+// WhatsApp não lê, e uma lente que só existisse aqui produziria duas Aylas.
+import { lenteDoTurno } from "@/lib/conducao/lentes";
 import { blocoBoasPraticas } from "@/lib/conhecimento/recuperar";
 import {
   ANCORA_PERFIL,
@@ -200,6 +206,8 @@ export function buildSystemTextConversa(
 Aqui você pensa a partir destas lentes de especialista do Kolo Família (app que apoia famílias com pelo menos um membro neurodivergente — TEA, TDAH, dislexia, AH/SD e outros perfis). Integre-as numa voz só, sem citar os nomes das skills:
 
 ${buildIdentityBlock(skills)}
+
+${lenteDoTurno(skills.map((s) => s.name))}
 
 ${VOZ_CONVERSA}${intencao ? `\n\n${blocoIntencao(intencao)}` : ""}${
     entrega
