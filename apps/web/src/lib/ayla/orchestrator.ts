@@ -44,6 +44,7 @@ import { traduzirProativa } from "./traduzir";
 import { montarPonteWhatsApp, gerarMagicLink, montarPlanoFimDeSemana } from "./ponte";
 import { aguardarTurnoDaMae, descartarTurnoPendente } from "./lote-inbound";
 import { pedeUmPlano } from "@/lib/ia/pedido-plano";
+import { abreFluxoDeArtefato, atoSobreArtefato } from "@/lib/conducao/ato-artefato";
 import {
   rotinaConversaPendente,
   pediuRotinaExplicitamente,
@@ -2296,8 +2297,37 @@ export async function processInbound(
   }
 
   // fluxo. `pediuRotinaExplicitamente` cobre o período nomeado sem a palavra.
+  //
+  // ⚠️ FALAR SOBRE ROTINA NÃO É PEDIR UMA ROTINA (11/08/2026, PEND-044).
+  //
+  // `pedeRotina` e `pediuRotinaExplicitamente` perguntam "a palavra aparece E
+  // existe um verbo por perto?" — e verbo não separa PEDIR de DESCREVER. Medido
+  // contra as funções reais: **5 de 6 usos conceituais** abriam o artefato. O
+  // caso que fechou a conta foi "Quando é PRECISO mudar a rotina de repente ela
+  // sente" — o radical `precis` casou, e uma descrição do que acontece com a
+  // criança virou pedido de artefato.
+  //
+  // Os dois continuam como PISO (a rotina precisa ser mencionada); o que se
+  // acrescenta é o ATO — `criar` e `editar` abrem; `conversar_sobre`,
+  // `reenviar`, `recusar` e `ambiguo` não. A composição só pode ESTREITAR o
+  // portão, nunca alargá-lo.
+  //
+  // ⚠️ `intent === "organizacao"` FICA, e a decisão de mantê-lo é deliberada.
+  //
+  // Eu havia tirado: o comentário abaixo já dizia que ela "NÃO diz que precisa
+  // de rotina", e o código entrava assim mesmo. Mas **não há prova** de que um
+  // turno real classificado como `organizacao` tenha criado artefato indevido —
+  // `conhecimento_consultado` não registra intenção, e a suspeita é INFERIDA.
+  // Corrigir por inferência é o que esta frente inteira existe para não fazer.
+  // Quando a instrumentação registrar a intenção (PEND-040), isto se decide com
+  // dado. Até lá, o que muda é só o que está medido.
+  const pedidoDeRotina =
+    (pedeRotina(inbound.texto) || pediuRotinaExplicitamente(inbound.texto)) &&
+    abreFluxoDeArtefato(atoSobreArtefato(inbound.texto));
   if (
     !seguranca.aberta &&
+    // `rotinaConversa` é CONTINUAÇÃO de uma montagem já em curso — a família já
+    // pediu, e o turno é a resposta dela. Não passa pelo ato de novo.
     (rotinaConversa ||
       intent === "rotina_criar" ||
       // "organizacao" entra na MESMA capacidade — e é por isso que ela existe.
@@ -2305,8 +2335,7 @@ export async function processInbound(
       // NÃO diz que precisa de rotina. Quem escolhe entre orientação, sequência
       // curta e o período inteiro é a prontidão, um passo adiante.
       intent === "organizacao" ||
-      pedeRotina(inbound.texto) ||
-      pediuRotinaExplicitamente(inbound.texto))
+      pedidoDeRotina)
   ) {
     const ctxR = await loadFamiliaParaEnvio(supabase, family.id);
     const alvo = alvoDaRotina(ctxR, rotinaConversa?.membroId ?? membroConversa);

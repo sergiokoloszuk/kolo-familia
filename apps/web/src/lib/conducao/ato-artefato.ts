@@ -125,9 +125,20 @@ const pedidoDirigido = (t: string, verbo: RegExp) => {
 const SOBRE_O_PASSADO =
   /\b(ja tinha|ja sabia|ja conhecia|voce sabia|vc sabia|por que|porque|pq) \b|\b(o que|oq|que) (voce|vc) (salvou|guardou|sabe|considerou|usou|colocou)\b/;
 
-/** VERBO DE CRIAR — o pedido de um artefato novo. */
+/**
+ * VERBO DE CRIAR — o pedido de um artefato novo.
+ *
+ * ⚠️ `organiza` entrou por REGRESSÃO MEDIDA, não por instinto de completar
+ * lista: "me ajuda a organizar a rotina dela?" abre o fluxo hoje (o piso
+ * `pedeRotina` casa) e passaria a ser `ambiguo` depois desta fatia — um pedido
+ * legítimo silenciado pela própria correção. É a única frase do corpus que
+ * regrediu, e é o único verbo acrescentado.
+ *
+ * Isso NÃO reabre o defeito: "a escola organiza a rotina da sala" continua
+ * fora, porque o verbo só decide junto da moldura de pedido.
+ */
 const CRIAR =
-  /\b(faz|faca|fazer|monta|monte|montar|cria|crie|criar|prepara|prepare|preparar|elabora|elabore|elaborar|gera|gere|gerar|quero um|queria um|quero uma|queria uma|me faz|me monta|me cria)\b/;
+  /\b(faz|faca|fazer|monta|monte|montar|cria|crie|criar|organiza|organize|organizar|prepara|prepare|preparar|elabora|elabore|elaborar|gera|gere|gerar|quero um|queria um|quero uma|queria uma|me faz|me monta|me cria)\b/;
 
 /** VERBO DE ALTERAR o que já existe. */
 const EDITAR =
