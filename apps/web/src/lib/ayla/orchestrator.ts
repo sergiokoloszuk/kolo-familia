@@ -2256,7 +2256,25 @@ export async function processInbound(
   //
   // O discriminador certo não é o FORMATO da mensagem, é um FATO: a rotina
   // existe? Se nasceu agora, ela é o referente e não há o que adivinhar.
-  const pedeImprimivel = pedeArtefatoImprimivel(inbound.texto);
+  // ⚠️ DETECTAR NÃO É AUTORIZAR — o caso Juliana/Daniel (11/08/2026, PEND-044).
+  //
+  // A mãe escreveu "ele esta colocando muita coisa na boca, planta, bonecos,
+  // papel, plastico". `PEDE_PDF` casa `\bpapel\b` — a palavra está lá porque
+  // "me manda no papel" é pedido legítimo de impressão. O portão abriu com uma
+  // condição verdadeira, e ela recebeu "Ainda não temos uma rotina montada pra
+  // eu transformar em PDF" no lugar de ajuda com o filho.
+  //
+  // `pedeArtefatoImprimivel` continua sendo o que sempre foi: detector de
+  // VOCABULÁRIO e de alvo. Quem autoriza é o ATO.
+  //
+  // ⚠️ E OS ATOS AQUI NÃO SÃO OS DE `abreFluxoDeArtefato`. Neste artefato
+  // `reenviar` É o caso central — "me manda o pdf" é a frase mais comum de
+  // todas —, enquanto no Plano `reenviar` deliberadamente NÃO abre geração.
+  // Contratos diferentes para artefatos diferentes, escritos por extenso.
+  const atoImprimivel = atoSobreArtefato(inbound.texto);
+  const autorizaImprimivel =
+    atoImprimivel === "criar" || atoImprimivel === "editar" || atoImprimivel === "reenviar";
+  const pedeImprimivel = pedeArtefatoImprimivel(inbound.texto) && autorizaImprimivel;
   const temRotinaRecem = pedeImprimivel
     ? await existeRotinaRecente(supabase, family.id, membroConversa)
     : false;
