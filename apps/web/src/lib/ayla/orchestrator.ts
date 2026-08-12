@@ -41,7 +41,8 @@ import {
 } from "./messageTemplates";
 import { gerarMensagemEspontanea } from "./mensagemEspontanea";
 import { traduzirProativa } from "./traduzir";
-import { montarPonteWhatsApp, gerarMagicLink, montarPlanoFimDeSemana } from "./ponte";
+import { montarPonteWhatsApp, gerarMagicLink, montarPlanoFimDeSemana, reentregarPlano } from "./ponte";
+import { acharPlanoParaReenviar, perguntaDeDesempate } from "./plano-reenvio";
 import { aguardarTurnoDaMae, descartarTurnoPendente } from "./lote-inbound";
 import { pedeUmPlano } from "@/lib/ia/pedido-plano";
 import { abreFluxoDeArtefato, atoSobreArtefato } from "@/lib/conducao/ato-artefato";
@@ -2160,6 +2161,70 @@ export async function processInbound(
         });
         return { tratada: true, familia: family.id, resposta: resp };
       }
+    }
+  }
+
+  // 3b-plano-reenviar. "manda o plano de novo", "quero ver aquele plano".
+  //
+  // ⚠️ ATÉ 11/08/2026 ISTO GERAVA UM PLANO NOVO. `pedeUmPlano` devolvia true, a
+  // ponte era forçada, e a mãe que pediu o que já tinha terminava com dois
+  // artefatos. O portão de autoridade (5490c24) parou a duplicação; este bloco
+  // dá DESTINO ao ato — sem ele, "não gerar" continuaria sendo silêncio.
+  //
+  // Nada aqui chama gerador: lê `planos` e remonta a entrega do que está salvo.
+  if (
+    !seguranca.aberta &&
+    !rotinaConversa &&
+    pedeUmPlano(inbound.texto) &&
+    atoSobreArtefato(inbound.texto) === "reenviar"
+  ) {
+    const ctxP = await loadFamiliaParaEnvio(supabase, family.id);
+    if (ctxP) {
+      const alvo = await acharPlanoParaReenviar(supabase, {
+        familyId: family.id,
+        membroAtipicoId: membroConversa,
+        totalDeCriancas: ctxP.membros.length,
+      });
+      console.log(
+        `[ayla:plano-reenvio] alvo=${alvo.tipo}${alvo.tipo === "achou" ? ` via=${alvo.via}` : ""}`,
+      );
+      if (alvo.tipo === "achou") {
+        const nomeMembro =
+          ctxP.membros.find((m) => m.id === alvo.plano.membro_atipico_id)?.nome ?? null;
+        const texto = await reentregarPlano(supabase, {
+          familyId: family.id,
+          phoneE164: ctxP.whatsapp_e164,
+          plano: alvo.plano,
+          nomeMembro,
+        });
+        const resp = await enviarEPersistir(supabase, {
+          family_account_id: family.id,
+          membro_atipico_id: alvo.plano.membro_atipico_id,
+          phone: ctxP.whatsapp_e164,
+          texto,
+          category: "reativa",
+          // NÃO é `resposta_registro`: esse tipo aciona a ponte do Plano, e um
+          // reenvio acabaria gerando o artefato que ele existe para evitar.
+          tipo: "plano_reenviado",
+          metadataMensagem: { plano_id: alvo.plano.id },
+        });
+        return { tratada: true, familia: family.id, resposta: resp };
+      }
+      if (alvo.tipo === "ambiguo") {
+        // Dois planos disputando o pedido: perguntar é a única saída honesta.
+        // Escolher o mais novo seria adivinhar com a cara de quem sabe.
+        const resp = await enviarEPersistir(supabase, {
+          family_account_id: family.id,
+          membro_atipico_id: membroConversa,
+          phone: ctxP.whatsapp_e164,
+          texto: perguntaDeDesempate(alvo.candidatos),
+          category: "reativa",
+          tipo: "plano_desempate",
+        });
+        return { tratada: true, familia: family.id, resposta: resp };
+      }
+      // Nenhum plano: NÃO responde aqui. Cai na conversa normal, onde a Ayla
+      // trata o assunto — inclusive podendo oferecer montar um.
     }
   }
 

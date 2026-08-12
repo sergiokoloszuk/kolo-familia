@@ -58,6 +58,13 @@ export type AylaTipoReativa =
    *  tipo acionava o gerador de PLANO logo em seguida — a mãe pedia rotina e
    *  recebia um PDF de plano por cima (caso real, 03/08/2026). */
   | "rotina_pronta"
+  /** O Plano que já existia foi REENTREGUE — nada foi gerado (PEND-050).
+   *  Tipo próprio pelo mesmo motivo de `rotina_pronta`: a ponte do plano
+   *  dispara em `resposta_registro`, e um reenvio marcado assim geraria
+   *  justamente o artefato que ele existe para evitar. */
+  | "plano_reenviado"
+  /** Dois planos disputam o pedido de reenvio e a Ayla perguntou qual. */
+  | "plano_desempate"
   /** O PISO acionou por risco ATUAL à vida. É o marcador operacional de que há
    *  uma situação de segurança ABERTA — ver `estado-seguranca.ts`. Enquanto
    *  aberta, artefatos não disparam e a condução prioriza o próximo passo. */

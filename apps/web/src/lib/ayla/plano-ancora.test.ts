@@ -53,11 +53,25 @@ vi.mock("@/lib/ia/plano", async (real) => ({
   // O módulo real entra inteiro (a ponte importa `PlanoIncompletoError` dele);
   // só a GERAÇÃO é trocada, que é o que custa dinheiro e o que se quer contar.
   ...(await real<Record<string, unknown>>()),
-  gerarPlano: async (p: { membroAtipicoId: string | null }) => {
+  gerarPlano: async (p: { familyId: string; membroAtipicoId: string | null }) => {
     geracoes++;
     const id = `plano-${geracoes}-${p.membroAtipicoId ?? "sem-membro"}`;
     idsGerados.push(id);
-    return { id, titulo: `Plano ${geracoes}`, secoes: [{ tipo: "entender", titulo: "t", conteudo_markdown: "c" }] };
+    const secoes = [{ tipo: "entender", titulo: "t", conteudo_markdown: "c" }];
+    // ⚠️ O DUPLO PERSISTE, como o real. Sem isto a tabela `planos` ficava vazia
+    // e o reenvio não achava nada — o teste acusaria o produto por uma fixture
+    // que não gravava. Foi o que aconteceu na primeira rodada desta fatia.
+    mundoRef.atual?.db.semear("planos", [
+      {
+        id,
+        family_account_id: p.familyId,
+        membro_atipico_id: p.membroAtipicoId,
+        titulo: `Plano ${geracoes}`,
+        tema: `tema ${geracoes}`,
+        secoes,
+      },
+    ]);
+    return { id, titulo: `Plano ${geracoes}`, secoes };
   },
   recadoDePlanoIncompleto: () => null,
 }));
@@ -161,5 +175,36 @@ describe("5 · a mensagem entregue não mudou", () => {
     const texto = m.enviadas.map((e) => e.texto).join("\n");
     expect(texto).toContain("plano estratégico com atividades");
     expect(texto, "o id vazou para a fala da Ayla").not.toContain(idsGerados[0]);
+  });
+});
+
+describe("F/G/H · reenviar não gera (PEND-050, fatia 2)", () => {
+  it("MORDE: 'manda o plano de novo' reentrega e NÃO chama o gerador", async () => {
+    const m = familia([{ nome: "Mário", nascimento: "2017-05-02" }]);
+    await turno(m, "faz um plano para melhorar a comunicação do Mário");
+    expect(geracoes, "o cenário não gerou o plano inicial — teste vazio").toBe(1);
+    const planosAntes = m.db.linhas("planos").length;
+    const enviadasAntes = m.enviadas.length;
+
+    await turno(m, "manda o plano de novo");
+
+    // H · o gerador NÃO rodou de novo.
+    expect(geracoes, "reenviar chamou o gerador").toBe(1);
+    // G · a tabela `planos` não mudou.
+    expect(m.db.linhas("planos").length, "reenviar criou linha em planos").toBe(planosAntes);
+    // E a mãe recebeu alguma coisa — reenvio que cala não é reenvio.
+    expect(m.enviadas.length, "o reenvio não mandou nada").toBeGreaterThan(enviadasAntes);
+    const ultima = m.db.linhas("ayla_messages").filter((x) => x.direcao === "outbound").pop();
+    expect(ultima?.tipo).toBe("plano_reenviado");
+    // ⚠️ O tipo importa: `resposta_registro` aciona a ponte do Plano, e o
+    // reenvio geraria justamente o artefato que ele existe para evitar.
+    expect(String(ultima?.texto)).toContain("de novo");
+  });
+
+  it("MORDE: 'faz outro plano' NÃO é reenviar — continua criando", async () => {
+    const m = familia([{ nome: "Mário", nascimento: "2017-05-02" }]);
+    await turno(m, "faz um plano para melhorar a comunicação do Mário");
+    await turno(m, "faz outro plano, agora pra escola");
+    expect(geracoes, "uma nova intenção explícita foi tratada como reenvio").toBe(2);
   });
 });
