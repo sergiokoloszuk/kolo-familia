@@ -125,11 +125,17 @@ describe("prova de envio no WhatsApp", () => {
   it("toda mensagem de saída persiste o id do provedor", () => {
     // Na conversa da Vitória foram 27 de 27 mensagens com zaap_message_id
     // nulo — o sistema não sabia se tinha enviado, e a Ayla disse "Chegou!".
-    const inserts = ORQUESTRADOR.split('from("ayla_messages").insert(').slice(1);
-    const saida = inserts.filter((b) => b.slice(0, 400).includes('direcao: "outbound"'));
+    // ⚠️ O RECORTE É O BLOCO DO INSERT, não os primeiros 400 caracteres
+    // (11/08/2026). Com a janela fixa, um comentário acrescentado dentro do
+    // objeto empurrava `registroDeEnvio(` para fora da janela e o teste
+    // reprovava um código correto. O que ele mede é a invariante: todo insert
+    // de saída passa por `registroDeEnvio`.
+    const bloco = (b: string) => b.split("});")[0] ?? "";
+    const inserts = ORQUESTRADOR.split('from("ayla_messages").insert(').slice(1).map(bloco);
+    const saida = inserts.filter((b) => b.includes('direcao: "outbound"'));
     expect(saida.length).toBeGreaterThanOrEqual(2); // reativa + proativa
-    const comRegistro = saida.filter((b) => b.slice(0, 400).includes("registroDeEnvio("));
-    expect(comRegistro.length).toBeGreaterThanOrEqual(2);
+    const comRegistro = saida.filter((b) => b.includes("registroDeEnvio("));
+    expect(comRegistro.length, "insert de saída sem registroDeEnvio").toBe(saida.length);
   });
 
   it("o campo se chama pelo que prova: aceito, não entregue", () => {

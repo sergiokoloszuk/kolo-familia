@@ -22,6 +22,7 @@ type Linha = Record<string, unknown>;
 type Filtro =
   | { op: "eq" | "neq" | "gt" | "gte" | "lt" | "lte"; col: string; val: unknown }
   | { op: "in"; col: string; val: unknown[] }
+  | { op: "ilike"; col: string; val: string }
   | { op: "is"; col: string; val: null }
   | { op: "not"; col: string; val: unknown };
 
@@ -70,6 +71,21 @@ function passa(l: Linha, f: Filtro): boolean {
       return v !== f.val;
     case "in":
       return f.val.includes(v);
+    case "ilike": {
+      // `%` é o curinga do PostgREST. O cooldown do plano depende disto
+      // (`ilike("texto", "%/auth/wa%")`), e sem ele a ponte morria na consulta
+      // e devolvia null — o turno inteiro parecia "não gerou plano".
+      const alvo = String(v ?? "").toLowerCase();
+      const partes = f.val.toLowerCase().split("%");
+      let i = 0;
+      for (const parte of partes) {
+        if (!parte) continue;
+        const acha = alvo.indexOf(parte, i);
+        if (acha < 0) return false;
+        i = acha + parte.length;
+      }
+      return true;
+    }
     case "gt":
       return String(v) > String(f.val);
     case "gte":
@@ -93,15 +109,19 @@ class Consulta implements PromiseLike<{ data: unknown; error: unknown }> {
   private carga: Linha[] = [];
   private umSo = false;
   private colunas = "*";
+  private contar = false;
 
   constructor(
     private readonly db: BancoMemoria,
     private readonly tabela: string,
   ) {}
 
-  select(cols = "*") {
+  select(cols = "*", opts?: { count?: string; head?: boolean }) {
     this.colunas = cols;
-    if (this.modo === "select") this.modo = "select";
+    // `select("id", { count: "exact", head: true })` — o freio de profundidade
+    // da ponte conta mensagens da mãe assim. Sem `count`, ele lia `undefined` e
+    // barrava toda família como "conversou pouco".
+    if (opts?.count) this.contar = true;
     return this;
   }
   eq(col: string, val: unknown) {
@@ -130,6 +150,10 @@ class Consulta implements PromiseLike<{ data: unknown; error: unknown }> {
   }
   in(col: string, val: unknown[]) {
     this.filtros.push({ op: "in", col, val });
+    return this;
+  }
+  ilike(col: string, val: string) {
+    this.filtros.push({ op: "ilike", col, val });
     return this;
   }
   is(col: string, val: null) {
@@ -240,6 +264,7 @@ class Consulta implements PromiseLike<{ data: unknown; error: unknown }> {
       }
       default: {
         const r = this.filtradas();
+        if (this.contar) return { data: r, error: null, count: r.length } as never;
         return { data: this.umSo ? (r[0] ?? null) : r, error: null };
       }
     }

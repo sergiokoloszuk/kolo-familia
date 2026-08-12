@@ -229,6 +229,19 @@ export async function gerarMagicLink(
   }
 }
 
+/**
+ * O QUE A PONTE DEVOLVE — o texto E o artefato que ela acabou de criar.
+ *
+ * ⚠️ POR QUE DEIXOU DE SER UMA STRING (11/08/2026, PEND-050). A entrega gravava
+ * só o texto; o id do Plano existia apenas dentro da URL do magic-link. Sem
+ * âncora, o turno seguinte não tem como saber QUAL plano acabou de chegar — e
+ * "manda o plano de novo" não teria a que se referir.
+ *
+ * `planoId` é null quando a ponte fala sem ter criado nada (o recado de plano
+ * incompleto). Texto sem artefato é caso legítimo, e continua sendo.
+ */
+export type PonteDoPlano = { texto: string; planoId: string | null };
+
 export async function montarPonteWhatsApp(
   supabase: SupabaseClient,
   params: {
@@ -242,7 +255,7 @@ export async function montarPonteWhatsApp(
     /** Pedido explícito de plano: pula os gates (dedup/intenção/temDesafio). */
     forcar?: boolean;
   },
-): Promise<string | null> {
+): Promise<PonteDoPlano | null> {
   const { familyId, membroAtipicoId, mensagem, phoneE164, forcar } = params;
 
   try {
@@ -367,11 +380,16 @@ export async function montarPonteWhatsApp(
       : "Montei um plano estratégico com atividades sobre isso 🌿";
     const volte =
       "\nDá uma olhada com calma e volta aqui pra me contar o que você achou? Quero muito saber se faz sentido pro dia a dia de vocês — e se algo não encaixou, a gente ajusta. 💛";
-    if (!link) return `${base}${volte}`;
-    return `${base}\nPra ver no app (já entra direto): ${link}${volte}`;
+    if (!link) return { texto: `${base}${volte}`, planoId: plano.id };
+    return {
+      texto: `${base}
+Pra ver no app (já entra direto): ${link}${volte}`,
+      planoId: plano.id,
+    };
   } catch (e) {
     const recado = recadoDePlanoIncompleto(e, "ponte");
-    if (recado) return recado;
+    // Falou, mas não nasceu artefato nenhum: sem âncora, e é correto que seja.
+    if (recado) return { texto: recado, planoId: null };
     console.warn(
       "[ayla:ponte] falha ao montar ponte WhatsApp→app:",
       e instanceof Error ? e.message : e,
