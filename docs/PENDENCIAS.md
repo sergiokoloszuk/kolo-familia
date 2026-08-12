@@ -508,6 +508,45 @@ Aberta em: 2026-08-11 · Origem: fatia de autoridade do Plano (5490c24)
 
 ---
 
+### PEND-052
+**Patrimônio dos especialistas do app anterior — auditar o que não migrou**
+Bloco: **A · Condução** · Prioridade: **P2** · Estado: **ABERTA**
+Aberta em: 2026-08-12 · Origem: missão do Core transversal (897f36b)
+
+> **Os prompts dos antigos especialistas do Kolo Materno nunca foram
+> comparados, item a item, com a Base Kolo atual.**
+
+- O app anterior tinha agentes por domínio com estratégias práticas,
+  atividades, formas de condução, crenças, rituais, frases prontas e perguntas
+  de investigação. Parte disso virou `docs/skills/` e `boas_praticas`; **não se
+  sabe o que ficou pelo caminho.**
+- **NÃO É** copiar o app antigo, nem engrossar o prompt: é identificar
+  patrimônio intelectual útil que possa ter se perdido na migração, e só então
+  decidir onde ele entra (BP, skill, Plano — não necessariamente o núcleo).
+- Critério de conclusão: uma lista, por domínio, do que existe lá e não existe
+  aqui, com recomendação de destino para cada item — ou a constatação, com
+  evidência, de que não há lacuna.
+
+### PEND-053
+**Aprendizado longitudinal sobre COMO a criança recebe melhor a informação**
+Bloco: **A · Condução** · Prioridade: **P1** · Estado: **ABERTA — não investigada**
+Aberta em: 2026-08-12 · Origem: missão do Core transversal (897f36b)
+
+> **Se a mãe descobre "quando eu mostro primeiro e falo depois, ele entende
+> muito melhor", isso chega ao próximo turno?**
+
+- O núcleo passou a mandar a Ayla propor testes pequenos ("vamos experimentar
+  mostrar em vez de falar?") e aprender com a resposta da criança. **A metade
+  que fecha o ciclo — guardar a descoberta e reusá-la — NÃO foi verificada.**
+- `perfil_vivo_membro` tem `aprendizado` e `como_e`, e existe incorporação
+  automática (`incorporar.ts`); mas **NÃO SEI** se uma descoberta sobre FORMA
+  DE INTERAÇÃO é reconhecida, classificada e gravada, nem em qual campo.
+- Se não chegar, é lacuna estrutural alinhada ao diferencial da Kolo: a
+  descoberta mais valiosa da conversa morre nela.
+- Critério de conclusão: prova por execução de que a descoberta é gravada e
+  volta ao prompt no turno seguinte — ou o desenho do menor mecanismo que faça
+  isso, sem memória nova.
+
 ### PEND-051
 **A conversa nunca tinha sido executada em teste**
 Bloco: **A · Condução** · Prioridade: **P1** · Estado: **CONCLUÍDA em 2026-08-11 (8c42a53)**
