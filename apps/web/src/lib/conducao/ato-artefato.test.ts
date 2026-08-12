@@ -164,3 +164,54 @@ describe("o ato sobre o artefato — seis atos, não um booleano", () => {
     }
   });
 });
+
+describe("pedidos de ENTREGA e TRANSFORMAÇÃO — o eixo que faltava", () => {
+  /**
+   * ⚠️ MEDIDO no caso Juliana/Daniel (11/08/2026). Compor o portão do imprimível
+   * com o ato, como estava, criaria TRÊS falsos negativos: "quero o PDF",
+   * "pode imprimir pra mim?" e "transforma essa rotina em cartões" — todos
+   * pedidos legítimos que só funcionavam por causa do falso positivo lexical.
+   *
+   * A lacuna não era de ATO: `reenviar` já cobre entrega e `editar` já cobre
+   * alteração. Faltavam a moldura com ARTIGO DEFINIDO, o verbo `imprimir` no
+   * eixo de entrega, e `transformar` no de alteração.
+   */
+  it("MORDE: os três pedidos que o contrato antigo não representava", () => {
+    expect(atoSobreArtefato("quero o PDF")).toBe("criar");
+    expect(atoSobreArtefato("pode imprimir pra mim?")).toBe("reenviar");
+    expect(atoSobreArtefato("transforma essa rotina em cartões")).toBe("editar");
+    // Pedir uma VERSÃO do que já existe é alteração, nunca criação: criar
+    // produziria um segundo artefato onde ela pediu outra forma do primeiro.
+    expect(atoSobreArtefato("quero essa rotina visual")).toBe("editar");
+  });
+
+  it("MORDE: o caso real de produção continua sendo narrativa", () => {
+    // A frase que gerou "Ainda não temos uma rotina montada pra eu transformar
+    // em PDF". O detector lexical pode continuar vendo "papel"; o ato é que
+    // não autoriza.
+    expect(
+      atoSobreArtefato("ele esta colocando muita coisa na boca, planta, bonecos, papel, plastico"),
+    ).toBe("ambiguo");
+  });
+
+  it("MORDE: artigo definido não vira autoridade sozinho — a moldura é que decide", () => {
+    // O par que prova a regra: mesma referência ao artefato, molduras opostas.
+    expect(atoSobreArtefato("quero o PDF")).toBe("criar");
+    expect(atoSobreArtefato("como funciona o PDF da rotina?")).toBe("ambiguo");
+    expect(atoSobreArtefato("o PDF da terapeuta não abre")).toBe("ambiguo");
+    expect(atoSobreArtefato("e o PDF?")).toBe("ambiguo");
+  });
+
+  it("MORDE: `imprimir` narrado continua fora", () => {
+    expect(atoSobreArtefato("a escola imprime as atividades")).toBe("ambiguo");
+    expect(atoSobreArtefato("imprimir tudo não resolveu")).toBe("ambiguo");
+    expect(atoSobreArtefato("transformar rotina em cartão ajuda mesmo?")).toBe("ambiguo");
+    expect(atoSobreArtefato("ela rasga papel quando fica nervosa")).toBe("ambiguo");
+  });
+
+  it("MORDE: a recusa continua vencendo tudo", () => {
+    for (const t of ["não quero PDF", "não precisa imprimir", "não quero cartões agora"]) {
+      expect(atoSobreArtefato(t), t).toBe("recusar");
+    }
+  });
+});
