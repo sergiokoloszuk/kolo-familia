@@ -813,6 +813,37 @@ describe("LENTES · a lente do turno chega ao produtor pelo fluxo real", () => {
     expect(systemMaisTurno(m)).not.toContain("QUANDO A CONVERSA JÁ AMADURECEU");
   });
 
+  /**
+   * CONTRADIÇÃO ENTRE PERFIL E RELATO (13/08/2026).
+   *
+   * ⚠️ ACHADO POR EXECUÇÃO, não por leitura. Com o perfil dizendo "não fala; se
+   * comunica apontando e levando pela mão", a mãe disse "ontem ela falou que
+   * não queria ir" — e a Ayla respondeu "falou que não queria ir aonde?".
+   * Tratou como natural. Não havia regra nenhuma sobre isso: era CAPACIDADE
+   * AUSENTE, não conflito entre regras.
+   *
+   * A regra não manda concluir nada — nem evolução, nem registro errado, nem
+   * sentido figurado. Manda MOSTRAR QUE LEMBRA e perguntar, que é o que faz a
+   * mãe sentir que a Ayla conhece a criança.
+   */
+  it("a regra de contradição perfil × relato chega ao WhatsApp", async () => {
+    const m = familiaComCatalogo();
+    await turno(m, "ontem ela falou que não queria ir");
+    const s = systemMaisTurno(m);
+    expect(s, "a regra de contradição sumiu — a Ayla aceita calada").toContain(
+      "QUANDO O RELATO CONTRADIZ O PERFIL, NÃO ESCOLHA EM SILÊNCIO",
+    );
+    expect(s, "sumiu o freio contra assumir evolução ou erro").toContain(
+      "Não assuma nenhum e não sobrescreva calado",
+    );
+    expect(s, "sumiu o 'mostre que lembra' — vira interrogatório").toContain("MOSTRE QUE LEMBRA");
+    // ⚠️ E o freio contra virar fiscal do perfil: contradição irrelevante não
+    // vira pergunta.
+    expect(s, "sumiu o limite — a Ayla passa a auditar o perfil").toContain(
+      "Só quando a diferença MUDAR algo",
+    );
+  });
+
   it("a lente NÃO cria artefato — não é portão e não tem autoridade", async () => {
     roteiro.skills = ["sensorial"];
     roteiro.prontidaoRotina = "suficiente";

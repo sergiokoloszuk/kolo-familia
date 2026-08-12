@@ -607,6 +607,33 @@ Aberta em: 2026-08-13 · Origem: medição da PEND-054
 - Critério de conclusão: a continuação tardia deixa de produzir duas respostas
   desconexas, sem impor espera longa a quem manda um balão só.
 
+### PEND-059
+**Contradição percebida, mas ainda não persistida — a segunda metade da fatia**
+Bloco: **A · Condução** · Prioridade: **P1** · Estado: **ABERTA — depende da [PEND-053]**
+Aberta em: 2026-08-13 · Origem: M3.2, regra de contradição perfil × relato
+
+> **A Ayla passou a PERCEBER e CHECAR a contradição. Ela ainda não ATUALIZA o
+> perfil nem USA a correção depois.**
+
+- O que foi entregue e está provado: `PERCEBER → CHECAR`. Com o perfil dizendo
+  "não fala", a Ayla responde *"pelo que você contou antes, a Manu não fala com
+  palavras… quando você diz que ela falou, como foi isso?"*.
+- O que **falta**, e é o que faz a mãe sentir que a Kolo aprende:
+  `→ ATUALIZAR O PERFIL → USAR DEPOIS`. Comportamento desejado, por caso:
+  - confirmou **evolução** → registrar o novo fato **com data**, sem apagar a
+    história anterior (o perfil é uma linha do tempo, não um estado);
+  - a mãe corrige (*"falei errado, ela não fala"*) → corrigir o dado incorreto;
+  - "falou" era **apontar/gesto/prancha** → NÃO alterar para verbal;
+  - ficou **ambíguo** → não salvar como fato.
+- ⚠️ **NÃO é mecanismo paralelo.** Depende da [PEND-053]: o parser hoje não
+  consegue endereçar boa parte dos domínios (lista manual de 9 de 20), então
+  não há por onde gravar. Resolver a 053 primeiro; esta é a continuação.
+- **NÃO SEI** se o mecanismo atual sabe corrigir ou remover um fato com
+  segurança — só provei INSERT. Se não souber, isso vira decisão de produto
+  antes de virar código.
+- Critério de conclusão: os quatro casos acima provados de ponta a ponta —
+  gravação correta, e recuperação no turno seguinte.
+
 ### PEND-052
 **Patrimônio dos especialistas do app anterior — auditar o que não migrou**
 Bloco: **A · Condução** · Prioridade: **P2** · Estado: **ABERTA**
