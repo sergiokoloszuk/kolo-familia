@@ -31,7 +31,7 @@ NÃO está pronto quando:
 - é dúvida pontual que a resposta na conversa já resolve;
 - o tema apareceu agora e ainda não foi explorado (1 mensagem solta);
 - a conversa está sobre outra coisa (preço, acesso ao app, agradecimento, assunto do time humano);
-- a família está falando de várias crianças e ainda não ficou claro de quem é o desafio.`;
+- a família está falando de várias crianças e ainda não ficou claro de quem é o desafio (quando O QUE JÁ SABEMOS identifica a criança, isto deixa de valer).`;
 
 export type Prontidao = {
   pronto: boolean;
@@ -51,7 +51,27 @@ const NAO = (motivo: string): Prontidao => ({ pronto: false, tema: null, motivo 
  */
 export async function avaliarProntidaoParaPlano(
   supabase: SupabaseClient,
-  params: { familyId: string; mensagemAtual: string },
+  params: {
+    familyId: string;
+    mensagemAtual: string;
+    /**
+     * A criança do turno. Sem ela, o que já sabemos não tem dono — e o critério
+     * antigo chegava a BARRAR o plano por "a família está falando de várias
+     * crianças", que é uma pergunta que o membro resolvido já respondeu.
+     */
+    membroAtipicoId: string | null;
+    /**
+     * O `<o_que_ja_sabemos_da_crianca>` que o turno JÁ montou.
+     *
+     * ⚠️ VEM DE CIMA DE PROPÓSITO, e é a decisão de custo desta fatia: o
+     * orquestrador já carregou este resumo para a resposta conversacional, no
+     * mesmo turno. Recuperá-lo aqui seria a mesma consulta duas vezes por uma
+     * decisão que nem sequer escreve o plano.
+     */
+    perfilResumo?: string | null;
+    /** `<o_que_ja_funcionou>` — planos anteriores DESTA criança, já avaliados. */
+    aprendizado?: string | null;
+  },
 ): Promise<Prontidao> {
   try {
     const { data } = await supabase
@@ -70,9 +90,21 @@ export async function avaliarProntidaoParaPlano(
       })
       .filter((l): l is string => Boolean(l));
 
-    if (linhas.length < 3) return NAO("conversa curta demais");
+    // ⚠️ O PISO DE TRÊS LINHAS DEIXOU DE VALER QUANDO JÁ CONHECEMOS A CRIANÇA.
+    //
+    // Ele era a única defesa contra "plano genérico pra quem acabou de chegar".
+    // Só que ele mede a CONVERSA, e a conversa é o pior proxy que temos: uma
+    // família de meses, com perfil cheio, que volta e escreve duas linhas caía
+    // aqui — e recebia silêncio. Quem tem perfil já provou que não acabou de
+    // chegar.
+    const jaConhecemos = Boolean(params.perfilResumo?.trim() || params.aprendizado?.trim());
+    if (linhas.length < 3 && !jaConhecemos) return NAO("conversa curta e criança desconhecida");
 
-    const system = `Você avalia se uma conversa entre uma mãe e a assistente Ayla já tem material suficiente pra montar um plano estratégico personalizado pra a criança.
+    const system = `Você avalia se JÁ SABEMOS o suficiente pra montar um plano estratégico personalizado pra esta criança.
+
+⚠️ A pergunta NÃO é "a conversa está rica". É: "com o que a Kolo já sabe desta criança MAIS o que esta conversa trouxe, dá pra escrever um plano específico e útil sem inventar o que falta?". Um perfil cheio torna uma conversa curta suficiente; uma conversa longa sobre nada continua insuficiente.
+
+O que vier em O QUE JÁ SABEMOS e em O QUE JÁ FUNCIONOU **conta como informação da conversa** — não peça de novo o que já está ali.
 
 ${CRITERIO_SUFICIENCIA}
 
@@ -89,7 +121,20 @@ Seja CRITERIOSO: na dúvida, responda false. É melhor conversar mais uma vez do
       messages: [
         {
           role: "user",
-          content: `<conversa>\n${linhas.join("\n")}\n</conversa>\n\n<mensagem_de_agora>\n${params.mensagemAtual.slice(0, 800)}\n</mensagem_de_agora>\n\nSó o JSON.`,
+          // ⚠️ A ORDEM É DELIBERADA: o que já sabemos vem ANTES da conversa.
+          // O critério pergunta se temos material — e o material começa no que
+          // a Kolo acumulou sobre esta criança, não no que foi digitado hoje.
+          content: [
+            params.perfilResumo?.trim()
+              ? `<o_que_ja_sabemos_da_crianca>\n${params.perfilResumo.trim().slice(0, 2000)}\n</o_que_ja_sabemos_da_crianca>`
+              : "",
+            params.aprendizado?.trim() ? params.aprendizado.trim().slice(0, 800) : "",
+            `<conversa>\n${linhas.join("\n")}\n</conversa>`,
+            `<mensagem_de_agora>\n${params.mensagemAtual.slice(0, 800)}\n</mensagem_de_agora>`,
+            "Só o JSON.",
+          ]
+            .filter(Boolean)
+            .join("\n\n"),
         },
       ],
     });

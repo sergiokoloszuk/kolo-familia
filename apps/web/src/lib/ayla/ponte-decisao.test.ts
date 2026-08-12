@@ -19,10 +19,15 @@ import type { DecisaoDePlano } from "./plano-decisao";
 
 let prontidaoChamada = 0;
 let geracoes = 0;
+/** O que a prontidão RECEBEU — a prova da fiação, não da função isolada. */
+let recebidoPelaProntidao: Record<string, unknown> | null = null;
+/** Com que membro o aprendizado foi buscado. */
+let membroDoAprendizado: string | null | undefined;
 
 vi.mock("./prontidao-plano", () => ({
-  avaliarProntidaoParaPlano: async () => {
+  avaliarProntidaoParaPlano: async (_s: unknown, p: Record<string, unknown>) => {
     prontidaoChamada++;
+    recebidoPelaProntidao = p;
     return { pronto: false, tema: null, motivo: "cenário" };
   },
   CRITERIO_SUFICIENCIA: "",
@@ -33,6 +38,10 @@ vi.mock("@/lib/ia/plano", async (real) => ({
   gerarPlano: async () => {
     geracoes++;
     return { id: "p1", titulo: "T", secoes: [] };
+  },
+  carregarAprendizado: async (_s: unknown, _f: string, membro: string | null) => {
+    membroDoAprendizado = membro;
+    return "<o_que_ja_funcionou> - banho: funcionou </o_que_ja_funcionou>";
   },
 }));
 
@@ -73,6 +82,7 @@ const chamar = (db: BancoMemoria, decisao: DecisaoDePlano) =>
     temDesafio: true,
     phoneE164: "+5541999990001",
     decisao,
+    perfilResumo: "O essencial: Mário, 9 anos, autista",
   });
 
 const decisao = (p: Partial<DecisaoDePlano>): DecisaoDePlano => ({
@@ -86,6 +96,35 @@ const decisao = (p: Partial<DecisaoDePlano>): DecisaoDePlano => ({
 beforeEach(() => {
   prontidaoChamada = 0;
   geracoes = 0;
+  recebidoPelaProntidao = null;
+  membroDoAprendizado = undefined;
+});
+
+/**
+ * ⚠️ A FIAÇÃO, e não a função isolada. Duas sabotagens passaram VERDE antes
+ * destes testes existirem: cortar `perfilResumo` no orquestrador e trocar o
+ * membro por `null` no aprendizado. Os testes da prontidão exercitam a função
+ * direto — nenhum deles via se alguém realmente entrega o perfil a ela.
+ */
+describe("o que a prontidão RECEBE de quem a chama", () => {
+  it("MORDE: o perfil do turno chega até ela", async () => {
+    await chamar(mundo(), decisao({ pularDedup: true, pularSuficiencia: false }));
+    expect(prontidaoChamada).toBe(1);
+    expect(recebidoPelaProntidao?.perfilResumo, "a ponte não repassou o perfil").toContain("Mário");
+  });
+
+  it("MORDE: a criança do turno chega — a decisão tem dono", async () => {
+    await chamar(mundo(), decisao({ pularDedup: true, pularSuficiencia: false }));
+    expect(recebidoPelaProntidao?.membroAtipicoId).toBe("m1");
+  });
+
+  it("MORDE: o aprendizado é buscado POR CRIANÇA, nunca pela família", async () => {
+    // Buscar por família devolveria planos do irmão, e a decisão de suficiência
+    // passaria a se apoiar no que funcionou para outra criança.
+    await chamar(mundo(), decisao({ pularDedup: true, pularSuficiencia: false }));
+    expect(membroDoAprendizado, "o aprendizado veio da família inteira").toBe("m1");
+    expect(recebidoPelaProntidao?.aprendizado).toContain("o_que_ja_funcionou");
+  });
 });
 
 describe("cada chave governa o SEU freio", () => {
