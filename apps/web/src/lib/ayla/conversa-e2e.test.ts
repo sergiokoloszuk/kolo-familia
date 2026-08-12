@@ -669,6 +669,92 @@ describe("LENTES · a lente do turno chega ao produtor pelo fluxo real", () => {
     expect(p).toContain("não tolera barulho alto");
   });
 
+  /**
+   * M1 · AS CONQUISTAS CHEGAM AO WHATSAPP (13/08/2026).
+   *
+   * ⚠️ A ASSIMETRIA QUE ISTO FECHA. `diarios.conquista` era escrito a cada
+   * turno pelo parser desde sempre. A WEB já lia e já injetava
+   * (`<diario_recente>` em `ia/prompt.ts`); o WhatsApp SÓ ESCREVIA — gravava e
+   * nunca lia de volta. O único outro consumidor era o relatório.
+   *
+   * Era a assimetria mais cara do produto: é exatamente o que fazia o app
+   * anterior parecer que conhecia a criança ("vi nos registros que ela já foi
+   * sozinha ao mercado").
+   */
+  it("M1 · o que a criança já conquistou chega ao produtor", async () => {
+    const m = familiaComCatalogo();
+    m.db.semear("diarios", [
+      {
+        family_account_id: m.familyId,
+        membro_atipico_id: Object.values(m.membros)[0],
+        data: new Date().toISOString().slice(0, 10),
+        origem: "ayla",
+        conquista: "foi sozinha até a padaria da esquina",
+        desafio: null,
+      },
+    ]);
+    await turno(m, "ela tá difícil na hora de sair de casa");
+    const p = systemMaisTurno(m);
+    expect(p, "a conquista não chegou — a ponte de capacidade não existe").toContain(
+      "foi sozinha até a padaria",
+    );
+    expect(p).toContain("ja_conquistou");
+    // ⚠️ A INSTRUÇÃO DE USO VIAJA COLADA. Conquista solta no prompt vira
+    // parabéns fora de hora, que é o vício do app anterior.
+    expect(p, "sumiu o freio contra virar elogio").toContain("EVIDÊNCIA DE CAPACIDADE, não elogio");
+  });
+
+  it("M1 · sem conquista gravada, nenhum bloco aparece", async () => {
+    const m = familiaComCatalogo();
+    await turno(m, "ela tá difícil na hora de sair de casa");
+    expect(systemMaisTurno(m)).not.toContain("ja_conquistou");
+  });
+
+  /**
+   * ⚠️ RECORTE POR MEMBRO. Numa lista de capacidades, atribuir a conquista do
+   * irmão à criança em foco é pior do que não ter lista nenhuma — a mãe lê que
+   * a Ayla não sabe de quem está falando.
+   */
+  it("M1 · a conquista do IRMÃO não entra no turno desta criança", async () => {
+    const m = montarMundo({
+      nomeMae: "Ana",
+      criancas: [
+        { nome: "Geovanna", nascimento: "2020-03-10", sabe: { essencial: "Geovanna, 6 anos" } },
+        { nome: "Mario", nascimento: "2018-01-05", sabe: { essencial: "Mario, 8 anos" } },
+      ],
+    });
+    m.db.semear("diarios", [
+      {
+        family_account_id: m.familyId,
+        membro_atipico_id: m.membros.Mario,
+        data: new Date().toISOString().slice(0, 10),
+        origem: "ayla",
+        conquista: "MARIO andou de bicicleta sem rodinhas",
+      },
+    ]);
+    await turno(m, "a Geovanna tá difícil na hora de sair de casa", m.membros.Geovanna);
+    expect(
+      systemMaisTurno(m),
+      "vazou a conquista do irmão para o turno da Geovanna",
+    ).not.toContain("MARIO andou de bicicleta");
+  });
+
+  it("M1 · o fechamento da investigação chega ao modelo", async () => {
+    const m = familiaComCatalogo();
+    await turno(m, "ela brigou com uma amiga na escola semana passada");
+    const s = systemMaisTurno(m);
+    expect(s, "o fechamento da investigação sumiu — a conversa não converge").toContain(
+      "FECHE A INVESTIGAÇÃO QUANDO ELA CONVERGIR",
+    );
+    expect(s, "sumiu a devolução do mérito à mãe").toContain("DEVOLVENDO O MÉRITO A ELA");
+    expect(s, "sumiu o freio contra ler a mente da criança").toContain(
+      "CONECTAR NÃO É LER A MENTE DA CRIANÇA",
+    );
+    // A segunda porta e a regra do avesso, que é o que impede o tique.
+    expect(s, "sumiu a tradução de comportamento").toContain("A SEGUNDA PORTA: TRADUZIR COMPORTAMENTO");
+    expect(s, "sumiu a regra do avesso — a lista vira tique").toContain("QUANDO NÃO LISTAR");
+  });
+
   it("a lente NÃO cria artefato — não é portão e não tem autoridade", async () => {
     roteiro.skills = ["sensorial"];
     roteiro.prontidaoRotina = "suficiente";

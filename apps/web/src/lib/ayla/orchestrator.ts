@@ -2658,6 +2658,7 @@ export async function processInbound(
   const [
     koloVivoResumo,
     koloVivoLacunas,
+    conquistasRecentes,
     estrategiasRecentes,
     historico,
     linkHistoria,
@@ -2668,6 +2669,7 @@ export async function processInbound(
   ] = await Promise.all([
     carregarKoloVivoResumo(supabase, membroContextoId),
     carregarLacunasKoloVivo(supabase, membroContextoId),
+    carregarConquistasRecentes(supabase, family.id, membroContextoId),
     carregarEstrategiasRecentes(supabase, family.id, membroContextoId),
     carregarHistorico(supabase, family.id, inbound.texto, membroContextoId, nomePorMembro),
     ofereceLudico ? gerarMagicLink(supabase, { familyId: family.id, next: "/historias/criar" }) : Promise.resolve(null),
@@ -2776,6 +2778,7 @@ export async function processInbound(
       estrategiasRecentes,
       historico,
       linksLudico,
+      conquistasRecentes,
       repertorio,
       // AS MESMAS skills que acabaram de escolher o repertório logo acima —
       // não uma segunda classificação, não uma chamada nova. Viram a lente
@@ -4120,6 +4123,57 @@ async function carregarKoloVivoResumo(
     if (gostos) linhas.push(`Gostos e interesses: ${gostos}`);
   }
   return linhas.join("\n");
+}
+
+/**
+ * O QUE A CRIANÇA JÁ CONQUISTOU — evidência de capacidade, não elogio.
+ *
+ * ⚠️ POR QUE ISTO FALTAVA SÓ AQUI. As conquistas são extraídas pelo parser e
+ * gravadas em `diarios.conquista` a cada turno desde sempre. A WEB já as lia e
+ * já as injetava (`<diario_recente>`, em `ia/prompt.ts`). O WhatsApp só
+ * ESCREVIA: gravava a conquista e nunca a lia de volta. O único outro
+ * consumidor era o relatório.
+ *
+ * Era a assimetria mais cara do produto, porque é justamente o que fazia o app
+ * anterior parecer que conhecia a criança: "vi nos registros que ela já foi
+ * sozinha ao mercado, saiu de metrô sozinha" — e daí usar isso como ponte para
+ * o desafio de agora.
+ *
+ * ⚠️ RECORTE POR MEMBRO, na CONSULTA e não depois. Sem ele, a conquista do
+ * irmão entra no prompt como se fosse da criança em foco — a mesma cicatriz
+ * que `carregarEstrategiasRecentes` documenta logo abaixo. Registro antigo sem
+ * membro NÃO entra aqui: numa lista de capacidades, atribuir à criança errada
+ * é pior do que não ter a lista.
+ *
+ * Custo: entra no `Promise.all` que já existe, então não soma latência serial.
+ * Cinco linhas, 30 dias — o suficiente pra haver ponte e pouco o bastante pra
+ * não virar despejo.
+ */
+async function carregarConquistasRecentes(
+  supabase: SupabaseClient,
+  familyId: string,
+  membroAtipicoId?: string | null,
+): Promise<string[]> {
+  if (!membroAtipicoId) return [];
+  const desde = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+  const { data, error } = await supabase
+    .from("diarios")
+    .select("data, conquista")
+    .eq("family_account_id", familyId)
+    .eq("membro_atipico_id", membroAtipicoId)
+    .not("conquista", "is", null)
+    .gte("data", desde)
+    .order("data", { ascending: false })
+    .limit(5);
+  if (error) {
+    // Falha silenciosa de propósito: sem conquistas a conversa segue como
+    // sempre seguiu. Mas fica no log, senão vira lacuna invisível.
+    console.warn("[ayla:conquistas] leitura falhou:", error.message);
+    return [];
+  }
+  return ((data ?? []) as Array<{ data: string; conquista: string | null }>)
+    .map((d) => d.conquista?.trim())
+    .filter((c): c is string => Boolean(c));
 }
 
 /**

@@ -281,6 +281,14 @@ export type RespostaParams = {
   base2?: readonly SecaoBase2[];
   /** Títulos das últimas conversas nas Estratégias (in-app), pra continuidade. */
   estrategiasRecentes?: string[];
+  /**
+   * O que a criança JÁ conquistou (`diarios.conquista`, últimos 30 dias, só
+   * dela). É EVIDÊNCIA DE CAPACIDADE, não elogio — a ponte entre o que ela já
+   * atravessou e o desafio de agora.
+   *
+   * A web já tinha isso em `<diario_recente>`; este canal só escrevia.
+   */
+  conquistasRecentes?: string[];
   /** `sobre` = nome de OUTRA criança da família, quando o turno não é do membro em foco. */
   historico: Array<{ de: "mae" | "ayla"; texto: string; sobre?: string }>;
   mensagem: string;
@@ -584,6 +592,15 @@ ${params.diagnosticoRegistrado.trim()}`);
       `\n<como_compreender_este_tema>\nMaterial INTERNO de raciocínio — não repita nada disto para a família e não transforme as bifurcações em questionário. Use para decidir O QUE ainda muda a conduta, e faça no máximo UMA pergunta: a que separa os caminhos.\n${params.base2
         .map((s) => `### ${s.titulo}\n${s.conteudo}`)
         .join("\n\n")}\n</como_compreender_este_tema>`,
+    );
+  }
+  // O QUE ELA JÁ CONQUISTOU — antes da lente e do repertório de propósito: é
+  // dado DAQUELA criança, e vem junto do resto do perfil, não no meio do
+  // material técnico. A instrução de uso vai colada, porque conquista solta no
+  // prompt vira parabéns fora de hora — que é o modo de falha do app anterior.
+  if (params.conquistasRecentes?.length) {
+    linhas.push(
+      `\n<ja_conquistou>\n${params.conquistasRecentes.map((c) => `- ${c}`).join("\n")}\n</ja_conquistou>\n(EVIDÊNCIA DE CAPACIDADE, não elogio. Use SÓ quando houver relação real com o que está sendo falado agora — como ponte: "ela já atravessou X, e a mesma coisa serve aqui". NUNCA parabenize por algo antigo sem vir ao caso, e nunca liste isto de volta pra família.)`,
     );
   }
   // LENTE PROFISSIONAL — o raciocínio do domínio, escolhido pelas MESMAS skills

@@ -591,7 +591,30 @@ describe("simplificação: o prompt não pode crescer", () => {
     // a partir daquele caso — não existe lista fixa por assunto". Se algum dia
     // aparecer aqui um mapa "se escola → mostre as opções X", é o paredão de
     // regras voltando pela porta dos fundos.
-    expect(nucleoConducao().length).toBeLessThan(70_000);
+    // 13/08/2026 — 74.000, pela M1 (o arco da conversa):
+    //
+    //   FECHE A INVESTIGAÇÃO QUANDO ELA CONVERGIR (~1.200) — a lacuna número
+    //   um, medida: a Ayla abre bem (hipóteses numeradas) e não sabe FECHAR.
+    //   Reconhecer o achado devolvendo o mérito à mãe, conectar os pontos como
+    //   hipótese, e parar de investigar. É o que faz a conversa da Isabela ser
+    //   boa no app anterior — e o freio contra o vício dele junto: proibido
+    //   narrar o que se passou "na cabecinha dela".
+    //
+    //   A SEGUNDA PORTA (~1.100) — as hipóteses também servem quando NÃO falta
+    //   contexto: quando a mãe lê o comportamento como intenção ("birra",
+    //   "me desafia", "do nada"). Aí a lista não decide nada por você, ela
+    //   ENSINA A MÃE A LER O FILHO. Vem com a regra do avesso colada — cinco
+    //   situações em que NÃO se lista —, porque lista em todo turno é
+    //   formulário com cara de ajuda, e esse é o modo de falha mais provável
+    //   desta entrada.
+    //
+    // ⚠️ ESTE TETO ESTÁ FICANDO CARO. Quatro subidas em dois dias (54 → 57 →
+    // 63 → 67 → 70 → 74). O núcleo é pago em TODO turno, e a próxima entrada
+    // deveria ser PAGA COM PODA, não com número novo — há candidatos: os
+    // EXEMPLOS herdados das 11 diretrizes antigas, e a sobreposição entre
+    // VOZ 2 e o "ORIENTAR OU PERGUNTAR". A poda foi adiada até a experiência
+    // nova ser validada com famílias; quando for, é a primeira coisa a fazer.
+    expect(nucleoConducao().length).toBeLessThan(74_000);
   });
 });
 
