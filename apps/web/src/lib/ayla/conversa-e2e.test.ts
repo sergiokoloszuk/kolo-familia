@@ -511,7 +511,7 @@ describe("CORE PROFISSIONAL · chega ao produtor pelo fluxo real", () => {
       "MUDARIA materialmente a orientação",
     );
     expect(s, "o freio da repergunta sumiu — ela volta a pedir nome/idade/diagnóstico").toContain(
-      "nunca fazer a família repetir o que ela já contou: nome, idade, diagnóstico",
+      "nem fazer a família repetir o que ela já contou: nome, idade, diagnóstico",
     );
     // E a proporção, que é o que impede a conversa de virar um Plano em miniatura.
     expect(s, "a regra de proporção sumiu").toContain("PROPORÇÃO NÃO É BREVIDADE");
