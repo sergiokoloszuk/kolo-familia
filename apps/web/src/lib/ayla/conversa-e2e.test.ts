@@ -1,5 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { estadoDoTurno, inboundDe, montarMundo, type Mundo } from "./__harness/cenario";
+import { clienteFalso, type Registro } from "./__harness/modelo";
+
+const registros: Registro[] = [];
+const roteiro: { prontidaoRotina?: "suficiente" | "orientacao" | "falta" } = {};
 
 /**
  * A CONVERSA INTEIRA, PELO FLUXO REAL — `processInbound` executado de verdade.
@@ -68,11 +72,14 @@ vi.mock("./whatsappSender", () => ({
 vi.mock("@/lib/ia/provider", () => ({
   MODELO_CONVERSA: { anthropic: "claude-sonnet-4-6", openai: "gpt-5.6-luna" },
   providerConversacionalParaFamilia: () => "anthropic",
-  gerarConversacional: async (p: { system?: string; mensagem?: string }) => {
+  gerarConversacional: async (p: unknown) => {
+    // ⚠️ O PAYLOAD INTEIRO, não dois campos escolhidos a dedo. A primeira versão
+    // capturava só `system` e `mensagem`, e por isso "o perfil não chegou ao
+    // modelo" — o bloco estava lá, num campo que eu não estava olhando.
     mundoRef.atual?.chamadas.push({
       quem: "conversa",
-      prompt: p.system ?? "",
-      mensagem: p.mensagem ?? "",
+      prompt: JSON.stringify(p),
+      mensagem: "",
       notas: [],
     });
     return {
@@ -89,26 +96,42 @@ vi.mock("@/lib/ia/provider", () => ({
 vi.mock("./anthropic", () => ({
   AYLA_MODEL: "claude-haiku-4-5",
   AYLA_MODEL_FALLBACK: "claude-sonnet-4-6",
-  getAylaAnthropicClient: () => ({
-    messages: {
-      stream: (args: { system?: unknown; messages?: Array<{ content?: unknown }> }) => ({
-        finalMessage: async () => {
-          mundoRef.atual?.chamadas.push({
-            quem: "auxiliar",
-            prompt: String(args.system ?? ""),
-            mensagem: JSON.stringify(args.messages ?? []).slice(0, 4000),
-            notas: [],
-          });
-          return {
-            content: [{ type: "text", text: respostaAuxiliar(String(args.system ?? ""), args) }],
-            usage: { input_tokens: 10, output_tokens: 5 },
-          };
-        },
-      }),
-    },
-  }),
+  getAylaAnthropicClient: () =>
+    clienteFalso({ alvo: mundoRef.alvo, prontidaoRotina: roteiro.prontidaoRotina }, registros),
 }));
 
+/**
+ * ⚠️ O GERADOR DA ROTINA É SUBSTITUÍDO, e isto delimita o que os cenários
+ * provam. `gerarRotina` monta o próprio cliente Anthropic e morre com
+ * "ANTHROPIC_API_KEY não configurada" — foi o que fez o cenário C terminar em
+ * `resposta_registro` e quase virar "defeito de produto" no relatório anterior.
+ *
+ * O duplo devolve uma sequência fixa. Portanto: o ROTEAMENTO até o gerador e a
+ * PERSISTÊNCIA depois dele ficam provados; a QUALIDADE do quadro, não.
+ */
+vi.mock("@/lib/ludico/rotina-servico", () => ({
+  gerarRotina: async () => ({
+    desfecho: "gerou",
+    rotinas: [
+      {
+        nome: "Manhã da Geovanna",
+        dia_semana: null,
+        // ⚠️ SEM `hora`, e isso não é detalhe: `validarRotina` BARRA a
+        // publicação com `horario_sem_base` quando o quadro traz um horário que
+        // a família nunca disse. Minha primeira versão inventou 06:30/07:00, o
+        // validador barrou — e por um instante isso pareceu "a rotina não
+        // persiste". Era o validador fazendo exatamente o que existe para fazer.
+        tarefas: [
+          { texto: "Acordar com luz baixa", hora: null, ordem: 1 },
+          { texto: "Trocar de roupa (sem etiqueta)", hora: null, ordem: 2 },
+          { texto: "Café da manhã", hora: null, ordem: 3 },
+          { texto: "Sair para a escola", hora: null, ordem: 4 },
+        ],
+      },
+    ],
+    fala: "Montei a manhã dela aqui 🌿",
+  }),
+}));
 
 /**
  * ⚠️ O LOTE DE INBOUND É SUBSTITUÍDO, e o motivo importa: `aguardarTurnoDaMae`
@@ -166,6 +189,7 @@ async function turno(m: Mundo, texto: string, alvo?: string) {
   const mundo = m;
   mundoRef.atual = mundo;
   mundoRef.alvo = alvo ?? Object.values(mundo.membros)[0] ?? null;
+  registros.length = 0;
   const antes = mundo.enviadas.length;
   const r = await processInbound(mundo.db.cliente(), inboundDe(mundo, texto));
   const e = { ...estadoDoTurno(mundo), respondeuNesteTurno: mundo.enviadas.length > antes };
@@ -175,7 +199,13 @@ async function turno(m: Mundo, texto: string, alvo?: string) {
   // rodada deste arquivo, quatro cenários passaram assim: `assinatura_nudge`,
   // zero chamadas de modelo, zero artefatos — verde por não ter acontecido nada.
   expect(e.tipo, `o portão de assinatura respondeu no lugar do fluxo`).not.toBe("assinatura_nudge");
-  expect(m.chamadas.length, `o turno não chamou modelo nenhum — não chegou a decidir`).toBeGreaterThan(0);
+  // ⚠️ QUALQUER modelo conta — auxiliar (parser/intenção/prontidão) ou
+  // conversacional. A primeira versão só contava o conversacional, e o caminho
+  // da ROTINA não passa por ele: a guarda reprovava o cenário que mais importa.
+  expect(
+    registros.length + m.chamadas.length,
+    `o turno não chamou modelo nenhum — não chegou a decidir`,
+  ).toBeGreaterThan(0);
   return e;
 }
 
@@ -185,7 +215,19 @@ beforeEach(() => {
 });
 
 describe("A · a família só relata dificuldade com rotina", () => {
+  /**
+   * ⚠️ A PRONTIDÃO VAI FORÇADA EM "suficiente", e sem isso este cenário NÃO
+   * PROTEGE NADA. Medido por sabotagem (11/08/2026): com a prontidão no padrão,
+   * reverter o portão de criar ao piso puro — o defeito Ana/Geovanna inteiro —
+   * mantinha o teste VERDE. O portão abria, e o modelo, um passo adiante,
+   * devolvia "orientação" e não publicava quadro nenhum. O teste media o
+   * modelo, não o portão.
+   *
+   * Com "suficiente", um portão aberto indevidamente PUBLICA uma rotina — e aí
+   * o zero abaixo passa a significar alguma coisa.
+   */
   it("não cria artefato nenhum", async () => {
+    roteiro.prontidaoRotina = "suficiente";
     const m = familiaAnaEGeovanna();
     const r = await turno(m, "Quando é preciso mudar a rotina de repente ela sente");
     expect(r.rotinasCriadas, "criou rotina sem ninguém pedir").toBe(0);
@@ -197,6 +239,7 @@ describe("A · a família só relata dificuldade com rotina", () => {
 
 describe("E · falar de uma rotina que já existe", () => {
   it("não cria outra", async () => {
+    roteiro.prontidaoRotina = "suficiente"; // ver a nota do cenário A
     const m = familiaAnaEGeovanna();
     const r = await turno(m, "por que você colocou banho antes do jantar naquela rotina?");
     expect(r.rotinasCriadas).toBe(0);
@@ -238,9 +281,11 @@ describe("C · pedido explícito de Rotina, com perfil já preenchido", () => {
    * não for localizada, isto é NÃO SEI, e a Rotina NÃO está provada de ponta a
    * ponta. Não corrigir nada com base neste teste.
    */
-  it.skip("entra no fluxo da Rotina — e não na conversa comum", async () => {
+  it("entra no fluxo da Rotina e PERSISTE o quadro", async () => {
+    roteiro.prontidaoRotina = "suficiente";
     const m = familiaAnaEGeovanna();
     const r = await turno(m, "me ajuda a montar uma rotina para a manhã dela?");
+    expect(r.rotinasCriadas, "o pedido explícito não produziu rotina").toBeGreaterThan(0);
     // O que se prova aqui é o ROTEAMENTO: o turno saiu marcado como conversa de
     // rotina, e não como resposta genérica. O conteúdo do quadro depende do
     // modelo e está fora do alcance deste duplo.
@@ -262,7 +307,7 @@ describe("o que a Kolo já sabe chega ao modelo", () => {
    * Registro no banco NÃO prova que chegou ao modelo — e a recíproca também
    * vale: a ausência aqui NÃO prova que o produto não recupera.
    */
-  it.skip("o perfil da criança entra no que é enviado — não só existe no banco", async () => {
+  it("o perfil da criança entra no que é enviado — não só existe no banco", async () => {
     const m = familiaAnaEGeovanna();
     await turno(m, "ela tá difícil na hora de dormir, não sei mais o que fazer");
     const tudo = m.chamadas.map((c) => `${c.prompt}\n${c.mensagem}`).join("\n");
@@ -289,5 +334,65 @@ describe("M · dois irmãos", () => {
     const tudo = m.chamadas.map((c) => `${c.prompt}\n${c.mensagem}`).join("\n");
     // O irmão errado não pode entrar na conversa por tabela.
     expect(tudo, "o perfil do IRMÃO vazou para a conversa da Manu").not.toContain("adora dinossauro");
+  });
+});
+
+describe("PARTE 10 · a base de conhecimento chega ao turno?", () => {
+  it("MEDIDO: não chega — e o motivo fica declarado, não silencioso", async () => {
+    const m = familiaAnaEGeovanna();
+    await turno(m, "ela tá difícil na hora de dormir, não sei mais o que fazer");
+    const tudo = m.chamadas.map((c) => c.prompt).join("\n");
+    // ⚠️ ISTO NÃO É UM TESTE DE "ESTÁ CERTO". É um teste de ESTADO ATUAL, que
+    // trava o que foi medido: neste turno o bloco `<repertorio_kolo>` NÃO chega
+    // ao modelo, e o log do turno declara o motivo (`vazio: sem_skill`).
+    //
+    // As três leituras possíveis são diferentes e não podem ser confundidas:
+    // acervo inexistente · recuperação que não roda · recuperação que roda e não
+    // acha. Aqui o motivo declarado é o terceiro tipo — não houve skill roteada.
+    //
+    // Quando a recuperação passar a servir o WhatsApp, este teste QUEBRA. É o
+    // objetivo: ele é o alarme de que o estado mudou.
+    expect(tudo).not.toContain("repertorio_kolo");
+  });
+});
+
+describe("PARTE 17 · uma pergunta pendente captura a conversa seguinte?", () => {
+  /**
+   * ⚠️ NÃO CONSEGUI PROVAR PELO FLUXO REAL, e o limite é do harness.
+   *
+   * Para deixar uma pergunta pendente (`tipo="rotina_conversa"`) o condutor
+   * precisa FAZER a pergunta, e isso exige um duplo de modelo que escreva a
+   * fala do condutor — o meu devolve "{}" e o fluxo cai na conversa comum
+   * (medido: com `prontidao="falta"` e com `"orientacao"`, os dois terminam em
+   * `resposta_registro`).
+   *
+   * O que sustenta a [PEND-049] NÃO é este teste: é a medição por execução de
+   * `rotinaConversaPendente` (1 h → abre · respondida → fecha · **40 h sem
+   * resposta → abre** · 47h59 → abre · 49 h → fecha). Esta ficha continua
+   * apoiada naquela prova, e não nesta, que fica registrada como o que é.
+   */
+  it.skip("MEDIDO: com pergunta de rotina em aberto, o assunto novo entra pelo fluxo da Rotina", async () => {
+    // "falta" = a Ayla ainda precisa de informação e PERGUNTA, deixando o
+    // estado aberto. Com "orientacao" o condutor devolve null de propósito (a
+    // menor ajuda cabe na conversa comum) e nada fica pendente — medido.
+    roteiro.prontidaoRotina = "falta";
+    const m = familiaAnaEGeovanna();
+
+    // Turno 1: a Ayla faz uma pergunta de rotina e fica esperando.
+    const t1 = await turno(m, "me ajuda a montar uma rotina para a manhã dela?");
+    expect(t1.tipo, "o cenário não conseguiu deixar uma pergunta pendente").toBe("rotina_conversa");
+
+    // ⚠️ E AGORA A MÃE MUDA DE ASSUNTO — sem responder a pergunta.
+    // `rotinaConversaPendente` só fecha quando existe um inbound DEPOIS da
+    // pergunta. O inbound do turno 1 é anterior a ela; então, no turno 2, o
+    // estado ainda está aberto e `rotinaConversa` entra no portão ANTES do ato.
+    const t2 = await turno(m, "esquece isso, a escola ligou hoje, ele mordeu um colega");
+
+    // O que segura o estrago é o modelo, um passo adiante: com a prontidão
+    // devolvendo algo diferente de "suficiente", nenhum quadro é publicado.
+    expect(t2.rotinasCriadas, "a mudança de assunto produziu uma rotina").toBe(0);
+    // Mas a conversa nova FOI conduzida pelo fluxo da Rotina, e isso está
+    // medido — é o objeto da PEND-049.
+    expect(t2.tipo).toBe("rotina_conversa");
   });
 });
