@@ -51,6 +51,27 @@ const CORPUS: Array<[AtoSobreArtefato, string]> = [
   ["ambiguo", "Ela sabe toda a rotina e mesmo assim trava"],
 ];
 
+describe("pedir a coisa — e os dois freios que seguram esse atalho", () => {
+  it("MORDE: primeira pessoa pede; terceira pessoa narra", () => {
+    // O artefato como OBJETO de um pedido em primeira pessoa.
+    expect(atoSobreArtefato("preciso de um plano pra ele dormir sozinho")).toBe("criar");
+    expect(atoSobreArtefato("gostaria de um plano de ação")).toBe("criar");
+    expect(atoSobreArtefato("me ajuda com um plano pra socialização")).toBe("criar");
+    // ⚠️ TERCEIRA PESSOA É A MÃE CONTANDO A NECESSIDADE DA FILHA, e nunca um
+    // pedido à Kolo. Sem este freio, "ela precisa de uma rotina" cria uma.
+    expect(atoSobreArtefato("ela precisa de uma rotina mas nao aceita")).toBe("ambiguo");
+    expect(atoSobreArtefato("ele precisa de um plano da escola")).toBe("ambiguo");
+  });
+
+  it("MORDE: a narrativa continua vencendo o pedido de coisa", () => {
+    // Sem o freio da NARRATIVA, a oração temporal vira pedido: a mãe conta o
+    // que acontece quando a filha quer algo, e recebe um artefato por isso.
+    expect(atoSobreArtefato("quando ela quer uma rotina nova ela briga")).toBe("ambiguo");
+    expect(atoSobreArtefato("toda vez que eu quero uma rotina nova ela chora")).toBe("ambiguo");
+    expect(atoSobreArtefato("se eu quero um plano diferente ele resiste")).toBe("ambiguo");
+  });
+});
+
 describe("o verbo que entrou por regressão medida", () => {
   it("MORDE: 'organizar' é pedido quando a mãe pede, e narrativa quando não é", () => {
     // Entrou porque a fatia da Rotina o teria silenciado (ver o comentário em
