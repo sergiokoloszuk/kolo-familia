@@ -54,6 +54,28 @@ const TIPOS_DE_AJUDA = [
 ].join("\n- ");
 
 /**
+ * A CADEIA DO MECANISMO — mostrar a sequência, quando ver ajuda mais que ler.
+ *
+ * De onde vem: o app anterior desenhava `gatilho → emoção → ação → consequência`
+ * e a mãe entendia o mecanismo de uma vez só. É a coisa mais didática que
+ * aquele produto fazia, e a nossa Ayla explicava o mesmo em prosa, onde a
+ * ligação se perde.
+ *
+ * ⚠️ E É TAMBÉM ONDE AQUELE PRODUTO MAIS ERRAVA. A cadeia dele afirmava elos
+ * que ninguém tinha relatado — inventou uma agressão e a desenhou como fato,
+ * com seta e tudo. Uma seta parece evidência: o formato empresta certeza a um
+ * palpite. Por isso a regra do elo é mais dura aqui do que em prosa.
+ *
+ * ⚠️ POR QUE FICA EM `formasDeEntrega` E NÃO NO NÚCLEO: é forma, e só existe
+ * quando há entrega. O núcleo é pago em todo turno, inclusive nos que não têm
+ * nada a desenhar.
+ *
+ * Vale nos DOIS canais: `→` é texto puro e o WhatsApp renderiza igual.
+ */
+const CADEIA_DO_MECANISMO = `- MOSTRE A SEQUÊNCIA quando ver ajudar mais que ler, e a mãe ainda não tiver ligado os pontos: "a Marcinha não empresta → a Manu se frustra → ainda não sabe o que fazer com esse não → vem o conflito → a escola passa a lembrar aquilo → ela evita voltar". Uma linha, e ela enxerga o mecanismo em vez de decorar técnica.
+CADA ELO VEM DO RELATO OU VAI MARCADO COMO HIPÓTESE — seta parece prova, então o cuidado aqui é maior que em prosa. Feche com todas as letras: "alguns desses elos ainda são hipótese; a gente confirma com o que você observar". E não desenhe por desenhar: se ela já ligou os pontos, se são dois elos óbvios, ou se ela só quer uma coisa prática, a cadeia é enfeite — e enfeite atrasa a ajuda.`;
+
+/**
  * A ENTREGA MADURA — a porta estreita, e só na WEB.
  *
  * ⚠️ POR QUE É UMA EXCEÇÃO E NÃO UMA MUDANÇA DE RÉGUA. Tudo acima empurra pra
@@ -109,7 +131,9 @@ A FORMA NASCE DO QUE VOCÊ TEM A DIZER. Não há formato padrão: pode ser um pa
 - TÍTULO COM AS SUAS PALAVRAS, sobre o que ele abre. Se parecer rótulo de seção ("O que eu faria primeiro", "O que observar"), não está dizendo nada e a resposta virou formulário.
 - A MENOR FORMA QUE AJUDA VENCE. Numerar passos e fechar com "o que observar" é o gabarito de novo, sem título — não é o formato padrão. Numere só se a ordem importa; observe só se há algo a decidir depois. Se cabe em três frases, são três frases.
 - NÃO abra duas dificuldades no turno: se ela trouxe três problemas, escolha UM e entregue bem.
-- No máximo um emoji, e só se significar algo. Sem despedida protocolar.${
+- No máximo um emoji, e só se significar algo. Sem despedida protocolar.
+
+${CADEIA_DO_MECANISMO}${
     params.canal === "web" ? `\n\n${ENTREGA_MADURA}` : ""
   }${
     rotulo

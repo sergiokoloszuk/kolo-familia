@@ -293,7 +293,19 @@ describe("formas de entrega", () => {
     // 10/08/2026 (fim do gabarito) o deixou em ~1318 — 18% menor, com mais
     // liberdade de forma e menos texto. Instrução que encolhe e libera é o
     // sinal de que a regra estava no lugar errado, não faltando.
-    expect(wa.length).toBeLessThan(1600);
+    //
+    // 13/08/2026 — sobe pra 2.400 pela CADEIA DO MECANISMO (~700), e esta é a
+    // primeira vez que este teto sobe. Ela não é mais uma regra de forma: é
+    // uma FORMA NOVA que a Ayla não tinha — mostrar a sequência em vez de
+    // explicá-la em prosa, que era a coisa mais didática do app anterior.
+    //
+    // Fica aqui, e não no núcleo, pelo motivo de sempre: só se aplica quando
+    // há entrega. E vale nos dois canais porque `→` é texto puro.
+    //
+    // ⚠️ ESTE TETO MEDE O WHATSAPP, QUE É O MENOR. A web soma ainda a ENTREGA
+    // MADURA — se um dia alguém quiser saber o custo real do canal grande, é
+    // `formasDeEntrega({canal:"web"})` que precisa ser medido, não este.
+    expect(wa.length).toBeLessThan(2_400);
   });
 });
 

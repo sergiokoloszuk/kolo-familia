@@ -780,7 +780,14 @@ describe("LENTES · a lente do turno chega ao produtor pelo fluxo real", () => {
       "não é bater — no Brasil quase sempre quer dizer discussão",
     );
     expect(s, "sumiu o alvo na habilidade — volta a tratar só o sintoma").toContain(
-      "O ALVO É A HABILIDADE",
+      "PROCURE A HABILIDADE POR TRÁS DA CENA",
+    );
+    expect(s, "sumiu a distinção cena × habilidade — a saída não transfere").toContain(
+      "nomeie a habilidade no nível que TRANSFERE",
+    );
+    expect(s, "sumiu o freio contra virar tudo em déficit").toContain("NÃO PRESUMA DÉFICIT");
+    expect(s, "sumiu a porta de esclarecer a palavra").toContain(
+      "A TERCEIRA PORTA: ESCLARECER A PALAVRA",
     );
     expect(s, "sumiu o repertório — sobra conduta pra mãe executar").toContain(
       "REPERTÓRIO NÃO É CONDUTA",
