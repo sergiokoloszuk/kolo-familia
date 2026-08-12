@@ -21,9 +21,14 @@ carregarEnvLocal(process.cwd());
 const mundoRef: { atual: Mundo | null } = { atual: null };
 const capturas: CapturaConversa[] = [];
 const chamadasIA: string[] = [];
+const pernas: Array<{ quem: string; ms: number }> = [];
+const envios: number[] = [];
 
 vi.mock("./whatsappSender", () => ({
   enviarTexto: async (p: { phoneE164: string; texto: string }) => {
+    // ⚠️ O INSTANTE QUE IMPORTA. Tudo o mais é curiosidade de engenharia; o que
+    // a mãe vive é o tempo entre mandar a mensagem e a primeira bolha chegar.
+    envios.push(Date.now());
     mundoRef.atual?.enviadas.push({ para: p.phoneE164, texto: p.texto });
     return { ok: true, messageId: "x" };
   },
@@ -67,8 +72,33 @@ vi.mock("./anthropic", async (original) => {
       const c = obter();
       return {
         messages: {
-          create: async (a: unknown) => { chamadasIA.push("aux"); return c.messages.create(a); },
-          stream: (a: unknown) => { chamadasIA.push("aux"); return c.messages.stream(a); },
+          create: async (a: unknown) => {
+            const sys = JSON.stringify((a as { system?: unknown }).system ?? "");
+            const quem = /membro_atipico_id/.test(sys) ? "parser"
+              : /intencao\|tema/.test(sys) ? "intencao"
+              : /desfecho/.test(sys) ? "prontidao"
+              : /seguran/i.test(sys) ? "seguranca" : "outra";
+            chamadasIA.push(quem);
+            const t = Date.now();
+            try { return await c.messages.create(a); } finally { pernas.push({ quem, ms: Date.now() - t }); }
+          },
+          stream: (a: unknown) => {
+            const sys = JSON.stringify((a as { system?: unknown }).system ?? "");
+            const quem = /membro_atipico_id/.test(sys) ? "parser(stream)"
+              : /intencao/.test(sys) ? "intencao(stream)"
+              : /desfecho/.test(sys) ? "prontidao(stream)"
+              : /seguran/i.test(sys) ? "seguranca(stream)" : "outra(stream)";
+            const marca = (sys.match(/#\s*[A-Za-zÀ-ú ]{4,40}/) || [sys.slice(1, 60)])[0];
+            chamadasIA.push(quem);
+            const t = Date.now();
+            const r = c.messages.stream(a);
+            return {
+              ...r,
+              finalMessage: async () => {
+                try { return await r.finalMessage(); } finally { pernas.push({ quem: quem + " :: " + marca, ms: Date.now() - t }); }
+              },
+            };
+          },
         },
       };
     },
@@ -109,6 +139,8 @@ async function turno(m: Mundo, texto: string, rotulo: string) {
   const antesCap = capturas.length;
   const antesIA = chamadasIA.length;
   const tTurno = Date.now();
+  pernas.length = 0;
+  envios.length = 0;
   const r = await processInbound(m.db.cliente(), inboundDe(m, texto));
   expect(r.tratada, `[${rotulo}] não tratado`).toBe(true);
   expect(m.enviadas.length, `[${rotulo}] não respondeu — teste vazio`).toBeGreaterThan(antesEnv);
@@ -119,7 +151,7 @@ async function turno(m: Mundo, texto: string, rotulo: string) {
   const c = capturas[capturas.length - 1];
   const lentes = [...c.user.matchAll(/\\n([A-ZÀ-Ú][A-ZÀ-Ú ÇÕÃÉ]+)\. OLHE:/g)].map((x) => x[1].trim());
   return {
-    rotulo, mensagem: texto, resposta, msTurno: Date.now() - tTurno, ...medirTexto(resposta), lentes, semProdutor: false,
+    rotulo, mensagem: texto, resposta, msTurno: Date.now() - tTurno, msAteMae: envios.length ? envios[0] - tTurno : null, msUltimaBolha: envios.length ? envios[envios.length - 1] - tTurno : null, bolhas: envios.length, pernas: pernas.slice(), ...medirTexto(resposta), lentes, semProdutor: false,
     msModelo: c.ms, tokensOut: c.tokensOut, chamadasIA: chamadasIA.length - antesIA,
   };
 }
