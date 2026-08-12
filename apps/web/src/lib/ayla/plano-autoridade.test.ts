@@ -82,10 +82,14 @@ describe("perguntar sobre o plano não gera outro plano", () => {
 });
 
 describe("o portão real do orquestrador", () => {
-  it("6. MORDE: `querPlano` compõe piso + ato de criar", () => {
-    expect(ORCH).toMatch(
-      /const querPlano =\s*\n\s*\(pedeUmPlano\(args\.params\.mensagem\) &&\s*\n\s*atoSobreArtefato\(args\.params\.mensagem\) === "criar"\)/,
-    );
+  it("6. MORDE: a autoridade compõe piso + ato de criar", () => {
+    // ⚠️ A composição saiu do orquestrador e virou `decidirSobrePlano` — o
+    // booleano `forcar` respondia por quatro perguntas distintas ao mesmo
+    // tempo. O que este teste defende é a REGRA, não o lugar dela: piso
+    // (`pedeUmPlano`) + ato `criar`.
+    const DEC = readFileSync(resolve(__dirname, "plano-decisao.ts"), "utf8");
+    expect(DEC).toMatch(/const pedidoExplicito = pedeUmPlano\(params\.texto\) && ato === "criar";/);
+    expect(ORCH).toMatch(/const decisaoPlano = decidirSobrePlano\(\{/);
   });
 
   it("7. MORDE: a oferta aceita continua valendo sem o ato", () => {

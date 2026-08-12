@@ -43,6 +43,7 @@ import { gerarMensagemEspontanea } from "./mensagemEspontanea";
 import { traduzirProativa } from "./traduzir";
 import { montarPonteWhatsApp, gerarMagicLink, montarPlanoFimDeSemana, reentregarPlano } from "./ponte";
 import { acharPlanoParaReenviar, perguntaDeDesempate } from "./plano-reenvio";
+import { decidirSobrePlano } from "./plano-decisao";
 import { aguardarTurnoDaMae, descartarTurnoPendente } from "./lote-inbound";
 import { pedeUmPlano } from "@/lib/ia/pedido-plano";
 import { abreFluxoDeArtefato, atoSobreArtefato } from "@/lib/conducao/ato-artefato";
@@ -2877,11 +2878,17 @@ async function enviarRespostaEmChunks(
   // A OFERTA ACEITA continua intocada: "sim"/"pode fazer" logo depois de a Ayla
   // oferecer um plano segue valendo como aceite — é a continuação da conversa,
   // e exigir o ato ali obrigaria a mãe a repetir o pedido por extenso.
-  const querPlano =
-    (pedeUmPlano(args.params.mensagem) &&
-      atoSobreArtefato(args.params.mensagem) === "criar") ||
-    (ehAfirmacaoCurta(args.params.mensagem) &&
-      (await ofertouPlanoRecente(supabase, args.family_account_id)));
+  const decisaoPlano = decidirSobrePlano({
+    texto: args.params.mensagem,
+    ofertaAceitaAgora:
+      ehAfirmacaoCurta(args.params.mensagem) &&
+      (await ofertouPlanoRecente(supabase, args.family_account_id)),
+  });
+  // ⚠️ `querPlano` continua existindo porque ele responde uma quinta pergunta,
+  // de OUTRA natureza: "a Ayla deve escrever o plano no chat?" — e a resposta é
+  // não, porque quem entrega é o sistema. Ele muda a forma da resposta e a nota
+  // do prompt; não é autoridade sobre o artefato.
+  const querPlano = decisaoPlano.autoridadeParaCriar;
   args.params.querPlano = querPlano;
 
   // ⚠️ O BALÃO DE ESPERA FOI DESLIGADO em 03/08/2026.
@@ -2983,8 +2990,7 @@ async function enviarRespostaEmChunks(
       mensagem: args.params.mensagem,
       temDesafio: Boolean(args.params.sinais.desafio),
       phoneE164: args.phone,
-      // Pedido explícito de plano: fura o dedup/intenção e entrega na hora.
-      forcar: querPlano,
+      decisao: decisaoPlano,
     });
     if (nudge) {
       try {

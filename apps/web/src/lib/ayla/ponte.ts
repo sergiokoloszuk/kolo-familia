@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import type { DecisaoDePlano } from "./plano-decisao";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { gerarPlano, PlanoIncompletoError } from "@/lib/ia/plano";
 import { planoParaPdf } from "@/lib/plano/pdf";
@@ -293,11 +294,14 @@ export async function montarPonteWhatsApp(
     temDesafio: boolean;
     /** Telefone pra enviar o PDF do plano como documento. */
     phoneE164: string;
-    /** Pedido explícito de plano: pula os gates (dedup/intenção/temDesafio). */
-    forcar?: boolean;
+    /**
+     * As quatro decisões, separadas (ver `plano-decisao.ts`). Substituiu o
+     * `forcar`, que respondia sozinho por autoridade, suficiência e dedup.
+     */
+    decisao: DecisaoDePlano;
   },
 ): Promise<PonteDoPlano | null> {
-  const { familyId, membroAtipicoId, mensagem, phoneE164, forcar } = params;
+  const { familyId, membroAtipicoId, mensagem, phoneE164, decisao } = params;
 
   try {
     // Freio anti-duplicata (SEMPRE, mesmo com forcar): se acabamos de mandar um
@@ -326,7 +330,7 @@ export async function montarPonteWhatsApp(
     // O que a Karina pediu era "conversa rica → ao ter elementos suficientes,
     // entregar": três freios baratos + o gate de suficiência.
     let temaAuto: string | null = null;
-    if (!forcar) {
+    if (!decisao.pularDedup) {
       // Freio 1 — não insiste: já entregou plano nas últimas 20h?
       const desdeDedup = new Date(Date.now() - JANELA_DEDUP_HORAS * 3600_000).toISOString();
       const { data: recentes } = await supabase
@@ -341,7 +345,14 @@ export async function montarPonteWhatsApp(
         console.log("[ayla:ponte] sem auto-plano — já entregou um nas últimas 20h");
         return null;
       }
+    }
 
+    // ── SUFICIÊNCIA: temos material para um plano BOM? ────────────────────
+    // Os dois freios abaixo são pré-filtros baratos da MESMA pergunta que a
+    // prontidão responde — por isso vivem sob a mesma chave, e não sob o dedup.
+    // Hoje `pularSuficiencia` e `pularDedup` valem o mesmo; separá-los é o que
+    // permite endurecer um sem desligar o outro.
+    if (!decisao.pularSuficiencia) {
       // Freio 2 — a preocupação da Karina: quem acabou de chegar e mal falou
       // não tem perfil pra um plano bom. Exige conversa de verdade antes.
       const { count: inbounds } = await supabase
@@ -380,10 +391,12 @@ export async function montarPonteWhatsApp(
     // na frase-gatilho. Desafio direto → a própria mensagem já é o tema.
     // No caminho automático o tema vem do gate (o desafio que a conversa
     // construiu), então o plano nasce focado nele — e não na última frase solta.
-    const desafioReal = forcar
+    const desafioReal = decisao.pularSuficiencia
       ? await desafioDaConversa(supabase, familyId, mensagem, membroAtipicoId)
       : `${await desafioDaConversa(supabase, familyId, mensagem, membroAtipicoId)}\n\n<foco_do_plano>\n${temaAuto}\n</foco_do_plano>\nO plano deve ser EXCLUSIVAMENTE sobre esse foco.`;
-    console.log(`[ayla:ponte] gerando plano (forcar=${Boolean(forcar)}) membro=${membroAtipicoId ?? "null"}`);
+    console.log(
+      `[ayla:ponte] gerando plano (ato=${decisao.ato} autoridade=${decisao.autoridadeParaCriar}) membro=${membroAtipicoId ?? "null"}`,
+    );
     const plano = await gerarPlano({
       supabase,
       familyId,
