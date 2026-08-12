@@ -723,3 +723,50 @@ describe("recompensa: compreender antes de premiar", () => {
     expect(nucleo).not.toMatch(/não é o método Kolo/i);
   });
 });
+
+/**
+ * A ENTREGA MADURA — a porta estreita da web (13/08/2026).
+ *
+ * ⚠️ ESTE BLOCO EXISTE PORQUE A RÉGUA GERAL DIZ O CONTRÁRIO. Tudo em
+ * `formasDeEntrega` empurra pra forma menor, e por dado: 74% dos títulos eram
+ * itens da lista copiados, três deles com 77% dos usos. A exceção é nomeada e
+ * condicionada — se ela alargar, o gabarito volta.
+ */
+describe("entrega madura: a porta estreita, e só na web", () => {
+  it("só existe na web — no WhatsApp seria uma parede", () => {
+    expect(formasDeEntrega({ canal: "web" })).toContain("QUANDO A CONVERSA JÁ AMADURECEU");
+    expect(
+      formasDeEntrega({ canal: "whatsapp" }),
+      "a entrega madura vazou pro WhatsApp, que é dois balões sem markdown",
+    ).not.toContain("QUANDO A CONVERSA JÁ AMADURECEU");
+  });
+
+  it("a condição é matéria-prima, não permissão de tamanho", () => {
+    const web = formasDeEntrega({ canal: "web" });
+    expect(web, "sumiu a condição — vira licença pra escrever muito").toContain(
+      "pelo menos DUAS destas",
+    );
+    expect(web, "sumiu o freio do primeiro turno").toContain(
+      "no primeiro turno uma resposta longa é enchimento",
+    );
+  });
+
+  /**
+   * ⚠️ O RISCO DE PRODUTO QUE ESTE TESTE GUARDA. Se a entrega rica passar a
+   * incluir brincadeiras, atividades e história social, ela canibaliza o Plano
+   * — a mãe recebe quase tudo no chat e o PDF perde a razão de existir. A
+   * resposta orienta um momento; o Plano consolida o acervo.
+   */
+  it("termina OFERECENDO o Plano, nunca entregando o acervo", () => {
+    const web = formasDeEntrega({ canal: "web" });
+    expect(web).toContain("FECHE OFERECENDO O PLANO");
+    expect(web).toContain("não da resposta");
+  });
+
+  it("a régua geral continua sendo a forma menor", () => {
+    const web = formasDeEntrega({ canal: "web" });
+    expect(web, "o freio geral sumiu — toda resposta vira documento").toContain(
+      "A MENOR FORMA QUE AJUDA VENCE",
+    );
+  });
+});

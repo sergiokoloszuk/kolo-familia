@@ -755,6 +755,53 @@ describe("LENTES · a lente do turno chega ao produtor pelo fluxo real", () => {
     expect(s, "sumiu a regra do avesso — a lista vira tique").toContain("QUANDO NÃO LISTAR");
   });
 
+  /**
+   * M3 · O QUE A COMPARAÇÃO COM O APP ANTERIOR ENSINOU (13/08/2026).
+   *
+   * A conversa dele sobre a mesma briga produziu um plano inteiro de contenção
+   * de AGRESSÃO — "bate", "quer bater", "sua filha é agressiva" — a partir de
+   * uma mãe que só tinha dito "brigou". Nada foi relatado; tudo foi suposto. E
+   * o plano tratou o problema errado enquanto ensinava aquela mãe a enxergar na
+   * filha algo que ela não tinha visto.
+   *
+   * As outras três regras vêm do que faltou na NOSSA resposta, medida: ela
+   * trabalhou a entrada e deixou a criança sem saída pra próxima vez.
+   */
+  it("M3 · as quatro regras novas chegam ao modelo", async () => {
+    const m = familiaComCatalogo();
+    await turno(m, "ela brigou com uma amiga na escola semana passada");
+    const s = systemMaisTurno(m);
+    expect(s, "sumiu o freio contra inventar o comportamento").toContain(
+      "NÃO INVENTE O COMPORTAMENTO",
+    );
+    // ⚠️ Sem aspas no trecho: o payload é `JSON.stringify`, e `"Brigou"` chega
+    // escapado como `\"Brigou\"`. Casar com aspas falha por motivo errado.
+    expect(s, "sumiu o exemplo que dá o tamanho do dano").toContain(
+      "não é bater — no Brasil quase sempre quer dizer discussão",
+    );
+    expect(s, "sumiu o alvo na habilidade — volta a tratar só o sintoma").toContain(
+      "O ALVO É A HABILIDADE",
+    );
+    expect(s, "sumiu o repertório — sobra conduta pra mãe executar").toContain(
+      "REPERTÓRIO NÃO É CONDUTA",
+    );
+    expect(s, "sumiu o freio contra inventar a história da mãe").toContain(
+      "NÃO INVENTE A HISTÓRIA DA MÃE",
+    );
+    expect(s, "sumiu o motivo colado à pergunta").toContain("DIGA POR QUE ESTÁ PERGUNTANDO");
+  });
+
+  /**
+   * ⚠️ A ENTREGA MADURA É DA WEB, E SÓ DELA. No WhatsApp são dois balões sem
+   * markdown: blocos titulados ali viram parede. Se este teste cair, a exceção
+   * vazou de canal — e o vazamento é silencioso, porque o texto é plausível.
+   */
+  it("M3 · a entrega madura NÃO vaza para o WhatsApp", async () => {
+    const m = familiaComCatalogo();
+    await turno(m, "ela tá difícil na hora de sair de casa, não sei mais o que fazer");
+    expect(systemMaisTurno(m)).not.toContain("QUANDO A CONVERSA JÁ AMADURECEU");
+  });
+
   it("a lente NÃO cria artefato — não é portão e não tem autoridade", async () => {
     roteiro.skills = ["sensorial"];
     roteiro.prontidaoRotina = "suficiente";

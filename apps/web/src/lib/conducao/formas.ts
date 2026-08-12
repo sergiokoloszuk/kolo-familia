@@ -54,6 +54,31 @@ const TIPOS_DE_AJUDA = [
 ].join("\n- ");
 
 /**
+ * A ENTREGA MADURA — a porta estreita, e só na WEB.
+ *
+ * ⚠️ POR QUE É UMA EXCEÇÃO E NÃO UMA MUDANÇA DE RÉGUA. Tudo acima empurra pra
+ * forma MENOR, e por um motivo medido: 74% dos títulos eram itens da lista
+ * copiados quase palavra por palavra, com três deles concentrando 77% dos usos.
+ * As famílias sentiram o gabarito. Afrouxar isso em geral traz o gabarito de
+ * volta — então o que se abre é uma porta nomeada, com condição de entrada.
+ *
+ * ⚠️ A CONDIÇÃO É MATÉRIA-PRIMA, NÃO TAMANHO. Uma resposta rica no primeiro
+ * turno é enchimento: não há gatilho identificado, não se sabe como aquela
+ * criança recebe, não há ponte. Medido no âncora de cinco turnos: o T1 saiu com
+ * 103 palavras e estava certo; o T3, depois de convergir, saiu com 178 e também
+ * estava certo. A resposta cresceu porque a conversa amadureceu.
+ *
+ * ⚠️ E POR QUE SÓ NA WEB. O WhatsApp são dois balões sem markdown — lá isso
+ * seria uma parede. Quando há material demais para o chat, o destino é o Plano,
+ * e é por isso que a entrega madura TERMINA OFERECENDO e não entregando o
+ * acervo. Se ela começar a incluir brincadeiras, história social e o resto, ela
+ * canibaliza o PDF e a Kolo perde o artefato que justifica a assinatura.
+ */
+const ENTREGA_MADURA = `QUANDO A CONVERSA JÁ AMADURECEU, a resposta pode ser mais completa — 3 ou 4 blocos, não um. Vale quando você já tem pelo menos DUAS destas: um gatilho ou hipótese identificada nesta conversa · algo que se sabe sobre como ESTA criança recebe melhor · um interesse ou conquista que sirva de ponte · o que já foi tentado. Sem isso, continue curta: no primeiro turno uma resposta longa é enchimento, não riqueza.
+Cabendo, o que costuma valer a pena é o que ela vai USAR: o que fazer antes · a frase pronta · o que a CRIANÇA pode fazer da próxima vez · o que reparar depois. Títulos com as palavras do caso, nunca rótulos de seção.
+E FECHE OFERECENDO O PLANO, sem entregar o acervo: brincadeiras, atividades e história social são do plano estratégico, não da resposta. "Se quiser, eu organizo isso num plano estratégico com atividades pra ele" — uma linha, sem insistir.`;
+
+/**
  * O bloco condicional. Recebe o tema ativo (se houver) e o canal, porque a
  * sintaxe do título é do canal — e cada canal tem UMA.
  *
@@ -85,6 +110,8 @@ A FORMA NASCE DO QUE VOCÊ TEM A DIZER. Não há formato padrão: pode ser um pa
 - A MENOR FORMA QUE AJUDA VENCE. Numerar passos e fechar com "o que observar" é o gabarito de novo, sem título — não é o formato padrão. Numere só se a ordem importa; observe só se há algo a decidir depois. Se cabe em três frases, são três frases.
 - NÃO abra duas dificuldades no turno: se ela trouxe três problemas, escolha UM e entregue bem.
 - No máximo um emoji, e só se significar algo. Sem despedida protocolar.${
+    params.canal === "web" ? `\n\n${ENTREGA_MADURA}` : ""
+  }${
     rotulo
       ? `\n- O assunto desta conversa é ${rotulo.toUpperCase()}: puxe do perfil o que serve pra isso e deixe o resto quieto.`
       : ""

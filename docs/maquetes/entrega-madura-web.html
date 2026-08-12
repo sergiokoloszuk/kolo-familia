@@ -1,0 +1,282 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>A mesma conversa, nos dois canais</title>
+<style>
+  :root {
+    --ground: #F6F7F4; --paper: #FFFFFF; --ink: #1C2621; --ink-soft: #46524B;
+    --whisper: #6B756E; --rule: #DDE0D8; --accent: #3F6B58; --accent-wash: #EAEFE9;
+    --bolha: #EDF1EC;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #141816; --paper: #1A201D; --ink: #E8EDE8; --ink-soft: #B4BEB7;
+      --whisper: #8C978F; --rule: #2C3531; --accent: #7FB79B; --accent-wash: #202A26;
+      --bolha: #222B27;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground: #141816; --paper: #1A201D; --ink: #E8EDE8; --ink-soft: #B4BEB7;
+    --whisper: #8C978F; --rule: #2C3531; --accent: #7FB79B; --accent-wash: #202A26;
+    --bolha: #222B27;
+    color-scheme: dark;
+  }
+  *, *::before, *::after { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--ground); color: var(--ink);
+    font-family: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, ui-serif, serif;
+    font-size: 16.5px; line-height: 1.6; -webkit-font-smoothing: antialiased;
+  }
+  .sans { font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, ui-sans-serif, system-ui, sans-serif; }
+  .wrap { max-width: 66rem; margin: 0 auto; padding: clamp(1.5rem,4vw,3.5rem) clamp(1.25rem,4vw,2.5rem) 5rem; }
+
+  .olho { font-family: "Segoe UI", -apple-system, ui-sans-serif, system-ui, sans-serif;
+    font-size: .72rem; letter-spacing: .14em; text-transform: uppercase;
+    color: var(--accent); font-weight: 600; margin: 0 0 .8rem; }
+  h1 { font-size: clamp(1.7rem,4.5vw,2.3rem); line-height: 1.15; font-weight: 600;
+    letter-spacing: -.015em; margin: 0 0 .9rem; text-wrap: balance; }
+  .lead { font-size: 1.02rem; color: var(--ink-soft); max-width: 36rem; margin: 0 0 .6rem; }
+  .contexto { font-size: .92rem; color: var(--whisper); max-width: 36rem; margin: 0 0 2.5rem;
+    padding-left: .9rem; border-left: 2px solid var(--rule); }
+
+  .par { display: grid; grid-template-columns: 1fr 1fr; gap: 2.5rem; align-items: start; }
+  @media (max-width: 54rem) { .par { grid-template-columns: 1fr; gap: 3rem; } }
+
+  .coluna > .rotulo { display: flex; align-items: baseline; gap: .6rem; margin: 0 0 1rem;
+    padding-bottom: .6rem; border-bottom: 1px solid var(--rule); }
+  .rotulo strong { font-family: "Segoe UI", -apple-system, ui-sans-serif, system-ui, sans-serif;
+    font-size: .78rem; letter-spacing: .1em; text-transform: uppercase; font-weight: 600; }
+  .rotulo .cont { font-family: "Segoe UI", -apple-system, ui-sans-serif, system-ui, sans-serif;
+    font-size: .75rem; color: var(--whisper); margin-left: auto; font-variant-numeric: tabular-nums; }
+
+  /* balões do WhatsApp */
+  .bolha { background: var(--bolha); border-radius: 4px 14px 14px 14px;
+    padding: 1rem 1.15rem; margin: 0 0 .55rem; font-size: .97rem; }
+  .bolha p { margin: 0 0 .8rem; }
+  .bolha p:last-child { margin: 0; }
+
+  /* resposta da web */
+  .tela { background: var(--paper); border: 1px solid var(--rule); border-radius: 4px;
+    padding: 1.5rem 1.6rem; }
+  .tela p { margin: 0 0 1rem; }
+  .tela p:last-child { margin: 0; }
+  .tela h3 { font-size: 1.05rem; font-weight: 600; margin: 1.6rem 0 .5rem;
+    letter-spacing: -.005em; text-wrap: balance; }
+  .tela h3:first-child { margin-top: 0; }
+  .tela blockquote { margin: 0 0 1rem; padding: .1rem 0 .1rem 1rem;
+    border-left: 2px solid var(--accent); font-style: italic; }
+  .tela ul { margin: 0 0 1rem; padding: 0; list-style: none; }
+  .tela li { position: relative; padding-left: 1.05rem; margin-bottom: .4rem; }
+  .tela li::before { content: ""; position: absolute; left: 0; top: .7em;
+    width: 5px; height: 1px; background: var(--accent); }
+  .oferta { margin-top: 1.2rem; padding-top: 1rem; border-top: 1px solid var(--rule);
+    font-size: .93rem; color: var(--ink-soft); }
+
+  .notas { margin-top: 3.5rem; padding-top: 1.8rem; border-top: 1px solid var(--rule);
+    font-family: "Segoe UI", -apple-system, ui-sans-serif, system-ui, sans-serif;
+    font-size: .87rem; line-height: 1.65; color: var(--ink-soft); max-width: 44rem; }
+  .notas h2 { font-family: "Iowan Old Style", Palatino, Georgia, ui-serif, serif;
+    font-size: 1.15rem; color: var(--ink); margin: 0 0 .8rem; }
+  .notas p { margin: 0 0 .9rem; }
+  .notas strong { color: var(--ink); }
+  .numeros { display: flex; flex-wrap: wrap; gap: 1.8rem; margin: 1.4rem 0 1.6rem;
+    padding: 1.1rem 0; border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule); }
+  .numeros div { min-width: 7rem; }
+  .numeros dt { font-size: .72rem; letter-spacing: .08em; text-transform: uppercase;
+    color: var(--whisper); margin-bottom: .25rem; }
+  .numeros dd { margin: 0; font-family: "Iowan Old Style", Palatino, Georgia, ui-serif, serif;
+    font-size: 1.5rem; color: var(--ink); font-variant-numeric: tabular-nums; }
+  .numeros dd small { font-size: .8rem; color: var(--whisper); font-family: "Segoe UI", ui-sans-serif, sans-serif; }
+</style>
+</head>
+<body>
+
+
+<div class="wrap">
+  <p class="olho">Maquete para decisão</p>
+  <h1>A mesma conversa, nos dois canais</h1>
+  <p class="lead">
+    O mesmo turno, o mesmo contexto acumulado, dois suportes diferentes. À esquerda o que
+    a Ayla respondeu de verdade no WhatsApp. À direita a proposta para a web, quando a
+    conversa já amadureceu.
+  </p>
+  <p class="contexto sans">
+    Quarto turno com a Juliana. Já se sabe: a recusa é recente, a Isabela gostava da escola,
+    houve uma briga com a Marcinha por causa de um brinquedo, ela não consegue falar sobre
+    isso, e com bonecos consegue contar. No perfil: sente barulho e lugar cheio, adora
+    cavalos e desenhar. Duas conquistas registradas.
+  </p>
+
+  <div class="par">
+    <div class="coluna">
+      <p class="rotulo"><strong>WhatsApp — hoje</strong><span class="cont">178 palavras · medido</span></p>
+      <div class="bolha">
+        <p>Ah, então foi na escola — com a Marcinha.</p>
+        <p>
+          Faz sentido que isso tenha ficado registrado nela. Pra muitas crianças autistas,
+          uma situação de conflito social fica colada ao lugar onde aconteceu: não é que ela
+          está pensando "não quero ir por causa da Marcinha", mas o corpo já sente aquele
+          aperto quando a hora da escola chega.
+        </p>
+        <p>
+          O que costuma ajudar nesse caso não é resolver o conflito diretamente, mas dar a
+          ela uma forma de chegar lá com algum chão. Antes de sair, nomear sem drama — algo
+          curto como "hoje você vai encontrar a Marcinha. Se ficar difícil, você pode me
+          contar depois." Só isso. Não prometer que vai estar tudo bem, mas mostrar que ela
+          tem onde pousar quando voltar.
+        </p>
+        <p>
+          Na chegada, se der, entrar junto um pouco mais devagar do que o normal — sem
+          pressa na despedida.
+        </p>
+        <p>
+          E uma coisa que vale observar: como ela fica durante o dia? A professora diz
+          alguma coisa sobre como ela está dentro da sala, ou o difícil é só a entrada?
+        </p>
+      </div>
+      <p class="contexto sans" style="margin-top:1.2rem;border:0;padding:0">
+        Prosa, sem títulos, dois balões. É o certo para o canal — e continua sendo.
+      </p>
+    </div>
+
+    <div class="coluna">
+      <p class="rotulo"><strong>Web — proposta</strong><span class="cont">513 palavras</span></p>
+      <div class="tela">
+        <p>
+          Ah, então foi na escola — com a Marcinha. Isso muda bastante a leitura, e foi você
+          que juntou as duas pontas: que é recente, e que teve um episódio no meio.
+        </p>
+        <p>
+          Pra muitas crianças, uma situação social difícil acaba ficando colada ao lugar onde
+          aconteceu. É provável que a Isabela não esteja pensando <em>"não quero ir por causa
+          da Marcinha"</em> de forma organizada — ela pode simplesmente sentir um aperto
+          quando chega a hora, sem saber de onde vem. E como a entrada é justamente o momento
+          mais barulhento e mais cheio do dia, o ambiente pode estar segurando isso de pé.
+        </p>
+
+        <h3>O que eu faria antes de sair</h3>
+        <p>
+          Nomear o que vem, sem drama e sem prometer que vai dar tudo certo. Prometa o que
+          você controla: que você volta.
+        </p>
+        <blockquote>
+          Hoje você vai encontrar a Marcinha. Se ficar difícil, você me conta depois.
+        </blockquote>
+        <p>
+          E vale dar a ela uma missão pequena e concreta pra fazer ao chegar — algo que ela já
+          sabe fazer. Desloca o foco de <em>"vou encontrar a Marcinha"</em> pra <em>"tenho uma
+          coisa pra fazer lá"</em>.
+        </p>
+
+        <h3>O que ela pode fazer quando acontecer de novo</h3>
+        <p>
+          Isto é o que resolve de verdade: enquanto a Isabela não tiver uma saída pra quando
+          alguém disser não, evitar a escola continua sendo a única que ela encontrou.
+          Ensaie com ela três opções — não uma, três, pra ela escolher:
+        </p>
+        <ul>
+          <li>pedir ajuda pra tia</li>
+          <li>perguntar <em>"posso brincar quando você acabar?"</em></li>
+          <li>escolher outro brinquedo e voltar depois</li>
+        </ul>
+        <blockquote>
+          Quando alguém não quer emprestar, não é que ela não gosta de você. Ela só está
+          usando agora. Você pode pedir de novo depois.
+        </blockquote>
+        <p>
+          Esse reenquadre importa tanto quanto a estratégia: amigos magoam sem querer, e isso
+          não quer dizer que a amizade acabou. É uma coisa que criança nenhuma sabe sozinha.
+        </p>
+
+        <h3>Uma coisa pra fazer hoje à noite</h3>
+        <p>
+          Com bonecos ela conseguiu contar o que não cabia em palavras — é o caminho por onde
+          a informação entra e sai com ela. Monte a cena: um quer o brinquedo, o outro diz
+          não. Você não resolve — pergunta <em>"e agora, o que ele faz?"</em> e deixa ela
+          dirigir. Se ela repetir várias vezes, deixe; repetir é como criança processa.
+        </p>
+        <p>
+          E, se couber, conte uma vez em que isso aconteceu com <strong>você</strong> — uma
+          amiga que não quis dividir, como você ficou, o que fez depois. Saber que a mãe já
+          passou por aquilo faz mais do que qualquer explicação.
+        </p>
+
+        <h3>O que reparar nos próximos dias</h3>
+        <ul>
+          <li>Ela resiste mais em casa, no caminho, ou só na porta?</li>
+          <li>Muda alguma coisa se vocês chegarem mais cedo, com a entrada vazia?</li>
+          <li>Ela fala da Marcinha em algum momento — nem que seja com os bonecos?</li>
+        </ul>
+        <p>
+          Se a entrada ficar mais fácil chegando cedo, a gente sabe que o ambiente pesa tanto
+          quanto o episódio — e isso muda o que fazer depois.
+        </p>
+
+        <p class="oferta">
+          Se quiser, eu organizo tudo isso num plano estratégico com atividades pra Isabela —
+          com uma história social sobre emprestar e esperar a vez, brincadeiras pra treinar
+          isso, e o que combinar com a professora.
+        </p>
+      </div>
+      <p class="contexto sans" style="margin-top:1.2rem;border:0;padding:0">
+        Três blocos titulados com as palavras do caso, uma fala destacada, e a oferta do
+        Plano no fim — onde cabe o acervo inteiro.
+      </p>
+    </div>
+  </div>
+
+  <div class="notas">
+    <h2>O que esta maquete decide</h2>
+    <dl class="numeros">
+      <div><dt>Hoje, medido</dt><dd>102 <small>palavras, mediana</small></dd></div>
+      <div><dt>Proposta web</dt><dd>513 <small>palavras</small></dd></div>
+      <div><dt>Maquete anterior</dt><dd>1.780 <small>palavras</small></dd></div>
+    </dl>
+    <p>
+      <strong>O achado que reescreveu a coluna da direita.</strong> A resposta real trabalhou
+      a ENTRADA — nomear antes de sair, entrar devagar, observar. Deixou de fora a habilidade
+      que falta: a Isabela continua sem saber o que fazer quando a Marcinha disser não de
+      novo. Enquanto ela não tiver uma saída, evitar a escola é a única que encontrou, e a
+      recusa volta. Quando o gatilho é uma habilidade ausente, o alvo é a habilidade — não o
+      sintoma.
+    </p>
+    <p>
+      <strong>E repertório é diferente de conduta.</strong> A mãe precisa da fala que a
+      criança pode usar, do reenquadre (amigo magoa sem querer, e a amizade não acabou), de
+      uma cena pra ensaiar, e de algo que só ela pode dar: contar uma vez em que aquilo
+      aconteceu com ela. Isso normaliza sem minimizar, e nenhuma técnica substitui.
+    </p>
+    <p>
+      <strong>A riqueza é conquistada, não liberada.</strong> O que torna a coluna da direita
+      possível não é permissão de tamanho — é material acumulado: o gatilho identificado, o
+      canal descoberto (os bonecos), o perfil sensorial e o interesse. No primeiro turno nada
+      disso existe, e a mesma resposta seria enchimento.
+    </p>
+    <p>
+      <strong>O WhatsApp não vira documento — ele oferece o documento.</strong> Dois balões,
+      sem markdown, é o certo para o canal. Quando há material demais para o chat, o destino
+      é o Plano em PDF, que é onde cabe o acervo validado inteiro.
+    </p>
+    <p>
+      <strong>O risco que isto cria.</strong> Se a entrega rica virar comum, ela canibaliza o
+      Plano: a mãe recebe quase tudo no chat e o PDF perde a razão de ser. A régua que
+      protege é a distinção de natureza — a resposta orienta um momento; o Plano consolida o
+      acervo (brincadeiras, atividades, crenças, história social). Por isso a coluna da
+      direita termina oferecendo, e não entregando.
+    </p>
+    <p>
+      <strong>E o freio que já existe e está certo.</strong> A instrução de formas de entrega
+      hoje diz "a menor forma que ajuda vence", e foi calibrada contra dado feio: 74% dos
+      títulos eram itens da lista copiados quase palavra por palavra. Soltar isso de forma
+      geral traz o gabarito de volta. O que se propõe é uma exceção nomeada para a conversa
+      madura, na web — e medir se o gabarito reaparece.
+    </p>
+  </div>
+</div>
+
+</body>
+</html>

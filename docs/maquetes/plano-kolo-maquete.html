@@ -1,0 +1,489 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Plano — A volta pra escola depois da briga</title>
+<style>
+  :root {
+    --ground: #F6F7F4;
+    --paper: #FFFFFF;
+    --ink: #1C2621;
+    --ink-soft: #46524B;
+    --whisper: #6B756E;
+    --rule: #DDE0D8;
+    --accent: #3F6B58;
+    --accent-wash: #EAEFE9;
+    --shadow: 0 1px 2px rgba(28, 38, 33, .04), 0 8px 24px -12px rgba(28, 38, 33, .10);
+  }
+  :root:not([data-theme="light"]) {
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #141816;
+      --paper: #1A201D;
+      --ink: #E8EDE8;
+      --ink-soft: #B4BEB7;
+      --whisper: #8C978F;
+      --rule: #2C3531;
+      --accent: #7FB79B;
+      --accent-wash: #202A26;
+      --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 8px 24px -12px rgba(0, 0, 0, .5);
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground: #141816;
+    --paper: #1A201D;
+    --ink: #E8EDE8;
+    --ink-soft: #B4BEB7;
+    --whisper: #8C978F;
+    --rule: #2C3531;
+    --accent: #7FB79B;
+    --accent-wash: #202A26;
+    --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 8px 24px -12px rgba(0, 0, 0, .5);
+    color-scheme: dark;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font-family: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, ui-serif, serif;
+    font-size: 17px;
+    line-height: 1.62;
+    -webkit-font-smoothing: antialiased;
+  }
+  .sans {
+    font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, ui-sans-serif, system-ui, sans-serif;
+  }
+
+  .folha {
+    max-width: 40rem;
+    margin: 0 auto;
+    padding: clamp(1.5rem, 5vw, 4rem) clamp(1.25rem, 5vw, 2.5rem) 6rem;
+  }
+
+  /* ── cabeçalho ─────────────────────────────────────────── */
+  header { padding-bottom: 2rem; border-bottom: 1px solid var(--rule); }
+  .olho {
+    font-family: "Segoe UI", -apple-system, ui-sans-serif, system-ui, sans-serif;
+    font-size: .72rem;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--accent);
+    font-weight: 600;
+    margin: 0 0 .9rem;
+  }
+  h1 {
+    font-size: clamp(1.9rem, 5.5vw, 2.7rem);
+    line-height: 1.14;
+    font-weight: 600;
+    letter-spacing: -.015em;
+    text-wrap: balance;
+    margin: 0 0 1rem;
+  }
+  .abertura {
+    font-size: 1.08rem;
+    color: var(--ink-soft);
+    margin: 0 0 1.6rem;
+    max-width: 34rem;
+  }
+  .meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .45rem .6rem;
+    font-size: .8rem;
+    color: var(--whisper);
+  }
+  .meta span { display: inline-flex; align-items: center; gap: .45rem; }
+  .meta span + span::before {
+    content: "";
+    width: 3px; height: 3px;
+    border-radius: 50%;
+    background: var(--rule);
+  }
+
+  /* ── seções ────────────────────────────────────────────── */
+  section { padding-top: 2.6rem; }
+  section + section { border-top: 1px solid var(--rule); }
+  h2 {
+    font-size: 1.28rem;
+    font-weight: 600;
+    letter-spacing: -.01em;
+    margin: 0 0 .2rem;
+    text-wrap: balance;
+  }
+  .nota {
+    font-family: "Segoe UI", -apple-system, ui-sans-serif, system-ui, sans-serif;
+    font-size: .78rem;
+    color: var(--whisper);
+    margin: 0 0 1.1rem;
+  }
+  p { margin: 0 0 1.05rem; }
+  p:last-child { margin-bottom: 0; }
+  strong { font-weight: 600; }
+  em { font-style: italic; }
+
+  /* ── por onde começar ──────────────────────────────────── */
+  .passos { display: flex; flex-direction: column; gap: 1.4rem; margin: 0; padding: 0; }
+  .passo { display: grid; grid-template-columns: 7.5rem 1fr; gap: 0 1.25rem; align-items: start; }
+  .quando {
+    font-family: "Segoe UI", -apple-system, ui-sans-serif, system-ui, sans-serif;
+    font-size: .72rem;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    font-weight: 600;
+    color: var(--accent);
+    padding-top: .35rem;
+  }
+  .passo p { margin: 0; }
+  @media (max-width: 34rem) {
+    .passo { grid-template-columns: 1fr; gap: .3rem; }
+    .quando { padding-top: 0; }
+  }
+
+  /* ── falas ─────────────────────────────────────────────── */
+  .fala {
+    border-left: 2px solid var(--accent);
+    padding: .15rem 0 .15rem 1.15rem;
+    margin: 0 0 1.3rem;
+    font-style: italic;
+    font-size: 1.06rem;
+    color: var(--ink);
+  }
+  .fala .quem {
+    display: block;
+    font-family: "Segoe UI", -apple-system, ui-sans-serif, system-ui, sans-serif;
+    font-style: normal;
+    font-size: .74rem;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: var(--whisper);
+    margin-bottom: .35rem;
+  }
+
+  /* ── listas ────────────────────────────────────────────── */
+  ul { margin: 0 0 1.05rem; padding: 0; list-style: none; }
+  ul li {
+    position: relative;
+    padding-left: 1.15rem;
+    margin-bottom: .55rem;
+  }
+  ul li::before {
+    content: "";
+    position: absolute;
+    left: 0; top: .72em;
+    width: 5px; height: 1px;
+    background: var(--accent);
+  }
+  ul li:last-child { margin-bottom: 0; }
+
+  /* ── caixa de observação ───────────────────────────────── */
+  .observar {
+    background: var(--accent-wash);
+    border-radius: 3px;
+    padding: 1.25rem 1.4rem;
+  }
+  .observar ul li::before { background: var(--accent); }
+
+  /* ── rodapé de aviso ───────────────────────────────────── */
+  .rodape {
+    margin-top: 3.5rem;
+    padding-top: 1.6rem;
+    border-top: 1px solid var(--rule);
+    font-family: "Segoe UI", -apple-system, ui-sans-serif, system-ui, sans-serif;
+    font-size: .8rem;
+    line-height: 1.6;
+    color: var(--whisper);
+  }
+
+  /* ── anexo de decisão (fora do plano) ──────────────────── */
+  .decisao {
+    max-width: 40rem;
+    margin: 0 auto;
+    padding: 0 clamp(1.25rem, 5vw, 2.5rem) 5rem;
+    font-family: "Segoe UI", -apple-system, ui-sans-serif, system-ui, sans-serif;
+    font-size: .88rem;
+    line-height: 1.65;
+    color: var(--ink-soft);
+  }
+  .decisao h3 {
+    font-family: "Iowan Old Style", Palatino, Georgia, ui-serif, serif;
+    font-size: 1.1rem;
+    color: var(--ink);
+    margin: 0 0 .9rem;
+  }
+  .divisor {
+    max-width: 40rem;
+    margin: 0 auto 2.5rem;
+    padding: 0 clamp(1.25rem, 5vw, 2.5rem);
+  }
+  .divisor hr { border: 0; border-top: 1px dashed var(--rule); margin: 0; }
+  .tabela-wrap { overflow-x: auto; margin: 0 0 1.2rem; }
+  table { border-collapse: collapse; width: 100%; font-size: .84rem; }
+  th, td { text-align: left; padding: .55rem .8rem .55rem 0; border-bottom: 1px solid var(--rule); vertical-align: top; }
+  th { font-weight: 600; color: var(--ink); font-size: .74rem; letter-spacing: .07em; text-transform: uppercase; }
+  td.novo { color: var(--accent); font-weight: 600; }
+</style>
+</head>
+<body>
+
+
+<article class="folha">
+  <header>
+    <p class="olho">Plano estratégico</p>
+    <h1>A volta pra escola, depois da briga</h1>
+    <p class="abertura">
+      Um caminho pra Isabela voltar a entrar na escola — construído a partir do que
+      você percebeu nesta semana.
+    </p>
+    <p class="meta sans">
+      <span>Isabela, 7 anos</span>
+      <span>13 de agosto</span>
+      <span>Feito a partir da sua conversa com a Ayla</span>
+    </p>
+  </header>
+
+  <section>
+    <h2>O que estamos vendo</h2>
+    <p>
+      A Isabela vinha gostando da escola. A recusa começou de uns dias pra cá, depois
+      da briga com a Marcinha por causa de um brinquedo — e apareceu primeiro no
+      corpo: choro ainda no carro, resistência antes mesmo de chegar.
+    </p>
+    <p>
+      Você reparou em duas coisas que mudaram a leitura inteira: que <strong>é
+      recente</strong>, e que <strong>tem um episódio no meio</strong>. Sem isso, a
+      gente estaria trabalhando a escola em geral — e o assunto não é a escola.
+    </p>
+  </section>
+
+  <section>
+    <h2>O que pode estar acontecendo</h2>
+    <p class="nota">Hipóteses de trabalho. Nenhuma delas é certeza, e a próxima semana vai mostrar quais se sustentam.</p>
+    <p>
+      Pra muitas crianças, uma situação social difícil acaba ficando colada ao lugar
+      onde aconteceu. É provável que a Isabela não esteja pensando <em>"não quero ir
+      por causa da Marcinha"</em> de forma organizada — ela pode simplesmente sentir
+      um aperto quando chega a hora, sem saber de onde vem.
+    </p>
+    <p>
+      Some a isso duas coisas que você já conhece nela: ela sente bastante barulho e
+      lugar cheio, e a entrada da escola é justamente o momento mais barulhento e mais
+      cheio do dia. O episódio pode ter sido o gatilho, e o ambiente pode estar
+      segurando a recusa de pé.
+    </p>
+    <p>
+      E há uma terceira possibilidade que vale manter viva: que ela ainda não tenha
+      uma forma de resolver aquilo quando acontecer de novo — e evitar a escola seja,
+      por enquanto, a única saída que ela encontrou.
+    </p>
+  </section>
+
+  <section>
+    <h2>Por onde eu começaria</h2>
+    <p class="nota">Não precisa fazer tudo. Se der pra fazer só a primeira linha, já muda alguma coisa.</p>
+    <div class="passos">
+      <div class="passo">
+        <div class="quando">Hoje</div>
+        <p>
+          Nomear o que aconteceu, sem drama e sem prometer que vai dar tudo certo.
+          É o que tira a Isabela de sozinha com aquilo.
+        </p>
+      </div>
+      <div class="passo">
+        <div class="quando">Amanhã cedo</div>
+        <p>
+          Dar a ela uma missão pequena e concreta pra fazer ao chegar — algo que ela já
+          sabe fazer. Desloca o foco de <em>"vou encontrar a Marcinha"</em> pra
+          <em>"tenho uma coisa pra fazer lá"</em>.
+        </p>
+      </div>
+      <div class="passo">
+        <div class="quando">Esta semana</div>
+        <p>
+          Combinar com a professora uma chegada mais acolhida, e ensaiar a entrada com
+          os bonecos antes de sair de casa.
+        </p>
+      </div>
+      <div class="passo">
+        <div class="quando">Quando der</div>
+        <p>
+          Pensar com ela no que fazer se a Marcinha disser não de novo. Isso é o que
+          faz a escola voltar a ser um lugar seguro — e não só suportável.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>O que fazer diferente</h2>
+    <ul>
+      <li>
+        Encurtar a despedida em vez de alongar. Despedida longa estica a dor;
+        despedida curta e sempre igual vira âncora.
+      </li>
+      <li>
+        Chegar um pouco mais cedo, quando a entrada ainda está vazia. Menos gente e
+        menos barulho no momento em que ela já está no limite.
+      </li>
+      <li>
+        Não pedir que ela conte o que aconteceu. Ela não consegue — e insistir
+        transforma a conversa em mais uma coisa difícil do dia.
+      </li>
+      <li>
+        Evitar prometer que vai estar tudo bem. Prometa o que você controla: que
+        você volta, e que ela pode te contar depois.
+      </li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>O que falar</h2>
+    <p class="nota">Do jeito que se fala em casa. Troque as palavras pelas suas.</p>
+    <p class="fala">
+      <span class="quem sans">Antes de sair</span>
+      Hoje você vai encontrar a Marcinha. Se ficar difícil, você me conta depois.
+    </p>
+    <p class="fala">
+      <span class="quem sans">Na porta</span>
+      Eu volto depois do lanche. Você guarda a mochila e me mostra um desenho quando
+      eu chegar.
+    </p>
+    <p class="fala">
+      <span class="quem sans">Se ela chorar</span>
+      Eu sei. Tá difícil hoje. Eu volto.
+    </p>
+    <p class="fala">
+      <span class="quem sans">Quando ela voltar</span>
+      Como foi lá hoje? Se quiser, a gente conta com os bonecos.
+    </p>
+  </section>
+
+  <section>
+    <h2>Como apresentar pra Isabela</h2>
+    <p class="nota">O que a gente descobriu nesta conversa sobre o jeito dela.</p>
+    <p>
+      Com bonecos ela conseguiu contar o que não cabia em palavras. Isso não é
+      detalhe: é o caminho por onde a informação entra e sai com ela. Vale usar
+      sempre que o assunto for pesado.
+    </p>
+    <p>
+      Antes de sair, dois bonecos e trinta segundos: a mochila, o lugar, a Marcinha se
+      aparecer. Sem forçar resolução, só deixar a cena existir. Passar pelo lugar com
+      o boneco antes de passar com o corpo costuma tornar a entrada mais leve.
+    </p>
+    <p>
+      Menos palavras nos momentos difíceis, mais presença. Explicação longa quando ela
+      já está tensa chega como mais estímulo, não como ajuda.
+    </p>
+  </section>
+
+  <section>
+    <h2>Uma brincadeira que trabalha isso</h2>
+    <p>
+      <strong>O brinquedo emprestado.</strong> Com os bonecos — ou com os cavalos, que
+      ela ama. Um quer o brinquedo, o outro diz não. Você não resolve: pergunta
+      <em>"e agora, o que ele faz?"</em> e deixa ela dirigir a história.
+    </p>
+    <p>
+      O valor está em ensaiar a saída num lugar seguro, onde errar não custa nada.
+      Se ela repetir a cena várias vezes, deixe. Repetir é como criança processa.
+    </p>
+  </section>
+
+  <section>
+    <h2>Uma coisa que vale conversar com você</h2>
+    <p class="nota">Sobre como a gente lê o que acontece — não sobre o que você faz.</p>
+    <p>
+      É comum, num momento assim, a gente pensar <em>"ela não consegue lidar com
+      isso"</em>. Vale trocar por <em>"ela ainda não tem uma saída pra isso"</em>.
+    </p>
+    <p>
+      Parece pequeno, mas muda o que você procura: em vez de proteger a Isabela de
+      toda situação difícil, você começa a construir com ela o que fazer quando
+      acontecer. E ela já mostrou que consegue — foi sozinha comprar pão na padaria,
+      e contou pela primeira vez o que tinha acontecido na aula. A coragem existe.
+      Falta o caminho.
+    </p>
+  </section>
+
+  <section>
+    <h2>O que observar nos próximos dias</h2>
+    <div class="observar">
+      <ul>
+        <li>Ela resiste mais em casa, no caminho, ou só na porta?</li>
+        <li>Muda alguma coisa quando vocês chegam mais cedo?</li>
+        <li>Ela fala da Marcinha em algum momento — nem que seja com os bonecos?</li>
+        <li>Como ela está <em>dentro</em> da sala? Vale perguntar à professora.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section>
+    <h2>Daqui a uma semana</h2>
+    <p>
+      Me conta o que você reparou. Se a entrada tiver ficado mais fácil, a gente
+      entende o que funcionou e transforma em rotina. Se não tiver mudado, isso também
+      é informação — provavelmente quer dizer que a hipótese da briga não é a
+      principal, e a gente olha pro ambiente ou pra outra coisa.
+    </p>
+    <p>
+      De qualquer jeito, o próximo passo sai do que <em>você</em> observar. É assim que
+      esse plano vira o plano da Isabela, e não um plano genérico.
+    </p>
+  </section>
+
+  <p class="rodape">
+    Isto é orientação de apoio ao dia a dia, feita a partir do que você contou.
+    Não substitui avaliação nem acompanhamento profissional.
+  </p>
+</article>
+
+<div class="divisor"><hr></div>
+
+<div class="decisao">
+  <h3>O que é novo aqui</h3>
+  <p>
+    O plano acima usa a estrutura que já existe e acrescenta três seções. Nada foi
+    inventado: todo o conteúdo sai da conversa de cinco turnos que a Ayla teve com
+    modelo real.
+  </p>
+  <div class="tabela-wrap">
+    <table>
+      <thead>
+        <tr><th>Seção</th><th>Hoje</th><th>Vem de</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>O que estamos vendo</td><td>existe</td><td><code>entender</code></td></tr>
+        <tr><td>O que pode estar acontecendo</td><td class="novo">nova</td><td>o "conectar os pontos" da M1</td></tr>
+        <tr><td>Por onde eu começaria</td><td class="novo">nova</td><td>a tabela de prioridade do app antigo</td></tr>
+        <tr><td>O que fazer diferente</td><td>existe</td><td><code>diferente</code></td></tr>
+        <tr><td>O que falar</td><td>existe</td><td><code>frases</code></td></tr>
+        <tr><td>Como apresentar pra ela</td><td class="novo">nova</td><td>"como esta criança recebe melhor"</td></tr>
+        <tr><td>Uma brincadeira</td><td>existe</td><td><code>brincadeiras</code> + <code>atividades</code></td></tr>
+        <tr><td>Conversar com você</td><td>existe</td><td><code>crencas</code></td></tr>
+        <tr><td>O que observar</td><td>existe</td><td><code>observar</code></td></tr>
+        <tr><td>Daqui a uma semana</td><td class="novo">nova</td><td>acompanhamento</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>
+    <strong>Duas seções que existem hoje não apareceram:</strong> <code>rotina</code> e
+    <code>historia_social</code> são condicionais e este caso não pede nenhuma das
+    duas. Deixá-las de fora é o comportamento certo — seção vazia é pior que seção
+    ausente.
+  </p>
+  <p>
+    <strong>O que a maquete assume e ainda precisa ser provado:</strong> que as
+    conquistas ("foi sozinha comprar pão", "contou pela primeira vez") chegam ao
+    gerador do plano. Elas chegam à conversa desde ontem; ao plano, não verifiquei.
+  </p>
+</div>
+
+</body>
+</html>

@@ -69,9 +69,32 @@ describe("caminhos de começo — sem virar menu de funcionalidades", () => {
     expect(NUCLEO).toMatch(/terminar sem pergunta é frequentemente o certo/);
   });
 
-  it("ajuda antes de investigação infinita", () => {
-    expect(NUCLEO).toMatch(/HAVENDO INFORMAÇÃO PARA UM PRIMEIRO PASSO SEGURO, DÊ O PRIMEIRO PASSO/);
-    expect(NUCLEO).toMatch(/não colete porque mais informação seria interessante/);
+  /**
+   * ⚠️ O TEXTO MUDOU DE LUGAR EM 13/08/2026, e a intenção do teste continua.
+   *
+   * A VOZ 2 abria com "DIREÇÃO ANTES DE INVESTIGAÇÃO" e "HAVENDO INFORMAÇÃO
+   * PARA UM PRIMEIRO PASSO SEGURO, DÊ O PRIMEIRO PASSO" — a regra rígida de
+   * ajudar antes de perguntar. Ela foi SUBSTITUÍDA pelo "ORIENTAR OU
+   * PERGUNTAR", de seis passos, porque a versão rígida errava: "ele não quer
+   * entrar na escola" recebeu 28 palavras e duas perguntas sem nenhuma ajuda,
+   * e ali perguntar ERA o certo — a causa muda tudo.
+   *
+   * Manter as duas no núcleo era contradição escrita: um trecho mandava dar
+   * direção sempre, o outro mandava decidir por turno. A poda tirou a antiga.
+   *
+   * O que este teste protege não muda: a Ayla não pode investigar sem fim. O
+   * guardião disso agora é o passo 5 ("se não muda, ajude agora") e o freio de
+   * coletar por hábito.
+   */
+  it("ajuda quando já dá — não investiga sem fim", () => {
+    expect(NUCLEO).toMatch(/ORIENTAR OU PERGUNTAR/);
+    expect(NUCLEO).toMatch(/Se não muda, ajude agora/);
+    expect(NUCLEO).toMatch(/Nunca investigue por hábito/);
+    // E a contradição não pode voltar pela porta dos fundos.
+    expect(
+      NUCLEO,
+      "a regra rígida de ajudar-antes voltou e agora compete com os seis passos",
+    ).not.toMatch(/DIREÇÃO ANTES DE INVESTIGAÇÃO/);
   });
 
   it("acolhimento não é obrigação de abertura", () => {
