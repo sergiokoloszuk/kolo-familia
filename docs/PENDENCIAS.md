@@ -508,6 +508,74 @@ Aberta em: 2026-08-11 · Origem: fatia de autoridade do Plano (5490c24)
 
 ---
 
+### PEND-054
+**A janela de lote custa 7 segundos em TODO turno do WhatsApp**
+Bloco: **A · Condução** · Prioridade: **P0** · Estado: **ABERTA — consulta pronta, aguardando dado de produção**
+Aberta em: 2026-08-13 · Origem: missão de latência (97d0765)
+
+> **`lote-inbound.ts:62` dorme 7 segundos fixos antes de qualquer
+> processamento, e é o maior componente isolado da latência percebida.**
+
+- MEDIDO local (n=5), sem contar a janela: até a mãe ver algo, p50 **12,9s**.
+  Somando os 7s: **~20s** no turno limpo, **~25s** com o fallback do parser.
+- A janela é decisão de produto, não defeito: junta balões que a mãe manda em
+  sequência, e o próprio arquivo assume o custo por escrito.
+- Consulta somente-leitura pronta em `docs/bancada/janela-lote-consulta.sql`,
+  com o recorte certo (burst ANTES da resposta da Ayla, não intervalo entre
+  mensagens consecutivas).
+- **Régua de decisão já acordada:** 3s se os casos entre 3-7s forem assunto
+  novo; 4s se houver complemento real perdido em 3s; manter 5-7s só se a
+  amostra qualitativa provar que junta frases do mesmo pensamento.
+- Critério de conclusão: janela ajustada com base no dado, e nova medição do
+  fluxo real depois.
+
+### PEND-055
+**O parser cai no modelo de fallback em parte dos turnos, e custa ~6s**
+Bloco: **A · Condução** · Prioridade: **P1** · Estado: **ABERTA — não investigada**
+Aberta em: 2026-08-13 · Origem: missão de latência
+
+> **`parser.ts:197` tenta o modelo leve e, se vier null, tenta o grande EM
+> SÉRIE. Disparou em 2 de 5 turnos medidos.**
+
+- A primeira medição acusou 4 de 5, mas **era artefato de fixture**: o
+  `novoId` do harness devolvia `membro-0016` e o `ParserSchema` exige
+  `z.string().uuid()`. Corrigido em `0bae762`; o índice caiu pela metade.
+- **NÃO SEI** por que ainda dispara nos 2 restantes: `tentar()` devolve null
+  por erro de rede, JSON inválido OU schema reprovado, e não distingui.
+  `prova-parser-real.test.ts` captura a resposta crua e serve pra isso.
+- Só investigar DEPOIS da janela (PEND-054) e de nova medição — pode deixar de
+  ser o maior gargalo.
+
+### PEND-056
+**As conquistas chegam ao prompt e a Ayla não as usa**
+Bloco: **A · Condução** · Prioridade: **P2** · Estado: **ABERTA — observação de 1 caso**
+Aberta em: 2026-08-13 · Origem: M1 (2cb06d6)
+
+> **Duas conquistas relevantes foram semeadas e nenhuma foi usada nos 5 turnos
+> do âncora — inclusive uma que era ponte perfeita.**
+
+- "Contou pela primeira vez o que tinha acontecido na aula" estava disponível
+  no turno em que a mãe disse "ela não consegue falar sobre isso". A Ayla
+  passou por cima.
+- A FIAÇÃO está provada (`conversa-e2e.test.ts`): o bloco `<ja_conquistou>`
+  chega, com a instrução de uso colada. O que não aconteceu foi o USO.
+- Amostra de 1. **Não corrigir com mais prompt antes de ver se repete** — o
+  padrão desta base é que regra somada a regra faz a nova perder.
+
+### PEND-057
+**Paralelizar parser e classificador esbarra em nove saídas antecipadas**
+Bloco: **A · Condução** · Prioridade: **P3** · Estado: **ABERTA — adiada por decisão**
+Aberta em: 2026-08-13 · Origem: missão de latência
+
+> **A independência está provada; a posição no fluxo é que não é gratuita.**
+
+- Entre o classificador (linha ~2060) e o parser (~2530) há **9 `return`
+  antecipados** (rotina, plano, PDF, aceite). Disparar o parser cedo paga uma
+  chamada de Haiku descartada nesses turnos, e deixa promise órfã em serverless.
+- Ganho: ~0,9s (serial 0,9+2,2=3,1s → paralelo 2,2s). Contra 4s sem custo na
+  janela — um oitavo do ganho com toda a complexidade.
+- Reavaliar só depois de PEND-054 e PEND-055.
+
 ### PEND-052
 **Patrimônio dos especialistas do app anterior — auditar o que não migrou**
 Bloco: **A · Condução** · Prioridade: **P2** · Estado: **ABERTA**
