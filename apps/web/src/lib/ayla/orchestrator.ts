@@ -2172,10 +2172,27 @@ export async function processInbound(
   // `lerFeedbackDaRotina` exige âncora no quadro daquele membro antes de mexer.
   const ehFeedbackDeRotina =
     !seguranca.aberta && !rotinaConversa && classificarFeedbackRotina(inbound.texto) !== null;
+  // ⚠️ ESTE É O PORTÃO DO CASO ANA/GEOVANNA (11/08/2026, PEND-044). "Não achei
+  // uma rotina pra ajustar 🌿" nasce em `editarRotina`, e quem abriu a porta foi
+  // `pedeEditarRotina` — não o portão de criar, corrigido em ad59254.
+  //
+  // MEDIDO nas funções reais: `pedeEditarRotina` abre para 4 de 6 usos
+  // CONCEITUAIS de "mudar a rotina" ("qdo muda a rotina ela fica mal", "ele não
+  // aceita mudar a rotina") e para apenas 2 dos 8 pedidos legítimos de edição —
+  // os outros 6 entram por `intent === "rotina_editar"` ou pelo feedback. Ou
+  // seja: como gatilho isolado ele erra mais do que acerta.
+  //
+  // O ato de EDITAR passa a ser exigido só dele. `intent === "rotina_editar"` e
+  // `ehFeedbackDeRotina` ficam intocados de propósito: o feedback real ("já faz
+  // sozinho", "não funcionou até o jantar") é `ambiguo` para o classificador —
+  // é edição pela NECESSIDADE, não pelo ato —, e exigir o ato ali mataria o
+  // caminho inteiro.
+  const pedidoDeEditarRotina =
+    pedeEditarRotina(inbound.texto) && atoSobreArtefato(inbound.texto) === "editar";
   if (
     !seguranca.aberta &&
     !rotinaConversa &&
-    (intent === "rotina_editar" || pedeEditarRotina(inbound.texto) || ehFeedbackDeRotina)
+    (intent === "rotina_editar" || pedidoDeEditarRotina || ehFeedbackDeRotina)
   ) {
     const ctxR = await loadFamiliaParaEnvio(supabase, family.id);
     const alvo = alvoDaRotina(ctxR, membroConversa);
