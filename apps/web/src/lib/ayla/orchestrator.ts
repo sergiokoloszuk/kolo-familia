@@ -74,6 +74,7 @@ import { dividirEmBolhas, ritmoDasBolhas, TETO_ESPERA_SEGUNDOS } from "./bolhas"
 import { semOutrosMembros } from "./membro-escopo";
 import { classificarFeedbackRotina } from "./rotina-feedback";
 import { pedeArtefatoImprimivel, apontaProRecente } from "./rotina-pdf-rota";
+import { atoSobreArtefato } from "@/lib/conducao/ato-artefato";
 import { resolverMembroAlvo } from "./membro-alvo";
 import {
   segurancaAberta,
