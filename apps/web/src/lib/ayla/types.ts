@@ -64,6 +64,13 @@ export type AylaTipoReativa =
   | "seguranca"
   /** A família confirmou atendimento/contato. Fecha o estado. */
   | "seguranca_encerrada"
+  /** Chegou mídia que a Ayla não consegue ler (hoje: vídeo) e não havia texto
+   *  junto. O recado é FIXO e não passa por modelo nenhum.
+   *
+   *  Tipo próprio pelo mesmo motivo de `rotina_pronta` e `plano_reenviado`: a
+   *  ponte do Plano dispara em `resposta_registro`, e um vídeo marcado assim
+   *  faria a mãe receber um PDF de plano por ter mandado um vídeo. */
+  | "midia_nao_suportada"
   | "assinatura_nudge";
 
 export type AylaTipo = AylaTipoProativa | AylaTipoReativa;

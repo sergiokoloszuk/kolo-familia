@@ -44,6 +44,7 @@ import { traduzirProativa } from "./traduzir";
 import { montarPonteWhatsApp, gerarMagicLink, montarPlanoFimDeSemana } from "./ponte";
 import { aguardarTurnoDaMae, descartarTurnoPendente } from "./lote-inbound";
 import { pedeUmPlano } from "@/lib/ia/pedido-plano";
+import { abreFluxoDeArtefato, atoSobreArtefato } from "@/lib/conducao/ato-artefato";
 import {
   rotinaConversaPendente,
   pediuRotinaExplicitamente,
@@ -1757,9 +1758,49 @@ export async function processInbound(
     textoAtual: inbound.texto,
   });
   if (!turno) return { tratada: false, familia: family.id };
-  if (turno.quantidade > 1) {
+  // ⚠️ ADOTA O TEXTO DO LOTE SEMPRE QUE ELE TIVER TEXTO — antes era só
+  // `quantidade > 1`, e `quantidade` conta textos NÃO VAZIOS, não linhas
+  // claimadas. Uma mensagem só-de-mídia (texto vazio) entrando no mesmo lote de
+  // uma mensagem de texto devolvia `quantidade === 1`, a condição não passava, e
+  // o turno seguia com o texto vazio da mídia — a fala da mãe se perdia. Já
+  // valia para foto sem legenda; com vídeo passaria a valer muito mais.
+  // Quando o turno é uma mensagem de texto só, `turno.texto` É `inbound.texto`:
+  // adotar não muda nada.
+  if (turno.texto.trim()) {
     // O resto da função (parser, responder, ponte) passa a ver a fala inteira.
     inbound = { ...inbound, texto: turno.texto };
+  }
+
+  // 3c. VÍDEO — a Ayla não assiste, e ficar muda é muito pior do que dizer isso.
+  //
+  // ⚠️ Até 13/08/2026 o vídeo nem chegava aqui: `parseZapiWebhook` devolvia null
+  // e o webhook respondia `{skipped:true}`. A mãe mandava o filho em crise e não
+  // recebia nada — nem um "recebi". Silêncio, não recusa.
+  //
+  // DEPOIS DO LOTE de propósito: vídeo + texto na MESMA rajada (≤3s) é um turno
+  // só, e quem responde é o texto. Vídeo sozinho cai aqui. ⚠️ Fora dos 3s são
+  // dois turnos — a mãe recebe este recado e depois a resposta ao texto. É o
+  // comportamento de hoje para qualquer rajada lenta, e pertence à PEND-058
+  // (mediana entre balões = 11,2s); NÃO se resolve alargando a janela.
+  //
+  // ⚠️ O DONO DESTA DECISÃO É O CÓDIGO, NÃO O MODELO. "Chegou vídeo e não há
+  // texto" é estado do que entrou, não interpretação — então nenhuma chamada
+  // conversacional acontece neste caminho. E o modelo nunca vê o vídeo nem como
+  // imagem: `imagemUrl` exige `midiaTipo === "image"`, igualdade estrita. É o
+  // orquestrador não oferecendo o que não existe, em vez de uma proibição em
+  // prompt — que competiria com "seja prestativa" e perderia.
+  if (inbound.midiaTipo === "video" && !inbound.texto.trim()) {
+    console.log(`[ayla] vídeo sem texto — recado honesto (family ${family.id})`);
+    const ctxVideo = await loadFamiliaParaEnvio(supabase, family.id);
+    const resp = await enviarEPersistir(supabase, {
+      family_account_id: family.id,
+      membro_atipico_id: null,
+      phone: ctxVideo?.whatsapp_e164 ?? inbound.phoneE164,
+      texto: TEXTO_VIDEO_SEM_TEXTO,
+      category: "reativa",
+      tipo: "midia_nao_suportada",
+    });
+    return { tratada: true, familia: family.id, resposta: resp };
   }
 
   // 3b. CRM Fase B: se o lead está em ABORDAGEM manual, a Ayla NÃO responde —
@@ -2130,10 +2171,27 @@ export async function processInbound(
   // `lerFeedbackDaRotina` exige âncora no quadro daquele membro antes de mexer.
   const ehFeedbackDeRotina =
     !seguranca.aberta && !rotinaConversa && classificarFeedbackRotina(inbound.texto) !== null;
+  // ⚠️ ESTE É O PORTÃO DO CASO ANA/GEOVANNA (11/08/2026, PEND-044). "Não achei
+  // uma rotina pra ajustar 🌿" nasce em `editarRotina`, e quem abriu a porta foi
+  // `pedeEditarRotina` — não o portão de criar, corrigido em ad59254.
+  //
+  // MEDIDO nas funções reais: `pedeEditarRotina` abre para 4 de 6 usos
+  // CONCEITUAIS de "mudar a rotina" ("qdo muda a rotina ela fica mal", "ele não
+  // aceita mudar a rotina") e para apenas 2 dos 8 pedidos legítimos de edição —
+  // os outros 6 entram por `intent === "rotina_editar"` ou pelo feedback. Ou
+  // seja: como gatilho isolado ele erra mais do que acerta.
+  //
+  // O ato de EDITAR passa a ser exigido só dele. `intent === "rotina_editar"` e
+  // `ehFeedbackDeRotina` ficam intocados de propósito: o feedback real ("já faz
+  // sozinho", "não funcionou até o jantar") é `ambiguo` para o classificador —
+  // é edição pela NECESSIDADE, não pelo ato —, e exigir o ato ali mataria o
+  // caminho inteiro.
+  const pedidoDeEditarRotina =
+    pedeEditarRotina(inbound.texto) && atoSobreArtefato(inbound.texto) === "editar";
   if (
     !seguranca.aberta &&
     !rotinaConversa &&
-    (intent === "rotina_editar" || pedeEditarRotina(inbound.texto) || ehFeedbackDeRotina)
+    (intent === "rotina_editar" || pedidoDeEditarRotina || ehFeedbackDeRotina)
   ) {
     const ctxR = await loadFamiliaParaEnvio(supabase, family.id);
     const alvo = alvoDaRotina(ctxR, membroConversa);
@@ -2215,7 +2273,25 @@ export async function processInbound(
   //
   // O discriminador certo não é o FORMATO da mensagem, é um FATO: a rotina
   // existe? Se nasceu agora, ela é o referente e não há o que adivinhar.
-  const pedeImprimivel = pedeArtefatoImprimivel(inbound.texto);
+  // ⚠️ DETECTAR NÃO É AUTORIZAR — o caso Juliana/Daniel (11/08/2026, PEND-044).
+  //
+  // A mãe escreveu "ele esta colocando muita coisa na boca, planta, bonecos,
+  // papel, plastico". `PEDE_PDF` casa `\bpapel\b` — a palavra está lá porque
+  // "me manda no papel" é pedido legítimo de impressão. O portão abriu com uma
+  // condição verdadeira, e ela recebeu "Ainda não temos uma rotina montada pra
+  // eu transformar em PDF" no lugar de ajuda com o filho.
+  //
+  // `pedeArtefatoImprimivel` continua sendo o que sempre foi: detector de
+  // VOCABULÁRIO e de alvo. Quem autoriza é o ATO.
+  //
+  // ⚠️ E OS ATOS AQUI NÃO SÃO OS DE `abreFluxoDeArtefato`. Neste artefato
+  // `reenviar` É o caso central — "me manda o pdf" é a frase mais comum de
+  // todas —, enquanto no Plano `reenviar` deliberadamente NÃO abre geração.
+  // Contratos diferentes para artefatos diferentes, escritos por extenso.
+  const atoImprimivel = atoSobreArtefato(inbound.texto);
+  const autorizaImprimivel =
+    atoImprimivel === "criar" || atoImprimivel === "editar" || atoImprimivel === "reenviar";
+  const pedeImprimivel = pedeArtefatoImprimivel(inbound.texto) && autorizaImprimivel;
   const temRotinaRecem = pedeImprimivel
     ? await existeRotinaRecente(supabase, family.id, membroConversa)
     : false;
@@ -2257,8 +2333,37 @@ export async function processInbound(
   }
 
   // fluxo. `pediuRotinaExplicitamente` cobre o período nomeado sem a palavra.
+  //
+  // ⚠️ FALAR SOBRE ROTINA NÃO É PEDIR UMA ROTINA (11/08/2026, PEND-044).
+  //
+  // `pedeRotina` e `pediuRotinaExplicitamente` perguntam "a palavra aparece E
+  // existe um verbo por perto?" — e verbo não separa PEDIR de DESCREVER. Medido
+  // contra as funções reais: **5 de 6 usos conceituais** abriam o artefato. O
+  // caso que fechou a conta foi "Quando é PRECISO mudar a rotina de repente ela
+  // sente" — o radical `precis` casou, e uma descrição do que acontece com a
+  // criança virou pedido de artefato.
+  //
+  // Os dois continuam como PISO (a rotina precisa ser mencionada); o que se
+  // acrescenta é o ATO — `criar` e `editar` abrem; `conversar_sobre`,
+  // `reenviar`, `recusar` e `ambiguo` não. A composição só pode ESTREITAR o
+  // portão, nunca alargá-lo.
+  //
+  // ⚠️ `intent === "organizacao"` FICA, e a decisão de mantê-lo é deliberada.
+  //
+  // Eu havia tirado: o comentário abaixo já dizia que ela "NÃO diz que precisa
+  // de rotina", e o código entrava assim mesmo. Mas **não há prova** de que um
+  // turno real classificado como `organizacao` tenha criado artefato indevido —
+  // `conhecimento_consultado` não registra intenção, e a suspeita é INFERIDA.
+  // Corrigir por inferência é o que esta frente inteira existe para não fazer.
+  // Quando a instrumentação registrar a intenção (PEND-040), isto se decide com
+  // dado. Até lá, o que muda é só o que está medido.
+  const pedidoDeRotina =
+    (pedeRotina(inbound.texto) || pediuRotinaExplicitamente(inbound.texto)) &&
+    abreFluxoDeArtefato(atoSobreArtefato(inbound.texto));
   if (
     !seguranca.aberta &&
+    // `rotinaConversa` é CONTINUAÇÃO de uma montagem já em curso — a família já
+    // pediu, e o turno é a resposta dela. Não passa pelo ato de novo.
     (rotinaConversa ||
       intent === "rotina_criar" ||
       // "organizacao" entra na MESMA capacidade — e é por isso que ela existe.
@@ -2266,8 +2371,7 @@ export async function processInbound(
       // NÃO diz que precisa de rotina. Quem escolhe entre orientação, sequência
       // curta e o período inteiro é a prontidão, um passo adiante.
       intent === "organizacao" ||
-      pedeRotina(inbound.texto) ||
-      pediuRotinaExplicitamente(inbound.texto))
+      pedidoDeRotina)
   ) {
     const ctxR = await loadFamiliaParaEnvio(supabase, family.id);
     const alvo = alvoDaRotina(ctxR, rotinaConversa?.membroId ?? membroConversa);
@@ -3371,6 +3475,22 @@ async function registrarExperimento(
 // ============================================================
 // Confirmação de sugestão pendente ("sim" no WhatsApp)
 // ============================================================
+
+/**
+ * O RECADO DO VÍDEO — fixo, e fixo de propósito.
+ *
+ * Ele diz três coisas, nesta ordem, e as três importam: **recebi** (a mãe não
+ * fica sem saber se chegou), **não consigo assistir** (sem rodeio e sem
+ * prometer para depois — o CATÁLOGO proíbe anunciar trabalho futuro), e **me
+ * conta que eu penso com você** (a conversa continua, em vez de terminar num
+ * "não posso").
+ *
+ * Não passa por modelo: é a mesma frase toda vez, para todo mundo. Famílias
+ * es/en recebem no idioma delas pelo choke point de tradução que já existe em
+ * `enviarEPersistir` — para PT não há chamada nenhuma.
+ */
+const TEXTO_VIDEO_SEM_TEXTO =
+  "Recebi seu vídeo 💛 Eu ainda não consigo assistir ao vídeo por aqui. Me conta o que você quer que eu observe nele — pode escrever ou mandar um áudio. Aí eu penso nisso com você.";
 
 const AFIRMACOES = new Set([
   "sim", "s", "simm", "sim sim", "claro", "claro que sim", "pode", "pode sim",
