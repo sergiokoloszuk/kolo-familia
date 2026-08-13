@@ -535,6 +535,58 @@ Aberta em: 2026-08-13 · Origem: missão de latência (97d0765)
   amostra qualitativa provar que junta frases do mesmo pensamento.
 - Critério de conclusão: janela ajustada com base no dado, e nova medição do
   fluxo real depois.
+- **PUBLICADA E PROVADA EM PRODUÇÃO em 2026-08-13** (PR #95, merge `2d790f1`).
+  Degraus: Implementado OK · Testado OK · Regressão OK (1839 testes) · Build OK
+  · Publicado OK · Configuração N/A (nenhuma env/cron/segredo) · Smoke OK ·
+  **Validado em produção OK** · Evidência: turno de vídeo real medido ponta a
+  ponta em **4,4 s** (inbound → outbound), impossível com a janela de 7 s.
+  Dado de teste apagado ao fim.
+
+### PEND-062
+**Vídeo no WhatsApp deixava a Ayla muda — CONCLUÍDA**
+Bloco: **A · Condução** · Prioridade: **P1 de EXPERIÊNCIA** · Estado: **CONCLUÍDA em 2026-08-13 (0a9ad4e / PR #95)**
+Aberta e concluída em: 2026-08-13 · Origem: relato de uso real
+
+> **A mãe mandava um vídeo do filho e não recebia nada. Nem um "recebi".**
+
+- CAUSA, VI NO CÓDIGO: `parseZapiWebhook` devolvia `null` para vídeo, o webhook
+  respondia `{skipped:true}` e `processInbound` nunca era chamado. Não era a
+  Ayla sem saber o que dizer — ela não era acordada. E `video.caption` não era
+  lido, então quem escrevia junto do vídeo perdia o próprio texto.
+- MEDIDO antes: `ayla_messages` tinha 327 linhas com mídia — 227 áudio, 100
+  imagem, **zero vídeo**.
+- Degraus: Implementado OK · Testado OK (29 testes) · Regressão OK · Build OK ·
+  Publicado OK · Configuração N/A · Smoke OK · **Validado em produção OK**.
+- Evidência de produção (13/08, conta de QA do próprio dev): resposta
+  *"Recebi seu vídeo 💛 Eu ainda não consigo assistir…"*, `tipo` gravado como
+  `midia_nao_suportada`, `midia_tipo='video'` e `midia_url` persistidos, 4,4 s
+  ponta a ponta **sem nenhuma chamada de modelo**, vídeo nunca baixado.
+- Fica aberto e separado: [PEND-061] — mensagem só-de-mídia some do histórico.
+
+### PEND-063
+**"Papel" sequestrava a conversa para Rotina/PDF — CONCLUÍDA**
+Bloco: **A · Condução** · Prioridade: **P1** · Estado: **CONCLUÍDA em 2026-08-13 (283c82b / PR #95)**
+Aberta e concluída em: 2026-08-13 · Origem: caso Juliana/Daniel, produção 11/08
+
+> **A Ayla pediu que a mãe contasse algo do dia. A mãe contou que o filho está
+> levando coisas à boca — "planta, bonecos, papel, plastico" — e foi cobrada
+> sobre a sequência do dia para montar uma rotina.**
+
+- CAUSA, VI NO CÓDIGO: `PEDE_PDF` casa `\bpapel\b`, porque "me manda no papel"
+  é pedido legítimo de impressão. A condição era VERDADEIRA; ela só respondia a
+  outra pergunta. **Vocabulário detecta; ato autoriza.**
+- Verificado no banco antes de concluir: zero rotinas e zero planos na família;
+  a proativa das 19:01 tinha `tipo="rotina"` e `rotinaConversaPendente` procura
+  `tipo="rotina_conversa"` — nenhum estado pendente contaminou o turno.
+- Degraus: Implementado OK · Testado OK (43 testes) · Regressão OK · Build OK ·
+  Publicado OK · Configuração N/A · Smoke OK · **Validado em produção OK**.
+- Evidência de produção (13/08): *"ele está colocando papel e brinquedos na
+  boca"* recebeu orientação prática de segurança, **sem uma palavra sobre
+  rotina ou PDF**; e o controle positivo *"me manda no papel"* continuou
+  entregando o PDF da rotina. O falso positivo morreu sem matar o verdadeiro.
+- ⚠️ O turno posterior *"a gente retoma a rotina"* era **consequência** do fio
+  falso, não defeito próprio: o modelo continuou fielmente uma conversa que
+  nunca deveria ter existido. Sem o primeiro turno errado, o fio não nasce.
 
 ### PEND-055
 **O parser cai no modelo de fallback em parte dos turnos, e custa ~6s**
@@ -4102,7 +4154,7 @@ trimestralmente, o que vier antes.
 
 ---
 
-**Próximo ID livre: PEND-033. *(024 e 025 reservadas por frentes ainda não publicadas.)***
+**Próximo ID livre: PEND-064. *(024 e 025 reservadas por frentes ainda não publicadas.)***
 
 > Conferir contra `origin/main`, não contra o seu branch. Dois branches podem
 > reivindicar o mesmo número — o conflito de merge nesta linha é o alarme.
