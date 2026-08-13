@@ -508,6 +508,36 @@ Aberta em: 2026-08-11 · Origem: fatia de autoridade do Plano (5490c24)
 
 ---
 
+### PEND-064
+**Regressão de latência conversacional — o banco custa mais que o modelo**
+Bloco: **A · Condução** · Prioridade: **P1 ALTA de EXPERIÊNCIA** · Estado: **ABERTA — diagnóstico feito, nada corrigido**
+Aberta em: 2026-08-13 · Origem: missão de latência, depois do PR #95
+
+> **MEDIDO: 27 idas sequenciais ao banco antes da primeira bolha sair, a ~400ms
+> cada — ~10,8s. O modelo principal custa ~7,3s. O banco custa MAIS que a IA.**
+
+- Baseline de produção (13/08/2026, smoke real): turno conversacional **21,6s**
+  · PDF determinístico **10,2s** · vídeo sem LLM **4,4s**.
+- MEDIDO, latência de UMA consulta trivial de dentro da Vercel (10 amostras,
+  `/api/health`, `count head limit 1`): **365-543ms, mediana ~400ms**. Não é
+  query pesada — é rede + PostgREST. O Supabase é self-hosted no Easypanel,
+  fora da infraestrutura da Vercel.
+- MEDIDO, chamada principal (Sonnet, 18.628 tokens de entrada): 4,5s / 7,3s /
+  10,7s para 99 / 198 / 348 tokens de saída. A latência acompanha a SAÍDA, não
+  a entrada — cortar prompt não é o caminho óbvio.
+- MEDIDO, crescimento do pipeline: `orchestrator.ts` foi de **992 para 4.093
+  linhas** e de **32 para 78** `.from()` entre 24/05 (fase rápida) e hoje.
+- VI NO CÓDIGO, a otimização perdida: `ca1cacb` (24/05) mandava a resposta
+  **parágrafo a parágrafo** no WhatsApp. Hoje nada sai antes da geração
+  terminar — a inspeção de fronteira precisa do texto inteiro em memória
+  (decisão consciente, `ada8129`, e existe por causa de um diagnóstico
+  informal que chegou a uma mãe em produção).
+- Núcleo de produção **56.954 chars**; branch novo **72.937 (+28%)** — o novo
+  NÃO está no ar e não explica a latência de hoje.
+- Critério de conclusão: nova medição decomposta, com o turno conversacional
+  abaixo de 10s, sem perder personalização, Boas Práticas nem a rede de
+  fronteiras.
+
 ### PEND-054
 **A janela de lote custa 7 segundos em TODO turno do WhatsApp**
 Bloco: **A · Condução** · Prioridade: **P0 de EXPERIÊNCIA** · Estado: **CONCLUÍDA em 2026-08-13 (05ca5b2)**
@@ -4154,7 +4184,7 @@ trimestralmente, o que vier antes.
 
 ---
 
-**Próximo ID livre: PEND-064. *(024 e 025 reservadas por frentes ainda não publicadas.)***
+**Próximo ID livre: PEND-065. *(024 e 025 reservadas por frentes ainda não publicadas.)***
 
 > Conferir contra `origin/main`, não contra o seu branch. Dois branches podem
 > reivindicar o mesmo número — o conflito de merge nesta linha é o alarme.
