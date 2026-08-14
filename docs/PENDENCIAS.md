@@ -508,6 +508,54 @@ Aberta em: 2026-08-11 · Origem: fatia de autoridade do Plano (5490c24)
 
 ---
 
+### PEND-065
+**A função da Vercel roda em Washington e o banco está em São Paulo**
+Bloco: **A · Condução** · Prioridade: **P0 de EXPERIÊNCIA** · Estado: **ABERTA — causa provada, nenhuma alteração feita**
+Aberta em: 2026-08-14 · Origem: PEND-064, investigação de infraestrutura
+
+> **PROVEI: `X-Vercel-Id: gru1::iad1` — a requisição entra em São Paulo e a
+> FUNÇÃO EXECUTA em `iad1` (Washington D.C.). O banco resolve para
+> `82.29.56.121` → São Paulo, BR, Hostinger (AS47583). Toda consulta
+> atravessa o continente duas vezes.**
+
+- MEDI a mesma consulta trivial, mesmo endpoint, dois pontos:
+  - **da Vercel (iad1): 365-543 ms**, mediana ~390 ms (10 amostras via `/api/health`);
+  - **de uma máquina no Brasil: 46-95 ms**, mediana **54 ms** (8 amostras).
+  - Diferença: **~330 ms por consulta, que é só distância.**
+- Com ~19 esperas sequenciais no caminho crítico, isso é **~6 s por turno** —
+  mais que qualquer outra alavanca desta frente, e **sem tocar em uma linha da
+  inteligência da Ayla**.
+- `vercel.json` **não declara `regions`** (VI NO CÓDIGO): a região é o padrão
+  do projeto, não uma decisão registrada no repositório.
+- ⚠️ **NÃO ALTERAR SEM PORTÃO.** Mudar a região da função é decisão de
+  infraestrutura: afeta latência de TODAS as rotas, dos crons e das chamadas a
+  Anthropic/OpenAI/Stripe/Z-API, que hoje saem dos EUA. O ganho no banco pode
+  ser parcialmente devolvido nas APIs externas — **NÃO MEDI** esse lado.
+- Critério de conclusão: turno conversacional medido em produção depois da
+  decisão de região, com o custo das APIs externas medido junto.
+
+### PEND-066
+**Dez portões em fila no caminho crítico — e o paralelismo funciona**
+Bloco: **A · Condução** · Prioridade: **P1** · Estado: **ABERTA — estimativa atualizada por medição**
+Aberta em: 2026-08-14 · Origem: PEND-064
+
+> **Entre o lote e o classificador de intenção há dez leituras em fila. Cada
+> uma paga a ida completa até São Paulo.**
+
+- MEDI que o paralelismo do PostgREST é real e escala bem: 3 sequenciais
+  169 ms · 3 em paralelo 91 ms (**1,9×**) · 5 em paralelo 120 ms · **10 em
+  paralelo 94 ms**. Dez requests custam praticamente o mesmo que dois.
+- ESTIMATIVA ATUALIZADA: agrupá-los em ondas seguras levaria ~10 idas a ~1-2,
+  ou seja **~3,2-3,6 s** com a latência de hoje (400 ms), e ~0,5 s se a
+  PEND-065 for resolvida antes. **A ordem importa: resolver a região primeiro
+  reduz o valor desta ficha.**
+- ⚠️ O motivo de estarem em fila NÃO é descuido: cada portão pode retornar
+  cedo. Paralelizar significa PREFETCH — ler coisas que às vezes não serão
+  usadas. É trocar consultas a mais por latência a menos, e a conta muda
+  completamente conforme a PEND-065.
+- Critério de conclusão: portões agrupados em ondas, com equivalência de
+  roteamento provada e medição antes/depois.
+
 ### PEND-064
 **Regressão de latência conversacional — o banco custa mais que o modelo**
 Bloco: **A · Condução** · Prioridade: **P1 ALTA de EXPERIÊNCIA** · Estado: **ABERTA — diagnóstico feito, nada corrigido**
@@ -537,6 +585,23 @@ Aberta em: 2026-08-13 · Origem: missão de latência, depois do PR #95
 - Critério de conclusão: nova medição decomposta, com o turno conversacional
   abaixo de 10s, sem perder personalização, Boas Práticas nem a rede de
   fronteiras.
+- **DEGRAU 1 — consultas redundantes e paralelismo seguro: PUBLICADO em
+  2026-08-14** (PR #96, merge `41393af`). Histórico lido 1× em vez de 3×; dois
+  grupos de leituras independentes em `Promise.all`. MEDIDO local: 9,27s →
+  7,52s (−1,75s). Smoke funcional em produção OK (conversa, perfil,
+  continuidade, rotina, vídeo, plano — 0 artefatos indevidos).
+  ⚠️ **O ganho NÃO é distinguível do ruído ponta a ponta**: 22,0 / 18,9 / 26,6s
+  em produção, contra 21,6s de baseline. A variância do modelo (5-9s conforme
+  o tamanho da SAÍDA) é maior que o ganho. Sem regressão e sem motivo de
+  rollback; a fatia fica publicada.
+- ⚠️ **CORREÇÃO AO DIAGNÓSTICO ANTERIOR.** A resposta principal em produção NÃO
+  é Sonnet: `api_calls` mostra `ayla_responder · gpt-5.6-luna`. O diagnóstico
+  de 13/08 inferiu Anthropic pelo padrão de `modoConversacional()` — errado.
+  Auxiliares seguem em `claude-haiku-4-5`.
+- MEDIDO em produção, decomposição real de um turno de 22,0s:
+  inbound → parser **8,9s** · parser → responder **9,0s** · responder →
+  primeira bolha **4,1s**.
+- ⚠️ Dois achados novos, com ficha própria: [PEND-065] e [PEND-066].
 
 ### PEND-054
 **A janela de lote custa 7 segundos em TODO turno do WhatsApp**
@@ -4184,7 +4249,7 @@ trimestralmente, o que vier antes.
 
 ---
 
-**Próximo ID livre: PEND-065. *(024 e 025 reservadas por frentes ainda não publicadas.)***
+**Próximo ID livre: PEND-067. *(024 e 025 reservadas por frentes ainda não publicadas.)***
 
 > Conferir contra `origin/main`, não contra o seu branch. Dois branches podem
 > reivindicar o mesmo número — o conflito de merge nesta linha é o alarme.
