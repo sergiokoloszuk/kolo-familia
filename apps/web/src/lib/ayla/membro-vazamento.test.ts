@@ -51,7 +51,10 @@ describe("o histórico sabe de quem é cada fala", () => {
 
   it("o caminho principal passa foco e nomes para o histórico", () => {
     expect(ORCH).toMatch(
-      /carregarHistorico\(supabase, family\.id, inbound\.texto, membroContextoId, nomePorMembro\)/,
+      // 13/08/2026 (PEND-064): ganhou o sexto argumento — o histórico já lido
+      // neste turno. Foco e nomes seguem nas mesmas posições, que é o que
+      // impede a fala de um irmão virar fato do outro.
+      /carregarHistorico\(\s*supabase,\s*family\.id,\s*inbound\.texto,\s*membroContextoId,\s*nomePorMembro,\s*await historicoDoTurno\(\),\s*\)/,
     );
   });
 });

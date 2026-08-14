@@ -132,8 +132,15 @@ describe("vetor: o Kolo Vivo (perfil permanente)", () => {
   it("o histórico do PARSER continua inteiro — é ele que descobre o membro", () => {
     // Recortar a entrada do parser seria circular: precisaríamos do membro pra
     // achar o membro. O recorte fica na escrita, onde o dano é permanente.
+    // 13/08/2026 (PEND-064): a chamada virou multilinha, entrou num
+    // `Promise.all` e passou a receber o histórico já lido neste turno. O que
+    // este teste defende NÃO mudou — o `null` na posição de `membroFocoId` é a
+    // prova de que a entrada do parser continua SEM recorte por criança.
     expect(ORCH).toMatch(
-      /const historicoParser = await carregarHistorico\(supabase, family\.id, inbound\.texto\);/,
+      /const \[ctx, \{ data: ultimoCheckin \}, historicoParser\] = await Promise\.all\(\[/,
+    );
+    expect(ORCH).toMatch(
+      /carregarHistorico\(supabase, family\.id, inbound\.texto, null, undefined, bruto\)/,
     );
   });
 });

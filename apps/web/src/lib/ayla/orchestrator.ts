@@ -1669,11 +1669,30 @@ export async function processInbound(
   // "sair", ou bloqueio manual do admin — ex.: criança/não-titular usando o
   // número), NÃO responde a nada. Antes o reativo ignorava isso e continuava
   // respondendo (inclusive pra quem pediu "sair").
-  const { data: pref } = await supabase
-    .from("ayla_preferences")
-    .select("desativada, consentimento_em")
-    .eq("family_account_id", family.id)
-    .maybeSingle();
+  // ⚠️ AS TRÊS LEITURAS DE ABERTURA, EM PARALELO (13/08/2026, PEND-064).
+  //
+  // Eram três idas em fila — preferências, oferta de fim de semana e rotina
+  // pendente —, e nenhuma depende da outra: as três só precisam de
+  // `family.id` e do horário da mensagem. A ~400 ms cada, a fila custava
+  // ~1,2 s onde cabia ~0,4 s.
+  //
+  // ⚠️ OS PORTÕES NÃO MUDARAM DE ORDEM. Continuam sendo avaliados um a um,
+  // logo abaixo, na mesma sequência de antes — o que mudou é QUANDO os dados
+  // chegam, não quem decide. Numa família bloqueada, as outras duas leituras
+  // acontecem à toa: são `select` puros, sem efeito, e o preço é ler duas
+  // linhas a mais num caminho raro em vez de 800 ms em todos os outros.
+  //
+  // `ofertaFds` e `rotinaConversa` continuam calculadas ANTES de o inbound
+  // ser persistido — é disso que depende detectar "primeira resposta".
+  const [{ data: pref }, ofertaFds, rotinaConversa] = await Promise.all([
+    supabase
+      .from("ayla_preferences")
+      .select("desativada, consentimento_em")
+      .eq("family_account_id", family.id)
+      .maybeSingle(),
+    ofertaFimDeSemanaPendente(supabase, family.id, inbound.recebidaEm),
+    rotinaConversaPendente(supabase, family.id, inbound.recebidaEm),
+  ]);
   // Bloqueada DE VERDADE = desativada E já tinha consentido (opt-out "sair" ou
   // bloqueio manual do admin). `desativada` + SEM consentimento é só o padrão do
   // cadastro (LGPD, "ainda não consentiu") — NÃO bloqueia o reativo.
@@ -1690,16 +1709,6 @@ export async function processInbound(
     await alertarNaoTitular(supabase, family.id, inbound.phoneE164, inbound.texto);
     return { tratada: false, familia: family.id };
   }
-
-  // 1b. Há uma oferta de fim de semana esperando resposta? (calcular ANTES
-  // de persistir o inbound atual, pra "primeira resposta" ser detectada).
-  const ofertaFds = await ofertaFimDeSemanaPendente(
-    supabase,
-    family.id,
-    inbound.recebidaEm,
-  );
-
-  const rotinaConversa = await rotinaConversaPendente(supabase, family.id, inbound.recebidaEm);
 
   // 2. Persiste inbound — E usa como TRAVA DE IDEMPOTÊNCIA. A Z-API entrega o
   // mesmo webhook mais de uma vez (at-least-once); o índice único em
@@ -1736,6 +1745,26 @@ export async function processInbound(
     // Sem id (payload raro) — não dá pra deduplicar; insere normal.
     await supabase.from("ayla_messages").insert(baseInbound);
   }
+
+  /**
+   * O HISTÓRICO DO TURNO, LIDO UMA VEZ SÓ (13/08/2026, PEND-064).
+   *
+   * ⚠️ MEDIDO: a mesma consulta das 9 últimas falas rodava TRÊS VEZES por
+   * turno — no classificador de intenção, no parser e nos loaders paralelos.
+   * A ~400 ms cada, eram ~800 ms de rede jogados fora em TODO turno.
+   *
+   * ⚠️ PREGUIÇOSO DE PROPÓSITO: só dispara no primeiro consumidor. Entre este
+   * ponto e o parser há uma dúzia de portões que retornam cedo (comando, CRM,
+   * assinatura, fim de semana, menu…), e ler adiantado transformaria economia
+   * em consulta a mais nesses caminhos.
+   *
+   * ⚠️ ESCOPO: `const` local desta execução, amarrado a ESTE `family.id`. Não
+   * é cache global e não sobrevive ao turno — não há como um turno enxergar o
+   * histórico de outra família.
+   */
+  let historicoBrutoPromise: Promise<LinhaDeHistorico[]> | null = null;
+  const historicoDoTurno = () =>
+    (historicoBrutoPromise ??= lerHistoricoBruto(supabase, family.id));
 
   // 3. Comando? — antes do parser IA, mais rápido (PAUSAR/SAIR valem mesmo em
   // abordagem). Fica ANTES do controle de turno de propósito: comando é
@@ -2058,7 +2087,7 @@ export async function processInbound(
     ? { intencao: "outro" as const, tema: null, aceite: null, skills: [] as string[] }
     : await classificarIntencao({
         texto: inbound.texto,
-        ...(await ultimasFalas(supabase, family.id, inbound.texto)),
+        ...(await ultimasFalas(supabase, family.id, inbound.texto, await historicoDoTurno())),
         temasOnboarding: await carregarDesafiosOnboarding(supabase, membroConversa),
         // QUAL REPERTÓRIO CONSULTAR — decidido na MESMA chamada que já classifica
         // intenção e tema. Zero chamada de LLM a mais: o campo é o quarto de uma
@@ -2436,31 +2465,42 @@ export async function processInbound(
   }
 
   // 4. Parser IA
-  const ctx = await loadFamiliaParaEnvio(supabase, family.id);
+  //
+  // ⚠️ AS TRÊS LEITURAS QUE ALIMENTAM O PARSER, EM PARALELO (13/08/2026,
+  // PEND-064). Contexto da família, último check-in e histórico não dependem
+  // um do outro: os três só precisam de `family.id`. Em fila custavam três
+  // idas ao banco; juntos custam uma. `loadFamiliaParaEnvio` já era um
+  // `Promise.all` de três consultas por dentro — este é o mesmo padrão, um
+  // nível acima.
+  //
+  // O histórico vem do leitor do turno: se o classificador de intenção já o
+  // leu, aqui não custa nada.
+  const [ctx, { data: ultimoCheckin }, historicoParser] = await Promise.all([
+    loadFamiliaParaEnvio(supabase, family.id),
+    supabase
+      .from("ayla_daily_checkins")
+      .select("membro_atipico_id, membros_atipicos(nome)")
+      .eq("family_account_id", family.id)
+      .order("created_at", { ascending: false })
+      .limit(1),
+    // Histórico da conversa PRO PARSER: respostas curtas ("letra f", "adora
+    // dançar") só viram fato se ele entender o contexto. Sem recorte de
+    // membro, DE PROPÓSITO: é este parser que descobre de quem a mensagem
+    // fala — filtrar aqui seria circular. O recorte acontece onde o dano é
+    // permanente: na ESCRITA do Kolo Vivo.
+    historicoDoTurno().then((bruto) =>
+      carregarHistorico(supabase, family.id, inbound.texto, null, undefined, bruto),
+    ),
+  ]);
   if (!ctx) return { tratada: true, familia: family.id };
 
   // Último membro foco (pra desambiguar pronome em famílias 2+)
-  const { data: ultimoCheckin } = await supabase
-    .from("ayla_daily_checkins")
-    .select("membro_atipico_id, membros_atipicos(nome)")
-    .eq("family_account_id", family.id)
-    .order("created_at", { ascending: false })
-    .limit(1);
   const ultimoNome = ultimoCheckin?.[0]
     ? Array.isArray(ultimoCheckin[0].membros_atipicos)
       ? ultimoCheckin[0].membros_atipicos[0]?.nome
       : (ultimoCheckin[0].membros_atipicos as { nome: string } | null)?.nome
     : null;
   const ultimoMembroId = (ultimoCheckin?.[0]?.membro_atipico_id as string | null) ?? null;
-
-  // Histórico da conversa PRO PARSER: respostas curtas ("letra f", "adora dançar")
-  // só viram fato se ele entender o contexto. Sem isso o perfil não aprende numa
-  // conversa de verdade (só no fluxo "pergunta do dia → 1 resposta").
-  // Sem recorte de membro, DE PROPÓSITO: é este parser que descobre de quem a
-  // mensagem fala (`parsed.membro_atipico_id` alimenta a resolução lá embaixo).
-  // Filtrar aqui seria circular — precisaríamos do membro pra achar o membro.
-  // O recorte acontece onde o dano é permanente: na ESCRITA do Kolo Vivo.
-  const historicoParser = await carregarHistorico(supabase, family.id, inbound.texto);
 
   const parsed = await parseInbound(
     {
@@ -2598,7 +2638,14 @@ export async function processInbound(
     carregarKoloVivoResumo(supabase, membroContextoId),
     carregarLacunasKoloVivo(supabase, membroContextoId),
     carregarEstrategiasRecentes(supabase, family.id, membroContextoId),
-    carregarHistorico(supabase, family.id, inbound.texto, membroContextoId, nomePorMembro),
+    carregarHistorico(
+      supabase,
+      family.id,
+      inbound.texto,
+      membroContextoId,
+      nomePorMembro,
+      await historicoDoTurno(),
+    ),
     ofereceLudico ? gerarMagicLink(supabase, { familyId: family.id, next: "/historias/criar" }) : Promise.resolve(null),
     ofereceLudico
       ? gerarMagicLink(supabase, { familyId: family.id, next: "/ludico/rotinas/semana" })
@@ -3998,9 +4045,10 @@ async function ultimasFalas(
   supabase: SupabaseClient,
   familyId: string,
   mensagemAtual: string,
+  brutoDoTurno?: LinhaDeHistorico[],
 ): Promise<{ ultimaMae: string | null; ultimaAyla: string | null }> {
   try {
-    const h = await carregarHistorico(supabase, familyId, mensagemAtual);
+    const h = await carregarHistorico(supabase, familyId, mensagemAtual, null, undefined, brutoDoTurno);
     return {
       ultimaMae: [...h].reverse().find((t) => t.de === "mae")?.texto ?? null,
       ultimaAyla: [...h].reverse().find((t) => t.de === "ayla")?.texto ?? null,
@@ -4049,6 +4097,37 @@ async function carregarDesafiosOnboarding(
  *
  * A coluna `membro_atipico_id` já existia em `ayla_messages`. Só não era lida.
  */
+type LinhaDeHistorico = {
+  direcao: string;
+  texto: string | null;
+  created_at: string;
+  membro_atipico_id?: string | null;
+};
+
+/**
+ * A CONSULTA, sozinha — as 9 últimas falas da família.
+ *
+ * ⚠️ SEPARADA DE `carregarHistorico` (13/08/2026, PEND-064) porque MEDIMOS que
+ * ela rodava TRÊS VEZES no mesmo turno, idêntica: uma dentro de `ultimasFalas`
+ * (para o classificador de intenção), uma para o parser e uma nos loaders
+ * paralelos. A consulta não usa `membroFocoId` nem `nomePorMembro` — esses só
+ * entram na formatação —, então as três traziam exatamente as mesmas linhas.
+ *
+ * A ~400 ms por ida ao banco, eram ~800 ms jogados fora em todo turno.
+ */
+async function lerHistoricoBruto(
+  supabase: SupabaseClient,
+  familyId: string,
+): Promise<LinhaDeHistorico[]> {
+  const { data } = await supabase
+    .from("ayla_messages")
+    .select("direcao, texto, created_at, membro_atipico_id")
+    .eq("family_account_id", familyId)
+    .order("created_at", { ascending: false })
+    .limit(9);
+  return (data ?? []) as LinhaDeHistorico[];
+}
+
 async function carregarHistorico(
   supabase: SupabaseClient,
   familyId: string,
@@ -4057,15 +4136,19 @@ async function carregarHistorico(
   nomePorMembro?: Map<string, string>,
   // `membro_atipico_id` volta em cada turno pra que quem ESCREVE fato possa
   // recortar depois, com o membro já resolvido — ver `extrairESalvarEventos`.
+  /**
+   * As linhas cruas já lidas NESTE TURNO, para não repetir a consulta.
+   *
+   * ⚠️ ESCOPO É TUDO. Isto não é cache: é um valor que o turno já tem na mão e
+   * passa adiante. Nasce e morre dentro de UMA execução de `processInbound`,
+   * amarrado a UM `family_account_id` — nunca um mapa global, que é como
+   * contexto de uma família vaza para outra.
+   */
+  brutoDoTurno?: LinhaDeHistorico[],
 ): Promise<
   Array<{ de: "mae" | "ayla"; texto: string; sobre?: string; membro_atipico_id: string | null }>
 > {
-  const { data } = await supabase
-    .from("ayla_messages")
-    .select("direcao, texto, created_at, membro_atipico_id")
-    .eq("family_account_id", familyId)
-    .order("created_at", { ascending: false })
-    .limit(9);
+  const data = brutoDoTurno ?? (await lerHistoricoBruto(supabase, familyId));
   const turnos = (data ?? [])
     .reverse()
     .filter((m) => typeof m.texto === "string" && m.texto.trim())
