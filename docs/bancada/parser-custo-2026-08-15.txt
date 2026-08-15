@@ -1,0 +1,8 @@
+CASO                     ms p50   ms max
+conversa comum             3980    11157
+conquista                  2043     2268
+desafio + tentativa        4297    12752
+desabafo                   2659     2799
+aprendizagem               2246     2407
+
+AMOSTRA: 15 chamadas · p50 = 2659 ms · p95 = 12752 ms · max = 12752 ms
