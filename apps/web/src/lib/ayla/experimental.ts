@@ -108,10 +108,23 @@ export type TurnoExperimental = {
  * faltar alguma coisa que importe, isso vira ACHADO do experimento — não
  * motivo para carregar tudo "por precaução".
  */
+/**
+ * Um turno da conversa TEMPORÁRIA do simulador — existe só na memória do
+ * navegador do Admin e no corpo desta requisição.
+ *
+ * ⚠️ NUNCA É PERSISTIDO. Não entra em `ayla_messages`, nem em `conversas`, nem
+ * na memória, nem nos eventos. A sessão de QA morre quando a aba fecha. É por
+ * isso que ela pode existir: um histórico de teste gravado no histórico real
+ * contaminaria a família de QA para sempre — e a Ayla leria aquilo como se a
+ * mãe tivesse dito.
+ */
+export type TurnoSimulado = { quem: "mae" | "ayla"; texto: string };
+
 async function montarContexto(
   supabase: SupabaseClient,
   familyId: string,
   mensagem: string,
+  simulados: readonly TurnoSimulado[] = [],
 ): Promise<{ bloco: string; foco: Foco; diagnosticoRegistrado: string; consultas: number }> {
   // As três leituras de abertura não dependem uma da outra: vão juntas.
   const [{ data: perfilFamilia }, { data: membros }, { data: falas }] = await Promise.all([
@@ -184,6 +197,18 @@ async function montarContexto(
       return sobre ? `${quem} (sobre ${sobre}): ${f.texto}` : `${quem}: ${f.texto}`;
     });
 
+  // ⚠️ A CONVERSA DO SIMULADOR ENTRA AQUI, NO FIM — depois do histórico real e
+  // ANTES do corte dos 10. É o que faz o turno 2 enxergar o turno 1, e é o que
+  // faz a correção ("é a Manu, não o Mario") valer nos turnos seguintes: ela
+  // vira uma linha do histórico como qualquer outra.
+  //
+  // Entra no MESMO formato do histórico real, de propósito: o modelo não deve
+  // ter como distinguir teste de conversa, senão o teste para de testar.
+  for (const t of simulados) {
+    const texto = (t.texto ?? "").trim();
+    if (texto) historico.push(`${t.quem === "mae" ? "Responsável" : "Ayla"}: ${texto}`);
+  }
+
   const SEP = "\n\n";
   const NL = "\n";
   const bloco = [
@@ -234,6 +259,12 @@ export async function responderExperimental(
      * a única métrica de custo por família que existe.
      */
     origem?: "conversa" | "simulador";
+    /**
+     * Só o simulador passa isto. A conversa real, nunca — e o teste
+     * `simulador-nao-escreve.test.ts` prende que estes turnos não são gravados
+     * em lugar nenhum.
+     */
+    turnosSimulados?: readonly TurnoSimulado[];
   },
 ): Promise<TurnoExperimental | null> {
   const t0 = Date.now();
@@ -241,7 +272,7 @@ export async function responderExperimental(
     // O Core e o contexto não dependem um do outro: vão juntos, então a
     // leitura do documento não acrescenta espera nenhuma ao turno.
     const [ctxTurno, core] = await Promise.all([
-      montarContexto(supabase, params.familyId, params.mensagem),
+      montarContexto(supabase, params.familyId, params.mensagem, params.turnosSimulados ?? []),
       resolverDocumento(supabase, "core", params.rascunhoCore ?? null),
     ]);
     const { bloco, foco, diagnosticoRegistrado, consultas } = ctxTurno;

@@ -1,0 +1,30 @@
+mensagens reais processadas : 3471
+mensagens que MUDARIAM      : 36 (1.04%)
+com Markdown cru ANTES      : 17
+com Markdown cru DEPOIS     : 3
+
+palavras preservadas        : 3471/3471
+URLs preservadas            : 3471/3471
+numeros preservados         : 3471/3471
+emojis preservados          : 3471/3471
+
+ANTES : "Ótimo, vou escrever agora!\n\n---\n\n*O Brócolis e a Amiga Nova*\n\nEra uma vez um brócolis chamado Beto, que morava numa floresta bem verde e che"
+DEPOIS: "Ótimo, vou escrever agora!\n\n*O Brócolis e a Amiga Nova*\n\nEra uma vez um brócolis chamado Beto, que morava numa floresta bem verde e cheirosa"
+ANTES : "Aqui, Karina! Me perdoa a demora 🧡\n\n**Plano de atividades para Jovenilda — foco, socialização e a letra B**\n\n**1. Brincadeira da Bolinha**\n"
+DEPOIS: "Aqui, Karina! Me perdoa a demora 🧡\n\n*Plano de atividades para Jovenilda — foco, socialização e a letra B*\n\n*1. Brincadeira da Bolinha*\nSent"
+ANTES : "Que ótimo que a caixa funcionou! Faz todo sentido — ele precisa de movimento e de algo que \"libere\" no corpo, e jogar papel amassado dá exat"
+DEPOIS: "Que ótimo que a caixa funcionou! Faz todo sentido — ele precisa de movimento e de algo que \"libere\" no corpo, e jogar papel amassado dá exat"
+ANTES : "Entendo que você quer que eu gere uma mensagem seguindo as orientações, mas preciso ser honesto: percebi que há uma inconsistência no prompt"
+DEPOIS: "Entendo que você quer que eu gere uma mensagem seguindo as orientações, mas preciso ser honesto: percebi que há uma inconsistência no prompt"
+ANTES : "Boa 💛 Vou montar um plano pra isso. Antes, me conta com as suas palavras: como está esse desafio **hoje**? O que mais complica? Pode escrev"
+DEPOIS: "Boa 💛 Vou montar um plano pra isso. Antes, me conta com as suas palavras: como está esse desafio *hoje*? O que mais complica? Pode escrever"
+ANTES : "Boa 💛 Vou montar um plano pra isso. Antes, me conta com as suas palavras: como está esse desafio **hoje**? O que mais complica? Pode escrev"
+DEPOIS: "Boa 💛 Vou montar um plano pra isso. Antes, me conta com as suas palavras: como está esse desafio *hoje*? O que mais complica? Pode escrever"
+ANTES : "Boa 💛 Vou montar um plano pra isso. Antes, me conta com as suas palavras: como está esse desafio **hoje**? O que mais complica? Pode escrev"
+DEPOIS: "Boa 💛 Vou montar um plano pra isso. Antes, me conta com as suas palavras: como está esse desafio *hoje*? O que mais complica? Pode escrever"
+ANTES : "Simone, que história carregada de força — e de dor real. Você recebeu uma notícia enorme, sozinha, depois de já ter perdido seus pais, e ain"
+DEPOIS: "Simone, que história carregada de força — e de dor real. Você recebeu uma notícia enorme, sozinha, depois de já ter perdido seus pais, e ain"
+ANTES : "Boa 💛 Vou montar um plano pra isso. Antes, me conta com as suas palavras: como está esse desafio **hoje**? O que mais complica? Pode escrev"
+DEPOIS: "Boa 💛 Vou montar um plano pra isso. Antes, me conta com as suas palavras: como está esse desafio *hoje*? O que mais complica? Pode escrever"
+ANTES : "Entendi! 🌿 Então a rotina de casa é em dois momentos: **antes de sair pra escola** (acordar, se preparar, montar a mochila…) e **quando che"
+DEPOIS: "Entendi! 🌿 Então a rotina de casa é em dois momentos: *antes de sair pra escola* (acordar, se preparar, montar a mochila…) e *quando chegar"
