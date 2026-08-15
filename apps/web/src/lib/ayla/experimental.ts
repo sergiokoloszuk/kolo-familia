@@ -14,6 +14,13 @@ import {
 import { resolverFoco, blocoDeFoco, type Foco } from "./experimental-foco";
 import { lerEventos, eventosRelevantes, blocoDeEventos } from "./experimental-memoria";
 import { recuperarBoasPraticas, blocoBoasPraticas } from "@/lib/conhecimento/recuperar";
+import { lerEstadoTrial } from "@/lib/trial/estado";
+import {
+  blocoDaJornada,
+  lerEvidenciasJornada,
+  EVIDENCIAS_VAZIAS,
+  DIAS_DE_FECHAMENTO,
+} from "@/lib/trial/jornada";
 
 /**
  * A AYLA EXPERIMENTAL — uma porta AO LADO da Ayla atual, 15/08/2026.
@@ -122,6 +129,12 @@ export type TurnoExperimental = {
     bpInjetadas: number;
     bpChars: number;
     msBp: number;
+    /** O dia do teste que a Ayla enxergava neste turno — null fora da jornada. */
+    jornada_dia?: number | null;
+    /** Este turno pôde cumprir função comercial (D4–D7)? */
+    jornada_fechamento?: boolean;
+    /** Quanto o bloco da jornada engordou o prompt. Zero = não entrou. */
+    jornada_chars?: number;
   };
 };
 
@@ -362,7 +375,14 @@ export async function responderExperimental(
     // `blocoBoasPraticas` já escreve isso no cabeçalho do bloco.
     const skillsDoTurno = params.turnoClassificado?.skills ?? [];
     const tBp = Date.now();
-    const [ctxTurno, core, bps] = await Promise.all([
+    // ⚠️ A JORNADA ENTRA AQUI, NO MESMO `Promise.all` — 15/08/2026. Duas
+    // consultas (estado + evidências) que não dependem de nada acima e não
+    // acrescentam espera ao turno, porque correm ao lado do contexto e do Core.
+    //
+    // ⚠️ O SIMULADOR NÃO TEM JORNADA. Ele não é uma família em teste; conduzir
+    // comercialmente uma tela de Admin não significa nada.
+    const semJornada = params.origem === "simulador";
+    const [ctxTurno, core, bps, estadoTrial, evidencias] = await Promise.all([
       montarContexto(supabase, params.familyId, params.mensagem, params.turnosSimulados ?? []),
       resolverDocumento(supabase, "core", params.rascunhoCore ?? null),
       skillsDoTurno.length
@@ -375,8 +395,23 @@ export async function responderExperimental(
             limite: 2,
           }).catch(() => [])
         : Promise.resolve([]),
+      semJornada ? Promise.resolve(null) : lerEstadoTrial(supabase, params.familyId),
+      semJornada
+        ? Promise.resolve(EVIDENCIAS_VAZIAS)
+        : lerEvidenciasJornada(supabase, params.familyId),
     ]);
     const msBp = Date.now() - tBp;
+    // Determinístico e barato: nenhuma chamada de modelo, nenhuma escrita. Sai
+    // vazio para assinante, cortesia, staff e para quem não está em teste.
+    const jornada = estadoTrial ? blocoDaJornada(estadoTrial, evidencias) : "";
+    const diaDaJornada = estadoTrial?.emConducaoComercial ? estadoTrial.dia : null;
+    const fechamentoDoDia = Boolean(
+      jornada &&
+        estadoTrial &&
+        DIAS_DE_FECHAMENTO.has(
+          estadoTrial.fase === "trial_encerrado" ? 7 : Math.min(estadoTrial.dia ?? 0, 7),
+        ),
+    );
     const repertorio = blocoBoasPraticas(bps);
     const { bloco, foco, diagnosticoRegistrado, consultas } = ctxTurno;
     // A criança que a resposta vai carimbar: no foco compartilhado ou ambíguo
@@ -399,7 +434,12 @@ export async function responderExperimental(
       // pode usar, adaptar, combinar — ou ignorar quando não servir àquela
       // criança. Repertório antes do contexto convidaria a resposta a nascer da
       // Boa Prática em vez de nascer da criança.
-      system: [core.conteudo, bloco, repertorio].filter(Boolean).join("\n\n"),
+      // ⚠️ A JORNADA VEM DEPOIS DO CONTEXTO E ANTES DO REPERTÓRIO. Depois,
+      // porque ela é sobre o MOMENTO da família, e o momento não pode competir
+      // com quem é a criança. Antes do repertório porque o repertório é
+      // material de consulta, e material não deve ficar entre a conversa e a
+      // razão dela.
+      system: [core.conteudo, bloco, jornada, repertorio].filter(Boolean).join("\n\n"),
       messages: [{ role: "user", content: params.mensagem }],
       maxTokens: 1200,
       cacheSystem: true,
@@ -463,6 +503,12 @@ export async function responderExperimental(
         bpInjetadas: repertorio ? bps.length : 0,
         bpChars: repertorio.length,
         msBp,
+        // ⚠️ O RASTRO DA JORNADA. Sem isto não dá para saber, depois, que dia a
+        // Ayla enxergava quando falou — e é ele que a proativa lê para não
+        // repetir a abordagem que a conversa acabou de fazer.
+        jornada_dia: diaDaJornada,
+        jornada_fechamento: fechamentoDoDia,
+        jornada_chars: jornada.length,
       },
     };
   } catch (e) {

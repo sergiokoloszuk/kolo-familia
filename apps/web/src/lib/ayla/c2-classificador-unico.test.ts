@@ -106,10 +106,17 @@ describe("BOAS PRÁTICAS — repertório, pelo mecanismo existente", () => {
   });
 
   it("a consulta roda EM PARALELO — não acrescenta espera em série", () => {
-    const bloco = EXP.slice(EXP.indexOf("const [ctxTurno, core, bps] = await Promise.all(["), EXP.indexOf("const msBp ="));
+    const bloco = EXP.slice(
+      EXP.indexOf("const [ctxTurno, core, bps, estadoTrial, evidencias] = await Promise.all(["),
+      EXP.indexOf("const msBp ="),
+    );
     expect(bloco).toContain("montarContexto(");
     expect(bloco).toContain("resolverDocumento(");
     expect(bloco).toContain("recuperarBoasPraticas({");
+    // A jornada do Trial entrou no MESMO Promise.all (15/08/2026): duas
+    // consultas que correm ao lado das outras e não somam espera ao turno.
+    expect(bloco).toContain("lerEstadoTrial(");
+    expect(bloco).toContain("lerEvidenciasJornada(");
   });
 
   it("falha do acervo NUNCA derruba o turno", () => {
@@ -124,10 +131,10 @@ describe("BOAS PRÁTICAS — repertório, pelo mecanismo existente", () => {
   });
 
   it("a ORDEM do prompt é Core → contexto → repertório", () => {
-    expect(EXP).toContain("[core.conteudo, bloco, repertorio].filter(Boolean).join");
+    expect(EXP).toContain("[core.conteudo, bloco, jornada, repertorio].filter(Boolean).join");
     // Repertório antes do contexto faria a resposta nascer da Boa Prática em
     // vez de nascer da criança.
-    const arr = "[core.conteudo, bloco, repertorio]";
+    const arr = "[core.conteudo, bloco, jornada, repertorio]";
     expect(arr.indexOf("core.conteudo")).toBeLessThan(arr.indexOf("bloco"));
     expect(arr.indexOf("bloco")).toBeLessThan(arr.indexOf("repertorio"));
   });
@@ -168,11 +175,11 @@ describe("SABOTAGEM — os testes mordem?", () => {
 
   it("S5 · o repertório passando na frente do contexto", () => {
     const sabotado = EXP.replace(
-      "[core.conteudo, bloco, repertorio]",
-      "[core.conteudo, repertorio, bloco]",
+      "[core.conteudo, bloco, jornada, repertorio]",
+      "[core.conteudo, repertorio, jornada, bloco]",
     );
-    expect(sabotado).toContain("[core.conteudo, repertorio, bloco]");
-    expect(EXP).toContain("[core.conteudo, bloco, repertorio]");
+    expect(sabotado).toContain("[core.conteudo, repertorio, jornada, bloco]");
+    expect(EXP).toContain("[core.conteudo, bloco, jornada, repertorio]");
   });
 
   it("S6 · injetadas medidas pela consulta em vez do bloco", () => {

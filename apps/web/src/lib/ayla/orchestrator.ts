@@ -42,6 +42,7 @@ import {
 import { gerarMensagemEspontanea } from "./mensagemEspontanea";
 import { traduzirProativa } from "./traduzir";
 import { montarPonteWhatsApp, gerarMagicLink, montarPlanoFimDeSemana } from "./ponte";
+import { fechamentoReativoRecente } from "@/lib/trial/jornada";
 import { aguardarTurnoDaMae, descartarTurnoPendente } from "./lote-inbound";
 import { pedeUmPlano } from "@/lib/ia/pedido-plano";
 import { abreFluxoDeArtefato, atoSobreArtefato } from "@/lib/conducao/ato-artefato";
@@ -830,6 +831,16 @@ export async function sendTrial(
   agora: Date = new Date(),
 ): Promise<EnvioResultado> {
   const tipo: AylaTipoProativa = diasRestantes === 3 ? "trial_d3" : "trial_d0";
+
+  // ⚠️ CONVIVÊNCIA COM A JORNADA REATIVA (15/08/2026). O pior resultado desta
+  // frente seria a família conversar sobre continuar no D6 e receber, logo
+  // depois, uma automática perguntando quase a mesma coisa. Se a conversa já
+  // cumpriu a função comercial nas últimas horas, a proativa cala — a família
+  // que NÃO conversa continua recebendo, que é a razão de a proativa existir.
+  if (await fechamentoReativoRecente(supabase, familyAccountId, agora)) {
+    console.log(`[ayla:trial] ${tipo} calado — a conversa já fez o fechamento hoje`);
+    return { enviada: false, motivo: "fechamento reativo recente" };
+  }
 
   const podeRes = await podeEnviarProativa(
     supabase,

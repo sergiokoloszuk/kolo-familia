@@ -18,7 +18,7 @@ Só o que está aberto. 🔒 = bloqueada.
 | [PEND-071](#pend-071) | Segurança está abaixo do gate de assinatura | F · Limites | **P0** | CORRIGIDA, NÃO PUBLICADA | publicar e fazer smoke com número de QA |
 | [PEND-072](#pend-072) | Teste do caminho novo cai para o Legacy sem mock do provider | H · Governança | P1 | PARCIALMENTE CORRIGIDA | varrer os outros testes que dizem medir o experimental |
 | [PEND-073](#pend-073) | Caminho novo não encurta a resposta em pedido de plano | A · Condução | P2 | ABERTA | decidir se o Core do experimental recebe a nota de `querPlano` |
-| [PEND-074](#pend-074) | Condução D0–D7 do Trial não existe em runtime | G · Comercial | P1 | ABERTA | fechar as decisões do `trial-v2.md` e construir sobre `lerEstadoTrial` |
+| [PEND-074](#pend-074) | Condução D0–D7 do Trial não existe em runtime | G · Comercial | P1 | IMPLEMENTADA, NÃO PUBLICADA | provar a condução na bancada com modelo real antes de publicar |
 | [PEND-069](#pend-069) | Migração 0077 (`ayla_documentos`) não aplicada em produção | H · Governança | P1 | ABERTA 🔒 | aplicar o SQL e rodar o seed do Core |
 | [PEND-070](#pend-070) | `ai_prompts.versao` promete versionamento que a PK impede | H · Governança | P3 | ABERTA | decidir entre documentar ou migrar |
 | [PEND-015](#pend-015) | Exposição de secrets no Easypanel | H · Governança | a definir | ABERTA | investigar o risco antes de priorizar |
@@ -3557,8 +3557,10 @@ Aberta em: 2026-08-15 · Origem: implementação da ponte do plano (Bloqueador 2
 
 ### PEND-074
 **Condução D0–D7 do Trial não existe em runtime**
-Bloco: **G · Comercial** · Prioridade: **P1** · Estado: **ABERTA**
+Bloco: **G · Comercial** · Prioridade: **P1** · Estado: **IMPLEMENTADA, NÃO PUBLICADA**
 Aberta em: 2026-08-15 · Origem: Bloqueador 4
+Implementada em: 2026-08-15, `lib/trial/jornada.ts` — **atrás da allowlist do
+caminho novo, que continua vazia**. Nenhuma família recebe isto hoje.
 
 - **Impacto:** o Trial de 7 dias não tem condução nenhuma no caminho novo. A
   família entra, conversa e sai sem que a jornada aconteça — e o fechamento
@@ -3572,17 +3574,38 @@ Aberta em: 2026-08-15 · Origem: Bloqueador 4
 - **Decisão fechada, que o `trial-v2.md` deixava em aberto:** **não** é preciso
   criar `trial_started_at`. `created_at` + `trial_ends_at` reconstroem o dia, e
   sem `created_at` o começo degrada pelo fim do teste.
-- **O que falta:** a camada de condução em si — quando falar, o quê, o teto de 1
-  Plano por dia garantido pelo sistema, "não repetir o que já aconteceu", e os
-  16 casos de teste (D0–D7, pouco uso, muito uso, assinou no D3, assinou no D6,
-  preço, "não vi valor", "quero continuar", família monossilábica).
-- **Bloqueio real:** `docs/documentos-ayla/trial-v2.md` ainda tem itens marcados
-  como PENDENTE DE INVESTIGAÇÃO e exige a comparação Legacy × Experimental por
-  capacidade antes de construir. Construir antes disso contraria o próprio
-  documento.
-- **Critério de conclusão:** os 16 casos provados por `processInbound`, com
-  assinante fora da condução comercial.
-- **Agente recomendado:** PROPOR → EXECUTAR
+- **O bloqueio caiu por decisão de produto (15/08/2026):** as duas decisões que o
+  `trial-v2.md` deixava em aberto foram fechadas — arquitetura de **bloco
+  contextual** (determinístico, zero LLM adicional, sem tabela nova, estado só
+  por `lerEstadoTrial`) e a intenção de cada dia D0–D7.
+- **O que foi construído:** `lib/trial/jornada.ts` — `blocoDaJornada` monta um
+  `<jornada>` que entra no system do caminho novo entre o contexto e o
+  repertório; `lerEvidenciasJornada` conta o que a família de fato viveu
+  (mensagens, planos, rotinas, relatos de `eventos_membro`); `intencaoDoDia`
+  ancora as etapas no **fim** do teste. Ambas as consultas entram no
+  `Promise.all` que já existia — **latência adicional zero em série**.
+- **A compressão que a jornada exigiu, e por quê:** o desenho tem oito etapas
+  (D0–D7) e o teste do produto tem sete dias. As quatro etapas do fechamento
+  invertido ficam nos **quatro últimos dias** (a decisão precisa cair no último
+  dia, não depois do vencimento) e a compressão acontece na etapa 3 — retomar o
+  que já foi contado é também o primeiro trabalho da etapa 4. A conta é por dias
+  restantes: num teste mais longo, a etapa 3 volta a existir sozinha.
+- **Convivência com as proativas, sem segundo estado:** `fechamentoReativoRecente`
+  lê `ayla_send_log.payload.meta.jornada_fechamento` — o rastro que o próprio
+  turno grava — e cala `sendTrial` por 20h. Falha de leitura **não** silencia a
+  proativa: calar a única mensagem de uma família silenciosa é pior que repetir.
+- **Provado (16 casos por `processInbound`, todos com `passouPeloExperimental`):**
+  `ayla/jornada-caminho-real.test.ts` + `trial/jornada.test.ts`. Suíte completa:
+  2288 passaram, 7 skipped; `tsc` limpo; `npm run build` ok.
+- **NÃO PROVADO:** a qualidade textual da condução. O arnês usa provedor falso —
+  ele prova arquitetura, estado, precedência, isolamento entre famílias e
+  ausência de duplicação, **não** que a Ayla conduz bem. Isso é bancada com
+  modelo real, e não foi feita.
+- **Fora do escopo desta entrega:** o teto de 1 Plano por dia garantido pelo
+  sistema continua não existindo — a jornada não o resolve. Fica aqui.
+- **Critério de conclusão:** publicar e provar a condução na bancada paga, com
+  modelo real, antes de qualquer família entrar na allowlist.
+- **Agente recomendado:** AUDITAR → bancada
 
 ---
 
