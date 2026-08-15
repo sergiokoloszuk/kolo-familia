@@ -15,6 +15,9 @@ Só o que está aberto. 🔒 = bloqueada.
 
 | ID | Pendência | Bloco | Prio | Estado | Próximo passo |
 |---|---|---|---|---|---|
+| [PEND-071](#pend-071) | Segurança está abaixo do gate de assinatura | F · Limites | **P0** | CORRIGIDA, NÃO PUBLICADA | publicar e fazer smoke com número de QA |
+| [PEND-069](#pend-069) | Migração 0077 (`ayla_documentos`) não aplicada em produção | H · Governança | P1 | ABERTA 🔒 | aplicar o SQL e rodar o seed do Core |
+| [PEND-070](#pend-070) | `ai_prompts.versao` promete versionamento que a PK impede | H · Governança | P3 | ABERTA | decidir entre documentar ou migrar |
 | [PEND-015](#pend-015) | Exposição de secrets no Easypanel | H · Governança | a definir | ABERTA | investigar o risco antes de priorizar |
 | [PEND-007](#pend-007) | Ativação do GPT parada na prova da chave | H · Governança | P1 | ABERTA 🔒 | publicar e rodar `provider-check` |
 | [PEND-002](#pend-002) | Pagamento confirmado sem acesso na Kolo | G · Comercial | P1 | AGUARDANDO VALIDAÇÃO | esperar a primeira assinatura real |
@@ -3461,6 +3464,126 @@ Aberta em: 2026-08-08 · Origem: consolidação da PEND-010
 - **Critério de conclusão:** DESEJADO aprovado, incluindo o caminho de volta
   para a memória da criança.
 - **Agente recomendado:** PROPOR (depois de D)
+
+---
+
+### PEND-071
+**Segurança está ABAIXO do gate de assinatura — trial vencido em crise recebe convite comercial, ou silêncio**
+Bloco: **F · Limites** · Prioridade: **P0** · Estado: **CORRIGIDA, NÃO PUBLICADA**
+Aberta em: 2026-08-15 · Origem: auditoria Legacy × Experimental do Trial
+Corrigida em: 2026-08-15, commit `0fc1feb` (branch `feat/admin-core`, **não publicado**)
+
+- **Impacto:** uma mãe com o teste vencido escreve à Ayla no meio de uma crise —
+  risco para a criança ou para ela — e a primeira coisa que o sistema faz é
+  checar se ela pagou. Ela recebe *"seu período grátis acabou, é só assinar
+  aqui"*. Se já houve convite nas últimas 12 horas, ela **não recebe nada**.
+  Não é hipótese de produto: é a ordem do código.
+- **VI NO CÓDIGO (15/08/2026, commit `662a857`):**
+  `apps/web/src/lib/ayla/orchestrator.ts`
+  - linha **1878** — `if (!(await aylaServicoLiberado(supabase, family.id)))`,
+    e dentro dele `return { tratada: true }` em **todos** os ramos: com convite,
+    ou mudo quando `reservarConviteAssinatura` nega pelo cooldown de 12h;
+  - linha **2073** — `const seguranca = await segurancaAberta(...)`, ou seja,
+    **195 linhas depois** e inalcançável para quem não passou no gate;
+  - linha **1237** — `aylaServicoLiberado` delega a `acessoLiberado`
+    (`lib/auth/acesso.ts`): é checagem de acesso pura, **sem exceção de
+    segurança**.
+- **Por que a proteção existente não pegou:** ela pegou o problema para o qual
+  foi feita. O gate foi posto ali de propósito, e com razão — o caso
+  Camile/Gramado mostrou entregável vazando de graça para trial vencido porque
+  o gate estava depois do handler. O comentário no código lista as exceções
+  permitidas acima dele: comandos (sair/pausar) e o fluxo de abordagem do CRM.
+  **Segurança não está nessa lista** — e ninguém percebeu que faltava, porque a
+  pergunta que se fez foi "o que não pode vazar", nunca "o que não pode esperar".
+- **NÃO SEI:** com que frequência isso acontece de verdade. Não medi quantas
+  mensagens de risco chegaram de famílias sem acesso — a busca exigiria ler
+  conteúdo de conversa real e não fazia parte desta missão.
+- **Menor mudança proposta (a implementar em missão própria):** inverter só a
+  ordem de dois blocos, para **segurança → gate comercial → resto da conversa**.
+  Concretamente: mover a avaliação de risco para antes da linha 1878, ou dar ao
+  gate uma exceção explícita quando a mensagem for classificada como segurança —
+  o mesmo mecanismo que hoje isenta comandos. Nada de infraestrutura nova.
+  **Cuidado obrigatório:** a avaliação de risco custa uma chamada de modelo; pô-la
+  antes do gate faz trial vencido gastar token a cada mensagem. A versão barata é
+  a triagem determinística primeiro, e só o caso suspeito subindo para o
+  classificador.
+- **Regressão a proteger:** o caso Camile/Gramado. Nenhum entregável — plano,
+  rotina, PDF, estratégia — pode passar a sair para trial vencido. A exceção é
+  para **acolher e encaminhar**, não para atender.
+- **Critério de conclusão:** teste que prove, com trial vencido, que (a) mensagem
+  de risco recebe a resposta de segurança e não o convite; (b) mensagem comum
+  continua recebendo o convite; (c) nenhum entregável vaza; (d) o cooldown de 12h
+  não silencia mensagem de risco.
+- **O que a correção fez (`0fc1feb`):** duas portas dentro do gate — triagem
+  determinística na entrada (sem IA, sem custo) OU estado de segurança já
+  aberto. Sai texto FIXO com 188/192/CAPS, sem convite comercial, sem modelo,
+  sem entregável, e sem passar pelo cooldown de 12h. O tipo `seguranca` abre o
+  estado, então o turno seguinte entra sem depender de palavra-chave.
+- **A correção NÃO foi mover `segurancaAberta`,** como eu havia proposto:
+  investigando, VI NO CÓDIGO que ela só lê estado já aberto — a detecção de
+  crise NOVA é emergente e depende da resposta já gerada. Não havia nada barato
+  para consultar antes do gate; a triagem precisou existir.
+- **PROVEI POR EXECUÇÃO:** 19 testes, sendo 7 de comportamento real (turno
+  inteiro, trial vencido de verdade). 5 sabotagens, todas mordem. Uma sabotagem
+  passou em branco na primeira leva e originou o arquivo de teste
+  comportamental — asserção sobre código-fonte prova estrutura, não
+  comportamento.
+- **POR QUE NÃO BAIXEI:** o commit não está publicado. `feat/admin-core` não foi
+  para produção. **Baixa só depois de publicar e de um smoke com número de QA.**
+- **Agente recomendado:** EXECUTAR (publicar + smoke)
+
+---
+
+### PEND-069
+**Migração 0077 (`ayla_documentos`) não aplicada em produção**
+Bloco: **H · Governança** · Prioridade: **P1** · Estado: **ABERTA 🔒**
+Aberta em: 2026-08-15 · Origem: Passo 1 do Admin da Inteligência
+
+- **Impacto:** enquanto a tabela não existir, o Admin da Inteligência abre e
+  explica, mas nada pode ser publicado — a Ayla segue com o Core do código. Não
+  há degradação: o Core do código **é** o conteúdo aprovado em QA. O que está
+  bloqueado é a capacidade de mudar a Ayla sem deploy, não a Ayla.
+- **PROVEI POR EXECUÇÃO (15/08/2026):** `GET /rest/v1/ayla_documentos` devolve
+  404 · `42P01 relation "public.ayla_documentos" does not exist`. Nenhuma RPC de
+  SQL existe (`exec_sql`, `exec`, `run_sql`, `sql` → todas 404), e a única
+  credencial de banco em `.env.local` é `POSTGRES_PASSWORD` — sem host nem
+  porta. **Não tenho caminho para aplicar a migração.**
+- **Próximo passo:** aplicar `supabase/migrations/0077_ayla_documentos.sql` e
+  depois rodar `node scripts/seed-core-ayla.mjs` (idempotente: não sobrescreve
+  publicação existente). O repasse auto-contido está em
+  `docs/repasses/0077-ayla-documentos.md`.
+- **Rollback:** `drop table public.ayla_documentos;` — nada depende dela, o
+  carregador cai no Core do código.
+- **Critério de conclusão:** o seed cria a v1 e um turno real reporta
+  `coreOrigem=admin`.
+- **Agente recomendado:** EXECUTAR (com acesso a SQL)
+
+---
+
+### PEND-070
+**`ai_prompts.versao` promete versionamento que a PK impede**
+Bloco: **H · Governança** · Prioridade: **P3** · Estado: **ABERTA**
+Aberta em: 2026-08-15 · Origem: Passo 1 do Admin da Inteligência
+
+- **Impacto:** a coluna `versao` faz a tela de Prompts parecer versionada. Não
+  é. Ela é um contador que sobe a cada save e sobrescreve o texto anterior — não
+  existe histórico, não existe rascunho, e **não existe rollback**. Quem editar
+  um prompt achando que pode voltar atrás vai descobrir que não pode no pior
+  momento possível.
+- **PROVEI POR EXECUÇÃO (15/08/2026):** `ai_prompts` tem `key text primary key`;
+  um segundo INSERT com a mesma chave devolve `23505 duplicate key value
+  violates unique constraint "ai_prompts_pkey"`. Uma linha por chave, por
+  construção.
+- **Por que NÃO foi corrigido junto:** trocar a PK alcançaria `getSystemPrompt`,
+  que está no caminho do **parser da Ayla legacy** e usa `.maybeSingle()` —
+  duas linhas para a mesma chave fariam essa leitura LANÇAR, quebrando o parser
+  de todas as famílias. `ayla_documentos` nasceu ao lado justamente para não
+  ampliar esse raio.
+- **Próximo passo:** decidir entre (a) só documentar na tela que Prompts não tem
+  histórico, ou (b) migrar `ai_prompts` para `ayla_documentos` quando o parser
+  legacy sair. Enquanto não se decide, (a) é o mínimo honesto.
+- **Critério de conclusão:** a tela não promete o que não entrega.
+- **Agente recomendado:** PROPOR
 
 ---
 

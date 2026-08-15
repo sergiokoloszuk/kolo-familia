@@ -67,6 +67,67 @@ export function respostaOrientouEmergencia(texto: string): boolean {
   );
 }
 
+/**
+ * TRIAGEM NA ENTRADA — só para quem o gate de acesso vai barrar.
+ *
+ * ⚠️ POR QUE ISTO PRECISOU EXISTIR (PEND-071, 15/08/2026). A detecção normal de
+ * risco é EMERGENTE: `respostaOrientouEmergencia` olha a RESPOSTA já gerada, e
+ * `riscoEhAtual` só roda depois dela. Isso funciona para quem tem acesso — e não
+ * alcança quem o gate de assinatura barrou antes de existir resposta. Uma mãe
+ * com o teste vencido escrevendo no meio de uma crise recebia "seu período
+ * grátis acabou, é só assinar aqui", ou silêncio dentro do cooldown de 12h.
+ *
+ * ⚠️ ESTA FUNÇÃO NÃO SUBSTITUI NADA. Quem tem acesso continua pelo caminho de
+ * sempre, com o classificador. Aqui é o piso de quem não tem — e o piso não
+ * entrega serviço: entrega encaminhamento.
+ *
+ * ⚠️ NARROW DE PROPÓSITO, ao contrário de `riscoEhAtual`. Lá, "na dúvida
+ * responda true" custa manter prioridade por mais tempo. Aqui um falso positivo
+ * manda CVV e SAMU para quem perguntou sobre cobrança — assustar uma família
+ * que não está em crise é dano real. Então: termos inequívocos, e o que escapar
+ * cai no comportamento de hoje, que é o convite. Perder um caso é ruim; hoje
+ * perdemos TODOS.
+ */
+const RISCO_INEQUIVOCO: RegExp[] = [
+  /\bse\s+mat(ar|ou|ando)\b|\bme\s+mat(ar|o)\b|\bmatar\s+(ela|ele|meu filho|minha filha|a gente)\b/i,
+  /\bsuic[íi]d/i,
+  /\btirar\s+a\s+(pr[óo]pria\s+)?vida\b/i,
+  /\bnão\s+quero\s+mais\s+viver\b|\bnao\s+quero\s+mais\s+viver\b/i,
+  /\bnão\s+aguento\s+mais\s+viver\b|\bnao\s+aguento\s+mais\s+viver\b/i,
+  /\bautomutila|\bse\s+cort(ar|ou|ando)\b|\bse\s+machuc(ar|ou|ando)\s+de\s+prop[óo]sito\b/i,
+  /\btentou\s+(se\s+)?(matar|suic)/i,
+  /\boverdose\b/i,
+];
+
+/**
+ * A MENSAGEM, SOZINHA, JÁ PEDE ENCAMINHAMENTO DE EMERGÊNCIA?
+ *
+ * Determinística e sem IA — roda antes do gate, em toda mensagem de família
+ * sem acesso, e não pode custar uma chamada de modelo por cobrança recebida.
+ */
+export function mensagemPedeSeguranca(texto: string | null | undefined): boolean {
+  const t = (texto ?? "").trim();
+  if (!t) return false;
+  return RISCO_INEQUIVOCO.some((re) => re.test(t));
+}
+
+/**
+ * O TEXTO QUE VAI PARA QUEM O GATE BARROU E ESTÁ EM RISCO.
+ *
+ * ⚠️ NÃO É ORIENTAÇÃO PARENTAL, e a diferença importa: não há estratégia, plano,
+ * rotina nem análise. É acolhimento curto e encaminhamento — exatamente o que
+ * não pode depender de assinatura. O convite comercial NÃO vai junto: cobrar no
+ * meio disto seria pior do que o silêncio que isto corrige.
+ */
+export function textoSegurancaSemAcesso(nomeMae: string | null): string {
+  const ola = nomeMae?.trim() ? `${nomeMae.trim()}, ` : "";
+  return `${ola}eu li o que você escreveu, e isso é mais importante que qualquer outra coisa agora. 💛
+
+Se houver risco à vida neste momento, ligue **192 (SAMU)**. Para falar com alguém agora, o **CVV atende 24h no 188** — ligação gratuita. E o **CAPS** da sua região faz acolhimento em crise, sem agendamento.
+
+Por favor, não fique sozinha com isso. Procure um desses agora, ou alguém de confiança que possa ficar com você.`;
+}
+
 const SYSTEM_RISCO = `Você decide se uma conversa tem RISCO ATUAL à vida ou à integridade de alguém, ou se o assunto é histórico/hipotético.
 
 RISCO ATUAL — a pessoa está em perigo AGORA ou nos próximos dias:

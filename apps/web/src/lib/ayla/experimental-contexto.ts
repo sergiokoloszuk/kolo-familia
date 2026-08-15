@@ -147,6 +147,66 @@ export function desafiosAtuais(pv: LinhaPerfilVivo | null, limite = 3): string[]
   return itens.slice(0, limite).map((i) => `${i.rotulo}: ${i.texto}`);
 }
 
+/**
+ * OS DESAFIOS QUE A FAMÍLIA MARCOU NO CADASTRO — e por que precisam de função
+ * própria.
+ *
+ * ⚠️ REGRESSÃO CORRIGIDA EM 15/08/2026. O onboarding grava a lista em
+ * `categorias_extras.desafios_onboarding` E cria uma chave por domínio com
+ * `{ texto: "" }`. `desafiosAtuais()` descartava as duas coisas: a lista não
+ * está em `ROTULO_DOMINIO`, e as chaves estão vazias. Resultado provado: com o
+ * cadastro completo, o modelo recebia "desafios atuais" como LACUNA — e o Core
+ * manda perguntar o que falta. A mãe marcava três desafios, a boas-vindas os
+ * citava de volta, e a Ayla perguntava de novo no turno seguinte.
+ *
+ * MEDI em produção (15/08/2026, 124 perfis): 100 têm a lista, e das chaves de
+ * domínio que ela aponta, **370 estão vazias contra 122 preenchidas**. Ou seja:
+ * três de cada quatro desafios declarados eram invisíveis.
+ *
+ * ⚠️ SEPARADO DE `desafiosAtuais` DE PROPÓSITO. São coisas diferentes: aqui é
+ * "o que ela marcou numa lista", lá é "o que ela contou, com data". Fundir os
+ * dois faria um chip de cadastro parecer relato — e o prompt trata os dois de
+ * formas distintas, como tem que ser.
+ */
+export function desafiosDoOnboarding(pv: LinhaPerfilVivo | null): string[] {
+  if (!pv) return [];
+  const extras = (pv.categorias_extras ?? {}) as Record<string, unknown>;
+  const bruto = extras.desafios_onboarding;
+  if (!Array.isArray(bruto)) return [];
+  const vistos = new Set<string>();
+  const out: string[] = [];
+  for (const item of bruto) {
+    const chave = String(item ?? "").trim();
+    if (!chave || vistos.has(chave)) continue;
+    vistos.add(chave);
+    // Sem rótulo conhecido, vai a própria chave: perder o desafio por causa de
+    // um domínio novo seria repetir exatamente o defeito que isto corrige.
+    out.push(ROTULO_DOMINIO[chave] ?? chave);
+  }
+  return out;
+}
+
+/**
+ * COMO A CRIANÇA SE COMUNICA — de `categorias_extras.comunicacao`, com o campo
+ * legado como resgate.
+ *
+ * ⚠️ O EXPERIMENTAL LIA O LUGAR ERRADO. Buscava só o top-level
+ * `desafios_regulacao`; o schema híbrido guarda comunicação em
+ * `categorias_extras.comunicacao` (a mesma lista que `lib/ia/context.ts` usa).
+ * O efeito provado era pior que uma ausência: com o domínio preenchido, o mesmo
+ * prompt dizia "comunicação: fala frases de 3 palavras" E "não sei como a
+ * criança se comunica".
+ *
+ * ⚠️ O FALLBACK NÃO É PRECAUÇÃO — É MEDIDO. Em produção (124 perfis): 40 têm o
+ * campo novo, 3 têm o legado, e **1 tem SÓ o legado**. Uma família perderia a
+ * informação sem esta linha.
+ */
+export function comunicacaoAtual(pv: LinhaPerfilVivo | null): string {
+  if (!pv) return "";
+  const extras = (pv.categorias_extras ?? {}) as Record<string, unknown>;
+  return textoDoCampo(extras.comunicacao) || textoDoCampo(pv.desafios_regulacao) || "";
+}
+
 export type ContextoBase = {
   bloco: string;
   /** O que o onboarding NÃO respondeu — para a Ayla perguntar só isso. */
@@ -199,7 +259,7 @@ export function montarContextoBase(params: {
   // ⚠️ `membros_atipicos.perfil` NÃO entra. É `perfilPrimario()` — um rótulo.
   // Se um dia servir, serve como diagnóstico, nunca como "o que já sabemos".
 
-  const comunicacao = textoDoCampo(pv?.desafios_regulacao);
+  const comunicacao = comunicacaoAtual(pv ?? null);
   if (comunicacao) linhas.push(`Comunicação hoje: ${primeiraFrase(comunicacao)}`);
   else lacunas.push("como a criança se comunica");
 
@@ -210,9 +270,25 @@ export function montarContextoBase(params: {
   if (interesses.length) linhas.push(`Interesses atuais: ${interesses.join(", ")}`);
   else lacunas.push("interesses da criança");
 
+  // ⚠️ DUAS FONTES, DOIS SIGNIFICADOS. O que ela CONTOU (com data) e o que ela
+  // MARCOU no cadastro. Os detalhados vêm primeiro; os marcados que ainda não
+  // têm detalhe entram numa linha própria, dizendo que falta o detalhe — é o
+  // que faz a Ayla perguntar "me conta do sono" em vez de "o que está difícil?",
+  // que a família já respondeu.
   const desafios = desafiosAtuais(pv ?? null);
   if (desafios.length) linhas.push(`Desafios atuais:\n- ${desafios.join("\n- ")}`);
-  else lacunas.push("desafios atuais");
+
+  const jaDetalhados = new Set(desafios.map((d) => d.split(":")[0]!.trim()));
+  const semDetalhe = desafiosDoOnboarding(pv ?? null).filter((d) => !jaDetalhados.has(d));
+  if (semDetalhe.length) {
+    linhas.push(
+      `Desafios que a família marcou no cadastro, ainda sem detalhe: ${semDetalhe.join(", ")}`,
+    );
+  }
+
+  // Lacuna só quando NENHUMA das duas fontes tem nada. Declarar falta o que a
+  // família já respondeu é o que fazia a Ayla repetir a pergunta.
+  if (!desafios.length && !semDetalhe.length) lacunas.push("desafios atuais");
 
   // Teto: corta pelo fim, que é a ordem de menor prioridade.
   let bloco = linhas.join("\n");

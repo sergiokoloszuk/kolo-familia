@@ -12,6 +12,7 @@ const items = [
   { href: "/admin/boas-praticas", label: "Boas Práticas" },
   { href: "/admin/skills", label: "Skills" },
   { href: "/admin/prompts", label: "Prompts" },
+  { href: "/admin/inteligencia", label: "Inteligência da Ayla" },
   { href: "/admin/vetos", label: "Vetos" },
   { href: "/admin/campanhas", label: "Campanhas" },
   { href: "/admin/regras", label: "Regras" },
