@@ -202,7 +202,11 @@ describe("o caminho curto pula mesmo a condução atual", () => {
 describe("as proteções que NÃO podem ser puladas", () => {
   it("a rede de fronteiras continua inspecionando a saída", () => {
     const EXP = readFileSync(resolve(__dirname, "experimental.ts"), "utf8");
-    expect(EXP).toMatch(/fronteiraAtravessada\(texto, membro\?\.diagnosticos_formais \?\? null\)/);
+    // 15/08/2026: o diagnóstico passou a vir das crianças EM FOCO (podem ser
+    // duas). O que este teste defende não mudou — a fronteira continua
+    // recebendo o que a família registrou, e não `null`, que a deixaria
+    // restritiva demais e proibiria falar de um diagnóstico já cadastrado.
+    expect(EXP).toMatch(/fronteiraAtravessada\(texto, diagnosticoRegistrado \|\| null\)/);
     // E barrar significa cair pro fluxo atual, não enviar assim mesmo.
     expect(EXP).toMatch(/if \(vazamento\) \{[\s\S]{0,320}return null;/);
   });

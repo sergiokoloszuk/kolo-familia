@@ -1933,8 +1933,6 @@ export async function processInbound(
       ? await responderExperimental(supabase, {
           familyId: family.id,
           mensagem: inbound.texto,
-          // A criança da conversa, quando já se sabe — sem chamar o parser.
-          membroPreferido: await criancaDaConversa(supabase, family.id),
         })
       : null;
     if (ctxExp && exp) {
@@ -1953,6 +1951,23 @@ export async function processInbound(
         tipo: "resposta_registro",
         meta: { ayla_path: "experimental", ...exp.metrica },
       });
+      // ⚠️ APRENDER DEPOIS DE RESPONDER (Fase 1). `extrairESalvarEventos` tem
+      // pré-filtro por regex e só chama modelo quando o texto PARECE trazer um
+      // evento — e roda DEPOIS da bolha, então não entra no caminho crítico.
+      // É a peça que faz o experimento deixar de ser amnésico.
+      //
+      // ⚠️ `persistirRegistro` NÃO entra: ela depende do `ParserResult`, ou
+      // seja, arrastaria `parseInbound` de volta — a chamada de ~9 s que este
+      // braço existe para evitar. Enriquecer o Perfil Vivo sem o parser é
+      // desenho da próxima fase.
+      if (exp.membroId) {
+        await extrairESalvarEventos(
+          supabase,
+          family.id,
+          exp.membroId,
+          inbound.texto,
+        ).catch(() => {});
+      }
       // ⚠️ O `return` É O QUE GARANTE UMA RESPOSTA SÓ. Sem ele, o turno seguiria
       // para a Ayla atual e a família receberia duas.
       return { tratada: true, familia: family.id, resposta: resp };

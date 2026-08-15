@@ -4,6 +4,9 @@ import { gerarConversacional, MODELO_CONVERSA } from "@/lib/ia/provider";
 import { fronteiraAtravessada } from "@/lib/conducao/fronteiras";
 import { logarUsoApi } from "@/lib/billing/logar";
 import { AYLA_EXPERIMENTAL_PROMPT } from "./experimental-prompt";
+import { montarContextoBase, lerPerfilVivo, pareceInformacao } from "./experimental-contexto";
+import { resolverFoco, blocoDeFoco, type Foco } from "./experimental-foco";
+import { lerEventos, eventosRelevantes, blocoDeEventos } from "./experimental-memoria";
 
 /**
  * A AYLA EXPERIMENTAL — uma porta AO LADO da Ayla atual, 15/08/2026.
@@ -70,6 +73,9 @@ type Membro = {
   diagnosticos_formais: string | null;
 };
 
+/** Uma fala do histórico, já com o dono resolvido. */
+type Fala = { direcao: string; texto: string | null; membro_atipico_id: string | null };
+
 export type TurnoExperimental = {
   texto: string;
   membroId: string | null;
@@ -86,6 +92,7 @@ export type TurnoExperimental = {
     modelo: string;
     provider: string;
     fronteiraBarrou: boolean;
+    foco: string;
   };
 };
 
@@ -101,9 +108,9 @@ export type TurnoExperimental = {
 async function montarContexto(
   supabase: SupabaseClient,
   familyId: string,
-  membroPreferido: string | null,
-): Promise<{ bloco: string; membro: Membro | null; consultas: number }> {
-  // As três leituras não dependem uma da outra: vão juntas.
+  mensagem: string,
+): Promise<{ bloco: string; foco: Foco; diagnosticoRegistrado: string; consultas: number }> {
+  // As três leituras de abertura não dependem uma da outra: vão juntas.
   const [{ data: perfilFamilia }, { data: membros }, { data: falas }] = await Promise.all([
     supabase
       .from("family_profiles")
@@ -118,59 +125,91 @@ async function montarContexto(
       .order("created_at", { ascending: true }),
     supabase
       .from("ayla_messages")
-      .select("direcao, texto, created_at")
+      .select("direcao, texto, membro_atipico_id")
       .eq("family_account_id", familyId)
       .order("created_at", { ascending: false })
       .limit(12),
   ]);
 
   const lista = (membros ?? []) as Membro[];
-  // Preferido (quando o turno já sabe de quem se fala) → único → nenhum.
-  const membro =
-    (membroPreferido ? lista.find((m) => m.id === membroPreferido) : null) ??
-    (lista.length === 1 ? lista[0] : null);
+  const foco = await resolverFoco(supabase, familyId, mensagem, lista);
+  const emFoco = foco.membros;
 
-  const nomeResponsavel =
+  // Perfil Vivo e trajetória das crianças em foco — também em paralelo.
+  const [perfis, eventos] = await Promise.all([
+    Promise.all(emFoco.map((m) => lerPerfilVivo(supabase, m.id))),
+    lerEventos(supabase, familyId, emFoco.map((m) => m.id)),
+  ]);
+
+  const nomeResponsavelBruto =
     (perfilFamilia as { como_chamar?: string; nome_mae?: string } | null)?.como_chamar ||
     (perfilFamilia as { nome_mae?: string } | null)?.nome_mae ||
     null;
+  const nomeResponsavel = pareceInformacao(nomeResponsavelBruto) ? nomeResponsavelBruto : null;
 
-  const partes: string[] = [];
-  if (nomeResponsavel) partes.push(`Responsável: ${nomeResponsavel}`);
-  if (membro) {
-    const idade = idadeAnos(membro.data_nascimento);
-    partes.push(
-      `Criança: ${membro.nome ?? "(sem nome)"}${idade != null ? `, ${idade} anos` : ""}`,
-    );
-    if (membro.diagnosticos_formais) {
-      partes.push(`Diagnóstico informado pela família: ${membro.diagnosticos_formais}`);
-    }
-    if (membro.perfil) partes.push(`O que já sabemos: ${membro.perfil}`);
-  } else if (lista.length > 1) {
-    // Multi-criança sem foco resolvido: dizer a verdade ao modelo é melhor que
-    // escolher um filho por conta própria.
-    partes.push(
-      `Crianças cadastradas: ${lista.map((m) => m.nome ?? "?").join(", ")} (ainda não sei de qual a pessoa está falando neste turno)`,
-    );
-  }
+  // ⚠️ UM RETRATO POR CRIANÇA EM FOCO. No foco compartilhado são dois blocos
+  // separados, cada um com o nome na frente — é isso que permite "uma
+  // brincadeira para os dois" sem que a característica de um vire fato do outro.
+  const retratos: string[] = [];
+  const lacunas = new Set<string>();
+  emFoco.forEach((m, i) => {
+    const membroCompleto = lista.find((x) => x.id === m.id) ?? null;
+    const base = montarContextoBase({
+      nomeResponsavel: i === 0 ? nomeResponsavel : null,
+      membro: membroCompleto,
+      perfilVivo: perfis[i] ?? null,
+    });
+    if (base.bloco) retratos.push(base.bloco);
+    for (const l of base.lacunas) lacunas.add(l);
+  });
 
-  // Histórico recente, do mais antigo para o mais novo, sem a fala atual.
-  const historico = ((falas ?? []) as Array<{ direcao: string; texto: string | null }>)
+  // ⚠️ O HISTÓRICO É ETIQUETADO, NÃO RECORTADO — mesma decisão de
+  // `carregarHistorico` no legacy. Recortar mataria o multi-criança; deixar sem
+  // dono foi o que produziu o caso Mario→Manu de 07/08/2026.
+  const nomePorId = new Map(lista.map((m) => [m.id, m.nome ?? "?"]));
+  const idsEmFoco = new Set(emFoco.map((m) => m.id));
+  const historico = ((falas ?? []) as Fala[])
     .slice()
     .reverse()
     .filter((f) => (f.texto ?? "").trim())
-    .map((f) => `${f.direcao === "inbound" ? "Responsável" : "Ayla"}: ${f.texto}`);
+    .map((f) => {
+      const quem = f.direcao === "inbound" ? "Responsável" : "Ayla";
+      const dono = f.membro_atipico_id;
+      // Só etiqueta o que é de OUTRA criança: marcar a da vez em toda linha
+      // vira ruído e ensina o modelo a repetir o nome.
+      const sobre = dono && !idsEmFoco.has(dono) ? nomePorId.get(dono) : null;
+      return sobre ? `${quem} (sobre ${sobre}): ${f.texto}` : `${quem}: ${f.texto}`;
+    });
 
+  const SEP = "\n\n";
+  const NL = "\n";
   const bloco = [
-    partes.length ? `<o_que_ja_sabemos>\n${partes.join("\n")}\n</o_que_ja_sabemos>` : "",
+    retratos.length ? `<o_que_ja_sabemos>${NL}${retratos.join(SEP)}${NL}</o_que_ja_sabemos>` : "",
+    lacunas.size
+      ? `<o_que_ainda_nao_sei>${[...lacunas].join(", ")}</o_que_ainda_nao_sei>`
+      : "",
+    blocoDeFoco(foco),
+    blocoDeEventos(eventosRelevantes(eventos, mensagem)),
     historico.length
-      ? `<conversa_recente>\n${historico.slice(-10).join("\n")}\n</conversa_recente>`
+      ? `<conversa_recente>${NL}${historico.slice(-10).join(NL)}${NL}</conversa_recente>`
       : "",
   ]
     .filter(Boolean)
-    .join("\n\n");
+    .join(SEP);
 
-  return { bloco, membro, consultas: 3 };
+  // ⚠️ O DIAGNÓSTICO VAI PARA A REDE DE FRONTEIRAS, não só para o prompt.
+  // `fronteiraAtravessada` usa este bloco para saber o que a família JÁ
+  // registrou — sem ele o detector proíbe a Ayla de confirmar um diagnóstico
+  // que a própria mãe cadastrou. Omitir é o comportamento mais restritivo, e
+  // restritivo demais também é defeito.
+  const diagnosticoRegistrado = emFoco
+    .map((m) => lista.find((x) => x.id === m.id)?.diagnosticos_formais)
+    .flatMap((d) => (Array.isArray(d) ? d : d ? [d] : []))
+    .map((d) => String(d).trim())
+    .filter(Boolean)
+    .join(", ");
+
+  return { bloco, foco, diagnosticoRegistrado, consultas: 3 + emFoco.length + 1 };
 }
 
 /**
@@ -184,16 +223,19 @@ export async function responderExperimental(
   params: {
     familyId: string;
     mensagem: string;
-    membroPreferido?: string | null;
   },
 ): Promise<TurnoExperimental | null> {
   const t0 = Date.now();
   try {
-    const { bloco, membro, consultas } = await montarContexto(
+    const { bloco, foco, diagnosticoRegistrado, consultas } = await montarContexto(
       supabase,
       params.familyId,
-      params.membroPreferido ?? null,
+      params.mensagem,
     );
+    // A criança que a resposta vai carimbar: no foco compartilhado ou ambíguo
+    // NÃO se escolhe uma — carimbar seria transformar palpite em dado.
+    const membroDoTurno =
+      foco.tipo === "individual" || foco.tipo === "unica" ? (foco.membros[0]?.id ?? null) : null;
     const msContexto = Date.now() - t0;
 
     // ⚠️ MESMO MODELO DA PRODUÇÃO. Trocar prompt E modelo ao mesmo tempo
@@ -220,7 +262,7 @@ export async function responderExperimental(
     // inspecionar o que vai sair. Foi por aí que uma mãe recebeu um diagnóstico
     // informal em produção — e o experimento não reabre esse buraco.
     const tInspecao = Date.now();
-    const vazamento = fronteiraAtravessada(texto, membro?.diagnosticos_formais ?? null);
+    const vazamento = fronteiraAtravessada(texto, diagnosticoRegistrado || null);
     const msInspecao = Date.now() - tInspecao;
     if (vazamento) {
       console.warn(
@@ -240,7 +282,7 @@ export async function responderExperimental(
 
     return {
       texto,
-      membroId: membro?.id ?? null,
+      membroId: membroDoTurno,
       metrica: {
         consultasBanco: consultas,
         chamadasLLM: 1,
@@ -253,6 +295,7 @@ export async function responderExperimental(
         modelo: model,
         provider,
         fronteiraBarrou: false,
+        foco: foco.tipo,
       },
     };
   } catch (e) {
