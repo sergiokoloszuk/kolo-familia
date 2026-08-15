@@ -1,0 +1,11 @@
+baloes reais analisados        : 3471
+mensagens que MUDAM            : 36 (1.04%)
+com Markdown cru ANTES         : 17
+com Markdown cru DEPOIS        : 3
+
+palavras preservadas           : 3471/3471
+URLs preservadas               : 3471/3471
+numeros preservados            : 3471/3471
+emojis preservados             : 3471/3471
+formatacao WhatsApp ja valida  : 3470/3471
+mesmo numero de baloes         : 3450/3471

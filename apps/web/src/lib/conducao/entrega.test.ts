@@ -74,7 +74,12 @@ describe("montagem das bolhas", () => {
   });
 
   it("o orquestrador usa o divisor — não o split cru", () => {
-    expect(ORCHESTRATOR).toMatch(/dividirEmBolhas\(textoCompleto\)/);
+    // 15/08/2026: `textoCompleto` passou a atravessar `paraWhatsApp` antes do
+    // divisor. Este teste continua provando o que sempre provou — que a
+    // publicação usa o divisor e nunca um `.split()` cru —, agora sobre a
+    // expressão real. A ordem (apresentação → bolhas) é prendida em
+    // `apresentacao-runtime.test.ts`, que é o dono dessa garantia.
+    expect(ORCHESTRATOR).toMatch(/dividirEmBolhas\(paraWhatsApp\(textoCompleto\)\)/);
     expect(ORCHESTRATOR).not.toMatch(/textoCompleto\.split\(/);
   });
 });
