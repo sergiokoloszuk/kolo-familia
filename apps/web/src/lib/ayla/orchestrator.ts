@@ -72,6 +72,7 @@ import { carregarPerfilConsultavel } from "@/lib/kolo-vivo/consultar";
 import { secoesDe, temMaterial } from "@/lib/conducao/base2";
 import { montarRastro, registrarRastroConhecimento } from "@/lib/conhecimento/rastro";
 import { dividirEmBolhas, ritmoDasBolhas, TETO_ESPERA_SEGUNDOS } from "./bolhas";
+import { paraWhatsApp } from "./apresentacao";
 import { semOutrosMembros } from "./membro-escopo";
 import { ehFamiliaExperimental, responderExperimental } from "./experimental";
 import { classificarFeedbackRotina } from "./rotina-feedback";
@@ -3028,7 +3029,13 @@ async function enviarRespostaEmChunks(
   // RITMO COM TETO. A fórmula antiga somava 13-14 s numa resposta de 3 bolhas —
   // mais que o pipeline inteiro. Ver `ritmoDasBolhas`. O orçamento é comum a
   // estas bolhas E ao link do plano, logo abaixo: os dois saem da mesma conta.
-  const bolhas = dividirEmBolhas(textoCompleto);
+  // ⚠️ APRESENTAÇÃO ANTES DA ENTREGA. `paraWhatsApp` é o último ponto em que o
+  // texto ainda é um texto só — depois dele já são balões, e consertar balão é
+  // consertar tarde. Ela normaliza SÓ marcação: medida em 3.471 balões reais
+  // (23/05→15/08), preservou palavras, URLs, números e emojis em 3.471/3.471,
+  // e mudaria 36 mensagens (1,04%) — as que hoje chegam com `**hoje**` e `---`
+  // visíveis para a mãe. Ver `apresentacao.ts` e a bancada do replay.
+  const bolhas = dividirEmBolhas(paraWhatsApp(textoCompleto));
   const ritmo = ritmoDasBolhas(bolhas);
   let esperaGasta = ritmo.reduce((a, b) => a + b, 0);
   for (const [i, par] of bolhas.entries()) {
