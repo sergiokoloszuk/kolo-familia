@@ -15,7 +15,7 @@ Só o que está aberto. 🔒 = bloqueada.
 
 | ID | Pendência | Bloco | Prio | Estado | Próximo passo |
 |---|---|---|---|---|---|
-| [PEND-071](#pend-071) | Segurança está abaixo do gate de assinatura | F · Limites | **P0** | ABERTA | inverter para segurança → gate → conversa |
+| [PEND-071](#pend-071) | Segurança está abaixo do gate de assinatura | F · Limites | **P0** | CORRIGIDA, NÃO PUBLICADA | publicar e fazer smoke com número de QA |
 | [PEND-069](#pend-069) | Migração 0077 (`ayla_documentos`) não aplicada em produção | H · Governança | P1 | ABERTA 🔒 | aplicar o SQL e rodar o seed do Core |
 | [PEND-070](#pend-070) | `ai_prompts.versao` promete versionamento que a PK impede | H · Governança | P3 | ABERTA | decidir entre documentar ou migrar |
 | [PEND-015](#pend-015) | Exposição de secrets no Easypanel | H · Governança | a definir | ABERTA | investigar o risco antes de priorizar |
@@ -3469,8 +3469,9 @@ Aberta em: 2026-08-08 · Origem: consolidação da PEND-010
 
 ### PEND-071
 **Segurança está ABAIXO do gate de assinatura — trial vencido em crise recebe convite comercial, ou silêncio**
-Bloco: **F · Limites** · Prioridade: **P0** · Estado: **ABERTA**
+Bloco: **F · Limites** · Prioridade: **P0** · Estado: **CORRIGIDA, NÃO PUBLICADA**
 Aberta em: 2026-08-15 · Origem: auditoria Legacy × Experimental do Trial
+Corrigida em: 2026-08-15, commit `0fc1feb` (branch `feat/admin-core`, **não publicado**)
 
 - **Impacto:** uma mãe com o teste vencido escreve à Ayla no meio de uma crise —
   risco para a criança ou para ela — e a primeira coisa que o sistema faz é
@@ -3513,7 +3514,23 @@ Aberta em: 2026-08-15 · Origem: auditoria Legacy × Experimental do Trial
   de risco recebe a resposta de segurança e não o convite; (b) mensagem comum
   continua recebendo o convite; (c) nenhum entregável vaza; (d) o cooldown de 12h
   não silencia mensagem de risco.
-- **Agente recomendado:** PROPOR, depois EXECUTAR
+- **O que a correção fez (`0fc1feb`):** duas portas dentro do gate — triagem
+  determinística na entrada (sem IA, sem custo) OU estado de segurança já
+  aberto. Sai texto FIXO com 188/192/CAPS, sem convite comercial, sem modelo,
+  sem entregável, e sem passar pelo cooldown de 12h. O tipo `seguranca` abre o
+  estado, então o turno seguinte entra sem depender de palavra-chave.
+- **A correção NÃO foi mover `segurancaAberta`,** como eu havia proposto:
+  investigando, VI NO CÓDIGO que ela só lê estado já aberto — a detecção de
+  crise NOVA é emergente e depende da resposta já gerada. Não havia nada barato
+  para consultar antes do gate; a triagem precisou existir.
+- **PROVEI POR EXECUÇÃO:** 19 testes, sendo 7 de comportamento real (turno
+  inteiro, trial vencido de verdade). 5 sabotagens, todas mordem. Uma sabotagem
+  passou em branco na primeira leva e originou o arquivo de teste
+  comportamental — asserção sobre código-fonte prova estrutura, não
+  comportamento.
+- **POR QUE NÃO BAIXEI:** o commit não está publicado. `feat/admin-core` não foi
+  para produção. **Baixa só depois de publicar e de um smoke com número de QA.**
+- **Agente recomendado:** EXECUTAR (publicar + smoke)
 
 ---
 
