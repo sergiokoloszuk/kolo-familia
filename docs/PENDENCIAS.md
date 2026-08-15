@@ -3490,11 +3490,41 @@ Aberta em: 2026-08-15 · Origem: implementação da ponte do plano (Bloqueador 2
 - **O que já foi feito:** `persistencia-caminho-real.test.ts` ganhou o mock e um
   **teste 0 de caminho** (`passouPeloExperimental`), e os 6 testes passam agora
   pelo ramo novo. `ponte-plano-caminho-novo.test.ts` nasceu com o mesmo portão.
-- **Próximo passo:** varrer os demais testes que afirmam medir o experimental e
-  aplicar o mesmo teste 0. Enquanto não for feito, nenhum laudo anterior sobre o
-  caminho novo pode ser lido como prova de caminho novo.
-- **Critério de conclusão:** todo teste que cita o experimental grava
-  `ayla_path=experimental` no turno que mede.
+- **A VARREDURA FOI FEITA (15/08/2026).** 15 arquivos citam o experimental; 5
+  afirmam comportamento do caminho novo. O marcador virou uma função só no
+  harness: `passouPeloExperimental(mundo)`, que lê
+  `ayla_send_log.payload.meta.ayla_path` — a mesma coisa que se leria em
+  produção para saber quem respondeu.
+  - **Refeitas:** `persistencia-caminho-real` (mock + teste 0) ·
+    `rotina-alcancavel` (mock + teste 0) · `perfil-familia-caminho-real`
+    (**criada**, ver abaixo).
+  - **Válidas sem mudança:** `experimental.test.ts` — distingue os motores pelo
+    system (`"Você é **AYLA**"`) e conta chamadas por motor. É o padrão-ouro.
+  - **Estruturais, e só isso:** `persistencia-pos-resposta`,
+    `c2-classificador-unico`, `acesso-antes-do-experimental`,
+    `eventos-atribuicao` leem o código-fonte. Provam decisão estrutural, **não**
+    execução — e não podem ser citadas como prova de caminho.
+  - **De função isolada:** `experimental-contexto`, `experimental-onboarding`,
+    `core-editavel`, `documentos-nao-injetados` chamam o montador de contexto ou
+    `responderExperimental` direto. Provam a função, não o turno.
+- **⚠️ ACHADO 1 — prova que não existia.** O commit `42a66e2` afirma "o perfil
+  da FAMILIA chega ao caminho novo". **Nenhum teste citava `lerPerfilFamilia`
+  nem `blocoDaFamilia`.** A prova foi criada agora
+  (`perfil-familia-caminho-real.test.ts`, 5 testes pelo `processInbound`:
+  chegada do bloco com conteúdo real, ausência sem linha, placeholder filtrado,
+  e não-vazamento entre famílias).
+- **⚠️ ACHADO 2 — asserção vácua.** Em `rotina-alcancavel`, "o artefato nasce na
+  família e na criança certas" iterava sobre uma lista **vazia**: nenhuma rotina
+  nasce naquele harness, nem com prontidão `suficiente`. O teste passava sem
+  verificar nada. Agora o zero está escrito e medido.
+- **⚠️ ACHADO 3 — comportamento que a prova antiga escondia.** MEDIDO: com a
+  prontidão em `orientacao`, um pedido explícito de rotina **atravessa** o
+  portão e é respondido pela conversa do experimental. O portão é alcançado; a
+  condução até o artefato, não.
+- **Próximo passo:** decidir se o Achado 3 é o comportamento desejado, e cobrir
+  a criação real do quadro (hoje é NÃO PROVADO por teste automatizado).
+- **Critério de conclusão:** todo teste que afirma comportamento do caminho novo
+  chama `passouPeloExperimental`; nenhuma asserção vácua sobrevive.
 - **Agente recomendado:** AUDITAR
 
 ---
