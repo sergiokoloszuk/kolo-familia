@@ -73,6 +73,7 @@ import { secoesDe, temMaterial } from "@/lib/conducao/base2";
 import { montarRastro, registrarRastroConhecimento } from "@/lib/conhecimento/rastro";
 import { dividirEmBolhas, ritmoDasBolhas, TETO_ESPERA_SEGUNDOS } from "./bolhas";
 import { semOutrosMembros } from "./membro-escopo";
+import { ehFamiliaExperimental, responderExperimental } from "./experimental";
 import { classificarFeedbackRotina } from "./rotina-feedback";
 import { pedeArtefatoImprimivel, apontaProRecente } from "./rotina-pdf-rota";
 import { resolverMembroAlvo } from "./membro-alvo";
@@ -1903,6 +1904,75 @@ export async function processInbound(
       return { tratada: true, familia: family.id, resposta: resp };
     }
     return { tratada: true, familia: family.id };
+  }
+
+  // ══════════════════════════════════════════════════════════════════════
+  // 3a-EXP. A PORTA AO LADO — AYLA EXPERIMENTAL (15/08/2026)
+  // ══════════════════════════════════════════════════════════════════════
+  //
+  // ⚠️ ISTO NÃO SUBSTITUI NADA. Tudo o que vem depois continua exatamente como
+  // estava, e é o CONTROLE do experimento. Só famílias na allowlist explícita
+  // entram aqui; qualquer outra segue o caminho de sempre.
+  //
+  // ⚠️ POR QUE AQUI, E NÃO ANTES NEM DEPOIS. Antes deste ponto ficam as
+  // proteções que NÃO podem ser puladas por um experimento — identidade da
+  // família, bloqueio/opt-out, criança escrevendo, idempotência do inbound,
+  // controle de turno e o gate de assinatura. Depois deste ponto começa a
+  // condução conversacional: classificador de intenção, parser, os portões de
+  // rotina/plano/imprimível, o núcleo de `diretrizes.ts` e as lentes — que é
+  // justamente o que o experimento quer PULAR.
+  //
+  // ⚠️ FAIL CLOSED EM DUAS CAMADAS. `ehFamiliaExperimental` devolve false em
+  // qualquer dúvida (variável ausente, id fora da lista, erro de leitura), e
+  // `responderExperimental` devolve null em qualquer falha — inclusive quando a
+  // rede de fronteiras barra o texto. Nos dois casos o turno CAI para a Ayla
+  // atual, e a família recebe UMA resposta só.
+  if (ehFamiliaExperimental(family.id)) {
+    const ctxExp = await loadFamiliaParaEnvio(supabase, family.id);
+    const exp = ctxExp
+      ? await responderExperimental(supabase, {
+          familyId: family.id,
+          mensagem: inbound.texto,
+        })
+      : null;
+    if (ctxExp && exp) {
+      console.log(
+        `[ayla:path] experimental — ${exp.metrica.consultasBanco} consultas · ${exp.metrica.chamadasLLM} LLM · ` +
+          `in=${exp.metrica.tokensEntrada} out=${exp.metrica.tokensSaida} · ` +
+          `contexto=${exp.metrica.msContexto}ms modelo=${exp.metrica.msModelo}ms ` +
+          `inspecao=${exp.metrica.msInspecao}ms total=${exp.metrica.msTotal}ms`,
+      );
+      const resp = await enviarEPersistir(supabase, {
+        family_account_id: family.id,
+        membro_atipico_id: exp.membroId,
+        phone: ctxExp.whatsapp_e164,
+        texto: exp.texto,
+        category: "reativa",
+        tipo: "resposta_registro",
+        meta: { ayla_path: "experimental", ...exp.metrica },
+      });
+      // ⚠️ APRENDER DEPOIS DE RESPONDER (Fase 1). `extrairESalvarEventos` tem
+      // pré-filtro por regex e só chama modelo quando o texto PARECE trazer um
+      // evento — e roda DEPOIS da bolha, então não entra no caminho crítico.
+      // É a peça que faz o experimento deixar de ser amnésico.
+      //
+      // ⚠️ `persistirRegistro` NÃO entra: ela depende do `ParserResult`, ou
+      // seja, arrastaria `parseInbound` de volta — a chamada de ~9 s que este
+      // braço existe para evitar. Enriquecer o Perfil Vivo sem o parser é
+      // desenho da próxima fase.
+      if (exp.membroId) {
+        await extrairESalvarEventos(
+          supabase,
+          family.id,
+          exp.membroId,
+          inbound.texto,
+        ).catch(() => {});
+      }
+      // ⚠️ O `return` É O QUE GARANTE UMA RESPOSTA SÓ. Sem ele, o turno seguiria
+      // para a Ayla atual e a família receberia duas.
+      return { tratada: true, familia: family.id, resposta: resp };
+    }
+    console.log("[ayla:path] experimental indisponível — seguindo pela Ayla atual");
   }
 
   // 3a. Resposta à oferta de fim de semana (Fase 5): se não for recusa,
