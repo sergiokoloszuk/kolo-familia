@@ -11,6 +11,8 @@
  * chamar outro endpoint nosso e nós despachamos por aqui no fim.
  */
 
+import { paraWhatsApp } from "./apresentacao";
+
 const ZAPI_BASE = "https://api.z-api.io";
 
 type ZapiConfig = {
@@ -61,7 +63,20 @@ export async function enviarTexto(params: {
   const phone = params.phoneE164.replace(/^\+/, "");
 
   const url = `${ZAPI_BASE}/instances/${instanceId}/token/${token}/send-text`;
-  const body: Record<string, unknown> = { phone, message: params.texto };
+
+  // ⚠️ A GARANTIA DE APRESENTAÇÃO MORA AQUI, e não nos chamadores.
+  //
+  // 15/08/2026: `paraWhatsApp` foi ligada no caminho de balões do orquestrador,
+  // e eu escrevi um teste afirmando que aquele era o único ponto de publicação.
+  // Era falso — o grep foi por `dividirEmBolhas`, não por `enviarTexto`. Existem
+  // ao menos oito chamadores (proativa, nudge, cron, ativação, webhook, admin),
+  // e a Karina recebeu uma resposta cheia de `###`, `>` e listas por uma dessas
+  // outras portas.
+  //
+  // Guardar o funil é a diferença entre uma garantia e um lembrete: um chamador
+  // novo nasce protegido, sem ninguém precisar lembrar. É o mesmo motivo pelo
+  // qual `logEvent` não pede que cada caller formate seu log.
+  const body: Record<string, unknown> = { phone, message: paraWhatsApp(params.texto) };
   if (params.delaySegundos && params.delaySegundos > 0) {
     body.delayTyping = Math.min(Math.round(params.delaySegundos), 15);
   }
