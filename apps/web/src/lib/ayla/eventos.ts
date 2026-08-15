@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { getAylaAnthropicClient, AYLA_MODEL } from "./anthropic";
+import { logEvent } from "@/lib/log";
 
 /**
  * Linha do tempo (Livro Vivo): a Ayla detecta EVENTOS importantes na conversa
@@ -149,7 +150,18 @@ export async function extrairESalvarEventos(
         .gte("created_at", desde)
         .limit(1);
       if (dup?.length) continue;
-      await supabase.from("eventos_membro").insert({
+      // ⚠️ A ESCRITA CONFERE O PRÓPRIO RESULTADO — §7 do protocolo.
+      //
+      // No cliente Supabase o `.insert()` DEVOLVE o erro; não lança. Um `await`
+      // sem checar `error` engole a falha inteira e o fluxo segue como sucesso.
+      // Foi assim que o acesso da Rochelle sumiu: seis handlers do webhook, e
+      // nenhum conferindo a escrita.
+      //
+      // Aqui o custo de engolir era menor mas do mesmo tipo: um aprendizado da
+      // criança sumia e ninguém ficava sabendo. `logEvent` com severidade de
+      // erro PERSISTE — é o que faz esta perda ser descobrível sem depender de
+      // a família reclamar que a Ayla esqueceu.
+      const { error: erroInsert } = await supabase.from("eventos_membro").insert({
         family_account_id: familyId,
         membro_atipico_id: membroId,
         data: ev.data ?? hoje,
@@ -157,6 +169,15 @@ export async function extrairESalvarEventos(
         descricao: ev.descricao,
         fonte: "ayla",
       });
+      if (erroInsert) {
+        await logEvent({
+          kind: "ayla_evento_nao_gravado",
+          severity: "error",
+          message: `evento de ${ev.tipo} não foi gravado: ${erroInsert.message}`,
+          family_account_id: familyId,
+          payload: { membro_atipico_id: membroId, tipo: ev.tipo, codigo: erroInsert.code },
+        }).catch(() => {});
+      }
     }
   } catch (e) {
     console.warn("[ayla:eventos] extração falhou:", e instanceof Error ? e.message : e);
