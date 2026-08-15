@@ -23,7 +23,8 @@ vi.mock("@/lib/auth/require-admin", () => ({
 }));
 vi.mock("next/cache", () => ({ revalidatePath: () => {} }));
 
-const { salvarNovaVersao, ativarVersao, listarVersoes, lerVersao, sha256 } = await import("./actions");
+const { salvarNovaVersao, ativarVersao, listarVersoes, lerVersao } = await import("./actions");
+const { sha256 } = await import("./sha");
 
 const docs = () => db.linhas("ayla_documentos") as Array<Record<string, unknown>>;
 const sha = (s: string) => createHash("sha256").update(s, "utf8").digest("hex");
@@ -144,6 +145,19 @@ describe("ativar é ação separada de salvar", () => {
     expect(r.ok, r.ok ? "" : r.error).toBe(true);
     expect(docs().filter((d) => d.status === "ativo")).toHaveLength(1);
     expect(docs()[0].publicado_em).toBeTruthy();
+  });
+
+  it("MORDE: quem ativou e quando ficam registrados", () => {
+    // Garantia herdada de `publicacao.test.ts`, que foi removido junto com as
+    // ações de escrita do simulador. Publicar um Core alcança todas as famílias
+    // do experimento de uma vez — a operação precisa de dono.
+    return (async () => {
+      await salvarNovaVersao("core", textoDe(700));
+      await ativarVersao(docs()[0].id as string);
+      const ativa = docs().find((d) => d.status === "ativo")!;
+      expect(ativa.publicado_por, "ativação sem dono").toBe(usuario.id);
+      expect(ativa.publicado_em).toBeTruthy();
+    })();
   });
 
   it("MORDE: no máximo UMA versão ativa por chave", async () => {
