@@ -186,17 +186,32 @@ describe("o caminho curto pula mesmo a condução atual", () => {
     // ramo desceu para depois de `classificarIntencao`, e agora CONSOME o
     // `turnoClassificado` em vez de reclassificar. Um dono para a decisão.
     //
-    // O que ele continua prendendo — e é o que sempre importou — é que o
-    // `parseInbound` NÃO entra no caminho crítico. MEDIDO em 15/08: parser tem
-    // p50 de 2.659 ms contra 849 ms do classificador. Trocar zero por um
-    // auxiliar barato foi escolha; deixar o caro entrar seria regressão.
-    const systems = registros.map((r) => r.system).join("\n---\n");
-    expect(systems, "o parser entrou no caminho crítico").not.toMatch(
-      /conquista|observacao_livre|sugestao_kolo_vivo/i,
-    );
+    // ⚠️ E MUDOU DE NOVO NA FATIA 3, pelo mesmo critério. O parser voltou — mas
+    // DEPOIS da resposta, para alimentar `persistirRegistro` (Diário, check-in
+    // e Kolo Vivo). A mãe não espera por ele.
+    //
+    // ⚠️ O LIMITE DESTE TESTE, DECLARADO. O harness registra chamadas ao modelo
+    // e envios em listas separadas, sem relógio comum — ele consegue provar que
+    // o parser RODOU, não que rodou DEPOIS. A ordem é provada logo abaixo, por
+    // posição no arquivo, que para esta garantia é exato: dentro do ramo, o
+    // `parseInbound` vem depois do `enviarEPersistir`.
+    //
+    // O que este teste prende de comportamento: a resposta saiu.
+    expect(mundo.enviadas.length, "a família não recebeu resposta").toBeGreaterThan(0);
 
-    // E o teto continua existindo: um auxiliar, não uma cascata.
-    expect(registros.length, `auxiliares chamados: ${registros.length}`).toBeLessThanOrEqual(1);
+    const ORCH = readFileSync(resolve(__dirname, "orchestrator.ts"), "utf8");
+    const ramo = ORCH.slice(
+      ORCH.indexOf("if (ehFamiliaExperimental(family.id))"),
+      ORCH.indexOf("  // 4. Parser IA"),
+    );
+    const iEnvio = ramo.indexOf("await enviarEPersistir(");
+    const iParser = ramo.indexOf("parseInbound(");
+    expect(iEnvio, "o ramo perdeu o envio").toBeGreaterThan(-1);
+    expect(iParser, "o ramo perdeu a persistência").toBeGreaterThan(-1);
+    expect(iParser, "o parser entrou ANTES da resposta").toBeGreaterThan(iEnvio);
+
+    // E a persistência é fire-and-forget: nada de `await` segurando o turno.
+    expect(ramo.slice(iEnvio)).toContain("void (async () => {");
   });
 
   it("MORDE: o núcleo de diretrizes.ts NÃO entra no prompt experimental", async () => {

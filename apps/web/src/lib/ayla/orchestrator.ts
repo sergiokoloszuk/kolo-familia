@@ -2605,10 +2605,6 @@ export async function processInbound(
       // evento — e roda DEPOIS da bolha, então não entra no caminho crítico.
       // É a peça que faz o experimento deixar de ser amnésico.
       //
-      // ⚠️ `persistirRegistro` NÃO entra: ela depende do `ParserResult`, ou
-      // seja, arrastaria `parseInbound` de volta — a chamada de ~9 s que este
-      // braço existe para evitar. Enriquecer o Perfil Vivo sem o parser é
-      // desenho da próxima fase.
       if (exp.membroId) {
         await extrairESalvarEventos(
           supabase,
@@ -2621,6 +2617,62 @@ export async function processInbound(
           ctxExp.membros.find((m) => m.id === exp.membroId)?.nome ?? null,
         ).catch(() => {});
       }
+
+      // ⚠️ FATIA 3 · O APRENDIZADO LONGITUDINAL VOLTA — DEPOIS DA RESPOSTA.
+      //
+      // Até 15/08/2026 este ramo só escrevia `eventos_membro`. Ficavam de fora
+      // `diarios`, `ayla_daily_checkins` e `sugestao_perfil_vivos` — ou seja, a
+      // auto-incorporação do Kolo Vivo, que é o mecanismo pelo qual o Perfil
+      // cresce sozinho. Uma Ayla que conversa bem hoje e esquece amanhã não é a
+      // Ayla que as famílias têm.
+      //
+      // O comentário antigo dizia que `persistirRegistro` não podia entrar
+      // porque arrastaria `parseInbound` de volta. Estava certo sobre o
+      // mecanismo e errado sobre a conclusão: o parser não pode entrar ANTES da
+      // resposta. Aqui a bolha JÁ FOI ENVIADA — `enviarEPersistir` aconteceu
+      // acima —, então a mãe não espera um milissegundo por isto.
+      //
+      // ⚠️ SEM `await`. O turno retorna e a persistência segue. Se ela falhar, a
+      // conversa já aconteceu; o custo é um aprendizado perdido, não um silêncio.
+      // O `console.warn` é o que torna essa perda visível — sem ele, dado
+      // sumindo em silêncio é exatamente o defeito que este repositório mais
+      // paga caro.
+      //
+      // ⚠️ ISOLAMENTO. `family.id` e o membro vêm do contexto JÁ resolvido deste
+      // turno; `persistirRegistro` sai cedo quando não há membro. Nada aqui
+      // escolhe criança por palpite.
+      void (async () => {
+        try {
+          const membrosDoTurno = ctxExp.membros.map((m) => ({ id: m.id, nome: m.nome ?? "" }));
+          if (membrosDoTurno.length === 0) return;
+          const parsedExp = await parseInbound(
+            {
+              texto: inbound.texto,
+              membros: membrosDoTurno,
+              ultimoMembroFoco:
+                ctxExp.membros.find((m) => m.id === exp.membroId)?.nome ?? null,
+            },
+            { supabase, family_account_id: family.id, feature: "ayla_parser_pos" },
+          );
+          // Família com uma criança só: se o parser não cravou, é a única
+          // possível. Mesma regra do Legacy, e pelo mesmo motivo.
+          if (membrosDoTurno.length === 1 && !parsedExp.membro_atipico_id) {
+            parsedExp.membro_atipico_id = membrosDoTurno[0].id;
+            parsedExp.confianca_identificacao = 100;
+          }
+          // ⚠️ O FOCO DO TURNO MANDA. Se a resposta foi carimbada para uma
+          // criança, o registro é dela — o parser não pode filar conteúdo em
+          // outro irmão depois de a resposta já ter saído.
+          if (exp.membroId) parsedExp.membro_atipico_id = exp.membroId;
+          await persistirRegistro(supabase, family.id, parsedExp);
+        } catch (e) {
+          console.warn(
+            "[ayla:experimental] persistência pós-resposta falhou:",
+            e instanceof Error ? e.message : e,
+          );
+        }
+      })();
+
       // ⚠️ O `return` É O QUE GARANTE UMA RESPOSTA SÓ. Sem ele, o turno seguiria
       // para a Ayla atual e a família receberia duas.
       return { tratada: true, familia: family.id, resposta: resp };
