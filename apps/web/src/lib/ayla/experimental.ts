@@ -120,6 +120,18 @@ export type TurnoExperimental = {
  */
 export type TurnoSimulado = { quem: "mae" | "ayla"; texto: string };
 
+/**
+ * POR QUE O TURNO NÃO PRODUZIU RESPOSTA.
+ *
+ * Nomes estáveis, para a tela de QA e para o log. `null` sozinho nunca disse
+ * qual dos caminhos foi — e "resposta vazia, fronteira barrou, ou a família
+ * não tem contexto", numa frase só, é um diagnóstico que não diagnostica.
+ */
+export type MotivoFalha =
+  | "LLM_RESPOSTA_VAZIA"
+  | "FRONTEIRA_BARROU"
+  | "EXCECAO";
+
 async function montarContexto(
   supabase: SupabaseClient,
   familyId: string,
@@ -265,6 +277,17 @@ export async function responderExperimental(
      * em lugar nenhum.
      */
     turnosSimulados?: readonly TurnoSimulado[];
+    /**
+     * ⚠️ SÓ O SIMULADOR PASSA ISTO — e existe porque `null` era uma resposta
+     * mentirosa. Três causas completamente diferentes (modelo devolveu vazio ·
+     * fronteira barrou · exceção) chegavam à tela como a MESMA frase, e a
+     * informação que as separa existia no instante da falha e era descartada.
+     *
+     * Não muda o contrato do runtime: a família continua recebendo `null` e
+     * caindo para o fluxo atual, exatamente como antes. Este callback só é
+     * chamado se alguém o passar, e a conversa real não passa.
+     */
+    onFalha?: (motivo: MotivoFalha, detalhe: string) => void;
   },
 ): Promise<TurnoExperimental | null> {
   const t0 = Date.now();
@@ -299,7 +322,13 @@ export async function responderExperimental(
     const msModelo = Date.now() - tModelo;
 
     const texto = (r.texto ?? "").trim();
-    if (!texto) return null;
+    if (!texto) {
+      params.onFalha?.(
+        "LLM_RESPOSTA_VAZIA",
+        `${provider}/${model} respondeu sem texto · tokens in ${r.tokensIn}, out ${r.tokensOut}`,
+      );
+      return null;
+    }
 
     // ⚠️ A REDE DE FRONTEIRAS CONTINUA. Ela é a razão de o streaming ter saído:
     // sem o instante em que a resposta inteira está em memória, não há onde
@@ -312,6 +341,7 @@ export async function responderExperimental(
       console.warn(
         `[ayla:experimental] fronteira barrou a resposta (${vazamento.fronteira.nome}) — caindo pro fluxo atual`,
       );
+      params.onFalha?.("FRONTEIRA_BARROU", `fronteira "${vazamento.fronteira.nome}"`);
       return null;
     }
 
@@ -350,6 +380,7 @@ export async function responderExperimental(
       "[ayla:experimental] falhou, caindo pro fluxo atual:",
       e instanceof Error ? e.message : e,
     );
+    params.onFalha?.("EXCECAO", e instanceof Error ? `${e.name}: ${e.message}` : String(e));
     return null;
   }
 }

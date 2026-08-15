@@ -1,5 +1,10 @@
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { getAylaAnthropicClient, AYLA_MODEL } from "./anthropic";
 import { CHAVES_TEMA } from "@/lib/conducao/temas";
+import { logarUsoApi } from "@/lib/billing/logar";
+
+/** O mínimo que o registro de custo precisa — não obriga ninguém a importar. */
+type SupabaseClientMinimo = SupabaseClient;
 
 /**
  * Classificador do TURNO da Ayla — o que a mãe/pai quer (intenção) e sobre o
@@ -214,6 +219,22 @@ Regras do tema — errar aqui faz a Ayla perder o fio da conversa:
 
 export async function classificarIntencao(params: {
   texto: string;
+  /**
+   * ⚠️ SÓ PARA OBSERVABILIDADE — não muda decisão nenhuma.
+   *
+   * Este classificador roda em TODO turno de WhatsApp e, até 15/08/2026, era
+   * invisível: não chamava `logarUsoApi`, e por isso não aparecia em uma única
+   * das 6.000 chamadas registradas em `api_calls`. Custo e latência dele não
+   * existiam em lugar nenhum — e a bancada de 15/08 mediu p50 de 849 ms com
+   * uma cauda de 12,2 s em 1 de 30 chamadas. Uma cauda dessas em produção era,
+   * literalmente, indetectável.
+   *
+   * Quem passar o `familyId` faz o custo virar linha em `api_calls`. Quem não
+   * passar continua funcionando igual — nenhum chamador é obrigado a mudar, e
+   * o registro nunca pode derrubar o turno.
+   */
+  familyId?: string | null;
+  supabase?: SupabaseClientMinimo | null;
   /** Última fala da Ayla, se houver — ajuda a entender respostas curtas. */
   ultimaAyla?: string | null;
   /** Fala anterior da mãe — dá o fio quando a mensagem de agora é curta. */
@@ -264,6 +285,7 @@ export async function classificarIntencao(params: {
       .join("\n");
 
     const client = getAylaAnthropicClient();
+    const tModelo = Date.now();
     const resp = await client.messages.create({
       model: AYLA_MODEL,
       // 24 bastavam pra "intencao|tema". Com o "aceite" — uma frase — a
@@ -272,8 +294,26 @@ export async function classificarIntencao(params: {
       system: montarSystem(catalogo),
       messages: [{ role: "user", content: user }],
     });
+    const msModelo = Date.now() - tModelo;
     const b = resp.content[0];
     const raw = (b?.type === "text" ? b.text : "").toLowerCase();
+
+    // ⚠️ REGISTRO BEST-EFFORT, E NUNCA BLOQUEANTE. Sem `await`: o custo entra
+    // em `api_calls` enquanto o turno segue. Se a gravação falhar, a mãe não
+    // pode nem perceber — observabilidade que derruba conversa é pior que a
+    // ausência dela. `msModelo` vai em `meta` porque é a coluna que não existe
+    // na tabela, e é justamente a que faltava para enxergar a cauda.
+    if (params.supabase && params.familyId) {
+      void logarUsoApi(params.supabase, {
+        family_account_id: params.familyId,
+        provider: "anthropic",
+        model: AYLA_MODEL,
+        feature: "classificar_intencao",
+        input_tokens: resp.usage?.input_tokens ?? 0,
+        output_tokens: resp.usage?.output_tokens ?? 0,
+        meta: { ms: msModelo },
+      }).catch(() => {});
+    }
 
     // ⚠️ A ORDEM DOS TRÊS PRIMEIROS NÃO MUDA. `skills` entrou como QUARTO campo
     // justamente pra que a posição de intenção, tema e aceite continue a mesma.
@@ -311,6 +351,21 @@ export async function classificarIntencao(params: {
     return { intencao, tema, aceite, skills: campos.skills };
   } catch (e) {
     console.warn("[ayla:intent] classificação falhou:", e instanceof Error ? e.message : e);
+    // ⚠️ A FALHA TAMBÉM É DADO. Sem isto, um provider fora do ar aparece como
+    // "a Ayla está mais genérica hoje" — o tema some, o roteamento cai no
+    // regex, e nada no sistema diz por quê. `output_tokens: 0` com `erro`
+    // preenchido é o que distingue "falhou" de "não rodou".
+    if (params.supabase && params.familyId) {
+      void logarUsoApi(params.supabase, {
+        family_account_id: params.familyId,
+        provider: "anthropic",
+        model: AYLA_MODEL,
+        feature: "classificar_intencao",
+        input_tokens: 0,
+        output_tokens: 0,
+        meta: { erro: e instanceof Error ? `${e.name}: ${e.message}` : String(e) },
+      }).catch(() => {});
+    }
     // Fallback seguro: o regex/reativo decide a intenção, e o tema não se perde.
     return { intencao: "outro", tema: anterior, aceite: null, skills: [] };
   }

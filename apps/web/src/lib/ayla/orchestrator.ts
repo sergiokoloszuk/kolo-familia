@@ -2218,6 +2218,12 @@ export async function processInbound(
     ? { intencao: "outro" as const, tema: null, aceite: null, skills: [] as string[] }
     : await classificarIntencao({
         texto: inbound.texto,
+        // ⚠️ 15/08/2026 · O CLASSIFICADOR SAI DA INVISIBILIDADE. Ele rodava em
+        // todo turno e não aparecia em nenhuma das 6.000 chamadas registradas
+        // em `api_calls` — custo e latência dele simplesmente não existiam.
+        // Passar estes dois faz o turno virar linha; não muda decisão nenhuma.
+        supabase,
+        familyId: family.id,
         ...(await ultimasFalas(supabase, family.id, inbound.texto, await historicoDoTurno())),
         temasOnboarding: await carregarDesafiosOnboarding(supabase, membroConversa),
         // QUAL REPERTÓRIO CONSULTAR — decidido na MESMA chamada que já classifica
