@@ -79,6 +79,8 @@ import { pedeArtefatoImprimivel, apontaProRecente } from "./rotina-pdf-rota";
 import { resolverMembroAlvo } from "./membro-alvo";
 import {
   segurancaAberta,
+  mensagemPedeSeguranca,
+  textoSegurancaSemAcesso,
   notaDeSeguranca,
   respostaOrientouEmergencia,
   riscoEhAtual,
@@ -1877,6 +1879,49 @@ export async function processInbound(
   // fluxo de ABORDAGEM do CRM (lead ainda não-assinante) podem vir acima daqui.
   if (!(await aylaServicoLiberado(supabase, family.id))) {
     const ctxA = await loadFamiliaParaEnvio(supabase, family.id);
+
+    // ── SEGURANÇA VEM ANTES DA COBRANÇA (PEND-071) ───────────────────────
+    //
+    // ⚠️ O QUE ESTAVA ERRADO. Este gate devolvia `{tratada:true}` em TODOS os
+    // ramos, e `segurancaAberta` só é consultada 195 linhas abaixo — portanto
+    // inalcançável para quem não passou aqui. Uma mãe com o teste vencido
+    // escrevendo no meio de uma crise recebia o convite para assinar, ou, dentro
+    // do cooldown de 12h, NADA.
+    //
+    // A proteção existente não falhou: ela pegou o problema para o qual foi
+    // feita (o caso Camile/Gramado, de entregável vazando de graça). O que
+    // faltava era a pergunta oposta — não "o que não pode vazar", mas "o que
+    // não pode esperar".
+    //
+    // ⚠️ ISTO NÃO LIBERA O SERVIÇO. Nenhum plano, rotina, estratégia ou
+    // orientação passa por aqui: sai um texto fixo de acolhimento e
+    // encaminhamento, e o `return` mantém a conversa bloqueada como antes.
+    // O convite comercial é SUPRIMIDO neste turno — cobrar no meio de uma
+    // crise é pior que o silêncio que estamos corrigindo.
+    //
+    // Duas portas, e a ordem entre elas é de custo: o estado já aberto é uma
+    // consulta que só acontece quando a triagem de texto não pegou nada.
+    const emRisco =
+      mensagemPedeSeguranca(inbound.texto) ||
+      (await segurancaAberta(supabase, family.id, inbound.recebidaEm)).aberta;
+
+    if (emRisco && ctxA?.whatsapp_e164) {
+      // ⚠️ SEM COOLDOWN. `reservarConviteAssinatura` governa o convite
+      // comercial, não isto. Uma segunda mensagem de risco dentro das 12h tem
+      // que ser respondida — era exatamente esse silêncio o pior sintoma.
+      const resp = await enviarEPersistir(supabase, {
+        family_account_id: family.id,
+        membro_atipico_id: null,
+        phone: ctxA.whatsapp_e164,
+        texto: textoSegurancaSemAcesso(ctxA.nomeMae),
+        category: "reativa",
+        // `seguranca` ABRE o estado: os próximos turnos desta família entram
+        // por `segurancaAberta` acima, mesmo sem palavra-chave na mensagem.
+        tipo: "seguranca",
+      });
+      return { tratada: true, familia: family.id, resposta: resp };
+    }
+
     if (ctxA) {
       // COOLDOWN REAL: um convite por família a cada 12h. O gate de acesso
       // continua valendo (a conversa não segue sem assinatura) — o que para de
