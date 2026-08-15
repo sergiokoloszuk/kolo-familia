@@ -20,7 +20,33 @@ import { AYLA_EXPERIMENTAL_PROMPT } from "./experimental-prompt";
  * Passo 2 entra sem custo novo.
  */
 
-export type ChaveDocumento = "core";
+/**
+ * OS DOCUMENTOS DA AYLA.
+ *
+ * ⚠️ CADASTRAR ≠ INJETAR. Estar aqui, e até estar ATIVO, não faz um documento
+ * entrar no prompt. Hoje **só o `core`** é resolvido e injetado — os outros
+ * quatro existem para serem administrados e revisados, e a decisão de quando
+ * cada um entra na conversa é a orquestração seletiva, que é outra frente.
+ * Um teste prende isso.
+ */
+export const CHAVES_DOCUMENTO = [
+  "core",
+  "trial",
+  "plano",
+  "cartoes_visuais",
+  "fontes_confiaveis",
+] as const;
+
+export type ChaveDocumento = (typeof CHAVES_DOCUMENTO)[number];
+
+/** Rótulo humano, para a tela do Admin. */
+export const ROTULO_DOCUMENTO: Record<ChaveDocumento, string> = {
+  core: "Core",
+  trial: "Trial",
+  plano: "Plano",
+  cartoes_visuais: "Cartões Visuais",
+  fontes_confiaveis: "Fontes Confiáveis",
+};
 
 export type DocumentoResolvido = {
   conteudo: string;
@@ -29,8 +55,16 @@ export type DocumentoResolvido = {
   versao: number | null;
 };
 
-/** O Core do código. Único ponto que conhece o fallback de cada chave. */
-const FALLBACK: Record<ChaveDocumento, string> = {
+/**
+ * O fallback de código — existe SÓ para o Core.
+ *
+ * ⚠️ Os outros documentos não têm (nem devem ter) versão no código: eles nascem
+ * no Admin. Se um deles for pedido e não houver versão ativa, o resolvedor
+ * devolve string vazia, e quem chamar decide o que fazer. Inventar um fallback
+ * para eles seria criar uma segunda fonte de verdade — exatamente o que esta
+ * tabela existe para acabar.
+ */
+const FALLBACK: Partial<Record<ChaveDocumento, string>> = {
   core: AYLA_EXPERIMENTAL_PROMPT,
 };
 
@@ -105,7 +139,7 @@ export async function resolverDocumento(
   if (linha && linha.conteudo.trim().length > 0) {
     return { conteudo: linha.conteudo, origem: "admin", versao: linha.versao };
   }
-  return { conteudo: FALLBACK[chave], origem: "fallback", versao: null };
+  return { conteudo: FALLBACK[chave] ?? "", origem: "fallback", versao: null };
 }
 
 /** O rascunho de uma chave, para o simulador. `null` quando não há. */
