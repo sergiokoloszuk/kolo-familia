@@ -531,6 +531,26 @@ Aberta em: 2026-08-14 · Origem: PEND-064, investigação de infraestrutura
   infraestrutura: afeta latência de TODAS as rotas, dos crons e das chamadas a
   Anthropic/OpenAI/Stripe/Z-API, que hoje saem dos EUA. O ganho no banco pode
   ser parcialmente devolvido nas APIs externas — **NÃO MEDI** esse lado.
+- **TENTATIVA DE A/B EM 15/08/2026 — BLOQUEADA.** Preview criado no branch
+  `perf/latencia-gru1-preview` (`2e7729f`) com `regions: ["gru1"]` e uma rota de
+  diagnóstico fail-closed. O deploy **subiu com sucesso**, mas a **Deployment
+  Protection (SSO) da Vercel** intercepta todo caminho do preview com 302 para
+  `vercel.com/sso-api`. Sem token da Vercel e sem
+  `VERCEL_AUTOMATION_BYPASS_SECRET`, a rota é inalcançável.
+  **Destrava com uma destas:** (a) gerar o *Protection Bypass for Automation*
+  no painel e me passar o segredo; (b) desligar a proteção só para este
+  preview; (c) abrir a URL da rota no navegador já logado e colar o JSON.
+- MEDIDO enquanto isso, com o que dava sem o preview:
+  - **Haiku pequeno**: em `iad1` **0,44-1,0 s** (extraído de 114 pares de
+    chamadas consecutivas em `api_calls`); **do Brasil 1,22-1,67 s**.
+  - **GPT principal** (~19k de entrada, saída curta): em `iad1` **~2,5 s**;
+    **do Brasil ~2,74 s**.
+  - ⚠️ O ponto de medição do Brasil é uma conexão comum, **não um datacenter
+    `gru1`**, que tem peering muito melhor. Esses números **superestimam** a
+    penalidade das APIs — servem como PIOR CASO, não como estimativa.
+- CONTA no pior caso medido: banco −5,9 s · Haiku +1,2 s · GPT +0,2 s ·
+  Z-API **NÃO SEI** → **ganho líquido ≈ −4,5 s**. Mesmo pessimista, `gru1`
+  vence. Falta a prova real.
 - Critério de conclusão: turno conversacional medido em produção depois da
   decisão de região, com o custo das APIs externas medido junto.
 
@@ -555,6 +575,29 @@ Aberta em: 2026-08-14 · Origem: PEND-064
   completamente conforme a PEND-065.
 - Critério de conclusão: portões agrupados em ondas, com equivalência de
   roteamento provada e medição antes/depois.
+
+### PEND-067
+**Latência pós-modelo extrema — 44 s entre a resposta pronta e a bolha sair**
+Bloco: **A · Condução** · Prioridade: **P1** · Estado: **ABERTA — medido uma vez, causa não investigada**
+Aberta em: 2026-08-15 · Origem: smoke da PEND-064
+
+> **MEDIDO em produção, 14/08: `ayla_responder` concluiu às 14:36:05 e a primeira
+> bolha só saiu às 14:36:49. Quarenta e quatro segundos com a resposta pronta.**
+
+- O turno inteiro levou 56,4 s e a resposta tinha **276 caracteres** — ou seja,
+  o tempo NÃO foi de geração. A mensagem era *"não quero outro plano agora"* e
+  o desfecho foi correto: **nenhum Plano criado**.
+- Suspeitos, pela ordem do que roda DEPOIS do modelo (VI NO CÓDIGO): a inspeção
+  de fronteira (`riscoEhAtual` / `segurancaFoiEncaminhada`, chamadas de LLM
+  condicionais), a ponte do Plano (`montarPonteWhatsApp`, 3 consultas e possível
+  `desafioDaConversa`) e o ritmo das bolhas (teto de 4 s). **Nenhum explica 44 s
+  sozinho** — e nenhum aparece em `api_calls` naquele intervalo, o que já é uma
+  lacuna de observabilidade por si só.
+- ⚠️ Isto pode valer mais que toda a frente de região: 44 s num turno é
+  experiência quebrada, não lentidão. Mas foi **uma ocorrência** — antes de
+  investigar a fundo, vale medir a frequência.
+- Critério de conclusão: a causa nomeada, e o estágio instrumentado para que a
+  próxima ocorrência apareça sem depender de reconstrução manual.
 
 ### PEND-064
 **Regressão de latência conversacional — o banco custa mais que o modelo**
@@ -699,6 +742,14 @@ Aberta em: 2026-08-13 · Origem: missão de latência
   `prova-parser-real.test.ts` captura a resposta crua e serve pra isso.
 - Só investigar DEPOIS da janela (PEND-054) e de nova medição — pode deixar de
   ser o maior gargalo.
+
+- **EVIDÊNCIA NOVA (14/08/2026, produção).** Num turno real de QA o parser
+  rodou DUAS VEZES: `ayla_parser · claude-haiku-4-5` (in=1952 out=345) e, 9,6 s
+  depois, `ayla_parser · claude-sonnet-4-6` (in=719 out=330). O fallback custou
+  **~9,6 s** naquele turno — mais que o modelo principal. O turno inteiro levou
+  26,6 s, o mais lento dos três medidos.
+- A prioridade desta ficha **sobe** depois que a região for resolvida: com o
+  banco perto, o fallback passa a ser o maior componente isolado.
 
 ### PEND-056
 **As conquistas chegam ao prompt e a Ayla não as usa**
@@ -4249,7 +4300,7 @@ trimestralmente, o que vier antes.
 
 ---
 
-**Próximo ID livre: PEND-067. *(024 e 025 reservadas por frentes ainda não publicadas.)***
+**Próximo ID livre: PEND-068. *(024 e 025 reservadas por frentes ainda não publicadas.)***
 
 > Conferir contra `origin/main`, não contra o seu branch. Dois branches podem
 > reivindicar o mesmo número — o conflito de merge nesta linha é o alarme.
