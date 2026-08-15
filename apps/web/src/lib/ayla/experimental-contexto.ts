@@ -344,6 +344,85 @@ export function montarContextoBase(params: {
 }
 
 /** Uma consulta: o Perfil Vivo da criança em foco. */
+/**
+ * O PERFIL DA FAMÍLIA — quem mora na casa, que rotina ela tem, com que recursos
+ * e em que dinâmica.
+ *
+ * ⚠️ POR QUE ELE EXISTE SEPARADO DO PERFIL DA CRIANÇA. "Somos só eu e ela",
+ * "trabalho em turno", "moramos com a avó", "não temos plano de saúde" mudam a
+ * orientação tanto quanto a característica da criança — uma estratégia que
+ * depende de dois adultos é inútil para quem cria sozinha. O Legacy já lia
+ * isto; o caminho novo não, e era a última lacuna real de contexto.
+ *
+ * ⚠️ SELEÇÃO, NÃO DESPEJO. Devolve as quatro seções de conteúdo e um teto de
+ * caracteres por seção. Ter o dado disponível não é motivo para mandá-lo
+ * inteiro: prompt grande não é prompt bom, e cada bloco compete com o que
+ * importa naquele turno.
+ */
+export type LinhaPerfilFamilia = {
+  composicao?: unknown;
+  rotina?: unknown;
+  recursos?: unknown;
+  dinamica?: unknown;
+  categorias_extras?: unknown;
+};
+
+export async function lerPerfilFamilia(
+  supabase: SupabaseClient,
+  familyId: string,
+): Promise<LinhaPerfilFamilia | null> {
+  try {
+    const { data } = await supabase
+      .from("perfil_vivo_familia")
+      .select("composicao, rotina, recursos, dinamica, categorias_extras")
+      .eq("family_account_id", familyId)
+      .maybeSingle();
+    return (data as LinhaPerfilFamilia | null) ?? null;
+  } catch {
+    // Enriquecimento acessório: se falhar, a conversa segue sem ele.
+    return null;
+  }
+}
+
+/** Uma linha por seção que tenha conteúdo de verdade. */
+export function blocoDaFamilia(pf: LinhaPerfilFamilia | null): string {
+  if (!pf) return "";
+  const ROTULOS: Array<[keyof LinhaPerfilFamilia, string]> = [
+    ["composicao", "quem mora na casa"],
+    ["rotina", "rotina da casa"],
+    ["recursos", "recursos e apoios"],
+    ["dinamica", "dinâmica familiar"],
+  ];
+  const linhas: string[] = [];
+  for (const [chave, rotulo] of ROTULOS) {
+    const texto = achatar(pf[chave]);
+    if (texto) linhas.push(`${rotulo}: ${texto.slice(0, 300)}`);
+  }
+  return linhas.length ? `<a_familia>\n${linhas.join("\n")}\n</a_familia>` : "";
+}
+
+/**
+ * Achata um jsonb em texto legível, descartando o que não é informação.
+ *
+ * Reusa `pareceInformacao` — o mesmo filtro que já impede "não sei", "-" e
+ * repetições de caractere de virarem contexto. Sem ele, o bloco encheria de
+ * placeholders e a Ayla trataria "aaaa" como um fato da família.
+ */
+function achatar(v: unknown): string {
+  if (typeof v === "string") return pareceInformacao(v) ? v.trim() : "";
+  if (Array.isArray(v)) return v.map(achatar).filter(Boolean).join("; ");
+  if (v && typeof v === "object") {
+    return Object.entries(v as Record<string, unknown>)
+      .map(([k, val]) => {
+        const t = achatar(val);
+        return t ? `${k.replace(/_/g, " ")} ${t}` : "";
+      })
+      .filter(Boolean)
+      .join("; ");
+  }
+  return "";
+}
+
 export async function lerPerfilVivo(
   supabase: SupabaseClient,
   membroId: string | null,

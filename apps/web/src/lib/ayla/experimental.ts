@@ -4,7 +4,13 @@ import { gerarConversacional, MODELO_CONVERSA } from "@/lib/ia/provider";
 import { fronteiraAtravessada } from "@/lib/conducao/fronteiras";
 import { logarUsoApi } from "@/lib/billing/logar";
 import { resolverDocumento } from "./documentos";
-import { montarContextoBase, lerPerfilVivo, pareceInformacao } from "./experimental-contexto";
+import {
+  montarContextoBase,
+  lerPerfilVivo,
+  pareceInformacao,
+  lerPerfilFamilia,
+  blocoDaFamilia,
+} from "./experimental-contexto";
 import { resolverFoco, blocoDeFoco, type Foco } from "./experimental-foco";
 import { lerEventos, eventosRelevantes, blocoDeEventos } from "./experimental-memoria";
 import { recuperarBoasPraticas, blocoBoasPraticas } from "@/lib/conhecimento/recuperar";
@@ -183,10 +189,17 @@ async function montarContexto(
   const foco = await resolverFoco(supabase, familyId, mensagem, lista);
   const emFoco = foco.membros;
 
-  // Perfil Vivo e trajetória das crianças em foco — também em paralelo.
-  const [perfis, eventos] = await Promise.all([
+  // Perfil Vivo, trajetória e perfil da FAMÍLIA — também em paralelo.
+  //
+  // ⚠️ O PERFIL DA FAMÍLIA ENTROU EM 15/08/2026. "Somos só eu e ela", "trabalho
+  // em turno", "moramos com a avó" mudam a orientação tanto quanto uma
+  // característica da criança: uma estratégia que depende de dois adultos é
+  // inútil para quem cria sozinha. O Legacy já lia isto; era a última lacuna
+  // real de contexto do caminho novo.
+  const [perfis, eventos, perfilDaFamilia] = await Promise.all([
     Promise.all(emFoco.map((m) => lerPerfilVivo(supabase, m.id))),
     lerEventos(supabase, familyId, emFoco.map((m) => m.id)),
+    lerPerfilFamilia(supabase, familyId),
   ]);
 
   const nomeResponsavelBruto =
@@ -249,6 +262,9 @@ async function montarContexto(
       ? `<o_que_ainda_nao_sei>${[...lacunas].join(", ")}</o_que_ainda_nao_sei>`
       : "",
     blocoDeFoco(foco),
+    // Depois do retrato da criança e antes da trajetória: a casa é contexto de
+    // quem ela é, não um assunto próprio.
+    blocoDaFamilia(perfilDaFamilia),
     blocoDeEventos(eventosRelevantes(eventos, mensagem)),
     historico.length
       ? `<conversa_recente>${NL}${historico.slice(-10).join(NL)}${NL}</conversa_recente>`
@@ -269,7 +285,7 @@ async function montarContexto(
     .filter(Boolean)
     .join(", ");
 
-  return { bloco, foco, diagnosticoRegistrado, consultas: 3 + emFoco.length + 1 };
+  return { bloco, foco, diagnosticoRegistrado, consultas: 3 + emFoco.length + 2 };
 }
 
 /**
