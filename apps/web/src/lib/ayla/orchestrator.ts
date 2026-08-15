@@ -2011,6 +2011,10 @@ export async function processInbound(
           family.id,
           exp.membroId,
           inbound.texto,
+          undefined,
+          // O nome sai do contexto que este turno JÁ carregou — nenhuma
+          // consulta nova. Sem ele o extrator não sabe de quem é o registro.
+          ctxExp.membros.find((m) => m.id === exp.membroId)?.nome ?? null,
         ).catch(() => {});
       }
       // ⚠️ O `return` É O QUE GARANTE UMA RESPOSTA SÓ. Sem ele, o turno seguiria
@@ -2909,7 +2913,19 @@ export async function processInbound(
   // anterior a esta correção (o inbound nunca gravava membro). Ver
   // `membro-escopo.ts` — a decisão de não confiar em janela de tempo.
   const historicoDoMembro = semOutrosMembros(historicoParser, membroContextoId);
-  await extrairESalvarEventos(supabase, family.id, membroContextoId, inbound.texto, historicoDoMembro);
+  // ⚠️ O NOME VAI JUNTO. Recortar o histórico por membro (acima) impede que a
+  // fala de um irmão vire contexto do outro; não impede que a MENSAGEM DE AGORA
+  // fale de outra pessoa. PROVEI que "o irmão dela, João, começou a andar"
+  // virava marco da Ana em 3/3. Quem separa é o extrator saber de quem é a
+  // linha do tempo — e `nomePorMembro` já está montado neste turno.
+  await extrairESalvarEventos(
+    supabase,
+    family.id,
+    membroContextoId,
+    inbound.texto,
+    historicoDoMembro,
+    membroContextoId ? (nomePorMembro.get(membroContextoId) ?? null) : null,
+  );
 
   return { tratada: true, familia: family.id, resposta: resp };
 }

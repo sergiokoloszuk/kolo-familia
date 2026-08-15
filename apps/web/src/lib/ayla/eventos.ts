@@ -32,7 +32,44 @@ const GATILHOS =
 const GATILHOS_MARCO =
   /\bletra [a-zç]\b|vocabul|palavra(s)? nov|aprendeu|conseguiu|progred|evolui|avan[çc]|passou a |come[çc]ou a |j[aá] (consegue|faz|fala|anda|l[eê]|est[aá] na letra)/i;
 
-const SYSTEM = `Você extrai EVENTOS IMPORTANTES da vida de uma criança/pessoa a partir da conversa da família, pra uma linha do tempo. Devolva SÓ um array JSON (sem texto fora), no máximo 2 itens, cada um:
+/**
+ * DE QUEM É ESTE REGISTRO — 15/08/2026.
+ *
+ * ⚠️ O QUE ESTAVA ERRADO. O SYSTEM falava em "uma criança/pessoa" e NUNCA
+ * recebia o nome de quem está em foco: o `membroId` só aparecia na hora do
+ * INSERT. O extrator acertava por sorte, quando a frase tinha um sujeito só.
+ *
+ * PROVEI POR EXECUÇÃO (Haiku, 3 execuções por caso, fixtures):
+ *   · "O irmão dela, João, começou a andar sozinho"
+ *     → gravava `marco: Irmão João começou a andar sozinho` NA ANA — 3/3.
+ *   · "O João começou a falar frases e a Ana ainda usa palavras soltas"
+ *     → gravava DOIS marcos, um deles do João, os dois na Ana — 3/3.
+ *   · "Meu marido disse que a Ana começou a dormir melhor"
+ *     → devolvia `[]` — 3/3. Ou seja, também PERDIA fato legítimo.
+ *
+ * ⚠️ POR QUE NÃO É REGRA POR NOME. "Se aparecer outro nome, ignore" falharia
+ * nas duas direções, e isso foi provado: o caso do marido tem outra pessoa e o
+ * fato É da criança; "ele começou a fazer isso sozinho" não tem nome nenhum e o
+ * fato também é dela. Quem decide sujeito é a leitura da frase, não a presença
+ * de um token.
+ *
+ * ⚠️ CUSTO ZERO. Mesma chamada, mesmo modelo, mesmo `after()` — só o system
+ * muda. O nome vem de dados que o turno já tem na mão; nenhuma consulta nova.
+ */
+function systemDoExtrator(nomeFocal: string | null): string {
+  if (!nomeFocal?.trim()) return SYSTEM_BASE;
+  const n = nomeFocal.trim();
+  return `${SYSTEM_BASE}
+
+DE QUEM É ESTE REGISTRO: a linha do tempo é de **${n}**, e só dela.
+- Extraia apenas fatos cujo SUJEITO é ${n}. Um avanço, mudança, perda ou marco de OUTRA pessoa (irmão, primo, colega, adulto) NÃO entra, mesmo que seja importante.
+- Quem CONTOU o fato não importa: "meu marido disse que ${n} dormiu melhor" é fato de ${n}.
+- Outra pessoa pode aparecer como circunstância. Se o fato relevante for a REAÇÃO de ${n} a algo que outra pessoa fez, isso é fato de ${n} e entra — descrito como reação dela.
+- Se a frase fala de ${n} E de outra pessoa, extraia só a parte de ${n}.
+- Se o sujeito for ambíguo e você não conseguir decidir se é ${n}, devolva [].`;
+}
+
+const SYSTEM_BASE = `Você extrai EVENTOS IMPORTANTES da vida de uma criança/pessoa a partir da conversa da família, pra uma linha do tempo. Devolva SÓ um array JSON (sem texto fora), no máximo 2 itens, cada um:
 {"tipo":"<um de: ${TIPOS.join(" | ")}>","descricao":"o evento em 1 frase curta, factual","data":"YYYY-MM-DD ou null se não disse"}
 - Só eventos REAIS e datáveis (uma mudança/marco/perda/início). NÃO extraia sentimentos, dúvidas, rotina do dia, nem hipóteses.
 - Inclua MARCOS de desenvolvimento (tipo "marco"): quando a criança AVANÇA numa habilidade — fala/vocabulário/letras, leitura, autonomia, motor, social. Ex.: "progrediu da letra B pra F", "passou a formar frases", "começou a aceitar fruta". Use a <conversa_recente> pra entender respostas curtas ("letra f" depois de falar de vocabulário = marco de comunicação). Factual, sem elogio.
@@ -71,6 +108,14 @@ export async function extrairESalvarEventos(
   membroId: string | null,
   texto: string,
   historico?: Array<{ de: "mae" | "ayla"; texto: string }>,
+  /**
+   * O NOME da criança em foco — a mesma que `membroId` aponta.
+   *
+   * ⚠️ Opcional por compatibilidade, mas todo chamador deve passar. Sem ele o
+   * extrator volta a não saber de quem é o registro, e a contaminação volta.
+   * Um teste prende os dois chamadores por isso.
+   */
+  nomeFocal?: string | null,
 ): Promise<void> {
   if (!membroId || !texto?.trim() || !(GATILHOS.test(texto) || GATILHOS_MARCO.test(texto))) return;
   try {
@@ -85,7 +130,7 @@ export async function extrairESalvarEventos(
     const resp = await client.messages.create({
       model: AYLA_MODEL,
       max_tokens: 300,
-      system: SYSTEM,
+      system: systemDoExtrator(nomeFocal ?? null),
       messages: [{ role: "user", content: userContent }],
     });
     const b = resp.content[0];
