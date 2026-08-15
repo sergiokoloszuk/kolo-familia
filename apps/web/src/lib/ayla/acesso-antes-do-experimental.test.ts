@@ -68,7 +68,10 @@ describe("A ORDEM — o acesso vem antes do experimental", () => {
   });
 
   it("5. o experimental continua com o `return` que garante resposta única", () => {
-    const ramo = ORQ.slice(pos(EXPERIMENTAL), pos(EXPERIMENTAL) + 2600);
+    // O recorte era por tamanho fixo (2.600 chars) e quebrou quando a Fatia 3
+    // acrescentou a persistência pós-resposta ao ramo. Fatiar até a próxima
+    // âncora real é o que não envelhece.
+    const ramo = ORQ.slice(pos(EXPERIMENTAL), pos("  // 4. Parser IA"));
     expect(ramo).toContain("return { tratada: true, familia: family.id, resposta: resp }");
   });
 

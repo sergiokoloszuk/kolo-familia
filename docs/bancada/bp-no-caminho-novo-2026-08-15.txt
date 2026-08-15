@@ -1,0 +1,46 @@
+CASO           | BP REC | BP INJ | CHARS |  msBP | ms SEM |  ms COM | tok SEM | tok COM
+----------------------------------------------------------------------------------------------
+comunicação    |      2 |      2 |  2501 |   523 |   5513 |    4347 |    4296 |    4922
+   SEM BP: "Entendo, Sérgio. Só preciso confirmar para não misturar as informações: você está falando do **André** ou de outra criança?\n\nSe for o André, quando el"
+   COM BP: "Sérgio, você está falando do **André** ou de outra criança? Pergunto porque você escreveu “ela” e quero orientar corretamente.\n\nSe for o André, quando"
+
+sensorial      |      2 |      2 |  2740 |   252 |   4863 |    5335 |    4295 |    4979
+   SEM BP: "Sérgio, isso parece uma reação de sobrecarga no ambiente do mercado — especialmente porque já sabemos que André é sensível a sons altos. O mais import"
+   COM BP: "Sérgio, isso parece uma reação de sobrecarga no mercado, especialmente porque André já é sensível a sons altos. O mais importante é **reduzir o barulh"
+
+emocional      |      2 |      2 |  2661 |   480 |   5047 |    5312 |    4296 |    4982
+   SEM BP: "Sérgio, só para eu não confundir: você está falando do **André** ou de outra pessoa? Até aqui eu tinha registrado André no masculino.\n\nEnquanto isso, "
+   COM BP: "Sérgio, só para eu não confundir: você está falando do **André** ou de outra pessoa? Você usou “ela”, então prefiro confirmar antes de relacionar isso"
+
+aprendizagem   |      2 |      2 |  2597 |   460 |   6387 |    5776 |    4292 |    4925
+   SEM BP: "Sérgio, para explicar a tabuada ao André, tente transformar a multiplicação em **grupos iguais**, em vez de pedir apenas para decorar.\n\n### 1. Comece "
+   COM BP: "Sérgio, para André, pode ser mais fácil ensinar a tabuada como **grupos iguais**, e não como uma lista para decorar. Use os interesses dele para dar p"
+
+autonomia      |      2 |      2 |  2538 |   242 |   4914 |    5368 |    4293 |    4957
+   SEM BP: "Sérgio, dá para trabalhar isso sem transformar a manhã em uma cobrança. Como André é adulto, o objetivo é ampliar a autonomia dele respeitando o ritmo"
+   COM BP: "Sérgio, dá para começar sem transformar a manhã inteira em treino. Como André é adulto, o objetivo deve ser **aumentar a autonomia respeitando o ritmo"
+
+socialização   |      2 |      2 |  2850 |   373 |   4226 |    4391 |    4293 |    5000
+   SEM BP: "Entendo, Sérgio. Em uma festa, André pode preferir ficar observando ou participar de outra forma — e isso não significa necessariamente que esteja sof"
+   COM BP: "Sérgio, entendo. Mas, como André tem 39 anos, ele **não precisa brincar com as outras crianças** para estar participando da festa. O mais importante é"
+
+brincadeira    |      2 |      2 |  2764 |   371 |   6510 |    5517 |    4292 |    4987
+   SEM BP: "Sérgio, para André, vale escolher brincadeiras com **turnos curtos, regras previsíveis e pouco barulho**. Como perder pode gerar muita frustração, com"
+   COM BP: "Sérgio, para André, vale começar com brincadeiras em que **esperar seja curto, previsível e tenha um propósito**, sem transformar isso em uma cobrança"
+
+rotina         |      2 |      2 |  2574 |   292 |   4721 |    4295 |    4293 |    4916
+   SEM BP: "Entendi, Sérgio. Então vamos **simplificar a manhã**, sem montar outro plano agora.\n\nPara amanhã, tente apenas isto:\n\n1. **Deixe na noite anterior** r"
+   COM BP: "Entendi, Sérgio. Quando a manhã já começa caótica, tentar organizar tudo de uma vez costuma aumentar a pressão. Vamos começar reduzindo a primeira tra"
+
+sono           |      2 |      2 |  2737 |   268 |   5075 |    4937 |    4296 |    4988
+   SEM BP: "Sérgio, acordar três vezes por noite e não conseguir voltar a dormir pode deixar André muito mais sensível e cansado durante o dia. Vale olhar isso co"
+   COM BP: "Sérgio, isso deve ser bem desgastante para vocês. Acordar três vezes e permanecer desperto pode ter relação com rotina, ansiedade, estímulos do ambien"
+
+alimentação    |      2 |      2 |  2433 |   210 |   5545 |    6411 |    4295 |    4869
+   SEM BP: "Entendi, Sérgio. Então a seletividade alimentar do André é bem intensa: ele aceita apenas quatro alimentos e recusa novidades. Nesse caso, o primeiro "
+   COM BP: "Entendo, Sérgio. Quando André aceita só cerca de quatro alimentos, o objetivo inicial não é fazê-lo “comer de tudo”, e sim **ampliar com segurança, se"
+
+----------------------------------------------------------------------------------------------
+MEDIANAS: msBP=371 · total SEM=5075 · total COM=5335
+          tokens entrada SEM=4295 · COM=4979 · delta=684
+          chars do bloco=2661
