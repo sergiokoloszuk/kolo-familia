@@ -22,6 +22,15 @@ export type Registro = { quem: string; system: string; user: string; tudo: strin
 
 /** Como o cenário manda o modelo se comportar num ponto específico. */
 export type Roteiro = {
+  /**
+   * O que o PARSER deve devolver além da identificação — conquista, desafio,
+   * sugestão de Kolo Vivo, estado da mãe.
+   *
+   * Existe porque o duplo devolvia tudo nulo e, com isso, nenhum cenário
+   * conseguia exercitar `persistirRegistro`: sem conteúdo, não há o que
+   * registrar, e o teste lia isso como persistência quebrada.
+   */
+  parser?: Record<string, unknown>;
   /** A criança que o parser deve identificar. */
   alvo?: string | null;
   /** Desfecho forçado da prontidão da rotina: "suficiente" gera o quadro. */
@@ -65,6 +74,16 @@ export function responder(system: string, user: string, r: Roteiro): string {
       confianca_camada_adulto: 0,
       sugestao_kolo_vivo: false,
       confianca: 90,
+      // ⚠️ O CENÁRIO PODE MANDAR O PARSER TRAZER CONTEÚDO — 15/08/2026.
+      //
+      // Sem isto o duplo devolvia SEMPRE tudo nulo, e `temAlgoPraRegistrar`
+      // dava falso em todo cenário. Consequência: nenhum teste conseguia provar
+      // que Diário, check-in e Kolo Vivo são escritos — e um "delta zero" era
+      // lido como "a persistência não funciona", quando na verdade era o duplo
+      // que nunca dava o que persistir.
+      //
+      // Vem por ÚLTIMO para poder sobrescrever os nulos acima.
+      ...(r.parser ?? {}),
     });
   }
 

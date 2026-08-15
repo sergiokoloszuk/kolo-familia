@@ -1,0 +1,6 @@
+HIPOTESE 1 — DEDUP. Eventos ja existentes de André:
+  tipo=marco · ha 8 dias · DEDUP BLOQUEIA=true · "André iniciou escrita de livro a partir de posts no Facebook com engaj"
+
+HIPOTESE 2 — INSERT. Escrevendo direto:
+  erro=NENHUM · inseriu=[{"id":"9af234e0-54af-41f2-9028-08f8ee7c5071"}]
+  (apagado)
