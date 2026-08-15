@@ -3,7 +3,7 @@ import { idadeAnos } from "@/lib/idade";
 import { gerarConversacional, MODELO_CONVERSA } from "@/lib/ia/provider";
 import { fronteiraAtravessada } from "@/lib/conducao/fronteiras";
 import { logarUsoApi } from "@/lib/billing/logar";
-import { AYLA_EXPERIMENTAL_PROMPT } from "./experimental-prompt";
+import { resolverDocumento } from "./documentos";
 import { montarContextoBase, lerPerfilVivo, pareceInformacao } from "./experimental-contexto";
 import { resolverFoco, blocoDeFoco, type Foco } from "./experimental-foco";
 import { lerEventos, eventosRelevantes, blocoDeEventos } from "./experimental-memoria";
@@ -93,6 +93,9 @@ export type TurnoExperimental = {
     provider: string;
     fronteiraBarrou: boolean;
     foco: string;
+    /** `admin` = documento publicado; `fallback` = Core do código. */
+    coreOrigem: "admin" | "fallback";
+    coreVersao: number | null;
   };
 };
 
@@ -223,15 +226,19 @@ export async function responderExperimental(
   params: {
     familyId: string;
     mensagem: string;
+    /** Só o simulador do Admin passa isto. A conversa real, nunca. */
+    rascunhoCore?: { conteudo: string; versao: number } | null;
   },
 ): Promise<TurnoExperimental | null> {
   const t0 = Date.now();
   try {
-    const { bloco, foco, diagnosticoRegistrado, consultas } = await montarContexto(
-      supabase,
-      params.familyId,
-      params.mensagem,
-    );
+    // O Core e o contexto não dependem um do outro: vão juntos, então a
+    // leitura do documento não acrescenta espera nenhuma ao turno.
+    const [ctxTurno, core] = await Promise.all([
+      montarContexto(supabase, params.familyId, params.mensagem),
+      resolverDocumento(supabase, "core", params.rascunhoCore ?? null),
+    ]);
+    const { bloco, foco, diagnosticoRegistrado, consultas } = ctxTurno;
     // A criança que a resposta vai carimbar: no foco compartilhado ou ambíguo
     // NÃO se escolhe uma — carimbar seria transformar palpite em dado.
     const membroDoTurno =
@@ -247,7 +254,7 @@ export async function responderExperimental(
     const r = await gerarConversacional({
       provider,
       model,
-      system: bloco ? `${AYLA_EXPERIMENTAL_PROMPT}\n\n${bloco}` : AYLA_EXPERIMENTAL_PROMPT,
+      system: bloco ? `${core.conteudo}\n\n${bloco}` : core.conteudo,
       messages: [{ role: "user", content: params.mensagem }],
       maxTokens: 1200,
       cacheSystem: true,
@@ -296,6 +303,8 @@ export async function responderExperimental(
         provider,
         fronteiraBarrou: false,
         foco: foco.tipo,
+        coreOrigem: core.origem,
+        coreVersao: core.versao,
       },
     };
   } catch (e) {
