@@ -2,7 +2,7 @@
 
 import { requireAdmin } from "@/lib/auth/require-admin";
 import { createServiceRoleClient } from "@/lib/supabase/server";
-import { responderExperimental } from "@/lib/ayla/experimental";
+import { responderExperimental, type TurnoSimulado } from "@/lib/ayla/experimental";
 
 /**
  * O SIMULADOR — testa, e SÓ testa.
@@ -83,6 +83,7 @@ export async function simular(
   familyId: string,
   mensagem: string,
   versaoId: string | null,
+  turnosAnteriores: readonly TurnoSimulado[] = [],
 ): Promise<ResultadoSimulacao> {
   try {
     await requireAdmin();
@@ -114,6 +115,9 @@ export async function simular(
       // sem tocar em nada. A conversa real nunca o passa.
       rascunhoCore: escolhida,
       origem: "simulador",
+      // A conversa da sessão de QA. Vive no estado do navegador e viaja nesta
+      // requisição — nenhuma linha dela é gravada.
+      turnosSimulados: turnosAnteriores,
     });
     const msPontaAPonta = Date.now() - t0;
 
