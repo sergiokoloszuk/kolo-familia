@@ -5,6 +5,7 @@ import {
   desafiosDoOnboarding,
   comunicacaoAtual,
   desafiosAtuais,
+  desafiosSemDetalhe,
   interessesAtuais,
 } from "./experimental-contexto";
 
@@ -117,6 +118,76 @@ describe("REGRESSÃO 1 — os desafios do cadastro", () => {
     ).toEqual(["sono"]);
     expect(desafiosDoOnboarding({ categorias_extras: { desafios_onboarding: "sono" } } as never)).toEqual([]);
     expect(desafiosDoOnboarding(null)).toEqual([]);
+  });
+});
+
+describe("PERFIL RICO — o teto não pode virar fonte de verdade", () => {
+  /**
+   * ⚠️ ESTE BLOCO NASCEU DE UM DEFEITO MEU, achado na bancada de 15/08/2026.
+   * A primeira correção dos desafios decidia "sem detalhe" pelo teto de três de
+   * `desafiosAtuais`. Com oito domínios preenchidos, `escola` caía fora do teto
+   * e o prompt dizia "escola: ainda sem detalhe" — com o texto dela no banco.
+   * Pior que omitir: afirma ao modelo algo falso.
+   */
+  const OITO = {
+    como_e: { interesses: ["dinossauros"] },
+    essencial: {},
+    categorias_extras: {
+      desafios_onboarding: ["sono", "comunicacao", "escola"],
+      sono: { texto: "Acorda 2x por noite", atualizado_em: "2026-08-14" },
+      emocional: { texto: "Chora quando muda a rotina", atualizado_em: "2026-08-13" },
+      nutricional: { texto: "Só aceita alimentos secos", atualizado_em: "2026-08-12" },
+      comunicacao: { texto: "Fala frases de 3 a 4 palavras", atualizado_em: "2026-08-10" },
+      escola: { texto: "Resiste a entrar na sala nas segundas", atualizado_em: "2026-08-01" },
+    },
+  } as never;
+
+  it("MORDE: domínio COM texto nunca é declarado 'sem detalhe', mesmo fora do top-3", () => {
+    const r = bloco(OITO);
+    const linha = r.bloco.split("\n").find((l) => l.startsWith("Desafios que a família marcou"));
+    expect(linha ?? "", "a escola tem texto no banco e foi declarada sem detalhe").not.toMatch(/escola/);
+    expect(linha ?? "", "a comunicação tem texto e foi declarada sem detalhe").not.toMatch(/comunicaç/);
+  });
+
+  it("MORDE: com todos os marcados detalhados, a linha inteira desaparece", () => {
+    const r = bloco(OITO);
+    expect(r.bloco).not.toContain("ainda sem detalhe");
+  });
+
+  it("MORDE: comunicação não pode chegar COM detalhe e ser declarada SEM detalhe", () => {
+    const r = bloco(OITO);
+    expect(r.bloco).toContain("Comunicação hoje: Fala frases de 3 a 4 palavras");
+    expect(r.lacunas).not.toContain("como a criança se comunica");
+    expect(r.bloco.split("\n").find((l) => l.startsWith("Desafios que a família marcou")) ?? "")
+      .not.toMatch(/comunicaç/);
+  });
+
+  it("MORDE: domínio realmente VAZIO continua sendo declarado sem detalhe", () => {
+    // O outro lado do erro: corrigir demais faria a Ayla parar de perguntar o
+    // que a família ainda não contou.
+    const misto = {
+      como_e: {},
+      essencial: {},
+      categorias_extras: {
+        desafios_onboarding: ["sono", "escola"],
+        sono: { texto: "Acorda 2x por noite", atualizado_em: "2026-08-14" },
+        escola: { texto: "" },
+      },
+    } as never;
+    const r = bloco(misto);
+    const linha = r.bloco.split("\n").find((l) => l.startsWith("Desafios que a família marcou")) ?? "";
+    expect(linha, "a escola está vazia e sumiu da lista").toMatch(/escola/);
+    expect(linha, "o sono tem texto e voltou como sem detalhe").not.toMatch(/sono/);
+  });
+
+  it("comunicação vinda do campo LEGADO também conta como detalhada", () => {
+    const legado = {
+      como_e: {},
+      essencial: {},
+      desafios_regulacao: { texto: "Usa gestos e algumas palavras" },
+      categorias_extras: { desafios_onboarding: ["comunicacao"] },
+    } as never;
+    expect(desafiosSemDetalhe(legado), "veio do campo legado e ainda assim foi declarada ausente").toEqual([]);
   });
 });
 
