@@ -2,7 +2,11 @@
 
 import { requireAdmin } from "@/lib/auth/require-admin";
 import { createServiceRoleClient } from "@/lib/supabase/server";
-import { responderExperimental, type TurnoSimulado } from "@/lib/ayla/experimental";
+import {
+  responderExperimental,
+  type TurnoSimulado,
+  type MotivoFalha,
+} from "@/lib/ayla/experimental";
 
 /**
  * O SIMULADOR — testa, e SÓ testa.
@@ -107,8 +111,18 @@ export async function simular(
       rotulo = `v${data.versao} (${data.status})`;
     }
 
+    // ⚠️ O SIMULADOR PRECISA SABER ONDE PAROU. `null` colapsava três causas
+    // distintas numa frase só, e a informação que as separa existe no instante
+    // da falha. Este callback a captura; a conversa real não o passa.
+    let motivo: MotivoFalha | null = null;
+    let detalhe = "";
+
     const t0 = Date.now();
     const r = await responderExperimental(supabase, {
+      onFalha: (m, d) => {
+        motivo = m;
+        detalhe = d;
+      },
       familyId,
       mensagem,
       // O mesmo parâmetro que o simulador sempre usou: injeta o texto escolhido
@@ -122,10 +136,13 @@ export async function simular(
     const msPontaAPonta = Date.now() - t0;
 
     if (!r) {
+      const cod: string = motivo ?? "SEM_MOTIVO_REGISTRADO";
       return {
         ok: false,
         error:
-          "A Ayla não respondeu — resposta vazia, fronteira barrou, ou a família não tem contexto. Na conversa real isso cairia no fluxo atual.",
+          `${cod}${detalhe ? ` — ${detalhe}` : ""}` +
+          `\n\nCore testado: ${rotulo} · ${escolhida ? `${escolhida.conteudo.length} car.` : "o que está no ar"}` +
+          `\n${msPontaAPonta} ms até parar. Na conversa real isto cairia para o fluxo atual.`,
       };
     }
 
