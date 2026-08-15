@@ -125,8 +125,24 @@ describe("vetor: o Kolo Vivo (perfil permanente)", () => {
   });
 
   it("a escrita de evento recorta por membro ANTES de salvar", () => {
+    // 15/08/2026: a chamada virou multilinha ao ganhar o NOME da criança focal
+    // (contaminação por menção a outro filho). O que este teste defende NÃO
+    // mudou — o histórico que entra na escrita continua sendo o recortado.
     expect(ORCH).toMatch(/const historicoDoMembro = semOutrosMembros\(historicoParser, membroContextoId\)/);
-    expect(ORCH).toMatch(/extrairESalvarEventos\(supabase, family\.id, membroContextoId, inbound\.texto, historicoDoMembro\)/);
+    // ⚠️ SÓ OS ARGUMENTOS. A primeira versão deste recorte começava na linha do
+    // `const historicoDoMembro = …`, então a asserção passava por causa da
+    // DECLARAÇÃO mesmo com o argumento trocado — a sabotagem provou isso. O
+    // recorte tem de começar depois do parêntese da chamada.
+    const iChamada = ORCH.indexOf("extrairESalvarEventos(", ORCH.indexOf("const historicoDoMembro ="));
+    const args = ORCH.slice(ORCH.indexOf("(", iChamada) + 1, ORCH.indexOf(");", iChamada));
+    expect(args, "a escrita voltou a receber o histórico SEM recorte por membro").toMatch(
+      /\bhistoricoDoMembro\b/,
+    );
+    expect(args, "a escrita voltou a receber o histórico do parser, inteiro").not.toMatch(
+      /\bhistoricoParser\b/,
+    );
+    // E a garantia nova: o extrator sabe DE QUEM é a linha do tempo.
+    expect(args, "o nome da criança focal saiu da chamada").toMatch(/nomePorMembro\.get/);
   });
 
   it("o histórico do PARSER continua inteiro — é ele que descobre o membro", () => {
