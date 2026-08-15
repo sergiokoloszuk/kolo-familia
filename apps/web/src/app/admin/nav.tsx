@@ -13,6 +13,7 @@ const items = [
   { href: "/admin/skills", label: "Skills" },
   { href: "/admin/prompts", label: "Prompts" },
   { href: "/admin/inteligencia", label: "Inteligência da Ayla" },
+  { href: "/admin/documentos", label: "Documentos da Ayla" },
   { href: "/admin/vetos", label: "Vetos" },
   { href: "/admin/campanhas", label: "Campanhas" },
   { href: "/admin/regras", label: "Regras" },
