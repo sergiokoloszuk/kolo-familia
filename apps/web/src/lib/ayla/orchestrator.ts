@@ -2600,6 +2600,49 @@ export async function processInbound(
         tipo: "resposta_registro",
         meta: { ayla_path: "experimental", ...exp.metrica },
       });
+      // ⚠️ A PONTE DO PLANO CHEGA AO CAMINHO NOVO — 15/08/2026.
+      //
+      // É a MESMA função que o Legacy chama (`ponteDePlano`), com o mesmo
+      // gerador por dentro. A resposta principal JÁ SAIU acima: a ponte
+      // continua sendo a última bolha do turno, nunca a resposta.
+      //
+      // ⚠️ O DADO QUE SUBSTITUI O PARSER. `temDesafio` não decide plano nenhum
+      // — é o freio barato de `montarPonteWhatsApp` (ver o comentário lá).
+      // Aqui ele vem da classificação que este turno já fez, então o caminho
+      // novo não paga `parseInbound` antes da resposta para ter isto.
+      //
+      // ⚠️ POR QUE `enviarEPersistir` E NÃO SÓ `enviarTexto`. O cooldown e a
+      // janela de 20h da própria ponte procuram "/auth/wa" em `ayla_messages`.
+      // Uma bolha enviada e não persistida deixaria o dedup cego, e a família
+      // ganharia um plano por turno.
+      if (resp.enviada) {
+        const nudge = await ponteDePlano(supabase, {
+          familyId: family.id,
+          membroId: exp.membroId,
+          phone: ctxExp.whatsapp_e164,
+          mensagem: inbound.texto,
+          temDesafio:
+            turnoClassificado.intencao === "plano" || Boolean(turnoClassificado.tema),
+        }).catch((e) => {
+          console.warn(
+            "[ayla:experimental] ponte do plano falhou:",
+            e instanceof Error ? e.message : e,
+          );
+          return null;
+        });
+        if (nudge) {
+          await enviarEPersistir(supabase, {
+            family_account_id: family.id,
+            membro_atipico_id: exp.membroId,
+            phone: ctxExp.whatsapp_e164,
+            texto: nudge,
+            category: "reativa",
+            tipo: "resposta_registro",
+            meta: { ayla_path: "experimental", ponte: "plano" },
+          });
+        }
+      }
+
       // ⚠️ APRENDER DEPOIS DE RESPONDER (Fase 1). `extrairESalvarEventos` tem
       // pré-filtro por regex e só chama modelo quando o texto PARECE trazer um
       // evento — e roda DEPOIS da bolha, então não entra no caminho crítico.
@@ -3028,6 +3071,62 @@ export async function processInbound(
 }
 
 /**
+ * A PONTE DO PLANO — UM DONO SÓ, PARA OS DOIS CAMINHOS DE PUBLICAÇÃO.
+ *
+ * ⚠️ POR QUE ELA EXISTE (15/08/2026). Este bloco vivia DENTRO de
+ * `enviarRespostaEmChunks`, que é chamada num único lugar: o caminho Legacy. O
+ * ramo experimental publica por `enviarEPersistir` — outra função —, então a
+ * família do experimento conversava e NUNCA recebia um plano. Não era ordem de
+ * blocos: era outro caminho de publicação.
+ *
+ * O que NÃO muda por isto: a ponte continua sendo FOLLOW-UP da resposta
+ * principal (nunca a substitui), o gerador continua sendo um só
+ * (`montarPonteWhatsApp`), e nenhuma chamada de modelo nova entra no turno —
+ * `pedeUmPlano` é regex pura e `ofertouPlanoRecente` é uma consulta, só
+ * disparada quando a mensagem é um "sim" curto.
+ *
+ * `querPlano` chega pronto no Legacy porque lá ele é calculado ANTES da
+ * geração: ele também encurta a resposta no chat (`RespostaParams.querPlano`).
+ * Quem não precisa disso omite, e a decisão é tomada aqui.
+ */
+async function ponteDePlano(
+  supabase: SupabaseClient,
+  args: {
+    familyId: string;
+    membroId: string | null;
+    phone: string;
+    mensagem: string;
+    /**
+     * ⚠️ NÃO É INSUMO DE DECISÃO. `temDesafio` aparece uma vez só dentro de
+     * `montarPonteWhatsApp`: um freio barato (mensagem < 40 caracteres e sem
+     * desafio sai antes de gastar IA). Com pedido explícito nem é lido. Por
+     * isso o caminho novo pode alimentá-lo com a classificação do turno, sem
+     * arrastar o parser de volta para antes da resposta.
+     */
+    temDesafio: boolean;
+    querPlano?: boolean;
+  },
+): Promise<string | null> {
+  const querPlano =
+    args.querPlano ??
+    (pedeUmPlano(args.mensagem) ||
+      (ehAfirmacaoCurta(args.mensagem) && (await ofertouPlanoRecente(supabase, args.familyId))));
+  console.log(
+    `[ayla:ponte] avaliando — querPlano=${querPlano} temDesafio=${args.temDesafio}`,
+  );
+  const nudge = await montarPonteWhatsApp(supabase, {
+    familyId: args.familyId,
+    membroAtipicoId: args.membroId,
+    mensagem: args.mensagem,
+    temDesafio: args.temDesafio,
+    phoneE164: args.phone,
+    // Pedido explícito de plano: fura o dedup/intenção e entrega na hora.
+    forcar: querPlano,
+  });
+  return nudge;
+}
+
+/**
  * Gera a resposta da Ayla em streaming e manda cada parágrafo no WhatsApp
  * assim que fica pronto (primeira parte chega rápido, efeito de "digitando").
  * Persiste UM registro com o texto completo, pra histórico/“sim” coerentes.
@@ -3158,14 +3257,15 @@ async function enviarRespostaEmChunks(
   // PEDIU ROTINA → RECEBE ROTINA. A ponte do plano só entra em conversa comum;
   // quem acabou de receber uma rotina não pode ganhar um plano por cima.
   if (enviada && args.tipo === "resposta_registro" && !args.params.notaDeSeguranca) {
-    const nudge = await montarPonteWhatsApp(supabase, {
+    const nudge = await ponteDePlano(supabase, {
       familyId: args.family_account_id,
-      membroAtipicoId: args.membro_atipico_id,
+      membroId: args.membro_atipico_id,
+      phone: args.phone,
       mensagem: args.params.mensagem,
       temDesafio: Boolean(args.params.sinais.desafio),
-      phoneE164: args.phone,
-      // Pedido explícito de plano: fura o dedup/intenção e entrega na hora.
-      forcar: querPlano,
+      // Já calculado lá em cima: aqui ele não pode ser recalculado, porque a
+      // resposta que acabou de sair foi encurtada com base nele.
+      querPlano,
     });
     if (nudge) {
       try {
