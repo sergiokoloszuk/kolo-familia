@@ -1952,6 +1952,49 @@ export async function processInbound(
     return { tratada: true, familia: family.id };
   }
 
+  // 3b-acesso. "Não consigo entrar", "esqueci a senha", "o link não abre" →
+  // a Ayla RESOLVE na hora: manda um link de acesso novo (token nosso, 7 dias,
+  // não mata os outros). Vem cedo no fluxo porque, trancada fora, nada mais que
+  // ela pedir vai funcionar — foi o que aconteceu com a mãe que passou dois dias
+  // sem acesso enquanto brigava com a escola (22–26/07).
+  //
+  // ⚠️ SUBIU PARA ANTES DO RAMO EXPERIMENTAL EM 15/08/2026 (Fatia 1 · Opção C).
+  // Ele ficava DEPOIS, e o `return` do experimental o pulava inteiro: uma
+  // família da allowlist trancada fora do app não recebia o link — recebia uma
+  // resposta conversacional sobre estar trancada fora, que é exatamente o que
+  // não ajuda. O inventário de 15/08 marcou isso como o único P0.
+  //
+  // Mover custou nada: `pedeAcessoAoApp` é regex pura sobre o texto de entrada
+  // — sem parser, sem LLM, sem consulta, sem estado. Ela só vem depois do gate
+  // de assinatura, que continua acima e é o que não pode ser pulado.
+  if (pedeAcessoAoApp(inbound.texto)) {
+    const ctxA = await loadFamiliaParaEnvio(supabase, family.id);
+    const link = await criarLinkAcesso(supabase, {
+      familyId: family.id,
+      next: "/painel",
+      criadoPor: "ayla",
+    });
+    if (ctxA && link) {
+      const texto = [
+        "Ah, isso eu resolvo agora 💛 Toca aqui que você entra direto, *sem senha*:",
+        link,
+        "",
+        "Esse link vale por 24 horas (é por segurança). Se expirar, me manda “quero entrar” de novo que eu te mando outro na hora.",
+        "E se quiser criar uma senha sua, é em *Configurações → Conta*.",
+      ].join("\n");
+      const resp = await enviarEPersistir(supabase, {
+        family_account_id: family.id,
+        membro_atipico_id: null,
+        phone: ctxA.whatsapp_e164,
+        texto,
+        category: "reativa",
+        tipo: "resposta_registro",
+      });
+      return { tratada: true, familia: family.id, resposta: resp };
+    }
+    // Falhou criar o link → segue o fluxo, e a Ayla ainda responde algo.
+  }
+
   // ══════════════════════════════════════════════════════════════════════
   // 3a-EXP. A PORTA AO LADO — AYLA EXPERIMENTAL (15/08/2026)
   // ══════════════════════════════════════════════════════════════════════
@@ -2055,38 +2098,6 @@ export async function processInbound(
         return { tratada: true, familia: family.id, resposta: resp };
       }
       // Falhou gerar → cai no fluxo normal (a Ayla ainda responde algo).
-    }
-  }
-
-  // 3b-acesso. "Não consigo entrar", "esqueci a senha", "o link não abre" →
-  // a Ayla RESOLVE na hora: manda um link de acesso novo (token nosso, 7 dias,
-  // não mata os outros). Vem cedo no fluxo porque, trancada fora, nada mais que
-  // ela pedir vai funcionar — foi o que aconteceu com a mãe que passou dois dias
-  // sem acesso enquanto brigava com a escola (22–26/07).
-  if (pedeAcessoAoApp(inbound.texto)) {
-    const ctxA = await loadFamiliaParaEnvio(supabase, family.id);
-    const link = await criarLinkAcesso(supabase, {
-      familyId: family.id,
-      next: "/painel",
-      criadoPor: "ayla",
-    });
-    if (ctxA && link) {
-      const texto = [
-        "Ah, isso eu resolvo agora 💛 Toca aqui que você entra direto, *sem senha*:",
-        link,
-        "",
-        "Esse link vale por 24 horas (é por segurança). Se expirar, me manda “quero entrar” de novo que eu te mando outro na hora.",
-        "E se quiser criar uma senha sua, é em *Configurações → Conta*.",
-      ].join("\n");
-      const resp = await enviarEPersistir(supabase, {
-        family_account_id: family.id,
-        membro_atipico_id: null,
-        phone: ctxA.whatsapp_e164,
-        texto,
-        category: "reativa",
-        tipo: "resposta_registro",
-      });
-      return { tratada: true, familia: family.id, resposta: resp };
     }
   }
 
