@@ -201,6 +201,41 @@ export function desafiosDoOnboarding(pv: LinhaPerfilVivo | null): string[] {
  * campo novo, 3 têm o legado, e **1 tem SÓ o legado**. Uma família perderia a
  * informação sem esta linha.
  */
+/**
+ * DOS DOMÍNIOS MARCADOS NO CADASTRO, OS QUE DE FATO NÃO TÊM DETALHE.
+ *
+ * ⚠️ ESTA FUNÇÃO EXISTE POR CAUSA DE UM DEFEITO MEU. A primeira versão da
+ * correção dos desafios (`662a857`) decidia "sem detalhe" subtraindo os três
+ * que passaram pelo teto de `desafiosAtuais`. Com oito domínios preenchidos, a
+ * `escola` ficava de fora do teto e o prompt anunciava "escola: ainda sem
+ * detalhe" — com o texto dela sentado no banco. PROVEI POR EXECUÇÃO na bancada
+ * de 15/08/2026.
+ *
+ * A pergunta certa é sobre o DADO, não sobre a vaga no bloco.
+ *
+ * ⚠️ `comunicacao` tem tratamento próprio porque ela é renderizada por outra
+ * linha (`Comunicação hoje:`) e pode vir do campo legado `desafios_regulacao`.
+ * Sem esta checagem, o mesmo prompt afirmaria e negaria a mesma coisa — que é
+ * exatamente o defeito que a leitura de comunicação já tinha antes.
+ */
+export function desafiosSemDetalhe(pv: LinhaPerfilVivo | null): string[] {
+  if (!pv) return [];
+  const extras = (pv.categorias_extras ?? {}) as Record<string, unknown>;
+  const temComunicacao = Boolean(comunicacaoAtual(pv));
+  const marcados = Array.isArray(extras.desafios_onboarding) ? extras.desafios_onboarding : [];
+  const vistos = new Set<string>();
+  const out: string[] = [];
+  for (const item of marcados) {
+    const chave = String(item ?? "").trim();
+    if (!chave || vistos.has(chave)) continue;
+    vistos.add(chave);
+    if (chave === "comunicacao" && temComunicacao) continue;
+    if (textoDoCampo(extras[chave])) continue;
+    out.push(ROTULO_DOMINIO[chave] ?? chave);
+  }
+  return out;
+}
+
 export function comunicacaoAtual(pv: LinhaPerfilVivo | null): string {
   if (!pv) return "";
   const extras = (pv.categorias_extras ?? {}) as Record<string, unknown>;
@@ -278,8 +313,17 @@ export function montarContextoBase(params: {
   const desafios = desafiosAtuais(pv ?? null);
   if (desafios.length) linhas.push(`Desafios atuais:\n- ${desafios.join("\n- ")}`);
 
-  const jaDetalhados = new Set(desafios.map((d) => d.split(":")[0]!.trim()));
-  const semDetalhe = desafiosDoOnboarding(pv ?? null).filter((d) => !jaDetalhados.has(d));
+  // ⚠️ O CRITÉRIO É "TEM TEXTO?", NUNCA "ENTROU NO TOP-3".
+  //
+  // Regressão que EU introduzi em `662a857` e que a bancada pegou: eu subtraía
+  // apenas os três que o teto de `desafiosAtuais` deixou entrar. Com perfil
+  // rico, `escola` tinha "Resiste a entrar na sala nas segundas" no banco e o
+  // prompt dizia "escola: ainda sem detalhe" — pior que omitir, porque AFIRMA
+  // ao modelo uma coisa falsa e faz a Ayla perguntar o que já sabe.
+  //
+  // O teto continua existindo (é outra frente); o que não pode é o teto virar
+  // fonte de verdade sobre o que a família contou.
+  const semDetalhe = desafiosSemDetalhe(pv ?? null);
   if (semDetalhe.length) {
     linhas.push(
       `Desafios que a família marcou no cadastro, ainda sem detalhe: ${semDetalhe.join(", ")}`,
