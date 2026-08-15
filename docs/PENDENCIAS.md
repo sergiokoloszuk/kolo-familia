@@ -16,6 +16,9 @@ Só o que está aberto. 🔒 = bloqueada.
 | ID | Pendência | Bloco | Prio | Estado | Próximo passo |
 |---|---|---|---|---|---|
 | [PEND-071](#pend-071) | Segurança está abaixo do gate de assinatura | F · Limites | **P0** | CORRIGIDA, NÃO PUBLICADA | publicar e fazer smoke com número de QA |
+| [PEND-072](#pend-072) | Teste do caminho novo cai para o Legacy sem mock do provider | H · Governança | P1 | PARCIALMENTE CORRIGIDA | varrer os outros testes que dizem medir o experimental |
+| [PEND-073](#pend-073) | Caminho novo não encurta a resposta em pedido de plano | A · Condução | P2 | ABERTA | decidir se o Core do experimental recebe a nota de `querPlano` |
+| [PEND-074](#pend-074) | Condução D0–D7 do Trial não existe em runtime | G · Comercial | P1 | ABERTA | fechar as decisões do `trial-v2.md` e construir sobre `lerEstadoTrial` |
 | [PEND-069](#pend-069) | Migração 0077 (`ayla_documentos`) não aplicada em produção | H · Governança | P1 | ABERTA 🔒 | aplicar o SQL e rodar o seed do Core |
 | [PEND-070](#pend-070) | `ai_prompts.versao` promete versionamento que a PK impede | H · Governança | P3 | ABERTA | decidir entre documentar ou migrar |
 | [PEND-015](#pend-015) | Exposição de secrets no Easypanel | H · Governança | a definir | ABERTA | investigar o risco antes de priorizar |
@@ -3464,6 +3467,92 @@ Aberta em: 2026-08-08 · Origem: consolidação da PEND-010
 - **Critério de conclusão:** DESEJADO aprovado, incluindo o caminho de volta
   para a memória da criança.
 - **Agente recomendado:** PROPOR (depois de D)
+
+---
+
+### PEND-072
+**Teste do caminho novo cai para o Legacy sem mock do provider**
+Bloco: **H · Governança** · Prioridade: **P1** · Estado: **PARCIALMENTE CORRIGIDA**
+Aberta em: 2026-08-15 · Origem: implementação da ponte do plano (Bloqueador 2)
+
+- **Impacto:** um teste que diz exercitar o ramo experimental e na verdade
+  exercita o Legacy é pior que teste nenhum — ele consome o orçamento de
+  confiança sem cobrir nada. Foi o caso de `persistencia-caminho-real.test.ts`,
+  que sustentava o Bloqueador 1 ("a Fatia 3 provada pelo caminho real").
+- **Causa:** `responderExperimental` chama `gerarConversacional`, que faz um
+  POST à API paga com a chave do ambiente. Sem chave e sem duplo, a chamada
+  falha, o ramo devolve `null` e o turno **cai para a Ayla atual** — fail-closed
+  correto em produção, falso verde no teste. Como `persistirRegistro` também
+  existe no Legacy, todas as asserções passavam pelo caminho errado.
+- **PROVEI POR EXECUÇÃO (15/08/2026):** um probe idêntico ao teste, sem o mock
+  de `@/lib/ia/provider`, nunca grava `ayla_path=experimental` em
+  `ayla_send_log` — falhou na asserção de caminho. Com o mock, passa.
+- **O que já foi feito:** `persistencia-caminho-real.test.ts` ganhou o mock e um
+  **teste 0 de caminho** (`passouPeloExperimental`), e os 6 testes passam agora
+  pelo ramo novo. `ponte-plano-caminho-novo.test.ts` nasceu com o mesmo portão.
+- **Próximo passo:** varrer os demais testes que afirmam medir o experimental e
+  aplicar o mesmo teste 0. Enquanto não for feito, nenhum laudo anterior sobre o
+  caminho novo pode ser lido como prova de caminho novo.
+- **Critério de conclusão:** todo teste que cita o experimental grava
+  `ayla_path=experimental` no turno que mede.
+- **Agente recomendado:** AUDITAR
+
+---
+
+### PEND-073
+**Caminho novo não encurta a resposta em pedido explícito de plano**
+Bloco: **A · Condução** · Prioridade: **P2** · Estado: **ABERTA**
+Aberta em: 2026-08-15 · Origem: implementação da ponte do plano (Bloqueador 2)
+
+- **Impacto:** no Legacy, `querPlano` entra em `RespostaParams` e instrui a Ayla
+  a NÃO escrever o plano no chat — resposta curta, e o plano chega em PDF pela
+  ponte. O Core do experimental não recebe essa nota (o documento de Plano não é
+  injetado). Uma família do experimento que peça um plano pode receber as
+  estratégias no chat **e** o PDF logo depois: conteúdo duplicado no mesmo
+  turno. Não é resposta dupla — a resposta continua sendo uma só.
+- **VI NO CÓDIGO (15/08/2026):** `responder.ts:598` monta a nota do Legacy;
+  `experimental.ts` monta o system com `[core, contexto, repertório]` e nada
+  equivalente.
+- **Por que não foi corrigido junto:** mexer no Core do experimental é decisão
+  de conteúdo, não de fiação — e a missão autorizava a fiação. Ver também a
+  decisão pendente sobre injetar `plano-v1.md`.
+- **Próximo passo:** decidir entre (a) injetar a nota equivalente quando
+  `querPlano` for verdadeiro, ou (b) deixar o Core resolver e medir na bancada
+  se o chat repete o plano.
+- **Critério de conclusão:** cenário de pedido explícito na bancada sem
+  duplicação de conteúdo entre a bolha e o PDF.
+- **Agente recomendado:** PROPOR
+
+---
+
+### PEND-074
+**Condução D0–D7 do Trial não existe em runtime**
+Bloco: **G · Comercial** · Prioridade: **P1** · Estado: **ABERTA**
+Aberta em: 2026-08-15 · Origem: Bloqueador 4
+
+- **Impacto:** o Trial de 7 dias não tem condução nenhuma no caminho novo. A
+  família entra, conversa e sai sem que a jornada aconteça — e o fechamento
+  invertido de D4–D7 (a família verbaliza antes da Ayla) não existe.
+- **O que já foi feito (15/08/2026):** o **leitor único de estado** existe e está
+  provado — `lib/trial/estado.ts`, 28 testes. Ele responde D0–D7, teste não
+  iniciado, teste encerrado, assinante, cortesia, falha de pagamento e
+  encerrado, **derivando tudo de `subscription_accesses`**, sem coluna nova e
+  sem segunda regra: `acesso` é sempre igual a `assinaturaLiberada` (há um teste
+  de coerência para os 13 casos justamente para impedir a segunda verdade).
+- **Decisão fechada, que o `trial-v2.md` deixava em aberto:** **não** é preciso
+  criar `trial_started_at`. `created_at` + `trial_ends_at` reconstroem o dia, e
+  sem `created_at` o começo degrada pelo fim do teste.
+- **O que falta:** a camada de condução em si — quando falar, o quê, o teto de 1
+  Plano por dia garantido pelo sistema, "não repetir o que já aconteceu", e os
+  16 casos de teste (D0–D7, pouco uso, muito uso, assinou no D3, assinou no D6,
+  preço, "não vi valor", "quero continuar", família monossilábica).
+- **Bloqueio real:** `docs/documentos-ayla/trial-v2.md` ainda tem itens marcados
+  como PENDENTE DE INVESTIGAÇÃO e exige a comparação Legacy × Experimental por
+  capacidade antes de construir. Construir antes disso contraria o próprio
+  documento.
+- **Critério de conclusão:** os 16 casos provados por `processInbound`, com
+  assinante fora da condução comercial.
+- **Agente recomendado:** PROPOR → EXECUTAR
 
 ---
 
