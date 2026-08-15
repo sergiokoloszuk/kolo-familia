@@ -35,6 +35,8 @@ const pos = (s: string) => {
 const GATE_ASSINATURA = "// 2b. ASSINATURA (GATE)";
 const ACESSO = "if (pedeAcessoAoApp(inbound.texto)) {";
 const EXPERIMENTAL = "if (ehFamiliaExperimental(family.id)) {";
+/** O bloco que vem logo depois do acesso — a fronteira do recorte. */
+const PROXIMO_BLOCO = "// 3a. Resposta à oferta de fim de semana";
 
 describe("A ORDEM — o acesso vem antes do experimental", () => {
   it("1. o bloco de acesso existe UMA vez só", () => {
@@ -55,7 +57,11 @@ describe("A ORDEM — o acesso vem antes do experimental", () => {
   });
 
   it("4. o bloco continua encerrando o turno — uma resposta só", () => {
-    const bloco = ORQ.slice(pos(ACESSO), pos(EXPERIMENTAL));
+    // ⚠️ O RECORTE MUDOU EM 15/08/2026. Ele ia de ACESSO até EXPERIMENTAL, e
+    // isso funcionava porque o experimental vinha logo em seguida. Com o C2 o
+    // ramo desceu para depois dos roteadores, então esse intervalo passou a
+    // conter meia função. O recorte certo é do bloco até o PRÓXIMO bloco.
+    const bloco = ORQ.slice(pos(ACESSO), pos(PROXIMO_BLOCO));
     expect(bloco).toContain("return { tratada: true, familia: family.id, resposta: resp }");
     // E manda UMA mensagem: um `enviarEPersistir`, não dois.
     expect(bloco.split("enviarEPersistir(").length - 1).toBe(1);
@@ -67,7 +73,10 @@ describe("A ORDEM — o acesso vem antes do experimental", () => {
   });
 
   it("6. nada de LLM novo no caminho: o bloco não chama modelo", () => {
-    const bloco = ORQ.slice(pos(ACESSO), pos(EXPERIMENTAL));
+    // Mesmo ajuste de recorte do teste 4 — aqui ele importa ainda mais, porque
+    // `classificarIntencao` agora vive entre o acesso e o experimental, e o
+    // recorte antigo acusaria um falso positivo.
+    const bloco = ORQ.slice(pos(ACESSO), pos(PROXIMO_BLOCO));
     for (const t of ["gerarConversacional", "parseInbound", "classificarIntencao", "openai"]) {
       expect(bloco).not.toContain(t);
     }

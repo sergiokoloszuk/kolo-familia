@@ -7,6 +7,7 @@ import { resolverDocumento } from "./documentos";
 import { montarContextoBase, lerPerfilVivo, pareceInformacao } from "./experimental-contexto";
 import { resolverFoco, blocoDeFoco, type Foco } from "./experimental-foco";
 import { lerEventos, eventosRelevantes, blocoDeEventos } from "./experimental-memoria";
+import { recuperarBoasPraticas, blocoBoasPraticas } from "@/lib/conhecimento/recuperar";
 
 /**
  * A AYLA EXPERIMENTAL — uma porta AO LADO da Ayla atual, 15/08/2026.
@@ -96,6 +97,25 @@ export type TurnoExperimental = {
     /** `admin` = documento publicado; `fallback` = Core do código. */
     coreOrigem: "admin" | "fallback";
     coreVersao: number | null;
+    /**
+     * ⚠️ AS TRÊS CAMADAS DO ACERVO, SEPARADAS DE PROPÓSITO.
+     *
+     * RECUPERAR ≠ INJETAR ≠ USAR, e confundir as três foi exatamente o erro da
+     * auditoria de 30/07 — ela concluiu coisas sobre o acervo olhando o código,
+     * não o prompt final. Aqui:
+     *
+     *   `bpRecuperadas` .. quantas o banco devolveu;
+     *   `bpInjetadas` .... quantas entraram no system que foi ao modelo;
+     *   `bpChars` ........ quanto o bloco engordou o prompt;
+     *   `msBp` ........... quanto a consulta custou.
+     *
+     * A quarta camada — se a Ayla USOU — não se mede aqui: é julgamento sobre a
+     * resposta, e é trabalho da bancada, nunca do runtime.
+     */
+    bpRecuperadas: number;
+    bpInjetadas: number;
+    bpChars: number;
+    msBp: number;
   };
 };
 
@@ -278,6 +298,25 @@ export async function responderExperimental(
      */
     turnosSimulados?: readonly TurnoSimulado[];
     /**
+     * ⚠️ C2 · A CLASSIFICAÇÃO JÁ FEITA NESTE TURNO — não se classifica de novo.
+     *
+     * Desde 15/08/2026 o ramo experimental roda DEPOIS de `classificarIntencao`,
+     * e recebe o resultado pronto. O dono da decisão é um só: quem classifica é
+     * o orquestrador, e todo mundo abaixo consome o mesmo objeto.
+     *
+     * `skills` é o que a recuperação de Boas Práticas consome — por isso religar
+     * o acervo ao caminho novo não custa classificação nova, só a consulta.
+     *
+     * Opcional de propósito: o simulador não classifica, e continua funcionando
+     * sem isto (cai no comportamento de antes, que é responder sem tema).
+     */
+    turnoClassificado?: {
+      intencao: string;
+      tema: string | null;
+      aceite: string | null;
+      skills: string[];
+    } | null;
+    /**
      * ⚠️ SÓ O SIMULADOR PASSA ISTO — e existe porque `null` era uma resposta
      * mentirosa. Três causas completamente diferentes (modelo devolveu vazio ·
      * fronteira barrou · exceção) chegavam à tela como a MESMA frase, e a
@@ -294,10 +333,35 @@ export async function responderExperimental(
   try {
     // O Core e o contexto não dependem um do outro: vão juntos, então a
     // leitura do documento não acrescenta espera nenhuma ao turno.
-    const [ctxTurno, core] = await Promise.all([
+    // ⚠️ O ACERVO ENTRA AQUI, EM PARALELO — não acrescenta espera.
+    //
+    // `recuperarBoasPraticas` é o MESMO mecanismo do Legacy: uma consulta ao
+    // banco e um ranking lexical determinístico (`aderencia.ts`). Sem modelo,
+    // sem embedding, sem segunda LLM. As skills vêm de `turnoClassificado`,
+    // que já foi calculado pelo orquestrador — religar o acervo não custa
+    // classificação nova.
+    //
+    // ⚠️ REPERTÓRIO, NÃO LIMITE. O bloco entra como material consultável; o
+    // Core continua autorizando a Ayla a raciocinar com o repertório dela.
+    // `blocoBoasPraticas` já escreve isso no cabeçalho do bloco.
+    const skillsDoTurno = params.turnoClassificado?.skills ?? [];
+    const tBp = Date.now();
+    const [ctxTurno, core, bps] = await Promise.all([
       montarContexto(supabase, params.familyId, params.mensagem, params.turnosSimulados ?? []),
       resolverDocumento(supabase, "core", params.rascunhoCore ?? null),
+      skillsDoTurno.length
+        ? recuperarBoasPraticas({
+            supabase,
+            skills: skillsDoTurno,
+            // O relato liga o ranking por aderência — sem ele, o corte é
+            // sempre o mesmo trio para qualquer mensagem da mesma skill.
+            relato: params.mensagem,
+            limite: 2,
+          }).catch(() => [])
+        : Promise.resolve([]),
     ]);
+    const msBp = Date.now() - tBp;
+    const repertorio = blocoBoasPraticas(bps);
     const { bloco, foco, diagnosticoRegistrado, consultas } = ctxTurno;
     // A criança que a resposta vai carimbar: no foco compartilhado ou ambíguo
     // NÃO se escolhe uma — carimbar seria transformar palpite em dado.
@@ -314,7 +378,12 @@ export async function responderExperimental(
     const r = await gerarConversacional({
       provider,
       model,
-      system: bloco ? `${core.conteudo}\n\n${bloco}` : core.conteudo,
+      // ⚠️ A ORDEM É CORE → CONTEXTO → REPERTÓRIO, e ela importa. O Core diz
+      // COMO pensar; o contexto diz sobre QUEM; o repertório é material que ela
+      // pode usar, adaptar, combinar — ou ignorar quando não servir àquela
+      // criança. Repertório antes do contexto convidaria a resposta a nascer da
+      // Boa Prática em vez de nascer da criança.
+      system: [core.conteudo, bloco, repertorio].filter(Boolean).join("\n\n"),
       messages: [{ role: "user", content: params.mensagem }],
       maxTokens: 1200,
       cacheSystem: true,
@@ -372,6 +441,12 @@ export async function responderExperimental(
         foco: foco.tipo,
         coreOrigem: core.origem,
         coreVersao: core.versao,
+        bpRecuperadas: bps.length,
+        // Injetadas ≠ recuperadas: se o bloco vier vazio, nada chegou ao
+        // modelo por mais que a consulta tenha devolvido linhas.
+        bpInjetadas: repertorio ? bps.length : 0,
+        bpChars: repertorio.length,
+        msBp,
       },
     };
   } catch (e) {

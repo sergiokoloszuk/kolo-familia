@@ -1995,79 +1995,6 @@ export async function processInbound(
     // Falhou criar o link → segue o fluxo, e a Ayla ainda responde algo.
   }
 
-  // ══════════════════════════════════════════════════════════════════════
-  // 3a-EXP. A PORTA AO LADO — AYLA EXPERIMENTAL (15/08/2026)
-  // ══════════════════════════════════════════════════════════════════════
-  //
-  // ⚠️ ISTO NÃO SUBSTITUI NADA. Tudo o que vem depois continua exatamente como
-  // estava, e é o CONTROLE do experimento. Só famílias na allowlist explícita
-  // entram aqui; qualquer outra segue o caminho de sempre.
-  //
-  // ⚠️ POR QUE AQUI, E NÃO ANTES NEM DEPOIS. Antes deste ponto ficam as
-  // proteções que NÃO podem ser puladas por um experimento — identidade da
-  // família, bloqueio/opt-out, criança escrevendo, idempotência do inbound,
-  // controle de turno e o gate de assinatura. Depois deste ponto começa a
-  // condução conversacional: classificador de intenção, parser, os portões de
-  // rotina/plano/imprimível, o núcleo de `diretrizes.ts` e as lentes — que é
-  // justamente o que o experimento quer PULAR.
-  //
-  // ⚠️ FAIL CLOSED EM DUAS CAMADAS. `ehFamiliaExperimental` devolve false em
-  // qualquer dúvida (variável ausente, id fora da lista, erro de leitura), e
-  // `responderExperimental` devolve null em qualquer falha — inclusive quando a
-  // rede de fronteiras barra o texto. Nos dois casos o turno CAI para a Ayla
-  // atual, e a família recebe UMA resposta só.
-  if (ehFamiliaExperimental(family.id)) {
-    const ctxExp = await loadFamiliaParaEnvio(supabase, family.id);
-    const exp = ctxExp
-      ? await responderExperimental(supabase, {
-          familyId: family.id,
-          mensagem: inbound.texto,
-        })
-      : null;
-    if (ctxExp && exp) {
-      console.log(
-        `[ayla:path] experimental — ${exp.metrica.consultasBanco} consultas · ${exp.metrica.chamadasLLM} LLM · ` +
-          `in=${exp.metrica.tokensEntrada} out=${exp.metrica.tokensSaida} · ` +
-          `contexto=${exp.metrica.msContexto}ms modelo=${exp.metrica.msModelo}ms ` +
-          `inspecao=${exp.metrica.msInspecao}ms total=${exp.metrica.msTotal}ms`,
-      );
-      const resp = await enviarEPersistir(supabase, {
-        family_account_id: family.id,
-        membro_atipico_id: exp.membroId,
-        phone: ctxExp.whatsapp_e164,
-        texto: exp.texto,
-        category: "reativa",
-        tipo: "resposta_registro",
-        meta: { ayla_path: "experimental", ...exp.metrica },
-      });
-      // ⚠️ APRENDER DEPOIS DE RESPONDER (Fase 1). `extrairESalvarEventos` tem
-      // pré-filtro por regex e só chama modelo quando o texto PARECE trazer um
-      // evento — e roda DEPOIS da bolha, então não entra no caminho crítico.
-      // É a peça que faz o experimento deixar de ser amnésico.
-      //
-      // ⚠️ `persistirRegistro` NÃO entra: ela depende do `ParserResult`, ou
-      // seja, arrastaria `parseInbound` de volta — a chamada de ~9 s que este
-      // braço existe para evitar. Enriquecer o Perfil Vivo sem o parser é
-      // desenho da próxima fase.
-      if (exp.membroId) {
-        await extrairESalvarEventos(
-          supabase,
-          family.id,
-          exp.membroId,
-          inbound.texto,
-          undefined,
-          // O nome sai do contexto que este turno JÁ carregou — nenhuma
-          // consulta nova. Sem ele o extrator não sabe de quem é o registro.
-          ctxExp.membros.find((m) => m.id === exp.membroId)?.nome ?? null,
-        ).catch(() => {});
-      }
-      // ⚠️ O `return` É O QUE GARANTE UMA RESPOSTA SÓ. Sem ele, o turno seguiria
-      // para a Ayla atual e a família receberia duas.
-      return { tratada: true, familia: family.id, resposta: resp };
-    }
-    console.log("[ayla:path] experimental indisponível — seguindo pela Ayla atual");
-  }
-
   // 3a. Resposta à oferta de fim de semana (Fase 5): se não for recusa,
   // monta o roteiro leve a partir do que ela contou e manda o link. Roda DEPOIS
   // do gate de assinatura (acima) — trial vencido nunca chega aqui, então o
@@ -2599,6 +2526,106 @@ export async function processInbound(
       });
       return { tratada: true, familia: family.id, resposta: resp };
     }
+  }
+
+  // ⚠️ 15/08/2026 · C2 — O EXPERIMENTAL DESCEU PARA CÁ.
+  //
+  // Ele era a PRIMEIRA porta depois do gate de assinatura, e o `return` dele
+  // pulava tudo o que vem acima: fim de semana, escolha de criança, rotina
+  // (ver/editar/conduzir), Cartões e o "sim" curto do Kolo Vivo. Uma família
+  // da allowlist que pedisse a rotina de terça não recebia a rotina —
+  // recebia uma resposta conversacional SOBRE rotina. A capacidade existia e
+  // não era alcançada.
+  //
+  // Descer resolve sem duplicar nada: os roteadores já se auto-excluem por
+  // `if` e já encerram o turno com `return`. O experimental passa a ser o que
+  // sempre foi na intenção — quem responde quando NENHUMA intenção
+  // especializada casou.
+  //
+  // ⚠️ O QUE ELE GANHA AQUI: `turnoClassificado` já existe neste ponto, com
+  // intenção, tema, aceite e skills. Um dono só para a decisão, e é o mesmo
+  // objeto que a recuperação de Boas Práticas consome logo abaixo — então
+  // religar o acervo ao caminho novo não custa classificação nova.
+  //
+  // ⚠️ O QUE ELE PASSA A PAGAR: `classificarIntencao`, MEDIDO em 849 ms de
+  // p50 (bancada de 15/08). Continua sem `parseInbound` (2.659 ms de p50),
+  // que segue abaixo — então o turno experimental continua mais rápido que o
+  // Legacy, que paga os dois. Era a decisão C2, com esses números na mesa.
+
+  // ══════════════════════════════════════════════════════════════════════
+  // 3a-EXP. A PORTA AO LADO — AYLA EXPERIMENTAL (15/08/2026)
+  // ══════════════════════════════════════════════════════════════════════
+  //
+  // ⚠️ ISTO NÃO SUBSTITUI NADA. Tudo o que vem depois continua exatamente como
+  // estava, e é o CONTROLE do experimento. Só famílias na allowlist explícita
+  // entram aqui; qualquer outra segue o caminho de sempre.
+  //
+  // ⚠️ POR QUE AQUI, E NÃO ANTES NEM DEPOIS. Antes deste ponto ficam as
+  // proteções que NÃO podem ser puladas por um experimento — identidade da
+  // família, bloqueio/opt-out, criança escrevendo, idempotência do inbound,
+  // controle de turno e o gate de assinatura. Depois deste ponto começa a
+  // condução conversacional: classificador de intenção, parser, os portões de
+  // rotina/plano/imprimível, o núcleo de `diretrizes.ts` e as lentes — que é
+  // justamente o que o experimento quer PULAR.
+  //
+  // ⚠️ FAIL CLOSED EM DUAS CAMADAS. `ehFamiliaExperimental` devolve false em
+  // qualquer dúvida (variável ausente, id fora da lista, erro de leitura), e
+  // `responderExperimental` devolve null em qualquer falha — inclusive quando a
+  // rede de fronteiras barra o texto. Nos dois casos o turno CAI para a Ayla
+  // atual, e a família recebe UMA resposta só.
+  if (ehFamiliaExperimental(family.id)) {
+    const ctxExp = await loadFamiliaParaEnvio(supabase, family.id);
+    const exp = ctxExp
+      ? await responderExperimental(supabase, {
+          familyId: family.id,
+          mensagem: inbound.texto,
+          // ⚠️ C2 · UM DONO PARA A DECISÃO. A classificação deste turno já
+          // aconteceu acima; o experimental consome, nunca reclassifica.
+          turnoClassificado,
+        })
+      : null;
+    if (ctxExp && exp) {
+      console.log(
+        `[ayla:path] experimental — ${exp.metrica.consultasBanco} consultas · ${exp.metrica.chamadasLLM} LLM · ` +
+          `in=${exp.metrica.tokensEntrada} out=${exp.metrica.tokensSaida} · ` +
+          `contexto=${exp.metrica.msContexto}ms modelo=${exp.metrica.msModelo}ms ` +
+          `inspecao=${exp.metrica.msInspecao}ms total=${exp.metrica.msTotal}ms`,
+      );
+      const resp = await enviarEPersistir(supabase, {
+        family_account_id: family.id,
+        membro_atipico_id: exp.membroId,
+        phone: ctxExp.whatsapp_e164,
+        texto: exp.texto,
+        category: "reativa",
+        tipo: "resposta_registro",
+        meta: { ayla_path: "experimental", ...exp.metrica },
+      });
+      // ⚠️ APRENDER DEPOIS DE RESPONDER (Fase 1). `extrairESalvarEventos` tem
+      // pré-filtro por regex e só chama modelo quando o texto PARECE trazer um
+      // evento — e roda DEPOIS da bolha, então não entra no caminho crítico.
+      // É a peça que faz o experimento deixar de ser amnésico.
+      //
+      // ⚠️ `persistirRegistro` NÃO entra: ela depende do `ParserResult`, ou
+      // seja, arrastaria `parseInbound` de volta — a chamada de ~9 s que este
+      // braço existe para evitar. Enriquecer o Perfil Vivo sem o parser é
+      // desenho da próxima fase.
+      if (exp.membroId) {
+        await extrairESalvarEventos(
+          supabase,
+          family.id,
+          exp.membroId,
+          inbound.texto,
+          undefined,
+          // O nome sai do contexto que este turno JÁ carregou — nenhuma
+          // consulta nova. Sem ele o extrator não sabe de quem é o registro.
+          ctxExp.membros.find((m) => m.id === exp.membroId)?.nome ?? null,
+        ).catch(() => {});
+      }
+      // ⚠️ O `return` É O QUE GARANTE UMA RESPOSTA SÓ. Sem ele, o turno seguiria
+      // para a Ayla atual e a família receberia duas.
+      return { tratada: true, familia: family.id, resposta: resp };
+    }
+    console.log("[ayla:path] experimental indisponível — seguindo pela Ayla atual");
   }
 
   // 4. Parser IA

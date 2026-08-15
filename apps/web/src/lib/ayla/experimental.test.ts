@@ -174,13 +174,29 @@ describe("UMA resposta, nunca duas", () => {
 });
 
 describe("o caminho curto pula mesmo a condução atual", () => {
-  it("MORDE: nenhum auxiliar (parser, intenção) roda no turno experimental", async () => {
+  it("MORDE: o PARSER não roda antes da resposta no turno experimental", async () => {
     const mundo = familia();
     process.env.AYLA_EXPERIMENTAL_FAMILY_IDS = mundo.familyId;
     await processInbound(mundo.db.cliente(), inboundDe(mundo, "Ele fica bravo quando perde um jogo."));
-    // `registros` recebe TODA chamada ao cliente Anthropic — parser, intenção,
-    // roteador, dedup. No caminho experimental não pode haver nenhuma.
-    expect(registros.length, `auxiliares chamados: ${registros.length}`).toBe(0);
+
+    // ⚠️ ESTE TESTE MUDOU EM 15/08/2026, E O MOTIVO IMPORTA.
+    //
+    // Antes ele exigia ZERO auxiliares, porque o ramo experimental era a
+    // primeira porta e pulava tudo. A decisão C2 mudou isso de propósito: o
+    // ramo desceu para depois de `classificarIntencao`, e agora CONSOME o
+    // `turnoClassificado` em vez de reclassificar. Um dono para a decisão.
+    //
+    // O que ele continua prendendo — e é o que sempre importou — é que o
+    // `parseInbound` NÃO entra no caminho crítico. MEDIDO em 15/08: parser tem
+    // p50 de 2.659 ms contra 849 ms do classificador. Trocar zero por um
+    // auxiliar barato foi escolha; deixar o caro entrar seria regressão.
+    const systems = registros.map((r) => r.system).join("\n---\n");
+    expect(systems, "o parser entrou no caminho crítico").not.toMatch(
+      /conquista|observacao_livre|sugestao_kolo_vivo/i,
+    );
+
+    // E o teto continua existindo: um auxiliar, não uma cascata.
+    expect(registros.length, `auxiliares chamados: ${registros.length}`).toBeLessThanOrEqual(1);
   });
 
   it("MORDE: o núcleo de diretrizes.ts NÃO entra no prompt experimental", async () => {
