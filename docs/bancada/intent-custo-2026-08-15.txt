@@ -1,0 +1,17 @@
+modelo do classificador: claude-haiku-4-5
+repetições por caso: 3
+
+CASO                  ms p50  ms p95  intencao    tema            skills
+conversa comum           849    1331  plano       emocional       
+pedido de Rotina         824     833  rotina_criarrotina          
+edição de Rotina        1187   12208  outro       —               
+Cartões Visuais          900    1440  rotina_criarautonomia       
+pedido de Plano          901    1024  plano       nutricional     
+comunicação              808     914  outro       comunicacao     
+aprendizagem             935    1338  plano       aprendizado     
+desabafo                 722     740  outro       —               
+saúde                    772    1048  outro       saude_geral     
+jurídico/BPC             725    1060  outro       —               
+
+AMOSTRA TOTAL: 30 chamadas
+  p50 = 849 ms · p95 = 1440 ms · min = 708 · max = 12208
