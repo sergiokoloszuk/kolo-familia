@@ -15,6 +15,8 @@ Só o que está aberto. 🔒 = bloqueada.
 
 | ID | Pendência | Bloco | Prio | Estado | Próximo passo |
 |---|---|---|---|---|---|
+| [PEND-069](#pend-069) | Migração 0077 (`ayla_documentos`) não aplicada em produção | H · Governança | P1 | ABERTA 🔒 | aplicar o SQL e rodar o seed do Core |
+| [PEND-070](#pend-070) | `ai_prompts.versao` promete versionamento que a PK impede | H · Governança | P3 | ABERTA | decidir entre documentar ou migrar |
 | [PEND-015](#pend-015) | Exposição de secrets no Easypanel | H · Governança | a definir | ABERTA | investigar o risco antes de priorizar |
 | [PEND-007](#pend-007) | Ativação do GPT parada na prova da chave | H · Governança | P1 | ABERTA 🔒 | publicar e rodar `provider-check` |
 | [PEND-002](#pend-002) | Pagamento confirmado sem acesso na Kolo | G · Comercial | P1 | AGUARDANDO VALIDAÇÃO | esperar a primeira assinatura real |
@@ -3461,6 +3463,59 @@ Aberta em: 2026-08-08 · Origem: consolidação da PEND-010
 - **Critério de conclusão:** DESEJADO aprovado, incluindo o caminho de volta
   para a memória da criança.
 - **Agente recomendado:** PROPOR (depois de D)
+
+---
+
+### PEND-069
+**Migração 0077 (`ayla_documentos`) não aplicada em produção**
+Bloco: **H · Governança** · Prioridade: **P1** · Estado: **ABERTA 🔒**
+Aberta em: 2026-08-15 · Origem: Passo 1 do Admin da Inteligência
+
+- **Impacto:** enquanto a tabela não existir, o Admin da Inteligência abre e
+  explica, mas nada pode ser publicado — a Ayla segue com o Core do código. Não
+  há degradação: o Core do código **é** o conteúdo aprovado em QA. O que está
+  bloqueado é a capacidade de mudar a Ayla sem deploy, não a Ayla.
+- **PROVEI POR EXECUÇÃO (15/08/2026):** `GET /rest/v1/ayla_documentos` devolve
+  404 · `42P01 relation "public.ayla_documentos" does not exist`. Nenhuma RPC de
+  SQL existe (`exec_sql`, `exec`, `run_sql`, `sql` → todas 404), e a única
+  credencial de banco em `.env.local` é `POSTGRES_PASSWORD` — sem host nem
+  porta. **Não tenho caminho para aplicar a migração.**
+- **Próximo passo:** aplicar `supabase/migrations/0077_ayla_documentos.sql` e
+  depois rodar `node scripts/seed-core-ayla.mjs` (idempotente: não sobrescreve
+  publicação existente). O repasse auto-contido está em
+  `docs/repasses/0077-ayla-documentos.md`.
+- **Rollback:** `drop table public.ayla_documentos;` — nada depende dela, o
+  carregador cai no Core do código.
+- **Critério de conclusão:** o seed cria a v1 e um turno real reporta
+  `coreOrigem=admin`.
+- **Agente recomendado:** EXECUTAR (com acesso a SQL)
+
+---
+
+### PEND-070
+**`ai_prompts.versao` promete versionamento que a PK impede**
+Bloco: **H · Governança** · Prioridade: **P3** · Estado: **ABERTA**
+Aberta em: 2026-08-15 · Origem: Passo 1 do Admin da Inteligência
+
+- **Impacto:** a coluna `versao` faz a tela de Prompts parecer versionada. Não
+  é. Ela é um contador que sobe a cada save e sobrescreve o texto anterior — não
+  existe histórico, não existe rascunho, e **não existe rollback**. Quem editar
+  um prompt achando que pode voltar atrás vai descobrir que não pode no pior
+  momento possível.
+- **PROVEI POR EXECUÇÃO (15/08/2026):** `ai_prompts` tem `key text primary key`;
+  um segundo INSERT com a mesma chave devolve `23505 duplicate key value
+  violates unique constraint "ai_prompts_pkey"`. Uma linha por chave, por
+  construção.
+- **Por que NÃO foi corrigido junto:** trocar a PK alcançaria `getSystemPrompt`,
+  que está no caminho do **parser da Ayla legacy** e usa `.maybeSingle()` —
+  duas linhas para a mesma chave fariam essa leitura LANÇAR, quebrando o parser
+  de todas as famílias. `ayla_documentos` nasceu ao lado justamente para não
+  ampliar esse raio.
+- **Próximo passo:** decidir entre (a) só documentar na tela que Prompts não tem
+  histórico, ou (b) migrar `ai_prompts` para `ayla_documentos` quando o parser
+  legacy sair. Enquanto não se decide, (a) é o mínimo honesto.
+- **Critério de conclusão:** a tela não promete o que não entrega.
+- **Agente recomendado:** PROPOR
 
 ---
 
