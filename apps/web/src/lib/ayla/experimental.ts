@@ -228,6 +228,12 @@ export async function responderExperimental(
     mensagem: string;
     /** Só o simulador do Admin passa isto. A conversa real, nunca. */
     rascunhoCore?: { conteudo: string; versao: number } | null;
+    /**
+     * ⚠️ O SIMULADOR SE DECLARA. O gasto de token dele é real e tem de ser
+     * registrado, mas somar o teste do Admin ao custo das famílias estragaria
+     * a única métrica de custo por família que existe.
+     */
+    origem?: "conversa" | "simulador";
   },
 ): Promise<TurnoExperimental | null> {
   const t0 = Date.now();
@@ -282,7 +288,7 @@ export async function responderExperimental(
       family_account_id: params.familyId,
       provider,
       model,
-      feature: "ayla_experimental",
+      feature: params.origem === "simulador" ? "ayla_simulador" : "ayla_experimental",
       input_tokens: r.tokensIn,
       output_tokens: r.tokensOut,
     }).catch(() => {});
