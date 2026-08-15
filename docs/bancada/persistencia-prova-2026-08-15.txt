@@ -1,0 +1,30 @@
+família: a376ba52-3046-45b6-a38b-e60819780cdf · criança: André
+respondeu: sim · 4051 ms · BP inj: 0
+
+TABELA                  | ANTES | DEPOIS | DELTA
+eventos_membro          |     1 |      1 |     0
+diarios                 |    28 |     28 |     0
+ayla_daily_checkins     |     0 |      0 |     0
+sugestao_perfil_vivos   |    19 |     19 |     0
+=================================================================
+LEITURA DESTA MEDICAO — 15/08/2026
+=================================================================
+
+DELTA ZERO EM TODAS AS QUATRO TABELAS.
+
+O que este teste PROVOU: nada sobre persistirRegistro. Ele chamou
+responderExperimental direto, e o bloco de persistencia que a Fatia 3
+acrescentou vive no ORQUESTRADOR, nao ali. O teste exercitou apenas
+extrairESalvarEventos.
+
+O que ele DESMENTIU: extrairESalvarEventos nao escreveu, mesmo com a mensagem
+contendo "conseguiu", que esta em GATILHOS_MARCO. Ou o modelo devolveu lista
+vazia, ou o insert falhou em silencio. NAO SEI qual — e a diferenca importa.
+
+CONCLUSAO HONESTA: a Fatia 3 esta IMPLEMENTADA e NAO PROVADA por execucao.
+Os 18 testes estruturais provam ordem, isolamento e tratamento de falha —
+nao provam que uma linha chega ao banco.
+
+Para provar de verdade e preciso exercitar processInbound inteiro com a
+familia na allowlist, com Z-API falsa, e conferir as quatro tabelas. E o
+proximo passo, e e BLOQUEADOR de rollout.
