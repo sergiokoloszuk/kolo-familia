@@ -19,6 +19,11 @@ Só o que está aberto. 🔒 = bloqueada.
 | [PEND-072](#pend-072) | Teste do caminho novo cai para o Legacy sem mock do provider | H · Governança | P1 | PARCIALMENTE CORRIGIDA | varrer os outros testes que dizem medir o experimental |
 | [PEND-073](#pend-073) | Caminho novo não encurta a resposta em pedido de plano | A · Condução | P2 | ABERTA | decidir se o Core do experimental recebe a nota de `querPlano` |
 | [PEND-074](#pend-074) | Condução D0–D7 do Trial não existe em runtime | G · Comercial | P1 | IMPLEMENTADA, NÃO PUBLICADA | provar a condução na bancada com modelo real antes de publicar |
+| [PEND-075](#pend-075) | Família REAL na allowlist do caminho novo | H · Governança | **P0** | ABERTA | decidir se sai da allowlist — não alterei a variável |
+| [PEND-076](#pend-076) | Teste vencido há 15 dias recebe serviço completo e proativa diária | G · Comercial | **P0** | ABERTA | achar por que o gate não barra o WhatsApp dessa família |
+| [PEND-077](#pend-077) | `ayla_daily_checkins` nunca gravou uma linha (400 desde 0001) | H · Governança | P1 | CORRIGIDA, NÃO PUBLICADA | aplicar a migração 0078 em produção |
+| [PEND-078](#pend-078) | Auditoria (`api_calls`) escrita com a sessão da família em outros pontos | H · Governança | P2 | PARCIALMENTE CORRIGIDA | varrer os 37 pontos de chamada de `logarUsoApi` |
+| [PEND-079](#pend-079) | Webhook do Stripe recusa assinatura e não deixa rastro nosso | H · Governança | P2 | ABERTA | persistir a recusa; decidir sobre os 2 endpoints de outro produto |
 | [PEND-069](#pend-069) | Migração 0077 (`ayla_documentos`) não aplicada em produção | H · Governança | P1 | ABERTA 🔒 | aplicar o SQL e rodar o seed do Core |
 | [PEND-070](#pend-070) | `ai_prompts.versao` promete versionamento que a PK impede | H · Governança | P3 | ABERTA | decidir entre documentar ou migrar |
 | [PEND-015](#pend-015) | Exposição de secrets no Easypanel | H · Governança | a definir | ABERTA | investigar o risco antes de priorizar |
@@ -3552,6 +3557,154 @@ Aberta em: 2026-08-15 · Origem: implementação da ponte do plano (Bloqueador 2
 - **Critério de conclusão:** cenário de pedido explícito na bancada sem
   duplicação de conteúdo entre a bolha e o PDF.
 - **Agente recomendado:** PROPOR
+
+---
+
+### PEND-075
+**Família REAL na allowlist do caminho novo (`AYLA_EXPERIMENTAL_FAMILY_IDS`)**
+Bloco: **H · Governança** · Prioridade: **P0** · Estado: **ABERTA**
+Aberta em: 2026-08-15 · Origem: auditoria da allowlist de produção
+
+- **PROVEI POR EXECUÇÃO (leitura de produção, 15/08/2026).** Os três IDs da
+  variável resolvem assim:
+
+  | ID | Responsável | Criança(s) | Controlada? |
+  |---|---|---|---|
+  | `9c14b56b` | Karina Koloszuk (`kkoloszuk@gmail.com`) | Mario (2008), Manu (2020) | **SIM** — conta da fundadora, fixture de irmãos |
+  | `a376ba52` | Sérgio Koloszuk (`sergiokoloszuk.sk@gmail.com`) | "André" (nasc. 1986 — dado de teste) | **SIM** — cortesia, `cortesia=true` |
+  | `4135061b` | **Rosangela Teixeira** (`roteixeira3003@gmail.com`) | Matheo (nasc. 26/02/2022, 4 anos) | **NÃO — FAMÍLIA REAL** |
+
+- **Por que a terceira é real, e não uma fixture:** e-mail pessoal, criança de 4
+  anos com idade coerente, 88 mensagens, e uma conversa de verdade em 13/08
+  sobre um conflito familiar concreto (contato com o outro genitor gerando
+  ciúme no marido). Não é dado de QA.
+- **§13 do protocolo:** *"Não usar conta ou conversa de família real para teste
+  que possa contaminar o contexto. Só contas autorizadas de QA."*
+- **MEDI, e é o que impede chamar isto de incidente consumado:** nenhum turno
+  dela passou pelo caminho novo. Os 40 envios têm `meta.ayla_path` ausente —
+  todos Legacy. Os 6 turnos experimentais de hoje são 5 de `9c14b56b` e 1 de
+  `a376ba52`. A exposição existe; o dano, até agora, não.
+- **NÃO SEI** por que ela nunca caiu no ramo experimental estando na allowlist.
+  A hipótese mais provável é o gate de acesso barrar antes (o teste dela venceu
+  em 31/07), mas isso conflita com PEND-076 — ela está sendo atendida. Não
+  investiguei: sairia do escopo desta missão.
+- **NÃO ALTEREI A VARIÁVEL**, conforme instrução explícita.
+- **Critério de conclusão:** ou a família sai da allowlist, ou existe
+  consentimento registrado dela para participar do piloto.
+- **Agente recomendado:** decisão do dono do produto → EXECUTAR
+
+---
+
+### PEND-076
+**Teste vencido há 15 dias recebe serviço completo e proativa diária**
+Bloco: **G · Comercial** · Prioridade: **P0** · Estado: **ABERTA**
+Aberta em: 2026-08-15 · Origem: auditoria da allowlist (achado fora de escopo)
+
+- **PROVEI POR EXECUÇÃO.** Família `4135061b`: `status='trialing'`,
+  `trial_ends_at = 2026-07-31`, `cortesia=false`. Por `assinaturaLiberada`
+  (`lib/auth/assinatura.ts:54` → `trialValido`), isso é **acesso negado** desde
+  01/08. Mesmo assim ela recebeu, depois do vencimento: proativa diária às
+  11:00 em 13, 14 e 15/08, um `plano_pdf` em 12/08, e uma conversa completa de
+  cinco turnos com orientação real em 13/08.
+- **VI NO CÓDIGO:** o gate existe e a função pura está certa — testei a regra,
+  não o caminho. O que **não** investiguei é por que o WhatsApp dela atravessa
+  o gate. Suspeitas não verificadas: número não-único no `.find()` do reativo
+  (ver [[incidente Thamires]], PEND aberta sobre `whatsapp_e164`), ou a proativa
+  não consultando o gate (classe do incidente Camile, `ae6698f`).
+- **Por que é P0:** é receita vazando e é a régua de acesso não valendo — a
+  mesma classe de falha que o gate foi criado para impedir, na direção oposta.
+- **Critério de conclusão:** reproduzir o caminho que atende uma família sem
+  acesso, corrigir, e provar com o caso `4135061b`.
+- **Agente recomendado:** INVESTIGAR → EXECUTAR
+
+---
+
+### PEND-077
+**`ayla_daily_checkins` nunca gravou uma linha — 400 em toda execução desde 0001**
+Bloco: **H · Governança** · Prioridade: **P1** · Estado: **CORRIGIDA, NÃO PUBLICADA**
+Aberta em: 2026-08-15 · Corrigida em: 2026-08-15 (migração `0078` + conferência da escrita)
+
+- **MEDI:** a tabela tem **zero linhas** na história inteira do produto.
+- **CAUSA RAIZ:** `persistirRegistro` grava com
+  `onConflict: "family_account_id,membro_atipico_id,date"` e `0001_init.sql`
+  criou só um índice **não-único**. O Postgres devolve 42P10 e o PostgREST
+  devolve **400**, sempre.
+- **Por que durou meses:** a escrita não conferia o próprio resultado — o
+  `error` do `.upsert()` era descartado e o fluxo seguia como sucesso (§7, a
+  mesma forma do incidente da Rochelle). O único rastro era um 400 no log da
+  Vercel, que some com a retenção.
+- **Consequência além da telemetria:** o orquestrador lê esta tabela para pôr
+  "último check-in" no contexto da Ayla. Sempre vazia, esse contexto sempre foi
+  vazio — a Ayla nunca soube do último registro de ninguém.
+- **Correção:** `0078_checkins_upsert.sql` (índice único nas três colunas) +
+  captura do erro com evento persistido `checkin_nao_gravou`.
+- **Prova:** `lib/ayla/checkin-upsert.test.ts`. **Verificado que o teste FALHA
+  sem a migração** (2 falhas), e passa com ela.
+- **Critério de conclusão:** migração aplicada em produção e uma linha gravada
+  de verdade.
+- **Agente recomendado:** EXECUTAR (aplicação de migração)
+
+---
+
+### PEND-078
+**Auditoria (`api_calls`) escrita com a sessão da família em outros pontos**
+Bloco: **H · Governança** · Prioridade: **P2** · Estado: **PARCIALMENTE CORRIGIDA**
+Aberta em: 2026-08-15 · Origem: 7 eventos `billing_nao_gravou` em produção
+
+- **PROVEI POR EXECUÇÃO:** sete eventos persistidos em `eventos_app` entre 11 e
+  15/08, todos *"new row violates row-level security policy for table
+  api_calls"*, todos de `classificar_intencao`, nas famílias `7932d0f4`,
+  `cdc33a5f` e `9c14b56b`.
+- **CAUSA RAIZ:** `api_calls` (0035) tem RLS com política de SELECT para admin e
+  **nenhuma de INSERT** — só service role escreve. O caminho da web passava o
+  cliente da sessão da família a `classificarIntencao`.
+- **Por que a proteção não pegou:** ela pegou. O `naoGravou` criado em 11/08 é a
+  razão de este achado existir. O que faltou foi o **varrimento** que aquela
+  correção prometeu: ela consertou `conversa_web` no ponto de chamada e deixou
+  os outros pontos.
+- **Corrigido agora:** `prepararRespostaStream` passa a exigir um cliente
+  `telemetria` separado e obrigatório, entregue pela rota como service role.
+  Prova em `lib/ia/telemetria-auditoria.test.ts`, **verificada falhando sem a
+  correção**.
+- **O que falta:** os outros **37 pontos de chamada** de `logarUsoApi` não foram
+  auditados um a um. `logar.ts` documenta, de propósito, que o privilégio é de
+  quem chama — para a bancada poder passar um stub que estoura. Portanto a
+  varredura é caso a caso, não uma troca no helper.
+- **Critério de conclusão:** cada ponto de chamada classificado como service
+  role, admin ou sessão-consciente; e `eventos_app` sem `billing_nao_gravou`
+  novo por 7 dias.
+- **Agente recomendado:** AUDITAR → EXECUTAR
+
+---
+
+### PEND-079
+**Webhook do Stripe recusa assinatura e não deixa rastro nosso**
+Bloco: **H · Governança** · Prioridade: **P2** · Estado: **ABERTA**
+Aberta em: 2026-08-15 · Origem: 3 erros de assinatura vistos na Vercel
+
+- **NÃO ERAM DO STRIPE — PROVEI POR EXECUÇÃO.** O último evento criado na conta
+  Stripe é de **04/08** (`evt_1U0cVQ...`), e **todos** os 34 eventos dos últimos
+  30 dias estão com `pending_webhooks=0`, ou seja, entregues e liquidados. Não
+  havia nada para o Stripe entregar em 15/08. As três requisições recusadas não
+  foram entregas legítimas.
+- **A recusa está CORRETA:** a rota é fail-closed — sem `stripe-signature`
+  válida, 400 e nada é processado.
+- **O problema é o rastro:** `eventos_app` não tem **nenhum** registro
+  relacionado a Stripe/webhook. A recusa só existiu no stdout da Vercel. Se um
+  dia a assinatura falhar por segredo errado — e não por um POST de fora —
+  vamos descobrir do mesmo jeito que descobrimos agora: por auditoria manual.
+- **ACHADO ADICIONAL, VI NA CONTA:** a mesma conta Stripe tem **três** endpoints
+  de webhook ativos, e dois são de outro produto
+  (`kolofamilia.base44.app/api/functions/webhookStripe` e
+  `koloeduca.base44.app/api/functions/stripeWebhook`). Todo evento de assinatura
+  da Kolo é entregue também a eles. Não avaliei o que fazem com isso.
+- **NÃO ALTEREI segredo nem endpoint**, conforme instrução.
+- **NÃO SEI** a origem das três requisições — não tenho acesso ao log da Vercel,
+  e nós não persistimos nada. A hipótese mais simples é varredura automatizada
+  contra uma URL pública.
+- **Critério de conclusão:** recusa de assinatura vira evento persistido, com
+  IP/origem quando disponível.
+- **Agente recomendado:** EXECUTAR
 
 ---
 

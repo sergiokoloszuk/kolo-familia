@@ -63,6 +63,10 @@ export async function POST(req: NextRequest) {
 
     const { system, messages, roteadas, intencao, tema, ctx } = await prepararRespostaStream({
       supabase,
+      // O MESMO privilégio pontual do billing lá embaixo, pela mesma razão:
+      // `api_calls` é auditoria e a sessão da família não a escreve. Tudo o
+      // mais que esta requisição faz continua passando pela RLS da família.
+      telemetria: createServiceRoleClient(),
       familyId: family.id,
       membroAtipicoId: conversa.membro_atipico_id as string | null,
       conversaId,

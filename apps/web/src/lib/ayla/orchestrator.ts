@@ -3492,7 +3492,15 @@ async function persistirRegistro(
     p.conquista ?? (p.experimentou ? `Experimentou ${p.experimentou}` : null);
 
   // 1. Daily check-in
-  await supabase.from("ayla_daily_checkins").upsert(
+  //
+  // ⚠️ A ESCRITA CONFERE O PRÓPRIO RESULTADO (§7). Sem isto, esta chamada
+  // devolveu **400 em toda execução desde 0001** e ninguém soube: o
+  // `onConflict` de três colunas não tinha constraint que casasse no banco
+  // (42P10), o `error` era descartado e o fluxo seguia como sucesso. Medido em
+  // 15/08/2026: a tabela tinha ZERO linhas na história inteira do produto. A
+  // constraint chegou na 0078; a conferência chega aqui, para que a próxima
+  // falha deste tipo não precise de uma auditoria da Vercel para aparecer.
+  const { error: erroCheckin } = await supabase.from("ayla_daily_checkins").upsert(
     {
       family_account_id: familyId,
       membro_atipico_id: p.membro_atipico_id,
@@ -3508,6 +3516,21 @@ async function persistirRegistro(
     },
     { onConflict: "family_account_id,membro_atipico_id,date" },
   );
+  if (erroCheckin) {
+    // Não derruba o turno: a mãe já recebeu a resposta, e perder o registro
+    // não justifica perder a conversa. Mas deixa de ser invisível.
+    await logEvent({
+      kind: "checkin_nao_gravou",
+      severity: "error",
+      family_account_id: familyId,
+      message: `ayla_daily_checkins não gravou: ${erroCheckin.message.slice(0, 200)}`,
+      payload: {
+        membro_atipico_id: p.membro_atipico_id,
+        code: (erroCheckin as { code?: string }).code ?? null,
+        motivo: erroCheckin.message.slice(0, 400),
+      },
+    });
+  }
 
   // 2. Diário (Camada A + B se confianca_camada_adulto >= 70). Com DEDUP:
   //    numa mesma conversa a mãe detalha o MESMO episódio em várias mensagens —

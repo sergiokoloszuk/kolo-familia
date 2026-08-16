@@ -57,12 +57,31 @@ export type EngineResponse = {
  */
 export async function prepararRespostaStream(params: {
   supabase: SupabaseClient;
+  /**
+   * ⚠️ O CLIENTE DA AUDITORIA, SEPARADO E OBRIGATÓRIO (15/08/2026).
+   *
+   * `api_calls` é tabela de auditoria: a RLS (0035) só tem política de SELECT
+   * para admin, e nenhuma de INSERT. Escrever com o cliente da SESSÃO DA
+   * FAMÍLIA — que é o `supabase` acima — é recusado pelo banco.
+   *
+   * MEDIDO EM PRODUÇÃO: sete eventos `billing_nao_gravou` entre 11 e 15/08,
+   * todos "new row violates row-level security policy for table api_calls",
+   * todos de `classificar_intencao`. Mesma causa que já tinha zerado
+   * `conversa_web` até 11/08 — a correção de lá foi no ponto de chamada e o
+   * varrimento nunca aconteceu; este era um dos pontos que faltavam.
+   *
+   * É PARÂMETRO, e não um service-role construído aqui dentro, porque o
+   * privilégio é decisão de quem chama: uma bancada passa um stub que estoura
+   * de propósito, para garantir que um teste nunca escreva em produção. É
+   * OBRIGATÓRIO porque opcional foi exatamente como o registro sumiu antes.
+   */
+  telemetria: SupabaseClient;
   familyId: string;
   membroAtipicoId: string | null;
   conversaId: string;
   userInput: string;
 }) {
-  const { supabase, familyId, membroAtipicoId, conversaId, userInput } = params;
+  const { supabase, telemetria, familyId, membroAtipicoId, conversaId, userInput } = params;
 
   const skills = await loadActiveSkills(supabase);
   if (skills.length === 0) {
@@ -92,7 +111,9 @@ export async function prepararRespostaStream(params: {
       relato: userInput,
     }),
     classificarIntencao({
-      supabase,
+      // A telemetria do classificador vai para `api_calls`, que a sessão da
+      // família não pode escrever. Ver a nota em `telemetria`, acima.
+      supabase: telemetria,
       familyId,
       texto: userInput,
       historico: anterior.historico,
