@@ -19,12 +19,12 @@ Só o que está aberto. 🔒 = bloqueada.
 | [PEND-072](#pend-072) | Teste do caminho novo cai para o Legacy sem mock do provider | H · Governança | P1 | PARCIALMENTE CORRIGIDA | varrer os outros testes que dizem medir o experimental |
 | [PEND-073](#pend-073) | Caminho novo não encurta a resposta em pedido de plano | A · Condução | P2 | ABERTA | decidir se o Core do experimental recebe a nota de `querPlano` |
 | [PEND-074](#pend-074) | Condução D0–D7 do Trial não existe em runtime | G · Comercial | P1 | IMPLEMENTADA, NÃO PUBLICADA | provar a condução na bancada com modelo real antes de publicar |
-| [PEND-075](#pend-075) | Família REAL na allowlist do caminho novo | H · Governança | **P0** | ABERTA | decidir se sai da allowlist — não alterei a variável |
-| [PEND-076](#pend-076) | Teste vencido há 15 dias recebe serviço completo e proativa diária | G · Comercial | **P0** | ABERTA | achar por que o gate não barra o WhatsApp dessa família |
+| [PEND-075](#pend-075) | Allowlist do caminho novo: quem é, e por quê | H · Governança | P3 | RESOLVIDA | nenhum — a composição das 3 contas é intencional |
+| [PEND-080](#pend-080) | Liberar o caminho novo para TODAS as famílias | A · Condução | P1 | ABERTA 🔒 | fechar os 6 bloqueadores antes de ampliar a allowlist |
 | [PEND-077](#pend-077) | `ayla_daily_checkins` nunca gravou uma linha (400 desde 0001) | H · Governança | P1 | CORRIGIDA, NÃO PUBLICADA | aplicar a migração 0078 em produção |
 | [PEND-078](#pend-078) | Auditoria (`api_calls`) escrita com a sessão da família em outros pontos | H · Governança | P2 | PARCIALMENTE CORRIGIDA | varrer os 37 pontos de chamada de `logarUsoApi` |
 | [PEND-079](#pend-079) | Webhook do Stripe recusa assinatura e não deixa rastro nosso | H · Governança | P2 | ABERTA | persistir a recusa; decidir sobre os 2 endpoints de outro produto |
-| [PEND-069](#pend-069) | Migração 0077 (`ayla_documentos`) não aplicada em produção | H · Governança | P1 | ABERTA 🔒 | aplicar o SQL e rodar o seed do Core |
+| [PEND-069](#pend-069) | Migração 0077 (`ayla_documentos`) não aplicada em produção | H · Governança | P1 | ~~ABERTA~~ **BAIXADA** | nenhum — a tabela existe com 11 linhas (medido 16/08) |
 | [PEND-070](#pend-070) | `ai_prompts.versao` promete versionamento que a PK impede | H · Governança | P3 | ABERTA | decidir entre documentar ou migrar |
 | [PEND-015](#pend-015) | Exposição de secrets no Easypanel | H · Governança | a definir | ABERTA | investigar o risco antes de priorizar |
 | [PEND-007](#pend-007) | Ativação do GPT parada na prova da chave | H · Governança | P1 | ABERTA 🔒 | publicar e rodar `provider-check` |
@@ -3561,61 +3561,100 @@ Aberta em: 2026-08-15 · Origem: implementação da ponte do plano (Bloqueador 2
 ---
 
 ### PEND-075
-**Família REAL na allowlist do caminho novo (`AYLA_EXPERIMENTAL_FAMILY_IDS`)**
-Bloco: **H · Governança** · Prioridade: **P0** · Estado: **ABERTA**
-Aberta em: 2026-08-15 · Origem: auditoria da allowlist de produção
+**Allowlist do caminho novo (`AYLA_EXPERIMENTAL_FAMILY_IDS`): quem é, e por quê**
+Bloco: **H · Governança** · Prioridade: **P3** · Estado: **RESOLVIDA**
+Aberta em: 2026-08-15 · Resolvida em: 2026-08-16, por decisão da Karina
 
-- **PROVEI POR EXECUÇÃO (leitura de produção, 15/08/2026).** Os três IDs da
-  variável resolvem assim:
+- **A COMPOSIÇÃO É INTENCIONAL, e fica registrada aqui para não ser
+  "descoberta" como incidente de novo:**
 
-  | ID | Responsável | Criança(s) | Controlada? |
-  |---|---|---|---|
-  | `9c14b56b` | Karina Koloszuk (`kkoloszuk@gmail.com`) | Mario (2008), Manu (2020) | **SIM** — conta da fundadora, fixture de irmãos |
-  | `a376ba52` | Sérgio Koloszuk (`sergiokoloszuk.sk@gmail.com`) | "André" (nasc. 1986 — dado de teste) | **SIM** — cortesia, `cortesia=true` |
-  | `4135061b` | **Rosangela Teixeira** (`roteixeira3003@gmail.com`) | Matheo (nasc. 26/02/2022, 4 anos) | **NÃO — FAMÍLIA REAL** |
+  | ID | Quem | Papel na allowlist |
+  |---|---|---|
+  | `9c14b56b` | Karina Koloszuk | QA/controlada |
+  | `a376ba52` | Sérgio Koloszuk | QA/controlada |
+  | `4135061b` | Rosangela Teixeira | **família real, autorizada para o teste** |
 
-- **Por que a terceira é real, e não uma fixture:** e-mail pessoal, criança de 4
-  anos com idade coerente, 88 mensagens, e uma conversa de verdade em 13/08
-  sobre um conflito familiar concreto (contato com o outro genitor gerando
-  ciúme no marido). Não é dado de QA.
-- **§13 do protocolo:** *"Não usar conta ou conversa de família real para teste
-  que possa contaminar o contexto. Só contas autorizadas de QA."*
-- **MEDI, e é o que impede chamar isto de incidente consumado:** nenhum turno
-  dela passou pelo caminho novo. Os 40 envios têm `meta.ayla_path` ausente —
-  todos Legacy. Os 6 turnos experimentais de hoje são 5 de `9c14b56b` e 1 de
-  `a376ba52`. A exposição existe; o dano, até agora, não.
-- **NÃO SEI** por que ela nunca caiu no ramo experimental estando na allowlist.
-  A hipótese mais provável é o gate de acesso barrar antes (o teste dela venceu
-  em 31/07), mas isso conflita com PEND-076 — ela está sendo atendida. Não
-  investiguei: sairia do escopo desta missão.
-- **NÃO ALTEREI A VARIÁVEL**, conforme instrução explícita.
-- **Critério de conclusão:** ou a família sai da allowlist, ou existe
-  consentimento registrado dela para participar do piloto.
-- **Agente recomendado:** decisão do dono do produto → EXECUTAR
+- **A abertura desta pendência foi um alarme correto com conclusão errada.** Eu
+  vi uma família real na allowlist e apliquei o §13 ("não usar conta de família
+  real como ambiente de teste") sem ter conferido `controle_acessos` — que era
+  onde a resposta estava. O §13 continua valendo: o que muda é que ela **não é**
+  uma família de fora sendo usada como cobaia; é participante autorizada, com
+  papel de admin dado de propósito em 29/07.
+- **NÃO REMOVER `4135061b` da allowlist. NÃO alterar o status de admin dela.**
+- **Não adicionar nenhuma outra família** sem decisão explícita.
+- **Lição de método:** antes de chamar de incidente, conferir a tabela que
+  concede o direito. `controle_acessos` respondia isso numa consulta.
+
+---
+
+### PEND-080
+**Liberar o caminho novo (Ayla experimental) para TODAS as famílias**
+Bloco: **A · Condução** · Prioridade: **P1** · Estado: **ABERTA 🔒**
+Aberta em: 2026-08-16 · Origem: decisão de produto — ampliar além das 3 contas
+
+- **O pedido:** parar de testar só nas 3 contas e liberar os ajustes para todo
+  mundo.
+- **Por que está bloqueada, e não é opinião — cada item tem evidência:**
+
+  1. **PEND-071 é P0 e NÃO está publicada.** Segurança está abaixo do gate de
+     assinatura: uma mãe com o teste vencido escrevendo numa crise recebe
+     convite para assinar, ou silêncio. Corrigida em `0fc1feb`, no branch
+     `feat/admin-core`, **fora da produção**. Ampliar a superfície da Ayla antes
+     de publicar isso aumenta o alcance de um P0 conhecido.
+  2. **MEDIDO em `79e2485`: o caminho novo engole pedido de rotina.** Com a
+     prontidão em `orientacao`, um pedido explícito de rotina **atravessa o
+     portão e é respondido pela conversa** — o artefato não nasce. Em 3 contas
+     de QA isso é um incômodo; em todas, é "quero uma rotina" deixando de
+     entregar rotina.
+  3. **PEND-072: o próprio aparato de prova é parcial.** Testes que dizem medir
+     o caminho novo caem para o Legacy sem duplo do provider. Só parte deles usa
+     `passouPeloExperimental`. Enquanto a varredura não termina, "os testes
+     passaram" não significa "o caminho novo foi medido".
+  4. **PEND-074 nunca foi provada com modelo real.** A jornada D0–D7 é texto de
+     prompt. O que está provado é estrutura, estado, precedência e isolamento —
+     com provedor falso. Qualidade de condução comercial com 100% das famílias,
+     sem uma única execução com modelo real, é apostar no texto.
+  5. **A 0078 não está aplicada.** `ayla_daily_checkins` continua devolvendo 400
+     e o "último check-in" do contexto da Ayla continua vazio para todo mundo.
+  6. **PEND-073 aberta:** o caminho novo não encurta a resposta em pedido de
+     plano.
+
+- **O que NÃO é bloqueador, e por isso não entra na lista:** a composição da
+  allowlist (PEND-075, resolvida) e o atendimento da Rosangela (PEND-076, falso
+  positivo).
+- **Ordem sugerida:** publicar PEND-071 → aplicar 0078 → fechar o achado 2
+  (rotina engolida) → terminar a varredura da PEND-072 → bancada com modelo real
+  da PEND-074 → **então** ampliar, e por etapas, não de uma vez.
+- **Critério de conclusão:** os seis itens acima fechados, e uma ampliação em
+  degraus (3 → ~10 → geral) com medição entre os degraus.
+- **Agente recomendado:** EXECUTAR, um bloqueador por missão
 
 ---
 
 ### PEND-076
-**Teste vencido há 15 dias recebe serviço completo e proativa diária**
-Bloco: **G · Comercial** · Prioridade: **P0** · Estado: **ABERTA**
-Aberta em: 2026-08-15 · Origem: auditoria da allowlist (achado fora de escopo)
+**Teste vencido recebendo servico — FALSO POSITIVO**
+Bloco: **G · Comercial** · Prioridade: — · Estado: **BAIXADA — falso positivo**
+Aberta em: 2026-08-15 · Baixada em: 2026-08-16
 
-- **PROVEI POR EXECUÇÃO.** Família `4135061b`: `status='trialing'`,
-  `trial_ends_at = 2026-07-31`, `cortesia=false`. Por `assinaturaLiberada`
-  (`lib/auth/assinatura.ts:54` → `trialValido`), isso é **acesso negado** desde
-  01/08. Mesmo assim ela recebeu, depois do vencimento: proativa diária às
-  11:00 em 13, 14 e 15/08, um `plano_pdf` em 12/08, e uma conversa completa de
-  cinco turnos com orientação real em 13/08.
-- **VI NO CÓDIGO:** o gate existe e a função pura está certa — testei a regra,
-  não o caminho. O que **não** investiguei é por que o WhatsApp dela atravessa
-  o gate. Suspeitas não verificadas: número não-único no `.find()` do reativo
-  (ver [[incidente Thamires]], PEND aberta sobre `whatsapp_e164`), ou a proativa
-  não consultando o gate (classe do incidente Camile, `ae6698f`).
-- **Por que é P0:** é receita vazando e é a régua de acesso não valendo — a
-  mesma classe de falha que o gate foi criado para impedir, na direção oposta.
-- **Critério de conclusão:** reproduzir o caminho que atende uma família sem
-  acesso, corrigir, e provar com o caso `4135061b`.
-- **Agente recomendado:** INVESTIGAR → EXECUTAR
+- **O que eu afirmei:** a familia `4135061b` estava com `status=trialing` e
+  `trial_ends_at = 2026-07-31`, e mesmo assim recebeu proativa diaria, um
+  `plano_pdf` e uma conversa completa depois do vencimento. Chamei de vazamento
+  de acesso, P0.
+- **PROVEI POR EXECUCAO que estava errado (16/08/2026):** o `user_id` dela
+  (`57f9d730`) tem linha em `controle_acessos` com `role=admin_geral` e
+  `ativo=true` **desde 29/07** — dois dias ANTES do teste vencer.
+- **Portanto o acesso esta CORRETO, e pelo mecanismo certo:**
+  `aylaServicoLiberado` -> `acessoLiberado` (`lib/auth/acesso.ts`) ->
+  `familiaEhDeStaff` -> `ehStaffPorUserId`. Staff usa o produto de verdade; e
+  assim que se testa o que as familias recebem. A regra de assinatura
+  (`assinaturaLiberada`) segue pura e continua dizendo "nao" — e e justamente a
+  camada de staff em volta dela que responde "sim".
+- **Por que eu errei:** medi `subscription_accesses` e parei ali. `acesso.ts`
+  existe exatamente porque a resposta NAO esta so naquela tabela — e o cabecalho
+  do modulo cita, por nome, o "incidente da Rosangela, 10/08/2026". Eu tinha
+  lido o arquivo e ainda assim nao conferi a tabela que ele consulta.
+- **Nada a corrigir.** Fica registrada como falso positivo para nao voltar como
+  achado numa proxima auditoria.
 
 ---
 

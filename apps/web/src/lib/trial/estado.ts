@@ -119,7 +119,11 @@ export function estadoTrialDe(
 ): EstadoTrial {
   if (!linha) return DESCONHECIDO;
 
-  const acesso = ehStaff || assinaturaLiberada(linha);
+  // ⚠️ O MESMO `agora` que o resto deste leitor usa. Sem passá-lo, `acesso` era
+  // calculado contra o relógio de parede enquanto `fase` e `dia` saíam do
+  // relógio injetado — duas verdades sobre o mesmo instante, que é exatamente o
+  // que a prova de coerência dos 13 casos existe para impedir.
+  const acesso = ehStaff || assinaturaLiberada(linha, agora);
   const base = {
     acesso,
     diasAteExclusaoDeDados: diasAteExclusao(linha),

@@ -29,9 +29,28 @@ export type AcessoAssinatura = {
   pagamento_falhou_em?: string | null;
 };
 
-export function assinaturaLiberada(sub: AcessoAssinatura | null | undefined): boolean {
+/**
+ * ⚠️ O RELÓGIO É PARÂMETRO (16/08/2026), e isso não é conforto de teste.
+ *
+ * Até aqui esta função lia `Date.now()` por dentro, enquanto `trialValido` —
+ * logo abaixo, e chamada por ela — já aceitava `agora`. `lerEstadoTrial` passa
+ * o seu relógio para todas as regras puras **menos** esta, então o leitor de
+ * estado do teste nunca foi determinístico: o mesmo dado respondia coisas
+ * diferentes conforme a hora da execução.
+ *
+ * Como apareceu: um caso de `past_due` dentro da graça, congelado em
+ * 15/08/2026, passou no dia 15 e falhou no dia 16 — sem uma linha de código ter
+ * mudado. A prova de coerência entre `acesso` e o gate (que existe justamente
+ * para impedir uma segunda verdade sobre acesso) estava medindo contra um
+ * relógio que anda.
+ *
+ * O default preserva todo caller existente.
+ */
+export function assinaturaLiberada(
+  sub: AcessoAssinatura | null | undefined,
+  agora: number = Date.now(),
+): boolean {
   if (!sub) return false;
-  const agora = Date.now();
 
   // Cortesia (comp): libera independente de status. cortesia_ate NULL = vitalícia.
   const cortesiaValida =
