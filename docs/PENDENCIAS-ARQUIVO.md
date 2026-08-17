@@ -100,6 +100,32 @@ Aberta em: 2026-08-08 · Concluída em: 2026-08-08
 
 ---
 
+### PEND-087 · Proativa imprimia o texto cru do campo do nome como nome da criança
+F · Limites · P1 · **CONCLUÍDA**
+Aberta em: 2026-08-17 · Concluída em: 2026-08-17
+
+- **O que resolveu:** as cinco proativas escritas à mão no orquestrador
+  (`video_guia`, `plano_seguimento`, `rotina_seguimento`, `recuperacao_plano`,
+  `recuperacao_rotina`) passaram a citar a criança por `citarCrianca()` — nome
+  só quando é nome (`primeiroNomeCriancaConfiavel`), concordância só com gênero
+  registrado, neutro em qualquer dúvida, e a mensagem nunca deixa de sair por
+  falta de nome. `ctx.nomeMae` não precisou de conserto: `loadFamiliaParaEnvio`
+  já o passava pelo detector.
+- **Evidência:** merge `5edafd0` (PR #122), em produção com health verde e zero
+  erro novo. 12 testes cobrindo nome inválido (`"Meu Filhos"`, `"meu filho"`,
+  frase inteira, vazio), gênero conhecido e fallback neutro. Provado por
+  execução: revertendo só a `video_guia`, o teste do `"Meu Filhos"` reprova.
+- **Achado extra, corrigido junto:** uma das cinco decidia o gênero da criança
+  pela ÚLTIMA LETRA do nome (`endsWith("a") ? "a" : "o"`). Todo Nicolas virava
+  menina. Não estava no laudo original — apareceu na varredura.
+- **Aprendizado:** um detector só protege o caminho que o consulta. `crianca-nome.ts`
+  existia, funcionava e era chamado pela conversa reativa — enquanto cinco
+  proativas montavam a citação à mão, do lado, e erravam. Quando a mesma decisão
+  aparece escrita em mais de um lugar, ela já está divergindo; a pergunta certa
+  não é "o detector existe?", é "quem NÃO está passando por ele?".
+
+---
+
 ## Formato
 
 Ficha arquivada é curta — o detalhe fica no commit e no relatório da missão:
