@@ -121,6 +121,8 @@ type Membro = {
   data_nascimento: string | null;
   perfil: string | null;
   diagnosticos_formais: string | null;
+  /** Usado por `resolverFoco` para entender "minha filha" / "meu filho". */
+  genero: string | null;
 };
 
 /** Uma fala do histórico, já com o dono resolvido. */
@@ -224,7 +226,7 @@ async function montarContexto(
       .maybeSingle(),
     supabase
       .from("membros_atipicos")
-      .select("id, nome, data_nascimento, perfil, diagnosticos_formais")
+      .select("id, nome, data_nascimento, perfil, diagnosticos_formais, genero")
       .eq("family_account_id", familyId)
       .eq("ativo", true)
       .order("created_at", { ascending: true }),

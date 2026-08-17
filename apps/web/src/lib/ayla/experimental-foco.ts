@@ -18,7 +18,16 @@ import type { SupabaseClient } from "@supabase/supabase-js";
  * pergunta, em vez de escolher no chute.
  */
 
-export type Membro = { id: string; nome: string | null };
+export type Membro = {
+  id: string;
+  nome: string | null;
+  /**
+   * "masculino" | "feminino" | outro | null. Já existe em `membros_atipicos`
+   * desde sempre; o que faltava era alguém usar na hora de saber de quem a
+   * mãe está falando.
+   */
+  genero?: string | null;
+};
 
 export type Foco =
   /** Uma criança, com confiança. */
@@ -36,6 +45,66 @@ const PLURAL_IRMAOS =
 
 /** Troca explícita: "agora quero falar do Mario". */
 const TROCA_EXPLICITA = /\b(agora|mudando|sobre|falar d[eoa]|quero falar|voltando a)\b/i;
+
+/**
+ * PARENTESCO EXPLÍCITO — sinal FORTE de gênero.
+ *
+ * "minha filha", "meu filho", "a menina", "o menino". Quem escreve isso está
+ * falando da própria criança, e o gênero é afirmação, não pista.
+ */
+const FILHA = /\b(filha|menina|garota|princesa)\b/i;
+const FILHO = /\b(filho|menino|garoto)\b/i;
+
+/**
+ * PRONOME SOLTO — sinal FRACO, de propósito.
+ *
+ * "ela não come" pode ser a filha, mas também a professora, a avó, a fono. Só
+ * vale quando NENHUMA outra pessoa aparece na frase; qualquer terceiro citado
+ * derruba o sinal. Trocar uma pergunta a mais por um fato gravado na criança
+ * errada seria um péssimo negócio — é o que o comentário de `resolverFoco` já
+ * teme.
+ */
+const PRONOME_ELA = /\b(ela|dela)\b/i;
+const PRONOME_ELE = /\b(ele|dele)\b/i;
+// ⚠️ O FECHO É `(?![a-zà-ÿ])`, NÃO `\b`. O `\b` do JavaScript é ASCII: depois
+// de um acento ele não enxerga limite de palavra, e `\bav[óô]\b` simplesmente
+// não casava com "avó" — o teste da avó reprovou por isso. O lookahead cobre
+// letras acentuadas e continua impedindo que "tia" case dentro de "Tiago".
+const OUTRA_PESSOA =
+  /\b(professora?|prof|escola|coordenadora?|diretora?|fono(audi[óo]loga)?|terapeuta|psic[óo]loga?|m[ée]dica?|pediatra|av[óô]|vov[óô]|tia|tio|bab[áa]|cuidadora?|vizinha?|amiga?|colega|irm[ãa]|madrinha|monitora?)(?![a-zà-ÿ])/i;
+
+/** As crianças cujo gênero casa com o termo. */
+function doGenero(membros: Membro[], alvo: "feminino" | "masculino"): Membro[] {
+  return membros.filter((m) => (m.genero ?? "").trim().toLowerCase() === alvo);
+}
+
+/**
+ * QUEM O TEXTO INDICA PELO GÊNERO — ou `null` quando não dá para afirmar.
+ *
+ * ⚠️ Só resolve quando existe **exatamente uma** criança daquele gênero. Dois
+ * filhos homens e "meu filho" continua ambíguo, como tem de ser. E nunca
+ * resolve por eliminação: "meu filho" não escolhe a criança sem gênero
+ * cadastrado só porque ela é a que sobrou.
+ */
+export function porGenero(texto: string, membros: Membro[]): Membro | null {
+  const temFilha = FILHA.test(texto);
+  const temFilho = FILHO.test(texto);
+  // Os dois na mesma frase ("minha filha e meu filho") não desambigua nada.
+  if (temFilha && temFilho) return null;
+
+  if (temFilha || temFilho) {
+    const c = doGenero(membros, temFilha ? "feminino" : "masculino");
+    return c.length === 1 ? c[0] : null;
+  }
+
+  // Pronome solto: só quando não há mais ninguém em cena.
+  if (OUTRA_PESSOA.test(texto)) return null;
+  const ela = PRONOME_ELA.test(texto);
+  const ele = PRONOME_ELE.test(texto);
+  if (ela === ele) return null; // nenhum dos dois, ou os dois
+  const c = doGenero(membros, ela ? "feminino" : "masculino");
+  return c.length === 1 ? c[0] : null;
+}
 
 function citados(texto: string, membros: Membro[]): Membro[] {
   const t = texto.toLowerCase();
@@ -99,6 +168,19 @@ export async function resolverFoco(
   if (nomes.length >= 2) return { tipo: "compartilhado", membros: nomes };
   if (PLURAL_IRMAOS.test(texto)) return { tipo: "compartilhado", membros: ativos };
   if (nomes.length === 1) return { tipo: "individual", membros: nomes };
+
+  // ⚠️ GÊNERO, DEPOIS DO NOME E ANTES DO HISTÓRICO — 17/08/2026.
+  //
+  // Caso real: a Karina escreveu "minha FILHA não come, ELA não aceita nada" e
+  // a Ayla perguntou "Manu ou Mario?". Mario é masculino, Manu é feminina, e o
+  // campo `genero` existe em `membros_atipicos` desde sempre — a escada é que
+  // não tinha esse degrau e caía direto em `ambiguo`.
+  //
+  // Vem DEPOIS do nome porque nome citado é mais forte ("a Manu" vence "meu
+  // filho" numa frase confusa). Vem ANTES do histórico porque o que a mãe
+  // escreve AGORA vale mais que a última criança de 24h atrás.
+  const porSexo = porGenero(texto, ativos);
+  if (porSexo) return { tipo: "individual", membros: [porSexo] };
 
   const ultimo = await ultimaCriancaDaConversa(supabase, familyId);
   const achado = ultimo ? ativos.find((m) => m.id === ultimo) : null;
