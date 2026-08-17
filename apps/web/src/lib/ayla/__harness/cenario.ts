@@ -154,6 +154,30 @@ export function inboundDe(mundo: Mundo, texto: string, quando = new Date()) {
 }
 
 /**
+ * O MARCADOR INEQUÍVOCO: este turno foi respondido pelo motor NOVO?
+ *
+ * ⚠️ POR QUE ELE EXISTE (PEND-072, 15/08/2026). Um teste que liga a allowlist e
+ * roda `processInbound` PARECE medir o caminho novo. Não mede: se
+ * `gerarConversacional` falhar — e sem duplo ele falha, porque tenta a API paga
+ * —, `responderExperimental` devolve `null` e o turno CAI para a Ayla atual.
+ * Fail-closed correto em produção, falso verde no teste. Cinco asserções de
+ * persistência já passaram assim, pelo motor errado.
+ *
+ * A marca vem do que o TURNO GRAVOU (`ayla_send_log.payload.meta.ayla_path`), e
+ * não de uma variável interna: é a mesma coisa que se leria no banco de
+ * produção para saber quem respondeu.
+ *
+ * Quem afirma comportamento do caminho novo chama isto. Quem não chama, não
+ * pode dizer "experimental" no nome do teste.
+ */
+export function passouPeloExperimental(mundo: Mundo): boolean {
+  return mundo.db.linhas("ayla_send_log").some((l) => {
+    const payload = l.payload as { meta?: { ayla_path?: string } } | null;
+    return payload?.meta?.ayla_path === "experimental";
+  });
+}
+
+/**
  * O ESTADO DO TURNO, do jeito que o cenário precisa ler.
  *
  * Vem do que FOI GRAVADO e do que FOI ENVIADO — não de uma variável interna do

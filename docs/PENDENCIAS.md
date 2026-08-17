@@ -16,7 +16,15 @@ Só o que está aberto. 🔒 = bloqueada.
 | ID | Pendência | Bloco | Prio | Estado | Próximo passo |
 |---|---|---|---|---|---|
 | [PEND-071](#pend-071) | Segurança está abaixo do gate de assinatura | F · Limites | **P0** | CORRIGIDA, NÃO PUBLICADA | publicar e fazer smoke com número de QA |
-| [PEND-069](#pend-069) | Migração 0077 (`ayla_documentos`) não aplicada em produção | H · Governança | P1 | ABERTA 🔒 | aplicar o SQL e rodar o seed do Core |
+| [PEND-072](#pend-072) | Teste do caminho novo cai para o Legacy sem mock do provider | H · Governança | P1 | PARCIALMENTE CORRIGIDA | varrer os outros testes que dizem medir o experimental |
+| [PEND-073](#pend-073) | Caminho novo não encurta a resposta em pedido de plano | A · Condução | P2 | ABERTA | decidir se o Core do experimental recebe a nota de `querPlano` |
+| [PEND-074](#pend-074) | Condução D0–D7 do Trial não existe em runtime | G · Comercial | P1 | IMPLEMENTADA, NÃO PUBLICADA | provar a condução na bancada com modelo real antes de publicar |
+| [PEND-075](#pend-075) | Allowlist do caminho novo: quem é, e por quê | H · Governança | P3 | RESOLVIDA | nenhum — a composição das 3 contas é intencional |
+| [PEND-080](#pend-080) | Liberar o caminho novo para TODAS as famílias | A · Condução | P1 | ABERTA 🔒 | fechar os 6 bloqueadores antes de ampliar a allowlist |
+| [PEND-077](#pend-077) | `ayla_daily_checkins` nunca gravou uma linha (400 desde 0001) | H · Governança | P1 | CORRIGIDA, NÃO PUBLICADA | aplicar a migração 0078 em produção |
+| [PEND-078](#pend-078) | Auditoria (`api_calls`) escrita com a sessão da família em outros pontos | H · Governança | P2 | PARCIALMENTE CORRIGIDA | varrer os 37 pontos de chamada de `logarUsoApi` |
+| [PEND-079](#pend-079) | Webhook do Stripe recusa assinatura e não deixa rastro nosso | H · Governança | P2 | ABERTA | persistir a recusa; decidir sobre os 2 endpoints de outro produto |
+| [PEND-069](#pend-069) | Migração 0077 (`ayla_documentos`) não aplicada em produção | H · Governança | P1 | ~~ABERTA~~ **BAIXADA** | nenhum — a tabela existe com 11 linhas (medido 16/08) |
 | [PEND-070](#pend-070) | `ai_prompts.versao` promete versionamento que a PK impede | H · Governança | P3 | ABERTA | decidir entre documentar ou migrar |
 | [PEND-015](#pend-015) | Exposição de secrets no Easypanel | H · Governança | a definir | ABERTA | investigar o risco antes de priorizar |
 | [PEND-007](#pend-007) | Ativação do GPT parada na prova da chave | H · Governança | P1 | ABERTA 🔒 | publicar e rodar `provider-check` |
@@ -3464,6 +3472,332 @@ Aberta em: 2026-08-08 · Origem: consolidação da PEND-010
 - **Critério de conclusão:** DESEJADO aprovado, incluindo o caminho de volta
   para a memória da criança.
 - **Agente recomendado:** PROPOR (depois de D)
+
+---
+
+### PEND-072
+**Teste do caminho novo cai para o Legacy sem mock do provider**
+Bloco: **H · Governança** · Prioridade: **P1** · Estado: **PARCIALMENTE CORRIGIDA**
+Aberta em: 2026-08-15 · Origem: implementação da ponte do plano (Bloqueador 2)
+
+- **Impacto:** um teste que diz exercitar o ramo experimental e na verdade
+  exercita o Legacy é pior que teste nenhum — ele consome o orçamento de
+  confiança sem cobrir nada. Foi o caso de `persistencia-caminho-real.test.ts`,
+  que sustentava o Bloqueador 1 ("a Fatia 3 provada pelo caminho real").
+- **Causa:** `responderExperimental` chama `gerarConversacional`, que faz um
+  POST à API paga com a chave do ambiente. Sem chave e sem duplo, a chamada
+  falha, o ramo devolve `null` e o turno **cai para a Ayla atual** — fail-closed
+  correto em produção, falso verde no teste. Como `persistirRegistro` também
+  existe no Legacy, todas as asserções passavam pelo caminho errado.
+- **PROVEI POR EXECUÇÃO (15/08/2026):** um probe idêntico ao teste, sem o mock
+  de `@/lib/ia/provider`, nunca grava `ayla_path=experimental` em
+  `ayla_send_log` — falhou na asserção de caminho. Com o mock, passa.
+- **O que já foi feito:** `persistencia-caminho-real.test.ts` ganhou o mock e um
+  **teste 0 de caminho** (`passouPeloExperimental`), e os 6 testes passam agora
+  pelo ramo novo. `ponte-plano-caminho-novo.test.ts` nasceu com o mesmo portão.
+- **A VARREDURA FOI FEITA (15/08/2026).** 15 arquivos citam o experimental; 5
+  afirmam comportamento do caminho novo. O marcador virou uma função só no
+  harness: `passouPeloExperimental(mundo)`, que lê
+  `ayla_send_log.payload.meta.ayla_path` — a mesma coisa que se leria em
+  produção para saber quem respondeu.
+  - **Refeitas:** `persistencia-caminho-real` (mock + teste 0) ·
+    `rotina-alcancavel` (mock + teste 0) · `perfil-familia-caminho-real`
+    (**criada**, ver abaixo).
+  - **Válidas sem mudança:** `experimental.test.ts` — distingue os motores pelo
+    system (`"Você é **AYLA**"`) e conta chamadas por motor. É o padrão-ouro.
+  - **Estruturais, e só isso:** `persistencia-pos-resposta`,
+    `c2-classificador-unico`, `acesso-antes-do-experimental`,
+    `eventos-atribuicao` leem o código-fonte. Provam decisão estrutural, **não**
+    execução — e não podem ser citadas como prova de caminho.
+  - **De função isolada:** `experimental-contexto`, `experimental-onboarding`,
+    `core-editavel`, `documentos-nao-injetados` chamam o montador de contexto ou
+    `responderExperimental` direto. Provam a função, não o turno.
+- **⚠️ ACHADO 1 — prova que não existia.** O commit `42a66e2` afirma "o perfil
+  da FAMILIA chega ao caminho novo". **Nenhum teste citava `lerPerfilFamilia`
+  nem `blocoDaFamilia`.** A prova foi criada agora
+  (`perfil-familia-caminho-real.test.ts`, 5 testes pelo `processInbound`:
+  chegada do bloco com conteúdo real, ausência sem linha, placeholder filtrado,
+  e não-vazamento entre famílias).
+- **⚠️ ACHADO 2 — asserção vácua.** Em `rotina-alcancavel`, "o artefato nasce na
+  família e na criança certas" iterava sobre uma lista **vazia**: nenhuma rotina
+  nasce naquele harness, nem com prontidão `suficiente`. O teste passava sem
+  verificar nada. Agora o zero está escrito e medido.
+- **⚠️ ACHADO 3 — comportamento que a prova antiga escondia.** MEDIDO: com a
+  prontidão em `orientacao`, um pedido explícito de rotina **atravessa** o
+  portão e é respondido pela conversa do experimental. O portão é alcançado; a
+  condução até o artefato, não.
+- **Próximo passo:** decidir se o Achado 3 é o comportamento desejado, e cobrir
+  a criação real do quadro (hoje é NÃO PROVADO por teste automatizado).
+- **Critério de conclusão:** todo teste que afirma comportamento do caminho novo
+  chama `passouPeloExperimental`; nenhuma asserção vácua sobrevive.
+- **Agente recomendado:** AUDITAR
+
+---
+
+### PEND-073
+**Caminho novo não encurta a resposta em pedido explícito de plano**
+Bloco: **A · Condução** · Prioridade: **P2** · Estado: **ABERTA**
+Aberta em: 2026-08-15 · Origem: implementação da ponte do plano (Bloqueador 2)
+
+- **Impacto:** no Legacy, `querPlano` entra em `RespostaParams` e instrui a Ayla
+  a NÃO escrever o plano no chat — resposta curta, e o plano chega em PDF pela
+  ponte. O Core do experimental não recebe essa nota (o documento de Plano não é
+  injetado). Uma família do experimento que peça um plano pode receber as
+  estratégias no chat **e** o PDF logo depois: conteúdo duplicado no mesmo
+  turno. Não é resposta dupla — a resposta continua sendo uma só.
+- **VI NO CÓDIGO (15/08/2026):** `responder.ts:598` monta a nota do Legacy;
+  `experimental.ts` monta o system com `[core, contexto, repertório]` e nada
+  equivalente.
+- **Por que não foi corrigido junto:** mexer no Core do experimental é decisão
+  de conteúdo, não de fiação — e a missão autorizava a fiação. Ver também a
+  decisão pendente sobre injetar `plano-v1.md`.
+- **Próximo passo:** decidir entre (a) injetar a nota equivalente quando
+  `querPlano` for verdadeiro, ou (b) deixar o Core resolver e medir na bancada
+  se o chat repete o plano.
+- **Critério de conclusão:** cenário de pedido explícito na bancada sem
+  duplicação de conteúdo entre a bolha e o PDF.
+- **Agente recomendado:** PROPOR
+
+---
+
+### PEND-075
+**Allowlist do caminho novo (`AYLA_EXPERIMENTAL_FAMILY_IDS`): quem é, e por quê**
+Bloco: **H · Governança** · Prioridade: **P3** · Estado: **RESOLVIDA**
+Aberta em: 2026-08-15 · Resolvida em: 2026-08-16, por decisão da Karina
+
+- **A COMPOSIÇÃO É INTENCIONAL, e fica registrada aqui para não ser
+  "descoberta" como incidente de novo:**
+
+  | ID | Quem | Papel na allowlist |
+  |---|---|---|
+  | `9c14b56b` | Karina Koloszuk | QA/controlada |
+  | `a376ba52` | Sérgio Koloszuk | QA/controlada |
+  | `4135061b` | Rosangela Teixeira | **família real, autorizada para o teste** |
+
+- **A abertura desta pendência foi um alarme correto com conclusão errada.** Eu
+  vi uma família real na allowlist e apliquei o §13 ("não usar conta de família
+  real como ambiente de teste") sem ter conferido `controle_acessos` — que era
+  onde a resposta estava. O §13 continua valendo: o que muda é que ela **não é**
+  uma família de fora sendo usada como cobaia; é participante autorizada, com
+  papel de admin dado de propósito em 29/07.
+- **NÃO REMOVER `4135061b` da allowlist. NÃO alterar o status de admin dela.**
+- **Não adicionar nenhuma outra família** sem decisão explícita.
+- **Lição de método:** antes de chamar de incidente, conferir a tabela que
+  concede o direito. `controle_acessos` respondia isso numa consulta.
+
+---
+
+### PEND-080
+**Liberar o caminho novo (Ayla experimental) para TODAS as famílias**
+Bloco: **A · Condução** · Prioridade: **P1** · Estado: **ABERTA 🔒**
+Aberta em: 2026-08-16 · Origem: decisão de produto — ampliar além das 3 contas
+
+- **O pedido:** parar de testar só nas 3 contas e liberar os ajustes para todo
+  mundo.
+- **Por que está bloqueada, e não é opinião — cada item tem evidência:**
+
+  1. **PEND-071 é P0 e NÃO está publicada.** Segurança está abaixo do gate de
+     assinatura: uma mãe com o teste vencido escrevendo numa crise recebe
+     convite para assinar, ou silêncio. Corrigida em `0fc1feb`, no branch
+     `feat/admin-core`, **fora da produção**. Ampliar a superfície da Ayla antes
+     de publicar isso aumenta o alcance de um P0 conhecido.
+  2. **MEDIDO em `79e2485`: o caminho novo engole pedido de rotina.** Com a
+     prontidão em `orientacao`, um pedido explícito de rotina **atravessa o
+     portão e é respondido pela conversa** — o artefato não nasce. Em 3 contas
+     de QA isso é um incômodo; em todas, é "quero uma rotina" deixando de
+     entregar rotina.
+  3. **PEND-072: o próprio aparato de prova é parcial.** Testes que dizem medir
+     o caminho novo caem para o Legacy sem duplo do provider. Só parte deles usa
+     `passouPeloExperimental`. Enquanto a varredura não termina, "os testes
+     passaram" não significa "o caminho novo foi medido".
+  4. **PEND-074 nunca foi provada com modelo real.** A jornada D0–D7 é texto de
+     prompt. O que está provado é estrutura, estado, precedência e isolamento —
+     com provedor falso. Qualidade de condução comercial com 100% das famílias,
+     sem uma única execução com modelo real, é apostar no texto.
+  5. **A 0078 não está aplicada.** `ayla_daily_checkins` continua devolvendo 400
+     e o "último check-in" do contexto da Ayla continua vazio para todo mundo.
+  6. **PEND-073 aberta:** o caminho novo não encurta a resposta em pedido de
+     plano.
+
+- **O que NÃO é bloqueador, e por isso não entra na lista:** a composição da
+  allowlist (PEND-075, resolvida) e o atendimento da Rosangela (PEND-076, falso
+  positivo).
+- **Ordem sugerida:** publicar PEND-071 → aplicar 0078 → fechar o achado 2
+  (rotina engolida) → terminar a varredura da PEND-072 → bancada com modelo real
+  da PEND-074 → **então** ampliar, e por etapas, não de uma vez.
+- **Critério de conclusão:** os seis itens acima fechados, e uma ampliação em
+  degraus (3 → ~10 → geral) com medição entre os degraus.
+- **Agente recomendado:** EXECUTAR, um bloqueador por missão
+
+---
+
+### PEND-076
+**Teste vencido recebendo servico — FALSO POSITIVO**
+Bloco: **G · Comercial** · Prioridade: — · Estado: **BAIXADA — falso positivo**
+Aberta em: 2026-08-15 · Baixada em: 2026-08-16
+
+- **O que eu afirmei:** a familia `4135061b` estava com `status=trialing` e
+  `trial_ends_at = 2026-07-31`, e mesmo assim recebeu proativa diaria, um
+  `plano_pdf` e uma conversa completa depois do vencimento. Chamei de vazamento
+  de acesso, P0.
+- **PROVEI POR EXECUCAO que estava errado (16/08/2026):** o `user_id` dela
+  (`57f9d730`) tem linha em `controle_acessos` com `role=admin_geral` e
+  `ativo=true` **desde 29/07** — dois dias ANTES do teste vencer.
+- **Portanto o acesso esta CORRETO, e pelo mecanismo certo:**
+  `aylaServicoLiberado` -> `acessoLiberado` (`lib/auth/acesso.ts`) ->
+  `familiaEhDeStaff` -> `ehStaffPorUserId`. Staff usa o produto de verdade; e
+  assim que se testa o que as familias recebem. A regra de assinatura
+  (`assinaturaLiberada`) segue pura e continua dizendo "nao" — e e justamente a
+  camada de staff em volta dela que responde "sim".
+- **Por que eu errei:** medi `subscription_accesses` e parei ali. `acesso.ts`
+  existe exatamente porque a resposta NAO esta so naquela tabela — e o cabecalho
+  do modulo cita, por nome, o "incidente da Rosangela, 10/08/2026". Eu tinha
+  lido o arquivo e ainda assim nao conferi a tabela que ele consulta.
+- **Nada a corrigir.** Fica registrada como falso positivo para nao voltar como
+  achado numa proxima auditoria.
+
+---
+
+### PEND-077
+**`ayla_daily_checkins` nunca gravou uma linha — 400 em toda execução desde 0001**
+Bloco: **H · Governança** · Prioridade: **P1** · Estado: **CORRIGIDA, NÃO PUBLICADA**
+Aberta em: 2026-08-15 · Corrigida em: 2026-08-15 (migração `0078` + conferência da escrita)
+
+- **MEDI:** a tabela tem **zero linhas** na história inteira do produto.
+- **CAUSA RAIZ:** `persistirRegistro` grava com
+  `onConflict: "family_account_id,membro_atipico_id,date"` e `0001_init.sql`
+  criou só um índice **não-único**. O Postgres devolve 42P10 e o PostgREST
+  devolve **400**, sempre.
+- **Por que durou meses:** a escrita não conferia o próprio resultado — o
+  `error` do `.upsert()` era descartado e o fluxo seguia como sucesso (§7, a
+  mesma forma do incidente da Rochelle). O único rastro era um 400 no log da
+  Vercel, que some com a retenção.
+- **Consequência além da telemetria:** o orquestrador lê esta tabela para pôr
+  "último check-in" no contexto da Ayla. Sempre vazia, esse contexto sempre foi
+  vazio — a Ayla nunca soube do último registro de ninguém.
+- **Correção:** `0078_checkins_upsert.sql` (índice único nas três colunas) +
+  captura do erro com evento persistido `checkin_nao_gravou`.
+- **Prova:** `lib/ayla/checkin-upsert.test.ts`. **Verificado que o teste FALHA
+  sem a migração** (2 falhas), e passa com ela.
+- **Critério de conclusão:** migração aplicada em produção e uma linha gravada
+  de verdade.
+- **Agente recomendado:** EXECUTAR (aplicação de migração)
+
+---
+
+### PEND-078
+**Auditoria (`api_calls`) escrita com a sessão da família em outros pontos**
+Bloco: **H · Governança** · Prioridade: **P2** · Estado: **PARCIALMENTE CORRIGIDA**
+Aberta em: 2026-08-15 · Origem: 7 eventos `billing_nao_gravou` em produção
+
+- **PROVEI POR EXECUÇÃO:** sete eventos persistidos em `eventos_app` entre 11 e
+  15/08, todos *"new row violates row-level security policy for table
+  api_calls"*, todos de `classificar_intencao`, nas famílias `7932d0f4`,
+  `cdc33a5f` e `9c14b56b`.
+- **CAUSA RAIZ:** `api_calls` (0035) tem RLS com política de SELECT para admin e
+  **nenhuma de INSERT** — só service role escreve. O caminho da web passava o
+  cliente da sessão da família a `classificarIntencao`.
+- **Por que a proteção não pegou:** ela pegou. O `naoGravou` criado em 11/08 é a
+  razão de este achado existir. O que faltou foi o **varrimento** que aquela
+  correção prometeu: ela consertou `conversa_web` no ponto de chamada e deixou
+  os outros pontos.
+- **Corrigido agora:** `prepararRespostaStream` passa a exigir um cliente
+  `telemetria` separado e obrigatório, entregue pela rota como service role.
+  Prova em `lib/ia/telemetria-auditoria.test.ts`, **verificada falhando sem a
+  correção**.
+- **O que falta:** os outros **37 pontos de chamada** de `logarUsoApi` não foram
+  auditados um a um. `logar.ts` documenta, de propósito, que o privilégio é de
+  quem chama — para a bancada poder passar um stub que estoura. Portanto a
+  varredura é caso a caso, não uma troca no helper.
+- **Critério de conclusão:** cada ponto de chamada classificado como service
+  role, admin ou sessão-consciente; e `eventos_app` sem `billing_nao_gravou`
+  novo por 7 dias.
+- **Agente recomendado:** AUDITAR → EXECUTAR
+
+---
+
+### PEND-079
+**Webhook do Stripe recusa assinatura e não deixa rastro nosso**
+Bloco: **H · Governança** · Prioridade: **P2** · Estado: **ABERTA**
+Aberta em: 2026-08-15 · Origem: 3 erros de assinatura vistos na Vercel
+
+- **NÃO ERAM DO STRIPE — PROVEI POR EXECUÇÃO.** O último evento criado na conta
+  Stripe é de **04/08** (`evt_1U0cVQ...`), e **todos** os 34 eventos dos últimos
+  30 dias estão com `pending_webhooks=0`, ou seja, entregues e liquidados. Não
+  havia nada para o Stripe entregar em 15/08. As três requisições recusadas não
+  foram entregas legítimas.
+- **A recusa está CORRETA:** a rota é fail-closed — sem `stripe-signature`
+  válida, 400 e nada é processado.
+- **O problema é o rastro:** `eventos_app` não tem **nenhum** registro
+  relacionado a Stripe/webhook. A recusa só existiu no stdout da Vercel. Se um
+  dia a assinatura falhar por segredo errado — e não por um POST de fora —
+  vamos descobrir do mesmo jeito que descobrimos agora: por auditoria manual.
+- **ACHADO ADICIONAL, VI NA CONTA:** a mesma conta Stripe tem **três** endpoints
+  de webhook ativos, e dois são de outro produto
+  (`kolofamilia.base44.app/api/functions/webhookStripe` e
+  `koloeduca.base44.app/api/functions/stripeWebhook`). Todo evento de assinatura
+  da Kolo é entregue também a eles. Não avaliei o que fazem com isso.
+- **NÃO ALTEREI segredo nem endpoint**, conforme instrução.
+- **NÃO SEI** a origem das três requisições — não tenho acesso ao log da Vercel,
+  e nós não persistimos nada. A hipótese mais simples é varredura automatizada
+  contra uma URL pública.
+- **Critério de conclusão:** recusa de assinatura vira evento persistido, com
+  IP/origem quando disponível.
+- **Agente recomendado:** EXECUTAR
+
+---
+
+### PEND-074
+**Condução D0–D7 do Trial não existe em runtime**
+Bloco: **G · Comercial** · Prioridade: **P1** · Estado: **IMPLEMENTADA, NÃO PUBLICADA**
+Aberta em: 2026-08-15 · Origem: Bloqueador 4
+Implementada em: 2026-08-15, `lib/trial/jornada.ts` — **atrás da allowlist do
+caminho novo, que continua vazia**. Nenhuma família recebe isto hoje.
+
+- **Impacto:** o Trial de 7 dias não tem condução nenhuma no caminho novo. A
+  família entra, conversa e sai sem que a jornada aconteça — e o fechamento
+  invertido de D4–D7 (a família verbaliza antes da Ayla) não existe.
+- **O que já foi feito (15/08/2026):** o **leitor único de estado** existe e está
+  provado — `lib/trial/estado.ts`, 28 testes. Ele responde D0–D7, teste não
+  iniciado, teste encerrado, assinante, cortesia, falha de pagamento e
+  encerrado, **derivando tudo de `subscription_accesses`**, sem coluna nova e
+  sem segunda regra: `acesso` é sempre igual a `assinaturaLiberada` (há um teste
+  de coerência para os 13 casos justamente para impedir a segunda verdade).
+- **Decisão fechada, que o `trial-v2.md` deixava em aberto:** **não** é preciso
+  criar `trial_started_at`. `created_at` + `trial_ends_at` reconstroem o dia, e
+  sem `created_at` o começo degrada pelo fim do teste.
+- **O bloqueio caiu por decisão de produto (15/08/2026):** as duas decisões que o
+  `trial-v2.md` deixava em aberto foram fechadas — arquitetura de **bloco
+  contextual** (determinístico, zero LLM adicional, sem tabela nova, estado só
+  por `lerEstadoTrial`) e a intenção de cada dia D0–D7.
+- **O que foi construído:** `lib/trial/jornada.ts` — `blocoDaJornada` monta um
+  `<jornada>` que entra no system do caminho novo entre o contexto e o
+  repertório; `lerEvidenciasJornada` conta o que a família de fato viveu
+  (mensagens, planos, rotinas, relatos de `eventos_membro`); `intencaoDoDia`
+  ancora as etapas no **fim** do teste. Ambas as consultas entram no
+  `Promise.all` que já existia — **latência adicional zero em série**.
+- **A compressão que a jornada exigiu, e por quê:** o desenho tem oito etapas
+  (D0–D7) e o teste do produto tem sete dias. As quatro etapas do fechamento
+  invertido ficam nos **quatro últimos dias** (a decisão precisa cair no último
+  dia, não depois do vencimento) e a compressão acontece na etapa 3 — retomar o
+  que já foi contado é também o primeiro trabalho da etapa 4. A conta é por dias
+  restantes: num teste mais longo, a etapa 3 volta a existir sozinha.
+- **Convivência com as proativas, sem segundo estado:** `fechamentoReativoRecente`
+  lê `ayla_send_log.payload.meta.jornada_fechamento` — o rastro que o próprio
+  turno grava — e cala `sendTrial` por 20h. Falha de leitura **não** silencia a
+  proativa: calar a única mensagem de uma família silenciosa é pior que repetir.
+- **Provado (16 casos por `processInbound`, todos com `passouPeloExperimental`):**
+  `ayla/jornada-caminho-real.test.ts` + `trial/jornada.test.ts`. Suíte completa:
+  2288 passaram, 7 skipped; `tsc` limpo; `npm run build` ok.
+- **NÃO PROVADO:** a qualidade textual da condução. O arnês usa provedor falso —
+  ele prova arquitetura, estado, precedência, isolamento entre famílias e
+  ausência de duplicação, **não** que a Ayla conduz bem. Isso é bancada com
+  modelo real, e não foi feita.
+- **Fora do escopo desta entrega:** o teto de 1 Plano por dia garantido pelo
+  sistema continua não existindo — a jornada não o resolve. Fica aqui.
+- **Critério de conclusão:** publicar e provar a condução na bancada paga, com
+  modelo real, antes de qualquer família entrar na allowlist.
+- **Agente recomendado:** AUDITAR → bancada
 
 ---
 

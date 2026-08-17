@@ -42,6 +42,7 @@ import {
 import { gerarMensagemEspontanea } from "./mensagemEspontanea";
 import { traduzirProativa } from "./traduzir";
 import { montarPonteWhatsApp, gerarMagicLink, montarPlanoFimDeSemana } from "./ponte";
+import { fechamentoReativoRecente } from "@/lib/trial/jornada";
 import { aguardarTurnoDaMae, descartarTurnoPendente } from "./lote-inbound";
 import { pedeUmPlano } from "@/lib/ia/pedido-plano";
 import { abreFluxoDeArtefato, atoSobreArtefato } from "@/lib/conducao/ato-artefato";
@@ -830,6 +831,16 @@ export async function sendTrial(
   agora: Date = new Date(),
 ): Promise<EnvioResultado> {
   const tipo: AylaTipoProativa = diasRestantes === 3 ? "trial_d3" : "trial_d0";
+
+  // ⚠️ CONVIVÊNCIA COM A JORNADA REATIVA (15/08/2026). O pior resultado desta
+  // frente seria a família conversar sobre continuar no D6 e receber, logo
+  // depois, uma automática perguntando quase a mesma coisa. Se a conversa já
+  // cumpriu a função comercial nas últimas horas, a proativa cala — a família
+  // que NÃO conversa continua recebendo, que é a razão de a proativa existir.
+  if (await fechamentoReativoRecente(supabase, familyAccountId, agora)) {
+    console.log(`[ayla:trial] ${tipo} calado — a conversa já fez o fechamento hoje`);
+    return { enviada: false, motivo: "fechamento reativo recente" };
+  }
 
   const podeRes = await podeEnviarProativa(
     supabase,
@@ -2600,6 +2611,49 @@ export async function processInbound(
         tipo: "resposta_registro",
         meta: { ayla_path: "experimental", ...exp.metrica },
       });
+      // ⚠️ A PONTE DO PLANO CHEGA AO CAMINHO NOVO — 15/08/2026.
+      //
+      // É a MESMA função que o Legacy chama (`ponteDePlano`), com o mesmo
+      // gerador por dentro. A resposta principal JÁ SAIU acima: a ponte
+      // continua sendo a última bolha do turno, nunca a resposta.
+      //
+      // ⚠️ O DADO QUE SUBSTITUI O PARSER. `temDesafio` não decide plano nenhum
+      // — é o freio barato de `montarPonteWhatsApp` (ver o comentário lá).
+      // Aqui ele vem da classificação que este turno já fez, então o caminho
+      // novo não paga `parseInbound` antes da resposta para ter isto.
+      //
+      // ⚠️ POR QUE `enviarEPersistir` E NÃO SÓ `enviarTexto`. O cooldown e a
+      // janela de 20h da própria ponte procuram "/auth/wa" em `ayla_messages`.
+      // Uma bolha enviada e não persistida deixaria o dedup cego, e a família
+      // ganharia um plano por turno.
+      if (resp.enviada) {
+        const nudge = await ponteDePlano(supabase, {
+          familyId: family.id,
+          membroId: exp.membroId,
+          phone: ctxExp.whatsapp_e164,
+          mensagem: inbound.texto,
+          temDesafio:
+            turnoClassificado.intencao === "plano" || Boolean(turnoClassificado.tema),
+        }).catch((e) => {
+          console.warn(
+            "[ayla:experimental] ponte do plano falhou:",
+            e instanceof Error ? e.message : e,
+          );
+          return null;
+        });
+        if (nudge) {
+          await enviarEPersistir(supabase, {
+            family_account_id: family.id,
+            membro_atipico_id: exp.membroId,
+            phone: ctxExp.whatsapp_e164,
+            texto: nudge,
+            category: "reativa",
+            tipo: "resposta_registro",
+            meta: { ayla_path: "experimental", ponte: "plano" },
+          });
+        }
+      }
+
       // ⚠️ APRENDER DEPOIS DE RESPONDER (Fase 1). `extrairESalvarEventos` tem
       // pré-filtro por regex e só chama modelo quando o texto PARECE trazer um
       // evento — e roda DEPOIS da bolha, então não entra no caminho crítico.
@@ -3028,6 +3082,62 @@ export async function processInbound(
 }
 
 /**
+ * A PONTE DO PLANO — UM DONO SÓ, PARA OS DOIS CAMINHOS DE PUBLICAÇÃO.
+ *
+ * ⚠️ POR QUE ELA EXISTE (15/08/2026). Este bloco vivia DENTRO de
+ * `enviarRespostaEmChunks`, que é chamada num único lugar: o caminho Legacy. O
+ * ramo experimental publica por `enviarEPersistir` — outra função —, então a
+ * família do experimento conversava e NUNCA recebia um plano. Não era ordem de
+ * blocos: era outro caminho de publicação.
+ *
+ * O que NÃO muda por isto: a ponte continua sendo FOLLOW-UP da resposta
+ * principal (nunca a substitui), o gerador continua sendo um só
+ * (`montarPonteWhatsApp`), e nenhuma chamada de modelo nova entra no turno —
+ * `pedeUmPlano` é regex pura e `ofertouPlanoRecente` é uma consulta, só
+ * disparada quando a mensagem é um "sim" curto.
+ *
+ * `querPlano` chega pronto no Legacy porque lá ele é calculado ANTES da
+ * geração: ele também encurta a resposta no chat (`RespostaParams.querPlano`).
+ * Quem não precisa disso omite, e a decisão é tomada aqui.
+ */
+async function ponteDePlano(
+  supabase: SupabaseClient,
+  args: {
+    familyId: string;
+    membroId: string | null;
+    phone: string;
+    mensagem: string;
+    /**
+     * ⚠️ NÃO É INSUMO DE DECISÃO. `temDesafio` aparece uma vez só dentro de
+     * `montarPonteWhatsApp`: um freio barato (mensagem < 40 caracteres e sem
+     * desafio sai antes de gastar IA). Com pedido explícito nem é lido. Por
+     * isso o caminho novo pode alimentá-lo com a classificação do turno, sem
+     * arrastar o parser de volta para antes da resposta.
+     */
+    temDesafio: boolean;
+    querPlano?: boolean;
+  },
+): Promise<string | null> {
+  const querPlano =
+    args.querPlano ??
+    (pedeUmPlano(args.mensagem) ||
+      (ehAfirmacaoCurta(args.mensagem) && (await ofertouPlanoRecente(supabase, args.familyId))));
+  console.log(
+    `[ayla:ponte] avaliando — querPlano=${querPlano} temDesafio=${args.temDesafio}`,
+  );
+  const nudge = await montarPonteWhatsApp(supabase, {
+    familyId: args.familyId,
+    membroAtipicoId: args.membroId,
+    mensagem: args.mensagem,
+    temDesafio: args.temDesafio,
+    phoneE164: args.phone,
+    // Pedido explícito de plano: fura o dedup/intenção e entrega na hora.
+    forcar: querPlano,
+  });
+  return nudge;
+}
+
+/**
  * Gera a resposta da Ayla em streaming e manda cada parágrafo no WhatsApp
  * assim que fica pronto (primeira parte chega rápido, efeito de "digitando").
  * Persiste UM registro com o texto completo, pra histórico/“sim” coerentes.
@@ -3158,14 +3268,15 @@ async function enviarRespostaEmChunks(
   // PEDIU ROTINA → RECEBE ROTINA. A ponte do plano só entra em conversa comum;
   // quem acabou de receber uma rotina não pode ganhar um plano por cima.
   if (enviada && args.tipo === "resposta_registro" && !args.params.notaDeSeguranca) {
-    const nudge = await montarPonteWhatsApp(supabase, {
+    const nudge = await ponteDePlano(supabase, {
       familyId: args.family_account_id,
-      membroAtipicoId: args.membro_atipico_id,
+      membroId: args.membro_atipico_id,
+      phone: args.phone,
       mensagem: args.params.mensagem,
       temDesafio: Boolean(args.params.sinais.desafio),
-      phoneE164: args.phone,
-      // Pedido explícito de plano: fura o dedup/intenção e entrega na hora.
-      forcar: querPlano,
+      // Já calculado lá em cima: aqui ele não pode ser recalculado, porque a
+      // resposta que acabou de sair foi encurtada com base nele.
+      querPlano,
     });
     if (nudge) {
       try {
@@ -3381,7 +3492,15 @@ async function persistirRegistro(
     p.conquista ?? (p.experimentou ? `Experimentou ${p.experimentou}` : null);
 
   // 1. Daily check-in
-  await supabase.from("ayla_daily_checkins").upsert(
+  //
+  // ⚠️ A ESCRITA CONFERE O PRÓPRIO RESULTADO (§7). Sem isto, esta chamada
+  // devolveu **400 em toda execução desde 0001** e ninguém soube: o
+  // `onConflict` de três colunas não tinha constraint que casasse no banco
+  // (42P10), o `error` era descartado e o fluxo seguia como sucesso. Medido em
+  // 15/08/2026: a tabela tinha ZERO linhas na história inteira do produto. A
+  // constraint chegou na 0078; a conferência chega aqui, para que a próxima
+  // falha deste tipo não precise de uma auditoria da Vercel para aparecer.
+  const { error: erroCheckin } = await supabase.from("ayla_daily_checkins").upsert(
     {
       family_account_id: familyId,
       membro_atipico_id: p.membro_atipico_id,
@@ -3397,6 +3516,21 @@ async function persistirRegistro(
     },
     { onConflict: "family_account_id,membro_atipico_id,date" },
   );
+  if (erroCheckin) {
+    // Não derruba o turno: a mãe já recebeu a resposta, e perder o registro
+    // não justifica perder a conversa. Mas deixa de ser invisível.
+    await logEvent({
+      kind: "checkin_nao_gravou",
+      severity: "error",
+      family_account_id: familyId,
+      message: `ayla_daily_checkins não gravou: ${erroCheckin.message.slice(0, 200)}`,
+      payload: {
+        membro_atipico_id: p.membro_atipico_id,
+        code: (erroCheckin as { code?: string }).code ?? null,
+        motivo: erroCheckin.message.slice(0, 400),
+      },
+    });
+  }
 
   // 2. Diário (Camada A + B se confianca_camada_adulto >= 70). Com DEDUP:
   //    numa mesma conversa a mãe detalha o MESMO episódio em várias mensagens —

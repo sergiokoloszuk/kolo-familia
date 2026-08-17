@@ -37,6 +37,33 @@ vi.mock("./whatsappSender", () => ({
   sendVideoGuia: async () => ({ messageId: "vid", raw: {} }),
 }));
 
+/**
+ * ⚠️ SEM ESTE MOCK, ESTE ARQUIVO INTEIRO MEDIA O LEGACY — 15/08/2026.
+ *
+ * `responderExperimental` chama `gerarConversacional`, que faz um POST à API
+ * paga com a chave do ambiente. Num teste não há chave: a chamada falha, o ramo
+ * devolve `null` e o turno CAI para a Ayla atual — fail-closed correto em
+ * produção, falso verde aqui. E como `persistirRegistro` também existe no
+ * Legacy, todas as asserções passavam pelo caminho errado.
+ *
+ * PROVEI POR EXECUÇÃO: com um probe idêntico e sem este mock, `ayla_path` nunca
+ * chega a "experimental". O teste 0 abaixo é o que impede a volta silenciosa.
+ */
+vi.mock("@/lib/ia/provider", () => ({
+  MODELO_CONVERSA: { anthropic: "claude-sonnet-4-6", openai: "gpt-5.6-luna" },
+  providerConversacionalParaFamilia: () => "openai",
+  gerarConversacional: async () => ({
+    texto: "[resposta da Ayla experimental]",
+    provider: "openai",
+    model: "gpt-5.6-luna",
+    tokensIn: 100,
+    tokensOut: 20,
+    cacheRead: 0,
+    cacheWrite: 0,
+    ms: 1,
+  }),
+}));
+
 vi.mock("./anthropic", async (orig) => {
   const real = (await orig()) as Record<string, unknown>;
   return {
@@ -95,7 +122,27 @@ function conta(mundo: Mundo, tabela: string): number {
 
 const TABELAS = ["eventos_membro", "diarios", "ayla_daily_checkins", "sugestao_perfil_vivos"];
 
+/** O turno passou pelo ramo experimental? A marca só existe lá. */
+function passouPeloExperimental(mundo: Mundo): boolean {
+  return mundo.db.linhas("ayla_send_log").some((l) => {
+    const p = l.payload as { meta?: { ayla_path?: string } } | null;
+    return p?.meta?.ayla_path === "experimental";
+  });
+}
+
 describe("A PERSISTÊNCIA ACONTECE — pelo processInbound real", () => {
+  it("0. o turno roda mesmo pelo caminho NOVO — senão tudo abaixo mede o Legacy", async () => {
+    const mundo = criancaEscolar();
+    mundoRef.atual = mundo;
+    mundoRef.alvo = mundo.membros["Daniel"];
+    process.env.AYLA_EXPERIMENTAL_FAMILY_IDS = mundo.familyId;
+
+    await processInbound(mundo.db.cliente(), inboundDe(mundo, "Oi, tudo bem?"));
+    await new Promise((r) => setTimeout(r, 50));
+
+    expect(passouPeloExperimental(mundo), "o turno caiu para o Legacy").toBe(true);
+  }, 30000);
+
   it("1. um relato de conquista produz escrita, e não só resposta", async () => {
     const mundo = criancaEscolar();
     mundoRef.atual = mundo;

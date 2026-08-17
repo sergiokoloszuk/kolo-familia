@@ -1,0 +1,36 @@
+-- 0078 · O UPSERT DO CHECK-IN DIÁRIO NUNCA TEVE ONDE ENCAIXAR
+--
+-- MEDIDO EM PRODUÇÃO (15/08/2026): `ayla_daily_checkins` tem **zero linhas**,
+-- desde 0001. Nenhum check-in diário foi gravado na história do produto.
+--
+-- CAUSA RAIZ. `persistirRegistro` (lib/ayla/orchestrator.ts) grava assim:
+--
+--     .upsert({...}, { onConflict: "family_account_id,membro_atipico_id,date" })
+--
+-- e 0001_init.sql criou a tabela com um índice **não-único**
+-- (`ayla_daily_checkins_family_date_idx`) e nenhuma constraint que case com
+-- essa especificação. O Postgres responde 42P10 — "there is no unique or
+-- exclusion constraint matching the ON CONFLICT specification" — e o PostgREST
+-- devolve **400**. O upsert falhava em toda execução, desde sempre.
+--
+-- POR QUE NINGUÉM VIU. A escrita não conferia o próprio resultado: o
+-- `await .upsert(...)` descartava o `error`, exatamente o padrão que o §7 do
+-- protocolo proíbe e que produziu o incidente da Rochelle. O fluxo seguia como
+-- sucesso, e a única pista era um 400 no log da Vercel, que some com a
+-- retenção. A conferência entra junto com esta migração.
+--
+-- CONSEQUÊNCIA REAL, e não é só telemetria: o orquestrador lê esta tabela para
+-- montar "último check-in" no contexto da Ayla. Como ela sempre esteve vazia,
+-- esse contexto sempre foi vazio — a Ayla nunca soube do último registro.
+--
+-- A CHAVE É A DO NEGÓCIO: uma linha por família, por criança, por dia. É o que
+-- o `onConflict` sempre pretendeu; faltava existir no banco.
+--
+-- SEGURO DE APLICAR: a tabela está vazia, então não há duplicata para resolver
+-- antes de criar a unicidade.
+--
+-- ROLLBACK: `drop index if exists public.ayla_daily_checkins_familia_membro_dia;`
+-- O upsert volta a falhar como falhava antes — nada além disso.
+
+create unique index if not exists ayla_daily_checkins_familia_membro_dia
+  on public.ayla_daily_checkins (family_account_id, membro_atipico_id, date);
