@@ -132,7 +132,11 @@ describe("orientação não gera artefato nenhum", () => {
   });
 
   it("`pronto` é forçado a false: quem decide o tamanho não é quem escreve", () => {
-    expect(GUIADA).toMatch(/const pronto = !soOrientacao &&/);
+    // `\s` porque a expressão quebrou em várias linhas quando ganhou a segunda
+    // chave de autorização (17/08/2026). O que importa é `!soOrientacao` estar
+    // na frente de tudo: em orientação nada é montado, diga o modelo o que
+    // disser.
+    expect(GUIADA).toMatch(/const pronto =\s*!soOrientacao &&/);
   });
 
   it("a forma vive em formas.ts, fora do núcleo", () => {
@@ -249,12 +253,33 @@ describe("a pergunta depois do uso", () => {
 // UMA DECISÃO SÓ — suficiente monta, ponto
 // ============================================================
 
-describe("suficiente gera, sem segundo julgamento", () => {
-  it("deveMontar nasce da prontidão, não do condutor", () => {
+describe("suficiente habilita, mas não gera sozinho", () => {
+  /**
+   * ⚠️ ESTE BLOCO MUDOU DE NOME E DE REGRA EM 17/08/2026, DELIBERADAMENTE.
+   *
+   * Ele se chamava "suficiente gera, sem segundo julgamento", e essa era a
+   * decisão de 08/08: a prontidão dizia "suficiente" e o artefato saía, mesmo
+   * que o condutor tivesse pedido pra perguntar. O motivo era legítimo — evitar
+   * o interrogatório de 35 turnos —, e ELE CONTINUA VALENDO onde valia: quando
+   * a sequência é da família, monta-se no mesmo turno.
+   *
+   * O que a regra não previa é o caso em que a Ayla INVENTA a sequência. Aí
+   * "sem segundo julgamento" virou "sem a família ver": rotina da Manu criada
+   * em 22 segundos, com quatro etapas que ninguém pediu (17/08/2026).
+   *
+   * Agora "suficiente" significa "tenho dados", não "estou autorizada".
+   */
+  it("a prontidão HABILITA a montagem — e o condutor ainda precisa escolher montar", () => {
     expect(GUIADA).toMatch(
-      /const deveMontar = prontidao\.desfecho === "suficiente" && !soOrientacao/,
+      /const prontidaoAutoriza = prontidao\.desfecho === "suficiente" && !soOrientacao/,
     );
-    expect(GUIADA).toMatch(/const pronto = !soOrientacao && \(deveMontar \|\|/);
+    expect(GUIADA).toMatch(/prontidaoAutoriza && acao === "montar"/);
+  });
+
+  it("MORDE: a família também autoriza — e é o que faz o aceite valer", () => {
+    // Sem esta segunda chave, um "sim" depois da proposta não geraria nada
+    // quando a prontidão daquele turno dissesse "falta".
+    expect(GUIADA).toMatch(/const familiaAutoriza = Boolean\(proposta\) && !soOrientacao/);
   });
 
   // ATUALIZADO em 08/08/2026 (D-R1): proíbe pergunta de DADO, e abre a saída
@@ -264,15 +289,27 @@ describe("suficiente gera, sem segundo julgamento", () => {
     expect(GUIADA).toMatch(/SÓ DUAS SAÍDAS AQUI/);
   });
 
-  it("se o modelo perguntar mesmo assim, a pergunta não vai junto da entrega", () => {
-    expect(GUIADA).toMatch(/if \(deveMontar && acao !== "montar"\)/);
-    expect(GUIADA).toMatch(/montando assim mesmo/);
+  it("MORDE: se o condutor propõe, a proposta CHEGA à família", () => {
+    // ⚠️ INVERTIDO EM 17/08/2026. Este teste afirmava o contrário: que a fala
+    // do condutor era descartada (`mensagem = ""`, "montando assim mesmo").
+    // Era a causa raiz da geração prematura — a regra CONFIRMAR OU MONTAR
+    // existia no contrato e nunca chegava a ser lida por ninguém.
+    expect(GUIADA).not.toMatch(/montando assim mesmo/);
+    expect(GUIADA).toMatch(/const propondo = !pronto && acao === "perguntar" && propostaDoTurno\.length > 0/);
+  });
+
+  it("pergunta SEM proposta na mão continua sendo o erro que se registra", () => {
+    // O medo que produziu a regra antiga não sumiu: gastar o turno da mãe com
+    // pergunta quando já dava pra pôr sequência na mesa. Isso não monta mais à
+    // força, mas fica visível no log pra poder ser calibrado.
+    expect(GUIADA).toMatch(/perguntou com prontidão suficiente e SEM proposta/);
   });
 
   it("orientação continua imune — ali `pronto` nunca é true", () => {
-    // deveMontar exclui orientação por construção; sem isso, o piso de
+    // As duas chaves excluem orientação por construção; sem isso, o piso de
     // "suficiente" passaria por cima do menor tamanho.
-    expect(GUIADA).toMatch(/deveMontar = prontidao\.desfecho === "suficiente" && !soOrientacao/);
+    expect(GUIADA).toMatch(/prontidaoAutoriza = prontidao\.desfecho === "suficiente" && !soOrientacao/);
+    expect(GUIADA).toMatch(/familiaAutoriza = Boolean\(proposta\) && !soOrientacao/);
   });
 });
 

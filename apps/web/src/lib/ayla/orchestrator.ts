@@ -76,6 +76,7 @@ import { dividirEmBolhas, ritmoDasBolhas, TETO_ESPERA_SEGUNDOS } from "./bolhas"
 import { paraWhatsApp } from "./apresentacao";
 import { semOutrosMembros } from "./membro-escopo";
 import { ehFamiliaExperimental, responderExperimental } from "./experimental";
+import { atenderDesconhecido } from "./desconhecido";
 import { classificarFeedbackRotina } from "./rotina-feedback";
 import { pedeArtefatoImprimivel, apontaProRecente } from "./rotina-pdf-rota";
 import { resolverMembroAlvo } from "./membro-alvo";
@@ -1674,8 +1675,20 @@ export async function processInbound(
   const family = busca.familia;
   if (!family) {
     // Aqui sim: a consulta funcionou e nenhuma família casa com este número.
+    //
+    // ⚠️ ANTES ACABAVA NESTA LINHA, num `console.warn`. A mensagem não era
+    // guardada em lugar nenhum (o `return` acontece antes de persistir em
+    // `ayla_messages`) e a pessoa levava silêncio absoluto. Agora o contato
+    // fica REGISTRADO e ela recebe, uma vez a cada 7 dias, o caminho de
+    // entrada. Ver lib/ayla/desconhecido.ts — nada de IA, nada de conversa.
+    //
+    // O caminho experimental NÃO participa daqui, e é por construção: ele só
+    // existe muito abaixo, depois de a família estar identificada. Número
+    // desconhecido nunca fala com agente conversacional.
+    const atendida = await atenderDesconhecido(supabase, inbound);
     console.warn(
-      `[ayla] inbound de número não cadastrado: ${inbound.phoneE164} (chave ${chaveIn})`,
+      `[ayla] inbound de número não cadastrado: ${inbound.phoneE164} (chave ${chaveIn})` +
+        ` — respondido=${atendida.respondido}${atendida.motivo ? ` (${atendida.motivo})` : ""}`,
     );
     return { tratada: false };
   }
@@ -2505,7 +2518,20 @@ export async function processInbound(
           // ABERTA, senão o "pode ser dinossauros" dela cai na conversa comum
           // e os cartões nunca saem. A ponte do Plano segue bloqueada, que é o
           // que "rotina_pronta" protegia.
-          tipo: r.pronto && !r.aguardandoTema ? "rotina_pronta" : "rotina_conversa",
+          //
+          // ⚠️ "rotina_proposta" (17/08/2026): a Ayla PÔS UMA SEQUÊNCIA NA MESA
+          // e está esperando a família. É tipo próprio porque o turno seguinte
+          // precisa saber que existe uma decisão em aberto — e as etapas viajam
+          // em `metadataMensagem`, senão o "sim" da mãe não teria referente e a
+          // sequência aprovada não teria como chegar ao quadro.
+          tipo: r.proposta?.length
+            ? "rotina_proposta"
+            : r.pronto && !r.aguardandoTema
+              ? "rotina_pronta"
+              : "rotina_conversa",
+          // Mesmo canal que a clarificação já usa pra guardar o pedido que a
+          // originou: `ayla_messages.metadata`, lido pela mensagem seguinte.
+          ...(r.proposta?.length ? { metadataMensagem: { proposta: r.proposta } } : {}),
         });
         return { tratada: true, familia: family.id, resposta: resp };
       }

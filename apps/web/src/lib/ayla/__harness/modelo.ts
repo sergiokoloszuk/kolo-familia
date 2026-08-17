@@ -33,8 +33,14 @@ export type Roteiro = {
   parser?: Record<string, unknown>;
   /** A criança que o parser deve identificar. */
   alvo?: string | null;
-  /** Desfecho forçado da prontidão da rotina: "suficiente" gera o quadro. */
+  /** Desfecho forçado da prontidão da rotina: "suficiente" libera a montagem. */
   prontidaoRotina?: "suficiente" | "falta" | "orientacao" | "nao_e_rotina";
+  /**
+   * O que o CONDUTOR decide neste turno. Desde 17/08/2026 a geração exige as
+   * DUAS coisas — prontidão suficiente E o condutor escolhendo "montar" —,
+   * então o cenário precisa poder dizer as duas. Default: "montar".
+   */
+  acaoRotina?: "montar" | "perguntar" | "responder" | "sair";
   /** A sequência que o gerador da rotina deve devolver. */
   rotinaGerada?: unknown;
 };
@@ -84,6 +90,34 @@ export function responder(system: string, user: string, r: Roteiro): string {
       //
       // Vem por ÚLTIMO para poder sobrescrever os nulos acima.
       ...(r.parser ?? {}),
+    });
+  }
+
+  // ── CONDUTOR DA ROTINA — o DESFECHO DO TURNO ──────────────────────────────
+  //
+  // ⚠️ VEM ANTES DA PRONTIDÃO DE PROPÓSITO, e a ordem foi paga com um teste
+  // que passava por acidente (17/08/2026). O contrato do condutor também tem a
+  // palavra "desfecho" no texto, então ele casava com o `if` da prontidão
+  // logo abaixo e recebia de volta o JSON da PRONTIDÃO — sem `acao` nenhuma.
+  //
+  // Isso não aparecia porque o código antigo montava a rotina só com a
+  // prontidão em "suficiente", ignorando o que o condutor tivesse dito. Quando
+  // a geração passou a exigir uma decisão explícita (`acao === "montar"`), o
+  // duplo mudo virou "não montou" — e o cenário C acusou.
+  //
+  // O DEFAULT ACOMPANHA O PORTEIRO, e não é preguiça: um condutor que decide
+  // "montar" enquanto a prontidão diz "falta" é um cenário CONTRADITÓRIO, e
+  // cenário contraditório dentro de um duplo produz prova falsa. Quando o
+  // roteiro não diz nada, o condutor concorda com a prontidão daquele cenário —
+  // e quem quiser testar a contradição (ou a PROPOSTA) declara `acaoRotina`.
+  if (/# Você está conduzindo uma ROTINA/.test(s)) {
+    const acao = r.acaoRotina ?? (r.prontidaoRotina === "suficiente" ? "montar" : "sair");
+    return JSON.stringify({
+      acao,
+      // "sair" tem que sair MUDO: é o desfecho que devolve o turno pro resto da
+      // Ayla, e uma fala aqui faria o condutor responder por cima de quem devia.
+      mensagem: acao === "sair" ? "" : "Certo — organizei aqui.",
+      recorrente: false,
     });
   }
 

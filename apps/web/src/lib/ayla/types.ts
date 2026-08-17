@@ -53,6 +53,19 @@ export type AylaTipoReativa =
   | "plano_pergunta"
   | "rotina_pergunta"
   | "rotina_conversa"
+  /**
+   * A Ayla PROPÔS uma sequência e está esperando a família responder — 17/08/2026.
+   *
+   * Tipo próprio porque o texto sozinho não diz que há uma decisão em aberto, e
+   * porque a sequência proposta viaja em `ayla_messages.metadata.proposta`: é
+   * ela que dá referente a um "sim" e é ela que vira o quadro depois do aceite.
+   *
+   * Caso real que o obrigou a existir (Manu, 17/08/2026): a mãe perguntou "o que
+   * você sugere?" para uma sequência de vacina, e recebeu o quadro pronto em 22
+   * segundos, com etapas que a Ayla inventou. Não havia onde guardar uma
+   * proposta, então não havia como esperar por ela.
+   */
+  | "rotina_proposta"
   /** A rotina FICOU PRONTA e foi entregue. Tipo próprio de propósito: a ponte
    *  do plano dispara em "resposta_registro", e uma rotina entregue com aquele
    *  tipo acionava o gerador de PLANO logo em seguida — a mãe pedia rotina e

@@ -149,7 +149,9 @@ describe("mudança de assunto — a rotina não sequestra a conversa", () => {
     // "reativa", o que FECHA o gate de rotina pendente na próxima mensagem.
     const trecho = ORCHESTRATOR.slice(
       ORCHESTRATOR.indexOf("const r = await conduzirRotina"),
-      ORCHESTRATOR.indexOf("const r = await conduzirRotina") + 1400,
+      // 1400 → 2200 em 17/08/2026: o bloco de comentário do `tipo` cresceu com
+      // "rotina_proposta" e a janela passou a cortar antes da linha que importa.
+      ORCHESTRATOR.indexOf("const r = await conduzirRotina") + 2200,
     );
     expect(trecho).toMatch(/if \(r\) \{/);
     // "rotina_pronta", não "resposta_registro": aquele tipo dispara a ponte do
@@ -159,12 +161,32 @@ describe("mudança de assunto — a rotina não sequestra a conversa", () => {
     // cartões mantém a conversa aberta. O que este teste protege é o que NÃO
     // pode voltar — "resposta_registro" — e "rotina_pronta" continuar exigindo
     // `r.pronto`.
-    expect(trecho).toMatch(/tipo: r\.pronto && !r\.aguardandoTema \? "rotina_pronta" : "rotina_conversa"/);
+    // ⚠️ ATUALIZADO EM 17/08/2026, DELIBERADAMENTE. O ternário virou de três
+    // pontas: "rotina_proposta" entrou na frente, para o turno em que a Ayla
+    // pôs uma sequência na mesa e está ESPERANDO a família. O que este teste
+    // protege continua igual: "rotina_pronta" só com `r.pronto`, e
+    // "resposta_registro" nunca (é ele que dispara a ponte do Plano).
+    expect(trecho).toMatch(/tipo: r\.proposta\?\.length/);
+    expect(trecho).toMatch(/"rotina_proposta"/);
+    expect(trecho).toMatch(/r\.pronto && !r\.aguardandoTema/);
     expect(trecho).not.toMatch(/tipo: "resposta_registro"/);
   });
 
-  it("o formato antigo (`pronto`) continua aceito", () => {
-    expect(ROTINA).toMatch(/acao === "montar" \|\| parsed\?\.pronto === true/);
+  it("MORDE: o modelo NÃO tem porta própria pra gerar o artefato", () => {
+    // ⚠️ ESTE TESTE FOI INVERTIDO EM 17/08/2026, DE PROPÓSITO.
+    //
+    // Ele afirmava que `acao === "montar" || parsed?.pronto === true` era um
+    // caminho válido para `pronto` — ou seja, que o modelo podia autorizar a
+    // criação do artefato sozinho, POR CIMA da prontidão. Isso não era um
+    // formato antigo tolerado: era uma SEGUNDA PORTA. Com a prontidão
+    // devolvendo "falta" — inclusive o "falta" que ela devolve quando FALHA —,
+    // bastava o modelo dizer "montar" e o quadro saía.
+    //
+    // A porta fechou. Agora a geração exige uma autorização de fora do modelo:
+    // o porteiro (`prontidaoAutoriza`) ou a família (`familiaAutoriza`).
+    expect(ROTINA).not.toMatch(/\(deveMontar \|\| acao === "montar" \|\| parsed\?\.pronto === true\)/);
+    expect(ROTINA).toMatch(/prontidaoAutoriza && acao === "montar"/);
+    expect(ROTINA).toMatch(/familiaAutoriza/);
   });
 });
 
