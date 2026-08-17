@@ -78,9 +78,28 @@ export async function GET() {
   const allEnvOk = Object.values(env).every(Boolean);
   const ok = db_ok && allEnvOk;
 
+  // ⚠️ QUAL COMMIT ESTÁ NO AR (17/08/2026).
+  //
+  // "Publicado" e "deployado" são estados diferentes — o §18 do protocolo
+  // separa os dois de propósito — e até aqui não havia NENHUMA forma de
+  // responder a segunda pergunta de fora da Vercel. Na prática isso já custou
+  // caro: pendências ficaram meses marcadas como "corrigida, não publicada"
+  // quando o commit estava em `main` há semanas (foi o caso da PEND-071), e
+  // toda auditoria precisava confiar em memória em vez de medir.
+  //
+  // A Vercel injeta estas variáveis sozinha em cada build. O SHA de um commit
+  // é informação pública do repositório — não há segredo aqui, e por isso este
+  // bloco fica fora do `env`, que só publica booleanos de presença.
+  const deploy = {
+    commit: process.env.VERCEL_GIT_COMMIT_SHA ?? null,
+    ref: process.env.VERCEL_GIT_COMMIT_REF ?? null,
+    ambiente: process.env.VERCEL_ENV ?? null,
+  };
+
   return NextResponse.json(
     {
       ok,
+      deploy,
       db: { ok: db_ok, latency_ms: db_latency_ms, error: db_error },
       env,
       total_ms,
