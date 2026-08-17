@@ -15,13 +15,14 @@ Só o que está aberto. 🔒 = bloqueada.
 
 | ID | Pendência | Bloco | Prio | Estado | Próximo passo |
 |---|---|---|---|---|---|
-| [PEND-071](#pend-071) | Segurança está abaixo do gate de assinatura | F · Limites | **P0** | CORRIGIDA, NÃO PUBLICADA | publicar e fazer smoke com número de QA |
+| [PEND-071](#pend-071) | Segurança está abaixo do gate de assinatura | F · Limites | **P0** | ~~CORRIGIDA~~ **BAIXADA** | nenhum — `0fc1feb` é ancestral de `main` (PR #98) e está no ar |
 | [PEND-072](#pend-072) | Teste do caminho novo cai para o Legacy sem mock do provider | H · Governança | P1 | PARCIALMENTE CORRIGIDA | varrer os outros testes que dizem medir o experimental |
 | [PEND-073](#pend-073) | Caminho novo não encurta a resposta em pedido de plano | A · Condução | P2 | ABERTA | decidir se o Core do experimental recebe a nota de `querPlano` |
 | [PEND-074](#pend-074) | Condução D0–D7 do Trial não existe em runtime | G · Comercial | P1 | IMPLEMENTADA, NÃO PUBLICADA | provar a condução na bancada com modelo real antes de publicar |
 | [PEND-075](#pend-075) | Allowlist do caminho novo: quem é, e por quê | H · Governança | P3 | RESOLVIDA | nenhum — a composição das 3 contas é intencional |
 | [PEND-080](#pend-080) | Liberar o caminho novo para TODAS as famílias | A · Condução | P1 | ABERTA 🔒 | fechar os 6 bloqueadores antes de ampliar a allowlist |
-| [PEND-077](#pend-077) | `ayla_daily_checkins` nunca gravou uma linha (400 desde 0001) | H · Governança | P1 | CORRIGIDA, NÃO PUBLICADA | aplicar a migração 0078 em produção |
+| [PEND-077](#pend-077) | `ayla_daily_checkins` nunca gravou uma linha (400 desde 0001) | H · Governança | P1 | ESCRITA PROVADA · LEITURA NÃO | ligar a leitura do check-in no caminho novo |
+| [PEND-081](#pend-081) | Caminho novo grava o check-in e nunca o lê de volta | C · Memória | P1 | ABERTA | mover/duplicar a leitura para antes do `return` do ramo novo |
 | [PEND-078](#pend-078) | Auditoria (`api_calls`) escrita com a sessão da família em outros pontos | H · Governança | P2 | PARCIALMENTE CORRIGIDA | varrer os 37 pontos de chamada de `logarUsoApi` |
 | [PEND-079](#pend-079) | Webhook do Stripe recusa assinatura e não deixa rastro nosso | H · Governança | P2 | ABERTA | persistir a recusa; decidir sobre os 2 endpoints de outro produto |
 | [PEND-069](#pend-069) | Migração 0077 (`ayla_documentos`) não aplicada em produção | H · Governança | P1 | ~~ABERTA~~ **BAIXADA** | nenhum — a tabela existe com 11 linhas (medido 16/08) |
