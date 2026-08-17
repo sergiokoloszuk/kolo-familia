@@ -241,6 +241,21 @@ export async function montarPonteWhatsApp(
     phoneE164: string;
     /** Pedido explícito de plano: pula os gates (dedup/intenção/temDesafio). */
     forcar?: boolean;
+    /**
+     * A ÂNCORA DA ENTREGA — avisada quando um Plano REALMENTE foi criado.
+     *
+     * ⚠️ EXISTE PARA QUE A ENTREGA POSSA SER DISTINGUIDA DA OFERTA. O texto
+     * fixo desta função ("Montei um plano estratégico com atividades…") casa
+     * com o detector de oferta (`REGEX_OFERTA_PLANO`), então a entrega se
+     * reoferecia sozinha: a mãe respondia "Ok" e ganhava outro Plano. Caso
+     * Matheo, 11/08/2026 — 6 Planos em dois dias, 4 deles em nove minutos.
+     *
+     * Quem chama guarda este id no `metadata` da mensagem que vai persistir, e
+     * é isso que transforma "parece uma oferta" em "é uma entrega, fato
+     * registrado". Callback e não valor de retorno para não mudar a assinatura
+     * — mesmo padrão de `aoFalhar` em `conhecimento/recuperar.ts`.
+     */
+    aoEntregar?: (planoId: string) => void;
   },
 ): Promise<string | null> {
   const { familyId, membroAtipicoId, mensagem, phoneE164, forcar } = params;
@@ -367,6 +382,14 @@ export async function montarPonteWhatsApp(
       : "Montei um plano estratégico com atividades sobre isso 🌿";
     const volte =
       "\nDá uma olhada com calma e volta aqui pra me contar o que você achou? Quero muito saber se faz sentido pro dia a dia de vocês — e se algo não encaixou, a gente ajusta. 💛";
+    // ⚠️ AVISA ANTES DE DEVOLVER O TEXTO, e só aqui: este é o único ponto em
+    // que um Plano existe de verdade. O callback nunca pode derrubar a entrega
+    // — quem chama só está guardando um id.
+    try {
+      params.aoEntregar?.(plano.id);
+    } catch {
+      /* ignorado de propósito: a âncora é rastro, não caminho crítico */
+    }
     if (!link) return `${base}${volte}`;
     return `${base}\nPra ver no app (já entra direto): ${link}${volte}`;
   } catch (e) {

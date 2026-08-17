@@ -89,7 +89,7 @@ import {
   riscoEhAtual,
   segurancaFoiEncaminhada,
 } from "./estado-seguranca";
-import { primeiroNomeConfiavel } from "./crianca-nome";
+import { primeiroNomeConfiavel, primeiroNomeCriancaConfiavel } from "./crianca-nome";
 import { TEMAS } from "@/lib/conducao/temas";
 import {
   deveMostrarMenu,
@@ -444,7 +444,7 @@ export async function sendPlanoSeguimento(
     : null;
   const tema = (plano.tema ?? "").trim();
   const refTema = tema ? ` sobre ${tema}` : "";
-  const refMembro = membro?.nome ? ` pra ${membro.nome}` : "";
+  const refMembro = citarCrianca(membro, "para");
   const texto = `Oi, ${ctx.nomeMae}! Lembra do plano${refTema} que montei${refMembro}? Você chegou a testar? Me conta rapidinho como foi — assim eu deixo os próximos cada vez mais certeiros. É só tocar aqui, você já entra direto:\n${link}`;
 
   const r = await enviarEPersistir(supabase, {
@@ -509,7 +509,7 @@ export async function sendRotinaSeguimento(
     : null;
   const nome = (rotina.nome ?? "").trim();
   const refRotina = nome ? ` de ${nome.toLowerCase()}` : "";
-  const refMembro = membro?.nome ? ` do ${membro.nome}` : "";
+  const refMembro = citarCrianca(membro, "de");
   // Pergunta o que MUDOU, não se gostou: é isso que muda a próxima orientação.
   const texto = `Oi, ${ctx.nomeMae}! Vocês chegaram a usar aquela sequência${refRotina}${refMembro}? Queria saber se ela facilitou alguma parte — ou se tem algum trecho que a gente precisa ajustar. É só tocar aqui:
 ${link}`;
@@ -577,7 +577,7 @@ export async function sendRecuperacaoPlano(
     : null;
   const tema = (plano.tema ?? "").trim();
   const refTema = tema ? ` sobre ${tema}` : "";
-  const refMembro = membro?.nome ? ` pra ${membro.nome}` : "";
+  const refMembro = citarCrianca(membro, "para");
   const link = await gerarMagicLink(supabase, {
     familyId: familyAccountId,
     next: `/planos/${plano.id}`,
@@ -639,7 +639,7 @@ export async function sendRecuperacaoRotina(
     : null;
   const refNome = (rotina.nome ?? "").trim();
   const refRotina = refNome ? ` "${refNome}"` : "";
-  const refMembro = membro?.nome ? ` d${membro.nome.endsWith("a") ? "a" : "o"} ${membro.nome}` : "";
+  const refMembro = citarCrianca(membro, "de");
   const link = await gerarMagicLink(supabase, {
     familyId: familyAccountId,
     next: `/ludico/rotinas/${rotina.id}`,
@@ -903,6 +903,41 @@ async function jaRecebeuVideoGuia(
 }
 
 /**
+ * COMO CITAR A CRIANÇA NUMA PROATIVA — nome e concordância, com as duas
+ * dúvidas resolvidas no mesmo lugar.
+ *
+ * ⚠️ POR QUE EXISTE (17/08/2026, caso Paula). As proativas escritas à mão aqui
+ * no orquestrador montavam a citação sozinhas, e erravam de dois jeitos:
+ *
+ *   1. NOME CRU. O campo do nome aceita recado, e `"Meu Filhos"` saiu numa
+ *      mensagem como se fosse o nome da criança — noventa segundos antes de
+ *      outra mensagem dizer que o nome não tinha vindo no cadastro.
+ *   2. GÊNERO ADIVINHADO PELO NOME. Uma delas fazia
+ *      `d${nome.endsWith("a") ? "a" : "o"}` — ou seja, decidia o gênero da
+ *      criança pela última letra. Todo Nicolas virava menina; todo nome que
+ *      não termina em "a" virava menino.
+ *
+ * A regra: nome só quando É nome (`primeiroNomeCriancaConfiavel`),
+ * concordância só quando o gênero está REGISTRADO, e neutro em qualquer
+ * dúvida. Nunca bloqueia a mensagem — sem nome utilizável a citação some e a
+ * frase segue de pé.
+ */
+function citarCrianca(
+  membro: { nome?: string | null; genero?: string | null } | undefined | null,
+  preposicao: "de" | "para",
+): string {
+  const nome = primeiroNomeCriancaConfiavel(membro?.nome);
+  if (!nome) return "";
+  if (preposicao === "para") return ` pra ${nome}`;
+  // "de" com concordância: "da Manu" / "do Pedro" quando o gênero é dado
+  // REGISTRADO; "de Manu" quando não é — correto em português e sem palpite.
+  const g = (membro?.genero ?? "").trim().toLowerCase();
+  if (g === "feminino") return ` da ${nome}`;
+  if (g === "masculino") return ` do ${nome}`;
+  return ` de ${nome}`;
+}
+
+/**
  * O texto da campanha. É ATIVAÇÃO, não lembrete de trial: nada de preço, nada
  * de "seu teste acaba em X dias", e sem pergunta no fim — se ela responder, a
  * Ayla conversa; se não responder, o vídeo trabalha sozinho.
@@ -917,8 +952,16 @@ export function textoVideoGuia(params: {
   nomeMembro: string | null;
 }): string {
   const ola = params.nomeMae?.trim() ? `Oi, ${params.nomeMae.trim()} 💛` : "Oi 💛";
-  const daCrianca = params.nomeMembro?.trim() ? ` do ${params.nomeMembro.trim()}` : "";
-  const aCrianca = params.nomeMembro?.trim() ? ` sobre ${params.nomeMembro.trim()}` : "";
+  // ⚠️ NOME SÓ QUANDO É NOME (17/08/2026). Aqui saía o campo cru: a família da
+  // Paula recebeu "montar histórias do Meu Filhos" e, 90 segundos depois, a
+  // mensagem que pede o nome verdadeiro. Sem nome utilizável a frase segue
+  // inteira, só sem a citação — a campanha nunca deixa de sair por isso.
+  //
+  // `nomeMae` NÃO precisa do mesmo tratamento: `loadFamiliaParaEnvio` já o
+  // passa por `primeiroNomeConfiavel`. Filtrar de novo seria a segunda fonte.
+  const nomeCrianca = primeiroNomeCriancaConfiavel(params.nomeMembro);
+  const daCrianca = nomeCrianca ? ` de ${nomeCrianca}` : "";
+  const aCrianca = nomeCrianca ? ` sobre ${nomeCrianca}` : "";
   return `${ola}
 
 Quero te mostrar uma coisa rápida que pode ajudar nesses dias de teste.
@@ -2653,6 +2696,10 @@ export async function processInbound(
       // Uma bolha enviada e não persistida deixaria o dedup cego, e a família
       // ganharia um plano por turno.
       if (resp.enviada) {
+        // A ÂNCORA DA ENTREGA. Sem ela, a mensagem que entrega o Plano volta a
+        // ser lida como uma OFERTA no turno seguinte, e o "Ok" da mãe gera
+        // outro Plano (caso Matheo, 11/08/2026).
+        let planoEntregueId: string | null = null;
         const nudge = await ponteDePlano(supabase, {
           familyId: family.id,
           membroId: exp.membroId,
@@ -2660,6 +2707,9 @@ export async function processInbound(
           mensagem: inbound.texto,
           temDesafio:
             turnoClassificado.intencao === "plano" || Boolean(turnoClassificado.tema),
+          aoEntregar: (id) => {
+            planoEntregueId = id;
+          },
         }).catch((e) => {
           console.warn(
             "[ayla:experimental] ponte do plano falhou:",
@@ -2676,6 +2726,10 @@ export async function processInbound(
             category: "reativa",
             tipo: "resposta_registro",
             meta: { ayla_path: "experimental", ponte: "plano" },
+            // ⚠️ `metadataMensagem`, não `meta`: esta vai para
+            // `ayla_messages.metadata`, que é onde `ofertaDePlanoPendente` lê.
+            // `meta` iria só para o log de auditoria e não fecharia a oferta.
+            ...(planoEntregueId ? { metadataMensagem: { plano_id: planoEntregueId } } : {}),
           });
         }
       }
@@ -3142,12 +3196,18 @@ async function ponteDePlano(
      */
     temDesafio: boolean;
     querPlano?: boolean;
+    /** Repassa a âncora da entrega pra quem vai persistir a mensagem. */
+    aoEntregar?: (planoId: string) => void;
   },
 ): Promise<string | null> {
   const querPlano =
     args.querPlano ??
     (pedeUmPlano(args.mensagem) ||
-      (ehAfirmacaoCurta(args.mensagem) && (await ofertouPlanoRecente(supabase, args.familyId))));
+      // ⚠️ `ofertaDePlanoPendente`, não `ofertouPlanoRecente`: a segunda
+      // perguntava ao TEXTO se havia oferta, e o texto da própria entrega
+      // respondia que sim. Ver o caso Matheo no comentário da função.
+      (ehAfirmacaoCurta(args.mensagem) &&
+        (await ofertaDePlanoPendente(supabase, args.familyId, args.membroId))));
   console.log(
     `[ayla:ponte] avaliando — querPlano=${querPlano} temDesafio=${args.temDesafio}`,
   );
@@ -3159,6 +3219,7 @@ async function ponteDePlano(
     phoneE164: args.phone,
     // Pedido explícito de plano: fura o dedup/intenção e entrega na hora.
     forcar: querPlano,
+    aoEntregar: args.aoEntregar,
   });
   return nudge;
 }
@@ -3187,14 +3248,22 @@ async function enviarRespostaEmChunks(
   // sem ter como saber.
   const idsBolhas: Array<string | null> = [];
   let erro: string | null = null;
+  /** Id do Plano que a ponte entregou neste turno — a âncora que fecha a oferta. */
+  let planoEntregueId: string | null = null;
 
   // A pessoa pediu um plano? Então a Ayla NÃO escreve o plano no chat — dá uma
   // resposta curta e o sistema entrega o plano (PDF + link). Vale tanto pro pedido
   // EXPLÍCITO quanto pro "sim" curto logo depois de a Ayla OFERECER um plano (1c).
   const querPlano =
     pedeUmPlano(args.params.mensagem) ||
+    // ⚠️ Mesma troca do outro ponto de uso: quem responde "há oferta pendente?"
+    // deixou de ser o texto da própria entrega. Ver o caso Matheo.
     (ehAfirmacaoCurta(args.params.mensagem) &&
-      (await ofertouPlanoRecente(supabase, args.family_account_id)));
+      (await ofertaDePlanoPendente(
+        supabase,
+        args.family_account_id,
+        args.membro_atipico_id,
+      )));
   args.params.querPlano = querPlano;
 
   // ⚠️ O BALÃO DE ESPERA FOI DESLIGADO em 03/08/2026.
@@ -3303,6 +3372,12 @@ async function enviarRespostaEmChunks(
       // Já calculado lá em cima: aqui ele não pode ser recalculado, porque a
       // resposta que acabou de sair foi encurtada com base nele.
       querPlano,
+      // ⚠️ NO LEGACY A PONTE NÃO TEM LINHA PRÓPRIA — ela é concatenada em
+      // `textoCompleto` e persistida junto da resposta principal, lá embaixo.
+      // Então a âncora vai no `metadata` DAQUELA linha, que é a que existe.
+      aoEntregar: (id) => {
+        planoEntregueId = id;
+      },
     });
     if (nudge) {
       try {
@@ -3342,6 +3417,9 @@ async function enviarRespostaEmChunks(
       texto: textoCompleto,
       enviada_em: new Date().toISOString(),
       ...registroDeEnvio(idsBolhas),
+      // A ÂNCORA DA ENTREGA DO PLANO — é ela que faz o "Ok" da mãe no turno
+      // seguinte NÃO gerar outro Plano (`ofertaDePlanoPendente` lê este campo).
+      ...(planoEntregueId ? { metadata: { plano_id: planoEntregueId } } : {}),
     });
     await supabase
       .from("ayla_preferences")
@@ -3947,15 +4025,78 @@ const AFIRMACOES = new Set([
   "monta", "monta sim", "quero ver", "vamos la", "uhum", "aham",
 ]);
 
-/** A Ayla ofereceu um plano na última mensagem? Pra um "sim" curto logo depois
- *  virar pedido de plano (auto-oferta, 1c). Marca por texto na última outbound. */
 /** Frases que caracterizam uma OFERTA de plano feita pela Ayla. Inclui a
  *  nomenclatura nova ("plano estratégico com atividades"), que existe pra a mãe
- *  não confundir o material com plano de ASSINATURA. */
+ *  não confundir o material com plano de ASSINATURA.
+ *
+ *  ⚠️ ELA NÃO DISTINGUE OFERTA DE ENTREGA, e não é ela que precisa distinguir.
+ *  "Montei um plano estratégico com atividades" — o texto FIXO da entrega, em
+ *  `ponte.ts` — casa aqui. Quem separa os dois estados é a âncora estrutural,
+ *  abaixo. */
 const REGEX_OFERTA_PLANO =
   /monte(i)? um plano|montar (um |esse |o )?plano|junte.*plano|plano (completo|estrat[ée]gico)|um plano (completo|estrat[ée]gico|com|pra|sobre)/;
 
-async function ofertouPlanoRecente(supabase: SupabaseClient, familyId: string): Promise<boolean> {
+/**
+ * Quantas mensagens de saída entram na janela de 30 min.
+ *
+ * ⚠️ ERA 6, e 6 bastava enquanto a pergunta era "existe alguma oferta aqui?".
+ * Agora a pergunta é sobre a ORDEM entre duas mensagens — a oferta e a entrega
+ * que a cumpriu —, e as duas precisam caber na mesma leitura. Entre elas cabe
+ * uma conversa inteira: no caso Matheo (11/08/2026) foram 6 balões em 4 min.
+ */
+const JANELA_OFERTA_MENSAGENS = 30;
+
+type SaidaDaJanela = {
+  texto: string | null;
+  metadata: unknown;
+  membro_atipico_id: string | null;
+};
+
+/**
+ * ESTA MENSAGEM É UMA ENTREGA? — perguntado à âncora, não ao texto.
+ *
+ * `metadata.plano_id` é gravado só quando `montarPonteWhatsApp` avisou que um
+ * Plano foi REALMENTE criado (callback `aoEntregar`). Mensagem com âncora
+ * entregou um Plano; é fato registrado, não interpretação de fala.
+ */
+function ehEntregaDePlano(m: SaidaDaJanela): boolean {
+  const meta = m.metadata as { plano_id?: unknown } | null | undefined;
+  return typeof meta?.plano_id === "string" && meta.plano_id.length > 0;
+}
+
+/**
+ * EXISTE UMA OFERTA DE PLANO AINDA NÃO CUMPRIDA? — o gatilho do "Ok".
+ *
+ * ⚠️ O CASO MATHEO (11/08/2026). A mãe recebeu o Plano, respondeu "Ok" e ganhou
+ * outro — seis vezes em dois dias, quatro delas em nove minutos. A pergunta
+ * antiga era "alguma das últimas 6 mensagens PARECE uma oferta?", e a mensagem
+ * que ENTREGA o Plano parece. A entrega se reoferecia sozinha, para sempre.
+ *
+ * ⚠️ POR QUE NÃO SE RESOLVE POR TIMESTAMP. Comparar "última oferta" com "último
+ * Plano" na tabela `planos` não funciona: a linha nasce dentro de `gerarPlano`,
+ * e a mensagem que a anuncia só é persistida no fim do turno — ela vem DEPOIS.
+ * O Plano que cumpriu a oferta é sempre mais VELHO que o texto que a
+ * "reoferece", então a comparação diria "pendente" sempre.
+ *
+ * O que resolve é a ORDEM na própria timeline de saída, com os dois estados
+ * marcados por naturezas diferentes: a oferta por TEXTO, a entrega por ÂNCORA.
+ * Varrendo do mais novo para o mais velho, a primeira mensagem RELEVANTE
+ * decide — e isso é exatamente "não há entrega depois da última oferta":
+ *
+ *   oferta ………………………………… pendente  → o "Ok" gera
+ *   oferta → entrega ………… cumprida  → o "Ok" NÃO gera
+ *   oferta → entrega → oferta  pendente  → a oferta NOVA vale por si
+ *
+ * ESCOPO: por criança quando o turno sabe de quem se fala, por família quando
+ * não sabe. Mensagem sem dono entra nos dois casos — é o mesmo recorte que a
+ * conversa já usa ("deste membro OU sem membro"), e sem ele as ofertas e
+ * entregas com `membro_atipico_id` nulo sumiriam da janela.
+ */
+export async function ofertaDePlanoPendente(
+  supabase: SupabaseClient,
+  familyId: string,
+  membroAtipicoId: string | null,
+): Promise<boolean> {
   const desde = new Date(Date.now() - 30 * 60 * 1000).toISOString();
   // Olha as ÚLTIMAS mensagens, não só a última. A Ayla responde em vários
   // balões e costuma continuar falando depois de oferecer; com limit(1) o "sim"
@@ -3963,15 +4104,24 @@ async function ofertouPlanoRecente(supabase: SupabaseClient, familyId: string): 
   // real: ela pergunta o preço, a Ayla esclarece, e só então ela aceita.
   const { data } = await supabase
     .from("ayla_messages")
-    .select("texto")
+    .select("texto, metadata, membro_atipico_id")
     .eq("family_account_id", familyId)
     .eq("direcao", "outbound")
     .gte("created_at", desde)
     .order("created_at", { ascending: false })
-    .limit(6);
-  return (data ?? []).some((m) =>
-    REGEX_OFERTA_PLANO.test(((m.texto as string | null) ?? "").toLowerCase()),
-  );
+    .limit(JANELA_OFERTA_MENSAGENS);
+
+  for (const m of (data ?? []) as SaidaDaJanela[]) {
+    // Do irmão: não é oferta minha nem entrega minha. Sai da conta inteira.
+    if (membroAtipicoId && m.membro_atipico_id && m.membro_atipico_id !== membroAtipicoId) {
+      continue;
+    }
+    // A ÂNCORA VENCE O TEXTO, e é a inversão que corrige o caso Matheo: a
+    // mensagem de entrega casa a regex, mas é entrega, e entrega fecha a oferta.
+    if (ehEntregaDePlano(m)) return false;
+    if (REGEX_OFERTA_PLANO.test((m.texto ?? "").toLowerCase())) return true;
+  }
+  return false;
 }
 
 /** Mensagem curta que é só um "sim" (sem conteúdo novo pra registrar). */

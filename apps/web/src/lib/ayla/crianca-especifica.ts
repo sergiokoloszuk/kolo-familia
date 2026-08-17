@@ -24,12 +24,14 @@ export {
   nomeUsavelCrianca,
   motivoNomeNaoNome,
   primeiroNome,
+  primeiroNomeCriancaConfiavel,
   type MotivoNomeNaoNome,
 } from "./crianca-nome";
 import {
   nomeUsavelCrianca,
   motivoNomeNaoNome,
   primeiroNome,
+  primeiroNomeCriancaConfiavel,
   type MotivoNomeNaoNome,
 } from "./crianca-nome";
 

@@ -67,6 +67,30 @@ export function primeiroNomeConfiavel(nome: string | null | undefined): string {
   return nomeUsavelCuidador(nome) ? primeiroNome(nome) : "";
 }
 
+/**
+ * O irmão do anterior, para a CRIANÇA: o primeiro nome quando o campo é mesmo
+ * um nome; string vazia quando não é.
+ *
+ * ⚠️ POR QUE VIROU FUNÇÃO (17/08/2026). Esta mesma expressão —
+ * `nomeUsavelCrianca(x) ? primeiroNome(x) : ""` — estava escrita à mão em
+ * `messageTemplates.ts` e PRECISAVA ser repetida em cinco proativas escritas
+ * direto no orquestrador. Seis cópias da mesma decisão é como ela diverge; uma
+ * função é uma fonte só.
+ *
+ * O caso que cobrou (Paula, 17/08/2026): o campo do nome tinha `"Meu Filhos"`,
+ * e a proativa do vídeo saiu dizendo "montar histórias do Meu Filhos". Noventa
+ * segundos depois, a conversa reativa — que JÁ consultava o detector — disse
+ * "no cadastro o nome dela não veio". Duas mensagens contradizendo uma à outra.
+ *
+ * ⚠️ NÃO USE ISTO PARA IDENTIFICAR A CRIANÇA. O nome cru continua sendo o dado
+ * de identidade (é por ele que o orquestrador casa "a Manu" com o membro
+ * certo); o que esta função devolve é o nome de FALAR. Filtrar na origem
+ * quebraria o casamento por nome.
+ */
+export function primeiroNomeCriancaConfiavel(nome: string | null | undefined): string {
+  return nomeUsavelCrianca(nome) ? primeiroNome(nome) : "";
+}
+
 export function motivoNomeNaoNome(nome: string | null | undefined): MotivoNomeNaoNome {
   const n = (nome ?? "").trim();
   if (!n) return "recado";
