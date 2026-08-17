@@ -10,7 +10,7 @@
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { pronomesVars, type Genero } from "./pronomes";
-import { nomeUsavelCrianca, primeiroNome } from "./crianca-especifica";
+import { nomeUsavelCrianca, primeiroNome, primeiroNomeCriancaConfiavel } from "./crianca-especifica";
 import { fraseDoTema, listarTemas } from "@/lib/conducao/temas";
 
 type TemplateVars = Record<string, string | number | undefined>;
@@ -199,7 +199,8 @@ export function templateBoasVindasComDesafio(params: {
   // Só cita a criança quando o nome É nome (o campo aceita recado) e com o
   // primeiro nome. Sem isso a frase sai "a comunicação da Cuido de Várias
   // Crianças. Sou Terapeuta! tem pesado" — foi o que aconteceu em 25/07.
-  const nomeCurto = nomeUsavelCrianca(params.nomeMembro) ? primeiroNome(params.nomeMembro) : "";
+  // Uma fonte só: a mesma regra vale para as proativas escritas no orquestrador.
+  const nomeCurto = primeiroNomeCriancaConfiavel(params.nomeMembro);
   const artigo = params.genero === "feminino" ? "da" : "do";
   const generoDefinido = params.genero === "feminino" || params.genero === "masculino";
   const comCrianca = nomeCurto && generoDefinido ? ` com ${artigo === "da" ? "a" : "o"} ${nomeCurto}` : "";
