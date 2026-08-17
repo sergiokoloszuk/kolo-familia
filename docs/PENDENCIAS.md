@@ -20,6 +20,11 @@ Só o que está aberto. 🔒 = bloqueada.
 | [PEND-073](#pend-073) | Caminho novo não encurta a resposta em pedido de plano | A · Condução | P2 | ABERTA | decidir se o Core do experimental recebe a nota de `querPlano` |
 | [PEND-074](#pend-074) | Condução D0–D7 do Trial não existe em runtime | G · Comercial | P1 | IMPLEMENTADA, NÃO PUBLICADA | provar a condução na bancada com modelo real antes de publicar |
 | [PEND-075](#pend-075) | Allowlist do caminho novo: quem é, e por quê | H · Governança | P3 | RESOLVIDA | nenhum — a composição das 3 contas é intencional |
+| [PEND-083](#pend-083) | Branch `bia/ciclo-tecnico` pode ter mais correções prontas e nunca publicadas | G · Entrega | P1 | ABERTA | auditar paridade Legacy × novo e branches não ancestrais de `main` |
+| [PEND-087](#pend-087) | Proativa imprime o texto cru do campo do nome como nome da criança | F · Limites | P1 | ABERTA | fazer a `video_guia` (e irmãs) consultarem `nomeUsavelCrianca` |
+| [PEND-084](#pend-084) | Caminho reativo escreve sequência de rotina que não é o quadro | B · Artefatos | P2 | ABERTA | ou não escreve etapas, ou lê do quadro como o condutor |
+| [PEND-085](#pend-085) | Medir "condutor perguntou sem pôr proposta na mesa" | A · Condução | P2 | EM OBSERVAÇÃO | contar as ocorrências do log contra o total de turnos de rotina |
+| [PEND-086](#pend-086) | Desfecho ilegível do condutor deixou de gerar artefato | B · Artefatos | P2 | EM OBSERVAÇÃO | contar `DESFECHO PERDIDO` após 17/08 |
 | [PEND-082](#pend-082) | Ayla repete orientação do turno anterior — medir frequência real | A · Condução | P2 | EM OBSERVAÇÃO | juntar 30–50 turnos reativos e contar |
 | [PEND-080](#pend-080) | Liberar o caminho novo para TODAS as famílias | A · Condução | P1 | ABERTA 🔒 | fechar os 6 bloqueadores antes de ampliar a allowlist |
 | [PEND-077](#pend-077) | `ayla_daily_checkins` nunca gravou uma linha (400 desde 0001) | H · Governança | P1 | ESCRITA PROVADA · LEITURA NÃO | ligar a leitura do check-in no caminho novo |
@@ -3967,6 +3972,138 @@ Aberta em: 2026-08-15 · Origem: Passo 1 do Admin da Inteligência
 
 ---
 
+### PEND-083
+**Branch `bia/ciclo-tecnico` pode ter mais correções prontas e nunca publicadas**
+Bloco: **G · Entrega** · Prioridade: **P1** · Estado: **ABERTA**
+Aberta em: 2026-08-17 · Origem: recuperação do commit `5a69e89`
+
+- **O caso, e ele é o motivo desta ficha existir.** O commit `5a69e89`
+  ("quem escreve sem cadastro deixa de levar silêncio") foi escrito em
+  **31/07/2026**, com 14 testes, tsc e build limpos — e **nunca chegou à
+  `main`**. Ficou parado neste branch. **PROVEI POR EXECUÇÃO:**
+  `git merge-base --is-ancestor 5a69e89 main` → falso.
+- **O custo medido:** 17 dias em que todo número sem cadastro que escreveu para
+  a Ayla levou silêncio absoluto, com a correção pronta no repositório. Um
+  número (21 9xxxx-1351) escreveu em 17/08 e não recebeu nada — foi assim que
+  se descobriu.
+- **O que investigar:** quais outros commits deste branch (e de outros branches
+  não ancestrais de `main`) contêm capacidade, correção ou proteção
+  **validada e não publicada** — em onboarding, acesso, segurança, foco na
+  criança, memória, rotina, plano, trial, resposta única, fallback,
+  persistência, silêncio sem resposta, multi-filhos, limites de saúde/jurídico
+  e observabilidade de falha.
+- **Regra de prova:** commit existente **não** prova produção; teste antigo não
+  prova que ainda funciona; branch antigo não significa que deve ser
+  recuperado. Cada achado precisa de: o que fazia · por que · tinha teste ·
+  chegou à main · existe equivalente hoje · continua relevante.
+- **Aprendizado que já vale:** `IMPLEMENTADO ≠ PUBLICADO` (§18). Este
+  repositório já tinha o `/api/health` dizendo o commit no ar justamente porque
+  a PEND-071 ficou marcada como "não publicada" estando em produção. O erro
+  simétrico — marcado como feito, nunca publicado — não tinha detector.
+- **Critério de conclusão:** tabela ACHADO · ONDE EXISTE · MAIN? · LEGACY? ·
+  NOVO? · RELEVANTE HOJE? · AÇÃO, com P0/P1/P2/DESCARTAR, e a frase explícita
+  "paridade suficientemente auditada" quando não houver mais nada relevante.
+- **Agente recomendado:** AUDITAR
+
+---
+
+### PEND-084
+**Caminho reativo escreve sequência de rotina que não é o quadro**
+Bloco: **B · Artefatos** · Prioridade: **P2** · Estado: **ABERTA**
+Aberta em: 2026-08-17 · Origem: caso Manu (vacina), investigação da Rotina
+
+- **O caso. VI NA CONVERSA REAL:** às 13:42:36 a Ayla escreveu para a Karina uma
+  sequência de **7 etapas** terminando em "Depois: tomar sorvete 🍦". O quadro
+  no banco tinha **4 etapas** e nenhuma delas era sorvete. A mãe lê uma coisa no
+  WhatsApp e vê outra no app.
+- **Por que não foi resolvido com a correção de 17/08.** `sequenciaDoQuadro`
+  (08/08) resolveu isto **para o condutor**: a lista da fala passou a ser lida
+  do banco. O caminho **reativo** não passa por lá — ele responde
+  conversacionalmente e pode compor uma sequência própria, que não vira
+  artefato nenhum.
+- **Classificação: B.** Não corrompe o quadro (o reativo não escreve), mas
+  quebra a correspondência entre o que foi dito e o que existe — que é a mesma
+  família de defeito que custou "12 etapas lidas, 9 recebidas" em 07/08.
+- **Critério de conclusão:** ou o reativo não escreve sequência de etapas, ou
+  ele lê do quadro como o condutor faz.
+- **Agente recomendado:** PROPOR
+
+---
+
+### PEND-085
+**Medir com que frequência o condutor pergunta sem pôr proposta na mesa**
+Bloco: **A · Condução** · Prioridade: **P2** · Estado: **EM OBSERVAÇÃO**
+Aberta em: 2026-08-17 · Origem: correção da geração prematura da Rotina
+
+- **O que se observa.** Desde 17/08 a prontidão "suficiente" deixou de montar à
+  força quando o condutor devolve `acao:"perguntar"` — a proposta dele passa a
+  chegar à família. O risco simétrico é o antigo: gastar o turno da mãe com uma
+  **pergunta de investigação** quando já dava para pôr sequência na mesa.
+- **O rastro já existe:** `[ayla:rotina] condutor perguntou com prontidão
+  suficiente e SEM proposta`. Ele não monta à força (isso seria o defeito de
+  volta) — registra.
+- **Critério de medição:** contar essas ocorrências contra o total de turnos que
+  entram no fluxo de rotina. **Raro** → variação normal, fecha. **Recorrente** →
+  o contrato precisa de ajuste (o modelo não está entendendo quando propor), e
+  a correção é no texto do contrato, não no código.
+- **Agente recomendado:** AUDITAR (depois de acumular turnos)
+
+---
+
+### PEND-086
+**Desfecho ilegível do condutor deixou de gerar artefato — observar**
+Bloco: **B · Artefatos** · Prioridade: **P2** · Estado: **EM OBSERVAÇÃO**
+Aberta em: 2026-08-17 · Origem: correção da segunda porta da Rotina
+
+- **A mudança, e ela é deliberada.** Antes, com a prontidão em "suficiente", o
+  quadro era montado mesmo quando o desfecho do condutor não podia ser lido —
+  `deveMontar` não olhava `acao`. Agora a geração exige uma decisão explícita, e
+  desfecho ilegível cai para conversa (a família recebe resposta, não silêncio).
+- **Decisão de produto (Sérgio, 17/08):** *"se não há segurança sobre a decisão,
+  NÃO gerar automaticamente"*. Não bloqueia publicação; registra e observa.
+- **Por que merece olho.** Este modo de falha **já aconteceu**: em 07/08/2026 o
+  condutor não usou a ferramenta em 3 de 3 execuções (aspas não escapadas
+  quebravam o `JSON.parse`). O `tool_choice` forçado corrigiu a causa, e
+  `lerDesfechoDoCondutor` grita no log — mas antes o defeito era mascarado pela
+  montagem à força.
+- **Critério de medição:** contar `DESFECHO PERDIDO` e `condutor não usou a
+  ferramenta` nos logs após 17/08. Zero ou quase zero → fecha. Recorrente →
+  investigar o serializador, **não** reabrir a porta de geração.
+- **Agente recomendado:** AUDITAR
+
+---
+
+### PEND-087
+**Proativa usa o texto cru do campo do nome como se fosse o nome da criança**
+Bloco: **F · Limites** · Prioridade: **P1** · Estado: **ABERTA**
+Aberta em: 2026-08-17 · Origem: família 83 9xxxx-4171 (Paula), 17/08
+
+- **O caso. VI NA CONVERSA REAL, produção.** O campo do nome da criança tem
+  `"Meu Filhos"`. Às **11:00:18** a família recebeu a proativa `video_guia`
+  dizendo *"montar histórias do **Meu Filhos**"* — o placeholder impresso cru
+  como se fosse nome. Às **11:01:48**, 90 segundos depois, recebeu a
+  `crianca_especifica` dizendo *"no cadastro o nome dela não veio"*.
+  **Duas mensagens que se contradizem, na ordem errada.**
+- **O detector existe e funciona.** `motivoNomeNaoNome` devolve `"recado"` para
+  `"Meu Filhos"` (o `PLACEHOLDER` cobre `filh[oa]s?`) — foi ele que disparou a
+  `crianca_especifica`, corretamente. O problema é que a **`video_guia` não o
+  consulta**: ela monta a copy com `membro.nome` direto.
+- **É exatamente o defeito que `crianca-nome.ts` existe para impedir**, e que já
+  aconteceu antes: 25/07 com *"a comunicação da Cuido de Várias Crianças. Sou
+  Terapeuta!"*, e 02/08 com *"Meu Nome e Gisela Meu Filgo e Davi"*. Fechou-se a
+  porta na conversa; a proativa ficou aberta.
+- **Não é multi-criança.** A família tem **um** membro ativo. O que houve foi
+  plural escrito no campo do nome — provavelmente uma mãe com mais de um filho
+  que não escolheu um. É o caso de uso da `crianca_especifica`.
+- **A investigar junto:** quais outras proativas imprimem `membro.nome` sem
+  passar por `nomeUsavelCrianca`, e se a `crianca_especifica` deveria **segurar**
+  as demais proativas enquanto a criança não estiver definida.
+- **Critério de conclusão:** nenhuma mensagem sai com texto de recado no lugar
+  do nome, e a família não recebe duas mensagens contraditórias sobre isso.
+- **Agente recomendado:** INVESTIGAR
+
+---
+
 ## Como usar este arquivo
 
 ### Estados
@@ -4067,7 +4204,7 @@ trimestralmente, o que vier antes.
 
 ---
 
-**Próximo ID livre: PEND-033. *(024 e 025 reservadas por frentes ainda não publicadas.)***
+**Próximo ID livre: PEND-088. *(024 e 025 reservadas por frentes ainda não publicadas.)***
 
 > Conferir contra `origin/main`, não contra o seu branch. Dois branches podem
 > reivindicar o mesmo número — o conflito de merge nesta linha é o alarme.
