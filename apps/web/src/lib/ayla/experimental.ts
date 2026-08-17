@@ -67,11 +67,47 @@ export function familiasExperimentais(): string[] {
   }
 }
 
-/** Esta família conversa com a Ayla experimental? */
+/**
+ * A LIBERAÇÃO GERAL — uma chave PRÓPRIA, e não a ausência da allowlist.
+ *
+ * ⚠️ POR QUE NÃO REUSAR A LISTA. O comentário acima é explícito: lista vazia
+ * significa "ninguém", nunca "todo mundo", justamente para que apagar a
+ * variável por engano não promova as 202 famílias de uma vez. Transformar
+ * "lista vazia" em "todos" inverteria essa proteção — o erro mais barato de
+ * cometer viraria o mais caro.
+ *
+ * Então a liberação geral é um SIM explícito, escrito à mão, e só os valores
+ * `1` e `true` valem. Qualquer outra coisa — vazio, `0`, `sim`, um espaço, um
+ * erro de digitação — é **false**, e a família continua na Ayla atual.
+ *
+ * ROLLBACK: apagar esta variável no ambiente. Volta todo mundo para o caminho
+ * atual no turno seguinte, sem deploy de código.
+ */
+export function experimentalParaTodas(): boolean {
+  try {
+    const v = (process.env.AYLA_EXPERIMENTAL_TODAS ?? "").trim().toLowerCase();
+    return v === "1" || v === "true";
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Esta família conversa com a Ayla experimental?
+ *
+ * ⚠️ O QUE ESTE PORTÃO NÃO DECIDE — e é o que torna a liberação geral segura.
+ * Ele roda DEPOIS do gate de acesso, da segurança, da identificação da família
+ * e da criança e da idempotência do inbound (a descida C2, 15/08/2026). Abrir
+ * este portão para todas não afrouxa nenhum dos anteriores: quem não tem
+ * acesso continua sem acesso, e a crise continua vindo antes da cobrança.
+ */
 export function ehFamiliaExperimental(familyAccountId?: string | null): boolean {
   try {
     const id = typeof familyAccountId === "string" ? familyAccountId.trim() : "";
     if (!id) return false;
+    // A família precisa existir de qualquer forma: id vazio nunca entra, nem
+    // na liberação geral. O resto do turno depende de saber de quem se trata.
+    if (experimentalParaTodas()) return true;
     return familiasExperimentais().includes(id);
   } catch {
     // Erro ao ler configuração NUNCA manda família real para o experimento.
