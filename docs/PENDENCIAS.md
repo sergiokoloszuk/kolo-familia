@@ -20,6 +20,10 @@ Só o que está aberto. 🔒 = bloqueada.
 | [PEND-073](#pend-073) | Caminho novo não encurta a resposta em pedido de plano | A · Condução | P2 | ABERTA | decidir se o Core do experimental recebe a nota de `querPlano` |
 | [PEND-074](#pend-074) | Condução D0–D7 do Trial não existe em runtime | G · Comercial | P1 | IMPLEMENTADA, NÃO PUBLICADA | provar a condução na bancada com modelo real antes de publicar |
 | [PEND-075](#pend-075) | Allowlist do caminho novo: quem é, e por quê | H · Governança | P3 | RESOLVIDA | nenhum — a composição das 3 contas é intencional |
+| [PEND-090](#pend-090) | Contradição entre o perfil salvo e o relato de agora | C · Memória | P1 | ABERTA | frente própria: definir se a regra mora no Core v9 ou no código |
+| [PEND-089](#pend-089) | Prioridade real dos desafios — hoje o "top 3" é por recência | C · Memória | P2 | ABERTA | desenhar de onde vem a prioridade |
+| [PEND-091](#pend-091) | Três lacunas menores do contexto (interesses, idade, confirmação) | C · Memória | P2 | ABERTA | depende de PEND-089 |
+| [PEND-088](#pend-088) | Dois P2 da auditoria — decisão registrada: NÃO implementar agora | H · Governança | P2 | ADIADA | retomar quando houver investigação de latência ou funil |
 | [PEND-083](#pend-083) | Branch `bia/ciclo-tecnico` pode ter mais correções prontas e nunca publicadas | G · Entrega | P1 | ABERTA | auditar paridade Legacy × novo e branches não ancestrais de `main` |
 | [PEND-087](#pend-087) | Proativa imprime o texto cru do campo do nome como nome da criança | F · Limites | P1 | ABERTA | fazer a `video_guia` (e irmãs) consultarem `nomeUsavelCrianca` |
 | [PEND-084](#pend-084) | Caminho reativo escreve sequência de rotina que não é o quadro | B · Artefatos | P2 | ABERTA | ou não escreve etapas, ou lê do quadro como o condutor |
@@ -4104,6 +4108,116 @@ Aberta em: 2026-08-17 · Origem: família 83 9xxxx-4171 (Paula), 17/08
 
 ---
 
+### PEND-088
+**Dois P2 da auditoria de paridade — decisão registrada: NÃO implementar agora**
+Bloco: **H · Governança** · Prioridade: **P2** · Estado: **ADIADA (decisão)**
+Aberta em: 2026-08-17 · Origem: auditoria de paridade (PEND-083)
+
+- **Por que a ficha existe.** As duas correções abaixo estão prontas e testadas
+  em branches que nunca chegaram à `main`. A decisão de não trazê-las agora é
+  deliberada (Sérgio, 17/08/2026) — registrada aqui para não virar mais um
+  "estava pronto e ninguém sabia", que é exatamente o que a PEND-083 apura.
+
+- **`turn_id` + duração do turno** (`f3382e5`, `baa53d1`, `4e617c4`, branch
+  `feat/observabilidade-turno`). Dá correlação e duração a cada turno do
+  WhatsApp e aos quatro auxiliares. **VI NO CÓDIGO:** `turn_id` não existe em
+  `apps/web/src` na `main`. Relevante para diagnosticar latência e falha em
+  produção; não corrige nenhum defeito ativo.
+
+- **Analytics: "ativado" com um conceito só** (`7be968a`, branch
+  `bia/ciclo-tecnico`). `analytics/fases.ts` não existe na `main`. É de Admin,
+  não afeta família — mas casa com a regra de que todo indicador mostra a
+  própria definição na tela.
+
+- **Critério de retomada:** quando houver uma investigação de latência ou de
+  funil que precise do dado. Antes disso, implementar seria acrescentar sem
+  necessidade — e a ordem do projeto é remover, simplificar, consolidar,
+  restaurar, religar, corrigir, e só então acrescentar.
+- **Agente recomendado:** PROPOR (quando retomar)
+
+---
+
+### PEND-089
+**Prioridade real dos desafios da criança — hoje o "top 3" é por recência**
+Bloco: **C · Memória** · Prioridade: **P2** · Estado: **ABERTA**
+Aberta em: 2026-08-17 · Origem: investigação de onboarding/perfil (Parte D3)
+
+- **O que existe hoje. VI NO CÓDIGO:** `desafiosAtuais(pv, limite = 3)` varre os
+  domínios que têm texto, ordena por **`atualizado_em` decrescente** e corta em
+  três. Ou seja: são os três **mais recentes**, não os três que mais pesam.
+  `desafiosSemDetalhe(pv)` completa com os domínios marcados no cadastro que
+  ainda não têm texto.
+- **O que NÃO existe:** campo de prioridade, ranking, ou qualquer lugar onde a
+  família diga o que dói mais. O onboarding grava uma lista **sem ordem**; o
+  Trial não coleta prioridade. A Ayla consegue resumir "os 3 mais recentes",
+  nunca "os 3 que mais pesam".
+- **Por que importa:** o `limite = 3` decidiu sozinho o que é prioridade. Um
+  desafio que a família marcou como o pior, mas sobre o qual não fala há duas
+  semanas, sai do retrato — e entra o que ela mencionou de passagem ontem.
+- **NÃO alterar agora** (decisão do Sérgio, 17/08/2026). Precisa de desenho de
+  produto antes: quem declara a prioridade, quando, e se ela decai com o tempo.
+- **Critério de conclusão:** DESEJADO aprovado — de onde vem a prioridade e o
+  que acontece quando ela conflita com a recência.
+- **Agente recomendado:** PROPOR
+
+---
+
+### PEND-090
+**Contradição entre o perfil salvo e o relato de agora — frente própria**
+Bloco: **C · Memória** · Prioridade: **P1** · Estado: **ABERTA**
+Aberta em: 2026-08-17 · Origem: investigação de onboarding/perfil (Parte E)
+
+- **O caso:** o perfil diz "não fala" e a mãe conta que "ela pediu sorvete". Ou
+  "não tolera barulho" × "está indo bem nas festas". Isso pode ser evolução,
+  registro antigo errado, diferença por contexto, ou outra interpretação da
+  palavra — e hoje o sistema não percebe nenhuma das quatro.
+- **O que existe e resolve OUTRA coisa. VI NO CÓDIGO:** `conflito-kolo-vivo.ts`
+  compara **campo × campo dentro do Kolo Vivo** ("Comunicação diz X, Regulação
+  diz Y"), roda em background depois da incorporação, e **sinaliza para a mãe
+  revisar no app**. Não olha o relato do turno e não faz a Ayla perguntar.
+- **A regra JÁ FOI ESCRITA E NUNCA CHEGOU A LUGAR NENHUM:** commit `c645e55`
+  (branch `feat/piloto-4a-web-whatsapp`), com teste próprio de 147 linhas.
+  Confirmei que **não está em `diretrizes.ts` da `main`** e **não está no Core
+  v9** — li o documento ativo no banco: zero ocorrências de "contradi".
+- **O nó, e é por isso que é frente própria:** o caminho novo lê o **Core v9 do
+  banco**, não `diretrizes.ts`. Pôr em `diretrizes.ts` conserta Legacy e o
+  condutor de Rotina, **não** o caminho novo; pôr no Core v9 é alteração de
+  Core, que é decisão da Karina. E o protocolo avisa que regra que falha em
+  prompt se corrige estruturalmente — o caminho estrutural seria o código
+  comparar relato × perfil e injetar a discrepância, o que é bem mais caro.
+- **NÃO implementar junto de outra coisa** (decisão do Sérgio, 17/08/2026).
+- **Critério de conclusão:** DESEJADO aprovado, com o dono da regra definido.
+- **Agente recomendado:** PROPOR
+
+---
+
+### PEND-091
+**Três lacunas menores do contexto essencial**
+Bloco: **C · Memória** · Prioridade: **P2** · Estado: **ABERTA**
+Aberta em: 2026-08-17 · Origem: investigação de onboarding/perfil (Partes D2/D4)
+
+Ficha única porque as três são pequenas, do mesmo bloco de contexto, e
+provavelmente se resolvem juntas.
+
+- **Interesses sem data nem origem.** `interessesAtuais` faz a UNIÃO de
+  `como_e.interesses` e `preferencias.temas`, tira o que está em `evitar`, e
+  entrega uma lista chapada. Não dá para saber quando cada interesse entrou nem
+  de onde veio — então não dá para perceber que um deles envelheceu.
+- **Sem guarda de idade impossível.** `idadeAnos` deriva de `data_nascimento` e
+  trata fuso corretamente (`hojeLocalISO`), mas **NÃO SEI** se existe teto/piso:
+  `idadeEmMeses` em `rotina-guiada.ts` descarta `> 1200` meses, e não achei o
+  equivalente. Data digitada errada no cadastro vira idade errada no prompt.
+- **Confirmação conversacional do que a Ayla já sabe.** O desejado é ela
+  recuperar → confirmar em uma frase ("a Manu tem 6 anos, gosta de dinossauros,
+  e o que mais pesa parece ser…") → perguntar só o que falta. Hoje ela tem os
+  dados e não os devolve para conferência.
+- **Depende de:** a confirmação só faz sentido depois de PEND-089 (senão
+  confirma "os 3 mais recentes" como se fossem prioridade) e de A-1, que já foi
+  corrigida (senão confirma com gênero adivinhado).
+- **Agente recomendado:** PROPOR
+
+---
+
 ## Como usar este arquivo
 
 ### Estados
@@ -4204,7 +4318,7 @@ trimestralmente, o que vier antes.
 
 ---
 
-**Próximo ID livre: PEND-088. *(024 e 025 reservadas por frentes ainda não publicadas.)***
+**Próximo ID livre: PEND-092. *(024 e 025 reservadas por frentes ainda não publicadas.)***
 
 > Conferir contra `origin/main`, não contra o seu branch. Dois branches podem
 > reivindicar o mesmo número — o conflito de merge nesta linha é o alarme.
