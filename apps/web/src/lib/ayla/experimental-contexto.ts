@@ -132,6 +132,53 @@ const ROTULO_DOMINIO: Record<string, string> = {
   saude_geral: "saúde",
 };
 
+/**
+ * MUDANÇAS RECENTES — o que o perfil deixou de dizer, e quando (PEND-090 · Peça 2).
+ *
+ * ⚠️ O CONTEXTO SÓ MOSTRAVA O ESTADO, NUNCA A TRAJETÓRIA. O modelo recebia
+ * "Como se comunica: Fala palavras soltas" e não tinha como saber que até a
+ * semana passada ali dizia "Não-verbal". Sem isso, ou a Ayla trata a mudança
+ * como se sempre tivesse sido assim (e a família não se sente vista numa
+ * conquista real), ou ela desconfia de um relato novo sem ter em que se apoiar.
+ *
+ * O Core v9 §16 já manda não repetir pergunta "salvo se houver conflito ou
+ * motivo para acreditar que mudou". O motivo passa a estar ESCRITO aqui, em vez
+ * de precisar ser inferido de dois blocos de texto.
+ *
+ * ⚠️ SÓ O QUE É RECENTE. Marco de três meses atrás é história do app
+ * (`/evolucao`), não assunto da conversa de hoje. A janela é curta de
+ * propósito: o valor está em reconhecer a mudança perto de quando ela
+ * aconteceu, e um histórico inteiro no prompt vira ruído.
+ */
+const JANELA_MARCOS_DIAS = 30;
+
+export function marcosRecentes(
+  pv: LinhaPerfilVivo | null,
+  agora: Date = new Date(),
+  limite = 3,
+): string[] {
+  if (!pv) return [];
+  const extras = (pv.categorias_extras ?? {}) as Record<string, unknown>;
+  const bruto = Array.isArray(extras.marcos) ? (extras.marcos as unknown[]) : [];
+  const corte = new Date(agora.getTime() - JANELA_MARCOS_DIAS * 86400_000);
+  const out: Array<{ data: string; texto: string }> = [];
+  for (const m of bruto) {
+    const o = (m ?? {}) as { data?: unknown; texto?: unknown };
+    const data = String(o.data ?? "").trim();
+    const texto = String(o.texto ?? "").trim();
+    // Sem data não dá para dizer que é recente — e "mudou recentemente" sem
+    // data é exatamente o tipo de afirmação que não se pode fazer.
+    if (!data || !texto) continue;
+    const d = new Date(`${data.slice(0, 10)}T00:00:00Z`);
+    if (Number.isNaN(d.getTime()) || d < corte) continue;
+    out.push({ data: data.slice(0, 10), texto });
+  }
+  // Mais recentes primeiro — a lista já costuma vir assim, mas não depender
+  // disso é barato.
+  out.sort((a, b) => b.data.localeCompare(a.data));
+  return out.slice(0, limite).map((m) => `${m.data} — ${m.texto}`);
+}
+
 export function desafiosAtuais(pv: LinhaPerfilVivo | null, limite = 3): string[] {
   if (!pv) return [];
   const extras = (pv.categorias_extras ?? {}) as Record<string, unknown>;
@@ -356,6 +403,14 @@ export function montarContextoBase(params: {
   // que a família já respondeu.
   const desafios = desafiosAtuais(pv ?? null);
   if (desafios.length) linhas.push(`Desafios atuais:\n- ${desafios.join("\n- ")}`);
+
+  // ⚠️ DEPOIS DOS DESAFIOS, ANTES DAS LACUNAS. A mudança é sobre um desafio que
+  // já foi nomeado acima — lida junto, ela diz "isto aqui virou outra coisa".
+  // Lida antes, viraria manchete de uma criança que o modelo ainda não conhece.
+  const mudancas = marcosRecentes(pv ?? null);
+  if (mudancas.length) {
+    linhas.push(`Mudou recentemente (registrado):\n- ${mudancas.join("\n- ")}`);
+  }
 
   // ⚠️ O CRITÉRIO É "TEM TEXTO?", NUNCA "ENTROU NO TOP-3".
   //

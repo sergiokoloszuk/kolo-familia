@@ -24,6 +24,7 @@ Só o que está aberto. 🔒 = bloqueada.
 | [PEND-089](#pend-089) | Prioridade real dos desafios — hoje o "top 3" é por recência | C · Memória | P2 | ABERTA | desenhar de onde vem a prioridade |
 | [PEND-091](#pend-091) | Três lacunas menores do contexto (interesses, idade, confirmação) | C · Memória | P2 | ABERTA | depende de PEND-089 |
 | [PEND-088](#pend-088) | Dois P2 da auditoria — decisão registrada: NÃO implementar agora | H · Governança | P2 | ADIADA | retomar quando houver investigação de latência ou funil |
+| [PEND-058](#pend-058) | Fragmentação multi-balão: a Ayla responde duas vezes ao mesmo pensamento | A · Condução | P1 | ABERTA | escolher entre rechecagem e continuação — janela DESCARTADA |
 | [PEND-083](#pend-083) | Branch `bia/ciclo-tecnico` pode ter mais correções prontas e nunca publicadas | G · Entrega | P1 | ABERTA | auditar paridade Legacy × novo e branches não ancestrais de `main` |
 | [PEND-084](#pend-084) | Caminho reativo escreve sequência de rotina que não é o quadro | B · Artefatos | P2 | ABERTA | ou não escreve etapas, ou lê do quadro como o condutor |
 | [PEND-085](#pend-085) | Medir "condutor perguntou sem pôr proposta na mesa" | A · Condução | P2 | EM OBSERVAÇÃO | contar as ocorrências do log contra o total de turnos de rotina |
@@ -4183,6 +4184,62 @@ provavelmente se resolvem juntas.
 - **Depende de:** a confirmação só faz sentido depois de PEND-089 (senão
   confirma "os 3 mais recentes" como se fossem prioridade) e de A-1, que já foi
   corrigida (senão confirma com gênero adivinhado).
+- **Agente recomendado:** PROPOR
+
+---
+
+### PEND-058
+**Fragmentação multi-balão: a Ayla responde duas vezes ao mesmo pensamento**
+Bloco: **A · Condução** · Prioridade: **P1 de EXPERIÊNCIA** · Estado: **ABERTA — medida, sem correção escolhida**
+Aberta em: 2026-08-13 · Trazida para a `main` em 2026-08-17 · Origem: medição da PEND-054
+
+> ⚠️ **ESTA FICHA EXISTIA E NÃO ESTAVA AQUI.** Foi aberta em 13/08 no branch
+> `feat/piloto-4a-web-whatsapp` (commit `50b15b9`) e nunca chegou à `main`. O
+> código de `lote-inbound.ts` diz *"Ver PEND-058"* apontando para uma ficha que,
+> na fonte oficial, não existia. Terceiro caso do mesmo padrão nesta semana —
+> ver PEND-083.
+
+- **O caso que a trouxe de volta (Vanuza, 17/08/2026). PROVEI pelos carimbos de
+  `processada_em` em produção:**
+
+  ```
+  15:33:33.516  mãe: "ele fica muito celular / agitado às 17h / come pouco"
+  15:33:36.798  execução A acorda (janela de 3s) e CLAIMA a msg1
+  15:33:37.911  mãe: "comecou usar oculos faz 1 semana"   ← 1,1s DEPOIS do claim
+  15:33:41.771  execução B acorda e CLAIMA a msg2
+  15:33:50      A responde (as três dificuldades)
+  15:33:50      B responde (os óculos)
+  ```
+
+  Intervalo real entre as mensagens: **4,4 segundos**. Janela: **3,0**. Perdeu
+  por 1,1 s. A mãe recebeu duas respostas no mesmo segundo.
+
+- **MEDI na base inteira (30 dias, 17/08/2026):**
+  - 1.873 respostas reativas;
+  - **115 duplicações reais = 6,1%** (duas respostas substanciais em ≤ 20 s,
+    já descontadas as 15 segundas-bolhas intencionais da ponte do Plano);
+  - mediana do intervalo entre balões do mesmo turno: **11,2 s**;
+  - **p75 = 18,6 s · p90 = 34 s**;
+  - janela de silêncio atual: **3 s** (`JANELA_SILENCIO_MS`).
+
+- **AUMENTAR A JANELA ESTÁ DESCARTADO — decisão de produto (Sérgio,
+  17/08/2026).** Piora a latência de 100% dos turnos, sendo que 86,3% têm um
+  balão só, e mesmo assim não resolve a maioria: cobrir o p90 exigiria 34
+  segundos de espera para todo mundo. A janela de 7s que existia até 13/08 já
+  não alcançava 72,6% dos bursts — o problema nunca foi calibragem.
+
+- **Dois caminhos em avaliação, nenhum escolhido:**
+  1. **rechecagem antes de publicar** — a execução mais antiga desiste ao ver
+     que chegou mensagem nova durante a geração;
+  2. **tratar a mensagem tardia como continuação** — a Ayla emenda em vez de
+     recomeçar, e aí a mediana de 11,2 s deixa de importar.
+
+  A análise comparativa foi entregue em 17/08. Não implementar sem a decisão:
+  as duas mexem em como o turno é definido.
+
+- **Critério de conclusão:** a continuação tardia deixa de produzir duas
+  respostas desconexas, sem impor espera longa a quem manda um balão só.
+  Medir de novo os 6,1% depois da correção.
 - **Agente recomendado:** PROPOR
 
 ---
