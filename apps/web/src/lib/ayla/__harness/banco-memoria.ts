@@ -131,6 +131,16 @@ class Consulta implements PromiseLike<{ data: unknown; error: unknown }> {
   private contar = false;
   /** Colunas do `onConflict` quando o upsert pediu `ignoreDuplicates`. */
   private conflito: string[] | null = null;
+  /**
+   * Colunas do `onConflict` do upsert que MESCLA (sem `ignoreDuplicates`).
+   *
+   * ⚠️ 16/08/2026. Até aqui este duplo ignorava esse caso e simplesmente
+   * inseria — o que fazia um upsert de "uma linha por família, por criança,
+   * por dia" produzir DUAS linhas no teste e passar verde. Ou seja: o arnês
+   * não conseguia reprovar a duplicação que o índice único de 0078 existe para
+   * impedir. Agora ele mescla, como o PostgREST faz.
+   */
+  private conflitoMescla: string[] | null = null;
 
   constructor(
     private readonly db: BancoMemoria,
@@ -224,10 +234,13 @@ class Consulta implements PromiseLike<{ data: unknown; error: unknown }> {
     // só do produto — a trava de idempotência do inbound (`zaap_message_id`) —
     // e sem ele o duplo inseria a linha repetida e devolvia sucesso: a Z-API
     // reentregando o mesmo webhook passava VERDE em qualquer teste.
-    // O upsert que MESCLA (sem `ignoreDuplicates`) continua inserindo como
-    // antes; implementar merge mudaria o resultado de cenários já provados.
     if (opts?.ignoreDuplicates && opts.onConflict) {
       this.conflito = opts.onConflict.split(",").map((c) => c.trim());
+    } else if (opts?.onConflict) {
+      // ⚠️ O UPSERT QUE MESCLA passou a ser honrado em 16/08/2026. Antes ele
+      // caía no `insert` puro, e "uma linha por família, por criança, por dia"
+      // virava duas sem ninguém reprovar. Era o caso do `ayla_daily_checkins`.
+      this.conflitoMescla = opts.onConflict.split(",").map((c) => c.trim());
     }
     return this;
   }
@@ -277,6 +290,30 @@ class Consulta implements PromiseLike<{ data: unknown; error: unknown }> {
           );
           if (carga.length === 0) return { data: [], error: null };
           this.carga = carga;
+        }
+        // MERGE: linha existente com a mesma chave é ATUALIZADA, não duplicada.
+        // É o `ON CONFLICT (...) DO UPDATE` do Postgres, que só passou a existir
+        // de verdade em `ayla_daily_checkins` com o índice único da 0078.
+        if (this.conflitoMescla) {
+          const existentes = this.db.linhas(this.tabela);
+          const restantes: Linha[] = [];
+          const mescladas: Linha[] = [];
+          for (const nova of this.carga) {
+            const velha = existentes.find((l) =>
+              this.conflitoMescla!.every((col) => l[col] != null && l[col] === nova[col]),
+            );
+            if (velha) {
+              Object.assign(velha, nova);
+              this.db.escritas.push({ tabela: this.tabela, op: "upsert", linha: velha });
+              mescladas.push(velha);
+            } else {
+              restantes.push(nova);
+            }
+          }
+          if (restantes.length === 0) {
+            return { data: this.umSo ? (mescladas[0] ?? null) : mescladas, error: null };
+          }
+          this.carga = restantes;
         }
         const criadas = this.carga.map((l) => ({
           id: novoId(this.tabela),
