@@ -145,7 +145,67 @@ async function membroTemAvatar(supabase: SupabaseClient, membroId: string): Prom
   }
 }
 
-/** Há uma conversa de rotina em andamento? (último outbound tipo=rotina_conversa sem resposta ainda) */
+/**
+ * Uma etapa proposta — o que a família vai ver e o que vai virar cartão.
+ *
+ * ⚠️ MESMO SHAPE DE `TarefaProposta`, de propósito: é isto que vai para
+ * `gerarRotina({propostaAtual})` sem tradução nenhuma no meio. Uma conversão
+ * aqui seria a terceira composição da mesma sequência.
+ */
+export type EtapaProposta = { texto: string; hora: string | null };
+
+/**
+ * A PROPOSTA QUE ESTÁ NA MESA — e por que ela se auto-consome.
+ *
+ * Pendente = a ÚLTIMA mensagem de rotina desta família é uma proposta. Assim
+ * que qualquer outra mensagem de rotina sai (o quadro montado, uma pergunta
+ * nova), a proposta deixa de ser a última e para de valer sozinha — sem flag
+ * pra apagar, sem estado que possa ficar preso.
+ *
+ * É o mesmo desenho de `rotinaConversaPendente` e de `cards_status`: estado
+ * inferido do que aconteceu, não uma máquina de estados paralela.
+ */
+export async function propostaPendente(
+  supabase: SupabaseClient,
+  familyId: string,
+  agora: Date = new Date(),
+): Promise<{ etapas: EtapaProposta[]; membroId: string | null } | null> {
+  try {
+    const limite = new Date(agora.getTime() - 48 * 60 * 60 * 1000);
+    const { data } = await supabase
+      .from("ayla_messages")
+      .select("tipo, metadata, membro_atipico_id")
+      .eq("family_account_id", familyId)
+      .eq("direcao", "outbound")
+      .in("tipo", ["rotina_proposta", "rotina_conversa", "rotina_pronta"])
+      .gte("created_at", limite.toISOString())
+      .order("created_at", { ascending: false })
+      .limit(1);
+    const ultima = data?.[0];
+    if (!ultima || ultima.tipo !== "rotina_proposta") return null;
+    const meta = (ultima.metadata ?? {}) as { proposta?: unknown };
+    const etapas = Array.isArray(meta.proposta)
+      ? (meta.proposta as unknown[])
+          .map((e) => {
+            const o = (e ?? {}) as Record<string, unknown>;
+            const texto = String(o.texto ?? "").trim();
+            return texto ? { texto, hora: o.hora ? String(o.hora) : null } : null;
+          })
+          .filter((e): e is EtapaProposta => e != null)
+      : [];
+    // Proposta sem etapas não é proposta: sem elas não há o que a mãe tenha
+    // aprovado, e montar em cima disso seria inventar de novo.
+    if (!etapas.length) return null;
+    return { etapas, membroId: (ultima.membro_atipico_id as string | null) ?? null };
+  } catch (e) {
+    // Sem estado, o turno se comporta como antes desta frente existir: o
+    // condutor decide. Nunca derruba a conversa por causa de uma leitura.
+    console.warn("[ayla:rotina] leitura da proposta falhou:", e instanceof Error ? e.message : e);
+    return null;
+  }
+}
+
+/** Há uma conversa de rotina em andamento? (último outbound de rotina sem resposta ainda) */
 export async function rotinaConversaPendente(
   supabase: SupabaseClient,
   familyId: string,
@@ -156,7 +216,12 @@ export async function rotinaConversaPendente(
     .from("ayla_messages")
     .select("created_at, membro_atipico_id")
     .eq("family_account_id", familyId)
-    .eq("tipo", "rotina_conversa")
+    // ⚠️ A PROPOSTA TAMBÉM MANTÉM A CONVERSA ABERTA. Sem isto o portão do
+    // orquestrador não reconheceria o turno seguinte como continuação, e o
+    // "sim" da mãe cairia na conversa comum — a proposta morreria calada,
+    // que é exatamente o beco que `cards_status='aguardando'` já resolveu
+    // para o tema em 08/08/2026.
+    .in("tipo", ["rotina_conversa", "rotina_proposta"])
     .eq("direcao", "outbound")
     .gte("created_at", limite.toISOString())
     .order("created_at", { ascending: false })
@@ -440,7 +505,10 @@ Oriente a usar: deixar visível em casa e olhar com a pessoa o dia seguinte na n
 A pergunta é uma só: as etapas que vão pro quadro são as que ELA deu, ou você é que completou?
 
 - ELA DITOU A SEQUÊNCIA ("Mario chega, jantar, Mario vai embora, dormir"; "acorda 6h, escola 7h30, almoço, fono, jantar, dormir") → MONTE, sem pedir confirmação. Confirmar aqui é devolver a ela a mesma lista que ela acabou de escrever, e isso cansa e atrasa. Ela vê a rotina pronta e ajusta o que quiser; corrigir algo pronto é mais rápido que responder mais uma pergunta. Só pare se houver INCONSISTÊNCIA REAL no que ela deu (duas etapas na mesma hora, uma que não pode vir antes da outra) — e aí pergunte sobre a inconsistência, não sobre a lista inteira.
-- VOCÊ INFERIU, ACRESCENTOU OU REORGANIZOU — encaixou uma etapa que ela não citou, mudou a ordem, quebrou uma etapa em duas, completou o começo ou o fim → devolva "perguntar" com a proposta ESCRITA, curta, numerada, e uma pergunta só no fim. Exemplo do formato (não copie o conteúdo): "Eu faria assim: 1. Mario chega · 2. brincar um pouco · 3. jantar · 4. despedida · 5. dormir. Faz sentido ou quer mudar alguma etapa?" Um "sim", "pode ser", "isso mesmo" libera a montagem; uma correção entra e você monta com ela.
+- VOCÊ INFERIU, ACRESCENTOU OU REORGANIZOU — encaixou uma etapa que ela não citou, mudou a ordem, quebrou uma etapa em duas, completou o começo ou o fim → devolva "perguntar" E PREENCHA O CAMPO \`proposta\` com as etapas na ordem. Um "sim", "pode ser", "isso mesmo" libera a montagem; uma correção entra e você monta com ela.
+  ⚠️ NÃO ESCREVA A LISTA NA SUA "mensagem". O sistema imprime as etapas do campo \`proposta\` logo abaixo da sua fala — é a MESMA lista que ele vai guardar e que vai virar o quadro depois do aceite. Se você escrever a lista à mão também, viram duas listas que podem divergir, e foi assim que uma família leu 12 etapas e a criança recebeu 9 (07/08/2026).
+  Sua "mensagem" aqui é curta: uma linha dizendo o que você entendeu e uma pergunta só no fim ("Faz sentido assim ou você mudaria alguma parte?").
+  ⚠️ NÃO INVENTE RECOMPENSA. "Escolher a recompensa combinada", "ganhar um prêmio depois" — nada disso entra numa proposta sua. Se a família disser espontaneamente que depois vem um sorvete, aí sim entra, porque veio dela e é o que de fato vai acontecer. Rotina não é barganha (ver COMBINADO VISUAL).
 ⚠️ O que se confirma é O QUE É SEU. Não é confirmar sempre, nem nunca: é não montar em cima de suposição sua sem ela ver. Horário que ela não deu, você PROPÕE a partir do que sabe (chegada, escola, atividade fixa) e deixa claro que é sugestão; só não invente horário quando não há nada em que se apoiar. Propor horário dentro da sequência dela NÃO é inferir a sequência.
 ⚠️ NÃO transforme a confirmação em mais uma rodada de perguntas. É UMA mensagem, com a proposta inteira à vista, e uma pergunta só.
 Ponha uma dica curta NO PONTO DIFÍCIL — o momento que ela relatou, ou a transição que você já conhece do perfil. Uma ou duas, não uma aula. Quando fizer sentido, uma brincadeira ou atividade simples ancorada nos interesses dele.
@@ -731,6 +799,47 @@ function recusouTema(t: string): boolean {
 }
 
 /**
+ * A FAMÍLIA ESTÁ CONCORDANDO COM O QUE FOI PROPOSTO?
+ *
+ * Só ACEITE puro entra aqui: uma afirmação curta que não acrescenta conteúdo
+ * nenhum. "sim", "isso", "pode ser". Qualquer coisa com informação dentro
+ * ("pode ser, mas tira o banho") NÃO é aceite — é ajuste, e ajuste tem que
+ * chegar ao quadro.
+ */
+export function ehAceitePuro(texto: string | null | undefined): boolean {
+  const t = (texto ?? "")
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "")
+    // Emoji e pontuação não mudam a resposta — "sim 👍" é o mesmo "sim".
+    .replace(/[^\p{L}\s]/gu, "")
+    .trim();
+  if (!t) return false;
+  return /^(sim|isso|isso mesmo|e isso|exato|exatamente|perfeito|otimo|ok|okay|blz|beleza|show|ta bom|tudo bem|pode ser|pode fazer|pode montar|pode mandar|podes|concordo|gostei|adorei|amei|ficou bom|ficou otimo|ta otimo|vamos|bora|manda|fecha|fechado|combinado|acho que sim|por mim ta bom|do jeito que voce falou|assim mesmo|assim ta bom)$/.test(
+    t,
+  );
+}
+
+/**
+ * A MENSAGEM RESPONDE A UMA PROPOSTA DE SEQUÊNCIA?
+ *
+ * ⚠️ SÓ FAZ SENTIDO COM UMA PROPOSTA PENDENTE. Quem chama já checou isso — é o
+ * ESTADO que dá significado à mensagem, não a mensagem sozinha. Foi essa
+ * inversão que produziu o caso Manu: "Vamos tomar sorvete depois" foi lida
+ * isoladamente, e uma frase sobre a SEQUÊNCIA virou o tema visual dos cartões.
+ *
+ * Devolve "aceite" (pode montar o que foi proposto) ou "ajuste" (a família
+ * mexeu em alguma coisa — e o que ela disse tem que entrar). Nunca devolve
+ * null: com proposta na mesa, a mensagem da mãe é sobre a proposta. Mudança de
+ * assunto continua sendo tratada onde sempre foi — pelo `acao:"sair"` do
+ * condutor, que lê a conversa inteira e sabe julgar isso.
+ */
+export function lerRespostaAProposta(texto: string | null | undefined): "aceite" | "ajuste" {
+  return ehAceitePuro(texto) ? "aceite" : "ajuste";
+}
+
+/**
  * A MENSAGEM É A ESCOLHA DO TEMA?
  *
  * Determinístico de propósito. A resposta "princesas" é o gatilho do turno
@@ -739,6 +848,20 @@ function recusouTema(t: string): boolean {
  *
  * Conservador: só reconhece resposta CURTA e sem verbo de edição. Qualquer
  * outra coisa devolve null e segue o fluxo normal, onde o condutor decide.
+ *
+ * ── ENDURECIDO EM 17/08/2026, DEPOIS DO CASO MANU ───────────────────────────
+ *
+ * O critério antigo era "curta e sem verbo de edição", e isso deixou passar
+ * coisas que não são tema nenhum. PROVADO POR EXECUÇÃO contra as frases reais:
+ * "sim", "isso", "pode ser", "ficou bom", "depois sorvete" e até "não, primeiro
+ * o banho" viravam TEMA — e "Vamos tomar sorvete depois" (4 palavras, no limite
+ * exato do filtro) virou o tema dos cartões da Manu em produção.
+ *
+ * ⚠️ O CONSERTO NÃO É EXIGIR MAIS PALAVRAS. Contar palavra não separa "sorvete"
+ * (sequência) de "dinossauros" (tema) — as duas têm uma. O que separa é o
+ * SIGNIFICADO e o ESTADO: aceite não é tema, negação não é tema, e frase que
+ * fala de ORDEM ("depois", "primeiro", "no final") é sequência. A precedência
+ * de estado — proposta pendente vence tema — vive em `conduzirRotina`.
  */
 export function lerTemaEscolhido(texto: string | null | undefined): string | null {
   const bruto = (texto ?? "").trim();
@@ -747,6 +870,25 @@ export function lerTemaEscolhido(texto: string | null | undefined): string | nul
   // Pedido de mudança na rotina não é escolha de tema.
   if (/\b(muda|troca|tira|apaga|acrescenta|inclui|adiciona|edita|imprim|pdf)\w*\b/i.test(bruto)) return null;
   if (/\?$/.test(bruto)) return null;
+
+  // "tema X" é declaração explícita e vence os filtros abaixo: quem escreve
+  // "tema aventureiro" está nomeando o tema, e nenhuma heurística deve discutir.
+  const declarouTema = /^\s*(o\s+)?tema\b/i.test(bruto);
+  if (!declarouTema) {
+    // CONCORDAR NÃO É ESCOLHER TEMA. "sim" respondia à sequência e virava o
+    // tema dos cartões — o aceite sumia e a arte saía no tema "sim".
+    if (ehAceitePuro(bruto)) return null;
+    // NEGAR NÃO É ESCOLHER TEMA. "não, primeiro o banho" é correção.
+    if (/^\s*(n[ãa]o|nem|opa|espera|pera|calma)\b/i.test(bruto)) return null;
+    // FALAR DE ORDEM É FALAR DA SEQUÊNCIA, não do desenho do cartão.
+    if (
+      /\b(depois|antes|primeiro|primeira|[úu]ltimo|[úu]ltima|no final|no fim|no come[çc]o|no in[íi]cio|em seguida|ent[ãa]o|a[íi] sim|junto|tamb[ée]m|falta|esqueci)\b/i.test(
+        bruto,
+      )
+    ) {
+      return null;
+    }
+  }
 
   const limpo = bruto
     .replace(/^(pode ser|podia ser|prefiro|quero|queria|vamos de|faz(er)? (de|em|no|na)?|escolho|acho que|talvez|ah,?|sim,?)\s+/i, "")
@@ -794,6 +936,19 @@ const FERRAMENTA_CONDUTOR = {
         type: "boolean",
         description:
           "true SÓ quando o pedido é sobre a GRADE DA SEMANA — dias que se repetem toda semana ('as segundas', 'a semana inteira', 'organizar os dias da semana'). Um acontecimento ÚNICO é false, mesmo citando o nome do dia: 'domingo dia dos pais', 'sábado na casa da vó', 'segunda tenho dentista', 'dia 9', 'amanhã'. Na dúvida, false.",
+      },
+      proposta: {
+        type: "array",
+        description:
+          'As etapas que você está PROPONDO, na ordem, quando acao="perguntar" porque você inferiu/completou/reorganizou a sequência. Só o rótulo curto de cada etapa ("Chegar ao posto", "Tomar a vacina"), do jeito que a criança veria no cartão. NÃO preencha quando estiver montando o que a família já ditou, nem quando estiver só perguntando um dado.',
+        items: {
+          type: "object",
+          properties: {
+            texto: { type: "string" },
+            hora: { type: "string" },
+          },
+          required: ["texto"],
+        },
       },
       // NÃO existe campo `tema` aqui, pelo mesmo motivo que não existe
       // `rotinas`: o tema é escolha da FAMÍLIA, capturada pelo código quando
@@ -864,7 +1019,13 @@ function lerDesfechoDoCondutor(resp: { content: BlocoResposta[] }): unknown {
 export async function conduzirRotina(
   supabase: SupabaseClient,
   params: { familyId: string; membroAtipicoId: string; contexto: string; phoneE164?: string | null },
-): Promise<{ mensagem: string; pronto: boolean; aguardandoTema?: boolean } | null> {
+): Promise<{
+  mensagem: string;
+  pronto: boolean;
+  aguardandoTema?: boolean;
+  /** As etapas propostas neste turno, quando a Ayla está esperando resposta. */
+  proposta?: EtapaProposta[];
+} | null> {
   try {
     if (!params.contexto.trim()) return null;
 
@@ -888,12 +1049,37 @@ export async function conduzirRotina(
       .slice(0, 2)
       .join("* ou *");
 
+    // ── A PROPOSTA NA MESA VEM ANTES DE TUDO ───────────────────────────────
+    //
+    // ⚠️ ORDEM É A CORREÇÃO, não um detalhe de organização. O gatilho do tema
+    // ficava aqui em cima e interceptava QUALQUER mensagem curta enquanto uma
+    // rotina esperava tema — inclusive as que respondiam à sequência. Foi assim
+    // que "Vamos tomar sorvete depois" virou o tema visual dos cartões da Manu
+    // (17/08/2026): a frase falava da sequência, e o estado que a leu primeiro
+    // era o do tema.
+    //
+    // Com a proposta pendente lida ANTES, a pergunta que o sistema faz na
+    // ordem certa é: "há uma sequência esperando resposta?" Só depois: "há uma
+    // rotina esperando tema?".
+    const proposta = await propostaPendente(supabase, familyId);
+    const respostaAProposta = proposta ? lerRespostaAProposta(params.contexto) : null;
+    if (proposta) {
+      console.log(
+        `[ayla:rotina] proposta pendente (${proposta.etapas.length} etapas) — mensagem lida como "${respostaAProposta}"`,
+      );
+    }
+
     // ── GATILHO DETERMINÍSTICO DO TEMA ─────────────────────────────────────
     // A rotina existe e espera só uma palavra. Essa palavra NÃO passa por
     // modelo nem por parser: em 07/08/2026 foi exatamente assim que a escolha
     // certa ("princesas") se perdeu no caminho e os cartões nunca saíram.
     // Aqui ela vira UPDATE + disparo, direto.
-    const pendente = await rotinaAguardandoTema(supabase, familyId, params.membroAtipicoId);
+    //
+    // ⚠️ NÃO RODA COM PROPOSTA PENDENTE. Enquanto a família ainda não respondeu
+    // sobre a SEQUÊNCIA, nenhuma mensagem dela pode ser lida como tema.
+    const pendente = proposta
+      ? null
+      : await rotinaAguardandoTema(supabase, familyId, params.membroAtipicoId);
     if (pendente) {
       if (recusouTema(params.contexto)) {
         // Desistir também é um desfecho — e precisa apagar o estado, senão a
@@ -1063,12 +1249,23 @@ export async function conduzirRotina(
     // o que acontecia quando isto caía em `nao_e_rotina`.
     const soOrientacao = tamanho === "orientacao" && prontidao.desfecho === "suficiente";
 
-    // ── UMA DECISÃO SÓ ─────────────────────────────────────────────────────
-    // Havia duas: a prontidão dizia "suficiente" e o condutor ainda escolhia
-    // entre perguntar e montar. Foi assim que o Caso 1 gastou um turno a mais
-    // pedindo o horário do banho depois de a mãe já ter dado a sequência — e é
-    // a porta pela qual o interrogatório de 35 turnos volta.
-    const deveMontar = prontidao.desfecho === "suficiente" && !soOrientacao;
+    // ── DUAS PERGUNTAS DIFERENTES, E ELAS ESTAVAM FUNDIDAS ─────────────────
+    //
+    // `prontidao === "suficiente"` significava, ao mesmo tempo, "tenho dados
+    // para pensar numa sequência" E "estou autorizada a criar o artefato". São
+    // coisas distintas, e confundi-las foi o que gerou a rotina da Manu em 22
+    // segundos, com etapas que a Ayla inventou, sobre uma vacina que a mãe
+    // tinha acabado de mencionar pedindo uma SUGESTÃO.
+    //
+    //   `prontidaoAutoriza` .. tenho dados suficientes (o porteiro).
+    //   `familiaAutoriza` .... a família viu a sequência e concordou/corrigiu.
+    //
+    // A regra antiga continua inteira onde ela era certa: quando a FAMÍLIA
+    // ditou a sequência, o condutor devolve "montar" e o artefato sai no mesmo
+    // turno, sem burocracia nenhuma. O que deixou de existir é montar em cima
+    // de suposição da Ayla sem a família ver.
+    const prontidaoAutoriza = prontidao.desfecho === "suficiente" && !soOrientacao;
+    const familiaAutoriza = Boolean(proposta) && !soOrientacao;
 
     // O que falta é a ORDEM (não o escopo, não a criança). Quem decide entre
     // propor e perguntar é o TAMANHO, logo abaixo: uma passagem curta a gente
@@ -1113,12 +1310,27 @@ Exemplo do formato (não copie o conteúdo): "Eu não faria uma rotina do dia in
       // quem sabe disso é o código — que também conhece os interesses e faz a
       // pergunta depois da sequência, no lugar certo. Deixar os dois donos
       // perguntando foi o que produziu a pergunta ANTES da lista, em 08/08.
-      deveMontar
-        ? `JÁ DÁ PRA MONTAR — a criança, o recorte e a sequência já estão na mesa. NÃO faça mais nenhuma pergunta de dado neste turno: horário, ponto difícil, tema e transição enriquecem, mas NÃO seguram a entrega. O que faltar, ela ajusta depois em cima do que já existe.
+      // ── A FAMÍLIA JÁ RESPONDEU A PROPOSTA ────────────────────────────────
+      // Este bloco vem ANTES do de montar: com a sequência já aprovada, não há
+      // mais nada a decidir sobre prontidão — quem autorizou foi ela.
+      proposta
+        ? `VOCÊ JÁ PROPÔS ESTA SEQUÊNCIA E ELA ACABOU DE RESPONDER:
+${proposta.etapas.map((e, i) => `${i + 1}. ${e.texto}${e.hora ? ` — ${e.hora}` : ""}`).join("\n")}
+
+${
+  respostaAProposta === "aceite"
+    ? `Ela CONCORDOU. Monte exatamente esta sequência, sem mudar nada e sem perguntar mais nada: acao="montar". Sua fala é curta — o que você entendeu e a dica no ponto difícil. NÃO repita a lista: o sistema mostra o quadro logo abaixo.`
+    : `Ela MEXEU em alguma coisa. Aplique o que ela disse SOBRE a sequência acima — acrescentar uma etapa no fim, tirar uma, trocar a ordem, mudar uma palavra — e monte: acao="montar". O resto da sequência fica EXATAMENTE como estava; não refaça o quadro inteiro por causa de um ajuste.
+⚠️ O QUE ELA ACRESCENTA É DELA E ENTRA. "Vamos tomar sorvete depois" quer dizer que a sequência termina no sorvete — vira etapa, com as palavras dela. Não trate isso como tema de cartão, não trate como recompensa, e não descarte por não estar na sua proposta.`
+}`
+        : "",
+      prontidaoAutoriza && !proposta
+        ? `JÁ DÁ PRA PENSAR NA SEQUÊNCIA — a criança e o recorte estão na mesa. NÃO faça mais nenhuma pergunta de dado neste turno: horário, ponto difícil, tema e transição enriquecem, mas NÃO seguram a entrega.
 SÓ DUAS SAÍDAS AQUI, e a regra CONFIRMAR OU MONTAR decide qual:
 - as etapas são as que ELA deu → acao="montar".
-- você está COMPLETANDO a sequência (encaixando etapa que ela não citou, fechando o depois, mudando a ordem) → acao="perguntar", e a sua fala é a PROPOSTA NUMERADA inteira mais UMA pergunta no fim ("Eu faria assim: 1. … 2. … 3. … Faz sentido ou quer mudar alguma etapa?").
-⚠️ Neste segundo caso, PROPOR NÃO É PERGUNTAR MAIS. É proibido devolver uma pergunta de investigação ("ele conhece bem essa pessoa?", "ele fica agitado de que jeito?") no lugar da proposta: isso gasta o turno dela sem colocar nada na mesa. Escreva a sequência que você montaria e deixe ela corrigir uma etapa se quiser.`
+- você está COMPLETANDO ou INVENTANDO a sequência (encaixando etapa que ela não citou, fechando o depois, mudando a ordem, imaginando como é o momento) → acao="perguntar" E preencha o campo \`proposta\` com as etapas na ordem.
+⚠️ PROPOR NÃO É PERGUNTAR MAIS. É proibido devolver uma pergunta de investigação ("ele conhece bem essa pessoa?", "ele fica agitado de que jeito?") no lugar da proposta: isso gasta o turno dela sem colocar nada na mesa. Ponha a sequência na mesa e deixe ela corrigir uma etapa se quiser.
+⚠️ NA DÚVIDA SOBRE DE QUEM É A SEQUÊNCIA, PROPONHA. Uma proposta custa um turno; um quadro errado a família imprime e cola na parede.`
         : "",
       tamanho === "mini" && prontidao.desfecho === "suficiente"
         ? `TAMANHO: SEQUÊNCIA CURTA. O que ajuda aqui é a criança VER a passagem, não o dia inteiro organizado. Monte de 2 a 4 etapas, só o trecho que trava (ex.: videogame → guardar → banho → pijama). Não estenda pro resto do dia, mesmo que você saiba como ele é. acao="montar".
@@ -1174,16 +1386,60 @@ ${jaSabemos.rotinaExistente}`
     if (acao === "sair") return null;
 
     let mensagem = (typeof parsed?.mensagem === "string" && parsed.mensagem.trim()) || "";
-    // `pronto` continua aceito por compatibilidade — se o modelo devolver o
-    // formato antigo, nada quebra.
-    // Em ORIENTAÇÃO nada é montado, aconteça o que acontecer com o "acao": o
-    // tamanho foi decidido pelo porteiro, não pelo modelo que está escrevendo.
-    const pronto = !soOrientacao && (deveMontar || acao === "montar" || parsed?.pronto === true);
-    if (deveMontar && acao !== "montar") {
-      // O modelo perguntou mesmo assim. Montamos, e a pergunta dele não vai
-      // junto: sairia uma mensagem que pergunta e entrega ao mesmo tempo.
-      console.warn(`[ayla:rotina] condutor pediu "${acao}" com prontidão suficiente — montando assim mesmo`);
-      mensagem = "";
+
+    // ── AS ETAPAS QUE A AYLA ESTÁ PROPONDO NESTE TURNO ─────────────────────
+    // Só valem quando ela NÃO vai montar. Uma proposta junto de um quadro
+    // pronto seria a segunda lista de novo.
+    const propostaDoTurno: EtapaProposta[] = Array.isArray(
+      (parsed as { proposta?: unknown } | null)?.proposta,
+    )
+      ? ((parsed as { proposta: unknown[] }).proposta
+          .map((e) => {
+            const o = (e ?? {}) as Record<string, unknown>;
+            const texto = String(o.texto ?? "").trim();
+            return texto ? { texto: texto.slice(0, 120), hora: o.hora ? String(o.hora) : null } : null;
+          })
+          .filter((e): e is EtapaProposta => e != null)
+          .slice(0, 25) as EtapaProposta[])
+      : [];
+
+    // ── QUEM AUTORIZA A GERAÇÃO ────────────────────────────────────────────
+    //
+    // ⚠️ O `acao === "montar"` SOLTO SAIU DAQUI, e essa é a correção do
+    // portão. Ele era uma SEGUNDA PORTA: com a prontidão devolvendo "falta" —
+    // inclusive o "falta" que ela devolve quando FALHA —, bastava o modelo
+    // dizer "montar" para o artefato sair. A falha segura protegia contra o
+    // erro dela mesma e não protegia contra o modelo.
+    //
+    // Agora existe UMA porta com duas chaves, e as duas vêm de fora do modelo:
+    //   · o porteiro diz que há dados suficientes E o condutor escolheu montar;
+    //   · ou a FAMÍLIA já viu a sequência e respondeu.
+    //
+    // `parsed.pronto` (formato antigo) também saiu: era a mesma porta com
+    // outro nome.
+    const pronto =
+      !soOrientacao &&
+      ((prontidaoAutoriza && acao === "montar") || (familiaAutoriza && acao !== "perguntar"));
+
+    // ⚠️ A PROPOSTA DO CONDUTOR DEIXOU DE SER DESCARTADA — 17/08/2026.
+    //
+    // Aqui ficava `if (deveMontar && acao !== "montar") { mensagem = "" }`: com
+    // a prontidão dizendo "suficiente", o `acao:"perguntar"` do condutor era
+    // ignorado e a fala dele — que era a PROPOSTA — jogada fora. A regra
+    // "CONFIRMAR OU MONTAR" existia no contrato desde 08/08 e nunca chegava à
+    // família. Era a causa raiz da geração prematura.
+    //
+    // O medo que produziu aquela linha continua legítimo: o interrogatório. Por
+    // isso a saída não é "sempre perguntar", é "perguntar só quando há uma
+    // PROPOSTA na mão". Pergunta sem proposta segue barrada logo abaixo.
+    const propondo = !pronto && acao === "perguntar" && propostaDoTurno.length > 0;
+    if (prontidaoAutoriza && acao === "perguntar" && propostaDoTurno.length === 0) {
+      // Ele tinha dados e devolveu pergunta SEM colocar sequência na mesa —
+      // é exatamente o turno gasto que a regra antiga queria evitar. Aqui não
+      // se monta (seria montar sem a família ver); registra-se para calibrar.
+      console.warn(
+        `[ayla:rotina] condutor perguntou com prontidão suficiente e SEM proposta — turno gasto sem sequência na mesa`,
+      );
     }
     // O tema NÃO vem do modelo. Nesta função ele é sempre null: quando a
     // família escolhe, quem grava é o gatilho determinístico, direto no banco.
@@ -1220,6 +1476,27 @@ ${jaSabemos.rotinaExistente}`
         contexto: [jaSabemos.perfil, jaSabemos.rotinaExistente, transicoesTxt].filter(Boolean).join("\n"),
         pontoDificil: pontoDificilDoTurno,
         tamanho,
+        // ── A SEQUÊNCIA ACORDADA CHEGA AO ARTEFATO ─────────────────────────
+        //
+        // ⚠️ MECANISMO REUSADO, NÃO CRIADO. `propostaAtual` já existia no
+        // gerador — é o que o assistente da WEB usa nas idas e vindas ("ajuste
+        // de uma proposta já mostrada"). O WhatsApp nunca o usou: cada turno
+        // recompunha a sequência do zero a partir da conversa, e por isso o que
+        // a mãe leu e o que foi gravado podiam divergir.
+        //
+        // Passando a proposta aprovada, o gerador ajusta o que ela pediu em
+        // cima da lista que ela viu, em vez de inventar outra. É o que faz "a
+        // sequência do quadro é a que foi combinada" deixar de ser uma regra
+        // de prompt e virar o caminho do dado.
+        propostaAtual: proposta
+          ? [
+              {
+                nome: "Rotina",
+                dia_semana: null,
+                tarefas: proposta.etapas.map((e) => ({ texto: e.texto, hora: e.hora ?? null })),
+              },
+            ]
+          : null,
         // A prontidão já rodou lá em cima, antes do turno de conversa.
         pularProntidao: true,
         // A guarda de identidade precisa da família inteira pra comparar o
@@ -1470,13 +1747,36 @@ Ah — se quiser, o próprio ${nome} pode ser o personagem dos cartões em vez d
         : `${fechamento}${quadro}${orient}${dica}`;
     }
 
+    // ── A PROPOSTA É IMPRESSA PELO CÓDIGO, DA MESMA FONTE QUE SERÁ GRAVADA ──
+    //
+    // Mesma decisão de `sequenciaDoQuadro`: a lista que a família lê e a lista
+    // que o sistema guarda são o MESMO dado, renderizado uma vez. O condutor
+    // escreve a fala; as etapas vêm do campo estruturado. Assim não existe
+    // "uma sequência no WhatsApp e outra no estado".
+    if (propondo) {
+      const lista = propostaDoTurno
+        .map((e, i) => `${i + 1}. ${e.texto}${e.hora ? ` — ${e.hora}` : ""}`)
+        .join("\n");
+      const fecho = /\?\s*$/.test(mensagem)
+        ? "" // o condutor já terminou perguntando; não perguntar duas vezes
+        : "\n\nFaz sentido assim ou você mudaria alguma parte?";
+      mensagem = `${mensagem}\n\n${lista}${fecho}`;
+    }
+
     if (!mensagem) return null;
     // AGUARDANDO O TEMA: a rotina existe, mas os cartões dependem de uma
     // palavra que ainda não veio. A conversa fica ABERTA (tipo rotina_conversa)
     // pra que a próxima mensagem dela — "pode ser dinossauros" — volte pra cá
     // e o tema seja aplicado. Se fechássemos com "rotina_pronta", a resposta
     // dela cairia na conversa comum e o tema morreria ali, sem cartão nenhum.
-    return { mensagem, pronto: pronto && rotinas.length > 0, aguardandoTema: faltaTemaFinal };
+    return {
+      mensagem,
+      pronto: pronto && rotinas.length > 0,
+      aguardandoTema: faltaTemaFinal,
+      // Quem persiste é o orquestrador (é ele que fala com `ayla_messages`).
+      // Devolver as etapas aqui é o que faz a proposta sobreviver ao turno.
+      proposta: propondo ? propostaDoTurno : undefined,
+    };
   } catch (e) {
     console.warn("[ayla:rotina-guiada] falha:", e instanceof Error ? e.message : e);
     return null;

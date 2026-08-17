@@ -45,7 +45,12 @@ describe("A · a mãe ditou a sequência → NÃO ganha pergunta extra", () => {
 describe("B · a Ayla inferiu → NÃO pode montar em silêncio", () => {
   it("6. o contrato manda devolver a proposta e perguntar", () => {
     expect(CONTRATO_ROTINA).toMatch(/VOCÊ INFERIU, ACRESCENTOU OU REORGANIZOU/);
-    expect(CONTRATO_ROTINA).toMatch(/devolva "perguntar" com a proposta/i);
+    // ⚠️ ATUALIZADO EM 17/08/2026. Antes a proposta era só texto na fala do
+    // modelo — e texto na fala não sobrevive ao turno, então o "sim" da mãe
+    // ficava sem referente e a sequência aprovada não tinha como chegar ao
+    // quadro. Agora ela volta ESTRUTURADA, no campo `proposta`, que é o mesmo
+    // dado que o sistema imprime, guarda e usa para montar.
+    expect(CONTRATO_ROTINA).toMatch(/devolva "perguntar" E PREENCHA O CAMPO/i);
   });
 
   it("7. os quatro modos de inferir estão nomeados", () => {
@@ -59,8 +64,13 @@ describe("B · a Ayla inferiu → NÃO pode montar em silêncio", () => {
     }
   });
 
-  it("8. a proposta é escrita, curta e com UMA pergunta", () => {
-    expect(CONTRATO_ROTINA).toMatch(/curta, numerada, e uma pergunta só/i);
+  it("8. a proposta é curta, com UMA pergunta, e a lista é impressa pelo sistema", () => {
+    // ⚠️ ATUALIZADO EM 17/08/2026. A lista deixou de ser escrita à mão pelo
+    // modelo: quem imprime é o código, a partir do campo `proposta`. Duas
+    // listas no mesmo turno podiam divergir — foi assim que uma família leu 12
+    // etapas e a criança recebeu 9 (07/08/2026).
+    expect(CONTRATO_ROTINA).toMatch(/NÃO ESCREVA A LISTA NA SUA "mensagem"/i);
+    expect(CONTRATO_ROTINA).toMatch(/uma pergunta só no fim/i);
   });
 
   it("9. um 'sim' curto libera a montagem", () => {
@@ -138,9 +148,16 @@ describe("a instrução injetada quando dá pra montar", () => {
     expect(GUIADA).toMatch(/a regra CONFIRMAR OU MONTAR decide qual/);
   });
 
-  it("21. completar a sequência devolve PROPOSTA NUMERADA, não pergunta", () => {
-    expect(GUIADA).toMatch(/você está COMPLETANDO a sequência/);
-    expect(GUIADA).toMatch(/PROPOSTA NUMERADA inteira mais UMA pergunta/);
+  it("21. completar a sequência devolve PROPOSTA ESTRUTURADA, não pergunta", () => {
+    // ⚠️ ATUALIZADO EM 17/08/2026 — ver o teste 8. A instrução passou a pedir o
+    // campo `proposta`, e ganhou o caso que faltava: INVENTAR a sequência
+    // (imaginar como é o momento) conta como completar. Era o buraco do caso
+    // Manu — a Ayla não completou nada, inventou tudo, e montou.
+    expect(GUIADA).toMatch(/você está COMPLETANDO ou INVENTANDO a sequência/);
+    // Sem crase no padrão: `GUIADA` é o CÓDIGO-FONTE, e ali a crase aparece
+    // escapada dentro do template literal.
+    expect(GUIADA).toMatch(/preencha o campo .*proposta.* com as etapas na ordem/i);
+    expect(GUIADA).toMatch(/NA DÚVIDA SOBRE DE QUEM É A SEQUÊNCIA, PROPONHA/);
   });
 
   it("22. proíbe explicitamente a pergunta de investigação no lugar da proposta", () => {
