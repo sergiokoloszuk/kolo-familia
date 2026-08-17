@@ -20,6 +20,7 @@ Só o que está aberto. 🔒 = bloqueada.
 | [PEND-073](#pend-073) | Caminho novo não encurta a resposta em pedido de plano | A · Condução | P2 | ABERTA | decidir se o Core do experimental recebe a nota de `querPlano` |
 | [PEND-074](#pend-074) | Condução D0–D7 do Trial não existe em runtime | G · Comercial | P1 | IMPLEMENTADA, NÃO PUBLICADA | provar a condução na bancada com modelo real antes de publicar |
 | [PEND-075](#pend-075) | Allowlist do caminho novo: quem é, e por quê | H · Governança | P3 | RESOLVIDA | nenhum — a composição das 3 contas é intencional |
+| [PEND-082](#pend-082) | Ayla repete orientação do turno anterior — medir frequência real | A · Condução | P2 | EM OBSERVAÇÃO | juntar 30–50 turnos reativos e contar |
 | [PEND-080](#pend-080) | Liberar o caminho novo para TODAS as famílias | A · Condução | P1 | ABERTA 🔒 | fechar os 6 bloqueadores antes de ampliar a allowlist |
 | [PEND-077](#pend-077) | `ayla_daily_checkins` nunca gravou uma linha (400 desde 0001) | H · Governança | P1 | ESCRITA PROVADA · LEITURA NÃO | ligar a leitura do check-in no caminho novo |
 | [PEND-081](#pend-081) | Caminho novo grava o check-in e nunca o lê de volta | C · Memória | P1 | ABERTA | mover/duplicar a leitura para antes do `return` do ramo novo |
@@ -3585,6 +3586,50 @@ Aberta em: 2026-08-15 · Resolvida em: 2026-08-16, por decisão da Karina
 - **Não adicionar nenhuma outra família** sem decisão explícita.
 - **Lição de método:** antes de chamar de incidente, conferir a tabela que
   concede o direito. `controle_acessos` respondia isso numa consulta.
+
+---
+
+### PEND-082
+**Ayla repete orientação já dada no turno imediatamente anterior**
+Bloco: **A · Condução** · Prioridade: **P2** · Estado: **EM OBSERVAÇÃO**
+Aberta em: 2026-08-17 · Origem: conversa real da Karina, pós-rollout geral
+
+- **O caso.** A mãe respondeu uma única palavra — "Manu", desambiguando de qual
+  filha falava — e recebeu 283 tokens que repetiam quase inteira a orientação
+  dada 69 segundos antes (os mesmos quatro passos sobre não obrigar, oferecer
+  alimento aceito, deixar tocar sem provar).
+- **NÃO é defeito de contexto. PROVEI POR EXECUÇÃO:** reconstruí o bloco
+  `<conversa_recente>` exato daquele turno pelo algoritmo real do código. A
+  resposta anterior da Ayla estava lá, **íntegra (1.297 chars), rotulada
+  `Ayla:` e imediatamente antes da mensagem da mãe**. O histórico leva as 10
+  últimas mensagens, sem filtro por papel e sem truncamento por linha.
+- **Classificação: B — contexto correto, o modelo repetiu.** O Core v9 diz, em
+  `CONTINUIDADE DA CONVERSA`: *"Não repita a orientação anterior inteira.
+  Reconheça o que aconteceu, preserve o que funcionou e ajuste apenas o próximo
+  passo."* A regra existe e foi ignorada.
+- **Por que NÃO se corrige agora:** uma ocorrência não é padrão, e a régua do
+  projeto é que só bloqueia o achado que se repete. Acrescentar mais texto ao
+  Core proibindo repetição competiria com a instrução de ser prestativa — e
+  regra que falha em prompt se corrige estruturalmente, não com mais prompt.
+- **CRITÉRIO DE MEDIÇÃO, acordado:** juntar **30–50 turnos reativos reais** do
+  caminho experimental e classificar cada repetição em *necessária* ·
+  *parcial aceitável* · *claramente desnecessária*. Registrar tokens de saída e
+  latência do terceiro grupo.
+  - **raro** → variação normal do modelo, fecha sem correção;
+  - **recorrente** → volta com frequência medida, exemplos, impacto em
+    tokens/latência, menor correção estrutural e risco de quebrar continuidade.
+- **Amostra em 17/08:** ~13 turnos com métrica desde a liberação geral. **Não
+  suficiente** — a medição precisa esperar acumular.
+- **Hipótese estrutural a testar SE virar padrão (não medida):** as respostas
+  anteriores da própria Ayla ocupam ~3.000 dos ~7.700 tokens de entrada (5 de
+  10 linhas do histórico, de 1.297 a 3.722 chars cada). Quanto mais texto
+  próprio ela vê, mais o padrão "responder assim" pode se reforçar. **NÃO SEI**
+  se limitar isso melhora ou piora a continuidade — cortar a fala da Ayla é
+  justamente o que quebra a retomada ("o que funcionou foi o timer" costuma
+  estar na fala dela). `experimental.ts`, `montarContexto`, o `slice(-10)`.
+- **Durante a observação, NÃO alterar:** Core, histórico, provider, Boas
+  Práticas, limites de saída.
+- **Agente recomendado:** MEDIR
 
 ---
 
