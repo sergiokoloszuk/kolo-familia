@@ -1,3 +1,4 @@
+import { pronomesPara, type Genero } from "./pronomes";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { idadeAnos } from "@/lib/idade";
 
@@ -262,6 +263,8 @@ export function montarContextoBase(params: {
     nome: string | null;
     data_nascimento: string | null;
     diagnosticos_formais: unknown;
+    /** Opcional de propósito: quem não tem o dado continua chamando igual. */
+    genero?: string | null;
   } | null;
   perfilVivo: LinhaPerfilVivo | null;
 }): ContextoBase {
@@ -277,6 +280,28 @@ export function montarContextoBase(params: {
   const idade = idadeAnos(membro.data_nascimento);
   linhas.push(`Criança: ${membro.nome ?? "(sem nome)"}${idade != null ? `, ${idade} anos` : ""}`);
   if (idade == null) lacunas.push("data de nascimento");
+
+  // ── O GÊNERO REGISTRADO CHEGA AO MODELO (17/08/2026) ─────────────────────
+  //
+  // ⚠️ ERA O ÚNICO DOS CINCO DADOS QUE O SISTEMA TINHA E NÃO ENTREGAVA. A
+  // coluna `membros_atipicos.genero` já vinha no `select` e já era usada por
+  // `resolverFoco` (é ela que faz "minha filha" apontar para a criança certa),
+  // mas nenhuma linha deste bloco a mencionava. Quando a Ayla escrevia "ele" ou
+  // "ela", estava adivinhando — quase sempre pelo nome, que é exatamente o
+  // palpite que acabou de ser removido das proativas (`endsWith("a")`).
+  //
+  // ⚠️ SÓ QUANDO É DADO REGISTRADO. `pronomesPara` é a fonte única do projeto e
+  // já responde isso em `generoDefinido`: masculino e feminino são escolhas da
+  // família; `neutro`, `null` e qualquer valor estranho caem no mesmo lugar e
+  // NÃO produzem linha nenhuma. Ausência de gênero não vira gênero inferido, e
+  // não vira lacuna: não se pergunta o gênero da criança só para escrever
+  // bonito — o Core já sabe falar de forma neutra quando não sabe.
+  //
+  // Entra como PRONOME, não como rótulo ("Gênero: feminino"), porque o que o
+  // modelo precisa é da concordância, não de um campo de cadastro para
+  // comentar.
+  const p = pronomesPara(membro.genero as Genero);
+  if (p.generoDefinido) linhas.push(`Como falar dela: ${p.sujeito}/${p.possessivo}`);
 
   // ⚠️ `length > 0`, e não a verdade do array: `[]` é TRUTHY em JS, e era isso
   // que fazia o prompt receber "Diagnóstico informado pela família: " vazio.
