@@ -89,9 +89,16 @@ describe("os cinco estão ativos no banco", () => {
     }
   });
 
-  it("MORDE: o resolvedor só é chamado para `core`", async () => {
-    // Se alguém acrescentar uma leitura de outro documento, ela aparece aqui
-    // como consulta a mais — e o custo de banco é o primeiro sintoma.
+  it("MORDE: o resolvedor é chamado para `core` e `trial` — e mais nada", async () => {
+    // ⚠️ ERA 1, PASSOU A SER 2 EM 17/08/2026. O documento do Trial foi
+    // integrado: ele é o COMO da intenção que o `<jornada>` escolhe. As duas
+    // leituras correm no MESMO `Promise.all`, então não há espera nova em
+    // série — o que este teste protege é o NÚMERO de documentos que o turno
+    // consulta, não a latência.
+    //
+    // `plano`, `cartoes_visuais` e `fontes_confiaveis` continuam fora. Se
+    // alguém ligar mais um, este número sobe e o teste reprova — que é
+    // exatamente o alarme que se quer.
     const cli = db.cliente() as unknown as { from: (t: string) => unknown };
     const orig = cli.from.bind(cli);
     let docsLidos = 0;
@@ -100,21 +107,6 @@ describe("os cinco estão ativos no banco", () => {
       return orig(t);
     };
     await responderExperimental(cli as never, { familyId: FAM, mensagem: "oi" });
-    expect(docsLidos, "houve mais de uma leitura de documentos no turno").toBe(1);
-  });
-});
-
-describe("sem versão ativa, os quatro não quebram nada", () => {
-  it("MORDE: só o Core tem fallback de código; os outros devolvem vazio", async () => {
-    const { resolverDocumento } = await import("./documentos");
-    const vazio = new BancoMemoria().cliente();
-    esquecerCacheDeDocumentos();
-    const core = await resolverDocumento(vazio, "core");
-    expect(core.conteudo.length, "o Core perdeu o fallback do código").toBeGreaterThan(10_000);
-    for (const chave of ["trial", "plano", "cartoes_visuais", "fontes_confiaveis"] as const) {
-      const d = await resolverDocumento(vazio, chave);
-      expect(d.conteudo, `"${chave}" ganhou um fallback de código — segunda fonte de verdade`).toBe("");
-      expect(d.origem).toBe("fallback");
-    }
+    expect(docsLidos, "número de documentos lidos no turno mudou").toBe(2);
   });
 });

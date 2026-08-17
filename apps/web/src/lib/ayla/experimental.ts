@@ -135,6 +135,8 @@ export type TurnoExperimental = {
     jornada_fechamento?: boolean;
     /** Quanto o bloco da jornada engordou o prompt. Zero = não entrou. */
     jornada_chars?: number;
+    /** Quanto o documento do Trial engordou o prompt. Zero = não entrou. */
+    trial_doc_chars?: number;
   };
 };
 
@@ -382,7 +384,7 @@ export async function responderExperimental(
     // ⚠️ O SIMULADOR NÃO TEM JORNADA. Ele não é uma família em teste; conduzir
     // comercialmente uma tela de Admin não significa nada.
     const semJornada = params.origem === "simulador";
-    const [ctxTurno, core, bps, estadoTrial, evidencias] = await Promise.all([
+    const [ctxTurno, core, bps, estadoTrial, evidencias, docTrial] = await Promise.all([
       montarContexto(supabase, params.familyId, params.mensagem, params.turnosSimulados ?? []),
       resolverDocumento(supabase, "core", params.rascunhoCore ?? null),
       skillsDoTurno.length
@@ -399,11 +401,28 @@ export async function responderExperimental(
       semJornada
         ? Promise.resolve(EVIDENCIAS_VAZIAS)
         : lerEvidenciasJornada(supabase, params.familyId),
+      // ⚠️ O DOCUMENTO DO TRIAL — a terceira leitura desta frente, e ela também
+      // corre AO LADO das outras. Nenhuma espera nova em série.
+      //
+      // Ele é o COMO: a profundidade para executar a intenção que o `<jornada>`
+      // já escolheu. Não decide o dia, não conta dias, não agenda nada — quem
+      // faz isso é `lerEstadoTrial` e o código das proativas.
+      semJornada ? Promise.resolve(null) : resolverDocumento(supabase, "trial"),
     ]);
     const msBp = Date.now() - tBp;
     // Determinístico e barato: nenhuma chamada de modelo, nenhuma escrita. Sai
     // vazio para assinante, cortesia, staff e para quem não está em teste.
     const jornada = estadoTrial ? blocoDaJornada(estadoTrial, evidencias) : "";
+    // ⚠️ UM DONO PARA A DECISÃO, E ELE JÁ EXISTE. O documento entra EXATAMENTE
+    // quando o `<jornada>` entra — não por uma segunda regra escrita aqui.
+    //
+    // `blocoDaJornada` já devolve "" para assinante, cortesia, staff, teste não
+    // iniciado e estado desconhecido; amarrar o documento ao resultado dela faz
+    // as duas coisas nunca divergirem. Uma segunda condição aqui seria a
+    // segunda verdade que este repositório já pagou caro para não ter.
+    //
+    // Fora da condução comercial o contexto não cresce um caractere.
+    const conducaoTrial = jornada ? (docTrial?.conteudo ?? "") : "";
     const diaDaJornada = estadoTrial?.emConducaoComercial ? estadoTrial.dia : null;
     const fechamentoDoDia = Boolean(
       jornada &&
@@ -439,7 +458,12 @@ export async function responderExperimental(
       // com quem é a criança. Antes do repertório porque o repertório é
       // material de consulta, e material não deve ficar entre a conversa e a
       // razão dela.
-      system: [core.conteudo, bloco, jornada, repertorio].filter(Boolean).join("\n\n"),
+      // O documento do Trial vem LOGO DEPOIS do `<jornada>`, porque ele é a
+      // profundidade daquele bloco — e antes do repertório, que é material de
+      // consulta e não deve ficar entre a conversa e a razão dela.
+      system: [core.conteudo, bloco, jornada, conducaoTrial, repertorio]
+        .filter(Boolean)
+        .join("\n\n"),
       messages: [{ role: "user", content: params.mensagem }],
       maxTokens: 1200,
       cacheSystem: true,
@@ -509,6 +533,8 @@ export async function responderExperimental(
         jornada_dia: diaDaJornada,
         jornada_fechamento: fechamentoDoDia,
         jornada_chars: jornada.length,
+        /** Quanto o documento do Trial engordou o prompt. Zero = não entrou. */
+        trial_doc_chars: conducaoTrial.length,
       },
     };
   } catch (e) {
