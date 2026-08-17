@@ -25,7 +25,6 @@ Só o que está aberto. 🔒 = bloqueada.
 | [PEND-091](#pend-091) | Três lacunas menores do contexto (interesses, idade, confirmação) | C · Memória | P2 | ABERTA | depende de PEND-089 |
 | [PEND-088](#pend-088) | Dois P2 da auditoria — decisão registrada: NÃO implementar agora | H · Governança | P2 | ADIADA | retomar quando houver investigação de latência ou funil |
 | [PEND-083](#pend-083) | Branch `bia/ciclo-tecnico` pode ter mais correções prontas e nunca publicadas | G · Entrega | P1 | ABERTA | auditar paridade Legacy × novo e branches não ancestrais de `main` |
-| [PEND-087](#pend-087) | Proativa imprime o texto cru do campo do nome como nome da criança | F · Limites | P1 | ABERTA | fazer a `video_guia` (e irmãs) consultarem `nomeUsavelCrianca` |
 | [PEND-084](#pend-084) | Caminho reativo escreve sequência de rotina que não é o quadro | B · Artefatos | P2 | ABERTA | ou não escreve etapas, ou lê do quadro como o condutor |
 | [PEND-085](#pend-085) | Medir "condutor perguntou sem pôr proposta na mesa" | A · Condução | P2 | EM OBSERVAÇÃO | contar as ocorrências do log contra o total de turnos de rotina |
 | [PEND-086](#pend-086) | Desfecho ilegível do condutor deixou de gerar artefato | B · Artefatos | P2 | EM OBSERVAÇÃO | contar `DESFECHO PERDIDO` após 17/08 |
@@ -4077,36 +4076,6 @@ Aberta em: 2026-08-17 · Origem: correção da segunda porta da Rotina
 
 ---
 
-### PEND-087
-**Proativa usa o texto cru do campo do nome como se fosse o nome da criança**
-Bloco: **F · Limites** · Prioridade: **P1** · Estado: **ABERTA**
-Aberta em: 2026-08-17 · Origem: família 83 9xxxx-4171 (Paula), 17/08
-
-- **O caso. VI NA CONVERSA REAL, produção.** O campo do nome da criança tem
-  `"Meu Filhos"`. Às **11:00:18** a família recebeu a proativa `video_guia`
-  dizendo *"montar histórias do **Meu Filhos**"* — o placeholder impresso cru
-  como se fosse nome. Às **11:01:48**, 90 segundos depois, recebeu a
-  `crianca_especifica` dizendo *"no cadastro o nome dela não veio"*.
-  **Duas mensagens que se contradizem, na ordem errada.**
-- **O detector existe e funciona.** `motivoNomeNaoNome` devolve `"recado"` para
-  `"Meu Filhos"` (o `PLACEHOLDER` cobre `filh[oa]s?`) — foi ele que disparou a
-  `crianca_especifica`, corretamente. O problema é que a **`video_guia` não o
-  consulta**: ela monta a copy com `membro.nome` direto.
-- **É exatamente o defeito que `crianca-nome.ts` existe para impedir**, e que já
-  aconteceu antes: 25/07 com *"a comunicação da Cuido de Várias Crianças. Sou
-  Terapeuta!"*, e 02/08 com *"Meu Nome e Gisela Meu Filgo e Davi"*. Fechou-se a
-  porta na conversa; a proativa ficou aberta.
-- **Não é multi-criança.** A família tem **um** membro ativo. O que houve foi
-  plural escrito no campo do nome — provavelmente uma mãe com mais de um filho
-  que não escolheu um. É o caso de uso da `crianca_especifica`.
-- **A investigar junto:** quais outras proativas imprimem `membro.nome` sem
-  passar por `nomeUsavelCrianca`, e se a `crianca_especifica` deveria **segurar**
-  as demais proativas enquanto a criança não estiver definida.
-- **Critério de conclusão:** nenhuma mensagem sai com texto de recado no lugar
-  do nome, e a família não recebe duas mensagens contraditórias sobre isso.
-- **Agente recomendado:** INVESTIGAR
-
----
 
 ### PEND-088
 **Dois P2 da auditoria de paridade — decisão registrada: NÃO implementar agora**
