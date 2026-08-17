@@ -301,6 +301,25 @@ export function montarContextoBase(params: {
   const sensorial = textoDoCampo(pv?.sensorial);
   if (sensorial) linhas.push(`Sensibilidades: ${primeiraFrase(sensorial)}`);
 
+  // ⚠️ COMO ELA É — o campo que a família escreveu sobre QUEM é esta criança.
+  //
+  // Caso real, 17/08/2026: a mãe perguntou "o que você sabe que ela aceita já?"
+  // e a Ayla respondeu que não sabia. O perfil da criança tinha, aqui,
+  // "Adora uva passa." A coluna `como_e` era buscada no banco desde sempre —
+  // mas só `como_e.interesses` era consumido (`interessesAtuais`), e o `texto`
+  // morria na montagem. Disponível, recuperada, NÃO injetada: §15 do protocolo
+  // na forma mais cara, porque faz a Ayla perguntar o que a Kolo já sabia.
+  //
+  // NÃO usa `primeiraFrase` de propósito. Nos outros campos o corte é aceitável
+  // porque o resto é detalhe; aqui o resto É o retrato — a segunda frase costuma
+  // trazer o jeito da criança, não uma nota de rodapé. O teto do bloco continua
+  // valendo, e a poda por prioridade acontece lá embaixo.
+  //
+  // Vem ANTES dos interesses porque identidade sobrevive à poda; gosto é o que
+  // se corta primeiro quando o bloco estoura.
+  const comoE = textoDoCampo(pv?.como_e);
+  if (comoE) linhas.push(`Como ela é: ${comoE.replace(/\s*\n\s*/g, " ").slice(0, 400)}`);
+
   const interesses = interessesAtuais(pv ?? null);
   if (interesses.length) linhas.push(`Interesses atuais: ${interesses.join(", ")}`);
   else lacunas.push("interesses da criança");
