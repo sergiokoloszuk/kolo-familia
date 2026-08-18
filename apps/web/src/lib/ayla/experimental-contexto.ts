@@ -320,6 +320,58 @@ export function comunicacaoAtual(pv: LinhaPerfilVivo | null): string {
   return textoDoCampo(extras.comunicacao) || textoDoCampo(pv.desafios_regulacao) || "";
 }
 
+/**
+ * OS RÓTULOS DO QUE SABEMOS — **sem uma linha do conteúdo** (Onda 1, pós-Trial).
+ *
+ * ⚠️ POR QUE RÓTULO E NÃO TEXTO. No modo pós-Trial a Ayla precisa poder dizer com
+ * verdade "eu já tenho informações sobre o sono e a alimentação do João" — que é
+ * o valor da continuidade — sem ter em mãos o material para montar a estratégia,
+ * que é justamente o que o teste encerrado não paga mais.
+ *
+ * Evidência suficiente para vender; informação insuficiente para orientar. O
+ * conteúdo NÃO entra neste modo, nem para o grupo com perfil rico.
+ *
+ * ⚠️ MESMA FONTE DO RETRATO NORMAL. Reusa `ROTULO_DOMINIO` e `textoDoCampo` de
+ * propósito: um segundo mapa de domínios divergiria do primeiro no primeiro
+ * domínio novo, e a Ayla passaria a anunciar um assunto que o retrato não
+ * conhece.
+ */
+export function rotulosConhecidos(pv: LinhaPerfilVivo | null): string[] {
+  if (!pv) return [];
+  const extras = (pv.categorias_extras ?? {}) as Record<string, unknown>;
+  const out: string[] = [];
+  for (const [chave, valor] of Object.entries(extras)) {
+    const rotulo = ROTULO_DOMINIO[chave];
+    if (rotulo && textoDoCampo(valor)) out.push(rotulo);
+  }
+  // Comunicação tem linha própria no retrato (e resgate do campo legado), então
+  // ela é conferida à parte — senão o perfil que só tem o legado sumiria daqui.
+  if (comunicacaoAtual(pv) && !out.includes("comunicação")) out.push("comunicação");
+  if (textoDoCampo(pv.sensorial)) out.push("sensibilidades");
+  if (textoDoCampo(pv.como_e)) out.push("como ela é");
+  if (interessesAtuais(pv).length) out.push("interesses");
+  return [...new Set(out)];
+}
+
+/**
+ * QUANTOS FATOS DE PERFIL EXISTEM — o que decide o NÍVEL DE LINGUAGEM pós-Trial.
+ *
+ * ⚠️ POR QUE NÃO CONTAR MENSAGENS. MEDI em 18/08/2026, nas 135 crianças ativas:
+ * a régua `mensagensDaFamilia >= 5` erra em 15 casos (11%), e erra nas DUAS
+ * direções — 8 crianças têm 5+ mensagens e no máximo 2 fatos (uma tem 23
+ * mensagens e 1 fato), e 7 têm menos de 5 mensagens e 5+ fatos (uma tem ZERO
+ * mensagens e 13 fatos, todos vindos do onboarding).
+ *
+ * Conversar muito não é contar; e não conversar não é não ter contado. Quem
+ * decide se a Ayla pode alegar continuidade é a evidência, não o volume.
+ *
+ * ⚠️ CUSTO ZERO. É uma contagem sobre o Perfil Vivo que o turno JÁ carregou —
+ * nenhuma consulta nova, nenhuma chamada de modelo.
+ */
+export function fatosDisponiveis(pv: LinhaPerfilVivo | null): number {
+  return rotulosConhecidos(pv).length;
+}
+
 export type ContextoBase = {
   bloco: string;
   /** O que o onboarding NÃO respondeu — para a Ayla perguntar só isso. */

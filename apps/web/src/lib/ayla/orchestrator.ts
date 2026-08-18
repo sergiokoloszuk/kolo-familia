@@ -79,7 +79,7 @@ import { montarRastro, registrarRastroConhecimento } from "@/lib/conhecimento/ra
 import { dividirEmBolhas, ritmoDasBolhas, TETO_ESPERA_SEGUNDOS } from "./bolhas";
 import { paraWhatsApp } from "./apresentacao";
 import { semOutrosMembros } from "./membro-escopo";
-import { ehFamiliaExperimental, responderExperimental } from "./experimental";
+import { ehFamiliaExperimental, responderExperimental, posTrialAtivo } from "./experimental";
 import { atenderDesconhecido } from "./desconhecido";
 import { classificarFeedbackRotina } from "./rotina-feedback";
 import { pedeArtefatoImprimivel, apontaProRecente } from "./rotina-pdf-rota";
@@ -1992,6 +1992,80 @@ export async function processInbound(
         tipo: "seguranca",
       });
       return { tratada: true, familia: family.id, resposta: resp };
+    }
+
+    // ── MODO PÓS-TRIAL — ONDA 1, 18/08/2026 ────────────────────────────────
+    //
+    // ⚠️ O DEFEITO QUE ISTO CORRIGE. Abaixo, `reservarConviteAssinatura` decidia
+    // se a família RECEBIA RESPOSTA. Fora da janela de 12h ela recebia um texto
+    // fixo; dentro dela, NADA — silêncio total. MEDI: de 179 famílias que
+    // chegaram ao fim do teste, 21 receberam qualquer coisa. Convidar a
+    // responder e emudecer é o pior resultado possível, e é o que acontece hoje
+    // com quem responde a uma campanha cinco minutos depois de recebê-la.
+    //
+    // ⚠️ O QUE MUDA: o cooldown passa a governar SÓ O LINK, nunca a resposta.
+    // Quem escreve sempre recebe conversa; o link entra no máximo 1×/12h.
+    //
+    // ⚠️ ORDEM PRESERVADA: isto vem DEPOIS do ramo de segurança acima (crise
+    // continua tendo precedência sobre o comercial) e ANTES do convite fixo, que
+    // continua existindo como comportamento de flag desligada.
+    if (posTrialAtivo() && ctxA) {
+      const podeLink = await reservarConviteAssinatura(supabase, family.id);
+      const link = podeLink
+        ? await gerarMagicLink(supabase, { familyId: family.id, next: "/assinatura" })
+        : null;
+      const exp = await responderExperimental(supabase, {
+        familyId: family.id,
+        mensagem: inbound.texto,
+        modo: "pos_trial",
+      }).catch((e) => {
+        console.warn(
+          "[ayla:pos-trial] falhou, caindo pro convite fixo:",
+          e instanceof Error ? e.message : e,
+        );
+        return null;
+      });
+      if (exp) {
+        // O link entra como última linha, e só quando o cooldown permitiu. O
+        // texto da Ayla nunca depende dele: sem link, a conversa acontece igual.
+        const texto = link
+          ? `${exp.texto}\n\nOs planos estão aqui, se fizer sentido:\n${link}`
+          : exp.texto;
+        const resp = await enviarEPersistir(supabase, {
+          family_account_id: family.id,
+          membro_atipico_id: exp.membroId,
+          phone: ctxA.whatsapp_e164,
+          texto,
+          category: "reativa",
+          // ⚠️ `assinatura_nudge` de propósito: é o mesmo tipo que
+          // `reservarConviteAssinatura` procura, então o cooldown do LINK
+          // continua funcionando sem uma segunda regra.
+          tipo: link ? "assinatura_nudge" : "pos_trial",
+          meta: { ayla_path: "pos_trial", ...exp.metrica },
+        });
+        return { tratada: true, familia: family.id, resposta: resp };
+      }
+      // ⚠️ MODELO INDISPONÍVEL, E A RESERVA JÁ FOI CONSUMIDA. Cair para o bloco
+      // abaixo pediria a reserva de novo, receberia `false` (ela é minha) e o
+      // `return` de lá produziria SILÊNCIO — o defeito desta onda voltando por
+      // dentro da própria correção. Então o convite fixo sai daqui mesmo.
+      if (link) {
+        const resp = await enviarEPersistir(supabase, {
+          family_account_id: family.id,
+          membro_atipico_id: null,
+          phone: ctxA.whatsapp_e164,
+          texto: `Oi, ${ctxA.nomeMae}! Eu adoraria seguir te ajudando 🌿 Mas seu período grátis acabou. Pra a gente continuar — estratégias, rotina, tudo o que você já conhece — é só assinar aqui:\n${link}\n\nO que você me contou fica tudo guardado. 💛`,
+          category: "reativa",
+          tipo: "assinatura_nudge",
+        });
+        return { tratada: true, familia: family.id, resposta: resp };
+      }
+      // Sem reserva e sem modelo: o comportamento antigo (silêncio dentro das
+      // 12h) é o que resta. Registrado para não passar por acidente.
+      console.warn(
+        `[ayla:pos-trial] sem resposta neste turno — modelo indisponível e cooldown ativo — família ${family.id}`,
+      );
+      return { tratada: true, familia: family.id };
     }
 
     if (ctxA) {

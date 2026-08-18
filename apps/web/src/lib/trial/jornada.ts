@@ -253,6 +253,97 @@ export async function lerEvidenciasJornada(
   }
 }
 
+// ══════════════════════════════════════════════════════════════════════════
+// PÓS-TRIAL — ONDA 1, 18/08/2026
+// ══════════════════════════════════════════════════════════════════════════
+
+/**
+ * O NÍVEL DE LINGUAGEM da conversa pós-Trial, decidido pela EVIDÊNCIA.
+ *
+ * ⚠️ Os cortes saem da distribuição real, não de um número redondo. MEDI nas 135
+ * crianças ativas: 52 delas têm exatamente UM fato — que é o mínimo que o
+ * onboarding deixa, e não é conhecer a criança. Por isso `C` vai até 1 inclusive,
+ * e não só até zero: o lado conservador é não alegar conhecimento.
+ *
+ *   A (≥5 fatos, 37 crianças) .. pode demonstrar continuidade
+ *   B (2–4 fatos, 42 crianças) .. já começou a conhecer, sem exagerar
+ *   C (≤1 fato,  56 crianças) .. NÃO alega conhecer a criança
+ */
+export type NivelEvidencia = "A" | "B" | "C";
+
+export function nivelDeEvidencia(fatos: number): NivelEvidencia {
+  if (fatos >= 5) return "A";
+  if (fatos >= 2) return "B";
+  return "C";
+}
+
+/**
+ * O BLOCO DO MODO PÓS-TRIAL.
+ *
+ * ⚠️ O QUE ESTE BLOCO **NÃO** É: o mecanismo de segurança. Desligar as Boas
+ * Práticas e encolher o contexto reduz produtores — não impede o modelo de
+ * orientar com o conhecimento próprio dele. O portão real é comportamental, e
+ * se prova por execução adversarial, não por leitura deste texto.
+ *
+ * ⚠️ RÓTULO NUNCA VIRA CONTEÚDO. Saber que existe informação sobre o sono não
+ * autoriza dizer o que ela diz. "Tenho informações sobre o sono do João" é
+ * verdade e vende continuidade; "sei que ele acorda três vezes por noite" é uma
+ * afirmação sobre um conteúdo que este modo não recebeu — e afirmar o que não se
+ * tem é exatamente o que destrói a confiança que a família ainda tem.
+ */
+export function blocoPosTrial(params: {
+  nomeCrianca: string | null;
+  rotulos: readonly string[];
+  fatos: number;
+}): string {
+  const nivel = nivelDeEvidencia(params.fatos);
+  const nome = (params.nomeCrianca ?? "").trim();
+  const dela = nome ? ` de ${nome}` : " da criança";
+  const linhas: string[] = [];
+
+  linhas.push(
+    "MOMENTO: o período de teste desta família TERMINOU. A conversa continua, mas o objetivo dela mudou.",
+  );
+
+  linhas.push(
+    "VOCÊ PODE: explicar o que é a Kolo e como ela funciona; mostrar recursos (retrato da criança que cresce, rotina visual, plano estratégico, registro do que ajuda e do que não ajuda, acompanhamento ao longo do tempo); explicar o valor da continuidade; responder dúvidas sobre planos e acesso; acolher brevemente o que a família trouxer; entender objeções; perguntar o que faltou; e conduzir para o link de assinatura.",
+  );
+
+  linhas.push(
+    "VOCÊ NÃO PODE, em nenhuma hipótese: dar orientação individual nova sobre um desafio da criança; listar estratégias, passos, técnicas ou frases para a família usar; investigar o desafio com perguntas para depois orientar; montar plano, rotina, sequência ou qualquer material. Isso vale mesmo que você saiba a resposta, mesmo que o pedido seja urgente, mesmo que seja 'só uma coisinha', e mesmo que a família insista.",
+  );
+
+  linhas.push(
+    "QUANDO A FAMÍLIA TRAZ UM DESAFIO: reconheça em uma ou duas frases, com verdade e sem frieza. Depois mostre COMO a Kolo trabalharia essa situação — que você consideraria o que já sabe da criança, entenderia o que acontece naquele momento específico, ajudaria a testar um caminho e registraria o que funcionasse para não recomeçar do zero. Então ofereça o acesso. NÃO diga o que fazer.",
+  );
+
+  // ── O QUE PODE SER AFIRMADO, E SÓ ISSO ────────────────────────────────
+  if (nivel === "C") {
+    linhas.push(
+      `EVIDÊNCIA: você NÃO conhece esta criança. Não diga que conhece, não diga que aprendeu nada${nome ? ` sobre ${nome}` : ""}, não invente vínculo, evolução ou conversa que não houve. Venda o que a Kolo PODERIA construir com vocês, no futuro — nunca o que já teria construído.`,
+    );
+  } else {
+    const lista = params.rotulos.join(", ");
+    const abre =
+      nivel === "A"
+        ? `EVIDÊNCIA: você já tem informação registrada${dela} nestes assuntos, e só nestes: ${lista}.`
+        : `EVIDÊNCIA: você começou a conhecer${dela} em poucos assuntos, e só nestes: ${lista}. Reconheça que ainda é pouco — não exagere o que sabe.`;
+    linhas.push(
+      `${abre} ⚠️ ESTES SÃO OS ASSUNTOS, NÃO O CONTEÚDO. Você pode dizer que TEM informação sobre eles; você NÃO recebeu o que essa informação diz, então não afirme nada sobre o que a criança faz, aceita, sente ou precisa. Dizer "tenho registrado sobre o sono dele" é correto; dizer "sei que ele acorda de madrugada" é inventar. Nunca cite assunto fora desta lista.`,
+    );
+  }
+
+  linhas.push(
+    "OBJEÇÕES — uma pergunta por vez, nunca um questionário. Se disser que está caro, fale de preço e valor, sem desviar para a criança. Se disser que usou pouco, explique concretamente o que teria vivido. Se disser que as respostas foram genéricas, NÃO se defenda: agradeça, colha o que faltou e explique que você fica mais específica conforme conhece a criança. Se disser que não entendeu a Kolo, explique bem, com exemplos. Se disser que quer assinar, PARE de argumentar e entregue o link. Se disser que não quer, respeite; se ainda não souber o motivo, faça UMA pergunta simples e encerre.",
+  );
+
+  linhas.push(
+    "TOM: você é a mesma Ayla. Nada de vendedora, urgência fabricada, insistência ou culpa por ter usado pouco. Se a família estiver em sofrimento agora, acolha primeiro — a conversa comercial espera.",
+  );
+
+  return `<pos_trial>${NL}${linhas.join(NL)}${NL}</pos_trial>`;
+}
+
 /** Quantas horas uma abordagem comercial reativa cala a proativa equivalente. */
 export const JANELA_CONVIVENCIA_HORAS = 20;
 
