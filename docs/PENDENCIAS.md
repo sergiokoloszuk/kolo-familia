@@ -45,7 +45,7 @@ Só o que está aberto. 🔒 = bloqueada.
 
 | ID | Pendência | Bloco | Prio | Estado | Próximo passo |
 |---|---|---|---|---|---|
-| **ONDA 1** | **Pós-Trial: fim do silêncio + modo comercial** | A · Condução | **P0** | **IMPLEMENTADO** | publicar, ligar `AYLA_POS_TRIAL`, provar em produção |
+| **ONDA 1** | **Pós-Trial: fim do silêncio + modo comercial** | A · Condução | **P0** | **PUBLICADO** 🔒 | ligar `AYLA_POS_TRIAL=1` na Vercel — agente não tem credencial; sem isso não sobe a PROVADO EM PRODUÇÃO |
 | [PEND-071](#pend-071) | Segurança está abaixo do gate de assinatura | F · Limites | **P0** | ~~CORRIGIDA~~ **BAIXADA** | nenhum — `0fc1feb` é ancestral de `main` (PR #98) e está no ar |
 | [PEND-072](#pend-072) | Teste do caminho novo cai para o Legacy sem mock do provider | H · Governança | P1 | PARCIALMENTE CORRIGIDA | varrer os outros testes que dizem medir o experimental |
 | [PEND-073](#pend-073) | Caminho novo não encurta a resposta em pedido de plano | A · Condução | P2 | ABERTA | decidir se o Core do experimental recebe a nota de `querPlano` |
