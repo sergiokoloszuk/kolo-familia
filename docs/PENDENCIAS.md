@@ -9,12 +9,43 @@ As regras de uso estão no fim deste documento.
 
 ---
 
+## Régua de estado das frentes de EXPERIÊNCIA
+
+Frente que uma família percebe não recebe baixa porque o código existe. A régua
+tem cinco degraus, e cada um é uma afirmação diferente:
+
+| Degrau | Significa |
+|---|---|
+| **DEFINIDO** | o desenho está fechado e aprovado |
+| **IMPLEMENTADO** | o código existe, com testes verdes no repositório |
+| **PUBLICADO** | o commit está no branch que a Vercel serve, e `/api/health` o confirma |
+| **PROVADO EM PRODUÇÃO** | o caminho foi exercitado no ambiente real, com evidência |
+| **PROVADO NA EXPERIÊNCIA REAL** | uma família de verdade passou por ele, e a conversa foi lida |
+
+> ⚠️ Build verde, merge e deploy movem no máximo até PUBLICADO. Nenhum deles
+> prova que uma mãe recebeu a coisa certa.
+
+### Frente Trial / Pós-Trial — as quatro ondas (18/08/2026)
+
+| Onda | O quê | Estado |
+|---|---|---|
+| **ONDA 1** | Pós-Trial: nunca silenciar quem escreve + modo comercial correto | ver abaixo |
+| **ONDA 2** | Memória: `primeiraFrase(140)`, pertinência por skill, extrator sem histórico | **DEFINIDO** |
+| **ONDA 3** | Jornada D0–D7: boas-vindas dos 7 dias, D6 só com evidência, D7 obrigação de função | **DEFINIDO** |
+| **ONDA 4** | Medição com coorte Experimental de 7 dias completos | **DEFINIDO** · baseline congelado: 8 famílias, 1,3 dia observável |
+
+Fora do escopo destas ondas, de propósito: BIA/corpus, crenças, Fontes Oficiais,
+Stripe e pagamento→acesso.
+
+---
+
 ## Painel
 
 Só o que está aberto. 🔒 = bloqueada.
 
 | ID | Pendência | Bloco | Prio | Estado | Próximo passo |
 |---|---|---|---|---|---|
+| **ONDA 1** | **Pós-Trial: fim do silêncio + modo comercial** | A · Condução | **P0** | **IMPLEMENTADO** | publicar, ligar `AYLA_POS_TRIAL`, provar em produção |
 | [PEND-071](#pend-071) | Segurança está abaixo do gate de assinatura | F · Limites | **P0** | ~~CORRIGIDA~~ **BAIXADA** | nenhum — `0fc1feb` é ancestral de `main` (PR #98) e está no ar |
 | [PEND-072](#pend-072) | Teste do caminho novo cai para o Legacy sem mock do provider | H · Governança | P1 | PARCIALMENTE CORRIGIDA | varrer os outros testes que dizem medir o experimental |
 | [PEND-073](#pend-073) | Caminho novo não encurta a resposta em pedido de plano | A · Condução | P2 | ABERTA | decidir se o Core do experimental recebe a nota de `querPlano` |

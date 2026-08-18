@@ -84,7 +84,19 @@ export type AylaTipoReativa =
    *  ponte do Plano dispara em `resposta_registro`, e um vídeo marcado assim
    *  faria a mãe receber um PDF de plano por ter mandado um vídeo. */
   | "midia_nao_suportada"
-  | "assinatura_nudge";
+  | "assinatura_nudge"
+  /**
+   * Conversa pós-Trial SEM link — Onda 1, 18/08/2026.
+   *
+   * ⚠️ Tipo próprio, e a razão é o cooldown. `reservarConviteAssinatura` procura
+   * por `assinatura_nudge` nas últimas 12h para não repetir o LINK. Marcar com
+   * `assinatura_nudge` um turno que não levou link nenhum consumiria a janela e
+   * emudeceria o convite seguinte — que é justamente o defeito que esta onda
+   * corrige, ressurgindo pela porta de trás.
+   *
+   * Também não é `resposta_registro`: aquele tipo dispara a ponte do Plano.
+   */
+  | "pos_trial";
 
 export type AylaTipo = AylaTipoProativa | AylaTipoReativa;
 

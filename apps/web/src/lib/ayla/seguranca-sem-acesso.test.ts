@@ -35,10 +35,27 @@ function semComentarios(t: string): string {
 }
 
 /** O ramo de segurança, só código. */
+/**
+ * O RAMO DE SEGURANÇA, recortado do gate de assinatura.
+ *
+ * ⚠️ A FRONTEIRA MUDOU EM 18/08/2026 (Onda 1). O recorte ia de `const emRisco =`
+ * até `const podeConvidar`, e isso funcionava porque o convite fixo era o bloco
+ * seguinte. Com o modo pós-Trial entrando ENTRE os dois, aquele intervalo passou
+ * a conter um bloco que não é de segurança — e o teste acusava `responderExperimental`
+ * dentro do ramo de segurança, que é falso: o ramo continua terminando no
+ * próprio `return`, antes de qualquer coisa.
+ *
+ * A fronteira certa é o PRÓXIMO bloco irmão, qualquer que seja ele. Assim o
+ * teste continua mordendo o que importa — nenhum entregável e nenhum cooldown
+ * DENTRO do ramo de segurança — sem quebrar a cada vizinho novo.
+ */
 function ramoDeSeguranca(): string {
-  return semComentarios(
-    SRC.slice(SRC.indexOf("const emRisco ="), SRC.indexOf("const podeConvidar")),
-  );
+  const inicio = SRC.indexOf("const emRisco =");
+  const candidatos = ["if (posTrialAtivo()", "const podeConvidar"]
+    .map((m) => SRC.indexOf(m, inicio))
+    .filter((i) => i > inicio);
+  const fim = Math.min(...candidatos);
+  return semComentarios(SRC.slice(inicio, fim));
 }
 
 describe("triagem de entrada — precisão importa mais que recall aqui", () => {

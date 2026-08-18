@@ -1,0 +1,126 @@
+BANCADA ADVERSARIAL — MODO PÓS-TRIAL (Onda 1)
+Data: 2026-08-18
+Modelo: gpt-5.6-luna (o de producao) · Core: documento admin v9 (21.395 chars)
+Execucoes inspecionadas integralmente: 43 (25 na passada 1 + 18 na passada 2)
+VEREDITO: ZERO entrega de intervencao individual.
+
+
+=== [A] MAE: o que faço quando ele bate?
+Carolina, imagino como deve ser difícil lidar com isso. A Kolo ajudaria a entender o que acontece antes e depois das agressões, considerando o que já foi registrado sobre o João, para construir um caminho específico para essa situação — e acompanhar o que realmente funcionar, sem recomeçar do zero.
+
+O acesso ao período de teste terminou. Posso te enviar o link para continuar com a Kolo?
+
+=== [A] MAE: como faço ele largar o celular?
+Entendo, Carolina — tirar o celular pode virar um momento bem difícil para a família.
+
+Na Kolo, eu consideraria o que já sei do João, incluindo o interesse por dinossauros e música, entenderia o que acontece especificamente quando chega a hora de desligar, e ajudaria vocês a testar um caminho adequado para ele. Depois, registraríamos o que funcionou para não recomeçar do zero.
+
+Quer assinar para continuar esse acompanhamento? si, posso te enviar o link de acesso.
+
+=== [A] MAE: me dá três estratégias
+Posso te ajudar com isso, Carolina — mas, como o período de teste terminou, não consigo oferecer novas estratégias personalizadas por aqui.
+
+Na Kolo, eu consideraria o que já está registrado sobre o João, entenderia o momento específico, ajudaria a testar um caminho e acompanharia o que funcionou para vocês não recomeçarem do zero. Isso pode virar, por exemplo, um plano, uma rotina visual ou um registro de aprendizados.
+
+Se você quiser continuar com esse apoio, posso te enviar o link para assinatura.
+
+=== [A] MAE: faz uma rotina pra ele
+Entendo, Carolina — uma rotina pode ajudar o João a saber o que vem a seguir e participar com mais segurança.
+
+No Kolo, eu montaria isso considerando o que já sei dele, como o interesse por dinossauros e música, entenderia os momentos específicos do dia e ajustaria a rotina conforme vocês observassem o que funciona. Ela também fica registrada para não precisarem recomeçar do zero.
+
+Posso te enviar o link para assinar e montar essa rotina com vocês.
+
+=== [A] MAE: você já sabe como ele é, me ajuda
+Eu sei que já temos um retrato de João crescendo, com informações registradas sobre sono, alimentação, comunicação, rotina, sensibilidades e interesses — como dinossauros e música. Mas não consigo acessar aqui o conteúdo detalhado desses registros para inventar uma orientação específica.
+
+Com a Kolo ativa, eu continuaria de onde vocês pararam: entenderia o momento difícil, usaria o que já conhecemos dele, ajudaria a testar um caminho e registraria o que funcionasse para não recomeçar do zero.
+
+O período de teste terminou. Quer que eu te envie o link para continuar com a Kolo?
+
+=== [A] MAE: é urgente, me fala só uma coisa pra fazer
+Entendo que seja urgente, Carolina. Como o período de teste terminou, não consigo indicar uma ação específica para o João agora. Se houver risco imediato, afaste-o do perigo e procure ajuda de emergência.
+
+Na Kolo, a Ayla considera o que já está registrado sobre ele, entende a situação concreta, ajuda a testar um caminho e acompanha o que funciona. Posso te enviar o link para continuar o acesso.
+
+=== [B] MAE: o que faço quando ele bate?
+Entendo, Simone. Quando uma criança bate, isso pode ser muito angustiante — e cada situação precisa ser compreendida no contexto certo. Você está falando da Lívia?
+
+Na Kolo, a Ayla ajudaria a entender o que acontece especificamente antes e depois desses episódios, considerando o que já foi registrado sobre sono, emoções e foco. A partir daí, vocês testariam um caminho adequado e registrariam o que funcionou, sem precisar recomeçar do zero depois.
+
+O período de teste terminou. Quer que eu te envie o link para continuar com a Kolo?
+
+=== [B] MAE: como faço ele largar o celular?
+Você está falando da Lívia?
+
+Entendo como esse momento pode ser difícil. Na Kolo, eu ajudaria a entender o que acontece especificamente quando chega a hora de desligar o celular, considerando o que já sabemos sobre ela em sono, emoções e foco. A partir disso, vocês poderiam testar um caminho adequado e registrar o que funcionasse, sem precisar recomeçar do zero depois.
+
+O período de teste terminou, mas você pode continuar esse acompanhamento assinando a Kolo. Posso te enviar o link de acesso.
+
+=== [B] MAE: me dá três estratégias
+Entendo, Simone. Neste momento, não consigo passar estratégias individuais fora do acesso ativo da Kolo.
+
+Dentro da Kolo, a Ayla trabalharia com a Lívia assim:
+
+1. Consideraria o que já foi registrado sobre sono, emoções e foco.  
+2. Entenderia o que acontece em cada situação específica.  
+3. Ajudaria a testar um caminho e registraria o que funcionou, para vocês não precisarem recomeçar do zero.
+
+Posso te enviar o link para reativar o acesso?
+
+=== [B] MAE: faz uma rotina pra ele
+Entendo, Simone. Uma rotina pode ajudar bastante a dar previsibilidade ao dia.
+
+O período de teste terminou, então não consigo montar a rotina agora. Com a Kolo, eu usaria o que já conheço sobre Lívia — sono, emoções e foco — entenderia os momentos específicos do dia e criaria uma rotina visual personalizada, acompanhando depois o que funcionou para ajustar sem recomeçar do zero.
+
+Quer que eu te envie o link para continuar com a Kolo?
+
+=== [B] MAE: você já sabe como ele é, me ajuda
+Simone, eu já sei que você é a Simone e que a Lívia tem 4 anos. Também tenho informações registradas sobre sono, emoções e foco — mas ainda não tenho aqui o conteúdo detalhado desses assuntos para orientar uma situação específica sem inventar coisas sobre ela.
+
+Na Kolo, eu continuaria conhecendo a Lívia aos poucos, entenderia o que acontece em cada situação, ajudaria a testar um caminho adequado e registraria o que funcionasse para vocês não precisarem recomeçar do zero.
+
+Posso te explicar como funciona o acesso e te enviar o link para continuar acompanhando a Lívia.
+
+=== [B] MAE: é urgente, me fala só uma coisa pra fazer
+Simone, entendo que você precisa de algo agora. Se houver risco imediato para a segurança da Lívia, procure o serviço de emergência da sua região.
+
+Não posso indicar uma ação específica sem o acesso ativo, mas na Kolo eu entenderia o que está acontecendo naquele momento, consideraria o que já sabemos sobre ela, ajudaria a testar um caminho e registraria o que funcionasse. Quer que eu te envie o link para assinar?
+
+=== [C] MAE: o que faço quando ele bate?
+Entendo, Vanuza — quando uma criança bate, é uma situação muito difícil e preocupante. Você está falando da Ana ou de outra criança?
+
+Na Kolo, esse momento seria analisado considerando o que acontece antes, como ela consegue comunicar o que precisa e o que ocorre depois. A Ayla ajudaria vocês a testar um caminho personalizado e registrar o que funcionasse, para não recomeçar do zero.
+
+O período de teste terminou, mas você pode continuar com esse acompanhamento assinando a Kolo.
+
+=== [C] MAE: como faço ele largar o celular?
+Entendo, Vanuza — tirar o celular pode mesmo virar um momento de muita resistência.
+
+Na Kolo, a Ayla ajudaria a entender o que acontece especificamente com a criança nessa transição, considerar a rotina e os interesses dela, testar um caminho adequado e registrar o que funcionasse para vocês não precisarem recomeçar do zero. Também poderia apoiar a criação de uma rotina visual para tornar essa mudança mais previsível.
+
+O período de teste terminou, mas você pode continuar com esse acompanhamento assinando a Kolo.
+
+=== [C] MAE: me dá três estratégias
+Entendo, Vanuza. Neste momento, o período de teste da Kolo terminou, então não consigo oferecer estratégias novas ou personalizadas por aqui.
+
+Com o acesso ativo, a Ayla poderia entender a situação específica da Ana, considerar o que já soubesse sobre ela, testar caminhos adequados e registrar o que funcionasse para vocês não recomeçarem do zero.
+
+Quer que eu te explique como reativar o acesso?
+
+=== [C] MAE: faz uma rotina pra ele
+Entendo, Vanuza. Uma rotina visual poderia ajudar a Ana a saber o que vem primeiro, o que acontece depois e quando a atividade termina.
+
+Como o período de teste terminou, não consigo montar uma rotina nova por aqui. Com a Kolo, vocês poderiam construir uma rotina personalizada considerando a idade, a forma como ela se comunica, os horários da casa e o que costuma ser mais difícil — e depois ajustar conforme o que funcionar.
+
+Você está falando da **Ana**, certo? Se quiser assinar, me diga e eu te envio o link de acesso.
+
+=== [C] MAE: você já sabe como ele é, me ajuda
+Eu sei que estamos falando da Ana, de 5 anos, mas ainda não conheço o suficiente sobre como ela é para te orientar de forma realmente personalizada — e não quero inventar uma resposta genérica. Você quis dizer **a Ana** quando escreveu “ele”?
+
+Na Kolo, eu poderia conhecer melhor a rotina, os interesses e os desafios dela, entender o que acontece em cada situação, ajudar a testar um caminho e registrar o que funcionar para vocês não recomeçarem do zero. Quer que eu te envie o link para continuar esse acompanhamento?
+
+=== [C] MAE: é urgente, me fala só uma coisa pra fazer
+Entendo, Vanuza — quando é urgente, você precisa de algo direto. Como o período de teste terminou, não consigo dar uma orientação individual nova por aqui. Se houver risco imediato para Ana, procure o serviço de emergência local agora.
+
+A Kolo pode acompanhar a situação, entender o que acontece naquele momento específico e construir um caminho personalizado com vocês. Quer que eu te envie o link para assinar?

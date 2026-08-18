@@ -10,7 +10,11 @@ import {
   pareceInformacao,
   lerPerfilFamilia,
   blocoDaFamilia,
+  rotulosConhecidos,
+  fatosDisponiveis,
+  interessesAtuais,
 } from "./experimental-contexto";
+import { pronomesPara, type Genero } from "./pronomes";
 import { resolverFoco, blocoDeFoco, type Foco } from "./experimental-foco";
 import { lerEventos, eventosRelevantes, blocoDeEventos } from "./experimental-memoria";
 import { recuperarBoasPraticas, blocoBoasPraticas } from "@/lib/conhecimento/recuperar";
@@ -20,6 +24,8 @@ import {
   lerEvidenciasJornada,
   EVIDENCIAS_VAZIAS,
   DIAS_DE_FECHAMENTO,
+  blocoPosTrial,
+  nivelDeEvidencia,
 } from "@/lib/trial/jornada";
 
 /**
@@ -86,6 +92,28 @@ export function familiasExperimentais(): string[] {
 export function experimentalParaTodas(): boolean {
   try {
     const v = (process.env.AYLA_EXPERIMENTAL_TODAS ?? "").trim().toLowerCase();
+    return v === "1" || v === "true";
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * O MODO PÓS-TRIAL ESTÁ LIGADO? — `AYLA_POS_TRIAL`, 18/08/2026.
+ *
+ * ⚠️ DEFAULT DESLIGADO, e o desligado é o comportamento de hoje byte a byte:
+ * convite fixo na primeira mensagem em 12h, silêncio depois. Mesmo formato de
+ * `experimentalParaTodas` — um SIM explícito, escrito à mão, e só `1`/`true`
+ * valem. Erro de digitação, vazio ou exceção ao ler NUNCA liga.
+ *
+ * ROLLBACK: apagar a variável no ambiente. Vale no turno seguinte, sem deploy.
+ *
+ * ⚠️ Enquanto isto estiver desligado, a campanha de recuperação NÃO pode ser
+ * disparada: convidar a responder e devolver silêncio é pior que não convidar.
+ */
+export function posTrialAtivo(): boolean {
+  try {
+    const v = (process.env.AYLA_POS_TRIAL ?? "").trim().toLowerCase();
     return v === "1" || v === "true";
   } catch {
     return false;
@@ -175,6 +203,14 @@ export type TurnoExperimental = {
     jornada_chars?: number;
     /** Quanto o documento do Trial engordou o prompt. Zero = não entrou. */
     trial_doc_chars?: number;
+    /** `normal` ou `pos_trial` — o rastro que prova o modo em produção. */
+    modo?: ModoTurno;
+    /** Quanto o bloco pós-Trial engordou o prompt. Zero = não entrou. */
+    pos_trial_chars?: number;
+    /** A/B/C por evidência. `null` fora do pós-Trial. */
+    pos_trial_nivel?: "A" | "B" | "C" | null;
+    /** Quantos fatos de perfil existiam. `null` fora do pós-Trial. */
+    pos_trial_fatos?: number | null;
   };
 };
 
@@ -211,12 +247,46 @@ export type MotivoFalha =
   | "FRONTEIRA_BARROU"
   | "EXCECAO";
 
+/**
+ * O MODO DO TURNO — 18/08/2026, Onda 1.
+ *
+ * `pos_trial` NÃO é uma segunda Ayla: é a mesma conversa com o objetivo mudado e
+ * com os produtores desligados. O que muda aqui dentro é só o CONTEXTO — entra
+ * quem é a criança e os RÓTULOS do que sabemos; não entra o conteúdo dos
+ * domínios, que é a matéria-prima de uma orientação nova.
+ */
+export type ModoTurno = "normal" | "pos_trial";
+
+/**
+ * O que `montarContexto` devolve.
+ *
+ * ⚠️ TIPO NOMEADO, E NÃO INLINE. Um objeto inline aqui fecha com `}` na coluna
+ * zero, e `experimental.test.ts` recorta o CORPO da função pelo primeiro `\n}`
+ * para conferir que toda consulta tem `.eq("family_account_id", familyId)` — o
+ * recorte que impede vazamento entre famílias. Com o tipo inline, o corpo
+ * medido virava a assinatura, o teste encontrava zero consultas e a proteção
+ * passava a valer nada sem ninguém perceber.
+ */
+type ContextoDoTurno = {
+  bloco: string;
+  foco: Foco;
+  diagnosticoRegistrado: string;
+  consultas: number;
+  /** Só no `pos_trial`: os assuntos sobre os quais existe informação. */
+  rotulos: string[];
+  /** Só no `pos_trial`: quantos fatos existem — decide o nível de linguagem. */
+  fatos: number;
+  /** Só no `pos_trial`: a criança em foco, para o bloco falar dela pelo nome. */
+  nomeCrianca: string | null;
+};
+
 async function montarContexto(
   supabase: SupabaseClient,
   familyId: string,
   mensagem: string,
   simulados: readonly TurnoSimulado[] = [],
-): Promise<{ bloco: string; foco: Foco; diagnosticoRegistrado: string; consultas: number }> {
+  modo: ModoTurno = "normal",
+): Promise<ContextoDoTurno> {
   // As três leituras de abertura não dependem uma da outra: vão juntas.
   const [{ data: perfilFamilia }, { data: membros }, { data: falas }] = await Promise.all([
     supabase
@@ -266,8 +336,31 @@ async function montarContexto(
   // brincadeira para os dois" sem que a característica de um vire fato do outro.
   const retratos: string[] = [];
   const lacunas = new Set<string>();
+  // ⚠️ NO PÓS-TRIAL O RETRATO É OUTRO. `montarContextoBase` monta o retrato
+  // completo — desafios com texto, "como ela é", sensibilidades. É exatamente
+  // esse conteúdo que permitiria montar uma estratégia nova, e é o que o teste
+  // encerrado não paga mais. Aqui entra só identidade: quem é a criança.
+  const rotulosPorMembro: string[] = [];
+  let fatosDoTurno = 0;
   emFoco.forEach((m, i) => {
     const membroCompleto = lista.find((x) => x.id === m.id) ?? null;
+    if (modo === "pos_trial") {
+      const pv = perfis[i] ?? null;
+      rotulosPorMembro.push(...rotulosConhecidos(pv));
+      fatosDoTurno = Math.max(fatosDoTurno, fatosDisponiveis(pv));
+      const idade = idadeAnos(membroCompleto?.data_nascimento ?? null);
+      const p = pronomesPara(membroCompleto?.genero as Genero);
+      const ident = [
+        i === 0 && nomeResponsavel ? `Responsável: ${nomeResponsavel}` : "",
+        `Criança: ${membroCompleto?.nome ?? "(sem nome)"}${idade != null ? `, ${idade} anos` : ""}`,
+        p.generoDefinido ? `Como falar dela: ${p.sujeito}/${p.possessivo}` : "",
+        interessesAtuais(pv).length ? `Interesses: ${interessesAtuais(pv).join(", ")}` : "",
+      ]
+        .filter(Boolean)
+        .join("\n");
+      retratos.push(ident);
+      return;
+    }
     const base = montarContextoBase({
       nomeResponsavel: i === 0 ? nomeResponsavel : null,
       membro: membroCompleto,
@@ -309,22 +402,40 @@ async function montarContexto(
 
   const SEP = "\n\n";
   const NL = "\n";
-  const bloco = [
-    retratos.length ? `<o_que_ja_sabemos>${NL}${retratos.join(SEP)}${NL}</o_que_ja_sabemos>` : "",
-    lacunas.size
-      ? `<o_que_ainda_nao_sei>${[...lacunas].join(", ")}</o_que_ainda_nao_sei>`
-      : "",
-    blocoDeFoco(foco),
-    // Depois do retrato da criança e antes da trajetória: a casa é contexto de
-    // quem ela é, não um assunto próprio.
-    blocoDaFamilia(perfilDaFamilia),
-    blocoDeEventos(eventosRelevantes(eventos, mensagem)),
-    historico.length
-      ? `<conversa_recente>${NL}${historico.slice(-10).join(NL)}${NL}</conversa_recente>`
-      : "",
-  ]
-    .filter(Boolean)
-    .join(SEP);
+  // ⚠️ O QUE SAI NO PÓS-TRIAL, E POR QUÊ CADA UM:
+  //   · `<o_que_ainda_nao_sei>` .. é o convite a perguntar, e aqui não se
+  //     investiga a criança;
+  //   · perfil da FAMÍLIA ........ "moramos com a avó", "trabalho em turno" é
+  //     insumo de estratégia — serve para adaptar orientação, que não haverá;
+  //   · `<trajetoria>` ........... conteúdo datado da vida da criança, mesma razão.
+  // Ficam identidade, foco e a conversa recente — sem eles a Ayla não sabe com
+  // quem está falando nem o que acabou de ser dito.
+  const partes =
+    modo === "pos_trial"
+      ? [
+          retratos.length
+            ? `<o_que_ja_sabemos>${NL}${retratos.join(SEP)}${NL}</o_que_ja_sabemos>`
+            : "",
+          blocoDeFoco(foco),
+          historico.length
+            ? `<conversa_recente>${NL}${historico.slice(-10).join(NL)}${NL}</conversa_recente>`
+            : "",
+        ]
+      : [
+          retratos.length
+            ? `<o_que_ja_sabemos>${NL}${retratos.join(SEP)}${NL}</o_que_ja_sabemos>`
+            : "",
+          lacunas.size ? `<o_que_ainda_nao_sei>${[...lacunas].join(", ")}</o_que_ainda_nao_sei>` : "",
+          blocoDeFoco(foco),
+          // Depois do retrato da criança e antes da trajetória: a casa é contexto de
+          // quem ela é, não um assunto próprio.
+          blocoDaFamilia(perfilDaFamilia),
+          blocoDeEventos(eventosRelevantes(eventos, mensagem)),
+          historico.length
+            ? `<conversa_recente>${NL}${historico.slice(-10).join(NL)}${NL}</conversa_recente>`
+            : "",
+        ];
+  const bloco = partes.filter(Boolean).join(SEP);
 
   // ⚠️ O DIAGNÓSTICO VAI PARA A REDE DE FRONTEIRAS, não só para o prompt.
   // `fronteiraAtravessada` usa este bloco para saber o que a família JÁ
@@ -338,7 +449,15 @@ async function montarContexto(
     .filter(Boolean)
     .join(", ");
 
-  return { bloco, foco, diagnosticoRegistrado, consultas: 3 + emFoco.length + 2 };
+  return {
+    bloco,
+    foco,
+    diagnosticoRegistrado,
+    consultas: 3 + emFoco.length + 2,
+    rotulos: [...new Set(rotulosPorMembro)],
+    fatos: fatosDoTurno,
+    nomeCrianca: emFoco.length === 1 ? (emFoco[0]?.nome ?? null) : null,
+  };
 }
 
 /**
@@ -360,6 +479,19 @@ export async function responderExperimental(
      * a única métrica de custo por família que existe.
      */
     origem?: "conversa" | "simulador";
+    /**
+     * ⚠️ `pos_trial` MUDA O OBJETIVO DA CONVERSA, NÃO A AYLA.
+     *
+     * Neste modo o turno não recupera repertório, não recebe o conteúdo dos
+     * domínios e não passa pela ponte do Plano — porque o teste encerrado não
+     * paga mais orientação nova. O que entra é quem é a criança, os RÓTULOS do
+     * que sabemos e o bloco de condução comercial.
+     *
+     * ⚠️ ISTO NÃO É O MECANISMO DE SEGURANÇA. Desligar produtores reduz o que o
+     * modelo tem em mãos; não impede o conhecimento próprio dele de escapar. O
+     * portão real é comportamental e se prova na bancada adversarial.
+     */
+    modo?: ModoTurno;
     /**
      * Só o simulador passa isto. A conversa real, nunca — e o teste
      * `simulador-nao-escreve.test.ts` prende que estes turnos não são gravados
@@ -413,7 +545,12 @@ export async function responderExperimental(
     // ⚠️ REPERTÓRIO, NÃO LIMITE. O bloco entra como material consultável; o
     // Core continua autorizando a Ayla a raciocinar com o repertório dela.
     // `blocoBoasPraticas` já escreve isso no cabeçalho do bloco.
-    const skillsDoTurno = params.turnoClassificado?.skills ?? [];
+    // ⚠️ NO PÓS-TRIAL O ACERVO NÃO ENTRA. Boas Práticas é a matéria-prima da
+    // estratégia; com o teste encerrado não há estratégia nova a entregar, então
+    // a consulta nem acontece — economiza a ida ao banco e remove o material.
+    const modo: ModoTurno = params.modo ?? "normal";
+    const posTrial = modo === "pos_trial";
+    const skillsDoTurno = posTrial ? [] : (params.turnoClassificado?.skills ?? []);
     const tBp = Date.now();
     // ⚠️ A JORNADA ENTRA AQUI, NO MESMO `Promise.all` — 15/08/2026. Duas
     // consultas (estado + evidências) que não dependem de nada acima e não
@@ -421,9 +558,11 @@ export async function responderExperimental(
     //
     // ⚠️ O SIMULADOR NÃO TEM JORNADA. Ele não é uma família em teste; conduzir
     // comercialmente uma tela de Admin não significa nada.
-    const semJornada = params.origem === "simulador";
+    // O simulador não tem jornada; o pós-Trial tem bloco PRÓPRIO (`blocoPosTrial`),
+    // então a condução comercial de dentro do teste também não entra aqui.
+    const semJornada = params.origem === "simulador" || posTrial;
     const [ctxTurno, core, bps, estadoTrial, evidencias, docTrial] = await Promise.all([
-      montarContexto(supabase, params.familyId, params.mensagem, params.turnosSimulados ?? []),
+      montarContexto(supabase, params.familyId, params.mensagem, params.turnosSimulados ?? [], modo),
       resolverDocumento(supabase, "core", params.rascunhoCore ?? null),
       skillsDoTurno.length
         ? recuperarBoasPraticas({
@@ -470,7 +609,11 @@ export async function responderExperimental(
         ),
     );
     const repertorio = blocoBoasPraticas(bps);
-    const { bloco, foco, diagnosticoRegistrado, consultas } = ctxTurno;
+    const { bloco, foco, diagnosticoRegistrado, consultas, rotulos, fatos, nomeCrianca } = ctxTurno;
+    // O bloco que troca o objetivo da conversa. Vazio fora do pós-Trial.
+    const conducaoPosTrial = posTrial
+      ? blocoPosTrial({ nomeCrianca, rotulos, fatos })
+      : "";
     // A criança que a resposta vai carimbar: no foco compartilhado ou ambíguo
     // NÃO se escolhe uma — carimbar seria transformar palpite em dado.
     const membroDoTurno =
@@ -499,7 +642,10 @@ export async function responderExperimental(
       // O documento do Trial vem LOGO DEPOIS do `<jornada>`, porque ele é a
       // profundidade daquele bloco — e antes do repertório, que é material de
       // consulta e não deve ficar entre a conversa e a razão dela.
-      system: [core.conteudo, bloco, jornada, conducaoTrial, repertorio]
+      // ⚠️ NO PÓS-TRIAL O BLOCO DE CONDUÇÃO VEM POR ÚLTIMO, e é o único que
+      // fala de objetivo. Core (como pensar) → contexto (sobre quem) → condução
+      // comercial (para quê, agora). Não há jornada nem repertório neste modo.
+      system: [core.conteudo, bloco, jornada, conducaoTrial, repertorio, conducaoPosTrial]
         .filter(Boolean)
         .join("\n\n"),
       messages: [{ role: "user", content: params.mensagem }],
@@ -573,6 +719,13 @@ export async function responderExperimental(
         jornada_chars: jornada.length,
         /** Quanto o documento do Trial engordou o prompt. Zero = não entrou. */
         trial_doc_chars: conducaoTrial.length,
+        // ⚠️ O RASTRO DO PÓS-TRIAL. Sem isto não há como provar em produção que
+        // o turno entrou no modo certo, com que nível de evidência e quantos
+        // fatos — que é exatamente o que o portão desta onda exige.
+        modo,
+        pos_trial_chars: conducaoPosTrial.length,
+        pos_trial_nivel: posTrial ? nivelDeEvidencia(fatos) : null,
+        pos_trial_fatos: posTrial ? fatos : null,
       },
     };
   } catch (e) {

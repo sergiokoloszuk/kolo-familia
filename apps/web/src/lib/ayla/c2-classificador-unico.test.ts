@@ -131,10 +131,10 @@ describe("BOAS PRÁTICAS — repertório, pelo mecanismo existente", () => {
   });
 
   it("a ORDEM do prompt é Core → contexto → repertório", () => {
-    expect(EXP).toContain("[core.conteudo, bloco, jornada, conducaoTrial, repertorio]");
+    expect(EXP).toContain("[core.conteudo, bloco, jornada, conducaoTrial, repertorio, conducaoPosTrial]");
     // Repertório antes do contexto faria a resposta nascer da Boa Prática em
     // vez de nascer da criança.
-    const arr = "[core.conteudo, bloco, jornada, conducaoTrial, repertorio]";
+    const arr = "[core.conteudo, bloco, jornada, conducaoTrial, repertorio, conducaoPosTrial]";
     expect(arr.indexOf("core.conteudo")).toBeLessThan(arr.indexOf("bloco"));
     expect(arr.indexOf("bloco")).toBeLessThan(arr.indexOf("repertorio"));
   });
@@ -175,11 +175,11 @@ describe("SABOTAGEM — os testes mordem?", () => {
 
   it("S5 · o repertório passando na frente do contexto", () => {
     const sabotado = EXP.replace(
-      "[core.conteudo, bloco, jornada, conducaoTrial, repertorio]",
+      "[core.conteudo, bloco, jornada, conducaoTrial, repertorio, conducaoPosTrial]",
       "[core.conteudo, repertorio, jornada, conducaoTrial, bloco]",
     );
     expect(sabotado).toContain("[core.conteudo, repertorio, jornada, conducaoTrial, bloco]");
-    expect(EXP).toContain("[core.conteudo, bloco, jornada, conducaoTrial, repertorio]");
+    expect(EXP).toContain("[core.conteudo, bloco, jornada, conducaoTrial, repertorio, conducaoPosTrial]");
   });
 
   it("S6 · injetadas medidas pela consulta em vez do bloco", () => {
