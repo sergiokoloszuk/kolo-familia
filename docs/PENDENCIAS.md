@@ -20,18 +20,6 @@ Só o que está aberto. 🔒 = bloqueada.
 | [PEND-073](#pend-073) | Caminho novo não encurta a resposta em pedido de plano | A · Condução | P2 | ABERTA | decidir se o Core do experimental recebe a nota de `querPlano` |
 | [PEND-074](#pend-074) | Condução D0–D7 do Trial não existe em runtime | G · Comercial | P1 | IMPLEMENTADA, NÃO PUBLICADA | provar a condução na bancada com modelo real antes de publicar |
 | [PEND-075](#pend-075) | Allowlist do caminho novo: quem é, e por quê | H · Governança | P3 | RESOLVIDA | nenhum — a composição das 3 contas é intencional |
-| [PEND-093](#pend-093) | BIA-1 · Motor da Biblioteca na main, atrás de flag OFF | B · Conhecimento | P1 | PROVADA · NÃO PUBLICADA | publicar; baixa exige deploy provado e flag OFF |
-| [PEND-094](#pend-094) | BIA-3 · Cautela científica: estável × datável | B · Conhecimento | P1 | DECISÃO PENDENTE | decidir ANTES de importar o corpus |
-| [PEND-095](#pend-095) | BIA-4 · Importar e validar os 1.120 chunks | B · Conhecimento | P1 | PRONTA PARA IMPLEMENTAR | depende de 093, 094 e **092 (backup)** |
-| [PEND-096](#pend-096) | BIA-6 · Ativação controlada e medição | B · Conhecimento | P2 | A INVESTIGAR | último da fila; depende de tudo acima |
-| [PEND-097](#pend-097) | Boas Práticas × BIA — o que cada uma acrescenta | B · Conhecimento | P2 | A INVESTIGAR | ⚠️ depende de PEND-042, senão a medição é falsa |
-| [PEND-098](#pend-098) | Crenças: hipótese e pergunta, nunca afirmação | B · Conhecimento | P2 | A INVESTIGAR | fechar metodologia antes do Plano |
-| [PEND-099](#pend-099) | Plano · "Um jeito diferente de olhar para isso" | D · Entregas | P2 | A INVESTIGAR | bloqueada por PEND-098 |
-| [PEND-100](#pend-100) | Entrada contínua de material no Admin | H · Governança | P2 | A INVESTIGAR | a BIA sem depender do VS Code |
-| [PEND-101](#pend-101) | Legislação federal — primeira etapa das Fontes Vivas | F · Limites | P2 | INVESTIGADA · DECISÃO PENDENTE | só federal; allowlist no código |
-| [PEND-102](#pend-102) | Whitelist de sites de referência | F · Limites | P3 | A INVESTIGAR | depende de 022 e 101 |
-| [PEND-103](#pend-103) | Higiene da fila de pendências | H · Governança | P3 | A INVESTIGAR | índice, main local e estados padronizados |
-| [PEND-092](#pend-092) | Não existe rotina de backup do banco de produção | H · Governança | P1 | A INVESTIGAR | bloqueia PEND-095 (corpus), não bloqueia código inerte |
 | [PEND-090](#pend-090) | Contradição entre o perfil salvo e o relato de agora | C · Memória | P1 | ABERTA | frente própria: definir se a regra mora no Core v9 ou no código |
 | [PEND-089](#pend-089) | Prioridade dos desafios — corte CORRIGIDO, ordenação por recência aberta | C · Memória | P1 | CORTE OK · PRIORIZAÇÃO ABERTA | decidir de onde vem a prioridade quando o perfil passar do teto |
 | [PEND-091](#pend-091) | Três lacunas menores do contexto (interesses, idade, confirmação) | C · Memória | P2 | ABERTA | depende de PEND-089 |
@@ -41,6 +29,24 @@ Só o que está aberto. 🔒 = bloqueada.
 | [PEND-084](#pend-084) | Caminho reativo escreve sequência de rotina que não é o quadro | B · Artefatos | P2 | ABERTA | ou não escreve etapas, ou lê do quadro como o condutor |
 | [PEND-085](#pend-085) | Medir "condutor perguntou sem pôr proposta na mesa" | A · Condução | P2 | EM OBSERVAÇÃO | contar as ocorrências do log contra o total de turnos de rotina |
 | [PEND-086](#pend-086) | Desfecho ilegível do condutor deixou de gerar artefato | B · Artefatos | P2 | EM OBSERVAÇÃO | contar `DESFECHO PERDIDO` após 17/08 |
+| **ORDEM** | **FRENTE DA INTELIGÊNCIA — sequência decidida em 18/08/2026** | | | | |
+| [PEND-092](#pend-092) | **0 ·** Backup automático + cópia fora da máquina | H · Governança | P1 | A INVESTIGAR | bloqueia PEND-095; não bloqueia código inerte |
+| [PEND-017](#pend-017) | **1 ·** Governança da Inteligência + **Forma Kolo de Pensar** | B · Conhecimento | P1 | DECISÃO PENDENTE · REDEFINIR AGORA | é a fundação: define como a Kolo pensa |
+| [PEND-098](#pend-098) | **2 ·** Crenças, evidências e mudança de perspectiva | B · Conhecimento | P1 | A INVESTIGAR | definir ANTES do corpus |
+| [PEND-093](#pend-093) | **3 ·** Motor da BIA na main, flag OFF | B · Conhecimento | P1 | PROVADA · NÃO PUBLICADA | mergeado; deploy pendente na Vercel |
+| [PEND-094](#pend-094) | **4 ·** Cautela científica: estável × datável | B · Conhecimento | P1 | DECISÃO PENDENTE | decidir antes de importar |
+| [PEND-095](#pend-095) | **5 ·** Importar e validar os 1.120 chunks | B · Conhecimento | P1 | PRONTA PARA IMPLEMENTAR | depende de 092, 093, 094 |
+| [PEND-039](#pend-039) | **6 ·** Bancada: provar que a Ayla passou a pensar Kolo | A · Condução | P1 | PRONTA PARA IMPLEMENTAR | 3 colunas: sem BIA × com BIA × genérica |
+| [PEND-042](#pend-042) | **7 ·** Por que o repertório não chega em 58% dos turnos | B · Conhecimento | P1 | INVESTIGADA · CAUSA DESCONHECIDA | bloqueia PEND-097 |
+| [PEND-097](#pend-097) | **8 ·** BIA × Boas Práticas: raciocinar → escolher estratégia | B · Conhecimento | P2 | A INVESTIGAR | medir antes de desligar qualquer camada |
+| [PEND-099](#pend-099) | **9 ·** Plano Kolo — transformar compreensão em evolução | D · Entregas | P2 | A INVESTIGAR | depende de 098 e 097 |
+| [PEND-100](#pend-100) | **10 ·** Entrada contínua de novos materiais | H · Governança | P2 | A INVESTIGAR | a BIA sem depender do VS Code |
+| [PEND-022](#pend-022) | **11 ·** Governança de Fontes Oficiais (guarda-chuva) | F · Limites | P2 | INVESTIGADA · DECISÃO PENDENTE | filhas: 101 e 102 |
+| [PEND-101](#pend-101) | **12 ·** Legislação federal vigente | F · Limites | P2 | INVESTIGADA · DECISÃO PENDENTE | só federal; allowlist no código |
+| [PEND-102](#pend-102) | **13 ·** Sites/fontes confiáveis permitidos | F · Limites | P3 | A INVESTIGAR | whitelist com precedência |
+| [PEND-096](#pend-096) | **14 ·** Ativação gradual + medição real | B · Conhecimento | P2 | A INVESTIGAR | última etapa |
+| [PEND-103](#pend-103) | **‖ paralela ·** Higiene da fila | H · Governança | P3 | A INVESTIGAR | não bloqueia produto |
+| [PEND-027](#pend-027) | Plano Kolo — contexto, conhecimento e aprendizado | D · Entregas | P1 | A INVESTIGAR | guarda-chuva de PEND-099 |
 | [PEND-082](#pend-082) | Ayla repete orientação do turno anterior — medir frequência real | A · Condução | P2 | EM OBSERVAÇÃO | juntar 30–50 turnos reativos e contar |
 | [PEND-080](#pend-080) | Liberar o caminho novo para TODAS as famílias | A · Condução | P1 | ABERTA 🔒 | fechar os 6 bloqueadores antes de ampliar a allowlist |
 | [PEND-077](#pend-077) | `ayla_daily_checkins` nunca gravou uma linha (400 desde 0001) | H · Governança | P1 | ESCRITA PROVADA · LEITURA NÃO | ligar a leitura do check-in no caminho novo |
@@ -54,15 +60,11 @@ Só o que está aberto. 🔒 = bloqueada.
 | [PEND-002](#pend-002) | Pagamento confirmado sem acesso na Kolo | G · Comercial | P1 | AGUARDANDO VALIDAÇÃO | esperar a primeira assinatura real |
 | [PEND-001](#pend-001) | Cooldown do convite de assinatura | G · Comercial | P1 | AGUARDANDO VALIDAÇÃO | esperar o próximo convite real |
 | [PEND-016](#pend-016) | Condução da Ayla — o que ela diz e por quê | **A · Condução** | P1 | ABERTA | **preencher o DESEJADO com a Karina** |
-| [PEND-017](#pend-017) | Conhecimento: acervo, recuperação e uso | **B · Conhecimento** | P1 | ABERTA | desenhar junto com A |
 | [PEND-018](#pend-018) | Memória e retrato da criança | **C · Memória** | P1 | ABERTA | desenhar junto com A |
 | [PEND-021](#pend-021) | Jornada dos 7 dias e conversão | G · Comercial | P1 | ABERTA | preencher o DESEJADO |
-| [PEND-022](#pend-022) | Fontes confiáveis, limites e escalonamento | F · Limites | P2 | ABERTA | preencher o DESEJADO |
 | [PEND-040](#pend-040) | Observabilidade de IA — conversa Web e Plano não existem em `api_calls` | H · Governança | P1 | ABERTA | achar por que a instrumentação atual não grava |
-| [PEND-042](#pend-042) | 58% dos turnos de WhatsApp sem repertório | B · Conhecimento | P1 | MEDIDA | separar os 5 motivos antes de tocar em base ou prompt |
 | [PEND-041](#pend-041) | Rastro web não separa conversa de artefato | H · Governança | P2 | ABERTA | carregar a origem no evento |
 | [PEND-038](#pend-038) | Latência percebida no WhatsApp e resposta em vários balões | A · Condução | P1 pós-rollout | NÃO MEDIDA EM PRODUÇÃO | os 56s são bancada do Plano; depende de [PEND-040] |
-| [PEND-039](#pend-039) | Bancada permanente de golden cases (Manu · LEGO · Bia · vago) | A · Condução | P1 | DESENHADA | construir antes da próxima fase do Plano |
 | [PEND-043](#pend-043) | Ter objetivo ≠ gerar Plano — falta decisão de valor | D · Entregas | P1 | ABERTA | separar suficiência de valor de consolidação |
 | [PEND-044](#pend-044) | A Kolo terceiriza antes de tentar ajudar | A · Condução | P1 | ABERTA | classe funcional, não regra de palavra |
 | [PEND-036](#pend-036) | O Plano reoferece o que a conversa acabou de descartar | D · Entregas | P1 | DESCONTAMINADA | medida sozinha após a 035; é defeito próprio |
@@ -72,7 +74,6 @@ Só o que está aberto. 🔒 = bloqueada.
 | [PEND-030](#pend-030) | Confirmações curtas e continuidade do objetivo | D · Entregas | P3 | VALIDAÇÃO NO PILOTO | observar conversas reais antes de ajustar |
 | [PEND-029](#pend-029) | Aprendizado do Plano sabe o resultado, não a intervenção | D · Entregas | P2 | ABERTA | medir quantas notas são descritivas |
 | [PEND-028](#pend-028) | Piloto 4A — o que a bancada deixou em aberto | **A · Condução** | P2 | ABERTA | não bloqueia o piloto; medir depois do uso real |
-| [PEND-027](#pend-027) | Plano Kolo — contexto, conhecimento e aprendizado | **D · Entregas** | P1 | ABERTA | P0 interno: fazer o feedback chegar ao Plano seguinte |
 | [PEND-004](#pend-004) | Rotina/Sequência Visual | D · Entregas | P2 | AGUARDANDO VALIDAÇÃO | 4 fatias no ar; falta conversa real |
 | [PEND-019](#pend-019) | Estratégias que a família consegue usar | D · Entregas | P2 | ABERTA | depende de A+B+C |
 | [PEND-020](#pend-020) | Relatórios para escola, terapeuta e médico | D · Entregas | P2 | ABERTA | depende de C |
@@ -571,7 +572,7 @@ Aberta em: 2026-08-11 · Origem: portão da PEND-035
 
 ### PEND-042
 **58% dos turnos de WhatsApp saem sem uma linha de repertório**
-Bloco: **B · Conhecimento** · Prioridade: **P1** · **ORDEM DA FRENTE: 6**
+Bloco: **B · Conhecimento** · Prioridade: **P1** · **ORDEM DA FRENTE: 7**
 STATUS: **INVESTIGADA · CAUSA DESCONHECIDA**
 
 > ⚠️ **PASSOU A BLOQUEAR A PEND-097** (Boas Práticas × BIA), por decisão de
@@ -676,7 +677,7 @@ Aberta em: 2026-08-11 · Origem: prova pós-rollout que não pôde ser feita
 
 ### PEND-039
 **BIA-5 · Bancada permanente de golden cases (e a prova de recuperação da BIA)**
-Bloco: **A · Condução** · Prioridade: **P1** · **ORDEM DA FRENTE: 5**
+Bloco: **A · Condução** · Prioridade: **P1** · **ORDEM DA FRENTE: 6**
 STATUS: **PRONTA PARA IMPLEMENTAR**
 
 > **É A BANCADA DA BIA (BIA-5), a partir de 18/08.** Além dos golden cases
@@ -685,6 +686,38 @@ STATUS: **PRONTA PARA IMPLEMENTAR**
 > autonomia** —, registrando quais chunks vieram, por quê, e se
 > acrescentaram valor. Simulação com o retriever real rodou em 18/08 e os
 > quatro casos recuperaram conteúdo pertinente; falta a bancada permanente.
+>
+> ## ⚠️ ESTA BANCADA VIROU O PORTÃO DA FORMA KOLO (18/08)
+>
+> **Não basta perguntar "o chunk recuperado era relevante?".** A comparação
+> é de TRÊS COLUNAS, com casos reais anonimizados:
+>
+> **Ayla SEM BIA × Ayla COM BIA × resposta GENÉRICA** (o que qualquer
+> assistente competente produziria).
+>
+> A BIA só cumpre o papel dela se a diferença for perceptível **na qualidade
+> do raciocínio e na personalização** — não porque a resposta ganhou mais
+> informação.
+>
+> ### Os 13 critérios de avaliação
+>
+> 1. ajudou a compreender melhor a situação?
+> 2. trouxe hipótese que a Ayla poderia não considerar?
+> 3. conectou domínios relevantes?
+> 4. ajudou a identificar a necessidade por trás do comportamento?
+> 5. produziu uma **pergunta melhor**?
+> 6. evitou conclusão precoce?
+> 7. ajudou a escolher melhor a estratégia?
+> 8. usou **fatos reais daquela criança** quando disponíveis?
+> 9. ajudou a questionar uma generalização/crença quando pertinente?
+> 10. a resposta continuou **simples e natural** para a família?
+> 11. evitou transformar conhecimento recuperado em **aula**?
+> 12. evitou **interrogatório**?
+> 13. a estratégia final ficou **realmente mais personalizada**?
+>
+> **CRITÉRIO DE BAIXA (revisto):** bancada rodando com os casos reais, as
+> três colunas lado a lado, e veredito explícito sobre se a resposta com BIA
+> **parece Kolo ou parece genérica**.
 Aberta em: 2026-08-11 · Origem: decisão de 11/08/2026
 
 > **A regra que ela existe para impor:** não gastar 40 chamadas para descobrir
@@ -2791,9 +2824,79 @@ do laudo de 06/08) + `docs/auditoria-ayla-prompt.md`
 ---
 
 ### PEND-017
-**BIA-2 · Governança do conhecimento: Core, BIA, Boas Práticas e Fontes**
-Bloco: **B · Conhecimento** · Prioridade: **P1** · **ORDEM DA FRENTE: 2**
-STATUS: **DECISÃO PENDENTE**
+**Governança da Inteligência + A FORMA KOLO DE PENSAR**
+Bloco: **B · Conhecimento** · Prioridade: **P1** · **ORDEM DA FRENTE: 1**
+STATUS: **DECISÃO PENDENTE · REDEFINIR AGORA**
+
+> ⚠️ **ESTA FICHA VIROU A FUNDAÇÃO DA FRENTE (18/08/2026).** Ela deixou de
+> ser "governança do acervo" e passou a ser **a arquitetura intelectual da
+> Ayla**. Precede a BIA: alimentar a Biblioteca antes de definir como a Kolo
+> pensa arrisca produzir uma biblioteca tecnicamente ótima e uma Ayla
+> genérica.
+>
+> ## A decisão de identidade do produto
+>
+> **A Ayla não é receita de bolo, e a BIA não existe para dar mais conteúdo.**
+> O diferencial da Kolo tem de aparecer no PROCESSO:
+>
+> não olhar só o comportamento → procurar **necessidades e mecanismos** →
+> conhecer **aquela** criança → considerar **o adulto que conduz** →
+> identificar **interpretações e crenças** que limitam → procurar
+> **evidências reais, inclusive conquistas anteriores** → construir uma
+> perspectiva **mais saudável e crível** → virar **linguagem** → escolher
+> **estratégia personalizada** → **experimentar em pequeno** → observar →
+> registrar aprendizado → usar na próxima orientação.
+>
+> ## O ciclo de raciocínio (repertório, NÃO roteiro obrigatório)
+>
+> situação observada → o que já sabemos da criança/família → mudanças
+> recentes e fatos anteriores → necessidades por trás do comportamento →
+> hipóteses plausíveis → o que ainda precisa ser distinguido → **pergunta
+> realmente útil, só se necessária** → interpretações/crenças do adulto →
+> evidências que sustentam ou desafiam → perspectiva mais realista →
+> linguagem para o adulto → estratégia → pequena experiência → observar →
+> transformar em aprendizado.
+>
+> **A Ayla escolhe quais partes valem naquele momento.** Percorrer tudo em
+> toda resposta seria o interrogatório que o Core já proíbe.
+>
+> ## As cinco camadas (hipótese arquitetural a validar)
+>
+> - **CORE** — identidade, limites, segurança e forma de conversar. **Manda
+>   sempre.**
+> - **KOLO VIVO + HISTÓRICO + APRENDIZADOS** — quem é esta criança, o que
+>   aconteceu, o que funcionou, mudanças e conquistas.
+> - **BIA** — como **pensar** sobre o caso: mecanismos, necessidades
+>   possíveis, hipóteses, perguntas discriminativas, relações entre
+>   domínios, crenças a investigar, o que observar.
+> - **BOAS PRÁTICAS** — repertório de estratégias e intervenções.
+> - **FONTES OFICIAIS/VIVAS** — fatos atuais, legislação, direitos.
+> - **A AYLA** cruza as camadas e raciocina **com** a família.
+>
+> Precedência a confirmar: em conflito sobre **fato datável**, a fonte
+> oficial atual prevalece sobre a BIA. Ver PEND-094 e PEND-101.
+>
+> ## Duas regras de qualidade
+>
+> **1. RECUPERAR CONHECIMENTO NÃO É MOSTRAR CONHECIMENTO.** Três chunks
+> excelentes podem resultar em **uma** excelente pergunta para a mãe. Nada de
+> resposta com cara de aula, relatório clínico ou despejo. O conhecimento
+> atua **silenciosamente** no raciocínio.
+>
+> **2. NÃO BASTA ESTAR CORRETO.** A régua é: *"esta resposta tem a forma Kolo
+> de pensar, ou poderia ter sido produzida por qualquer assistente
+> genérico?"*. Se poderia ser genérica, **ainda falta alguma coisa**.
+>
+> ## A capacidade que um chatbot genérico não tem
+>
+> A memória longitudinal permite usar **a própria história daquela família**
+> como evidência — inclusive **evidência de capacidade e evolução**, não só
+> do problema. Uma dificuldade de hoje **não vira identidade, incapacidade
+> permanente nem previsão de futuro**.
+>
+> **CRITÉRIO DE BAIXA (revisto):** a Forma Kolo de Pensar escrita e
+> verificável, a precedência das cinco camadas definida, e prova técnica de
+> que nenhuma camada cria segunda fonte de regras acima do Core.
 
 > **ESTA FICHA VIROU A GOVERNANÇA DO CONHECIMENTO (18/08).** O que ela já
 > mediu sobre o acervo continua valendo abaixo; o que se acrescenta é a
@@ -4429,7 +4532,7 @@ Aberta em: 2026-08-18 · Origem: aplicação da migração 0071 (BIA)
 
 ### PEND-093
 **BIA-1 · Motor da Biblioteca na `main`, atrás de flag desligada**
-Bloco: **B · Conhecimento** · Prioridade: **P1** · **ORDEM DA FRENTE: 1**
+Bloco: **B · Conhecimento** · Prioridade: **P1** · **ORDEM DA FRENTE: 3**
 STATUS: **PROVADA · NÃO PUBLICADA** · Aberta em: 2026-08-18
 
 - **Problema:** o motor da BIA existia desde 30/07 no branch `bia/ciclo-tecnico`
@@ -4466,7 +4569,7 @@ STATUS: **PROVADA · NÃO PUBLICADA** · Aberta em: 2026-08-18
 
 ### PEND-094
 **BIA-3 · Cautela científica: separar conhecimento estável de fato datável**
-Bloco: **B · Conhecimento** · Prioridade: **P1** · **ORDEM DA FRENTE: 3**
+Bloco: **B · Conhecimento** · Prioridade: **P1** · **ORDEM DA FRENTE: 4**
 STATUS: **DECISÃO PENDENTE** · Aberta em: 2026-08-18
 
 - **Problema:** `cautela_cientifica` existe no CHECK da 0071 e está **vazio nos
@@ -4490,7 +4593,7 @@ STATUS: **DECISÃO PENDENTE** · Aberta em: 2026-08-18
 
 ### PEND-095
 **BIA-4 · Importar e validar os 1.120 chunks**
-Bloco: **B · Conhecimento** · Prioridade: **P1** · **ORDEM DA FRENTE: 4**
+Bloco: **B · Conhecimento** · Prioridade: **P1** · **ORDEM DA FRENTE: 5**
 STATUS: **PRONTA PARA IMPLEMENTAR** · Aberta em: 2026-08-18
 
 - **Problema:** a tabela existe e está vazia. O conteúdo está versionado desde
@@ -4533,7 +4636,7 @@ STATUS: **A INVESTIGAR** · Aberta em: 2026-08-18
 
 ### PEND-097
 **Boas Práticas × BIA: o que cada uma acrescenta, e onde se sobrepõem**
-Bloco: **B · Conhecimento** · Prioridade: **P2** · **ORDEM DA FRENTE: 7**
+Bloco: **B · Conhecimento** · Prioridade: **P2** · **ORDEM DA FRENTE: 8**
 STATUS: **A INVESTIGAR** · Aberta em: 2026-08-18
 
 - **Hipótese a validar, não conclusão a codificar:** a BIA ajuda a Ayla a
@@ -4549,15 +4652,76 @@ STATUS: **A INVESTIGAR** · Aberta em: 2026-08-18
 - **O que medir:** o que cada uma acrescenta · sobreposição · casos em que
   NENHUMA acrescenta · impacto em tokens e latência.
 - **Decisão registrada (Sérgio, 18/08):** **NÃO desligar Boas Práticas agora.**
+- **A ARQUITETURA QUE ESTA FICHA TESTA (definida em 18/08):**
+  **BIA** ajuda a pensar · **Memória** ajuda a conhecer · **Boas Práticas**
+  oferecem repertório de ação · **Fontes Oficiais** sustentam fato atual ·
+  **Core** mantém identidade, segurança e comportamento. **A Ayla combina.**
+- **Sobre desligar as Boas Práticas:** não se decide antes de medir. Pode
+  acontecer de a BIA tornar parte delas redundante; pode acontecer de elas
+  serem justamente o melhor catálogo de estratégias que temos.
 - **CRITÉRIO DE BAIXA:** medição com casos reais mostrando, com número, o que
   cada camada acrescenta — e recomendação explícita de manter as duas ou não.
 
 ---
 
 ### PEND-098
-**Crenças: metodologia por hipótese e pergunta, nunca por afirmação**
-Bloco: **B · Conhecimento** · Prioridade: **P2** · **ORDEM DA FRENTE: 8**
-STATUS: **A INVESTIGAR** · Aberta em: 2026-08-18
+**Crenças, evidências e mudança de perspectiva**
+Bloco: **B · Conhecimento** · Prioridade: **P1** · **ORDEM DA FRENTE: 2**
+STATUS: **A INVESTIGAR**
+
+> ⚠️ **SUBIU DE 8 PARA 2, E DE P2 PARA P1 (18/08).** Crenças deixaram de ser
+> um tema dentro da BIA e passaram a ser **parte da maneira de raciocinar**
+> (PEND-017). Precisa estar definida **antes de alimentar o corpus**, senão
+> importamos 1.120 chunks sem saber como esse eixo é tratado.
+>
+> ## As quatro coisas que esta ficha precisa definir
+>
+> **1. Identificar sem rotular.** A Ayla não diz *"isso é uma crença
+> limitante"*, e também não aceita a frase como fato.
+>
+> **2. Questionar com fatos.** *"Ele não consegue ficar sem celular"* abre
+> investigação: isso acontece sempre? em que condições? já houve uma vez em
+> que conseguiu? o que estava diferente? que necessidade pode estar por trás?
+> a interpretação se sustenta nos fatos?
+>
+> **3. Usar a memória longitudinal como evidência.** Se a Kolo **já conhece**
+> um fato que contradiz a generalização, recuperá-lo: *"lembra que você me
+> contou que na semana passada ele conseguiu X? Talvez não seja que ele não
+> consiga — precisamos entender o que naquele momento ajudou."*
+> **NUNCA inventar uma conquista.** Não conhecendo, perguntar com
+> naturalidade: *"me conta uma vez em que ele lidou melhor do que você
+> esperava com uma mudança ou com o fim de algo de que gostava."*
+>
+> **4. Reconstruir uma crença CRÍVEL.** Não trocar *"ele não consegue"* por
+> *"ele consegue tudo"*. O alvo é algo como: *"ainda é difícil encerrar uma
+> atividade muito prazerosa, mas ele já mostrou que consegue em algumas
+> condições — podemos descobrir quais apoios ajudam e ampliar isso."*
+>
+> ## Vale também para o adulto sobre si mesmo
+>
+> *"eu não sei conduzir"* · *"eu sempre cedo"* · *"não consigo colocar
+> limites"* · *"já tentei tudo"* · *"com ele nada funciona"*. Mesma regra:
+> não rotular, não confrontar, não inventar, **não responder com positividade
+> vazia** — procurar exceções e evidências.
+>
+> ## Linguagem do adulto com a criança
+>
+> Ajudar a perceber como a fala consolida dificuldade ou possibilidade.
+> Evitar *"você sempre faz isso"*, *"você não consegue"*, *"se eu tirar você
+> vai surtar"*. Oferecer *"está difícil parar agora"*, *"vamos treinar essa
+> mudança"*, *"ontem você conseguiu depois do aviso"*.
+>
+> ⚠️ **SEM ALEGAÇÃO CIENTÍFICA EXAGERADA.** Nada de "neurolinguística",
+> "reprogramar" ou "destruir crenças". O objetivo é **identificar, questionar
+> e flexibilizar** interpretações com perguntas, linguagem intencional e
+> evidências reais daquela família.
+>
+> ## Necessidade → crença → estratégia
+>
+> *"fica agitado quando acaba o celular"* **não** produz *"use timer"*. Pode
+> ser transição, previsibilidade, cansaço, regulação, atividade muito
+> reforçadora, não saber o que fazer depois, sensação de perda de controle.
+> A Ayla usa o que já sabe e pergunta **só o que diferencia caminhos**. · Aberta em: 2026-08-18
 
 - **Norte definido (Karina/Sérgio):** crença **não** é "frase negativa → frase
   positiva". A construção desejada é: `experiência → interpretação → possível
@@ -4580,9 +4744,20 @@ STATUS: **A INVESTIGAR** · Aberta em: 2026-08-18
 ---
 
 ### PEND-099
-**Plano Kolo · a seção "Um jeito diferente de olhar para isso"**
+**Plano Kolo — transformar compreensão em evolução**
 Bloco: **D · Entregas** · Prioridade: **P2** · **ORDEM DA FRENTE: 9**
-STATUS: **A INVESTIGAR** · Aberta em: 2026-08-18
+STATUS: **A INVESTIGAR**
+
+> **REDEFINIDA EM 18/08.** Deixou de ser "colocar crenças no Plano". O arco,
+> quando fizer sentido: **o que estamos percebendo → um jeito diferente de
+> olhar → evidências da própria criança → como falar → o que experimentar →
+> o que observar → o que aprendemos.**
+>
+> Isso é o que dá identidade própria ao Plano — e é o mesmo arco da Forma
+> Kolo (PEND-017), aplicado a um artefato.
+>
+> ⚠️ **NÃO transformar em seção obrigatória de todo Plano** antes de
+> investigar. Depende de PEND-098 (metodologia de crenças) e PEND-097. · Aberta em: 2026-08-18
 
 - **Conceito de produto a avaliar:** uma seção do Plano trazendo, quando
   pertinente — possível pensamento/crença a investigar · por que vale olhar para
