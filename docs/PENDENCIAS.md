@@ -20,6 +20,18 @@ Só o que está aberto. 🔒 = bloqueada.
 | [PEND-073](#pend-073) | Caminho novo não encurta a resposta em pedido de plano | A · Condução | P2 | ABERTA | decidir se o Core do experimental recebe a nota de `querPlano` |
 | [PEND-074](#pend-074) | Condução D0–D7 do Trial não existe em runtime | G · Comercial | P1 | IMPLEMENTADA, NÃO PUBLICADA | provar a condução na bancada com modelo real antes de publicar |
 | [PEND-075](#pend-075) | Allowlist do caminho novo: quem é, e por quê | H · Governança | P3 | RESOLVIDA | nenhum — a composição das 3 contas é intencional |
+| [PEND-093](#pend-093) | BIA-1 · Motor da Biblioteca na main, atrás de flag OFF | B · Conhecimento | P1 | PROVADA · NÃO PUBLICADA | publicar; baixa exige deploy provado e flag OFF |
+| [PEND-094](#pend-094) | BIA-3 · Cautela científica: estável × datável | B · Conhecimento | P1 | DECISÃO PENDENTE | decidir ANTES de importar o corpus |
+| [PEND-095](#pend-095) | BIA-4 · Importar e validar os 1.120 chunks | B · Conhecimento | P1 | PRONTA PARA IMPLEMENTAR | depende de 093, 094 e **092 (backup)** |
+| [PEND-096](#pend-096) | BIA-6 · Ativação controlada e medição | B · Conhecimento | P2 | A INVESTIGAR | último da fila; depende de tudo acima |
+| [PEND-097](#pend-097) | Boas Práticas × BIA — o que cada uma acrescenta | B · Conhecimento | P2 | A INVESTIGAR | ⚠️ depende de PEND-042, senão a medição é falsa |
+| [PEND-098](#pend-098) | Crenças: hipótese e pergunta, nunca afirmação | B · Conhecimento | P2 | A INVESTIGAR | fechar metodologia antes do Plano |
+| [PEND-099](#pend-099) | Plano · "Um jeito diferente de olhar para isso" | D · Entregas | P2 | A INVESTIGAR | bloqueada por PEND-098 |
+| [PEND-100](#pend-100) | Entrada contínua de material no Admin | H · Governança | P2 | A INVESTIGAR | a BIA sem depender do VS Code |
+| [PEND-101](#pend-101) | Legislação federal — primeira etapa das Fontes Vivas | F · Limites | P2 | INVESTIGADA · DECISÃO PENDENTE | só federal; allowlist no código |
+| [PEND-102](#pend-102) | Whitelist de sites de referência | F · Limites | P3 | A INVESTIGAR | depende de 022 e 101 |
+| [PEND-103](#pend-103) | Higiene da fila de pendências | H · Governança | P3 | A INVESTIGAR | índice, main local e estados padronizados |
+| [PEND-092](#pend-092) | Não existe rotina de backup do banco de produção | H · Governança | P1 | A INVESTIGAR | bloqueia PEND-095 (corpus), não bloqueia código inerte |
 | [PEND-090](#pend-090) | Contradição entre o perfil salvo e o relato de agora | C · Memória | P1 | ABERTA | frente própria: definir se a regra mora no Core v9 ou no código |
 | [PEND-089](#pend-089) | Prioridade dos desafios — corte CORRIGIDO, ordenação por recência aberta | C · Memória | P1 | CORTE OK · PRIORIZAÇÃO ABERTA | decidir de onde vem a prioridade quando o perfil passar do teto |
 | [PEND-091](#pend-091) | Três lacunas menores do contexto (interesses, idade, confirmação) | C · Memória | P2 | ABERTA | depende de PEND-089 |
@@ -559,7 +571,13 @@ Aberta em: 2026-08-11 · Origem: portão da PEND-035
 
 ### PEND-042
 **58% dos turnos de WhatsApp saem sem uma linha de repertório**
-Bloco: **B · Conhecimento** · Prioridade: **P1** · Estado: **ABERTA · MEDIDA, CAUSA DESCONHECIDA**
+Bloco: **B · Conhecimento** · Prioridade: **P1** · **ORDEM DA FRENTE: 6**
+STATUS: **INVESTIGADA · CAUSA DESCONHECIDA**
+
+> ⚠️ **PASSOU A BLOQUEAR A PEND-097** (Boas Práticas × BIA), por decisão de
+> 18/08. Comparar a BIA contra um canal que sai vazio em 58% dos turnos
+> faria a BIA "ganhar" por ausência do adversário. A causa não precisa estar
+> resolvida — precisa estar SEPARADA, para sabermos se a comparação é justa.
 Aberta em: 2026-08-11 · Origem: leitura pós-rollout de `eventos_app`
 
 - **MEDIDO**, últimas 24h antes do rollout geral: dos **64** eventos
@@ -657,8 +675,16 @@ Aberta em: 2026-08-11 · Origem: prova pós-rollout que não pôde ser feita
 ---
 
 ### PEND-039
-**Bancada permanente de golden cases — quatro casos que medem sete coisas de uma vez**
-Bloco: **A · Condução** · Prioridade: **P1** · Estado: **ABERTA · DESENHADA**
+**BIA-5 · Bancada permanente de golden cases (e a prova de recuperação da BIA)**
+Bloco: **A · Condução** · Prioridade: **P1** · **ORDEM DA FRENTE: 5**
+STATUS: **PRONTA PARA IMPLEMENTAR**
+
+> **É A BANCADA DA BIA (BIA-5), a partir de 18/08.** Além dos golden cases
+> já desenhados, precisa provar recuperação com os casos reais conhecidos —
+> **alimentação (Rosangela), agitação (Vanuza), comunicação (Manu) e
+> autonomia** —, registrando quais chunks vieram, por quê, e se
+> acrescentaram valor. Simulação com o retriever real rodou em 18/08 e os
+> quatro casos recuperaram conteúdo pertinente; falta a bancada permanente.
 Aberta em: 2026-08-11 · Origem: decisão de 11/08/2026
 
 > **A regra que ela existe para impor:** não gastar 40 chamadas para descobrir
@@ -793,8 +819,14 @@ Aberta em: 2026-08-11 · Origem: teste real (Karina/Manu)
 
 ### PEND-035
 **✅ BAIXADA · O objetivo do Plano confundia BARREIRA com OBJETIVO FINAL**
-Bloco: **D · Entregas** · Prioridade: **P1** · Estado: **CORRIGIDA · AGUARDANDO DEPLOY**
-Baixada em: 2026-08-11 · working tree, ainda não commitada
+Bloco: **D · Entregas** · Prioridade: **P1** · STATUS: **CONCLUÍDA**
+Baixada em: 2026-08-11 · **estado real confirmado em 18/08: PUBLICADA**
+
+> ⚠️ **A FICHA ESTAVA DESATUALIZADA, NÃO A CORREÇÃO.** Dizia "working tree,
+> ainda não commitada" desde 11/08. VERIFIQUEI em 18/08: a distinção está em
+> `lib/conducao/objetivo.ts` na `main` — 27 menções a "barreira", incluindo
+> `BARREIRA = o que dificulta chegar lá → NUNCA substitui`. Foi publicada e
+> ninguém atualizou a ficha. Ver PEND-103.
 Aberta em: 2026-08-11 · Origem: teste real (Karina/Manu)
 
 - **O caso.** A conversa começou em *"quero ler com ela e ela não fica
@@ -1195,7 +1227,11 @@ Aberta em: 2026-08-10 · Origem: bancada do piloto 4A (portões A–D + ablaçã
 
 ### PEND-027
 **Plano Kolo — o que ele sabe da criança, o que recupera e o que aprende**
-Bloco: **D · Entregas** · Prioridade: **P1** · Estado: **ABERTA**
+Bloco: **D · Entregas** · Prioridade: **P1** · STATUS: **A INVESTIGAR**
+
+> **Ganhou uma filha em 18/08: PEND-099** — a seção "Um jeito diferente de
+> olhar para isso", que só pode ser desenhada depois de a metodologia de
+> crenças fechar (PEND-098).
 Aberta em: 2026-08-10 · Origem: auditoria vertical do Plano (2026-08-10)
 
 📄 **LAUDO COMPLETO: [auditoria-plano-2026-08-10.md](auditoria-plano-2026-08-10.md)**
@@ -2755,8 +2791,24 @@ do laudo de 06/08) + `docs/auditoria-ayla-prompt.md`
 ---
 
 ### PEND-017
-**Conhecimento: o que existe, o que é recuperado, o que chega ao modelo**
-Bloco: **B · Conhecimento** · Prioridade: **P1** · Estado: **ABERTA**
+**BIA-2 · Governança do conhecimento: Core, BIA, Boas Práticas e Fontes**
+Bloco: **B · Conhecimento** · Prioridade: **P1** · **ORDEM DA FRENTE: 2**
+STATUS: **DECISÃO PENDENTE**
+
+> **ESTA FICHA VIROU A GOVERNANÇA DO CONHECIMENTO (18/08).** O que ela já
+> mediu sobre o acervo continua valendo abaixo; o que se acrescenta é a
+> precedência entre as quatro camadas:
+>
+> - **PERFIL/CONVERSA** = verdade sobre AQUELA criança;
+> - **BIA** = conhecimento técnico e raciocínio adotados pela Kolo;
+> - **FONTES OFICIAIS/VIVAS** = autoridade sobre fato atualizável;
+> - **CORE** = comportamento, limites e forma de conversar. **Manda sempre.**
+>
+> Regra a confirmar: havendo conflito sobre **fato datável**, a fonte oficial
+> atual prevalece sobre a BIA. Ver PEND-094 e PEND-101.
+>
+> **CRITÉRIO DE BAIXA:** precedência escrita, com prova técnica de que a BIA
+> não cria segunda fonte de regras acima do Core.
 Aberta em: 2026-08-08 · Origem: consolidação da PEND-010 +
 `docs/cowork-frente-1-skills.md`, `docs/cowork-frente-2-boas-praticas.md`,
 `docs/frente-import-documentos.md`
@@ -3444,8 +3496,24 @@ Aberta em: 2026-08-08 · Origem: consolidação da PEND-010 (itens 23, 24, 25) +
 ---
 
 ### PEND-022
-**Fontes confiáveis, limites e escalonamento para humano**
-Bloco: **F · Limites** · Prioridade: **P2** · Estado: **ABERTA**
+**Fontes Oficiais/Vivas — camada separada da BIA (guarda-chuva)**
+Bloco: **F · Limites** · Prioridade: **P2** · **ORDEM DA FRENTE: 11**
+STATUS: **INVESTIGADA · DECISÃO PENDENTE**
+
+> **INVESTIGAÇÃO COMPLETA ENTREGUE EM 17/08.** O que ficou provado: o Core
+> v9 **já autoriza** a camada (*"informações gerais provenientes de Fontes
+> Confiáveis, quando essa camada estiver disponível"*); a chave
+> `fontes_confiaveis` existe no código e **não tem linha no banco**; o
+> fallback do código contradiz o Core; e a allowlist de domínios tem de
+> morar **no código**, porque o documento é editável sem deploy.
+>
+> **Regra conceitual:** BIA = conhecimento formativo. Fonte Oficial =
+> autoridade sobre informação atualizável. Em conflito sobre fato datável,
+> **a fonte oficial atual prevalece**.
+>
+> Esta ficha vira o GUARDA-CHUVA; as filhas são PEND-101 (legislação
+> federal) e PEND-102 (whitelist). O escalonamento para humano continua
+> aqui — e continua não existindo.
 Aberta em: 2026-08-08 · Origem: consolidação da PEND-010
 
 - **Impacto:** saúde, diagnóstico, medicação, direito escolar e laudo são temas
@@ -3977,8 +4045,29 @@ Aberta em: 2026-08-15 · Origem: Passo 1 do Admin da Inteligência
 ---
 
 ### PEND-083
-**Branch `bia/ciclo-tecnico` pode ter mais correções prontas e nunca publicadas**
-Bloco: **G · Entrega** · Prioridade: **P1** · Estado: **ABERTA**
+**✅ BAIXADA · Branch `bia/ciclo-tecnico` tinha correções prontas e nunca publicadas**
+Bloco: **G · Entrega** · Prioridade: **P1** · STATUS: **CONCLUÍDA**
+Baixada em: 2026-08-18
+
+> **PARIDADE SUFICIENTEMENTE AUDITADA.** O critério era a tabela ACHADO ·
+> ONDE ESTÁ · MAIN? · LEGACY? · NOVO? · RELEVANTE? · AÇÃO, com a frase de
+> encerramento. Cumprido, com evidência verificável:
+>
+> - **3 P1 encontrados e publicados** no merge `5edafd0` (PR #122): convite
+>   ao desconhecido uma vez para sempre · Plano deixa de se reoferecer após
+>   a própria entrega · proativas sem nome inválido nem gênero inferido.
+> - **3 P2 registrados**, não implementados: PEND-088 (turn_id e analytics,
+>   adiados por decisão) e PEND-090 (contradição perfil × relato).
+> - **1 DESCARTADA:** `5d05ba8` — o equivalente chegou por `kolo-vivo/campos.ts`.
+> - **PEND-058 trazida** para a `main` com medição atualizada.
+> - **Motor da BIA** identificado e trazido — ver PEND-093.
+> - **Inventário de branches fechado em 18/08.**
+>
+> **Aprendizado:** o `/api/health` pegava o erro de dizer "não publicado"
+> sobre algo em produção. O erro simétrico — marcado como feito, nunca
+> publicado — não tinha detector, e apareceu **quatro vezes** nesta semana.
+> O que o pega é abrir a frente perguntando "existe isto em algum branch?",
+> que virou passo do protocolo permanente.
 Aberta em: 2026-08-17 · Origem: recuperação do commit `5a69e89`
 
 - **O caso, e ele é o motivo desta ficha existir.** O commit `5a69e89`
@@ -4289,6 +4378,358 @@ Aberta em: 2026-08-13 · Trazida para a `main` em 2026-08-17 · Origem: mediçã
 
 ---
 
+### PEND-092
+**Não existe rotina de backup do banco de produção**
+Bloco: **H · Governança** · Prioridade: **P1** · Estado: **ABERTA**
+Aberta em: 2026-08-18 · Origem: aplicação da migração 0071 (BIA)
+
+- **Impacto:** 209 famílias, 6.146 mensagens e informação de saúde de criança
+  num banco cuja única cópia foi criada **à mão, hoje**, por causa de uma
+  migração. Não é hipótese: este banco **já foi zerado em 08/06/2026** por um
+  redeploy, e a recuperação dependeu de snapshot da Hostinger — do servidor,
+  não do banco.
+- **VERIFICADO EM 18/08/2026, por cinco caminhos independentes** (sessão com
+  acesso ao Easypanel, tudo leitura):
+  1. o serviço Supabase é do tipo **compose**, e o Easypanel só oferece backup
+     para banco gerenciado — a aba de Backups **não existe**;
+  2. Snapshots do painel são Exportar/Importar/Migrar **serviço**, não dados;
+  3. Configurações do servidor não têm seção de Backups (há "Provedores de
+     Armazenamento", sem job associado);
+  4. o log de Ações dos últimos 3 meses tem só logins e um deploy do n8n —
+     **nenhum job de backup**;
+  5. dentro do container: `/backups` e `/backup` não existem, `/var/backups`
+     vazio, `find` por `*.dump *.sql.gz *.backup *.tar.gz` (>1M) sem resultado,
+     `/etc/cron.d` só com `e2scrub_all`, `/var/spool/cron` inexistente.
+- **O que existe hoje, e por que não basta:** um dump manual de 18/08,
+  `kolo_20260818_1305.dump` (5,6 MB, `pg_restore -l` com 1.234 entradas,
+  md5 conferido), em `/etc/postgresql-custom/` — persistido e fora do PGDATA.
+  **Mas está na mesma máquina que falhou em junho.** Backup que mora no
+  servidor não protege contra o servidor.
+- **Caminho já disponível, sem instalar nada:** existe `wal-g.conf` em
+  `/etc/postgresql-custom/` — a imagem do Supabase já traz o `wal-g`, então
+  backup contínuo é viável com o que está no ambiente.
+- **⚠️ RESTORE NUNCA FOI TESTADO.** Nem o dump de hoje. Backup não provado é
+  suposição — e a prova exige um lugar para restaurar, que é a mesma lacuna
+  que trava migração neste projeto (não há staging; `SUPABASE_URL` aponta para
+  produção).
+- **Critério de conclusão:** existe rotina automática, com retenção definida,
+  cópia **fora do servidor**, e **um restore provado ao menos uma vez**.
+- **Não implementar junto de outra frente** (decisão do Sérgio, 18/08/2026).
+- **O QUE ESTA FICHA BLOQUEIA — e o que NÃO bloqueia (decisão do Sérgio,
+  18/08):** backup **NÃO** bloqueia desenvolver nem publicar código inerte
+  que não escreve no banco (por isso a PEND-093 saiu da dependência).
+  Backup **BLOQUEIA**: importação de corpus · gravação em massa · nova
+  migração ou DDL · mudança de estrutura de dados · qualquer operação com
+  risco real para produção.
+- **Dependente direta: PEND-095** (importar os 1.120 chunks) — a primeira
+  gravação em massa que este banco vai receber.
+- **Agente recomendado:** PROPOR
+
+---
+
+### PEND-093
+**BIA-1 · Motor da Biblioteca na `main`, atrás de flag desligada**
+Bloco: **B · Conhecimento** · Prioridade: **P1** · **ORDEM DA FRENTE: 1**
+STATUS: **PROVADA · NÃO PUBLICADA** · Aberta em: 2026-08-18
+
+- **Problema:** o motor da BIA existia desde 30/07 no branch `bia/ciclo-tecnico`
+  e nunca chegou à `main`. Quarto caso do mesmo padrão nesta semana.
+- **Objetivo:** ter o motor versionado e inerte — sem conteúdo, sem fiação.
+- **Evidências:** 15 arquivos em `lib/bia/` (retriever, pontuação, bloco,
+  conflitos, desabafo, flag) + `0071_bia.sql` e `0071_rollback.sql`. Migração
+  **aplicada em produção em 18/08 13:05 UTC**, com backup provado antes.
+  113 testes passando; dependência externa só `@/lib/log` e o tipo do Supabase.
+- **Decisões tomadas (Sérgio, 18/08):** trazer só o motor; NÃO trazer a fiação
+  do branch (`prompt.ts`, `responder.ts`, `orchestrator.ts`) — ela mira Legacy
+  e Web e **não toca `experimental.ts`**, que atende todas as famílias hoje.
+- **Perguntas abertas:** nenhuma para esta etapa.
+- **Dependências: NENHUMA.** ⚠️ A dependência de PEND-092 (backup) foi
+  **retirada em 18/08, por decisão do Sérgio, e o critério ficou escrito:**
+  backup **não** bloqueia desenvolver nem publicar código INERTE que não
+  escreve no banco. Backup bloqueia **importação de corpus, gravação em
+  massa, nova migração/DDL, mudança de estrutura de dados** e qualquer
+  operação com risco real em produção. A dependência real de PEND-092 é a
+  **PEND-095** (importar os 1.120 chunks).
+- **Branch/commit:** `bia/ciclo-tecnico` (`1936335`, `1e133b9`); working tree.
+- **Critério de implementação:** motor na `main`, flag OFF por padrão.
+- **Critério de prova — JÁ CUMPRIDO (18/08):**
+  flag fail-closed (só `1`/`true` ligam) · com a flag OFF `carregarBlocoBia`
+  devolve `""` **sem tocar no banco** (provado com espião que lança em
+  `from()`) · **zero imports** da BIA nos 5 caminhos de conversa · nenhuma
+  família afetada · **113 testes** da frente · suíte, `tsc` e build verdes.
+- **CRITÉRIO DE BAIXA (BIA-1):** motor presente na `main` + deploy provado +
+  flag OFF + **nenhuma alteração de comportamento** + health verde.
+- **Depois de publicar, o estado passa a `PUBLICADA · INERTE`;** a baixa só
+  vem quando os cinco itens acima estiverem provados.
+
+---
+
+### PEND-094
+**BIA-3 · Cautela científica: separar conhecimento estável de fato datável**
+Bloco: **B · Conhecimento** · Prioridade: **P1** · **ORDEM DA FRENTE: 3**
+STATUS: **DECISÃO PENDENTE** · Aberta em: 2026-08-18
+
+- **Problema:** `cautela_cientifica` existe no CHECK da 0071 e está **vazio nos
+  1.120 chunks**. Sem ele, prevalência, DSM-5 e CID-11 ficam indistinguíveis de
+  princípios que não envelhecem.
+- **Objetivo:** marcar o que envelhece, para que a Fonte Oficial possa
+  prevalecer depois sem reescrever a Biblioteca.
+- **Proposta entregue em 18/08, não implementada:** o critério é *"se este
+  trecho estiver desatualizado, a família recebe informação errada sobre o
+  MUNDO — ou só uma explicação menos precisa sobre a CRIANÇA?"*. Datável ganha
+  **fonte**, **data da afirmação** e **domínio oficial correspondente**. Regra
+  de uso: chunk datável **nunca é afirmado como atual**; sem fonte viva, a Ayla
+  diz o dado **com a data**.
+- **Perguntas abertas:** a marcação é regra no chunker ou revisão humana? Quem
+  decide a lista de fontes canônicas (CDC, DSM-5, CID-11, ANS)?
+- **Dependências:** nenhuma. **Bloqueia PEND-095.**
+- **CRITÉRIO DE BAIXA:** regra escrita, aplicada no chunker, e amostra de 20
+  chunks datáveis conferida por humano.
+
+---
+
+### PEND-095
+**BIA-4 · Importar e validar os 1.120 chunks**
+Bloco: **B · Conhecimento** · Prioridade: **P1** · **ORDEM DA FRENTE: 4**
+STATUS: **PRONTA PARA IMPLEMENTAR** · Aberta em: 2026-08-18
+
+- **Problema:** a tabela existe e está vazia. O conteúdo está versionado desde
+  30/07 e nunca foi importado.
+- **Evidências:** `data/bia/corpus-volume-1-2026-07-30.json`, 1.120 chunks de
+  `BIA_Kolo_Familia_Compilado_Final.docx`. Distribuição medida: autonomia 210,
+  aprendizagem 177, socialização 149, motor 136 · tipos: conceito 495,
+  regra_operacional 285, pergunta_investigativa 44 · cautela: baixo 852,
+  requer_encaminhamento 11. **298 (27%) com `revisao_pendente = true`** — o
+  retriever já os exclui.
+- **Decisão (Sérgio, 18/08):** missão separada do motor, para distinguir falha
+  de motor de falha de conteúdo.
+- **Dependências:** PEND-093 (motor) · **PEND-094 (cautela — marcar na
+  importação; depois vira curadoria manual sobre 1.120 linhas)** ·
+  **PEND-092 (backup) — esta é a primeira gravação em massa que o banco vai
+  receber, e é exatamente o caso que o backup existe para cobrir.**
+- **Critério de prova:** contagem por núcleo e tipo igual à do JSON;
+  reimportação não duplica (o `hash` é único); `revisao_pendente` preservado.
+- **CRITÉRIO DE BAIXA:** 1.120 linhas em produção, contagens conferidas, e
+  nenhuma família alcançando a BIA (flag OFF).
+
+---
+
+### PEND-096
+**BIA-6 · Ativação controlada e medição**
+Bloco: **B · Conhecimento** · Prioridade: **P2** · **ORDEM DA FRENTE: 14**
+STATUS: **A INVESTIGAR** · Aberta em: 2026-08-18
+
+- **Objetivo:** ligar a BIA para uso real medindo qualidade, tokens e latência.
+- **Medido antes de ligar** (simulação com o retriever real contra o corpus,
+  18/08): **~470–610 tokens** por turno acionado, 1 consulta, **zero LLM**.
+  O custo real da ida ao Postgres é **NÃO SEI** — não havia tabela quando medi.
+- **Perguntas abertas:** onde injetar (o experimental é o único caminho vivo)?
+  Uma família primeiro ou uma coorte? Qual o critério de reversão?
+- **Dependências:** 093, 094, 095, PEND-039 (bancada) e PEND-097 (BPs × BIA).
+- **CRITÉRIO DE BAIXA:** ligada para famílias reais, com latência medida
+  ANTES→DEPOIS e nenhuma regressão de qualidade na bancada.
+
+---
+
+### PEND-097
+**Boas Práticas × BIA: o que cada uma acrescenta, e onde se sobrepõem**
+Bloco: **B · Conhecimento** · Prioridade: **P2** · **ORDEM DA FRENTE: 7**
+STATUS: **A INVESTIGAR** · Aberta em: 2026-08-18
+
+- **Hipótese a validar, não conclusão a codificar:** a BIA ajuda a Ayla a
+  **pensar e investigar**; as Boas Práticas dão **repertório acionável do que
+  fazer**.
+- **A fronteira já está escrita no código da BIA:** *"boas_praticas → O QUE
+  FAZER (368 fichas curadas). bia_chunks → COMO PENSAR antes de escolher o que
+  fazer."* Isso é desenho, não medição.
+- **⚠️ DEPENDE DE PEND-042, E SEM ELA A COMPARAÇÃO SERIA FALSA.** MEDIDO: **58%
+  dos turnos de WhatsApp saem com ZERO boas práticas** (`sem_skill` em 31 de
+  64, `acervo_vazio` em 6). Comparar a BIA contra um canal vazio em mais da
+  metade dos turnos faria a BIA ganhar por ausência do adversário.
+- **O que medir:** o que cada uma acrescenta · sobreposição · casos em que
+  NENHUMA acrescenta · impacto em tokens e latência.
+- **Decisão registrada (Sérgio, 18/08):** **NÃO desligar Boas Práticas agora.**
+- **CRITÉRIO DE BAIXA:** medição com casos reais mostrando, com número, o que
+  cada camada acrescenta — e recomendação explícita de manter as duas ou não.
+
+---
+
+### PEND-098
+**Crenças: metodologia por hipótese e pergunta, nunca por afirmação**
+Bloco: **B · Conhecimento** · Prioridade: **P2** · **ORDEM DA FRENTE: 8**
+STATUS: **A INVESTIGAR** · Aberta em: 2026-08-18
+
+- **Norte definido (Karina/Sérgio):** crença **não** é "frase negativa → frase
+  positiva". A construção desejada é: `experiência → interpretação → possível
+  crença → efeito sobre comportamento/percepção → questionamento → nova
+  perspectiva → pequena experiência concreta`.
+- **Limite inegociável:** a Ayla **não afirma** qual é a crença da criança ou do
+  responsável. Trabalha com **hipótese e pergunta**.
+- **O que já existe:** o núcleo `pensamentos_crencas` da BIA (13 chunks) e o
+  bloco de crenças limitantes, hoje classificado como `interpretacao`. A própria
+  migração 0071 registra, por escrito, a decisão em aberto de virar tipo próprio
+  (`crenca_limitante`).
+- **Perguntas abertas:** como este conhecimento entra na BIA (tipo próprio?) e
+  como é recuperado sem virar interpretação psicológica da família.
+- **Fonte:** material de formação e pós-graduação da fundadora — tratar como
+  fonte de construção de metodologia, com cautela científica (PEND-094).
+- **Dependências:** 093, 095. **Bloqueia PEND-099.**
+- **CRITÉRIO DE BAIXA:** metodologia escrita e provada em bancada, com evidência
+  de que a Ayla formula hipótese e pergunta e **nunca** afirma a crença.
+
+---
+
+### PEND-099
+**Plano Kolo · a seção "Um jeito diferente de olhar para isso"**
+Bloco: **D · Entregas** · Prioridade: **P2** · **ORDEM DA FRENTE: 9**
+STATUS: **A INVESTIGAR** · Aberta em: 2026-08-18
+
+- **Conceito de produto a avaliar:** uma seção do Plano trazendo, quando
+  pertinente — possível pensamento/crença a investigar · por que vale olhar para
+  isso · perguntas que abrem outra perspectiva · nova interpretação possível ·
+  pequena experiência prática.
+- **Risco central:** parecer diagnóstico, ou virar lista de afirmações sobre a
+  família.
+- **Dependências:** **PEND-098 — não implementar antes de fechar a metodologia
+  de crenças.** Liga-se a PEND-027 e a PEND-037 (o Plano afirma causas sem
+  fonte rastreável).
+- **CRITÉRIO DE BAIXA:** seção provada em Plano real, com leitura humana
+  confirmando que soa como convite, não como laudo.
+
+---
+
+### PEND-100
+**Entrada contínua de material no Admin — a BIA sem depender do VS Code**
+Bloco: **H · Governança** · Prioridade: **P2** · **ORDEM DA FRENTE: 10**
+STATUS: **A INVESTIGAR** · Aberta em: 2026-08-18
+
+- **Problema:** hoje importar conhecimento exige `.docx` local, script e
+  desenvolvedor. A Karina não consegue acrescentar material sozinha.
+- **Fluxo desejado:** anexar material → interpretar/classificar → **revisar o
+  que será incorporado** → aprovação humana → importar/versionar.
+- **Investigar também:** atualização, substituição e **retirada** de conteúdo —
+  o `hash` dá idempotência, mas não existe caminho para despublicar um chunk.
+- **O que já existe para reusar:** `scripts/bia/importar-bia.mjs`, o campo
+  `revisao_pendente` e a tela de Documentos da Ayla (versiona sem deploy).
+- **Dependências:** 093, 095.
+- **CRITÉRIO DE BAIXA:** a Karina importa e publica um material do começo ao
+  fim sem desenvolvedor, com revisão humana antes de qualquer chunk ficar ativo.
+
+---
+
+### PEND-101
+**Legislação federal brasileira — primeira etapa das Fontes Vivas**
+Bloco: **F · Limites** · Prioridade: **P2** · **ORDEM DA FRENTE: 12**
+STATUS: **INVESTIGADA · DECISÃO PENDENTE** · Aberta em: 2026-08-18
+
+- **Escopo desta etapa: SOMENTE federal.** Sem estadual, sem municipal, sem
+  campo de cidade/UF (decisão do Sérgio, 17/08).
+- **Já investigado em 17/08** (detalhe em PEND-022): o Core v9 **já autoriza** a
+  camada — *"pode fornecer informações gerais provenientes de Fontes Confiáveis,
+  quando essa camada estiver disponível"*; o fallback do código contradiz o Core
+  e precisa ser alinhado; a allowlist de domínios tem de morar **no código**,
+  nunca no documento editável do Admin.
+- **Perguntas abertas:** consulta direta às fontes basta, ou é preciso provedor
+  de busca? (esgotar antes de contratar dependência — instrução do Sérgio).
+  Como confirmar **vigência**: norma alterada ou revogada.
+- **Limite:** informação e orientação geral. **Nunca** estratégia jurídica
+  individual nem decisão de elegibilidade.
+- **Dependências:** PEND-022. **NÃO misturar dentro da BIA** — legislação é fato
+  datável, não conhecimento formativo.
+- **CRITÉRIO DE BAIXA:** consulta federal funcionando com fonte e data
+  registradas, falha segura provada, e nenhum dado pessoal saindo na consulta.
+
+---
+
+### PEND-102
+**Whitelist de sites de referência em neurodivergência**
+Bloco: **F · Limites** · Prioridade: **P3** · **ORDEM DA FRENTE: 13**
+STATUS: **A INVESTIGAR** · Aberta em: 2026-08-18
+
+- **Objetivo:** lista curada de fontes confiáveis, cada uma com: **o assunto
+  para o qual ela é autoridade** · tipo de informação permitido · atualização ·
+  precedência · **quando consultar e quando NÃO consultar**.
+- **Por que separada da legislação:** fonte de referência não é fonte
+  normativa. Uma explica; a outra tem autoridade sobre o que vale.
+- **Dependências:** PEND-022, PEND-101.
+- **CRITÉRIO DE BAIXA:** whitelist escrita, com precedência definida e o
+  critério de "quando não consultar" explícito.
+
+---
+
+### PEND-103
+**Higiene da fila de pendências**
+Bloco: **H · Governança** · Prioridade: **P3** · **ORDEM DA FRENTE: paralela**
+STATUS: **A INVESTIGAR** · Aberta em: 2026-08-18
+
+- **Três achados laterais da reorganização de 18/08**, registrados em vez de
+  corrigidos em silêncio:
+  1. **Fichas fora do índice:** PEND-033, 034, 035 e 076 têm ficha e não têm
+     linha na tabela. As quatro estão baixadas — deveriam ter ido para
+     `PENDENCIAS-ARQUIVO.md`, conforme a regra do próprio arquivo.
+  2. **`main` local divergente:** 5 commits que nunca chegaram a `origin/main`.
+     Backup em `backup/main-local-2026-08-09`. Mesma classe de problema que a
+     PEND-083 apurou.
+  3. **Estados livres:** cada ficha inventou o seu (`MEDIDA`, `DESENHADA`,
+     `DESCONTAMINADA`, `ESCRITA PROVADA · LEITURA NÃO`…). O campo `STATUS`
+     padronizado entrou em 18/08 para as fichas novas; as antigas não foram
+     convertidas.
+- **CRITÉRIO DE BAIXA:** índice e fichas batendo, `main` local reconciliada, e
+  todas as fichas usando o vocabulário único de STATUS.
+
+---
+
+## Protocolo permanente de trabalho
+
+> Registrado em 18/08/2026, depois de **quatro casos numa única semana** em que
+> a correção certa estava escrita, testada — e fora da `main`.
+
+**INVESTIGAR → DECIDIR → IMPLEMENTAR → PROVAR → PUBLICAR → OBSERVAR → DAR BAIXA.**
+
+### Ao abrir uma frente
+
+1. **Localizar a ficha.** Se não existir, abrir antes de mexer em código.
+2. **Ler as decisões anteriores** registradas nela. Decisão de produto já tomada
+   não se rediscute por conveniência de implementação.
+3. **Procurar implementação e documentação na `main` E nos branches não
+   ancestrais.** A pergunta é literal: *"isto já existe em algum branch?"*.
+   Foi a ausência dessa pergunta que custou os quatro casos.
+4. **Investigar antes de implementar.** Nome e comentário não são evidência.
+5. **Registrar o que foi provado e o que continua desconhecido**, com o
+   vocabulário: VI NO CÓDIGO · VI NO BANCO · PROVEI POR EXECUÇÃO · MEDI ·
+   INFERI · NÃO SEI.
+
+### Ao fechar
+
+6. **Implementar só com critério escrito** na ficha.
+7. **Provar** — teste que falha sem a correção, e prova por execução quando o
+   comportamento for observável.
+8. **Publicar quando autorizado**, e provar o deploy (commit no `/api/health`,
+   health verde, zero erro novo).
+9. **Observar produção** quando o efeito só aparecer com famílias reais.
+10. **DAR BAIXA somente quando o CRITÉRIO DE BAIXA registrado for cumprido.**
+
+> **IMPLEMENTADO ≠ CONCLUÍDO.** E **PUBLICADO ≠ PROVADO**.
+
+### Achado lateral
+
+Descoberta importante fora do escopo da missão vira **`COLOCAR EM PENDÊNCIA`**,
+com ID — **nunca** correção escondida dentro de outra missão. A missão original
+segue, se for seguro. Exceção única: P0 **ativo**, com família perdendo acesso
+ou dado agora — aí parar e avisar vale mais do que terminar.
+
+### Campos obrigatórios de uma ficha
+
+`STATUS` · prioridade · `ORDEM DA FRENTE` · problema · objetivo · evidências ·
+decisões já tomadas · perguntas abertas · dependências · branch/commit/PR ·
+critério de implementação · critério de prova · **critério de baixa**.
+
+**Vocabulário único de STATUS:**
+`A INVESTIGAR` · `INVESTIGADA` · `DECISÃO PENDENTE` · `PRONTA PARA IMPLEMENTAR` ·
+`IMPLEMENTADA NÃO PROVADA` · `PROVADA` · `PUBLICADA EM OBSERVAÇÃO` · `CONCLUÍDA`
+
+---
+
 ## Como usar este arquivo
 
 ### Estados
@@ -4389,7 +4830,7 @@ trimestralmente, o que vier antes.
 
 ---
 
-**Próximo ID livre: PEND-092. *(024 e 025 reservadas por frentes ainda não publicadas.)***
+**Próximo ID livre: PEND-104. *(024 e 025 reservadas por frentes ainda não publicadas.)***
 
 > Conferir contra `origin/main`, não contra o seu branch. Dois branches podem
 > reivindicar o mesmo número — o conflito de merge nesta linha é o alarme.
