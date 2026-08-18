@@ -148,8 +148,26 @@ describe("o retrato traz o que importa", () => {
 
   it("MORDE: os desafios chegam, os mais recentes primeiro", () => {
     expect(bloco).toContain("escola: Chora na entrada");
-    // `motor` é de janeiro — fica de fora dos 3 mais recentes.
-    expect(bloco).not.toContain("Sobe escada");
+  });
+
+  it("MORDE: o domínio ANTIGO também chega — se cabe, não se descarta", () => {
+    // ⚠️ ESTE TESTE FOI INVERTIDO EM 18/08/2026, DELIBERADAMENTE.
+    //
+    // Ele afirmava `not.toContain("Sobe escada")` — `motor` é de janeiro e
+    // ficava fora dos "3 mais recentes". Isso não era proteção: era o defeito.
+    //
+    // Caso Rosangela (17/08, produção): ela perguntou quais alimentos o filho
+    // gosta; o perfil tinha "banana; maçã; melancia; mamão" salvo desde 07/08;
+    // alimentação era o domínio mais ANTIGO entre cinco e foi cortada aqui. A
+    // Ayla respondeu "não tenho registrado quais alimentos ele gosta".
+    //
+    // A ordem continua sendo por recência — o mais recente vem primeiro. O que
+    // acabou é o descarte do que CABE no teto.
+    expect(bloco, "o domínio mais antigo foi descartado mesmo cabendo").toContain(
+      "Sobe escada",
+    );
+    // E a ordem não se perdeu: o mais recente continua na frente do mais velho.
+    expect(bloco.indexOf("Chora na entrada")).toBeLessThan(bloco.indexOf("Sobe escada"));
   });
 
   it("respeita o teto de tamanho", () => {

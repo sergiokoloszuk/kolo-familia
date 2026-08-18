@@ -179,7 +179,37 @@ export function marcosRecentes(
   return out.slice(0, limite).map((m) => `${m.data} — ${m.texto}`);
 }
 
-export function desafiosAtuais(pv: LinhaPerfilVivo | null, limite = 3): string[] {
+/**
+ * ⚠️ O `limite = 3` SAIU EM 18/08/2026, E O CASO QUE O DERRUBOU FOI ESTE.
+ *
+ * Rosangela perguntou "quais alimentos ele gosta?". O perfil tinha, salvo desde
+ * 07/08: *"Aceita bem / preferidos: banana; maçã; melancia; mamão"*. A Ayla
+ * respondeu **"até agora não tenho registrado quais alimentos o Matheo gosta"**.
+ *
+ * PROVEI POR EXECUÇÃO reconstruindo o bloco com o perfil real dela: a palavra
+ * "banana" NÃO estava no prompt. Alimentação era o domínio mais ANTIGO (07/08)
+ * entre cinco preenchidos, ficou em 5º na ordenação por recência e foi cortada
+ * aqui — antes de o prompt existir. O modelo respondeu com fidelidade ao que
+ * recebeu; o dado nunca chegou.
+ *
+ * MEDI na base: 31 de 77 perfis (40%) tinham mais de 3 domínios preenchidos,
+ * somando **131 domínios descartados**. Em alimentação especificamente: 28
+ * perfis tinham o campo, e **16 (57%) estavam fora do contexto**.
+ *
+ * E MEDI o custo de não cortar: mesmo sem limite algum, o pior perfil da base
+ * produz 761 caracteres de seção, contra um teto de 1200 para o bloco inteiro.
+ * O corte descartava dado que cabia — e o teto, que já existia, nunca chegava a
+ * ser exercitado.
+ *
+ * O teto de segurança que sobra aqui NÃO é critério de seleção: são 20 para que
+ * um `categorias_extras` corrompido não vire uma lista infinita. Quem decide o
+ * que não cabe é o teto de caracteres, em `montarContextoBase`, item a item.
+ *
+ * ⚠️ A ORDEM CONTINUA SENDO POR RECÊNCIA, e isso continua sendo um problema
+ * aberto: recência não é prioridade. Ver PEND-089 — o corte foi corrigido, a
+ * ordenação não.
+ */
+export function desafiosAtuais(pv: LinhaPerfilVivo | null, limite = 20): string[] {
   if (!pv) return [];
   const extras = (pv.categorias_extras ?? {}) as Record<string, unknown>;
   const itens: Array<{ rotulo: string; texto: string; quando: string }> = [];
@@ -401,8 +431,18 @@ export function montarContextoBase(params: {
   // têm detalhe entram numa linha própria, dizendo que falta o detalhe — é o
   // que faz a Ayla perguntar "me conta do sono" em vez de "o que está difícil?",
   // que a família já respondeu.
+  // ⚠️ SEM CORTE ARBITRÁRIO (18/08/2026). Todos os domínios preenchidos são
+  // ELEGÍVEIS; quem decide o que não cabe é o teto, logo abaixo, e item a item.
+  // Ver o comentário de `desafiosAtuais` para o caso Rosangela.
   const desafios = desafiosAtuais(pv ?? null);
-  if (desafios.length) linhas.push(`Desafios atuais:\n- ${desafios.join("\n- ")}`);
+  const renderDesafios = (itens: readonly string[]) =>
+    `Desafios atuais:\n- ${itens.join("\n- ")}`;
+  /** Onde a seção de desafios ficou em `linhas` — o teto precisa encontrá-la. */
+  let idxDesafios = -1;
+  if (desafios.length) {
+    idxDesafios = linhas.length;
+    linhas.push(renderDesafios(desafios));
+  }
 
   // ⚠️ DEPOIS DOS DESAFIOS, ANTES DAS LACUNAS. A mudança é sobre um desafio que
   // já foi nomeado acima — lida junto, ela diz "isto aqui virou outra coisa".
@@ -433,10 +473,30 @@ export function montarContextoBase(params: {
   // família já respondeu é o que fazia a Ayla repetir a pergunta.
   if (!desafios.length && !semDetalhe.length) lacunas.push("desafios atuais");
 
-  // Teto: corta pelo fim, que é a ordem de menor prioridade.
+  // ── O TETO PODA ITEM A ITEM, E NUNCA APAGA A SEÇÃO INTEIRA ───────────────
+  //
+  // ⚠️ ANTES ERA `linhas.pop()` PURO, e os desafios são UMA entrada de `linhas`
+  // com os itens juntos por `\n`. Bastava o bloco estourar para a seção inteira
+  // desaparecer de uma vez — a família contava seis coisas e o modelo recebia
+  // zero. Agora a seção encolhe pelo fim, um domínio por vez, e sobrevive com
+  // pelo menos um item.
+  //
+  // A ordem de sacrifício é a de sempre — pelo fim, que é a de menor
+  // prioridade: primeiro os marcados sem detalhe, depois as mudanças recentes,
+  // e só então os desafios começam a encolher.
+  const MIN_DESAFIOS_VISIVEIS = 1;
+  const visiveis = [...desafios];
   let bloco = linhas.join("\n");
   while (bloco.length > TETO_CONTEXTO_BASE && linhas.length > 2) {
-    linhas.pop();
+    const ultimo = linhas.length - 1;
+    if (ultimo === idxDesafios) {
+      // Chegou nos desafios: encolhe em vez de remover.
+      if (visiveis.length <= MIN_DESAFIOS_VISIVEIS) break;
+      visiveis.pop();
+      linhas[idxDesafios] = renderDesafios(visiveis);
+    } else {
+      linhas.pop();
+    }
     bloco = linhas.join("\n");
   }
   return { bloco, lacunas };
