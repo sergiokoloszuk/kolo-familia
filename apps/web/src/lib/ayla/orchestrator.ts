@@ -14,6 +14,10 @@ import {
   parsearSubcampos,
   serializarSubcampos,
 } from "@/lib/kolo-vivo/subcampos";
+// ⚠️ MESMA FUNÇÃO que o Registro Diário e o editor da web já usam. Um segundo
+// detector de transição divergiria do primeiro — e história divergente é pior
+// que história ausente.
+import { detectarMarcos, type Marco } from "@/lib/kolo-vivo/incorporar";
 import { detectarConflitoCrossCampo } from "./conflito-kolo-vivo";
 import { rotearFatoSubcampo } from "./incorporar-subcampo";
 import { gerarRespostaAyla, type RespostaParams } from "./responder";
@@ -3529,24 +3533,61 @@ async function aplicarSugestaoNoMembro(
 
   const now = new Date().toISOString();
   let patch: Record<string, unknown>;
+
+  // ── A TRANSIÇÃO VIRA HISTÓRIA (17/08/2026, PEND-090 · Peça 1) ────────────
+  //
+  // ⚠️ ESTE CAMINHO SOBRESCREVIA EM SILÊNCIO. Domínio com sub-campos chega aqui
+  // com `operacao = "reescrever"`, e o seletor é trocado inteiro: uma criança
+  // registrada como "Não-verbal" que passa a "Fala palavras soltas" perdia o
+  // valor anterior sem deixar rastro. `aplicarItensNoMembro` (Registro Diário)
+  // e o editor da web JÁ chamavam `detectarMarcos` nesse mesmo ponto; o caminho
+  // da Ayla — que é o que mais escreve — não chamava.
+  //
+  // MEDI em produção antes de corrigir: **1 perfil de 128 tinha marcos**. O
+  // mecanismo de "ANTES → AGORA" existia, funcionava, e estava desligado
+  // justamente onde a informação nova chega.
+  //
+  // `detectarMarcos` é comparação de string pura — sem modelo, sem consulta,
+  // sem latência. E só dispara em sub-campo de SELETOR (`opcoes`), que é uma
+  // transição discreta e inequívoca: texto livre não vira marco, então
+  // diferença de contexto e ambiguidade de linguagem não viram alarme falso.
+  const marcos: Marco[] = [];
+
   if (storage === "toplevel") {
     const secaoAtual = (atual as Record<string, SecaoJson> | null)?.[campo] ?? {};
-    const novoTexto =
-      operacao === "reescrever"
-        ? texto.trim()
-        : appendFato(secaoAtual?.texto ?? "", texto);
+    const prev = secaoAtual?.texto ?? "";
+    const novoTexto = operacao === "reescrever" ? texto.trim() : appendFato(prev, texto);
+    marcos.push(...detectarMarcos(campo, prev, novoTexto, now));
     patch = { [campo]: { ...secaoAtual, texto: novoTexto, atualizado_em: now } };
+    // ⚠️ Marco de campo TOPLEVEL mora em `categorias_extras` do mesmo jeito —
+    // é lá que a lista vive. Sem este ramo, a transição do único domínio
+    // toplevel com seletor seria detectada e jogada fora.
+    if (marcos.length) {
+      const extras = { ...((atual?.categorias_extras as Record<string, unknown>) ?? {}) };
+      const anteriores = Array.isArray(extras.marcos) ? (extras.marcos as Marco[]) : [];
+      extras.marcos = [...marcos, ...anteriores].slice(0, 40);
+      patch = { ...patch, categorias_extras: extras };
+    }
   } else {
     const extras = {
       ...((atual?.categorias_extras as Record<string, unknown>) ?? {}),
     };
     const secaoAtual = (extras[campo] as SecaoJson) ?? {};
-    const novoTexto =
-      operacao === "reescrever"
-        ? texto.trim()
-        : appendFato(secaoAtual?.texto ?? "", texto);
+    const prev = secaoAtual?.texto ?? "";
+    const novoTexto = operacao === "reescrever" ? texto.trim() : appendFato(prev, texto);
+    marcos.push(...detectarMarcos(campo, prev, novoTexto, now));
     extras[campo] = { ...secaoAtual, texto: novoTexto, atualizado_em: now };
+    if (marcos.length) {
+      const anteriores = Array.isArray(extras.marcos) ? (extras.marcos as Marco[]) : [];
+      extras.marcos = [...marcos, ...anteriores].slice(0, 40);
+    }
     patch = { categorias_extras: extras };
+  }
+
+  if (marcos.length) {
+    console.log(
+      `[ayla:kv] marco registrado — ${marcos.map((m) => m.texto).join(" · ")}`,
+    );
   }
 
   const { error } = await supabase.from("perfil_vivo_membro").upsert(
