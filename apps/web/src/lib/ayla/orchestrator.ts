@@ -2812,18 +2812,42 @@ export async function processInbound(
         }
       }
 
+      // ⚠️ O HISTÓRICO VOLTA AO EXTRATOR — 18/08/2026, Onda 2.
+      //
+      // Este ramo passava `undefined` aqui, enquanto o Legacy passava o
+      // histórico recortado. E o SYSTEM do extrator instrui, textualmente:
+      // "use a <conversa_recente> pra entender respostas curtas ('letra f'
+      // depois de falar de vocabulário = marco de comunicação)" — um bloco que
+      // nunca chegava.
+      //
+      // MEDI o tamanho do buraco: 20 dos 90 turnos da janela (22%) são
+      // respostas de até 25 caracteres — "Manu", "Grita", "Aponta e leva",
+      // "Ela tem 4 anos". Sem a pergunta anterior, nenhuma delas tem sujeito.
+      //
+      // ⚠️ NENHUMA CONSULTA NOVA: `historicoDoTurno()` é memoizado e já foi
+      // lido por `classificarIntencao` neste mesmo turno.
+      const historicoExp = await carregarHistorico(
+        supabase,
+        family.id,
+        inbound.texto,
+        exp.membroId,
+        undefined,
+        await historicoDoTurno(),
+      ).catch(() => []);
+
       // ⚠️ APRENDER DEPOIS DE RESPONDER (Fase 1). `extrairESalvarEventos` tem
       // pré-filtro por regex e só chama modelo quando o texto PARECE trazer um
       // evento — e roda DEPOIS da bolha, então não entra no caminho crítico.
       // É a peça que faz o experimento deixar de ser amnésico.
-      //
       if (exp.membroId) {
         await extrairESalvarEventos(
           supabase,
           family.id,
           exp.membroId,
           inbound.texto,
-          undefined,
+          // Recortado pelo membro do turno: a fala sobre um irmão não pode
+          // virar contexto do outro. Mesma regra do Legacy.
+          semOutrosMembros(historicoExp, exp.membroId),
           // O nome sai do contexto que este turno JÁ carregou — nenhuma
           // consulta nova. Sem ele o extrator não sabe de quem é o registro.
           ctxExp.membros.find((m) => m.id === exp.membroId)?.nome ?? null,
@@ -2863,6 +2887,14 @@ export async function processInbound(
               membros: membrosDoTurno,
               ultimoMembroFoco:
                 ctxExp.membros.find((m) => m.id === exp.membroId)?.nome ?? null,
+              // ⚠️ A MESMA AMPUTAÇÃO, NA OUTRA PORTA. O parser alimenta
+              // `persistirRegistro`, que é o canal por onde o Perfil Vivo cresce
+              // — e é ele que transforma "sim, música ajuda" em fato. Sem o
+              // histórico ele não sabe a que a mãe está respondendo. SEM recorte
+              // de membro aqui, de propósito: é este parser que DESCOBRE de quem
+              // a mensagem fala, e filtrar antes seria circular (o recorte
+              // acontece na escrita, onde o dano seria permanente).
+              historico: historicoExp,
             },
             { supabase, family_account_id: family.id, feature: "ayla_parser_pos" },
           );

@@ -286,6 +286,7 @@ async function montarContexto(
   mensagem: string,
   simulados: readonly TurnoSimulado[] = [],
   modo: ModoTurno = "normal",
+  skills: readonly string[] = [],
 ): Promise<ContextoDoTurno> {
   // As três leituras de abertura não dependem uma da outra: vão juntas.
   const [{ data: perfilFamilia }, { data: membros }, { data: falas }] = await Promise.all([
@@ -365,6 +366,9 @@ async function montarContexto(
       nomeResponsavel: i === 0 ? nomeResponsavel : null,
       membro: membroCompleto,
       perfilVivo: perfis[i] ?? null,
+      // O assunto do turno decide QUAL domínio ganha profundidade. Já veio do
+      // classificador que rodou acima — nenhuma consulta, nenhum modelo novo.
+      skills,
     });
     if (base.bloco) retratos.push(base.bloco);
     for (const l of base.lacunas) lacunas.add(l);
@@ -562,7 +566,14 @@ export async function responderExperimental(
     // então a condução comercial de dentro do teste também não entra aqui.
     const semJornada = params.origem === "simulador" || posTrial;
     const [ctxTurno, core, bps, estadoTrial, evidencias, docTrial] = await Promise.all([
-      montarContexto(supabase, params.familyId, params.mensagem, params.turnosSimulados ?? [], modo),
+      montarContexto(
+        supabase,
+        params.familyId,
+        params.mensagem,
+        params.turnosSimulados ?? [],
+        modo,
+        skillsDoTurno,
+      ),
       resolverDocumento(supabase, "core", params.rascunhoCore ?? null),
       skillsDoTurno.length
         ? recuperarBoasPraticas({

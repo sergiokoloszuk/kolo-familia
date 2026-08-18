@@ -130,6 +130,15 @@ const ROTULO_DOMINIO: Record<string, string> = {
   transicoes: "transições",
   conflitos: "conflitos",
   saude_geral: "saúde",
+  // ⚠️ OS TRÊS QUE FALTAVAM (18/08/2026). MEDI na base: `tela_midia` preenchido
+  // em 8 perfis, `gostos` em 7, `imitacao` em 6 — todos invisíveis ao modelo
+  // porque não tinham rótulo aqui. `imitacao` é o mais caro dos três: é SKILL
+  // ATIVA, então o classificador podia rotear o turno para um assunto que o
+  // contexto não sabia ler. Exemplo real que não chegava: "O que imita: tchau,
+  // beijo, dança, tarefas de casa · Aprende imitando?: agora tá começando".
+  imitacao: "imitação",
+  tela_midia: "telas e mídia",
+  gostos: "gostos",
 };
 
 /**
@@ -209,20 +218,104 @@ export function marcosRecentes(
  * aberto: recência não é prioridade. Ver PEND-089 — o corte foi corrigido, a
  * ordenação não.
  */
-export function desafiosAtuais(pv: LinhaPerfilVivo | null, limite = 20): string[] {
+/**
+ * OS DOMÍNIOS VIZINHOS DE CADA SKILL — determinístico, sem modelo.
+ *
+ * ⚠️ POR QUE VIZINHOS, E NÃO SÓ O PRINCIPAL. Sono e rotina são o mesmo problema
+ * visto de dois ângulos; alimentação e sensorial idem. Aprofundar só o domínio
+ * exato deixaria de fora justamente o que explica o caso.
+ *
+ * A lista é curta de propósito: vizinho de vizinho é "tudo", e "tudo" é o
+ * despejo que esta frente existe para não fazer.
+ */
+const VIZINHOS_DA_SKILL: Record<string, readonly string[]> = {
+  sono: ["rotina", "transicoes", "sensorial", "emocional"],
+  nutricional: ["sensorial", "autonomia", "gostos"],
+  rotina: ["transicoes", "autonomia", "sono", "tela_midia"],
+  transicoes: ["rotina", "emocional", "comunicacao", "tela_midia"],
+  comunicacao: ["socializacao", "imitacao", "aprendizado"],
+  imitacao: ["comunicacao", "socializacao", "motor"],
+  emocional: ["sensorial", "transicoes", "conflitos", "rotina"],
+  sensorial: ["nutricional", "emocional", "sono"],
+  socializacao: ["comunicacao", "emocional", "escola"],
+  foco: ["aprendizado", "escola", "rotina"],
+  motor: ["autonomia", "aprendizado"],
+  autonomia: ["rotina", "motor", "nutricional"],
+  aprendizado: ["foco", "escola", "comunicacao"],
+  escola: ["aprendizado", "socializacao", "foco"],
+  conflitos: ["emocional", "socializacao"],
+  saude_geral: ["sono", "nutricional"],
+};
+
+/** Teto de caracteres do domínio PERTINENTE ao assunto do turno. */
+export const TETO_DOMINIO_PERTINENTE = 320;
+/** Teto dos demais — é o de sempre, e não muda para ninguém. */
+export const TETO_DOMINIO_PADRAO = 140;
+
+/**
+ * OS DESAFIOS ATUAIS — com profundidade onde o assunto está, e não em tudo.
+ *
+ * ⚠️ O DEFEITO MEDIDO (18/08/2026). `primeiraFrase(texto, 140)` descartava
+ * **67.464 de 84.738 caracteres salvos — 79,6%** — em 307 textos de domínio.
+ * Entre eles, **55 de 61** campos "O que ajuda" e **16 de 19** "Aceita bem /
+ * preferidos". O caso Matheo: a mãe perguntou quais alimentos ele aceita, o
+ * perfil tinha a ponte de textura salva desde 07/08, e o modelo recebeu só a
+ * primeira linha.
+ *
+ * ⚠️ POR QUE NÃO BASTA SUBIR O TETO PARA TODO MUNDO. PROVEI na bancada: com 320
+ * em todos os itens e o mesmo teto global, sobram 2–3 domínios em vez de 5–7, e
+ * quem decide os sobreviventes é a recência. O domínio sobre o qual a mãe está
+ * perguntando SOME em 54% dos casos de sono, 46% de alimentação e 26% de
+ * rotina. Subir o teto sem pertinência troca "memória rasa sobre o assunto
+ * certo" por "memória profunda sobre o assunto errado" — é regressão.
+ *
+ * ⚠️ POR QUE ESTE DESENHO É SEGURO COM `skills = []`. MEDI que **55% dos turnos
+ * não têm skill**. Aqui, sem skill, nenhum domínio é pertinente, todos ficam em
+ * 140 e a ordem segue por recência — ou seja, **o comportamento é byte a byte o
+ * de hoje**. O caso que não sabemos classificar não piora; só deixa de melhorar.
+ *
+ * Nenhuma consulta nova, nenhum modelo: `skills` já vem do classificador que
+ * roda neste turno.
+ */
+export function desafiosAtuais(
+  pv: LinhaPerfilVivo | null,
+  limite = 20,
+  skills: readonly string[] = [],
+): string[] {
   if (!pv) return [];
   const extras = (pv.categorias_extras ?? {}) as Record<string, unknown>;
-  const itens: Array<{ rotulo: string; texto: string; quando: string }> = [];
+  const principais = new Set(skills.filter(Boolean));
+  const vizinhos = new Set(skills.flatMap((s) => VIZINHOS_DA_SKILL[s] ?? []));
+  const peso = (chave: string) => (principais.has(chave) ? 0 : vizinhos.has(chave) ? 1 : 2);
+
+  const itens: Array<{ rotulo: string; texto: string; quando: string; peso: number }> = [];
   for (const [chave, valor] of Object.entries(extras)) {
     const rotulo = ROTULO_DOMINIO[chave];
     if (!rotulo) continue;
     const texto = textoDoCampo(valor);
     if (!texto) continue;
     const quando = String((valor as { atualizado_em?: unknown })?.atualizado_em ?? "");
-    itens.push({ rotulo, texto: primeiraFrase(texto, 140), quando });
+    const p = peso(chave);
+    // Só o que é do assunto ganha profundidade. O resto continua no teto antigo.
+    const teto = p <= 1 ? TETO_DOMINIO_PERTINENTE : TETO_DOMINIO_PADRAO;
+    itens.push({ rotulo, texto: recorteDoDominio(texto, teto), quando, peso: p });
   }
-  itens.sort((a, b) => b.quando.localeCompare(a.quando));
+  // Pertinência manda; dentro do mesmo peso, a recência decide como antes.
+  itens.sort((a, b) => a.peso - b.peso || b.quando.localeCompare(a.quando));
   return itens.slice(0, limite).map((i) => `${i.rotulo}: ${i.texto}`);
+}
+
+/**
+ * O RECORTE DE UM DOMÍNIO.
+ *
+ * ⚠️ NÃO É `primeiraFrase`. Aquela corta na primeira quebra de linha, e o perfil
+ * guarda os campos separados por `\n` — é por isso que "O que ajuda" morria: ele
+ * quase nunca é a primeira linha. Aqui as linhas viram uma só, separadas por
+ * ` · `, e o corte é por tamanho. Nada de conteúdo se perde por posição.
+ */
+function recorteDoDominio(texto: string, max: number): string {
+  const s = texto.replace(/\s*\n\s*/g, " · ").trim();
+  return s.length > max ? `${s.slice(0, max - 1).trimEnd()}…` : s;
 }
 
 /**
@@ -396,6 +489,14 @@ export function montarContextoBase(params: {
     genero?: string | null;
   } | null;
   perfilVivo: LinhaPerfilVivo | null;
+  /**
+   * As skills do turno — o assunto sobre o qual a família está falando AGORA.
+   *
+   * ⚠️ Opcional de propósito. Quem não passa recebe o comportamento antigo, com
+   * todos os domínios no teto de 140. É o que faz `skills = []` — 55% dos
+   * turnos, MEDI — não piorar: sem assunto, nada é pertinente e nada aprofunda.
+   */
+  skills?: readonly string[];
 }): ContextoBase {
   const { nomeResponsavel, membro, perfilVivo: pv } = params;
   const linhas: string[] = [];
@@ -486,7 +587,7 @@ export function montarContextoBase(params: {
   // ⚠️ SEM CORTE ARBITRÁRIO (18/08/2026). Todos os domínios preenchidos são
   // ELEGÍVEIS; quem decide o que não cabe é o teto, logo abaixo, e item a item.
   // Ver o comentário de `desafiosAtuais` para o caso Rosangela.
-  const desafios = desafiosAtuais(pv ?? null);
+  const desafios = desafiosAtuais(pv ?? null, 20, params.skills ?? []);
   const renderDesafios = (itens: readonly string[]) =>
     `Desafios atuais:\n- ${itens.join("\n- ")}`;
   /** Onde a seção de desafios ficou em `linhas` — o teto precisa encontrá-la. */
