@@ -21,7 +21,7 @@ Só o que está aberto. 🔒 = bloqueada.
 | [PEND-074](#pend-074) | Condução D0–D7 do Trial não existe em runtime | G · Comercial | P1 | IMPLEMENTADA, NÃO PUBLICADA | provar a condução na bancada com modelo real antes de publicar |
 | [PEND-075](#pend-075) | Allowlist do caminho novo: quem é, e por quê | H · Governança | P3 | RESOLVIDA | nenhum — a composição das 3 contas é intencional |
 | [PEND-090](#pend-090) | Contradição entre o perfil salvo e o relato de agora | C · Memória | P1 | ABERTA | frente própria: definir se a regra mora no Core v9 ou no código |
-| [PEND-089](#pend-089) | Prioridade real dos desafios — hoje o "top 3" é por recência | C · Memória | P2 | ABERTA | desenhar de onde vem a prioridade |
+| [PEND-089](#pend-089) | Prioridade dos desafios — corte CORRIGIDO, ordenação por recência aberta | C · Memória | P1 | CORTE OK · PRIORIZAÇÃO ABERTA | decidir de onde vem a prioridade quando o perfil passar do teto |
 | [PEND-091](#pend-091) | Três lacunas menores do contexto (interesses, idade, confirmação) | C · Memória | P2 | ABERTA | depende de PEND-089 |
 | [PEND-088](#pend-088) | Dois P2 da auditoria — decisão registrada: NÃO implementar agora | H · Governança | P2 | ADIADA | retomar quando houver investigação de latência ou funil |
 | [PEND-058](#pend-058) | Fragmentação multi-balão: a Ayla responde duas vezes ao mesmo pensamento | A · Condução | P1 | ABERTA | escolher entre rechecagem e continuação — janela DESCARTADA |
@@ -4108,13 +4108,58 @@ Aberta em: 2026-08-17 · Origem: auditoria de paridade (PEND-083)
 ---
 
 ### PEND-089
-**Prioridade real dos desafios da criança — hoje o "top 3" é por recência**
-Bloco: **C · Memória** · Prioridade: **P2** · Estado: **ABERTA**
-Aberta em: 2026-08-17 · Origem: investigação de onboarding/perfil (Parte D3)
+**Prioridade real dos desafios da criança — o corte caiu, a ordenação continua**
+Bloco: **C · Memória** · Prioridade: **P1** · Estado: **CORTE CORRIGIDO · PRIORIZAÇÃO ABERTA**
+Aberta em: 2026-08-17 · P2 → P1 e evidência real em 2026-08-18 · Origem: investigação de onboarding/perfil (Parte D3)
 
-- **O que existe hoje. VI NO CÓDIGO:** `desafiosAtuais(pv, limite = 3)` varre os
-  domínios que têm texto, ordena por **`atualizado_em` decrescente** e corta em
-  três. Ou seja: são os três **mais recentes**, não os três que mais pesam.
+> ⚠️ **DUAS COISAS DIFERENTES NESTA FICHA, E SÓ UMA FECHOU.**
+> **(a) O DESCARTE do que cabia — CORRIGIDO** em 18/08 (merge `9045c83`).
+> **(b) A ORDENAÇÃO por recência — ABERTA.** Recência não é prioridade, e isso
+> não foi resolvido. Não dar baixa na ficha inteira por causa de (a).
+
+#### (a) O descarte — CONCLUÍDO, com evidência real
+
+- **O CASO ROSANGELA (17/08/2026, produção).** Ela perguntou *"quais são os
+  alimentos que ele gosta?"*. O perfil tinha, salvo desde 07/08, em
+  `categorias_extras.nutricional`:
+
+  ```
+  Aceita bem / preferidos: banana; maçã; melancia; mamão
+  ```
+
+  A Ayla respondeu: **"até agora não tenho registrado quais alimentos o Matheo
+  gosta. Sei apenas que ele se interessa por bichinhos e música."**
+
+- **PROVEI POR EXECUÇÃO**, reconstruindo o bloco com o perfil real dela: a
+  palavra "banana" **não estava no prompt**. Alimentação era o domínio mais
+  ANTIGO entre cinco preenchidos, ficou em 5º na ordenação por recência, e o
+  `limite = 3` a cortou antes de o prompt existir.
+- **O modelo não ignorou nada.** "bichinhos e música" era literalmente a linha
+  `Interesses atuais` do bloco — ele respondeu com fidelidade perfeita ao que
+  recebeu. Classificação da falha: **C (dado salvo, contexto não lê)**, nunca D.
+- **MEDI que não era só dela:** 31 de 77 perfis (40%) tinham mais de 3 domínios
+  preenchidos, somando **131 domínios descartados**. Em alimentação: 28 perfis
+  com o campo, **16 (57%) fora do contexto**. Quem contou mais perdia mais —
+  perfis com 12 domínios perdiam 9.
+- **O que foi feito:** o corte saiu (todos os domínios preenchidos são
+  elegíveis), e a poda do teto passou a acontecer **item a item** dentro da
+  seção — antes era `linhas.pop()` e os desafios são UMA entrada, então bastava
+  estourar o teto para a seção inteira sumir de uma vez.
+- **Custo medido:** 168 → 272 chars por perfil (+26 tokens/turno). 42% dos
+  perfis ganham contexto. Maior bloco real da base: 1.061 de 1.200 — **nenhum
+  perfil chega ao teto hoje**, então a poda nova é rede de segurança.
+- **Evidência:** 13 testes novos com o perfil real da Rosangela como fixture;
+  provado por execução nas duas metades (restaurar o corte reprova 6;
+  restaurar a poda antiga reprova 3). Merge `9045c83`, health verde, zero erro
+  novo.
+
+#### (b) A priorização — SEGUE ABERTA
+
+- **O que existe hoje. VI NO CÓDIGO:** `desafiosAtuais` ordena por
+  **`atualizado_em` decrescente**. Sem o corte, isso só importa quando o perfil
+  crescer além do teto — mas aí volta a importar inteiro, porque a poda come
+  pelo fim, ou seja, sacrifica o mais ANTIGO. O caso Rosangela aconteceria de
+  novo num perfil maior.
   `desafiosSemDetalhe(pv)` completa com os domínios marcados no cadastro que
   ainda não têm texto.
 - **O que NÃO existe:** campo de prioridade, ranking, ou qualquer lugar onde a
