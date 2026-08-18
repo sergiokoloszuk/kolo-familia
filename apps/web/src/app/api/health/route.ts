@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createServiceRoleClient } from "@/lib/supabase/server";
+import { posTrialAtivo, experimentalParaTodas } from "@/lib/ayla/experimental";
 
 /**
  * Health check: responde com latência do DB + presença das envs
@@ -56,6 +57,28 @@ export async function GET() {
     cron_secret: Boolean(process.env.CRON_SECRET),
   };
 
+  /**
+   * AS FLAGS DE COMPORTAMENTO — 18/08/2026.
+   *
+   * ⚠️ FORA DE `env`, E ISSO NÃO É ORGANIZAÇÃO: É CORREÇÃO. Logo abaixo,
+   * `allEnvOk` faz `Object.values(env).every(Boolean)` — uma flag DESLIGADA é
+   * `false`, então pôr as flags ali derrubaria o health para 503 exatamente
+   * quando o produto está no estado padrão e saudável. Peguei isto ao reler o
+   * arquivo depois de editar; teria transformado um recurso de observabilidade
+   * na causa de um alarme falso permanente.
+   *
+   * Semanticamente também são coisas diferentes: `env` responde "o segredo está
+   * configurado?"; aqui é "qual comportamento está ligado?". A segunda pergunta
+   * não tem resposta certa — só tem resposta verdadeira.
+   *
+   * Vai o VALOR EFETIVO lido pelo código, não a presença da variável: é a
+   * diferença entre "alguém digitou algo" e "o runtime está ligado".
+   */
+  const flags = {
+    ayla_pos_trial: posTrialAtivo(),
+    ayla_experimental_todas: experimentalParaTodas(),
+  };
+
   let db_ok = false;
   let db_latency_ms: number | null = null;
   let db_error: string | null = null;
@@ -102,6 +125,7 @@ export async function GET() {
       deploy,
       db: { ok: db_ok, latency_ms: db_latency_ms, error: db_error },
       env,
+      flags,
       total_ms,
       ts: new Date().toISOString(),
     },

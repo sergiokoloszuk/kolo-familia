@@ -289,6 +289,30 @@ describe("6. O orquestrador — ordem e ausência de vazamento", () => {
 
 const EXP = readFileSync(join(process.cwd(), "src/lib/ayla/experimental.ts"), "utf8");
 
+// ── 8. A FLAG É OBSERVÁVEL, E NÃO DERRUBA O HEALTH ────────────────────────
+
+const HEALTH = readFileSync(join(process.cwd(), "src/app/api/health/route.ts"), "utf8");
+
+describe("8. /api/health expõe a flag sem quebrar o health", () => {
+  it("a flag aparece na resposta", () => {
+    expect(HEALTH).toContain("ayla_pos_trial: posTrialAtivo()");
+    expect(HEALTH).toContain("flags,");
+  });
+
+  it("MORDE: as flags ficam FORA de `env` — senão flag off = health 503", () => {
+    // ⚠️ Defeito real, pego na releitura antes de publicar: `allEnvOk` faz
+    // `every(Boolean)` sobre `env`. Uma flag desligada é `false`, e o health
+    // passaria a devolver 503 no estado padrão e saudável do produto.
+    const iEnv = HEALTH.indexOf("const env = {");
+    const iFimEnv = HEALTH.indexOf("};", iEnv);
+    const blocoEnv = HEALTH.slice(iEnv, iFimEnv);
+    expect(blocoEnv).not.toContain("posTrialAtivo");
+    expect(blocoEnv).not.toContain("experimentalParaTodas");
+    // E `allEnvOk` continua lendo só `env`.
+    expect(HEALTH).toContain("Object.values(env).every(Boolean)");
+  });
+});
+
 describe("7. O modo desliga os produtores", () => {
   it("pós-Trial zera as skills — a consulta de Boas Práticas nem acontece", () => {
     expect(EXP).toContain("const skillsDoTurno = posTrial ? [] : (params.turnoClassificado?.skills ?? [])");
