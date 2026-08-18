@@ -33,7 +33,7 @@ Só o que está aberto. 🔒 = bloqueada.
 | [PEND-092](#pend-092) | **0 ·** Backup automático + cópia fora da máquina | H · Governança | P1 | A INVESTIGAR | bloqueia PEND-095; não bloqueia código inerte |
 | [PEND-017](#pend-017) | **1 ·** Governança da Inteligência + **Forma Kolo de Pensar** | B · Conhecimento | P1 | DECISÃO PENDENTE · REDEFINIR AGORA | é a fundação: define como a Kolo pensa |
 | [PEND-098](#pend-098) | **2 ·** Crenças, evidências e mudança de perspectiva | B · Conhecimento | P1 | A INVESTIGAR | definir ANTES do corpus |
-| [PEND-093](#pend-093) | **3 ·** Motor da BIA na main, flag OFF | B · Conhecimento | P1 | PROVADA · NÃO PUBLICADA | mergeado; deploy pendente na Vercel |
+| [PEND-093](#pend-093) | ✅ Motor da BIA na main, flag OFF | B · Conhecimento | P1 | **CONCLUÍDA** | publicada e inerte em 18/08 (`0973695`) |
 | [PEND-094](#pend-094) | **4 ·** Cautela científica: estável × datável | B · Conhecimento | P1 | DECISÃO PENDENTE | decidir antes de importar |
 | [PEND-095](#pend-095) | **5 ·** Importar e validar os 1.120 chunks | B · Conhecimento | P1 | PRONTA PARA IMPLEMENTAR | depende de 092, 093, 094 |
 | [PEND-039](#pend-039) | **6 ·** Bancada: provar que a Ayla passou a pensar Kolo | A · Condução | P1 | PRONTA PARA IMPLEMENTAR | 3 colunas: sem BIA × com BIA × genérica |
@@ -4531,9 +4531,10 @@ Aberta em: 2026-08-18 · Origem: aplicação da migração 0071 (BIA)
 ---
 
 ### PEND-093
-**BIA-1 · Motor da Biblioteca na `main`, atrás de flag desligada**
-Bloco: **B · Conhecimento** · Prioridade: **P1** · **ORDEM DA FRENTE: 3**
-STATUS: **PROVADA · NÃO PUBLICADA** · Aberta em: 2026-08-18
+**✅ BIA-1 · Motor da Biblioteca na `main`, atrás de flag desligada**
+Bloco: **B · Conhecimento** · Prioridade: **P1**
+STATUS: **CONCLUÍDA · PUBLICADA E INERTE**
+Aberta em: 2026-08-18 · Baixada em: 2026-08-18
 
 - **Problema:** o motor da BIA existia desde 30/07 no branch `bia/ciclo-tecnico`
   e nunca chegou à `main`. Quarto caso do mesmo padrão nesta semana.
@@ -4560,10 +4561,38 @@ STATUS: **PROVADA · NÃO PUBLICADA** · Aberta em: 2026-08-18
   devolve `""` **sem tocar no banco** (provado com espião que lança em
   `from()`) · **zero imports** da BIA nos 5 caminhos de conversa · nenhuma
   família afetada · **113 testes** da frente · suíte, `tsc` e build verdes.
-- **CRITÉRIO DE BAIXA (BIA-1):** motor presente na `main` + deploy provado +
-  flag OFF + **nenhuma alteração de comportamento** + health verde.
-- **Depois de publicar, o estado passa a `PUBLICADA · INERTE`;** a baixa só
-  vem quando os cinco itens acima estiverem provados.
+- **CRITÉRIO DE BAIXA (BIA-1) — CUMPRIDO em 18/08, item a item:**
+
+  | # | Critério | Prova |
+  |---|---|---|
+  | 1 | motor na `main` | 16 arquivos em `lib/bia/` em `origin/main` |
+  | 2 | deploy **automático** provado | `/api/health` passou a servir `0973695` às **15:19:52Z**, ~3 min após o merge do PR #129, **sem redeploy manual** |
+  | 3 | flag OFF | `BIA_PROMPT_ENABLED` **ausente** do ambiente |
+  | 4 | nenhuma alteração de comportamento | **zero imports** da BIA nos 5 caminhos de conversa, conferido no conteúdo de `origin/main` (não no working tree); `bia_chunks` = **0 linhas** |
+  | 5 | health verde | `ok:true` · `db.ok:true` (551 ms) · 13 envs presentes · Stripe `live` |
+  | 6 | zero erro novo | **0** eventos `severity=error` desde 15:19Z; linha de base das 3h anteriores = 1 (`billing_nao_gravou`, anterior e sem relação) |
+
+> ⚠️ **O DEPLOY DO PR #128 NUNCA EXISTIU — e isso rendeu um aprendizado.**
+> O merge de `343f402` saiu às 14:16:58Z e a Vercel **não registrou
+> deployment nenhum** para esse commit, em nenhum estado. No mesmo minuto
+> ela recebeu o push da *branch* (`7c9c401` → Preview) e não recebeu o do
+> `main`. Não foi build quebrado (não houve build), nem fila, nem
+> `Ignored Build Step`, nem branch tracking, nem limite de conta —
+> tudo verificado na tela em 15:07Z.
+>
+> **Um evento de push para `main` pode se perder entre GitHub e Vercel, e
+> `main` fica silenciosamente à frente da produção.** O PR #129 (documental)
+> serviu de teste: o fluxo voltou sozinho, o que prova falha **pontual**,
+> não quebra da integração.
+>
+> O que pegou foi o `/api/health` expondo `deploy.commit`. Sem ele, esta
+> ficha teria sido baixada com o motor fora do ar. **Merge não é deploy** —
+> conferir o commit servido faz parte de publicar. Ver PEND-103.
+
+- **O que continua verdadeiro depois da baixa:** a BIA está **no ar e
+  inerte**. Nenhuma família recebeu uma vírgula diferente. Ligar exige
+  corpus (PEND-095), cautela científica (PEND-094) e a fiação — que
+  **não existe** para `experimental.ts`, o caminho que atende todas.
 
 ---
 
