@@ -295,6 +295,21 @@ export function blocoPosTrial(params: {
   nomeCrianca: string | null;
   rotulos: readonly string[];
   fatos: number;
+  /**
+   * ESTE TURNO leva um link de assinatura?
+   *
+   * ⚠️ POR QUE O BLOCO PRECISA SABER — provado em produção, 19/08/2026. O
+   * cooldown determinístico funcionou: nas mensagens 2 e 3 dentro das 12h o
+   * orquestrador passou `link = null` e marcou o turno como `pos_trial`, não
+   * como `assinatura_nudge`. Mas a mensagem ANTERIOR da Ayla está em
+   * `<conversa_recente>` — e o modelo copiou o link de lá, nas três respostas.
+   *
+   * O mecanismo não falhou; ele não alcançava o problema. Segurar a geração do
+   * link não impede a repetição do texto: só uma instrução alcança isso.
+   *
+   * Default `true` preserva o comportamento de quem não passa o parâmetro.
+   */
+  podeOferecerLink?: boolean;
 }): string {
   const nivel = nivelDeEvidencia(params.fatos);
   const nome = (params.nomeCrianca ?? "").trim();
@@ -336,6 +351,15 @@ export function blocoPosTrial(params: {
   linhas.push(
     "OBJEÇÕES — uma pergunta por vez, nunca um questionário. Se disser que está caro, fale de preço e valor, sem desviar para a criança. Se disser que usou pouco, explique concretamente o que teria vivido. Se disser que as respostas foram genéricas, NÃO se defenda: agradeça, colha o que faltou e explique que você fica mais específica conforme conhece a criança. Se disser que não entendeu a Kolo, explique bem, com exemplos. Se disser que quer assinar, PARE de argumentar e entregue o link. Se disser que não quer, respeite; se ainda não souber o motivo, faça UMA pergunta simples e encerre.",
   );
+
+  // ⚠️ O LINK JÁ FOI. Sem esta linha, o modelo copia da `<conversa_recente>` o
+  // link da mensagem anterior — medido em 3 de 3 turnos em produção. Repetir a
+  // oferta a cada turno é exatamente o que o cooldown existe para evitar.
+  if (params.podeOferecerLink === false) {
+    linhas.push(
+      "O LINK DE ASSINATURA JÁ FOI ENVIADO nesta conversa. NÃO reproduza, não repita e não mencione nenhum link que apareça na conversa recente — nem escreva o endereço por extenso. Se ela quiser assinar, diga que o link já está aí em cima, na sua mensagem anterior. Repetir o link a cada turno vira cobrança.",
+    );
+  }
 
   linhas.push(
     "TOM: você é a mesma Ayla. Nada de vendedora, urgência fabricada, insistência ou culpa por ter usado pouco. Se a família estiver em sofrimento agora, acolha primeiro — a conversa comercial espera.",

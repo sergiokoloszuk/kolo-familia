@@ -497,6 +497,14 @@ export async function responderExperimental(
      */
     modo?: ModoTurno;
     /**
+     * Este turno leva link de assinatura? Só o pós-Trial usa.
+     *
+     * ⚠️ Quem decide é o cooldown, no orquestrador. O bloco precisa saber para
+     * poder proibir a repetição do link que está na conversa recente — segurar
+     * a GERAÇÃO não impede o modelo de copiar o TEXTO.
+     */
+    linkDisponivel?: boolean;
+    /**
      * Só o simulador passa isto. A conversa real, nunca — e o teste
      * `simulador-nao-escreve.test.ts` prende que estes turnos não são gravados
      * em lugar nenhum.
@@ -623,7 +631,12 @@ export async function responderExperimental(
     const { bloco, foco, diagnosticoRegistrado, consultas, rotulos, fatos, nomeCrianca } = ctxTurno;
     // O bloco que troca o objetivo da conversa. Vazio fora do pós-Trial.
     const conducaoPosTrial = posTrial
-      ? blocoPosTrial({ nomeCrianca, rotulos, fatos })
+      ? blocoPosTrial({
+          nomeCrianca,
+          rotulos,
+          fatos,
+          podeOferecerLink: params.linkDisponivel !== false,
+        })
       : "";
     // A criança que a resposta vai carimbar: no foco compartilhado ou ambíguo
     // NÃO se escolhe uma — carimbar seria transformar palpite em dado.
