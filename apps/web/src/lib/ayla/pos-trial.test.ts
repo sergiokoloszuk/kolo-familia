@@ -327,3 +327,31 @@ describe("7. O modo desliga os produtores", () => {
     expect(EXP).toContain("pos_trial_fatos");
   });
 });
+
+// ── 9. O LINK NÃO SE REPETE ───────────────────────────────────────────────
+
+describe("9. Turno sem link proíbe repetir o que está no histórico", () => {
+  it("com link disponível, nenhuma proibição entra", () => {
+    const b = blocoPosTrial({ nomeCrianca: "Téo", rotulos: ["sono"], fatos: 3, podeOferecerLink: true });
+    expect(b).not.toContain("LINK DE ASSINATURA JÁ FOI ENVIADO");
+  });
+
+  it("SEM link, o bloco proíbe reproduzir o da conversa recente", () => {
+    // ⚠️ Provado em produção 19/08: o cooldown segurou a GERAÇÃO (tipo veio
+    // `pos_trial`, não `assinatura_nudge`), e o modelo copiou o link da
+    // mensagem anterior nas três respostas. Segurar o link não segura o texto.
+    const b = blocoPosTrial({ nomeCrianca: "Téo", rotulos: ["sono"], fatos: 3, podeOferecerLink: false });
+    expect(b).toContain("LINK DE ASSINATURA JÁ FOI ENVIADO");
+    expect(b).toContain("NÃO reproduza");
+    expect(b).toContain("nem escreva o endereço por extenso");
+  });
+
+  it("default preserva o comportamento de quem não passa o parâmetro", () => {
+    const b = blocoPosTrial({ nomeCrianca: "Téo", rotulos: ["sono"], fatos: 3 });
+    expect(b).not.toContain("LINK DE ASSINATURA JÁ FOI ENVIADO");
+  });
+
+  it("o orquestrador informa o bloco sobre o link deste turno", () => {
+    expect(ORQ).toContain("linkDisponivel: Boolean(link)");
+  });
+});

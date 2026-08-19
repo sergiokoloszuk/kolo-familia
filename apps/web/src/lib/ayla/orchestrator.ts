@@ -2018,6 +2018,8 @@ export async function processInbound(
         familyId: family.id,
         mensagem: inbound.texto,
         modo: "pos_trial",
+        // Sem link neste turno, o bloco proíbe repetir o que está no histórico.
+        linkDisponivel: Boolean(link),
       }).catch((e) => {
         console.warn(
           "[ayla:pos-trial] falhou, caindo pro convite fixo:",
