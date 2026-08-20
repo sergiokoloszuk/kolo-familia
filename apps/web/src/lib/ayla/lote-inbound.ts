@@ -27,31 +27,68 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 /**
  * Silêncio esperado antes de responder.
  *
- * ⚠️ 7000 → 3000 EM 13/08/2026, e o número saiu de DADO DE PRODUÇÃO, não de
- * intuição. Medido sobre 60 dias — 5.329 mensagens, 1.834 turnos, com o
- * recorte certo (entradas consecutivas SEM resposta da Ayla no meio):
+ * ⚠️ 3000 → 10000 EM 19/08/2026 (PEND-058), depois do rollout geral. É a
+ * segunda recalibragem, e a história das duas importa mais que o número.
  *
- *   86,3% dos turnos têm UM balão só — a janela não faz nada por eles,
- *          e mesmo assim cobrava a espera inteira.
- *   252 turnos são multi-balão. A janela de 7s capturava 69 deles (27,4%);
- *          a de 3s captura 33 (13,1%).
- *   O corte 7s → 3s deixa de agrupar 36 bursts = 1,96% de TODOS os turnos,
- *          e devolve 4 SEGUNDOS a 100% deles.
+ * ── O QUE FOI DECIDIDO EM 13/08 (7000 → 3000), e por quê ────────────────────
+ * Medido sobre 60 dias do caminho LEGACY — 5.329 mensagens, 1.834 turnos:
+ * 86,3% dos turnos têm um balão só e pagavam a espera à toa; a mediana do
+ * intervalo dentro de um burst deu 11,2s (p90 34s), o que fez a janela parecer
+ * inalcançável por construção. Trocou-se cobertura por 4 segundos em 100% dos
+ * turnos, com conhecimento de causa.
  *
- * ⚠️ E O ACHADO QUE MAIS IMPORTA, que a mesma medição revelou: a mediana do
- * intervalo dentro de um burst é 11,2 SEGUNDOS (p75 18,6 · p90 34). Ou seja, a
- * janela de 7s JÁ NÃO ALCANÇAVA 72,6% dos casos que existe para resolver —
- * resposta partida em turno multi-balão já era comum antes desta mudança, e
- * ninguém tinha medido. Esticar a janela não resolveria: para cobrir o p90
- * seriam 34 segundos de espera para todo mundo. Ver PEND-058.
+ * ── POR QUE AQUELE NÚMERO DEIXOU DE VALER ───────────────────────────────────
+ * A medição de 13/08 diz ter usado o mesmo recorte que a de agora (entradas
+ * consecutivas sem resposta da Ayla no meio) e mesmo assim deu mediana de
+ * 11,2s, contra 5,6s aqui. **NÃO SEI dizer com certeza a origem da diferença.**
+ * A hipótese mais provável é a população: aquela leu 60 dias do caminho
+ * LEGACY, este lê 3 dias do caminho NOVO, que responde bem mais rápido (só
+ * `parseInbound`, que o novo não paga, custava 2.659 ms de p50) — e quanto
+ * mais rápido a Ayla responde, menos tempo a mãe tem para fragmentar antes de
+ * ser respondida. Não é conclusão: é o que fica em aberto.
  *
- * A LEITURA QUALITATIVA sustenta que o mecanismo é bom e a calibragem é que
- * estava errada: os bursts que só 7s capturava são mesmo o mesmo pensamento
- * ("Tem dificuldade de Tomar" + "De engolir"), inclusive correção de digitação
- * ("Ela e raida" + "Rapida"). Perder 1,96% desses é o preço aceito, com
- * conhecimento de causa, por 4 segundos em cada turno.
+ * O que NÃO está em aberto é o efeito: com 3s no ar, 11 dos 16 fragmentos
+ * reais foram partidos em turnos separados. Isso é contagem, não modelo.
+ *
+ * ── MEDIDO EM 19/08, SOBRE O CAMINHO NOVO (desde 17/08 13:13Z) ──────────────
+ * 47 pares de balões consecutivos (<60s). Separados pelo único critério que
+ * distingue os dois fenômenos — houve resposta da Ayla ENTRE os dois?
+ *
+ *   31 pares COM resposta no meio  → ela respondeu à Ayla. Duas respostas
+ *                                     aqui é o comportamento CORRETO.
+ *   16 pares SEM resposta no meio  → fragmentação de verdade.
+ *
+ * Só os 16 reais:  p25 3,1s · MEDIANA 5,6s · p75 7,9s · p90 10,4s · máx 17,2s
+ *
+ *   janela  3s captura  4/16 (25%)   ← o que estava no ar
+ *   janela  8s captura 13/16 (81%)
+ *   janela 10s captura 14/16 (88%)   ← escolhido
+ *   janela 20s captura 16/16 (100%)
+ *
+ * Onze dos dezesseis foram partidos em turnos separados.
+ *
+ * ── POR QUE 10s, E NÃO 8 NEM 20 ─────────────────────────────────────────────
+ * A curva vira entre 8 e 10: 8s custa 5 segundos e pega 81%; 10s custa 7 e
+ * pega 88%; 20s custaria 17 segundos a todo mundo para pegar mais dois casos.
+ * O ponto de 10 foi escolhido por SEGURANÇA, não por eficiência — ver abaixo.
+ *
+ * ── O CASO QUE DECIDIU ──────────────────────────────────────────────────────
+ * Lia/Valentina, 19/08 20:25. Conversa sobre tentativa de agressão da mãe
+ * contra a criança. A cuidadora escreveu "Não há tisco" e, 4,0 SEGUNDOS depois,
+ * "Risco" — corrigindo o próprio erro de digitação. Com a janela de 3s os dois
+ * balões viraram dois turnos, e a Ayla respondeu duas vezes, contraditórias:
+ * uma concluindo "não há risco" e seguindo para a lição de casa, outra
+ * reabrindo "há risco?" e mandando ligar para o 190.
+ *
+ * Ter o primeiro balão no histórico NÃO resolve: ele chega como fala anterior,
+ * não como parte da mesma frase. Só o agrupamento resolve. É por isso que
+ * fragmentação de WhatsApp virou, aqui, um problema de segurança — e por isso
+ * a janela maior é uma escolha deliberada de segurança, com o custo de
+ * latência aceito por escrito.
+ *
+ * ⚠️ n=16. Base para decidir, não para fechar: remedir com amostra nova.
  */
-const JANELA_SILENCIO_MS = 3000;
+const JANELA_SILENCIO_MS = 10000;
 
 /** Teto de mensagens no lote — rajada absurda não vira prompt gigante. */
 const MAX_MENSAGENS_LOTE = 12;
