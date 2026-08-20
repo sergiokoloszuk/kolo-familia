@@ -123,10 +123,48 @@ async function runHealthcheck() {
     await logServerError("healthcheck_resumo", e, {});
   }
 
+  /**
+   * O PREÇO PASSA PELOS OLHOS DE UM HUMANO TODO DIA — 20/08/2026.
+   *
+   * Sincroniza o espelho `configuracao_precos` com o Stripe (o dono) e coloca
+   * o valor vigente na mensagem diária. Reusa este monitor em vez de criar um
+   * cron novo: ele já roda todo dia e já fala com uma pessoa.
+   *
+   * Por que o valor aparece mesmo quando está tudo certo: o defeito do plano
+   * anual (R$ 603,90 cobrados por MÊS) sobreviveu meses porque ninguém olhava.
+   * Um número visível todo dia é a defesa mais barata que existe contra texto
+   * comercial que defasa — a mesma lição do prazo defasado do `trial_d3`.
+   *
+   * Best-effort: falhar aqui não pode derrubar o monitor do Z-API, que é o
+   * motivo original deste cron existir.
+   */
+  let planosLinha = "";
+  try {
+    const admin = createServiceRoleClient();
+    const { sincronizarPlanos, lerPlanosParaExibir, formatarBRL } = await import(
+      "@/lib/billing/planos"
+    );
+    const r = await sincronizarPlanos(admin);
+    const planos = await lerPlanosParaExibir(admin);
+    const m = formatarBRL(planos.mensal.centavos) ?? "?";
+    const a = formatarBRL(planos.anual.centavos) ?? "?";
+    planosLinha = `\n💳 Planos: ${m}/mês · ${a}/ano`;
+    if (r.problemas.length > 0) {
+      planosLinha += `\n🚨 PREÇO COM PROBLEMA: ${r.problemas.join(" | ")}`;
+      await logEvent({
+        kind: "planos_divergentes",
+        severity: "error",
+        message: r.problemas.join(" | "),
+      });
+    }
+  } catch (e) {
+    await logServerError("healthcheck_planos", e, {});
+  }
+
   const statusLinha = st.connected
     ? `✅ Kolo no ar — Z-API conectado, a Ayla está respondendo. (${quando})`
     : `⚠️ ATENÇÃO: o Z-API parece DESCONECTADO — a Ayla pode não estar respondendo. Confira o painel do Z-API. (${quando})`;
-  const texto = statusLinha + resumoLinha;
+  const texto = statusLinha + resumoLinha + planosLinha;
   let enviada = true;
   try {
     await enviarTexto({ phoneE164: numero, texto });

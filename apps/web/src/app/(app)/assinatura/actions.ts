@@ -3,8 +3,10 @@
 import { headers } from "next/headers";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
-import { getStripeClient, priceIdFor, type PlanoTipo } from "@/lib/stripe/client";
+import { getStripeClient, type PlanoTipo } from "@/lib/stripe/client";
+import { exigirPlanoCobravel } from "@/lib/billing/planos";
 import { trackFeature } from "@/lib/analytics/track";
+import { logServerError } from "@/lib/log";
 
 async function requireFamilyAndOrigin(): Promise<{
   familyId: string;
@@ -64,10 +66,35 @@ export async function iniciarCheckout(
       .eq("family_account_id", familyId)
       .maybeSingle();
 
+    // ⛔ TRAVA FAIL-CLOSED — 20/08/2026. NÃO REMOVER.
+    //
+    // O plano anual esteve configurado no Stripe como `month × 1` a R$ 603,90:
+    // quem clicasse aqui seria cobrado R$ 603,90 POR MÊS, com a tela dizendo
+    // "por ano". Depois, a primeira correção criou um price `one_time`, que o
+    // `mode: "subscription"` recusa — o botão daria erro na cara da mãe.
+    //
+    // Nenhum dos dois casos era detectável antes de cobrar. Agora é: esta
+    // chamada confere, AO VIVO no Stripe, que o price tem a recorrência que o
+    // nome do plano promete. Não batendo, o checkout não abre.
+    //
+    // Endpoint que move dinheiro é fail-closed (§16): recusar custa uma venda
+    // adiada; cobrar errado custa a confiança de uma família e um estorno.
+    let precoConferido;
+    try {
+      precoConferido = await exigirPlanoCobravel(plano);
+    } catch (e) {
+      await logServerError("checkout_preco_invalido", e, { family_account_id: familyId });
+      return {
+        ok: false,
+        error:
+          "Não consegui abrir o pagamento agora — a configuração deste plano está sendo corrigida. Tente o outro plano ou volte em instantes.",
+      };
+    }
+
     const stripe = getStripeClient();
     const session = await stripe.checkout.sessions.create({
       mode: "subscription",
-      line_items: [{ price: priceIdFor(plano), quantity: 1 }],
+      line_items: [{ price: precoConferido.priceId as string, quantity: 1 }],
       customer: subAcc?.stripe_customer_id ?? undefined,
       customer_email: subAcc?.stripe_customer_id ? undefined : userEmail ?? undefined,
       client_reference_id: familyId,

@@ -6,6 +6,11 @@ import { Eyebrow } from "@/components/brand/eyebrow";
 import { IconCard } from "@/components/brand/icon-card";
 import { cn } from "@/lib/utils";
 import { createServiceRoleClient } from "@/lib/supabase/server";
+import {
+  formatarBRL,
+  lerPlanosParaExibir,
+  seloEconomiaAnual,
+} from "@/lib/billing/planos";
 
 export const metadata: Metadata = {
   title: "Preços · Kolo Família",
@@ -13,36 +18,20 @@ export const metadata: Metadata = {
     "Trial de 7 dias grátis sem cartão. Depois, mensalidade ou anual com desconto. Sem pegadinhas.",
 };
 
-// Lê de configuracao_precos no DB — admin pode ajustar sem redeploy.
+// O preço vem do Stripe, espelhado em configuracao_precos. Ver lib/billing/planos.ts.
 export const dynamic = "force-dynamic";
-
-const FORMATTER = new Intl.NumberFormat("pt-BR", {
-  style: "currency",
-  currency: "BRL",
-});
-
-function formatarBRL(valor_centavos: number): string {
-  return FORMATTER.format(valor_centavos / 100);
-}
 
 export default async function PrecosPage() {
   const admin = createServiceRoleClient();
-  const { data: rows } = await admin
-    .from("configuracao_precos")
-    .select("chave, valor_centavos, descricao");
-
-  const planos = new Map<
-    string,
-    { valor_centavos: number; descricao: string | null }
-  >();
-  for (const r of rows ?? []) {
-    planos.set(r.chave as string, {
-      valor_centavos: r.valor_centavos as number,
-      descricao: (r.descricao as string) ?? null,
-    });
-  }
-  const mensal = planos.get("plano_mensal");
-  const anual = planos.get("plano_anual");
+  const planos = await lerPlanosParaExibir(admin);
+  const mensalCent = planos.mensal.centavos;
+  const anualCent = planos.anual.centavos;
+  const mensalLabel = formatarBRL(mensalCent);
+  const anualLabel = formatarBRL(anualCent);
+  // O selo do anual é DERIVADO dos dois preços. Ver o porquê em planos.ts:
+  // aqui já esteve escrito "Economia ~20%" enquanto o desconto real era 8,33%.
+  const selo = seloEconomiaAnual(mensalCent, anualCent);
+  const equivalenteMes = anualCent != null ? formatarBRL(Math.round(anualCent / 12)) : null;
 
   const mensalFeatures = [
     "App completo + Ayla no WhatsApp",
@@ -51,9 +40,12 @@ export default async function PrecosPage() {
     "Cancela a qualquer momento",
   ];
 
+  // ⚠️ NENHUM NÚMERO DE DESCONTO ESCRITO À MÃO AQUI. Esta lista já disse
+  // "~2 meses grátis" quando o desconto real era de 1 mês. O selo derivado
+  // (`selo`) é o único lugar que fala em economia, e ele vem da conta.
   const anualFeatures = [
     "Tudo do plano mensal",
-    "~2 meses grátis comparado ao mensal",
+    ...(selo ? [`${selo} em relação ao mensal`] : []),
     "Pagamento único anual",
     "Cancela a qualquer momento",
   ];
@@ -111,7 +103,7 @@ export default async function PrecosPage() {
               </div>
               <div>
                 <p className="font-heading text-5xl text-brand-purple-dark">
-                  {mensal ? formatarBRL(mensal.valor_centavos) : "—"}
+                  {mensalLabel ?? "—"}
                   <span className="text-base font-normal text-muted-foreground">
                     {" "}
                     / mês
@@ -142,9 +134,9 @@ export default async function PrecosPage() {
 
             {/* Plano anual — destacado em gradient roxo Kolo. */}
             <div className="relative flex flex-col gap-6 overflow-hidden rounded-3xl bg-gradient-to-br from-brand-purple to-brand-purple-dark p-8 text-white shadow-2xl md:p-10">
-              {anual && mensal && (
+              {selo && (
                 <span className="absolute right-6 top-6 rounded-full bg-brand-yellow px-3 py-1 text-xs font-bold uppercase tracking-[0.12em] text-brand-purple-dark">
-                  Economia ~20%
+                  {selo}
                 </span>
               )}
               <div>
@@ -156,18 +148,16 @@ export default async function PrecosPage() {
               <div>
                 <p className="font-heading text-5xl">
                   <span style={{ fontWeight: 500 }}>
-                    {anual ? formatarBRL(anual.valor_centavos) : "—"}
+                    {anualLabel ?? "—"}
                   </span>
                   <span className="text-base font-normal text-white/70">
                     {" "}
                     / ano
                   </span>
                 </p>
-                {anual && (
+                {equivalenteMes && (
                   <p className="mt-1 text-sm text-white/75">
-                    Equivalente a{" "}
-                    {formatarBRL(Math.round(anual.valor_centavos / 12))} por
-                    mês.
+                    Equivalente a {equivalenteMes} por mês.
                   </p>
                 )}
               </div>

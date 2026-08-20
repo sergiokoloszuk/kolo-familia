@@ -7,15 +7,9 @@ import { Eyebrow } from "@/components/brand/eyebrow";
 import { IconCard } from "@/components/brand/icon-card";
 import { loadFamilyContext } from "@/lib/auth/require-user";
 import { createServiceRoleClient } from "@/lib/supabase/server";
+import { formatarBRL, lerPlanosParaExibir } from "@/lib/billing/planos";
 import { AssinaturaActions } from "./assinatura-actions";
 import { ExcluirContaForm } from "../configuracoes/conta/excluir-form";
-
-/** Centavos → "R$ 54,90" (pt-BR). null quando não houver valor. */
-function fmtBRL(centavos?: number): string | null {
-  return centavos != null
-    ? (centavos / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })
-    : null;
-}
 
 const STATUS_LABEL: Record<string, string> = {
   trialing: "Em trial",
@@ -45,17 +39,12 @@ export default async function AssinaturaPage(props: PageProps<"/assinatura">) {
     .eq("family_account_id", familyId)
     .maybeSingle();
 
-  // Preços da MESMA fonte que a página de planos (configuracao_precos), pra
-  // nunca divergir do que é cobrado/anunciado. Service-role: config é pública.
-  const { data: precosRows } = await createServiceRoleClient()
-    .from("configuracao_precos")
-    .select("chave, valor_centavos")
-    .in("chave", ["plano_mensal", "plano_anual"]);
-  const precos = new Map(
-    (precosRows ?? []).map((r) => [r.chave as string, r.valor_centavos as number]),
-  );
-  const mensalLabel = fmtBRL(precos.get("plano_mensal"));
-  const anualLabel = fmtBRL(precos.get("plano_anual"));
+  // Preço pelo leitor único (lib/billing/planos.ts) — o Stripe é o dono, e
+  // esta tela mostra exatamente o que o checkout vai cobrar. Service-role
+  // porque configuração de preço é pública.
+  const planos = await lerPlanosParaExibir(createServiceRoleClient());
+  const mensalLabel = formatarBRL(planos.mensal.centavos);
+  const anualLabel = formatarBRL(planos.anual.centavos);
 
   const sp = await props.searchParams;
   const flash = typeof sp.status === "string" ? sp.status : null;
