@@ -1,5 +1,24 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { getStripeClient, STRIPE_PRICE, type PlanoTipo } from "@/lib/stripe/client";
+import { logEvent, logServerError } from "@/lib/log";
+
+/**
+ * NENHUM SEGREDO ENTRA NO LOG, nem por acidente.
+ *
+ * Mensagem de erro de provider é texto que a gente não escreveu — e o §11 do
+ * protocolo proíbe registrar segredo. O caso clássico é o Stripe ecoar a chave
+ * usada numa falha de autenticação. Redação por FORMATO, não por lista: se
+ * parece credencial, sai.
+ */
+export function sanitizarErro(msg: string | null | undefined): string {
+  if (!msg) return "(sem mensagem)";
+  return String(msg)
+    .replace(/\b(sk|pk|rk)_(live|test)_[A-Za-z0-9]+/g, "$1_$2_[REDIGIDO]")
+    .replace(/\bwhsec_[A-Za-z0-9_-]+/g, "whsec_[REDIGIDO]")
+    .replace(/\beyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+/g, "[JWT_REDIGIDO]")
+    .replace(/\b[A-Za-z0-9_-]{40,}\b/g, "[TOKEN_REDIGIDO]")
+    .slice(0, 400);
+}
 
 /**
  * PLANOS — FONTE ÚNICA DO QUE CUSTA E DE COM QUE FREQUÊNCIA É COBRADO.
@@ -220,10 +239,22 @@ export async function lerPlanosParaExibir(admin: AdminClient): Promise<PlanosPar
   if (desatualizado && !jaTenteiRessincronizar) {
     jaTenteiRessincronizar = true;
     try {
-      await sincronizarPlanos(admin);
-      linhas = await lerEspelho(admin);
-    } catch {
-      /* best-effort: a página mostra o último valor conhecido */
+      // ⚠️ O RETORNO NÃO PODE SER DESCARTADO — 20/08/2026.
+      //
+      // Aqui estava `await sincronizarPlanos(admin)` sem olhar o resultado, e
+      // um `catch {}` vazio embaixo. Como `sincronizarPlanos` NÃO lança (ela
+      // DEVOLVE `problemas`, justamente para o chamador decidir), o catch nunca
+      // disparava e a falha sumia na linha de cima. O espelho ficou nulo em
+      // produção e a causa era invisível: eu relatei o catch como culpado e o
+      // culpado era o valor de retorno jogado fora.
+      //
+      // É o mesmo padrão do §7 do protocolo — escrita crítica que falha e o
+      // fluxo segue como sucesso — só que numa camada acima da escrita.
+      const r = await sincronizarPlanos(admin);
+      if (r.problemas.length === 0) linhas = await lerEspelho(admin);
+    } catch (e) {
+      // Exceção inesperada (rede, import). `sincronizarPlanos` não chega aqui.
+      await logServerError("planos_resync_excecao", e, {});
     }
   }
 
@@ -300,10 +331,31 @@ export async function sincronizarPlanos(admin: AdminClient): Promise<ResultadoSi
   const atualizados: PlanoTipo[] = [];
   const problemas: string[] = [];
 
+  /**
+   * ⚠️ TODA FALHA DE SINCRONIZAÇÃO VIRA REGISTRO PERSISTIDO — 20/08/2026.
+   *
+   * `logEvent` só persiste severidade de erro; `info` vai para stdout e some
+   * com a retenção da Vercel (§11). Esta função falhou em produção e não
+   * deixou rastro nenhum — a causa teve que ser caçada por dedução.
+   *
+   * `etapa` separa as duas metades, que falham por motivos diferentes e têm
+   * donos diferentes: "stripe" é configuração de preço (mexe a Rosângela),
+   * "banco" é schema ou permissão (mexe quem opera o Supabase).
+   */
+  async function registrar(etapa: "stripe" | "banco", plano: PlanoTipo, detalhe: string) {
+    const msg = sanitizarErro(detalhe);
+    problemas.push(msg);
+    await logEvent({
+      kind: "planos_sync_falhou",
+      severity: "error",
+      message: `[${etapa}] ${plano}: ${msg}`,
+    });
+  }
+
   for (const p of PLANOS) {
     const info = doStripe[p];
     if (!info.ok) {
-      problemas.push(info.problema ?? `Plano ${p} inválido.`);
+      await registrar("stripe", p, info.problema ?? `Plano ${p} inválido.`);
       continue;
     }
     // ⚠️ Escrita conferida (§7): `.update()` do Supabase DEVOLVE o erro, não
@@ -322,11 +374,20 @@ export async function sincronizarPlanos(admin: AdminClient): Promise<ResultadoSi
       .select("chave");
 
     if (error) {
-      problemas.push(`Não consegui gravar o preço ${p} no espelho: ${error.message}`);
+      const cod = (error as { code?: string }).code;
+      await registrar(
+        "banco",
+        p,
+        `não gravou no espelho${cod ? ` [${cod}]` : ""}: ${error.message}`,
+      );
       continue;
     }
     if (!data || data.length === 0) {
-      problemas.push(`A linha "${CHAVE_ESPELHO[p]}" não existe em configuracao_precos.`);
+      await registrar(
+        "banco",
+        p,
+        `a linha "${CHAVE_ESPELHO[p]}" não existe em configuracao_precos (update sem efeito)`,
+      );
       continue;
     }
     atualizados.push(p);
