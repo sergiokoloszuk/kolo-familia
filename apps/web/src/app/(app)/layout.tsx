@@ -4,6 +4,7 @@ import { differenceInCalendarDays } from "date-fns";
 import { loadFamilyContext } from "@/lib/auth/require-user";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { assinaturaLiberada, pagamentoEmFalha, diasAteExclusao, acessoEncerradoSemPagar, testeJaUsadoAntes } from "@/lib/auth/assinatura";
+import { economiaAnual, formatarBRL, lerPlanosParaExibir } from "@/lib/billing/planos";
 import { Sidebar } from "./sidebar";
 import { TrialGate } from "./trial-gate";
 import { PagamentoGate } from "./pagamento-gate";
@@ -90,30 +91,20 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
     if (pagamentoEmFalha(sub)) {
       return <PagamentoGate diasRestantes={diasAteExclusao(sub)} />;
     }
-    // Preço da MESMA fonte da página de planos (configuracao_precos) — quem
-    // está bloqueada não alcança /assinatura, então o valor tem que aparecer
-    // aqui. Service-role porque configuração de preço é pública.
-    const { data: precosRows } = await createServiceRoleClient()
-      .from("configuracao_precos")
-      .select("chave, valor_centavos")
-      .in("chave", ["plano_mensal", "plano_anual"]);
-    const cent = new Map(
-      (precosRows ?? []).map((r) => [r.chave as string, r.valor_centavos as number]),
-    );
-    const fmt = (c?: number) =>
-      c != null ? (c / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" }) : null;
-    const mensalCent = cent.get("plano_mensal");
-    const anualCent = cent.get("plano_anual");
-    const economia =
-      mensalCent != null && anualCent != null && mensalCent * 12 > anualCent
-        ? fmt(mensalCent * 12 - anualCent)
-        : null;
+    // Preço pelo leitor único (lib/billing/planos.ts) — quem está bloqueada
+    // não alcança /assinatura, então o valor tem que aparecer aqui. É o mesmo
+    // número que o checkout vai cobrar, porque a fonte é o Stripe.
+    const planos = await lerPlanosParaExibir(createServiceRoleClient());
+    const mensalCent = planos.mensal.centavos;
+    const anualCent = planos.anual.centavos;
+    const economiaCalculada = economiaAnual(mensalCent, anualCent);
+    const economia = economiaCalculada ? formatarBRL(economiaCalculada.centavos) : null;
     return (
       <TrialGate
         vencido={acessoEncerradoSemPagar(sub)}
         jaUsouAntes={testeJaUsadoAntes(sub)}
-        precoMensal={fmt(mensalCent)}
-        precoAnual={fmt(anualCent)}
+        precoMensal={formatarBRL(mensalCent)}
+        precoAnual={formatarBRL(anualCent)}
         economiaAnual={economia}
       />
     );

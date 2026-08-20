@@ -6,6 +6,7 @@ import { createClient, createServiceRoleClient } from "@/lib/supabase/server";
 import { logServerError } from "@/lib/log";
 import { notificarFeedback } from "@/lib/admin/notificacoes";
 import { TRIAL_DIAS } from "@/lib/billing/fatos-comerciais";
+import { formatarBRL, lerPlanosParaExibir } from "@/lib/billing/planos";
 
 /**
  * Guia de uso do app — a pessoa diz o que quer fazer e a IA responde em
@@ -82,17 +83,14 @@ function montarSystem(precos: { mensal: string | null; anual: string | null }): 
   return `${SYSTEM_BASE}\n\n${fatos}\n\n${MAPA}`;
 }
 
-/** Lê os preços vigentes (mesma fonte de /precos e /assinatura). Graceful. */
+/** Lê os preços vigentes pelo leitor único (lib/billing/planos.ts). Graceful. */
 async function lerPrecos(): Promise<{ mensal: string | null; anual: string | null }> {
   try {
-    const { data } = await createServiceRoleClient()
-      .from("configuracao_precos")
-      .select("chave, valor_centavos")
-      .in("chave", ["plano_mensal", "plano_anual"]);
-    const m = new Map((data ?? []).map((r) => [r.chave as string, r.valor_centavos as number]));
-    const fmt = (c?: number) =>
-      c != null ? (c / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" }) : null;
-    return { mensal: fmt(m.get("plano_mensal")), anual: fmt(m.get("plano_anual")) };
+    const planos = await lerPlanosParaExibir(createServiceRoleClient());
+    return {
+      mensal: formatarBRL(planos.mensal.centavos),
+      anual: formatarBRL(planos.anual.centavos),
+    };
   } catch {
     return { mensal: null, anual: null };
   }

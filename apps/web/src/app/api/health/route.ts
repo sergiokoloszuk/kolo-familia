@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { posTrialAtivo, experimentalParaTodas } from "@/lib/ayla/experimental";
+import { lerPlanosNoStripe, PLANOS } from "@/lib/billing/planos";
 
 /**
  * Health check: responde com latência do DB + presença das envs
@@ -41,6 +42,42 @@ export async function GET() {
     checkPrice(process.env.STRIPE_PRICE_ID_MENSAL),
     checkPrice(process.env.STRIPE_PRICE_ID_ANUAL),
   ]);
+
+  /**
+   * QUAL PREÇO ESTÁ NO AR, DE VERDADE — 20/08/2026.
+   *
+   * `env.stripe_price_*` acima só responde "o price existe no modo da chave?".
+   * Isso não impediu o defeito: o anual EXISTIA e respondia "ok" enquanto
+   * cobrava R$ 603,90 por MÊS.
+   *
+   * Pior: na Vercel as duas `STRIPE_PRICE_ID_*` estão marcadas como
+   * **Sensitive** — o painel não devolve o valor nem para quem tem acesso.
+   * Provado em 20/08, ao trocar a variável: "Copy to Clipboard" desabilitado,
+   * campo em branco na edição. Ou seja, **não havia NENHUMA forma de saber
+   * qual preço a produção usava.**
+   *
+   * ID de price e recorrência são informação pública do Stripe, não segredo —
+   * pelo mesmo critério que já publica o SHA do commit logo abaixo. Fica fora
+   * de `env`, que só publica booleanos de presença.
+   */
+  const planosStripe = await lerPlanosNoStripe().catch(() => null);
+  const planos = planosStripe
+    ? Object.fromEntries(
+        PLANOS.map((p) => [
+          p,
+          {
+            price_id: planosStripe[p].priceId,
+            centavos: planosStripe[p].centavos,
+            moeda: planosStripe[p].moeda,
+            intervalo: planosStripe[p].intervalo,
+            intervalo_count: planosStripe[p].intervaloCount,
+            ativo: planosStripe[p].ativo,
+            ok: planosStripe[p].ok,
+            problema: planosStripe[p].problema,
+          },
+        ]),
+      )
+    : null;
 
   const env = {
     supabase_url: Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL),
@@ -126,6 +163,7 @@ export async function GET() {
       db: { ok: db_ok, latency_ms: db_latency_ms, error: db_error },
       env,
       flags,
+      planos,
       total_ms,
       ts: new Date().toISOString(),
     },

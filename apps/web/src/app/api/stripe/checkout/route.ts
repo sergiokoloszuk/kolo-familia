@@ -1,7 +1,9 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
-import { getStripeClient, priceIdFor, type PlanoTipo } from "@/lib/stripe/client";
+import { getStripeClient, type PlanoTipo } from "@/lib/stripe/client";
+import { exigirPlanoCobravel } from "@/lib/billing/planos";
+import { logServerError } from "@/lib/log";
 
 const inputSchema = z.object({
   plano: z.enum(["mensal", "anual"]),
@@ -50,12 +52,28 @@ export async function POST(request: NextRequest) {
     .eq("family_account_id", family.id)
     .maybeSingle();
 
+  // ⛔ MESMA TRAVA FAIL-CLOSED do server action de `/assinatura` — 20/08/2026.
+  //
+  // Existem DOIS caminhos de checkout neste repositório, e uma trava que vale
+  // só em um não vale em nenhum: bastaria a chamada entrar por aqui para a
+  // cobrança errada passar. Ver o porquê inteiro em `lib/billing/planos.ts`.
+  let precoConferido;
+  try {
+    precoConferido = await exigirPlanoCobravel(plano);
+  } catch (e) {
+    await logServerError("checkout_preco_invalido", e, { family_account_id: family.id });
+    return NextResponse.json(
+      { error: "Configuração do plano indisponível no momento." },
+      { status: 503 },
+    );
+  }
+
   const stripe = getStripeClient();
   const origin = request.headers.get("origin") ?? process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
 
   const session = await stripe.checkout.sessions.create({
     mode: "subscription",
-    line_items: [{ price: priceIdFor(plano), quantity: 1 }],
+    line_items: [{ price: precoConferido.priceId as string, quantity: 1 }],
     customer: subAcc?.stripe_customer_id ?? undefined,
     customer_email: subAcc?.stripe_customer_id ? undefined : (user.email ?? undefined),
     client_reference_id: family.id,
