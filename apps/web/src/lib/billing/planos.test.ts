@@ -155,6 +155,18 @@ describe("a trava do checkout (fail-closed)", () => {
     await expect(exigirPlanoCobravel("anual")).rejects.toThrow();
   });
 
+  it("13b. price SEM valor fixo é recusado (o único defeito de valor que resta)", async () => {
+    // ⚠️ Não existe teste de "valor incorreto", e a ausência é a prova de que
+    // a arquitetura mudou: o valor EXIBIDO passa a ser derivado do valor
+    // COBRADO, então não há dois números para divergir. O que sobra é o price
+    // sem `unit_amount` (preço graduado/por uso), que não serve para um plano.
+    priceRetrieve.mockResolvedValue(priceFake({ unit_amount: null }));
+    const info = await lerPlanoNoStripe("anual");
+    expect(info.ok).toBe(false);
+    expect(info.problema).toMatch(/não tem valor fixo/);
+    await expect(exigirPlanoCobravel("anual")).rejects.toThrow(/valor fixo/);
+  });
+
   it("14. a recorrência esperada de cada plano está declarada e é a óbvia", () => {
     expect(RECORRENCIA_ESPERADA.mensal).toBe("month");
     expect(RECORRENCIA_ESPERADA.anual).toBe("year");
