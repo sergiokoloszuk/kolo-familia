@@ -61,7 +61,7 @@ Só o que está aberto. 🔒 = bloqueada.
 | [PEND-085](#pend-085) | Medir "condutor perguntou sem pôr proposta na mesa" | A · Condução | P2 | EM OBSERVAÇÃO | contar as ocorrências do log contra o total de turnos de rotina |
 | [PEND-086](#pend-086) | Desfecho ilegível do condutor deixou de gerar artefato | B · Artefatos | P2 | EM OBSERVAÇÃO | contar `DESFECHO PERDIDO` após 17/08 |
 | **ORDEM** | **FRENTE DA INTELIGÊNCIA — sequência decidida em 18/08/2026** | | | | |
-| [PEND-092](#pend-092) | **0 ·** Backup automático + cópia fora da máquina | H · Governança | P1 | A INVESTIGAR | bloqueia PEND-095; não bloqueia código inerte |
+| [PEND-092](#pend-092) | **0 ·** Backup automático + cópia fora da máquina | H · Governança | **P1 ALTA** | A INVESTIGAR | reconfirmada em 20/08: 2º dump manual, ainda no mesmo disco do PGDATA |
 | [PEND-017](#pend-017) | **1 ·** Governança da Inteligência + **Forma Kolo de Pensar** | B · Conhecimento | P1 | DECISÃO PENDENTE · REDEFINIR AGORA | é a fundação: define como a Kolo pensa |
 | [PEND-098](#pend-098) | **2 ·** Crenças, evidências e mudança de perspectiva | B · Conhecimento | P1 | A INVESTIGAR | definir ANTES do corpus |
 | [PEND-093](#pend-093) | ✅ Motor da BIA na main, flag OFF | B · Conhecimento | P1 | **CONCLUÍDA** | publicada e inerte em 18/08 (`0973695`) |
@@ -77,8 +77,14 @@ Só o que está aberto. 🔒 = bloqueada.
 | [PEND-102](#pend-102) | **13 ·** Sites/fontes confiáveis permitidos | F · Limites | P3 | A INVESTIGAR | whitelist com precedência |
 | [PEND-096](#pend-096) | **14 ·** Ativação gradual + medição real | B · Conhecimento | P2 | A INVESTIGAR | última etapa |
 | [PEND-103](#pend-103) | **‖ paralela ·** Higiene da fila | H · Governança | P3 | A INVESTIGAR | não bloqueia produto |
-| [PEND-115](#pend-115) | **Ayla não sabe o preço** — o bloco que respondia ficou no Legacy | G · Comercial | **P0** | CAUSA RAIZ · MENSAL VALIDADO | R$ 54,90 confere no Stripe; ⚠️ o ANUAL cobraria por mês |
-| [PEND-116](#pend-116) | **Plano anual do Stripe cobraria por MÊS** (R$ 603,90) e a Kolo anuncia "por ano" | G · Comercial | **P0** | PROVADO · NÃO CORRIGIDO | bloqueia o fechamento da 115; Ayla NÃO oferece anual |
+| [PEND-115](#pend-115) | **Ayla não sabe o preço** — o bloco que respondia ficou no Legacy | G · Comercial | **P0** | CAUSA RAIZ · DESBLOQUEADA | os dois preços estão corretos e provados (PEND-116 baixada); falta o bloco de preço no caminho novo |
+| [PEND-117](#pend-117) | Stack Supabase: CPU anormal e seis serviços ausentes | H · Governança | **P1 ALTA** | MEDIDA · CAUSA DESCONHECIDA | mapear quais containers não subiram e de onde vem a CPU — antes de reiniciar nada |
+| [PEND-118](#pend-118) | `DUNNING_DELETE_ENABLED` não existe — a exclusão prometida não executa | G · Comercial | **P1 ALTA** | PROVADA · NÃO CORRIGIDA | decidir se liga a exclusão ou corrige a promessa do `PagamentoGate` |
+| [PEND-119](#pend-119) | Aplicar migração é manual, e o PostgREST não recarrega o schema sozinho | H · Governança | P1 | PROVADA · NÃO CORRIGIDA | conferir o event trigger de reload e desenhar o caminho de aplicação |
+| [PEND-120](#pend-120) | `.env.local` de desenvolvimento aponta para preços que não valem mais | H · Governança | P3 | ABERTA | atualizar os dois `STRIPE_PRICE_ID_*` locais |
+| [PEND-121](#pend-121) | Migração 0076 espera o branch do Plano Kolo | H · Governança | P2 | AGUARDANDO BRANCH | aplicar quando `feat/plano-kolo-estrutura` entrar na `main` |
+| [PEND-122](#pend-122) | Termos e Privacidade não descrevem a política real de cancelamento e retenção | F · Limites | P1 | ABERTA | revisar depois que a política de cancelamento/retenção estiver fechada |
+| [PEND-123](#pend-123) | Assinatura anômala: `active` + `cancel_at_period_end` + período vencido em 26/06 | G · Comercial | P2 | MEDIDA · NÃO DIAGNOSTICADA | descobrir por que não virou `canceled` — pode ser webhook perdido |
 | [PEND-104](#pend-104) | **2b ·** Material da pós — LOCALIZADO, em auditoria | B · Conhecimento | P1 | LOCALIZADO · NÃO ATIVO | camada transversal; cobre os buracos do Compilado (rho demanda×regras = 0,042) |
 | [PEND-105](#pend-105) | **8b ·** Conhecimento Especializado: BIA é mecanismo, não inteligência | B · Conhecimento | P1 | PROPOSTA · DECISÃO PENDENTE | sobreposição Compilado × BPs medida em 0% |
 | [PEND-106](#pend-106) | Rastro do conhecimento não cobre o WhatsApp desde 17/08 | H · Governança | P1 | MEDIDA · NÃO CORRIGIDA | invalida o baseline de PEND-042 |
@@ -4651,6 +4657,20 @@ Aberta em: 2026-08-18 · Origem: aplicação da migração 0071 (BIA)
   gravação em massa que este banco vai receber.
 - **Agente recomendado:** PROPOR
 
+
+- **RECONFIRMADA EM 20/08/2026, e a situação não melhorou.** Antes de aplicar a
+  migração 0079, uma sessão com acesso ao container gerou o **segundo** dump
+  manual da história: `/etc/postgresql-custom/kolo_pre0079_20260820_1451.dump`,
+  5,9 MB, integridade provada por `pg_restore -l` (1.249 entradas, exit 0).
+  Disco com 178 GB livres de 193 GB.
+- **Por que isso ainda não é backup:** o arquivo está no volume `db-config`, no
+  **mesmo host e no mesmo disco (`/dev/sda1`) do PGDATA**. Protege contra erro
+  de comando; **não protege contra perda do volume — que foi exatamente o modo
+  de falha de 08/06/2026.**
+- **Dois dumps em três dias, os dois manuais, os dois porque alguém ia rodar uma
+  migração.** Não existe rotina; existe reflexo de operador.
+- **Agrava:** ver PEND-117 — parte do stack está degradada, e é justamente
+  quando não se quer descobrir que a única cópia está no disco que falhou.
 ---
 
 ### PEND-093
@@ -5429,53 +5449,213 @@ STATUS: **CAUSA RAIZ IDENTIFICADA — NÃO CORRIGIDA** · Aberta em: 2026-08-19
   sincronia — hoje batem no mensal por coincidência de manutenção, não por
   construção. Vale registrar como dívida, sem virar frente agora.
 
+
+> **DESBLOQUEADA EM 20/08/2026.** A PEND-116 foi baixada: os dois preços estão
+> corretos e provados em produção — mensal `price_1TlUyk…` R$ 54,90 `month × 1`
+> e anual `price_1U6VIN…` R$ 603,90 `year × 1`, ambos com `ok: true` no
+> `/api/health`. **A regra "a Ayla não oferece o anual" deixa de valer.** O que
+> continua aberto aqui é só o que sempre foi: o bloco que responde preço vive
+> no Legacy e não existe no caminho novo. Fonte do número, quando for
+> implementar: `lerPlanosParaExibir` (`lib/billing/planos.ts`) — nunca texto
+> cravado.
 ---
 
-### PEND-116
-**Plano anual do Stripe cobraria por MÊS — e a Kolo anuncia "por ano"**
-Bloco: **G · Comercial** · Prioridade: **P0** · **ORDEM DA FRENTE: —**
-STATUS: **PROVADO — NÃO CORRIGIDO** · Aberta em: 2026-08-19
+---
 
-> **PROVEI POR EXECUÇÃO em 19/08**, por leitura pura da API LIVE do Stripe.
-> Defeito adormecido: nenhuma família assinou o anual, então nunca disparou.
-> **Bloqueia o fechamento da PEND-115.**
+### PEND-117
+**Stack Supabase: CPU anormal e seis serviços ausentes**
+Bloco: **H · Governança** · Prioridade: **P1 ALTA**
+STATUS: **MEDIDA — CAUSA DESCONHECIDA** · Aberta em: 2026-08-20
 
-- **O QUE ESTÁ ERRADO:** o único preço anual ativo na conta é
-  `price_1TlUzXPAH1xSrJeSfkOY0UIY`, **R$ 603,90**, com
-  **`recurring.interval = "month"` e `interval_count = 1`**. Está configurado
-  para cobrar **R$ 603,90 todo mês**. Foi criado em 23/06/2026, junto com o
-  mensal correto — o erro nasceu ali.
-- **E O PRODUTO ANUNCIA O CONTRÁRIO.** `/assinatura` exibe como título
-  *"R$ 54,90/mês ou R$ 603,90/ano"* (`page.tsx:85`), e `/precos` reforça
-  *"Pagamento único anual"* e *"~2 meses grátis comparado ao mensal"*. Os dois
-  leem `configuracao_precos`, que está certa **como intenção** e desconectada
-  do que o Stripe cobraria.
-- **POR QUE NÃO EXPLODIU AINDA — MEDIDO:** 6 assinaturas na conta, **zero
-  anuais**. As duas recentes (23/07 `active`, 02/07 `canceled`) são mensais,
-  em `price_1TlUyk…` = R$ 54,90 — que confere com `configuracao_precos`.
-- **REGRA QUE VALE DESDE JÁ, até isto ser corrigido e provado:**
-  - **a Ayla NÃO oferece o plano anual;**
-  - **nenhuma mensagem comercial afirma "R$ 603,90/ano";**
-  - **a PEND-115 não fecha** — ela entra só com o mensal, e sobre o anual manda
-    para a tela de Assinatura.
-- **DUAS FONTES DE PREÇO, SEM VÍNCULO — VI NO CÓDIGO.** O que se **cobra** vem
-  de `STRIPE_PRICE_ID_*` (`priceIdFor`, em `api/stripe/checkout/route.ts:58`);
-  o que se **exibe** vem de `configuracao_precos`. Nada mantém os dois em
-  sincronia. Hoje batem no mensal por manutenção manual, não por construção —
-  e é exatamente por isso que o anual pôde divergir sem ninguém ver.
-- **⚠️ NÃO SEI — env de produção.** O `.env.local` desta máquina aponta para
-  `STRIPE_PRICE_ID_MENSAL = price_1T53jc…` (**R$ 53,00**, de 26/02) e para um
-  `STRIPE_PRICE_ID_ANUAL` que **não existe mais na conta**. A assinatura real de
-  23/07 usou o preço novo, o que **INFERE** que a Vercel tem o mensal correto —
-  mas não se lê o env da Vercel daqui. **Conferir os dois no painel** antes de
-  qualquer conclusão sobre o anual em produção.
-- **CORREÇÃO PROPOSTA (não executada):** criar no Stripe um preço anual com
-  `recurring.interval = "year"`, arquivar o atual, apontar
-  `STRIPE_PRICE_ID_ANUAL` para o novo na Vercel, e conferir a tela. É trabalho
-  de painel, não de código.
-- **CRITÉRIO DE BAIXA:** o preço anual em produção com `interval = "year"`
-  comprovado pela API, o env da Vercel apontando para ele, e **um checkout
-  anual de teste concluído** mostrando cobrança única.
+> Não afeta o produto hoje. Afeta a capacidade de operar o banco — e convive
+> com a PEND-092 (backup só no mesmo disco), que é o que torna isto grave.
+
+- **FATOS MEDIDOS (20/08/2026):**
+  - `https://studio-supabase.4oydba.easypanel.host` devolve **404** do proxy do
+    Easypanel — o hostname não roteia para serviço nenhum;
+  - `GET /pg/*` (postgres-meta, pelo gateway) devolve **500**;
+  - não aparecem entre os containers ativos: `meta`, `studio`, `analytics`,
+    `realtime`, `supavisor`, `functions`;
+  - leitura de CPU do serviço: **828%** por volta das 13h e **1291,6%** mais
+    tarde no mesmo dia.
+- **O QUE ESTÁ SAUDÁVEL, e também é fato:** `/auth/v1/health` 200,
+  `/rest/v1/` 200, `/storage/v1/bucket` 200, e o dado cresce em tempo real
+  (225 famílias, 6.449 mensagens às 14:39 UTC). O container `db` está de pé, e
+  o ID observado não mudou numa janela de cerca de uma hora — o que é evidência
+  **contra** recriação frequente.
+- **⚠️ HIPÓTESE NÃO PROVADA, registrada como hipótese:** a combinação de CPU
+  alta com serviços ausentes *sugere* processo em laço, mas **não há prova de
+  laço de restart**, e isso não pode ser registrado como causa. A causa da CPU
+  é **NÃO SEI**.
+- **CONSEQUÊNCIA PRÁTICA JÁ SENTIDA:** sem Studio e sem `postgres-meta`, toda
+  migração passou a depender do terminal do container. Ver PEND-119.
+- **PRÓXIMO PASSO:** mapear, por leitura, quais containers o compose define e
+  quais não subiram, e de qual processo vem a CPU. **Reiniciar é a ação de
+  maior risco neste stack e não deve ser o primeiro passo** — um redeploy já
+  zerou este banco em 08/06/2026.
+- **CRITÉRIO DE CONCLUSÃO:** causa da CPU identificada com evidência, e decisão
+  escrita sobre os seis serviços (subir, remover do compose, ou aceitar
+  ausentes com motivo).
+
+---
+
+### PEND-118
+**`DUNNING_DELETE_ENABLED` não existe — a exclusão prometida não executa**
+Bloco: **G · Comercial** · Prioridade: **P1 ALTA**
+STATUS: **PROVADA — NÃO CORRIGIDA** · Aberta em: 2026-08-20
+
+> A Kolo promete a uma mãe, na tela, que os dados dela serão apagados num
+> prazo — e o mecanismo que apagaria está desligado. Ninguém foi prejudicado;
+> a promessa é que não é verdadeira.
+
+- **PROVEI EM PRODUÇÃO (20/08/2026):** a variável **não existe** na Vercel,
+  conferida nas abas Project e Shared do projeto `kolo-familia-web`. Logo
+  `process.env.DUNNING_DELETE_ENABLED === "true"` é falso e
+  `/api/cron/exclusao-pagamento` roda em **DRY-RUN** — lista quem seria
+  apagado e não apaga.
+- **O QUE A TELA PROMETE — VI NO CÓDIGO.** `app/(app)/pagamento-gate.tsx` diz
+  que os dados ficam guardados por N dias e que, passado o prazo sem
+  regularizar, são apagados definitivamente.
+- **POPULAÇÃO AFETADA HOJE: ZERO.** Medido: **0 linhas** em
+  `subscription_accesses` com `pagamento_falhou_em` preenchido. O cron nunca
+  teve um único candidato desde que existe. Por isso P1 e não P0.
+- **NÃO É SÓ LIGAR A VARIÁVEL.** Ligar a exclusão sem revisar as isenções é
+  perigoso: o cron pula `cortesia`, mas **não isenta staff** —
+  `familiaEhDeStaff` (`lib/auth/acesso.ts`) existe e não é usada em caminho
+  destrutivo nenhum.
+- **DUAS SAÍDAS, e a escolha é de produto:** ligar a exclusão (com isenção de
+  staff antes), **ou** corrigir o texto para o que o sistema de fato faz.
+  Prometer e não cumprir é o pior dos três estados.
+- **CRITÉRIO DE CONCLUSÃO:** tela e comportamento dizendo a mesma coisa, com a
+  decisão registrada e — se a exclusão for ligada — isenção de staff coberta
+  por teste.
+
+---
+
+### PEND-119
+**Aplicar migração é manual, e o PostgREST não recarrega o schema sozinho**
+Bloco: **H · Governança** · Prioridade: **P1**
+STATUS: **PROVADA — NÃO CORRIGIDA** · Aberta em: 2026-08-20
+
+> Duas dores que pareciam uma. A segunda só apareceu porque a primeira já
+> tinha sido paga.
+
+- **DOR 1 — não existe caminho automatizado.** Aplicar a 0079 custou: uma
+  sessão de navegador, identificação do container, um dump de segurança e um
+  humano colando SQL num terminal. Com 79 migrações no repositório, isso já
+  atrasou entregas antes (0038 e 0071–0074 ficaram semanas pendentes por falta
+  de caminho, não por falta de decisão). Agravado pela PEND-117: sem Studio,
+  sobrou só o terminal do container.
+- **DOR 2 — PROVEI EM PRODUÇÃO (20/08):** depois da 0079 aplicada, **toda
+  escrita** nas colunas novas falhava com
+  `PGRST204 Could not find the 'intervalo' column of 'configuracao_precos' in
+  the schema cache`, enquanto **leitura funcionava normalmente**. Isolado por
+  três testes num cliente independente do app: ler coluna nova OK · escrever em
+  coluna antiga OK · escrever em coluna nova PGRST204.
+- **A DIFERENÇA IMPORTA, e foi ela que enganou a investigação:** o PostgREST
+  valida o payload de **escrita** contra o cache de schema; a **leitura** passa.
+  Quem só confere leitura conclui, errado, que a migração pegou.
+- **RESOLVIDO NAQUELA OCASIÃO** com `notify pgrst, 'reload schema';` — mas
+  **manualmente**. O event trigger que deveria disparar a recarga sozinho não
+  está funcionando neste ambiente, ou não existe.
+- **POR QUE VAI REPETIR:** vale para **qualquer** migração futura que adicione
+  coluna que o app escreva. O sintoma é traiçoeiro — o app segue de pé, a
+  leitura funciona, e só a escrita falha, em silêncio se ninguém tiver
+  instrumentado o caminho.
+- **CRITÉRIO DE CONCLUSÃO:** ou o event trigger de reload funcionando e provado
+  com uma migração de teste, ou o `notify` incorporado a um procedimento escrito
+  de aplicação — e o procedimento existindo por escrito.
+
+---
+
+### PEND-120
+**`.env.local` de desenvolvimento aponta para preços que não valem mais**
+Bloco: **H · Governança** · Prioridade: **P3**
+STATUS: **ABERTA** · Aberta em: 2026-08-20
+
+- **O QUE ESTÁ ERRADO — VI NO CÓDIGO:** `STRIPE_PRICE_ID_MENSAL` local aponta
+  para `price_1T53jc…` (**R$ 53,00**, agora arquivado no Stripe) e
+  `STRIPE_PRICE_ID_ANUAL` para `price_1T53lh…`, que **não existe** na conta.
+- **RISCO REAL, e não é cosmético:** qualquer teste local de checkout exercita
+  o preço errado e devolve confiança falsa. Foi por conferir a API antes de
+  confiar no env que o defeito do anual não passou batido.
+- **NÃO AFETA PRODUÇÃO.** As variáveis da Vercel são outras, estão marcadas
+  como Sensitive e foram provadas corretas pelo `/api/health`.
+- **CRITÉRIO DE CONCLUSÃO:** os dois IDs locais iguais aos de produção, e o
+  `/api/health` local mostrando `ok: true` nos dois planos.
+
+---
+
+### PEND-121
+**Migração 0076 espera o branch do Plano Kolo**
+Bloco: **H · Governança** · Prioridade: **P2**
+STATUS: **AGUARDANDO BRANCH** · Aberta em: 2026-08-20
+
+- **FATO:** `0076_plano_versionamento.sql` **não existe na `main`** — vive em
+  `feat/plano-kolo-estrutura` (e em dois backups). A numeração da `main` pula
+  de propósito: 0075 → 0077 → 0078 → 0079.
+- **Não é buraco no schema.** Conferido por leitura em 20/08: 0071, 0072, 0073,
+  0074, 0075, 0077, 0078 e 0079 estão aplicadas em produção. A 0076 **não deve**
+  estar — o código que depende dela também não está no ar.
+- **O que lembrar quando o branch entrar:** ela será aplicada **depois** da
+  0079, fora da ordem numérica. Não é problema para o Postgres (são
+  independentes), mas confunde quem auditar o histórico depois.
+- **⚠️ O número 0076 está RESERVADO, não vago.** Nenhuma frente nova pode
+  reaproveitá-lo.
+- **CRITÉRIO DE CONCLUSÃO:** 0076 aplicada e provada em produção, ou o branch
+  cancelado e o número liberado por escrito.
+
+---
+
+### PEND-122
+**Termos e Privacidade não descrevem a política real de cancelamento e retenção**
+Bloco: **F · Limites** · Prioridade: **P1**
+STATUS: **ABERTA** · Aberta em: 2026-08-20
+
+- **O QUE OS DOCUMENTOS DIZEM HOJE — VI NO CÓDIGO.** Termos §7
+  (`app/(public)/termos/page.tsx`) diz apenas que o usuário poderá solicitar o
+  encerramento pelos canais oficiais. Privacidade §7 diz que a exclusão pode
+  ser solicitada e ocorrerá conforme exigências legais aplicáveis.
+- **O QUE O PRODUTO FAZ:** cancelar pela tela **apaga a conta e todos os
+  registros da criança, imediatamente e sem volta** (`excluirContaAction`,
+  reusada pelo card de cancelamento). Nenhum dos dois documentos avisa isso.
+- **E O QUE ESTÁ SENDO DECIDIDO:** a política nova (cancelar vale até o fim do
+  período pago, 7 dias de guarda em qualquer situação) muda de novo o que
+  precisa estar escrito — inclusive o **prazo de retenção**, que é o dado que a
+  lei espera encontrar na Política de Privacidade.
+- **⚠️ DEPENDE:** só revisar **depois** que a política de cancelamento e
+  retenção estiver fechada e implementada. Revisar antes gera um segundo
+  documento desatualizado.
+- **Cuidado registrado:** se a tela disser que os dados são apagados numa data
+  e o sistema guardar mais 7 dias, é a Privacidade que precisa declarar o prazo
+  real.
+- **CRITÉRIO DE CONCLUSÃO:** Termos e Privacidade descrevendo cancelamento, fim
+  do período pago, exclusão, retenção após trial, retenção após falha de
+  pagamento e os registros técnicos que permanecem.
+
+---
+
+### PEND-123
+**Assinatura anômala: `active` com `cancel_at_period_end` e período vencido**
+Bloco: **G · Comercial** · Prioridade: **P2**
+STATUS: **MEDIDA — NÃO DIAGNOSTICADA** · Aberta em: 2026-08-20
+
+- **MEDIDO EM PRODUÇÃO (20/08), leitura pura:** uma linha em
+  `subscription_accesses` com `status = 'active'`,
+  `cancel_at_period_end = true` e `current_period_end = 2026-06-26` — vencido
+  há quase dois meses e ainda ativo. Família `a376ba52-…`.
+- **POR QUE IMPORTA:** ao fim do período, o Stripe deveria ter enviado
+  `customer.subscription.deleted` e o webhook deveria ter rebaixado para
+  `canceled`. Ou o evento não chegou, ou chegou e não foi processado, ou o
+  cancelamento agendado foi revertido no Stripe sem a Kolo saber.
+- **⚠️ NÃO DIAGNOSTICAR POR SUPOSIÇÃO.** As três hipóteses acima têm correções
+  diferentes, e uma delas (webhook perdido) é da mesma família do incidente
+  Rochelle. Conferir contra a API do Stripe **antes** de concluir qualquer
+  coisa.
+- **Relação:** se for webhook perdido, encosta em PEND-002 e no reconciliador.
+- **CRITÉRIO DE CONCLUSÃO:** saber por que a linha está assim, com evidência do
+  lado do Stripe, e decidir se revela falha de sincronização que afeta outras
+  famílias.
 
 ---
 
@@ -5630,7 +5810,7 @@ trimestralmente, o que vier antes.
 
 ---
 
-**Próximo ID livre: PEND-117. *(024 e 025 reservadas por frentes ainda não publicadas.)***
+**Próximo ID livre: PEND-124. *(024 e 025 reservadas por frentes ainda não publicadas; 0076 é número de MIGRACAO reservado — ver PEND-121.)***
 
 > Conferir contra `origin/main`, não contra o seu branch. Dois branches podem
 > reivindicar o mesmo número — o conflito de merge nesta linha é o alarme.

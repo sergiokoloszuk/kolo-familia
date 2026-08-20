@@ -12,6 +12,94 @@ Ordem cronológica inversa: a mais recente no topo.
 
 ## 2026
 
+### PEND-116 · Plano anual do Stripe cobraria por MÊS — e a frente de preços que nasceu dela
+G · Comercial · P0 · **CONCLUÍDA**
+Aberta em: 2026-08-19 · Concluída em: 2026-08-20
+
+- **O DEFEITO:** o único preço anual ativo da conta,
+  `price_1TlUzXPAH1xSrJeSfkOY0UIY`, era **R$ 603,90 com `interval = "month"`**.
+  Quem clicasse em "Assinar anual" seria cobrado **R$ 603,90 todos os meses**,
+  enquanto a tela dizia "por ano". Adormecido desde 23/06/2026: nenhuma família
+  havia assinado o anual, então nunca disparou.
+
+- **A CAUSA RAIZ NÃO ERA O VALOR.** Eram **três fontes independentes para a
+  mesma informação, sem ninguém compará-las**: o Stripe (o que se cobra), a env
+  da Vercel (qual price o checkout usa) e `configuracao_precos` (o que a tela
+  mostra). Quatro telas consultavam a tabela por conta própria, cada uma com o
+  seu formatador. A tela estava certa em relação à sua fonte e o Stripe em
+  relação à dele — **os dois "funcionavam"**, e por isso o defeito atravessou
+  quase dois meses.
+
+- **O QUE FOI CORRIGIDO NO STRIPE (Rosângela, 20/08):** produto novo
+  **Kolo Família - ANUAL** com `price_1U6VINPAH1xSrJeSkUbHY6m9` =
+  **R$ 603,90 `recurring · year × 1`**. Houve um passo intermediário instrutivo:
+  o preço nasceu como `one_time`, que `mode: "subscription"` recusa — o botão
+  daria **erro** em vez de cobrar errado. Corrigido para recorrente anual.
+  Arquivados depois: `price_1TlUzX…` (o defeituoso) e `price_1T53jc…`
+  (mensal de R$ 53,00, valor velho ainda ativo num produto ativo).
+
+- **O QUE FOI CONSTRUÍDO (PR #137, merge `1d5eac7`; PR #138, merge `6d1b45d`):**
+  - **o Stripe virou o dono do preço.** `configuracao_precos` deixou de ser
+    fonte e virou **espelho**, escrito só por `sincronizarPlanos`. As quatro
+    telas passaram a ler por um leitor único, com um formatador só;
+  - **trava fail-closed nos DOIS caminhos de checkout** (`exigirPlanoCobravel`).
+    Confere ao vivo que a recorrência é a que o nome do plano promete; não
+    batendo, o checkout não abre. **Sozinha, teria impedido os dois defeitos.**
+    Havia dois caminhos de checkout no repositório — trava em um só não valeria
+    em nenhum;
+  - **`/api/health` publica id, valor e recorrência de cada plano.** Na Vercel
+    as `STRIPE_PRICE_ID_*` estão marcadas como *Sensitive* e o painel não
+    devolve o valor: **não existia nenhuma forma de saber qual preço a produção
+    usava**;
+  - **alarme no monitor diário** que já existia, sem cron novo: o valor vigente
+    passa pelos olhos de uma pessoa todo dia, e a divergência vira aviso;
+  - **textos falsos removidos.** `/precos` afirmava *"Economia ~20%"* e
+    *"~2 meses grátis"*. O desconto real é **1 mês, 8,33%** — R$ 603,90 são
+    exatamente 11 × R$ 54,90. O desconto passou a ser **calculado** dos dois
+    preços, nunca escrito;
+  - **migração 0079**, aplicada em produção em 20/08 com dump de segurança
+    conferido por `pg_restore -l` antes.
+
+- **A RESSALVA QUE FOI ATÉ O FIM.** Depois do deploy, as colunas novas do
+  espelho ficaram `NULL` mesmo após dez renderizações. A causa era invisível, e
+  o primeiro diagnóstico estava errado: acusei um `catch {}` vazio, mas ele
+  nunca disparava — `sincronizarPlanos` **não lança**, ela **devolve**
+  `{atualizados, problemas}`, e o chamador descartava o retorno inteiro. A
+  falha sumia **uma linha antes** do catch. Corrigido, mais observabilidade com
+  redação de segredo por formato, e só então a causa real apareceu:
+  **`PGRST204` — o PostgREST validava a escrita contra um cache de schema que
+  não conhecia as colunas novas**, enquanto a leitura passava normalmente.
+  Resolvido com `notify pgrst, 'reload schema';`. O espelho sincronizou pelo
+  mecanismo real no render seguinte.
+
+- **PROVA FINAL EM PRODUÇÃO (20/08, commit `6d1b45d`):**
+
+  | | mensal | anual |
+  |---|---|---|
+  | `/api/health` | 5490 `brl` · `month × 1` · `ok: true` | 60390 `brl` · `year × 1` · `ok: true` |
+  | price ID | `price_1TlUyk…` | `price_1U6VIN…` |
+  | espelho | `intervalo month` · `sincronizado_em 16:49:41Z` | `intervalo year` · `sincronizado_em 16:49:42Z` |
+
+  Página de preços renderizada: `"Economia ~20%": 0` · `"2 meses grátis": 0` ·
+  `"1 mês grátis": 2`. Suíte 2674 testes, `tsc` limpo, build compila.
+
+- **⚠️ O QUE NÃO FOI PROVADO, e a baixa não finge que foi.** O critério
+  original pedia *"um checkout anual de teste concluído mostrando cobrança
+  única"*. **Não foi feito** — um checkout anual real cobraria R$ 603,90 de
+  alguém. No lugar dele ficam duas provas de natureza mais forte: a leitura
+  direta da API do Stripe e a validação em runtime **pela mesma função que o
+  checkout chama antes de cobrar**. A confirmação definitiva é a primeira
+  assinatura anual real, como em PEND-002.
+
+- **Aprendizado:** duas fontes para a mesma decisão não divergem *se* alguém
+  compará-las — o problema é que ninguém compara, porque cada uma está certa em
+  relação a si mesma. A correção que dura não é acertar o número: é fazer o
+  número exibido **derivar** do número cobrado, e pôr uma trava que recuse o que
+  não bate. E o corolário barato: **um valor comercial que passa pelos olhos de
+  uma pessoa todo dia não defasa em silêncio.**
+
+---
+
 ### PEND-010 · Triar as 26 pendências do laudo de 06/08
 Documentação · P2 · **CONCLUÍDA**
 Aberta em: 2026-08-08 · Concluída em: 2026-08-08
