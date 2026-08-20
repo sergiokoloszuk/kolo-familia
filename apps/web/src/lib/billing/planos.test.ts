@@ -20,12 +20,21 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const priceRetrieve = vi.fn();
 
+const logEventMock = vi.fn();
+const logServerErrorMock = vi.fn();
+
+vi.mock("@/lib/log", () => ({
+  logEvent: (...a: unknown[]) => logEventMock(...a),
+  logServerError: (...a: unknown[]) => logServerErrorMock(...a),
+}));
+
 vi.mock("@/lib/stripe/client", () => ({
   getStripeClient: () => ({ prices: { retrieve: priceRetrieve } }),
   STRIPE_PRICE: { mensal: "price_mensal_x", anual: "price_anual_x" },
 }));
 
 const {
+  sanitizarErro,
   economiaAnual,
   seloEconomiaAnual,
   formatarBRL,
@@ -52,6 +61,8 @@ function priceFake(over: Record<string, unknown> = {}) {
 
 beforeEach(() => {
   priceRetrieve.mockReset();
+  logEventMock.mockReset();
+  logServerErrorMock.mockReset();
 });
 
 describe("o desconto do anual é calculado, nunca escrito", () => {
@@ -280,6 +291,88 @@ describe("o espelho se corrige sozinho", () => {
     const dois = await sincronizarPlanos(db as any);
     expect(dois.atualizados).toEqual(um.atualizados);
     expect(dois.problemas).toEqual(um.problemas);
+  });
+});
+
+describe("a falha de sincronização é observável (e sem segredo)", () => {
+  it("26. REGRESSÃO: erro de ESCRITA vira evento persistido, não silêncio", async () => {
+    priceRetrieve.mockResolvedValue(priceFake());
+    const db = supabaseFake({ erro: "permission denied for table configuracao_precos" });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const r = await sincronizarPlanos(db as any);
+
+    expect(r.problemas.length).toBeGreaterThan(0);
+    expect(logEventMock).toHaveBeenCalled();
+    const ev = logEventMock.mock.calls.at(-1)![0] as {
+      kind: string;
+      severity: string;
+      message: string;
+    };
+    expect(ev.kind).toBe("planos_sync_falhou");
+    // `logEvent` só PERSISTE severidade de erro; `info` some com a retenção.
+    expect(ev.severity).toBe("error");
+    expect(ev.message).toMatch(/^\[banco\]/);
+    expect(ev.message).toMatch(/permission denied/);
+  });
+
+  it("27. falha de configuração no STRIPE é registrada com a etapa certa", async () => {
+    priceRetrieve.mockResolvedValue(
+      priceFake({ recurring: { interval: "month", interval_count: 1 } }),
+    );
+    const db = supabaseFake();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await sincronizarPlanos(db as any);
+
+    const etapas = logEventMock.mock.calls.map((c) => (c[0] as { message: string }).message);
+    expect(etapas.some((m) => m.startsWith("[stripe] anual:"))).toBe(true);
+    // O mensal está correto neste cenário — não pode virar alarme falso.
+    expect(etapas.some((m) => m.startsWith("[stripe] mensal:"))).toBe(false);
+  });
+
+  it("28. NENHUM SEGREDO no log, por formato", () => {
+    const casos: [string, RegExp][] = [
+      ["Invalid API Key provided: sk_live_51H8aBcDeFgHiJkLmNoPq", /sk_live_\[REDIGIDO\]/],
+      ["bad key pk_test_abc123XYZ", /pk_test_\[REDIGIDO\]/],
+      ["signature whsec_aBcD_eFgH-1234", /whsec_\[REDIGIDO\]/],
+      [
+        "JWT eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NSJ9.dBjftJeZ4CVPmB92K",
+        /\[JWT_REDIGIDO\]/,
+      ],
+      ["token abcdefghijklmnopqrstuvwxyz0123456789ABCDEFGH", /\[TOKEN_REDIGIDO\]/],
+    ];
+    for (const [entrada, esperado] of casos) {
+      const saida = sanitizarErro(entrada);
+      expect(saida).toMatch(esperado);
+      expect(saida).not.toMatch(/sk_live_51H8aBcDeFgHiJkLmNoPq|eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9/);
+    }
+  });
+
+  it("29. o que NÃO é segredo continua legível — senão o log não serve", () => {
+    const msg = sanitizarErro(
+      'nao gravou no espelho [42501]: permission denied, price price_1U6VINPAH1xSrJeSkUbHY6m9',
+    );
+    expect(msg).toMatch(/42501/);
+    expect(msg).toMatch(/permission denied/);
+    // price ID tem 30 caracteres — abaixo do limiar de token, e é operacional.
+    expect(msg).toMatch(/price_1U6VINPAH1xSrJeSkUbHY6m9/);
+  });
+
+  it("30. mensagem vazia não vira 'undefined' no log", () => {
+    expect(sanitizarErro(null)).toBe("(sem mensagem)");
+    expect(sanitizarErro(undefined)).toBe("(sem mensagem)");
+    expect(sanitizarErro("")).toBe("(sem mensagem)");
+  });
+
+  it("31. FALHA DE SINCRONIZAÇÃO NÃO LIBERA CHECKOUT INVÁLIDO", () => {
+    // A trava lê o Stripe ao vivo; ela não consulta o espelho nem depende dele.
+    // Espelho quebrado não pode virar cobrança errada.
+    const fonte = readFileSync(resolve(RAIZ, "src/lib/billing/planos.ts"), "utf8");
+    const trava = fonte.slice(
+      fonte.indexOf("export async function exigirPlanoCobravel"),
+      fonte.indexOf("export type PlanoParaExibir"),
+    );
+    expect(trava).toMatch(/lerPlanoNoStripe\(plano\)/);
+    expect(trava).not.toMatch(/configuracao_precos|lerEspelho|lerPlanosParaExibir/);
   });
 });
 
