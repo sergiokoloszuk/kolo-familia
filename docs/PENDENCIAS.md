@@ -55,7 +55,7 @@ Só o que está aberto. 🔒 = bloqueada.
 | [PEND-089](#pend-089) | Prioridade dos desafios — corte CORRIGIDO, ordenação por recência aberta | C · Memória | P1 | CORTE OK · PRIORIZAÇÃO ABERTA | decidir de onde vem a prioridade quando o perfil passar do teto |
 | [PEND-091](#pend-091) | Três lacunas menores do contexto (interesses, idade, confirmação) | C · Memória | P2 | ABERTA | depende de PEND-089 |
 | [PEND-088](#pend-088) | Dois P2 da auditoria — decisão registrada: NÃO implementar agora | H · Governança | P2 | ADIADA | retomar quando houver investigação de latência ou funil |
-| [PEND-058](#pend-058) | Fragmentação multi-balão: a Ayla responde duas vezes ao mesmo pensamento | A · Condução | P1 | ABERTA | escolher entre rechecagem e continuação — janela DESCARTADA |
+| [PEND-058](#pend-058) | Fragmentação multi-balão: a Ayla responde duas vezes ao mesmo pensamento | A · Condução | **P0** | CORRIGIDA · PUBLICADA | janela 3s→10s; remedir a amostra nova antes de baixar |
 | [PEND-083](#pend-083) | Branch `bia/ciclo-tecnico` pode ter mais correções prontas e nunca publicadas | G · Entrega | P1 | ABERTA | auditar paridade Legacy × novo e branches não ancestrais de `main` |
 | [PEND-084](#pend-084) | Caminho reativo escreve sequência de rotina que não é o quadro | B · Artefatos | P2 | ABERTA | ou não escreve etapas, ou lê do quadro como o condutor |
 | [PEND-085](#pend-085) | Medir "condutor perguntou sem pôr proposta na mesa" | A · Condução | P2 | EM OBSERVAÇÃO | contar as ocorrências do log contra o total de turnos de rotina |
@@ -65,11 +65,11 @@ Só o que está aberto. 🔒 = bloqueada.
 | [PEND-017](#pend-017) | **1 ·** Governança da Inteligência + **Forma Kolo de Pensar** | B · Conhecimento | P1 | DECISÃO PENDENTE · REDEFINIR AGORA | é a fundação: define como a Kolo pensa |
 | [PEND-098](#pend-098) | **2 ·** Crenças, evidências e mudança de perspectiva | B · Conhecimento | P1 | A INVESTIGAR | definir ANTES do corpus |
 | [PEND-093](#pend-093) | ✅ Motor da BIA na main, flag OFF | B · Conhecimento | P1 | **CONCLUÍDA** | publicada e inerte em 18/08 (`0973695`) |
-| [PEND-094](#pend-094) | **4 ·** Cautela científica: estável × datável | B · Conhecimento | P1 | DECISÃO PENDENTE | decidir antes de importar |
-| [PEND-095](#pend-095) | **5 ·** Importar e validar os 1.120 chunks | B · Conhecimento | P1 | PRONTA PARA IMPLEMENTAR | depende de 092, 093, 094 |
+| [PEND-094](#pend-094) | **4 ·** Cautela científica: estável × datável | B · Conhecimento | P1 | DECISÃO PENDENTE | o material da pós (104) é o caso concreto: 6 afirmações a verificar |
+| [PEND-095](#pend-095) | **5 ·** Importar e validar os 1.120 chunks | B · Conhecimento | P1 | PRONTA PARA IMPLEMENTAR | depende de 092, 093, 094; o corpus só existe em `bia/ciclo-tecnico` |
 | [PEND-039](#pend-039) | **6 ·** Bancada: provar que a Ayla passou a pensar Kolo | A · Condução | P1 | PRONTA PARA IMPLEMENTAR | 3 colunas: sem BIA × com BIA × genérica |
-| [PEND-042](#pend-042) | **7 ·** Por que o repertório não chega em 58% dos turnos | B · Conhecimento | P1 | INVESTIGADA · CAUSA DESCONHECIDA | bloqueia PEND-097 |
-| [PEND-097](#pend-097) | **8 ·** BIA × Boas Práticas: raciocinar → escolher estratégia | B · Conhecimento | P2 | A INVESTIGAR | medir antes de desligar qualquer camada |
+| [PEND-042](#pend-042) | **7 ·** Por que o repertório não chega em 58% dos turnos | B · Conhecimento | P1 | INVESTIGADA · BASELINE CEGO | releitura 19/08 tem viés de canal — ver PEND-106 |
+| [PEND-097](#pend-097) | **8 ·** BIA × Boas Práticas: raciocinar → escolher estratégia | B · Conhecimento | P2 | A INVESTIGAR | segue como a MEDIÇÃO; a decisão migrou para PEND-105 |
 | [PEND-099](#pend-099) | **9 ·** Plano Kolo — transformar compreensão em evolução | D · Entregas | P2 | A INVESTIGAR | depende de 098 e 097 |
 | [PEND-100](#pend-100) | **10 ·** Entrada contínua de novos materiais | H · Governança | P2 | A INVESTIGAR | a BIA sem depender do VS Code |
 | [PEND-022](#pend-022) | **11 ·** Governança de Fontes Oficiais (guarda-chuva) | F · Limites | P2 | INVESTIGADA · DECISÃO PENDENTE | filhas: 101 e 102 |
@@ -77,8 +77,21 @@ Só o que está aberto. 🔒 = bloqueada.
 | [PEND-102](#pend-102) | **13 ·** Sites/fontes confiáveis permitidos | F · Limites | P3 | A INVESTIGAR | whitelist com precedência |
 | [PEND-096](#pend-096) | **14 ·** Ativação gradual + medição real | B · Conhecimento | P2 | A INVESTIGAR | última etapa |
 | [PEND-103](#pend-103) | **‖ paralela ·** Higiene da fila | H · Governança | P3 | A INVESTIGAR | não bloqueia produto |
+| [PEND-115](#pend-115) | **Ayla não sabe o preço** — o bloco que respondia ficou no Legacy | G · Comercial | **P0** | CAUSA RAIZ · MENSAL VALIDADO | R$ 54,90 confere no Stripe; ⚠️ o ANUAL cobraria por mês |
+| [PEND-116](#pend-116) | **Plano anual do Stripe cobraria por MÊS** (R$ 603,90) e a Kolo anuncia "por ano" | G · Comercial | **P0** | PROVADO · NÃO CORRIGIDO | bloqueia o fechamento da 115; Ayla NÃO oferece anual |
+| [PEND-104](#pend-104) | **2b ·** Material da pós — LOCALIZADO, em auditoria | B · Conhecimento | P1 | LOCALIZADO · NÃO ATIVO | camada transversal; cobre os buracos do Compilado (rho demanda×regras = 0,042) |
+| [PEND-105](#pend-105) | **8b ·** Conhecimento Especializado: BIA é mecanismo, não inteligência | B · Conhecimento | P1 | PROPOSTA · DECISÃO PENDENTE | sobreposição Compilado × BPs medida em 0% |
+| [PEND-106](#pend-106) | Rastro do conhecimento não cobre o WhatsApp desde 17/08 | H · Governança | P1 | MEDIDA · NÃO CORRIGIDA | invalida o baseline de PEND-042 |
+| [PEND-107](#pend-107) | Auditoria da Rotina contra o documento aprovado | D · Entregas | P1 | A INVESTIGAR | aderência ao documento ≠ funciona |
+| [PEND-108](#pend-108) | Auditoria do Plano contra o documento aprovado | D · Entregas | P1 | A INVESTIGAR | documento `plano` v1 está arquivado |
+| [PEND-109](#pend-109) | Central de Avisos no Admin — Trial · Pós-Trial · Todos | G · Comercial | P1 | A INVESTIGAR | fila, lotes, pausa, idempotência; reusar as reservas |
+| [PEND-110](#pend-110) | Satisfação no D3 | G · Comercial | P2 | DEFINIDA · NÃO CONSTRUÍDA | depende de PEND-074 |
+| [PEND-111](#pend-111) | Indicação — não existe | G · Comercial | P2 | DECISÃO DE PRODUTO PENDENTE | decidir antes de codar |
+| [PEND-112](#pend-112) | Recuperação dos Trials expirados | G · Comercial | P1 | 80 ELEGÍVEIS · NÃO DISPARADA | bloqueada por PEND-109 |
+| [PEND-113](#pend-113) | Métricas completas do funil | G · Comercial | P1 | A INVESTIGAR | uma consulta versionada, com paginação |
+| [PEND-114](#pend-114) | WhatsApp obrigatório antes de iniciar o Trial | G · Comercial | P1 | AGUARDANDO DECISÃO COM A AGÊNCIA | causa raiz no gatilho `handle_new_user` |
 | [PEND-027](#pend-027) | Plano Kolo — contexto, conhecimento e aprendizado | D · Entregas | P1 | A INVESTIGAR | guarda-chuva de PEND-099 |
-| [PEND-082](#pend-082) | Ayla repete orientação do turno anterior — medir frequência real | A · Condução | P2 | EM OBSERVAÇÃO | juntar 30–50 turnos reativos e contar |
+| [PEND-082](#pend-082) | Ayla repete orientação do turno anterior — medir frequência real | A · Condução | P1 | MEDIDA | caso Lia/Valentina: "pausa" em 10 de 25 respostas |
 | [PEND-080](#pend-080) | Liberar o caminho novo para TODAS as famílias | A · Condução | P1 | ABERTA 🔒 | fechar os 6 bloqueadores antes de ampliar a allowlist |
 | [PEND-077](#pend-077) | `ayla_daily_checkins` nunca gravou uma linha (400 desde 0001) | H · Governança | P1 | ESCRITA PROVADA · LEITURA NÃO | ligar a leitura do check-in no caminho novo |
 | [PEND-081](#pend-081) | Caminho novo grava o check-in e nunca o lê de volta | C · Memória | P1 | ABERTA | mover/duplicar a leitura para antes do `return` do ramo novo |
@@ -639,6 +652,14 @@ Aberta em: 2026-08-11 · Origem: leitura pós-rollout de `eventos_app`
   código. Um número que continue somando cinco fenômenos não fecha nada.
 - **Ligada a** [PEND-017]. **Depende de:** nada.
 - **Agente recomendado:** INVESTIGAR
+
+- **⚠️ RELEITURA DE 19/08 — O BASELINE FICOU CEGO, NÃO MELHOROU.** Sobre os
+  499 eventos `conhecimento_consultado` acumulados: **42% ainda saem com zero
+  BP**. Desde 17/08 13:13Z o número cai para **5% (2 de 39)** — mas esses 39
+  eventos são **37 web e 2 WhatsApp**, porque o ramo experimental responde e
+  encerra o turno antes da linha que registra o rastro (`orchestrator.ts:2739`
+  × `:3170`). A queda é **viés de canal**, não melhora medida. Ver
+  **PEND-106**, que é pré-requisito para esta ficha voltar a ter baseline.
 
 ---
 
@@ -4458,7 +4479,7 @@ provavelmente se resolvem juntas.
 
 ### PEND-058
 **Fragmentação multi-balão: a Ayla responde duas vezes ao mesmo pensamento**
-Bloco: **A · Condução** · Prioridade: **P1 de EXPERIÊNCIA** · Estado: **ABERTA — medida, sem correção escolhida**
+Bloco: **A · Condução** · Prioridade: **P0** · Estado: **CORRIGIDA · PUBLICADA · AGUARDANDO REMEDIÇÃO**
 Aberta em: 2026-08-13 · Trazida para a `main` em 2026-08-17 · Origem: medição da PEND-054
 
 > ⚠️ **ESTA FICHA EXISTIA E NÃO ESTAVA AQUI.** Foi aberta em 13/08 no branch
@@ -4509,6 +4530,77 @@ Aberta em: 2026-08-13 · Trazida para a `main` em 2026-08-17 · Origem: mediçã
   respostas desconexas, sem impor espera longa a quem manda um balão só.
   Medir de novo os 6,1% depois da correção.
 - **Agente recomendado:** PROPOR
+
+- **⚠️ MEDIDA EM PRODUÇÃO EM 19/08 — SOBE PARA P0.** Sobre todas as mensagens
+  desde o rollout (17/08 13:13Z): **145 turnos de entrada, 26 com duas ou mais
+  respostas da Ayla = 18%**; **12 das 17 famílias que escreveram** receberam
+  resposta dupla. Não é cauda rara: é a experiência majoritária.
+- **O CASO QUE OBRIGA A PRIORIZAR — família `087cda09` (Lia/Valentina, 19/08,
+  20:22–20:28).** Conversa de **segurança infantil**: houve tentativa de
+  agressão da mãe contra a criança. A Ayla perguntou se havia risco; a família
+  respondeu em dois balões ("Não há tisco" + "Risco"); a Ayla respondeu **duas
+  vezes, e as duas se contradizem**: a primeira conclui *"não há risco de a mãe
+  bater na Valentina agora"* e segue com orientação de lição; a segunda, no
+  mesmo minuto, reabre *"há risco de a mãe tentar bater novamente hoje?"* e
+  manda **ligar para o 190**. Duplicação em conversa comum é ruído; aqui é uma
+  cuidadora recebendo duas leituras opostas do risco à criança.
+  Nesta conversa: **19 entradas, 25 saídas, 8 turnos duplicados.**
+- **Agrava a PEND-082 no mesmo caso:** "pausa" aparece em **10 das 25**
+  respostas e "uma questão por vez" em **6** — seis mensagens seguidas com a
+  mesma orientação, porque cada balão duplicado repete o conselho anterior.
+
+- **✅ CORREÇÃO IMPLEMENTADA E PUBLICADA EM 19/08 — `JANELA_SILENCIO_MS` 3000 →
+  10000.** Uma constante em `lib/ayla/lote-inbound.ts`. Autorizada pelo Sérgio
+  com o número 10s escolhido explicitamente (a curva vira entre 8 e 10: 8s
+  custa 5 segundos e pega 81%; 10s custa 7 e pega 88%; 20s custaria 17 segundos
+  a todos para pegar mais dois casos).
+- **CAUSA RAIZ, para não se perder:** não era webhook duplicado nem falha de
+  idempotência. **PROVEI POR EXECUÇÃO:** das 159 entradas desde o rollout,
+  **159 têm `zaap_message_id` e 159 têm `processada_em`** — o índice único e o
+  claim atômico sempre funcionaram. Era **calibragem**: a janela de 3s alcançava
+  só 25% da fragmentação real.
+- **POR QUE A CALIBRAGEM DE 13/08 ENVELHECEU — e o que fica em aberto.** Dos
+  47 pares de balões desde 17/08, separados pelo critério que distingue os dois
+  fenômenos (houve resposta da Ayla ENTRE eles?), apenas **16 são fragmentação
+  real**, com mediana **5,6s** e p90 **10,4s**. A medição de 13/08 diz ter
+  usado o mesmo recorte e deu mediana de 11,2s. **NÃO SEI a origem da
+  diferença.** Hipótese mais provável, não comprovada: a população — 60 dias do
+  Legacy contra 3 dias do caminho novo, que responde bem mais rápido, deixando
+  menos janela para a mãe fragmentar antes de ser respondida.
+- **TESTES — 12 no arquivo, e a prova de que eles mordem.** Revertendo a
+  constante para 3000, **4 testes falham**, entre eles o caso Lia com a
+  mensagem *"duas execuções responderam — é o defeito de 19/08"*. Os testes de
+  agrupamento por si só passariam com qualquer janela (as mensagens já estão
+  semeadas); o que exercita a janela de verdade são os cenários de **duas
+  execuções concorrentes**, que reproduzem o webhook disparando um
+  `processInbound` por balão. Cobertos: caso Lia (4s), "não quer ir"+"para
+  escola" (5s), três balões em 10s, cessão de vez, claim atômico sob corrida,
+  turno independente depois do claim, **caso I** (mensagem já respondida não
+  volta ao lote), mensagem fora da janela de 15 min, e execução órfã.
+- **⚠️ LACUNA CONHECIDA, NÃO CORRIGIDA NESTE PR — execução órfã.** Se a execução
+  que assumiu o turno morrer (timeout, deploy no meio, erro não tratado), as
+  linhas ficam com `processada_em = null`: **a mensagem não se perde e entra no
+  lote seguinte, mas ninguém responde até a família escrever de novo.** Não há
+  varredura que recupere pendente órfã sem mensagem nova. A janela de 10s
+  **aumenta a exposição de 3s para 10s**. Está provado por teste
+  (`TESTE 8`), e fica aqui como o próximo item desta ficha.
+- **BASELINE PARA A REMEDIÇÃO (congelado em 19/08, antes do deploy):**
+  | | |
+  |---|---|
+  | pares de balões consecutivos (<60s) | 47 |
+  | com resposta da Ayla no meio (turno legítimo) | 31 |
+  | **fragmentação real** | **16** |
+  | **fragmentos PARTIDOS em turnos separados** | **11 de 16** |
+  | turnos de entrada | 145 |
+  | turnos com 2+ respostas | 26 (18%) |
+  | famílias que escreveram | 17 |
+  | famílias com resposta dupla | 12 (71%) |
+  **Critério inicial:** os 11/16 partidos devem cair claramente (esperado ≤3/16,
+  pelos 88% de cobertura). **NÃO dar baixa com poucas horas de produção** —
+  amostra nova, com pelo menos uma semana.
+- **LATÊNCIA:** o custo é **+7 s determinísticos** em 100% dos turnos, e só
+  isso: a janela é um `setTimeout` antes de qualquer leitura. Não muda contexto,
+  modelo nem envio. Escolha deliberada de segurança, registrada.
 
 ---
 
@@ -4914,6 +5006,479 @@ STATUS: **A INVESTIGAR** · Aberta em: 2026-08-18
 
 ---
 
+### PEND-104
+**Material da pós — LOCALIZADO, em auditoria, NÃO ATIVO**
+Bloco: **B · Conhecimento** · Prioridade: **P1** · **ORDEM DA FRENTE: 2b**
+STATUS: **MATERIAL LOCALIZADO — EM AUDITORIA / NÃO ATIVO** · Aberta em: 2026-08-19
+
+> **LOCALIZADO EM 19/08.** Karina entregou `kolo-familia-ia-library(2).md`.
+> Guardado sem uma palavra alterada, com o encoding corrigido, em
+> `docs/documentos-ayla/material-pos-v1-ORIGINAL.md` — **20.695 caracteres,
+> 3.058 palavras, 10 seções**. Não importado, não ligado, não no prompt.
+>
+> Os três candidatos de 18/08 estão resolvidos: o material é um **quarto
+> artefato**, e a auditoria mostrou que ele é a **camada transversal** de um conhecimento que
+> o Compilado tem por domínio, de forma desigual — não um acervo concorrente.
+
+- **MESMA ORIGEM, DOIS NÍVEIS DE GRANULARIDADE.** O chunk
+  `16. Os 20 princípios de ouro da Comunicação Infantil` (núcleo `comunicacao`,
+  tipo `principio_de_ouro`, 3.322 caracteres) traz **os mesmos 20 princípios, na
+  mesma ordem**, que a §10 do material da pós — **MEDIDO: 20 de 20**. E a seção
+  `14. Conhecimento para IA (Regras Clínicas BIA)` traz regras SE→ENTÃO
+  equivalentes às da §7. Mesma autoria, mesma origem clínica.
+  **⚠️ Isso NÃO significa que o material é dispensável** — significa que parte
+  dele já foi incorporada ao Compilado. O material é a camada **transversal e
+  condensada**; o Compilado é a expansão **por domínio**.
+- **⚠️ CORREÇÃO DE 19/08 (tarde) — A LEITURA "É SÓ RESUMO" ESTAVA ERRADA.** Duas
+  medições a derrubam:
+  1. **A estrutura de decisão do Compilado é desigual e não acompanha a
+     demanda.** Regras SE→ENTÃO por núcleo: `autonomia` 70, `aprendizagem` 81,
+     `motor` 52 — e `regulacao_emocional` **0**, `foco_executivas` **0**,
+     `rotina` **0**, `sono` **0**, `alimentacao` **0**,
+     `brincadeiras_atividades` **0**. Cruzado com o que as famílias de fato
+     escrevem (roteamento de skill em 499 turnos): **emocional 102 pedidos /
+     7 chunks / 0 regras · comunicação 97 / 24 / 6 · foco 49 / 83 / 0**, contra
+     `autonomia` 34 pedidos e 210 chunks. **Spearman demanda × nº de regras =
+     0,042** — correlação praticamente nula. O material da pós cobre
+     exatamente os buracos (§6 regulação emocional, §7 rotina e foco).
+  2. **Os campos estruturados do Compilado estão vazios.** MEDIDO sobre os
+     1.120 chunks: `perguntas_investigativas` **0**, `hipoteses` **0**,
+     `estrategias` **0**, `o_que_evitar` **0**, `habilidades_relacionadas`
+     **0**, `nucleos_relacionados` **0**; `muda_conduta=true` em **20**. A
+     informação de decisão existe **em prosa** (37 chunks escrevem "Por que
+     existe / Muda conduta?") e **nunca foi extraída**. Ou seja: hoje o
+     Compilado só pode ser **recuperado como texto**, nunca **usado para
+     decidir**. O material da pós é escrito em forma de decisão
+     (gatilho → hipótese → o que perguntar → o que fazer) e é o andaime que
+     falta.
+- **O que o material tem e o Compilado NÃO tem** (MEDIDO por varredura nos
+  1.120 chunks): CID-11 / 6A02 (**0**), série epidemiológica 1975→2004 (**0**),
+  "1 para cada 31" (**0**), "Dismetria Funcional" (**0**), prevalência sensorial
+  "90% a 99%" (**0**), Pomodoro (**0**), Integração Sensorial de Ayres (**0**),
+  dietas de exclusão (**0**), e a lista de leituras/filmes (**0**). Níveis de
+  suporte do DSM-5: **1 chunk**. Cerebelo: **1**. "Mãe geladeira"/vacinas: **1**.
+- **O que o Compilado tem e o material NÃO tem:** granularidade. Ex.: os chunks
+  `4. Perguntas investigativas por idade` trazem a pergunta **mais** "Por que
+  existe" **mais** "Muda conduta? Sim/Não, e por quê". O material da pós tem
+  **4** perguntas de investigação, todas de comunicação pré-verbal.
+- **CONFLITO DIRETO COM O QUE A AYLA JÁ FAZ CERTO** — o achado que impede
+  importar como está. A §3.B prescreve *"segure o item de desejo colado ao seu
+  rosto… **espere até 5 segundos pelo contato visual antes de entregar**"*. Isso
+  contradiz o **princípio 17 do próprio documento** ("contato visual forçado
+  pode gerar dor") e contradiz uma conversa real: em 17/08, Rosangela pediu
+  ajuda para o Matheo "olhar no olho" e a Ayla respondeu **"não é preciso
+  obrigar"** — três turnos seguidos, corretamente. Recuperar a §3.B naquele
+  turno teria **piorado** a resposta. Junta-se ao achado de 30/07 de que **3 BPs
+  já prescrevem contato visual e precisam de correção**.
+- **Outras marcações de segurança/ciência (detalhe no relatório de 19/08):** a
+  abertura promete *"precisão diagnóstica indireta"* e *"raciocinar de forma
+  clínica"*, incompatível com o §14 do Core v9; a série epidemiológica é
+  apresentada como aumento de incidência e como argumento de **urgência**; "90%"
+  e "90% a 99%" são números sem fonte; neurônios-espelho, Teoria da Mente e
+  "Dismetria Funcional" aparecem como mecanismo estabelecido; e a regra
+  SE→ENTÃO do adolescente "grosso" manda a Ayla **atribuir a um comportamento
+  relatado uma falha neurofuncional**.
+- **Destino proposto (não decidido):** o material **não vira acervo próprio**.
+  As partes novas e aprovadas entram como chunks no mesmo acervo do Compilado;
+  §8 (limites) é conferida contra o Core v9 e o que faltar vira **regra
+  determinística**, não texto de prompt; §1 e §10 **não entram no Core** —
+  já estão no Compilado como `principio_de_ouro`, e `bia/bloco.ts` exclui esse
+  tipo das cotas de propósito.
+- **Ligações:** **PEND-105** (arquitetura — nada muda: continua sendo um
+  mecanismo e um acervo). **PEND-094** (cautela científica — este material é o
+  caso concreto que a ficha esperava: `estável × datável` deixa de ser abstrato).
+  **PEND-098** (crenças — a §7 e os princípios 13/14 são exatamente o risco de
+  "afirmar a crença/o déficit em vez de levantar hipótese"). **PEND-106** — sem
+  ela, ligar isto é ligar às cegas.
+- **CRITÉRIO DE BAIXA:** versão revisada escrita (fonte original preservada), com
+  cada afirmação marcada como aprovada, corrigida ou descartada, e a decisão de
+  destino registrada por seção.
+
+---
+
+### PEND-105
+**Conhecimento Especializado — uma camada só, e a BIA como mecanismo**
+Bloco: **B · Conhecimento** · Prioridade: **P1** · **ORDEM DA FRENTE: 8b**
+STATUS: **PROPOSTA — AGUARDANDO DECISÃO** · Aberta em: 2026-08-19
+
+> Consolida a decisão arquitetural que PEND-097 media por partes. **A BIA não é
+> uma inteligência**: é o mecanismo de recuperação do Conhecimento
+> Especializado. Manual, Compilado e Boas Práticas são **acervos** desse
+> mecanismo, não camadas concorrentes.
+
+- **O que foi VISTO NO CÓDIGO em 19/08:**
+  - `lib/bia/contexto-ayla.ts` expõe `carregarBlocoBia` como ponto de entrada
+    único dos dois canais. **Nenhum arquivo o chama.** O motor está na `main`,
+    inerte, sem integração — não "fiado nos dois canais", como a memória de
+    agente registrava.
+  - `lib/conhecimento/recuperar.ts` já é o recuperador compartilhado das Boas
+    Práticas, e **é chamado** por `experimental.ts:587`, `orchestrator.ts` e
+    `ia/context.ts`.
+  - Os dois usam o **mesmo padrão**: filtro estruturado em SQL + ranking lexical
+    determinístico. Sem embedding, sem LLM. `bia/pontuacao.ts` diz por escrito
+    que copiou a abordagem de `boas-praticas.ts`.
+  - `experimental.ts:576` monta o contexto num **único `Promise.all` de 6
+    ramos**. Uma sétima consulta cabe ali sem espera nova em série.
+  - `classificarIntencao` já devolve `tema` **e** `skills` no mesmo turno
+    (`intent.ts:24-46`), antes da montagem do contexto. **O tema já é conhecido
+    antes de buscar conhecimento, sem chamada de modelo adicional.**
+- **O que foi MEDIDO em 19/08** (contra produção, da máquina de dev — a Vercel
+  fica mais perto do banco, então estes números são teto, não piso):
+  - consulta estruturada da BIA: **p50 39 ms**; textual: **p50 56 ms**; as duas
+    **em paralelo: p50 53 ms**. Consulta das Boas Práticas hoje: **p50 90 ms**.
+  - orçamento do bloco já está escrito em `bia/bloco.ts`: **máx. 5 chunks,
+    2.000 caracteres**, teto de 600 por chunk → **~550 tokens**.
+  - Boas Práticas hoje no experimental: `limite: 2`, p50 de **952 caracteres por
+    BP** → **~500 tokens**.
+- **A menor arquitetura, e ela não cria camada nova:**
+  `tema/skills (já classificados) → uma chamada a um recuperador → poucos
+  trechos → resposta`. Zero chamadas LLM novas. Zero consultas sequenciais.
+  **Uma** consulta nova, dentro do `Promise.all` que já existe.
+- **A medição que decide "Manual substitui Boas Práticas?"** — feita em 19/08
+  entre o corpus do Compilado (941 chunks com skill mapeada) e as 370 BPs ativas
+  da mesma skill, por contenção lexical (`|A∩B| / menor conjunto`):
+  **p50 0,170 · p90 0,250 · máximo 0,400. Zero quase-duplicatas (≥0,50).**
+  Só 3,1% passam de 0,30. Ou seja: **os dois acervos não dizem a mesma coisa.**
+  O mesmo cálculo, rodado contra o Manual quando ele existir, é o que responde
+  a pergunta sem opinião.
+- **Recomendação (não decisão):** BIA = mecanismo; Boas Práticas **continuam**,
+  porque medem 0% de sobreposição com o outro acervo e são o único material com
+  `passos_praticos`. O que muda é o nome: deixam de ser uma "camada" e passam a
+  ser um acervo com tipo próprio dentro do Conhecimento Especializado.
+- **Dependências:** PEND-104 (qual material), PEND-094 (cautela científica),
+  PEND-095 (importação). **Substitui o escopo de decisão de PEND-097**, que
+  segue como a medição.
+- **CRITÉRIO DE BAIXA:** decisão escrita sobre papel da BIA e das Boas Práticas,
+  com a medição de sobreposição do material real na mesa.
+
+---
+
+### PEND-106
+**O rastro do conhecimento não cobre o WhatsApp desde o rollout de 17/08**
+Bloco: **H · Governança** · Prioridade: **P1** · **ORDEM DA FRENTE: —**
+STATUS: **MEDIDA — CORREÇÃO NÃO IMPLEMENTADA** · Aberta em: 2026-08-19
+
+> Achado **fora do escopo** da investigação de 19/08, registrado em vez de
+> corrigido. Ele invalida parcialmente o baseline de PEND-042.
+
+- **O que está errado:** `registrarRastroConhecimento` é chamado em
+  `orchestrator.ts:3170`. O ramo experimental responde e **encerra o turno em
+  `orchestrator.ts:2739`** — 400 linhas antes. Toda família no WhatsApp passa
+  pelo experimental desde 17/08; portanto **nenhum turno de WhatsApp registra
+  qual Boa Prática chegou ao modelo desde o rollout.**
+- **MEDIDO (19/08):** 499 eventos `conhecimento_consultado` no total. Desde
+  2026-08-17T13:13Z: **39 eventos — 37 web e 2 WhatsApp.** O WhatsApp
+  respondeu muito mais que dois turnos nesse período.
+- **Por que importa agora:** PEND-042 ("o repertório não chega em 58% dos
+  turnos") tem como baseline uma população que hoje é **quase só web**. A
+  releitura de 19/08 dá 42% de turnos sem BP no acumulado e **5% desde 17/08**
+  — mas essa queda pode ser efeito do viés de canal, não melhora real. **Não
+  dar baixa em PEND-042 com este número.**
+- **Correção mínima:** chamar `registrarRastroConhecimento` também no ramo
+  experimental, com os mesmos ids que `recuperarBoasPraticas` devolveu. É
+  observabilidade — não pode mudar o que mede.
+- **CRITÉRIO DE BAIXA:** rastro de WhatsApp e web no mesmo período, com volumes
+  compatíveis com o número de turnos respondidos.
+
+---
+
+### PEND-107
+**Auditoria da Rotina contra o documento aprovado**
+Bloco: **D · Entregas** · Prioridade: **P1** · **ORDEM DA FRENTE: —**
+STATUS: **A INVESTIGAR** · Aberta em: 2026-08-19
+
+- **O que provar:** que o quadro que a família recebe corresponde ao documento
+  aprovado da Rotina — não ao que o código foi acumulando. Comparar o documento
+  vigente contra artefatos reais gerados em produção, item a item.
+- **Não é** reabrir a Rotina: ela foi fechada em 03/08 (`5e1031f`, PR #1). É
+  conferir **aderência ao documento**, que é coisa diferente de "funciona".
+- **Relaciona:** PEND-004 (Rotina/Sequência Visual), PEND-084.
+- **CRITÉRIO DE BAIXA:** laudo com N artefatos reais conferidos contra o
+  documento, e a lista do que diverge.
+
+---
+
+### PEND-108
+**Auditoria do Plano contra o documento aprovado**
+Bloco: **D · Entregas** · Prioridade: **P1** · **ORDEM DA FRENTE: —**
+STATUS: **A INVESTIGAR** · Aberta em: 2026-08-19
+
+- **O que provar:** mesma régua da PEND-107, aplicada ao Plano. O documento
+  `plano` existe em `ayla_documentos` (v1, 16.499 caracteres, **arquivado** —
+  medido 19/08); a geração real precisa ser conferida contra ele.
+- **Herda dois defeitos já registrados:** PEND-037 (afirma causas sem fonte
+  rastreável) e o bug aberto dos planos amputados por falha silenciosa nas
+  chamadas paralelas.
+- **Relaciona:** PEND-027, PEND-031, PEND-036, PEND-099.
+- **CRITÉRIO DE BAIXA:** laudo com N planos reais conferidos, e a lista do que
+  diverge.
+
+---
+
+### PEND-109
+**Central de Avisos no Admin — Trial · Pós-Trial · Todos**
+Bloco: **G · Comercial** · Prioridade: **P1** · **ORDEM DA FRENTE: —**
+STATUS: **A INVESTIGAR** · Aberta em: 2026-08-19
+
+> Nasce da campanha de recuperação de 18/08, que ficou **não disparada** por
+> falta exatamente disto: não existe jeito seguro de mandar uma mensagem para
+> um grupo de famílias.
+
+- **Público, escolhido no Admin:** famílias em Trial · famílias em pós-Trial ·
+  todas.
+- **Requisitos inegociáveis, todos por causa de incidente já vivido:**
+  - **fila segura** — nada de laço disparando N envios dentro de uma requisição;
+  - **lotes** com **folga operacional** entre eles;
+  - **pausa e cancelamento** com efeito imediato sobre o que ainda não saiu;
+  - **idempotência** — reexecutar não manda duas vezes (ver §8 do protocolo:
+    reservar primeiro, resolver depois; a coordenação vive no banco, porque
+    cada invocação serverless é um processo novo);
+  - **prioridade para conversa recebida** — mensagem de família nunca espera
+    atrás de uma campanha;
+  - **observabilidade** — para cada família: enviado, falhou, pulado e por quê.
+- **Reutilizar antes de criar:** `reservarEnvioProativo` (`lib/ayla/cadencia.ts`)
+  e `reservarConviteAssinatura` (`lib/ayla/orchestrator.ts`) já implementam o
+  padrão de reserva desta casa. Não construir fila paralela sem dizer por
+  escrito por que essas não serviram.
+- **Regra que vale desde já:** disparo para família real exige **autorização
+  explícita do Sérgio**, campanha a campanha. Canário antes de lote.
+- **CRITÉRIO DE BAIXA:** uma campanha real enviada por lotes, com pausa
+  exercitada, sem envio duplicado e com o relatório por família.
+
+---
+
+### PEND-110
+**Satisfação no D3 — perguntar, guardar e usar**
+Bloco: **G · Comercial** · Prioridade: **P2** · **ORDEM DA FRENTE: —**
+STATUS: **DEFINIDA — NÃO CONSTRUÍDA** · Aberta em: 2026-08-19
+
+- **Hoje o D3 só demonstra continuidade** (`INTENCAO_DO_DIA[3]`). Não há
+  pergunta de satisfação, não há onde guardar a resposta, e nada a lê depois.
+- **O que decidir antes de construir:** se a satisfação é pergunta da Ayla na
+  conversa ou evento próprio; onde persiste; e **o que muda** quando a resposta
+  é ruim — medir sem agir é custo sem retorno.
+- **Dependência:** PEND-074 (a condução D0–D7 precisa estar provada antes de
+  ganhar mais uma intenção).
+- **CRITÉRIO DE BAIXA:** N respostas reais colhidas e uma decisão registrada
+  sobre o que fazer com as ruins.
+
+---
+
+### PEND-111
+**Indicação — não existe, e o D3 pressupõe que exista**
+Bloco: **G · Comercial** · Prioridade: **P2** · **ORDEM DA FRENTE: —**
+STATUS: **DECISÃO DE PRODUTO PENDENTE** · Aberta em: 2026-08-19
+
+- **Estado medido:** não há link de indicação, não há atribuição de origem por
+  família indicante, não há recompensa definida. A ideia apareceu ligada ao D3
+  e ficou sem dono.
+- **O que decidir primeiro (produto, não código):** o que a família ganha, o que
+  a indicada ganha, e se a Ayla chega a mencionar isso — uma Ayla que pede
+  indicação no meio de um teste de 7 dias custa confiança.
+- **CRITÉRIO DE BAIXA:** decisão de produto escrita. Só depois, código.
+
+---
+
+### PEND-112
+**Recuperação dos Trials expirados**
+Bloco: **G · Comercial** · Prioridade: **P1** · **ORDEM DA FRENTE: —**
+STATUS: **POPULAÇÃO MEDIDA — CAMPANHA NÃO DISPARADA** · Aberta em: 2026-08-19
+
+- **MEDIDO em 18/08:** **80 famílias elegíveis** (teste vencido, sem
+  assinatura, com WhatsApp utilizável). As duas contas de QA (`5874a49e` e
+  `ef325d25`, números não roteáveis `+550000000001/2`) estão auto-excluídas.
+- **O que já está no ar e muda o cenário:** o pós-Trial (`AYLA_POS_TRIAL`)
+  responde de verdade desde 18/08, e o link de assinatura deixou de se repetir
+  a cada turno (`5d6715e`). Uma família recuperada hoje encontra uma Ayla que
+  conversa — antes encontrava silêncio ou texto fixo.
+- **Bloqueio:** depende de PEND-109 (Central de Avisos). **Não disparar por
+  script solto.** Canário de 5 antes do lote, e autorização explícita.
+- **CRITÉRIO DE BAIXA:** campanha enviada pela Central, com taxa de resposta e
+  de conversão medidas contra o baseline de quem não recebeu.
+
+---
+
+### PEND-113
+**Métricas completas do funil**
+Bloco: **G · Comercial** · Prioridade: **P1** · **ORDEM DA FRENTE: —**
+STATUS: **A INVESTIGAR** · Aberta em: 2026-08-19
+
+- **O que falta:** uma leitura única e reprodutível de cadastro → onboarding →
+  primeira conversa → uso no teste → fechamento D4–D7 → clique no link →
+  assinatura, com a população de cada etapa e a data de corte explícita.
+- **Por que virou pendência:** as medições de agosto foram feitas por script
+  avulso, cada uma com o seu recorte. Duas leituras da mesma pergunta já deram
+  números diferentes — e uma delas errou por causa do teto de 5.000 linhas do
+  PostgREST sem paginação.
+- **Reutilizar:** `user_events` (migração 0050) e o `/admin/uso-api`, que já
+  existem. **Não criar um terceiro lugar de verdade.**
+- **Relaciona:** PEND-021, PEND-026, PEND-040, PEND-088.
+- **CRITÉRIO DE BAIXA:** uma consulta versionada no repositório que qualquer
+  pessoa roda e obtém o mesmo funil, com paginação correta.
+
+---
+
+### PEND-114
+**WhatsApp obrigatório antes de iniciar o Trial**
+Bloco: **G · Comercial** · Prioridade: **P1** · **ORDEM DA FRENTE: —**
+STATUS: **AGUARDANDO DECISÃO COM A AGÊNCIA** · Aberta em: 2026-08-19
+
+- **CAUSA RAIZ, investigada em 18/08:** o relógio do teste começa no cadastro —
+  o gatilho `handle_new_user` grava o início da assinatura no `signup`, antes de
+  existir WhatsApp. Quem cadastra e some queima o teste sem nunca conversar com
+  a Ayla.
+- **População medida (18/08):** grupo B — **10 testes ativos sem WhatsApp**;
+  grupo C — **74 testes expirados sem WhatsApp**.
+- **A decisão que não é técnica, e por isso está aqui:** uma conta sem WhatsApp
+  **navega o painel** (e o teste corre) ou **fica bloqueada** até informar o
+  número? As duas escolhas mudam o funil inteiro, e a correção depende de
+  migração no gatilho em produção — ponto sem volta (§17).
+- **Não bloqueia** a frente de Conhecimento nem a de Trial. **Bloqueia**
+  qualquer mudança na contagem de dias.
+- **CRITÉRIO DE BAIXA:** decisão registrada com a agência, e — se for mudar o
+  gatilho — migração aplicada com a numeração conferida contra todos os
+  branches vivos.
+
+---
+
+### PEND-115
+**A Ayla não sabe o preço — e o caminho novo perdeu o bloco que respondia**
+Bloco: **G · Comercial** · Prioridade: **P0** · **ORDEM DA FRENTE: —**
+STATUS: **CAUSA RAIZ IDENTIFICADA — NÃO CORRIGIDA** · Aberta em: 2026-08-19
+
+> Achado em conversa real de 19/08. **3 de 3 perguntas diretas de preço desde o
+> rollout ficaram sem resposta.** Uma delas é uma mãe em teste, com medo de ser
+> cobrada, escrevendo *"pelo amor de Deus… eu não tenho meu dinheiro"*.
+
+- **BASELINE (MEDIDO, 8 turnos tocando em preço/cobrança desde 17/08 13:13Z; 3
+  são pergunta direta):**
+  - `5874a49e` 19/08 16:29 — *"quanto custa?"* → *"Não quero te passar um valor
+    desatualizado: o preço vigente aparece na página de assinatura."*
+  - `5874a49e` 19/08 17:32 — *"quanto custa o plano?"* (**perguntou de novo,
+    porque a primeira não respondeu**) → mesma recusa.
+  - `5b62f2df` (Andréia, em teste desde 15/08) 19/08 18:12 → *"os valores
+    oficiais aparecem na tela Assinatura; eu não vou inventar um preço nem
+    dizer que algo é gratuito sem confirmar."*
+- **CAUSA RAIZ — VI NO CÓDIGO, três camadas, e nenhuma é o modelo:**
+  1. **O bloco que respondia ficou no Legacy.** `PERGUNTA_DE_PRECO`
+     (`lib/ayla/responder.ts:85`) monta uma nota que diz *"Durante o teste não
+     se cobra nada"* e manda o link de `/precos` com valores ao vivo.
+     **`experimental.ts` não importa `responder.ts`.** Desde 17/08 todo o
+     WhatsApp é experimental — o bloco existe e não roda para ninguém.
+  2. **`FATOS_COMERCIAIS` também não chega.** É importado por `responder.ts` e
+     `lib/ia/prompt.ts` (web), **não** por `experimental.ts`. É o único lugar
+     que carrega `TRIAL_DIAS = 7`. **O caminho novo não sabe nem que o teste é
+     de 7 dias.**
+  3. **O preço nunca esteve no prompt conversacional.** Vive em
+     `configuracao_precos` (**R$ 54,90 mensal / R$ 603,90 anual**, medido
+     19/08) e é lido por `/precos`, `/assinatura`, `layout.tsx`, `trial-gate` e
+     `/ajuda` — **por nenhum caminho da Ayla**. O comentário de
+     `fatos-comerciais.ts:42` registra a decisão: *"Preço fica FORA daqui…
+     quem precisa dele o lê da tabela, como o `/ajuda` já faz."* Ninguém leu.
+- **E a instrução vigente fecha o círculo.** O documento `trial` v4, publicado
+  em 19/08, diz: *"Nunca diga um valor de cabeça."* Como o valor **não está no
+  contexto**, "de cabeça" é o único jeito possível — então o modelo,
+  corretamente, recusa. `blocoPosTrial` agrava: manda *"se disser que está
+  caro, fale de preço e valor"*, sobre um preço que ela não tem.
+  **O modelo está obedecendo. A instrução é o defeito.**
+- **CORREÇÃO MÍNIMA PROPOSTA (não implementada), 2 partes:**
+  1. injetar no contexto do turno o bloco comercial que já existe —
+     `FATOS_COMERCIAIS` **mais** os dois valores lidos de `configuracao_precos`,
+     pela mesma consulta de `/ajuda`. Cabe no `Promise.all` de 6 ramos de
+     `experimental.ts:576`: **1 consulta, 0 LLM, ~60 tokens**.
+  2. trocar a frase do documento `trial` v4 de *"nunca diga um valor de
+     cabeça"* para *"diga o valor que está no contexto; se ele não estiver,
+     mande para a tela de Assinatura"* — a regra passa a depender do dado, não
+     de uma proibição cega.
+- **⚠️ CONFERIR ANTES DE PUBLICAR O NÚMERO:** as duas linhas de
+  `configuracao_precos` têm `descricao` = *"placeholder — atualizar conforme
+  doc operacional"* e `updated_at` de **23/05/2026**, enquanto a decisão de
+  preço registrada é de 23/06. **Fazer a Ayla dizer um valor errado é pior que
+  não dizer.** Bater contra o Stripe antes.
+- **Relaciona:** PEND-021 (jornada e conversão), PEND-113 (funil).
+- **CRITÉRIO DE BAIXA:** três perguntas diretas de preço, em produção,
+  respondidas com o valor correto e com "durante o teste não se cobra nada".
+
+- **✅ PREÇO MENSAL VALIDADO CONTRA O STRIPE — PROVEI POR EXECUÇÃO (19/08).**
+  Leitura pura da API LIVE. As assinaturas reais mais recentes (23/07 `active`,
+  02/07 `canceled`) cobram `price_1TlUykPAH1xSrJeSchq0mbG6` = **R$ 54,90/mês**,
+  que é exatamente o valor de `configuracao_precos.plano_mensal`. **O rótulo
+  "placeholder" na `descricao` estava desatualizado: o número está certo.**
+  A Ayla pode dizer **R$ 54,90** com segurança.
+- **🚨 O PLANO ANUAL NÃO PODE SER DITO — DEFEITO COMERCIAL PROVADO.** O único
+  preço anual ativo na conta é `price_1TlUzXPAH1xSrJeSfkOY0UIY`, R$ 603,90, com
+  **`recurring.interval = "month"`, `interval_count = 1`**. Ou seja: está
+  configurado para cobrar **R$ 603,90 TODO MÊS**, não uma vez por ano. E a tela
+  `/assinatura` exibe *"ou R$ 603,90/ano"* (`page.tsx:85`). **Nenhuma família
+  assinou o anual até hoje** (0 assinaturas anuais em 6), então o defeito nunca
+  disparou — mas fazer a Ayla oferecer o anual antes de corrigir isso é
+  transformar um defeito latente em cobrança errada.
+  **Enquanto não for corrigido: a Ayla responde só o mensal e, sobre o anual,
+  manda para a tela de Assinatura.**
+- **⚠️ NÃO SEI — env de produção.** O `.env.local` desta máquina aponta para
+  `STRIPE_PRICE_ID_MENSAL = price_1T53jc…` (**R$ 53,00**, de 26/02) e para um
+  `STRIPE_PRICE_ID_ANUAL` que **não existe mais na conta**. A assinatura real de
+  23/07 usou o preço novo, o que **INFERE** que a Vercel tem os IDs corretos —
+  mas não consigo ler o env da Vercel daqui. **Como validar:** conferir
+  `STRIPE_PRICE_ID_MENSAL` e `STRIPE_PRICE_ID_ANUAL` no painel da Vercel contra
+  `price_1TlUyk…` e o anual corrigido. Enquanto isso, o `.env.local` local está
+  velho e deve ser atualizado, senão um teste local cobra R$ 53,00.
+- **DUAS FONTES DE PREÇO, SEM VÍNCULO — VI NO CÓDIGO.** O que se **cobra** vem
+  de `STRIPE_PRICE_ID_*` (via `priceIdFor`, em `api/stripe/checkout/route.ts:58`).
+  O que se **exibe** vem de `configuracao_precos`. Nada mantém os dois em
+  sincronia — hoje batem no mensal por coincidência de manutenção, não por
+  construção. Vale registrar como dívida, sem virar frente agora.
+
+---
+
+### PEND-116
+**Plano anual do Stripe cobraria por MÊS — e a Kolo anuncia "por ano"**
+Bloco: **G · Comercial** · Prioridade: **P0** · **ORDEM DA FRENTE: —**
+STATUS: **PROVADO — NÃO CORRIGIDO** · Aberta em: 2026-08-19
+
+> **PROVEI POR EXECUÇÃO em 19/08**, por leitura pura da API LIVE do Stripe.
+> Defeito adormecido: nenhuma família assinou o anual, então nunca disparou.
+> **Bloqueia o fechamento da PEND-115.**
+
+- **O QUE ESTÁ ERRADO:** o único preço anual ativo na conta é
+  `price_1TlUzXPAH1xSrJeSfkOY0UIY`, **R$ 603,90**, com
+  **`recurring.interval = "month"` e `interval_count = 1`**. Está configurado
+  para cobrar **R$ 603,90 todo mês**. Foi criado em 23/06/2026, junto com o
+  mensal correto — o erro nasceu ali.
+- **E O PRODUTO ANUNCIA O CONTRÁRIO.** `/assinatura` exibe como título
+  *"R$ 54,90/mês ou R$ 603,90/ano"* (`page.tsx:85`), e `/precos` reforça
+  *"Pagamento único anual"* e *"~2 meses grátis comparado ao mensal"*. Os dois
+  leem `configuracao_precos`, que está certa **como intenção** e desconectada
+  do que o Stripe cobraria.
+- **POR QUE NÃO EXPLODIU AINDA — MEDIDO:** 6 assinaturas na conta, **zero
+  anuais**. As duas recentes (23/07 `active`, 02/07 `canceled`) são mensais,
+  em `price_1TlUyk…` = R$ 54,90 — que confere com `configuracao_precos`.
+- **REGRA QUE VALE DESDE JÁ, até isto ser corrigido e provado:**
+  - **a Ayla NÃO oferece o plano anual;**
+  - **nenhuma mensagem comercial afirma "R$ 603,90/ano";**
+  - **a PEND-115 não fecha** — ela entra só com o mensal, e sobre o anual manda
+    para a tela de Assinatura.
+- **DUAS FONTES DE PREÇO, SEM VÍNCULO — VI NO CÓDIGO.** O que se **cobra** vem
+  de `STRIPE_PRICE_ID_*` (`priceIdFor`, em `api/stripe/checkout/route.ts:58`);
+  o que se **exibe** vem de `configuracao_precos`. Nada mantém os dois em
+  sincronia. Hoje batem no mensal por manutenção manual, não por construção —
+  e é exatamente por isso que o anual pôde divergir sem ninguém ver.
+- **⚠️ NÃO SEI — env de produção.** O `.env.local` desta máquina aponta para
+  `STRIPE_PRICE_ID_MENSAL = price_1T53jc…` (**R$ 53,00**, de 26/02) e para um
+  `STRIPE_PRICE_ID_ANUAL` que **não existe mais na conta**. A assinatura real de
+  23/07 usou o preço novo, o que **INFERE** que a Vercel tem o mensal correto —
+  mas não se lê o env da Vercel daqui. **Conferir os dois no painel** antes de
+  qualquer conclusão sobre o anual em produção.
+- **CORREÇÃO PROPOSTA (não executada):** criar no Stripe um preço anual com
+  `recurring.interval = "year"`, arquivar o atual, apontar
+  `STRIPE_PRICE_ID_ANUAL` para o novo na Vercel, e conferir a tela. É trabalho
+  de painel, não de código.
+- **CRITÉRIO DE BAIXA:** o preço anual em produção com `interval = "year"`
+  comprovado pela API, o env da Vercel apontando para ele, e **um checkout
+  anual de teste concluído** mostrando cobrança única.
+
+---
+
 ## Protocolo permanente de trabalho
 
 > Registrado em 18/08/2026, depois de **quatro casos numa única semana** em que
@@ -5065,7 +5630,7 @@ trimestralmente, o que vier antes.
 
 ---
 
-**Próximo ID livre: PEND-104. *(024 e 025 reservadas por frentes ainda não publicadas.)***
+**Próximo ID livre: PEND-117. *(024 e 025 reservadas por frentes ainda não publicadas.)***
 
 > Conferir contra `origin/main`, não contra o seu branch. Dois branches podem
 > reivindicar o mesmo número — o conflito de merge nesta linha é o alarme.

@@ -59,6 +59,32 @@ vi.mock("./anthropic", async (orig) => {
   return { ...real, getAylaAnthropicClient: () => clienteFalso({ alvo: mundoRef.alvo }, registros) };
 });
 
+/**
+ * O LOTE, DUBLADO — mesma decisão de `video.test.ts` e `conversa-e2e.test.ts`.
+ *
+ * ⚠️ POR QUE ISTO PRECISOU ENTRAR EM 19/08. Este arquivo nunca dublou o lote e
+ * pagava a janela de silêncio de verdade em cada `processInbound`. Com 3s isso
+ * cabia nos 30s de timeout; com a janela em 10s (PEND-058) não cabe mais, e os
+ * dois primeiros cenários passaram a estourar o tempo — **por espera, não por
+ * comportamento**.
+ *
+ * Aqui cada fala vem sozinha, então "segue com o seu texto" é exatamente o que
+ * o lote real devolveria. O que este arquivo testa é a JORNADA (o bloco do dia
+ * chegando ao motor), não o agrupamento — que tem o seu próprio arquivo,
+ * `lote-janela.test.ts`, onde a janela roda com relógio de verdade.
+ */
+vi.mock("./lote-inbound", async (orig) => {
+  const real = await orig<typeof import("./lote-inbound")>();
+  return {
+    ...real,
+    aguardarTurnoDaMae: async (_s: unknown, p: { textoAtual: string }) => ({
+      texto: p.textoAtual,
+      quantidade: 1,
+    }),
+    descartarTurnoPendente: async () => {},
+  };
+});
+
 const { processInbound, sendTrial } = await import("./orchestrator");
 
 const MS_DIA = 24 * 60 * 60 * 1000;

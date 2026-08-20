@@ -107,7 +107,7 @@ vi.mock("./anthropic", () => ({
   getAylaAnthropicClient: () => clienteFalso({ alvo: mundoRef.alvo }, registros),
 }));
 
-/** O lote dorme 3s de propósito. Nos cenários de turno cada fala vem sozinha,
+/** O lote dorme 10s de propósito. Nos cenários de turno cada fala vem sozinha,
  *  então o duplo devolve "segue com o seu texto" — que é o resultado real desse
  *  caso. A janela DE VERDADE é exercitada no último bloco, sem este duplo. */
 vi.mock("./lote-inbound", async (original) => {
@@ -398,7 +398,7 @@ describe("CONTROLES do turno — imagem e áudio não regrediram", () => {
 // 3. A JANELA DO LOTE — relógio de verdade, sem duplo
 // ════════════════════════════════════════════════════════════════════════
 
-describe("vídeo + texto: dentro e fora da janela de 3s", () => {
+describe("vídeo + texto: dentro e fora da janela do lote", () => {
   // ⚠️ O LOTE DE VERDADE, não o duplo declarado lá em cima. A primeira versão
   // importava `./lote-inbound` no topo e recebia o MOCK — o teste "provava" que
   // o texto se perdia, quando estava lendo a própria dublagem.
@@ -422,7 +422,7 @@ describe("vídeo + texto: dentro e fora da janela de 3s", () => {
 
   const FALA = "olha o que ele faz quando a irmã chega";
 
-  it("DENTRO de 3s: vídeo (texto vazio) + texto viram UM turno, e o texto manda", async () => {
+  it("DENTRO da janela: vídeo (texto vazio) + texto viram UM turno, e o texto manda", async () => {
     // ⚠️ AS DUAS MENSAGENS FICAM NO PASSADO. Carimbar a segunda no futuro faz o
     // lote ver "chegou algo depois de mim" e CEDER A VEZ — foi como este teste
     // nasceu, devolvendo null e parecendo defeito de produto. Quem responde uma
@@ -440,13 +440,22 @@ describe("vídeo + texto: dentro e fora da janela de 3s", () => {
     // mãe receberia o recado de vídeo depois de já ter sido respondida.
     const pendentes = db.linhas("ayla_messages").filter((m) => m.processada_em == null);
     expect(pendentes.length, "o vídeo ficou pendente e voltará fora de hora").toBe(0);
-  }, 15_000);
+  }, 25_000);
 
-  it("FORA de 3s: são dois turnos — comportamento de hoje, e é a PEND-058", async () => {
-    // ⚠️ NÃO é regressão desta fatia e NÃO se resolve alargando a janela: a
-    // mediana entre balões do mesmo turno é 11,2s (p90 34s), então cobrir isso
-    // custaria 34 segundos de espera a 100% dos turnos, sendo que 86,3% têm um
-    // balão só. A mãe recebe o recado do vídeo e, depois, a resposta ao texto.
+  it("turno JÁ CLAIMADO não volta: o vídeo sai num turno, a fala no seguinte", async () => {
+    // ⚠️ O QUE ESTE TESTE GUARDA, e o que ele NÃO guarda mais.
+    //
+    // Ele nasceu como "FORA de 3s: são dois turnos", com a nota de que alargar
+    // a janela não resolveria — apoiada na mediana de 11,2s medida em 13/08.
+    // **Essa nota caiu em 19/08** (PEND-058): aquela mediana contava como burst
+    // qualquer par de entradas consecutivas, inclusive a mãe respondendo à
+    // Ayla. Separando os dois fenômenos, a fragmentação real tem mediana de
+    // 5,6s, e a janela subiu para 10s. Ver `lote-inbound.ts`.
+    //
+    // O que continua verdadeiro, e é o que se prova aqui: turno já claimado
+    // NÃO volta. A segunda execução leva só o que chegou depois — qualquer que
+    // seja a janela. Se os dois se fundissem, a mãe receberia o recado do vídeo
+    // junto com a resposta ao texto, fora de hora.
     const db = bancoCom([{ texto: "", quando: new Date(Date.now() - 2000) }]);
     const { aguardarTurnoDaMae } = await real();
     const r1 = await aguardarTurnoDaMae(db.cliente(), { familyId: "fam-1", textoAtual: "" });
@@ -465,8 +474,9 @@ describe("vídeo + texto: dentro e fora da janela de 3s", () => {
       },
     ]);
     const r2 = await aguardarTurnoDaMae(db.cliente(), { familyId: "fam-1", textoAtual: FALA });
-    expect(r2?.texto, "os dois turnos se fundiram — a janela mudou sem dado").toBe(FALA);
-  }, 20_000);
+    expect(r2?.texto, "os dois turnos se fundiram — turno claimado voltou ao lote").toBe(FALA);
+    // 40s: são DUAS janelas de 10s em série, no relógio real.
+  }, 40_000);
 });
 
 // ════════════════════════════════════════════════════════════════════════
