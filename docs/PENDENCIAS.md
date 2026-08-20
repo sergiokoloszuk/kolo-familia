@@ -85,6 +85,7 @@ Só o que está aberto. 🔒 = bloqueada.
 | [PEND-121](#pend-121) | Migração 0076 espera o branch do Plano Kolo | H · Governança | P2 | AGUARDANDO BRANCH | aplicar quando `feat/plano-kolo-estrutura` entrar na `main` |
 | [PEND-122](#pend-122) | Termos e Privacidade não descrevem a política real de cancelamento e retenção | F · Limites | P1 | ABERTA | revisar depois que a política de cancelamento/retenção estiver fechada |
 | [PEND-123](#pend-123) | Assinatura anômala: `active` + `cancel_at_period_end` + período vencido em 26/06 | G · Comercial | P2 | MEDIDA · NÃO DIAGNOSTICADA | descobrir por que não virou `canceled` — pode ser webhook perdido |
+| [PEND-124](#pend-124) | `configuracao_geral` não existe em produção (migração 0068 nunca aplicada) | H · Governança | P2 | MEDIDA · IMPACTO NÃO PROVADO | exercitar a tela do Admin antes de decidir aplicar ou aposentar |
 | [PEND-104](#pend-104) | **2b ·** Material da pós — LOCALIZADO, em auditoria | B · Conhecimento | P1 | LOCALIZADO · NÃO ATIVO | camada transversal; cobre os buracos do Compilado (rho demanda×regras = 0,042) |
 | [PEND-105](#pend-105) | **8b ·** Conhecimento Especializado: BIA é mecanismo, não inteligência | B · Conhecimento | P1 | PROPOSTA · DECISÃO PENDENTE | sobreposição Compilado × BPs medida em 0% |
 | [PEND-106](#pend-106) | Rastro do conhecimento não cobre o WhatsApp desde 17/08 | H · Governança | P1 | MEDIDA · NÃO CORRIGIDA | invalida o baseline de PEND-042 |
@@ -5659,6 +5660,41 @@ STATUS: **MEDIDA — NÃO DIAGNOSTICADA** · Aberta em: 2026-08-20
 
 ---
 
+### PEND-124
+**`configuracao_geral` não existe em produção — migração 0068 nunca aplicada**
+Bloco: **H · Governança** · Prioridade: **P2**
+STATUS: **MEDIDA — IMPACTO NÃO PROVADO** · Aberta em: 2026-08-20
+
+> Descoberta de raspão, procurando o número do suporte. Não corrigir sem antes
+> provar o impacto e a relação com a tela do Admin.
+
+- **PROVEI EM PRODUÇÃO (20/08):** uma leitura em `configuracao_geral` devolve
+  `relation "public.configuracao_geral" does not exist`. A migração
+  `0068_configuracao_geral.sql` está no repositório e **nunca foi aplicada**.
+- **O que a 0068 criaria:** a tabela e o seed da chave `ayla_whatsapp` com
+  `5511963197032` — o número da própria Ayla, usado no botão "falar com a Ayla"
+  no fim do cadastro.
+- **CONSEQUÊNCIA APARENTE — INFERI, não provei:** `salvarWhatsappAyla`
+  (`app/admin/ayla/numero-actions.ts`) grava via `gravarConfig`, e
+  `whatsappDaAyla` lê via `lerConfig`. Sem a tabela, a tela do Admin que troca o
+  número da Ayla provavelmente não funciona, e a leitura cai no `null` do
+  próprio helper. **Não exercitei a tela** — e por isso o estado é "medida", não
+  "diagnosticada".
+- **NÃO SEI:** se algum caminho de produção depende hoje de `whatsappDaAyla` e
+  está degradado em silêncio, ou se existe fallback em outro lugar.
+- **NÃO É O NÚMERO DO SUPORTE.** O contato humano — (11) 94037-7337 — foi
+  centralizado em `lib/billing/fatos-comerciais.ts` e não depende desta tabela.
+  Os dois números não se confundem: um é o robô, o outro é gente.
+- **Relação:** encosta em PEND-119 (não existe caminho automatizado para
+  migração) — é mais um caso de migração que ficou para trás sem ninguém ver.
+- **PRÓXIMO PASSO:** exercitar a tela do Admin e mapear quem chama
+  `whatsappDaAyla` antes de decidir entre aplicar a 0068 ou remover o código
+  que a pressupõe.
+- **CRITÉRIO DE CONCLUSÃO:** ou a tabela existindo e a tela do Admin provada
+  funcionando, ou a decisão escrita de aposentar o mecanismo.
+
+---
+
 ## Protocolo permanente de trabalho
 
 > Registrado em 18/08/2026, depois de **quatro casos numa única semana** em que
@@ -5810,7 +5846,7 @@ trimestralmente, o que vier antes.
 
 ---
 
-**Próximo ID livre: PEND-124. *(024 e 025 reservadas por frentes ainda não publicadas; 0076 é número de MIGRACAO reservado — ver PEND-121.)***
+**Próximo ID livre: PEND-125. *(024 e 025 reservadas por frentes ainda não publicadas; 0076 é número de MIGRACAO reservado — ver PEND-121.)***
 
 > Conferir contra `origin/main`, não contra o seu branch. Dois branches podem
 > reivindicar o mesmo número — o conflito de merge nesta linha é o alarme.
