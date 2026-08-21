@@ -152,19 +152,51 @@ if (arquivos.length === 0) {
       if (meus.get(caminho) === sha && !achadoEm.has(caminho)) achadoEm.set(caminho, ref);
     });
 
+    // Segunda passada, sobre os que não bateram no mesmo caminho: o conteúdo
+    // pode estar salvo sob OUTRO NOME. `--find-object` acha o commit que
+    // introduziu aquele blob exato. É a diferença entre "perdi o arquivo" e
+    // "o arquivo tem outro nome lá" — e a regra 12 exige provar isso ANTES de
+    // qualquer limpeza. Caso real: trial-v1.md × trial-v1-base.md.
+    const porConteudo = new Map(); // caminho -> "sha do commit | caminho remoto"
+    for (const [caminho, sha] of meus) {
+      if (achadoEm.has(caminho)) continue;
+      let commit = "";
+      try {
+        commit = git("log", "--remotes", `--find-object=${sha}`, "--format=%H", "-1").trim();
+      } catch {
+        /* --find-object indisponível nesta versão do git: segue como só local */
+      }
+      if (!commit) continue;
+      let ondeEsta = "";
+      try {
+        ondeEsta = linhas(git("ls-tree", "-r", "--format=%(objectname) %(path)", commit))
+          .find((l) => l.startsWith(sha))
+          ?.slice(41) ?? "";
+      } catch {
+        /* nome exato indisponível; o commit já basta como prova */
+      }
+      porConteudo.set(caminho, { commit: commit.slice(0, 8), ondeEsta });
+    }
+
     for (const [caminho] of meus) {
       if (achadoEm.has(caminho)) {
         console.log(`   PROTEGIDO  ${caminho}  →  ${achadoEm.get(caminho).replace(/^origin\//, "")}`);
+      } else if (porConteudo.has(caminho)) {
+        const { commit, ondeEsta } = porConteudo.get(caminho);
+        console.log(`   OUTRO NOME ${caminho}`);
+        console.log(`              conteúdo idêntico já versionado em ${commit}${ondeEsta ? ` como ${ondeEsta}` : ""}`);
       } else {
         console.log(`   SÓ LOCAL   ${caminho}`);
         soLocalArquivos.push(caminho);
       }
     }
-    console.log(`\nMEDI: ${soLocalArquivos.length} de ${meus.size} sem conteúdo idêntico em remoto algum.`);
+    console.log(`\nMEDI: ${meus.size} conferido${t(meus.size)} — ${achadoEm.size} no mesmo caminho, ${porConteudo.size} sob outro nome, ${soLocalArquivos.length} sem cópia remota alguma.`);
     if (soLocalArquivos.length > 0) {
       riscos.push(`${soLocalArquivos.length} arquivo${t(soLocalArquivos.length)} sem cópia remota`);
-      console.log("   ⚠️ Um arquivo pode aparecer aqui e ainda assim ter o conteúdo salvo");
-      console.log("      sob OUTRO NOME. Conferir por hash antes de concluir perda.");
+    }
+    if (porConteudo.size > 0) {
+      console.log("   OUTRO NOME não é risco de perda: o conteúdo está salvo. É risco de");
+      console.log("   confusão — decidir qual nome vale antes de apagar o duplicado.");
     }
   }
 }
