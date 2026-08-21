@@ -52,13 +52,23 @@ async function req(url, init) {
 /** O que tem fonte textual fiel HOJE. Os outros quatro ficam de fora, de propósito. */
 const FONTES = [
   {
-    chave: "core",
-    arquivo: `${RAIZ}/docs/documentos-ayla/core-ayla-v2.md`,
-    nota: "Core v2 — derivado do v1 do banco (byte-exato) + deltas aprovados do PDF v2. Gerado e verificado por scripts/core-v2-gerar.mjs e core-v2-verificar.mjs.",
+    chave: "trial",
+    arquivo: `${RAIZ}/docs/documentos-ayla/trial-v1.md`,
+    nota: "Trial D0–D7 v2 — texto integral fornecido pela Karina no chat, transcrito sem resumir, completar ou reescrever.",
+  },
+  {
+    chave: "cartoes_visuais",
+    arquivo: `${RAIZ}/docs/documentos-ayla/cartoes-visuais-v1.md`,
+    nota: "Cartões Visuais v1 — texto integral fornecido pela Karina no chat, transcrito sem resumir, completar ou reescrever.",
+  },
+  {
+    chave: "plano",
+    arquivo: `${RAIZ}/docs/documentos-ayla/plano-v1.md`,
+    nota: "Plano Ayla — documento mestre, texto integral fornecido pela Karina no chat, transcrito sem resumir, completar ou reescrever.",
   },
 ];
 
-const AGUARDANDO = ["trial", "plano", "cartoes_visuais", "fontes_confiaveis"];
+const AGUARDANDO = ["fontes_confiaveis"];
 
 for (const f of FONTES) {
   if (!existsSync(f.arquivo)) {
