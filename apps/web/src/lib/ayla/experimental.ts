@@ -4,6 +4,7 @@ import { gerarConversacional, MODELO_CONVERSA } from "@/lib/ia/provider";
 import { fronteiraAtravessada } from "@/lib/conducao/fronteiras";
 import { logarUsoApi } from "@/lib/billing/logar";
 import { resolverDocumento } from "./documentos";
+import { FATOS_COMERCIAIS } from "@/lib/billing/fatos-comerciais";
 import {
   montarContextoBase,
   lerPerfilVivo,
@@ -669,7 +670,14 @@ export async function responderExperimental(
       // ⚠️ NO PÓS-TRIAL O BLOCO DE CONDUÇÃO VEM POR ÚLTIMO, e é o único que
       // fala de objetivo. Core (como pensar) → contexto (sobre quem) → condução
       // comercial (para quê, agora). Não há jornada nem repertório neste modo.
-      system: [core.conteudo, bloco, jornada, conducaoTrial, repertorio, conducaoPosTrial]
+      // ⚠️ OS FATOS COMERCIAIS ENTRAM AQUI TAMBÉM — 20/08/2026. O caminho
+      // experimental atende TODAS as famílias desde 17/08 e nunca os recebeu:
+      // só o Legacy os injetava. Na prática, a Ayla do caminho novo não sabia
+      // quanto dura o teste nem que existe suporte humano — e o número vivia
+      // dentro do documento do Trial, alcançando só quem estava em condução de
+      // teste. É o bloco mais curto do prompt, e é informação que não pode ser
+      // gerada pelo modelo.
+      system: [core.conteudo, FATOS_COMERCIAIS, bloco, jornada, conducaoTrial, repertorio, conducaoPosTrial]
         .filter(Boolean)
         .join("\n\n"),
       messages: [{ role: "user", content: params.mensagem }],

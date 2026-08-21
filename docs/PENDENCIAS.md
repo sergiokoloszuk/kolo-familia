@@ -85,6 +85,14 @@ Só o que está aberto. 🔒 = bloqueada.
 | [PEND-121](#pend-121) | Migração 0076 espera o branch do Plano Kolo | H · Governança | P2 | AGUARDANDO BRANCH | aplicar quando `feat/plano-kolo-estrutura` entrar na `main` |
 | [PEND-122](#pend-122) | Termos e Privacidade não descrevem a política real de cancelamento e retenção | F · Limites | P1 | ABERTA | revisar depois que a política de cancelamento/retenção estiver fechada |
 | [PEND-123](#pend-123) | Assinatura anômala: `active` + `cancel_at_period_end` + período vencido em 26/06 | G · Comercial | P2 | MEDIDA · NÃO DIAGNOSTICADA | descobrir por que não virou `canceled` — pode ser webhook perdido |
+| [PEND-124](#pend-124) | `configuracao_geral` não existe em produção (migração 0068 nunca aplicada) | H · Governança | P2 | MEDIDA · IMPACTO NÃO PROVADO | exercitar a tela do Admin antes de decidir aplicar ou aposentar |
+| [PEND-125](#pend-125) | **31% dos cadastros nunca confirmam o e-mail e nunca entram** | G · Comercial | **P0** | MEDIDA · CAUSA NÃO ISOLADA | ler os logs de entrega do Brevo — só isso separa "não chegou" de "não abriu" |
+| [PEND-126](#pend-126) | **A jornada D0–D7 não acontece**: 2 dias de 8, 94% nunca contactadas | A · Condução | **P0** | MEDIDA · NÃO CORRIGIDA | Trial entra na varredura da rotina; bloqueia PEND-118 |
+| [PEND-127](#pend-127) | `utm_attribution` não existe em produção (0052 nunca aplicada) | H · Governança | P1 | MEDIDA | sem atribuição, funil é chute |
+| [PEND-128](#pend-128) | Suporte ainda duplicado no documento `trial` v4 | Conteúdo | P2 | PARCIALMENTE CORRIGIDA | publicar `trial` v5 sem o número |
+| [PEND-129](#pend-129) | **HMAC do código de ativação tem valor padrão público no código** | Segurança | **P0** | MEDIDA · IMPACTO NÃO CONFIRMADO | conferir nomes das envs na Vercel; corrigir com `KOLO_GERACAO_SECRET` |
+| [PEND-130](#pend-130) | Código de ativação sem limite de tentativas, reenvios ou cooldown | Segurança | P1 | MEDIDA · NÃO CORRIGIDA | usar `verificacoes_whatsapp` (0080), que já está aplicada e sem uso |
+| [PEND-131](#pend-131) | Sem caminho de reativação após opt-out ou bloqueio do Admin | G · Comercial | P2 | ABERTA | hoje 0 famílias afetadas; o beco existe |
 | [PEND-104](#pend-104) | **2b ·** Material da pós — LOCALIZADO, em auditoria | B · Conhecimento | P1 | LOCALIZADO · NÃO ATIVO | camada transversal; cobre os buracos do Compilado (rho demanda×regras = 0,042) |
 | [PEND-105](#pend-105) | **8b ·** Conhecimento Especializado: BIA é mecanismo, não inteligência | B · Conhecimento | P1 | PROPOSTA · DECISÃO PENDENTE | sobreposição Compilado × BPs medida em 0% |
 | [PEND-106](#pend-106) | Rastro do conhecimento não cobre o WhatsApp desde 17/08 | H · Governança | P1 | MEDIDA · NÃO CORRIGIDA | invalida o baseline de PEND-042 |
@@ -5359,6 +5367,27 @@ STATUS: **AGUARDANDO DECISÃO COM A AGÊNCIA** · Aberta em: 2026-08-19
   gatilho — migração aplicada com a numeração conferida contra todos os
   branches vivos.
 
+
+- **CAUSA RAIZ PROVADA EM CÓDIGO E MEDIDA (20–21/08/2026).** Não é "falta
+  validação no onboarding": os dois onboardings **já exigem** o telefone —
+  medido, `famílias sem telefone com onboarding completo = 0` em 227. O defeito
+  é que **o teste nasce antes do onboarding**, em `handle_new_user`, no INSERT
+  de `auth.users`, com telefone nulo e Ayla desativada.
+- **O CUSTO, MEDIDO:** **87 famílias** tiveram os 7 dias consumidos sem
+  completar o cadastro. Destas, **84 nunca trocaram uma única mensagem com a
+  Kolo**, 72 pararam no step 1 e 60 nunca confirmaram o e-mail. E a marca em
+  `testes_usados` impede que voltem com outro teste.
+- **A AYLA NASCE DESATIVADA por default do gatilho** (`desativada = true`).
+  Medido: **97 famílias desativadas, e ZERO opt-out explícito** — todas com
+  `consentimento_em` nulo. Ninguém na história da Kolo pediu para não receber;
+  é o default que nunca virou.
+- **NÃO EXISTIA OTP, verificação de telefone nem rate limit** em lugar nenhum
+  do repositório. A estrutura passou a existir em **21/08** com a migração 0080
+  (`verificacoes_whatsapp`), e o início do teste ganhou dono único com a 0081
+  (`iniciar_trial_se_apto`) — as duas aplicadas e provadas em produção, e
+  **inócuas** até o código da Fase 2 subir.
+- **FALTA:** Fase 2 (verificação por código no onboarding + trava do e-mail
+  antes do checkout) e Fase 3 (0082, que tira o teste do cadastro).
 ---
 
 ### PEND-115
@@ -5530,6 +5559,16 @@ STATUS: **PROVADA — NÃO CORRIGIDA** · Aberta em: 2026-08-20
   decisão registrada e — se a exclusão for ligada — isenção de staff coberta
   por teste.
 
+
+- **BLOQUEADA POR PEND-126 (21/08/2026).** O mecanismo de retenção e exclusão
+  existe, cobre os três caminhos e está provado por 58 testes — mas ligá-lo
+  hoje apagaria dados de famílias que, com 94% de probabilidade, **nunca
+  souberam que o teste existia**: a jornada D0–D7 alcança 5,6% da base.
+- **8 famílias estão elegíveis e paradas**, aguardando a jornada funcionar.
+  Nenhuma foi tocada.
+- A variável passa a se chamar `EXCLUSAO_AUTOMATICA`, com ativação por motivo
+  (`trial` · `cancelamento` · `inadimplencia`) e valor efetivo exposto no
+  `/api/health` — o que resolve a cegueira original desta ficha.
 ---
 
 ### PEND-119
@@ -5656,6 +5695,252 @@ STATUS: **MEDIDA — NÃO DIAGNOSTICADA** · Aberta em: 2026-08-20
 - **CRITÉRIO DE CONCLUSÃO:** saber por que a linha está assim, com evidência do
   lado do Stripe, e decidir se revela falha de sincronização que afeta outras
   famílias.
+
+---
+
+### PEND-124
+**`configuracao_geral` não existe em produção — migração 0068 nunca aplicada**
+Bloco: **H · Governança** · Prioridade: **P2**
+STATUS: **MEDIDA — IMPACTO NÃO PROVADO** · Aberta em: 2026-08-20
+
+> Descoberta de raspão, procurando o número do suporte. Não corrigir sem antes
+> provar o impacto e a relação com a tela do Admin.
+
+- **PROVEI EM PRODUÇÃO (20/08):** uma leitura em `configuracao_geral` devolve
+  `relation "public.configuracao_geral" does not exist`. A migração
+  `0068_configuracao_geral.sql` está no repositório e **nunca foi aplicada**.
+- **O que a 0068 criaria:** a tabela e o seed da chave `ayla_whatsapp` com
+  `5511963197032` — o número da própria Ayla, usado no botão "falar com a Ayla"
+  no fim do cadastro.
+- **CONSEQUÊNCIA APARENTE — INFERI, não provei:** `salvarWhatsappAyla`
+  (`app/admin/ayla/numero-actions.ts`) grava via `gravarConfig`, e
+  `whatsappDaAyla` lê via `lerConfig`. Sem a tabela, a tela do Admin que troca o
+  número da Ayla provavelmente não funciona, e a leitura cai no `null` do
+  próprio helper. **Não exercitei a tela** — e por isso o estado é "medida", não
+  "diagnosticada".
+- **NÃO SEI:** se algum caminho de produção depende hoje de `whatsappDaAyla` e
+  está degradado em silêncio, ou se existe fallback em outro lugar.
+- **NÃO É O NÚMERO DO SUPORTE.** O contato humano — (11) 94037-7337 — foi
+  centralizado em `lib/billing/fatos-comerciais.ts` e não depende desta tabela.
+  Os dois números não se confundem: um é o robô, o outro é gente.
+- **Relação:** encosta em PEND-119 (não existe caminho automatizado para
+  migração) — é mais um caso de migração que ficou para trás sem ninguém ver.
+- **PRÓXIMO PASSO:** exercitar a tela do Admin e mapear quem chama
+  `whatsappDaAyla` antes de decidir entre aplicar a 0068 ou remover o código
+  que a pressupõe.
+- **CRITÉRIO DE CONCLUSÃO:** ou a tabela existindo e a tela do Admin provada
+  funcionando, ou a decisão escrita de aposentar o mecanismo.
+
+---
+
+### PEND-125
+**31% dos cadastros nunca confirmam o e-mail e nunca entram**
+Bloco: **G · Comercial** · Prioridade: **P0**
+STATUS: **MEDIDA — CAUSA NÃO ISOLADA** · Aberta em: 2026-08-21
+
+> O maior buraco do funil da Kolo. Maior que a jornada D0–D7, maior que a
+> exclusão automática. Não é sobre Trial: é sobre **chegada**.
+
+- **MEDIDO EM PRODUÇÃO (20/08/2026):** de 227 cadastros, **71 (31%) nunca
+  confirmaram o e-mail e nunca fizeram login uma vez sequer**. Todos por
+  cadastro com e-mail; os 8 do Google confirmam sozinhos.
+- **PIORANDO:** 26% em julho → **38% em agosto**.
+- **TRÊS CAUSAS DESCARTADAS COM DADO:**
+  1. *não é falta de envio* — `confirmation_sent_at` preenchido em **71 de 71**;
+  2. *não é provedor bloqueando* — gmail 30%, hotmail 29%, yahoo 40%: uniforme.
+     Se o Brevo estivesse queimado no Gmail, ele destoaria dos 176 cadastros;
+  3. *não é UX* — o `/signup` já tem campo de código, botão de reenviar e aviso
+     de spam.
+- **CONTRA-FATO FORTE:** quem confirma, confirma em **60 segundos** (mediana;
+  p90 = 204s; 145 de 156 em menos de 5 min). O caminho funciona, e rápido, para
+  69%.
+- **NÃO SEI** se o e-mail chega. **BLOQUEIO OPERACIONAL:** o app não fala com o
+  Brevo — não há credencial dele no `.env.local`. O SMTP vive dentro do GoTrue.
+  Bounces, entregas, aberturas e spam reports só existem no painel do Brevo.
+- **O QUE MUDA A ARQUITETURA — PROVEI POR EXECUÇÃO (21/08):** o link do
+  WhatsApp (`generateLink` + `verifyOtp`) **funciona para usuário não
+  confirmado e confirma o e-mail de passagem**. Testado com usuário de QA
+  criado e apagado: login por senha bloqueado ("Email not confirmed"), link
+  funciona, `email_confirmed_at` preenchido depois. Ou seja: verificar o
+  WhatsApp destrava o e-mail sozinho.
+- **PRÓXIMO PASSO:** ler os logs de entrega do Brevo. É o único caminho que
+  separa "não chegou" de "chegou e ela não abriu" — e as duas têm correções
+  opostas.
+- **CRITÉRIO DE CONCLUSÃO:** saber por que 31% não confirmam, com evidência de
+  entrega, e a taxa caindo de forma medida.
+
+---
+
+### PEND-126
+**A jornada D0–D7 do Trial não acontece: 2 dias de 8, e 94% nunca são contactadas**
+Bloco: **A · Condução** · Prioridade: **P0**
+STATUS: **MEDIDA — NÃO CORRIGIDA** · Aberta em: 2026-08-21
+
+> Documento ativo ≠ jornada funcionando. O `trial` v4 está publicado e correto;
+> ele simplesmente não alcança quase ninguém.
+
+- **VI NO CÓDIGO:** o cron `?tipo=comercial` chama `sendTrial(familyId,
+  diasRestantes: 3 | 0)` — a assinatura é literal. Cobre **dois** dias, e nem
+  são dias da jornada: são dias *restantes*. Traduzindo para o documento, **D4
+  e D7**. **D0, D1, D2, D3, D5 e D6 não têm gatilho proativo nenhum.**
+- O bloco `<jornada>` D0–D7 existe e está certo, mas é injetado **só no caminho
+  reativo** — quem não escreve nunca encontra a jornada.
+- **MEDIDO EM PRODUÇÃO (20/08):**
+  - 198 famílias terminaram o teste; **11 receberam algum aviso (5,6%)**;
+    **187 não receberam nada (94,4%)**;
+  - últimos 30 dias: 138 terminaram, 80 alcançáveis, **9 avisadas**;
+  - só existem 2 tipos proativos de trial na história: `trial_d0` (10) e
+    `trial_d3` (7).
+- **DUAS CAUSAS, dos 71 alcançáveis não avisados:**
+  1. **31 tiveram outra proativa no mesmo dia.** A cadência não é "uma por
+     dia": é **uma por janela de 3h** (`JANELA_CADENCIA_MS`). O cron comercial
+     roda às 15h UTC, **em cima** de uma das quatro passadas da rotina
+     (11,15,18,22). O aviso de fim de teste perde para a rotina.
+  2. **40 não tiveram mensagem nenhuma** naquele dia. **NÃO SEI por quê** — e
+     não é descobrível: `ayla_proativo_log` existe e tem **zero linhas**. Nada
+     registra tentativa.
+- **O CRON RODA — PROVEI EM PRODUÇÃO:** 17 disparos datados, todos entre 15:00
+  e 15:03 UTC. O mecanismo executa; ele só alcança pouca gente.
+- **A INFRAESTRUTURA QUE FALTA JÁ EXISTE:** `ayla_preferences` tem
+  `horario_preferido_inicio/fim`, e `runRotina` já filtra por
+  `horaLocalHHMM` dentro da janela da família. Medido: as 4 passadas cobrem
+  **todas** as janelas configuradas (0 famílias fora). O Trial é o único que
+  ignora esse mecanismo.
+- **CORREÇÃO PROPOSTA, sem motor novo:** o Trial passa a **entrar na varredura
+  da rotina** — mesmo cron, mesmo filtro de horário — e ganha dela nos dias em
+  que a jornada tem intenção. O cron comercial é aposentado. Observabilidade em
+  `eventos_app`: família → dia → avaliada → enviou/não → motivo → versão do
+  documento.
+- **⚠️ BLOQUEIA A EXCLUSÃO AUTOMÁTICA (PEND-118).** Apagar dados ao fim de um
+  teste que 94% nunca soube que existia é indefensável.
+- **CRITÉRIO DE CONCLUSÃO:** uma coorte real percorrendo D0→D7 com registro de
+  avaliação em todos os dias — prova longitudinal de 8 dias, não retrato de um
+  dia.
+
+---
+
+### PEND-127
+**`utm_attribution` não existe em produção (migração 0052 nunca aplicada)**
+Bloco: **H · Governança** · Prioridade: **P1**
+STATUS: **MEDIDA** · Aberta em: 2026-08-21
+
+- **PROVEI EM PRODUÇÃO (20/08):** consulta a `utm_attribution` devolve
+  `relation "public.utm_attribution" does not exist`.
+- **CONSEQUÊNCIA:** não existe atribuição de origem. Investigando a PEND-125
+  (31% não confirmam o e-mail), não foi possível saber se esses cadastros vêm
+  de uma campanha específica, de tráfego pago ou de indicação. **Toda conversa
+  sobre funil é chute enquanto isto não existir.**
+- **A terceira migração da base que se prova não aplicada**, junto com a 0068
+  (PEND-124) e as 0080/0081 antes desta frente. Não é coincidência — é a
+  PEND-119 cobrando juros.
+- **CRITÉRIO DE CONCLUSÃO:** tabela existindo, populada por cadastro novo, e
+  uma consulta de origem respondida com dado real.
+
+---
+
+### PEND-128
+**O contato do suporte ainda está duplicado no documento `trial` v4**
+Bloco: **Conteúdo** · Prioridade: **P2**
+STATUS: **PARCIALMENTE CORRIGIDA** · Aberta em: 2026-08-21
+
+- **O que já foi feito (não publicado):** o número (11) 94037-7337 foi
+  centralizado em `lib/billing/fatos-comerciais.ts`, com teste estrutural que
+  impede qualquer outro arquivo de produto repeti-lo, e os fatos comerciais
+  passaram a entrar **também** no caminho experimental — que atende todas as
+  famílias desde 17/08 e nunca os recebeu.
+- **O que falta:** o documento `trial` **v4 está ativo no banco e contém o
+  número**. Tirar a duplicação exige publicar uma **v5** — escrita de conteúdo
+  em produção, que não foi feita.
+- **Impacto hoje:** baixo. O valor é o mesmo nos dois lugares. O risco é o de
+  sempre: no dia em que o número mudar, um dos dois fica para trás.
+- **CRITÉRIO DE CONCLUSÃO:** `trial` v5 publicada sem o número, e a Ayla
+  entregando o contato pela fonte canônica nos dois canais.
+
+---
+
+### PEND-129
+**O HMAC do código de ativação tem valor padrão público no código**
+Bloco: **Segurança** · Prioridade: **P0**
+STATUS: **MEDIDA — IMPACTO EM PRODUÇÃO NÃO CONFIRMADO** · Aberta em: 2026-08-21
+
+> Encontrada ao investigar o card "Ativar a Ayla" para a Fase 2 da PEND-114.
+> O mecanismo é bom; o segredo dele é que não.
+
+- **VI NO CÓDIGO** (`app/(app)/painel/ativar-actions.ts:24`):
+
+  ```ts
+  process.env.AYLA_WEBHOOK_SECRET || process.env.NEXTAUTH_SECRET || "kolo-ativacao-dev"
+  ```
+
+- **O QUE ISSO SIGNIFICA.** O cookie de ativação é assinado com HMAC. Se nenhuma
+  das duas variáveis existir no ambiente, a chave é **uma string pública,
+  escrita no repositório**. Quem a conhece forja o cookie
+  `whats.exp.hmac(whats.codigo.exp)` e **ativa qualquer número em qualquer
+  conta logada, sem receber código nenhum** — o que derruba exatamente a
+  proteção que o mecanismo existe para dar ("se o número for de terceiro, o
+  código vai pra ELE").
+- **NÃO SEI se as variáveis existem em produção.** Nenhuma das duas está no
+  `.env.local`. Precisa ser conferido no painel da Vercel — só os NOMES, sem
+  revelar valor.
+- **⚠️ A CORREÇÃO ÓBVIA É UMA ARMADILHA.** Criar `AYLA_WEBHOOK_SECRET` para
+  fechar isto **liga a exigência de header no webhook de entrada da Z-API**, que
+  hoje é fail-open — e **emudece o WhatsApp inteiro** se o painel da Z-API não
+  estiver configurado com o mesmo valor. O próprio repositório já registra esse
+  risco em `api/ludico/gerar-rotina/route.ts:36`.
+- **CORREÇÃO PROPOSTA:** trocar o segredo do OTP para `KOLO_GERACAO_SECRET`,
+  que **existe justamente para isso** — nasceu como segredo dedicado para não
+  reaproveitar o `AYLA_WEBHOOK_SECRET`. Impacto: nenhum outro consumidor muda.
+  Se ele não existir em produção, o OTP passa a ser **fail-closed** (recusa em
+  vez de assinar com chave pública), que é o comportamento correto.
+- **CRITÉRIO DE CONCLUSÃO:** o HMAC do OTP usando um segredo que existe no
+  ambiente, sem valor padrão no código, e sem tocar no webhook da Z-API.
+
+---
+
+### PEND-130
+**O código de ativação não tem limite de tentativas, de reenvios nem cooldown**
+Bloco: **Segurança** · Prioridade: **P1**
+STATUS: **MEDIDA — NÃO CORRIGIDA** · Aberta em: 2026-08-21
+
+- **VI NO CÓDIGO.** `confirmarCodigoAtivacao` compara o código digitado com o
+  HMAC do cookie e devolve "Código errado" — **sem contar tentativas**. São 6
+  dígitos: um milhão de combinações, sem limite e sem atraso entre elas.
+- `enviarCodigoAtivacao` **não tem cooldown nem teto de reenvios**: cada clique
+  dispara uma mensagem pela Z-API para o número informado. É custo e é vetor de
+  incômodo contra terceiro (mandar código repetido para um número alheio).
+- **O estado não persiste.** Sendo cookie, trocar de navegador zera qualquer
+  contagem que existisse — por isso o limite precisa viver no banco.
+- **A ESTRUTURA JÁ EXISTE:** a migração 0080 (`verificacoes_whatsapp`) tem
+  `tentativas`, `reenvios` e `expira_em`, com índice único por família — está
+  aplicada em produção e sem uso.
+- **Parâmetros aprovados em 21/08/2026:** 6 dígitos · validade 10 min · máximo
+  5 tentativas · máximo 3 reenvios · cooldown de 60 s · reenvio gera código
+  novo e invalida o anterior.
+- **CRITÉRIO DE CONCLUSÃO:** os cinco limites em vigor, persistidos em
+  `verificacoes_whatsapp`, com teste cobrindo cada um.
+
+---
+
+### PEND-131
+**Não existe caminho para reativar a Ayla depois de opt-out ou bloqueio administrativo**
+Bloco: **G · Comercial** · Prioridade: **P2**
+STATUS: **ABERTA** · Aberta em: 2026-08-21
+
+- **O card "Ativar a Ayla" só aparece quando `consentimento_em` é nulo**
+  (`painel/page.tsx:327`). Quem já consentiu e depois teve a Ayla desligada
+  **não vê o card** — e não tem outro caminho.
+- **Dois casos reais que caem nisso:**
+  1. a família pede opt-out e depois muda de ideia;
+  2. o Admin usa "🚫 Bloquear Ayla" (que grava `desativada = true`) porque uma
+     criança estava conversando sozinha, e depois a família quer voltar.
+- **MEDIDO em 21/08:** **zero** famílias em opt-out real hoje — as 98 sem
+  consentimento nunca consentiram, é o default do gatilho. Então o beco existe,
+  mas ainda não pegou ninguém.
+- **Relação:** quando o card virar "Confirmar seu WhatsApp" (Fase 2A da
+  PEND-114), esta lacuna fica mais visível — o card deixa de ser o caminho de
+  volta para qualquer um.
+- **CRITÉRIO DE CONCLUSÃO:** uma família com a Ayla desativada consegue
+  reativá-la sozinha, pela interface, e o teste cobre os dois casos.
 
 ---
 
@@ -5810,7 +6095,7 @@ trimestralmente, o que vier antes.
 
 ---
 
-**Próximo ID livre: PEND-124. *(024 e 025 reservadas por frentes ainda não publicadas; 0076 é número de MIGRACAO reservado — ver PEND-121.)***
+**Próximo ID livre: PEND-132. *(024 e 025 reservadas por frentes ainda não publicadas; 0076 é número de MIGRACAO reservado — ver PEND-121.)***
 
 > Conferir contra `origin/main`, não contra o seu branch. Dois branches podem
 > reivindicar o mesmo número — o conflito de merge nesta linha é o alarme.

@@ -5,10 +5,10 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { requireUser, loadFamilyContext } from "@/lib/auth/require-user";
 import { createServiceRoleClient } from "@/lib/supabase/server";
-import { getStripeClient } from "@/lib/stripe/client";
 import { chaveTelefoneBR } from "@/lib/telefone";
 import { encerrarTrialPorNumeroDeOutraConta } from "@/lib/trial/ledger";
-import { logEvent, logServerError } from "@/lib/log";
+import { logServerError } from "@/lib/log";
+import { excluirFamilia } from "@/lib/billing/excluir-familia";
 
 export type PerfilResult = { ok: true } | { ok: false; error: string };
 
@@ -239,72 +239,27 @@ export async function excluirContaAction(input: {
   const { family } = await loadFamilyContext();
   const familyId = family?.id ?? null;
 
-  // 1. Cancela subscription Stripe
+  // ⚠️ A REGRA VIVE EM UM LUGAR SÓ (20/08/2026). Antes, esta função e o cron
+  // de exclusão tinham cópias divergentes da mesma operação: o cron pulava
+  // cortesia e esta não, nenhuma isentava staff, e NENHUMA das duas apagava os
+  // arquivos da criança no bucket. Agora as duas portas chamam
+  // `excluirFamilia`, que cancela o Stripe, marca o teste como usado, remove
+  // os arquivos e só então apaga o usuário.
+  //
+  // O que NÃO muda aqui: este caminho é imediato e não passa por retenção. É
+  // direito da titular (LGPD §18, V) — ela pede, apaga. Os 7 dias de guarda
+  // são regra comercial, e regra comercial não atrasa direito.
   if (familyId) {
-    const { data: sub } = await supabase
-      .from("subscription_accesses")
-      .select("stripe_subscription_id")
-      .eq("family_account_id", familyId)
-      .maybeSingle();
-    const subId = sub?.stripe_subscription_id as string | null;
-    if (subId) {
-      try {
-        const stripe = getStripeClient();
-        await stripe.subscriptions.cancel(subId);
-      } catch (e) {
-        await logServerError("excluir_conta_stripe", e, {
-          family_account_id: familyId,
-          user_id: user.id,
-        });
-      }
+    const admin = createServiceRoleClient();
+    const r = await excluirFamilia(admin, {
+      familyId,
+      userId: user.id,
+      motivo: "pedido_da_familia",
+    });
+    if (!r.ok) {
+      throw new Error(`Não consegui excluir agora: ${r.erro ?? "erro inesperado"}`);
     }
   }
-
-  // 2. Antes de apagar: registra que este e-mail/número JÁ USOU o teste.
-  //    Só o hash (sha256) vai pra tabela — a exclusão continua sendo exclusão
-  //    de verdade, e ninguém ganha outros 7 dias grátis recadastrando. O hash
-  //    é calculado no banco (fonte única), não aqui, pra não haver divergência
-  //    de normalização.
-  const admin = createServiceRoleClient();
-  {
-    const { data: conta } = familyId
-      ? await admin
-          .from("family_accounts")
-          .select("whatsapp_e164")
-          .eq("id", familyId)
-          .maybeSingle()
-      : { data: null };
-    const { error: errReg } = await admin.rpc("registrar_teste_usado", {
-      p_email: user.email ?? null,
-      p_whatsapp: (conta?.whatsapp_e164 as string | null) ?? null,
-      p_origem: "exclusao",
-    });
-    // Falhar aqui NÃO pode impedir a exclusão (direito da pessoa vem primeiro),
-    // mas tem que ficar visível — senão a brecha volta em silêncio.
-    if (errReg) {
-      await logServerError("registrar_teste_usado_falhou", errReg, {
-        user_id: user.id,
-        family_account_id: familyId,
-      });
-    }
-  }
-
-  const { error: errDel } = await admin.auth.admin.deleteUser(user.id);
-  if (errDel) {
-    await logServerError("excluir_conta_delete_user", errDel, {
-      user_id: user.id,
-      family_account_id: familyId,
-    });
-    throw new Error(`Não consegui excluir agora: ${errDel.message}`);
-  }
-
-  await logEvent({
-    kind: "conta_excluida",
-    severity: "warn",
-    user_id: user.id,
-    family_account_id: familyId,
-    message: "Usuária acionou exclusão de conta (LGPD).",
-  });
 
   // 3. Encerra sessão e leva pra home
   await supabase.auth.signOut();

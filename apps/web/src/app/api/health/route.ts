@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { posTrialAtivo, experimentalParaTodas } from "@/lib/ayla/experimental";
 import { lerPlanosNoStripe, PLANOS } from "@/lib/billing/planos";
+import { descreverMotivosAtivos } from "@/lib/billing/retencao";
 
 /**
  * Health check: responde com latência do DB + presença das envs
@@ -114,6 +115,15 @@ export async function GET() {
   const flags = {
     ayla_pos_trial: posTrialAtivo(),
     ayla_experimental_todas: experimentalParaTodas(),
+    /**
+     * QUAIS MOTIVOS DE EXCLUSÃO ESTÃO LIGADOS — 20/08/2026.
+     *
+     * Substitui `DUNNING_DELETE_ENABLED`, que nunca existiu em produção e cujo
+     * estado era invisível: a tela prometia exclusão e ninguém, de fora,
+     * conseguia saber se o mecanismo estava ligado. Vai o VALOR EFETIVO lido
+     * pelo código ("off" ou a lista de motivos), não a presença da variável.
+     */
+    exclusao_automatica: descreverMotivosAtivos(),
   };
 
   let db_ok = false;

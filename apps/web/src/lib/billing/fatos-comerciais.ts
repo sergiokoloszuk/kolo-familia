@@ -42,4 +42,26 @@ export const TRIAL_DIAS = 7;
  * gasta contexto. Preço fica FORA daqui porque vive em `configuracao_precos` e
  * muda sem deploy; quem precisa dele o lê da tabela, como o `/ajuda` já faz.
  */
-export const FATOS_COMERCIAIS = `FATO COMERCIAL, nunca invente: o teste grátis é de ${TRIAL_DIAS} dias — corrija quem disser outro prazo, e não confunda com a duração de um Plano. Preço e cobrança: mande para a tela de Assinatura.`;
+/**
+ * O WHATSAPP DE SUPORTE HUMANO DA KOLO — fonte única.
+ *
+ * ⚠️ NÃO REPETIR ESTE NÚMERO EM LUGAR NENHUM. Ele vivia escrito dentro do
+ * documento `trial` v4, publicado no banco — o que significava que a Ayla só
+ * conseguia oferecê-lo a famílias em condução de teste, e que trocá-lo exigiria
+ * republicar um documento de conteúdo. Quem já assinou, quem está no pós-Trial
+ * e a Ayla da Web nunca souberam que existe um humano do outro lado.
+ *
+ * Existem outros dois números no sistema, e NENHUM dos dois é suporte:
+ *   - (11) 96319-7032 — o WhatsApp da própria Ayla, o robô;
+ *   - (11) 99477-0067 — o monitor diário do admin.
+ * Oferecer qualquer um deles a uma família é defeito.
+ */
+export const SUPORTE_WHATSAPP = "(11) 94037-7337";
+
+/**
+ * ⚠️ SEM PRAZO DE RESPOSTA. Não existe SLA definido, e prometer "respondemos
+ * em X horas" é o mesmo erro do `PagamentoGate`: uma promessa que o sistema não
+ * tem como cumprir. Quando houver regra operacional, ela entra aqui — e só aqui.
+ */
+export const FATOS_COMERCIAIS = `FATO COMERCIAL, nunca invente: o teste grátis é de ${TRIAL_DIAS} dias — corrija quem disser outro prazo, e não confunda com a duração de um Plano. Preço e cobrança: mande para a tela de Assinatura.
+SUPORTE HUMANO: quando a pessoa pedir para falar com alguém, com o suporte ou com uma pessoa de verdade — ou quando ela disser que não conseguiu assinar, pagar, cancelar, apagar a conta ou entrar —, ajude no que der em uma ou duas frases E dê o contato, sem enrolar: "Suporte Kolo: ${SUPORTE_WHATSAPP}". Nunca esconda o contato, nunca insista em resolver sozinha depois que ela pediu atendimento humano, e NÃO prometa prazo de resposta.`;
