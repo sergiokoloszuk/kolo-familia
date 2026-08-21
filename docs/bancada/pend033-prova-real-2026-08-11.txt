@@ -1,0 +1,169 @@
+██████████████████████████████████████████████████████████████████████████████
+PEND-033 · PROVA CONTRA O FORMATO REALMENTE PERSISTIDO
+██████████████████████████████████████████████████████████████████████████████
+
+1. REGISTROS REAIS LIDOS
+
+  ✓ há registro real de perfil para ler
+      112 linhas em perfil_vivo_membro
+
+   como os domínios estão gravados, somando todas as linhas:
+         0  string
+       667  objeto com texto
+       747  objeto sem texto
+         0  nulo
+  ✓ o banco guarda OBJETO, não string — a premissa do defeito
+      667 objetos com texto · 0 strings
+  ✓ convivem duas formas no banco: com texto e vazia — nenhuma string legada
+      747 domínios gravados como objeto vazio
+
+1b. AS CINCO FORMAS DE VALOR, PELO CAMINHO PÚBLICO
+
+  ✓ string antiga (se existir) continua sendo lida
+  ✓ `{ texto, atualizado_em }` — a forma real — é lida
+  ✓ null vira ausência, não lixo
+  ✓ objeto incompleto (`{}`) vira ausência
+  ✓ valor inesperado (número, array) vira ausência
+
+2. O CAMINHO, PERCORRIDO COM CADA REGISTRO REAL
+
+   crianças com pelo menos um campo PREENCHIDO: 66/112
+   crianças com pelo menos um NEGATIVO:         4/112
+   crianças cujo bloco sai com conteúdo:        66/112
+   campos reconhecidos no total:                944 preenchidos · 10 negativos
+  ✓ carregarPerfilConsultavel lê conteúdo do registro REAL
+      antes da correção este número seria 0 — é o defeito da PEND-033
+  ✓ os NEGATIVOS são reconhecidos como tal em registro real
+      exemplo de rótulos negativos (sem valores): Comunicação/Comunicação alternativa (CAA)
+  ✓ linhasDoPerfilConsultavel devolve texto para registro real
+      66 de 112 produzem bloco não vazio
+  ✓ ausência de informação continua sendo AUSÊNCIA, não negativa
+      11366 campos vazios · apenas 10 negativos — os 747 domínios gravados como `{}` não viraram "a família disse que não"
+  ✓ todo negativo real é uma negação escrita pela família
+      valores distintos encontrados: não
+
+3. O REGISTRO ESCOLHIDO — o mais rico entre os que têm negativo
+
+   82 preenchidos · 5 negativos · 23 vazios
+
+   ESTRUTURA lida (rótulo e estado; VALORES REDIGIDOS):
+     Sensorial:
+       · Texturas (roupas, objetos)             PREENCHIDO  (105 ch)
+       · Luz                                    NEGATIVO    (3 ch)
+       · Cheiros                                PREENCHIDO  (123 ch)
+       · Movimento                              PREENCHIDO  (40 ch)
+     Alimentação:
+       · Seletividade alimentar                 PREENCHIDO  (5 ch)
+       · Aceita bem / preferidos                PREENCHIDO  (22 ch)
+       · Rejeita ou recusa                      PREENCHIDO  (20 ch)
+       · Texturas que aceita                    PREENCHIDO  (23 ch)
+       · Texturas que rejeita                   PREENCHIDO  (22 ch)
+       · Dificuldades na alimentação            PREENCHIDO  (84 ch)
+     Comunicação:
+       · Como se comunica                       PREENCHIDO  (10 ch)
+       · Como mostra o que quer                 PREENCHIDO  (43 ch)
+       · Vocabulário e fala                     PREENCHIDO  (219 ch)
+       · Entende o contexto                     PREENCHIDO  (155 ch)
+       · Lê lábios / pistas visuais             PREENCHIDO  (83 ch)
+       · Mostra o que quer ou espera?           PREENCHIDO  (17 ch)
+       · Contato visual e gestos                PREENCHIDO  (130 ch)
+       · Comunicação alternativa (CAA)          NEGATIVO    (3 ch)
+     Regulação emocional:
+       · Como costuma ser                       PREENCHIDO  (24 ch)
+       · Gatilhos                               PREENCHIDO  (92 ch)
+       · Sinais de que vem vindo                PREENCHIDO  (260 ch)
+       · Como se manifesta                      PREENCHIDO  (100 ch)
+       · O que ajuda a passar                   PREENCHIDO  (125 ch)
+       · O que NÃO ajuda / piora                PREENCHIDO  (57 ch)
+       · Depois                                 PREENCHIDO  (126 ch)
+       · Outras observações                     PREENCHIDO  (305 ch)
+     Foco e atenção:
+       · Como é o foco                          PREENCHIDO  (17 ch)
+       · O que prende a atenção dela (hiperfocos) PREENCHIDO  (42 ch)
+       · O que dispersa                         PREENCHIDO  (50 ch)
+       · Por quanto tempo sustenta              PREENCHIDO  (11 ch)
+       · O que ajuda a focar                    PREENCHIDO  (81 ch)
+       · Sair de uma atividade                  PREENCHIDO  (32 ch)
+     Sono:
+       · Como costuma ser o sono                PREENCHIDO  (14 ch)
+       · Quanto tempo leva pra pegar no sono    PREENCHIDO  (12 ch)
+       · Despertares                            PREENCHIDO  (16 ch)
+       · Horários                               PREENCHIDO  (16 ch)
+       · O que atrapalha                        PREENCHIDO  (7 ch)
+     Socialização:
+       · Como é socializar pra ele(a)           PREENCHIDO  (5 ch)
+       · Interage com outras pessoas (pares)    PREENCHIDO  (9 ch)
+       · Com quem flui melhor                   PREENCHIDO  (7 ch)
+       · Divide e espera a vez                  PREENCHIDO  (8 ch)
+       · Sozinho ou acompanhado                 PREENCHIDO  (77 ch)
+       · Iniciativa e reciprocidade             PREENCHIDO  (41 ch)
+       · Vínculos e conflitos                   PREENCHIDO  (37 ch)
+     Motor:
+       · Coordenação geral                      PREENCHIDO  (15 ch)
+       · Motor grosso                           PREENCHIDO  (68 ch)
+       · Motor fino (mãos)                      PREENCHIDO  (9 ch)
+       · Imita movimentos / sequências          PREENCHIDO  (21 ch)
+       · O que ajuda                            PREENCHIDO  (23 ch)
+     Rotina:
+       · Como lida com a rotina                 PREENCHIDO  (26 ch)
+       · O que ajuda nas transições             PREENCHIDO  (24 ch)
+       · Rotinas-âncora                         PREENCHIDO  (21 ch)
+       · Como você avisa mudanças               PREENCHIDO  (11 ch)
+       · Sinais quando a rotina quebra          PREENCHIDO  (16 ch)
+     Autonomia:
+       · Autonomia no dia a dia                 PREENCHIDO  (27 ch)
+       · O que faz sozinha                      PREENCHIDO  (41 ch)
+       · O que faz com apoio                    PREENCHIDO  (22 ch)
+       · O que ainda precisa de ajuda           PREENCHIDO  (24 ch)
+       · O que está aprendendo a fazer          PREENCHIDO  (10 ch)
+     Aprendizado:
+       · Como aprende melhor                    PREENCHIDO  (5 ch)
+       · O que ajuda a aprender                 PREENCHIDO  (21 ch)
+       · O que dificulta                        PREENCHIDO  (40 ch)
+       · Interesses que puxam o aprender        PREENCHIDO  (33 ch)
+     Imitação:
+       · Imita?                                 PREENCHIDO  (14 ch)
+       · O que imita                            PREENCHIDO  (8 ch)
+       · Faz de conta                           PREENCHIDO  (15 ch)
+       · Aprende imitando?                      NEGATIVO    (3 ch)
+     Tela e mídia:
+       · Relação com telas                      PREENCHIDO  (11 ch)
+       · O que assiste / usa                    PREENCHIDO  (8 ch)
+       · Como reage ao desligar                 PREENCHIDO  (10 ch)
+       · O que ajuda na hora de sair            PREENCHIDO  (12 ch)
+       · Combinados de tempo                    PREENCHIDO  (13 ch)
+     Escola:
+       · Como é a escola hoje                   PREENCHIDO  (7 ch)
+       · O que funciona                         PREENCHIDO  (12 ch)
+       · Queixas / dificuldades                 PREENCHIDO  (14 ch)
+       · Relação com colegas e professores      PREENCHIDO  (14 ch)
+       · Combinados com a escola                PREENCHIDO  (15 ch)
+     Saúde geral:
+       · Saúde geral                            PREENCHIDO  (24 ch)
+       · Acompanhamentos                        PREENCHIDO  (69 ch)
+       · Medicações                             NEGATIVO    (3 ch)
+       · Alergias e restrições                  NEGATIVO    (3 ch)
+       · Outras observações                     PREENCHIDO  (3 ch)
+     Gostos & arte:
+       · Filmes, desenhos e personagens favoritos PREENCHIDO  (44 ch)
+       · Arte: materiais e o que gosta de fazer PREENCHIDO  (21 ch)
+       · Brincadeiras favoritas                 PREENCHIDO  (7 ch)
+       · Paixões do momento                     PREENCHIDO  (40 ch)
+       · O que NÃO gosta                        PREENCHIDO  (36 ch)
+
+4. O CONTEXTO EFETIVAMENTE MONTADO — buildContext + buildContextBlock
+
+  ✓ o contexto real traz perfilConsultavel
+  ✓ fora do piloto ele continua nulo
+  ✓ <o_que_ja_sabemos> está no bloco montado com dado real
+  ✓ ANCORA_PERFIL está dentro dele
+  ✓ o bloco declara o que a família JÁ RESPONDEU
+  ✓ o bloco declara os NEGATIVOS com a redação certa
+      5 campos negativos neste registro
+  ✓ fora do piloto nada disso aparece
+
+   bloco fora do piloto: 7339 ch · no piloto: 15514 ch (+8175)
+
+██████████████████████████████████████████████████████████████████████████████
+PLACAR: 20/20
+██████████████████████████████████████████████████████████████████████████████
