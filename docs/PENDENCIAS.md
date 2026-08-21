@@ -90,6 +90,9 @@ Só o que está aberto. 🔒 = bloqueada.
 | [PEND-126](#pend-126) | **A jornada D0–D7 não acontece**: 2 dias de 8, 94% nunca contactadas | A · Condução | **P0** | MEDIDA · NÃO CORRIGIDA | Trial entra na varredura da rotina; bloqueia PEND-118 |
 | [PEND-127](#pend-127) | `utm_attribution` não existe em produção (0052 nunca aplicada) | H · Governança | P1 | MEDIDA | sem atribuição, funil é chute |
 | [PEND-128](#pend-128) | Suporte ainda duplicado no documento `trial` v4 | Conteúdo | P2 | PARCIALMENTE CORRIGIDA | publicar `trial` v5 sem o número |
+| [PEND-129](#pend-129) | **HMAC do código de ativação tem valor padrão público no código** | Segurança | **P0** | MEDIDA · IMPACTO NÃO CONFIRMADO | conferir nomes das envs na Vercel; corrigir com `KOLO_GERACAO_SECRET` |
+| [PEND-130](#pend-130) | Código de ativação sem limite de tentativas, reenvios ou cooldown | Segurança | P1 | MEDIDA · NÃO CORRIGIDA | usar `verificacoes_whatsapp` (0080), que já está aplicada e sem uso |
+| [PEND-131](#pend-131) | Sem caminho de reativação após opt-out ou bloqueio do Admin | G · Comercial | P2 | ABERTA | hoje 0 famílias afetadas; o beco existe |
 | [PEND-104](#pend-104) | **2b ·** Material da pós — LOCALIZADO, em auditoria | B · Conhecimento | P1 | LOCALIZADO · NÃO ATIVO | camada transversal; cobre os buracos do Compilado (rho demanda×regras = 0,042) |
 | [PEND-105](#pend-105) | **8b ·** Conhecimento Especializado: BIA é mecanismo, não inteligência | B · Conhecimento | P1 | PROPOSTA · DECISÃO PENDENTE | sobreposição Compilado × BPs medida em 0% |
 | [PEND-106](#pend-106) | Rastro do conhecimento não cobre o WhatsApp desde 17/08 | H · Governança | P1 | MEDIDA · NÃO CORRIGIDA | invalida o baseline de PEND-042 |
@@ -5855,6 +5858,92 @@ STATUS: **PARCIALMENTE CORRIGIDA** · Aberta em: 2026-08-21
 
 ---
 
+### PEND-129
+**O HMAC do código de ativação tem valor padrão público no código**
+Bloco: **Segurança** · Prioridade: **P0**
+STATUS: **MEDIDA — IMPACTO EM PRODUÇÃO NÃO CONFIRMADO** · Aberta em: 2026-08-21
+
+> Encontrada ao investigar o card "Ativar a Ayla" para a Fase 2 da PEND-114.
+> O mecanismo é bom; o segredo dele é que não.
+
+- **VI NO CÓDIGO** (`app/(app)/painel/ativar-actions.ts:24`):
+
+  ```ts
+  process.env.AYLA_WEBHOOK_SECRET || process.env.NEXTAUTH_SECRET || "kolo-ativacao-dev"
+  ```
+
+- **O QUE ISSO SIGNIFICA.** O cookie de ativação é assinado com HMAC. Se nenhuma
+  das duas variáveis existir no ambiente, a chave é **uma string pública,
+  escrita no repositório**. Quem a conhece forja o cookie
+  `whats.exp.hmac(whats.codigo.exp)` e **ativa qualquer número em qualquer
+  conta logada, sem receber código nenhum** — o que derruba exatamente a
+  proteção que o mecanismo existe para dar ("se o número for de terceiro, o
+  código vai pra ELE").
+- **NÃO SEI se as variáveis existem em produção.** Nenhuma das duas está no
+  `.env.local`. Precisa ser conferido no painel da Vercel — só os NOMES, sem
+  revelar valor.
+- **⚠️ A CORREÇÃO ÓBVIA É UMA ARMADILHA.** Criar `AYLA_WEBHOOK_SECRET` para
+  fechar isto **liga a exigência de header no webhook de entrada da Z-API**, que
+  hoje é fail-open — e **emudece o WhatsApp inteiro** se o painel da Z-API não
+  estiver configurado com o mesmo valor. O próprio repositório já registra esse
+  risco em `api/ludico/gerar-rotina/route.ts:36`.
+- **CORREÇÃO PROPOSTA:** trocar o segredo do OTP para `KOLO_GERACAO_SECRET`,
+  que **existe justamente para isso** — nasceu como segredo dedicado para não
+  reaproveitar o `AYLA_WEBHOOK_SECRET`. Impacto: nenhum outro consumidor muda.
+  Se ele não existir em produção, o OTP passa a ser **fail-closed** (recusa em
+  vez de assinar com chave pública), que é o comportamento correto.
+- **CRITÉRIO DE CONCLUSÃO:** o HMAC do OTP usando um segredo que existe no
+  ambiente, sem valor padrão no código, e sem tocar no webhook da Z-API.
+
+---
+
+### PEND-130
+**O código de ativação não tem limite de tentativas, de reenvios nem cooldown**
+Bloco: **Segurança** · Prioridade: **P1**
+STATUS: **MEDIDA — NÃO CORRIGIDA** · Aberta em: 2026-08-21
+
+- **VI NO CÓDIGO.** `confirmarCodigoAtivacao` compara o código digitado com o
+  HMAC do cookie e devolve "Código errado" — **sem contar tentativas**. São 6
+  dígitos: um milhão de combinações, sem limite e sem atraso entre elas.
+- `enviarCodigoAtivacao` **não tem cooldown nem teto de reenvios**: cada clique
+  dispara uma mensagem pela Z-API para o número informado. É custo e é vetor de
+  incômodo contra terceiro (mandar código repetido para um número alheio).
+- **O estado não persiste.** Sendo cookie, trocar de navegador zera qualquer
+  contagem que existisse — por isso o limite precisa viver no banco.
+- **A ESTRUTURA JÁ EXISTE:** a migração 0080 (`verificacoes_whatsapp`) tem
+  `tentativas`, `reenvios` e `expira_em`, com índice único por família — está
+  aplicada em produção e sem uso.
+- **Parâmetros aprovados em 21/08/2026:** 6 dígitos · validade 10 min · máximo
+  5 tentativas · máximo 3 reenvios · cooldown de 60 s · reenvio gera código
+  novo e invalida o anterior.
+- **CRITÉRIO DE CONCLUSÃO:** os cinco limites em vigor, persistidos em
+  `verificacoes_whatsapp`, com teste cobrindo cada um.
+
+---
+
+### PEND-131
+**Não existe caminho para reativar a Ayla depois de opt-out ou bloqueio administrativo**
+Bloco: **G · Comercial** · Prioridade: **P2**
+STATUS: **ABERTA** · Aberta em: 2026-08-21
+
+- **O card "Ativar a Ayla" só aparece quando `consentimento_em` é nulo**
+  (`painel/page.tsx:327`). Quem já consentiu e depois teve a Ayla desligada
+  **não vê o card** — e não tem outro caminho.
+- **Dois casos reais que caem nisso:**
+  1. a família pede opt-out e depois muda de ideia;
+  2. o Admin usa "🚫 Bloquear Ayla" (que grava `desativada = true`) porque uma
+     criança estava conversando sozinha, e depois a família quer voltar.
+- **MEDIDO em 21/08:** **zero** famílias em opt-out real hoje — as 98 sem
+  consentimento nunca consentiram, é o default do gatilho. Então o beco existe,
+  mas ainda não pegou ninguém.
+- **Relação:** quando o card virar "Confirmar seu WhatsApp" (Fase 2A da
+  PEND-114), esta lacuna fica mais visível — o card deixa de ser o caminho de
+  volta para qualquer um.
+- **CRITÉRIO DE CONCLUSÃO:** uma família com a Ayla desativada consegue
+  reativá-la sozinha, pela interface, e o teste cobre os dois casos.
+
+---
+
 ## Protocolo permanente de trabalho
 
 > Registrado em 18/08/2026, depois de **quatro casos numa única semana** em que
@@ -6006,7 +6095,7 @@ trimestralmente, o que vier antes.
 
 ---
 
-**Próximo ID livre: PEND-129. *(024 e 025 reservadas por frentes ainda não publicadas; 0076 é número de MIGRACAO reservado — ver PEND-121.)***
+**Próximo ID livre: PEND-132. *(024 e 025 reservadas por frentes ainda não publicadas; 0076 é número de MIGRACAO reservado — ver PEND-121.)***
 
 > Conferir contra `origin/main`, não contra o seu branch. Dois branches podem
 > reivindicar o mesmo número — o conflito de merge nesta linha é o alarme.
