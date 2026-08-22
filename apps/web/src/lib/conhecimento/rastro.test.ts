@@ -11,6 +11,8 @@ const bp = (id: string): BoaPraticaRecuperada => ({
   quando_usar: null,
   erros_comuns: [],
   passos_praticos: [],
+  atividades_praticas: [],
+  crenca_adulto: null,
 });
 
 const FAM = "fam-1";

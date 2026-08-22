@@ -16,7 +16,17 @@ import { ordenarPorAderencia } from "./aderencia";
  *
  * O que ele NÃO faz: não decide QUAL skill (isso é do classificador), não
  * escreve resposta, e não é um segundo acervo. Atividades e brincadeiras já
- * vivem dentro das BPs, em `passos_praticos` — não há Camada 3.
+ * vivem dentro das BPs — não há Camada 3.
+ *
+ * ⚠️ CORREÇÃO DE 22/08/2026, e ela desmente uma frase que estava aqui. O
+ * comentário dizia que atividades viviam em `passos_praticos`. Não vivem:
+ * vivem em `atividades_praticas`, coluna própria, preenchida em **367 das 370**
+ * BPs ativas — e que **nenhum caminho do produto lia**. `crencas_adulto`, mesma
+ * história. E `erros_comuns`, embora selecionado desde 06/08, era descartado
+ * uma linha adiante por ser texto onde o código esperava array (ver `lista`).
+ *
+ * Ou seja: dos campos que o cabeçalho acima celebra ter recuperado, dois nunca
+ * chegaram e um chegava vazio. Medido, não suposto.
  */
 
 export type BoaPraticaRecuperada = {
@@ -27,6 +37,19 @@ export type BoaPraticaRecuperada = {
   quando_usar: string | null;
   erros_comuns: string[];
   passos_praticos: string[];
+  /**
+   * As brincadeiras e atividades concretas. Preenchido em 367 das 370 BPs
+   * ativas — e, até 22/08/2026, nunca lido por caminho nenhum: o campo não
+   * estava no `select` nem no bloco. A Ayla inventava a atividade a partir dos
+   * `passos_praticos`, que estão em 248.
+   */
+  atividades_praticas: string[];
+  /**
+   * A crença do adulto que precisa mudar para a prática funcionar ("birra é
+   * manipulação" → "é sobrecarga"). Também em 367, também nunca lida.
+   * Não é para ser dita à família: é para a Ayla saber contra o que fala.
+   */
+  crenca_adulto: string | null;
 };
 
 type Linha = {
@@ -37,6 +60,8 @@ type Linha = {
   quando_usar: string | null;
   erros_comuns: unknown;
   passos_praticos: unknown;
+  atividades_praticas: unknown;
+  crencas_adulto: unknown;
   skills_relacionadas: unknown;
   tags: unknown;
   peso_relevancia: number | null;
@@ -44,8 +69,35 @@ type Linha = {
   faixa_etaria_max: number | null;
 };
 
-const lista = (v: unknown): string[] =>
-  Array.isArray(v) ? v.map((x) => String(x).trim()).filter(Boolean) : [];
+/**
+ * NORMALIZA UMA LISTA QUE NEM SEMPRE É LISTA.
+ *
+ * ⚠️ O DEFEITO QUE ISTO CORRIGE (medido em 22/08/2026). `erros_comuns` está
+ * preenchido em **367 das 370** boas práticas ativas — e chegava ao modelo em
+ * ZERO delas. No banco ele é **texto** ("Prescrição sem investigação;
+ * moralização"), e a versão anterior desta função devolvia `[]` para tudo que
+ * não fosse array. O bloco do prompt só emite a linha `EVITE:` quando o array
+ * tem itens, então ela nunca saía.
+ *
+ * O cabeçalho deste arquivo já dizia que a web "jogava fora justamente os
+ * campos que decidem a conduta — `quando_usar`, `erros_comuns` e
+ * `passos_praticos`". A correção de 06/08 passou a SELECIONAR a coluna, e o
+ * descarte continuou uma linha adiante, por incompatibilidade de tipo. É o
+ * mesmo padrão do dedup que não deduplicava: o conserto parecia feito.
+ *
+ * Separador `;` porque é o que o acervo usa — 233 das 367 trazem mais de um
+ * item na mesma string.
+ */
+const lista = (v: unknown): string[] => {
+  if (Array.isArray(v)) return v.map((x) => String(x).trim()).filter(Boolean);
+  if (typeof v === "string") {
+    return v
+      .split(/[;·\n]/)
+      .map((x) => x.trim())
+      .filter(Boolean);
+  }
+  return [];
+};
 
 /**
  * A REGRA DE IDADE — tolerante de propósito.
@@ -145,7 +197,7 @@ export async function recuperarBoasPraticas(
     const { data, error } = await p.supabase
       .from("boas_praticas")
       .select(
-        "id, titulo, versao_curta, versao_conversa, quando_usar, erros_comuns, passos_praticos, skills_relacionadas, tags, peso_relevancia, faixa_etaria_min, faixa_etaria_max",
+        "id, titulo, versao_curta, versao_conversa, quando_usar, erros_comuns, passos_praticos, atividades_praticas, crencas_adulto, skills_relacionadas, tags, peso_relevancia, faixa_etaria_min, faixa_etaria_max",
       )
       .in("status", p.statusAceitos ?? ["ativo"])
       .or(clausulas.join(","))
@@ -215,6 +267,8 @@ export async function recuperarBoasPraticas(
       quando_usar: (bp.quando_usar ?? "").trim() || null,
       erros_comuns: lista(bp.erros_comuns),
       passos_praticos: lista(bp.passos_praticos),
+      atividades_praticas: lista(bp.atividades_praticas),
+      crenca_adulto: (typeof bp.crencas_adulto === "string" ? bp.crencas_adulto : "").trim() || null,
     }));
   } catch (e) {
     const motivo = e instanceof Error ? e.message : String(e);
@@ -252,6 +306,13 @@ export function blocoBoasPraticas(bps: readonly BoaPraticaRecuperada[]): string 
       if (b.erros_comuns.length) linhas.push(`   EVITE: ${b.erros_comuns.join(" · ")}`);
       if (b.passos_praticos.length)
         linhas.push(`   DÁ PRA FAZER: ${b.passos_praticos.join(" · ")}`);
+      // As brincadeiras concretas. Vêm DEPOIS dos passos porque são o material
+      // da oferta ("quer que eu monte…"), não o raciocínio que a antecede.
+      if (b.atividades_praticas.length)
+        linhas.push(`   ATIVIDADES: ${b.atividades_praticas.join(" · ")}`);
+      // A crença do adulto NÃO é para ser dita à família — é contra o que a
+      // Ayla está falando. Por isso o rótulo diz "desfazer", não "explicar".
+      if (b.crenca_adulto) linhas.push(`   CRENÇA A DESFAZER: ${b.crenca_adulto}`);
       return linhas.join("\n");
     })
     .join("\n\n");
@@ -262,7 +323,9 @@ Isto é REPERTÓRIO da Kolo pra você raciocinar — não é roteiro e não se c
 - Use "QUANDO SERVE" pra decidir se aquilo cabe MESMO nesta situação. Se não couber, ignore aquela entrada; trazer conteúdo que não serve é pior do que não trazer.
 - "EVITE" é o que NÃO recomendar. Não vire isso em aula sobre erros.
 - "DÁ PRA FAZER" é o que a família consegue executar hoje — adapte à idade e aos interesses da criança que você já conhece, em vez de repetir o passo literal.
-- NUNCA escreva "quando usar", "erros comuns" ou "passos" como seções da resposta, e nunca despeje as ${bps.length} entradas. Escolha o que ajuda AGORA e transforme em conversa.
+- "ATIVIDADES" são brincadeiras e atividades concretas já validadas. Prefira ADAPTAR uma delas ao interesse da criança a inventar uma do zero — mas nunca cite a lista, e nunca proponha uma que não caiba na idade ou no momento.
+- "CRENÇA A DESFAZER" é o que o adulto provavelmente pensa e que atrapalha. NÃO diga isso a ela, não a corrija e não a acuse de pensar assim: use só para escolher como falar, e para não reforçar a crença sem querer.
+- NUNCA escreva "quando usar", "erros comuns", "passos", "atividades" ou "crença" como seções da resposta, e nunca despeje as ${bps.length} entradas. Escolha o que ajuda AGORA e transforme em conversa.
 
 ${itens}
 </repertorio_kolo>`;
