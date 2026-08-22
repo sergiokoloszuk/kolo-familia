@@ -1,92 +1,36 @@
 "use client";
 
-import { useState, useTransition } from "react";
-import { MessageCircle, Check, ArrowRight } from "lucide-react";
-import { enviarCodigoAtivacao, confirmarCodigoAtivacao } from "./ativar-actions";
+import { useRouter } from "next/navigation";
+import { MessageCircle } from "lucide-react";
+import { ConfirmarWhatsapp } from "@/components/confirmar-whatsapp";
 
-// "+5511999998888" → "(11) 99999-8888" (só pra exibir o número já salvo).
-function paraExibir(e164: string | null): string {
-  if (!e164) return "";
-  const d = e164.replace(/\D/g, "").replace(/^55/, "");
-  if (d.length < 10) return "";
-  const ddd = d.slice(0, 2);
-  const resto = d.slice(2);
-  const meio = resto.length === 9 ? resto.slice(0, 5) : resto.slice(0, 4);
-  const fim = resto.length === 9 ? resto.slice(5) : resto.slice(4);
-  return `(${ddd}) ${meio}-${fim}`;
-}
-
-// Qualquer coisa que a mãe digite → "+55DDDNUMERO".
-function normalizar(raw: string): string {
-  const d = raw.replace(/\D/g, "");
-  if (!d) return "";
-  const semDdi = d.startsWith("55") && d.length > 11 ? d.slice(2) : d;
-  return `+55${semDdi}`;
-}
-
-export function AtivarAylaCard({
-  numeroAtual,
-}: {
-  numeroAtual: string | null;
-}) {
-  const [etapa, setEtapa] = useState<"numero" | "codigo">("numero");
-  const [valor, setValor] = useState(paraExibir(numeroAtual));
-  const [codigo, setCodigo] = useState("");
-  const [numeroConfirmado, setNumeroConfirmado] = useState("");
-  const [erro, setErro] = useState<string | null>(null);
-  const [ok, setOk] = useState(false);
-  const [pending, startTransition] = useTransition();
-
-  function enviarCodigo() {
-    setErro(null);
-    const e164 = normalizar(valor);
-    if (!/^\+55\d{10,11}$/.test(e164)) {
-      setErro("Informe o DDD + número, ex: (11) 99999-9999");
-      return;
-    }
-    startTransition(async () => {
-      const res = await enviarCodigoAtivacao({ whatsapp_e164: e164 });
-      if (res.ok) {
-        setNumeroConfirmado(valor);
-        setEtapa("codigo");
-        setCodigo("");
-      } else {
-        setErro(res.erro);
-      }
-    });
-  }
-
-  function confirmar() {
-    setErro(null);
-    if (codigo.replace(/\D/g, "").length !== 6) {
-      setErro("Digite os 6 números do código.");
-      return;
-    }
-    startTransition(async () => {
-      const res = await confirmarCodigoAtivacao({ codigo });
-      if (res.ok) setOk(true);
-      else setErro(res.erro);
-    });
-  }
-
-  if (ok) {
-    return (
-      <div
-        id="ativar-ayla"
-        className="flex items-center gap-3 rounded-3xl border border-brand-yellow/40 bg-brand-yellow/10 px-6 py-5"
-      >
-        <span className="flex size-10 shrink-0 items-center justify-center rounded-2xl bg-brand-yellow text-brand-purple-dark">
-          <Check className="size-5" strokeWidth={2.5} aria-hidden />
-        </span>
-        <div>
-          <p className="font-heading text-lg text-foreground">Prontinho! 🌿</p>
-          <p className="text-sm text-muted-foreground">
-            A Ayla já pode te escrever no WhatsApp. Fica de olho — ela logo dá um oi.
-          </p>
-        </div>
-      </div>
-    );
-  }
+/**
+ * O CARD DO PAINEL — deixou de ser "Ativar a Ayla" e virou "Confirmar seu
+ * WhatsApp" (Fase 2A).
+ *
+ * ── por que o nome mudou ──────────────────────────────────────────────────
+ *
+ * "Ativar a Ayla" descrevia um segundo passo que só existia porque o
+ * onboarding não confirmava o número. Agora quem entra pelo cadastro já sai
+ * com o WhatsApp confirmado e a Ayla ligada — não há segundo passo.
+ *
+ * O card continua existindo para quem é de ANTES: família que nunca datou o
+ * consentimento. Para ela a pergunta certa não é "quer ativar?", é "esse
+ * número é seu mesmo?".
+ *
+ * ── o que este arquivo NÃO faz mais ───────────────────────────────────────
+ *
+ * ⚠️ Ele chamava `./ativar-actions`, que gerava o código e guardava a prova
+ * num cookie assinado por HMAC cujo segredo caía em `"kolo-ativacao-dev"`
+ * quando as duas variáveis de ambiente não existiam. Aquele arquivo foi
+ * REMOVIDO nesta frente — não sobrou caminho alternativo, nem "desativado por
+ * flag": ele deixou de existir. Ver PEND-129 e PEND-130.
+ *
+ * Quem confirma aqui passa pelo mesmo `verificacoes_whatsapp` das outras
+ * portas, com os mesmos limites (5 tentativas, 3 reenvios, 60s, 10 min).
+ */
+export function AtivarAylaCard({ numeroAtual }: { numeroAtual: string | null }) {
+  const router = useRouter();
 
   return (
     <div
@@ -97,101 +41,24 @@ export function AtivarAylaCard({
           "linear-gradient(135deg, var(--brand-purple-deep) 0%, var(--brand-purple-dark) 100%)",
       }}
     >
-      <span
-        aria-hidden
-        className="pointer-events-none absolute -right-16 -top-16 size-48 rounded-full opacity-40 blur-3xl"
-        style={{ background: "radial-gradient(circle, rgba(255,186,0,0.3) 0%, transparent 70%)" }}
-      />
-      <div className="relative">
-        <div className="inline-flex items-center gap-2.5">
-          <span className="flex size-8 items-center justify-center rounded-xl bg-brand-yellow text-brand-purple-dark">
-            <MessageCircle className="size-4" aria-hidden />
-          </span>
-          <span className="text-[11px] font-bold uppercase tracking-[0.16em] text-brand-yellow">
-            Ayla no WhatsApp
-          </span>
+      <div className="flex items-start gap-3">
+        <span className="flex size-10 shrink-0 items-center justify-center rounded-2xl bg-white/15">
+          <MessageCircle className="size-5" aria-hidden />
+        </span>
+        <div>
+          <h2 className="font-heading text-xl">Confirmar seu WhatsApp</h2>
+          <p className="mt-1 text-sm text-white/80">
+            Falta um passo para a Ayla poder te escrever.
+          </p>
         </div>
+      </div>
 
-        {etapa === "numero" ? (
-          <>
-            <h3 className="mt-3 font-heading text-xl text-white md:text-2xl">
-              Ative a Ayla e leve a Kolo pro seu dia
-            </h3>
-            <p className="mt-2 max-w-lg text-[14px] leading-relaxed text-white/75">
-              A Ayla vira sua parceira no dia a dia: uma estratégia na hora do desafio,
-              montar a rotina (com cartões pra imprimir), tirar dúvidas — na hora em que
-              acontece. Pra confirmar que o número é seu, a gente manda um código.
-            </p>
-            <div className="mt-5 flex flex-col gap-2.5 sm:flex-row sm:items-start">
-              <div className="flex-1">
-                <input
-                  inputMode="tel"
-                  value={valor}
-                  onChange={(e) => setValor(e.target.value)}
-                  placeholder="(11) 99999-9999"
-                  aria-label="Seu WhatsApp"
-                  className="w-full rounded-full border border-white/20 bg-white/10 px-4 py-3 text-sm text-white placeholder:text-white/50 focus:border-brand-yellow focus:outline-none"
-                />
-                {erro && <p className="mt-1.5 pl-1 text-xs text-brand-yellow-light">{erro}</p>}
-              </div>
-              <button
-                type="button"
-                onClick={enviarCodigo}
-                disabled={pending}
-                className="inline-flex items-center justify-center gap-1.5 rounded-full bg-brand-yellow px-5 py-3 text-sm font-bold text-brand-purple-dark transition-transform hover:scale-[1.02] disabled:opacity-60"
-              >
-                {pending ? "Enviando…" : "Enviar código"}
-                {!pending && <ArrowRight className="size-4" strokeWidth={2.5} aria-hidden />}
-              </button>
-            </div>
-          </>
-        ) : (
-          <>
-            <h3 className="mt-3 font-heading text-xl text-white md:text-2xl">
-              Digite o código que enviei
-            </h3>
-            <p className="mt-2 max-w-lg text-[14px] leading-relaxed text-white/75">
-              Mandei um código de 6 números no WhatsApp <strong className="text-white">{numeroConfirmado}</strong>.
-              Digite ele aqui pra ativar a Ayla. 🌿
-            </p>
-            <div className="mt-5 flex flex-col gap-2.5 sm:flex-row sm:items-start">
-              <div className="flex-1">
-                <input
-                  inputMode="numeric"
-                  value={codigo}
-                  onChange={(e) => setCodigo(e.target.value.replace(/\D/g, "").slice(0, 6))}
-                  placeholder="000000"
-                  aria-label="Código de 6 dígitos"
-                  className="w-full rounded-full border border-white/20 bg-white/10 px-4 py-3 text-center text-lg font-bold tracking-[0.3em] text-white placeholder:tracking-[0.2em] placeholder:text-white/40 focus:border-brand-yellow focus:outline-none"
-                />
-                {erro && <p className="mt-1.5 pl-1 text-xs text-brand-yellow-light">{erro}</p>}
-              </div>
-              <button
-                type="button"
-                onClick={confirmar}
-                disabled={pending}
-                className="inline-flex items-center justify-center gap-1.5 rounded-full bg-brand-yellow px-5 py-3 text-sm font-bold text-brand-purple-dark transition-transform hover:scale-[1.02] disabled:opacity-60"
-              >
-                {pending ? "Ativando…" : "Ativar a Ayla"}
-                {!pending && <Check className="size-4" strokeWidth={2.5} aria-hidden />}
-              </button>
-            </div>
-            <button
-              type="button"
-              onClick={() => {
-                setEtapa("numero");
-                setErro(null);
-              }}
-              className="mt-3 pl-1 text-xs text-white/60 underline-offset-2 hover:underline"
-            >
-              ← trocar o número ou reenviar
-            </button>
-          </>
-        )}
-
-        <p className="mt-2.5 pl-1 text-[11px] text-white/50">
-          Você pode ajustar horários ou pausar quando quiser, nas Configurações.
-        </p>
+      <div className="mt-5 rounded-2xl bg-white/95 p-1 text-foreground">
+        <ConfirmarWhatsapp
+          numeroInicial={numeroAtual}
+          variante="painel"
+          onConfirmado={() => router.refresh()}
+        />
       </div>
     </div>
   );

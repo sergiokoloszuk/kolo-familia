@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { dataBrParaIso } from "@/lib/idade";
 import { capitalizarNome } from "@/lib/nome";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { ConfirmarWhatsapp } from "@/components/confirmar-whatsapp";
 import { Tela1Mae } from "./steps/tela-1-mae";
 import { Tela2Membros } from "./steps/tela-2-membros";
 import { Tela3Contexto } from "./steps/tela-3-contexto";
@@ -96,6 +97,18 @@ export function OnboardingWizard({ initial }: { initial: InitialState }) {
   const router = useRouter();
   const [step, setStep] = useState<number>(Math.min(Math.max(initial.currentStep, 1), TOTAL_STEPS));
   const [pending, startTransition] = useTransition();
+  /**
+   * O PORTÃO DO WHATSAPP (Fase 2A).
+   *
+   * A tela 1 salva o perfil e devolve aqui; enquanto este estado estiver
+   * ligado, o passo 2 não aparece. Quem já tinha número confirmado (família
+   * antiga, ou quem voltou depois de confirmar) nunca vê esta etapa: a tela 1
+   * só liga o portão quando o número ainda não está gravado na conta.
+   *
+   * Este gate é de EXPERIÊNCIA. A trava de verdade está em `saveTela2`, no
+   * servidor — recarregar a página não pula nada.
+   */
+  const [confirmandoWhats, setConfirmandoWhats] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // Estado mutável compartilhado entre telas — fonte é o que o servidor já tem.
@@ -186,7 +199,27 @@ export function OnboardingWizard({ initial }: { initial: InitialState }) {
             </div>
           )}
 
-          {step === 1 && (
+          {step === 1 && confirmandoWhats && (
+            <div className="space-y-4">
+              <ConfirmarWhatsapp
+                numeroInicial={state.whatsapp}
+                autoFocus
+                onConfirmado={() => {
+                  setConfirmandoWhats(false);
+                  next();
+                }}
+              />
+              <button
+                type="button"
+                onClick={() => setConfirmandoWhats(false)}
+                className="text-sm text-muted-foreground underline underline-offset-4"
+              >
+                Voltar e revisar meus dados
+              </button>
+            </div>
+          )}
+
+          {step === 1 && !confirmandoWhats && (
             <Tela1Mae
               initial={{
                 nome_mae: state.profile?.nome_mae ?? "",
@@ -220,7 +253,15 @@ export function OnboardingWizard({ initial }: { initial: InitialState }) {
                       },
                       whatsapp: values.whatsapp_e164,
                     }));
-                    next();
+                    // Desde a Fase 2A, ter número na conta significa número
+                    // CONFIRMADO — só `concluirVerificacao` grava esse campo.
+                    // Quem chega aqui com o mesmo número já confirmado segue
+                    // direto; ninguém reconfirma à toa.
+                    if (state.whatsapp && state.whatsapp === values.whatsapp_e164) {
+                      next();
+                    } else {
+                      setConfirmandoWhats(true);
+                    }
                   },
                 )
               }

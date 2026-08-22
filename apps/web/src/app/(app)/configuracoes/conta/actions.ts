@@ -6,8 +6,6 @@ import { z } from "zod";
 import { requireUser, loadFamilyContext } from "@/lib/auth/require-user";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { getStripeClient } from "@/lib/stripe/client";
-import { chaveTelefoneBR } from "@/lib/telefone";
-import { encerrarTrialPorNumeroDeOutraConta } from "@/lib/trial/ledger";
 import { logEvent, logServerError } from "@/lib/log";
 
 export type PerfilResult = { ok: true } | { ok: false; error: string };
@@ -50,76 +48,17 @@ export async function salvarPerfilAction(
   }
 }
 
-const whatsappSchema = z.object({
-  whatsapp_e164: z
-    .string()
-    .trim()
-    .transform((s) => s.replace(/[\s()\-.]/g, ""))
-    .pipe(
-      z
-        .string()
-        .regex(/^\+\d{8,15}$/, "Use o formato internacional, ex.: +55 11 91234-5678."),
-    ),
-});
-
 /**
- * Atualiza o WhatsApp da família (por onde a Ayla fala). Valida o formato e
- * bloqueia se outro cadastro já usa o mesmo número — protege contra a Ayla
- * responder pra família errada (ver pendência de WhatsApp único).
+ * ⚠️ `atualizarWhatsappAction` FOI REMOVIDA na Fase 2A (21/08/2026).
+ *
+ * Ela gravava `family_accounts.whatsapp_e164` direto, sem confirmação — e é
+ * desse campo que a Ayla lê para escrever às famílias. Trocar o número virou
+ * o mesmo caminho das outras portas: `ConfirmarWhatsapp` →
+ * `confirmarCodigoWhatsapp` → `concluirVerificacao`, com código pelo WhatsApp.
+ *
+ * A tela de Configurações passou a montar o componente compartilhado; não há
+ * mais ação de escrita direta aqui. Ver `lib/whatsapp/acoes.ts`.
  */
-export async function atualizarWhatsappAction(
-  input: z.infer<typeof whatsappSchema>,
-): Promise<PerfilResult> {
-  try {
-    const { whatsapp_e164 } = whatsappSchema.parse(input);
-    const { family } = await loadFamilyContext();
-    if (!family) return { ok: false, error: "Família não inicializada." };
-
-    const admin = createServiceRoleClient();
-    // Compara pela chave NORMALIZADA (9º dígito/país) — igual ao onboarding e à
-    // Ayla — pra pegar variações do mesmo número, não só o texto idêntico.
-    const chaveNova = chaveTelefoneBR(whatsapp_e164);
-    if (chaveNova) {
-      const { data: outras } = await admin
-        .from("family_accounts")
-        .select("id, whatsapp_e164")
-        .not("whatsapp_e164", "is", null)
-        .neq("id", family.id);
-      const conflito = (outras ?? []).some(
-        (f) => chaveTelefoneBR(f.whatsapp_e164 as string) === chaveNova,
-      );
-      if (conflito) {
-        // Mesmo número de outra conta = mesma pessoa (regra "1 número = 1 teste").
-        await encerrarTrialPorNumeroDeOutraConta(admin, {
-          familyId: family.id,
-          contexto: "configuracoes",
-        });
-        return { ok: false, error: "Esse WhatsApp já está em uso por outra conta." };
-      }
-    }
-
-    const { error } = await admin
-      .from("family_accounts")
-      .update({ whatsapp_e164 })
-      .eq("id", family.id);
-    if (error) {
-      // 23505 = unique_violation (índice family_accounts_whatsapp_unico).
-      if (error.code === "23505") {
-        await encerrarTrialPorNumeroDeOutraConta(admin, {
-          familyId: family.id,
-          contexto: "configuracoes/unique",
-        });
-        return { ok: false, error: "Esse WhatsApp já está em uso por outra conta." };
-      }
-      return { ok: false, error: `Não consegui salvar: ${error.message}` };
-    }
-
-    revalidatePath("/configuracoes/conta");
-    return { ok: true };
-  } catch (e) {
-    return { ok: false, error: e instanceof Error ? e.message : "Erro inesperado" };
-  }
-}
 
 const idiomaSchema = z.object({
   idioma: z.enum(["pt", "es", "en"]),

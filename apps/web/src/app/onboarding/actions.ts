@@ -6,8 +6,7 @@ import { z } from "zod";
 import { createClient, createServiceRoleClient } from "@/lib/supabase/server";
 import { idadeAnos, dataBrParaIso } from "@/lib/idade";
 import { capitalizarNome } from "@/lib/nome";
-import { chaveTelefoneBR } from "@/lib/telefone";
-import { encerrarTrialPorNumeroDeOutraConta } from "@/lib/trial/ledger";
+import { numeroDeOutraConta, MSG_DUPLICADO } from "@/lib/whatsapp/porta";
 import { checarLimiteDeCriancas } from "@/lib/familia/limite-criancas";
 import {
   perfilPrimario,
@@ -39,7 +38,7 @@ async function requireFamily() {
 
   const { data: family } = await supabase
     .from("family_accounts")
-    .select("id, onboarding_step")
+    .select("id, onboarding_step, whatsapp_e164")
     .eq("user_id", user.id)
     .single();
   if (!family) throw new Error("Família não inicializada");
@@ -213,46 +212,26 @@ export async function saveTela1(raw: Tela1Input) {
   // família errada). Compara pela chave normalizada (9º dígito/país). Usa
   // service-role pra enxergar além da própria família (RLS esconderia as
   // outras). É a proteção principal; o índice único no banco é o backstop.
-  const chaveNova = chaveTelefoneBR(data.whatsapp_e164);
-  if (chaveNova) {
-    const admin = createServiceRoleClient();
-    const { data: outras } = await admin
-      .from("family_accounts")
-      .select("id, whatsapp_e164")
-      .not("whatsapp_e164", "is", null)
-      .neq("id", family.id);
-    const conflito = (outras ?? []).some(
-      (f) => chaveTelefoneBR(f.whatsapp_e164 as string) === chaveNova,
-    );
-    if (conflito) {
-      // Número de outra conta = mesma pessoa voltando com e-mail novo. O teste
-      // dela já foi usado (regra "1 número = 1 teste").
-      await encerrarTrialPorNumeroDeOutraConta(admin, {
-        familyId: family.id,
-        contexto: "onboarding",
-      });
-      throw new Error(
-        "Esse número de WhatsApp já está em uso por outra conta. Use o número que você usa no WhatsApp, ou fale com o suporte se achar que é um engano.",
-      );
-    }
-  }
-
-  const { error: errWhats } = await supabase
-    .from("family_accounts")
-    .update({ whatsapp_e164: data.whatsapp_e164 })
-    .eq("id", family.id);
-  if (errWhats) {
-    // 23505 = unique_violation do índice family_accounts_whatsapp_unico.
-    if (errWhats.code === "23505") {
-      await encerrarTrialPorNumeroDeOutraConta(createServiceRoleClient(), {
-        familyId: family.id,
-        contexto: "onboarding/unique",
-      });
-      throw new Error(
-        "Esse número de WhatsApp já está em uso por outra conta. Use o número que você usa no WhatsApp, ou fale com o suporte se achar que é um engano.",
-      );
-    }
-    throw new Error(`Erro ao salvar WhatsApp: ${errWhats.message}`);
+  // ⚠️ O NÚMERO NÃO É GRAVADO AQUI — e essa é a mudança da Fase 2A.
+  //
+  // Até 21/08/2026 esta ação escrevia `whatsapp_e164` direto na conta, ANTES
+  // de qualquer confirmação. É desse campo que a Ayla lê para escrever às
+  // famílias: bastava digitar o número de um terceiro para ela passar a mandar
+  // mensagem para ele. Agora quem grava é `concluirVerificacao`, e só depois
+  // do código conferir.
+  //
+  // A checagem de duplicado continua ACONTECENDO aqui, antes do código sair:
+  // mandar OTP para um número que já é de outra família seria incômodo contra
+  // terceiro, e a regra "1 número = 1 teste" precisa disparar do mesmo jeito.
+  const admin = createServiceRoleClient();
+  if (
+    await numeroDeOutraConta(admin, {
+      familyId: family.id,
+      telefone: data.whatsapp_e164,
+      contexto: "onboarding",
+    })
+  ) {
+    throw new Error(MSG_DUPLICADO);
   }
 
   await bumpStep(supabase, family.id, Math.max(family.onboarding_step, 2));
@@ -313,6 +292,19 @@ function camposMembro(m: MembroForm) {
 export async function saveTela2(raw: Tela2Input) {
   const data = tela2Schema.parse(raw);
   const { supabase, family } = await requireFamily();
+
+  // ⚠️ O PORTÃO DA FASE 2A, e ele vive no SERVIDOR de propósito. O gate da
+  // tela 1 é de tela, e tela se recarrega: sem esta linha bastaria voltar
+  // direto para o passo 2 para pular a confirmação.
+  //
+  // A invariante que sustenta a checagem: desde a Fase 2A, o ÚNICO caminho que
+  // escreve `whatsapp_e164` é `concluirVerificacao`, depois do código conferir.
+  // Logo "tem número" e "número confirmado" passaram a ser a mesma coisa — e
+  // famílias antigas, que já tinham número gravado pelo caminho velho, seguem
+  // adiante sem reconfirmar nada (era o requisito de não mexer em quem já usa).
+  if (!family.whatsapp_e164) {
+    throw new Error("Confirme seu WhatsApp antes de continuar.");
+  }
 
   const novos = data.membros.filter((m) => !m.id);
   const existentes = data.membros.filter((m) => m.id);
@@ -537,12 +529,36 @@ export async function saveTela5(raw: Tela5Input) {
   const data = tela5Schema.parse(raw);
   const { supabase, family } = await requireFamily();
 
+  // ⚠️ O OPT-IN NÃO CRIA CONSENTIMENTO SOZINHO (Fase 2A). Quem chega aqui já
+  // confirmou o WhatsApp na tela 1, e a confirmação é que datou o
+  // `consentimento_em`. Marcar a caixinha sobre um número não confirmado seria
+  // consentir em nome de terceiro; por isso a guarda pelo número da conta,
+  // que desde a Fase 2A só existe se houve código conferido.
   if (data.optin_ayla) {
+    if (!family.whatsapp_e164) {
+      throw new Error("Confirme seu WhatsApp antes de ativar a Ayla.");
+    }
+    // Idempotente: preserva a data original de quem já consentiu.
+    const { data: pref } = await supabase
+      .from("ayla_preferences")
+      .select("consentimento_em")
+      .eq("family_account_id", family.id)
+      .maybeSingle();
     const { error } = await supabase
       .from("ayla_preferences")
-      .update({ desativada: false, consentimento_em: new Date().toISOString() })
+      .update({
+        desativada: false,
+        consentimento_em: pref?.consentimento_em ?? new Date().toISOString(),
+      })
       .eq("family_account_id", family.id);
     if (error) throw new Error(`Erro ao salvar consentimento da Ayla: ${error.message}`);
+  } else {
+    // Recusa explícita continua valendo, e desliga a Ayla.
+    const { error } = await supabase
+      .from("ayla_preferences")
+      .update({ desativada: true, consentimento_em: null })
+      .eq("family_account_id", family.id);
+    if (error) throw new Error(`Erro ao salvar a recusa da Ayla: ${error.message}`);
   }
 
   await bumpStep(supabase, family.id, Math.max(family.onboarding_step, 6));

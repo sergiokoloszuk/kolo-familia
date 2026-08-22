@@ -93,6 +93,7 @@ Só o que está aberto. 🔒 = bloqueada.
 | [PEND-129](#pend-129) | **HMAC do código de ativação tem valor padrão público no código** | Segurança | **P0** | MEDIDA · IMPACTO NÃO CONFIRMADO | conferir nomes das envs na Vercel; corrigir com `KOLO_GERACAO_SECRET` |
 | [PEND-130](#pend-130) | Código de ativação sem limite de tentativas, reenvios ou cooldown | Segurança | P1 | MEDIDA · NÃO CORRIGIDA | usar `verificacoes_whatsapp` (0080), que já está aplicada e sem uso |
 | [PEND-131](#pend-131) | Sem caminho de reativação após opt-out ou bloqueio do Admin | G · Comercial | P2 | ABERTA | hoje 0 famílias afetadas; o beco existe |
+| [PEND-133](#pend-133) | **Medir o degrau novo do OTP no onboarding** | G · Comercial | P1 | ABERTA | o gate entra na tela 1; medir antes de julgar |
 | [PEND-104](#pend-104) | **2b ·** Material da pós — LOCALIZADO, em auditoria | B · Conhecimento | P1 | LOCALIZADO · NÃO ATIVO | camada transversal; cobre os buracos do Compilado (rho demanda×regras = 0,042) |
 | [PEND-105](#pend-105) | **8b ·** Conhecimento Especializado: BIA é mecanismo, não inteligência | B · Conhecimento | P1 | PROPOSTA · DECISÃO PENDENTE | sobreposição Compilado × BPs medida em 0% |
 | [PEND-106](#pend-106) | Rastro do conhecimento não cobre o WhatsApp desde 17/08 | H · Governança | P1 | MEDIDA · NÃO CORRIGIDA | invalida o baseline de PEND-042 |
@@ -5934,6 +5935,39 @@ STATUS: **ABERTA** · Aberta em: 2026-08-21
 
 ---
 
+### PEND-133
+**Medir o degrau que o OTP criou no início do onboarding**
+Bloco: **G · Comercial** · Prioridade: **P1**
+STATUS: **ABERTA** · Aberta em: 2026-08-21
+
+- **O QUE MUDOU (Fase 2A, PEND-114).** A confirmação do WhatsApp por código
+  passou a acontecer logo depois do campo de telefone — que na tela 1 é a
+  **primeira** tela do onboarding tradicional. Antes, o número era gravado sem
+  confirmação nenhuma e a pessoa seguia direto.
+- **POR QUE ISTO PRECISA SER MEDIDO, e não discutido.** PEND-125 mediu que
+  **31% dos cadastros nunca confirmam o e-mail**. Um segundo degrau, ainda mais
+  cedo, pode somar abandono — ou pode não somar nada, porque quem chega até ali
+  já quer a Ayla. **NÃO SEI**, e não há baseline: o funil nunca teve este
+  degrau.
+- **DECISÃO REGISTRADA:** o gate **fica**. Ele existe porque, sem ele, bastava
+  digitar o número de um terceiro para a Ayla passar a escrever para ele. Medir
+  não é pretexto para removê-lo; é para saber o custo e trabalhar a microcopy.
+- **O QUE MEDIR** — quatro números, na ordem do funil:
+  1. quantas chegam ao campo de WhatsApp;
+  2. quantas pedem o código;
+  3. quantas recebem e confirmam;
+  4. quantas abandonam **neste** degrau.
+- **A MATÉRIA-PRIMA JÁ EXISTE**, e por isso esta ficha não pede analytics novo:
+  `otp_solicitado`, `otp_falhou`, `otp_verificado` e `whatsapp_confirmado` já
+  são persistidos em `eventos_app`, e `onboarding_step` diz onde a pessoa
+  parou. Falta a leitura, não a coleta.
+- **Relação:** PEND-114 (a frente que criou o degrau), PEND-125 e PEND-126 (os
+  outros dois buracos do mesmo funil).
+- **CRITÉRIO DE CONCLUSÃO:** os quatro números medidos sobre pelo menos duas
+  semanas de uso real, comparados com o abandono da tela 1 antes de 21/08.
+
+---
+
 ## Protocolo permanente de trabalho
 
 > Registrado em 18/08/2026, depois de **quatro casos numa única semana** em que
@@ -6085,7 +6119,7 @@ trimestralmente, o que vier antes.
 
 ---
 
-**Próximo ID livre: PEND-132. *(024 e 025 reservadas por frentes ainda não publicadas; 0076 é número de MIGRACAO reservado — ver PEND-121.)***
+**Próximo ID livre: PEND-134. *(024 e 025 reservadas por frentes ainda não publicadas; 0076 é número de MIGRACAO reservado — ver PEND-121.)***
 
 > Conferir contra `origin/main`, não contra o seu branch. Dois branches podem
 > reivindicar o mesmo número — o conflito de merge nesta linha é o alarme.

@@ -18,6 +18,8 @@ import { DesafioFluxo } from "@/app/(app)/dashboards/onboarding/preview";
  * quando a chave (onboarding_copy.modo) manda o fluxo novo pra esta família.
  */
 
+import { ConfirmarWhatsapp } from "@/components/confirmar-whatsapp";
+
 function fill(text: string, nome: string, voce: string): string {
   const n = nome.trim() || "quem você cuida";
   const v = voce.trim() || "você";
@@ -45,7 +47,7 @@ function opcoesDoPasso(passo: OnbPasso, nascimentoBr: string): OnbChip[] {
   return [...ex, { value: "Outro", label: "Outro", livre: true }];
 }
 
-type Fase = "form" | "salvando" | "garfo" | "desafio" | "duplicado" | "erro";
+type Fase = "form" | "salvando" | "confirmar_whats" | "garfo" | "desafio" | "duplicado" | "erro";
 
 /**
  * Em que pergunta a retomada começa. Prefere o `passoId` ao número: a lista de
@@ -88,6 +90,10 @@ export function OnboardingConversacional({
   const [retomarEm, setRetomarEm] = useState<number | null>(null);
   const [fase, setFase] = useState<Fase>("form");
   const [erroMsg, setErroMsg] = useState("");
+  /** Número em confirmação e onde voltar depois — o portão da Fase 2A. */
+  const [whatsPendente, setWhatsPendente] = useState<string | null>(null);
+  const [voltarPara, setVoltarPara] = useState<number | null>(null);
+  const [whatsConfirmado, setWhatsConfirmado] = useState(false);
 
   // Captura a ORIGEM (anúncio/campanha/criativo via UTM; afiliado via ref) — igual
   // ao wizard antigo. Lê os cookies kolo_utm/kolo_ref e grava na família, 1x.
@@ -198,6 +204,15 @@ export function OnboardingConversacional({
         setFase("duplicado");
         return;
       }
+      // ⚠️ PORTÃO DA FASE 2A. O número foi conferido (duplicado), mas ainda
+      // NÃO foi gravado. Sem confirmação real por código, a conversa não passa
+      // daqui — e nada de telefone ou consentimento chega ao banco.
+      if (!whatsConfirmado) {
+        setWhatsPendente(telParaE164(strDe(merged, "whatsapp")));
+        setVoltarPara(idx + 1);
+        setFase("confirmar_whats");
+        return;
+      }
       setFase("form");
     } else if (id === "aceites") {
       void salvarAceitesAction(aceites);
@@ -304,6 +319,40 @@ export function OnboardingConversacional({
           onEntrar={() => router.push("/estrategias")}
         />
       </div>
+    );
+  }
+  if (fase === "confirmar_whats") {
+    return (
+      <Centro>
+        <p className="font-heading text-lg text-foreground">Vamos confirmar seu WhatsApp</p>
+        <ConfirmarWhatsapp
+          numeroInicial={whatsPendente}
+          autoFocus
+          onConfirmado={() => {
+            setWhatsConfirmado(true);
+            setWhatsPendente(null);
+            setFase("form");
+            if (voltarPara !== null) {
+              // O checkpoint tinha parado antes de avançar: retoma exatamente
+              // onde a conversa estava, sem repetir a pergunta do número.
+              const destino = voltarPara;
+              setVoltarPara(null);
+              if (destino >= passos.length) void finalizar(answers, outros);
+              else setIdx(destino);
+            }
+          }}
+        />
+        <button
+          type="button"
+          className="text-sm text-muted-foreground underline underline-offset-4"
+          onClick={() => {
+            setFase("form");
+            setIdx(passos.findIndex((pp) => pp.tipo === "whatsapp"));
+          }}
+        >
+          Voltar e trocar o número
+        </button>
+      </Centro>
     );
   }
   if (fase === "duplicado") {

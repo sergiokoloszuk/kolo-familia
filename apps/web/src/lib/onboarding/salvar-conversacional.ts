@@ -1,8 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { dataBrParaIso } from "@/lib/idade";
 import { capitalizarNome } from "@/lib/nome";
-import { chaveTelefoneBR } from "@/lib/telefone";
-import { encerrarTrialPorNumeroDeOutraConta } from "@/lib/trial/ledger";
+import { numeroDeOutraConta } from "@/lib/whatsapp/porta";
 import { inferGeneroDePalavra } from "@/lib/ayla/pronomes";
 import { perfilPrimario, buildDiagnosticosFormais } from "@/lib/onboarding/diagnostico";
 import { CHAVES_TEMA } from "@/lib/conducao/temas";
@@ -179,42 +178,26 @@ export async function cpMembro(
   }
 }
 
-/** ETAPA 2 — WhatsApp (com checagem de duplicado). Idempotente. */
+/**
+ * ETAPA 2 — WhatsApp: CONFERE o número, mas NÃO o grava (Fase 2A).
+ *
+ * ⚠️ Até 21/08/2026 esta etapa escrevia `whatsapp_e164` direto na conta, antes
+ * de qualquer confirmação — o mesmo furo que existia no onboarding
+ * tradicional. Quem grava agora é `concluirVerificacao`, depois do código
+ * conferir, e a tela conversacional só segue adiante com a confirmação real.
+ *
+ * O que sobrou aqui: a regra de número duplicado (que precisa disparar ANTES
+ * de o código sair) e o avanço do passo, para o funil continuar mostrando onde
+ * a pessoa parou. Idempotente.
+ */
 export async function cpWhatsapp(
   admin: SupabaseClient,
   familyId: string,
   whatsapp: string,
 ): Promise<SalvarResultado> {
   try {
-    const chaveNova = chaveTelefoneBR(whatsapp);
-    if (chaveNova) {
-      const { data: outras } = await admin
-        .from("family_accounts")
-        .select("id, whatsapp_e164")
-        .not("whatsapp_e164", "is", null)
-        .neq("id", familyId);
-      const conflito = (outras ?? []).some(
-        (f) => chaveTelefoneBR(f.whatsapp_e164 as string) === chaveNova,
-      );
-      if (conflito) {
-        // Mesmo número = mesma pessoa: o teste dela já foi usado.
-        await encerrarTrialPorNumeroDeOutraConta(admin, {
-          familyId,
-          contexto: "onboarding_conversacional",
-        });
-        return { ok: false, motivo: "whatsapp_duplicado", mensagem: "Já existe uma conta com esse WhatsApp." };
-      }
-    }
-    const { error } = await admin.from("family_accounts").update({ whatsapp_e164: whatsapp }).eq("id", familyId);
-    if (error) {
-      if (error.code === "23505") {
-        await encerrarTrialPorNumeroDeOutraConta(admin, {
-          familyId,
-          contexto: "onboarding_conversacional/unique",
-        });
-        return { ok: false, motivo: "whatsapp_duplicado", mensagem: "Já existe uma conta com esse WhatsApp." };
-      }
-      return { ok: false, motivo: "erro", mensagem: error.message };
+    if (await numeroDeOutraConta(admin, { familyId, telefone: whatsapp, contexto: "onboarding_conversacional" })) {
+      return { ok: false, motivo: "whatsapp_duplicado", mensagem: "Já existe uma conta com esse WhatsApp." };
     }
     await bumpStep(admin, familyId, 3);
     return { ok: true };
@@ -223,16 +206,27 @@ export async function cpWhatsapp(
   }
 }
 
-/** ETAPA 3 — aceites (termos + opt-in da Ayla). Captura o consentimento CEDO. */
+/**
+ * ETAPA 3 — aceites (termos + opt-in da Ayla).
+ *
+ * ⚠️ O OPT-IN NÃO GRAVA MAIS `consentimento_em` (Fase 2A). Marcar uma caixinha
+ * dizia "pode falar comigo" sobre um número que ninguém tinha confirmado — e
+ * consentimento sobre número de terceiro não é consentimento de ninguém. A
+ * data passa a nascer em `concluirVerificacao`, junto da confirmação.
+ *
+ * Quem NÃO marca o opt-in continua sem a Ayla: a etapa registra a recusa
+ * explícita, e `concluirVerificacao` não é chamada se a pessoa não confirmar.
+ */
 export async function cpAceites(
   admin: SupabaseClient,
   familyId: string,
   aceites: { termos: boolean; ayla: boolean },
 ): Promise<void> {
   try {
-    if (aceites.ayla) {
+    if (!aceites.ayla) {
+      // Recusa explícita: mantém a Ayla desativada e sem data de consentimento.
       await admin.from("ayla_preferences").upsert(
-        { family_account_id: familyId, desativada: false, consentimento_em: new Date().toISOString() },
+        { family_account_id: familyId, desativada: true, consentimento_em: null },
         { onConflict: "family_account_id" },
       );
     }

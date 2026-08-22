@@ -51,7 +51,7 @@ export function AtalhosKolo({
 }: {
   titulo: string;
   evolucaoLocked: boolean;
-  /** true = Ayla nunca foi ativada → o card vira atalho de ativação (#ativar-ayla). */
+  /** true = consentimento nunca datado → o atalho leva ao card de confirmar o WhatsApp. */
   mostrarAtivarAyla: boolean;
 }) {
   return (
@@ -123,7 +123,7 @@ export function AtalhosKolo({
             <div className="flex-1">
               <h3 className="font-heading text-lg font-medium text-foreground">Ayla no WhatsApp</h3>
               <p className="mt-0.5 text-sm leading-relaxed text-muted-foreground">
-                Ative pra pedir estratégia, montar a rotina e tirar dúvidas — na hora.
+                Confirme seu número pra pedir estratégia, montar a rotina e tirar dúvidas — na hora.
               </p>
             </div>
             <span
