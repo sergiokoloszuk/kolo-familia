@@ -1,5 +1,11 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import {
+  ehPerguntaComercial,
+  precisaDeHumano,
+  notaComercial,
+  notaSuporte,
+} from "@/lib/billing/destino-comercial";
+import {
   gerarConversacional,
   providerConversacionalParaFamilia,
   MODELO_CONVERSA,
@@ -74,29 +80,17 @@ export const FORMATO_WHATSAPP = `# Formato (WhatsApp)
  * então não depende de editar o prompt em produção.
  */
 /**
- * A mensagem toca em PREÇO/ASSINATURA?
+ * ⚠️ `PERGUNTA_DE_PRECO` SAIU DAQUI em 22/08/2026.
  *
- * Precisa pegar o caso real que descarrilhou a conversa do Pietro — "Qual
- * valor?", duas palavras, sem contexto nenhum — sem disparar no vocabulário
- * normal da Kolo. Dois cuidados aprendidos: "cartão" NÃO entra (aqui é cartão
- * de rotina visual), e "valor" sozinho também não ("o valor dela como mãe",
- * "isso não tem valor pra ele") — só valor perguntado ou de plano/assinatura.
+ * Ela era o dono da decisão "isto é conversa de dinheiro?" — dentro do arquivo
+ * do WhatsApp, o que deixava a Web sem nada. MEDIDO: das 18 formulações
+ * naturais testadas, 11 escapavam ("onde assino?", "quais os planos?", "me
+ * manda o link"), e `assinar` solto ainda casava "assinar o caderno".
+ *
+ * A decisão passou a viver em `lib/billing/destino-comercial.ts`, que os DOIS
+ * canais importam. Os 13 casos positivos e 9 negativos que este arquivo
+ * garantia foram levados inteiros para o teste de lá, mais os novos.
  */
-export const PERGUNTA_DE_PRECO = new RegExp(
-  [
-    // termos que só existem em conversa de dinheiro
-    "\\b(pre[çc]o|mensalidade|assinatura|assinar|cobran[çc]a|cupom|desconto)\\b",
-    "\\bplano\\s+(mensal|anual)\\b",
-    "\\b(pagar|paguei|pagando|pago|cobra|cobram|cobrar)\\b",
-    "\\bgr[áa]tis\\b",
-    // "quanto custa/é/fica/sai/vou pagar"
-    "\\bquanto\\s+(custa|custam|é|fica|sai|vou\\s+pagar|tenho\\s+que\\s+pagar)\\b",
-    // "valor" só quando é pergunta ou de plano/assinatura
-    "\\b(qual|quais|quanto|que)\\s+(é\\s+)?(o\\s+|os\\s+)?valor(es)?\\b",
-    "\\bvalor(es)?\\s+(do|da|de)\\s+(plano|assinatura|app|aplicativo|kolo|mensalidade)\\b",
-  ].join("|"),
-  "i",
-);
 
 export const DIRETRIZ_IDIOMA = `# Idioma (REGRA QUE PREVALECE — leia por último)
 Esta regra PREVALECE sobre qualquer instrução acima que mande responder "em português do Brasil": aquilo vale SÓ quando a mãe escreve em português. O idioma da resposta é SEMPRE o da mãe.
@@ -605,24 +599,13 @@ QUEM ENTREGA O PLANO NÃO É VOCÊ, É O SISTEMA — logo depois desta sua fala,
       `QUANDO OFERECER UM PLANO — e quando NÃO. Primeiro tenha uma CONVERSA RICA (entenda, acolha, agregue, explique como o cérebro/o desenvolvimento funciona, dê direção com ideias concretas) — e é assim, também, que a Kolo vai CONHECENDO a criança: faça as perguntas que ajudam E que revelam o perfil. O plano só vale quando faz sentido TRABALHAR algo com estrutura: ajustar o mindset / uma crença ("não é capaz" → é habilidade em construção), propor atividades pra desenvolver uma habilidade, superar um desafio ou treinar algo — e só depois de já ter ENTENDIDO o suficiente (pra o plano ser bom, não genérico — importante com quem chegou agora). Se o momento é de conversa que já vale por si (acolher, informar, tirar uma dúvida, dar direção), NÃO force um plano — sustente a conversa. ADEQUE SEMPRE À IDADE: criança pequena → brincadeiras/atividades/historinha; adolescente ou adulto → atividades e estratégias, NUNCA infantilize (nada de "brincadeiras"/"historinha" pra eles). Quando fizer sentido, ofereça UMA vez, de leve, no fim — e NUNCA como "um plano" seco (soa plano de ASSINATURA e a mãe pergunta o preço em vez de aceitar). Diga o que É: "quer que eu monte um plano estratégico com atividades pra isso? Vem em PDF aqui e fica salvo no app". NÃO fale em custo/preço na oferta — puxar dinheiro sem ela ter perguntado planta a dúvida que você queria evitar; se ela se confundir e perguntar, aí sim você esclarece. Não ofereça a cada mensagem nem se acabou de mandar um. Se ela disser "sim", o sistema entrega — você só confirma que está montando.`,
     );
   }
-  // PREÇO / ASSINATURA — a pergunta que hoje descarrilha a conversa. A Ayla
-  // mandava pra um "suporte" que não existe e nunca dava o link. A página
-  // /precos é pública e lê os valores ao vivo do banco, então nunca desatualiza.
-  if (PERGUNTA_DE_PRECO.test(params.mensagem)) {
-    const base = (process.env.NEXT_PUBLIC_APP_URL || "").replace(/\/$/, "");
-    const link = base ? `${base}/precos` : null;
-    notas.push(
-      [
-        `Ela tocou em PREÇO/ASSINATURA. Não negocie, não invente valor nem desconto — mas RESPONDA.`,
-        // O mal-entendido mais comum: ela achou que o MATERIAL é pago.
-        `Antes de qualquer coisa, cheque na <conversa_recente> se você acabou de oferecer um plano estratégico. Se sim, ela quase certamente achou que o MATERIAL é pago — desfaça isso primeiro, com naturalidade: o plano estratégico é o material sobre a criança, já incluído, sem custo nenhum. E ofereça montar assim mesmo.`,
-        `Durante o teste não se cobra nada, e nenhum material que você entrega é cobrado à parte.`,
-        link
-          ? `Se a dúvida for mesmo sobre a assinatura (quanto custa depois, planos), mande ESTE link, que mostra os valores atualizados: ${link}`
-          : `Se a dúvida for sobre a assinatura, diga que os valores ficam na página de preços do site.`,
-        `NÃO diga que vai chamar alguém, nem que existe "digitar suporte" — isso não existe e a pessoa fica esperando. Se ela quiser mesmo falar com gente, o time responde pelo suporte dentro do app e pelo e-mail de contato.`,
-      ].join(" "),
-    );
+  // COMERCIAL e SUPORTE — as duas decisões que a auditoria de 22/08 encontrou
+  // sem dono. Agora vêm da fonte canônica, e são as MESMAS da Web.
+  if (ehPerguntaComercial(params.mensagem)) {
+    notas.push(notaComercial());
+  }
+  if (precisaDeHumano(params.mensagem)) {
+    notas.push(notaSuporte());
   }
   if (params.koloVivoResumo.trim() || (params.estrategiasRecentes?.length ?? 0) > 0) {
     notas.push(

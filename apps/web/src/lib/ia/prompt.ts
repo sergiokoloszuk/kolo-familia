@@ -16,6 +16,12 @@ import {
 } from "@/lib/conducao/composicao";
 import { linhasDoPerfilConsultavel } from "@/lib/kolo-vivo/consultar";
 import { FATOS_COMERCIAIS } from "@/lib/billing/fatos-comerciais";
+import {
+  ehPerguntaComercial,
+  precisaDeHumano,
+  notaComercial,
+  notaSuporte,
+} from "@/lib/billing/destino-comercial";
 import { angulosUsados, blocoProgressao } from "@/lib/conducao/angulos";
 import {
   formasDeEntrega,
@@ -532,9 +538,24 @@ export function assemblePrompt(params: {
     ? `<nota_do_turno>\nELA ESTÁ ACEITANDO O QUE VOCÊ OFERECEU no seu último turno: ${aceite}. FAÇA ISSO AGORA, neste turno. Não reabra o assunto geral da conversa, não peça pra ela repetir o pedido, não pergunte de novo o que você já sabe. Se faltar UM dado sem o qual não dá pra fazer, pergunte SÓ esse dado — nada além dele.\n</nota_do_turno>\n\n`
     : "";
 
+  // COMERCIAL e SUPORTE — a MESMA decisão do WhatsApp, da mesma fonte.
+  //
+  // ⚠️ A auditoria de 22/08 mediu que a web não tinha NADA disto, embora o
+  // Core mandasse "aponte a página de preços (o canal te dá o link)". O canal
+  // nunca dava: `/precos` apareceu 2 vezes em 3909 mensagens. Aqui a nota entra
+  // como fato do TURNO, junto do aceite — não no system, que é regra de
+  // produto e fica em cache.
+  const notasDoTurno = [
+    ehPerguntaComercial(userInput) ? notaComercial() : "",
+    precisaDeHumano(userInput) ? notaSuporte() : "",
+  ].filter(Boolean);
+  const notaDestino = notasDoTurno.length
+    ? `<nota_do_turno>\n${notasDoTurno.join("\n\n")}\n</nota_do_turno>\n\n`
+    : "";
+
   const userTurnText = contextoBloco
-    ? `${contextoBloco}\n\n${notaAceite}<${wrapper}>\n${userInput}\n</${wrapper}>`
-    : `${notaAceite}<${wrapper}>\n${userInput}\n</${wrapper}>`;
+    ? `${contextoBloco}\n\n${notaAceite}${notaDestino}<${wrapper}>\n${userInput}\n</${wrapper}>`
+    : `${notaAceite}${notaDestino}<${wrapper}>\n${userInput}\n</${wrapper}>`;
 
   messages.push({ role: "user", content: userTurnText });
 

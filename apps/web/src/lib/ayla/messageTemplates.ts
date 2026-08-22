@@ -12,6 +12,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { pronomesVars, type Genero } from "./pronomes";
 import { nomeUsavelCrianca, primeiroNome, primeiroNomeCriancaConfiavel } from "./crianca-especifica";
 import { fraseDoTema, listarTemas } from "@/lib/conducao/temas";
+import { linkPlanos } from "@/lib/billing/destino-comercial";
 
 type TemplateVars = Record<string, string | number | undefined>;
 
@@ -310,13 +311,29 @@ export function templateRespostaRegistro(params: {
 // Comerciais — trial D-3, D-0 (PRD §12.5)
 // ============================================================
 
+/**
+ * As mensagens de fim de teste (D-3 e D-0).
+ *
+ * ⚠️ O LINK ENTRA COMO VARIÁVEL, não escrito dentro do texto. MEDIDO em
+ * 22/08/2026: as duas variações de `trial_d0` em produção diziam "é só assinar
+ * em /assinatura" — caminho solto, que no WhatsApp não é clicável e não leva a
+ * lugar nenhum.
+ *
+ * `{link_planos}` vem de `linkPlanos()`, a fonte canônica, para que a URL não
+ * fique gravada no banco e não exija edição de template quando o domínio mudar.
+ * Sem `NEXT_PUBLIC_APP_URL` a variável vira string vazia e a frase continua de
+ * pé — degrada, não quebra.
+ */
 export async function templateTrial(
   supabase: SupabaseClient,
   params: { diasRestantes: 3 | 0; nomeMae: string; seed: string },
 ): Promise<string> {
   const key = params.diasRestantes === 0 ? "trial_d0" : "trial_d3";
   const variations = await getVariations(supabase, key);
-  return fill(pickVariation(variations, params.seed), params);
+  return fill(pickVariation(variations, params.seed), {
+    ...params,
+    link_planos: linkPlanos() ?? "",
+  });
 }
 
 // ============================================================

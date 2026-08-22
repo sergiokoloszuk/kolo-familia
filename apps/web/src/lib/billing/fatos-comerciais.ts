@@ -42,4 +42,4 @@ export const TRIAL_DIAS = 7;
  * gasta contexto. Preço fica FORA daqui porque vive em `configuracao_precos` e
  * muda sem deploy; quem precisa dele o lê da tabela, como o `/ajuda` já faz.
  */
-export const FATOS_COMERCIAIS = `FATO COMERCIAL, nunca invente: o teste grátis é de ${TRIAL_DIAS} dias — corrija quem disser outro prazo, e não confunda com a duração de um Plano. Preço e cobrança: mande para a tela de Assinatura.`;
+export const FATOS_COMERCIAIS = `FATO COMERCIAL, nunca invente: o teste grátis é de ${TRIAL_DIAS} dias — corrija quem disser outro prazo, e não confunda com a duração de um Plano. Preço, planos e "como assino": responda VOCÊ e mande o link de Planos que o canal te dá — nunca mande procurar o suporte por causa disso.`;
