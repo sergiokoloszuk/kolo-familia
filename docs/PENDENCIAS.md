@@ -93,6 +93,7 @@ Só o que está aberto. 🔒 = bloqueada.
 | [PEND-129](#pend-129) | **HMAC do código de ativação tem valor padrão público no código** | Segurança | **P0** | MEDIDA · IMPACTO NÃO CONFIRMADO | conferir nomes das envs na Vercel; corrigir com `KOLO_GERACAO_SECRET` |
 | [PEND-130](#pend-130) | Código de ativação sem limite de tentativas, reenvios ou cooldown | Segurança | P1 | MEDIDA · NÃO CORRIGIDA | usar `verificacoes_whatsapp` (0080), que já está aplicada e sem uso |
 | [PEND-131](#pend-131) | Sem caminho de reativação após opt-out ou bloqueio do Admin | G · Comercial | P2 | ABERTA | hoje 0 famílias afetadas; o beco existe |
+| [PEND-132](#pend-132) | `iniciar.ts` não reconhece `trial_ja_utilizado`, que a 0081 devolve | G · Comercial | P2 | ABERTA | corrigir ANTES de ligar `iniciarTrial` na Fase 2C |
 | [PEND-104](#pend-104) | **2b ·** Material da pós — LOCALIZADO, em auditoria | B · Conhecimento | P1 | LOCALIZADO · NÃO ATIVO | camada transversal; cobre os buracos do Compilado (rho demanda×regras = 0,042) |
 | [PEND-105](#pend-105) | **8b ·** Conhecimento Especializado: BIA é mecanismo, não inteligência | B · Conhecimento | P1 | PROPOSTA · DECISÃO PENDENTE | sobreposição Compilado × BPs medida em 0% |
 | [PEND-106](#pend-106) | Rastro do conhecimento não cobre o WhatsApp desde 17/08 | H · Governança | P1 | MEDIDA · NÃO CORRIGIDA | invalida o baseline de PEND-042 |
@@ -5934,6 +5935,41 @@ STATUS: **ABERTA** · Aberta em: 2026-08-21
 
 ---
 
+### PEND-132
+**`iniciar.ts` não reconhece `trial_ja_utilizado`, que a migração 0081 devolve**
+Bloco: **G · Comercial** · Prioridade: **P2**
+STATUS: **ABERTA** · Aberta em: 2026-08-21
+
+- **VI NO CÓDIGO (21/08/2026).** `iniciar_trial_se_apto` (migração 0081) tem
+  **sete** retornos possíveis: `iniciado` · `ja_existia` · `sem_whatsapp` ·
+  `nao_verificado` · `sem_consentimento` · `familia_inexistente` ·
+  **`trial_ja_utilizado`**. O tipo `MotivoTrial` em
+  `apps/web/src/lib/trial/iniciar.ts` lista apenas seis mais `erro` — o sétimo
+  ficou de fora.
+- **O QUE ISSO PROVOCA.** `trial_ja_utilizado` é uma **recusa legítima** — é a
+  regra da 0065 funcionando, o teste já usado por aquela pessoa. Mas ele não
+  está em `RECUSAS_LEGITIMAS`, então cai no ramo final e dispara
+  `logServerError("iniciar_trial_inesperado")`. Uma regra de negócio correta
+  seria registrada como erro inesperado do sistema, poluindo o sinal justamente
+  no caminho que o §11 do protocolo manda manter legível.
+- **IMPACTO HOJE: ZERO — MEDI.** `iniciar.ts` é órfão: nenhum módulo do
+  repositório o importa. Não está em `origin/main` e não está no commit servido
+  em produção. Nenhuma família passa por este código.
+- **ONDE A DIVERGÊNCIA NASCEU.** A 0081 foi escrita e aplicada em produção; o
+  `iniciar.ts` foi escrito depois, replicando a lista de motivos **à mão**. Duas
+  fontes para a mesma enumeração — o §15 do protocolo chama isso de decisão sem
+  dono único, e elas sempre divergem.
+- **NÃO CORRIGIDA DE PROPÓSITO.** Achada durante a reconciliação de 0080/0081,
+  que é uma frente de documentação e migrações. Corrigir ali teria posto código
+  funcional num branch que existe para não ter nenhum (§5).
+- **Relação:** PEND-114, Fase 2. A correção pertence à frente que ligar o
+  `iniciarTrial` de verdade.
+- **CRITÉRIO DE CONCLUSÃO:** `MotivoTrial` cobrindo os sete retornos da 0081,
+  `trial_ja_utilizado` dentro de `RECUSAS_LEGITIMAS`, e um teste que falhe se a
+  migração ganhar um motivo novo que o tipo não conheça.
+
+---
+
 ## Protocolo permanente de trabalho
 
 > Registrado em 18/08/2026, depois de **quatro casos numa única semana** em que
@@ -6085,7 +6121,7 @@ trimestralmente, o que vier antes.
 
 ---
 
-**Próximo ID livre: PEND-132. *(024 e 025 reservadas por frentes ainda não publicadas; 0076 é número de MIGRACAO reservado — ver PEND-121.)***
+**Próximo ID livre: PEND-133. *(024 e 025 reservadas por frentes ainda não publicadas; 0076 é número de MIGRACAO reservado — ver PEND-121.)***
 
 > Conferir contra `origin/main`, não contra o seu branch. Dois branches podem
 > reivindicar o mesmo número — o conflito de merge nesta linha é o alarme.
