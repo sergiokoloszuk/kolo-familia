@@ -94,6 +94,7 @@ Só o que está aberto. 🔒 = bloqueada.
 | [PEND-130](#pend-130) | Código de ativação sem limite de tentativas, reenvios ou cooldown | Segurança | P1 | MEDIDA · NÃO CORRIGIDA | usar `verificacoes_whatsapp` (0080), que já está aplicada e sem uso |
 | [PEND-131](#pend-131) | Sem caminho de reativação após opt-out ou bloqueio do Admin | G · Comercial | P2 | ABERTA | hoje 0 famílias afetadas; o beco existe |
 | [PEND-133](#pend-133) | **Medir o degrau novo do OTP no onboarding** | G · Comercial | P1 | ABERTA | o gate entra na tela 1; medir antes de julgar |
+| [PEND-134](#pend-134) | **Smoke integrado da Fase 2A (OTP) ainda não feito** | Segurança | P1 | ABERTA | número QA limpo; falta e-mail QA |
 | [PEND-104](#pend-104) | **2b ·** Material da pós — LOCALIZADO, em auditoria | B · Conhecimento | P1 | LOCALIZADO · NÃO ATIVO | camada transversal; cobre os buracos do Compilado (rho demanda×regras = 0,042) |
 | [PEND-105](#pend-105) | **8b ·** Conhecimento Especializado: BIA é mecanismo, não inteligência | B · Conhecimento | P1 | PROPOSTA · DECISÃO PENDENTE | sobreposição Compilado × BPs medida em 0% |
 | [PEND-106](#pend-106) | Rastro do conhecimento não cobre o WhatsApp desde 17/08 | H · Governança | P1 | MEDIDA · NÃO CORRIGIDA | invalida o baseline de PEND-042 |
@@ -5968,6 +5969,47 @@ STATUS: **ABERTA** · Aberta em: 2026-08-21
 
 ---
 
+### PEND-134
+**O smoke integrado da Fase 2A nunca foi executado**
+Bloco: **Segurança** · Prioridade: **P1**
+STATUS: **ABERTA** · Aberta em: 2026-08-22
+
+> A Fase 2A está **em produção** (`74f069a`, servindo desde 22/08 às 01:23Z).
+> Está **testada, não exercitada**: 2730 testes verdes, nenhuma pessoa.
+
+- **O QUE JÁ ESTÁ PROVADO.** Os 25 testes do mecanismo e os 31 de integração
+  passam; `tsc` e `build` limpos; os quatro caminhos que gravavam
+  `whatsapp_e164` sem OTP deixaram de existir (varredura estrutural em
+  `origin/main`). O **transporte** para o aparelho de QA já havia sido provado
+  em teste anterior.
+- **O QUE FALTA, e é o que nenhum teste substitui:** a jornada inteira por uma
+  pessoa — `/signup` → onboarding → informar o WhatsApp → receber o código NO
+  APARELHO → digitar → confirmar → o onboarding destravar.
+- **NÚMERO DE QA CONFIRMADO LIMPO em 22/08/2026:** `+55 11 97084-4839`.
+  Verificado por leitura, com as 6 variantes do 9º dígito e os 4 hashes
+  SHA-256 do ledger, contra **as 87 tabelas expostas**: zero vínculo em
+  `family_accounts` (número e hash), `verificacoes_whatsapp`, `testes_usados`
+  e `campanhas`. `crm_leads`, `conversas` e `acessos_app` não têm coluna de
+  telefone — ligam-se só por `family_account_id`, que não existe para ele.
+- **O QUE BLOQUEIA:** falta um **e-mail de QA** acessível e nunca usado na
+  Kolo. Sem ele não há como criar a conta pelo caminho real, e criar por
+  INSERT direto não seria o teste que interessa.
+- **BASELINE JÁ CONGELADO (22/08, 01:33Z)**, para provar a limpeza depois:
+  231 famílias · 231 assinaturas · 231 preferências · 140 `testes_usados` ·
+  **0** `verificacoes_whatsapp` · 229 trials ativos · 2 assinaturas ativas ·
+  132 consentimentos datados.
+- **ATENÇÃO NA LIMPEZA, quando o smoke rodar:** confirmar o número dispara o
+  gatilho `family_accounts_checar_teste` (0069), que grava o hash em
+  `testes_usados`. Essa linha **não** cai no `ON DELETE CASCADE` e precisa de
+  DELETE explícito — senão o aparelho de QA fica queimado para sempre pela
+  regra "1 número = 1 teste".
+- **Relação:** PEND-114 (a frente), PEND-133 (medir o degrau novo).
+- **CRITÉRIO DE CONCLUSÃO:** a jornada completa exercitada por uma pessoa, com
+  `verificado_em`, `whatsapp_e164`, `consentimento_em`, `desativada=false` e
+  `onboarding_step` provados no banco — e as 11 contagens de volta ao baseline.
+
+---
+
 ## Protocolo permanente de trabalho
 
 > Registrado em 18/08/2026, depois de **quatro casos numa única semana** em que
@@ -6119,7 +6161,7 @@ trimestralmente, o que vier antes.
 
 ---
 
-**Próximo ID livre: PEND-134. *(024 e 025 reservadas por frentes ainda não publicadas; 0076 é número de MIGRACAO reservado — ver PEND-121.)***
+**Próximo ID livre: PEND-135. *(024 e 025 reservadas por frentes ainda não publicadas; 0076 é número de MIGRACAO reservado — ver PEND-121.)***
 
 > Conferir contra `origin/main`, não contra o seu branch. Dois branches podem
 > reivindicar o mesmo número — o conflito de merge nesta linha é o alarme.
