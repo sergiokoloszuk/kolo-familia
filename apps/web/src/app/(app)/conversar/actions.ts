@@ -17,13 +17,7 @@ import {
   MEMBRO_CAMPOS_EXTRAS,
   membroCampoStorage,
 } from "@/lib/kolo-vivo/campos";
-import {
-  subcamposDe,
-  parsearSubcampos,
-  serializarSubcampos,
-  splitItens,
-  joinItens,
-} from "@/lib/kolo-vivo/subcampos";
+import { appendFato, aplicarTextoCampo } from "@/lib/kolo-vivo/incorporar";
 import { idadeAnos, hojeLocalISO } from "@/lib/idade";
 import { requireActiveWrite, SubscriptionBlockedError } from "@/lib/auth/require-active-write";
 import { resolveFamily } from "@/lib/auth/current-family";
@@ -428,7 +422,19 @@ export async function proporAtualizacao(
       conversa.membro_atipico_id as string | null,
     );
 
-    const proposta = await extrairAtualizacoes({ transcript, koloVivoResumo, membro });
+    const proposta = await extrairAtualizacoes({
+      transcript,
+      koloVivoResumo,
+      membro,
+      // ⚠️ SERVICE ROLE, e só pra medir. `api_calls` é auditoria: a RLS recusa
+      // o INSERT da sessão da família. Foi exatamente assim que `conversa_web`
+      // ficou com ZERO registros por meses (ver `stream/route.ts`). Todo o
+      // resto desta action continua passando pela RLS da família.
+      supabase: createServiceRoleClient(),
+      familyId: family.id,
+      via: "web_conversa",
+      meta: { conversa_id: conversaId },
+    });
     return {
       ok: true,
       proposta,
@@ -458,45 +464,15 @@ const confirmarSchema = z.object({
 
 const FAMILIA_CAMPOS = ["composicao", "rotina", "recursos", "dinamica"] as const;
 
-/** Anexa um fato curto ao texto da seção, sem substituir o que já existe. */
-function appendFato(prev: string, fato: string): string {
-  const p = (prev ?? "").trim();
-  const f = fato.trim();
-  if (!p) return f;
-  if (p.toLowerCase().includes(f.toLowerCase())) return p;
-  return `${p}\n${f}`;
-}
-
 /**
- * Novo texto de um campo, respeitando sub-campos estruturados. Domínios com
- * sub-campos (ex.: nutricional) recebem o fato NO sub-campo certo (seletor
- * substitui; demais anexam); domínios simples usam o anexo/reescrita normal.
+ * ⚠️ `appendFato` e `aplicarTextoCampo` MORAVAM AQUI, copiados de
+ * `lib/kolo-vivo/incorporar.ts`.
+ *
+ * As duas cópias eram idênticas — conferido removendo comentários e espaços:
+ * a única diferença era a palavra `export`. Não havia divergência de
+ * comportamento a resolver; havia duas verdades esperando para divergir na
+ * primeira correção feita de um lado só. O merge do Kolo Vivo é UM.
  */
-function aplicarTextoCampo(
-  campo: string,
-  prev: string,
-  it: { subcampo?: string | null; texto: string; operacao: "adicionar" | "reescrever" },
-): string {
-  const subs = subcamposDe(campo);
-  if (!subs) {
-    return it.operacao === "reescrever" ? it.texto : appendFato(prev, it.texto);
-  }
-  const valores = parsearSubcampos(subs, prev);
-  const def =
-    (it.subcampo && subs.find((s) => s.key === it.subcampo)) || subs[subs.length - 1];
-  if (def.opcoes) {
-    valores[def.key] = it.texto; // seletor: substitui pelo valor
-  } else if (def.lista) {
-    // lista: anexa como item(ns), sem duplicar
-    valores[def.key] = joinItens([
-      ...splitItens(valores[def.key] ?? ""),
-      ...splitItens(it.texto),
-    ]);
-  } else {
-    valores[def.key] = appendFato(valores[def.key] ?? "", it.texto);
-  }
-  return serializarSubcampos(subs, valores);
-}
 
 export async function confirmarAtualizacao(
   input: z.infer<typeof confirmarSchema>,

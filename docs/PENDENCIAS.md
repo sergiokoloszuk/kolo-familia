@@ -94,6 +94,10 @@ Só o que está aberto. 🔒 = bloqueada.
 | [PEND-130](#pend-130) | Código de ativação sem limite de tentativas, reenvios ou cooldown | Segurança | P1 | MEDIDA · NÃO CORRIGIDA | usar `verificacoes_whatsapp` (0080), que já está aplicada e sem uso |
 | [PEND-131](#pend-131) | Sem caminho de reativação após opt-out ou bloqueio do Admin | G · Comercial | P2 | ABERTA | hoje 0 famílias afetadas; o beco existe |
 | [PEND-133](#pend-133) | **Medir o degrau novo do OTP no onboarding** | G · Comercial | P1 | ABERTA | o gate entra na tela 1; medir antes de julgar |
+| [PEND-135](#pend-135) | Terceira cópia de `montarKoloVivoResumo` em `conversar/actions.ts` | H · Governança | P3 | ABERTA | equivalente por comportamento; fora do escopo autorizado |
+| [PEND-136](#pend-136) | A conversa web é o único caminho de escrita no perfil que não registra marco | C · Memória | P1 | MEDIDA · NÃO CORRIGIDA | 3 dos 4 caminhos chamam `detectarMarcos`; este não |
+| [PEND-137](#pend-137) | Marcos ligados desde 17/08 produziram **1** marco em 143 perfis | C · Memória | P1 | MEDIDA · NÃO CORRIGIDA | o mecanismo funciona; nada flui por ele |
+| [PEND-138](#pend-138) | `sugestao_perfil_vivos`: 3 das 4 origens do CHECK nunca gravaram | H · Governança | P2 | MEDIDA · NÃO CORRIGIDA | `app`, `skill` e `diario_parser` = 0 linhas |
 | [PEND-104](#pend-104) | **2b ·** Material da pós — LOCALIZADO, em auditoria | B · Conhecimento | P1 | LOCALIZADO · NÃO ATIVO | camada transversal; cobre os buracos do Compilado (rho demanda×regras = 0,042) |
 | [PEND-105](#pend-105) | **8b ·** Conhecimento Especializado: BIA é mecanismo, não inteligência | B · Conhecimento | P1 | PROPOSTA · DECISÃO PENDENTE | sobreposição Compilado × BPs medida em 0% |
 | [PEND-106](#pend-106) | Rastro do conhecimento não cobre o WhatsApp desde 17/08 | H · Governança | P1 | MEDIDA · NÃO CORRIGIDA | invalida o baseline de PEND-042 |
@@ -6112,6 +6116,111 @@ Ao concluir ou cancelar: mover a ficha para
 **`Aprendizado:`**. Quando três fichas arquivadas disserem a mesma coisa,
 aquilo virou padrão — e padrão sobe para o protocolo.
 
+### PEND-135
+**Terceira cópia de `montarKoloVivoResumo` vive em `conversar/actions.ts`**
+Bloco: **H · Governança** · Prioridade: **P3**
+STATUS: **ABERTA** · Aberta em: 2026-08-22
+
+- **VI NO CÓDIGO.** `montarKoloVivoResumo` existe duas vezes:
+  `lib/kolo-vivo/incorporar.ts` (exportada, usada pelo Registro Diário) e
+  `app/(app)/conversar/actions.ts:632` (local, usada pela conversa web).
+- **PROVEI POR EXECUÇÃO** que são equivalentes por comportamento. As duas
+  únicas diferenças são de tipo e de forma, não de efeito:
+  1. o tipo do cliente (`Awaited<ReturnType<typeof createClient>>` × `SupabaseClient`);
+  2. os campos da família vêm de um literal inline num lado e da constante
+     `FAMILIA_CAMPOS` no outro — mesma lista.
+- **POR QUE NÃO FOI CORRIGIDA AGORA.** A missão de 22/08 autorizou consolidar
+  `aplicarTextoCampo` (nomeada explicitamente) e nada mais. Achado fora do
+  escopo vira ficha, não correção silenciosa. As duas cópias de
+  `aplicarTextoCampo` e de `appendFato` **foram** consolidadas nessa missão.
+- **CRITÉRIO DE CONCLUSÃO:** existe uma `montarKoloVivoResumo`, importada pelos
+  dois chamadores, com a suíte verde.
+
+---
+
+### PEND-136
+**A conversa web é o único caminho de escrita no perfil que não registra marco**
+Bloco: **C · Memória** · Prioridade: **P1**
+STATUS: **MEDIDA · NÃO CORRIGIDA** · Aberta em: 2026-08-22
+
+- **VI NO CÓDIGO.** Quatro caminhos escrevem em `perfil_vivo_membro` a partir
+  de fato novo. Três chamam `detectarMarcos`:
+  - editor do Kolo Vivo — `app/(app)/kolo-vivo/actions.ts:147` ✅
+  - WhatsApp (Ayla) — `lib/ayla/orchestrator.ts:3668` e `:3686` ✅
+  - Registro Diário — `lib/kolo-vivo/incorporar.ts:187` e `:193` ✅
+  - **conversa web — `app/(app)/conversar/actions.ts`, "Guardar no Perfil": ❌
+    nenhuma ocorrência de `detectarMarcos` no arquivo.**
+- **O QUE SE PERDE.** Uma mãe que conta na conversa web que a criança passou de
+  "Não-verbal" para "Fala palavras soltas" tem o seletor trocado e **a transição
+  não vira história**. É exatamente o defeito que a PEND-090 · Peça 1 corrigiu
+  no caminho da Ayla em 17/08 — e que sobreviveu aqui.
+- **POR QUE NÃO FOI CORRIGIDA AGORA.** A missão de 22/08 é instrumentação e
+  consolidação do extrator; ligar marco na conversa web muda comportamento de
+  escrita, que é o portão seguinte.
+- **CAMINHO PROVÁVEL, e é barato:** o caminho certo não é copiar
+  `detectarMarcos` para lá — é a conversa web passar a usar
+  `aplicarItensNoMembro` (`lib/kolo-vivo/incorporar.ts:154`), que o Registro
+  Diário já usa e que já faz marco, merge e escrita conferida. Um quarto
+  caminho de escrita deixaria de existir.
+- **CRITÉRIO DE CONCLUSÃO:** trocar um seletor pela conversa web cria linha em
+  `categorias_extras.marcos`, com teste.
+
+---
+
+### PEND-137
+**O mecanismo de marcos está ligado e produziu 1 marco em 143 perfis**
+Bloco: **C · Memória** · Prioridade: **P1**
+STATUS: **MEDIDA · NÃO CORRIGIDA** · Aberta em: 2026-08-22
+
+- **MEDI em 22/08/2026:** **1 perfil de 143** tem marcos; **1 marco no total**.
+- **O agravante é a data.** O comentário em `orchestrator.ts:3650` registra
+  "MEDI em produção antes de corrigir: 1 perfil de 128 tinha marcos" — em
+  17/08, quando a detecção foi ligada no caminho da Ayla, que é o que mais
+  escreve. **Cinco dias depois, o número continua 1.** A correção está no ar e
+  não produziu nenhum marco novo.
+- **HIPÓTESES, não medidas** (`NÃO SEI` qual vale):
+  1. `detectarMarcos` exige que o seletor tivesse valor ANTES — e há só
+     **258 seletores preenchidos em 143 perfis** (≈1,8 por criança, de 19
+     seletores possíveis). A maioria das transições é de vazio para algo, que
+     por desenho não é marco;
+  2. a extração raramente propõe `reescrever` sobre um seletor;
+  3. a janela de 5 dias é curta demais para uma transição de desenvolvimento.
+- **POR QUE IMPORTA.** "Mostrar progresso para a família" depende disto. Um
+  mecanismo que existe, está ligado e não dispara é indistinguível de um que
+  não existe — e é pior, porque parece resolvido.
+- **CRITÉRIO DE CONCLUSÃO:** saber qual das três hipóteses vale, por medição, e
+  então decidir. Não acrescentar mecanismo antes de saber.
+
+---
+
+### PEND-138
+**`sugestao_perfil_vivos`: três das quatro origens nunca gravaram uma linha**
+Bloco: **H · Governança** · Prioridade: **P2**
+STATUS: **MEDIDA · NÃO CORRIGIDA** · Aberta em: 2026-08-22
+
+- **MEDI em 22/08/2026**, na tabela inteira (849 linhas):
+  | origem | linhas |
+  |---|---|
+  | `ayla` | **847** |
+  | `app` | **0** |
+  | `diario_parser` | **0** |
+  | `skill` | **0** (as outras 2 linhas não têm origem entre as medidas) |
+- **VI NO CÓDIGO** por quê: a web aplica o fato **direto** no perfil depois do
+  clique em "Guardar no Perfil" — o preview na tela faz o papel da fila de
+  revisão, então não há por que criar sugestão pendente. O `CHECK` da migração
+  0001 descreve um desenho que nunca chegou a existir.
+- **CONSEQUÊNCIA REAL, e é a que importa:** qualquer contagem de "o que a Kolo
+  aprendeu" feita sobre esta tabela mede **só o WhatsApp**. Foi assim que a
+  assimetria entre canais ficou invisível por tanto tempo.
+- **DECISÃO PENDENTE:** ou a web passa a registrar procedência aqui (o campo
+  `origem_detalhe jsonb` já existe e caberia `por`/`via`/`em` sem migração), ou
+  o `CHECK` encolhe para o que é verdade. As duas são defensáveis; conviver com
+  três valores mortos não é.
+- **CRITÉRIO DE CONCLUSÃO:** ou as quatro origens gravam, ou o `CHECK` reflete
+  o que existe — e a documentação diz qual foi a escolha.
+
+---
+
 ### Arquivamento
 
 Concluídas e canceladas saem daqui quando este arquivo passar de ~40 fichas, ou
@@ -6119,7 +6228,7 @@ trimestralmente, o que vier antes.
 
 ---
 
-**Próximo ID livre: PEND-134. *(024 e 025 reservadas por frentes ainda não publicadas; 0076 é número de MIGRACAO reservado — ver PEND-121.)***
+**Próximo ID livre: PEND-139. *(024 e 025 reservadas por frentes ainda não publicadas; 0076 é número de MIGRACAO reservado — ver PEND-121.)***
 
 > Conferir contra `origin/main`, não contra o seu branch. Dois branches podem
 > reivindicar o mesmo número — o conflito de merge nesta linha é o alarme.

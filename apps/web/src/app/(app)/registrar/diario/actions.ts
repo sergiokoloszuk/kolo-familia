@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { after } from "next/server";
 import { z } from "zod";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createServiceRoleClient } from "@/lib/supabase/server";
 import { requireActiveWrite } from "@/lib/auth/require-active-write";
 import { trackFeature } from "@/lib/analytics/track";
 import { idadeAnos } from "@/lib/idade";
@@ -207,6 +207,12 @@ export async function proporKoloVivoDoDiario(
         idade: idadeAnos((m.data_nascimento as string | null) ?? null),
         perfil: (m.perfil as string) ?? "",
       },
+      // ⚠️ SERVICE ROLE só pra medir — `api_calls` é auditoria e a RLS recusa
+      // o INSERT da sessão da família. Ver `stream/route.ts`.
+      supabase: createServiceRoleClient(),
+      familyId: family.id,
+      via: "web_diario",
+      meta: { membro_atipico_id: membroAtipicoId },
     });
     // Só camada1 (a criança) faz sentido a partir do diário.
     const koloVivo = proposta.koloVivo.filter((it) => it.camada === "camada1");
