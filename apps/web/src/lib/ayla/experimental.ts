@@ -6,6 +6,8 @@ import {
   FORMATO_WHATSAPP,
   formasDeEntrega,
   pedeEntregaEstruturada,
+  INTERESSE_COMO_VEICULO,
+  A_CRIANCA_ANTES_DO_ROTULO,
 } from "@/lib/conducao/formas";
 import { FATOS_COMERCIAIS } from "@/lib/billing/fatos-comerciais";
 import {
@@ -696,9 +698,35 @@ export async function responderExperimental(
     const entrega = pedeEntregaEstruturada({
       intencao: params.turnoClassificado?.intencao ?? null,
     });
+    // ⚠️ AS TRÊS SÃO UM BLOCO SÓ, e a PEND-145 portou uma delas.
+    //
+    // O Legacy sempre as injetou juntas, sob o mesmo gate (`responder.ts`):
+    //   ...(entrega ? [formasDeEntrega(...), INTERESSE_COMO_VEICULO,
+    //                  A_CRIANCA_ANTES_DO_ROTULO] : [])
+    // Em 24/08 eu levei só `formasDeEntrega` para cá, guiado pelo sintoma que
+    // tinha medido (`##`, `**`) em vez da unidade que o código declara. O
+    // Oficial ficou com o gate de entrega e um terço do que entra por ele.
+    //
+    // O QUE FALTAVA, e não é acessório:
+    //   · `INTERESSE_COMO_VEICULO` — a permissão de ancorar a atividade no que a
+    //     criança ama. O contexto tem um freio forte contra puxar interesse fora
+    //     de hora, e o freio sozinho matava também o mecanismo que fazia o Kolo
+    //     antigo ser bom. Esta constante é a distinção entre INTRODUZIR ASSUNTO
+    //     e SER VEÍCULO — sem ela, sobra só o freio.
+    //   · `A_CRIANCA_ANTES_DO_ROTULO` — de onde a explicação nasce: da criança
+    //     que a mãe descreveu, não do diagnóstico dela.
+    //
+    // Condicionais pelo MESMO gate, pela mesma razão de sempre: as duas só fazem
+    // sentido quando há entrega. Num desabafo, repertório de atividade é ruído.
     const formato = [
       FORMATO_WHATSAPP,
-      entrega ? formasDeEntrega({ canal: "whatsapp", tema: params.turnoClassificado?.tema }) : "",
+      ...(entrega
+        ? [
+            formasDeEntrega({ canal: "whatsapp", tema: params.turnoClassificado?.tema }),
+            INTERESSE_COMO_VEICULO,
+            A_CRIANCA_ANTES_DO_ROTULO,
+          ]
+        : []),
     ]
       .filter(Boolean)
       .join("\n\n");

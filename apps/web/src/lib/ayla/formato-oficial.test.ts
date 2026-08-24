@@ -6,6 +6,8 @@ import {
   FORMATO_WHATSAPP,
   formasDeEntrega,
   pedeEntregaEstruturada,
+  INTERESSE_COMO_VEICULO,
+  A_CRIANCA_ANTES_DO_ROTULO,
 } from "@/lib/conducao/formas";
 
 /**
@@ -129,8 +131,13 @@ describe("D · o canal decide a sintaxe do título", () => {
   });
 
   it("11. e só injeta a forma quando há entrega", () => {
+    // ⚠️ A forma da condicional mudou de ternário para spread quando as duas
+    // constantes irmãs entraram (o gate passou a carregar três itens, como o
+    // Legacy sempre fez). O que este teste guarda é o GATE, não a sintaxe dele.
     const src = semComentarios(EXPERIMENTAL);
-    expect(src).toMatch(/entrega \? formasDeEntrega\(/);
+    const i = src.indexOf("...(entrega");
+    expect(i).toBeGreaterThan(-1);
+    expect(src.slice(i, src.indexOf(": [])", i))).toContain("formasDeEntrega(");
   });
 });
 
@@ -195,5 +202,90 @@ describe("G · custo — zero chamada nova", () => {
     );
     expect(conversa).toBeLessThan(3000);
     expect(comEntrega).toBeLessThan(6000);
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+describe("H · o BLOCO DE ENTREGA ficou completo (PEND-144, itens 5 e 6)", () => {
+  // ⚠️ A PEND-145 portou UMA das três. O Legacy sempre injetou as três juntas,
+  // sob o mesmo gate — e o Oficial ficou com o gate e um terço do conteúdo.
+  const NO_GATE = ["formasDeEntrega(", "INTERESSE_COMO_VEICULO", "A_CRIANCA_ANTES_DO_ROTULO"];
+
+  it("24. as três entram juntas no Oficial, sob o mesmo `entrega`", () => {
+    const src = semComentarios(EXPERIMENTAL);
+    const i = src.indexOf("...(entrega");
+    expect(i).toBeGreaterThan(-1);
+    const gate = src.slice(i, src.indexOf(": [])", i));
+    for (const c of NO_GATE) expect(gate).toContain(c);
+  });
+
+  it("25. e é a MESMA unidade que o Legacy declara — nem mais, nem menos", () => {
+    const itens = (fonte: string) => {
+      const src = semComentarios(fonte);
+      const i = src.indexOf("...(entrega");
+      const gate = src.slice(i, src.indexOf(": [])", i));
+      return NO_GATE.filter((c) => gate.includes(c));
+    };
+    expect(itens(EXPERIMENTAL)).toEqual(itens(RESPONDER));
+    expect(itens(EXPERIMENTAL)).toHaveLength(3);
+  });
+
+  it("26. FORA do gate continua só o formato — turno conversacional não muda", () => {
+    const src = semComentarios(EXPERIMENTAL);
+    const bloco = src.slice(src.indexOf("const formato = ["), src.indexOf("...(entrega"));
+    expect(bloco).toContain("FORMATO_WHATSAPP");
+    expect(bloco).not.toContain("INTERESSE_COMO_VEICULO");
+    expect(bloco).not.toContain("A_CRIANCA_ANTES_DO_ROTULO");
+  });
+
+  it("27. o interesse pode ser VEÍCULO, e a constante calibra o freio em vez de soltá-lo", () => {
+    // Sem ela sobra só o freio do contexto ("não puxe um interesse guardado"),
+    // que sozinho mata o mecanismo em vez de calibrá-lo. As três asserções são
+    // as três frases que fazem essa calibragem, no texto real da constante.
+    expect(INTERESSE_COMO_VEICULO).toMatch(/USE o interesse dele/);
+    expect(INTERESSE_COMO_VEICULO).toMatch(/NÃO afrouxa o freio/);
+    expect(INTERESSE_COMO_VEICULO).toMatch(/o interesse é o veículo de uma entrega que ela pediu/);
+  });
+
+  it("28. e a explicação nasce da criança, não do rótulo", () => {
+    expect(A_CRIANCA_ANTES_DO_ROTULO).toMatch(/diagn[óo]stico|r[óo]tulo/i);
+  });
+
+  it("29. nenhuma chamada de modelo entrou junto", () => {
+    const src = semComentarios(EXPERIMENTAL);
+    const bloco = src.slice(src.indexOf("const formato = ["), src.indexOf("const { bloco,"));
+    for (const p of ["await", "gerarConversacional", "messages.stream", "fetch(", "supabase"]) {
+      expect(bloco).not.toContain(p);
+    }
+  });
+
+  it("30. o Legacy não ganhou nada — segue com uma ocorrência de cada", () => {
+    const src = semComentarios(RESPONDER);
+    expect((src.match(/INTERESSE_COMO_VEICULO/g) ?? []).length).toBe(2); // import + uso
+    expect((src.match(/A_CRIANCA_ANTES_DO_ROTULO/g) ?? []).length).toBe(2);
+  });
+
+  it("31. a WEB continua com o próprio bloco, intocada", () => {
+    // A web injeta as mesmas duas, pelo gate dela, desde antes desta frente.
+    expect(PROMPT_WEB).toMatch(/\$\{INTERESSE_COMO_VEICULO\}/);
+    expect(PROMPT_WEB).toMatch(/\$\{A_CRIANCA_ANTES_DO_ROTULO\}/);
+    expect(PROMPT_WEB).not.toMatch(/FORMATO_WHATSAPP/);
+  });
+
+  it("32. custo: o acréscimo cai SÓ no turno de entrega", () => {
+    const conversa = FORMATO_WHATSAPP.length;
+    const entregaChars =
+      conversa +
+      formasDeEntrega({ canal: "whatsapp", tema: "sono" }).length +
+      INTERESSE_COMO_VEICULO.length +
+      A_CRIANCA_ANTES_DO_ROTULO.length;
+    const tok = (c: number) => Math.round(c / 3.5);
+    console.log(
+      `\n  conversacional: +${tok(conversa)} tokens (+${((100 * tok(conversa)) / 7011).toFixed(1)}%) — INALTERADO` +
+        `\n  entrega:        +${tok(entregaChars)} tokens (+${((100 * tok(entregaChars)) / 7011).toFixed(1)}%)` +
+        `\n  as duas novas:  +${tok(INTERESSE_COMO_VEICULO.length + A_CRIANCA_ANTES_DO_ROTULO.length)} tokens\n`,
+    );
+    // o turno conversacional não pode ter crescido
+    expect(conversa).toBeLessThan(1500);
   });
 });
