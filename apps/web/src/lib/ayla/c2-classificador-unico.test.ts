@@ -1,4 +1,5 @@
 import { describe, it, expect } from "vitest";
+import { itensDoSystem } from "./__harness/system-array";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
@@ -136,12 +137,14 @@ describe("BOAS PRÁTICAS — repertório, pelo mecanismo existente", () => {
   // propósito: o documento `core` é escrito EM markdown, e o modelo imita o que
   // o documento demonstra; a regra precisa ser a última coisa lida.
   it("a ORDEM do prompt é Core → contexto → repertório → formato", () => {
-    expect(EXP).toContain("[core.conteudo, bloco, jornada, conducaoTrial, repertorio, conducaoPosTrial, formato]");
+    // ⚠️ ORDEM, não literal — ver `itensDoSystem`. A versão anterior casava a
+    // string do array inteira e caía quando ele era quebrado em linhas.
+    const itens = itensDoSystem(EXP);
     // Repertório antes do contexto faria a resposta nascer da Boa Prática em
     // vez de nascer da criança.
-    const arr = "[core.conteudo, bloco, jornada, conducaoTrial, repertorio, conducaoPosTrial, formato]";
-    expect(arr.indexOf("core.conteudo")).toBeLessThan(arr.indexOf("bloco"));
-    expect(arr.indexOf("bloco")).toBeLessThan(arr.indexOf("repertorio"));
+    expect(itens.indexOf("core.conteudo")).toBeLessThan(itens.indexOf("bloco"));
+    expect(itens.indexOf("bloco")).toBeLessThan(itens.indexOf("repertorio"));
+    expect(itens.at(-1)).toBe("formato");
   });
 
   it("RECUPERADO ≠ INJETADO ≠ USADO — as camadas são medidas separadas", () => {
@@ -179,12 +182,15 @@ describe("SABOTAGEM — os testes mordem?", () => {
   });
 
   it("S5 · o repertório passando na frente do contexto", () => {
-    const sabotado = EXP.replace(
-      "[core.conteudo, bloco, jornada, conducaoTrial, repertorio, conducaoPosTrial, formato]",
-      "[core.conteudo, repertorio, jornada, conducaoTrial, bloco]",
-    );
-    expect(sabotado).toContain("[core.conteudo, repertorio, jornada, conducaoTrial, bloco]");
-    expect(EXP).toContain("[core.conteudo, bloco, jornada, conducaoTrial, repertorio, conducaoPosTrial, formato]");
+    // A sabotagem agora troca a ORDEM dos itens, que é o que o teste guarda —
+    // e prova que a asserção morde: com o repertório antes do contexto, ela cai.
+    const itens = itensDoSystem(EXP);
+    const trocado = [...itens];
+    const i = trocado.indexOf("bloco");
+    const j = trocado.indexOf("repertorio");
+    [trocado[i], trocado[j]] = [trocado[j], trocado[i]];
+    expect(trocado.indexOf("bloco")).toBeGreaterThan(trocado.indexOf("repertorio"));
+    expect(itens.indexOf("bloco")).toBeLessThan(itens.indexOf("repertorio"));
   });
 
   it("S6 · injetadas medidas pela consulta em vez do bloco", () => {

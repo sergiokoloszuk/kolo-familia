@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
+import { itensDoSystem } from "./__harness/system-array";
 import {
   FORMATO_WHATSAPP,
   formasDeEntrega,
@@ -35,6 +36,7 @@ const PROMPT_WEB = readFileSync(resolve(__dirname, "../ia/prompt.ts"), "utf8");
 const semComentarios = (s: string) =>
   s.replace(/\/\*[\s\S]*?\*\//g, "").replace(/(^|[^:])\/\/.*$/gm, "$1");
 
+
 // ─────────────────────────────────────────────────────────────────────────────
 describe("A · a regra de formato chegou ao caminho OFICIAL", () => {
   it("1. `experimental.ts` injeta FORMATO_WHATSAPP", () => {
@@ -44,10 +46,7 @@ describe("A · a regra de formato chegou ao caminho OFICIAL", () => {
   });
 
   it("2. e o formato entra POR ÚLTIMO no system — o Core demonstra markdown", () => {
-    const src = semComentarios(EXPERIMENTAL);
-    const m = src.match(/system: \[([^\]]*)\]/);
-    expect(m).not.toBeNull();
-    const itens = m![1].split(",").map((x) => x.trim());
+    const itens = itensDoSystem(EXPERIMENTAL);
     expect(itens.at(-1)).toBe("formato");
     expect(itens[0]).toBe("core.conteudo");
   });
@@ -165,11 +164,14 @@ describe("F · NADA do Core do Legacy veio junto", () => {
     expect(src).toMatch(/core\.conteudo/);
   });
 
-  it("16. e o escopo proibido continua fora — nada de comercial, onFalha ou check-in", () => {
-    const src = semComentarios(EXPERIMENTAL);
-    for (const fora of ["FATOS_COMERCIAIS", "notaComercial", "ayla_daily_checkins"]) {
-      expect(src).not.toContain(fora);
-    }
+  it("16. o check-in continua FORA — ele é da PEND-081, não desta frente", () => {
+    // ⚠️ ESTA ASSERÇÃO ENCOLHEU EM 24/08/2026, e o motivo é bom. Quando foi
+    // escrita, a missão da PEND-145 proibia explicitamente mexer no comercial —
+    // então `FATOS_COMERCIAIS` e `notaComercial` estavam na lista de proibidos.
+    // A missão seguinte (PEND-115) AUTORIZOU exatamente isso, e eles entraram.
+    // Manter a proibição seria um teste guardando uma decisão revogada.
+    // O check-in continua fora, e esse é o que ainda vale.
+    expect(semComentarios(EXPERIMENTAL)).not.toContain("ayla_daily_checkins");
   });
 });
 

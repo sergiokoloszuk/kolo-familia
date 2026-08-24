@@ -77,7 +77,7 @@ Só o que está aberto. 🔒 = bloqueada.
 | [PEND-102](#pend-102) | **13 ·** Sites/fontes confiáveis permitidos | F · Limites | P3 | A INVESTIGAR | whitelist com precedência |
 | [PEND-096](#pend-096) | **14 ·** Ativação gradual + medição real | B · Conhecimento | P2 | A INVESTIGAR | última etapa |
 | [PEND-103](#pend-103) | **‖ paralela ·** Higiene da fila | H · Governança | P3 | A INVESTIGAR | não bloqueia produto |
-| [PEND-115](#pend-115) | **Ayla não sabe o preço** — o bloco que respondia ficou no Legacy | G · Comercial | **P0** | CAUSA RAIZ · DESBLOQUEADA | os dois preços estão corretos e provados (PEND-116 baixada); falta o bloco de preço no caminho novo |
+| [PEND-115](#pend-115) | **Ayla não sabe o preço** — o bloco que respondia ficou no Legacy | G · Comercial | **P0** | **CORRIGIDA · NÃO PUBLICADA** | levada ao caminho OFICIAL; a fonte canônica é a mesma da Web |
 | [PEND-117](#pend-117) | Stack Supabase: CPU anormal e seis serviços ausentes | H · Governança | **P1 ALTA** | MEDIDA · CAUSA DESCONHECIDA | mapear quais containers não subiram e de onde vem a CPU — antes de reiniciar nada |
 | [PEND-118](#pend-118) | `DUNNING_DELETE_ENABLED` não existe — a exclusão prometida não executa | G · Comercial | **P1 ALTA** | PROVADA · NÃO CORRIGIDA | decidir se liga a exclusão ou corrige a promessa do `PagamentoGate` |
 | [PEND-119](#pend-119) | Aplicar migração é manual, e o PostgREST não recarrega o schema sozinho | H · Governança | P1 | PROVADA · NÃO CORRIGIDA | conferir o event trigger de reload e desenhar o caminho de aplicação |
@@ -98,7 +98,7 @@ Só o que está aberto. 🔒 = bloqueada.
 | [PEND-136](#pend-136) | A conversa web é o único caminho de escrita no perfil que não registra marco | C · Memória | P1 | MEDIDA · NÃO CORRIGIDA | 3 dos 4 caminhos chamam `detectarMarcos`; este não |
 | [PEND-137](#pend-137) | Marcos ligados desde 17/08 produziram **1** marco em 143 perfis | C · Memória | P1 | MEDIDA · NÃO CORRIGIDA | o mecanismo funciona; nada flui por ele |
 | [PEND-138](#pend-138) | `sugestao_perfil_vivos`: 3 das 4 origens do CHECK nunca gravaram | H · Governança | P2 | MEDIDA · NÃO CORRIGIDA | `app`, `skill` e `diario_parser` = 0 linhas |
-| [PEND-144](#pend-144) | **Retirar o Legacy do runtime da Ayla** | A · Condução | P1 | MEDIDA · NÃO CORRIGIDA | 6 chamadas em 6,9 dias (2,59%); 4 famílias reais; causa desconhecida em ≥5 |
+| [PEND-144](#pend-144) | **Retirar o Legacy do runtime da Ayla** | A · Condução | P1 | **PARCIALMENTE CORRIGIDA** | as 5 portas ficaram observáveis; falta medir e desligar |
 | [PEND-145](#pend-145) | **A Ayla oficial manda markdown que o WhatsApp não renderiza** | D · Entregas | **P0** | **PUBLICADA · AGUARDANDO MEDIÇÃO REAL** | `fc70305` no ar em 24/08 10:37Z; baseline congelado |
 | [PEND-146](#pend-146) | O documento `core` é escrito EM markdown, e o modelo imita | D · Entregas | P2 | MEDIDA · NÃO CORRIGIDA | `## Psicologia`, `**compreender → ajudar**` no próprio Core |
 | [PEND-147](#pend-147) | A regra de entrega da web ainda é literal, fora da fonte compartilhada | H · Governança | P3 | ABERTA | `intencao === "desafio"` em `lib/ia/prompt.ts:199` |
@@ -117,7 +117,7 @@ Só o que está aberto. 🔒 = bloqueada.
 | [PEND-082](#pend-082) | Ayla repete orientação do turno anterior — medir frequência real | A · Condução | P1 | MEDIDA | caso Lia/Valentina: "pausa" em 10 de 25 respostas |
 | [PEND-080](#pend-080) | Liberar o caminho novo para TODAS as famílias | A · Condução | P1 | ABERTA 🔒 | fechar os 6 bloqueadores antes de ampliar a allowlist |
 | [PEND-077](#pend-077) | `ayla_daily_checkins` nunca gravou uma linha (400 desde 0001) | H · Governança | P1 | ESCRITA PROVADA · LEITURA NÃO | ligar a leitura do check-in no caminho novo |
-| [PEND-081](#pend-081) | Caminho novo grava o check-in e nunca o lê de volta | C · Memória | P1 | ABERTA | mover/duplicar a leitura para antes do `return` do ramo novo |
+| [PEND-081](#pend-081) | Caminho novo grava o check-in e nunca o lê de volta | C · Memória | P1 | ABERTA | bloqueia a baixa de [PEND-144](#pend-144) — é capacidade só do Legacy |
 | [PEND-078](#pend-078) | Auditoria (`api_calls`) escrita com a sessão da família em outros pontos | H · Governança | P2 | PARCIALMENTE CORRIGIDA | varrer os 37 pontos de chamada de `logarUsoApi` |
 | [PEND-079](#pend-079) | Webhook do Stripe recusa assinatura e não deixa rastro nosso | H · Governança | P2 | ABERTA | persistir a recusa; decidir sobre os 2 endpoints de outro produto |
 | [PEND-069](#pend-069) | Migração 0077 (`ayla_documentos`) não aplicada em produção | H · Governança | P1 | ~~ABERTA~~ **BAIXADA** | nenhum — a tabela existe com 11 linhas (medido 16/08) |
@@ -5402,7 +5402,35 @@ STATUS: **AGUARDANDO DECISÃO COM A AGÊNCIA** · Aberta em: 2026-08-19
 ### PEND-115
 **A Ayla não sabe o preço — e o caminho novo perdeu o bloco que respondia**
 Bloco: **G · Comercial** · Prioridade: **P0** · **ORDEM DA FRENTE: —**
-STATUS: **CAUSA RAIZ IDENTIFICADA — NÃO CORRIGIDA** · Aberta em: 2026-08-19
+STATUS: **CORRIGIDA · NÃO PUBLICADA** · Aberta em: 2026-08-19 · Corrigida em: 2026-08-24
+
+> **ATUALIZAÇÃO 24/08/2026 — a correção estava no lugar errado.**
+>
+> A correção de 22/08 (`f70a77f`) foi feita em `lib/ayla/responder.ts`, que é o
+> **Legacy**. MEDI que ele atende **2,59%** dos turnos desde o rollout geral de
+> 17/08 — o conserto alcançava um turno em quarenta.
+> `git log -S "FATOS_COMERCIAIS" -- experimental.ts` volta **vazio**: nunca
+> esteve no caminho oficial. Não foi perdido; nunca entrou.
+>
+> Agora `experimental.ts` importa `FATOS_COMERCIAIS` e as quatro funções de
+> `destino-comercial` — **as mesmas que `lib/ia/prompt.ts` (a Web) já usava**.
+> Nenhuma segunda fonte de preço foi criada, e há teste que falha se aparecer
+> `R$`, um valor ou um `/precos` escrito à mão no caminho oficial.
+>
+> **Lacuna encontrada na própria fonte canônica, e corrigida nela:**
+> `"como continuo depois do trial?"` — uma das formulações que a missão exigia —
+> **não era reconhecida**. `QUERO_CONTINUAR` cobria "quero continuar", e nada
+> cobria a pergunta feita como pergunta. Entrou `FIM_DO_TESTE`, deliberadamente
+> estreito: só casa `trial`, "teste/período grátis", "período de teste" e
+> "7 dias grátis". Neste produto "teste" também é audiometria, teste do pezinho
+> e prova da escola — responder preço a quem falava de exame seria o pior falso
+> positivo desta frente. Há teste para os dois lados.
+>
+> **Custo MEDIDO:** +78 tokens no turno comum (+1,11% sobre a mediana de 7.011),
+> +271 quando a pergunta é comercial (+3,87%), +417 com comercial e suporte
+> juntos (+5,95%). **Zero chamada de modelo a mais.**
+>
+> **NÃO PUBLICADA.** O portão de merge é o próximo passo.
 
 > Achado em conversa real de 19/08. **3 de 3 perguntas diretas de preço desde o
 > rollout ficaram sem resposta.** Uma delas é uma mãe em teste, com medo de ser
@@ -5852,6 +5880,13 @@ STATUS: **PARCIALMENTE CORRIGIDA** · Aberta em: 2026-08-21
   em produção, que não foi feita.
 - **Impacto hoje:** baixo. O valor é o mesmo nos dois lugares. O risco é o de
   sempre: no dia em que o número mudar, um dos dois fica para trás.
+- **⚠️ CORREÇÃO DE UMA AFIRMAÇÃO DESTA FICHA (24/08/2026).** Onde ela dizia que
+  "os fatos comerciais passaram a entrar **também** no caminho experimental",
+  isso era **falso** quando foi escrito — `git log -S "FATOS_COMERCIAIS" --
+  experimental.ts` voltava vazio. **Passou a ser verdade na PEND-115**, e por
+  isso a frase fica; mas ela descrevia intenção, não código, e é exatamente o
+  tipo de erro que o §1 do protocolo manda não cometer.
+- **Referência cruzada:** [PEND-115](#pend-115) (a verdade comercial no OFICIAL).
 - **CRITÉRIO DE CONCLUSÃO:** `trial` v5 publicada sem o número, e a Ayla
   entregando o contato pela fonte canônica nos dois canais.
 
@@ -6228,7 +6263,29 @@ STATUS: **MEDIDA · NÃO CORRIGIDA** · Aberta em: 2026-08-22
 ### PEND-144
 **Retirar o Legacy do runtime da Ayla**
 Bloco: **A · Condução** · Prioridade: **P1**
-STATUS: **MEDIDA · NÃO CORRIGIDA** · Aberta em: 2026-08-24
+STATUS: **PARCIALMENTE CORRIGIDA** · Aberta em: 2026-08-24
+
+> **ATUALIZAÇÃO 24/08/2026 — as portas ficaram observáveis, e são CINCO.**
+>
+> `onFalha` deixou de ser código morto: o call site em `orchestrator.ts` passa a
+> recebê-lo e a gravar evento **persistente** `ayla_oficial_cedeu`
+> (`severity: error`, `persistir: true`), com motivo, mídia (texto/áudio) e a
+> família pela coluna própria de `eventos_app`. **Nada da conversa entra no
+> evento** — há teste que falha se `inbound.texto` aparecer no payload.
+>
+> **A quinta porta, que não estava no laudo anterior:**
+> `FORA_DO_OFICIAL` — `ehFamiliaExperimental` devolvendo false. Hoje fechada por
+> `AYLA_EXPERIMENTAL_TODAS=true`, e é a mais larga que existe: se a variável
+> sumir, todo mundo fora da allowlist volta ao Legacy sem uma linha em lugar
+> nenhum. Porta fechada por configuração continua sendo porta.
+>
+> As cinco: `FORA_DO_OFICIAL` · `CONTEXTO_NULO` (as duas acontecem ANTES da
+> chamada, e por isso são registradas pelo orquestrador) · `LLM_RESPOSTA_VAZIA`
+> · `FRONTEIRA_BARROU` · `EXCECAO` (as três saem por `onFalha`).
+>
+> **O que ISTO não resolve:** o Legacy continua ligado e continua sendo a rede.
+> A baixa segue exigindo os mesmos critérios — inclusive PEND-081 e as 14 dias
+> de `ayla_responder = 0`.
 
 - **BASELINE MEDIDO (24/08):** desde o rollout geral de 17/08 13:13Z, **6
   chamadas `ayla_responder` em 6,9 dias — 2,59%** dos turnos (226 pelo

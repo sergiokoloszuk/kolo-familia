@@ -7,6 +7,13 @@ import {
   formasDeEntrega,
   pedeEntregaEstruturada,
 } from "@/lib/conducao/formas";
+import { FATOS_COMERCIAIS } from "@/lib/billing/fatos-comerciais";
+import {
+  ehPerguntaComercial,
+  precisaDeHumano,
+  notaComercial,
+  notaSuporte,
+} from "@/lib/billing/destino-comercial";
 import { logarUsoApi } from "@/lib/billing/logar";
 import { resolverDocumento } from "./documentos";
 import {
@@ -657,6 +664,35 @@ export async function responderExperimental(
     // ⚠️ A ENTREGA É CONDICIONAL, e é a parte que mais importa: título em cima
     // de desabafo é frieza. `pedeEntregaEstruturada` é a MESMA função que o
     // `ehEntrega` do Legacy passou a chamar — a decisão tem um dono só.
+    // ── COMERCIAL E SUPORTE (PEND-115, 24/08/2026) ────────────────────────
+    //
+    // ⚠️ O CASO QUE ABRIU ESTA PENDÊNCIA. Em 19/08, três perguntas diretas de
+    // preço ficaram sem resposta. Uma era de uma mãe em teste, com medo de ser
+    // cobrada, escrevendo "pelo amor de Deus… eu não tenho meu dinheiro". A
+    // Ayla respondeu que "o preço vigente aparece na página de assinatura" — e
+    // não disse qual página, nem qual preço.
+    //
+    // ⚠️ POR QUE DUROU. A correção de 22/08 existia e estava no lugar errado:
+    // `responder.ts` é o Legacy, que MEDI atender **2,59%** dos turnos desde o
+    // rollout. `git log -S "FATOS_COMERCIAIS" -- experimental.ts` volta VAZIO —
+    // nunca esteve aqui. O conserto alcançava um turno em quarenta.
+    //
+    // ⚠️ NADA NOVO É ESCRITO AQUI. `FATOS_COMERCIAIS` e as duas notas vêm das
+    // MESMAS funções que `lib/ia/prompt.ts` (a web) já importa — mesma verdade,
+    // mesmo destino canônico `/precos`. Uma segunda fonte de preço seria a
+    // repetição do defeito que a fonte canônica existe para impedir.
+    //
+    // A DIVISÃO É DELIBERADA: `FATOS_COMERCIAIS` é regra de produto, estável, e
+    // vale em todo turno. As notas são fato DO TURNO — só entram quando a
+    // pergunta é comercial ou pede humano, exatamente como a web faz.
+    const comercial = [
+      FATOS_COMERCIAIS,
+      ehPerguntaComercial(params.mensagem) ? notaComercial() : "",
+      precisaDeHumano(params.mensagem) ? notaSuporte() : "",
+    ]
+      .filter(Boolean)
+      .join("\n\n");
+
     const entrega = pedeEntregaEstruturada({
       intencao: params.turnoClassificado?.intencao ?? null,
     });
@@ -708,8 +744,24 @@ export async function responderExperimental(
       // ⚠️ NO PÓS-TRIAL O BLOCO DE CONDUÇÃO VEM POR ÚLTIMO, e é o único que
       // fala de objetivo. Core (como pensar) → contexto (sobre quem) → condução
       // comercial (para quê, agora). Não há jornada nem repertório neste modo.
-      // `formato` POR ÚLTIMO — ver o comentário na construção dele.
-      system: [core.conteudo, bloco, jornada, conducaoTrial, repertorio, conducaoPosTrial, formato]
+      // `comercial` depois do contexto e antes do formato: é fato de produto e
+      // do turno, não identidade. `formato` POR ÚLTIMO — ver o comentário na
+      // construção dele.
+      //
+      // ⚠️ NENHUM DOS DOIS INVALIDA O CACHE. O `cache_control` cobre o system
+      // inteiro, mas a Anthropic casa por PREFIXO — e o prefixo é
+      // `core.conteudo`, que não muda. `bloco` já varia a cada turno desde
+      // sempre; acrescentar depois dele não custa cache nenhum a mais.
+      system: [
+        core.conteudo,
+        bloco,
+        jornada,
+        conducaoTrial,
+        repertorio,
+        conducaoPosTrial,
+        comercial,
+        formato,
+      ]
         .filter(Boolean)
         .join("\n\n"),
       messages: [{ role: "user", content: params.mensagem }],

@@ -2733,8 +2733,54 @@ export async function processInbound(
   // `responderExperimental` devolve null em qualquer falha — inclusive quando a
   // rede de fronteiras barra o texto. Nos dois casos o turno CAI para a Ayla
   // atual, e a família recebe UMA resposta só.
+  // ── QUANDO O OFICIAL CEDE, ALGUÉM PRECISA SABER (PEND-144, 24/08/2026) ───
+  //
+  // ⚠️ O QUE ESTAVA ERRADO. MEDI: desde o rollout geral de 17/08, **6 turnos de
+  // famílias reais caíram para o Legacy** — 4 deles por ÁUDIO, sendo áudio ~20%
+  // do inbound. E não sabíamos por quê em nenhum dos seis: três das portas só
+  // deixavam `console.warn`, que some com a retenção da Vercel, e uma não
+  // deixava nada.
+  //
+  // ⚠️ O GANCHO JÁ EXISTIA E ESTAVA DESLIGADO. `experimental.ts` declara
+  // `onFalha` e o invoca nas três saídas dele — e este call site nunca o
+  // passava. Era o mecanismo certo, sem ninguém do outro lado.
+  //
+  // ⚠️ SÃO CINCO PORTAS, NÃO TRÊS. `onFalha` cobre as três de dentro do
+  // Oficial; as outras duas acontecem ANTES da chamada e por isso são
+  // registradas aqui:
+  //   FORA_DO_OFICIAL — `ehFamiliaExperimental` falso. Hoje fechada por
+  //     `AYLA_EXPERIMENTAL_TODAS=true`, mas é a porta mais larga que existe: se
+  //     a variável sumir, todo mundo fora da allowlist volta ao Legacy em
+  //     silêncio. Uma porta fechada por configuração continua sendo uma porta.
+  //   CONTEXTO_NULO — `loadFamiliaParaEnvio` devolveu null. MEDI ao menos um
+  //     caso com `The connection to the database timed out` a ±5min.
+  //
+  // ⚠️ SÓ MÉTRICA, NUNCA CONVERSA. O evento leva motivo, mídia e a família pela
+  // coluna própria de `eventos_app`. Nada do que a mãe escreveu entra aqui: o
+  // que precisa ser observável é a TAXA e a CAUSA, não o conteúdo.
+  //
+  // `logEvent` tem try/catch próprio e é best-effort — uma falha de telemetria
+  // não pode custar a resposta da família.
+  const registrarQueda = (motivo: string, detalhe: string) => {
+    void logEvent({
+      kind: "ayla_oficial_cedeu",
+      severity: "error",
+      persistir: true,
+      family_account_id: family.id,
+      message: `${motivo}: ${detalhe.slice(0, 200)}`,
+      payload: {
+        motivo,
+        midia: inbound.midiaTipo === "audio" ? "audio" : "texto",
+        detalhe: detalhe.slice(0, 400),
+      },
+    });
+  };
+
   if (ehFamiliaExperimental(family.id)) {
     const ctxExp = await loadFamiliaParaEnvio(supabase, family.id);
+    if (!ctxExp) {
+      registrarQueda("CONTEXTO_NULO", "loadFamiliaParaEnvio devolveu null");
+    }
     const exp = ctxExp
       ? await responderExperimental(supabase, {
           familyId: family.id,
@@ -2742,6 +2788,7 @@ export async function processInbound(
           // ⚠️ C2 · UM DONO PARA A DECISÃO. A classificação deste turno já
           // aconteceu acima; o experimental consome, nunca reclassifica.
           turnoClassificado,
+          onFalha: registrarQueda,
         })
       : null;
     if (ctxExp && exp) {
@@ -2924,6 +2971,13 @@ export async function processInbound(
       return { tratada: true, familia: family.id, resposta: resp };
     }
     console.log("[ayla:path] experimental indisponível — seguindo pela Ayla atual");
+  } else {
+    // A QUINTA PORTA. Hoje fechada por `AYLA_EXPERIMENTAL_TODAS=true` — e é
+    // exatamente por isso que precisa de rastro: uma variável de ambiente que
+    // some não avisa ninguém, e o sintoma seria a Ayla inteira voltando ao
+    // Legacy sem uma linha em lugar nenhum. Porta fechada por configuração
+    // continua sendo porta.
+    registrarQueda("FORA_DO_OFICIAL", "ehFamiliaExperimental devolveu false");
   }
 
   // 4. Parser IA

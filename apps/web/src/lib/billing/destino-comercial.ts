@@ -129,6 +129,29 @@ const CONTINUAR_OUTRA_COISA =
   /\bcontinuar\s+(a\s+|o\s+|com\s+a\s+|com\s+o\s+)?(rotina|terapia|fono|escola|tentando|insistindo|assim|em\s+casa|treinando|conversando|falando)\b/i;
 
 /**
+ * O FIM DO TESTE — acrescentado em 24/08/2026, e a lacuna era grande.
+ *
+ * ⚠️ "Como continuo depois do trial?" NÃO era reconhecida. `QUERO_CONTINUAR`
+ * cobre "quero continuar", mas ninguém cobria a pergunta feita como pergunta:
+ * o que acontece quando o teste acaba. É o momento exato da conversão — a
+ * família perguntando como pagar — e caía em "nenhuma das anteriores".
+ *
+ * ⚠️ POR QUE TÃO ESTREITO. Neste produto, "teste" é palavra perigosa: a criança
+ * faz teste de audiometria, teste na escola, teste do pezinho. Um padrão em
+ * "depois do teste" transformaria avaliação clínica em conversa de dinheiro.
+ * Por isso só casa quando o termo é inequivocamente do produto:
+ *   - `trial` — palavra em inglês, que ninguém usa para exame de criança;
+ *   - "teste/período GRÁTIS ou GRATUITO";
+ *   - "período de teste";
+ *   - "7 dias grátis / de teste".
+ * Deixa passar "quando acaba meu teste?" de propósito: ambíguo demais, e o
+ * preço de um falso positivo aqui é responder dinheiro para quem falava de
+ * exame.
+ */
+const FIM_DO_TESTE =
+  /\btrial\b|\b(teste|per[íi]odo)\s+(gr[áa]tis|gratuito)\b|\bper[íi]odo\s+de\s+teste\b|\b(7|sete)\s+dias\s+(gr[áa]tis|de\s+teste)\b/i;
+
+/**
  * ESTA MENSAGEM É SOBRE CONTRATAR / QUANTO CUSTA?
  *
  * Positiva por FAMÍLIA DE SENTIDO, não por frase decorada. As exclusões são
@@ -143,6 +166,7 @@ export function ehPerguntaComercial(texto: string | null | undefined): boolean {
   if (QUAL_VALOR.test(t)) return true;
   if (PAGAR.test(t)) return true;
   if (PLANOS_COMERCIAIS.test(t)) return true;
+  if (FIM_DO_TESTE.test(t)) return true;
 
   // "assinar" só vale quando não está assinando um papel.
   if (CONTRATAR.test(t) && !OBJETO_DE_PAPEL.test(t)) return true;

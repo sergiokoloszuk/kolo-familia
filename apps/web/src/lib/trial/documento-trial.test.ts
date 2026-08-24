@@ -1,4 +1,5 @@
 import { describe, it, expect } from "vitest";
+import { itensDoSystem } from "@/lib/ayla/__harness/system-array";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { blocoDaJornada, EVIDENCIAS_VAZIAS } from "./jornada";
@@ -102,20 +103,23 @@ describe("SÓ ENTRA DURANTE A CONDUÇÃO COMERCIAL", () => {
 });
 
 describe("A ORDEM DO PROMPT", () => {
+  // ⚠️ ORDEM, NÃO LITERAL (24/08/2026). Estas duas casavam a string do array
+  // inteira e caíam quando ele era quebrado em linhas — o que não muda
+  // comportamento nenhum. `itensDoSystem` guarda o que de fato importa aqui.
   it("Core → contexto → jornada → documento do Trial → repertório", () => {
-    expect(EXP).toContain("[core.conteudo, bloco, jornada, conducaoTrial, repertorio, conducaoPosTrial, formato]");
-    const arr = "[core.conteudo, bloco, jornada, conducaoTrial, repertorio, conducaoPosTrial, formato]";
-    expect(arr.indexOf("jornada")).toBeLessThan(arr.indexOf("conducaoTrial"));
-    expect(arr.indexOf("conducaoTrial")).toBeLessThan(arr.indexOf("repertorio"));
+    const itens = itensDoSystem(EXP);
+    expect(itens.indexOf("jornada")).toBeLessThan(itens.indexOf("conducaoTrial"));
+    expect(itens.indexOf("conducaoTrial")).toBeLessThan(itens.indexOf("repertorio"));
   });
 
   it("SABOTAGEM · o documento passando na frente da jornada seria pego", () => {
-    const sabotado = EXP.replace(
-      "[core.conteudo, bloco, jornada, conducaoTrial, repertorio, conducaoPosTrial, formato]",
-      "[core.conteudo, bloco, conducaoTrial, jornada, repertorio]",
-    );
-    expect(sabotado).not.toContain("[core.conteudo, bloco, jornada, conducaoTrial, repertorio, conducaoPosTrial, formato]");
-    expect(EXP).toContain("[core.conteudo, bloco, jornada, conducaoTrial, repertorio, conducaoPosTrial, formato]");
+    const itens = itensDoSystem(EXP);
+    const trocado = [...itens];
+    const i = trocado.indexOf("jornada");
+    const j = trocado.indexOf("conducaoTrial");
+    [trocado[i], trocado[j]] = [trocado[j], trocado[i]];
+    expect(trocado.indexOf("jornada")).toBeGreaterThan(trocado.indexOf("conducaoTrial"));
+    expect(itens.indexOf("jornada")).toBeLessThan(itens.indexOf("conducaoTrial"));
   });
 });
 
