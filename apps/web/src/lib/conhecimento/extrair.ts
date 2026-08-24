@@ -279,15 +279,39 @@ Decida o que vale guardar e devolva o JSON.`;
     falhou = true;
   }
 
-  // ⚠️ INSTRUMENTAÇÃO — a lacuna que motivou esta fase.
+  // ⚠️ INSTRUMENTAÇÃO — a lacuna que motivou esta fase, e o que ela custou.
+  //
+  // A primeira versão registrava aqui, ANTES das guardas. Era cedo demais: no
+  // instante do log, `avaliarFatos` ainda não tinha rodado, então "quantos
+  // fatos foram recusados e por quê" simplesmente não existia ainda. O objeto
+  // `rejeitados` até era devolvido pela função — e morria no `return`, porque
+  // nenhum chamador o lia. Publicar assim seria publicar para medir uma coisa
+  // que continuaria sem ser medida.
+  //
+  // ⚠️ EXATAMENTE UM REGISTRO POR INVOCAÇÃO, em qualquer caminho. Por isso o
+  // registrador é uma função chamada em cada `return`, e não uma linha solta:
+  // com três saídas (modelo falhou · JSON inválido · sucesso), uma linha solta
+  // ou perde caminho ou duplica. As contagens vêm ZERADAS por padrão, de modo
+  // que "falhou" e "não recusou nada" nunca se confundem — a diferença está em
+  // `ok` e `falha`, não na ausência do número.
   //
   // `void`, e não `await`: quem chama é uma server action que já devolveu o
   // essencial; esperar o INSERT de auditoria seria cobrar latência da família
   // por um número nosso. Mesmo padrão de `lib/ia/intencao.ts`.
   //
-  // A duração vai em `meta` porque `api_calls` não tem coluna de duração — e
-  // criar uma seria infraestrutura paralela de métrica, que a missão proíbe.
-  if (supabase) {
+  // Tudo mora no `meta jsonb` que `api_calls` JÁ tem. Nenhuma tabela, nenhuma
+  // migração, nenhum sistema paralelo de métrica — a duração inclusive, que
+  // não tem coluna própria.
+  const registrar = (r: {
+    ok: boolean;
+    falha: "modelo" | "json" | null;
+    candidatos?: number;
+    aceitos?: number;
+    rejeitados?: number;
+    hipoteses?: number;
+    motivos?: Record<string, number>;
+  }) => {
+    if (!supabase) return;
     void logarUsoApi(supabase, {
       family_account_id: familyId,
       provider: "anthropic",
@@ -299,16 +323,30 @@ Decida o que vale guardar e devolva o JSON.`;
         ...(meta ?? {}),
         via,
         modo,
-        ok: !falhou,
+        candidatos: 0,
+        aceitos: 0,
+        rejeitados: 0,
+        hipoteses: 0,
+        motivos: {},
+        ...r,
         duracao_ms: Date.now() - t0,
       },
     });
+  };
+
+  if (falhou) {
+    registrar({ ok: false, falha: "modelo" });
+    return vazio;
   }
 
-  if (falhou) return vazio;
-
   const parsed = parseJson(raw);
-  if (!parsed) return vazio;
+  if (!parsed) {
+    // Modelo respondeu e a resposta não era utilizável. É um estado diferente
+    // de "modelo fora do ar", e custou tokens do mesmo jeito — por isso tem
+    // nome próprio em vez de virar o mesmo `ok: false` de antes.
+    registrar({ ok: false, falha: "json" });
+    return vazio;
+  }
 
   // ── as guardas ──────────────────────────────────────────────────────────
   const candidatos: FatoCandidato[] = parsed.kolo_vivo.map((item) => ({
@@ -321,13 +359,30 @@ Decida o que vale guardar e devolva o JSON.`;
     inferido: item.inferido ?? false,
   }));
 
-  const { aceitos, rejeitados } = avaliarFatos({
+  const { aceitos, rejeitados, hipoteses } = avaliarFatos({
     candidatos,
     temMembro: membro != null,
     entradaNormalizada: entradaNormalizada ?? transcript,
     procedenciaBase: { via, em },
     modo,
     estadoAtual,
+  });
+
+  // Motivos AGREGADOS — contagem por motivo, nunca o conteúdo recusado. O que
+  // foi recusado é fala de família sobre a saúde de uma criança; o que precisa
+  // ser observável é a TAXA e a RAZÃO, não o texto. Um `meta` de auditoria não
+  // é lugar de dado clínico.
+  const motivos: Record<string, number> = {};
+  for (const r of rejeitados) motivos[r.motivo] = (motivos[r.motivo] ?? 0) + 1;
+
+  registrar({
+    ok: true,
+    falha: null,
+    candidatos: candidatos.length,
+    aceitos: aceitos.length,
+    rejeitados: rejeitados.length,
+    hipoteses: hipoteses.length,
+    motivos,
   });
 
   return {

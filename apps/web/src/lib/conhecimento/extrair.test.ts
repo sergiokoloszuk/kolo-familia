@@ -107,7 +107,105 @@ describe("A · INSTRUMENTAÇÃO — a lacuna que motivou esta fase", () => {
     const r = await rodar(kv([]));
     expect(r.koloVivo).toEqual([]);
     expect(logs).toHaveLength(1);
-    expect((logs[0].meta as Record<string, unknown>).ok).toBe(false);
+    const meta = logs[0].meta as Record<string, unknown>;
+    expect(meta.ok).toBe(false);
+    expect(meta.falha).toBe("modelo");
+  });
+
+  // ── as contagens: a lacuna que segurou o merge de 22/08 ──────────────────
+
+  it("5a. o `meta` carrega candidatos, aceitos, rejeitados, hipóteses e motivos", async () => {
+    await rodar(
+      kv([
+        // 4 aceitos
+        { camada: "camada1", campo: "sono", subcampo: "outras", texto: "demora", operacao: "adicionar" },
+        { camada: "camada1", campo: "nutricional", subcampo: "rejeita", texto: "folhas", operacao: "adicionar" },
+        { camada: "camada1", campo: "escola", subcampo: "outras", texto: "chora na porta", operacao: "adicionar" },
+        { camada: "camada2", campo: "recursos", texto: "faz fono", operacao: "adicionar" },
+        // 2 rejeitados, motivos DIFERENTES
+        { camada: "camada1", campo: "telepatia", texto: "lê pensamentos", operacao: "adicionar" },
+        { camada: "camada1", campo: "comunicacao", subcampo: "forma", texto: "Fala frases curtas", operacao: "reescrever" },
+        // 1 hipótese (inferida, sem âncora)
+        { camada: "camada1", campo: "foco", subcampo: "outras", texto: "talvez desatento", operacao: "adicionar", inferido: true },
+      ]),
+    );
+    const meta = logs[0].meta as Record<string, unknown>;
+    expect(meta.candidatos).toBe(7);
+    expect(meta.aceitos).toBe(4);
+    expect(meta.rejeitados).toBe(2);
+    expect(meta.hipoteses).toBe(1);
+    expect(meta.motivos).toEqual({ campo_desconhecido: 1, valor_fora_das_opcoes: 1 });
+  });
+
+  it("5b. os motivos são AGREGADOS — o texto recusado nunca vai para a auditoria", async () => {
+    const segredo = "ele toma risperidona desde os quatro anos";
+    await rodar(kv([{ camada: "camada1", campo: "telepatia", texto: segredo, operacao: "adicionar" }]));
+    expect(JSON.stringify(logs[0])).not.toContain("risperidona");
+    expect((logs[0].meta as Record<string, unknown>).motivos).toEqual({ campo_desconhecido: 1 });
+  });
+
+  it("5c. o mesmo motivo repetido é somado, não sobrescrito", async () => {
+    await rodar(
+      kv([
+        { camada: "camada1", campo: "telepatia", texto: "a", operacao: "adicionar" },
+        { camada: "camada1", campo: "astrologia", texto: "b", operacao: "adicionar" },
+        { camada: "camada1", campo: "quiromancia", texto: "c", operacao: "adicionar" },
+      ]),
+    );
+    expect((logs[0].meta as Record<string, unknown>).motivos).toEqual({ campo_desconhecido: 3 });
+  });
+
+  it("5d. JSON inválido tem nome próprio — não se confunde com modelo fora do ar", async () => {
+    await rodar("isto não é json");
+    expect(logs).toHaveLength(1);
+    const meta = logs[0].meta as Record<string, unknown>;
+    expect(meta.ok).toBe(false);
+    expect(meta.falha).toBe("json");
+    // custou tokens do mesmo jeito — o registro não pode fingir que não houve chamada
+    expect(logs[0].input_tokens).toBe(1234);
+  });
+
+  it("5e. em falha, as contagens vêm ZERADAS — ausência de número não é o sinal", async () => {
+    for (const preparar of [() => (deveFalhar = true), () => undefined]) {
+      logs.length = 0;
+      deveFalhar = false;
+      preparar();
+      await rodar("nem json nem nada");
+      const meta = logs[0].meta as Record<string, unknown>;
+      expect(meta.candidatos).toBe(0);
+      expect(meta.aceitos).toBe(0);
+      expect(meta.rejeitados).toBe(0);
+      expect(meta.hipoteses).toBe(0);
+      expect(meta.motivos).toEqual({});
+    }
+  });
+
+  it("5f. EXATAMENTE UM registro por invocação, nos três caminhos", async () => {
+    const caminhos: Array<() => Promise<unknown>> = [
+      () => {
+        deveFalhar = true;
+        return rodar(kv([]));
+      },
+      () => rodar("json quebrado"),
+      () => rodar(kv([{ camada: "camada1", campo: "sono", texto: "ok", operacao: "adicionar" }])),
+    ];
+    for (const caminho of caminhos) {
+      logs.length = 0;
+      deveFalhar = false;
+      await caminho();
+      expect(logs).toHaveLength(1);
+    }
+  });
+
+  it("5g. o registro acontece DEPOIS das guardas — senão as contagens não existiriam", () => {
+    const src = readFileSync(resolve(__dirname, "extrair.ts"), "utf8");
+    expect(src.indexOf("avaliarFatos({")).toBeLessThan(src.lastIndexOf("registrar({"));
+    // UMA chamada a logarUsoApi no arquivo inteiro: o registrador é o dono
+    // único. Duas chamadas seriam dois lugares para esquecer um caminho.
+    expect(src.match(/logarUsoApi\(/g)).toHaveLength(1);
+    // e ela mora dentro do registrador, não solta num caminho de saída
+    const dentro = src.slice(src.indexOf("const registrar = "), src.indexOf("if (falhou) {"));
+    expect(dentro).toMatch(/logarUsoApi\(/);
   });
 
   it("6. sem cliente, extrai e só não mede — telemetria nunca é pré-requisito de funcionar", async () => {
