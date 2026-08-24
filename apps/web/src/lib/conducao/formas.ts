@@ -99,6 +99,40 @@ export const FORMATO_WHATSAPP = `# Formato (WhatsApp)
 - Não prometa artefato: nada de "vou montar", "vou gerar", "vou te mandar" quando não é você quem entrega. Ou já está feito, ou você diz o caminho.`;
 
 /**
+ * O IDIOMA DA CONVERSA — e o nome já é a regra.
+ *
+ * ⚠️ POR QUE NÃO É A `DIRETRIZ_IDIOMA` DO LEGACY. Aquela tem 581 tokens e entra
+ * em TODO turno. A investigação de 24/08 mediu o que ela realmente compra no
+ * modelo que atende as famílias hoje (`gpt-5.6-luna`, Core v9), em teste
+ * controlado:
+ *
+ *   · inglês  — respondeu em inglês SEM a diretiva (1/1);
+ *   · espanhol longo — espanhol limpo em 3 de 4 SEM ela; **1 de 4 escorregou
+ *     para português no meio da resposta**;
+ *   · espanhol curto — limpo sem ela.
+ *
+ * Ou seja: o modelo já acerta o idioma sozinho quase sempre. O que sobra é UM
+ * modo de falha — vazar português dentro de uma resposta que não é em português
+ * — e é só isso que precisa de regra. Os outros ~468 tokens da versão antiga
+ * são aula de gramática espanhola (enclíticos, artigo antes de nome próprio,
+ * falsos amigos) que o modelo atual cumpre sem ser mandado.
+ *
+ * ⚠️ E NÃO SE DECIDE PELO CADASTRO. `family_accounts.idioma` define a língua da
+ * PLATAFORMA e das mensagens PROATIVAS — o próprio código diz isso em
+ * `configuracoes/conta/actions.ts` e em `traduzir.ts` ("a conversa reativa NÃO
+ * passa por aqui"). Usar aquela coluna para escolher a língua da resposta seria
+ * a fonte errada: a pessoa pode escrever em espanhol numa conta configurada em
+ * português, e é a mensagem que manda.
+ *
+ * ⚠️ "PESSOA", não "mãe". Quem escreve pode ser pai, avó, tia ou o próprio
+ * adolescente. A Kolo não presume.
+ *
+ * MEDI: 113 tokens contra 581 — 81% menor.
+ */
+export const IDIOMA_DA_CONVERSA = `# Idioma (leia por último)
+Responda SEMPRE no idioma da ÚLTIMA mensagem da pessoa. A resposta INTEIRA num único idioma — nunca misture português com espanhol ou inglês, nem em conectivos. O contexto, o perfil e as notas podem vir em português: leia normalmente, mas ESCREVA na língua da pessoa (nomes próprios ficam como são). Mensagem curta ou ambígua ("ok", "😊"): siga o idioma que vocês já vinham usando.`;
+
+/**
  * ESTE TURNO PEDE ESTRUTURA?
  *
  * A regra é conservadora de propósito: na dúvida, texto corrido. Uma resposta

@@ -8,6 +8,7 @@ import {
   pedeEntregaEstruturada,
   INTERESSE_COMO_VEICULO,
   A_CRIANCA_ANTES_DO_ROTULO,
+  IDIOMA_DA_CONVERSA,
 } from "@/lib/conducao/formas";
 import { FATOS_COMERCIAIS } from "@/lib/billing/fatos-comerciais";
 import {
@@ -727,6 +728,11 @@ export async function responderExperimental(
             A_CRIANCA_ANTES_DO_ROTULO,
           ]
         : []),
+      // ⚠️ POR ÚLTIMO DENTRO DO ÚLTIMO BLOCO, e precisa ser verdade: esta é a
+      // única instrução que PREVALECE sobre o resto do prompt — que é inteiro
+      // escrito em português. Se vier antes, compete com o exemplo, e o exemplo
+      // é o documento todo. Mesmo motivo do `formato`.
+      IDIOMA_DA_CONVERSA,
     ]
       .filter(Boolean)
       .join("\n\n");

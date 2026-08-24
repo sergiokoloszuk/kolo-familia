@@ -99,6 +99,9 @@ Só o que está aberto. 🔒 = bloqueada.
 | [PEND-137](#pend-137) | Marcos ligados desde 17/08 produziram **1** marco em 143 perfis | C · Memória | P1 | MEDIDA · NÃO CORRIGIDA | o mecanismo funciona; nada flui por ele |
 | [PEND-138](#pend-138) | `sugestao_perfil_vivos`: 3 das 4 origens do CHECK nunca gravaram | H · Governança | P2 | MEDIDA · NÃO CORRIGIDA | `app`, `skill` e `diario_parser` = 0 linhas |
 | [PEND-148](#pend-148) | O conteúdo do check-in é escrito por todos e lido por ninguém na conversa | C · Memória | P2 | MEDIDA · NÃO CORRIGIDA | `emocao_mae` em 78% dos 36; nenhum canal lê |
+| [PEND-149](#pend-149) | **A Ayla oficial não enxerga imagem — regressão desde 17/08** | D · Entregas | **P1** | MEDIDA · NÃO CORRIGIDA | 100 imagens de 7 famílias no histórico; 0 desde o rollout |
+| [PEND-150](#pend-150) | A Ayla oficial perdeu a progressão por ângulos — regressão desde 17/08 | A · Condução | P1 | MEDIDA · NÃO CORRIGIDA | mecanismo de 07/08 contra repetir orientação; ver [PEND-082](#pend-082) |
+| [PEND-151](#pend-151) | O fallback do WhatsApp termina em SILÊNCIO se os dois contextos falharem | A · Condução | **P1** | MEDIDA · NÃO CORRIGIDA | `orchestrator.ts:3011` devolve sem responder |
 | [PEND-144](#pend-144) | **Retirar o Legacy do runtime da Ayla** | A · Condução | P1 | **PARCIALMENTE CORRIGIDA** | 4 fechados + 2 publicados aguardando prova; falta `DIRETRIZ_IDIOMA` e a flag |
 | [PEND-145](#pend-145) | **A Ayla oficial manda markdown que o WhatsApp não renderiza** | D · Entregas | **P0** | **PUBLICADA · AGUARDANDO MEDIÇÃO REAL** | `fc70305` no ar em 24/08 10:37Z; baseline congelado |
 | [PEND-146](#pend-146) | O documento `core` é escrito EM markdown, e o modelo imita | D · Entregas | P2 | MEDIDA · NÃO CORRIGIDA | `## Psicologia`, `**compreender → ajudar**` no próprio Core |
@@ -6343,7 +6346,7 @@ STATUS: **PARCIALMENTE CORRIGIDA** · Aberta em: 2026-08-24
   | 4 | `onFalha` observável nas 5 portas | **✅ no ar** (`41a1054`) |
   | 5 | `INTERESSE_COMO_VEICULO` no Oficial | **PUBLICADO · AGUARDANDO VALIDAÇÃO EM CONVERSA REAL** (`13f4561`) |
   | 6 | `A_CRIANCA_ANTES_DO_ROTULO` no Oficial | **PUBLICADO · AGUARDANDO VALIDAÇÃO EM CONVERSA REAL** (`13f4561`) |
-  | 7 | `DIRETRIZ_IDIOMA` no Oficial | ☐ **INVESTIGADO 24/08 · DECISÃO PENDENTE** — recomendação: regra mínima de ~113 tokens, não a de 581 |
+  | 7 | Idioma no Oficial | **IMPLEMENTADO · NÃO PUBLICADO** — `IDIOMA_DA_CONVERSA`, 117 tokens contra 581 (−80%) |
   | 8 | Causas de fallback conhecidas por medição | ☐ aguardando tráfego real |
   | 9 | Falha do Oficial tratada **sem** segundo cérebro | ☐ |
   | 10 | `ayla_responder = 0` de famílias reais em ≥14 dias | ☐ |
@@ -6618,6 +6621,74 @@ STATUS: **MEDIDA · NÃO CORRIGIDA** · Aberta em: 2026-08-24
 
 ---
 
+### PEND-149
+**A Ayla oficial não enxerga imagem — e isso regrediu no rollout de 17/08**
+Bloco: **D · Entregas** · Prioridade: **P1**
+STATUS: **MEDIDA · NÃO CORRIGIDA** · Aberta em: 2026-08-24
+
+- **VI NO CÓDIGO.** `orchestrator.ts:3275` monta `imagemUrl` e entrega **ao
+  Legacy**; `responder.ts:718` baixa a imagem e a manda ao modelo em base64.
+  `experimental.ts` tem **ZERO** referências a imagem, mídia ou `midiaUrl`.
+- **⚠️ NÃO É "capacidade que o Legacy tem".** É regressão. Quando uma família
+  manda foto hoje, o OFICIAL atende (ele responde e retorna em
+  `orchestrator.ts:2971`) — e o Legacy **nunca é alcançado**. A família recebe
+  uma resposta escrita **sem que ninguém tenha olhado a imagem**.
+- **Consequência:** desligar o Legacy **não piora isto**. Portanto **não é
+  bloqueador da [PEND-144](#pend-144)** — é uma frente própria.
+- **MEDI (24/08):** 100 imagens no histórico, de **7 famílias**; **295 áudios**;
+  1 vídeo. **Zero imagens desde o rollout de 17/08** — por isso o dano é
+  **latente, não ativo**, e por isso ninguém percebeu.
+- **CRITÉRIO DE CONCLUSÃO:** uma foto de lição ou rótulo enviada no WhatsApp
+  produz resposta que demonstra ter visto a imagem, pelo caminho oficial.
+
+---
+
+### PEND-150
+**A Ayla oficial perdeu a progressão por ângulos — regressão desde 17/08**
+Bloco: **A · Condução** · Prioridade: **P1**
+STATUS: **MEDIDA · NÃO CORRIGIDA** · Aberta em: 2026-08-24
+
+- **VI NO CÓDIGO.** `angulosUsados` e `blocoProgressao` (`lib/conducao/angulos.ts`
+  — já neutros de canal) são injetados só em `responder.ts`. O Oficial não tem
+  equivalente: nenhuma referência a ângulo, progressão ou "o que já disse".
+- **O que se perde**, nas palavras do próprio arquivo: o mecanismo nasceu em
+  07/08 de uma conversa real em que *"em dois turnos seguidos a Ayla entregou a
+  MESMA orientação"* — e o comentário registra a lição: *"A regra de progressão
+  já existia na VOZ e não segurou. Exortação genérica no fim de um núcleo grande
+  o modelo atropela; a lista concreta do que ele mesmo já disse é bem mais
+  difícil de ignorar. Por isso isto é código, não mais uma linha de prompt."*
+- **Mesma natureza da [PEND-149](#pend-149):** é regressão, não dependência —
+  o Legacy não é alcançado. **Não bloqueia a [PEND-144](#pend-144).**
+- **Referência cruzada:** [PEND-082](#pend-082) mede exatamente este sintoma
+  ("Ayla repete orientação do turno anterior"). O baseline dela foi medido no
+  Legacy; **no Oficial o mecanismo nem existe.**
+- **CRITÉRIO DE CONCLUSÃO:** o Oficial recebe os ângulos já usados, e a medição
+  da PEND-082 é refeita sobre o caminho que atende as famílias.
+
+---
+
+### PEND-151
+**Se os dois contextos falharem, a família não recebe nada**
+Bloco: **A · Condução** · Prioridade: **P1**
+STATUS: **MEDIDA · NÃO CORRIGIDA** · Aberta em: 2026-08-24
+
+- **VI NO CÓDIGO.** A cadeia de hoje é: Oficial tenta → se cede, Legacy tenta →
+  **`orchestrator.ts:3011`: `if (!ctx) return { tratada: true, familia: family.id };`**
+  Sem resposta, sem evento, sem rastro. A mãe escreveu e **não recebe nada**.
+- **É o "silêncio" que a missão de 24/08 disse explicitamente não querer.**
+- **Agrava:** o Oficial **não tem retentativa**. `comRetentativaCurta` existe só
+  no Legacy (`responder.ts`) — o Oficial captura a exceção e devolve `null`.
+  Hoje o Legacy é a rede; quando ele sair, não há rede nenhuma.
+- **Liga-se ao item 9 da [PEND-144](#pend-144)** ("falha do Oficial tratada sem
+  segundo cérebro"): a solução dos dois é a mesma — retentativa dentro do
+  Oficial e uma mensagem honesta de última instância, com evento persistido.
+- **NÃO SEI a frequência.** Depende de `loadFamiliaParaEnvio` falhar duas vezes
+  no mesmo turno; não há evento hoje para contar.
+- **CRITÉRIO DE CONCLUSÃO:** nenhum caminho do WhatsApp pode terminar sem
+  resposta à família, e toda desistência deixa evento persistido.
+
+---
+
 ### Arquivamento
 
 Concluídas e canceladas saem daqui quando este arquivo passar de ~40 fichas, ou
@@ -6625,7 +6696,7 @@ trimestralmente, o que vier antes.
 
 ---
 
-**Próximo ID livre: PEND-149. *(024 e 025 reservadas por frentes ainda não publicadas; 0076 é número de MIGRACAO reservado — ver PEND-121.)***
+**Próximo ID livre: PEND-152. *(024 e 025 reservadas por frentes ainda não publicadas; 0076 é número de MIGRACAO reservado — ver PEND-121.)***
 
 > Conferir contra `origin/main`, não contra o seu branch. Dois branches podem
 > reivindicar o mesmo número — o conflito de merge nesta linha é o alarme.
