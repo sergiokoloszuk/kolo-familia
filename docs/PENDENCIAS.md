@@ -98,6 +98,7 @@ Só o que está aberto. 🔒 = bloqueada.
 | [PEND-136](#pend-136) | A conversa web é o único caminho de escrita no perfil que não registra marco | C · Memória | P1 | MEDIDA · NÃO CORRIGIDA | 3 dos 4 caminhos chamam `detectarMarcos`; este não |
 | [PEND-137](#pend-137) | Marcos ligados desde 17/08 produziram **1** marco em 143 perfis | C · Memória | P1 | MEDIDA · NÃO CORRIGIDA | o mecanismo funciona; nada flui por ele |
 | [PEND-138](#pend-138) | `sugestao_perfil_vivos`: 3 das 4 origens do CHECK nunca gravaram | H · Governança | P2 | MEDIDA · NÃO CORRIGIDA | `app`, `skill` e `diario_parser` = 0 linhas |
+| [PEND-148](#pend-148) | O conteúdo do check-in é escrito por todos e lido por ninguém na conversa | C · Memória | P2 | MEDIDA · NÃO CORRIGIDA | `emocao_mae` em 78% dos 36; nenhum canal lê |
 | [PEND-144](#pend-144) | **Retirar o Legacy do runtime da Ayla** | A · Condução | P1 | **PARCIALMENTE CORRIGIDA** | as 5 portas ficaram observáveis; falta medir e desligar |
 | [PEND-145](#pend-145) | **A Ayla oficial manda markdown que o WhatsApp não renderiza** | D · Entregas | **P0** | **PUBLICADA · AGUARDANDO MEDIÇÃO REAL** | `fc70305` no ar em 24/08 10:37Z; baseline congelado |
 | [PEND-146](#pend-146) | O documento `core` é escrito EM markdown, e o modelo imita | D · Entregas | P2 | MEDIDA · NÃO CORRIGIDA | `## Psicologia`, `**compreender → ajudar**` no próprio Core |
@@ -117,7 +118,7 @@ Só o que está aberto. 🔒 = bloqueada.
 | [PEND-082](#pend-082) | Ayla repete orientação do turno anterior — medir frequência real | A · Condução | P1 | MEDIDA | caso Lia/Valentina: "pausa" em 10 de 25 respostas |
 | [PEND-080](#pend-080) | Liberar o caminho novo para TODAS as famílias | A · Condução | P1 | ABERTA 🔒 | fechar os 6 bloqueadores antes de ampliar a allowlist |
 | [PEND-077](#pend-077) | `ayla_daily_checkins` nunca gravou uma linha (400 desde 0001) | H · Governança | P1 | ESCRITA PROVADA · LEITURA NÃO | ligar a leitura do check-in no caminho novo |
-| [PEND-081](#pend-081) | Caminho novo grava o check-in e nunca o lê de volta | C · Memória | P1 | ABERTA | bloqueia a baixa de [PEND-144](#pend-144) — é capacidade só do Legacy |
+| [PEND-081](#pend-081) | Caminho novo grava o check-in e nunca o lê de volta | C · Memória | P3 | **PROVADA FALSO POSITIVO · AGUARDANDO DECISÃO DE BAIXA** | o Oficial resolve melhor por outra fonte; 3 famílias multi-criança, 1 com check-in |
 | [PEND-078](#pend-078) | Auditoria (`api_calls`) escrita com a sessão da família em outros pontos | H · Governança | P2 | PARCIALMENTE CORRIGIDA | varrer os 37 pontos de chamada de `logarUsoApi` |
 | [PEND-079](#pend-079) | Webhook do Stripe recusa assinatura e não deixa rastro nosso | H · Governança | P2 | ABERTA | persistir a recusa; decidir sobre os 2 endpoints de outro produto |
 | [PEND-069](#pend-069) | Migração 0077 (`ayla_documentos`) não aplicada em produção | H · Governança | P1 | ~~ABERTA~~ **BAIXADA** | nenhum — a tabela existe com 11 linhas (medido 16/08) |
@@ -6438,6 +6439,100 @@ STATUS: **ABERTA** · Aberta em: 2026-08-24
 
 ---
 
+### PEND-081
+**O caminho novo grava o check-in e nunca o lê de volta**
+Bloco: **C · Memória** · Prioridade: **P3** (era P1)
+STATUS: **PROVADA FALSO POSITIVO · AGUARDANDO DECISÃO DE BAIXA** · Investigada em: 2026-08-24
+
+> ⚠️ **A FICHA NÃO EXISTIA.** Havia linha no índice e âncora `#pend-081`, e
+> nenhuma ficha — quem clicava não encontrava nada. Ela é escrita agora, com o
+> resultado da investigação de 24/08.
+
+- **O QUE A LEITURA DO LEGACY DE FATO FAZ — VI NO CÓDIGO** (`orchestrator.ts:2997`):
+
+  ```
+  .from("ayla_daily_checkins")
+  .select("membro_atipico_id, membros_atipicos(nome)")
+  .order("created_at", desc).limit(1)
+  ```
+
+  **Nenhum campo de conteúdo é lido.** O comentário do próprio código diz para
+  que serve: *"Último membro foco (pra desambiguar pronome em famílias 2+)"*. O
+  destino é `parseInbound({ ultimoMembroFoco })` e o 4º item da cadeia de
+  `membroContextoId`. **Não é contexto sobre a criança; é um desempate de nome.**
+
+- **A PREMISSA DA PENDÊNCIA ESTAVA ERRADA.** O título sugere perda de contexto
+  recente. Não há contexto recente nessa leitura para se perder.
+
+- **O OFICIAL JÁ RESOLVE A MESMA NECESSIDADE, DE FONTE MELHOR:**
+  | | LEGACY | OFICIAL |
+  |---|---|---|
+  | desempate de criança | último **check-in** | `resolverFoco`, 5 níveis, incl. **última criança da conversa (24h)** |
+  | quando não há sinal | **chuta** o do check-in | `tipo: "ambiguo"` → **a Ayla pergunta** |
+  | fonte do `ultimoMembroFoco` do parser | check-in antigo | `exp.membroId` — **o foco deste turno** |
+
+- **E O OFICIAL TEM CONTEXTO RECENTE QUE O LEGACY NÃO TEM:** `<trajetoria>`
+  (`blocoDeEventos` sobre `eventos_membro`, com janelas de 30/120 dias),
+  `<o_que_ainda_nao_sei>`, `blocoDaFamilia` e a jornada do Trial.
+
+- **MEDI em produção (24/08/2026):**
+  | | |
+  |---|---|
+  | check-ins | **36** |
+  | famílias com check-in | **20 de 233 — 8,6%** |
+  | janela | 16/08 → 23/08 (a escrita só existe desde a 0078) |
+  | **famílias com 2+ crianças ativas** | **3** |
+  | **destas, com check-in** | **1** |
+
+  A desambiguação por check-in só pode fazer diferença em família com 2+
+  crianças. **Hoje isso é uma família.** Com uma criança só, `resolverFoco`
+  devolve `unica` e não há o que desempatar.
+
+- **RECOMENDAÇÃO: NÃO PORTAR (opção C).** Portar seria levar ao Oficial uma
+  heurística pior que a dele, para cobrir uma família, e reacender a fixação por
+  palpite justamente onde o isolamento entre irmãos importa.
+
+- **RESSALVA HONESTA, e é o motivo de a baixa não ser automática:** existe um
+  caso de borda em que os dois divergem — família 2+ crianças, sem mensagem
+  carimbada nas últimas 24h, mas com check-in. O Legacy fixaria pelo check-in; o
+  Oficial pergunta. **INFERI que perguntar é melhor** (não inventa de qual filho
+  se fala), mas é mudança de comportamento, e quem decide é o produto.
+
+- **CRITÉRIO DE CONCLUSÃO (revisado):** decisão registrada de que o desempate do
+  Oficial substitui o do Legacy — ou, se não substituir, o que exatamente falta.
+
+---
+
+### PEND-148
+**O conteúdo do check-in é escrito por todos e lido por ninguém na conversa**
+Bloco: **C · Memória** · Prioridade: **P2**
+STATUS: **MEDIDA · NÃO CORRIGIDA** · Aberta em: 2026-08-24
+
+- **VI NO CÓDIGO.** `ayla_daily_checkins` guarda `conquista_extraida`,
+  `desafio_extraido`, `emocao_mae`, `possivel_gatilho` e `observacao_livre`.
+  **Os dois canais ESCREVEM** (via `persistirRegistro`, que o Oficial também
+  chama). **Nenhum dos dois LÊ esse conteúdo na conversa:** o Legacy seleciona
+  só `membro_atipico_id` e o nome; o Oficial não consulta a tabela.
+- **Quem lê** são caminhos de fora da conversa: `insightEngine.ts`,
+  `metrics.ts`, `rules.ts`, `regras/registry.ts` e o cron.
+- **MEDI (24/08), sobre 36 check-ins:** `emocao_mae` preenchido em **78%**,
+  `observacao_livre` em **75%**, conquista em 28%, desafio em 25%. **Todos os 36
+  com `respondeu = true`.** É informação real, recente (≤8 dias) e ociosa.
+- **Por que isto NÃO é a PEND-081:** aquela era sobre desempate de criança, e o
+  Oficial já faz melhor. Esta é sobre **conteúdo emocional da família** que
+  ninguém devolve à conversa — em nenhum canal, nem antes nem depois do rollout.
+- **⚠️ NÃO ABRIR ISTO COMO "levar o check-in ao prompt".** Antes de acrescentar
+  fonte, decidir como ela convive com `<trajetoria>` (`eventos_membro`),
+  `diarios` (**579 linhas**) e o Mapa da Criança — três fontes de "o que andou
+  acontecendo" já existindo em paralelo. Acrescentar a quarta sem essa decisão é
+  repetir o defeito que esta frente inteira está desfazendo.
+- **Granularidade, MEDI:** 8 famílias têm mais de um check-in, o máximo é 5. Se
+  algum dia o conteúdo entrar, "o último" esconderia até quatro.
+- **CRITÉRIO DE CONCLUSÃO:** decisão escrita sobre qual é a fonte única de
+  contexto recente, e a implementação seguindo essa decisão.
+
+---
+
 ### Arquivamento
 
 Concluídas e canceladas saem daqui quando este arquivo passar de ~40 fichas, ou
@@ -6445,7 +6540,7 @@ trimestralmente, o que vier antes.
 
 ---
 
-**Próximo ID livre: PEND-148. *(024 e 025 reservadas por frentes ainda não publicadas; 0076 é número de MIGRACAO reservado — ver PEND-121.)***
+**Próximo ID livre: PEND-149. *(024 e 025 reservadas por frentes ainda não publicadas; 0076 é número de MIGRACAO reservado — ver PEND-121.)***
 
 > Conferir contra `origin/main`, não contra o seu branch. Dois branches podem
 > reivindicar o mesmo número — o conflito de merge nesta linha é o alarme.
