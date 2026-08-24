@@ -77,7 +77,7 @@ Só o que está aberto. 🔒 = bloqueada.
 | [PEND-102](#pend-102) | **13 ·** Sites/fontes confiáveis permitidos | F · Limites | P3 | A INVESTIGAR | whitelist com precedência |
 | [PEND-096](#pend-096) | **14 ·** Ativação gradual + medição real | B · Conhecimento | P2 | A INVESTIGAR | última etapa |
 | [PEND-103](#pend-103) | **‖ paralela ·** Higiene da fila | H · Governança | P3 | A INVESTIGAR | não bloqueia produto |
-| [PEND-115](#pend-115) | **Ayla não sabe o preço** — o bloco que respondia ficou no Legacy | G · Comercial | **P0** | **CORRIGIDA · NÃO PUBLICADA** | levada ao caminho OFICIAL; a fonte canônica é a mesma da Web |
+| [PEND-115](#pend-115) | **Ayla não sabe o preço** — o bloco que respondia ficou no Legacy | G · Comercial | **P0** | **PUBLICADA · AGUARDANDO VALIDAÇÃO EM CONVERSA REAL** | `41a1054` no ar em 24/08 11:24Z |
 | [PEND-117](#pend-117) | Stack Supabase: CPU anormal e seis serviços ausentes | H · Governança | **P1 ALTA** | MEDIDA · CAUSA DESCONHECIDA | mapear quais containers não subiram e de onde vem a CPU — antes de reiniciar nada |
 | [PEND-118](#pend-118) | `DUNNING_DELETE_ENABLED` não existe — a exclusão prometida não executa | G · Comercial | **P1 ALTA** | PROVADA · NÃO CORRIGIDA | decidir se liga a exclusão ou corrige a promessa do `PagamentoGate` |
 | [PEND-119](#pend-119) | Aplicar migração é manual, e o PostgREST não recarrega o schema sozinho | H · Governança | P1 | PROVADA · NÃO CORRIGIDA | conferir o event trigger de reload e desenhar o caminho de aplicação |
@@ -5402,7 +5402,15 @@ STATUS: **AGUARDANDO DECISÃO COM A AGÊNCIA** · Aberta em: 2026-08-19
 ### PEND-115
 **A Ayla não sabe o preço — e o caminho novo perdeu o bloco que respondia**
 Bloco: **G · Comercial** · Prioridade: **P0** · **ORDEM DA FRENTE: —**
-STATUS: **CORRIGIDA · NÃO PUBLICADA** · Aberta em: 2026-08-19 · Corrigida em: 2026-08-24
+STATUS: **PUBLICADA · AGUARDANDO VALIDAÇÃO EM CONVERSA REAL** · Aberta em: 2026-08-19
+Publicada em: 2026-08-24 · `41a1054` · produção servindo às 11:24Z (health ok, db ok)
+
+> ⚠️ **NÃO BAIXADA.** O prompt chegou ao caminho que atende as famílias; o que
+> ainda não existe é uma conversa real em que a Ayla responda preço direito.
+> `IMPLEMENTADA ≠ PRONTA`. A baixa exige ver, em produção, que "quanto custa?",
+> "quais são os planos?", "quero assinar", "como continuo depois do trial?" e
+> "quero continuar depois do período grátis" produzem resposta comercial correta
+> no OFICIAL e conduzem para `/precos`.
 
 > **ATUALIZAÇÃO 24/08/2026 — a correção estava no lugar errado.**
 >
@@ -6305,6 +6313,26 @@ STATUS: **PARCIALMENTE CORRIGIDA** · Aberta em: 2026-08-24
   saídas — por isso 3 das 6 quedas não têm linha `ayla_experimental` nenhuma.
 - **DUAS capacidades ainda só existem no Legacy:** os fatos comerciais
   (PEND-115) e a leitura do último check-in (PEND-081).
+> **BLOQUEADOR EXPLÍCITO DA BAIXA — `FORA_DO_OFICIAL` (24/08/2026).**
+>
+> `AYLA_EXPERIMENTAL_TODAS=true` **não é** prova de que o Legacy morreu. É uma
+> condição de ROTEAMENTO, e enquanto ela existir o caminho de volta ao Legacy
+> continua construído: basta a variável sumir, mudar de valor ou o id da
+> família chegar vazio para toda família fora da allowlist voltar ao Legacy —
+> agora com rastro, mas voltar.
+>
+> **O objetivo NÃO é** "a flag manda todo mundo para o Oficial".
+> **O objetivo É** "o Legacy não participa mais do runtime das famílias".
+>
+> Enquanto a diferença entre as duas frases importar, esta ficha não baixa.
+> A flag e o roteamento **não foram alterados** na missão de 24/08, de propósito.
+
+- **MEDIÇÃO QUE PASSA A SER POSSÍVEL** (evento `ayla_oficial_cedeu`, desde
+  `41a1054`): motivo (`FORA_DO_OFICIAL` · `CONTEXTO_NULO` · `LLM_RESPOSTA_VAZIA`
+  · `FRONTEIRA_BARROU` · `EXCECAO`) · texto × áudio (`payload.midia`) · família
+  (coluna `family_account_id`) · frequência (por `created_at`). **Sem nenhum
+  conteúdo da conversa** — há teste que falha se `inbound.texto` entrar no
+  payload.
 - **CRITÉRIO DE CONCLUSÃO — todos, com prova:** fatos comerciais no Oficial ·
   check-in no Oficial ou decisão escrita · `onFalha` observável · causas de
   fallback conhecidas por medição · nenhuma capacidade só no Legacy · falha do
