@@ -2,6 +2,8 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { idadeAnos } from "@/lib/idade";
 import { gerarConversacional, MODELO_CONVERSA } from "@/lib/ia/provider";
 import { fronteiraAtravessada } from "@/lib/conducao/fronteiras";
+import { comRetentativaCurta } from "@/lib/conducao/retentativa";
+import { logEvent } from "@/lib/log";
 import {
   FORMATO_WHATSAPP,
   formasDeEntrega,
@@ -759,7 +761,18 @@ export async function responderExperimental(
     const model = MODELO_CONVERSA[provider];
 
     const tModelo = Date.now();
-    const r = await gerarConversacional({
+    // ⚠️ A GERAÇÃO VIRA FUNÇÃO PORQUE PRECISA SER REPETÍVEL (PEND-151).
+    //
+    // Até 24/08 este caminho chamava o modelo UMA vez: se estourasse, devolvia
+    // `null` e quem segurava a queda era o Legacy. Enquanto o Legacy existe isso
+    // funciona; quando ele sair, uma falha transitória do provider — sobrecarga,
+    // rate-limit, um 500 que passa em segundos — vira uma mãe sem resposta.
+    //
+    // `instrucaoExtra` é o que a rede de fronteiras injeta na segunda passada.
+    // Vazia no caminho normal: o turno saudável monta o mesmo `system` de antes,
+    // byte a byte.
+    const gerar = (instrucaoExtra?: string) =>
+      gerarConversacional({
       provider,
       model,
       // ⚠️ A ORDEM É CORE → CONTEXTO → REPERTÓRIO, e ela importa. O Core diz
@@ -795,6 +808,10 @@ export async function responderExperimental(
         conducaoPosTrial,
         comercial,
         formato,
+        // A instrução da fronteira entra DEPOIS de tudo, inclusive do idioma:
+        // ela é a correção de uma resposta que já saiu errada, e precisa ser a
+        // última palavra. Vazia no turno normal.
+        instrucaoExtra ?? "",
       ]
         .filter(Boolean)
         .join("\n\n"),
@@ -802,13 +819,24 @@ export async function responderExperimental(
       maxTokens: 1200,
       cacheSystem: true,
     });
+
+    // ⚠️ O LIMITE, POR EXTENSO. `comRetentativaCurta` repete UMA vez se a
+    // chamada ESTOURAR. Vazio não estoura — devolve texto em branco —, então
+    // ganha UMA segunda chance própria, sem retentativa aninhada. Pior caso
+    // absoluto: 3 chamadas. Caminho saudável: 1, exatamente como antes.
+    let r = await comRetentativaCurta(() => gerar());
+    let texto = (r.texto ?? "").trim();
+    if (!texto) {
+      console.warn("[ayla:oficial] resposta vazia — uma segunda tentativa");
+      r = await gerar();
+      texto = (r.texto ?? "").trim();
+    }
     const msModelo = Date.now() - tModelo;
 
-    const texto = (r.texto ?? "").trim();
     if (!texto) {
       params.onFalha?.(
         "LLM_RESPOSTA_VAZIA",
-        `${provider}/${model} respondeu sem texto · tokens in ${r.tokensIn}, out ${r.tokensOut}`,
+        `${provider}/${model} respondeu sem texto duas vezes · tokens in ${r.tokensIn}, out ${r.tokensOut}`,
       );
       return null;
     }
@@ -820,12 +848,65 @@ export async function responderExperimental(
     const tInspecao = Date.now();
     const vazamento = fronteiraAtravessada(texto, diagnosticoRegistrado || null);
     const msInspecao = Date.now() - tInspecao;
+    // ⚠️ A FRONTEIRA DEIXA DE SER UMA QUEDA (PEND-151, 24/08/2026).
+    //
+    // Até aqui, resposta barrada = `return null` = o turno ia para o Legacy.
+    // Só que o Legacy NÃO ignora a fronteira: ele regenera com a instrução da
+    // própria fronteira e, se ainda vazar, entrega o PISO — uma resposta segura
+    // que a fronteira define. O caminho oficial pulava as duas etapas e
+    // terceirizava a rede para o cérebro que queremos aposentar.
+    //
+    // Nada aqui é invenção: `instrucao()` e `piso()` são da própria fronteira,
+    // em `lib/conducao/fronteiras.ts`, que já era neutro e já estava importado.
+    // O que muda é QUEM executa a rede.
+    //
+    // ⚠️ UMA regeneração, nunca duas. Se a segunda também vazar, sai o piso —
+    // `aindaVaza` não realimenta nada, então não há laço possível.
     if (vazamento) {
       console.warn(
-        `[ayla:experimental] fronteira barrou a resposta (${vazamento.fronteira.nome}) — caindo pro fluxo atual`,
+        `[ayla:oficial] fronteira barrou (${vazamento.fronteira.nome}) — regenerando`,
       );
-      params.onFalha?.("FRONTEIRA_BARROU", `fronteira "${vazamento.fronteira.nome}"`);
-      return null;
+      void logEvent({
+        kind: "ayla_fronteira_regenerou",
+        severity: "warn",
+        family_account_id: params.familyId,
+        payload: {
+          fronteira: vazamento.fronteira.nome,
+          codigos: vazamento.achados.map((a) => a.codigo),
+          caminho: "oficial",
+        },
+      });
+
+      let segunda = "";
+      try {
+        const r2 = await gerar(vazamento.fronteira.instrucao(vazamento.achados));
+        segunda = (r2.texto ?? "").trim();
+      } catch {
+        segunda = "";
+      }
+      const aindaVaza = segunda
+        ? fronteiraAtravessada(segunda, diagnosticoRegistrado || null)
+        : null;
+
+      if (segunda && !aindaVaza) {
+        texto = segunda;
+      } else {
+        void logEvent({
+          kind: "ayla_fronteira_piso",
+          severity: "error",
+          family_account_id: params.familyId,
+          payload: {
+            fronteira: (aindaVaza ?? vazamento).fronteira.nome,
+            codigos_1a: vazamento.achados.map((a) => a.codigo),
+            caminho: "oficial",
+          },
+        });
+        // O PISO é RESPOSTA, não desistência: a família recebe algo seguro,
+        // escrito para este caso, em vez de o turno cair para outro cérebro.
+        texto = (aindaVaza ?? vazamento).fronteira.piso({
+          nomeMembro: nomeCrianca ?? null,
+        });
+      }
     }
 
     await logarUsoApi(supabase, {

@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
+import { itensDoSystem } from "./__harness/system-array";
 import {
   ehPerguntaComercial,
   precisaDeHumano,
@@ -118,10 +119,10 @@ describe("B · o OFICIAL recebe a verdade comercial", () => {
   });
 
   it("6. e `comercial` entra no system, antes do formato", () => {
-    const src = semComentarios(EXPERIMENTAL);
-    const m = src.match(/system: \[([\s\S]*?)\]/);
-    expect(m).not.toBeNull();
-    const itens = m![1].split(",").map((x) => x.trim()).filter(Boolean);
+    // ⚠️ passou a usar o harness (24/08): ele já sabe descartar
+    // `instrucaoExtra ?? ""`, que é o slot da correção da fronteira e vale ""
+    // em todo turno normal. O parser local aqui contava esse slot como bloco.
+    const itens = itensDoSystem(EXPERIMENTAL);
     expect(itens).toContain("comercial");
     expect(itens.indexOf("comercial")).toBeLessThan(itens.indexOf("formato"));
     expect(itens.at(-1)).toBe("formato");
@@ -204,7 +205,14 @@ describe("E · AS CINCO PORTAS ficam observáveis", () => {
   it("16. e as três de DENTRO continuam saindo por `onFalha`", () => {
     const src = semComentarios(EXPERIMENTAL);
     expect(src).toMatch(/params\.onFalha\?\.\(\s*"LLM_RESPOSTA_VAZIA"/);
-    expect(src).toMatch(/params\.onFalha\?\.\("FRONTEIRA_BARROU"/);
+    // ⚠️ ESTA ASSERÇÃO MUDOU EM 24/08/2026 (PEND-151), e a mudança é o conserto.
+    // `FRONTEIRA_BARROU` DEIXOU de ser emitido: o Oficial não cede mais quando a
+    // fronteira barra — regenera com a instrução dela e, se ainda vazar, entrega
+    // o piso. A porta fechou, então o motivo para de disparar. A visibilidade
+    // não se perdeu: mora nos dois eventos da própria fronteira.
+    expect(src).toMatch(/kind: "ayla_fronteira_regenerou"/);
+    expect(src).toMatch(/kind: "ayla_fronteira_piso"/);
+    expect(src).not.toMatch(/onFalha\?\.\("FRONTEIRA_BARROU"/);
     expect(src).toMatch(/params\.onFalha\?\.\("EXCECAO"/);
   });
 

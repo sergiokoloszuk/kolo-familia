@@ -318,7 +318,9 @@ describe("I · IDIOMA — a regra mínima chegou ao OFICIAL (PEND-144, item 7)",
       .split(",")
       .map((x) => x.trim())
       // o fecho do array vira um item vazio/`]` no split — não é um bloco
-      .filter((x) => /[A-Za-z]/.test(x));
+      .filter((x) => /[A-Za-z]/.test(x))
+      // `instrucaoExtra` vale "" no turno normal — ver `__harness/system-array`
+      .filter((x) => !x.startsWith("instrucaoExtra"));
     expect(itens.at(-1)).toContain("IDIOMA_DA_CONVERSA");
     // e `formato` continua sendo o último do `system`
     expect(itensDoSystem(EXPERIMENTAL).at(-1)).toBe("formato");

@@ -13,6 +13,7 @@ import {
 import { logarUsoApi } from "@/lib/billing/logar";
 import { logServerError, logEvent } from "@/lib/log";
 import { fronteiraAtravessada } from "@/lib/conducao/fronteiras";
+import { comRetentativaCurta } from "@/lib/conducao/retentativa";
 import { pronomesPara, type Genero, type CuidadorDescrito } from "./pronomes";
 // NÚCLEO DE CONDUÇÃO — fonte única compartilhada com as Estratégias (web):
 // identidade + norte, princípios, regra de sequência, exemplos, piso e tom.
@@ -790,18 +791,7 @@ Se for uma TAREFA da escola/terapia:
  * `fallbackSimples` ("Que coisa boa de ouvir 🌿" em cima de um desabafo) saía na
  * primeira falha, sempre.
  */
-async function comRetentativaCurta<T>(fn: () => T | Promise<T>): Promise<T> {
-  try {
-    return await fn();
-  } catch (e) {
-    console.warn(
-      "[ayla:responder] 1ª tentativa falhou, tentando de novo:",
-      e instanceof Error ? e.message : e,
-    );
-    await new Promise((r) => setTimeout(r, 1200));
-    return fn();
-  }
-}
+
 
 /**
  * Última linha de defesa: nunca deixar a Ayla muda. Só sai quando o modelo

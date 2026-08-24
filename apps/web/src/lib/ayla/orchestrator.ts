@@ -2777,9 +2777,23 @@ export async function processInbound(
   };
 
   if (ehFamiliaExperimental(family.id)) {
-    const ctxExp = await loadFamiliaParaEnvio(supabase, family.id);
+    // ⚠️ UMA SEGUNDA LEITURA ANTES DE DESISTIR (PEND-151, 24/08/2026).
+    //
+    // `loadFamiliaParaEnvio` é leitura de banco, e o modo de falha que MEDI foi
+    // justamente transitório: em 20/08 havia um `The connection to the database
+    // timed out` persistido a ±5min de uma queda para o Legacy. Desistir na
+    // primeira tentativa transforma um soluço de rede em turno perdido.
+    //
+    // O limite é o mesmo de sempre: uma repetição, e só. `comRetentativaCurta`
+    // não repete em `null` — ela repete quando ESTOURA —, então a segunda
+    // leitura é explícita aqui, e não há laço possível.
+    let ctxExp = await loadFamiliaParaEnvio(supabase, family.id);
     if (!ctxExp) {
-      registrarQueda("CONTEXTO_NULO", "loadFamiliaParaEnvio devolveu null");
+      console.warn("[ayla:oficial] contexto nulo — uma segunda leitura");
+      ctxExp = await loadFamiliaParaEnvio(supabase, family.id).catch(() => null);
+    }
+    if (!ctxExp) {
+      registrarQueda("CONTEXTO_NULO", "loadFamiliaParaEnvio devolveu null duas vezes");
     }
     const exp = ctxExp
       ? await responderExperimental(supabase, {
@@ -3008,7 +3022,39 @@ export async function processInbound(
       carregarHistorico(supabase, family.id, inbound.texto, null, undefined, bruto),
     ),
   ]);
-  if (!ctx) return { tratada: true, familia: family.id };
+  // ⚠️ AQUI TERMINAVA EM SILÊNCIO (PEND-151, 24/08/2026).
+  //
+  // Se o contexto falhasse TAMBÉM neste ponto — depois de o Oficial já ter
+  // cedido —, a função devolvia `{ tratada: true }` e pronto: a pessoa
+  // escreveu e não recebeu nada. Sem resposta, sem evento, sem rastro. Era o
+  // último degrau da cadeia, e era mudo.
+  //
+  // O princípio é de produto e vale acima de qualquer otimização: **uma
+  // mensagem recebida não pode terminar em silêncio por falha interna.**
+  //
+  // ⚠️ O TELEFONE VEM DO INBOUND, não do contexto — é justamente o contexto
+  // que faltou. É o mesmo padrão que o caminho de vídeo sem texto já usa
+  // (`ctxVideo?.whatsapp_e164 ?? inbound.phoneE164`), e é o que torna esta
+  // saída possível sem depender do que quebrou.
+  if (!ctx) {
+    await logEvent({
+      kind: "ayla_sem_contexto",
+      severity: "error",
+      persistir: true,
+      family_account_id: family.id,
+      message: "contexto indisponível nos dois caminhos — recado honesto enviado",
+      payload: { midia: inbound.midiaTipo ?? "texto" },
+    });
+    const resp = await enviarEPersistir(supabase, {
+      family_account_id: family.id,
+      membro_atipico_id: null,
+      phone: inbound.phoneE164,
+      texto: TEXTO_NAO_CONSEGUI_AGORA,
+      category: "reativa",
+      tipo: "indisponivel",
+    });
+    return { tratada: true, familia: family.id, resposta: resp };
+  }
 
   // Último membro foco (pra desambiguar pronome em famílias 2+)
   const ultimoNome = ultimoCheckin?.[0]
@@ -4211,6 +4257,24 @@ async function registrarExperimento(
  * es/en recebem no idioma delas pelo choke point de tradução que já existe em
  * `enviarEPersistir` — para PT não há chamada nenhuma.
  */
+/**
+ * O RECADO DE ÚLTIMA INSTÂNCIA — quando nem o contexto veio (PEND-151).
+ *
+ * ⚠️ NÃO EXISTIA UMA MENSAGEM CANÔNICA PARA ISTO. Procurei: há a de vídeo sem
+ * texto (logo abaixo) e a de PDF que não saiu (`rotina-pdf-rota.ts`) — as duas
+ * são sobre um artefato específico, não sobre a Ayla não ter conseguido pensar.
+ * Então esta é nova, e segue a voz das que já existem.
+ *
+ * O que ela NÃO faz, e cada linha custou um incidente em algum produto:
+ *   · não finge que entendeu — a Ayla não leu a mensagem de verdade;
+ *   · não inventa orientação nem acolhe um conteúdo que não conhece;
+ *   · não expõe erro técnico, modelo, API nem caminho interno;
+ *   · não pede desculpas em três linhas;
+ *   · convida a repetir, porque a falha aqui é quase sempre transitória.
+ */
+const TEXTO_NAO_CONSEGUI_AGORA =
+  "Não consegui processar sua mensagem agora 💛 Pode me mandar de novo? Quero te responder com cuidado.";
+
 const TEXTO_VIDEO_SEM_TEXTO =
   "Recebi seu vídeo 💛 Eu ainda não consigo assistir ao vídeo por aqui. Me conta o que você quer que eu observe nele — pode escrever ou mandar um áudio. Aí eu penso nisso com você.";
 

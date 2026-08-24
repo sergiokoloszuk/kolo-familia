@@ -18,8 +18,17 @@ export function itensDoSystem(fonte: string): string[] {
     .replace(/(^|[^:])\/\/.*$/gm, "$1");
   const m = semComentarios.match(/system: \[([^\]]*)\]/);
   if (!m) throw new Error("array do `system` não encontrado no fonte");
-  return m[1]
-    .split(",")
-    .map((x) => x.trim())
-    .filter(Boolean);
+  return (
+    m[1]
+      .split(",")
+      .map((x) => x.trim())
+      .filter(Boolean)
+      // ⚠️ `instrucaoExtra ?? ""` NÃO é um bloco do prompt (24/08/2026). É o
+      // slot da correção que a rede de fronteiras injeta na SEGUNDA passada, e
+      // vale `""` em todo turno normal — o `.filter(Boolean)` do próprio código
+      // o remove antes de o system existir. Contá-lo aqui faria os testes de
+      // ordem medirem uma linha que nunca chega ao modelo, e foi o que
+      // aconteceu: quatro guardas caíram dizendo que o último bloco era ele.
+      .filter((x) => !x.startsWith("instrucaoExtra"))
+  );
 }

@@ -235,7 +235,12 @@ describe("as consultas paralelizadas continuam independentes", () => {
     const ORCH = readFileSync(resolve(__dirname, "orchestrator.ts"), "utf8");
     expect(ORCH).toMatch(/const \[ctx, \{ data: ultimoCheckin \}, historicoParser\] = await Promise\.all\(\[/);
     // E o `ctx` nulo continua encerrando o turno.
-    expect(ORCH).toMatch(/\]\);\s*\n  if \(!ctx\) return \{ tratada: true, familia: family\.id \};/);
+    // ⚠️ 24/08/2026 (PEND-151): a linha seguinte ao `Promise.all` deixou de ser
+    // `return { tratada: true }` — que era a saída MUDA da cadeia. Hoje ela
+    // manda um recado honesto. O que este teste guarda continua o mesmo: as três
+    // leituras vão juntas, e a checagem do contexto vem logo depois.
+    expect(ORCH).toMatch(/\]\);\s*\n[\s\S]{0,1200}if \(!ctx\) \{/);
+    expect(ORCH).toMatch(/texto: TEXTO_NAO_CONSEGUI_AGORA/);
   });
 
   it("NENHUMA ESCRITA foi paralelizada", () => {

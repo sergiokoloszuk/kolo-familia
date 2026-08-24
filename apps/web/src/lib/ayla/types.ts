@@ -84,6 +84,20 @@ export type AylaTipoReativa =
    *  ponte do Plano dispara em `resposta_registro`, e um vídeo marcado assim
    *  faria a mãe receber um PDF de plano por ter mandado um vídeo. */
   | "midia_nao_suportada"
+  /**
+   * O recado de última instância — a Ayla não conseguiu pensar (PEND-151).
+   *
+   * ⚠️ TIPO PRÓPRIO, e não `midia_nao_suportada`, porque são falhas de natureza
+   * oposta e confundi-las apagaria a única coisa que interessa medir. "Mídia não
+   * suportada" é uma decisão CORRETA sobre um estado da entrada — chegou vídeo,
+   * a Ayla não assiste vídeo, e ela diz isso. "Indisponível" é a Ayla FALHANDO:
+   * o contexto não veio, nem na segunda leitura, e ela responde para não ficar
+   * muda. Uma é o produto funcionando; a outra é o produto quebrado.
+   *
+   * Enquanto forem tipos distintos, `select tipo, count(*)` responde "quantas
+   * vezes a Ayla quebrou esta semana" sem precisar de mais nada.
+   */
+  | "indisponivel"
   | "assinatura_nudge"
   /**
    * Conversa pós-Trial SEM link — Onda 1, 18/08/2026.

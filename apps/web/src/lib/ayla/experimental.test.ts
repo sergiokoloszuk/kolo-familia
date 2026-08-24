@@ -239,7 +239,13 @@ describe("as proteções que NÃO podem ser puladas", () => {
     // restritiva demais e proibiria falar de um diagnóstico já cadastrado.
     expect(EXP).toMatch(/fronteiraAtravessada\(texto, diagnosticoRegistrado \|\| null\)/);
     // E barrar significa cair pro fluxo atual, não enviar assim mesmo.
-    expect(EXP).toMatch(/if \(vazamento\) \{[\s\S]{0,320}return null;/);
+    // ⚠️ 24/08/2026 (PEND-151): a inspeção continua idêntica — o que mudou é o
+    // que acontece DEPOIS dela. Barrar deixou de ser `return null` (que jogava o
+    // turno no Legacy) e passou a ser regenerar uma vez e, se preciso, entregar
+    // o piso da própria fronteira. A proteção não afrouxou; ela deixou de
+    // terceirizar.
+    expect(EXP).toMatch(/if \(vazamento\) \{[\s\S]{0,900}fronteira\.instrucao\(/);
+    expect(EXP).toMatch(/\.fronteira\.piso\(\{/);
   });
 
   it("o portão fica DEPOIS de identidade, bloqueio, idempotência e assinatura", () => {
