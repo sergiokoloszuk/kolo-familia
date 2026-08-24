@@ -101,7 +101,7 @@ Só o que está aberto. 🔒 = bloqueada.
 | [PEND-148](#pend-148) | O conteúdo do check-in é escrito por todos e lido por ninguém na conversa | C · Memória | P2 | MEDIDA · NÃO CORRIGIDA | `emocao_mae` em 78% dos 36; nenhum canal lê |
 | [PEND-149](#pend-149) | **A Ayla oficial não enxerga imagem — regressão desde 17/08** | D · Entregas | **P1** | MEDIDA · NÃO CORRIGIDA | 100 imagens de 7 famílias no histórico; 0 desde o rollout |
 | [PEND-150](#pend-150) | A Ayla oficial perdeu a progressão por ângulos — regressão desde 17/08 | A · Condução | P1 | MEDIDA · NÃO CORRIGIDA | mecanismo de 07/08 contra repetir orientação; ver [PEND-082](#pend-082) |
-| [PEND-151](#pend-151) | O fallback do WhatsApp termina em SILÊNCIO se os dois contextos falharem | A · Condução | **P1** | MEDIDA · NÃO CORRIGIDA | `orchestrator.ts:3011` devolve sem responder |
+| [PEND-151](#pend-151) | O fallback do WhatsApp terminava em SILÊNCIO se os dois contextos falhassem | A · Condução | **P1** | **IMPLEMENTADA/PUBLICADA · AGUARDANDO PROVA REAL** | `28a8d97` no ar; falta varrer outros caminhos de silêncio |
 | [PEND-144](#pend-144) | **Retirar o Legacy do runtime da Ayla** | A · Condução | P1 | **PARCIALMENTE CORRIGIDA** | 4 fechados + 2 publicados aguardando prova; falta `DIRETRIZ_IDIOMA` e a flag |
 | [PEND-145](#pend-145) | **A Ayla oficial manda markdown que o WhatsApp não renderiza** | D · Entregas | **P0** | **PUBLICADA · AGUARDANDO MEDIÇÃO REAL** | `fc70305` no ar em 24/08 10:37Z; baseline congelado |
 | [PEND-146](#pend-146) | O documento `core` é escrito EM markdown, e o modelo imita | D · Entregas | P2 | MEDIDA · NÃO CORRIGIDA | `## Psicologia`, `**compreender → ajudar**` no próprio Core |
@@ -6348,7 +6348,7 @@ STATUS: **PARCIALMENTE CORRIGIDA** · Aberta em: 2026-08-24
   | 6 | `A_CRIANCA_ANTES_DO_ROTULO` no Oficial | **PUBLICADO · AGUARDANDO VALIDAÇÃO EM CONVERSA REAL** (`13f4561`) |
   | 7 | Idioma no Oficial | **IMPLEMENTADO · NÃO PUBLICADO** — `IDIOMA_DA_CONVERSA`, 117 tokens contra 581 (−80%) |
   | 8 | Causas de fallback conhecidas por medição | ☐ aguardando tráfego real |
-  | 9 | Falha do Oficial tratada **sem** segundo cérebro | ☐ |
+  | 9 | Falha do Oficial tratada **sem** segundo cérebro | **PUBLICADO · AGUARDANDO VALIDAÇÃO REAL** (`28a8d97`) — retentativa, regeneração e piso dentro do Oficial |
   | 10 | `ayla_responder = 0` de famílias reais em ≥14 dias | ☐ |
   | 11 | `FORA_DO_OFICIAL` deixar de ser um caminho construído | ☐ **bloqueador** — ver acima |
   | 12 | Smoke Web + WhatsApp · rollback documentado | ☐ |
@@ -6670,7 +6670,24 @@ STATUS: **MEDIDA · NÃO CORRIGIDA** · Aberta em: 2026-08-24
 ### PEND-151
 **Se os dois contextos falharem, a família não recebe nada**
 Bloco: **A · Condução** · Prioridade: **P1**
-STATUS: **MEDIDA · NÃO CORRIGIDA** · Aberta em: 2026-08-24
+STATUS: **IMPLEMENTADA/PUBLICADA · AGUARDANDO PROVA REAL** · Aberta em: 2026-08-24
+Publicada em: 2026-08-24 · `28a8d97` · produção servindo às 15:22Z (health ok, db ok)
+
+> **O que foi publicado.** A saída muda de `orchestrator.ts` virou recado
+> honesto com evento `ayla_sem_contexto` persistido, e o telefone vem do
+> INBOUND — é o contexto que faltou. Tipo próprio `indisponivel`, separado de
+> `midia_nao_suportada`: uma é o produto funcionando, a outra é o produto
+> quebrado. Junto foram publicadas as três recuperações dentro do Oficial
+> (retentativa, segunda chance para vazio, regeneração + piso da fronteira).
+>
+> ⚠️ **NÃO BAIXADA, por dois motivos:**
+>
+> 1. **Não há prova real.** MEDI 4 mensagens desde o deploy e 10 desde a
+>    instrumentação; **zero eventos da rede**. Com esse volume, zero não prova
+>    ausência de falha — prova ausência de tráfego.
+> 2. **Só varri UM caminho de silêncio.** Este era o que a investigação achou.
+>    Baixar exige varrer o orquestrador inteiro atrás de outros `return` que
+>    encerrem o turno sem responder — e isso ainda não foi feito.
 
 - **VI NO CÓDIGO.** A cadeia de hoje é: Oficial tenta → se cede, Legacy tenta →
   **`orchestrator.ts:3011`: `if (!ctx) return { tratada: true, familia: family.id };`**
