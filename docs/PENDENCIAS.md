@@ -6343,7 +6343,7 @@ STATUS: **PARCIALMENTE CORRIGIDA** · Aberta em: 2026-08-24
   | 4 | `onFalha` observável nas 5 portas | **✅ no ar** (`41a1054`) |
   | 5 | `INTERESSE_COMO_VEICULO` no Oficial | **PUBLICADO · AGUARDANDO VALIDAÇÃO EM CONVERSA REAL** (`13f4561`) |
   | 6 | `A_CRIANCA_ANTES_DO_ROTULO` no Oficial | **PUBLICADO · AGUARDANDO VALIDAÇÃO EM CONVERSA REAL** (`13f4561`) |
-  | 7 | `DIRETRIZ_IDIOMA` no Oficial | ☐ **falta** — impacto hoje **0** (MEDI 233/233 famílias `pt`) |
+  | 7 | `DIRETRIZ_IDIOMA` no Oficial | ☐ **INVESTIGADO 24/08 · DECISÃO PENDENTE** — recomendação: regra mínima de ~113 tokens, não a de 581 |
   | 8 | Causas de fallback conhecidas por medição | ☐ aguardando tráfego real |
   | 9 | Falha do Oficial tratada **sem** segundo cérebro | ☐ |
   | 10 | `ayla_responder = 0` de famílias reais em ≥14 dias | ☐ |
@@ -6367,15 +6367,40 @@ STATUS: **PARCIALMENTE CORRIGIDA** · Aberta em: 2026-08-24
   para [PEND-145](#pend-145) (formato/tamanho/acolhimento) e
   [PEND-115](#pend-115) (comercial). É o mesmo tráfego e a mesma amostra.
 
-  Falta só a **7** (`DIRETRIZ_IDIOMA`) — e ela tem decisão própria pendente:
-  **não portar automaticamente** ~591 tokens em todos os turnos para uma
-  capacidade de impacto medido **zero** (233/233 famílias em `pt`). Investigação
-  curta e separada, antes de qualquer código, deve responder: o Core já responde
-  no idioma da mensagem sem a diretiva? a coluna `idioma` é intenção de conversa
-  ou cadastro? reagir à mensagem atual é melhor que ao cadastro? o que fazer
-  quando a mãe escreve noutro idioma **ocasionalmente**? cabe uma regra curta e
-  determinística, sem chamada de modelo? e ela **realmente bloqueia** a retirada
-  do Legacy, ou pode ser substituída por algo muito menor?
+  **Item 7 — INVESTIGADO em 24/08, sem implementar.** O que ficou provado:
+
+  - **A coluna `idioma` NÃO é o idioma da conversa.** O próprio código diz
+    (`configuracoes/conta/actions.ts:68`): ela *"define a língua da plataforma e
+    das mensagens que a Ayla ENVIA (proativas). A resposta reativa da Ayla já
+    espelha o idioma de quem escreve, independente disto"*. `traduzir.ts` traduz
+    só proativas, e diz por extenso que *"a conversa reativa NÃO passa por aqui"*.
+    **Condicionar a resposta reativa a essa coluna seria usar a fonte errada** —
+    e era o que eu havia sugerido no relatório anterior. Estava errado.
+  - **A diretiva do Legacy já reage à MENSAGEM**, não ao cadastro, e já trata
+    mensagem curta ("siga o idioma que vocês já vinham usando").
+  - **MEDI em produção:** 2.689 mensagens no histórico inteiro, **3 não são
+    português** — todas de 03/07, todas da fixture de teste do admin. Zero desde
+    o rollout de 17/08. 233/233 famílias em `pt`.
+  - **PROVEI POR EXECUÇÃO** (teste controlado, Core v9 + `gpt-5.6-luna`, sem
+    escrever nada): **sem a diretiva**, inglês saiu em inglês (1/1) e espanhol
+    saiu em espanhol limpo em **3 de 4** — **1 de 4 vazou para português no meio**
+    da resposta longa. **Com a diretiva**, 4/4 limpos.
+  - **⚠️ A evidência de julho é de OUTRO MODELO.** Naquela conversa a diretiva
+    estava ativa e violou as próprias regras ("te dar" em vez de "darte", "el
+    Mario o la Manu", "dentista com miedo"), mas o provider era
+    `claude-sonnet-4-6`; hoje o Oficial é `gpt-5.6-luna`. Não serve para julgar
+    a diretiva no modelo atual.
+
+  **RECOMENDAÇÃO — opção D: substituir por regra mínima, não portar a atual.**
+  O único modo de falha MEDIDO é *vazar português no meio de resposta não-PT*.
+  Uma regra de **~113 tokens (+1,6%)** cobre isso e mais três coisas que o
+  modelo precisa (idioma = o da mensagem; contexto em PT se lê mas não se copia;
+  mensagem curta segue a conversa). Os outros **468 tokens** da diretiva atual
+  são aula de gramática espanhola e instruções por idioma que o `gpt-5.6-luna`
+  **já cumpre sem elas** — provado acima. **Redução de 81%.**
+
+  **Item 7 NÃO bloqueia a retirada do Legacy** — impacto operacional hoje é zero.
+  Vira um item de qualidade a fechar com a regra mínima, quando autorizado.
 - **EXPLICITAMENTE INSUFICIENTE:** "`AYLA_EXPERIMENTAL_TODAS` está ligada".
 
 ---
