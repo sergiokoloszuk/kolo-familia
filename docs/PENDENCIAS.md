@@ -99,7 +99,7 @@ Só o que está aberto. 🔒 = bloqueada.
 | [PEND-137](#pend-137) | Marcos ligados desde 17/08 produziram **1** marco em 143 perfis | C · Memória | P1 | MEDIDA · NÃO CORRIGIDA | o mecanismo funciona; nada flui por ele |
 | [PEND-138](#pend-138) | `sugestao_perfil_vivos`: 3 das 4 origens do CHECK nunca gravaram | H · Governança | P2 | MEDIDA · NÃO CORRIGIDA | `app`, `skill` e `diario_parser` = 0 linhas |
 | [PEND-148](#pend-148) | O conteúdo do check-in é escrito por todos e lido por ninguém na conversa | C · Memória | P2 | MEDIDA · NÃO CORRIGIDA | `emocao_mae` em 78% dos 36; nenhum canal lê |
-| [PEND-144](#pend-144) | **Retirar o Legacy do runtime da Ayla** | A · Condução | P1 | **PARCIALMENTE CORRIGIDA** | as 5 portas ficaram observáveis; falta medir e desligar |
+| [PEND-144](#pend-144) | **Retirar o Legacy do runtime da Ayla** | A · Condução | P1 | **PARCIALMENTE CORRIGIDA** | 4 de 12 fechados; faltam 3 constantes de prompt e a flag |
 | [PEND-145](#pend-145) | **A Ayla oficial manda markdown que o WhatsApp não renderiza** | D · Entregas | **P0** | **PUBLICADA · AGUARDANDO MEDIÇÃO REAL** | `fc70305` no ar em 24/08 10:37Z; baseline congelado |
 | [PEND-146](#pend-146) | O documento `core` é escrito EM markdown, e o modelo imita | D · Entregas | P2 | MEDIDA · NÃO CORRIGIDA | `## Psicologia`, `**compreender → ajudar**` no próprio Core |
 | [PEND-147](#pend-147) | A regra de entrega da web ainda é literal, fora da fonte compartilhada | H · Governança | P3 | ABERTA | `intencao === "desafio"` em `lib/ia/prompt.ts:199` |
@@ -118,7 +118,6 @@ Só o que está aberto. 🔒 = bloqueada.
 | [PEND-082](#pend-082) | Ayla repete orientação do turno anterior — medir frequência real | A · Condução | P1 | MEDIDA | caso Lia/Valentina: "pausa" em 10 de 25 respostas |
 | [PEND-080](#pend-080) | Liberar o caminho novo para TODAS as famílias | A · Condução | P1 | ABERTA 🔒 | fechar os 6 bloqueadores antes de ampliar a allowlist |
 | [PEND-077](#pend-077) | `ayla_daily_checkins` nunca gravou uma linha (400 desde 0001) | H · Governança | P1 | ESCRITA PROVADA · LEITURA NÃO | ligar a leitura do check-in no caminho novo |
-| [PEND-081](#pend-081) | Caminho novo grava o check-in e nunca o lê de volta | C · Memória | P3 | **PROVADA FALSO POSITIVO · AGUARDANDO DECISÃO DE BAIXA** | o Oficial resolve melhor por outra fonte; 3 famílias multi-criança, 1 com check-in |
 | [PEND-078](#pend-078) | Auditoria (`api_calls`) escrita com a sessão da família em outros pontos | H · Governança | P2 | PARCIALMENTE CORRIGIDA | varrer os 37 pontos de chamada de `logarUsoApi` |
 | [PEND-079](#pend-079) | Webhook do Stripe recusa assinatura e não deixa rastro nosso | H · Governança | P2 | ABERTA | persistir a recusa; decidir sobre os 2 endpoints de outro produto |
 | [PEND-069](#pend-069) | Migração 0077 (`ayla_documentos`) não aplicada em produção | H · Governança | P1 | ~~ABERTA~~ **BAIXADA** | nenhum — a tabela existe com 11 linhas (medido 16/08) |
@@ -6334,11 +6333,25 @@ STATUS: **PARCIALMENTE CORRIGIDA** · Aberta em: 2026-08-24
   (coluna `family_account_id`) · frequência (por `created_at`). **Sem nenhum
   conteúdo da conversa** — há teste que falha se `inbound.texto` entrar no
   payload.
-- **CRITÉRIO DE CONCLUSÃO — todos, com prova:** fatos comerciais no Oficial ·
-  check-in no Oficial ou decisão escrita · `onFalha` observável · causas de
-  fallback conhecidas por medição · nenhuma capacidade só no Legacy · falha do
-  Oficial tratada sem segundo cérebro · **0 chamadas `ayla_responder` de
-  famílias reais em ≥14 dias** · smoke Web + WhatsApp · rollback documentado.
+- **CRITÉRIO DE CONCLUSÃO — todos, com prova.** Estado em 24/08/2026:
+
+  | # | item | estado |
+  |---|---|---|
+  | 1 | Fatos comerciais no Oficial | **✅ no ar** (`41a1054`, PEND-115) |
+  | 2 | Formato e entrega condicional no Oficial | **✅ no ar** (`fc70305`, PEND-145) |
+  | 3 | Check-in no Oficial **ou decisão explícita** | **✅ decisão tomada** — [PEND-081](#pend-081) baixada: não é necessário, e o Oficial já faz melhor |
+  | 4 | `onFalha` observável nas 5 portas | **✅ no ar** (`41a1054`) |
+  | 5 | `INTERESSE_COMO_VEICULO` no Oficial | ☐ **falta** |
+  | 6 | `A_CRIANCA_ANTES_DO_ROTULO` no Oficial | ☐ **falta** |
+  | 7 | `DIRETRIZ_IDIOMA` no Oficial | ☐ **falta** — impacto hoje **0** (MEDI 233/233 famílias `pt`) |
+  | 8 | Causas de fallback conhecidas por medição | ☐ aguardando tráfego real |
+  | 9 | Falha do Oficial tratada **sem** segundo cérebro | ☐ |
+  | 10 | `ayla_responder = 0` de famílias reais em ≥14 dias | ☐ |
+  | 11 | `FORA_DO_OFICIAL` deixar de ser um caminho construído | ☐ **bloqueador** — ver acima |
+  | 12 | Smoke Web + WhatsApp · rollback documentado | ☐ |
+
+  **Quatro de doze fechados.** As três capacidades que faltam (5, 6 e 7) são
+  constantes de prompt — nenhuma delas exige arquitetura nova.
 - **EXPLICITAMENTE INSUFICIENTE:** "`AYLA_EXPERIMENTAL_TODAS` está ligada".
 
 ---
@@ -6442,7 +6455,25 @@ STATUS: **ABERTA** · Aberta em: 2026-08-24
 ### PEND-081
 **O caminho novo grava o check-in e nunca o lê de volta**
 Bloco: **C · Memória** · Prioridade: **P3** (era P1)
-STATUS: **PROVADA FALSO POSITIVO · AGUARDANDO DECISÃO DE BAIXA** · Investigada em: 2026-08-24
+STATUS: **✅ BAIXADA — ENCERRADA POR INVESTIGAÇÃO** · Investigada e baixada em: 2026-08-24
+
+> **A decisão, por extenso:** *PEND-081 foi encerrada por investigação: a
+> capacidade supostamente ausente não era memória/contexto de check-in, mas
+> heurística de foco. O Oficial já possui solução equivalente/superior.*
+>
+> **NÃO PORTAR** a heurística de "último check-in" do Legacy para o Oficial —
+> porque a leitura do Legacy não usa conteúdo do check-in, serve apenas para
+> desempatar membro, e o `resolverFoco` do Oficial é mais robusto.
+>
+> **Não é dependência para a retirada do Legacy** (ver [PEND-144](#pend-144)).
+>
+> **DECISÃO DE PRODUTO SOBRE O CASO DE BORDA** — família com 2+ crianças, sem
+> sinal recente, com check-in disponível: **manter o comportamento do Oficial e
+> PERGUNTAR quando o foco for ambíguo.** Check-in antigo não vira palpite de
+> criança. Preferir a pergunta é o que impede que observação de um irmão vire
+> fato sobre o outro — o mesmo princípio de `membro-escopo.ts`.
+>
+> **NENHUM CÓDIGO FOI ALTERADO.** A baixa é a decisão de não alterar.
 
 > ⚠️ **A FICHA NÃO EXISTIA.** Havia linha no índice e âncora `#pend-081`, e
 > nenhuma ficha — quem clicava não encontrava nada. Ela é escrita agora, com o
@@ -6498,8 +6529,13 @@ STATUS: **PROVADA FALSO POSITIVO · AGUARDANDO DECISÃO DE BAIXA** · Investigad
   Oficial pergunta. **INFERI que perguntar é melhor** (não inventa de qual filho
   se fala), mas é mudança de comportamento, e quem decide é o produto.
 
-- **CRITÉRIO DE CONCLUSÃO (revisado):** decisão registrada de que o desempate do
-  Oficial substitui o do Legacy — ou, se não substituir, o que exatamente falta.
+- **CRITÉRIO DE CONCLUSÃO — ✅ CUMPRIDO em 24/08/2026:** a decisão está registrada
+  acima. O desempate do Oficial substitui o do Legacy, e o caso de borda tem
+  resolução escrita.
+- **Aprendizado:** uma pendência pode descrever a ausência de uma coisa e o código
+  estar fazendo outra. Aqui o título dizia "contexto de check-in" e a leitura
+  buscava `membro_atipico_id, nome`. Ler o `select` antes de aceitar o título é o
+  que separou uma migração desnecessária de uma decisão.
 
 ---
 
