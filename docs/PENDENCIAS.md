@@ -99,7 +99,7 @@ Só o que está aberto. 🔒 = bloqueada.
 | [PEND-137](#pend-137) | Marcos ligados desde 17/08 produziram **1** marco em 143 perfis | C · Memória | P1 | MEDIDA · NÃO CORRIGIDA | o mecanismo funciona; nada flui por ele |
 | [PEND-138](#pend-138) | `sugestao_perfil_vivos`: 3 das 4 origens do CHECK nunca gravaram | H · Governança | P2 | MEDIDA · NÃO CORRIGIDA | `app`, `skill` e `diario_parser` = 0 linhas |
 | [PEND-148](#pend-148) | O conteúdo do check-in é escrito por todos e lido por ninguém na conversa | C · Memória | P2 | MEDIDA · NÃO CORRIGIDA | `emocao_mae` em 78% dos 36; nenhum canal lê |
-| [PEND-144](#pend-144) | **Retirar o Legacy do runtime da Ayla** | A · Condução | P1 | **PARCIALMENTE CORRIGIDA** | 4 de 12 fechados; faltam 3 constantes de prompt e a flag |
+| [PEND-144](#pend-144) | **Retirar o Legacy do runtime da Ayla** | A · Condução | P1 | **PARCIALMENTE CORRIGIDA** | 4 fechados + 2 publicados aguardando prova; falta `DIRETRIZ_IDIOMA` e a flag |
 | [PEND-145](#pend-145) | **A Ayla oficial manda markdown que o WhatsApp não renderiza** | D · Entregas | **P0** | **PUBLICADA · AGUARDANDO MEDIÇÃO REAL** | `fc70305` no ar em 24/08 10:37Z; baseline congelado |
 | [PEND-146](#pend-146) | O documento `core` é escrito EM markdown, e o modelo imita | D · Entregas | P2 | MEDIDA · NÃO CORRIGIDA | `## Psicologia`, `**compreender → ajudar**` no próprio Core |
 | [PEND-147](#pend-147) | A regra de entrega da web ainda é literal, fora da fonte compartilhada | H · Governança | P3 | ABERTA | `intencao === "desafio"` em `lib/ia/prompt.ts:199` |
@@ -6341,8 +6341,8 @@ STATUS: **PARCIALMENTE CORRIGIDA** · Aberta em: 2026-08-24
   | 2 | Formato e entrega condicional no Oficial | **✅ no ar** (`fc70305`, PEND-145) |
   | 3 | Check-in no Oficial **ou decisão explícita** | **✅ decisão tomada** — [PEND-081](#pend-081) baixada: não é necessário, e o Oficial já faz melhor |
   | 4 | `onFalha` observável nas 5 portas | **✅ no ar** (`41a1054`) |
-  | 5 | `INTERESSE_COMO_VEICULO` no Oficial | ☐ **falta** |
-  | 6 | `A_CRIANCA_ANTES_DO_ROTULO` no Oficial | ☐ **falta** |
+  | 5 | `INTERESSE_COMO_VEICULO` no Oficial | **PUBLICADO · AGUARDANDO VALIDAÇÃO EM CONVERSA REAL** (`13f4561`) |
+  | 6 | `A_CRIANCA_ANTES_DO_ROTULO` no Oficial | **PUBLICADO · AGUARDANDO VALIDAÇÃO EM CONVERSA REAL** (`13f4561`) |
   | 7 | `DIRETRIZ_IDIOMA` no Oficial | ☐ **falta** — impacto hoje **0** (MEDI 233/233 famílias `pt`) |
   | 8 | Causas de fallback conhecidas por medição | ☐ aguardando tráfego real |
   | 9 | Falha do Oficial tratada **sem** segundo cérebro | ☐ |
@@ -6350,8 +6350,32 @@ STATUS: **PARCIALMENTE CORRIGIDA** · Aberta em: 2026-08-24
   | 11 | `FORA_DO_OFICIAL` deixar de ser um caminho construído | ☐ **bloqueador** — ver acima |
   | 12 | Smoke Web + WhatsApp · rollback documentado | ☐ |
 
-  **Quatro de doze fechados.** As três capacidades que faltam (5, 6 e 7) são
-  constantes de prompt — nenhuma delas exige arquitetura nova.
+  **Quatro fechados; 5 e 6 publicados e aguardando prova comportamental.**
+
+  ⚠️ **"O PROMPT CHEGOU" NÃO É PROVA.** Os itens 5 e 6 estão no ar desde
+  24/08 (`13f4561`) e só viram ✅ depois de observação em conversa real:
+
+  - a Ayla usa o interesse conhecido da criança **quando isso de fato melhora**
+    a orientação — e **não o força em toda resposta**;
+  - o interesse ajuda a adaptar brincadeira, atividade, comunicação ou
+    estratégia (é veículo, não assunto);
+  - a Ayla continua enxergando **a criança antes do diagnóstico**;
+  - as respostas **não ficaram artificialmente longas**;
+  - acolhimento e naturalidade **não pioraram**.
+
+  **Sem medição paralela:** estas observações entram na leitura que já corre
+  para [PEND-145](#pend-145) (formato/tamanho/acolhimento) e
+  [PEND-115](#pend-115) (comercial). É o mesmo tráfego e a mesma amostra.
+
+  Falta só a **7** (`DIRETRIZ_IDIOMA`) — e ela tem decisão própria pendente:
+  **não portar automaticamente** ~591 tokens em todos os turnos para uma
+  capacidade de impacto medido **zero** (233/233 famílias em `pt`). Investigação
+  curta e separada, antes de qualquer código, deve responder: o Core já responde
+  no idioma da mensagem sem a diretiva? a coluna `idioma` é intenção de conversa
+  ou cadastro? reagir à mensagem atual é melhor que ao cadastro? o que fazer
+  quando a mãe escreve noutro idioma **ocasionalmente**? cabe uma regra curta e
+  determinística, sem chamada de modelo? e ela **realmente bloqueia** a retirada
+  do Legacy, ou pode ser substituída por algo muito menor?
 - **EXPLICITAMENTE INSUFICIENTE:** "`AYLA_EXPERIMENTAL_TODAS` está ligada".
 
 ---
