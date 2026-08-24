@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
+import { FORMATO_WHATSAPP } from "@/lib/conducao/formas";
 
 /**
  * A AYLA SEMPRE ENTREGA — os três casos reais que motivaram esta frente.
@@ -23,6 +24,14 @@ import { resolve } from "node:path";
  */
 const ROTINA = readFileSync(resolve(__dirname, "rotina-guiada.ts"), "utf8");
 const RESPONDER = readFileSync(resolve(__dirname, "responder.ts"), "utf8");
+/**
+ * ⚠️ `FORMATO_WHATSAPP` MUDOU DE ARQUIVO EM 24/08/2026 (PEND-145) — foi para
+ * `lib/conducao/formas`, para que o caminho OFICIAL do WhatsApp pudesse lê-lo
+ * sem importar o Legacy. As asserções abaixo passaram a olhar a CONSTANTE em
+ * vez do código-fonte de um dos caminhos: assim elas valem para os dois, que é
+ * exatamente o que estas regras sempre quiseram garantir.
+ */
+const FORMATO = FORMATO_WHATSAPP;
 const ORCHESTRATOR = readFileSync(resolve(__dirname, "orchestrator.ts"), "utf8");
 
 describe("uma Ayla só — o condutor herda o núcleo", () => {
@@ -61,8 +70,8 @@ describe("MATEUS — pergunta feita é pergunta respondida", () => {
   });
 
   it("o reativo também responde horário em vez de mandar esperar um fluxo", () => {
-    expect(RESPONDER).toMatch(/PROPONHA o horário/);
-    expect(RESPONDER).toMatch(/Mandar ela esperar um fluxo em vez de responder/);
+    expect(FORMATO).toMatch(/PROPONHA o horário/);
+    expect(FORMATO).toMatch(/Mandar ela esperar um fluxo em vez de responder/);
   });
 
   it("o convite do fim não recolhe o que já está no contexto", () => {
@@ -70,14 +79,14 @@ describe("MATEUS — pergunta feita é pergunta respondida", () => {
     // como é a tarde de vocês" — com a tarde dela no contexto e usada na
     // própria resposta. Não era o bug antigo (respondeu primeiro), mas é a
     // mesma pergunta, e falhava um critério de aceitação explícito.
-    expect(RESPONDER).toMatch(/NUNCA peça de novo o que já está no contexto/);
-    expect(RESPONDER).toMatch(/o convite do fim é pelo que ela quer MUDAR ou pelo que ela vai reparar testando/);
+    expect(FORMATO).toMatch(/NUNCA peça de novo o que já está no contexto/);
+    expect(FORMATO).toMatch(/o convite do fim é pelo que ela quer MUDAR ou pelo que ela vai reparar testando/);
   });
 
   it("a proibição antiga de propor horário no chat não existe mais", () => {
     // "não invente horários" fazia a Ayla se recusar a responder a pergunta
     // dela. Propor com base no que ela contou não é inventar.
-    expect(RESPONDER).not.toMatch(/e não invente horários/);
+    expect(FORMATO).not.toMatch(/e não invente horários/);
   });
 });
 
@@ -196,6 +205,6 @@ describe("nunca prometer artefato que não foi gerado", () => {
   });
 
   it("o reativo também não promete o que não é ele quem entrega", () => {
-    expect(RESPONDER).toMatch(/Não prometa artefato/);
+    expect(FORMATO).toMatch(/Não prometa artefato/);
   });
 });

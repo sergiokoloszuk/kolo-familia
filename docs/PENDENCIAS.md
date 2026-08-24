@@ -98,6 +98,10 @@ Só o que está aberto. 🔒 = bloqueada.
 | [PEND-136](#pend-136) | A conversa web é o único caminho de escrita no perfil que não registra marco | C · Memória | P1 | MEDIDA · NÃO CORRIGIDA | 3 dos 4 caminhos chamam `detectarMarcos`; este não |
 | [PEND-137](#pend-137) | Marcos ligados desde 17/08 produziram **1** marco em 143 perfis | C · Memória | P1 | MEDIDA · NÃO CORRIGIDA | o mecanismo funciona; nada flui por ele |
 | [PEND-138](#pend-138) | `sugestao_perfil_vivos`: 3 das 4 origens do CHECK nunca gravaram | H · Governança | P2 | MEDIDA · NÃO CORRIGIDA | `app`, `skill` e `diario_parser` = 0 linhas |
+| [PEND-144](#pend-144) | **Retirar o Legacy do runtime da Ayla** | A · Condução | P1 | MEDIDA · NÃO CORRIGIDA | 6 chamadas em 6,9 dias (2,59%); 4 famílias reais; causa desconhecida em ≥5 |
+| [PEND-145](#pend-145) | **A Ayla oficial manda markdown que o WhatsApp não renderiza** | D · Entregas | **P0** | CORRIGIDA · NÃO PUBLICADA | `**` cru em 65,2% das respostas desde 17/08 |
+| [PEND-146](#pend-146) | O documento `core` é escrito EM markdown, e o modelo imita | D · Entregas | P2 | MEDIDA · NÃO CORRIGIDA | `## Psicologia`, `**compreender → ajudar**` no próprio Core |
+| [PEND-147](#pend-147) | A regra de entrega da web ainda é literal, fora da fonte compartilhada | H · Governança | P3 | ABERTA | `intencao === "desafio"` em `lib/ia/prompt.ts:199` |
 | [PEND-104](#pend-104) | **2b ·** Material da pós — LOCALIZADO, em auditoria | B · Conhecimento | P1 | LOCALIZADO · NÃO ATIVO | camada transversal; cobre os buracos do Compilado (rho demanda×regras = 0,042) |
 | [PEND-105](#pend-105) | **8b ·** Conhecimento Especializado: BIA é mecanismo, não inteligência | B · Conhecimento | P1 | PROPOSTA · DECISÃO PENDENTE | sobreposição Compilado × BPs medida em 0% |
 | [PEND-106](#pend-106) | Rastro do conhecimento não cobre o WhatsApp desde 17/08 | H · Governança | P1 | MEDIDA · NÃO CORRIGIDA | invalida o baseline de PEND-042 |
@@ -6221,6 +6225,129 @@ STATUS: **MEDIDA · NÃO CORRIGIDA** · Aberta em: 2026-08-22
 
 ---
 
+### PEND-144
+**Retirar o Legacy do runtime da Ayla**
+Bloco: **A · Condução** · Prioridade: **P1**
+STATUS: **MEDIDA · NÃO CORRIGIDA** · Aberta em: 2026-08-24
+
+- **BASELINE MEDIDO (24/08):** desde o rollout geral de 17/08 13:13Z, **6
+  chamadas `ayla_responder` em 6,9 dias — 2,59%** dos turnos (226 pelo
+  Oficial). **0,87/dia.** Todas de **famílias reais** (`onboarding_step = 7`,
+  com WhatsApp, 1 membro). Nenhuma é proativa, artefato, comando, admin ou QA.
+- **⚠️ CORREÇÃO DE UM NÚMERO ANTERIOR.** O relatório de 22/08 disse "37
+  chamadas / 14%". Estava certo para uma janela de 7 dias que **começava antes
+  do rollout**. A arquitetura atual é 2,59%, não 14%.
+- **4 de 6 quedas foram ÁUDIO**, sendo áudio ~20% do inbound — sobre-
+  representação de ~3,3×. **NÃO SEI por quê.**
+- **Quatro portas para o Legacy, e o rastro de três morre no `console`:**
+  1. `ctxExp === null` — **nenhum rastro, nem `console.log`**;
+  2. `LLM_RESPOSTA_VAZIA`; 3. `FRONTEIRA_BARROU`; 4. `EXCECAO`.
+- **O gancho existe e está desligado.** `experimental.ts:542` declara
+  `onFalha` e o invoca nas três saídas; **o call site em `orchestrator.ts:2739`
+  não o passa**. É código morto. E o `logarUsoApi` do Oficial vem DEPOIS das
+  saídas — por isso 3 das 6 quedas não têm linha `ayla_experimental` nenhuma.
+- **DUAS capacidades ainda só existem no Legacy:** os fatos comerciais
+  (PEND-115) e a leitura do último check-in (PEND-081).
+- **CRITÉRIO DE CONCLUSÃO — todos, com prova:** fatos comerciais no Oficial ·
+  check-in no Oficial ou decisão escrita · `onFalha` observável · causas de
+  fallback conhecidas por medição · nenhuma capacidade só no Legacy · falha do
+  Oficial tratada sem segundo cérebro · **0 chamadas `ayla_responder` de
+  famílias reais em ≥14 dias** · smoke Web + WhatsApp · rollback documentado.
+- **EXPLICITAMENTE INSUFICIENTE:** "`AYLA_EXPERIMENTAL_TODAS` está ligada".
+
+---
+
+### PEND-145
+**A Ayla oficial manda markdown que o WhatsApp não renderiza**
+Bloco: **D · Entregas** · Prioridade: **P0**
+STATUS: **CORRIGIDA · NÃO PUBLICADA** · Aberta em: 2026-08-24
+
+- **BASELINE MEDIDO** nas respostas reativas reais (n=2.288 Legacy até 17/08 ×
+  270 Oficial depois):
+
+  | padrão | LEGACY | OFICIAL |
+  |---|---|---|
+  | `**negrito**` | 0,8% | **65,2%** |
+  | `##` / `###` | 0,1% | **9,6%** |
+  | citação `>` | 0,3% | **22,2%** |
+  | lista numerada | 1,5% | **35,9%** |
+  | mediana | 376 chars | **812** |
+
+- **O que a família recebeu**, textual: `## Plano inicial da [NOME]`,
+  `### 1. O que fazer agora`. O WhatsApp não renderiza `##`, e o negrito dele é
+  `*um asterisco*`, não `**dois**`.
+- **⚠️ A CAUSA NÃO É FALTA DE ACOLHIMENTO — e isso foi medido.** No recorte
+  pareado das mesmas 12 famílias nas duas eras, o Oficial **valida emoção em
+  27,1% contra 11,3%**, **acolhe antes de orientar em 20,1% contra 10,2%** e
+  **nomeia cansaço em 30,6% contra 18,1%**. Ele é mais acolhedor; o que faltava
+  era disciplina de canal. **Por isso nada do Core do Legacy foi copiado.**
+- **CAUSA RAIZ — VI NO CÓDIGO:** `FORMATO_WHATSAPP`, `ehEntrega` e
+  `formasDeEntrega` existiam só no caminho Legacy. `FORMATO_WHATSAPP` e
+  `ehEntrega` moravam **dentro de `lib/ayla/responder.ts`** — o Oficial não
+  podia importá-los sem depender do Legacy que a PEND-144 quer aposentar.
+- **CORREÇÃO (não publicada):** `FORMATO_WHATSAPP` mudou para
+  `lib/conducao/formas.ts`; a regra de entrega virou `pedeEntregaEstruturada`,
+  chamada pelos dois caminhos; o Oficial injeta os dois no FIM do `system`.
+- **CRITÉRIO DE CONCLUSÃO, medido em conversas reais depois do deploy:**
+  `##` < 1% · `**` cru < 1% · `>` cru < 1% · queda clara da estrutura
+  excessiva · **sem piora** nos indicadores de acolhimento (acolhe-antes ≥ 20%,
+  validação ≥ 27%) · nenhuma regressão na web.
+
+---
+
+### PEND-146
+**O documento `core` é escrito EM markdown — e o modelo imita o que ele demonstra**
+Bloco: **D · Entregas** · Prioridade: **P2**
+STATUS: **MEDIDA · NÃO CORRIGIDA** · Aberta em: 2026-08-24
+
+- **MEDI:** o `core` v9 ativo no banco (21.395 chars) contém `## Psicologia
+  comportamental e TCC`, `## Terapia Ocupacional`, `**compreender o suficiente
+  → ajudar → aprofundar**` e `**"2 e 4."**`. Ele **não proíbe** markdown em
+  lugar nenhum; ele o **usa**.
+- **Por que importa:** estilo demonstrado pesa mais que estilo declarado. A
+  PEND-145 contorna isso pondo a regra de formato por ÚLTIMO no `system`, mas
+  o documento continua ensinando o formato errado pelo exemplo.
+- **Também MEDI a inversão de natureza entre os dois Cores:**
+
+  | | Legacy `nucleoConducao()` | Oficial `core` v9 |
+  |---|---|---|
+  | tamanho | 56.983 chars | 21.395 |
+  | **VOZ/ACOLHIMENTO** | **21.172 — 37,9%** | **1.677 — 8,1%** |
+  | PROCEDIMENTO | 2.149 — 3,9% | **10.414 — 50,5%** |
+
+  Seções que sumiram: "Como você conversa" (7.198), "Princípios centrais"
+  (5.818), "Regra de sequência e RITMO" (3.748), "Quem você é" (1.341), "Tom"
+  (361). Vocabulário: `valida` 5→0, `junto` 8→0, `medo` 3→0.
+- **⚠️ NÃO CONCLUIR QUE ISSO PIOROU O ACOLHIMENTO.** A saída real diz o
+  contrário (ver PEND-145). Copiar os 35.588 chars de volta seria desfazer um
+  ganho por causa de um sintoma cuja causa era outra. **Medir de novo depois
+  que o formato estiver corrigido**, sem o ruído dos asteriscos.
+- **Detalhe que merece atenção:** o documento ativo se chama "CORE AYLA —
+  CANDIDATO ATUALIZADO". Um candidato está em produção.
+- **CRITÉRIO DE CONCLUSÃO:** decidir se o `core` deve ser neutro de sintaxe
+  (e publicar a versão), ou se a regra de canal no fim do `system` basta —
+  com medição depois da PEND-145.
+
+---
+
+### PEND-147
+**A regra de entrega da web ainda é um literal, fora da fonte compartilhada**
+Bloco: **H · Governança** · Prioridade: **P3**
+STATUS: **ABERTA** · Aberta em: 2026-08-24
+
+- **VI NO CÓDIGO:** `lib/ia/prompt.ts:199` decide a entrega com
+  `const entrega = intencao === "desafio"`, enquanto o WhatsApp (Legacy e
+  Oficial) passou a chamar `pedeEntregaEstruturada` em `conducao/formas`.
+- **Impacto hoje: zero** — as duas dizem a mesma coisa, e há teste que falha se
+  divergirem (`formato-oficial.test.ts`, caso 13).
+- **Por que não foi corrigida agora:** a missão da PEND-145 proibia
+  explicitamente ampliar escopo e mandava não quebrar a web. Trocar o literal
+  por uma chamada é seguro, mas é mudança na web e fica para quando houver
+  motivo próprio.
+- **CRITÉRIO DE CONCLUSÃO:** os três canais chamam a mesma função.
+
+---
+
 ### Arquivamento
 
 Concluídas e canceladas saem daqui quando este arquivo passar de ~40 fichas, ou
@@ -6228,7 +6355,7 @@ trimestralmente, o que vier antes.
 
 ---
 
-**Próximo ID livre: PEND-139. *(024 e 025 reservadas por frentes ainda não publicadas; 0076 é número de MIGRACAO reservado — ver PEND-121.)***
+**Próximo ID livre: PEND-148. *(024 e 025 reservadas por frentes ainda não publicadas; 0076 é número de MIGRACAO reservado — ver PEND-121.)***
 
 > Conferir contra `origin/main`, não contra o seu branch. Dois branches podem
 > reivindicar o mesmo número — o conflito de merge nesta linha é o alarme.

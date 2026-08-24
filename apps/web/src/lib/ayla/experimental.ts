@@ -2,6 +2,11 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { idadeAnos } from "@/lib/idade";
 import { gerarConversacional, MODELO_CONVERSA } from "@/lib/ia/provider";
 import { fronteiraAtravessada } from "@/lib/conducao/fronteiras";
+import {
+  FORMATO_WHATSAPP,
+  formasDeEntrega,
+  pedeEntregaEstruturada,
+} from "@/lib/conducao/formas";
 import { logarUsoApi } from "@/lib/billing/logar";
 import { resolverDocumento } from "./documentos";
 import {
@@ -628,6 +633,40 @@ export async function responderExperimental(
         ),
     );
     const repertorio = blocoBoasPraticas(bps);
+
+    // ── DISCIPLINA DE CANAL (PEND-145, 24/08/2026) ────────────────────────
+    //
+    // ⚠️ O QUE ESTAVA ERRADO. Este caminho atende TODAS as famílias no WhatsApp
+    // desde 17/08 e nunca recebeu regra de formato nenhuma. MEDI nas respostas
+    // reais desde o rollout: `**` cru em **65,2%**, `##` em 9,6%, `>` em 22,2%,
+    // mediana de 812 chars contra 376 do Legacy. O WhatsApp não renderiza nada
+    // disso — a família via os asteriscos na tela.
+    //
+    // ⚠️ E NÃO ERA FALTA DE ACOLHIMENTO. No recorte pareado das mesmas 12
+    // famílias, este caminho valida emoção em 27,1% contra 11,3% do Legacy e
+    // acolhe antes de orientar em 20,1% contra 10,2%. Por isso a correção é SÓ
+    // de forma: nada do Core do Legacy vem junto.
+    //
+    // ⚠️ POR QUE ISTO VAI NO FIM DO `system`. O documento `core` é escrito EM
+    // markdown — tem `## Psicologia comportamental`, `**compreender → ajudar**`
+    // — e o modelo imita o que o próprio documento demonstra. Regra de formato
+    // colocada antes competiria com o exemplo; colocada por último, é a última
+    // coisa lida. Mesmo motivo pelo qual `DIRETRIZ_IDIOMA` diz "leia por
+    // último" no Legacy.
+    //
+    // ⚠️ A ENTREGA É CONDICIONAL, e é a parte que mais importa: título em cima
+    // de desabafo é frieza. `pedeEntregaEstruturada` é a MESMA função que o
+    // `ehEntrega` do Legacy passou a chamar — a decisão tem um dono só.
+    const entrega = pedeEntregaEstruturada({
+      intencao: params.turnoClassificado?.intencao ?? null,
+    });
+    const formato = [
+      FORMATO_WHATSAPP,
+      entrega ? formasDeEntrega({ canal: "whatsapp", tema: params.turnoClassificado?.tema }) : "",
+    ]
+      .filter(Boolean)
+      .join("\n\n");
+
     const { bloco, foco, diagnosticoRegistrado, consultas, rotulos, fatos, nomeCrianca } = ctxTurno;
     // O bloco que troca o objetivo da conversa. Vazio fora do pós-Trial.
     const conducaoPosTrial = posTrial
@@ -669,7 +708,8 @@ export async function responderExperimental(
       // ⚠️ NO PÓS-TRIAL O BLOCO DE CONDUÇÃO VEM POR ÚLTIMO, e é o único que
       // fala de objetivo. Core (como pensar) → contexto (sobre quem) → condução
       // comercial (para quê, agora). Não há jornada nem repertório neste modo.
-      system: [core.conteudo, bloco, jornada, conducaoTrial, repertorio, conducaoPosTrial]
+      // `formato` POR ÚLTIMO — ver o comentário na construção dele.
+      system: [core.conteudo, bloco, jornada, conducaoTrial, repertorio, conducaoPosTrial, formato]
         .filter(Boolean)
         .join("\n\n"),
       messages: [{ role: "user", content: params.mensagem }],

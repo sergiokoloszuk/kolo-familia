@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import {
   formasDeEntrega,
+  pedeEntregaEstruturada,
   INTERESSE_COMO_VEICULO,
   A_CRIANCA_ANTES_DO_ROTULO as ROTULO,
 } from "./formas";
@@ -373,15 +374,24 @@ describe("quando os blocos NÃO entram", () => {
   });
 
   it("desabafo e pergunta simples: sem desafio detectado, sem blocos", () => {
-    expect(RESPONDER).toMatch(/return Boolean\(params\.sinais\?\.desafio\);/);
+    // ⚠️ ESTA ASSERÇÃO MELHOROU EM 24/08/2026 (PEND-145). A regra saiu do texto
+    // de `responder.ts` e virou `pedeEntregaEstruturada`, em `conducao/formas`,
+    // porque o caminho OFICIAL do WhatsApp precisava da MESMA decisão. Com um
+    // dono só, dá para EXERCITAR a função em vez de casar o código-fonte dela —
+    // que é o que o §12 do protocolo pede sempre que for possível.
+    expect(pedeEntregaEstruturada({ intencao: "desabafo" })).toBe(false);
+    expect(pedeEntregaEstruturada({ intencao: "duvida" })).toBe(false);
+    expect(pedeEntregaEstruturada({ intencao: "crise" })).toBe(false);
+    expect(pedeEntregaEstruturada({ intencao: "outro" })).toBe(false);
+    expect(pedeEntregaEstruturada({ intencao: "desafio" })).toBe(true);
   });
 
   it("pedido explícito de plano não ganha blocos — a resposta ali é curta", () => {
-    expect(RESPONDER).toMatch(/if \(params\.querPlano\) return false;/);
+    expect(pedeEntregaEstruturada({ intencao: "desafio", querPlano: true })).toBe(false);
   });
 
   it("a segunda passada da rede de fronteiras nunca ganha formato por cima", () => {
-    expect(RESPONDER).toMatch(/if \(params\.regenerarPorDiagnostico\) return false;/);
+    expect(pedeEntregaEstruturada({ intencao: "desafio", regenerando: true })).toBe(false);
   });
 
   it("na web, só 'desafio' — crise, desabafo e dúvida ficam em prosa", () => {

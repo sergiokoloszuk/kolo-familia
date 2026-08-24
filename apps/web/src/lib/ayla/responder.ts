@@ -36,6 +36,8 @@ import {
 import { angulosUsados, blocoProgressao } from "@/lib/conducao/angulos";
 import {
   formasDeEntrega,
+  FORMATO_WHATSAPP,
+  pedeEntregaEstruturada,
   INTERESSE_COMO_VEICULO,
   A_CRIANCA_ANTES_DO_ROTULO,
 } from "@/lib/conducao/formas";
@@ -61,16 +63,16 @@ export type UsageTracking = {
  */
 
 /**
- * FORMATO da resposta no WhatsApp — específico do canal (o resto da condução vem
- * do núcleo). Curto por padrão, mas com espaço quando a necessidade pede; e as
- * fronteiras com os fluxos próprios (rotina visual, plano completo).
+ * ⚠️ `FORMATO_WHATSAPP` MUDOU DE ENDEREÇO (24/08/2026).
+ *
+ * Vive em `@/lib/conducao/formas` porque o caminho OFICIAL precisava dela e
+ * não podia importar deste arquivo sem depender do Legacy que vamos aposentar.
+ * MEDIDO: sem esta regra, 65,2% das respostas do Oficial saíam com `**` cru e
+ * 9,6% com `##` — sintaxe que o WhatsApp não renderiza.
+ *
+ * O reexport mantém quem já importava daqui funcionando.
  */
-export const FORMATO_WHATSAPP = `# Formato (WhatsApp)
-- Texto puro de WhatsApp: sem markdown (nada de **, ##, listas com - / •), sem aspas, sem rótulo, sem "Ayla:". Pra destacar uma palavra, *um asterisco só* (negrito do WhatsApp), com muita parcimônia.
-- Curto por padrão — 2 a 4 balões curtos — mas dê o espaço que a necessidade pedir: uma pergunta prática (comida, estratégia) merece 3-5 opções concretas; um desabafo, poucas linhas. No máximo UMA pergunta por vez.
-- Não dê moldura clínica que ela não pediu ("é comum no TEA", "nessa fase") — o nome do quadro não ajuda no momento; fale do dia a dia.
-- ROTINA VISUAL e PLANO completo têm fluxo próprio, com cartões ilustrados e PDF: não é aqui que a rotina inteira da semana é montada. Mas SEMPRE responda a pergunta que ela fez — "que horário encaixo o iPad?", "como você faria a tarde?" — com o que você já sabe da sequência dela; PROPONHA o horário, diga em uma frase por que, e deixe claro que é sugestão e dá pra ajustar. Mandar ela esperar um fluxo em vez de responder é deixá-la sem nada. E o convite do fim é pelo que ela quer MUDAR ou pelo que ela vai reparar testando — NUNCA peça de novo o que já está no contexto ("me conta como é a tarde de vocês" depois de usar a tarde dela na resposta soa como quem não leu).
-- Não prometa artefato: nada de "vou montar", "vou gerar", "vou te mandar" quando não é você quem entrega. Ou já está feito, ou você diz o caminho.`;
+export { FORMATO_WHATSAPP };
 
 /**
  * Espelhamento de idioma. A Ayla responde SEMPRE na língua em que a mãe
@@ -347,10 +349,22 @@ export async function gerarRespostaAyla(
  * Fica DENTRO: desafio do dia a dia, que é onde a entrega organizada ajuda.
  */
 export function ehEntrega(params: RespostaParams): boolean {
-  if (params.regenerarPorDiagnostico) return false;
-  if (params.querPlano) return false;
-  if (params.precisaEscolherMembro) return false;
-  return Boolean(params.sinais?.desafio);
+  // ⚠️ A REGRA SAIU DAQUI (24/08/2026) e virou `pedeEntregaEstruturada`, em
+  // `lib/conducao/formas`. Motivo: o caminho OFICIAL precisava da MESMA decisão
+  // e não podia importar deste arquivo. Esta função continua existindo porque
+  // traduz o formato de parâmetros do Legacy — `sinais.desafio` — para o
+  // vocabulário compartilhado de intenção. O julgamento é um só.
+  return pedeEntregaEstruturada({
+    intencao: params.sinais?.desafio ? "desafio" : "outro",
+    // ⚠️ `Boolean(...)` porque no Legacy estes dois NÃO são booleanos —
+    // `regenerarPorDiagnostico` é `string | undefined` e `precisaEscolherMembro`
+    // é `{ nomes } | null`. O código antigo os usava em `if (...)`, ou seja, por
+    // veracidade. Coagir aqui preserva exatamente esse comportamento; deixar o
+    // tipo frouxo é que teria mudado a decisão em silêncio.
+    regenerando: Boolean(params.regenerarPorDiagnostico),
+    querPlano: Boolean(params.querPlano),
+    precisaEscolherMembro: Boolean(params.precisaEscolherMembro),
+  });
 }
 
 /** Uma passada pelo modelo. A rede acima decide se precisa de outra. */

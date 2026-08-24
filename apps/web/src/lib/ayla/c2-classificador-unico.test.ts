@@ -130,11 +130,16 @@ describe("BOAS PRÁTICAS — repertório, pelo mecanismo existente", () => {
     expect(EXP).toContain("Promise.resolve([])");
   });
 
-  it("a ORDEM do prompt é Core → contexto → repertório", () => {
-    expect(EXP).toContain("[core.conteudo, bloco, jornada, conducaoTrial, repertorio, conducaoPosTrial]");
+  // ⚠️ `formato` ENTROU NO FIM EM 24/08/2026 (PEND-145). O caminho oficial não
+  // tinha regra de formato nenhuma e mandava markdown que o WhatsApp não
+  // renderiza — MEDI `**` cru em 65,2% das respostas reais. Vai por ÚLTIMO de
+  // propósito: o documento `core` é escrito EM markdown, e o modelo imita o que
+  // o documento demonstra; a regra precisa ser a última coisa lida.
+  it("a ORDEM do prompt é Core → contexto → repertório → formato", () => {
+    expect(EXP).toContain("[core.conteudo, bloco, jornada, conducaoTrial, repertorio, conducaoPosTrial, formato]");
     // Repertório antes do contexto faria a resposta nascer da Boa Prática em
     // vez de nascer da criança.
-    const arr = "[core.conteudo, bloco, jornada, conducaoTrial, repertorio, conducaoPosTrial]";
+    const arr = "[core.conteudo, bloco, jornada, conducaoTrial, repertorio, conducaoPosTrial, formato]";
     expect(arr.indexOf("core.conteudo")).toBeLessThan(arr.indexOf("bloco"));
     expect(arr.indexOf("bloco")).toBeLessThan(arr.indexOf("repertorio"));
   });
@@ -175,11 +180,11 @@ describe("SABOTAGEM — os testes mordem?", () => {
 
   it("S5 · o repertório passando na frente do contexto", () => {
     const sabotado = EXP.replace(
-      "[core.conteudo, bloco, jornada, conducaoTrial, repertorio, conducaoPosTrial]",
+      "[core.conteudo, bloco, jornada, conducaoTrial, repertorio, conducaoPosTrial, formato]",
       "[core.conteudo, repertorio, jornada, conducaoTrial, bloco]",
     );
     expect(sabotado).toContain("[core.conteudo, repertorio, jornada, conducaoTrial, bloco]");
-    expect(EXP).toContain("[core.conteudo, bloco, jornada, conducaoTrial, repertorio, conducaoPosTrial]");
+    expect(EXP).toContain("[core.conteudo, bloco, jornada, conducaoTrial, repertorio, conducaoPosTrial, formato]");
   });
 
   it("S6 · injetadas medidas pela consulta em vez do bloco", () => {

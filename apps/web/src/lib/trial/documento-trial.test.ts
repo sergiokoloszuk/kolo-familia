@@ -103,19 +103,19 @@ describe("SÓ ENTRA DURANTE A CONDUÇÃO COMERCIAL", () => {
 
 describe("A ORDEM DO PROMPT", () => {
   it("Core → contexto → jornada → documento do Trial → repertório", () => {
-    expect(EXP).toContain("[core.conteudo, bloco, jornada, conducaoTrial, repertorio, conducaoPosTrial]");
-    const arr = "[core.conteudo, bloco, jornada, conducaoTrial, repertorio, conducaoPosTrial]";
+    expect(EXP).toContain("[core.conteudo, bloco, jornada, conducaoTrial, repertorio, conducaoPosTrial, formato]");
+    const arr = "[core.conteudo, bloco, jornada, conducaoTrial, repertorio, conducaoPosTrial, formato]";
     expect(arr.indexOf("jornada")).toBeLessThan(arr.indexOf("conducaoTrial"));
     expect(arr.indexOf("conducaoTrial")).toBeLessThan(arr.indexOf("repertorio"));
   });
 
   it("SABOTAGEM · o documento passando na frente da jornada seria pego", () => {
     const sabotado = EXP.replace(
-      "[core.conteudo, bloco, jornada, conducaoTrial, repertorio, conducaoPosTrial]",
+      "[core.conteudo, bloco, jornada, conducaoTrial, repertorio, conducaoPosTrial, formato]",
       "[core.conteudo, bloco, conducaoTrial, jornada, repertorio]",
     );
-    expect(sabotado).not.toContain("[core.conteudo, bloco, jornada, conducaoTrial, repertorio, conducaoPosTrial]");
-    expect(EXP).toContain("[core.conteudo, bloco, jornada, conducaoTrial, repertorio, conducaoPosTrial]");
+    expect(sabotado).not.toContain("[core.conteudo, bloco, jornada, conducaoTrial, repertorio, conducaoPosTrial, formato]");
+    expect(EXP).toContain("[core.conteudo, bloco, jornada, conducaoTrial, repertorio, conducaoPosTrial, formato]");
   });
 });
 

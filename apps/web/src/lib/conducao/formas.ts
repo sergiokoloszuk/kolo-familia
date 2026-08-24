@@ -68,6 +68,68 @@ const TIPOS_DE_AJUDA = [
  * `**` porque o canal não os renderiza. Lá o título continua sendo o negrito de
  * um asterisco só.
  */
+/**
+ * FORMATO da resposta no WhatsApp — específico do CANAL (o resto da condução
+ * vem do núcleo).
+ *
+ * ⚠️ MUDOU DE ENDEREÇO EM 24/08/2026, e a mudança é o conserto.
+ *
+ * Esta constante morava dentro de `lib/ayla/responder.ts` — o caminho Legacy.
+ * O caminho OFICIAL (`experimental.ts`), que atende TODAS as famílias no
+ * WhatsApp desde 17/08, não tinha como importá-la sem depender do Legacy que
+ * queremos aposentar. Resultado MEDIDO nas respostas reais desde o rollout:
+ *
+ *   `##`/`###` .... 0,1% no Legacy → **9,6%** no Oficial
+ *   `**negrito**` .. 0,8% no Legacy → **65,2%** no Oficial
+ *   citação `>` .... 0,3% no Legacy → **22,2%** no Oficial
+ *
+ * O WhatsApp não renderiza nada disso. Dois em cada três recados da Ayla saíam
+ * com asterisco cru na tela da família. Não era falta de acolhimento — MEDI que
+ * o Oficial valida emoção MAIS que o Legacy (27,1% × 11,3%) — era falta de
+ * disciplina de canal.
+ *
+ * Aqui, em `lib/conducao/`, os dois caminhos leem a MESMA regra. Uma correção
+ * de formato deixa de precisar ser feita duas vezes.
+ */
+export const FORMATO_WHATSAPP = `# Formato (WhatsApp)
+- Texto puro de WhatsApp: sem markdown (nada de **, ##, listas com - / •), sem aspas, sem rótulo, sem "Ayla:". Pra destacar uma palavra, *um asterisco só* (negrito do WhatsApp), com muita parcimônia.
+- Curto por padrão — 2 a 4 balões curtos — mas dê o espaço que a necessidade pedir: uma pergunta prática (comida, estratégia) merece 3-5 opções concretas; um desabafo, poucas linhas. No máximo UMA pergunta por vez.
+- Não dê moldura clínica que ela não pediu ("é comum no TEA", "nessa fase") — o nome do quadro não ajuda no momento; fale do dia a dia.
+- ROTINA VISUAL e PLANO completo têm fluxo próprio, com cartões ilustrados e PDF: não é aqui que a rotina inteira da semana é montada. Mas SEMPRE responda a pergunta que ela fez — "que horário encaixo o iPad?", "como você faria a tarde?" — com o que você já sabe da sequência dela; PROPONHA o horário, diga em uma frase por que, e deixe claro que é sugestão e dá pra ajustar. Mandar ela esperar um fluxo em vez de responder é deixá-la sem nada. E o convite do fim é pelo que ela quer MUDAR ou pelo que ela vai reparar testando — NUNCA peça de novo o que já está no contexto ("me conta como é a tarde de vocês" depois de usar a tarde dela na resposta soa como quem não leu).
+- Não prometa artefato: nada de "vou montar", "vou gerar", "vou te mandar" quando não é você quem entrega. Ou já está feito, ou você diz o caminho.`;
+
+/**
+ * ESTE TURNO PEDE ESTRUTURA?
+ *
+ * A regra é conservadora de propósito: na dúvida, texto corrido. Uma resposta
+ * boa em prosa nunca incomodou ninguém; um título em cima de um desabafo, sim.
+ *
+ * FORA (texto corrido): `crise`, `desabafo`, `duvida` pontual e `outro`.
+ * DENTRO: `desafio` — o problema do dia a dia, que é onde a organização ajuda.
+ *
+ * ⚠️ ESTA REGRA JÁ EXISTIA TRÊS VEZES, escrita de três jeitos: `ehEntrega()` no
+ * WhatsApp Legacy (sobre `sinais.desafio`), `intencao === "desafio"` na web
+ * (`lib/ia/prompt.ts:199`), e nada no Oficial — que por isso formatava sempre.
+ * Aqui ela passa a ter um nome e um dono. O Oficial e o Legacy chamam esta
+ * função; a web ainda usa o literal — registrado, não corrigido nesta missão.
+ *
+ * As três exclusões extras (`regenerando`, `querPlano`, `precisaEscolherMembro`)
+ * são do Legacy e continuam valendo lá: regenerar já tem instrução própria e
+ * somar formato por cima é competir com ela; e o pedido de plano responde curto,
+ * porque o plano vai no PDF.
+ */
+export function pedeEntregaEstruturada(p: {
+  intencao?: string | null;
+  regenerando?: boolean;
+  querPlano?: boolean;
+  precisaEscolherMembro?: boolean;
+}): boolean {
+  if (p.regenerando) return false;
+  if (p.querPlano) return false;
+  if (p.precisaEscolherMembro) return false;
+  return p.intencao === "desafio";
+}
+
 export function formasDeEntrega(params: {
   canal: "whatsapp" | "web";
   tema?: string | null;
