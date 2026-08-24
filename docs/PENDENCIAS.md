@@ -99,7 +99,7 @@ Só o que está aberto. 🔒 = bloqueada.
 | [PEND-137](#pend-137) | Marcos ligados desde 17/08 produziram **1** marco em 143 perfis | C · Memória | P1 | MEDIDA · NÃO CORRIGIDA | o mecanismo funciona; nada flui por ele |
 | [PEND-138](#pend-138) | `sugestao_perfil_vivos`: 3 das 4 origens do CHECK nunca gravaram | H · Governança | P2 | MEDIDA · NÃO CORRIGIDA | `app`, `skill` e `diario_parser` = 0 linhas |
 | [PEND-144](#pend-144) | **Retirar o Legacy do runtime da Ayla** | A · Condução | P1 | MEDIDA · NÃO CORRIGIDA | 6 chamadas em 6,9 dias (2,59%); 4 famílias reais; causa desconhecida em ≥5 |
-| [PEND-145](#pend-145) | **A Ayla oficial manda markdown que o WhatsApp não renderiza** | D · Entregas | **P0** | CORRIGIDA · NÃO PUBLICADA | `**` cru em 65,2% das respostas desde 17/08 |
+| [PEND-145](#pend-145) | **A Ayla oficial manda markdown que o WhatsApp não renderiza** | D · Entregas | **P0** | **PUBLICADA · AGUARDANDO MEDIÇÃO REAL** | `fc70305` no ar em 24/08 10:37Z; baseline congelado |
 | [PEND-146](#pend-146) | O documento `core` é escrito EM markdown, e o modelo imita | D · Entregas | P2 | MEDIDA · NÃO CORRIGIDA | `## Psicologia`, `**compreender → ajudar**` no próprio Core |
 | [PEND-147](#pend-147) | A regra de entrega da web ainda é literal, fora da fonte compartilhada | H · Governança | P3 | ABERTA | `intencao === "desafio"` em `lib/ia/prompt.ts:199` |
 | [PEND-104](#pend-104) | **2b ·** Material da pós — LOCALIZADO, em auditoria | B · Conhecimento | P1 | LOCALIZADO · NÃO ATIVO | camada transversal; cobre os buracos do Compilado (rho demanda×regras = 0,042) |
@@ -6260,7 +6260,12 @@ STATUS: **MEDIDA · NÃO CORRIGIDA** · Aberta em: 2026-08-24
 ### PEND-145
 **A Ayla oficial manda markdown que o WhatsApp não renderiza**
 Bloco: **D · Entregas** · Prioridade: **P0**
-STATUS: **CORRIGIDA · NÃO PUBLICADA** · Aberta em: 2026-08-24
+STATUS: **PUBLICADA · AGUARDANDO MEDIÇÃO REAL** · Aberta em: 2026-08-24
+Publicada em: 2026-08-24 · `fc70305` · produção servindo às 10:37Z (health ok, db ok)
+
+> ⚠️ **NÃO BAIXADA DE PROPÓSITO.** O código está no ar e provado por 2.908
+> testes; o que ainda não existe é evidência de que a tela da família mudou.
+> `IMPLEMENTADA ≠ PRONTA`. A baixa depende da medição descrita no fim da ficha.
 
 - **BASELINE MEDIDO** nas respostas reativas reais (n=2.288 Legacy até 17/08 ×
   270 Oficial depois):
