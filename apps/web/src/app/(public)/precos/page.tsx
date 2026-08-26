@@ -12,7 +12,8 @@ import {
   seloEconomiaAnual,
 } from "@/lib/billing/planos";
 import { ctaDoEstado, estadoComercialDoVisitante } from "./cta-por-estado";
-import { MarcoOrigem, origemValida } from "./marco-origem";
+import { MarcoOrigem } from "./marco-origem";
+import { origemValida } from "./origem";
 
 export const metadata: Metadata = {
   title: "Preços · Kolo Família",
