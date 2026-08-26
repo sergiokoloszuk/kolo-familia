@@ -151,6 +151,48 @@ export function blocoDaJornada(
       ? "Momento: o período de teste terminou."
       : `Dia ${dia} de ${dia + (estado.diasRestantes ?? 0)} do período de teste.`,
   );
+
+  // ── O TEMPO DO TESTE, JÁ CALCULADO — 26/08/2026 ──────────────────────────
+  //
+  // ⚠️ O MODELO NÃO CALCULA DATA. Ele já recebia o dia em prosa; agora recebe
+  // também quantos dias faltam, quando termina e se hoje é o último. Pedir a um
+  // LLM que subtraia dias de um timestamp é convidar o erro mais caro possível
+  // numa conversa comercial — "faltam 2 dias" para quem tem 5.
+  //
+  // ⚠️ ISTO É CONTEXTO, NÃO ROTEIRO. Não existe instrução para anunciar o dia,
+  // e não pode existir: uma Ayla que abre toda mensagem com "você está no dia
+  // 4" vira contagem regressiva de cobrança. O dado fica disponível para quando
+  // a conversa pedir; quem decide se e como mencionar é a condução.
+  //
+  // ⚠️ NENHUMA LÓGICA PARALELA. Tudo vem de `estadoTrialDe`, que já era o dono
+  // do `dia` e do `diasRestantes`. Este bloco só formata.
+  const dataBr = (iso: string | null | undefined): string | null => {
+    if (!iso) return null;
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return null;
+    return new Intl.DateTimeFormat("pt-BR", {
+      timeZone: "America/Sao_Paulo",
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    }).format(d);
+  };
+  const termina = dataBr(estado.terminaEm);
+  const temporal = [
+    estado.dia != null ? `dia_atual: ${estado.dia}` : null,
+    estado.diasRestantes != null ? `dias_restantes: ${estado.diasRestantes}` : null,
+    termina ? `termina_em: ${termina}` : null,
+    `ultimo_dia: ${estado.ultimoDia ? "sim" : "nao"}`,
+    `encerrado: ${estado.encerrado ? "sim" : "nao"}`,
+  ].filter(Boolean);
+  linhas.push(
+    [
+      "<trial_estado>",
+      temporal.join("\n"),
+      "</trial_estado>",
+      "Estes números já estão calculados. NÃO os recalcule e NÃO os anuncie por hábito — use só quando a conversa pedir.",
+    ].join("\n"),
+  );
   linhas.push(`Intenção disponível hoje: ${INTENCAO_DO_DIA[intencao] ?? INTENCAO_DO_DIA[7]}`);
 
   // O QUE ACONTECEU DE VERDADE — e nada além disso.
