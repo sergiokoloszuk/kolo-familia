@@ -184,6 +184,22 @@ export default async function PainelPage({
   const ativaId = (await resolverCriancaAtivaId(membros ?? [])) ?? null;
   const filtroMembro = ativaId ?? "00000000-0000-0000-0000-000000000000";
 
+  // ⚠️ UMA ONDA SÓ, DE PROPÓSITO — 26/08/2026.
+  //
+  // Estas 14 consultas já foram DUAS ondas sequenciais: as oito primeiras, e
+  // depois as seis últimas (NPS/alertas/estado da Ayla). A segunda onda nunca
+  // dependeu da primeira — as seis usam SOMENTE `familyId`, que já existe
+  // desde `loadFamilyContext()`. Era uma ida ao banco inteira paga à toa.
+  //
+  // Isso não incomodava enquanto uma consulta custava dezenas de ms. Passou a
+  // incomodar quando o host do Supabase degradou e TODA consulta ganhou um
+  // piso de ~0,7–1,8 s (PEND-117): a onda extra virou segundos na cara da mãe.
+  //
+  // ⚠️ AO ACRESCENTAR CONSULTA AQUI, confira de que ela depende. Se precisar de
+  // `filtroMembro` (a criança ativa), ela pertence a esta onda — `membros` já
+  // foi resolvido acima. Se precisar do RESULTADO de alguma consulta desta
+  // lista, ela NÃO pertence a esta onda, e criar uma segunda onda para ela é o
+  // certo. O que não pode voltar é uma onda separada por hábito de escrita.
   const [
     { data: profile },
     { data: subscription },
@@ -193,6 +209,12 @@ export default async function PainelPage({
     { count: sugestoesCount },
     { data: conversasRecentes },
     { data: perfisCompletude },
+    { data: familyMeta },
+    { data: alertasOpen },
+    { count: adaptacoesPendentesCount },
+    { data: aylaPrefs },
+    { count: diariosCountEver },
+    { count: checkinsCountEver },
   ] = await Promise.all([
     supabase
       .from("family_profiles")
@@ -246,45 +268,8 @@ export default async function PainelPage({
       .select("completude_pct, categorias_extras")
       .eq("family_account_id", familyId)
       .eq("membro_atipico_id", filtroMembro),
-  ]);
-
-  const greeting =
-    profile?.como_chamar?.trim() ||
-    profile?.nome_mae?.trim() ||
-    user.email?.split("@")[0] ||
-    "Você";
-  const primeiraCrianca = (membros ?? []).find((m) => m.id === ativaId) ?? membros?.[0];
-
-  // Criança ativa: nome (1º) + gênero, reusados na saudação e no card Perfil.
-  const nomeCA = primeiraCrianca?.nome ? primeiroNome(primeiraCrianca.nome as string) : null;
-  const generoCA = (primeiraCrianca?.genero as string | null) ?? null;
-
-  // Sinais vivos das 3 portas.
-  const koloVivoPct = (() => {
-    const arr = (perfisCompletude ?? []).map((p) => Number(p.completude_pct) || 0);
-    return arr.length ? Math.round(Math.max(...arr)) : 0;
-  })();
-  const ultimaConversaTitulo =
-    ((conversasRecentes ?? [])[0]?.titulo as string | null)?.trim() || null;
-
-  const trialDaysLeft =
-    subscription?.status === "trialing" && subscription.trial_ends_at
-      ? Math.max(
-          0,
-          differenceInCalendarDays(new Date(subscription.trial_ends_at), hoje),
-        )
-      : null;
-
-  // NPS elegibilidade + estado da Ayla + se a família já registrou algo (define
-  // a Home de boas-vindas: recém-chegada = nunca registrou nada, na família toda).
-  const [
-    { data: familyMeta },
-    { data: alertasOpen },
-    { count: adaptacoesPendentesCount },
-    { data: aylaPrefs },
-    { count: diariosCountEver },
-    { count: checkinsCountEver },
-  ] = await Promise.all([
+    // ── daqui para baixo: NPS + alertas + estado da Ayla + "já registrou algo
+    // alguma vez?" (define a Home de boas-vindas). Só dependem de `familyId`.
     supabase
       .from("family_accounts")
       .select("created_at")
@@ -316,6 +301,33 @@ export default async function PainelPage({
       .select("id", { count: "exact", head: true })
       .eq("family_account_id", familyId),
   ]);
+
+  const greeting =
+    profile?.como_chamar?.trim() ||
+    profile?.nome_mae?.trim() ||
+    user.email?.split("@")[0] ||
+    "Você";
+  const primeiraCrianca = (membros ?? []).find((m) => m.id === ativaId) ?? membros?.[0];
+
+  // Criança ativa: nome (1º) + gênero, reusados na saudação e no card Perfil.
+  const nomeCA = primeiraCrianca?.nome ? primeiroNome(primeiraCrianca.nome as string) : null;
+  const generoCA = (primeiraCrianca?.genero as string | null) ?? null;
+
+  // Sinais vivos das 3 portas.
+  const koloVivoPct = (() => {
+    const arr = (perfisCompletude ?? []).map((p) => Number(p.completude_pct) || 0);
+    return arr.length ? Math.round(Math.max(...arr)) : 0;
+  })();
+  const ultimaConversaTitulo =
+    ((conversasRecentes ?? [])[0]?.titulo as string | null)?.trim() || null;
+
+  const trialDaysLeft =
+    subscription?.status === "trialing" && subscription.trial_ends_at
+      ? Math.max(
+          0,
+          differenceInCalendarDays(new Date(subscription.trial_ends_at), hoje),
+        )
+      : null;
 
   // ── Estado da Home (boas-vindas × diário reflexivo) ──────────────
   // Recém-chegada = a família ainda não registrou nada (nem diário, nem
