@@ -80,7 +80,7 @@ Só o que está aberto. 🔒 = bloqueada.
 | [PEND-096](#pend-096) | **14 ·** Ativação gradual + medição real | B · Conhecimento | P2 | A INVESTIGAR | última etapa |
 | [PEND-103](#pend-103) | **‖ paralela ·** Higiene da fila | H · Governança | P3 | A INVESTIGAR | não bloqueia produto |
 | [PEND-115](#pend-115) | **Ayla não sabe o preço** — o bloco que respondia ficou no Legacy | G · Comercial | **P0** | **PUBLICADA · AGUARDANDO VALIDAÇÃO EM CONVERSA REAL** | `41a1054` no ar em 24/08 11:24Z |
-| [PEND-117](#pend-117) | Stack Supabase: 3 de 6 serviços em 5xx, piso de ~1,4 s por consulta | H · Governança | **P0** | MEDIDA 26/08 · CAUSA DESCONHECIDA | **precisa de shell no host**: CPU/memória, por que realtime/pg-meta/functions dão 5xx, pg_stat_activity |
+| [PEND-117](#pend-117) | Stack Supabase sem CPU: piso de ~900 ms em TODA consulta — a web ficou lenta | H · Governança | **P0** | MEDIDA 26/08 21h · HOST ISOLADO COMO CAUSA | **precisa de shell no host**: CPU/memória, por que realtime/pg-meta/functions dão 5xx, pg_stat_activity |
 | [PEND-118](#pend-118) | `DUNNING_DELETE_ENABLED` não existe — a exclusão prometida não executa | G · Comercial | **P1 ALTA** | PROVADA · NÃO CORRIGIDA | decidir se liga a exclusão ou corrige a promessa do `PagamentoGate` |
 | [PEND-119](#pend-119) | Aplicar migração é manual, e o PostgREST não recarrega o schema sozinho | H · Governança | P1 | PROVADA · NÃO CORRIGIDA | conferir o event trigger de reload e desenhar o caminho de aplicação |
 | [PEND-120](#pend-120) | `.env.local` de desenvolvimento aponta para preços que não valem mais | H · Governança | P3 | ABERTA | atualizar os dois `STRIPE_PRICE_ID_*` locais |
@@ -5576,6 +5576,56 @@ STATUS: **MEDIDA — CAUSA DESCONHECIDA** · Aberta em: 2026-08-20
   escrita sobre os seis serviços (subir, remover do compose, ou aceitar
   ausentes com motivo).
 
+
+**MEDIÇÃO DE 26/08/2026, 21h UTC — a lentidão chegou à web, e agora a causa
+tem recorte.** Sérgio relatou "a Kolo está muito lenta, a web inclusive".
+
+⚠️ O que as medições anteriores NÃO conseguiam separar era **rede × host** —
+por isso o registro de 20/08 fechou em "parte é rede, inconclusivo". Três
+medições novas separam.
+
+- **PROVEI POR EXECUÇÃO · não é a rede.** A MESMA consulta, por dois caminhos
+  de rede completamente diferentes, dá o mesmo número:
+  · de dentro da Vercel (`/api/health`, `db.latency_ms`): **686 · 735 · 769 ·
+    895 · 1.087 · 2.342 ms**;
+  · da máquina do agente, no Brasil, com conexão já quente:
+    **903 · 991 · 1.109 · 1.287 · 1.811 ms**.
+  Duas rotas distintas convergindo no mesmo patamar excluem a rede. É o host.
+- **PROVEI POR EXECUÇÃO · não é o banco, é a máquina.** `GET
+  /storage/v1/version` devolve uma **string fixa e não toca em Postgres**:
+  **5.837 ms**. Nenhuma consulta, nenhum índice, nenhum volume de dado explica
+  isso. É contenção de CPU/IO no container.
+- **PROVEI POR EXECUÇÃO · não é fila nem pool de conexão.** Sequencial (uma por
+  vez): 1,47 · 3,01 · 1,47 s. Oito simultâneas: 1,77 a 2,81 s. Concorrência
+  8× **quase não degrada** — logo não há enfileiramento por falta de conexão.
+  O custo é um **piso fixo por requisição**, pago mesmo por quem não faz
+  trabalho nenhum.
+- **PROVEI POR EXECUÇÃO · a Vercel e o Next estão saudáveis.** Páginas públicas
+  que não tocam o banco: `/` 474 ms · `/precos` 347 ms · `/login` 312 ms ·
+  `/ajuda` 363 ms. Rápidas. Só fica lento o que depende do Supabase.
+- **VI NO CÓDIGO · por que a web parece pior que o WhatsApp.** `/painel` gasta
+  **quatro ondas sequenciais** de ida ao banco: `loadFamilyContext()` → consulta
+  de `membros` → `Promise.all` de 8 consultas → `Promise.all` de 6 consultas
+  (`(app)/painel/page.tsx:169,179,196,287`). Com piso de ~900 ms por onda, a
+  Home custa **~3,6 s antes de renderizar** — e o piso não é culpa do código.
+  ⚠️ VI NO CÓDIGO que a onda 4 usa **somente `familyId`**; ela não depende de
+  nada da onda 3. As duas podem virar uma só.
+
+**CAUSA RAIZ (agora com recorte, ainda sem prova de qual processo):** a VPS que
+hospeda o Supabase self-hosted está **sem CPU disponível**. Casa com os 828% e
+1.291% de CPU medidos em 20/08 e com os seis serviços que não sobem.
+**NÃO SEI** ainda *qual* processo consome — isso continua exigindo shell no
+host. Suspeitos por serem os notórios do stack e não serem usados pela Kolo:
+`analytics` (Logflare), `vector`, `realtime`, `imgproxy`, `studio`.
+
+**⚠️ RISCO QUE MANDA NA ORDEM DAS AÇÕES:** um redeploy deste stack **já zerou
+este banco em 08/06/2026** (PEND-092: backup ainda no mesmo disco). Portanto,
+antes de qualquer `docker` que pare ou recrie container: **backup verificado
+fora do host**. Diagnóstico (`docker stats`, `uptime`, `free -h`, `df -h`) é
+leitura e é seguro; parar container não é.
+
+Prioridade elevada a **P0**: deixou de ser só "dificuldade de operar o banco" e
+passou a ser experiência da família em toda tela autenticada.
 
 **MEDIÇÃO DE 26/08/2026 — o que o agente alcança sem acesso ao host.**
 
