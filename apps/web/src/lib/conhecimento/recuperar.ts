@@ -194,11 +194,35 @@ export async function recuperarBoasPraticas(
       ...[...tags].filter(seguro).slice(0, 12).map((t) => `tags.cs.["${t}"]`),
     ];
     if (clausulas.length === 0) return [];
+    // ── DUAS FASES: RANQUEAR LEVE, DETALHAR SÓ O QUE VAI SER USADO ──────────
+    //
+    // ⚠️ O QUE ISTO CORRIGE, MEDIDO EM 26/08/2026. A consulta trazia 200 linhas
+    // com as 14 colunas — **212 KB** — para que o produto usasse **2** delas
+    // (`bpInjetadas` p75 = 2, MEDI em 270 turnos). Os 198 restantes eram
+    // transferidos e descartados.
+    //
+    // A fase 1 traz só o que o RANQUEAMENTO precisa: `ordenarPorAderencia` lê
+    // `titulo`, `versao_conversa`/`versao_curta`, `quando_usar`, `passos_praticos`
+    // e `tags`; o filtro de idade lê as faixas; a ordem por skill lê
+    // `skills_relacionadas`. Ficam de fora as três colunas mais gordas —
+    // `erros_comuns`, `atividades_praticas` e `crencas_adulto` —, que só entram
+    // no bloco final e por isso só precisam existir para as escolhidas.
+    //
+    // ⚠️ SIM, É UM ROUND-TRIP A MAIS, e eu duvidei que compensasse: o banco está
+    // com piso de ~700 ms por consulta (PEND-117). MEDI antes de escrever:
+    //   1 query pesada ............................ p50 1.701 ms
+    //   leve + detalhe das 2, em série ............ p50   993 ms
+    // O payload domina o round-trip. Se PEND-117 for resolvida e o piso cair, a
+    // conta muda de sinal — vale remedir antes de tratar isto como definitivo.
+    //
+    // ⚠️ NENHUM CONHECIMENTO SAI. As mesmas boas práticas são consideradas, na
+    // mesma ordem, com os mesmos campos no bloco final. O que muda é quando cada
+    // coluna viaja pela rede.
+    const COLUNAS_RANKING =
+      "id, titulo, versao_curta, versao_conversa, quando_usar, passos_praticos, skills_relacionadas, tags, peso_relevancia, faixa_etaria_min, faixa_etaria_max";
     const { data, error } = await p.supabase
       .from("boas_praticas")
-      .select(
-        "id, titulo, versao_curta, versao_conversa, quando_usar, erros_comuns, passos_praticos, atividades_praticas, crencas_adulto, skills_relacionadas, tags, peso_relevancia, faixa_etaria_min, faixa_etaria_max",
-      )
+      .select(COLUNAS_RANKING)
       .in("status", p.statusAceitos ?? ["ativo"])
       .or(clausulas.join(","))
       .order("peso_relevancia", { ascending: false })
@@ -258,18 +282,44 @@ export async function recuperarBoasPraticas(
         ).itens.map((x) => x._original)
       : ordenadas;
 
-    return finais.slice(0, p.limite ?? 3).map((bp) => ({
-      id: String(bp.id),
-      titulo: String(bp.titulo ?? "").trim(),
-      // `versao_curta` só entra quando não há `versao_conversa` — mandar as duas
-      // seria repetir a mesma orientação com outras palavras dentro do prompt.
-      versao_conversa: (bp.versao_conversa ?? bp.versao_curta ?? null)?.trim() || null,
-      quando_usar: (bp.quando_usar ?? "").trim() || null,
-      erros_comuns: lista(bp.erros_comuns),
-      passos_praticos: lista(bp.passos_praticos),
-      atividades_praticas: lista(bp.atividades_praticas),
-      crenca_adulto: (typeof bp.crencas_adulto === "string" ? bp.crencas_adulto : "").trim() || null,
-    }));
+    const escolhidas = finais.slice(0, p.limite ?? 3);
+    if (escolhidas.length === 0) return [];
+
+    // ── FASE 2: o detalhe, só das escolhidas ────────────────────────────────
+    //
+    // ⚠️ FALHA AQUI NÃO PODE APAGAR O REPERTÓRIO. Se a segunda consulta não
+    // voltar, as boas práticas escolhidas seguem para o bloco com os campos que
+    // a fase 1 já trouxe — `versao_conversa`, `quando_usar` e `passos_praticos`,
+    // que são o miolo da orientação. Perder `erros_comuns` e `atividades` é pior
+    // que antes; perder a boa prática inteira seria MUITO pior.
+    const detalhePorId = new Map<string, Record<string, unknown>>();
+    const { data: detalhe } = await p.supabase
+      .from("boas_praticas")
+      .select("id, erros_comuns, atividades_praticas, crencas_adulto")
+      .in(
+        "id",
+        escolhidas.map((bp) => String(bp.id)),
+      );
+    for (const d of (detalhe ?? []) as Array<Record<string, unknown>>) {
+      detalhePorId.set(String(d.id), d);
+    }
+
+    return escolhidas.map((bp) => {
+      const d = detalhePorId.get(String(bp.id)) ?? {};
+      return {
+        id: String(bp.id),
+        titulo: String(bp.titulo ?? "").trim(),
+        // `versao_curta` só entra quando não há `versao_conversa` — mandar as duas
+        // seria repetir a mesma orientação com outras palavras dentro do prompt.
+        versao_conversa: (bp.versao_conversa ?? bp.versao_curta ?? null)?.trim() || null,
+        quando_usar: (bp.quando_usar ?? "").trim() || null,
+        erros_comuns: lista(d.erros_comuns),
+        passos_praticos: lista(bp.passos_praticos),
+        atividades_praticas: lista(d.atividades_praticas),
+        crenca_adulto:
+          (typeof d.crencas_adulto === "string" ? d.crencas_adulto : "").trim() || null,
+      };
+    });
   } catch (e) {
     const motivo = e instanceof Error ? e.message : String(e);
     console.warn("[conhecimento] recuperação falhou:", motivo);

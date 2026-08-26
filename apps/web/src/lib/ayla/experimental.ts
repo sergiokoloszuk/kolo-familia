@@ -18,6 +18,7 @@ import {
   INTERESSE_COMO_VEICULO,
   A_CRIANCA_ANTES_DO_ROTULO,
   IDIOMA_DA_CONVERSA,
+  notaDeProporcao,
 } from "@/lib/conducao/formas";
 import { FATOS_COMERCIAIS } from "@/lib/billing/fatos-comerciais";
 import {
@@ -239,6 +240,24 @@ export type TurnoExperimental = {
     forma_modo?: "off" | "sombra" | "ativo";
     /** Nome da fronteira de forma que disparou, ou `null` se nenhuma. */
     forma_disparou?: string | null;
+    /**
+     * ⚠️ O QUE `msBp` ERA E O QUE ELE É — 26/08/2026.
+     *
+     * Era o tempo do `Promise.all` inteiro (seis operações), ou seja, a mais
+     * lenta delas. Passou a ser só a recuperação de repertório. `msParalelo`
+     * carrega o significado antigo, para a série histórica não quebrar.
+     */
+    msParalelo?: number;
+    /** `montarContexto` sozinho — a operação mais pesada do bloco paralelo. */
+    msCtx?: number;
+    /** Leitura do documento `core` (16-21 KB de texto). */
+    msCore?: number;
+    /** Estado + evidências + documento do Trial, somados. */
+    msTrial?: number;
+    /** As três ondas SEQUENCIAIS de `montarContexto`, separadas. */
+    msOnda1?: number;
+    msFoco?: number;
+    msOnda3?: number;
   };
 };
 
@@ -320,6 +339,21 @@ type ContextoDoTurno = {
    * está lido para montar `<conversa_recente>`.
    */
   jaHouveOrientacao: boolean;
+  /**
+   * ONDE O TEMPO DE `montarContexto` FOI GASTO — 26/08/2026.
+   *
+   * ⚠️ A INSTRUMENTAÇÃO ANTERIOR MENTIA, e custou uma conclusão errada. `msBp`
+   * era medido em volta do `Promise.all` de SEIS operações e devolvia a mais
+   * lenta delas — não o tempo das Boas Práticas. Como `msContexto` era medido
+   * de `t0`, poucas linhas de código síncrono antes, os dois davam o mesmo
+   * número em 98% dos turnos, e a leitura natural ("as BPs dominam o contexto")
+   * era falsa.
+   *
+   * `montarContexto` faz TRÊS ondas em série. Medir cada uma é o que permite
+   * dizer se achatá-las vale a pena — MEDI 1.799 ms em série contra 1.296 ms
+   * com as sete consultas num `Promise.all` só.
+   */
+  msOndas: { onda1: number; foco: number; onda3: number };
 };
 
 async function montarContexto(
@@ -331,7 +365,24 @@ async function montarContexto(
   skills: readonly string[] = [],
 ): Promise<ContextoDoTurno> {
   // As três leituras de abertura não dependem uma da outra: vão juntas.
-  const [{ data: perfilFamilia }, { data: membros }, { data: falas }] = await Promise.all([
+  // ⚠️ `lerPerfilFamilia` SUBIU PARA A ONDA 1 — 26/08/2026, quick win 3.
+  //
+  // Ela não depende de nada: só do `familyId`, que o turno já tem. Estava na
+  // onda 3, atrás de `resolverFoco`, esperando uma resolução de criança que não
+  // lhe diz respeito.
+  //
+  // ⚠️ O GANHO É PEQUENO, e digo o número para não vender o que não entrego:
+  // MEDI 300 ms para esta consulta e 529 ms para a onda 3 inteira — ela não é a
+  // mais lenta do grupo, então sair de lá economiza dezenas de ms, não centenas.
+  // As outras duas da onda 3 (`lerPerfilVivo` e `lerEventos`) dependem DE FATO
+  // do foco resolvido, e nenhuma reorganização honesta as sobe junto.
+  //
+  // A emulação que sugeriu 1.799 ms → 1.296 ms colocava as sete consultas num
+  // `Promise.all` só, ignorando as dependências. Esse número era um teto
+  // teórico, não uma promessa.
+  const tOnda1 = Date.now();
+  const [{ data: perfilFamilia }, { data: membros }, { data: falas }, perfilDaFamilia] =
+    await Promise.all([
     supabase
       .from("family_profiles")
       .select("nome_mae, como_chamar")
@@ -349,10 +400,16 @@ async function montarContexto(
       .eq("family_account_id", familyId)
       .order("created_at", { ascending: false })
       .limit(12),
+    // Só depende de `familyId` — nada aqui espera a criança ser resolvida.
+    lerPerfilFamilia(supabase, familyId),
   ]);
 
   const lista = (membros ?? []) as Membro[];
+  const msOnda1 = Date.now() - tOnda1;
+
+  const tFoco = Date.now();
   const foco = await resolverFoco(supabase, familyId, mensagem, lista);
+  const msFoco = Date.now() - tFoco;
   const emFoco = foco.membros;
 
   // Perfil Vivo, trajetória e perfil da FAMÍLIA — também em paralelo.
@@ -362,11 +419,12 @@ async function montarContexto(
   // característica da criança: uma estratégia que depende de dois adultos é
   // inútil para quem cria sozinha. O Legacy já lia isto; era a última lacuna
   // real de contexto do caminho novo.
-  const [perfis, eventos, perfilDaFamilia] = await Promise.all([
+  const tOnda3 = Date.now();
+  const [perfis, eventos] = await Promise.all([
     Promise.all(emFoco.map((m) => lerPerfilVivo(supabase, m.id))),
     lerEventos(supabase, familyId, emFoco.map((m) => m.id)),
-    lerPerfilFamilia(supabase, familyId),
   ]);
+  const msOnda3 = Date.now() - tOnda3;
 
   const nomeResponsavelBruto =
     (perfilFamilia as { como_chamar?: string; nome_mae?: string } | null)?.como_chamar ||
@@ -514,6 +572,7 @@ async function montarContexto(
     fatos: fatosDoTurno,
     nomeCrianca: emFoco.length === 1 ? (emFoco[0]?.nome ?? null) : null,
     jaHouveOrientacao,
+    msOndas: { onda1: msOnda1, foco: msFoco, onda3: msOnda3 },
   };
 }
 
@@ -616,6 +675,27 @@ export async function responderExperimental(
     const modo: ModoTurno = params.modo ?? "normal";
     const posTrial = modo === "pos_trial";
     const skillsDoTurno = posTrial ? [] : (params.turnoClassificado?.skills ?? []);
+    // ⚠️ UM CRONÔMETRO POR OPERAÇÃO — 26/08/2026.
+    //
+    // Medir em volta do `Promise.all` responde "quanto demorou a mais lenta",
+    // que é justamente a pergunta que NÃO se quer responder quando se está
+    // procurando o gargalo. `cron` embrulha cada promessa e registra o tempo
+    // dela, sem alterar valor, erro nem ordem — `then` com os dois ramos, para
+    // que uma falha continue falhando exatamente como antes.
+    const marcas: Record<string, number> = {};
+    const cron = <T,>(nome: string, pr: Promise<T>): Promise<T> => {
+      const inicio = Date.now();
+      return pr.then(
+        (v) => {
+          marcas[nome] = Date.now() - inicio;
+          return v;
+        },
+        (e) => {
+          marcas[nome] = Date.now() - inicio;
+          throw e;
+        },
+      );
+    };
     const tBp = Date.now();
     // ⚠️ A JORNADA ENTRA AQUI, NO MESMO `Promise.all` — 15/08/2026. Duas
     // consultas (estado + evidências) que não dependem de nada acima e não
@@ -627,38 +707,47 @@ export async function responderExperimental(
     // então a condução comercial de dentro do teste também não entra aqui.
     const semJornada = params.origem === "simulador" || posTrial;
     const [ctxTurno, core, bps, estadoTrial, evidencias, docTrial] = await Promise.all([
-      montarContexto(
-        supabase,
-        params.familyId,
-        params.mensagem,
-        params.turnosSimulados ?? [],
-        modo,
-        skillsDoTurno,
+      cron(
+        "ctx",
+        montarContexto(
+          supabase,
+          params.familyId,
+          params.mensagem,
+          params.turnosSimulados ?? [],
+          modo,
+          skillsDoTurno,
+        ),
       ),
-      resolverDocumento(supabase, "core", params.rascunhoCore ?? null),
+      cron("core", resolverDocumento(supabase, "core", params.rascunhoCore ?? null)),
       skillsDoTurno.length
-        ? recuperarBoasPraticas({
+        ? cron("bp", recuperarBoasPraticas({
             supabase,
             skills: skillsDoTurno,
             // O relato liga o ranking por aderência — sem ele, o corte é
             // sempre o mesmo trio para qualquer mensagem da mesma skill.
             relato: params.mensagem,
             limite: 2,
-          }).catch(() => [])
+          })).catch(() => [])
         : Promise.resolve([]),
-      semJornada ? Promise.resolve(null) : lerEstadoTrial(supabase, params.familyId),
+      semJornada
+        ? Promise.resolve(null)
+        : cron("trial_estado", lerEstadoTrial(supabase, params.familyId)),
       semJornada
         ? Promise.resolve(EVIDENCIAS_VAZIAS)
-        : lerEvidenciasJornada(supabase, params.familyId),
+        : cron("trial_evid", lerEvidenciasJornada(supabase, params.familyId)),
       // ⚠️ O DOCUMENTO DO TRIAL — a terceira leitura desta frente, e ela também
       // corre AO LADO das outras. Nenhuma espera nova em série.
       //
       // Ele é o COMO: a profundidade para executar a intenção que o `<jornada>`
       // já escolheu. Não decide o dia, não conta dias, não agenda nada — quem
       // faz isso é `lerEstadoTrial` e o código das proativas.
-      semJornada ? Promise.resolve(null) : resolverDocumento(supabase, "trial"),
+      semJornada ? Promise.resolve(null) : cron("trial_doc", resolverDocumento(supabase, "trial")),
     ]);
-    const msBp = Date.now() - tBp;
+    // ⚠️ `msParalelo` CARREGA O SIGNIFICADO ANTIGO de `msBp` — o bloco inteiro —
+    // para que a série histórica continue comparável. `msBp` passa a ser o que
+    // o nome sempre prometeu: só a recuperação de repertório.
+    const msParalelo = Date.now() - tBp;
+    const msBp = marcas.bp ?? 0;
     // Determinístico e barato: nenhuma chamada de modelo, nenhuma escrita. Sai
     // vazio para assinante, cortesia, staff e para quem não está em teste.
     const jornada = estadoTrial ? blocoDaJornada(estadoTrial, evidencias) : "";
@@ -757,8 +846,28 @@ export async function responderExperimental(
     //
     // Condicionais pelo MESMO gate, pela mesma razão de sempre: as duas só fazem
     // sentido quando há entrega. Num desabafo, repertório de atividade é ruído.
+    // ── R4a · A PROPORÇÃO ENTRA CALCULADA — 26/08/2026 ─────────────────────
+    //
+    // A natureza do turno é determinística e o código já a tem: a mensagem
+    // deste turno e se a conversa já produziu ajuda. Dizer ao modelo qual é
+    // custa zero — nenhuma consulta, nenhuma chamada — e é a diferença entre
+    // um princípio que ele aplica sozinho (e que MEDI perdendo: p50 de 666
+    // caracteres) e uma instrução sobre ESTE turno.
+    //
+    // ⚠️ NÃO PASSA PELO GATE QUEBRADO. `pedeEntregaEstruturada` devolve false
+    // em 100% dos turnos do Oficial (a taxonomia de intenção daqui não tem
+    // "desafio"), então tudo que depende dele é inerte. Esta nota entra ao lado
+    // de `FORMATO_WHATSAPP`, que é incondicional — o mesmo lugar por onde a
+    // disciplina de canal de fato chegou às famílias em 24/08.
+    // `ctxTurno.jaHouveOrientacao` e não a variável desestruturada: a
+    // desestruturação acontece algumas linhas abaixo, e o prompt é montado aqui.
+    const proporcao = notaDeProporcao(
+      naturezaDoTurno(params.mensagem, ctxTurno.jaHouveOrientacao),
+    );
+
     const formato = [
       FORMATO_WHATSAPP,
+      proporcao,
       ...(entrega
         ? [
             formasDeEntrega({ canal: "whatsapp", tema: params.turnoClassificado?.tema }),
@@ -1050,6 +1159,14 @@ export async function responderExperimental(
         // string = qual fronteira disparou. É por aqui que a taxa vira número.
         forma_modo: modoDeForma,
         forma_disparou: formaDisparou,
+        msParalelo,
+        msCtx: marcas.ctx ?? 0,
+        msCore: marcas.core ?? 0,
+        msTrial:
+          (marcas.trial_estado ?? 0) + (marcas.trial_evid ?? 0) + (marcas.trial_doc ?? 0),
+        msOnda1: ctxTurno.msOndas.onda1,
+        msFoco: ctxTurno.msOndas.foco,
+        msOnda3: ctxTurno.msOndas.onda3,
       },
     };
   } catch (e) {

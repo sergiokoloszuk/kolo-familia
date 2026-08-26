@@ -286,8 +286,28 @@ describe("H · o BLOCO DE ENTREGA ficou completo (PEND-144, itens 5 e 6)", () =>
         `\n  entrega:        +${tok(entregaChars)} tokens (+${((100 * tok(entregaChars)) / 7011).toFixed(1)}%)` +
         `\n  as duas novas:  +${tok(INTERESSE_COMO_VEICULO.length + A_CRIANCA_ANTES_DO_ROTULO.length)} tokens\n`,
     );
-    // o turno conversacional não pode ter crescido
-    expect(conversa).toBeLessThan(1500);
+    // ⚠️ ESTE TETO SUBIU DE 1.500 PARA 2.600 EM 26/08/2026 (R4a), e o motivo
+    // fica escrito porque o teste estava certo em existir.
+    //
+    // Ele nasceu para impedir que o bloco de ENTREGA (PEND-144, itens 5 e 6)
+    // inflasse todo turno — e essa proteção continua valendo: as três peças de
+    // entrega seguem fora do turno conversacional, e é o que o teste 29 prende.
+    //
+    // O que mudou foi outra decisão, e é deliberada: o gate que guardava a
+    // entrega (`pedeEntregaEstruturada`) devolve false em 100% dos turnos do
+    // Oficial, então TUDO que depende dele é inerte. A disciplina de tamanho
+    // precisava entrar por onde de fato chega às famílias — `FORMATO_WHATSAPP`,
+    // que é incondicional.
+    //
+    // O CUSTO, MEDIDO: 1.393 → 2.273 caracteres, ~+251 tokens, sobre um prompt
+    // de 7.136 tokens (p50 medido em produção) = **+3,5%** de entrada. A troca é
+    // por saída menor: `tokensSaida` p50 = 300, e respostas com p50 de 666
+    // caracteres, 38,5% acima de 800.
+    //
+    // ⚠️ SEM REGRESSÃO DE CACHE: o prefixo cacheável do `system` já terminava no
+    // primeiro elemento (`core.conteudo`), porque `bloco` — que varia a cada
+    // turno — vem logo depois. Crescer o item 8 não move esse limite.
+    expect(conversa).toBeLessThan(2600);
   });
 });
 

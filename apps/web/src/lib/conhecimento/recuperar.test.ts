@@ -117,14 +117,70 @@ describe("o defeito do tipo — erros_comuns era texto e virava nada", () => {
 });
 
 describe("guardas de estrutura — o que já custou caro uma vez", () => {
-  it("o select traz as duas colunas que faltavam", () => {
-    const sel = FONTE.match(/"id, titulo[^"]+"/)?.[0] ?? "";
-    expect(sel).toContain("atividades_praticas");
-    expect(sel).toContain("crencas_adulto");
-    // e não perdeu as que já estavam
-    expect(sel).toContain("erros_comuns");
-    expect(sel).toContain("passos_praticos");
-    expect(sel).toContain("quando_usar");
+  it("as colunas que faltavam continuam sendo buscadas — agora em DUAS fases", () => {
+    // ⚠️ ESTE TESTE MUDOU DE FORMA EM 26/08/2026, e o intento dele NÃO mudou.
+    //
+    // Ele nasceu em 22/08 porque `atividades_praticas` e `crencas_adulto`
+    // estavam preenchidas em 367 de 370 boas práticas e **nenhum caminho do
+    // produto as lia** — não estavam no `select`. A garantia que ele existe
+    // para dar é: essas colunas CHEGAM ao modelo.
+    //
+    // O que mudou foi a implementação. A consulta trazia 200 linhas com 14
+    // colunas (212 KB, MEDI) para usar 2 — então as três colunas mais pesadas
+    // passaram para uma segunda consulta, feita só para as escolhidas
+    // (1.701 ms → 993 ms, MEDI). Prender a antiga forma faria o teste proibir a
+    // correção em vez de proteger o dado.
+    //
+    // Agora ele confere a UNIÃO das duas fases, que é a garantia real.
+    const ranking = FONTE.match(/const COLUNAS_RANKING\s*=\s*\n?\s*"([^"]+)"/)?.[1] ?? "";
+    const detalhe = FONTE.match(/\.select\("id, erros_comuns[^"]*"\)/)?.[0] ?? "";
+    const uniao = `${ranking} ${detalhe}`;
+
+    // as duas que nunca chegavam
+    expect(uniao).toContain("atividades_praticas");
+    expect(uniao).toContain("crencas_adulto");
+    // e as que já estavam
+    expect(uniao).toContain("erros_comuns");
+    expect(uniao).toContain("passos_praticos");
+    expect(uniao).toContain("quando_usar");
+
+    // ⚠️ O RANQUEAMENTO PRECISA DAS SUAS: `ordenarPorAderencia` lê titulo,
+    // versao_conversa/curta, quando_usar, passos_praticos e tags. Se alguma
+    // sair da fase 1, a ordem passa a ser decidida por menos informação — sem
+    // erro nenhum aparecer.
+    for (const c of [
+      "titulo",
+      "versao_curta",
+      "versao_conversa",
+      "quando_usar",
+      "passos_praticos",
+      "tags",
+      "skills_relacionadas",
+      "faixa_etaria_min",
+      "faixa_etaria_max",
+    ]) {
+      expect(ranking).toContain(c);
+    }
+  });
+
+  it("MORDE: a fase 2 é só das ESCOLHIDAS, não das 200", () => {
+    const i = FONTE.indexOf("const escolhidas = finais.slice(");
+    const j = FONTE.indexOf("return escolhidas.map(", i);
+    const fase2 = FONTE.slice(i, j);
+    expect(fase2).toMatch(/escolhidas\.map\(\(bp\) => String\(bp\.id\)\)/);
+    // Nada de refazer o `.or(` das skills aqui — seria a query pesada de novo.
+    expect(fase2).not.toMatch(/\.or\(/);
+    expect(fase2).not.toMatch(/limit\(200\)/);
+  });
+
+  it("MORDE: falha na fase 2 não apaga o repertório", () => {
+    const i = FONTE.indexOf("const detalhePorId");
+    const j = FONTE.indexOf("return escolhidas.map(", i);
+    const fase2 = FONTE.slice(i, j);
+    // O erro da segunda consulta NÃO é lançado: as escolhidas seguem com o que
+    // a fase 1 trouxe. Perder dois campos é melhor que perder a boa prática.
+    expect(fase2).not.toMatch(/throw new Error/);
+    expect(FONTE).toMatch(/const d = detalhePorId\.get\(String\(bp\.id\)\) \?\? \{\};/);
   });
 
   it("o tipo devolvido carrega os dois campos", () => {
