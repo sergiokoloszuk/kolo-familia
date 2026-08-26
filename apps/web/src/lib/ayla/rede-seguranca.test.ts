@@ -127,12 +127,33 @@ describe("D · contexto nulo ganha uma segunda leitura", () => {
   });
 });
 
+
+/**
+ * A REDE DE ÚLTIMA INSTÂNCIA, localizada pelo que ela FAZ — 26/08/2026.
+ *
+ * ⚠️ ESTE HELPER SUBSTITUI UMA ÂNCORA FRÁGIL, e o motivo fica escrito. Os
+ * testes 15-18 procuravam o PRIMEIRO `if (!ctx) {` do orquestrador. Isso
+ * funcionava por acidente de ordem: bastava outra função ganhar a mesma guarda
+ * acima desta para os três testes passarem a medir o bloco errado — foi
+ * exatamente o que aconteceu quando `sendTrial` ganhou tratamento de contexto
+ * ausente (fechamento do Trial, 26/08).
+ *
+ * A rede não é "o primeiro `if (!ctx)`": é o bloco que manda
+ * `TEXTO_NAO_CONSEGUI_AGORA`. Ancorar nisso é ancorar no comportamento que a
+ * PEND-151 existe para proteger — e nenhuma função nova pode deslocá-lo.
+ */
+function blocoDaRede(src: string): string {
+  const i = src.indexOf("TEXTO_NAO_CONSEGUI_AGORA,");
+  if (i < 0) return "";
+  const abre = src.lastIndexOf("if (!ctx) {", i);
+  return src.slice(abre >= 0 ? abre : Math.max(0, i - 900), i + 300);
+}
 // ─────────────────────────────────────────────────────────────────────────────
 describe("E · o SILÊNCIO deixou de ser um estado final", () => {
   it("15. a saída muda vira recado honesto, com evento persistido", () => {
     const src = semComentarios(ORCHESTRATOR);
     expect(src).not.toMatch(/if \(!ctx\) return \{ tratada: true, familia: family\.id \};/);
-    const bloco = src.slice(src.indexOf("if (!ctx) {"), src.indexOf("if (!ctx) {") + 900);
+    const bloco = blocoDaRede(src);
     expect(bloco).toMatch(/kind: "ayla_sem_contexto"/);
     expect(bloco).toMatch(/persistir: true/);
     expect(bloco).toMatch(/texto: TEXTO_NAO_CONSEGUI_AGORA/);
@@ -140,7 +161,7 @@ describe("E · o SILÊNCIO deixou de ser um estado final", () => {
 
   it("16. o telefone vem do INBOUND — é o contexto que faltou", () => {
     const src = semComentarios(ORCHESTRATOR);
-    const bloco = src.slice(src.indexOf("if (!ctx) {"), src.indexOf("if (!ctx) {") + 900);
+    const bloco = blocoDaRede(src);
     expect(bloco).toMatch(/phone: inbound\.phoneE164/);
     expect(bloco).not.toMatch(/ctx\?\.whatsapp_e164/);
   });
@@ -160,7 +181,7 @@ describe("E · o SILÊNCIO deixou de ser um estado final", () => {
     expect(TYPES).toMatch(/\| "indisponivel"/);
     expect(TYPES).toMatch(/\| "midia_nao_suportada"/);
     const src = semComentarios(ORCHESTRATOR);
-    const bloco = src.slice(src.indexOf("if (!ctx) {"), src.indexOf("if (!ctx) {") + 900);
+    const bloco = blocoDaRede(src);
     expect(bloco).toMatch(/tipo: "indisponivel"/);
   });
 });

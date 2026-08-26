@@ -829,6 +829,96 @@ export async function sendEngajamento(
 // PROATIVA: Trial D-3 e D-0
 // ============================================================
 
+/**
+ * O FECHAMENTO DO TESTE NÃO PODE SUMIR EM SILÊNCIO — 26/08/2026.
+ *
+ * ⚠️ O QUE FOI MEDIDO. **223 trials venceram; 11 receberam `trial_d0` (5%).**
+ * Das 129 famílias que passavam por consentimento, WhatsApp e desativação,
+ * **115 (89%) morriam num portão só: a JANELA PREFERIDA.**
+ *
+ * A causa é aritmética, não conceitual. O cron comercial roda **uma vez por
+ * dia, às 15:00 UTC = 12:00 BRT**, e `podeEnviarProativa` cala fora da janela
+ * que a família escolheu. As janelas configuradas na base são quatro, e MEDI a
+ * distribuição:
+ *
+ *   19:00-21:00 .... 134 famílias   ← 12:00 está fora
+ *   08:00-10:00 ..... 61 famílias   ← fora
+ *   15:00-17:00 ..... 26 famílias   ← fora
+ *   12:00-14:00 ..... 15 famílias   ← a ÚNICA que inclui 12:00
+ *
+ * Ou seja: o fechamento do teste só alcançava **6% da base**, e alcançava por
+ * coincidência de horário. A `rotina` funciona porque roda **4× por dia**
+ * (11, 15, 18, 22 UTC = 08h, 12h, 15h, 19h BRT) — e essas quatro batidas
+ * cobrem exatamente as quatro janelas. O comercial rodava uma vez.
+ *
+ * ⚠️ A CORREÇÃO NÃO É REMOVER A JANELA. A preferência de horário é da família e
+ * existe por um motivo; atropelá-la para vender seria trocar um defeito por
+ * outro. A correção é o cron comercial passar a bater nas MESMAS quatro horas
+ * da rotina — aí a janela é respeitada E o fechamento acontece.
+ *
+ * ⚠️ O QUE ISSO EXIGE, E É O RESTO DESTA FUNÇÃO: com quatro tentativas por dia,
+ * a idempotência deixa de ser detalhe. `jaEnviouTipoHoje` é a trava, e ela
+ * pergunta ao registro do que DE FATO saiu (`ayla_messages`), não a uma
+ * reserva — o mesmo princípio do §8 do protocolo.
+ *
+ * ⚠️ E A TENTATIVA PASSA A DEIXAR RASTRO. Antes, o resultado do cron só existia
+ * no JSON da resposta HTTP, que ninguém guarda — foi por isso que "22 podiam
+ * receber, 2 receberam" ficou sem explicação por semanas. Agora toda tentativa
+ * persiste em `eventos_app`, com o motivo do não-envio.
+ */
+async function jaEnviouTipoHoje(
+  supabase: SupabaseClient,
+  familyAccountId: string,
+  tipo: string,
+  agora: Date,
+): Promise<boolean> {
+  const inicio = new Date(agora);
+  inicio.setHours(0, 0, 0, 0);
+  const { data, error } = await supabase
+    .from("ayla_messages")
+    .select("id")
+    .eq("family_account_id", familyAccountId)
+    .eq("direcao", "outbound")
+    .eq("tipo", tipo)
+    .gte("created_at", inicio.toISOString())
+    .limit(1);
+  // ⚠️ ERRO NA CONSULTA VIRA "JÁ ENVIOU". Numa dúvida entre calar e repetir, o
+  // silêncio de um dia é recuperável na batida seguinte; uma segunda mensagem
+  // comercial no mesmo dia não é.
+  if (error) return true;
+  return (data?.length ?? 0) > 0;
+}
+
+/** Toda tentativa de fechamento deixa rastro — enviada ou não, e por quê. */
+async function registrarTentativaTrial(p: {
+  familyAccountId: string;
+  tipo: string;
+  diasRestantes: number;
+  enviada: boolean;
+  motivo?: string;
+  erro?: string | null;
+}): Promise<void> {
+  await logEvent({
+    kind: "trial_fechamento_tentativa",
+    // `warn` para PERSISTIR: `info` só vai para stdout e some com a retenção da
+    // Vercel — que é exatamente como esta cobertura ficou invisível.
+    severity: p.enviada ? "warn" : "error",
+    persistir: true,
+    family_account_id: p.familyAccountId,
+    message: `${p.tipo}: ${p.enviada ? "enviada" : `nao enviada — ${p.motivo ?? "?"}`}`.slice(0, 200),
+    payload: {
+      tipo: p.tipo,
+      dia_trial: p.diasRestantes,
+      enviada: p.enviada,
+      motivo: p.enviada ? null : (p.motivo ?? null),
+      canal: "whatsapp",
+      erro: p.erro ?? null,
+    },
+  }).catch(() => {
+    /* telemetria nunca derruba o envio */
+  });
+}
+
 export async function sendTrial(
   supabase: SupabaseClient,
   familyAccountId: string,
@@ -837,6 +927,15 @@ export async function sendTrial(
 ): Promise<EnvioResultado> {
   const tipo: AylaTipoProativa = diasRestantes === 3 ? "trial_d3" : "trial_d0";
 
+  // ⚠️ A TRAVA VEM PRIMEIRO, e antes de qualquer consulta cara. Com quatro
+  // batidas por dia, este é o único ponto que impede a família de receber o
+  // mesmo fechamento quatro vezes.
+  if (await jaEnviouTipoHoje(supabase, familyAccountId, tipo, agora)) {
+    // Não registra evento: com quatro batidas por dia, três delas cairiam aqui
+    // todo dia para toda família já atendida, e o rastro viraria ruído.
+    return { enviada: false, motivo: "ja enviada hoje" };
+  }
+
   // ⚠️ CONVIVÊNCIA COM A JORNADA REATIVA (15/08/2026). O pior resultado desta
   // frente seria a família conversar sobre continuar no D6 e receber, logo
   // depois, uma automática perguntando quase a mesma coisa. Se a conversa já
@@ -844,7 +943,9 @@ export async function sendTrial(
   // que NÃO conversa continua recebendo, que é a razão de a proativa existir.
   if (await fechamentoReativoRecente(supabase, familyAccountId, agora)) {
     console.log(`[ayla:trial] ${tipo} calado — a conversa já fez o fechamento hoje`);
-    return { enviada: false, motivo: "fechamento reativo recente" };
+    const motivo = "fechamento reativo recente";
+    await registrarTentativaTrial({ familyAccountId, tipo, diasRestantes, enviada: false, motivo });
+    return { enviada: false, motivo };
   }
 
   const podeRes = await podeEnviarProativa(
@@ -852,10 +953,23 @@ export async function sendTrial(
     { family_account_id: familyAccountId, agora },
     tipo,
   );
-  if (!podeRes.permitido) return { enviada: false, motivo: podeRes.motivo };
+  if (!podeRes.permitido) {
+    await registrarTentativaTrial({
+      familyAccountId,
+      tipo,
+      diasRestantes,
+      enviada: false,
+      motivo: podeRes.motivo,
+    });
+    return { enviada: false, motivo: podeRes.motivo };
+  }
 
   const ctx = await loadFamiliaParaEnvio(supabase, familyAccountId);
-  if (!ctx) return { enviada: false, motivo: "Sem contexto da família." };
+  if (!ctx) {
+    const motivo = "Sem contexto da família.";
+    await registrarTentativaTrial({ familyAccountId, tipo, diasRestantes, enviada: false, motivo });
+    return { enviada: false, motivo };
+  }
 
   const texto = await templateTrial(supabase, {
     diasRestantes,
@@ -863,7 +977,7 @@ export async function sendTrial(
     seed: `${familyAccountId}-trial-${diasRestantes}`,
   });
 
-  return enviarEPersistir(supabase, {
+  const res = await enviarEPersistir(supabase, {
     family_account_id: familyAccountId,
     membro_atipico_id: null,
     phone: ctx.whatsapp_e164,
@@ -871,6 +985,16 @@ export async function sendTrial(
     category: "proativa",
     tipo,
   });
+  await registrarTentativaTrial({
+    familyAccountId,
+    tipo,
+    diasRestantes,
+    enviada: res.enviada,
+    // `motivo` só existe no ramo de falha — a união é discriminada de propósito.
+    motivo: res.enviada ? undefined : res.motivo,
+    erro: res.enviada ? null : res.motivo,
+  });
+  return res;
 }
 
 // ============================================================

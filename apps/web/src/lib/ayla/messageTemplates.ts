@@ -91,13 +91,26 @@ const FALLBACK: Record<string, string[]> = {
     "{nomeMae}, faz alguns dias que não nos falamos. Sem cobrança — quero só saber se vocês estão bem.\n\nSe puder responder, mesmo que com \"tudo bem\", já me conforta.",
     "Oi, {nomeMae}. Caí da rotina aqui sem você.\n\nMe conta uma coisa do dia quando puder — sem pressa.",
   ],
+  // ⚠️ A ROTA CERTA É `/precos`, E ELA ENTRA COMO VARIÁVEL — 26/08/2026.
+  //
+  // Estes três textos diziam "assinar em /assinatura". São dois defeitos num só:
+  //   · `/assinatura` é GESTÃO de assinatura e exige login — quem chega ali sem
+  //     sessão bate numa parede. A rota de aquisição é `/precos`, pública, que
+  //     lê os valores ao vivo. `linkPlanos()` é a fonte canônica.
+  //   · caminho solto não é clicável no WhatsApp. `{link_planos}` vira a URL
+  //     inteira; sem `NEXT_PUBLIC_APP_URL` vira string vazia e a frase degrada
+  //     em vez de quebrar.
+  //
+  // Isto é o FALLBACK: em produção mandam as variações de
+  // `ayla_message_templates`. Ele só aparece se a leitura do banco falhar — e
+  // era exatamente aí que a rota errada voltaria a sair.
   trial_d3: [
-    "Oi, {nomeMae}. Te lembrando que seu período grátis termina em 3 dias.\n\nSe quiser continuar com a gente, é só assinar em /assinatura. Sem pressa.",
+    "Oi, {nomeMae}. Te lembrando que seu período grátis termina em 3 dias.\n\nSe quiser continuar com a gente, os planos estão aqui: {link_planos}\n\nSem pressa.",
     "{nomeMae}, faltam 3 dias pro fim do seu período grátis.\n\nQuis te avisar com antecedência, pra você decidir com calma.",
   ],
   trial_d0: [
-    "Oi, {nomeMae}. Hoje é o último dia do seu período grátis 🌿\n\nTudo que você me contou continua salvo. Se quiser seguir, é só assinar em /assinatura — cancela quando quiser.",
-    "{nomeMae}, hoje termina seu período grátis.\n\nSe você quiser continuar com a gente, é em /assinatura. Se não quiser, sem problema — seus registros ficam aqui, caso queira voltar depois.",
+    "Oi, {nomeMae}. Hoje é o último dia do seu período grátis 🌿\n\nTudo que você me contou continua salvo. Se quiser seguir, é aqui: {link_planos} — cancela quando quiser.",
+    "{nomeMae}, hoje termina seu período grátis.\n\nSe fizer sentido continuar com a Kolo, os planos estão aqui: {link_planos}\n\nSe não quiser, sem problema — seus registros ficam aqui, caso queira voltar depois.",
   ],
   emocional_streak: [
     "{nomeMae}, você me respondeu 7 dias seguidos 🌿\n\nIsso é cuidado de verdade. {nomeMembro} está tendo um cuidado bem presente — e isso vem de você.",
