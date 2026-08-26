@@ -47,15 +47,3 @@ export function MarcoOrigem({ origem }: { origem: string | null }) {
 
   return null;
 }
-
-/**
- * As origens que reconhecemos. Vocabulário fechado de propósito: qualquer coisa
- * fora daqui vira `null` e NÃO emite evento — senão um link colado com um
- * parâmetro qualquer viraria uma origem inventada dentro da métrica.
- */
-const ORIGENS = new Set(["d7", "d3", "pos_trial"]);
-
-export function origemValida(bruta: string | string[] | undefined): string | null {
-  const v = typeof bruta === "string" ? bruta.trim().toLowerCase() : "";
-  return ORIGENS.has(v) ? v : null;
-}

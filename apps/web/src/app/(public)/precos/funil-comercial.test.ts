@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import fs from "node:fs";
 import path from "node:path";
 import { ctaDoEstado } from "./cta-por-estado";
-import { origemValida } from "./marco-origem";
+import { origemValida } from "./origem";
 import { linkPlanos } from "@/lib/billing/destino-comercial";
 
 /**
