@@ -2,6 +2,13 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { idadeAnos } from "@/lib/idade";
 import { gerarConversacional, MODELO_CONVERSA } from "@/lib/ia/provider";
 import { fronteiraAtravessada } from "@/lib/conducao/fronteiras";
+import {
+  formaAtravessada,
+  ehMenuDeAlternativas,
+  naturezaDoTurno,
+  perguntasReais,
+  modoForma,
+} from "@/lib/conducao/fronteiras-forma";
 import { comRetentativaCurta } from "@/lib/conducao/retentativa";
 import { logEvent } from "@/lib/log";
 import {
@@ -228,6 +235,10 @@ export type TurnoExperimental = {
     pos_trial_nivel?: "A" | "B" | "C" | null;
     /** Quantos fatos de perfil existiam. `null` fora do pós-Trial. */
     pos_trial_fatos?: number | null;
+    /** `off` | `sombra` | `ativo` — em que modo a rede de forma rodou. */
+    forma_modo?: "off" | "sombra" | "ativo";
+    /** Nome da fronteira de forma que disparou, ou `null` se nenhuma. */
+    forma_disparou?: string | null;
   };
 };
 
@@ -295,6 +306,20 @@ type ContextoDoTurno = {
   fatos: number;
   /** Só no `pos_trial`: a criança em foco, para o bloco falar dela pelo nome. */
   nomeCrianca: string | null;
+  /**
+   * ESTA CONVERSA JÁ PRODUZIU ALGUMA AJUDA? — 26/08/2026, rede de forma.
+   *
+   * ⚠️ NÃO É "a conversa é longa". É "a família já recebeu algo aplicável". A
+   * distinção decide duas coisas na rede de forma: se um menu é condução
+   * legítima ou interrogatório (MEDI um caso real com SETE menus antes da
+   * primeira orientação), e se uma mensagem de três palavras é um cumprimento
+   * ou a continuação de um assunto que já está em pé.
+   *
+   * O sinal é determinístico e barato: uma fala anterior da Ayla, com corpo, que
+   * não seja ela própria um menu. Sem modelo, sem consulta nova — o histórico já
+   * está lido para montar `<conversa_recente>`.
+   */
+  jaHouveOrientacao: boolean;
 };
 
 async function montarContexto(
@@ -470,6 +495,16 @@ async function montarContexto(
     .filter(Boolean)
     .join(", ");
 
+  // ⚠️ 200 CARACTERES É O CORTE, e ele veio da medição: a mediana das respostas
+  // do Oficial é 666 e as falas curtas da amostra (despedidas, "imagina",
+  // confirmações) ficam abaixo de 200. Um menu não conta por mais longo que
+  // seja — é exatamente o que esta rede existe para não confundir com ajuda.
+  const jaHouveOrientacao = historico.some((l) => {
+    if (!l.startsWith("Ayla")) return false;
+    const corpo = l.slice(l.indexOf(":") + 1).trim();
+    return corpo.length >= 200 && !ehMenuDeAlternativas(corpo);
+  });
+
   return {
     bloco,
     foco,
@@ -478,6 +513,7 @@ async function montarContexto(
     rotulos: [...new Set(rotulosPorMembro)],
     fatos: fatosDoTurno,
     nomeCrianca: emFoco.length === 1 ? (emFoco[0]?.nome ?? null) : null,
+    jaHouveOrientacao,
   };
 }
 
@@ -739,7 +775,8 @@ export async function responderExperimental(
       .filter(Boolean)
       .join("\n\n");
 
-    const { bloco, foco, diagnosticoRegistrado, consultas, rotulos, fatos, nomeCrianca } = ctxTurno;
+    const { bloco, foco, diagnosticoRegistrado, consultas, rotulos, fatos, nomeCrianca, jaHouveOrientacao } =
+      ctxTurno;
     // O bloco que troca o objetivo da conversa. Vazio fora do pós-Trial.
     const conducaoPosTrial = posTrial
       ? blocoPosTrial({
@@ -909,6 +946,58 @@ export async function responderExperimental(
       }
     }
 
+    // ── A REDE DE FORMA — 26/08/2026 ────────────────────────────────────────
+    //
+    // ⚠️ DEPOIS DA REDE DE SEGURANÇA, SEMPRE. A de cima decide se a resposta
+    // PODE sair; esta decide se ela sai BEM. Inverter a ordem faria uma
+    // correção de tamanho competir com uma correção clínica, e o §16 do Core
+    // já diz quem ganha quando as duas falam: a segurança.
+    //
+    // ⚠️ EM `sombra`, NADA MUDA PARA A FAMÍLIA. Detecta, registra e devolve o
+    // texto intacto. Existe porque regenerar custa uma chamada de modelo, e
+    // MEDI `msTotal` entre 12 e 26 segundos por turno: ligar a regeneração sem
+    // saber a taxa de disparo poderia dobrar o tempo de um quarto das conversas
+    // — a tentativa de melhorar a experiência piorando a experiência.
+    //
+    // O evento é persistido (`persistir: true`) de propósito: em `info` puro
+    // ele sumiria com a retenção da Vercel, e a taxa de disparo é justamente o
+    // número que decide se a Etapa F acontece.
+    // ⚠️ `modoDeForma`, e não `modo`: `modo` já é o do TURNO (`normal` |
+    // `pos_trial`) neste mesmo escopo. Dois `modo` diferentes na mesma função é
+    // como se lê um bug depois.
+    const modoDeForma = modoForma();
+    let formaDisparou: string | null = null;
+    if (modoDeForma !== "off") {
+      const ctxForma = { mensagem: params.mensagem, jaHouveOrientacao };
+      const excesso = formaAtravessada(texto, ctxForma);
+      if (excesso) {
+        formaDisparou = excesso.fronteira.nome;
+        void logEvent({
+          kind: "ayla_forma_disparo",
+          severity: "warn",
+          persistir: true,
+          family_account_id: params.familyId,
+          message: `${excesso.fronteira.nome}: ${excesso.achados[0]?.detalhe ?? ""}`.slice(0, 200),
+          payload: {
+            fronteira: excesso.fronteira.nome,
+            modo: modoDeForma,
+            natureza: naturezaDoTurno(params.mensagem, jaHouveOrientacao),
+            chars: texto.length,
+            perguntas: perguntasReais(texto).length,
+            menu: ehMenuDeAlternativas(texto),
+            ja_houve_orientacao: jaHouveOrientacao,
+            ms_modelo: msModelo,
+            caminho: "oficial",
+          },
+        });
+      }
+      // ⚠️ `ativo` ainda NÃO regenera — a Etapa F depende do número que a
+      // sombra vai produzir. Deixar o ramo escrito e vazio seria pior: quem
+      // ligasse a variável acharia que estava corrigindo e não estaria.
+      // Enquanto a regeneração não existir, `ativo` se comporta como `sombra`,
+      // e o log acima diz em que modo o disparo aconteceu.
+    }
+
     await logarUsoApi(supabase, {
       family_account_id: params.familyId,
       provider,
@@ -957,6 +1046,10 @@ export async function responderExperimental(
         pos_trial_chars: conducaoPosTrial.length,
         pos_trial_nivel: posTrial ? nivelDeEvidencia(fatos) : null,
         pos_trial_fatos: posTrial ? fatos : null,
+        // ⚠️ O RASTRO DA REDE DE FORMA. `null` = não rodou (modo off). Uma
+        // string = qual fronteira disparou. É por aqui que a taxa vira número.
+        forma_modo: modoDeForma,
+        forma_disparou: formaDisparou,
       },
     };
   } catch (e) {

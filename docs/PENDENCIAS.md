@@ -46,6 +46,8 @@ Só o que está aberto. 🔒 = bloqueada.
 | ID | Pendência | Bloco | Prio | Estado | Próximo passo |
 |---|---|---|---|---|---|
 | **ONDA 1** | **Pós-Trial: fim do silêncio + modo comercial** | A · Condução | **P0** | **PUBLICADO** 🔒 | ligar `AYLA_POS_TRIAL=1` na Vercel — agente não tem credencial; sem isso não sobe a PROVADO EM PRODUÇÃO |
+| [PEND-152](#pend-152) | **27 famílias engajadas (D2+) nunca receberam convite de assinatura** | G · Comercial | **P1 ALTA** | MEDIDA · NÃO INVESTIGADA | descobrir por que o convite não sai para quem voltou |
+| [PEND-153](#pend-153) | **Tela 1 do onboarding: 36% de abandono histórico** | G · Comercial | **P1 ALTA** | MEDIDA · NÃO INVESTIGADA | revisar a UX da tela 1; o abandono é anterior ao OTP |
 | [PEND-071](#pend-071) | Segurança está abaixo do gate de assinatura | F · Limites | **P0** | ~~CORRIGIDA~~ **BAIXADA** | nenhum — `0fc1feb` é ancestral de `main` (PR #98) e está no ar |
 | [PEND-072](#pend-072) | Teste do caminho novo cai para o Legacy sem mock do provider | H · Governança | P1 | PARCIALMENTE CORRIGIDA | varrer os outros testes que dizem medir o experimental |
 | [PEND-073](#pend-073) | Caminho novo não encurta a resposta em pedido de plano | A · Condução | P2 | ABERTA | decidir se o Core do experimental recebe a nota de `querPlano` |
@@ -6706,6 +6708,65 @@ Publicada em: 2026-08-24 · `28a8d97` · produção servindo às 15:22Z (health 
 
 ---
 
+### PEND-152
+**27 famílias que chegaram ao D2+ nunca receberam convite de assinatura**
+Bloco: **G · Comercial** · Prioridade: **P1 ALTA**
+STATUS: **MEDIDA · NÃO INVESTIGADA** · Aberta em: 2026-08-26
+
+- **MEDI (26/08/2026)**, coorte de 60 dias, fluxo histórico (213 contas criadas
+  antes de 21/08):
+  | etapa | n | % do topo |
+  |---|---|---|
+  | conversaram (>=1 inbound) | 81 | 38% |
+  | voltaram no D2+ (>=2 dias) | **53** | 25% |
+  | receberam convite de assinatura | **26** | 12% |
+  | assinaram | 1 | 0,5% |
+- **O buraco:** **27 das 53 famílias que voltaram** — as mais engajadas do funil
+  — nunca receberam convite nenhum (`assinatura_nudge`, `pos_trial`, `trial_d0`,
+  `trial_d3`).
+- **NÃO INVESTIGADA.** `NÃO SEI` se a causa é cooldown, reserva órfã, o cron não
+  varrer o estado certo, ou o gate de trial. Não abri.
+- **Relação:** [PEND-109](#pend-109) (Central de Avisos), [PEND-112](#pend-112)
+  (recuperação de trials expirados), [PEND-126](#pend-126) (a jornada D0–D7 não
+  acontece), [PEND-001](#pend-001) (cooldown do convite).
+- **Por que é ALTA:** é o único ponto do funil com volume real onde a correção
+  não depende de mudar a conversa nem o produto — depende de o convite sair.
+- **CRITÉRIO DE CONCLUSÃO:** saber por que os 27 não receberam, e a taxa subir
+  com o mecanismo já existente.
+- **Agente recomendado:** INVESTIGAR
+
+---
+
+### PEND-153
+**Tela 1 do onboarding: 36% de abandono, e ele é anterior ao OTP**
+Bloco: **G · Comercial** · Prioridade: **P1 ALTA**
+STATUS: **MEDIDA · NÃO INVESTIGADA** · Aberta em: 2026-08-26
+
+- **MEDI (26/08/2026):** `onboarding_step` das 213 contas criadas entre 27/06 e
+  20/08 — **77 pararam no passo 1 (36%)**, 8 no passo 2, 1 no 3, 1 no 4, 1 no 6,
+  125 concluíram.
+- **⚠️ O ABANDONO É ANTERIOR À OBRIGATORIEDADE DO WHATSAPP.** Os 36% são do
+  fluxo SEM OTP. A obrigatoriedade entrou em **21/08/2026** (`VI NO CÓDIGO`,
+  comentário em `app/onboarding/actions.ts:217`; primeira verificação real
+  provada em 23/08, `verificacoes_whatsapp`). **Não atribuir o abandono ao
+  degrau novo** — ele já existia sem o degrau.
+- **O fluxo atual ainda não é mensurável:** 9 contas desde 21/08 (4 concluíram,
+  4 pararam no passo 1, 1 no passo 2), e **2** passaram pelo OTP. No ritmo
+  medido (1,6 conta/dia contra 3,9/dia no histórico), n=30 só por volta de
+  **13/09**.
+- **⚠️ VIGIAR O VOLUME**, sem atribuir causa: a taxa de criação de contas caiu
+  de 3,9 para 1,6/dia. `NÃO SEI` se é o OTP, tráfego ou sazonalidade.
+- **NÃO INVESTIGADA.** `onboarding_rascunho` guarda o que foi preenchido antes
+  da saída; não abri.
+- **Relação:** [PEND-133](#pend-133) (medir o degrau do OTP — esta ficha dá o
+  baseline que faltava lá), [PEND-125](#pend-125) (31% não confirmam e-mail),
+  [PEND-114](#pend-114) (a frente que criou o degrau).
+- **CRITÉRIO DE CONCLUSÃO:** saber o que a tela 1 pede, onde a pessoa desiste, e
+  a taxa de conclusão subir.
+- **Agente recomendado:** INVESTIGAR
+
+---
+
 ### Arquivamento
 
 Concluídas e canceladas saem daqui quando este arquivo passar de ~40 fichas, ou
@@ -6713,7 +6774,7 @@ trimestralmente, o que vier antes.
 
 ---
 
-**Próximo ID livre: PEND-152. *(024 e 025 reservadas por frentes ainda não publicadas; 0076 é número de MIGRACAO reservado — ver PEND-121.)***
+**Próximo ID livre: PEND-154. *(024 e 025 reservadas por frentes ainda não publicadas; 0076 é número de MIGRACAO reservado — ver PEND-121.)***
 
 > Conferir contra `origin/main`, não contra o seu branch. Dois branches podem
 > reivindicar o mesmo número — o conflito de merge nesta linha é o alarme.
