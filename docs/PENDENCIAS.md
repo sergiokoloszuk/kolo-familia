@@ -80,7 +80,7 @@ Só o que está aberto. 🔒 = bloqueada.
 | [PEND-096](#pend-096) | **14 ·** Ativação gradual + medição real | B · Conhecimento | P2 | A INVESTIGAR | última etapa |
 | [PEND-103](#pend-103) | **‖ paralela ·** Higiene da fila | H · Governança | P3 | A INVESTIGAR | não bloqueia produto |
 | [PEND-115](#pend-115) | **Ayla não sabe o preço** — o bloco que respondia ficou no Legacy | G · Comercial | **P0** | **PUBLICADA · AGUARDANDO VALIDAÇÃO EM CONVERSA REAL** | `41a1054` no ar em 24/08 11:24Z |
-| [PEND-117](#pend-117) | Stack Supabase sem CPU: piso de ~900 ms em TODA consulta — a web ficou lenta | H · Governança | **P0** | MEDIDA 26/08 21h · HOST ISOLADO COMO CAUSA | **precisa de shell no host**: CPU/memória, por que realtime/pg-meta/functions dão 5xx, pg_stat_activity |
+| [PEND-117](#pend-117) | Stack Supabase degradado: endpoint sem Postgres em 5,8 s, 3 serviços em 5xx, CPU 828–1.291% | H · Governança | **P0** | MEDIDA 26/08 22h · CAUSA NÃO PROVADA · precisa de shell | **precisa de shell no host**: CPU/memória, por que realtime/pg-meta/functions dão 5xx, pg_stat_activity |
 | [PEND-118](#pend-118) | `DUNNING_DELETE_ENABLED` não existe — a exclusão prometida não executa | G · Comercial | **P1 ALTA** | PROVADA · NÃO CORRIGIDA | decidir se liga a exclusão ou corrige a promessa do `PagamentoGate` |
 | [PEND-119](#pend-119) | Aplicar migração é manual, e o PostgREST não recarrega o schema sozinho | H · Governança | P1 | PROVADA · NÃO CORRIGIDA | conferir o event trigger de reload e desenhar o caminho de aplicação |
 | [PEND-120](#pend-120) | `.env.local` de desenvolvimento aponta para preços que não valem mais | H · Governança | P3 | ABERTA | atualizar os dois `STRIPE_PRICE_ID_*` locais |
@@ -5626,6 +5626,72 @@ leitura e é seguro; parar container não é.
 
 Prioridade elevada a **P0**: deixou de ser só "dificuldade de operar o banco" e
 passou a ser experiência da família em toda tela autenticada.
+
+**⚠️ CORREÇÃO DA MEDIÇÃO ACIMA — 26/08/2026, 22h UTC.** O registro anterior
+desta mesma noite afirmou *"piso de ~900 ms em TODA consulta"* e estimou
+*"~3,6 s antes de renderizar"* no `/painel`. **As duas afirmações estavam
+erradas, e a correção vem de medição.**
+
+- **O erro de leitura.** `/api/health` cria um cliente Supabase **novo** e
+  cronometra a **primeira** consulta dele (`route.ts:123-130`). O número que
+  ele publica inclui, portanto, DNS + TCP + TLS + boot do lambda — não é custo
+  por consulta. Eu li como se fosse.
+- **MEDI · quanto custa, de fato, TODO o banco de uma página.** Mesma Vercel,
+  mesma sessão, n=15 cada, com cache desligado (`X-Vercel-Cache: MISS`,
+  `no-store` — conferido no header):
+  | página | consultas | p50 | p90 |
+  |---|---|---|---|
+  | `/login` (sem banco) | 0 | **0,351 s** | 0,791 s |
+  | `/painel` (com banco) | 14 | **0,556 s** | 0,993 s |
+  **A diferença é ~205 ms — e esse é o custo INTEIRO das 14 consultas**, não de
+  uma. Consulta seguinte na conexão já quente é barata; quem custa é a
+  primeira.
+- **MEDI · o que a família sente ao apertar o menu não é o banco, é cold
+  start.** Primeira abertura × segunda × terceira, em páginas paradas há ~20
+  min: `historias` 0,64 → 0,37 → 0,44 · `apoio` 0,80 → 0,50 → 0,45 ·
+  `dashboards` 1,00 → 0,54 → 0,79 · `galeria` 0,97 → 0,62 → 0,67. A primeira
+  paga 200–400 ms a mais, sistematicamente. Com 236 famílias e pouco tráfego,
+  **a família quase sempre pega o lambda frio.**
+- **MEDI · a fusão de ondas do `/painel` não produziu ganho distinguível.**
+  Antes (6 ondas, `bd3fee4`): p50 0,612 s · p90 1,149 s. Depois (5 ondas,
+  `5696e06`): p50 0,706 s · p90 0,851 s. n=12 cada. p50 piorou 94 ms, p90
+  melhorou 298 ms: **está dentro do ruído.** A alteração fica (é correta e sem
+  risco), mas **não é a alavanca**, e o registro honesto é "ganho não medido".
+
+**O QUE CONTINUA VERDADEIRO, e é o que mantém esta pendência em pé:**
+
+- `GET /storage/v1/version` — string fixa, sem Postgres — em **5.837 ms**.
+  Nenhum cold start de lambda explica isso; é o host.
+- Três de seis serviços do stack em 5xx (realtime 503, pg-meta 500,
+  functions 500).
+- CPU de 828% e 1.291% medida em 20/08.
+- Cinco `ayla_pdf_plano_falha` com *"The connection to the database timed out"*.
+
+**FORMULAÇÃO CORRETA DA CAUSA, hoje:** *host/stack Supabase apresenta
+degradação severa — endpoint sem Postgres em ~5,8 s, três serviços em 5xx,
+histórico de CPU 828–1.291%. Saturação de recurso do host é a hipótese
+principal; **processo/serviço causador NÃO PROVADO** e depende de diagnóstico
+por shell.*
+
+**E ONDE ISSO DÓI DE VERDADE — revisão de impacto.** Não é a tela da família
+(~205 ms). Dói em quem faz **muitas idas sequenciais por operação**: a Ayla
+(um turno encadeia perfil, histórico, BPs, documentos), os crons, a geração de
+PDF (que já falhou por timeout) e o Admin. É lá que a remedição deve ocorrer
+depois que o host for corrigido.
+
+**PARTE 4 · o que a Kolo usa, PROVADO POR CÓDIGO (não por nome do serviço):**
+| serviço | a aplicação usa? | evidência |
+|---|---|---|
+| auth (GoTrue) | **SIM** | 62 arquivos |
+| rest/PostgREST | **SIM** | onipresente |
+| storage | **SIM** | 10 arquivos com `.storage.from(` |
+| rpc/postgres | **SIM** | 6 arquivos, inclui `current_family_account_id` do RLS |
+| realtime | **NÃO** | 0 `.channel(` / `postgres_changes`; o único `unsubscribe()` é do `onAuthStateChange`, que é auth |
+| imgproxy | **NÃO** | 0 ocorrências |
+| edge functions | **NÃO** | 0 `functions.invoke` |
+⚠️ Isto prova apenas que **a aplicação** não os chama. Se o **próprio stack**
+Supabase depende deles internamente: **NÃO SEI** — e por isso nada será
+desligado sem `docker stats` + backup externo verificado.
 
 **MEDIÇÃO DE 26/08/2026 — o que o agente alcança sem acesso ao host.**
 
