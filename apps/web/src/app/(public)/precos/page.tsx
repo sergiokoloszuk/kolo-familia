@@ -11,6 +11,8 @@ import {
   lerPlanosParaExibir,
   seloEconomiaAnual,
 } from "@/lib/billing/planos";
+import { ctaDoEstado, estadoComercialDoVisitante } from "./cta-por-estado";
+import { MarcoOrigem, origemValida } from "./marco-origem";
 
 export const metadata: Metadata = {
   title: "Preços · Kolo Família",
@@ -21,9 +23,21 @@ export const metadata: Metadata = {
 // O preço vem do Stripe, espelhado em configuracao_precos. Ver lib/billing/planos.ts.
 export const dynamic = "force-dynamic";
 
-export default async function PrecosPage() {
+export default async function PrecosPage({
+  searchParams,
+}: {
+  // ⚠️ SÓ A ORIGEM. Nenhum identificador de família na URL — ver `marco-origem`.
+  searchParams: Promise<{ de?: string | string[] }>;
+}) {
+  const origem = origemValida((await searchParams)?.de);
   const admin = createServiceRoleClient();
-  const planos = await lerPlanosParaExibir(admin);
+  // ⚠️ O CTA depende de quem está olhando — ver `cta-por-estado.ts`. Quem chega
+  // pelo convite de fim de teste não pode receber "comece um teste".
+  const [planos, estado] = await Promise.all([
+    lerPlanosParaExibir(admin),
+    estadoComercialDoVisitante(),
+  ]);
+  const cta = ctaDoEstado(estado);
   const mensalCent = planos.mensal.centavos;
   const anualCent = planos.anual.centavos;
   const mensalLabel = formatarBRL(mensalCent);
@@ -90,6 +104,17 @@ export default async function PrecosPage() {
       {/* PLANOS — 2 cards lado a lado. */}
       <section className="bg-white">
         <div className="mx-auto w-full max-w-7xl px-6 py-16 md:px-8 md:py-20">
+          <MarcoOrigem origem={origem} />
+
+          {/* Quem já tem conta chega aqui vindo do convite da Ayla. Dizer em
+              que ponto ela está evita o estranhamento de ver uma página de
+              aquisição depois de já ter usado o produto por uma semana. */}
+          {cta.nota ? (
+            <p className="mx-auto mb-8 max-w-2xl rounded-2xl bg-kolo-lilas-bg-2 px-6 py-4 text-center text-sm text-foreground/85">
+              {cta.nota}
+            </p>
+          ) : null}
+
           <div className="grid gap-6 md:grid-cols-2">
             {/* Plano mensal — card lilás (não destacado). */}
             <div className="flex flex-col gap-6 rounded-3xl bg-kolo-lilas-bg-2 p-8 transition-all hover:-translate-y-1 hover:shadow-lg md:p-10">
@@ -122,13 +147,13 @@ export default async function PrecosPage() {
                 ))}
               </ul>
               <Link
-                href="/signup"
+                href={cta.destino}
                 className={cn(
                   buttonVariants({ variant: "outline", size: "xl" }),
                   "mt-auto w-full justify-center rounded-full border-brand-purple text-brand-purple hover:bg-kolo-lilas hover:text-brand-purple-dark",
                 )}
               >
-                Começar 7 dias grátis
+                {cta.rotulo}
               </Link>
             </div>
 
@@ -173,13 +198,13 @@ export default async function PrecosPage() {
                 ))}
               </ul>
               <Link
-                href="/signup"
+                href={cta.destino}
                 className={cn(
                   buttonVariants({ variant: "cta", size: "xl" }),
                   "mt-auto w-full justify-center",
                 )}
               >
-                Começar 7 dias grátis
+                {cta.rotulo}
               </Link>
             </div>
           </div>
