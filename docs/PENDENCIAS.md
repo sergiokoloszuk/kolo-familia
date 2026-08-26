@@ -80,7 +80,7 @@ Só o que está aberto. 🔒 = bloqueada.
 | [PEND-096](#pend-096) | **14 ·** Ativação gradual + medição real | B · Conhecimento | P2 | A INVESTIGAR | última etapa |
 | [PEND-103](#pend-103) | **‖ paralela ·** Higiene da fila | H · Governança | P3 | A INVESTIGAR | não bloqueia produto |
 | [PEND-115](#pend-115) | **Ayla não sabe o preço** — o bloco que respondia ficou no Legacy | G · Comercial | **P0** | **PUBLICADA · AGUARDANDO VALIDAÇÃO EM CONVERSA REAL** | `41a1054` no ar em 24/08 11:24Z |
-| [PEND-117](#pend-117) | Stack Supabase: CPU anormal e seis serviços ausentes | H · Governança | **P1 ALTA** | MEDIDA · CAUSA DESCONHECIDA | mapear quais containers não subiram e de onde vem a CPU — antes de reiniciar nada |
+| [PEND-117](#pend-117) | Stack Supabase: 3 de 6 serviços em 5xx, piso de ~1,4 s por consulta | H · Governança | **P0** | MEDIDA 26/08 · CAUSA DESCONHECIDA | **precisa de shell no host**: CPU/memória, por que realtime/pg-meta/functions dão 5xx, pg_stat_activity |
 | [PEND-118](#pend-118) | `DUNNING_DELETE_ENABLED` não existe — a exclusão prometida não executa | G · Comercial | **P1 ALTA** | PROVADA · NÃO CORRIGIDA | decidir se liga a exclusão ou corrige a promessa do `PagamentoGate` |
 | [PEND-119](#pend-119) | Aplicar migração é manual, e o PostgREST não recarrega o schema sozinho | H · Governança | P1 | PROVADA · NÃO CORRIGIDA | conferir o event trigger de reload e desenhar o caminho de aplicação |
 | [PEND-120](#pend-120) | `.env.local` de desenvolvimento aponta para preços que não valem mais | H · Governança | P3 | ABERTA | atualizar os dois `STRIPE_PRICE_ID_*` locais |
@@ -5576,6 +5576,46 @@ STATUS: **MEDIDA — CAUSA DESCONHECIDA** · Aberta em: 2026-08-20
   escrita sobre os seis serviços (subir, remover do compose, ou aceitar
   ausentes com motivo).
 
+
+**MEDIÇÃO DE 26/08/2026 — o que o agente alcança sem acesso ao host.**
+
+- **PROVEI POR EXECUÇÃO · três de seis serviços respondem 5xx:**
+  | serviço | HTTP | tempo |
+  |---|---|---|
+  | auth (GoTrue) | 200 | **2.292 ms** |
+  | storage | 200 | **2.972 ms** |
+  | realtime | **503** | 4.603 ms |
+  | pg-meta | **500** | 3.987 ms |
+  | functions | **500** | 2.613 ms |
+  | rest (raiz) | timeout 8 s | — (as queries em si respondem; a raiz pode não ser endpoint válido — inconclusivo) |
+  Um *health check* levar 2 a 3 segundos já é o sintoma: não é a consulta que
+  está pesada, é o host.
+- **PROVEI POR EXECUÇÃO · o piso de qualquer consulta.** `select id from
+  family_accounts where id = <pk>` → **p50 1.395 ms**, mín 499, máx 1.771 em
+  cinco execuções. Uma busca por chave primária devolvendo uma linha.
+  ⚠️ Medido da máquina do agente: parte é rede. A VARIÂNCIA (3,5× na mesma
+  query) é que aponta para o servidor.
+- **MEDI · a janela que o Sérgio pediu (19–21/08) tem rastro direto:** cinco
+  eventos `ayla_pdf_plano_falha` com a mensagem literal *"The connection to the
+  database timed out"* — 20/08 12:13, 20/08 19:28, 21/08 12:37, 21/08 18:15,
+  21/08 18:43. Antes de 20/08, nenhum.
+- **MEDI · NÃO é volume de dado.** Entre 19 e 26/08: `ayla_messages` +546,
+  `api_calls` +947, `diarios` +39, **`boas_praticas` +0** (381 antes e depois).
+  Nada aqui explica uma degradação de 16×.
+- **O CUSTO NO PRODUTO, MEDIDO** (270 turnos, telemetria da Ayla): o bloco
+  paralelo de consultas do turno foi de **561 ms (19/08) para 9.020 ms (26/08)**
+  — p50 por dia. No mesmo período o tempo de modelo ficou estável (4,2–5,3 s).
+  A lentidão que as famílias sentem hoje vem daqui, não do modelo.
+- **NÃO SEI a causa**, e não atribuo: CPU, memória, I/O de disco, pool de
+  conexões, locks e o que mudou no host entre 19 e 21/08 exigem shell no
+  Easypanel, que o agente não tem.
+- **PRÓXIMO PASSO (precisa de humano com acesso ao host):** `docker stats` /
+  uso de CPU e memória do stack; por que `realtime`, `pg-meta` e `functions`
+  devolvem 5xx; `pg_stat_activity` (conexões e locks); espaço e I/O do volume do
+  PGDATA; e o que foi alterado/reimplantado entre 19 e 21/08.
+- **⚠️ ISTO BLOQUEIA A FRENTE DE LATÊNCIA.** Os quick wins de código já feitos
+  (repertório em duas fases, −42%; instrumentação honesta) valem, mas atacam
+  centenas de ms. O host custa **segundos**.
 ---
 
 ### PEND-118

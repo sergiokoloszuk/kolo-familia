@@ -1,4 +1,42 @@
 import { rotuloDoTema } from "./temas";
+import type { NaturezaDoTurno } from "./fronteiras-forma";
+
+/**
+ * A NOTA DE PROPORÇÃO — R4a, 26/08/2026.
+ *
+ * ⚠️ POR QUE UMA NOTA CALCULADA, E NÃO SÓ O PRINCÍPIO NO FORMATO. O princípio
+ * ("a menor resposta que ajuda vence") já está em `FORMATO_WHATSAPP` e vale em
+ * todo turno. Mas princípio é o que o modelo aplica sozinho, e MEDI o resultado
+ * disso: p50 de 666 caracteres, 38,5% acima de 800, e uma resposta de 620
+ * caracteres para uma mensagem de 12. O Core já mandava ser curto e perdia.
+ *
+ * O que não perde é o CÓDIGO dizer qual é a natureza deste turno — que ele sabe
+ * de forma determinística, por `naturezaDoTurno` — em vez de esperar que o
+ * modelo a deduza junto com todo o resto.
+ *
+ * ⚠️ NÃO É TETO RÍGIDO, e a diferença importa. Os números são referência de
+ * ordem de grandeza, ditos como referência; a instrução que manda é a de
+ * PRESERVAR (segurança, orientação, personalização, fala pronta). Um teto duro
+ * no prompt produziria a resposta mutilada que a fronteira de forma existe para
+ * não produzir — e MEDI que 55,4% dos turnos passariam de um teto cego.
+ *
+ * ⚠️ `tecnico` NÃO PEDE BREVIDADE. Encurtar um pedido de embasamento legal é
+ * piorar: a resposta certa ali cita a lei inteira. A nota diz isso explicitamente
+ * para que o princípio geral não vire pressão para responder raso.
+ */
+export function notaDeProporcao(natureza: NaturezaDoTurno): string {
+  const linha: Record<NaturezaDoTurno, string> = {
+    simples:
+      "Esta mensagem é um cumprimento ou uma resposta curta. Responda no mesmo tamanho — poucas linhas, sem abrir assunto novo e sem despejar o que você sabe. Se não há o que ajudar ainda, uma frase e uma pergunta bastam. Referência: algo em torno de 350 caracteres.",
+    continuacao:
+      "Esta é uma continuação curta de um assunto que já está em pé. Não recomece nem reexplique o que já foi dito: siga de onde pararam, com o próximo passo. Referência: algo em torno de 500 caracteres.",
+    orientacao:
+      "Esta é uma situação concreta. Entregue uma orientação breve e aplicável hoje — o essencial primeiro, o detalhe só se ele muda a conduta. Referência: algo em torno de 700 caracteres.",
+    tecnico:
+      "Este é um pedido detalhado ou explicitamente técnico. Aqui o tamanho segue o pedido: NÃO encurte às custas da precisão, da citação correta ou do texto pronto que a pessoa vai usar. Responder raso aqui é pior do que responder longo.",
+  };
+  return `# Proporção desta resposta\n${linha[natureza]}`;
+}
 
 /**
  * AS FORMAS DE ENTREGA — o repertório de jeitos de ajudar numa resposta.
@@ -93,7 +131,10 @@ const TIPOS_DE_AJUDA = [
  */
 export const FORMATO_WHATSAPP = `# Formato (WhatsApp)
 - Texto puro de WhatsApp: sem markdown (nada de **, ##, listas com - / •), sem aspas, sem rótulo, sem "Ayla:". Pra destacar uma palavra, *um asterisco só* (negrito do WhatsApp), com muita parcimônia.
-- Curto por padrão — 2 a 4 balões curtos — mas dê o espaço que a necessidade pedir: uma pergunta prática (comida, estratégia) merece 3-5 opções concretas; um desabafo, poucas linhas. No máximo UMA pergunta por vez.
+- A MENOR RESPOSTA QUE REALMENTE AJUDA VENCE. Entregue primeiro o essencial — o que fazer agora. Acrescente detalhe só quando ele muda a conduta ou quando pedirem. Uma resposta completa que a pessoa não consegue ler no meio de uma crise ajudou menos que três frases certas.
+- PROPORÇÃO COM O QUE FOI PEDIDO. Cumprimento ou confirmação curta ("oi", "sim", "isso") pede resposta curta — não abra assunto novo nem devolva um bloco. Uma situação concreta pede uma orientação breve e prática. Uma situação delicada ou complexa pode ocupar mais espaço. Um pedido explicitamente técnico (lei, laudo, documento, medicação) pede o tamanho que o pedido exige — aí encurtar é errar.
+- NUNCA corte o que decide: a orientação principal, a ressalva de segurança ou incerteza, o que é específico DESTA criança, a frase pronta quando é ela que ajuda, e o que observar quando há mesmo algo a decidir depois. O que se corta é a repetição do que ela acabou de contar, a explicação que ninguém pediu, a alternativa que você mesma não recomendaria e o passo que não muda nada hoje.
+- No máximo UMA pergunta por vez.
 - Não dê moldura clínica que ela não pediu ("é comum no TEA", "nessa fase") — o nome do quadro não ajuda no momento; fale do dia a dia.
 - ROTINA VISUAL e PLANO completo têm fluxo próprio, com cartões ilustrados e PDF: não é aqui que a rotina inteira da semana é montada. Mas SEMPRE responda a pergunta que ela fez — "que horário encaixo o iPad?", "como você faria a tarde?" — com o que você já sabe da sequência dela; PROPONHA o horário, diga em uma frase por que, e deixe claro que é sugestão e dá pra ajustar. Mandar ela esperar um fluxo em vez de responder é deixá-la sem nada. E o convite do fim é pelo que ela quer MUDAR ou pelo que ela vai reparar testando — NUNCA peça de novo o que já está no contexto ("me conta como é a tarde de vocês" depois de usar a tarde dela na resposta soa como quem não leu).
 - Não prometa artefato: nada de "vou montar", "vou gerar", "vou te mandar" quando não é você quem entrega. Ou já está feito, ou você diz o caminho.`;
