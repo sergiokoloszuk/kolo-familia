@@ -5627,6 +5627,39 @@ leitura e é seguro; parar container não é.
 Prioridade elevada a **P0**: deixou de ser só "dificuldade de operar o banco" e
 passou a ser experiência da família em toda tela autenticada.
 
+**26/08/2026, 23h — ELIMINADA a hipótese de que a carga é nossa.**
+
+Sérgio leu no painel do Easypanel: **CPU 567,2% e 1,9 GB** no stack `supabase`.
+Isso é consumo sustentado. A pergunta que segue é: vem do trabalho que a Kolo
+manda, ou de dentro do stack?
+
+- **MEDI · o volume que a Kolo gera em 24 h:**
+  | tabela | escritas em 24 h | hora de pico |
+  |---|---|---|
+  | `ayla_messages` | 46 | 01h, com 15 |
+  | `eventos_app` | 12 | 18h, com 7 |
+  | `user_events` | 31 | 21h, com 20 |
+  | `ayla_send_log` | 26 | 11h, com 10 |
+  **~115 escritas no dia inteiro.** Nenhuma rajada, nenhum laço.
+- **CONCLUSÃO:** um Postgres que recebe ~115 escritas por dia **não justifica
+  567% de CPU**. A carga não é da aplicação. Sobra o interior do stack.
+- **A hipótese que mais casa com o quadro** — e que continua **NÃO PROVADA** —
+  é serviço em laço de crash/restart: `realtime` (503), `pg-meta` (500) e
+  `functions` (500) estão fora do ar há dias, e container que morre e sobe em
+  loop queima CPU continuamente sem gerar trabalho útil nenhum. **A seção 5 do
+  bloco de diagnóstico (`RestartCount`) é o que confirma ou derruba isso** — um
+  `RestartCount` alto com `StartedAt` recente fecha o caso.
+- **NÃO CONSIGO PROVAR DAQUI.** `pg_stat_activity` não é alcançável por
+  PostgREST (não está no schema exposto) e não existe RPC de SQL arbitrário —
+  o que, aliás, está **certo** do ponto de vista de segurança. E o agente não
+  tem chave SSH autorizada em `82.29.56.121`: a única chave local
+  (`flowvendas_ed25519`) recebe `Permission denied (publickey,password)`, e
+  autenticação por senha exige terminal interativo.
+- ⚠️ **O console do Easypanel NÃO serve para este diagnóstico:** ele abre um
+  shell **dentro de um container** (`/n8n_supabase-auth-1`), onde não existem
+  `docker`, `dmesg`, `vmstat` nem visão de CPU/disco do host. O diagnóstico
+  precisa de **SSH no host**.
+
 **⚠️ CORREÇÃO DA MEDIÇÃO ACIMA — 26/08/2026, 22h UTC.** O registro anterior
 desta mesma noite afirmou *"piso de ~900 ms em TODA consulta"* e estimou
 *"~3,6 s antes de renderizar"* no `/painel`. **As duas afirmações estavam
