@@ -47,7 +47,7 @@ Só o que está aberto. 🔒 = bloqueada.
 |---|---|---|---|---|---|
 | **ONDA 1** | **Pós-Trial: fim do silêncio + modo comercial** | A · Condução | **P0** | **PUBLICADO** 🔒 | ligar `AYLA_POS_TRIAL=1` na Vercel — agente não tem credencial; sem isso não sobe a PROVADO EM PRODUÇÃO |
 | [PEND-152](#pend-152) | **27 famílias engajadas (D2+) nunca receberam convite de assinatura** | G · Comercial | **P1 ALTA** | MEDIDA · NÃO INVESTIGADA | descobrir por que o convite não sai para quem voltou |
-| [PEND-153](#pend-153) | **Tela 1 do onboarding: 36% de abandono histórico** | G · Comercial | **P1 ALTA** | MEDIDA · NÃO INVESTIGADA | revisar a UX da tela 1; o abandono é anterior ao OTP |
+| [PEND-153](#pend-153) | **89% do abandono é antes da 1ª pergunta — não é o WhatsApp** | G · Comercial | **P1 ALTA** | MEDIDA · INSTRUMENTADA · AGUARDANDO VOLUME | acumular 2 semanas de marcos e ler o funil |
 | [PEND-071](#pend-071) | Segurança está abaixo do gate de assinatura | F · Limites | **P0** | ~~CORRIGIDA~~ **BAIXADA** | nenhum — `0fc1feb` é ancestral de `main` (PR #98) e está no ar |
 | [PEND-072](#pend-072) | Teste do caminho novo cai para o Legacy sem mock do provider | H · Governança | P1 | PARCIALMENTE CORRIGIDA | varrer os outros testes que dizem medir o experimental |
 | [PEND-073](#pend-073) | Caminho novo não encurta a resposta em pedido de plano | A · Condução | P2 | ABERTA | decidir se o Core do experimental recebe a nota de `querPlano` |
@@ -6778,32 +6778,59 @@ STATUS: **MEDIDA · NÃO INVESTIGADA** · Aberta em: 2026-08-26
 ---
 
 ### PEND-153
-**Tela 1 do onboarding: 36% de abandono, e ele é anterior ao OTP**
+**Onde o onboarding realmente quebra — e a correção de uma leitura errada**
 Bloco: **G · Comercial** · Prioridade: **P1 ALTA**
-STATUS: **MEDIDA · NÃO INVESTIGADA** · Aberta em: 2026-08-26
+STATUS: **MEDIDA 26/08 · INSTRUMENTADA · AGUARDANDO VOLUME** · Aberta em: 2026-08-26
 
-- **MEDI (26/08/2026):** `onboarding_step` das 213 contas criadas entre 27/06 e
-  20/08 — **77 pararam no passo 1 (36%)**, 8 no passo 2, 1 no 3, 1 no 4, 1 no 6,
-  125 concluíram.
-- **⚠️ O ABANDONO É ANTERIOR À OBRIGATORIEDADE DO WHATSAPP.** Os 36% são do
-  fluxo SEM OTP. A obrigatoriedade entrou em **21/08/2026** (`VI NO CÓDIGO`,
-  comentário em `app/onboarding/actions.ts:217`; primeira verificação real
-  provada em 23/08, `verificacoes_whatsapp`). **Não atribuir o abandono ao
-  degrau novo** — ele já existia sem o degrau.
-- **O fluxo atual ainda não é mensurável:** 9 contas desde 21/08 (4 concluíram,
-  4 pararam no passo 1, 1 no passo 2), e **2** passaram pelo OTP. No ritmo
-  medido (1,6 conta/dia contra 3,9/dia no histórico), n=30 só por volta de
-  **13/09**.
-- **⚠️ VIGIAR O VOLUME**, sem atribuir causa: a taxa de criação de contas caiu
-  de 3,9 para 1,6/dia. `NÃO SEI` se é o OTP, tráfego ou sazonalidade.
-- **NÃO INVESTIGADA.** `onboarding_rascunho` guarda o que foi preenchido antes
-  da saída; não abri.
-- **Relação:** [PEND-133](#pend-133) (medir o degrau do OTP — esta ficha dá o
-  baseline que faltava lá), [PEND-125](#pend-125) (31% não confirmam e-mail),
-  [PEND-114](#pend-114) (a frente que criou o degrau).
-- **CRITÉRIO DE CONCLUSÃO:** saber o que a tela 1 pede, onde a pessoa desiste, e
-  a taxa de conclusão subir.
-- **Agente recomendado:** INVESTIGAR
+- **⚠️ CORREÇÃO DA PRÓPRIA FICHA (26/08).** A versão anterior dizia *"36% param
+  no passo 1"* e tratava isso como uma tela. Estava errado em dois níveis:
+  1. **Existem DOIS onboardings.** `onboarding_copy.modo = "todos"` desde
+     06/07 (MEDI), então todo mundo recebe o **conversacional**, não o wizard.
+  2. **`onboarding_step` tem significados diferentes nos dois.** No
+     conversacional (`salvar-conversacional.ts:60`): `2=pessoa, 3=whatsapp,
+     4=aceite, 7=concluiu`. Ou seja, **`step = 1` NÃO é "parou na tela 1"** — é
+     *"não terminou o bloco da criança"*, que vem **antes** do WhatsApp.
+- **A ORDEM REAL DAS PERGUNTAS** (`copy-default.ts`), 13 passos:
+  `0 membro_nome · 1 membro_genero · 2 membro_nascimento · 3 membro_laudo ·
+  4 membro_investigacao · 5 desafios · 6 membro_interesses · **7 whatsapp** ·
+  8 voce_nome · 9 voce_relacao · 10 aceites · 11 voce_faixa · 12 voce_horario`
+  **O WhatsApp é a pergunta 8 de 13.** Quem para no `step = 1` parou antes dela.
+- **MEDI (26/08), contas criadas desde 29/07** — quando o rascunho entrou em
+  produção (`518751c`, ancestral de `origin/main`):
+  | | n |
+  |---|---|
+  | contas criadas | 130 |
+  | não concluíram | 57 |
+  | **sem rascunho nenhum** | **53** |
+  | `step = 1` **e** sem rascunho | **51** |
+  `rascunhar()` só dispara ao AVANÇAR de uma pergunta. Logo, **51 dos 57
+  abandonos (89%) acontecem antes de avançar da PRIMEIRA pergunta** — o nome da
+  criança. Não é o WhatsApp, não é o OTP.
+- **Dos 4 abandonos COM rascunho:** 3 pararam no passo `whatsapp` (idx 7) já
+  tendo digitado o número, 1 parou em `desafios` (idx 5). n=4 — **não sustenta
+  conclusão**, só indica onde olhar depois.
+- **⚠️ O QUE AINDA NÃO SE SABE, e é o motivo da instrumentação.** "Sem
+  rascunho" confunde três coisas: abriu e saiu sem responder · respondeu e
+  fechou a aba antes de o rascunho gravar · a tela nem abriu. **NÃO SEI** qual
+  delas domina.
+- **INSTRUMENTADO EM 26/08** (`obs/onboarding-passo-1`), reusando `/api/track`,
+  que já existia e que **nenhum ponto do onboarding chamava** — sétima
+  ocorrência da classe "capacidade existe, não está ligada onde importa":
+  `onboarding_passo_1_visualizado` · `campo_whatsapp_visualizado` ·
+  `avancar_clicado` (com o passo) · `whatsapp_preenchido` · `passo_2_iniciado` ·
+  `onboarding_concluido`. Os de OTP já existiam em `eventos_app`
+  (`otp_solicitado`, `otp_falhou`, `otp_verificado`).
+  **Sem `unload`**: o abandono se infere pela ausência de progressão.
+- **Lacuna de evento que permanece:** `otp_reenviado` não é emitido (a coluna
+  `reenvios` existe em `verificacoes_whatsapp`, o evento não).
+- **CRITÉRIO DE CONCLUSÃO:** com duas semanas de marcos, responder quantas
+  **viram** a tela, quantas avançaram da primeira pergunta, quantas chegaram ao
+  campo de WhatsApp e quantas desistiram em cada degrau.
+- **NÃO redesenhar o onboarding antes disso.** E não atribuir o abandono ao
+  WhatsApp: a evidência atual aponta para antes dele.
+- **Relação:** [PEND-133](#pend-133) (medir o degrau do OTP),
+  [PEND-125](#pend-125) (31% não confirmam e-mail), [PEND-114](#pend-114).
+- **Agente recomendado:** MEDIR (depois de acumular volume)
 
 ---
 

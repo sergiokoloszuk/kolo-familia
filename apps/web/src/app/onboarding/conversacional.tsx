@@ -20,6 +20,50 @@ import { DesafioFluxo } from "@/app/(app)/dashboards/onboarding/preview";
 
 import { ConfirmarWhatsapp } from "@/components/confirmar-whatsapp";
 
+/**
+ * MARCO DO ONBOARDING — 26/08/2026.
+ *
+ * ⚠️ POR QUE ISTO NASCEU. MEDI: das 57 contas criadas desde 29/07 que não
+ * concluíram, **53 não têm rascunho nenhum**, e 51 delas estão em
+ * `onboarding_step = 1`. `rascunhar()` só dispara ao AVANÇAR de uma pergunta —
+ * então "sem rascunho" quer dizer "nunca avançou da primeira". Só que não dá
+ * para distinguir três coisas muito diferentes com esse silêncio:
+ *
+ *   · a pessoa abriu a tela e saiu sem responder nada;
+ *   · a pessoa respondeu e fechou a aba antes de o rascunho gravar;
+ *   · a tela nem chegou a abrir.
+ *
+ * Sem separar isso, qualquer conclusão sobre a causa do abandono é palpite — e
+ * a hipótese mais citada (o WhatsApp) está na PERGUNTA 8 de 13, longe daqui.
+ *
+ * ⚠️ NÃO USA `unload`. Evento de saída é notoriamente não confiável e mediria
+ * o navegador, não a pessoa. O abandono se infere DEPOIS, pela ausência de
+ * progressão: quem tem `passo_1_visualizado` e não tem `passo_2_iniciado` saiu
+ * no meio, e os marcos intermediários dizem onde.
+ *
+ * ⚠️ `/api/track` JÁ EXISTIA e ninguém no onboarding o chamava — ele carimba a
+ * família pela sessão (o cliente não manda id, não dá para forjar), grava em
+ * `user_events` via service-role e é fire-and-forget com rate limit. Nenhuma
+ * rota nova, nenhuma tabela nova.
+ *
+ * ⚠️ SEM CONTEÚDO SENSÍVEL. Só o nome do marco e, quando ajuda, o índice/id do
+ * passo. Nunca o nome da criança, o telefone ou a resposta.
+ */
+function marco(evento: string, detalhe?: Record<string, unknown>): void {
+  try {
+    void fetch("/api/track", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ evento, detalhe }),
+      keepalive: true,
+    }).catch(() => {
+      /* telemetria nunca segura o cadastro */
+    });
+  } catch {
+    /* idem */
+  }
+}
+
 function fill(text: string, nome: string, voce: string): string {
   const n = nome.trim() || "quem você cuida";
   const v = voce.trim() || "você";
@@ -99,6 +143,9 @@ export function OnboardingConversacional({
   // ao wizard antigo. Lê os cookies kolo_utm/kolo_ref e grava na família, 1x.
   // Best-effort: nunca trava o cadastro.
   useEffect(() => {
+    // O primeiro marco: a tela ABRIU. É o denominador de tudo — sem ele não dá
+    // para diferenciar "não veio ninguém" de "veio e desistiu".
+    marco("onboarding_passo_1_visualizado", { idx: inicio, retomada: inicio > 0 });
     void (async () => {
       try {
         const { atribuirAfiliado, atribuirUtm } = await import("./actions");
@@ -108,10 +155,17 @@ export function OnboardingConversacional({
         /* tracking nunca segura o fluxo */
       }
     })();
-  }, []);
+  }, [inicio]);
 
   const passos = copy.passos;
   const passo: OnbPasso | undefined = passos[idx];
+
+  // Chegou ao campo de WhatsApp. É a pergunta 8 de 13 — e é o degrau que a
+  // hipótese mais citada acusa. Sem este marco, "quantas viram o campo" era
+  // NÃO SEI, e todo o resto da conta ficava sem denominador.
+  useEffect(() => {
+    if (passo?.tipo === "whatsapp") marco("campo_whatsapp_visualizado", { idx });
+  }, [passo?.tipo, idx]);
   const nome = (answers["membro_nome"] as string) ?? "";
   const voce = (answers["voce_nome"] as string) ?? "";
 
@@ -189,6 +243,11 @@ export function OnboardingConversacional({
 
     const id = passo?.id;
     const ultimo = idx + 1 >= passos.length;
+    // AVANÇAR foi acionado. Junto do marco de tela vista, é isto que separa
+    // "abriu e saiu" de "respondeu e saiu".
+    marco("avancar_clicado", { idx, passo: id ?? null });
+    if (idx === 0) marco("passo_2_iniciado", { passo: passos[1]?.id ?? null });
+    if (id === "whatsapp") marco("whatsapp_preenchido");
     rascunhar(ultimo ? passos.length : idx + 1, merged, outrosMerged);
 
     // Checkpoints — salvam cedo (pro "Parou em" + resgate) e são idempotentes.
@@ -242,8 +301,12 @@ export function OnboardingConversacional({
     }
     await salvarAceitesAction(aceites);
     const res = await concluirAction(buildResp(a, o), strDe(a, "voce_horario") || null);
-    if (res.ok) setFase("garfo");
-    else if (res.motivo === "whatsapp_duplicado") setFase("duplicado");
+    if (res.ok) {
+      // O fim do funil. Fecha a conta que os marcos anteriores abriram: quem
+      // viu a tela, quem avançou, quem chegou ao WhatsApp e quem terminou.
+      marco("onboarding_concluido");
+      setFase("garfo");
+    } else if (res.motivo === "whatsapp_duplicado") setFase("duplicado");
     else {
       setErroMsg(res.mensagem);
       setFase("erro");
