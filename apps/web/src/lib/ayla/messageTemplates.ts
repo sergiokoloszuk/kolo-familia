@@ -345,10 +345,7 @@ export async function templateTrial(
   const variations = await getVariations(supabase, key);
   return fill(pickVariation(variations, params.seed), {
     ...params,
-    // ⚠️ A ORIGEM VIAJA NO LINK — e só ela. É o que permite separar "abriu
-    // porque a Ayla convidou" de "abriu navegando", sem pôr identificador
-    // nenhum numa URL que vai por WhatsApp. Ver `linkPlanos`.
-    link_planos: linkPlanos(params.diasRestantes === 0 ? "d7" : "d3") ?? "",
+    link_planos: linkPlanos() ?? "",
   });
 }
 

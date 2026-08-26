@@ -54,24 +54,10 @@ export function origemCanonica(): string | null {
   return bruta || null;
 }
 
-/**
- * A página de Planos. **Conversão.** Pública, e lê os valores ao vivo.
- *
- * ⚠️ `de` É ORIGEM DE CAMPANHA, NÃO IDENTIFICADOR — 26/08/2026. Sem ele, o
- * funil comercial tinha um buraco no meio: sabíamos que o convite saiu e que
- * alguém iniciou checkout, e **não** sabíamos se a família chegou a abrir a
- * página. "Mandamos e ninguém assinou" não distingue *não clicou* de *clicou e
- * a página não convenceu* — e as duas têm correções opostas.
- *
- * O valor é o mesmo para todas as famílias (`d7`, `d3`, `pos_trial`) e não vale
- * nada para quem interceptar o link. Quem liga o evento à família é o servidor,
- * pela SESSÃO, em `/api/track` — nunca a URL. Um link comercial vai por
- * WhatsApp, é encaminhado e aparece em print: `familyId` ali seria vazamento.
- */
-export function linkPlanos(de?: "d7" | "d3" | "pos_trial"): string | null {
+/** A página de Planos. **Conversão.** Pública, e lê os valores ao vivo. */
+export function linkPlanos(): string | null {
   const origem = origemCanonica();
-  if (!origem) return null;
-  return de ? `${origem}/precos?de=${de}` : `${origem}/precos`;
+  return origem ? `${origem}/precos` : null;
 }
 
 /**
