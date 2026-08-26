@@ -85,11 +85,38 @@ export type EstadoTrial = {
   emConducaoComercial: boolean;
   /** Dias até a exclusão dos dados, quando há falha de pagamento carimbada. */
   diasAteExclusaoDeDados: number | null;
+  /**
+   * O TEMPO DO TESTE, JÁ CALCULADO — 26/08/2026.
+   *
+   * ⚠️ O MODELO NÃO CALCULA DATA. Pedir a um LLM que subtraia dias de um ISO
+   * timestamp é convidar o erro mais caro possível numa conversa comercial:
+   * dizer "faltam 2 dias" para quem tem 5, ou "hoje é o último" para quem
+   * ainda tem uma semana. O `dia` e o `diasRestantes` já eram derivados aqui;
+   * estes três fecham o conjunto para que o prompt receba fato pronto.
+   *
+   * `null` fora do teste — assinante, cortesia e staff não têm contagem.
+   */
+  /** ISO da data em que o teste começou (`created_at` da linha). */
+  comecouEm: string | null;
+  /** ISO da data em que o teste termina (`trial_ends_at`). */
+  terminaEm: string | null;
+  /** Hoje é o último dia? `diasRestantes <= 1` durante o teste. */
+  ultimoDia: boolean;
+  /** O teste já acabou? */
+  encerrado: boolean;
   /** A linha lida, para quem precisar decidir algo que este resumo não cobre. */
   linha: LinhaAssinatura | null;
 };
 
+const SEM_TEMPO = {
+  comecouEm: null,
+  terminaEm: null,
+  ultimoDia: false,
+  encerrado: false,
+} as const;
+
 const DESCONHECIDO: EstadoTrial = {
+  ...SEM_TEMPO,
   fase: "desconhecida",
   dia: null,
   diasRestantes: null,
@@ -125,6 +152,7 @@ export function estadoTrialDe(
   // que a prova de coerência dos 13 casos existe para impedir.
   const acesso = ehStaff || assinaturaLiberada(linha, agora);
   const base = {
+    ...SEM_TEMPO,
     acesso,
     diasAteExclusaoDeDados: diasAteExclusao(linha),
     linha,
@@ -178,7 +206,21 @@ export function estadoTrialDe(
       const comeco = inicio ?? fim - TRIAL_DIAS * MS_DIA;
       const dia = Math.max(0, Math.floor((agora - comeco) / MS_DIA));
       const diasRestantes = Math.max(0, Math.ceil((fim - agora) / MS_DIA));
-      return { ...base, fase: "trial", dia, diasRestantes, emConducaoComercial: !ehStaff };
+      return {
+        ...base,
+        fase: "trial",
+        dia,
+        diasRestantes,
+        emConducaoComercial: !ehStaff,
+        comecouEm: new Date(comeco).toISOString(),
+        terminaEm: new Date(fim).toISOString(),
+        // ⚠️ `<= 1` e não `=== 0`: `diasRestantes` é `ceil`, então o último dia
+        // aparece como 1 durante quase toda a sua duração e só vira 0 no
+        // instante do vencimento. Comparar com 0 faria "hoje é o último dia"
+        // nunca ser verdade num turno real.
+        ultimoDia: diasRestantes <= 1,
+        encerrado: false,
+      };
     }
 
     return {
@@ -187,6 +229,10 @@ export function estadoTrialDe(
       dia: null,
       diasRestantes: 0,
       emConducaoComercial: !ehStaff,
+      comecouEm: linha.created_at ?? null,
+      terminaEm: linha.trial_ends_at ?? null,
+      ultimoDia: false,
+      encerrado: true,
     };
   }
 
@@ -200,6 +246,10 @@ export function estadoTrialDe(
       dia: null,
       diasRestantes: 0,
       emConducaoComercial: !ehStaff,
+      comecouEm: linha.created_at ?? null,
+      terminaEm: linha.trial_ends_at ?? null,
+      ultimoDia: false,
+      encerrado: true,
     };
   }
 
