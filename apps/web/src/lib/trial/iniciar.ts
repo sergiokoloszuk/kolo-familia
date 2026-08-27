@@ -31,6 +31,15 @@ import { logEvent, logServerError } from "@/lib/log";
 
 export type MotivoTrial =
   | "iniciado"
+  /**
+   * O direito de legado foi resgatado — 27/08/2026, migração 0084.
+   *
+   * A família se cadastrou ANTES da 0082, perdeu os 7 dias sem nunca usar, e
+   * voltou. A assinatura antiga foi atualizada para `trialing` com prazo novo;
+   * nenhuma linha foi criada. Só acontece UMA vez por família, e a garantia é
+   * do Postgres (`update ... where redeemed_at is null returning`).
+   */
+  | "legado_iniciado"
   | "ja_existia"
   | "sem_whatsapp"
   | "nao_verificado"
@@ -71,14 +80,22 @@ export async function iniciarTrial(
       kind: "trial_inicio",
       // `iniciado` e `ja_existia` são o caminho feliz e precisam sobreviver à
       // retenção da Vercel — daí `persistir`, sem envenenar a severidade.
-      severity: motivo === "iniciado" || motivo === "ja_existia" ? "info" : "warn",
+      severity:
+        motivo === "iniciado" || motivo === "legado_iniciado" || motivo === "ja_existia"
+          ? "info"
+          : "warn",
       persistir: true,
       family_account_id: familyId,
       message: `trial: ${motivo}`,
       payload: { motivo, em: new Date().toISOString() },
     });
 
-    if (!RECUSAS_LEGITIMAS.has(motivo) && motivo !== "iniciado" && motivo !== "ja_existia") {
+    if (
+      !RECUSAS_LEGITIMAS.has(motivo) &&
+      motivo !== "iniciado" &&
+      motivo !== "legado_iniciado" &&
+      motivo !== "ja_existia"
+    ) {
       await logServerError(
         "iniciar_trial_inesperado",
         new Error(`motivo inesperado: ${motivo}`),
@@ -86,7 +103,7 @@ export async function iniciarTrial(
       );
     }
 
-    return { iniciado: motivo === "iniciado", motivo };
+    return { iniciado: motivo === "iniciado" || motivo === "legado_iniciado", motivo };
   } catch (e) {
     await logServerError("iniciar_trial_excecao", e, { family_account_id: familyId });
     return { iniciado: false, motivo: "erro" };
