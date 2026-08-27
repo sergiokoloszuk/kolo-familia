@@ -10,8 +10,12 @@ import { destinoDaFamilia, normalizarDestino } from "@/lib/auth/destino-link";
  *  0) Robô de PREVIEW (WhatsApp/Facebook) faz GET pra montar o card — devolve
  *     página neutra SEM tocar em token, senão o preview consome o acesso.
  *  1) Já logada? Vai direto pro destino; token nem importa.
- *  2) `k` = token NOSSO (acessos_app). Vários valem ao mesmo tempo e duram 7
- *     dias: o link de ontem continua abrindo. A sessão é mintada aqui, sem senha.
+ *  2) `k` = token NOSSO (acessos_app). Vários valem ao mesmo tempo: o link de
+ *     ontem continua abrindo. A sessão é mintada aqui, sem senha.
+ *     ⚠️ A DURAÇÃO NÃO SE REPETE AQUI. Este comentário dizia "7 dias" enquanto
+ *     o código gravava 24h — número decorado envelhece sozinho e passa a
+ *     mentir. A validade tem um dono só: `VALIDADE_HORAS`, em
+ *     `lib/auth/acesso-link.ts`.
  *  3) `token_hash` = magic-link do Supabase (links ANTIGOS, já enviados). Fica
  *     por compatibilidade — o GoTrue só mantém UM token por usuário, então
  *     esses links morrem quando outro é gerado. Era a causa de a mãe ficar

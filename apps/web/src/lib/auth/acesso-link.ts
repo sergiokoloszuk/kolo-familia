@@ -16,15 +16,33 @@ import type { SupabaseClient } from "@supabase/supabase-js";
  */
 
 /**
- * 24h — a mesma ordem de grandeza dos magic-links de mercado.
+ * 30 DIAS — FONTE ÚNICA da validade de TODO magic link da Kolo.
  *
- * O link É a credencial: quem abrir, entra (vale pro Slack, Notion, Substack e
- * qualquer outro). Então o que protege é a JANELA ser curta, não o link ser
- * eterno. 24h cobre o caso real ("recebi de manhã, abri de noite") sem deixar
- * uma chave viva na conversa por uma semana. Expirou? Ela toca, lê que expirou,
- * e a Ayla manda outro na hora — a conveniência vem da reposição instantânea.
+ * ⚠️ DECISÃO DE PRODUTO DE 27/08/2026, e ela reverte a régua anterior. Antes
+ * eram 24h, com este raciocínio: *"o link É a credencial; o que protege é a
+ * JANELA ser curta, não o link ser eterno. Expirou? A Ayla manda outro na
+ * hora — a conveniência vem da reposição instantânea."*
+ *
+ * O que derrubou esse raciocínio foi o uso real. A reposição instantânea
+ * pressupõe que a família **volte a escrever** para pedir outro link — e a
+ * maior parte não volta. Uma mãe que abre o WhatsApp três dias depois, toca no
+ * link que a Ayla mandou e lê "expirado" não pede outro: ela desiste. Vinte e
+ * quatro horas protegiam contra um risco hipotético às custas de uma perda
+ * observada.
+ *
+ * ⚠️ E O RISCO É REAL, não some por decisão: o link continua sendo a
+ * credencial, e agora ele fica vivo por trinta dias numa conversa de WhatsApp
+ * que pode ser encaminhada, aparecer num print ou ficar num aparelho
+ * emprestado. O que segura a ponta é o que já existe e NÃO muda aqui: o token
+ * é de UMA família, o destino é de uma allowlist, `destinoDaFamilia` confere
+ * se o artefato é dela, e cada uso é contado (`usos`, `ultimo_uso_em`) para
+ * auditoria. Se um dia isto precisar encolher, é este número — e só ele.
+ *
+ * Alterar aqui alcança TODOS os fluxos: D7 e D3, recuperação comercial, acesso
+ * pedido na conversa, suporte. Nenhum chamador passa validade própria, e não
+ * existe segundo mecanismo de link de acesso na Kolo — foi conferido.
  */
-const VALIDADE_HORAS = 24;
+const VALIDADE_HORAS = 30 * 24;
 
 function novoToken(): string {
   return randomBytes(32).toString("base64url");
