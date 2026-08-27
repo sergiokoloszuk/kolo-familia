@@ -613,6 +613,28 @@ export async function completeOnboarding(opts?: { janela?: JanelaOnboarding | nu
   // (admin-only) e ayla_messages outbound (sem policy de insert para
   // usuário comum). Se Z-API falhar, o erro fica em ayla_send_log e o
   // usuário continua o fluxo normalmente.
+  // ⚠️ O TESTE COMEÇA AQUI — não no cadastro (PEND-155, Fase 1).
+  //
+  // Até a 0082, `handle_new_user` já criou a linha e esta chamada devolve
+  // `ja_existia`: um no-op seguro, de propósito. É o que permite publicar e
+  // provar o encanamento ANTES de mexer no comportamento. Depois da 0082,
+  // esta passa a ser a ÚNICA porta pela qual um teste nasce.
+  //
+  // ⚠️ VEM ANTES DO `sendBoasVindas`: a Ayla só deve dizer "oi" para quem já
+  // tem acesso. Invertido, a primeira mensagem sairia para uma família ainda
+  // sem teste, e `podeEnviarProativa` a barraria por falta de acesso.
+  //
+  // ⚠️ NUNCA DERRUBA A CONCLUSÃO. Concluir o onboarding não pode falhar porque
+  // o teste não pôde começar — mas a recusa também não passa em silêncio:
+  // `iniciarTrial` registra tudo (§7).
+  try {
+    const admin = createServiceRoleClient();
+    const { iniciarTrial } = await import("@/lib/trial/iniciar");
+    await iniciarTrial(admin, family.id);
+  } catch (e) {
+    console.error("[onboarding] iniciarTrial:", e);
+  }
+
   try {
     console.log("[onboarding] → sendBoasVindas family.id =", family.id);
     const admin = createServiceRoleClient();
