@@ -27,6 +27,7 @@ import {
   notaComercial,
   notaSuporte,
 } from "@/lib/billing/destino-comercial";
+import { linkComercialAutenticado } from "@/lib/billing/link-comercial";
 import { logarUsoApi } from "@/lib/billing/logar";
 import { resolverDocumento } from "./documentos";
 import {
@@ -815,9 +816,17 @@ export async function responderExperimental(
     // A DIVISÃO É DELIBERADA: `FATOS_COMERCIAIS` é regra de produto, estável, e
     // vale em todo turno. As notas são fato DO TURNO — só entram quando a
     // pergunta é comercial ou pede humano, exatamente como a web faz.
+    // ⚠️ O LINK COMERCIAL É AUTENTICADO — 27/08/2026. No WhatsApp a família é
+    // sempre identificada (chegou pelo número), então ela não pode receber a
+    // página pública de aquisição: recebe o caminho que a leva LOGADA ao
+    // checkout. Só se paga o custo de gravar o token quando a pergunta é mesmo
+    // comercial.
+    const linkComercial = ehPerguntaComercial(params.mensagem)
+      ? await linkComercialAutenticado(supabase, params.familyId, "pos_trial")
+      : null;
     const comercial = [
       FATOS_COMERCIAIS,
-      ehPerguntaComercial(params.mensagem) ? notaComercial() : "",
+      linkComercial !== null ? notaComercial(linkComercial) : "",
       precisaDeHumano(params.mensagem) ? notaSuporte() : "",
     ]
       .filter(Boolean)

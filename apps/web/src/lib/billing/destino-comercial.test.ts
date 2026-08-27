@@ -152,13 +152,35 @@ describe("o destino é único e absoluto", () => {
     }
   });
 
-  it("nunca oferece o magic link como destino comercial", () => {
-    expect(notaComercial()).not.toContain("/auth/wa");
+  it("⚠️ REGRA INVERTIDA EM 27/08: o magic link AGORA é o destino comercial", () => {
+    // Este teste dizia o contrário — "nunca oferece o magic link como destino
+    // comercial" — e a regra estava certa PARA O PROBLEMA DE 22/08: o magic
+    // link estava sendo mandado NO LUGAR da página comercial (437 vezes contra
+    // 2), o que é acesso substituindo conversão.
+    //
+    // O que a produção mostrou em 27/08 é o outro lado: Karina escreveu "quero
+    // pagar, quero assinar" e recebeu `/precos` — a página PÚBLICA, que sem
+    // sessão oferece começar um teste. Para quem a Kolo já identifica, acesso e
+    // conversão não são alternativas: o certo é `/auth/wa?k=…&next=/assinatura`,
+    // que é acesso **e** conversão.
+    //
+    // `notaComercial` deixou de escolher o link: quem sabe quem está
+    // perguntando é o canal.
+    expect(notaComercial("https://x/auth/wa?k=abc")).toContain("/auth/wa?k=abc");
+    // …e `linkPlanos` continua sendo aquisição pura, sem magic link.
     expect(linkPlanos() ?? "").not.toContain("/auth/wa");
   });
 
+  it("MORDE: a nota não decide o link por dentro", () => {
+    // Se alguém voltar a chamar `linkPlanos()` aqui dentro, o defeito de 27/08
+    // volta inteiro — e volta em silêncio, porque o texto continua plausível.
+    const nota = notaComercial("https://x/auth/wa?k=TOKEN");
+    expect(nota).not.toMatch(/\/precos/);
+    expect(nota).toContain("TOKEN");
+  });
+
   it("a nota comercial proíbe mandar para o suporte", () => {
-    expect(notaComercial().toLowerCase()).toContain("não mande procurar suporte");
+    expect(notaComercial(null).toLowerCase()).toContain("não mande procurar suporte");
   });
 
   it("a nota de suporte carrega o contato — nunca manda procurar sem dizer onde", () => {

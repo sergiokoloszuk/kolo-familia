@@ -4,6 +4,7 @@ import {
   precisaDeHumano,
   notaComercial,
   notaSuporte,
+  linkAssinatura,
 } from "@/lib/billing/destino-comercial";
 import {
   gerarConversacional,
@@ -617,7 +618,12 @@ QUEM ENTREGA O PLANO NÃO É VOCÊ, É O SISTEMA — logo depois desta sua fala,
   // COMERCIAL e SUPORTE — as duas decisões que a auditoria de 22/08 encontrou
   // sem dono. Agora vêm da fonte canônica, e são as MESMAS da Web.
   if (ehPerguntaComercial(params.mensagem)) {
-    notas.push(notaComercial());
+    // ⚠️ O LEGACY MANDA `/assinatura` SEM MAGIC LINK, e é uma escolha.
+    // `RespostaParams` não carrega `supabase` nem `familyId`, e threadá-los por
+    // este caminho mexeria numa peça que MEDI atender **2,59%** dos turnos e
+    // está em retirada. O que não se negocia é o DESTINO: `/assinatura`, nunca
+    // `/precos`. Ela cai no `/login` e entra — atrito, não porta errada.
+    notas.push(notaComercial(linkAssinatura("pos_trial")));
   }
   if (precisaDeHumano(params.mensagem)) {
     notas.push(notaSuporte());

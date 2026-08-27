@@ -12,12 +12,8 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { pronomesVars, type Genero } from "./pronomes";
 import { nomeUsavelCrianca, primeiroNome, primeiroNomeCriancaConfiavel } from "./crianca-especifica";
 import { fraseDoTema, listarTemas } from "@/lib/conducao/temas";
-import {
-  linkPlanos,
-  linkAssinatura,
-  destinoAssinatura,
-} from "@/lib/billing/destino-comercial";
-import { criarLinkAcesso } from "@/lib/auth/acesso-link";
+import { linkPlanos } from "@/lib/billing/destino-comercial";
+import { linkComercialAutenticado } from "@/lib/billing/link-comercial";
 
 type TemplateVars = Record<string, string | number | undefined>;
 
@@ -354,47 +350,11 @@ export async function templateTrial(
     // ⚠️ A ORIGEM VIAJA NO LINK — e só ela. É o que permite separar "abriu
     // porque a Ayla convidou" de "abriu navegando", sem pôr identificador
     // nenhum numa URL que vai por WhatsApp. Ver `linkPlanos`.
-    link_planos: await linkDeFimDeTeste(supabase, params.familyId, de),
+    link_planos: await linkComercialAutenticado(supabase, params.familyId, de),
   });
 }
 
-/**
- * O LINK DO FIM DO TESTE — três degraus, e NENHUM deles é `/precos`.
- *
- * ⚠️ ESTA É A GARANTIA PEDIDA EM 27/08/2026: quem já está no teste **nunca**
- * pode receber um link que ofereça começar um teste. `/precos` sem sessão
- * mostra *"7 dias grátis pra sentir se vale"* e *"Começar 7 dias grátis"* →
- * `/signup`. Para esta família, isso é o convite errado no momento mais caro.
- *
- * Os degraus, do melhor para o pior — e todos terminam em `/assinatura`:
- *   1. **link de acesso** (`/auth/wa?k=…&next=/assinatura?de=…`): ela chega
- *      LOGADA, direto no checkout. É o único degrau que resolve de verdade,
- *      porque `/assinatura` é rota autenticada — deslogada, ela pararia no
- *      `/login`.
- *   2. **`/assinatura?de=…` puro**, se não der para gravar o token. Ela cai no
- *      `/login` e entra — atrito, mas o destino continua certo.
- *   3. **string vazia**, sem `NEXT_PUBLIC_APP_URL`. A frase do template segue
- *      de pé sem link. Degrada, não quebra.
- *
- * ⚠️ NÃO EXISTE DEGRAU PARA `/precos`, de propósito. Um fallback "seguro" para
- * a página pública seria exatamente o defeito voltando pela porta dos fundos,
- * e justamente quando algo já falhou. Um teste MORDE isso.
- */
-async function linkDeFimDeTeste(
-  supabase: SupabaseClient,
-  familyId: string | undefined,
-  de: "d7" | "d3",
-): Promise<string> {
-  if (familyId) {
-    const autenticado = await criarLinkAcesso(supabase, {
-      familyId,
-      next: destinoAssinatura(de),
-      criadoPor: "ayla",
-    });
-    if (autenticado) return autenticado;
-  }
-  return linkAssinatura(de) ?? "";
-}
+
 
 // ============================================================
 // Emocional — streak 7 dias seguidos (PRD §12.5)

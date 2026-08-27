@@ -112,9 +112,13 @@ describe("B · o OFICIAL recebe a verdade comercial", () => {
 
   it("5. os fatos entram SEMPRE; as notas só no turno em que cabem", () => {
     const src = semComentarios(EXPERIMENTAL);
-    const bloco = src.slice(src.indexOf("const comercial = ["), src.indexOf("const entrega ="));
+    // ⚠️ A JANELA COMEÇA NA ATRIBUIÇÃO DO LINK — 27/08. O Oficial passou a
+    // resolver o link comercial numa `const` antes do array, então cortar a
+    // partir de `const comercial = [` deixaria `ehPerguntaComercial` de fora e
+    // o teste passaria a não provar nada.
+    const bloco = src.slice(src.indexOf("const linkComercial ="), src.indexOf("const entrega ="));
     expect(bloco).toMatch(/FATOS_COMERCIAIS,/);
-    expect(bloco).toMatch(/ehPerguntaComercial\(params\.mensagem\) \? notaComercial\(\) : ""/);
+    expect(bloco).toMatch(/ehPerguntaComercial\(params\.mensagem\)[\s\S]{0,200}notaComercial\(/);
     expect(bloco).toMatch(/precisaDeHumano\(params\.mensagem\) \? notaSuporte\(\) : ""/);
   });
 
@@ -131,10 +135,11 @@ describe("B · o OFICIAL recebe a verdade comercial", () => {
 
 // ─────────────────────────────────────────────────────────────────────────────
 describe("C · o destino é UM, e é o canônico", () => {
-  it("7. a nota comercial manda o link de planos, não o suporte", () => {
-    const nota = notaComercial();
-    const link = linkPlanos();
-    if (link) expect(nota).toContain(link);
+  it("7. a nota comercial manda o link QUE RECEBEU, não o suporte", () => {
+    // ⚠️ 27/08: o link deixou de ser escolhido aqui dentro. Ver
+    // `link-comercial.ts` — família identificada recebe caminho autenticado.
+    const nota = notaComercial("https://x/auth/wa?k=abc");
+    expect(nota).toContain("https://x/auth/wa?k=abc");
     expect(nota).toMatch(/NÃO mande procurar suporte por causa de preço/);
   });
 
@@ -160,7 +165,7 @@ describe("C · o destino é UM, e é o canônico", () => {
 describe("D · a WEB permanece inalterada e na mesma fonte", () => {
   it("11. continua importando e usando as mesmas funções", () => {
     expect(PROMPT_WEB).toMatch(/from "@\/lib\/billing\/fatos-comerciais"/);
-    expect(PROMPT_WEB).toMatch(/ehPerguntaComercial\(userInput\) \? notaComercial\(\) : ""/);
+    expect(PROMPT_WEB).toMatch(/ehPerguntaComercial\(userInput\) \? notaComercial\(/);
     expect(PROMPT_WEB).toMatch(/precisaDeHumano\(userInput\) \? notaSuporte\(\) : ""/);
   });
 });
@@ -262,7 +267,9 @@ describe("G · zero chamada de modelo a mais, e nada novo no Legacy", () => {
   it("22. o Legacy NÃO ganhou nada — só continua sendo rede temporária", () => {
     const src = semComentarios(RESPONDER);
     // as mesmas quatro chamadas de antes, nem uma a mais
-    expect((src.match(/notaComercial\(\)/g) ?? []).length).toBe(1);
+    // ⚠️ 27/08: `notaComercial` passou a RECEBER o link. A contagem continua
+    // sendo 1 — o que se prende é "uma chamada, nem uma a mais".
+    expect((src.match(/notaComercial\(/g) ?? []).length).toBe(1);
     expect((src.match(/notaSuporte\(\)/g) ?? []).length).toBe(1);
     expect((src.match(/FATOS_COMERCIAIS/g) ?? []).length).toBe(2); // import + uso
   });

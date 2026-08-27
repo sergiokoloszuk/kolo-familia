@@ -21,6 +21,7 @@ import {
   precisaDeHumano,
   notaComercial,
   notaSuporte,
+  linkAssinatura,
 } from "@/lib/billing/destino-comercial";
 import { angulosUsados, blocoProgressao } from "@/lib/conducao/angulos";
 import {
@@ -546,7 +547,9 @@ export function assemblePrompt(params: {
   // como fato do TURNO, junto do aceite — não no system, que é regra de
   // produto e fica em cache.
   const notasDoTurno = [
-    ehPerguntaComercial(userInput) ? notaComercial() : "",
+    // ⚠️ NA WEB ELA JÁ ESTÁ LOGADA. Não precisa de magic link: `/assinatura`
+    // direto já resolve, e o CTA por estado daquela tela faz o resto.
+    ehPerguntaComercial(userInput) ? notaComercial(linkAssinatura("pos_trial")) : "",
     precisaDeHumano(userInput) ? notaSuporte() : "",
   ].filter(Boolean);
   const notaDestino = notasDoTurno.length

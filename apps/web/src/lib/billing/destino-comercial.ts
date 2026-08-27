@@ -243,6 +243,24 @@ export function ehPerguntaComercial(texto: string | null | undefined): boolean {
 const PEDE_HUMANO_EXPLICITO =
   /\b(falar|conversar|contato)\s+(com\s+)?(uma\s+|um\s+|alguma\s+)?(pessoa|gente|humano|algu[ée]m|atendente|respons[áa]vel|time|equipe|suporte)\b|\b(quero|queria|preciso|posso)\s+falar\s+com\b|\btem\s+algu[ée]m\b/i;
 
+/**
+ * JÁ PAGOU E CONTINUA BLOQUEADA — a frase mais cara do produto.
+ *
+ * ⚠️ ELA IA PARAR NA VENDA. `PAGAR` casa com "paguei", então "eu paguei e
+ * continua pedindo pra assinar" era classificada como pergunta COMERCIAL — e a
+ * Ayla respondia mandando o link de assinatura para quem **acabou de pagar**.
+ * É a classe do incidente Rochelle chegando pela conversa, e a resposta era
+ * pedir que ela pagasse de novo.
+ *
+ * ⚠️ POR QUE PRECISA DOS DOIS LADOS. "paguei" sozinho não serve: neste produto
+ * as mães falam o tempo todo de pagar OUTRA coisa — "eu pago caro por este
+ * acompanhamento", "não tenho como pagar a fono". Uma delas está na base, e
+ * viraria falso positivo. Então só casa quando o pagamento é DA KOLO **e** há
+ * queixa de acesso junto.
+ */
+const JA_PAGOU_E_NAO_LIBEROU =
+  /\b(paguei|pagamos|assinei|fiz\s+o\s+pagamento|efetuei\s+o\s+pagamento|pagamento\s+(foi\s+)?(aprovado|confirmado|feito))\b[^.?!]{0,80}\b(n[ãa]o\s+(liberou|liberado|abriu|funciona|entrou|mudou|deu\s+certo)|continua\s+(pedindo|bloquead|cobrando|igual|assim)|ainda\s+(pede|pedindo|est[áa]\s+bloquead|n[ãa]o)|segue\s+(pedindo|bloquead)|bloquead[oa]|sem\s+acesso)\b/i;
+
 /** Problema que a Ayla não resolve sozinha: erro, falha, travou, não consigo. */
 const PROBLEMA_OPERACIONAL =
   /\b(erro|falhou|falha|travou|travando|bugou|n[ãa]o\s+funciona|n[ãa]o\s+carrega|n[ãa]o\s+abre|n[ãa]o\s+consigo\s+(entrar|acessar|pagar|assinar|cancelar)|recusado|recusou|negado\s+o\s+pagamento|cobrado\s+(duas|2)\s+vezes|cobran[çc]a\s+(errada|duplicada)|reembolso|estornar|estorno)\b/i;
@@ -263,6 +281,8 @@ export function precisaDeHumano(texto: string | null | undefined): boolean {
   const t = (texto ?? "").trim();
   if (!t) return false;
   if (PEDE_HUMANO_EXPLICITO.test(t)) return true;
+  // ⚠️ "JÁ PAGUEI E NÃO LIBEROU" vem ANTES de tudo — 27/08/2026.
+  if (JA_PAGOU_E_NAO_LIBEROU.test(t)) return true;
   // Problema operacional manda para gente mesmo quando fala de pagamento —
   // "não consigo pagar, dá erro" é suporte, não conversão.
   if (PROBLEMA_OPERACIONAL.test(t)) return true;
@@ -273,9 +293,21 @@ export function precisaDeHumano(texto: string | null | undefined): boolean {
 // As notas de prompt — o MESMO texto nos dois canais
 // ============================================================
 
-/** O que dizer quando a pessoa toca em preço/assinatura. */
-export function notaComercial(): string {
-  const link = linkPlanos();
+/**
+ * O que dizer quando a pessoa toca em preço/assinatura.
+ *
+ * ⚠️ O LINK VEM DE FORA — 27/08/2026, e a mudança é a correção de um P0. Esta
+ * função chamava `linkPlanos()` por dentro e mandava `/precos` para todo mundo.
+ * Karina escreveu "quero pagar, quero assinar" e recebeu a página pública de
+ * aquisição, que sem sessão oferece começar um teste.
+ *
+ * Quem sabe QUEM está perguntando é o canal, não esta função: no WhatsApp e na
+ * web a família é identificada e recebe o caminho autenticado
+ * (`linkComercialAutenticado`); um visitante anônimo receberia `/precos`. Por
+ * isso o link passou a ser parâmetro — e um teste MORDE se ele voltar para
+ * dentro.
+ */
+export function notaComercial(link: string | null): string {
   return [
     `Ela tocou em PREÇO / PLANOS / ASSINAR. Não negocie, não invente valor nem desconto — mas RESPONDA você mesma; isto NÃO é assunto de suporte.`,
     `Antes de qualquer coisa, cheque se você acabou de oferecer um plano estratégico: se sim, ela provavelmente achou que o MATERIAL é pago. Desfaça isso primeiro — o plano estratégico é o material sobre a criança, já incluído, sem custo. E ofereça montar assim mesmo.`,

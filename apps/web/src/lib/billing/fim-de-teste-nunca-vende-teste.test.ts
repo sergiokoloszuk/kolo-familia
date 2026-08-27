@@ -34,13 +34,27 @@ const SRC_TEMPLATES = readFileSync(
   "utf8",
 );
 
-/** O corpo de `linkDeFimDeTeste` — a função que decide o destino do convite. */
+/**
+ * O corpo de `linkComercialAutenticado` — a função que decide o destino.
+ *
+ * ⚠️ ELA MUDOU DE ARQUIVO EM 27/08. Nasceu como `linkDeFimDeTeste`, privada em
+ * `messageTemplates.ts`, servindo só ao D7. Quando a conversa reativa mandou
+ * `/precos` para quem escreveu "quero pagar", ficou claro que a decisão tinha
+ * DUAS cópias — o proativo corrigido e o reativo não. Agora há um dono só, em
+ * `lib/billing/link-comercial.ts`, e os dois lados o chamam. A garantia é a
+ * mesma; o endereço é outro.
+ */
 function corpoDoLinkDeFimDeTeste(): string {
-  const i = SRC_TEMPLATES.indexOf("async function linkDeFimDeTeste");
-  expect(i, "a função `linkDeFimDeTeste` sumiu — a garantia mora nela").toBeGreaterThan(-1);
-  const resto = SRC_TEMPLATES.slice(i);
+  const src = readFileSync(join(process.cwd(), "src/lib/billing/link-comercial.ts"), "utf8");
+  const i = src.indexOf("export async function linkComercialAutenticado");
+  expect(i, "`linkComercialAutenticado` sumiu — a garantia mora nela").toBeGreaterThan(-1);
+  const resto = src.slice(i);
   const fim = resto.indexOf("\n}");
-  return resto.slice(0, fim);
+  // ⚠️ SEM COMENTÁRIOS. O corpo da função EXPLICA por que não há degrau para
+  // `/precos` — e a explicação contém a própria string. Sem esta limpeza, o
+  // teste falha por causa do comentário que o defende, e alguém "conserta"
+  // afrouxando a asserção em vez de olhar o código.
+  return resto.slice(0, fim).replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/[^\n]*/g, "");
 }
 
 describe("1. o destino do fim de teste é /assinatura, nunca /precos", () => {
@@ -63,7 +77,7 @@ describe("1. o destino do fim de teste é /assinatura, nunca /precos", () => {
   it("o template do trial pede o link à função, não monta URL na mão", () => {
     const i = SRC_TEMPLATES.indexOf("export async function templateTrial");
     const corpo = SRC_TEMPLATES.slice(i, i + 900);
-    expect(corpo).toMatch(/link_planos:\s*await linkDeFimDeTeste/);
+    expect(corpo).toMatch(/link_planos:\s*await linkComercialAutenticado/);
     expect(corpo).not.toMatch(/https?:\/\//);
   });
 });
