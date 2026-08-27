@@ -57,7 +57,7 @@ Só o que está aberto. 🔒 = bloqueada.
 | [PEND-089](#pend-089) | Prioridade dos desafios — corte CORRIGIDO, ordenação por recência aberta | C · Memória | P1 | CORTE OK · PRIORIZAÇÃO ABERTA | decidir de onde vem a prioridade quando o perfil passar do teto |
 | [PEND-091](#pend-091) | Três lacunas menores do contexto (interesses, idade, confirmação) | C · Memória | P2 | ABERTA | depende de PEND-089 |
 | [PEND-088](#pend-088) | Dois P2 da auditoria — decisão registrada: NÃO implementar agora | H · Governança | P2 | ADIADA | retomar quando houver investigação de latência ou funil |
-| [PEND-155](#pend-155) | **Trial nasce no cadastro** — 99 contas incompletas com o relógio correndo sujam a conversão | H · Governança | **P0** | DIAGNOSTICADA · FASE 1 VERSIONADA, NÃO PUBLICADA | Fase 1 no ar e provada → só então aplicar a 0082 |
+| [PEND-155](#pend-155) | **Trial nasce no cadastro** — estrutura CORRIGIDA; falta decidir as 96 contas antigas | H · Governança | P1 | **ESTRUTURAL BAIXADA 27/08** · RESÍDUO ABERTO | 0082 aplicada e provada ponta a ponta; 96 contas pré-0082 aguardam regra |
 | [PEND-058](#pend-058) | Fragmentação multi-balão: a Ayla responde duas vezes ao mesmo pensamento | A · Condução | **P0** | CORRIGIDA · PUBLICADA | janela 3s→10s; remedir a amostra nova antes de baixar |
 | [PEND-083](#pend-083) | Branch `bia/ciclo-tecnico` pode ter mais correções prontas e nunca publicadas | G · Entrega | P1 | ABERTA | auditar paridade Legacy × novo e branches não ancestrais de `main` |
 | [PEND-084](#pend-084) | Caminho reativo escreve sequência de rotina que não é o quadro | B · Artefatos | P2 | ABERTA | ou não escreve etapas, ou lê do quadro como o condutor |
@@ -5616,6 +5616,59 @@ linha? → `ja_existia`) → WhatsApp presente → **WhatsApp verificado**
 **contas totais · trials reais · cadastros incompletos · testes/admin**. Contar
 cadastro incompleto como família em teste é inflar a base e produzir prospect
 que não existe.
+
+**BAIXA DA PARTE ESTRUTURAL — 27/08/2026, 19h40.**
+
+A 0082 foi aplicada no Postgres real por Sérgio, e **PROVEI POR EXECUÇÃO** com
+duas contas QA criadas e apagadas em produção:
+
+| portão | resultado |
+|---|---|
+| criar login → `subscription_accesses` nasce? | **NÃO** ✅ |
+| conta deixada incompleta → consome dia? | **NÃO** ✅ |
+| sem WhatsApp → inicia? | `sem_whatsapp` ✅ |
+| WhatsApp não verificado → inicia? | `nao_verificado` ✅ |
+| sem consentimento → inicia? | `sem_consentimento` ✅ |
+| completou apta → inicia? | `iniciado` · `trialing` · **7,0000 dias** ✅ |
+| chamada repetida (2×) | `ja_existia` · **1 linha** · prazo não esticou ✅ |
+| D1 conta de quando? | da **conclusão** — 29 s depois do login ✅ |
+| cadastro incompleto novo em D6/D7? | **invisível** — sem linha, `runComercial` não o enxerga ✅ |
+
+**REGRESSÃO, sobre as 237 famílias que já existiam:** nenhuma teve status ou
+prazo alterado · 2 assinantes ativas seguem ativas · 226 vencidas seguem sem
+acesso (TrialGate) · perfis 141→141 e mensagens 6.840→6.840 (crianças e linhas
+de assinatura variaram só pelas contas QA, apagadas no fim).
+
+⚠️ **O QUE ESTA BAIXA NÃO COBRE.** A correção vale **daqui para a frente**. As
+contas criadas antes da 0082 continuam com o teste consumido — e são elas o
+resíduo abaixo.
+
+**RESÍDUO ABERTO — as 96 contas do modelo antigo.**
+
+MEDI em 27/08, sobre as 237 contas:
+
+| grupo | quantas |
+|---|---|
+| concluíram o onboarding | 126 |
+| **incompletas e que NUNCA usaram** | **96** |
+| têm acesso hoje (assinante / trial vivo / cortesia) | 13 |
+| incompletas **mas que já usaram** de verdade | 2 |
+
+Das 96: **71 nunca fizeram login e 71 nunca confirmaram o e-mail**; 7 têm
+WhatsApp, 11 têm criança, 6 têm perfil. Distribuição: 44 em agosto, 44 em
+julho, 7 em junho, 1 em maio.
+
+⚠️ "Já usou" foi medido por **quatro sinais**, não por um: mensagem recebida
+(`ayla_messages` inbound), registro no diário, plano gerado ou check-in. Uma
+conta só entra em "nunca usou" se **nenhum** dos quatro existir.
+
+**REGRA COMERCIAL DECIDIDA (não implementada):** conta do modelo pré-0082 que
+não concluiu o onboarding e não chegou a usar a Kolo **poderá iniciar seu
+primeiro teste efetivo de 7 dias quando voltar e concluir o onboarding**. Não
+se concede teste novo a quem efetivamente já usou.
+
+**NÃO INICIAR ESSES TESTES AGORA.** A próxima missão mede, propõe a regra
+técnica e só então implementa.
 
 ### PEND-117
 **Stack Supabase: CPU anormal e seis serviços ausentes**
