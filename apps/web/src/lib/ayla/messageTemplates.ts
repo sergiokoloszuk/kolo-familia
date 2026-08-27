@@ -12,7 +12,12 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { pronomesVars, type Genero } from "./pronomes";
 import { nomeUsavelCrianca, primeiroNome, primeiroNomeCriancaConfiavel } from "./crianca-especifica";
 import { fraseDoTema, listarTemas } from "@/lib/conducao/temas";
-import { linkPlanos } from "@/lib/billing/destino-comercial";
+import {
+  linkPlanos,
+  linkAssinatura,
+  destinoAssinatura,
+} from "@/lib/billing/destino-comercial";
+import { criarLinkAcesso } from "@/lib/auth/acesso-link";
 
 type TemplateVars = Record<string, string | number | undefined>;
 
@@ -339,17 +344,56 @@ export function templateRespostaRegistro(params: {
  */
 export async function templateTrial(
   supabase: SupabaseClient,
-  params: { diasRestantes: 3 | 0; nomeMae: string; seed: string },
+  params: { diasRestantes: 3 | 0; nomeMae: string; seed: string; familyId?: string },
 ): Promise<string> {
   const key = params.diasRestantes === 0 ? "trial_d0" : "trial_d3";
+  const de = params.diasRestantes === 0 ? "d7" : "d3";
   const variations = await getVariations(supabase, key);
   return fill(pickVariation(variations, params.seed), {
     ...params,
     // ⚠️ A ORIGEM VIAJA NO LINK — e só ela. É o que permite separar "abriu
     // porque a Ayla convidou" de "abriu navegando", sem pôr identificador
     // nenhum numa URL que vai por WhatsApp. Ver `linkPlanos`.
-    link_planos: linkPlanos(params.diasRestantes === 0 ? "d7" : "d3") ?? "",
+    link_planos: await linkDeFimDeTeste(supabase, params.familyId, de),
   });
+}
+
+/**
+ * O LINK DO FIM DO TESTE — três degraus, e NENHUM deles é `/precos`.
+ *
+ * ⚠️ ESTA É A GARANTIA PEDIDA EM 27/08/2026: quem já está no teste **nunca**
+ * pode receber um link que ofereça começar um teste. `/precos` sem sessão
+ * mostra *"7 dias grátis pra sentir se vale"* e *"Começar 7 dias grátis"* →
+ * `/signup`. Para esta família, isso é o convite errado no momento mais caro.
+ *
+ * Os degraus, do melhor para o pior — e todos terminam em `/assinatura`:
+ *   1. **link de acesso** (`/auth/wa?k=…&next=/assinatura?de=…`): ela chega
+ *      LOGADA, direto no checkout. É o único degrau que resolve de verdade,
+ *      porque `/assinatura` é rota autenticada — deslogada, ela pararia no
+ *      `/login`.
+ *   2. **`/assinatura?de=…` puro**, se não der para gravar o token. Ela cai no
+ *      `/login` e entra — atrito, mas o destino continua certo.
+ *   3. **string vazia**, sem `NEXT_PUBLIC_APP_URL`. A frase do template segue
+ *      de pé sem link. Degrada, não quebra.
+ *
+ * ⚠️ NÃO EXISTE DEGRAU PARA `/precos`, de propósito. Um fallback "seguro" para
+ * a página pública seria exatamente o defeito voltando pela porta dos fundos,
+ * e justamente quando algo já falhou. Um teste MORDE isso.
+ */
+async function linkDeFimDeTeste(
+  supabase: SupabaseClient,
+  familyId: string | undefined,
+  de: "d7" | "d3",
+): Promise<string> {
+  if (familyId) {
+    const autenticado = await criarLinkAcesso(supabase, {
+      familyId,
+      next: destinoAssinatura(de),
+      criadoPor: "ayla",
+    });
+    if (autenticado) return autenticado;
+  }
+  return linkAssinatura(de) ?? "";
 }
 
 // ============================================================

@@ -9,6 +9,8 @@ import { loadFamilyContext } from "@/lib/auth/require-user";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { formatarBRL, lerPlanosParaExibir } from "@/lib/billing/planos";
 import { AssinaturaActions } from "./assinatura-actions";
+import { origemValida } from "@/app/(public)/precos/origem";
+import { MarcoOrigem } from "@/app/(public)/precos/marco-origem";
 import { ExcluirContaForm } from "../configuracoes/conta/excluir-form";
 
 const STATUS_LABEL: Record<string, string> = {
@@ -30,6 +32,14 @@ const STATUS_VARIANT: Record<string, "default" | "secondary" | "outline" | "dest
 export default async function AssinaturaPage(props: PageProps<"/assinatura">) {
   const { supabase, family } = await loadFamilyContext();
   const familyId = family!.id;
+
+  // ⚠️ A MEDIÇÃO SEGUIU O DESTINO — 27/08/2026. O convite de fim de teste
+  // deixou de apontar para `/precos` e passou a apontar para cá; sem este
+  // marcador, o degrau do meio do funil (“a família ABRIU a página?”) sumiria
+  // em silêncio, e “mandamos e ninguém assinou” voltaria a não distinguir
+  // *não clicou* de *clicou e não converteu*. Mesmo evento de sempre, com a
+  // página no detalhe — a série histórica não se parte em duas.
+  const origemComercial = origemValida((await props.searchParams)?.de);
 
   const { data: sub } = await supabase
     .from("subscription_accesses")
@@ -61,6 +71,7 @@ export default async function AssinaturaPage(props: PageProps<"/assinatura">) {
 
   return (
     <div className="flex flex-col gap-8">
+      <MarcoOrigem origem={origemComercial} />
       <header className="flex items-start justify-between gap-4">
         <div className="flex items-start gap-4">
           <IconCard tone="light" size="lg" className="hidden md:inline-flex">

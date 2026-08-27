@@ -975,6 +975,10 @@ export async function sendTrial(
     diasRestantes,
     nomeMae: ctx.nomeMae,
     seed: `${familyAccountId}-trial-${diasRestantes}`,
+    // ⚠️ SEM `familyId` O LINK CHEGA DESLOGADO — e `/assinatura` é rota
+    // autenticada, então ela pararia no `/login`. Com ele, o template gera um
+    // link de acesso e a família cai direto no checkout. Ver `linkDeFimDeTeste`.
+    familyId: familyAccountId,
   });
 
   const res = await enviarEPersistir(supabase, {
