@@ -3,6 +3,7 @@ import type Stripe from "stripe";
 import { getStripeClient } from "@/lib/stripe/client";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { logEvent, logServerError } from "@/lib/log";
+import { talvezReceberComoAssinante } from "@/lib/assinatura/boas-vindas";
 import {
   mapStripeStatus,
   isoFromUnix,
@@ -183,6 +184,15 @@ async function onCheckoutSessionCompleted(
       stripeStatus: session.payment_status ?? null,
     },
   );
+
+  // ⚠️ A AYLA RECEBE A FAMÍLIA — 27/08/2026. Depois da escrita CONFERIDA, e
+  // nunca antes: mandar a mensagem sobre uma escrita que não pegou seria dizer
+  // "sua assinatura já está ativa" para quem continua bloqueada.
+  //
+  // A função é segura de chamar sempre: ela mesma confere se está `active` e
+  // se a família já foi recebida alguma vez. Não existe regra aqui — a regra
+  // mora num lugar só, e o reconciliador chama a MESMA.
+  if (pago) await talvezReceberComoAssinante(admin, familyId);
 }
 
 async function onSubscriptionChanged(

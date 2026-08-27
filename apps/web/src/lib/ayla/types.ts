@@ -30,6 +30,16 @@ export type AylaTipoProativa =
    * já enviado — ver `jaRecebeuVideoGuia`.
    */
   | "video_guia"
+  /**
+   * A PRIMEIRA MENSAGEM COMO ASSINANTE — 27/08/2026.
+   *
+   * ⚠️ Este tipo É a idempotência. A pergunta não é "mandei hoje?", é "mandei
+   * ALGUMA VEZ?" — por isso não existe coluna nova nem migração: a própria
+   * existência de uma linha em `ayla_messages` com este tipo prova que a
+   * família já foi recebida. Webhook repetido, reconciliador, renovação e
+   * ressincronização convergem todos para a mesma resposta: já foi.
+   */
+  | "assinante_boas_vindas"
   | "dass21_convite"
   | "dass21_resultado_moderado"
   | "dass21_resultado_severo"

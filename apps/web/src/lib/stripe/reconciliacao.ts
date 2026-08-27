@@ -3,6 +3,7 @@ import { assinaturaLiberada, type AcessoAssinatura } from "@/lib/auth/assinatura
 import { sincronizarAssinaturaDoStripe } from "./sync";
 import { getStripeClient } from "./client";
 import { logEvent } from "@/lib/log";
+import { talvezReceberComoAssinante } from "@/lib/assinatura/boas-vindas";
 
 /** O `kind` desta frente em `eventos_app` — um só, para poder filtrar tudo junto. */
 const KIND_DIVERGENCIA = "reconciliacao_divergencia";
@@ -328,6 +329,12 @@ export async function reconciliarDivergencias(
       const liberada = assinaturaLiberada(depoisDoSync as unknown as AcessoAssinatura);
 
       if (liberada) {
+      // ⚠️ MESMA FUNÇÃO DO WEBHOOK. Se o webhook falhou e foi a reconciliação
+      // que reconheceu o pagamento, a família não pode ficar sem a mensagem —
+      // e também não pode recebê-la duas vezes. Quem garante isso é a própria
+      // função, não este chamador.
+      await talvezReceberComoAssinante(admin, familyId);
+
         resultado.corrigidas.push({
           familyId,
           antes: r.antes,

@@ -4633,7 +4633,7 @@ type FamiliaEnvio = {
   }>;
 };
 
-async function loadFamiliaParaEnvio(
+export async function loadFamiliaParaEnvio(
   supabase: SupabaseClient,
   familyAccountId: string,
 ): Promise<FamiliaEnvio | null> {
@@ -4708,7 +4708,7 @@ function registroDeEnvio(ids: Array<string | null>): {
   };
 }
 
-async function enviarEPersistir(
+export async function enviarEPersistir(
   supabase: SupabaseClient,
   params: {
     family_account_id: string;
