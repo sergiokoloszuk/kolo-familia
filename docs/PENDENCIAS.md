@@ -57,6 +57,7 @@ Só o que está aberto. 🔒 = bloqueada.
 | [PEND-089](#pend-089) | Prioridade dos desafios — corte CORRIGIDO, ordenação por recência aberta | C · Memória | P1 | CORTE OK · PRIORIZAÇÃO ABERTA | decidir de onde vem a prioridade quando o perfil passar do teto |
 | [PEND-091](#pend-091) | Três lacunas menores do contexto (interesses, idade, confirmação) | C · Memória | P2 | ABERTA | depende de PEND-089 |
 | [PEND-088](#pend-088) | Dois P2 da auditoria — decisão registrada: NÃO implementar agora | H · Governança | P2 | ADIADA | retomar quando houver investigação de latência ou funil |
+| [PEND-155](#pend-155) | **Trial nasce no cadastro** — 99 contas incompletas com o relógio correndo sujam a conversão | H · Governança | **P0** | DIAGNOSTICADA · FASE 1 VERSIONADA, NÃO PUBLICADA | Fase 1 no ar e provada → só então aplicar a 0082 |
 | [PEND-058](#pend-058) | Fragmentação multi-balão: a Ayla responde duas vezes ao mesmo pensamento | A · Condução | **P0** | CORRIGIDA · PUBLICADA | janela 3s→10s; remedir a amostra nova antes de baixar |
 | [PEND-083](#pend-083) | Branch `bia/ciclo-tecnico` pode ter mais correções prontas e nunca publicadas | G · Entrega | P1 | ABERTA | auditar paridade Legacy × novo e branches não ancestrais de `main` |
 | [PEND-084](#pend-084) | Caminho reativo escreve sequência de rotina que não é o quadro | B · Artefatos | P2 | ABERTA | ou não escreve etapas, ou lê do quadro como o condutor |
@@ -5540,6 +5541,81 @@ Publicada em: 2026-08-24 · `41a1054` · produção servindo às 11:24Z (health 
 ---
 
 ---
+
+### PEND-155
+**O teste de 7 dias começa na criação da conta, não na entrada real**
+Bloco: **H · Governança** · Prioridade: **P0**
+STATUS: **DIAGNOSTICADA · FASE 1 VERSIONADA, NÃO PUBLICADA** · Aberta em: 2026-08-27
+
+> Não é bug de código: é o relógio comercial contando para quem ainda não
+> chegou. Contamina toda métrica de conversão e queima dias de teste de quem
+> nunca entrou no produto.
+
+- **MEDI EM PRODUÇÃO (27/08/2026), sobre 237 contas:**
+  | | |
+  |---|---|
+  | famílias **completas** (perfil + criança + WhatsApp) | **138** |
+  | **cadastros incompletos** | **99** (42%) |
+  | …parados no `onboarding_step = 1`, sem nada preenchido | **88** |
+  | …que **nunca fizeram login** | **76** |
+  | …com **trial correndo mesmo assim** | **99 de 99** |
+- **PROVEI POR EXECUÇÃO · o que são essas contas.** Amostra das quatro que
+  apareceram como "famílias em D6/D7" de 27/08: conta de login criada, **e-mail
+  nunca confirmado**, **nunca entraram**, sem perfil, sem criança, sem WhatsApp
+  — e o teste vencendo hoje. Não são famílias que desistiram; são pessoas que
+  nunca chegaram a entrar.
+- **VI NO CÓDIGO · a causa.** `handle_new_user` (versão vigente, migração 0065)
+  insere `family_accounts`, `subscription_accesses` com
+  `trial_ends_at = now() + 7 days` e `ayla_preferences` no **INSERT em
+  `auth.users`** — antes do onboarding, antes do telefone, antes de existir
+  alguém alcançável.
+- **CONSEQUÊNCIA JÁ SENTIDA:** 3 das 4 "famílias em D7" de 27/08 eram cadastros
+  que nunca entraram, e as 99 entram no denominador de "236 famílias" e no
+  cálculo de conversão.
+
+**O ESTADO DA CORREÇÃO — desenhada em duas fases, e estava pela metade.**
+
+| peça | estado em 27/08 |
+|---|---|
+| `0081_iniciar_trial_se_apto.sql` | ✅ **aplicada em produção** e commitada (`ced7922`) |
+| `apps/web/src/lib/trial/iniciar.ts` (Fase 1) | ✅ **versionada em `fa5c007`** — antes disso estava SÓ no working tree |
+| `0082_trial_sai_do_cadastro.sql` (Fase 2) | ✅ versionada em `fa5c007` · 🔴 **NÃO aplicada** |
+| a Fase 1 sendo **chamada** por algum fluxo | 🔴 **ninguém importa `iniciar.ts`** |
+
+⚠️ **A ORDEM É OBRIGATÓRIA E NÃO PODE SER INVERTIDA.** Com a 0081 sozinha, o
+comportamento antigo continua e a RPC devolve `ja_existia` para toda família —
+a Fase 1 é um no-op seguro. Aplicar a **0082 antes** de a Fase 1 estar no ar e
+provada tiraria o teste do cadastro **sem nada iniciá-lo no lugar**: todo
+cadastro novo ficaria sem teste nenhum.
+
+**O CRITÉRIO DA 0081**, na ordem em que ela avalia: idempotência (já existe
+linha? → `ja_existia`) → WhatsApp presente → **WhatsApp verificado**
+(`verificacoes_whatsapp`, amarrado ao NÚMERO, não à família) → consentimento
+(`consentimento_em` preenchido e `desativada = false`).
+
+- **⚠️ CORRIJO UMA LEITURA MINHA.** Simulei o critério sobre as 138 famílias
+  completas e obtive "136 seriam recusadas por `nao_verificado`". **A conta
+  estava errada:** a idempotência é a PRIMEIRA condição, e as 138 já têm linha
+  de assinatura — todas receberiam `ja_existia`. Nenhuma família existente é
+  afetada.
+- **MEDI · o critério é atingível pelo onboarding atual.** A verificação por OTP
+  é uma fase do onboarding conversacional (`confirmar_whats`), viva desde
+  23/08. Das contas criadas de 23/08 em diante, **a única que concluiu o
+  onboarding foi verificada** (1 de 1). As outras quatro não concluíram — e são
+  justamente a classe "cadastro incompleto".
+
+**CRITÉRIO DE CONCLUSÃO — não dar baixa antes dos três:**
+1. Fase 1 **publicada** e provada por execução: apto inicia · inapto não inicia
+   · já iniciado não duplica · nenhum onboarding real fica sem teste;
+2. **0082 aplicada**;
+3. cadastro novo provado ponta a ponta: criar conta **não** inicia teste ·
+   completar o onboarding inicia · D1 começa na hora certa · o cron de D6/D7
+   passa a enxergar só trials reais.
+
+**REGRA DE RELATÓRIO, a partir de agora:** toda métrica de teste separa
+**contas totais · trials reais · cadastros incompletos · testes/admin**. Contar
+cadastro incompleto como família em teste é inflar a base e produzir prospect
+que não existe.
 
 ### PEND-117
 **Stack Supabase: CPU anormal e seis serviços ausentes**
