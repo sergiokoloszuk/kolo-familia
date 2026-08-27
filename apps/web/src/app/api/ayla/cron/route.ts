@@ -76,7 +76,6 @@ async function handle(request: NextRequest) {
     if (tipo === "repertorio") return await runRepertorio(supabase);
     if (tipo === "seguimento") return await runSeguimento(supabase);
     if (tipo === "recuperacao_plano") return await runRecuperacaoPlano(supabase);
-    if (tipo === "recuperacao_plano_3min") return await runRecuperacaoPlano(supabase, "3min");
     if (tipo === "alerta_assinatura") return await runAlertaAssinatura(supabase);
     if (tipo === "video_guia") return await runVideoGuia(supabase);
     if (tipo === "fim_de_semana") return await runFimDeSemana(supabase);
@@ -870,23 +869,38 @@ async function runSeguimento(supabase: AdminClient) {
 }
 
 /**
- * Recuperação pós-plano (disparo one-off / manual): pega planos criados HOJE cuja
- * conversa MORREU (a família não respondeu depois) e reabre com sendRecuperacaoPlano
- * — pergunta se foi útil, oferece continuar o tema, e traz o link se o PDF falhou.
- * Um por família (o plano mais recente). Travas de proativa + idempotência 24h ficam
- * dentro de sendRecuperacaoPlano. Aciona via ?tipo=recuperacao_plano.
+ * Recuperação pós-plano — DISPARO MANUAL, só via `?tipo=recuperacao_plano`.
+ * Pega planos criados HOJE cuja conversa MORREU (a família não respondeu
+ * depois) e reabre: pergunta se foi útil, oferece continuar o tema, e traz o
+ * link se o PDF falhou. Um por família (o plano mais recente). Travas de
+ * proativa + idempotência 24h ficam dentro de `sendRecuperacaoPlano`.
+ *
+ * ⚠️ O MODO AUTOMÁTICO DE 3 MINUTOS FOI REMOVIDO — 27/08/2026.
+ *
+ * Ele rodava de cinco em cinco minutos, varrendo `planos` e `rotinas`:
+ * **288 execuções e 576 consultas por dia** só para perguntar se
+ * havia algo. MEDI o retorno em produção: **0 mensagens de
+ * `recuperacao_plano` em todo o histórico** e **1 de `recuperacao_rotina`**,
+ * contra 161 artefatos criados em 30 dias.
+ *
+ * ⚠️ E O MOTIVO DO ZERO NÃO ERA FALTA DE DEMANDA. `podeEnviarProativa` barra
+ * quem "já conversou hoje" — e quem acaba de gerar um plano ACABOU de falar
+ * com a Ayla, por definição. A janela preferida fechava o resto. A
+ * funcionalidade não estava ociosa: estava sufocada pelos próprios portões.
+ *
+ * ⚠️ NADA SE PERDEU, e isto foi conferido antes de remover:
+ *   · PLANO — `plano_seguimento` (cron `?tipo=seguimento`, 3 a 14 dias) segue
+ *     intacto e é o que de fato funciona: MEDI 104 envios, 50 em 30 dias;
+ *   · ROTINA — a Ayla JÁ manda o magic link no mesmo turno do pedido, dizendo
+ *     "tô gerando os cartões — ao abrir, já vão aparecendo". PROVEI POR
+ *     EXECUÇÃO que o MESMO link resolve com `cards_status = 'gerando'` e
+ *     depois com `'pronto'`, pelos 30 dias de validade do token. A família
+ *     volta quando quiser; não precisa ser chamada de novo.
  */
-async function runRecuperacaoPlano(supabase: AdminClient, janela: "hoje" | "3min" = "hoje") {
+async function runRecuperacaoPlano(supabase: AdminClient) {
   const agora = new Date();
-
-  // "hoje" = disparo one-off pro backlog do dia. "3min" = toque automático ~3 min
-  // após a entrega (cron a cada poucos min pega a janela 3–30 min atrás; a
-  // idempotência de 24h em sendRecuperacaoPlano evita duplicar).
-  const desde =
-    janela === "3min"
-      ? new Date(agora.getTime() - 30 * 60 * 1000).toISOString()
-      : startOfDay(agora).toISOString();
-  const ate = janela === "3min" ? new Date(agora.getTime() - 3 * 60 * 1000).toISOString() : null;
+  const desde = startOfDay(agora).toISOString();
+  const ate: string | null = null;
 
   let query = supabase
     .from("planos")

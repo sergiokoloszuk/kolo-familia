@@ -21,10 +21,6 @@
       "schedule": "0 11,15,18,22 * * *"
     },
     {
-      "path": "/api/ayla/cron?tipo=recuperacao_plano_3min",
-      "schedule": "*/5 * * * *"
-    },
-    {
       "path": "/api/ayla/cron?tipo=alerta_assinatura",
       "schedule": "0 * * * *"
     },
