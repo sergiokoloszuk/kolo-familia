@@ -81,7 +81,7 @@ Só o que está aberto. 🔒 = bloqueada.
 | [PEND-096](#pend-096) | **14 ·** Ativação gradual + medição real | B · Conhecimento | P2 | A INVESTIGAR | última etapa |
 | [PEND-103](#pend-103) | **‖ paralela ·** Higiene da fila | H · Governança | P3 | A INVESTIGAR | não bloqueia produto |
 | [PEND-115](#pend-115) | **Ayla não sabe o preço** — o bloco que respondia ficou no Legacy | G · Comercial | **P0** | **PUBLICADA · AGUARDANDO VALIDAÇÃO EM CONVERSA REAL** | `41a1054` no ar em 24/08 11:24Z |
-| [PEND-117](#pend-117) | Stack Supabase degradado: endpoint sem Postgres em 5,8 s, 3 serviços em 5xx, CPU 828–1.291% | H · Governança | **P0** | MEDIDA 26/08 22h · CAUSA NÃO PROVADA · precisa de shell | **precisa de shell no host**: CPU/memória, por que realtime/pg-meta/functions dão 5xx, pg_stat_activity |
+| [PEND-117](#pend-117) | CPU da VPS: **steal 91,6% explicava a lentidão** (limitação Hostinger removida); falta explicar `dockerd` a 346% | H · Governança | P1 | 27/08 · LENTIDÃO EXPLICADA · dockerd NÃO SEI · precisa de shell | **precisa de shell no host**: CPU/memória, por que realtime/pg-meta/functions dão 5xx, pg_stat_activity |
 | [PEND-118](#pend-118) | `DUNNING_DELETE_ENABLED` não existe — a exclusão prometida não executa | G · Comercial | **P1 ALTA** | PROVADA · NÃO CORRIGIDA | decidir se liga a exclusão ou corrige a promessa do `PagamentoGate` |
 | [PEND-119](#pend-119) | Aplicar migração é manual, e o PostgREST não recarrega o schema sozinho | H · Governança | P1 | PROVADA · NÃO CORRIGIDA | conferir o event trigger de reload e desenhar o caminho de aplicação |
 | [PEND-120](#pend-120) | `.env.local` de desenvolvimento aponta para preços que não valem mais | H · Governança | P3 | ABERTA | atualizar os dois `STRIPE_PRICE_ID_*` locais |
@@ -5755,6 +5755,52 @@ leitura e é seguro; parar container não é.
 
 Prioridade elevada a **P0**: deixou de ser só "dificuldade de operar o banco" e
 passou a ser experiência da família em toda tela autenticada.
+
+**BAIXA PARCIAL — carga da aplicação eliminada, 27/08/2026 (`0cc2d68`).**
+
+O cron `recuperacao_plano_3min` rodava de cinco em cinco minutos varrendo
+`planos` e `rotinas`: **288 execuções e 576 consultas ociosas por dia**. MEDI o
+retorno: **0 mensagens de `recuperacao_plano` em todo o histórico** e **1 de
+`recuperacao_rotina`**, contra 161 artefatos criados em 30 dias.
+
+Removido e validado em produção: endpoint devolve **400 `tipo inválido`** ·
+13 → 12 crons · 0 mensagens de recuperação desde o deploy · 0 eventos de erro ·
+`plano_seguimento` intacto (disparei e processou 2 famílias) · o magic link da
+rotina abre em `gerando` **e** em `pronto`, provado com o mesmo token.
+
+⚠️ **ISTO NÃO É A CAUSA DA PEND-117, e não deve ser lido como tal.** Era carga
+legítima desnecessária da aplicação, e sai porque não se justificava sozinha.
+A CPU do `dockerd` continua sem explicação.
+
+**O QUE A HOSTINGER CONFIRMOU (27/08) — e muda o entendimento:**
+
+- a VPS sustentou CPU alta por **mais de 180 minutos**, e a política deles
+  **reduz a capacidade em 25% por hora** quando isso acontece;
+- a VPS chegou a **~20% da capacidade**;
+- a limitação foi **removida temporariamente** para troubleshooting;
+- na telemetria deles, `dockerd` chegou a **~109%**.
+
+**MEDIDO NA VPS, antes da remoção da limitação (60 min):** 4 vCPUs · **steal
+médio 91,59%** (p95 93,92%) · idle 3,49% · PSI CPU avg10 **72,41** · load1 8,01
+· `select 1` com conexão nova: mediana **506 ms**, máx 1.896 ms · 60/60 consultas
+OK · sem pressão de memória ou disco.
+
+⚠️ **O STEAL DE 91,59% EXPLICA A PEND-117 INTEIRA.** Aquele piso de ~900 ms por
+consulta que eu media de fora não era o Postgres nem a rede: era a VPS
+recebendo **8% da CPU que deveria ter**. A causa do "banco lento" está
+identificada — e era a limitação da Hostinger.
+
+**Depois da remoção:** steal caiu para **~8,75%**, load1 para ~5,13, nenhum
+container individual alto, nenhum restart loop. **MAS `dockerd` permaneceu em
+346% · 325% · 150%** em leituras consecutivas.
+
+**A PERGUNTA QUE RESTA, e é outra:** por que o `dockerd` consome tanto **sem
+consumo correspondente dentro dos containers**? ⚠️ Em 4 vCPUs, **346% é 86,5%
+da capacidade total do host** — sozinho, isso basta para sustentar CPU alta por
+180 minutos e disparar a limitação de novo.
+
+**NÃO SEI.** Investigar exige shell no host, que o agente não tem: a chave
+`kolo_diag_ed25519` segue não autorizada em `82.29.56.121`.
 
 **26/08/2026, 23h — ELIMINADA a hipótese de que a carga é nossa.**
 
