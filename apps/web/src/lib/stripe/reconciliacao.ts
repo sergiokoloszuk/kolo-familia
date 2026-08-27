@@ -1,7 +1,20 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { assinaturaLiberada, type AcessoAssinatura } from "@/lib/auth/assinatura";
 import { sincronizarAssinaturaDoStripe } from "./sync";
+import { getStripeClient } from "./client";
 import { logEvent } from "@/lib/log";
+
+/** O `kind` desta frente em `eventos_app` — um só, para poder filtrar tudo junto. */
+const KIND_DIVERGENCIA = "reconciliacao_divergencia";
+
+/**
+ * Os status do Stripe que AFIRMAM direito de uso.
+ *
+ * ⚠️ `incomplete` fica de fora de propósito: ele chega em TODO checkout, é
+ * transitório e não afirma nada. Semear vínculo a partir dele encheria a Kolo
+ * de vínculos de compras que nunca se concretizaram.
+ */
+const COM_DIREITO = new Set(["active", "trialing", "past_due"]);
 
 /**
  * RECONCILIAÇÃO POR DIVERGÊNCIA — Stripe → Kolo.
@@ -128,12 +141,118 @@ export async function pulsoRecente(
   return registroRecente(admin, KIND_PULSO, JANELA_PULSO_HORAS, agora);
 }
 
+/**
+ * PRIMEIRA PASSADA: DO STRIPE PARA A KOLO — 27/08/2026.
+ *
+ * ⚠️ O BURACO QUE ISTO FECHA, e ele mordia exatamente quem paga pela PRIMEIRA
+ * vez. A varredura abaixo começa em `subscription_accesses` e só olha quem tem
+ * `stripe_customer_id` ou `stripe_subscription_id`. Só que esses dois campos
+ * são escritos **pelo webhook** — então uma família que nunca pagou antes só
+ * ganha vínculo se o webhook funcionar. Se ele falhar, ela fica invisível para
+ * a própria rede que existe para salvá-la.
+ *
+ * MEDI em 27/08: das 237 linhas, **2 tinham vínculo**. As seis famílias da
+ * recuperação comercial — todas primeiras assinaturas — tinham `customer =
+ * não`. Ou seja: a rede estava armada para 2 e cega para as que estavam
+ * prestes a pagar.
+ *
+ * A inversão é a correção: o Stripe é a AUTORIDADE, então a pergunta passa a
+ * partir dele — "quem o Stripe diz que tem direito?" — e não da Kolo. A
+ * `metadata.family_account_id` viaja desde a criação do checkout
+ * (`actions.ts`), em `metadata` e em `subscription_data.metadata`, então a
+ * assinatura sabe de quem é mesmo que a Kolo não saiba.
+ *
+ * ⚠️ ESTA FUNÇÃO NÃO DECIDE ACESSO. Ela só **semeia o vínculo** para que a
+ * família passe a ser encontrável; quem decide o status continua sendo
+ * `sincronizarAssinaturaDoStripe`, que aplica a MESMA regra de autoridade do
+ * webhook. Duas políticas para a mesma decisão sempre divergem — aqui há uma.
+ *
+ * ⚠️ E ELA NUNCA DERRUBA A VARREDURA. Falha de rede com o Stripe é registrada e
+ * engolida: a passada seguinte (a de sempre) roda igual. Uma proteção nova não
+ * pode quebrar a proteção que já existia.
+ */
+export async function semearVinculosDoStripe(
+  admin: ClienteAdmin,
+): Promise<{ examinadas: number; semeadas: number; semMetadata: number }> {
+  const r = { examinadas: 0, semeadas: 0, semMetadata: 0 };
+  try {
+    const stripe = getStripeClient();
+    const lista = await stripe.subscriptions.list({ limit: 100, status: "all" });
+    const vivas = lista.data.filter((s) => COM_DIREITO.has(s.status));
+    r.examinadas = vivas.length;
+
+    for (const sub of vivas) {
+      const familyId = (sub.metadata?.family_account_id as string | undefined) ?? null;
+      if (!familyId) {
+        // Pagamento sem destino: não dá para saber de quem é. Vira alerta, não
+        // correção — inventar um dono é pior que não corrigir.
+        r.semMetadata += 1;
+        await logEvent({
+          kind: KIND_DIVERGENCIA,
+          severity: "error",
+          message: `assinatura ${sub.id} está ${sub.status} no Stripe e NÃO tem family_account_id na metadata — impossível saber de quem é`,
+          payload: { resultado: "sem_metadata", stripe_status: sub.status },
+        });
+        continue;
+      }
+
+      const { data: linha } = await admin
+        .from("subscription_accesses")
+        .select(COLUNAS)
+        .eq("family_account_id", familyId)
+        .maybeSingle();
+      // Já tem acesso? Nada a fazer — não se mexe em quem está bem.
+      if (linha && assinaturaLiberada(linha as unknown as AcessoAssinatura)) continue;
+      // Já tem o vínculo? A passada de sempre alcança essa família.
+      const jaTem = (linha as { stripe_subscription_id?: string | null } | null)?.stripe_subscription_id;
+      if (jaTem) continue;
+
+      const customerId = typeof sub.customer === "string" ? sub.customer : sub.customer.id;
+      const { error: erroSeed } = await admin
+        .from("subscription_accesses")
+        .update({ stripe_customer_id: customerId, stripe_subscription_id: sub.id })
+        .eq("family_account_id", familyId);
+      if (erroSeed) {
+        await logEvent({
+          kind: KIND_DIVERGENCIA,
+          severity: "error",
+          message: `falha ao semear vínculo do Stripe para ${familyId}: ${erroSeed.message}`,
+          payload: { resultado: "seed_falhou", stripe_status: sub.status },
+        });
+        continue;
+      }
+      r.semeadas += 1;
+      await logEvent({
+        kind: KIND_DIVERGENCIA,
+        severity: "warn",
+        message: `vínculo semeado a partir do Stripe: família sem acesso e com assinatura ${sub.status} que a Kolo não conhecia`,
+        payload: { resultado: "vinculo_semeado", stripe_status: sub.status },
+        family_account_id: familyId,
+      });
+    }
+  } catch (e) {
+    await logEvent({
+      kind: KIND_DIVERGENCIA,
+      severity: "error",
+      message: `passada Stripe→Kolo falhou: ${e instanceof Error ? e.message : "erro"}`,
+      payload: { resultado: "seed_erro" },
+    });
+  }
+  return r;
+}
+
 export async function reconciliarDivergencias(
   admin: ClienteAdmin,
   deps: Dependencias = {},
 ): Promise<ResultadoReconciliacao> {
   const sincronizar = deps.sincronizar ?? sincronizarAssinaturaDoStripe;
   const agora = deps.agora ?? Date.now();
+
+  // Passada 0 — DO STRIPE PARA A KOLO. Semeia o vínculo de quem pagou e a Kolo
+  // não conhece, para que os filtros abaixo passem a enxergá-la. Ver
+  // `semearVinculosDoStripe`. Em teste (com `sincronizar` injetado) não roda:
+  // o teste não fala com o Stripe de verdade.
+  if (!deps.sincronizar) await semearVinculosDoStripe(admin);
 
   // Filtro 1 (no banco): só quem tem vínculo com o Stripe. Sem isto, a varredura
   // leria todas as famílias — e nenhuma delas pode ser resolvida sem vínculo.
