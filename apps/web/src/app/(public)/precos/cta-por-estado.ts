@@ -49,7 +49,26 @@ export type CtaPrecos = {
   destino: string;
   /** Uma linha de contexto acima dos planos, quando há o que dizer. */
   nota: string | null;
+  /**
+   * A MANCHETE. ⚠️ Acrescentada em 27/08/2026, e a falta dela era metade do
+   * defeito. A versão anterior tornou o **botão** e a **nota** conscientes de
+   * estado e deixou o `<h1>` fixo em *"7 dias grátis pra sentir se vale"* —
+   * então a família logada no sétimo dia via o botão certo debaixo de uma
+   * manchete que vendia o teste que ela estava terminando.
+   *
+   * `titulo` é o texto em preto; `destaque` é a parte em roxo; `sub` é a linha
+   * abaixo. Um teste MORDE a presença de "7 dias grátis" nos estados que já
+   * têm conta.
+   */
+  hero: { titulo: string; destaque: string; sub: string };
 };
+
+/** A manchete de quem ainda não é cliente — a página pública de sempre. */
+const HERO_VISITANTE = {
+  titulo: "7 dias grátis",
+  destaque: "pra sentir se vale",
+  sub: "Sem cartão pra começar. Depois você decide.",
+} as const;
 
 /** O CTA de cada estado — puro, para poder ser testado sem banco nem sessão. */
 export function ctaDoEstado(estado: EstadoComercial): CtaPrecos {
@@ -61,6 +80,11 @@ export function ctaDoEstado(estado: EstadoComercial): CtaPrecos {
         // `/assinatura` é a tela que JÁ tem o checkout, com o preço conferido.
         destino: "/assinatura",
         nota: "Você já está no seu período de teste — aqui você escolhe como continuar.",
+        hero: {
+          titulo: "Escolha como",
+          destaque: "continuar com a Kolo",
+          sub: "Seu teste está em curso. Tudo que você registrou continua com você.",
+        },
       };
     case "trial_vencido":
       return {
@@ -68,6 +92,11 @@ export function ctaDoEstado(estado: EstadoComercial): CtaPrecos {
         rotulo: "Continuar com a Kolo",
         destino: "/assinatura",
         nota: "Seu período de teste terminou. Tudo que você registrou continua salvo.",
+        hero: {
+          titulo: "Seu teste terminou.",
+          destaque: "Continue de onde parou",
+          sub: "Nada do que você registrou se perdeu.",
+        },
       };
     case "assinante":
       return {
@@ -77,6 +106,11 @@ export function ctaDoEstado(estado: EstadoComercial): CtaPrecos {
         // ⚠️ NADA de "assine" para quem já assina. Quem paga chega aqui para
         // conferir o que tem, não para comprar de novo.
         nota: "Você já tem uma assinatura ativa.",
+        hero: {
+          titulo: "Sua assinatura",
+          destaque: "está ativa",
+          sub: "Aqui você confere seu plano quando quiser.",
+        },
       };
     case "visitante":
     default:
@@ -85,6 +119,7 @@ export function ctaDoEstado(estado: EstadoComercial): CtaPrecos {
         rotulo: "Começar 7 dias grátis",
         destino: "/signup",
         nota: null,
+        hero: HERO_VISITANTE,
       };
   }
 }

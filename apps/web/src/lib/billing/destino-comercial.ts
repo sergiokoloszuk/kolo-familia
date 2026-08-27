@@ -78,7 +78,48 @@ export function linkPlanos(de?: "d7" | "d3" | "pos_trial"): string | null {
  * ⚠️ MAGIC LINK NÃO É LINK COMERCIAL. `/auth/wa` é **acesso** — serve para
  * entrar sem senha. `/precos` é **conversão**. Trocar um pelo outro foi o que
  * a auditoria encontrou 437 vezes contra 2.
+ *
+ * ⚠️ E ISSO **NÃO** SIGNIFICA QUE O LINK COMERCIAL DEVA CHEGAR DESLOGADO —
+ * 27/08/2026. Ver `linkAssinatura` logo abaixo: para quem JÁ TEM CONTA, o certo
+ * é `/auth/wa?k=…&next=/assinatura` — acesso **e** conversão, não um no lugar
+ * do outro.
  */
+
+/**
+ * A tela de Assinatura. **Pagamento.** É aqui que existe o checkout de verdade
+ * — "Assinar mensal", "Assinar anual", preço conferido antes de abrir o Stripe.
+ *
+ * ⚠️ POR QUE ESTE DESTINO EXISTE, E O DEFEITO QUE ELE CORRIGE — 27/08/2026.
+ * O convite de fim de teste levava para `/precos`, que é a rota comercial
+ * correta **para quem ainda não é cliente**. Só que `/precos` é pública, o
+ * convite vai por WhatsApp e abre no navegador do celular quase sempre **sem
+ * sessão** — e ali a página inteira vende o teste: manchete *"7 dias grátis pra
+ * sentir se vale"*, botão *"Começar 7 dias grátis"* → `/signup`.
+ *
+ * Ou seja: no **último dia** do teste, a família recebia um convite para
+ * **começar** o teste que estava terminando. O último passo do funil oferecendo
+ * o primeiro. VI EM PRODUÇÃO, na página servida em 27/08.
+ *
+ * `/precos` continua sendo o destino de quem chega de fora. Quem já tem conta
+ * vai para cá.
+ */
+export function linkAssinatura(de?: "d7" | "d3" | "pos_trial"): string | null {
+  const origem = origemCanonica();
+  if (!origem) return null;
+  return de ? `${origem}/assinatura?de=${de}` : `${origem}/assinatura`;
+}
+
+/**
+ * O DESTINO INTERNO do link de acesso — o que vai no `next` do `/auth/wa`.
+ *
+ * Separado de `linkAssinatura` porque são coisas diferentes: aquele é URL
+ * absoluta (para colar na conversa), este é caminho relativo (para o token
+ * guardar). `/assinatura` já está na allowlist de `destino-link.ts`, e a
+ * allowlist compara **sem a query**, então o `?de=` sobrevive à normalização.
+ */
+export function destinoAssinatura(de: "d7" | "d3" | "pos_trial"): string {
+  return `/assinatura?de=${de}`;
+}
 
 /** O contato humano. Um número, um lugar. */
 export const WHATSAPP_SUPORTE = "(11) 94037-7337";

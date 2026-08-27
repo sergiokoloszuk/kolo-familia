@@ -91,14 +91,15 @@ export default async function PrecosPage({
       <section className="bg-kolo-lilas-2">
         <div className="mx-auto w-full max-w-7xl px-6 py-16 text-center md:px-8 md:py-24">
           <Eyebrow className="justify-center">Preços simples</Eyebrow>
+          {/* ⚠️ A MANCHETE TAMBÉM É POR ESTADO — 27/08/2026. Fixa em "7 dias
+              grátis", ela vendia o teste para quem estava terminando o teste.
+              Ver `cta-por-estado.ts`. */}
           <h1 className="mt-4 font-heading text-4xl text-foreground md:text-6xl">
-            7 dias grátis{" "}
-            <em className="not-italic text-brand-purple">pra sentir se vale</em>
+            {cta.hero.titulo}{" "}
+            <em className="not-italic text-brand-purple">{cta.hero.destaque}</em>
             .
           </h1>
-          <p className="mt-4 text-lg text-muted-foreground">
-            Sem cartão pra começar. Depois você decide.
-          </p>
+          <p className="mt-4 text-lg text-muted-foreground">{cta.hero.sub}</p>
         </div>
       </section>
 
