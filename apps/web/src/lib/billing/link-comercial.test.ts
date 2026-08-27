@@ -97,6 +97,17 @@ describe("3. quem JÁ PAGOU vai para suporte, nunca para venda", () => {
     });
   }
 
+  it("MORDE: quem já pagou NÃO recebe link comercial junto", () => {
+    // ⚠️ Corrigir só `precisaDeHumano` resolvia metade: a frase saía como
+    // comercial E suporte ao mesmo tempo, e a Ayla mandava o contato do time
+    // E um link para assinar, no mesmo turno. Para quem acabou de pagar, o
+    // link é a pior resposta — sugere que o pagamento não valeu.
+    for (const t of JA_PAGOU) {
+      expect(ehPerguntaComercial(t), t).toBe(false);
+      expect(precisaDeHumano(t), t).toBe(true);
+    }
+  });
+
   it("MORDE: quem QUER pagar não vira suporte — é venda", () => {
     // O caso legítimo que não pode ser bloqueado (§12, caso I). Confundir os
     // dois mandaria quem quer comprar para uma fila humana que não existe.

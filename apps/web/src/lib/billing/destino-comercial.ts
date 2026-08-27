@@ -216,6 +216,18 @@ export function ehPerguntaComercial(texto: string | null | undefined): boolean {
   const t = (texto ?? "").trim();
   if (!t) return false;
 
+  // ⚠️ QUEM JÁ PAGOU NÃO É PERGUNTA COMERCIAL, e esta linha vem PRIMEIRO.
+  //
+  // Sem ela, "paguei e continua pedindo pra assinar" era classificada como
+  // comercial **e** como suporte ao mesmo tempo — e a Ayla mandava, no mesmo
+  // turno, o contato do time E um link para assinar. Para quem acabou de pagar,
+  // o link é a pior resposta possível: sugere que o pagamento não valeu.
+  //
+  // PROVEI POR EXECUÇÃO em 27/08: antes desta linha, a frase saía com
+  // `comercial=SIM · humano=SIM` e recebia link. Foi o teste que revelou —
+  // corrigir só `precisaDeHumano` tinha resolvido metade.
+  if (JA_PAGOU_E_NAO_LIBEROU.test(t)) return false;
+
   if (DINHEIRO.test(t)) return true;
   if (QUANTO_CUSTA.test(t)) return true;
   if (QUAL_VALOR.test(t)) return true;
