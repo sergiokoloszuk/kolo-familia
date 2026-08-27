@@ -54,8 +54,20 @@ end;
 $$;
 
 -- ------------------------------------------------------------
--- ROLLBACK: recriar `handle_new_user` com o corpo da migração 0066, que volta
--- a inserir `subscription_accesses` no cadastro. O código novo continua
--- funcionando (passa a receber `ja_existia`), então o rollback é seguro e não
--- exige desfazer deploy.
+-- ROLLBACK: aplicar `0083_rollback_0082.sql`, que traz a definição da função
+-- CAPTURADA DO POSTGRES DE PRODUÇÃO em 27/08/2026, e não reconstruída.
+--
+-- ⚠️ ESTA LINHA JÁ DIZIA "com o corpo da migração 0066", e isso era um convite
+-- a errar: quem reconstruísse de memória pegaria o corpo da **0065**, que NÃO
+-- tem o `begin/exception` em volta de `teste_ja_usado`. Esse bloco foi
+-- acrescentado pela 0066 porque `pgcrypto` vive em `extensions` e um erro ali
+-- derrubava o cadastro inteiro. Rollback que perde proteção não é rollback.
+--
+-- O código da Fase 1 continua funcionando com o gatilho antigo de volta (passa
+-- a receber `ja_existia`), então o rollback NÃO exige desfazer deploy.
+-- ------------------------------------------------------------
+--
+-- VERIFICAÇÃO (read-only) — colar logo depois desta migração. Deve dar `false`:
+--   select pg_get_functiondef('public.handle_new_user'::regproc)
+--            like '%subscription_accesses%' as ainda_cria_trial_no_cadastro;
 -- ------------------------------------------------------------
