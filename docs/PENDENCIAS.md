@@ -81,7 +81,7 @@ Só o que está aberto. 🔒 = bloqueada.
 | [PEND-096](#pend-096) | **14 ·** Ativação gradual + medição real | B · Conhecimento | P2 | A INVESTIGAR | última etapa |
 | [PEND-103](#pend-103) | **‖ paralela ·** Higiene da fila | H · Governança | P3 | A INVESTIGAR | não bloqueia produto |
 | [PEND-115](#pend-115) | **Ayla não sabe o preço** — o bloco que respondia ficou no Legacy | G · Comercial | **P0** | **PUBLICADA · AGUARDANDO VALIDAÇÃO EM CONVERSA REAL** | `41a1054` no ar em 24/08 11:24Z |
-| [PEND-117](#pend-117) | CPU da VPS: **steal 91,6% explicava a lentidão** (limitação Hostinger removida); falta explicar `dockerd` a 346% | H · Governança | P1 | 27/08 · LENTIDÃO EXPLICADA · dockerd NÃO SEI · precisa de shell | **precisa de shell no host**: CPU/memória, por que realtime/pg-meta/functions dão 5xx, pg_stat_activity |
+| [PEND-117](#pend-117) | CPU da VPS: steal 91,6% explica a janela medida; `dockerd` a 346% segue sem explicação | H · Governança | P1 | **PAUSADA 28/08** · aguarda conversa com Sérgio · não intervir | **precisa de shell no host**: CPU/memória, por que realtime/pg-meta/functions dão 5xx, pg_stat_activity |
 | [PEND-118](#pend-118) | `DUNNING_DELETE_ENABLED` não existe — a exclusão prometida não executa | G · Comercial | **P1 ALTA** | PROVADA · NÃO CORRIGIDA | decidir se liga a exclusão ou corrige a promessa do `PagamentoGate` |
 | [PEND-119](#pend-119) | Aplicar migração é manual, e o PostgREST não recarrega o schema sozinho | H · Governança | P1 | PROVADA · NÃO CORRIGIDA | conferir o event trigger de reload e desenhar o caminho de aplicação |
 | [PEND-120](#pend-120) | `.env.local` de desenvolvimento aponta para preços que não valem mais | H · Governança | P3 | ABERTA | atualizar os dois `STRIPE_PRICE_ID_*` locais |
@@ -5756,6 +5756,26 @@ leitura e é seguro; parar container não é.
 Prioridade elevada a **P0**: deixou de ser só "dificuldade de operar o banco" e
 passou a ser experiência da família em toda tela autenticada.
 
+**PAUSADA EM 28/08/2026, por decisão de produto.**
+
+Não fazer agora: restart do Docker, alteração de rede, remoção do cron ou do
+`reconnect-n8n-supabase.sh`, redeploy, ou qualquer mudança de produção. A
+próxima etapa exige shell no host e conversa com Sérgio antes.
+
+**O que fica registrado, com o rótulo certo:**
+- **EXPLICADO** — a degradação **na janela medida**, por steal de 91,59%
+  durante a limitação da Hostinger;
+- **NÃO SEI** — por que `dockerd` chegou a ~346%, e se ele foi **causa** do
+  gatilho dos 180 minutos ou **consequência** do estado do host;
+- **HIPÓTESE A TESTAR, não conclusão** — atividade anormal de reconciliação de
+  rede/Swarm relacionada ao `reconnect-n8n-supabase.sh`;
+- **ENCERRADO À PARTE** — o polling de recuperação de Plano/Rotina foi removido
+  (`0cc2d68`) e **não deve ser tratado como causa desta pendência**.
+
+⚠️ A infraestrutura está funcional o suficiente para esta questão esperar. O
+risco desta pendência não é o produto parar; é ela consumir de novo o tempo que
+pertence à inteligência da Ayla.
+
 **BAIXA PARCIAL — carga da aplicação eliminada, 27/08/2026 (`0cc2d68`).**
 
 O cron `recuperacao_plano_3min` rodava de cinco em cinco minutos varrendo
@@ -5785,10 +5805,17 @@ médio 91,59%** (p95 93,92%) · idle 3,49% · PSI CPU avg10 **72,41** · load1 8
 · `select 1` com conexão nova: mediana **506 ms**, máx 1.896 ms · 60/60 consultas
 OK · sem pressão de memória ou disco.
 
-⚠️ **O STEAL DE 91,59% EXPLICA A PEND-117 INTEIRA.** Aquele piso de ~900 ms por
-consulta que eu media de fora não era o Postgres nem a rede: era a VPS
-recebendo **8% da CPU que deveria ter**. A causa do "banco lento" está
-identificada — e era a limitação da Hostinger.
+⚠️ **O STEAL DE 91,59% EXPLICA A LENTIDÃO DAQUELA JANELA — e só dela.** O piso
+de ~900 ms por consulta que eu media de fora não era o Postgres nem a rede: era
+a VPS recebendo **8% da CPU que deveria ter**.
+
+⚠️ **CORREÇÃO DE UMA AFIRMAÇÃO MINHA (Sérgio, 28/08).** Eu havia escrito que
+isto "explica a PEND-117 inteira". **Não explica.** Explica muito bem a
+degradação **no período medido, sob a limitação da Hostinger**. Não prova que
+toda a degradação histórica do banco teve a mesma causa — as medições de 20/08
+(CPU 828–1.291%, três serviços em 5xx) são anteriores e podem ter outra
+origem. Correlacionar uma janela com o histórico inteiro é o tipo de salto que
+este documento existe para impedir.
 
 **Depois da remoção:** steal caiu para **~8,75%**, load1 para ~5,13, nenhum
 container individual alto, nenhum restart loop. **MAS `dockerd` permaneceu em
