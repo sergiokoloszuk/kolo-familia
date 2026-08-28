@@ -390,6 +390,19 @@ export function blocoPosTrial(params: {
     );
   }
 
+  // ⚠️ O TURNO SEM CONTEÚDO ERA O ÚNICO SEM DONO — 28/08/2026, caso Nicole.
+  //
+  // O bloco cobre desafio, objeção, dúvida e "quero assinar". Não cobria o
+  // "Oi" seco, que é justamente como uma família volta. Sem nada a que
+  // responder, a Ayla produziu uma abertura social — "Que bom te ver por aqui
+  // 😊 Como você está?" — e o orquestrador colou embaixo a linha comercial com
+  // o link. Perguntar como ela está e, na linha seguinte, dizer que a conversa
+  // depende de assinatura é a pior combinação possível: a pergunta não é
+  // sincera, porque a resposta dela não pode ser atendida.
+  linhas.push(
+    `ABERTURA SEM CONTEÚDO — "oi", "olá", "bom dia", um emoji, ou qualquer mensagem que não traga assunto: acolha o retorno em uma frase curta e diga, com clareza e sem rodeio, que o período gratuito terminou${nome ? ` e que os registros${dela} continuam guardados` : ""}. NÃO faça pergunta social ("como você está?", "como vocês estão?", "tudo bem?") — você não pode atender o que ela responderia, e perguntar sabendo disso é falso. Também não reinicie apresentação nem cadastro: esta família já é conhecida.`,
+  );
+
   linhas.push(
     "OBJEÇÕES — uma pergunta por vez, nunca um questionário. Se disser que está caro, fale de preço e valor, sem desviar para a criança. Se disser que usou pouco, explique concretamente o que teria vivido. Se disser que as respostas foram genéricas, NÃO se defenda: agradeça, colha o que faltou e explique que você fica mais específica conforme conhece a criança. Se disser que não entendeu a Kolo, explique bem, com exemplos. Se disser que quer assinar, PARE de argumentar e entregue o link. Se disser que não quer, respeite; se ainda não souber o motivo, faça UMA pergunta simples e encerre.",
   );
@@ -400,6 +413,22 @@ export function blocoPosTrial(params: {
   if (params.podeOferecerLink === false) {
     linhas.push(
       "O LINK DE ASSINATURA JÁ FOI ENVIADO nesta conversa. NÃO reproduza, não repita e não mencione nenhum link que apareça na conversa recente — nem escreva o endereço por extenso. Se ela quiser assinar, diga que o link já está aí em cima, na sua mensagem anterior. Repetir o link a cada turno vira cobrança.",
+    );
+  } else {
+    // ⚠️ O LINK É COLADO DEPOIS, PELO SISTEMA — 28/08/2026, PEND-156.
+    //
+    // Sem esta linha o modelo tenta resolver o link sozinho, e o smoke com
+    // modelo real mostrou as duas formas de errar:
+    //   · sem URL no prompt, ele inventa um marcador — saiu literalmente
+    //     "é só assinar por aqui: [link de Planos]", e a mãe receberia o
+    //     colchete quebrado junto do link verdadeiro;
+    //   · com URL no prompt (o bloco comercial mintava a sua), ele a escrevia
+    //     e o orquestrador colava a segunda — dois links, dois tokens.
+    //
+    // A primeira causa se corrige aqui; a segunda em `experimental.ts`, que
+    // deixou de mintar no pós-Trial. As duas juntas dão UM dono ao link.
+    linhas.push(
+      "O LINK: ele é acrescentado AUTOMATICAMENTE ao final da sua mensagem, pelo sistema. Você NUNCA escreve endereço, URL, domínio, nem marcador de posição como [link], [link de Planos], [inserir link] ou \"clique aqui\". Conduza a conversa até ele com naturalidade — \"as opções estão logo abaixo\", \"é só tocar no link aqui embaixo\" — e pare aí. Escrever um link você mesma produz endereço quebrado ou repetido.",
     );
   }
 

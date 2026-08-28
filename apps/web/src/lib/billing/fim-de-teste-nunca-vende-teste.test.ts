@@ -75,8 +75,15 @@ describe("1. o destino do fim de teste é /assinatura, nunca /precos", () => {
   });
 
   it("o template do trial pede o link à função, não monta URL na mão", () => {
+    // ⚠️ A JANELA ANCORA NO FIM DA FUNÇÃO — 28/08/2026. Eram 900 bytes fixos, e
+    // a documentação do parâmetro `jaExpirou` (o prazo defasado do caso Nicole)
+    // empurrou a linha do `link_planos` para fora. O que este teste guarda é que
+    // o link vem da função canônica e que nenhuma URL é escrita à mão; nada
+    // disso tem a ver com o tamanho do corpo.
     const i = SRC_TEMPLATES.indexOf("export async function templateTrial");
-    const corpo = SRC_TEMPLATES.slice(i, i + 900);
+    expect(i, "`templateTrial` sumiu").toBeGreaterThan(-1);
+    const fim = SRC_TEMPLATES.indexOf("\n// ====", i);
+    const corpo = SRC_TEMPLATES.slice(i, fim > i ? fim : i + 2500);
     expect(corpo).toMatch(/link_planos:\s*await linkComercialAutenticado/);
     expect(corpo).not.toMatch(/https?:\/\//);
   });

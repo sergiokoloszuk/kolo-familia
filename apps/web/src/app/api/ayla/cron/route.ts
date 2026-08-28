@@ -571,7 +571,16 @@ async function runComercial(supabase: AdminClient) {
 
   for (const r of d0 ?? []) {
     try {
-      const res = await sendTrial(supabase, r.family_account_id as string, 0, agora);
+      // ⚠️ `trial_ends_at` VIAJA JUNTO. A seleção acima é por dia de calendário
+      // e inclui quem já venceu horas atrás; é `sendTrial` que compara o
+      // instante e escolhe entre "hoje é o último dia" e "terminou".
+      const res = await sendTrial(
+        supabase,
+        r.family_account_id as string,
+        0,
+        agora,
+        r.trial_ends_at as string | null,
+      );
       resultados.push({
         familyId: r.family_account_id as string,
         tipo: "trial_d0",

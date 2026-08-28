@@ -96,12 +96,25 @@ describe("1 · o cron alcança as quatro janelas", () => {
   });
 });
 
+/**
+ * O CORPO INTEIRO DE `sendTrial`, sem contar bytes.
+ *
+ * ⚠️ A ÂNCORA É A PRÓXIMA DECLARAÇÃO DE TOPO, e não um tamanho fixo. Duas vezes
+ * um comentário novo dentro da função empurrou trecho relevante para fora de
+ * uma janela de N bytes e deixou o teste vermelho por escrita, não por
+ * comportamento. Quem lê o corpo inteiro não tem esse problema.
+ */
+function corpoDeSendTrial(): string {
+  const i = ORQ.indexOf("export async function sendTrial");
+  expect(i, "`sendTrial` sumiu do orquestrador").toBeGreaterThan(-1);
+  const fim = ORQ.indexOf("\n// ====", i);
+  expect(fim, "o fim de `sendTrial` não foi encontrado").toBeGreaterThan(i);
+  return ORQ.slice(i, fim);
+}
+
 describe("2 · idempotência — quatro tentativas, no máximo um envio", () => {
   it("a trava existe e vem ANTES de qualquer consulta cara", () => {
-    const i = ORQ.indexOf("export async function sendTrial");
-    // A janela precisa cobrir o corpo inteiro de `sendTrial` — os comentários
-    // que explicam a medição de 26/08 ocupam boa parte dele.
-    const corpo = ORQ.slice(i, i + 3500);
+    const corpo = corpoDeSendTrial();
     const iTrava = corpo.indexOf("jaEnviouTipoHoje");
     const iReativo = corpo.indexOf("fechamentoReativoRecente");
     const iPode = corpo.indexOf("podeEnviarProativa");
@@ -145,8 +158,13 @@ describe("3 · observabilidade — nunca mais 'não sabemos por quê'", () => {
   });
 
   it("MORDE: os três caminhos de não-envio registram o motivo", () => {
-    const i = ORQ.indexOf("export async function sendTrial");
-    const corpo = ORQ.slice(i, i + 3000);
+    // ⚠️ A JANELA ANCORA NO FIM REAL DA FUNÇÃO, e passou a ancorar em
+    // 28/08/2026. Antes eram 3000 bytes contados a partir do começo — e um
+    // comentário novo dentro de `sendTrial` (a explicação do prazo defasado do
+    // caso Nicole) empurrou o quarto `registrarTentativaTrial` para fora da
+    // contagem. O teste ficou vermelho sem que nada do comportamento mudasse.
+    // Contagem de bytes é uma âncora que envelhece sozinha.
+    const corpo = corpoDeSendTrial();
     // fechamento reativo · portão da proativa · sem contexto
     const registros = (corpo.match(/registrarTentativaTrial\(/g) ?? []).length;
     expect(registros).toBeGreaterThanOrEqual(4); // 3 falhas + 1 resultado final

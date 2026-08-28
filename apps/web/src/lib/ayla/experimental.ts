@@ -858,9 +858,26 @@ export async function responderExperimental(
     // página pública de aquisição: recebe o caminho que a leva LOGADA ao
     // checkout. Só se paga o custo de gravar o token quando a pergunta é mesmo
     // comercial.
-    const linkComercial = ehPerguntaComercial(params.mensagem)
-      ? await linkComercialAutenticado(supabase, params.familyId, "pos_trial")
-      : null;
+    // ⚠️ NO PÓS-TRIAL O LINK TEM OUTRO DONO — 28/08/2026, PEND-156.
+    //
+    // Este bloco mintava um token e injetava a URL no prompt; o ramo pós-Trial
+    // do orquestrador minta OUTRO e cola a linha comercial na composição final.
+    // Nenhum dos dois sabia do outro. PROVEI POR EXECUÇÃO no smoke com modelo
+    // real: "Quero assinar" saiu com **dois links diferentes e dois tokens**
+    // (`acessos_app` foi de 0 a 2) num único turno.
+    //
+    // ⚠️ QUEM FICA COM O LINK É O ORQUESTRADOR, e não por sorteio: só ele
+    // conhece o acesso, a reserva de 12h (`reservarConviteAssinatura`) e a
+    // composição final. Um link mintado aqui furaria o cooldown por fora.
+    //
+    // ⚠️ ISTO NÃO TIRA O LINK DE NINGUÊM FORA DO PÓS-TRIAL. No turno normal
+    // (`modo: "normal"`) a pergunta comercial continua recebendo o link
+    // autenticado exatamente como antes — ali o orquestrador não cola nada, e
+    // este é o único dono.
+    const linkComercial =
+      !posTrial && ehPerguntaComercial(params.mensagem)
+        ? await linkComercialAutenticado(supabase, params.familyId, "pos_trial")
+        : null;
     const comercial = [
       FATOS_COMERCIAIS,
       linkComercial !== null ? notaComercial(linkComercial) : "",

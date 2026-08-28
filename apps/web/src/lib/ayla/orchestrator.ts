@@ -924,8 +924,38 @@ export async function sendTrial(
   familyAccountId: string,
   diasRestantes: 3 | 0,
   agora: Date = new Date(),
+  /**
+   * O INSTANTE EM QUE O TESTE TERMINA — para o texto não mentir sobre o prazo.
+   *
+   * ⚠️ O DEFEITO QUE ISTO CORRIGE (28/08/2026, caso Nicole). `runComercial`
+   * seleciona o D-0 por DIA DE CALENDÁRIO (`trial_ends_at` entre 00h e 24h de
+   * hoje) e nunca compara com o agora. O cron bate às 11, 15, 18 e 22 UTC.
+   * Quem vence às 01h29 é selecionada às 11h — nove horas e meia DEPOIS de já
+   * estar bloqueada — e recebia "Hoje é o último dia do seu período grátis".
+   *
+   * MEDI em produção: 86 das 237 contas com teste (36%) vencem antes da
+   * primeira batida, e 11 das 15 `trial_d0` já enviadas mentiram sobre o prazo.
+   *
+   * ⚠️ NÃO É FUSO HORÁRIO. O instante já tinha passado em qualquer fuso: a
+   * comparação que faltava é `trial_ends_at > agora`, não uma conversão.
+   *
+   * ⚠️ POR QUE NÃO DEIXAR DE ENVIAR. Tirar essas famílias da seleção resolveria
+   * a mentira e abriria um buraco: 36% da base deixaria de receber QUALQUER
+   * fechamento — a regressão exata que a correção de 26/08 acabou de fechar
+   * (223 venceram, 11 receberam). Então a família continua sendo alcançada; o
+   * que muda é o tempo verbal.
+   *
+   * Ausente ou nulo → comportamento de sempre. Quem não passa não regride.
+   */
+  trialEndsAt?: string | null,
 ): Promise<EnvioResultado> {
   const tipo: AylaTipoProativa = diasRestantes === 3 ? "trial_d3" : "trial_d0";
+  // ⚠️ SÓ AFIRMA A EXPIRAÇÃO COM DATA NA MÃO. Sem `trialEndsAt` legível, o
+  // texto continua o de hoje: dizer "acabou" para quem ainda tem horas custaria
+  // uma conversão, e a dúvida não é evidência.
+  const fim = trialEndsAt ? new Date(trialEndsAt) : null;
+  const jaExpirou =
+    diasRestantes === 0 && fim !== null && !Number.isNaN(fim.getTime()) && fim <= agora;
 
   // ⚠️ A TRAVA VEM PRIMEIRO, e antes de qualquer consulta cara. Com quatro
   // batidas por dia, este é o único ponto que impede a família de receber o
@@ -973,6 +1003,7 @@ export async function sendTrial(
 
   const texto = await templateTrial(supabase, {
     diasRestantes,
+    jaExpirou,
     nomeMae: ctx.nomeMae,
     seed: `${familyAccountId}-trial-${diasRestantes}`,
     // ⚠️ SEM `familyId` O LINK CHEGA DESLOGADO — e `/assinatura` é rota
@@ -1591,6 +1622,33 @@ const JANELA_RAJADA_MS = 2 * 60 * 1000;
  * contra todas as proativas da janela e aplica isenções de cadência, então o
  * convite bloquearia proativas e seria bloqueado por elas.
  */
+/**
+ * OS TIPOS QUE JÁ ENTREGARAM O LINK DE ASSINATURA NA JANELA.
+ *
+ * ⚠️ O DEFEITO QUE ISTO CORRIGE (28/08/2026, caso Nicole). A consulta perguntava
+ * só por `assinatura_nudge`. Às 11h01 o cron mandou o fechamento do teste — com
+ * link — sob o tipo `trial_d0`; às 11h24 Nicole escreveu "Oi", a reserva não viu
+ * nada e mintou um SEGUNDO token. PROVEI POR EXECUÇÃO: duas linhas em
+ * `acessos_app` a 23 minutos de distância, ambas `next=/assinatura`, ambas com
+ * `usos: 0`.
+ *
+ * ⚠️ ISTO NÃO MISTURA OS EVENTOS. `trial_d0` continua sendo `trial_d0` em
+ * `ayla_messages`, na série histórica e na idempotência diária do cron. O que
+ * muda é só o que o COOLDOWN enxerga — e a pergunta que ele faz sempre foi
+ * "esta família já recebeu um link de assinatura nas últimas 12h?", não "já
+ * recebeu uma mensagem do tipo X?".
+ *
+ * ⚠️ E POR ISSO NÃO PRECISA REAPROVEITAR TOKEN. Com o cooldown enxergando, o
+ * segundo token não chega a ser criado — melhor do que reusar um. Quem escreve
+ * dentro da janela continua recebendo CONVERSA; só o link não se repete, e
+ * `blocoPosTrial({ podeOferecerLink: false })` manda a Ayla apontar o link que
+ * já está logo acima, em vez de calar.
+ *
+ * `trial_d3` não entra: quem está a três dias do fim ainda tem acesso liberado
+ * e nunca alcança este ramo. Acrescentá-lo seria regra morta.
+ */
+const TIPOS_QUE_JA_LEVARAM_O_LINK = ["assinatura_nudge", "trial_d0"] as const;
+
 export async function reservarConviteAssinatura(
   supabase: SupabaseClient,
   familyId: string,
@@ -1604,7 +1662,7 @@ export async function reservarConviteAssinatura(
     .select("id")
     .eq("family_account_id", familyId)
     .eq("direcao", "outbound")
-    .eq("tipo", "assinatura_nudge")
+    .in("tipo", TIPOS_QUE_JA_LEVARAM_O_LINK)
     .gte("created_at", desde)
     .limit(1);
   if ((enviados?.length ?? 0) > 0) return false;

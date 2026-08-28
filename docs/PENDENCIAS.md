@@ -45,9 +45,12 @@ Só o que está aberto. 🔒 = bloqueada.
 
 | ID | Pendência | Bloco | Prio | Estado | Próximo passo |
 |---|---|---|---|---|---|
-| **ONDA 1** | **Pós-Trial: fim do silêncio + modo comercial** | A · Condução | **P0** | **PUBLICADO** 🔒 | ligar `AYLA_POS_TRIAL=1` na Vercel — agente não tem credencial; sem isso não sobe a PROVADO EM PRODUÇÃO |
+| **ONDA 1** | **Pós-Trial: fim do silêncio + modo comercial** | A · Condução | **P0** | **PROVADO EM PRODUÇÃO 28/08** | nenhum — `AYLA_POS_TRIAL` está ligada: o turno de Nicole (28/08 11h24) gravou `ayla_path=pos_trial`, `modo=pos_trial`, `nivel=B` |
 | [PEND-152](#pend-152) | **27 famílias engajadas (D2+) nunca receberam convite de assinatura** | G · Comercial | **P1 ALTA** | MEDIDA · NÃO INVESTIGADA | descobrir por que o convite não sai para quem voltou |
 | [PEND-153](#pend-153) | **89% do abandono é antes da 1ª pergunta — não é o WhatsApp** | G · Comercial | **P1 ALTA** | MEDIDA · INSTRUMENTADA · AGUARDANDO VOLUME | acumular 2 semanas de marcos e ler o funil |
+| [PEND-156](#pend-156) | **Duas fontes de link no mesmo turno pós-Trial** — 2 links e 2 tokens em "Quero assinar"; marcador `[link de Planos]` no "Oi" | A · Condução | **P1** | **CORRIGIDA 28/08 · SMOKE REAL VERDE · PRONTA PARA BAIXA** | aguarda aprovação e deploy |
+| [PEND-157](#pend-157) | Ex-assinante recebe copy de "período grátis" | G · Comercial | P2 | REGISTRADA 28/08 · NÃO CORRIGIDA | separar quem nunca assinou de quem cancelou |
+| [PEND-158](#pend-158) | Testes que leem o fonte com janela de N bytes quebram por comentário | H · Governança | P2 | 2 CORRIGIDOS 28/08 · RESTO NÃO VARRIDO | varrer os demais `slice(i, i + N)` e ancorar no fim real |
 | [PEND-071](#pend-071) | Segurança está abaixo do gate de assinatura | F · Limites | **P0** | ~~CORRIGIDA~~ **BAIXADA** | nenhum — `0fc1feb` é ancestral de `main` (PR #98) e está no ar |
 | [PEND-072](#pend-072) | Teste do caminho novo cai para o Legacy sem mock do provider | H · Governança | P1 | PARCIALMENTE CORRIGIDA | varrer os outros testes que dizem medir o experimental |
 | [PEND-073](#pend-073) | Caminho novo não encurta a resposta em pedido de plano | A · Condução | P2 | ABERTA | decidir se o Core do experimental recebe a nota de `querPlano` |
@@ -7033,6 +7036,102 @@ STATUS: **MEDIDA · NÃO CORRIGIDA** · Aberta em: 2026-08-24
   **latente, não ativo**, e por isso ninguém percebeu.
 - **CRITÉRIO DE CONCLUSÃO:** uma foto de lição ou rótulo enviada no WhatsApp
   produz resposta que demonstra ter visto a imagem, pelo caminho oficial.
+
+---
+
+### PEND-156
+**A resposta pós-Trial tem duas vozes**
+Bloco: **A · Condução** · Prioridade: **P1**
+STATUS: **CORRIGIDA · SMOKE REAL VERDE · PRONTA PARA BAIXA** · Aberta em: 2026-08-28 · Corrigida em: 2026-08-28
+
+- **VI NO CÓDIGO** (`orchestrator.ts`, ramo `posTrialAtivo()`): a Ayla escreve a
+  resposta e o orquestrador COLA embaixo, sempre igual, `"Os planos estão aqui,
+  se fizer sentido:
+<link>"`.
+- **Por que é assim, e é defensável:** o link precisa ser um token mintado de
+  verdade. Deixar o modelo escrever a URL é como ele passou a copiar o link da
+  conversa anterior (19/08) — o defeito que `podeOferecerLink` existe para
+  conter.
+- **O que incomoda:** a mensagem chega com uma costura visível. A correção de
+  28/08 fez a Ayla nomear o fim do teste, então a emenda ficou menos áspera —
+  mas continua sendo duas vozes.
+- **PROVEI POR EXECUÇÃO (28/08, smoke com `gpt-5.6-luna` e Core v9 real).** Não
+  é só estética — a costura produz dois defeitos visíveis para a família:
+  - **"Oi"** (sem bloco comercial, logo sem URL no prompt): o modelo escreveu
+    o literal `[link de Planos]`, e o orquestrador colou o link real embaixo. A
+    mãe recebe um placeholder quebrado E um link.
+  - **"Quero assinar"** (`ehPerguntaComercial` → o bloco `comercial` injeta um
+    link autenticado): o modelo escreveu esse link, e o orquestrador colou um
+    SEGUNDO, diferente. **Dois links e dois tokens em um único turno**
+    (`acessos_app` foi de 0 a 2).
+- **A causa é haver DUAS fontes de link no mesmo turno:**
+  `experimental.ts` (`linkComercialAutenticado`, dentro do bloco `comercial`) e
+  `orchestrator.ts` (`gerarMagicLink`, na composição do ramo pós-Trial). Nenhuma
+  sabe da outra.
+- **⚠️ A SEQUÊNCIA COMPLETA PASSA.** Quando o convite do cron já saiu, o
+  cooldown fecha e a resposta ao "Oi" aponta a mensagem anterior sem link novo
+  (1 token → 1 token). O defeito aparece no turno em que o link é oferecido
+  pela primeira vez.
+- **CORREÇÃO (28/08/2026), duas linhas, um dono:**
+  - `experimental.ts` — o bloco `comercial` só minta link **fora** do pós-Trial
+    (`!posTrial && ehPerguntaComercial(...)`). No pós-Trial o dono é o
+    orquestrador, porque só ele conhece acesso, reserva de 12h e composição.
+    O turno NORMAL não perdeu nada: ali o orquestrador não cola link, e este
+    segue sendo o único dono.
+  - `jornada.ts` — o ramo `podeOferecerLink !== false` ganhou a instrução de
+    que o link é colado pelo sistema, e de nunca escrever URL, domínio ou
+    marcador (`[link]`, `[link de Planos]`, "clique aqui").
+- **SMOKE REAL DEPOIS (`gpt-5.6-luna`, Core v9, mesma bancada):** os quatro
+  casos passaram — **1 link e 1 token** em cada um, zero marcadores, e a
+  sequência da Nicole manteve 1 token → 1 token, com a 2ª mensagem apontando a
+  anterior sem link novo.
+- **MUTAÇÃO:** reverter o `!posTrial` derruba "cria UM token, não dois" e
+  "fora do pós-Trial não perdeu o link"; remover a instrução derruba "não
+  escrever URL nem marcador". Guardas em `pos-trial-coerente.test.ts`.
+- **CRITÉRIO DE CONCLUSÃO:** ✅ atendido — um dono só para o link do turno,
+  nenhuma resposta com dois links, nenhum marcador literal, nunca dois tokens.
+- **Falta para BAIXAR:** aprovação e deploy.
+
+---
+
+### PEND-157
+**Quem cancelou uma assinatura recebe copy de "período grátis"**
+Bloco: **G · Comercial** · Prioridade: **P2**
+STATUS: **REGISTRADA · NÃO CORRIGIDA** · Aberta em: 2026-08-28
+
+- **VI NO CÓDIGO:** os textos do ramo pós-Trial e do `TrialGate` dizem "seu
+  período grátis acabou" / "terminou". Quem já foi assinante e cancelou não
+  teve período grátis nenhum acabando agora.
+- **INFERI que o impacto hoje é baixo:** nenhuma assinatura paga foi cancelada
+  até 28/08. Vira real no primeiro cancelamento.
+- **Fora do escopo da missão de 28/08 de propósito** — aquela tratou só de
+  quem venceu o teste sem nunca ter assinado.
+- **CRITÉRIO DE CONCLUSÃO:** ex-assinante recebe texto que reconhece que ela
+  JÁ foi assinante.
+- **Agente recomendado:** PROPOR
+
+---
+
+### PEND-158
+**Testes que leem o fonte com janela de N bytes quebram por comentário**
+Bloco: **H · Governança** · Prioridade: **P2**
+STATUS: **2 CORRIGIDOS · RESTO NÃO VARRIDO** · Aberta em: 2026-08-28
+
+- **O padrão:** `SRC.slice(i, i + 900)` a partir do começo de uma função. Um
+  comentário novo dentro dela empurra o trecho relevante para fora da janela e
+  o teste fica **vermelho sem que o comportamento mude**.
+- **PROVEI POR EXECUÇÃO (28/08):** dois testes caíram assim ao documentar a
+  correção do prazo do trial — `d7-cobertura.test.ts` (3000 e 3500 bytes) e
+  `fim-de-teste-nunca-vende-teste.test.ts` (900 bytes). Os dois foram ancorados
+  no fim real da função (`
+// ====`) e o corte continua apertado: 4689 e 1650
+  bytes, sem vazar para a seção seguinte.
+- **NÃO VARRIDO:** `NÃO SEI` quantos outros existem no repositório.
+- **Por que importa:** teste que quebra por escrita ensina a encolher
+  comentário — o oposto do que este repositório quer.
+- **CRITÉRIO DE CONCLUSÃO:** nenhum `slice(i, i + N)` sobre código-fonte sem
+  âncora no fim real do trecho.
+- **Agente recomendado:** EXECUTAR
 
 ---
 

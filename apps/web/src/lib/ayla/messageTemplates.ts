@@ -113,6 +113,27 @@ const FALLBACK: Record<string, string[]> = {
     "Oi, {nomeMae}. Hoje é o último dia do seu período grátis 🌿\n\nTudo que você me contou continua salvo. Se quiser seguir, é aqui: {link_planos} — cancela quando quiser.",
     "{nomeMae}, hoje termina seu período grátis.\n\nSe fizer sentido continuar com a Kolo, os planos estão aqui: {link_planos}\n\nSe não quiser, sem problema — seus registros ficam aqui, caso queira voltar depois.",
   ],
+  // ⚠️ TERCEIRA CHAVE, E ELA EXISTE POR UM DEFEITO MEDIDO — 28/08/2026.
+  //
+  // `trial_d0` diz "HOJE é o último dia". Isso só é verdade enquanto o teste
+  // ainda está de pé. O cron comercial seleciona por DIA DE CALENDÁRIO e bate
+  // às 11, 15, 18 e 22 UTC — então quem vence às 01h29 recebia, dez horas
+  // depois de já estar bloqueada, um texto dizendo que ainda tinha o dia.
+  //
+  // MEDI em produção: 86 das 237 contas com teste (36%) vencem ANTES da
+  // primeira batida, e 11 das 15 `trial_d0` já enviadas mentiram sobre o prazo.
+  //
+  // ⚠️ NÃO TEM LINHA NO BANCO, DE PROPÓSITO. `getVariations` procura em
+  // `ayla_message_templates` e cai neste fallback quando não acha — então este
+  // texto É a fonte, sem exigir migração. Se um dia quiser variações editáveis
+  // pelo admin, basta inserir a linha com esta chave; o código não muda.
+  //
+  // O tipo do evento continua `trial_d0`: é o mesmo fechamento, no mesmo dia,
+  // com a mesma idempotência. O que muda é só a verdade sobre o prazo.
+  trial_expirado: [
+    "Oi, {nomeMae}. Seu período grátis terminou 🌿\n\nTudo que você me contou continua salvo. Se quiser continuar comigo, os planos estão aqui:\n{link_planos}\n\nSe tiver alguma dúvida, pode me perguntar por aqui.",
+    "{nomeMae}, seu período grátis chegou ao fim.\n\nSeus registros ficam guardados aqui. Se fizer sentido continuar com a Kolo, as opções estão aqui:\n{link_planos}\n\nSe quiser, posso te explicar antes de você decidir.",
+  ],
   emocional_streak: [
     "{nomeMae}, você me respondeu 7 dias seguidos 🌿\n\nIsso é cuidado de verdade. {nomeMembro} está tendo um cuidado bem presente — e isso vem de você.",
     "Sete dias de papo seguidos, {nomeMae}.\n\nTô vendo o trabalho enorme que você está fazendo {comNomeMembro}. Não é pouco.",
@@ -340,13 +361,40 @@ export function templateRespostaRegistro(params: {
  */
 export async function templateTrial(
   supabase: SupabaseClient,
-  params: { diasRestantes: 3 | 0; nomeMae: string; seed: string; familyId?: string },
+  params: {
+    diasRestantes: 3 | 0;
+    nomeMae: string;
+    seed: string;
+    familyId?: string;
+    /**
+     * O TESTE JÁ TINHA ACABADO NO INSTANTE DO ENVIO?
+     *
+     * ⚠️ SÓ O TEXTO MUDA. O evento continua sendo o fechamento do dia 0 — mesmo
+     * `tipo`, mesma idempotência, mesma origem `d7` no link. Trocar o tipo
+     * partiria a série histórica e criaria uma segunda janela de dedupe, o que
+     * é caro demais para corrigir um tempo verbal.
+     *
+     * Ausente ou `false` → comportamento de sempre ("hoje é o último dia").
+     * Quem não passa o parâmetro não regride.
+     */
+    jaExpirou?: boolean;
+  },
 ): Promise<string> {
-  const key = params.diasRestantes === 0 ? "trial_d0" : "trial_d3";
+  const key =
+    params.diasRestantes === 0
+      ? params.jaExpirou
+        ? "trial_expirado"
+        : "trial_d0"
+      : "trial_d3";
   const de = params.diasRestantes === 0 ? "d7" : "d3";
   const variations = await getVariations(supabase, key);
+  // ⚠️ `jaExpirou` NÃO É VARIÁVEL DE TEXTO — ela escolheu a chave lá em cima.
+  // Deixá-la entrar no espalhamento quebra o tipo de `TemplateVars`, que só
+  // aceita string e número, e não existe `{jaExpirou}` em nenhum template.
+  const { jaExpirou: _escolhaDaChave, ...vars } = params;
+  void _escolhaDaChave;
   return fill(pickVariation(variations, params.seed), {
-    ...params,
+    ...vars,
     // ⚠️ A ORIGEM VIAJA NO LINK — e só ela. É o que permite separar "abriu
     // porque a Ayla convidou" de "abriu navegando", sem pôr identificador
     // nenhum numa URL que vai por WhatsApp. Ver `linkPlanos`.

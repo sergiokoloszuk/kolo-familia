@@ -50,6 +50,14 @@ function fakeSupabase(inicial: { mensagens?: Linha[]; reservas?: Linha[] } = {})
         filtros.push((l) => l[c] === v);
         return api;
       },
+      // ⚠️ `in` ENTROU EM 28/08/2026, junto com `TIPOS_QUE_JA_LEVARAM_O_LINK`.
+      // Sem ele o fake devolvia "is not a function" e DEZ testes deste arquivo
+      // caíam — não por comportamento, mas porque o dublê não acompanhava a
+      // consulta real. Um fake que não fala a linguagem da query não prova nada.
+      in: (c: string, vs: readonly unknown[]) => {
+        filtros.push((l) => vs.includes(l[c]));
+        return api;
+      },
       gte: (c: string, v: string) => {
         filtros.push((l) => String(l[c]) >= v);
         return api;
@@ -186,7 +194,7 @@ describe("isolamento e falha", () => {
     const quebrado = {
       from: () => ({
         select: () => ({
-          eq: () => ({ eq: () => ({ eq: () => ({ gte: () => ({ limit: async () => ({ data: [] }) }) }) }) }),
+          eq: () => ({ eq: () => ({ in: () => ({ gte: () => ({ limit: async () => ({ data: [] }) }) }) }) }),
         }),
         insert: () => {
           throw new Error("connection reset");
@@ -200,6 +208,40 @@ describe("isolamento e falha", () => {
 // ————————————————————————————————————————————————————————————
 // Invariantes estruturais — o que não pode voltar
 // ————————————————————————————————————————————————————————————
+
+describe("o convite do fim de teste também consome a janela", () => {
+  /** O fechamento do cron: leva link, mas viaja sob `trial_d0`. */
+  const fechamentoDoCron = (minutosAtras: number): Linha => ({
+    id: `d0-${minutosAtras}`,
+    family_account_id: FAM,
+    direcao: "outbound",
+    tipo: "trial_d0",
+    created_at: new Date(Date.now() - minutosAtras * 60_000).toISOString(),
+  });
+
+  it("MORDE: convite saiu como `trial_d0` há 23min → o oi seguinte NÃO ganha outro link", async () => {
+    // O relógio exato do caso Nicole (28/08/2026): fechamento às 11h01 sob
+    // `trial_d0`, "Oi" às 11h24. A reserva só olhava `assinatura_nudge`, não via
+    // nada, e um SEGUNDO token era mintado 23 minutos depois do primeiro.
+    const { client } = fakeSupabase({ mensagens: [fechamentoDoCron(23)] });
+    expect(await reservarConviteAssinatura(client, FAM)).toBe(false);
+  });
+
+  it("passadas as 12h do fechamento, volta a ser elegível", async () => {
+    const { client } = fakeSupabase({ mensagens: [fechamentoDoCron(12 * 60 + 1)] });
+    expect(await reservarConviteAssinatura(client, FAM)).toBe(true);
+  });
+
+  it("MORDE: `trial_d3` NÃO consome a janela — quem está a 3 dias do fim tem acesso", async () => {
+    // Regra morta seria pior que regra ausente: quem está em D-3 nunca alcança
+    // este ramo, e incluí-lo só criaria uma condição que ninguém consegue
+    // exercitar. Se um dia alguém a acrescentar, este teste avisa.
+    const { client } = fakeSupabase({
+      mensagens: [{ ...fechamentoDoCron(30), tipo: "trial_d3" }],
+    });
+    expect(await reservarConviteAssinatura(client, FAM)).toBe(true);
+  });
+});
 
 describe("invariantes", () => {
   it("a função que só trocava a copy não existe mais", () => {
@@ -237,7 +279,15 @@ describe("invariantes", () => {
       ORCH.indexOf("export async function reservarConviteAssinatura"),
       ORCH.indexOf("/** Avisa a admin"),
     );
-    expect(fn).toMatch(/from\("ayla_messages"\)[\s\S]{0,200}tipo", "assinatura_nudge"/);
+    // ⚠️ O INVARIANTE É "LÊ O QUE SAIU", NÃO O LITERAL DO TIPO. Em 28/08/2026 a
+    // consulta passou de `.eq("tipo", "assinatura_nudge")` para `.in("tipo",
+    // TIPOS_QUE_JA_LEVARAM_O_LINK)`, porque o convite do fim de teste viaja sob
+    // `trial_d0` e ficava invisível para o cooldown (caso Nicole). O que este
+    // teste guarda — que a fonte é `ayla_messages`, o registro do que de fato
+    // foi enviado, e não a tabela de reserva — não mudou.
+    expect(fn).toMatch(
+      /from\("ayla_messages"\)[\s\S]{0,200}\.in\("tipo", TIPOS_QUE_JA_LEVARAM_O_LINK\)/,
+    );
     // `enviarEPersistir` só grava em ayla_messages quando `resultado.enviada`.
     expect(ORCH).toMatch(/if \(resultado\.enviada\) \{\s*\n\s*await supabase\.from\("ayla_messages"\)/);
   });
