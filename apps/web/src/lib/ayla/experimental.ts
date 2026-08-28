@@ -1,3 +1,40 @@
+/**
+ * ╔══════════════════════════════════════════════════════════════════════════╗
+ * ║  AYLA OFICIAL DE PRODUÇÃO — É ESTE ARQUIVO QUE ATENDE AS FAMÍLIAS.       ║
+ * ╚══════════════════════════════════════════════════════════════════════════╝
+ *
+ * ⚠️ O NOME "EXPERIMENTAL" MENTE, E JÁ CUSTOU CARO. Desde 23/08/2026, com
+ * `AYLA_EXPERIMENTAL_TODAS=true` no ambiente, **100% das conversas passam por
+ * aqui**. PROVEI POR EXECUÇÃO em 28/08: `/api/health` devolve
+ * `ayla_experimental_todas: true`.
+ *
+ * O arquivo se chama `experimental.ts` por razões históricas — ele nasceu como
+ * o caminho novo, atrás de flag, para poucas famílias. Renomeá-lo hoje tocaria
+ * importações, testes que leem o próprio código-fonte por caminho, e a
+ * variável de ambiente — que, se renomeada por engano, **desliga a Ayla de
+ * todas as famílias no turno seguinte**. Por isso o nome fica, e este
+ * cabeçalho existe no lugar da renomeação.
+ *
+ * ⚠️ TODA MUDANÇA DE CONDUTA DA AYLA PASSA POR AQUI. Se você está corrigindo
+ * como a Ayla responde, decide, pergunta ou orienta, o lugar é ESTE arquivo.
+ * `responder.ts` é o LEGACY, e MEDI que ele atende **2,59%** dos turnos.
+ *
+ * ⚠️ ISTO JÁ DEU ERRADO TRÊS VEZES, e não são hipóteses:
+ *   · 22/08 — a correção comercial foi só para `responder.ts`. Alcançava um
+ *     turno em quarenta. `git log -S "FATOS_COMERCIAIS" -- experimental.ts`
+ *     voltava VAZIO;
+ *   · 26/08 — o D7 foi corrigido no template proativo e a conversa reativa
+ *     continuou mandando `/precos` por mais um dia;
+ *   · 27/08 — Karina escreveu "quero pagar, quero assinar" e recebeu a página
+ *     que vende o teste, porque a regra vivia em dois arquivos.
+ *
+ * ⚠️ E HÁ UM SINAL QUE ENGANA QUEM CHEGA: `responder.ts` é importado por 8
+ * arquivos; este, por 1. A contagem de importações sugere o contrário do que é
+ * verdade. Não se guie por ela.
+ *
+ * Quando o Legacy for removido, este arquivo passa a se chamar `ayla.ts` e
+ * este cabeçalho some junto. Até lá, ele é a placa na porta.
+ */
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { idadeAnos } from "@/lib/idade";
 import { gerarConversacional, MODELO_CONVERSA } from "@/lib/ia/provider";

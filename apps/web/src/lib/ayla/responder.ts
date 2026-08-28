@@ -1,3 +1,24 @@
+/**
+ * ╔══════════════════════════════════════════════════════════════════════════╗
+ * ║  AYLA LEGACY — CAMINHO RESIDUAL, EM RETIRADA. NÃO É AQUI.                ║
+ * ╚══════════════════════════════════════════════════════════════════════════╝
+ *
+ * ⚠️ SE VOCÊ VEIO CORRIGIR COMO A AYLA CONVERSA, O ARQUIVO É
+ * `lib/ayla/experimental.ts` — que, apesar do nome, é a **Ayla oficial de
+ * produção** e atende 100% das famílias desde 23/08/2026.
+ *
+ * Este arquivo é a rede que sobrou de antes daquele rollout. MEDI: **2,59%**
+ * dos turnos. Ele existe para o caso de `AYLA_EXPERIMENTAL_TODAS` ser apagada
+ * — e é por isso que não foi removido.
+ *
+ * ⚠️ CORRIGIR SÓ AQUI É NÃO CORRIGIR. Em 22/08 a correção comercial foi feita
+ * neste arquivo e alcançava um turno em quarenta; ninguém percebeu por quatro
+ * dias. Se uma mudança de conduta precisa valer para as famílias, ela vai no
+ * Oficial. Se precisar valer nos dois, vai nos dois — e um teste prende isso.
+ *
+ * O que pode mudar aqui sem problema: correção de defeito próprio do Legacy,
+ * ou paridade com uma decisão que já foi tomada no Oficial.
+ */
 import type { SupabaseClient } from "@supabase/supabase-js";
 import {
   ehPerguntaComercial,
