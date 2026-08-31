@@ -7291,7 +7291,66 @@ trimestralmente, o que vier antes.
 
 ---
 
-**Próximo ID livre: PEND-154. *(024 e 025 reservadas por frentes ainda não publicadas; 0076 é número de MIGRACAO reservado — ver PEND-121.)***
+
+### PEND-159
+**O portão do e-mail está desligado no app, não no lugar certo (Easypanel)**
+Bloco: **H · Governança** · Prioridade: **P2**
+STATUS: **CONTORNO NO AR · ENV NÃO VIRADA** · Aberta em: 2026-08-31
+
+- **PROVEI POR EXECUÇÃO (31/08):** `GET /auth/v1/settings` do Supabase de
+  produção devolve `"mailer_autoconfirm": false`. O portão continua ligado **no
+  servidor**; o que desliguei foi o efeito dele, no app (`f2e3c2e`).
+- **Por que não virei a env:** `GOTRUE_MAILER_AUTOCONFIRM` mora no serviço
+  Supabase Auth no Easypanel, e mexer lá exige redeploy do stack — que neste
+  projeto **já zerou o banco uma vez (08/06/2026)**. Não tenho shell no host, e
+  o risco não é meu para correr sozinho.
+- **O que o contorno não resolve:** o GoTrue continua **disparando o e-mail
+  "confirme seu e-mail"** no `signUp`. A mãe entra direto e recebe um e-mail que
+  não precisa mais obedecer. Não bloqueia nada; é confuso.
+- **Custo de e-mail:** ~120 e-mails/mês de confirmação enviados à toa pelo
+  Brevo.
+- **Quando a env virar, o contorno se apaga sozinho:** com autoconfirm ligado o
+  `signUp` já devolve sessão, o ramo `!data.session` da tela nunca roda, e
+  `signup/actions.ts` deixa de ser chamado. Sobra um arquivo para remover.
+- **CRITÉRIO DE CONCLUSÃO:** `/auth/v1/settings` devolvendo
+  `"mailer_autoconfirm": true`, um cadastro real entrando sem receber e-mail de
+  confirmação, e `signup/actions.ts` removido.
+- **Agente recomendado:** EXECUTAR (com o Sérgio no host)
+
+---
+
+### PEND-160
+**Ligar o Google agora abre tomada de conta — a confirmação de e-mail era o que segurava**
+Bloco: **G · Segurança** · Prioridade: **P1 se o Google for ligado · dormente enquanto não for**
+STATUS: **RISCO IDENTIFICADO · NENHUM VETOR ATIVO** · Aberta em: 2026-08-31
+
+- **VI NO CÓDIGO (31/08):** `components/auth/google-button.tsx` existe e **não é
+  usado em tela nenhuma** — `grep GoogleButton` fora do próprio arquivo não
+  devolve nada. O `/auth/callback` já tem o ramo de conta nova via social.
+- **PROVEI POR EXECUÇÃO (31/08):** `/auth/v1/settings` devolve `"google": true`
+  — o provedor está **habilitado no servidor**. Falta só pendurar o botão.
+- **O vetor, que nasceu com `f2e3c2e`:** sem confirmação de e-mail, qualquer um
+  cria conta com senha usando `vitima@gmail.com` **sem nunca provar o e-mail**.
+  Se depois a vítima entrar com Google, o Supabase vincula as identidades pelo
+  e-mail — e quem plantou a senha passa a ter acesso à conta dela, com o Kolo
+  Vivo da criança dentro. Antes de 31/08 a confirmação de e-mail impedia isso.
+- **NENHUM VETOR ATIVO HOJE:** sem botão em tela, ninguém entra por Google.
+  O risco só existe **se** a frente do Google for em frente.
+- **Não é argumento para religar o portão do e-mail:** ele custava 32% do funil
+  (78 de 244 contas) para cobrir um ataque que exige saber o e-mail da vítima
+  *e* que ela use Google *e* que ela não estranhe a conta já existente.
+- **Se o Google for ligado, mitigar antes.** Caminhos, do mais barato ao mais
+  caro: (a) só no `/login`, e no `/auth/callback` recusar conta social que já
+  tenha identidade `email` não provada, mandando para "redefinir senha";
+  (b) desativar o vínculo automático de identidades no GoTrue; (c) exigir
+  WhatsApp confirmado antes de vincular.
+- **CRITÉRIO DE CONCLUSÃO:** ou o Google segue fora de tela e isto vira
+  CANCELADA, ou a mitigação está no ar e provada com duas contas de QA.
+- **Agente recomendado:** PROPOR
+
+---
+
+**Próximo ID livre: PEND-161. *(024 e 025 reservadas por frentes ainda não publicadas; 0076 é número de MIGRACAO reservado — ver PEND-121.)***
 
 > Conferir contra `origin/main`, não contra o seu branch. Dois branches podem
 > reivindicar o mesmo número — o conflito de merge nesta linha é o alarme.
