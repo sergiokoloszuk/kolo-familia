@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { createClient } from "@/lib/supabase/client";
 import { emailCampo } from "@/lib/auth/email-campo";
+import { confirmarEmailAutomatico } from "./actions";
 
 const BETA_GATE = process.env.NEXT_PUBLIC_BETA_GATE_ENABLED === "true";
 
@@ -148,7 +149,39 @@ export default function SignupPage() {
     // Quando email confirmation está ON no Supabase, session vem null e precisa confirmar.
     // Quando está OFF, session vem preenchida e o usuário já entra.
     if (!data.session) {
-      setNeedsConfirm(values.email);
+      // PORTÃO DO E-MAIL DESLIGADO (31/08/2026). Antes desta linha, 32% das
+      // contas criadas morriam aqui — 78 de 244, e 45 das 120 dos últimos 30
+      // dias. Em vez de pedir o código, confirmamos a conta pelo servidor e
+      // entramos. A verificação que a Kolo leva a sério é o WhatsApp, no meio
+      // do onboarding, e ela continua obrigatória.
+      //
+      // A tela de código NÃO foi apagada: ela é o fallback. Se a confirmação
+      // pelo servidor falhar (rede, service role fora do ar), a mãe cai no
+      // fluxo de antes em vez de ficar presa numa tela sem saída — pior do que
+      // hoje, nunca.
+      const auto = await confirmarEmailAutomatico(data.user?.id ?? "");
+      if (!auto.ok) {
+        setNeedsConfirm(values.email);
+        return;
+      }
+      const { error: erroEntrada } = await supabase.auth.signInWithPassword({
+        email: values.email,
+        password: values.password,
+      });
+      if (erroEntrada) {
+        setNeedsConfirm(values.email);
+        return;
+      }
+      try {
+        await fetch("/api/me/aceitar-termos", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ aceitos_em: aceitoEm }),
+        });
+      } catch {
+        /* consumer cuida */
+      }
+      window.location.href = "/onboarding";
     } else {
       // Tenta persistir agora (best-effort; consumer também tenta)
       try {
