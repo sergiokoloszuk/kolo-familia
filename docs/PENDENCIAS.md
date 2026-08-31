@@ -7295,7 +7295,7 @@ trimestralmente, o que vier antes.
 ### PEND-159
 **O portão do e-mail está desligado no app, não no lugar certo (Easypanel)**
 Bloco: **H · Governança** · Prioridade: **P2**
-STATUS: **CONTORNO NO AR · ENV NÃO VIRADA** · Aberta em: 2026-08-31
+STATUS: **CONTORNO NO AR · VIRAR A ENV ESTÁ EM DÚVIDA (ver revisão abaixo)** · Aberta em: 2026-08-31
 
 - **PROVEI POR EXECUÇÃO (31/08):** `GET /auth/v1/settings` do Supabase de
   produção devolve `"mailer_autoconfirm": false`. O portão continua ligado **no
@@ -7312,6 +7312,16 @@ STATUS: **CONTORNO NO AR · ENV NÃO VIRADA** · Aberta em: 2026-08-31
 - **Quando a env virar, o contorno se apaga sozinho:** com autoconfirm ligado o
   `signUp` já devolve sessão, o ramo `!data.session` da tela nunca roda, e
   `signup/actions.ts` deixa de ser chamado. Sobra um arquivo para remover.
+- **⚠️ REVISÃO DE 31/08, DEPOIS DE ABRIR: virar a env pode ser PIOR que não
+  virar, e a pendência vira DECISÃO, não tarefa.** Com
+  `MAILER_AUTOCONFIRM=true` o GoTrue **para de enviar** o e-mail de confirmação.
+  Hoje ele ainda envia — e esse envio é a **única coisa que ainda pode provar
+  que o e-mail da mãe existe** (um hard bounce no Brevo denuncia o endereço
+  errado). Virar a env transforma "e-mail errado" em algo **permanentemente
+  invisível**, e a pessoa só descobre no dia em que esquece a senha. Ver
+  [PEND-161](#pend-161).
+- **NÃO VIRAR ATÉ A PEND-161 ESTAR RESOLVIDA.** O incômodo do e-mail duplicado
+  é o preço de manter o sinal vivo. Barato.
 - **CRITÉRIO DE CONCLUSÃO:** `/auth/v1/settings` devolvendo
   `"mailer_autoconfirm": true`, um cadastro real entrando sem receber e-mail de
   confirmação, e `signup/actions.ts` removido.
@@ -7321,8 +7331,14 @@ STATUS: **CONTORNO NO AR · ENV NÃO VIRADA** · Aberta em: 2026-08-31
 
 ### PEND-160
 **Ligar o Google agora abre tomada de conta — a confirmação de e-mail era o que segurava**
-Bloco: **G · Segurança** · Prioridade: **P1 se o Google for ligado · dormente enquanto não for**
-STATUS: **RISCO IDENTIFICADO · NENHUM VETOR ATIVO** · Aberta em: 2026-08-31
+Bloco: **G · Segurança** · Prioridade: **—**
+STATUS: **CANCELADA POR DECISÃO (31/08/2026)** · Aberta em: 2026-08-31
+
+- **DECISÃO DO SÉRGIO (31/08):** *"não vamos ter Google."* O botão fica fora de
+  tela, o vetor não existe, e esta pendência não tem trabalho a fazer. Fica
+  registrada, e não arquivada, porque o risco **volta inteiro** no dia em que
+  alguém pendurar o `GoogleButton` — e essa pessoa não vai lembrar sozinha.
+  Quem for ligar o Google lê isto primeiro.
 
 - **VI NO CÓDIGO (31/08):** `components/auth/google-button.tsx` existe e **não é
   usado em tela nenhuma** — `grep GoogleButton` fora do próprio arquivo não
@@ -7350,7 +7366,56 @@ STATUS: **RISCO IDENTIFICADO · NENHUM VETOR ATIVO** · Aberta em: 2026-08-31
 
 ---
 
-**Próximo ID livre: PEND-161. *(024 e 025 reservadas por frentes ainda não publicadas; 0076 é número de MIGRACAO reservado — ver PEND-121.)***
+
+### PEND-161
+**Quem errar o e-mail no cadastro fica sem caminho de volta — e desde 31/08 nem descobre**
+Bloco: **G · Segurança** · Prioridade: **P1**
+STATUS: **ABERTA · CAUSADA POR `f2e3c2e`** · Aberta em: 2026-08-31
+
+- **VI NO CÓDIGO (31/08):** `recuperar-senha/page.tsx:42` chama
+  `resetPasswordForEmail` e **é o único caminho de recuperação que existe**. Não
+  há segundo fator, segundo canal, nem recuperação pelo admin.
+- **O QUE EU MESMO PIOREI:** até 31/08, quem digitasse o e-mail errado **não
+  conseguia entrar** — descobria na hora, no pior jeito possível, mas
+  descobria. Com o portão desligado (`f2e3c2e`) a pessoa entra, faz o
+  onboarding, conversa com a Ayla por dias — e só descobre o erro no dia em que
+  esquece a senha. Aí não há volta: o link vai para um endereço que não é dela.
+  **Troquei uma falha barulhenta e imediata por uma silenciosa e tardia.**
+- **E APAGUEI O SINAL QUE DENUNCIARIA ISSO.** `confirmarEmailAutomatico` grava
+  `email_confirm: true` em toda conta. Depois disso, `email_confirmed_at` está
+  preenchido para **todo mundo** e não distingue mais "provou o e-mail" de "nós
+  carimbamos". O campo que respondia a pergunta virou constante.
+- **O QUE AINDA SOBRA:** o GoTrue continua **enviando** o e-mail de confirmação
+  (por causa da [PEND-159](#pend-159)), então um endereço errado ainda produz
+  hard bounce no Brevo. Ninguém lê esse bounce hoje. E ele **some** se a env da
+  PEND-159 for virada.
+- **A SAÍDA QUE JÁ EXISTE E NÃO ESTÁ SENDO USADA:** a Kolo **já prova o
+  WhatsApp** por código de 6 dígitos, obrigatoriamente, no onboarding
+  (`lib/whatsapp/verificacao.ts`, `acoes.ts`, `porta.ts`). 147 das 244 contas
+  têm um número provado. É um canal **mais confiável que o e-mail** para este
+  produto — e é onde a mãe já conversa todo dia. Recuperação por WhatsApp
+  funciona mesmo com o e-mail errado, que é exatamente o caso que dói.
+- **DESENHO PROPOSTO (4 partes, da que mais resolve para a que menos):**
+  1. **Recuperação por WhatsApp** em `/recuperar-senha`, reusando a verificação
+     que já existe. É a garantia de verdade.
+  2. **Devolver o sinal:** `confirmarEmailAutomatico` grava
+     `user_metadata.email_prova = "nao_provado"`; provar o e-mail depois grava
+     `"provado"`. Sem migração.
+  3. **Cutucão não-bloqueante** no painel para quem está `nao_provado`, com a
+     razão dita em voz alta ("é por ele que você recupera a senha") e um botão
+     **"esse e-mail está errado, quero trocar"** — que é o que a mãe realmente
+     precisa e hoje não existe em lugar nenhum.
+  4. **Visibilidade no admin:** quantas contas estão `nao_provado`.
+- **⚠️ NÃO É ARGUMENTO PARA RELIGAR O PORTÃO DO E-MAIL.** Ele custava 32% do
+  funil. O que falta não é uma porta na entrada — é uma **segunda chave**.
+- **CRITÉRIO DE CONCLUSÃO:** uma conta de QA com e-mail propositalmente errado
+  consegue redefinir a senha pelo WhatsApp, e o admin mostra a contagem de
+  `nao_provado`.
+- **Agente recomendado:** EXECUTAR (o desenho acima está fechado)
+
+---
+
+**Próximo ID livre: PEND-162. *(024 e 025 reservadas por frentes ainda não publicadas; 0076 é número de MIGRACAO reservado — ver PEND-121.)***
 
 > Conferir contra `origin/main`, não contra o seu branch. Dois branches podem
 > reivindicar o mesmo número — o conflito de merge nesta linha é o alarme.
