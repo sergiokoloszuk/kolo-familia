@@ -7,6 +7,10 @@ import { requireUser, loadFamilyContext } from "@/lib/auth/require-user";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { getStripeClient } from "@/lib/stripe/client";
 import { logEvent, logServerError } from "@/lib/log";
+import {
+  solicitarCodigoEmail,
+  confirmarCodigoEmail,
+} from "@/lib/email/verificacao-email";
 
 export type PerfilResult = { ok: true } | { ok: false; error: string };
 
@@ -95,28 +99,100 @@ const emailSchema = z.object({
   email: z.string().trim().toLowerCase().email("E-mail inválido"),
 });
 
+const confirmaEmailSchema = z.object({
+  email: z.string().trim().toLowerCase().email("E-mail inválido"),
+  codigo: z.string().trim().regex(/^\d{6}$/, "O código tem 6 números"),
+});
+
 /**
- * Troca o e-mail de login. O Supabase manda um link de confirmação pro NOVO
- * e-mail; a troca só vale quando a pessoa confirma. Não muda nada na hora.
+ * TROCAR O E-MAIL PROVANDO SÓ O ENDEREÇO NOVO — passo 1.
+ *
+ * ⚠️ NÃO usa `supabase.auth.updateUser({ email })`, e isso é o ponto.
+ * PROVEI POR EXECUÇÃO (31/08/2026, produção): com `SECURE_EMAIL_CHANGE`
+ * ligado, aquele caminho exige confirmar TAMBÉM o endereço antigo — e devolve
+ * *"Please proceed to confirm link sent to the other email"* deixando o
+ * `email` intacto. Ou seja: era inalcançável exatamente para quem digitou o
+ * e-mail errado no cadastro, que é a pessoa que esta frente veio atender.
+ *
+ * ⚠️ O `userId` vem da SESSÃO. Nenhum id chega do navegador — é o que impede
+ * que alguém dispare a troca de e-mail de outra conta.
  */
-export async function atualizarEmailAction(
+export async function pedirCodigoEmailAction(
   input: z.infer<typeof emailSchema>,
 ): Promise<PerfilResult> {
   try {
     const { email } = emailSchema.parse(input);
-    const { supabase, user } = await loadFamilyContext();
-    if (email === (user.email ?? "").toLowerCase()) {
-      return { ok: false, error: "Esse já é o seu e-mail atual." };
-    }
-    const { error } = await supabase.auth.updateUser({ email });
-    if (error) {
-      return { ok: false, error: `Não consegui trocar agora: ${error.message}` };
-    }
-    return { ok: true };
+    const { user } = await requireUser();
+    const admin = createServiceRoleClient();
+
+    const r = await solicitarCodigoEmail(admin, {
+      userId: user.id,
+      emailAtual: user.email ?? null,
+      emailNovo: email,
+    });
+    if (r.ok) return { ok: true };
+
+    return { ok: false, error: (MSG_EMAIL[r.motivo] ?? MSG_EMAIL.erro)(r as RecusaEmail) };
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : "Erro inesperado" };
   }
 }
+
+/**
+ * TROCAR O E-MAIL PROVANDO SÓ O ENDEREÇO NOVO — passo 2.
+ *
+ * O endereço só chega em `auth.users` aqui, depois de o código bater. Antes
+ * disso ele vive em `verificacoes_email`, onde não é e-mail de login nem
+ * endereço de recuperação.
+ */
+export async function confirmarEmailAction(
+  input: z.infer<typeof confirmaEmailSchema>,
+): Promise<PerfilResult> {
+  try {
+    const { email, codigo } = confirmaEmailSchema.parse(input);
+    const { user } = await requireUser();
+    const admin = createServiceRoleClient();
+
+    const r = await confirmarCodigoEmail(admin, {
+      userId: user.id,
+      emailNovo: email,
+      codigo,
+    });
+    if (r.ok) {
+      revalidatePath("/configuracoes/conta");
+      return { ok: true };
+    }
+    return { ok: false, error: (MSG_EMAIL[r.motivo] ?? MSG_EMAIL.erro)(r as RecusaEmail) };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "Erro inesperado" };
+  }
+}
+
+/**
+ * As frases de recusa, num lugar só.
+ *
+ * Nenhuma delas conta ao navegador mais do que a pessoa precisa: "em_uso" não
+ * diz de quem é a conta, e "codigo_errado" não diz quantas tentativas faltam
+ * além do que a tela já mostra.
+ */
+type RecusaEmail = { motivo: string; segundosRestantes?: number };
+
+const MSG_EMAIL: Record<string, (r: RecusaEmail) => string> = {
+  invalido: () => "Esse e-mail não parece válido. Confere a digitação.",
+  igual_atual: () => "Esse já é o seu e-mail atual.",
+  em_uso: () =>
+    "Esse e-mail já está em uso por outra conta. Use outro, ou fale com o suporte se achar que é engano.",
+  cooldown: (r) => `Espera ${r.segundosRestantes ?? 60}s pra pedir outro código.`,
+  max_reenvios: () =>
+    "Já mandei códigos demais pra esse endereço. Confere se ele está certo e tenta com outro.",
+  envio_falhou: () =>
+    "Não consegui enviar o e-mail agora. Tenta de novo em alguns minutos.",
+  sem_pedido: () => "Pede um código novo — esse já foi usado ou não vale mais.",
+  expirado: () => "O código expirou. Pede um novo.",
+  max_tentativas: () => "Errou o código vezes demais. Pede um código novo.",
+  codigo_errado: () => "Código incorreto. Confere os 6 números do e-mail.",
+  erro: () => "Não consegui agora. Tenta de novo em alguns minutos.",
+};
 
 const senhaSchema = z.object({
   senha: z.string().min(8, "A senha precisa ter pelo menos 8 caracteres.").max(72),

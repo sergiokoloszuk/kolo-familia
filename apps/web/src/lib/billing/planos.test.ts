@@ -489,7 +489,7 @@ describe("nenhum número comercial volta a viver em texto", () => {
     // Uma trava que vale em um caminho só não vale em nenhum: bastaria a
     // chamada entrar pelo outro para a cobrança errada passar.
     const caminhos = [
-      "src/app/(app)/assinatura/actions.ts",
+      "src/app/(conta)/assinatura/actions.ts",
       "src/app/api/stripe/checkout/route.ts",
     ];
     for (const c of caminhos) {

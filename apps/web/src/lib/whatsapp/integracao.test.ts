@@ -400,7 +400,7 @@ describe("as três portas usam o MESMO mecanismo", () => {
       "app/onboarding/wizard.tsx",
       "app/onboarding/conversacional.tsx",
       "app/(app)/painel/ativar-ayla.tsx",
-      "app/(app)/configuracoes/conta/whatsapp-form.tsx",
+      "app/(conta)/configuracoes/conta/whatsapp-form.tsx",
     ]) {
       expect(ler(arquivo), arquivo).toContain("ConfirmarWhatsapp");
     }
@@ -437,8 +437,8 @@ describe("nenhum bypass sobrou", () => {
     "app/onboarding/actions.ts",
     "lib/onboarding/salvar-conversacional.ts",
     "app/(app)/painel/ativar-ayla.tsx",
-    "app/(app)/configuracoes/conta/actions.ts",
-    "app/(app)/configuracoes/conta/whatsapp-form.tsx",
+    "app/(conta)/configuracoes/conta/actions.ts",
+    "app/(conta)/configuracoes/conta/whatsapp-form.tsx",
   ];
 
   it("o arquivo do HMAC antigo não existe mais", () => {
@@ -458,7 +458,7 @@ describe("nenhum bypass sobrou", () => {
   });
 
   it("as ações de configurações não gravam mais o número direto", () => {
-    const CONTA = semComentarios("app/(app)/configuracoes/conta/actions.ts");
+    const CONTA = semComentarios("app/(conta)/configuracoes/conta/actions.ts");
     expect(CONTA).not.toContain("atualizarWhatsappAction");
     expect(CONTA).not.toMatch(/update\(\{\s*whatsapp_e164/);
   });
@@ -490,7 +490,7 @@ describe("nenhum bypass sobrou", () => {
       "lib/whatsapp/acoes.ts",
       "lib/whatsapp/verificacao.ts",
       "components/confirmar-whatsapp.tsx",
-      "app/(app)/configuracoes/conta/whatsapp-form.tsx",
+      "app/(conta)/configuracoes/conta/whatsapp-form.tsx",
       "app/(app)/painel/ativar-ayla.tsx",
     ]) {
       expect(semComentarios(a).toLowerCase(), a).not.toContain("stripe");

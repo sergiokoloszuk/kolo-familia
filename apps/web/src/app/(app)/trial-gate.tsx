@@ -1,16 +1,25 @@
+import Link from "next/link";
 import { Logo } from "@/components/brand/logo";
-import { AssinaturaActions } from "./assinatura/assinatura-actions";
+import { AssinaturaActions } from "@/app/(conta)/assinatura/assinatura-actions";
 
 /**
  * Bloqueio de acesso quando o período grátis acabou (ou a assinatura não está
  * ativa) e a pessoa não é admin/analista/cortesia. Tela cheia, sem sidebar.
  * Reusa os botões de checkout do Stripe — assinou, o webhook libera e volta.
  *
- * Aqui é o FIM DA LINHA de quem venceu: o layout intercepta antes de qualquer
- * página, então a `/assinatura` (que mostra planos e valores) é inalcançável
- * justamente pra quem precisa dela — inclusive quando a Ayla manda o link. Por
- * isso esta tela precisa mostrar o PREÇO e a diferença entre mensal e anual;
- * antes eram dois botões sem valor nenhum.
+ * ⚠️ ESTA TELA ERA UM BECO SEM SAÍDA (corrigido em 01/09/2026). Ela não tinha
+ * um único `href` nem botão de sair: 95 linhas, dois botões de checkout e mais
+ * nada. E como "Sair da conta" só existia na `Sidebar` — que vive dentro de
+ * `(app)`, atrás deste mesmo gate —, **uma família com teste vencido não
+ * conseguia nem sair da própria conta**, quanto mais corrigir o e-mail ou a
+ * senha. Quem tivesse errado o e-mail no cadastro ficava sem nenhum caminho.
+ *
+ * As duas saídas abaixo NÃO afrouxam o bloqueio: levam para `(conta)`, que
+ * exige sessão e não exige assinatura. Produto, Ayla e dados da criança
+ * continuam exatamente tão fechados quanto antes.
+ *
+ * O preço continua aparecendo aqui porque o checkout tem que caber nesta tela
+ * — mas `/assinatura` deixou de ser inalcançável, e agora há link para ela.
  */
 export function TrialGate({
   vencido,
@@ -89,6 +98,28 @@ export function TrialGate({
           Dá pra cancelar quando quiser. Se preferir falar com a gente antes, é só
           responder a Ayla no WhatsApp.
         </p>
+
+        {/* As duas portas que faltavam. Cuidar da conta e sair dela nunca
+            dependeram de assinatura — só estavam trancadas do lado errado. */}
+        <div className="mt-6 flex items-center justify-center gap-4 border-t border-foreground/[0.08] pt-5 text-sm">
+          <Link
+            href="/configuracoes/conta"
+            className="text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+          >
+            Minha conta
+          </Link>
+          <span aria-hidden className="text-foreground/20">
+            ·
+          </span>
+          <form action="/auth/logout" method="post">
+            <button
+              type="submit"
+              className="text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+            >
+              Sair
+            </button>
+          </form>
+        </div>
       </div>
     </div>
   );

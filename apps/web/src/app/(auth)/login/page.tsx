@@ -93,21 +93,30 @@ function LoginPageInner() {
           <Button type="submit" disabled={submitting}>
             {submitting ? "Entrando..." : "Entrar"}
           </Button>
-          <Link
-            href="/recuperar-senha"
-            className="self-end text-xs text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
-          >
-            Esqueci minha senha
-          </Link>
+          {/* AS DUAS SAÍDAS, lado a lado. A segunda é a que faltava: até
+              01/09/2026, quem tinha digitado o e-mail errado no cadastro não
+              tinha caminho nenhum — o "esqueci minha senha" manda o link para
+              o endereço errado, e a correção do e-mail exigia confirmar esse
+              mesmo endereço. A saída pelo WhatsApp mora numa página própria,
+              que explica sem jargão e NÃO autentica ninguém. */}
+          <div className="flex flex-wrap items-center justify-end gap-x-3 gap-y-1 text-xs">
+            <Link
+              href="/recuperar-senha"
+              className="text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+            >
+              Esqueci minha senha
+            </Link>
+            <span aria-hidden className="text-foreground/20">
+              ·
+            </span>
+            <Link
+              href="/sem-acesso-ao-email"
+              className="text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+            >
+              Não tenho acesso a este e-mail
+            </Link>
+          </div>
         </form>
-
-        {/* Saída que NÃO depende de e-mail nem de lembrar senha: o público daqui
-            vive no WhatsApp, e o link da Ayla entra direto. Antes, quem tocava
-            num link velho caía nesta tela sem saber o que fazer. */}
-        <p className="rounded-md bg-muted/60 px-3 py-2 text-center text-xs text-muted-foreground">
-          Não lembra a senha? Manda <strong className="font-semibold">“quero entrar”</strong> pra
-          Ayla no WhatsApp — ela te envia um link que abre sem senha.
-        </p>
 
         <p className="text-center text-sm text-muted-foreground">
           Ainda não tem conta?{" "}

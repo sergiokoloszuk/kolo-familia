@@ -91,7 +91,13 @@ function Inner() {
       setErro(error.message);
       return;
     }
-    router.replace("/painel");
+    // ⚠️ ANTES ISTO IA PARA `/painel`, e para quem estava com o teste vencido
+    // o painel é o paywall: a pessoa acabava de recuperar a senha e caía numa
+    // tela de cobrança, sem entender se tinha dado certo. `Minha conta` sempre
+    // abre — confirma que a senha nova valeu, mostra o e-mail e leva ao painel
+    // ou aos planos, conforme o caso. Quem tem acesso perde um clique; quem
+    // não tem deixa de bater num muro.
+    router.replace("/configuracoes/conta");
     router.refresh();
   }
 
