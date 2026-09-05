@@ -2614,10 +2614,41 @@ export async function processInbound(
   // caminho inteiro.
   const pedidoDeEditarRotina =
     pedeEditarRotina(inbound.texto) && atoSobreArtefato(inbound.texto) === "editar";
+  // ⚠️ O CLASSIFICADOR VIRA SUGESTÃO, NÃO AUTORIDADE — 05/09/2026, PEND-162.
+  //
+  // ⚠️ O CASO REAL (Claire/Maria, 03/09). A Ayla perguntou "isso acontece mais
+  // na lição de casa ou na rotina da manhã?". A mãe respondeu **"Nós 2, lição e
+  // rotina"** — quer dizer, nos dois. `classificar_intencao` devolveu
+  // `rotina_editar`, a feature abriu, e a conversa morreu em "Não achei uma
+  // rotina pra ajustar 🌿" no meio de uma investigação boa sobre autonomia.
+  //
+  // ⚠️ PROVEI POR EXECUÇÃO que o portão determinístico NÃO acusa essa frase:
+  // `pedeRotina`, `pediuRotinaExplicitamente` e `atoSobreArtefato` dão todos
+  // `false`. E PROVEI PELOS LOGS que o GPT nunca foi chamado naquele turno —
+  // `api_calls` tem `classificar_intencao` às 20:06:45 e a resposta às 20:06:46,
+  // sem nenhum `ayla_experimental`. Um modelo auxiliar de 8 tokens de saída
+  // sequestrou o turno e excluiu o cérebro da conversa.
+  //
+  // A correção é um `&&`: a intenção do classificador passa a precisar do ATO
+  // determinístico sobre o artefato. Não é chamada nova, não é latência, não é
+  // outra IA.
+  //
+  // ⚠️ E O PISO É O ATO, NÃO A MENÇÃO — testei as duas coisas. Exigir menção
+  // (`pedeRotina`) barraria "ajusta a rotina de segunda" e "tira o banho da
+  // rotina", que são pedidos legítimos: era exatamente o que o comentário acima
+  // já avisava, que como gatilho isolado essa função erra mais do que acerta.
+  // `atoSobreArtefato` separa limpo — os casos que devem ir ao GPT ("Nós 2,
+  // lição e rotina", "a rotina da manhã é difícil", "ele não gosta da rotina")
+  // dão todos `ambiguo`; os pedidos reais dão `editar`. `ehFeedbackDeRotina` fica intocado de propósito — o feedback real ("já
+  // faz sozinho", "não funcionou até o jantar") é `ambiguo` para o
+  // classificador e é edição pela NECESSIDADE, não pelo ato; exigir menção ali
+  // mataria o caminho inteiro, como o comentário acima já registrava.
+  const intencaoDeRotinaComPiso =
+    intent === "rotina_editar" && atoSobreArtefato(inbound.texto) === "editar";
   if (
     !seguranca.aberta &&
     !rotinaConversa &&
-    (intent === "rotina_editar" || pedidoDeEditarRotina || ehFeedbackDeRotina)
+    (intencaoDeRotinaComPiso || pedidoDeEditarRotina || ehFeedbackDeRotina)
   ) {
     const ctxR = await loadFamiliaParaEnvio(supabase, family.id);
     const alvo = alvoDaRotina(ctxR, membroConversa);

@@ -232,7 +232,7 @@ describe("I/J/K. o que já existia continua", () => {
     expect(ORCH).toMatch(
       /const pedidoDeEditarRotina =\s*\n\s*pedeEditarRotina\(inbound\.texto\) && atoSobreArtefato\(inbound\.texto\) === "editar";/,
     );
-    expect(ORCH).toMatch(/intent === "rotina_editar" \|\| pedidoDeEditarRotina \|\| ehFeedbackDeRotina/);
+    expect(ORCH).toMatch(/intencaoDeRotinaComPiso \|\| pedidoDeEditarRotina \|\| ehFeedbackDeRotina/);
   });
 
   it("feedback sem âncora devolve a conversa ao fluxo normal", () => {

@@ -44,6 +44,97 @@ export type Prontidao = {
 const NAO = (motivo: string): Prontidao => ({ pronto: false, tema: null, motivo });
 
 /**
+ * ⚠️ O GATE DE EVIDÊNCIA — 05/09/2026, incidente Vanessa/Lucila.
+ *
+ * ⚠️ O QUE ACONTECEU. A Vanessa recebeu um plano cujo tema era **"Responder
+ * 'ok' com clareza"**. A Lucila recebeu **"Dizer 'ok' e seguir instruções"** e
+ * **"Esperar após fazer um pedido"** (depois de dizer "Verdade"). Existe até um
+ * plano chamado **"Jackson tem 9 anos"** — o cadastro da criança virou desafio.
+ *
+ * ⚠️ POR QUE O CRITÉRIO ANTIGO DEIXOU PASSAR. `linhas` é o histórico INTEIRO,
+ * Ayla incluída. Na Vanessa, as 14 últimas mensagens eram seis proativas da
+ * própria Ayla, um aviso de Trial e UMA palavra da mãe: "Ok". O `linhas.length
+ * < 3` foi satisfeito por mensagens que a Kolo escreveu para si mesma, e o
+ * modelo — obrigado a devolver um tema "nas palavras da própria conversa" —
+ * pegou a única palavra disponível.
+ *
+ * ⚠️ MEDI A DIMENSÃO: **51 dos 195 planos (26%)** nasceram até 10 minutos
+ * depois de uma resposta de até três palavras, em 32 famílias. Quatro são
+ * indefensáveis; a maioria é legítima (resposta curta que FECHA uma
+ * investigação rica). Por isso o gate mede a evidência da FAMÍLIA, e não o
+ * tamanho da última mensagem — bloquear por tamanho mataria os legítimos.
+ */
+const MIN_INBOUNDS_COM_SUBSTANCIA = 2;
+/**
+ * Abaixo disto a mensagem é aceite, escolha de menu ou confirmação.
+ *
+ * ⚠️ TRÊS, E NÃO QUATRO. Com quatro, a bancada dos 195 planos reais barrou
+ * **"Aponta e leva — pedindo ajuda"**, e a mãe tinha escrito exatamente
+ * "Aponta e leva": três palavras que SÃO o conteúdo. "Ok", "Verdade", "Sim" e
+ * "2" continuam abaixo do corte. O limiar existe para separar aceite de relato,
+ * não para exigir prosa de quem escreve curto.
+ */
+const PALAVRAS_MIN_SUBSTANCIA = 3;
+
+/**
+ * ⚠️ CONFIRMAÇÃO NÃO É PEDIDO — e é por isso que este gate existe aqui e não
+ * no tamanho da mensagem.
+ *
+ * A oferta ACEITA já tem caminho próprio: `forcar`, que ignora a prontidão por
+ * completo. Logo, tudo que chega neste ponto é o caminho AUTOMÁTICO — e nele um
+ * "ok", um "verdade" ou um "2" nunca podem ser o gatilho, porque não pedem
+ * nada. Foi exatamente assim que nasceram "Responder 'ok' com clareza",
+ * "Dizer 'ok' e seguir instruções" e um plano depois de "Verdade".
+ *
+ * ⚠️ E A REGRA NÃO É "MENSAGEM CURTA". "Aponta e leva" tem três palavras e é
+ * conteúdo puro — a bancada dos 195 planos reais provou que barrar por tamanho
+ * mata o legítimo. O que se barra é a FORMA de confirmar.
+ */
+const CONFIRMACAO_PURA =
+  /^\s*(ok(ay)?|sim|nao|não|isso|certo|exato|verdade|tudo|ambos|blz|beleza|uhum|aham|s|n|👍|✅|[1-9](\s*(e|,)\s*[1-9])*)\s*[.!]?\s*$/i;
+
+/** A última fala da família é só um aceite/escolha, sem conteúdo próprio? */
+export function ultimaFalaEhConfirmacao(texto: string): boolean {
+  return CONFIRMACAO_PURA.test((texto ?? "").trim());
+}
+
+/** "Jackson tem 9 anos", "Lucas, 5 anos" — cadastro, nunca desafio. */
+const TEMA_SO_IDENTIDADE = /^[\p{L}\s]{2,30}?(tem|,)\s*\d{1,2}\s*(anos?|meses)\.?$/iu;
+
+/** Quantas falas da FAMÍLIA trazem conteúdo, e não só aceite ou número. */
+export function inboundsComSubstancia(
+  linhas: ReadonlyArray<{ direcao: string; texto: string | null }>,
+): number {
+  return linhas.filter(
+    (m) =>
+      m.direcao === "inbound" &&
+      (m.texto ?? "").trim().split(/\s+/).filter(Boolean).length >= PALAVRAS_MIN_SUBSTANCIA,
+  ).length;
+}
+
+/**
+ * O tema ecoa a última fala curta da família?
+ *
+ * ⚠️ NÃO É COMPARAÇÃO DE TEXTO INTEIRO. "Responder 'ok' com clareza" não contém
+ * "ok" como substring isolada — contém a PALAVRA. Por isso a checagem é por
+ * token, e só quando a fala é curta: numa fala longa, repetir uma palavra dela
+ * é justamente a personalização que queremos.
+ */
+export function temaEcoaFalaCurta(tema: string, ultimaFalaFamilia: string): boolean {
+  const norm = (s: string) =>
+    s
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[̀-ͯ]/g, "")
+      .split(/[^a-z0-9]+/)
+      .filter(Boolean);
+  const fala = norm(ultimaFalaFamilia);
+  if (fala.length === 0 || fala.length >= PALAVRAS_MIN_SUBSTANCIA) return false;
+  const doTema = new Set(norm(tema));
+  return fala.some((p) => doTema.has(p));
+}
+
+/**
  * Lê as últimas trocas e decide. Chamada leve (Haiku) — roda só quando a ponte
  * já passou pelos freios baratos (cooldown, dedup de 20h, profundidade).
  * Qualquer falha → NÃO entrega: na dúvida, a conversa segue (o silêncio é
@@ -71,6 +162,20 @@ export async function avaliarProntidaoParaPlano(
       .filter((l): l is string => Boolean(l));
 
     if (linhas.length < 3) return NAO("conversa curta demais");
+
+    // ⚠️ A EVIDÊNCIA TEM QUE SER DA FAMÍLIA. Ver o comentário do gate acima:
+    // seis proativas da própria Ayla não são conversa.
+    const brutas = (data ?? []) as Array<{ direcao: string; texto: string | null }>;
+    if (inboundsComSubstancia(brutas) < MIN_INBOUNDS_COM_SUBSTANCIA) {
+      return NAO("sem material da família — só falas da Ayla e respostas curtas");
+    }
+
+    // ⚠️ E O TURNO QUE DISPARA NÃO PODE SER UMA CONFIRMAÇÃO. Ver acima: a
+    // oferta aceita entra por `forcar`; aqui é só o automático.
+    const ultimoInbound = brutas.find((m) => m.direcao === "inbound")?.texto ?? "";
+    if (ultimaFalaEhConfirmacao(ultimoInbound)) {
+      return NAO("último turno da família é confirmação, não pedido");
+    }
 
     const system = `Você avalia se uma conversa entre uma mãe e a assistente Ayla já tem material suficiente pra montar um plano estratégico personalizado pra a criança.
 
@@ -107,6 +212,22 @@ Seja CRITERIOSO: na dúvida, responda false. É melhor conversar mais uma vez do
     // Sem tema não há plano focado — e plano sem foco é o genérico que a
     // Karina não quer.
     if (pronto && !tema) return NAO("pronto sem tema definido");
+
+    // ⚠️ E O TEMA NÃO PODE SER A PALAVRA QUE ELA ACABOU DE DIZER. É o que
+    // produziu "Responder 'ok' com clareza" e "Dizer 'ok' e seguir instruções":
+    // o modelo cumpriu a instrução de usar "as palavras da própria conversa"
+    // quando a única palavra disponível era um aceite.
+    const ultimaFamilia = [...brutas].find((m) => m.direcao === "inbound")?.texto ?? "";
+    if (pronto && tema && temaEcoaFalaCurta(tema, ultimaFamilia)) {
+      return NAO("tema ecoaria a resposta curta da família");
+    }
+    // ⚠️ E IDENTIDADE NÃO É DESAFIO. Existe em produção um plano chamado
+    // **"Jackson tem 9 anos"**: o turno em que a família informa quem é a
+    // criança virou tema de plano estratégico. O `CRITERIO_SUFICIENCIA` já pede
+    // "um desafio concreto e nomeável"; esta é a forma que nunca pode ser um.
+    if (pronto && tema && TEMA_SO_IDENTIDADE.test(tema)) {
+      return NAO("tema é identidade da criança, não desafio");
+    }
     return { pronto, tema, motivo };
   } catch (e) {
     return NAO(`falha: ${e instanceof Error ? e.message : "erro"}`);

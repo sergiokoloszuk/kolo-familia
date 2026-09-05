@@ -173,7 +173,11 @@ describe("durante a segurança, artefato nenhum dispara", () => {
     // mesma e não afrouxou: segurança continua sendo o primeiro termo, e o
     // `ehFeedbackDeRotina` que entrou na disjunção também nasce com ela.
     expect(ORCH).toMatch(
-      /!seguranca\.aberta &&\s*\n?\s*!rotinaConversa &&\s*\n?\s*\(intent === "rotina_editar"/,
+      // 05/09/2026: o primeiro termo da disjunção virou `intencaoDeRotinaComPiso`
+      // — o `intent === "rotina_editar"` do classificador passou a exigir o ATO
+      // determinístico (PEND-162, caso Claire). A exigência deste teste é a
+      // mesma e não afrouxou: segurança continua sendo o primeiro termo.
+      /!seguranca\.aberta &&\s*\n?\s*!rotinaConversa &&\s*\n?\s*\(intencaoDeRotinaComPiso/,
     );
     expect(ORCH).toMatch(/const ehFeedbackDeRotina =\s*\n?\s*!seguranca\.aberta && !rotinaConversa/);
   });
