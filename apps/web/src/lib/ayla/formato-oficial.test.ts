@@ -78,6 +78,33 @@ describe("A · a regra de formato chegou ao caminho OFICIAL", () => {
     );
     expect(sender).toMatch(/message: paraWhatsApp\(params\.texto\)/);
   });
+
+  /**
+   * PEND-FIDELIDADE — o desabafo graduado (05/09/2026).
+   *
+   * ⚠️ O DEFEITO MEDIDO na bancada de fidelidade, 6 execucoes: **0 de 6**
+   * ofereceram a escolha que o §46 do documento da agência pede, **6 de 6**
+   * deram instrução de ação e **5 de 6** abriram rastreio de risco — para uma
+   * mensagem ("não aguento mais… chorei escondida… exausta") que NÃO dispara
+   * `RISCO_INEQUIVOCO`. A regra existe no Core §15, verbatim do §46, e perdeu
+   * para o reflexo de segurança do próprio modelo. Regra que falha em prompt se
+   * corrige por posição: esta linha é a última palavra do último bloco.
+   *
+   * ⚠️ E ELA NÃO AFROUXA NADA. O gate determinístico (`mensagemPedeSeguranca`
+   * → `RISCO_INEQUIVOCO`) segue intocado, e a linha manda fazer a checagem
+   * curta diante de sinal real. O que ela desfaz é tratar tristeza comum como
+   * emergência.
+   */
+  it("3c. MORDE: o desabafo é graduado — acolhimento e escolha antes de rastreio", () => {
+    expect(FORMATO_WHATSAPP).toMatch(/DESABAFO/);
+    expect(FORMATO_WHATSAPP).toMatch(/não rastreio/);
+    expect(FORMATO_WHATSAPP).toMatch(/sinal real/);
+    expect(FORMATO_WHATSAPP).toMatch(/quer contar ou pensar no que fazer/);
+    // A porta determinística de segurança continua de pé, e não é aqui.
+    const seg = readFileSync(resolve(process.cwd(), "src/lib/ayla/estado-seguranca.ts"), "utf8");
+    expect(seg).toMatch(/RISCO_INEQUIVOCO/);
+    expect(seg).toMatch(/suic/);
+  });
 });
 
 // ─────────────────────────────────────────────────────────────────────────────

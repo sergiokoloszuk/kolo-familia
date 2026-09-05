@@ -53,7 +53,12 @@ export type FronteiraDeForma = {
  * amostra, e um de 620 caracteres respondendo "Sim conversa" que é das piores.
  * O que separa as duas não é o tamanho — é a proporção com o que foi pedido.
  */
-export type NaturezaDoTurno = "simples" | "continuacao" | "orientacao" | "tecnico";
+export type NaturezaDoTurno =
+  | "simples"
+  | "continuacao"
+  | "orientacao"
+  | "entrega"
+  | "tecnico";
 
 export type ContextoDeForma = {
   /** A mensagem da família neste turno — é ela que dá a proporção. */
@@ -71,6 +76,17 @@ export const TETO: Record<NaturezaDoTurno, number> = {
   simples: 350,
   continuacao: 500,
   orientacao: 700,
+  // ⚠️ O NÍVEL 3 DO PROMPT MESTRE — e ele precisa caber (05/09/2026).
+  //
+  // MEDI na bancada de fidelidade: "Pode me passar." tem 15 caracteres, caía em
+  // `continuacao` e recebia teto 500 — **o menor dos três turnos da progressão**,
+  // justamente onde o documento da agência quer a resposta MAIOR. Três das seis
+  // execuções do passo a passo saíram acima do teto (507, 507, 729).
+  //
+  // Hoje isso não corta ninguém porque `AYLA_FORMA_MODO` está `off` e a
+  // `FRONTEIRA_TAMANHO` não roda. No dia em que ela for ligada, o Nível 3 passa
+  // a ser regenerado e encurtado em metade dos casos. A inversão é a mina.
+  entrega: 1200,
   tecnico: 1200,
 };
 
@@ -83,6 +99,25 @@ export const TETO: Record<NaturezaDoTurno, number> = {
  */
 const PEDIDO_TECNICO =
   /\blei\b|\bleis\b|jurídic|advogad|laudo|relatóri|documento|ofício|perícia|direito (dele|dela|da|do)|LBI|estatuto|convênio|plano de saúde|medica(ção|mento)|bula|dosagem|receita/i;
+
+/**
+ * PEDIDO EXPLÍCITO DE ENTREGA COMPLETA — o Nível 3 do Prompt Mestre.
+ *
+ * ⚠️ ISTO NÃO É O DETECTOR DE INTENÇÃO, E NÃO PODE VIRAR UM. Quem entende o
+ * pedido é o modelo, com a §4 do Core na mão. Esta lista existe só para o TETO
+ * não estrangular um pedido que o documento manda atender por inteiro — é piso
+ * de espaço, não gatilho de comportamento. Um pedido que ela não reconheça cai
+ * em `orientacao` e continua sendo respondido pelo julgamento do modelo, como
+ * sempre foi.
+ *
+ * ⚠️ "ME MOSTRA" E "ME EXPLICA" FICAM DE FORA, DE PROPÓSITO. O §59 do documento
+ * da agência usa exatamente "Me mostra." e responde em PROSA, ainda no Nível 2.
+ * MEDI: "Me mostra" virou lista numerada em 3 de 6 execuções — antecipar o
+ * Nível 3 é o defeito, não a cura. Aqui entram só os pedidos inequívocos de
+ * entrega completa que o §6 nomeia.
+ */
+const PEDIDO_ENTREGA_COMPLETA =
+  /passo a passo|passo-a-passo|\bpode me passar\b|\bme passa\b|\bme manda\b|\bpode mandar\b|(?:uma |a |o )?lista\b|sequ[êe]ncia (?:completa|de passos|toda)|\broteiro\b|atividade completa|planejamento|instru[çc][ãa]o detalhada|passo por passo|\bpor etapas\b/i;
 
 /** Mensagem curta e sem pedido concreto: cumprimento, "ok", "sim", "obrigada". */
 const MENSAGEM_MINIMA = 25;
@@ -119,6 +154,12 @@ export function naturezaDoTurno(
   // Pedido longo e detalhado também compra espaço: quem escreveu 400 caracteres
   // contando uma situação não recebe bem uma resposta de três linhas.
   if (m.length >= 400) return "tecnico";
+  // ⚠️ ANTES DA REGRA DE TAMANHO, e é essa ordem que corrige a inversão. Um
+  // pedido de entrega completa quase sempre é CURTO ("pode me passar", "manda o
+  // passo a passo") — medir só o comprimento fazia o Nível 3 cair no teto mais
+  // apertado da conversa inteira. O que compra espaço aqui é o que foi PEDIDO,
+  // não quantas letras a pessoa digitou.
+  if (PEDIDO_ENTREGA_COMPLETA.test(m)) return "entrega";
   if (m.length <= MENSAGEM_MINIMA) {
     return jaHouveOrientacao ? "continuacao" : "simples";
   }

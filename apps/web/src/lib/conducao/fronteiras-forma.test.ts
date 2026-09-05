@@ -118,6 +118,40 @@ describe("naturezaDoTurno — a proporção manda", () => {
     expect(TETO.simples).toBeLessThan(TETO.continuacao);
     expect(TETO.continuacao).toBeLessThan(TETO.orientacao);
   });
+
+  /**
+   * PEND-FIDELIDADE — a inversão do Nível 3 (05/09/2026).
+   *
+   * ⚠️ O DEFEITO MEDIDO. "Pode me passar." tem 15 caracteres. Caía em
+   * `continuacao` e recebia teto 500 — **o menor da progressão inteira**, bem
+   * onde o §6 do documento da agência quer a resposta maior. Três das seis
+   * execuções do passo a passo saíram acima (507, 507, 729).
+   */
+  it("MORDE: pedido explícito de entrega completa não cai no teto de continuação", () => {
+    for (const m of [
+      "Pode me passar.",
+      "me passa o passo a passo",
+      "manda a lista",
+      "me manda o roteiro",
+      "pode mandar o planejamento",
+    ]) {
+      expect(naturezaDoTurno(m, true), `"${m}" deveria comprar espaço`).toBe("entrega");
+    }
+    expect(TETO.entrega).toBeGreaterThan(TETO.continuacao);
+    expect(TETO.entrega).toBeGreaterThan(TETO.orientacao);
+  });
+
+  /**
+   * ⚠️ E O CONTRÁRIO PRECISA CONTINUAR VALENDO. O §59 do documento usa
+   * "Me mostra." e responde em PROSA, ainda no Nível 2. MEDI: essa frase virou
+   * lista numerada em 3 de 6 execuções. Transformá-la em `entrega` seria
+   * institucionalizar o defeito em vez de corrigi-lo.
+   */
+  it("MORDE: 'me mostra' e 'me explica' NÃO são Nível 3", () => {
+    for (const m of ["Me mostra.", "me explica", "me ensina", "Como?", "como faço?"]) {
+      expect(naturezaDoTurno(m, true), `"${m}" não é entrega`).not.toBe("entrega");
+    }
+  });
   it("7. pedido com lei/laudo/documento compra teto maior", () => {
     expect(naturezaDoTurno("tem alguma lei que embasa a redução de carga horária?")).toBe("tecnico");
     expect(naturezaDoTurno("preciso mandar o laudo pra escola")).toBe("tecnico");

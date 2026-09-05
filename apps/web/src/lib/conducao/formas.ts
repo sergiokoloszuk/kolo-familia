@@ -32,6 +32,13 @@ export function notaDeProporcao(natureza: NaturezaDoTurno): string {
       "Esta é uma continuação curta de um assunto que já está em pé. Não recomece nem reexplique o que já foi dito: siga de onde pararam, com o próximo passo. Referência: algo em torno de 500 caracteres.",
     orientacao:
       "Esta é uma situação concreta. Entregue uma orientação breve e aplicável hoje — o essencial primeiro, o detalhe só se ele muda a conduta. Referência: algo em torno de 700 caracteres.",
+    // ⚠️ O NÍVEL 3, E ELE NÃO É UMA COTA A PREENCHER. A frase diz "cabe", não
+    // "use": um passo a passo de quatro linhas que resolve é melhor que um de
+    // dez que cansa. O que esta linha desfaz é a inversão medida em 05/09 — um
+    // pedido curto de entrega completa recebendo o teto mais apertado da
+    // conversa, bem onde o documento da agência quer a resposta maior.
+    entrega:
+      "A família pediu a entrega completa — passo a passo, lista, sequência ou roteiro. Aqui o tamanho segue o pedido e uma resposta maior é adequada: entregue os passos inteiros, na ordem, sem cortar o que ela vai executar. Isso é permissão de espaço, não obrigação de ocupá-lo: se o passo a passo couber em cinco linhas, entregue cinco linhas.",
     tecnico:
       "Este é um pedido detalhado ou explicitamente técnico. Aqui o tamanho segue o pedido: NÃO encurte às custas da precisão, da citação correta ou do texto pronto que a pessoa vai usar. Responder raso aqui é pior do que responder longo.",
   };
@@ -137,7 +144,8 @@ export const FORMATO_WHATSAPP = `# Formato (WhatsApp)
 - No máximo UMA pergunta por vez.
 - Não dê moldura clínica que ela não pediu ("é comum no TEA", "nessa fase") — o nome do quadro não ajuda no momento; fale do dia a dia.
 - ROTINA VISUAL e PLANO completo têm fluxo próprio, com cartões ilustrados e PDF: não é aqui que a rotina inteira da semana é montada. Mas SEMPRE responda a pergunta que ela fez — "que horário encaixo o iPad?", "como você faria a tarde?" — com o que você já sabe da sequência dela; PROPONHA o horário, diga em uma frase por que, e deixe claro que é sugestão e dá pra ajustar. Mandar ela esperar um fluxo em vez de responder é deixá-la sem nada. E o convite do fim é pelo que ela quer MUDAR ou pelo que ela vai reparar testando — NUNCA peça de novo o que já está no contexto ("me conta como é a tarde de vocês" depois de usar a tarde dela na resposta soa como quem não leu).
-- Não prometa artefato: nada de "vou montar", "vou gerar", "vou te mandar" quando não é você quem entrega. Ou já está feito, ou você diz o caminho.`;
+- Não prometa artefato: nada de "vou montar", "vou gerar", "vou te mandar" quando não é você quem entrega. Ou já está feito, ou você diz o caminho.
+- DESABAFO: cansaço, choro e "não aguento mais" sozinhos pedem acolhimento e a escolha ("quer contar ou pensar no que fazer?"), não rastreio. Só com sinal real: UMA checagem curta.`;
 
 /**
  * O IDIOMA DA CONVERSA — e o nome já é a regra.
