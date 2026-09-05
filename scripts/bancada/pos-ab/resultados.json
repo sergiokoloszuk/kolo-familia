@@ -1,0 +1,3997 @@
+{
+  "quando": "2026-09-05T19:05:24.435Z",
+  "commit": "4fefcbb",
+  "coreHash": "791c663763329726a1ce73bf7370e073ad9ab7bacd1c0b724ee4128c6d1e0d8f",
+  "n": 6,
+  "ingestao": {
+    "total": 14
+  },
+  "alarmes": [],
+  "nota": "Evidência enxuta: preservados texto, métrica, contexto de busca e os chunks selecionados. Removidos os `chamadas[].system/baseSystem` — o system inteiro repetido 36 vezes respondia por ~5MB e é reconstruível a partir de coreHash + corpus + rodar.mjs.",
+  "resultados": [
+    {
+      "caso": "mario-social",
+      "braco": "A",
+      "execucao": 1,
+      "ctx": {
+        "idadeAnos": 18,
+        "perfil": "TEA",
+        "dominio": "socializacao",
+        "dificuldade": "Meu filho não consegue brincar com outras crianças",
+        "textoDaConversa": "",
+        "objetivo": null
+      },
+      "texto": "Para o Mario, eu não começaria por uma brincadeira livre com várias crianças. **É mais fácil treinar em uma situação curta, com uma pessoa e uma atividade já estruturada**, como desenhar juntos ou conversar sobre carrinhos, com uma frase preparada: “Posso participar?” ou “Você quer me mostrar o que está fazendo?”\n\nNo início, ajude sem falar por ele: combine a situação antes, fique por perto e encerre enquanto ainda estiver tolerável. **O objetivo primeiro é tentar e permanecer um pouco — não fazer amizade imediatamente.**\n\nIsso pesa mais porque ele não sabe como começar ou porque fica ansioso com a possibilidade de ser rejeitado?",
+      "metrica": {
+        "consultasBanco": 6,
+        "chamadasLLM": 1,
+        "tokensEntrada": 8531,
+        "tokensSaida": 300,
+        "msContexto": 56,
+        "msModelo": 7785,
+        "msInspecao": 23,
+        "msTotal": 7864,
+        "modelo": "gpt-5.6-luna",
+        "provider": "openai",
+        "fronteiraBarrou": false,
+        "foco": "unica",
+        "coreOrigem": "admin",
+        "coreVersao": 10,
+        "bpRecuperadas": 2,
+        "bpInjetadas": 2,
+        "bpChars": 2658,
+        "msBp": 48,
+        "jornada_dia": null,
+        "jornada_fechamento": false,
+        "jornada_chars": 0,
+        "trial_doc_chars": 0,
+        "modo": "normal",
+        "pos_trial_chars": 0,
+        "pos_trial_nivel": null,
+        "pos_trial_fatos": null,
+        "forma_modo": "off",
+        "forma_disparou": null,
+        "msParalelo": 49,
+        "msCtx": 38,
+        "msCore": 1,
+        "msTrial": 0,
+        "msOnda1": 1,
+        "msFoco": 0,
+        "msOnda3": 1
+      },
+      "falha": null,
+      "ms": 7865,
+      "blocoChars": 2006,
+      "blocoTexto": null,
+      "selecionados": [
+        {
+          "titulo": "🏫 Tema 6: Relações Sociais, Inclusão Escolar e Mídia",
+          "nucleo": "socializacao",
+          "tipo": "conceito",
+          "score": 77,
+          "faixa": [
+            null,
+            null
+          ],
+          "motivos": [
+            "dominio",
+            "diagnostico",
+            "tipo",
+            "texto"
+          ]
+        },
+        {
+          "titulo": "👤 Tema 7: Vida Adulta e Inserção Organizacional",
+          "nucleo": "autonomia",
+          "tipo": "conceito",
+          "score": 24,
+          "faixa": [
+            216,
+            null
+          ],
+          "motivos": [
+            "faixa_etaria",
+            "diagnostico",
+            "tipo"
+          ]
+        }
+      ],
+      "uso": [
+        {
+          "modelo": "gpt-5.6-luna",
+          "uso": {
+            "prompt_tokens": 8531,
+            "completion_tokens": 300,
+            "total_tokens": 8831,
+            "prompt_tokens_details": {
+              "cached_tokens": 8528,
+              "cache_write_tokens": 0,
+              "audio_tokens": 0
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 156,
+              "audio_tokens": 0,
+              "accepted_prediction_tokens": 0,
+              "rejected_prediction_tokens": 0
+            }
+          },
+          "ms": 7736,
+          "bpChars": 2658
+        }
+      ]
+    },
+    {
+      "caso": "mario-social",
+      "braco": "B",
+      "execucao": 1,
+      "ctx": {
+        "idadeAnos": 18,
+        "perfil": "TEA",
+        "dominio": "socializacao",
+        "dificuldade": "Meu filho não consegue brincar com outras crianças",
+        "textoDaConversa": "",
+        "objetivo": null
+      },
+      "texto": "Com o Mario, eu não começaria cobrando que ele simplesmente “brinque” com outras crianças. Pode ser mais fácil escolher **uma pessoa e uma atividade estruturada**, como desenhar ou brincar com carrinhos, por poucos minutos, combinando antes uma frase simples: **“Quer fazer comigo?”**. Valorize a tentativa, sem corrigir cada resposta; se ele ficar muito ansioso, pause e reduza a pressão.\n\nIsso acontece mais com pessoas da idade dele ou também com crianças menores?",
+      "metrica": {
+        "consultasBanco": 6,
+        "chamadasLLM": 1,
+        "tokensEntrada": 9023,
+        "tokensSaida": 466,
+        "msContexto": 3,
+        "msModelo": 6377,
+        "msInspecao": 7,
+        "msTotal": 6387,
+        "modelo": "gpt-5.6-luna",
+        "provider": "openai",
+        "fronteiraBarrou": false,
+        "foco": "unica",
+        "coreOrigem": "admin",
+        "coreVersao": 10,
+        "bpRecuperadas": 2,
+        "bpInjetadas": 2,
+        "bpChars": 2658,
+        "msBp": 1,
+        "jornada_dia": null,
+        "jornada_fechamento": false,
+        "jornada_chars": 0,
+        "trial_doc_chars": 0,
+        "modo": "normal",
+        "pos_trial_chars": 0,
+        "pos_trial_nivel": null,
+        "pos_trial_fatos": null,
+        "forma_modo": "off",
+        "forma_disparou": null,
+        "msParalelo": 2,
+        "msCtx": 1,
+        "msCore": 0,
+        "msTrial": 0,
+        "msOnda1": 1,
+        "msFoco": 0,
+        "msOnda3": 0
+      },
+      "falha": null,
+      "ms": 6387,
+      "blocoChars": 2006,
+      "blocoTexto": "<conhecimento_de_apoio>\nIsto é CONHECIMENTO DE APOIO para você PENSAR — não é a resposta, não é roteiro e não é obrigatório usar.\n- Trate interpretações como HIPÓTESES, nunca como diagnóstico ou causa afirmada.\n- NÃO copie o texto literalmente. Integre com as suas palavras, no seu tom.\n- NUNCA mencione esta fonte, nem \"a biblioteca\", nem que consultou algo.\n- Use só o que for pertinente ao relato de agora. IGNORE o resto — vir aqui não significa caber.\n- Se houver uma pergunta investigativa aqui, ela NÃO é uma ordem para perguntar. Não faça perguntas a mais só porque existe uma.\n- O movimento deste turno já foi decidido antes (conversar, perguntar ou entregar). Respeite-o.\n- Em qualquer conflito, as regras de segurança, o piso e os limites do Core PREVALECEM sobre tudo isto.\n\n1. * **Participação Social Docente-Discente:** Alunos autistas incluídos em salas regulares frequentemente experimentam dificuldades pragmáticas que geram atritos com professores e isolamento em relação aos pares [66]. A inclusão bem-sucedida exige que o professor mude atitudes de mera cobrança para mediação ativa de suporte pedagógico e ambiental [15, 66]. * **Status Sociométrico de Inclusão:** Pesquisas em pátios escolares indicam que crianças neurodivergentes frequentemente ocupam o *status* de **isolado negligenciado** (ficam sozinhas sem atritos diretos) ou de **isolado controverso**…\n2. * **O Fenótipo Ampliado do Autismo (FAA / BAP):** Caracteriza-se por traços sutis de rigidez, preferências por rotinas fixas e dificuldades pragmáticas leves na interação social em pais e parentes biológicos de pessoas autistas, sem que atinjam o limiar clínico para um diagnóstico formal de TEA [68]. É avaliado clinicamente no Brasil pelo questionário autoadministrado *BAPQ* ( Broad Autism Phenotype Questionnaire) [60, 23]. * **Barreiras Adaptativas e Laborais de Adultos:** Pessoas autistas na vida adulta (mesmo com inteligência na média ou acima e alta escolaridade formal) enfrentam as…\n</conhecimento_de_apoio>",
+      "selecionados": [
+        {
+          "titulo": "🏫 Tema 6: Relações Sociais, Inclusão Escolar e Mídia",
+          "nucleo": "socializacao",
+          "tipo": "conceito",
+          "score": 77,
+          "faixa": [
+            null,
+            null
+          ],
+          "motivos": [
+            "dominio",
+            "diagnostico",
+            "tipo",
+            "texto"
+          ]
+        },
+        {
+          "titulo": "👤 Tema 7: Vida Adulta e Inserção Organizacional",
+          "nucleo": "autonomia",
+          "tipo": "conceito",
+          "score": 24,
+          "faixa": [
+            216,
+            null
+          ],
+          "motivos": [
+            "faixa_etaria",
+            "diagnostico",
+            "tipo"
+          ]
+        }
+      ],
+      "uso": [
+        {
+          "modelo": "gpt-5.6-luna",
+          "uso": {
+            "prompt_tokens": 9023,
+            "completion_tokens": 466,
+            "total_tokens": 9489,
+            "prompt_tokens_details": {
+              "cached_tokens": 9020,
+              "cache_write_tokens": 0,
+              "audio_tokens": 0
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 354,
+              "audio_tokens": 0,
+              "accepted_prediction_tokens": 0,
+              "rejected_prediction_tokens": 0
+            }
+          },
+          "ms": 6353,
+          "bpChars": 2658
+        }
+      ]
+    },
+    {
+      "caso": "mario-social",
+      "braco": "B",
+      "execucao": 2,
+      "ctx": {
+        "idadeAnos": 18,
+        "perfil": "TEA",
+        "dominio": "socializacao",
+        "dificuldade": "Meu filho não consegue brincar com outras crianças",
+        "textoDaConversa": "",
+        "objetivo": null
+      },
+      "texto": "Pode ser mais fácil começar **sem cobrar que ele “brinque” ou faça amizade**. Escolha uma atividade curta e estruturada, como desenhar ou brincar com carrinhos, com apenas uma pessoa; mostre uma forma simples de participar, como trocar turnos ou comentar algo, e encerre antes de ele ficar muito cansado.\n\nVocê pode dizer: **“Vamos fazer juntos por cinco minutos. Eu começo e depois é a sua vez.”** Observe se o mais difícil é iniciar, saber o que falar ou lidar com a ansiedade de ser avaliado. Isso acontece mais com crianças conhecidas ou também em lugares novos?",
+      "metrica": {
+        "consultasBanco": 6,
+        "chamadasLLM": 1,
+        "tokensEntrada": 9023,
+        "tokensSaida": 226,
+        "msContexto": 2,
+        "msModelo": 4385,
+        "msInspecao": 1,
+        "msTotal": 4388,
+        "modelo": "gpt-5.6-luna",
+        "provider": "openai",
+        "fronteiraBarrou": false,
+        "foco": "unica",
+        "coreOrigem": "admin",
+        "coreVersao": 10,
+        "bpRecuperadas": 2,
+        "bpInjetadas": 2,
+        "bpChars": 2658,
+        "msBp": 2,
+        "jornada_dia": null,
+        "jornada_fechamento": false,
+        "jornada_chars": 0,
+        "trial_doc_chars": 0,
+        "modo": "normal",
+        "pos_trial_chars": 0,
+        "pos_trial_nivel": null,
+        "pos_trial_fatos": null,
+        "forma_modo": "off",
+        "forma_disparou": null,
+        "msParalelo": 2,
+        "msCtx": 0,
+        "msCore": 0,
+        "msTrial": 0,
+        "msOnda1": 0,
+        "msFoco": 0,
+        "msOnda3": 0
+      },
+      "falha": null,
+      "ms": 4388,
+      "blocoChars": 2006,
+      "blocoTexto": null,
+      "selecionados": [
+        {
+          "titulo": "🏫 Tema 6: Relações Sociais, Inclusão Escolar e Mídia",
+          "nucleo": "socializacao",
+          "tipo": "conceito",
+          "score": 77,
+          "faixa": [
+            null,
+            null
+          ],
+          "motivos": [
+            "dominio",
+            "diagnostico",
+            "tipo",
+            "texto"
+          ]
+        },
+        {
+          "titulo": "👤 Tema 7: Vida Adulta e Inserção Organizacional",
+          "nucleo": "autonomia",
+          "tipo": "conceito",
+          "score": 24,
+          "faixa": [
+            216,
+            null
+          ],
+          "motivos": [
+            "faixa_etaria",
+            "diagnostico",
+            "tipo"
+          ]
+        }
+      ],
+      "uso": [
+        {
+          "modelo": "gpt-5.6-luna",
+          "uso": {
+            "prompt_tokens": 9023,
+            "completion_tokens": 226,
+            "total_tokens": 9249,
+            "prompt_tokens_details": {
+              "cached_tokens": 9020,
+              "cache_write_tokens": 0,
+              "audio_tokens": 0
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 89,
+              "audio_tokens": 0,
+              "accepted_prediction_tokens": 0,
+              "rejected_prediction_tokens": 0
+            }
+          },
+          "ms": 4353,
+          "bpChars": 2658
+        }
+      ]
+    },
+    {
+      "caso": "mario-social",
+      "braco": "A",
+      "execucao": 2,
+      "ctx": {
+        "idadeAnos": 18,
+        "perfil": "TEA",
+        "dominio": "socializacao",
+        "dificuldade": "Meu filho não consegue brincar com outras crianças",
+        "textoDaConversa": "",
+        "objetivo": null
+      },
+      "texto": "Com o Mario, eu começaria por uma interação **curta e estruturada**, não por uma brincadeira livre: uma pessoa tranquila, uma atividade com começo e fim — como desenhar juntos por 10 minutos — e uma frase combinada, por exemplo: **“Quer fazer isso comigo?”**. Treinem antes em casa, sem pressionar; o objetivo inicial é apenas ele conseguir iniciar ou permanecer um pouco na interação. 💛\n\nQuando está com outras crianças, ele mais **evita**, não sabe como entrar na atividade ou fica ansioso/agressivo?",
+      "metrica": {
+        "consultasBanco": 6,
+        "chamadasLLM": 1,
+        "tokensEntrada": 8531,
+        "tokensSaida": 414,
+        "msContexto": 2,
+        "msModelo": 4523,
+        "msInspecao": 1,
+        "msTotal": 4526,
+        "modelo": "gpt-5.6-luna",
+        "provider": "openai",
+        "fronteiraBarrou": false,
+        "foco": "unica",
+        "coreOrigem": "admin",
+        "coreVersao": 10,
+        "bpRecuperadas": 2,
+        "bpInjetadas": 2,
+        "bpChars": 2658,
+        "msBp": 2,
+        "jornada_dia": null,
+        "jornada_fechamento": false,
+        "jornada_chars": 0,
+        "trial_doc_chars": 0,
+        "modo": "normal",
+        "pos_trial_chars": 0,
+        "pos_trial_nivel": null,
+        "pos_trial_fatos": null,
+        "forma_modo": "off",
+        "forma_disparou": null,
+        "msParalelo": 2,
+        "msCtx": 0,
+        "msCore": 0,
+        "msTrial": 0,
+        "msOnda1": 0,
+        "msFoco": 0,
+        "msOnda3": 0
+      },
+      "falha": null,
+      "ms": 4526,
+      "blocoChars": 2006,
+      "blocoTexto": null,
+      "selecionados": [
+        {
+          "titulo": "🏫 Tema 6: Relações Sociais, Inclusão Escolar e Mídia",
+          "nucleo": "socializacao",
+          "tipo": "conceito",
+          "score": 77,
+          "faixa": [
+            null,
+            null
+          ],
+          "motivos": [
+            "dominio",
+            "diagnostico",
+            "tipo",
+            "texto"
+          ]
+        },
+        {
+          "titulo": "👤 Tema 7: Vida Adulta e Inserção Organizacional",
+          "nucleo": "autonomia",
+          "tipo": "conceito",
+          "score": 24,
+          "faixa": [
+            216,
+            null
+          ],
+          "motivos": [
+            "faixa_etaria",
+            "diagnostico",
+            "tipo"
+          ]
+        }
+      ],
+      "uso": [
+        {
+          "modelo": "gpt-5.6-luna",
+          "uso": {
+            "prompt_tokens": 8531,
+            "completion_tokens": 414,
+            "total_tokens": 8945,
+            "prompt_tokens_details": {
+              "cached_tokens": 8528,
+              "cache_write_tokens": 0,
+              "audio_tokens": 0
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 289,
+              "audio_tokens": 0,
+              "accepted_prediction_tokens": 0,
+              "rejected_prediction_tokens": 0
+            }
+          },
+          "ms": 4486,
+          "bpChars": 2658
+        }
+      ]
+    },
+    {
+      "caso": "mario-social",
+      "braco": "A",
+      "execucao": 3,
+      "ctx": {
+        "idadeAnos": 18,
+        "perfil": "TEA",
+        "dominio": "socializacao",
+        "dificuldade": "Meu filho não consegue brincar com outras crianças",
+        "textoDaConversa": "",
+        "objetivo": null
+      },
+      "texto": "Pode ser mais fácil começar por uma **atividade compartilhada e com pouca exigência de conversa**, em vez de esperar que ele saiba brincar livremente. Por exemplo, desenhar juntos ou fazer algo com um objetivo claro, por poucos minutos, e você modelar: **“Eu faço uma parte e você faz outra; depois trocamos.”** Evite pressioná-lo a falar ou fazer amizade na hora; primeiro, ajude-o a se sentir seguro perto do outro.\n\nQuando ele está com outras pessoas, o mais difícil é **se aproximar** ou continuar na interação depois que começa?",
+      "metrica": {
+        "consultasBanco": 6,
+        "chamadasLLM": 1,
+        "tokensEntrada": 8531,
+        "tokensSaida": 305,
+        "msContexto": 3,
+        "msModelo": 4202,
+        "msInspecao": 1,
+        "msTotal": 4206,
+        "modelo": "gpt-5.6-luna",
+        "provider": "openai",
+        "fronteiraBarrou": false,
+        "foco": "unica",
+        "coreOrigem": "admin",
+        "coreVersao": 10,
+        "bpRecuperadas": 2,
+        "bpInjetadas": 2,
+        "bpChars": 2658,
+        "msBp": 3,
+        "jornada_dia": null,
+        "jornada_fechamento": false,
+        "jornada_chars": 0,
+        "trial_doc_chars": 0,
+        "modo": "normal",
+        "pos_trial_chars": 0,
+        "pos_trial_nivel": null,
+        "pos_trial_fatos": null,
+        "forma_modo": "off",
+        "forma_disparou": null,
+        "msParalelo": 3,
+        "msCtx": 0,
+        "msCore": 0,
+        "msTrial": 0,
+        "msOnda1": 0,
+        "msFoco": 0,
+        "msOnda3": 0
+      },
+      "falha": null,
+      "ms": 4206,
+      "blocoChars": 2006,
+      "blocoTexto": null,
+      "selecionados": [
+        {
+          "titulo": "🏫 Tema 6: Relações Sociais, Inclusão Escolar e Mídia",
+          "nucleo": "socializacao",
+          "tipo": "conceito",
+          "score": 77,
+          "faixa": [
+            null,
+            null
+          ],
+          "motivos": [
+            "dominio",
+            "diagnostico",
+            "tipo",
+            "texto"
+          ]
+        },
+        {
+          "titulo": "👤 Tema 7: Vida Adulta e Inserção Organizacional",
+          "nucleo": "autonomia",
+          "tipo": "conceito",
+          "score": 24,
+          "faixa": [
+            216,
+            null
+          ],
+          "motivos": [
+            "faixa_etaria",
+            "diagnostico",
+            "tipo"
+          ]
+        }
+      ],
+      "uso": [
+        {
+          "modelo": "gpt-5.6-luna",
+          "uso": {
+            "prompt_tokens": 8531,
+            "completion_tokens": 305,
+            "total_tokens": 8836,
+            "prompt_tokens_details": {
+              "cached_tokens": 8528,
+              "cache_write_tokens": 0,
+              "audio_tokens": 0
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 176,
+              "audio_tokens": 0,
+              "accepted_prediction_tokens": 0,
+              "rejected_prediction_tokens": 0
+            }
+          },
+          "ms": 4168,
+          "bpChars": 2658
+        }
+      ]
+    },
+    {
+      "caso": "mario-social",
+      "braco": "B",
+      "execucao": 3,
+      "ctx": {
+        "idadeAnos": 18,
+        "perfil": "TEA",
+        "dominio": "socializacao",
+        "dificuldade": "Meu filho não consegue brincar com outras crianças",
+        "textoDaConversa": "",
+        "objetivo": null
+      },
+      "texto": "Pode ajudar começar **sem exigir que ele “brinque” ou converse livremente**. Escolha uma pessoa tranquila, uma atividade com começo e fim — como desenhar ou montar algo com carrinhos — e faça um convite simples: **“Vamos fazer juntos por 10 minutos?”**; você pode mediar no início, mostrando como pedir, esperar a vez e comentar algo.\n\nComo ele já antecipa que vai falhar, comece com encontros curtos e previsíveis, valorizando a tentativa, não o quanto ele falou. Quando ele trava, reduza a cobrança e ofereça uma frase pronta, como **“Posso participar?”** ou **“Você quer desenhar comigo?”**\n\nIsso acontece mais porque ele não sabe como iniciar, porque fica ansioso ou porque perde o interesse depois de pouco tempo?",
+      "metrica": {
+        "consultasBanco": 6,
+        "chamadasLLM": 1,
+        "tokensEntrada": 9023,
+        "tokensSaida": 351,
+        "msContexto": 2,
+        "msModelo": 5071,
+        "msInspecao": 0,
+        "msTotal": 5074,
+        "modelo": "gpt-5.6-luna",
+        "provider": "openai",
+        "fronteiraBarrou": false,
+        "foco": "unica",
+        "coreOrigem": "admin",
+        "coreVersao": 10,
+        "bpRecuperadas": 2,
+        "bpInjetadas": 2,
+        "bpChars": 2658,
+        "msBp": 2,
+        "jornada_dia": null,
+        "jornada_fechamento": false,
+        "jornada_chars": 0,
+        "trial_doc_chars": 0,
+        "modo": "normal",
+        "pos_trial_chars": 0,
+        "pos_trial_nivel": null,
+        "pos_trial_fatos": null,
+        "forma_modo": "off",
+        "forma_disparou": null,
+        "msParalelo": 2,
+        "msCtx": 0,
+        "msCore": 0,
+        "msTrial": 0,
+        "msOnda1": 0,
+        "msFoco": 0,
+        "msOnda3": 0
+      },
+      "falha": null,
+      "ms": 5074,
+      "blocoChars": 2006,
+      "blocoTexto": null,
+      "selecionados": [
+        {
+          "titulo": "🏫 Tema 6: Relações Sociais, Inclusão Escolar e Mídia",
+          "nucleo": "socializacao",
+          "tipo": "conceito",
+          "score": 77,
+          "faixa": [
+            null,
+            null
+          ],
+          "motivos": [
+            "dominio",
+            "diagnostico",
+            "tipo",
+            "texto"
+          ]
+        },
+        {
+          "titulo": "👤 Tema 7: Vida Adulta e Inserção Organizacional",
+          "nucleo": "autonomia",
+          "tipo": "conceito",
+          "score": 24,
+          "faixa": [
+            216,
+            null
+          ],
+          "motivos": [
+            "faixa_etaria",
+            "diagnostico",
+            "tipo"
+          ]
+        }
+      ],
+      "uso": [
+        {
+          "modelo": "gpt-5.6-luna",
+          "uso": {
+            "prompt_tokens": 9023,
+            "completion_tokens": 351,
+            "total_tokens": 9374,
+            "prompt_tokens_details": {
+              "cached_tokens": 9020,
+              "cache_write_tokens": 0,
+              "audio_tokens": 0
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 175,
+              "audio_tokens": 0,
+              "accepted_prediction_tokens": 0,
+              "rejected_prediction_tokens": 0
+            }
+          },
+          "ms": 5036,
+          "bpChars": 2658
+        }
+      ]
+    },
+    {
+      "caso": "mario-social",
+      "braco": "B",
+      "execucao": 4,
+      "ctx": {
+        "idadeAnos": 18,
+        "perfil": "TEA",
+        "dominio": "socializacao",
+        "dificuldade": "Meu filho não consegue brincar com outras crianças",
+        "textoDaConversa": "",
+        "objetivo": null
+      },
+      "texto": "Com o Mario, talvez seja mais fácil começar por uma interação **curta e estruturada**, em vez de esperar que ele saiba brincar espontaneamente com outras crianças. Escolha uma atividade com algo que ele goste, como desenhar ou carrinhos, combine uma ação simples — mostrar, escolher ou comentar — e fique por perto para ajudar sem falar por ele.\n\nVocê pode dizer: **“Vamos ficar cinco minutos desenhando juntos. Se quiser parar, me avisa.”** O objetivo inicial não é fazer amizade, mas tolerar a presença, participar um pouco e sair antes de ficar sobrecarregado. Isso acontece mais em encontros livres ou ele também evita quando a atividade é organizada?",
+      "metrica": {
+        "consultasBanco": 6,
+        "chamadasLLM": 1,
+        "tokensEntrada": 9023,
+        "tokensSaida": 261,
+        "msContexto": 2,
+        "msModelo": 4287,
+        "msInspecao": 1,
+        "msTotal": 4290,
+        "modelo": "gpt-5.6-luna",
+        "provider": "openai",
+        "fronteiraBarrou": false,
+        "foco": "unica",
+        "coreOrigem": "admin",
+        "coreVersao": 10,
+        "bpRecuperadas": 2,
+        "bpInjetadas": 2,
+        "bpChars": 2658,
+        "msBp": 2,
+        "jornada_dia": null,
+        "jornada_fechamento": false,
+        "jornada_chars": 0,
+        "trial_doc_chars": 0,
+        "modo": "normal",
+        "pos_trial_chars": 0,
+        "pos_trial_nivel": null,
+        "pos_trial_fatos": null,
+        "forma_modo": "off",
+        "forma_disparou": null,
+        "msParalelo": 2,
+        "msCtx": 0,
+        "msCore": 0,
+        "msTrial": 0,
+        "msOnda1": 0,
+        "msFoco": 0,
+        "msOnda3": 0
+      },
+      "falha": null,
+      "ms": 4290,
+      "blocoChars": 2006,
+      "blocoTexto": null,
+      "selecionados": [
+        {
+          "titulo": "🏫 Tema 6: Relações Sociais, Inclusão Escolar e Mídia",
+          "nucleo": "socializacao",
+          "tipo": "conceito",
+          "score": 77,
+          "faixa": [
+            null,
+            null
+          ],
+          "motivos": [
+            "dominio",
+            "diagnostico",
+            "tipo",
+            "texto"
+          ]
+        },
+        {
+          "titulo": "👤 Tema 7: Vida Adulta e Inserção Organizacional",
+          "nucleo": "autonomia",
+          "tipo": "conceito",
+          "score": 24,
+          "faixa": [
+            216,
+            null
+          ],
+          "motivos": [
+            "faixa_etaria",
+            "diagnostico",
+            "tipo"
+          ]
+        }
+      ],
+      "uso": [
+        {
+          "modelo": "gpt-5.6-luna",
+          "uso": {
+            "prompt_tokens": 9023,
+            "completion_tokens": 261,
+            "total_tokens": 9284,
+            "prompt_tokens_details": {
+              "cached_tokens": 9020,
+              "cache_write_tokens": 0,
+              "audio_tokens": 0
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 114,
+              "audio_tokens": 0,
+              "accepted_prediction_tokens": 0,
+              "rejected_prediction_tokens": 0
+            }
+          },
+          "ms": 4242,
+          "bpChars": 2658
+        }
+      ]
+    },
+    {
+      "caso": "mario-social",
+      "braco": "A",
+      "execucao": 4,
+      "ctx": {
+        "idadeAnos": 18,
+        "perfil": "TEA",
+        "dominio": "socializacao",
+        "dificuldade": "Meu filho não consegue brincar com outras crianças",
+        "textoDaConversa": "",
+        "objetivo": null
+      },
+      "texto": "Com o Mario, pode ajudar começar por **interações curtas e estruturadas**, em vez de esperar que ele entre numa brincadeira espontaneamente. Escolha alguém tranquilo e uma atividade de interesse dele, como desenhar ou brincar com carrinhos, e combine uma troca simples: **“Você mostra o seu desenho e depois pergunta o que ele gosta.”** Não force quando ele travar; faça você uma demonstração calma primeiro. 💛\n\nIsso acontece mais por **vergonha e medo de errar**, ou ele também não sabe como iniciar a conversa?",
+      "metrica": {
+        "consultasBanco": 6,
+        "chamadasLLM": 1,
+        "tokensEntrada": 8531,
+        "tokensSaida": 226,
+        "msContexto": 3,
+        "msModelo": 3686,
+        "msInspecao": 1,
+        "msTotal": 3690,
+        "modelo": "gpt-5.6-luna",
+        "provider": "openai",
+        "fronteiraBarrou": false,
+        "foco": "unica",
+        "coreOrigem": "admin",
+        "coreVersao": 10,
+        "bpRecuperadas": 2,
+        "bpInjetadas": 2,
+        "bpChars": 2658,
+        "msBp": 3,
+        "jornada_dia": null,
+        "jornada_fechamento": false,
+        "jornada_chars": 0,
+        "trial_doc_chars": 0,
+        "modo": "normal",
+        "pos_trial_chars": 0,
+        "pos_trial_nivel": null,
+        "pos_trial_fatos": null,
+        "forma_modo": "off",
+        "forma_disparou": null,
+        "msParalelo": 3,
+        "msCtx": 1,
+        "msCore": 0,
+        "msTrial": 0,
+        "msOnda1": 0,
+        "msFoco": 0,
+        "msOnda3": 0
+      },
+      "falha": null,
+      "ms": 3690,
+      "blocoChars": 2006,
+      "blocoTexto": null,
+      "selecionados": [
+        {
+          "titulo": "🏫 Tema 6: Relações Sociais, Inclusão Escolar e Mídia",
+          "nucleo": "socializacao",
+          "tipo": "conceito",
+          "score": 77,
+          "faixa": [
+            null,
+            null
+          ],
+          "motivos": [
+            "dominio",
+            "diagnostico",
+            "tipo",
+            "texto"
+          ]
+        },
+        {
+          "titulo": "👤 Tema 7: Vida Adulta e Inserção Organizacional",
+          "nucleo": "autonomia",
+          "tipo": "conceito",
+          "score": 24,
+          "faixa": [
+            216,
+            null
+          ],
+          "motivos": [
+            "faixa_etaria",
+            "diagnostico",
+            "tipo"
+          ]
+        }
+      ],
+      "uso": [
+        {
+          "modelo": "gpt-5.6-luna",
+          "uso": {
+            "prompt_tokens": 8531,
+            "completion_tokens": 226,
+            "total_tokens": 8757,
+            "prompt_tokens_details": {
+              "cached_tokens": 8528,
+              "cache_write_tokens": 0,
+              "audio_tokens": 0
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 103,
+              "audio_tokens": 0,
+              "accepted_prediction_tokens": 0,
+              "rejected_prediction_tokens": 0
+            }
+          },
+          "ms": 3652,
+          "bpChars": 2658
+        }
+      ]
+    },
+    {
+      "caso": "mario-social",
+      "braco": "A",
+      "execucao": 5,
+      "ctx": {
+        "idadeAnos": 18,
+        "perfil": "TEA",
+        "dominio": "socializacao",
+        "dificuldade": "Meu filho não consegue brincar com outras crianças",
+        "textoDaConversa": "",
+        "objetivo": null
+      },
+      "texto": "Pode começar sem esperar que ele brinque em grupo. **Escolha uma criança tranquila, uma atividade com começo e fim** — como desenhar ou brincar com carrinhos — e fique por perto para ajudar a iniciar: “Você pode mostrar seu desenho e perguntar qual ele prefere.”\n\nFaça um encontro curto, de 10 a 15 minutos, sem exigir que ele fale o tempo todo. Se ele ficar ansioso, reduza a cobrança e modele uma frase simples, como **“posso brincar com você?”**. O que mais trava o Mario: chegar perto, iniciar a conversa ou continuar depois que começa?",
+      "metrica": {
+        "consultasBanco": 6,
+        "chamadasLLM": 1,
+        "tokensEntrada": 8531,
+        "tokensSaida": 217,
+        "msContexto": 2,
+        "msModelo": 3244,
+        "msInspecao": 1,
+        "msTotal": 3247,
+        "modelo": "gpt-5.6-luna",
+        "provider": "openai",
+        "fronteiraBarrou": false,
+        "foco": "unica",
+        "coreOrigem": "admin",
+        "coreVersao": 10,
+        "bpRecuperadas": 2,
+        "bpInjetadas": 2,
+        "bpChars": 2658,
+        "msBp": 2,
+        "jornada_dia": null,
+        "jornada_fechamento": false,
+        "jornada_chars": 0,
+        "trial_doc_chars": 0,
+        "modo": "normal",
+        "pos_trial_chars": 0,
+        "pos_trial_nivel": null,
+        "pos_trial_fatos": null,
+        "forma_modo": "off",
+        "forma_disparou": null,
+        "msParalelo": 2,
+        "msCtx": 1,
+        "msCore": 0,
+        "msTrial": 0,
+        "msOnda1": 0,
+        "msFoco": 0,
+        "msOnda3": 0
+      },
+      "falha": null,
+      "ms": 3247,
+      "blocoChars": 2006,
+      "blocoTexto": null,
+      "selecionados": [
+        {
+          "titulo": "🏫 Tema 6: Relações Sociais, Inclusão Escolar e Mídia",
+          "nucleo": "socializacao",
+          "tipo": "conceito",
+          "score": 77,
+          "faixa": [
+            null,
+            null
+          ],
+          "motivos": [
+            "dominio",
+            "diagnostico",
+            "tipo",
+            "texto"
+          ]
+        },
+        {
+          "titulo": "👤 Tema 7: Vida Adulta e Inserção Organizacional",
+          "nucleo": "autonomia",
+          "tipo": "conceito",
+          "score": 24,
+          "faixa": [
+            216,
+            null
+          ],
+          "motivos": [
+            "faixa_etaria",
+            "diagnostico",
+            "tipo"
+          ]
+        }
+      ],
+      "uso": [
+        {
+          "modelo": "gpt-5.6-luna",
+          "uso": {
+            "prompt_tokens": 8531,
+            "completion_tokens": 217,
+            "total_tokens": 8748,
+            "prompt_tokens_details": {
+              "cached_tokens": 8528,
+              "cache_write_tokens": 0,
+              "audio_tokens": 0
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 83,
+              "audio_tokens": 0,
+              "accepted_prediction_tokens": 0,
+              "rejected_prediction_tokens": 0
+            }
+          },
+          "ms": 3222,
+          "bpChars": 2658
+        }
+      ]
+    },
+    {
+      "caso": "mario-social",
+      "braco": "B",
+      "execucao": 5,
+      "ctx": {
+        "idadeAnos": 18,
+        "perfil": "TEA",
+        "dominio": "socializacao",
+        "dificuldade": "Meu filho não consegue brincar com outras crianças",
+        "textoDaConversa": "",
+        "objetivo": null
+      },
+      "texto": "Pode ser mais fácil começar **sem exigir uma brincadeira livre**, porque ela deixa muitas decisões abertas. Escolha uma atividade com começo e fim — como desenhar juntos ou brincar com carrinhos — e combine uma única fala para o Mario usar, como: **“Quer fazer isso comigo?”**; depois, mantenha o encontro curto e encerre antes de ele ficar muito cansado.\n\nComo o Mario tem 18 anos, você está falando de interagir com **pessoas da idade dele ou com crianças menores**?",
+      "metrica": {
+        "consultasBanco": 6,
+        "chamadasLLM": 1,
+        "tokensEntrada": 9023,
+        "tokensSaida": 330,
+        "msContexto": 2,
+        "msModelo": 4754,
+        "msInspecao": 1,
+        "msTotal": 4757,
+        "modelo": "gpt-5.6-luna",
+        "provider": "openai",
+        "fronteiraBarrou": false,
+        "foco": "unica",
+        "coreOrigem": "admin",
+        "coreVersao": 10,
+        "bpRecuperadas": 2,
+        "bpInjetadas": 2,
+        "bpChars": 2658,
+        "msBp": 2,
+        "jornada_dia": null,
+        "jornada_fechamento": false,
+        "jornada_chars": 0,
+        "trial_doc_chars": 0,
+        "modo": "normal",
+        "pos_trial_chars": 0,
+        "pos_trial_nivel": null,
+        "pos_trial_fatos": null,
+        "forma_modo": "off",
+        "forma_disparou": null,
+        "msParalelo": 2,
+        "msCtx": 0,
+        "msCore": 0,
+        "msTrial": 0,
+        "msOnda1": 0,
+        "msFoco": 0,
+        "msOnda3": 0
+      },
+      "falha": null,
+      "ms": 4757,
+      "blocoChars": 2006,
+      "blocoTexto": null,
+      "selecionados": [
+        {
+          "titulo": "🏫 Tema 6: Relações Sociais, Inclusão Escolar e Mídia",
+          "nucleo": "socializacao",
+          "tipo": "conceito",
+          "score": 77,
+          "faixa": [
+            null,
+            null
+          ],
+          "motivos": [
+            "dominio",
+            "diagnostico",
+            "tipo",
+            "texto"
+          ]
+        },
+        {
+          "titulo": "👤 Tema 7: Vida Adulta e Inserção Organizacional",
+          "nucleo": "autonomia",
+          "tipo": "conceito",
+          "score": 24,
+          "faixa": [
+            216,
+            null
+          ],
+          "motivos": [
+            "faixa_etaria",
+            "diagnostico",
+            "tipo"
+          ]
+        }
+      ],
+      "uso": [
+        {
+          "modelo": "gpt-5.6-luna",
+          "uso": {
+            "prompt_tokens": 9023,
+            "completion_tokens": 330,
+            "total_tokens": 9353,
+            "prompt_tokens_details": {
+              "cached_tokens": 9020,
+              "cache_write_tokens": 0,
+              "audio_tokens": 0
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 216,
+              "audio_tokens": 0,
+              "accepted_prediction_tokens": 0,
+              "rejected_prediction_tokens": 0
+            }
+          },
+          "ms": 4736,
+          "bpChars": 2658
+        }
+      ]
+    },
+    {
+      "caso": "mario-social",
+      "braco": "B",
+      "execucao": 6,
+      "ctx": {
+        "idadeAnos": 18,
+        "perfil": "TEA",
+        "dominio": "socializacao",
+        "dificuldade": "Meu filho não consegue brincar com outras crianças",
+        "textoDaConversa": "",
+        "objetivo": null
+      },
+      "texto": "Pode ajudar começar com **uma atividade estruturada e curta**, em vez de esperar que ele saiba brincar espontaneamente. Como ele gosta de carrinhos e desenhar, convide apenas um colega para uma tarefa com começo e fim, como montar uma pista ou desenhar juntos; você pode modelar frases simples: **“Agora é sua vez”** e **“Quer escolher este?”**. O objetivo inicial não precisa ser fazer amizade, mas **conseguir permanecer e participar por alguns minutos**, sem pressão.\n\nA dificuldade maior aparece para se aproximar ou depois que a brincadeira começa?",
+      "metrica": {
+        "consultasBanco": 6,
+        "chamadasLLM": 1,
+        "tokensEntrada": 9023,
+        "tokensSaida": 251,
+        "msContexto": 4,
+        "msModelo": 4243,
+        "msInspecao": 0,
+        "msTotal": 4247,
+        "modelo": "gpt-5.6-luna",
+        "provider": "openai",
+        "fronteiraBarrou": false,
+        "foco": "unica",
+        "coreOrigem": "admin",
+        "coreVersao": 10,
+        "bpRecuperadas": 2,
+        "bpInjetadas": 2,
+        "bpChars": 2658,
+        "msBp": 4,
+        "jornada_dia": null,
+        "jornada_fechamento": false,
+        "jornada_chars": 0,
+        "trial_doc_chars": 0,
+        "modo": "normal",
+        "pos_trial_chars": 0,
+        "pos_trial_nivel": null,
+        "pos_trial_fatos": null,
+        "forma_modo": "off",
+        "forma_disparou": null,
+        "msParalelo": 4,
+        "msCtx": 0,
+        "msCore": 0,
+        "msTrial": 0,
+        "msOnda1": 0,
+        "msFoco": 0,
+        "msOnda3": 0
+      },
+      "falha": null,
+      "ms": 4247,
+      "blocoChars": 2006,
+      "blocoTexto": null,
+      "selecionados": [
+        {
+          "titulo": "🏫 Tema 6: Relações Sociais, Inclusão Escolar e Mídia",
+          "nucleo": "socializacao",
+          "tipo": "conceito",
+          "score": 77,
+          "faixa": [
+            null,
+            null
+          ],
+          "motivos": [
+            "dominio",
+            "diagnostico",
+            "tipo",
+            "texto"
+          ]
+        },
+        {
+          "titulo": "👤 Tema 7: Vida Adulta e Inserção Organizacional",
+          "nucleo": "autonomia",
+          "tipo": "conceito",
+          "score": 24,
+          "faixa": [
+            216,
+            null
+          ],
+          "motivos": [
+            "faixa_etaria",
+            "diagnostico",
+            "tipo"
+          ]
+        }
+      ],
+      "uso": [
+        {
+          "modelo": "gpt-5.6-luna",
+          "uso": {
+            "prompt_tokens": 9023,
+            "completion_tokens": 251,
+            "total_tokens": 9274,
+            "prompt_tokens_details": {
+              "cached_tokens": 9020,
+              "cache_write_tokens": 0,
+              "audio_tokens": 0
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 124,
+              "audio_tokens": 0,
+              "accepted_prediction_tokens": 0,
+              "rejected_prediction_tokens": 0
+            }
+          },
+          "ms": 4224,
+          "bpChars": 2658
+        }
+      ]
+    },
+    {
+      "caso": "mario-social",
+      "braco": "A",
+      "execucao": 6,
+      "ctx": {
+        "idadeAnos": 18,
+        "perfil": "TEA",
+        "dominio": "socializacao",
+        "dificuldade": "Meu filho não consegue brincar com outras crianças",
+        "textoDaConversa": "",
+        "objetivo": null
+      },
+      "texto": "Pode ser mais fácil para o Mario começar por uma interação **curta, estruturada e com um interesse em comum**, em vez de esperar que ele saiba brincar ou conversar espontaneamente. Combine uma atividade simples, como desenhar juntos ou montar algo, e ensaie antes uma frase: **“Oi, quer fazer isso comigo?”**; fique por perto e encerre antes de ele se cansar, para a experiência terminar bem.\n\nEle trava mais por **não saber como se aproximar**, por vergonha ou porque não consegue acompanhar a brincadeira?",
+      "metrica": {
+        "consultasBanco": 6,
+        "chamadasLLM": 1,
+        "tokensEntrada": 8531,
+        "tokensSaida": 233,
+        "msContexto": 2,
+        "msModelo": 3983,
+        "msInspecao": 1,
+        "msTotal": 3986,
+        "modelo": "gpt-5.6-luna",
+        "provider": "openai",
+        "fronteiraBarrou": false,
+        "foco": "unica",
+        "coreOrigem": "admin",
+        "coreVersao": 10,
+        "bpRecuperadas": 2,
+        "bpInjetadas": 2,
+        "bpChars": 2658,
+        "msBp": 1,
+        "jornada_dia": null,
+        "jornada_fechamento": false,
+        "jornada_chars": 0,
+        "trial_doc_chars": 0,
+        "modo": "normal",
+        "pos_trial_chars": 0,
+        "pos_trial_nivel": null,
+        "pos_trial_fatos": null,
+        "forma_modo": "off",
+        "forma_disparou": null,
+        "msParalelo": 2,
+        "msCtx": 1,
+        "msCore": 0,
+        "msTrial": 0,
+        "msOnda1": 1,
+        "msFoco": 0,
+        "msOnda3": 0
+      },
+      "falha": null,
+      "ms": 3986,
+      "blocoChars": 2006,
+      "blocoTexto": null,
+      "selecionados": [
+        {
+          "titulo": "🏫 Tema 6: Relações Sociais, Inclusão Escolar e Mídia",
+          "nucleo": "socializacao",
+          "tipo": "conceito",
+          "score": 77,
+          "faixa": [
+            null,
+            null
+          ],
+          "motivos": [
+            "dominio",
+            "diagnostico",
+            "tipo",
+            "texto"
+          ]
+        },
+        {
+          "titulo": "👤 Tema 7: Vida Adulta e Inserção Organizacional",
+          "nucleo": "autonomia",
+          "tipo": "conceito",
+          "score": 24,
+          "faixa": [
+            216,
+            null
+          ],
+          "motivos": [
+            "faixa_etaria",
+            "diagnostico",
+            "tipo"
+          ]
+        }
+      ],
+      "uso": [
+        {
+          "modelo": "gpt-5.6-luna",
+          "uso": {
+            "prompt_tokens": 8531,
+            "completion_tokens": 233,
+            "total_tokens": 8764,
+            "prompt_tokens_details": {
+              "cached_tokens": 8528,
+              "cache_write_tokens": 0,
+              "audio_tokens": 0
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 114,
+              "audio_tokens": 0,
+              "accepted_prediction_tokens": 0,
+              "rejected_prediction_tokens": 0
+            }
+          },
+          "ms": 3965,
+          "bpChars": 2658
+        }
+      ]
+    },
+    {
+      "caso": "mario-limite",
+      "braco": "A",
+      "execucao": 1,
+      "ctx": {
+        "idadeAnos": 18,
+        "perfil": "TEA",
+        "dominio": "emocional",
+        "dificuldade": "Toda vez que eu falo não ele começa a gritar. detesta ser frustrado",
+        "textoDaConversa": "Quero que ele aprenda a aceitar o limite, não receber sempre outra opção.",
+        "objetivo": "Quero que ele aprenda a aceitar o limite, não receber sempre outra opção."
+      },
+      "texto": "Quando você disser não, tente **não oferecer outra opção automaticamente**. Fale pouco e mantenha o limite: **“Eu sei que você queria. A resposta continua sendo não. Quando sua voz baixar, conversamos.”**\n\nEnquanto ele grita, evite explicar, discutir ou tentar convencer. Dê espaço e reduza a conversa; depois, já calmo, reconheça o que ele conseguiu fazer: **“Você ficou frustrado e conseguiu se acalmar. Da próxima vez, pode dizer ‘fiquei bravo’ ou pedir um tempo.”** Comece treinando isso em situações pequenas, para ele praticar tolerar um não sem chegar ao auge.",
+      "metrica": {
+        "consultasBanco": 6,
+        "chamadasLLM": 1,
+        "tokensEntrada": 8945,
+        "tokensSaida": 307,
+        "msContexto": 3,
+        "msModelo": 4946,
+        "msInspecao": 1,
+        "msTotal": 4950,
+        "modelo": "gpt-5.6-luna",
+        "provider": "openai",
+        "fronteiraBarrou": false,
+        "foco": "unica",
+        "coreOrigem": "admin",
+        "coreVersao": 10,
+        "bpRecuperadas": 2,
+        "bpInjetadas": 2,
+        "bpChars": 4144,
+        "msBp": 3,
+        "jornada_dia": null,
+        "jornada_fechamento": false,
+        "jornada_chars": 0,
+        "trial_doc_chars": 0,
+        "modo": "normal",
+        "pos_trial_chars": 0,
+        "pos_trial_nivel": null,
+        "pos_trial_fatos": null,
+        "forma_modo": "off",
+        "forma_disparou": null,
+        "msParalelo": 3,
+        "msCtx": 0,
+        "msCore": 0,
+        "msTrial": 0,
+        "msOnda1": 0,
+        "msFoco": 0,
+        "msOnda3": 0
+      },
+      "falha": null,
+      "ms": 4950,
+      "blocoChars": 2008,
+      "blocoTexto": null,
+      "selecionados": [
+        {
+          "titulo": "👤 Tema 7: Vida Adulta e Inserção Organizacional",
+          "nucleo": "autonomia",
+          "tipo": "conceito",
+          "score": 24,
+          "faixa": [
+            216,
+            null
+          ],
+          "motivos": [
+            "faixa_etaria",
+            "diagnostico",
+            "tipo"
+          ]
+        },
+        {
+          "titulo": "👤 5. Vida Adulta (18 anos ou mais)",
+          "nucleo": "autonomia",
+          "tipo": "conceito",
+          "score": 24,
+          "faixa": [
+            216,
+            null
+          ],
+          "motivos": [
+            "faixa_etaria",
+            "diagnostico",
+            "tipo"
+          ]
+        }
+      ],
+      "uso": [
+        {
+          "modelo": "gpt-5.6-luna",
+          "uso": {
+            "prompt_tokens": 8945,
+            "completion_tokens": 307,
+            "total_tokens": 9252,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 8942,
+              "audio_tokens": 0
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 163,
+              "audio_tokens": 0,
+              "accepted_prediction_tokens": 0,
+              "rejected_prediction_tokens": 0
+            }
+          },
+          "ms": 4911,
+          "bpChars": 4144
+        }
+      ]
+    },
+    {
+      "caso": "mario-limite",
+      "braco": "B",
+      "execucao": 1,
+      "ctx": {
+        "idadeAnos": 18,
+        "perfil": "TEA",
+        "dominio": "emocional",
+        "dificuldade": "Toda vez que eu falo não ele começa a gritar. detesta ser frustrado",
+        "textoDaConversa": "Quero que ele aprenda a aceitar o limite, não receber sempre outra opção.",
+        "objetivo": "Quero que ele aprenda a aceitar o limite, não receber sempre outra opção."
+      },
+      "texto": "Entendo. Para não ensinar que gritar muda o limite, tente manter a decisão e falar pouco: **“Eu sei que você queria. Mesmo assim, agora é não. Quando sua voz acalmar, eu converso com você.”** Não ofereça outra opção automaticamente; fique por perto e reduza a conversa enquanto ele estiver desregulado. Depois, em um momento calmo, treinem situações pequenas de frustração e uma resposta para ele usar, como **“não gostei”** ou **“me ajuda a esperar”**. Quando ele consegue se acalmar sem gritar, reconheça isso. Ele chega a agredir alguém ou a si mesmo nessas situações?",
+      "metrica": {
+        "consultasBanco": 6,
+        "chamadasLLM": 1,
+        "tokensEntrada": 9435,
+        "tokensSaida": 365,
+        "msContexto": 2,
+        "msModelo": 4994,
+        "msInspecao": 1,
+        "msTotal": 4997,
+        "modelo": "gpt-5.6-luna",
+        "provider": "openai",
+        "fronteiraBarrou": false,
+        "foco": "unica",
+        "coreOrigem": "admin",
+        "coreVersao": 10,
+        "bpRecuperadas": 2,
+        "bpInjetadas": 2,
+        "bpChars": 4144,
+        "msBp": 2,
+        "jornada_dia": null,
+        "jornada_fechamento": false,
+        "jornada_chars": 0,
+        "trial_doc_chars": 0,
+        "modo": "normal",
+        "pos_trial_chars": 0,
+        "pos_trial_nivel": null,
+        "pos_trial_fatos": null,
+        "forma_modo": "off",
+        "forma_disparou": null,
+        "msParalelo": 2,
+        "msCtx": 0,
+        "msCore": 0,
+        "msTrial": 0,
+        "msOnda1": 0,
+        "msFoco": 0,
+        "msOnda3": 0
+      },
+      "falha": null,
+      "ms": 4997,
+      "blocoChars": 2008,
+      "blocoTexto": "<conhecimento_de_apoio>\nIsto é CONHECIMENTO DE APOIO para você PENSAR — não é a resposta, não é roteiro e não é obrigatório usar.\n- Trate interpretações como HIPÓTESES, nunca como diagnóstico ou causa afirmada.\n- NÃO copie o texto literalmente. Integre com as suas palavras, no seu tom.\n- NUNCA mencione esta fonte, nem \"a biblioteca\", nem que consultou algo.\n- Use só o que for pertinente ao relato de agora. IGNORE o resto — vir aqui não significa caber.\n- Se houver uma pergunta investigativa aqui, ela NÃO é uma ordem para perguntar. Não faça perguntas a mais só porque existe uma.\n- O movimento deste turno já foi decidido antes (conversar, perguntar ou entregar). Respeite-o.\n- Em qualquer conflito, as regras de segurança, o piso e os limites do Core PREVALECEM sobre tudo isto.\n\n1. * **O Fenótipo Ampliado do Autismo (FAA / BAP):** Caracteriza-se por traços sutis de rigidez, preferências por rotinas fixas e dificuldades pragmáticas leves na interação social em pais e parentes biológicos de pessoas autistas, sem que atinjam o limiar clínico para um diagnóstico formal de TEA [68]. É avaliado clinicamente no Brasil pelo questionário autoadministrado *BAPQ* ( Broad Autism Phenotype Questionnaire) [60, 23]. * **Barreiras Adaptativas e Laborais de Adultos:** Pessoas autistas na vida adulta (mesmo com inteligência na média ou acima e alta escolaridade formal) enfrentam as…\n2. * **Marcos de Neurodesenvolvimento Esperados:** * Independência adaptativa e autônoma plena (manutenção de moradia, contas bancárias, decisões legais, relacionamentos estáveis voluntários) [15, 311]. * Inserção produtiva e colocação profissional compatível com o nível de formação acadêmica no mercado de trabalho ou ambiente universitário regular [14, 21]. * Autoadvocacia (conhecimento dos próprios direitos legais e capacidade de solicitar adaptações ou acomodações razoáveis no local de trabalho) [22, 100]. * **Foco Principal da Avaliação:** Nível de funcionamento adaptativo independente,…\n</conhecimento_de_apoio>",
+      "selecionados": [
+        {
+          "titulo": "👤 Tema 7: Vida Adulta e Inserção Organizacional",
+          "nucleo": "autonomia",
+          "tipo": "conceito",
+          "score": 24,
+          "faixa": [
+            216,
+            null
+          ],
+          "motivos": [
+            "faixa_etaria",
+            "diagnostico",
+            "tipo"
+          ]
+        },
+        {
+          "titulo": "👤 5. Vida Adulta (18 anos ou mais)",
+          "nucleo": "autonomia",
+          "tipo": "conceito",
+          "score": 24,
+          "faixa": [
+            216,
+            null
+          ],
+          "motivos": [
+            "faixa_etaria",
+            "diagnostico",
+            "tipo"
+          ]
+        }
+      ],
+      "uso": [
+        {
+          "modelo": "gpt-5.6-luna",
+          "uso": {
+            "prompt_tokens": 9435,
+            "completion_tokens": 365,
+            "total_tokens": 9800,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 9432,
+              "audio_tokens": 0
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 215,
+              "audio_tokens": 0,
+              "accepted_prediction_tokens": 0,
+              "rejected_prediction_tokens": 0
+            }
+          },
+          "ms": 4970,
+          "bpChars": 4144
+        }
+      ]
+    },
+    {
+      "caso": "mario-limite",
+      "braco": "B",
+      "execucao": 2,
+      "ctx": {
+        "idadeAnos": 18,
+        "perfil": "TEA",
+        "dominio": "emocional",
+        "dificuldade": "Toda vez que eu falo não ele começa a gritar. detesta ser frustrado",
+        "textoDaConversa": "Quero que ele aprenda a aceitar o limite, não receber sempre outra opção.",
+        "objetivo": "Quero que ele aprenda a aceitar o limite, não receber sempre outra opção."
+      },
+      "texto": "Quando você disser não, tente manter uma frase curta e firme: **Eu entendo que você não gostou, mas a resposta continua sendo não.** Não ofereça outra opção apenas para o grito parar. Enquanto ele estiver muito alterado, fale pouco e dê espaço para se regular; a conversa acontece depois.\n\nEm um momento calmo, ensaiem uma forma de reagir à frustração, como dizer preciso de um tempo ou pedir ajuda. Assim, ele aprende uma alternativa ao grito sem transformar o limite em negociação. **Isso acontece com qualquer não ou principalmente em situações específicas?**",
+      "metrica": {
+        "consultasBanco": 6,
+        "chamadasLLM": 1,
+        "tokensEntrada": 9435,
+        "tokensSaida": 318,
+        "msContexto": 6,
+        "msModelo": 3934,
+        "msInspecao": 0,
+        "msTotal": 3940,
+        "modelo": "gpt-5.6-luna",
+        "provider": "openai",
+        "fronteiraBarrou": false,
+        "foco": "unica",
+        "coreOrigem": "admin",
+        "coreVersao": 10,
+        "bpRecuperadas": 2,
+        "bpInjetadas": 2,
+        "bpChars": 4144,
+        "msBp": 5,
+        "jornada_dia": null,
+        "jornada_fechamento": false,
+        "jornada_chars": 0,
+        "trial_doc_chars": 0,
+        "modo": "normal",
+        "pos_trial_chars": 0,
+        "pos_trial_nivel": null,
+        "pos_trial_fatos": null,
+        "forma_modo": "off",
+        "forma_disparou": null,
+        "msParalelo": 6,
+        "msCtx": 0,
+        "msCore": 0,
+        "msTrial": 0,
+        "msOnda1": 1,
+        "msFoco": 0,
+        "msOnda3": 0
+      },
+      "falha": null,
+      "ms": 3940,
+      "blocoChars": 2008,
+      "blocoTexto": null,
+      "selecionados": [
+        {
+          "titulo": "👤 Tema 7: Vida Adulta e Inserção Organizacional",
+          "nucleo": "autonomia",
+          "tipo": "conceito",
+          "score": 24,
+          "faixa": [
+            216,
+            null
+          ],
+          "motivos": [
+            "faixa_etaria",
+            "diagnostico",
+            "tipo"
+          ]
+        },
+        {
+          "titulo": "👤 5. Vida Adulta (18 anos ou mais)",
+          "nucleo": "autonomia",
+          "tipo": "conceito",
+          "score": 24,
+          "faixa": [
+            216,
+            null
+          ],
+          "motivos": [
+            "faixa_etaria",
+            "diagnostico",
+            "tipo"
+          ]
+        }
+      ],
+      "uso": [
+        {
+          "modelo": "gpt-5.6-luna",
+          "uso": {
+            "prompt_tokens": 9435,
+            "completion_tokens": 318,
+            "total_tokens": 9753,
+            "prompt_tokens_details": {
+              "cached_tokens": 9432,
+              "cache_write_tokens": 0,
+              "audio_tokens": 0
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 187,
+              "audio_tokens": 0,
+              "accepted_prediction_tokens": 0,
+              "rejected_prediction_tokens": 0
+            }
+          },
+          "ms": 3926,
+          "bpChars": 4144
+        }
+      ]
+    },
+    {
+      "caso": "mario-limite",
+      "braco": "A",
+      "execucao": 2,
+      "ctx": {
+        "idadeAnos": 18,
+        "perfil": "TEA",
+        "dominio": "emocional",
+        "dificuldade": "Toda vez que eu falo não ele começa a gritar. detesta ser frustrado",
+        "textoDaConversa": "Quero que ele aprenda a aceitar o limite, não receber sempre outra opção.",
+        "objetivo": "Quero que ele aprenda a aceitar o limite, não receber sempre outra opção."
+      },
+      "texto": "Quando você disser não, tente **manter o limite sem oferecer outra opção imediatamente**: “Eu sei que você queria isso. A resposta continua sendo não.” Fale pouco e não discuta enquanto ele grita; aguarde ele se regular.\n\nDepois, em um momento calmo, treinem uma resposta para a frustração, como **“não gostei, mas consigo esperar”** ou pedir uma pausa. No começo, reconheça o esforço de ele se acalmar, sem retirar o limite que foi dado.\n\nQuando ele grita, também tenta agredir alguém ou quebrar coisas?",
+      "metrica": {
+        "consultasBanco": 6,
+        "chamadasLLM": 1,
+        "tokensEntrada": 8945,
+        "tokensSaida": 259,
+        "msContexto": 3,
+        "msModelo": 4066,
+        "msInspecao": 1,
+        "msTotal": 4070,
+        "modelo": "gpt-5.6-luna",
+        "provider": "openai",
+        "fronteiraBarrou": false,
+        "foco": "unica",
+        "coreOrigem": "admin",
+        "coreVersao": 10,
+        "bpRecuperadas": 2,
+        "bpInjetadas": 2,
+        "bpChars": 4144,
+        "msBp": 2,
+        "jornada_dia": null,
+        "jornada_fechamento": false,
+        "jornada_chars": 0,
+        "trial_doc_chars": 0,
+        "modo": "normal",
+        "pos_trial_chars": 0,
+        "pos_trial_nivel": null,
+        "pos_trial_fatos": null,
+        "forma_modo": "off",
+        "forma_disparou": null,
+        "msParalelo": 3,
+        "msCtx": 1,
+        "msCore": 0,
+        "msTrial": 0,
+        "msOnda1": 1,
+        "msFoco": 0,
+        "msOnda3": 0
+      },
+      "falha": null,
+      "ms": 4070,
+      "blocoChars": 2008,
+      "blocoTexto": null,
+      "selecionados": [
+        {
+          "titulo": "👤 Tema 7: Vida Adulta e Inserção Organizacional",
+          "nucleo": "autonomia",
+          "tipo": "conceito",
+          "score": 24,
+          "faixa": [
+            216,
+            null
+          ],
+          "motivos": [
+            "faixa_etaria",
+            "diagnostico",
+            "tipo"
+          ]
+        },
+        {
+          "titulo": "👤 5. Vida Adulta (18 anos ou mais)",
+          "nucleo": "autonomia",
+          "tipo": "conceito",
+          "score": 24,
+          "faixa": [
+            216,
+            null
+          ],
+          "motivos": [
+            "faixa_etaria",
+            "diagnostico",
+            "tipo"
+          ]
+        }
+      ],
+      "uso": [
+        {
+          "modelo": "gpt-5.6-luna",
+          "uso": {
+            "prompt_tokens": 8945,
+            "completion_tokens": 259,
+            "total_tokens": 9204,
+            "prompt_tokens_details": {
+              "cached_tokens": 8942,
+              "cache_write_tokens": 0,
+              "audio_tokens": 0
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 129,
+              "audio_tokens": 0,
+              "accepted_prediction_tokens": 0,
+              "rejected_prediction_tokens": 0
+            }
+          },
+          "ms": 4051,
+          "bpChars": 4144
+        }
+      ]
+    },
+    {
+      "caso": "mario-limite",
+      "braco": "A",
+      "execucao": 3,
+      "ctx": {
+        "idadeAnos": 18,
+        "perfil": "TEA",
+        "dominio": "emocional",
+        "dificuldade": "Toda vez que eu falo não ele começa a gritar. detesta ser frustrado",
+        "textoDaConversa": "Quero que ele aprenda a aceitar o limite, não receber sempre outra opção.",
+        "objetivo": "Quero que ele aprenda a aceitar o limite, não receber sempre outra opção."
+      },
+      "texto": "Quando você disser não, tente **manter o limite sem oferecer outra opção para encerrar o grito**. Fale pouco e repita com calma: **“Eu sei que você queria. A resposta continua sendo não. Quando sua voz baixar, eu converso.”**\n\nDurante o grito, não explique nem negocie; ajude a reduzir estímulos e mantenha distância se ele ficar agressivo. Depois que ele se acalmar, reconheça a frustração e ensine uma frase para usar: **“Fiquei bravo, mas consigo esperar”**. Treinem isso em momentos tranquilos, começando com pequenas negativas. 💛",
+      "metrica": {
+        "consultasBanco": 6,
+        "chamadasLLM": 1,
+        "tokensEntrada": 8945,
+        "tokensSaida": 252,
+        "msContexto": 2,
+        "msModelo": 3600,
+        "msInspecao": 1,
+        "msTotal": 3603,
+        "modelo": "gpt-5.6-luna",
+        "provider": "openai",
+        "fronteiraBarrou": false,
+        "foco": "unica",
+        "coreOrigem": "admin",
+        "coreVersao": 10,
+        "bpRecuperadas": 2,
+        "bpInjetadas": 2,
+        "bpChars": 4144,
+        "msBp": 2,
+        "jornada_dia": null,
+        "jornada_fechamento": false,
+        "jornada_chars": 0,
+        "trial_doc_chars": 0,
+        "modo": "normal",
+        "pos_trial_chars": 0,
+        "pos_trial_nivel": null,
+        "pos_trial_fatos": null,
+        "forma_modo": "off",
+        "forma_disparou": null,
+        "msParalelo": 2,
+        "msCtx": 1,
+        "msCore": 0,
+        "msTrial": 0,
+        "msOnda1": 0,
+        "msFoco": 0,
+        "msOnda3": 1
+      },
+      "falha": null,
+      "ms": 3603,
+      "blocoChars": 2008,
+      "blocoTexto": null,
+      "selecionados": [
+        {
+          "titulo": "👤 Tema 7: Vida Adulta e Inserção Organizacional",
+          "nucleo": "autonomia",
+          "tipo": "conceito",
+          "score": 24,
+          "faixa": [
+            216,
+            null
+          ],
+          "motivos": [
+            "faixa_etaria",
+            "diagnostico",
+            "tipo"
+          ]
+        },
+        {
+          "titulo": "👤 5. Vida Adulta (18 anos ou mais)",
+          "nucleo": "autonomia",
+          "tipo": "conceito",
+          "score": 24,
+          "faixa": [
+            216,
+            null
+          ],
+          "motivos": [
+            "faixa_etaria",
+            "diagnostico",
+            "tipo"
+          ]
+        }
+      ],
+      "uso": [
+        {
+          "modelo": "gpt-5.6-luna",
+          "uso": {
+            "prompt_tokens": 8945,
+            "completion_tokens": 252,
+            "total_tokens": 9197,
+            "prompt_tokens_details": {
+              "cached_tokens": 8942,
+              "cache_write_tokens": 0,
+              "audio_tokens": 0
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 110,
+              "audio_tokens": 0,
+              "accepted_prediction_tokens": 0,
+              "rejected_prediction_tokens": 0
+            }
+          },
+          "ms": 3585,
+          "bpChars": 4144
+        }
+      ]
+    },
+    {
+      "caso": "mario-limite",
+      "braco": "B",
+      "execucao": 3,
+      "ctx": {
+        "idadeAnos": 18,
+        "perfil": "TEA",
+        "dominio": "emocional",
+        "dificuldade": "Toda vez que eu falo não ele começa a gritar. detesta ser frustrado",
+        "textoDaConversa": "Quero que ele aprenda a aceitar o limite, não receber sempre outra opção.",
+        "objetivo": "Quero que ele aprenda a aceitar o limite, não receber sempre outra opção."
+      },
+      "texto": "Entendo. Quando você diz não e ele grita, tente **manter o limite sem oferecer outra opção imediatamente**: fale pouco e repita com calma, como “Eu sei que você queria. Mesmo assim, não vai acontecer agora”. Durante o grito, não tente explicar ou convencer; dê espaço para ele se regular e retome a conversa depois, em um momento calmo, treinando frases como “fiquei frustrado” ou “posso tentar de novo?”. 💛",
+      "metrica": {
+        "consultasBanco": 6,
+        "chamadasLLM": 1,
+        "tokensEntrada": 9435,
+        "tokensSaida": 188,
+        "msContexto": 2,
+        "msModelo": 2833,
+        "msInspecao": 0,
+        "msTotal": 2835,
+        "modelo": "gpt-5.6-luna",
+        "provider": "openai",
+        "fronteiraBarrou": false,
+        "foco": "unica",
+        "coreOrigem": "admin",
+        "coreVersao": 10,
+        "bpRecuperadas": 2,
+        "bpInjetadas": 2,
+        "bpChars": 4144,
+        "msBp": 2,
+        "jornada_dia": null,
+        "jornada_fechamento": false,
+        "jornada_chars": 0,
+        "trial_doc_chars": 0,
+        "modo": "normal",
+        "pos_trial_chars": 0,
+        "pos_trial_nivel": null,
+        "pos_trial_fatos": null,
+        "forma_modo": "off",
+        "forma_disparou": null,
+        "msParalelo": 2,
+        "msCtx": 0,
+        "msCore": 0,
+        "msTrial": 0,
+        "msOnda1": 0,
+        "msFoco": 0,
+        "msOnda3": 0
+      },
+      "falha": null,
+      "ms": 2835,
+      "blocoChars": 2008,
+      "blocoTexto": null,
+      "selecionados": [
+        {
+          "titulo": "👤 Tema 7: Vida Adulta e Inserção Organizacional",
+          "nucleo": "autonomia",
+          "tipo": "conceito",
+          "score": 24,
+          "faixa": [
+            216,
+            null
+          ],
+          "motivos": [
+            "faixa_etaria",
+            "diagnostico",
+            "tipo"
+          ]
+        },
+        {
+          "titulo": "👤 5. Vida Adulta (18 anos ou mais)",
+          "nucleo": "autonomia",
+          "tipo": "conceito",
+          "score": 24,
+          "faixa": [
+            216,
+            null
+          ],
+          "motivos": [
+            "faixa_etaria",
+            "diagnostico",
+            "tipo"
+          ]
+        }
+      ],
+      "uso": [
+        {
+          "modelo": "gpt-5.6-luna",
+          "uso": {
+            "prompt_tokens": 9435,
+            "completion_tokens": 188,
+            "total_tokens": 9623,
+            "prompt_tokens_details": {
+              "cached_tokens": 9432,
+              "cache_write_tokens": 0,
+              "audio_tokens": 0
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 80,
+              "audio_tokens": 0,
+              "accepted_prediction_tokens": 0,
+              "rejected_prediction_tokens": 0
+            }
+          },
+          "ms": 2820,
+          "bpChars": 4144
+        }
+      ]
+    },
+    {
+      "caso": "mario-limite",
+      "braco": "B",
+      "execucao": 4,
+      "ctx": {
+        "idadeAnos": 18,
+        "perfil": "TEA",
+        "dominio": "emocional",
+        "dificuldade": "Toda vez que eu falo não ele começa a gritar. detesta ser frustrado",
+        "textoDaConversa": "Quero que ele aprenda a aceitar o limite, não receber sempre outra opção.",
+        "objetivo": "Quero que ele aprenda a aceitar o limite, não receber sempre outra opção."
+      },
+      "texto": "Quando você diz não, tente **manter o limite sem oferecer outra opção imediatamente**. Fale pouco e com calma: **“Eu sei que você queria. A resposta é não. Quando sua voz estiver calma, conversamos.”** Se ele começar a gritar, reduza estímulos e espere a regulação; discutir ou explicar muito nessa hora costuma aumentar a frustração. Depois, em um momento tranquilo, treinem essa frase e uma forma de pedir ajuda ou esperar.  \n\nIsso acontece mais quando ele quer algo específico ou também quando você interrompe uma atividade?",
+      "metrica": {
+        "consultasBanco": 6,
+        "chamadasLLM": 1,
+        "tokensEntrada": 9435,
+        "tokensSaida": 247,
+        "msContexto": 2,
+        "msModelo": 3631,
+        "msInspecao": 1,
+        "msTotal": 3634,
+        "modelo": "gpt-5.6-luna",
+        "provider": "openai",
+        "fronteiraBarrou": false,
+        "foco": "unica",
+        "coreOrigem": "admin",
+        "coreVersao": 10,
+        "bpRecuperadas": 2,
+        "bpInjetadas": 2,
+        "bpChars": 4144,
+        "msBp": 2,
+        "jornada_dia": null,
+        "jornada_fechamento": false,
+        "jornada_chars": 0,
+        "trial_doc_chars": 0,
+        "modo": "normal",
+        "pos_trial_chars": 0,
+        "pos_trial_nivel": null,
+        "pos_trial_fatos": null,
+        "forma_modo": "off",
+        "forma_disparou": null,
+        "msParalelo": 2,
+        "msCtx": 0,
+        "msCore": 0,
+        "msTrial": 0,
+        "msOnda1": 0,
+        "msFoco": 0,
+        "msOnda3": 0
+      },
+      "falha": null,
+      "ms": 3634,
+      "blocoChars": 2008,
+      "blocoTexto": null,
+      "selecionados": [
+        {
+          "titulo": "👤 Tema 7: Vida Adulta e Inserção Organizacional",
+          "nucleo": "autonomia",
+          "tipo": "conceito",
+          "score": 24,
+          "faixa": [
+            216,
+            null
+          ],
+          "motivos": [
+            "faixa_etaria",
+            "diagnostico",
+            "tipo"
+          ]
+        },
+        {
+          "titulo": "👤 5. Vida Adulta (18 anos ou mais)",
+          "nucleo": "autonomia",
+          "tipo": "conceito",
+          "score": 24,
+          "faixa": [
+            216,
+            null
+          ],
+          "motivos": [
+            "faixa_etaria",
+            "diagnostico",
+            "tipo"
+          ]
+        }
+      ],
+      "uso": [
+        {
+          "modelo": "gpt-5.6-luna",
+          "uso": {
+            "prompt_tokens": 9435,
+            "completion_tokens": 247,
+            "total_tokens": 9682,
+            "prompt_tokens_details": {
+              "cached_tokens": 9432,
+              "cache_write_tokens": 0,
+              "audio_tokens": 0
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 122,
+              "audio_tokens": 0,
+              "accepted_prediction_tokens": 0,
+              "rejected_prediction_tokens": 0
+            }
+          },
+          "ms": 3614,
+          "bpChars": 4144
+        }
+      ]
+    },
+    {
+      "caso": "mario-limite",
+      "braco": "A",
+      "execucao": 4,
+      "ctx": {
+        "idadeAnos": 18,
+        "perfil": "TEA",
+        "dominio": "emocional",
+        "dificuldade": "Toda vez que eu falo não ele começa a gritar. detesta ser frustrado",
+        "textoDaConversa": "Quero que ele aprenda a aceitar o limite, não receber sempre outra opção.",
+        "objetivo": "Quero que ele aprenda a aceitar o limite, não receber sempre outra opção."
+      },
+      "texto": "Quando ele gritar após ouvir não, tente **não trocar o limite por outra opção nem explicar demais**. Fale baixo e repita a mesma frase: **“Eu sei que você queria. A resposta continua sendo não. Conversamos quando você conseguir falar mais baixo.”**\n\nDurante a crise, reduza as palavras e dê espaço, mantendo a segurança. Depois que ele se acalmar, reconheça o esforço de se recuperar e pratique limites pequenos em momentos tranquilos, sem transformar tudo em negociação. 💛",
+      "metrica": {
+        "consultasBanco": 6,
+        "chamadasLLM": 1,
+        "tokensEntrada": 8945,
+        "tokensSaida": 354,
+        "msContexto": 3,
+        "msModelo": 5606,
+        "msInspecao": 0,
+        "msTotal": 5609,
+        "modelo": "gpt-5.6-luna",
+        "provider": "openai",
+        "fronteiraBarrou": false,
+        "foco": "unica",
+        "coreOrigem": "admin",
+        "coreVersao": 10,
+        "bpRecuperadas": 2,
+        "bpInjetadas": 2,
+        "bpChars": 4144,
+        "msBp": 3,
+        "jornada_dia": null,
+        "jornada_fechamento": false,
+        "jornada_chars": 0,
+        "trial_doc_chars": 0,
+        "modo": "normal",
+        "pos_trial_chars": 0,
+        "pos_trial_nivel": null,
+        "pos_trial_fatos": null,
+        "forma_modo": "off",
+        "forma_disparou": null,
+        "msParalelo": 3,
+        "msCtx": 0,
+        "msCore": 0,
+        "msTrial": 0,
+        "msOnda1": 0,
+        "msFoco": 0,
+        "msOnda3": 0
+      },
+      "falha": null,
+      "ms": 5609,
+      "blocoChars": 2008,
+      "blocoTexto": null,
+      "selecionados": [
+        {
+          "titulo": "👤 Tema 7: Vida Adulta e Inserção Organizacional",
+          "nucleo": "autonomia",
+          "tipo": "conceito",
+          "score": 24,
+          "faixa": [
+            216,
+            null
+          ],
+          "motivos": [
+            "faixa_etaria",
+            "diagnostico",
+            "tipo"
+          ]
+        },
+        {
+          "titulo": "👤 5. Vida Adulta (18 anos ou mais)",
+          "nucleo": "autonomia",
+          "tipo": "conceito",
+          "score": 24,
+          "faixa": [
+            216,
+            null
+          ],
+          "motivos": [
+            "faixa_etaria",
+            "diagnostico",
+            "tipo"
+          ]
+        }
+      ],
+      "uso": [
+        {
+          "modelo": "gpt-5.6-luna",
+          "uso": {
+            "prompt_tokens": 8945,
+            "completion_tokens": 354,
+            "total_tokens": 9299,
+            "prompt_tokens_details": {
+              "cached_tokens": 8942,
+              "cache_write_tokens": 0,
+              "audio_tokens": 0
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 241,
+              "audio_tokens": 0,
+              "accepted_prediction_tokens": 0,
+              "rejected_prediction_tokens": 0
+            }
+          },
+          "ms": 5587,
+          "bpChars": 4144
+        }
+      ]
+    },
+    {
+      "caso": "mario-limite",
+      "braco": "A",
+      "execucao": 5,
+      "ctx": {
+        "idadeAnos": 18,
+        "perfil": "TEA",
+        "dominio": "emocional",
+        "dificuldade": "Toda vez que eu falo não ele começa a gritar. detesta ser frustrado",
+        "textoDaConversa": "Quero que ele aprenda a aceitar o limite, não receber sempre outra opção.",
+        "objetivo": "Quero que ele aprenda a aceitar o limite, não receber sempre outra opção."
+      },
+      "texto": "Quando você diz não e ele grita, tente **não transformar o grito em uma nova negociação**. Fale pouco e mantenha o limite: “Eu sei que você queria isso. A resposta continua sendo não. Quando sua voz baixar, eu converso com você.”\n\nDurante a crise, reduza estímulos, mantenha distância segura e evite explicar ou oferecer outra opção. Depois que ele se acalmar, retome brevemente: “Você ficou frustrado, mas gritar não muda a resposta. Da próxima vez, pode dizer: fiquei bravo.” O treino dessa frase funciona melhor em momentos tranquilos, não no auge da crise.",
+      "metrica": {
+        "consultasBanco": 6,
+        "chamadasLLM": 1,
+        "tokensEntrada": 8945,
+        "tokensSaida": 242,
+        "msContexto": 2,
+        "msModelo": 3608,
+        "msInspecao": 0,
+        "msTotal": 3610,
+        "modelo": "gpt-5.6-luna",
+        "provider": "openai",
+        "fronteiraBarrou": false,
+        "foco": "unica",
+        "coreOrigem": "admin",
+        "coreVersao": 10,
+        "bpRecuperadas": 2,
+        "bpInjetadas": 2,
+        "bpChars": 4144,
+        "msBp": 2,
+        "jornada_dia": null,
+        "jornada_fechamento": false,
+        "jornada_chars": 0,
+        "trial_doc_chars": 0,
+        "modo": "normal",
+        "pos_trial_chars": 0,
+        "pos_trial_nivel": null,
+        "pos_trial_fatos": null,
+        "forma_modo": "off",
+        "forma_disparou": null,
+        "msParalelo": 2,
+        "msCtx": 0,
+        "msCore": 0,
+        "msTrial": 0,
+        "msOnda1": 0,
+        "msFoco": 0,
+        "msOnda3": 0
+      },
+      "falha": null,
+      "ms": 3610,
+      "blocoChars": 2008,
+      "blocoTexto": null,
+      "selecionados": [
+        {
+          "titulo": "👤 Tema 7: Vida Adulta e Inserção Organizacional",
+          "nucleo": "autonomia",
+          "tipo": "conceito",
+          "score": 24,
+          "faixa": [
+            216,
+            null
+          ],
+          "motivos": [
+            "faixa_etaria",
+            "diagnostico",
+            "tipo"
+          ]
+        },
+        {
+          "titulo": "👤 5. Vida Adulta (18 anos ou mais)",
+          "nucleo": "autonomia",
+          "tipo": "conceito",
+          "score": 24,
+          "faixa": [
+            216,
+            null
+          ],
+          "motivos": [
+            "faixa_etaria",
+            "diagnostico",
+            "tipo"
+          ]
+        }
+      ],
+      "uso": [
+        {
+          "modelo": "gpt-5.6-luna",
+          "uso": {
+            "prompt_tokens": 8945,
+            "completion_tokens": 242,
+            "total_tokens": 9187,
+            "prompt_tokens_details": {
+              "cached_tokens": 8942,
+              "cache_write_tokens": 0,
+              "audio_tokens": 0
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 101,
+              "audio_tokens": 0,
+              "accepted_prediction_tokens": 0,
+              "rejected_prediction_tokens": 0
+            }
+          },
+          "ms": 3588,
+          "bpChars": 4144
+        }
+      ]
+    },
+    {
+      "caso": "mario-limite",
+      "braco": "B",
+      "execucao": 5,
+      "ctx": {
+        "idadeAnos": 18,
+        "perfil": "TEA",
+        "dominio": "emocional",
+        "dificuldade": "Toda vez que eu falo não ele começa a gritar. detesta ser frustrado",
+        "textoDaConversa": "Quero que ele aprenda a aceitar o limite, não receber sempre outra opção.",
+        "objetivo": "Quero que ele aprenda a aceitar o limite, não receber sempre outra opção."
+      },
+      "texto": "Quando você disser não, tente manter **uma frase curta e firme**, sem oferecer outra opção na hora: “Eu sei que você queria, mas a resposta é não. Vou esperar você se acalmar.” Fale pouco enquanto ele grita e retome a conversa só depois, quando ele estiver regulado — aí vocês podem praticar como demonstrar frustração sem gritar.\n\nIsso fica só no grito ou ele também ameaça, agride ou quebra coisas?",
+      "metrica": {
+        "consultasBanco": 6,
+        "chamadasLLM": 1,
+        "tokensEntrada": 9435,
+        "tokensSaida": 234,
+        "msContexto": 2,
+        "msModelo": 3189,
+        "msInspecao": 1,
+        "msTotal": 3192,
+        "modelo": "gpt-5.6-luna",
+        "provider": "openai",
+        "fronteiraBarrou": false,
+        "foco": "unica",
+        "coreOrigem": "admin",
+        "coreVersao": 10,
+        "bpRecuperadas": 2,
+        "bpInjetadas": 2,
+        "bpChars": 4144,
+        "msBp": 2,
+        "jornada_dia": null,
+        "jornada_fechamento": false,
+        "jornada_chars": 0,
+        "trial_doc_chars": 0,
+        "modo": "normal",
+        "pos_trial_chars": 0,
+        "pos_trial_nivel": null,
+        "pos_trial_fatos": null,
+        "forma_modo": "off",
+        "forma_disparou": null,
+        "msParalelo": 2,
+        "msCtx": 0,
+        "msCore": 0,
+        "msTrial": 0,
+        "msOnda1": 0,
+        "msFoco": 0,
+        "msOnda3": 0
+      },
+      "falha": null,
+      "ms": 3192,
+      "blocoChars": 2008,
+      "blocoTexto": null,
+      "selecionados": [
+        {
+          "titulo": "👤 Tema 7: Vida Adulta e Inserção Organizacional",
+          "nucleo": "autonomia",
+          "tipo": "conceito",
+          "score": 24,
+          "faixa": [
+            216,
+            null
+          ],
+          "motivos": [
+            "faixa_etaria",
+            "diagnostico",
+            "tipo"
+          ]
+        },
+        {
+          "titulo": "👤 5. Vida Adulta (18 anos ou mais)",
+          "nucleo": "autonomia",
+          "tipo": "conceito",
+          "score": 24,
+          "faixa": [
+            216,
+            null
+          ],
+          "motivos": [
+            "faixa_etaria",
+            "diagnostico",
+            "tipo"
+          ]
+        }
+      ],
+      "uso": [
+        {
+          "modelo": "gpt-5.6-luna",
+          "uso": {
+            "prompt_tokens": 9435,
+            "completion_tokens": 234,
+            "total_tokens": 9669,
+            "prompt_tokens_details": {
+              "cached_tokens": 9432,
+              "cache_write_tokens": 0,
+              "audio_tokens": 0
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 130,
+              "audio_tokens": 0,
+              "accepted_prediction_tokens": 0,
+              "rejected_prediction_tokens": 0
+            }
+          },
+          "ms": 3156,
+          "bpChars": 4144
+        }
+      ]
+    },
+    {
+      "caso": "mario-limite",
+      "braco": "B",
+      "execucao": 6,
+      "ctx": {
+        "idadeAnos": 18,
+        "perfil": "TEA",
+        "dominio": "emocional",
+        "dificuldade": "Toda vez que eu falo não ele começa a gritar. detesta ser frustrado",
+        "textoDaConversa": "Quero que ele aprenda a aceitar o limite, não receber sempre outra opção.",
+        "objetivo": "Quero que ele aprenda a aceitar o limite, não receber sempre outra opção."
+      },
+      "texto": "Quando você diz não, ele pode estar tendo dificuldade para lidar com a frustração — mas isso não significa que o limite precise virar uma nova negociação.\n\nNa hora do grito, fale pouco e mantenha o limite: **“Eu sei que você queria isso. A resposta continua sendo não. Quando sua voz estiver mais calma, eu te escuto.”** Evite oferecer outra opção imediatamente só para ele parar; primeiro ajude-o a se regular. Depois, em um momento tranquilo, treinem limites pequenos e reconheça quando ele conseguir se recuperar: **“Você ficou frustrado e conseguiu voltar a falar.”**\n\nNesses momentos ele também fica agressivo ou tenta machucar alguém?",
+      "metrica": {
+        "consultasBanco": 6,
+        "chamadasLLM": 1,
+        "tokensEntrada": 9435,
+        "tokensSaida": 328,
+        "msContexto": 2,
+        "msModelo": 4711,
+        "msInspecao": 0,
+        "msTotal": 4714,
+        "modelo": "gpt-5.6-luna",
+        "provider": "openai",
+        "fronteiraBarrou": false,
+        "foco": "unica",
+        "coreOrigem": "admin",
+        "coreVersao": 10,
+        "bpRecuperadas": 2,
+        "bpInjetadas": 2,
+        "bpChars": 4144,
+        "msBp": 2,
+        "jornada_dia": null,
+        "jornada_fechamento": false,
+        "jornada_chars": 0,
+        "trial_doc_chars": 0,
+        "modo": "normal",
+        "pos_trial_chars": 0,
+        "pos_trial_nivel": null,
+        "pos_trial_fatos": null,
+        "forma_modo": "off",
+        "forma_disparou": null,
+        "msParalelo": 2,
+        "msCtx": 0,
+        "msCore": 0,
+        "msTrial": 0,
+        "msOnda1": 0,
+        "msFoco": 0,
+        "msOnda3": 0
+      },
+      "falha": null,
+      "ms": 4714,
+      "blocoChars": 2008,
+      "blocoTexto": null,
+      "selecionados": [
+        {
+          "titulo": "👤 Tema 7: Vida Adulta e Inserção Organizacional",
+          "nucleo": "autonomia",
+          "tipo": "conceito",
+          "score": 24,
+          "faixa": [
+            216,
+            null
+          ],
+          "motivos": [
+            "faixa_etaria",
+            "diagnostico",
+            "tipo"
+          ]
+        },
+        {
+          "titulo": "👤 5. Vida Adulta (18 anos ou mais)",
+          "nucleo": "autonomia",
+          "tipo": "conceito",
+          "score": 24,
+          "faixa": [
+            216,
+            null
+          ],
+          "motivos": [
+            "faixa_etaria",
+            "diagnostico",
+            "tipo"
+          ]
+        }
+      ],
+      "uso": [
+        {
+          "modelo": "gpt-5.6-luna",
+          "uso": {
+            "prompt_tokens": 9435,
+            "completion_tokens": 328,
+            "total_tokens": 9763,
+            "prompt_tokens_details": {
+              "cached_tokens": 9432,
+              "cache_write_tokens": 0,
+              "audio_tokens": 0
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 180,
+              "audio_tokens": 0,
+              "accepted_prediction_tokens": 0,
+              "rejected_prediction_tokens": 0
+            }
+          },
+          "ms": 4670,
+          "bpChars": 4144
+        }
+      ]
+    },
+    {
+      "caso": "mario-limite",
+      "braco": "A",
+      "execucao": 6,
+      "ctx": {
+        "idadeAnos": 18,
+        "perfil": "TEA",
+        "dominio": "emocional",
+        "dificuldade": "Toda vez que eu falo não ele começa a gritar. detesta ser frustrado",
+        "textoDaConversa": "Quero que ele aprenda a aceitar o limite, não receber sempre outra opção.",
+        "objetivo": "Quero que ele aprenda a aceitar o limite, não receber sempre outra opção."
+      },
+      "texto": "Quando você disser não, tente **validar sem retirar o limite**: “Eu sei que você queria isso. É frustrante ouvir não, mas a resposta continua sendo não.” Depois, fale pouco e não ofereça outra opção só para ele parar de gritar; aguarde ele se acalmar e retome a conversa.\n\nEm um momento tranquilo, vocês podem treinar com situações pequenas: ouvir “não”, respirar ou se afastar por um minuto e dizer “não gostei” ou “preciso de ajuda”. Se ele entrar em crise, priorize segurança e deixe a explicação para depois. **Quando ele grita, também fica agressivo ou tenta machucar alguém?**",
+      "metrica": {
+        "consultasBanco": 6,
+        "chamadasLLM": 1,
+        "tokensEntrada": 8945,
+        "tokensSaida": 291,
+        "msContexto": 2,
+        "msModelo": 4394,
+        "msInspecao": 1,
+        "msTotal": 4397,
+        "modelo": "gpt-5.6-luna",
+        "provider": "openai",
+        "fronteiraBarrou": false,
+        "foco": "unica",
+        "coreOrigem": "admin",
+        "coreVersao": 10,
+        "bpRecuperadas": 2,
+        "bpInjetadas": 2,
+        "bpChars": 4144,
+        "msBp": 2,
+        "jornada_dia": null,
+        "jornada_fechamento": false,
+        "jornada_chars": 0,
+        "trial_doc_chars": 0,
+        "modo": "normal",
+        "pos_trial_chars": 0,
+        "pos_trial_nivel": null,
+        "pos_trial_fatos": null,
+        "forma_modo": "off",
+        "forma_disparou": null,
+        "msParalelo": 2,
+        "msCtx": 0,
+        "msCore": 0,
+        "msTrial": 0,
+        "msOnda1": 0,
+        "msFoco": 0,
+        "msOnda3": 0
+      },
+      "falha": null,
+      "ms": 4397,
+      "blocoChars": 2008,
+      "blocoTexto": null,
+      "selecionados": [
+        {
+          "titulo": "👤 Tema 7: Vida Adulta e Inserção Organizacional",
+          "nucleo": "autonomia",
+          "tipo": "conceito",
+          "score": 24,
+          "faixa": [
+            216,
+            null
+          ],
+          "motivos": [
+            "faixa_etaria",
+            "diagnostico",
+            "tipo"
+          ]
+        },
+        {
+          "titulo": "👤 5. Vida Adulta (18 anos ou mais)",
+          "nucleo": "autonomia",
+          "tipo": "conceito",
+          "score": 24,
+          "faixa": [
+            216,
+            null
+          ],
+          "motivos": [
+            "faixa_etaria",
+            "diagnostico",
+            "tipo"
+          ]
+        }
+      ],
+      "uso": [
+        {
+          "modelo": "gpt-5.6-luna",
+          "uso": {
+            "prompt_tokens": 8945,
+            "completion_tokens": 291,
+            "total_tokens": 9236,
+            "prompt_tokens_details": {
+              "cached_tokens": 8942,
+              "cache_write_tokens": 0,
+              "audio_tokens": 0
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 143,
+              "audio_tokens": 0,
+              "accepted_prediction_tokens": 0,
+              "rejected_prediction_tokens": 0
+            }
+          },
+          "ms": 4374,
+          "bpChars": 4144
+        }
+      ]
+    },
+    {
+      "caso": "manu-mapa",
+      "braco": "A",
+      "execucao": 1,
+      "ctx": {
+        "idadeAnos": 6,
+        "perfil": "TEA",
+        "dominio": "aprendizado",
+        "dificuldade": "Minha filha não aprende o mapa do Brasil. Ela não quer aprender",
+        "textoDaConversa": "",
+        "objetivo": null
+      },
+      "texto": "Talvez o mapa esteja **abstrato demais para ela**, e não seja falta de vontade. Em vez de tentar ensinar o Brasil inteiro, comece com um mapa grande no chão e uma brincadeira: coloque figuras de dinossauros, comidas ou lugares conhecidos e ajude-a a encontrar **apenas um estado ou região por vez**.\n\nUse frases curtas, como: **“Vamos achar onde fica este dinossauro?”**; deixe que ela aponte, encaixe ou escolha, sem exigir que fale o nome. Faça por poucos minutos e pare antes de virar uma briga. Ela tem mais dificuldade para reconhecer o desenho do mapa ou para memorizar os nomes?",
+      "metrica": {
+        "consultasBanco": 6,
+        "chamadasLLM": 1,
+        "tokensEntrada": 8805,
+        "tokensSaida": 306,
+        "msContexto": 2,
+        "msModelo": 4485,
+        "msInspecao": 0,
+        "msTotal": 4487,
+        "modelo": "gpt-5.6-luna",
+        "provider": "openai",
+        "fronteiraBarrou": false,
+        "foco": "unica",
+        "coreOrigem": "admin",
+        "coreVersao": 10,
+        "bpRecuperadas": 2,
+        "bpInjetadas": 2,
+        "bpChars": 4129,
+        "msBp": 2,
+        "jornada_dia": null,
+        "jornada_fechamento": false,
+        "jornada_chars": 0,
+        "trial_doc_chars": 0,
+        "modo": "normal",
+        "pos_trial_chars": 0,
+        "pos_trial_nivel": null,
+        "pos_trial_fatos": null,
+        "forma_modo": "off",
+        "forma_disparou": null,
+        "msParalelo": 2,
+        "msCtx": 0,
+        "msCore": 0,
+        "msTrial": 0,
+        "msOnda1": 0,
+        "msFoco": 0,
+        "msOnda3": 0
+      },
+      "falha": null,
+      "ms": 4487,
+      "blocoChars": 2009,
+      "blocoTexto": null,
+      "selecionados": [
+        {
+          "titulo": "👦 3. Idade Escolar / Segunda Infância (6 a 12 anos)",
+          "nucleo": "aprendizagem",
+          "tipo": "conceito",
+          "score": 73,
+          "faixa": [
+            72,
+            144
+          ],
+          "motivos": [
+            "dominio",
+            "faixa_etaria",
+            "tipo",
+            "texto"
+          ]
+        },
+        {
+          "titulo": "🏫 Tema 6: Relações Sociais, Inclusão Escolar e Mídia",
+          "nucleo": "socializacao",
+          "tipo": "conceito",
+          "score": 21,
+          "faixa": [
+            null,
+            null
+          ],
+          "motivos": [
+            "diagnostico",
+            "tipo",
+            "texto"
+          ]
+        }
+      ],
+      "uso": [
+        {
+          "modelo": "gpt-5.6-luna",
+          "uso": {
+            "prompt_tokens": 8805,
+            "completion_tokens": 306,
+            "total_tokens": 9111,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 8802,
+              "audio_tokens": 0
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 157,
+              "audio_tokens": 0,
+              "accepted_prediction_tokens": 0,
+              "rejected_prediction_tokens": 0
+            }
+          },
+          "ms": 4464,
+          "bpChars": 4129
+        }
+      ]
+    },
+    {
+      "caso": "manu-mapa",
+      "braco": "B",
+      "execucao": 1,
+      "ctx": {
+        "idadeAnos": 6,
+        "perfil": "TEA",
+        "dominio": "aprendizado",
+        "dificuldade": "Minha filha não aprende o mapa do Brasil. Ela não quer aprender",
+        "textoDaConversa": "",
+        "objetivo": null
+      },
+      "texto": "Pode ser que o mapa esteja **abstrato demais para ela**, e não que a Manu não queira aprender. Em vez de pedir para decorar o mapa inteiro, comece por algo concreto: escolha um lugar que ela conheça ou tenha interesse e faça uma pequena viagem de faz-de-conta — por exemplo, uma princesa ou dinossauro viajando de um estado para outro.\n\nUse só **2 ou 3 lugares por vez**, com imagens, uma história curta e repetição em momentos breves. Depois pergunte “onde fica a nossa casa?” ou “para onde vamos agora?”, sem exigir que ela memorize tudo. **Se ela se frustrar, pare e retome outro dia**; o objetivo inicial é entender a ideia de lugar e caminho, não decorar o mapa inteiro.",
+      "metrica": {
+        "consultasBanco": 6,
+        "chamadasLLM": 1,
+        "tokensEntrada": 9288,
+        "tokensSaida": 251,
+        "msContexto": 2,
+        "msModelo": 3879,
+        "msInspecao": 0,
+        "msTotal": 3881,
+        "modelo": "gpt-5.6-luna",
+        "provider": "openai",
+        "fronteiraBarrou": false,
+        "foco": "unica",
+        "coreOrigem": "admin",
+        "coreVersao": 10,
+        "bpRecuperadas": 2,
+        "bpInjetadas": 2,
+        "bpChars": 4129,
+        "msBp": 2,
+        "jornada_dia": null,
+        "jornada_fechamento": false,
+        "jornada_chars": 0,
+        "trial_doc_chars": 0,
+        "modo": "normal",
+        "pos_trial_chars": 0,
+        "pos_trial_nivel": null,
+        "pos_trial_fatos": null,
+        "forma_modo": "off",
+        "forma_disparou": null,
+        "msParalelo": 2,
+        "msCtx": 1,
+        "msCore": 0,
+        "msTrial": 0,
+        "msOnda1": 0,
+        "msFoco": 0,
+        "msOnda3": 0
+      },
+      "falha": null,
+      "ms": 3881,
+      "blocoChars": 2009,
+      "blocoTexto": "<conhecimento_de_apoio>\nIsto é CONHECIMENTO DE APOIO para você PENSAR — não é a resposta, não é roteiro e não é obrigatório usar.\n- Trate interpretações como HIPÓTESES, nunca como diagnóstico ou causa afirmada.\n- NÃO copie o texto literalmente. Integre com as suas palavras, no seu tom.\n- NUNCA mencione esta fonte, nem \"a biblioteca\", nem que consultou algo.\n- Use só o que for pertinente ao relato de agora. IGNORE o resto — vir aqui não significa caber.\n- Se houver uma pergunta investigativa aqui, ela NÃO é uma ordem para perguntar. Não faça perguntas a mais só porque existe uma.\n- O movimento deste turno já foi decidido antes (conversar, perguntar ou entregar). Respeite-o.\n- Em qualquer conflito, as regras de segurança, o piso e os limites do Core PREVALECEM sobre tudo isto.\n\n1. * **Marcos de Neurodesenvolvimento Esperados:** * Participação plena em processos escolares regulares comuns e aprendizagem formal da leitura e escrita em papel [66]. * Consolidação de funções executivas de alto nível (controle inibitório para aguardar a vez de falar, flexibilidade cognitiva para tolerar mudanças de planos em tarefas escolares e memória de trabalho para seguir instruções complexas em sequência) [88, 90]. * Coordenação motora fina complexa (grafomotricidade, preensão em pinça do lápis, uso de tesouras e amarração de sapatos) [78]. * Brincar cooperativo organizado por regras…\n2. * **Participação Social Docente-Discente:** Alunos autistas incluídos em salas regulares frequentemente experimentam dificuldades pragmáticas que geram atritos com professores e isolamento em relação aos pares [66]. A inclusão bem-sucedida exige que o professor mude atitudes de mera cobrança para mediação ativa de suporte pedagógico e ambiental [15, 66]. * **Status Sociométrico de Inclusão:** Pesquisas em pátios escolares indicam que crianças neurodivergentes frequentemente ocupam o *status* de **isolado negligenciado** (ficam sozinhas sem atritos diretos) ou de **isolado controverso**…\n</conhecimento_de_apoio>",
+      "selecionados": [
+        {
+          "titulo": "👦 3. Idade Escolar / Segunda Infância (6 a 12 anos)",
+          "nucleo": "aprendizagem",
+          "tipo": "conceito",
+          "score": 73,
+          "faixa": [
+            72,
+            144
+          ],
+          "motivos": [
+            "dominio",
+            "faixa_etaria",
+            "tipo",
+            "texto"
+          ]
+        },
+        {
+          "titulo": "🏫 Tema 6: Relações Sociais, Inclusão Escolar e Mídia",
+          "nucleo": "socializacao",
+          "tipo": "conceito",
+          "score": 21,
+          "faixa": [
+            null,
+            null
+          ],
+          "motivos": [
+            "diagnostico",
+            "tipo",
+            "texto"
+          ]
+        }
+      ],
+      "uso": [
+        {
+          "modelo": "gpt-5.6-luna",
+          "uso": {
+            "prompt_tokens": 9288,
+            "completion_tokens": 251,
+            "total_tokens": 9539,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 9285,
+              "audio_tokens": 0
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 83,
+              "audio_tokens": 0,
+              "accepted_prediction_tokens": 0,
+              "rejected_prediction_tokens": 0
+            }
+          },
+          "ms": 3837,
+          "bpChars": 4129
+        }
+      ]
+    },
+    {
+      "caso": "manu-mapa",
+      "braco": "B",
+      "execucao": 2,
+      "ctx": {
+        "idadeAnos": 6,
+        "perfil": "TEA",
+        "dominio": "aprendizado",
+        "dificuldade": "Minha filha não aprende o mapa do Brasil. Ela não quer aprender",
+        "textoDaConversa": "",
+        "objetivo": null
+      },
+      "texto": "Talvez não seja falta de vontade: para a Manu, um mapa inteiro pode ser abstrato demais. **Comece por uma parte pequena e concreta**, como escolher um estado por vez e ligá-lo a algo que ela goste: uma comida, um animal, um lugar de um filme ou uma história de viagem.\n\nHoje, use um quebra-cabeça ou desenho simples e faça uma brincadeira de “viagem”: **“Vamos sair daqui e procurar onde fica esse lugar?”** Pare antes de ela se cansar; o objetivo inicial é reconhecer e se interessar, não decorar o mapa todo. Isso é uma tarefa da escola ou vocês estão tentando ensinar em casa?",
+      "metrica": {
+        "consultasBanco": 6,
+        "chamadasLLM": 1,
+        "tokensEntrada": 9288,
+        "tokensSaida": 333,
+        "msContexto": 2,
+        "msModelo": 5146,
+        "msInspecao": 1,
+        "msTotal": 5149,
+        "modelo": "gpt-5.6-luna",
+        "provider": "openai",
+        "fronteiraBarrou": false,
+        "foco": "unica",
+        "coreOrigem": "admin",
+        "coreVersao": 10,
+        "bpRecuperadas": 2,
+        "bpInjetadas": 2,
+        "bpChars": 4129,
+        "msBp": 2,
+        "jornada_dia": null,
+        "jornada_fechamento": false,
+        "jornada_chars": 0,
+        "trial_doc_chars": 0,
+        "modo": "normal",
+        "pos_trial_chars": 0,
+        "pos_trial_nivel": null,
+        "pos_trial_fatos": null,
+        "forma_modo": "off",
+        "forma_disparou": null,
+        "msParalelo": 2,
+        "msCtx": 0,
+        "msCore": 0,
+        "msTrial": 0,
+        "msOnda1": 0,
+        "msFoco": 0,
+        "msOnda3": 0
+      },
+      "falha": null,
+      "ms": 5149,
+      "blocoChars": 2009,
+      "blocoTexto": null,
+      "selecionados": [
+        {
+          "titulo": "👦 3. Idade Escolar / Segunda Infância (6 a 12 anos)",
+          "nucleo": "aprendizagem",
+          "tipo": "conceito",
+          "score": 73,
+          "faixa": [
+            72,
+            144
+          ],
+          "motivos": [
+            "dominio",
+            "faixa_etaria",
+            "tipo",
+            "texto"
+          ]
+        },
+        {
+          "titulo": "🏫 Tema 6: Relações Sociais, Inclusão Escolar e Mídia",
+          "nucleo": "socializacao",
+          "tipo": "conceito",
+          "score": 21,
+          "faixa": [
+            null,
+            null
+          ],
+          "motivos": [
+            "diagnostico",
+            "tipo",
+            "texto"
+          ]
+        }
+      ],
+      "uso": [
+        {
+          "modelo": "gpt-5.6-luna",
+          "uso": {
+            "prompt_tokens": 9288,
+            "completion_tokens": 333,
+            "total_tokens": 9621,
+            "prompt_tokens_details": {
+              "cached_tokens": 9285,
+              "cache_write_tokens": 0,
+              "audio_tokens": 0
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 187,
+              "audio_tokens": 0,
+              "accepted_prediction_tokens": 0,
+              "rejected_prediction_tokens": 0
+            }
+          },
+          "ms": 5108,
+          "bpChars": 4129
+        }
+      ]
+    },
+    {
+      "caso": "manu-mapa",
+      "braco": "A",
+      "execucao": 2,
+      "ctx": {
+        "idadeAnos": 6,
+        "perfil": "TEA",
+        "dominio": "aprendizado",
+        "dificuldade": "Minha filha não aprende o mapa do Brasil. Ela não quer aprender",
+        "textoDaConversa": "",
+        "objetivo": null
+      },
+      "texto": "Pode ser que o mapa esteja **abstrato demais para a Manu**, e não que ela simplesmente não queira aprender. Em vez de insistir no mapa inteiro, comece com algo concreto: mostre o Brasil como um grande desenho, escolha **uma região por vez** e ligue cada lugar a algo que ela goste, como dinossauros, princesas ou uma comida típica. Faça por poucos minutos, sem cobrança, e pare enquanto ainda estiver tranquila. 💛\n\nA dificuldade maior é reconhecer o desenho do mapa ou manter o interesse na atividade?",
+      "metrica": {
+        "consultasBanco": 6,
+        "chamadasLLM": 1,
+        "tokensEntrada": 8805,
+        "tokensSaida": 277,
+        "msContexto": 2,
+        "msModelo": 3674,
+        "msInspecao": 0,
+        "msTotal": 3686,
+        "modelo": "gpt-5.6-luna",
+        "provider": "openai",
+        "fronteiraBarrou": false,
+        "foco": "unica",
+        "coreOrigem": "admin",
+        "coreVersao": 10,
+        "bpRecuperadas": 2,
+        "bpInjetadas": 2,
+        "bpChars": 4129,
+        "msBp": 2,
+        "jornada_dia": null,
+        "jornada_fechamento": false,
+        "jornada_chars": 0,
+        "trial_doc_chars": 0,
+        "modo": "normal",
+        "pos_trial_chars": 0,
+        "pos_trial_nivel": null,
+        "pos_trial_fatos": null,
+        "forma_modo": "off",
+        "forma_disparou": null,
+        "msParalelo": 2,
+        "msCtx": 0,
+        "msCore": 0,
+        "msTrial": 0,
+        "msOnda1": 0,
+        "msFoco": 0,
+        "msOnda3": 0
+      },
+      "falha": null,
+      "ms": 3686,
+      "blocoChars": 2009,
+      "blocoTexto": null,
+      "selecionados": [
+        {
+          "titulo": "👦 3. Idade Escolar / Segunda Infância (6 a 12 anos)",
+          "nucleo": "aprendizagem",
+          "tipo": "conceito",
+          "score": 73,
+          "faixa": [
+            72,
+            144
+          ],
+          "motivos": [
+            "dominio",
+            "faixa_etaria",
+            "tipo",
+            "texto"
+          ]
+        },
+        {
+          "titulo": "🏫 Tema 6: Relações Sociais, Inclusão Escolar e Mídia",
+          "nucleo": "socializacao",
+          "tipo": "conceito",
+          "score": 21,
+          "faixa": [
+            null,
+            null
+          ],
+          "motivos": [
+            "diagnostico",
+            "tipo",
+            "texto"
+          ]
+        }
+      ],
+      "uso": [
+        {
+          "modelo": "gpt-5.6-luna",
+          "uso": {
+            "prompt_tokens": 8805,
+            "completion_tokens": 277,
+            "total_tokens": 9082,
+            "prompt_tokens_details": {
+              "cached_tokens": 8802,
+              "cache_write_tokens": 0,
+              "audio_tokens": 0
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 154,
+              "audio_tokens": 0,
+              "accepted_prediction_tokens": 0,
+              "rejected_prediction_tokens": 0
+            }
+          },
+          "ms": 3657,
+          "bpChars": 4129
+        }
+      ]
+    },
+    {
+      "caso": "manu-mapa",
+      "braco": "A",
+      "execucao": 3,
+      "ctx": {
+        "idadeAnos": 6,
+        "perfil": "TEA",
+        "dominio": "aprendizado",
+        "dificuldade": "Minha filha não aprende o mapa do Brasil. Ela não quer aprender",
+        "textoDaConversa": "",
+        "objetivo": null
+      },
+      "texto": "Talvez o mapa esteja abstrato demais para a Manu — não necessariamente seja falta de vontade. Em vez de pedir que ela memorize, comece com algo concreto: desenhe o Brasil como um grande território de dinossauros, usando poucas partes por vez, e brinque de colocar cada figura no lugar; depois, nomeie a região sem cobrar que ela repita. **“Vamos descobrir onde esse dinossauro mora?”** pode ser mais interessante do que “aprenda o mapa”.  \n\nEla precisa aprender o formato do mapa ou localizar estados e regiões?",
+      "metrica": {
+        "consultasBanco": 6,
+        "chamadasLLM": 1,
+        "tokensEntrada": 8805,
+        "tokensSaida": 199,
+        "msContexto": 2,
+        "msModelo": 3169,
+        "msInspecao": 0,
+        "msTotal": 3171,
+        "modelo": "gpt-5.6-luna",
+        "provider": "openai",
+        "fronteiraBarrou": false,
+        "foco": "unica",
+        "coreOrigem": "admin",
+        "coreVersao": 10,
+        "bpRecuperadas": 2,
+        "bpInjetadas": 2,
+        "bpChars": 4129,
+        "msBp": 2,
+        "jornada_dia": null,
+        "jornada_fechamento": false,
+        "jornada_chars": 0,
+        "trial_doc_chars": 0,
+        "modo": "normal",
+        "pos_trial_chars": 0,
+        "pos_trial_nivel": null,
+        "pos_trial_fatos": null,
+        "forma_modo": "off",
+        "forma_disparou": null,
+        "msParalelo": 2,
+        "msCtx": 1,
+        "msCore": 0,
+        "msTrial": 0,
+        "msOnda1": 0,
+        "msFoco": 0,
+        "msOnda3": 0
+      },
+      "falha": null,
+      "ms": 3171,
+      "blocoChars": 2009,
+      "blocoTexto": null,
+      "selecionados": [
+        {
+          "titulo": "👦 3. Idade Escolar / Segunda Infância (6 a 12 anos)",
+          "nucleo": "aprendizagem",
+          "tipo": "conceito",
+          "score": 73,
+          "faixa": [
+            72,
+            144
+          ],
+          "motivos": [
+            "dominio",
+            "faixa_etaria",
+            "tipo",
+            "texto"
+          ]
+        },
+        {
+          "titulo": "🏫 Tema 6: Relações Sociais, Inclusão Escolar e Mídia",
+          "nucleo": "socializacao",
+          "tipo": "conceito",
+          "score": 21,
+          "faixa": [
+            null,
+            null
+          ],
+          "motivos": [
+            "diagnostico",
+            "tipo",
+            "texto"
+          ]
+        }
+      ],
+      "uso": [
+        {
+          "modelo": "gpt-5.6-luna",
+          "uso": {
+            "prompt_tokens": 8805,
+            "completion_tokens": 199,
+            "total_tokens": 9004,
+            "prompt_tokens_details": {
+              "cached_tokens": 8802,
+              "cache_write_tokens": 0,
+              "audio_tokens": 0
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 75,
+              "audio_tokens": 0,
+              "accepted_prediction_tokens": 0,
+              "rejected_prediction_tokens": 0
+            }
+          },
+          "ms": 3154,
+          "bpChars": 4129
+        }
+      ]
+    },
+    {
+      "caso": "manu-mapa",
+      "braco": "B",
+      "execucao": 3,
+      "ctx": {
+        "idadeAnos": 6,
+        "perfil": "TEA",
+        "dominio": "aprendizado",
+        "dificuldade": "Minha filha não aprende o mapa do Brasil. Ela não quer aprender",
+        "textoDaConversa": "",
+        "objetivo": null
+      },
+      "texto": "Talvez o problema não seja falta de vontade, mas o mapa estar **abstrato demais para ela**. Em vez de tentar decorar o Brasil inteiro, comece com um quebra-cabeça ou desenho grande: deixe a Manu montar, colorir e colocar apenas **um ponto conhecido**, como onde vocês moram; depois acrescente outro aos poucos.\n\nVocê também pode ligar o mapa a algo que ela gosta: procurar onde vivem dinossauros, escolher um estado para “viajar” numa brincadeira de cozinha ou de princesas. **Não force a memorização agora**; primeiro ajude-a a criar sentido. Isso é uma atividade da escola ou você quer que ela reconheça os estados?",
+      "metrica": {
+        "consultasBanco": 6,
+        "chamadasLLM": 1,
+        "tokensEntrada": 9288,
+        "tokensSaida": 349,
+        "msContexto": 3,
+        "msModelo": 5050,
+        "msInspecao": 1,
+        "msTotal": 5054,
+        "modelo": "gpt-5.6-luna",
+        "provider": "openai",
+        "fronteiraBarrou": false,
+        "foco": "unica",
+        "coreOrigem": "admin",
+        "coreVersao": 10,
+        "bpRecuperadas": 2,
+        "bpInjetadas": 2,
+        "bpChars": 4129,
+        "msBp": 3,
+        "jornada_dia": null,
+        "jornada_fechamento": false,
+        "jornada_chars": 0,
+        "trial_doc_chars": 0,
+        "modo": "normal",
+        "pos_trial_chars": 0,
+        "pos_trial_nivel": null,
+        "pos_trial_fatos": null,
+        "forma_modo": "off",
+        "forma_disparou": null,
+        "msParalelo": 3,
+        "msCtx": 0,
+        "msCore": 0,
+        "msTrial": 0,
+        "msOnda1": 0,
+        "msFoco": 0,
+        "msOnda3": 0
+      },
+      "falha": null,
+      "ms": 5054,
+      "blocoChars": 2009,
+      "blocoTexto": null,
+      "selecionados": [
+        {
+          "titulo": "👦 3. Idade Escolar / Segunda Infância (6 a 12 anos)",
+          "nucleo": "aprendizagem",
+          "tipo": "conceito",
+          "score": 73,
+          "faixa": [
+            72,
+            144
+          ],
+          "motivos": [
+            "dominio",
+            "faixa_etaria",
+            "tipo",
+            "texto"
+          ]
+        },
+        {
+          "titulo": "🏫 Tema 6: Relações Sociais, Inclusão Escolar e Mídia",
+          "nucleo": "socializacao",
+          "tipo": "conceito",
+          "score": 21,
+          "faixa": [
+            null,
+            null
+          ],
+          "motivos": [
+            "diagnostico",
+            "tipo",
+            "texto"
+          ]
+        }
+      ],
+      "uso": [
+        {
+          "modelo": "gpt-5.6-luna",
+          "uso": {
+            "prompt_tokens": 9288,
+            "completion_tokens": 349,
+            "total_tokens": 9637,
+            "prompt_tokens_details": {
+              "cached_tokens": 9285,
+              "cache_write_tokens": 0,
+              "audio_tokens": 0
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 196,
+              "audio_tokens": 0,
+              "accepted_prediction_tokens": 0,
+              "rejected_prediction_tokens": 0
+            }
+          },
+          "ms": 5031,
+          "bpChars": 4129
+        }
+      ]
+    },
+    {
+      "caso": "manu-mapa",
+      "braco": "B",
+      "execucao": 4,
+      "ctx": {
+        "idadeAnos": 6,
+        "perfil": "TEA",
+        "dominio": "aprendizado",
+        "dificuldade": "Minha filha não aprende o mapa do Brasil. Ela não quer aprender",
+        "textoDaConversa": "",
+        "objetivo": null
+      },
+      "texto": "Pode ser que o mapa esteja **abstrato demais para a Manu**, e não que ela não queira aprender. Em vez de pedir o mapa inteiro, comece pelo concreto: mostre o Brasil como o lugar onde vocês moram, use uma imagem de cozinha ou dinossauros viajando e trabalhe só **um ponto por vez** — por exemplo, “aqui é onde moramos” e “aqui fica o mar”.  \n\nFaça por poucos minutos, sem transformar em cobrança: **“Vamos procurar onde o dinossauro vai passear?”**. Se ela recusar, pare e tente outro dia; o objetivo inicial é criar interesse e compreensão, não decorar o mapa. Isso é uma exigência da escola ou uma atividade que vocês escolheram em casa?",
+      "metrica": {
+        "consultasBanco": 6,
+        "chamadasLLM": 1,
+        "tokensEntrada": 9288,
+        "tokensSaida": 249,
+        "msContexto": 3,
+        "msModelo": 4377,
+        "msInspecao": 1,
+        "msTotal": 4381,
+        "modelo": "gpt-5.6-luna",
+        "provider": "openai",
+        "fronteiraBarrou": false,
+        "foco": "unica",
+        "coreOrigem": "admin",
+        "coreVersao": 10,
+        "bpRecuperadas": 2,
+        "bpInjetadas": 2,
+        "bpChars": 4129,
+        "msBp": 3,
+        "jornada_dia": null,
+        "jornada_fechamento": false,
+        "jornada_chars": 0,
+        "trial_doc_chars": 0,
+        "modo": "normal",
+        "pos_trial_chars": 0,
+        "pos_trial_nivel": null,
+        "pos_trial_fatos": null,
+        "forma_modo": "off",
+        "forma_disparou": null,
+        "msParalelo": 3,
+        "msCtx": 0,
+        "msCore": 0,
+        "msTrial": 0,
+        "msOnda1": 0,
+        "msFoco": 0,
+        "msOnda3": 0
+      },
+      "falha": null,
+      "ms": 4381,
+      "blocoChars": 2009,
+      "blocoTexto": null,
+      "selecionados": [
+        {
+          "titulo": "👦 3. Idade Escolar / Segunda Infância (6 a 12 anos)",
+          "nucleo": "aprendizagem",
+          "tipo": "conceito",
+          "score": 73,
+          "faixa": [
+            72,
+            144
+          ],
+          "motivos": [
+            "dominio",
+            "faixa_etaria",
+            "tipo",
+            "texto"
+          ]
+        },
+        {
+          "titulo": "🏫 Tema 6: Relações Sociais, Inclusão Escolar e Mídia",
+          "nucleo": "socializacao",
+          "tipo": "conceito",
+          "score": 21,
+          "faixa": [
+            null,
+            null
+          ],
+          "motivos": [
+            "diagnostico",
+            "tipo",
+            "texto"
+          ]
+        }
+      ],
+      "uso": [
+        {
+          "modelo": "gpt-5.6-luna",
+          "uso": {
+            "prompt_tokens": 9288,
+            "completion_tokens": 249,
+            "total_tokens": 9537,
+            "prompt_tokens_details": {
+              "cached_tokens": 9285,
+              "cache_write_tokens": 0,
+              "audio_tokens": 0
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 82,
+              "audio_tokens": 0,
+              "accepted_prediction_tokens": 0,
+              "rejected_prediction_tokens": 0
+            }
+          },
+          "ms": 4335,
+          "bpChars": 4129
+        }
+      ]
+    },
+    {
+      "caso": "manu-mapa",
+      "braco": "A",
+      "execucao": 4,
+      "ctx": {
+        "idadeAnos": 6,
+        "perfil": "TEA",
+        "dominio": "aprendizado",
+        "dificuldade": "Minha filha não aprende o mapa do Brasil. Ela não quer aprender",
+        "textoDaConversa": "",
+        "objetivo": null
+      },
+      "texto": "Pode ser que o mapa esteja **abstrato demais para ela**, e não que ela simplesmente não queira aprender. Hoje, tente não começar pelos nomes dos estados: use um mapa bem simples e transforme em brincadeira — por exemplo, colocar um dinossauro ou uma princesa em diferentes regiões e dizer apenas **“vamos encontrar o Norte”** ou **“onde fica a praia?”**. Faça por poucos minutos e pare antes de ela se frustrar.\n\nSe isso for para uma atividade da escola, posso adaptar a brincadeira ao que ela precisa aprender primeiro.",
+      "metrica": {
+        "consultasBanco": 6,
+        "chamadasLLM": 1,
+        "tokensEntrada": 8805,
+        "tokensSaida": 188,
+        "msContexto": 2,
+        "msModelo": 2733,
+        "msInspecao": 1,
+        "msTotal": 2736,
+        "modelo": "gpt-5.6-luna",
+        "provider": "openai",
+        "fronteiraBarrou": false,
+        "foco": "unica",
+        "coreOrigem": "admin",
+        "coreVersao": 10,
+        "bpRecuperadas": 2,
+        "bpInjetadas": 2,
+        "bpChars": 4129,
+        "msBp": 2,
+        "jornada_dia": null,
+        "jornada_fechamento": false,
+        "jornada_chars": 0,
+        "trial_doc_chars": 0,
+        "modo": "normal",
+        "pos_trial_chars": 0,
+        "pos_trial_nivel": null,
+        "pos_trial_fatos": null,
+        "forma_modo": "off",
+        "forma_disparou": null,
+        "msParalelo": 2,
+        "msCtx": 0,
+        "msCore": 0,
+        "msTrial": 0,
+        "msOnda1": 0,
+        "msFoco": 0,
+        "msOnda3": 0
+      },
+      "falha": null,
+      "ms": 2736,
+      "blocoChars": 2009,
+      "blocoTexto": null,
+      "selecionados": [
+        {
+          "titulo": "👦 3. Idade Escolar / Segunda Infância (6 a 12 anos)",
+          "nucleo": "aprendizagem",
+          "tipo": "conceito",
+          "score": 73,
+          "faixa": [
+            72,
+            144
+          ],
+          "motivos": [
+            "dominio",
+            "faixa_etaria",
+            "tipo",
+            "texto"
+          ]
+        },
+        {
+          "titulo": "🏫 Tema 6: Relações Sociais, Inclusão Escolar e Mídia",
+          "nucleo": "socializacao",
+          "tipo": "conceito",
+          "score": 21,
+          "faixa": [
+            null,
+            null
+          ],
+          "motivos": [
+            "diagnostico",
+            "tipo",
+            "texto"
+          ]
+        }
+      ],
+      "uso": [
+        {
+          "modelo": "gpt-5.6-luna",
+          "uso": {
+            "prompt_tokens": 8805,
+            "completion_tokens": 188,
+            "total_tokens": 8993,
+            "prompt_tokens_details": {
+              "cached_tokens": 8802,
+              "cache_write_tokens": 0,
+              "audio_tokens": 0
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 66,
+              "audio_tokens": 0,
+              "accepted_prediction_tokens": 0,
+              "rejected_prediction_tokens": 0
+            }
+          },
+          "ms": 2683,
+          "bpChars": 4129
+        }
+      ]
+    },
+    {
+      "caso": "manu-mapa",
+      "braco": "A",
+      "execucao": 5,
+      "ctx": {
+        "idadeAnos": 6,
+        "perfil": "TEA",
+        "dominio": "aprendizado",
+        "dificuldade": "Minha filha não aprende o mapa do Brasil. Ela não quer aprender",
+        "textoDaConversa": "",
+        "objetivo": null
+      },
+      "texto": "Talvez o mapa esteja **abstrato demais para a Manu**, e não seja falta de vontade. Em vez de pedir que ela memorize o Brasil inteiro, comece com algo concreto e curto: desenhe o contorno, coloque só **2 ou 3 partes** e transforme em uma brincadeira de viagem de dinossauro, usando imagens de animais ou lugares.\n\nPor 5 minutos, diga: **“Vamos descobrir onde o dinossauro vai hoje?”** Ela pode apontar, colar figuras ou escolher uma cor — sem exigir que responda verbalmente. Quando isso ficar fácil, acrescente uma parte; se ela perder o interesse, pare antes de virar pressão.",
+      "metrica": {
+        "consultasBanco": 6,
+        "chamadasLLM": 1,
+        "tokensEntrada": 8805,
+        "tokensSaida": 382,
+        "msContexto": 2,
+        "msModelo": 4982,
+        "msInspecao": 0,
+        "msTotal": 4984,
+        "modelo": "gpt-5.6-luna",
+        "provider": "openai",
+        "fronteiraBarrou": false,
+        "foco": "unica",
+        "coreOrigem": "admin",
+        "coreVersao": 10,
+        "bpRecuperadas": 2,
+        "bpInjetadas": 2,
+        "bpChars": 4129,
+        "msBp": 2,
+        "jornada_dia": null,
+        "jornada_fechamento": false,
+        "jornada_chars": 0,
+        "trial_doc_chars": 0,
+        "modo": "normal",
+        "pos_trial_chars": 0,
+        "pos_trial_nivel": null,
+        "pos_trial_fatos": null,
+        "forma_modo": "off",
+        "forma_disparou": null,
+        "msParalelo": 2,
+        "msCtx": 0,
+        "msCore": 0,
+        "msTrial": 0,
+        "msOnda1": 0,
+        "msFoco": 0,
+        "msOnda3": 0
+      },
+      "falha": null,
+      "ms": 4984,
+      "blocoChars": 2009,
+      "blocoTexto": null,
+      "selecionados": [
+        {
+          "titulo": "👦 3. Idade Escolar / Segunda Infância (6 a 12 anos)",
+          "nucleo": "aprendizagem",
+          "tipo": "conceito",
+          "score": 73,
+          "faixa": [
+            72,
+            144
+          ],
+          "motivos": [
+            "dominio",
+            "faixa_etaria",
+            "tipo",
+            "texto"
+          ]
+        },
+        {
+          "titulo": "🏫 Tema 6: Relações Sociais, Inclusão Escolar e Mídia",
+          "nucleo": "socializacao",
+          "tipo": "conceito",
+          "score": 21,
+          "faixa": [
+            null,
+            null
+          ],
+          "motivos": [
+            "diagnostico",
+            "tipo",
+            "texto"
+          ]
+        }
+      ],
+      "uso": [
+        {
+          "modelo": "gpt-5.6-luna",
+          "uso": {
+            "prompt_tokens": 8805,
+            "completion_tokens": 382,
+            "total_tokens": 9187,
+            "prompt_tokens_details": {
+              "cached_tokens": 8802,
+              "cache_write_tokens": 0,
+              "audio_tokens": 0
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 235,
+              "audio_tokens": 0,
+              "accepted_prediction_tokens": 0,
+              "rejected_prediction_tokens": 0
+            }
+          },
+          "ms": 4929,
+          "bpChars": 4129
+        }
+      ]
+    },
+    {
+      "caso": "manu-mapa",
+      "braco": "B",
+      "execucao": 5,
+      "ctx": {
+        "idadeAnos": 6,
+        "perfil": "TEA",
+        "dominio": "aprendizado",
+        "dificuldade": "Minha filha não aprende o mapa do Brasil. Ela não quer aprender",
+        "textoDaConversa": "",
+        "objetivo": null
+      },
+      "texto": "Pode ser menos falta de vontade e mais que o mapa do Brasil está **abstrato demais** para a Manu. Em vez de tentar ensinar o mapa inteiro, comece com **2 ou 3 estados**, usando um mapa com peças, cores e imagens: por exemplo, coloque um dinossauro em um estado e uma princesa em outro, e brinque de encontrar cada um.\n\nFaça por poucos minutos, sem exigir que ela memorize. Você pode dizer: **“Vamos descobrir onde fica este lugar?”** e aceitar que ela aponte, combine cores ou peça ajuda. Depois, aumente aos poucos. 💛\n\nA escola está cobrando que ela reconheça o formato do Brasil ou que memorize os nomes e a localização dos estados?",
+      "metrica": {
+        "consultasBanco": 6,
+        "chamadasLLM": 1,
+        "tokensEntrada": 9288,
+        "tokensSaida": 376,
+        "msContexto": 2,
+        "msModelo": 5305,
+        "msInspecao": 1,
+        "msTotal": 5308,
+        "modelo": "gpt-5.6-luna",
+        "provider": "openai",
+        "fronteiraBarrou": false,
+        "foco": "unica",
+        "coreOrigem": "admin",
+        "coreVersao": 10,
+        "bpRecuperadas": 2,
+        "bpInjetadas": 2,
+        "bpChars": 4129,
+        "msBp": 2,
+        "jornada_dia": null,
+        "jornada_fechamento": false,
+        "jornada_chars": 0,
+        "trial_doc_chars": 0,
+        "modo": "normal",
+        "pos_trial_chars": 0,
+        "pos_trial_nivel": null,
+        "pos_trial_fatos": null,
+        "forma_modo": "off",
+        "forma_disparou": null,
+        "msParalelo": 2,
+        "msCtx": 0,
+        "msCore": 0,
+        "msTrial": 0,
+        "msOnda1": 0,
+        "msFoco": 0,
+        "msOnda3": 0
+      },
+      "falha": null,
+      "ms": 5308,
+      "blocoChars": 2009,
+      "blocoTexto": null,
+      "selecionados": [
+        {
+          "titulo": "👦 3. Idade Escolar / Segunda Infância (6 a 12 anos)",
+          "nucleo": "aprendizagem",
+          "tipo": "conceito",
+          "score": 73,
+          "faixa": [
+            72,
+            144
+          ],
+          "motivos": [
+            "dominio",
+            "faixa_etaria",
+            "tipo",
+            "texto"
+          ]
+        },
+        {
+          "titulo": "🏫 Tema 6: Relações Sociais, Inclusão Escolar e Mídia",
+          "nucleo": "socializacao",
+          "tipo": "conceito",
+          "score": 21,
+          "faixa": [
+            null,
+            null
+          ],
+          "motivos": [
+            "diagnostico",
+            "tipo",
+            "texto"
+          ]
+        }
+      ],
+      "uso": [
+        {
+          "modelo": "gpt-5.6-luna",
+          "uso": {
+            "prompt_tokens": 9288,
+            "completion_tokens": 376,
+            "total_tokens": 9664,
+            "prompt_tokens_details": {
+              "cached_tokens": 9285,
+              "cache_write_tokens": 0,
+              "audio_tokens": 0
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 215,
+              "audio_tokens": 0,
+              "accepted_prediction_tokens": 0,
+              "rejected_prediction_tokens": 0
+            }
+          },
+          "ms": 5259,
+          "bpChars": 4129
+        }
+      ]
+    },
+    {
+      "caso": "manu-mapa",
+      "braco": "B",
+      "execucao": 6,
+      "ctx": {
+        "idadeAnos": 6,
+        "perfil": "TEA",
+        "dominio": "aprendizado",
+        "dificuldade": "Minha filha não aprende o mapa do Brasil. Ela não quer aprender",
+        "textoDaConversa": "",
+        "objetivo": null
+      },
+      "texto": "Pode ser que o mapa inteiro esteja abstrato demais para a Manu, e não simplesmente que ela não queira aprender. **Comece por uma parte pequena e concreta**, sem exigir que ela memorize: escolha um estado, coloque uma imagem de algo que ela goste — um dinossauro, uma comida ou um lugar de um filme — e brinquem de encontrar esse estado no mapa.\n\nDiga: **“Vamos procurar só este lugar”**, por 2 ou 3 minutos, e pare antes de ela se frustrar. Depois, retome em outro momento. Você quer que ela reconheça os estados, localize o Brasil ou faça uma atividade escolar específica?",
+      "metrica": {
+        "consultasBanco": 6,
+        "chamadasLLM": 1,
+        "tokensEntrada": 9288,
+        "tokensSaida": 243,
+        "msContexto": 2,
+        "msModelo": 3756,
+        "msInspecao": 0,
+        "msTotal": 3758,
+        "modelo": "gpt-5.6-luna",
+        "provider": "openai",
+        "fronteiraBarrou": false,
+        "foco": "unica",
+        "coreOrigem": "admin",
+        "coreVersao": 10,
+        "bpRecuperadas": 2,
+        "bpInjetadas": 2,
+        "bpChars": 4129,
+        "msBp": 2,
+        "jornada_dia": null,
+        "jornada_fechamento": false,
+        "jornada_chars": 0,
+        "trial_doc_chars": 0,
+        "modo": "normal",
+        "pos_trial_chars": 0,
+        "pos_trial_nivel": null,
+        "pos_trial_fatos": null,
+        "forma_modo": "off",
+        "forma_disparou": null,
+        "msParalelo": 2,
+        "msCtx": 0,
+        "msCore": 0,
+        "msTrial": 0,
+        "msOnda1": 0,
+        "msFoco": 0,
+        "msOnda3": 0
+      },
+      "falha": null,
+      "ms": 3758,
+      "blocoChars": 2009,
+      "blocoTexto": null,
+      "selecionados": [
+        {
+          "titulo": "👦 3. Idade Escolar / Segunda Infância (6 a 12 anos)",
+          "nucleo": "aprendizagem",
+          "tipo": "conceito",
+          "score": 73,
+          "faixa": [
+            72,
+            144
+          ],
+          "motivos": [
+            "dominio",
+            "faixa_etaria",
+            "tipo",
+            "texto"
+          ]
+        },
+        {
+          "titulo": "🏫 Tema 6: Relações Sociais, Inclusão Escolar e Mídia",
+          "nucleo": "socializacao",
+          "tipo": "conceito",
+          "score": 21,
+          "faixa": [
+            null,
+            null
+          ],
+          "motivos": [
+            "diagnostico",
+            "tipo",
+            "texto"
+          ]
+        }
+      ],
+      "uso": [
+        {
+          "modelo": "gpt-5.6-luna",
+          "uso": {
+            "prompt_tokens": 9288,
+            "completion_tokens": 243,
+            "total_tokens": 9531,
+            "prompt_tokens_details": {
+              "cached_tokens": 9285,
+              "cache_write_tokens": 0,
+              "audio_tokens": 0
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 99,
+              "audio_tokens": 0,
+              "accepted_prediction_tokens": 0,
+              "rejected_prediction_tokens": 0
+            }
+          },
+          "ms": 3703,
+          "bpChars": 4129
+        }
+      ]
+    },
+    {
+      "caso": "manu-mapa",
+      "braco": "A",
+      "execucao": 6,
+      "ctx": {
+        "idadeAnos": 6,
+        "perfil": "TEA",
+        "dominio": "aprendizado",
+        "dificuldade": "Minha filha não aprende o mapa do Brasil. Ela não quer aprender",
+        "textoDaConversa": "",
+        "objetivo": null
+      },
+      "texto": "Pode ser que o mapa esteja **abstrato demais para ela**, e não falta de vontade. Em vez de tentar ensinar o Brasil inteiro, comece por algo concreto: escolha um lugar ligado a um interesse da Manu, como onde acontece um filme ou de onde vem uma comida, e marque só esse ponto com uma imagem.\n\nDiga: **“Vamos descobrir onde fica este lugar?”** Explore por poucos minutos e pare antes de virar briga. Depois, retome outro dia, sempre com uma região por vez. O objetivo agora é ela começar a perceber que o mapa representa lugares, não decorar estados. Isso é para uma tarefa da escola ou uma cobrança mais geral?",
+      "metrica": {
+        "consultasBanco": 6,
+        "chamadasLLM": 1,
+        "tokensEntrada": 8805,
+        "tokensSaida": 281,
+        "msContexto": 2,
+        "msModelo": 3797,
+        "msInspecao": 0,
+        "msTotal": 3799,
+        "modelo": "gpt-5.6-luna",
+        "provider": "openai",
+        "fronteiraBarrou": false,
+        "foco": "unica",
+        "coreOrigem": "admin",
+        "coreVersao": 10,
+        "bpRecuperadas": 2,
+        "bpInjetadas": 2,
+        "bpChars": 4129,
+        "msBp": 1,
+        "jornada_dia": null,
+        "jornada_fechamento": false,
+        "jornada_chars": 0,
+        "trial_doc_chars": 0,
+        "modo": "normal",
+        "pos_trial_chars": 0,
+        "pos_trial_nivel": null,
+        "pos_trial_fatos": null,
+        "forma_modo": "off",
+        "forma_disparou": null,
+        "msParalelo": 2,
+        "msCtx": 1,
+        "msCore": 0,
+        "msTrial": 0,
+        "msOnda1": 1,
+        "msFoco": 0,
+        "msOnda3": 0
+      },
+      "falha": null,
+      "ms": 3799,
+      "blocoChars": 2009,
+      "blocoTexto": null,
+      "selecionados": [
+        {
+          "titulo": "👦 3. Idade Escolar / Segunda Infância (6 a 12 anos)",
+          "nucleo": "aprendizagem",
+          "tipo": "conceito",
+          "score": 73,
+          "faixa": [
+            72,
+            144
+          ],
+          "motivos": [
+            "dominio",
+            "faixa_etaria",
+            "tipo",
+            "texto"
+          ]
+        },
+        {
+          "titulo": "🏫 Tema 6: Relações Sociais, Inclusão Escolar e Mídia",
+          "nucleo": "socializacao",
+          "tipo": "conceito",
+          "score": 21,
+          "faixa": [
+            null,
+            null
+          ],
+          "motivos": [
+            "diagnostico",
+            "tipo",
+            "texto"
+          ]
+        }
+      ],
+      "uso": [
+        {
+          "modelo": "gpt-5.6-luna",
+          "uso": {
+            "prompt_tokens": 8805,
+            "completion_tokens": 281,
+            "total_tokens": 9086,
+            "prompt_tokens_details": {
+              "cached_tokens": 8802,
+              "cache_write_tokens": 0,
+              "audio_tokens": 0
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 136,
+              "audio_tokens": 0,
+              "accepted_prediction_tokens": 0,
+              "rejected_prediction_tokens": 0
+            }
+          },
+          "ms": 3762,
+          "bpChars": 4129
+        }
+      ]
+    }
+  ]
+}
