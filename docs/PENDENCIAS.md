@@ -7458,6 +7458,28 @@ global de provider e não reescrever os 17 testes que quebraram quando tentei
 fixar GPT em `providerConversacionalParaFamilia`. `IA_PROVIDER=openai` fica como
 proteção corrente.
 
+**AMPLIADA EM 05/09/2026 — o escopo definitivo, decidido pelo produto.**
+Esta pendência absorve a frente que chamávamos de "GPT como cérebro"; não existe
+uma segunda. Quatro exigências, e as quatro valem juntas:
+
+1. **Toda interpretação substantiva voltada à família é do GPT** — ler a
+   situação, formular hipótese, decidir o que investigar, decidir o que orientar.
+2. **A seleção e a integração do conhecimento são do GPT** — qual fonte serve
+   àquele turno (Boas Práticas, BASE 2, Resumo Geral da Pós, combinação delas ou
+   nenhuma) e o que fazer com ela.
+3. **A formulação da resposta final é do GPT.**
+4. **Classificador ou modelo auxiliar só permanece se for mecânico** — e
+   "mecânico" tem teste: se ele **limita materialmente o que o GPT consegue
+   enxergar ou decidir**, não é mecânico, é interpretação disfarçada de
+   roteamento. `classificar_intencao` é o caso a resolver: ele escolhe as skills
+   e, por elas, quais Boas Práticas são recuperadas **e quanto do perfil entra
+   no prompt** — sem nunca ver a criança.
+
+⚠️ **A auditoria vem antes da implementação.** Cada chamada auxiliar anterior ao
+GPT precisa ser classificada em **pode permanecer · precisa virar GPT · precisa
+ser eliminada**, com a evidência do que ela decide. Sem esse mapa, trocar
+provider é adivinhação.
+
 **CONTEXTO:** [AYLA_ATIVACAO_V10_2026-09.md](AYLA_ATIVACAO_V10_2026-09.md) §8.
 
 **ERRO MEU, REGISTRADO:** cinco documentos de setembro afirmavam que Claude e
