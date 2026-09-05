@@ -109,7 +109,8 @@ describe("NÃO-REGRESSÃO — o que o encurtamento não pode levar junto", () =>
   });
 
   it("12. MORDE: as regras antigas do canal continuam todas lá", () => {
-    expect(FORMATO_WHATSAPP).toMatch(/sem markdown/);
+    // "sem markdown" virou a lista do que o canal não converte (05/09/2026).
+    expect(FORMATO_WHATSAPP).toMatch(/sem títulos \(##\)/);
     expect(FORMATO_WHATSAPP).toMatch(/No máximo UMA pergunta por vez/);
     expect(FORMATO_WHATSAPP).toMatch(/Não dê moldura clínica/);
     expect(FORMATO_WHATSAPP).toMatch(/Não prometa artefato/);

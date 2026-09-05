@@ -1,5 +1,27 @@
 # Pacote de análise conversacional da Ayla — setembro/2026
 
+> ## ⚠️ RETIFICAÇÃO — 05/09/2026
+>
+> **Este documento afirmou que Claude e GPT eram dois providers conversacionais
+> válidos em produção. Está errado, e a correção importa.**
+>
+> **PROVEI POR EXECUÇÃO:** `lib/ayla/experimental.ts:969` fixa
+> `const provider = "openai" as const`. O caminho oficial do WhatsApp — 97,4%
+> dos turnos — **nunca** usa Claude e ignora o seletor de provider. Eu li o
+> registro `MODELO_CONVERSA` inteiro (que contém os dois) e reportei o lado
+> errado.
+>
+> **Consequência:** onde este documento fala em "Claude × GPT" ou "fallback
+> Claude", leia **GPT nas duas colunas**. As diferenças que atribuí a providers
+> eram variação entre execuções do mesmo modelo.
+>
+> **DECISÃO DE PRODUTO (05/09/2026):** GPT é o cérebro conversacional e
+> interpretativo da Ayla. Claude não responde família em canal nenhum. O
+> endurecimento arquitetural disso é frente própria — ver
+> `docs/AYLA_ATIVACAO_V10_2026-09.md`.
+
+
+
 **Para uma equipe externa avaliar ativação e Trial.**
 Levantado em 02/09/2026 lendo o repositório e consultando o banco de produção
 por leitura. Nada foi alterado.

@@ -1,0 +1,57 @@
+{
+  "quando": "2026-09-05T14:08:52.110Z",
+  "modelo": {
+    "anthropic": "claude-sonnet-4-6",
+    "openai": "gpt-5.6-luna"
+  },
+  "resultados": [
+    {
+      "caso": "vago",
+      "braco": "A",
+      "execucao": 1,
+      "ms": 4064,
+      "texto": "Entendo. Quando o Theo gritar, fale baixo e use uma frase curta: “Eu quero entender. Fala baixo ou aponta.” Evite repetir muitas perguntas.\n\nIsso acontece mais quando ele é contrariado, quando quer pedir algo, quando fica ansioso ou em lugares barulhentos?",
+      "falha": null
+    },
+    {
+      "caso": "vago",
+      "braco": "B",
+      "execucao": 1,
+      "ms": 1803,
+      "texto": "Entendo, ouvir gritos o tempo todo pode ser bem desgastante. Quando ele grita, parece mais por frustração, barulho, mudança de atividade ou para pedir alguma coisa?",
+      "falha": null
+    },
+    {
+      "caso": "bpc",
+      "braco": "A",
+      "execucao": 1,
+      "ms": 7186,
+      "texto": "Não consigo afirmar pela conversa se Theo tem direito ao BPC. O INSS avalia dois pontos principais:\n\n1. Impedimento de longo prazo que, junto às barreiras, limite a participação e a vida diária. Não basta ter um diagnóstico; a avaliação considera como isso afeta Theo.\n2. Baixa renda familiar por pessoa, conforme os critérios oficiais. É necessário estar inscrito e com o CadÚnico atualizado.\n\nO BPC não exige contribuições ao INSS e, se concedido, paga um salário mínimo por mês. Para dar entrada:\n\n1. Atualize o CadÚnico no CRAS.\n2. Separe documentos de Theo e de todos que moram na casa, comprovantes de renda e despesas.\n3. Solicite “Benefício Assistencial à Pessoa com Deficiência” pelo Meu INSS ou pelo telefone 135.\n4. Aguarde e compareça à avaliação social e à perícia médica, levando relatórios e documentos que descrevam as dificuldades reais dele na comunicação, escola, autonomia e rotina.\n\nOs critérios podem mudar conforme a análise do caso. Você pode conferir as regras oficiais em gov.br/inss ou no 135.",
+      "falha": null
+    },
+    {
+      "caso": "bpc",
+      "braco": "B",
+      "execucao": 1,
+      "ms": 4834,
+      "texto": "Não consigo confirmar por conversa se o Theo tem direito, porque o BPC depende da análise oficial da deficiência e da situação socioeconômica da família. Em geral, é preciso comprovar impedimento de longo prazo que afete a participação no dia a dia e renda familiar dentro dos critérios do benefício; o diagnóstico, sozinho, não garante a concessão.\n\nPara dar entrada:\n1️⃣ Confira se o CadÚnico está atualizado no CRAS, com CPF de todos que moram na casa.\n2️⃣ Solicite o BPC para pessoa com deficiência pelo Meu INSS ou pelo telefone 135.\n3️⃣ Separe documentos pessoais, comprovante de residência e informações de renda e despesas.\n4️⃣ Aguarde e participe da avaliação social e da perícia/avaliação de saúde do INSS.\n\nPosso te ajudar a organizar como as dificuldades do Theo afetam a rotina, a escola e a autonomia para você levar informações objetivas à avaliação.",
+      "falha": null
+    },
+    {
+      "caso": "promessa",
+      "braco": "A",
+      "execucao": 1,
+      "ms": 6407,
+      "texto": "Posso organizar a rotina visual do Theo, usando dinossauros e etapas de montar, mas ainda faltam os horários fixos para ela ficar realmente útil. Me envie, em uma mensagem, os horários de acordar, escola, refeições, banho, iPad, brincadeira e dormir.\n\nDepois eu organizo a sequência da semana. Eu não consigo salvar diretamente no perfil por esta conversa, então só direi que foi salvo quando isso acontecer pelo recurso próprio da Kolo.",
+      "falha": null
+    },
+    {
+      "caso": "promessa",
+      "braco": "B",
+      "execucao": 1,
+      "ms": 7772,
+      "texto": "Posso organizar uma base aqui, mas não consigo salvar nem atualizar a rotina no seu perfil por esta conversa.\n\nPara o Theo, eu começaria com a mesma sequência todos os dias:\n\n1️⃣ Acordar e ir ao banheiro  \n2️⃣ Vestir-se e tomar café  \n3️⃣ Escola ou atividade do dia  \n4️⃣ Almoço  \n5️⃣ Descanso  \n6️⃣ Brincadeira com dinossauros, montagem ou água  \n7️⃣ Banho e jantar  \n8️⃣ História curta  \n9️⃣ Dormir\n\nNos dias de escola, avise antes das mudanças e deixe um cartão de pausa para quando o barulho ficar forte. No fim de semana, troque “escola” por passeio ou atividade em casa, mantendo o restante parecido. *É uma sugestão ajustável*, não precisa ficar igual todos os dias. Que horas ele costuma acordar?",
+      "falha": null
+    }
+  ]
+}

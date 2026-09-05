@@ -54,11 +54,29 @@ describe("A · a regra de formato chegou ao caminho OFICIAL", () => {
     expect(itens[0]).toBe("core.conteudo");
   });
 
-  it("3. a proibição é explícita sobre os três padrões medidos", () => {
-    expect(FORMATO_WHATSAPP).toContain("**");
+  it("3. a proibição cobre o que o canal NÃO converte", () => {
+    // ⚠️ A REGRA MUDOU EM 05/09/2026, e este guarda mudou junto — mas não
+    // afrouxou. O que era "sem markdown" virou uma lista do que o WhatsApp
+    // realmente não renderiza. Títulos, citações e listas continuam proibidos
+    // porque `paraWhatsApp` NÃO os converte para nada.
     expect(FORMATO_WHATSAPP).toContain("##");
-    expect(FORMATO_WHATSAPP).toMatch(/sem markdown/i);
-    expect(FORMATO_WHATSAPP).toMatch(/\*um asterisco só\*/);
+    expect(FORMATO_WHATSAPP).toMatch(/sem títulos/i);
+    expect(FORMATO_WHATSAPP).toMatch(/sem citações/i);
+    expect(FORMATO_WHATSAPP).toMatch(/sem listas com - ou •/i);
+  });
+
+  it("3b. MORDE: negrito só é liberado porque o envio normaliza a marcação", () => {
+    // ⚠️ ESTAS DUAS AFIRMAÇÕES ANDAM JUNTAS OU NENHUMA VALE. Liberar negrito no
+    // prompt sem o conversor no funil devolve `**` cru à tela da família — que
+    // é exatamente o defeito medido em 65,2% das respostas após o rollout de
+    // 17/08. Se alguém remover `paraWhatsApp` de `enviarTexto`, este teste cai
+    // e a regra do prompt precisa voltar atrás no mesmo commit.
+    expect(FORMATO_WHATSAPP).toMatch(/NEGRITO é permitido/);
+    const sender = readFileSync(
+      resolve(process.cwd(), "src/lib/ayla/whatsappSender.ts"),
+      "utf8",
+    );
+    expect(sender).toMatch(/message: paraWhatsApp\(params\.texto\)/);
   });
 });
 

@@ -7415,7 +7415,58 @@ STATUS: **ABERTA · CAUSADA POR `f2e3c2e`** · Aberta em: 2026-08-31
 
 ---
 
-**Próximo ID livre: PEND-162. *(024 e 025 reservadas por frentes ainda não publicadas; 0076 é número de MIGRACAO reservado — ver PEND-121.)***
+### PEND-162
+**GPT como cérebro único da Ayla: geração *e* interpretação — Claude ainda fala com família e ainda interpreta criança**
+Bloco: **B · Ayla** · Prioridade: **P1**
+STATUS: **ABERTA** · Aberta em: 2026-09-05
+
+**DECISÃO DE PRODUTO (05/09/2026):** o GPT é o cérebro conversacional **e
+interpretativo** da Ayla. Claude não escreve texto que chega à família em canal
+nenhum, e não faz interpretação clínica/comportamental cujo resultado a
+orientação herde como conclusão pronta. Claude/Haiku pode permanecer, **por
+enquanto**, apenas em função mecânica/interna — e nenhum módulo é presumido
+inofensivo sem auditoria.
+
+**O QUE JÁ ESTÁ CERTO.** **VI NO CÓDIGO:** `lib/ayla/experimental.ts:969` fixa
+`const provider = "openai" as const`. O caminho oficial do WhatsApp — 97,4% dos
+turnos — é GPT e **ignora** o seletor global de provider. É por isso que a
+ativação da v10 não precisou esperar esta frente.
+
+**O QUE ESTÁ ERRADO — e foi medido, não suposto.**
+
+- **`ayla_espontanea` → `claude-haiku-4-5`, 56 chamadas em 4h.** **MEDI** em
+  `api_calls` (05/09). É **texto que chega à família** e é Claude. Agrava:
+  a fala espontânea **não recebe o Core**, então a v10 não a alcança — migrar
+  exige bancada própria, com critério próprio.
+- **`classificar_intencao` → 102 chamadas em 4h.** Não escreve para a família,
+  mas **decide quais skills são roteadas** e portanto **o que entra em
+  `bpInjetadas`** — ou seja, escolhe o conhecimento que o GPT vai ver. É
+  exatamente o caso que a decisão de produto proíbe presumir inofensivo.
+  Precisa de análise própria antes de qualquer troca.
+- **Em `AYLA_MODEL` (Claude), a auditar um a um:** `lib/ayla/traduzir.ts`,
+  `lib/ayla/rotina-guiada.ts`, `lib/ayla/crianca-especifica.ts`,
+  `lib/conhecimento/repertorio.ts`.
+
+**O QUE ESTA PENDÊNCIA EXIGE, ANTES DE QUALQUER TROCA.** Um mapa, por módulo,
+em quatro colunas: (1) gera texto que a família lê · (2) interpreta dado de
+criança ou de família · (3) decide qual conhecimento chega ao GPT · (4) uso
+puramente mecânico, que pode ficar. Sem esse mapa, trocar provider é
+adivinhação.
+
+**O QUE NÃO FAZER AGORA — instrução explícita de 05/09:** não mexer no seletor
+global de provider e não reescrever os 17 testes que quebraram quando tentei
+fixar GPT em `providerConversacionalParaFamilia`. `IA_PROVIDER=openai` fica como
+proteção corrente.
+
+**CONTEXTO:** [AYLA_ATIVACAO_V10_2026-09.md](AYLA_ATIVACAO_V10_2026-09.md) §8.
+
+**ERRO MEU, REGISTRADO:** cinco documentos de setembro afirmavam que Claude e
+GPT eram dois providers conversacionais válidos em produção. **É falso** — eu
+li o registro `MODELO_CONVERSA` inteiro (que contém os dois) e reportei o lado
+errado, e por isso a "validação Claude × GPT" de 60 execuções foi **GPT nos dois
+braços**. Os cinco documentos levam retificação no topo desde 05/09.
+
+**Próximo ID livre: PEND-163. *(024 e 025 reservadas por frentes ainda não publicadas; 0076 é número de MIGRACAO reservado — ver PEND-121.)***
 
 > Conferir contra `origin/main`, não contra o seu branch. Dois branches podem
 > reivindicar o mesmo número — o conflito de merge nesta linha é o alarme.

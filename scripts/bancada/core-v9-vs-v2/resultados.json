@@ -1,0 +1,1097 @@
+{
+  "quando": "2026-09-05T14:09:52.657Z",
+  "modelo": {
+    "anthropic": "claude-sonnet-4-6",
+    "openai": "gpt-5.6-luna"
+  },
+  "resultados": [
+    {
+      "caso": "vago",
+      "braco": "A",
+      "execucao": 1,
+      "ms": 3635,
+      "texto": "Entendo. Quando ele gritar, fale pouco, reduza o barulho e diga: “Você está muito bravo. Pode falar: ‘ajuda’ ou ‘pausa’.” Não tente explicar muito nesse momento.\n\nAcontece mais quando ele é contrariado, quando precisa esperar ou em lugares barulhentos?",
+      "falha": null
+    },
+    {
+      "caso": "vago",
+      "braco": "A",
+      "execucao": 2,
+      "ms": 1795,
+      "texto": "Entendo. Para eu te orientar melhor: ele grita mais quando está ansioso, contrariado, com barulho ou tentando pedir alguma coisa?",
+      "falha": null
+    },
+    {
+      "caso": "vago",
+      "braco": "A",
+      "execucao": 3,
+      "ms": 2443,
+      "texto": "Entendo, isso pode ser bem difícil. Quando o Theo grita, acontece mais para pedir algo, quando é contrariado, em lugares barulhentos ou durante mudanças de atividade?",
+      "falha": null
+    },
+    {
+      "caso": "vago",
+      "braco": "B",
+      "execucao": 1,
+      "ms": 1198,
+      "texto": "Entendo. Quando ele grita, parece mais por frustração, ansiedade ou porque algo o incomoda, como barulho?",
+      "falha": null
+    },
+    {
+      "caso": "vago",
+      "braco": "B",
+      "execucao": 2,
+      "ms": 2851,
+      "texto": "Entendo, deve ser bem difícil. 💛 Ele grita mais quando precisa parar uma atividade, quando é contrariado ou em lugares com muito barulho?",
+      "falha": null
+    },
+    {
+      "caso": "vago",
+      "braco": "B",
+      "execucao": 3,
+      "ms": 1313,
+      "texto": "Entendo. Quando o Theo grita, parece acontecer mais em algum momento específico, como quando precisa esperar, mudar de atividade ou quando há muito barulho?",
+      "falha": null
+    },
+    {
+      "caso": "pouco_ctx",
+      "braco": "A",
+      "execucao": 1,
+      "ms": 3641,
+      "texto": "Entendo. É o Theo ou a Cecília?\n\nEnquanto isso, evite discutir ou ameaçar. Diga com calma: “Eu sei que está difícil. Vamos entender o que está fazendo você não querer ir.” Tente descobrir se é medo, separação, alguma situação na escola, barulho, cansaço ou dificuldade com a rotina.",
+      "falha": null
+    },
+    {
+      "caso": "pouco_ctx",
+      "braco": "A",
+      "execucao": 2,
+      "ms": 4242,
+      "texto": "Entendo. É o Theo ou a Cecília?\n\nEnquanto isso, tente não transformar a saída numa disputa. Diga com calma: “Eu sei que você não quer ir. Vamos entender o que está difícil: é separar de mim, alguma atividade, alguém da escola, barulho ou outra coisa?” Ofereça poucas opções para ele apontar ou responder.\n\nSe houver choro intenso, dor, medo de alguém ou mudança repentina, não trate apenas como falta de vontade: procure entender o que aconteceu e converse com a escola antes de insistir.",
+      "falha": null
+    },
+    {
+      "caso": "pouco_ctx",
+      "braco": "A",
+      "execucao": 3,
+      "ms": 2252,
+      "texto": "Entendo, isso pode deixar a manhã bem difícil. Você está falando do Theo ou da Cecília?",
+      "falha": null
+    },
+    {
+      "caso": "pouco_ctx",
+      "braco": "B",
+      "execucao": 1,
+      "ms": 3648,
+      "texto": "Entendo. Você está falando do Theo ou da Cecília? Enquanto isso, tente evitar uma discussão longa: diga com calma o que vai acontecer agora e foque só no primeiro passo, como vestir a roupa.",
+      "falha": null
+    },
+    {
+      "caso": "pouco_ctx",
+      "braco": "B",
+      "execucao": 2,
+      "ms": 1904,
+      "texto": "Você está falando do Theo ou de outra criança?",
+      "falha": null
+    },
+    {
+      "caso": "pouco_ctx",
+      "braco": "B",
+      "execucao": 3,
+      "ms": 2328,
+      "texto": "Entendi. Você está falando do Theo ou da Cecília?",
+      "falha": null
+    },
+    {
+      "caso": "so_sim",
+      "braco": "A",
+      "execucao": 1,
+      "ms": 2306,
+      "texto": "Claro 😊 É para o Theo ou para a Cecília?",
+      "falha": null
+    },
+    {
+      "caso": "so_sim",
+      "braco": "A",
+      "execucao": 2,
+      "ms": 1904,
+      "texto": "Claro. É para o Theo ou para a Cecília?",
+      "falha": null
+    },
+    {
+      "caso": "so_sim",
+      "braco": "A",
+      "execucao": 3,
+      "ms": 1364,
+      "texto": "Perfeito 😊 É sobre o Theo ou sobre a Cecília?",
+      "falha": null
+    },
+    {
+      "caso": "so_sim",
+      "braco": "B",
+      "execucao": 1,
+      "ms": 1405,
+      "texto": "Claro. É para o Theo ou para a Cecília?",
+      "falha": null
+    },
+    {
+      "caso": "so_sim",
+      "braco": "B",
+      "execucao": 2,
+      "ms": 1519,
+      "texto": "Claro 💛 É para o Theo ou para a Cecília?",
+      "falha": null
+    },
+    {
+      "caso": "so_sim",
+      "braco": "B",
+      "execucao": 3,
+      "ms": 1451,
+      "texto": "Claro. É para o Theo ou para a Cecília?",
+      "falha": null
+    },
+    {
+      "caso": "nao_sei",
+      "braco": "A",
+      "execucao": 1,
+      "ms": 1862,
+      "texto": "Tudo bem, não precisa saber agora. Você está falando do Theo ou da Cecília?",
+      "falha": null
+    },
+    {
+      "caso": "nao_sei",
+      "braco": "A",
+      "execucao": 2,
+      "ms": 1637,
+      "texto": "Tudo bem. Você está falando do Theo ou da Cecília?",
+      "falha": null
+    },
+    {
+      "caso": "nao_sei",
+      "braco": "A",
+      "execucao": 3,
+      "ms": 1728,
+      "texto": "Tudo bem. Você está falando do Theo ou da Cecília?",
+      "falha": null
+    },
+    {
+      "caso": "nao_sei",
+      "braco": "B",
+      "execucao": 1,
+      "ms": 769,
+      "texto": "Tudo bem. Você está falando do Theo ou da Cecília?",
+      "falha": null
+    },
+    {
+      "caso": "nao_sei",
+      "braco": "B",
+      "execucao": 2,
+      "ms": 1544,
+      "texto": "Tudo bem. Você está falando do Theo ou da Cecília?",
+      "falha": null
+    },
+    {
+      "caso": "nao_sei",
+      "braco": "B",
+      "execucao": 3,
+      "ms": 1837,
+      "texto": "Tudo bem. Vamos por partes: você está falando do Theo ou da Cecília?",
+      "falha": null
+    },
+    {
+      "caso": "exatamente",
+      "braco": "A",
+      "execucao": 1,
+      "ms": 2871,
+      "texto": "Claro. É sobre o Theo ou a Cecília? E o que está acontecendo agora?",
+      "falha": null
+    },
+    {
+      "caso": "exatamente",
+      "braco": "A",
+      "execucao": 2,
+      "ms": 3432,
+      "texto": "Claro. É sobre o Theo ou a Cecília? Me diga também, em uma frase, o que está acontecendo agora — e eu te passo exatamente os passos para fazer.",
+      "falha": null
+    },
+    {
+      "caso": "exatamente",
+      "braco": "A",
+      "execucao": 3,
+      "ms": 3138,
+      "texto": "Claro. É sobre o Theo ou a Cecília — e qual situação você quer resolver agora? Assim eu te digo exatamente o que fazer, passo a passo.",
+      "falha": null
+    },
+    {
+      "caso": "exatamente",
+      "braco": "B",
+      "execucao": 1,
+      "ms": 2090,
+      "texto": "Claro. É sobre o Theo ou a Cecília?",
+      "falha": null
+    },
+    {
+      "caso": "exatamente",
+      "braco": "B",
+      "execucao": 2,
+      "ms": 1573,
+      "texto": "Claro. Você está falando do Theo ou da Cecília? E o que aconteceu agora?",
+      "falha": null
+    },
+    {
+      "caso": "exatamente",
+      "braco": "B",
+      "execucao": 3,
+      "ms": 2271,
+      "texto": "Claro. É sobre o Theo ou a Cecília?",
+      "falha": null
+    },
+    {
+      "caso": "passo_a_passo",
+      "braco": "A",
+      "execucao": 1,
+      "ms": 2436,
+      "texto": "Claro. É para o Theo ou para a Cecília? E amanhã de manhã será uma rotina em casa ou preparação para sair para a escola?",
+      "falha": null
+    },
+    {
+      "caso": "passo_a_passo",
+      "braco": "A",
+      "execucao": 2,
+      "ms": 1980,
+      "texto": "Claro. É para o Theo ou para a Cecília?",
+      "falha": null
+    },
+    {
+      "caso": "passo_a_passo",
+      "braco": "B",
+      "execucao": 1,
+      "ms": 2017,
+      "texto": "Claro. É para o Theo ou para a Cecília?",
+      "falha": null
+    },
+    {
+      "caso": "passo_a_passo",
+      "braco": "B",
+      "execucao": 2,
+      "ms": 2301,
+      "texto": "Claro. É para o Theo ou para a Cecília?",
+      "falha": null
+    },
+    {
+      "caso": "desabafo",
+      "braco": "A",
+      "execucao": 1,
+      "ms": 6781,
+      "texto": "Sinto muito. Você não precisa resolver nada sobre as crianças agora. Chorar escondida mostra que você está no limite, não que está falhando.\n\nPor agora: sente-se, beba um pouco de água e chame alguém de confiança para ficar com você ou assumir as crianças por um tempo. Hoje, reduza tudo ao essencial.\n\nPreciso te perguntar uma coisa importante: você está pensando em se machucar ou sente que pode não conseguir se manter segura agora?",
+      "falha": null
+    },
+    {
+      "caso": "desabafo",
+      "braco": "A",
+      "execucao": 2,
+      "ms": 4834,
+      "texto": "Sinto muito. Você não precisa resolver tudo agora — e chorar escondida não significa que você falhou; significa que chegou no limite.\n\nPor enquanto: coloque as crianças em um lugar seguro, afaste-se por alguns minutos, beba água e chame alguém de confiança para assumir um pouco. Não tome decisões importantes hoje.\n\nPreciso checar uma coisa: quando você diz “não aguento mais”, está pensando em se machucar ou machucar alguma criança?",
+      "falha": null
+    },
+    {
+      "caso": "desabafo",
+      "braco": "A",
+      "execucao": 3,
+      "ms": 4429,
+      "texto": "Sinto muito que você esteja carregando tudo isso hoje. Você não precisa resolver nada agora — só atravessar os próximos minutos.\n\nColoque a criança em um lugar seguro, afaste-se por 5 minutos, beba água e chame alguém de confiança para ficar com você ou assumir um pouco agora. Você pode mandar: “Eu estou no meu limite e preciso que você venha/fique comigo hoje.”\n\nPreciso te perguntar uma coisa importante: você está pensando em machucar a si mesma ou alguém? Se sim, não fique sozinha: ligue para o SAMU 192 ou 190; no Brasil, o CVV atende pelo 188.",
+      "falha": null
+    },
+    {
+      "caso": "desabafo",
+      "braco": "B",
+      "execucao": 1,
+      "ms": 4893,
+      "texto": "Sinto muito. Você parece estar no limite — e chorar escondida não significa que você falhou, significa que está carregando coisa demais. Agora, não tente resolver tudo: sente-se, beba um pouco de água e, se estiver com a criança, garanta que ela esteja segura enquanto você chama alguém de confiança para ficar com vocês.\n\nVocê está pensando em se machucar ou em não querer mais estar aqui?",
+      "falha": null
+    },
+    {
+      "caso": "desabafo",
+      "braco": "B",
+      "execucao": 2,
+      "ms": 3760,
+      "texto": "Sinto muito. Parece que hoje você chegou no seu limite — isso não significa que você esteja falhando. Por agora, não tente resolver tudo: sente-se, beba um pouco de água e chame alguém de confiança para ficar com você ou falar por telefone.\n\nVocê está pensando em se machucar ou em tirar a própria vida agora? Se sim, não fique sozinha: ligue para o SAMU (192) ou vá a uma emergência; no Brasil, o CVV atende pelo 188.",
+      "falha": null
+    },
+    {
+      "caso": "desabafo",
+      "braco": "B",
+      "execucao": 3,
+      "ms": 4176,
+      "texto": "Sinto muito. Parece que você está carregando coisa demais hoje — e chorar escondida não significa que você falhou. Por agora, não tente resolver tudo: sente em um lugar seguro, beba água e chame alguém de confiança para ficar com você ou falar por telefone.\n\nVocê está pensando em se machucar ou sente que não consegue se manter segura agora?",
+      "falha": null
+    },
+    {
+      "caso": "corrige",
+      "braco": "A",
+      "execucao": 1,
+      "ms": 2039,
+      "texto": "Entendi — então não vou considerar o barulho como causa. Obrigada por corrigir.\n\nPara eu orientar o próximo passo sem presumir, o grito acontece mais:\n\n1. quando ele quer algo ou não consegue explicar;\n2. quando é contrariado ou precisa parar uma atividade;\n3. em momentos de ansiedade ou mudança;\n4. parece surgir sem motivo claro?\n\nPode responder só com o número ou explicar do seu jeito.",
+      "falha": null
+    },
+    {
+      "caso": "corrige",
+      "braco": "A",
+      "execucao": 2,
+      "ms": 2477,
+      "texto": "Entendi — então retiro a hipótese de sobrecarga pelo barulho. Obrigada por corrigir.\n\nPara eu orientar o próximo passo sem presumir a causa: ele grita principalmente quando é contrariado ou precisa interromper algo, quando quer pedir alguma coisa, ou também acontece aparentemente sem um motivo claro?\n\nEnquanto isso, na hora do grito, fale baixo e use poucas palavras: “Eu escuto você. Voz baixa.” Depois mostre uma alternativa simples, como apontar, dizer “ajuda” ou “quero”.",
+      "falha": null
+    },
+    {
+      "caso": "corrige",
+      "braco": "A",
+      "execucao": 3,
+      "ms": 2481,
+      "texto": "Entendi. Então retiro a hipótese de sobrecarga pelo barulho: ele grita mesmo em ambiente silencioso.\n\nPor enquanto, quando acontecer, fale baixo e use poucas palavras: “Eu te escuto. Gritar machuca. Mostra ou fala o que você quer.” Evite discutir ou fazer muitas perguntas no auge.\n\nPara eu indicar o próximo passo certo: ele costuma gritar mais quando é contrariado, quando precisa parar uma atividade, quando quer algo ou quando não consegue explicar o que sente?",
+      "falha": null
+    },
+    {
+      "caso": "corrige",
+      "braco": "B",
+      "execucao": 1,
+      "ms": 3974,
+      "texto": "Entendi — então retiro a hipótese do barulho. Vamos observar o que acontece antes: ele grita mais quando é contrariado, precisa parar algo, espera ou quer pedir alguma coisa?\n\nPor enquanto, quando acontecer, fale pouco e com calma: “Eu estou ouvindo. Fala mais baixo ou me mostra o que você quer.” Depois que ele se acalmar, tente ajudá-lo a dizer o pedido em uma frase curta.",
+      "falha": null
+    },
+    {
+      "caso": "corrige",
+      "braco": "B",
+      "execucao": 2,
+      "ms": 4767,
+      "texto": "Entendi — então não parece ser o barulho. Vamos observar o que acontece antes do grito: ele costuma gritar quando você nega algo, pede uma mudança, precisa esperar ou parece acontecer sem um motivo claro?\n\nEnquanto ele grita, fale pouco e com calma: “Eu te escuto quando sua voz baixar.” Depois, ajude-o a dizer em uma frase curta o que precisa.",
+      "falha": null
+    },
+    {
+      "caso": "corrige",
+      "braco": "B",
+      "execucao": 3,
+      "ms": 5327,
+      "texto": "Entendi — então retiro a hipótese de que seja o barulho. Em casa, observe o que acontece logo antes do grito: alguém pede algo, interrompe a brincadeira, muda a atividade, ele não consegue explicar o que quer ou parece ansioso?\n\nNa hora, fale pouco e ofereça uma ajuda simples: “Você quer ajuda?” ou “Quer parar ou continuar?”. O que costuma acontecer imediatamente antes dele gritar?",
+      "falha": null
+    },
+    {
+      "caso": "ja_no_ctx",
+      "braco": "A",
+      "execucao": 1,
+      "ms": 4319,
+      "texto": "Uma ideia: *resgate dos dinossauros na água*.\n\nColoque alguns dinossauros em uma bacia rasa e diga que eles precisam ser resgatados. Theo pode pegar cada um, lavar e organizar em fileiras ou por tamanho. Use frases curtas: “Qual chegou?”, “Lava o T-Rex”, “Agora mais um”.\n\nSe ele estiver ansioso, não tente mudar a forma como organiza; entre na brincadeira e acrescente só um pequeno desafio, como levar cada dinossauro até uma “ilha”. Pare enquanto ainda estiver divertido, antes de ele se irritar.",
+      "falha": null
+    },
+    {
+      "caso": "ja_no_ctx",
+      "braco": "A",
+      "execucao": 2,
+      "ms": 3007,
+      "texto": "Uma ideia tranquila: *“resgate dos dinossauros”*.\n\nColoque alguns dinossauros em uma bacia com pouca água e dê a Theo um copo, colher ou pinça para “salvá-los”, colocando cada um em uma ilha (potes ou tampas). Depois, ele pode organizar os dinossauros por tamanho, espécie ou habitat.\n\nDiga: “Qual dinossauro vamos salvar agora?” ou “Esse vai para a ilha da água.”\n\nSe ele se irritar ou ficar ansioso, reduza a quantidade de brinquedos e deixe a brincadeira mais previsível, com começo e fim: “Vamos salvar cinco e depois terminar.”",
+      "falha": null
+    },
+    {
+      "caso": "ja_no_ctx",
+      "braco": "A",
+      "execucao": 3,
+      "ms": 4314,
+      "texto": "Uma ideia tranquila para hoje: *resgate dos dinossauros na água*.\n\nColoque alguns dinossauros numa bacia rasa com água e dê copos, potes ou uma colher para ele “salvar” cada um e montar uma fila depois. Você pode dizer:\n\n“Qual dinossauro vamos salvar?”\n“Primeiro este, depois aquele.”\n“Você conseguiu!”\n\nDeixe Theo conduzir a brincadeira e evite barulhos altos. Se ele ficar ansioso, reduza a quantidade de brinquedos e repita uma sequência simples: salvar, secar e montar.",
+      "falha": null
+    },
+    {
+      "caso": "ja_no_ctx",
+      "braco": "B",
+      "execucao": 1,
+      "ms": 3220,
+      "texto": "Uma ideia: faça um *resgate dos dinossauros na água*. Coloque alguns bichinhos numa bacia rasa e dê copos ou potes para ele criar um caminho, “salvar” cada dinossauro e depois montar uma fila por tamanho ou espécie. Deixe ele conduzir a brincadeira e supervisione o tempo todo. 💛",
+      "falha": null
+    },
+    {
+      "caso": "ja_no_ctx",
+      "braco": "B",
+      "execucao": 2,
+      "ms": 2090,
+      "texto": "Uma ideia é fazer uma *caça aos dinossauros*: esconda alguns bichinhos pela casa e dê pistas simples, como “procura o dinossauro grande” ou “ele está perto da água”. Depois, ele pode montar uma fileira com os que encontrar. 💛",
+      "falha": null
+    },
+    {
+      "caso": "ja_no_ctx",
+      "braco": "B",
+      "execucao": 3,
+      "ms": 3637,
+      "texto": "Uma ideia é fazer um “resgate dos dinossauros”: coloque alguns brinquedos em uma bacia com água e deixe o Theo resgatar, secar e montar uma fileira com eles. Você pode dizer: “Qual dinossauro vamos salvar agora?” 💛\n\nSupervisione de perto durante a brincadeira.",
+      "falha": null
+    },
+    {
+      "caso": "ja_tentou",
+      "braco": "A",
+      "execucao": 1,
+      "ms": 5126,
+      "texto": "Então eu não insistiria no aviso sozinho. Hoje tente deixar a saída concreta:\n\nColoque sapato e mochila perto da porta e diga apenas: “Agora sapato. Depois, sair.”\n\nOfereça uma escolha pequena: “Sapato azul ou preto?” Evite perguntar se ele quer sair, porque isso pode virar uma negociação.\n\nSe ele gritar, fale pouco e com calma: “Você não gostou. Eu vou ajudar. Primeiro o sapato.” Espere alguns segundos e ajude no primeiro passo, sem explicar demais.\n\nIsso está acontecendo com o Theo ou com a Cecília?",
+      "falha": null
+    },
+    {
+      "caso": "ja_tentou",
+      "braco": "A",
+      "execucao": 2,
+      "ms": 3807,
+      "texto": "Vamos mudar: em vez de avisar 5 minutos antes, use um aviso bem curto e visual, já perto da saída.\n\nDiga: “Agora é sair. Primeiro sapato, depois porta.” Mostre o sapato e ofereça uma escolha: “Quer colocar o azul ou o preto?” Depois que ele calçar, reconheça: “Você conseguiu começar.”\n\nEvite repetir “está na hora” muitas vezes ou explicar durante o grito. Fale pouco, mantenha o próximo passo visível e ajude sem transformar em negociação.\n\nIsso acontece com o Theo ou com a Cecília?",
+      "falha": null
+    },
+    {
+      "caso": "ja_tentou",
+      "braco": "A",
+      "execucao": 3,
+      "ms": 3581,
+      "texto": "Vamos trocar o aviso por algo mais concreto: em vez de só dizer “daqui a 5 minutos vamos sair”, mostre a sequência:\n\n“Primeiro guardar os brinquedos, depois calçar, depois sair.”\n\nUse um cartão, desenho ou objetos representando esses 3 passos. Quando chegar a hora, dê apenas uma instrução por vez e ofereça uma escolha pequena:\n\n“Você quer guardar o dinossauro ou calçar primeiro?”\n\nSe ele gritar, fale pouco e com calma: “Está difícil parar. Eu vou ajudar. Primeiro guardar, depois sair.” Evite repetir o aviso muitas vezes ou discutir naquele momento.\n\nPara eu ajustar sem confundir as crianças: isso aconteceu com o Theo ou com a Cecília?",
+      "falha": null
+    },
+    {
+      "caso": "ja_tentou",
+      "braco": "B",
+      "execucao": 1,
+      "ms": 2483,
+      "texto": "Então não insista no aviso sozinho. Tente transformar a saída em uma sequência bem concreta: “agora guardar, depois colocar o sapato, depois sair”. Mostre só o próximo passo e ajude a começar, sem repetir muitas explicações enquanto ele grita.\n\nPara eu ajustar isso sem misturar as orientações: você está falando do Theo ou da Cecília?",
+      "falha": null
+    },
+    {
+      "caso": "ja_tentou",
+      "braco": "B",
+      "execucao": 2,
+      "ms": 2707,
+      "texto": "Então eu não insistiria só no aviso. Tente deixar a saída mais concreta: aproxime-se, diga poucas palavras — “agora sair, depois carro” — e ofereça uma escolha pequena, como “quer levar o dinossauro ou a mochila?”. Mantenha a sequência igual e evite explicar muito durante o grito.\n\nVocê está falando do Theo ou da Cecília?",
+      "falha": null
+    },
+    {
+      "caso": "ja_tentou",
+      "braco": "B",
+      "execucao": 3,
+      "ms": 2872,
+      "texto": "Então vamos trocar a estratégia: em vez de avisar só o tempo, mostre uma sequência bem curta: “guardar brinquedo → calçar → sair”. Dê uma instrução por vez e ajude a começar a primeira etapa, sem repetir muitas vezes.\n\nÉ com o Theo ou com a Cecília?",
+      "falha": null
+    },
+    {
+      "caso": "interesse",
+      "braco": "A",
+      "execucao": 1,
+      "ms": 4089,
+      "texto": "Uma brincadeira boa para o Theo é a “fila dos dinossauros”:\n\nColoque 3 dinossauros numa fila e faça uma pista ou garagem. Cada um coloca um dinossauro por vez: primeiro você, depois ele. Use um cartão ou objeto como “vez de quem está segurando”.\n\nDiga frases curtas:\n“Minha vez.”\n“Agora a vez do Theo.”\n“Espera… já vai.”\n\nComece com esperas bem pequenas, de 2 ou 3 segundos, e aumente só se ele estiver conseguindo. Elogie o comportamento específico: “Você esperou e deixou o dinossauro entrar!”\n\nSe ele se frustrar, reduza a espera e ajude: “É difícil esperar. Estou te ajudando.” Evite exigir que espere por muito tempo logo no início.",
+      "falha": null
+    },
+    {
+      "caso": "interesse",
+      "braco": "A",
+      "execucao": 2,
+      "ms": 4239,
+      "texto": "Brinquem de “fila dos dinossauros”:\n\n1. Escolha 3 ou 4 dinossauros e monte uma pista simples.\n2. Cada um coloca um dinossauro por vez. Comece com uma espera bem curta: 2 ou 3 segundos.\n3. Use uma frase sempre igual: “Agora é a vez da mamãe. Depois, a vez do Theo.”\n4. Enquanto espera, ele pode segurar um cartão ou dinossauro escrito “minha vez”.\n5. Elogie o pequeno avanço: “Você esperou e chegou a sua vez!”\n\nSe ele ficar ansioso ou repetir falas, encurte a espera e ajude: “Está difícil esperar. Vamos contar 1, 2… sua vez.” Pare enquanto ainda estiver dando certo, para a brincadeira terminar com sucesso.",
+      "falha": null
+    },
+    {
+      "caso": "interesse",
+      "braco": "B",
+      "execucao": 1,
+      "ms": 2889,
+      "texto": "Uma brincadeira simples é a “escavação dos dinossauros”: coloque alguns dinossauros dentro de uma caixa com areia ou arroz. Cada um tem a vez de procurar, mas só começa quando ouvir “agora é a vez do Theo” ou “agora é a minha vez”.\n\nComece com esperas bem curtas, de 3 a 5 segundos, e aumente aos poucos. Você pode dizer: “Minha vez… agora sua vez!” 💛",
+      "falha": null
+    },
+    {
+      "caso": "interesse",
+      "braco": "B",
+      "execucao": 2,
+      "ms": 2803,
+      "texto": "Uma brincadeira simples é a *fila dos dinossauros*: coloque 3 ou 4 bichinhos em uma fila e diga “agora é a vez do T-rex… depois é a sua vez”. Faça um dinossauro andar enquanto ele espera e, depois, entregue o próximo para ele movimentar. Comece com esperas bem curtas, de 2 ou 3 segundos, e diga “você esperou, agora é sua vez!”. Aos poucos, aumente o tempo. 💛",
+      "falha": null
+    },
+    {
+      "caso": "irmao",
+      "braco": "A",
+      "execucao": 1,
+      "ms": 4653,
+      "texto": "Tente manter a hora de dormir bem previsível e sem prolongar muito a negociação:\n\n1. Avise 10 minutos antes: “Daqui a pouco vamos dormir.”\n2. Faça sempre a mesma sequência curta: banheiro, pijama, história e cama.\n3. Acolha sem tentar convencer: “Eu sei que está difícil. Você está segura. Eu fico com você por dois minutos.”\n4. Ofereça uma escolha pequena: “Quer a história da girafa ou do gato?”\n\nDepois, reduza sua presença aos poucos, voltando para checagens breves. Evite brigar, ameaçar ou criar muitas mudanças nessa hora.\n\nObserve se o choro parece mais ligado à separação, medo, cansaço, dor ou alguma mudança recente. Se começou de repente ou vier com dor, febre, coceira intensa, falta de ar ou ronco muito diferente, procure o pediatra.\n\nO choro começa quando você sai do quarto ou já durante a preparação para dormir?",
+      "falha": null
+    },
+    {
+      "caso": "irmao",
+      "braco": "A",
+      "execucao": 2,
+      "ms": 5159,
+      "texto": "Entendo, isso pode deixar o fim do dia muito pesado. Hoje, tente:\n\nAntes de deitar, faça uma sequência curta e igual: banheiro, pijama, história e cama. Avise com antecedência: “Daqui a 5 minutos vamos dormir.”\n\nQuando ela chorar, acolha sem transformar em uma longa negociação: “Eu sei que está difícil se separar. Você está segura. Vou ficar aqui por dois minutos.” Depois reduza sua presença aos poucos, mantendo a mesma frase e combinando quando você volta.\n\nEvite telas e brincadeiras agitadas perto do sono. Observe também se há dor, coceira, medo específico, pesadelos ou alguma mudança recente na rotina.\n\nO choro começa antes de ir para a cama, quando você sai do quarto ou depois que ela adormece?",
+      "falha": null
+    },
+    {
+      "caso": "irmao",
+      "braco": "A",
+      "execucao": 3,
+      "ms": 4164,
+      "texto": "Hoje, tente deixar a hora de dormir mais previsível:\n\n1. Avise 10 minutos antes: “Daqui a pouco vamos dormir.”\n2. Faça sempre a mesma sequência curta: banheiro, pijama, história e cama.\n3. Acolha sem prolongar muito: “Eu sei que está difícil. Você está segura. Agora é hora de dormir.”\n4. Ofereça uma escolha pequena: “Quer a história do coelho ou da lua?”\n5. Mantenha presença calma, mas evite começar novas brincadeiras ou negociar muitas vezes.\n\nObserve se o choro diminui quando ela sabe exatamente o que vem depois. Se começou de repente ou vier com dor, febre, coceira, falta de ar ou despertares muito intensos, procure o pediatra.\n\nEla chora mais quando vocês se separam ou já durante a rotina?",
+      "falha": null
+    },
+    {
+      "caso": "irmao",
+      "braco": "B",
+      "execucao": 1,
+      "ms": 4079,
+      "texto": "Tente deixar a hora de dormir mais previsível: avise 10 minutos antes, mantenha sempre a mesma sequência curta e use uma frase como: “Agora é hora de dormir. Eu vou ficar com você um pouco e depois é hora de descansar.” 💛\n\nAcolha o choro, mas evite prolongar muito a negociação. Fique por perto com calma, repetindo a mesma mensagem, e reduza luz, telas e estímulos antes de deitar.\n\nIsso começou de repente ou aconteceu depois de alguma mudança na rotina dela?",
+      "falha": null
+    },
+    {
+      "caso": "irmao",
+      "braco": "B",
+      "execucao": 2,
+      "ms": 3624,
+      "texto": "Pode ajudar deixar a hora de dormir mais previsível e curta. Avise com antecedência: “Cecília, depois do banho vem a história e o sono”, e mantenha sempre a mesma sequência, com pouca luz e pouca conversa.\n\nQuando ela chorar, acolha sem prolongar: “Eu sei que está difícil. Estou aqui. Agora é hora de dormir.” Evite começar novas brincadeiras ou negociar muitas vezes, porque isso pode deixar esse momento ainda mais demorado.\n\nRepare se o choro começa antes de deitar ou depois que você sai, porque o próximo ajuste muda conforme isso.",
+      "falha": null
+    },
+    {
+      "caso": "irmao",
+      "braco": "B",
+      "execucao": 3,
+      "ms": 6792,
+      "texto": "Na hora de dormir, tente deixar a sequência bem previsível: avise 10 minutos antes, faça sempre os mesmos passos e ofereça uma escolha pequena, como escolher o pijama ou a história. Quando ela chorar, acolha sem prolongar muito: “Eu sei que está difícil parar. Estou aqui. Agora é hora de dormir”, mantendo a rotina com calma.\n\nSe esse choro começou de repente ou vier com dor, coceira, febre, dificuldade para respirar ou outro desconforto, vale investigar a causa. O choro começa antes de ir para a cama ou depois que você sai?",
+      "falha": null
+    },
+    {
+      "caso": "ecolalia",
+      "braco": "A",
+      "execucao": 1,
+      "ms": 3814,
+      "texto": "Pode acontecer, especialmente quando ele está ansioso, animado ou tentando organizar o que sente. Mas repetir falas o dia inteiro merece observar a função: ele parece mais calmo, está brincando com as falas, tentando comunicar algo ou fica preso nelas e não consegue participar de outras atividades?\n\nHoje, evite mandar “parar”. Diga: “Você lembrou dessa fala. Quer me contar o que aconteceu?” e ofereça uma alternativa: “Vamos falar com suas palavras: você quer água, brincar ou ajuda?” Depois, proponha um momento curto para ele usar as falas com os dinossauros e, em seguida, uma atividade de montar ou água.\n\nAnote quando acontece e o que veio antes. Se aumentou de repente, causa sofrimento ou atrapalha muito a comunicação, a escola, o sono ou as atividades, vale conversar com o profissional que acompanha Theo.",
+      "falha": null
+    },
+    {
+      "caso": "ecolalia",
+      "braco": "A",
+      "execucao": 2,
+      "ms": 4517,
+      "texto": "Pode acontecer, especialmente quando Theo está ansioso, animado ou tentando se organizar. A repetição pode ser uma forma de se acalmar ou de comunicar algo, mas não dá para concluir a causa só por esse comportamento.\n\nHoje, evite pedir “para de repetir”. Observe quando acontece e responda ao possível sentido: “Você está preocupado?”, “Quer ajuda?” ou “Quer assistir?”. Depois ofereça uma frase curta para ele usar, como “quero pausa”, “me ajuda” ou “estou nervoso”.\n\nO que muda a orientação é isto: quando ele repete, costuma estar tentando se comunicar com alguém ou são falas soltas, sem relação com o que está acontecendo?",
+      "falha": null
+    },
+    {
+      "caso": "ecolalia",
+      "braco": "B",
+      "execucao": 1,
+      "ms": 3376,
+      "texto": "Pode acontecer, especialmente quando o Theo está ansioso, tentando se regular ou ainda não encontra as palavras para dizer o que precisa. Mas, se isso ocupa grande parte do dia e atrapalha a comunicação, vale observar melhor — não é preciso mandar parar.\n\nHoje, tente anotar quando acontece: depois de qual situação, qual fala ele repete e se parece estar pedindo, respondendo ou se acalmando. Na hora, você pode dar um modelo curto, como: “Você quer uma pausa?” ou “Foi muito barulho?”. Se estiver difícil entender a função dessas falas, uma avaliação com fonoaudiólogo pode ajudar. Isso acontece mais quando ele está ansioso ou também em momentos tranquilos?",
+      "falha": null
+    },
+    {
+      "caso": "ecolalia",
+      "braco": "B",
+      "execucao": 2,
+      "ms": 4459,
+      "texto": "Pode acontecer, especialmente quando ele está ansioso, e a repetição de falas não significa, sozinha, que há algo errado. Às vezes ela ajuda Theo a se comunicar ou se acalmar; em vez de pedir para parar, tente responder ao sentido: “Você está preocupado?” ou ofereça uma frase curta que ele possa usar.\n\nComo você percebe que acontece o dia inteiro, vale observar se aumenta em situações específicas e conversar sobre isso com o fonoaudiólogo ou outro profissional que o acompanha. Ele repete mais quando está ansioso ou também quando está tranquilo?",
+      "falha": null
+    },
+    {
+      "caso": "sensorial",
+      "braco": "A",
+      "execucao": 1,
+      "ms": 3717,
+      "texto": "No mercado, priorize tirar o Theo do barulho: vá para uma área mais silenciosa ou saiam por alguns minutos. Diga com poucas palavras: “Está muito barulho. Vamos para um lugar calmo.” Não insista para ele continuar enquanto estiver tampando os ouvidos.\n\nPara as próximas compras, tente ir em horários mais tranquilos, fazer uma lista curta e combinar antes: “Primeiro pegar duas coisas, depois vamos embora.” Fones abafadores, se ele aceitar, também podem ajudar. Comece com compras rápidas e aumente aos poucos, sem esperar ele chegar ao limite.\n\nObserve se ele reage principalmente ao caixa, à música, à lotação ou ao barulho geral, porque isso ajuda a adaptar melhor.",
+      "falha": null
+    },
+    {
+      "caso": "sensorial",
+      "braco": "A",
+      "execucao": 2,
+      "ms": 3998,
+      "texto": "Parece que o barulho do mercado está ficando intenso demais para o Theo. Na hora:\n\n1. Leve-o para um canto mais silencioso ou saia por alguns minutos. Não force a permanência.\n2. Use abafador ou fone, se ele aceitar.\n3. Fale pouco e com calma: “Está barulhento. Vamos para um lugar quieto. Depois tentamos de novo.”\n4. Faça visitas curtas, em horários mais tranquilos, começando por poucos minutos. Combine antes: “Vamos comprar duas coisas e ir embora.”\n\nObserve se ele tolera melhor com fone, em outro horário ou em mercados menores. Você já percebeu se isso acontece com qualquer barulho ou principalmente no caixa e nas áreas mais cheias?",
+      "falha": null
+    },
+    {
+      "caso": "sensorial",
+      "braco": "B",
+      "execucao": 1,
+      "ms": 4222,
+      "texto": "Quando o Theo tapar os ouvidos e pedir para ir embora, leve isso como sinal de que o barulho ficou demais para ele. Se vocês ainda estiverem no mercado, vá para um lugar mais silencioso e fale pouco; se não melhorar, sair é melhor do que insistir.\n\nPara as próximas vezes, tente ir em um horário mais tranquilo, combine antes uma compra curta e leve um abafador de ruído, se ele aceitar. Você pode dizer: “Está barulhento. Vamos para um lugar calmo e depois decidimos se continuamos.”",
+      "falha": null
+    },
+    {
+      "caso": "sensorial",
+      "braco": "B",
+      "execucao": 2,
+      "ms": 1930,
+      "texto": "Pode ser que o barulho do mercado esteja ficando intenso demais para ele. Na próxima vez, avise antes: “O mercado está barulhento. Vamos comprar três coisas e depois ir embora”, e leve um protetor auricular, se ele aceitar.\n\nSe ele tapar os ouvidos, reduza o tempo e vá para um lugar mais silencioso, sem insistir em continuar. Depois, observe se isso acontece mais em horários cheios ou com algum som específico.",
+      "falha": null
+    },
+    {
+      "caso": "alim_alerta",
+      "braco": "A",
+      "execucao": 1,
+      "ms": 10213,
+      "texto": "Isso merece atenção, porque tosse e engasgos frequentes durante a refeição também podem ter relação com a deglutição ou com algo físico, e não dá para concluir a causa só pela conversa. Avise o pediatra e leve esse registro; ele pode avaliar se é necessário investigar a alimentação e a deglutição.\n\nHoje, mantenha Theo sentado bem ereto, sempre supervisionado, ofereça bocados pequenos e devagar, sem conversar ou brincar enquanto mastiga, e pare a refeição se ele começar a tossir muito. Não force a continuação.\n\nSe ele não conseguir respirar ou falar, ficar arroxeado ou perder a consciência, acione o SAMU (192) imediatamente.\n\nIsso começou de repente ou foi aumentando aos poucos?",
+      "falha": null
+    },
+    {
+      "caso": "alim_alerta",
+      "braco": "A",
+      "execucao": 2,
+      "ms": 9333,
+      "texto": "Isso precisa ser avaliado por um pediatra em breve, porque engasgar e tossir quase todos os dias durante a refeição pode indicar dificuldade para engolir e risco de o alimento ir para o pulmão.\n\nHoje, durante a janta:\n1. Mantenha Theo sentado bem ereto, comendo devagar e em pequenos pedaços.\n2. Faça pausas entre as garfadas e não ofereça comida enquanto ele fala ou está tossindo.\n3. Se tossir, pare a oferta e deixe-o tossir; não force água nem coloque a mão na boca.\n4. Anote quais alimentos provocam mais tosse e se acontece também com líquidos.\n\nSe ele não conseguir respirar, falar ou tossir, ficar arroxeado ou muito abatido, chame imediatamente o serviço de emergência local.\n\nIsso acontece mais com alimentos sólidos, líquidos ou ambos?",
+      "falha": null
+    },
+    {
+      "caso": "alim_alerta",
+      "braco": "A",
+      "execucao": 3,
+      "ms": 4684,
+      "texto": "Isso precisa ser avaliado pelo pediatra em breve. Engasgar quase todos os dias e tossir durante a refeição pode indicar dificuldade para mastigar ou engolir, e é importante verificar se algum alimento está indo para as vias respiratórias.\n\nHoje:\n1. Ofereça a comida sentado, bem ereto e sem pressa.\n2. Dê porções pequenas e espere ele engolir antes da próxima.\n3. Pare a refeição se ele começar a tossir muito; não force nem ofereça água para “descer”.\n4. Evite, até a avaliação, alimentos que já provocam engasgo.\n\nSe ele não conseguir respirar, falar ou tossir, ficar arroxeado ou muito abatido, chame o SAMU 192 imediatamente e faça primeiros socorros para engasgo, se souber.\n\nNa consulta, peça avaliação da deglutição e registre quais alimentos, consistências e momentos provocam isso. A tosse acontece mais com líquidos, sólidos ou ambos?",
+      "falha": null
+    },
+    {
+      "caso": "alim_alerta",
+      "braco": "B",
+      "execucao": 1,
+      "ms": 4010,
+      "texto": "Engasgar quase todos os dias e tossir bastante durante a comida precisa de avaliação com o pediatra e, provavelmente, com fonoaudiólogo especializado em deglutição. Até ser avaliado, ofereça a comida com Theo bem sentado e ereto, em bocados pequenos e sem pressa; pare a refeição se ele começar a tossir ou engasgar e não force a continuação.\n\nIsso está acontecendo agora? Ele está com dificuldade para respirar, ficando arroxeado ou não consegue falar/tossir? Se sim, chame o SAMU (192) imediatamente.",
+      "falha": null
+    },
+    {
+      "caso": "alim_alerta",
+      "braco": "B",
+      "execucao": 2,
+      "ms": 3993,
+      "texto": "Engasgar quase todos os dias e tossir bastante durante a comida precisa de avaliação médica em breve, porque pode haver dificuldade para engolir ou a comida estar indo para o caminho errado. Até ser avaliado, ofereça a refeição sentado bem ereto, em pequenas quantidades, devagar e sempre supervisionado; não force e evite alimentos que já provocam tosse.\n\nSe ele estiver com dificuldade para respirar, não conseguir falar ou tossir, ficar arroxeado ou muito abatido, chame o SAMU (192) imediatamente. Isso está acontecendo agora ou ele está respirando normalmente?",
+      "falha": null
+    },
+    {
+      "caso": "alim_alerta",
+      "braco": "B",
+      "execucao": 3,
+      "ms": 3932,
+      "texto": "Engasgos quase diários e tosse durante a janta precisam de avaliação médica em breve, porque podem indicar dificuldade para engolir ou que a comida está indo para o caminho errado. Até ser avaliado, mantenha Theo sentado bem ereto, sempre supervisionado, comendo devagar e em pequenas porções; não force se ele começar a tossir.\n\nSe isso estiver acontecendo agora e ele não conseguir respirar, falar ou ficar roxo, chame o SAMU (192) imediatamente. Ele está com dificuldade para respirar neste momento ou consegue respirar normalmente?",
+      "falha": null
+    },
+    {
+      "caso": "sono_ronco",
+      "braco": "A",
+      "execucao": 1,
+      "ms": 4088,
+      "texto": "Ronco muito alto com pausas na respiração não deve ser ignorado. Pode indicar uma dificuldade respiratória durante o sono e precisa ser avaliado por um pediatra em breve, que pode encaminhar ao otorrino ou solicitar um exame do sono.\n\nSe isso estiver acontecendo agora e Theo ficar arroxeado, respirar com esforço, fizer engasgos repetidos, ficar muito difícil de acordar ou a pausa parecer prolongada, chame o SAMU (192) ou procure uma emergência imediatamente.\n\nAté ser avaliado, observe e, se possível, grave um trecho curto do sono para mostrar ao médico. Não use medicamentos ou descongestionantes por conta própria. Isso está acontecendo nesta noite?",
+      "falha": null
+    },
+    {
+      "caso": "sono_ronco",
+      "braco": "A",
+      "execucao": 2,
+      "ms": 6083,
+      "texto": "Isso precisa ser avaliado por um pediatra em breve, porque ronco muito alto com pausas na respiração pode indicar um problema respiratório durante o sono. Não dá para confirmar a causa só por aqui.\n\nHoje, observe sem tentar acordá-lo a cada pausa. Se ele ficar arroxeado ou muito pálido, fizer esforço para respirar, engasgar, não despertar bem ou a pausa parecer prolongada, chame o SAMU (192) ou vá à emergência imediatamente.\n\nSe estiver estável, grave um pequeno vídeo do ronco e das pausas, anote quando acontecem e marque avaliação com o pediatra, que pode encaminhar ao otorrino. Não ofereça remédios para dormir. Isso está acontecendo nesta noite também?",
+      "falha": null
+    },
+    {
+      "caso": "sono_ronco",
+      "braco": "A",
+      "execucao": 3,
+      "ms": 3464,
+      "texto": "Ronco muito alto junto com pausas na respiração merece avaliação médica em breve, pois pode indicar um problema respiratório durante o sono. Marque consulta com o pediatra o quanto antes; ele pode encaminhar para otorrino ou avaliação do sono.\n\nDurante a noite, observe se Theo fica arroxeado ou muito pálido, faz esforço para respirar, engasga, fica difícil de acordar ou a pausa parece prolongada. Nesses casos, procure emergência imediatamente.\n\nSe conseguir sem acordá-lo, grave um trecho curto do ronco e das pausas para mostrar ao médico. Não use travesseiros altos nem medicamentos para dormir. Vocês já perceberam se ele acorda cansado, irritado ou com dor de cabeça?",
+      "falha": null
+    },
+    {
+      "caso": "sono_ronco",
+      "braco": "B",
+      "execucao": 1,
+      "ms": 2602,
+      "texto": "Ronco muito alto junto com pausas na respiração precisa de avaliação médica, pois pode indicar um problema respiratório durante o sono. Marque uma consulta com o pediatra ou otorrino o quanto antes e conte exatamente o que você observou.\n\nSe ele estiver com dificuldade para respirar agora, ficar arroxeado, muito difícil de acordar ou tiver pausas prolongadas, procure uma emergência imediatamente.",
+      "falha": null
+    },
+    {
+      "caso": "sono_ronco",
+      "braco": "B",
+      "execucao": 2,
+      "ms": 3001,
+      "texto": "Ronco muito alto com pausas na respiração durante o sono precisa de avaliação médica, pois pode indicar um problema respiratório do sono. Marque avaliação com o pediatra o quanto antes; ele poderá encaminhar ao otorrino ou solicitar um exame do sono.\n\nSe Theo estiver com dificuldade para respirar agora, ficando arroxeado ou muito pálido, fazendo esforço para respirar ou difícil de acordar, procure uma emergência imediatamente. Se conseguir, grave um trecho do sono para mostrar ao médico, sem atrasar o atendimento.",
+      "falha": null
+    },
+    {
+      "caso": "sono_ronco",
+      "braco": "B",
+      "execucao": 3,
+      "ms": 2954,
+      "texto": "Ronco muito alto junto com pausas na respiração durante o sono precisa de avaliação médica, pois pode indicar um problema respiratório do sono. Marque consulta com o pediatra o quanto antes; ele pode encaminhar ao otorrino e solicitar uma avaliação do sono.\n\nSe durante uma pausa ele não voltar a respirar rapidamente, ficar arroxeado, tiver esforço para respirar ou for difícil acordá-lo, procure emergência imediatamente. Isso está acontecendo agora?",
+      "falha": null
+    },
+    {
+      "caso": "crise",
+      "braco": "A",
+      "execucao": 1,
+      "ms": 3657,
+      "texto": "Isso é uma *emergência*. Ligue agora para o SAMU (192) ou para o número de emergência local e diga: queda da escada, pancada na cabeça, sonolência/molinho e vômito.\n\nEnquanto aguarda:\n1. Não o deixe sozinho nem o deixe andar.\n2. Se estiver vomitando, vire-o cuidadosamente de lado, mantendo cabeça e pescoço alinhados.\n3. Não ofereça comida, bebida ou remédio.\n4. Observe se respira e se responde quando chamado. Se parar de respirar ou não responder, avise imediatamente ao atendente e siga as instruções.\n\nMesmo que ele pareça melhorar, precisa ser avaliado imediatamente.",
+      "falha": null
+    },
+    {
+      "caso": "crise",
+      "braco": "A",
+      "execucao": 2,
+      "ms": 3877,
+      "texto": "Isso é uma emergência. Como Theo bateu a cabeça, está molinho e vomitou, ligue agora para o SAMU (192) ou vá imediatamente ao pronto-socorro. Não espere para observar em casa.\n\nEnquanto aguarda:\n1. Não o deixe sozinho nem caminhar.\n2. Mantenha-o deitado e, se estiver sonolento ou vomitando, vire-o de lado, com cuidado para manter cabeça e pescoço alinhados.\n3. Não ofereça comida, bebida ou remédio.\n4. Observe a respiração. Se ficar inconsciente, convulsionar, tiver dificuldade para respirar ou não responder, informe isso imediatamente ao 192 e siga as instruções do atendente.\n\nNão o sacuda e evite movimentar o pescoço, salvo se houver perigo no local.",
+      "falha": null
+    },
+    {
+      "caso": "crise",
+      "braco": "A",
+      "execucao": 3,
+      "ms": 3815,
+      "texto": "Isso é uma emergência. Sonolência ou moleza e vômito após bater a cabeça precisam de avaliação médica imediata.\n\nLigue agora para o SAMU (192) ou vá ao pronto-socorro; prefira ambulância, principalmente se ele estiver difícil de acordar. Não o deixe sozinho, não dê comida, água ou remédio e não o deixe caminhar.\n\nMantenha-o deitado e imóvel, com cabeça e pescoço alinhados. Se vomitar novamente, vire o corpo inteiro de lado, sem dobrar o pescoço, para evitar engasgo. Observe a respiração. Se ele parar de respirar ou não responder, avise o 192 imediatamente e siga as instruções do atendente.",
+      "falha": null
+    },
+    {
+      "caso": "crise",
+      "braco": "B",
+      "execucao": 1,
+      "ms": 3755,
+      "texto": "Isso é uma emergência. Ligue agora para o SAMU (192) ou para o serviço de emergência da sua região e diga que o Theo caiu da escada, bateu a cabeça, vomitou e está molinho.\n\nEnquanto aguarda, não o deixe sozinho, não dê comida, bebida ou remédio e não o deixe dormir sem avaliação. Mantenha-o deitado e imóvel; se vomitar novamente, vire-o cuidadosamente de lado, mantendo cabeça e pescoço alinhados. Se ficar difícil de acordar, tiver convulsão ou dificuldade para respirar, avise imediatamente ao atendente.",
+      "falha": null
+    },
+    {
+      "caso": "crise",
+      "braco": "B",
+      "execucao": 2,
+      "ms": 3416,
+      "texto": "Ligue para o SAMU agora: 192. Queda com batida na cabeça, vômito e estar molinho pode ser uma emergência.\n\nEnquanto aguarda, não deixe o Theo sozinho nem andar. Não dê comida, bebida ou remédio. Se vomitar novamente, vire-o de lado mantendo cabeça e pescoço alinhados. Observe a respiração; se ficar difícil, ele desmaiar ou não responder, informe imediatamente ao 192 e siga as instruções.",
+      "falha": null
+    },
+    {
+      "caso": "crise",
+      "braco": "B",
+      "execucao": 3,
+      "ms": 2993,
+      "texto": "Ligue agora para o SAMU (192) ou vá imediatamente ao pronto-socorro. Depois de bater a cabeça, estar molinho e vomitar são sinais de alerta.\n\nNão deixe Theo sozinho, não ofereça comida, bebida ou remédio e evite movimentá-lo. Se vomitar novamente, vire-o de lado com cuidado, mantendo cabeça e pescoço alinhados. Se ficar inconsciente ou tiver dificuldade para respirar, avise o 192 imediatamente e siga as orientações do atendente.",
+      "falha": null
+    },
+    {
+      "caso": "bpc",
+      "braco": "A",
+      "execucao": 1,
+      "ms": 5705,
+      "texto": "Não consigo dizer pela conversa se Theo tem direito. O BPC não exige contribuição ao INSS, mas, em geral, considera:\n\n1. Impedimento de longo prazo que cause barreiras importantes no dia a dia e na participação social, avaliado pelo INSS.\n2. Renda familiar por pessoa dentro do critério legal, geralmente até 1/4 do salário mínimo, com análise da situação familiar e das despesas.\n3. Cadastro Único atualizado.\n\nPara dar entrada:\n\n1. Atualize ou faça o CadÚnico no CRAS, com CPF e documentos de todos que moram na casa.\n2. Reúna relatórios e exames que descrevam as dificuldades de Theo na comunicação, escola, autonomia, rotina e participação — não apenas o diagnóstico.\n3. Solicite o BPC pelo aplicativo ou site Meu INSS, ou pelo telefone 135.\n4. Aguarde as avaliações médica e social do INSS.\n\nPosso te ajudar a organizar uma lista dos documentos e observações de Theo para levar ao CRAS e ao pedido.",
+      "falha": null
+    },
+    {
+      "caso": "bpc",
+      "braco": "A",
+      "execucao": 2,
+      "ms": 6565,
+      "texto": "Não consigo confirmar por conversa se Theo tem direito. O BPC não exige contribuição ao INSS, mas exige:\n\n1. Baixa renda familiar, analisada por pessoa, conforme os critérios oficiais. Gastos e a composição familiar também podem ser considerados na avaliação.\n2. Impedimento de longo prazo, de natureza física, mental, intelectual ou sensorial, que dificulte a participação em igualdade com outras pessoas. O diagnóstico, sozinho, não garante o benefício.\n3. CadÚnico atualizado, com CPF de todos da família.\n\nPara dar entrada:\n\n1. Atualize ou faça o CadÚnico no CRAS.\n2. Tenha documentos de Theo e dos familiares, comprovante de residência e relatórios/avaliações que descrevam dificuldades, duração e impacto no dia a dia.\n3. Solicite no Meu INSS ou pelo telefone 135: BPC à pessoa com deficiência.\n4. Theo passará por avaliação médica e social do INSS.\n\nO benefício é de um salário mínimo, não tem 13º salário e passa por revisões. Confira os critérios e documentos atualizados em gov.br/inss ou no 135.",
+      "falha": null
+    },
+    {
+      "caso": "bpc",
+      "braco": "A",
+      "execucao": 3,
+      "ms": 6673,
+      "texto": "Não consigo dizer pela conversa se Theo tem direito ao BPC. A sensibilidade a barulho e as dificuldades de comunicação, sozinhas, não comprovam o direito. O INSS avalia se existe uma condição de longo prazo que cause barreiras importantes na participação e na vida diária, além da situação socioeconômica da família.\n\nPara dar entrada:\n\n1. Confira se o CadÚnico está atualizado no CRAS, com todos que moram na casa.\n2. Separe documentos de Theo, dos responsáveis e comprovantes de renda e residência.\n3. Peça o BPC da pessoa com deficiência pelo Meu INSS ou telefone 135.\n4. Ele será chamado para avaliação social e perícia médica. Leve relatórios, exames e registros que mostrem como as dificuldades afetam escola, comunicação, autonomia e rotina.\n\nNão é preciso ter contribuído ao INSS. O benefício é assistencial e não exige pagamento. Informações e pedido: gov.br/meuinss. O CRAS pode orientar sobre o CadÚnico, mas não decide o benefício.",
+      "falha": null
+    },
+    {
+      "caso": "bpc",
+      "braco": "B",
+      "execucao": 1,
+      "ms": 5840,
+      "texto": "Não consigo confirmar por conversa se o Theo tem direito, porque o BPC não é concedido apenas pelo diagnóstico ou por uma dificuldade específica. Em geral, é preciso comprovar baixa renda familiar e uma condição de longo prazo que, junto às barreiras do dia a dia, limite a participação dele; o INSS faz avaliação social e médica.\n\nPara dar entrada:\n\n1. Confira ou atualize o Cadastro Único no CRAS, com todas as pessoas da casa.\n2. Separe CPF, certidão de nascimento, documentos dos responsáveis, comprovante de residência e NIS.\n3. Reúna relatórios médicos, terapêuticos e escolares que descrevam as dificuldades e o apoio que ele precisa.\n4. Solicite o BPC para pessoa com deficiência pelo aplicativo/site Meu INSS ou pelo telefone 135.\n\nO critério de renda é analisado por pessoa da família, mas a situação completa também pode ser considerada. Posso te ajudar a organizar as informações do Theo para levar ao CRAS e à avaliação do INSS.",
+      "falha": null
+    },
+    {
+      "caso": "bpc",
+      "braco": "B",
+      "execucao": 2,
+      "ms": 5472,
+      "texto": "Não consigo confirmar por conversa se Theo tem direito ao BPC. Em geral, o benefício exige baixa renda familiar por pessoa e uma condição de longo prazo que cause barreiras importantes no dia a dia, comprovada por avaliação médica e social do INSS — não depende apenas de diagnóstico.\n\nPara dar entrada:\n\n1️⃣ Confira se o CadÚnico está atualizado no CRAS e se todos da família têm CPF.\n2️⃣ Separe documentos de Theo e dos moradores da casa, comprovantes de renda e despesas, além de relatórios de saúde e escola que descrevam as dificuldades e os apoios necessários.\n3️⃣ Solicite o benefício pelo aplicativo ou site Meu INSS, pelo telefone 135 ou com ajuda no CRAS.\n\nO pedido passa por avaliação do INSS. Posso te ajudar a organizar quais informações devem aparecer nos relatórios do Theo.",
+      "falha": null
+    },
+    {
+      "caso": "bpc",
+      "braco": "B",
+      "execucao": 3,
+      "ms": 7834,
+      "texto": "Não dá para confirmar o direito do Theo só por aqui. O BPC não depende apenas de diagnóstico: em geral, exige impedimento de longo prazo, com duração mínima esperada de 2 anos, que gere barreiras no dia a dia, além de baixa renda familiar. O critério administrativo costuma ser renda por pessoa de até 1/4 do salário mínimo; a análise considera também a situação da família.\n\nPara dar entrada:\n\n1️⃣ Atualize o CadÚnico no CRAS, com CPF de todos que moram na casa.\n2️⃣ Faça o pedido no Meu INSS ou pelo telefone 135: BPC à pessoa com deficiência.\n3️⃣ Separe documentos, laudos e relatórios que mostrem as dificuldades e os apoios que Theo precisa.\n4️⃣ Ele passará por avaliação médica e social do INSS.\n\nO BPC não exige contribuição ao INSS, mas não é automático por haver diagnóstico. Se você me disser se o CadÚnico está atualizado, eu te indico o primeiro passo mais adequado.",
+      "falha": null
+    },
+    {
+      "caso": "promessa",
+      "braco": "A",
+      "execucao": 1,
+      "ms": 5321,
+      "texto": "Posso te ajudar a organizar a rotina do Theo, mas não consigo salvar diretamente no seu perfil por esta conversa.\n\nPara eu montar uma sequência semanal realmente útil, me diga os horários fixos dele: escola, acordar, dormir e terapias/atividades. Se preferir, pode enviar assim: “acorda…, escola…, volta…, dorme…”. A partir disso, organizo os passos incluindo dinossauros, montagem, água, refeições, banho e momentos de descanso.",
+      "falha": null
+    },
+    {
+      "caso": "promessa",
+      "braco": "A",
+      "execucao": 2,
+      "ms": 4003,
+      "texto": "Posso organizar a rotina visual da semana do Theo, usando dinossauros e montagem para deixá-la mais atrativa. Para não criar uma sequência que não combine com a vida de vocês, qual é a principal rotina fixa dele durante a semana: escola, terapias ou outra atividade? \n\nEu não consigo salvar diretamente no seu perfil por esta conversa, mas posso organizar o conteúdo para você usar no recurso de rotina visual da Kolo.",
+      "falha": null
+    },
+    {
+      "caso": "promessa",
+      "braco": "A",
+      "execucao": 3,
+      "ms": 4831,
+      "texto": "Posso organizar a rotina visual do Theo com dinossauros, incluindo pausas mais tranquilas por causa do barulho. Para não inventar horários, me diga só a sequência da semana: que horas ele acorda, vai à escola, volta, toma banho, janta e dorme?\n\nCom isso, sigo pelo fluxo de sequência visual e você poderá salvá-la no perfil.",
+      "falha": null
+    },
+    {
+      "caso": "promessa",
+      "braco": "B",
+      "execucao": 1,
+      "ms": 6172,
+      "texto": "Posso organizar a sugestão aqui, mas não consigo criar nem salvar a rotina visual no seu perfil por esta conversa.\n\nPara o Theo, eu começaria com uma sequência igual de segunda a sexta: acordar → banheiro e roupa → café → escola → chegada e lanche → pausa em lugar silencioso → tarefa curta → brincar de dinossauros ou montar → banho → jantar → história → dormir.\n\nNo fim de semana, mantenha os mesmos horários de acordar, refeições, banho e sono; troque a escola por passeio ou brincadeira com água. Como barulho alto incomoda, avise antes das saídas e preveja uma pausa tranquila depois. Qual é o horário em que ele acorda e entra na escola?",
+      "falha": null
+    },
+    {
+      "caso": "promessa",
+      "braco": "B",
+      "execucao": 2,
+      "ms": 5949,
+      "texto": "Posso organizar a sequência aqui, mas não consigo criar nem salvar a rotina visual no perfil por esta conversa.\n\nCom o que já sei do Theo, uma base seria: acordar → se vestir → café → escola → almoço → descanso/brincadeira com dinossauros → banho → jantar → atividade calma → dormir. Para adaptar à semana dele, em quais dias e horários ele vai à escola?",
+      "falha": null
+    },
+    {
+      "caso": "promessa",
+      "braco": "B",
+      "execucao": 3,
+      "ms": 9076,
+      "texto": "Posso organizar a sequência da rotina aqui, mas não consigo criar os cartões nem salvar uma rotina no seu perfil por esta conversa.\n\nPara não inventar horários do Theo, me diga primeiro: que horas ele acorda e que horas começa a escola? A partir disso, organizo uma sugestão para os dias da semana usando passos curtos e interesses dele, como dinossauros e montar.",
+      "falha": null
+    },
+    {
+      "caso": "midia",
+      "braco": "A",
+      "execucao": 1,
+      "ms": 3340,
+      "texto": "Não consegui interpretar o vídeo por aqui. É do Theo ou da Cecília, e o que estava acontecendo nele? Pode descrever em uma frase; eu te ajudo mesmo sem conseguir ver o vídeo.",
+      "falha": null
+    },
+    {
+      "caso": "midia",
+      "braco": "A",
+      "execucao": 2,
+      "ms": 2451,
+      "texto": "Não consegui interpretar os detalhes do vídeo por aqui. Você pode me dizer, em uma frase, o que acontece nele e se é o Theo ou a Cecília?",
+      "falha": null
+    },
+    {
+      "caso": "midia",
+      "braco": "B",
+      "execucao": 1,
+      "ms": 1272,
+      "texto": "Não consegui ver esse vídeo por aqui. Me conta em uma frase o que aparece nele, ou me manda um áudio explicando a situação, e eu te ajudo a pensar no próximo passo.",
+      "falha": null
+    },
+    {
+      "caso": "midia",
+      "braco": "B",
+      "execucao": 2,
+      "ms": 1303,
+      "texto": "Não consegui ver o vídeo por aqui. Você pode me contar em uma frase o que aparece nele ou me mandar um áudio? Assim consigo te orientar.",
+      "falha": null
+    },
+    {
+      "caso": "conversa_longa",
+      "braco": "A",
+      "execucao": 1,
+      "ms": 4557,
+      "texto": "O sono pode estar deixando a saída de casa ainda mais difícil. Para começar hoje:\n\n1. Mantenha o horário de acordar o mais fixo possível, inclusive nos fins de semana.\n2. Antecipe o sono aos poucos: 15 minutos mais cedo a cada 2 ou 3 noites, em vez de tentar mudar tudo de uma vez.\n3. Uma hora antes, reduza telas e faça uma sequência previsível: banho, pijama, história curta e cama.\n4. Use os dinossauros como parte do ritual: ele pode escolher um “dinossauro guardião do sono”.\n\nFale: “Agora começa o caminho do sono. Primeiro banho, depois pijama, história e cama.”\n\nQue horas ele costuma dormir e acordar atualmente?",
+      "falha": null
+    },
+    {
+      "caso": "conversa_longa",
+      "braco": "A",
+      "execucao": 2,
+      "ms": 6029,
+      "texto": "O sono pode estar deixando a saída de casa ainda mais difícil. Para começar hoje:\n\nMantenha um horário fixo para acordar, mesmo que ele tenha dormido tarde. À noite, antecipe o início da rotina em 15 minutos a cada 2 ou 3 dias, sem tentar mudar tudo de uma vez.\n\nFaça uma sequência curta e igual: banheiro, pijama, luz mais baixa, história de dinossauros e cama. Evite telas na última hora; se ele usa iPad, termine antes da história e avise com uma sequência simples: “iPad, guardar, pijama, história, cama”.\n\nFale pouco e repita a mesma frase: “Seu corpo está se preparando para dormir.”\n\nEle costuma dormir e acordar que horas?",
+      "falha": null
+    },
+    {
+      "caso": "conversa_longa",
+      "braco": "B",
+      "execucao": 1,
+      "ms": 3810,
+      "texto": "Para o Theo, eu começaria *antecipando o horário aos poucos*: 15 minutos mais cedo a cada 2 ou 3 noites, mantendo o horário de acordar o mais parecido possível. Cerca de 40 minutos antes, faça uma sequência calma e igual todos os dias: diminuir luz e telas, higiene, história curta e cama.\n\nQue horas ele costuma dormir e acordar hoje?",
+      "falha": null
+    },
+    {
+      "caso": "conversa_longa",
+      "braco": "B",
+      "execucao": 2,
+      "ms": 5142,
+      "texto": "Dormir muito tarde pode deixar o Theo mais cansado e tornar a saída de casa ainda mais difícil. Por enquanto, tente adiantar o horário aos poucos: 15 minutos a cada 2 ou 3 noites, mantendo a hora de acordar o mais estável possível.\n\nAntes de dormir, faça sempre a mesma sequência curta: luz mais baixa, menos barulho e telas, higiene e uma atividade tranquila. Você pode usar os dinossauros para avisar: agora guardar, depois banho, história e cama. Que horas ele costuma dormir e acordar?",
+      "falha": null
+    },
+    {
+      "caso": "curtissima",
+      "braco": "A",
+      "execucao": 1,
+      "ms": 1100,
+      "texto": "Imagina! ❤️ Estou aqui para ajudar você e o Theo ou a Cecília.",
+      "falha": null
+    },
+    {
+      "caso": "curtissima",
+      "braco": "A",
+      "execucao": 2,
+      "ms": 1137,
+      "texto": "Imagina! ❤️ Estou aqui para ajudar você e o Theo ou a Cecília. Quando quiser, me diga com qual dos dois vamos falar e o que está mais difícil agora.",
+      "falha": null
+    },
+    {
+      "caso": "curtissima",
+      "braco": "A",
+      "execucao": 3,
+      "ms": 880,
+      "texto": "Imagina! ❤️ Estou por aqui para ajudar vocês.",
+      "falha": null
+    },
+    {
+      "caso": "curtissima",
+      "braco": "B",
+      "execucao": 1,
+      "ms": 925,
+      "texto": "Imagina! ❤️ Se precisar, pode me chamar.",
+      "falha": null
+    },
+    {
+      "caso": "curtissima",
+      "braco": "B",
+      "execucao": 2,
+      "ms": 786,
+      "texto": "Imagina! ❤️ Se precisar, pode me chamar.",
+      "falha": null
+    },
+    {
+      "caso": "curtissima",
+      "braco": "B",
+      "execucao": 3,
+      "ms": 1019,
+      "texto": "Imagina! 💛 Se precisar, pode me chamar.",
+      "falha": null
+    },
+    {
+      "caso": "curta_insuf",
+      "braco": "A",
+      "execucao": 1,
+      "ms": 3844,
+      "texto": "Não dê o remédio do irmão, mesmo meio comprimido. A dose e o medicamento podem ser inadequados para ele e causar efeitos perigosos, especialmente sonolência excessiva ou dificuldade para respirar. Para sono, use apenas algo prescrito especificamente para essa criança e confirme com o pediatra.\n\nSe ele já tomou: não provoque vômito nem dê outro remédio. Ligue agora para o Disque-Intoxicação (0800 722 6001) ou, se estiver muito sonolento, confuso, com respiração diferente ou difícil de acordar, chame o SAMU (192). Qual é o nome do remédio e ele já tomou?",
+      "falha": null
+    },
+    {
+      "caso": "curta_insuf",
+      "braco": "A",
+      "execucao": 2,
+      "ms": 4128,
+      "texto": "Não dê. Mesmo meio comprimido pode ser perigoso: o remédio pode não ser adequado para a idade, peso ou causa do sono dele, e alguns comprimidos não podem ser divididos.\n\nSe já deu, não provoque vômito e ligue agora para o Disque-Intoxicação: 0800 722 6001, com a embalagem em mãos. Se ele ficar muito sonolento, difícil de acordar, respirar diferente, ficar arroxeado ou tiver convulsão, chame o SAMU (192) imediatamente.\n\nPara ajudar a dormir, mantenha luz baixa e uma rotina calma, mas não use medicamento sem orientação do pediatra.",
+      "falha": null
+    },
+    {
+      "caso": "curta_insuf",
+      "braco": "A",
+      "execucao": 3,
+      "ms": 3660,
+      "texto": "Não dê o remédio do irmão ao Theo. Mesmo meio comprimido pode ter dose ou efeito inadequado para ele, causar sonolência excessiva e afetar a respiração.\n\nSe ele já tomou, não provoque vômito e entre em contato agora com o Disque-Intoxicação (0800 722 6001) ou um serviço de emergência. Se estiver muito sonolento, confuso, com respiração diferente ou difícil de acordar, chame o SAMU (192).\n\nQual é o nome do remédio e ele já tomou alguma quantidade?",
+      "falha": null
+    },
+    {
+      "caso": "curta_insuf",
+      "braco": "B",
+      "execucao": 1,
+      "ms": 3167,
+      "texto": "Não dê o remédio do irmão, nem meio comprimido. A dose e o tipo de medicamento precisam ser avaliados para aquela criança; alguns podem causar sonolência perigosa e afetar a respiração.\n\nSe ele já tomou, não provoque vômito e ligue agora para o Disque-Intoxicação: 0800 722 6001, informando o nome do remédio, a quantidade e o horário. Se estiver muito sonolento, confuso, desmaiado, convulsionando ou respirando diferente, chame o SAMU (192) imediatamente.",
+      "falha": null
+    },
+    {
+      "caso": "curta_insuf",
+      "braco": "B",
+      "execucao": 2,
+      "ms": 3130,
+      "texto": "Não dê o remédio do irmão ao Theo ou à Cecília, mesmo meio comprimido. O medicamento e a dose podem ser inadequados e causar sonolência excessiva, queda da respiração ou intoxicação; só use algo orientado para essa criança pelo profissional que a acompanha.\n\nSe já tomou, não provoque vômito e ligue agora para o Disque-Intoxicação: 0800 722 6001. Se estiver muito sonolento, confuso, com dificuldade para respirar, convulsionando ou não acordar, chame o SAMU (192) imediatamente. Qual criança tomou, qual remédio, quanto e há quanto tempo?",
+      "falha": null
+    },
+    {
+      "caso": "curta_insuf",
+      "braco": "B",
+      "execucao": 3,
+      "ms": 3282,
+      "texto": "Não dê o remédio do irmão, mesmo meio comprimido. O medicamento e a dose podem ser inadequados e causar sonolência excessiva, queda da respiração ou outras reações.\n\nSe ele já tomou, não provoque vômito e procure orientação agora pelo Disque-Intoxicação: 0800 722 6001. Se estiver muito sonolento, confuso, desmaiado ou respirando diferente, ligue para o SAMU (192) imediatamente. Leve a embalagem do remédio.",
+      "falha": null
+    },
+    {
+      "caso": "cta_natural",
+      "braco": "A",
+      "execucao": 1,
+      "ms": 2498,
+      "texto": "É na despedida do Theo ou da Cecília? Quero adaptar a estratégia à idade e ao jeito de comunicação de quem está passando por isso.",
+      "falha": null
+    },
+    {
+      "caso": "cta_natural",
+      "braco": "A",
+      "execucao": 2,
+      "ms": 2541,
+      "texto": "É para o Theo ou para a Cecília? A forma de ajudar na despedida pode mudar bastante conforme a idade e a maneira como cada um se comunica.",
+      "falha": null
+    },
+    {
+      "caso": "cta_natural",
+      "braco": "B",
+      "execucao": 1,
+      "ms": 3088,
+      "texto": "É para o Theo ou para a Cecília? A despedida pode mudar bastante conforme a idade e o jeito de cada um.",
+      "falha": null
+    },
+    {
+      "caso": "cta_natural",
+      "braco": "B",
+      "execucao": 2,
+      "ms": 1723,
+      "texto": "É para o Theo ou para a Cecília?",
+      "falha": null
+    },
+    {
+      "caso": "cta_artificial",
+      "braco": "A",
+      "execucao": 1,
+      "ms": 2078,
+      "texto": "Por nada! Teste amanhã sem buscar perfeição. Observe só duas coisas: o que facilitou para ele e em qual momento ainda ficou difícil. Pequenos avanços já mostram o caminho.",
+      "falha": null
+    },
+    {
+      "caso": "cta_artificial",
+      "braco": "A",
+      "execucao": 2,
+      "ms": 1511,
+      "texto": "Tomara que ajude, sim. Amanhã, observe só duas coisas: em que momento Theo consegue participar melhor e o que parece deixá-lo mais agitado. Depois, me conte o que funcionou e o que precisou ser ajustado.",
+      "falha": null
+    },
+    {
+      "caso": "cta_artificial",
+      "braco": "A",
+      "execucao": 3,
+      "ms": 2358,
+      "texto": "Por nada! Amanhã, faça um passo de cada vez e observe principalmente o que facilita ou dificulta para ele. Mesmo uma pequena melhora já mostra um caminho; depois vocês podem ajustar a estratégia.",
+      "falha": null
+    },
+    {
+      "caso": "cta_artificial",
+      "braco": "B",
+      "execucao": 1,
+      "ms": 3044,
+      "texto": "Por nada 💛 Tenta amanhã sem se cobrar que dê certo de primeira. Observe só o que ajudou e em que momento ficou mais difícil; isso já dá uma boa pista para ajustar depois.",
+      "falha": null
+    },
+    {
+      "caso": "cta_artificial",
+      "braco": "B",
+      "execucao": 2,
+      "ms": 2498,
+      "texto": "Por nada! Amanhã, tente manter o combinado simples e igual do começo ao fim. Depois, observe em qual momento ficou mais difícil para ele — isso ajuda a pensar no próximo ajuste. 💛",
+      "falha": null
+    },
+    {
+      "caso": "cta_artificial",
+      "braco": "B",
+      "execucao": 3,
+      "ms": 3140,
+      "texto": "Perfeito 💛 Tenta amanhã e depois me conta como foi — principalmente o que ajudou e em que momento ficou mais difícil.",
+      "falha": null
+    }
+  ]
+}

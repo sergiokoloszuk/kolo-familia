@@ -1,0 +1,298 @@
+{
+  "quando": "2026-09-05T14:26:20.826Z",
+  "modelo": {
+    "anthropic": "claude-sonnet-4-6",
+    "openai": "gpt-5.6-luna"
+  },
+  "n": 6,
+  "resultados": [
+    {
+      "caso": "vago",
+      "braco": "A",
+      "execucao": 1,
+      "ms": 4671,
+      "texto": "Entendo, deve ser bem cansativo. Na hora, fale pouco e reduza o barulho ao redor, sem tentar conversar por muito tempo.\n\nEle grita mais quando é contrariado, quando quer pedir algo, nas mudanças de atividade ou em lugares barulhentos?",
+      "falha": null
+    },
+    {
+      "caso": "vago",
+      "braco": "A",
+      "execucao": 2,
+      "ms": 2695,
+      "texto": "Entendi. Quando o Theo grita, acontece mais em qual situação?\n\n1. Quando é contrariado ou precisa esperar\n2. Quando fica ansioso ou repete falas\n3. Em lugares barulhentos, como o mercado\n4. Para pedir algo ou chamar atenção\n5. Outra situação",
+      "falha": null
+    },
+    {
+      "caso": "vago",
+      "braco": "A",
+      "execucao": 3,
+      "ms": 3131,
+      "texto": "Entendo, isso pode ser bem desgastante. Por agora, fale baixo e use poucas palavras: “Theo, voz baixa. Me mostra o que você quer.” Evite pedir que ele pare de gritar muitas vezes.\n\nAcontece mais quando ele fica contrariado, quer pedir algo ou em lugares barulhentos?",
+      "falha": null
+    },
+    {
+      "caso": "vago",
+      "braco": "A",
+      "execucao": 4,
+      "ms": 3176,
+      "texto": "Entendi. Quando ele gritar, fale baixo, use poucas palavras e reduza o barulho ao redor — sem pedir que ele explique naquele momento.\n\nAcontece mais quando ele é contrariado, fica ansioso, quer pedir algo ou está em lugar barulhento?",
+      "falha": null
+    },
+    {
+      "caso": "vago",
+      "braco": "A",
+      "execucao": 5,
+      "ms": 3024,
+      "texto": "Entendo, deve ser bem difícil. Quando o Theo grita mais?\n\n1. Quando é contrariado ou precisa parar algo\n2. Quando quer pedir alguma coisa\n3. Em lugares barulhentos\n4. Quando fica ansioso ou frustrado\n5. Em outro momento\n\nSe estiver acontecendo agora, reduza as palavras e diga com calma: “Eu estou aqui. Mostre o que você quer.”",
+      "falha": null
+    },
+    {
+      "caso": "vago",
+      "braco": "A",
+      "execucao": 6,
+      "ms": 1237,
+      "texto": "Entendo. Para eu te orientar melhor: ele grita mais quando está ansioso, frustrado, contrariado ou por causa de barulho?",
+      "falha": null
+    },
+    {
+      "caso": "vago",
+      "braco": "B",
+      "execucao": 1,
+      "ms": 1863,
+      "texto": "Quando ele grita, tente falar pouco e oferecer um jeito simples de mostrar o que precisa, como apontar ou dizer ajuda. Repare no que acontece logo antes: isso aparece mais quando ele precisa esperar, é contrariado ou fica incomodado com barulho?",
+      "falha": null
+    },
+    {
+      "caso": "vago",
+      "braco": "B",
+      "execucao": 2,
+      "ms": 3219,
+      "texto": "Antes de tentar corrigir o grito, observe o que acontece logo antes e fale pouco na hora. Você pode ensinar uma alternativa curta, como “ajuda”, “pausa” ou “mais”, para ele pedir o que precisa. Isso acontece mais quando ele é contrariado, precisa esperar ou fica incomodado com barulho?",
+      "falha": null
+    },
+    {
+      "caso": "vago",
+      "braco": "B",
+      "execucao": 3,
+      "ms": 1750,
+      "texto": "Quando ele grita, tente falar pouco e oferecer uma forma simples de pedir o que precisa, como apontar ou dizer ajuda. Vale observar o que acontece logo antes: isso acontece mais quando ele precisa esperar, quando é contrariado ou quando há muito barulho?",
+      "falha": null
+    },
+    {
+      "caso": "vago",
+      "braco": "B",
+      "execucao": 4,
+      "ms": 2191,
+      "texto": "Quando ele gritar, tente falar pouco e oferecer uma forma simples de pedir: “ajuda”, “pausa” ou “acabou”. Também vale observar o que acontece logo antes, porque o grito pode estar comunicando algo. Isso acontece mais quando ele é contrariado, precisa esperar ou fica incomodado com barulho?",
+      "falha": null
+    },
+    {
+      "caso": "vago",
+      "braco": "B",
+      "execucao": 5,
+      "ms": 3087,
+      "texto": "Quando ele gritar, fale pouco e ofereça uma forma simples de pedir: “pausa”, “ajuda” ou “quero sair”. Observe o que acontece logo antes — espera, mudança, barulho ou algo difícil — porque isso ajuda a escolher o apoio certo. Acontece mais em qual situação?",
+      "falha": null
+    },
+    {
+      "caso": "vago",
+      "braco": "B",
+      "execucao": 6,
+      "ms": 2260,
+      "texto": "Quando o Theo gritar, fale pouco e ofereça uma forma simples de pedir: “ajuda”, “pausa” ou “acabou”. Vale observar o que acontece logo antes: isso aparece mais quando ele precisa esperar, é contrariado ou fica incomodado com barulho?",
+      "falha": null
+    },
+    {
+      "caso": "pouco_ctx",
+      "braco": "A",
+      "execucao": 1,
+      "ms": 3736,
+      "texto": "Entendo. Hoje, tente não discutir nem perguntar muitas vezes “por quê?”. Diga com calma:\n\n“Eu sei que você não quer ir. Primeiro vestir, depois dinossauros no carro. Você quer a camiseta azul ou verde?”\n\nUse poucos passos visíveis e uma despedida curta. Como o Theo se incomoda com barulho, ofereça proteção auricular no caminho e combine um lugar mais tranquilo na chegada, se a escola puder ajudar.\n\nObserve quando começa: antes de sair, na entrada ou depois que chega. Isso muda o próximo passo. A recusa começou de repente ou vem acontecendo há vários dias?",
+      "falha": null
+    },
+    {
+      "caso": "pouco_ctx",
+      "braco": "A",
+      "execucao": 2,
+      "ms": 4920,
+      "texto": "Entendi. Hoje, evite transformar a saída numa disputa. Diga com calma: “Eu sei que está difícil. Vamos descobrir o que você precisa para conseguir ir.”\n\nComo ele se incomoda com barulho e repete falas quando fica ansioso, reduza estímulos, avise cada passo e ofereça uma escolha pequena: “Quer entrar segurando minha mão ou levando um dinossauro?”\n\nPara eu orientar o próximo passo, o que parece mais próximo?\n\n1. Ele não quer se separar de você.\n2. Tem medo ou dificuldade com alguém ou alguma atividade.\n3. O barulho, o recreio ou a sala incomodam.\n4. Aconteceu algo diferente na escola.\n5. Ele não consegue explicar, só fica muito angustiado.\n\nSe houver relato de agressão, medo intenso ou sintomas físicos frequentes, converse com a escola e procure avaliação profissional.",
+      "falha": null
+    },
+    {
+      "caso": "pouco_ctx",
+      "braco": "A",
+      "execucao": 3,
+      "ms": 3773,
+      "texto": "Entendo. Hoje, evite discutir ou ameaçar. Diga com calma: “Eu sei que está difícil. Vamos fazer só o próximo passo: vestir a roupa.” Ofereça uma escolha pequena: “Você quer levar o dinossauro ou escolher a música no caminho?”\n\nPara eu orientar melhor: a resistência começa em casa, na hora de se arrumar, ou aparece principalmente ao chegar na escola?",
+      "falha": null
+    },
+    {
+      "caso": "pouco_ctx",
+      "braco": "A",
+      "execucao": 4,
+      "ms": 3327,
+      "texto": "Entendo. Hoje, evite discutir ou ameaçar. Diga com calma: “Eu sei que está difícil. Vamos descobrir o que está acontecendo e fazer só o primeiro passo: colocar o sapato.”\n\nUse os dinossauros como apoio: ele pode escolher um dinossauro para levar no bolso ou desenhar o trajeto até a escola. Ao chegar, combine uma entrada mais tranquila, longe de barulho e aglomeração, se possível.\n\nO mais importante agora é entender em que ponto ele trava: é antes de sair, no caminho ou ao chegar à escola?",
+      "falha": null
+    },
+    {
+      "caso": "pouco_ctx",
+      "braco": "A",
+      "execucao": 5,
+      "ms": 5149,
+      "texto": "Entendo. Hoje, evite pressionar ou fazer muitas perguntas. Diga: “Eu sei que está difícil. Vamos descobrir o que está deixando a escola difícil e pensar juntos.”\n\nPara a próxima ida:\n1. Avise a sequência curta: “vestir, tomar café, carro, escola”.\n2. Ofereça uma escolha pequena: “Quer levar o dinossauro no bolso ou na mochila?”\n3. Combine com a escola uma chegada tranquila, especialmente por causa do barulho.\n4. Observe se ele se acalma ao saber quem o recebe e o que acontecerá primeiro.\n\nA recusa começa em casa, antes de sair, ou principalmente quando chega à escola?",
+      "falha": null
+    },
+    {
+      "caso": "pouco_ctx",
+      "braco": "A",
+      "execucao": 6,
+      "ms": 3512,
+      "texto": "Entendi. Para hoje, tente não discutir nem prometer que ele poderá ficar em casa. Diga com calma: “Eu sei que você não quer ir. Vou te ajudar. Primeiro roupa, depois café, depois escola.”\n\nUse os dinossauros como apoio: ele pode escolher um para levar no bolso ou desenhar um “dinossauro corajoso” para acompanhá-lo. Dê escolhas pequenas: “Quer vestir a blusa azul ou a verde?” e avise cada próximo passo.\n\nComo ele se incomoda com barulho, reduza estímulos na saída e, se possível, combine com a escola uma chegada mais tranquila.\n\nO que muda bastante a orientação: a recusa começa em casa, antes de sair, ou acontece quando ele chega à escola?",
+      "falha": null
+    },
+    {
+      "caso": "pouco_ctx",
+      "braco": "B",
+      "execucao": 1,
+      "ms": 3319,
+      "texto": "Pode ajudar descobrir *em que momento* ele trava: ao se arrumar, sair de casa ou chegar à escola. Hoje, avise com antecedência e use uma frase curta: “Primeiro escola, depois você volta para casa”; se o barulho incomoda, combine com a escola um lugar mais tranquilo na chegada.\n\nEle chora ou resiste mais na hora de se separar de você, ou reclama de algo que acontece na escola?",
+      "falha": null
+    },
+    {
+      "caso": "pouco_ctx",
+      "braco": "B",
+      "execucao": 2,
+      "ms": 2687,
+      "texto": "Pode ajudar deixar a ida mais previsível para o Theo: avise antes, use uma sequência curta — vestir, colocar o sapato, entrar na escola — e combine uma despedida sempre igual. Se o barulho incomoda, vale pedir que alguém o receba em um lugar mais calmo e já o envolva em uma atividade com dinossauros ou montagem.\n\nIsso acontece mais na hora de sair de casa ou depois que ele chega à escola?",
+      "falha": null
+    },
+    {
+      "caso": "pouco_ctx",
+      "braco": "B",
+      "execucao": 3,
+      "ms": 3058,
+      "texto": "Pode ajudar deixar a ida mais previsível: avise com frases curtas o que vai acontecer — “agora vestir, depois carro, depois escola” — e combine uma despedida sempre igual. Na hora, fale pouco e reconheça: “Eu sei que está difícil. Eu vou te buscar depois da escola.” Como barulho incomoda o Theo, vale também combinar com a escola um lugar mais tranquilo na chegada.\n\nEle começa a recusar ainda em casa ou piora principalmente na hora de se despedir?",
+      "falha": null
+    },
+    {
+      "caso": "pouco_ctx",
+      "braco": "B",
+      "execucao": 4,
+      "ms": 3888,
+      "texto": "Pode ajudar deixar a ida mais previsível: avise antes, use sempre a mesma sequência e fale pouco na hora: “agora colocar o sapato, entrar no carro e chegar na escola”. Como o barulho alto incomoda o Theo, vale combinar uma chegada mais tranquila, evitando momentos muito barulhentos.\n\nEle recusa mais em casa, na hora de sair ou quando chega à escola?",
+      "falha": null
+    },
+    {
+      "caso": "pouco_ctx",
+      "braco": "B",
+      "execucao": 5,
+      "ms": 4308,
+      "texto": "Pode ajudar deixar a ida mais previsível: avise antes, diga a sequência em frases curtas e combine uma atividade com dinossauros assim que ele chegar. Você pode falar: “Primeiro escola, depois dinossauros”, mostrando o que vem antes e o que acontece depois. Na chegada, mantenha a despedida breve e combine com a escola um adulto para recebê-lo.\n\nA resistência aparece mais antes de sair de casa ou quando ele chega à escola?",
+      "falha": null
+    },
+    {
+      "caso": "pouco_ctx",
+      "braco": "B",
+      "execucao": 6,
+      "ms": 5417,
+      "texto": "Entendo. Hoje, fale pouco e deixe a sequência previsível: “Primeiro se arrumar, depois ir para a escola. Na chegada, professora.” Evite negociar por muito tempo; combine com a escola uma recepção mais tranquila, porque o barulho pode estar pesando para ele. Se ajudar, ele pode levar um pequeno dinossauro, se a escola permitir.\n\nEle começa a recusar ainda em casa ou só quando chega à escola?",
+      "falha": null
+    },
+    {
+      "caso": "exatamente",
+      "braco": "A",
+      "execucao": 1,
+      "ms": 4301,
+      "texto": "Se você está falando das falas repetidas quando o Theo fica ansioso, faça assim hoje:\n\n1. Abaixe o barulho e fale devagar.\n2. Não peça para ele parar de repetir. Diga: “Você está preocupado. Quer ajuda ou pausa?”\n3. Ofereça duas opções: “Dinossauro ou água?” e espere alguns segundos.\n4. Se ele não responder, modele uma frase curta: “Theo quer pausa” ou “Theo precisa de ajuda.”\n5. Quando ele tentar comunicar, atenda e elogie: “Você pediu ajuda. Eu entendi.”\n\nObserve se ele consegue se acalmar mais rápido. Você está falando desse momento ou de outro desafio?",
+      "falha": null
+    },
+    {
+      "caso": "exatamente",
+      "braco": "A",
+      "execucao": 2,
+      "ms": 3250,
+      "texto": "Posso. Você quer saber exatamente o que fazer com:\n\n1. Theo repetindo falas quando fica ansioso;\n2. Theo falando frases curtas;\n3. o incômodo com barulho;\n4. rotina, sono ou escola?\n\nResponda só com o número e eu te passo os passos de hoje.",
+      "falha": null
+    },
+    {
+      "caso": "exatamente",
+      "braco": "A",
+      "execucao": 3,
+      "ms": 6092,
+      "texto": "Vamos começar pela comunicação quando o Theo fica ansioso.\n\nNa próxima vez que ele repetir uma fala de desenho:\n\n1. Diminua o barulho e fale baixo.\n2. Não diga “para de repetir”.\n3. Diga uma frase curta que ele possa usar: “quero pausa”, “me ajuda” ou “estou nervoso”.\n4. Espere alguns segundos. Se ele tentar falar ou repetir parte da frase, ajude imediatamente: leve-o para um lugar mais calmo ou ajude no que ele pediu.\n5. Depois, elogie: “Você pediu ajuda. Eu entendi.”\n\nFaça isso sem exigir que ele repita perfeitamente. Hoje, observe apenas o que aconteceu antes da fala repetida: barulho, mudança, espera, pedido difícil ou outra coisa.\n\nSe você estava falando de rotina, sono, escola ou emoções, diga só qual deles.",
+      "falha": null
+    },
+    {
+      "caso": "exatamente",
+      "braco": "A",
+      "execucao": 4,
+      "ms": 4578,
+      "texto": "Quando Theo começar a repetir falas por ansiedade, faça assim:\n\n1. Abaixe o tom de voz e reduza o barulho ao redor. Se estiver em um lugar muito barulhento, leve-o para um canto mais silencioso.\n2. Não peça “para de repetir”. Diga uma frase curta: “Você está preocupado. Estou aqui.”\n3. Ofereça duas opções concretas: “Quer dinossauro ou água?” Se ele não responder, mostre os dois.\n4. Ensine uma frase substituta, sem exigir que ele repita: “Me ajuda”, “Quero sair” ou “Mais devagar”.\n5. Quando ele usar palavras para pedir, mesmo poucas, responda imediatamente e elogie de forma simples: “Você pediu ajuda. Eu entendi.”\n\nPratique isso quando ele estiver calmo, usando os dinossauros: um dinossauro fica ansioso e o outro diz “me ajuda”. Observe se ele consegue se acalmar mais rápido ou pedir algo antes de repetir as falas.",
+      "falha": null
+    },
+    {
+      "caso": "exatamente",
+      "braco": "A",
+      "execucao": 5,
+      "ms": 3756,
+      "texto": "Eu te passo o passo a passo. É sobre o Theo agora:\n\n1. repetindo falas ou ansioso;\n2. incomodado com barulho;\n3. dificuldade na rotina ou transição;\n4. emoção forte ou crise;\n5. sono;\n6. escola?\n\nResponda só com o número.",
+      "falha": null
+    },
+    {
+      "caso": "exatamente",
+      "braco": "A",
+      "execucao": 6,
+      "ms": 3695,
+      "texto": "Quando Theo começar a repetir falas de desenho por ansiedade, faça assim:\n\n1. Abaixe o barulho e fale pouco.\n2. Diga: “Você está preocupado. Eu estou aqui.”\n3. Ofereça duas opções: “Quer água ou dinossauro?”\n4. Espere até 5 segundos, sem pedir para ele parar de repetir.\n5. Se ele escolher ou tentar falar, responda ao sentido: “Você quer água. Vamos pegar.”\n6. Depois, mostre o próximo passo: “Agora água, depois dinossauros.”\n\nEvite fazer muitas perguntas ou corrigir a fala naquele momento. Observe se ele consegue se comunicar melhor quando o ambiente fica silencioso e há duas opções concretas.",
+      "falha": null
+    },
+    {
+      "caso": "exatamente",
+      "braco": "B",
+      "execucao": 1,
+      "ms": 3122,
+      "texto": "Consigo te passar o passo a passo, sim. Enquanto ele estiver ansioso, fale pouco, reduza o barulho e leve-o para um lugar mais calmo; não peça que explique tudo naquele momento.\n\nVocê quer saber exatamente o que fazer com a rotina, o barulho, a escola, o sono ou quando ele repete falas?",
+      "falha": null
+    },
+    {
+      "caso": "exatamente",
+      "braco": "B",
+      "execucao": 2,
+      "ms": 3759,
+      "texto": "Posso. Para eu te passar o passo a passo certo, me diga *qual situação com o Theo* você quer resolver agora: o barulho, a escola, o sono, a rotina ou outra coisa? Enquanto isso, observe o que aconteceu logo antes — isso ajuda a escolher a melhor resposta.",
+      "falha": null
+    },
+    {
+      "caso": "exatamente",
+      "braco": "B",
+      "execucao": 3,
+      "ms": 1862,
+      "texto": "Claro. Me conta *qual situação está acontecendo agora com o Theo* — rotina, barulho, fala, escola, sono ou outra coisa? Aí eu te passo exatamente o que fazer, passo a passo.",
+      "falha": null
+    },
+    {
+      "caso": "exatamente",
+      "braco": "B",
+      "execucao": 4,
+      "ms": 2904,
+      "texto": "Claro. Pra eu te passar o passo a passo certo, me diga só uma coisa: você quer saber o que fazer com o Theo em qual situação agora — quando ele fica ansioso e repete falas, quando se incomoda com barulho, ou em outro momento?\n\nEnquanto isso, se ele estiver ansioso, fale pouco e com calma, reduza o barulho e diga: “Você está seguro. Me mostra o que precisa.” Se ele puder, ofereça apontar ou escolher entre duas opções.",
+      "falha": null
+    },
+    {
+      "caso": "exatamente",
+      "braco": "B",
+      "execucao": 5,
+      "ms": 2278,
+      "texto": "Claro. Exatamente o que você quer fazer com o Theo: ajudar com o barulho no mercado, as falas repetidas quando ele fica ansioso, a rotina, o sono ou a escola?",
+      "falha": null
+    },
+    {
+      "caso": "exatamente",
+      "braco": "B",
+      "execucao": 6,
+      "ms": 3657,
+      "texto": "Claro. Se você está falando de quando o Theo fica ansioso e repete falas, faça assim:\n\n1️⃣ Leve-o para um lugar mais silencioso e fale pouco.\n2️⃣ Diga: “Você está seguro. Quer sair ou ficar?”\n3️⃣ Mostre duas opções simples, sem insistir para ele responder com frases longas.\n4️⃣ Se ele tapar os ouvidos, reduza o barulho e dê tempo para ele se reorganizar.\n5️⃣ Só converse sobre o que aconteceu quando ele estiver calmo.\n\nO mais importante agora é diminuir o barulho e a quantidade de fala. Você está falando dessa situação ou de outra?",
+      "falha": null
+    }
+  ]
+}
