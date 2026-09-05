@@ -105,6 +105,164 @@ function maisAntiga(a: LinhaReserva, b: LinhaReserva): boolean {
  * silenciar a Ayla se o banco piscar. O risco de mandar duas é menor que o de
  * não mandar nenhuma.
  */
+// ─────────────────────────────────────────────────────────────────────────────
+// A ARBITRAÇÃO ENTRE INICIATIVAS — 05/09/2026, incidente Vanessa.
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * ⚠️ O CASO REAL. Em 04/09 a Vanessa recebeu, com **6 segundos de diferença**,
+ * uma proativa perguntando qual desafio pegava mais e um aviso de que faltavam
+ * 3 dias do teste. Duas Aylas falando ao mesmo tempo com a mesma família.
+ *
+ * ⚠️ POR QUE A RESERVA NÃO PEGOU. `enviarEPersistir` já chama
+ * `reservarEnvioProativo` em toda proativa — mas `trial_d3` está em
+ * `PROATIVAS_ISENTAS`, e isento significava "não passo pela janela". A isenção
+ * é legítima (um aviso de 3 dias no dia 4 não serve); o que estava errado era
+ * ela virar licença para falar por cima.
+ *
+ * ⚠️ E RESERVAR NÃO BASTARIA. Na Vanessa a proativa saiu PRIMEIRO, às 18:00:31;
+ * o Trial veio às 18:00:37. Uma reserva que só resolve empate chegaria tarde —
+ * a mensagem já tinha ido. Por isso quem cede tem que saber ANTES de gerar.
+ *
+ * REGRA DE PRODUTO (05/09/2026): `trial_d0` e `trial_d3` CONTAM como a
+ * iniciativa não solicitada do dia. Havendo Trial elegível, a proativa daquele
+ * dia não sai.
+ */
+
+/** Um dia local da família, em ISO — a janela "hoje" da arbitração. */
+function inicioDoDiaLocal(agora: Date): string {
+  const d = new Date(agora);
+  d.setHours(0, 0, 0, 0);
+  return d.toISOString();
+}
+
+/**
+ * A família está conversando AGORA?
+ *
+ * ⚠️ NÃO É "FALOU HOJE". A regra de produto separa conversa ativa de conversa
+ * encerrada, e com razão: quem escreveu de manhã e resolveu o assunto pode
+ * receber a iniciativa à tarde. O que não pode é a Ayla entrar no meio de um
+ * turno — foi o que aconteceu com a Vanessa, que respondeu "Ok" 17 minutos
+ * depois e recebeu uma pergunta e um plano.
+ *
+ * 30 minutos: acima disso a conversa não está mais em andamento; abaixo, a
+ * família ainda pode estar digitando.
+ */
+export const JANELA_CONVERSA_ATIVA_MS = 30 * 60 * 1000;
+
+export async function conversaAtiva(
+  supabase: SupabaseClient,
+  familyAccountId: string,
+  agora: Date = new Date(),
+): Promise<boolean> {
+  try {
+    const desde = new Date(agora.getTime() - JANELA_CONVERSA_ATIVA_MS).toISOString();
+    const { data } = await supabase
+      .from("ayla_messages")
+      .select("id")
+      .eq("family_account_id", familyAccountId)
+      .eq("direcao", "inbound")
+      .gte("created_at", desde)
+      .limit(1);
+    return (data ?? []).length > 0;
+  } catch {
+    // ⚠️ FAIL-OPEN, e a escolha é deliberada: se a leitura falhar, a iniciativa
+    // sai. O silêncio de uma família por erro de infra é pior que uma
+    // sobreposição rara — e a reserva de cadência continua valendo depois.
+    return false;
+  }
+}
+
+/**
+ * A vaga de iniciativa não solicitada do dia já foi ocupada?
+ *
+ * ⚠️ `boas_vindas` NÃO OCUPA A VAGA. É a primeira mensagem da relação, sai uma
+ * vez e no mesmo dia do cadastro; contá-la calaria a família no dia em que ela
+ * mais precisa de condução.
+ */
+export async function iniciativaDoDiaConsumida(
+  supabase: SupabaseClient,
+  familyAccountId: string,
+  agora: Date = new Date(),
+): Promise<boolean> {
+  try {
+    const { data } = await supabase
+      .from("ayla_send_log")
+      .select("template_key")
+      .eq("family_account_id", familyAccountId)
+      .gte("created_at", inicioDoDiaLocal(agora))
+      .in("status", ["enfileirada", "enviada"]);
+    return (data ?? []).some((l) => (l as { template_key: string }).template_key !== "boas_vindas");
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Existe Trial obrigatório para esta família HOJE?
+ *
+ * ⚠️ MESMA CONSULTA DO CRON, e de propósito. `runTrial` seleciona por
+ * `trial_ends_at` caindo em hoje (d0) ou em três dias (d3). Duplicar o critério
+ * com outra fonte criaria duas verdades sobre o mesmo fato — e a proativa
+ * cederia (ou não) por um motivo diferente do que o Trial usa para falar.
+ */
+export async function trialObrigatorioHoje(
+  supabase: SupabaseClient,
+  familyAccountId: string,
+  agora: Date = new Date(),
+): Promise<boolean> {
+  try {
+    const hoje = new Date(agora);
+    hoje.setHours(0, 0, 0, 0);
+    const dia = 24 * 60 * 60 * 1000;
+    const { data } = await supabase
+      .from("subscription_accesses")
+      .select("trial_ends_at")
+      .eq("family_account_id", familyAccountId)
+      .eq("status", "trialing")
+      .maybeSingle();
+    const fim = (data as { trial_ends_at?: string } | null)?.trial_ends_at;
+    if (!fim) return false;
+    const t = new Date(fim).getTime();
+    const d0 = t >= hoje.getTime() && t < hoje.getTime() + dia;
+    const d3 = t >= hoje.getTime() + 3 * dia && t < hoje.getTime() + 4 * dia;
+    return d0 || d3;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * A iniciativa pode falar agora? — o portão único.
+ *
+ * Precedência (a resposta a inbound nem chega aqui: ela é reativa e sempre
+ * vence): **segurança > Trial obrigatório > proativa > artefatos**.
+ */
+export async function podeIniciarConversa(
+  supabase: SupabaseClient,
+  params: { familyAccountId: string; tipo: string; agora?: Date },
+): Promise<{ ok: true } | { ok: false; motivo: string }> {
+  const agora = params.agora ?? new Date();
+  const ehTrial = params.tipo === "trial_d0" || params.tipo === "trial_d3";
+
+  // ⚠️ NINGUÉM ENTRA NO MEIO DE UM TURNO — nem o Trial. Ele espera a janela
+  // segura do mesmo dia; a próxima passada do cron o pega.
+  if (await conversaAtiva(supabase, params.familyAccountId, agora)) {
+    return { ok: false, motivo: "conversa ativa — a iniciativa espera" };
+  }
+
+  // ⚠️ O TRIAL OCUPA A VAGA; a proativa cede quando ele é elegível hoje.
+  if (!ehTrial && (await trialObrigatorioHoje(supabase, params.familyAccountId, agora))) {
+    return { ok: false, motivo: "Trial obrigatório ocupa a iniciativa de hoje" };
+  }
+
+  if (await iniciativaDoDiaConsumida(supabase, params.familyAccountId, agora)) {
+    return { ok: false, motivo: "iniciativa do dia já consumida" };
+  }
+
+  return { ok: true };
+}
+
 export async function reservarEnvioProativo(
   supabase: SupabaseClient,
   params: {

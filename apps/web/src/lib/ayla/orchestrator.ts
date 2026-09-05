@@ -22,7 +22,11 @@ import { detectarConflitoCrossCampo } from "./conflito-kolo-vivo";
 import { rotearFatoSubcampo } from "./incorporar-subcampo";
 import { gerarRespostaAyla, type RespostaParams } from "./responder";
 import { blocoDiagnosticoRegistrado } from "@/lib/onboarding/diagnostico";
-import { reservarEnvioProativo, proativaIsentaDeCadencia } from "./cadencia";
+import {
+  reservarEnvioProativo,
+  proativaIsentaDeCadencia,
+  podeIniciarConversa,
+} from "./cadencia";
 import { logEvent, logServerError } from "@/lib/log";
 import { descricaoCuidador, type CuidadorDescrito, type Genero } from "./pronomes";
 import { gerarSugestaoRepertorio } from "./repertorio";
@@ -4855,6 +4859,32 @@ export async function enviarEPersistir(
   // CADENCIA — so proativa, e antes de qualquer coisa cara (traducao, envio).
   // Resposta a mae NUNCA passa por aqui: a trava le `category` e sai.
   // Ver lib/ayla/cadencia.ts pro caso real (08:00 + 08:01) e pra concorrencia.
+  // ⚠️ A ARBITRAÇÃO VEM ANTES DA RESERVA — 05/09/2026, incidente Vanessa.
+  //
+  // A reserva resolve empate entre proativas; ela não resolve "duas iniciativas
+  // diferentes no mesmo dia" nem "iniciativa no meio de um turno". E vale para
+  // TODA proativa, inclusive as isentas de cadência: a isenção do `trial_d3`
+  // existe para ele não ser adiado, não para ele falar por cima da conversa.
+  //
+  // `boas_vindas` fica de fora porque é a abertura da relação: ela não disputa
+  // vaga com ninguém, e segurá-la seria começar a relação com silêncio.
+  if (params.category === "proativa" && params.tipo !== "boas_vindas") {
+    const portao = await podeIniciarConversa(supabase, {
+      familyAccountId: params.family_account_id,
+      tipo: params.tipo,
+    });
+    if (!portao.ok) {
+      await logEvent({
+        kind: "iniciativa_suprimida",
+        severity: "info",
+        family_account_id: params.family_account_id,
+        message: portao.motivo,
+        payload: { tipo: params.tipo, motivo: portao.motivo },
+      }).catch(() => {});
+      return { enviada: false, motivo: portao.motivo };
+    }
+  }
+
   let reservaId: string | null = null;
   if (params.category === "proativa" && !proativaIsentaDeCadencia(params.tipo)) {
     const reserva = await reservarEnvioProativo(supabase, {
