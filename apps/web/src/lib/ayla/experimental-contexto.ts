@@ -479,6 +479,34 @@ export type ContextoBase = {
  * (ignorando o que já sabe) ou não pergunta nada. Dizer explicitamente o que
  * falta é o que faz a boas-vindas se adaptar SEM encher o Core de condicionais.
  */
+/**
+ * O RÓTULO DO SUJEITO — e por que ele não podia continuar sendo "Criança".
+ *
+ * ⚠️ O CASO REAL (Samara, 05/09/2026). O prompt oficial serializava
+ * **"Criança: Samara, 37 anos"**. A pessoa acompanhada tem 37 anos e
+ * diagnóstico de depressão, ansiedade e síndrome do pânico. O modelo recebia um
+ * sujeito semanticamente falso e respondia coerente com ele — a culpa nunca foi
+ * do GPT.
+ *
+ * ⚠️ OS CORTES NÃO SÃO INVENÇÃO MINHA, e isso importa. **12** já é a fronteira
+ * de criança no produto (`mensagemEspontanea.ts`, `ehCrianca: idade <= 12`), e
+ * **18** já é a fronteira superior do acervo de Boas Práticas (a faixa
+ * "13 a 18 anos", com 54 entradas). Reuso as duas em vez de criar uma terceira
+ * verdade sobre a mesma coisa.
+ *
+ * ⚠️ E NÃO É TROCA COSMÉTICA DE PALAVRA. O rótulo entra no lugar em que o
+ * modelo lê QUEM é o sujeito; chamar de "criança" quem tem 37 anos muda a
+ * hipótese, a orientação e o repertório que faz sentido. Sem idade registrada,
+ * o rótulo é neutro — inventar faixa a partir da ausência seria repetir o erro
+ * em outra direção.
+ */
+export function rotuloDoSujeito(idade: number | null): string {
+  if (idade == null) return "Pessoa acompanhada";
+  if (idade <= 12) return "Criança";
+  if (idade <= 18) return "Adolescente";
+  return "Pessoa acompanhada (adulta)";
+}
+
 export function montarContextoBase(params: {
   nomeResponsavel: string | null;
   membro: {
@@ -508,7 +536,7 @@ export function montarContextoBase(params: {
   if (!membro) return { bloco: "", lacunas };
 
   const idade = idadeAnos(membro.data_nascimento);
-  linhas.push(`Criança: ${membro.nome ?? "(sem nome)"}${idade != null ? `, ${idade} anos` : ""}`);
+  linhas.push(`${rotuloDoSujeito(idade)}: ${membro.nome ?? "(sem nome)"}${idade != null ? `, ${idade} anos` : ""}`);
   if (idade == null) lacunas.push("data de nascimento");
 
   // ── O GÊNERO REGISTRADO CHEGA AO MODELO (17/08/2026) ─────────────────────

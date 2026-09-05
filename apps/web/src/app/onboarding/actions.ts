@@ -14,6 +14,9 @@ import {
   parseDiagnosticosFormais,
 } from "@/lib/onboarding/diagnostico";
 
+/** "eu", "eu mesmo", "eu mesma", "próprio", "mim" — não é grau de parentesco. */
+const AUTORREFERENCIA = /^(eu|eu\s*mesm[oa]|mim|meu\s*pr[óo]prio|pr[óo]pri[oa]|self|a\s*mim)$/i;
+
 const dataNascimentoSchema = (minAnos: number, maxAnos: number, msg: string) =>
   z
     .string()
@@ -187,6 +190,24 @@ const tela1Schema = z.object({
 }).refine(
   (d) => d.papel !== "outro" || (d.papel_outro && d.papel_outro.length >= 2),
   { path: ["papel_outro"], message: "Diga qual é o grau de parentesco" },
+).refine(
+  // ⚠️ "EU MESMO" NÃO É GRAU DE PARENTESCO — 05/09/2026, caso Samara.
+  //
+  // Uma pessoa de 37 anos se cadastrou como o membro acompanhado e escreveu
+  // "Eu Mesmo" no campo de parentesco. A validação só exigia dois caracteres,
+  // então passou — e a Ayla passou a receber "Criança: Samara, 37 anos", com
+  // diagnóstico de depressão, ansiedade e síndrome do pânico no contexto.
+  //
+  // A Kolo Família acompanha uma criança ou jovem cadastrada por um
+  // responsável; não é produto de autoacompanhamento de adulto. Esta é a menor
+  // barreira correta: o campo PEDE um parentesco, e autorreferência não é um.
+  // Não mexe em idade, não recusa adolescente, e não toca em quem já existe.
+  (d) => d.papel !== "outro" || !AUTORREFERENCIA.test((d.papel_outro ?? "").trim()),
+  {
+    path: ["papel_outro"],
+    message:
+      "A Kolo acompanha uma criança ou jovem. Diga seu parentesco com ela (mãe, pai, avó, tio…).",
+  },
 );
 
 export type Tela1Input = z.infer<typeof tela1Schema>;
