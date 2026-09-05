@@ -7466,7 +7466,115 @@ li o registro `MODELO_CONVERSA` inteiro (que contém os dois) e reportei o lado
 errado, e por isso a "validação Claude × GPT" de 60 execuções foi **GPT nos dois
 braços**. Os cinco documentos levam retificação no topo desde 05/09.
 
-**Próximo ID livre: PEND-163. *(024 e 025 reservadas por frentes ainda não publicadas; 0076 é número de MIGRACAO reservado — ver PEND-121.)***
+
+### PEND-163
+**A idade da criança não chega à recuperação de repertório — e só no caminho que todas as famílias usam**
+Bloco: **B · Ayla** · Prioridade: **P1**
+STATUS: **ABERTA** · Aberta em: 2026-09-05
+
+**PROVEI POR EXECUÇÃO (05/09).** Três chamadores de `recuperarBoasPraticas`:
+
+| chamador | passa `idade`? |
+|---|---|
+| `experimental.ts:761` — WhatsApp oficial, **97,4% dos turnos** | **NÃO** |
+| `orchestrator.ts:3426` — Legacy | sim |
+| `lib/ia/context.ts:333` — web | sim |
+
+`idadeElegivel(idade, min, max)` devolve `true` de saída quando `idade == null`
+(`recuperar.ts:117`). Sem o parâmetro, **o filtro etário inteiro é desligado** —
+não falha, não avisa, apenas deixa tudo elegível.
+
+**O caso que revelou (Mario, 18 anos, TEA, perfil diz "Conversa bem").**
+Reconstruí a recuperação real: **3.546 ch, idêntico ao `bpChars=3546` gravado em
+produção** — não é inferência. O GPT recebeu:
+
+> "Quando sua **criança pequena** vê alguém chorando… **cérebro pequeno** ainda
+> não conecta sozinho…"
+> "Quando seu filho está **brincando com outra criança**… 'vocês estão
+> construindo uma torre juntos'"
+
+Com `idade: 18`, as mesmas skills devolvem outras duas, uma delas *"conversa
+respeitosa durante discordância"*. **A infantilização não foi invenção do
+modelo: foi entregue a ele.**
+
+Repete no segundo caso do mesmo dia ("grita quando ouço não"): produção entregou
+*"gritar: formas de comunicação **antes da linguagem verbal estar pronta**"* —
+para um jovem cujo perfil diz que conversa bem. Com idade, viria *"discussões
+abertas… com seu **adolescente**"*.
+
+**CORREÇÃO APARENTE:** passar `idade` na chamada de `experimental.ts`. **NÃO
+FAZER SEM MEDIR:** o acervo pode não ter faixa etária preenchida em volume
+suficiente, e ligar o filtro pode zerar `bpInjetadas` para faixas inteiras — o
+caso I do §12 (o legítimo que não pode ser bloqueado).
+
+---
+
+### PEND-164
+**`primeiraFrase` corta a comunicação em 180 caracteres — e o que importa costuma estar na terceira frase**
+Bloco: **B · Ayla** · Prioridade: **P1**
+STATUS: **ABERTA** · Aberta em: 2026-09-05
+
+**VI NO CÓDIGO:** `experimental-contexto.ts:72` — `primeiraFrase(t, max=180)`
+corta na primeira quebra de linha **ou no primeiro ponto final**. É aplicada em
+`Comunicação hoje:` e em `Sensibilidades:`.
+
+**PROVEI POR EXECUÇÃO (Mario, 05/09):** o campo `comunicacao` tem **508 ch** no
+banco; chegaram **117**. O que foi cortado:
+
+> "Apresenta resistência em aprender habilidades sociais… **Antecipa falha em
+> interações com estranhos (porteiro, jardineiro, merendeira) e não tenta;
+> crença limitante**…"
+
+Ou seja: **as duas informações que teriam reenquadrado o caso** ficaram de fora,
+enquanto sobrou a primeira frase ("Conversa bem, estamos treinando autonomia").
+
+**E o contraste prova que é posicional, não semântico.** Na Manu, a mesma função
+entregou o dado decisivo — *"Fala palavras soltas"* — **porque era a primeira
+frase**. Mesma função, mesmo teto, resultados opostos, por ordem de digitação.
+
+`desafiosAtuais` já resolveu esse problema para os domínios
+(`recorteDoDominio`, que achata as linhas e corta por tamanho, comentário em
+`experimental-contexto.ts:316`: *"Nada de conteúdo se perde por posição"*). As
+duas linhas de topo ficaram para trás.
+
+**Relacionado:** o teto global `TETO_CONTEXTO_BASE = 1200` entregou **2 de 8
+domínios** do Mario. Os 6 podados incluíam `foco`, `rotina` e `motor`.
+
+---
+
+### PEND-165
+**Fala espontânea: repete quase palavra por palavra, e é Claude falando com família**
+Bloco: **B · Ayla** · Prioridade: **P2**
+STATUS: **ABERTA** · Aberta em: 2026-09-05
+
+**MEDI (conta interna, 25/08 a 04/09):** quatro proativas das 22:00 quase
+idênticas — *"você conseguiu testar o plano com a Manu? Fico curiosa…"* em 25/08,
+28/08, 30/08 e 03/09. **Nenhuma respondida.**
+
+`ayla_espontanea` roda em **claude-haiku-4-5** (`mensagemEspontanea.ts:604`) e
+**não recebe o Core** — a v10 não a alcança. Migrar exige bancada própria.
+Sub-item de [PEND-162](#pend-162), registrado à parte por ter causa própria
+(ausência de dedup semântica entre proativas), não só de provider.
+
+---
+
+### PEND-166
+**Três defeitos de entrega observados na janela de 05/09 — registrados, não corrigidos**
+Bloco: **B · Ayla** · Prioridade: **P2**
+STATUS: **ABERTA** · Aberta em: 2026-09-05
+
+1. **Tema `evitar` usado como isca.** Para a Manu, a Ayla propôs uma brincadeira
+   com paradas na *praia*. O perfil registra
+   `preferencias.evitar: ["Contato com areia e água na praia"]`, com experimento
+   `resultado: nao_gostou` (13/07). Praia imaginária não é areia e água — mas o
+   dado existia e foi usado ao contrário. **Uma ocorrência; não concluir por ela.**
+2. **Ordem invertida.** Às 17:28:17 saiu o anúncio do plano em PDF; às 17:28:26
+   saiu a resposta à pergunta da mãe. O artefato chegou **antes** da resposta.
+3. **CTA fixo do plano.** *"volta aqui pra me contar o que você achou?"* é texto
+   fixo da entrega, **não vem do Core** — então nenhuma versão do Prompt Mestre
+   o governa.
+
+**Próximo ID livre: PEND-167. *(024 e 025 reservadas por frentes ainda não publicadas; 0076 é número de MIGRACAO reservado — ver PEND-121.)***
 
 > Conferir contra `origin/main`, não contra o seu branch. Dois branches podem
 > reivindicar o mesmo número — o conflito de merge nesta linha é o alarme.
