@@ -27,7 +27,7 @@ const apres = readFileSync(
 
 describe("ESTÁ NO CAMINHO, e no lugar certo", () => {
   it("1. o orquestrador importa a função", () => {
-    expect(orch).toMatch(/import \{ paraWhatsApp \} from "\.\/apresentacao"/);
+    expect(orch).toMatch(/import \{[^}]*\bparaWhatsApp\b[^}]*\} from "\.\/apresentacao"/);
   });
 
   it("2. ela roda ANTES de dividirEmBolhas, na mesma expressão", () => {

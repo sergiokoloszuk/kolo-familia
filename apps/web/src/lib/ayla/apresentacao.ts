@@ -55,6 +55,59 @@ const RE_NEGRITO_SUBLINHADO = /__(?!\s)([^_\n]+?)(?<!\s)__/g;
 const RE_CODIGO = /`([^`\n]+)`/g;
 
 /**
+ * ESCRITAS QUE A KOLO NÃO ATENDE — e por que a lista é por BLOCO, não por
+ * exclusão do que é permitido.
+ *
+ * ⚠️ O CASO REAL (05/09/2026). Uma resposta terminou assim:
+ *
+ *   "…como: **“Primeiro olhar, depois pausa e acabou.”**大小规律"
+ *
+ * Ideogramas colados DEPOIS do fecho do negrito, no fim da mensagem — cauda de
+ * geração, não conteúdo. A família receberia isso na tela.
+ *
+ * ⚠️ POR QUE ENUMERAR O SUSPEITO EM VEZ DE PERMITIR SÓ O CONHECIDO. Uma
+ * allowlist quebraria o produto no primeiro nome próprio incomum, no primeiro
+ * símbolo de unidade, no primeiro emoji novo do Unicode. Aqui só entram os
+ * blocos de escrita que a Kolo não atende — a conversa é pt/es/en, todas em
+ * alfabeto latino. Acentos, ç, emojis, números, URLs e a marcação do WhatsApp
+ * ficam fora desta expressão inteiramente, e é isso que a torna segura.
+ */
+const RE_ESCRITA_ESTRANHA =
+  /[぀-ヿ㐀-䶿一-鿿豈-﫿가-힯Ѐ-ӿ؀-ۿ֐-׿฀-๿ऀ-ॿ]/g;
+
+/**
+ * ⚠️ SÓ LIMPA QUANDO É RESÍDUO, NUNCA QUANDO É A RESPOSTA.
+ *
+ * Se a mensagem inteira estiver em cirílico, ela provavelmente É a resposta —
+ * alguém escreveu em russo e a Ayla respondeu em russo. Apagar seria destruir a
+ * conversa para consertar um artefato. Se for uma fração mínima, é cauda.
+ *
+ * O corte de 10% separa os dois casos com folga: o resíduo observado eram 4
+ * caracteres em 394 (1%); uma resposta de verdade em outra escrita passa de 60%.
+ */
+const FRACAO_MAXIMA_RESIDUO = 0.1;
+
+/** Quantos caracteres de escrita não atendida sobraram — para telemetria. */
+export function residuoDeEscrita(texto: string): number {
+  return (texto.match(RE_ESCRITA_ESTRANHA) ?? []).length;
+}
+
+/**
+ * Tira o resíduo e devolve quantos caracteres saíram. Zero mudanças quando não
+ * há resíduo — e o chamador usa a contagem para decidir se registra o evento.
+ */
+export function semEscritaEstranha(texto: string): { texto: string; removidos: number } {
+  const achados = residuoDeEscrita(texto);
+  if (achados === 0) return { texto, removidos: 0 };
+  if (achados / Math.max(1, texto.length) > FRACAO_MAXIMA_RESIDUO) {
+    // Não é resíduo: é o idioma da resposta. Sai intacta, e quem chama registra.
+    return { texto, removidos: 0 };
+  }
+  const limpo = texto.replace(RE_ESCRITA_ESTRANHA, "").replace(/[ \t]{2,}/g, " ");
+  return { texto: limpo, removidos: achados };
+}
+
+/**
  * Converte a resposta do modelo para o que o WhatsApp de fato renderiza.
  *
  * Roda IMEDIATAMENTE antes de `dividirEmBolhas` — depois de toda decisão de
@@ -65,7 +118,13 @@ const RE_CODIGO = /`([^`\n]+)`/g;
  * `~tachado~`, URLs, números, emojis, `- listas`, e qualquer palavra.
  */
 export function paraWhatsApp(texto: string): string {
-  const linhas = texto.replace(/\r\n/g, "\n").split("\n");
+  // ⚠️ O RESÍDUO SAI AQUI DENTRO, e não no chamador, porque este é o único
+  // ponto por onde TODO texto de WhatsApp passa — o caminho de bolhas do
+  // orquestrador e o `enviarTexto` do sender. Protegendo aqui, não há como um
+  // terceiro caminho nascer sem a proteção. Quem tem contexto de família
+  // registra o evento; quem só formata, limpa.
+  const semResiduo = semEscritaEstranha(texto).texto;
+  const linhas = semResiduo.replace(/\r\n/g, "\n").split("\n");
   const saida: string[] = [];
 
   for (const linha of linhas) {

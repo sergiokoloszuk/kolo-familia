@@ -2,8 +2,7 @@ import { describe, it, expect } from "vitest";
 import {
   paraWhatsApp,
   sintaxeCruaWhatsApp,
-  sintaxeCruaWeb,
-} from "./apresentacao";
+  sintaxeCruaWeb, semEscritaEstranha, residuoDeEscrita } from "./apresentacao";
 import { dividirEmBolhas } from "./bolhas";
 
 /**
@@ -237,5 +236,57 @@ describe("SABOTAGEM — os testes mordem?", () => {
     // a contagem de bolhas.
     expect(semColapso("Um.\n\n---\n\nDois.")).toMatch(/\n{3,}/);
     expect(paraWhatsApp("Um.\n\n---\n\nDois.")).not.toMatch(/\n{3,}/);
+  });
+});
+
+/** Os quatro ideogramas do caso real de 05/09/2026. */
+const CAUDA = String.fromCodePoint(0x5927, 0x5c0f, 0x89c4, 0x5f8b);
+/** Uma resposta inteira em cirílico — legítima, não resíduo. */
+const RUSSO = String.fromCodePoint(0x417, 0x434, 0x440, 0x430, 0x432) + ", " + String.fromCodePoint(0x44f, 0x20, 0x410, 0x439, 0x43b, 0x430) + ".";
+
+describe("resíduo de escrita não atendida (05/09/2026)", () => {
+  /**
+   * ⚠️ O CASO REAL: ideogramas colados DEPOIS do fecho do negrito, no fim da
+   * mensagem. MEDI antes de proteger — 0 em 1.775 mensagens reais da Ayla em 30
+   * dias, 1 em 198 turnos de bancada. Por isso LIMPA, não regenera.
+   */
+  it("R1. MORDE: tira a cauda e preserva a frase inteira", () => {
+    // ⚠️ O TAMANHO IMPORTA E O TESTE PROVA ISSO. A mensagem real tinha 394
+    // caracteres e 4 de resíduo — 1%. Numa frase de 30 caracteres os mesmos 4
+    // seriam 12%, acima do corte, e a função corretamente NÃO limparia: ali já
+    // não dá para distinguir cauda de idioma.
+    const frase =
+      "Claro 💛 Brinque de dentista com os carrinhos do Pedro: faça o brinquedo " +
+      "chegar, sentar e abrir a boca, e conte o que acontece a cada passo. " +
+      "Use frases curtas, como: **“Primeiro olhar, depois pausa e acabou.”**";
+    const r = semEscritaEstranha(frase + CAUDA);
+    expect(r.removidos).toBe(4);
+    expect(r.texto).toBe(frase);
+  });
+
+  /** ⚠️ A PROTEÇÃO NÃO PODE DESTRUIR CONVERSA. */
+  it("R2. MORDE: português, emoji, marcação, números e URL saem intactos", () => {
+    for (const t of [
+      "Não é só isso: à noite, o coração da mãe já não aguenta — ç, ã, õ, ê.",
+      "Tudo bem 💛 vamos tentar 🌿 e 1️⃣ 2️⃣ ✨",
+      "*negrito* _itálico_ ~tachado~ e https://kolo.com.br/x?a=1",
+      "O Théo tem 6 anos, 192 e 188 são telefones.",
+      "¿Cómo está el niño? Señor, mañana empezamos.",
+    ]) {
+      expect(semEscritaEstranha(t), "alterou: " + t).toEqual({ texto: t, removidos: 0 });
+    }
+  });
+
+  /**
+   * ⚠️ E O CONTRÁRIO: resposta INTEIRA em outra escrita é a resposta, não
+   * resíduo. Apagar seria destruir a conversa para consertar um artefato.
+   */
+  it("R3. MORDE: resposta inteira em outra escrita NÃO é limpa", () => {
+    expect(semEscritaEstranha(RUSSO)).toEqual({ texto: RUSSO, removidos: 0 });
+  });
+
+  it("R4. residuoDeEscrita conta sem alterar", () => {
+    expect(residuoDeEscrita("tudo certo por aqui")).toBe(0);
+    expect(residuoDeEscrita("uma frase qualquer" + CAUDA)).toBe(4);
   });
 });

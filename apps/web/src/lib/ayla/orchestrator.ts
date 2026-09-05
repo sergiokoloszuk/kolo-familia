@@ -77,7 +77,7 @@ import { carregarPerfilConsultavel } from "@/lib/kolo-vivo/consultar";
 import { secoesDe, temMaterial } from "@/lib/conducao/base2";
 import { montarRastro, registrarRastroConhecimento } from "@/lib/conhecimento/rastro";
 import { dividirEmBolhas, ritmoDasBolhas, TETO_ESPERA_SEGUNDOS } from "./bolhas";
-import { paraWhatsApp } from "./apresentacao";
+import { paraWhatsApp, residuoDeEscrita } from "./apresentacao";
 import { semOutrosMembros } from "./membro-escopo";
 import { ehFamiliaExperimental, responderExperimental, posTrialAtivo } from "./experimental";
 import { atenderDesconhecido } from "./desconhecido";
@@ -3734,6 +3734,35 @@ async function enviarRespostaEmChunks(
   // (23/05→15/08), preservou palavras, URLs, números e emojis em 3.471/3.471,
   // e mudaria 36 mensagens (1,04%) — as que hoje chegam com `**hoje**` e `---`
   // visíveis para a mãe. Ver `apresentacao.ts` e a bancada do replay.
+  // ⚠️ A TELEMETRIA DO RESÍDUO DE ESCRITA — 05/09/2026.
+  //
+  // A limpeza acontece DENTRO de `paraWhatsApp`, para não haver caminho sem ela.
+  // O registro acontece aqui, que é onde existe família. Sem isto, um artefato
+  // some em silêncio e nunca saberíamos se voltou.
+  //
+  // ⚠️ MEDI ANTES DE PROTEGER: **0 em 1.775 mensagens reais** da Ayla em 30 dias
+  // (06/08→05/09), e 0 em 1.154 da família. A única ocorrência foi 1 em 198
+  // turnos de bancada — ideogramas colados depois do fecho do negrito, no fim da
+  // mensagem. Por isso a resposta é LIMPAR, não regenerar: uma chamada de modelo
+  // a mais para um evento que produção nunca viu seria pagar caro por medo.
+  // Se a telemetria mostrar que isso é comum, aí a decisão se revê com número.
+  const residuo = residuoDeEscrita(textoCompleto);
+  if (residuo > 0) {
+    void logEvent({
+      kind: "resposta_residuo_escrita",
+      severity: "warn",
+      family_account_id: args.family_account_id,
+      message: `${residuo} caractere(s) de escrita não atendida na resposta`,
+      payload: {
+        caracteres: residuo,
+        chars_resposta: textoCompleto.length,
+        fracao: Number((residuo / Math.max(1, textoCompleto.length)).toFixed(4)),
+        // Sem o texto da família: só o formato do resíduo interessa aqui.
+        limpo: residuo / Math.max(1, textoCompleto.length) <= 0.1,
+        caminho: "oficial",
+      },
+    }).catch(() => {});
+  }
   const bolhas = dividirEmBolhas(paraWhatsApp(textoCompleto));
   const ritmo = ritmoDasBolhas(bolhas);
   let esperaGasta = ritmo.reduce((a, b) => a + b, 0);
