@@ -549,12 +549,43 @@ export function montarContextoBase(params: {
   // ⚠️ `membros_atipicos.perfil` NÃO entra. É `perfilPrimario()` — um rótulo.
   // Se um dia servir, serve como diagnóstico, nunca como "o que já sabemos".
 
+  // ⚠️ AS DUAS LINHAS DE TOPO NÃO USAM MAIS `primeiraFrase` (05/09/2026).
+  //
+  // Elas ficaram para trás da correção de 18/08, que trocou o corte POSICIONAL
+  // pelo corte POR TAMANHO nos domínios (`recorteDoDominio`). Aqui o corte
+  // posicional continuava, e cobrou caro.
+  //
+  // ⚠️ O CASO MARIO, 05/09/2026. 18 anos, perfil registra "Conversa bem",
+  // treino de autonomia, "resistência em aprender habilidades sociais",
+  // "Antecipa falha em interações com estranhos … e não tenta; crença
+  // limitante". O campo tem 508 caracteres; `primeiraFrase` corta no primeiro
+  // ponto final e entregava 117 — a frase mais benigna do conjunto. A mãe
+  // escreveu "não consegue brincar com outras crianças" e a Ayla respondeu
+  // dentro desse enquadramento, porque **os fatos que o reenquadrariam nunca
+  // chegaram ao modelo**.
+  //
+  // ⚠️ E A PROVA DE QUE O DEFEITO ERA POSICIONAL, NÃO SEMÂNTICO: na Manu, a
+  // MESMA função entregou o dado decisivo ("Fala palavras soltas") — porque na
+  // Manu ele era a primeira frase. Mesma função, mesmo teto, resultados
+  // opostos, decididos pela ordem em que a família digitou.
+  //
+  // Reusa `recorteDoDominio` e `TETO_DOMINIO_PERTINENTE` de propósito: o
+  // mecanismo já existe e já resolve exatamente isto em `desafiosAtuais`. Um
+  // segundo mecanismo divergiria do primeiro na primeira mudança de teto.
+  // ⚠️ CALCULADO AQUI, RENDERIZADO LÁ EMBAIXO. Subiu de posição (05/09/2026)
+  // só para que a duplicata de comunicação possa ser removida abaixo. A ORDEM
+  // DAS LINHAS NO BLOCO NÃO MUDOU — o `linhas.push` do bloco de desafios
+  // continua onde estava, e o teto continua encontrando-o por `idxDesafios`.
+  const desafiosTodos = desafiosAtuais(pv ?? null, 20, params.skills ?? []);
+
   const comunicacao = comunicacaoAtual(pv ?? null);
-  if (comunicacao) linhas.push(`Comunicação hoje: ${primeiraFrase(comunicacao)}`);
+  if (comunicacao) linhas.push(`Comunicação hoje: ${recorteDoDominio(comunicacao, TETO_DOMINIO_PERTINENTE)}`);
   else lacunas.push("como a criança se comunica");
 
+  // ⚠️ `pv.sensorial` é COLUNA PRÓPRIA, não `categorias_extras.sensorial` — não
+  // há duplicata para remover aqui, só o corte a corrigir.
   const sensorial = textoDoCampo(pv?.sensorial);
-  if (sensorial) linhas.push(`Sensibilidades: ${primeiraFrase(sensorial)}`);
+  if (sensorial) linhas.push(`Sensibilidades: ${recorteDoDominio(sensorial, TETO_DOMINIO_PERTINENTE)}`);
 
   // ⚠️ COMO ELA É — o campo que a família escreveu sobre QUEM é esta criança.
   //
@@ -587,7 +618,22 @@ export function montarContextoBase(params: {
   // ⚠️ SEM CORTE ARBITRÁRIO (18/08/2026). Todos os domínios preenchidos são
   // ELEGÍVEIS; quem decide o que não cabe é o teto, logo abaixo, e item a item.
   // Ver o comentário de `desafiosAtuais` para o caso Rosangela.
-  const desafios = desafiosAtuais(pv ?? null, 20, params.skills ?? []);
+  // ⚠️ A DUPLICATA SAI DAQUI, NÃO DE CIMA — e a direção importa.
+  //
+  // `comunicacaoAtual` lê `categorias_extras.comunicacao`: A MESMA FONTE do
+  // domínio "comunicação". Quando os dois renderizam, o mesmo texto ocupa o
+  // teto duas vezes — PROVEI na Manu, cujo bloco trazia "Fala palavras soltas"
+  // nas duas seções.
+  //
+  // ⚠️ TENTEI O CONTRÁRIO PRIMEIRO E ESTAVA ERRADO. Suprimir a linha de topo
+  // quando o domínio existe consulta a lista ANTES da poda; o teto então
+  // removia o domínio também, e a comunicação sumia inteira — pior que a
+  // duplicata. A linha de topo está ACIMA de `idxDesafios` e o teto nunca a
+  // alcança: ela é a cópia garantida, e agora carrega o texto completo (320).
+  // Quem sai é a cópia que pode ser podada.
+  const desafios = comunicacao
+    ? desafiosTodos.filter((d) => !d.startsWith("comunicação: "))
+    : desafiosTodos;
   const renderDesafios = (itens: readonly string[]) =>
     `Desafios atuais:\n- ${itens.join("\n- ")}`;
   /** Onde a seção de desafios ficou em `linhas` — o teto precisa encontrá-la. */

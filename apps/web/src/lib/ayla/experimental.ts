@@ -364,6 +364,15 @@ type ContextoDoTurno = {
   /** Só no `pos_trial`: a criança em foco, para o bloco falar dela pelo nome. */
   nomeCrianca: string | null;
   /**
+   * A IDADE DA CRIANÇA EM FOCO — para o filtro etário do repertório (PEND-163).
+   *
+   * ⚠️ `null` QUANDO NÃO HÁ UMA SÓ CRIANÇA EM FOCO. Com dois irmãos no turno não
+   * existe "a idade": filtrar pela de um entregaria material impróprio para o
+   * outro. `null` mantém o comportamento antigo (nenhum filtro) só nesse caso,
+   * que hoje alcança 3 famílias — a trava de uma criança vale desde 08/08.
+   */
+  idadeFoco: number | null;
+  /**
    * ESTA CONVERSA JÁ PRODUZIU ALGUMA AJUDA? — 26/08/2026, rede de forma.
    *
    * ⚠️ NÃO É "a conversa é longa". É "a família já recebeu algo aplicável". A
@@ -609,6 +618,11 @@ async function montarContexto(
     rotulos: [...new Set(rotulosPorMembro)],
     fatos: fatosDoTurno,
     nomeCrianca: emFoco.length === 1 ? (emFoco[0]?.nome ?? null) : null,
+    // ⚠️ SÓ COM UMA CRIANÇA EM FOCO. Ver o comentário do campo no tipo.
+    idadeFoco:
+      emFoco.length === 1
+        ? idadeAnos(lista.find((x) => x.id === emFoco[0]?.id)?.data_nascimento ?? null)
+        : null,
     jaHouveOrientacao,
     msOndas: { onda1: msOnda1, foco: msFoco, onda3: msOnda3 },
   };
@@ -744,28 +758,55 @@ export async function responderExperimental(
     // O simulador não tem jornada; o pós-Trial tem bloco PRÓPRIO (`blocoPosTrial`),
     // então a condução comercial de dentro do teste também não entra aqui.
     const semJornada = params.origem === "simulador" || posTrial;
-    const [ctxTurno, core, bps, estadoTrial, evidencias, docTrial] = await Promise.all([
-      cron(
-        "ctx",
-        montarContexto(
-          supabase,
-          params.familyId,
-          params.mensagem,
-          params.turnosSimulados ?? [],
-          modo,
-          skillsDoTurno,
-        ),
+    // ⚠️ O REPERTÓRIO PASSOU A ESPERAR A CRIANÇA — 05/09/2026, PEND-163.
+    //
+    // ⚠️ O DEFEITO: dos três chamadores de `recuperarBoasPraticas`, o único que
+    // NÃO passava `idade` era este — o caminho oficial, 97,4% dos turnos.
+    // Legacy (`orchestrator.ts:3426`) e web (`lib/ia/context.ts:333`) passavam.
+    // E `idadeElegivel` abre com `if (idade == null) return true`: sem o
+    // parâmetro o filtro etário inteiro se desliga em silêncio, sem erro.
+    //
+    // ⚠️ MEDI O ESTRAGO (05/09/2026, 156 crianças ativas, 12 skills): **71% das
+    // Boas Práticas entregues hoje estão fora da faixa da criança** (373 de
+    // 528). O caso Mario, 18 anos: o modelo recebeu "criança pequena vê alguém
+    // chorando", "cérebro pequeno", "brincadeira com outra criança … torre".
+    // A infantilização não foi do modelo — foi entregue a ele.
+    //
+    // ⚠️ POR QUE ISTO CUSTA LATÊNCIA, E QUANTO. A busca corria AO LADO da
+    // montagem do contexto, e é lá que a criança é resolvida — por isso a idade
+    // não estava disponível. Encadear custa, MEDIDO em 67 turnos reais com
+    // repertório: `msParalelo` mediana 846 → 1388 ms (**+542 ms**), p90 983 →
+    // 1530. Nos 54% de turnos sem skill nada muda: a busca já não acontecia.
+    //
+    // ⚠️ SEM FALLBACK. Se a faixa não tiver material, o bloco sai VAZIO. Acima
+    // de 18 anos o acervo é vazio em 11 das 13 skills — 5 crianças em produção.
+    // Elas passam a receber Core + perfil, sem repertório. É o resultado certo:
+    // zero material pertinente é melhor que material impróprio.
+    const ctxP = cron(
+      "ctx",
+      montarContexto(
+        supabase,
+        params.familyId,
+        params.mensagem,
+        params.turnosSimulados ?? [],
+        modo,
+        skillsDoTurno,
       ),
+    );
+    const [ctxTurno, core, bps, estadoTrial, evidencias, docTrial] = await Promise.all([
+      ctxP,
       cron("core", resolverDocumento(supabase, "core", params.rascunhoCore ?? null)),
       skillsDoTurno.length
-        ? cron("bp", recuperarBoasPraticas({
+        ? cron("bp", ctxP.then((ctx) => recuperarBoasPraticas({
             supabase,
             skills: skillsDoTurno,
             // O relato liga o ranking por aderência — sem ele, o corte é
             // sempre o mesmo trio para qualquer mensagem da mesma skill.
             relato: params.mensagem,
+            // A IDADE DA CRIANÇA EM FOCO. Ver o bloco acima (PEND-163).
+            idade: ctx.idadeFoco,
             limite: 2,
-          })).catch(() => [])
+          }))).catch(() => [])
         : Promise.resolve([]),
       semJornada
         ? Promise.resolve(null)

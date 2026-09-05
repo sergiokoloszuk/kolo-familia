@@ -7556,6 +7556,23 @@ idênticas — *"você conseguiu testar o plano com a Manu? Fico curiosa…"* em
 Sub-item de [PEND-162](#pend-162), registrado à parte por ter causa própria
 (ausência de dedup semântica entre proativas), não só de provider.
 
+**AGRAVANTE MEDIDO NA PRIMEIRA FAMÍLIA CLIENTE COM v10 (05/09, `67c246cf`).**
+Uma proativa perguntou: *"qual é o desafio que tá pegando mais agora? Sono,
+**trabalho, relacionamento**, rotina?"* — tópicos de vida adulta, num produto de
+apoio à criança. A mãe respondeu "Relacionamento", e a conversa virou conflito
+conjugal (brigas que escalam, ciúmes, desconfiança). No dia seguinte outra
+proativa voltou à criança, a mãe disse "Tudo", e a **v10 seguiu o fio vivo** —
+respondeu com desescalada de briga e rastreio de violência doméstica.
+
+**A v10 não errou: foi coerente com o histórico que recebeu.** Quem desviou a
+conversa foi a proativa, que não passa pelo Core. É o custo real da PEND-162:
+um caminho sem Core contamina o caminho com Core.
+
+**E há uma colisão de identidade nessa mesma conta:** mãe e filha registradas
+com o **mesmo nome** ("Oi, Samara! … te ajudar nos desafios do dia a dia com a
+Samara"), mais um erro de concordância ("pro Samara"). Não corrigido nesta
+frente.
+
 ---
 
 ### PEND-166

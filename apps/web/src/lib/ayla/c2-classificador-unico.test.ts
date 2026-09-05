@@ -106,14 +106,35 @@ describe("BOAS PRÁTICAS — repertório, pelo mecanismo existente", () => {
     expect(EXP).toContain("params.turnoClassificado?.skills ?? []");
   });
 
-  it("a consulta roda EM PARALELO — não acrescenta espera em série", () => {
+  /**
+   * ⚠️ ESTE TESTE MUDOU DE PROMESSA EM 05/09/2026 — e a mudança é deliberada.
+   *
+   * Ele afirmava que a busca de repertório rodava EM PARALELO com o contexto.
+   * Não roda mais: ela ESPERA o contexto, porque é lá que a criança é resolvida
+   * e **a idade da criança precisa entrar no filtro** (PEND-163). Sem ela,
+   * `idadeElegivel` devolve elegível para tudo e o filtro etário inteiro se
+   * desliga em silêncio — MEDI 71% das Boas Práticas entregues fora da faixa.
+   *
+   * ⚠️ O CUSTO ESTÁ MEDIDO, não estimado: em 67 turnos reais com repertório,
+   * `msParalelo` mediana 846 → 1388 ms (+542), p90 983 → 1530. Nos turnos sem
+   * skill nada muda — a busca já não acontecia.
+   *
+   * O que este teste continua guardando: **tudo o mais segue em paralelo**, e a
+   * busca continua encadeada em `ctxP` (não numa segunda leitura de contexto).
+   */
+  it("a consulta ESPERA o contexto — pela idade — e nada mais virou série", () => {
     const bloco = EXP.slice(
       EXP.indexOf("const [ctxTurno, core, bps, estadoTrial, evidencias, docTrial] = await Promise.all(["),
       EXP.indexOf("const msBp ="),
     );
-    expect(bloco).toContain("montarContexto(");
+    // O contexto é UMA promessa só, criada antes e consumida no mesmo Promise.all.
+    expect(EXP).toContain('const ctxP = cron(\n      "ctx",\n      montarContexto(');
+    expect(bloco).toContain("ctxP,");
+    // A busca de repertório pendura-se NELA — sem montar contexto de novo.
+    expect(bloco).toContain("ctxP.then((ctx) => recuperarBoasPraticas({");
+    expect(bloco).toContain("idade: ctx.idadeFoco,");
+    expect(EXP.split("montarContexto(").length - 1, "contexto montado mais de uma vez").toBe(2);
     expect(bloco).toContain("resolverDocumento(");
-    expect(bloco).toContain("recuperarBoasPraticas({");
     // A jornada do Trial entrou no MESMO Promise.all (15/08/2026): duas
     // consultas que correm ao lado das outras e não somam espera ao turno.
     expect(bloco).toContain("lerEstadoTrial(");

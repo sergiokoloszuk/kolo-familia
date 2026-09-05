@@ -46,7 +46,12 @@ describe("A LEITURA NÃO ACRESCENTA ESPERA", () => {
       EXP.indexOf("const [ctxTurno, core, bps, estadoTrial, evidencias, docTrial] = await Promise.all(["),
       EXP.indexOf("const msBp ="),
     );
-    expect(bloco).toContain("montarContexto(");
+    // ⚠️ `montarContexto` virou `ctxP` em 05/09/2026 (PEND-163): a promessa é
+    // criada logo acima e consumida AQUI, para que a busca de repertório possa
+    // pendurar-se nela e receber a idade da criança. O contexto continua no
+    // mesmo `Promise.all` — só deixou de estar escrito por extenso dentro dele.
+    // O documento do Trial NÃO foi afetado: segue paralelo, como antes.
+    expect(bloco).toContain("ctxP,");
     expect(bloco).toContain('resolverDocumento(supabase, "core"');
     expect(bloco).toContain('resolverDocumento(supabase, "trial")');
   });
