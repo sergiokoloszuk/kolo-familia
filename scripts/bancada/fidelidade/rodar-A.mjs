@@ -28,7 +28,16 @@ const ler = async q => {
 };
 const docs = await ler('ayla_documentos?select=versao,conteudo&chave=eq.core&status=eq.ativo');
 if (docs.length !== 1 || docs[0].versao !== 10) throw Error('Core ativo nao e v10 unico');
-const core = docs[0];
+let core = docs[0];
+// ⚠️ CANDIDATO OPCIONAL. Sem `CORE_ARQUIVO`, roda o ativo do banco — que é o
+// comportamento original e continua sendo o padrão. Com ele, o conteúdo vem do
+// arquivo e o banco NÃO é tocado: a asserção acima já provou que o ativo é o
+// v10, e é contra ele que o candidato se compara.
+if (process.env.CORE_ARQUIVO) {
+  const conteudo = readFileSync(resolve(RAIZ, process.env.CORE_ARQUIVO), 'utf8');
+  core = { versao: Number(process.env.CORE_VERSAO ?? 11), conteudo };
+  console.log(`CANDIDATO: ${process.env.CORE_ARQUIVO} (v${core.versao}, ${conteudo.length} ch)`);
+}
 const bps = await ler('boas_praticas?select=*&status=eq.ativo&limit=1000');
 const skills = await ler('specialist_prompt_templates?select=name,routing_keywords&ativo=eq.true');
 console.log(`Core v${core.versao} (${core.conteudo.length} ch, sha ${sha(core.conteudo)}) - ${bps.length} BPs - ${skills.length} skills`);
@@ -94,7 +103,7 @@ for (const c of CENARIOS) {
       const natureza = naturezaDoTurno(msg, jaHouve);
       const t0 = Date.now();
       const r = await responderExperimental(mundo.db, { familyId: mundo.familyId, mensagem: msg,
-        rascunhoCore: { conteudo: core.conteudo, versao: 10 }, origem: 'simulador',
+        rascunhoCore: { conteudo: core.conteudo, versao: core.versao }, origem: 'simulador',
         turnosSimulados: hist.map(h => ({ quem: h.quem, texto: h.texto })), turnoClassificado: tc });
       const texto = r?.texto ?? '';
       hist.push({ quem: 'mae', texto: msg });
