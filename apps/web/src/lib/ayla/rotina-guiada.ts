@@ -17,6 +17,7 @@ import {
 import { rotinaParaPdf } from "@/lib/ludico/rotina-pdf";
 import { alvoDoPedido, RESPOSTA_PDF } from "./rotina-pdf-rota";
 import { enviarDocumento } from "./whatsappSender";
+import { falaCoerenteComEstado, type EstadoDeCartoes } from "./rotina-fala-coerente";
 import {
   classificarFeedbackRotina,
   falaDoQuadro,
@@ -1129,6 +1130,61 @@ export async function temaJaDitoNoHistorico(
   }
 }
 
+/**
+ * Relê `cards_status` no banco e devolve a fala que esse estado sustenta.
+ *
+ * ⚠️ RELEITURA, NÃO MEMÓRIA. O turno inteiro trabalha com variáveis locais que
+ * "sabem" o que foi feito — `autoGerou`, `faltaTema`, `pronto`. Nenhuma delas
+ * serve aqui: elas descrevem a INTENÇÃO do ramo, e o bug é exatamente a
+ * distância entre a intenção e o que a linha ficou. Então o portão vai ao banco
+ * depois de todas as escritas do turno e pergunta como a coisa realmente ficou.
+ *
+ * ⚠️ FALHA DE LEITURA É TRATADA COMO "NÃO PODE AFIRMAR". Se o SELECT cair, não
+ * sabemos o estado — e não saber nunca autoriza prometer. O viés é sempre para
+ * a ressalva, porque o custo dela é uma frase mais modesta, e o custo do erro
+ * contrário é a mãe abrindo a tela e não encontrando nada.
+ */
+async function conferirFalaContraOBanco(
+  supabase: SupabaseClient,
+  ids: string[],
+  mensagem: string,
+): Promise<{ texto: string; corrigida: boolean; removido: string[] }> {
+  // Nenhuma rotina gravada neste turno: não há artefato sobre o qual afirmar.
+  if (ids.length === 0) return { texto: mensagem, corrigida: false, removido: [] };
+  let estado: EstadoDeCartoes = "aguardando";
+  let temArtefato = false;
+  try {
+    const { data, error } = await supabase
+      .from("rotinas")
+      .select("cards_status, tarefas:rotina_tarefas(imagem_url)")
+      .in("id", ids);
+    if (error) throw new Error(error.message);
+    const linhas = (data ?? []) as Array<{
+      cards_status: string | null;
+      tarefas?: Array<{ imagem_url: string | null }> | null;
+    }>;
+    // ⚠️ O PIOR ESTADO MANDA. Com duas rotinas no turno, uma pronta e outra
+    // aguardando, a fala não pode afirmar conclusão — parte do que foi
+    // prometido não existe. Afirmar pelo melhor caso é como o bug começou.
+    const ordem: EstadoDeCartoes[] = ["erro", "aguardando", "gerando", "pronto", "nenhum"];
+    const estados = linhas
+      .map((l) => (l.cards_status ?? "nenhum") as EstadoDeCartoes)
+      .sort((a, b) => ordem.indexOf(a) - ordem.indexOf(b));
+    estado = estados[0] ?? "aguardando";
+    // ⚠️ A PROVA DO ARTEFATO É UMA URL DE CARTÃO EXISTENTE. `cards_status`
+    // dizer "pronto" é a afirmação do gerador; `imagem_url` preenchida é o que
+    // a família consegue abrir. Só a segunda autoriza dizer que está lá.
+    temArtefato = linhas.some((l) => (l.tarefas ?? []).some((t) => !!t.imagem_url));
+  } catch (e) {
+    console.warn(
+      "[ayla:rotina] portão 3 não conseguiu ler cards_status — fala tratada como não-conclusiva:",
+      e instanceof Error ? e.message : e,
+    );
+    return falaCoerenteComEstado({ texto: mensagem, estado: "aguardando", temArtefatoVerificavel: false });
+  }
+  return falaCoerenteComEstado({ texto: mensagem, estado, temArtefatoVerificavel: temArtefato });
+}
+
 export async function conduzirRotina(
   supabase: SupabaseClient,
   params: { familyId: string; membroAtipicoId: string; contexto: string; phoneE164?: string | null },
@@ -1136,6 +1192,8 @@ export async function conduzirRotina(
   mensagem: string;
   pronto: boolean;
   aguardandoTema?: boolean;
+  /** A fala afirmava conclusão que o estado não sustentava. Vira telemetria. */
+  falaCorrigida?: boolean;
   /** As etapas propostas neste turno, quando a Ayla está esperando resposta. */
   proposta?: EtapaProposta[];
 } | null> {
@@ -1592,6 +1650,8 @@ ${jaSabemos.rotinaExistente}`
       (t0?.estrategia ? String(t0.estrategia) : "") || transicoesConhecidas[0]?.estrategia || null;
 
     let rotinas: ReturnType<typeof sanitizarRotinas> = [];
+    /** Rotinas gravadas neste turno; vazio quando nada foi persistido. */
+    let idsDoTurno: string[] = [];
     let faltaTemaFinal = false;
     if (pronto) {
       const r = await gerarRotina(supabase, {
@@ -1721,6 +1781,9 @@ ${jaSabemos.rotinaExistente}`
         const id = await aplicarRotina(supabase, familyId, params.membroAtipicoId, r, tema, visual);
         if (id) ids.push(id);
       }
+      // As rotinas que ESTE turno persistiu — é sobre elas que o portão 3
+      // relê o estado antes de deixar a fala sair.
+      idsDoTurno = ids;
       // PDF só quando imprimir serve: ela pediu, ou já pediu em algum momento
       // desta conversa (o "manda em PDF" costuma vir um turno depois).
       // Mesma fronteira do visual: "imprimir" de outro assunto não manda PDF.
@@ -1900,10 +1963,27 @@ Ah — se quiser, o próprio ${nome} pode ser o personagem dos cartões em vez d
     // pra que a próxima mensagem dela — "pode ser dinossauros" — volte pra cá
     // e o tema seja aplicado. Se fechássemos com "rotina_pronta", a resposta
     // dela cairia na conversa comum e o tema morreria ali, sem cartão nenhum.
+    // ── PORTÃO 3: A FALA PODE AFIRMAR ISTO? ────────────────────────────────
+    // ⚠️ O ÚLTIMO PONTO ANTES DA FAMÍLIA. Os portões 1 e 2 decidem se a rotina
+    // pode ser montada e publicada. Este decide se a FRASE que sai é verdade —
+    // e ele não pergunta ao modelo nem ao ramo do código: relê `cards_status`
+    // no banco, depois de todas as escritas do turno.
+    //
+    // Foi assim que "Pronto! A rotina da Manu está montada" saiu com a rotina
+    // em `aguardando`. O ramo "achava" que tinha terminado; a linha do banco
+    // dizia outra coisa; ninguém confrontou as duas.
+    const conferida = await conferirFalaContraOBanco(supabase, idsDoTurno, mensagem);
+    if (conferida.corrigida) {
+      console.warn(
+        `[ayla:rotina] fala afirmava conclusão sem estado — ${conferida.removido.length} trecho(s) retirado(s)`,
+      );
+    }
+
     return {
-      mensagem,
+      mensagem: conferida.texto,
       pronto: pronto && rotinas.length > 0,
       aguardandoTema: faltaTemaFinal,
+      falaCorrigida: conferida.corrigida,
       // Quem persiste é o orquestrador (é ele que fala com `ayla_messages`).
       // Devolver as etapas aqui é o que faz a proposta sobreviver ao turno.
       proposta: propondo ? propostaDoTurno : undefined,
