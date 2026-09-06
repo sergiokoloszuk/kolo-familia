@@ -1016,6 +1016,119 @@ function lerDesfechoDoCondutor(resp: { content: BlocoResposta[] }): unknown {
  * rotinas + aplica o tema + manda o PDF, e devolve a mensagem final com o link.
  * Enquanto não está pronto, devolve só a próxima pergunta (pronto=false).
  */
+/**
+ * ⚠️ SÓ TEMA EXPLICITAMENTE MARCADO — e este limite nasceu de um erro meu,
+ * apanhado pelo teste com os dados reais da Karina.
+ *
+ * A primeira versão varria o histórico com `lerTemaEscolhido` direto. Ela
+ * devolveu **"Gere"** — porque aquele extrator foi escrito para o turno logo
+ * depois de "qual tema?", onde quase qualquer resposta curta É o tema. Sobre
+ * histórico solto, ele captura lixo, e a rotina da Manu teria nascido com o
+ * tema "Gere".
+ *
+ * Aqui a família precisa ter ESCRITO que aquilo é o tema. A Karina escreveu
+ * "Tema princesa" na primeira mensagem; é isso que se recupera, e nada além.
+ */
+/**
+ * As formas em que a família ENUNCIA um tema. Cada uma exige um portador — a
+ * palavra que vem depois do marcador —, e é esse portador que vira o tema.
+ */
+const ENUNCIADOS_DE_TEMA: readonly RegExp[] = [
+  /\btema[:\s]+([^\n.;!?]{2,40})/i,
+  /\bdesenho\s+(?:de\s+|da\s+|do\s+)?([^\n.;!?]{2,40})/i,
+  /\bquero\s+(?:de\s+|da\s+|do\s+)?([^\n.;!?]{2,40})/i,
+  /\bpode\s+ser\s+(?:de\s+|da\s+|do\s+)?([^\n.;!?]{2,40})/i,
+  /\b(?:faz|faça|monta|monte)\s+(?:de\s+|da\s+|do\s+|com\s+)([^\n.;!?]{2,40})/i,
+  /^([^\n.;!?]{2,40}?)\s+ent[ãa]o\b/i,
+];
+
+/**
+ * ⚠️ A LISTA DE RECUSA, e ela é o coração da correção.
+ *
+ * Palavras operacionais respondem ao PEDIDO, não nomeiam o tema. "Gere",
+ * "Isso", "Manda" são a mãe autorizando — não escolhendo capivara. Sem esta
+ * lista, um enunciado como "Faz" casaria com o portador vazio ou com a palavra
+ * seguinte qualquer, e a rotina nasceria com um tema que ninguém pediu.
+ */
+const PALAVRA_OPERACIONAL =
+  /^(gere?|gerar|sim|nao|não|isso|ok(ay)?|pode|podes|assim|fa[çz]a?|faz|manda|mande|mandar|perfeito|certo|beleza|blz|vai|bora|agora|favor|por favor|obrigad[ao]|entendi|exato|verdade|tudo|ambos|uhum|aham|essa|esse|isto|aquilo|ele|ela|a rotina|rotina|as imagens|imagens|figuras|cartões|cartoes)$/i;
+
+/**
+ * O tema enunciado numa mensagem — ou `null` quando não há evidência.
+ *
+ * ⚠️ NA DÚVIDA, NULL. Uma pergunta curta custa um turno; um artefato com o tema
+ * errado custa a confiança da família e não se desfaz.
+ */
+export function temaEnunciado(texto: string | null | undefined): string | null {
+  const t = (texto ?? "").trim();
+  if (!t) return null;
+  for (const re of ENUNCIADOS_DE_TEMA) {
+    const m = t.match(re);
+    if (!m) continue;
+    const bruto = (m[1] ?? "")
+      .trim()
+      .replace(/^(de|da|do|uma?|uns?|umas?)\s+/i, "")
+      // ⚠️ A CONFIRMAÇÃO NÃO É O TEMA. A Maria Julia escreveu "Perfeito
+      // princesa frozen então" — o "Perfeito" responde à pergunta anterior,
+      // o tema é "princesa frozen". Sem esta aparadura o artefato nasceria
+      // com a palavra de confirmação grudada no nome do desenho.
+      .replace(/^(perfeito|isso|sim|ok|certo|beleza|exato|show|ótimo|otimo)[,!.\s]+/i, "")
+      .replace(/[,;]+$/, "")
+      .trim();
+    if (!bruto || bruto.length < 2) continue;
+    if (PALAVRA_OPERACIONAL.test(bruto)) continue;
+    // ⚠️ UM TEMA É CURTO, e este limite nasceu de um falso positivo real. A
+    // Karina escreveu "Quero q rotina com as imagens" — um PEDIDO — e o
+    // enunciado `quero X` capturou "q rotina com as imagens" como se fosse
+    // tema. Tema é "princesa", "Frozen", "capivara": no máximo três palavras.
+    const palavras = bruto.split(/\s+/).filter(Boolean);
+    if (palavras.length > 3 || bruto.length > 25) continue;
+    // ⚠️ E NUNCA O NOME DO PRÓPRIO ARTEFATO. "rotina", "imagens", "cartões"
+    // são o que ela está pedindo, não o desenho que quer neles.
+    if (/\b(rotina|imagens?|cartõe?s?|cartao|figuras?|desenhos?|quadro|pdf|lista)\b/i.test(bruto)) continue;
+    return bruto;
+  }
+  return null;
+}
+
+/**
+ * O tema que a família JÁ disse, em qualquer turno recente.
+ *
+ * ⚠️ JANELA DE 12 HORAS, a mesma que `conduzirRotina` usa para não repetir
+ * pergunta. Mais que isso e um tema de outra conversa poderia ser capturado —
+ * foi exatamente o beco do "Carrinho" que a janela de `rotinaAguardandoTema`
+ * já evita.
+ *
+ * Lê do mais novo para o mais antigo: se a família mudou de ideia, vale a
+ * última palavra dela.
+ */
+export async function temaJaDitoNoHistorico(
+  supabase: SupabaseClient,
+  familyId: string,
+): Promise<string | null> {
+  try {
+    const desde = new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString();
+    const { data } = await supabase
+      .from("ayla_messages")
+      .select("texto")
+      .eq("family_account_id", familyId)
+      .eq("direcao", "inbound")
+      .gte("created_at", desde)
+      .order("created_at", { ascending: false })
+      .limit(30);
+    // ⚠️ DO MAIS NOVO PARA O MAIS ANTIGO — a `order` acima já garante isso, e é
+    // a regra pedida: se a família enunciou dois temas em momentos diferentes,
+    // vale o último que ela confirmou, não o primeiro que apareceu.
+    for (const m of (data ?? []) as Array<{ texto: string | null }>) {
+      const t = temaEnunciado(m.texto);
+      if (t) return t;
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
 export async function conduzirRotina(
   supabase: SupabaseClient,
   params: { familyId: string; membroAtipicoId: string; contexto: string; phoneE164?: string | null },
@@ -1094,7 +1207,25 @@ export async function conduzirRotina(
           pronto: true,
         };
       }
-      const escolhido = lerTemaEscolhido(params.contexto);
+      // ⚠️ O TEMA PODE TER SIDO DITO ANTES — 06/09/2026, caso Karina/Manu.
+      //
+      // Ela abriu o assunto com "Quero uma rotina visual / Escola adventista /
+      // Tios / Perua / Casa / **Tema princesa**" numa mensagem só, às 14:42. A
+      // sequência foi confirmada, a rotina nasceu em `aguardando`, e às 17:14
+      // ela escreveu "E agora?" e "Consegue trazer?". `lerTemaEscolhido` lê
+      // apenas a MENSAGEM ATUAL — não achou tema nenhum e o fluxo ia perguntar
+      // de novo algo que ela já tinha respondido duas horas antes.
+      //
+      // ⚠️ ISTO NÃO É REGRA PARA "consegue trazer?". Nenhuma frase é
+      // reconhecida aqui. O que muda é de ONDE o tema é lido: da conversa
+      // inteira desde que a rotina nasceu, e não só do último turno. Qualquer
+      // referência contextual — "cadê?", "e as figuras?", "não apareceu" —
+      // chega neste mesmo ponto e encontra o dado que a família já deu.
+      //
+      // ⚠️ E NÃO INVENTA NADA. Só encontra o que a própria família escreveu,
+      // pelo MESMO extrator (`lerTemaEscolhido`). Sem tema no histórico, o
+      // fluxo segue perguntando, como antes.
+      const escolhido = lerTemaEscolhido(params.contexto) ?? (await temaJaDitoNoHistorico(supabase, familyId));
       if (escolhido) {
         await supabase.from("rotinas").update({ tema: escolhido }).eq("id", pendente.id);
         const comecou = await dispararGeracao(pendente.id, escolhido);
