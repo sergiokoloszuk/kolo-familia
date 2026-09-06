@@ -82,6 +82,7 @@ import { resolverFoco, blocoDeFoco, type Foco } from "./experimental-foco";
 import { lerEventos, eventosRelevantes, blocoDeEventos } from "./experimental-memoria";
 import { recuperarBoasPraticas, blocoBoasPraticas } from "@/lib/conhecimento/recuperar";
 import { lerEstadoTrial } from "@/lib/trial/estado";
+import { blocoDeContinuidade } from "@/lib/conducao/continuidade";
 import {
   blocoDaJornada,
   lerEvidenciasJornada,
@@ -586,7 +587,21 @@ async function montarContexto(
             ? `<conversa_recente>${NL}${historico.slice(-10).join(NL)}${NL}</conversa_recente>`
             : "",
         ];
-  const bloco = partes.filter(Boolean).join(SEP);
+  // ⚠️ A CONTINUIDADE VEM DEPOIS DO HISTÓRICO, E POR ISSO — 05/09/2026.
+  //
+  // O histórico chega ao modelo como prosa: "Ayla: … / Mãe: 3". Ler isso e
+  // ligar o "3" à lista certa é justamente o que falhou com a Lucila, com a
+  // Vanessa e com a Samara. Este bloco não decide nada; ele diz ao modelo o que
+  // ele não conseguia ver sozinho — qual era a pergunta, quais eram as opções
+  // e, quando a resposta é ambígua, que ela É ambígua.
+  //
+  // Nasce vazio no caso comum: só existe quando a família respondeu curto E há
+  // algo pendente. Ver `lib/conducao/continuidade.ts`.
+  const ultimaFalaDaAyla = ((falas ?? []) as Fala[]).find(
+    (f) => f.direcao === "outbound" && (f.texto ?? "").trim(),
+  )?.texto;
+  const continuidade = blocoDeContinuidade({ ultimaAyla: ultimaFalaDaAyla, mensagem });
+  const bloco = [...partes, continuidade].filter(Boolean).join(SEP);
 
   // ⚠️ O DIAGNÓSTICO VAI PARA A REDE DE FRONTEIRAS, não só para o prompt.
   // `fronteiraAtravessada` usa este bloco para saber o que a família JÁ
