@@ -260,39 +260,69 @@ export async function resolverRotinaOrfa(
   rotinaId: string,
   disparar: (rotinaId: string, tema: string) => Promise<boolean>,
 ): Promise<ResolucaoDeOrfa> {
-  const decisao = await reconciliarRotina(supabase, rotinaId);
-  if (decisao.decisao === "perguntar") {
-    const { data } = await supabase.from("rotinas").select("nome").eq("id", rotinaId).maybeSingle();
-    return { tipo: "perguntar", rotinaId, motivo: decisao.motivo, nome: (data?.nome as string) ?? null };
-  }
-
-  const { data: afetadas, error } = await supabase
+  const { data: atual } = await supabase
     .from("rotinas")
-    .update({ tema: decisao.tema, cards_status: "gerando" })
+    .select("nome, tema, cards_status")
     .eq("id", rotinaId)
-    // ⚠️ A GUARDA CONTRA CORRIDA. Se o cron e o turno reativo caírem juntos no
-    // mesmo órfão, só um encontra a linha ainda em `aguardando`; para o outro a
-    // condição não casa e a escrita não afeta linha nenhuma.
-    .eq("cards_status", "aguardando")
-    // ⚠️ O `.select()` NÃO É ENFEITE — é ELE que faz o UPDATE devolver as linhas
-    // afetadas. Sem ele não há como distinguir "eu escrevi" de "outro escreveu
-    // o mesmo valor um instante antes", e os dois donos disparariam a geração
-    // para o mesmo quadro. A mãe receberia a rotina duas vezes. Descoberto pelo
-    // teste de corrida, não em produção — que é onde se quer descobrir isso.
-    .select("id");
-  if (error) {
-    return { tipo: "falhou", rotinaId, erro: error.message };
-  }
-  if (!afetadas || afetadas.length === 0) {
-    // Não é falha a informar: é o outro dono seguindo com o trabalho. Quem
-    // perde a corrida sai calado, senão a família ouve a mesma coisa duas vezes.
-    return { tipo: "falhou", rotinaId, erro: "outro dono assumiu a rotina antes desta escrita" };
+    .maybeSingle();
+  if (!atual) return { tipo: "falhou", rotinaId, erro: "rotina não encontrada" };
+  if (atual.cards_status !== "aguardando") {
+    return {
+      tipo: "perguntar",
+      rotinaId,
+      motivo: `rotina não está mais aguardando (${atual.cards_status})`,
+      nome: (atual.nome as string) ?? null,
+    };
   }
 
-  const ok = await disparar(rotinaId, decisao.tema);
+  // ⚠️ TEMA JÁ PRESENTE E MESMO ASSIM PARADA. É uma órfã de outra espécie: o
+  // dado existe, o disparo é que nunca aconteceu (ou nunca chegou). Não há o
+  // que reconciliar — há o que disparar. Este ramo também é o caminho de reparo
+  // de uma rotina que voltou de `gerando` sem geração nenhuma.
+  const temaJaSabido = (atual.tema as string | null)?.trim() || null;
+  let tema = temaJaSabido;
+  let evidencia = "tema já registrado na rotina";
+
+  if (!tema) {
+    const decisao = await reconciliarRotina(supabase, rotinaId);
+    if (decisao.decisao === "perguntar") {
+      return { tipo: "perguntar", rotinaId, motivo: decisao.motivo, nome: (atual.nome as string) ?? null };
+    }
+    // ⚠️ GRAVA SÓ O TEMA — NUNCA `cards_status`. Esta linha já custou caro:
+    // escrevendo `cards_status='gerando'` aqui, o endpoint de geração via a
+    // rotina como "já a caminho", pulava por idempotência e devolvia 200. O
+    // disparo parecia ter dado certo, a rotina ficava em `gerando` para sempre,
+    // e — pior — saía do alcance do próprio varredor, que só procura
+    // `aguardando`. Um falso sucesso que produzia um órfão pior que o original.
+    // Quem faz a transição para `gerando` é o endpoint, que é quem realmente
+    // sabe se começou. Karina e Maria Julia, 06/09/2026.
+    const { data: afetadas, error } = await supabase
+      .from("rotinas")
+      .update({ tema: decisao.tema })
+      .eq("id", rotinaId)
+      // A corrida se resolve aqui: quem escreve o tema primeiro leva. O
+      // segundo não encontra mais `tema IS NULL` e afeta zero linhas.
+      .is("tema", null)
+      .eq("cards_status", "aguardando")
+      // ⚠️ O `.select()` É O QUE FAZ O UPDATE DEVOLVER AS LINHAS AFETADAS. Sem
+      // ele não há como distinguir "eu escrevi" de "outro escreveu o mesmo
+      // valor um instante antes", e os dois donos disparariam a geração para o
+      // mesmo quadro — a mãe receberia a rotina duas vezes.
+      .select("id");
+    if (error) return { tipo: "falhou", rotinaId, erro: error.message };
+    if (!afetadas || afetadas.length === 0) {
+      // Não é falha a informar: é o outro dono seguindo com o trabalho. Quem
+      // perde a corrida sai calado, senão a família ouve a mesma coisa duas vezes.
+      return { tipo: "falhou", rotinaId, erro: "outro dono assumiu a rotina antes desta escrita" };
+    }
+    tema = decisao.tema;
+    evidencia = decisao.evidencia;
+  }
+
+  const ok = await disparar(rotinaId, tema);
   if (!ok) {
     await supabase.from("rotinas").update({ cards_status: "erro" }).eq("id", rotinaId);
     return { tipo: "falhou", rotinaId, erro: "disparo da geração não confirmou" };
   }
-  return { tipo: "resolvida", rotinaId, tema: decisao.tema, evidencia: decisao.evidencia };
+  return { tipo: "resolvida", rotinaId, tema, evidencia };
 }

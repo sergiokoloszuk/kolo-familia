@@ -86,7 +86,15 @@ describe("CICLO COMPLETO — aguardando até fala correta", () => {
     // ── O disparo aconteceu, uma vez só, para esta rotina ──────────────────
     expect(disparos).toEqual([{ id: ROTINA, tema: "princesa" }]);
     expect(linha().tema).toBe("princesa");
-    expect(linha().cards_status).toBe("gerando");
+    // ⚠️ O RECONCILIADOR NÃO ESCREVE `gerando`, E ISSO É O CONTRATO. Quando ele
+    // escrevia, o endpoint de geração via a rotina como "já a caminho", pulava
+    // por idempotência e devolvia 200 — falso sucesso que deixava a rotina em
+    // `gerando` para sempre, fora do alcance do próprio varredor. Karina e
+    // Maria Julia, 06/09/2026, em produção. Quem faz a transição é o endpoint,
+    // que é quem sabe se a geração realmente começou.
+    expect(linha().cards_status).toBe("aguardando");
+    // No mundo real, é o endpoint que grava isto — aqui simulamos a transição.
+    db.tabelas.set("rotinas", [{ ...linha(), cards_status: "gerando" }]);
 
     // ── Em `gerando` a fala ainda não pode afirmar entrega ─────────────────
     const durante = falaCoerenteComEstado({
@@ -165,5 +173,37 @@ describe("CICLO COMPLETO — aguardando até fala correta", () => {
     expect(disparos).toHaveLength(0);
     expect(linha().tema).toBeNull();
     expect(linha().cards_status).toBe("aguardando");
+  });
+
+  it("REGRESSÃO — o reconciliador jamais grava 'gerando' por conta própria", async () => {
+    /**
+     * ⚠️ O BUG QUE ESTE TESTE EXISTE PARA IMPEDIR, em produção, 06/09/2026.
+     *
+     * O reconciliador gravava `cards_status='gerando'` antes de chamar o
+     * gerador. O endpoint tem guarda de idempotência — "não refaz se já está a
+     * caminho" — então via `gerando`, pulava, e devolvia 200. O disparo parecia
+     * ter dado certo. As rotinas da Manu e da Maria Julia saíram de
+     * `aguardando`, que o varredor recolhe, para `gerando`, que ninguém
+     * recolhe: um falso sucesso que produzia um órfão PIOR que o original.
+     */
+    let statusNoMomentoDoDisparo: string | null = null;
+    await resolverRotinaOrfa(db.cliente() as never, ROTINA, async () => {
+      statusNoMomentoDoDisparo = String(linha().cards_status);
+      return true;
+    });
+    expect(statusNoMomentoDoDisparo).toBe("aguardando");
+  });
+
+  it("tema já presente e ainda parada: dispara sem reconciliar nada", async () => {
+    // A outra espécie de órfã — o dado existe, o disparo é que nunca chegou.
+    // É também o caminho de reparo de quem voltou de `gerando` sem geração.
+    db.tabelas.set("rotinas", [{ ...linha(), tema: "dinossauro" }]);
+    const disparos: string[] = [];
+    const r = await resolverRotinaOrfa(db.cliente() as never, ROTINA, async (_id, tema) => {
+      disparos.push(tema);
+      return true;
+    });
+    expect(r.tipo).toBe("resolvida");
+    expect(disparos).toEqual(["dinossauro"]);
   });
 });

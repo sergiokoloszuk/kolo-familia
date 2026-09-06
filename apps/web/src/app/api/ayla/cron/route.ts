@@ -297,7 +297,11 @@ async function runArtefatosOrfaos(supabase: AdminClient) {
     .from("rotinas")
     .select("id, family_account_id, created_at")
     .eq("cards_status", "aguardando")
-    .is("tema", null)
+    // ⚠️ SEM FILTRO DE TEMA, de propósito. Existem DUAS espécies de órfã: a que
+    // não tem tema (falta dado) e a que tem tema e nunca foi disparada (falta
+    // ato). Filtrar por `tema IS NULL` deixava a segunda invisível — e foi
+    // exatamente nela que a Manu e a Maria Julia caíram em 06/09/2026, quando o
+    // reconciliador marcava `gerando` sozinho e o endpoint pulava.
     .order("created_at", { ascending: false })
     .limit(50);
 
