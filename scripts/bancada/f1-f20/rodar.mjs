@@ -109,17 +109,28 @@ async function chamarJuiz({ system, user }) {
     body: JSON.stringify({
       model: process.env.OPENAI_MODEL_PRINCIPAL || "gpt-5.6-luna",
       messages: [{ role: "system", content: system }, { role: "user", content: user }],
-      max_completion_tokens: 900,
+      // ⚠️ 3000, E O NÚMERO VEIO DE UM ERRO MEDIDO. Com 900 o juiz truncava:
+      // são 13 critérios, e só a saída passa de 500 tokens — mais o raciocínio,
+      // que neste modelo consome do MESMO teto. O JSON chegava cortado, virava
+      // `indeterminado` em silêncio, e 75 dos 122 turnos da primeira bateria
+      // saíram sem avaliação semântica nenhuma sem que nada acusasse.
+      max_completion_tokens: 3000,
     }),
   });
   if (!r.ok) throw Error(`juiz HTTP ${r.status}`);
   const j = await r.json();
   custo.juiz += 1;
   custo.tokensJuiz += j.usage?.total_tokens ?? 0;
+  // ⚠️ TRUNCAGEM NÃO PODE SER SILENCIOSA. Se o teto estourar de novo, o
+  // relatório tem que dizer — um juiz que emudece faz a bancada parecer limpa.
+  if (j.choices?.[0]?.finish_reason === "length") {
+    custo.juizTruncado += 1;
+    console.error("  ! juiz truncado — veredito descartado");
+  }
   return j.choices?.[0]?.message?.content ?? "";
 }
 
-const custo = { juiz: 0, tokensJuiz: 0, geracao: 0, decisao: 0 };
+const custo = { juiz: 0, juizTruncado: 0, tokensJuiz: 0, geracao: 0, decisao: 0 };
 
 /** O `<estado>` do caso — vazio, ou com o artefato pendente que ele descreve. */
 function estadoDoCaso(caso, historico) {
@@ -312,7 +323,7 @@ for (const c of RUBRICA) {
 linhas.push(`\n## Custo\n`);
 linhas.push(`- chamadas de decisão: ${custo.decisao}`);
 linhas.push(`- chamadas de geração: ${custo.geracao}`);
-linhas.push(`- chamadas do juiz: ${custo.juiz} (${custo.tokensJuiz} tokens)`);
+linhas.push(`- chamadas do juiz: ${custo.juiz} (${custo.tokensJuiz} tokens) · truncadas: ${custo.juizTruncado}`);
 
 const md = linhas.join("\n") + "\n";
 writeFileSync(resolve(AQUI, "resultados/relatorio.md"), md);
