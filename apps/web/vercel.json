@@ -25,6 +25,10 @@
       "schedule": "0 * * * *"
     },
     {
+      "path": "/api/ayla/cron?tipo=artefatos_orfaos",
+      "schedule": "20 11,15,18,22 * * *"
+    },
+    {
       "path": "/api/ayla/cron?tipo=comercial",
       "schedule": "0 11,15,18,22 * * *"
     },
