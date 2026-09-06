@@ -38,6 +38,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { idadeAnos } from "@/lib/idade";
 import { gerarConversacional, MODELO_CONVERSA } from "@/lib/ia/provider";
+import { apurarEstadoDoTurno, blocoDeEstado } from "@/lib/conducao/estado-do-turno";
 import { fronteiraAtravessada } from "@/lib/conducao/fronteiras";
 import {
   formaAtravessada,
@@ -601,7 +602,32 @@ async function montarContexto(
     (f) => f.direcao === "outbound" && (f.texto ?? "").trim(),
   )?.texto;
   const continuidade = blocoDeContinuidade({ ultimaAyla: ultimaFalaDaAyla, mensagem });
-  const bloco = [...partes, continuidade].filter(Boolean).join(SEP);
+
+  // ── O ESTADO DO TURNO ────────────────────────────────────────────────────
+  // ⚠️ FATOS QUE O MODELO NÃO CONSEGUIA VER — 06/09/2026. A auditoria mostrou
+  // que a memória do produto era de dez linhas de prosa: plano em
+  // acompanhamento, resultado dele e rotina esperando tema existiam no banco e
+  // nunca chegavam ao prompt. Foi assim que "E agora?" da Karina virou "Sobre
+  // quem você está falando?" com um quadro devendo havia duas horas.
+  //
+  // ⚠️ ELE NÃO DECIDE NADA. Não classifica, não escolhe tema, não seleciona
+  // conhecimento. Apura e entrega legível — o código prepara, o modelo decide.
+  //
+  // ⚠️ E VEM DEPOIS DA CONTINUIDADE, ANTES DO REPERTÓRIO. Depois porque a
+  // continuidade é sobre a última fala e este bloco é sobre a conversa inteira;
+  // antes do repertório porque material de consulta não fica entre a conversa e
+  // a razão dela — a mesma ordem que o array do `system` já defende.
+  const estado = await apurarEstadoDoTurno(supabase, {
+    familyId,
+    membroId: emFoco[0]?.id ?? null,
+    membroNome: emFoco[0]?.nome ?? null,
+    historico: ((falas ?? []) as Fala[])
+      .slice()
+      .reverse()
+      .map((f) => ({ direcao: f.direcao, texto: f.texto })),
+  });
+
+  const bloco = [...partes, continuidade, blocoDeEstado(estado)].filter(Boolean).join(SEP);
 
   // ⚠️ O DIAGNÓSTICO VAI PARA A REDE DE FRONTEIRAS, não só para o prompt.
   // `fronteiraAtravessada` usa este bloco para saber o que a família JÁ
