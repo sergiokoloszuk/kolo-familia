@@ -272,20 +272,48 @@ const conta = (braco, id) => {
   return { pass, fail, na, ind, avaliados: pass + fail };
 };
 
+const porExec = (braco, id) => {
+  const execs = [...new Set(saida.turnos.filter((t) => t.braco === braco).map((t) => t.execucao))].sort();
+  return execs.map((e) =>
+    saida.turnos.filter((t) => t.braco === braco && t.execucao === e && t.vereditos?.[id]?.veredito === "fail").length,
+  );
+};
+const media = (xs) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : 0);
+const amplitude = (xs) => (xs.length ? Math.max(...xs) - Math.min(...xs) : 0);
+function classificar(a, b) {
+  const n = Math.min(a.length, b.length);
+  if (n === 0) return "sem dados";
+  const pares = Array.from({ length: n }, (_, i) => b[i] - a[i]);
+  if (pares.every((d) => d === 0)) return "equivalente";
+  if (pares.every((d) => d > 0)) return "regressao consistente";
+  if (pares.every((d) => d < 0)) return "melhoria consistente";
+  return "inconclusivo por variabilidade";
+}
+
 const linhas = [];
-linhas.push(`# Bancada F1–F20\n`);
-linhas.push(`Core v${core.versao} (sha ${sha(core.conteudo)}) · ${saida.quando}`);
+linhas.push("# Bancada F1-F20\n");
+linhas.push(`Core v${core.versao} (sha ${sha(core.conteudo)}) - ${saida.quando}`);
 linhas.push(`\n- **A** = ${saida.bracos.A}`);
 linhas.push(`- **B** = ${saida.bracos.B}`);
-linhas.push(`\nCasos: ${alvo.length} · turnos gerados: ${saida.turnos.length} · execuções por caso crítico: ${N_CRITICOS}`);
-linhas.push(`\n## F1–F20 — A × B\n`);
-linhas.push(`| Critério | Tipo | A pass/fail | B pass/fail | Δ fails | N/A | Indet. |`);
-linhas.push(`|---|---|---|---|---|---|---|`);
+linhas.push(`\nCasos: ${alvo.length} - turnos: ${saida.turnos.length} - execucoes por caso critico: ${N_CRITICOS}`);
+linhas.push("\n## F1-F20 - fails por execucao e variabilidade\n");
+linhas.push("| Criterio | Tipo | A por exec | A med | A ampl | B por exec | B med | B ampl | D med | Classificacao |");
+linhas.push("|---|---|---|---|---|---|---|---|---|---|");
+for (const c of RUBRICA) {
+  const a = porExec("A", c.id), b = porExec("B", c.id);
+  linhas.push(`| ${c.id} ${c.nome} | ${c.tipo} | ${a.join(",")} | ${media(a).toFixed(1)} | ${amplitude(a)} | ${b.join(",")} | ${media(b).toFixed(1)} | ${amplitude(b)} | ${(media(b) - media(a)).toFixed(2)} | ${classificar(a, b)} |`);
+}
+linhas.push("\n## Resumo por classificacao\n");
+for (const cls of ["regressao consistente", "melhoria consistente", "equivalente", "inconclusivo por variabilidade"]) {
+  const ids = RUBRICA.filter((c) => classificar(porExec("A", c.id), porExec("B", c.id)) === cls).map((c) => c.id);
+  linhas.push(`- **${cls}**: ${ids.length ? ids.join(", ") : "-"}`);
+}
+linhas.push("\n## Totais (contexto, nao veredito)\n");
+linhas.push("| Criterio | A pass/fail | B pass/fail | N/A | Indet. |");
+linhas.push("|---|---|---|---|---|");
 for (const c of RUBRICA) {
   const a = conta("A", c.id), b = conta("B", c.id);
-  const delta = b.fail - a.fail;
-  const marca = delta > 0 ? ` ⚠️ +${delta}` : delta < 0 ? ` ✅ ${delta}` : " 0";
-  linhas.push(`| ${c.id} ${c.nome} | ${c.tipo} | ${a.pass}/${a.fail} | ${b.pass}/${b.fail} |${marca} | A${a.na} B${b.na} | A${a.ind} B${b.ind} |`);
+  linhas.push(`| ${c.id} | ${a.pass}/${a.fail} | ${b.pass}/${b.fail} | A${a.na} B${b.na} | A${a.ind} B${b.ind} |`);
 }
 
 linhas.push(`\n## Por caso\n`);

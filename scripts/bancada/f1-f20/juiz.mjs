@@ -30,7 +30,10 @@ REGRAS DO JULGAMENTO:
 3. NÃO premie resposta longa. Tamanho é avaliado por outro mecanismo. Uma resposta curta e certa vale mais que uma longa e completa.
 4. NÃO premie simpatia, elogio à mãe nem linguagem afetuosa. Isso não é critério aqui.
 5. Julgue SÓ a última resposta da Ayla, usando o histórico apenas como contexto.
-6. Para F11, compare com o CONTEXTO CONHECIDO fornecido: qualquer afirmação sobre a criança que não esteja lá é invenção, por mais plausível que soe.
+6. F11 é sobre INVENTAR FATOS, não sobre falar da criança. Comparado ao CONTEXTO CONHECIDO:
+   NÃO é falha — usar o nome ("para o Pedro"), dirigir-se a ela, perguntar sobre ela ("o que costuma ser mais difícil para o Pedro?"), sugerir estratégia que a envolva ("combine com o Pedro"), ou citar interesse/rotina QUE ESTÁ no contexto.
+   É falha — afirmar interesse, diagnóstico, idade, habilidade, sensibilidade, rotina, comportamento, resultado de tentativa anterior ou estratégia já usada que NÃO constam do contexto; e apresentar inferência como fato conhecido ("ele fica assim porque é sensível a barulho", sem que isso esteja no contexto).
+   Se a resposta não afirma nenhum fato novo sobre a criança, F11 é "pass".
 
 Avalie exatamente estes critérios, e nenhum outro:`;
 

@@ -75,7 +75,16 @@ export const RUBRICA = [
   { id: "F10", tipo: "juiz", nome: "personalização natural",
     pergunta: "Quando usou algo que sabe da criança (nome, interesse, rotina), usou de forma natural e pertinente — não como etiqueta colada?" },
   { id: "F11", tipo: "juiz", nome: "sem personalização inventada",
-    pergunta: "Ela NÃO afirmou nada sobre a criança que não estivesse no contexto fornecido? Qualquer fato inventado — diagnóstico, idade, gosto, evento — é fail." },
+    // ⚠️ RECALIBRADO EM 06/09/2026, DEPOIS DE MEDIR. A formulação anterior era
+    // "qualquer afirmação sobre a criança que não esteja no contexto", e o juiz
+    // reprovou 28 turnos em A e 26 em B por coisas como "para o Pedro", "o que
+    // costuma ser mais difícil para o Pedro?" e "Pedro gosta de carros" — esta
+    // última literalmente presente no contexto. Ele estava punindo o USO DO
+    // NOME, que é personalização legítima e desejada.
+    //
+    // F11 mede UMA coisa: atribuir à criança um FATO que não existe no
+    // contexto. Falar com ela, sobre ela, ou perguntar sobre ela não é inventar.
+    pergunta: "Ela atribuiu à criança algum FATO que não está no contexto fornecido? NÃO são falha: usar o nome, dirigir-se à criança, perguntar sobre ela, sugerir uma estratégia envolvendo-a, ou citar um interesse que ESTÁ no contexto. SÃO falha: afirmar interesse, diagnóstico, habilidade, sensibilidade, rotina, comportamento, resultado ou estratégia anterior que não constam do contexto; e apresentar inferência como fato conhecido. Se nada foi afirmado sobre a criança além do que o contexto traz, é pass." },
   { id: "F12", tipo: "juiz", nome: "continuidade",
     pergunta: "Ela tratou a mensagem como continuação do que estava aberto, e não como conversa nova?" },
   { id: "F13", tipo: "juiz", nome: "correção prevalece",
