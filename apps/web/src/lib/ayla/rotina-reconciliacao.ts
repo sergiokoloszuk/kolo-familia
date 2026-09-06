@@ -208,3 +208,91 @@ export async function reconciliarRotina(
     outrasRotinasCriadasEm: (outras ?? []).map((o) => o.created_at as string),
   });
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// O ATO — a única função que RESOLVE um órfão. Os dois chamadores usam esta.
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * A rotina órfã mais recente desta família, ou null.
+ *
+ * ⚠️ `aguardando` APENAS. `gerando` está em curso e resolver por cima criaria
+ * duas gerações para o mesmo quadro; `erro` precisa de retry, que é outra
+ * decisão, com outro limite. Este caminho trata o único estado em que falta um
+ * DADO — e dado é o que o reconciliador sabe recuperar.
+ */
+export async function rotinaOrfaDaFamilia(
+  supabase: SupabaseClient,
+  familyId: string,
+): Promise<{ id: string; nome: string | null; membro_atipico_id: string | null } | null> {
+  const { data } = await supabase
+    .from("rotinas")
+    .select("id, nome, membro_atipico_id, created_at")
+    .eq("family_account_id", familyId)
+    .eq("cards_status", "aguardando")
+    .is("tema", null)
+    .order("created_at", { ascending: false })
+    .limit(1);
+  const r = (data ?? [])[0];
+  return r ? { id: r.id as string, nome: (r.nome as string) ?? null, membro_atipico_id: (r.membro_atipico_id as string) ?? null } : null;
+}
+
+export type ResolucaoDeOrfa =
+  | { tipo: "resolvida"; rotinaId: string; tema: string; evidencia: string }
+  | { tipo: "perguntar"; rotinaId: string; motivo: string; nome: string | null }
+  | { tipo: "falhou"; rotinaId: string; erro: string };
+
+/**
+ * RECUPERA E DISPARA — ou diz que precisa perguntar.
+ *
+ * ⚠️ ESTA É A "FUNÇÃO COMPARTILHADA" da missão, e é literal: o turno reativo e
+ * o cron chamam ESTA, não uma cópia adaptada. Duas inteligências de recuperação
+ * divergiriam — e a divergência apareceria na tela de uma mãe, que é o único
+ * lugar onde ela custa alguma coisa.
+ *
+ * ⚠️ A ESCRITA É CONFERIDA. `.update()` do Supabase DEVOLVE o erro em vez de
+ * lançar: um `await` sem checar `error` engoliria a falha e o fluxo seguiria
+ * como sucesso — exatamente o modo de falha que custou o acesso da Rochelle.
+ * Aqui a falha vira `falhou`, e quem chama informa em vez de prometer.
+ */
+export async function resolverRotinaOrfa(
+  supabase: SupabaseClient,
+  rotinaId: string,
+  disparar: (rotinaId: string, tema: string) => Promise<boolean>,
+): Promise<ResolucaoDeOrfa> {
+  const decisao = await reconciliarRotina(supabase, rotinaId);
+  if (decisao.decisao === "perguntar") {
+    const { data } = await supabase.from("rotinas").select("nome").eq("id", rotinaId).maybeSingle();
+    return { tipo: "perguntar", rotinaId, motivo: decisao.motivo, nome: (data?.nome as string) ?? null };
+  }
+
+  const { data: afetadas, error } = await supabase
+    .from("rotinas")
+    .update({ tema: decisao.tema, cards_status: "gerando" })
+    .eq("id", rotinaId)
+    // ⚠️ A GUARDA CONTRA CORRIDA. Se o cron e o turno reativo caírem juntos no
+    // mesmo órfão, só um encontra a linha ainda em `aguardando`; para o outro a
+    // condição não casa e a escrita não afeta linha nenhuma.
+    .eq("cards_status", "aguardando")
+    // ⚠️ O `.select()` NÃO É ENFEITE — é ELE que faz o UPDATE devolver as linhas
+    // afetadas. Sem ele não há como distinguir "eu escrevi" de "outro escreveu
+    // o mesmo valor um instante antes", e os dois donos disparariam a geração
+    // para o mesmo quadro. A mãe receberia a rotina duas vezes. Descoberto pelo
+    // teste de corrida, não em produção — que é onde se quer descobrir isso.
+    .select("id");
+  if (error) {
+    return { tipo: "falhou", rotinaId, erro: error.message };
+  }
+  if (!afetadas || afetadas.length === 0) {
+    // Não é falha a informar: é o outro dono seguindo com o trabalho. Quem
+    // perde a corrida sai calado, senão a família ouve a mesma coisa duas vezes.
+    return { tipo: "falhou", rotinaId, erro: "outro dono assumiu a rotina antes desta escrita" };
+  }
+
+  const ok = await disparar(rotinaId, decisao.tema);
+  if (!ok) {
+    await supabase.from("rotinas").update({ cards_status: "erro" }).eq("id", rotinaId);
+    return { tipo: "falhou", rotinaId, erro: "disparo da geração não confirmou" };
+  }
+  return { tipo: "resolvida", rotinaId, tema: decisao.tema, evidencia: decisao.evidencia };
+}

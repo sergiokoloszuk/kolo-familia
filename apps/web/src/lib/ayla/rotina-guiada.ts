@@ -668,7 +668,7 @@ export async function entregarPdfDaRotina(
 
 /** Dispara a geração dos cartões (endpoint interno) — a Ayla não gera direto
  * (mundo separado de /lib/ia). Best-effort; roda em segundo plano no app. */
-async function dispararGeracao(
+export async function dispararGeracao(
   rotinaId: string,
   tema: string,
   opts?: { preservarArte?: boolean },

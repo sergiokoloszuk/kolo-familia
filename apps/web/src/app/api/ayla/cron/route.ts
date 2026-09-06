@@ -3,6 +3,8 @@ import { createServiceRoleClient } from "@/lib/supabase/server";
 import { logServerError, logEvent } from "@/lib/log";
 import { horaLocalHHMM, hojeLocalISO } from "@/lib/idade";
 import { gerarSnapshotMensal } from "@/lib/evolucao/snapshot";
+import { resolverRotinaOrfa } from "@/lib/ayla/rotina-reconciliacao";
+import { dispararGeracao } from "@/lib/ayla/rotina-guiada";
 import {
   sendRotinaDiaria,
   sendEngajamento,
@@ -81,6 +83,7 @@ async function handle(request: NextRequest) {
     if (tipo === "fim_de_semana") return await runFimDeSemana(supabase);
     if (tipo === "campanhas") return await runCampanhas(supabase);
     if (tipo === "regras") return await runRegras(supabase);
+    if (tipo === "artefatos_orfaos") return await runArtefatosOrfaos(supabase);
     if (tipo === "cleanup") return await runCleanup(supabase);
     if (tipo === "snapshots") return await runSnapshots(supabase);
     if (tipo === "healthcheck") return await runHealthcheck();
@@ -274,6 +277,73 @@ async function emailsDeFamilias(
  * ANTERIOR pra cada membro ativo (só os que ainda não têm). Idempotente.
  * Ideal: cron 1×/dia nos primeiros dias do mês (ou 1×/mês no dia 1).
  */
+/**
+ * OS ARTEFATOS ÓRFÃOS — a rede que pega quem a conversa não pegou.
+ *
+ * ⚠️ MESMA INTELIGÊNCIA DO REATIVO, LITERALMENTE. Este run chama
+ * `resolverRotinaOrfa`, a MESMA função que o turno conversacional chama. O cron
+ * não tem uma segunda lógica de recuperação — se tivesse, as duas divergiriam,
+ * e a divergência apareceria na tela de uma mãe, que é o único lugar onde ela
+ * custa alguma coisa.
+ *
+ * ⚠️ ELE NÃO ABRE CONVERSA. Quando falta dado, este run REGISTRA e para. Mandar
+ * uma pergunta espontânea sobre um quadro de duas semanas atrás seria a Kolo
+ * cutucando uma família que seguiu a vida — e a arbitragem de iniciativa
+ * (`podeIniciarConversa`) existe justamente para isso não acontecer por
+ * acidente. O que falta vira registro persistido e visível, não mensagem.
+ */
+async function runArtefatosOrfaos(supabase: AdminClient) {
+  const { data: orfas } = await supabase
+    .from("rotinas")
+    .select("id, family_account_id, created_at")
+    .eq("cards_status", "aguardando")
+    .is("tema", null)
+    .order("created_at", { ascending: false })
+    .limit(50);
+
+  let recuperadas = 0;
+  let semDado = 0;
+  let falhas = 0;
+  for (const r of orfas ?? []) {
+    try {
+      const res = await resolverRotinaOrfa(supabase, r.id as string, (id, tema) =>
+        dispararGeracao(id, tema),
+      );
+      if (res.tipo === "resolvida") recuperadas += 1;
+      else if (res.tipo === "perguntar") semDado += 1;
+      else falhas += 1;
+      await logEvent({
+        kind:
+          res.tipo === "resolvida"
+            ? "artefato_reconciliado"
+            : res.tipo === "perguntar"
+              ? "artefato_faltou_dado"
+              : "artefato_geracao_falhou",
+        // ⚠️ `warn` NO MÍNIMO, PARA PERSISTIR. `info` só vai para stdout e some
+        // com a retenção da Vercel — e um órfão cujo único rastro sumiu é um
+        // órfão que ninguém vai encontrar.
+        severity: res.tipo === "falhou" ? "error" : "warn",
+        persistir: true,
+        family_account_id: (r.family_account_id as string) ?? null,
+        message: `rotina ${String(r.id).slice(0, 8)} · cron · ${res.tipo}${res.tipo === "resolvida" ? ` · tema=${res.tema}` : res.tipo === "perguntar" ? ` · ${res.motivo}` : ` · ${res.erro}`}`.slice(0, 200),
+      });
+    } catch (e) {
+      falhas += 1;
+      await logServerError("artefato_geracao_falhou", e, {
+        family_account_id: (r.family_account_id as string | null) ?? null,
+      });
+    }
+  }
+  return NextResponse.json({
+    ok: true,
+    tipo: "artefatos_orfaos",
+    examinadas: (orfas ?? []).length,
+    recuperadas,
+    semDado,
+    falhas,
+  });
+}
+
 async function runSnapshots(supabase: AdminClient) {
   const hoje = hojeLocalISO(); // 'YYYY-MM-DD' (America/Sao_Paulo)
   const [y, m] = hoje.split("-").map(Number);

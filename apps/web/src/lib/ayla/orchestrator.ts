@@ -86,6 +86,9 @@ import { semOutrosMembros } from "./membro-escopo";
 import { ehFamiliaExperimental, responderExperimental, posTrialAtivo } from "./experimental";
 import { atenderDesconhecido } from "./desconhecido";
 import { classificarFeedbackRotina } from "./rotina-feedback";
+import { apontaParaPendente } from "./rotina-retomada";
+import { dispararGeracao } from "./rotina-guiada";
+import { resolverRotinaOrfa, rotinaOrfaDaFamilia } from "./rotina-reconciliacao";
 import { pedeArtefatoImprimivel, apontaProRecente } from "./rotina-pdf-rota";
 import { resolverMembroAlvo } from "./membro-alvo";
 import {
@@ -2457,6 +2460,81 @@ export async function processInbound(
         tipo: TIPO_ENTRADA_GUIADA,
       });
       return { tratada: true, familia: family.id, resposta: resp };
+    }
+  }
+
+  // ── RETOMADA DE ARTEFATO PENDENTE ────────────────────────────────────────
+  // ⚠️ ANTES DE QUALQUER CLASSIFICAÇÃO, e por isso está aqui e não mais abaixo.
+  // Em 06/09/2026 a Karina cobrou duas vezes ("E agora?", "Consegue trazer?")
+  // uma rotina prometida às 15:01 e nunca entregue, e a conversa geral
+  // respondeu POR CIMA — "Sobre quem você está falando? Mario ou Manu?" — com
+  // a rotina órfã na mesa e o nome da Manu escrito na própria promessa.
+  //
+  // ⚠️ QUEM MANDA É O ESTADO. `rotinaOrfaDaFamilia` é o gatilho de verdade: sem
+  // uma rotina em `aguardando`, este bloco inteiro não existe. `apontaParaPendente`
+  // só confirma que a mãe não está abrindo assunto novo — "E agora?" só quer
+  // dizer "cadê o quadro" porque há um quadro devendo.
+  if (!rotinaConversa && apontaParaPendente(inbound.texto)) {
+    const orfa = await rotinaOrfaDaFamilia(supabase, family.id);
+    if (orfa) {
+      const r = await resolverRotinaOrfa(supabase, orfa.id, (id, tema) => dispararGeracao(id, tema));
+      // ⚠️ `warn`/`error` PARA PERSISTIR. `info` só vai para stdout e some com a
+      // retenção da Vercel — um fluxo cujo único rastro é `info` é, na prática,
+      // não observável depois de alguns dias. Esta frente existe justamente
+      // para acabar com abandono silencioso; ela não pode ser silenciosa.
+      await logEvent({
+        kind:
+          r.tipo === "resolvida"
+            ? "artefato_reconciliado"
+            : r.tipo === "perguntar"
+              ? "artefato_faltou_dado"
+              : "artefato_geracao_falhou",
+        severity: r.tipo === "falhou" ? "error" : "warn",
+        persistir: true,
+        family_account_id: family.id,
+        message: `rotina ${orfa.id.slice(0, 8)} · reativo · ${r.tipo}${r.tipo === "resolvida" ? ` · tema=${r.tema}` : r.tipo === "perguntar" ? ` · ${r.motivo}` : ` · ${r.erro}`}`.slice(0, 200),
+      });
+      const ctxRet = await loadFamiliaParaEnvio(supabase, family.id);
+      // ⚠️ O TIPO NÃO É DECORATIVO — ele É o estado. Quando perguntamos o tema,
+      // a mensagem sai como `rotina_conversa`, que é o que `rotinaConversaPendente`
+      // procura: a resposta dela ("princesa") volta para a condução da rotina em
+      // vez de cair na conversa geral e morrer ali. Foi exatamente esse buraco
+      // que transformou "Carrinho" em carrinho de supermercado, em 07/08.
+      const falar = async (texto: string, tipo: "rotina_conversa" | "resposta_registro") => {
+        const resp = ctxRet
+          ? await enviarEPersistir(supabase, {
+              family_account_id: family.id,
+              membro_atipico_id: orfa.membro_atipico_id,
+              phone: ctxRet.whatsapp_e164,
+              texto,
+              category: "reativa",
+              tipo,
+            })
+          : undefined;
+        return { tratada: true as const, familia: family.id, resposta: resp ?? undefined };
+      };
+      if (r.tipo === "resolvida") {
+        return await falar(
+          `Achei aqui o que ficou parado — os cartões dessa rotina, no tema *${r.tema}*, já estão sendo preparados 🌿 Eles vão aparecendo conforme ficarem prontos.`,
+          "resposta_registro",
+        );
+      }
+      if (r.tipo === "perguntar") {
+        // ⚠️ UMA PERGUNTA ESPECÍFICA, nunca "sobre quem você está falando?".
+        // Sabemos QUAL rotina está parada e o que falta nela: o tema.
+        return await falar(
+          `Essa rotina${orfa.nome ? ` (*${orfa.nome}*)` : ""} ficou esperando uma coisa só: o tema dos cartões 🌿 Me diz qual — princesa, dinossauro, o que fizer os olhos brilharem — que eu preparo na hora.`,
+          "rotina_conversa",
+        );
+      }
+      // ⚠️ FALHOU: informa. A promessa termina em UM dos três desfechos —
+      // entregue, faltou dado e perguntei, falhou e avisei. Abandono não é um
+      // deles.
+      console.error(`[ayla:rotina] retomada reativa falhou — ${r.erro}`);
+      return await falar(
+        `Tentei retomar os cartões dessa rotina agora e não consegui 🌿 Vou tentar de novo e te aviso assim que estiverem prontos.`,
+        "resposta_registro",
+      );
     }
   }
 
