@@ -77,7 +77,7 @@ describe("NÃO ATRAPALHA — o turno não paga por ser observável", () => {
   });
 
   it("8. o orquestrador passa os dois — e é o único que precisa", () => {
-    const chamada = ORQ.slice(ORQ.indexOf("await classificarIntencao({"), ORQ.indexOf("await classificarIntencao({") + 900);
+    const chamada = ORQ.slice(ORQ.indexOf("await decidirTurno({"), ORQ.indexOf("await decidirTurno({") + 900);
     expect(chamada).toContain("supabase,");
     expect(chamada).toContain("familyId: family.id");
   });

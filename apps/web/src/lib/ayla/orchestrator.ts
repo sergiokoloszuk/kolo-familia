@@ -67,6 +67,8 @@ import {
   editarRotina,
 } from "./rotina-guiada";
 import { classificarIntencao } from "./intent";
+import { decidirTurno } from "@/lib/conducao/decisao-do-turno";
+import { apurarEstadoDoTurno, blocoDeEstado } from "@/lib/conducao/estado-do-turno";
 import { carregarCatalogoSkills } from "./catalogo-skills";
 import { recuperarBoasPraticas, blocoBoasPraticas } from "@/lib/conhecimento/recuperar";
 // FASE 4A NO WHATSAPP (10/08/2026) — os MESMOS módulos que a web usa, chamados
@@ -2556,24 +2558,70 @@ export async function processInbound(
   // desafios do cadastro dizem de onde ele provavelmente nasceu. Foi a decisão
   // consciente de 02/08 — sem coluna, sem migração; se a derivação se mostrar
   // insuficiente no uso real, aí se discute persistir, com evidência.
+  // ── O ESTADO, ANTES DA DECISÃO ───────────────────────────────────────────
+  // ⚠️ A ORDEM É O PONTO DESTA FASE. Até aqui a decisão semântica acontecia
+  // sobre a string nua: o classificador via "e agora?" e não tinha como saber
+  // que havia um quadro devendo. Apurando o estado ANTES, quem decide decide
+  // com o que a Kolo sabe.
+  //
+  // ⚠️ NENHUMA LEITURA DE HISTÓRICO A MAIS: `historicoDoTurno()` é memoizado e
+  // já foi lido acima. O estado acrescenta 2 SELECTs curtos, em paralelo.
+  const estadoDoTurno = rotinaConversa
+    ? null
+    : await apurarEstadoDoTurno(supabase, {
+        familyId: family.id,
+        membroId: membroConversa ?? null,
+        membroNome: null,
+        historico: (await historicoDoTurno())
+          .slice()
+          .reverse()
+          .map((l) => ({ direcao: l.direcao, texto: l.texto })),
+      });
+  const blocoEstadoDoTurno = estadoDoTurno ? blocoDeEstado(estadoDoTurno) : "";
+
+  // ⚠️ QUEM DECIDE O TURNO É O GPT — Fase 1B, 06/09/2026.
+  //
+  // A auditoria mediu que o decisor mais chamado da Kolo era o Haiku do
+  // `classificar_intencao`: 252 chamadas em 14 dias contra 221 do GPT. Ele
+  // decidia intenção, tema e skills — e portanto QUE CONHECIMENTO o GPT podia
+  // ver — antes de o GPT ler a mensagem. Agora quem decide é quem responde.
+  //
+  // `classificarIntencao` continua existindo e deixou de ser chamado neste
+  // caminho. Não foi apagado nesta missão: outros consumidores e testes ainda o
+  // referenciam, e removê-lo junto misturaria duas frentes.
   const turnoClassificado = rotinaConversa
-    ? { intencao: "outro" as const, tema: null, aceite: null, skills: [] as string[] }
-    : await classificarIntencao({
+    ? {
+        intencao: "outro" as const,
+        tema: null,
+        aceite: null,
+        skills: [] as string[],
+        pedidoExplicito: false,
+        continuacao: true,
+        necessidadeConhecimento: "nenhum" as const,
+        temaConhecimento: null,
+      }
+    : await decidirTurno({
         texto: inbound.texto,
-        // ⚠️ 15/08/2026 · O CLASSIFICADOR SAI DA INVISIBILIDADE. Ele rodava em
-        // todo turno e não aparecia em nenhuma das 6.000 chamadas registradas
-        // em `api_calls` — custo e latência dele simplesmente não existiam.
-        // Passar estes dois faz o turno virar linha; não muda decisão nenhuma.
+        blocoEstado: blocoEstadoDoTurno,
+        // O custo E A DURAÇÃO da decisão viram linha em `api_calls`.
         supabase,
         familyId: family.id,
         ...(await ultimasFalas(supabase, family.id, inbound.texto, await historicoDoTurno())),
         temasOnboarding: await carregarDesafiosOnboarding(supabase, membroConversa),
-        // QUAL REPERTÓRIO CONSULTAR — decidido na MESMA chamada que já classifica
-        // intenção e tema. Zero chamada de LLM a mais: o campo é o quarto de uma
-        // linha que já vinha com três. Só entram as skills `ativo=true`.
         catalogoSkills: await carregarCatalogoSkills(supabase),
       });
   const intent = turnoClassificado.intencao;
+  // ⚠️ PEDIDO EXPLÍCITO — GATE DA FASE 1B, 06/09/2026.
+  //
+  // Falar SOBRE um assunto não é pedir a ação. "Nós 2, lição e rotina" era uma
+  // mãe contando o dia; o classificador lia `rotina` e a feature tomava o turno
+  // inteiro, por cima da conversa dela. O caso Claire/Maria.
+  //
+  // Agora a feature só age quando quem decidiu diz que houve PEDIDO. Uma
+  // feature que não dispara custa, no máximo, a família pedir de novo com todas
+  // as letras; uma feature que dispara sem pedido interrompe a conversa.
+  const pedidoExplicito = turnoClassificado.pedidoExplicito === true;
+
   // A escolha do menu MANDA no tema: ela é explícita, o classificador é
   // inferência. Duas fontes para a mesma decisão sempre divergem, e aqui a
   // dona é a família.
@@ -2646,7 +2694,7 @@ export async function processInbound(
   // 3c-rotina-ver. "Traga a rotina de hoje/terça" — só quando NÃO está montando
   // uma agora (senão o pedido é parte da conversa). Acha o dia, gera se faltar e
   // manda o link certo.
-  if (!seguranca.aberta && !rotinaConversa && (intent === "rotina_ver" || pedeRotinaDeUmDia(inbound.texto))) {
+  if (!seguranca.aberta && !rotinaConversa && ((intent === "rotina_ver" && pedidoExplicito) || pedeRotinaDeUmDia(inbound.texto))) {
     const ctxR = await loadFamiliaParaEnvio(supabase, family.id);
     const alvo = alvoDaRotina(ctxR, membroConversa);
     if (alvo.ambiguo) return await perguntarQualCrianca(supabase, family, ctxR, alvo.ambiguo);
@@ -2726,7 +2774,7 @@ export async function processInbound(
   // classificador e é edição pela NECESSIDADE, não pelo ato; exigir menção ali
   // mataria o caminho inteiro, como o comentário acima já registrava.
   const intencaoDeRotinaComPiso =
-    intent === "rotina_editar" && atoSobreArtefato(inbound.texto) === "editar";
+    intent === "rotina_editar" && pedidoExplicito && atoSobreArtefato(inbound.texto) === "editar";
   if (
     !seguranca.aberta &&
     !rotinaConversa &&
@@ -2904,12 +2952,12 @@ export async function processInbound(
     // `rotinaConversa` é CONTINUAÇÃO de uma montagem já em curso — a família já
     // pediu, e o turno é a resposta dela. Não passa pelo ato de novo.
     (rotinaConversa ||
-      intent === "rotina_criar" ||
+      (intent === "rotina_criar" && pedidoExplicito) ||
       // "organizacao" entra na MESMA capacidade — e é por isso que ela existe.
       // O classificador diz que o assunto é sequência/previsibilidade/passagem;
       // NÃO diz que precisa de rotina. Quem escolhe entre orientação, sequência
       // curta e o período inteiro é a prontidão, um passo adiante.
-      intent === "organizacao" ||
+      (intent === "organizacao" && pedidoExplicito) ||
       pedidoDeRotina)
   ) {
     const ctxR = await loadFamiliaParaEnvio(supabase, family.id);
@@ -3146,7 +3194,10 @@ export async function processInbound(
           phone: ctxExp.whatsapp_e164,
           mensagem: inbound.texto,
           temDesafio:
-            turnoClassificado.intencao === "plano" || Boolean(turnoClassificado.tema),
+            // ⚠️ O TEMA SOZINHO NÃO PEDE PLANO. `Boolean(tema)` fazia qualquer
+            // conversa com assunto identificável contar como desafio.
+            (turnoClassificado.intencao === "plano" && pedidoExplicito) ||
+            Boolean(turnoClassificado.tema),
           aoEntregar: (id) => {
             planoEntregueId = id;
           },

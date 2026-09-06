@@ -338,7 +338,7 @@ describe("intenção de organização", () => {
   });
 
   it("entra na MESMA capacidade — não abre uma segunda", () => {
-    expect(ORCH).toMatch(/intent === "organizacao" \|\|/);
+    expect(ORCH).toMatch(/\(intent === "organizacao" && pedidoExplicito\) \|\|/);
     // Um só bloco de rotina no roteamento: se houvesse dois, seriam duas portas.
     expect(ORCH.match(/const r = await conduzirRotina\(/g)?.length).toBe(1);
   });

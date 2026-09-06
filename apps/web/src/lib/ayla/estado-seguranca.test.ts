@@ -167,7 +167,7 @@ describe("durante a segurança, artefato nenhum dispara", () => {
     expect(ORCH).toMatch(
       /!seguranca\.aberta &&[\s\S]{0,400}?\(rotinaConversa \|\|[\s\S]{0,400}?intent === "rotina_criar"/,
     );
-    expect(ORCH).toMatch(/!seguranca\.aberta && !rotinaConversa && \(intent === "rotina_ver"/);
+    expect(ORCH).toMatch(/!seguranca\.aberta && !rotinaConversa && \(\(intent === "rotina_ver" && pedidoExplicito\)/);
     // O gate de editar virou multilinha quando o FEEDBACK passou a entrar por
     // ele ("já faz sozinho", "não funcionou até o jantar"). A exigência é a
     // mesma e não afrouxou: segurança continua sendo o primeiro termo, e o

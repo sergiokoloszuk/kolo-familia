@@ -23,7 +23,7 @@ import { clienteFalso, type Registro } from "./__harness/modelo";
 const registros: Registro[] = [];
 const mundoRef: { atual: Mundo | null; alvo: string | null } = { atual: null, alvo: null };
 /** Quantas vezes cada caminho gerou texto neste turno. */
-const chamadas = { experimental: 0, legacy: 0 };
+const chamadas = { experimental: 0, legacy: 0, decisao: 0,};
 
 vi.mock("./whatsappSender", () => ({
   enviarTexto: async (p: { phoneE164: string; texto: string }) => {
@@ -45,6 +45,18 @@ vi.mock("@/lib/ia/provider", () => ({
   providerConversacionalParaFamilia: () => "anthropic",
   gerarConversacional: async (p: { system?: string }) => {
     const sys = String(p.system ?? "");
+    // ⚠️ TRÊS TIPOS DE CHAMADA, não dois — 06/09/2026. A decisão semântica do
+    // turno passou a usar o mesmo provider da conversa (antes era Haiku, por
+    // outro cliente). Sem esta linha ela cairia no balde `legacy` e este teste
+    // acusaria resposta dupla onde há uma resposta e uma decisão.
+    if (sys.includes("decide o que ela QUER")) {
+      chamadas.decisao++;
+      return {
+        texto: '{"intencao":"outro","pedido_explicito":false,"skills":[]}',
+        provider: "openai", model: "gpt-5.6-luna",
+        tokensIn: 10, tokensOut: 10, cacheRead: 0, cacheWrite: 0, ms: 1,
+      };
+    }
     if (sys.includes("Você é **AYLA**")) chamadas.experimental++;
     else chamadas.legacy++;
     return {

@@ -38,7 +38,7 @@ describe("a resposta da clarificação retoma o pedido", () => {
 
   it("roda ANTES da classificação de intenção — sem caso especial no roteamento", () => {
     expect(ORCH.indexOf("retomarPedidoAposClarificacao(supabase, family.id, inbound.texto)")).toBeLessThan(
-      ORCH.indexOf("await classificarIntencao({"),
+      ORCH.indexOf("await decidirTurno({"),
     );
   });
 

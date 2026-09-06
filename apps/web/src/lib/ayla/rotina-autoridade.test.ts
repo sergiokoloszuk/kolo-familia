@@ -106,7 +106,7 @@ describe("o portão real do orquestrador", () => {
     // `organizacao` tenha criado artefato indevido — `conhecimento_consultado`
     // não registra intenção. Quando registrar (PEND-040), decide-se com dado.
     const i = ORCH.indexOf("const pedidoDeRotina =");
-    expect(ORCH.slice(i, i + 900)).toMatch(/intent === "organizacao" \|\|/);
+    expect(ORCH.slice(i, i + 900)).toMatch(/\(intent === "organizacao" && pedidoExplicito\) \|\|/);
   });
 });
 

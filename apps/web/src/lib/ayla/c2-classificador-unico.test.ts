@@ -75,8 +75,13 @@ describe("A ORDEM — o experimental é o último recurso, não o primeiro", () 
 });
 
 describe("UM DONO — ninguém reclassifica a mesma mensagem", () => {
-  it("o orquestrador classifica UMA vez por turno", () => {
-    expect(ORQ.split("await classificarIntencao(").length - 1).toBe(1);
+  it("o orquestrador decide UMA vez por turno", () => {
+    // ⚠️ O DONO DA DECISÃO MUDOU EM 06/09/2026 — de `classificarIntencao`
+    // (claude-haiku-4-5) para `decidirTurno` (GPT, com o `<estado>` à vista).
+    // A REGRA é a mesma: uma decisão por turno, nunca duas.
+    expect(ORQ.split("await decidirTurno(").length - 1).toBe(1);
+    // E o classificador antigo não pode voltar a decidir o turno reativo.
+    expect(ORQ.split("await classificarIntencao(").length - 1).toBe(0);
   });
 
   it("o experimental RECEBE o resultado, não o recalcula", () => {
@@ -184,10 +189,10 @@ describe("SABOTAGEM — os testes mordem?", () => {
     expect(pos(ROTEADORES[2][1])).toBeLessThan(pos(EXPERIMENTAL));
   });
 
-  it("S2 · uma segunda classificação da mesma mensagem", () => {
-    const sabotado = ORQ + "\n  await classificarIntencao({ texto: inbound.texto });\n";
-    expect(sabotado.split("await classificarIntencao(").length - 1).toBe(2);
-    expect(ORQ.split("await classificarIntencao(").length - 1).toBe(1);
+  it("S2 · uma segunda decisão da mesma mensagem", () => {
+    const sabotado = ORQ + "\n  await decidirTurno({ texto: inbound.texto });\n";
+    expect(sabotado.split("await decidirTurno(").length - 1).toBe(2);
+    expect(ORQ.split("await decidirTurno(").length - 1).toBe(1);
   });
 
   it("S3 · o parser entrando no caminho crítico do experimental", () => {
