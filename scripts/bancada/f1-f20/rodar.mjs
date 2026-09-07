@@ -9,6 +9,7 @@
  *     EXECUCOES=2      repetições por caso crítico (padrão 2; não-críticos: 1)
  *     SO_CASO=id       roda um caso só
  *     SEM_JUIZ=1       só os critérios determinísticos (rápido, sem custo de juiz)
+ *     DIRECIONAL=1     bateria de agir × não agir (13 casos), sem juiz, saída própria
  *
  * ⚠️ O EXPERIMENTO É ISOLADO DE PROPÓSITO. Os dois braços rodam o MESMO Core
  * v11, o MESMO gerador (`responderExperimental`) e os MESMOS casos. A única
@@ -32,7 +33,7 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 import { createHash } from "node:crypto";
 import { registerHooks } from "node:module";
 import { RUBRICA, CRITERIOS_JUIZ, avaliarDeterministicos, jargaoEncontrado } from "./rubrica.mjs";
-import { CASOS, CASOS_CRITICOS } from "./casos.mjs";
+import { CASOS, CASOS_CRITICOS, CASOS_DIRECIONAIS } from "./casos.mjs";
 import { porExec, media, amplitude, classificar, paresDeFeature, resumoFeature } from "./analise.mjs";
 import { julgar } from "./juiz.mjs";
 
@@ -183,7 +184,20 @@ async function decidir(braco, { msg, historico, caso }) {
 const N_CRITICOS = Number(process.env.EXECUCOES ?? 2);
 const SO = process.env.SO_CASO;
 const SEM_JUIZ = process.env.SEM_JUIZ === "1";
-const alvo = SO ? CASOS.filter((c) => c.id === SO) : CASOS;
+/**
+ * ⚠️ MODO DIRIGIDO. `DIRECIONAL=1` troca o conjunto de casos pelo de agir ×
+ * não agir, desliga o juiz (aqui não se mede rubrica) e escreve em arquivo
+ * próprio, para não sobrescrever a bateria de 234 turnos que já está fechada.
+ *
+ * E NÃO GERA RESPOSTA NO ÚLTIMO TURNO DE CADA CASO. A decisão é tomada antes
+ * da geração; a geração só existe para produzir o histórico que o turno
+ * seguinte lê. No último turno não há turno seguinte — gerar ali seria pagar
+ * uma chamada por um texto que nada leria.
+ */
+const DIRECIONAL = process.env.DIRECIONAL === "1";
+const conjunto = DIRECIONAL ? CASOS_DIRECIONAIS : CASOS;
+const alvo = SO ? conjunto.filter((c) => c.id === SO) : conjunto;
+const SUFIXO = DIRECIONAL ? "-direcional" : "";
 
 const saida = {
   quando: new Date().toISOString(),
@@ -201,11 +215,13 @@ for (const caso of alvo) {
       const mundo = montarMundo({ nomeMae: "Ana", criancas: [caso.crianca] });
       mundo.db.semear("boas_praticas", structuredClone(bps));
       const historico = [];
-      for (const turno of caso.turnos) {
+      for (const [iTurno, turno] of caso.turnos.entries()) {
+        const precisaGerar = !DIRECIONAL || iTurno < caso.turnos.length - 1;
         const d = await decidir(braco, { msg: turno.msg, historico, caso });
         const t0 = Date.now();
         let texto = "";
         try {
+          if (!precisaGerar) throw { pulado: true };
           const r = await responderExperimental(mundo.db, {
             familyId: mundo.familyId,
             mensagem: turno.msg,
@@ -218,14 +234,14 @@ for (const caso of alvo) {
           custo.geracao += 1;
         } catch (e) {
           texto = "";
-          console.error(`  ! geração falhou (${caso.id}/${braco}): ${e.message}`);
+          if (!e?.pulado) console.error(`  ! geração falhou (${caso.id}/${braco}): ${e.message}`);
         }
         const ms = Date.now() - t0;
 
         const contexto = { ...turno, texto };
         const det = avaliarDeterministicos(contexto);
         let sem = {};
-        if (!SEM_JUIZ && texto) {
+        if (!SEM_JUIZ && !DIRECIONAL && texto) {
           try {
             sem = await julgar({
               turno: contexto,
@@ -246,13 +262,15 @@ for (const caso of alvo) {
           nivelEsperado: turno.nivelEsperado ?? null,
           decisao: { intencao: d.intencao, pedidoExplicito: d.pedidoExplicito, skills: d.skills ?? [], origem: d.origem },
           esperaFeature: turno.esperaFeature ?? null,
+          observarDecisao: turno.observarDecisao === true,
+          geracaoPulada: !precisaGerar,
           featureAgiria: d.pedidoExplicito === true,
           texto, chars: texto.length, ms,
           jargao: jargaoEncontrado(texto),
           vereditos: { ...det, ...sem },
         });
         mkdirSync(resolve(AQUI, "resultados"), { recursive: true });
-        writeFileSync(resolve(AQUI, "resultados/bruto.json"), JSON.stringify(saida, null, 2));
+        writeFileSync(resolve(AQUI, `resultados/bruto${SUFIXO}.json`), JSON.stringify(saida, null, 2));
       }
       console.log(`${caso.id} · braço ${braco} · exec ${exec} · ${caso.turnos.length} turno(s)`);
     }
@@ -279,34 +297,41 @@ linhas.push(`Core v${core.versao} (sha ${sha(core.conteudo)}) - ${saida.quando}`
 linhas.push(`\n- **A** = ${saida.bracos.A}`);
 linhas.push(`- **B** = ${saida.bracos.B}`);
 linhas.push(`\nCasos: ${alvo.length} - turnos: ${saida.turnos.length} - execucoes por caso critico: ${N_CRITICOS}`);
-linhas.push("\n## F1-F20 - fails por execucao e variabilidade\n");
-linhas.push("| Criterio | Tipo | A por exec | A med | A ampl | B por exec | B med | B ampl | D med | Classificacao |");
-linhas.push("|---|---|---|---|---|---|---|---|---|---|");
-for (const c of RUBRICA) {
-  const a = porExec(saida.turnos, "A", c.id), b = porExec(saida.turnos, "B", c.id);
-  linhas.push(`| ${c.id} ${c.nome} | ${c.tipo} | ${a.join(",")} | ${media(a).toFixed(1)} | ${amplitude(a)} | ${b.join(",")} | ${media(b).toFixed(1)} | ${amplitude(b)} | ${(media(b) - media(a)).toFixed(2)} | ${classificar(a, b)} |`);
-}
-linhas.push("\n## Resumo por classificacao\n");
-for (const cls of ["regressao consistente", "melhoria consistente", "equivalente", "inconclusivo por variabilidade"]) {
-  const ids = RUBRICA.filter((c) => classificar(porExec(saida.turnos, "A", c.id), porExec(saida.turnos, "B", c.id)) === cls).map((c) => c.id);
-  linhas.push(`- **${cls}**: ${ids.length ? ids.join(", ") : "-"}`);
-}
-linhas.push("\n## Totais (contexto, nao veredito)\n");
-linhas.push("| Criterio | A pass/fail | B pass/fail | N/A | Indet. |");
-linhas.push("|---|---|---|---|---|");
-for (const c of RUBRICA) {
-  const a = conta("A", c.id), b = conta("B", c.id);
-  linhas.push(`| ${c.id} | ${a.pass}/${a.fail} | ${b.pass}/${b.fail} | A${a.na} B${b.na} | A${a.ind} B${b.ind} |`);
-}
+// NO MODO DIRIGIDO NAO HA RUBRICA. A maioria dos turnos nao gera texto (de
+// proposito), e os criterios deterministicos sobre texto vazio dariam zero em
+// todo lugar — relatorio limpo por ausencia de medicao, que e exatamente o
+// defeito que esta bancada ja teve uma vez, com o juiz truncando em silencio.
+if (!DIRECIONAL) {
+  linhas.push("\n## F1-F20 - fails por execucao e variabilidade\n");
+  linhas.push("| Criterio | Tipo | A por exec | A med | A ampl | B por exec | B med | B ampl | D med | Classificacao |");
+  linhas.push("|---|---|---|---|---|---|---|---|---|---|");
+  for (const c of RUBRICA) {
+    const a = porExec(saida.turnos, "A", c.id), b = porExec(saida.turnos, "B", c.id);
+    linhas.push(`| ${c.id} ${c.nome} | ${c.tipo} | ${a.join(",")} | ${media(a).toFixed(1)} | ${amplitude(a)} | ${b.join(",")} | ${media(b).toFixed(1)} | ${amplitude(b)} | ${(media(b) - media(a)).toFixed(2)} | ${classificar(a, b)} |`);
+  }
+  linhas.push("\n## Resumo por classificacao\n");
+  for (const cls of ["regressao consistente", "melhoria consistente", "equivalente", "inconclusivo por variabilidade"]) {
+    const ids = RUBRICA.filter((c) => classificar(porExec(saida.turnos, "A", c.id), porExec(saida.turnos, "B", c.id)) === cls).map((c) => c.id);
+    linhas.push(`- **${cls}**: ${ids.length ? ids.join(", ") : "-"}`);
+  }
+  linhas.push("\n## Totais (contexto, nao veredito)\n");
+  linhas.push("| Criterio | A pass/fail | B pass/fail | N/A | Indet. |");
+  linhas.push("|---|---|---|---|---|");
+  for (const c of RUBRICA) {
+    const a = conta("A", c.id), b = conta("B", c.id);
+    linhas.push(`| ${c.id} | ${a.pass}/${a.fail} | ${b.pass}/${b.fail} | A${a.na} B${b.na} | A${a.ind} B${b.ind} |`);
+  }
 
-linhas.push(`\n## Por caso\n`);
-linhas.push(`| Caso | Fails A | Fails B | Nova regressão? |`);
-linhas.push(`|---|---|---|---|`);
-for (const caso of alvo) {
-  const fails = (br) => saida.turnos.filter((x) => x.caso === caso.id && x.braco === br)
-    .reduce((n, x) => n + Object.values(x.vereditos ?? {}).filter((v) => v.veredito === "fail").length, 0);
-  const a = fails("A"), b = fails("B");
-  linhas.push(`| ${caso.id}${caso.critico ? " ⭑" : ""} | ${a} | ${b} | ${b > a ? "**SIM**" : "não"} |`);
+  linhas.push(`\n## Por caso\n`);
+  linhas.push(`| Caso | Fails A | Fails B | Nova regressão? |`);
+  linhas.push(`|---|---|---|---|`);
+  for (const caso of alvo) {
+    const fails = (br) => saida.turnos.filter((x) => x.caso === caso.id && x.braco === br)
+      .reduce((n, x) => n + Object.values(x.vereditos ?? {}).filter((v) => v.veredito === "fail").length, 0);
+    const a = fails("A"), b = fails("B");
+    linhas.push(`| ${caso.id}${caso.critico ? " ⭑" : ""} | ${a} | ${b} | ${b > a ? "**SIM**" : "não"} |`);
+  }
+
 }
 
 linhas.push(`\n## Feature — sequestro do turno\n`);
@@ -326,18 +351,21 @@ for (const r of resumoFeature(saida.turnos)) {
   linhas.push(`| ${r.caso} — "${r.mensagem.slice(0, 40)}" | ${r.esperado} | ${m(r.aAgiuPorExec)} | ${m(r.bAgiuPorExec)} | ${r.aErros}/${r.n} | ${r.bErros}/${r.n} | ${r.classificacao} |`);
 }
 
-linhas.push(`\n## "Me mostra" — resultado explícito\n`);
-for (const x of saida.turnos.filter((t) => /me mostra/i.test(t.mensagem))) {
-  const f4 = x.vereditos?.F4?.veredito;
-  linhas.push(`- \`${x.braco}\` exec ${x.execucao}: F4 **${f4}** — ${x.vereditos?.F4?.evidencia ?? ""} (${x.chars} chars)`);
-}
+if (!DIRECIONAL) {
+  linhas.push(`\n## "Me mostra" — resultado explícito\n`);
+  for (const x of saida.turnos.filter((t) => /me mostra/i.test(t.mensagem))) {
+    const f4 = x.vereditos?.F4?.veredito;
+    linhas.push(`- \`${x.braco}\` exec ${x.execucao}: F4 **${f4}** — ${x.vereditos?.F4?.evidencia ?? ""} (${x.chars} chars)`);
+  }
 
-linhas.push(`\n## Violações — exemplos\n`);
-for (const c of RUBRICA) {
-  const ex = saida.turnos.filter((x) => x.vereditos?.[c.id]?.veredito === "fail").slice(0, 2);
-  if (!ex.length) continue;
-  linhas.push(`\n**${c.id} · ${c.nome}**`);
-  for (const x of ex) linhas.push(`- \`${x.braco}\` ${x.caso} — ${x.vereditos[c.id].evidencia}`);
+  linhas.push(`\n## Violações — exemplos\n`);
+  for (const c of RUBRICA) {
+    const ex = saida.turnos.filter((x) => x.vereditos?.[c.id]?.veredito === "fail").slice(0, 2);
+    if (!ex.length) continue;
+    linhas.push(`\n**${c.id} · ${c.nome}**`);
+    for (const x of ex) linhas.push(`- \`${x.braco}\` ${x.caso} — ${x.vereditos[c.id].evidencia}`);
+  }
+
 }
 
 linhas.push(`\n## Custo\n`);
@@ -346,7 +374,7 @@ linhas.push(`- chamadas de geração: ${custo.geracao}`);
 linhas.push(`- chamadas do juiz: ${custo.juiz} (${custo.tokensJuiz} tokens) · truncadas: ${custo.juizTruncado}`);
 
 const md = linhas.join("\n") + "\n";
-writeFileSync(resolve(AQUI, "resultados/relatorio.md"), md);
-writeFileSync(resolve(AQUI, "resultados/bruto.json"), JSON.stringify(saida, null, 2));
+writeFileSync(resolve(AQUI, `resultados/relatorio${SUFIXO}.md`), md);
+writeFileSync(resolve(AQUI, `resultados/bruto${SUFIXO}.json`), JSON.stringify(saida, null, 2));
 console.log("\n" + md);
-console.log(`\nrelatório: scripts/bancada/f1-f20/resultados/relatorio.md`);
+console.log(`\nrelatório: scripts/bancada/f1-f20/resultados/relatorio${SUFIXO}.md`);

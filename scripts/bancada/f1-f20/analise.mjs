@@ -75,8 +75,13 @@ export function paresDeFeature(turnos) {
   const todos = comOrdinal(turnos);
   const chave = (t) => `${t.caso}|${t.execucao}|${t.ordinal}`;
   const ladoB = new Map(todos.filter((t) => t.braco === "B").map((t) => [chave(t), t]));
+  // ⚠️ TURNO OBSERVADO ≠ TURNO COBRADO. Alguns turnos entram para MEDIR a
+  // divergência A↔B sem carregar expectativa: "Pode", logo depois de a Ayla
+  // oferecer o quadro, é aceite explícito ou continuação de conversa? Isso é
+  // decisão de produto, não de bancada. Marcá-los com `observarDecisao` põe o
+  // número na mesa sem transformar um palpite meu em pass/fail.
   return todos
-    .filter((t) => t.esperaFeature !== null && t.esperaFeature !== undefined && t.braco === "A")
+    .filter((t) => t.braco === "A" && (t.observarDecisao === true || (t.esperaFeature !== null && t.esperaFeature !== undefined)))
     .map((x) => {
       const b = ladoB.get(chave(x)) ?? null;
       return {
@@ -84,11 +89,13 @@ export function paresDeFeature(turnos) {
         execucao: x.execucao,
         ordinal: x.ordinal,
         mensagem: x.mensagem,
-        esperado: x.esperaFeature,
+        esperado: x.observarDecisao === true ? null : x.esperaFeature,
+        soObservacao: x.observarDecisao === true,
         aAgiria: x.featureAgiria,
         bAgiria: b ? b.featureAgiria : null,
-        aErrou: x.featureAgiria !== x.esperaFeature,
-        bErrou: b ? b.featureAgiria !== x.esperaFeature : null,
+        aErrou: x.observarDecisao === true ? null : x.featureAgiria !== x.esperaFeature,
+        bErrou: x.observarDecisao === true || !b ? null : b.featureAgiria !== x.esperaFeature,
+        divergem: b ? x.featureAgiria !== b.featureAgiria : null,
       };
     });
 }
@@ -99,13 +106,14 @@ export function resumoFeature(turnos) {
   const grupos = new Map();
   for (const p of pares) {
     const k = `${p.caso}|${p.ordinal}`;
-    if (!grupos.has(k)) grupos.set(k, { caso: p.caso, ordinal: p.ordinal, mensagem: p.mensagem, esperado: p.esperado, execucoes: [] });
+    if (!grupos.has(k)) grupos.set(k, { caso: p.caso, ordinal: p.ordinal, mensagem: p.mensagem, esperado: p.esperado, soObservacao: p.soObservacao, execucoes: [] });
     grupos.get(k).execucoes.push(p);
   }
   return [...grupos.values()].map((g) => {
     g.execucoes.sort((x, y) => x.execucao - y.execucao);
     const errosA = g.execucoes.map((p) => (p.aErrou ? 1 : 0));
     const errosB = g.execucoes.map((p) => (p.bErrou ? 1 : 0));
+    const divergencias = g.execucoes.filter((p) => p.divergem === true).length;
     return {
       ...g,
       aAgiuPorExec: g.execucoes.map((p) => p.aAgiria),
@@ -113,7 +121,9 @@ export function resumoFeature(turnos) {
       aErros: errosA.reduce((s, x) => s + x, 0),
       bErros: errosB.reduce((s, x) => s + x, 0),
       n: g.execucoes.length,
-      classificacao: classificar(errosA, errosB),
+      divergencias,
+      // Turno só observado não tem gabarito: classificar seria fabricar veredito.
+      classificacao: g.soObservacao ? "observacao - sem gabarito" : classificar(errosA, errosB),
     };
   });
 }

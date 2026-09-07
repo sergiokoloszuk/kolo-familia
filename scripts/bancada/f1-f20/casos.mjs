@@ -226,3 +226,138 @@ export const CASOS = [
 ];
 
 export const CASOS_CRITICOS = CASOS.filter((c) => c.critico).map((c) => c.id);
+
+/**
+ * ══ A BATERIA DIRECIONADA — agir × não agir ═════════════════════════════════
+ *
+ * ⚠️ POR QUE ELA EXISTE SEPARADA. A bateria de 234 turnos fechou sem regressão
+ * consistente em F1-F20, e sobrou UM sinal, fora da rubrica: em
+ * `regressao-karina — "Consegue trazer?"`, A não agiu em nenhuma das 4
+ * execuções e B agiu em 3. Quatro execuções não distinguem sinal de ruído nesse
+ * tamanho — e repetir os 234 turnos para responder uma pergunta de decisão
+ * seria pagar o juiz inteiro de novo para medir o que o juiz não mede.
+ *
+ * Aqui só se mede `pedidoExplicito`: a decisão de agir, tomada ANTES de
+ * qualquer geração. O gerador continua rodando onde a conversa tem mais de um
+ * turno, porque é ele que produz o histórico que o turno seguinte lê — e não
+ * roda no último turno de cada caso, onde a resposta não seria lida por
+ * ninguém.
+ *
+ * ⚠️ `observarDecisao: true` MARCA O QUE NÃO TEM GABARITO. "Pode", logo depois
+ * de a Ayla oferecer o quadro, é aceite explícito ou continuação de conversa?
+ * É decisão de produto e está em aberto (o caso do Mario é exatamente isso).
+ * Esses turnos entram para medir a divergência entre os braços, não para
+ * reprovar ninguém.
+ */
+export const CASOS_DIRECIONAIS = [
+  // ── 1. FALAR SOBRE ≠ PEDIR ────────────────────────────────────────────────
+  {
+    id: "feature-conversa",
+    critico: true,
+    crianca: CRIANCA,
+    turnos: [{ msg: "A rotina dele é bagunçada.", nivelEsperado: "N1", esperaFeature: false }],
+  },
+  {
+    // ⚠️ CLAIRE/MARIA — mencionar "rotina" fazia a feature tomar o turno.
+    id: "regressao-claire",
+    critico: true,
+    crianca: CRIANCA,
+    turnos: [{ msg: "Nós 2, lição e rotina.", nivelEsperado: "N1", esperaFeature: false }],
+  },
+  {
+    // "organizacao" é um dos quatro pontos de sequestro. Aqui é desabafo.
+    id: "conversa-organizacao",
+    critico: true,
+    crianca: CRIANCA,
+    turnos: [{ msg: "Nossa casa vira um caos de manhã, eu não dou conta.", nivelEsperado: "N1", esperaFeature: false }],
+  },
+  {
+    // A palavra "plano" no meio de um relato da escola.
+    id: "conversa-plano-mencao",
+    critico: true,
+    crianca: CRIANCA,
+    turnos: [{ msg: "A escola mandou o plano de aula dele hoje.", nivelEsperado: "N1", esperaFeature: false }],
+  },
+
+  // ── 2. PEDIDO EXPLÍCITO — TEM QUE CONTINUAR DISPARANDO ────────────────────
+  {
+    id: "feature-comando",
+    critico: true,
+    crianca: CRIANCA,
+    turnos: [{ msg: "Crie uma rotina visual pra manhã dele.", nivelEsperado: "N1", esperaFeature: true }],
+  },
+  {
+    id: "comando-plano",
+    critico: true,
+    crianca: CRIANCA,
+    turnos: [{ msg: "Me monta um plano pra hora do banho.", nivelEsperado: "N1", esperaFeature: true }],
+  },
+  {
+    id: "comando-editar",
+    critico: true,
+    crianca: CRIANCA,
+    turnos: [{ msg: "Tira o banho da rotina.", nivelEsperado: "N1", esperaFeature: true }],
+  },
+
+  // ── 3. O SINAL QUE SOBROU, E O SEU CONTROLE ───────────────────────────────
+  {
+    // ⚠️ KARINA/MANU — artefato prometido e não entregue. A: 0/4, B: 3/4.
+    id: "regressao-karina",
+    critico: true,
+    crianca: CRIANCA,
+    artefatoPendente: { nome: "Dia com os tios", falta: "tema" },
+    turnos: [
+      { msg: "E agora?", nivelEsperado: "N1", esperaFeature: false },
+      { msg: "Consegue trazer?", nivelEsperado: "N1", esperaFeature: false },
+    ],
+  },
+  {
+    // ⚠️ O CONTROLE. Mesma frase, SEM artefato pendente no <estado>. Se B só
+    // age quando há artefato devendo, a causa está no bloco de estado — que é
+    // exatamente o que a Fase 1B acrescentou — e não na frase.
+    id: "controle-consegue-trazer-sem-artefato",
+    critico: true,
+    crianca: CRIANCA,
+    turnos: [{ msg: "Consegue trazer?", nivelEsperado: "N1", esperaFeature: false }],
+  },
+  {
+    // ⚠️ MILENA/MARIA JULIA — figuras prometidas e nunca entregues.
+    id: "regressao-milena",
+    critico: true,
+    crianca: CRIANCA,
+    artefatoPendente: { nome: "Saída da escola", falta: "geracao" },
+    turnos: [{ msg: "E as figuras?", nivelEsperado: "N1", esperaFeature: false }],
+  },
+
+  // ── 4. CONTINUAÇÃO CURTA — A FRASE É AMBÍGUA, O CONTEXTO NÃO ──────────────
+  {
+    // O contexto ANTES pede o artefato. "Pode" é aceite ou conversa?
+    id: "contexto-pede-artefato",
+    critico: true,
+    crianca: CRIANCA,
+    turnos: [
+      { msg: "Queria um quadro de rotina visual pra manhã dele.", nivelEsperado: "N1", esperaFeature: true },
+      { msg: "Pode", nivelEsperado: "N2", observarDecisao: true },
+    ],
+  },
+  {
+    // O contexto ANTES é desabafo. "Me mostra" pede estratégia, não artefato.
+    id: "contexto-nao-pede",
+    critico: true,
+    crianca: CRIANCA,
+    turnos: [
+      { msg: "Ele grita muito na hora do banho.", nivelEsperado: "N1", esperaFeature: false },
+      { msg: "Me mostra", nivelEsperado: "N2", observarDecisao: true },
+      { msg: "Isso", nivelEsperado: "N2", observarDecisao: true },
+    ],
+  },
+  {
+    id: "continuacao-sim",
+    critico: true,
+    crianca: CRIANCA,
+    turnos: [
+      { msg: "Ele não quer sair de casa de manhã.", nivelEsperado: "N1", esperaFeature: false },
+      { msg: "Sim", nivelEsperado: "N2", observarDecisao: true },
+    ],
+  },
+];

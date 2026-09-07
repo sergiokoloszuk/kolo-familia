@@ -104,5 +104,27 @@ igual("erros de B", r.bErros, 3);
 igual("n", r.n, 4);
 igual("classificação pareada", r.classificacao, "inconclusivo por variabilidade");
 
+// ── 7. TURNO OBSERVADO NÃO VIRA VEREDITO ────────────────────────────────────
+console.log("\n7. turno só observado é medido, não cobrado");
+const obs = [
+  { caso: "o", braco: "A", execucao: 1, mensagem: "Pode", featureAgiria: false, observarDecisao: true, vereditos: {} },
+  { caso: "o", braco: "B", execucao: 1, mensagem: "Pode", featureAgiria: true, observarDecisao: true, vereditos: {} },
+  { caso: "o", braco: "A", execucao: 2, mensagem: "Pode", featureAgiria: false, observarDecisao: true, vereditos: {} },
+  { caso: "o", braco: "B", execucao: 2, mensagem: "Pode", featureAgiria: true, observarDecisao: true, vereditos: {} },
+];
+const po = paresDeFeature(obs);
+igual("entra na medição mesmo sem esperaFeature", po.length, 2);
+igual("não recebe gabarito", po.map((p) => p.esperado), [null, null]);
+igual("não acusa erro em ninguém", po.map((p) => [p.aErrou, p.bErrou]), [[null, null], [null, null]]);
+igual("mas registra a divergência A↔B", po.map((p) => p.divergem), [true, true]);
+const ro = resumoFeature(obs)[0];
+igual("não é classificado como regressão", ro.classificacao, "observacao - sem gabarito");
+igual("divergências contadas", ro.divergencias, 2);
+
+// E o turno COM gabarito continua sendo cobrado normalmente.
+const ro2 = resumoFeature(karina).find((x) => x.mensagem === "Consegue trazer?");
+igual("turno com gabarito segue classificado", ro2.classificacao, "inconclusivo por variabilidade");
+igual("divergências também contadas nele", ro2.divergencias, 3);
+
 console.log(falhas ? `\n${falhas} FALHA(S) — a análise não pode ser usada assim.\n` : "\nTodos os casos passaram.\n");
 process.exit(falhas ? 1 : 0);
