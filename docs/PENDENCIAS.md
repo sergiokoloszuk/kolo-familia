@@ -7616,7 +7616,16 @@ STATUS: **ABERTA** · Aberta em: 2026-09-05
 ### PEND-167
 **Aceite curto depois de a Ayla oferecer o artefato — quem decide, e o quê**
 Bloco: **B · Ayla** · Prioridade: **P2**
-STATUS: **ABERTA** · Aberta em: 2026-09-07
+STATUS: **PARCIALMENTE RESOLVIDA** · Aberta em: 2026-09-07 · Atualizada em: 2026-09-07
+
+> **07/09, cfd500b — resolvida NO CAMINHO DA ROTINA VISUAL, nao globalmente.**
+> O aceite curto ganhou referente: `ofertaDeTemaNaUltimaFala` confere que a ultima
+> fala da Ayla ofereceu mesmo aquele tema, e so entao o aceite vira tema e dispara
+> a geracao. `lerTemaEscolhido` NAO foi afrouxado — aceite continua nao sendo tema.
+> **NAO ENCERRA** enquanto nao houver prova ponta a ponta com banco e modelo reais,
+> e enquanto o caso do Mario — aceite curto em OUTRO fluxo, com cartoes prometidos e
+> nao entregues — nao for exercitado. Quem e o dono do aceite curto FORA do fluxo da
+> rotina continua sem decisao escrita.
 
 Bateria dirigida de 06-07/09 (360 turnos, 10 execucoes por braco, mesmo Core v11,
 `resultados/bruto-direcional.json`). Depois de a mae pedir *"Queria um quadro de
@@ -7702,7 +7711,63 @@ sim, remover o `|| Boolean(tema)` e medir o falso negativo (§12, caso I) antes 
 publicar. Se nao, corrigir o comentario, que hoje engana quem le. Relacionada a
 PEND-167 e ao gate de prontidao de `prontidao-plano.ts`.
 
-**Proximo ID livre: PEND-170. *(024 e 025 reservadas por frentes ainda nao publicadas; 0076 e numero de MIGRACAO reservado — ver PEND-121.)***
+### PEND-170
+**Rajada concorrente disputa a continuidade da rotina — mitigado, nao corrigido**
+Bloco: **B · Ayla** · Prioridade: **P2**
+STATUS: **ABERTA** · Aberta em: 2026-09-07
+
+Duas mensagens da familia no MESMO segundo produzem duas invocacoes de
+`processInbound` (o webhook responde 200 e processa em `after()`), sem lock. Caso
+real medido: 07/09, familia 9c14b56b — "Pode ser" e "Nao tem barco" chegaram
+ambas as 12:55:34 e sairam DUAS desculpas quase identicas, 12:55:56 e 12:56:06.
+
+⚠️ A correcao de continuidade (cfd500b) TORNA ISTO MAIS PROVAVEL, e isso esta
+declarado de proposito. Antes, a segunda invocacao encontrava
+`rotinaConversaPendente = null` (porque ja havia inbound) e caia fora por
+acidente; agora as duas veem a acao aberta e as duas entram no fluxo da rotina.
+
+O QUE EXISTE E MITIGACAO, NAO CONSERTO: `/api/ludico/gerar-rotina` e idempotente
+(route.ts l.75-78 — recusa quando `cards_status` ja e `gerando` ou `pronto`),
+entao o pior caso e uma fala duplicada, nao arte duplicada nem rotina duplicada.
+
+**Criterio de conclusao:** reserva no banco antes de agir, no padrao ja existente
+(`reservarEnvioProativo` em `lib/ayla/cadencia.ts`, `reservarConviteAssinatura`
+em `orchestrator.ts` l.1661) — reservar primeiro, resolver quem chegou antes,
+quem perde apaga a propria reserva. Medir a rajada real antes e depois.
+Relacionada a PEND-058.
+
+---
+
+### PEND-171
+**Rotina orfa da Manu — ec61feee, presa em aguardando com etapas de barco**
+Bloco: **B · Ayla** · Prioridade: **P2**
+STATUS: **ABERTA** · Aberta em: 2026-09-07
+
+    rotinas.id    ec61feee-24e8-421b-a827-136ba966ba1f
+    familia       9c14b56b-32ca-4410-b830-09b16cc9a7a1   crianca Manu
+    nome          "Dia de shopping e passeio"
+    cards_status  "aguardando"   tema  null   historia  null
+    updated_at    2026-09-07T12:55:09Z  (nunca mais tocada)
+
+`rotina_tarefas`: 8 linhas, `imagem_url` nulo em todas, e as posicoes 3 a 6
+seguem sendo *Preparar para o passeio de barco*, *Ir ate o barco*, *Entrar no
+barco com calma*, *Passeio de barco*. A Ayla se desculpou tres vezes e enunciou a
+sequencia correta — **so no texto**. O artefato nunca foi corrigido.
+
+A correcao cfd500b impede o PROXIMO caso; nao desfaz este. O reconciliador
+(`runArtefatosOrfaos`) classifica como `perguntar` (falta tema) e NAO abre
+conversa, por decisao explicita (cron/route.ts l.288-294) — entao a linha fica.
+
+⚠️ **NAO TOCAR SEM AUTORIZACAO EXPLICITA.** E dado de familia real, em producao.
+As opcoes (corrigir as tarefas e gerar, ou marcar `nenhum` e a rotina virar
+lista) tem efeito visivel para a familia, e nenhuma delas se desfaz sozinha.
+
+**Criterio de conclusao:** decisao registrada sobre o destino desta linha, e —
+se for gerar — prova de que as etapas de barco sairam antes da arte.
+
+---
+
+**Proximo ID livre: PEND-172. *(024 e 025 reservadas por frentes ainda nao publicadas; 0076 e numero de MIGRACAO reservado — ver PEND-121.)***
 
 > Conferir contra `origin/main`, não contra o seu branch. Dois branches podem
 > reivindicar o mesmo número — o conflito de merge nesta linha é o alarme.
