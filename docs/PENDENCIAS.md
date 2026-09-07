@@ -7712,29 +7712,50 @@ publicar. Se nao, corrigir o comentario, que hoje engana quem le. Relacionada a
 PEND-167 e ao gate de prontidao de `prontidao-plano.ts`.
 
 ### PEND-170
-**Rajada concorrente disputa a continuidade da rotina — mitigado, nao corrigido**
-Bloco: **B · Ayla** · Prioridade: **P2**
-STATUS: **ABERTA** · Aberta em: 2026-09-07
+**Repeticao conversacional entre turnos consecutivos**
+Bloco: **B · Ayla** · Prioridade: **P3**
+STATUS: **ABERTA** · Aberta em: 2026-09-07 · Reescrita em: 2026-09-07
 
-Duas mensagens da familia no MESMO segundo produzem duas invocacoes de
-`processInbound` (o webhook responde 200 e processa em `after()`), sem lock. Caso
-real medido: 07/09, familia 9c14b56b — "Pode ser" e "Nao tem barco" chegaram
-ambas as 12:55:34 e sairam DUAS desculpas quase identicas, 12:55:56 e 12:56:06.
+⚠️ **PREMISSA ORIGINAL REFUTADA EM 07/09/2026.** Esta pendencia nasceu
+atribuindo as respostas duplicadas do caso Manu a concorrencia de rajada. A
+medicao em producao mostrou o contrario, e o texto anterior — que chegou a
+afirmar que a correcao de continuidade "torna isto mais provavel" — estava
+errado. Fica registrado assim de proposito: pendencia errada que permanece no
+arquivo envenena a proxima investigacao.
 
-⚠️ A correcao de continuidade (cfd500b) TORNA ISTO MAIS PROVAVEL, e isso esta
-declarado de proposito. Antes, a segunda invocacao encontrava
-`rotinaConversaPendente = null` (porque ja havia inbound) e caia fora por
-acidente; agora as duas veem a acao aberta e as duas entram no fluxo da rotina.
+**O QUE JA EXISTE E FUNCIONA.** `aguardarTurnoDaMae`, em
+`lib/ayla/lote-inbound.ts`, e chamado em `orchestrator.ts` l.2055 — ANTES da
+porta da Rotina Visual (l.2947). Ele ja garante dono unico por lote, por claim
+atomico sobre `ayla_messages.processada_em`
+(`update ... where processada_em is null returning *`). Janela de silencio de
+10s, calibrada em 19/08 sob a PEND-058.
 
-O QUE EXISTE E MITIGACAO, NAO CONSERTO: `/api/ludico/gerar-rotina` e idempotente
-(route.ts l.75-78 — recusa quando `cards_status` ja e `gerando` ou `pronto`),
-entao o pior caso e uma fala duplicada, nao arte duplicada nem rotina duplicada.
+**A MEDICAO, no caso real de 07/09 (familia 9c14b56b):**
 
-**Criterio de conclusao:** reserva no banco antes de agir, no padrao ja existente
-(`reservarEnvioProativo` em `lib/ayla/cadencia.ts`, `reservarConviteAssinatura`
-em `orchestrator.ts` l.1661) — reservar primeiro, resolver quem chegou antes,
-quem perde apaga a propria reserva. Medir a rajada real antes e depois.
-Relacionada a PEND-058.
+    12:55:34.341  processada_em=12:55:44.996  "Pode ser"        \ MESMO
+    12:55:34.566  processada_em=12:55:44.996  "Nao tem barco"   / LOTE
+    12:55:47.738  processada_em=12:55:57.934  "Por que acha qje yem barco?"
+    12:56:07.030  processada_em=12:56:17.225  "Ok"
+
+"Pode ser" e "Nao tem barco" chegaram com ~0,2s de diferenca e receberam o MESMO
+`processada_em`: foram processadas pelo mesmo lote, pelo mesmo dono. A mensagem
+seguinte chegou ~13,2s depois — fora da janela de 10s — e formou um turno novo e
+legitimo. As duas desculpas quase identicas sao dois TURNOS, nao dois donos.
+
+Portanto:
+
+- nao ha evidencia de dois donos concorrentes;
+- a mudanca de continuidade da Rotina Visual (cfd500b) NAO aumenta concorrencia;
+- **nao criar novo mecanismo de claim** — seria duplicar mecanismo maduro (§4).
+
+**O FENOMENO REAL E OUTRO:** a Ayla pode repetir uma correcao ou desculpa em
+turnos consecutivos porque o turno seguinte nao considera adequadamente que a
+mesma questao acabou de ser respondida. E conversacional, tem dono diferente
+(memoria do turno anterior) e nao pertence a Rotina Visual.
+
+**Proxima investigacao, se priorizada:** medir a frequencia dessa repeticao
+entre turnos, quantas familias sao afetadas e os padroes de contexto — ANTES de
+qualquer mudanca funcional.
 
 ---
 
