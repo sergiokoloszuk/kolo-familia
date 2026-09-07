@@ -13,7 +13,7 @@
  * Sem rede e sem custo. Sai com código 1 se qualquer regra falhar.
  */
 
-import { porExec, classificar, paresDeFeature, resumoFeature, comOrdinal } from "./analise.mjs";
+import { porExec, classificar, paresDeFeature, resumoFeature, comOrdinal, agiriaNaFeature, PONTOS_DE_SEQUESTRO } from "./analise.mjs";
 
 let falhas = 0;
 const igual = (nome, obtido, esperado) => {
@@ -125,6 +125,16 @@ igual("divergências contadas", ro.divergencias, 2);
 const ro2 = resumoFeature(karina).find((x) => x.mensagem === "Consegue trazer?");
 igual("turno com gabarito segue classificado", ro2.classificacao, "inconclusivo por variabilidade");
 igual("divergências também contadas nele", ro2.divergencias, 3);
+
+// ── 8. O QUE A FAMÍLIA SENTIRIA ≠ O BOOLEANO ────────────────────────────────
+console.log("\n8. agiriaNaFeature exige intenção NO ponto de sequestro");
+const dec = (intencao, pedidoExplicito) => ({ decisao: { intencao, pedidoExplicito } });
+igual("outro + pedido explícito NÃO toma o turno", agiriaNaFeature(dec("outro", true)), false);
+igual("rotina_criar + pedido explícito toma", agiriaNaFeature(dec("rotina_criar", true)), true);
+igual("rotina_criar SEM pedido explícito não toma", agiriaNaFeature(dec("rotina_criar", false)), false);
+igual("plano + pedido explícito toma", agiriaNaFeature(dec("plano", true)), true);
+igual("os cinco pontos e nada além", PONTOS_DE_SEQUESTRO.length, 5);
+igual("turno ausente não estoura", agiriaNaFeature(null), false);
 
 console.log(falhas ? `\n${falhas} FALHA(S) — a análise não pode ser usada assim.\n` : "\nTodos os casos passaram.\n");
 process.exit(falhas ? 1 : 0);

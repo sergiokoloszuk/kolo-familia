@@ -34,7 +34,7 @@ import { createHash } from "node:crypto";
 import { registerHooks } from "node:module";
 import { RUBRICA, CRITERIOS_JUIZ, avaliarDeterministicos, jargaoEncontrado } from "./rubrica.mjs";
 import { CASOS, CASOS_CRITICOS, CASOS_DIRECIONAIS } from "./casos.mjs";
-import { porExec, media, amplitude, classificar, paresDeFeature, resumoFeature } from "./analise.mjs";
+import { porExec, media, amplitude, classificar, paresDeFeature, resumoFeature, agiriaNaFeature } from "./analise.mjs";
 import { julgar } from "./juiz.mjs";
 
 const AQUI = dirname(fileURLToPath(import.meta.url));
@@ -335,10 +335,10 @@ if (!DIRECIONAL) {
 }
 
 linhas.push(`\n## Feature — sequestro do turno\n`);
-linhas.push(`| Caso | Exec | Esperado | A agiria | B agiria |`);
+linhas.push(`| Caso | Exec | Esperado | A pedidoExplicito / toma o turno | B pedidoExplicito / toma o turno |`);
 linhas.push(`|---|---|---|---|---|`);
 for (const p of paresDeFeature(saida.turnos)) {
-  linhas.push(`| ${p.caso} — "${p.mensagem.slice(0, 40)}" | exec ${p.execucao} | ${p.esperado} | ${p.aAgiria} | ${p.bAgiria ?? "sem par"} |`);
+  linhas.push(`| ${p.caso} — "${p.mensagem.slice(0, 40)}" | exec ${p.execucao} | ${p.esperado} | ${p.aAgiria} / ${p.aAgiriaNaFeature} | ${p.bAgiria ?? "sem par"} / ${p.bAgiriaNaFeature ?? "-"} |`);
 }
 
 linhas.push(`
@@ -366,6 +366,23 @@ if (!DIRECIONAL) {
     for (const x of ex) linhas.push(`- \`${x.braco}\` ${x.caso} — ${x.vereditos[c.id].evidencia}`);
   }
 
+}
+
+linhas.push(`
+### O que a família sentiria — porta real do orquestrador
+`);
+linhas.push(`Sequestro exige intenção NO ponto (rotina_ver/editar/criar, organizacao, plano) E pedidoExplicito.`);
+linhas.push(`
+| Caso — turno | Esperado | A toma por exec | B toma por exec | Erros A | Erros B | Classificacao |`);
+linhas.push(`|---|---|---|---|---|---|---|`);
+for (const r of resumoFeature(saida.turnos)) {
+  const alvo = (br) => r.execucoes.map((p) => (br === "A" ? p.aAgiriaNaFeature : p.bAgiriaNaFeature));
+  const errs = (br) => (r.esperado === null ? null : alvo(br).map((v) => (v !== r.esperado ? 1 : 0)));
+  const a = alvo("A"), b = alvo("B"), ea = errs("A"), eb = errs("B");
+  const m = (xs) => xs.map((v) => (v === null ? "?" : v ? "sim" : "nao")).join(",");
+  const cls = r.esperado === null ? "observacao - sem gabarito" : classificar(ea, eb);
+  const soma = (xs) => (xs ? xs.reduce((s, x) => s + x, 0) + "/" + xs.length : "-");
+  linhas.push(`| ${r.caso} — "${r.mensagem.slice(0, 40)}" | ${r.esperado} | ${m(a)} | ${m(b)} | ${soma(ea)} | ${soma(eb)} | ${cls} |`);
 }
 
 linhas.push(`\n## Custo\n`);

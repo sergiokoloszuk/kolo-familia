@@ -92,6 +92,8 @@ export function paresDeFeature(turnos) {
         esperado: x.observarDecisao === true ? null : x.esperaFeature,
         soObservacao: x.observarDecisao === true,
         aAgiria: x.featureAgiria,
+        aAgiriaNaFeature: agiriaNaFeature(x),
+        bAgiriaNaFeature: b ? agiriaNaFeature(b) : null,
         bAgiria: b ? b.featureAgiria : null,
         aErrou: x.observarDecisao === true ? null : x.featureAgiria !== x.esperaFeature,
         bErrou: x.observarDecisao === true || !b ? null : b.featureAgiria !== x.esperaFeature,
@@ -127,3 +129,29 @@ export function resumoFeature(turnos) {
     };
   });
 }
+
+/**
+ * OS PONTOS DE SEQUESTRO, COMO ELES EXISTEM NO ORQUESTRADOR.
+ *
+ * ⚠️ `pedidoExplicito` SOZINHO NÃO FAZ A FEATURE AGIR. Em
+ * `orchestrator.ts` cada porta exige as DUAS coisas — a intenção ser um dos
+ * pontos de sequestro E o pedido ser explícito:
+ *
+ *     intent === "rotina_ver"    && pedidoExplicito
+ *     intent === "rotina_editar" && pedidoExplicito && atoSobreArtefato(...)
+ *     intent === "rotina_criar"  && pedidoExplicito
+ *     intent === "organizacao"   && pedidoExplicito
+ *     intent === "plano"         && pedidoExplicito
+ *
+ * Medir só o booleano conta como sequestro turnos em que a intenção é `outro` —
+ * e nesses a feature não toma o turno em produção. A bateria dirigida mediu 4
+ * "sequestros" de B que eram todos `outro`: zero, na porta real.
+ *
+ * As duas métricas ficam lado a lado de propósito. `pedidoExplicito` é o
+ * booleano que a Fase 1B introduziu e é o que se quer vigiar; `agiriaNaFeature`
+ * é o que a família sentiria.
+ */
+export const PONTOS_DE_SEQUESTRO = ["rotina_ver", "rotina_editar", "rotina_criar", "organizacao", "plano"];
+
+export const agiriaNaFeature = (turno) =>
+  turno?.decisao?.pedidoExplicito === true && PONTOS_DE_SEQUESTRO.includes(turno?.decisao?.intencao);

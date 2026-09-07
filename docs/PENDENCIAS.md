@@ -7613,7 +7613,61 @@ STATUS: **ABERTA** · Aberta em: 2026-09-05
    fixo da entrega, **não vem do Core** — então nenhuma versão do Prompt Mestre
    o governa.
 
-**Próximo ID livre: PEND-167. *(024 e 025 reservadas por frentes ainda não publicadas; 0076 é número de MIGRACAO reservado — ver PEND-121.)***
+### PEND-167
+**Aceite curto depois de a Ayla oferecer o artefato — quem decide, e o quê**
+Bloco: **B · Ayla** · Prioridade: **P2**
+STATUS: **ABERTA** · Aberta em: 2026-09-07
+
+Bateria dirigida de 06-07/09 (360 turnos, 10 execucoes por braco, mesmo Core v11,
+`resultados/bruto-direcional.json`). Depois de a mae pedir *"Queria um quadro de
+rotina visual pra manha dele"* e a Ayla responder, o turno seguinte e **"Pode"**:
+
+| | agiu por execucao |
+|---|---|
+| A (`classificarIntencao`, producao 1c1b415) | sim x9, nao x1 — intencao `rotina_criar` |
+| B (`decidirTurno`, candidato 471e782) | nao x10 — intencao `outro` |
+
+Mesmo padrao em **"Me mostra"** depois de desabafo: A age em 5 de 10, B em 0 de
+10. Em **"Sim"** e **"Isso"** os dois bracos concordam: nenhum age.
+
+**Isto NAO foi contado como regressao** e nao bloqueou a Fase 1B: nao existe
+gabarito acordado para "aceite de oferta". O candidato ja agiu no turno anterior
+(10/10 no pedido explicito), entao tratar o aceite como continuacao e defensavel
+— mas e uma DECISAO DE PRODUTO que ninguem tomou por escrito, e a bancada nao
+pode toma-la no lugar de alguem.
+
+**Por que importa:** e a mesma forma do caso do **Mario** — a Ayla estrutura a
+sequencia, pergunta "esta correto?", a mae responde "Sim", e nada e gerado nem
+entregue. O defeito existe **hoje, em producao, com o braco A**; nao nasce do
+candidato. Mas o dado acima diz que o candidato **nao o corrige**, e que trata o
+aceite curto de forma mais conservadora que a producao atual.
+
+**Criterio de conclusao:** decisao escrita sobre quem e o dono do aceite curto
+(codigo, a partir do estado do artefato, x modelo), e prova em bancada de que
+aceite depois de oferta gera e entrega o artefato.
+
+---
+
+### PEND-168
+**A bancada media `pedidoExplicito` como se fosse a porta da feature**
+Bloco: **F · Bancada** · Prioridade: **P3**
+STATUS: **CONCLUIDA** · Aberta e fechada em: 2026-09-07
+
+`rodar.mjs` gravava `featureAgiria = d.pedidoExplicito === true`. Em
+`orchestrator.ts` cada porta exige as **duas** coisas — intencao no ponto de
+sequestro **E** pedido explicito (`intent === "rotina_criar" && pedidoExplicito`,
+e assim nas cinco). Medir so o booleano contava como sequestro turnos de intencao
+`outro`, em que a feature nao toma o turno nenhum.
+
+Efeito medido: os 4 "sequestros" de B na bateria dirigida eram todos `outro` —
+zero na porta real. A metrica **superestimava o candidato para pior**, o que por
+sorte nao inverteu conclusao nenhuma.
+
+Fechada por `agiriaNaFeature` em `analise.mjs`, com as duas metricas lado a lado
+no relatorio e 6 casos novos em `testar-analise.mjs` (37 no total). Recalculada
+sobre o bruto ja gravado por `analisar-feature.mjs`, sem repetir as 460 chamadas.
+
+**Proximo ID livre: PEND-169. *(024 e 025 reservadas por frentes ainda nao publicadas; 0076 e numero de MIGRACAO reservado — ver PEND-121.)***
 
 > Conferir contra `origin/main`, não contra o seu branch. Dois branches podem
 > reivindicar o mesmo número — o conflito de merge nesta linha é o alarme.
