@@ -4,8 +4,14 @@ Procedimento para ter uma família de teste **em produção** sem usar conta de
 família real. Escrito em 06/09/2026, para homologar a retomada reativa de
 artefato pendente (`b816ef2`).
 
-> **Estado:** preparado até onde não depende de telefone. Os passos 1 a 3
-> exigem um número de WhatsApp disponível e **não foram executados**.
+> **Estado (atualizado em 07/09/2026):** existem **dois** tipos de QA, e eles
+> têm pré-requisitos diferentes. O **QA de artefatos** foi executado e provado
+> em produção no Nível 2 — sem telefone nenhum. O **QA comportamental de
+> WhatsApp** (passos 1 a 7 deste documento) continua exigindo um número
+> disponível e **não foi executado**.
+>
+> ⚠️ Este documento afirmava que `whatsapp_e164` era obrigatório. **Não é.**
+> Ver "Dois tipos de QA", logo abaixo.
 
 ---
 
@@ -24,6 +30,73 @@ Decisão de 06/09/2026: **criar a quarta, dedicada e descartável.**
 
 ---
 
+## Dois tipos de QA — escolha antes de começar
+
+A pergunta que decide é: **o que está sendo provado é o artefato, ou a
+conversa?** Elas têm custos e pré-requisitos completamente diferentes, e
+confundi-las foi o que fez este documento declarar um bloqueio que não existia.
+
+| | **QA de artefatos** | **QA comportamental de WhatsApp** |
+|---|---|---|
+| Prova | banco, geração, storage, URLs assinadas, magic link, páginas | webhook, inbound, outbound, experiência no aparelho |
+| Telefone | **não precisa** | **exige número real da equipe** |
+| `whatsapp_e164` | `NULL` | número verificado |
+| `ayla_preferences.desativada` | `true` (segunda trava) | `false` durante a bateria |
+| Criação | Auth Admin API + `handle_new_user` | signup pelo caminho real |
+| Estado | **executado e provado** (Nível 2, 07/09/2026) | **não executado** — é o Nível 3 |
+
+---
+
+## QA de artefatos — sem WhatsApp
+
+### O fato que destrava isto
+
+`whatsapp_e164` **é anulável**. A `NOT NULL` da migração 0001 não vale mais.
+
+> **Evidência datada — 07/09/2026.** Na medição do Nível 2, **107 das 273
+> famílias** da base estavam com `whatsapp_e164 = NULL`. Isto é uma leitura de
+> um dia, não uma regra: se for usada de novo, **medir de novo**. O que a
+> medição estabelece é que o estado é *possível e comum*, não que a proporção
+> se mantenha.
+
+Uma família sem telefone **não tem para onde a Ayla enviar**. A trava é física,
+não disciplinar — não depende de ninguém lembrar de nada.
+
+### Receita
+
+1. **Criar o usuário pela Auth Admin API**, com `email_confirm: true` e um
+   e-mail identificável (`qa+<frente>-<data>@…`). Não inserir família por SQL:
+   quem a cria é o gatilho `handle_new_user`, que também monta trial e
+   preferências — a família fica com a mesma forma das reais.
+2. **Conferir que a família nasceu com `whatsapp_e164 = NULL`.** Se nasceu com
+   número, parar: alguma coisa mudou e o resto desta receita não vale.
+3. **Marcar alto e claro**: `nome_familia = "QA <frente> APAGAR <data>"`.
+4. **Segunda trava**: `ayla_preferences.desativada = true`. Redundante com a
+   ausência de telefone, e é essa a intenção.
+5. **Criança fictícia.** `membros_atipicos` exige `perfil` num CHECK fechado
+   (`TEA` · `TDAH` · `Dislexia` · `AHSD` · `Outro` · `EmInvestigacao`) e `idade`
+   entre 0 e 120. Nome, data e diagnóstico fictícios, e ficam fictícios.
+6. **Acesso**: criar `subscription_accesses` com `status = 'trialing'` e
+   `trial_ends_at` no futuro, senão o app barra a página.
+7. **Registrar todos os IDs criados** num arquivo à parte, antes de seguir.
+   Sem a lista, a limpeza vira arqueologia.
+8. **Snapshot das contagens antes.** É o que permite provar, no fim, que só o
+   que foi criado sumiu.
+
+### Limpeza
+
+`DELETE` do usuário de Auth — o `ON DELETE CASCADE` leva família, membro,
+rotinas, tarefas, acesso, preferências e tokens de acesso.
+
+⚠️ **O storage não entra no cascade.** As imagens ficam sob
+`imagens/<family_id>/…` e precisam ser apagadas explicitamente, pelo prefixo da
+família QA, **antes** do delete — depois dele o `family_id` já não está à mão.
+
+Fechar conferindo que as contagens voltaram ao snapshot inicial. Contagem que
+não volta é resíduo, e resíduo em produção não é aceitável.
+
+---
+
 ## O que NÃO fazer
 
 - **Não criar a família por SQL direto.** `handle_new_user` cria a família e o
@@ -38,7 +111,12 @@ Decisão de 06/09/2026: **criar a quarta, dedicada e descartável.**
 
 ---
 
-## Pré-requisito que custa mundo real
+## QA comportamental de WhatsApp — os passos 1 a 7
+
+> Tudo daqui para baixo vale **só** para a trilha comportamental. Para provar
+> artefato, use a receita acima e não gaste um número.
+
+### Pré-requisito que custa mundo real
 
 **Um número de WhatsApp ativo, novo, que alguém nosso segure.**
 
