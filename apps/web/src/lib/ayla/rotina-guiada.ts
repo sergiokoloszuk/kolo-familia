@@ -206,38 +206,56 @@ export async function propostaPendente(
   }
 }
 
-/** Há uma conversa de rotina em andamento? (último outbound de rotina sem resposta ainda) */
+/**
+ * HÁ UMA CONVERSA DE ROTINA EM ANDAMENTO?
+ *
+ * ⚠️ QUEM FECHA A AÇÃO É A AYLA, NÃO A RESPOSTA DA FAMÍLIA — 07/09/2026.
+ *
+ * Até aqui a função procurava o último outbound DE ROTINA e devolvia `null` se
+ * existisse qualquer inbound depois dele. Bastava a mãe responder UMA vez para
+ * o fio se cortar. Foi o que aconteceu com a Manu: ela pediu o quadro, a Ayla
+ * montou e perguntou o tema (`rotina_conversa`, 12:55:10); ela respondeu "Pode
+ * ser" e "Nao tem barco" no mesmo segundo — e a partir daí todo turno caiu na
+ * conversa comum, que responde como `resposta_registro` e ACIONA a ponte do
+ * Plano. A rotina ficou em `aguardando` até hoje e a família recebeu um Plano
+ * no lugar dos cartões.
+ *
+ * Agora a pergunta é outra: **qual foi a última coisa que a Ayla disse?** Se foi
+ * uma fala de rotina, a ação continua aberta — não importa quantas vezes a
+ * família tenha respondido. Se foi qualquer outro desfecho (`rotina_pronta`,
+ * `resposta_registro`, ...), a ação está encerrada.
+ *
+ * É o mesmo desenho de sempre: estado inferido do que aconteceu. O que muda é
+ * QUEM tem autoridade para encerrar — e responder nunca foi encerrar.
+ */
 export async function rotinaConversaPendente(
   supabase: SupabaseClient,
   familyId: string,
   agora: Date,
 ): Promise<{ membroId: string | null } | null> {
   const limite = new Date(agora.getTime() - 48 * 60 * 60 * 1000);
+  // ⚠️ SEM FILTRO DE TIPO NA CONSULTA, de propósito. É preciso ver a ÚLTIMA fala
+  // da Ayla, seja ela qual for — filtrar por tipo aqui traria a última fala DE
+  // ROTINA mesmo que dez respostas comuns tivessem saído depois, e a ação
+  // pareceria aberta muito além do seu fim.
+  //
+  // ⚠️ A PROPOSTA TAMBÉM MANTÉM A CONVERSA ABERTA. Sem `rotina_proposta` na
+  // lista o portão do orquestrador não reconheceria o turno seguinte como
+  // continuação, e o "sim" da mãe cairia na conversa comum — a proposta
+  // morreria calada, que é o beco que `cards_status='aguardando'` já resolveu
+  // para o tema em 08/08/2026.
   const { data: perguntas } = await supabase
     .from("ayla_messages")
-    .select("created_at, membro_atipico_id")
+    .select("created_at, membro_atipico_id, tipo")
     .eq("family_account_id", familyId)
-    // ⚠️ A PROPOSTA TAMBÉM MANTÉM A CONVERSA ABERTA. Sem isto o portão do
-    // orquestrador não reconheceria o turno seguinte como continuação, e o
-    // "sim" da mãe cairia na conversa comum — a proposta morreria calada,
-    // que é exatamente o beco que `cards_status='aguardando'` já resolveu
-    // para o tema em 08/08/2026.
-    .in("tipo", ["rotina_conversa", "rotina_proposta"])
     .eq("direcao", "outbound")
     .gte("created_at", limite.toISOString())
     .order("created_at", { ascending: false })
     .limit(1);
   const p = perguntas?.[0];
   if (!p) return null;
-
-  const { data: respostas } = await supabase
-    .from("ayla_messages")
-    .select("id")
-    .eq("family_account_id", familyId)
-    .eq("direcao", "inbound")
-    .gt("created_at", p.created_at as string)
-    .limit(1);
-  if ((respostas?.length ?? 0) > 0) return null;
+  const tipo = (p.tipo as string | null) ?? null;
+  if (tipo !== "rotina_conversa" && tipo !== "rotina_proposta") return null;
 
   return { membroId: (p.membro_atipico_id as string | null) ?? null };
 }
@@ -357,6 +375,50 @@ type Transicao = {
   merece_plano?: boolean | null;
   atualizado_em?: string;
 };
+
+/**
+ * ESTA TRANSIÇÃO É DO PEDIDO DE AGORA, OU É MEMÓRIA?
+ *
+ * ⚠️ O CASO DO BARCO — 07/09/2026. A mãe pediu "Brincadeira, Banho, Almoço,
+ * Shopping. Monta a rotina visual". O quadro saiu com QUATRO etapas de passeio
+ * de barco. Não foi alucinação: o perfil da Manu guarda a transição
+ * `{momento:"passeio de barco", estrategia:"rotina visual para antecipar os
+ * passos"}`, de um passeio real de 24/07. Como o turno não revelou transição
+ * nova, `pontoDificilDoTurno` caía em `transicoesConhecidas[0]` — a PRIMEIRA
+ * transição já gravada, seja ela de quando for — e o gerador construiu o dia de
+ * hoje em volta de um passeio de julho.
+ *
+ * O fato estava certo. O uso é que estava errado: memória virou etapa.
+ *
+ * A régua é determinística: a transição só compõe o artefato de hoje se a
+ * família tiver falado dela AGORA. O acervo continua inteiro no contexto
+ * conversacional — a Ayla segue sabendo e segue não re-perguntando —, mas o que
+ * a criança vê no cartão só pode vir do que foi pedido.
+ */
+export function transicaoPertenceAoPedido(
+  momento: string | null | undefined,
+  falaDaFamilia: string | null | undefined,
+): boolean {
+  const normalizar = (t: string) =>
+    t.toLowerCase().normalize("NFD").replace(/\p{Diacritic}/gu, "");
+  const alvo = normalizar(String(falaDaFamilia ?? ""));
+  if (!alvo.trim()) return false;
+  // Palavras curtas e de ligação não distinguem nada, e "hora"/"momento"/"casa"
+  // aparecem em quase toda transição.
+  const VAZIAS = new Set([
+    "hora", "horas", "momento", "dia", "tarde", "manha", "noite", "casa",
+    "para", "pela", "pelo", "com", "sem", "que", "quando", "depois", "antes",
+    "toda", "todo", "cada", "uma", "uns", "umas", "dos", "das", "nos", "nas",
+  ]);
+  const termos = normalizar(String(momento ?? ""))
+    .split(/[^a-z0-9]+/)
+    .filter((w) => w.length >= 4 && !VAZIAS.has(w));
+  // Transição sem termo distintivo não se prova pertencente — e no escuro o
+  // viés é NÃO compor o artefato. Deixar de usar custa uma pergunta; usar
+  // errado custa um quadro com um passeio que não vai acontecer.
+  if (!termos.length) return false;
+  return termos.some((w) => alvo.includes(w));
+}
 
 /** Transições difíceis já aprendidas (do Kolo Vivo) — pra a Ayla já chegar sabendo. */
 async function carregarTransicoes(supabase: SupabaseClient, membroId: string): Promise<Transicao[]> {
@@ -817,7 +879,7 @@ export function ehAceitePuro(texto: string | null | undefined): boolean {
     .replace(/[^\p{L}\s]/gu, "")
     .trim();
   if (!t) return false;
-  return /^(sim|isso|isso mesmo|e isso|exato|exatamente|perfeito|otimo|ok|okay|blz|beleza|show|ta bom|tudo bem|pode ser|pode fazer|pode montar|pode mandar|podes|concordo|gostei|adorei|amei|ficou bom|ficou otimo|ta otimo|vamos|bora|manda|fecha|fechado|combinado|acho que sim|por mim ta bom|do jeito que voce falou|assim mesmo|assim ta bom)$/.test(
+  return /^(sim|isso|isso mesmo|e isso|exato|exatamente|perfeito|otimo|ok|okay|blz|beleza|show|ta bom|tudo bem|pode|pode ser|pode fazer|pode montar|pode mandar|podes|concordo|gostei|adorei|amei|ficou bom|ficou otimo|ta otimo|vamos|bora|manda|fecha|fechado|combinado|acho que sim|por mim ta bom|do jeito que voce falou|assim mesmo|assim ta bom)$/.test(
     t,
   );
 }
@@ -838,6 +900,39 @@ export function ehAceitePuro(texto: string | null | undefined): boolean {
  */
 export function lerRespostaAProposta(texto: string | null | undefined): "aceite" | "ajuste" {
   return ehAceitePuro(texto) ? "aceite" : "ajuste";
+}
+
+/**
+ * A ÚLTIMA FALA DA AYLA OFERECEU MESMO ESTE TEMA?
+ *
+ * ⚠️ É O QUE IMPEDE O ACEITE DE VIRAR TEMA NO VAZIO. Sem esta conferência,
+ * qualquer "ok" com uma rotina em `aguardando` aplicaria o primeiro interesse
+ * da criança como tema — inclusive um "ok" que respondia a outra coisa. Aqui a
+ * oferta precisa estar escrita, na fala anterior, com todas as letras.
+ */
+async function ofertaDeTemaNaUltimaFala(
+  supabase: SupabaseClient,
+  familyId: string,
+  tema: string,
+): Promise<boolean> {
+  try {
+    const { data } = await supabase
+      .from("ayla_messages")
+      .select("texto, tipo")
+      .eq("family_account_id", familyId)
+      .eq("direcao", "outbound")
+      .order("created_at", { ascending: false })
+      .limit(1);
+    const ultima = data?.[0];
+    if (!ultima) return false;
+    const tipo = (ultima.tipo as string | null) ?? null;
+    if (tipo !== "rotina_conversa" && tipo !== "rotina_proposta") return false;
+    const normalizar = (t: string) =>
+      t.toLowerCase().normalize("NFD").replace(/\p{Diacritic}/gu, "");
+    return normalizar(String(ultima.texto ?? "")).includes(normalizar(tema));
+  } catch {
+    return false;
+  }
 }
 
 /**
@@ -1283,7 +1378,28 @@ export async function conduzirRotina(
       // ⚠️ E NÃO INVENTA NADA. Só encontra o que a própria família escreveu,
       // pelo MESMO extrator (`lerTemaEscolhido`). Sem tema no histórico, o
       // fluxo segue perguntando, como antes.
-      const escolhido = lerTemaEscolhido(params.contexto) ?? (await temaJaDitoNoHistorico(supabase, familyId));
+      // ⚠️ ACEITAR O TEMA OFERECIDO É ESCOLHER O TEMA — 07/09/2026, caso Manu.
+      //
+      // A Ayla montou o quadro e ofereceu: "posso fazer em *contos e princesas*
+      // — ou qualquer outro". A mãe respondeu "Pode ser". `lerTemaEscolhido`
+      // devolve `null` para aceite, e com razão: em 17/08 "sim" virava o tema
+      // dos cartões. Só que aqui o aceite TEM referente — a própria Ayla acabou
+      // de nomear o tema —, e sem ninguém para ligar as duas pontas a rotina
+      // ficou em `aguardando` para sempre e a família nunca recebeu os cartões.
+      //
+      // Não é afrouxar o extrator: ele continua recusando aceite como tema. O
+      // que se acrescenta é o REFERENTE, e ele não é inventado — é `interesses`,
+      // a mesma fonte determinística que compôs a oferta no turno anterior, e só
+      // vale se a última fala da Ayla tiver mesmo oferecido aquele tema.
+      const temaOferecido = sugestoesDeTema.split("* ou *")[0]?.trim() || null;
+      const aceitouOTemaOferecido =
+        !!temaOferecido &&
+        ehAceitePuro(params.contexto) &&
+        (await ofertaDeTemaNaUltimaFala(supabase, familyId, temaOferecido));
+      const escolhido =
+        lerTemaEscolhido(params.contexto) ??
+        (aceitouOTemaOferecido ? temaOferecido : null) ??
+        (await temaJaDitoNoHistorico(supabase, familyId));
       if (escolhido) {
         await supabase.from("rotinas").update({ tema: escolhido }).eq("id", pendente.id);
         const comecou = await dispararGeracao(pendente.id, escolhido);
@@ -1644,10 +1760,24 @@ ${jaSabemos.rotinaExistente}`
     // de revelar, ou o que já estava no perfil. Serve ao gerador E ao PDF.
     const trAgora = Array.isArray(parsed?.transicoes) ? (parsed.transicoes as unknown[]) : [];
     const t0 = (trAgora[0] ?? null) as { momento?: unknown; estrategia?: unknown } | null;
+    // ⚠️ A MEMÓRIA NÃO DECIDE O PONTO DIFÍCIL DE HOJE. O fallback pegava
+    // `transicoesConhecidas[0]` — a primeira transição já gravada, de qualquer
+    // data — e a entregava ao gerador como o ponto difícil DESTE pedido. Foi
+    // assim que o passeio de barco de 24/07 virou quatro etapas do dia 07/09.
+    const falaDoPedido = historicoDaRotina
+      .filter((h) => h.de === "mae")
+      .map((h) => h.texto)
+      .join("\n");
+    const transicoesDoPedido = transicoesConhecidas.filter((t) =>
+      transicaoPertenceAoPedido(t.momento, falaDoPedido),
+    );
+    const transicoesTxtDoPedido = transicoesDoPedido
+      .map((t) => `${t.momento}${t.estrategia ? ` → ${t.estrategia}` : ""}`)
+      .join("; ");
     const pontoDificilDoTurno =
-      (t0?.momento ? String(t0.momento) : "") || transicoesConhecidas[0]?.momento || null;
+      (t0?.momento ? String(t0.momento) : "") || transicoesDoPedido[0]?.momento || null;
     const estrategiaDoTurno =
-      (t0?.estrategia ? String(t0.estrategia) : "") || transicoesConhecidas[0]?.estrategia || null;
+      (t0?.estrategia ? String(t0.estrategia) : "") || transicoesDoPedido[0]?.estrategia || null;
 
     let rotinas: ReturnType<typeof sanitizarRotinas> = [];
     /** Rotinas gravadas neste turno; vazio quando nada foi persistido. */
@@ -1664,7 +1794,10 @@ ${jaSabemos.rotinaExistente}`
         // inteira volta apenas quando a mãe mandou usar o que já contou.
         historico: prontidao.reusaHistorico ? historico : historicoDaRotina,
         mensagem: params.contexto,
-        contexto: [jaSabemos.perfil, jaSabemos.rotinaExistente, transicoesTxt].filter(Boolean).join("\n"),
+        // Mesmo motivo do ponto difícil: o gerador só vê as transições que a
+        // família trouxe para ESTE pedido. O contexto conversacional continua
+        // recebendo o acervo inteiro.
+        contexto: [jaSabemos.perfil, jaSabemos.rotinaExistente, transicoesTxtDoPedido].filter(Boolean).join("\n"),
         pontoDificil: pontoDificilDoTurno,
         tamanho,
         // ── A SEQUÊNCIA ACORDADA CHEGA AO ARTEFATO ─────────────────────────
