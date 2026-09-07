@@ -7667,7 +7667,42 @@ Fechada por `agiriaNaFeature` em `analise.mjs`, com as duas metricas lado a lado
 no relatorio e 6 casos novos em `testar-analise.mjs` (37 no total). Recalculada
 sobre o bruto ja gravado por `analisar-feature.mjs`, sem repetir as 460 chamadas.
 
-**Proximo ID livre: PEND-169. *(024 e 025 reservadas por frentes ainda nao publicadas; 0076 e numero de MIGRACAO reservado — ver PEND-121.)***
+### PEND-169
+**O gate de pedido explicito nao alcanca o Plano — o comentario diz que sim**
+Bloco: **B · Ayla** · Prioridade: **P2**
+STATUS: **ABERTA** · Aberta em: 2026-09-07
+
+A Fase 1B (471e782) fechou os quatro pontos de sequestro da Rotina com
+`pedidoExplicito`. No Plano, a mudanca foi em `ponteDePlano.temDesafio`:
+
+    ANTES:  intencao === "plano" || Boolean(tema)
+    DEPOIS: (intencao === "plano" && pedidoExplicito) || Boolean(tema)
+
+`Boolean(tema)` continua **OU-ado** e nao foi tocado. Como quase todo turno com
+assunto identificavel produz `tema`, o primeiro ramo praticamente nunca decide —
+`pedidoExplicito` e, na pratica, inerte para o Plano.
+
+E o comentario acrescentado junto diz o contrario:
+
+    // O TEMA SOZINHO NAO PEDE PLANO. Boolean(tema) fazia qualquer
+    // conversa com assunto identificavel contar como desafio.
+
+Ele descreve um defeito que a linha abaixo dele **nao corrige**. E exatamente o
+caso do §1 do protocolo: nome e comentario nao sao evidencia.
+
+**NAO E REGRESSAO.** O conjunto DEPOIS e subconjunto do ANTES — o gate so pode
+disparar menos, nunca mais. Provado em producao em 07/09: o plano `cf46532c`
+(familia 9c14b56b, tema "Lidar com frustracao e mudancas de planos",
+origem `estrategias`) nasceu pelo ramo do tema, identico ao plano `ee4d54ea` de
+06/09 as 22:22, que rodou sob 1c1b415. Entregas por dia: 3, 1, 6, 2, 2, 1, 1 —
+o dia do deploy e o menor da serie.
+
+**Criterio de conclusao:** decidir se o Plano deve exigir pedido explicito. Se
+sim, remover o `|| Boolean(tema)` e medir o falso negativo (§12, caso I) antes de
+publicar. Se nao, corrigir o comentario, que hoje engana quem le. Relacionada a
+PEND-167 e ao gate de prontidao de `prontidao-plano.ts`.
+
+**Proximo ID livre: PEND-170. *(024 e 025 reservadas por frentes ainda nao publicadas; 0076 e numero de MIGRACAO reservado — ver PEND-121.)***
 
 > Conferir contra `origin/main`, não contra o seu branch. Dois branches podem
 > reivindicar o mesmo número — o conflito de merge nesta linha é o alarme.
