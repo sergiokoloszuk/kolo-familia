@@ -155,6 +155,14 @@ async function membroTemAvatar(supabase: SupabaseClient, membroId: string): Prom
  */
 export type EtapaProposta = { texto: string; hora: string | null };
 
+/** Referente conversacional; o estado dos cartões continua pertencendo a rotinas. */
+export type AcaoRotina = {
+  rotinaIds: string[];
+  temasOferecidos: string[];
+  aguardando: "tema" | "sequencia";
+  temaAceito?: string | null;
+};
+
 /**
  * A PROPOSTA QUE ESTÁ NA MESA — e por que ela se auto-consome.
  *
@@ -206,40 +214,31 @@ export async function propostaPendente(
   }
 }
 
-/** Há uma conversa de rotina em andamento? (último outbound de rotina sem resposta ainda) */
+/** A resposta da família não consome a ação. O próximo desfecho da Ayla a encerra. */
 export async function rotinaConversaPendente(
   supabase: SupabaseClient,
   familyId: string,
   agora: Date,
-): Promise<{ membroId: string | null } | null> {
+): Promise<{ membroId: string | null; acao?: AcaoRotina } | null> {
   const limite = new Date(agora.getTime() - 48 * 60 * 60 * 1000);
   const { data: perguntas } = await supabase
     .from("ayla_messages")
-    .select("created_at, membro_atipico_id")
+    .select("created_at, membro_atipico_id, tipo, metadata")
     .eq("family_account_id", familyId)
     // ⚠️ A PROPOSTA TAMBÉM MANTÉM A CONVERSA ABERTA. Sem isto o portão do
     // orquestrador não reconheceria o turno seguinte como continuação, e o
     // "sim" da mãe cairia na conversa comum — a proposta morreria calada,
     // que é exatamente o beco que `cards_status='aguardando'` já resolveu
     // para o tema em 08/08/2026.
-    .in("tipo", ["rotina_conversa", "rotina_proposta"])
     .eq("direcao", "outbound")
     .gte("created_at", limite.toISOString())
     .order("created_at", { ascending: false })
     .limit(1);
   const p = perguntas?.[0];
-  if (!p) return null;
-
-  const { data: respostas } = await supabase
-    .from("ayla_messages")
-    .select("id")
-    .eq("family_account_id", familyId)
-    .eq("direcao", "inbound")
-    .gt("created_at", p.created_at as string)
-    .limit(1);
-  if ((respostas?.length ?? 0) > 0) return null;
-
-  return { membroId: (p.membro_atipico_id as string | null) ?? null };
+  if (!p || !["rotina_conversa", "rotina_proposta"].includes(p.tipo)) return null;
+  const acao = (p.metadata as { acaoRotina?: AcaoRotina } | null)?.acaoRotina;
+  return { membroId: (p.membro_atipico_id as string | null) ?? null,
+    ...(acao?.rotinaIds?.length ? { acao } : {}) };
 }
 
 /**
@@ -817,7 +816,7 @@ export function ehAceitePuro(texto: string | null | undefined): boolean {
     .replace(/[^\p{L}\s]/gu, "")
     .trim();
   if (!t) return false;
-  return /^(sim|isso|isso mesmo|e isso|exato|exatamente|perfeito|otimo|ok|okay|blz|beleza|show|ta bom|tudo bem|pode ser|pode fazer|pode montar|pode mandar|podes|concordo|gostei|adorei|amei|ficou bom|ficou otimo|ta otimo|vamos|bora|manda|fecha|fechado|combinado|acho que sim|por mim ta bom|do jeito que voce falou|assim mesmo|assim ta bom)$/.test(
+  return /^(sim|isso|isso mesmo|e isso|exato|exatamente|perfeito|otimo|ok|okay|blz|beleza|show|ta bom|tudo bem|pode|pode ser|pode fazer|pode montar|pode mandar|podes|concordo|gostei|adorei|amei|ficou bom|ficou otimo|ta otimo|vamos|bora|manda|fecha|fechado|combinado|acho que sim|por mim ta bom|do jeito que voce falou|assim mesmo|assim ta bom)$/.test(
     t,
   );
 }
@@ -1196,6 +1195,7 @@ export async function conduzirRotina(
   falaCorrigida?: boolean;
   /** As etapas propostas neste turno, quando a Ayla está esperando resposta. */
   proposta?: EtapaProposta[];
+  acaoRotina?: AcaoRotina;
 } | null> {
   try {
     if (!params.contexto.trim()) return null;
@@ -1205,7 +1205,7 @@ export async function conduzirRotina(
       .select("family_account_id, nome, data_nascimento")
       .eq("id", params.membroAtipicoId)
       .maybeSingle();
-    if (!membro) return null;
+    if (!membro || membro.family_account_id !== params.familyId) return null;
     const familyId = (membro.family_account_id as string) ?? params.familyId;
     const nome = (membro.nome as string) ?? "seu filho";
     const idade = idadeAnos((membro.data_nascimento as string | null) ?? null);
@@ -1219,6 +1219,11 @@ export async function conduzirRotina(
       .filter(Boolean)
       .slice(0, 2)
       .join("* ou *");
+
+    const conversaPendente = await rotinaConversaPendente(supabase, familyId, new Date());
+    if (conversaPendente?.acao && conversaPendente.membroId === params.membroAtipicoId) {
+      return await continuarQuadro(supabase, params, conversaPendente.acao);
+    }
 
     // ── A PROPOSTA NA MESA VEM ANTES DE TUDO ───────────────────────────────
     //
@@ -1348,14 +1353,18 @@ export async function conduzirRotina(
     let inicio = 0;
     for (let i = historico.length - 1; i >= 0; i--) {
       const h = historico[i]!;
-      if (h.de === "kolo" && h.tipo && h.tipo !== "rotina_conversa") {
+      if (h.de === "kolo" && h.tipo && !["rotina_conversa", "rotina_proposta"].includes(h.tipo)) {
         inicio = i + 1;
         break;
       }
     }
     const historicoDaRotina = historico.slice(inicio);
 
-    const transicoesConhecidas = await carregarTransicoes(supabase, params.membroAtipicoId);
+    // Só eventos mencionados pela FAMÍLIA neste pedido podem compor etapas.
+    // Memória histórica permanece no perfil, mas não vira ponto difícil de hoje.
+    const falaAtual = historicoDaRotina.filter((h) => h.de === "mae").map((h) => h.texto).join("\n");
+    const transicoesConhecidas = (await carregarTransicoes(supabase, params.membroAtipicoId))
+      .filter((t) => transicaoPertenceAoPedido(t.momento, falaAtual));
     const transicoesTxt = transicoesConhecidas.length
       ? transicoesConhecidas
           .map((t) => `${t.momento}${t.estrategia ? ` → ${t.estrategia}` : ""}${t.funcionou === false ? " (não funcionou, tentar outra)" : ""}`)
@@ -1653,6 +1662,7 @@ ${jaSabemos.rotinaExistente}`
     /** Rotinas gravadas neste turno; vazio quando nada foi persistido. */
     let idsDoTurno: string[] = [];
     let faltaTemaFinal = false;
+    let acaoRotina: AcaoRotina | undefined;
     if (pronto) {
       const r = await gerarRotina(supabase, {
         familyId,
@@ -1664,7 +1674,7 @@ ${jaSabemos.rotinaExistente}`
         // inteira volta apenas quando a mãe mandou usar o que já contou.
         historico: prontidao.reusaHistorico ? historico : historicoDaRotina,
         mensagem: params.contexto,
-        contexto: [jaSabemos.perfil, jaSabemos.rotinaExistente, transicoesTxt].filter(Boolean).join("\n"),
+        contexto: [jaSabemos.perfil, prontidao.reusaHistorico ? jaSabemos.rotinaExistente : "", transicoesTxt].filter(Boolean).join("\n"),
         pontoDificil: pontoDificilDoTurno,
         tamanho,
         // ── A SEQUÊNCIA ACORDADA CHEGA AO ARTEFATO ─────────────────────────
@@ -1844,6 +1854,7 @@ ${jaSabemos.rotinaExistente}`
         // realmente acontece: os cartões existem no plano, falta ela escolher
         // o tema. É o que permite perguntar sem abandonar.
         await marcarAguardandoTema(supabase, ids);
+        acaoRotina = { rotinaIds: ids, temasOferecidos: (interesses ?? "").split(/[,;]/).map((s) => s.trim()).filter(Boolean).slice(0, 2), aguardando: "tema" };
         console.warn(
           `[ayla:rotina] cartões pedidos sem tema — rotina(s) em 'aguardando', tema perguntado na mensagem`,
         );
@@ -1987,6 +1998,7 @@ Ah — se quiser, o próprio ${nome} pode ser o personagem dos cartões em vez d
       // Quem persiste é o orquestrador (é ele que fala com `ayla_messages`).
       // Devolver as etapas aqui é o que faz a proposta sobreviver ao turno.
       proposta: propondo ? propostaDoTurno : undefined,
+      acaoRotina,
     };
   } catch (e) {
     console.warn("[ayla:rotina-guiada] falha:", e instanceof Error ? e.message : e);
