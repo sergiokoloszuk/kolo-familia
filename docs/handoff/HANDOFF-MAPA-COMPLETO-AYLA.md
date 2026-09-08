@@ -64,7 +64,90 @@ E o `FALLBACK` do código só tem `core`: se alguém pedisse `plano` ou
 
 ---
 
-## 2 · A incógnita que decide metade do mapa
+## 1-bis · A INCÓGNITA FOI FECHADA — e a resposta é pior que "off"
+
+**08/09, segunda rodada.** A pergunta era "`KOLO_PILOTO_4A` está ligada?".
+A resposta certa é: **não importa, porque o código que a lê não é alcançado.**
+
+### A prova, em três passos
+
+**1. `pilotoQuatroA` é chamada em exatamente dois lugares:**
+
+```
+orchestrator.ts:3588   ← caminho do WhatsApp
+lib/ia/context.ts:153  ← caminho da WEB
+```
+
+**2. A linha 3588 fica DEPOIS do `return` do caminho novo.** Em
+`orchestrator.ts:3334`, com o comentário original:
+
+```js
+// ⚠️ O `return` É O QUE GARANTE UMA RESPOSTA SÓ. Sem ele, o turno seguiria
+// para a Ayla atual e a família receberia duas.
+return { tratada: true, familia: family.id, resposta: resp };
+}
+console.log("[ayla:path] experimental indisponível — seguindo pela Ayla atual");
+```
+
+Tudo abaixo disso — inclusive o bloco do piloto 4A — só executa quando
+`responderExperimental` **falha**. E `AYLA_EXPERIMENTAL_TODAS=true` está
+publicado em produção (visível em `/api/health`), então o caminho novo atende
+**todos os turnos**.
+
+**3. O caminho vivo não usa nada disso.** Varredura em `experimental.ts` por
+`carregarPerfilConsultavel`, `secoesDe`, `base2`, `pilotoQuatroA` e
+`registrarRastroConhecimento`: **zero ocorrências**.
+
+### A confirmação empírica, que eu quase li ao contrário
+
+Os 330 rastros de conhecimento com `canal:"whatsapp"` vão de **09/08 a 22/08 —
+e param**. Nenhum depois disso. É exatamente a assinatura de um bloco que
+deixou de ser alcançado quando o caminho novo assumiu.
+
+E dentro daquela janela o piloto **estava ligado para alguém**: das 93 boas
+práticas distintas recuperadas no WhatsApp, **8 estavam em `rascunho`** — e
+`statusAceitos` só inclui `rascunho` dentro do piloto (`orchestrator.ts:3597`).
+A distribuição de `n_enviados` mistura 2 (limite do piloto) e 3 (limite de
+fora), coerente com `teste` + allowlist.
+
+> ⚠️ **CORREÇÃO DE UM ERRO MEU.** Na primeira versão deste mapa eu escrevi que a
+> PEND-106 estava "parcialmente desatualizada" porque encontrei 330 rastros de
+> WhatsApp. **Estava errado.** Os rastros são todos do período legado e param em
+> 22/08. A PEND-106 está certa: **o rastro do conhecimento não cobre o WhatsApp
+> hoje**. Eu tinha o dado e li a data errado.
+
+### O que isso significa
+
+| | WhatsApp (caminho vivo) | Web |
+|---|---|---|
+| `carregarPerfilConsultavel` | **não chega** | atrás do piloto |
+| `base2` / `secoesDe` | **não chega** | atrás do piloto |
+| rastro do conhecimento | **não emite** | emite |
+| BPs | **chega** — `experimental.ts:841`, `relato` + `idade` + `limite: 2`, só `ativo` | chega |
+| `KOLO_PILOTO_4A` | **irrelevante** | relevante |
+
+**Valor da variável: NÃO COMPROVADO** — não tenho leitura de env de produção, e
+o `/api/health` não a publica. Mas o valor **deixou de importar para o
+WhatsApp**: ligar a flag hoje não mudaria nada no canal das famílias.
+
+### Consumidores do gate — o que ele liga de verdade
+
+| Recurso | Condição | Efeito | Alcançável no WhatsApp? |
+|---|---|---|---|
+| `relato` no ranking de BPs | `noPiloto4A` | ordena por aderência | ❌ legado |
+| `statusAceitos: ["ativo","rascunho"]` | `noPiloto4A` | inclui rascunho | ❌ legado |
+| `limite: 2` | `noPiloto4A` | 2 em vez de 3 BPs | ❌ legado |
+| `carregarPerfilConsultavel` | `noPiloto4A && membroContextoId` | perfil estruturado ao modelo | ❌ legado |
+| `secoesDe` (base2) | `noPiloto4A && temMaterial(tema)` | 3 seções de investigação | ❌ legado |
+| `piloto` na web | `pilotoQuatroA && relato` | idem, no canal web | ✅ web |
+
+**Ele não escreve estado, não muda perguntas, não toca Plano nem Rotina.** É um
+gate exclusivamente de *enriquecimento de contexto* — e, no WhatsApp, de código
+inalcançável.
+
+---
+
+## 2 · A incógnita que decide metade do mapa (RESOLVIDA — ver 1-bis)
 
 `carregarPerfilConsultavel` e `secoesDe` (base2) — as duas leituras "que
 faltavam a este canal" — estão atrás de **uma única porta**:
@@ -236,6 +319,49 @@ ligada, Perfil consultável e base2.
 perguntou, não sabe o que falta saber, e não fecha o ciclo do que aprendeu.
 É exatamente a camada que a base da pós deveria alimentar — e que hoje não
 existe nem como mecanismo, nem como conteúdo conectado.
+
+---
+
+## 7-bis · `ayla_documentos` — chave por chave
+
+| Chave | No banco | Status | Consumidor no runtime | Influencia a Ayla? |
+|---|---|---|---|---|
+| `core` | ✅ v1–v11 | **v11 ativo** | `experimental.ts:839` | ✅ **sim, todo turno** |
+| `trial` | ✅ v1–v5 | **v5 ativo** | `experimental.ts:864` (se `!semJornada`) | ✅ sim, condicional |
+| `plano` | ✅ v1 | `arquivado` | **nenhum** | ❌ **não** |
+| `cartoes_visuais` | ✅ v1 | `arquivado` | **nenhum** | ❌ **não** |
+| `fontes_confiaveis` | ❌ **sem linha** | — | **nenhum** | ❌ não |
+
+- **Outra leitura direta de `ayla_documentos`?** Sim, mas só no Admin
+  (`admin/documentos/actions.ts`, `admin/inteligencia/actions.ts`) e dentro do
+  próprio `documentos.ts`. Nenhuma no caminho conversacional.
+- **Cache:** de processo, TTL de 60 s (`documentos.ts:87`), e **não cacheia
+  falha** de propósito. Em serverless acerta pouco.
+- **O Admin dá falsa impressão de ativação?** **Sim.** A tela publica, versiona e
+  marca `ativo` para as cinco chaves; três delas não têm consumidor. Publicar
+  `cartoes_visuais` ou `plano` cria a sensação de mudança sem mudança nenhuma —
+  e o `FALLBACK` do código só tem `core`, então um consumidor futuro que
+  pedisse `plano` receberia string vazia em vez de erro.
+
+---
+
+## 7-ter · Outros artefatos
+
+| Artefato | Existe | Documento | Consumidor do doc | Porta no WhatsApp | Página |
+|---|---|---|---|---|---|
+| **Rotina Visual** | ✅ `lib/ludico/rotina-servico.ts` | v1 arquivado / **V2 escrita** | ❌ | ✅ 5 portas | ✅ |
+| **Plano** | ✅ `lib/ia/plano.ts` | v1 arquivado | ❌ | ✅ `ponteDePlano` | ✅ |
+| **História** | ✅ `lib/historias/gerar.ts` | ❌ | — | ⚠️ 1 referência, **não medida** | ✅ |
+| **Meditação** | ✅ `lib/ludico/meditacao.ts` + `api/ludico/meditacao` | ❌ | — | ❌ **zero** referências no orquestrador | ✅ app |
+| **Desenho** | ✅ `lib/ludico/desenho.ts` + `api/ludico/desenhos` | ❌ | — | ⚠️ 1 referência, não medida | ✅ app |
+| **Relatório** | ✅ `lib/relatorio/` | ❌ | — | ⚠️ 1 referência, não medida | ✅ app |
+| **Avatar** | ✅ `avatares_membros_atipicos` | ❌ | — | ⚠️ 1 referência, não medida | ✅ app |
+| **Timer** | ✅ `app/(app)/ludico/timer` | ❌ | — | ❌ | ✅ app |
+
+**O padrão de `cartoes_visuais` e `plano` se repete e é pior:** dos oito
+artefatos, **nenhum** tem documento de produto que o runtime carregue. Seis não
+têm documento nenhum. **Meditação não é alcançável pela Ayla** — existe só no
+app.
 
 ---
 
