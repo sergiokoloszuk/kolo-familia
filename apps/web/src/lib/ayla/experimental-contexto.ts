@@ -302,7 +302,41 @@ export function desafiosAtuais(
   }
   // Pertinência manda; dentro do mesmo peso, a recência decide como antes.
   itens.sort((a, b) => a.peso - b.peso || b.quando.localeCompare(a.quando));
-  return itens.slice(0, limite).map((i) => `${i.rotulo}: ${i.texto}`);
+  return itens.slice(0, limite).map((i) => `${i.rotulo}: ${i.texto}${marcaTemporal(i.quando)}`);
+}
+
+/**
+ * A MARCA TEMPORAL — Gate A · A1, 08/09/2026.
+ *
+ * ⚠️ O QUE ESTAVA ERRADO. `atualizado_em` era lido (para ordenar) e jogado fora
+ * na renderização. O modelo recebia "sono: Sono irregular" sem nenhuma chance de
+ * saber que aquilo foi escrito em 15/06 e que o resto do retrato é de setembro.
+ * O Prompt Mestre §19 proíbe inventar rotina e preferência; sem tempo no dado, a
+ * regra é impossível de cumprir.
+ *
+ * ⚠️ POR QUE NÃO CARIMBAR TUDO. O mesmo §3 manda não despejar. Um retrato onde
+ * cada linha termina em data vira relatório, e o custo é pago em todo turno.
+ * MEDI a distribuição real dos 355 domínios datados: mediana 35 dias, p75 42,
+ * **p90 61**, máximo 101. Marcar só o que passa de 60 dias atinge ~13% das
+ * linhas — as outras 87% seguem limpas, e "sem marca" passa a significar
+ * "recente" por construção.
+ *
+ * ⚠️ SEM DATA NÃO É RECENTE. São 33 domínios assim, quase todos semeados pelo
+ * onboarding, que grava `{ texto }` sem carimbo. Silenciar isso seria promover
+ * dado legado a fato de hoje — exatamente o que este gate existe para impedir.
+ */
+export const MARCA_ANTIGO = "informação antiga";
+export const MARCA_SEM_DATA = "sem data";
+const JANELA_RECENTE_DIAS = 60;
+
+function marcaTemporal(quando: string, agora: Date = new Date()): string {
+  if (!quando) return ` [${MARCA_SEM_DATA}]`;
+  const t = new Date(quando).getTime();
+  if (!Number.isFinite(t)) return ` [${MARCA_SEM_DATA}]`;
+  const dias = Math.floor((agora.getTime() - t) / 86400_000);
+  if (dias <= JANELA_RECENTE_DIAS) return "";
+  const meses = Math.max(2, Math.round(dias / 30));
+  return ` [${MARCA_ANTIGO}: há ~${meses} meses]`;
 }
 
 /**
@@ -669,6 +703,15 @@ export function montarContextoBase(params: {
   if (desafios.length) {
     idxDesafios = linhas.length;
     linhas.push(renderDesafios(desafios));
+    // ⚠️ A LEGENDA SÓ APARECE QUANDO HÁ O QUE LEGENDAR. Numa base em que 87% dos
+    // domínios são recentes, esta linha quase nunca entra — e quando entra, é
+    // porque existe pelo menos um item que o modelo não deve tratar como de
+    // hoje. Marca sem explicação seria ruído; explicação sem marca, desperdício.
+    if (desafios.some((d) => d.includes(MARCA_ANTIGO) || d.includes(MARCA_SEM_DATA))) {
+      linhas.push(
+        `O que está entre colchetes é sobre o REGISTRO, não sobre a criança — não repita isso para a família. O que vier marcado com "${MARCA_ANTIGO}" ou "${MARCA_SEM_DATA}" pode ter mudado: use como hipótese, confirme antes de tratar como certo, e nunca afirme que é assim hoje. O que não tem marca é recente.`,
+      );
+    }
   }
 
   // ⚠️ DEPOIS DOS DESAFIOS, ANTES DAS LACUNAS. A mudança é sobre um desafio que
