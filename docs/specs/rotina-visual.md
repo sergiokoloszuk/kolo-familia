@@ -1,5 +1,24 @@
 # SPEC — Rotina / Sequência Visual
 
+> ## ⚠️ SUPERADA COMO FONTE DE REQUISITOS DE PRODUTO
+>
+> **Preservada como histórico técnico e genealogia das decisões até
+> 2026-08-08.** Não apagar: as decisões D-R1 a D-R5, a auditoria ATUAL×DESEJADO
+> e os casos reais citados aqui são a memória de por que o código é como é.
+>
+> **Fonte canônica de produto:**
+> [`docs/documentos-ayla/cartoes-visuais-v2.md`](../documentos-ayla/cartoes-visuais-v2.md)
+> **Contrato técnico atual:**
+> [`docs/specs/rotina-visual-v2.md`](rotina-visual-v2.md)
+>
+> Em conflito de comportamento, o Documento de Produto V2 prevalece. Duas
+> divergências conhecidas entre este arquivo e a V2 estão registradas na
+> auditoria: a confirmação seletiva (D-R1) e o teto de 10 cartões.
+>
+> ⚠️ A coluna **ATUAL** da tabela §2 foi levantada em 08/08/2026 e **está
+> desatualizada** — o código andou muito desde então. Ela vale como registro do
+> que se sabia naquela data, não como estado de hoje.
+
 **Estado:** DESEJADO consolidado · ATUAL auditado · **decisões D-R1 a D-R5
 tomadas em 2026-08-08** · **não implementado**.
 Fonte: decisões de produto do Sérgio (2026-08-08) + auditoria do código de
