@@ -7919,7 +7919,43 @@ Criterio de conclusao: para perfil com fala por palavras soltas, o conteudo
 dirigido a crianca muda de forma mensuravel, e tema visual sozinho deixa de
 contar como personalizacao.
 
-**Proximo ID livre: PEND-181. *(024 e 025 reservadas por frentes ainda nao publicadas; 0076 e numero de MIGRACAO reservado — ver PEND-121.)***
+
+### PEND-182
+**Tres mecanismos dormentes acordam junto com o Gate B — observar em producao**
+Bloco: **B · Ayla** · Prioridade: **P1**
+STATUS: **ABERTA** · Aberta em: 2026-09-08
+
+Achado pelo teste de integracao do Gate B, 08/09/2026, executando a escrita em
+vez de conferir o argumento. Os dois `insert` de `ayla_messages` espalhavam
+`metadata` do chamador AO LADO do `metadata` de `registroDeEnvio`. Chave
+repetida em objeto literal nao funde: a ultima vence, a outra some inteira. O
+`insert` voltava sucesso com o campo errado dentro — o §7 na letra.
+
+**Desde 08/08/2026** (`1a800b1`, quando `metadataMensagem` nasceu), tudo que
+passou por `enviarEPersistir` foi apagado. Corrigido nesta frente
+(`registroDeEnvio(ids, ancora)` funde as duas). O que a correcao ACORDA:
+
+| Ancora | Consumidor | O que volta a funcionar |
+|---|---|---|
+| `pedido` | `orchestrator.ts:1805` | "Mario ou Manu?" → a resposta curta RETOMA o pedido de rotina (o caso Karina de 08/08, que a correcao daquele dia nunca chegou a ligar) |
+| `proposta` | `rotina-guiada.ts:215` | a mae aprova a sequencia PROPOSTA e a rotina e montada com ela — hoje a Ayla reinventa |
+| `plano_id` | `ofertaDePlanoPendente` | dedup da entrega do Plano no caminho novo (o Legacy nao dependia disto; a tabela `planos` amortecia) |
+| `lacuna` | Gate B | a continuidade do decisor |
+
+Na outra escrita (entrega do Plano) a ordem era inversa: `plano_id` apagava o
+registro de entrega. Tambem corrigido.
+
+**Por que nenhum teste pegou:** todos provavam que o campo era PASSADO, nenhum
+que ele SOBREVIVIA ao `insert`. `clarificacao-retoma.test.ts` casava o texto do
+spread e passou o mes inteiro verde. A trava nova esta em
+`lacuna-integracao-e2e.test.ts`, que le a linha gravada.
+
+**Criterio de conclusao:** depois da publicacao, confirmar em producao (leitura)
+que (a) `ayla_messages.metadata` traz `entrega` E a ancora na mesma linha, e
+(b) uma clarificacao respondida retoma o pedido — sem forcar cenario com
+familia real.
+
+**Proximo ID livre: PEND-183. *(024 e 025 reservadas por frentes ainda nao publicadas; 0076 e numero de MIGRACAO reservado — ver PEND-121.)***
 
 > Conferir contra `origin/main`, não contra o seu branch. Dois branches podem
 > reivindicar o mesmo número — o conflito de merge nesta linha é o alarme.

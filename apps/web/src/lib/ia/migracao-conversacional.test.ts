@@ -125,10 +125,18 @@ describe("prova de envio no WhatsApp", () => {
   it("toda mensagem de saída persiste o id do provedor", () => {
     // Na conversa da Vitória foram 27 de 27 mensagens com zaap_message_id
     // nulo — o sistema não sabia se tinha enviado, e a Ayla disse "Chegou!".
-    const inserts = ORQUESTRADOR.split('from("ayla_messages").insert(').slice(1);
-    const saida = inserts.filter((b) => b.slice(0, 400).includes('direcao: "outbound"'));
+    // ⚠️ O RECORTE É O OBJETO, não uma janela de caracteres. A versão anterior
+    // olhava os primeiros 400 chars e passou a falhar em 08/09/2026 quando um
+    // comentário empurrou `registroDeEnvio` para o char 550 — sem nada ter
+    // mudado no comportamento. Uma régua que reprova por comentário obriga a
+    // escolher entre explicar o código e manter o teste verde.
+    const literal = (b: string) => b.slice(0, b.indexOf("});") + 1);
+    const inserts = ORQUESTRADOR.split('from("ayla_messages").insert(')
+      .slice(1)
+      .map(literal);
+    const saida = inserts.filter((b) => b.includes('direcao: "outbound"'));
     expect(saida.length).toBeGreaterThanOrEqual(2); // reativa + proativa
-    const comRegistro = saida.filter((b) => b.slice(0, 400).includes("registroDeEnvio("));
+    const comRegistro = saida.filter((b) => b.includes("registroDeEnvio("));
     expect(comRegistro.length).toBeGreaterThanOrEqual(2);
   });
 

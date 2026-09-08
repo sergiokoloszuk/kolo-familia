@@ -64,6 +64,9 @@ import {
   rotinaConversaPendente,
   pediuRotinaExplicitamente,
   portaoDeterministicoDeRotina,
+} from "./rotina-guiada";
+import { deveGravarLacuna } from "./lacuna-decisiva";
+import {
   conduzirRotina,
   pedeRotina,
   pedeRotinaDeUmDia,
@@ -1554,56 +1557,6 @@ function temConteudo(v: unknown): boolean {
   return Boolean(v);
 }
 
-/**
- * Lacunas do perfil por domínio — o que já tem × o que falta. Dá pra a Ayla
- * "perfil no centro": perguntar só o pertinente, sem repetir, e saber o que
- * ainda falta pra montar um relatório. Devolve uma frase curta pro prompt.
- */
-async function carregarLacunasKoloVivo(
-  supabase: SupabaseClient,
-  membroId: string | null,
-): Promise<string> {
-  if (!membroId) return "";
-  try {
-    const { data } = await supabase
-      .from("perfil_vivo_membro")
-      .select("essencial, como_e, corpo_rotina, desafios_regulacao, sensorial, categorias_extras")
-      .eq("membro_atipico_id", membroId)
-      .maybeSingle();
-    const linha = (data ?? {}) as Record<string, unknown>;
-    const extras = (linha.categorias_extras ?? {}) as Record<string, unknown>;
-    const preenchidos: string[] = [];
-    const faltando: string[] = [];
-    for (const campo of MEMBRO_CAMPOS_TODOS) {
-      const v = membroCampoStorage(campo) === "toplevel" ? linha[campo] : extras[campo];
-      (temConteudo(v) ? preenchidos : faltando).push(MEMBRO_CAMPO_LABEL[campo] ?? campo);
-    }
-    const partes: string[] = [];
-
-    // OS DESAFIOS QUE A FAMÍLIA MARCOU NO CADASTRO — a lista INTEIRA.
-    // Antes, `desafios_onboarding` só era lido no [0], e só pra escolher a
-    // template de boas-vindas: o resto do que ela contou no cadastro nunca
-    // chegava à conversa. A Ayla re-perguntava o que já sabia.
-    //
-    // Isto é RELATO da família, não diagnóstico e não conclusão da Ayla — o
-    // rótulo abaixo diz isso ao modelo, porque a fronteira diagnóstica vale
-    // igual: saber que a mãe marcou "sono" não autoriza afirmar nada.
-    const desafios = Array.isArray(extras.desafios_onboarding)
-      ? (extras.desafios_onboarding as unknown[]).map(String).filter(Boolean)
-      : [];
-    if (desafios.length) {
-      partes.push(
-        `NO CADASTRO A FAMÍLIA MARCOU estes desafios (relato dela, NÃO diagnóstico e NÃO conclusão sua): ${desafios.join(", ")} — use pra entender o contexto e pra NÃO re-perguntar; não force o assunto se ela trouxe outro`,
-      );
-    }
-
-    if (preenchidos.length) partes.push(`JÁ TEM no perfil: ${preenchidos.join(", ")}`);
-    if (faltando.length) partes.push(`AINDA FALTA (pergunte só se vier a propósito): ${faltando.join(", ")}`);
-    return partes.join(". ");
-  } catch {
-    return "";
-  }
-}
 
 /** Marca de reserva do convite — vive em `ayla_send_log`, fora do fluxo de envio. */
 const RESERVA_NUDGE = "assinatura_nudge_reserva";
@@ -3292,6 +3245,52 @@ async function processInboundInterno(
           `contexto=${exp.metrica.msContexto}ms modelo=${exp.metrica.msModelo}ms ` +
           `inspecao=${exp.metrica.msInspecao}ms total=${exp.metrica.msTotal}ms`,
       );
+      // ── A LACUNA DO TURNO — Gate B, 08/09/2026 ─────────────────────────
+      //
+      // ⚠️ SÓ MARCA SE A AYLA REALMENTE PERGUNTOU. O decisor pode escolher uma
+      // lacuna e o modelo, corretamente, decidir que já dá para orientar sem
+      // perguntar — o Core §8 manda isso. Gravar `metadata.lacuna` sem pergunta
+      // faria o turno seguinte acreditar que algo foi perguntado, e a resposta
+      // da mãe a outra coisa fecharia um campo que ninguém investigou.
+      //
+      // A detecção é grosseira de propósito (existe "?" no texto): errar para
+      // MENOS só custa perguntar de novo depois; errar para MAIS inventa
+      // conhecimento. Mesmo critério de `classificarResposta`.
+      // ⚠️ `exp.texto` É A FALA PURA. A ponte do Plano vai como MENSAGEM
+      // SEPARADA logo abaixo (`texto: nudge`), não concatenada aqui — medido em
+      // 08/09/2026. Por isso a detecção não corre risco de ler um "?" que veio
+      // de CTA, convite ou ponte. Ver `deveGravarLacuna`.
+      const d = exp.decisaoLacuna ?? null;
+      const lacunaDoTurno = deveGravarLacuna(d, exp.texto);
+      const perguntou = Boolean(lacunaDoTurno);
+
+      // ⚠️ NENHUM CAMINHO VIVO DO DECISOR TERMINA INVISÍVEL. O rastro sai
+      // mesmo em NO_ASK — é justamente ele que explica por que a Ayla NÃO
+      // perguntou, que é a decisão mais difícil de auditar depois.
+      if (d) {
+        void logEvent({
+          kind: "lacuna_decisao",
+          severity: "info",
+          family_account_id: family.id,
+          message: `lacuna:${d.decisao}${lacunaDoTurno ? ` ${lacunaDoTurno}` : ""}`,
+          payload: {
+            sha: process.env.VERCEL_GIT_COMMIT_SHA ?? null,
+            membro_atipico_id: exp.membroId,
+            tema: turnoClassificado.skills ?? [],
+            decisao: d.decisao,
+            escolhida: d.escolhida ? `${d.escolhida.dominio}.${d.escolhida.campo}` : null,
+            motivo: d.motivo,
+            candidatas: d.candidatasChaves,
+            descartadas: d.descartadas,
+            ja_respondidas: d.jaRespondidas,
+            corrigidas: d.corrigidas,
+            // A diferença entre "escolhi" e "gravei" é o modelo ter perguntado.
+            perguntou_de_fato: perguntou,
+            gravou_lacuna: Boolean(lacunaDoTurno),
+          },
+          persistir: true,
+        });
+      }
       const resp = await enviarEPersistir(supabase, {
         family_account_id: family.id,
         membro_atipico_id: exp.membroId,
@@ -3299,6 +3298,7 @@ async function processInboundInterno(
         texto: exp.texto,
         category: "reativa",
         tipo: "resposta_registro",
+        ...(lacunaDoTurno ? { metadataMensagem: { lacuna: lacunaDoTurno } } : {}),
         meta: { ayla_path: "experimental", ...exp.metrica },
       });
       // ⚠️ A PONTE DO PLANO CHEGA AO CAMINHO NOVO — 15/08/2026.
@@ -3671,7 +3671,7 @@ async function processInboundInterno(
   const ofereceLudico = ehCrianca && !pedidoDePlano;
   const [
     koloVivoResumo,
-    koloVivoLacunas,
+    oQueAFamiliaJaContou,
     estrategiasRecentes,
     historico,
     linkHistoria,
@@ -3681,7 +3681,7 @@ async function processInboundInterno(
     linkRelatorio,
   ] = await Promise.all([
     carregarKoloVivoResumo(supabase, membroContextoId),
-    carregarLacunasKoloVivo(supabase, membroContextoId),
+    carregarOQueAFamiliaJaContou(supabase, membroContextoId),
     carregarEstrategiasRecentes(supabase, family.id, membroContextoId),
     carregarHistorico(
       supabase,
@@ -3791,7 +3791,7 @@ async function processInboundInterno(
       aceite,
       notaDeSeguranca: seguranca.aberta ? notaDeSeguranca({ precisaChecar: seguranca.precisaChecar }) : null,
       koloVivoResumo,
-      koloVivoLacunas,
+      oQueJaContou: oQueAFamiliaJaContou,
       estrategiasRecentes,
       historico,
       linksLudico,
@@ -4140,10 +4140,11 @@ async function enviarRespostaEmChunks(
       tipo: args.tipo,
       texto: textoCompleto,
       enviada_em: new Date().toISOString(),
-      ...registroDeEnvio(idsBolhas),
       // A ÂNCORA DA ENTREGA DO PLANO — é ela que faz o "Ok" da mãe no turno
       // seguinte NÃO gerar outro Plano (`ofertaDePlanoPendente` lê este campo).
-      ...(planoEntregueId ? { metadata: { plano_id: planoEntregueId } } : {}),
+      // Entra DENTRO de `registroDeEnvio` para conviver com o registro de
+      // entrega, em vez de apagá-lo. Ver o comentário lá.
+      ...registroDeEnvio(idsBolhas, planoEntregueId ? { plano_id: planoEntregueId } : null),
     });
     await supabase
       .from("ayla_preferences")
@@ -5073,13 +5074,37 @@ export async function loadFamiliaParaEnvio(
  * Nunca gravamos a string "unknown" ali: além de mentir, a segunda ocorrência
  * violaria o índice e derrubaria o registro inteiro da mensagem.
  */
-function registroDeEnvio(ids: Array<string | null>): {
+function registroDeEnvio(
+  ids: Array<string | null>,
+  /**
+   * ⚠️ A ÂNCORA DO CHAMADOR ENTRA AQUI, e não por um spread ao lado.
+   *
+   * ⚠️ DEFEITO MEDIDO EM 08/09/2026, pelo teste de integração do Gate B.
+   * `registroDeEnvio` devolve SEMPRE um `metadata`, e os dois `insert` de
+   * `ayla_messages` o espalhavam ao lado de um `metadata` do chamador. Chave
+   * repetida em objeto literal não funde: a última vence e a outra some
+   * inteira.
+   *
+   * As duas ordens existiam, e as duas perdiam:
+   *   · em `enviarEPersistir`, `registroDeEnvio` vinha DEPOIS — então `lacuna`,
+   *     `pedido`, `proposta` e `plano_id` eram apagados. Desde 08/08/2026,
+   *     quando `metadataMensagem` nasceu: um mês inteiro de âncoras gravadas
+   *     como se existissem e lidas como se não.
+   *   · na entrega do Plano (linha ~4143), `plano_id` vinha DEPOIS — então
+   *     quem sumia era o registro de entrega.
+   *
+   * Nenhum dos dois falhava: o `insert` retornava sucesso com o campo errado
+   * dentro. É exatamente o "pode falhar e mesmo assim parecer concluído" do §7.
+   */
+  ancora?: Record<string, unknown> | null,
+): {
   zaap_message_id: string | null;
   metadata: Record<string, unknown>;
 } {
   return {
     zaap_message_id: ids.find(Boolean) ?? null,
     metadata: {
+      ...(ancora ?? {}),
       entrega: {
         canal: "z-api",
         // O nome do campo é o que ele prova. Não renomeie pra "entregue".
@@ -5214,8 +5239,7 @@ export async function enviarEPersistir(
       tipo: params.tipo,
       texto,
       enviada_em: new Date().toISOString(),
-      ...(params.metadataMensagem ? { metadata: params.metadataMensagem } : {}),
-      ...registroDeEnvio(idsBolhas),
+      ...registroDeEnvio(idsBolhas, params.metadataMensagem ?? null),
     });
 
     await supabase
@@ -5340,6 +5364,72 @@ async function carregarKoloVivoResumo(
  * planos recentes do irmão apagariam as Estratégias da criança da vez.
  * Registro antigo sem membro continua entrando — ver `membro-escopo.ts`.
  */
+/**
+ * O QUE A FAMÍLIA JÁ CONTOU — e por que a lista do que FALTA saiu daqui.
+ *
+ * ⚠️ ESTA FUNÇÃO FAZIA TRÊS COISAS, e só uma estava errada. Ela devolvia (a) os
+ * desafios que a família marcou no cadastro, (b) o que já existe no perfil e
+ * (c) **"AINDA FALTA (pergunte só se vier a propósito): …"** — a lista
+ * indiscriminada de campos vazios.
+ *
+ * (c) era o padrão que o Gate B veio desfazer: campo vazio virando pergunta. E
+ * era a única rota de investigação por formulário ainda ALCANÇÁVEL, porque
+ * bastava o caminho oficial falhar para este fallback assumir. Saiu.
+ *
+ * (a) e (b) FICAM, e o motivo é o oposto: elas existem justamente para a Ayla
+ * NÃO re-perguntar o que a família já contou. Foi o caso Maria Iasmin — a lista
+ * de `desafios_onboarding` só era lida no `[0]`, e o resto do que ela contou no
+ * cadastro nunca chegava à conversa.
+ *
+ * ⚠️ Eu removi a função inteira primeiro, e três testes pegaram. Estavam certos:
+ * apagar (a) para matar (c) teria trocado um defeito por outro pior.
+ */
+async function carregarOQueAFamiliaJaContou(
+  supabase: SupabaseClient,
+  membroId: string | null,
+): Promise<string> {
+  if (!membroId) return "";
+  try {
+    const { data } = await supabase
+      .from("perfil_vivo_membro")
+      .select("essencial, como_e, corpo_rotina, desafios_regulacao, sensorial, categorias_extras")
+      .eq("membro_atipico_id", membroId)
+      .maybeSingle();
+    const linha = (data ?? {}) as Record<string, unknown>;
+    const extras = (linha.categorias_extras ?? {}) as Record<string, unknown>;
+    const preenchidos: string[] = [];
+    for (const campo of MEMBRO_CAMPOS_TODOS) {
+      const v = membroCampoStorage(campo) === "toplevel" ? linha[campo] : extras[campo];
+      if (temConteudo(v)) preenchidos.push(MEMBRO_CAMPO_LABEL[campo] ?? campo);
+    }
+    const partes: string[] = [];
+
+    // OS DESAFIOS QUE A FAMÍLIA MARCOU NO CADASTRO — a lista INTEIRA.
+    // Antes, `desafios_onboarding` só era lido no [0], e só pra escolher a
+    // template de boas-vindas: o resto do que ela contou no cadastro nunca
+    // chegava à conversa. A Ayla re-perguntava o que já sabia.
+    //
+    // Isto é RELATO da família, não diagnóstico e não conclusão da Ayla — o
+    // rótulo abaixo diz isso ao modelo, porque a fronteira diagnóstica vale
+    // igual: saber que a mãe marcou "sono" não autoriza afirmar nada.
+    const desafios = Array.isArray(extras.desafios_onboarding)
+      ? (extras.desafios_onboarding as unknown[]).map(String).filter(Boolean)
+      : [];
+    if (desafios.length) {
+      partes.push(
+        `NO CADASTRO A FAMÍLIA MARCOU estes desafios (relato dela, NÃO diagnóstico e NÃO conclusão sua): ${desafios.join(", ")} — use pra entender o contexto e pra NÃO re-perguntar; não force o assunto se ela trouxe outro`,
+      );
+    }
+
+    if (preenchidos.length) partes.push(`JÁ TEM no perfil: ${preenchidos.join(", ")}`);
+    // ⚠️ A LISTA DO QUE FALTA NÃO VOLTA. Ver o cabeçalho: era investigação por
+    // formulário, e a decisão de o que perguntar é do Gate B.
+    return partes.join(". ");
+  } catch {
+    return "";
+  }
+}
+
 async function carregarEstrategiasRecentes(
   supabase: SupabaseClient,
   familyId: string,

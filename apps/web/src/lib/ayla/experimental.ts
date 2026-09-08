@@ -49,6 +49,13 @@ import {
 } from "@/lib/conducao/fronteiras-forma";
 import { comRetentativaCurta } from "@/lib/conducao/retentativa";
 import { logEvent } from "@/lib/log";
+import { perfilConsultavelDaLinha } from "@/lib/kolo-vivo/consultar";
+import {
+  escolherLacunaDecisiva,
+  blocoDaLacuna,
+  jaRespondidas,
+  type DecisaoDeLacuna,
+} from "./lacuna-decisiva";
 import {
   FORMATO_WHATSAPP,
   formasDeEntrega,
@@ -219,11 +226,24 @@ type Membro = {
 };
 
 /** Uma fala do histórico, já com o dono resolvido. */
-type Fala = { direcao: string; texto: string | null; membro_atipico_id: string | null };
+type Fala = {
+  direcao: string;
+  texto: string | null;
+  membro_atipico_id: string | null;
+  metadata?: Record<string, unknown> | null;
+};
 
 export type TurnoExperimental = {
   texto: string;
   membroId: string | null;
+  /**
+   * A decisão de lacuna do turno.
+   *
+   * ⚠️ SOBE PARA O ORQUESTRADOR porque é ele quem escreve em `ayla_messages` —
+   * e o `metadata.lacuna` precisa ficar na mensagem para que o turno seguinte
+   * saiba o que foi perguntado. Aqui ela não volta ao prompt.
+   */
+  decisaoLacuna?: DecisaoDeLacuna | null;
   /** Medição do turno — ver `ayla_path` no relatório da PEND-064. */
   metrica: {
     consultasBanco: number;
@@ -356,6 +376,8 @@ export type ModoTurno = "normal" | "pos_trial";
  */
 type ContextoDoTurno = {
   bloco: string;
+  /** A decisão de lacuna do turno — sobe ao orquestrador, nunca ao prompt. */
+  decisaoLacuna: DecisaoDeLacuna | null;
   foco: Foco;
   diagnosticoRegistrado: string;
   consultas: number;
@@ -445,7 +467,9 @@ async function montarContexto(
       .order("created_at", { ascending: true }),
     supabase
       .from("ayla_messages")
-      .select("direcao, texto, membro_atipico_id")
+      // ⚠️ `metadata` NA MESMA CONSULTA — Gate B. É onde viaja a lacuna que o
+      // turno anterior perguntou. Uma coluna a mais, nenhuma query nova.
+      .select("direcao, texto, membro_atipico_id, metadata")
       .eq("family_account_id", familyId)
       .order("created_at", { ascending: false })
       .limit(12),
@@ -485,7 +509,11 @@ async function montarContexto(
   // separados, cada um com o nome na frente — é isso que permite "uma
   // brincadeira para os dois" sem que a característica de um vire fato do outro.
   const retratos: string[] = [];
-  const lacunas = new Set<string>();
+  // ⚠️ O SET DE LACUNAS DO CADASTRO MORREU — Gate B, 08/09/2026. Ele alimentava
+  // `<o_que_ainda_nao_sei>` com os cinco campos fixos. Quem decide agora é
+  // `escolherLacunaDecisiva`, sobre o perfil consultável. `montarContextoBase`
+  // continua devolvendo `lacunas` porque o Legacy ainda as usa; aqui elas não
+  // são mais lidas, e deixar o acumulador vivo seria convite para reinjetá-las.
   // ⚠️ NO PÓS-TRIAL O RETRATO É OUTRO. `montarContextoBase` monta o retrato
   // completo — desafios com texto, "como ela é", sensibilidades. É exatamente
   // esse conteúdo que permitiria montar uma estratégia nova, e é o que o teste
@@ -520,8 +548,36 @@ async function montarContexto(
       skills,
     });
     if (base.bloco) retratos.push(base.bloco);
-    for (const l of base.lacunas) lacunas.add(l);
   });
+
+  // ── A LACUNA QUE MUDA A CONDUTA — Gate B, 08/09/2026 ────────────────────
+  //
+  // ⚠️ SEM SEGUNDA CONSULTA. `perfis[i]` é a linha que este turno JÁ leu, alguns
+  // blocos acima. `perfilConsultavelDaLinha` é a transformação de
+  // `kolo-vivo/consultar.ts` — a MESMA que a web usa — operando sobre ela.
+  // Chamar `carregarPerfilConsultavel` aqui faria a segunda leitura da mesma
+  // linha no mesmo turno, que é o padrão que o Gate A acabou de eliminar.
+  //
+  // ⚠️ E NÃO É UM SEGUNDO RETRATO. O que sai daqui é, no máximo, UMA linha: a
+  // pergunta que vale a pena. A lista do que falta não vai ao prompt.
+  const decisaoLacuna =
+    modo === "pos_trial" || emFoco.length !== 1
+      ? null
+      : escolherLacunaDecisiva({
+          perfil: perfilConsultavelDaLinha(
+            (perfis[0] ?? null) as Record<string, unknown> | null,
+            emFoco[0].id,
+          ),
+          temas: skills,
+          relato: mensagem,
+          // ⚠️ A CONTINUIDADE VEM DA MESMA LEITURA. `falas` já está carregada
+          // acima; `jaRespondidas` só a interpreta. Escopo por criança na
+          // origem: `ayla_messages` carrega `membro_atipico_id`.
+          resolvidas: jaRespondidas(
+            ((falas ?? []) as Fala[]).slice().reverse(),
+            emFoco[0].id,
+          ),
+        });
 
   // ⚠️ O HISTÓRICO É ETIQUETADO, NÃO RECORTADO — mesma decisão de
   // `carregarHistorico` no legacy. Recortar mataria o multi-criança; deixar sem
@@ -578,7 +634,12 @@ async function montarContexto(
           retratos.length
             ? `<o_que_ja_sabemos>${NL}${retratos.join(SEP)}${NL}</o_que_ja_sabemos>`
             : "",
-          lacunas.size ? `<o_que_ainda_nao_sei>${[...lacunas].join(", ")}</o_que_ainda_nao_sei>` : "",
+          // ⚠️ SUBSTITUI `<o_que_ainda_nao_sei>` — Gate B. Aquele bloco listava
+          // CINCO CAMPOS FIXOS de cadastro, independentemente do assunto: o
+          // modelo recebia buracos de formulário e, ao lado, o Core §8 mandando
+          // não interrogar. Agora entra ZERO OU UMA lacuna, a do assunto de
+          // agora, e só quando ela mudaria a conduta.
+          decisaoLacuna ? blocoDaLacuna(decisaoLacuna) : "",
           blocoDeFoco(foco),
           // Depois do retrato da criança e antes da trajetória: a casa é contexto de
           // quem ela é, não um assunto próprio.
@@ -628,6 +689,9 @@ async function montarContexto(
   });
 
   const bloco = [...partes, continuidade, blocoDeEstado(estado)].filter(Boolean).join(SEP);
+  // A decisão do turno viaja junto — o orquestrador precisa dela para gravar o
+  // `metadata.lacuna` e para o rastro. Ela NÃO volta ao prompt.
+  const decisaoDoTurno = decisaoLacuna;
 
   // ⚠️ O DIAGNÓSTICO VAI PARA A REDE DE FRONTEIRAS, não só para o prompt.
   // `fronteiraAtravessada` usa este bloco para saber o que a família JÁ
@@ -653,6 +717,8 @@ async function montarContexto(
 
   return {
     bloco,
+    /** A decisão de lacuna deste turno — para o metadata e para o rastro. */
+    decisaoLacuna: decisaoDoTurno,
     foco,
     diagnosticoRegistrado,
     consultas: 3 + emFoco.length + 2,
@@ -1264,6 +1330,7 @@ export async function responderExperimental(
     return {
       texto,
       membroId: membroDoTurno,
+      decisaoLacuna: ctxTurno.decisaoLacuna ?? null,
       metrica: {
         consultasBanco: consultas,
         chamadasLLM: 1,
