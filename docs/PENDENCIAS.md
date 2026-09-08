@@ -7677,39 +7677,73 @@ no relatorio e 6 casos novos em `testar-analise.mjs` (37 no total). Recalculada
 sobre o bruto ja gravado por `analisar-feature.mjs`, sem repetir as 460 chamadas.
 
 ### PEND-169
-**O gate de pedido explicito nao alcanca o Plano — o comentario diz que sim**
+**Plano surpresa — hipotese do Boolean(tema) REFUTADA; causa era perda de metadata**
 Bloco: **B · Ayla** · Prioridade: **P2**
-STATUS: **ABERTA** · Aberta em: 2026-09-07
+STATUS: **CAUSA RAIZ CORRIGIDA** · Aberta em: 2026-09-07 · Reescrita em: 2026-09-07
 
-A Fase 1B (471e782) fechou os quatro pontos de sequestro da Rotina com
-`pedidoExplicito`. No Plano, a mudanca foi em `ponteDePlano.temDesafio`:
+⚠️ **A HIPOTESE ORIGINAL ESTAVA ERRADA.** Esta pendencia acusava o
+`|| Boolean(tema)` no `temDesafio` de ser um bypass que autorizava o Plano sem
+pedido explicito. **Nao e.** Seguindo `temDesafio` ate o fim, ele e lido UMA vez
+dentro de `montarPonteWhatsApp`:
 
-    ANTES:  intencao === "plano" || Boolean(tema)
-    DEPOIS: (intencao === "plano" && pedidoExplicito) || Boolean(tema)
+    // Freio 3 (barato, antes de gastar IA)
+    if (!params.temDesafio && mensagem.trim().length < 40) return null;
 
-`Boolean(tema)` continua **OU-ado** e nao foi tocado. Como quase todo turno com
-assunto identificavel produz `tema`, o primeiro ramo praticamente nunca decide —
-`pedidoExplicito` e, na pratica, inerte para o Plano.
+E um curto-circuito de economia: no maximo deixa uma mensagem curta CHEGAR ao
+gate de suficiencia, nunca a autoriza. Quem autoriza e `avaliarProntidaoParaPlano`
+(problema + contexto + exemplo concreto), com tres freios deterministicos antes.
+Remover `Boolean(tema)` nao teria resolvido nada.
 
-E o comentario acrescentado junto diz o contrario:
+**A CAUSA RAIZ, COMPROVADA.** A metadata do turno nunca chegava ao banco. Nos
+dois pontos de persistencia, duas fontes escreviam a MESMA chave `metadata` em
+spreads separados — e em spread a ultima vence. Nao havia mesclagem, e os dois
+pontos erravam em direcoes OPOSTAS, cada um perdendo uma metade.
 
-    // O TEMA SOZINHO NAO PEDE PLANO. Boolean(tema) fazia qualquer
-    // conversa com assunto identificavel contar como desafio.
+Medido em producao sobre 4.498 mensagens de saida:
 
-Ele descreve um defeito que a linha abaixo dele **nao corrige**. E exatamente o
-caso do §1 do protocolo: nome e comentario nao sao evidencia.
+| chave | mensagens |
+|---|---|
+| `entrega` (o que sobrescrevia) | 1788 |
+| `plano_id` (ancora da entrega de Plano) | **1** — contra 119 entregas |
+| `proposta` (etapas da Rotina Visual) | **0** |
+| `pedido` (clarificacao) | **0** |
 
-**NAO E REGRESSAO.** O conjunto DEPOIS e subconjunto do ANTES — o gate so pode
-disparar menos, nunca mais. Provado em producao em 07/09: o plano `cf46532c`
-(familia 9c14b56b, tema "Lidar com frustracao e mudancas de planos",
-origem `estrategias`) nasceu pelo ramo do tema, identico ao plano `ee4d54ea` de
-06/09 as 22:22, que rodou sob 1c1b415. Entregas por dia: 3, 1, 6, 2, 2, 1, 1 —
-o dia do deploy e o menor da serie.
+Sem `plano_id`, `ehEntregaDePlano` e sempre falso; a mensagem que ENTREGA o Plano
+casa com `REGEX_OFERTA_PLANO` e **se reoferece sozinha**; o "Ok" seguinte vira
+`forcar` e pula o gate de suficiencia inteiro. E o caso Matheo (11/08), cuja
+correcao foi escrita e nunca chegou ao banco. Medido: **7 dos 25 planos recentes
+foram disparados por confirmacao curta** ("Ok", "Sim", "Verdade", "?"), dois
+deles com o tema tirado da propria confirmacao — "Responder 'ok' com clareza" e
+"Dizer 'ok' e seguir instrucoes".
 
-**Criterio de conclusao:** decidir se o Plano deve exigir pedido explicito. Se
-sim, remover o `|| Boolean(tema)` e medir o falso negativo (§12, caso I) antes de
-publicar. Se nao, corrigir o comentario, que hoje engana quem le. Relacionada a
-PEND-167 e ao gate de prontidao de `prontidao-plano.ts`.
+O mesmo defeito matava `metadata.proposta` (por isso `propostaPendente()`
+devolvia null sempre) e `metadata.pedido` (por isso a clarificacao nunca retomava
+o pedido original — caso Karina/Manu de 07/09 15:41, que terminou com 0 rotinas,
+0 tarefas e 0 geracoes depois de a familia pedir a visualizacao do dia).
+
+**CORRECAO.** `registroDeEnvio` passou a ser o DONO UNICO da composicao: recebe a
+metadata do turno e devolve o objeto pronto. Nenhum insert escreve `metadata:`
+por conta propria. Precedencia fixada e testada — o registro de envio vence,
+porque `entrega` e fato provado no ato do envio e o chamador estaria sombreando
+um fato com um palpite. Nao ha colisao real hoje.
+
+Bancada em `metadata-preservada.test.ts`: composicao, as tres ancoras juntas,
+chave desconhecida, colisao, anti-Matheo (entrega + "Ok" nao gera novo Plano),
+Rotina Visual (proposta recuperavel) e o caso Karina/Manu como regressao nomeada.
+
+---
+
+⚠️ **O QUE ESTA PENDENCIA NAO RESOLVE, e vira decisao de produto separada:**
+
+**a politica do Plano automatico.** Dos 25 planos recentes, **25 nasceram pelo
+caminho automatico** — zero pedidos explicitos, zero oferta+aceite. O caminho
+automatico nao e vazamento: e o produto, decidido em 29/07 a pedido da Karina
+("conversa rica -> ao ter elementos suficientes, entregar").
+
+A regra desejavel — *identificar um assunto nao significa que a familia quer um
+Plano* — esta certa, mas hoje eliminaria **100%** dos planos entregues. Com o
+"Ok" ja nao gerando Plano, a pergunta volta com dado limpo: quantos planos
+automaticos sobram, e quantos sao surpresa? **Medir antes de mexer no gate.**
 
 ### PEND-170
 **Repeticao conversacional entre turnos consecutivos**
