@@ -7702,7 +7702,77 @@ sim, remover o `|| Boolean(tema)` e medir o falso negativo (§12, caso I) antes 
 publicar. Se nao, corrigir o comentario, que hoje engana quem le. Relacionada a
 PEND-167 e ao gate de prontidao de `prontidao-plano.ts`.
 
-**Proximo ID livre: PEND-170. *(024 e 025 reservadas por frentes ainda nao publicadas; 0076 e numero de MIGRACAO reservado — ver PEND-121.)***
+### PEND-173
+**A janela de 60 dias e heuristica, nao definicao de "padrao"**
+Bloco: **B · Ayla** · Prioridade: **P3**
+STATUS: **ABERTA** · Aberta em: 2026-09-08
+
+O Gate A (fe507a0) passou a distinguir informacao recente de antiga usando um
+corte de 60 dias, em dois lugares: `marcaTemporal` em `experimental-contexto.ts`
+e `JANELA_PADRAO_ATUAL_DIAS` em `rotina-guiada.ts`.
+
+O numero saiu da distribuicao real, nao de intuicao. MEDI nos 355 dominios
+datados da base em 08/09/2026: mediana 35 dias, p75 42, **p90 61**, maximo 101.
+Sessenta dias e o decil mais velho do que existe hoje.
+
+O ponto da pendencia: **isso e uma heuristica conservadora do momento, nao uma
+definicao permanente do que e um padrao.** O produto tem quatro meses de dados;
+o maximo observado e 101 dias justamente porque nada e mais velho que isso. A
+mesma medicao daqui a seis meses vai devolver outra distribuicao, e um corte
+calibrado sobre uma base jovem tende a marcar como "antigo" o que e so estavel.
+
+Nao expandir a janela automaticamente, e nao transformar o numero em constante
+de produto. Quando houver base com mais de um ano, remedir a distribuicao e
+decidir com evidencia se o corte muda, se passa a variar por dominio (o sono
+muda mais rapido que a forma de comunicar) ou se a nocao de "padrao" deixa de
+depender de tempo e passa a depender de repeticao observada.
+
+Criterio de conclusao: nova medicao da distribuicao com base de 12+ meses, e
+decisao escrita sobre manter, mover ou substituir o criterio temporal.
+
+### PEND-174
+**O onboarding sobrescreve `categorias_extras` inteiro — risco de perda de memoria**
+Bloco: **B · Ayla** · Prioridade: **P1**
+STATUS: **ABERTA** · Aberta em: 2026-09-08
+
+Achado durante o mapeamento do Gate A, fora do escopo daquele gate.
+
+Dos sete escritores de `perfil_vivo_membro`, cinco preservam o que ja existe —
+`incorporar.ts:202`, `orchestrator.ts:4180`, `orchestrator.ts:4565`,
+`kolo-vivo/actions.ts:263` e `rotina-guiada.ts:424` fazem spread do
+`categorias_extras` atual antes de gravar, ou tocam so uma chave.
+
+Dois **nao**:
+
+    app/onboarding/actions.ts:520
+    lib/onboarding/salvar-conversacional.ts:162
+
+Os dois montam `extras` do zero e fazem `upsert(..., { onConflict:
+"membro_atipico_id" })`. Se qualquer um rodar para um membro que ja tem perfil,
+o `categorias_extras` inteiro e substituido — e vao junto: os dominios de texto
+com todo o historico incorporado pela Ayla, `marcos` (as mudancas recentes),
+`preferencias`, `conflitos` e `transicoes` (as estrategias que ja ajudaram
+aquela crianca).
+
+NAO MEDI se existe caminho real que reexecute o onboarding para um membro
+existente — retomada de rascunho, refazer cadastro, admin, correcao de dados.
+Enquanto isso nao for medido, o risco e desconhecido, nao inexistente.
+
+Agrava: o onboarding grava os dominios como `{ texto }` **sem** `atualizado_em`.
+Sao os 33 dominios sem data medidos em 08/09/2026 — que, depois do Gate A,
+chegam ao modelo marcados como `[sem data]` e por isso valem menos.
+
+Correcao esperada: os dois escritores lerem o `categorias_extras` atual e fazerem
+merge, como os outros cinco ja fazem; e carimbarem `atualizado_em` no que
+gravam. Nao ha razao para o onboarding ser o unico caminho destrutivo.
+
+**Esta correcao e obrigatoria antes do gate final de producao desta frente.**
+
+Criterio de conclusao: os dois escritores preservam chaves nao tocadas, gravam
+data, e um teste prende que um upsert de onboarding sobre perfil existente nao
+apaga `transicoes`, `marcos` nem dominio nenhum.
+
+**Proximo ID livre: PEND-175. *(024 e 025 reservadas por frentes ainda nao publicadas; 0076 e numero de MIGRACAO reservado — ver PEND-121.)***
 
 > Conferir contra `origin/main`, não contra o seu branch. Dois branches podem
 > reivindicar o mesmo número — o conflito de merge nesta linha é o alarme.
