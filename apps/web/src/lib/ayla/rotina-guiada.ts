@@ -407,6 +407,99 @@ const JANELA_PADRAO_ATUAL_DIAS = 60;
  * momento reconhecido; não se perde "música depois" como estratégia. O erro
  * barato é a Ayla perguntar de novo; o caro é ela inventar um barco.
  */
+/**
+ * A FAMÍLIA DITOU A SEQUÊNCIA NESTA MENSAGEM?
+ *
+ * ⚠️ NASCEU DE UM INCIDENTE REAL — 08/09/2026, 08:53, Manu. A mãe escreveu, em
+ * linhas separadas: "Quero montar uma rotina visual para Manu / Brincar / Tomar
+ * banho / Almoçar / Ir ao shopping". Recebeu nove etapas, com um passeio de
+ * barco que ela não citou e com banho e almoço trocados de lugar.
+ *
+ * ⚠️ O DETECTOR É PROPOSITALMENTE BURRO. Ele não interpreta atividade, não
+ * classifica, não chama modelo: conta linhas curtas. Quem entende de sequência
+ * é o condutor; o que este código precisa saber é UMA coisa — "existe uma lista
+ * na mensagem de agora?" —, porque a resposta decide se o artefato de ontem
+ * pode ou não entrar no prompt. Um detector esperto erraria de formas mais
+ * difíceis de prever que este.
+ *
+ * ⚠️ CONSERVADOR NA DIREÇÃO CERTA. Se ele disser "não" para uma lista que
+ * existe, a moldura endurecida ainda protege. Se dissesse "sim" para uma
+ * mensagem sem lista, tiraria contexto legítimo de quem só quer conversar sobre
+ * a rotina que já tem. Por isso o piso é 3, e não 2.
+ */
+/**
+ * A PERGUNTA DO TEMA — explícita, com saída para os dois lados.
+ *
+ * ⚠️ O QUE SAÍA ANTES, medido no turno real de 08/09/2026: *"Falta só escolher o
+ * tema dos cartões: posso fazer em **contos e princesas** — ou qualquer outro
+ * que Manu esteja gostando agora."* Uma sugestão só, colada, sem numeração e
+ * **sem a opção de não ter tema**. Quem não quer tema nenhum não tinha o que
+ * responder, e "ou qualquer outro" devolve à mãe um trabalho que é nosso.
+ *
+ * ⚠️ O CANÔNICO DE PRODUTO (cartoes-visuais-v2 §10) pede **duas** sugestões, a
+ * possibilidade de outro tema e a de nenhum tema — numeradas, porque a resposta
+ * "1" tem que valer. `lerTemaEscolhido` já entende número.
+ *
+ * ⚠️ AS SUGESTÕES SÃO DELA, NÃO MINHAS. Saem de `carregarInteresses`, a mesma
+ * fonte dos chips da web. Quando não há interesse registrado, o convite fica
+ * aberto em vez de inventar preferência — §19 do Prompt Mestre.
+ */
+export function perguntaDeTema(nome: string, sugestoes: readonly string[]): string {
+  const semTema = `Se preferir, faço *sem tema*, com imagens bem simples.`;
+  if (!sugestoes.length) {
+    return `Falta só escolher o tema dos cartões. Me fala um tema que ${nome} ama — animais, dinossauros, fundo do mar, um personagem — que eu desenho em cima disso. ${semTema}`;
+  }
+  const lista = sugestoes.map((s, i) => `${i + 1}️⃣ *${s}*`).join("\n");
+  return `Falta só escolher o tema dos cartões. Pensei em:\n${lista}\n\nPode responder só o número, me dizer outro tema que ${nome} esteja gostando agora, ou pedir *sem tema* — aí faço com imagens bem simples.`;
+}
+
+export function familiaDitouSequencia(texto: string | null | undefined): boolean {
+  const linhas = String(texto ?? "")
+    .split(/\r?\n/)
+    .map((l) => l.trim())
+    .filter(Boolean);
+  if (linhas.length < 4) return false; // 1 de pedido + ao menos 3 de lista
+  const itens = linhas.filter(
+    (l) => l.length <= 60 && !l.endsWith("?") && l.split(/\s+/).length <= 8,
+  );
+  return itens.length >= 3;
+}
+
+/**
+ * A ROTINA ANTERIOR, EMOLDURADA — e por que ela precisa de UM dono.
+ *
+ * ⚠️ O INCIDENTE, RECONSTRUÍDO. O barco da Manu não veio de
+ * `categorias_extras.transicoes` — o Gate A já o tinha tirado de lá, e a prova
+ * contra os 177 perfis de produção confirmou. Veio de `carregarOQueJaSabemos`,
+ * que injeta as TRÊS últimas rotinas com suas tarefas. A rotina de 07/09, "Dia
+ * de shopping e passeio", era exatamente: Brincadeira → Banho → Almoço →
+ * Preparar para o passeio de barco → Ir até o barco → Entrar no barco com calma
+ * → Passeio de barco → Shopping.
+ *
+ * O prompt mandava **"use como base"**. O modelo usou. De novo não foi
+ * alucinação: foi obediência.
+ *
+ * ⚠️ A MOLDURA CERTA JÁ EXISTIA NESTE ARQUIVO, oito linhas de contexto acima —
+ * `avaliarProntidaoParaRotina` recebia "NÃO é a sequência de agora e NÃO conta
+ * como sequência informada", escrito depois de um incidente de 04/08/2026 com
+ * ESTA MESMA CRIANÇA e este mesmo padrão. O condutor não recebeu. Dois donos
+ * para o mesmo dado, e um deles nunca soube da correção do outro.
+ *
+ * ⚠️ E MOLDURA SOZINHA NÃO BASTA — é a lição do Gate A. Quando a família ditou a
+ * sequência AGORA, o artefato de ontem não é emoldurado: ele **não entra**. Uma
+ * ressalva compete com a vontade de ajudar e perde; ausência de texto não
+ * compete com nada.
+ */
+export function blocoRotinaAnterior(
+  rotinaExistente: string,
+  pedidoAtual?: string | null,
+): string {
+  const t = (rotinaExistente ?? "").trim();
+  if (!t) return "";
+  if (familiaDitouSequencia(pedidoAtual)) return "";
+  return `ROTINA QUE JÁ EXISTE (de outro pedido — serve pra conhecer a criança; NÃO é a sequência de agora, NÃO conta como sequência informada e NÃO empresta etapa nenhuma para o pedido de hoje. Se a família ditou as etapas agora, valem as dela, inteiras e na ordem dela):\n${t}`;
+}
+
 export function blocoDeTransicoes(
   transicoes: readonly Transicao[],
   agora: Date = new Date(),
@@ -1343,8 +1436,7 @@ export async function conduzirRotina(
       .split(/[,;]/)
       .map((s) => s.trim())
       .filter(Boolean)
-      .slice(0, 2)
-      .join("* ou *");
+      .slice(0, 2);
 
     // ── A PROPOSTA NA MESA VEM ANTES DE TUDO ───────────────────────────────
     //
@@ -1519,9 +1611,7 @@ export async function conduzirRotina(
         // disse só "quero organizar a rotina do dia da Manu" e o porteiro
         // devolveu "suficiente". O gerador inventou o dia, o validador barrou,
         // e ela recebeu "montei aqui, mas prefiro confirmar".
-        jaSabemos.rotinaExistente
-          ? `ROTINA QUE JÁ EXISTE (de outro pedido — serve pra conhecer a criança; NÃO é a sequência de agora e NÃO conta como sequência informada):\n${jaSabemos.rotinaExistente}`
-          : "",
+        blocoRotinaAnterior(jaSabemos.rotinaExistente, params.contexto),
         transicoesTxt,
         anteriorTxt
           ? `CONVERSA ANTERIOR (outro assunto — contexto, NÃO é a sequência de agora):\n${anteriorTxt}`
@@ -1660,10 +1750,10 @@ SÓ DUAS SAÍDAS AQUI, e a regra CONFIRMAR OU MONTAR decide qual:
         : "",
       jaSabemos.perfil ? `PERFIL (o que já sabemos — NÃO re-pergunte):
 ${jaSabemos.perfil}` : "",
-      jaSabemos.rotinaExistente
-        ? `ROTINA QUE JÁ EXISTE (use como base; se ela perguntar sobre a rotina, é ESTA):
-${jaSabemos.rotinaExistente}`
-        : "",
+      // ⚠️ "use como base" ERA O DEFEITO — ver `blocoRotinaAnterior`. Agora os
+      // dois sítios de composição deste arquivo usam a MESMA função, e ela
+      // sabe calar quando a família acabou de ditar a sequência.
+      blocoRotinaAnterior(jaSabemos.rotinaExistente, params.contexto),
       // ⚠️ O RÓTULO SAIU DAQUI. `blocoDeTransicoes` já devolve o texto com o
       // enquadramento certo para cada parte — "use proativamente" valia para
       // padrão conhecido e era exatamente o que mandava usar o barco.
@@ -2044,11 +2134,7 @@ Ah — se quiser, o próprio ${nome} pode ser o personagem dos cartões em vez d
       const cartoes = autoGerou
         ? `\n\nJá comecei a preparar os cartões no tema *${tema}* — eles vão aparecendo nesta rotina conforme ficarem prontos 🌿`
         : faltaTema || ofereceCartoes
-          ? `\n\nFalta só escolher o tema dos cartões${
-              sugestoesDeTema
-                ? `: posso fazer em *${sugestoesDeTema}* — ou qualquer outro que ${nome} esteja gostando agora.`
-                : `. Me fala um tema que ${nome} ama — animais, dinossauros, fundo do mar, um personagem — que eu desenho em cima disso.`
-            }`
+          ? `\n\n${perguntaDeTema(nome, sugestoesDeTema)}`
           : "";
       const impresso = querImprimir
         ? "\n\nTe mandei também um *PDF pra imprimir* (com quadradinhos pra marcar)."
