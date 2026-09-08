@@ -7919,7 +7919,53 @@ Criterio de conclusao: para perfil com fala por palavras soltas, o conteudo
 dirigido a crianca muda de forma mensuravel, e tema visual sozinho deixa de
 contar como personalizacao.
 
-**Proximo ID livre: PEND-181. *(024 e 025 reservadas por frentes ainda nao publicadas; 0076 e numero de MIGRACAO reservado — ver PEND-121.)***
+
+### PEND-182
+**metadata de `ayla_messages` apagado por sobrescrita de chave — 3 mecanismos mortos**
+Bloco: **B · Ayla** · Prioridade: **P1**
+STATUS: **EM PRODUCAO — aguardando prova de leitura** · Aberta em: 2026-09-08
+
+Achado pelo teste de integracao do Gate B, executando a escrita em vez de
+conferir o argumento. Os dois `insert` de `ayla_messages` espalhavam o
+`metadata` do chamador AO LADO do `metadata` de `registroDeEnvio`. Chave
+repetida em objeto literal nao funde: a ultima vence, a outra some inteira. O
+`insert` voltava sucesso com o campo errado dentro — o §7 na letra.
+
+**BASELINE, medido em producao por leitura (08/09/2026):**
+
+| tipo | linhas | com a ancora |
+|---|---|---|
+| `rotina_proposta` | 3 (21/08 → 06/09) | **0** |
+| `clarificacao_identificacao` | 54 (08/06 → 07/09) | **0** |
+| `resposta_registro` | 400 | 1 `plano_id` |
+
+Inventario de 1.861 mensagens: existem DUAS chaves, `entrega` (1.860) e
+`plano_id` (1) — este vindo da outra escrita, de ordem invertida, onde quem
+sumia era a `entrega`.
+
+**CAUSA RAIZ:** `metadataMensagem` nasceu em 08/08/2026 (`1a800b1`) dentro de um
+`insert` que ja espalhava `registroDeEnvio` depois dele. Nasceu apagado.
+
+**O QUE VOLTA A EXISTIR** — conjunto FECHADO, provado por caca: `metadataMensagem`
+e a unica porta daquele `insert` e tem 4 pontos de chamada; ha 4 leitores; o
+quarto par (`lacuna`) e do Gate B e nao entrou aqui.
+
+| Ancora | Consumidor | O que volta |
+|---|---|---|
+| `pedido` | `orchestrator.ts` (retomarPedidoAposClarificacao) | "Mario ou Manu?" → a resposta retoma o pedido (caso Karina, 08/08) |
+| `proposta` | `rotina-guiada.ts` (propostaPendente) | a mae aprova a sequencia e o quadro usa a que ela aprovou — antes reinventava |
+| `plano_id` | `ofertaDePlanoPendente` | dedup da entrega do Plano no caminho novo |
+
+**POR QUE NENHUM TESTE PEGOU:** todos provavam que o campo era PASSADO, nenhum
+que SOBREVIVIA ao `insert`. A trava nova e `metadata-persistencia-e2e.test.ts`,
+que le a linha gravada e o consumidor lendo de volta. Sabotagem medida: com a
+correcao revertida, 7 dos 14 testes ficam vermelhos.
+
+**CRITERIO DE CONCLUSAO:** apos o deploy, leitura de producao confirmando que
+uma linha nova de `rotina_proposta` ou `clarificacao_identificacao` traz a
+ancora E `entrega` na mesma linha. Sem forcar cenario com familia real.
+
+**Proximo ID livre: PEND-183. *(024 e 025 reservadas por frentes ainda nao publicadas; 0076 e numero de MIGRACAO reservado — ver PEND-121.)***
 
 > Conferir contra `origin/main`, não contra o seu branch. Dois branches podem
 > reivindicar o mesmo número — o conflito de merge nesta linha é o alarme.

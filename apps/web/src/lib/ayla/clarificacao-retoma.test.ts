@@ -28,7 +28,23 @@ describe("a resposta da clarificação retoma o pedido", () => {
     // `meta` já existia e vai pro ayla_send_log (auditoria). Estado que a
     // próxima mensagem precisa ler tem que estar em `ayla_messages.metadata`.
     expect(ORCH).toMatch(/metadataMensagem\?: Record<string, unknown>;/);
-    expect(ORCH).toMatch(/\.\.\.\(params\.metadataMensagem \? \{ metadata: params\.metadataMensagem \} : \{\}\)/);
+    expect(ORCH).toMatch(/registroDeEnvio\(idsBolhas, params\.metadataMensagem \?\? null\)/);
+
+    // ⚠️ E TEM QUE CONVIVER COM O REGISTRO DE ENTREGA — PEND-182, 08/09/2026.
+    //
+    // A forma antiga (`...(params.metadataMensagem ? { metadata: ... } : {})`)
+    // ficava ao LADO de `...registroDeEnvio(idsBolhas)`, e chave repetida em
+    // objeto literal nao funde: a ultima vencia. `pedido`, `proposta` e
+    // `plano_id` foram apagados por um mes — gravados sem erro, lidos como
+    // ausentes. Em producao, 0 de 54 clarificacoes tinham `pedido`.
+    //
+    // Este teste passava o tempo todo: provava que o campo era PASSADO, nunca
+    // que sobrevivia ao `insert`. Quem prova a sobrevivencia e
+    // `metadata-persistencia-e2e.test.ts`, lendo a linha gravada. O que fica
+    // aqui e a trava estrutural: ninguem volta a espalhar os dois lado a lado.
+    const i = ORCH.indexOf('from("ayla_messages").insert({', ORCH.indexOf("async function enviarEPersistir"));
+    const literal = ORCH.slice(i, ORCH.indexOf("});", i) + 1);
+    expect(literal).not.toMatch(/\{ metadata:/);
   });
 
   it("a retomada devolve o TEXTO ORIGINAL ao roteamento", () => {
