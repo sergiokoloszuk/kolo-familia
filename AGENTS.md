@@ -34,6 +34,12 @@ e entrega — com dois níveis de escrutínio acima do mínimo (MÉDIA e CRÍTIC
 duas perguntas que mandam no resto: **"funciona para quem não sabe que
 existe?"** e **"o que acontece amanhã?"**. `IMPLEMENTADA ≠ PRONTA`.
 
+**[docs/PROTOCOLO-TESTE-REAL.md](docs/PROTOCOLO-TESTE-REAL.md)** vale
+**a partir do Gate B**, em todo teste humano no WhatsApp: reconstruir o turno
+de ponta a ponta, rastrear as portas que NÃO dispararam, provar fala ≠ ação e
+entregar o bloco "o que quase aconteceu". Nasceu do Gate A, em que seis
+correções pareceram fechar o mesmo defeito e cinco não fecharam.
+
 O comportamento de cada funcionalidade específica vive em
 [docs/specs/](docs/specs/).
 
