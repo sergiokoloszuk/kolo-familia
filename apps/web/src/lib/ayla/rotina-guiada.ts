@@ -2103,7 +2103,25 @@ ${jaSabemos.perfil}` : "",
         // inteira volta apenas quando a mãe mandou usar o que já contou.
         historico: prontidao.reusaHistorico ? historico : historicoDaRotina,
         mensagem: params.contexto,
-        contexto: [jaSabemos.perfil, jaSabemos.rotinaExistente, transicoesTxt].filter(Boolean).join("\n"),
+        // ⚠️ O TERCEIRO SÍTIO — e eu tinha migrado só dois. 08/09/2026 10:36:
+        // a mãe ditou cinco etapas para o Mario, recebeu as cinco CERTAS **e uma
+        // segunda rotina inventada, "Hora do sudoku"**, com quatro etapas que
+        // ninguém pediu. A causa: `jaSabemos.rotinaExistente` chegava aqui CRU,
+        // carregando as tarefas da rotina "Dia do Mario" de 07:33 — que tinha
+        // "Respiração antes do sudoku" e "Sudoku (sem pressão de terminar)".
+        //
+        // `blocoRotinaAnterior` é o dono único dessa moldura desde a manhã, e
+        // cala quando a família dita a sequência. Eu o apliquei nos dois prompts
+        // de `conduzirRotina` e esqueci do GERADOR — que é justamente quem
+        // compõe o artefato. Criar o dono não basta; é preciso não deixar sítio
+        // nenhum lendo o dado cru. Um teste passa a prender isso.
+        contexto: [
+          jaSabemos.perfil,
+          blocoRotinaAnterior(jaSabemos.rotinaExistente, params.contexto),
+          transicoesTxt,
+        ]
+          .filter(Boolean)
+          .join("\n"),
         pontoDificil: pontoDificilDoTurno,
         tamanho,
         // ── A SEQUÊNCIA ACORDADA CHEGA AO ARTEFATO ─────────────────────────
@@ -2278,6 +2296,16 @@ ${jaSabemos.perfil}` : "",
       faltaTemaFinal = faltaTema;
       rastro.rotina_ids = ids;
       rastro.rotina_reutilizada = false;
+      // ⚠️ ALARME DE ARTEFATO A MAIS — 08/09/2026. Quando a família DITOU a
+      // sequência, o turno tem de produzir UMA rotina. Duas significa que algo
+      // do passado virou artefato novo: foi assim que "Hora do sudoku" nasceu
+      // ao lado da festa do Mario, com quatro etapas que ninguém pediu.
+      // Não bloqueia — a rotina certa foi criada e a família precisa dela. Mas
+      // sobe para `warn` e fica contável, em vez de depender de alguém reparar.
+      if (ditouAgora && ids.length > 1) {
+        rastro.motivo = `ditou sequência e nasceram ${ids.length} rotinas`;
+        console.warn(`[ayla:rotina] ARTEFATO A MAIS — ${ids.length} rotinas num turno ditado`);
+      }
       rastro.tema = tema ? String(tema).slice(0, 60) : null;
       rastro.tema_fonte = tema ? (rastro.tema_fonte ?? "mensagem_atual") : "nenhuma";
       rastro.status_final = faltaTema ? "aguardando" : tema ? "gerando" : "nenhum";

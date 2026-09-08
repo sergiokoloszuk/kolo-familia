@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import {
   blocoRotinaAnterior,
@@ -265,5 +266,42 @@ Mostre pra ele antes de começar o dia — ajuda a saber o que vem depois.`,
   it("não confunde prosa numerada com quadro", () => {
     const fala = { de: "kolo", texto: "Ele tem 7 anos e isso é comum.\nVale avisar antes." };
     expect(podarSequenciasAntigas(fala, true)).toBe(fala.texto);
+  });
+});
+
+/**
+ * O DONO ÚNICO PRECISA SER O ÚNICO — 08/09/2026, 10:36.
+ *
+ * ⚠️ Criei `blocoRotinaAnterior` de manhã e migrei DOIS dos três sítios que
+ * liam `jaSabemos.rotinaExistente`. O terceiro era o GERADOR — justamente quem
+ * compõe o artefato. Resultado: a mãe ditou cinco etapas para o Mario, recebeu
+ * as cinco certas E uma segunda rotina inventada, "Hora do sudoku", montada a
+ * partir das tarefas da rotina de 07:33.
+ *
+ * Criar o dono não basta. Este teste prende que nenhum sítio leia o dado cru.
+ */
+describe("nenhum sítio lê a rotina anterior sem a moldura", () => {
+  const GUIADA = readFileSync(new URL("./rotina-guiada.ts", import.meta.url), "utf8");
+
+  it("toda leitura de `jaSabemos.rotinaExistente` passa por blocoRotinaAnterior", () => {
+    const usos = GUIADA.split(String.fromCharCode(10))
+      .map((l, i) => [i + 1, l] as const)
+      .filter(([, l]) => l.includes("jaSabemos.rotinaExistente") && !l.trim().startsWith("//"));
+    expect(usos.length, "sumiram os usos — teste desatualizado").toBeGreaterThan(0);
+    for (const [linha, l] of usos) {
+      const ok = l.includes("blocoRotinaAnterior(") || l.includes("baseDeHorarios");
+      expect(ok, `linha ${linha} lê a rotina anterior CRUA: ${l.trim().slice(0, 100)}`).toBe(true);
+    }
+  });
+
+  it("o gerador recebe a moldura, não o texto cru", () => {
+    const i = GUIADA.indexOf("const r = await gerarRotina(supabase, {");
+    const chamada = GUIADA.slice(i, i + 2200);
+    expect(chamada).toContain("blocoRotinaAnterior(jaSabemos.rotinaExistente, params.contexto)");
+  });
+
+  it("dois artefatos num turno ditado viram alarme, não silêncio", () => {
+    expect(GUIADA).toMatch(/if \(ditouAgora && ids\.length > 1\)/);
+    expect(GUIADA).toMatch(/ARTEFATO A MAIS/);
   });
 });
