@@ -355,8 +355,107 @@ type Transicao = {
   /** Momento que a rotina sozinha NÃO resolve (ex.: ansiedade de separação) →
    *  semente pra a Ayla voltar depois e oferecer um PLANO de ação. */
   merece_plano?: boolean | null;
+  /**
+   * O QUE ESTE REGISTRO É — Gate A, 08/09/2026.
+   *
+   * `padrao` acontece com regularidade na vida da criança (escovar dentes,
+   * início da lição). `episodio` aconteceu uma vez (um passeio de barco, um
+   * sudoku que frustrou). AUSENTE significa legado: 47 entradas em 13 perfis
+   * foram gravadas antes deste campo existir, e para elas não há evidência
+   * nenhuma de qual das duas coisas são.
+   */
+  tipo?: "padrao" | "episodio" | null;
+  /** ISO. Ausente = legado. Nenhuma das 47 entradas existentes tem data. */
   atualizado_em?: string;
 };
+
+/**
+ * QUANTO TEMPO UM PADRÃO CONTINUA VALENDO COMO ATUAL.
+ *
+ * ⚠️ MEDIDO na base (08/09/2026), nos 355 domínios de texto datados: mediana de
+ * 35 dias, p75 de 42, **p90 de 61**, máximo de 101. Sessenta dias é o decil mais
+ * velho do que existe — não um número redondo. Acima disso o registro continua
+ * servindo de inspiração, mas deixa de ser oferecido como coisa de agora.
+ */
+const JANELA_PADRAO_ATUAL_DIAS = 60;
+
+/**
+ * O BLOCO DE TRANSIÇÕES QUE VAI AO MODELO — e por que ele deixou de ser uma
+ * lista de `momento → estratégia`.
+ *
+ * ⚠️ O DEFEITO, PROVADO EM 08/09/2026. O prompt dizia "TRANSIÇÕES JÁ CONHECIDAS
+ * (use proativamente, não re-pergunte)" seguido de `passeio de barco → rotina
+ * visual para antecipar os passos`. A Manu tem esse registro no perfil desde um
+ * passeio que já aconteceu. O modelo obedeceu: pôs o barco na rotina de hoje.
+ * O mesmo com `sudoku - frustração com puzzle complexo`, no perfil do Mario.
+ * Não foi alucinação — foi obediência a uma instrução que mandava usar.
+ *
+ * ⚠️ A DECISÃO DE PRODUTO que este bloco implementa: **a estratégia é
+ * reutilizável; o contexto em que ela foi aprendida, não.** "Antecipação visual
+ * dos passos já ajudou" é aprendizado sobre a criança e vale para qualquer
+ * transição. "Passeio de barco" é um acontecimento, e acontecimento antigo não
+ * volta a acontecer porque está escrito no perfil.
+ *
+ * ⚠️ POR QUE O `momento` SOME EM VEZ DE GANHAR UMA RESSALVA. Uma ressalva textual
+ * ("isto é histórico, não use como etapa") compete com a vontade de ser útil, e
+ * perde — é a lição do §15 do protocolo. O que não perde é a string não estar
+ * no prompt. Com o barco fora do texto, `barco = 0` não depende de o modelo
+ * obedecer: depende de ele não ter recebido a palavra.
+ *
+ * ⚠️ LEGADO É CONSERVADOR, E ISSO TEM CUSTO ACEITO. Sem `tipo` e sem data, as 47
+ * entradas atuais entram só como estratégia. Perde-se "escovar dentes" como
+ * momento reconhecido; não se perde "música depois" como estratégia. O erro
+ * barato é a Ayla perguntar de novo; o caro é ela inventar um barco.
+ */
+export function blocoDeTransicoes(
+  transicoes: readonly Transicao[],
+  agora: Date = new Date(),
+): string {
+  const corte = agora.getTime() - JANELA_PADRAO_ATUAL_DIAS * 86400_000;
+  const padroesAtuais: string[] = [];
+  const estrategias: string[] = [];
+
+  for (const t of transicoes) {
+    const estrategia = (t.estrategia ?? "").trim();
+    // "não funcionou" é aprendizado tão útil quanto "funcionou", mas nunca
+    // entra como sugestão: entra como coisa a não repetir.
+    const falhou = t.funcionou === false;
+
+    const quando = t.atualizado_em ? new Date(t.atualizado_em).getTime() : NaN;
+    const recente = Number.isFinite(quando) && quando >= corte;
+    const ehPadraoAtual = t.tipo === "padrao" && recente;
+
+    if (ehPadraoAtual) {
+      const momento = t.momento.trim();
+      if (momento) {
+        padroesAtuais.push(
+          estrategia
+            ? `${momento} → ${estrategia}${falhou ? " (não funcionou, tentar outra)" : ""}`
+            : momento,
+        );
+        continue;
+      }
+    }
+    // Todo o resto — episódio, legado sem tipo, padrão velho — contribui só com
+    // o COMO. O `momento` fica fora do prompt, e é isso que zera barco e sudoku.
+    if (estrategia) {
+      estrategias.push(falhou ? `${estrategia} (já foi tentada e não funcionou)` : estrategia);
+    }
+  }
+
+  const partes: string[] = [];
+  if (padroesAtuais.length) {
+    partes.push(
+      `MOMENTOS DIFÍCEIS QUE SE REPETEM NA VIDA DELE(A) (padrões conhecidos e recentes — pode usar, não re-pergunte): ${[...new Set(padroesAtuais)].join("; ")}`,
+    );
+  }
+  if (estrategias.length) {
+    partes.push(
+      `ESTRATÉGIAS QUE JÁ AJUDARAM ESTA CRIANÇA ANTES (inspiração para o COMO fazer). ⚠️ São aprendizados de outras situações: NÃO são o que está acontecendo hoje, NÃO viram etapa da sequência e NÃO devem ser mencionadas como acontecimento atual. Use só se couberem no que a família pediu agora: ${[...new Set(estrategias)].join("; ")}`,
+    );
+  }
+  return partes.join("\n");
+}
 
 /** Transições difíceis já aprendidas (do Kolo Vivo) — pra a Ayla já chegar sabendo. */
 async function carregarTransicoes(supabase: SupabaseClient, membroId: string): Promise<Transicao[]> {
@@ -373,11 +472,18 @@ async function carregarTransicoes(supabase: SupabaseClient, membroId: string): P
         const o = (t ?? {}) as Record<string, unknown>;
         const momento = String(o.momento ?? "").trim();
         if (!momento) return null;
+        // ⚠️ `tipo` e `atualizado_em` ATRAVESSAM. Antes do Gate A os dois eram
+        // descartados aqui — `atualizado_em` já existia no tipo e nenhum dos
+        // dois lados o usava. Sem eles, `blocoDeTransicoes` não tem como
+        // separar padrão atual de episódio antigo.
+        const tipo = o.tipo === "padrao" || o.tipo === "episodio" ? o.tipo : null;
         return {
           momento: momento.slice(0, 60),
           estrategia: o.estrategia ? String(o.estrategia).slice(0, 120) : null,
           funcionou: typeof o.funcionou === "boolean" ? o.funcionou : null,
           merece_plano: typeof o.merece_plano === "boolean" ? o.merece_plano : null,
+          tipo,
+          atualizado_em: typeof o.atualizado_em === "string" ? o.atualizado_em : undefined,
         } as Transicao;
       })
       .filter((t): t is Transicao => t != null)
@@ -408,11 +514,21 @@ async function salvarTransicoes(
       if (!n.momento) continue;
       const key = n.momento.toLowerCase();
       const antigo = porMomento.get(key);
+      // ⚠️ A DATA É GRAVADA AGORA — Gate A. `atualizado_em` era declarado no
+      // tipo e nunca escrito: MEDI 47 entradas em 13 perfis, ZERO com data.
+      // Sem carimbo na escrita, nenhum leitor consegue distinguir o que é de
+      // agora do que é de três meses atrás, e a decisão vira chute.
+      //
+      // ⚠️ O `tipo` NÃO É INVENTADO PARA O QUE JÁ EXISTE. Quando a mensagem
+      // nova não traz classificação, herda a antiga — e se não havia nenhuma,
+      // continua ausente. Ausente é lido como legado, e legado é conservador.
       porMomento.set(key, {
         momento: n.momento.slice(0, 60),
         estrategia: (n.estrategia ?? antigo?.estrategia ?? null)?.slice(0, 120) ?? null,
         funcionou: n.funcionou ?? antigo?.funcionou ?? null,
         merece_plano: n.merece_plano ?? antigo?.merece_plano ?? null,
+        tipo: n.tipo ?? antigo?.tipo ?? null,
+        atualizado_em: new Date().toISOString(),
       });
     }
     const merged = Array.from(porMomento.values()).slice(0, 20);
@@ -516,7 +632,8 @@ Ponha uma dica curta NO PONTO DIFÍCIL — o momento que ela relatou, ou a trans
 TEMA dos cartões NÃO é assunto seu: o sistema pergunta, no lugar certo, com os interesses que já conhece. Você não oferece tema, não pergunta tema, não escreve "quer no tema de...". E tema NUNCA é motivo pra existir cartão — o cartão existe quando VER a sequência ajuda a criança; o tema só personaliza o que já ia existir. A atividade tem que continuar reconhecível: primeiro se entende que é BANHO, depois é que ele é um dinossauro.
 
 ## Formato dos dados
-transicoes: [{"momento":"banho","estrategia":"música depois","funcionou":null,"merece_plano":false}] — o que você descobriu sobre momentos difíceis fica no perfil e você reusa. Marque "funcionou" quando ela disser que deu certo ou não. Se o momento for algo que a rotina sozinha NÃO resolve (ansiedade de separação, crise intensa, recusa alimentar séria), diga isso em uma frase e marque "merece_plano":true.
+transicoes: [{"momento":"banho","estrategia":"música depois","funcionou":null,"merece_plano":false,"tipo":"padrao"}] — o que você descobriu sobre momentos difíceis fica no perfil e você reusa. Marque "funcionou" quando ela disser que deu certo ou não. Se o momento for algo que a rotina sozinha NÃO resolve (ansiedade de separação, crise intensa, recusa alimentar séria), diga isso em uma frase e marque "merece_plano":true.
+"tipo" é OBRIGATÓRIO e só aceita dois valores. "padrao" = acontece com regularidade na vida dela (o banho de todo dia, o início da lição, a saída para a escola). "episodio" = aconteceu uma vez ou é de uma ocasião específica (um passeio, uma viagem, uma consulta, um jogo que frustrou naquele dia). Na dúvida, "episodio" — só o que se repete pode ser reusado depois como coisa de hoje.
 
 ## A SEQUÊNCIA DO QUADRO É A DA FAMÍLIA — a sua dica NÃO é o quadro
 Quando a família DITOU as etapas, elas são o artefato, inteiras e na ordem dela. Você pode melhorar a redação de cada uma, encurtar palavra, deixar mais concreto. Você NÃO pode, em silêncio: trocar por outra sequência, apagar etapa, cortar o fim, nem reduzir a lista dela à passagem que você achou mais difícil.
@@ -966,8 +1083,17 @@ const FERRAMENTA_CONDUTOR = {
             estrategia: { type: "string" },
             funcionou: { type: "boolean" },
             merece_plano: { type: "boolean" },
+            // ⚠️ `enum` E `required` — Gate A. O esquema é o único lugar onde a
+            // classificação pode ser exigida em vez de pedida: sem ela o
+            // registro nasce legado e nunca mais pode ser reusado como padrão.
+            tipo: {
+              type: "string",
+              enum: ["padrao", "episodio"],
+              description:
+                "padrao = se repete na vida da criança; episodio = aconteceu uma vez ou é de uma ocasião específica. Na dúvida, episodio.",
+            },
           },
-          required: ["momento"],
+          required: ["momento", "tipo"],
         },
       },
       // NÃO existe campo `rotinas` aqui. O condutor NÃO compõe o artefato —
@@ -1356,11 +1482,10 @@ export async function conduzirRotina(
     const historicoDaRotina = historico.slice(inicio);
 
     const transicoesConhecidas = await carregarTransicoes(supabase, params.membroAtipicoId);
-    const transicoesTxt = transicoesConhecidas.length
-      ? transicoesConhecidas
-          .map((t) => `${t.momento}${t.estrategia ? ` → ${t.estrategia}` : ""}${t.funcionou === false ? " (não funcionou, tentar outra)" : ""}`)
-          .join("; ")
-      : "";
+    // ⚠️ NÃO É MAIS `momento → estratégia` DE TUDO. Ver `blocoDeTransicoes`: só
+    // padrão recente mantém o momento; o resto entra como estratégia sem
+    // contexto. É o que impede o passeio de barco de virar etapa de hoje.
+    const transicoesTxt = blocoDeTransicoes(transicoesConhecidas);
 
     const jaSabemos = await carregarOQueJaSabemos(supabase, params.membroAtipicoId);
 
@@ -1539,7 +1664,10 @@ ${jaSabemos.perfil}` : "",
         ? `ROTINA QUE JÁ EXISTE (use como base; se ela perguntar sobre a rotina, é ESTA):
 ${jaSabemos.rotinaExistente}`
         : "",
-      transicoesTxt ? `TRANSIÇÕES JÁ CONHECIDAS (use proativamente, não re-pergunte): ${transicoesTxt}` : "",
+      // ⚠️ O RÓTULO SAIU DAQUI. `blocoDeTransicoes` já devolve o texto com o
+      // enquadramento certo para cada parte — "use proativamente" valia para
+      // padrão conhecido e era exatamente o que mandava usar o barco.
+      transicoesTxt,
       "CONVERSA (a última fala da mãe é o pedido atual):\n" +
         historico.map((h) => `${h.de === "mae" ? "Mãe" : "Kolo"}: ${h.texto}`).join("\n"),
     ]
@@ -1746,6 +1874,10 @@ ${jaSabemos.rotinaExistente}`
             estrategia: o.estrategia ? String(o.estrategia) : null,
             funcionou: typeof o.funcionou === "boolean" ? o.funcionou : null,
             merece_plano: typeof o.merece_plano === "boolean" ? o.merece_plano : null,
+            // ⚠️ SÓ ACEITA O QUE O CONTRATO PREVÊ. Qualquer outra coisa vira
+            // `null`, que é lido como legado — nunca como padrão atual. Um
+            // modelo que responda "recorrente" não promove nada por engano.
+            tipo: o.tipo === "padrao" || o.tipo === "episodio" ? o.tipo : null,
           };
         })
         .filter((t): t is Transicao => t != null);
