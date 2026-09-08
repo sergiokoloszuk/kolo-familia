@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { blocoDeTransicoes } from "./rotina-guiada";
+import { blocoDeTransicoes, pontoDificilAtual } from "./rotina-guiada";
 
 /**
  * GATE A · A2 — SEMÂNTICA TEMPORAL DE `categorias_extras.transicoes`.
@@ -224,5 +224,63 @@ describe("Gate A · transições: o que NÃO pode ser bloqueado demais", () => {
     expect(bloco).toContain("início da lição");
     expect(bloco).toContain("antecipação visual");
     expect(bloco.toLowerCase()).not.toContain("barco");
+  });
+});
+
+/**
+ * A SEXTA PORTA — 08/09/2026 11:16, e a mais bem escondida do dia.
+ *
+ * ⚠️ `pontoDificilDoTurno` lia `transicoesConhecidas[0]?.momento` — o índice
+ * ZERO do array CRU do perfil. Para o Mario, isso é
+ * "sudoku - frustração com puzzle complexo". O valor virava instrução literal
+ * ao gerador ("o que mais trava no dia: … quebre em passos menores, com uma
+ * etapa de preparação antes dele") e produzia a rotina de sudoku — com a etapa
+ * de preparação e tudo, exatamente como pedido.
+ *
+ * O Gate A sanitizou a RENDERIZAÇÃO (`blocoDeTransicoes`) e deixou o ARRAY.
+ * Cinco correções fecharam portas do texto; esta é do dado.
+ */
+describe("Gate A · o ponto difícil não sai de episódio antigo", () => {
+  const HOJE2 = new Date("2026-09-08T12:00:00Z");
+  const dias = (n: number) => new Date(HOJE2.getTime() - n * 86400_000).toISOString();
+
+  /** O perfil real do Mario, na ordem em que está gravado. */
+  const MARIO = [
+    { momento: "sudoku - frustração com puzzle complexo", estrategia: null },
+    { momento: "frustracao_com_puzzle_complexo_sudoku", estrategia: null },
+    { momento: "transicoes_abruptas_roupa_entrega_presente", estrategia: "avisar antes" },
+  ];
+
+  it("REGRESSÃO: com sequência ditada, o perfil não impõe ponto difícil", () => {
+    expect(pontoDificilAtual(null, MARIO, true, HOJE2)).toBeNull();
+  });
+
+  it("REGRESSÃO: sem tipo e sem data, episódio antigo nunca vira ponto difícil", () => {
+    expect(pontoDificilAtual(null, MARIO, false, HOJE2)).toBeNull();
+  });
+
+  it("o que a conversa revelou AGORA manda sempre", () => {
+    expect(pontoDificilAtual("guardar na geladeira", MARIO, true, HOJE2)).toBe("guardar na geladeira");
+    expect(pontoDificilAtual("guardar na geladeira", MARIO, false, HOJE2)).toBe("guardar na geladeira");
+  });
+
+  it("padrão RECENTE do perfil vale quando a família não ditou", () => {
+    const perfil = [{ momento: "sair do celular", estrategia: "aviso de 10 min", tipo: "padrao" as const, atualizado_em: dias(3) }];
+    expect(pontoDificilAtual(null, perfil, false, HOJE2)).toBe("sair do celular");
+  });
+
+  it("padrão VELHO não vale", () => {
+    const perfil = [{ momento: "sair do celular", estrategia: null, tipo: "padrao" as const, atualizado_em: dias(120) }];
+    expect(pontoDificilAtual(null, perfil, false, HOJE2)).toBeNull();
+  });
+
+  it("episódio RECENTE também não vale — recência não promove episódio", () => {
+    const perfil = [{ momento: "passeio de barco", estrategia: null, tipo: "episodio" as const, atualizado_em: dias(1) }];
+    expect(pontoDificilAtual(null, perfil, false, HOJE2)).toBeNull();
+  });
+
+  it("perfil vazio não quebra", () => {
+    expect(pontoDificilAtual(null, [], false, HOJE2)).toBeNull();
+    expect(pontoDificilAtual("", [], true, HOJE2)).toBeNull();
   });
 });

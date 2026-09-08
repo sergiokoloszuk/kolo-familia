@@ -677,6 +677,56 @@ export function blocoRotinaAnterior(
   return `ROTINA QUE JÁ EXISTE (de outro pedido — serve pra conhecer a criança; NÃO é a sequência de agora, NÃO conta como sequência informada e NÃO empresta etapa nenhuma para o pedido de hoje. Se a família ditou as etapas agora, valem as dela, inteiras e na ordem dela):\n${t}`;
 }
 
+/**
+ * O PONTO DIFÍCIL DESTE TURNO — e a sexta porta do Sudoku, 08/09/2026 11:16.
+ *
+ * ⚠️ O QUE ESTAVA ERRADO, e é o defeito mais bem escondido do dia:
+ *
+ *     pontoDificilDoTurno = t0?.momento || transicoesConhecidas[0]?.momento
+ *
+ * `transicoesConhecidas` é o array CRU do perfil. Para o Mario, o índice ZERO é
+ * `{"momento":"sudoku - frustração com puzzle complexo"}`. Esse valor virava
+ * `pontoDificil`, e `gerarRotina` o transforma numa instrução literal ao
+ * gerador: "(o que mais trava no dia: … quebre esse momento em passos menores,
+ * com uma etapa de preparação antes dele)". O gerador obedeceu — e por isso a
+ * rotina inventada sempre começava com "Respirar fundo antes de começar".
+ *
+ * ⚠️ O GATE A SANITIZOU A RENDERIZAÇÃO E DEIXOU O ARRAY. `blocoDeTransicoes`
+ * cuida do texto que vai ao prompt; este consumidor lia o dado bruto e passava
+ * por fora. Cinco correções minhas hoje não alcançaram isto porque eu estava
+ * fechando as portas do TEXTO, e esta é do DADO.
+ *
+ * ⚠️ E `[0]` NÃO É NADA. Não é o mais recente, não é o mais pertinente: é o
+ * primeiro do array, na ordem em que foi gravado. Um episódio de agosto tinha a
+ * mesma chance de governar a rotina de hoje que qualquer outro.
+ *
+ * A REGRA, a mesma do resto do Gate A:
+ *   · o que ESTE turno revelou manda sempre;
+ *   · o perfil só entra se for `padrao` E recente — episódio antigo nunca;
+ *   · e quando a família DITOU a sequência, o perfil não impõe ponto difícil
+ *     nenhum: ela acabou de dizer o que o dia é.
+ */
+export function pontoDificilAtual(
+  doTurno: string | null | undefined,
+  transicoes: readonly Transicao[],
+  familiaDitouAgora: boolean,
+  agora: Date = new Date(),
+): string | null {
+  const daConversa = (doTurno ?? "").trim();
+  if (daConversa) return daConversa;
+  if (familiaDitouAgora) return null;
+
+  const corte = agora.getTime() - JANELA_PADRAO_ATUAL_DIAS * 86400_000;
+  for (const t of transicoes) {
+    if (t.tipo !== "padrao") continue;
+    const quando = t.atualizado_em ? new Date(t.atualizado_em).getTime() : NaN;
+    if (!Number.isFinite(quando) || quando < corte) continue;
+    const momento = (t.momento ?? "").trim();
+    if (momento) return momento;
+  }
+  return null;
+}
+
 export function blocoDeTransicoes(
   transicoes: readonly Transicao[],
   agora: Date = new Date(),
@@ -2105,10 +2155,26 @@ ${jaSabemos.perfil}` : "",
     // de revelar, ou o que já estava no perfil. Serve ao gerador E ao PDF.
     const trAgora = Array.isArray(parsed?.transicoes) ? (parsed.transicoes as unknown[]) : [];
     const t0 = (trAgora[0] ?? null) as { momento?: unknown; estrategia?: unknown } | null;
-    const pontoDificilDoTurno =
-      (t0?.momento ? String(t0.momento) : "") || transicoesConhecidas[0]?.momento || null;
+    // ⚠️ A SEXTA PORTA — ver `pontoDificilAtual`. Era
+    // `transicoesConhecidas[0]?.momento`: o índice ZERO do array cru do perfil,
+    // que para o Mario é "sudoku - frustração com puzzle complexo". Virava
+    // instrução literal ao gerador e produzia a rotina de sudoku que nenhuma
+    // das cinco correções anteriores alcançou — elas fechavam portas do TEXTO,
+    // e esta é do DADO.
+    const pontoDificilDoTurno = pontoDificilAtual(
+      t0?.momento ? String(t0.momento) : null,
+      transicoesConhecidas,
+      ditouAgora,
+    );
+    // A estratégia segue o MESMO critério: o que a conversa revelou vence, e o
+    // perfil só empresta quando é padrão atual. Estratégia de episódio antigo
+    // continua disponível como inspiração — mas via `blocoDeTransicoes`, que a
+    // entrega sem o contexto, nunca como "o que trava hoje".
     const estrategiaDoTurno =
-      (t0?.estrategia ? String(t0.estrategia) : "") || transicoesConhecidas[0]?.estrategia || null;
+      (t0?.estrategia ? String(t0.estrategia) : "") ||
+      (pontoDificilDoTurno
+        ? (transicoesConhecidas.find((t) => t.momento === pontoDificilDoTurno)?.estrategia ?? null)
+        : null);
 
     let rotinas: ReturnType<typeof sanitizarRotinas> = [];
     /** Rotinas gravadas neste turno; vazio quando nada foi persistido. */
