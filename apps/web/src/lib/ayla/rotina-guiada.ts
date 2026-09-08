@@ -461,6 +461,51 @@ const JANELA_PADRAO_ATUAL_DIAS = 60;
  * barato é a Ayla perguntar de novo; o caro é ela inventar um barco.
  */
 /**
+ * A TERCEIRA PORTA DO SUDOKU — 08/09/2026, 10:21, produção.
+ *
+ * ⚠️ O CASO. A mãe ditou cinco etapas para o Mario: "Fazer bolo / Guardar na
+ * geladeira / Colocar vela / Cantar parabéns / Comer bolo e brigadeiros".
+ * Recebeu SETE, com "Respirar fundo antes do sudoku" e "Sudoku — um passo de
+ * cada vez" enfiados no meio.
+ *
+ * Não veio de `categorias_extras.transicoes` — o Gate A fechou aquilo, e a
+ * prova contra os 177 perfis confirmou. Não veio da rotina anterior —
+ * `blocoRotinaAnterior` devolve vazio quando a família dita a sequência, e ela
+ * ditou. Veio da **conversa recente**: às 07:33 do mesmo dia a própria Ayla
+ * escreveu, para o Mario, um quadro que continha o sudoku. Essa mensagem cabe
+ * na janela de 12 h e chegava CRUA ao prompt, sob o rótulo "CONVERSA".
+ *
+ * ⚠️ MESMO DEFEITO, TERCEIRA PORTA: conteúdo de artefato antigo competindo com
+ * o pedido de agora. E o contrato já proíbe em texto — "quando a família DITOU
+ * as etapas, elas são o artefato, inteiras e na ordem dela" — e perdeu de novo.
+ * Regra em prompt compete com contexto concreto e perde; é a lição que o Gate A
+ * já tinha aprendido duas vezes.
+ *
+ * ⚠️ O QUE SE PODA, E O QUE NÃO. Some só a LISTA — as linhas de quadro que o
+ * sistema cola embaixo da fala ("3. Sudoku", "1️⃣ Fazer bolo"). A prosa da Ayla
+ * fica inteira: é ela que carrega a continuidade, o que já foi combinado e o
+ * tom. E só poda quando a família ditou a sequência AGORA: quando ela não
+ * ditou, o quadro anterior é justamente o que dá contexto.
+ *
+ * ⚠️ SÓ A FALA DA AYLA. Uma lista escrita pela MÃE é o pedido dela, presente ou
+ * passado, e nunca se apaga.
+ */
+export function podarSequenciasAntigas(
+  fala: { de: string; texto: string },
+  familiaDitouAgora: boolean,
+): string {
+  if (!familiaDitouAgora || fala.de === "mae") return fala.texto;
+  const linhas = fala.texto.split("\n");
+  const ehLinhaDeQuadro = (l: string) =>
+    /^\s*(?:\d{1,2}[.)]|[1-9]️?⃣|[-–•])\s+\S/.test(l);
+  const podadas = linhas.filter((l) => !ehLinhaDeQuadro(l));
+  // Se sobrou pouco, a fala era só o quadro — devolve um marcador em vez de
+  // vazio, para o modelo não achar que a Ayla ficou muda naquele turno.
+  const texto = podadas.join("\n").trim();
+  return texto || "(montou uma sequência anterior — não é a de agora)";
+}
+
+/**
  * O PORTÃO DETERMINÍSTICO DA ROTINA — dono único, 08/09/2026.
  *
  * ⚠️ POR QUE ELE EXISTE. A expressão vivia solta no orquestrador e cada frase
@@ -1723,6 +1768,9 @@ export async function conduzirRotina(
     }
     const historicoDaRotina = historico.slice(inicio);
 
+    // A família ditou a sequência NESTE turno? Decide se o quadro de conversas
+    // antigas pode competir com o pedido de agora — ver `podarSequenciasAntigas`.
+    const ditouAgora = familiaDitouSequencia(params.contexto);
     const transicoesConhecidas = carregarTransicoes(perfilDaRotina);
     // ⚠️ NÃO É MAIS `momento → estratégia` DE TUDO. Ver `blocoDeTransicoes`: só
     // padrão recente mantém o momento; o resto entra como estratégia sem
@@ -1922,7 +1970,9 @@ ${jaSabemos.perfil}` : "",
       // padrão conhecido e era exatamente o que mandava usar o barco.
       transicoesTxt,
       "CONVERSA (a última fala da mãe é o pedido atual):\n" +
-        historico.map((h) => `${h.de === "mae" ? "Mãe" : "Kolo"}: ${h.texto}`).join("\n"),
+        historico
+          .map((h) => `${h.de === "mae" ? "Mãe" : "Kolo"}: ${podarSequenciasAntigas(h, ditouAgora)}`)
+          .join("\n"),
     ]
       .filter(Boolean)
       .join("\n\n");
