@@ -4,6 +4,7 @@ import {
   blocoRotinaAnterior,
   familiaDitouSequencia,
   pediuRotinaExplicitamente,
+  podarHistorico,
   podarSequenciasAntigas,
   perguntaDeTema,
   temaEnunciado,
@@ -303,5 +304,44 @@ describe("nenhum sítio lê a rotina anterior sem a moldura", () => {
   it("dois artefatos num turno ditado viram alarme, não silêncio", () => {
     expect(GUIADA).toMatch(/if \(ditouAgora && ids\.length > 1\)/);
     expect(GUIADA).toMatch(/ARTEFATO A MAIS/);
+  });
+});
+
+/**
+ * A QUINTA PORTA — 08/09/2026, 10:58, e o alarme apontou para ela.
+ *
+ * ⚠️ Podei o histórico no TEXTO que vai ao prompt do condutor e deixei o ARRAY
+ * seguir cru para `gerarRotina` — quem compõe o artefato. Duas saídas do mesmo
+ * dado, uma podada e outra não. Resultado: "Momento sudoku" nasceu de novo ao
+ * lado da festa, e o rastro registrou "ditou sequência e nasceram 2 rotinas".
+ */
+const QUEBRA = String.fromCharCode(10);
+describe("os dois destinos do histórico usam a MESMA poda", () => {
+  const GUIADA = readFileSync(new URL("./rotina-guiada.ts", import.meta.url), "utf8");
+  const H = [
+    { de: "mae", texto: ["Mario", "Rotina visual", "Fazer bolo", "Colocar vela", "Cantar"].join(QUEBRA) },
+    { de: "kolo", texto: ["Ficou assim:", "1. Estudar", "2. Sudoku", "3. Fono", "Mostre um por vez."].join(QUEBRA) },
+  ];
+
+  it("poda o array inteiro quando a família ditou", () => {
+    const podado = podarHistorico(H, true);
+    expect(JSON.stringify(podado).toLowerCase()).not.toContain("sudoku");
+    // A fala da mãe fica intacta.
+    expect(podado[0].texto).toBe(H[0].texto);
+    // A prosa da Ayla sobrevive.
+    expect(podado[1].texto).toContain("Mostre um por vez.");
+  });
+
+  it("não poda nada quando a família NÃO ditou", () => {
+    expect(podarHistorico(H, false)).toEqual(H);
+  });
+
+  it("o prompt do condutor e o gerador recebem o MESMO histórico podado", () => {
+    // Nenhum dos dois pode voltar a ler `historico` cru.
+    expect(GUIADA).toMatch(/podarHistorico\(historico, ditouAgora\)/);
+    expect(GUIADA).toMatch(/historico: podarHistorico\(/);
+    // E a poda por fala não pode ser chamada solta em nenhum destino.
+    const soltas = GUIADA.match(/podarSequenciasAntigas\(h, ditouAgora\)/g) ?? [];
+    expect(soltas.length, "voltou a podar num destino só").toBe(0);
   });
 });

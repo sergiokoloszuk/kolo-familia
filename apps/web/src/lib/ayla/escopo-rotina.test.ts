@@ -119,8 +119,12 @@ describe("o critério separa o que se sabe do que foi pedido", () => {
   });
 
   it("só ele devolve a janela inteira ao gerador", () => {
+    // ⚠️ O CRITÉRIO É O MESMO; o que mudou em 08/09/2026 é que a janela passa
+    // por `podarHistorico` antes de chegar ao gerador. `reusaHistorico`
+    // continua sendo quem decide QUANTO histórico volta; a poda decide o que,
+    // dentro dele, é quadro antigo que não pode virar artefato novo.
     expect(GUIADA).toMatch(
-      /historico: prontidao\.reusaHistorico \? historico : historicoDaRotina/,
+      /historico: podarHistorico\(\s*\n\s*prontidao\.reusaHistorico \? historico : historicoDaRotina,/,
     );
   });
 });
