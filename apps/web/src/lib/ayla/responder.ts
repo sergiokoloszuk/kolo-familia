@@ -176,9 +176,16 @@ export type RespostaParams = {
   diagnosticoRegistrado?: string | null;
   generoMembro?: Genero;
   koloVivoResumo: string;
+  /**
+   * O que a família JÁ contou — desafios do cadastro e domínios preenchidos.
+   *
+   * ⚠️ NÃO É A LISTA DO QUE FALTA. Aquela saiu no Gate B: era investigação por
+   * formulário, e a decisão de o que perguntar tem outro dono. Isto existe para
+   * o oposto — impedir que a Ayla re-pergunte o que já sabe.
+   */
+  oQueJaContou?: string;
   /** O que o perfil da criança já tem × o que falta, por domínio — pra a Ayla
    *  perguntar só o pertinente (sem repetir) e saber o que falta pro relatório. */
-  koloVivoLacunas?: string;
   /**
    * Bloco `<repertorio_kolo>` já montado por `lib/conhecimento/recuperar`. É a
    * MESMA função que serve as Estratégias — o canal muda a apresentação, nunca
@@ -506,11 +513,30 @@ ${params.diagnosticoRegistrado.trim()}`);
       `\n<o_que_ja_sabemos_da_crianca>\n${params.koloVivoResumo}\n</o_que_ja_sabemos_da_crianca>\n(Isto é FUNDO acumulado ao longo do tempo e pode estar DESATUALIZADO: um interesse ou um passeio/evento listado aqui pode já ter passado. NÃO trate como o que está acontecendo agora, e NÃO puxe um interesse/evento daqui por conta própria — use só quando ajudar DE VERDADE o que está sendo falado agora.)`,
     );
   }
-  if (params.koloVivoLacunas?.trim()) {
+  if (params.oQueJaContou?.trim()) {
     linhas.push(
-      `\n<lacunas_do_perfil>\n${params.koloVivoLacunas}\nUse isto pra perguntar só o PERTINENTE (não re-pergunte o que já tem) e pra saber o que ainda falta antes de montar um relatório.\n</lacunas_do_perfil>`,
+      `
+<o_que_a_familia_ja_contou>
+${params.oQueJaContou}
+Use para NÃO re-perguntar o que ela já disse. Isto é relato dela, não diagnóstico.
+</o_que_a_familia_ja_contou>`,
     );
   }
+  // ⚠️ `<lacunas_do_perfil>` REMOVIDO — Gate B, 08/09/2026.
+  //
+  // Este bloco injetava a lista INDISCRIMINADA de campos vazios do Kolo Vivo,
+  // com a instrução de perguntar "só o pertinente". Era exatamente o padrão que
+  // o Gate B veio desfazer — campo vazio virando pergunta — e, pior, era a única
+  // rota de investigação AINDA ALCANÇÁVEL que não passava pelo decisor: bastava
+  // o caminho oficial falhar para a Ayla voltar ao formulário.
+  //
+  // A segunda justificativa do bloco ("saber o que falta antes de montar um
+  // relatório") não se sustenta: o relatório é gerado PELA FAMÍLIA, no app —
+  // este caminho nunca o monta, e o próprio prompt do Legacy diz isso.
+  //
+  // Não foi substituído por outro decisor aqui de propósito. O fallback não
+  // precisa da sofisticação do caminho principal; precisa não reintroduzir
+  // investigação por formulário.
   // ── FASE 4A (10/08/2026) ────────────────────────────────────────────────
   // A âncora vem COLADA no perfil, e não no fim — medido na web em 09/08: sem
   // instrução de precedência, o repertório genérico apagava o que o perfil
