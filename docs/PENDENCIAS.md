@@ -7772,7 +7772,154 @@ Criterio de conclusao: os dois escritores preservam chaves nao tocadas, gravam
 data, e um teste prende que um upsert de onboarding sobre perfil existente nao
 apaga `transicoes`, `marcos` nem dominio nenhum.
 
-**Proximo ID livre: PEND-175. *(024 e 025 reservadas por frentes ainda nao publicadas; 0076 e numero de MIGRACAO reservado — ver PEND-121.)***
+### PEND-175
+**`cards_status='aguardando'` nao expira — rotina presa governa conversa para sempre**
+Bloco: **B · Ayla** · Prioridade: **P2**
+STATUS: **PARCIAL** · Aberta em: 2026-09-08
+
+O Gate A tirou a AUTORIDADE da pendencia vencida: `rotina-pendencia.ts` deixa de
+devolver pendencia acima de 7 dias para as finalidades conversacionais, e por
+isso a rotina de 18 dias parou de aparecer como pendencia de agora.
+
+O que NAO foi feito: o ESTADO continua `aguardando` para sempre. O reconciliador
+desiste em 7 dias (`TETO_RECONCILIACAO_MS`) e ninguem mais toca. A linha fica no
+banco num estado que nao descreve mais nada — nem "esperando tema", porque
+ninguem espera, nem "encerrada".
+
+MEDIDO em 08/09/2026: 92 rotinas, 2 em `aguardando`, uma delas ha 18 dias
+(`f0c052a4`, familia `f824762d`).
+
+⚠️ EXPIRAR NAO E APAGAR. O artefato continua valido na web e recuperavel. O que
+falta e um estado que diga a verdade — algo como `abandonada`, ou o retorno a
+`nenhum` por idade — e a decisao de produto sobre qual dos dois.
+
+Criterio de conclusao: estado vencido deixa de ser `aguardando`, o historico e
+preservado, e um teste prende que a transicao nao apaga tarefa nem imagem.
+
+### PEND-176
+**Duas rotinas em `erro` nunca investigadas — e nada alerta sobre elas**
+Bloco: **B · Ayla** · Prioridade: **P2**
+STATUS: **ABERTA** · Aberta em: 2026-09-08
+
+MEDIDO em 08/09/2026: das 92 rotinas, 2 estao em `cards_status='erro'`. Nenhuma
+foi investigada, e nao existe caminho que as traga a tona: nao ha alerta, nao ha
+varredura, e o reconciliador so enxerga `aguardando`.
+
+Uma familia com rotina em `erro` ve uma pagina que nao completa e nao recebe
+nada. Descobrir isso depende de ela reclamar — exatamente a pergunta obrigatoria
+do §11 do protocolo, respondida com "nao".
+
+Criterio de conclusao: causa das duas identificada; tratamento definido (nova
+tentativa, ou estado final honesto com explicacao a familia); e alerta ou
+varredura que faca `erro` deixar de ser silencioso.
+
+### PEND-177
+**Artefatos reais incorretos preservados como evidencia — limpar apos o Gate A**
+Bloco: **B · Ayla** · Prioridade: **P3**
+STATUS: **PARCIAL** · Aberta em: 2026-09-08
+
+Durante a investigacao do Gate A, quatro rotinas de teste do Mario foram
+apagadas com autorizacao (08/09, "Hora do sudoku", "Momento sudoku", "Fazer bolo
+do Mario", "Fazer bolo"). Ficaram, no perfil de familias reais:
+
+    4ff5fc8b  "Dia do Mario"              contem o Sudoku nas tarefas
+    66bb28ed  "Academia e Casa da Vovo"   tema = "sequencia visual" (defeito do nome do artefato virando tema)
+    aa52a529  "Dia do Shopping" (Manu)    9 etapas com barco, tema "sequencia visual"
+    ec61feee  "Dia de shopping e passeio" PRESERVAR — evidencia da PEND-171
+
+⚠️ Estes artefatos estao VISIVEIS para as criancas. E `4ff5fc8b` ja provou ser
+insumo: o gerador a leu como "rotina anterior" durante os incidentes do dia.
+
+Criterio de conclusao: decisao de produto sobre cada uma (apagar, corrigir tema,
+ou manter), executada com autorizacao explicita, preservando `ec61feee`.
+
+### PEND-178
+**O decisor nao reconhece pedido telegrafico — a mae nao sabe pedir pelo nome**
+Bloco: **B · Ayla** · Prioridade: **P1**
+STATUS: **ABERTA** · Aberta em: 2026-09-08
+
+MEDIDO em CINCO turnos reais de 08/09/2026, todos com o rastro `rotina_portao`:
+
+    intent=outro   pedidoExplicito=false
+
+O pedido era "Mario / Rotina visual / Fazer bolo / Guardar na geladeira / …" —
+nome da crianca, nome do artefato e a sequencia inteira. O DECISOR nao o
+reconheceu em nenhuma das cinco vezes. Quem abriu o portao foi sempre o piso
+deterministico (`portaoDeterministicoDeRotina`), criado no Gate A.
+
+⚠️ O PISO E PISO, NAO TETO. Ele so alcanca quem ja pede pelo nome ou dita a
+lista. A bancada `rotina-portao.test.ts` documenta a fronteira com frases reais
+que ele NAO alcanca — "Mario precisa ir para o medico depois da avo. Queria
+imagens para mostrar para ele a sequencia" — e prende a absurdidade que prova o
+limite: hoje o que separa abrir de nao abrir entre "Quero uma rotina com as
+imagens" e "Quero q rotina com as imagens" e o ARTIGO.
+
+⚠️ NAO CORRIGIR ALARGANDO A REGEX. "quero entender a rotina dele" tambem nomeia
+e tambem pede, e nao e pedido de artefato. A diferenca e semantica.
+
+Criterio de conclusao: medir, com o rastro ja em producao, quantos pedidos reais
+o decisor perde; corrigir a causa no decisor; e a bancada de frases reais passar
+com o piso DESLIGADO.
+
+### PEND-179
+**Core v11 §16 nega capacidades que o sistema tem — a mae teve que corrigir a Ayla**
+Bloco: **B · Ayla** · Prioridade: **P1**
+STATUS: **ABERTA** · Aberta em: 2026-09-08
+
+Turno real, 08/09/2026 10:09:
+
+    Ayla:   "eu nao consigo gerar os cartoes ilustrados ou o PDF diretamente
+             por esta conversa"
+    Karina: "Vc sabe sim. Ja fez antes"
+
+Ela esta certa. A Ayla tinha gerado duas horas antes.
+
+E o conflito C1 da auditoria de 08/09 (`AYLA_MATRIZ_CONFLITOS_2026-09-08.md`):
+o Core v11 §16 diz "voce NAO cria, salva, registra nem atualiza nada por conta
+propria" e "nunca prometa entregar um artefato". A formulacao da AGENCIA (§49 do
+Prompt Mestre) e condicional a verdade — "so diga que registrou se uma
+ferramenta realmente executou" — e e ela que esta correta. A versao Kolo
+endureceu isso em negacao de capacidade.
+
+Criterio de conclusao: §16 reescrito na formulacao condicional, publicado como
+Core v12 depois dos gates C/D/E, e provado que a Ayla nao promete o que nao
+existe NEM nega o que existe.
+
+### PEND-180
+**A linguagem dos cartoes ignora a compreensao da crianca — benchmark do Gate F**
+Bloco: **B · Ayla** · Prioridade: **P2**
+STATUS: **ABERTA** · Aberta em: 2026-09-08
+
+Caso Manu, 08/09/2026, rotina `c2608dc4`. O perfil, no mesmo banco que gerou o
+artefato, diz: **"Fala palavras soltas"**, **"Dificuldade em responder a
+comandos"**, **"nao tem nenhuma atencao; dificuldade em ligar pontos e fazer
+associacoes entre conceitos"**. Ela tem 6 anos.
+
+A historia gerada para ela tem seis frases longas, com subordinadas e
+causalidade abstrata:
+
+    "Aí vem o almoço, PORQUE a gente sai com a barriga cheia."
+    "SE em algum momento você se sentir cansada ou desconfortável, você pode
+     avisar o adulto que está com você."
+
+⚠️ O ARTEFATO ADAPTA A IMAGEM AO TEMA E NAO ADAPTA A LINGUAGEM A CRIANCA. O
+perfil foi lido para escolher a princesa e ignorado para escolher como falar. E
+o mesmo dado, usado pela metade.
+
+O que ficou BOM e vale preservar: as cenas carregam continuidade deliberada — a
+coroa dourada nos quatro cartoes, a roupa nova do banho reaparecendo no almoco e
+no shopping.
+
+⚠️ NAO IMPLEMENTAR REGRA CLINICA IMPROVISADA. Isto e benchmark OBRIGATORIO do
+Gate F, onde a base da pos deve mudar o RACIOCINIO (comprimento de frase, uma
+ideia por unidade, concretude, carga verbal, apoio visual, complexidade
+sintatica) e nao acrescentar texto.
+
+Criterio de conclusao: para perfil com fala por palavras soltas, o conteudo
+dirigido a crianca muda de forma mensuravel, e tema visual sozinho deixa de
+contar como personalizacao.
+
+**Proximo ID livre: PEND-181. *(024 e 025 reservadas por frentes ainda nao publicadas; 0076 e numero de MIGRACAO reservado — ver PEND-121.)***
 
 > Conferir contra `origin/main`, não contra o seu branch. Dois branches podem
 > reivindicar o mesmo número — o conflito de merge nesta linha é o alarme.
