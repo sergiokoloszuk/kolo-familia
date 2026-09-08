@@ -57,6 +57,7 @@ import { abreFluxoDeArtefato, atoSobreArtefato } from "@/lib/conducao/ato-artefa
 import {
   rotinaConversaPendente,
   pediuRotinaExplicitamente,
+  portaoDeterministicoDeRotina,
   conduzirRotina,
   pedeRotina,
   pedeRotinaDeUmDia,
@@ -2944,9 +2945,65 @@ export async function processInbound(
   // Corrigir por inferência é o que esta frente inteira existe para não fazer.
   // Quando a instrumentação registrar a intenção (PEND-040), isto se decide com
   // dado. Até lá, o que muda é só o que está medido.
-  const pedidoDeRotina =
-    (pedeRotina(inbound.texto) || pediuRotinaExplicitamente(inbound.texto)) &&
-    abreFluxoDeArtefato(atoSobreArtefato(inbound.texto));
+  // ⚠️ O PEDIDO TELEGRÁFICO — 08/09/2026 09:59, produção, caso Mario.
+  //
+  // A mãe escreveu, em linhas: "Mario / Rotina visual / Fazer bolo / Guardar na
+  // geladeira / Colocar vela / Cantar parabéns". Nome da criança, nome do
+  // artefato, sequência inteira — e NENHUM verbo de pedido. `atoSobreArtefato`
+  // devolveu `"ambiguo"`, o portão fechou e o turno caiu na conversa comum: a
+  // Ayla listou as etapas, aceitou o tema "bolo e festa" e não criou nada.
+  // PROVEI por execução que a mesma frase com "Quero" vira `"criar"`.
+  //
+  // ⚠️ SÓ DESEMPATA A AMBIGUIDADE, e isso é o limite deliberado. `"ambiguo"`
+  // quer dizer "o classificador não soube"; nomear o artefato E ditar a
+  // sequência é evidência suficiente para saber. As classificações NEGATIVAS —
+  // `recusar`, `conversar_sobre`, `reenviar` — continuam mandando, porque ali o
+  // classificador soube, e sobrepô-las reabriria o sequestro de conversa que a
+  // Fase 1B fechou.
+  const portao = portaoDeterministicoDeRotina(inbound.texto);
+  const pedidoDeRotina = portao.abre;
+
+  // ⚠️ O PORTÃO PASSA A DEIXAR RASTRO — 08/09/2026, e esta é a peça que faltava.
+  //
+  // Instrumentei o INTERIOR de `conduzirRotina` e continuei cego onde importava:
+  // quando o portão FECHA, o turno cai na conversa comum e não existe registro
+  // nenhum de que uma rotina foi cogitada. Foi o caso Mario 09:59 — sem rastro,
+  // sem rotina, e eu só descobri a causa executando as funções à mão.
+  //
+  // ⚠️ E É AQUI QUE SE MEDE A PERGUNTA QUE IMPORTA: a mãe não sabe pedir pelo
+  // nome. Quem tem de reconhecer a necessidade é o DECISOR (`intent`), não a
+  // regex — a regex é piso, nunca teto. Sem este registro não dá para saber se
+  // o decisor reconhece "queria mostrar pra ela a sequência do médico" como
+  // pedido de artefato, e sem saber disso não há como melhorá-lo.
+  //
+  // Só registra quando o turno é PLAUSIVELMENTE sobre o artefato — nem todo
+  // turno vira linha no banco.
+  const cogitouRotina =
+    portao.nomeou || portao.ditou || intent === "rotina_criar" || intent === "organizacao";
+  if (cogitouRotina) {
+    void logEvent({
+      kind: "rotina_portao",
+      severity: portao.abre ? "info" : "warn",
+      family_account_id: family.id,
+      message: portao.abre ? "portao:abriu" : "portao:fechou",
+      payload: {
+        sha: process.env.VERCEL_GIT_COMMIT_SHA ?? null,
+        chars: inbound.texto.length,
+        // Decisor — a metade inteligente.
+        intent,
+        pedido_explicito: pedidoExplicito,
+        // Portão determinístico — a metade barata.
+        nomeou_artefato: portao.nomeou,
+        ditou_sequencia: portao.ditou,
+        ato: portao.ato,
+        abriu_por_desempate: portao.porDesempate,
+        // O desfecho do roteamento.
+        rotina_conversa_em_curso: Boolean(rotinaConversa),
+        abriu: portao.abre || Boolean(rotinaConversa) || (intent === "rotina_criar" && pedidoExplicito),
+      },
+      persistir: true,
+    });
+  }
   if (
     !seguranca.aberta &&
     // `rotinaConversa` é CONTINUAÇÃO de uma montagem já em curso — a família já

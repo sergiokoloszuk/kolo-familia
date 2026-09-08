@@ -137,7 +137,10 @@ describe("10. duas rotinas → UMA pergunta, e nada de pedir a sequência", () =
 describe("2/9/14. a rota vem ANTES do construtor", () => {
   it("o gate de PDF aparece antes do gate de rotina no orquestrador", () => {
     const pdf = ORCH.indexOf("pedeArtefatoImprimivel(inbound.texto)");
-    const construtor = ORCH.indexOf("pedeRotina(inbound.texto) ||");
+    // ⚠️ O MARCADOR MUDOU DE NOME em 08/09/2026, a ordem não. A composição do
+    // portão virou `portaoDeterministicoDeRotina` (dono único); o que este
+    // teste mede — PDF avaliado antes do construtor — segue igual.
+    const construtor = ORCH.indexOf("portaoDeterministicoDeRotina(inbound.texto)");
     expect(pdf).toBeGreaterThan(0);
     expect(construtor).toBeGreaterThan(0);
     expect(pdf).toBeLessThan(construtor);

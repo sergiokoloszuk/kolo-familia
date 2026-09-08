@@ -136,10 +136,16 @@ describe("os tempos por etapa", () => {
 });
 
 describe("as leituras repetidas de perfil ficam contadas", () => {
-  it("o contador existe e é incrementado nas três leituras", () => {
+  it("o contador existe — e agora conta UMA leitura, não três", () => {
     expect(GUIADA).toMatch(/rastro\.leituras_perfil \+= 1;/);
-    // carregarTransicoes, carregarOQueJaSabemos e carregarInteresses.
-    expect((GUIADA.match(/rastro\.leituras_perfil \+= 1;/g) ?? []).length).toBeGreaterThanOrEqual(3);
+    // ⚠️ ERAM TRÊS consultas à mesma linha (`carregarInteresses`,
+    // `carregarTransicoes`, `carregarOQueJaSabemos`), medidas pelo próprio
+    // rastro em 09:46: `leituras_perfil=3`, 879 ms de contexto. Em 08/09/2026
+    // viraram uma (`lerPerfilDaRotina`) e duas funções puras sobre a linha.
+    expect((GUIADA.match(/rastro\.leituras_perfil \+= 1;/g) ?? []).length).toBe(1);
+    expect(GUIADA).toMatch(/lerPerfilDaRotina\(supabase, params\.membroAtipicoId\)/);
+    expect(GUIADA).toMatch(/const interesses = carregarInteresses\(perfilDaRotina\);/);
+    expect(GUIADA).toMatch(/const transicoesConhecidas = carregarTransicoes\(perfilDaRotina\);/);
   });
 
   it("as chamadas de modelo do turno ficam contadas", () => {

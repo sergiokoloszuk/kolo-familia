@@ -27,7 +27,20 @@ describe("ARTEFATO PENDENTE — o campo que justifica a fase", () => {
   it("rotina em aguardando sem tema aparece, e diz o que falta", async () => {
     const b = db();
     b.semear("rotinas", [
-      { family_account_id: FAM, nome: "Dia com os tios", tema: null, cards_status: "aguardando" },
+      // ⚠️ FIXTURE REALISTA — 08/09/2026. Faltavam `membro_atipico_id` e as
+      // datas, e a consulta passou a exigir os dois: a pendência agora é por
+      // CRIANÇA (uma rotina da Manu não governa conversa sobre o Mario) e tem
+      // validade. MEDI em produção: das 92 rotinas, ZERO sem membro e ZERO sem
+      // data — a fixture é que não representava o banco.
+      {
+        family_account_id: FAM,
+        membro_atipico_id: MEMBRO,
+        nome: "Dia com os tios",
+        tema: null,
+        cards_status: "aguardando",
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      },
     ]);
     const e = await apurarEstadoDoTurno(b.cliente() as never, {
       familyId: FAM,

@@ -99,7 +99,11 @@ describe("pedido explícito não é rebaixado", () => {
     // "quero organizar a tarde da Manu" dá false em `pedeRotina` (não tem a
     // palavra "rotina") e "outro" no classificador. Sem esta linha, o pedido
     // mais explícito que existe não chegava no condutor.
-    expect(ORCH).toMatch(/pediuRotinaExplicitamente\(inbound\.texto\)/);
+    // ⚠️ Desde 08/09/2026 o orquestrador chama o dono único, que compõe
+    // `pedeRotina || pediuRotinaExplicitamente` com o ato. A garantia é a
+    // mesma: o pedido explícito entra no fluxo.
+    expect(ORCH).toMatch(/portaoDeterministicoDeRotina\(inbound\.texto\)/);
+    expect(GUIADA).toMatch(/pedeRotina\(texto\) \|\| nomeou/);
   });
 
   it("o piso roda no condutor, e o log diz quando ele agiu", () => {

@@ -2,6 +2,13 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { getAylaAnthropicClient, AYLA_MODEL_FALLBACK } from "./anthropic";
 import { nucleoConducao } from "@/lib/conducao/diretrizes";
 import { novoRastro, registrarRastro, etapa } from "./rotina-rastro";
+import { interessesAtuais, type LinhaPerfilVivo } from "./experimental-contexto";
+import { pendenciaDeRotina } from "./rotina-pendencia";
+import {
+  abreFluxoDeArtefato,
+  atoSobreArtefato,
+  type AtoSobreArtefato,
+} from "@/lib/conducao/ato-artefato";
 import { ORIENTACAO_DE_TRANSICAO } from "@/lib/conducao/formas";
 import { gerarMagicLink } from "./ponte";
 import { gerarRotina } from "@/lib/ludico/rotina-servico";
@@ -274,24 +281,20 @@ export async function rotinaConversaPendente(
 async function carregarOQueJaSabemos(
   supabase: SupabaseClient,
   membroId: string,
+  pv: LinhaPerfilVivo | null,
 ): Promise<{ perfil: string; desafios: string[]; rotinaExistente: string }> {
   const vazio = { perfil: "", desafios: [] as string[], rotinaExistente: "" };
   try {
-    const [pv, rots] = await Promise.all([
-      supabase
-        .from("perfil_vivo_membro")
-        .select("categorias_extras")
-        .eq("membro_atipico_id", membroId)
-        .maybeSingle(),
-      supabase
-        .from("rotinas")
-        .select("id, nome, dia_semana")
-        .eq("membro_atipico_id", membroId)
-        .order("created_at", { ascending: false })
-        .limit(3),
-    ]);
+    // ⚠️ O PERFIL CHEGA PRONTO — `lerPerfilDaRotina` já leu a linha. Esta função
+    // mantém só a consulta que é dela: as rotinas anteriores.
+    const rots = await supabase
+      .from("rotinas")
+      .select("id, nome, dia_semana")
+      .eq("membro_atipico_id", membroId)
+      .order("created_at", { ascending: false })
+      .limit(3);
 
-    const ce = (pv.data?.categorias_extras ?? {}) as Record<string, unknown>;
+    const ce = (pv?.categorias_extras ?? {}) as Record<string, unknown>;
     // Os desafios são o que a FAMÍLIA marcou — informação relatada, não
     // diagnóstico e não inferência da Ayla.
     const desafios = Array.isArray(ce.desafios_onboarding)
@@ -347,26 +350,55 @@ function idadeEmMeses(nascimento: string | null): number | null {
   return meses < 0 || meses > 1200 ? null : Math.floor(meses);
 }
 
-/** Interesses conhecidos da criança (pra a Ayla PROPOR um tema). Best-effort. */
-async function carregarInteresses(supabase: SupabaseClient, membroId: string): Promise<string | null> {
+/**
+ * A LINHA DO PERFIL, LIDA UMA VEZ SÓ — 08/09/2026.
+ *
+ * ⚠️ ERAM TRÊS CONSULTAS À MESMA LINHA no mesmo turno: `carregarTransicoes`,
+ * `carregarOQueJaSabemos` e `carregarInteresses`, cada uma com seu
+ * `.from("perfil_vivo_membro")`, em série. O rastro do turno real de 09:46
+ * mediu `leituras_perfil=3` e 879 ms só de contexto, com o banco a ~400 ms por
+ * ida. Três nomes diferentes para "o perfil da criança" é o mesmo padrão de
+ * donos múltiplos que este Gate inteiro está desfazendo — aqui custava latência
+ * em vez de correção.
+ *
+ * Agora a linha é lida uma vez e as três viram funções puras sobre ela.
+ */
+async function lerPerfilDaRotina(
+  supabase: SupabaseClient,
+  membroId: string,
+): Promise<LinhaPerfilVivo | null> {
   try {
     const { data } = await supabase
       .from("perfil_vivo_membro")
-      .select("categorias_extras")
+      .select("essencial, como_e, corpo_rotina, desafios_regulacao, sensorial, categorias_extras")
       .eq("membro_atipico_id", membroId)
       .maybeSingle();
-    const ce = (data?.categorias_extras ?? {}) as Record<string, unknown>;
-    const cand =
-      (ce?.como_e as Record<string, unknown> | undefined)?.interesses ??
-      (ce?.preferencias as Record<string, unknown> | undefined)?.temas ??
-      null;
-    const parts: string[] = [];
-    if (Array.isArray(cand)) parts.push(...cand.map((x) => String(x)));
-    else if (typeof cand === "string") parts.push(cand);
-    return parts.length ? parts.slice(0, 8).join(", ") : null;
+    return (data as LinhaPerfilVivo | null) ?? null;
   } catch {
     return null;
   }
+}
+
+/**
+ * Interesses conhecidos da criança (pra a Ayla PROPOR um tema).
+ *
+ * ⚠️ O DEFEITO, PROVADO NO TURNO REAL DE 09:46. Esta função procurava
+ * `interesses` dentro de `categorias_extras.como_e` — mas `como_e` é **coluna
+ * própria** da tabela, não uma chave do saco de extras. O caminho nunca
+ * existiu, então ela caía sempre no fallback `preferencias.temas`. A Manu tem
+ * quatro interesses registrados (Cozinha, Dinossauro, Cinema, contos e
+ * princesas); a Ayla enxergava UM, e por isso ofereceu uma sugestão de tema
+ * onde o canônico de produto (cartoes-visuais-v2 §10) pede duas.
+ *
+ * ⚠️ NÃO É UMA SEGUNDA FONTE DE VERDADE. Quem sabe ler interesse é
+ * `interessesAtuais`, em `experimental-contexto.ts` — a MESMA função que o
+ * caminho conversacional usa. Ela une as duas fontes reais (`como_e.interesses`
+ * da coluna e `categorias_extras.preferencias.temas`) e subtrai o que a família
+ * mandou evitar. Aqui só se delega e se formata.
+ */
+function carregarInteresses(pv: LinhaPerfilVivo | null): string | null {
+  const lista = interessesAtuais(pv);
+  return lista.length ? lista.slice(0, 8).join(", ") : null;
 }
 
 type Transicao = {
@@ -428,6 +460,47 @@ const JANELA_PADRAO_ATUAL_DIAS = 60;
  * momento reconhecido; não se perde "música depois" como estratégia. O erro
  * barato é a Ayla perguntar de novo; o caro é ela inventar um barco.
  */
+/**
+ * O PORTÃO DETERMINÍSTICO DA ROTINA — dono único, 08/09/2026.
+ *
+ * ⚠️ POR QUE ELE EXISTE. A expressão vivia solta no orquestrador e cada frase
+ * nova das famílias virava um incidente em produção, não um teste:
+ *
+ *   08:53  "Quero montar uma **rotina visual** para Manu…"    → passou
+ *   09:13  "Quero montar uma **sequencia visual**…"           → NÃO passou
+ *   09:59  "Mario / Rotina visual / Fazer bolo / …"           → NÃO passou
+ *
+ * Três correções no varejo em um dia. Com um dono e uma bancada de frases
+ * REAIS (`rotina-portao.test.ts`, extraídas de 113 mensagens de produção), a
+ * próxima frase é um teste que falha antes do deploy, não uma família sem
+ * artefato.
+ *
+ * ⚠️ ISTO É A METADE DETERMINÍSTICA. A outra é o decisor (`decidirTurno`), que
+ * roda no orquestrador e pode abrir o fluxo por conta própria. As duas somam;
+ * nenhuma substitui a outra. Um `false` aqui não significa "não é rotina" —
+ * significa "o caminho barato não teve certeza".
+ */
+export function portaoDeterministicoDeRotina(texto: string | null | undefined): {
+  abre: boolean;
+  nomeou: boolean;
+  ditou: boolean;
+  ato: AtoSobreArtefato;
+  /** Abriu por desempate de ambiguidade, e não por ato claro. */
+  porDesempate: boolean;
+} {
+  const nomeou = pediuRotinaExplicitamente(texto);
+  const ditou = familiaDitouSequencia(texto);
+  const ato = atoSobreArtefato(texto);
+  // ⚠️ SÓ DESEMPATA A AMBIGUIDADE. `"ambiguo"` quer dizer "o classificador não
+  // soube"; nomear o artefato E ditar a sequência é evidência suficiente para
+  // saber. As classificações NEGATIVAS — `recusar`, `conversar_sobre`,
+  // `reenviar` — continuam mandando: ali o classificador SOUBE, e sobrepô-las
+  // reabriria o sequestro de conversa que a Fase 1B fechou.
+  const porDesempate = ato === "ambiguo" && nomeou && ditou;
+  const abre = (pedeRotina(texto) || nomeou) && (abreFluxoDeArtefato(ato) || porDesempate);
+  return { abre, nomeou, ditou, ato, porDesempate };
+}
+
 /**
  * A FAMÍLIA DITOU A SEQUÊNCIA NESTA MENSAGEM?
  *
@@ -589,14 +662,9 @@ export function blocoDeTransicoes(
 }
 
 /** Transições difíceis já aprendidas (do Kolo Vivo) — pra a Ayla já chegar sabendo. */
-async function carregarTransicoes(supabase: SupabaseClient, membroId: string): Promise<Transicao[]> {
+function carregarTransicoes(pv: LinhaPerfilVivo | null): Transicao[] {
   try {
-    const { data } = await supabase
-      .from("perfil_vivo_membro")
-      .select("categorias_extras")
-      .eq("membro_atipico_id", membroId)
-      .maybeSingle();
-    const ce = (data?.categorias_extras ?? {}) as Record<string, unknown>;
+    const ce = (pv?.categorias_extras ?? {}) as Record<string, unknown>;
     const arr = Array.isArray(ce.transicoes) ? (ce.transicoes as unknown[]) : [];
     return arr
       .map((t) => {
@@ -1022,24 +1090,15 @@ async function rotinaAguardandoTema(
   familyId: string,
   membroId: string,
 ): Promise<{ id: string; nome: string } | null> {
-  try {
-    const { data } = await supabase
-      .from("rotinas")
-      .select("id, nome")
-      .eq("family_account_id", familyId)
-      .eq("membro_atipico_id", membroId)
-      .eq("cards_status", "aguardando")
-      // RECENTE. Uma rotina esquecida em `aguardando` semanas atrás não pode
-      // capturar a próxima palavra solta que a mãe mandar — apareceu no teste
-      // de 08/08, quando um "Carrinho" foi parar numa rotina de outra conversa.
-      .gte("updated_at", new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString())
-      .order("updated_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-    return data ? { id: data.id as string, nome: (data.nome as string) ?? "" } : null;
-  } catch {
-    return null;
-  }
+  // ⚠️ A JANELA SAIU DAQUI — Gate A, 08/09/2026. Os 6 h continuam valendo e
+  // continuam sendo a decisão certa (caso "Carrinho", 08/08), mas quem os
+  // guarda agora é `VALIDADE_MS.capturar_tema`, em `rotina-pendencia.ts`.
+  // Cinco lugares respondiam "há rotina pendente?" com quatro janelas; o número
+  // não mudou, o dono sim.
+  // Aqui o caminho ESCREVE (grava tema e dispara geração), então "não sei"
+  // e "não há" têm o mesmo desfecho: não capturar.
+  const r = await pendenciaDeRotina(supabase, { familyId, membroId, finalidade: "capturar_tema" });
+  return r.estado === "sim" ? { id: r.valor.id, nome: r.valor.nome } : null;
 }
 
 /** A família desistiu dos cartões desta rotina? */
@@ -1479,10 +1538,14 @@ export async function conduzirRotina(
     const familyId = (membro.family_account_id as string) ?? params.familyId;
     const nome = (membro.nome as string) ?? "seu filho";
     const idade = idadeAnos((membro.data_nascimento as string | null) ?? null);
-    const interesses = await etapa(rastro, "contexto", () =>
-      carregarInteresses(supabase, params.membroAtipicoId),
+    // ⚠️ UMA LEITURA PARA O TURNO INTEIRO. Eram três consultas à mesma linha —
+    // interesses, transições e "o que já sabemos" —, em série, a ~400 ms cada.
+    // O rastro de 09:46 mediu `leituras_perfil=3`.
+    const perfilDaRotina = await etapa(rastro, "contexto", () =>
+      lerPerfilDaRotina(supabase, params.membroAtipicoId),
     );
     rastro.leituras_perfil += 1;
+    const interesses = carregarInteresses(perfilDaRotina);
     // NO MÁXIMO DUAS. O interesse conhecido vira SUGESTÃO, nunca escolha — o
     // tema é da rotina, não atributo fixo da criança. Despejar a lista inteira
     // vira formulário; oferecer uma só vira decisão disfarçada de pergunta.
@@ -1660,19 +1723,15 @@ export async function conduzirRotina(
     }
     const historicoDaRotina = historico.slice(inicio);
 
-    const transicoesConhecidas = await etapa(rastro, "contexto", () =>
-      carregarTransicoes(supabase, params.membroAtipicoId),
-    );
-    rastro.leituras_perfil += 1;
+    const transicoesConhecidas = carregarTransicoes(perfilDaRotina);
     // ⚠️ NÃO É MAIS `momento → estratégia` DE TUDO. Ver `blocoDeTransicoes`: só
     // padrão recente mantém o momento; o resto entra como estratégia sem
     // contexto. É o que impede o passeio de barco de virar etapa de hoje.
     const transicoesTxt = blocoDeTransicoes(transicoesConhecidas);
 
     const jaSabemos = await etapa(rastro, "contexto", () =>
-      carregarOQueJaSabemos(supabase, params.membroAtipicoId),
+      carregarOQueJaSabemos(supabase, params.membroAtipicoId, perfilDaRotina),
     );
-    rastro.leituras_perfil += 1;
 
     // Todos os membros da família — só pra guarda de identidade comparar nomes.
     const { data: irmaosRaw } = await supabase
@@ -2319,6 +2378,12 @@ Ah — se quiser, o próprio ${nome} pode ser o personagem dos cartões em vez d
       );
     }
 
+    // ⚠️ O CAMINHO DE SUCESSO TAMBÉM SE DECLARA — e faltava. O turno real de
+    // 09:46, que funcionou, saiu no rastro como `saida=null` e
+    // `rotina:indefinido`: eu instrumentei as saídas de falha e esqueci a de
+    // êxito. Telemetria com furo é o que o commit anterior existia para não
+    // ter, e um desfecho conhecido nunca pode chegar como indefinido.
+    rastro.saida = propondo ? "propos" : pronto && rotinas.length > 0 ? "montou" : "perguntou";
     return {
       mensagem: conferida.texto,
       pronto: pronto && rotinas.length > 0,
