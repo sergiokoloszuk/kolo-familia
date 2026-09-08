@@ -293,7 +293,24 @@ describe("o tema é escolha da família — e quem pergunta é o CÓDIGO", () =>
   });
 
   it("deixa claro que ela pode escolher qualquer outro tema", () => {
-    expect(GUIADA).toMatch(/ou qualquer outro que \$\{nome\} esteja gostando agora/);
+    // ⚠️ O LITERAL MUDOU DE DONO em 08/09/2026, não de sentido. A pergunta saiu
+    // da composição inline e virou `perguntaDeTema` — que passou a numerar as
+    // sugestões e a oferecer NENHUM tema, como pede cartoes-visuais-v2 §10.
+    // A garantia deste teste ("ela pode escolher outro") continua; o que ele
+    // media era a frase, e a frase se mudou.
+    expect(GUIADA).toMatch(/outro tema que \$\{nome\} esteja gostando agora/);
+  });
+
+  it("e pode escolher NENHUM tema — a saída que faltava", () => {
+    // Em 08/09 a mãe recebeu "posso fazer em *contos e princesas* — ou qualquer
+    // outro". Quem não queria tema nenhum não tinha o que responder.
+    expect(GUIADA).toMatch(/sem tema/);
+    expect(GUIADA).toMatch(/imagens bem simples/);
+  });
+
+  it("as sugestões são numeradas, pra a resposta '1' valer", () => {
+    expect(GUIADA).toMatch(/\$\{i \+ 1\}️⃣/);
+    expect(GUIADA).toMatch(/só o número/);
   });
 
   it("sem interesse conhecido, o convite fica aberto", () => {

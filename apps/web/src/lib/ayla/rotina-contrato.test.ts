@@ -217,9 +217,12 @@ describe("ordem da entrega quando falta tema", () => {
   );
 
   it("a sequência vem ANTES da pergunta do tema", () => {
-    expect(BLOCO.indexOf("sequenciaDoQuadro")).toBeLessThan(
-      BLOCO.indexOf("Falta só escolher o tema dos cartões"),
-    );
+    // ⚠️ O MARCADOR MUDOU, A GARANTIA NÃO — 08/09/2026. A pergunta do tema saiu
+    // da composição inline e virou `perguntaDeTema(nome, sugestoesDeTema)`; o
+    // literal "Falta só escolher..." mora agora dentro dela. A ordem de
+    // montagem neste bloco continua sendo a mesma, e é isto que o teste mede.
+    expect(BLOCO).toContain("perguntaDeTema(");
+    expect(BLOCO.indexOf("sequenciaDoQuadro")).toBeLessThan(BLOCO.indexOf("perguntaDeTema("));
   });
 
   it("a mensagem monta na ordem fala → quadro → tema/cartões → link", () => {
