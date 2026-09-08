@@ -4140,10 +4140,11 @@ async function enviarRespostaEmChunks(
       tipo: args.tipo,
       texto: textoCompleto,
       enviada_em: new Date().toISOString(),
-      ...registroDeEnvio(idsBolhas),
       // A ÂNCORA DA ENTREGA DO PLANO — é ela que faz o "Ok" da mãe no turno
       // seguinte NÃO gerar outro Plano (`ofertaDePlanoPendente` lê este campo).
-      ...(planoEntregueId ? { metadata: { plano_id: planoEntregueId } } : {}),
+      // Entra DENTRO de `registroDeEnvio` para conviver com o registro de
+      // entrega, em vez de apagá-lo. Ver o comentário lá.
+      ...registroDeEnvio(idsBolhas, planoEntregueId ? { plano_id: planoEntregueId } : null),
     });
     await supabase
       .from("ayla_preferences")
@@ -5073,13 +5074,41 @@ export async function loadFamiliaParaEnvio(
  * Nunca gravamos a string "unknown" ali: além de mentir, a segunda ocorrência
  * violaria o índice e derrubaria o registro inteiro da mensagem.
  */
-function registroDeEnvio(ids: Array<string | null>): {
+function registroDeEnvio(
+  ids: Array<string | null>,
+  /**
+   * ⚠️ A ÂNCORA DO CHAMADOR ENTRA AQUI, e não por um spread ao lado.
+   *
+   * ⚠️ DEFEITO MEDIDO EM 08/09/2026 [PEND-182]. `registroDeEnvio` devolve
+   * SEMPRE um `metadata`, e os dois `insert` de `ayla_messages` o espalhavam ao
+   * lado de um `metadata` do chamador. Chave repetida em objeto literal não
+   * funde: a última vence e a outra some inteira.
+   *
+   * As duas ordens existiam, e as duas perdiam:
+   *   · em `enviarEPersistir`, `registroDeEnvio` vinha DEPOIS — então `pedido`,
+   *     `proposta` e `plano_id` eram apagados. Desde 08/08/2026, quando
+   *     `metadataMensagem` nasceu.
+   *   · na entrega do Plano, `plano_id` vinha DEPOIS — e sumia o registro de
+   *     entrega.
+   *
+   * O tamanho do estrago, medido em produção no mesmo dia: das 3 mensagens
+   * `rotina_proposta` já enviadas, ZERO tinham `proposta`; das 54
+   * `clarificacao_identificacao`, ZERO tinham `pedido`. Num inventário de 1.861
+   * mensagens só existiam duas chaves — `entrega` e um único `plano_id`, este
+   * vindo justamente da escrita de ordem invertida.
+   *
+   * Nenhum dos dois falhava: o `insert` retornava sucesso com o campo errado
+   * dentro. É exatamente o "pode falhar e mesmo assim parecer concluído" do §7.
+   */
+  ancora?: Record<string, unknown> | null,
+): {
   zaap_message_id: string | null;
   metadata: Record<string, unknown>;
 } {
   return {
     zaap_message_id: ids.find(Boolean) ?? null,
     metadata: {
+      ...(ancora ?? {}),
       entrega: {
         canal: "z-api",
         // O nome do campo é o que ele prova. Não renomeie pra "entregue".
@@ -5214,8 +5243,7 @@ export async function enviarEPersistir(
       tipo: params.tipo,
       texto,
       enviada_em: new Date().toISOString(),
-      ...(params.metadataMensagem ? { metadata: params.metadataMensagem } : {}),
-      ...registroDeEnvio(idsBolhas),
+      ...registroDeEnvio(idsBolhas, params.metadataMensagem ?? null),
     });
 
     await supabase
