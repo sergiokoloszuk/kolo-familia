@@ -83,7 +83,9 @@ describe("classificador é sugestão, não autoridade", () => {
     const ORCH = readFileSync(resolve(__dirname, "orchestrator.ts"), "utf8");
     expect(ORCH).toMatch(/intencaoDeRotinaComPiso\s*=/);
     expect(ORCH).toMatch(/intent === "rotina_editar" &&/);
-    expect(ORCH).toMatch(/pedeRotina\(inbound\.texto\) \|\| pediuRotinaExplicitamente\(inbound\.texto\)/);
+    // ⚠️ O piso continua exigido; desde 08/09/2026 ele é composto dentro de
+    // `portaoDeterministicoDeRotina`. O orquestrador chama o dono único.
+    expect(ORCH).toMatch(/portaoDeterministicoDeRotina\(inbound\.texto\)/);
     // E o gatilho antigo, sozinho, não pode ter voltado.
     expect(ORCH).not.toMatch(/\(intent === "rotina_editar" \|\| pedidoDeEditarRotina/);
   });

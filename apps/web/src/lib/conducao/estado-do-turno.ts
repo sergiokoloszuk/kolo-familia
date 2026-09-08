@@ -30,6 +30,7 @@
  */
 
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { pendenciaDeRotina } from "@/lib/ayla/rotina-pendencia";
 import { perguntaAberta, type OpcaoDaPergunta } from "./continuidade";
 
 /**
@@ -129,7 +130,7 @@ export async function apurarEstadoDoTurno(
 
   // ── O QUE VEM DO BANCO ─────────────────────────────────────────────────
   const [artefatoPendente, acompanhamento] = await Promise.all([
-    lerArtefatoPendente(supabase, familyId),
+    lerArtefatoPendente(supabase, familyId, membroId),
     lerAcompanhamento(supabase, familyId, membroId),
   ]);
 
@@ -170,32 +171,34 @@ export async function apurarEstadoDoTurno(
 async function lerArtefatoPendente(
   supabase: SupabaseClient,
   familyId: string,
+  membroId: string | null,
 ): Promise<EstadoDoTurno["artefatoPendente"]> {
-  try {
-    const { data, error } = await supabase
-      .from("rotinas")
-      .select("id, nome, tema, cards_status")
-      .eq("family_account_id", familyId)
-      .eq("cards_status", "aguardando")
-      .order("created_at", { ascending: false })
-      .limit(1);
-    if (error) return { conhecido: "nao_rastreado" };
-    const r = (data ?? [])[0];
-    if (!r) return { conhecido: "nenhum" };
-    return {
-      conhecido: "sim",
-      valor: {
-        tipo: "rotina",
-        id: r.id as string,
-        nome: ((r.nome as string) ?? "").trim() || "a rotina",
-        // As duas espécies de órfã, como o reconciliador já as distingue:
-        // falta o dado, ou falta o ato.
-        falta: (r.tema as string | null)?.trim() ? "geracao" : "tema",
-      },
-    };
-  } catch {
-    return { conhecido: "nao_rastreado" };
-  }
+  // ⚠️ DUAS OMISSÕES CORRIGIDAS AQUI — Gate A, 08/09/2026.
+  //
+  // Esta consulta não tinha filtro de TEMPO nem de MEMBRO. MEDI na base: uma
+  // rotina presa em `aguardando` há 18 dias — além do teto de 7 dias em que o
+  // reconciliador desiste — continuava sendo apresentada ao modelo como
+  // pendência de agora, em toda conversa daquela família, sobre qualquer filho.
+  //
+  // Apresentar como pendente algo que ninguém vai resolver é apresentar uma
+  // mentira; e a pendência de uma criança governar a conversa de outra é a
+  // mesma quebra de isolamento que `membro-escopo.ts` existe para impedir.
+  //
+  // Quem sabe a política agora é `rotina-pendencia.ts`. Continua valendo o que
+  // o comentário original dizia e continua verdadeiro: este módulo SÓ LÊ — não
+  // escreve, não dispara geração, não altera `cards_status`. O reconciliador
+  // segue dono disso.
+  const r = await pendenciaDeRotina(supabase, {
+    familyId,
+    membroId,
+    finalidade: "mostrar_ao_modelo",
+  });
+  if (r.estado === "nao_rastreado") return { conhecido: "nao_rastreado" };
+  if (r.estado === "nenhum") return { conhecido: "nenhum" };
+  return {
+    conhecido: "sim",
+    valor: { tipo: "rotina", id: r.valor.id, nome: r.valor.nome, falta: r.valor.falta },
+  };
 }
 
 /**

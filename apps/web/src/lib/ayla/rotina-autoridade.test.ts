@@ -24,6 +24,8 @@ import { classificarFeedbackRotina } from "./rotina-feedback";
  */
 
 const ORCH = readFileSync(resolve(__dirname, "orchestrator.ts"), "utf8");
+/** Onde a composição do portão passou a morar (08/09/2026) — ver o teste 7. */
+const GUIADA = readFileSync(resolve(__dirname, "rotina-guiada.ts"), "utf8");
 
 /** O portão real, reproduzido: piso de menção + ato que abre fluxo. */
 const abreRotina = (t: string) =>
@@ -88,16 +90,26 @@ describe("falar sobre a vida da criança NÃO cria artefato", () => {
 
 describe("o portão real do orquestrador", () => {
   it("7. MORDE: o gate compõe piso + ato, e não troca um pelo outro", () => {
-    expect(ORCH).toMatch(
-      /const pedidoDeRotina =\s*\n\s*\(pedeRotina\(inbound\.texto\) \|\| pediuRotinaExplicitamente\(inbound\.texto\)\) &&\s*\n\s*abreFluxoDeArtefato\(atoSobreArtefato\(inbound\.texto\)\);/,
+    // ⚠️ A COMPOSIÇÃO MUDOU DE CASA em 08/09/2026, não de sentido. Era uma
+    // expressão solta no orquestrador e virou `portaoDeterministicoDeRotina`,
+    // em rotina-guiada — dono único, com bancada de frases REAIS de produção
+    // (`rotina-portao.test.ts`). Três frases diferentes de uma mesma família
+    // falharam em um dia porque a regra vivia num lugar sem bancada.
+    // A garantia é a mesma: piso E ato, nunca um pelo outro.
+    expect(ORCH).toMatch(/const portao = portaoDeterministicoDeRotina\(inbound\.texto\);/);
+    expect(ORCH).toMatch(/const pedidoDeRotina = portao\.abre;/);
+    expect(GUIADA).toMatch(
+      /const abre = \(pedeRotina\(texto\) \|\| nomeou\) && \(abreFluxoDeArtefato\(ato\) \|\| porDesempate\);/,
     );
   });
 
   it("8. MORDE: `rotinaConversa` NÃO passa pelo ato — é continuação", () => {
     // A família já pediu; o turno é a resposta dela. Exigir o ato de novo
     // mataria a montagem no meio, a cada resposta curta.
+    // A janela cresceu: a instrumentação do portão (rastro `rotina_portao`)
+    // entrou entre o marcador e o `if`. O que se mede é o mesmo.
     const i = ORCH.indexOf("const pedidoDeRotina =");
-    const gate = ORCH.slice(i, i + 900);
+    const gate = ORCH.slice(i, i + 3000);
     expect(gate).toMatch(/\(rotinaConversa \|\|/);
   });
 
@@ -106,7 +118,7 @@ describe("o portão real do orquestrador", () => {
     // `organizacao` tenha criado artefato indevido — `conhecimento_consultado`
     // não registra intenção. Quando registrar (PEND-040), decide-se com dado.
     const i = ORCH.indexOf("const pedidoDeRotina =");
-    expect(ORCH.slice(i, i + 900)).toMatch(/\(intent === "organizacao" && pedidoExplicito\) \|\|/);
+    expect(ORCH.slice(i, i + 3000)).toMatch(/\(intent === "organizacao" && pedidoExplicito\) \|\|/);
   });
 });
 
