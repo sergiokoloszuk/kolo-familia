@@ -2,7 +2,9 @@ import { describe, expect, it } from "vitest";
 import {
   blocoRotinaAnterior,
   familiaDitouSequencia,
+  pediuRotinaExplicitamente,
   perguntaDeTema,
+  temaEnunciado,
 } from "./rotina-guiada";
 
 /**
@@ -136,5 +138,66 @@ describe("a pergunta do tema é explícita — cartoes-visuais-v2 §10", () => {
     const p = perguntaDeTema("Manu", ["contos e princesas"]);
     expect(p).not.toContain("ou qualquer outro que Manu esteja gostando agora.");
     expect(p).toContain("sem tema");
+  });
+});
+
+/**
+ * O SEGUNDO INCIDENTE DO MESMO DIA — 08/09/2026, 09:13.
+ *
+ * ⚠️ A mãe refez o teste: "Quero montar uma sequencia visual / Para Manu /
+ * Brincar, tomar banho, almoçar, ir ao shopping". O texto do WhatsApp saiu
+ * limpo — a correção das 09:00 funcionou, nenhuma menção a barco na fala. Mas:
+ * a Ayla NÃO perguntou o tema, mandou o link na hora, e as IMAGENS vieram
+ * cheias de barco.
+ *
+ * ⚠️ RECONSTRUÍDO: a mensagem nunca chegou a criar rotina. Havia a rotina de
+ * 08:53 (`aa52a529`, com as nove etapas do barco) esperando tema. O ramo do
+ * tema capturou a mensagem inteira, `lerTemaEscolhido` extraiu **"sequencia
+ * visual"** como nome do desenho, e a geração disparou sobre o artefato ERRADO.
+ *
+ * Três buracos numa cadeia só:
+ *   1. `pediuRotinaExplicitamente` só conhecia "rotina visual" — o produto
+ *      (cartoes-visuais-v2 §1) admite os três nomes;
+ *   2. `familiaDitouSequencia` só via lista em linhas, não em vírgulas;
+ *   3. o ramo do tema não perguntava se a mensagem era um pedido novo.
+ */
+describe("incidente Manu 09:13 — pedido novo não é resposta de tema", () => {
+  const PEDIDO_0913 = `Quero montar uma sequencia visual
+Para Manu
+Brincar, tomar banho, almoçar,  ir ao shopping`;
+
+  it("REGRESSÃO: 'sequência visual' é reconhecida como pedido do artefato", () => {
+    expect(pediuRotinaExplicitamente(PEDIDO_0913)).toBe(true);
+  });
+
+  it("os três nomes do artefato valem — cartoes-visuais-v2 §1", () => {
+    expect(pediuRotinaExplicitamente("quero uma rotina visual")).toBe(true);
+    expect(pediuRotinaExplicitamente("quero uma sequencia visual")).toBe(true);
+    expect(pediuRotinaExplicitamente("quero uma sequência visual")).toBe(true);
+    expect(pediuRotinaExplicitamente("me faz uns cartões visuais")).toBe(true);
+  });
+
+  it("REGRESSÃO: lista em UMA linha, separada por vírgula, é sequência ditada", () => {
+    expect(familiaDitouSequencia(PEDIDO_0913)).toBe(true);
+    expect(familiaDitouSequencia("Brincar, tomar banho, almoçar, ir ao shopping")).toBe(true);
+    expect(familiaDitouSequencia("acordar → escola → almoço → dormir")).toBe(true);
+  });
+
+  it("vírgula em desabafo NÃO vira sequência", () => {
+    expect(familiaDitouSequencia("ele grita, chora e se joga no chão toda vez que eu falo não")).toBe(
+      false,
+    );
+    expect(familiaDitouSequencia("tá difícil, muito difícil mesmo")).toBe(false);
+  });
+
+  it("o nome do artefato nunca pode virar o tema do desenho", () => {
+    expect(temaEnunciado("Quero montar uma sequencia visual")).toBeNull();
+    expect(temaEnunciado("quero uma rotina visual")).toBeNull();
+    expect(temaEnunciado("quero cartões visuais")).toBeNull();
+  });
+
+  it("mas um tema de verdade continua sendo lido", () => {
+    expect(temaEnunciado("quero dinossauros")).toBe("dinossauros");
+    expect(temaEnunciado("tema: princesas")).toBe("princesas");
   });
 });

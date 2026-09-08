@@ -81,9 +81,29 @@ export function pedeRotina(texto: string | null | undefined): boolean {
  * A Ayla ainda pode SUGERIR que uma sequência curta resolveria melhor. Sugerir
  * é conversa; rebaixar por baixo é trocar o pedido dela.
  */
+/**
+ * OS TRÊS NOMES DO MESMO ARTEFATO — cartoes-visuais-v2 §1.
+ *
+ * ⚠️ MEDIDO EM PRODUÇÃO, 08/09/2026 09:13. A mãe escreveu "Quero montar uma
+ * **sequencia visual** / Para Manu / Brincar, tomar banho, almoçar, ir ao
+ * shopping". Nenhum dos três testes de `pediuRotinaExplicitamente` casava:
+ * o primeiro só conhecia "rotina visual", o segundo exige um período nomeado
+ * (tarde/manhã/dia/semana) e o terceiro exige a palavra "rotina".
+ *
+ * O pedido não foi reconhecido como pedido — e, com uma rotina pendente de
+ * tema, a mensagem inteira foi lida como se fosse a resposta do tema.
+ *
+ * O documento de produto é explícito: "a Ayla pode usar naturalmente Rotina
+ * Visual, Sequência Visual ou Cartões Visuais, conforme o pedido da família.
+ * Tecnicamente, todos utilizam um único mecanismo." Se a família pode dizer os
+ * três, o código precisa entender os três.
+ */
+const NOMES_DO_ARTEFATO =
+  /\b(rotina|sequ[êe]ncia|cart[õo]es|quadro)\s+(visual|visuais)\b|\bquadro (de|da) rotina\b|\bplanejamento da semana\b|\bcronograma\b/;
+
 export function pediuRotinaExplicitamente(texto: string | null | undefined): boolean {
   const t = (texto ?? "").toLowerCase();
-  if (/rotina visual|quadro (de|da) rotina|planejamento da semana|cronograma/.test(t)) return true;
+  if (NOMES_DO_ARTEFATO.test(t)) return true;
   // "organizar a tarde/manhã/noite/o dia/a semana" — período nomeado.
   if (
     /\b(organiz|mont|arrum|estrutur)\w*\s+(a|o|as|os|minha|meu|nossa|nosso)?\s*(tarde|manh[ãa]|noite|dia|semana|rotina)\b/.test(
@@ -454,15 +474,32 @@ export function perguntaDeTema(nome: string, sugestoes: readonly string[]): stri
 }
 
 export function familiaDitouSequencia(texto: string | null | undefined): boolean {
-  const linhas = String(texto ?? "")
-    .split(/\r?\n/)
-    .map((l) => l.trim())
-    .filter(Boolean);
-  if (linhas.length < 4) return false; // 1 de pedido + ao menos 3 de lista
-  const itens = linhas.filter(
-    (l) => l.length <= 60 && !l.endsWith("?") && l.split(/\s+/).length <= 8,
-  );
-  return itens.length >= 3;
+  const bruto = String(texto ?? "");
+  if (!bruto.trim()) return false;
+
+  const ehItem = (l: string) =>
+    l.length > 0 && l.length <= 60 && !l.endsWith("?") && l.split(/\s+/).length <= 8;
+
+  // Forma 1 — uma etapa por linha. É como a mãe escreveu em 08/09 08:53.
+  const linhas = bruto.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+  if (linhas.length >= 4 && linhas.filter(ehItem).length >= 3) return true;
+
+  // ⚠️ FORMA 2 — TUDO NUMA LINHA SÓ, separado por vírgula ou seta. Faltava, e
+  // custou o segundo incidente: às 09:13 do mesmo dia a mãe escreveu
+  // "Brincar, tomar banho, almoçar, ir ao shopping" numa linha, o detector
+  // devolveu `false`, e a mensagem seguiu para ser lida como tema.
+  //
+  // A vírgula sozinha não basta como sinal — "ele grita, chora e se joga no
+  // chão" também tem vírgulas. Por isso o piso é 3 itens E cada um precisa ter
+  // cara de etapa (curto, sem pergunta).
+  for (const linha of linhas) {
+    const partes = linha
+      .split(/\s*(?:,|→|->|;)\s*/)
+      .map((p) => p.trim())
+      .filter(Boolean);
+    if (partes.length >= 3 && partes.every(ehItem)) return true;
+  }
+  return false;
 }
 
 /**
@@ -1271,7 +1308,7 @@ const ENUNCIADOS_DE_TEMA: readonly RegExp[] = [
  * seguinte qualquer, e a rotina nasceria com um tema que ninguém pediu.
  */
 const PALAVRA_OPERACIONAL =
-  /^(gere?|gerar|sim|nao|não|isso|ok(ay)?|pode|podes|assim|fa[çz]a?|faz|manda|mande|mandar|perfeito|certo|beleza|blz|vai|bora|agora|favor|por favor|obrigad[ao]|entendi|exato|verdade|tudo|ambos|uhum|aham|essa|esse|isto|aquilo|ele|ela|a rotina|rotina|as imagens|imagens|figuras|cartões|cartoes)$/i;
+  /^(gere?|gerar|sim|nao|não|isso|ok(ay)?|pode|podes|assim|fa[çz]a?|faz|manda|mande|mandar|perfeito|certo|beleza|blz|vai|bora|agora|favor|por favor|obrigad[ao]|entendi|exato|verdade|tudo|ambos|uhum|aham|essa|esse|isto|aquilo|ele|ela|a rotina|rotina|as imagens|imagens|figuras|cartões|cartoes|(uma? )?(rotina|sequ[êe]ncia|cart[õo]es|quadro) (visual|visuais)|montar (uma? )?(rotina|sequ[êe]ncia) visual)$/i;
 
 /**
  * O tema enunciado numa mensagem — ou `null` quando não há evidência.
@@ -1466,9 +1503,30 @@ export async function conduzirRotina(
     //
     // ⚠️ NÃO RODA COM PROPOSTA PENDENTE. Enquanto a família ainda não respondeu
     // sobre a SEQUÊNCIA, nenhuma mensagem dela pode ser lida como tema.
-    const pendente = proposta
-      ? null
-      : await rotinaAguardandoTema(supabase, familyId, params.membroAtipicoId);
+    // ⚠️ UM PEDIDO NOVO NÃO É RESPOSTA DE TEMA — 08/09/2026 09:13, produção.
+    //
+    // A mãe escreveu "Quero montar uma sequencia visual / Para Manu / Brincar,
+    // tomar banho, almoçar, ir ao shopping". Havia uma rotina de 08:53 esperando
+    // tema. Esta linha não existia: a mensagem inteira caiu no ramo do tema,
+    // `lerTemaEscolhido` capturou **"sequencia visual"** como se fosse o nome
+    // do desenho, e a geração disparou — na rotina ERRADA, a antiga, com as
+    // etapas que a mãe não pediu. Ela recebeu o link direto, sem nunca ter sido
+    // perguntada, e as imagens saíram do artefato velho.
+    //
+    // O ramo do tema existe para a palavra solta depois de "qual tema?". Uma
+    // mensagem que pede o artefato pelo nome, ou que dita uma sequência, é
+    // outra coisa — e precisa seguir para o condutor, que sabe criar rotina
+    // nova. Na dúvida o custo é assimétrico: perguntar o tema de novo custa um
+    // turno; gerar o artefato errado custa a confiança e já saiu no WhatsApp.
+    const pedidoNovo =
+      pediuRotinaExplicitamente(params.contexto) || familiaDitouSequencia(params.contexto);
+    const pendente =
+      proposta || pedidoNovo
+        ? null
+        : await rotinaAguardandoTema(supabase, familyId, params.membroAtipicoId);
+    if (pedidoNovo) {
+      console.log("[ayla:rotina] pedido novo — não é resposta de tema da rotina pendente");
+    }
     if (pendente) {
       if (recusouTema(params.contexto)) {
         // Desistir também é um desfecho — e precisa apagar o estado, senão a
