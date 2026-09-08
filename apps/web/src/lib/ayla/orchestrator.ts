@@ -3998,6 +3998,10 @@ async function enviarRespostaEmChunks(
     erro,
   });
 
+  // A ÂNCORA DA ENTREGA DO PLANO viaja DENTRO de `registroDeEnvio`: é ela que
+  // faz o "Ok" da mãe no turno seguinte NÃO gerar outro Plano
+  // (`ofertaDePlanoPendente` lê `metadata.plano_id`). Antes ela era escrita num
+  // spread próprio, DEPOIS do registro, e apagava `metadata.entrega`.
   if (enviada) {
     await supabase.from("ayla_messages").insert({
       family_account_id: args.family_account_id,
@@ -4007,10 +4011,7 @@ async function enviarRespostaEmChunks(
       tipo: args.tipo,
       texto: textoCompleto,
       enviada_em: new Date().toISOString(),
-      ...registroDeEnvio(idsBolhas),
-      // A ÂNCORA DA ENTREGA DO PLANO — é ela que faz o "Ok" da mãe no turno
-      // seguinte NÃO gerar outro Plano (`ofertaDePlanoPendente` lê este campo).
-      ...(planoEntregueId ? { metadata: { plano_id: planoEntregueId } } : {}),
+      ...registroDeEnvio(idsBolhas, planoEntregueId ? { plano_id: planoEntregueId } : undefined),
     });
     await supabase
       .from("ayla_preferences")
@@ -4940,13 +4941,45 @@ export async function loadFamiliaParaEnvio(
  * Nunca gravamos a string "unknown" ali: além de mentir, a segunda ocorrência
  * violaria o índice e derrubaria o registro inteiro da mensagem.
  */
-function registroDeEnvio(ids: Array<string | null>): {
+/**
+ * O REGISTRO DO ENVIO — e a metadata do turno, no MESMO lugar.
+ *
+ * ⚠️ POR QUE ELE RECEBE A METADATA DO TURNO (07/09/2026). Antes cada ponto de
+ * persistência compunha a metadata por conta própria, com dois spreads que
+ * escreviam a MESMA chave — e em spread de objeto a última vence. Não havia
+ * mesclagem: uma das duas fontes era apagada, sempre. Pior, os dois pontos
+ * erravam em direções OPOSTAS, e cada um perdia uma metade diferente.
+ *
+ * Medido em produção antes de corrigir, sobre 4.498 mensagens de saída:
+ * `entrega` em 1788, `plano_id` em **1** (contra 119 entregas de Plano),
+ * `proposta` em 0, `pedido` em 0.
+ *
+ * O custo não era cosmético. Sem `plano_id`, `ehEntregaDePlano` é sempre falso,
+ * a mensagem que ENTREGA o Plano casa com `REGEX_OFERTA_PLANO` e se reoferece
+ * sozinha — o "Ok" seguinte pula o gate de suficiência inteiro. É o caso Matheo,
+ * cuja correção foi escrita em 11/08 e nunca chegou ao banco. Sem `proposta`, a
+ * sequência aprovada pela família não chega ao quadro. Sem `pedido`, a
+ * clarificação não retoma o pedido original.
+ *
+ * Agora existe UM dono da composição. Quem persiste não escolhe ordem de
+ * spread: passa o que tem e recebe o objeto pronto.
+ *
+ * ⚠️ PRECEDÊNCIA: o registro de envio VENCE. Hoje não há colisão — o turno usa
+ * `pedido`, `proposta` e `plano_id`; o envio usa só `entrega`. A regra existe
+ * para o dia em que houver: `entrega` é fato provado no ato do envio, e um
+ * chamador que a escrevesse estaria sombreando um fato com um palpite.
+ */
+export function registroDeEnvio(
+  ids: Array<string | null>,
+  metadataDoTurno?: Record<string, unknown>,
+): {
   zaap_message_id: string | null;
   metadata: Record<string, unknown>;
 } {
   return {
     zaap_message_id: ids.find(Boolean) ?? null,
     metadata: {
+      ...(metadataDoTurno ?? {}),
       entrega: {
         canal: "z-api",
         // O nome do campo é o que ele prova. Não renomeie pra "entregue".
@@ -5072,6 +5105,8 @@ export async function enviarEPersistir(
   }
 
   // Mensagem (mesmo se falhou, pra deixar rastro)
+  // A metadata do turno viaja DENTRO de `registroDeEnvio`. Antes ela era um
+  // spread próprio, ANTES do registro, e `entrega` a apagava inteira.
   if (resultado.enviada) {
     await supabase.from("ayla_messages").insert({
       family_account_id: params.family_account_id,
@@ -5081,8 +5116,7 @@ export async function enviarEPersistir(
       tipo: params.tipo,
       texto,
       enviada_em: new Date().toISOString(),
-      ...(params.metadataMensagem ? { metadata: params.metadataMensagem } : {}),
-      ...registroDeEnvio(idsBolhas),
+      ...registroDeEnvio(idsBolhas, params.metadataMensagem),
     });
 
     await supabase

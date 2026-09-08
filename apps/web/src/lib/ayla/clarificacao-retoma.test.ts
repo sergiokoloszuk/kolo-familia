@@ -1,5 +1,6 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
+import { registroDeEnvio } from "./orchestrator";
 
 const ORCH = readFileSync(new URL("./orchestrator.ts", import.meta.url), "utf8");
 
@@ -27,8 +28,28 @@ describe("a resposta da clarificação retoma o pedido", () => {
   it("o metadata vai pra MENSAGEM, não pro log de envio", () => {
     // `meta` já existia e vai pro ayla_send_log (auditoria). Estado que a
     // próxima mensagem precisa ler tem que estar em `ayla_messages.metadata`.
+    //
+    // ⚠️ ATUALIZADO EM 07/09/2026 — a INVARIANTE é a mesma, a forma mudou. Este
+    // teste prendia a expressão literal
+    //     ...(params.metadataMensagem ? { metadata: params.metadataMensagem } : {})
+    // que era um spread SEPARADO, escrito ANTES de `registroDeEnvio`. Como os
+    // dois escreviam a mesma chave `metadata`, o registro de envio apagava a
+    // metadata do turno inteira: medido em produção, `pedido` aparecia em 0 de
+    // 4.498 mensagens de saída. A clarificação nunca conseguiu retomar nada.
+    //
+    // Agora a composição tem UM dono (`registroDeEnvio`), e é isso que se
+    // prende aqui — junto com a garantia que faltava: as duas coisas coexistem.
     expect(ORCH).toMatch(/metadataMensagem\?: Record<string, unknown>;/);
-    expect(ORCH).toMatch(/\.\.\.\(params\.metadataMensagem \? \{ metadata: params\.metadataMensagem \} : \{\}\)/);
+    expect(ORCH).toMatch(/\.\.\.registroDeEnvio\(idsBolhas, params\.metadataMensagem\)/);
+    expect(ORCH).not.toMatch(/\{ metadata: params\.metadataMensagem \}/);
+  });
+
+  it("a metadata do turno e o registro de envio COEXISTEM", () => {
+    // O que o teste acima não cobria, e por isso o defeito passou: as duas
+    // fontes escreviam a mesma chave e ninguém conferiu o resultado.
+    const composto = registroDeEnvio(["msg-1"], { pedido: "quero a rotina da Manu" });
+    expect(composto.metadata.pedido).toBe("quero a rotina da Manu");
+    expect(composto.metadata.entrega).toBeTruthy();
   });
 
   it("a retomada devolve o TEXTO ORIGINAL ao roteamento", () => {
