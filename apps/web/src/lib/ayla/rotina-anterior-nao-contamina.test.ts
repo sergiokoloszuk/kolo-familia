@@ -3,6 +3,7 @@ import {
   blocoRotinaAnterior,
   familiaDitouSequencia,
   pediuRotinaExplicitamente,
+  podarSequenciasAntigas,
   perguntaDeTema,
   temaEnunciado,
 } from "./rotina-guiada";
@@ -199,5 +200,70 @@ Brincar, tomar banho, almoçar,  ir ao shopping`;
   it("mas um tema de verdade continua sendo lido", () => {
     expect(temaEnunciado("quero dinossauros")).toBe("dinossauros");
     expect(temaEnunciado("tema: princesas")).toBe("princesas");
+  });
+});
+
+/**
+ * A TERCEIRA PORTA — 08/09/2026, 10:21, Mario e o Sudoku.
+ *
+ * ⚠️ A mãe ditou cinco etapas e recebeu sete: o Sudoku entrou no meio, no
+ * artefato E na mensagem. Não veio de `transicoes` (Gate A fechou) nem da rotina
+ * anterior (`blocoRotinaAnterior` cala quando a família dita). Veio da CONVERSA:
+ * às 07:33 do mesmo dia a própria Ayla escreveu um quadro com o Sudoku, e essa
+ * mensagem cabia na janela de 12 h e chegava crua ao prompt.
+ */
+describe("incidente Mario 10:21 — o quadro de ontem não entra no pedido de hoje", () => {
+  const FALA_07_33 = {
+    de: "kolo",
+    texto: `A sequência do Mario ficou assim:
+1. Acordar e higiene
+2. Estudar
+3. Almoçar
+4. Meditar
+5. Respiração antes do sudoku (1-2 min)
+6. Sudoku (sem pressão de terminar)
+7. Fono
+Mostre pra ele antes de começar o dia — ajuda a saber o que vem depois.`,
+  };
+
+  it("REGRESSÃO: com sequência ditada agora, o Sudoku some da conversa injetada", () => {
+    const podado = podarSequenciasAntigas(FALA_07_33, true);
+    expect(podado.toLowerCase()).not.toContain("sudoku");
+    expect(podado.toLowerCase()).not.toContain("meditar");
+  });
+
+  it("a PROSA da Ayla sobrevive — é ela que carrega a continuidade", () => {
+    const podado = podarSequenciasAntigas(FALA_07_33, true);
+    expect(podado).toContain("Mostre pra ele antes de começar o dia");
+    expect(podado).toContain("A sequência do Mario ficou assim");
+  });
+
+  it("sem sequência ditada agora, o quadro anterior CONTINUA sendo contexto", () => {
+    const intacto = podarSequenciasAntigas(FALA_07_33, false);
+    expect(intacto).toBe(FALA_07_33.texto);
+  });
+
+  it("a lista escrita pela MÃE nunca é podada — é o pedido dela", () => {
+    const daMae = { de: "mae", texto: "Mario\n1. Fazer bolo\n2. Colocar vela\n3. Cantar parabéns" };
+    expect(podarSequenciasAntigas(daMae, true)).toBe(daMae.texto);
+  });
+
+  it("poda emojis numerados também — é como o quadro sai no WhatsApp", () => {
+    const fala = { de: "kolo", texto: "Ficou assim:\n1️⃣ Sudoku\n2️⃣ Fono\nMostre um por vez." };
+    const podado = podarSequenciasAntigas(fala, true);
+    expect(podado.toLowerCase()).not.toContain("sudoku");
+    expect(podado).toContain("Mostre um por vez.");
+  });
+
+  it("fala que era SÓ quadro não vira vazio — o modelo não pode achar que ela ficou muda", () => {
+    const soQuadro = { de: "kolo", texto: "1. Acordar\n2. Estudar\n3. Dormir" };
+    const podado = podarSequenciasAntigas(soQuadro, true);
+    expect(podado).toContain("sequência anterior");
+    expect(podado.toLowerCase()).not.toContain("acordar");
+  });
+
+  it("não confunde prosa numerada com quadro", () => {
+    const fala = { de: "kolo", texto: "Ele tem 7 anos e isso é comum.\nVale avisar antes." };
+    expect(podarSequenciasAntigas(fala, true)).toBe(fala.texto);
   });
 });
