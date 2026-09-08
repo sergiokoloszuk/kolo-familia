@@ -506,6 +506,27 @@ export function podarSequenciasAntigas(
 }
 
 /**
+ * A PODA APLICADA A UM HISTÓRICO INTEIRO — os dois destinos, um critério.
+ *
+ * ⚠️ POR QUE ESTA FUNÇÃO EXISTE, e é confissão: eu apliquei
+ * `podarSequenciasAntigas` ao TEXTO que vai no prompt do condutor e deixei o
+ * ARRAY seguir cru para `gerarRotina` — que é quem compõe o artefato. Duas
+ * saídas para o mesmo dado, uma podada e outra não. O alarme do turno das
+ * 10:58 apontou para isso: "ditou sequência e nasceram 2 rotinas".
+ *
+ * É a quinta porta do mesmo defeito em um dia, e sempre pela mesma razão: eu
+ * corrijo o dono e esqueço um consumidor. Por isso a poda agora é UMA função
+ * usada pelos dois destinos, e não uma expressão repetida em cada um.
+ */
+export function podarHistorico<T extends { de: string; texto: string }>(
+  historico: readonly T[],
+  familiaDitouAgora: boolean,
+): T[] {
+  if (!familiaDitouAgora) return [...historico];
+  return historico.map((h) => ({ ...h, texto: podarSequenciasAntigas(h, true) }));
+}
+
+/**
  * O PORTÃO DETERMINÍSTICO DA ROTINA — dono único, 08/09/2026.
  *
  * ⚠️ POR QUE ELE EXISTE. A expressão vivia solta no orquestrador e cada frase
@@ -1969,9 +1990,10 @@ ${jaSabemos.perfil}` : "",
       // enquadramento certo para cada parte — "use proativamente" valia para
       // padrão conhecido e era exatamente o que mandava usar o barco.
       transicoesTxt,
+      // O MESMO histórico podado que vai ao gerador — um critério, dois destinos.
       "CONVERSA (a última fala da mãe é o pedido atual):\n" +
-        historico
-          .map((h) => `${h.de === "mae" ? "Mãe" : "Kolo"}: ${podarSequenciasAntigas(h, ditouAgora)}`)
+        podarHistorico(historico, ditouAgora)
+          .map((h) => `${h.de === "mae" ? "Mãe" : "Kolo"}: ${h.texto}`)
           .join("\n"),
     ]
       .filter(Boolean)
@@ -2101,7 +2123,18 @@ ${jaSabemos.perfil}` : "",
         idadeMeses: idadeEmMeses((membro.data_nascimento as string | null) ?? null),
         // O gerador compõe a sequência SÓ com o pedido em curso. A janela
         // inteira volta apenas quando a mãe mandou usar o que já contou.
-        historico: prontidao.reusaHistorico ? historico : historicoDaRotina,
+        // ⚠️ A QUINTA PORTA — 08/09/2026 10:58, com o alarme do turno anterior
+        // apontando para cá: "ditou sequência e nasceram 2 rotinas".
+        //
+        // Podei o histórico no PROMPT do condutor e deixei o gerador receber o
+        // ARRAY cru. Ele compõe o artefato, então era o pior lugar para
+        // esquecer: as falas de 10:21 e 10:36 traziam "Sudoku (sem pressão de
+        // terminar)" em linha de quadro, e ele montou "Momento sudoku" ao lado
+        // da festa. Mesma poda, mesmo critério, agora nos dois destinos.
+        historico: podarHistorico(
+          prontidao.reusaHistorico ? historico : historicoDaRotina,
+          ditouAgora,
+        ),
         mensagem: params.contexto,
         // ⚠️ O TERCEIRO SÍTIO — e eu tinha migrado só dois. 08/09/2026 10:36:
         // a mãe ditou cinco etapas para o Mario, recebeu as cinco CERTAS **e uma
