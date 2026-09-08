@@ -198,6 +198,32 @@ export async function carregarPerfilConsultavel(
     linha = null;
   }
 
+  return perfilConsultavelDaLinha(linha, p.membroId);
+}
+
+/**
+ * A MESMA INTELIGÊNCIA, SOBRE UMA LINHA JÁ CARREGADA — Gate B, 08/09/2026.
+ *
+ * ⚠️ POR QUE ISTO EXISTE. O caminho vivo do WhatsApp já lê `perfil_vivo_membro`
+ * em `montarContexto`. Chamar `carregarPerfilConsultavel` lá dentro faria uma
+ * SEGUNDA consulta da mesma linha, no mesmo turno — e o Gate A acabou de
+ * eliminar exatamente esse padrão na Rotina (três leituras viraram uma, 879 ms
+ * → 432 ms).
+ *
+ * ⚠️ E POR QUE NÃO UM DECISOR NOVO. Esta transformação é a inteligência que já
+ * existe: lacunas por CAMPO, não os cinco campos fixos do
+ * `<o_que_ainda_nao_sei>`. Ela roda hoje na web e no Legacy sob o piloto 4A —
+ * mas nunca no caminho que atende 97% das famílias. Construir outra criaria o
+ * QUARTO dono da mesma decisão, que é o padrão que produziu as seis portas do
+ * Gate A.
+ *
+ * O corte foi por construção: a consulta sempre esteve em cima, a transformação
+ * sempre esteve embaixo. Só faltava dar nome à segunda.
+ */
+export function perfilConsultavelDaLinha(
+  linha: Record<string, unknown> | null,
+  membroId: string,
+): PerfilConsultavel {
   const dominios = new Map<string, DominioPerfil>();
   for (const def of DOMINIOS) {
     const campos = subcamposDe(def.key);
@@ -209,7 +235,7 @@ export async function carregarPerfilConsultavel(
     (dominios.get(dominio) ?? VAZIO).campos.find((c) => c.key === campo) ?? null;
 
   return {
-    membroId: p.membroId,
+    membroId,
     dominios,
     sabemos: (dominio, campo) => {
       const c = pega(dominio, campo);

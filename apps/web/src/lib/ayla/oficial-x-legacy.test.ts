@@ -54,10 +54,13 @@ const SO_NO_LEGACY_CONHECIDO = new Set([
   // funciona, e NÃO alcança nenhuma família. É o achado da frente de
   // inteligência de 28/08.
   "@/lib/conducao/base2",
-  // 🔴 O leitor estruturado do Kolo Vivo (16 domínios organizados). O Oficial
-  // lê o mesmo dado cru por `lerPerfilVivo` + `categorias_extras`, então não
-  // é perda de cobertura — é perda de estrutura.
-  "@/lib/kolo-vivo/consultar",
+  // ✅ PAGA EM 08/09/2026 — Gate B. `@/lib/kolo-vivo/consultar` saiu daqui: o
+  // Oficial passou a usar `perfilConsultavelDaLinha`, a MESMA transformação,
+  // sobre a linha de perfil que o turno já carregou. Sem segunda consulta e sem
+  // segundo retrato — o que entra no prompt é, no máximo, UMA lacuna.
+  //
+  // Este teste foi quem avisou: eu liguei o módulo e ele exigiu a baixa da
+  // dívida no mesmo commit. É o oposto de folclore.
   "@/lib/conducao/composicao",
   "@/lib/conducao/angulos",
 ]);
