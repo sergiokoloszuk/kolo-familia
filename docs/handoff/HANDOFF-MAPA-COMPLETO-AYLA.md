@@ -52,15 +52,15 @@ E o `FALLBACK` do código só tem `core`: se alguém pedisse `plano` ou
 | **Doc. Cartões Visuais** (`cartoes_visuais v1`) | ✅ | ❌ | `arquivado` | **nunca** | — | — | — | ❌ | **sem consumidor no runtime**; ativar não faria efeito |
 | **Doc. Plano** (`plano v1`) | ✅ | ❌ | `arquivado` | **nunca** | — | — | — | ❌ | idem |
 | **Boas Práticas (BPs)** | ✅ | ✅ | ✅ | todo turno do caminho novo | via skills | ✅ | rastro | ✅ **330 rastros `canal:"whatsapp"`** em `eventos_app` desde 09/08 | — |
-| **Perfil consultável** (`carregarPerfilConsultavel`) | ✅ | ✅ | **NÃO SEI** | só se `pilotoQuatroA(family)` | ✅ | — | não | ⚠️ **não provado** | ver §2 |
-| **base2** (`secoesDe`) | ✅ | ✅ | **NÃO SEI** | só se `pilotoQuatroA` **e** `temMaterial(tema)` | — | ✅ | não | ⚠️ **não provado** | ver §2 |
+| **Perfil consultável** (`carregarPerfilConsultavel`) | ✅ | ✅ | **web apenas** | só no caminho **LEGADO** do WhatsApp | ✅ | — | não | ❌ **não chega ao WhatsApp** | código inalcançável — §1-bis |
+| **base2** (`secoesDe`) | ✅ | ✅ | **web apenas** | só no caminho **LEGADO** do WhatsApp | — | ✅ | não | ❌ **não chega ao WhatsApp** | código inalcançável — §1-bis |
 | **Material da pós** | ✅ (arquivo) | ❌ | ❌ | **nunca** | — | ❌ | — | ❌ | **BASE EXISTE / NÃO CONECTADA** — ver §7 |
 | **Decisor do turno** (`decidirTurno`) | ✅ | ✅ | ✅ | todo turno | não | não | `api_calls` | ✅ 4 chamadas medidas em 07/09 | — |
 | **Dono do lote** (`aguardarTurnoDaMae`) | ✅ | ✅ | ✅ | todo turno, antes dos gates | — | — | `processada_em` | ✅ dois balões com o mesmo `processada_em` | janela de 10 s |
 | **Rotina Visual** | ✅ | ✅ | ✅ | porta `rotina_criar`/`organizacao`/posse | ✅ interesses e transições | — | `rotinas`, `rotina_tarefas` | ✅ Nível 2 provou `aguardando→gerando→pronto` | ver §6 |
 | **Plano Estratégico** | ✅ | ✅ | ✅ | `ponteDePlano` após resposta comum | ✅ | ✅ BPs | `planos` | ✅ 25 planos analisados | 25/25 automáticos |
 | **Metadata de turno** | ✅ | ✅ | ✅ | todo envio | — | — | `ayla_messages.metadata` | ⚠️ **corrigido só em branch** (`94e2e6d`) | em produção ainda apaga |
-| **Rastro do conhecimento** | ✅ | ✅ | ✅ | quando há recuperação | — | — | `eventos_app` | ✅ 584 rastros (330 WA / 254 web) | não registra base2/perfil |
+| **Rastro do conhecimento** | ✅ | ✅ | **web apenas** | caminho legado (WA) / web | — | — | `eventos_app` | ⚠️ 330 rastros WA, **todos de 09–22/08**; nenhum depois | PEND-106 confirmada — §1-bis |
 
 ---
 
@@ -303,12 +303,12 @@ ligada, Perfil consultável e base2.
 |---|---|---|
 | situação real chega | 🟢 | webhook + lote com dono único |
 | entender contexto | 🟢 | Core v11 + decisor GPT com `<estado>` |
-| consultar a criança | 🟡 | interesses e transições sim; **Perfil consultável depende da flag** (§2) |
+| consultar a criança | 🟡 | interesses e transições sim; **Perfil consultável NÃO chega ao WhatsApp** (§1-bis) |
 | identificar ponto crítico | 🟢 | `prontidao-rotina` distingue os cenários |
 | saber o que já foi respondido | 🔴 | histórico são **9 mensagens**; `metadata` era apagada; sem índice de "já perguntei isso" |
 | identificar lacuna | 🔴 | **não existe** seleção de lacunas nem matriz de perguntas por habilidade |
 | **uma** pergunta realmente útil | 🟡 | o Core manda perguntar uma coisa por vez; não há mecanismo que **prove** que a resposta muda a conduta |
-| consultar conhecimento relevante | 🟡 | BPs sim (330 rastros); base2 depende da flag; **pós não** |
+| consultar conhecimento relevante | 🟡 | BPs sim (`experimental.ts:841`); **base2 não chega**; **pós não** |
 | orientar de forma personalizada | 🟡 | personaliza por nome/interesses; profundidade clínica limitada ao Compilado |
 | oferecer/executar recurso | 🟢 | Rotina e Plano executam de verdade |
 | registrar novo aprendizado | 🟡 | `perfil_vivo_membro` é escrito (medido no Mario); **sem carimbo de temporalidade** |
@@ -384,8 +384,9 @@ app.
 - **PEND-104** — material da pós localizado, em auditoria, **não ativo**; há
   conflito clínico documentado (contato visual) que impede importar como está.
 - **PEND-106** — rastro do conhecimento não cobria o WhatsApp desde 17/08.
-  ⚠️ **Parcialmente desatualizada:** medi **330 rastros com `canal:"whatsapp"`**,
-  o mais antigo em 09/08. Vale reconferir o que exatamente ela mede.
+  **CONFIRMADA.** Os 330 rastros com `canal:"whatsapp"` são todos de 09/08 a
+  22/08 e param ali: o bloco que os emite ficou inalcançável quando o caminho
+  novo assumiu. Eu havia escrito o contrário na primeira versão — ver §1-bis.
 - **PEND-169 / PEND-170 / PEND-171** — Plano automático, repetição entre turnos,
   rotina órfã da Manu.
 - **`whatsapp_e164` sem UNIQUE** — 1 duplicado medido em 07/09; deixou de ser
