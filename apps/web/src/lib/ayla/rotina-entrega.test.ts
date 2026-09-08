@@ -146,7 +146,12 @@ describe("PRIMEIRA EXPERIÊNCIA — sai com rotina, não com formulário", () =>
 describe("mudança de assunto — a rotina não sequestra a conversa", () => {
   it("existe o desfecho 'sair'", () => {
     expect(ROTINA).toMatch(/acao === "sair"/);
-    expect(ROTINA).toMatch(/if \(acao === "sair"\) return null;/);
+    // ⚠️ VIROU BLOCO em 08/09/2026, e a garantia é a mesma: 'sair' devolve
+    // null. O que mudou é que agora ele diz POR QUÊ antes de sair — era uma
+    // das duas saídas silenciosas que nos cegaram no incidente da Manu.
+    expect(ROTINA).toMatch(/if \(acao === "sair"\) \{/);
+    expect(ROTINA).toMatch(/rastro\.saida = "null_condutor_saiu"/);
+    expect(ROTINA).toMatch(/rastro\.motivo = "condutor devolveu acao=sair"/);
   });
 
   it("sair proíbe a frase que devolvia o controle do assunto pra Ayla", () => {

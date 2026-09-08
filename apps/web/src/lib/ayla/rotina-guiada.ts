@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { getAylaAnthropicClient, AYLA_MODEL_FALLBACK } from "./anthropic";
 import { nucleoConducao } from "@/lib/conducao/diretrizes";
+import { novoRastro, registrarRastro, etapa } from "./rotina-rastro";
 import { ORIENTACAO_DE_TRANSICAO } from "@/lib/conducao/formas";
 import { gerarMagicLink } from "./ponte";
 import { gerarRotina } from "@/lib/ludico/rotina-servico";
@@ -1453,19 +1454,35 @@ export async function conduzirRotina(
   /** As etapas propostas neste turno, quando a Ayla está esperando resposta. */
   proposta?: EtapaProposta[];
 } | null> {
+  // ⚠️ O RASTRO NASCE ANTES DO `try` e morre no `finally` — é isso que faz as
+  // saídas silenciosas aparecerem. Ver `rotina-rastro.ts`: em 08/09/2026 este
+  // fluxo devolveu `null` num turno real e não havia como saber por qual dos
+  // dois caminhos. Nada aqui decide nada; só registra.
+  const rastro = novoRastro(params.familyId, params.contexto.length);
+  rastro.membro = params.membroAtipicoId;
   try {
-    if (!params.contexto.trim()) return null;
+    if (!params.contexto.trim()) {
+      rastro.saida = "null_sem_contexto";
+      return null;
+    }
 
     const { data: membro } = await supabase
       .from("membros_atipicos")
       .select("family_account_id, nome, data_nascimento")
       .eq("id", params.membroAtipicoId)
       .maybeSingle();
-    if (!membro) return null;
+    if (!membro) {
+      rastro.saida = "null_sem_membro";
+      rastro.motivo = "membro_atipico não encontrado";
+      return null;
+    }
     const familyId = (membro.family_account_id as string) ?? params.familyId;
     const nome = (membro.nome as string) ?? "seu filho";
     const idade = idadeAnos((membro.data_nascimento as string | null) ?? null);
-    const interesses = await carregarInteresses(supabase, params.membroAtipicoId);
+    const interesses = await etapa(rastro, "contexto", () =>
+      carregarInteresses(supabase, params.membroAtipicoId),
+    );
+    rastro.leituras_perfil += 1;
     // NO MÁXIMO DUAS. O interesse conhecido vira SUGESTÃO, nunca escolha — o
     // tema é da rotina, não atributo fixo da criança. Despejar a lista inteira
     // vira formulário; oferecer uma só vira decisão disfarçada de pergunta.
@@ -1518,8 +1535,10 @@ export async function conduzirRotina(
     // outra coisa — e precisa seguir para o condutor, que sabe criar rotina
     // nova. Na dúvida o custo é assimétrico: perguntar o tema de novo custa um
     // turno; gerar o artefato errado custa a confiança e já saiu no WhatsApp.
-    const pedidoNovo =
-      pediuRotinaExplicitamente(params.contexto) || familiaDitouSequencia(params.contexto);
+    rastro.pedido_explicito = pediuRotinaExplicitamente(params.contexto);
+    rastro.ditou_sequencia = familiaDitouSequencia(params.contexto);
+    const pedidoNovo = rastro.pedido_explicito || rastro.ditou_sequencia;
+    rastro.pedido_novo = pedidoNovo;
     const pendente =
       proposta || pedidoNovo
         ? null
@@ -1527,8 +1546,10 @@ export async function conduzirRotina(
     if (pedidoNovo) {
       console.log("[ayla:rotina] pedido novo — não é resposta de tema da rotina pendente");
     }
+    rastro.pendente_id = pendente?.id ?? null;
     if (pendente) {
       if (recusouTema(params.contexto)) {
+        rastro.saida = "tema_recusado";
         // Desistir também é um desfecho — e precisa apagar o estado, senão a
         // rotina fica "aguardando" pra sempre e a tela mente.
         await supabase
@@ -1560,9 +1581,17 @@ export async function conduzirRotina(
       // pelo MESMO extrator (`lerTemaEscolhido`). Sem tema no histórico, o
       // fluxo segue perguntando, como antes.
       const escolhido = lerTemaEscolhido(params.contexto) ?? (await temaJaDitoNoHistorico(supabase, familyId));
+      rastro.tema = escolhido ? String(escolhido).slice(0, 60) : null;
+      rastro.tema_fonte = escolhido
+        ? (lerTemaEscolhido(params.contexto) ? "mensagem_atual" : "historico")
+        : "nenhuma";
       if (escolhido) {
+        rastro.saida = "tema_aplicado";
+        rastro.rotina_ids = [pendente.id];
+        rastro.rotina_reutilizada = true;
         await supabase.from("rotinas").update({ tema: escolhido }).eq("id", pendente.id);
         const comecou = await dispararGeracao(pendente.id, escolhido);
+        rastro.geracao_iniciada = comecou;
         const link = await gerarMagicLink(supabase, {
           familyId,
           next: `/ludico/rotinas/${pendente.id}`,
@@ -1631,13 +1660,19 @@ export async function conduzirRotina(
     }
     const historicoDaRotina = historico.slice(inicio);
 
-    const transicoesConhecidas = await carregarTransicoes(supabase, params.membroAtipicoId);
+    const transicoesConhecidas = await etapa(rastro, "contexto", () =>
+      carregarTransicoes(supabase, params.membroAtipicoId),
+    );
+    rastro.leituras_perfil += 1;
     // ⚠️ NÃO É MAIS `momento → estratégia` DE TUDO. Ver `blocoDeTransicoes`: só
     // padrão recente mantém o momento; o resto entra como estratégia sem
     // contexto. É o que impede o passeio de barco de virar etapa de hoje.
     const transicoesTxt = blocoDeTransicoes(transicoesConhecidas);
 
-    const jaSabemos = await carregarOQueJaSabemos(supabase, params.membroAtipicoId);
+    const jaSabemos = await etapa(rastro, "contexto", () =>
+      carregarOQueJaSabemos(supabase, params.membroAtipicoId),
+    );
+    rastro.leituras_perfil += 1;
 
     // Todos os membros da família — só pra guarda de identidade comparar nomes.
     const { data: irmaosRaw } = await supabase
@@ -1658,7 +1693,9 @@ export async function conduzirRotina(
     // Assim a prontidão consegue julgar "ela apontou pro que já contou?" sem
     // confundir aquilo com a sequência de agora.
     const anteriorTxt = inicio > 0 ? linhas(historico.slice(0, inicio)) : "";
-    const prontidao = await avaliarProntidaoParaRotina({
+    rastro.chamadas_llm += 1;
+    const prontidao = await etapa(rastro, "prontidao", () =>
+      avaliarProntidaoParaRotina({
       mensagem: params.contexto,
       conversa: conversaTxt,
       contexto: [
@@ -1678,7 +1715,8 @@ export async function conduzirRotina(
         .filter(Boolean)
         .join("\n"),
       idadeMeses: idadeEmMeses((membro.data_nascimento as string | null) ?? null),
-    });
+      }),
+    );
     // ── PISO DO TAMANHO ────────────────────────────────────────────────────
     // Quem pediu a rotina com todas as letras recebe rotina. O modelo pode
     // achar que uma sequência curta bastaria — e pode DIZER isso na conversa —,
@@ -1703,7 +1741,15 @@ export async function conduzirRotina(
     );
 
     // Não é rotina: sai e deixa o reativo responder. Mesmo caminho do "sair".
-    if (prontidao.desfecho === "nao_e_rotina") return null;
+    rastro.prontidao_desfecho = prontidao.desfecho;
+    rastro.prontidao_motivo = (prontidao.motivo ?? "").slice(0, 200);
+    rastro.prontidao_tamanho = String(prontidao.tamanho ?? "");
+    rastro.prontidao_visual = Boolean(prontidao.visual);
+    if (prontidao.desfecho === "nao_e_rotina") {
+      rastro.saida = "null_nao_e_rotina";
+      rastro.motivo = rastro.prontidao_motivo;
+      return null;
+    }
 
     // ── ORIENTAÇÃO: A MENOR AJUDA ──────────────────────────────────────────
     // A passagem se resolve com o adulto conduzindo. Nada é montado, nada é
@@ -1823,7 +1869,9 @@ ${jaSabemos.perfil}` : "",
       .join("\n\n");
 
     const client = getAylaAnthropicClient();
-    const resp = await client.messages.create({
+    rastro.chamadas_llm += 1;
+    const resp = await etapa(rastro, "condutor", () =>
+      client.messages.create({
       model: AYLA_MODEL_FALLBACK,
       max_tokens: 1600,
       system: `${nucleoConducao()}\n\n${CONTRATO_ROTINA}`,
@@ -1832,7 +1880,8 @@ ${jaSabemos.perfil}` : "",
       // que alguém precise reinterpretar.
       tool_choice: { type: "tool", name: FERRAMENTA_CONDUTOR.name },
       messages: [{ role: "user", content: userPrompt }],
-    });
+      }),
+    );
     const parsed = lerDesfechoDoCondutor(resp) as
       | {
           acao?: string;
@@ -1848,7 +1897,12 @@ ${jaSabemos.perfil}` : "",
     // pendente capturava TODA mensagem por 48h — a mãe perguntava de atividades
     // e a Ayla respondia sobre a rotina.
     const acao = String(parsed?.acao ?? "").trim().toLowerCase();
-    if (acao === "sair") return null;
+    rastro.acao = String(acao ?? "");
+    if (acao === "sair") {
+      rastro.saida = "null_condutor_saiu";
+      rastro.motivo = "condutor devolveu acao=sair";
+      return null;
+    }
 
     let mensagem = (typeof parsed?.mensagem === "string" && parsed.mensagem.trim()) || "";
 
@@ -2113,9 +2167,15 @@ ${jaSabemos.perfil}` : "",
       let autoGerou = false;
       const faltaTema = visual && ids.length > 0 && !tema;
       faltaTemaFinal = faltaTema;
+      rastro.rotina_ids = ids;
+      rastro.rotina_reutilizada = false;
+      rastro.tema = tema ? String(tema).slice(0, 60) : null;
+      rastro.tema_fonte = tema ? (rastro.tema_fonte ?? "mensagem_atual") : "nenhuma";
+      rastro.status_final = faltaTema ? "aguardando" : tema ? "gerando" : "nenhum";
       if (visual && tema && ids.length) {
         for (const id of ids) await dispararGeracao(id, tema);
         autoGerou = true;
+        rastro.geracao_iniciada = true;
       }
       if (faltaTema) {
         // ESTADO OPERACIONAL VERDADEIRO. Antes ficava `cards_status="nenhum"`,
@@ -2233,7 +2293,11 @@ Ah — se quiser, o próprio ${nome} pode ser o personagem dos cartões em vez d
       mensagem = `${mensagem}\n\n${lista}${fecho}`;
     }
 
-    if (!mensagem) return null;
+    if (!mensagem) {
+      rastro.saida = "null_sem_mensagem";
+      rastro.motivo = "condutor não produziu fala";
+      return null;
+    }
     // AGUARDANDO O TEMA: a rotina existe, mas os cartões dependem de uma
     // palavra que ainda não veio. A conversa fica ABERTA (tipo rotina_conversa)
     // pra que a próxima mensagem dela — "pode ser dinossauros" — volte pra cá
@@ -2266,7 +2330,14 @@ Ah — se quiser, o próprio ${nome} pode ser o personagem dos cartões em vez d
     };
   } catch (e) {
     console.warn("[ayla:rotina-guiada] falha:", e instanceof Error ? e.message : e);
+    rastro.saida = "null_excecao";
+    rastro.motivo = e instanceof Error ? e.message.slice(0, 200) : String(e).slice(0, 200);
     return null;
+  } finally {
+    // ⚠️ `finally`, e não uma chamada antes de cada `return`. São nove saídas
+    // nesta função; a que nos cegou em 08/09 foi justamente uma que ninguém
+    // lembraria de instrumentar. O `finally` não tem como esquecer.
+    void registrarRastro(rastro);
   }
 }
 
