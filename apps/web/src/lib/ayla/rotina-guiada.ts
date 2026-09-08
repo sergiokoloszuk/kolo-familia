@@ -903,6 +903,99 @@ export function lerRespostaAProposta(texto: string | null | undefined): "aceite"
 }
 
 /**
+ * ISTO É UM COMANDO DE EXECUÇÃO, NÃO UM TEMA — 08/09/2026.
+ *
+ * ⚠️ O DEFEITO QUE ISTO FECHA. Com uma rotina esperando tema,
+ * `lerTemaEscolhido("pode gerar")` devolvia **"pode gerar"**. A mãe que escrevia
+ * "pode gerar" não disparava a geração: ela NOMEAVA O TEMA VISUAL DOS CARTÕES, e
+ * a arte saía no tema "pode gerar". Medido em cinco formas — `pode gerar`,
+ * `gera`, `ok pode gerar`, `quero os cartoes`, `faz para mim`.
+ *
+ * É a mesma classe do caso de 17/08 ("Vamos tomar sorvete depois" virou tema).
+ * O endurecimento de então cobriu aceite, negação e frase de ORDEM — e não
+ * cobriu quem manda EXECUTAR. Aceitar é "pode ser"; mandar fazer é "pode gerar".
+ *
+ * Conservador de propósito: reconhece o verbo de execução no começo da fala,
+ * não em qualquer lugar dela. "gera" manda; "essa história gera confusão" não.
+ */
+export function ehComandoDeExecucao(texto: string | null | undefined): boolean {
+  return prefixoDeComando(texto) !== null;
+}
+
+/**
+ * A FAMÍLIA ESCOLHEU PELO NÚMERO — e só vale se a oferta numerada existiu.
+ *
+ * ⚠️ SEM A FALA ANTERIOR, "1" NÃO É NADA. Um número solto é resposta a
+ * qualquer coisa — quantidade, horário, escolha de outro menu. O que o torna
+ * uma escolha de tema é a Ayla ter acabado de escrever "1. lago e natureza".
+ * Por isso a conferência é sobre o TEXTO da fala anterior, não sobre existir
+ * uma rotina esperando tema.
+ *
+ * Devolve a sugestão escolhida, ou `null` — inclusive quando o índice não
+ * corresponde a nenhuma oferta.
+ */
+export function escolhaNumeradaDeTema(
+  texto: string | null | undefined,
+  sugestoes: string[],
+  falaAnterior: string | null | undefined,
+): string | null {
+  if (!sugestoes.length || !falaAnterior) return null;
+  const norm = (t: string) =>
+    t.toLowerCase().normalize("NFD").replace(/\p{Diacritic}/gu, "").trim();
+  const t = norm(String(texto ?? "")).replace(/[.ºo°)]+$/, "").trim();
+  const POR_EXTENSO: Record<string, number> = {
+    "1": 1, "2": 2,
+    "o primeiro": 1, "primeiro": 1, "a primeira": 1, "primeira": 1,
+    "o segundo": 2, "segundo": 2, "a segunda": 2, "segunda": 2,
+    "opcao 1": 1, "opcao 2": 2,
+  };
+  const idx = POR_EXTENSO[t];
+  if (!idx) return null;
+  const escolhida = sugestoes[idx - 1];
+  if (!escolhida) return null;
+  // A oferta precisa estar ESCRITA, numerada, na fala anterior.
+  const anterior = norm(String(falaAnterior));
+  if (!anterior.includes(norm(escolhida))) return null;
+  if (!new RegExp(`(^|[^0-9])${idx}[.)\\s]`, "m").test(anterior)) return null;
+  return escolhida;
+}
+
+/**
+ * O comando, se houver — devolve o que sobra depois dele.
+ *
+ * ⚠️ É ASSIM QUE "pode gerar com dinossauros" FUNCIONA SEM AFROUXAR NADA. O
+ * prefixo de comando sai, e o RESTO passa pelo mesmo `lerTemaEscolhido` de
+ * sempre, com as mesmas recusas. O extrator não ficou mais permissivo; ele só
+ * deixou de receber o comando junto.
+ */
+export function prefixoDeComando(texto: string | null | undefined): string | null {
+  const bruto = (texto ?? "").trim();
+  if (!bruto) return null;
+  const norm = bruto
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "");
+  const VERBOS = "(gera|gere|gerar|faz|faca|fazer|monta|monte|montar|cria|crie|criar|manda|mande|mandar)";
+  const RE = new RegExp(
+    `^(ok\\s+|ta\\s+|tudo\\s+bem\\s+|beleza\\s+|isso\\s+|sim\\s+)?` +
+      `(pode\\s+|podes\\s+|voce\\s+pode\\s+|quero\\s+que\\s+voce\\s+|quero\\s+|queria\\s+|me\\s+)?` +
+      `${VERBOS}\\b`,
+    "i",
+  );
+  const m = norm.match(RE);
+  if (!m) {
+    // "quero os cartões" / "quero a rotina" — pedido de execução sem verbo.
+    if (/^(quero|queria|manda|me manda)\s+(os\s+|as\s+|o\s+|a\s+)?(cart|rotina|sequenc|imagen|figur)/i.test(norm)) {
+      return "";
+    }
+    return null;
+  }
+  // O resto vem do texto ORIGINAL (com acento), recortado no mesmo tamanho.
+  const resto = bruto.slice(m[0].length).trim();
+  return resto.replace(/^(com|de|em|no|na|usando|tema)\s+/i, "").trim();
+}
+
+/**
  * A ÚLTIMA FALA DA AYLA OFERECEU MESMO ESTE TEMA?
  *
  * ⚠️ É O QUE IMPEDE O ACEITE DE VIRAR TEMA NO VAZIO. Sem esta conferência,
@@ -910,6 +1003,34 @@ export function lerRespostaAProposta(texto: string | null | undefined): "aceite"
  * da criança como tema — inclusive um "ok" que respondia a outra coisa. Aqui a
  * oferta precisa estar escrita, na fala anterior, com todas as letras.
  */
+/**
+ * O TEXTO DA ÚLTIMA FALA DE ROTINA — é ele que dá sentido a "1".
+ *
+ * Mesma consulta de `ofertaDeTemaNaUltimaFala`, devolvendo o texto em vez de um
+ * booleano: a escolha numerada precisa conferir a numeração, não só o tema.
+ */
+async function falaDeRotinaAnterior(
+  supabase: SupabaseClient,
+  familyId: string,
+): Promise<string | null> {
+  try {
+    const { data } = await supabase
+      .from("ayla_messages")
+      .select("texto, tipo")
+      .eq("family_account_id", familyId)
+      .eq("direcao", "outbound")
+      .order("created_at", { ascending: false })
+      .limit(1);
+    const ultima = data?.[0];
+    if (!ultima) return null;
+    const tipo = (ultima.tipo as string | null) ?? null;
+    if (tipo !== "rotina_conversa" && tipo !== "rotina_proposta") return null;
+    return (ultima.texto as string | null) ?? null;
+  } catch {
+    return null;
+  }
+}
+
 async function ofertaDeTemaNaUltimaFala(
   supabase: SupabaseClient,
   familyId: string,
@@ -974,6 +1095,12 @@ export function lerTemaEscolhido(texto: string | null | undefined): string | nul
     // CONCORDAR NÃO É ESCOLHER TEMA. "sim" respondia à sequência e virava o
     // tema dos cartões — o aceite sumia e a arte saía no tema "sim".
     if (ehAceitePuro(bruto)) return null;
+    // MANDAR EXECUTAR NÃO É ESCOLHER TEMA — 08/09/2026. "pode gerar" devolvia
+    // "pode gerar" e a arte saía nesse tema. Quem manda gerar não está nomeando
+    // o desenho; quem trouxer comando E tema ("pode gerar com dinossauros") é
+    // atendido em `conduzirRotina`, que tira o comando e reapresenta o resto
+    // A ESTE MESMO extrator — sem afrouxá-lo.
+    if (ehComandoDeExecucao(bruto)) return null;
     // NEGAR NÃO É ESCOLHER TEMA. "não, primeiro o banho" é correção.
     if (/^\s*(n[ãa]o|nem|opa|espera|pera|calma)\b/i.test(bruto)) return null;
     // FALAR DE ORDEM É FALAR DA SEQUÊNCIA, não do desenho do cartão.
@@ -1308,12 +1435,12 @@ export async function conduzirRotina(
     // NO MÁXIMO DUAS. O interesse conhecido vira SUGESTÃO, nunca escolha — o
     // tema é da rotina, não atributo fixo da criança. Despejar a lista inteira
     // vira formulário; oferecer uma só vira decisão disfarçada de pergunta.
-    const sugestoesDeTema = (interesses ?? "")
+    const sugestoesLista = (interesses ?? "")
       .split(/[,;]/)
       .map((s) => s.trim())
       .filter(Boolean)
-      .slice(0, 2)
-      .join("* ou *");
+      .slice(0, 2);
+    const sugestoesDeTema = sugestoesLista.join("* ou *");
 
     // ── A PROPOSTA NA MESA VEM ANTES DE TUDO ───────────────────────────────
     //
@@ -1391,15 +1518,70 @@ export async function conduzirRotina(
       // que se acrescenta é o REFERENTE, e ele não é inventado — é `interesses`,
       // a mesma fonte determinística que compôs a oferta no turno anterior, e só
       // vale se a última fala da Ayla tiver mesmo oferecido aquele tema.
-      const temaOferecido = sugestoesDeTema.split("* ou *")[0]?.trim() || null;
+      const temaOferecido = sugestoesLista[0] ?? null;
       const aceitouOTemaOferecido =
         !!temaOferecido &&
         ehAceitePuro(params.contexto) &&
         (await ofertaDeTemaNaUltimaFala(supabase, familyId, temaOferecido));
+
+      // ── COMANDO DE EXECUÇÃO VEM ANTES DO EXTRATOR — 08/09/2026 ───────────
+      //
+      // "pode gerar" não é tema; é ordem. Mas "pode gerar com dinossauros" traz
+      // as duas coisas, e negar a segunda por causa da primeira custaria um
+      // turno inteiro à família. O comando sai do começo da fala e o RESTO passa
+      // pelo mesmo `lerTemaEscolhido`, com as mesmas recusas — o extrator não
+      // afrouxou, só parou de receber o comando grudado no tema.
+      const resto = prefixoDeComando(params.contexto);
+      const comandou = resto !== null;
+      const temaNoComando = resto ? lerTemaEscolhido(resto) : null;
+      const semTemaNoComando = !!resto && recusouTema(resto);
+
+      // "pode gerar sem tema" resolve no mesmo turno: vira lista, sem cartão.
+      if (semTemaNoComando) {
+        await supabase
+          .from("rotinas")
+          .update({ cards_status: "nenhum", modo_exibicao: "lista" })
+          .eq("id", pendente.id);
+        const link = await gerarMagicLink(supabase, { familyId, next: `/ludico/rotinas/${pendente.id}` });
+        console.log(`[ayla:rotina] comando sem tema — ${pendente.id} fica como lista`);
+        return {
+          mensagem: link
+            ? `Fechado — deixei *${pendente.nome}* como lista, sem os cartões.\n\nAbre aqui:\n${link}`
+            : `Fechado — deixei *${pendente.nome}* como lista, sem os cartões.`,
+          pronto: true,
+        };
+      }
+
+      const escolhaNumerada = escolhaNumeradaDeTema(
+        params.contexto,
+        sugestoesLista,
+        await falaDeRotinaAnterior(supabase, familyId),
+      );
+
       const escolhido =
+        temaNoComando ??
         lerTemaEscolhido(params.contexto) ??
+        escolhaNumerada ??
         (aceitouOTemaOferecido ? temaOferecido : null) ??
         (await temaJaDitoNoHistorico(supabase, familyId));
+
+      // ⚠️ COMANDO SEM TEMA NÃO INVENTA TEMA. Antes de existir esta guarda o
+      // "pode gerar" virava o próprio tema; a correção não pode trocar isso por
+      // escolher um tema no lugar da família. Reapresenta as duas sugestões,
+      // curto, sem reabrir a investigação.
+      if (!escolhido && comandou) {
+        const opcoes = sugestoesLista.length
+          ? sugestoesLista.map((s, i) => `${i + 1}. ${s}`).join("\n")
+          : null;
+        console.log(`[ayla:rotina] comando de execução sem tema em ${pendente.id} — reapresentando sugestões`);
+        return {
+          mensagem: opcoes
+            ? `Só falta o tema dos cartões pra eu começar:\n\n${opcoes}\n\nResponde o número, me diz outro tema, ou "sem tema" que eu faço simples.`
+            : `Só falta o tema dos cartões pra eu começar. Me diz um tema que ${nome} esteja gostando agora — ou "sem tema", que eu faço simples.`,
+          pronto: false,
+          aguardandoTema: true,
+        };
+      }
       if (escolhido) {
         await supabase.from("rotinas").update({ tema: escolhido }).eq("id", pendente.id);
         const comecou = await dispararGeracao(pendente.id, escolhido);
