@@ -52,6 +52,12 @@ import { traduzirProativa } from "./traduzir";
 import { montarPonteWhatsApp, gerarMagicLink, montarPlanoFimDeSemana } from "./ponte";
 import { fechamentoReativoRecente } from "@/lib/trial/jornada";
 import { aguardarTurnoDaMae, descartarTurnoPendente } from "./lote-inbound";
+import {
+  novoRastroTurno,
+  registrarRastroTurno,
+  marco,
+  type RastroTurno,
+} from "./turno-rastro";
 import { pedeUmPlano } from "@/lib/ia/pedido-plano";
 import { abreFluxoDeArtefato, atoSobreArtefato } from "@/lib/conducao/ato-artefato";
 import {
@@ -1876,9 +1882,44 @@ async function retomarPedidoAposClarificacao(
   }
 }
 
+/**
+ * O TURNO, COM CRONÔMETRO — 08/09/2026, observabilidade pura.
+ *
+ * ⚠️ POR QUE UM INVÓLUCRO, e não `finally` no corpo. `processInbound` tem mais
+ * de mil e novecentas linhas e dezenas de `return`. Um `try/finally` em volta
+ * do corpo inteiro é a única forma de garantir que TODA saída — inclusive as
+ * que ninguém lembraria de instrumentar — deixe rastro. É a mesma lição do
+ * `rotina-rastro.ts`: a saída que nos cegou foi justamente a esquecida.
+ *
+ * ⚠️ NADA DE COMPORTAMENTO MUDA AQUI. O corpo é o mesmo, renomeado. A exceção
+ * continua subindo; o rastro só a nomeia antes.
+ */
 export async function processInbound(
   supabase: SupabaseClient,
   inboundRecebido: InboundWhatsApp,
+): Promise<{ tratada: boolean; familia?: string; resposta?: EnvioResultado }> {
+  const rastro = novoRastroTurno({
+    chars: (inboundRecebido.texto ?? "").length,
+    recebidaEm: inboundRecebido.recebidaEm ?? null,
+  });
+  try {
+    const r = await processInboundInterno(supabase, inboundRecebido, rastro);
+    if (!rastro.saida) rastro.saida = r.tratada ? "tratada" : "nao_tratada";
+    if (r.familia && !rastro.familia) rastro.familia = r.familia;
+    return r;
+  } catch (e) {
+    rastro.saida = "null_excecao";
+    rastro.motivo = e instanceof Error ? e.message.slice(0, 200) : String(e).slice(0, 200);
+    throw e;
+  } finally {
+    void registrarRastroTurno(rastro);
+  }
+}
+
+async function processInboundInterno(
+  supabase: SupabaseClient,
+  inboundRecebido: InboundWhatsApp,
+  rastro: RastroTurno,
 ): Promise<{ tratada: boolean; familia?: string; resposta?: EnvioResultado }> {
   // `let` porque o CONTROLE DE TURNO (mais abaixo) troca o texto pelo lote — as
   // mensagens que a mãe mandou em sequência viram uma fala só. Todo o resto da
@@ -2053,10 +2094,17 @@ export async function processInbound(
   // acolhendo conquista que não existia). Esta execução espera o silêncio e,
   // se chegou mensagem nova, CEDE A VEZ — quem chegou depois responde por
   // todas. Ver lib/ayla/lote-inbound.ts.
+  rastro.familia = family.id;
+  marco(rastro, "familia_resolvida");
+  // ⚠️ LATÊNCIA DELIBERADA DE PRODUTO — 10 s de silêncio (3 s → 10 s em
+  // 19/08/2026, PEND-058). Fica numa etapa própria justamente para NÃO se
+  // confundir com tempo de computação no orçamento.
+  marco(rastro, "debounce_inicio");
   const turno = await aguardarTurnoDaMae(supabase, {
     familyId: family.id,
     textoAtual: inbound.texto,
   });
+  marco(rastro, "debounce_fim");
   if (!turno) return { tratada: false, familia: family.id };
   // ⚠️ ADOTA O TEXTO DO LOTE SEMPRE QUE ELE TIVER TEXTO — antes era só
   // `quantidade > 1`, e `quantidade` conta textos NÃO VAZIOS, não linhas
@@ -2357,6 +2405,11 @@ export async function processInbound(
         phoneE164: ctxFds.whatsapp_e164,
       });
       if (msg) {
+        // ⚠️ PERSISTÊNCIA + ENVIO numa etapa só, de propósito: o que interessa
+        // aqui é separar "tempo para DECIDIR a resposta" de "tempo para
+        // ENTREGAR a resposta". O detalhe de quanto é banco e quanto é Z-API
+        // fica para quando este número justificar abrir.
+        marco(rastro, "envio_inicio");
         const resp = await enviarEPersistir(supabase, {
           family_account_id: family.id,
           membro_atipico_id: membroId,
@@ -2365,6 +2418,8 @@ export async function processInbound(
           category: "reativa",
           tipo: "resposta_registro",
         });
+        marco(rastro, "envio_fim");
+        rastro.saida = "fim_de_semana";
         return { tratada: true, familia: family.id, resposta: resp };
       }
       // Falhou gerar → cai no fluxo normal (a Ayla ainda responde algo).
@@ -2590,6 +2645,12 @@ export async function processInbound(
   // `classificarIntencao` continua existindo e deixou de ser chamado neste
   // caminho. Não foi apagado nesta missão: outros consumidores e testes ainda o
   // referenciam, e removê-lo junto misturaria duas frentes.
+  // ⚠️ MARCO, NÃO INVÓLUCRO. Envolver a chamada em `etapaTurno` mudaria o TEXTO
+  // do código, e onze testes prendem deliberadamente a forma dela — um deles
+  // CONTA as ocorrências, então nem este comentário pode citá-la. Medir não
+  // pode custar a garantia de quem já estava lá: a instrumentação é um carimbo
+  // antes e outro depois, e o corpo da chamada fica intocado.
+  marco(rastro, "decisor_inicio");
   const turnoClassificado = rotinaConversa
     ? {
         intencao: "outro" as const,
@@ -2611,6 +2672,7 @@ export async function processInbound(
         temasOnboarding: await carregarDesafiosOnboarding(supabase, membroConversa),
         catalogoSkills: await carregarCatalogoSkills(supabase),
       });
+  marco(rastro, "decisor_fim");
   const intent = turnoClassificado.intencao;
   // ⚠️ PEDIDO EXPLÍCITO — GATE DA FASE 1B, 06/09/2026.
   //
@@ -3022,13 +3084,24 @@ export async function processInbound(
     if (alvo.ambiguo) return await perguntarQualCrianca(supabase, family, ctxR, alvo.ambiguo);
     const membroId = alvo.membroId;
     if (ctxR && membroId) {
+      // ⚠️ UMA ETAPA, NÃO DUAS MEDIÇÕES. `conduzirRotina` tem rastro próprio
+      // (`rotina_turno`) com o detalhe por dentro. Aqui ela conta como a fatia
+      // "capacidade especializada" do orçamento; medir de novo o mesmo trecho
+      // produziria dois números para o mesmo fato.
+      marco(rastro, "capacidade_inicio");
       const r = await conduzirRotina(supabase, {
         familyId: family.id,
         membroAtipicoId: membroId,
         contexto: inbound.texto,
         phoneE164: ctxR.whatsapp_e164,
       });
+      marco(rastro, "capacidade_fim");
       if (r) {
+        // ⚠️ PERSISTÊNCIA + ENVIO numa etapa só, de propósito: o que interessa
+        // é separar "tempo para DECIDIR a resposta" de "tempo para ENTREGAR a
+        // resposta". Abrir em banco × Z-API fica para quando este número
+        // justificar.
+        marco(rastro, "envio_inicio");
         const resp = await enviarEPersistir(supabase, {
           family_account_id: family.id,
           membro_atipico_id: membroId,
@@ -3060,6 +3133,9 @@ export async function processInbound(
           // originou: `ayla_messages.metadata`, lido pela mensagem seguinte.
           ...(r.proposta?.length ? { metadataMensagem: { proposta: r.proposta } } : {}),
         });
+        marco(rastro, "envio_fim");
+        rastro.saida = "capacidade_rotina";
+        rastro.membro = membroId;
         return { tratada: true, familia: family.id, resposta: resp };
       }
     }
