@@ -8254,7 +8254,7 @@ indevida. Nenhum erro novo.
 ### PEND-187
 **`metadata.lacuna` marca a lacuna ESCOLHIDA, nao a pergunta FEITA**
 Bloco: **B · Ayla** · Prioridade: **P1**
-STATUS: **CONTIDA (187A) — falta o vinculo estrutural (187B)** · Aberta em: 2026-09-10
+STATUS: **187A CONCLUIDA — PRODUCAO PROVADA · 187B em bancada** · Aberta em: 2026-09-10 · Baixa da 187A em: 2026-09-10
 
 Medido no teste humano de 09/09/2026, turnos 2 e 3.
 
@@ -8327,6 +8327,43 @@ HISTORICO passaram a medir afunilamento pelo PERFIL — que e o mecanismo
 verdadeiro. E o teste de integracao T1-T5 agora **cobra a repeticao** no arnes
 (que nao roda incorporacao): se ele parar de repetir, e sinal de que o historico
 voltou a fechar.
+
+---
+
+**BAIXA DA 187A (10/09/2026) — PRODUCAO PROVADA, SEM REGRESSAO.**
+
+Primeiro turno humano em `a81c9fa` (descendente de `5f33e93`, contem a 187A).
+Karina, 21:04:17: *"A Manu esta ficando muito irritada quando preciso
+interromper uma brincadeira que ela gosta. Como posso ajudar?"*
+
+| verificacao | resultado |
+|---|---|
+| `lacuna_sugerida` no payload | ✅ `"sensorial.perfil"` |
+| `perguntou_de_fato` como dado | ✅ **ausente** |
+| `metadata` da mensagem | ✅ `["entrega","lacuna_sugerida"]` |
+| chave antiga `lacuna` | ✅ ausente no turno novo |
+| `entrega` convivendo | ✅ |
+| crianca | ✅ Manu; Mario ausente |
+| `skills_avaliadas` · `origem` | ✅ `true` · `tema` (`["emocional","rotina"]`) |
+| PEND-186 | ✅ out=88, 1 chamada, sem retry, sem `sem_resposta` |
+| erros | ✅ zero |
+
+**A PROVA DIRETA DA 187A:** `sensorial.perfil` aparece em `ja_respondidas`
+(observacao do historico legado) **e mesmo assim foi escolhido**. Sob o codigo
+anterior o historico o teria excluido. O historico virou observacao; quem exclui
+e o Perfil.
+
+**E A PROVA DA 189 NO CAMINHO VIVO:** `sensorial.toques` **nao esta** entre as
+candidatas — porque o Perfil agora o le. E a Ayla USOU o fato na orientacao:
+*"ajude-a a ir para um espaco com menos barulho e luz mais suave, **sem tocar se
+ela nao quiser**"*. Os dois campos que a 189 recuperou (`toques` e `luz`)
+apareceram na fala.
+
+⚠️ **E A 187B FICOU JUSTIFICADA NO MESMO TURNO.** A sugestao foi
+`sensorial.perfil`; a pergunta que a Ayla fez foi *"Ela fica mais irritada
+quando voce avisa antes, ou principalmente quando precisa encerrar no meio da
+brincadeira?"* — que e sobre gatilho/transicao, nao sobre perfil sensorial. O
+fenomeno se repetiu; a diferenca e que agora **nada falso foi registrado**.
 
 
 ### PEND-188
@@ -8462,8 +8499,7 @@ funcao pura, sem ambiente nem I/O — mas a distincao existe e fica escrita.
 
 1. ~~PEND-186~~ — **BAIXA**
 2. ~~PEND-189~~ — **BAIXA**
-3. **PEND-187A** — aguardando prova real (codigo em `5f33e93`, servido; sem
-   trafego apos o deploy)
+3. ~~PEND-187A~~ — **BAIXA** (provada em `a81c9fa`, turno de 10/09 21:04)
 4. PEND-187B — bancada de envelope estruturado. **So comeca depois da baixa da
    187A**: sofisticar o vinculo entre pergunta e campo antes de provar que o
    sistema parou de afirmar aprendizado que nao aconteceu seria construir sobre
