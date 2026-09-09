@@ -8284,7 +8284,51 @@ e falta a terceira saida — orientar cobrindo as duas hipoteses. Vale a regua d
 §14: uma resposta sofisticada que chega errada e pior que uma simples que chega
 certa.
 
-**Proximo ID livre: PEND-189. *(024 e 025 reservadas por frentes ainda nao publicadas; 0076 e numero de MIGRACAO reservado — ver PEND-121.)***
+### PEND-189
+**Subcampos escritos numa linha so ficam INVISIVEIS ao parser — e o Core os ve, o Gate B nao**
+Bloco: **B · Ayla** · Prioridade: **P2**
+STATUS: **ABERTA** · Aberta em: 2026-09-10
+
+Achado ao investigar a PEND-187. `parsearSubcampos` (subcampos.ts:423) quebra o
+texto por `
+` e so reconhece um rotulo quando ele esta **no inicio da linha**.
+
+No perfil da Manu, o bloco `sensorial` tem seis rotulos concatenados numa UNICA
+linha, separados por ". ":
+
+    Reacao a sons: ... . Reacao a toques: nao gosta de abraco. Texturas (...): ... . Luz: ... . Cheiros: ...
+
+O parser le so `Reacao a sons` e engole todo o resto dentro do valor dele.
+Resultado medido executando `perfilConsultavelDaLinha` sobre a linha REAL de
+producao:
+
+    sensorial · LACUNAS (vazios): ["perfil","toques","luz","cheiros"]
+    sensorial · SABEMOS: sons
+
+**`sensorial.toques` = "nao gosta de abraco" esta no banco e e invisivel.**
+
+**A CONSEQUENCIA APARECEU NO TESTE HUMANO (09/09/2026, 16:36):** o Gate B
+escolheu `sensorial.toques` como lacuna decisiva — um campo que a familia ja
+tinha contado. E, no MESMO turno, a Ayla orientou "mantenha-se por perto **sem
+tocar nela**", coerente com "nao gosta de abraco".
+
+**E ISSO EXPOE UMA ASSIMETRIA ARQUITETURAL:** o Core recebe o TEXTO BRUTO do
+dominio e enxerga tudo; o Gate B recebe os CAMPOS PARSEADOS e enxerga menos.
+Duas visoes do mesmo perfil, com conteudos diferentes, no mesmo turno. Nao e
+so um dado mal gravado — e dois leitores do mesmo fato que discordam.
+
+**ESCOPO MEDIDO:** varredura das 181 criancas com perfil → **1 afetada**, 4
+subcampos, todos em `sensorial`. Nao e sistemico; e pontual e e da crianca que
+usamos para testar.
+
+**A investigar antes de corrigir:** QUEM escreveu naquele formato (o
+`appendFato` do orquestrador junta com `
+`, entao veio de outro caminho), se
+o parser deve passar a aceitar rotulo no meio da linha (arrisca falso positivo
+em texto livre) ou se o dado deve ser normalizado uma vez. E, separadamente, se
+Core e Gate B deveriam ler a MESMA representacao.
+
+**Proximo ID livre: PEND-190. *(024 e 025 reservadas por frentes ainda nao publicadas; 0076 e numero de MIGRACAO reservado — ver PEND-121.)***
 
 > Conferir contra `origin/main`, não contra o seu branch. Dois branches podem
 > reivindicar o mesmo número — o conflito de merge nesta linha é o alarme.
