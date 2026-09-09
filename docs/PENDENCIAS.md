@@ -8126,7 +8126,7 @@ caso.
 ### PEND-186
 **21,5% das decisoes de turno sao truncadas no teto de 300 tokens e viram o neutro — em silencio**
 Bloco: **B · Ayla** · Prioridade: **P0**
-STATUS: **ABERTA** · Aberta em: 2026-09-10
+STATUS: **CORRIGIDA — aguardando prova em producao** · Aberta em: 2026-09-10
 
 Achado na leitura do teste humano de 09/09/2026, e **e a causa real do
 `skills: []` da PEND-184** — que a correcao do catalogo NAO tratou.
@@ -8168,6 +8168,64 @@ de um log da resposta crua.
 **NAO CORRIGIDO.** Subir o teto e barato, mas mexe no caminho mais quente do
 produto e precisa vir com a falha observavel — senao a proxima intermitencia se
 esconde do mesmo jeito.
+
+---
+
+**CAUSA CONFIRMADA (10/09/2026) — NAO ERA JSON TRUNCADO.**
+
+`gpt-5.6-luna` e modelo de raciocinio: os tokens de pensamento contam no
+`max_completion_tokens` e nao aparecem no texto. Medido chamando o modelo real
+com o contrato e o contexto de producao:
+
+    finish_reason=length  out=300  reasoning_tokens=300  chars=0  ← CONTEUDO VAZIO
+
+O raciocinio consumia os 300 tokens inteiros e o modelo nao emitia **um
+caractere** de JSON. Nao havia o que truncar. Nas execucoes que deram certo, o
+raciocinio ficou entre 65 e 225 tokens — a variancia esta toda no pensamento, e
+o conteudo cabe em 179-270 caracteres.
+
+**AS ALAVANCAS, COMPARADAS** (turno real da Karina, 8 execucoes cada):
+
+| config | parseou | out medio | latencia mediana |
+|---|---|---|---|
+| A · 300 (atual) | 7/8 | 225 | 3174 ms |
+| B · 900 | 8/8 | 235 | 3343 ms |
+| C · 300 + reasoning_effort low | 8/8 | 164 | 3584 ms |
+| D · 900 + json_schema | 8/8 | 252 | 3911 ms |
+| **E · 900 + low + json_schema** | **8/8** | **101** | **1389 ms** |
+
+E vence nos tres eixos ao mesmo tempo: 55% menos tokens de saida que hoje e 2,3x
+mais rapida. **Subir o teto sozinho (B) resolveria o sintoma pagando mais caro.**
+
+**QUALIDADE NAO REGREDIU.** Bancada de conteudo com 12 casos — incluindo pedidos
+explicitos de rotina, plano e edicao, e o caso negativo "a rotina dele e
+bagunçada": **A e E acertaram 12/12**. Baixar o esforco de raciocinio nao
+degradou o juizo.
+
+**INTERMITENCIA:** 60 execucoes sob a config final (3 frases x 20) —
+**60/60 parseou, 0 vazios, 0 `finish=length`**.
+
+**A CORRECAO E DA CLASSE, nao do numero:**
+
+1. `SaidaConversacional` passa a carregar `motivoDeParada` (`finish_reason`
+   normalizado entre os dois providers). Ele era descartado.
+2. `decidirTurno` ganha o terceiro desfecho **`origem: "sem_resposta"`**.
+   Sucesso de rede sem conteudo aproveitavel deixa de ser `"gpt"`.
+3. Uma retry, com o MESMO pedido (montado uma vez, para nao divergir).
+4. `decisao_turno_sem_resposta` persistido, com motivo de parada, tentativas e
+   os campos perdidos. Nenhum dado da familia.
+5. `response_format` estrito cobrindo os 8 campos — elimina a classe "JSON
+   invalido" na origem. `interpretar` continua garantindo o DOMINIO (intencao
+   fora do enum, skill fora do catalogo, `"sim"` que nao e booleano).
+
+**DEGRADACAO, por campo:** nenhum campo cai para regex ou palpite. A retry
+recupera o turno; se as duas falharem, o neutro continua sendo o valor mais
+conservador — mas agora **declarado**, e um `pedido_explicito: false` vindo de
+falha e distinguivel de um vindo de decisao.
+
+**PROVA:** 9 testes novos; com a retry e a distincao revertidas, 5 ficam
+vermelhos.
+
 
 ### PEND-187
 **`metadata.lacuna` marca a lacuna ESCOLHIDA, nao a pergunta FEITA**
