@@ -8123,8 +8123,110 @@ Nao corrigido junto com a PEND-184 de proposito: acrescentar um emissor no
 caminho mais quente do produto e mudanca de escopo, e a missao pedia STOP nesse
 caso.
 
+### PEND-186
+**21,5% das decisoes de turno sao truncadas no teto de 300 tokens e viram o neutro — em silencio**
+Bloco: **B · Ayla** · Prioridade: **P0**
+STATUS: **ABERTA** · Aberta em: 2026-09-10
 
-**Proximo ID livre: PEND-186. *(024 e 025 reservadas por frentes ainda nao publicadas; 0076 e numero de MIGRACAO reservado — ver PEND-121.)***
+Achado na leitura do teste humano de 09/09/2026, e **e a causa real do
+`skills: []` da PEND-184** — que a correcao do catalogo NAO tratou.
+
+`decisao-do-turno.ts` chama o GPT com `maxTokens: 300`. Nos dois turnos em que o
+Gate B ficou mudo, `api_calls` registra `output_tokens = 300` — exatamente o
+teto. Nos dois turnos em que ele funcionou, 122 e 125. `interpretar` nao acha
+JSON valido, cai em `DECISAO_NEUTRA`, e `decidirTurno` devolve
+`origem: "gpt"` — afirmando que o modelo decidiu.
+
+**FREQUENCIA MEDIDA** (79 chamadas registradas):
+
+| output_tokens | chamadas |
+|---|---|
+| 100-149 | 10 |
+| 150-199 | 16 |
+| 200-249 | 23 |
+| 250-299 | 13 |
+| **>= 300 (teto)** | **17 — 21,5%** |
+
+Por dia: 07/09 6% · 08/09 24% · 09/09 50%. A distribuicao e densa ate o teto:
+ele e baixo demais para este modelo, nao um limite folgado.
+
+**O QUE MORRE JUNTO.** Nao e so `skills`. O neutro zera a decisao inteira:
+`intencao` (nenhuma feature roteia), `pedidoExplicito` (**um "cria uma rotina
+visual" explicito seria ignorado**), `continuacao`, `tema` e
+`necessidadeConhecimento`. Um em cada cinco turnos perde a decisao e ninguem
+sabe.
+
+**NAO E OBSERVAVEL.** O `catch` de `interpretar` nao registra nada, e o
+`origem: "gpt"` mente. So deu para achar porque o `skills_avaliadas: true` que a
+PEND-184 acrescentou descartou o catalogo e obrigou a procurar em outro lugar.
+
+**NAO SEI, e digo:** a resposta bruta nao e guardada, entao nao da para provar
+pelo banco se o corte foi no meio do JSON ou se o modelo gastou o orcamento em
+raciocinio e devolveu conteudo vazio. O efeito e identico; a causa exata precisa
+de um log da resposta crua.
+
+**NAO CORRIGIDO.** Subir o teto e barato, mas mexe no caminho mais quente do
+produto e precisa vir com a falha observavel — senao a proxima intermitencia se
+esconde do mesmo jeito.
+
+### PEND-187
+**`metadata.lacuna` marca a lacuna ESCOLHIDA, nao a pergunta FEITA**
+Bloco: **B · Ayla** · Prioridade: **P1**
+STATUS: **ABERTA** · Aberta em: 2026-09-10
+
+Medido no teste humano de 09/09/2026, turnos 2 e 3.
+
+| turno | lacuna escolhida e GRAVADA | o que a Ayla realmente perguntou |
+|---|---|---|
+| 16:32 | `sensorial.perfil` | "ela consegue se acalmar com uma atividade que gosta ou continua gritando por bastante tempo?" |
+| 16:36 | `sensorial.toques` | "ela tenta se machucar, machucar alguem ou sair correndo?" |
+
+Nos dois casos o Core recebeu a lacuna, decidiu com razao perguntar outra coisa
+— e `deveGravarLacuna` marcou assim mesmo, porque o criterio e a presenca de
+"?" no texto, nao a correspondencia entre a pergunta e o campo.
+
+**O DANO E CONCRETO, e apareceu no turno seguinte:** a resposta "Ela continua
+gritando por bastante tempo, mesmo quando ofereco outra coisa" fechou
+`sensorial.perfil` em `ja_respondidas`. Aquela frase nao diz **nada** sobre o
+perfil sensorial da Manu. Um campo foi dado como sabido sem ninguem ter
+investigado — exatamente o que o comentario de `deveGravarLacuna` diz que nao
+pode acontecer ("errar para MAIS inventa conhecimento").
+
+O crescimento de `ja_respondidas` observado no teste ([] → ["sensorial.perfil"])
+e, portanto, **falso**.
+
+**A investigar (nao corrigir agora):** marcar so quando a pergunta feita casa
+com o campo escolhido exige comparar texto com campo. Alternativa mais barata e
+mais honesta: nao marcar por heuristica de "?" e sim so quando o Core declarar
+que usou a lacuna — o que muda a coordenacao Core × Gate B, e por isso e decisao
+de desenho, nao ajuste.
+
+### PEND-188
+**Conducao condicional em vez de afirmar opcao universal — Gate F**
+Bloco: **B · Ayla** · Prioridade: **P2**
+STATUS: **ABERTA (desenho, para o Gate F)** · Aberta em: 2026-09-10
+
+Registrado a pedido, sem correcao agora.
+
+No teste de 09/09/2026, turno 3, a Ayla orientou: "mantenha-se por perto **sem
+tocar nela**" — como instrucao universal. No MESMO turno, o Gate B tinha acabado
+de decidir que `sensorial.toques` era a lacuna decisiva: o sistema afirmou uma
+opcao justamente na dimensao que ele proprio sabia desconhecer.
+
+**REQUISITO:** quando uma caracteristica relevante ainda nao e conhecida — como
+preferencia por contato durante a regulacao — nao afirmar uma opcao como
+universal. Se for seguro orientar sem perguntar, usar **conducao condicional**:
+
+> se ela se acalma com contato... / se ela nao aceita toque nesse momento...
+
+Perguntar **so** quando a informacao precisar ser conhecida ANTES de orientar.
+
+E o par natural do Gate B: hoje o gate escolhe entre perguntar e nao perguntar,
+e falta a terceira saida — orientar cobrindo as duas hipoteses. Vale a regua do
+§14: uma resposta sofisticada que chega errada e pior que uma simples que chega
+certa.
+
+**Proximo ID livre: PEND-189. *(024 e 025 reservadas por frentes ainda nao publicadas; 0076 e numero de MIGRACAO reservado — ver PEND-121.)***
 
 > Conferir contra `origin/main`, não contra o seu branch. Dois branches podem
 > reivindicar o mesmo número — o conflito de merge nesta linha é o alarme.
