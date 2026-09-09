@@ -8126,7 +8126,7 @@ caso.
 ### PEND-186
 **21,5% das decisoes de turno sao truncadas no teto de 300 tokens e viram o neutro — em silencio**
 Bloco: **B · Ayla** · Prioridade: **P0**
-STATUS: **CORRIGIDA — aguardando prova em producao** · Aberta em: 2026-09-10
+STATUS: **CONCLUIDA — PRODUCAO PROVADA, SEM REGRESSAO** · Aberta em: 2026-09-10 · Baixa em: 2026-09-10
 
 Achado na leitura do teste humano de 09/09/2026, e **e a causa real do
 `skills: []` da PEND-184** — que a correcao do catalogo NAO tratou.
@@ -8225,6 +8225,30 @@ falha e distinguivel de um vindo de decisao.
 
 **PROVA:** 9 testes novos; com a retry e a distincao revertidas, 5 ficam
 vermelhos.
+
+---
+
+**BAIXA (10/09/2026) — PRODUCAO PROVADA, SEM REGRESSAO.**
+
+Seis turnos reais desde que `291668c` entrou no ar:
+
+| hora (UTC) | output_tokens | ms | desfecho |
+|---|---|---|---|
+| 18:23 | 84 | 3231 | decisao valida |
+| 18:28 | 162 | 3874 | decisao valida |
+| 18:51 | 145 | 3384 | decisao valida |
+| **19:11** | **355** | 11659 | **decisao valida — e acima do teto ANTIGO** |
+| 20:10 | 192 | 4854 | decisao valida |
+| 20:20 | 149 | 3377 | decisao valida |
+
+**A LINHA DAS 19:11 E A PROVA.** 355 tokens de saida: sob o teto antigo de 300
+aquele turno teria sido truncado e perdido a decisao inteira — intencao, pedido
+explicito, continuidade, tema e skills. Sob o orcamento novo ele produziu
+`lacuna:ASK` com `tema: ["rotina","socializacao"]`.
+
+Nos seis: `decisao_turno_sem_resposta` **zero**, `skills_avaliadas: true` em
+todos, tema populado em todos, e **uma chamada por turno** — nenhuma retentativa
+indevida. Nenhum erro novo.
 
 
 ### PEND-187
@@ -8333,7 +8357,7 @@ certa.
 ### PEND-189
 **Subcampos escritos numa linha so ficam INVISIVEIS ao parser — e o Core os ve, o Gate B nao**
 Bloco: **B · Ayla** · Prioridade: **P2**
-STATUS: **CORRIGIDA — aguardando prova em producao** · Aberta em: 2026-09-10
+STATUS: **CONCLUIDA — PRODUCAO PROVADA, SEM REGRESSAO** · Aberta em: 2026-09-10 · Baixa em: 2026-09-10
 
 Achado ao investigar a PEND-187. `parsearSubcampos` (subcampos.ts:423) quebra o
 texto por `
@@ -8417,6 +8441,38 @@ minha reproducao do parser antigo tinha esquecido o passo que joga texto sem
 rotulo no ULTIMO campo. Refeita fielmente, o numero e 3.
 
 **PROVA:** 16 testes novos; com a correcao neutralizada, 6 ficam vermelhos.
+
+---
+
+**BAIXA (10/09/2026) — PRODUCAO PROVADA, SEM REGRESSAO.**
+
+Publicada em `5bf0c80` e servida (health conferido). Sobre a linha REAL de
+producao, executando o commit publicado: `sensorial.toques = "nao gosta de
+abraco."`, `luz` e `cheiros` preenchidos, e `toques` fora das lacunas
+(`["perfil","toques","luz","cheiros"]` → `["perfil"]`). Varredura das 181
+criancas: **0 perdas, 3 ganhos numa crianca**.
+
+⚠️ **LIMITE DECLARADO:** a execucao rodou fora do processo da Vercel, contra o
+dado ao vivo e com o commit cujo SHA o health reporta. `parsearSubcampos` e
+funcao pura, sem ambiente nem I/O — mas a distincao existe e fica escrita.
+
+---
+
+## FILA (10/09/2026)
+
+1. ~~PEND-186~~ — **BAIXA**
+2. ~~PEND-189~~ — **BAIXA**
+3. **PEND-187A** — aguardando prova real (codigo em `5f33e93`, servido; sem
+   trafego apos o deploy)
+4. PEND-187B — bancada de envelope estruturado. **So comeca depois da baixa da
+   187A**: sofisticar o vinculo entre pergunta e campo antes de provar que o
+   sistema parou de afirmar aprendizado que nao aconteceu seria construir sobre
+   o que ainda nao foi verificado.
+5. Teste humano final do Gate B → baixa do Gate B → Gate C.
+
+Fora da fila, abertas: PEND-182 (ancora + entrega, parcialmente provada),
+PEND-183 (plano automatico), PEND-185 (rastro de conhecimento no caminho vivo),
+PEND-188 (conducao condicional, Gate F).
 
 
 **Proximo ID livre: PEND-190. *(024 e 025 reservadas por frentes ainda nao publicadas; 0076 e numero de MIGRACAO reservado — ver PEND-121.)***
