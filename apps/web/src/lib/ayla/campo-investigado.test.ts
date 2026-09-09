@@ -56,8 +56,15 @@ describe("PEND-187B · o contrato de saída", () => {
     const i = instrucaoDoEnvelope();
     expect(i).toContain("campo_investigado");
     // Diz explicitamente que declarar a sugerida sem tê-la perguntado é pior.
-    expect(i).toMatch(/nunca pela sugest[ãa]o/i);
+    expect(i).toMatch(/nunca declare a chave que foi sugerida/i);
     expect(i).toMatch(/orientar sem perguntar continua certo/i);
+    // ⚠️ A SEPARAÇÃO TEM QUE ESTAR ESCRITA: o envelope é observabilidade e não
+    // pode governar o que a mãe recebe. Sem esta frase, o modelo encurta.
+    expect(i).toMatch(/Não altere nada por causa deste/i);
+    expect(i).toMatch(/nem a profundidade/i);
+    expect(i).toMatch(/Quem decide o quanto dizer é o Core/i);
+    // E nenhuma régua de tamanho — nem mínimo, nem máximo.
+    expect(i).not.toMatch(/palavras|caracteres|curt[ao]|breve|conciso/i);
     // E o glossário sai dos campos reais.
     expect(i).toContain("emocional.gatilhos");
   });
@@ -211,6 +218,25 @@ describe("PEND-187B · os dois turnos reais da Manu", () => {
     const r = lerEnvelope(
       JSON.stringify({
         fala: "Então, o que mais pesa parece ser parar sem conseguir concluir o que estava fazendo. 💛",
+        campo_investigado: null,
+      }),
+    );
+    expect(r.valido).toBe(true);
+    expect(r.campo).toBeNull();
+  });
+
+  it("USOU o fato do Perfil sem perguntar → null (o defeito medido na bancada)", () => {
+    // ⚠️ O CASO OBRIGATÓRIO. Na bancada ampliada, 2 execuções declararam
+    // `sensorial.toques` numa fala que NÃO perguntou nada sobre toque — só
+    // usou o que o Perfil já dizia ("não gosta de abraço"). Usar não é
+    // investigar, e é a direção perigosa: declarar sem ter perguntado.
+    const i = instrucaoDoEnvelope();
+    expect(i).toMatch(/USOU um fato que já sabia do perfil, mas não perguntou/i);
+    expect(i).toMatch(/NÃO é investigar toque/i);
+    // E o tratamento do envelope respeita a declaração, seja ela qual for.
+    const r = lerEnvelope(
+      JSON.stringify({
+        fala: "Como a Manu não gosta de abraço, evite abraçá-la à força durante a crise. Fique por perto e fale pouco.",
         campo_investigado: null,
       }),
     );

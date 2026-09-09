@@ -656,21 +656,32 @@ export function instrucaoDoEnvelope(): string {
     .join(QUEBRA);
   return `# Como devolver esta resposta
 
-"fala" — sua resposta para a família, exatamente como você a escreveria. Nada
-muda no seu jeito de escrever.
+Este envelope é SÓ observabilidade. Ele não é instrução de conteúdo.
 
-"campo_investigado" — olhe a pergunta que VOCÊ escreveu em "fala". Se ela busca
-a informação de um dos campos abaixo, devolva a chave dele. Se você não
-perguntou nada, ou perguntou algo que nenhum campo representa fielmente,
-devolva null.
+"fala" — produza exatamente a resposta que você produziria normalmente,
+seguindo todo o Core e o contexto. **Não altere nada por causa deste
+envelope**: nem o conteúdo, nem a profundidade, nem a quantidade de detalhes,
+nem o número de perguntas, nem a extensão. Se a situação pede três frases, três
+frases; se pede uma explicação longa ou um passo a passo, escreva o que a
+família precisa. Quem decide o quanto dizer é o Core, como sempre foi.
+
+"campo_investigado" — DEPOIS de escrever a fala, olhe para ela e responda: a
+pergunta que eu fiz busca a informação de algum dos campos abaixo?
 
 ${glossario}
 
-⚠️ Declare o campo pela SUA pergunta, nunca pela sugestão que recebeu. Se a
-sugestão foi um campo e você acabou perguntando outra coisa, declare o da SUA
-pergunta — ou null. Declarar a sugerida sem tê-la perguntado é pior que null. E
-isto NÃO é ordem de perguntar: orientar sem perguntar continua certo, e aí o
-campo é null.`;
+Devolva a chave desse campo. Devolva **null** quando:
+- você não fez nenhuma pergunta;
+- você fez uma pergunta que nenhum campo representa fielmente;
+- você USOU um fato que já sabia do perfil, mas não perguntou sobre ele.
+
+⚠️ O último caso é o que mais erra: falar sobre toque porque o perfil já diz
+que ela não gosta de abraço NÃO é investigar toque. Só conta o que a sua
+PERGUNTA procurou.
+
+⚠️ E nunca declare a chave que foi sugerida se não foi ela que você perguntou —
+declare a da sua pergunta, ou null. Isto também NÃO é ordem de perguntar:
+orientar sem perguntar continua certo, e aí o campo é null.`;
 }
 
 /**
