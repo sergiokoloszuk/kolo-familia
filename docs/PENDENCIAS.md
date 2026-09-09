@@ -8230,7 +8230,7 @@ vermelhos.
 ### PEND-187
 **`metadata.lacuna` marca a lacuna ESCOLHIDA, nao a pergunta FEITA**
 Bloco: **B · Ayla** · Prioridade: **P1**
-STATUS: **ABERTA** · Aberta em: 2026-09-10
+STATUS: **CONTIDA (187A) — falta o vinculo estrutural (187B)** · Aberta em: 2026-09-10
 
 Medido no teste humano de 09/09/2026, turnos 2 e 3.
 
@@ -8258,6 +8258,52 @@ com o campo escolhido exige comparar texto com campo. Alternativa mais barata e
 mais honesta: nao marcar por heuristica de "?" e sim so quando o Core declarar
 que usou a lacuna — o que muda a coordenacao Core × Gate B, e por isso e decisao
 de desenho, nao ajuste.
+
+---
+
+**PEND-187A — CONTENCAO SEMANTICA (10/09/2026, publicada).**
+
+**MAPA, antes de alterar.** `metadata.lacuna` tinha UM escritor
+(`orchestrator.ts`, atras da heuristica do "?") e UM leitor (`jaRespondidas`).
+`jaRespondidas` alimentava `escolherLacunaDecisiva`, que somava
+`resolvidas.fechadas` ao conjunto que exclui candidatas. Zero uso em painel,
+zero em telemetria externa, zero em docs. **Resposta a pergunta da missao: nao
+havia nenhum uso alem da inferencia de "ja perguntado/respondido".**
+
+**O QUE MUDOU:**
+
+1. `deveGravarLacuna` → `lacunaSugeridaDoTurno`. A fala nao e mais lida: a
+   funcao nem recebe o texto. Some a classe inteira de engano.
+2. Grava-se `metadata.lacuna_sugerida`, que afirma UMA coisa — o Gate B achou
+   este campo util para este turno.
+3. `escolherLacunaDecisiva` deixou de somar `resolvidas.fechadas` a exclusao.
+   **A fonte confiavel ja existia:** `perfil.lacunasDe` so devolve campo com
+   `estado === "vazio"`, entao tudo que foi incorporado ao Kolo Vivo ja saia
+   sozinho. Removeu-se a fonte NAO confiavel; nada novo foi inventado.
+4. `perguntou_de_fato` saiu do rastro — ele afirmava, a partir de um "?", o que
+   nao se sabia. Entrou `lacuna_sugerida`.
+5. Historico legado (`lacuna`) continua LEGIVEL, ao lado da chave nova, e **nao
+   e migrado**: seriam afirmacoes diferentes sobre o passado.
+
+**O RISCO ACEITO, por escrito:** sem incorporacao, a mesma pergunta pode
+reaparecer. Repeticao ocasional e visivel e branda; memoria falsa e invisivel e
+contamina o perfil de uma crianca.
+
+**PROVAS.** Os dois casos reais reproduzidos: a pergunta sobre duracao NAO fecha
+`sensorial.perfil`, e a pergunta sobre autoagressao NAO cria conclusao sobre
+`sensorial.toques`. Com a PEND-189 no ar, a linha real da Manu mostra
+`sensorial.toques` ja preenchido — o campo nem chega a ser candidato, e quem o
+tira e o Perfil.
+
+15 testes novos + 3 arquivos convertidos. **Mordida: restaurando a semantica
+antiga, 7 ficam vermelhos**, incluindo os dois casos reais.
+
+⚠️ **TESTES CONVERTIDOS, NAO APAGADOS.** Os blocos que mediam afunilamento pelo
+HISTORICO passaram a medir afunilamento pelo PERFIL — que e o mecanismo
+verdadeiro. E o teste de integracao T1-T5 agora **cobra a repeticao** no arnes
+(que nao roda incorporacao): se ele parar de repetir, e sinal de que o historico
+voltou a fechar.
+
 
 ### PEND-188
 **Conducao condicional em vez de afirmar opcao universal — Gate F**

@@ -4,7 +4,7 @@ import {
   escolherLacunaDecisiva,
   blocoDaLacuna,
   jaRespondidas,
-  deveGravarLacuna,
+  lacunaSugeridaDoTurno,
 } from "./lacuna-decisiva";
 
 /**
@@ -301,84 +301,83 @@ describe("o bloco que vai ao prompt", () => {
  * a família respondeu no turno 2 não pode voltar como pergunta no turno 4, nem
  * com outra redação — porque a chave é o CAMPO, não o texto.
  */
-describe("MULTITURNO — Ele grita → … → como ensino a falar em vez de gritar", () => {
-  const M = "manu";
-  type F = {
-    direcao: string;
-    texto?: string | null;
-    metadata?: Record<string, unknown> | null;
-    membro_atipico_id?: string | null;
-  };
+/**
+ * MULTITURNO — o afunilamento agora vem do PERFIL (PEND-187A, 10/09/2026).
+ *
+ * ⚠️ ESTE BLOCO MEDIA O HISTORICO, e o historico deixou de fechar lacuna. A
+ * versao anterior marcava a lacuna sugerida e a dava por respondida quando
+ * qualquer fala vinha depois — foi assim que `sensorial.perfil` foi dado como
+ * sabido por uma resposta sobre duracao de grito.
+ *
+ * ⚠️ O QUE SE MEDE AGORA e o mecanismo verdadeiro: a resposta da familia vira
+ * FATO no Kolo Vivo, e `lacunasDe` para de oferecer o campo. Cada turno abaixo
+ * recebe o perfil como ele fica DEPOIS da incorporacao do turno anterior.
+ *
+ * ⚠️ E A GARANTIA FICOU MAIS FRACA DE PROPOSITO: se a incorporacao nao
+ * acontecer, a pergunta pode reaparecer. Repeticao ocasional e visivel e
+ * branda; memoria falsa e invisivel e contamina o perfil de uma crianca.
+ */
+describe("MULTITURNO — o perfil cresce, as candidatas caem", () => {
+  const comEmocional = (linhas: string[]) => ({
+    categorias_extras: { emocional: { texto: L(linhas) } },
+  });
 
-  const rodar = (falas: F[], temas: string[], relato: string) => {
-    const resolvidas = jaRespondidas(falas, M);
-    const d = escolherLacunaDecisiva({
-      perfil: perfilConsultavelDaLinha(PERFIL_VAZIO as Record<string, unknown>, M),
-      temas,
-      relato,
-      resolvidas,
-    });
-    return { d, resolvidas };
-  };
-
-  it("os cinco turnos afunilam: nenhuma pergunta se repete", () => {
-    const falas: F[] = [];
-    const perguntados: string[] = [];
-    const chave = (d: ReturnType<typeof escolherLacunaDecisiva>) =>
-      d.escolhida ? `${d.escolhida.dominio}.${d.escolhida.campo}` : null;
-
-    // T1 · "Ele grita."
-    falas.push({ direcao: "inbound", texto: "Ele grita.", membro_atipico_id: M });
-    let r = rodar(falas, ["emocional"], "Ele grita.");
-    expect(r.d.decisao).toBe("ASK");
-    perguntados.push(chave(r.d)!);
-    falas.push({ direcao: "outbound", texto: "...", metadata: { lacuna: perguntados[0] }, membro_atipico_id: M });
-
-    // T2 · a família responde de verdade
-    falas.push({
-      direcao: "inbound",
-      texto: "Acontece quando eu insisto para ele parar de brincar",
-      membro_atipico_id: M,
-    });
-    r = rodar(falas, ["emocional"], "Acontece quando eu insisto para ele parar de brincar");
-    expect(r.resolvidas.fechadas.has(perguntados[0]), "T2 deveria ter fechado a lacuna do T1").toBe(true);
-    expect(chave(r.d)).not.toBe(perguntados[0]);
-    if (chave(r.d)) {
-      perguntados.push(chave(r.d)!);
-      falas.push({ direcao: "outbound", texto: "...", metadata: { lacuna: perguntados[1] }, membro_atipico_id: M });
+  it("cada fato incorporado tira o campo da disputa", () => {
+    const passos = [
+      { perfil: {}, esperado: true },
+      { perfil: comEmocional(["Gatilhos: insistencia"]), esperado: false },
+      {
+        perfil: comEmocional(["Gatilhos: insistencia", "Sinais de que vem vindo: fica em silencio"]),
+        esperado: false,
+      },
+    ];
+    const candidatas: number[] = [];
+    for (const passo of passos) {
+      const d = decidir(passo.perfil, ["emocional"], "Ele grita.");
+      candidatas.push(d.candidatasChaves.length);
+      expect(
+        d.candidatasChaves.includes("emocional.gatilhos"),
+        "gatilhos deveria sair da disputa depois de incorporado",
+      ).toBe(passo.esperado);
     }
+    expect(candidatas[2]).toBeLessThan(candidatas[0]);
+  });
 
-    // T3 · informação nova
-    falas.push({
-      direcao: "inbound",
-      texto: "Ele fica em silencio e depois comeca a bater o pe antes de gritar",
-      membro_atipico_id: M,
-    });
-    r = rodar(falas, ["emocional"], "Ele fica em silencio e depois comeca a bater o pe");
-    const t3 = chave(r.d);
-    expect(perguntados, "T3 repetiu uma pergunta anterior").not.toContain(t3);
-    if (t3) {
-      perguntados.push(t3);
-      falas.push({ direcao: "outbound", texto: "...", metadata: { lacuna: t3 }, membro_atipico_id: M });
-    }
+  it("NENHUMA repeticao do que o perfil ja sabe — a chave e o campo", () => {
+    const cheio = comEmocional([
+      "Como costuma ser: Desregula com facilidade",
+      "Gatilhos: insistencia",
+      "Sinais de que vem vindo: fica em silencio",
+      "Como se manifesta: grita",
+      "O que ajuda a passar: aviso antes",
+      "O que NAO ajuda / piora: insistir",
+    ]);
+    const d = decidir(cheio, ["emocional"], "Ele grita.");
+    for (const c of d.candidatasChaves) expect(c.startsWith("emocional.")).toBe(false);
+  });
 
-    // T4 · "O que eu faco nessa hora?"
-    falas.push({ direcao: "inbound", texto: "O que eu faco nessa hora?", membro_atipico_id: M });
-    r = rodar(falas, ["emocional"], "O que eu faco nessa hora?");
-    expect(perguntados, "T4 repetiu uma pergunta anterior").not.toContain(chave(r.d));
+  it("ASK -> NO ASK -> ASK e ACEITAVEL quando o assunto muda", () => {
+    const cheio = comEmocional([
+      "Como costuma ser: Desregula",
+      "Gatilhos: insistencia",
+      "Sinais de que vem vindo: silencio",
+      "Como se manifesta: grita",
+      "O que ajuda a passar: aviso",
+      "O que NAO ajuda / piora: insistir",
+    ]);
+    // Mesmo perfil, tema novo: as candidatas do tema novo sao legitimas.
+    const emocional = decidir(cheio, ["emocional"], "Ele grita.");
+    const comunicacao = decidir(cheio, ["comunicacao"], "E como ensino ele a pedir?");
+    // ⚠️ NAO E "zero candidatas": o tema `emocional` tambem abre `sensorial` e
+    // `comunicacao` (a regra da pos). O que o perfil cheio garante e que nenhum
+    // campo DO EMOCIONAL volta a ser perguntado.
+    expect(emocional.candidatasChaves.filter((c) => c.startsWith("emocional."))).toEqual([]);
+    expect(comunicacao.candidatasChaves.length).toBeGreaterThan(0);
+  });
 
-    // T5 · "E como ensino ele a falar em vez de gritar?"
-    falas.push({
-      direcao: "inbound",
-      texto: "E como ensino ele a falar em vez de gritar?",
-      membro_atipico_id: M,
-    });
-    r = rodar(falas, ["emocional", "comunicacao"], "E como ensino ele a falar em vez de gritar?");
-    expect(perguntados, "T5 repetiu uma pergunta anterior").not.toContain(chave(r.d));
-
-    // A PROVA DO AFUNILAMENTO: cada turno perguntou coisa diferente.
-    expect(new Set(perguntados).size).toBe(perguntados.length);
-    expect(r.resolvidas.fechadas.size).toBeGreaterThanOrEqual(perguntados.length - 1);
+  it("NAO e aceitavel perguntar so porque sobraram campos vazios", () => {
+    // Sem tema, nenhum campo vazio vira pergunta — a regra de pertinencia.
+    expect(decidir(PERFIL_VAZIO, [], "sei la").decisao).toBe("NO_ASK");
   });
 });
 
@@ -431,7 +430,7 @@ describe("CORRECAO VENCE HISTORICO", () => {
     expect(r.corrigidas.has("emocional.gatilhos")).toBe(true);
   });
 
-  it("a correcao chega ao rastro do turno seguinte", () => {
+  it("a correcao continua VISIVEL no rastro — mas nao exclui mais", () => {
     const resolvidas = jaRespondidas(
       [
         { direcao: "outbound", metadata: { lacuna: "emocional.gatilhos" }, membro_atipico_id: "m1" },
@@ -445,9 +444,15 @@ describe("CORRECAO VENCE HISTORICO", () => {
       relato: "e agora?",
       resolvidas,
     });
+    // ⚠️ PEND-187A: o rastro continua mostrando o que o historico diz — e o
+    // historico deixou de tirar candidata. Quem tira e o Perfil.
     expect(d.corrigidas).toContain("emocional.gatilhos");
     expect(d.jaRespondidas).toContain("emocional.gatilhos");
-    expect(d.descartadas.some((x) => x.chave === "emocional.gatilhos")).toBe(true);
+    expect(
+      d.descartadas.some(
+        (x) => x.chave === "emocional.gatilhos" && x.motivo === "ja respondido nesta conversa",
+      ),
+    ).toBe(false);
   });
 });
 
@@ -467,8 +472,14 @@ describe("ISOLAMENTO ENTRE IRMAOS no multiturno", () => {
       temas: ["emocional"],
       resolvidas: jaRespondidas(falas, "mario"),
     });
-    expect(daManu.escolhida?.campo).not.toBe("gatilhos");
-    expect(doMario.escolhida?.campo, "o Mario perdeu a pergunta por causa da Manu").toBe("gatilhos");
+    // ⚠️ PEND-187A: nenhum dos dois fecha por historico. O que o isolamento
+    // garante e que a fala sobre a Manu nao aparece no escopo do Mario.
+    expect(jaRespondidas(falas, "mario").fechadas.size).toBe(0);
+    expect(jaRespondidas(falas, "manu").fechadas.has("emocional.gatilhos")).toBe(true);
+    expect(doMario.candidatasChaves, "o Mario perdeu a pergunta por causa da Manu").toContain(
+      "emocional.gatilhos",
+    );
+    expect(daManu.decisao).toBe("ASK");
   });
 });
 
@@ -499,185 +510,98 @@ describe("O RASTRO DO DECISOR", () => {
 });
 
 /**
- * BLOQUEADOR 2 — o texto acrescentado depois NAO pode virar ASK.
+ * O QUE SE GRAVA — reescrito pela PEND-187A (10/09/2026).
  *
- * ⚠️ MEDIDO no caminho vivo em 08/09/2026: a ponte do Plano sai como MENSAGEM
- * SEPARADA (`enviarEPersistir` com `texto: nudge`), nao concatenada em
- * `exp.texto`. Entao a fala examinada ja e pura. No Legacy e diferente
- * (`textoCompleto = ...\n\n${nudge}`) — e e por isso que `deveGravarLacuna`
- * recebe o texto por parametro: quem chama responde por passar a FALA, nunca o
- * pacote com CTA, ponte ou convite colados.
+ * ⚠️ ESTE BLOCO MEDIA OUTRA COISA, e o que ele media deixou de existir de
+ * proposito. `deveGravarLacuna` so gravava quando a fala continha "?", e a
+ * ideia era "so marcar se a Ayla perguntou de fato". A heuristica provava que
+ * houve UMA pergunta, nunca que foi ESTA — e em producao (09/09/2026) o Core
+ * recebeu `sensorial.perfil` e perguntou sobre duracao da desregulacao, recebeu
+ * `sensorial.toques` e perguntou sobre autoagressao. Marcou nos dois.
+ *
+ * ⚠️ ENTAO A GARANTIA MUDOU DE LUGAR, e nao sumiu. Antes ela dependia de
+ * acertar quando marcar; agora nada do que se marca exclui candidata — a
+ * exclusao vem do Perfil. Os casos "ponte com pergunta" e "CTA colado" que este
+ * bloco protegia perderam o sentido: nao existe mais leitura de texto nenhuma.
+ * As protecoes vivas estao em `lacuna-sugerida.test.ts`.
  */
-describe("BLOQUEADOR 2 — gravar lacuna so quando a Ayla perguntou de fato", () => {
+describe("PEND-187A — a sugestao e gravada pelo que ela e, nao pelo texto", () => {
   const comLacuna = () => decidir(PERFIL_VAZIO, ["emocional"], "Ele grita.");
   const semLacuna = () => decidir(PERFIL_RICO, ["sono"], "Ela nao dorme bem.");
 
-  const NUDGE_COM_PERGUNTA = "Quer que eu prepare um plano pra essa semana?";
-  const NUDGE_SEM_PERGUNTA = "Preparei um plano pra essa semana. O link esta aqui.";
-  const FALA_COM_PERGUNTA = "Vale reparar no que acontece antes. O que costuma disparar?";
-  const FALA_SEM_PERGUNTA = "Antes de corrigir o grito, vale reparar no que acontece logo antes.";
-
-  it("NO ASK + ponte COM pergunta -> nao grava", () => {
-    // A ponte vai separada; mesmo que fosse colada, a decisao e NO ASK.
-    expect(deveGravarLacuna(semLacuna(), FALA_SEM_PERGUNTA)).toBeNull();
-    expect(deveGravarLacuna(semLacuna(), NUDGE_COM_PERGUNTA)).toBeNull();
-  });
-
-  it("ASK real + ponte SEM pergunta -> grava", () => {
+  it("ha escolha -> grava a chave", () => {
     const d = comLacuna();
-    const chave = deveGravarLacuna(d, FALA_COM_PERGUNTA);
-    expect(chave).toBe(`${d.escolhida!.dominio}.${d.escolhida!.campo}`);
+    expect(lacunaSugeridaDoTurno(d)).toBe(`${d.escolhida!.dominio}.${d.escolhida!.campo}`);
   });
 
-  it("ASK real + ponte COM pergunta -> UMA lacuna, e a correta", () => {
-    const d = comLacuna();
-    const chave = deveGravarLacuna(d, FALA_COM_PERGUNTA);
-    expect(chave).toBe(`${d.escolhida!.dominio}.${d.escolhida!.campo}`);
-    expect(chave!.split(".").length).toBe(2);
-  });
-
-  it("NO ASK + ponte SEM pergunta -> nao grava", () => {
-    expect(deveGravarLacuna(semLacuna(), FALA_SEM_PERGUNTA)).toBeNull();
-  });
-
-  it("ASK escolhido mas a Ayla NAO perguntou -> nao grava", () => {
-    // O caso que mais importa: o Core §8 mandou ajudar sem perguntar, e o
-    // modelo obedeceu. Marcar aqui faria o turno seguinte fechar um campo que
-    // ninguem investigou.
-    expect(deveGravarLacuna(comLacuna(), FALA_SEM_PERGUNTA)).toBeNull();
+  it("NO ASK -> nao grava", () => {
+    expect(lacunaSugeridaDoTurno(semLacuna())).toBeNull();
   });
 
   it("decisao ausente nunca grava", () => {
-    expect(deveGravarLacuna(null, FALA_COM_PERGUNTA)).toBeNull();
+    expect(lacunaSugeridaDoTurno(null)).toBeNull();
+  });
+
+  it("O TEXTO DA FALA NAO ENTRA MAIS NA CONTA — e esse e o ponto", () => {
+    // A funcao nem recebe a fala. Nao ha "?" para ler, nem ponte, nem CTA:
+    // some a classe inteira de engano.
+    expect(lacunaSugeridaDoTurno.length).toBe(1);
+  });
+
+  it("uma chave, sempre no formato dominio.campo", () => {
+    const chave = lacunaSugeridaDoTurno(comLacuna())!;
+    expect(chave.split(".").length).toBe(2);
   });
 });
 
 /**
- * BLOQUEADOR 3 — AFUNILAMENTO MEDIDO, sem impor curva.
+ * AFUNILAMENTO MEDIDO — reescrito pela PEND-187A (10/09/2026).
  *
- * ⚠️ A METRICA NAO E "perguntou menos a cada turno". Isso produziria
- * comportamento artificial: um ASK legitimo, nascido de informacao nova, e
- * melhor que um NO ASK forcado. O que se mede e a INCERTEZA RELEVANTE caindo —
- * lacunas pertinentes que se fecham — e a ausencia de repeticao.
+ * ⚠️ A VERSAO ANTERIOR SIMULAVA A CONVERSA e media a queda das candidatas pelo
+ * HISTORICO: marcava a lacuna sugerida e a dava por respondida quando qualquer
+ * fala vinha depois. Media, portanto, o mecanismo que produziu a memoria falsa
+ * — e nao o afunilamento real.
+ *
+ * ⚠️ A REGUA CONTINUA A MESMA, e ela nunca foi "perguntou menos a cada turno":
+ * um ASK legitimo, nascido de informacao nova, e melhor que um NO ASK forcado.
+ * O que se mede e a INCERTEZA RELEVANTE caindo conforme a familia CONTA as
+ * coisas — e agora ela cai porque o fato entrou no Perfil, que e onde ele mora.
  */
-describe("BLOQUEADOR 3 — afunilamento medido", () => {
-  type F = {
-    direcao: string;
-    texto?: string | null;
-    metadata?: Record<string, unknown> | null;
-    membro_atipico_id?: string | null;
-  };
-  const M = "m1";
-
-  /** Roda uma conversa e devolve as metricas do afunilamento. */
-  function conversa(passos: Array<{ texto: string; temas: string[] }>, linha: object) {
-    const falas: F[] = [];
-    const metricas: Array<{
-      candidatas: number;
-      decisao: string;
-      escolhida: string | null;
-      fechadas: number;
-      corrigidas: number;
-    }> = [];
-    const perguntados: string[] = [];
-
-    for (const passo of passos) {
-      falas.push({ direcao: "inbound", texto: passo.texto, membro_atipico_id: M });
-      const resolvidas = jaRespondidas(falas, M);
-      const d = escolherLacunaDecisiva({
-        perfil: perfilConsultavelDaLinha(linha as Record<string, unknown>, M),
-        temas: passo.temas,
-        relato: passo.texto,
-        resolvidas,
-      });
-      const chave = d.escolhida ? `${d.escolhida.dominio}.${d.escolhida.campo}` : null;
-      metricas.push({
-        candidatas: d.candidatas,
-        decisao: d.decisao,
-        escolhida: chave,
-        fechadas: resolvidas.fechadas.size,
-        corrigidas: resolvidas.corrigidas.size,
-      });
-      if (chave) {
-        perguntados.push(chave);
-        // Simula a Ayla tendo perguntado de fato.
-        falas.push({ direcao: "outbound", texto: "e o que costuma disparar?", metadata: { lacuna: chave }, membro_atipico_id: M });
-      } else {
-        falas.push({ direcao: "outbound", texto: "orientacao sem pergunta.", membro_atipico_id: M });
-      }
-    }
-    return { metricas, perguntados };
-  }
-
-  it("a incerteza relevante CAI: as candidatas diminuem conforme a familia responde", () => {
-    const r = conversa(
-      [
-        { texto: "Ele grita.", temas: ["emocional"] },
-        { texto: "Acontece quando eu insisto para ele parar de brincar", temas: ["emocional"] },
-        { texto: "Ele fica em silencio e bate o pe antes", temas: ["emocional"] },
-        { texto: "O que eu faco nessa hora?", temas: ["emocional"] },
-      ],
-      PERFIL_VAZIO,
-    );
-    const primeira = r.metricas[0].candidatas;
-    const ultima = r.metricas[r.metricas.length - 1].candidatas;
-    expect(ultima, "as candidatas deveriam cair ao longo da conversa").toBeLessThan(primeira);
-    expect(r.metricas[r.metricas.length - 1].fechadas).toBeGreaterThan(0);
+describe("AFUNILAMENTO — a incerteza cai conforme o Perfil aprende", () => {
+  const comEmocional = (linhas: string[]) => ({
+    categorias_extras: { emocional: { texto: linhas.join(String.fromCharCode(10)) } },
   });
 
-  it("NENHUMA pergunta se repete — nem com outra redacao, porque a chave e o campo", () => {
-    const r = conversa(
-      [
-        { texto: "Ele grita.", temas: ["emocional"] },
-        { texto: "Acontece quando eu insisto para ele parar de brincar", temas: ["emocional"] },
-        { texto: "Ele fica em silencio e bate o pe antes", temas: ["emocional"] },
-        { texto: "E como ensino ele a falar em vez de gritar?", temas: ["emocional"] },
-      ],
-      PERFIL_VAZIO,
+  it("a incerteza relevante CAI a cada fato incorporado", () => {
+    const vazio = decidir(PERFIL_VAZIO, ["emocional"], "Ele grita.");
+    const um = decidir(comEmocional(["Gatilhos: insistencia"]), ["emocional"], "Ele grita.");
+    const dois = decidir(
+      comEmocional(["Gatilhos: insistencia", "Sinais de que vem vindo: silencio"]),
+      ["emocional"],
+      "Ele grita.",
     );
-    expect(new Set(r.perguntados).size).toBe(r.perguntados.length);
+    expect(um.candidatasChaves.length).toBeLessThan(vazio.candidatasChaves.length);
+    expect(dois.candidatasChaves.length).toBeLessThan(um.candidatasChaves.length);
   });
 
-  it("ASK -> NO ASK -> ASK e ACEITAVEL quando a informacao nova reabre decisao", () => {
-    // O tema muda no meio: comunicacao traz lacunas proprias, legitimas.
-    const r = conversa(
-      [
-        { texto: "Ele grita.", temas: ["emocional"] },
-        { texto: "Acontece quando eu insisto", temas: ["emocional"] },
-        { texto: "E como ensino ele a falar em vez de gritar?", temas: ["comunicacao"] },
-      ],
-      PERFIL_VAZIO,
+  it("NENHUMA pergunta se repete depois de o fato existir — a chave e o campo", () => {
+    const d = decidir(comEmocional(["Gatilhos: insistencia"]), ["emocional"], "Ele grita.");
+    expect(d.candidatasChaves).not.toContain("emocional.gatilhos");
+    expect(d.escolhida ? `${d.escolhida.dominio}.${d.escolhida.campo}` : null).not.toBe(
+      "emocional.gatilhos",
     );
-    const decisoes = r.metricas.map((m) => m.decisao);
-    // Nao exigimos monotonia: exigimos que nenhum ASK seja repeticao.
-    expect(new Set(r.perguntados).size).toBe(r.perguntados.length);
-    expect(decisoes.length).toBe(3);
   });
 
   it("PERFIL SUFICIENTE: a Ayla orienta e acompanha sem NENHUMA pergunta", () => {
-    const r = conversa(
-      [
-        { texto: "Ela nao dorme bem.", temas: ["sono"] },
-        { texto: "Ontem acordou duas vezes", temas: ["sono"] },
-        { texto: "O que eu faco?", temas: ["sono"] },
-      ],
-      PERFIL_RICO,
-    );
-    expect(r.perguntados, "com perfil rico nao deveria perguntar nada").toEqual([]);
-    expect(r.metricas.every((m) => m.decisao === "NO_ASK")).toBe(true);
+    expect(decidir(PERFIL_RICO, ["sono"], "Ela nao dorme bem.").decisao).toBe("NO_ASK");
   });
 
-  it("NAO e aceitavel perguntar so porque sobraram campos vazios", () => {
-    // Depois de fechar a lacuna decisiva do tema, as candidatas restantes
-    // precisam ser MENOS — nao um estoque infinito de formulario.
-    const r = conversa(
-      [
-        { texto: "Ela nao dorme bem.", temas: ["sono"] },
-        { texto: "Ela demora muito pra pegar no sono, quase uma hora", temas: ["sono"] },
-        { texto: "E o que mais eu posso fazer?", temas: ["sono"] },
-      ],
-      PERFIL_VAZIO,
-    );
-    expect(r.metricas[2].candidatas).toBeLessThan(r.metricas[0].candidatas);
+  it("⚠️ O RISCO ACEITO: sem incorporacao, a pergunta PODE reaparecer", () => {
+    // Isto nao e um defeito escondido — e a troca que a PEND-187A fez por
+    // escrito. Enquanto o fato nao entra no Perfil, o campo segue candidato.
+    // Repeticao ocasional e visivel e branda; memoria falsa e invisivel.
+    const a = decidir(PERFIL_VAZIO, ["emocional"], "Ele grita.");
+    const b = decidir(PERFIL_VAZIO, ["emocional"], "Ele grita de novo.");
+    expect(a.escolhida?.campo).toBe(b.escolhida?.campo);
   });
 });

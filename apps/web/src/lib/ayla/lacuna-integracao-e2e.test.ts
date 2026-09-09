@@ -219,11 +219,12 @@ async function turno(
       candidatas?: string[];
       ja_respondidas?: string[];
       corrigidas?: string[];
-      perguntou_de_fato?: boolean;
+      lacuna_sugerida?: string | null;
       membro_atipico_id?: string | null;
     } | null,
     /** O que FOI GRAVADO — a memória que o turno seguinte vai ler. */
-    gravada: ((ultima?.metadata ?? null) as { lacuna?: string } | null)?.lacuna ?? null,
+    gravada:
+      ((ultima?.metadata ?? null) as { lacuna_sugerida?: string } | null)?.lacuna_sugerida ?? null,
     /** A lacuna chegou ao prompt do modelo? */
     noPrompt: /<lacuna_decisiva>/.test(promptConversa),
     /** Quantas vezes o perfil foi lido neste turno. */
@@ -277,7 +278,7 @@ describe("GATE B · os cinco turnos pelo orquestrador vivo", () => {
         decisao: r.rastro?.decisao ?? null,
         escolhida: r.rastro?.escolhida ?? null,
         no_prompt: r.noPrompt,
-        perguntou: r.rastro?.perguntou_de_fato ?? false,
+        sugerida: r.rastro?.lacuna_sugerida ?? null,
         gravada: r.gravada,
         leituras_perfil: r.leiturasDePerfil,
       });
@@ -285,12 +286,25 @@ describe("GATE B · os cinco turnos pelo orquestrador vivo", () => {
 
     console.log("TABELA T1–T5\n" + JSON.stringify(tabela, null, 1));
 
-    // A PROVA DO AFUNILAMENTO: nenhuma pergunta se repete, nem com outra redação
-    // — porque a chave é o CAMPO, não o texto.
-    expect(new Set(perguntadas).size, `repetiu: ${perguntadas.join(", ")}`).toBe(
-      perguntadas.length,
-    );
-    expect(perguntadas.length, "nenhum turno perguntou — o mecanismo não foi exercitado").toBeGreaterThan(1);
+    /**
+     * ⚠️ AQUI A SUGESTÃO SE REPETE — E ISSO É O DESENHO, NÃO O DEFEITO.
+     *
+     * PEND-187A: o histórico deixou de fechar lacuna; quem fecha é o Perfil. O
+     * arnês usa um modelo falso e NÃO roda a incorporação do Kolo Vivo, então o
+     * perfil da Manu continua vazio nos cinco turnos e o mesmo campo segue
+     * sendo o mais decisivo. É a troca que a frente assumiu por escrito:
+     * repetição ocasional é visível e branda; memória falsa é invisível e
+     * contamina o perfil de uma criança.
+     *
+     * O afunilamento de verdade — perfil que cresce, candidatas que caem — é
+     * provado em `lacuna-sugerida.test.ts` e no bloco AFUNILAMENTO de
+     * `lacuna-decisiva.test.ts`. O que ESTE teste prova é a cadeia viva.
+     */
+    expect(perguntadas.length, "nenhum turno sugeriu — o mecanismo não foi exercitado").toBeGreaterThan(1);
+    expect(
+      new Set(perguntadas).size,
+      "sem incorporação, a repetição é esperada — se parou de repetir, o histórico voltou a fechar",
+    ).toBeLessThan(perguntadas.length);
     /**
      * A INCERTEZA RELEVANTE CAI — e a régua NÃO é "perguntou menos a cada turno".
      *
@@ -303,17 +317,24 @@ describe("GATE B · os cinco turnos pelo orquestrador vivo", () => {
      * O que se cobra é o que de fato importa: dentro do MESMO tema a incerteza
      * cai, e o que já foi respondido NUNCA volta a ser desconhecido.
      */
-    expect(tabela[3].candidatas as number).toBeLessThan(tabela[0].candidatas as number);
+    // ⚠️ `ja_respondidas` continua no rastro como OBSERVAÇÃO do histórico legado
+    // — cresce, e não exclui nada. Monotonia aqui é sobre o rastro não perder
+    // memória do que registrou, não sobre conhecimento.
     const fechadas = tabela.map((t) => t.ja_respondidas as number);
-    expect(fechadas[fechadas.length - 1]).toBeGreaterThan(0);
     for (let i = 1; i < fechadas.length; i++) {
-      expect(fechadas[i], `T${i + 1} esqueceu o que a família já tinha respondido`).toBeGreaterThanOrEqual(
+      expect(fechadas[i], `T${i + 1} perdeu o histórico que o rastro já mostrava`).toBeGreaterThanOrEqual(
         fechadas[i - 1],
       );
     }
-    // DECISÃO ≠ FALA: o turno sem pergunta não gravou nada.
-    expect(tabela[3].perguntou, "T4 falou sem perguntar e ainda assim marcou").toBe(false);
-    expect(tabela[3].gravada).toBeNull();
+    // ⚠️ PEND-187A: O QUE SE GRAVA MUDOU DE SIGNIFICADO. Antes, T4 (o turno em
+    // que o Core orienta sem perguntar) não gravava nada, e o teste media a
+    // heurística do "?". Agora a sugestão é gravada sempre que existe — porque
+    // ela afirma só que o Gate B a considerou útil — e NADA do que se grava
+    // exclui candidata. O que este teste passa a cobrar é a coerência: o que
+    // está no rastro é o que está no metadata.
+    for (const t of tabela) {
+      expect(t.gravada, `${t.turno}: metadata e rastro divergem`).toBe(t.sugerida);
+    }
     // O perfil é lido UMA vez por turno — a garantia do Gate A, no caminho vivo.
     for (const t of tabela) {
       expect(
@@ -342,7 +363,9 @@ describe("GATE B · a âncora e o registro de entrega convivem", () => {
     const saida = (m.db.linhas("ayla_messages") as Linha[]).filter((x) => x.direcao === "outbound");
     const meta = (saida.at(-1)?.metadata ?? null) as Record<string, unknown> | null;
     expect(meta, "a mensagem saiu sem metadata nenhum").toBeTruthy();
-    expect(meta?.lacuna, "a lacuna foi apagada pelo registro de entrega").toBe(r.rastro?.escolhida);
+    expect(meta?.lacuna_sugerida, "a lacuna foi apagada pelo registro de entrega").toBe(
+      r.rastro?.escolhida,
+    );
     expect(meta?.entrega, "o registro de entrega foi apagado pela lacuna").toBeTruthy();
   });
 });
@@ -361,9 +384,11 @@ describe("GATE B · a correção da família atravessa o caminho vivo", () => {
     expect(r.rastro?.corrigidas, "a correção não ficou marcada como correção").toContain(
       "emocional.gatilhos",
     );
-    expect(r.rastro?.escolhida, "voltou a perguntar o que a família acabou de corrigir").not.toBe(
-      "emocional.gatilhos",
-    );
+    // ⚠️ PEND-187A: a correção continua VISÍVEL no rastro, e deixou de excluir.
+    // Quem tira o campo da disputa é o Perfil, quando a correção é incorporada
+    // — e isso é medido em `lacuna-sugerida.test.ts`. Aqui a cobrança é que o
+    // rastro não minta sobre o que aconteceu.
+    expect(r.rastro?.corrigidas).toContain("emocional.gatilhos");
   });
 });
 

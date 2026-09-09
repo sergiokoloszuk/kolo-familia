@@ -126,7 +126,21 @@ export function jaRespondidas(falas: ReadonlyArray<Fala>, membroId: string): Lac
     // `membro_atipico_id`, então o isolamento entre irmãos não precisa de
     // mecanismo novo: a resposta sobre a Manu nunca fecha a lacuna do Mario.
     if ((f.membro_atipico_id ?? membroId) !== membroId) continue;
-    const chave = (f.metadata as { lacuna?: unknown } | null)?.lacuna;
+    /**
+     * ⚠️ AS DUAS CHAVES, E NENHUMA DELAS FECHA NADA — PEND-187A.
+     *
+     * `lacuna` é o histórico legado, escrito até 10/09/2026 pela heurística do
+     * "?"; `lacuna_sugerida` é o que se grava agora. As duas continuam
+     * LEGÍVEIS, de propósito: apagar o histórico esconderia como o sistema se
+     * comportava. O que mudou é o USO — nada aqui exclui candidata. Ver o
+     * comentário de `lacunaSugeridaDoTurno`.
+     *
+     * ⚠️ E NÃO HÁ MIGRAÇÃO. `lacuna` legado NÃO vira `lacuna_sugerida`: seriam
+     * afirmações diferentes sobre o passado, e tratar uma como a outra
+     * carimbaria de "sugerido" o que na época se afirmou "perguntado".
+     */
+    const meta = f.metadata as { lacuna?: unknown; lacuna_sugerida?: unknown } | null;
+    const chave = typeof meta?.lacuna === "string" ? meta.lacuna : meta?.lacuna_sugerida;
     if (typeof chave !== "string" || !chave.includes(".")) continue;
 
     // A PRIMEIRA fala da família depois da pergunta é a que responde. As
@@ -376,6 +390,9 @@ export function escolherLacunaDecisiva(params: {
     dominios: [] as string[],
     candidatasChaves: [] as string[],
     descartadas: [] as Array<{ chave: string; motivo: string }>,
+    // ⚠️ OBSERVAÇÃO, NÃO EXCLUSÃO — PEND-187A. Estes dois campos continuam no
+    // rastro para se poder auditar o histórico legado; nenhum deles tira
+    // candidata da disputa.
     jaRespondidas: [...resolvidas.fechadas],
     corrigidas: [...resolvidas.corrigidas],
     decisao: "NO_ASK" as const,
@@ -442,7 +459,24 @@ export function escolherLacunaDecisiva(params: {
     };
   }
 
-  const jaRespondido = new Set([...(params.jaRespondido ?? []), ...resolvidas.fechadas]);
+  /**
+   * ⚠️ A EXCLUSÃO VEM DO PERFIL, NÃO DO HISTÓRICO — PEND-187A, 10/09/2026.
+   *
+   * Antes, `resolvidas.fechadas` entrava aqui: uma lacuna marcada por heurística
+   * de "?" e "respondida" por qualquer fala seguinte saía das candidatas. Foi
+   * assim que `sensorial.perfil` foi dado como sabido por uma resposta que
+   * falava de outra coisa.
+   *
+   * A fonte confiável já existia e não precisou ser inventada:
+   * `perfil.lacunasDe(dominio)` só devolve campo com `estado === "vazio"`, então
+   * TUDO que foi de fato incorporado ao Kolo Vivo já sai das candidatas sozinho.
+   * O que se removeu foi a fonte NÃO confiável.
+   *
+   * ⚠️ O RISCO ACEITO, por escrito: se a incorporação não acontecer, a mesma
+   * pergunta pode reaparecer. Repetição ocasional é visível e branda; memória
+   * falsa é invisível e contamina o perfil de uma criança.
+   */
+  const jaRespondido = new Set(params.jaRespondido ?? []);
   const candidatas: Array<{ dominio: string; campo: CampoPerfil }> = [];
   const descartadas: Array<{ chave: string; motivo: string }> = [];
 
@@ -528,33 +562,35 @@ function motivoDaEscolha(
 }
 
 /**
- * A AYLA PERGUNTOU DE FATO? — e por que isto é uma função e não um `if`.
+ * O QUE O GATE B SUGERIU NESTE TURNO — e SÓ isso.
  *
- * ⚠️ ESCOLHER UMA LACUNA NÃO É PERGUNTAR. O decisor diz qual pergunta valeria;
- * quem decide perguntar é o modelo, e o Core §8 manda ele ajudar sem perguntar
- * sempre que já der. Gravar `metadata.lacuna` sem pergunta faria o turno
- * seguinte acreditar que aquele campo foi investigado — e a resposta da mãe a
- * outra coisa fecharia uma lacuna que ninguém abriu.
+ * ⚠️ PEND-187A, 10/09/2026. Esta função substitui `deveGravarLacuna`, que
+ * devolvia a chave quando a fala da Ayla continha "?". A presença de uma
+ * interrogação provava apenas que houve UMA pergunta — nunca que foi ESTA.
  *
- * ⚠️ O TEXTO EXAMINADO É **SÓ A FALA CONVERSACIONAL**, antes de qualquer ponte.
- * MEDI o caminho vivo em 08/09/2026: a ponte do Plano é enviada como MENSAGEM
- * SEPARADA (`enviarEPersistir` com `texto: nudge`), não concatenada — então
- * `exp.texto` já é a fala pura. No Legacy é diferente (`textoCompleto =
- * ...\n\n${nudge}`), e é justamente por isso que esta função recebe o texto por
- * parâmetro em vez de ir buscá-lo: quem chama é responsável por passar a fala,
- * nunca o pacote com CTA, ponte ou convite colados.
+ * ⚠️ O DANO, MEDIDO EM PRODUÇÃO (09/09/2026):
  *
- * ⚠️ A DETECÇÃO É GROSSEIRA DE PROPÓSITO. Errar para MENOS custa perguntar de
- * novo depois; errar para MAIS inventa conhecimento. Mesmo critério de
- * `classificarResposta`.
+ *   | sugerido e gravado  | o que a Ayla realmente perguntou                    |
+ *   |---------------------|----------------------------------------------------|
+ *   | `sensorial.perfil`  | "...ou continua gritando por bastante tempo?"       |
+ *   | `sensorial.toques`  | "...tenta se machucar, machucar alguém ou fugir?"   |
+ *
+ * Nos dois turnos o Core recebeu a sugestão e, com razão, perguntou outra
+ * coisa. A marcação foi feita assim mesmo — e no turno seguinte a resposta
+ * "ela continua gritando mesmo quando ofereço outra coisa" FECHOU
+ * `sensorial.perfil`. Aquela frase não diz nada sobre perfil sensorial: um
+ * campo foi dado como sabido sem ninguém ter investigado.
+ *
+ * ⚠️ ENTÃO O QUE SE GRAVA MUDOU DE SIGNIFICADO. `lacuna_sugerida` diz "o Gate B
+ * considerou este campo útil para este turno". Não diz que o Core perguntou,
+ * nem que a família respondeu, nem que o campo foi aprendido — e por isso NÃO
+ * entra em nenhuma exclusão de candidatas. Saber qual das três coisas
+ * aconteceu exige vínculo estrutural entre pergunta e campo, que é a PEND-187B.
  */
-export function deveGravarLacuna(
-  decisao: DecisaoDeLacuna | null,
-  falaDaAyla: string,
-): string | null {
-  if (!decisao?.escolhida) return null;
-  if (!/\?/.test(falaDaAyla ?? "")) return null;
-  return `${decisao.escolhida.dominio}.${decisao.escolhida.campo}`;
+export function lacunaSugeridaDoTurno(decisao: DecisaoDeLacuna | null): string | null {
+  return decisao?.escolhida
+    ? `${decisao.escolhida.dominio}.${decisao.escolhida.campo}`
+    : null;
 }
 
 /**

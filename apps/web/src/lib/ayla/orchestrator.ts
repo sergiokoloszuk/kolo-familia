@@ -65,7 +65,7 @@ import {
   pediuRotinaExplicitamente,
   portaoDeterministicoDeRotina,
 } from "./rotina-guiada";
-import { deveGravarLacuna } from "./lacuna-decisiva";
+import { lacunaSugeridaDoTurno } from "./lacuna-decisiva";
 import {
   conduzirRotina,
   pedeRotina,
@@ -3259,24 +3259,22 @@ async function processInboundInterno(
           `contexto=${exp.metrica.msContexto}ms modelo=${exp.metrica.msModelo}ms ` +
           `inspecao=${exp.metrica.msInspecao}ms total=${exp.metrica.msTotal}ms`,
       );
-      // ── A LACUNA DO TURNO — Gate B, 08/09/2026 ─────────────────────────
+      // ── A LACUNA SUGERIDA — Gate B, com a semântica da PEND-187A ───────
       //
-      // ⚠️ SÓ MARCA SE A AYLA REALMENTE PERGUNTOU. O decisor pode escolher uma
-      // lacuna e o modelo, corretamente, decidir que já dá para orientar sem
-      // perguntar — o Core §8 manda isso. Gravar `metadata.lacuna` sem pergunta
-      // faria o turno seguinte acreditar que algo foi perguntado, e a resposta
-      // da mãe a outra coisa fecharia um campo que ninguém investigou.
+      // ⚠️ O QUE SE GRAVA É A SUGESTÃO, NÃO A PERGUNTA. Até 10/09/2026 a chave
+      // só era gravada quando a fala continha "?", e isso era lido depois como
+      // "este campo foi perguntado e respondido". A interrogação provava que
+      // houve UMA pergunta, nunca que foi ESTA: medido em produção, o Core
+      // recebeu `sensorial.perfil` e perguntou sobre duração da desregulação,
+      // recebeu `sensorial.toques` e perguntou sobre autoagressão. Nos dois
+      // casos a marcação saiu assim mesmo, e uma resposta sobre outro assunto
+      // fechou o campo.
       //
-      // A detecção é grosseira de propósito (existe "?" no texto): errar para
-      // MENOS só custa perguntar de novo depois; errar para MAIS inventa
-      // conhecimento. Mesmo critério de `classificarResposta`.
-      // ⚠️ `exp.texto` É A FALA PURA. A ponte do Plano vai como MENSAGEM
-      // SEPARADA logo abaixo (`texto: nudge`), não concatenada aqui — medido em
-      // 08/09/2026. Por isso a detecção não corre risco de ler um "?" que veio
-      // de CTA, convite ou ponte. Ver `deveGravarLacuna`.
+      // Agora `lacuna_sugerida` significa uma coisa só: o Gate B considerou
+      // este campo útil para este turno. Ela NÃO exclui candidata nenhuma — a
+      // exclusão vem do Perfil, que é onde o conhecimento de fato mora.
       const d = exp.decisaoLacuna ?? null;
-      const lacunaDoTurno = deveGravarLacuna(d, exp.texto);
-      const perguntou = Boolean(lacunaDoTurno);
+      const lacunaSugerida = lacunaSugeridaDoTurno(d);
 
       // ⚠️ NENHUM CAMINHO VIVO DO DECISOR TERMINA INVISÍVEL. O rastro sai
       // mesmo em NO_ASK — é justamente ele que explica por que a Ayla NÃO
@@ -3286,7 +3284,7 @@ async function processInboundInterno(
           kind: "lacuna_decisao",
           severity: "info",
           family_account_id: family.id,
-          message: `lacuna:${d.decisao}${lacunaDoTurno ? ` ${lacunaDoTurno}` : ""}`,
+          message: `lacuna:${d.decisao}${lacunaSugerida ? ` ${lacunaSugerida}` : ""}`,
           payload: {
             sha: process.env.VERCEL_GIT_COMMIT_SHA ?? null,
             membro_atipico_id: exp.membroId,
@@ -3296,11 +3294,14 @@ async function processInboundInterno(
             motivo: d.motivo,
             candidatas: d.candidatasChaves,
             descartadas: d.descartadas,
+            // ⚠️ HISTÓRICO LEGADO, para auditoria — nenhum dos dois exclui
+            // candidata desde a PEND-187A.
             ja_respondidas: d.jaRespondidas,
             corrigidas: d.corrigidas,
-            // A diferença entre "escolhi" e "gravei" é o modelo ter perguntado.
-            perguntou_de_fato: perguntou,
-            gravou_lacuna: Boolean(lacunaDoTurno),
+            // ⚠️ `perguntou_de_fato` SAIU. Ele afirmava, a partir de um "?",
+            // que a Ayla tinha perguntado a lacuna escolhida — e era isso que
+            // não se sabia. O que o rastro afirma agora é só o que se sabe.
+            lacuna_sugerida: lacunaSugerida,
             // ⚠️ PEND-184: um ASK por tema e um ASK por fallback têm
             // confiabilidades diferentes. Quem auditar depois não pode ter que
             // adivinhar qual dos dois aconteceu.
@@ -3317,7 +3318,10 @@ async function processInboundInterno(
         texto: exp.texto,
         category: "reativa",
         tipo: "resposta_registro",
-        ...(lacunaDoTurno ? { metadataMensagem: { lacuna: lacunaDoTurno } } : {}),
+        // ⚠️ CHAVE NOVA, e o nome carrega a semântica. `lacuna` legado fica
+        // legível no histórico e NÃO é migrado: seriam afirmações diferentes
+        // sobre o passado.
+        ...(lacunaSugerida ? { metadataMensagem: { lacuna_sugerida: lacunaSugerida } } : {}),
         meta: { ayla_path: "experimental", ...exp.metrica },
       });
       // ⚠️ A PONTE DO PLANO CHEGA AO CAMINHO NOVO — 15/08/2026.
