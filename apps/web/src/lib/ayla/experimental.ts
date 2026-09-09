@@ -1242,8 +1242,15 @@ export async function responderExperimental(
      * `campoInvestigado` fica `null` — porque não veio de estrutura válida, e
      * declarar sem prova é o defeito que a PEND-187 inteira existe para matar.
      *
-     * ⚠️ SEM LAÇO POSSÍVEL: `semEnvelope = true` não reentra. Pior caso
-     * absoluto: 3 chamadas, igual ao que já era.
+     * ⚠️ SEM LAÇO POSSÍVEL: `semEnvelope = true` não reentra — a recuperação
+     * roda no máximo uma vez.
+     *
+     * ⚠️ E O PIOR CASO SUBIU DE 3 PARA 4 CHAMADAS. Eu tinha escrito "igual ao
+     * que já era" e estava errado: a sequência é retentativa da rede (2) +
+     * segunda chance por texto vazio (3) + recuperação do envelope (4). O
+     * caminho saudável continua sendo 1, e na bancada de 50 execuções o
+     * envelope foi válido em 50 — mas o teto absoluto é 4, e vale dizer o
+     * número certo.
      */
     let r = await comRetentativaCurta(() => gerar());
     let env = lerEnvelope(r.texto);
