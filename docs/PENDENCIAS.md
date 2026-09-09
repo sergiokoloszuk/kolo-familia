@@ -8287,7 +8287,7 @@ certa.
 ### PEND-189
 **Subcampos escritos numa linha so ficam INVISIVEIS ao parser — e o Core os ve, o Gate B nao**
 Bloco: **B · Ayla** · Prioridade: **P2**
-STATUS: **ABERTA** · Aberta em: 2026-09-10
+STATUS: **CORRIGIDA — aguardando prova em producao** · Aberta em: 2026-09-10
 
 Achado ao investigar a PEND-187. `parsearSubcampos` (subcampos.ts:423) quebra o
 texto por `
@@ -8327,6 +8327,51 @@ usamos para testar.
 o parser deve passar a aceitar rotulo no meio da linha (arrisca falso positivo
 em texto livre) ou se o dado deve ser normalizado uma vez. E, separadamente, se
 Core e Gate B deveriam ler a MESMA representacao.
+
+---
+
+**CORRECAO (10/09/2026) — na LEITURA, e ela cura o dado sozinha.**
+
+`quebrarRotulosColados` roda antes do parser por linha: quebra a linha quando um
+rotulo **canonico daquele dominio** comeca depois de um limite estrutural
+(inicio, ou `.`/`;`/`—`/`·` + espaco). Rotulos ordenados do mais longo para o
+mais curto, para "Reacao a sons" nao ser partido por "Sons".
+
+⚠️ **NAO E REGEX AMPLA.** `/(.+?):/` leria "Ontem: ela chorou" como campo e
+transformaria desabafo em fato — conhecimento inventado e o pior desfecho
+possivel. So entram os rotulos do dominio, e so em limite de frase.
+
+⚠️ **E CURA SOZINHA.** `aplicarTextoCampo` faz parse → serializa. Com o parse
+perdendo rotulos, cada incorporacao **regravava** o bloco colado. Corrigida a
+leitura, a proxima escrita normaliza o dado — ninguem edita o perfil de uma
+familia na mao.
+
+**ANTES → DEPOIS na linha real (executando as funcoes de producao):**
+
+| campo | antes | depois |
+|---|---|---|
+| `sensorial.sons` | o paragrafo inteiro | so a reacao a sons |
+| `sensorial.toques` | **(vazio)** | "nao gosta de abraco." |
+| `sensorial.luz` | **(vazio)** | "luz forte e direta incomoda." |
+| `sensorial.cheiros` | **(vazio)** | "cheiro de cigarro." |
+| `sensorial.perfil` | (vazio) | (vazio) — nao esta no texto, e nada foi inventado |
+
+Lacunas de `sensorial`: **`["perfil","toques","luz","cheiros"]` → `["perfil"]`**.
+
+**VARREDURA DAS 181 CRIANCAS**, comparando o parser antigo (reproduzido fielmente,
+inclusive o passo do texto legado) com o novo:
+
+    PERDAS (fato antes lido e agora nao): 0
+    GANHOS: 3, em 1 crianca — sensorial.toques, sensorial.luz, sensorial.cheiros
+
+Exatamente o previsto, e nada alem. Nenhuma informacao criada.
+
+⚠️ Uma primeira medicao minha acusou "46 ganhos em 16 criancas" — era artefato:
+minha reproducao do parser antigo tinha esquecido o passo que joga texto sem
+rotulo no ULTIMO campo. Refeita fielmente, o numero e 3.
+
+**PROVA:** 16 testes novos; com a correcao neutralizada, 6 ficam vermelhos.
+
 
 **Proximo ID livre: PEND-190. *(024 e 025 reservadas por frentes ainda nao publicadas; 0076 e numero de MIGRACAO reservado — ver PEND-121.)***
 
