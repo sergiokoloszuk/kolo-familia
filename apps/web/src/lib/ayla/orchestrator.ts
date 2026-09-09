@@ -3275,6 +3275,11 @@ async function processInboundInterno(
       // exclusão vem do Perfil, que é onde o conhecimento de fato mora.
       const d = exp.decisaoLacuna ?? null;
       const lacunaSugerida = lacunaSugeridaDoTurno(d);
+      // ⚠️ DUAS CHAVES SEPARADAS, E UMA NUNCA VIRA A OUTRA — PEND-187B.
+      // `lacuna_sugerida` é o que o Gate B ofereceu; `campo_investigado` é o
+      // que a pergunta de fato procurou, declarado pelo Core. Podem divergir —
+      // e é justamente a divergência que a gente quer poder medir.
+      const campoInvestigado = exp.campoInvestigado ?? null;
 
       // ⚠️ NENHUM CAMINHO VIVO DO DECISOR TERMINA INVISÍVEL. O rastro sai
       // mesmo em NO_ASK — é justamente ele que explica por que a Ayla NÃO
@@ -3302,6 +3307,10 @@ async function processInboundInterno(
             // que a Ayla tinha perguntado a lacuna escolhida — e era isso que
             // não se sabia. O que o rastro afirma agora é só o que se sabe.
             lacuna_sugerida: lacunaSugerida,
+            campo_investigado: campoInvestigado,
+            // A pergunta feita foi a sugerida? Observação, não julgamento.
+            sugestao_seguida:
+              lacunaSugerida && campoInvestigado ? lacunaSugerida === campoInvestigado : null,
             // ⚠️ PEND-184: um ASK por tema e um ASK por fallback têm
             // confiabilidades diferentes. Quem auditar depois não pode ter que
             // adivinhar qual dos dois aconteceu.
@@ -3321,7 +3330,14 @@ async function processInboundInterno(
         // ⚠️ CHAVE NOVA, e o nome carrega a semântica. `lacuna` legado fica
         // legível no histórico e NÃO é migrado: seriam afirmações diferentes
         // sobre o passado.
-        ...(lacunaSugerida ? { metadataMensagem: { lacuna_sugerida: lacunaSugerida } } : {}),
+        ...(lacunaSugerida || campoInvestigado
+          ? {
+              metadataMensagem: {
+                ...(lacunaSugerida ? { lacuna_sugerida: lacunaSugerida } : {}),
+                ...(campoInvestigado ? { campo_investigado: campoInvestigado } : {}),
+              },
+            }
+          : {}),
         meta: { ayla_path: "experimental", ...exp.metrica },
       });
       // ⚠️ A PONTE DO PLANO CHEGA AO CAMINHO NOVO — 15/08/2026.

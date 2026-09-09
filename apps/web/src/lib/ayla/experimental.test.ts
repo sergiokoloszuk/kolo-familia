@@ -60,7 +60,13 @@ vi.mock("@/lib/ia/provider", () => ({
     if (sys.includes("Você é **AYLA**")) chamadas.experimental++;
     else chamadas.legacy++;
     return {
-      texto: sys.includes("Você é **AYLA**") ? "[resposta EXPERIMENTAL]" : "[resposta LEGACY]",
+      // ⚠️ O CAMINHO NOVO PEDE ENVELOPE — PEND-187B, 10/09/2026. Devolver texto
+      // puro aqui faria a recuperação disparar e o turno gastar DUAS chamadas,
+      // acusando "resposta dupla" onde há uma resposta e um fallback. O duplo
+      // precisa falar o contrato que o caminho vivo usa; o Legacy segue texto.
+      texto: sys.includes("Você é **AYLA**")
+        ? JSON.stringify({ fala: "[resposta EXPERIMENTAL]", campo_investigado: null })
+        : "[resposta LEGACY]",
       provider: "openai",
       model: "gpt-5.6-luna",
       tokensIn: 100,
