@@ -8510,8 +8510,50 @@ Fora da fila, abertas: PEND-182 (ancora + entrega, parcialmente provada),
 PEND-183 (plano automatico), PEND-185 (rastro de conhecimento no caminho vivo),
 PEND-188 (conducao condicional, Gate F).
 
+### PEND-190
+**A mae respondeu a pergunta da Ayla e a resposta NAO virou conhecimento**
+Bloco: **B · Ayla** · Prioridade: **P1**
+STATUS: **ABERTA** · Aberta em: 2026-09-10
 
-**Proximo ID livre: PEND-190. *(024 e 025 reservadas por frentes ainda nao publicadas; 0076 e numero de MIGRACAO reservado — ver PEND-121.)***
+Medido no turno 2 do teste humano de 10/09/2026 (`a81c9fa`).
+
+Turno 1, a Ayla perguntou: *"Ela fica mais irritada quando voce avisa antes, ou
+principalmente quando precisa encerrar no meio da brincadeira?"*
+
+Turno 2, a Karina respondeu com precisao: *"Ela fica mais irritada
+principalmente quando precisa encerrar no meio da brincadeira."*
+
+**Esse fato nao esta em lugar nenhum do Perfil.** Varri os 15 dominios da Manu
+procurando "brincadeira", "interromp", "encerrar", "concluir", "terminar": o
+unico casamento e um texto antigo sobre a escola. `emocional.gatilhos` continua
+"insistencia; pressao para fazer atividades; rotina de sair de casa para escola;
+mudancas abruptas de planos" — sem o gatilho que ela acabou de nomear.
+
+E `perfil_vivo_membro.updated_at` MUDOU as 21:07:58, no mesmo segundo do
+`ayla_rotear_kv`. Entao o pipeline **rodou e escreveu**; o que ele nao fez foi
+guardar o fato que a propria Ayla tinha perguntado.
+
+**A PROVA INDIRETA:** as candidatas do Gate B sao IDENTICAS nos dois turnos —
+`["sensorial.perfil","comunicacao.contato","comunicacao.iniciativa","sono.adormece","sono.despertares","sono.atrapalha"]`.
+Nada mudou de estado.
+
+**POR QUE ISSO IMPORTA AGORA.** A PEND-187A tirou o fechamento do historico e
+pos a fonte de verdade no Perfil, aceitando por escrito o risco de repeticao se
+a incorporacao falhar. **A incorporacao falhou no primeiro par de turnos
+observado.** O risco nao e teorico.
+
+⚠️ **E O SISTEMA NAO SABE DISSO.** Nao ha rastro ligando "a Ayla perguntou X" a
+"X foi incorporado". E exatamente a sonda que a PEND-187B propoe com
+`campo_investigado` — e este turno mostra que a sonda mede um problema real, nao
+hipotetico.
+
+**A investigar (nao corrigir agora):** por que o roteador do Kolo Vivo nao
+classificou a resposta como gatilho de `emocional`; se a resposta curta que
+apenas ESCOLHE entre duas opcoes oferecidas ("principalmente quando X") e
+tratada como sem conteudo; e se a incorporacao deveria receber a pergunta que a
+originou como contexto.
+
+**Proximo ID livre: PEND-191. *(024 e 025 reservadas por frentes ainda nao publicadas; 0076 e numero de MIGRACAO reservado — ver PEND-121.)***
 
 > Conferir contra `origin/main`, não contra o seu branch. Dois branches podem
 > reivindicar o mesmo número — o conflito de merge nesta linha é o alarme.
