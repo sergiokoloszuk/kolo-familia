@@ -290,20 +290,35 @@ describe("PEND-184 · o Gate B degrada em vez de emudecer", () => {
     expect(d.origemDosDominios).toBe("tema");
   });
 
-  it("o fallback respeita o que a família já respondeu, e a correção vence", () => {
-    const resolvidas = {
-      fechadas: new Set(["emocional.gatilhos"]),
-      corrigidas: new Set(["emocional.gatilhos"]),
-      detalhe: [],
+  it("o fallback respeita o que o PERFIL já sabe, e a correção vence por lá", () => {
+    // ⚠️ REESCRITO PELA PEND-187A (10/09/2026). A versão anterior passava
+    // `resolvidas.fechadas` e cobrava que o campo saísse da disputa — ou seja,
+    // media o fechamento por HISTÓRICO, que era a fonte não confiável. Agora
+    // quem tira o campo é o Perfil, e a correção vence quando é incorporada.
+    const comGatilhosCorrigidos = {
+      categorias_extras: {
+        emocional: {
+          texto: L([
+            "Como costuma ser: Desregula com facilidade",
+            "Gatilhos: não é mais mudança de plano; hoje é cansaço no fim da tarde",
+          ]),
+        },
+      },
     };
     const d = escolherLacunaDecisiva({
-      perfil: perfil(PERFIL_COM_DOMINIO_VIVO),
+      perfil: perfil(comGatilhosCorrigidos),
       temas: [],
       relato: "e agora?",
-      resolvidas,
+      resolvidas: {
+        fechadas: new Set(["emocional.gatilhos"]),
+        corrigidas: new Set(["emocional.gatilhos"]),
+        detalhe: [],
+      },
       catalogoDisponivel: false,
     });
-    expect(d.escolhida?.campo, "reperguntou o que a família corrigiu").not.toBe("gatilhos");
+    expect(d.escolhida?.campo, "reperguntou o que já está no perfil").not.toBe("gatilhos");
+    expect(d.candidatasChaves).not.toContain("emocional.gatilhos");
+    // O histórico continua VISÍVEL no rastro — observação, não exclusão.
     expect(d.corrigidas).toContain("emocional.gatilhos");
   });
 
