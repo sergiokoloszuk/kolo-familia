@@ -44,7 +44,17 @@ export type MotivoVazio =
   /** Consultou e o acervo não tinha nada para aquelas skills/idade. */
   | "acervo_vazio"
   /** A consulta falhou (erro de banco, timeout) e foi engolida. */
-  | "erro_na_consulta";
+  | "erro_na_consulta"
+  /**
+   * O CATÁLOGO DE SKILLS NÃO CARREGOU — PEND-184, 09/09/2026.
+   *
+   * ⚠️ NÃO É `sem_skill`. Ali o roteador olhou o catálogo e nada serviu; aqui
+   * não houve catálogo para olhar, e o vazio é ausência de entrada. Foram a
+   * mesma string durante um mês, e por isso o turno da Karina (09/09) apareceu
+   * como "nenhum conhecimento necessário" quando era "conhecimento
+   * indisponível" — as duas coisas mais opostas que este rastro pode confundir.
+   */
+  | "catalogo_indisponivel";
 
 export type RastroConhecimento = {
   canal: CanalConhecimento;
@@ -72,7 +82,12 @@ export function motivoDoVazio(p: {
   skills: readonly string[];
   tags: number;
   erroNaConsulta?: boolean;
+  /** O catálogo de skills não carregou — ver `catalogo_indisponivel`. */
+  catalogoIndisponivel?: boolean;
 }): MotivoVazio {
+  // ⚠️ ANTES DE TUDO: sem catálogo não houve roteamento, então nem `sem_skill`
+  // nem `acervo_vazio` seriam verdade. A causa mais a montante vence.
+  if (p.catalogoIndisponivel) return "catalogo_indisponivel";
   if (p.erroNaConsulta) return "erro_na_consulta";
   if (p.skills.length === 0 && p.tags === 0) return "sem_skill";
   return "acervo_vazio";
@@ -97,6 +112,8 @@ export function montarRastro(p: {
   recuperadas: readonly BoaPraticaRecuperada[];
   enviadas: readonly BoaPraticaRecuperada[];
   erroNaConsulta?: boolean;
+  /** Ver `catalogo_indisponivel`: falha a montante, não ausência de material. */
+  catalogoIndisponivel?: boolean;
 }): RastroConhecimento {
   const tags = p.tags ?? 0;
   const recuperados = p.recuperadas.map((b) => b.id).filter(Boolean);
@@ -114,7 +131,15 @@ export function montarRastro(p: {
   // Vazio é o que se mede pelo que CHEGOU ao modelo. Recuperar três e mandar
   // zero é, para a família, o mesmo que não ter encontrado nada.
   if (enviados.length === 0) {
-    return { ...base, motivoVazio: motivoDoVazio({ skills: p.skills, tags, erroNaConsulta: p.erroNaConsulta }) };
+    return {
+      ...base,
+      motivoVazio: motivoDoVazio({
+        skills: p.skills,
+        tags,
+        erroNaConsulta: p.erroNaConsulta,
+        catalogoIndisponivel: p.catalogoIndisponivel,
+      }),
+    };
   }
   return base;
 }

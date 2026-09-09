@@ -8025,7 +8025,7 @@ produto antes de codigo.
 ### PEND-184
 **O decisor de lacuna do Gate B ficou mudo porque o decisor de turno nao devolveu tema**
 Bloco: **B · Ayla** · Prioridade: **P1**
-STATUS: **ABERTA** · Aberta em: 2026-09-09
+STATUS: **CORRIGIDA — aguardando prova em producao** · Aberta em: 2026-09-09
 
 Primeiro turno humano com o Gate B no ar (09/09/2026, 15:34, `7a35e98`). O
 rastro `lacuna_decisao` saiu — a observabilidade funciona — mas com
@@ -8056,7 +8056,75 @@ saber". Sao donos distintos para decisoes distintas.
 `decisao: ASK`, `metadata.lacuna` gravado, e o turno seguinte fechando aquela
 lacuna.
 
-**Proximo ID livre: PEND-185. *(024 e 025 reservadas por frentes ainda nao publicadas; 0076 e numero de MIGRACAO reservado — ver PEND-121.)***
+---
+
+**CAUSA RAIZ (10/09/2026) — NAO ERA O MODELO.**
+
+Bancada com o decisor REAL, contrato lido do arquivo em producao e catalogo com
+as `routing_keywords` reais:
+
+| medicao | resultado |
+|---|---|
+| 13 frases, sem contexto | skills correto em **13/13**; Gate B daria ASK em 13/13 |
+| a frase da Manu sob 5 contextos (estado, ultima fala, artefato pendente), 5x cada | **0 vazios em 25** |
+| a mesma frase **sem o bloco `<catalogo_de_skills>`** | **5 vazios em 5** |
+
+`decidirTurno` so monta o bloco quando a lista nao esta vazia, e
+`carregarCatalogoSkills` devolvia `[]` em QUALQUER falha do select, sem lancar,
+com um `console.warn` que some com a retencao da Vercel. Sem o bloco, o contrato
+manda "SOMENTE nomes do catalogo oferecido. Se nada do catalogo servir, devolva
+[]" — **o modelo obedeceu**. E, ainda que nao obedecesse, `permitidas` estaria
+vazio e o filtro descartaria tudo depois.
+
+Um fail-open que apagava DOIS consumidores de uma vez: a lacuna do Gate B e o
+repertorio de Boas Praticas. O turno da Karina foi respondido sem repertorio
+nenhum, e nada no sistema registrou isso.
+
+**CORRECAO (commit isolado):**
+
+1. `carregarCatalogoSkills` devolve `{estado:"ok"}` ou `{estado:"indisponivel"}`.
+   Vazio legitimo (13 skills desativadas no Admin) continua sendo `ok`. Falha
+   nao e cacheada, emite `catalogo_skills_indisponivel` persistido, e o turno
+   seguinte tenta de novo.
+2. `decidirTurno` ganha `skillsAvaliadas`. O resto da decisao continua valendo —
+   abortar o turno por causa de um select seria trocar defeito por apagao.
+3. Gate B degrada: sem catalogo, olha os dominios que o PERFIL ja conhece
+   (`sabemos` + ainda ha campo decisivo aberto). Perfil rico continua NO_ASK;
+   perfil sem dominio vivo continua NO_ASK. `origemDosDominios` separa
+   `tema` de `fallback_sem_catalogo` no rastro.
+4. `MotivoVazio` ganha `catalogo_indisponivel` — indisponibilidade deixa de se
+   passar por "nenhum conhecimento necessario".
+
+**PROVA:** 22 testes novos; com a correcao revertida, 5 ficam vermelhos.
+
+**ACHADO FORA DE ESCOPO (nao corrigido):** o caminho experimental — ~97% dos
+turnos — **nao emite rastro de conhecimento nenhum**. Todos os
+`conhecimento_consultado` medidos vem do Legacy (2,59%) ou da web. Ampliar isso
+sairia do escopo desta missao; fica como PEND-185.
+
+**CRITERIO DE CONCLUSAO (inalterado):** um turno real com `lacuna_decisao`
+`decisao: ASK`, `metadata.lacuna` gravado, fechado no turno seguinte.
+
+### PEND-185
+**O caminho vivo nao emite rastro de conhecimento**
+Bloco: **B · Ayla** · Prioridade: **P2**
+STATUS: **ABERTA** · Aberta em: 2026-09-10
+
+Achado durante a PEND-184. `montarRastro`/`registrarRastroConhecimento` sao
+chamados em `orchestrator.ts` (Legacy) e `ia/context.ts` (web). O caminho
+experimental, que atende ~97% das conversas, nao chama nenhum dos dois: quando
+`skillsDoTurno` esta vazio ele nem tenta recuperar, e nao registra nada.
+
+Consequencia: os 585 eventos `conhecimento_consultado` medidos em 10/09/2026
+descrevem 3% do trafego. "Quantos turnos foram respondidos sem repertorio" e uma
+pergunta que hoje nao tem resposta.
+
+Nao corrigido junto com a PEND-184 de proposito: acrescentar um emissor no
+caminho mais quente do produto e mudanca de escopo, e a missao pedia STOP nesse
+caso.
+
+
+**Proximo ID livre: PEND-186. *(024 e 025 reservadas por frentes ainda nao publicadas; 0076 e numero de MIGRACAO reservado — ver PEND-121.)***
 
 > Conferir contra `origin/main`, não contra o seu branch. Dois branches podem
 > reivindicar o mesmo número — o conflito de merge nesta linha é o alarme.
