@@ -27,6 +27,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { gerarConversacional, MODELO_CONVERSA } from "@/lib/ia/provider";
 import { logarUsoApi } from "@/lib/billing/logar";
+import { logEvent } from "@/lib/log";
 import type { IntencaoAyla, SkillDoCatalogo, TurnoClassificado } from "@/lib/ayla/intent";
 
 /**
@@ -59,7 +60,16 @@ export type DecisaoDoTurno = TurnoClassificado & {
   /** Sobre o quê buscar, quando houver necessidade. `null` quando não há. */
   temaConhecimento: string | null;
   /** Como a decisão foi tomada — para telemetria, nunca para a família. */
-  origem: "gpt" | "fallback_neutro";
+  /**
+   * ⚠️ TRÊS DESFECHOS, NÃO DOIS — PEND-186, 10/09/2026.
+   *
+   * `"gpt"` é decisão do modelo. `"fallback_neutro"` é exceção na chamada.
+   * `"sem_resposta"` é o que faltava: a chamada teve SUCESSO e voltou sem
+   * conteúdo aproveitável — orçamento consumido pelo raciocínio, ou JSON
+   * ilegível. Antes isso virava `"gpt"`, e o rastro afirmava que a Ayla decidira
+   * não fazer nada quando na verdade ninguém decidiu coisa alguma.
+   */
+  origem: "gpt" | "fallback_neutro" | "sem_resposta";
   /**
    * ⚠️ `skills` FOI AVALIADO CONTRA UM CATÁLOGO VÁLIDO? — PEND-184, 09/09/2026.
    *
@@ -119,6 +129,66 @@ const NECESSIDADES: readonly NecessidadeConhecimento[] = [
  * misturar as duas coisas faria a decisão herdar a instrução de ser prestativa,
  * que é justamente o que faz uma regra perder dentro de um prompt.
  */
+/**
+ * O CONTRATO DE SAÍDA, imposto na origem — PEND-186.
+ *
+ * ⚠️ Não substitui `interpretar`: o schema garante a FORMA, e `interpretar`
+ * continua responsável pelo DOMÍNIO (intenção inventada, skill fora do
+ * catálogo, `true` que não é booleano). Uma camada impede o JSON quebrado; a
+ * outra impede o valor errado.
+ */
+const ESQUEMA_DA_DECISAO: Record<string, unknown> = {
+  type: "json_schema",
+  json_schema: {
+    name: "decisao_do_turno",
+    strict: true,
+    schema: {
+      type: "object",
+      additionalProperties: false,
+      required: [
+        "intencao",
+        "pedido_explicito",
+        "tema",
+        "aceite",
+        "continuacao",
+        "skills",
+        "necessidade_conhecimento",
+        "tema_conhecimento",
+      ],
+      properties: {
+        intencao: {
+          type: "string",
+          enum: ["rotina_criar", "rotina_ver", "rotina_editar", "organizacao", "plano", "outro"],
+        },
+        pedido_explicito: { type: "boolean" },
+        tema: { type: ["string", "null"] },
+        aceite: { type: ["string", "null"] },
+        continuacao: { type: "boolean" },
+        skills: { type: "array", items: { type: "string" } },
+        necessidade_conhecimento: {
+          type: "string",
+          enum: ["nenhum", "boas_praticas", "base2", "pos_neurodesenvolvimento", "combinacao"],
+        },
+        tema_conhecimento: { type: ["string", "null"] },
+      },
+    },
+  },
+};
+
+/**
+ * O ORÇAMENTO — 900, e o número é medido, não escolhido por conforto.
+ *
+ * ⚠️ ERA 300, e 21,5% das decisões batiam nele. A causa não era JSON longo: o
+ * conteúdo cabe em 179–270 caracteres. Era o RACIOCÍNIO, que conta como saída e
+ * variou de 65 a 300 tokens nas medições de 10/09/2026. Com `reasoning_effort:
+ * "low"` o total caiu para média 101 (era 225) e a latência mediana para 1389ms
+ * (era 3174ms) — mais confiável, mais barato e mais rápido ao mesmo tempo.
+ *
+ * 900 é folga, não custo: cobra-se o que se usa, e o máximo observado com
+ * esforço baixo foi 232.
+ */
+const ORCAMENTO_DA_DECISAO = 900;
+
 const INSTRUCOES = `Você lê a mensagem de uma mãe/responsável para a Ayla e decide o que ela QUER — nada além disso. Você não responde à família e não escreve texto para ela.
 
 Devolva SOMENTE um JSON, sem cercas de código, com estas chaves:
@@ -216,17 +286,24 @@ export async function decidirTurno(params: {
     .join("\n\n");
 
   try {
-    const saida = await gerarConversacional({
+    // ⚠️ UM PEDIDO, DUAS TENTATIVAS. Montado uma vez para a retry não poder
+    // divergir do original — duas cópias do mesmo prompt divergem na primeira
+    // vez que alguém edita só uma.
+    const pedido = {
       // ⚠️ MESMO PROVIDER DA CONVERSA, de propósito. Decisão e fala tomadas por
       // modelos diferentes divergem — e a divergência aparece como uma Ayla que
       // decidiu uma coisa e falou outra.
-      provider: "openai",
+      provider: "openai" as const,
       model: MODELO_CONVERSA.openai,
       system: `${INSTRUCOES}\n\n${contexto}`,
-      messages: [{ role: "user", content: params.texto.slice(0, 4000) }],
-      maxTokens: 300,
+      messages: [{ role: "user" as const, content: params.texto.slice(0, 4000) }],
+      maxTokens: ORCAMENTO_DA_DECISAO,
       cacheSystem: true,
-    });
+      // Ver `ORCAMENTO_DA_DECISAO`: ataca a causa, não paga a conta dela.
+      esforcoRaciocinio: "low" as const,
+      formatoJson: ESQUEMA_DA_DECISAO,
+    };
+    const saida = await gerarConversacional(pedido);
 
     if (params.supabase && params.familyId) {
       // Falha de registro nunca derruba o turno.
@@ -244,8 +321,55 @@ export async function decidirTurno(params: {
       }).catch(() => {});
     }
 
+    /**
+     * ⚠️ SUCESSO DE REDE NÃO É DECISÃO. Se voltou sem conteúdo aproveitável, o
+     * modelo não decidiu nada — e chamar isso de `"gpt"` foi o que escondeu a
+     * PEND-186 por semanas. Uma tentativa a mais é barata perto de perder a
+     * intenção, o pedido explícito e a continuidade do turno.
+     */
+    const util = (t: string) => t.includes("{") && t.lastIndexOf("}") > t.indexOf("{");
+    let texto = saida.texto;
+    let motivo = saida.motivoDeParada;
+    let tentativas = 1;
+    if (!util(texto)) {
+      const retry = await gerarConversacional(pedido);
+      tentativas = 2;
+      texto = retry.texto;
+      motivo = retry.motivoDeParada;
+    }
+
+    if (!util(texto)) {
+      // ⚠️ O ALARME QUE NÃO EXISTIA. Sem ele, um em cada cinco turnos perdia a
+      // decisão inteira e o único rastro dizia "o GPT decidiu `outro`".
+      void logEvent({
+        kind: "decisao_turno_sem_resposta",
+        severity: "error",
+        family_account_id: params.familyId ?? null,
+        message: `decisor sem conteúdo aproveitável (${motivo ?? "sem motivo"}) após ${tentativas} tentativa(s)`,
+        payload: {
+          sha: process.env.VERCEL_GIT_COMMIT_SHA ?? null,
+          motivo_de_parada: motivo,
+          tentativas,
+          orcamento: ORCAMENTO_DA_DECISAO,
+          caracteres: texto.length,
+          // ⚠️ O QUE O TURNO PERDE — para quem ler não ter que saber o mapa.
+          campos_perdidos: [
+            "intencao",
+            "pedido_explicito",
+            "tema",
+            "aceite",
+            "continuacao",
+            "skills",
+            "necessidade_conhecimento",
+          ],
+        },
+        persistir: true,
+      });
+      return { ...DECISAO_NEUTRA, origem: "sem_resposta", skillsAvaliadas: false };
+    }
+
     return {
-      ...interpretar(saida.texto, permitidas, catalogoDisponivel),
+      ...interpretar(texto, permitidas, catalogoDisponivel),
       origem: "gpt",
     };
   } catch (e) {

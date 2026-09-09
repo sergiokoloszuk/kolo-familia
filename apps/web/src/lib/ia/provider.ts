@@ -82,6 +82,23 @@ export type EntradaConversacional = {
    * chamador).
    */
   cacheSystem?: boolean;
+  /**
+   * ⚠️ QUANTO RACIOCÍNIO — PEND-186, 10/09/2026.
+   *
+   * `gpt-5.6-luna` é modelo de raciocínio: os tokens de pensamento contam no
+   * `max_completion_tokens` e NÃO aparecem no texto. Medido: com teto 300 o
+   * raciocínio consumia os 300 e a resposta voltava com `finish_reason:
+   * "length"` e **zero caractere** de conteúdo — não era JSON truncado, era JSON
+   * que nunca começou. Baixar o esforço ataca a causa; subir o teto só paga a
+   * conta. Ignorado pela Anthropic.
+   */
+  esforcoRaciocinio?: "low" | "medium" | "high";
+  /**
+   * Contrato de saída estruturada (`response_format` da OpenAI). Elimina a
+   * classe "JSON inválido" na origem, em vez de tentar consertar no parser.
+   * Ignorado pela Anthropic.
+   */
+  formatoJson?: Record<string, unknown>;
 };
 
 export type SaidaConversacional = {
@@ -95,6 +112,15 @@ export type SaidaConversacional = {
   ms: number;
   provider: Provider;
   model: string;
+  /**
+   * ⚠️ POR QUE A GERAÇÃO PAROU — PEND-186.
+   *
+   * `"length"` significa que o orçamento acabou antes de o modelo terminar. O
+   * provider descartava isto, e por isso uma falha técnica chegava ao chamador
+   * como uma resposta vazia indistinguível de uma resposta legítima. `null`
+   * quando o provider não informa.
+   */
+  motivoDeParada: string | null;
 };
 
 /** Modelo conversacional de cada provider, por env, com o default do produto. */
@@ -228,6 +254,9 @@ async function chamarAnthropic(e: EntradaConversacional): Promise<SaidaConversac
   const j = (await r.json()) as Record<string, any>;
   if (!r.ok || j.error) throw new ErroDeProvider("anthropic", r.status, j?.error?.message ?? "");
   return {
+    // A Anthropic chama de `stop_reason`, e `"max_tokens"` é o equivalente do
+    // `"length"` da OpenAI. Normalizado aqui para o chamador não precisar saber.
+    motivoDeParada: j.stop_reason === "max_tokens" ? "length" : (j.stop_reason ?? null),
     texto: (j.content ?? [])
       .filter((b: { type: string }) => b.type === "text")
       .map((b: { text: string }) => b.text)
@@ -256,6 +285,10 @@ async function chamarOpenAI(e: EntradaConversacional): Promise<SaidaConversacion
       // rejeitam o nome antigo. E o teto precisa acomodar os tokens de
       // raciocínio, que são cobrados como saída e não aparecem no texto.
       max_completion_tokens: e.maxTokens,
+      // Ver `esforcoRaciocinio`: é o que impede o pensamento de comer o
+      // orçamento inteiro e devolver conteúdo vazio.
+      ...(e.esforcoRaciocinio ? { reasoning_effort: e.esforcoRaciocinio } : {}),
+      ...(e.formatoJson ? { response_format: e.formatoJson } : {}),
       // O system vira uma MENSAGEM — não é parâmetro separado como na Anthropic.
       // E o conteúdo multimodal muda de envelope: ver `conteudoParaOpenAI`.
       messages: [
@@ -268,6 +301,7 @@ async function chamarOpenAI(e: EntradaConversacional): Promise<SaidaConversacion
   if (!r.ok || j.error) throw new ErroDeProvider("openai", r.status, j?.error?.message ?? "");
   return {
     texto: j.choices?.[0]?.message?.content ?? "",
+    motivoDeParada: j.choices?.[0]?.finish_reason ?? null,
     tokensIn: j.usage?.prompt_tokens ?? 0,
     tokensOut: j.usage?.completion_tokens ?? 0,
     cacheRead: j.usage?.prompt_tokens_details?.cached_tokens ?? 0,
