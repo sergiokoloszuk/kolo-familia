@@ -413,6 +413,47 @@ export function serializarSubcampos(
  * Quebra o texto rotulado de volta nos sub-campos. Texto sem rótulo (legado,
  * digitado livre) cai no último campo, pra não se perder.
  */
+/**
+ * ROTULO NO MEIO DA LINHA — PEND-189, 10/09/2026.
+ *
+ * ⚠️ O CASO REAL. No perfil de uma criança em produção, o bloco `sensorial`
+ * tinha SEIS rótulos concatenados numa única linha, separados por ". ":
+ *
+ *     Reação a sons: ... . Reação a toques: não gosta de abraço. Luz: ... .
+ *
+ * O parser só reconhecia rótulo no INÍCIO da linha, então lia `Reação a sons` e
+ * engolia todo o resto dentro do valor dele. `sensorial.toques` estava no banco
+ * e era invisível — e o Gate B, que lê os campos parseados, escolheu
+ * justamente `toques` como "a lacuna decisiva" enquanto o Core, que lê o texto
+ * bruto, orientava "sem tocar nela". Dois leitores do mesmo fato, discordando.
+ *
+ * ⚠️ E A CORRUPÇÃO SE REESCREVIA SOZINHA: `aplicarTextoCampo` faz
+ * `parsearSubcampos` → `serializarSubcampos`. Com o parse perdendo os rótulos,
+ * cada incorporação regravava o bloco colado. Consertar a LEITURA faz a próxima
+ * escrita normalizar o dado por si — sem ninguém editar o perfil de uma família
+ * na mão.
+ *
+ * ⚠️ POR QUE NÃO UMA REGEX AMPLA. `/^(.+?):/` leria "Ontem: ela chorou" como
+ * rótulo e transformaria desabafo em campo. Aqui só entram os rótulos
+ * CANÔNICOS daquele domínio, e só quando começam depois de um limite
+ * estrutural — início do texto, ou fim de frase (`.`/`;`/`—`) seguido de
+ * espaço. Um rótulo no meio de uma oração continua sendo texto.
+ */
+function quebrarRotulosColados(campos: SubCampo[], texto: string): string {
+  if (!campos.length) return texto;
+  const escapar = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  // Do rótulo mais longo para o mais curto: "Reação a sons" antes de "Sons",
+  // senão o curto casa dentro do longo e parte o rótulo ao meio.
+  const rotulos = [...campos]
+    .map((c) => c.label)
+    .sort((a, b) => b.length - a.length)
+    .map(escapar)
+    .join("|");
+  // O limite estrutural fica FORA do grupo capturado para ser preservado.
+  const re = new RegExp(`([.;—·])\\s+(?=(?:${rotulos}):)`, "gi");
+  return texto.replace(re, "$1\n");
+}
+
 export function parsearSubcampos(
   campos: SubCampo[],
   texto: string,
@@ -420,7 +461,7 @@ export function parsearSubcampos(
   const out: Record<string, string> = {};
   if (!texto?.trim()) return out;
 
-  const linhas = texto.replace(/\r\n/g, "\n").split("\n");
+  const linhas = quebrarRotulosColados(campos, texto.replace(/\r\n/g, "\n")).split("\n");
   const buf: Record<string, string[]> = {};
   const legado: string[] = [];
   let atual: string | null = null;
