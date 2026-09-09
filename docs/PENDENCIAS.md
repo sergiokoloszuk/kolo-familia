@@ -7965,7 +7965,98 @@ correcao revertida, 7 dos 14 testes ficam vermelhos.
 uma linha nova de `rotina_proposta` ou `clarificacao_identificacao` traz a
 ancora E `entrega` na mesma linha. Sem forcar cenario com familia real.
 
-**Proximo ID livre: PEND-183. *(024 e 025 reservadas por frentes ainda nao publicadas; 0076 e numero de MIGRACAO reservado — ver PEND-121.)***
+### PEND-183
+**Plano Estrategico automatico com UMA mensagem — o gate de suficiencia nao exige que a conversa seja SOBRE o problema**
+Bloco: **B · Ayla** · Prioridade: **P1**
+STATUS: **ABERTA — nao corrigir sem decisao de produto** · Aberta em: 2026-09-09
+
+Teste humano da Karina, 09/09/2026, 15:34. Ela escreveu UMA mensagem
+("A Manu tem gritado muito quando eu desligo o tablet. Nao sei mais o que
+fazer") e recebeu, 76 segundos depois, um Plano Estrategico completo em PDF.
+**Nao houve pedido nem aceite.** Plano `fdcc7a02`, origem `estrategias`.
+
+**A CADEIA, reconstruida do rastro:**
+
+| | |
+|---|---|
+| 15:34:00 | mensagem da mae (17 palavras, 63 chars) |
+| 15:34:17 | `decidirTurno` (openai, 5,3s) → `querPlano = false` |
+| 15:34:27 | resposta conversacional enviada — com uma pergunta |
+| — | `montarPonteWhatsApp(forcar: false)` → caminho AUTOMATICO |
+| 15:35:13 | linha em `planos` |
+| 15:35:16 | PDF + link, `metadata.plano_id` |
+
+**OS FREIOS, e por que todos abriram:**
+
+1. cooldown de 3 min — sem link `/auth/wa` recente. Abriu.
+2. dedup de 20h — nenhum plano no periodo. Abriu.
+3. `MIN_MENSAGENS_DA_MAE = 3` — conta inbounds da **historia inteira** da
+   familia, sem recorte de tempo. Para qualquer familia estabelecida este freio
+   esta **permanentemente aberto**.
+4. mensagem >= 40 chars OU desafio — 63 chars. Abriu.
+5. `avaliarProntidaoParaPlano` — LLM sobre as **14 ultimas mensagens, sem corte
+   de tempo**. Disse `pronto: true`, tema "Gritos ao desligar o tablet".
+
+**A CAUSA:** a janela de 14 mensagens que o gate leu cobria 1,2 dias e continha
+3 inbounds com substancia — mas **dois eram sobre outro assunto**: cartoes
+visuais para a praia e rotina de dia de tenis. O gate mede VOLUME de material
+da familia, nao material sobre ESTE problema. O tema do plano saiu certo
+(vem da mensagem de agora); a evidencia de prontidao foi emprestada de
+conversas alheias.
+
+**INTENCIONAL, NAO LEGADO.** O caminho automatico e desenho deliberado de
+29/07/2026, documentado em `ponte.ts`: "conversa rica → ao ter elementos
+suficientes, entregar", pedido pela propria Karina depois que `6d4e21a`
+removeu o auto-disparo e o regime seguinte ("a mae precisa dizer a palavra
+plano") deixava conversas de dias terminarem sem entrega. **O que falhou nao
+foi a intencao — foram os criterios.**
+
+**A CONTRADICAO A DECIDIR:** no MESMO turno a Ayla perguntou "Ela grita apenas
+quando o tablet e desligado de repente, ou tambem quando voce avisa antes?" — e
+49 segundos depois entregou um plano fechado sobre o mesmo assunto. Ela
+perguntou e respondeu de uma vez. Isso colide com o objetivo canonico
+(entender → orientar → aprofundar), e nao tem relacao com o Gate B: o decisor
+de lacuna ficou em NO_ASK neste turno (ver PEND-184).
+
+**NAO CORRIGIDO DE PROPOSITO.** Endurecer o gate mexe em quando toda familia
+recebe Plano — e o historico desta regra e de pendulo. Precisa de decisao de
+produto antes de codigo.
+
+### PEND-184
+**O decisor de lacuna do Gate B ficou mudo porque o decisor de turno nao devolveu tema**
+Bloco: **B · Ayla** · Prioridade: **P1**
+STATUS: **ABERTA** · Aberta em: 2026-09-09
+
+Primeiro turno humano com o Gate B no ar (09/09/2026, 15:34, `7a35e98`). O
+rastro `lacuna_decisao` saiu — a observabilidade funciona — mas com
+`decisao: NO_ASK`, `escolhida: null`, `candidatas: 0` e **`tema: []`**.
+
+`escolherLacunaDecisiva` recebe `temas` de `turnoClassificado.skills`, que vem
+de `decidirTurno`. Sem tema, ele sai por "tema nao identificado" antes de
+avaliar campo nenhum. **O mecanismo nao foi exercitado — nao porque errou, mas
+porque nao recebeu entrada.**
+
+**E NAO FOI FALHA DE CHAMADA.** `api_calls` registra 1 chamada `decisao_turno`
+as 15:34:17 (openai/gpt-5.6-luna, 300 tokens de saida) — sem fallback neutro. O
+catalogo tem **13 skills ativas**, `emocional` entre elas. O GPT recebeu o
+catalogo e escolheu devolver `skills: []` para "A Manu tem gritado muito quando
+eu desligo o tablet".
+
+**Consequencia:** a qualidade do turno (orientacao antes da pergunta, uma
+pergunta decisiva, crianca certa) veio do Core, nao do Gate B. O Gate B ficou
+correto e inerte.
+
+**A investigar, sem acrescentar prompt antes de medir:** com que frequencia o
+decisor devolve `skills: []` em turnos que tem tema evidente; e se `temas` deve
+mesmo depender do classificador de repertorio, ja que sao duas perguntas
+diferentes — "que repertorio consultar" e "sobre que dominio ainda me falta
+saber". Sao donos distintos para decisoes distintas.
+
+**Criterio de conclusao:** um turno real em que `lacuna_decisao` saia com
+`decisao: ASK`, `metadata.lacuna` gravado, e o turno seguinte fechando aquela
+lacuna.
+
+**Proximo ID livre: PEND-185. *(024 e 025 reservadas por frentes ainda nao publicadas; 0076 e numero de MIGRACAO reservado — ver PEND-121.)***
 
 > Conferir contra `origin/main`, não contra o seu branch. Dois branches podem
 > reivindicar o mesmo número — o conflito de merge nesta linha é o alarme.
