@@ -60,6 +60,22 @@ export type DecisaoDoTurno = TurnoClassificado & {
   temaConhecimento: string | null;
   /** Como a decisão foi tomada — para telemetria, nunca para a família. */
   origem: "gpt" | "fallback_neutro";
+  /**
+   * ⚠️ `skills` FOI AVALIADO CONTRA UM CATÁLOGO VÁLIDO? — PEND-184, 09/09/2026.
+   *
+   * `false` significa que o catálogo não carregou: o bloco
+   * `<catalogo_de_skills>` não foi ao prompt e, pelo contrato, o modelo devolve
+   * `[]` com razão. Nesse estado `skills: []` NÃO é "nada do catálogo servia";
+   * é "não houve catálogo". Quem consome tem que poder distinguir as duas
+   * coisas, senão uma falha de leitura vira, silenciosamente, uma decisão
+   * negativa do modelo — que foi o defeito da PEND-184.
+   *
+   * O resto da decisão (intenção, pedido explícito, continuidade, aceite,
+   * necessidade de conhecimento) NÃO depende do catálogo e continua valendo:
+   * abortar o turno inteiro por causa de um select seria trocar um defeito
+   * silencioso por um apagão.
+   */
+  skillsAvaliadas: boolean;
 };
 
 /**
@@ -76,7 +92,7 @@ export type DecisaoDoTurno = TurnoClassificado & {
  * que esta fase retira. Falhar para o neutro é mais honesto que falhar para o
  * comportamento antigo.
  */
-const DECISAO_NEUTRA: Omit<DecisaoDoTurno, "origem"> = {
+const DECISAO_NEUTRA: Omit<DecisaoDoTurno, "origem" | "skillsAvaliadas"> = {
   intencao: "outro",
   tema: null,
   aceite: null,
@@ -168,11 +184,21 @@ export async function decidirTurno(params: {
   temaAnterior?: string | null;
   temasOnboarding?: string[];
   catalogoSkills?: SkillDoCatalogo[];
+  /**
+   * O catálogo estava DISPONÍVEL? — PEND-184.
+   *
+   * ⚠️ Não dá para deduzir isto de `catalogoSkills.length === 0`: zero skills
+   * ativas é um estado real do produto (basta desativarem todas no Admin) e uma
+   * falha de leitura é outra coisa. O default é `true` porque, para todo
+   * chamador que não sabe distinguir, o comportamento continua o de antes.
+   */
+  catalogoDisponivel?: boolean;
   supabase?: SupabaseClient | null;
   familyId?: string | null;
 }): Promise<DecisaoDoTurno> {
   const catalogo = (params.catalogoSkills ?? []).slice(0, 40);
   const permitidas = new Set(catalogo.map((s) => s.name));
+  const catalogoDisponivel = params.catalogoDisponivel !== false;
 
   const contexto = [
     params.blocoEstado,
@@ -218,13 +244,19 @@ export async function decidirTurno(params: {
       }).catch(() => {});
     }
 
-    return { ...interpretar(saida.texto, permitidas), origem: "gpt" };
+    return {
+      ...interpretar(saida.texto, permitidas, catalogoDisponivel),
+      origem: "gpt",
+    };
   } catch (e) {
     console.error(
       "[conducao:decisao] decisão do turno falhou — caindo no neutro:",
       e instanceof Error ? e.message : e,
     );
-    return { ...DECISAO_NEUTRA, origem: "fallback_neutro" };
+    // ⚠️ O NEUTRO TAMBÉM NÃO AVALIOU SKILLS. A chamada falhou inteira: dizer
+    // `skillsAvaliadas: true` aqui afirmaria que o modelo olhou o catálogo e
+    // não escolheu nada — exatamente a mentira que a PEND-184 desfez.
+    return { ...DECISAO_NEUTRA, origem: "fallback_neutro", skillsAvaliadas: false };
   }
 }
 
@@ -239,12 +271,20 @@ export async function decidirTurno(params: {
 export function interpretar(
   bruto: string,
   permitidas: Set<string>,
+  /**
+   * O catálogo estava disponível? Quando `false`, `skills` sai vazio e
+   * `skillsAvaliadas` sai `false` — ver o comentário do campo. O filtro por
+   * `permitidas` já produziria o vazio sozinho (o Set está vazio); o que muda
+   * aqui é o turno passar a DIZER isso, em vez de deixar o vazio se passar por
+   * decisão do modelo.
+   */
+  catalogoDisponivel = true,
 ): Omit<DecisaoDoTurno, "origem"> {
   try {
     const limpo = bruto.trim().replace(/^```(?:json)?/i, "").replace(/```$/, "").trim();
     const i = limpo.indexOf("{");
     const j = limpo.lastIndexOf("}");
-    if (i < 0 || j <= i) return { ...DECISAO_NEUTRA };
+    if (i < 0 || j <= i) return { ...DECISAO_NEUTRA, skillsAvaliadas: catalogoDisponivel };
     const o = JSON.parse(limpo.slice(i, j + 1)) as Record<string, unknown>;
 
     const intencao = INTENCOES.includes(o.intencao as IntencaoAyla)
@@ -265,7 +305,8 @@ export function interpretar(
       intencao,
       tema: texto(o.tema, 80),
       aceite: texto(o.aceite, 200),
-      skills,
+      skills: catalogoDisponivel ? skills : [],
+      skillsAvaliadas: catalogoDisponivel,
       // ⚠️ SÓ `true` LITERAL LIBERA A AÇÃO. Uma string "true", um 1, um objeto —
       // qualquer coisa que não seja o booleano vira `false`. O viés é sempre
       // para não disparar feature.
@@ -275,6 +316,6 @@ export function interpretar(
       temaConhecimento: texto(o.tema_conhecimento, 80),
     };
   } catch {
-    return { ...DECISAO_NEUTRA };
+    return { ...DECISAO_NEUTRA, skillsAvaliadas: catalogoDisponivel };
   }
 }

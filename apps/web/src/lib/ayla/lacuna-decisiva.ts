@@ -168,6 +168,19 @@ export type DecisaoDeLacuna = {
   corrigidas: string[];
   /** ASK ou NO_ASK, explícito. */
   decisao: "ASK" | "NO_ASK";
+  /**
+   * COMO os domínios foram escolhidos — PEND-184, 09/09/2026.
+   *
+   * `tema` é o caminho normal. `fallback_sem_catalogo` é o turno em que o
+   * catálogo de skills não carregou: o decisor não pôde dizer o tema, e em vez
+   * de emudecer (o defeito da PEND-184) este gate olha os domínios que o
+   * PERFIL já conhece. `nenhum` é quando não houve nem uma coisa nem outra.
+   *
+   * Precisa estar no rastro porque um ASK por fallback e um ASK por tema têm
+   * confiabilidades diferentes, e quem auditar depois não pode ter que adivinhar
+   * qual dos dois aconteceu.
+   */
+  origemDosDominios: "tema" | "fallback_sem_catalogo" | "nenhum";
 };
 
 /**
@@ -342,6 +355,18 @@ export function escolherLacunaDecisiva(params: {
   jaRespondido?: ReadonlySet<string>;
   /** O que a conversa recente já resolveu — ver `jaRespondidas`. */
   resolvidas?: LacunasResolvidas;
+  /**
+   * O catálogo de skills estava disponível? — PEND-184.
+   *
+   * ⚠️ QUANDO `false`, `temas` VAZIO NÃO É INFORMAÇÃO. É ausência de entrada:
+   * o bloco `<catalogo_de_skills>` não foi ao prompt do decisor e o modelo
+   * devolveu `[]` obedecendo ao contrato. Tratar isso como "nenhum tema" fez o
+   * Gate B ficar mudo no primeiro turno humano, em 09/09/2026.
+   *
+   * O default é `true` para que todo chamador que não sabe distinguir mantenha
+   * exatamente o comportamento anterior.
+   */
+  catalogoDisponivel?: boolean;
 }): DecisaoDeLacuna {
   const resolvidas = params.resolvidas ?? { fechadas: new Set<string>(), corrigidas: new Set<string>(), detalhe: [] };
   const base = {
@@ -354,16 +379,67 @@ export function escolherLacunaDecisiva(params: {
     jaRespondidas: [...resolvidas.fechadas],
     corrigidas: [...resolvidas.corrigidas],
     decisao: "NO_ASK" as const,
+    origemDosDominios: "nenhum" as DecisaoDeLacuna["origemDosDominios"],
   };
   if (!params.perfil) return { ...base, descartadas: [{ chave: "*", motivo: "perfil indisponível" }] };
 
   // Sem tema identificado não há como saber o que muda a conduta — e perguntar
   // "por perguntar" é exatamente o que este gate existe para acabar.
-  const dominios = [
-    ...new Set(params.temas.flatMap((t) => DOMINIOS_DO_TEMA[t] ?? [])),
-  ];
+  const porTema = [...new Set(params.temas.flatMap((t) => DOMINIOS_DO_TEMA[t] ?? []))];
+
+  /**
+   * A DEGRADAÇÃO CONSERVADORA — PEND-184, 09/09/2026.
+   *
+   * ⚠️ SÓ QUANDO A ENTRADA FALTOU, NUNCA QUANDO ELA VEIO VAZIA. Se o catálogo
+   * carregou e o modelo não escolheu skill nenhuma, isso É uma decisão: a
+   * conversa não era sobre um domínio do acervo, e o gate continua calado. O
+   * fallback existe só para o caso em que o decisor não teve como responder.
+   *
+   * ⚠️ E ELE OLHA O QUE O PERFIL JÁ CONHECE, não a lista inteira de domínios.
+   * Abrir todos os domínios transformaria uma falha de leitura em varredura de
+   * cadastro — o oposto do gate. Aqui, um domínio só entra se a família já
+   * contou ALGUMA coisa sobre ele: é sinal de que aquele assunto é vivo para
+   * esta criança, e é o mesmo princípio de pertinência que `desafiosAtuais` usa
+   * do outro lado. Tudo o mais continua valendo — no máximo uma escolhida, só
+   * campo aberto, correção vence histórico, escopo por criança.
+   */
+  const perfil = params.perfil;
+  const dominiosDoPerfil = () =>
+    Object.keys(CAMPOS_DECISIVOS).filter((d) => {
+      const decisivos = CAMPOS_DECISIVOS[d] ?? [];
+      // "Vivo" = a família já contou alguma coisa decisiva deste domínio
+      // (`sabemos` cobre inclusive a resposta negativa) E ainda sobra pelo menos
+      // um campo decisivo aberto. Sem a segunda metade, um domínio completo
+      // entraria só para ser descartado logo abaixo.
+      const contou = decisivos.some((campo) => perfil.sabemos(d, campo));
+      const falta = perfil.lacunasDe(d).some((c) => decisivos.includes(c.key));
+      return contou && falta;
+    });
+
+  const catalogoIndisponivel = params.catalogoDisponivel === false;
+  const dominios = porTema.length
+    ? porTema
+    : catalogoIndisponivel
+      ? dominiosDoPerfil()
+      : [];
+  const origemDosDominios: DecisaoDeLacuna["origemDosDominios"] = porTema.length
+    ? "tema"
+    : dominios.length
+      ? "fallback_sem_catalogo"
+      : "nenhum";
+
   if (!dominios.length) {
-    return { ...base, descartadas: [{ chave: "*", motivo: "tema não identificado" }] };
+    return {
+      ...base,
+      descartadas: [
+        {
+          chave: "*",
+          motivo: catalogoIndisponivel
+            ? "catálogo indisponível e o perfil não tem domínio vivo"
+            : "tema não identificado",
+        },
+      ],
+    };
   }
 
   const jaRespondido = new Set([...(params.jaRespondido ?? []), ...resolvidas.fechadas]);
@@ -390,7 +466,7 @@ export function escolherLacunaDecisiva(params: {
   }
 
   if (!candidatas.length) {
-    return { ...base, dominios, descartadas };
+    return { ...base, dominios, descartadas, origemDosDominios };
   }
 
   // ⚠️ A ORDEM TEM TRÊS CAMADAS, e nenhuma delas é `[0]` de um array qualquer —
@@ -428,6 +504,7 @@ export function escolherLacunaDecisiva(params: {
     candidatasChaves: ordenadas.map(chaveDe),
     descartadas,
     decisao: "ASK",
+    origemDosDominios,
   };
 }
 

@@ -2614,6 +2614,11 @@ async function processInboundInterno(
         continuacao: true,
         necessidadeConhecimento: "nenhum" as const,
         temaConhecimento: null,
+        // ⚠️ `true` E NÃO `false`: no fluxo da Rotina o vazio é DECISÃO do
+        // produto — o condutor manda no turno e nenhuma skill se aplica. Dizer
+        // "não avaliado" aqui ligaria o fallback da PEND-184 num turno em que
+        // ele não tem o que fazer.
+        skillsAvaliadas: true,
       }
     : await decidirTurno({
         texto: inbound.texto,
@@ -2623,7 +2628,16 @@ async function processInboundInterno(
         familyId: family.id,
         ...(await ultimasFalas(supabase, family.id, inbound.texto, await historicoDoTurno())),
         temasOnboarding: await carregarDesafiosOnboarding(supabase, membroConversa),
-        catalogoSkills: await carregarCatalogoSkills(supabase),
+        ...(await (async () => {
+          // ⚠️ FALHA ≠ VAZIO — PEND-184. O catálogo indisponível some do prompt
+          // e faz o modelo devolver `skills: []` obedecendo ao contrato; sem
+          // este sinal, aquele vazio chegaria ao Gate B e às Boas Práticas
+          // como se fosse decisão do modelo.
+          const cat = await carregarCatalogoSkills(supabase, family.id);
+          return cat.estado === "ok"
+            ? { catalogoSkills: cat.skills, catalogoDisponivel: true }
+            : { catalogoSkills: [], catalogoDisponivel: false };
+        })()),
       });
   marco(rastro, "decisor_fim");
   const intent = turnoClassificado.intencao;
@@ -3287,6 +3301,11 @@ async function processInboundInterno(
             // A diferença entre "escolhi" e "gravei" é o modelo ter perguntado.
             perguntou_de_fato: perguntou,
             gravou_lacuna: Boolean(lacunaDoTurno),
+            // ⚠️ PEND-184: um ASK por tema e um ASK por fallback têm
+            // confiabilidades diferentes. Quem auditar depois não pode ter que
+            // adivinhar qual dos dois aconteceu.
+            origem_dos_dominios: d.origemDosDominios,
+            skills_avaliadas: turnoClassificado.skillsAvaliadas !== false,
           },
           persistir: true,
         });
@@ -3764,6 +3783,9 @@ async function processInboundInterno(
       // O bloco leva tudo o que foi recuperado; vazio quando não há bloco.
       enviadas: repertorio ? bpsRecuperadas : [],
       erroNaConsulta,
+      // PEND-184: sem catálogo não houve roteamento — o vazio é falha a
+      // montante, não "nenhum conhecimento necessário".
+      catalogoIndisponivel: turnoClassificado.skillsAvaliadas === false,
     }),
   );
 

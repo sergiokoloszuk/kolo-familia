@@ -434,6 +434,8 @@ async function montarContexto(
   simulados: readonly TurnoSimulado[] = [],
   modo: ModoTurno = "normal",
   skills: readonly string[] = [],
+  /** Ver PEND-184: `skills` vazio por falha ≠ `skills` vazio por decisão. */
+  catalogoDisponivel = true,
 ): Promise<ContextoDoTurno> {
   // As três leituras de abertura não dependem uma da outra: vão juntas.
   // ⚠️ `lerPerfilFamilia` SUBIU PARA A ONDA 1 — 26/08/2026, quick win 3.
@@ -570,6 +572,10 @@ async function montarContexto(
           ),
           temas: skills,
           relato: mensagem,
+          // ⚠️ SEM ISTO A FALHA VIRA SILÊNCIO. Ver PEND-184: catálogo
+          // indisponível some do prompt do decisor, o modelo devolve `[]` com
+          // razão, e o Gate B tratava isso como "nenhum tema" — mudo.
+          catalogoDisponivel,
           // ⚠️ A CONTINUIDADE VEM DA MESMA LEITURA. `falas` já está carregada
           // acima; `jaRespondidas` só a interpreta. Escopo por criança na
           // origem: `ayla_messages` carrega `membro_atipico_id`.
@@ -799,6 +805,13 @@ export async function responderExperimental(
       tema: string | null;
       aceite: string | null;
       skills: string[];
+      /**
+       * ⚠️ `skills` FOI AVALIADO CONTRA UM CATÁLOGO VÁLIDO? — PEND-184.
+       * `false` significa que o catálogo não carregou e o vazio é ausência de
+       * entrada, não decisão do modelo. Opcional para não quebrar chamador que
+       * não sabe distinguir — e o default preserva o comportamento anterior.
+       */
+      skillsAvaliadas?: boolean;
     } | null;
     /**
      * ⚠️ SÓ O SIMULADOR PASSA ISTO — e existe porque `null` era uma resposta
@@ -834,6 +847,14 @@ export async function responderExperimental(
     const modo: ModoTurno = params.modo ?? "normal";
     const posTrial = modo === "pos_trial";
     const skillsDoTurno = posTrial ? [] : (params.turnoClassificado?.skills ?? []);
+    /**
+     * ⚠️ O CATÁLOGO ESTAVA DISPONÍVEL? — PEND-184, 09/09/2026.
+     *
+     * No pós-trial `skills` é zerado por DECISÃO do produto, não por falha:
+     * ali o vazio é legítimo e o Gate B deve continuar calado. Fora dele, o
+     * sinal vem do decisor do turno.
+     */
+    const catalogoDisponivel = posTrial ? true : params.turnoClassificado?.skillsAvaliadas !== false;
     // ⚠️ UM CRONÔMETRO POR OPERAÇÃO — 26/08/2026.
     //
     // Medir em volta do `Promise.all` responde "quanto demorou a mais lenta",
@@ -898,6 +919,7 @@ export async function responderExperimental(
         params.turnosSimulados ?? [],
         modo,
         skillsDoTurno,
+        catalogoDisponivel,
       ),
     );
     const [ctxTurno, core, bps, estadoTrial, evidencias, docTrial] = await Promise.all([
