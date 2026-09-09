@@ -8511,47 +8511,50 @@ PEND-183 (plano automatico), PEND-185 (rastro de conhecimento no caminho vivo),
 PEND-188 (conducao condicional, Gate F).
 
 ### PEND-190
-**A mae respondeu a pergunta da Ayla e a resposta NAO virou conhecimento**
-Bloco: **B · Ayla** · Prioridade: **P1**
-STATUS: **ABERTA** · Aberta em: 2026-09-10
+**IMPROCEDENTE — o fato FOI incorporado; o erro foi da minha varredura**
+Bloco: **B · Ayla** · Prioridade: **—**
+STATUS: **IMPROCEDENTE (retratada)** · Aberta em: 2026-09-10 · Retratada em: 2026-09-10
 
-Medido no turno 2 do teste humano de 10/09/2026 (`a81c9fa`).
+Abri esta pendencia afirmando que a resposta da Karina no turno 2 nao tinha sido
+incorporada ao Perfil. **Estava errado.** A auditoria de `sugestao_perfil_vivos`
+mostra o contrario:
 
-Turno 1, a Ayla perguntou: *"Ela fica mais irritada quando voce avisa antes, ou
-principalmente quando precisa encerrar no meio da brincadeira?"*
+    21:08:03 · campo=rotina · status=APROVADA · operacao=reescrever · confianca=80
+    texto: "Manu reage com irritacao e gritos a interrupcoes de atividades
+            prazerosas; responde melhor a avisos previos (5 min e 1 min antes) e
+            oferecimento de escolha sobre o que vem depois."
 
-Turno 2, a Karina respondeu com precisao: *"Ela fica mais irritada
-principalmente quando precisa encerrar no meio da brincadeira."*
+E o fato esta no Perfil, em `rotina` → "O que ajuda nas transicoes":
 
-**Esse fato nao esta em lugar nenhum do Perfil.** Varri os 15 dominios da Manu
-procurando "brincadeira", "interromp", "encerrar", "concluir", "terminar": o
-unico casamento e um texto antigo sobre a escola. `emocional.gatilhos` continua
-"insistencia; pressao para fazer atividades; rotina de sair de casa para escola;
-mudancas abruptas de planos" — sem o gatilho que ela acabou de nomear.
+    "oferecer escolha sobre o que vem depois apos atividades prazerosas reduz
+     gritos e irritacao"
 
-E `perfil_vivo_membro.updated_at` MUDOU as 21:07:58, no mesmo segundo do
-`ayla_rotear_kv`. Entao o pipeline **rodou e escreveu**; o que ele nao fez foi
-guardar o fato que a propria Ayla tinha perguntado.
+**POR QUE EU NAO ACHEI.** Dois erros meus somados:
 
-**A PROVA INDIRETA:** as candidatas do Gate B sao IDENTICAS nos dois turnos —
-`["sensorial.perfil","comunicacao.contato","comunicacao.iniciativa","sono.adormece","sono.despertares","sono.atrapalha"]`.
-Nada mudou de estado.
+1. **Procurei pelas palavras da mae, nao pelo sentido.** Meu filtro era
+   `brincadeira|interromp|encerrar|conclu|terminar`; a incorporacao parafraseou
+   para "atividades prazerosas". Busca lexical nao prova ausencia semantica.
+2. **Truncei em 700 caracteres.** O campo "O que ajuda nas transicoes" tem 1.140
+   caracteres e o fato novo esta no FIM. Meu print cortou exatamente onde os
+   anexos caem.
 
-**POR QUE ISSO IMPORTA AGORA.** A PEND-187A tirou o fechamento do historico e
-pos a fonte de verdade no Perfil, aceitando por escrito o risco de repeticao se
-a incorporacao falhar. **A incorporacao falhou no primeiro par de turnos
-observado.** O risco nao e teorico.
+E a segunda varredura, a dos "finais de cada dominio", tambem nao pegou: ela
+lia os ultimos 190 caracteres do DOMINIO, e o fato estava no fim de um SUBCAMPO
+que nao e o ultimo do bloco.
 
-⚠️ **E O SISTEMA NAO SABE DISSO.** Nao ha rastro ligando "a Ayla perguntou X" a
-"X foi incorporado". E exatamente a sonda que a PEND-187B propoe com
-`campo_investigado` — e este turno mostra que a sonda mede um problema real, nao
-hipotetico.
+**O QUE FICA COMO OBSERVACAO, sem virar pendencia sem evidencia:** o roteador
+arquivou o fato em `rotina` → "O que ajuda nas transicoes", isto e, guardou a
+ESTRATEGIA. A metade que e GATILHO — "interromper atividade prazerosa dispara
+irritacao" — nao foi para `emocional.gatilhos`. Nao afirmo que isso seja
+defeito: o fato esta legivel e num dominio que a conversa futura le. Se virar
+frente, precisa de amostra, nao de um caso.
 
-**A investigar (nao corrigir agora):** por que o roteador do Kolo Vivo nao
-classificou a resposta como gatilho de `emocional`; se a resposta curta que
-apenas ESCOLHE entre duas opcoes oferecidas ("principalmente quando X") e
-tratada como sem conteudo; e se a incorporacao deveria receber a pergunta que a
-originou como contexto.
+⚠️ **LICAO, que e o que sobra de util aqui:** ausencia so se afirma com a busca
+certa. Neste repositorio a incorporacao PARAFRASEIA, entao procurar pelas
+palavras da familia produz falso negativo — e eu abri um P1 em cima de um.
+Confere com [[auditoria-precisa-de-status]]: todo achado carrega data, estado e
+evidencia, e a evidencia aqui era a tabela de auditoria que eu nao tinha
+consultado.
 
 **Proximo ID livre: PEND-191. *(024 e 025 reservadas por frentes ainda nao publicadas; 0076 e numero de MIGRACAO reservado — ver PEND-121.)***
 
