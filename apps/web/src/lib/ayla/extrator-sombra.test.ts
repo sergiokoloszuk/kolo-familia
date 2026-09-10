@@ -92,8 +92,22 @@ describe("a flag manda", () => {
     expect(eventos).toHaveLength(0);
   });
 
-  it("valor diferente de 1 também é desligada", async () => {
-    process.env.KOLO_EXTRATOR_SOMBRA = "true";
+  it("aceita `true` como o resto do repositório — e sem caixa", async () => {
+    // ⚠️ ESTE TESTE NASCEU DE UM DEFEITO REAL. A primeira versão só aceitava
+    // "1"; a variável foi configurada em produção, o deploy subiu e a sombra
+    // continuou inerte. `AYLA_EXPERIMENTAL_TODAS` e `AYLA_POS_TRIAL` sempre
+    // aceitaram os dois — inventar uma convenção nova custou um deploy.
+    process.env.KOLO_EXTRATOR_SOMBRA = "TRUE";
+    expect(extratorSombraLigado()).toBe(true);
+    await medirExtratorEmSombra(turno);
+    expect(chamadasExtrair).toHaveLength(1);
+  });
+
+  it("valor que não é 1 nem true continua desligada", async () => {
+    for (const v of ["0", "sim", "on", "ligado", " "]) {
+      process.env.KOLO_EXTRATOR_SOMBRA = v;
+      expect(extratorSombraLigado()).toBe(false);
+    }
     await medirExtratorEmSombra(turno);
     expect(chamadasExtrair).toHaveLength(0);
   });

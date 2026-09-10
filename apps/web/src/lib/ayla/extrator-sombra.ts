@@ -48,9 +48,23 @@ import { logEvent } from "@/lib/log";
  * falha aqui não pode derrubar turno nenhum.
  */
 
-/** A flag. Ausente = desligada, que é o estado em que isto entra no ar. */
+/**
+ * A flag. Ausente = desligada, que é o estado em que isto entra no ar.
+ *
+ * ⚠️ A MESMA LEITURA DE `AYLA_EXPERIMENTAL_TODAS` E `AYLA_POS_TRIAL`, e isso
+ * não é estilo: `1` **e** `true`, sem caixa, com `trim`, dentro de `try`. A
+ * primeira versão daqui aceitava só `"1"` — inventei uma convenção própria num
+ * repositório que já tinha uma, e o custo apareceu na hora: a variável foi
+ * configurada em produção, o deploy subiu e o health respondeu `false`, sem
+ * ninguém conseguir dizer se o erro era do painel, do nome ou do valor.
+ */
 export function extratorSombraLigado(): boolean {
-  return (process.env.KOLO_EXTRATOR_SOMBRA ?? "").trim() === "1";
+  try {
+    const v = (process.env.KOLO_EXTRATOR_SOMBRA ?? "").trim().toLowerCase();
+    return v === "1" || v === "true";
+  } catch {
+    return false;
+  }
 }
 
 export type TurnoParaSombra = {
