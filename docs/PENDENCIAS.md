@@ -8840,6 +8840,21 @@ FALSO POSITIVO, nao verdadeiro positivo. Com a correcao neutralizada, **4 ficam
 vermelhos**. Suite completa: **3.730 passaram, 7 skipped, 0 falharam**.
 `npx tsc --noEmit` limpo e `npm run build` compilado.
 
+**DEPLOY (10/09/2026, 12:18 UTC).** Publicada em `f8577a8`; o health reporta
+esse SHA servido, `ref: main`, `ambiente: production`, `ok: true`. Desde o
+deploy: **0 erros ou fatais** em `eventos_app` e **nenhum** `lacuna_decisao` —
+nenhuma familia conversou ainda.
+
+**PROVA SOBRE A LINHA REAL, com o commit publicado.** Executando
+`perfilConsultavelDaLinha` + `escolherLacunaDecisiva` sobre a linha de producao
+do Lorenzo: `decisao: ASK`, `escolhida: socializacao.com_quem`, e nenhum degrau
+pre-verbal entre as candidatas.
+
+⚠️ **LIMITE DECLARADO, igual ao da PEND-189:** essa execucao rodou FORA do
+processo da Vercel, contra o dado ao vivo, com a working tree identica ao commit
+que o health reporta (`git diff HEAD` vazio no arquivo). `degrauProvadoPeloPerfil`
+e funcao pura, sem ambiente nem I/O — mas a distincao existe e fica escrita.
+
 **O QUE FALTA PARA A BAIXA:** um turno real em que o tema seja comunicacao e o
 perfil prove o pre-requisito, com `lacuna_decisao` mostrando o descarte por
 `pre-requisito provado`.
