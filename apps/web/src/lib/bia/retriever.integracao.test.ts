@@ -27,7 +27,23 @@ import { buscarConhecimentosBIA, montarConsultaTexto } from "./retriever";
 
 const MIGRACAO = resolve(__dirname, "../../../../../supabase/migrations/0071_bia.sql");
 
-/** Colunas declaradas em `create table public.bia_chunks`. */
+/**
+ * ⚠️ O SCHEMA DE `bia_chunks` NÃO CABE MAIS NUMA MIGRAÇÃO SÓ — 10/09/2026.
+ *
+ * A 0086 acrescentou `pressupoe_ausencia_de` (o veto da PEND-196), e esta
+ * guarda reprovou o `SELECT_CHUNK` por conhecer apenas a 0071. Ela estava CERTA
+ * em reprovar: a coluna existia no código e não na migração que ela lia. A
+ * correção é ensiná-la a ver os `alter table` posteriores — nunca afrouxar a
+ * regra, que é justamente a que pega "coluna que o retriever pede e o banco não
+ * tem".
+ *
+ * Toda migração futura que acrescentar coluna a `bia_chunks` entra nesta lista.
+ */
+const ALTERACOES = [
+  resolve(__dirname, "../../../../../supabase/migrations/0086_bia_pressupoe_ausencia.sql"),
+];
+
+/** Colunas declaradas na criação da tabela, mais as acrescentadas depois. */
 function colunasDaMigracao(): Set<string> {
   const sql = readFileSync(MIGRACAO, "utf8");
   const corpo = sql.slice(
@@ -38,6 +54,12 @@ function colunasDaMigracao(): Set<string> {
     // "  nome_da_coluna tipo ..." — ignora comentários, constraints e índices.
     const m = linha.match(/^\s{2}([a-z_]+)\s+(uuid|text|int|boolean|timestamptz|tsvector)/);
     if (m) cols.add(m[1]);
+  }
+  for (const caminho of ALTERACOES) {
+    for (const linha of readFileSync(caminho, "utf8").split("\n")) {
+      const m = linha.match(/add column if not exists\s+([a-z_]+)\s/);
+      if (m) cols.add(m[1]);
+    }
   }
   return cols;
 }

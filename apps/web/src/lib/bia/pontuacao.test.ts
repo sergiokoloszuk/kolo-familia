@@ -37,6 +37,7 @@ function chunk(over: Partial<ChunkParaPontuar> = {}): ChunkParaPontuar {
     diagnosticos_relacionados: [],
     nucleos_relacionados: [],
     habilidades_relacionadas: [],
+    pressupoe_ausencia_de: [],
     nivel_de_cautela: "baixo",
     muda_conduta: null,
     texto_original:
@@ -411,6 +412,7 @@ describe("relato curto não vira pertinência (calibração da cobertura)", () =
     nucleos_relacionados: [],
     habilidades_relacionadas: [],
       nivel_de_cautela: "baixo" as const,
+      pressupoe_ausencia_de: [],
       muda_conduta: null,
       texto_original: texto,
       revisao_pendente: false,

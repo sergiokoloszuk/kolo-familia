@@ -37,6 +37,7 @@ function r(
       diagnosticos_relacionados: [],
       nucleos_relacionados: [],
       habilidades_relacionadas: [],
+    pressupoe_ausencia_de: [],
       nivel_de_cautela: "baixo",
       muda_conduta: null,
       texto_original: texto,

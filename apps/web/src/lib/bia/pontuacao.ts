@@ -1,5 +1,5 @@
 import type { BiaChunk, BiaNucleo, BiaTipoConhecimento } from "./tipos";
-import { BIA_NUCLEO_LABEL, BIA_NUCLEO_PARA_DOMINIOS, BIA_NUCLEOS, faixaServe } from "./tipos";
+import { BIA_NUCLEO_LABEL, BIA_NUCLEO_PARA_DOMINIOS, BIA_NUCLEOS, faixaServe, habilidadesImplicadas } from "./tipos";
 
 /**
  * PONTUAÇÃO DA BIA — o núcleo do retriever, PURO.
@@ -59,6 +59,24 @@ export type ContextoBia = {
   objetivo?: string | null;
   /** O trecho relevante da conversa — o sinal textual mais forte. */
   textoDaConversa?: string | null;
+  /**
+   * O QUE O PERFIL JÁ PROVA SOBRE ESTA CRIANÇA — PEND-196.
+   *
+   * Vocabulário fechado (`BIA_HABILIDADES` em `tipos.ts`); string fora dele é
+   * ignorada em silêncio, nunca derruba a chamada. Alimenta o VETO de
+   * `filtrarDuro`, não a pontuação: provar uma habilidade nunca faz um chunk
+   * subir, só faz o incompatível sair.
+   *
+   * ⚠️ QUEM PREENCHE É QUEM CHAMA, e isso é a fronteira. A BIA não lê perfil,
+   * não importa `degrauProvadoPeloPerfil` e não conhece o decisor de lacuna —
+   * ela recebe FATOS já estruturados e decide sobre os próprios chunks. Acoplar
+   * os dois módulos por implementação faria uma mudança no Gate B mexer no
+   * recuperador sem ninguém perceber.
+   *
+   * ⚠️ AINDA NÃO HÁ PRODUTOR NO CAMINHO VIVO. Hoje só a bancada preenche, à
+   * mão. Transformar Perfil estruturado nestas chaves é a PEND-197.
+   */
+  habilidadesProvadas?: readonly string[] | null;
 };
 
 /** O subconjunto de colunas que a pontuação precisa. */
@@ -82,6 +100,9 @@ export type ChunkParaPontuar = Pick<
   // exatamente essa metade que não tinha como pontuar.
   | "nucleos_relacionados"
   | "habilidades_relacionadas"
+  // ⚠️ O VETO — PEND-196. Ver `filtrarDuro`. Diferente de
+  // `habilidades_relacionadas`: aquele SOMA, este EXCLUI.
+  | "pressupoe_ausencia_de"
   | "nivel_de_cautela"
   | "muda_conduta"
   | "texto_original"
@@ -351,6 +372,8 @@ type ContextoNormalizado = {
   alvoRadical: Set<string>;
   temSinalDeRisco: boolean;
   temMudancaAbrupta: boolean;
+  /** Fecho transitivo do que o contexto prova. Ver `habilidadesImplicadas`. */
+  habilidadesProvadas: ReturnType<typeof habilidadesImplicadas>;
 };
 
 const DIAGNOSTICOS_CONHECIDOS: Array<[string, RegExp]> = [
@@ -415,6 +438,7 @@ export function normalizarContexto(ctx: ContextoBia): ContextoNormalizado {
     alvoRadical: new Set([...alvo].map(radical)),
     temSinalDeRisco: contextoTemSinalDeRisco(ctx),
     temMudancaAbrupta: contextoTemMudancaAbrupta(ctx),
+    habilidadesProvadas: habilidadesImplicadas(ctx.habilidadesProvadas),
   };
 }
 
@@ -425,7 +449,8 @@ export function normalizarContexto(ctx: ContextoBia): ContextoNormalizado {
 export type MotivoExclusao =
   | "revisao_pendente"
   | "faixa_etaria"
-  | "nao_usar_sem_contexto";
+  | "nao_usar_sem_contexto"
+  | "habilidade_ja_provada";
 
 /**
  * O chunk está fora, e por quê? `null` = passou.
@@ -445,6 +470,26 @@ export function filtrarDuro(
 ): MotivoExclusao | null {
   if (chunk.revisao_pendente) return "revisao_pendente";
   if (!faixaServe(chunk, ctx.idadeMeses)) return "faixa_etaria";
+  /**
+   * ⚠️ O VETO POR HABILIDADE JÁ PROVADA — PEND-196.
+   *
+   * VETO, NÃO PENALIDADE, e a diferença não é de grau. Um chunk rebaixado
+   * continua elegível: se a cota dele estiver vazia, ele volta. Foi assim que
+   * um adolescente de 15 anos que escreve redação recebeu a escada pré-verbal
+   * na bancada de 45 chunks. Conhecimento incompatível com o que a criança já
+   * demonstrou não deve competir — deve sair.
+   *
+   * ⚠️ AUSÊNCIA DE PROVA NÃO É PROVA DE AUSÊNCIA. Só veta o que o contexto
+   * afirma: perfil que nada informa não veta nada, e o conhecimento continua
+   * disponível. O viés é deliberado — uma recuperação a mais custa um turno;
+   * uma vetada indevidamente custa a conduta de quem mais precisava dela.
+   */
+  if (chunk.pressupoe_ausencia_de?.length && ctx.habilidadesProvadas.size > 0) {
+    const provada = chunk.pressupoe_ausencia_de.find((h) =>
+      ctx.habilidadesProvadas.has(h as never),
+    );
+    if (provada) return "habilidade_ja_provada";
+  }
   if (
     chunk.nivel_de_cautela === "nao_usar_sem_contexto" &&
     !ctx.nucleosDoDominio.includes(chunk.nucleo)

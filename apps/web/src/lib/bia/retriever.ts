@@ -30,7 +30,7 @@ import {
 
 /** Colunas que a pontuação precisa. Nada além — o texto já é grande. */
 const SELECT_CHUNK =
-  "id, nucleo, secao, titulo, tipo_conhecimento, faixa_etaria_min_meses, faixa_etaria_max_meses, faixa_rotulo, situacoes_relacionadas, diagnosticos_relacionados, nucleos_relacionados, habilidades_relacionadas, nivel_de_cautela, muda_conduta, texto_original, revisao_pendente, ordem";
+  "id, nucleo, secao, titulo, tipo_conhecimento, faixa_etaria_min_meses, faixa_etaria_max_meses, faixa_rotulo, situacoes_relacionadas, diagnosticos_relacionados, nucleos_relacionados, habilidades_relacionadas, pressupoe_ausencia_de, nivel_de_cautela, muda_conduta, texto_original, revisao_pendente, ordem";
 
 /** Teto de candidatos por consulta. Espelha CANDIDATAS_MAX das Boas Práticas. */
 const CANDIDATOS_POR_CONSULTA = 120;

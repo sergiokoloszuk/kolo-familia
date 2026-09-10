@@ -9087,7 +9087,7 @@ e recuperado pelo caso Mario na bancada.
 ### PEND-196
 **Conhecimento pre-verbal recuperado para crianca que ja fala — a PEND-192 do lado da BIA**
 Bloco: **B · Ayla** · Prioridade: **P1**
-STATUS: **ABERTA — proposta pronta, NAO implementada (aguarda decisao)** · Aberta em: 2026-09-10
+STATUS: **BAIXADA — implementada e provada na bancada (10/10)** · Aberta em: 2026-09-10 · Baixa em: 2026-09-10
 
 Medido na bancada do corpus completo (45 chunks, 10 casos, `rodar-corpus.mts`).
 
@@ -9143,7 +9143,46 @@ ingerido antes, os 9 chunks precisam de um UPDATE depois — barato, porque o
 chunk pre-verbal, e o caso 2 (crianca que leva pela mao) continua recuperando
 todos — provado na mesma bancada, sem alterar os chunks.
 
-**Proximo ID livre: PEND-197. *(024 e 025 reservadas por frentes ainda nao publicadas; 0076 e numero de MIGRACAO reservado — ver PEND-121.)***
+### PEND-197
+**Quem transforma o Perfil Vivo em `habilidadesProvadas` — o produtor que ainda nao existe**
+Bloco: **B · Ayla** · Prioridade: **P1**
+STATUS: **ABERTA — pre-requisito de qualquer conexao da BIA ao prompt** · Aberta em: 2026-09-10
+
+A PEND-196 fechou o CONSUMIDOR: a BIA veta conhecimento incompativel com o que o
+contexto prova. O produtor nao existe.
+
+**O QUE ESTA PROVADO E O QUE NAO ESTA.** A bancada de 10 casos passou 10/10 — e
+em todos eles `habilidadesProvadas` foi preenchido **a mao**, a partir da fala
+da familia ("ele conversa bem", "as vezes aponta"). Isso prova que o veto
+funciona quando recebe o conjunto certo. **Nao prova que o sistema vivo sabe
+construir esse conjunto.**
+
+**O RISCO E CONHECIDO E TEM NOME.** Se o produtor reinterpretar prosa livre, ele
+repete a classe da PEND-192: la o fato "Conversa bem" estava em
+`comunicacao.outras` e o Gate B nao enxergava, porque le CAMPO ESTRUTURADO. Um
+produtor que leia `outras` com regex para decidir `fala_funcional` seria
+exatamente a regex ampla que a PEND-189 proibe.
+
+**AS OPCOES, sem decidir agora:**
+
+1. **Reusar `degrauProvadoPeloPerfil`** (lacuna-decisiva.ts) e traduzir o degrau
+   provado para o vocabulario `BIA_HABILIDADES`. A traducao mora em quem CHAMA,
+   nunca dentro de `lib/bia` — a fronteira da PEND-196 e deliberada.
+2. **Leitor proprio** sobre `perfilConsultavelDaLinha`, com a mesma lista
+   fechada de evidencias.
+3. **Esperar a PEND-194 fase 2**: com o extrator unificado escrevendo em campo
+   estruturado, `comunicacao.forma`/`vocabulario`/`conversa` passam a ser
+   confiaveis, e o produtor fica trivial.
+
+⚠️ **A opcao 3 e a unica que ataca a causa.** As duas primeiras convivem com o
+dado torto; a terceira conserta o dado. Isso liga esta pendencia a PEND-194, que
+esta BLOQUEADA EXTERNAMENTE.
+
+**Criterio de conclusao:** um turno real em que `habilidadesProvadas` seja
+construido pelo sistema, e a bancada dos 10 casos passe com o conjunto vindo do
+Perfil em vez da mao.
+
+**Proximo ID livre: PEND-198. *(024 e 025 reservadas por frentes ainda nao publicadas; 0076 e numero de MIGRACAO reservado — ver PEND-121.)***
 
 > Conferir contra `origin/main`, não contra o seu branch. Dois branches podem
 > reivindicar o mesmo número — o conflito de merge nesta linha é o alarme.

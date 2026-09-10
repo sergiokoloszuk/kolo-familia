@@ -130,6 +130,123 @@ export const BIA_PUBLICOS = ["familia", "escola", "terapeuta"] as const;
 export type BiaPublico = (typeof BIA_PUBLICOS)[number];
 
 // ============================================================
+// Habilidades — o vocabulário do veto (PEND-196)
+// ============================================================
+
+/**
+ * AS HABILIDADES QUE UM CHUNK PODE PRESSUPOR AUSENTES — e que um Perfil pode
+ * provar presentes. Vocabulário FECHADO, e é o fechamento que é o ponto.
+ *
+ * ⚠️ POR QUE UMA LISTA FECHADA, E NÃO TEXTO LIVRE. Sem ela, "fala", "verbal",
+ * "linguagem" e "conversa" viram quatro conceitos diferentes que ninguém
+ * consegue cruzar — e o veto passa a depender de quem digitou a string. É o
+ * mesmo motivo de `nucleo` e `tipo_conhecimento` terem CHECK na 0071: o banco
+ * recusa o INSERT e a divergência aparece na importação, não em silêncio numa
+ * resposta.
+ *
+ * ⚠️ ESTE VOCABULÁRIO NÃO É O DO KOLO VIVO NEM O DO GATE B. Ele descreve
+ * CAPACIDADES da criança, não campos de perfil (`comunicacao.contato`) nem
+ * degraus de um decisor. Quem chama a BIA traduz o que sabe para cá — e é
+ * exatamente essa tradução que mantém os dois lados desacoplados.
+ */
+export const BIA_HABILIDADES = [
+  /** Nota o outro: desvia o foco do objeto para o rosto de quem chega. */
+  "atencao_social",
+  /** Triângulo criança-objeto-adulto: olha para onde o outro aponta. */
+  "atencao_compartilhada",
+  /** Copia ações simples, com e sem objeto. */
+  "imitacao",
+  /** Aponta, mostra, usa gesto com intenção de comunicar. */
+  "gestos_intencionais",
+  /** Bate-volta: sustenta a alternância numa troca. */
+  "troca_de_turnos",
+  /** Usa símbolo — fala, escrita ou CAA — para comunicar. */
+  "comunicacao_simbolica",
+  /** Usa a FALA para resolver demandas do cotidiano. */
+  "fala_funcional",
+  /** Fala em frases, não em palavras isoladas. */
+  "frases",
+  /** Conversa recíproca: mantém assunto, argumenta, discorda. */
+  "conversa_reciproca",
+  /** Lê e escreve com autonomia. */
+  "leitura_escrita",
+] as const;
+
+export type BiaHabilidade = (typeof BIA_HABILIDADES)[number];
+
+/**
+ * O QUE CADA HABILIDADE PROVADA IMPLICA — a cadeia de pré-requisitos.
+ *
+ * ⚠️ PROVENIÊNCIA: `docs/documentos-ayla/material-pos-v1-ORIGINAL.md` §3, hoje
+ * versionado no repositório: *"fala funcional exige troca de turnos, que exige
+ * gestos, que exige imitação, que exige atenção compartilhada, que exige
+ * atenção social"*. A fonte é o documento — **não** `ESCADA_COMUNICACAO` de
+ * `lacuna-decisiva.ts`, que este módulo não importa e não conhece. Os dois
+ * lados codificam o mesmo fato clínico a partir da mesma fonte, cada um no seu
+ * vocabulário; acoplá-los por implementação seria pior que a coincidência.
+ *
+ * ⚠️ O QUE **NÃO** ESTÁ AQUI, E POR QUÊ. `leitura_escrita` NÃO implica
+ * `fala_funcional`: existe pessoa que escreve e não fala — é o perfil de quem
+ * usa CAA por texto, e vetar conteúdo de fala para ela seria apagar justamente
+ * quem mais precisa. `frases` também não implica `conversa_reciproca`: frase
+ * ecolálica é frase. Cada seta abaixo é uma afirmação clínica, e a lista curta
+ * é deliberada — na dúvida, não implica.
+ */
+export const BIA_HABILIDADE_IMPLICA: Record<BiaHabilidade, readonly BiaHabilidade[]> = {
+  atencao_social: [],
+  atencao_compartilhada: ["atencao_social"],
+  imitacao: ["atencao_social"],
+  gestos_intencionais: ["atencao_social", "atencao_compartilhada"],
+  troca_de_turnos: ["atencao_social", "atencao_compartilhada"],
+  comunicacao_simbolica: ["atencao_social", "atencao_compartilhada"],
+  fala_funcional: [
+    "atencao_social",
+    "atencao_compartilhada",
+    "imitacao",
+    "gestos_intencionais",
+    "troca_de_turnos",
+    "comunicacao_simbolica",
+  ],
+  frases: ["fala_funcional", "atencao_social", "atencao_compartilhada", "imitacao", "gestos_intencionais", "troca_de_turnos", "comunicacao_simbolica"],
+  conversa_reciproca: [
+    "fala_funcional",
+    "frases",
+    "troca_de_turnos",
+    "atencao_social",
+    "atencao_compartilhada",
+    "imitacao",
+    "gestos_intencionais",
+    "comunicacao_simbolica",
+  ],
+  leitura_escrita: ["comunicacao_simbolica", "atencao_social", "atencao_compartilhada"],
+};
+
+/**
+ * Fecho transitivo do que o conjunto provado implica.
+ *
+ * ⚠️ IGNORA EM SILÊNCIO o que não está no vocabulário. Quem chama pode ter
+ * outras palavras; string desconhecida não vira habilidade nem derruba a
+ * chamada — ela simplesmente não prova nada. Errar para MENOS aqui custa uma
+ * recuperação a mais; errar para MAIS apaga conhecimento de quem precisa dele.
+ */
+export function habilidadesImplicadas(
+  provadas: readonly string[] | null | undefined,
+): Set<BiaHabilidade> {
+  const saida = new Set<BiaHabilidade>();
+  const fila: BiaHabilidade[] = [];
+  for (const h of provadas ?? []) {
+    if ((BIA_HABILIDADES as readonly string[]).includes(h)) fila.push(h as BiaHabilidade);
+  }
+  while (fila.length) {
+    const h = fila.pop()!;
+    if (saida.has(h)) continue;
+    saida.add(h);
+    for (const dep of BIA_HABILIDADE_IMPLICA[h]) if (!saida.has(dep)) fila.push(dep);
+  }
+  return saida;
+}
+
+// ============================================================
 // Mapa núcleo da BIA → domínios do Kolo Vivo
 // ============================================================
 
@@ -200,6 +317,19 @@ export type BiaChunk = {
   habilidades_relacionadas: string[];
   diagnosticos_relacionados: string[];
   nucleos_relacionados: string[];
+  /**
+   * O QUE ESTE CHUNK PRESSUPÕE QUE A CRIANÇA AINDA NÃO TEM — PEND-196.
+   *
+   * ⚠️ NÃO É O INVERSO DE `habilidades_relacionadas`. Aquele campo diz "este
+   * conhecimento fala sobre X" e SOMA score; este diz "este conhecimento só faz
+   * sentido se X ainda não existe" e VETA. Um chunk sobre troca de turnos se
+   * relaciona a `troca_de_turnos` nos dois sentidos e significa coisas opostas
+   * em cada um — foi por isso que reaproveitar o campo antigo teria criado uma
+   * coluna com duas semânticas, o defeito que o Gate A cobrou em `transicoes`.
+   *
+   * Vazio é o normal: a maioria do conhecimento não pressupõe ausência de nada.
+   */
+  pressupoe_ausencia_de: BiaHabilidade[];
 
   perguntas_investigativas: string[];
   hipoteses: string[];

@@ -50,7 +50,8 @@
       "Chamar de preguiça, manha ou birra"
     ],
     "quando_encaminhar": null,
-    "hash": "0d5e2851a6c611fff50d8511864ba1d21d02ce0c315ba5aa60f86c5c4580446a"
+    "hash": "0d5e2851a6c611fff50d8511864ba1d21d02ce0c315ba5aa60f86c5c4580446a",
+    "pressupoe_ausencia_de": []
   },
   {
     "id": "pos-a-01-escolha",
@@ -102,7 +103,8 @@
       "Transformar a escolha em pergunta aberta durante a crise"
     ],
     "quando_encaminhar": null,
-    "hash": "4184730d540d3c87b547cf11d3a7363a3707ae53b5e912eff8d4a8e5731060f4"
+    "hash": "4184730d540d3c87b547cf11d3a7363a3707ae53b5e912eff8d4a8e5731060f4",
+    "pressupoe_ausencia_de": []
   },
   {
     "id": "pos-a-02-cid11",
@@ -145,7 +147,8 @@
       "Classificar a criança por rótulo de gravidade em vez de por função"
     ],
     "quando_encaminhar": null,
-    "hash": "39a7f3cb2fef101bd9ad9fb21c19dd0e2f3bfb1e66fb7383b311da4c9dc8ac46"
+    "hash": "39a7f3cb2fef101bd9ad9fb21c19dd0e2f3bfb1e66fb7383b311da4c9dc8ac46",
+    "pressupoe_ausencia_de": []
   },
   {
     "id": "pos-a-02-culpa",
@@ -183,7 +186,8 @@
       "Deixar passar sem resposta uma frase de autoculpabilização"
     ],
     "quando_encaminhar": null,
-    "hash": "2364b794c4c250fcccfd9e783eece7eb3a085da9e397568d2148c48860ca992b"
+    "hash": "2364b794c4c250fcccfd9e783eece7eb3a085da9e397568d2148c48860ca992b",
+    "pressupoe_ausencia_de": []
   },
   {
     "id": "pos-a-03-escada",
@@ -231,7 +235,12 @@
       "Treinar vocabulário quando o degrau ausente é atenção social ou imitação"
     ],
     "quando_encaminhar": null,
-    "hash": "0ddb5a1bd0af4b098b84e99da6da28bb7d1e29b220668b0a8e0984f6ec3da229"
+    "hash": "0ddb5a1bd0af4b098b84e99da6da28bb7d1e29b220668b0a8e0984f6ec3da229",
+    "pressupoe_ausencia_de": [
+      "fala_funcional",
+      "frases",
+      "conversa_reciproca"
+    ]
   },
   {
     "id": "pos-a-03-contato",
@@ -281,7 +290,11 @@
       "Exigir contato visual como condição para responder ou entregar algo"
     ],
     "quando_encaminhar": null,
-    "hash": "20e24edc60f5180dab58dead9188d58e7aeacc0b732d3da8691f98a8420b998d"
+    "hash": "20e24edc60f5180dab58dead9188d58e7aeacc0b732d3da8691f98a8420b998d",
+    "pressupoe_ausencia_de": [
+      "atencao_social",
+      "conversa_reciproca"
+    ]
   },
   {
     "id": "pos-a-03-mao",
@@ -332,7 +345,11 @@
       "Ler o puxar de mão como \"ela já se comunica bem\" e parar de investigar"
     ],
     "quando_encaminhar": null,
-    "hash": "6ff934f3e2a09115fb7d07d431982f4ddb32b65e845b59564186b72d863b8f8f"
+    "hash": "6ff934f3e2a09115fb7d07d431982f4ddb32b65e845b59564186b72d863b8f8f",
+    "pressupoe_ausencia_de": [
+      "fala_funcional",
+      "conversa_reciproca"
+    ]
   },
   {
     "id": "pos-a-03-imitacao",
@@ -383,7 +400,12 @@
       "Começar pela ajuda física total, que impede a criança de mostrar o que já consegue"
     ],
     "quando_encaminhar": null,
-    "hash": "7888a62503160a23113df26712f28604e37a452c34516c467373a44962b890cc"
+    "hash": "7888a62503160a23113df26712f28604e37a452c34516c467373a44962b890cc",
+    "pressupoe_ausencia_de": [
+      "imitacao",
+      "fala_funcional",
+      "conversa_reciproca"
+    ]
   },
   {
     "id": "pos-a-03-turnos",
@@ -430,7 +452,11 @@
     ],
     "o_que_evitar": [],
     "quando_encaminhar": null,
-    "hash": "d137b9f621939ec42f792f2b6fa887e909fedfbb0ba2d5427ad7aacb5f97f013"
+    "hash": "d137b9f621939ec42f792f2b6fa887e909fedfbb0ba2d5427ad7aacb5f97f013",
+    "pressupoe_ausencia_de": [
+      "troca_de_turnos",
+      "conversa_reciproca"
+    ]
   },
   {
     "id": "pos-a-04-cerebelo",
@@ -479,7 +505,8 @@
       "Corrigir a criança como se fosse descuido ou pressa"
     ],
     "quando_encaminhar": "Quedas frequentes, desequilíbrio e dificuldade motora fina importante pedem avaliação de psicomotricista ou terapeuta ocupacional",
-    "hash": "0408bade43a5c811bf463a53072bdc76e68fa2c526b2c6bd2a7aa37011f7cc03"
+    "hash": "0408bade43a5c811bf463a53072bdc76e68fa2c526b2c6bd2a7aa37011f7cc03",
+    "pressupoe_ausencia_de": []
   },
   {
     "id": "pos-a-04-fala-motora",
@@ -521,7 +548,8 @@
       "Pedir para repetir a palavra várias vezes até \"sair certo\""
     ],
     "quando_encaminhar": null,
-    "hash": "4c6e818ba913755d6624ca2f6aaa2b4510403b20d53af0f3e6274c0da394855d"
+    "hash": "4c6e818ba913755d6624ca2f6aaa2b4510403b20d53af0f3e6274c0da394855d",
+    "pressupoe_ausencia_de": []
   },
   {
     "id": "pos-a-05-ate10",
@@ -573,7 +601,8 @@
       "Repetir a mesma instrução vaga em voz mais alta"
     ],
     "quando_encaminhar": null,
-    "hash": "6d8bbad062ec3aa38180464779c69d3aaf6aff005917771f2c9450fbd5d6c1bb"
+    "hash": "6d8bbad062ec3aa38180464779c69d3aaf6aff005917771f2c9450fbd5d6c1bb",
+    "pressupoe_ausencia_de": []
   },
   {
     "id": "pos-a-05-11a14",
@@ -622,7 +651,8 @@
       "Transformar a escolha de ordem em negociação sobre fazer ou não"
     ],
     "quando_encaminhar": null,
-    "hash": "ecb70086e8621e36ff91ac753729b29739374b0210b7635cedde14d2b7db781f"
+    "hash": "ecb70086e8621e36ff91ac753729b29739374b0210b7635cedde14d2b7db781f",
+    "pressupoe_ausencia_de": []
   },
   {
     "id": "pos-a-05-15mais",
@@ -673,7 +703,8 @@
       "Cobrar foco contínuo como prova de esforço"
     ],
     "quando_encaminhar": null,
-    "hash": "b5cd31796b7baedb6fcfe239e0125747c4c4413cd57b0e14d26a4abf01780950"
+    "hash": "b5cd31796b7baedb6fcfe239e0125747c4c4413cd57b0e14d26a4abf01780950",
+    "pressupoe_ausencia_de": []
   },
   {
     "id": "pos-a-06-hiperfoco",
@@ -727,7 +758,8 @@
       "Usar o interesse como moeda de troca ou punição"
     ],
     "quando_encaminhar": null,
-    "hash": "fca70a797774057ca99ffa1d593ba5c8b09952d421672413f6318dfe94e7c48b"
+    "hash": "fca70a797774057ca99ffa1d593ba5c8b09952d421672413f6318dfe94e7c48b",
+    "pressupoe_ausencia_de": []
   },
   {
     "id": "pos-a-06-espelho",
@@ -778,7 +810,8 @@
       "Elevar a voz"
     ],
     "quando_encaminhar": null,
-    "hash": "5c7f6ee0c3863cdea853892ad1ab15c9f39ded85e0c224f7da3d83343110991d"
+    "hash": "5c7f6ee0c3863cdea853892ad1ab15c9f39ded85e0c224f7da3d83343110991d",
+    "pressupoe_ausencia_de": []
   },
   {
     "id": "pos-a-07-entende-tudo",
@@ -828,7 +861,11 @@
       "Tratar \"entende tudo\" como prova de que a linguagem receptiva está preservada"
     ],
     "quando_encaminhar": null,
-    "hash": "59b21aa439fd4f0709634ab7b080bf9da20aecf7a787820697a47fca2646d27c"
+    "hash": "59b21aa439fd4f0709634ab7b080bf9da20aecf7a787820697a47fca2646d27c",
+    "pressupoe_ausencia_de": [
+      "fala_funcional",
+      "conversa_reciproca"
+    ]
   },
   {
     "id": "pos-a-07-rodinha",
@@ -877,7 +914,8 @@
       "Trocar a brincadeira dela pela \"certa\" no meio do atrito"
     ],
     "quando_encaminhar": null,
-    "hash": "88a7611308c9f50d9de54f515d5917609464e44ee4cb582420c20a6caca1a896"
+    "hash": "88a7611308c9f50d9de54f515d5917609464e44ee4cb582420c20a6caca1a896",
+    "pressupoe_ausencia_de": []
   },
   {
     "id": "pos-a-07-teoria-mente",
@@ -926,7 +964,8 @@
       "Interpretar a resposta ríspida como falta de amor ou má educação"
     ],
     "quando_encaminhar": null,
-    "hash": "80cab28cb808585c234db845e67a7bd2a9be4caa375e59994f3c02707dbb9200"
+    "hash": "80cab28cb808585c234db845e67a7bd2a9be4caa375e59994f3c02707dbb9200",
+    "pressupoe_ausencia_de": []
   },
   {
     "id": "pos-a-07-janela",
@@ -965,7 +1004,8 @@
       "Prometer que a janela \"fecha\" numa data"
     ],
     "quando_encaminhar": null,
-    "hash": "4ff2f9749c69f88236f6ca59a5fd068368e6e4b41c0a4846fbf869662dcf425d"
+    "hash": "4ff2f9749c69f88236f6ca59a5fd068368e6e4b41c0a4846fbf869662dcf425d",
+    "pressupoe_ausencia_de": []
   },
   {
     "id": "pos-a-07-sensorial-publico",
@@ -1017,7 +1057,8 @@
       "Propor treino de atenção antes de investigar o ambiente sensorial"
     ],
     "quando_encaminhar": null,
-    "hash": "64164a0726704e4f49c8830101879055aa6cf38b219d44ae6008138107952f2d"
+    "hash": "64164a0726704e4f49c8830101879055aa6cf38b219d44ae6008138107952f2d",
+    "pressupoe_ausencia_de": []
   },
   {
     "id": "pos-a-08-dieta",
@@ -1059,7 +1100,8 @@
       "Ridicularizar a família que perguntou"
     ],
     "quando_encaminhar": "Qualquer restrição alimentar precisa de nutrólogo ou pediatra",
-    "hash": "50a00951cd069ffaa04bc6cde1cfb1aad0b5cbff00f23594821ebdbde586de35"
+    "hash": "50a00951cd069ffaa04bc6cde1cfb1aad0b5cbff00f23594821ebdbde586de35",
+    "pressupoe_ausencia_de": []
   },
   {
     "id": "pos-a-08-protocolo-sensorial",
@@ -1103,7 +1145,8 @@
       "Indicar escovação, colete ponderado ou suspensão"
     ],
     "quando_encaminhar": "Protocolo sensorial estruturado é indicação de terapeuta ocupacional",
-    "hash": "18b8fb7e02376b86ab27619af572923ea22656414b043425e6e54720c006c312"
+    "hash": "18b8fb7e02376b86ab27619af572923ea22656414b043425e6e54720c006c312",
+    "pressupoe_ausencia_de": []
   },
   {
     "id": "pos-a-10-semantica",
@@ -1151,7 +1194,8 @@
       "Medir avanço por quantidade de palavras conhecidas"
     ],
     "quando_encaminhar": null,
-    "hash": "7f68b67921a2148ec622f79dbd158c795376af1f7b9cc998bd9d70531316251f"
+    "hash": "7f68b67921a2148ec622f79dbd158c795376af1f7b9cc998bd9d70531316251f",
+    "pressupoe_ausencia_de": []
   },
   {
     "id": "pos-a-10-sabotagem",
@@ -1204,7 +1248,11 @@
       "Adivinhar e entregar antes de qualquer sinal"
     ],
     "quando_encaminhar": null,
-    "hash": "55c4252402a323c1b209accb85c78c35c67e93569dbc88f0e84bc78ea69a3a1f"
+    "hash": "55c4252402a323c1b209accb85c78c35c67e93569dbc88f0e84bc78ea69a3a1f",
+    "pressupoe_ausencia_de": [
+      "fala_funcional",
+      "conversa_reciproca"
+    ]
   },
   {
     "id": "pos-a-10-modelar",
@@ -1253,7 +1301,11 @@
       "Falar pela criança"
     ],
     "quando_encaminhar": null,
-    "hash": "fabb364938fb23407eadab7d28b6fa2e3fe7e62ef029643d7ec8bc61120df122"
+    "hash": "fabb364938fb23407eadab7d28b6fa2e3fe7e62ef029643d7ec8bc61120df122",
+    "pressupoe_ausencia_de": [
+      "frases",
+      "conversa_reciproca"
+    ]
   },
   {
     "id": "pos-a-10-previsibilidade",
@@ -1301,7 +1353,8 @@
       "Ler a melhora com rotina visual como \"ela só queria atenção\""
     ],
     "quando_encaminhar": null,
-    "hash": "5d11e1f27b884114b02c277c094c029ba6b76c031ea8f36db56a6b420cd01b56"
+    "hash": "5d11e1f27b884114b02c277c094c029ba6b76c031ea8f36db56a6b420cd01b56",
+    "pressupoe_ausencia_de": []
   },
   {
     "id": "pos-a-10-coerencia",
@@ -1349,7 +1402,8 @@
       "Presumir que o contexto óbvio para o adulto está óbvio para ela"
     ],
     "quando_encaminhar": null,
-    "hash": "9820cda3438bfa946767f2a30999097bade612f9b3c94ccf0e07fb7f8fd62156"
+    "hash": "9820cda3438bfa946767f2a30999097bade612f9b3c94ccf0e07fb7f8fd62156",
+    "pressupoe_ausencia_de": []
   },
   {
     "id": "pos-b-seg-dor",
@@ -1400,7 +1454,8 @@
       "Montar plano comportamental para uma mudança abrupta antes de descartar causa orgânica"
     ],
     "quando_encaminhar": "Crises agudas inexplicáveis e fora do padrão pedem avaliação pediátrica",
-    "hash": "3d47f3de19f8f4a2c92123f86a8dbc9635c5067acd2489de0b14244943625c5e"
+    "hash": "3d47f3de19f8f4a2c92123f86a8dbc9635c5067acd2489de0b14244943625c5e",
+    "pressupoe_ausencia_de": []
   },
   {
     "id": "pos-b-t1-niveis",
@@ -1441,7 +1496,8 @@
       "Usar \"leve\" ou \"grave\" como se descrevessem a pessoa inteira"
     ],
     "quando_encaminhar": null,
-    "hash": "993d6189a36f2beb12aaa897e12599cfbb87b04fc75ca0929a27e8355a2090bf"
+    "hash": "993d6189a36f2beb12aaa897e12599cfbb87b04fc75ca0929a27e8355a2090bf",
+    "pressupoe_ausencia_de": []
   },
   {
     "id": "pos-b-t2-pfc",
@@ -1489,7 +1545,8 @@
       "Medir progresso só por número de palavras faladas"
     ],
     "quando_encaminhar": null,
-    "hash": "7e69dd49012e0d6966dd00a2f634777f6f2561ff6cde74e14bb64c9acd6656c8"
+    "hash": "7e69dd49012e0d6966dd00a2f634777f6f2561ff6cde74e14bb64c9acd6656c8",
+    "pressupoe_ausencia_de": []
   },
   {
     "id": "pos-b-t3-apraxia",
@@ -1535,7 +1592,8 @@
       "Nomear apraxia como diagnóstico"
     ],
     "quando_encaminhar": "Dificuldades importantes de fala com inconsistência marcada pedem avaliação fonoaudiológica especializada",
-    "hash": "e678e9c0644c4203227c27ed6f4f6de4667067bbd480485637c9c5d03d87833f"
+    "hash": "e678e9c0644c4203227c27ed6f4f6de4667067bbd480485637c9c5d03d87833f",
+    "pressupoe_ausencia_de": []
   },
   {
     "id": "pos-b-t4-limiares",
@@ -1590,7 +1648,8 @@
       "Aplicar a mesma receita de \"reduzir estímulos\" aos três perfis"
     ],
     "quando_encaminhar": null,
-    "hash": "a9c5b680a1b02ead72f88eb8caf558714b4d6a0d65cfd6a60f0d931bae19ebaf"
+    "hash": "a9c5b680a1b02ead72f88eb8caf558714b4d6a0d65cfd6a60f0d931bae19ebaf",
+    "pressupoe_ausencia_de": []
   },
   {
     "id": "pos-b-t4-modular",
@@ -1638,7 +1697,8 @@
       "Forçar contato com o estímulo aversivo para \"acostumar\""
     ],
     "quando_encaminhar": null,
-    "hash": "7d6d2e3fd601eb6ad3949668adce56c1e861f288a9cd10deda6c6f6afd3130dd"
+    "hash": "7d6d2e3fd601eb6ad3949668adce56c1e861f288a9cd10deda6c6f6afd3130dd",
+    "pressupoe_ausencia_de": []
   },
   {
     "id": "pos-b-t5-seletividade",
@@ -1685,7 +1745,8 @@
       "Insistir para \"experimentar só um pouquinho\" no meio da refeição"
     ],
     "quando_encaminhar": null,
-    "hash": "660e04af3342e05ba1f0c3c4ab9b2f3904ac491b1cd939da41bbed69db96d3b2"
+    "hash": "660e04af3342e05ba1f0c3c4ab9b2f3904ac491b1cd939da41bbed69db96d3b2",
+    "pressupoe_ausencia_de": []
   },
   {
     "id": "pos-b-t5-comida-brincar",
@@ -1733,7 +1794,8 @@
       "Concentrar toda a tentativa no momento da refeição"
     ],
     "quando_encaminhar": null,
-    "hash": "d56c135dd0dcc76a55772aff90d9e339057530bb7197848bff5de41bd007c142"
+    "hash": "d56c135dd0dcc76a55772aff90d9e339057530bb7197848bff5de41bd007c142",
+    "pressupoe_ausencia_de": []
   },
   {
     "id": "pos-b-t5-desfralde",
@@ -1781,7 +1843,8 @@
       "Comparar com o calendário de desfralde de crianças típicas"
     ],
     "quando_encaminhar": null,
-    "hash": "6d256918d71af2e3e63783863aa9f998237ac41ac6f966b82b94d883c715fa0f"
+    "hash": "6d256918d71af2e3e63783863aa9f998237ac41ac6f966b82b94d883c715fa0f",
+    "pressupoe_ausencia_de": []
   },
   {
     "id": "pos-b-t6-sociometria",
@@ -1834,7 +1897,8 @@
       "Supor que colocar junto dos colegas produz amizade"
     ],
     "quando_encaminhar": null,
-    "hash": "6ef3ce94fe56dbc7c0e7a08fbf362ca7bf24b63f279a51942f8f7409e1378ed9"
+    "hash": "6ef3ce94fe56dbc7c0e7a08fbf362ca7bf24b63f279a51942f8f7409e1378ed9",
+    "pressupoe_ausencia_de": []
   },
   {
     "id": "pos-b-t6-midia",
@@ -1883,7 +1947,8 @@
       "Cobrar a mesma leitura social durante um conflito real"
     ],
     "quando_encaminhar": null,
-    "hash": "8a955e86b37163706b026908cf10af96aa36e095cbf73a2d06a9b1060a83b29e"
+    "hash": "8a955e86b37163706b026908cf10af96aa36e095cbf73a2d06a9b1060a83b29e",
+    "pressupoe_ausencia_de": []
   },
   {
     "id": "pos-b-t7-masking",
@@ -1931,7 +1996,8 @@
       "Concluir que \"em casa ele faz isso porque pode\""
     ],
     "quando_encaminhar": null,
-    "hash": "423f7075fe28d280f59e16663707ce5f69964a9a47cb1cea48f87415f3750975"
+    "hash": "423f7075fe28d280f59e16663707ce5f69964a9a47cb1cea48f87415f3750975",
+    "pressupoe_ausencia_de": []
   },
   {
     "id": "pos-b-p2-0a3",
@@ -1979,7 +2045,12 @@
       "Tratar marco ausente como diagnóstico"
     ],
     "quando_encaminhar": null,
-    "hash": "e558a12c3a851bfd98f00d765698b87424cf266986cf94a775652e11bdde6ddb"
+    "hash": "e558a12c3a851bfd98f00d765698b87424cf266986cf94a775652e11bdde6ddb",
+    "pressupoe_ausencia_de": [
+      "fala_funcional",
+      "frases",
+      "conversa_reciproca"
+    ]
   },
   {
     "id": "pos-b-p2-3a5",
@@ -2026,7 +2097,8 @@
       "Cobrar brincar cooperativo antes do brincar paralelo"
     ],
     "quando_encaminhar": null,
-    "hash": "8010d550d24b55960b427a330e886864b53c7ccd5388cf044ebb034cb12b50e6"
+    "hash": "8010d550d24b55960b427a330e886864b53c7ccd5388cf044ebb034cb12b50e6",
+    "pressupoe_ausencia_de": []
   },
   {
     "id": "pos-b-p2-6a12",
@@ -2074,7 +2146,8 @@
       "Ler falha executiva como desobediência"
     ],
     "quando_encaminhar": null,
-    "hash": "35c7734b1677dd024404c410e004f15dfdc66388add7fa5700f371380d2d520c"
+    "hash": "35c7734b1677dd024404c410e004f15dfdc66388add7fa5700f371380d2d520c",
+    "pressupoe_ausencia_de": []
   },
   {
     "id": "pos-b-p2-13a17",
@@ -2119,7 +2192,8 @@
       "Presumir que sarcasmo e ironia foram compreendidos"
     ],
     "quando_encaminhar": null,
-    "hash": "c932a9f084a8ec8fe886067b428325b3b53bbf0536f06f5f6a5a4205f0380101"
+    "hash": "c932a9f084a8ec8fe886067b428325b3b53bbf0536f06f5f6a5a4205f0380101",
+    "pressupoe_ausencia_de": []
   },
   {
     "id": "pos-b-p2-18mais",
@@ -2162,6 +2236,7 @@
       "Medir sucesso adulto só por emprego"
     ],
     "quando_encaminhar": null,
-    "hash": "6a0cc50cde7bb6d307d99a33412313759283a2ecaf9771d4a378e96860283755"
+    "hash": "6a0cc50cde7bb6d307d99a33412313759283a2ecaf9771d4a378e96860283755",
+    "pressupoe_ausencia_de": []
   }
 ]

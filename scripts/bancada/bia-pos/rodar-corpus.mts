@@ -11,7 +11,7 @@
  *   cd apps/web && npx tsx ../../scripts/bancada/bia-pos/rodar-corpus.mts
  */
 import { readFileSync } from "node:fs";
-import { selecionar, filtrarDuro, type ChunkParaPontuar, type ContextoBia } from "@/lib/bia/pontuacao";
+import { selecionar, filtrarDuro, normalizarContexto, type ChunkParaPontuar, type ContextoBia } from "@/lib/bia/pontuacao";
 import { aplicarCotas, aplicarOrcamento, MAX_CHARS_POR_CHUNK } from "@/lib/bia/bloco";
 
 const chunks = JSON.parse(
@@ -40,6 +40,8 @@ const CASOS: Caso[] = [
       contexto: "casa",
       textoDaConversa:
         "Quero ajudar ele a se comunicar melhor quando fica frustrado. Ele conversa bem, mas na hora da crise trava e fica agressivo.",
+      // ⚠️ DA FALA DA MÃE: "ele conversa bem". Nada além disso é presumido.
+      habilidadesProvadas: ["conversa_reciproca"],
     },
     espera: "regulação + comunicação; escada pré-verbal NÃO pode dominar",
   },
@@ -52,6 +54,9 @@ const CASOS: Caso[] = [
       contexto: "casa",
       textoDaConversa:
         "Ela fala poucas palavras. Às vezes aponta, mas quase sempre pega na minha mão e me leva até o que quer.",
+      // ⚠️ "às vezes aponta" prova gesto intencional — e SÓ. "fala poucas
+      // palavras" não é fala funcional, e presumir isso vetaria a escada dela.
+      habilidadesProvadas: ["gestos_intencionais"],
     },
     espera: "a escada e o significado do puxar a mão",
     exigido: ["pos-a-03-mao"],
@@ -104,6 +109,9 @@ const CASOS: Caso[] = [
       contexto: "escola",
       textoDaConversa:
         "Ele fala muito bem e escreve redação sozinho, mas não consegue manter uma conversa com os colegas sem falar só do assunto dele.",
+      // ⚠️ "fala muito bem" + "escreve redação sozinho". A dificuldade dele é
+      // PRAGMÁTICA (manter assunto), o que não desfaz a fala funcional.
+      habilidadesProvadas: ["fala_funcional", "leitura_escrita"],
     },
     espera: "pragmática, NÃO escada pré-verbal",
     proibido: PRE_VERBAIS,
@@ -167,7 +175,15 @@ for (const caso of CASOS) {
   console.log(`contexto: domínio=${dom} · idade=${caso.ctx.idadeAnos} · situação=${caso.ctx.contexto}`);
   console.log(`espera: ${caso.espera}`);
 
-  const vivos = chunks.filter((c) => !filtrarDuro(c, caso.ctx));
+  // ⚠️ `filtrarDuro` recebe o contexto NORMALIZADO — é o que `pontuar` faz por
+  // dentro. Passar o cru aqui fazia o pré-filtro da bancada mentir (e, depois
+  // do veto, estourar): `habilidadesProvadas` só vira Set na normalização.
+  const ctxN = normalizarContexto(caso.ctx);
+  const vivos = chunks.filter((c) => !filtrarDuro(c, ctxN));
+  const vetados = chunks.filter((c) => filtrarDuro(c, ctxN) === "habilidade_ja_provada");
+  if (vetados.length) {
+    console.log(`  VETADOS por habilidade já provada (${vetados.length}): ${vetados.map((c) => c.id).join(", ")}`);
+  }
   const resultados = selecionar(vivos, caso.ctx, { limite: 8 });
   const noPrompt = aplicarOrcamento(aplicarCotas(resultados));
 

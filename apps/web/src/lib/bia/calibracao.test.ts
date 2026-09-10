@@ -45,6 +45,7 @@ function chunk(over: Partial<ChunkParaPontuar> = {}): ChunkParaPontuar {
     diagnosticos_relacionados: [],
     nucleos_relacionados: [],
     habilidades_relacionadas: [],
+    pressupoe_ausencia_de: [],
     nivel_de_cautela: "baixo",
     muda_conduta: null,
     texto_original: "conteúdo de apoio sobre o tema em questão",
