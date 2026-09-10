@@ -8997,6 +8997,16 @@ suficiente, o extrator unificado tem de mostrar **menos fatos no balde de
 sobra que os 16,1% do baseline**, sem aumento de `motivos_rejeicao` que
 indiquem perda de fato. So entao a escrita muda, e atras da mesma flag.
 
+⚠️ **E ESTA FASE VIROU DEPENDENCIA DE OUTRA FRENTE (10/09/2026).** A PEND-197
+— produzir `habilidadesProvadas` a partir do Perfil — foi formalmente bloqueada
+por esta Fase 2, e a razao esta medida: dos 187 perfis, o campo mais confiavel
+de comunicacao (`forma`, seletor fechado) esta preenchido em **15%**; os demais,
+entre 4% e 13%. Enquanto 16,1% dos fatos cairem em `outras`, nao ha leitura
+estruturada com cobertura util — e ler `outras` com regex esta proibido.
+
+Ou seja: esta Fase 2 nao destrava so a qualidade do Perfil. Ela destrava a
+cadeia **PEND-197 → migracao 0086 → ingestao dos 45 chunks → BIA conectada**.
+
 ---
 
 **BLOQUEIO EXTERNO (10/09/2026, 13:33 UTC) — a medicao nao comecou.**
@@ -9146,7 +9156,7 @@ todos — provado na mesma bancada, sem alterar os chunks.
 ### PEND-197
 **Quem transforma o Perfil Vivo em `habilidadesProvadas` — o produtor que ainda nao existe**
 Bloco: **B · Ayla** · Prioridade: **P1**
-STATUS: **ABERTA — pre-requisito de qualquer conexao da BIA ao prompt** · Aberta em: 2026-09-10
+STATUS: **ABERTA — BLOQUEADA POR DEPENDENCIA: PEND-194 Fase 2** · Aberta em: 2026-09-10
 
 A PEND-196 fechou o CONSUMIDOR: a BIA veta conhecimento incompativel com o que o
 contexto prova. O produtor nao existe.
@@ -9181,6 +9191,105 @@ esta BLOQUEADA EXTERNAMENTE.
 **Criterio de conclusao:** um turno real em que `habilidadesProvadas` seja
 construido pelo sistema, e a bancada dos 10 casos passe com o conjunto vindo do
 Perfil em vez da mao.
+
+---
+
+## DEPENDENCIA FORMALIZADA (10/09/2026)
+
+**PEND-197 NAO COMECA ANTES DA PEND-194 FASE 2.** A opcao 3 foi escolhida: nao
+se constroi um leitor que conviva com o dado torto; conserta-se a escrita e o
+leitor fica trivial.
+
+**AS QUATRO REGRAS, que valem para quem implementar:**
+
+1. **Nao ler `comunicacao.outras` com regex.** E o campo onde a prosa cai; ler
+   com regex e reproduzir a PEND-189 (`/(.+?):/` transformando desabafo em
+   fato) e a PEND-192 (interpretar prosa para decidir conduta).
+2. **Nao reinterpretar prosa dentro do retriever da BIA.** `lib/bia` recebe
+   fatos estruturados; a fronteira da PEND-196 e deliberada.
+3. **Nao criar um segundo extrator.** A PEND-194 existe exatamente para ter UM.
+4. **Nao duplicar a logica do decisor de lacuna.** Se `degrauProvadoPeloPerfil`
+   servir, quem TRADUZ e o chamador — a BIA nao o importa.
+
+---
+
+## MAPA: as 10 habilidades da BIA × o Perfil de hoje
+
+Medido sobre os **187 perfis reais** em 10/09/2026.
+
+⚠️ **O CAMPO MAIS CONFIAVEL COBRE 15% DA BASE.** `comunicacao.forma` e o unico
+seletor fechado do dominio ("Fala frases" · "Fala palavras soltas" ·
+"Nao-verbal") e esta preenchido em **28 de 187**. Os demais campos ficam entre
+4% e 13%. Nao ha, hoje, produtor possivel com cobertura util — e essa e a
+medicao que sustenta a dependencia.
+
+| habilidade BIA | campo(s) do Perfil | preenchido | confiabilidade | depende da 194? | regra de inferencia |
+|---|---|---|---|---|---|
+| `fala_funcional` | `comunicacao.forma` | 15% | **alta** (seletor) | nao para o valor, SIM para a cobertura | `forma ∈ {Fala frases, Fala palavras soltas}` → provada |
+| `frases` | `comunicacao.forma` | 15% | **alta** (seletor) | idem | `forma = "Fala frases"` → provada |
+| `conversa_reciproca` | `comunicacao.conversa` | 6% | **baixa** (texto livre) | **SIM** | so com o campo estruturado; hoje exigiria ler prosa |
+| `leitura_escrita` | — | 0% | **inexistente** | **SIM** | nao ha campo. Hoje vive em `vocabulario` ou `outras`, em prosa |
+| `comunicacao_simbolica` | `comunicacao.forma`, `.caa` | 15% / 5% | media | parcial | `forma ≠ Nao-verbal` **ou** `caa` preenchido → provada |
+| `gestos_intencionais` | `comunicacao.contato`, `.mostra` | 4% / 13% | **baixa** (texto livre) | **SIM** | hoje exigiria interpretar "aponta" na prosa |
+| `atencao_compartilhada` | `comunicacao.contato` | 4% | **baixa** | **SIM** | idem |
+| `atencao_social` | `comunicacao.contato` | 4% | **baixa** | **SIM** | idem |
+| `imitacao` | `imitacao.padrao` | **4%** | **alta** (seletor) | SIM (cobertura) | `padrao ∈ {Imita bastante, As vezes}` → provada |
+| `troca_de_turnos` | `comunicacao.iniciativa` (so nao-verbal), `.conversa` | 5% / 6% | baixa | **SIM** | `iniciativa = "Mostra o que quer"` e sinal fraco, nao prova |
+
+**O QUE JA SE INFERE DETERMINISTICAMENTE, SEM LLM:** apenas o que sai de
+SELETOR — `fala_funcional`, `frases`, `imitacao` e, parcialmente,
+`comunicacao_simbolica`. Todo o resto exigiria interpretar texto livre, que e
+justamente o proibido. E o fecho transitivo de `BIA_HABILIDADE_IMPLICA` faz o
+resto de graca: provar `frases` ja implica atencao social, atencao
+compartilhada, imitacao, gestos e troca de turnos.
+
+⚠️ **ATE O SELETOR TEM VAZAMENTO.** Entre os 28 valores de `comunicacao.forma`
+ha **"Fala frases curtas"** — que nao esta no enum. Alguem (o roteador da Ayla)
+escreveu fora da lista, e o parser aceitou. Um produtor que compare por
+igualdade exata erraria esse caso; um que compare por prefixo aceitaria
+qualquer coisa. **Mais uma razao para a escrita ser corrigida antes da leitura.**
+
+---
+
+## O CASO MARIO — por que ele ainda nao pode ser automatico
+
+Perfil real de `7da80c3a`, lido em 10/09/2026:
+
+| | |
+|---|---|
+| `comunicacao` — conhecidos | **apenas `outras`** |
+| `comunicacao` — lacunas | forma, mostra, entende, vocabulario, ecolalia, conversa, contexto, le_labios, iniciativa, contato, caa |
+| o que esta preso em `outras` | *"**Conversa bem**, estamos treinando ter autonomia e ligar para resolver coisas, agendar cabeleireiro."* |
+| `imitacao` | **nenhum campo preenchido** |
+| `socializacao` | `disposicao = "Custa / cansa"` · `interage = "Raramente"` |
+
+**O QUE DEVERIA SAIR quando a escrita estiver correta:** com "Conversa bem" no
+campo `comunicacao.conversa` (ou `forma = "Fala frases"`),
+`habilidadesProvadas` seria `["conversa_reciproca"]` — e o fecho transitivo
+entregaria as outras sete de graca. E o veto da PEND-196 tiraria exatamente os
+tres chunks que a bancada mostrou: escada, "entende tudo" e sabotagem.
+
+**POR QUE NAO DA PARA CONFIAR HOJE:** o unico lugar onde a informacao existe e
+`outras` — texto livre, no campo que o Gate B nao le e que o roteador da Ayla
+usa como fallback. Extrair "conversa bem" dali seria exatamente a regex proibida
+pela regra 1. **O Mario nao sera corrigido a mao**: ele e a prova de que o
+defeito e da escrita, e corrigir o dado apagaria a evidencia.
+
+---
+
+## A SEQUENCIA, por escrito
+
+1. **PEND-194 Fase 2** — o extrator unificado passa a escrever em campo
+   estruturado (hoje 16,1% cai em `outras`). *Bloqueada externamente: falta
+   `KOLO_EXTRATOR_SOMBRA` na Vercel.*
+2. **PEND-197** — o produtor le SELETOR e campo estruturado, sem prosa.
+3. **Migracao 0086 aplicada** e os 45 chunks ingeridos.
+4. **BIA conectada**, atras da flag, com a bancada de 10 casos rodando contra o
+   conjunto vindo do Perfil.
+
+⚠️ **Inverter a ordem tem custo conhecido:** ligar a BIA antes do passo 2 daria
+`habilidadesProvadas` vazio para 85% da base — e veto que nao dispara e o mesmo
+que nao existir, com a diferenca de dar a impressao de que existe.
 
 **Proximo ID livre: PEND-198. *(024 e 025 reservadas por frentes ainda nao publicadas; 0076 e numero de MIGRACAO reservado — ver PEND-121.)***
 
