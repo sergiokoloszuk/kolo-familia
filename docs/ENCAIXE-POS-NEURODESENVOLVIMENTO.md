@@ -3,9 +3,16 @@
 **08/09/2026 · Gate B.** Mapa apenas. **Nada foi conectado ao prompt vivo,
 nenhum contexto aumentou, nenhuma pergunta por faixa etária foi criada.**
 
-Fonte mapeada: [`material-pos-v1-ORIGINAL.md`](documentos-ayla/material-pos-v1-ORIGINAL.md)
-(20.695 caracteres, 10 seções). Existem 4 variantes em `~/Downloads` ainda não
-comparadas — ver §5.
+⚠️ **A FONTE OFICIAL PASSOU A SER A CANÔNICA (10/09/2026):**
+[`material-pos-neurodesenvolvimento-CANONICO-v1.md`](documentos-ayla/material-pos-neurodesenvolvimento-CANONICO-v1.md).
+
+Este mapa foi escrito sobre **um** dos dois documentos —
+[`material-pos-v1-ORIGINAL.md`](documentos-ayla/material-pos-v1-ORIGINAL.md)
+(20.695 caracteres, 10 seções), o "Manual para a IA". O segundo, o "Compêndio da
+pós" ([`material-pos-compendio-v1-ORIGINAL.md`](documentos-ayla/material-pos-compendio-v1-ORIGINAL.md),
+26.909 caracteres), **não estava mapeado aqui** e traz o que falta a este mapa:
+faixas etárias com marcos, limiares de Dunn, apraxia, PFC e a procedência
+científica. Ler os dois antes de usar este mapa como completo.
 
 Classificação pedida: **A** fato da criança · **B** critério de decisão ·
 **C** conhecimento de orientação (Gate F) · **D** referência por idade.
@@ -84,13 +91,23 @@ exatamente a decisão do Gate B.
 
 ---
 
-## 5. Lacuna do próprio mapa
+## 5. Lacuna do próprio mapa — **RESOLVIDA em 10/09/2026**
 
-Há **quatro variantes** do resumo em `~/Downloads`
-(`resumo-geral-pos-neurodesenvolvimento*.md`) e **uma** versionada no repositório.
-**Não comparei as cinco.** Antes de o Gate F usar qualquer uma, é preciso saber
-qual é a canônica e o que diverge — é a mesma disciplina que o Gate A cobrou de
-`transicoes`: um conceito, um dono.
+O texto original desta seção dizia: *"Há quatro variantes do resumo em
+`~/Downloads` e uma versionada no repositório. Não comparei as cinco."*
+
+**Comparadas.** E a contagem estava errada: os quatro arquivos de `~/Downloads`
+são **byte a byte o mesmo arquivo** (md5 `e433ce04…`), baixado quatro vezes.
+Havia **dois** documentos, não cinco — e eles **não são variantes um do outro**:
+são obras complementares, com propósitos diferentes.
+
+A canônica é o corpus dos dois, com a comparação completa, o mapa de duplicação
+com o Core v11 e a lista do que não pode virar conduta em
+[`material-pos-neurodesenvolvimento-CANONICO-v1.md`](documentos-ayla/material-pos-neurodesenvolvimento-CANONICO-v1.md).
+
+⚠️ **O item 3 da §6 ("comparar as cinco variantes e eleger a canônica") está
+CUMPRIDO.** Os itens 1, 2 e 4 seguem valendo — em especial o 4: nada da pós foi
+conectado ao prompt vivo.
 
 ---
 
