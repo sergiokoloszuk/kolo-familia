@@ -7965,6 +7965,34 @@ correcao revertida, 7 dos 14 testes ficam vermelhos.
 uma linha nova de `rotina_proposta` ou `clarificacao_identificacao` traz a
 ancora E `entrega` na mesma linha. Sem forcar cenario com familia real.
 
+---
+
+**LEITURA DE PRODUCAO (10/09/2026) — A COEXISTENCIA ESTA PROVADA; OS DOIS TIPOS
+DO CRITERIO AINDA NAO OCORRERAM.**
+
+Correcao publicada em `0542067` (08/09 11:16). Varredura de `ayla_messages` de
+08/09 em diante — 275 linhas, agrupadas por `tipo | chaves de metadata`:
+
+| chaves na MESMA linha | linhas |
+|---|---|
+| `entrega` + `lacuna_sugerida` | 17 |
+| `entrega` + `lacuna` (legado) | 15 |
+| `entrega` + `plano_id` | **3** (09/09 15:35, 18:52, 21:57) |
+| `entrega` + `lacuna_sugerida` + `campo_investigado` | 1 |
+
+**E ISSO E A PROVA DO MECANISMO.** O inventario do baseline achou UMA linha com
+`plano_id` em 1.861 mensagens — e nela quem sumira era a `entrega`. Agora as
+duas convivem, nas duas portas: a de `metadataMensagem` (`lacuna_sugerida`,
+`campo_investigado`) e a de ordem invertida (`plano_id`). A classe "chave
+repetida em objeto literal" nao existe mais no dado.
+
+⚠️ **O CRITERIO LITERAL CONTINUA ABERTO, e por isso a pendencia nao fecha:** ele
+pede uma linha nova de `rotina_proposta` **ou** `clarificacao_identificacao`. A
+mais recente de cada e de **06/09** e **07/09** — as duas ANTES da correcao.
+Nenhuma familia passou por esses caminhos desde entao, e forcar o cenario com
+familia real esta proibido pelo proprio criterio. Fica aguardando ocorrencia
+natural.
+
 ### PEND-183
 **Plano Estrategico automatico com UMA mensagem — o gate de suficiencia nao exige que a conversa seja SOBRE o problema**
 Bloco: **B · Ayla** · Prioridade: **P1**
@@ -8254,7 +8282,7 @@ indevida. Nenhum erro novo.
 ### PEND-187
 **`metadata.lacuna` marca a lacuna ESCOLHIDA, nao a pergunta FEITA**
 Bloco: **B · Ayla** · Prioridade: **P1**
-STATUS: **187A CONCLUIDA — PRODUCAO PROVADA · 187B em bancada** · Aberta em: 2026-09-10 · Baixa da 187A em: 2026-09-10
+STATUS: **187A e 187B CONCLUIDAS — PRODUCAO PROVADA** · Aberta em: 2026-09-10 · Baixa da 187A em: 2026-09-10 · Baixa da 187B em: 2026-09-10
 
 Medido no teste humano de 09/09/2026, turnos 2 e 3.
 
@@ -8365,6 +8393,43 @@ quando voce avisa antes, ou principalmente quando precisa encerrar no meio da
 brincadeira?"* — que e sobre gatilho/transicao, nao sobre perfil sensorial. O
 fenomeno se repetiu; a diferenca e que agora **nada falso foi registrado**.
 
+
+---
+
+**PEND-187B — O CORE DECLARA O CAMPO (10/09/2026, publicada em `ea54788`).**
+
+O envelope `{ fala, campo_investigado }` com enum fechado, na MESMA chamada.
+`campo_investigado` descreve a PERGUNTA — nunca respondido, nunca aprendido,
+nunca incorporado.
+
+**BAIXA (10/09/2026) — PRODUCAO PROVADA, SEM REGRESSAO.**
+
+Producao servindo `6b9f36f` (health conferido em 10/09 11:27 UTC, `ref: main`,
+`ambiente: production`). Oito turnos reais desde o merge:
+
+| verificacao | resultado |
+|---|---|
+| turnos com a chave `campo_investigado` no rastro | 8 de 8 |
+| chamadas `ayla_experimental` por turno (`api_calls`) | **1 em todos os 8** |
+| passada de recuperacao em texto livre | **zero** — nenhum turno gastou a 2a chamada |
+| `campo_investigado` nao-null | 1 (`comunicacao.mostra`, 10/09 00:10) |
+| `sugestao_seguida` | `false` em 1, `null` nos demais; **`true` em nenhum** |
+| `metadata` da mensagem, no turno de 00:10 | `["entrega","lacuna_sugerida","campo_investigado"]` |
+| `decisao_turno_sem_resposta` / `catalogo_skills_indisponivel` | 0 / 0 |
+
+**O QUE ISSO PROVA, e o que nao prova.** Prova que o envelope e valido no
+caminho quente (uma chamada por turno: envelope invalido custaria duas, e nao
+custou nenhuma vez) e que a divergencia que a 187B existe para medir e **real e
+mensuravel**: no turno das 00:10 a sugestao foi `comunicacao.contato` e a
+pergunta feita investigou `comunicacao.mostra`. Nao prova que `null` seja sempre
+declaracao: `null` por decisao do Core e `null` por envelope invalido sao
+indistinguiveis no dado persistido — o caminho de recuperacao so emite
+`console.warn`. Aqui a distincao foi feita por FORA, contando chamadas em
+`api_calls`; enquanto a contagem der 1, o `null` e declaracao.
+
+⚠️ **A LACUNA DE OBSERVABILIDADE FICA REGISTRADA, nao suposta:** o dia em que o
+envelope comecar a falhar, o rastro nao dira. Contar `api_calls` funciona porque
+o volume e pequeno. Ver PEND-193.
 
 ### PEND-188
 **Conducao condicional em vez de afirmar opcao universal — Gate F**
@@ -8495,20 +8560,20 @@ funcao pura, sem ambiente nem I/O — mas a distincao existe e fica escrita.
 
 ---
 
-## FILA (10/09/2026)
+## FILA (10/09/2026 — revisada apos a leitura de producao)
 
 1. ~~PEND-186~~ — **BAIXA**
 2. ~~PEND-189~~ — **BAIXA**
 3. ~~PEND-187A~~ — **BAIXA** (provada em `a81c9fa`, turno de 10/09 21:04)
-4. PEND-187B — bancada de envelope estruturado. **So comeca depois da baixa da
-   187A**: sofisticar o vinculo entre pergunta e campo antes de provar que o
-   sistema parou de afirmar aprendizado que nao aconteceu seria construir sobre
-   o que ainda nao foi verificado.
-5. Teste humano final do Gate B → baixa do Gate B → Gate C.
+4. ~~PEND-187B~~ — **BAIXA** (publicada em `ea54788`, provada em 8 turnos reais)
+5. **PEND-192 — a escada pre-verbal escolhe um degrau que o perfil ja
+   desmentiu.** BLOQUEIA a baixa do Gate B: 19,8% dos perfis levariam uma
+   pergunta que a propria linha responde. Precisa de DECISAO antes de codigo.
+6. Teste humano final do Gate B → baixa do Gate B → Gate C.
 
-Fora da fila, abertas: PEND-182 (ancora + entrega, parcialmente provada),
-PEND-183 (plano automatico), PEND-185 (rastro de conhecimento no caminho vivo),
-PEND-188 (conducao condicional, Gate F).
+Fora da fila, abertas: PEND-182 (mecanismo provado, criterio literal aguardando
+ocorrencia natural), PEND-183 (plano automatico), PEND-185 (rastro de
+conhecimento no caminho vivo), PEND-188 (conducao condicional, Gate F).
 
 ### PEND-190
 **IMPROCEDENTE — o fato FOI incorporado; o erro foi da minha varredura**
@@ -8623,7 +8688,131 @@ hiperfoco. Entregar brincadeira estruturada sem repertorio proprio tende a
 produzir atividade genérica — o oposto da regra. A auditoria do BRINCAR e
 pre-requisito, nao detalhe.
 
-**Proximo ID livre: PEND-192. *(024 e 025 reservadas por frentes ainda nao publicadas; 0076 e numero de MIGRACAO reservado — ver PEND-121.)***
+### PEND-192
+**A escada pre-verbal escolhe um degrau que o proprio perfil ja desmentiu**
+Bloco: **B · Ayla** · Prioridade: **P1**
+STATUS: **ABERTA — investigada, NAO corrigida: precisa de decisao clinica** · Aberta em: 2026-09-10
+
+Achada na leitura de producao do Gate B (10/09/2026), sobre `6b9f36f` no ar.
+**Bloqueia a baixa do Gate B.**
+
+**O CASO, medido na linha REAL de producao.** Familia `7c764314`, crianca
+`e226bb2e` (Lorenzo). O perfil, no dominio `comunicacao`, diz:
+
+    Vocabulario e fala: le e escreve com autonomia
+    Conversa e argumentacao: identifica contradicoes logicas em argumentos dos
+      adultos e questiona pressupostos
+    Como mostra o que quer: expressa preferencias e escolhas quando perguntado
+    Entende o contexto: processa linguagem literal
+
+E o Gate B, executado sobre essa mesma linha, decide:
+
+    decisao: ASK
+    escolhida: comunicacao.contato — "Contato visual e gestos"
+    motivo: "degrau 1 da escada pre-verbal (pos §3); o mais baixo ainda desconhecido"
+
+**Perguntar sobre contato visual a uma crianca que le, escreve e discute
+logica.** Nao e so improdutivo: para a mae, e o sistema demonstrando nao ter
+lido o que ela ja contou — o oposto do objetivo (usar o que se sabe, perguntar
+so a lacuna que muda a conduta).
+
+**BASELINE — varredura dos 187 perfis**, executando `perfilConsultavelDaLinha` +
+`escolherLacunaDecisiva` de producao, com `temas: ["comunicacao"]`:
+
+| medicao | resultado |
+|---|---|
+| perfis lidos | 187 |
+| `ASK` com tema `comunicacao` | 187 (100%) |
+| escolhida caiu na escada | 187 (100%) |
+| **escolhida com um degrau ACIMA ja conhecido** | **37 — 19,8%** |
+
+E em producao, nas 51 decisoes reais registradas desde 08/09,
+`comunicacao.contato` foi a escolhida **18 vezes** — a mais frequente de todas.
+
+**CAUSA RAIZ.** `pesoDaPos` (`lacuna-decisiva.ts:329`) ordena a escada pelo
+**degrau mais baixo ainda desconhecido**. O comentario da `ESCADA_COMUNICACAO`
+declara a guarda que existe — "se o degrau de baixo ja e conhecido, ele nem
+aparece" — e ela e verdadeira: conhecimento vindo de BAIXO retira a candidata.
+**A reciproca nao existe.** Conhecimento de um degrau ACIMA nao retira nada, e a
+escada e cumulativa por definicao: quem fala em frases, le e escreve ja passou
+pela atencao social. O pre-requisito foi provado pelo topo, e o codigo so sabe
+ler de baixo para cima.
+
+**POR QUE AS PROTECOES NAO PEGARAM.** A guarda de tema (`temas.includes
+("comunicacao")`) existe e funcionou — o assunto ERA comunicacao. `lacunasDe`
+so devolve campo vazio, e `comunicacao.contato` esta de fato vazio. Cada peca
+esta certa isolada; o que falta e a regra de implicacao entre elas. E a PEND-189
+ja tinha apontado o vizinho deste problema: o Core le o TEXTO e enxerga a
+crianca inteira, o Gate B le CAMPOS e enxerga buracos.
+
+**O DANO NAO CHEGOU A NENHUMA FAMILIA — e o motivo importa.** Nos 7 turnos
+dessa familia depois da 187B, `campo_investigado` foi `null` em todos: o Core
+recebeu a sugestao e **nao perguntou**. A sugestao foi ignorada 18 vezes
+seguidas. O Gate B esta gastando decisao num campo errado e sendo salvo pelo
+juizo do Core — o que e exatamente a situacao em que um defeito fica invisivel
+ate o dia em que o Core obedecer.
+
+⚠️ **O CASO LEGITIMO QUE NAO PODE SER BLOQUEADO (caso I do §12).** Na varredura,
+`c7b57ea3` sabe `forma = "Nao-verbal"` — um degrau acima conhecido — e para essa
+crianca perguntar contato visual e **decisivo e correto**. Uma regra cega
+("degrau acima conhecido → nao pergunta os de baixo") suprimiria justamente a
+pergunta certa para quem mais precisa dela. Dos 37 casos, uma parte e desta
+natureza.
+
+**AS DUAS SAIDAS, e por que nao escolhi sozinho:**
+
+- **A · estrutural, cega ao valor.** Degrau acima conhecido retira os de baixo.
+  Barata, sem heuristica de texto — e suprime o caso nao-verbal. Falso positivo
+  garantido.
+- **B · estreita, sensivel ao valor.** So curto-circuita quando o degrau
+  conhecido **prova** o pre-requisito (fala em frases, le/escreve, argumenta).
+  Acerta Lorenzo e preserva o nao-verbal — ao custo de ler o CONTEUDO do campo,
+  que e o que a PEND-189 alerta para nao fazer com regex ampla.
+
+Escolher entre elas e regra clinica sobre o que conta como prova de
+pre-requisito. O §5 manda parar aqui, e a PEND-180 e explicita: **nao
+implementar regra clinica improvisada.**
+
+**RECOMENDACAO (minha, para a decisao):** B, com lista fechada e curta de
+evidencias de fala funcional, o caso `c7b57ea3` (nao-verbal) preso como teste de
+falso positivo, e a varredura dos 187 refeita ANTES → DEPOIS medindo perdas e
+ganhos — o mesmo metodo da PEND-189.
+
+**Criterio de conclusao:** para um perfil com fala funcional registrada, o Gate B
+deixa de escolher um degrau pre-verbal; para um perfil nao-verbal, continua
+escolhendo. Provado pela varredura dos 187 e por um turno real.
+
+**RELACOES.** [[pend-189]] (duas visoes do mesmo perfil), [[pend-180]] (nao
+improvisar regra clinica), [[pend-188]] (a terceira saida: orientar cobrindo as
+hipoteses em vez de perguntar).
+
+### PEND-193
+**Envelope invalido so avisa em `console.warn` — o `null` nao se distingue da falha**
+Bloco: **B · Ayla** · Prioridade: **P2**
+STATUS: **ABERTA** · Aberta em: 2026-09-10
+
+Achada ao provar a PEND-187B. `campo_investigado: null` tem dois significados
+opostos: o Core olhou a propria fala e declarou que nao investigou campo nenhum,
+ou o envelope veio invalido e o turno caiu na passada de texto livre — onde o
+campo e zerado por principio. No dado persistido os dois sao a MESMA linha.
+
+O caminho de recuperacao emite `console.warn("[ayla:oficial] envelope invalido")`
+— e `logEvent` so persiste severidade de erro, entao isso some com a retencao da
+Vercel (§11 do protocolo).
+
+Hoje da para distinguir por FORA, contando chamadas `ayla_experimental` em
+`api_calls`: 1 chamada = envelope valido, 2 = recuperacao. Foi assim que a baixa
+da 187B foi provada (8 turnos, 1 chamada cada). **Isso e uma muleta que depende
+do volume ser pequeno** e de alguem se lembrar de contar.
+
+Nao corrigido junto com a baixa de proposito: acrescentar emissor e mudanca no
+caminho mais quente do produto, e a missao de agora era provar, nao ampliar.
+
+**Criterio de conclusao:** um evento persistido distinguindo envelope valido de
+recuperacao, e o `null` do rastro passando a ser legivel sem consultar
+`api_calls`.
+
+**Proximo ID livre: PEND-194. *(024 e 025 reservadas por frentes ainda nao publicadas; 0076 e numero de MIGRACAO reservado — ver PEND-121.)***
 
 > Conferir contra `origin/main`, não contra o seu branch. Dois branches podem
 > reivindicar o mesmo número — o conflito de merge nesta linha é o alarme.
