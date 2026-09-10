@@ -9084,7 +9084,66 @@ dominando —, mas o conhecimento especifico nao existe para ser recuperado.
 sob sobrecarga entra no corpus canonico, com procedencia, e um chunk sobre ela
 e recuperado pelo caso Mario na bancada.
 
-**Proximo ID livre: PEND-196. *(024 e 025 reservadas por frentes ainda nao publicadas; 0076 e numero de MIGRACAO reservado — ver PEND-121.)***
+### PEND-196
+**Conhecimento pre-verbal recuperado para crianca que ja fala — a PEND-192 do lado da BIA**
+Bloco: **B · Ayla** · Prioridade: **P1**
+STATUS: **ABERTA — proposta pronta, NAO implementada (aguarda decisao)** · Aberta em: 2026-09-10
+
+Medido na bancada do corpus completo (45 chunks, 10 casos, `rodar-corpus.mts`).
+
+**O CASO ADVERSARIAL A1 FALHOU.** Adolescente de 15 anos, "fala muito bem e
+escreve redacao sozinho", tema `comunicacao`. O bloco recuperou
+`pos-a-03-escada` — *"a fala e o telhado: contato visual → atencao compartilhada
+→ imitacao → gestos → troca de turnos → fala"* — com score 88.
+
+E nao e caso isolado. No turno real do Mario (9 anos, conversa bem), **2 dos 5
+chunks do bloco pressupoem linguagem ausente**: sabotagem amigavel e "entende
+tudo o que eu mando". No caso de tres dominios, **3 de 5**.
+
+**E EXATAMENTE A CLASSE DA PEND-192, do outro lado do sistema.** La o decisor de
+lacuna escolhia `comunicacao.contato` para quem le e escreve; aqui o recuperador
+entrega a escada pre-verbal para quem argumenta. A causa e a mesma: **nada no
+mecanismo sabe que a crianca ja provou um degrau superior.**
+
+**O QUE O SCHEMA ATUAL NAO RESOLVE, conferido campo a campo:**
+
+| tentativa | por que nao serve |
+|---|---|
+| `faixa_etaria_max_meses` | idade nao e nivel de linguagem: existe adolescente nao-verbal |
+| `nivel_de_cautela: nao_usar_sem_contexto` | o filtro duro dela e "nucleo ≠ dominio", outra semantica |
+| `habilidades_relacionadas` | hoje so SOMA score; marcar pre-requisito ali seria um campo com duas semanticas — o defeito de `transicoes` que o Gate A cobrou |
+
+**A PROPOSTA (nao implementada):**
+
+1. **Coluna nova `pressupoe_ausencia_de text[]`** na `bia_chunks` — migracao de
+   uma linha, numerada a partir de 0085. Diz o que o chunk PRESSUPOE que a
+   crianca ainda nao tem ("fala_funcional", "atencao_compartilhada").
+2. **`ContextoBia` ganha `habilidadesProvadas?: string[]`** — NEUTRO. A BIA nao
+   importa `degrauProvadoPeloPerfil` nem conhece o Gate B: quem chama e que
+   preenche. E isto e deliberado — uma dependencia direta entre `lib/bia` e
+   `lacuna-decisiva.ts` acoplaria dois modulos que hoje nao se conhecem, e o
+   §15 pede um dono por decisao.
+3. **Veto em `filtrarDuro`**, nao penalidade: se o contexto prova a habilidade
+   que o chunk pressupoe ausente, o chunk **sai**. Recuperar com score baixo nao
+   basta — a cota poderia trazer de volta.
+4. Os **9 chunks ja marcados** com `_pressupoe` no corpus (`corpus-pos-v1.json`)
+   sao a lista inicial, e a marcacao ja esta escrita e revisavel.
+
+⚠️ **NAO REPLICAR A PEND-192 AS CEGAS.** La a prova vem de tres campos do
+perfil com lista fechada de evidencias e veto por sinal pre-verbal. Aqui o
+consumidor da prova e outro, e a decisao de QUEM produz `habilidadesProvadas`
+ainda nao foi tomada — pode ser o mesmo `degrauProvadoPeloPerfil`, pode ser um
+leitor proprio do perfil. Isso e desenho, nao ajuste.
+
+**CUSTO DE ESPERAR:** nenhum enquanto a BIA estiver desligada. Se o corpus for
+ingerido antes, os 9 chunks precisam de um UPDATE depois — barato, porque o
+`hash` e estavel e o importador e idempotente.
+
+**Criterio de conclusao:** o caso A1 da bancada passa a nao recuperar nenhum
+chunk pre-verbal, e o caso 2 (crianca que leva pela mao) continua recuperando
+todos — provado na mesma bancada, sem alterar os chunks.
+
+**Proximo ID livre: PEND-197. *(024 e 025 reservadas por frentes ainda nao publicadas; 0076 e numero de MIGRACAO reservado — ver PEND-121.)***
 
 > Conferir contra `origin/main`, não contra o seu branch. Dois branches podem
 > reivindicar o mesmo número — o conflito de merge nesta linha é o alarme.

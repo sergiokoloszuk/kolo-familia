@@ -1,0 +1,2167 @@
+[
+  {
+    "id": "pos-a-01-sobrecarga",
+    "_piloto": "piloto-09",
+    "_fonte": "A",
+    "_core": "ausente do Core v11 (medido: \"comportamento é comunicação\" não aparece)",
+    "_criterio": "muda a interpretação + muda o que evitar",
+    "documento_origem": "material-pos-v1-ORIGINAL.md",
+    "versao_documento": "v1",
+    "secao": "§1.1 e §1.4 · Filosofia de Raciocínio Clínico",
+    "ordem": 1,
+    "titulo": "Dispersão e fuga não são preguiça",
+    "nucleo": "regulacao_emocional",
+    "subnucleo": "custo_cognitivo",
+    "tipo_conhecimento": "interpretacao",
+    "faixa_etaria_min_meses": null,
+    "faixa_etaria_max_meses": null,
+    "faixa_rotulo": null,
+    "situacoes_relacionadas": [
+      "escola",
+      "licao_de_casa",
+      "casa"
+    ],
+    "nucleos_relacionados": [
+      "foco_executivas",
+      "aprendizagem"
+    ],
+    "habilidades_relacionadas": [
+      "regulacao",
+      "foco",
+      "tolerancia_a_frustracao"
+    ],
+    "diagnosticos_relacionados": [
+      "tea",
+      "tdah"
+    ],
+    "nivel_de_cautela": "baixo",
+    "muda_conduta": null,
+    "texto_original": "O cérebro neurodivergente frequentemente opera em alto custo de processamento — sensorial, motor ou executivo. Dispersão, recusa e fuga não são preguiça nem birra: são mecanismos de defesa de um sistema sobrecarregado. E todo comportamento disruptivo (crise, choro, recusa, agressividade) é a expressão física de uma necessidade que a criança não conseguiu verbalizar ou processar. A pergunta deixa de ser \"como faço ela obedecer\" e passa a ser \"o que está custando caro demais aqui\".",
+    "perguntas_investigativas": [
+      "O que estava acontecendo nos minutos ANTES da recusa?"
+    ],
+    "hipoteses": [
+      "Recusa como proteção contra sobrecarga, não como oposição",
+      "A necessidade existe e não encontrou palavra"
+    ],
+    "estrategias": [],
+    "o_que_evitar": [
+      "Responder à recusa com aumento de exigência ou consequência",
+      "Chamar de preguiça, manha ou birra"
+    ],
+    "quando_encaminhar": null,
+    "hash": "0d5e2851a6c611fff50d8511864ba1d21d02ce0c315ba5aa60f86c5c4580446a"
+  },
+  {
+    "id": "pos-a-01-escolha",
+    "_piloto": "piloto-15",
+    "_fonte": "A",
+    "_core": "ausente do Core v11",
+    "_criterio": "muda a estratégia",
+    "documento_origem": "material-pos-v1-ORIGINAL.md",
+    "versao_documento": "v1",
+    "secao": "§1.3 e §1.5 · Autonomia Estruturada (A Ciência da Escolha)",
+    "ordem": 2,
+    "titulo": "Escolha delimitada em vez de ordem",
+    "nucleo": "autonomia",
+    "subnucleo": "escolha_delimitada",
+    "tipo_conhecimento": "estrategia",
+    "faixa_etaria_min_meses": null,
+    "faixa_etaria_max_meses": null,
+    "faixa_rotulo": null,
+    "situacoes_relacionadas": [
+      "casa",
+      "transicao",
+      "banho",
+      "escola"
+    ],
+    "nucleos_relacionados": [
+      "regulacao_emocional",
+      "rotina"
+    ],
+    "habilidades_relacionadas": [
+      "autonomia",
+      "tolerancia_a_frustracao",
+      "transicoes"
+    ],
+    "diagnosticos_relacionados": [
+      "tea",
+      "tdah"
+    ],
+    "nivel_de_cautela": "baixo",
+    "muda_conduta": null,
+    "texto_original": "Substituir o controle absoluto por opções delimitadas preserva a segurança emocional e reduz o atrito comportamental. Não é abrir a decisão inteira: é oferecer duas alternativas que servem ao adulto, deixando a escolha com a criança. A terapia formal ocupa poucas horas por semana; o motor real da generalização é a frequência das interações na rotina da família — por isso a estratégia precisa caber no dia comum, não numa sessão.",
+    "perguntas_investigativas": [],
+    "hipoteses": [
+      "Parte do atrito vem da ausência de qualquer margem de decisão"
+    ],
+    "estrategias": [
+      "Oferecer duas opções concretas, ambas aceitáveis para o adulto"
+    ],
+    "o_que_evitar": [
+      "Transformar a escolha em pergunta aberta durante a crise"
+    ],
+    "quando_encaminhar": null,
+    "hash": "4184730d540d3c87b547cf11d3a7363a3707ae53b5e912eff8d4a8e5731060f4"
+  },
+  {
+    "id": "pos-a-02-cid11",
+    "_fonte": "A",
+    "_core": "ausente do Core v11",
+    "_criterio": "muda a interpretação",
+    "documento_origem": "material-pos-v1-ORIGINAL.md",
+    "versao_documento": "v1",
+    "secao": "§2 · Critérios da CID-11",
+    "ordem": 3,
+    "titulo": "As duas variáveis que mais mudam a conduta: linguagem funcional e DI",
+    "nucleo": "comunicacao",
+    "subnucleo": "classificacao",
+    "tipo_conhecimento": "interpretacao",
+    "faixa_etaria_min_meses": null,
+    "faixa_etaria_max_meses": null,
+    "faixa_rotulo": null,
+    "situacoes_relacionadas": [],
+    "nucleos_relacionados": [
+      "aprendizagem"
+    ],
+    "habilidades_relacionadas": [
+      "fala",
+      "compreensao"
+    ],
+    "diagnosticos_relacionados": [
+      "tea"
+    ],
+    "nivel_de_cautela": "moderado",
+    "muda_conduta": null,
+    "texto_original": "A CID-11 subdivide o TEA por duas variáveis de altíssimo impacto prático: presença ou ausência de deficiência intelectual associada, e presença ou ausência de LINGUAGEM FUNCIONAL — a capacidade de usar a comunicação para resolver demandas do cotidiano. Antes de escolher qualquer estratégia, é essa segunda que decide o caminho: orientar quem já resolve demandas falando é diferente de orientar quem ainda não.",
+    "perguntas_investigativas": [
+      "Ela consegue usar a fala para resolver o que precisa no dia a dia, ou a fala existe mas não serve para isso ainda?"
+    ],
+    "hipoteses": [
+      "Linguagem presente não é o mesmo que linguagem funcional"
+    ],
+    "estrategias": [],
+    "o_que_evitar": [
+      "Classificar a criança por rótulo de gravidade em vez de por função"
+    ],
+    "quando_encaminhar": null,
+    "hash": "39a7f3cb2fef101bd9ad9fb21c19dd0e2f3bfb1e66fb7383b311da4c9dc8ac46"
+  },
+  {
+    "id": "pos-a-02-culpa",
+    "_fonte": "A",
+    "_core": "ausente do Core v11",
+    "_criterio": "muda o que orientar",
+    "documento_origem": "material-pos-v1-ORIGINAL.md",
+    "versao_documento": "v1",
+    "secao": "§2 · Etiologia e Genética",
+    "ordem": 4,
+    "titulo": "O acolhimento começa retirando a culpa",
+    "nucleo": "pensamentos_crencas",
+    "subnucleo": "culpa_parental",
+    "tipo_conhecimento": "interpretacao",
+    "faixa_etaria_min_meses": null,
+    "faixa_etaria_max_meses": null,
+    "faixa_rotulo": null,
+    "situacoes_relacionadas": [],
+    "nucleos_relacionados": [
+      "regulacao_emocional"
+    ],
+    "habilidades_relacionadas": [],
+    "diagnosticos_relacionados": [
+      "tea"
+    ],
+    "nivel_de_cautela": "baixo",
+    "muda_conduta": null,
+    "texto_original": "O autismo tem base predominantemente genética e epigenética. Teorias culpabilizantes obsoletas — a \"mãe geladeira\" — e associações pseudocientíficas com vacinas são descartadas de forma absoluta pela ciência. Quando o adulto carrega essa culpa, ela precisa ser retirada antes de qualquer estratégia: um cuidador que se acha causador do quadro não consegue agir com firmeza tranquila.",
+    "perguntas_investigativas": [],
+    "hipoteses": [
+      "Culpa não dita ainda assim trava a ação do adulto"
+    ],
+    "estrategias": [],
+    "o_que_evitar": [
+      "Deixar passar sem resposta uma frase de autoculpabilização"
+    ],
+    "quando_encaminhar": null,
+    "hash": "2364b794c4c250fcccfd9e783eece7eb3a085da9e397568d2148c48860ca992b"
+  },
+  {
+    "id": "pos-a-03-escada",
+    "_piloto": "piloto-01",
+    "_fonte": "A",
+    "_core": "ausente do Core v11; a ORDEM já está em ESCADA_COMUNICACAO (lacuna-decisiva.ts)",
+    "_criterio": "muda o que investigar + muda a estratégia",
+    "_pressupoe": "linguagem ausente ou emergente — ver §I do laudo (veto pré-verbal)",
+    "documento_origem": "material-pos-v1-ORIGINAL.md",
+    "versao_documento": "v1",
+    "secao": "§1.2 e §3 · A Fala é o Telhado",
+    "ordem": 5,
+    "titulo": "A fala é o telhado: a ordem dos pré-requisitos",
+    "nucleo": "comunicacao",
+    "subnucleo": "pre_verbal",
+    "tipo_conhecimento": "regra_operacional",
+    "faixa_etaria_min_meses": null,
+    "faixa_etaria_max_meses": null,
+    "faixa_rotulo": null,
+    "situacoes_relacionadas": [],
+    "nucleos_relacionados": [
+      "imitacao",
+      "socializacao"
+    ],
+    "habilidades_relacionadas": [
+      "fala",
+      "contato_visual",
+      "atencao_compartilhada",
+      "imitacao",
+      "troca_de_turnos",
+      "gestos"
+    ],
+    "diagnosticos_relacionados": [
+      "tea"
+    ],
+    "nivel_de_cautela": "baixo",
+    "muda_conduta": null,
+    "texto_original": "Exigir fala funcional sem antes consolidar os alicerces é erro metodológico que gera exaustão e frustração. A ordem dos pré-requisitos, de baixo para cima: contato visual/social (notar o outro) → atenção compartilhada (triângulo criança-objeto-adulto) → imitação de ações → gestos e apontar → troca de turnos → fala funcional. Investigue o degrau EXATO em que a criança está: o degrau mais baixo ainda desconhecido é o que muda a estratégia, não o mais alto.",
+    "perguntas_investigativas": [],
+    "hipoteses": [
+      "Se a fala não avança, o degrau que falta pode estar abaixo dela, não nela"
+    ],
+    "estrategias": [],
+    "o_que_evitar": [
+      "Treinar vocabulário quando o degrau ausente é atenção social ou imitação"
+    ],
+    "quando_encaminhar": null,
+    "hash": "0ddb5a1bd0af4b098b84e99da6da28bb7d1e29b220668b0a8e0984f6ec3da229"
+  },
+  {
+    "id": "pos-a-03-contato",
+    "_piloto": "piloto-02",
+    "_fonte": "A",
+    "_core": "sobreposição PARCIAL: o Core já proíbe exigir contato visual, mas não traz a pergunta de investigação nem o mecanismo",
+    "_criterio": "muda o que investigar",
+    "_pressupoe": "linguagem ausente ou emergente — ver §I do laudo (veto pré-verbal)",
+    "documento_origem": "material-pos-v1-ORIGINAL.md",
+    "versao_documento": "v1",
+    "secao": "§3.A · Atenção Social e Contato Visual",
+    "ordem": 6,
+    "titulo": "Atenção social: como investigar sem exigir contato visual",
+    "nucleo": "comunicacao",
+    "subnucleo": "atencao_social",
+    "tipo_conhecimento": "pergunta_investigativa",
+    "faixa_etaria_min_meses": null,
+    "faixa_etaria_max_meses": 72,
+    "faixa_rotulo": "até 6 anos",
+    "situacoes_relacionadas": [
+      "casa",
+      "brincadeira"
+    ],
+    "nucleos_relacionados": [
+      "socializacao"
+    ],
+    "habilidades_relacionadas": [
+      "contato_visual",
+      "atencao_social"
+    ],
+    "diagnosticos_relacionados": [
+      "tea"
+    ],
+    "nivel_de_cautela": "moderado",
+    "muda_conduta": true,
+    "texto_original": "Mecanismo: o cérebro autista tem predisposição inata para focar em objetos e padrões em detrimento de estímulos sociais. Como investigar, em uma pergunta: \"Quando você entra no quarto, a criança desvia o foco do brinquedo para olhar seu rosto, ou age como se você não estivesse lá?\" A resposta muda a conduta: se ela não nota a entrada do adulto, o alvo é atenção social — não vocabulário.",
+    "perguntas_investigativas": [
+      "Quando você entra no quarto, ela desvia o foco do brinquedo para olhar seu rosto, ou age como se você não estivesse lá?"
+    ],
+    "hipoteses": [
+      "Foco preferencial em objetos sobre estímulos sociais"
+    ],
+    "estrategias": [
+      "Seguir a liderança: posicionar-se no campo de visão, sem ordens verbais, e imitar o que ela faz com o brinquedo"
+    ],
+    "o_que_evitar": [
+      "Exigir contato visual como condição para responder ou entregar algo"
+    ],
+    "quando_encaminhar": null,
+    "hash": "20e24edc60f5180dab58dead9188d58e7aeacc0b732d3da8691f98a8420b998d"
+  },
+  {
+    "id": "pos-a-03-mao",
+    "_piloto": "piloto-03",
+    "_fonte": "A",
+    "_core": "ausente do Core v11",
+    "_criterio": "muda a interpretação + muda a estratégia",
+    "_pressupoe": "linguagem ausente ou emergente — ver §I do laudo (veto pré-verbal)",
+    "documento_origem": "material-pos-v1-ORIGINAL.md",
+    "versao_documento": "v1",
+    "secao": "§3.B · Atenção Compartilhada (O Triângulo Comunicativo)",
+    "ordem": 7,
+    "titulo": "Puxar a mão do adulto como ferramenta: o que isso significa",
+    "nucleo": "comunicacao",
+    "subnucleo": "atencao_compartilhada",
+    "tipo_conhecimento": "interpretacao",
+    "faixa_etaria_min_meses": null,
+    "faixa_etaria_max_meses": 72,
+    "faixa_rotulo": "até 6 anos",
+    "situacoes_relacionadas": [
+      "casa",
+      "refeicao"
+    ],
+    "nucleos_relacionados": [
+      "socializacao"
+    ],
+    "habilidades_relacionadas": [
+      "atencao_compartilhada",
+      "apontar",
+      "gestos"
+    ],
+    "diagnosticos_relacionados": [
+      "tea"
+    ],
+    "nivel_de_cautela": "baixo",
+    "muda_conduta": null,
+    "texto_original": "Sinal de alerta na atenção compartilhada: puxar a mão do adulto como se fosse uma ferramenta ou alavanca para alcançar o que quer, SEM contato visual com o rosto. É comunicação instrumental — usa a pessoa como meio, sem o triângulo criança-objeto-adulto. Diferente de apontar ou de olhar alternando entre o objeto e o rosto, que já são compartilhamento. Como investigar: \"Se um avião passa e você aponta dizendo 'olha!', ela olha para onde você aponta, ou olha só para o seu dedo?\"",
+    "perguntas_investigativas": [
+      "Se você aponta para algo e diz \"olha!\", ela olha para onde você aponta ou olha só para o seu dedo?"
+    ],
+    "hipoteses": [
+      "Comunicação instrumental sem triangulação: a pessoa é meio, não interlocutor"
+    ],
+    "estrategias": [
+      "Modelo com espera: segurar o item desejado junto ao próprio rosto, nomear e esperar até 5 segundos pelo olhar antes de entregar"
+    ],
+    "o_que_evitar": [
+      "Ler o puxar de mão como \"ela já se comunica bem\" e parar de investigar"
+    ],
+    "quando_encaminhar": null,
+    "hash": "6ff934f3e2a09115fb7d07d431982f4ddb32b65e845b59564186b72d863b8f8f"
+  },
+  {
+    "id": "pos-a-03-imitacao",
+    "_piloto": "piloto-04",
+    "_fonte": "A",
+    "_core": "ausente do Core v11",
+    "_criterio": "muda a estratégia",
+    "_pressupoe": "linguagem ausente ou emergente — ver §I do laudo (veto pré-verbal)",
+    "documento_origem": "material-pos-v1-ORIGINAL.md",
+    "versao_documento": "v1",
+    "secao": "§3.C · Imitação (Neurônios-Espelho)",
+    "ordem": 8,
+    "titulo": "Hierarquia de dicas para ensinar imitação",
+    "nucleo": "imitacao",
+    "subnucleo": "hierarquia_de_dicas",
+    "tipo_conhecimento": "estrategia",
+    "faixa_etaria_min_meses": null,
+    "faixa_etaria_max_meses": 72,
+    "faixa_rotulo": "até 6 anos",
+    "situacoes_relacionadas": [
+      "brincadeira",
+      "casa"
+    ],
+    "nucleos_relacionados": [
+      "comunicacao",
+      "motor"
+    ],
+    "habilidades_relacionadas": [
+      "imitacao",
+      "fala"
+    ],
+    "diagnosticos_relacionados": [
+      "tea"
+    ],
+    "nivel_de_cautela": "baixo",
+    "muda_conduta": null,
+    "texto_original": "A imitação de ações simples, com e sem objeto, é o caminho biológico para a fala — falar é imitar movimentos da boca. Estratégia: brinquedos de causa e efeito (bater martelo, empilhar blocos) com hierarquia de dicas, sempre nesta ordem: dica visual → dica verbal → apoio físico leve no cotovelo → ajuda física total conduzindo a mão. Reduza o apoio conforme ela demonstra autonomia. Como investigar: \"Se você bate palmas ou faz careta rindo, ela tenta copiar espontaneamente?\"",
+    "perguntas_investigativas": [
+      "Se você bate palmas ou faz uma careta rindo, ela tenta copiar espontaneamente?"
+    ],
+    "hipoteses": [
+      "Imitação ausente é pré-requisito faltante da fala, não desinteresse"
+    ],
+    "estrategias": [
+      "Dica visual → verbal → apoio físico leve no cotovelo → ajuda física total, sempre reduzindo"
+    ],
+    "o_que_evitar": [
+      "Começar pela ajuda física total, que impede a criança de mostrar o que já consegue"
+    ],
+    "quando_encaminhar": null,
+    "hash": "7888a62503160a23113df26712f28604e37a452c34516c467373a44962b890cc"
+  },
+  {
+    "id": "pos-a-03-turnos",
+    "_piloto": "piloto-05",
+    "_fonte": "A",
+    "_core": "ausente do Core v11",
+    "_criterio": "muda o que investigar + muda a estratégia",
+    "_pressupoe": "linguagem ausente ou emergente — ver §I do laudo (veto pré-verbal)",
+    "documento_origem": "material-pos-v1-ORIGINAL.md",
+    "versao_documento": "v1",
+    "secao": "§3.D · Troca de Turnos (O Bate-Bola)",
+    "ordem": 9,
+    "titulo": "Troca de turnos: parar a brincadeira e esperar a iniciativa",
+    "nucleo": "comunicacao",
+    "subnucleo": "troca_de_turnos",
+    "tipo_conhecimento": "pergunta_investigativa",
+    "faixa_etaria_min_meses": null,
+    "faixa_etaria_max_meses": 72,
+    "faixa_rotulo": "até 6 anos",
+    "situacoes_relacionadas": [
+      "brincadeira"
+    ],
+    "nucleos_relacionados": [
+      "socializacao"
+    ],
+    "habilidades_relacionadas": [
+      "troca_de_turnos",
+      "iniciativa_comunicativa"
+    ],
+    "diagnosticos_relacionados": [
+      "tea"
+    ],
+    "nivel_de_cautela": "baixo",
+    "muda_conduta": true,
+    "texto_original": "Troca de turnos é entender que a comunicação é via de mão dupla. Como investigar: \"Em brincadeiras físicas (cócegas, balanço, serra-serra), se você parar de repente, o que ela faz? Ela demonstra de alguma forma — olhar, som, movimento — que quer que você continue?\" A própria investigação é a intervenção: parar a ação divertida e aguardar a iniciativa, reiniciando só depois de uma resposta social dela.",
+    "perguntas_investigativas": [
+      "Em brincadeiras físicas, se você parar de repente, ela demonstra de alguma forma que quer que você continue?"
+    ],
+    "hipoteses": [
+      "Sem troca de turnos, a fala funcional não tem sobre o que se apoiar"
+    ],
+    "estrategias": [
+      "Parar a ação agradável abruptamente e reiniciar só após olhar, som ou sorriso"
+    ],
+    "o_que_evitar": [],
+    "quando_encaminhar": null,
+    "hash": "d137b9f621939ec42f792f2b6fa887e909fedfbb0ba2d5427ad7aacb5f97f013"
+  },
+  {
+    "id": "pos-a-04-cerebelo",
+    "_fonte": "A",
+    "_core": "ausente do Core v11",
+    "_criterio": "muda a interpretação + muda a cautela",
+    "documento_origem": "material-pos-v1-ORIGINAL.md",
+    "versao_documento": "v1",
+    "secao": "§4 · Coordenação, Movimento e Cerebelo + §7 (regra 7)",
+    "ordem": 10,
+    "titulo": "\"Criança desastrada\" pode ser assimetria funcional, não descuido",
+    "nucleo": "motor",
+    "subnucleo": "dismetria",
+    "tipo_conhecimento": "encaminhamento",
+    "faixa_etaria_min_meses": null,
+    "faixa_etaria_max_meses": null,
+    "faixa_rotulo": null,
+    "situacoes_relacionadas": [
+      "escola",
+      "casa"
+    ],
+    "nucleos_relacionados": [
+      "autonomia",
+      "aprendizagem"
+    ],
+    "habilidades_relacionadas": [
+      "coordenacao",
+      "equilibrio",
+      "motor_fino"
+    ],
+    "diagnosticos_relacionados": [
+      "tea",
+      "dispraxia"
+    ],
+    "nivel_de_cautela": "moderado",
+    "muda_conduta": null,
+    "texto_original": "Marcha atípica, desequilíbrio constante, quedas frequentes e dificuldade motora fina importante podem indicar dismetria funcional — assimetria inconsciente na ativação de cadeias musculares, ligada à comunicação neural cerebelar. Afeta equilíbrio postural, correr e pular, e também segurar o lápis e usar talheres. O rótulo \"criança desastrada\" esconde isso. Vale avaliação com psicomotricista ou terapeuta ocupacional.",
+    "perguntas_investigativas": [
+      "As quedas e esbarrões acontecem em qualquer lugar, ou só em ambiente novo e cheio?"
+    ],
+    "hipoteses": [
+      "Descoordenação motora com base neurofuncional, não falta de atenção"
+    ],
+    "estrategias": [],
+    "o_que_evitar": [
+      "Corrigir a criança como se fosse descuido ou pressa"
+    ],
+    "quando_encaminhar": "Quedas frequentes, desequilíbrio e dificuldade motora fina importante pedem avaliação de psicomotricista ou terapeuta ocupacional",
+    "hash": "0408bade43a5c811bf463a53072bdc76e68fa2c526b2c6bd2a7aa37011f7cc03"
+  },
+  {
+    "id": "pos-a-04-fala-motora",
+    "_fonte": "A",
+    "_core": "sobreposição parcial: o Core traz a tríade da apraxia, não o mecanismo (saber o que dizer × coordenar a boca)",
+    "_criterio": "muda a interpretação",
+    "documento_origem": "material-pos-v1-ORIGINAL.md",
+    "versao_documento": "v1",
+    "secao": "§4 · A Fala como Ato Motor",
+    "ordem": 11,
+    "titulo": "A fala é ato motor: saber o que dizer e conseguir dizer são coisas diferentes",
+    "nucleo": "comunicacao",
+    "subnucleo": "planejamento_motor",
+    "tipo_conhecimento": "interpretacao",
+    "faixa_etaria_min_meses": null,
+    "faixa_etaria_max_meses": null,
+    "faixa_rotulo": null,
+    "situacoes_relacionadas": [],
+    "nucleos_relacionados": [
+      "motor"
+    ],
+    "habilidades_relacionadas": [
+      "fala",
+      "articulacao"
+    ],
+    "diagnosticos_relacionados": [
+      "tea",
+      "apraxia"
+    ],
+    "nivel_de_cautela": "moderado",
+    "muda_conduta": null,
+    "texto_original": "Atraso na produção de sons nem sempre é cognitivo: pode ser planejamento motor orofacial. O cérebro sabe o que quer dizer e falha em coordenar os músculos da boca em sequência. Isso muda a leitura do esforço da criança — ela não está \"sem querer falar\" nem \"sem entender\"; está travando na execução. E muda a resposta do adulto: aceitar a tentativa, não repetir a cobrança.",
+    "perguntas_investigativas": [],
+    "hipoteses": [
+      "Falha de execução motora, não de intenção nem de compreensão"
+    ],
+    "estrategias": [],
+    "o_que_evitar": [
+      "Pedir para repetir a palavra várias vezes até \"sair certo\""
+    ],
+    "quando_encaminhar": null,
+    "hash": "4c6e818ba913755d6624ca2f6aaa2b4510403b20d53af0f3e6274c0da394855d"
+  },
+  {
+    "id": "pos-a-05-ate10",
+    "_fonte": "A",
+    "_core": "ausente do Core v11",
+    "_criterio": "muda a estratégia",
+    "documento_origem": "material-pos-v1-ORIGINAL.md",
+    "versao_documento": "v1",
+    "secao": "§5.A · Crianças até 10 anos",
+    "ordem": 12,
+    "titulo": "Instrução vaga sobrecarrega a memória de trabalho",
+    "nucleo": "autonomia",
+    "subnucleo": "quebra_de_tarefa",
+    "tipo_conhecimento": "regra_operacional",
+    "faixa_etaria_min_meses": 24,
+    "faixa_etaria_max_meses": 120,
+    "faixa_rotulo": "até 10 anos",
+    "situacoes_relacionadas": [
+      "casa",
+      "escola",
+      "licao_de_casa"
+    ],
+    "nucleos_relacionados": [
+      "rotina",
+      "foco_executivas"
+    ],
+    "habilidades_relacionadas": [
+      "autonomia",
+      "memoria_de_trabalho",
+      "vestir"
+    ],
+    "diagnosticos_relacionados": [
+      "tea",
+      "tdah"
+    ],
+    "nivel_de_cautela": "baixo",
+    "muda_conduta": null,
+    "texto_original": "\"Vai arrumar seu quarto\" e \"se arrume para a escola\" são instruções vagas: sobrecarregam a memória de trabalho, a criança paralisa e recusa. A recusa aqui é sintoma da instrução, não da criança. Quebre em microetapas visíveis — 1. vestir a calça · 2. calçar a meia · 3. colocar o tênis — em cartões ou lista visual. A previsibilidade reduz o estresse e poupa energia cognitiva para a tarefa em si.",
+    "perguntas_investigativas": [
+      "Quando você pede uma etapa só de cada vez, ela consegue?"
+    ],
+    "hipoteses": [
+      "Paralisia por instrução ampla demais, não por oposição"
+    ],
+    "estrategias": [
+      "Cartões ou lista com microetapas, uma linha por passo"
+    ],
+    "o_que_evitar": [
+      "Repetir a mesma instrução vaga em voz mais alta"
+    ],
+    "quando_encaminhar": null,
+    "hash": "6d8bbad062ec3aa38180464779c69d3aaf6aff005917771f2c9450fbd5d6c1bb"
+  },
+  {
+    "id": "pos-a-05-11a14",
+    "_fonte": "A",
+    "_core": "ausente do Core v11",
+    "_criterio": "muda a estratégia",
+    "documento_origem": "material-pos-v1-ORIGINAL.md",
+    "versao_documento": "v1",
+    "secao": "§5.B · Adolescentes (11 a 14 anos)",
+    "ordem": 13,
+    "titulo": "Escolha de ordem: agência para o lobo frontal em maturação",
+    "nucleo": "autonomia",
+    "subnucleo": "escolha_de_ordem",
+    "tipo_conhecimento": "estrategia",
+    "faixa_etaria_min_meses": 132,
+    "faixa_etaria_max_meses": 168,
+    "faixa_rotulo": "11 a 14 anos",
+    "situacoes_relacionadas": [
+      "casa",
+      "escola",
+      "licao_de_casa"
+    ],
+    "nucleos_relacionados": [
+      "foco_executivas",
+      "aprendizagem"
+    ],
+    "habilidades_relacionadas": [
+      "autonomia",
+      "organizacao"
+    ],
+    "diagnosticos_relacionados": [
+      "tea",
+      "tdah"
+    ],
+    "nivel_de_cautela": "baixo",
+    "muda_conduta": null,
+    "texto_original": "Na adolescência as demandas escolares crescem junto com a exigência de gerenciar a vida diária, e o lobo frontal ainda está amadurecendo. A estratégia que funciona é a escolha de ORDEM, não de conteúdo: \"Você prefere começar pela tarefa de história ou pela de matemática?\". A sensação de agência estimula o frontal e reduz a evitação — sem abrir mão de que as duas serão feitas.",
+    "perguntas_investigativas": [],
+    "hipoteses": [
+      "Evitação alimentada por ausência de controle sobre a sequência"
+    ],
+    "estrategias": [
+      "Deixar o adolescente decidir a ordem do cronograma, mantendo o conteúdo"
+    ],
+    "o_que_evitar": [
+      "Transformar a escolha de ordem em negociação sobre fazer ou não"
+    ],
+    "quando_encaminhar": null,
+    "hash": "ecb70086e8621e36ff91ac753729b29739374b0210b7635cedde14d2b7db781f"
+  },
+  {
+    "id": "pos-a-05-15mais",
+    "_fonte": "A",
+    "_core": "ausente do Core v11",
+    "_criterio": "muda a estratégia + muda a interpretação",
+    "documento_origem": "material-pos-v1-ORIGINAL.md",
+    "versao_documento": "v1",
+    "secao": "§5.C · Jovens (15+ anos)",
+    "ordem": 14,
+    "titulo": "O alvo não é foco ininterrupto: é mapa de retomada",
+    "nucleo": "foco_executivas",
+    "subnucleo": "retomada",
+    "tipo_conhecimento": "estrategia",
+    "faixa_etaria_min_meses": 180,
+    "faixa_etaria_max_meses": null,
+    "faixa_rotulo": "15 anos ou mais",
+    "situacoes_relacionadas": [
+      "estudo",
+      "casa",
+      "escola"
+    ],
+    "nucleos_relacionados": [
+      "autonomia",
+      "aprendizagem"
+    ],
+    "habilidades_relacionadas": [
+      "foco",
+      "autonomia",
+      "automonitoramento"
+    ],
+    "diagnosticos_relacionados": [
+      "tea",
+      "tdah"
+    ],
+    "nivel_de_cautela": "baixo",
+    "muda_conduta": null,
+    "texto_original": "No jovem, a dispersão involuntária alimenta sentimento de incompetência e frustração crônica. O objetivo deixa de ser foco absoluto ininterrupto — que não vai acontecer — e passa a ser um mapa de RETOMADA: aceitar que a distração neurológica ocorre e treinar o voltar. Blocos curtos com timer visual (8 a 12 minutos) e pistas visíveis na mesa para lembrar de retornar.",
+    "perguntas_investigativas": [],
+    "hipoteses": [
+      "A frustração vem da meta errada (não se distrair), não da distração em si"
+    ],
+    "estrategias": [
+      "Blocos de 8 a 12 minutos com timer visual",
+      "Pista visual na mesa como âncora de retomada"
+    ],
+    "o_que_evitar": [
+      "Cobrar foco contínuo como prova de esforço"
+    ],
+    "quando_encaminhar": null,
+    "hash": "b5cd31796b7baedb6fcfe239e0125747c4c4413cd57b0e14d26a4abf01780950"
+  },
+  {
+    "id": "pos-a-06-hiperfoco",
+    "_fonte": "A",
+    "_core": "ausente do Core v11 (medido: \"hiperfoco\" não aparece)",
+    "_criterio": "muda a estratégia + muda o que evitar",
+    "documento_origem": "material-pos-v1-ORIGINAL.md",
+    "versao_documento": "v1",
+    "secao": "§6 · O Hiperfoco como Ponte",
+    "ordem": 15,
+    "titulo": "O hiperfoco é via de acesso, não isolamento a combater",
+    "nucleo": "foco_executivas",
+    "subnucleo": "hiperfoco",
+    "tipo_conhecimento": "estrategia",
+    "faixa_etaria_min_meses": null,
+    "faixa_etaria_max_meses": null,
+    "faixa_rotulo": null,
+    "situacoes_relacionadas": [
+      "casa",
+      "escola",
+      "brincadeira",
+      "licao_de_casa"
+    ],
+    "nucleos_relacionados": [
+      "aprendizagem",
+      "socializacao",
+      "brincadeiras_atividades"
+    ],
+    "habilidades_relacionadas": [
+      "foco",
+      "interesses",
+      "aprendizagem"
+    ],
+    "diagnosticos_relacionados": [
+      "tea",
+      "tdah"
+    ],
+    "nivel_de_cautela": "baixo",
+    "muda_conduta": null,
+    "texto_original": "O interesse restrito e profundo ativa intensamente o lobo frontal. Em vez de proibir ou punir o hiperfoco, use-o como via de acesso: aprender matemática contando dinossauros, treinar troca de turnos num jogo sobre o tema que ela ama. O que é ponte não deveria virar moeda de troca nem castigo — retirá-lo costuma custar mais engajamento do que a conduta que se queria corrigir.",
+    "perguntas_investigativas": [
+      "Qual é o assunto que ela procura sozinha, sem ninguém pedir?"
+    ],
+    "hipoteses": [
+      "O tema de interesse é o canal de maior disponibilidade cognitiva"
+    ],
+    "estrategias": [
+      "Ancorar a habilidade a treinar dentro do tema de interesse"
+    ],
+    "o_que_evitar": [
+      "Usar o interesse como moeda de troca ou punição"
+    ],
+    "quando_encaminhar": null,
+    "hash": "fca70a797774057ca99ffa1d593ba5c8b09952d421672413f6318dfe94e7c48b"
+  },
+  {
+    "id": "pos-a-06-espelho",
+    "_piloto": "piloto-10",
+    "_fonte": "A",
+    "_core": "ausente do Core v11",
+    "_criterio": "muda a estratégia + muda o que evitar",
+    "documento_origem": "material-pos-v1-ORIGINAL.md",
+    "versao_documento": "v1",
+    "secao": "§6 · O Efeito Espelho na Crise",
+    "ordem": 16,
+    "titulo": "Na crise, a calma do adulto é a intervenção",
+    "nucleo": "regulacao_emocional",
+    "subnucleo": "co_regulacao",
+    "tipo_conhecimento": "estrategia",
+    "faixa_etaria_min_meses": null,
+    "faixa_etaria_max_meses": null,
+    "faixa_rotulo": null,
+    "situacoes_relacionadas": [
+      "casa",
+      "escola",
+      "publico"
+    ],
+    "nucleos_relacionados": [
+      "comunicacao"
+    ],
+    "habilidades_relacionadas": [
+      "regulacao",
+      "co_regulacao"
+    ],
+    "diagnosticos_relacionados": [
+      "tea",
+      "tdah"
+    ],
+    "nivel_de_cautela": "baixo",
+    "muda_conduta": null,
+    "texto_original": "Durante a desregulação (meltdown), gritar ou dar lição de moral ativa o sistema de ameaça da criança — a amígdala. Nesse estado ela não processa argumento. A calma do adulto, transmitida pelo corpo, pela respiração lenta e pelo tom de voz baixo, é lida pelos neurônios-espelho e inicia a co-regulação. Conversa sobre o que aconteceu vem DEPOIS, quando ela já estiver regulada.",
+    "perguntas_investigativas": [],
+    "hipoteses": [
+      "Em estado de ameaça, a criança perde acesso a raciocínio e linguagem elaborada"
+    ],
+    "estrategias": [
+      "Reduzir a própria voz e a própria velocidade antes de tentar qualquer instrução",
+      "Deixar a conversa sobre o ocorrido para depois da regulação"
+    ],
+    "o_que_evitar": [
+      "Explicar, argumentar ou corrigir durante a crise",
+      "Elevar a voz"
+    ],
+    "quando_encaminhar": null,
+    "hash": "5c7f6ee0c3863cdea853892ad1ab15c9f39ded85e0c224f7da3d83343110991d"
+  },
+  {
+    "id": "pos-a-07-entende-tudo",
+    "_piloto": "piloto-06",
+    "_fonte": "A",
+    "_core": "ausente do Core v11; a ORDEM já é regra do Gate B (ORDEM_DA_POS)",
+    "_criterio": "muda a interpretação + muda o que investigar",
+    "_pressupoe": "atraso de fala relatado — ver §I do laudo (veto pré-verbal)",
+    "documento_origem": "material-pos-v1-ORIGINAL.md",
+    "versao_documento": "v1",
+    "secao": "§7 · Matriz SE… ENTÃO (regra 1)",
+    "ordem": 17,
+    "titulo": "\"Entende tudo o que eu mando\" não é compreensão de linguagem",
+    "nucleo": "comunicacao",
+    "subnucleo": "compreensao",
+    "tipo_conhecimento": "regra_operacional",
+    "faixa_etaria_min_meses": null,
+    "faixa_etaria_max_meses": null,
+    "faixa_rotulo": null,
+    "situacoes_relacionadas": [
+      "casa"
+    ],
+    "nucleos_relacionados": [
+      "aprendizagem"
+    ],
+    "habilidades_relacionadas": [
+      "compreensao",
+      "fala",
+      "contato_visual",
+      "imitacao",
+      "atencao_compartilhada"
+    ],
+    "diagnosticos_relacionados": [
+      "tea"
+    ],
+    "nivel_de_cautela": "baixo",
+    "muda_conduta": null,
+    "texto_original": "SE a família relata atraso de fala mas diz que a criança \"entende tudo o que eu mando e faz\", ENTÃO explique que compreender o CONTEXTO visual e a rotina é diferente de processar a linguagem semanticamente — a criança pode estar lendo pistas do ambiente, não as palavras. E investigue os marcos pré-verbais ausentes: contato visual, imitação, atenção compartilhada.",
+    "perguntas_investigativas": [
+      "Quando você pede algo sem gesto nenhum e fora da rotina de sempre, ela ainda entende?"
+    ],
+    "hipoteses": [
+      "Compreensão apoiada em contexto e rotina, não em linguagem"
+    ],
+    "estrategias": [],
+    "o_que_evitar": [
+      "Tratar \"entende tudo\" como prova de que a linguagem receptiva está preservada"
+    ],
+    "quando_encaminhar": null,
+    "hash": "59b21aa439fd4f0709634ab7b080bf9da20aecf7a787820697a47fca2646d27c"
+  },
+  {
+    "id": "pos-a-07-rodinha",
+    "_fonte": "A",
+    "_core": "ausente do Core v11 (medido: \"seguir a liderança\" e \"coerência central\" não aparecem)",
+    "_criterio": "muda a interpretação + muda a estratégia",
+    "documento_origem": "material-pos-v1-ORIGINAL.md",
+    "versao_documento": "v1",
+    "secao": "§7 · Matriz SE… ENTÃO (regra 2)",
+    "ordem": 18,
+    "titulo": "Girar a rodinha: seguir a liderança em vez de corrigir a brincadeira",
+    "nucleo": "brincadeiras_atividades",
+    "subnucleo": "seguir_a_lideranca",
+    "tipo_conhecimento": "regra_operacional",
+    "faixa_etaria_min_meses": 24,
+    "faixa_etaria_max_meses": 96,
+    "faixa_rotulo": "2 a 8 anos",
+    "situacoes_relacionadas": [
+      "brincadeira",
+      "casa"
+    ],
+    "nucleos_relacionados": [
+      "comunicacao",
+      "regulacao_emocional",
+      "socializacao"
+    ],
+    "habilidades_relacionadas": [
+      "brincar",
+      "imitacao",
+      "flexibilidade"
+    ],
+    "diagnosticos_relacionados": [
+      "tea"
+    ],
+    "nivel_de_cautela": "baixo",
+    "muda_conduta": null,
+    "texto_original": "SE a criança só gira as rodinhas do carrinho e chora quando tentam fazê-la empurrar o carro no chão, ENTÃO isso é coerência central focada no detalhe somada a rigidez — não teimosia. A conduta que funciona é seguir a liderança: imitar o giro da roda ao lado dela, entrar no que ela faz, e só depois ampliar. Impor a brincadeira \"funcional\" no atrito custa a conexão e não ensina a brincadeira.",
+    "perguntas_investigativas": [],
+    "hipoteses": [
+      "Foco no detalhe (coerência central) com rigidez, não oposição"
+    ],
+    "estrategias": [
+      "Imitar a ação dela em paralelo, sem pedir mudança, até haver troca"
+    ],
+    "o_que_evitar": [
+      "Trocar a brincadeira dela pela \"certa\" no meio do atrito"
+    ],
+    "quando_encaminhar": null,
+    "hash": "88a7611308c9f50d9de54f515d5917609464e44ee4cb582420c20a6caca1a896"
+  },
+  {
+    "id": "pos-a-07-teoria-mente",
+    "_fonte": "A",
+    "_core": "ausente do Core v11 (medido: \"teoria da mente\" não aparece)",
+    "_criterio": "muda a interpretação + muda a estratégia",
+    "documento_origem": "material-pos-v1-ORIGINAL.md",
+    "versao_documento": "v1",
+    "secao": "§7 · Matriz SE… ENTÃO (regra 4) + §10 (princípio 13)",
+    "ordem": 19,
+    "titulo": "\"Grosso\" e \"não se importa\" podem ser Teoria da Mente, não falta de afeto",
+    "nucleo": "socializacao",
+    "subnucleo": "teoria_da_mente",
+    "tipo_conhecimento": "regra_operacional",
+    "faixa_etaria_min_meses": 96,
+    "faixa_etaria_max_meses": 216,
+    "faixa_rotulo": "8 a 18 anos",
+    "situacoes_relacionadas": [
+      "escola",
+      "casa",
+      "familia"
+    ],
+    "nucleos_relacionados": [
+      "comunicacao",
+      "pensamentos_crencas"
+    ],
+    "habilidades_relacionadas": [
+      "empatia",
+      "pragmatica",
+      "socializacao"
+    ],
+    "diagnosticos_relacionados": [
+      "tea"
+    ],
+    "nivel_de_cautela": "baixo",
+    "muda_conduta": null,
+    "texto_original": "SE o relato é que o adolescente é \"grosso\", responde ríspido e parece não se importar com os sentimentos dos outros, ENTÃO considere dificuldade de Teoria da Mente — inferir o estado mental do outro. É falha neurofuncional de empatia COGNITIVA, não falta de afeto. A conduta é tornar explícito o que é implícito: histórias sociais e regras visuais de comportamento, treinando a leitura em vez de cobrar a intenção.",
+    "perguntas_investigativas": [],
+    "hipoteses": [
+      "Empatia cognitiva prejudicada, com afeto preservado"
+    ],
+    "estrategias": [
+      "Histórias sociais e regras explícitas e visíveis, em vez de cobrança de intenção"
+    ],
+    "o_que_evitar": [
+      "Interpretar a resposta ríspida como falta de amor ou má educação"
+    ],
+    "quando_encaminhar": null,
+    "hash": "80cab28cb808585c234db845e67a7bd2a9be4caa375e59994f3c02707dbb9200"
+  },
+  {
+    "id": "pos-a-07-janela",
+    "_fonte": "A",
+    "_core": "ausente do Core v11",
+    "_criterio": "muda o que orientar",
+    "documento_origem": "material-pos-v1-ORIGINAL.md",
+    "versao_documento": "v1",
+    "secao": "§7 · Matriz SE… ENTÃO (regra 5)",
+    "ordem": 20,
+    "titulo": "\"Cada criança tem seu tempo\" e a janela de neuroplasticidade",
+    "nucleo": "aprendizagem",
+    "subnucleo": "intervencao_precoce",
+    "tipo_conhecimento": "interpretacao",
+    "faixa_etaria_min_meses": 0,
+    "faixa_etaria_max_meses": 72,
+    "faixa_rotulo": "até 6 anos",
+    "situacoes_relacionadas": [],
+    "nucleos_relacionados": [
+      "comunicacao"
+    ],
+    "habilidades_relacionadas": [],
+    "diagnosticos_relacionados": [
+      "tea"
+    ],
+    "nivel_de_cautela": "alto",
+    "muda_conduta": null,
+    "texto_original": "SE os adultos justificam o atraso com \"cada criança tem seu tempo\" e pretendem esperar mais um ano, ENTÃO cabe — com muito respeito, sem alarme — lembrar das janelas de neuroplasticidade, com pico de resposta entre 0 e 4 anos: intervir cedo reduz o esforço adaptativo depois. A frase da família costuma ser esperança, não negação; responder a ela com susto fecha a conversa.",
+    "perguntas_investigativas": [],
+    "hipoteses": [
+      "A espera vem de esperança ou medo, não de descuido"
+    ],
+    "estrategias": [],
+    "o_que_evitar": [
+      "Usar urgência como pressão ou culpa",
+      "Prometer que a janela \"fecha\" numa data"
+    ],
+    "quando_encaminhar": null,
+    "hash": "4ff2f9749c69f88236f6ca59a5fd068368e6e4b41c0a4846fbf869662dcf425d"
+  },
+  {
+    "id": "pos-a-07-sensorial-publico",
+    "_piloto": "piloto-12",
+    "_fonte": "A",
+    "_core": "ausente do Core v11; a ORDEM já é regra do Gate B (ORDEM_DA_POS)",
+    "_criterio": "muda o que investigar",
+    "documento_origem": "material-pos-v1-ORIGINAL.md",
+    "versao_documento": "v1",
+    "secao": "§7 · Matriz SE… ENTÃO (regra 3)",
+    "ordem": 21,
+    "titulo": "Dispersão em lugar público investiga o sensorial primeiro",
+    "nucleo": "sensorial",
+    "subnucleo": "ambiente",
+    "tipo_conhecimento": "regra_operacional",
+    "faixa_etaria_min_meses": null,
+    "faixa_etaria_max_meses": null,
+    "faixa_rotulo": null,
+    "situacoes_relacionadas": [
+      "escola",
+      "festa",
+      "mercado",
+      "shopping",
+      "publico"
+    ],
+    "nucleos_relacionados": [
+      "foco_executivas",
+      "regulacao_emocional"
+    ],
+    "habilidades_relacionadas": [
+      "foco",
+      "regulacao"
+    ],
+    "diagnosticos_relacionados": [
+      "tea",
+      "tdah"
+    ],
+    "nivel_de_cautela": "baixo",
+    "muda_conduta": null,
+    "texto_original": "SE a queixa é desatenção ou dispersão extrema em lugar público — escola, festa, mercado, shopping —, ENTÃO investigue o perfil SENSORIAL antes do foco: hipersensibilidade a ruído ou luz. Um sistema nervoso central sob estresse físico é incapaz de manter atenção voluntária sustentada. Trabalhar atenção sem tratar a carga sensorial é pedir esforço a um sistema que já está no limite.",
+    "perguntas_investigativas": [
+      "Nesses lugares, ela reage ao barulho ou à luz de alguma forma — tapa o ouvido, aperta os olhos, quer sair?"
+    ],
+    "hipoteses": [
+      "Dispersão como consequência de carga sensorial, não de déficit atencional isolado"
+    ],
+    "estrategias": [],
+    "o_que_evitar": [
+      "Propor treino de atenção antes de investigar o ambiente sensorial"
+    ],
+    "quando_encaminhar": null,
+    "hash": "64164a0726704e4f49c8830101879055aa6cf38b219d44ae6008138107952f2d"
+  },
+  {
+    "id": "pos-a-08-dieta",
+    "_fonte": "A",
+    "_core": "ausente do Core v11 (medido: \"dieta\" não aparece)",
+    "_criterio": "muda a cautela",
+    "documento_origem": "material-pos-v1-ORIGINAL.md",
+    "versao_documento": "v1",
+    "secao": "§8 · Limites Éticos (item 4)",
+    "ordem": 22,
+    "titulo": "Dieta de exclusão não é tratamento de autismo",
+    "nucleo": "alimentacao",
+    "subnucleo": "limite_etico",
+    "tipo_conhecimento": "regra_operacional",
+    "faixa_etaria_min_meses": null,
+    "faixa_etaria_max_meses": null,
+    "faixa_rotulo": null,
+    "situacoes_relacionadas": [
+      "refeicao",
+      "casa"
+    ],
+    "nucleos_relacionados": [
+      "sensorial"
+    ],
+    "habilidades_relacionadas": [
+      "alimentacao"
+    ],
+    "diagnosticos_relacionados": [
+      "tea"
+    ],
+    "nivel_de_cautela": "alto",
+    "muda_conduta": null,
+    "texto_original": "Não apoiar nem sugerir dietas de exclusão — sem glúten, sem lactose — como \"cura\" ou tratamento do autismo, sem indicação e acompanhamento de nutrólogo ou pediatra. Retirar grupos alimentares de uma criança que já tem seletividade estreita ainda mais o repertório e pode custar nutrientes. Quando a família traz a ideia, o caminho é remeter a avaliação profissional, sem julgar a esperança que motivou a busca.",
+    "perguntas_investigativas": [],
+    "hipoteses": [],
+    "estrategias": [],
+    "o_que_evitar": [
+      "Endossar dieta restritiva como tratamento",
+      "Ridicularizar a família que perguntou"
+    ],
+    "quando_encaminhar": "Qualquer restrição alimentar precisa de nutrólogo ou pediatra",
+    "hash": "50a00951cd069ffaa04bc6cde1cfb1aad0b5cbff00f23594821ebdbde586de35"
+  },
+  {
+    "id": "pos-a-08-protocolo-sensorial",
+    "_fonte": "A",
+    "_core": "ausente do Core v11",
+    "_criterio": "muda a cautela + muda o que orientar",
+    "documento_origem": "material-pos-v1-ORIGINAL.md",
+    "versao_documento": "v1",
+    "secao": "§8 · Limites Éticos (item 3)",
+    "ordem": 23,
+    "titulo": "Ajuste de ambiente sim; protocolo sensorial clínico não",
+    "nucleo": "sensorial",
+    "subnucleo": "limite_etico",
+    "tipo_conhecimento": "regra_operacional",
+    "faixa_etaria_min_meses": null,
+    "faixa_etaria_max_meses": null,
+    "faixa_rotulo": null,
+    "situacoes_relacionadas": [
+      "casa",
+      "escola"
+    ],
+    "nucleos_relacionados": [
+      "motor",
+      "regulacao_emocional"
+    ],
+    "habilidades_relacionadas": [
+      "regulacao"
+    ],
+    "diagnosticos_relacionados": [
+      "tea"
+    ],
+    "nivel_de_cautela": "alto",
+    "muda_conduta": null,
+    "texto_original": "Protocolos de Integração Sensorial — escovação sensorial, colete ponderado, equipamento suspenso — são de terapeuta ocupacional habilitado, em consultório, e não se prescrevem por conversa. O que cabe orientar é ajuste de ambiente e rotina: abafador de ruído, redução de estímulo visual, canto de calmaria, pausa antes da sobrecarga. A diferença não é de intensidade: é de quem tem competência para indicar.",
+    "perguntas_investigativas": [],
+    "hipoteses": [],
+    "estrategias": [
+      "Ajuste ambiental: abafador, menos estímulo visual, canto de calmaria"
+    ],
+    "o_que_evitar": [
+      "Indicar escovação, colete ponderado ou suspensão"
+    ],
+    "quando_encaminhar": "Protocolo sensorial estruturado é indicação de terapeuta ocupacional",
+    "hash": "18b8fb7e02376b86ab27619af572923ea22656414b043425e6e54720c006c312"
+  },
+  {
+    "id": "pos-a-10-semantica",
+    "_fonte": "A",
+    "_core": "ausente do Core v11",
+    "_criterio": "muda a interpretação",
+    "documento_origem": "material-pos-v1-ORIGINAL.md",
+    "versao_documento": "v1",
+    "secao": "§10 · Princípios 10, 11 e 20",
+    "ordem": 24,
+    "titulo": "Saber cores e números não é comunicação funcional",
+    "nucleo": "comunicacao",
+    "subnucleo": "pragmatica",
+    "tipo_conhecimento": "interpretacao",
+    "faixa_etaria_min_meses": null,
+    "faixa_etaria_max_meses": null,
+    "faixa_rotulo": null,
+    "situacoes_relacionadas": [
+      "casa",
+      "escola"
+    ],
+    "nucleos_relacionados": [
+      "aprendizagem",
+      "socializacao"
+    ],
+    "habilidades_relacionadas": [
+      "fala",
+      "pragmatica",
+      "vocabulario"
+    ],
+    "diagnosticos_relacionados": [
+      "tea"
+    ],
+    "nivel_de_cautela": "baixo",
+    "muda_conduta": null,
+    "texto_original": "Saber cores, números, letras ou falas de desenho é conhecimento semântico. Comunicação funcional é pragmática: usar a linguagem para pedir, recusar, comentar e manter uma troca com alguém. Uma criança pode ter muito da primeira e pouco da segunda — e é a segunda que sustenta socialização, redução de crises e autonomia. Ao ouvir \"ele sabe tudo\", vale perguntar para que ele USA o que sabe.",
+    "perguntas_investigativas": [
+      "Ele usa as palavras que sabe para pedir e comentar com você, ou mais para repetir e nomear?"
+    ],
+    "hipoteses": [
+      "Repertório semântico alto convivendo com pragmática frágil"
+    ],
+    "estrategias": [],
+    "o_que_evitar": [
+      "Medir avanço por quantidade de palavras conhecidas"
+    ],
+    "quando_encaminhar": null,
+    "hash": "7f68b67921a2148ec622f79dbd158c795376af1f7b9cc998bd9d70531316251f"
+  },
+  {
+    "id": "pos-a-10-sabotagem",
+    "_fonte": "A",
+    "_core": "ausente do Core v11",
+    "_criterio": "muda a estratégia",
+    "_pressupoe": "iniciativa comunicativa baixa — ver §I do laudo (veto pré-verbal)",
+    "documento_origem": "material-pos-v1-ORIGINAL.md",
+    "versao_documento": "v1",
+    "secao": "§10 · Princípio 18",
+    "ordem": 25,
+    "titulo": "Sabotagem amigável: criar a necessidade de comunicar",
+    "nucleo": "comunicacao",
+    "subnucleo": "iniciativa",
+    "tipo_conhecimento": "estrategia",
+    "faixa_etaria_min_meses": null,
+    "faixa_etaria_max_meses": 120,
+    "faixa_rotulo": "até 10 anos",
+    "situacoes_relacionadas": [
+      "casa",
+      "brincadeira",
+      "refeicao"
+    ],
+    "nucleos_relacionados": [
+      "brincadeiras_atividades",
+      "autonomia"
+    ],
+    "habilidades_relacionadas": [
+      "iniciativa_comunicativa",
+      "gestos",
+      "fala"
+    ],
+    "diagnosticos_relacionados": [
+      "tea"
+    ],
+    "nivel_de_cautela": "baixo",
+    "muda_conduta": null,
+    "texto_original": "Antecipar tudo o que a criança quer retira a razão de comunicar. A estratégia é a sabotagem amigável: deixar o item desejado à vista e fora de alcance, entregar o brinquedo sem a peça que falta, servir o pote fechado. Não é privação nem teste — é criar uma pequena lacuna que faz valer a pena pedir. Aceite qualquer forma de pedido: olhar, som, gesto, palavra.",
+    "perguntas_investigativas": [],
+    "hipoteses": [
+      "Sem necessidade de comunicar, a iniciativa não aparece"
+    ],
+    "estrategias": [
+      "Item à vista e fora de alcance",
+      "Entregar incompleto de propósito",
+      "Aceitar olhar, som ou gesto como pedido válido"
+    ],
+    "o_que_evitar": [
+      "Insistir até virar cobrança",
+      "Adivinhar e entregar antes de qualquer sinal"
+    ],
+    "quando_encaminhar": null,
+    "hash": "55c4252402a323c1b209accb85c78c35c67e93569dbc88f0e84bc78ea69a3a1f"
+  },
+  {
+    "id": "pos-a-10-modelar",
+    "_fonte": "A",
+    "_core": "ausente do Core v11",
+    "_criterio": "muda a estratégia",
+    "_pressupoe": "linguagem emergente — ver §I do laudo (veto pré-verbal)",
+    "documento_origem": "material-pos-v1-ORIGINAL.md",
+    "versao_documento": "v1",
+    "secao": "§10 · Princípio 19",
+    "ordem": 26,
+    "titulo": "Modele uma palavra-alvo, não uma frase longa",
+    "nucleo": "comunicacao",
+    "subnucleo": "modelagem",
+    "tipo_conhecimento": "estrategia",
+    "faixa_etaria_min_meses": null,
+    "faixa_etaria_max_meses": 96,
+    "faixa_rotulo": "até 8 anos",
+    "situacoes_relacionadas": [
+      "casa",
+      "brincadeira",
+      "refeicao"
+    ],
+    "nucleos_relacionados": [
+      "imitacao"
+    ],
+    "habilidades_relacionadas": [
+      "fala",
+      "vocabulario",
+      "imitacao"
+    ],
+    "diagnosticos_relacionados": [
+      "tea"
+    ],
+    "nivel_de_cautela": "baixo",
+    "muda_conduta": null,
+    "texto_original": "Ao ensinar fala, modele o alvo EXATO — uma palavra — em vez de responder com frases longas ou explicações. Se o alvo é \"abre\", diga \"abre\" no momento em que a ação acontece, e repita a palavra sozinha. Frase comprida dilui o alvo e aumenta a carga de processamento justamente em quem já tem pouca. E não fale nem decida pela criança: dê o modelo e espere.",
+    "perguntas_investigativas": [],
+    "hipoteses": [],
+    "estrategias": [
+      "Uma palavra-alvo por vez, dita no momento exato da ação",
+      "Dar o modelo e esperar em silêncio"
+    ],
+    "o_que_evitar": [
+      "Responder com frases longas quando o alvo é uma palavra",
+      "Falar pela criança"
+    ],
+    "quando_encaminhar": null,
+    "hash": "fabb364938fb23407eadab7d28b6fa2e3fe7e62ef029643d7ec8bc61120df122"
+  },
+  {
+    "id": "pos-a-10-previsibilidade",
+    "_fonte": "A",
+    "_core": "parcial: o produto já implementa previsibilidade como capacidade (Rotina Visual); o Core não traz o PORQUÊ",
+    "_criterio": "muda a interpretação",
+    "documento_origem": "material-pos-v1-ORIGINAL.md",
+    "versao_documento": "v1",
+    "secao": "§10 · Princípios 8 e 9",
+    "ordem": 27,
+    "titulo": "Previsibilidade poupa energia cerebral para o que importa",
+    "nucleo": "rotina",
+    "subnucleo": "previsibilidade",
+    "tipo_conhecimento": "interpretacao",
+    "faixa_etaria_min_meses": null,
+    "faixa_etaria_max_meses": null,
+    "faixa_rotulo": null,
+    "situacoes_relacionadas": [
+      "casa",
+      "escola",
+      "transicao"
+    ],
+    "nucleos_relacionados": [
+      "foco_executivas",
+      "regulacao_emocional"
+    ],
+    "habilidades_relacionadas": [
+      "transicoes",
+      "regulacao",
+      "autonomia"
+    ],
+    "diagnosticos_relacionados": [
+      "tea",
+      "tdah"
+    ],
+    "nivel_de_cautela": "baixo",
+    "muda_conduta": null,
+    "texto_original": "Previsibilidade ambiental e visual não é conforto: é economia. Saber o que vem a seguir poupa a energia que o cérebro gastaria antecipando e vigiando — e essa energia passa a estar disponível para aprender e para se regular. É por isso que quadro visual e aviso prévio mudam o comportamento sem que ninguém tenha cobrado nada da criança.",
+    "perguntas_investigativas": [],
+    "hipoteses": [
+      "Parte da desregulação vem do custo de não saber o que vem"
+    ],
+    "estrategias": [],
+    "o_que_evitar": [
+      "Ler a melhora com rotina visual como \"ela só queria atenção\""
+    ],
+    "quando_encaminhar": null,
+    "hash": "5d11e1f27b884114b02c277c094c029ba6b76c031ea8f36db56a6b420cd01b56"
+  },
+  {
+    "id": "pos-a-10-coerencia",
+    "_fonte": "A",
+    "_core": "ausente do Core v11",
+    "_criterio": "muda a interpretação",
+    "documento_origem": "material-pos-v1-ORIGINAL.md",
+    "versao_documento": "v1",
+    "secao": "§10 · Princípio 14",
+    "ordem": 28,
+    "titulo": "Coerência central: a árvore perfeita antes da floresta",
+    "nucleo": "aprendizagem",
+    "subnucleo": "coerencia_central",
+    "tipo_conhecimento": "interpretacao",
+    "faixa_etaria_min_meses": null,
+    "faixa_etaria_max_meses": null,
+    "faixa_rotulo": null,
+    "situacoes_relacionadas": [
+      "escola",
+      "casa",
+      "brincadeira"
+    ],
+    "nucleos_relacionados": [
+      "comunicacao",
+      "brincadeiras_atividades",
+      "foco_executivas"
+    ],
+    "habilidades_relacionadas": [
+      "aprendizagem",
+      "brincar",
+      "flexibilidade"
+    ],
+    "diagnosticos_relacionados": [
+      "tea"
+    ],
+    "nivel_de_cautela": "baixo",
+    "muda_conduta": null,
+    "texto_original": "A coerência central dita o foco no detalhe: a pessoa no espectro vê a árvore perfeita antes de notar a floresta. Isso explica por que ela percebe a etiqueta, a peça fora do lugar e a mudança mínima na rotina — e por que o \"contexto geral\" que parece óbvio ao adulto pode simplesmente não estar em primeiro plano. Não é desatenção ao todo: é atenção intensa à parte.",
+    "perguntas_investigativas": [],
+    "hipoteses": [
+      "Detalhe em primeiro plano, contexto em segundo"
+    ],
+    "estrategias": [],
+    "o_que_evitar": [
+      "Presumir que o contexto óbvio para o adulto está óbvio para ela"
+    ],
+    "quando_encaminhar": null,
+    "hash": "9820cda3438bfa946767f2a30999097bade612f9b3c94ccf0e07fb7f8fd62156"
+  },
+  {
+    "id": "pos-b-seg-dor",
+    "_piloto": "piloto-11",
+    "_fonte": "B",
+    "_core": "o Core traz ronco/apneia, engasgo e constipação — NÃO traz a dor silenciosa em crise súbita (otite, dente, ITU)",
+    "_criterio": "muda a cautela + muda o que investigar",
+    "documento_origem": "material-pos-compendio-v1-ORIGINAL.md",
+    "versao_documento": "v1",
+    "secao": "Diretriz de Segurança Clínica Transversal",
+    "ordem": 29,
+    "titulo": "Crise que começou do nada: procurar dor antes de comportamento",
+    "nucleo": "regulacao_emocional",
+    "subnucleo": "causa_organica",
+    "tipo_conhecimento": "sinal_de_alerta",
+    "faixa_etaria_min_meses": null,
+    "faixa_etaria_max_meses": null,
+    "faixa_rotulo": null,
+    "situacoes_relacionadas": [
+      "casa",
+      "escola"
+    ],
+    "nucleos_relacionados": [
+      "sono",
+      "alimentacao",
+      "autonomia"
+    ],
+    "habilidades_relacionadas": [
+      "regulacao"
+    ],
+    "diagnosticos_relacionados": [
+      "tea",
+      "tdah"
+    ],
+    "nivel_de_cautela": "alto",
+    "muda_conduta": null,
+    "texto_original": "Desregulação emocional de INÍCIO SÚBITO, sem explicação e diferente do padrão da criança, exige investigar dor física silenciosa antes de qualquer plano comportamental: otite, dor de dente, infecção urinária. A criança que não localiza nem nomeia a dor a expressa como crise. Antes de mudar rotina, quadro visual ou estratégia de manejo, pergunte o que mudou no corpo.",
+    "perguntas_investigativas": [
+      "Isso começou de repente, ou vinha acontecendo aos poucos?",
+      "Mudou alguma coisa no corpo — sono, apetite, xixi, algum incômodo?"
+    ],
+    "hipoteses": [
+      "Dor silenciosa expressa como crise",
+      "Mudança abrupta de padrão aponta causa física, não pedagógica"
+    ],
+    "estrategias": [],
+    "o_que_evitar": [
+      "Montar plano comportamental para uma mudança abrupta antes de descartar causa orgânica"
+    ],
+    "quando_encaminhar": "Crises agudas inexplicáveis e fora do padrão pedem avaliação pediátrica",
+    "hash": "3d47f3de19f8f4a2c92123f86a8dbc9635c5067acd2489de0b14244943625c5e"
+  },
+  {
+    "id": "pos-b-t1-niveis",
+    "_fonte": "B",
+    "_core": "ausente do Core v11",
+    "_criterio": "muda a interpretação",
+    "documento_origem": "material-pos-compendio-v1-ORIGINAL.md",
+    "versao_documento": "v1",
+    "secao": "Tema 1 · Níveis de Suporte (DSM-5)",
+    "ordem": 30,
+    "titulo": "Nível de suporte é por domínio, e não é grau de funcionamento",
+    "nucleo": "socializacao",
+    "subnucleo": "niveis_de_suporte",
+    "tipo_conhecimento": "interpretacao",
+    "faixa_etaria_min_meses": null,
+    "faixa_etaria_max_meses": null,
+    "faixa_rotulo": null,
+    "situacoes_relacionadas": [],
+    "nucleos_relacionados": [
+      "comunicacao"
+    ],
+    "habilidades_relacionadas": [
+      "socializacao",
+      "flexibilidade"
+    ],
+    "diagnosticos_relacionados": [
+      "tea"
+    ],
+    "nivel_de_cautela": "moderado",
+    "muda_conduta": null,
+    "texto_original": "O DSM-5 trocou \"graus de funcionamento\" por NÍVEIS DE SUPORTE, avaliados separadamente em dois domínios: comunicação social e padrões restritos/repetitivos. Uma pessoa pode precisar de pouco apoio num e de muito no outro — por isso \"leve\" e \"grave\" descrevem mal. O nível também não é fixo: descreve a necessidade de apoio agora, naquele ambiente.",
+    "perguntas_investigativas": [],
+    "hipoteses": [
+      "Necessidade de apoio desigual entre os dois domínios"
+    ],
+    "estrategias": [],
+    "o_que_evitar": [
+      "Usar \"leve\" ou \"grave\" como se descrevessem a pessoa inteira"
+    ],
+    "quando_encaminhar": null,
+    "hash": "993d6189a36f2beb12aaa897e12599cfbb87b04fc75ca0929a27e8355a2090bf"
+  },
+  {
+    "id": "pos-b-t2-pfc",
+    "_piloto": "piloto-08",
+    "_fonte": "B",
+    "_core": "ausente do Core v11 e de A",
+    "_criterio": "muda a interpretação",
+    "documento_origem": "material-pos-compendio-v1-ORIGINAL.md",
+    "versao_documento": "v1",
+    "secao": "Tema 2 · Perfil Funcional da Comunicação (Fernandes)",
+    "ordem": 31,
+    "titulo": "Comunicação se mede por iniciativa, não por vocabulário",
+    "nucleo": "comunicacao",
+    "subnucleo": "perfil_funcional",
+    "tipo_conhecimento": "conceito",
+    "faixa_etaria_min_meses": 18,
+    "faixa_etaria_max_meses": 72,
+    "faixa_rotulo": "1,5 a 6 anos",
+    "situacoes_relacionadas": [
+      "casa",
+      "brincadeira"
+    ],
+    "nucleos_relacionados": [
+      "socializacao"
+    ],
+    "habilidades_relacionadas": [
+      "iniciativa_comunicativa",
+      "gestos",
+      "fala"
+    ],
+    "diagnosticos_relacionados": [
+      "tea"
+    ],
+    "nivel_de_cautela": "baixo",
+    "muda_conduta": null,
+    "texto_original": "A comunicação funcional se avalia pela INICIATIVA espontânea, não pelo tamanho do vocabulário: quantos atos comunicativos a criança inicia por minuto numa interação cara a cara. Aos 30 meses, o esperado gira em torno de 6 atos por minuto. E os meios contam igual: verbal, vocal (som que não chega a palavra) e gestual são todos comunicação. Apontar, levar pela mão e olhar alternado são atos — e devem ser contados como tal.",
+    "perguntas_investigativas": [
+      "Numa brincadeira de 5 minutos, quantas vezes ela começa a comunicação sozinha — de qualquer jeito?"
+    ],
+    "hipoteses": [
+      "Vocabulário pequeno com iniciativa alta é prognóstico diferente de vocabulário pequeno com iniciativa ausente"
+    ],
+    "estrategias": [],
+    "o_que_evitar": [
+      "Medir progresso só por número de palavras faladas"
+    ],
+    "quando_encaminhar": null,
+    "hash": "7e69dd49012e0d6966dd00a2f634777f6f2561ff6cde74e14bb64c9acd6656c8"
+  },
+  {
+    "id": "pos-b-t3-apraxia",
+    "_piloto": "piloto-07",
+    "_fonte": "B",
+    "_core": "SOBREPOSIÇÃO REAL: o Core já traz a tríade. Sobrevive só pelo critério diferencial (variável × fixo)",
+    "_criterio": "muda a interpretação",
+    "documento_origem": "material-pos-compendio-v1-ORIGINAL.md",
+    "versao_documento": "v1",
+    "secao": "Tema 3 · Apraxia de Fala na Infância (AFI/CAS)",
+    "ordem": 32,
+    "titulo": "O que distingue apraxia de desvio fonológico típico",
+    "nucleo": "comunicacao",
+    "subnucleo": "apraxia",
+    "tipo_conhecimento": "interpretacao",
+    "faixa_etaria_min_meses": 24,
+    "faixa_etaria_max_meses": 144,
+    "faixa_rotulo": "2 a 12 anos",
+    "situacoes_relacionadas": [],
+    "nucleos_relacionados": [
+      "motor"
+    ],
+    "habilidades_relacionadas": [
+      "fala",
+      "articulacao"
+    ],
+    "diagnosticos_relacionados": [
+      "tea",
+      "apraxia"
+    ],
+    "nivel_de_cautela": "moderado",
+    "muda_conduta": null,
+    "texto_original": "O que diferencia apraxia de fala de um desvio fonológico comum é a INCONSISTÊNCIA: a mesma palavra sai diferente em tentativas seguidas (\"banana\" vira /babana/, /bana/, /nana/ em minutos). Some-se a isso a alta incidência de erros e pouca diferenciação em VOGAIS — o que raramente ocorre em desvios fonológicos típicos — e a quebra de ritmo e acentuação. Não é um erro fixo que se corrige treinando; é planejamento motor.",
+    "perguntas_investigativas": [
+      "A mesma palavra sai diferente em tentativas seguidas, ou o erro é sempre o mesmo?"
+    ],
+    "hipoteses": [
+      "Erro variável na mesma palavra sugere planejamento motor, não troca fonológica fixa"
+    ],
+    "estrategias": [],
+    "o_que_evitar": [
+      "Treinar repetição de palavra como se fosse erro fonológico fixo",
+      "Nomear apraxia como diagnóstico"
+    ],
+    "quando_encaminhar": "Dificuldades importantes de fala com inconsistência marcada pedem avaliação fonoaudiológica especializada",
+    "hash": "e678e9c0644c4203227c27ed6f4f6de4667067bbd480485637c9c5d03d87833f"
+  },
+  {
+    "id": "pos-b-t4-limiares",
+    "_piloto": "piloto-13",
+    "_fonte": "B",
+    "_core": "ausente do Core v11 e de A (A tem só hiper × hipo, sem o padrão ativo de busca)",
+    "_criterio": "muda a interpretação + muda a estratégia",
+    "documento_origem": "material-pos-compendio-v1-ORIGINAL.md",
+    "versao_documento": "v1",
+    "secao": "Tema 4 · Limiares Neurológicos (Modelo de Winnie Dunn)",
+    "ordem": 33,
+    "titulo": "Três perfis sensoriais que pedem condutas opostas",
+    "nucleo": "sensorial",
+    "subnucleo": "limiares",
+    "tipo_conhecimento": "interpretacao",
+    "faixa_etaria_min_meses": null,
+    "faixa_etaria_max_meses": null,
+    "faixa_rotulo": null,
+    "situacoes_relacionadas": [
+      "casa",
+      "escola",
+      "banho",
+      "publico"
+    ],
+    "nucleos_relacionados": [
+      "regulacao_emocional",
+      "alimentacao",
+      "foco_executivas",
+      "motor"
+    ],
+    "habilidades_relacionadas": [
+      "regulacao",
+      "sensorial"
+    ],
+    "diagnosticos_relacionados": [
+      "tea"
+    ],
+    "nivel_de_cautela": "baixo",
+    "muda_conduta": null,
+    "texto_original": "Três perfis com condutas opostas. HIPERSENSÍVEL (limiar baixo): reage rápido e forte a pouco — tapa o ouvido com liquidificador, pânico de etiqueta, aversão a cortar unha ou cabelo. BAIXO REGISTRO (limiar alto, passivo): demora a perceber — indiferente a ferimento, não reage a chamado, não nota sujeira. BUSCA SENSORIAL (limiar alto, ativo): precisa de estímulo intenso para se organizar — choca-se em paredes, balança-se, morde tecido, põe objeto na boca. Reduzir estímulo ajuda o primeiro e piora o terceiro.",
+    "perguntas_investigativas": [
+      "Ela foge do estímulo, não parece notar, ou procura ativamente por ele?"
+    ],
+    "hipoteses": [
+      "Buscar movimento intenso é organização sensorial, não agitação",
+      "Não reagir a chamado pode ser limiar alto, não desobediência"
+    ],
+    "estrategias": [
+      "Para busca sensorial, oferecer canal organizado de descarga antes de exigir quietude"
+    ],
+    "o_que_evitar": [
+      "Aplicar a mesma receita de \"reduzir estímulos\" aos três perfis"
+    ],
+    "quando_encaminhar": null,
+    "hash": "a9c5b680a1b02ead72f88eb8caf558714b4d6a0d65cfd6a60f0d931bae19ebaf"
+  },
+  {
+    "id": "pos-b-t4-modular",
+    "_fonte": "B",
+    "_core": "ausente do Core v11",
+    "_criterio": "muda a estratégia + muda o que evitar",
+    "documento_origem": "material-pos-compendio-v1-ORIGINAL.md",
+    "versao_documento": "v1",
+    "secao": "Tema 4 · A Abordagem da Integração Sensorial (Ayres)",
+    "ordem": 34,
+    "titulo": "O objetivo é modular aos poucos, não dessensibilizar à força",
+    "nucleo": "sensorial",
+    "subnucleo": "modulacao",
+    "tipo_conhecimento": "regra_operacional",
+    "faixa_etaria_min_meses": null,
+    "faixa_etaria_max_meses": null,
+    "faixa_rotulo": null,
+    "situacoes_relacionadas": [
+      "casa",
+      "banho",
+      "brincadeira"
+    ],
+    "nucleos_relacionados": [
+      "regulacao_emocional",
+      "brincadeiras_atividades"
+    ],
+    "habilidades_relacionadas": [
+      "sensorial",
+      "regulacao"
+    ],
+    "diagnosticos_relacionados": [
+      "tea"
+    ],
+    "nivel_de_cautela": "moderado",
+    "muda_conduta": null,
+    "texto_original": "O trabalho sensorial busca ajudar o cérebro a organizar os fluxos de forma gradual, gerando respostas adaptativas espontâneas — e não forçar a dessensibilização. Exposição forçada ao que causa aversão costuma produzir defesa maior, não tolerância. Em casa isso significa oferecer, permitir aproximação no ritmo dela e aceitar recusa sem transformar a situação em enfrentamento.",
+    "perguntas_investigativas": [],
+    "hipoteses": [
+      "Aumento da recusa após insistência sugere defesa sensorial reforçada"
+    ],
+    "estrategias": [
+      "Oferecer e permitir aproximação gradual, aceitando recusa"
+    ],
+    "o_que_evitar": [
+      "Forçar contato com o estímulo aversivo para \"acostumar\""
+    ],
+    "quando_encaminhar": null,
+    "hash": "7d6d2e3fd601eb6ad3949668adce56c1e861f288a9cd10deda6c6f6afd3130dd"
+  },
+  {
+    "id": "pos-b-t5-seletividade",
+    "_fonte": "B",
+    "_core": "ausente do Core v11",
+    "_criterio": "muda a interpretação",
+    "documento_origem": "material-pos-compendio-v1-ORIGINAL.md",
+    "versao_documento": "v1",
+    "secao": "Tema 5 · A Complexidade Multimodal da Alimentação",
+    "ordem": 35,
+    "titulo": "Seletividade severa costuma ser defensividade tátil-oral",
+    "nucleo": "alimentacao",
+    "subnucleo": "seletividade",
+    "tipo_conhecimento": "interpretacao",
+    "faixa_etaria_min_meses": null,
+    "faixa_etaria_max_meses": null,
+    "faixa_rotulo": null,
+    "situacoes_relacionadas": [
+      "refeicao",
+      "casa",
+      "escola"
+    ],
+    "nucleos_relacionados": [
+      "sensorial"
+    ],
+    "habilidades_relacionadas": [
+      "alimentacao",
+      "sensorial"
+    ],
+    "diagnosticos_relacionados": [
+      "tea"
+    ],
+    "nivel_de_cautela": "baixo",
+    "muda_conduta": null,
+    "texto_original": "Comer envolve visão de cores, som da crocância, cheiro e tato oral de consistências — tudo ao mesmo tempo. No autismo, a seletividade severa frequentemente decorre de defensividade tátil-oral e de hipersensibilidade olfativa e visual, não de manha nem de preferência. Isso muda a conduta: o problema raramente é o alimento em si, e sim a textura, o cheiro ou a mistura no prato.",
+    "perguntas_investigativas": [
+      "O que ela recusa tem alguma coisa em comum — textura, temperatura, cheiro, cor, misturado ou separado?"
+    ],
+    "hipoteses": [
+      "Recusa por propriedade sensorial, não pelo alimento"
+    ],
+    "estrategias": [],
+    "o_que_evitar": [
+      "Insistir para \"experimentar só um pouquinho\" no meio da refeição"
+    ],
+    "quando_encaminhar": null,
+    "hash": "660e04af3342e05ba1f0c3c4ab9b2f3904ac491b1cd939da41bbed69db96d3b2"
+  },
+  {
+    "id": "pos-b-t5-comida-brincar",
+    "_fonte": "B",
+    "_core": "ausente do Core v11 (o Core tem aproximações graduais; não tem o fora-da-refeição)",
+    "_criterio": "muda a estratégia",
+    "documento_origem": "material-pos-compendio-v1-ORIGINAL.md",
+    "versao_documento": "v1",
+    "secao": "Tema 5 · Intervenção de Integração Sensorial",
+    "ordem": 36,
+    "titulo": "Tocar e cheirar fora da hora da refeição vem antes de provar",
+    "nucleo": "alimentacao",
+    "subnucleo": "aproximacao_gradual",
+    "tipo_conhecimento": "estrategia",
+    "faixa_etaria_min_meses": 24,
+    "faixa_etaria_max_meses": 144,
+    "faixa_rotulo": "2 a 12 anos",
+    "situacoes_relacionadas": [
+      "refeicao",
+      "casa",
+      "brincadeira"
+    ],
+    "nucleos_relacionados": [
+      "sensorial",
+      "brincadeiras_atividades"
+    ],
+    "habilidades_relacionadas": [
+      "alimentacao",
+      "sensorial",
+      "brincar"
+    ],
+    "diagnosticos_relacionados": [
+      "tea"
+    ],
+    "nivel_de_cautela": "baixo",
+    "muda_conduta": null,
+    "texto_original": "A aproximação que funciona acontece FORA da hora da refeição, sem a pressão de comer: brincar com grãos crus, espuma e texturas, participar do preparo, culinária lúdica. A criança tolera, toca e cheira primeiro; provar vem depois e por iniciativa dela. Na mesa, com o prato servido e todo mundo olhando, a mesma exposição vira enfrentamento.",
+    "perguntas_investigativas": [],
+    "hipoteses": [],
+    "estrategias": [
+      "Brincar com texturas cruas fora da refeição",
+      "Participação no preparo antes de qualquer prova"
+    ],
+    "o_que_evitar": [
+      "Concentrar toda a tentativa no momento da refeição"
+    ],
+    "quando_encaminhar": null,
+    "hash": "d56c135dd0dcc76a55772aff90d9e339057530bb7197848bff5de41bd007c142"
+  },
+  {
+    "id": "pos-b-t5-desfralde",
+    "_fonte": "B",
+    "_core": "parcial: o Core já traz constipação e banquinho firme; a EXPECTATIVA de atraso médio não está lá",
+    "_criterio": "muda a interpretação",
+    "documento_origem": "material-pos-compendio-v1-ORIGINAL.md",
+    "versao_documento": "v1",
+    "secao": "Tema 5 · Controle Esfincteriano e Desfralde",
+    "ordem": 37,
+    "titulo": "O desfralde no TEA costuma atrasar — e o atraso tem números",
+    "nucleo": "autonomia",
+    "subnucleo": "desfralde",
+    "tipo_conhecimento": "interpretacao",
+    "faixa_etaria_min_meses": 24,
+    "faixa_etaria_max_meses": 96,
+    "faixa_rotulo": "2 a 8 anos",
+    "situacoes_relacionadas": [
+      "banheiro",
+      "casa"
+    ],
+    "nucleos_relacionados": [
+      "sensorial",
+      "rotina"
+    ],
+    "habilidades_relacionadas": [
+      "autonomia",
+      "desfralde"
+    ],
+    "diagnosticos_relacionados": [
+      "tea"
+    ],
+    "nivel_de_cautela": "baixo",
+    "muda_conduta": null,
+    "texto_original": "O controle esfincteriano no TEA costuma se estabelecer com cerca de 1,6 ano de atraso para a urina e mais de 2 anos para o intestino. Saber disso muda a conversa com a família: o atraso não é falha da criança nem do método. O que ajuda é estabilidade postural — banquinho firme para os pés e redutor de assento — e previsibilidade visual do passo a passo.",
+    "perguntas_investigativas": [],
+    "hipoteses": [
+      "Atraso dentro do esperado para o perfil, não recusa"
+    ],
+    "estrategias": [
+      "Banquinho firme para os pés e redutor de assento",
+      "Passo a passo visual do banheiro"
+    ],
+    "o_que_evitar": [
+      "Comparar com o calendário de desfralde de crianças típicas"
+    ],
+    "quando_encaminhar": null,
+    "hash": "6d256918d71af2e3e63783863aa9f998237ac41ac6f966b82b94d883c715fa0f"
+  },
+  {
+    "id": "pos-b-t6-sociometria",
+    "_piloto": "piloto-14",
+    "_fonte": "B",
+    "_core": "ausente do Core v11 e de A",
+    "_criterio": "muda a estratégia",
+    "documento_origem": "material-pos-compendio-v1-ORIGINAL.md",
+    "versao_documento": "v1",
+    "secao": "Tema 6 · Relações Sociais e Inclusão Escolar",
+    "ordem": 38,
+    "titulo": "Estar perto não é socializar",
+    "nucleo": "socializacao",
+    "subnucleo": "mediacao_de_pares",
+    "tipo_conhecimento": "regra_operacional",
+    "faixa_etaria_min_meses": 60,
+    "faixa_etaria_max_meses": 180,
+    "faixa_rotulo": "5 a 15 anos",
+    "situacoes_relacionadas": [
+      "escola",
+      "recreio",
+      "festa"
+    ],
+    "nucleos_relacionados": [
+      "comunicacao",
+      "brincadeiras_atividades"
+    ],
+    "habilidades_relacionadas": [
+      "socializacao",
+      "amizade",
+      "pragmatica"
+    ],
+    "diagnosticos_relacionados": [
+      "tea"
+    ],
+    "nivel_de_cautela": "baixo",
+    "muda_conduta": null,
+    "texto_original": "Socialização não acontece por proximidade física. Duas posições comuns no pátio: o isolado NEGLIGENCIADO, que fica sozinho sem atrito, e o isolado CONTROVERSO, que se envolve em conflitos por não ler as regras invisíveis. Nos dois casos, estar junto não basta. O que muda o resultado é estrutura: grupos pequenos e cooperativos, brincadeiras de regra explícita construídas a partir do hiperfoco da criança, e colegas orientados a servirem de apoio.",
+    "perguntas_investigativas": [
+      "Na escola, ela fica sozinha sem conflito, ou se envolve em atrito com frequência?"
+    ],
+    "hipoteses": [
+      "Isolamento sem atrito e isolamento com conflito pedem estratégias diferentes"
+    ],
+    "estrategias": [
+      "Brincadeira de regra explícita ancorada no interesse dela",
+      "Grupo pequeno com papel definido, em vez de recreio livre"
+    ],
+    "o_que_evitar": [
+      "Supor que colocar junto dos colegas produz amizade"
+    ],
+    "quando_encaminhar": null,
+    "hash": "6ef3ce94fe56dbc7c0e7a08fbf362ca7bf24b63f279a51942f8f7409e1378ed9"
+  },
+  {
+    "id": "pos-b-t6-midia",
+    "_fonte": "B",
+    "_core": "ausente do Core v11",
+    "_criterio": "muda a estratégia",
+    "documento_origem": "material-pos-compendio-v1-ORIGINAL.md",
+    "versao_documento": "v1",
+    "secao": "Tema 6 · O papel das Mídias e Teoria da Mente",
+    "ordem": 39,
+    "titulo": "História e vídeo como ensaio social, sem a pressão do tempo real",
+    "nucleo": "socializacao",
+    "subnucleo": "ensaio_social",
+    "tipo_conhecimento": "estrategia",
+    "faixa_etaria_min_meses": 48,
+    "faixa_etaria_max_meses": 204,
+    "faixa_rotulo": "4 a 17 anos",
+    "situacoes_relacionadas": [
+      "casa",
+      "escola"
+    ],
+    "nucleos_relacionados": [
+      "comunicacao",
+      "aprendizagem",
+      "brincadeiras_atividades"
+    ],
+    "habilidades_relacionadas": [
+      "socializacao",
+      "empatia",
+      "pragmatica"
+    ],
+    "diagnosticos_relacionados": [
+      "tea"
+    ],
+    "nivel_de_cautela": "baixo",
+    "muda_conduta": null,
+    "texto_original": "Narrativa em livro, vídeo, jogo ou história social funciona como ensaio cognitivo: observando personagens numa cena previsível e PAUSÁVEL, a criança consegue analisar o que o outro pensa, prever intenções e formular o que faria — sem a pressão de responder em tempo real, que é o que mais trava na interação ao vivo. Pausar e perguntar \"o que você acha que ele está sentindo?\" é o exercício.",
+    "perguntas_investigativas": [],
+    "hipoteses": [
+      "A dificuldade pode estar na velocidade da interação, não na compreensão social"
+    ],
+    "estrategias": [
+      "Pausar a cena e perguntar o que o personagem sente ou vai fazer"
+    ],
+    "o_que_evitar": [
+      "Cobrar a mesma leitura social durante um conflito real"
+    ],
+    "quando_encaminhar": null,
+    "hash": "8a955e86b37163706b026908cf10af96aa36e095cbf73a2d06a9b1060a83b29e"
+  },
+  {
+    "id": "pos-b-t7-masking",
+    "_fonte": "B",
+    "_core": "ausente do Core v11",
+    "_criterio": "muda a interpretação + muda a cautela",
+    "documento_origem": "material-pos-compendio-v1-ORIGINAL.md",
+    "versao_documento": "v1",
+    "secao": "Tema 7 · Vida Adulta e Inserção Organizacional",
+    "ordem": 40,
+    "titulo": "Camuflagem social cobra o preço depois",
+    "nucleo": "regulacao_emocional",
+    "subnucleo": "masking",
+    "tipo_conhecimento": "interpretacao",
+    "faixa_etaria_min_meses": 144,
+    "faixa_etaria_max_meses": null,
+    "faixa_rotulo": "12 anos ou mais",
+    "situacoes_relacionadas": [
+      "escola",
+      "trabalho",
+      "casa"
+    ],
+    "nucleos_relacionados": [
+      "socializacao",
+      "autonomia"
+    ],
+    "habilidades_relacionadas": [
+      "regulacao",
+      "socializacao"
+    ],
+    "diagnosticos_relacionados": [
+      "tea"
+    ],
+    "nivel_de_cautela": "moderado",
+    "muda_conduta": null,
+    "texto_original": "Manter o esforço contínuo de parecer neurotípico — o masking — esgota. É comum a pessoa sustentar o dia inteiro na escola ou no trabalho e desabar em casa, no lugar seguro. A crise da noite pode ser a conta do dia, e não do que aconteceu naquele minuto. Quem só vê o desabamento em casa costuma concluir o oposto do que está acontecendo.",
+    "perguntas_investigativas": [
+      "Como ele fica nos outros ambientes — na escola, com outras pessoas — comparado a como fica em casa?"
+    ],
+    "hipoteses": [
+      "Desregulação em casa como descarga do esforço sustentado fora"
+    ],
+    "estrategias": [],
+    "o_que_evitar": [
+      "Concluir que \"em casa ele faz isso porque pode\""
+    ],
+    "quando_encaminhar": null,
+    "hash": "423f7075fe28d280f59e16663707ce5f69964a9a47cb1cea48f87415f3750975"
+  },
+  {
+    "id": "pos-b-p2-0a3",
+    "_fonte": "B",
+    "_core": "ausente do Core v11 (medido: marcos por idade não aparecem)",
+    "_criterio": "muda a interpretação",
+    "_pressupoe": "faixa inicial — os marcos são pré-verbais por natureza",
+    "documento_origem": "material-pos-compendio-v1-ORIGINAL.md",
+    "versao_documento": "v1",
+    "secao": "Parte 2 · 1. Primeira Infância (0 a 36 meses)",
+    "ordem": 41,
+    "titulo": "O que se espera até os 3 anos",
+    "nucleo": "comunicacao",
+    "subnucleo": "marcos",
+    "tipo_conhecimento": "conceito",
+    "faixa_etaria_min_meses": 0,
+    "faixa_etaria_max_meses": 36,
+    "faixa_rotulo": "0 a 3 anos",
+    "situacoes_relacionadas": [
+      "casa",
+      "brincadeira"
+    ],
+    "nucleos_relacionados": [
+      "imitacao",
+      "socializacao",
+      "motor"
+    ],
+    "habilidades_relacionadas": [
+      "balbucio",
+      "apontar",
+      "atencao_compartilhada",
+      "imitacao",
+      "fala"
+    ],
+    "diagnosticos_relacionados": [
+      "tea"
+    ],
+    "nivel_de_cautela": "moderado",
+    "muda_conduta": null,
+    "texto_original": "Até 3 anos, os marcos que mais informam: 6-9 meses, balbucio com sílabas repetidas, localizar som e imitar jogos gestuais simples. 9-18 meses, responder ao próprio nome com o olhar, olhar para onde o outro aponta, e usar gesto para pedir ou mostrar. 18-30 meses, triangulação (olhar o brinquedo, olhar o adulto, voltar), primeiras palavras isoladas e combinadas, e brincar de causa e efeito.",
+    "perguntas_investigativas": [],
+    "hipoteses": [],
+    "estrategias": [],
+    "o_que_evitar": [
+      "Tratar marco ausente como diagnóstico"
+    ],
+    "quando_encaminhar": null,
+    "hash": "e558a12c3a851bfd98f00d765698b87424cf266986cf94a775652e11bdde6ddb"
+  },
+  {
+    "id": "pos-b-p2-3a5",
+    "_fonte": "B",
+    "_core": "ausente do Core v11",
+    "_criterio": "muda a interpretação",
+    "documento_origem": "material-pos-compendio-v1-ORIGINAL.md",
+    "versao_documento": "v1",
+    "secao": "Parte 2 · 2. Pré-Escolar (3 a 5 anos)",
+    "ordem": 42,
+    "titulo": "O que se espera dos 3 aos 5 anos",
+    "nucleo": "comunicacao",
+    "subnucleo": "marcos",
+    "tipo_conhecimento": "conceito",
+    "faixa_etaria_min_meses": 36,
+    "faixa_etaria_max_meses": 60,
+    "faixa_rotulo": "3 a 5 anos",
+    "situacoes_relacionadas": [
+      "casa",
+      "brincadeira",
+      "escola"
+    ],
+    "nucleos_relacionados": [
+      "autonomia",
+      "socializacao",
+      "brincadeiras_atividades"
+    ],
+    "habilidades_relacionadas": [
+      "fala",
+      "brincar",
+      "autonomia",
+      "desfralde"
+    ],
+    "diagnosticos_relacionados": [
+      "tea"
+    ],
+    "nivel_de_cautela": "moderado",
+    "muda_conduta": null,
+    "texto_original": "Dos 3 aos 5 anos, o esperado é a fala se consolidar em orações completas para expressar desejo, intenção e relato; a passagem do brincar solitário para o brincar PARALELO (perto dos colegas, respeitando o espaço) e daí ao faz-de-conta inicial; e independência nas rotinas básicas — comer sozinho com talher, colaborar no vestir, iniciar o controle esfincteriano.",
+    "perguntas_investigativas": [],
+    "hipoteses": [],
+    "estrategias": [],
+    "o_que_evitar": [
+      "Cobrar brincar cooperativo antes do brincar paralelo"
+    ],
+    "quando_encaminhar": null,
+    "hash": "8010d550d24b55960b427a330e886864b53c7ccd5388cf044ebb034cb12b50e6"
+  },
+  {
+    "id": "pos-b-p2-6a12",
+    "_fonte": "B",
+    "_core": "ausente do Core v11",
+    "_criterio": "muda a interpretação",
+    "documento_origem": "material-pos-compendio-v1-ORIGINAL.md",
+    "versao_documento": "v1",
+    "secao": "Parte 2 · 3. Idade Escolar (6 a 12 anos)",
+    "ordem": 43,
+    "titulo": "O que se espera dos 6 aos 12 anos",
+    "nucleo": "foco_executivas",
+    "subnucleo": "marcos",
+    "tipo_conhecimento": "conceito",
+    "faixa_etaria_min_meses": 72,
+    "faixa_etaria_max_meses": 144,
+    "faixa_rotulo": "6 a 12 anos",
+    "situacoes_relacionadas": [
+      "escola",
+      "licao_de_casa",
+      "recreio"
+    ],
+    "nucleos_relacionados": [
+      "aprendizagem",
+      "motor",
+      "socializacao"
+    ],
+    "habilidades_relacionadas": [
+      "memoria_de_trabalho",
+      "flexibilidade",
+      "motor_fino",
+      "brincar"
+    ],
+    "diagnosticos_relacionados": [
+      "tea",
+      "tdah"
+    ],
+    "nivel_de_cautela": "moderado",
+    "muda_conduta": null,
+    "texto_original": "Dos 6 aos 12, o que está em construção: funções executivas de alto nível — controle inibitório para esperar a vez, flexibilidade para tolerar mudança de plano, memória de trabalho para seguir instrução em sequência; coordenação motora fina complexa (preensão do lápis, tesoura, amarrar o sapato); e brincar cooperativo com regra explícita. Cada uma dessas é uma habilidade que se ensina, não um traço de caráter.",
+    "perguntas_investigativas": [],
+    "hipoteses": [],
+    "estrategias": [],
+    "o_que_evitar": [
+      "Ler falha executiva como desobediência"
+    ],
+    "quando_encaminhar": null,
+    "hash": "35c7734b1677dd024404c410e004f15dfdc66388add7fa5700f371380d2d520c"
+  },
+  {
+    "id": "pos-b-p2-13a17",
+    "_fonte": "B",
+    "_core": "ausente do Core v11",
+    "_criterio": "muda a interpretação",
+    "documento_origem": "material-pos-compendio-v1-ORIGINAL.md",
+    "versao_documento": "v1",
+    "secao": "Parte 2 · 4. Adolescência (13 a 17 anos)",
+    "ordem": 44,
+    "titulo": "O que se espera dos 13 aos 17 anos",
+    "nucleo": "socializacao",
+    "subnucleo": "marcos",
+    "tipo_conhecimento": "conceito",
+    "faixa_etaria_min_meses": 156,
+    "faixa_etaria_max_meses": 204,
+    "faixa_rotulo": "13 a 17 anos",
+    "situacoes_relacionadas": [
+      "escola",
+      "casa"
+    ],
+    "nucleos_relacionados": [
+      "comunicacao",
+      "autonomia",
+      "regulacao_emocional"
+    ],
+    "habilidades_relacionadas": [
+      "pragmatica",
+      "autonomia",
+      "socializacao"
+    ],
+    "diagnosticos_relacionados": [
+      "tea"
+    ],
+    "nivel_de_cautela": "moderado",
+    "muda_conduta": null,
+    "texto_original": "Na adolescência entram a puberdade e a sexualidade; a linguagem pragmática abstrata — subtexto, sarcasmo, ironia, intenção oculta, gíria do grupo; e a autonomia de transição comunitária: transporte, dinheiro, organização do próprio tempo. A vulnerabilidade que acompanha é específica: credulidade pragmática e exposição a cyberbullying, porque a leitura de intenção é justamente o que está em construção.",
+    "perguntas_investigativas": [],
+    "hipoteses": [],
+    "estrategias": [],
+    "o_que_evitar": [
+      "Presumir que sarcasmo e ironia foram compreendidos"
+    ],
+    "quando_encaminhar": null,
+    "hash": "c932a9f084a8ec8fe886067b428325b3b53bbf0536f06f5f6a5a4205f0380101"
+  },
+  {
+    "id": "pos-b-p2-18mais",
+    "_fonte": "B",
+    "_core": "ausente do Core v11",
+    "_criterio": "muda a interpretação",
+    "documento_origem": "material-pos-compendio-v1-ORIGINAL.md",
+    "versao_documento": "v1",
+    "secao": "Parte 2 · 5. Vida Adulta (18 anos ou mais)",
+    "ordem": 45,
+    "titulo": "O que se espera na vida adulta",
+    "nucleo": "autonomia",
+    "subnucleo": "marcos",
+    "tipo_conhecimento": "conceito",
+    "faixa_etaria_min_meses": 216,
+    "faixa_etaria_max_meses": null,
+    "faixa_rotulo": "18 anos ou mais",
+    "situacoes_relacionadas": [
+      "trabalho",
+      "casa"
+    ],
+    "nucleos_relacionados": [
+      "socializacao",
+      "regulacao_emocional"
+    ],
+    "habilidades_relacionadas": [
+      "autonomia",
+      "autoadvocacia"
+    ],
+    "diagnosticos_relacionados": [
+      "tea"
+    ],
+    "nivel_de_cautela": "moderado",
+    "muda_conduta": null,
+    "texto_original": "Na vida adulta o alvo é independência adaptativa — moradia, contas, decisões, vínculos escolhidos —, colocação compatível com a formação, e AUTOADVOCACIA: conhecer os próprios direitos e conseguir pedir as adaptações de que precisa. O risco a acompanhar é o esgotamento crônico por camuflagem sustentada, que costuma aparecer como exaustão e retraimento, não como pedido de ajuda.",
+    "perguntas_investigativas": [],
+    "hipoteses": [],
+    "estrategias": [],
+    "o_que_evitar": [
+      "Medir sucesso adulto só por emprego"
+    ],
+    "quando_encaminhar": null,
+    "hash": "6a0cc50cde7bb6d307d99a33412313759283a2ecaf9771d4a378e96860283755"
+  }
+]
