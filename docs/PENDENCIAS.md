@@ -8859,6 +8859,34 @@ e funcao pura, sem ambiente nem I/O — mas a distincao existe e fica escrita.
 perfil prove o pre-requisito, com `lacuna_decisao` mostrando o descarte por
 `pre-requisito provado`.
 
+---
+
+**A PROVA FALHOU NO PRIMEIRO TURNO REAL (10/09/2026, 12:27) — e o motivo virou
+a PEND-194.**
+
+Turno do Mario (`9c14b56b` / `7da80c3a`), SHA `9a5715a`, caminho
+`experimental`, `provider: openai`, `gpt-5.6-luna`, Core v11, UMA chamada
+`ayla_experimental` (envelope valido).
+
+| verificacao | resultado |
+|---|---|
+| candidatas | as SEIS da escada + `socializacao.com_quem` + `emocional.ajuda` + 2 sensoriais |
+| `degrauProvadoPeloPerfil` | **-1** |
+| descartes por `pre-requisito provado` | **zero** |
+| decisao | `ASK` · `comunicacao.contato` |
+| `campo_investigado` | `null` — a Ayla nao perguntou nada |
+| o Core seguiu a sugestao? | **nao**, e contradisse na primeira linha |
+
+**A regra nao errou: ela nao teve o que disparar.** A evidencia de fala
+funcional do Mario esta em `comunicacao.outras`, que nao e campo de prova — e
+nao pode ser, sob pena de virar interpretacao de texto livre por regex, que e o
+que a PEND-189 proibe.
+
+E este e exatamente o falso negativo que a correcao declarou por escrito
+(`3a8e86a1`), aparecendo no primeiro turno real. A correcao continua valida e
+no ar; o que falta esta na ESCRITA do perfil, nao na leitura. **Gate B segue
+sem baixa.**
+
 ### PEND-193
 **Envelope invalido so avisa em `console.warn` — o `null` nao se distingue da falha**
 Bloco: **B · Ayla** · Prioridade: **P2**
@@ -8885,7 +8913,95 @@ caminho mais quente do produto, e a missao de agora era provar, nao ampliar.
 recuperacao, e o `null` do rastro passando a ser legivel sem consultar
 `api_calls`.
 
-**Proximo ID livre: PEND-194. *(024 e 025 reservadas por frentes ainda nao publicadas; 0076 e numero de MIGRACAO reservado — ver PEND-121.)***
+### PEND-194
+**O canal de 99% do aprendizado usa o extrator fraco — migracao para o extrator unificado**
+Bloco: **B · Ayla** · Prioridade: **P1**
+STATUS: **FASE 1 (SOMBRA) IMPLEMENTADA — flag desligada, aguardando medicao** · Aberta em: 2026-09-10
+
+Nasceu da PEND-192, no turno real do Mario (10/09, 12:27). O decisor sugeriu
+`comunicacao.contato` — degrau pre-verbal — para uma crianca cujo perfil diz
+**"Conversa bem, estamos treinando ter autonomia e ligar para resolver coisas,
+agendar cabeleireiro"**. O Core sabia (abriu a resposta com "Como o Mario
+conversa bem") e o Gate B nao, porque o fato mora em `comunicacao.outras` e o
+Gate B le CAMPO ESTRUTURADO.
+
+**CAUSA RAIZ — a frase nunca foi roteada.** Ela e da mae, em primeira pessoa,
+digitada na caixa "Outras observacoes" que o proprio produto oferece. Depois
+disso a Ayla ANEXOU ao mesmo campo tres vezes (04/08 11:27, 04/08 11:40, 07/08
+00:33), porque `rotearFatoSubcampo` tem fallback declarado: *"se o fato nao
+encaixa em nenhum campo especifico, use o ULTIMO campo (observacoes)"*. **Nada
+jamais rele `outras`.**
+
+E `lib/conhecimento/fato.ts` ja documentava a classe: *"a web, ao receber
+sub-campo invalido, o troca por null — e `aplicarTextoCampo` cai no ULTIMO
+sub-campo, que quase sempre e 'Outras observacoes'. O fato nao some: e
+arquivado no lugar errado, calado."*
+
+**BASELINE (30 dias ate 10/09/2026), medido em producao:**
+
+| medicao | resultado |
+|---|---|
+| incorporacoes no periodo | **274 — 100% `origem=ayla`** (WhatsApp) |
+| `extrair_conhecimento` (extrator da web) | **4 chamadas** |
+| aprovadas / rejeitadas | 244 / 30 |
+| incorporacoes com par anterior para diff | 143 |
+| **fatos que cairam em `outras`** | **23 — 16,1%** |
+| perfis com algum `outras` preenchido | **58 de 187**, ~294 frases, 16 dominios |
+
+Custo do caminho atual: `ayla_parser` (sonnet, 272 chamadas, US$ 1,17) +
+`ayla_rotear_kv` (haiku, 273, US$ 0,39). **Sao DOIS modelos para colocar UM
+fato**, e o segundo existe so para descobrir o sub-campo que o primeiro nao
+declara.
+
+**O MECANISMO JA EXISTE, e nao e novo:** `conhecimento/extrair.ts` +
+`fato.ts` extraem N fatos **com sub-campo declarado**, vendo o perfil, com
+guardas fail-closed e `Via` que ja preve `whatsapp_texto`/`whatsapp_audio`. O
+proprio arquivo diz: *"NESTA FASE O WHATSAPP AINDA NAO CHAMA. A migracao dele e
+o portao seguinte, e depende de aprovacao."* Aprovada em 10/09/2026.
+
+⚠️ **O BACKFILL EM MASSA FOI REPROVADO POR EVIDENCIA.** Dry-run do roteador
+existente sobre os 18 perfis com `comunicacao.outras` (31 frases, sem escrita):
+13 iriam para campo estruturado, mas **`c7b57ea3` — "fica mais agitado e tem
+dificuldade em expressar" — foi para `caa`**, e "Ela e muito visual" foi para
+`le_labios`. ~15% de colocacao errada. O roteador foi feito para posicionar um
+fato NOVO com contexto de conversa, nao para normalizar prosa antiga em lote.
+Usa-lo assim inventaria fato sobre crianca — o pior desfecho possivel.
+
+---
+
+**FASE 1 — SOMBRA (implementada, flag DESLIGADA).**
+
+`extrator-sombra.ts` roda o extrator unificado sobre o MESMO turno que o
+caminho atual acabou de processar e publica `extrator_sombra` com o que ele
+TERIA proposto. **Nao escreve no perfil, nem em `sugestao_perfil_vivos`.** O
+caminho de producao continua byte a byte o mesmo.
+
+- **Fora do caminho critico:** entra no bloco `void` que ja roda DEPOIS da
+  bolha enviada. A familia nao espera um milissegundo.
+- **Sem palavra da familia no evento:** so chaves `campo.subcampo`, contagens e
+  motivos de recusa. Um teste prende isso.
+- **`ehBaldeDeSobra` nao e `key === "outras"`** — e "e o ULTIMO sub-campo do
+  dominio", que e como o fallback de fato decide.
+- **Custo:** so com a flag ligada; ~US$ 3/mes no volume atual, marcado com
+  `meta.sombra` para ser separavel.
+
+**PROVA:** 9 testes; com a guarda da flag neutralizada, 2 ficam vermelhos.
+Suite completa **3.739 passaram, 0 falharam**; `tsc` limpo; build compilado.
+
+⚠️ **NAO MEDE NADA ATE ALGUEM LIGAR.** Falta `KOLO_EXTRATOR_SOMBRA=1` na
+Vercel — o agente nao tem acesso ao painel. Enquanto isso, a fase 1 esta no ar
+e inerte, que e o estado correto para uma flag nao provada.
+
+**CRITERIO PARA A FASE 2 (trocar a escrita):** com a sombra ligada por tempo
+suficiente, o extrator unificado tem de mostrar **menos fatos no balde de
+sobra que os 16,1% do baseline**, sem aumento de `motivos_rejeicao` que
+indiquem perda de fato. So entao a escrita muda, e atras da mesma flag.
+
+**RELACOES.** [[pend-192]] (que so fecha quando decisor e Core lerem o mesmo
+conhecimento), [[pend-185]] (rastro do caminho vivo), [[pend-190]] (a
+incorporacao parafraseia — por isso busca lexical nao prova ausencia).
+
+**Proximo ID livre: PEND-195. *(024 e 025 reservadas por frentes ainda nao publicadas; 0076 e numero de MIGRACAO reservado — ver PEND-121.)***
 
 > Conferir contra `origin/main`, não contra o seu branch. Dois branches podem
 > reivindicar o mesmo número — o conflito de merge nesta linha é o alarme.
