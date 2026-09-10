@@ -325,6 +325,93 @@ const ESCADA_COMUNICACAO: readonly string[] = [
   "comunicacao.vocabulario", // o degrau mais alto
 ];
 
+/**
+ * A ESCADA SE SOBE POR INTEIRO — PEND-192, 10/09/2026.
+ *
+ * A guarda que já existia lê de baixo para cima: degrau conhecido não vira
+ * candidato. **Faltava a recíproca**, e ela é a própria definição de
+ * pré-requisito: quem lê e escreve já passou pela atenção social. Sem isto, o
+ * Gate B decidiu que a pergunta decisiva para uma criança que "lê e escreve com
+ * autonomia" e "identifica contradições lógicas em argumentos dos adultos" era
+ * **contato visual**. Medido na linha real de produção; 19,8% dos 187 perfis
+ * levariam um degrau que a própria linha já desmente.
+ *
+ * ⚠️ O CASO QUE NÃO PODE SER SUPRIMIDO. Para a criança não-verbal, `forma`
+ * preenchido também é um degrau acima conhecido — e ali perguntar contato
+ * visual é DECISIVO. Uma regra cega ("degrau acima conhecido → cala os de
+ * baixo") mataria a pergunta certa de quem mais precisa dela. Por isso a regra
+ * não olha se o campo está PREENCHIDO: olha se o valor **prova** o
+ * pré-requisito.
+ *
+ * ⚠️ E NÃO É REGEX AMPLA SOBRE TEXTO LIVRE — o alerta da PEND-189 vale aqui.
+ * Leem-se três campos, com lista fechada de evidências, e qualquer sinal de
+ * comunicação não-verbal VETA a inferência inteira. Na dúvida a escada fica de
+ * pé: uma pergunta a mais custa um turno; uma pergunta suprimida custa a
+ * conduta.
+ */
+const CAMPOS_QUE_PROVAM_FALA: readonly string[] = ["vocabulario", "conversa", "forma"];
+
+/** Evidência de comunicação simbólica funcional. Lista FECHADA, curta de propósito. */
+const PROVA_DE_FALA_FUNCIONAL: readonly RegExp[] = [
+  /\bfrases?\b/i,
+  /\bl[êe] e escreve\b/i,
+  /\bescreve\b/i,
+  /\balfabetizad/i,
+  /\bargumenta|\bquestiona|\bdiscute\b/i,
+  /\bfluente/i,
+  /\bfala (bem|muito)\b/i,
+];
+
+/**
+ * O VETO. Qualquer um destes em QUALQUER campo conhecido do domínio derruba a
+ * inferência — inclusive quando um positivo também casa, porque "monta frases
+ * curtas, mas é pouco verbal" descreve um perfil pré-verbal.
+ */
+const DESMENTE_FALA_FUNCIONAL: readonly RegExp[] = [
+  /n[ãa]o[\s-]?verbal/i,
+  /\bn[ãa]o fala\b/i,
+  /\bsem fala\b/i,
+  /\bpr[ée][\s-]?verbal\b/i,
+  /\bpalavras? soltas?\b/i,
+  /\bpoucas palavras\b/i,
+  /\bbalbuci/i,
+  /\bapenas gestos\b/i,
+  /\bn[ãa]o (monta|forma|fala) frases\b/i,
+  /\bn[ãa]o conversa\b/i,
+  /\bCAA\b|comunica[çc][ãa]o alternativa/i,
+];
+
+/**
+ * O DEGRAU MAIS ALTO QUE O PERFIL **PROVA**, ou `-1` quando não prova nenhum.
+ *
+ * Devolve índice em `ESCADA_COMUNICACAO`: o que está ABAIXO dele deixa de ser
+ * lacuna decisiva, porque a criança já demonstrou o pré-requisito. `conversa`
+ * não é degrau da escada — argumentar é evidência do topo, e por isso vale como
+ * `vocabulario`.
+ */
+export function degrauProvadoPeloPerfil(perfil: PerfilConsultavel): number {
+  const dominio = perfil.dominios.get("comunicacao");
+  if (!dominio) return -1;
+  const conhecidos = dominio.conhecidos ?? [];
+  // ⚠️ O VETO DA CAA É ESTRUTURAL, NÃO TEXTUAL. Quem tem comunicação
+  // alternativa registrada tem o campo PREENCHIDO — e o texto dele fala de
+  // pranchas e figuras, não da palavra "CAA". Procurar a sigla no valor não
+  // acharia nada, e foi assim que este teste ficou vermelho da primeira vez.
+  if (conhecidos.some((c) => c.key === "caa")) return -1;
+  const tudo = conhecidos.map((c) => String(c.valor ?? "")).join(" | ");
+  if (DESMENTE_FALA_FUNCIONAL.some((r) => r.test(tudo))) return -1;
+  let maior = -1;
+  for (const campo of conhecidos) {
+    if (!CAMPOS_QUE_PROVAM_FALA.includes(campo.key)) continue;
+    if (!PROVA_DE_FALA_FUNCIONAL.some((r) => r.test(String(campo.valor ?? "")))) continue;
+    // `conversa` prova o topo; os demais provam o próprio degrau.
+    const chave = campo.key === "conversa" ? "comunicacao.vocabulario" : `comunicacao.${campo.key}`;
+    const i = ESCADA_COMUNICACAO.indexOf(chave);
+    if (i > maior) maior = i;
+  }
+  return maior;
+}
+
 /** Posição na fila: menor vem primeiro. `Infinity` = não priorizado. */
 function pesoDaPos(chave: string, relato: string, temas: readonly string[]): number {
   for (const regra of ORDEM_DA_POS) {
@@ -480,6 +567,16 @@ export function escolherLacunaDecisiva(params: {
   const candidatas: Array<{ dominio: string; campo: CampoPerfil }> = [];
   const descartadas: Array<{ chave: string; motivo: string }> = [];
 
+  /**
+   * ⚠️ O PRÉ-REQUISITO JÁ PROVADO SAI DA DISPUTA — PEND-192.
+   *
+   * Calculado UMA vez, fora do laço: é leitura do perfil, não do candidato. E o
+   * descarte fica registrado em `descartadas` com motivo próprio — quem auditar
+   * depois precisa distinguir "não perguntei porque já sei" de "não perguntei
+   * porque não mudava a conduta".
+   */
+  const degrauProvado = degrauProvadoPeloPerfil(perfil);
+
   for (const dominio of dominios) {
     const decisivos = CAMPOS_DECISIVOS[dominio];
     if (!decisivos) continue;
@@ -493,6 +590,13 @@ export function escolherLacunaDecisiva(params: {
       // é o modelo se comportando bem — é ele não receber a opção.
       if (jaRespondido.has(chave)) {
         descartadas.push({ chave, motivo: "já respondido nesta conversa" });
+        continue;
+      }
+      // A escada é cumulativa: degrau abaixo de um pré-requisito provado não é
+      // lacuna decisiva — é pergunta que o próprio perfil já responde.
+      const degrau = ESCADA_COMUNICACAO.indexOf(chave);
+      if (degrau >= 0 && degrauProvado > degrau) {
+        descartadas.push({ chave, motivo: "pré-requisito provado pelo perfil (pos §3)" });
         continue;
       }
       candidatas.push({ dominio, campo });

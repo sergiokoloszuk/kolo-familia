@@ -8691,7 +8691,7 @@ pre-requisito, nao detalhe.
 ### PEND-192
 **A escada pre-verbal escolhe um degrau que o proprio perfil ja desmentiu**
 Bloco: **B · Ayla** · Prioridade: **P1**
-STATUS: **ABERTA — investigada, NAO corrigida: precisa de decisao clinica** · Aberta em: 2026-09-10
+STATUS: **CORRIGIDA — aguardando prova em producao** · Aberta em: 2026-09-10 · Corrigida em: 2026-09-10
 
 Achada na leitura de producao do Gate B (10/09/2026), sobre `6b9f36f` no ar.
 **Bloqueia a baixa do Gate B.**
@@ -8785,6 +8785,64 @@ escolhendo. Provado pela varredura dos 187 e por um turno real.
 **RELACOES.** [[pend-189]] (duas visoes do mesmo perfil), [[pend-180]] (nao
 improvisar regra clinica), [[pend-188]] (a terceira saida: orientar cobrindo as
 hipoteses em vez de perguntar).
+
+---
+
+**CORRECAO (10/09/2026) — SAIDA B, autorizada pelo Sergio.**
+
+`degrauProvadoPeloPerfil` devolve o degrau mais alto que o perfil **prova**, e o
+laco de candidatas descarta o que estiver ABAIXO dele, com motivo proprio no
+rastro (`pre-requisito provado pelo perfil (pos §3)`) — quem auditar depois
+precisa distinguir "nao perguntei porque ja sei" de "nao perguntei porque nao
+mudava a conduta".
+
+- **Tres campos lidos, so eles:** `vocabulario`, `conversa`, `forma`. `conversa`
+  nao e degrau da escada: argumentar e evidencia do TOPO, e por isso vale como
+  `vocabulario`.
+- **Lista fechada de evidencias** (frases, le/escreve, alfabetizado, argumenta,
+  fluente) — nao e `/(.+?):/` sobre texto livre; o alerta da PEND-189 vale aqui.
+- **O VETO vence o positivo.** Qualquer sinal pre-verbal em QUALQUER campo
+  conhecido do dominio derruba a inferencia inteira: nao-verbal, nao fala,
+  palavras soltas, balbucia, apenas gestos, nao conversa. "Monta frases curtas,
+  mas e pouco verbal" e perfil pre-verbal.
+- **O veto da CAA e ESTRUTURAL, nao textual.** Quem tem comunicacao alternativa
+  tem o CAMPO preenchido, e o valor fala de pranchas e figuras, nao da sigla.
+  Procurar "CAA" no texto nao acharia nada — este teste ficou vermelho na
+  primeira execucao e foi assim que o defeito da regra apareceu.
+
+**ANTES → DEPOIS, varredura dos 187 perfis** (funcoes reais sobre as linhas
+reais de producao, tema `comunicacao`):
+
+| medicao | antes | depois |
+|---|---|---|
+| escolhem degrau com um ACIMA ja conhecido | 37 | — |
+| **pre-requisito PROVADO** (degraus de baixo saem) | — | **13** |
+| degrau acima conhecido mas NAO provado (segue perguntando) | — | **28** |
+| `NO_ASK` no tema comunicacao | 0 | 3 |
+
+**A DISCRIMINACAO E O PONTO.** A saida A (cega ao valor) suprimiria os 37. A B
+suprime 13 e deixa 28 de pe — e os 28 sao, um a um, perfis pre-verbais reais:
+"Nao-verbal", "Fala palavras soltas", "aponta e leva pela mao", "suspeita de
+apraxia". O caso protegido `c7b57ea3` continua com `decisao: ASK`,
+`escolhida: comunicacao.contato`. E o caso que originou a pendencia, o Lorenzo,
+passa a perguntar `socializacao.com_quem` — "com quem flui melhor" —, coerente
+com um perfil que registra rejeicao de pares.
+
+⚠️ **UM FALSO NEGATIVO DECLARADO, e nao vou atras dele com regex.** `3a8e86a1`
+tem `mostra = "relata situacoes de bullying/exclusao para autoridades
+(diretora)"` — crianca claramente verbal, que a lista fechada nao pega, e que
+segue podendo receber a pergunta pre-verbal. O vies e deliberado: uma pergunta a
+mais custa um turno; uma pergunta suprimida custa a conduta. Perseguir cada
+formulacao em prosa e como a regra vira `/(.+?):/`.
+
+**PROVA:** 11 testes novos em `escada-pre-verbal.test.ts` — quatro deles medindo
+FALSO POSITIVO, nao verdadeiro positivo. Com a correcao neutralizada, **4 ficam
+vermelhos**. Suite completa: **3.730 passaram, 7 skipped, 0 falharam**.
+`npx tsc --noEmit` limpo e `npm run build` compilado.
+
+**O QUE FALTA PARA A BAIXA:** um turno real em que o tema seja comunicacao e o
+perfil prove o pre-requisito, com `lacuna_decisao` mostrando o descarte por
+`pre-requisito provado`.
 
 ### PEND-193
 **Envelope invalido so avisa em `console.warn` — o `null` nao se distingue da falha**
