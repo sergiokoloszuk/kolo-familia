@@ -53,6 +53,9 @@ import { perfilConsultavelDaLinha } from "@/lib/kolo-vivo/consultar";
 import {
   escolherLacunaDecisiva,
   blocoDaLacuna,
+  esquemaDaResposta,
+  instrucaoDoEnvelope,
+  lerEnvelope,
   jaRespondidas,
   type DecisaoDeLacuna,
 } from "./lacuna-decisiva";
@@ -319,6 +322,19 @@ export type TurnoExperimental = {
     msFoco?: number;
     msOnda3?: number;
   };
+  /**
+   * ⚠️ O CAMPO QUE A PERGUNTA DE FATO INVESTIGOU — PEND-187B, 10/09/2026.
+   *
+   * Declarado pelo Core no MESMO chamado, dentro do enum fechado de
+   * `CHAVES_DECISIVAS`. `null` quando não houve pergunta estruturável, e também
+   * quando o envelope falhou: sem estrutura válida não há prova, e sem prova
+   * não se declara.
+   *
+   * ⚠️ NÃO significa respondido, aprendido nem incorporado. Não fecha lacuna e
+   * não entra em `jaRespondidas` — o Perfil continua sendo a fonte de verdade
+   * sobre o que a Ayla sabe.
+   */
+  campoInvestigado: string | null;
 };
 
 /**
@@ -1150,7 +1166,7 @@ export async function responderExperimental(
     // `instrucaoExtra` é o que a rede de fronteiras injeta na segunda passada.
     // Vazia no caminho normal: o turno saudável monta o mesmo `system` de antes,
     // byte a byte.
-    const gerar = (instrucaoExtra?: string) =>
+    const gerar = (instrucaoExtra?: string, semEnvelope = false) =>
       gerarConversacional({
       provider,
       model,
@@ -1186,6 +1202,18 @@ export async function responderExperimental(
         repertorio,
         conducaoPosTrial,
         comercial,
+        // ⚠️ ANTES DO FORMATO, E O MOTIVO É UMA REGRA QUE JÁ EXISTIA — PEND-187B.
+        //
+        // `formato` precisa continuar sendo o ÚLTIMO bloco nomeado, porque a
+        // última linha dele é `IDIOMA_DA_CONVERSA`, a única instrução que
+        // PREVALECE sobre o resto do prompt. Três testes prendem isso ("'leia
+        // por último' tem de ser verdade"), e eles estão certos: pôr o envelope
+        // depois empurraria o idioma para o meio.
+        //
+        // E não custa nada estar aqui: isto é contrato de SERIALIZAÇÃO, não de
+        // estilo — não compete com o formato, e fica fora do Core v11 do mesmo
+        // jeito.
+        semEnvelope ? "" : instrucaoDoEnvelope(),
         formato,
         // A instrução da fronteira entra DEPOIS de tudo, inclusive do idioma:
         // ela é a correção de uma resposta que já saiu errada, e precisa ser a
@@ -1197,18 +1225,51 @@ export async function responderExperimental(
       messages: [{ role: "user", content: params.mensagem }],
       maxTokens: 1200,
       cacheSystem: true,
+      // ⚠️ ENVELOPE — PEND-187B. Ver `esquemaDaResposta`. `semEnvelope` é a
+      // recuperação: uma única passada em texto livre quando a estrutura falha.
+      ...(semEnvelope ? {} : { formatoJson: esquemaDaResposta() }),
     });
 
     // ⚠️ O LIMITE, POR EXTENSO. `comRetentativaCurta` repete UMA vez se a
     // chamada ESTOURAR. Vazio não estoura — devolve texto em branco —, então
     // ganha UMA segunda chance própria, sem retentativa aninhada. Pior caso
     // absoluto: 3 chamadas. Caminho saudável: 1, exatamente como antes.
+    /**
+     * ⚠️ O ENVELOPE E SUA RECUPERAÇÃO — PEND-187B.
+     *
+     * `lerEnvelope` devolve a fala e o campo. Envelope inválido NÃO pode
+     * emudecer a família: cai UMA vez para texto livre, e nesse caminho
+     * `campoInvestigado` fica `null` — porque não veio de estrutura válida, e
+     * declarar sem prova é o defeito que a PEND-187 inteira existe para matar.
+     *
+     * ⚠️ SEM LAÇO POSSÍVEL: `semEnvelope = true` não reentra — a recuperação
+     * roda no máximo uma vez.
+     *
+     * ⚠️ E O PIOR CASO SUBIU DE 3 PARA 4 CHAMADAS. Eu tinha escrito "igual ao
+     * que já era" e estava errado: a sequência é retentativa da rede (2) +
+     * segunda chance por texto vazio (3) + recuperação do envelope (4). O
+     * caminho saudável continua sendo 1, e na bancada de 50 execuções o
+     * envelope foi válido em 50 — mas o teto absoluto é 4, e vale dizer o
+     * número certo.
+     */
     let r = await comRetentativaCurta(() => gerar());
-    let texto = (r.texto ?? "").trim();
+    let env = lerEnvelope(r.texto);
+    let texto = env.fala;
+    let campoInvestigado = env.campo;
+    let envelopeFalhou = !env.valido;
     if (!texto) {
       console.warn("[ayla:oficial] resposta vazia — uma segunda tentativa");
       r = await gerar();
+      env = lerEnvelope(r.texto);
+      texto = env.fala;
+      campoInvestigado = env.campo;
+      envelopeFalhou = !env.valido;
+    }
+    if (envelopeFalhou) {
+      console.warn("[ayla:oficial] envelope inválido — uma passada em texto livre");
+      r = await gerar(undefined, true);
       texto = (r.texto ?? "").trim();
+      campoInvestigado = null;
     }
     const msModelo = Date.now() - tModelo;
 
@@ -1353,6 +1414,19 @@ export async function responderExperimental(
       texto,
       membroId: membroDoTurno,
       decisaoLacuna: ctxTurno.decisaoLacuna ?? null,
+      /**
+       * ⚠️ O CAMPO QUE A PERGUNTA DE FATO INVESTIGOU — PEND-187B.
+       *
+       * Declarado pelo próprio Core, no mesmo chamado, dentro de um enum
+       * fechado. `null` quando não houve pergunta estruturável — e também
+       * quando o envelope falhou e o turno caiu para texto livre: ali não há
+       * prova, e sem prova não se declara.
+       *
+       * ⚠️ NÃO significa respondido, aprendido nem incorporado. Não fecha
+       * lacuna, não entra em `jaRespondidas`. O Perfil segue sendo a fonte de
+       * verdade sobre o que a Ayla sabe.
+       */
+      campoInvestigado,
       metrica: {
         consultasBanco: consultas,
         chamadasLLM: 1,

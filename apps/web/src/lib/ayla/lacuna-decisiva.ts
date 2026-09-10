@@ -594,6 +594,130 @@ export function lacunaSugeridaDoTurno(decisao: DecisaoDeLacuna | null): string |
 }
 
 /**
+ * O VOCABULÁRIO FECHADO DOS CAMPOS — PEND-187B, 10/09/2026.
+ *
+ * ⚠️ DERIVADO, NUNCA DIGITADO. Sai de `CAMPOS_DECISIVOS`, então uma lista nova
+ * de campos decisivos entra no contrato de saída do Core sozinha. Uma segunda
+ * lista escrita à mão divergiria da primeira no dia em que alguém editasse uma
+ * só — e a divergência apareceria como o modelo declarando uma chave que o
+ * decisor não conhece.
+ */
+export const CHAVES_DECISIVAS: readonly string[] = Object.entries(CAMPOS_DECISIVOS)
+  .flatMap(([dominio, campos]) => campos.map((c) => `${dominio}.${c}`))
+  .sort();
+
+/**
+ * O CONTRATO DE SAÍDA DA CONVERSA — `{ fala, campo_investigado }`.
+ *
+ * ⚠️ POR QUE O ENUM É A PEÇA CENTRAL. Sem ele, "campo investigado" seria texto
+ * livre e voltaríamos a comparar strings — que é exatamente o que a PEND-187
+ * proibiu. Com ele, o modelo escolhe dentro de um conjunto fechado ou diz
+ * `null`, e não existe terceira saída.
+ *
+ * ⚠️ E `campo_investigado` DESCREVE A PERGUNTA, NÃO A RESPOSTA. Ele afirma "foi
+ * isto que a minha pergunta procurou" — nunca que a família respondeu, nem que
+ * o fato foi aprendido, nem que o campo pode sair das candidatas. A fonte de
+ * verdade sobre o que a Ayla sabe continua sendo o Perfil, como a PEND-187A
+ * estabeleceu.
+ */
+export function esquemaDaResposta(): Record<string, unknown> {
+  return {
+    type: "json_schema",
+    json_schema: {
+      name: "resposta_da_ayla",
+      strict: true,
+      schema: {
+        type: "object",
+        additionalProperties: false,
+        required: ["fala", "campo_investigado"],
+        properties: {
+          fala: { type: "string" },
+          campo_investigado: {
+            type: ["string", "null"],
+            enum: [...CHAVES_DECISIVAS, null],
+          },
+        },
+      },
+    },
+  };
+}
+
+/**
+ * A instrução do envelope — curta, e fora do documento do Core.
+ *
+ * ⚠️ NÃO ENTRA NO CORE v11. O Core governa COMO a Ayla pensa e fala; isto é
+ * contrato de formato do turno, e misturar as duas coisas faria a identidade
+ * carregar um detalhe de serialização.
+ */
+export function instrucaoDoEnvelope(): string {
+  const QUEBRA = String.fromCharCode(10);
+  const glossario = Object.entries(CAMPOS_DECISIVOS)
+    .map(([d, campos]) => `- ${d}: ${campos.map((c) => `${d}.${c}`).join(", ")}`)
+    .join(QUEBRA);
+  return `# Como devolver esta resposta
+
+Este envelope é SÓ observabilidade. Ele não é instrução de conteúdo.
+
+"fala" — produza exatamente a resposta que você produziria normalmente,
+seguindo todo o Core e o contexto. **Não altere nada por causa deste
+envelope**: nem o conteúdo, nem a profundidade, nem a quantidade de detalhes,
+nem o número de perguntas, nem a extensão. Se a situação pede três frases, três
+frases; se pede uma explicação longa ou um passo a passo, escreva o que a
+família precisa. Quem decide o quanto dizer é o Core, como sempre foi.
+
+"campo_investigado" — DEPOIS de escrever a fala, olhe para ela e responda: a
+pergunta que eu fiz busca a informação de algum dos campos abaixo?
+
+${glossario}
+
+Devolva a chave desse campo. Devolva **null** quando:
+- você não fez nenhuma pergunta;
+- você fez uma pergunta que nenhum campo representa fielmente;
+- você USOU um fato que já sabia do perfil, mas não perguntou sobre ele.
+
+⚠️ O último caso é o que mais erra: falar sobre toque porque o perfil já diz
+que ela não gosta de abraço NÃO é investigar toque. Só conta o que a sua
+PERGUNTA procurou.
+
+⚠️ E nunca declare a chave que foi sugerida se não foi ela que você perguntou —
+declare a da sua pergunta, ou null. Isto também NÃO é ordem de perguntar:
+orientar sem perguntar continua certo, e aí o campo é null.`;
+}
+
+/**
+ * LÊ O ENVELOPE — e a fala é o que a família recebe, sempre.
+ *
+ * ⚠️ `valido: false` NÃO significa "sem fala". Um modelo que ignore o schema e
+ * devolva prosa continua tendo o que dizer à família: a fala é o texto cru, e
+ * só o `campo` se perde. Emudecer alguém porque um campo de telemetria não veio
+ * seria trocar um problema de observabilidade por um problema de produto.
+ *
+ * ⚠️ E O CAMPO SÓ VALE SE VEIO DO ENUM. Uma chave fora de `CHAVES_DECISIVAS`
+ * vira `null` — o schema já a impede, e esta é a segunda camada, pelo mesmo
+ * princípio de `interpretar` no decisor: o contrato garante a forma, o código
+ * garante o domínio.
+ */
+export function lerEnvelope(bruto: string | null | undefined): {
+  fala: string;
+  campo: string | null;
+  valido: boolean;
+} {
+  const t = (bruto ?? "").trim();
+  if (!t) return { fala: "", campo: null, valido: false };
+  try {
+    const o = JSON.parse(t) as { fala?: unknown; campo_investigado?: unknown };
+    const fala = typeof o.fala === "string" ? o.fala.trim() : "";
+    if (!fala) return { fala: "", campo: null, valido: false };
+    const c = o.campo_investigado;
+    const campo = typeof c === "string" && CHAVES_DECISIVAS.includes(c) ? c : null;
+    return { fala, campo, valido: true };
+  } catch {
+    // Não é JSON: a fala é o texto inteiro, e não há campo a declarar.
+    return { fala: t, campo: null, valido: false };
+  }
+}
+
+/**
  * O BLOCO QUE VAI AO PROMPT — uma linha, ou nada.
  *
  * ⚠️ NO ASK NÃO PRODUZ TEXTO. Nem "não há lacunas", nem "você já sabe tudo":
