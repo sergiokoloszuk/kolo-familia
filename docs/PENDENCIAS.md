@@ -9045,7 +9045,46 @@ medicao a fazer.
 conhecimento), [[pend-185]] (rastro do caminho vivo), [[pend-190]] (a
 incorporacao parafraseia — por isso busca lexical nao prova ausencia).
 
-**Proximo ID livre: PEND-195. *(024 e 025 reservadas por frentes ainda nao publicadas; 0076 e numero de MIGRACAO reservado — ver PEND-121.)***
+### PEND-195
+**A base da pos nao tem o mecanismo do caso Mario: perda de acesso a fala sob estresse**
+Bloco: **B · Ayla** · Prioridade: **P2**
+STATUS: **ABERTA — lacuna de FONTE, nao de codigo** · Aberta em: 2026-09-10
+
+Achada ao montar os 15 chunks piloto (bancada `scripts/bancada/bia-pos/`).
+
+O caso que originou a frente inteira e o do Mario (turno real de 10/09, 12:27):
+crianca que **conversa bem** e que, na crise, **trava** — o proprio perfil dela
+diz "durante crises nao consegue falar (sistema em sobrecarga)". A Ayla precisou
+raciocinar sobre isso sozinha.
+
+**MEDIDO nas duas fontes canonicas** (`material-pos-v1-ORIGINAL.md` +
+`material-pos-compendio-v1-ORIGINAL.md`):
+
+| termo | A | B |
+|---|---|---|
+| "nao consegue falar" | 0 | 0 |
+| "regressao" | 0 | 0 |
+| "perda" | 0 | 0 |
+
+O que existe e **vizinho, nao equivalente**: custo cognitivo e sobrecarga (A
+§1.4), efeito espelho na crise e amigdala (A §6), comportamento e comunicacao
+(A §1.1). Nenhum deles diz que a linguagem elaborada fica indisponivel sob
+ameaca — que e exatamente o mecanismo que o turno do Mario pedia.
+
+⚠️ **NENHUM CHUNK FOI INVENTADO PARA COBRIR ISSO.** Escrever um chunk afirmando
+o mecanismo seria produzir conhecimento clinico a partir do palpite do agente e
+carimba-lo de "base da pos" — a pior classe de erro possivel nesta frente.
+
+**O QUE ISSO SIGNIFICA PARA A EXPECTATIVA:** o caso Mario **nao vai** ficar
+completo so com a ingestao do corpus atual. A calibracao de 10/09 fez o que
+podia — ele passou a receber regulacao e comunicacao juntas, sem apraxia
+dominando —, mas o conhecimento especifico nao existe para ser recuperado.
+
+**Criterio de conclusao:** uma fonte que trate a indisponibilidade de linguagem
+sob sobrecarga entra no corpus canonico, com procedencia, e um chunk sobre ela
+e recuperado pelo caso Mario na bancada.
+
+**Proximo ID livre: PEND-196. *(024 e 025 reservadas por frentes ainda nao publicadas; 0076 e numero de MIGRACAO reservado — ver PEND-121.)***
 
 > Conferir contra `origin/main`, não contra o seu branch. Dois branches podem
 > reivindicar o mesmo número — o conflito de merge nesta linha é o alarme.

@@ -37,6 +37,20 @@ export type ContextoBia = {
   perfil?: string | null;
   /** Domínio do Kolo Vivo em foco ("comunicacao", "sono", "nutricional"). */
   dominio?: string | null;
+  /**
+   * OS DOMÍNIOS DO TURNO — quando há mais de um.
+   *
+   * ⚠️ POR QUE ISTO EXISTE. `decidirTurno` devolve `tema` como LISTA: o turno
+   * real de 10/09/2026 veio com `["comunicacao","emocional"]`. Com um campo
+   * só, quem chamasse teria de escolher um — e a bancada mediu o custo dessa
+   * escolha: o MESMO turno do Mario, lido por "comunicacao", trazia apraxia no
+   * topo (irrelevante ali); lido por "emocional", trazia exatamente os dois
+   * chunks certos. A escolha do domínio decidia o resultado, e ninguém a
+   * estava fazendo de propósito.
+   *
+   * `dominio` continua valendo e é somado a este — nenhum chamador atual muda.
+   */
+  dominios?: readonly string[] | null;
   /** Situação do cotidiano ("escola", "banho", "refeicao"). */
   contexto?: string | null;
   /** A dificuldade relatada, nas palavras da família. */
@@ -60,6 +74,14 @@ export type ChunkParaPontuar = Pick<
   | "faixa_rotulo"
   | "situacoes_relacionadas"
   | "diagnosticos_relacionados"
+  // ⚠️ AS DUAS ABAIXO EXISTEM NA 0071 DESDE SEMPRE E NUNCA FORAM LIDAS. A
+  // bancada de 10/09/2026 as encontrou gravadas e ausentes de
+  // `ChunkParaPontuar` e do `SELECT_CHUNK` — ou seja, o importador as
+  // preenchia e a recuperação não as enxergava. Metade do raciocínio da pós é
+  // cross-domínio ("dispersão no foco → investigue o sensorial"), e era
+  // exatamente essa metade que não tinha como pontuar.
+  | "nucleos_relacionados"
+  | "habilidades_relacionadas"
   | "nivel_de_cautela"
   | "muda_conduta"
   | "texto_original"
@@ -80,6 +102,9 @@ export type CodigoMotivo =
   | "muda_conduta"
   | "texto"
   | "sinal_de_alerta"
+  | "mudanca_abrupta"
+  | "nucleo_relacionado"
+  | "habilidade_relacionada"
   | "penalidade";
 
 /**
@@ -174,6 +199,20 @@ export const PESOS = {
    *  (lib/conducao/diretrizes.ts). Devolvê-la seria a Ayla recuperando a
    *  própria identidade como se fosse conhecimento externo. */
   nucleoFundamentos: -25,
+  /**
+   * O núcleo do chunk não é o do turno, mas ele se DECLARA relacionado a ele.
+   *
+   * Vale menos que `dominioExato` de propósito: é um vínculo declarado pelo
+   * curador, não o assunto do chunk. E nunca soma com o exato — ver `pontuar`.
+   */
+  nucleoRelacionado: 20,
+  /**
+   * Uma habilidade que o chunk declara aparece nas palavras da família
+   * ("aponta", "imita", "gestos"). É ponte de vocabulário: a lista curada
+   * alcança o que o full-text não alcança sozinho. Pequena e contada UMA vez,
+   * para não virar um segundo peso textual disfarçado.
+   */
+  habilidadeRelacionada: 8,
 } as const;
 
 /** Quantos resultados por padrão. */
@@ -254,6 +293,51 @@ export function contextoTemSinalDeRisco(ctx: ContextoBia): boolean {
   );
 }
 
+/**
+ * O RELATO DESCREVE UMA MUDANÇA ABRUPTA DE PADRÃO?
+ *
+ * ⚠️ É SINAL DIFERENTE DE RISCO, E DE PROPÓSITO. `contextoTemSinalDeRisco`
+ * responde "há perigo aqui?" e promove conteúdo de encaminhamento com +60.
+ * Mudança abrupta não é perigo: é a informação de que a explicação
+ * comportamental pode estar errada e a causa pode ser física. Somar as duas
+ * transformaria toda queixa nova em alarme — que é exatamente o que o §14 da
+ * régua de qualidade proíbe.
+ *
+ * O QUE ELA FAZ: apenas **suspende a penalidade** de −40 que rebaixa
+ * encaminhamento fora de contexto de risco. Não soma ponto nenhum. O chunk
+ * passa a competir pelos próprios méritos, e nada mais.
+ *
+ * O CASO QUE A ORIGINOU (bancada de 10/09/2026): "Essa semana ele começou do
+ * nada a ter crises muito fortes. Nunca foi assim." O único chunk que responde
+ * — *procurar dor silenciosa antes de plano comportamental* — levava −40 e era
+ * descartado pela cota; entrava no lugar hierarquia de dicas de imitação.
+ *
+ * ⚠️ "DE REPENTE" SOZINHO NÃO ENTRA. É advérbio de narrativa comum em
+ * português ("aí de repente ele grita") e casaria com metade das conversas.
+ * Só entram formas que afirmam NOVIDADE DE PADRÃO — "começou de repente",
+ * "mudou de repente", "nunca foi assim". Um teste negativo prende isso.
+ */
+export function contextoTemMudancaAbrupta(ctx: ContextoBia): boolean {
+  const texto = [ctx.textoDaConversa, ctx.dificuldade, ctx.objetivo]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "");
+  if (!texto.trim()) return false;
+  return (
+    // novidade de padrão declarada
+    /\bnunca (foi|tinha sido|era) (assim|desse jeito)\b/.test(texto) ||
+    /\bnunca (tinha|teve|aconteceu|fez isso|foi de)\b/.test(texto) ||
+    // início súbito, sempre ancorado num verbo de começo/mudança
+    /\b(comecou|comecaram|apareceu|surgiu|passou) (a |a ter |com )?.{0,20}\bdo nada\b/.test(texto) ||
+    /\bdo nada (comecou|comecaram|passou|apareceu|surgiu)\b/.test(texto) ||
+    /\b(comecou|comecaram|mudou|mudaram|piorou|pioraram) de repente\b/.test(texto) ||
+    /\bde uma hora (para|pra) (a )?outra\b/.test(texto) ||
+    /\b(mudou|mudaram) do nada\b/.test(texto)
+  );
+}
+
 // ============================================================
 // Normalização do contexto
 // ============================================================
@@ -266,6 +350,7 @@ type ContextoNormalizado = {
   alvo: Set<string>;
   alvoRadical: Set<string>;
   temSinalDeRisco: boolean;
+  temMudancaAbrupta: boolean;
 };
 
 const DIAGNOSTICOS_CONHECIDOS: Array<[string, RegExp]> = [
@@ -285,10 +370,17 @@ export function normalizarContexto(ctx: ContextoBia): ContextoNormalizado {
         : null;
 
   // Domínio do Kolo Vivo → núcleos da BIA (o mapa vive em tipos.ts).
-  const dominio = (ctx.dominio ?? "").trim().toLowerCase();
-  const nucleosDoDominio = dominio
+  //
+  // ⚠️ UNIÃO, NÃO SOMA. `dominio` e `dominios` viram um conjunto único de
+  // núcleos; o bônus de domínio é concedido UMA vez em `pontuar`, mesmo que o
+  // núcleo do chunk apareça por dois caminhos. Somar +50 por domínio faria um
+  // turno de três temas valer o triplo — inflação de score sem informação nova.
+  const dominios = [ctx.dominio, ...(ctx.dominios ?? [])]
+    .map((d) => (d ?? "").trim().toLowerCase())
+    .filter(Boolean);
+  const nucleosDoDominio = dominios.length
     ? BIA_NUCLEOS.filter((n) =>
-        (BIA_NUCLEO_PARA_DOMINIOS[n] as readonly string[]).includes(dominio),
+        dominios.some((d) => (BIA_NUCLEO_PARA_DOMINIOS[n] as readonly string[]).includes(d)),
       )
     : [];
 
@@ -322,6 +414,7 @@ export function normalizarContexto(ctx: ContextoBia): ContextoNormalizado {
     alvo,
     alvoRadical: new Set([...alvo].map(radical)),
     temSinalDeRisco: contextoTemSinalDeRisco(ctx),
+    temMudancaAbrupta: contextoTemMudancaAbrupta(ctx),
   };
 }
 
@@ -382,11 +475,43 @@ export function pontuar(
   };
 
   // ----- Estruturado: domínio -----
+  //
+  // ⚠️ EXCLUSIVO: o chunk ganha o bônus do núcleo PRÓPRIO ou o do núcleo
+  // RELACIONADO — nunca os dois. Somar transformaria um chunk bem etiquetado
+  // em vencedor por etiquetagem, não por pertinência.
   if (ctx.nucleosDoDominio.includes(chunk.nucleo)) {
     add(
       "dominio",
       `corresponde ao domínio ${BIA_NUCLEO_LABEL[chunk.nucleo]}`,
       PESOS.dominioExato,
+    );
+  } else {
+    const relacionado = (chunk.nucleos_relacionados ?? []).find((n) =>
+      ctx.nucleosDoDominio.includes(n as BiaNucleo),
+    );
+    if (relacionado) {
+      add(
+        "nucleo_relacionado",
+        `declarado relacionado a ${BIA_NUCLEO_LABEL[relacionado as BiaNucleo] ?? relacionado}`,
+        PESOS.nucleoRelacionado,
+      );
+    }
+  }
+
+  // ----- Estruturado: habilidade que a família nomeou -----
+  //
+  // Ponte de vocabulário: a lista curada alcança o que o full-text não alcança
+  // sozinho ("aponta" no relato × `apontar` na lista). Conta UMA vez, por mais
+  // habilidades que batam — senão vira um segundo peso textual disfarçado.
+  const habilidadeQueBate = (chunk.habilidades_relacionadas ?? []).find((h) => {
+    const termo = h.toLowerCase().replace(/_/g, " ").split(" ")[0];
+    return termo.length >= 4 && (ctx.alvo.has(termo) || ctx.alvoRadical.has(radical(termo)));
+  });
+  if (habilidadeQueBate) {
+    add(
+      "habilidade_relacionada",
+      `a família falou de "${habilidadeQueBate.replace(/_/g, " ")}"`,
+      PESOS.habilidadeRelacionada,
     );
   }
 
@@ -480,6 +605,16 @@ export function pontuar(
   if (ehEncaminhamento) {
     if (ctx.temSinalDeRisco) {
       add("sinal_de_alerta", "há sinal de risco no contexto", PESOS.encaminhamentoComSinal);
+    } else if (ctx.temMudancaAbrupta) {
+      // ⚠️ SUSPENDE A PENALIDADE, NÃO PREMIA. Peso zero de propósito: mudança
+      // abrupta diz que a explicação comportamental pode estar errada — não que
+      // há perigo. O chunk volta a competir pelos próprios méritos. Promovê-lo
+      // com +60 aqui transformaria toda queixa nova em alarme.
+      motivos.push({
+        codigo: "mudanca_abrupta",
+        descricao: "mudança abrupta de padrão no relato — encaminhamento não é rebaixado",
+        peso: 0,
+      });
     } else {
       add(
         "penalidade",

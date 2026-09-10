@@ -30,7 +30,7 @@ import {
 
 /** Colunas que a pontuação precisa. Nada além — o texto já é grande. */
 const SELECT_CHUNK =
-  "id, nucleo, secao, titulo, tipo_conhecimento, faixa_etaria_min_meses, faixa_etaria_max_meses, faixa_rotulo, situacoes_relacionadas, diagnosticos_relacionados, nivel_de_cautela, muda_conduta, texto_original, revisao_pendente, ordem";
+  "id, nucleo, secao, titulo, tipo_conhecimento, faixa_etaria_min_meses, faixa_etaria_max_meses, faixa_rotulo, situacoes_relacionadas, diagnosticos_relacionados, nucleos_relacionados, habilidades_relacionadas, nivel_de_cautela, muda_conduta, texto_original, revisao_pendente, ordem";
 
 /** Teto de candidatos por consulta. Espelha CANDIDATAS_MAX das Boas Práticas. */
 const CANDIDATOS_POR_CONSULTA = 120;
@@ -44,11 +44,19 @@ export type OpcoesBusca = OpcoesSelecao & {
  * Núcleos que interessam ao domínio pedido. Vazio = sem restrição de núcleo
  * (a consulta estruturada não roda, e sobra só a textual).
  */
-function nucleosDoDominio(dominio: string | null | undefined): BiaNucleo[] {
-  const d = (dominio ?? "").trim().toLowerCase();
-  if (!d) return [];
+function nucleosDoDominio(
+  dominio: string | null | undefined,
+  dominios?: readonly string[] | null,
+): BiaNucleo[] {
+  // ⚠️ UNIÃO DOS DOIS CAMPOS, e UMA consulta só. `decidirTurno` devolve `tema`
+  // como lista; buscar por domínio de cada vez duplicaria candidatos e o custo
+  // da rede sem trazer nada novo — o `in("nucleo", …)` já aceita o conjunto.
+  const lista = [dominio, ...(dominios ?? [])]
+    .map((d) => (d ?? "").trim().toLowerCase())
+    .filter(Boolean);
+  if (lista.length === 0) return [];
   return BIA_NUCLEOS.filter((n) =>
-    (BIA_NUCLEO_PARA_DOMINIOS[n] as readonly string[]).includes(d),
+    lista.some((d) => (BIA_NUCLEO_PARA_DOMINIOS[n] as readonly string[]).includes(d)),
   );
 }
 
@@ -115,7 +123,7 @@ async function buscarCandidatos(
     return q;
   };
 
-  const nucleos = nucleosDoDominio(ctx.dominio);
+  const nucleos = nucleosDoDominio(ctx.dominio, ctx.dominios);
   const consultaTexto = montarConsultaTexto(ctx);
 
   const promessas: Array<PromiseLike<{ data: unknown }>> = [];

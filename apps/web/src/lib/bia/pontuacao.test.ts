@@ -35,6 +35,8 @@ function chunk(over: Partial<ChunkParaPontuar> = {}): ChunkParaPontuar {
     faixa_rotulo: null,
     situacoes_relacionadas: [],
     diagnosticos_relacionados: [],
+    nucleos_relacionados: [],
+    habilidades_relacionadas: [],
     nivel_de_cautela: "baixo",
     muda_conduta: null,
     texto_original:
@@ -330,6 +332,8 @@ describe("explicabilidade", () => {
       secao: "14. Conhecimento para IA",
       tipo_conhecimento: "regra_operacional",
       diagnosticos_relacionados: [],
+    nucleos_relacionados: [],
+    habilidades_relacionadas: [],
       texto_original:
         "SE a criança puxa a mão do adulto como ferramenta para alcançar algo sem fazer contato visual, ENTÃO deduzir intenção comunicativa com déficit de atenção compartilhada.",
     });
@@ -404,6 +408,8 @@ describe("relato curto não vira pertinência (calibração da cobertura)", () =
       faixa_rotulo: null,
       situacoes_relacionadas: [],
       diagnosticos_relacionados: [],
+    nucleos_relacionados: [],
+    habilidades_relacionadas: [],
       nivel_de_cautela: "baixo" as const,
       muda_conduta: null,
       texto_original: texto,

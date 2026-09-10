@@ -84,6 +84,15 @@ CASOS.splice(1, 0, {
   oQueFaltou: "o mesmo turno, lido pelo outro tema que o decisor devolveu",
 });
 
+// ⚠️ O TURNO COMO ELE REALMENTE FOI. `decidirTurno` devolveu
+// tema: ["comunicacao","emocional"]. Antes da calibração não havia como
+// expressar isso — o contexto aceitava um domínio. Os CHUNKS são os mesmos.
+CASOS.splice(2, 0, {
+  nome: "MARIO (real) — os DOIS temas que o decisor devolveu",
+  ctx: { ...CASOS[0].ctx, dominio: null, dominios: ["comunicacao", "emocional"] },
+  oQueFaltou: "o turno como ele foi: comunicação E regulação, sem escolher uma",
+});
+
 const LIMITE = 6;
 
 for (const caso of CASOS) {

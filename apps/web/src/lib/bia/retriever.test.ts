@@ -58,6 +58,8 @@ function linha(over: Partial<ChunkParaPontuar> = {}): ChunkParaPontuar {
     faixa_rotulo: null,
     situacoes_relacionadas: ["sono"],
     diagnosticos_relacionados: [],
+    nucleos_relacionados: [],
+    habilidades_relacionadas: [],
     nivel_de_cautela: "baixo",
     muda_conduta: null,
     texto_original:
