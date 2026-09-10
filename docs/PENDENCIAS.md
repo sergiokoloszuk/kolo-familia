@@ -8916,7 +8916,7 @@ recuperacao, e o `null` do rastro passando a ser legivel sem consultar
 ### PEND-194
 **O canal de 99% do aprendizado usa o extrator fraco — migracao para o extrator unificado**
 Bloco: **B · Ayla** · Prioridade: **P1**
-STATUS: **FASE 1 (SOMBRA) IMPLEMENTADA — flag desligada, aguardando medicao** · Aberta em: 2026-09-10
+STATUS: **BLOQUEADA EXTERNAMENTE — Fase 1 no ar e INERTE, aguardando `KOLO_EXTRATOR_SOMBRA` na Vercel Production** · Aberta em: 2026-09-10
 
 Nasceu da PEND-192, no turno real do Mario (10/09, 12:27). O decisor sugeriu
 `comunicacao.contato` — degrau pre-verbal — para uma crianca cujo perfil diz
@@ -8996,6 +8996,50 @@ e inerte, que e o estado correto para uma flag nao provada.
 suficiente, o extrator unificado tem de mostrar **menos fatos no balde de
 sobra que os 16,1% do baseline**, sem aumento de `motivos_rejeicao` que
 indiquem perda de fato. So entao a escrita muda, e atras da mesma flag.
+
+---
+
+**BLOQUEIO EXTERNO (10/09/2026, 13:33 UTC) — a medicao nao comecou.**
+
+| verificacao | resultado |
+|---|---|
+| SHA servido | `af2f145` · `ref: main` · `ambiente: production` |
+| health | HTTP 200, `ok: true`, DB 557 ms |
+| `flags.kolo_extrator_sombra` | **`false`** |
+| `flags.ayla_pos_trial` · `ayla_experimental_todas` | `true` · `true` |
+| eventos `extrator_sombra` | **0** |
+| turnos desde o deploy | 0 |
+
+**AMOSTRA DA FASE 1: ZERO.** E zero por configuracao, nao por falta de trafego —
+distincao que so existe porque o health passou a publicar a flag.
+
+**O QUE FOI DESCARTADO COMO CAUSA, por medicao:**
+
+1. *"Variavel so vale em deploy novo"* — verdadeiro e ja resolvido: dois deploys
+   novos subiram depois da configuracao (`e0d9bb4`, `af2f145`).
+2. *"A flag so aceitava `1`"* — era defeito MEU, corrigido em `af2f145`, que le
+   `1` **ou** `true` sem caixa, como `AYLA_EXPERIMENTAL_TODAS` e
+   `AYLA_POS_TRIAL` — as duas respondendo `true` no MESMO bloco do health.
+
+**AS TRES HIPOTESES QUE SOBRAM sao todas de configuracao, nenhuma de codigo:**
+escopo errado (Preview/Development em vez de Production, ou outro projeto);
+nome diferente de `KOLO_EXTRATOR_SOMBRA`; ou valor que nao e `1` nem `true`
+(aspas literais, espaco, outra palavra).
+
+⚠️ **NENHUM CONTORNO SERA IMPLEMENTADO.** Nao se ajusta codigo para adivinhar
+uma configuracao ausente: o resultado seria uma flag que liga sozinha, que e o
+oposto de rollout controlado.
+
+**DESBLOQUEIO:** acesso a Vercel Production (com o Sergio). Ao ligar, o health
+responde `flags.kolo_extrator_sombra: true` no deploy seguinte, e a medicao
+comeca sozinha — a Fase 1 ja esta publicada.
+
+⚠️ **UM DIAGNOSTICO FICOU FORA DE PROPOSITO.** Cheguei a escrever
+`kolo_extrator_sombra_definida` (so a PRESENCA da variavel, nunca o valor), que
+separaria "nao existe neste ambiente" de "existe com valor irreconhecivel".
+Testado e compilado, **nao commitado e revertido** para nao contaminar a frente
+seguinte. Se o desbloqueio na Vercel nao resolver de primeira, e a proxima
+medicao a fazer.
 
 **RELACOES.** [[pend-192]] (que so fecha quando decisor e Core lerem o mesmo
 conhecimento), [[pend-185]] (rastro do caminho vivo), [[pend-190]] (a
