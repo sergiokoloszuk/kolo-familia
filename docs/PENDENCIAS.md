@@ -8556,7 +8556,74 @@ Confere com [[auditoria-precisa-de-status]]: todo achado carrega data, estado e
 evidencia, e a evidencia aqui era a tabela de auditoria que eu nao tinha
 consultado.
 
-**Proximo ID livre: PEND-191. *(024 e 025 reservadas por frentes ainda nao publicadas; 0076 e numero de MIGRACAO reservado — ver PEND-121.)***
+### PEND-191
+**Brincadeira tem de ser ENTREGUE, nao prometida — regra de produto para o Gate F**
+Bloco: **B · Ayla** · Prioridade: **P2**
+STATUS: **ABERTA (desenho aprovado, nao implementar agora)** · Aberta em: 2026-09-10
+
+Regra de produto registrada a pedido. **Nao implementar nesta etapa**; entra no
+desenho do Gate F. Nao altera Core v11 nem Gate B.
+
+**A EVIDENCIA QUE ANCORA A REGRA** — turno real de 10/09/2026, 00:10, `ea54788`,
+sobre a Manu. A Ayla orientou bem e terminou com:
+
+> "...e responder assim que ela tentar comunicar; **depois, em um momento calmo,
+> treinem isso numa brincadeira**."
+
+A brincadeira foi **nomeada como estrategia e nao entregue**. A mae sai do turno
+sabendo que brincar ajudaria e sem saber o que fazer. E o perfil tinha o que era
+preciso para montar: interesses reais (cozinha, dinossauros), nivel de
+comunicacao (palavras soltas, nao monta frases), que ela aprende por modelo
+compartilhado e por sequencia visual.
+
+**A REGRA.** Quando a Ayla identificar que brincadeira e forma adequada de
+ensinar, praticar ou generalizar uma habilidade, nao deve dizer "treinem numa
+brincadeira" nem "quer que eu monte uma?". Se ja houver informacao suficiente e
+for seguro orientar, **entregar a brincadeira no mesmo turno**.
+
+**ESTRUTURA MINIMA OBRIGATORIA** — a estrutura e obrigatoria, o TAMANHO nao:
+
+1. **Titulo** da brincadeira;
+2. **O que treina** — habilidade/objetivo funcional, em linguagem simples;
+3. **Materiais** — quando houver; objetos simples, de casa, e interesses REAIS da
+   crianca;
+4. **Como brincar** — instrucoes executaveis pela familia.
+
+A profundidade continua sendo decisao da Ayla, como em [[pend-187b]]: estrutura
+nao e regua de extensao.
+
+**PERSONALIZACAO, e seus limites.** Adaptar por nivel de comunicacao, habilidades
+atuais, interesses reais, sensibilidades, compreensao, necessidade de apoio
+visual/modelo e a dificuldade em trabalho. **Nunca inventar interesse, habilidade
+ou preferencia.** Sem informacao para personalizar: versao segura e neutra quando
+possivel; perguntar SO quando a resposta muda a atividade — mesmo criterio do
+Gate B.
+
+**PRINCIPIO.** Nao guardar para o proximo turno algo util que ja pode ser
+entregue agora. A brincadeira e estrategia aplicada, nao promessa de conteudo
+futuro e **nao e CTA**. Isto conversa direto com o Contrato de Verdade
+(`diretrizes.ts`), que ja proibe "vou montar" quando nao e a Ayla quem entrega:
+aqui a saida nao e prometer menos, e **entregar**.
+
+**DESTINO:** situacao → habilidade a desenvolver → brincadeira adequada → titulo
++ objetivo + materiais + como brincar → familia aplica agora → acompanhamento
+depois.
+
+**RELACOES.** Gate F (conducao e conteudo) é o dono. Par natural de
+[[pend-188]] (conducao condicional): as duas dizem que a Ayla deve ENTREGAR
+conduta util sem depender de uma resposta que ainda nao tem. E toca a integracao
+futura com atividades/artefatos — hoje Rotina e Plano tem fluxo proprio com
+cartoes e PDF, e brincadeira nao tem nenhum: decidir no Gate F se ela vira
+artefato ou permanece fala estruturada.
+
+⚠️ **O QUE INVESTIGAR ANTES DE IMPLEMENTAR:** o acervo tem **86 BPs que usam
+brincar como ferramenta e ZERO que o tratam como dominio** (laudo de 30/07,
+[[brincar-bia-auditoria]]), e nao ha BP de "seguir a lideranca" nem de
+hiperfoco. Entregar brincadeira estruturada sem repertorio proprio tende a
+produzir atividade genérica — o oposto da regra. A auditoria do BRINCAR e
+pre-requisito, nao detalhe.
+
+**Proximo ID livre: PEND-192. *(024 e 025 reservadas por frentes ainda nao publicadas; 0076 e numero de MIGRACAO reservado — ver PEND-121.)***
 
 > Conferir contra `origin/main`, não contra o seu branch. Dois branches podem
 > reivindicar o mesmo número — o conflito de merge nesta linha é o alarme.
