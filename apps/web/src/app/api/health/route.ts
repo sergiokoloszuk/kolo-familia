@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { posTrialAtivo, experimentalParaTodas } from "@/lib/ayla/experimental";
+import { extratorSombraLigado } from "@/lib/ayla/extrator-sombra";
 import { lerPlanosNoStripe, PLANOS } from "@/lib/billing/planos";
 
 /**
@@ -114,6 +115,19 @@ export async function GET() {
   const flags = {
     ayla_pos_trial: posTrialAtivo(),
     ayla_experimental_todas: experimentalParaTodas(),
+    /**
+     * A SOMBRA DO EXTRATOR UNIFICADO — PEND-194, 10/09/2026.
+     *
+     * ⚠️ ESTÁ AQUI PORQUE "CONFIGUREI NA VERCEL" NÃO É "O RUNTIME ESTÁ LENDO".
+     * Variável de ambiente só alcança o runtime num deploy NOVO: em 10/09 a
+     * variável foi configurada e o health seguiu servindo o mesmo SHA, então
+     * não havia como responder se a medição tinha começado — e uma sombra que
+     * se acredita ligada e está desligada produz "amostra zero" indistinguível
+     * de "nenhum turno aconteceu".
+     *
+     * Vai o VALOR EFETIVO lido pela mesma função que o orquestrador chama.
+     */
+    kolo_extrator_sombra: extratorSombraLigado(),
   };
 
   let db_ok = false;
