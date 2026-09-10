@@ -127,6 +127,7 @@ import {
   templateConviteCriancaEspecifica,
 } from "./crianca-especifica";
 import { extrairESalvarEventos } from "./eventos";
+import { medirExtratorEmSombra } from "./extrator-sombra";
 import { acessoLiberado } from "@/lib/auth/acesso";
 import { classificarAreasDiario } from "@/lib/ia/classificar-area";
 import type { AylaTipoProativa, AylaTipoReativa, ParserResult } from "./types";
@@ -3494,6 +3495,36 @@ async function processInboundInterno(
           // outro irmão depois de a resposta já ter saído.
           if (exp.membroId) parsedExp.membro_atipico_id = exp.membroId;
           await persistirRegistro(supabase, family.id, parsedExp);
+
+          /**
+           * ⚠️ A SOMBRA DO EXTRATOR UNIFICADO — PEND-194. NÃO ESCREVE NADA.
+           *
+           * Roda DEPOIS de `persistirRegistro`, sobre o mesmo turno, só para
+           * publicar o que o extrator da web TERIA proposto — com sub-campo
+           * declarado, vendo o perfil. É a medição que decide se a migração do
+           * canal de 99% do volume se justifica, feita no tráfego real em vez
+           * de em bancada sintética.
+           *
+           * Desligada por padrão (`KOLO_EXTRATOR_SOMBRA`). O `await` aqui é
+           * inofensivo: este bloco inteiro já é `void`, depois da bolha.
+           */
+          const membroDaSombra =
+            ctxExp.membros.find((m) => m.id === parsedExp.membro_atipico_id) ?? null;
+          await medirExtratorEmSombra({
+            supabase,
+            familyId: family.id,
+            membroId: parsedExp.membro_atipico_id,
+            membro: membroDaSombra
+              ? {
+                  nome: membroDaSombra.nome ?? "",
+                  idade: idadeAnos(membroDaSombra.data_nascimento ?? null),
+                  perfil: membroDaSombra.perfil ?? "",
+                }
+              : null,
+            historico: historicoExp,
+            entrada: inbound.texto,
+            via: inbound.midiaTipo === "audio" ? "whatsapp_audio" : "whatsapp_texto",
+          });
         } catch (e) {
           console.warn(
             "[ayla:experimental] persistência pós-resposta falhou:",
