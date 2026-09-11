@@ -476,3 +476,28 @@ describe("o que a Fase 2 tem de preservar", () => {
     expect(foco).toBeLessThan(decisao);
   });
 });
+
+// ─────────────────────────────────────────────────────────────────────────────
+describe("o health responde qual é o alvo — não se a flag está 'ligada'", () => {
+  /**
+   * ⚠️ "CONFIGUREI NA VERCEL" NÃO É "O RUNTIME ESTÁ LENDO", e a variável só
+   * alcança o runtime num deploy novo. A sombra já custou um ciclo por isso.
+   * Aqui o erro simétrico é pior: acreditar que a escrita está restrita ao QA
+   * quando ela alcança todas as famílias.
+   *
+   * Por isso o health publica o ALVO, não um booleano: "ligado" não diz nada
+   * sobre uma flag que tem alcance.
+   */
+  const HEALTH = readFileSync(
+    new URL("../../app/api/health/route.ts", import.meta.url),
+    "utf8",
+  );
+
+  it("publica o alvo efetivo, lido pela MESMA função que o orquestrador usa", () => {
+    expect(HEALTH).toMatch(/kolo_extrator_escrita: alvoDaEscritaDoExtrator\(\)\.tipo/);
+  });
+
+  it("não publica um booleano — `admin` e `todas` não podem se confundir", () => {
+    expect(HEALTH).not.toMatch(/kolo_extrator_escrita:\s*(true|false|Boolean)/);
+  });
+});

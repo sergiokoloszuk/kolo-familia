@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { posTrialAtivo, experimentalParaTodas } from "@/lib/ayla/experimental";
 import { extratorSombraLigado } from "@/lib/ayla/extrator-sombra";
+import { alvoDaEscritaDoExtrator } from "@/lib/ayla/extrator-escrita";
 import { lerPlanosNoStripe, PLANOS } from "@/lib/billing/planos";
 
 /**
@@ -128,6 +129,18 @@ export async function GET() {
      * Vai o VALOR EFETIVO lido pela mesma função que o orquestrador chama.
      */
     kolo_extrator_sombra: extratorSombraLigado(),
+    /**
+     * O ALVO DA ESCRITA DO EXTRATOR — PEND-194 Fase 2.
+     *
+     * ⚠️ MESMA LIÇÃO, RISCO MAIOR. A sombra que se acreditava ligada e estava
+     * desligada custou um ciclo de deploy. Aqui o erro simétrico é pior: uma
+     * flag que se acredita restrita ao QA e na verdade alcança todas as
+     * famílias troca, sem revisão, o cérebro que aprende sobre as crianças.
+     *
+     * Vai o ALVO, não um booleano — `ninguem` · `admin` · `todas` · `lista`.
+     * "Ligado" não é resposta suficiente para uma flag que tem alcance.
+     */
+    kolo_extrator_escrita: alvoDaEscritaDoExtrator().tipo,
   };
 
   let db_ok = false;
