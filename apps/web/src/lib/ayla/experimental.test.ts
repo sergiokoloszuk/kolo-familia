@@ -228,8 +228,13 @@ describe("o caminho curto pula mesmo a condução atual", () => {
     expect(iParser, "o ramo perdeu a persistência").toBeGreaterThan(-1);
     expect(iParser, "o parser entrou ANTES da resposta").toBeGreaterThan(iEnvio);
 
-    // E a persistência é fire-and-forget: nada de `await` segurando o turno.
-    expect(ramo.slice(iEnvio)).toContain("void (async () => {");
+    // ⚠️ A PERSISTÊNCIA É AGUARDADA — invertido em 11/09/2026 (PEND-198).
+    // Era `void` para o turno retornar rápido; em serverless a promise solta
+    // ficava fora da cadeia do `after()` do webhook e a lambda a matava em
+    // 32,8% dos turnos (medido: 209 execuções em 311 respostas). O que este
+    // teste protege continua sendo a ORDEM, provada acima: o parser vem DEPOIS
+    // do envio. Quem espera é a função, não a família.
+    expect(ramo.slice(iEnvio)).toContain("await (async () => {");
   });
 
   it("MORDE: o núcleo de diretrizes.ts NÃO entra no prompt experimental", async () => {

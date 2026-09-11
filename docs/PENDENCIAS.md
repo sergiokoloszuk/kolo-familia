@@ -9291,7 +9291,75 @@ defeito e da escrita, e corrigir o dado apagaria a evidencia.
 `habilidadesProvadas` vazio para 85% da base — e veto que nao dispara e o mesmo
 que nao existir, com a diferenca de dar a impressao de que existe.
 
-**Proximo ID livre: PEND-198. *(024 e 025 reservadas por frentes ainda nao publicadas; 0076 e numero de MIGRACAO reservado — ver PEND-121.)***
+### PEND-198
+**Um em cada tres turnos nao aprendia nada — promise solta depois da resposta**
+Bloco: **B · Ayla** · Prioridade: **P1**
+STATUS: **CORRIGIDA — aguardando prova de cobertura em producao** · Aberta em: 2026-09-11 · Corrigida em: 2026-09-11
+
+Achada ao investigar por que 3 dos 6 turnos da microprova da PEND-194 nao
+geraram sombra. **Nao era guarda da sombra nem do extrator: era defeito
+funcional do produto.** O turno respondia bem e o sistema nao aprendia nada
+daquele relato.
+
+**BASELINE (01/09 a 11/09/2026):**
+
+| medicao | resultado |
+|---|---|
+| respostas entregues pelo caminho experimental | **311** |
+| execucoes do bloco de aprendizado (`ayla_parser_pos`) | **209** |
+| **cobertura** | **67,2%** |
+| **perda** | **32,8%** |
+
+Por dia: 33% · 44% · 46% · 63% · 66% · 68% · 69% · 75% · 79% · 80% · 80%. A
+oscilacao e o que descarta guarda semantica: regra de negocio da taxa estavel
+por tipo de mensagem, nao variacao de 33% a 80%.
+
+**CAUSA RAIZ.** O bloco era disparado com `void (async () => {…})()` depois do
+envio. O `processInbound` inteiro roda dentro do `after()` do webhook
+(`maxDuration = 300`), e o `after()` aguarda a PROPRIA callback — que aguarda o
+`processInbound`. **A promise solta fica fora dessa cadeia**: quando a funcao
+retornava, a lambda podia congelar com o aprendizado no meio. O unico rastro era
+um `console.warn`, que some com a retencao da Vercel.
+
+O comentario do proprio codigo dizia *"SEM `await`. O turno retorna e a
+persistencia segue"*. Verdade num processo longo; falso em serverless.
+
+⚠️ **HAVIA UM TESTE DELIBERADO PRENDENDO O DEFEITO.** `persistencia-pos-resposta`
+tinha o teste 2 exigindo `void` e a sabotagem **S2 · `await` na IIFE (a mae
+volta a esperar a persistencia)**. A justificativa **nao se sustenta**, e a
+prova estava no cabecalho do mesmo arquivo: a bolha ja foi entregue por
+`enviarEPersistir` ANTES do bloco. Quem espera com o `await` e a FUNCAO, nao a
+familia. E o debounce (`aguardarTurnoDaMae`) claima MENSAGENS e nao libera lock
+no fim — a fala seguinte abre a propria invocacao e a propria janela. Os dois
+testes foram invertidos, com o motivo escrito neles.
+
+**IMPACTO.** Perfil Vivo crescia a dois tercos da velocidade real; a
+longitudinalidade (diarios, check-ins, eventos) perdia um terco dos relatos; e
+a PEND-194 media a sombra so nos turnos que sobreviviam ao runtime. Para a
+PEND-197 o efeito e direto: campo estruturado que nunca foi escrito nao pode ser
+lido depois.
+
+**CORRECAO.** `void` → `await` no bloco, mantendo-o DEPOIS do envio (mover para
+antes esta proibido por desenho). E a falha deixou de ser `console.warn`: virou
+evento **persistido** `aprendizado_pos_resposta_falhou`, com o `turno` para
+cruzar com `turno_externo` e `extrator_sombra`, sem relancar — o aprendizado
+continua secundario a conversa.
+
+**PROVA.** 8 testes comportamentais novos em `aprendizado-aguardado.test.ts`,
+rodando `processInbound` de verdade **sem nenhum `sleep`** — e o sleep de 50 ms
+que `persistencia-caminho-real` usava era justamente o sintoma da promise
+solta. Sabotagem (voltar o `void`): **7 vermelhos**, incluindo o comportamental
+*"processInbound NAO resolve com o aprendizado pendente"*. Suite completa
+**3.797 passaram, 0 falharam**; `tsc` limpo; build compilado.
+
+**CRITERIO DE CONCLUSAO:** medicao em producao mostrando a cobertura subir de
+67,2% para proximo de 100%, descontando apenas casos com razao explicita e
+registrada para nao processar.
+
+**RELACOES.** [[pend-194]] (a sombra media 2/3 do trafego por causa disto),
+[[pend-197]] (campo nao escrito nao se le depois).
+
+**Proximo ID livre: PEND-199. *(024 e 025 reservadas por frentes ainda nao publicadas; 0076 e numero de MIGRACAO reservado — ver PEND-121.)***
 
 > Conferir contra `origin/main`, não contra o seu branch. Dois branches podem
 > reivindicar o mesmo número — o conflito de merge nesta linha é o alarme.

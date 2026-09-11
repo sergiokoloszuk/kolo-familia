@@ -3456,16 +3456,33 @@ async function processInboundInterno(
       // resposta. Aqui a bolha JÁ FOI ENVIADA — `enviarEPersistir` aconteceu
       // acima —, então a mãe não espera um milissegundo por isto.
       //
-      // ⚠️ SEM `await`. O turno retorna e a persistência segue. Se ela falhar, a
-      // conversa já aconteceu; o custo é um aprendizado perdido, não um silêncio.
-      // O `console.warn` é o que torna essa perda visível — sem ele, dado
-      // sumindo em silêncio é exatamente o defeito que este repositório mais
-      // paga caro.
+      // ⚠️ COM `await` — E A LINHA ANTERIOR DIZIA O CONTRÁRIO. CORRIGIDO EM
+      // 11/09/2026 (PEND-198).
+      //
+      // O texto antigo era: "SEM `await`. O turno retorna e a persistência
+      // segue." Isso é verdade num processo longo. **Em serverless, não.** O
+      // `processInbound` inteiro roda dentro do `after()` do webhook, e o
+      // `after()` aguarda a PRÓPRIA callback — que aguarda esta função. Uma
+      // promise disparada com `void` fica FORA dessa cadeia: quando a função
+      // retornava, a lambda podia congelar com o aprendizado no meio.
+      //
+      // MEDIDO (01/09 a 11/09): 311 respostas do caminho experimental, **209
+      // execuções** do bloco. Cobertura de **67,2%** — um em cada três relatos
+      // da família não virava conhecimento nenhum, em silêncio. E a taxa
+      // oscilava de 33% a 80% por dia, que é assinatura de perda por runtime e
+      // não de regra de negócio.
+      //
+      // ⚠️ A FAMÍLIA NÃO ESPERA UM MILISSEGUNDO A MAIS. A bolha foi enviada
+      // acima, por `enviarEPersistir`. O `await` aqui só atrasa o `return`
+      // desta função — ou seja, mantém a lambda viva (o `maxDuration = 300` do
+      // webhook já concede esse tempo, e é o mesmo fôlego que a geração de
+      // plano usa). Mover o aprendizado para ANTES da resposta seria o erro
+      // oposto, e está proibido por desenho.
       //
       // ⚠️ ISOLAMENTO. `family.id` e o membro vêm do contexto JÁ resolvido deste
       // turno; `persistirRegistro` sai cedo quando não há membro. Nada aqui
       // escolhe criança por palpite.
-      void (async () => {
+      await (async () => {
         try {
           const membrosDoTurno = ctxExp.membros.map((m) => ({ id: m.id, nome: m.nome ?? "" }));
           if (membrosDoTurno.length === 0) return;
@@ -3530,10 +3547,26 @@ async function processInboundInterno(
             via: inbound.midiaTipo === "audio" ? "whatsapp_audio" : "whatsapp_texto",
           });
         } catch (e) {
-          console.warn(
-            "[ayla:experimental] persistência pós-resposta falhou:",
-            e instanceof Error ? e.message : e,
-          );
+          // ⚠️ PROMISE REJEITADA NUNCA FICA SEM RASTRO — PEND-198. Antes daqui
+          // saía só um `console.warn`, que morre com a retenção da Vercel: a
+          // perda de aprendizado era invisível depois de alguns dias. Agora
+          // vira evento PERSISTIDO, com o `turno` para cruzar com
+          // `turno_externo` e `extrator_sombra`.
+          //
+          // ⚠️ E ELE NÃO RELANÇA. O aprendizado é secundário: a resposta da
+          // família já saiu, e transformar isso em erro do turno trocaria um
+          // fato perdido por um silêncio.
+          await logEvent({
+            kind: "aprendizado_pos_resposta_falhou",
+            family_account_id: family.id,
+            severity: "warn",
+            persistir: true,
+            message: e instanceof Error ? e.message : "erro desconhecido",
+            payload: { turno: rastro.turno, membro: exp.membroId ?? null },
+          }).catch(() => {
+            // Último recurso: se nem o log persiste, ainda resta o stdout.
+            console.warn("[ayla:experimental] aprendizado pós-resposta falhou e o log também");
+          });
         }
       })();
 
