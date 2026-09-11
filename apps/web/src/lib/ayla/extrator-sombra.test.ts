@@ -319,8 +319,8 @@ describe("sabotagem — devolver a releitura do perfil para depois da escrita", 
 
   it("o orquestrador tira a foto ANTES de `persistirRegistro`", () => {
     const foto = ORQ.indexOf("const koloVivoAntesDoTurno");
-    const escrita = ORQ.indexOf("await persistirRegistro(supabase, family.id, parsedExp)");
-    const sombra = ORQ.indexOf("await medirExtratorEmSombra({");
+    const escrita = ORQ.indexOf("await persistirRegistro(supabase, family.id, parsedExp, {");
+    const sombra = ORQ.indexOf("const turnoParaExtrator = {");
     expect(foto).toBeGreaterThan(0);
     expect(escrita).toBeGreaterThan(0);
     // A ordem é o invariante inteiro: FOTO → ESCRITA → SOMBRA.
@@ -332,21 +332,21 @@ describe("sabotagem — devolver a releitura do perfil para depois da escrita", 
     // O outro jeito de "consertar" isto seria rodar a sombra antes de
     // persistir. Funcionaria para a medição e atrasaria o aprendizado real —
     // e o aprendizado é do produto, a medição é nossa.
-    const escrita = ORQ.indexOf("await persistirRegistro(supabase, family.id, parsedExp)");
-    const sombra = ORQ.indexOf("await medirExtratorEmSombra({");
+    const escrita = ORQ.indexOf("await persistirRegistro(supabase, family.id, parsedExp, {");
+    const sombra = ORQ.indexOf("const turnoParaExtrator = {");
     expect(escrita).toBeLessThan(sombra);
   });
 
   it("a foto só custa consulta quando a flag está ligada", () => {
     const bloco = ORQ.slice(
       ORQ.indexOf("const koloVivoAntesDoTurno"),
-      ORQ.indexOf("await persistirRegistro(supabase, family.id, parsedExp)"),
+      ORQ.indexOf("await persistirRegistro(supabase, family.id, parsedExp, {"),
     );
     expect(bloco).toMatch(/extratorSombraLigado\(\)/);
   });
 
-  it("a sombra recebe a foto — e não uma montada na hora da chamada", () => {
-    const chamada = ORQ.slice(ORQ.indexOf("await medirExtratorEmSombra({"));
+  it("o turno entregue ao extrator recebe a foto — e não uma montada na hora", () => {
+    const chamada = ORQ.slice(ORQ.indexOf("const turnoParaExtrator = {"));
     expect(chamada).toMatch(/koloVivoResumo: koloVivoAntesDoTurno/);
   });
 });

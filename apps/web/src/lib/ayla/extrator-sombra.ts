@@ -122,6 +122,118 @@ function ehBaldeDeSobra(campo: string, subcampo: string | null): boolean {
   return subs[subs.length - 1].key === subcampo;
 }
 
+/**
+ * AS CONTAGENS QUE OS DOIS CAMINHOS PUBLICAM — PEND-194 Fase 2.
+ *
+ * ⚠️ UMA CONTA, DOIS CAMINHOS. A sombra e o escritor têm de publicar o MESMO
+ * número para a mesma proposta, senão a comparação antes/depois da promoção
+ * mede a diferença entre duas contas em vez da diferença entre dois
+ * extratores. Por isso o cálculo mora aqui, e não em cada chamador.
+ */
+export function metricasDaProposta<
+  I extends { camada: string; campo: string; subcampo?: string | null },
+>(proposta: {
+  // Genérica de propósito: `camada1` sai com o tipo COMPLETO do item, não com
+  // a fatia que esta função precisa ler. Quem escreve o Perfil Vivo precisa de
+  // `texto` e `operacao`, e não deve ter de refiltrar a proposta para tê-los.
+  koloVivo: ReadonlyArray<I>;
+  rejeitados: ReadonlyArray<{ motivo: string }>;
+}) {
+  const camada1 = proposta.koloVivo.filter((i) => i.camada === "camada1");
+  const emBalde = camada1.filter((i) => ehBaldeDeSobra(i.campo, i.subcampo ?? null));
+  const motivos: Record<string, number> = {};
+  for (const r of proposta.rejeitados) motivos[r.motivo] = (motivos[r.motivo] ?? 0) + 1;
+  return {
+    camada1,
+    n_itens: proposta.koloVivo.length,
+    n_camada1: camada1.length,
+    chaves: camada1.map((i) => `${i.campo}.${i.subcampo ?? "(sem_subcampo)"}`),
+    n_balde_de_sobra: emBalde.length,
+    n_sem_subcampo: camada1.filter((i) => !i.subcampo).length,
+    n_rejeitados: proposta.rejeitados.length,
+    motivos_rejeicao: motivos,
+  };
+}
+
+/**
+ * A EXTRAÇÃO — exatamente a configuração que a bancada aprovou.
+ *
+ * ⚠️ ELA ESTÁ AQUI, E SÓ AQUI, PARA NÃO EXISTIR DUAS VEZES. Na Fase 2 o mesmo
+ * extrator passa a escrever em algumas famílias e a observar nas outras. Se a
+ * configuração fosse copiada para o caminho escritor, a primeira divergência
+ * entre as cópias — um `modo` diferente, um `entradaNormalizada` esquecido —
+ * seria invisível e destruiria a comparação. O que muda entre os dois é o
+ * `meta`, para o custo ser separável; o resto é literalmente o mesmo código.
+ *
+ * Preserva, por construção: fotografia pré-escrita (`t.koloVivoResumo`),
+ * `transcript` = turno atual, contexto anterior em bloco próprio, modo estrito
+ * com proveniência conferida contra a fala de agora.
+ */
+export async function extrairDoTurno(
+  t: TurnoParaSombra,
+  opts: { escrita: boolean },
+) {
+  /**
+   * ⚠️ A FONTE EXTRAÍVEL É O TURNO, E SÓ O TURNO — PEND-200.
+   *
+   * Até 11/09/2026 esta linha concatenava `t.historico` aqui dentro. Os 12
+   * turnos da bancada do Pedro mostraram o preço: 19 de 31 itens eram
+   * repetição da janela, 5 dos 11 fatos novos se perderam, um desabafo puro
+   * produziu 3 fatos — e, no pior caso, dois fatos da MANU saíram dentro de um
+   * turno do Pedro, com o `membro_atipico_id` do Pedro.
+   *
+   * `t.entrada` já é a fala INTEIRA do turno: o orquestrador reatribui
+   * `inbound.texto` para o texto do lote depois do debounce, então uma mãe que
+   * manda três mensagens seguidas continua sendo um turno só, completo.
+   */
+  const transcript = `Responsável: ${t.entrada}`.slice(0, 8000);
+
+  /**
+   * O histórico continua indo — como CONTEXTO, em bloco próprio. Sem ele,
+   * resposta curta ("sim", "já está na letra f") perde o sentido, e o caminho
+   * atual saberia interpretá-la: `parseInbound` recebe `<conversa_recente>`
+   * exatamente para isso. Tirar seria trocar um defeito por outro.
+   */
+  const contextoRecente = t.historico
+    .filter((m) => m.texto?.trim())
+    .map((m) => `${m.de === "mae" ? "Responsável" : "Kolo"}: ${m.texto}`)
+    .join("\n\n")
+    .slice(0, 6000);
+
+  return extrairAtualizacoes({
+    transcript,
+    contextoRecente,
+    // ⚠️ NÃO RELER O PERFIL AQUI — PEND-200. Ver `koloVivoResumo` no tipo.
+    koloVivoResumo: t.koloVivoResumo,
+    membro: t.membro,
+    supabase: t.supabase,
+    familyId: t.familyId,
+    via: t.via,
+    // ⚠️ É CONTRA ISTO que cada citação é conferida — e é o turno atual.
+    entradaNormalizada: t.entrada,
+    /**
+     * ⚠️ A ÂNCORA LIGADA, E É ELA QUE TORNA O VAZAMENTO IMPOSSÍVEL.
+     *
+     * Separar os blocos ORIENTA o modelo; `estrito` VERIFICA. Ele exige
+     * `citacao` literal em cada item e `avaliarFatos` confere a citação contra
+     * `entradaNormalizada` por substring normalizada (`citacaoConfere`). Um
+     * fato lido do `<contexto_anterior>` não consegue citar a fala de agora:
+     * sai como `citacao_nao_comprovada` ou `citacao_ausente`, e não como fato.
+     *
+     * Na bancada do Pedro `n_rejeitados` foi ZERO nos 12 turnos — a guarda
+     * existia, estava testada, e nunca tinha sido exercida porque o modo
+     * `compativel` não pede citação.
+     *
+     * ⚠️ A WEB CONTINUA EM `compativel`. O modo não é alterado lá.
+     */
+    modo: "estrito",
+    // ⚠️ O CUSTO TEM DE SER SEPARÁVEL. `sombra` marca a medição inofensiva;
+    // `escrita` marca a chamada que virou o dono do Perfil Vivo. Sem isto, o
+    // relatório de custo da Fase 2 não distingue observar de escrever.
+    meta: opts.escrita ? { escrita: true } : { sombra: true },
+  });
+}
+
 export async function medirExtratorEmSombra(t: TurnoParaSombra): Promise<void> {
   if (!extratorSombraLigado()) return;
   // Sem criança o extrator só produziria camada 2, que não é o que esta
@@ -130,76 +242,14 @@ export async function medirExtratorEmSombra(t: TurnoParaSombra): Promise<void> {
 
   const t0 = Date.now();
   try {
-    /**
-     * ⚠️ A FONTE EXTRAÍVEL É O TURNO, E SÓ O TURNO — PEND-200.
-     *
-     * Até 11/09/2026 esta linha concatenava `t.historico` aqui dentro. Os 12
-     * turnos da bancada do Pedro mostraram o preço: 19 de 31 itens eram
-     * repetição da janela, 5 dos 11 fatos novos se perderam, um desabafo puro
-     * produziu 3 fatos — e, no pior caso, dois fatos da MANU saíram dentro de
-     * um turno do Pedro, com o `membro_atipico_id` do Pedro.
-     *
-     * `t.entrada` já é a fala INTEIRA do turno: o orquestrador reatribui
-     * `inbound.texto` para o texto do lote depois do debounce, então uma mãe
-     * que manda três mensagens seguidas continua sendo um turno só, completo.
-     */
-    const transcript = `Responsável: ${t.entrada}`.slice(0, 8000);
-
-    /**
-     * O histórico continua indo — como CONTEXTO, em bloco próprio. Sem ele,
-     * resposta curta ("sim", "já está na letra f") perde o sentido, e o
-     * caminho atual saberia interpretá-la: `parseInbound` recebe
-     * `<conversa_recente>` exatamente para isso. Tirar seria trocar um defeito
-     * por outro.
-     */
-    const contextoRecente = t.historico
-      .filter((m) => m.texto?.trim())
-      .map((m) => `${m.de === "mae" ? "Responsável" : "Kolo"}: ${m.texto}`)
-      .join("\n\n")
-      .slice(0, 6000);
-
-    const proposta = await extrairAtualizacoes({
-      transcript,
-      contextoRecente,
-      // ⚠️ NÃO RELER O PERFIL AQUI — PEND-200. Ver `koloVivoResumo` no tipo.
-      koloVivoResumo: t.koloVivoResumo,
-      membro: t.membro,
-      supabase: t.supabase,
-      familyId: t.familyId,
-      via: t.via,
-      // ⚠️ É CONTRA ISTO que cada citação é conferida — e é o turno atual.
-      entradaNormalizada: t.entrada,
-      /**
-       * ⚠️ A ÂNCORA LIGADA, E É ELA QUE TORNA O VAZAMENTO IMPOSSÍVEL.
-       *
-       * Separar os blocos ORIENTA o modelo; `estrito` VERIFICA. Ele exige
-       * `citacao` literal em cada item e `avaliarFatos` confere a citação
-       * contra `entradaNormalizada` por substring normalizada
-       * (`citacaoConfere`). Um fato lido do `<contexto_anterior>` não consegue
-       * citar a fala de agora: sai como `citacao_nao_comprovada` ou
-       * `citacao_ausente`, e não como fato.
-       *
-       * Na bancada do Pedro `n_rejeitados` foi ZERO nos 12 turnos — a guarda
-       * existia, estava testada, e nunca tinha sido exercida porque o modo
-       * `compativel` não pede citação. A sombra é o lugar certo para acender:
-       * ela não escreve, e é justamente onde se mede antes de migrar.
-       *
-       * ⚠️ A WEB CONTINUA EM `compativel`. O modo não é alterado lá.
-       */
-      modo: "estrito",
-      meta: { sombra: true },
-    });
-
-    const camada1 = proposta.koloVivo.filter((i) => i.camada === "camada1");
-    const emBalde = camada1.filter((i) => ehBaldeDeSobra(i.campo, i.subcampo ?? null));
-    const motivos: Record<string, number> = {};
-    for (const r of proposta.rejeitados) motivos[r.motivo] = (motivos[r.motivo] ?? 0) + 1;
+    const proposta = await extrairDoTurno(t, { escrita: false });
+    const m = metricasDaProposta(proposta);
 
     await logEvent({
       kind: "extrator_sombra",
       family_account_id: t.familyId,
       persistir: true,
-      message: `sombra: ${camada1.length} fato(s), ${emBalde.length} no balde de sobra`,
+      message: `sombra: ${m.n_camada1} fato(s), ${m.n_balde_de_sobra} no balde de sobra`,
       payload: {
         // ⚠️ PRIMEIRO CAMPO, de proposito: e a chave de cruzamento.
         turno: t.turnoId,
@@ -208,16 +258,26 @@ export async function medirExtratorEmSombra(t: TurnoParaSombra): Promise<void> {
         // de saber de cabeça qual SHA servia o quê na hora da medição.
         modo: "estrito",
         escopo: "turno",
+        /**
+         * ⚠️ PEND-194 FASE 2 — QUEM ESCREVEU O PERFIL NESTE TURNO.
+         *
+         * Aqui é sempre `atual`, e não por comodidade: este evento só é
+         * emitido quando a sombra OBSERVA. Quando o extrator vira dono, o
+         * evento é `extrator_escreveu`. Dois `kind` diferentes para dois donos
+         * diferentes é o que impede uma consulta de somar as duas populações
+         * sem perceber.
+         */
+        escritor: "atual",
         membro_atipico_id: t.membroId,
-        n_itens: proposta.koloVivo.length,
-        n_camada1: camada1.length,
+        n_itens: m.n_itens,
+        n_camada1: m.n_camada1,
         // ⚠️ CHAVES, NUNCA VALORES. `campo.subcampo` diz onde o fato moraria;
         // o que ele diz sobre a criança fica fora daqui.
-        chaves: camada1.map((i) => `${i.campo}.${i.subcampo ?? "(sem_subcampo)"}`),
-        n_balde_de_sobra: emBalde.length,
-        n_sem_subcampo: camada1.filter((i) => !i.subcampo).length,
-        n_rejeitados: proposta.rejeitados.length,
-        motivos_rejeicao: motivos,
+        chaves: m.chaves,
+        n_balde_de_sobra: m.n_balde_de_sobra,
+        n_sem_subcampo: m.n_sem_subcampo,
+        n_rejeitados: m.n_rejeitados,
+        motivos_rejeicao: m.motivos_rejeicao,
         ms: Date.now() - t0,
       },
     });

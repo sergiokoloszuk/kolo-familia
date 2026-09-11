@@ -127,7 +127,19 @@ import {
   templateConviteCriancaEspecifica,
 } from "./crianca-especifica";
 import { extrairESalvarEventos } from "./eventos";
-import { medirExtratorEmSombra, extratorSombraLigado } from "./extrator-sombra";
+import {
+  medirExtratorEmSombra,
+  extratorSombraLigado,
+  extrairDoTurno,
+  metricasDaProposta,
+  type TurnoParaSombra,
+} from "./extrator-sombra";
+import type { Via } from "@/lib/conhecimento/fato";
+import {
+  escritorDoPerfil,
+  planejarEscritaDeFatos,
+  type FatoParaEscrever,
+} from "./extrator-escrita";
 import { montarKoloVivoResumo } from "@/lib/kolo-vivo/incorporar";
 import { acessoLiberado } from "@/lib/auth/acesso";
 import { classificarAreasDiario } from "@/lib/ia/classificar-area";
@@ -3547,7 +3559,21 @@ async function processInboundInterno(
                 ).catch(() => "")
               : "";
 
-          await persistirRegistro(supabase, family.id, parsedExp);
+          /**
+           * ⚠️ A DECISÃO DE DONO, UMA VEZ SÓ — PEND-194 Fase 2.
+           *
+           * Calculada AQUI e lida nos dois lugares abaixo. É o que torna
+           * "dois escritores" inexpressável: não há como `persistirRegistro`
+           * e o extrator acharem, ao mesmo tempo, que a vez é sua.
+           *
+           * Com `KOLO_EXTRATOR_ESCRITA` ausente — o default — isto devolve
+           * `"atual"` sem consultar nada, e o turno é byte a byte o de sempre.
+           */
+          const escritor = await escritorDoPerfil(supabase, family.id);
+
+          await persistirRegistro(supabase, family.id, parsedExp, {
+            escreverKoloVivo: escritor === "atual",
+          });
 
           /**
            * ⚠️ A SOMBRA DO EXTRATOR UNIFICADO — PEND-194. NÃO ESCREVE NADA.
@@ -3564,7 +3590,12 @@ async function processInboundInterno(
            */
           const membroDaSombra =
             ctxExp.membros.find((m) => m.id === parsedExp.membro_atipico_id) ?? null;
-          await medirExtratorEmSombra({
+          /**
+           * ⚠️ UM TURNO, UMA EXTRAÇÃO. O mesmo objeto alimenta o observador e
+           * o escritor — e só um dos dois roda. Nunca há duas chamadas de
+           * modelo, nem dois candidatos a dono.
+           */
+          const turnoParaExtrator = {
             supabase,
             familyId: family.id,
             // A MESMA chave que `turno_externo` publica — ver `extrator-sombra.ts`.
@@ -3579,11 +3610,22 @@ async function processInboundInterno(
               : null,
             historico: historicoExp,
             entrada: inbound.texto,
-            via: inbound.midiaTipo === "audio" ? "whatsapp_audio" : "whatsapp_texto",
-            // ⚠️ PEND-200 — a foto de ANTES, tirada acima. A sombra não relê o
-            // perfil: se relesse, veria o próprio turno já aprendido.
+            via: (inbound.midiaTipo === "audio" ? "whatsapp_audio" : "whatsapp_texto") as Via,
+            // ⚠️ PEND-200 — a foto de ANTES, tirada acima. O extrator não relê
+            // o perfil: se relesse, veria o próprio turno já aprendido.
             koloVivoResumo: koloVivoAntesDoTurno,
-          });
+          };
+
+          if (escritor === "extrator_unificado") {
+            await escreverKoloVivoComExtrator(supabase, turnoParaExtrator, {
+              campo: parsedExp.campo_kolo_vivo_sugerido ?? null,
+              tinhaFato: Boolean(
+                parsedExp.sugestao_kolo_vivo && parsedExp.texto_kolo_vivo_sugerido,
+              ),
+            });
+          } else {
+            await medirExtratorEmSombra(turnoParaExtrator);
+          }
         } catch (e) {
           // ⚠️ PROMISE REJEITADA NUNCA FICA SEM RASTRO — PEND-198. Antes daqui
           // saía só um `console.warn`, que morre com a retenção da Vercel: a
@@ -4489,6 +4531,157 @@ function lerTextoAtualDaSecao(
   return "";
 }
 
+/**
+ * O EXTRATOR UNIFICADO COMO DONO DO PERFIL VIVO — PEND-194 Fase 2.
+ *
+ * ⚠️ SÓ RODA QUANDO `escritorDoPerfil` DEVOLVEU `extrator_unificado`, e nesse
+ * turno `persistirRegistro` NÃO escreveu a seção 3. Os dois leem a mesma
+ * variável; não existe caminho em que ambos gravem.
+ *
+ * Mora aqui, e não em `extrator-escrita.ts`, por um motivo concreto: a escrita
+ * de verdade é `aplicarSugestaoNoMembro`, que carrega o `detectarMarcos`
+ * (PEND-090 — a transição de seletor vira história). Reimplementar aquilo do
+ * outro lado duplicaria regra de negócio, e o §4 é explícito: reusar antes de
+ * criar. O que é PURO — decidir o dono e planejar a escrita por domínio — mora
+ * no módulo novo, testável sem banco.
+ *
+ * Roda DEPOIS da resposta ter sido enviada, no mesmo bloco aguardado que a
+ * PEND-198 consertou. A família não espera por isto.
+ */
+async function escreverKoloVivoComExtrator(
+  supabase: SupabaseClient,
+  t: TurnoParaSombra,
+  /** O que o caminho ANTIGO teria proposto — para a divergência ficar medida. */
+  propostaDoAtual: { campo: string | null; tinhaFato: boolean },
+): Promise<void> {
+  if (!t.membroId || !t.membro) return;
+  const t0 = Date.now();
+  try {
+    const proposta = await extrairDoTurno(t, { escrita: true });
+    const m = metricasDaProposta(proposta);
+
+    // ⚠️ O TEXTO ATUAL VEM DA MESMA LEITURA para todos os domínios. Ler por
+    // domínio, em sequência, reabriria a janela de ler-modificar-gravar que o
+    // agrupamento existe para fechar.
+    const { data: rowAtual } = await supabase
+      .from("perfil_vivo_membro")
+      .select(
+        "essencial, como_e, corpo_rotina, desafios_regulacao, sensorial, categorias_extras",
+      )
+      .eq("membro_atipico_id", t.membroId)
+      .maybeSingle();
+
+    const fatos: FatoParaEscrever[] = m.camada1.map((i) => ({
+      campo: i.campo,
+      subcampo: i.subcampo ?? null,
+      texto: i.texto,
+      operacao: i.operacao === "reescrever" ? "reescrever" : "adicionar",
+    }));
+    const textoAtualPorCampo: Record<string, string> = {};
+    for (const f of fatos) {
+      textoAtualPorCampo[f.campo] = lerTextoAtualDaSecao(rowAtual, f.campo);
+    }
+
+    const { escritas, ignorados } = planejarEscritaDeFatos(fatos, textoAtualPorCampo);
+
+    const aplicados: string[] = [];
+    const falhas: string[] = [];
+    for (const e of escritas) {
+      // ⚠️ A ESCRITA CONFERE O PRÓPRIO RESULTADO (§7). `aplicarSugestaoNoMembro`
+      // devolve `false` quando o upsert falhou — e um `false` engolido aqui
+      // seria exatamente o caso da Rochelle: fluxo seguindo como sucesso.
+      const ok = await aplicarSugestaoNoMembro(
+        supabase,
+        t.familyId,
+        t.membroId,
+        e.campo,
+        e.texto,
+        e.operacao,
+      );
+      (ok ? aplicados : falhas).push(e.campo);
+
+      // A linha de auditoria, um por domínio escrito — o mesmo papel que ela
+      // já tem no caminho antigo: log do que entrou e por qual origem.
+      await supabase.from("sugestao_perfil_vivos").insert({
+        family_account_id: t.familyId,
+        membro_atipico_id: t.membroId,
+        camada: "camada1",
+        campo: e.campo,
+        texto_sugerido: e.texto,
+        origem: "ayla",
+        origem_detalhe: {
+          auto: true,
+          escritor: "extrator_unificado",
+          turno: t.turnoId,
+          subcampos: e.subcampos,
+          operacao: e.operacao,
+        },
+        status: ok ? "aprovada" : "pendente",
+      });
+    }
+
+    if (falhas.length) {
+      await logEvent({
+        kind: "extrator_escrita_falhou",
+        severity: "error",
+        family_account_id: t.familyId,
+        message: `upsert do Perfil Vivo falhou em ${falhas.join(", ")}`,
+        payload: { turno: t.turnoId, campos: falhas, membro_atipico_id: t.membroId },
+      });
+    }
+
+    await logEvent({
+      kind: "extrator_escreveu",
+      family_account_id: t.familyId,
+      persistir: true,
+      message: `escritor novo: ${aplicados.length} domínio(s), ${m.n_camada1} fato(s)`,
+      payload: {
+        turno: t.turnoId,
+        via: t.via,
+        modo: "estrito",
+        escopo: "turno",
+        escritor: "extrator_unificado",
+        membro_atipico_id: t.membroId,
+        n_itens: m.n_itens,
+        n_camada1: m.n_camada1,
+        chaves: m.chaves,
+        n_balde_de_sobra: m.n_balde_de_sobra,
+        n_sem_subcampo: m.n_sem_subcampo,
+        n_rejeitados: m.n_rejeitados,
+        motivos_rejeicao: m.motivos_rejeicao,
+        // o que foi de fato ao banco
+        dominios_escritos: aplicados,
+        dominios_com_falha: falhas,
+        ignorados: ignorados.map((i) => `${i.campo}.${i.subcampo ?? "-"}:${i.motivo}`),
+        /**
+         * ⚠️ A DIVERGÊNCIA, NO MESMO EVENTO. Sem isto, comparar os dois
+         * caminhos exigiria cruzar duas consultas e adivinhar o par. O parser
+         * antigo roda de qualquer jeito (alimenta check-in e diário), então o
+         * que ele PROPORIA sai de graça — sem segunda chamada de modelo.
+         *
+         * Só o CAMPO, não o sub-campo: descobrir o sub-campo do caminho antigo
+         * custaria uma chamada a `rotearFatoSubcampo`, e pagar modelo para
+         * medir o caminho que estamos substituindo seria caro e inútil.
+         */
+        atual_tinha_fato: propostaDoAtual.tinhaFato,
+        atual_campo: propostaDoAtual.campo,
+        ms: Date.now() - t0,
+      },
+    });
+  } catch (e) {
+    // ⚠️ FALHA DO ESCRITOR NÃO DERRUBA O TURNO — a mãe já foi respondida. Mas
+    // fica com severidade de erro e persistida: aqui, diferente da sombra,
+    // falhar significa que a família NÃO aprendeu nada neste turno.
+    await logEvent({
+      kind: "extrator_escrita_falhou",
+      severity: "error",
+      family_account_id: t.familyId,
+      message: e instanceof Error ? e.message : "erro desconhecido",
+      payload: { turno: t.turnoId, via: t.via, ms: Date.now() - t0 },
+    });
+  }
+}
+
 // ============================================================
 // Persistência de registro derivado do parser
 // ============================================================
@@ -4497,8 +4690,22 @@ async function persistirRegistro(
   supabase: SupabaseClient,
   familyId: string,
   p: ParserResult,
+  /**
+   * ⚠️ QUEM É O DONO DO PERFIL VIVO NESTE TURNO — PEND-194 Fase 2.
+   *
+   * `escreverKoloVivo: false` desliga **somente a seção 3** (auto-incorporação
+   * no Perfil Vivo), porque nesse turno o dono é o extrator unificado. O
+   * check-in e o diário continuam vindo daqui SEMPRE: esta fase troca o dono
+   * do Perfil, e só dele. Trocar três coisas de uma vez é como se perde a
+   * capacidade de saber qual delas quebrou.
+   *
+   * O default é `true`, então todo chamador que não conhece a Fase 2 continua
+   * com o comportamento de sempre.
+   */
+  opcoes: { escreverKoloVivo?: boolean } = {},
 ): Promise<void> {
   if (!p.membro_atipico_id) return;
+  const escreverKoloVivo = opcoes.escreverKoloVivo !== false;
 
   // Tentar algo novo já é conquista: se a mãe contou um experimento e não
   // veio conquista explícita, celebramos a tentativa em si (Fatia 3.3).
@@ -4663,7 +4870,12 @@ async function persistirRegistro(
   //    semântico consolida. A linha em sugestao_perfil_vivos vira log de
   //    auditoria (aprovada se aplicou, rejeitada se skip, pendente se campo
   //    desconhecido).
-  if (p.sugestao_kolo_vivo && p.texto_kolo_vivo_sugerido) {
+  //
+  // ⚠️ `escreverKoloVivo === false` (PEND-194 Fase 2): o dono deste turno é o
+  // extrator unificado, e ele escreve depois, no bloco pós-resposta. Sair aqui
+  // é o que garante UM escritor — não uma checagem a mais, mas a MESMA decisão
+  // lida nos dois lugares.
+  if (escreverKoloVivo && p.sugestao_kolo_vivo && p.texto_kolo_vivo_sugerido) {
     const campo = p.campo_kolo_vivo_sugerido ?? "como_e";
     const storage = membroCampoStorage(campo);
     const agora = new Date().toISOString();

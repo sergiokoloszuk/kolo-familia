@@ -77,7 +77,14 @@ describe("A ORDEM — responder primeiro, aprender depois", () => {
 
 describe("O QUE VOLTA A SER ESCRITO", () => {
   it("4. `persistirRegistro` é chamada — Diário, check-in e Kolo Vivo", () => {
-    expect(RAMO).toContain("await persistirRegistro(supabase, family.id, parsedExp)");
+    // ⚠️ A ÂNCORA GANHOU UM SEGUNDO ARGUMENTO EM 11/09/2026 (PEND-194 Fase 2).
+    // A chamada passou a declarar QUEM é o dono da escrita do Perfil Vivo
+    // naquele turno. O invariante deste teste não mudou: a persistência do
+    // pós-resposta continua sendo chamada, e com `await`.
+    expect(RAMO).toContain("await persistirRegistro(supabase, family.id, parsedExp, {");
+    // E o check-in e o diário continuam SEMPRE vindo daqui: a Fase 2 troca o
+    // dono do Perfil, não o dono do registro do dia.
+    expect(RAMO).toContain('escreverKoloVivo: escritor === "atual"');
   });
 
   it("5. `extrairESalvarEventos` continua — não foi substituída", () => {

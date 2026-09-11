@@ -370,13 +370,13 @@ describe("T11 · sabotagem — devolver o histórico à fonte extraível", () =>
     // linha que produziu o vazamento Manu → Pedro.
     expect(instrucao).not.toMatch(/historico/);
     // E ele continua indo — em variável própria, como contexto.
-    const bloco = src.slice(i, src.indexOf("const koloVivoResumo"));
+    const bloco = src.slice(i, src.indexOf("return extrairAtualizacoes({"));
     expect(bloco).toMatch(/const contextoRecente = t\.historico/);
   });
 
   it("a âncora estrita está LIGADA na sombra — sem ela a fronteira é só um pedido", () => {
     const src = readFileSync(resolve(__dirname, "../ayla/extrator-sombra.ts"), "utf8");
-    const chamada = src.slice(src.indexOf("await extrairAtualizacoes({"));
+    const chamada = src.slice(src.indexOf("extrairAtualizacoes({", src.indexOf("export async function extrairDoTurno(")));
     expect(chamada).toMatch(/modo: "estrito"/);
     expect(chamada).toMatch(/entradaNormalizada: t\.entrada/);
   });
