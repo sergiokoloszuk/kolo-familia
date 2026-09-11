@@ -3307,6 +3307,8 @@ async function processInboundInterno(
             // ⚠️ `perguntou_de_fato` SAIU. Ele afirmava, a partir de um "?",
             // que a Ayla tinha perguntado a lacuna escolhida — e era isso que
             // não se sabia. O que o rastro afirma agora é só o que se sabe.
+            // Mesma chave de cruzamento do turno — PEND-194 Fase 1.
+            turno: rastro.turno,
             lacuna_sugerida: lacunaSugerida,
             campo_investigado: campoInvestigado,
             // A pergunta feita foi a sugerida? Observação, não julgamento.
@@ -3513,6 +3515,8 @@ async function processInboundInterno(
           await medirExtratorEmSombra({
             supabase,
             familyId: family.id,
+            // A MESMA chave que `turno_externo` publica — ver `extrator-sombra.ts`.
+            turnoId: rastro.turno,
             membroId: parsedExp.membro_atipico_id,
             membro: membroDaSombra
               ? {

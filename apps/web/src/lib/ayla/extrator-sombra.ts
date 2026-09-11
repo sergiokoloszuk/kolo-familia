@@ -70,6 +70,20 @@ export function extratorSombraLigado(): boolean {
 export type TurnoParaSombra = {
   supabase: SupabaseClient;
   familyId: string;
+  /**
+   * O ID DO TURNO — `RastroTurno.turno` (`tn_<base36>_<rand>`).
+   *
+   * ⚠️ POR QUE ELE PRECISOU EXISTIR AQUI. Na microprova de 11/09/2026 o
+   * pareamento entre a extração da sombra e a do caminho atual foi feito por
+   * PROXIMIDADE DE TIMESTAMP. Funcionou com 3 turnos e não escala: o debounce
+   * agrupa mensagens, um turno pode levar 36 s e dois turnos consecutivos
+   * distam segundos. Com 60 turnos, pareamento por relógio é adivinhação.
+   *
+   * É o MESMO id que `turno_externo` publica, então uma consulta cruza os dois
+   * eventos sem heurística — e por ele se chega ao inbound, às chamadas de
+   * modelo e ao desfecho do turno.
+   */
+  turnoId: string;
   /** Sem criança resolvida não há fato de camada 1 — e não se adivinha dono. */
   membroId: string | null;
   membro: { nome: string; idade: number | null; perfil: string } | null;
@@ -130,6 +144,8 @@ export async function medirExtratorEmSombra(t: TurnoParaSombra): Promise<void> {
       persistir: true,
       message: `sombra: ${camada1.length} fato(s), ${emBalde.length} no balde de sobra`,
       payload: {
+        // ⚠️ PRIMEIRO CAMPO, de proposito: e a chave de cruzamento.
+        turno: t.turnoId,
         via: t.via,
         membro_atipico_id: t.membroId,
         n_itens: proposta.koloVivo.length,
@@ -153,7 +169,7 @@ export async function medirExtratorEmSombra(t: TurnoParaSombra): Promise<void> {
       severity: "warn",
       persistir: true,
       message: e instanceof Error ? e.message : "erro desconhecido",
-      payload: { via: t.via, ms: Date.now() - t0 },
+      payload: { turno: t.turnoId, via: t.via, ms: Date.now() - t0 },
     });
   }
 }

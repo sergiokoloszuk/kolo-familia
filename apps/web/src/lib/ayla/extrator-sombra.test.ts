@@ -66,6 +66,7 @@ const supabaseFalso = {
 const turno = {
   supabase: supabaseFalso,
   familyId: "fam-1",
+  turnoId: "tn_abc123_xyz",
   membroId: "membro-1",
   membro: { nome: "Mario", idade: 9, perfil: "TEA" },
   historico: [{ de: "mae" as const, texto: "ele trava quando fica bravo" }],
@@ -168,5 +169,40 @@ describe("o que a medição publica", () => {
     await medirExtratorEmSombra(turno);
     const p = chamadasExtrair[0] as { meta: Record<string, unknown> };
     expect(p.meta).toMatchObject({ sombra: true });
+  });
+});
+
+describe("o turno é rastreável — PEND-194 Fase 1", () => {
+  it("o id do turno é persistido no evento, e é a MESMA chave de `turno_externo`", async () => {
+    await medirExtratorEmSombra(turno);
+    expect(eventos[0].payload!.turno).toBe("tn_abc123_xyz");
+  });
+
+  it("também vai no evento de FALHA — senão o turno que quebrou fica anônimo", async () => {
+    falharNaProxima.valor = true;
+    await medirExtratorEmSombra(turno);
+    expect(eventos.at(-1)!.kind).toBe("extrator_sombra_falhou");
+    expect(eventos.at(-1)!.payload!.turno).toBe("tn_abc123_xyz");
+  });
+
+  it("DOIS TURNOS PRÓXIMOS NÃO SE CONFUNDEM — o defeito que originou este campo", async () => {
+    // ⚠️ NA MICROPROVA DE 11/09/2026 o pareamento foi por timestamp, e um dos
+    // três turnos levou 36 s enquanto o seguinte levou 5 s. Com o debounce
+    // agrupando mensagens, dois turnos consecutivos ficam a segundos um do
+    // outro — e o relógio deixa de distinguir. Aqui os dois rodam sem nenhuma
+    // pausa entre eles, que é o pior caso possível.
+    await medirExtratorEmSombra({ ...turno, turnoId: "tn_primeiro" });
+    await medirExtratorEmSombra({ ...turno, turnoId: "tn_segundo" });
+    expect(eventos).toHaveLength(2);
+    expect(eventos.map((e) => e.payload!.turno)).toEqual(["tn_primeiro", "tn_segundo"]);
+    // E o id não pode vazar de um evento para o outro por referência comum.
+    expect(eventos[0].payload!.turno).not.toBe(eventos[1].payload!.turno);
+  });
+
+  it("o id não substitui a anonimização: continua sem palavra da família", async () => {
+    await medirExtratorEmSombra(turno);
+    const s = JSON.stringify(eventos[0]);
+    expect(s).toContain("tn_abc123_xyz");
+    expect(s).not.toContain("frustrado");
   });
 });
