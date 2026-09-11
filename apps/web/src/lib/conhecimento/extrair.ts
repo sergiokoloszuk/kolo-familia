@@ -189,6 +189,31 @@ export type ParamsExtracao = {
   em?: string;
   /** Texto original da família — é contra ELE que a citação é conferida. */
   entradaNormalizada?: string;
+  /**
+   * TURNOS ANTERIORES, SÓ PARA INTERPRETAR — nunca como fonte de fato.
+   *
+   * ⚠️ ESTE PARÂMETRO NASCEU DE UM DEFEITO REAL (PEND-200, 11/09/2026). A
+   * sombra concatenava os 6 turnos anteriores da família DENTRO de
+   * `transcript`, que é a fonte extraível. O modelo não tinha como distinguir
+   * o que era novo, e o resultado foi o pior possível: num turno sobre o
+   * Pedro, ele emitiu dois fatos da MANU, lidos do histórico e carimbados com
+   * o `membro_atipico_id` do Pedro. Também repetia fatos antigos a cada turno
+   * (19 de 31 itens) e inventava fato em desabafo puro.
+   *
+   * A fronteira é a correção: `transcript` é o que PODE virar fato;
+   * `contextoRecente` é o que só ajuda a entender ("sim", "já está na letra
+   * f"). É a mesma separação que `parser.ts` já faz entre
+   * `<conversa_recente>` e `<mensagem_da_mae>` — e que é a razão de o parser
+   * de produção nunca ter vazado fato de irmão.
+   *
+   * ⚠️ AUSENTE = NENHUM BLOCO É RENDERIZADO. Os dois caminhos da web não
+   * passam este campo, e o prompt deles continua idêntico byte a byte.
+   *
+   * A separação de blocos ORIENTA o modelo; quem IMPEDE é a âncora de
+   * `modo: "estrito"`, que confere cada citação contra `entradaNormalizada`.
+   * Citação vinda daqui não existe no turno atual, e o fato é recusado.
+   */
+  contextoRecente?: string;
   /** Estado atual por domínio, pra guarda condicional (`mostrarSe`). */
   estadoAtual?: Record<string, string>;
   modo?: ModoGuarda;
@@ -207,6 +232,7 @@ export async function extrairAtualizacoes(
     via,
     em = new Date().toISOString(),
     entradaNormalizada,
+    contextoRecente,
     estadoAtual = {},
     modo = "compativel",
     meta,
@@ -227,6 +253,22 @@ export async function extrairAtualizacoes(
     })
     .join("\n");
 
+  // ⚠️ BLOCO CONDICIONAL — PEND-200. Só existe para quem passa
+  // `contextoRecente`. Sem ele, a string montada é a de sempre, caractere a
+  // caractere, e os dois caminhos da web não mudam de comportamento.
+  const blocoContexto = (contextoRecente ?? "").trim()
+    ? `<contexto_anterior>
+${contextoRecente!.trim()}
+</contexto_anterior>
+
+⚠️ O <contexto_anterior> é SÓ PARA ENTENDER a fala de agora (a quem "ele" se
+refere, o que responde "sim"). NÃO é fonte de fato: nada que esteja apenas ali
+pode virar item de kolo_vivo, conquista ou desafio — nem que pareça importante,
+nem que seja sobre outra criança. Só a <conversa> abaixo gera registro.
+
+`
+    : "";
+
   const userMsg = `${regraMembro}
 
 <campos_com_subcampos>
@@ -238,7 +280,7 @@ ${instrSub}
 ${koloVivoResumo || "(vazio)"}
 </kolo_vivo_atual>
 
-<conversa>
+${blocoContexto}<conversa>
 ${transcript}
 </conversa>
 

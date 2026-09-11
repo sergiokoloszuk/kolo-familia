@@ -115,21 +115,64 @@ export async function medirExtratorEmSombra(t: TurnoParaSombra): Promise<void> {
 
   const t0 = Date.now();
   try {
-    const transcript = [...t.historico, { de: "mae" as const, texto: t.entrada }]
+    /**
+     * ⚠️ A FONTE EXTRAÍVEL É O TURNO, E SÓ O TURNO — PEND-200.
+     *
+     * Até 11/09/2026 esta linha concatenava `t.historico` aqui dentro. Os 12
+     * turnos da bancada do Pedro mostraram o preço: 19 de 31 itens eram
+     * repetição da janela, 5 dos 11 fatos novos se perderam, um desabafo puro
+     * produziu 3 fatos — e, no pior caso, dois fatos da MANU saíram dentro de
+     * um turno do Pedro, com o `membro_atipico_id` do Pedro.
+     *
+     * `t.entrada` já é a fala INTEIRA do turno: o orquestrador reatribui
+     * `inbound.texto` para o texto do lote depois do debounce, então uma mãe
+     * que manda três mensagens seguidas continua sendo um turno só, completo.
+     */
+    const transcript = `Responsável: ${t.entrada}`.slice(0, 8000);
+
+    /**
+     * O histórico continua indo — como CONTEXTO, em bloco próprio. Sem ele,
+     * resposta curta ("sim", "já está na letra f") perde o sentido, e o
+     * caminho atual saberia interpretá-la: `parseInbound` recebe
+     * `<conversa_recente>` exatamente para isso. Tirar seria trocar um defeito
+     * por outro.
+     */
+    const contextoRecente = t.historico
+      .filter((m) => m.texto?.trim())
       .map((m) => `${m.de === "mae" ? "Responsável" : "Kolo"}: ${m.texto}`)
       .join("\n\n")
-      .slice(0, 8000);
+      .slice(0, 6000);
 
     const koloVivoResumo = await montarKoloVivoResumo(t.supabase, t.familyId, t.membroId);
 
     const proposta = await extrairAtualizacoes({
       transcript,
+      contextoRecente,
       koloVivoResumo,
       membro: t.membro,
       supabase: t.supabase,
       familyId: t.familyId,
       via: t.via,
+      // ⚠️ É CONTRA ISTO que cada citação é conferida — e é o turno atual.
       entradaNormalizada: t.entrada,
+      /**
+       * ⚠️ A ÂNCORA LIGADA, E É ELA QUE TORNA O VAZAMENTO IMPOSSÍVEL.
+       *
+       * Separar os blocos ORIENTA o modelo; `estrito` VERIFICA. Ele exige
+       * `citacao` literal em cada item e `avaliarFatos` confere a citação
+       * contra `entradaNormalizada` por substring normalizada
+       * (`citacaoConfere`). Um fato lido do `<contexto_anterior>` não consegue
+       * citar a fala de agora: sai como `citacao_nao_comprovada` ou
+       * `citacao_ausente`, e não como fato.
+       *
+       * Na bancada do Pedro `n_rejeitados` foi ZERO nos 12 turnos — a guarda
+       * existia, estava testada, e nunca tinha sido exercida porque o modo
+       * `compativel` não pede citação. A sombra é o lugar certo para acender:
+       * ela não escreve, e é justamente onde se mede antes de migrar.
+       *
+       * ⚠️ A WEB CONTINUA EM `compativel`. O modo não é alterado lá.
+       */
+      modo: "estrito",
       meta: { sombra: true },
     });
 
@@ -147,6 +190,10 @@ export async function medirExtratorEmSombra(t: TurnoParaSombra): Promise<void> {
         // ⚠️ PRIMEIRO CAMPO, de proposito: e a chave de cruzamento.
         turno: t.turnoId,
         via: t.via,
+        // ⚠️ PEND-200 — distingue a execução ancorada da anterior sem depender
+        // de saber de cabeça qual SHA servia o quê na hora da medição.
+        modo: "estrito",
+        escopo: "turno",
         membro_atipico_id: t.membroId,
         n_itens: proposta.koloVivo.length,
         n_camada1: camada1.length,

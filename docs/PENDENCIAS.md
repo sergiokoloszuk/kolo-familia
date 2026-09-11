@@ -9464,7 +9464,77 @@ clicar.
 (a mesma familia admin e a unica com 3 criancas ativas),
 [[supabase-persistencia-incidente]] (o unico resgate hoje e o backup diario).
 
-**Proximo ID livre: PEND-200. *(024 e 025 reservadas por frentes ainda nao publicadas; 0076 e numero de MIGRACAO reservado — ver PEND-121.)***
+### PEND-200
+**A sombra transforma histórico em fato novo — e atribui fato de um irmao a outro**
+Bloco: **B · Ayla** · Prioridade: **P0**
+STATUS: **ABERTA — BLOQUEADORA da promocao da PEND-194 Fase 2** · Aberta em: 2026-09-11
+
+Achada na sessao controlada de 12 turnos com a crianca de QA (Pedro,
+`26fb0aa0`), em 11/09/2026, SHA `03b91fe`. A sombra nao escreve, entao **nada
+foi corrompido** — mas o que ela publicou e exatamente o que ela TERIA escrito
+na Fase 2.
+
+**CAUSA RAIZ.** `carregarHistorico` (orchestrator.ts) devolve `turnos.slice(-6)`
+— os ultimos 6 turnos da FAMILIA, sem janela de tempo e sem filtro de irmao —
+e `extrator-sombra.ts` concatena esse historico com a fala do turno num unico
+bloco `<conversa>`, que e a **fonte extraivel** do extrator unificado. O modelo
+nao tem como distinguir o que e novo do que ja foi dito.
+
+⚠️ **O CONTRASTE QUE PROVA A CAUSA.** O parser de PRODUCAO (`parser.ts`) ja
+separa `<conversa_recente>` (contexto) de `<mensagem_da_mae>` (fonte), e por
+isso capturou 11/11 sem vazar um unico fato. A fronteira certa ja existe no
+repositorio; a sombra e o unico caminho que a ignora.
+
+**OS QUATRO DEFEITOS, medidos nos mesmos 12 turnos:**
+
+| defeito | evidencia |
+|---|---|
+| **vazamento cross-membro** | No turno 1 (fala: *"Pedro tem 7 anos troca letras ao falar"*) a sombra emitiu `emocional.manifesta` e `comunicacao.mostra` — os dois fatos da **MANU** que estavam no historico (*"ela fica isolada e tira cabelo"*, *"pega na minha mao e me leva ate o que quer"*), carimbados com o `membro_atipico_id` do **Pedro** |
+| **repeticao de fato antigo** | `sono.despertares` (turno 2) reapareceu nos turnos 4 e 5; `nutricional.aceita/rejeita` e `imitacao.padrao` reapareceram em 5 turnos seguidos. **19 dos 31 itens emitidos eram repeticao da janela** |
+| **perda do fato atual** | 5 de 11 fatos novos nao sairam: troca de letras, sensibilidade ao chuveiro, **conversa bem × trava na frustracao** (a classe do Mario), dinossauros e levantar na licao |
+| **falso positivo em desabafo** | Em *"Estou bem cansada. Sem avancos por aqui"* — turno sem fato nenhum — a sombra emitiu **3 fatos**, todos re-lidos do historico |
+
+**BASELINE CONGELADO (12 turnos, 11 falas com fato):**
+
+| | ATUAL | SOMBRA |
+|---|---|---|
+| capturou o fato do turno | 11/11 (100%) | 6/11 (55%) |
+| estruturou certo o que capturou | 10/11 (91%) | 6/6 (100%) |
+| itens pertencentes ao turno | — | **9 de 31 (29%)** |
+| fatos de outro irmao | 0 | **2** |
+| fatos no desabafo (esperado 0) | 0 | **3** |
+
+**POR QUE AS GUARDAS EXISTENTES NAO IMPEDIRAM.** `n_rejeitados` foi **zero nos
+12 turnos**: a sombra roda em `modo: "compativel"`, em que a citacao e
+opcional. A ancora que provaria proveniencia — `citacaoConfere(citacao,
+entradaNormalizada)` em `fato.ts`, ja escrita e testada — **nunca foi
+exercida**, porque o prompt nao pede citacao nesse modo. Emitir fato de outra
+crianca nao e condicao de recusa para nenhuma guarda de hoje.
+
+**RISCO SE A FASE 2 TIVESSE SIDO PROMOVIDA.** O extrator escreve em
+`perfil_vivo_membro` pelo `membro_atipico_id` do turno. Numa familia com dois
+filhos, o fato de um irmao entraria no perfil do outro — sem sinal, sem
+recusa, e depois indistinguivel da fala real da mae. A regra de isolamento
+entre irmaos ([[isolamento-entre-irmaos]]) nao cobre este vetor: ela filtra
+LINHAS por dono, e mensagem inbound tem `membro_atipico_id` nulo.
+
+**O QUE ESTA PENDENCIA NAO E.** Nao e defeito do extrator unificado. No unico
+turno multi-fato do teste (alimentacao + imitacao) ele entregou 4 fatos em 2
+dominios com subcampo correto, onde o caminho atual entregou 1 campo com o
+segundo fato diluido na prosa — que e justamente a vantagem que a PEND-194
+quer capturar. O defeito esta na FRONTEIRA DE DADOS que alimenta o extrator.
+
+**CRITERIO DE CONCLUSAO:** repetir a mesma bancada de 12 casos, pos-correcao,
+com **0 fatos cross-membro, 0 fatos antigos emitidos como novos, 0 fatos em
+desabafo puro**, sem perder fato novo relevante, e com multi-fato e
+multidominio preservados. Ate la, **a Fase 2 da PEND-194 nao pode ser
+promovida**.
+
+**RELACOES.** [[pend-194]] (bloqueada por esta), [[isolamento-entre-irmaos]]
+(o vetor que a regra atual nao cobre), [[pend-198]] (a correcao que fez a
+sombra rodar em 12/12 e permitiu enxergar isto).
+
+**Proximo ID livre: PEND-201. *(024 e 025 reservadas por frentes ainda nao publicadas; 0076 e numero de MIGRACAO reservado — ver PEND-121.)***
 
 > Conferir contra `origin/main`, não contra o seu branch. Dois branches podem
 > reivindicar o mesmo número — o conflito de merge nesta linha é o alarme.

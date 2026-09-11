@@ -156,13 +156,46 @@ describe("o que a medição publica", () => {
     expect(serializado).not.toContain("Conversa bem");
   });
 
-  it("o transcript inclui a mensagem de agora, e o áudio vira via própria", async () => {
+  /**
+   * ⚠️ ESTE TESTE MUDOU DE LADO EM 11/09/2026, E DE PROPÓSITO — PEND-200.
+   *
+   * Ele afirmava que o transcript continha TAMBÉM a fala anterior
+   * (`"Responsável: ele trava quando fica bravo"`). Era exatamente esse o
+   * defeito: o histórico dentro da fonte extraível fez a sombra emitir dois
+   * fatos da Manu num turno do Pedro. O histórico não sumiu — mudou de lugar,
+   * e agora o teste prende o lugar novo.
+   */
+  it("o transcript tem SÓ a fala de agora; o histórico vai em contexto separado", async () => {
     await medirExtratorEmSombra({ ...turno, via: "whatsapp_audio" });
-    const p = chamadasExtrair[0] as { transcript: string; via: string; membro: unknown };
+    const p = chamadasExtrair[0] as {
+      transcript: string;
+      contextoRecente: string;
+      via: string;
+      modo: string;
+      entradaNormalizada: string;
+      membro: unknown;
+    };
     expect(p.via).toBe("whatsapp_audio");
-    expect(p.transcript).toContain("Responsável: ele trava quando fica bravo");
     expect(p.transcript).toContain("Quero ajudar ele a se comunicar melhor");
+    expect(p.transcript).not.toContain("ele trava quando fica bravo");
+    expect(p.contextoRecente).toContain("Responsável: ele trava quando fica bravo");
     expect(p.membro).toEqual({ nome: "Mario", idade: 9, perfil: "TEA" });
+  });
+
+  it("a âncora é conferida contra a fala do turno, e o modo é estrito", async () => {
+    await medirExtratorEmSombra(turno);
+    const p = chamadasExtrair[0] as { modo: string; entradaNormalizada: string };
+    expect(p.modo).toBe("estrito");
+    // Sem isto a citação seria conferida contra o transcript inteiro, e a
+    // fronteira voltaria a ser um pedido em prompt.
+    expect(p.entradaNormalizada).toBe(turno.entrada);
+  });
+
+  it("turno sem histórico nenhum não quebra nem inventa contexto", async () => {
+    await medirExtratorEmSombra({ ...turno, historico: [] });
+    const p = chamadasExtrair[0] as { contextoRecente: string; transcript: string };
+    expect(p.contextoRecente).toBe("");
+    expect(p.transcript).toContain("Quero ajudar ele a se comunicar melhor");
   });
 
   it("a chamada é marcada como sombra, para o custo ser separável", async () => {
