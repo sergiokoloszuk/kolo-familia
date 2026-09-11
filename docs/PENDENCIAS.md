@@ -9294,25 +9294,40 @@ que nao existir, com a diferenca de dar a impressao de que existe.
 ### PEND-198
 **Um em cada tres turnos nao aprendia nada — promise solta depois da resposta**
 Bloco: **B · Ayla** · Prioridade: **P1**
-STATUS: **CORRIGIDA — aguardando prova de cobertura em producao** · Aberta em: 2026-09-11 · Corrigida em: 2026-09-11
+STATUS: **BAIXADA — causa corrigida e comprovada em producao; n=5 pos-correcao, suficiente como prova do MECANISMO e nao como estimativa da taxa historica** · Aberta em: 2026-09-11 · Baixa em: 2026-09-11
 
 Achada ao investigar por que 3 dos 6 turnos da microprova da PEND-194 nao
 geraram sombra. **Nao era guarda da sombra nem do extrator: era defeito
 funcional do produto.** O turno respondia bem e o sistema nao aprendia nada
 daquele relato.
 
-**BASELINE (01/09 a 11/09/2026):**
+**BASELINE — RETIFICADO EM 11/09/2026. NAO HA TAXA HISTORICA CONFIAVEL.**
 
-| medicao | resultado |
+⚠️ **A PRIMEIRA VERSAO DESTA PENDENCIA AFIRMAVA "cobertura 67,2%, perda 32,8%"
+NA JANELA 01/09→11/09. ESSE NUMERO NAO SE SUSTENTA**, e a retificacao vale mais
+que o numero:
+
+- O denominador era **envios** do caminho experimental (311). **Um turno pode
+  entregar mais de uma bolha** — a mensagem do Plano mais a resposta —, e ali
+  ele contava duas vezes. Na propria microprova pos-correcao, 5 turnos
+  produziram 6 envios.
+- O denominador alternativo por turno (`decisao_turno`) devolve **145%** na
+  mesma janela, o que so prova que ele tambem nao serve.
+- E `turno_externo`, o unico id por turno, **era ele mesmo perdido** pelo
+  defeito: 113 rastros contra 209 execucoes do bloco.
+
+**Conclusao: nao existe denominador retrospectivo confiavel para 01/09→11/09, e
+nenhum outro numero foi inventado para substitui-lo.** O que existe e a
+contagem POR TURNO da microprova, reconstruida mensagem a mensagem.
+
+**A EVIDENCIA QUE FICA, e que basta:**
+
+| evidencia | resultado |
 |---|---|
-| respostas entregues pelo caminho experimental | **311** |
-| execucoes do bloco de aprendizado (`ayla_parser_pos`) | **209** |
-| **cobertura** | **67,2%** |
-| **perda** | **32,8%** |
-
-Por dia: 33% · 44% · 46% · 63% · 66% · 68% · 69% · 75% · 79% · 80% · 80%. A
-oscilacao e o que descarta guarda semantica: regra de negocio da taxa estavel
-por tipo de mensagem, nao variacao de 33% a 80%.
+| causa raiz no codigo | `void (async () => {})()` fora da cadeia aguardada pelo `after()` |
+| sabotagem (voltar o `void`) | **7 testes vermelhos**, incluindo o comportamental |
+| microprova ANTES, por turno | **3 de 6 turnos** executaram o aprendizado — **50%** |
+| microprova DEPOIS, por turno | **5 de 5** — **100%** |
 
 **CAUSA RAIZ.** O bloco era disparado com `void (async () => {…})()` depois do
 envio. O `processInbound` inteiro roda dentro do `after()` do webhook
@@ -9352,9 +9367,38 @@ solta. Sabotagem (voltar o `void`): **7 vermelhos**, incluindo o comportamental
 *"processInbound NAO resolve com o aprendizado pendente"*. Suite completa
 **3.797 passaram, 0 falharam**; `tsc` limpo; build compilado.
 
-**CRITERIO DE CONCLUSAO:** medicao em producao mostrando a cobertura subir de
-67,2% para proximo de 100%, descontando apenas casos com razao explicita e
-registrada para nao processar.
+---
+
+**PROVA EM PRODUCAO (11/09/2026, 18:34–18:36, SHA `81e9014`).**
+
+Cinco turnos reais, cruzados **por `turno_id`** — nao por relogio:
+
+| turno | fala | sombra: fatos / chaves |
+|---|---|---|
+| `tn_mtxaovx0` | "Manu fala frases e conversa bem quando esta calma" | 1 · `emocional.sinais` |
+| `tn_mtxapkr7` | "acorda duas vezes por noite…" | 2 · `comunicacao.mostra`, `emocional.sinais` |
+| `tn_mtxaq88b` | "quando fica nervosa nao explica o que quer" | **0** |
+| `tn_mtxaqouk` | "imita bastante o que eu faco" | 3 · `emocional.outras`, **`imitacao.padrao`**, `imitacao.aprende_imitando` |
+| `tn_mtxar23x` | "Hoje sstou cansada. So isso" | **0** |
+
+**5 turnos · 5 `turno_externo` · 5 `ayla_parser_pos` · 5 `extrator_sombra` ·
+5 `lacuna_decisao` · 0 `extrator_sombra_falhou` · 0
+`aprendizado_pos_resposta_falhou`.** Cobertura **5/5**, sem uma lacuna no
+cruzamento — e antes da correcao os contadores nem concordavam entre si (113
+rastros x 209 blocos).
+
+⚠️ **E O TURNO SEM FATO RODOU.** "Hoje sstou cansada. So isso": o extrator
+executou em 2.728 ms e devolveu **zero fatos**, sem rejeicao e sem inventar
+nada. Era a pergunta que a microprova anterior nao conseguiu responder, porque
+o bloco nao chegava a rodar.
+
+⚠️ **LIMITE DECLARADO: n=5.** Isso prova o MECANISMO — a promise entrou na
+cadeia e o bloco passou a rodar —, nao a taxa. Quem for reabrir isto tem de
+saber que 5 turnos nao estimam percentual nenhum.
+
+**CRITERIO DE CONCLUSAO (cumprido):** medicao em producao mostrando o bloco
+executando em todos os turnos observados, com cruzamento por turno e sem falha
+registrada.
 
 **RELACOES.** [[pend-194]] (a sombra media 2/3 do trafego por causa disto),
 [[pend-197]] (campo nao escrito nao se le depois).
