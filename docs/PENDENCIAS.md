@@ -9403,7 +9403,68 @@ registrada.
 **RELACOES.** [[pend-194]] (a sombra media 2/3 do trafego por causa disto),
 [[pend-197]] (campo nao escrito nao se le depois).
 
-**Proximo ID livre: PEND-199. *(024 e 025 reservadas por frentes ainda nao publicadas; 0076 e numero de MIGRACAO reservado — ver PEND-121.)***
+### PEND-199
+**`seedExemplo` e `resetMinhaConta` podem apagar a Manu e o Mario por cascade**
+Bloco: **F · Admin/Operacao** · Prioridade: **P1**
+STATUS: **ABERTA — investigada, NAO corrigida (correcao fora do escopo da missao que a achou)** · Aberta em: 2026-09-11
+
+Achada ao investigar o isolamento de QA no proprio numero do Sergio (PEND-194).
+Nao e defeito da Ayla: e uma arma apontada para a familia admin, que deixou de
+ser fixture descartavel e hoje guarda o historico real da Manu e do Mario.
+
+**O RISCO, em uma frase:** os dois botoes de `/admin/teste` agem sobre a
+familia do **proprio admin logado** (`user.id`), e a familia do admin logado
+e `9c14b56b-32ca-4410-b830-09b16cc9a7a1` — Manu, Mario e agora o Pedro de QA.
+
+**EVIDENCIA (codigo em 2026-09-11, `apps/web/src/app/admin/teste/actions.ts`):**
+
+| acao | o que faz na familia do admin logado |
+|---|---|
+| `seedExemplo` (l. 137-141) | `from("membros_atipicos").delete().eq("family_account_id", familyId)` — **apaga TODOS os membros**, e o cascade leva perfil vivo, diarios, planos, check-ins e conversas |
+| `seedExemplo` (l. 143-147) | sobrescreve `whatsapp_e164` para `+5511999990000` — **o numero real perde o vinculo e o inbound da Ayla deixa de achar a familia** |
+| `seedExemplo` (l. 153-169) | sobrescreve `family_profiles` e `perfil_vivo_familia` (a **Camada 2**) com "Ana Exemplo" |
+| `resetMinhaConta` -> `recriarFamiliaStub` (l. 34) | `from("family_accounts").delete().eq("id", fam.id)` — **apaga a linha da familia inteira**; o cascade leva tudo abaixo dela |
+
+**POR QUE AS PROTECOES EXISTENTES NAO IMPEDEM.** Nenhuma delas olha para o
+*conteudo* da familia:
+
+- `requireAdmin()` protege contra **quem nao e admin** — e o risco aqui e
+  justamente o admin, agindo na propria conta.
+- Nao existe confirmacao, contagem de dados que serao perdidos, nem
+  `dry-run`. Um clique basta.
+- Nao existe backup por linha: o unico resgate seria o backup diario do banco
+  (ver [[supabase-persistencia-incidente]]).
+
+⚠️ **E o comentario do codigo afirma o contrario do que o codigo faz.** Em
+`recriarFamiliaStub` esta escrito, textualmente: *"O usuario de auth e o
+controle_acessos NAO sao tocados — so os dados da familia. Por isso e seguro
+pra resetar a propria conta de admin."* Era verdade quando a familia admin era
+descartavel; hoje "so os dados da familia" **sao** a Manu e o Mario. Caso de
+manual do §1: nome e comentario nao sao evidencia.
+
+**DIRECAO SUGERIDA (nao implementada, a decidir quando esta pendencia for
+executada).** Barato e suficiente:
+
+1. recusar as duas acoes quando a familia alvo tiver membro com dado real —
+   criterio objetivo, por exemplo diario, plano ou conversa existente;
+2. ou exigir confirmacao digitando o nome da familia, mostrando **antes** a
+   contagem do que sera apagado;
+3. e idealmente mover a fixture de teste para uma familia admin dedicada, que
+   nao seja a que recebe WhatsApp real.
+
+**CRITERIO DE CONCLUSAO:** um clique em `seedExemplo` ou `resetMinhaConta` com
+a conta `kkoloszuk@gmail.com` logada **nao** consegue apagar a Manu nem o
+Mario, e existe teste que morde se a protecao for removida.
+
+**NAO FAZER ENQUANTO ESTA ABERTA:** nao abrir `/admin/teste` com a conta
+admin real; os dois botoes ficam desarmados apenas pela disciplina de nao
+clicar.
+
+**RELACOES.** [[pend-194]] (a missao que a achou), [[limite-uma-crianca]]
+(a mesma familia admin e a unica com 3 criancas ativas),
+[[supabase-persistencia-incidente]] (o unico resgate hoje e o backup diario).
+
+**Proximo ID livre: PEND-200. *(024 e 025 reservadas por frentes ainda nao publicadas; 0076 e numero de MIGRACAO reservado — ver PEND-121.)***
 
 > Conferir contra `origin/main`, não contra o seu branch. Dois branches podem
 > reivindicar o mesmo número — o conflito de merge nesta linha é o alarme.
