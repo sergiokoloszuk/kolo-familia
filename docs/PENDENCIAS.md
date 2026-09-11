@@ -9467,7 +9467,65 @@ clicar.
 ### PEND-200
 **A sombra transforma histórico em fato novo — e atribui fato de um irmao a outro**
 Bloco: **B · Ayla** · Prioridade: **P0**
-STATUS: **CRITERIO DE CONCLUSAO CUMPRIDO em 11/09/2026 — correcao no ar (`2165626`) e comprovada na bancada do Bento: 18/18 fatos esperados, 19 itens, 0 rejeitados, 0 cross-membro, 0 repeticao, 0 no desabafo, multi-fato e multidominio demonstrados. BAIXA PROPOSTA, aguardando a decisao da Fase 2.** · Aberta em: 2026-09-11
+STATUS: **BAIXADA — corrigida em duas etapas, ambas no ar, e comprovada em producao** · Aberta em: 2026-09-11 · Baixa em: 2026-09-11
+
+**A BAIXA, e o que exatamente ela cobre.** Duas correcoes, nesta ordem:
+
+| SHA | o que corrigiu |
+|---|---|
+| `1b8d16d` | a FRONTEIRA — `transcript` = turno atual, historico em `<contexto_anterior>`, `modo: "estrito"` com a citacao conferida contra a fala de agora |
+| `2165626` | a FOTOGRAFIA TEMPORAL — o resumo do Kolo Vivo passa a ser tirado ANTES de `persistirRegistro` e entregue a sombra, que nao rele o perfil |
+
+A segunda so apareceu porque a primeira funcionou. Com a fronteira corrigida, a
+sombra parou de emitir lixo do historico e o recall caiu — e o que parecia
+regressao do extrator era o relogio: a sombra roda DEPOIS de
+`persistirRegistro` e montava o resumo sozinha, entao perguntava "o que ha de
+novo?" a um perfil em que o fato do turno ja tinha sido escrito segundos antes
+pelo caminho contra o qual ela estava sendo comparada.
+
+**A PROVA (bancada do Bento, 11/09/2026, SHA `2165626`, perfil virgem):**
+
+| | ATUAL | SOMBRA |
+|---|---|---|
+| recall sobre 18 fatos esperados | 10/18 (56%) | **18/18 (100%)** |
+| precisao dos itens emitidos | — | **19/19 (100%)** |
+| repeticao historica | 0 | **0** |
+| fatos cross-membro | 0 | **0** |
+| invencao | 0 | **0** |
+| fatos em desabafo puro (esperado 0) | 0 | **0** |
+| multi-fato | colapsa num campo | **3 fatos num turno** |
+| multidominio | nao | **demonstrado 2x** |
+| `outras` bruto | 0% | 10,5% |
+| **`outras` EVITAVEL (OU-1)** | 0% | **5,3%** (1 de 19) |
+| falhas tecnicas | 0 | **0** |
+
+Isolamento conferido por registro, nao por foco: Mario, Manu, Pedro e Lucas com
+linha e Perfil Vivo intactos por hash, zero escritas para qualquer um deles na
+janela, e as 11 sugestoes e 12 eventos de sombra todos do Bento.
+
+⚠️ **O LIMITE DA EVIDENCIA, QUE FICA REGISTRADO JUNTO DA BAIXA: n=12, UMA
+crianca, UM operador, UMA sessao.** Isso prova o MECANISMO e a qualidade
+estrutural — nao estima taxa em trafego diverso. As 12 falas eram todas
+declarativas, em primeira pessoa e em texto puro. **NAO foram exercitados em
+producao:** audio, resposta curta ("sim", "ja esta na letra f"), plural /
+irmaos, foto, turno agrupado pelo debounce, contradicao direta ("na verdade nao
+e assim") e fala sobre a mae (camada 2). Quem for ampliar o alcance da escrita
+tem de medir esses casos antes, e nao depois.
+
+**A UNICA OCORRENCIA DE `outras` EVITAVEL** foi `comunicacao.outras` recebendo
+"troca algumas letras" quando `comunicacao.vocabulario` existia, estava
+disponivel e comportava o valor. E defeito real de escolha do extrator, pequeno
+e nao bloqueador — fica como divida conhecida, para ser medida na ampliacao.
+
+**A segunda ocorrencia de `outras` e JUSTIFICADA (OU-2):** "o banho melhorou"
+nao tem destino estruturado em nenhum dominio — o schema nao tem campo de
+EVOLUCAO. Isso e lacuna de schema, nao falha do extrator, e nao foi mascarada
+como se fosse.
+
+**RELACOES.** [[pend-194]] (a Fase 2 e o passo seguinte, e nao foi promovida
+por esta baixa), [[pend-201]] (um turno da bancada respondeu e nao publicou
+`turno_externo`), [[isolamento-entre-irmaos]] (o vetor que esta correcao
+fechou).
 
 Achada na sessao controlada de 12 turnos com a crianca de QA (Pedro,
 `26fb0aa0`), em 11/09/2026, SHA `03b91fe`. A sombra nao escreve, entao **nada
