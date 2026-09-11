@@ -9467,7 +9467,7 @@ clicar.
 ### PEND-200
 **A sombra transforma histórico em fato novo — e atribui fato de um irmao a outro**
 Bloco: **B · Ayla** · Prioridade: **P0**
-STATUS: **ABERTA — BLOQUEADORA da promocao da PEND-194 Fase 2** · Aberta em: 2026-09-11
+STATUS: **CRITERIO DE CONCLUSAO CUMPRIDO em 11/09/2026 — correcao no ar (`2165626`) e comprovada na bancada do Bento: 18/18 fatos esperados, 19 itens, 0 rejeitados, 0 cross-membro, 0 repeticao, 0 no desabafo, multi-fato e multidominio demonstrados. BAIXA PROPOSTA, aguardando a decisao da Fase 2.** · Aberta em: 2026-09-11
 
 Achada na sessao controlada de 12 turnos com a crianca de QA (Pedro,
 `26fb0aa0`), em 11/09/2026, SHA `03b91fe`. A sombra nao escreve, entao **nada
@@ -9534,7 +9534,41 @@ promovida**.
 (o vetor que a regra atual nao cobre), [[pend-198]] (a correcao que fez a
 sombra rodar em 12/12 e permitiu enxergar isto).
 
-**Proximo ID livre: PEND-201. *(024 e 025 reservadas por frentes ainda nao publicadas; 0076 e numero de MIGRACAO reservado — ver PEND-121.)***
+### PEND-201
+**Turno respondido sem publicar `turno_externo` — o rastro do turno falha em silencio**
+Bloco: **B · Ayla** · Prioridade: **P2**
+STATUS: **ABERTA — registrada, NAO corrigida (achado fora do escopo da missao que a achou)** · Aberta em: 2026-09-11
+
+Achada na bancada final da PEND-200 (Bento, 12 turnos, SHA `2165626`). Das 12
+falas, **11 publicaram `turno_externo` e uma nao**. O turno existiu e funcionou:
+respondeu a familia, publicou `lacuna_decisao` (22:26:07) e `extrator_sombra`
+(22:26:15) com o mesmo `turno` (`tn_mtxiz17s_7m2zu9`). So o rastro do turno
+ficou de fora.
+
+**POR QUE IMPORTA.** `turno_externo` e a unica fonte de `ms.total`,
+`chars_entrada`, `saida`, `marcos` e do SHA que serviu o turno. Sem ele, o turno
+existe para o produto e **desaparece da medicao** — e foi por `turno_externo`
+que a PEND-194 passou a cruzar sombra x caminho atual. Nas quatro bancadas a
+contagem bateu tres vezes e faltou uma agora; o pareamento por `turno_id` nao
+avisa, porque o id existe nos outros eventos.
+
+⚠️ **NAO E A SOMBRA NEM O APRENDIZADO.** `extrator_sombra_falhou` e
+`aprendizado_pos_resposta_falhou` seguem com ZERO ocorrencias em toda a
+historia. O bloco pos-resposta rodou; quem nao registrou foi o rastro do turno.
+
+**O TURNO EM QUESTAO era o desabafo** (*"Hoje eu estou exausta, mas nao
+aconteceu nada diferente com o Bento"*) — possivelmente um caminho de saida
+propria que retorna antes da publicacao do rastro. **Hipotese, nao causa raiz:
+a investigacao nao foi feita**, porque a missao era outra.
+
+**CRITERIO DE CONCLUSAO:** todo turno que produz resposta publica
+`turno_externo`, com teste que morde se um caminho de saida novo escapar da
+publicacao.
+
+**RELACOES.** [[pend-194]] (a medicao que depende deste rastro), [[pend-198]]
+(o outro caso em que o bloco pos-resposta ficava sem rastro).
+
+**Proximo ID livre: PEND-202. *(024 e 025 reservadas por frentes ainda nao publicadas; 0076 e numero de MIGRACAO reservado — ver PEND-121.)***
 
 > Conferir contra `origin/main`, não contra o seu branch. Dois branches podem
 > reivindicar o mesmo número — o conflito de merge nesta linha é o alarme.
