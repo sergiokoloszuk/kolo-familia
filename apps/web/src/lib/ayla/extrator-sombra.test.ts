@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
@@ -72,6 +73,8 @@ const turno = {
   historico: [{ de: "mae" as const, texto: "ele trava quando fica bravo" }],
   entrada: "Quero ajudar ele a se comunicar melhor quando fica frustrado.",
   via: "whatsapp_texto" as const,
+  // A foto do perfil ANTES do aprendizado deste turno — PEND-200.
+  koloVivoResumo: "",
 };
 
 beforeEach(() => {
@@ -237,5 +240,113 @@ describe("o turno é rastreável — PEND-194 Fase 1", () => {
     const s = JSON.stringify(eventos[0]);
     expect(s).toContain("tn_abc123_xyz");
     expect(s).not.toContain("frustrado");
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+/**
+ * A FOTOGRAFIA TEMPORAL — PEND-200.
+ *
+ * ⚠️ O DEFEITO QUE ESTE BLOCO PRENDE não é de estrutura: é de RELÓGIO. A
+ * sombra montava o Kolo Vivo por conta própria e roda depois de
+ * `persistirRegistro`, então perguntava "o que há de novo?" a um perfil em que
+ * o fato do turno já tinha sido escrito — pelo caminho contra o qual ela está
+ * sendo comparada. Com a regra de novidade do extrator, a resposta certa
+ * passava a ser "nada", e a medição anotava isso como recall perdido.
+ *
+ * Bancada do Lucas: produção 7/12 turnos com fato; replay dos MESMOS turnos
+ * com a foto anterior, 11/12.
+ */
+describe("a sombra vê o perfil de ANTES do turno — PEND-200", () => {
+  it("recebe a foto de fora e a entrega ao extrator sem mexer", async () => {
+    const foto = "[criança/sono] Como costuma ser o sono: Acorda à noite";
+    await medirExtratorEmSombra({ ...turno, koloVivoResumo: foto });
+    const p = chamadasExtrair[0] as { koloVivoResumo: string };
+    expect(p.koloVivoResumo).toBe(foto);
+  });
+
+  it("PERFIL VIRGEM: a foto vazia chega vazia — o fato do turno pode ser novo", async () => {
+    // O turno 1 de uma criança recém-criada. Se a sombra relesse o perfil aqui,
+    // já veria o que `persistirRegistro` acabou de gravar.
+    await medirExtratorEmSombra({ ...turno, koloVivoResumo: "" });
+    const p = chamadasExtrair[0] as { koloVivoResumo: string };
+    expect(p.koloVivoResumo).toBe("");
+  });
+
+  it("PERFIL QUE JÁ TINHA O FATO: a foto leva o fato, e a novidade é do extrator julgar", async () => {
+    // O outro lado da moeda, e é o que mantém a medição honesta: quando o fato
+    // JÁ existia antes do turno, a foto tem de dizer isso.
+    const comFato = "[criança/comunicacao] Conversa e argumentação: trava quando fica bravo";
+    await medirExtratorEmSombra({ ...turno, koloVivoResumo: comFato });
+    const p = chamadasExtrair[0] as { koloVivoResumo: string };
+    expect(p.koloVivoResumo).toContain("trava quando fica bravo");
+  });
+
+  it("as duas fotos produzem entradas DIFERENTES para o mesmo turno", async () => {
+    await medirExtratorEmSombra({ ...turno, koloVivoResumo: "" });
+    await medirExtratorEmSombra({ ...turno, koloVivoResumo: "[criança/sono] X" });
+    const a = chamadasExtrair[0] as { koloVivoResumo: string };
+    const b = chamadasExtrair[1] as { koloVivoResumo: string };
+    expect(a.koloVivoResumo).not.toBe(b.koloVivoResumo);
+  });
+
+  it("continua sem escrever nada, com foto ou sem ela", async () => {
+    await medirExtratorEmSombra({ ...turno, koloVivoResumo: "[criança/sono] X" });
+    expect(escritas).toEqual([]);
+  });
+
+  it("falha da sombra não vaza para o turno, e a foto não muda isso", async () => {
+    falharNaProxima.valor = true;
+    await expect(
+      medirExtratorEmSombra({ ...turno, koloVivoResumo: "[criança/sono] X" }),
+    ).resolves.toBeUndefined();
+    expect(eventos.at(-1)?.kind).toBe("extrator_sombra_falhou");
+    expect(escritas).toEqual([]);
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+describe("sabotagem — devolver a releitura do perfil para depois da escrita", () => {
+  const SRC = readFileSync(new URL("./extrator-sombra.ts", import.meta.url), "utf8");
+  const ORQ = readFileSync(new URL("./orchestrator.ts", import.meta.url), "utf8");
+
+  it("a sombra NÃO monta o Kolo Vivo por conta própria", () => {
+    // Se alguém reintroduzir a chamada aqui, a foto volta a sair depois da
+    // escrita e o recall volta a ser medido errado.
+    expect(SRC).not.toMatch(/montarKoloVivoResumo/);
+    expect(SRC).toMatch(/koloVivoResumo: t\.koloVivoResumo/);
+  });
+
+  it("o orquestrador tira a foto ANTES de `persistirRegistro`", () => {
+    const foto = ORQ.indexOf("const koloVivoAntesDoTurno");
+    const escrita = ORQ.indexOf("await persistirRegistro(supabase, family.id, parsedExp)");
+    const sombra = ORQ.indexOf("await medirExtratorEmSombra({");
+    expect(foto).toBeGreaterThan(0);
+    expect(escrita).toBeGreaterThan(0);
+    // A ordem é o invariante inteiro: FOTO → ESCRITA → SOMBRA.
+    expect(foto).toBeLessThan(escrita);
+    expect(escrita).toBeLessThan(sombra);
+  });
+
+  it("a escrita real NÃO foi movida para depois da sombra", () => {
+    // O outro jeito de "consertar" isto seria rodar a sombra antes de
+    // persistir. Funcionaria para a medição e atrasaria o aprendizado real —
+    // e o aprendizado é do produto, a medição é nossa.
+    const escrita = ORQ.indexOf("await persistirRegistro(supabase, family.id, parsedExp)");
+    const sombra = ORQ.indexOf("await medirExtratorEmSombra({");
+    expect(escrita).toBeLessThan(sombra);
+  });
+
+  it("a foto só custa consulta quando a flag está ligada", () => {
+    const bloco = ORQ.slice(
+      ORQ.indexOf("const koloVivoAntesDoTurno"),
+      ORQ.indexOf("await persistirRegistro(supabase, family.id, parsedExp)"),
+    );
+    expect(bloco).toMatch(/extratorSombraLigado\(\)/);
+  });
+
+  it("a sombra recebe a foto — e não uma montada na hora da chamada", () => {
+    const chamada = ORQ.slice(ORQ.indexOf("await medirExtratorEmSombra({"));
+    expect(chamada).toMatch(/koloVivoResumo: koloVivoAntesDoTurno/);
   });
 });

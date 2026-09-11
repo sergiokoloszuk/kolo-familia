@@ -127,7 +127,8 @@ import {
   templateConviteCriancaEspecifica,
 } from "./crianca-especifica";
 import { extrairESalvarEventos } from "./eventos";
-import { medirExtratorEmSombra } from "./extrator-sombra";
+import { medirExtratorEmSombra, extratorSombraLigado } from "./extrator-sombra";
+import { montarKoloVivoResumo } from "@/lib/kolo-vivo/incorporar";
 import { acessoLiberado } from "@/lib/auth/acesso";
 import { classificarAreasDiario } from "@/lib/ia/classificar-area";
 import type { AylaTipoProativa, AylaTipoReativa, ParserResult } from "./types";
@@ -3513,6 +3514,39 @@ async function processInboundInterno(
           // criança, o registro é dela — o parser não pode filar conteúdo em
           // outro irmão depois de a resposta já ter saído.
           if (exp.membroId) parsedExp.membro_atipico_id = exp.membroId;
+
+          /**
+           * ⚠️ A FOTOGRAFIA DO PERFIL, ANTES DO APRENDIZADO DESTE TURNO — PEND-200.
+           *
+           * A sombra montava o Kolo Vivo por dentro, e ela roda DEPOIS de
+           * `persistirRegistro`. Ou seja: ela perguntava "o que há de novo?" a
+           * um perfil em que o fato do turno JÁ tinha sido escrito, segundos
+           * antes, pelo caminho contra o qual ela está sendo comparada. E o
+           * extrator tem regra de novidade dura ("se já está registrado, não
+           * proponha"), então ele respondia, corretamente, "nada".
+           *
+           * O CUSTO DISSO, MEDIDO. Bancada do Lucas (11/09/2026, 12 turnos):
+           * produção deu 7/12 turnos com fato; o replay dos MESMOS turnos, com
+           * os MESMOS insumos, mudando só o perfil para o estado anterior à
+           * escrita, deu 11/12 — e recuperou o multidomínio que produção não
+           * mostrou. A diferença não era o extrator: era o relógio.
+           *
+           * ⚠️ A ESCRITA REAL NÃO SE MOVE, e a execução da sombra continua
+           * depois dela. O que muda é só de QUANDO é a foto que ela recebe.
+           *
+           * ⚠️ CONSULTA A MAIS SÓ COM A FLAG LIGADA. Com a sombra desligada
+           * isto é uma comparação booleana, e nenhuma família paga por uma
+           * medição nossa.
+           */
+          const koloVivoAntesDoTurno =
+            extratorSombraLigado() && parsedExp.membro_atipico_id
+              ? await montarKoloVivoResumo(
+                  supabase,
+                  family.id,
+                  parsedExp.membro_atipico_id,
+                ).catch(() => "")
+              : "";
+
           await persistirRegistro(supabase, family.id, parsedExp);
 
           /**
@@ -3520,9 +3554,10 @@ async function processInboundInterno(
            *
            * Roda DEPOIS de `persistirRegistro`, sobre o mesmo turno, só para
            * publicar o que o extrator da web TERIA proposto — com sub-campo
-           * declarado, vendo o perfil. É a medição que decide se a migração do
-           * canal de 99% do volume se justifica, feita no tráfego real em vez
-           * de em bancada sintética.
+           * declarado, vendo o perfil **como ele estava ANTES deste turno**
+           * (`koloVivoAntesDoTurno`, PEND-200). É a medição que decide se a
+           * migração do canal de 99% do volume se justifica, feita no tráfego
+           * real em vez de em bancada sintética.
            *
            * Desligada por padrão (`KOLO_EXTRATOR_SOMBRA`). O `await` aqui é
            * inofensivo: este bloco inteiro já é `void`, depois da bolha.
@@ -3545,6 +3580,9 @@ async function processInboundInterno(
             historico: historicoExp,
             entrada: inbound.texto,
             via: inbound.midiaTipo === "audio" ? "whatsapp_audio" : "whatsapp_texto",
+            // ⚠️ PEND-200 — a foto de ANTES, tirada acima. A sombra não relê o
+            // perfil: se relesse, veria o próprio turno já aprendido.
+            koloVivoResumo: koloVivoAntesDoTurno,
           });
         } catch (e) {
           // ⚠️ PROMISE REJEITADA NUNCA FICA SEM RASTRO — PEND-198. Antes daqui

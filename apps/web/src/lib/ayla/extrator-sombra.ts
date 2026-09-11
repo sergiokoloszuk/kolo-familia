@@ -1,7 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { extrairAtualizacoes } from "@/lib/conhecimento/extrair";
 import type { Via } from "@/lib/conhecimento/fato";
-import { montarKoloVivoResumo } from "@/lib/kolo-vivo/incorporar";
 import { subcamposDe } from "@/lib/kolo-vivo/subcampos";
 import { logEvent } from "@/lib/log";
 
@@ -90,6 +89,22 @@ export type TurnoParaSombra = {
   historico: ReadonlyArray<{ de: "mae" | "ayla"; texto: string }>;
   entrada: string;
   via: Via;
+  /**
+   * O PERFIL COMO ESTAVA ANTES DO APRENDIZADO DESTE TURNO — PEND-200.
+   *
+   * ⚠️ VEM DE FORA, E É O PONTO INTEIRO. Este módulo montava o resumo por
+   * conta própria, e é chamado DEPOIS de `persistirRegistro`: a foto saía com
+   * o fato do turno já dentro, escrito segundos antes pelo caminho contra o
+   * qual a sombra está sendo comparada. Com a regra de novidade do extrator
+   * ("se já está registrado, não proponha"), a resposta certa passava a ser
+   * "nada" — e a medição registrava isso como recall perdido.
+   *
+   * MEDIDO: na bancada do Lucas, produção deu 7/12 turnos com fato; o replay
+   * dos mesmos turnos com a foto anterior deu 11/12.
+   *
+   * Quem tira a foto é o orquestrador, antes da escrita. Aqui só se usa.
+   */
+  koloVivoResumo: string;
 };
 
 /**
@@ -143,12 +158,11 @@ export async function medirExtratorEmSombra(t: TurnoParaSombra): Promise<void> {
       .join("\n\n")
       .slice(0, 6000);
 
-    const koloVivoResumo = await montarKoloVivoResumo(t.supabase, t.familyId, t.membroId);
-
     const proposta = await extrairAtualizacoes({
       transcript,
       contextoRecente,
-      koloVivoResumo,
+      // ⚠️ NÃO RELER O PERFIL AQUI — PEND-200. Ver `koloVivoResumo` no tipo.
+      koloVivoResumo: t.koloVivoResumo,
       membro: t.membro,
       supabase: t.supabase,
       familyId: t.familyId,
