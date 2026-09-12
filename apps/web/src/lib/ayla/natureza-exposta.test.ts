@@ -147,39 +147,40 @@ describe("C · sabotagens", () => {
     expect(chamadasNoRetorno).toBe(0);
   });
 
-  it("CLASSIFICAR TODO `outro` COMO DESABAFO: a taxonomia não tem desabafo", () => {
-    // ⚠️ O sinal de desabafo NÃO FOI CRIADO neste gate, de propósito. Este
-    // teste existe para que a ausência seja explícita: se alguém acrescentar
-    // `desabafo` a `IntencaoAyla` sem medir o impacto no roteamento, cai aqui.
+  it("CLASSIFICAR TODO `outro` COMO DESABAFO: `desabafo` não é valor de `intencao`", () => {
+    /**
+     * ⚠️ INVERTIDO NO GATE 2B. Ele afirmava que o sinal de desabafo NÃO
+     * EXISTIA. O Gate 2B o criou — mas como CAMPO PARALELO
+     * (`natureza_emocional`), nunca como valor de `intencao`. O invariante que
+     * este teste defende não mudou: `desabafo` não pode competir com
+     * `plano`/`rotina`, senão a feature para de disparar (Claire/Maria).
+     */
     const INT = readFileSync(new URL("./intent.ts", import.meta.url), "utf8");
     const DEC = readFileSync(new URL("../conducao/decisao-do-turno.ts", import.meta.url), "utf8");
-    // ⚠️ ESTA ASSERÇÃO FOI ENDURECIDA DEPOIS DE UMA SABOTAGEM PASSAR. A versão
-    // anterior checava a regex dos seis valores e a contagem de
-    // `"rotina_criar"` — e inserir `"desabafo"` em UM dos três lugares não
-    // quebrava nenhuma das duas: as outras duas ocorrências ainda casavam. O
-    // que morde de verdade é a ausência da palavra no arquivo inteiro.
-    // ⚠️ USO, NÃO MENÇÃO: `intent.ts` CITA desabafo num comentário que descreve
-    // o que cai em `outro` ("desabafo, contar o dia, dúvida, cumprimento") —
-    // proibir a palavra proibiria a documentação. O que não pode existir é o
-    // valor literal na união e na lista.
+    // ⚠️ USO, NÃO MENÇÃO: `intent.ts` cita desabafo num comentário que descreve
+    // o que cai em `outro` — proibir a palavra proibiria a documentação.
     expect(INT).not.toMatch(/\|\s*"desabafo"/);
-    expect(DEC).not.toMatch(/"desabafo"/);
-    // E os TRÊS lugares (allowlist, enum do schema, texto do prompt) seguem
-    // com exatamente os mesmos seis valores.
-    const seis = /"rotina_criar", ?"rotina_ver", ?"rotina_editar", ?"organizacao", ?"plano", ?"outro"/g;
-    expect(DEC.match(seis)?.length).toBe(2);
-    expect(DEC).toMatch(
-      /"rotina_criar" \| "rotina_ver" \| "rotina_editar" \| "organizacao" \| "plano" \| "outro"/,
-    );
-    expect(DEC.match(/"rotina_criar"/g)?.length).toBe(3);
+    // e no decisor ele é valor do enum NOVO, nunca do de intenção
+    const enumIntencao = DEC.slice(DEC.indexOf("intencao: {"), DEC.indexOf("pedido_explicito: {"));
+    expect(enumIntencao).not.toContain("desabafo");
+    const uniaoDoPrompt = DEC.slice(DEC.indexOf('"intencao": "rotina_criar"'), DEC.indexOf('"pedido_explicito"'));
+    expect(uniaoDoPrompt).not.toContain("desabafo");
   });
 
-  it("`pediuParaContar` também não existe ainda — e a ausência é declarada", () => {
+  it("`pediuParaContar` GANHOU produtor — em sombra, e sem nenhum consumidor", () => {
+    /**
+     * ⚠️ INVERTIDO NO GATE 2B, e de propósito. Antes este teste afirmava que
+     * o produtor NÃO existia. Ele passou a existir — como campo paralelo, em
+     * sombra. O que passou a importar é que ele continue IMPOTENTE: produzido
+     * pelo decisor, lido por ninguém.
+     */
     const DEC = readFileSync(new URL("../conducao/decisao-do-turno.ts", import.meta.url), "utf8");
-    expect(DEC).not.toMatch(/pediu_para_contar|pediuParaContar/);
-    // o decisor da PEND-203 continua RECEBENDO o sinal de fora, sem produtor
+    expect(DEC).toContain('pediu_para_contar: { type: "boolean" }');
+    expect(DEC).toContain("pediuParaContar: o.pediu_para_contar === true,");
     const CONV = readFileSync(new URL("./convite-perfil.ts", import.meta.url), "utf8");
-    expect(CONV).toMatch(/pediuParaContar: boolean;/);
+    expect(CONV).toContain("pediuParaContar: boolean;");
+    // e NADA no caminho de produção o consome
+    expect(ORQ).not.toContain("pediuParaContar");
   });
 
   it("o decisor do convite continua NÃO fiado — nada foi ligado neste gate", () => {

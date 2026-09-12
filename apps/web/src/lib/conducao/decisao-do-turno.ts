@@ -56,6 +56,39 @@ export type DecisaoDoTurno = TurnoClassificado & {
   pedidoExplicito: boolean;
   /** É continuação do que estava aberto, e não assunto novo? */
   continuacao: boolean;
+  /**
+   * ONDE ESTÁ O FOCO DA MENSAGEM — PEND-203 Gate 2B. **SOMBRA.**
+   *
+   * ⚠️ METADADO, NÃO ROTEADOR. Nada em produção lê este campo; ele existe para
+   * ser MEDIDO antes de ganhar poder. O uso futuro é uma guarda: não oferecer
+   * atalho de Perfil para quem está desabafando.
+   *
+   * ⚠️ POR QUE NÃO ENTROU COMO VALOR DE `intencao`. A lista de intenções
+   * aparece em três lugares deste arquivo (allowlist, `enum` do schema e texto
+   * do prompt) e um valor novo COMPETE com os existentes: uma mãe que desabafa
+   * E pede plano viraria `desabafo`, e a feature de plano pararia de disparar.
+   * É a classe do defeito Claire/Maria. Campo paralelo é aditivo: o modelo
+   * preenche `intencao` como sempre E preenche este.
+   *
+   * ⚠️ `null` É "NÃO SEI", E É O FAIL-SAFE. Ausência ou valor fora do
+   * vocabulário não vira `neutra` — viraria permissão para convidar. Quem
+   * consumir amanhã trata `null` como "não ofereça".
+   *
+   * `crise` NÃO está na taxonomia de propósito: quem é dono desse estado é
+   * `segurancaAberta`, e duas fontes para a mesma decisão sempre divergem.
+   */
+  naturezaEmocional: "neutra" | "desabafo" | null;
+  /**
+   * A MÃE QUER CONTAR O PERFIL DE FORMA AMPLA — PEND-203 Gate 2B. **SOMBRA.**
+   *
+   * Não é "existe a palavra contar". É: ela quer FORNECER contexto sobre a
+   * criança para a Ayla conhecê-la melhor ("quero que você conheça meu
+   * filho", "tem algum lugar onde eu coloco mais informações?"). Narrar o dia
+   * ("vou te contar o que aconteceu hoje") NÃO é isso.
+   *
+   * ⚠️ `=== true` LITERAL, como `pedidoExplicito`. O viés é não agir.
+   */
+  pediuParaContar: boolean;
   necessidadeConhecimento: NecessidadeConhecimento;
   /** Sobre o quê buscar, quando houver necessidade. `null` quando não há. */
   temaConhecimento: string | null;
@@ -109,6 +142,10 @@ const DECISAO_NEUTRA: Omit<DecisaoDoTurno, "origem" | "skillsAvaliadas"> = {
   skills: [],
   pedidoExplicito: false,
   continuacao: false,
+  // ⚠️ `null`, não `"neutra"`: sem decisão do modelo não se afirma que o turno
+  // é neutro — e quem consumir amanhã não pode ler ausência como permissão.
+  naturezaEmocional: null,
+  pediuParaContar: false,
   necessidadeConhecimento: "nenhum",
   temaConhecimento: null,
 };
@@ -151,6 +188,8 @@ const ESQUEMA_DA_DECISAO: Record<string, unknown> = {
         "tema",
         "aceite",
         "continuacao",
+        "natureza_emocional",
+        "pediu_para_contar",
         "skills",
         "necessidade_conhecimento",
         "tema_conhecimento",
@@ -164,6 +203,10 @@ const ESQUEMA_DA_DECISAO: Record<string, unknown> = {
         tema: { type: ["string", "null"] },
         aceite: { type: ["string", "null"] },
         continuacao: { type: "boolean" },
+        // ⚠️ PEND-203 Gate 2B — SOMBRA. Campos PARALELOS: o `enum` de
+        // `intencao` acima segue com exatamente os mesmos seis valores.
+        natureza_emocional: { type: "string", enum: ["neutra", "desabafo"] },
+        pediu_para_contar: { type: "boolean" },
         skills: { type: "array", items: { type: "string" } },
         necessidade_conhecimento: {
           type: "string",
@@ -199,6 +242,8 @@ Devolva SOMENTE um JSON, sem cercas de código, com estas chaves:
   "tema": string | null,
   "aceite": string | null,
   "continuacao": true | false,
+  "natureza_emocional": "neutra" | "desabafo",
+  "pediu_para_contar": true | false,
   "skills": [string],
   "necessidade_conhecimento": "nenhum" | "boas_praticas" | "base2" | "pos_neurodesenvolvimento" | "combinacao",
   "tema_conhecimento": string | null
@@ -214,6 +259,40 @@ REGRA MAIS IMPORTANTE — falar sobre um assunto NÃO é pedir a ação.
   "ele tem dificuldade com a lição" — está trazendo uma queixa.
 Na dúvida, false. Uma feature disparando sem pedido interrompe a conversa da mãe;
 uma feature que não dispara custa, no máximo, ela pedir de novo com todas as letras.
+
+"natureza_emocional" — ONDE ESTÁ O FOCO da mensagem, e nada além disso.
+  "desabafo" SOMENTE quando o foco principal é o estado emocional, o cansaço ou o
+  sofrimento DO ADULTO, sem pedido objetivo sobre a criança:
+    "Hoje estou exausta. Foi um dia horrível."
+    "Não aguento mais, estou muito cansada."
+    "Hoje eu só queria desabafar."
+  "neutra" em todo o resto — INCLUSIVE quando há emoção forte junto de um fato ou
+  de um pedido sobre a criança:
+    "Estou preocupada porque ele não come."        -> neutra
+    "Ele não fala e eu estou desesperada, o que faço?" -> neutra
+    "Ele gritou três vezes hoje e eu estou exausta."   -> neutra
+    "Estou destruída com as crises dele. Me ajuda a montar um plano?" -> neutra
+  Emoção presente NÃO é desabafo. O que decide é o FOCO: se há pedido ou fato da
+  criança no centro, é "neutra". Na dúvida, "neutra".
+
+"pediu_para_contar" — a família quer FORNECER contexto amplo sobre a criança para
+  a Ayla conhecê-la melhor. É true em:
+    "Quero te contar mais sobre ele."
+    "Quero que você conheça melhor meu filho."
+    "Posso preencher tudo?" / "Quero adiantar essas informações."
+    "Tem algum lugar onde eu possa colocar mais informações sobre ele?"
+    "Quero te passar tudo para você conseguir me orientar melhor."
+  É FALSE quando ela vai narrar um episódio ou falar de UM assunto:
+    "Vou te contar o que aconteceu hoje."   -> false
+    "Quero contar uma coisa."               -> false
+    "Quero contar como foi a escola."       -> false
+    "Quero falar sobre o sono dele."        -> false
+    "Posso te fazer uma pergunta?"          -> false
+  Não é a palavra "contar", "quero" ou "preencher": é a INTENÇÃO de ampliar o que
+  você sabe da criança. Na dúvida, false.
+
+⚠️ Estes dois campos NÃO mudam "intencao". Preencha "intencao" exatamente como
+  você preencheria sem eles.
 
 CONTINUIDADE — use o <estado>. Respostas curtas ("sim", "3", "isso", "ok", "e agora?",
 "consegue trazer?", "me mostra") quase nunca são assunto novo: elas respondem à
@@ -421,6 +500,13 @@ export function interpretar(
       const s = typeof v === "string" ? v.trim() : "";
       return s && s.toLowerCase() !== "null" ? s.slice(0, max) : null;
     };
+    // ⚠️ PEND-203 Gate 2B — mesmo padrão do resto: allowlist para enum,
+    // `=== true` literal para booleano. Fora do vocabulário vira `null`, que
+    // significa "não sei" — nunca "neutra".
+    const natureza: "neutra" | "desabafo" | null =
+      o.natureza_emocional === "neutra" || o.natureza_emocional === "desabafo"
+        ? o.natureza_emocional
+        : null;
     const skills = Array.isArray(o.skills)
       ? [...new Set(o.skills.filter((s): s is string => typeof s === "string" && permitidas.has(s)))].slice(0, 2)
       : [];
@@ -436,6 +522,8 @@ export function interpretar(
       // para não disparar feature.
       pedidoExplicito: o.pedido_explicito === true,
       continuacao: o.continuacao === true,
+      naturezaEmocional: natureza,
+      pediuParaContar: o.pediu_para_contar === true,
       necessidadeConhecimento: necessidade,
       temaConhecimento: texto(o.tema_conhecimento, 80),
     };
