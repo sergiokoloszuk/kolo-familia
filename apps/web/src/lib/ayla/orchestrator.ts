@@ -3348,6 +3348,16 @@ async function processInboundInterno(
              */
             natureza_emocional: turnoClassificado.naturezaEmocional,
             pediu_para_contar: turnoClassificado.pediuParaContar,
+            /**
+             * ⚠️ `intencao` VEM JUNTO — e sem ela o gate da distribuicao é
+             * inobservável em produção. Ela era decidida em todo turno e não
+             * ficava em nenhum registro persistido: `logarUsoApi` do decisor
+             * grava só tokens e `ms`. Comparar a distribuição antes/depois de
+             * uma mudança no prompt do classificador — que é exatamente o
+             * risco desta frente — dependia de bancada, nunca de tráfego real.
+             */
+            intencao: turnoClassificado.intencao,
+            pedido_explicito: turnoClassificado.pedidoExplicito,
             // A pergunta feita foi a sugerida? Observação, não julgamento.
             sugestao_seguida:
               lacunaSugerida && campoInvestigado ? lacunaSugerida === campoInvestigado : null,
