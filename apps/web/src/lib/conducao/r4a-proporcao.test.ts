@@ -44,7 +44,21 @@ describe("o princípio entra por onde as famílias de fato recebem", () => {
   });
 
   it("3. a proporção é CALCULADA pelo código, não deduzida pelo modelo", () => {
-    expect(OFICIAL).toMatch(/notaDeProporcao\(\s*naturezaDoTurno\(params\.mensagem/);
+    /**
+     * ⚠️ A ÂNCORA MUDOU EM 12/09/2026 (PEND-203 Gate 2A), O INVARIANTE NÃO.
+     *
+     * Antes a asserção era a composição literal
+     * `notaDeProporcao(naturezaDoTurno(params.mensagem…))`. O valor passou a
+     * ser içado para uma const, porque o orquestrador precisa DELE e
+     * recalcular do lado de lá exigiria `jaHouveOrientacao`, que não existe
+     * ali. O que este teste afirma continua idêntico: a natureza sai da
+     * MENSAGEM, por função do código, e é ela que alimenta a nota — o modelo
+     * não deduz nem uma nem outra.
+     */
+    expect(OFICIAL).toMatch(
+      /const natureza = naturezaDoTurno\(params\.mensagem, ctxTurno\.jaHouveOrientacao\)/,
+    );
+    expect(OFICIAL).toMatch(/const proporcao = notaDeProporcao\(natureza\)/);
   });
 });
 

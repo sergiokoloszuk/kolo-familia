@@ -44,6 +44,7 @@ import {
   formaAtravessada,
   ehMenuDeAlternativas,
   naturezaDoTurno,
+  type NaturezaDoTurno,
   perguntasReais,
   modoForma,
 } from "@/lib/conducao/fronteiras-forma";
@@ -261,6 +262,21 @@ export type TurnoExperimental = {
     provider: string;
     fronteiraBarrou: boolean;
     foco: string;
+    /**
+     * A NATUREZA DO TURNO — PEND-203 Gate 2A.
+     *
+     * ⚠️ VEM DAQUI PORQUE FOI AQUI QUE ELA FOI DECIDIDA. `naturezaDoTurno`
+     * depende de `jaHouveOrientacao`, que só existe neste escopo; devolver o
+     * resultado é a única forma de o orquestrador tê-lo sem recalcular com um
+     * argumento que ele não possui.
+     *
+     * MEDIDO na bancada dos 12 casos: ela separa `simples`/`continuacao` de
+     * `orientacao` com precisão — e **não** separa desabafo de preocupação
+     * concreta ("Hoje estou exausta" e "Estou preocupada porque ele não come"
+     * devolvem os dois `orientacao`). Serve para a guarda de continuação
+     * curta; não serve, sozinha, como guarda de desabafo.
+     */
+    natureza: NaturezaDoTurno;
     /** `admin` = documento publicado; `fallback` = Core do código. */
     coreOrigem: "admin" | "fallback";
     coreVersao: number | null;
@@ -1110,9 +1126,18 @@ export async function responderExperimental(
     // disciplina de canal de fato chegou às famílias em 24/08.
     // `ctxTurno.jaHouveOrientacao` e não a variável desestruturada: a
     // desestruturação acontece algumas linhas abaixo, e o prompt é montado aqui.
-    const proporcao = notaDeProporcao(
-      naturezaDoTurno(params.mensagem, ctxTurno.jaHouveOrientacao),
-    );
+    /**
+     * ⚠️ IÇADO PARA UMA CONST — PEND-203 Gate 2A. O valor era calculado aqui e
+     * morria dentro de `notaDeProporcao`. Ele é DETERMINÍSTICO e barato, mas
+     * recalculá-lo do lado do orquestrador exigiria `jaHouveOrientacao`, que
+     * vive só neste escopo — e um recálculo com o parâmetro errado produziria
+     * uma guarda silenciosamente furada. Então quem já calculou, devolve.
+     *
+     * Isto NÃO é classificação nova: zero chamada, zero modelo, mesma função,
+     * mesmo argumento, mesmo resultado. O que muda é só ele ficar observável.
+     */
+    const natureza = naturezaDoTurno(params.mensagem, ctxTurno.jaHouveOrientacao);
+    const proporcao = notaDeProporcao(natureza);
 
     const formato = [
       FORMATO_WHATSAPP,
@@ -1440,6 +1465,8 @@ export async function responderExperimental(
         provider,
         fronteiraBarrou: false,
         foco: foco.tipo,
+        // ⚠️ A MESMA const içada acima — nunca uma segunda chamada.
+        natureza,
         coreOrigem: core.origem,
         coreVersao: core.versao,
         bpRecuperadas: bps.length,
