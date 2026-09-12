@@ -58,48 +58,64 @@ export type NaturezaParaConvite =
   | "normal";
 
 export type EntradaDoConvite = {
-  /** A decisão do Gate B deste turno. `null` = gate não rodou. */
-  decisaoLacuna: Pick<DecisaoDeLacuna, "decisao" | "escolhida" | "candidatasChaves"> | null;
   /**
-   * O que o envelope do Core devolveu em `campo_investigado`.
+   * ⚠️ O GATILHO PRINCIPAL — E ISSO MUDOU NO GATE 2, POR MEDIÇÃO.
    *
-   * ⚠️ ESTE É O SINAL QUE DISTINGUE AS DUAS ÚLTIMAS LINHAS DA TABELA. Não-nulo
-   * significa "a Ayla perguntou algo neste turno" — e aí o convite está
-   * proibido. É sinal que já existe e já é gravado; nada de novo é inferido.
-   */
-  campoInvestigado: string | null;
-  natureza: NaturezaParaConvite;
-  /** Houve convite de perfil no turno imediatamente anterior? */
-  conviteNoTurnoAnterior: boolean;
-  /** A reserva/cooldown liberou? Decidido por `reservarConviteDePerfil`. */
-  cooldownLiberado: boolean;
-  /**
-   * Domínios cujo campo relevante JÁ está estruturado.
+   * O desenho original tinha como caminho principal "o Gate B achou lacuna e a
+   * Ayla decidiu não perguntar". Os 12 turnos reais do Gate 2C mostraram que
+   * esse estado ocorreu **0 vezes**: nos 6 turnos com `ASK`, a Ayla perguntou
+   * em todos. Já `pediu_para_contar` veio `true` em **2 de 12** — e nesses dois
+   * a Ayla respondeu *"pode me contar aqui mesmo na conversa"*, aceitando
+   * receber uma informação por vez pelo WhatsApp.
    *
-   * ⚠️ Guarda 3. O Gate B já exclui campo respondido da disputa, então na
-   * prática isto é cinto e suspensório — e é de propósito: o dia em que o gate
-   * mudar de critério, esta lista continua impedindo o convite por algo que a
-   * família já respondeu.
-   */
-  dominiosJaEstruturados: readonly string[];
-  /**
-   * A mãe demonstrou querer contar tudo de uma vez?
-   *
-   * ⚠️ A ÚNICA CONDIÇÃO QUE PULA O COOLDOWN, e não pula nenhuma outra. Quando
-   * ela diz "quero te contar tudo pra você conhecer ele", responder com dez
-   * perguntas no WhatsApp é pior que abrir a tela onde ela preenche no ritmo
-   * dela. O pedido é dela; o cooldown existe para proteger de convite NÃO
-   * pedido.
+   * Então o gatilho é o pedido explícito da mãe, e o mecanismo do Gate B fica
+   * como caminho SECUNDÁRIO.
    */
   pediuParaContar: boolean;
+  /** A decisão do Gate B — hoje só alimenta o caminho secundário. */
+  decisaoLacuna: Pick<DecisaoDeLacuna, "decisao" | "escolhida" | "candidatasChaves"> | null;
+  /**
+   * O que o envelope do Core devolveu em `campo_investigado`. Não-nulo = a Ayla
+   * perguntou algo NESTE turno, e aí o convite está proibido: pergunta + link
+   * no mesmo balão é o interrogatório com formulário anexo.
+   */
+  campoInvestigado: string | null;
+  /**
+   * ⚠️ PERGUNTA ANTERIOR AINDA SEM RESPOSTA — `EstadoDoTurno.perguntaPendente`.
+   *
+   * Fonte reusada, não inventada: `apurarEstadoDoTurno` já a apura com
+   * `perguntaAberta`. Sem esta guarda, a Ayla pergunta "ele aponta ou mostra o
+   * que quer?", a mãe ainda não respondeu, e o turno seguinte já traz um link —
+   * duas demandas abertas ao mesmo tempo.
+   */
+  perguntaAberta: boolean;
+  /** `segurancaAberta().aberta` — crise/segurança em curso. */
+  segurancaAberta: boolean;
+  /** `natureza_emocional` do decisor. `null` = "não sei", e bloqueia. */
+  naturezaEmocional: "neutra" | "desabafo" | null;
+  /** `naturezaDoTurno` — `simples`/`continuacao` são conversa curta. */
+  naturezaDoTurno: string | null;
+  cooldownLiberado: boolean;
+  dominiosJaEstruturados: readonly string[];
+  /** Tema do turno, quando houver — orienta o domínio do destino. */
+  temaDoTurno?: string | null;
 };
 
 export type SaidaDoConvite = {
   acao: "NENHUMA" | "CONVIDAR";
-  /** O domínio a oferecer. `null` quando a ação é NENHUMA. */
+  /** O domínio a oferecer. `null` = genérico (`/kolo-vivo`). */
   dominio: string | null;
   /** Por que — para o rastro e para a auditoria, nunca para o prompt. */
   motivo: string;
+  /**
+   * QUAL DOS DOIS CAMINHOS gerou o convite — PEND-203 Gate 2.
+   *
+   * ⚠️ SEPARADO NO RASTRO DE PROPÓSITO. O Gate 2C mediu que um dos caminhos
+   * ocorre e o outro não; sem distinguir os dois na telemetria, daqui a um mês
+   * ninguém consegue dizer qual deles gerou valor real — e a decisão de manter
+   * ou remover o secundário vira palpite.
+   */
+  origem: "pedido_explicito" | "lacuna_nao_perguntada" | null;
 };
 
 /** Domínios do Perfil Vivo que o convite pode oferecer. */
@@ -123,67 +139,101 @@ const DOMINIOS_OFERECIVEIS: readonly string[] = [
 /**
  * A DECISÃO — função pura, auditável, sem modelo e sem consulta.
  *
+ * ⚠️ A ORDEM DOS BLOQUEADORES VEM ANTES DE TUDO, inclusive do pedido explícito
+ * da mãe. Quem está em crise não recebe atalho de cadastro nem se pedir, e a
+ * dor de quem desabafa não é oportunidade de preencher campo.
+ *
  * Devolve sempre um `motivo`, inclusive (e principalmente) quando a resposta é
- * NENHUMA: um convite que não saiu sem motivo registrado é indistinguível de um
- * bug.
+ * NENHUMA: um convite que não saiu sem motivo registrado é indistinguível de
+ * um bug.
  */
 export function decidirConviteDePerfil(e: EntradaDoConvite): SaidaDoConvite {
-  const nao = (motivo: string): SaidaDoConvite => ({ acao: "NENHUMA", dominio: null, motivo });
+  const nao = (motivo: string): SaidaDoConvite => ({
+    acao: "NENHUMA",
+    dominio: null,
+    motivo,
+    origem: null,
+  });
 
-  // ── 1. os momentos em que não se oferece nada, ponto ────────────────────
-  //
-  // ⚠️ A ORDEM É DELIBERADA: estas guardas vêm ANTES de tudo, inclusive do
-  // pedido explícito da mãe. Quem está em crise não recebe atalho de cadastro
-  // nem se pedir — a precedência de segurança sobre o resto é a mesma regra
-  // que o pós-trial respeita no orquestrador.
-  if (e.natureza === "crise") return nao("crise aguda");
-  if (e.natureza === "seguranca") return nao("situação de segurança");
-  if (e.natureza === "desabafo") return nao("desabafo — a dor da mãe não é oportunidade de cadastro");
-
-  // ── 2. o pedido explícito da mãe ────────────────────────────────────────
-  if (e.pediuParaContar) {
-    const alvo = primeiroDominioOferecivel(e);
-    // Mesmo aqui: se não há domínio pertinente, não se inventa um.
-    return alvo
-      ? { acao: "CONVIDAR", dominio: alvo, motivo: "a mãe pediu para contar" }
-      : nao("a mãe pediu, mas nenhum domínio pertinente está em aberto");
+  // ── 1. BLOQUEADORES ABSOLUTOS ───────────────────────────────────────────
+  if (e.segurancaAberta) return nao("segurança/crise aberta");
+  if (e.naturezaEmocional === "desabafo") {
+    return nao("desabafo — a dor da mãe não é oportunidade de cadastro");
   }
-
-  // ── 3. continuação curta — ela está no meio de um assunto ───────────────
-  if (e.natureza === "continuacao_curta") {
-    return nao("continuação curta — a conversa está em pé, não se interrompe com link");
-  }
-
-  // ── 4. o Gate B e o envelope, que são os dois donos da decisão ──────────
-  if (!e.decisaoLacuna) return nao("Gate B não rodou neste turno");
-  if (e.decisaoLacuna.decisao === "NO_ASK") {
-    return nao("nenhuma lacuna pertinente ao tema — não há o que oferecer");
-  }
+  /**
+   * ⚠️ `null` BLOQUEIA, E É O PONTO MAIS FÁCIL DE ERRAR. `null` significa que o
+   * decisor não classificou — modelo omitiu o campo, devolveu valor fora do
+   * vocabulário, ou o turno veio pelo fluxo da Rotina, em que ele não roda.
+   * Tratar "não sei" como "neutra" transformaria silêncio em permissão, e o
+   * primeiro convite indevido sairia exatamente no turno em que a telemetria
+   * falhou.
+   */
+  if (e.naturezaEmocional === null) return nao("natureza emocional desconhecida");
   if (e.campoInvestigado) {
-    // GUARDA 7, e a mais fácil de esquecer: a Ayla já perguntou. Uma pergunta
-    // curta resolve melhor do que uma tela, e as duas juntas viram
-    // interrogatório.
-    return nao("a Ayla perguntou neste turno — ASK não vira link");
+    return nao("a Ayla perguntou neste turno — pergunta e link não vão juntos");
+  }
+  if (e.perguntaAberta) return nao("há pergunta anterior aguardando resposta");
+
+  // ── 2. CAMINHO PRINCIPAL — o pedido explícito da mãe ────────────────────
+  if (e.pediuParaContar) {
+    /**
+     * ⚠️ FURA O COOLDOWN, E SÓ ELE. Se ela está pedindo AGORA uma forma de
+     * adiantar, responder "você já recebeu um link esta semana" é absurdo. O
+     * cooldown existe para proteger de convite NÃO pedido; este é pedido.
+     *
+     * O que ele NÃO fura: crise, segurança, desabafo e pergunta aberta — todos
+     * acima, e todos antes dele de propósito.
+     */
+    return {
+      acao: "CONVIDAR",
+      dominio: dominioDoPedido(e),
+      motivo: "a mãe pediu para adiantar informações",
+      origem: "pedido_explicito",
+    };
   }
 
-  // ── 5. as guardas de ritmo ──────────────────────────────────────────────
-  if (e.conviteNoTurnoAnterior) return nao("houve convite no turno anterior");
+  // ── 3. as guardas de ritmo, que valem só para o caminho espontâneo ──────
+  if (e.naturezaDoTurno === "simples" || e.naturezaDoTurno === "continuacao") {
+    return nao("conversa curta — não se interrompe com link");
+  }
   if (!e.cooldownLiberado) return nao("cooldown do convite ativo");
 
+  // ── 4. CAMINHO SECUNDÁRIO — a lacuna que o Gate B viu e não foi perguntada
+  //
+  // ⚠️ MEDIDO EM 0 DE 12 TURNOS REAIS (Gate 2C). Fica porque é correto e
+  // barato, não porque se espera volume dele. A arquitetura NÃO foi otimizada
+  // para este caso, e a telemetria o separa para que daqui a um mês se possa
+  // decidir mantê-lo ou removê-lo com número na mão.
+  if (!e.decisaoLacuna) return nao("Gate B não rodou neste turno");
+  if (e.decisaoLacuna.decisao === "NO_ASK") {
+    return nao("nenhuma lacuna pertinente ao tema, e a mãe não pediu");
+  }
   const alvo = primeiroDominioOferecivel(e);
   if (!alvo) return nao("nenhum domínio oferecível em aberto");
-
-  return { acao: "CONVIDAR", dominio: alvo, motivo: "lacuna do tema não era decisiva agora" };
+  return {
+    acao: "CONVIDAR",
+    dominio: alvo,
+    motivo: "lacuna do tema não era decisiva agora",
+    origem: "lacuna_nao_perguntada",
+  };
 }
 
 /**
- * O domínio a oferecer — UM, e derivado do que o Gate B já considerou.
+ * O DOMÍNIO QUANDO O PEDIDO É EXPLÍCITO.
  *
- * ⚠️ NÃO ESCOLHE POR CONTA PRÓPRIA. A fonte é `escolhida` (a lacuna que o gate
- * elegeu) e, na falta dela, a primeira de `candidatasChaves`, que é a ordem que
- * o gate já calculou com as regras da pós. Inventar uma ordem aqui seria a
- * segunda inteligência que este módulo existe para não ter.
+ * ⚠️ GENÉRICO É O PADRÃO, e isso é deliberado. "Quero te contar tudo sobre ele"
+ * não aponta domínio nenhum — mandar essa mãe para uma única seção seria
+ * estreitar o que ela ofereceu. Só quando o tema do turno é claramente um
+ * domínio do Perfil o destino se especializa.
  */
+function dominioDoPedido(e: EntradaDoConvite): string | null {
+  const tema = (e.temaDoTurno ?? "").trim();
+  if (tema && DOMINIOS_OFERECIVEIS.includes(tema) && !e.dominiosJaEstruturados.includes(tema)) {
+    return tema;
+  }
+  return null;
+}
+
 function primeiroDominioOferecivel(e: EntradaDoConvite): string | null {
   const daEscolhida = e.decisaoLacuna?.escolhida?.dominio ?? null;
   const daCandidata = (e.decisaoLacuna?.candidatasChaves ?? [])
@@ -210,8 +260,10 @@ function primeiroDominioOferecivel(e: EntradaDoConvite): string | null {
  * jeito de sair do app — por isso a checagem é de vocabulário fechado, não de
  * formato.
  */
-export function destinoDoConvite(dominio: string): string {
-  if (!DOMINIOS_OFERECIVEIS.includes(dominio)) return "/kolo-vivo";
+export function destinoDoConvite(dominio: string | null): string {
+  // ⚠️ `null` É O DESTINO GENÉRICO, e é o caso mais comum: "quero te contar
+  // tudo sobre ele" não aponta domínio nenhum.
+  if (!dominio || !DOMINIOS_OFERECIVEIS.includes(dominio)) return "/kolo-vivo";
   return `/kolo-vivo?dominio=${dominio}`;
 }
 
@@ -292,6 +344,19 @@ const FRASES: Record<string, readonly string[]> = {
   ],
 };
 
+/**
+ * AS FRASES DO PEDIDO EXPLÍCITO — sem domínio, porque ela ofereceu tudo.
+ *
+ * ⚠️ NENHUMA DELAS CRIA SUSPENSE nem cobra: a orientação já foi entregue acima
+ * quando isto aparece. E nenhuma diz "complete seu cadastro" — a mãe precisa
+ * ler "ela quer conhecer melhor meu filho".
+ */
+const FRASES_GENERICAS: readonly string[] = [
+  "Se quiser adiantar, você pode me contar mais sobre {nome} por aqui — isso me ajuda a deixar as próximas orientações ainda mais do jeitinho dele",
+  "Se quiser, dá para completar algumas informações de {nome} por aqui. Assim eu conheço melhor o jeito dele e personalizo mais as próximas sugestões",
+  "Se quiser adiantar, você pode preencher por aqui o que quiser sobre {nome} — e eu já uso isso nas próximas conversas",
+];
+
 /** Palavras que nunca podem aparecer num convite. Há teste lendo esta lista. */
 export const LEXICO_PROIBIDO: readonly string[] = [
   "complete seu perfil",
@@ -313,13 +378,15 @@ export const LEXICO_PROIBIDO: readonly string[] = [
  * "como {nome} se comunica".
  */
 export function fraseDoConvite(params: {
-  dominio: string;
+  dominio: string | null;
   nome: string | null;
   link: string;
   /** Só para variar de forma reproduzível. */
   turnoId?: string | null;
 }): string | null {
-  const lista = FRASES[params.dominio];
+  // ⚠️ SEM DOMÍNIO, A FRASE É GENÉRICA — e ela existe de propósito: é a do
+  // pedido explícito, que é o caminho principal desde o Gate 2.
+  const lista = params.dominio ? FRASES[params.dominio] : FRASES_GENERICAS;
   if (!lista?.length || !params.link) return null;
   const i = indiceEstavel(params.turnoId ?? "", lista.length);
   const nome = (params.nome ?? "").trim() || "ele(a)";

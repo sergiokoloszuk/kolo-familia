@@ -89,11 +89,18 @@ describe("B · a exposição, e o que ela não muda", () => {
     expect(metrica).not.toMatch(/natureza: naturezaDoTurno\(/);
   });
 
-  it("2. o ORQUESTRADOR não recalcula — ele nem importa a função", () => {
-    // ⚠️ ESTE É O INVARIANTE MAIS IMPORTANTE DO GATE. Recalcular no
-    // orquestrador exigiria `jaHouveOrientacao`, que não existe lá: o valor
-    // sairia errado e a guarda de continuação curta ficaria furada em silêncio.
-    expect(ORQ).not.toMatch(/naturezaDoTurno/);
+  it("2. o ORQUESTRADOR não recalcula — a função não é chamada nem importada", () => {
+    /**
+     * ⚠️ O INVARIANTE MAIS IMPORTANTE DO GATE, E ELE NÃO MUDOU: recalcular no
+     * orquestrador exigiria `jaHouveOrientacao`, que não existe lá — o valor
+     * sairia errado e a guarda de conversa curta ficaria furada em silêncio.
+     *
+     * A ASSERÇÃO foi reapontada no Gate 2: `naturezaDoTurno` agora aparece no
+     * arquivo como NOME DE PROPRIEDADE (`naturezaDoTurno: exp.metrica.natureza`),
+     * ao passar o valor para o decisor do convite. Proibir a palavra proibiria
+     * o uso legítimo; o que não pode existir é a CHAMADA.
+     */
+    expect(ORQ).not.toContain("naturezaDoTurno(");
     expect(ORQ).not.toMatch(/from "@\/lib\/conducao\/fronteiras-forma"/);
   });
 
@@ -111,14 +118,22 @@ describe("B · a exposição, e o que ela não muda", () => {
     expect(EXP).not.toMatch(/texto.*\$\{natureza\}|natureza.*\+ texto/);
   });
 
-  it("12. nenhuma feature passa a rotear por natureza", () => {
-    // Se alguma decisão de rota começar a ler `natureza`, este teste cai — e
-    // essa decisão tem de ser deliberada, não efeito colateral da exposição.
+  it("12. nenhuma FEATURE roteia por natureza — só o convite a consome", () => {
+    /**
+     * ⚠️ INVERTIDO EM PARTE NO GATE 2. `exp.metrica.natureza` passou a ser
+     * LIDA — de propósito, e num lugar só: a guarda de conversa curta do
+     * convite de Perfil. O que continua proibido é uma FEATURE (rotina, plano,
+     * organização) mudar de rota por causa dela.
+     */
     for (const src of [ORQ, EXP]) {
       expect(src).not.toMatch(/natureza === "desabafo"/);
       expect(src).not.toMatch(/if \(natureza === "continuacao"\)/);
-      expect(src).not.toMatch(/metrica\.natureza/);
     }
+    // Lida em lugares CONTADOS: o rastro da lacuna, a entrada do decisor do
+    // convite e a telemetria do convite. Se o número subir, alguém começou a
+    // usá-la em outro lugar — e essa decisão tem de ser deliberada.
+    expect((ORQ.match(/exp\.metrica\.natureza/g) ?? []).length).toBe(4);
+    expect(EXP).not.toMatch(/metrica\.natureza/);
   });
 
   it("9. crise/segurança continuam soberanas e independentes disto", () => {
@@ -126,7 +141,10 @@ describe("B · a exposição, e o que ela não muda", () => {
     // consultado antes de qualquer coisa que este gate toque.
     expect(ORQ).toMatch(/const seguranca = await segurancaAberta\(/);
     const iSeg = ORQ.indexOf("const seguranca = await segurancaAberta(");
-    const iEnvio = ORQ.indexOf("texto: exp.texto,");
+    // ⚠️ ÂNCORA REAPONTADA NO GATE 2: a composição do texto passou a ser
+    // condicional ao convite. O invariante é o mesmo — segurança é apurada
+    // antes de qualquer coisa que este gate toque.
+    const iEnvio = ORQ.indexOf("texto: conviteTexto ?");
     expect(iSeg).toBeGreaterThan(0);
     expect(iSeg).toBeLessThan(iEnvio);
   });
@@ -137,8 +155,8 @@ describe("C · sabotagens", () => {
   const EXP = readFileSync(new URL("./experimental.ts", import.meta.url), "utf8");
   const ORQ = readFileSync(new URL("./orchestrator.ts", import.meta.url), "utf8");
 
-  it("RECALCULAR NO ORQUESTRADOR: proibido por ausência de import e de chamada", () => {
-    expect(ORQ).not.toContain("naturezaDoTurno");
+  it("RECALCULAR NO ORQUESTRADOR: proibido por ausência de CHAMADA", () => {
+    expect(ORQ).not.toContain("naturezaDoTurno(");
   });
 
   it("SEGUNDA CHAMADA NO RETORNO: o retorno usa a const, não a função", () => {
@@ -167,26 +185,26 @@ describe("C · sabotagens", () => {
     expect(uniaoDoPrompt).not.toContain("desabafo");
   });
 
-  it("`pediuParaContar` GANHOU produtor — em sombra, e sem nenhum consumidor", () => {
+  it("`pediuParaContar` tem produtor E, desde o Gate 2, um consumidor", () => {
     /**
-     * ⚠️ INVERTIDO NO GATE 2B, e de propósito. Antes este teste afirmava que
-     * o produtor NÃO existia. Ele passou a existir — como campo paralelo, em
-     * sombra. O que passou a importar é que ele continue IMPOTENTE: produzido
-     * pelo decisor, lido por ninguém.
+     * ⚠️ INVERTIDO NO GATE 2. Este teste afirmava "sem nenhum consumidor" —
+     * era o estado da sombra. Agora ele É o gatilho principal do convite, e o
+     * que importa é que continue NÃO mexendo em `intencao` nem em feature.
      */
     const DEC = readFileSync(new URL("../conducao/decisao-do-turno.ts", import.meta.url), "utf8");
     expect(DEC).toContain('pediu_para_contar: { type: "boolean" }');
     expect(DEC).toContain("pediuParaContar: o.pediu_para_contar === true,");
-    const CONV = readFileSync(new URL("./convite-perfil.ts", import.meta.url), "utf8");
-    expect(CONV).toContain("pediuParaContar: boolean;");
-    // e NADA no caminho de produção DECIDE por ele — publicar em telemetria
-    // é permitido desde o Gate 2C, decidir não.
-    expect(ORQ).not.toMatch(/if \([^)]*pediuParaContar/);
-    expect(ORQ).not.toMatch(/pediuParaContar\s*\?/);
+    // consumido pelo convite, e SÓ por ele
+    expect(ORQ).toContain("pediuParaContar: turnoClassificado.pediuParaContar");
+    expect(ORQ).not.toMatch(/intencao = .*pediuParaContar/);
   });
 
-  it("o decisor do convite continua NÃO fiado — nada foi ligado neste gate", () => {
-    expect(ORQ).not.toMatch(/decidirConviteDePerfil|reservarConviteDePerfil|fraseDoConvite/);
+  it("o decisor do convite ESTÁ fiado — e as guardas têm bancada própria", () => {
+    // ⚠️ INVERTIDO NO GATE 2: era a afirmação de que nada estava ligado.
+    // As guardas são provadas em `convite-perfil.test.ts` (58 casos).
+    expect(ORQ).toContain("decidirConviteDePerfil({");
+    expect(ORQ).toContain("reservarConviteDePerfil(");
+    expect(ORQ).toContain("fraseDoConvite({");
   });
 
   it("nenhuma mudança tocou a escrita da Fase 2", () => {

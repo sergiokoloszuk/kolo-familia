@@ -136,6 +136,13 @@ import {
 } from "./extrator-sombra";
 import type { Via } from "@/lib/conhecimento/fato";
 import {
+  decidirConviteDePerfil,
+  destinoDoConvite,
+  fraseDoConvite,
+  reservarConviteDePerfil,
+  TIPO_CONVITE_PERFIL,
+} from "./convite-perfil";
+import {
   escritorDoPerfil,
   planejarEscritaDeFatos,
   type FatoParaEscrever,
@@ -3349,6 +3356,14 @@ async function processInboundInterno(
             natureza_emocional: turnoClassificado.naturezaEmocional,
             pediu_para_contar: turnoClassificado.pediuParaContar,
             /**
+             * ⚠️ A NATUREZA DO TURNO, VINDA DE QUEM A CALCULOU — Gate 2, Etapa 1.
+             * `exp.metrica.natureza` é o valor que `responderExperimental`
+             * produziu com `jaHouveOrientacao`, que só existe no escopo dele.
+             * Recalcular aqui daria outro valor e furaria a guarda de conversa
+             * curta em silêncio.
+             */
+            natureza_turno: exp.metrica.natureza,
+            /**
              * ⚠️ `intencao` VEM JUNTO — e sem ela o gate da distribuicao é
              * inobservável em produção. Ela era decidida em todo turno e não
              * ficava em nenhum registro persistido: `logarUsoApi` do decisor
@@ -3370,13 +3385,113 @@ async function processInboundInterno(
           persistir: true,
         });
       }
+      /**
+       * ⚠️ O ATALHO OPCIONAL PARA O KOLO VIVO — PEND-203 Gate 2.
+       *
+       * A fala do Core JÁ ESTÁ PRONTA acima e não é tocada: o convite é, no
+       * máximo, uma última linha. É o mesmo padrão que o pós-trial usa em
+       * produção desde 18/08 — o cooldown governa SÓ o link, nunca a resposta.
+       *
+       * ⚠️ NADA AQUI PODE DERRUBAR O TURNO. A decisão é pura; a reserva e o
+       * mint do link vivem em `catch` que devolve "sem convite". Se qualquer
+       * peça falhar, a mãe recebe a orientação inteira e não recebe o link —
+       * que é exatamente a degradação desejada.
+       */
+      let conviteTexto: string | null = null;
+      let conviteRastro: Record<string, unknown> | null = null;
+      try {
+        const decisao = decidirConviteDePerfil({
+          pediuParaContar: turnoClassificado.pediuParaContar,
+          decisaoLacuna: d,
+          campoInvestigado,
+          perguntaAberta: estadoDoTurno?.perguntaPendente.conhecido === "sim",
+          segurancaAberta: seguranca.aberta,
+          naturezaEmocional: turnoClassificado.naturezaEmocional,
+          naturezaDoTurno: exp.metrica.natureza,
+          // ⚠️ A RESERVA SÓ É PEDIDA QUANDO O PEDIDO FOI EXPLÍCITO OU QUANDO
+          // ela pode mudar a decisão — pedir reserva em todo turno gastaria
+          // duas consultas por conversa para nada.
+          cooldownLiberado: turnoClassificado.pediuParaContar
+            ? true
+            : await reservarConviteDePerfil(supabase, family.id),
+          /**
+           * ⚠️ VAZIO, E ISSO É CORRETO — NÃO UM ATALHO. A guarda "não oferecer
+           * por campo já estruturado" é garantida por quem é dono dela:
+           *
+           *   - caminho SECUNDÁRIO: o Gate B já exclui da disputa todo campo
+           *     respondido, então uma `escolhida` existir significa que ela
+           *     está em aberto. Repetir a checagem aqui exigiria trazer o
+           *     `PerfilConsultavel` para este escopo — ele vive dentro de
+           *     `responderExperimental` — só para reconfirmar o que o gate já
+           *     afirmou.
+           *   - caminho PRINCIPAL: a mãe pediu para contar MAIS. Barrá-la
+           *     porque um campo daquele domínio já tem valor seria o oposto do
+           *     que ela pediu.
+           */
+          dominiosJaEstruturados: [],
+          temaDoTurno: temaAtivo,
+        });
+        conviteRastro = {
+          acao: decisao.acao,
+          origem: decisao.origem,
+          motivo: decisao.motivo,
+          dominio: decisao.dominio,
+        };
+        if (decisao.acao === "CONVIDAR") {
+          const link = await gerarMagicLink(supabase, {
+            familyId: family.id,
+            next: destinoDoConvite(decisao.dominio),
+          });
+          conviteRastro.link_gerado = Boolean(link);
+          if (link) {
+            const nome =
+              ctxExp.membros?.find((m) => m.id === exp.membroId)?.nome ?? null;
+            conviteTexto = fraseDoConvite({
+              dominio: decisao.dominio,
+              nome,
+              link,
+              turnoId: rastro.turno,
+            });
+          }
+        }
+      } catch (e) {
+        // Falha do convite é falha NOSSA, não da conversa dela.
+        conviteRastro = {
+          acao: "NENHUMA",
+          motivo: `erro: ${e instanceof Error ? e.message : "desconhecido"}`,
+        };
+      }
+      conviteRastro = { ...(conviteRastro ?? {}), link_enviado: Boolean(conviteTexto) };
+      void logEvent({
+        kind: "convite_perfil",
+        severity: "info",
+        family_account_id: family.id,
+        message: `convite:${conviteTexto ? "enviado" : "nao"} ${String(conviteRastro.motivo ?? "")}`.slice(0, 200),
+        persistir: true,
+        payload: {
+          turno: rastro.turno,
+          membro_atipico_id: exp.membroId,
+          ...conviteRastro,
+          natureza_turno: exp.metrica.natureza,
+          natureza_emocional: turnoClassificado.naturezaEmocional,
+          pediu_para_contar: turnoClassificado.pediuParaContar,
+          campo_investigado: campoInvestigado,
+          pergunta_aberta: estadoDoTurno?.perguntaPendente.conhecido === "sim",
+        },
+      });
+
       const resp = await enviarEPersistir(supabase, {
         family_account_id: family.id,
         membro_atipico_id: exp.membroId,
         phone: ctxExp.whatsapp_e164,
-        texto: exp.texto,
+        // ⚠️ O CONVITE É A ÚLTIMA LINHA, SEMPRE. `exp.texto` vem primeiro e
+        // inteiro; sem convite, a string é exatamente a de antes.
+        texto: conviteTexto ? `${exp.texto}\n\n${conviteTexto}` : exp.texto,
         category: "reativa",
-        tipo: "resposta_registro",
+        // ⚠️ O TIPO SÓ MUDA QUANDO HÁ CONVITE, e é ele que o cooldown procura —
+        // uma regra só. Sem convite, `resposta_registro` continua intacto para
+        // todos os consumidores que já o leem.
+        tipo: conviteTexto ? TIPO_CONVITE_PERFIL : "resposta_registro",
         // ⚠️ CHAVE NOVA, e o nome carrega a semântica. `lacuna` legado fica
         // legível no histórico e NÃO é migrado: seriam afirmações diferentes
         // sobre o passado.

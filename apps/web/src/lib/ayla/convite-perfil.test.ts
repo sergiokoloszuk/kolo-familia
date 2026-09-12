@@ -12,265 +12,250 @@ import {
 } from "./convite-perfil";
 
 /**
- * O ATALHO OPCIONAL — PEND-203.
+ * O ATALHO OPCIONAL, FIADO — PEND-203 Gate 2.
  *
- * ⚠️ A MAIOR PARTE DESTE ARQUIVO PROVA QUE O CONVITE **NÃO** SAI. Um link a
- * menos não custa nada; um link a mais, na hora errada, transforma a Ayla em
- * formulário — e o pior caso é oferecer cadastro para uma mãe em crise. Por
- * isso cada guarda tem teste próprio, e o `motivo` é verificado junto com a
- * ação: convite que não sai sem motivo registrado é indistinguível de bug.
+ * ⚠️ A TABELA DE VERDADE MUDOU POR MEDIÇÃO, não por opinião. O desenho original
+ * tinha como caminho principal "o Gate B achou lacuna e a Ayla não perguntou".
+ * Os 12 turnos reais do Gate 2C mostraram que esse estado ocorreu **0 vezes**
+ * — nos 6 turnos com `ASK`, a Ayla perguntou em todos — enquanto
+ * `pediu_para_contar` veio `true` em **2 de 12**. O gatilho principal virou o
+ * pedido explícito da mãe.
+ *
+ * ⚠️ A MAIOR PARTE DESTE ARQUIVO PROVA QUE O LINK **NÃO** SAI. Um link a menos
+ * não custa nada; um link na hora errada — em cima de um desabafo, ou colado
+ * numa pergunta que a mãe ainda não respondeu — transforma a Ayla em
+ * formulário, e ninguém percebe o dano.
  */
 
 const base: EntradaDoConvite = {
+  pediuParaContar: false,
   decisaoLacuna: {
     decisao: "ASK",
-    escolhida: { dominio: "comunicacao", campo: "reciprocidade", label: "Vai-e-vem na conversa" },
+    escolhida: { dominio: "comunicacao", campo: "reciprocidade", label: "Vai-e-vem" },
     candidatasChaves: ["comunicacao.reciprocidade"],
   },
   campoInvestigado: null,
-  natureza: "normal",
-  conviteNoTurnoAnterior: false,
+  perguntaAberta: false,
+  segurancaAberta: false,
+  naturezaEmocional: "neutra",
+  naturezaDoTurno: "orientacao",
   cooldownLiberado: true,
   dominiosJaEstruturados: [],
-  pediuParaContar: false,
+  temaDoTurno: null,
 };
 const e = (over: Partial<EntradaDoConvite> = {}): EntradaDoConvite => ({ ...base, ...over });
 
 // ─────────────────────────────────────────────────────────────────────────────
-describe("A · o caminho em que o convite existe", () => {
-  it("5. HELP + LINK: Gate B viu lacuna do tema e a Ayla NÃO perguntou", () => {
-    const r = decidirConviteDePerfil(e());
+describe("A · caminho PRINCIPAL — o pedido explícito", () => {
+  it("1. `pediuParaContar` convida, e a origem fica registrada", () => {
+    const r = decidirConviteDePerfil(e({ pediuParaContar: true }));
     expect(r.acao).toBe("CONVIDAR");
-    expect(r.dominio).toBe("comunicacao");
-    expect(r.motivo).toBe("lacuna do tema não era decisiva agora");
+    expect(r.origem).toBe("pedido_explicito");
+    expect(r.motivo).toBe("a mãe pediu para adiantar informações");
   });
 
-  it("o domínio vem do Gate B, não de escolha própria", () => {
+  it("9. pedido CURTO também convida — tamanho não é o critério", () => {
+    // "Quero te contar mais sobre ele." é curto e é pedido.
     const r = decidirConviteDePerfil(
-      e({
-        decisaoLacuna: {
-          decisao: "ASK",
-          escolhida: null,
-          candidatasChaves: ["sensorial.sons", "comunicacao.forma"],
-        },
-      }),
+      e({ pediuParaContar: true, naturezaDoTurno: "simples" }),
     );
-    // a primeira candidata da ordem que o gate já calculou
-    expect(r.dominio).toBe("sensorial");
-  });
-});
-
-describe("B · o convite NÃO sai", () => {
-  it("1. lacuna vazia não gera pergunta nem convite automaticamente", () => {
-    const r = decidirConviteDePerfil(
-      e({ decisaoLacuna: { decisao: "NO_ASK", escolhida: null, candidatasChaves: [] } }),
-    );
-    expect(r.acao).toBe("NENHUMA");
-    expect(r.motivo).toContain("nenhuma lacuna pertinente");
+    expect(r.acao).toBe("CONVIDAR");
   });
 
-  it("2. campo já estruturado não recebe convite", () => {
-    const r = decidirConviteDePerfil(e({ dominiosJaEstruturados: ["comunicacao"] }));
-    expect(r.acao).toBe("NENHUMA");
-    expect(r.motivo).toContain("nenhum domínio oferecível");
-  });
-
-  it("3+7. a Ayla perguntou neste turno ⇒ ASK NÃO vira link", () => {
-    const r = decidirConviteDePerfil(e({ campoInvestigado: "comunicacao.reciprocidade" }));
-    expect(r.acao).toBe("NENHUMA");
-    expect(r.motivo).toContain("ASK não vira link");
-  });
-
-  it("6. desabafo ⇒ zero link", () => {
-    const r = decidirConviteDePerfil(e({ natureza: "desabafo" }));
-    expect(r.acao).toBe("NENHUMA");
-    expect(r.motivo).toContain("desabafo");
-  });
-
-  it("7. crise e segurança ⇒ zero link", () => {
-    for (const natureza of ["crise", "seguranca"] as const) {
-      const r = decidirConviteDePerfil(e({ natureza }));
-      expect(r.acao, natureza).toBe("NENHUMA");
-    }
-  });
-
-  it("9. dois turnos seguidos não recebem convite", () => {
-    const r = decidirConviteDePerfil(e({ conviteNoTurnoAnterior: true }));
-    expect(r.acao).toBe("NENHUMA");
-    expect(r.motivo).toContain("turno anterior");
-  });
-
-  it("8. dedup/cooldown impede repetição", () => {
-    const r = decidirConviteDePerfil(e({ cooldownLiberado: false }));
-    expect(r.acao).toBe("NENHUMA");
-    expect(r.motivo).toContain("cooldown");
-  });
-
-  it("resposta curta que só continua a conversa não é interrompida", () => {
-    const r = decidirConviteDePerfil(e({ natureza: "continuacao_curta" }));
-    expect(r.acao).toBe("NENHUMA");
-  });
-
-  it("Gate B não rodou ⇒ nada", () => {
-    const r = decidirConviteDePerfil(e({ decisaoLacuna: null }));
-    expect(r.acao).toBe("NENHUMA");
-  });
-
-  it("domínio fora do vocabulário oferecível não vira convite", () => {
-    const r = decidirConviteDePerfil(
-      e({
-        decisaoLacuna: { decisao: "ASK", escolhida: null, candidatasChaves: ["campo_inventado.x"] },
-      }),
-    );
-    expect(r.acao).toBe("NENHUMA");
-  });
-});
-
-describe("C · 17. a mãe que quer acelerar", () => {
-  it("pedido explícito convida, mesmo dentro do cooldown e sem Gate B ter perguntado", () => {
+  it("11. o pedido explícito FURA o cooldown — ela está pedindo agora", () => {
     const r = decidirConviteDePerfil(e({ pediuParaContar: true, cooldownLiberado: false }));
     expect(r.acao).toBe("CONVIDAR");
-    expect(r.motivo).toBe("a mãe pediu para contar");
   });
 
-  it("mas o pedido NÃO atravessa crise, segurança nem desabafo", () => {
-    for (const natureza of ["crise", "seguranca", "desabafo"] as const) {
-      const r = decidirConviteDePerfil(e({ pediuParaContar: true, natureza }));
-      expect(r.acao, natureza).toBe("NENHUMA");
-    }
-  });
-
-  it("e não inventa domínio quando não há lacuna em aberto", () => {
+  it("e convida mesmo sem lacuna do Gate B — não depende dele", () => {
     const r = decidirConviteDePerfil(
       e({
         pediuParaContar: true,
         decisaoLacuna: { decisao: "NO_ASK", escolhida: null, candidatasChaves: [] },
       }),
     );
+    expect(r.acao).toBe("CONVIDAR");
+    expect(r.dominio).toBeNull(); // destino genérico
+  });
+});
+
+describe("B · BLOQUEADORES ABSOLUTOS — nem o pedido atravessa", () => {
+  it("5. crise/segurança bloqueia", () => {
+    const r = decidirConviteDePerfil(e({ pediuParaContar: true, segurancaAberta: true }));
     expect(r.acao).toBe("NENHUMA");
+    expect(r.motivo).toContain("segurança");
+  });
+
+  it("3. desabafo bloqueia", () => {
+    const r = decidirConviteDePerfil(e({ pediuParaContar: true, naturezaEmocional: "desabafo" }));
+    expect(r.acao).toBe("NENHUMA");
+    expect(r.motivo).toContain("desabafo");
+  });
+
+  it("4. natureza `null` bloqueia — silêncio do modelo não é permissão", () => {
+    /**
+     * ⚠️ O PONTO MAIS FÁCIL DE ERRAR DO GATE. `null` é "não sei": o modelo
+     * omitiu, devolveu valor inválido, ou o turno veio pelo fluxo da Rotina
+     * onde o decisor não roda. Se `null` valesse `neutra`, o primeiro convite
+     * indevido sairia exatamente no turno em que a telemetria falhou.
+     */
+    const r = decidirConviteDePerfil(e({ pediuParaContar: true, naturezaEmocional: null }));
+    expect(r.acao).toBe("NENHUMA");
+    expect(r.motivo).toContain("desconhecida");
+  });
+
+  it("6. a Ayla perguntou NESTE turno ⇒ bloqueia", () => {
+    const r = decidirConviteDePerfil(
+      e({ pediuParaContar: true, campoInvestigado: "comunicacao.forma" }),
+    );
+    expect(r.acao).toBe("NENHUMA");
+    expect(r.motivo).toContain("pergunta e link não vão juntos");
+  });
+
+  it("7. pergunta ANTERIOR ainda aberta ⇒ bloqueia", () => {
+    // Evita: "ele aponta ou mostra o que quer?" … e no turno seguinte um link.
+    const r = decidirConviteDePerfil(e({ pediuParaContar: true, perguntaAberta: true }));
+    expect(r.acao).toBe("NENHUMA");
+    expect(r.motivo).toContain("aguardando resposta");
+  });
+
+  it("os bloqueadores vêm ANTES do pedido, na ordem do código", () => {
+    const SRC = readFileSync(new URL("./convite-perfil.ts", import.meta.url), "utf8");
+    const bloq = SRC.indexOf("if (e.segurancaAberta)");
+    const pedido = SRC.indexOf("if (e.pediuParaContar)");
+    expect(bloq).toBeGreaterThan(0);
+    expect(bloq).toBeLessThan(pedido);
+  });
+});
+
+describe("C · caminho ESPONTÂNEO — guardas de ritmo", () => {
+  it("8. conversa curta/continuação bloqueia o convite espontâneo", () => {
+    for (const n of ["simples", "continuacao"]) {
+      const r = decidirConviteDePerfil(e({ naturezaDoTurno: n }));
+      expect(r.acao, n).toBe("NENHUMA");
+      expect(r.motivo).toContain("conversa curta");
+    }
+  });
+
+  it("10. cooldown bloqueia o espontâneo", () => {
+    const r = decidirConviteDePerfil(e({ cooldownLiberado: false }));
+    expect(r.acao).toBe("NENHUMA");
+    expect(r.motivo).toContain("cooldown");
+  });
+
+  it("2. `pediuParaContar=false` sozinho NÃO basta: precisa da lacuna do Gate B", () => {
+    const r = decidirConviteDePerfil(
+      e({ decisaoLacuna: { decisao: "NO_ASK", escolhida: null, candidatasChaves: [] } }),
+    );
+    expect(r.acao).toBe("NENHUMA");
+    expect(r.motivo).toContain("a mãe não pediu");
+  });
+
+  it("20. o caminho SECUNDÁRIO ainda funciona, com origem própria", () => {
+    const r = decidirConviteDePerfil(e());
+    expect(r.acao).toBe("CONVIDAR");
+    expect(r.origem).toBe("lacuna_nao_perguntada");
+    expect(r.dominio).toBe("comunicacao");
+  });
+
+  it("Gate B ausente ⇒ nada", () => {
+    expect(decidirConviteDePerfil(e({ decisaoLacuna: null })).acao).toBe("NENHUMA");
+  });
+
+  it("domínio já estruturado não é oferecido no espontâneo", () => {
+    expect(
+      decidirConviteDePerfil(e({ dominiosJaEstruturados: ["comunicacao"] })).acao,
+    ).toBe("NENHUMA");
   });
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-describe("D · 11+12. o destino", () => {
-  it("12. o domínio correto entra no deep-link", () => {
-    expect(destinoDoConvite("comunicacao")).toBe("/kolo-vivo?dominio=comunicacao");
-    expect(destinoDoConvite("aprendizado")).toBe("/kolo-vivo?dominio=aprendizado");
+describe("D · 13+14. destino e domínio", () => {
+  it("13. pedido genérico vai para `/kolo-vivo`; pedido temático especializa", () => {
+    expect(decidirConviteDePerfil(e({ pediuParaContar: true })).dominio).toBeNull();
+    expect(
+      decidirConviteDePerfil(e({ pediuParaContar: true, temaDoTurno: "comunicacao" })).dominio,
+    ).toBe("comunicacao");
+    // tema que não é domínio do Perfil não especializa
+    expect(
+      decidirConviteDePerfil(e({ pediuParaContar: true, temaDoTurno: "tema_inventado" })).dominio,
+    ).toBeNull();
   });
 
-  it("11. `next` NUNCA aceita destino externo", () => {
-    // Vocabulário fechado, não validação de formato: `//evil.com` é caminho
-    // relativo de protocolo e passaria por um teste de "começa com /".
+  it("`null` vira o destino genérico, e nunca uma URL quebrada", () => {
+    expect(destinoDoConvite(null)).toBe("/kolo-vivo");
+    expect(destinoDoConvite("comunicacao")).toBe("/kolo-vivo?dominio=comunicacao");
+  });
+
+  it("NUNCA aceita destino externo — vocabulário fechado, não formato", () => {
     for (const v of ["//evil.com", "https://evil.com", "../../etc", "javascript:alert(1)", ""]) {
       const d = destinoDoConvite(v);
       expect(d, v).toBe("/kolo-vivo");
-      expect(d.startsWith("/kolo-vivo")).toBe(true);
       expect(d).not.toContain("//");
       expect(d).not.toContain(":");
     }
   });
-
-  it("o destino é sempre o Kolo Vivo oficial — nenhuma tela paralela", () => {
-    expect(destinoDoConvite("sensorial").startsWith("/kolo-vivo")).toBe(true);
-  });
 });
 
 describe("E · a voz", () => {
-  it("usa o nome da criança e termina no link", () => {
-    const f = fraseDoConvite({ dominio: "comunicacao", nome: "Bento", link: "https://x/y", turnoId: "tn_a" })!;
+  it("há frase GENÉRICA para o pedido explícito, e ela usa o nome", () => {
+    const f = fraseDoConvite({ dominio: null, nome: "Bento", link: "L", turnoId: "t" })!;
     expect(f).toContain("Bento");
-    expect(f.endsWith("https://x/y")).toBe(true);
+    expect(f.endsWith("L")).toBe(true);
   });
 
-  it("sem nome resolvido, não sai `{nome}` literal", () => {
-    const f = fraseDoConvite({ dominio: "sensorial", nome: null, link: "L", turnoId: "t" })!;
-    expect(f).not.toContain("{nome}");
-    expect(f).toContain("ele(a)");
-  });
-
-  it("varia entre turnos, e é reproduzível para o mesmo turno", () => {
-    const a1 = fraseDoConvite({ dominio: "comunicacao", nome: "X", link: "L", turnoId: "tn_1" });
-    const a2 = fraseDoConvite({ dominio: "comunicacao", nome: "X", link: "L", turnoId: "tn_1" });
-    expect(a1).toBe(a2);
-    const variantes = new Set(
-      ["a", "b", "c", "d", "e", "f", "g", "h"].map(
-        (t) => fraseDoConvite({ dominio: "comunicacao", nome: "X", link: "L", turnoId: t })!,
-      ),
-    );
-    expect(variantes.size).toBeGreaterThan(1);
-  });
-
-  it("NENHUMA frase usa o léxico de cadastro", () => {
-    const SRC = readFileSync(new URL("./convite-perfil.ts", import.meta.url), "utf8");
-    const bloco = SRC.slice(SRC.indexOf("const FRASES"), SRC.indexOf("export const LEXICO_PROIBIDO"));
-    for (const proibido of LEXICO_PROIBIDO) {
-      expect(bloco.toLowerCase(), proibido).not.toContain(proibido);
+  it("16. o link é a ÚLTIMA coisa da frase", () => {
+    for (const dom of [null, "comunicacao", "sensorial"]) {
+      const f = fraseDoConvite({ dominio: dom, nome: "X", link: "https://a/b", turnoId: "t" })!;
+      expect(f.endsWith("https://a/b"), String(dom)).toBe(true);
     }
   });
 
-  it("nenhuma frase cria suspense — a ajuda não fica presa ao clique", () => {
+  it("sem nome resolvido não sai `{nome}` literal", () => {
+    expect(fraseDoConvite({ dominio: null, nome: null, link: "L" })).toContain("ele(a)");
+  });
+
+  it("NENHUMA frase usa o léxico de cadastro nem cria suspense", () => {
     const SRC = readFileSync(new URL("./convite-perfil.ts", import.meta.url), "utf8");
     const bloco = SRC.slice(SRC.indexOf("const FRASES"), SRC.indexOf("export const LEXICO_PROIBIDO"));
-    for (const p of ["mas primeiro", "antes de te", "só depois", "preciso que você"]) {
+    for (const p of LEXICO_PROIBIDO) expect(bloco.toLowerCase(), p).not.toContain(p);
+    for (const p of ["mas primeiro", "só depois", "preciso que você", "antes de te", "só consigo"]) {
       expect(bloco.toLowerCase(), p).not.toContain(p);
     }
-    // e toda frase é um convite, não uma condição
-    expect(bloco).toMatch(/Se quiser|Se você quiser|Se fizer sentido|Se ajudar/);
   });
 
-  it("todo domínio oferecível tem frase — e nenhuma frase órfã", () => {
-    const SRC = readFileSync(new URL("./convite-perfil.ts", import.meta.url), "utf8");
-    const oferecivel = SRC.slice(SRC.indexOf("DOMINIOS_OFERECIVEIS"), SRC.indexOf("/**\n * A DECISÃO"));
-    const dominios = [...oferecivel.matchAll(/"([a-z_]+)"/g)].map((m) => m[1]);
-    expect(dominios.length).toBeGreaterThanOrEqual(14);
-    for (const d of dominios) {
-      expect(fraseDoConvite({ dominio: d, nome: "X", link: "L" }), d).toBeTruthy();
-    }
-  });
-
-  it("domínio sem frase e link vazio devolvem null — nunca frase quebrada", () => {
-    expect(fraseDoConvite({ dominio: "inexistente", nome: "X", link: "L" })).toBeNull();
-    expect(fraseDoConvite({ dominio: "comunicacao", nome: "X", link: "" })).toBeNull();
+  it("link vazio devolve null — nunca frase sem destino", () => {
+    expect(fraseDoConvite({ dominio: null, nome: "X", link: "" })).toBeNull();
   });
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-describe("F · a reserva (dedup serverless)", () => {
-  /** Supabase falso: `ayla_messages` responde o histórico, `ayla_send_log` reserva. */
-  function db(opts: {
-    jaEnviou?: boolean;
-    insertFalha?: boolean;
-    primeiraDeOutro?: boolean;
-    lanca?: boolean;
-  }) {
-    const escritas: string[] = [];
-    const client = {
+describe("F · 12. a reserva (dedup serverless)", () => {
+  function db(o: { jaEnviou?: boolean; insertFalha?: boolean; deOutro?: boolean; lanca?: boolean }) {
+    return {
       from: (tabela: string) => {
-        if (opts.lanca) throw new Error("banco fora");
+        if (o.lanca) throw new Error("banco fora");
         if (tabela === "ayla_messages") {
-          const chain: Record<string, unknown> = {};
-          for (const k of ["select", "eq", "gte"]) chain[k] = () => chain;
-          chain.limit = async () => ({ data: opts.jaEnviou ? [{ id: "m1" }] : [] });
-          return chain;
+          const c: Record<string, unknown> = {};
+          for (const k of ["select", "eq", "gte"]) c[k] = () => c;
+          c.limit = async () => ({ data: o.jaEnviou ? [{ id: "m" }] : [] });
+          return c;
         }
-        // ayla_send_log
         return {
           insert: () => ({
             select: () => ({
-              single: async () => {
-                escritas.push("insert:ayla_send_log");
-                return opts.insertFalha
+              single: async () =>
+                o.insertFalha
                   ? { data: null, error: { message: "x" } }
-                  : { data: { id: "minha", created_at: "2026-09-12T00:00:01Z" }, error: null };
-              },
+                  : { data: { id: "minha", created_at: "2026-09-12T00:00:01Z" }, error: null },
             }),
           }),
           select: () => {
             const c: Record<string, unknown> = {};
             for (const k of ["eq", "gte", "order"]) c[k] = () => c;
             c.limit = async () => ({
-              data: opts.primeiraDeOutro
-                ? [{ id: "de_outro", created_at: "2026-09-12T00:00:00Z" }]
+              data: o.deOutro
+                ? [{ id: "outro", created_at: "2026-09-12T00:00:00Z" }]
                 : [{ id: "minha", created_at: "2026-09-12T00:00:01Z" }],
             });
             return c;
@@ -278,175 +263,249 @@ describe("F · a reserva (dedup serverless)", () => {
         };
       },
     } as unknown as SupabaseClient;
-    return { client, escritas };
   }
 
-  it("libera quando não houve convite na janela e a reserva é minha", async () => {
-    expect(await reservarConviteDePerfil(db({}).client, "f1")).toBe(true);
+  it("libera quando não houve convite e a reserva é minha", async () => {
+    expect(await reservarConviteDePerfil(db({}), "f1")).toBe(true);
   });
 
-  it("8. NÃO libera quando já houve convite na janela de 7 dias", async () => {
-    expect(await reservarConviteDePerfil(db({ jaEnviou: true }).client, "f1")).toBe(false);
+  it("não libera quando já houve convite na janela", async () => {
+    expect(await reservarConviteDePerfil(db({ jaEnviou: true }), "f1")).toBe(false);
   });
 
-  it("RAJADA: quem perdeu a corrida não convida", async () => {
-    // As quatro leituras de uma rajada acontecem antes da primeira escrita —
-    // foi assim que o convite de assinatura saiu 4× em 6 segundos em 23/07.
-    expect(await reservarConviteDePerfil(db({ primeiraDeOutro: true }).client, "f1")).toBe(false);
+  it("12. RAJADA: quem perdeu a corrida não convida", async () => {
+    expect(await reservarConviteDePerfil(db({ deOutro: true }), "f1")).toBe(false);
   });
 
-  it("falha da reserva NÃO convida — o silêncio é o resultado seguro", async () => {
-    expect(await reservarConviteDePerfil(db({ insertFalha: true }).client, "f1")).toBe(false);
-    expect(await reservarConviteDePerfil(db({ lanca: true }).client, "f1")).toBe(false);
+  it("falha da reserva NÃO convida — silêncio é o resultado seguro", async () => {
+    expect(await reservarConviteDePerfil(db({ insertFalha: true }), "f1")).toBe(false);
+    expect(await reservarConviteDePerfil(db({ lanca: true }), "f1")).toBe(false);
   });
 
   it("o tipo que o cooldown procura é o mesmo que o envio grava", () => {
     const SRC = readFileSync(new URL("./convite-perfil.ts", import.meta.url), "utf8");
-    expect(TIPO_CONVITE_PERFIL).toBe("perfil_nudge");
-    // uma regra só: o cooldown lê `tipo`, e é o `tipo` que o envio carrega.
-    expect(SRC).toMatch(/\.eq\("tipo", TIPO_CONVITE_PERFIL\)/);
-  });
-
-  it("a janela do convite é MUITO maior que a do convite comercial", () => {
-    const SRC = readFileSync(new URL("./convite-perfil.ts", import.meta.url), "utf8");
     const ORQ = readFileSync(new URL("./orchestrator.ts", import.meta.url), "utf8");
-    expect(SRC).toMatch(/JANELA_CONVITE_MS = 7 \* 24 \* 60 \* 60 \* 1000/);
-    // 12h é a do nudge de assinatura, que é urgente. Lacuna de Perfil não é.
-    expect(ORQ).toMatch(/JANELA_NUDGE_MS = 12 \* 60 \* 60 \* 1000/);
-  });
-
-  it("a reserva olha a RAJADA, não a janela — reserva órfã não cala 7 dias", () => {
-    const SRC = readFileSync(new URL("./convite-perfil.ts", import.meta.url), "utf8");
-    const bloco = SRC.slice(SRC.indexOf("export async function reservarConviteDePerfil"));
-    expect(bloco).toMatch(/JANELA_RAJADA_MS/);
-    // e a reserva NÃO usa a janela longa para decidir quem chegou antes
-    const trechoConcorrentes = bloco.slice(bloco.indexOf("concorrentes"));
-    expect(trechoConcorrentes).not.toMatch(/JANELA_CONVITE_MS/);
+    expect(TIPO_CONVITE_PERFIL).toBe("perfil_nudge");
+    expect(SRC).toMatch(/\.eq\("tipo", TIPO_CONVITE_PERFIL\)/);
+    expect(ORQ).toMatch(/tipo: conviteTexto \? TIPO_CONVITE_PERFIL : "resposta_registro"/);
   });
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-describe("G · 14+16. o caso Mario, e a lacuna que desaparece", () => {
-  /**
-   * O perfil do Mario diz "Conversa bem" em PROSA
-   * (`comunicacao.outras`), e `comunicacao.reciprocidade` está vazio. A prosa é
-   * pista, nunca prova — este módulo nunca a lê, e quem decide a lacuna é o
-   * Gate B, que também não a lê como resposta.
-   */
-  it("14. assunto NÃO é comunicação ⇒ Gate B não traz a lacuna ⇒ nada", () => {
-    // Turno sobre sono: o gate só considera domínios do tema.
-    const r = decidirConviteDePerfil(
-      e({ decisaoLacuna: { decisao: "NO_ASK", escolhida: null, candidatasChaves: [] } }),
-    );
-    expect(r.acao).toBe("NENHUMA");
+describe("G · a fiação no orquestrador", () => {
+  const ORQ = readFileSync(new URL("./orchestrator.ts", import.meta.url), "utf8");
+
+  it("17. a fala do Core é intacta — o convite é acrescentado, nunca substituído", () => {
+    expect(ORQ).toMatch(/texto: conviteTexto \? `\$\{exp\.texto\}\\n\\n\$\{conviteTexto\}` : exp\.texto/);
   });
 
-  it("assunto é comunicação e a informação não mudava a conduta ⇒ HELP + LINK", () => {
-    const r = decidirConviteDePerfil(e());
-    expect(r.acao).toBe("CONVIDAR");
-    expect(r.dominio).toBe("comunicacao");
+  it("16. ordem: fala do Core → decisão → reserva → link → envio", () => {
+    const fala = ORQ.indexOf("const exp = await responderExperimental");
+    const decisao = ORQ.indexOf("const decisao = decidirConviteDePerfil({");
+    const link = ORQ.indexOf("const link = await gerarMagicLink(supabase, {\n            familyId: family.id,\n            next: destinoDoConvite");
+    const envio = ORQ.indexOf("const resp = await enviarEPersistir(supabase, {\n        family_account_id: family.id,\n        membro_atipico_id: exp.membroId,");
+    expect(fala).toBeGreaterThan(0);
+    expect(fala).toBeLessThan(decisao);
+    expect(decisao).toBeLessThan(link);
+    expect(link).toBeLessThan(envio);
   });
 
-  it("assunto é comunicação e a informação ERA decisiva ⇒ ASK, sem link", () => {
-    const r = decidirConviteDePerfil(e({ campoInvestigado: "comunicacao.reciprocidade" }));
-    expect(r.acao).toBe("NENHUMA");
+  it("15. o convite inteiro vive num try/catch — nunca derruba o turno", () => {
+    const i = ORQ.indexOf("let conviteTexto: string | null = null;");
+    const bloco = ORQ.slice(i, ORQ.indexOf('kind: "convite_perfil"', i));
+    expect(bloco).toMatch(/try \{/);
+    expect(bloco).toMatch(/\} catch \(e\) \{/);
+    // e a falha vira rastro, não exceção
+    expect(bloco).toMatch(/motivo: `erro:/);
   });
 
-  it("16. DEPOIS de estruturado, a mesma lacuna nunca mais convida", () => {
-    // Dois caminhos independentes fecham: o Gate B deixa de trazê-la
-    // (NO_ASK) e a guarda de domínio estruturado também barra.
-    expect(decidirConviteDePerfil(e({ dominiosJaEstruturados: ["comunicacao"] })).acao).toBe(
-      "NENHUMA",
-    );
-    expect(
-      decidirConviteDePerfil(
-        e({ decisaoLacuna: { decisao: "NO_ASK", escolhida: null, candidatasChaves: [] } }),
-      ).acao,
-    ).toBe("NENHUMA");
-  });
-});
-
-// ─────────────────────────────────────────────────────────────────────────────
-describe("H · sabotagens", () => {
-  const SRC = readFileSync(new URL("./convite-perfil.ts", import.meta.url), "utf8");
-
-  it("REMOVER O DEDUP: sem a guarda de cooldown, o convite repetiria", () => {
-    // A guarda existe e é a penúltima — se alguém a retirar, este teste cai
-    // junto com o comportamento.
-    expect(SRC).toMatch(/if \(!e\.cooldownLiberado\) return nao\("cooldown do convite ativo"\)/);
-    expect(decidirConviteDePerfil(e({ cooldownLiberado: false })).acao).toBe("NENHUMA");
+  it("14. o membro e a família vêm do turno — nunca escolhidos aqui", () => {
+    const i = ORQ.indexOf("const decisao = decidirConviteDePerfil({");
+    const bloco = ORQ.slice(i, i + 2500);
+    expect(bloco).toMatch(/familyId: family\.id/);
+    expect(bloco).toMatch(/m\.id === exp\.membroId/);
+    expect(bloco).not.toMatch(/membros\[0\]|resolverFoco/);
   });
 
-  it("TRATAR TODA LACUNA COMO ASK: a decisão tem de continuar lendo `campoInvestigado`", () => {
-    expect(SRC).toMatch(/if \(e\.campoInvestigado\)/);
-    // e a diferença é observável
-    expect(decidirConviteDePerfil(e({ campoInvestigado: null })).acao).toBe("CONVIDAR");
-    expect(decidirConviteDePerfil(e({ campoInvestigado: "x.y" })).acao).toBe("NENHUMA");
+  it("as guardas são alimentadas pelos donos que já existem", () => {
+    const i = ORQ.indexOf("const decisao = decidirConviteDePerfil({");
+    const bloco = ORQ.slice(i, i + 1600);
+    expect(bloco).toMatch(/perguntaAberta: estadoDoTurno\?\.perguntaPendente\.conhecido === "sim"/);
+    expect(bloco).toMatch(/segurancaAberta: seguranca\.aberta/);
+    expect(bloco).toMatch(/naturezaEmocional: turnoClassificado\.naturezaEmocional/);
+    expect(bloco).toMatch(/naturezaDoTurno: exp\.metrica\.natureza/);
+    expect(bloco).toMatch(/campoInvestigado,/);
   });
 
-  it("PERMITIR LINK EM DESABAFO: as três guardas de momento vêm ANTES do resto", () => {
-    const i = SRC.indexOf('if (e.natureza === "crise")');
-    const j = SRC.indexOf("if (e.pediuParaContar)");
-    expect(i).toBeGreaterThan(0);
-    expect(i).toBeLessThan(j); // precedência de segurança sobre o pedido
-    expect(decidirConviteDePerfil(e({ natureza: "desabafo", pediuParaContar: true })).acao).toBe(
-      "NENHUMA",
-    );
-  });
-
-  it("IGNORAR CAMPO PREENCHIDO: a guarda de domínio estruturado é consultada", () => {
-    expect(SRC).toMatch(/dominiosJaEstruturados\.includes\(d\)/);
-    expect(decidirConviteDePerfil(e({ dominiosJaEstruturados: ["comunicacao"] })).acao).toBe(
-      "NENHUMA",
-    );
-  });
-
-  it("PERMITIR URL EXTERNA: o destino é vocabulário fechado, não formato", () => {
-    expect(SRC).toMatch(/if \(!DOMINIOS_OFERECIVEIS\.includes\(dominio\)\) return "\/kolo-vivo"/);
-    expect(destinoDoConvite("https://evil.com")).toBe("/kolo-vivo");
-  });
-
-  it("13. TROCAR MEMBRO: este módulo não escolhe criança e não lê Perfil", () => {
-    // ⚠️ O isolamento entre irmãos não é responsabilidade deste módulo, e a
-    // melhor forma de garantir isso é ele NÃO TER como errar: nenhuma consulta
-    // a `perfil_vivo_membro`, nenhum `membroId`, nenhuma escolha de criança. O
-    // nome da criança chega pronto, de quem já resolveu o foco do turno.
-    expect(SRC).not.toMatch(/membro_atipico_id|perfil_vivo_membro|resolverFoco/);
-    expect(SRC).not.toMatch(/\.upsert\(|\.update\(/);
-  });
-
-  it("18. o módulo não toca a escrita da Fase 2", () => {
-    expect(SRC).not.toMatch(/extrairAtualizacoes|persistirRegistro|escritorDoPerfil/);
-    // e não chama modelo nenhum
-    expect(SRC).not.toMatch(/getAnthropicClient|getAylaAnthropicClient|messages\.stream/);
-  });
-
-  it("NÃO EXISTE SEGUNDO DECISOR: a fonte da lacuna é o Gate B", () => {
-    // Se este módulo passar a escolher lacuna sozinho, ele duplica o cérebro
-    // que a missão proíbe duplicar.
-    // ⚠️ A CHECAGEM É SOBRE USO, NÃO SOBRE MENÇÃO. O cabeçalho do módulo CITA
-    // `escolherLacunaDecisiva` justamente para dizer que quem decide a lacuna é
-    // ele — proibir a palavra proibiria a explicação. O que não pode existir é
-    // import de valor e chamada.
-    expect(SRC).toMatch(/import type \{ DecisaoDeLacuna \} from "\.\/lacuna-decisiva"/);
+  it("18. ZERO segunda chamada de modelo para decidir o link", () => {
+    const i = ORQ.indexOf("let conviteTexto: string | null = null;");
+    const bloco = ORQ.slice(i, ORQ.indexOf('kind: "convite_perfil"', i));
+    // ⚠️ CHAMADA, NÃO MENÇÃO. O bloco CITA `responderExperimental` num
+    // comentário que explica onde o `PerfilConsultavel` vive — proibir a
+    // palavra proibiria a explicação. O que não pode existir é invocação.
     for (const chamada of [
-      "escolherLacunaDecisiva(",
-      "CAMPOS_DECISIVOS",
-      "DOMINIOS_DO_TEMA",
-      "degrauProvadoPeloPerfil",
-      "ESCADA_COMUNICACAO",
+      "gerarConversacional(",
+      "responderExperimental(",
+      "getAnthropicClient(",
+      "decidirTurno(",
+      "extrairAtualizacoes(",
     ]) {
-      expect(SRC, chamada).not.toContain(chamada);
+      expect(bloco, chamada).not.toContain(chamada);
     }
   });
 
-  it("a decisão é pura: mesma entrada, mesma saída, sem IO", () => {
-    const x = e();
-    expect(decidirConviteDePerfil(x)).toEqual(decidirConviteDePerfil(x));
+  it("19. a telemetria separa as duas origens e diz por que não enviou", () => {
+    const i = ORQ.indexOf('kind: "convite_perfil"');
+    const bloco = ORQ.slice(i, i + 1200);
+    for (const campo of [
+      "turno: rastro.turno",
+      "natureza_turno",
+      "natureza_emocional",
+      "pediu_para_contar",
+      "campo_investigado",
+      "pergunta_aberta",
+    ]) {
+      expect(bloco, campo).toContain(campo);
+    }
+    // origem e motivo vêm do rastro da decisão
+    expect(ORQ).toMatch(/origem: decisao\.origem/);
+    expect(ORQ).toMatch(/motivo: decisao\.motivo/);
+    expect(ORQ).toMatch(/link_gerado/);
+    expect(ORQ).toMatch(/link_enviado/);
+  });
+
+  it("a reserva não é pedida quando o pedido foi explícito — não se gasta consulta", () => {
+    expect(ORQ).toMatch(
+      /cooldownLiberado: turnoClassificado\.pediuParaContar\s*\n\s*\? true\s*\n\s*: await reservarConviteDePerfil/,
+    );
+  });
+
+  it("Etapa 1: `natureza_turno` entra no rastro sem recálculo", () => {
+    expect(ORQ).toMatch(/natureza_turno: exp\.metrica\.natureza,/);
+    expect(ORQ).not.toMatch(/naturezaDoTurno\(/);
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+/**
+ * AS 10 JORNADAS — em nível de decisão, que é onde elas são determinísticas.
+ */
+describe("H · as 10 jornadas", () => {
+  const j = (over: Partial<EntradaDoConvite>) => decidirConviteDePerfil(e(over));
+
+  it("J1 genérico: 'quero te contar tudo' → LINK em /kolo-vivo", () => {
+    const r = j({ pediuParaContar: true, temaDoTurno: null });
+    expect(r.acao).toBe("CONVIDAR");
+    expect(destinoDoConvite(r.dominio)).toBe("/kolo-vivo");
+  });
+
+  it("J2 temático: 'como ele se comunica' → LINK no domínio", () => {
+    const r = j({ pediuParaContar: true, temaDoTurno: "comunicacao" });
+    expect(destinoDoConvite(r.dominio)).toBe("/kolo-vivo?dominio=comunicacao");
+  });
+
+  it("J3 desabafo → zero link", () => {
+    expect(j({ naturezaEmocional: "desabafo" }).acao).toBe("NENHUMA");
+  });
+
+  it("J4 emoção + pedido de ajuda, sem pedido de contar → zero link espontâneo", () => {
+    // "Estou cansada e preciso de ajuda com o sono" — neutra, e a Ayla
+    // perguntou (foi o turno 12 real do Gate 2C).
+    expect(j({ naturezaEmocional: "neutra", campoInvestigado: "sono.adormece" }).acao).toBe(
+      "NENHUMA",
+    );
+  });
+
+  it("J5 ASK real → zero link no mesmo turno", () => {
+    expect(j({ campoInvestigado: "emocional.gatilhos" }).acao).toBe("NENHUMA");
+  });
+
+  it("J6 pergunta aberta → zero link", () => {
+    expect(j({ perguntaAberta: true }).acao).toBe("NENHUMA");
+  });
+
+  it("J7 continuação curta ('sim', 'pode', 'obrigada') → zero link", () => {
+    expect(j({ naturezaDoTurno: "simples" }).acao).toBe("NENHUMA");
+    expect(j({ naturezaDoTurno: "continuacao" }).acao).toBe("NENHUMA");
+  });
+
+  it("J8 mãe ignora o link e segue conversando → o turno seguinte não cobra", () => {
+    // Sem pedido novo e com o cooldown consumido pelo convite anterior.
+    expect(j({ cooldownLiberado: false }).acao).toBe("NENHUMA");
+  });
+
+  it("J9 já convidou há pouco → dedup bloqueia", () => {
+    expect(j({ cooldownLiberado: false, pediuParaContar: false }).acao).toBe("NENHUMA");
+  });
+
+  it("J10 multi-criança: o decisor não escolhe criança nenhuma", () => {
+    const SRC = readFileSync(new URL("./convite-perfil.ts", import.meta.url), "utf8");
+    // ⚠️ A melhor garantia de isolamento é ele NÃO TER como errar: nenhum
+    // membroId, nenhuma leitura de Perfil, nenhuma resolução de foco.
+    expect(SRC).not.toMatch(/membro_atipico_id|perfil_vivo_membro|resolverFoco|membroId/);
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+describe("I · sabotagens", () => {
+  const SRC = readFileSync(new URL("./convite-perfil.ts", import.meta.url), "utf8");
+  const ORQ = readFileSync(new URL("./orchestrator.ts", import.meta.url), "utf8");
+
+  it("PERMITIR LINK EM DESABAFO", () => {
+    expect(SRC).toMatch(/if \(e\.naturezaEmocional === "desabafo"\)/);
+    expect(decidirConviteDePerfil(e({ pediuParaContar: true, naturezaEmocional: "desabafo" })).acao).toBe("NENHUMA");
+  });
+
+  it("IGNORAR PERGUNTA ABERTA", () => {
+    expect(SRC).toMatch(/if \(e\.perguntaAberta\) return nao/);
+    expect(decidirConviteDePerfil(e({ pediuParaContar: true, perguntaAberta: true })).acao).toBe("NENHUMA");
+  });
+
+  it("LINK ANTES DA FALA", () => {
+    // A composição é `${exp.texto}\n\n${conviteTexto}` — nunca o inverso.
+    expect(ORQ).not.toMatch(/\$\{conviteTexto\}\\n\\n\$\{exp\.texto\}/);
+    expect(ORQ).toMatch(/`\$\{exp\.texto\}\\n\\n\$\{conviteTexto\}`/);
+  });
+
+  it("MAGIC LINK DERRUBAR A RESPOSTA", () => {
+    const i = ORQ.indexOf("let conviteTexto: string | null = null;");
+    const bloco = ORQ.slice(i, ORQ.indexOf('kind: "convite_perfil"', i));
+    expect(bloco).toMatch(/\} catch \(e\) \{/);
+    // e o envio não depende do link
+    expect(ORQ).toMatch(/conviteTexto \? `\$\{exp\.texto\}/);
+  });
+
+  it("USAR MEMBRO ERRADO", () => {
+    expect(SRC).not.toContain("membroId");
+    expect(ORQ).toMatch(/m\.id === exp\.membroId/);
+  });
+
+  it("PERMITIR URL EXTERNA", () => {
+    expect(SRC).toMatch(/if \(!dominio \|\| !DOMINIOS_OFERECIVEIS\.includes\(dominio\)\) return "\/kolo-vivo"/);
+    expect(destinoDoConvite("https://evil.com")).toBe("/kolo-vivo");
+  });
+
+  it("REPETIR CONVITE", () => {
+    expect(SRC).toMatch(/if \(!e\.cooldownLiberado\) return nao/);
+    expect(decidirConviteDePerfil(e({ cooldownLiberado: false })).acao).toBe("NENHUMA");
+  });
+
+  it("TRATAR `null` COMO `neutra`", () => {
+    expect(SRC).toMatch(/if \(e\.naturezaEmocional === null\) return nao/);
+    expect(decidirConviteDePerfil(e({ pediuParaContar: true, naturezaEmocional: null })).acao).toBe("NENHUMA");
+  });
+
+  it("NOVO LLM PARA DECIDIR O LINK", () => {
+    expect(SRC).not.toMatch(/getAnthropicClient|gerarConversacional|messages\.stream|extrairAtualizacoes/);
     const decisao = SRC.slice(
       SRC.indexOf("export function decidirConviteDePerfil"),
-      SRC.indexOf("function primeiroDominioOferecivel"),
+      SRC.indexOf("function dominioDoPedido"),
     );
     expect(decisao).not.toMatch(/await|async|fetch\(|supabase/);
+  });
+
+  it("a decisão é pura e determinística", () => {
+    const x = e({ pediuParaContar: true });
+    expect(decidirConviteDePerfil(x)).toEqual(decidirConviteDePerfil(x));
   });
 });

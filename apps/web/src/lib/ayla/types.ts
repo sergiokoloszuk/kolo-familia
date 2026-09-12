@@ -56,6 +56,20 @@ export type AylaTipoReativa =
    *  estado: é dele que sai a numeração quando a mãe responde só "2". */
   | "entrada_guiada"
   | "resposta_registro"
+  /**
+   * A RESPOSTA QUE LEVOU O ATALHO DO KOLO VIVO — PEND-203 Gate 2.
+   *
+   * ⚠️ TIPO PRÓPRIO PORQUE ELE É O COOLDOWN. `reservarConviteDePerfil` procura
+   * exatamente este valor em `ayla_messages` para saber se a família já
+   * recebeu um convite na janela — uma regra só, em vez de uma segunda tabela
+   * de controle. É o mesmo desenho de `assinatura_nudge`.
+   *
+   * ⚠️ SÓ APARECE QUANDO O CONVITE DE FATO SAIU. Sem convite, a mensagem
+   * continua `resposta_registro`, byte a byte, para todos os consumidores que
+   * já leem esse tipo. E `ayla_messages.tipo` é `text` sem CHECK no banco
+   * (0001_init), então isto não pede migração.
+   */
+  | "perfil_nudge"
   | "clarificacao_identificacao"
   | "clarificacao_conteudo"
   | "resposta_comando"

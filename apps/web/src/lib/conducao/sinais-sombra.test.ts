@@ -143,16 +143,26 @@ describe("D · SOMBRA — nenhum consumidor lê os campos novos", () => {
     }
   });
 
-  it("nenhum `if` de produção decide por `pediuParaContar`", () => {
-    for (const [nome, src] of [["orquestrador", ORQ], ["experimental", EXP]] as const) {
-      expect(src, nome).not.toMatch(/if \([^)]*pediuParaContar/);
-      expect(src, nome).not.toMatch(/pediuParaContar\s*\?/);
-      expect(src, nome).not.toMatch(/pediuParaContar\s*===/);
-    }
+  it("`pediuParaContar` nao mexe em `intencao` nem em feature — so no convite", () => {
+    /**
+     * ⚠️ INVERTIDO NO GATE 2. O sinal deixou de ser puro observador: ele é o
+     * gatilho do convite de Perfil. O invariante que sobra — e que era o que
+     * importava desde o começo — é que ele não desloque `intencao` nem faça
+     * feature nenhuma mudar de rota.
+     */
+    expect(ORQ).not.toContain("intencao = turnoClassificado.pediuParaContar");
+    expect(EXP).not.toContain("pediuParaContar");
+    // Consumido em lugares CONTADOS, todos do convite: o rastro da lacuna, a
+    // entrada do decisor, o gate da reserva e a telemetria. Se subir, alguem
+    // comecou a usa-lo em outro lugar.
+    expect((ORQ.match(/turnoClassificado\.pediuParaContar/g) ?? []).length).toBe(4);
   });
 
-  it("o convite continua NÃO fiado — nenhum magic link, nenhuma reserva", () => {
-    expect(ORQ).not.toMatch(/decidirConviteDePerfil|reservarConviteDePerfil|fraseDoConvite|destinoDoConvite/);
+  it("o convite ESTA fiado, e o magic link e o existente", () => {
+    // ⚠️ INVERTIDO NO GATE 2. Reusa `gerarMagicLink`, que já existia e já era
+    // usada para `/planos/:id` — nenhuma infra nova de link.
+    expect(ORQ).toContain("decidirConviteDePerfil({");
+    expect(ORQ).toContain("next: destinoDoConvite(decisao.dominio)");
   });
 
   it("os campos não entram no envelope da PEND-187B", () => {
