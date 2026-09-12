@@ -98,6 +98,31 @@ const PROVAS: ReadonlyArray<{
     prova: "atencao_social",
     porque: "buscar contato social pressupõe notar o outro",
   },
+  // ── as três provas que a PEND-202 destravou ──────────────────────────────
+  {
+    campo: "comunicacao",
+    subcampo: "reciprocidade",
+    valores: ["Mantém e argumenta"],
+    prova: "conversa_reciproca",
+    porque:
+      "é a definição da habilidade. `Mantém com apoio` NÃO prova: sustentar com andaime é outra coisa; e `Fala, mas trava no vai-e-vem` é exatamente o contrário — é o caso que a PEND-192 expôs",
+  },
+  {
+    campo: "comunicacao",
+    subcampo: "caa_uso",
+    valores: ["Usa no dia a dia"],
+    prova: "comunicacao_simbolica",
+    porque:
+      "prancha e app são símbolo tanto quanto palavra — e é o único jeito de a criança não-verbal que se comunica por CAA sair do conjunto vazio. `Em treino` não prova: treino é o que ainda não virou uso",
+  },
+  {
+    campo: "aprendizado",
+    subcampo: "leitura_escrita",
+    valores: ["Lê e escreve com autonomia"],
+    prova: "leitura_escrita",
+    porque:
+      "autonomia é a palavra que separa ler de estar aprendendo a ler. `Está alfabetizando` e `Reconhece letras e palavras` NÃO provam — e não provar aqui é o que mantém o conteúdo de alfabetização chegando para quem está no meio do caminho",
+  },
 ];
 
 /**
@@ -127,10 +152,20 @@ const PROVAS: ReadonlyArray<{
  * `comunicacao.caa` — provaria `comunicacao_simbolica`, e é texto livre. Fica
  * de fora pela mesma regra. Vale como pedido de schema: CAA merece seletor.
  */
-export const HABILIDADES_SEM_FONTE_ESTRUTURADA: readonly BiaHabilidade[] = [
-  "conversa_reciproca",
-  "leitura_escrita",
-];
+/**
+ * ⚠️ ESTA LISTA ESVAZIOU EM 12/09/2026 — PEND-202, e o histórico fica.
+ *
+ * Ela continha `conversa_reciproca` e `leitura_escrita`, as duas habilidades
+ * que NENHUM dos 110 sub-campos do Perfil Vivo conseguia provar. A PEND-202
+ * criou os seletores que faltavam (`comunicacao.reciprocidade` e
+ * `aprendizado.leitura_escrita`) em vez de ensinar este módulo a ler prosa.
+ *
+ * Continua exportada, e vazia, de propósito: é o contrato que diz "toda
+ * habilidade da taxonomia tem hoje uma fonte estruturada". No dia em que a
+ * taxonomia crescer sem o schema acompanhar, é aqui que a lacuna é declarada —
+ * e há teste amarrando a lista à tabela de provas.
+ */
+export const HABILIDADES_SEM_FONTE_ESTRUTURADA: readonly BiaHabilidade[] = [];
 
 export type PerfilParaHabilidades = Readonly<Record<string, string>>;
 

@@ -159,7 +159,18 @@ export const SUBCAMPOS_DOMINIO: Record<string, SubCampo[]> = {
       key: "iniciativa",
       label: "Mostra o que quer ou espera?",
       opcoes: ["Mostra o que quer", "Espera oferecerem", "Varia"],
-      mostrarSe: { campo: "forma", valores: ["Não-verbal"] },
+      /**
+       * ⚠️ O `mostrarSe` FOI REMOVIDO EM 12/09/2026 — PEND-202. Ele restringia
+       * este campo a `forma = "Não-verbal"`, e isso era conceitualmente errado:
+       * quem fala palavras, quem fala frases e quem usa CAA também mostra,
+       * aponta, leva pela mão, chama e pergunta. Iniciativa comunicativa não é
+       * propriedade de quem não fala.
+       *
+       * MEDIDO: 20 perfis com `forma` verbal ficavam impedidos de registrar
+       * aqui, e 6 deles ("Fala palavras soltas") são justamente onde
+       * `gestos_intencionais` NÃO chega por transitividade — a habilidade
+       * existia na criança e não tinha onde ser escrita.
+       */
     },
     // Não-verbal (ou palavras soltas):
     {
@@ -173,6 +184,66 @@ export const SUBCAMPOS_DOMINIO: Record<string, SubCampo[]> = {
       label: "Comunicação alternativa (CAA)",
       placeholder: "usa pranchas, PECS, app de comunicação?",
       mostrarSe: { campo: "forma", valores: ["Não-verbal", "Fala palavras soltas"] },
+    },
+    /**
+     * ⚠️ OS DOIS SELETORES ABAIXO ENTRAM ANTES DE `outras`, E ISSO NÃO É
+     * ESTILO — PEND-202. `parsearSubcampos` usa o ÚLTIMO sub-campo do domínio
+     * como sumidouro do texto legado (a linha sem rótulo reconhecido cai nele).
+     * Um campo novo colocado depois de `outras` passaria a receber a prosa
+     * antiga de 19 perfis, e `ehBaldeDeSobra` passaria a chamar ESSE campo de
+     * balde de sobra — quebrando a métrica da PEND-194 e o fallback do roteador
+     * de uma vez.
+     */
+    {
+      /**
+       * O VAI-E-VEM DA CONVERSA — o que faltava para `conversa_reciproca`.
+       *
+       * ⚠️ POR QUE UM CAMPO NOVO EM VEZ DE PÔR `opcoes` EM `conversa`. O campo
+       * `comunicacao.conversa` já faz exatamente esta pergunta, em texto livre,
+       * e 14 perfis têm prosa boa lá ("Não argumenta, sabe pedir o que quer,
+       * mas não conta fatos do passado"; "Questiona bastante, tudo tem que ter
+       * sentido e lógica"). Transformá-lo em seletor jogaria essa prosa contra
+       * um enum que ela não satisfaz. O idioma deste schema é seletor E texto
+       * convivendo — `emocional.padrao` + `emocional.gatilhos`, `foco.padrao` +
+       * `foco.hiperfocos` —, e é o que se faz aqui: o seletor entra, a prosa
+       * fica, e nada de ninguém é reescrito.
+       *
+       * ⚠️ SEM `mostrarSe`, de propósito. Gatear por `forma` repetiria o erro
+       * que a remoção acima corrige: quem usa CAA sustenta troca, e quem fala
+       * frases pode não sustentar. É pergunta legítima para qualquer criança, e
+       * a última opção a torna respondível por todas.
+       */
+      key: "reciprocidade",
+      label: "Vai-e-vem na conversa",
+      opcoes: [
+        "Mantém e argumenta",
+        "Mantém com apoio",
+        "Fala, mas trava no vai-e-vem",
+        "Ainda não sustenta",
+      ],
+      placeholder: "só o vai-e-vem: sustenta o assunto, discorda, argumenta?",
+    },
+    {
+      /**
+       * CAA COMO USO, NÃO COMO DESCRIÇÃO.
+       *
+       * O campo `caa` (texto) descreve o recurso; este diz se ela USA. A
+       * diferença importa: 9 perfis preencheram o texto, e dois deles dizem
+       * literalmente "não" — descrição e uso estavam no mesmo lugar.
+       *
+       * ⚠️ SEM `mostrarSe`. Criança que fala frases pode usar prancha na
+       * escola ou na desregulação; o gate do campo `caa` acima já exclui esse
+       * caso hoje, e é uma limitação conhecida que este seletor contorna sem
+       * mexer no campo antigo.
+       */
+      key: "caa_uso",
+      label: "Usa comunicação alternativa?",
+      opcoes: [
+        "Usa no dia a dia",
+        "Em treino / às vezes",
+        "Já tentou e não engajou",
+        "Não usa",
+      ],
     },
     {
       key: "outras",
@@ -332,6 +403,35 @@ export const SUBCAMPOS_DOMINIO: Record<string, SubCampo[]> = {
     { key: "dificulta", label: "O que dificulta", lista: true, placeholder: "instrução longa, abstrato, pressa…" },
     { key: "interesses_puxam", label: "Interesses que puxam o aprender", placeholder: "usar o que ela ama pra ensinar (dinossauros, música…)" },
     { key: "ritmo", label: "Ritmo", placeholder: "rápido; ou precisa do tempo dela" },
+    {
+      /**
+       * LEITURA E ESCRITA — a lacuna mais dura que a PEND-197 encontrou.
+       *
+       * ⚠️ NÃO EXISTIA CAMPO NENHUM. Varri os 110 sub-campos dos 20 domínios:
+       * nada sobre alfabetização. `aprendizado.modo` é CANAL de aprendizagem
+       * (Vendo/Ouvindo/Fazendo/Repetindo), não competência de leitura. Era
+       * lacuna de SCHEMA, e nenhuma esperteza de leitura de prosa resolveria.
+       *
+       * ⚠️ SEM `mostrarSe` E SEM CORTE POR IDADE. A idade contextualiza, não
+       * decide: existe criança de 5 anos lendo e adolescente ainda
+       * alfabetizando. Perguntar por faixa etária produziria questionário
+       * rígido, que é justamente o que não se quer.
+       *
+       * ⚠️ E `leitura_escrita` NÃO IMPLICA FALA — a cadeia da PEND-196 é
+       * explícita nisso. Existe quem escreve e não fala; em produção há um
+       * perfil não-verbal que "usa pintura e escrita como formas de
+       * comunicação". Vetar conteúdo de fala para ela seria apagar exatamente
+       * quem mais precisa dele.
+       */
+      key: "leitura_escrita",
+      label: "Leitura e escrita",
+      opcoes: [
+        "Lê e escreve com autonomia",
+        "Está alfabetizando",
+        "Reconhece letras e palavras",
+        "Ainda não",
+      ],
+    },
     { key: "outras", label: "Outras observações", placeholder: "qualquer outra coisa que você percebe" },
   ],
   imitacao: [

@@ -10,7 +10,7 @@ import {
 } from "./habilidades-provadas";
 import { BIA_HABILIDADES, habilidadesImplicadas } from "./tipos";
 import { filtrarDuro, normalizarContexto, type ChunkParaPontuar } from "./pontuacao";
-import { subcamposDe } from "@/lib/kolo-vivo/subcampos";
+import { parsearSubcampos, subcamposDe } from "@/lib/kolo-vivo/subcampos";
 
 /**
  * O PRODUTOR DE `habilidadesProvadas` — PEND-197.
@@ -50,11 +50,31 @@ describe("sanidade do vocabulário", () => {
     }
   });
 
-  it("as duas habilidades sem fonte estruturada estão declaradas, e nenhuma prova as alcança", () => {
-    expect(HABILIDADES_SEM_FONTE_ESTRUTURADA).toEqual(["conversa_reciproca", "leitura_escrita"]);
-    for (const h of HABILIDADES_SEM_FONTE_ESTRUTURADA) {
-      expect(TABELA_DE_PROVAS.map((p) => p.prova)).not.toContain(h);
+  /**
+   * ⚠️ ESTE TESTE MUDOU DE LADO EM 12/09/2026, E DE PROPÓSITO — PEND-202.
+   *
+   * Ele afirmava que `conversa_reciproca` e `leitura_escrita` NÃO tinham fonte
+   * estruturada, porque nenhum dos 110 sub-campos as provava. A PEND-202
+   * criou os seletores que faltavam, então a lista esvaziou. O invariante que
+   * importa não era a lista — era a coerência entre ela e a tabela de provas.
+   */
+  it("nenhuma habilidade fica sem fonte E sem declaração", () => {
+    const provaveis = new Set(TABELA_DE_PROVAS.map((p) => p.prova));
+    const semFonte = new Set<string>(HABILIDADES_SEM_FONTE_ESTRUTURADA);
+    // Habilidade declarada sem fonte não pode ter prova — seria contradição.
+    for (const h of HABILIDADES_SEM_FONTE_ESTRUTURADA) expect(provaveis.has(h)).toBe(false);
+    // E toda habilidade da taxonomia é provável, transitiva, ou declarada.
+    const transitivas = new Set(["atencao_compartilhada", "troca_de_turnos", "fala_funcional"]);
+    for (const h of BIA_HABILIDADES) {
+      expect(provaveis.has(h) || transitivas.has(h) || semFonte.has(h), h).toBe(true);
     }
+  });
+
+  it("as duas lacunas da PEND-197 FECHARAM — e cada uma tem um seletor próprio", () => {
+    const provas = TABELA_DE_PROVAS.map((p) => `${p.campo}.${p.subcampo}->${p.prova}`);
+    expect(provas).toContain("comunicacao.reciprocidade->conversa_reciproca");
+    expect(provas).toContain("aprendizado.leitura_escrita->leitura_escrita");
+    expect(HABILIDADES_SEM_FONTE_ESTRUTURADA).toEqual([]);
   });
 });
 
@@ -452,6 +472,146 @@ describe("G · sabotagens", () => {
         provaveis.has(h) || semFonte.has(h) || transitivas.has(h),
         `${h} não é provável, nem transitiva, nem declarada sem fonte`,
       ).toBe(true);
+    }
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+/**
+ * OS TRÊS SELETORES DA PEND-202 — e o que cada valor deliberadamente NÃO prova.
+ */
+describe("H · reciprocidade, CAA e leitura/escrita", () => {
+  it("`Mantém e argumenta` prova conversa recíproca; os outros três NÃO", () => {
+    const h = habilidadesProvadasDaLinha(
+      perfil({ comunicacao: "Como se comunica: Fala frases\nVai-e-vem na conversa: Mantém e argumenta" }),
+    );
+    expect(h.diretas.has("conversa_reciproca")).toBe(true);
+    expect(h.todas.size).toBe(9);
+    for (const v of ["Mantém com apoio", "Fala, mas trava no vai-e-vem", "Ainda não sustenta"]) {
+      const x = habilidadesProvadasDaLinha(
+        perfil({ comunicacao: `Como se comunica: Fala frases\nVai-e-vem na conversa: ${v}` }),
+      );
+      expect(x.todas.has("conversa_reciproca"), v).toBe(false);
+      // e continua provando o que `forma` provava — a correção não tira nada
+      expect(x.diretas.has("frases"), v).toBe(true);
+    }
+  });
+
+  it("O CASO DA PEND-192, agora estruturado: fala frases e trava no vai-e-vem", () => {
+    // Era isto que "Conversa bem" em prosa não conseguia distinguir. Agora a
+    // criança recebe o veto do pré-verbal E continua recebendo o conteúdo de
+    // reciprocidade, que é o que ela precisa.
+    const h = habilidadesProvadasDaLinha(
+      perfil({
+        comunicacao: "Como se comunica: Fala frases\nVai-e-vem na conversa: Fala, mas trava no vai-e-vem",
+      }),
+    );
+    expect(h.todas.has("fala_funcional")).toBe(true);
+    expect(h.todas.has("conversa_reciproca")).toBe(false);
+  });
+
+  it("CAA no dia a dia prova símbolo — e tira a criança não-verbal do conjunto vazio", () => {
+    const h = habilidadesProvadasDaLinha(
+      perfil({ comunicacao: "Como se comunica: Não-verbal\nUsa comunicação alternativa?: Usa no dia a dia" }),
+    );
+    expect(h.diretas.has("comunicacao_simbolica")).toBe(true);
+    // mas NÃO ganha fala: CAA não é fala
+    expect(h.todas.has("fala_funcional")).toBe(false);
+    expect(h.todas.has("frases")).toBe(false);
+  });
+
+  it("`Em treino` e `Já tentou e não engajou` NÃO provam CAA", () => {
+    for (const v of ["Em treino / às vezes", "Já tentou e não engajou", "Não usa"]) {
+      const h = habilidadesProvadasDaLinha(
+        perfil({ comunicacao: `Como se comunica: Não-verbal\nUsa comunicação alternativa?: ${v}` }),
+      );
+      expect(h.todas.size, v).toBe(0);
+    }
+  });
+
+  it("lê e escreve com autonomia prova leitura — e NUNCA fala", () => {
+    // O perfil real não-verbal que "usa pintura e escrita como comunicação".
+    const h = habilidadesProvadasDaLinha(
+      perfil({
+        comunicacao: "Como se comunica: Não-verbal",
+        aprendizado: "Leitura e escrita: Lê e escreve com autonomia",
+      }),
+    );
+    expect(h.diretas.has("leitura_escrita")).toBe(true);
+    expect(h.todas.has("comunicacao_simbolica")).toBe(true); // pelo fecho
+    expect(h.todas.has("fala_funcional")).toBe(false);
+    expect(h.todas.has("frases")).toBe(false);
+  });
+
+  it("`Está alfabetizando` e `Reconhece letras` NÃO provam leitura", () => {
+    for (const v of ["Está alfabetizando", "Reconhece letras e palavras", "Ainda não"]) {
+      const h = habilidadesProvadasDaLinha(perfil({ aprendizado: `Leitura e escrita: ${v}` }));
+      expect(h.todas.size, v).toBe(0);
+    }
+  });
+
+  it("`iniciativa` funciona para quem FALA — o `mostrarSe` saiu", () => {
+    const h = habilidadesProvadasDaLinha(
+      perfil({ comunicacao: "Como se comunica: Fala palavras soltas\nMostra o que quer ou espera?: Mostra o que quer" }),
+    );
+    expect(h.diretas.has("gestos_intencionais")).toBe(true);
+    expect(h.diretas.has("comunicacao_simbolica")).toBe(true);
+  });
+});
+
+describe("I · o schema não regrediu", () => {
+  it("os campos novos entram ANTES de `outras` — senão viram sumidouro de prosa", () => {
+    // ⚠️ `parsearSubcampos` joga a linha sem rótulo reconhecido no ÚLTIMO
+    // sub-campo do domínio, e `ehBaldeDeSobra` chama o último de balde de
+    // sobra. Campo novo depois de `outras` capturaria a prosa antiga de 19
+    // perfis e quebraria a métrica da PEND-194 de uma vez.
+    for (const dom of ["comunicacao", "aprendizado"]) {
+      const subs = subcamposDe(dom)!;
+      expect(subs[subs.length - 1].key, dom).toBe("outras");
+    }
+  });
+
+  it("PROSA ANTIGA continua parseando depois dos campos novos", () => {
+    // Perfil real do Mario, escrito antes da PEND-202.
+    const h = habilidadesProvadasDaLinha(
+      perfil({
+        comunicacao: "Outras observações: Conversa bem, estamos treinando ter autonomia",
+        socializacao: "Interage com outras pessoas (pares): Raramente",
+      }),
+    );
+    // segue vazio — e o importante é que não explodiu e não inventou prova
+    expect(h.todas.size).toBe(0);
+    const subs = subcamposDe("comunicacao")!;
+    const v = parsearSubcampos(subs, "Outras observações: Conversa bem");
+    expect(v.outras).toBe("Conversa bem");
+    expect(v.reciprocidade ?? "").toBe("");
+  });
+
+  it("texto LEGADO sem rótulo continua caindo em `outras`, não nos campos novos", () => {
+    const subs = subcamposDe("comunicacao")!;
+    const v = parsearSubcampos(subs, "frase solta escrita antes de existir rótulo");
+    expect(v.outras).toContain("frase solta");
+    expect(v.reciprocidade ?? "").toBe("");
+    expect(v.caa_uso ?? "").toBe("");
+  });
+
+  it("os seletores novos não ganharam `mostrarSe` — e isso é o ponto", () => {
+    const c = subcamposDe("comunicacao")!;
+    const a = subcamposDe("aprendizado")!;
+    for (const k of ["reciprocidade", "caa_uso", "iniciativa"]) {
+      const def = c.find((s) => s.key === k)!;
+      expect(def, k).toBeTruthy();
+      expect((def as { mostrarSe?: unknown }).mostrarSe, k).toBeUndefined();
+    }
+    expect((a.find((s) => s.key === "leitura_escrita") as { mostrarSe?: unknown }).mostrarSe).toBeUndefined();
+  });
+
+  it("os campos ANTIGOS de texto seguem intactos — nada foi reescrito", () => {
+    const c = subcamposDe("comunicacao")!;
+    for (const k of ["conversa", "caa", "mostra", "entende", "vocabulario", "ecolalia", "contato"]) {
+      const def = c.find((s) => s.key === k);
+      expect(def, k).toBeTruthy();
+      expect((def as { opcoes?: unknown }).opcoes, `${k} virou seletor`).toBeUndefined();
     }
   });
 });
