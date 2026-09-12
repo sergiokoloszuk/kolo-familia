@@ -133,15 +133,21 @@ describe("D · SOMBRA — nenhum consumidor lê os campos novos", () => {
 
   it("nenhum `if` de produção decide por `naturezaEmocional`", () => {
     for (const [nome, src] of [["orquestrador", ORQ], ["experimental", EXP]] as const) {
-      expect(src, nome).not.toMatch(/naturezaEmocional/);
-      expect(src, nome).not.toMatch(/natureza_emocional/);
+      // ⚠️ PROIBIDO É O USO CONDICIONAL, NÃO A MENÇÃO — Gate 2C. Os dois
+      // sinais passaram a ser PUBLICADOS no payload de `lacuna_decisao`, que
+      // é telemetria: sem isso não haveria o que observar em produção.
+      // Decidir por eles continua proibido.
+      expect(src, nome).not.toMatch(/if \([^)]*naturezaEmocional/);
+      expect(src, nome).not.toMatch(/naturezaEmocional\s*===/);
+      expect(src, nome).not.toMatch(/naturezaEmocional\s*\?/);
     }
   });
 
   it("nenhum `if` de produção decide por `pediuParaContar`", () => {
     for (const [nome, src] of [["orquestrador", ORQ], ["experimental", EXP]] as const) {
-      expect(src, nome).not.toMatch(/pediuParaContar/);
-      expect(src, nome).not.toMatch(/pediu_para_contar/);
+      expect(src, nome).not.toMatch(/if \([^)]*pediuParaContar/);
+      expect(src, nome).not.toMatch(/pediuParaContar\s*\?/);
+      expect(src, nome).not.toMatch(/pediuParaContar\s*===/);
     }
   });
 

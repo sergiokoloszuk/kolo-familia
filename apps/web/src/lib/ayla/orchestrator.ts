@@ -2628,6 +2628,15 @@ async function processInboundInterno(
         continuacao: true,
         necessidadeConhecimento: "nenhum" as const,
         temaConhecimento: null,
+        /**
+         * ⚠️ OS SINAIS EM SOMBRA TAMBÉM AQUI — PEND-203 Gate 2C, e os valores
+         * não são arbitrários. No fluxo da Rotina o decisor NÃO roda, então
+         * ninguém classificou nada: `null` é "não sei", que é o fail-safe
+         * (quem consumir amanhã não lê silêncio como permissão), e
+         * `pediuParaContar` é `false` porque o viés é não agir.
+         */
+        naturezaEmocional: null as "neutra" | "desabafo" | null,
+        pediuParaContar: false,
         // ⚠️ `true` E NÃO `false`: no fluxo da Rotina o vazio é DECISÃO do
         // produto — o condutor manda no turno e nenhuma skill se aplica. Dizer
         // "não avaliado" aqui ligaria o fallback da PEND-184 num turno em que
@@ -3324,6 +3333,21 @@ async function processInboundInterno(
             turno: rastro.turno,
             lacuna_sugerida: lacunaSugerida,
             campo_investigado: campoInvestigado,
+            /**
+             * ⚠️ OS DOIS SINAIS EM SOMBRA — PEND-203 Gate 2C. TELEMETRIA, NÃO
+             * DECISÃO: nenhum `if` deste arquivo os lê, e há teste prendendo
+             * isso. Eles vêm aqui, e não num evento novo, porque este já é
+             * persistido e já carrega `turno` — a chave por onde a medição
+             * cruza sinal, pergunta e escrita do mesmo turno.
+             *
+             * ⚠️ SEM ISTO O GATE 2C NÃO TERIA O QUE OBSERVAR. Os campos eram
+             * parseados em `decisao-do-turno` e morriam ali: `logarUsoApi`
+             * dispara antes do parse e só grava tokens. Declarei "saem em
+             * telemetria" no Gate 2B e a telemetria não existia — mesmo defeito
+             * da sombra que se acreditava ligada.
+             */
+            natureza_emocional: turnoClassificado.naturezaEmocional,
+            pediu_para_contar: turnoClassificado.pediuParaContar,
             // A pergunta feita foi a sugerida? Observação, não julgamento.
             sugestao_seguida:
               lacunaSugerida && campoInvestigado ? lacunaSugerida === campoInvestigado : null,

@@ -179,8 +179,10 @@ describe("C · sabotagens", () => {
     expect(DEC).toContain("pediuParaContar: o.pediu_para_contar === true,");
     const CONV = readFileSync(new URL("./convite-perfil.ts", import.meta.url), "utf8");
     expect(CONV).toContain("pediuParaContar: boolean;");
-    // e NADA no caminho de produção o consome
-    expect(ORQ).not.toContain("pediuParaContar");
+    // e NADA no caminho de produção DECIDE por ele — publicar em telemetria
+    // é permitido desde o Gate 2C, decidir não.
+    expect(ORQ).not.toMatch(/if \([^)]*pediuParaContar/);
+    expect(ORQ).not.toMatch(/pediuParaContar\s*\?/);
   });
 
   it("o decisor do convite continua NÃO fiado — nada foi ligado neste gate", () => {
