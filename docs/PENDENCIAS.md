@@ -9724,21 +9724,50 @@ teste da suite depende do relogio real.
 ---
 
 ### PEND-206
-**Custo do extrator unificado nao e medido — so a latencia**
+**O extrator unificado e a MAIOR linha de custo de IA da Kolo — 41,8% do total**
 Bloco: **B · Ayla** · Prioridade: **P3**
-STATUS: **ABERTA — lacuna de observabilidade, NAO corrigida** · Aberta em: 2026-09-14
+STATUS: **ABERTA — medido em 2026-09-14, nenhuma decisao tomada** · Aberta em: 2026-09-14
 
-`extrator_escreveu` publica `ms` (p50 2142 · p95 10656 · max 12410, pos-resposta,
-fora da espera da familia) e **nada de token ou custo**. Nao existe tabela de
-uso por chamada (`uso_api`, `uso_modelo`, `llm_chamadas`, `custos_api` — todas
-ausentes no banco de producao, conferido em 14/09).
+⚠️ **ESTA FICHA FOI ESCRITA ERRADA E CORRIGIDA NO MESMO DIA.** A primeira versao
+afirmava que o custo do extrator "nao e medido" e que nao existia tabela de uso
+por chamada. **Falso.** `api_calls` existe, esta em producao e registra
+`input_tokens`, `output_tokens` e `custo_usd` por chamada. O erro veio de
+adivinhar nomes de tabela (`uso_api`, `uso_modelo`, `llm_chamadas`,
+`custos_api`) em vez de partir do codigo — o mesmo habito que o §1 proibe.
 
-Com `KOLO_EXTRATOR_ESCRITA=todas` isso e uma chamada de modelo **por turno de
-toda familia**: 64 turnos em 62h. A pergunta "quanto custa a Fase 2?" hoje nao
-tem resposta medida — so estimada.
+**O QUE A MEDICAO DIZ (`api_calls`, 12/09 a 14/09, 62h, 416 chamadas):**
 
-**CRITERIO DE CONCLUSAO:** o custo por turno do extrator e consultavel sem
-estimativa.
+| feature | n | USD | USD/chamada | modelo |
+|---|---|---|---|---|
+| **extrair_conhecimento** | **64** | **0,7083** | **0,01107** | **claude-sonnet-4-6** |
+| ayla_parser_pos | 70 | 0,3052 | 0,00436 | claude-haiku-4-5 |
+| ayla_experimental | 64 | 0,2172 | 0,00339 | gpt-5.6-luna |
+| ayla_dedup_diario | 53 | 0,1905 | 0,00359 | claude-haiku-4-5 |
+| *(demais 8 features)* | 165 | 0,2739 | — | — |
+| **TOTAL** | **416** | **1,6951** | — | — |
+
+As 64 chamadas batem exatamente com os 64 `extrator_escreveu` — um por turno,
+como projetado.
+
+**O ACHADO.** O extrator custa **41,8% de toda a IA da Kolo** e **3,3x a propria
+conversa** (0,01107 contra 0,00339 por turno). A conversa roda em `gpt-5.6-luna`
+e o extrator em `claude-sonnet-4-6` — o modelo mais caro do conjunto esta na
+tarefa que a familia nao ve. Projecao no ritmo atual: **19,69 USD/30d no total,
+8,23 USD/30d so o extrator**, com 11 familias. O numero e pequeno hoje; a
+PROPORCAO e que nao foi decidida, foi herdada.
+
+**NAO E RECOMENDACAO DE TROCAR O MODELO.** O extrator escreve no Perfil Vivo —
+errar ali contamina o que a Ayla sabe da crianca. A pergunta aberta e se a
+qualidade exige Sonnet, e isso se responde com bancada, nao com planilha.
+
+**O LIVRO-CAIXA TEM BURACO.** `billing_nao_gravou` acumulou **15 erros desde
+01/09** (`TypeError: fetch failed` e `new row violates row-level security`),
+quase todos em `ayla_parser_pos`. Ou seja: o custo real e **maior ou igual** ao
+medido, e nao se sabe por quanto.
+
+**CRITERIO DE CONCLUSAO:** (a) `billing_nao_gravou` zera ou passa a ter
+reconciliacao, e (b) existe decisao escrita sobre o modelo do extrator, apoiada
+em bancada de qualidade — nao em custo isolado.
 
 **RELACOES.** [[pend-194]].
 
