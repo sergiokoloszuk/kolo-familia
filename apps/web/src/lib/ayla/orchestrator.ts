@@ -3373,6 +3373,24 @@ async function processInboundInterno(
              */
             intencao: turnoClassificado.intencao,
             pedido_explicito: turnoClassificado.pedidoExplicito,
+            /**
+             * ⚠️ OS DOIS SINAIS DE CONHECIMENTO — PEND-207, SOMBRA.
+             *
+             * `necessidade_conhecimento` e `tema_conhecimento` são decididos em
+             * TODO turno desde que o esquema da decisão existe, e até aqui
+             * morriam dentro de `interpretar`: nenhum consumidor, nenhum
+             * registro. Ou seja, a pergunta "em quantos turnos a Ayla precisaria
+             * da base da pós, e sobre o quê?" não tinha resposta medida — só
+             * palpite.
+             *
+             * ⚠️ SOMBRA DE VERDADE: nada neste arquivo lê estes dois campos para
+             * decidir coisa alguma, e há teste prendendo isso. É a mesma lição
+             * do Gate 2B — medir o sinal ANTES de fiá-lo. A tabela de verdade do
+             * HELP + LINK elegeu `pediu_para_contar` como caminho principal e a
+             * produção devolveu 0 em 28; sinal não medido é sinal suposto.
+             */
+            necessidade_conhecimento: turnoClassificado.necessidadeConhecimento,
+            tema_conhecimento: turnoClassificado.temaConhecimento,
             // A pergunta feita foi a sugerida? Observação, não julgamento.
             sugestao_seguida:
               lacunaSugerida && campoInvestigado ? lacunaSugerida === campoInvestigado : null,

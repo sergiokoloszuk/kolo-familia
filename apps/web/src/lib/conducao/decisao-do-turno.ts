@@ -304,12 +304,36 @@ Se o estado mostra artefato pendente e a mensagem é uma cobrança, "continuacao
 "aceite" — quando ela aceita algo que a Ayla ofereceu, descreva em UMA frase o que
 foi aceito. "sim" sozinho não carrega conteúdo.
 
-"necessidade_conhecimento" — o que ESTE turno pediria de material de apoio:
-  "nenhum" para desabafo, cumprimento, conversa social, resposta operacional;
-  "boas_praticas" para pedido de estratégia concreta do dia a dia;
-  "base2" para compreender um tema em profundidade antes de orientar;
-  "pos_neurodesenvolvimento" para fundamento clínico/de desenvolvimento;
-  "combinacao" quando mais de uma fonte ajudaria.
+"necessidade_conhecimento" — que tipo de apoio ESTE turno pede. A pergunta é
+  "para responder bem, o que falta: ENTENDER o caso ou saber O QUE FAZER?".
+  "nenhum": desabafo, cumprimento, conversa social, boa notícia, pedido
+    operacional (link, arquivo, remarcar). Também quando a mãe só relata o dia.
+  "boas_praticas": ela já sabe o alvo e quer o COMO — atividade, brincadeira,
+    passo a passo, "me dá ideias de", "como eu monto isso".
+  "pos_neurodesenvolvimento": o relato descreve um COMPORTAMENTO ou uma
+    DIFICULDADE da criança cuja leitura muda a conduta. Ou seja: antes de
+    sugerir, é preciso entender o que está acontecendo no desenvolvimento dela.
+    Exemplos que são "pos_neurodesenvolvimento":
+      "Ele não fala, mas entende tudo o que eu mando."
+      "Na escola e no mercado ele não para quieto, não presta atenção em nada."
+      "Do nada essa semana começou a ter crise todo dia, nunca foi assim."
+      "Ele é muito grosso com as pessoas e não se importa se magoa."
+      "Sabe todas as cores e conta até 50, mas não conversa comigo."
+      "Na escola a professora diz que é um anjo; só em casa ele explode."
+      "Ele fica sozinho no recreio, ninguém brinca com ele."
+  "combinacao": o turno precisa das duas — entender o mecanismo E entregar o
+    que fazer. É o caso típico de "ele só come três coisas, o que eu faço?" e de
+    "toda vez que é hora de sair ele tem crise, me ajuda".
+  "base2": só para pedido de informação geral que não é sobre esta criança
+    (direitos, laudo, escola, benefício). Na dúvida entre "base2" e
+    "pos_neurodesenvolvimento", escolha "pos_neurodesenvolvimento".
+
+⚠️ AQUI O VIÉS NÃO É O DA DÚVIDA. Nos outros campos, na dúvida escolha o valor
+  que NÃO dispara. Neste, entender melhor a criança nunca interrompe a conversa
+  da mãe — e não entender produz resposta genérica. Se o turno fala de um
+  comportamento ou dificuldade da criança, NÃO é "nenhum".
+  "nenhum" é para quando não há caso: desabafo, saudação, operacional, celebração.
+
 "tema_conhecimento" é sobre o quê buscar, em poucas palavras.
 
 "skills" — no máximo duas, e SOMENTE nomes do catálogo oferecido. Se nada do
