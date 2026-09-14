@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { destinoPermitido, normalizarDestino, DESTINO_PADRAO } from "./destino-link";
+import { destinoDoConvite, DOMINIOS_OFERECIVEIS } from "../ayla/convite-perfil";
 
 /**
  * PARA ONDE O LINK DA AYLA LEVA.
@@ -129,5 +130,45 @@ describe("relatório: a fala não promete o que o sistema não faz", () => {
 
   it("o link continua apontando pra tela de Relatório", () => {
     expect(RESP).toMatch(/Este link abre DIRETO na tela de Relatório/);
+  });
+});
+
+/**
+ * A COSTURA ENTRE QUEM ESCOLHE O DESTINO E QUEM O AUTORIZA — 14/09/2026.
+ *
+ * ⚠️ ESTE BLOCO EXISTE PORQUE OS DOIS LADOS JÁ ESTAVAM PROVADOS E O PRODUTO
+ * ERRAVA MESMO ASSIM. `convite-perfil.test.ts` provava que `destinoDoConvite`
+ * devolve `/kolo-vivo`; este arquivo provava que a allowlist barra o que não
+ * conhece. Nenhum teste juntava os dois — e `/kolo-vivo` nunca tinha entrado na
+ * lista. O primeiro convite real (produção, 14/09 13:42) prometeu conhecer como
+ * a criança se comunica e entregou um link para `/painel`. Sem exceção, sem
+ * log: só o destino errado.
+ *
+ * Vale para TODO destino que a Ayla saiba montar. Um destino novo que não passe
+ * por aqui volta a falhar exatamente do mesmo jeito, em silêncio.
+ */
+describe("todo destino que a Ayla monta sobrevive à allowlist", () => {
+  it("o destino genérico do convite de Perfil não vira /painel", () => {
+    expect(normalizarDestino(destinoDoConvite(null))).toBe("/kolo-vivo");
+  });
+
+  it("o destino temático preserva o domínio — a query não é motivo de recusa", () => {
+    const d = destinoDoConvite("comunicacao");
+    expect(d).toBe("/kolo-vivo?dominio=comunicacao");
+    expect(normalizarDestino(d)).toBe(d);
+  });
+
+  it("TODO domínio oferecível chega inteiro ao destino", () => {
+    for (const dom of DOMINIOS_OFERECIVEIS) {
+      const d = destinoDoConvite(dom);
+      expect(normalizarDestino(d), dom).toBe(d);
+      expect(normalizarDestino(d), dom).not.toBe(DESTINO_PADRAO);
+    }
+  });
+
+  it("e o open redirect continua barrado — a rota nova não afrouxou nada", () => {
+    expect(normalizarDestino("//evil.com/kolo-vivo")).toBe(DESTINO_PADRAO);
+    expect(normalizarDestino("https://evil.com/kolo-vivo")).toBe(DESTINO_PADRAO);
+    expect(destinoPermitido("//kolo-vivo")).toBe(false);
   });
 });

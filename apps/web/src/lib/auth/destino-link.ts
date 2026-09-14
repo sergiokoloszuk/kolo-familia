@@ -21,6 +21,20 @@ const PERMITIDOS: readonly RegExp[] = [
   /^\/configuracoes(\/[a-z-]+)?$/,
   /^\/evolucao(\/(registros|relatorio))?$/,
   /^\/historias(\/criar)?$/,
+  /**
+   * ⚠️ O PERFIL — ADICIONADO EM 14/09/2026, DEPOIS DE UM CONVITE REAL ERRAR.
+   *
+   * O convite de Perfil (PEND-203) monta `/kolo-vivo` ou
+   * `/kolo-vivo?dominio=x` e manda para `criarLinkAcesso`. Como a rota nunca
+   * entrou nesta lista, `normalizarDestino` não achou nem allowlist nem
+   * FALLBACK de área e caiu no `DESTINO_PADRAO` — `/painel`. Em produção,
+   * 14/09 às 13:42, a mãe leu "posso conhecer melhor como {nome} se comunica"
+   * e o link a levou para o painel: nenhum erro, nenhum log, resultado errado.
+   *
+   * A query é descartada por `destinoPermitido` antes do teste, então
+   * `?dominio=` passa sem precisar de regra própria.
+   */
+  /^\/kolo-vivo$/,
   /^\/ludico$/,
   /^\/ludico\/(desenhos|meditacao|timer)$/,
   /^\/ludico\/rotinas$/,
@@ -37,6 +51,7 @@ const FALLBACK: ReadonlyArray<[RegExp, string]> = [
   [/^\/ludico/, "/ludico"],
   [/^\/evolucao/, "/evolucao"],
   [/^\/historias/, "/historias"],
+  [/^\/kolo-vivo/, "/kolo-vivo"],
 ];
 
 export const DESTINO_PADRAO = "/painel";

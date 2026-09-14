@@ -119,7 +119,7 @@ export type SaidaDoConvite = {
 };
 
 /** Domínios do Perfil Vivo que o convite pode oferecer. */
-const DOMINIOS_OFERECIVEIS: readonly string[] = [
+export const DOMINIOS_OFERECIVEIS: readonly string[] = [
   "comunicacao",
   "sensorial",
   "socializacao",

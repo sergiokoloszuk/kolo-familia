@@ -9626,7 +9626,125 @@ publicacao.
 **RELACOES.** [[pend-194]] (a medicao que depende deste rastro), [[pend-198]]
 (o outro caso em que o bloco pos-resposta ficava sem rastro).
 
-**Proximo ID livre: PEND-202. *(024 e 025 reservadas por frentes ainda nao publicadas; 0076 e numero de MIGRACAO reservado — ver PEND-121.)***
+### PEND-203
+**HELP + LINK — o atalho opcional para o Kolo Vivo (convite de Perfil)**
+Bloco: **B · Ayla** · Prioridade: **P2**
+STATUS: **EM PRODUCAO desde 2026-09-12 23:10 (SHA `0aa7562`, servido por `1163871`)** · Aberta em: 2026-09-11
+
+Ficha aberta em 14/09 com atraso: a frente andou seis commits (`9f0b7e3`,
+`5e222ee`, `f29b258`, `871ee89`, `a0587c1`, `0aa7562`) sem ficha aqui. O ID ja
+estava reivindicado nas mensagens de commit.
+
+**MEDICAO REAL — 28 decisoes, 12/09 23:10 a 14/09 13:47, 5 familias, 5 membros.**
+
+| motivo | n |
+|---|---|
+| a Ayla perguntou neste turno | 18 |
+| ha pergunta anterior aguardando resposta | 6 |
+| cooldown do convite ativo | 2 |
+| conversa curta | 1 |
+| CONVIDOU (lacuna nao decisiva) | 1 |
+
+`link_enviado=true` em **1 de 28**, pelo caminho SECUNDARIO
+(`lacuna_nao_perguntada`). **`pediu_para_contar` saiu `false` nos 28 turnos** —
+o caminho que a tabela de verdade chama de PRINCIPAL **nunca disparou em
+producao**. `natureza_emocional` saiu `neutra` em 28/28 (zero `desabafo`, zero
+`null` — o fail-safe do `null` nunca precisou agir).
+
+**O IMPACTO DE `perguntaAberta`, MEDIDO.** `pergunta_aberta=true` em **24 de
+28** (86%) — coerente com os 121/200 de `?` observados antes. Ela foi o
+bloqueio EXCLUSIVO em **6 de 28**; nos outros 18 a Ayla ja tinha perguntado no
+proprio turno, que barra antes. **Pedidos explicitos bloqueados por ela: ZERO**,
+porque nao houve nenhum pedido explicito na janela. A regra NAO foi alterada.
+
+⚠️ **O UNICO CONVITE REAL SAIU COM O DESTINO ERRADO** — causa raiz em
+[[pend-204]]. Corrigido em 14/09; **o convite corrigido ainda nao foi
+exercitado em producao**.
+
+**CRITERIO DE CONCLUSAO:** um convite real entregue com o destino certo
+(`/kolo-vivo`), mais evidencia de ao menos um turno com
+`pediu_para_contar=true` — sem isso o caminho principal segue sem prova.
+
+**RELACOES.** [[pend-204]] (o destino descartado), [[pend-194]] (a Fase 2, que
+roda no mesmo turno).
+
+---
+
+### PEND-204
+**`normalizarDestino` descarta o destino em silencio — e derrubou o primeiro convite real**
+Bloco: **B · Ayla** · Prioridade: **P2**
+STATUS: **allowlist CORRIGIDA em 2026-09-14; o RASTRO segue ABERTO** · Aberta em: 2026-09-14
+
+`destinoDoConvite` monta `/kolo-vivo?dominio=x`; `criarLinkAcesso` passa por
+`normalizarDestino`, cuja allowlist **nunca conheceu `/kolo-vivo`**. Sem
+allowlist e sem FALLBACK de area, o destino virou `DESTINO_PADRAO` — `/painel`.
+
+**O CASO REAL.** Producao, 14/09 13:42:45. A mae leu *"posso conhecer um
+pouquinho melhor como {nome} se comunica"* e o link a levou ao painel.
+`acessos_app.next = '/painel'`, enquanto o evento `convite_perfil` registrava
+`dominio: "comunicacao"` e `link_gerado: true`. **Nenhum erro, nenhum log,
+nenhuma excecao: so o resultado errado.**
+
+**POR QUE AS PROTECOES NAO PEGARAM (§3.5).** Os dois lados estavam provados e
+nenhum teste os juntava: `convite-perfil.test.ts` provava que
+`destinoDoConvite` devolve `/kolo-vivo`; `destino-link.test.ts` provava que a
+allowlist barra o que nao conhece. A costura entre eles nao tinha dono.
+
+**CORRIGIDO:** `/kolo-vivo` na allowlist, FALLBACK de area, e um bloco de teste
+que percorre **todo** `DOMINIOS_OFERECIVEIS` pela costura — sabotagem executada,
+3 testes vermelhos sem a entrada.
+
+**O QUE SEGUE ABERTO — O RASTRO.** `normalizarDestino` continua rebaixando
+destino sem registrar nada. Todo destino futuro que a Ayla aprender a montar
+falha do mesmo jeito, em silencio, ate alguem ler `acessos_app` a mao.
+
+**CRITERIO DE CONCLUSAO:** rebaixamento de destino publica evento com o pedido
+e o entregue, e a diferenca fica consultavel sem leitura manual de tabela.
+
+**RELACOES.** [[pend-203]] (a frente que o defeito atingiu).
+
+---
+
+### PEND-205
+**`perfil-marcos.test.ts` #11 apodrece com o relogio — `main` esta VERMELHA**
+Bloco: **B · Ayla** · Prioridade: **P3**
+STATUS: **ABERTA — achado fora do escopo, NAO corrigido** · Aberta em: 2026-09-14
+
+`marcosRecentes` tem `agora: Date = new Date()` e janela de 30 dias. O teste 11
+fixa o marco em `2026-08-15` e **nao passa `agora`**, entao usa o relogio real.
+Em 14/09 o marco saiu da janela e o teste virou vermelho sozinho.
+
+**NAO E DEFEITO DE PRODUTO.** O teste 10, ao lado, passa `HOJE` explicito e
+segue verde. Confirmado em `main` limpa (`1163871`), sem alteracao no working
+tree: **1 failed | 3969 passed | 7 skipped**. Em 11/09 a suite fechava 3966/0.
+
+**CRITERIO DE CONCLUSAO:** o teste injeta `agora`, e uma varredura diz se outro
+teste da suite depende do relogio real.
+
+---
+
+### PEND-206
+**Custo do extrator unificado nao e medido — so a latencia**
+Bloco: **B · Ayla** · Prioridade: **P3**
+STATUS: **ABERTA — lacuna de observabilidade, NAO corrigida** · Aberta em: 2026-09-14
+
+`extrator_escreveu` publica `ms` (p50 2142 · p95 10656 · max 12410, pos-resposta,
+fora da espera da familia) e **nada de token ou custo**. Nao existe tabela de
+uso por chamada (`uso_api`, `uso_modelo`, `llm_chamadas`, `custos_api` — todas
+ausentes no banco de producao, conferido em 14/09).
+
+Com `KOLO_EXTRATOR_ESCRITA=todas` isso e uma chamada de modelo **por turno de
+toda familia**: 64 turnos em 62h. A pergunta "quanto custa a Fase 2?" hoje nao
+tem resposta medida — so estimada.
+
+**CRITERIO DE CONCLUSAO:** o custo por turno do extrator e consultavel sem
+estimativa.
+
+**RELACOES.** [[pend-194]].
+
+---
+
+**Proximo ID livre: PEND-207. *(024 e 025 reservadas por frentes ainda nao publicadas; PEND-202 reivindicada em commit e ainda sem ficha; 0076 e numero de MIGRACAO reservado — ver PEND-121.)***
 
 > Conferir contra `origin/main`, não contra o seu branch. Dois branches podem
 > reivindicar o mesmo número — o conflito de merge nesta linha é o alarme.
