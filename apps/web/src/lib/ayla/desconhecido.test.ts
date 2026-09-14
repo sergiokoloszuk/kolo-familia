@@ -18,7 +18,8 @@ vi.mock("./whatsappSender", () => ({ enviarTexto: (p: unknown) => enviarTexto(p)
 const logEvent = vi.fn<(e: unknown) => Promise<void>>(async () => {});
 vi.mock("@/lib/log", () => ({ logEvent: (e: unknown) => logEvent(e) }));
 
-const { atenderDesconhecido, textoParaDesconhecido, pareceCelularPessoal } = await import("./desconhecido");
+const { atenderDesconhecido, textoParaDesconhecido, pareceCelularPessoal, ehTelefoneDeVerdade } =
+  await import("./desconhecido");
 
 /** Supabase falso: `respondidos` simula eventos de resposta já registrados. */
 function bancoFalso(respondidos: number, erro = false) {
@@ -252,5 +253,87 @@ describe("a mensagem", () => {
 
   it("cabe no WhatsApp", () => {
     expect(texto.split(/\s+/).length).toBeLessThan(70);
+  });
+});
+
+/**
+ * O LID DO WHATSAPP — O FALSO "NÃO ENCONTREI CADASTRO". 14/09/2026.
+ *
+ * ⚠️ O DEFEITO NÃO ERA DE CÓPIA E NÃO ERA DE BANCO. A consulta funcionava, não
+ * havia erro, não havia truncamento (190 famílias contra um teto de 2000). O
+ * que chegava era um identificador que NÃO É TELEFONE — o LID que o WhatsApp
+ * passou a entregar para parte dos remetentes — e `chaveTelefoneBR`, ao
+ * descartar os não-dígitos, apagava a única pista de que aquilo não era um
+ * número. A partir daí tudo funcionava "corretamente" até a conclusão errada.
+ *
+ * Provado em produção: Barbara conversava com a Ayla sobre o filho se bater e,
+ * seis minutos depois, recebeu duas vezes "Ainda não encontrei um cadastro com
+ * este número".
+ */
+describe("identificador que não é telefone nunca recebe o convite de cadastro", () => {
+  it("L1. LID do WhatsApp não é telefone de verdade", () => {
+    expect(ehTelefoneDeVerdade("+147390476623892@lid")).toBe(false);
+    expect(ehTelefoneDeVerdade("86638231335067@lid")).toBe(false);
+    expect(ehTelefoneDeVerdade("+213293075533927@lid")).toBe(false);
+  });
+
+  it("L2. grupo e lista de transmissão também não são", () => {
+    expect(ehTelefoneDeVerdade("120363041234567890@g.us")).toBe(false);
+    expect(ehTelefoneDeVerdade("status@broadcast")).toBe(false);
+  });
+
+  it("L3. MORDE ONDE DOÍA: o LID de 15 dígitos passava pela guarda antiga", () => {
+    // A guarda antiga contava dígitos DEPOIS de limpar — 15 dígitos, dentro da
+    // faixa, e o convite saía. É exatamente este caso que produziu o incidente.
+    const lid = "+147390476623892@lid";
+    expect(lid.replace(/\D/g, "").length).toBe(15); // passava no teto antigo
+    expect(pareceCelularPessoal(lid)).toBe(false); // e agora não passa
+  });
+
+  it("L4. telefone BR de verdade continua passando — com e sem +55", () => {
+    for (const t of ["+5511994770067", "5511994770067", "+55 (11) 99477-0067", "11994770067"]) {
+      expect(ehTelefoneDeVerdade(t), t).toBe(true);
+      expect(pareceCelularPessoal(t), t).toBe(true);
+    }
+  });
+
+  it("L5. o nono dígito e a formatação não mudam nada", () => {
+    expect(pareceCelularPessoal("+551194770067")).toBe(true); // sem o 9
+    expect(pareceCelularPessoal("+55 11 9477-0067")).toBe(true);
+  });
+
+  it("L6. telefone internacional legítimo continua passando", () => {
+    expect(pareceCelularPessoal("+351912345678")).toBe(true);
+    expect(pareceCelularPessoal("+14155552671")).toBe(true);
+  });
+
+  it("L7. vazio, letras e lixo não passam", () => {
+    for (const t of ["", "   ", "abc", "+55abc11", null, undefined]) {
+      expect(ehTelefoneDeVerdade(t as string), String(t)).toBe(false);
+    }
+  });
+
+  it("L8. o convite NÃO é enviado para um LID — e a perda fica registrada", async () => {
+    const r = await atenderDesconhecido(bancoFalso(0), {
+      phoneE164: "+86638231335067@lid",
+      texto: "Quero ajudar ele a se comunicar melhor quando fica frustrado",
+    });
+    expect(r.respondido).toBe(false);
+    expect(r.motivo).toBe("nao_e_pessoal");
+    // o contato continua registrado — a medição não pode sumir junto
+    expect(r.registrado).toBe(true);
+    expect(enviarTexto).not.toHaveBeenCalled();
+    // ⚠️ SILÊNCIO SEM REGISTRO TROCARIA UM DEFEITO VISÍVEL POR UM INVISÍVEL.
+    // Enquanto o LID não for resolvido, cada linha destas é uma mãe sem resposta.
+    const perda = primeiro("ayla_identificador_nao_telefone");
+    expect((perda.payload as Record<string, unknown>).sufixo).toBe("lid");
+    expect(perda.severity).toBe("error");
+  });
+
+  it("L9. o telefone de verdade continua recebendo o convite — caso I do §12", async () => {
+    const r = await atenderDesconhecido(bancoFalso(0), INBOUND);
+    expect(r.respondido).toBe(true);
+    expect(enviarTexto).toHaveBeenCalledTimes(1);
+    expect(doKind("ayla_identificador_nao_telefone")).toHaveLength(0);
   });
 });

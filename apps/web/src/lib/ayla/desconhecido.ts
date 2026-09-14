@@ -122,8 +122,55 @@ function linkDeCadastro(): string {
  * aconteceu é o que permite decidir depois.
  */
 export function pareceCelularPessoal(phoneE164: string | null | undefined): boolean {
-  const digitos = (phoneE164 ?? "").replace(/\D/g, "");
+  const bruto = (phoneE164 ?? "").trim();
+  if (!ehTelefoneDeVerdade(bruto)) return false;
+  const digitos = bruto.replace(/\D/g, "");
   return digitos.length >= 8 && digitos.length <= 15;
+}
+
+/**
+ * ISTO É UM NÚMERO DE TELEFONE, OU OUTRA COISA QUE O WHATSAPP CHAMA DE "phone"?
+ *
+ * ⚠️ ESTA FUNÇÃO NASCEU DE UM DEFEITO EM PRODUÇÃO, 14/09/2026, E ELE ERA GRAVE.
+ *
+ * O WhatsApp passou a entregar, para parte dos remetentes, um LID
+ * (`<digitos>@lid`) no lugar do telefone — é o identificador da era de
+ * privacidade da Meta, e `parseZapiWebhook` o copia para `phoneE164` com um
+ * "+" na frente. `chaveTelefoneBR` então **descarta os não-dígitos**, o `@lid`
+ * evapora, e sobra uma chave de 14–15 dígitos que não casa com família
+ * nenhuma. A consulta funciona, ninguém erra, e o sistema conclui que uma
+ * família cadastrada não existe.
+ *
+ * A guarda antiga não pegava isso porque contava dígitos DEPOIS de limpar: um
+ * LID de 15 dígitos passava exatamente como um telefone internacional.
+ *
+ * ⚠️ O CASO REAL. 14/09, 13:38. Barbara conversava com a Ayla havia 25 minutos
+ * sobre o filho; às 13:32 ela relatou que o menino estava se batendo. Às
+ * 13:38:13 e 13:38:44, no meio dessa conversa, duas mensagens dela chegaram com
+ * LID e ela recebeu: *"Ainda não encontrei um cadastro com este número"*. Duas
+ * vezes. Antes disso, em 19 e 21/08, outra mãe — que escreveu literalmente
+ * *"Ayla eu tenho um cadastro criado uma conta"* — perdeu cinco mensagens pelo
+ * mesmo caminho.
+ *
+ * MEDIDO em `eventos_app`: 7 mensagens de família perdidas e 3 falsos
+ * "não encontrei cadastro" enviados, em 3 identificadores distintos — 6 eventos
+ * em agosto e 4 na primeira metade de setembro. Está crescendo, porque a
+ * migração do WhatsApp para LID é progressiva.
+ *
+ * ⚠️ ESTE PATCH NÃO RESOLVE O PROBLEMA INTEIRO, e isso precisa estar escrito: a
+ * mensagem da família continua sem resposta, porque o LID não diz quem ela é.
+ * O que ele impede é o PIOR dos dois danos — afirmar a uma família cadastrada,
+ * em texto, que ela não existe. Silêncio é recuperável; a afirmação falsa, num
+ * momento como o da Barbara, não é.
+ *
+ * O critério é o formato BRUTO, antes de qualquer limpeza: telefone tem dígitos,
+ * "+", espaço, hífen e parênteses. `@` (LID, `@g.us` de grupo, `@broadcast`) e
+ * letras não são telefone.
+ */
+export function ehTelefoneDeVerdade(identificador: string | null | undefined): boolean {
+  const s = (identificador ?? "").trim();
+  if (!s) return false;
+  return /^\+?[\d\s().-]+$/.test(s);
 }
 
 /**
@@ -213,8 +260,28 @@ export async function atenderDesconhecido(
 
   if (!habilitado()) return { registrado: true, respondido: false, motivo: "flag_desligada" };
 
-  // Grupo, lista de transmissão, id estranho — registra e não responde.
+  // Grupo, lista de transmissão, LID, id estranho — registra e não responde.
   if (!pareceCelularPessoal(inbound.phoneE164)) {
+    /**
+     * ⚠️ O EVENTO PRÓPRIO EXISTE PARA DESTRAVAR A CORREÇÃO DE VERDADE.
+     *
+     * Silenciar o falso "não encontrei cadastro" para o alívio imediato, e
+     * ficar sem saber quantas famílias estão mudas, seria trocar um defeito
+     * visível por um invisível. Enquanto o LID não for resolvido para a
+     * família, CADA linha destas é uma mãe que escreveu e não teve resposta —
+     * e o número precisa estar à vista para decidir a urgência do resto.
+     *
+     * Só o SUFIXO do identificador (`lid`, `g.us`, `broadcast`) e o tamanho: o
+     * suficiente para separar grupo de LID sem guardar o identificador de
+     * ninguém além do que o evento acima já registra.
+     */
+    const sufixo = (inbound.phoneE164 ?? "").split("@")[1] ?? "sem_arroba";
+    await logEvent({
+      kind: "ayla_identificador_nao_telefone",
+      severity: "error",
+      message: `inbound com identificador que não é telefone (${sufixo}) — família fica sem resposta`,
+      payload: { chave, sufixo, digitos: (inbound.phoneE164 ?? "").replace(/\D/g, "").length },
+    }).catch(() => {});
     return { registrado: true, respondido: false, motivo: "nao_e_pessoal" };
   }
 

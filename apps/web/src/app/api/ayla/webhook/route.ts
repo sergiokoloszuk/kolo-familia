@@ -39,6 +39,28 @@ export async function POST(request: NextRequest) {
   }
   console.log("[ayla webhook] raw payload:", JSON.stringify(payload).slice(0, 600));
 
+  /**
+   * ⚠️ AS CHAVES DO PAYLOAD, QUANDO O REMETENTE VEM COMO LID — 14/09/2026.
+   *
+   * O `console.log` acima trunca em 600 caracteres e morre com a retenção da
+   * Vercel. Para consertar o LID de verdade é preciso saber SE a Z-API manda o
+   * telefone real em algum outro campo — e essa pergunta não tinha como ser
+   * respondida sem olhar um payload ao vivo no minuto certo.
+   *
+   * Aqui vão só os NOMES dos campos de primeiro nível. Nenhum valor: nome de
+   * campo é forma do protocolo, não dado de ninguém.
+   */
+  const identificador =
+    (typeof (payload as Record<string, unknown>)?.phone === "string"
+      ? ((payload as Record<string, unknown>).phone as string)
+      : "") || "";
+  if (identificador.includes("@")) {
+    console.error(
+      "[ayla webhook] IDENTIFICADOR NÃO-TELEFONE — campos do payload:",
+      JSON.stringify(Object.keys(payload as Record<string, unknown>)),
+    );
+  }
+
   const inbound = parseZapiWebhook(payload);
   if (!inbound) {
     console.log("[ayla webhook] parser retornou null — skipped");
