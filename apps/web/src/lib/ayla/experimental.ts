@@ -38,6 +38,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { idadeAnos } from "@/lib/idade";
 import { gerarConversacional, MODELO_CONVERSA } from "@/lib/ia/provider";
+import { BLOCO_DNA } from "@/lib/conducao/dna-especialistas";
 import { apurarEstadoDoTurno, blocoDeEstado } from "@/lib/conducao/estado-do-turno";
 import { fronteiraAtravessada } from "@/lib/conducao/fronteiras";
 import {
@@ -1224,6 +1225,38 @@ export async function responderExperimental(
         bloco,
         jornada,
         conducaoTrial,
+        /**
+         * ⚠️ O DNA DOS ESPECIALISTAS — PEND-207, 14/09/2026.
+         *
+         * Entre o contexto e o repertório, e é a posição exata em que a arena
+         * de valor o mediu. O Core diz COMO pensar; o contexto diz SOBRE QUEM;
+         * este bloco diz como transformar as duas coisas numa resposta que
+         * serve — e por isso não pode ficar depois do material de consulta.
+         *
+         * ⚠️ DE ONDE ELE VEIO. `specialist_prompt_templates` tem 14
+         * especialistas, e `lib/ia/prompt.ts` injeta o Objetivo/Tom/Escopo/
+         * Limites deles no prompt da WEB há muito tempo. Este caminho, que
+         * atende TODAS as famílias no WhatsApp desde 17/08, nunca recebeu nada
+         * disso: `catalogo-skills.ts` lê da mesma tabela só `name` e
+         * `routing_keywords`, para classificar. A inteligência existia e
+         * alcançava o canal menor.
+         *
+         * ⚠️ MEDIDO, NÃO SUPOSTO. Arena de 6 braços, 270 gerações, 270
+         * julgamentos cegos por modelo diferente do gerador. Taxa de resposta
+         * de ALTO VALOR: 4% sem o bloco, 24% com ele. Obviedade 62% → 29%; uso
+         * do Perfil 36% → 62%; perseveração de segurança no multiturno 11% →
+         * 0%. Venceu em 3 de 3 rodadas e em 10 de 10 tipos de caso.
+         *
+         * ⚠️ E A PÓS E AS BOAS PRÁTICAS FICARAM DE FORA PORQUE NÃO GANHARAM:
+         * +Pós isolada fez 2%, +BP isolada 2%, e as três juntas 11% — 13 pontos
+         * ABAIXO do DNA sozinho. O ganho inteiro está nesta string.
+         *
+         * ⚠️ FORA DO PÓS-TRIAL, e isso é limite do que foi medido: naquele modo
+         * o objetivo da conversa é outro (condução comercial, sem repertório) e
+         * a arena não o testou. Injetar aqui uma instrução de entrega mudaria
+         * uma conversa que ninguém mediu.
+         */
+        posTrial ? "" : BLOCO_DNA,
         repertorio,
         conducaoPosTrial,
         comercial,
