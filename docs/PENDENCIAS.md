@@ -9773,7 +9773,89 @@ em bancada de qualidade — nao em custo isolado.
 
 ---
 
-**Proximo ID livre: PEND-207. *(024 e 025 reservadas por frentes ainda nao publicadas; PEND-202 reivindicada em commit e ainda sem ficha; 0076 e numero de MIGRACAO reservado — ver PEND-121.)***
+### PEND-207
+**O DNA dos especialistas no WhatsApp — o unico componente que a arena provou**
+Bloco: **B · Ayla** · Prioridade: **P1**
+STATUS: **EM PRODUCAO desde 2026-09-14 22:16 (SHA `c817c94`)** · Aberta em: 2026-09-14
+
+`specialist_prompt_templates` tem 14 especialistas (13 ativos). `lib/ia/prompt.ts`
+injeta Objetivo/Tom/Escopo/Limites deles no prompt da WEB ha muito tempo. O
+caminho experimental — que atende TODAS as familias no WhatsApp desde 17/08 —
+nunca recebeu nada disso: `catalogo-skills.ts` le da MESMA tabela so `name` e
+`routing_keywords`, para classificar. A inteligencia existia e alcancava o canal
+menor.
+
+**MEDIDO EM ARENA DE 6 BRACOS**, 270 geracoes, 270 julgamentos cegos por modelo
+diferente do gerador:
+
+| | A atual | +Pos | +BP | +Pos+BP | **+DNA** | +tudo |
+|---|---|---|---|---|---|---|
+| alto valor (nivel 3) | 4% | 2% | 2% | 2% | **24%** | 11% |
+| obviedade | 62% | 49% | 64% | 56% | **29%** | 38% |
+| usou o Perfil | 36% | 49% | 33% | 44% | **62%** | 60% |
+| "pagaria" | 24% | 42% | 27% | 33% | **62%** | 47% |
+
+Venceu em 3 de 3 rodadas e em 10 de 10 tipos de caso. +7,7% de custo, +780ms.
+Perseveracao de seguranca no multiturno: 11% → **0%**.
+
+**A POS E AS BOAS PRATICAS NAO GANHARAM** — e a Pos DERRUBA 13pp quando somada
+ao DNA. O ganho inteiro esta numa string de 1.791 caracteres.
+
+**IMPLEMENTACAO:** duas linhas funcionais em `experimental.ts` (um import e
+`posTrial ? "" : BLOCO_DNA` no array do `system`), entre contexto e repertorio —
+a posicao exata em que foi medido. Fora do pos-trial, porque a arena nao testou
+aquele modo. Bloco byte a byte o da bancada (md5 `ee48f1e2`).
+
+**CRITERIO DE CONCLUSAO:** smoke em producao com os 4 tipos (estrategia, social/
+foco, sequencia com seguranca ja esclarecida, pedido de atividade) mostrando uso
+do Perfil e queda de genericidade. **PENDENTE** — sem trafego no SHA novo ate
+22:20 de 14/09.
+
+**RELACOES.** [[pend-208]] (o que ele NAO resolveu).
+
+---
+
+### PEND-208
+**O repertorio criativo continua obvio — nenhum braco resolveu a brincadeira**
+Bloco: **B · Ayla** · Prioridade: **P1**
+STATUS: **ABERTA — medida, nao corrigida** · Aberta em: 2026-09-14
+
+⚠️ **ESTA FICHA EXISTE PARA QUE O GANHO DA PEND-207 NAO SEJA LIDO COMO VITORIA
+COMPLETA.** O DNA subiu alto valor de 4% para 24%. O teto e 24%: **tres em cada
+quatro respostas do MELHOR braco ainda sao "corretas e comuns"** — o nivel 1 da
+regua, que e o que qualquer busca devolveria.
+
+E no caso decisivo — pedido explicito de brincadeira — **o braco vencedor fez 0%
+de alto valor**. A entrega acontece (100% DELIVER em todos os bracos, 0% de
+pergunta-em-vez-de-entrega), mas a IDEIA entregue continua sendo a obvia.
+
+**O CASO LITERAL.** Perfil com hiperfoco "jogos", mae pede "me da uma brincadeira
+pra fazer com ele agora". O braco atual entregou "desenho maluco em dupla"; o
+braco com as tres camadas entregou "missao do objeto impossivel". As duas sao
+brincadeiras honestas e nenhuma das duas e *daquela crianca*.
+
+**E O INTERESSE NAO E O ATALHO.** O braco vencedor usou linguagem de jogos em
+27% dos casos daquela crianca — MENOS que os bracos com Boas Praticas (60%) — e
+mesmo assim pontuou mais alto. Trocar o nome do interesse nao produz valor; o
+interesse precisa mudar o DESENHO da atividade, e nenhum braco fez isso.
+
+**A PERGUNTA ABERTA, e ela e a proxima frente:** por que a base de Boas Praticas
+(381 linhas em producao, ~4.000 chars por turno chegando ao prompt) NAO agregou
+valor — +BP isolada fez 2% de alto valor contra 4% do braco sem ela. O acervo
+chega e nao vira repertorio melhor. Suspeita registrada e NAO investigada: a
+recuperacao devolve BPs fracas para o caso (num dos turnos, "Amizade nessa idade
+e laboratorio" para uma mae exausta; "Incentivo a leitura diversificada" para um
+turno de autoagressao).
+
+**CRITERIO DE CONCLUSAO:** taxa de alto valor acima de 50% nos casos de pedido
+explicito de brincadeira/atividade, com o interesse da crianca alterando o
+desenho da atividade — nao so o nome.
+
+**RELACOES.** [[pend-207]] (o que ganhou), [[pend-194]].
+
+---
+
+**Proximo ID livre: PEND-209. *(024 e 025 reservadas por frentes ainda nao publicadas; PEND-202 reivindicada em commit e ainda sem ficha; 0076 e numero de MIGRACAO reservado — ver PEND-121.)***
 
 > Conferir contra `origin/main`, não contra o seu branch. Dois branches podem
 > reivindicar o mesmo número — o conflito de merge nesta linha é o alarme.
