@@ -1,0 +1,542 @@
+{
+  "data": "2026-09-24T16:10:20.307Z",
+  "fase": "ANTES",
+  "criterioNorte": {
+    "fonte": "AYLA_KOLO_FAMILIA_PROMPT_MESTRE.pdf (transcrição fiel versionada em docs/documentos-ayla/prompt-mestre-agencia-v1.md)",
+    "regraFinal": "A Ayla da Kolo Família entendeu o que está acontecendo e me mostrou algo que eu consigo fazer.",
+    "aceiteObrigatorio": [
+      "Entendeu o problema atual?",
+      "Usou o que já sabia da criança quando disponível?",
+      "Ajudou antes de investigar?",
+      "Fez no máximo uma pergunta realmente decisiva?",
+      "A resposta ficou curta/conversacional?",
+      "O conhecimento técnico ficou por trás?",
+      "Houve uma ação concreta que a família consegue testar?",
+      "A resposta abriu naturalmente o próximo passo?",
+      "Evitou repetir algo já conhecido?",
+      "A mudança da Pós alterou uma decisão útil, e não apenas a redação?"
+    ]
+  },
+  "ambiente": {
+    "familia": "sintética",
+    "idade": 6,
+    "persistencia": false,
+    "whatsapp": false,
+    "banco": "somente leitura para Core, catálogo e BPs",
+    "provider": "real"
+  },
+  "casos": [
+    {
+      "id": "comunicacao",
+      "mensagem": "Ele me puxa pela mão quando quer alguma coisa.",
+      "nivelSeguranca": 1,
+      "decisao": {
+        "intencao": "outro",
+        "tema": "comunicação para pedir o que quer",
+        "aceite": null,
+        "skills": [
+          "comunicacao"
+        ],
+        "skillsAvaliadas": true,
+        "pedidoExplicito": false,
+        "continuacao": false,
+        "naturezaEmocional": "neutra",
+        "pediuParaContar": false,
+        "necessidadeConhecimento": "nenhum",
+        "temaConhecimento": null,
+        "origem": "gpt"
+      },
+      "repertorio": [
+        {
+          "id": "c753936d-9a74-488c-9333-2c1d3657ad76",
+          "titulo": "Quando dois crianças têm conflito: 'Você quer o carro. Ele…"
+        },
+        {
+          "id": "854864cc-4189-4e77-bb7e-89498ff70193",
+          "titulo": "Aviso prévio de 5 minutos com linguagem concreta"
+        }
+      ],
+      "resposta": "Quando ele puxar sua mão, acompanhe até o que ele quer, mas transforme o gesto em comunicação: diga **“você quer o quê? Mostra”** e espere um pouco para ele apontar, olhar para o objeto ou tentar um som/palavra. Depois, nomeie: **“quer água”** e entregue. Assim, você não ignora o pedido e começa a ampliar a forma de ele pedir, sem exigir contato visual. Além de puxar, ele aponta ou usa alguma palavra para pedir?",
+      "metrica": {
+        "consultasBanco": 6,
+        "chamadasLLM": 1,
+        "tokensEntrada": 11004,
+        "tokensSaida": 319,
+        "msContexto": 14424,
+        "msModelo": 9710,
+        "msInspecao": 45,
+        "msTotal": 24180,
+        "modelo": "gpt-5.6-luna",
+        "provider": "openai",
+        "fronteiraBarrou": false,
+        "foco": "unica",
+        "nivelSeguranca": 1,
+        "natureza": "orientacao",
+        "coreOrigem": "admin",
+        "coreVersao": 11,
+        "bpRecuperadas": 2,
+        "bpInjetadas": 2,
+        "bpChars": 3886,
+        "msBp": 14414,
+        "jornada_dia": null,
+        "jornada_fechamento": false,
+        "jornada_chars": 0,
+        "trial_doc_chars": 0,
+        "modo": "normal",
+        "pos_trial_chars": 0,
+        "pos_trial_nivel": null,
+        "pos_trial_fatos": null,
+        "forma_modo": "off",
+        "forma_disparou": null,
+        "msParalelo": 14416,
+        "msCtx": 15,
+        "msCore": 2945,
+        "msTrial": 0,
+        "msOnda1": 2,
+        "msFoco": 3,
+        "msOnda3": 0
+      },
+      "falhas": [],
+      "chamadasModelo": 2,
+      "traceBps": [
+        {
+          "select": "id,titulo,versao_curta,versao_conversa,quando_usar,passos_praticos,skills_relacionadas,tags,peso_relevancia,faixa_etaria_min,faixa_etaria_max",
+          "url": "/rest/v1/boas_praticas?select=id%2Ctitulo%2Cversao_curta%2Cversao_conversa%2Cquando_usar%2Cpassos_praticos%2Cskills_relacionadas%2Ctags%2Cpeso_relevancia%2Cfaixa_etaria_min%2Cfaixa_etaria_max&status=in.%28ativo%29&or=%28skills_relacionadas.cs.%5B%22comunicacao%22%5D%29&order=peso_relevancia.desc&limit=200",
+          "rows": 66
+        },
+        {
+          "select": "id,titulo,versao_curta,versao_conversa,quando_usar,passos_praticos,skills_relacionadas,tags,peso_relevancia,faixa_etaria_min,faixa_etaria_max",
+          "url": "/rest/v1/boas_praticas?select=id%2Ctitulo%2Cversao_curta%2Cversao_conversa%2Cquando_usar%2Cpassos_praticos%2Cskills_relacionadas%2Ctags%2Cpeso_relevancia%2Cfaixa_etaria_min%2Cfaixa_etaria_max&status=in.%28ativo%29&or=%28skills_relacionadas.cs.%5B%22comunicacao%22%5D%29&order=peso_relevancia.desc&limit=200",
+          "rows": 66
+        }
+      ]
+    },
+    {
+      "id": "atividade",
+      "mensagem": "Ela não quer fazer nenhuma atividade.",
+      "nivelSeguranca": 1,
+      "decisao": {
+        "intencao": "outro",
+        "tema": "recusa de atividades",
+        "aceite": null,
+        "skills": [
+          "foco"
+        ],
+        "skillsAvaliadas": true,
+        "pedidoExplicito": false,
+        "continuacao": false,
+        "naturezaEmocional": "neutra",
+        "pediuParaContar": false,
+        "necessidadeConhecimento": "nenhum",
+        "temaConhecimento": null,
+        "origem": "gpt"
+      },
+      "repertorio": [
+        {
+          "id": "99c86175-4ba2-4f50-9e4c-8e985ebe6fbb",
+          "titulo": "O cérebro tem andares: tronco cerebral (sobrevivência), sistema límbico (emoção),…"
+        },
+        {
+          "id": "361bbf6f-4fc8-4a6a-8c87-0ee1bcb2f511",
+          "titulo": "Criança que brinca livremente (não dirigida) aprende mais sobre si…"
+        }
+      ],
+      "resposta": "Entendo. Hoje, não tente fazer a atividade inteira: ofereça **duas opções** e um começo de menos de 1 minuto, como “você escolhe qual fazer primeiro; eu começo com você”. Compare se ele se aproxima mais quando a tarefa fica bem curta e ele pode escolher. Se melhorar, o tamanho ou a forma de iniciar pode estar pesando; se não mudar, vale entender melhor o que está tornando as atividades difíceis. Ele também recusa quando a atividade é escolhida por ele, ou principalmente quando é proposta por um adulto?",
+      "metrica": {
+        "consultasBanco": 6,
+        "chamadasLLM": 1,
+        "tokensEntrada": 11225,
+        "tokensSaida": 484,
+        "msContexto": 17949,
+        "msModelo": 11205,
+        "msInspecao": 13,
+        "msTotal": 29167,
+        "modelo": "gpt-5.6-luna",
+        "provider": "openai",
+        "fronteiraBarrou": false,
+        "foco": "unica",
+        "nivelSeguranca": 1,
+        "natureza": "orientacao",
+        "coreOrigem": "admin",
+        "coreVersao": 11,
+        "bpRecuperadas": 2,
+        "bpInjetadas": 2,
+        "bpChars": 4777,
+        "msBp": 17945,
+        "jornada_dia": null,
+        "jornada_fechamento": false,
+        "jornada_chars": 0,
+        "trial_doc_chars": 0,
+        "modo": "normal",
+        "pos_trial_chars": 0,
+        "pos_trial_nivel": null,
+        "pos_trial_fatos": null,
+        "forma_modo": "off",
+        "forma_disparou": null,
+        "msParalelo": 17946,
+        "msCtx": 2,
+        "msCore": 0,
+        "msTrial": 0,
+        "msOnda1": 0,
+        "msFoco": 0,
+        "msOnda3": 0
+      },
+      "falhas": [],
+      "chamadasModelo": 2,
+      "traceBps": [
+        {
+          "select": "id,titulo,versao_curta,versao_conversa,quando_usar,passos_praticos,skills_relacionadas,tags,peso_relevancia,faixa_etaria_min,faixa_etaria_max",
+          "url": "/rest/v1/boas_praticas?select=id%2Ctitulo%2Cversao_curta%2Cversao_conversa%2Cquando_usar%2Cpassos_praticos%2Cskills_relacionadas%2Ctags%2Cpeso_relevancia%2Cfaixa_etaria_min%2Cfaixa_etaria_max&status=in.%28ativo%29&or=%28skills_relacionadas.cs.%5B%22foco%22%5D%29&order=peso_relevancia.desc&limit=200",
+          "rows": 35
+        },
+        {
+          "select": "id,titulo,versao_curta,versao_conversa,quando_usar,passos_praticos,skills_relacionadas,tags,peso_relevancia,faixa_etaria_min,faixa_etaria_max",
+          "url": "/rest/v1/boas_praticas?select=id%2Ctitulo%2Cversao_curta%2Cversao_conversa%2Cquando_usar%2Cpassos_praticos%2Cskills_relacionadas%2Ctags%2Cpeso_relevancia%2Cfaixa_etaria_min%2Cfaixa_etaria_max&status=in.%28ativo%29&or=%28skills_relacionadas.cs.%5B%22foco%22%5D%29&order=peso_relevancia.desc&limit=200",
+          "rows": 35
+        }
+      ]
+    },
+    {
+      "id": "sensorial_foco",
+      "mensagem": "No mercado ele corre e parece que nem me escuta.",
+      "nivelSeguranca": 1,
+      "decisao": {
+        "intencao": "outro",
+        "tema": "comportamento de correr no mercado e não responder aos chamados",
+        "aceite": null,
+        "skills": [
+          "foco",
+          "comunicacao"
+        ],
+        "skillsAvaliadas": true,
+        "pedidoExplicito": false,
+        "continuacao": false,
+        "naturezaEmocional": "neutra",
+        "pediuParaContar": false,
+        "necessidadeConhecimento": "nenhum",
+        "temaConhecimento": null,
+        "origem": "gpt"
+      },
+      "repertorio": [
+        {
+          "id": "0502c313-a25b-4fdb-9bc8-91283bc0cb9c",
+          "titulo": "Ouça com atenção quando seu filho fala — desligue o…"
+        },
+        {
+          "id": "99c86175-4ba2-4f50-9e4c-8e985ebe6fbb",
+          "titulo": "O cérebro tem andares: tronco cerebral (sobrevivência), sistema límbico (emoção),…"
+        }
+      ],
+      "resposta": "No mercado, **não conte só com chamar de longe**. Antes de entrar, combine uma frase curta, como “Leo, fica perto de mim e me ajuda a procurar três coisas”; mantenha-o ao seu lado e, se ele correr, aproxime-se para reconduzi-lo, em vez de repetir o chamado à distância. Veja se ele consegue permanecer perto por mais tempo; se sim, a regra e a tarefa podem estar ajudando. **Ele corre assim que entra ou depois de ver algum produto ou acontecer algo específico?**",
+      "metrica": {
+        "consultasBanco": 6,
+        "chamadasLLM": 1,
+        "tokensEntrada": 11140,
+        "tokensSaida": 531,
+        "msContexto": 17730,
+        "msModelo": 11098,
+        "msInspecao": 1,
+        "msTotal": 28830,
+        "modelo": "gpt-5.6-luna",
+        "provider": "openai",
+        "fronteiraBarrou": false,
+        "foco": "unica",
+        "nivelSeguranca": 1,
+        "natureza": "orientacao",
+        "coreOrigem": "admin",
+        "coreVersao": 11,
+        "bpRecuperadas": 2,
+        "bpInjetadas": 2,
+        "bpChars": 4500,
+        "msBp": 17730,
+        "jornada_dia": null,
+        "jornada_fechamento": false,
+        "jornada_chars": 0,
+        "trial_doc_chars": 0,
+        "modo": "normal",
+        "pos_trial_chars": 0,
+        "pos_trial_nivel": null,
+        "pos_trial_fatos": null,
+        "forma_modo": "off",
+        "forma_disparou": null,
+        "msParalelo": 17730,
+        "msCtx": 6,
+        "msCore": 4104,
+        "msTrial": 0,
+        "msOnda1": 0,
+        "msFoco": 3,
+        "msOnda3": 0
+      },
+      "falhas": [],
+      "chamadasModelo": 2,
+      "traceBps": [
+        {
+          "select": "id,titulo,versao_curta,versao_conversa,quando_usar,passos_praticos,skills_relacionadas,tags,peso_relevancia,faixa_etaria_min,faixa_etaria_max",
+          "url": "/rest/v1/boas_praticas?select=id%2Ctitulo%2Cversao_curta%2Cversao_conversa%2Cquando_usar%2Cpassos_praticos%2Cskills_relacionadas%2Ctags%2Cpeso_relevancia%2Cfaixa_etaria_min%2Cfaixa_etaria_max&status=in.%28ativo%29&or=%28skills_relacionadas.cs.%5B%22foco%22%5D%2Cskills_relacionadas.cs.%5B%22comunicacao%22%5D%29&order=peso_relevancia.desc&limit=200",
+          "rows": 99
+        },
+        {
+          "select": "id,titulo,versao_curta,versao_conversa,quando_usar,passos_praticos,skills_relacionadas,tags,peso_relevancia,faixa_etaria_min,faixa_etaria_max",
+          "url": "/rest/v1/boas_praticas?select=id%2Ctitulo%2Cversao_curta%2Cversao_conversa%2Cquando_usar%2Cpassos_praticos%2Cskills_relacionadas%2Ctags%2Cpeso_relevancia%2Cfaixa_etaria_min%2Cfaixa_etaria_max&status=in.%28ativo%29&or=%28skills_relacionadas.cs.%5B%22foco%22%5D%2Cskills_relacionadas.cs.%5B%22comunicacao%22%5D%29&order=peso_relevancia.desc&limit=200",
+          "rows": 99
+        }
+      ]
+    },
+    {
+      "id": "socializacao",
+      "mensagem": "Ela fica sozinha no recreio.",
+      "nivelSeguranca": 1,
+      "decisao": {
+        "intencao": "outro",
+        "tema": "socialização no recreio",
+        "aceite": null,
+        "skills": [
+          "socializacao"
+        ],
+        "skillsAvaliadas": true,
+        "pedidoExplicito": false,
+        "continuacao": false,
+        "naturezaEmocional": "neutra",
+        "pediuParaContar": false,
+        "necessidadeConhecimento": "nenhum",
+        "temaConhecimento": null,
+        "origem": "gpt"
+      },
+      "repertorio": [
+        {
+          "id": "f27c8188-b103-47c5-b130-9ccf1f4f7ef1",
+          "titulo": "Durante brincadeira com outro criança, observe e comente sem interromper:…"
+        },
+        {
+          "id": "adbc13a6-63ba-4bc4-9507-a97f16119461",
+          "titulo": "Você faz papel: 'Sou o médico, vou ouvir seu coração'.…"
+        }
+      ],
+      "resposta": "Entendi — ficar sozinho no recreio merece atenção, mas pode acontecer por motivos diferentes: ele pode não saber como entrar na brincadeira, não encontrar uma atividade em comum ou preferir ficar mais reservado. **Você está falando do Leo ou de outra criança?** Depois de esclarecer, posso sugerir um primeiro apoio bem concreto para o recreio.",
+      "metrica": {
+        "consultasBanco": 6,
+        "chamadasLLM": 1,
+        "tokensEntrada": 11087,
+        "tokensSaida": 251,
+        "msContexto": 14509,
+        "msModelo": 8747,
+        "msInspecao": 1,
+        "msTotal": 23257,
+        "modelo": "gpt-5.6-luna",
+        "provider": "openai",
+        "fronteiraBarrou": false,
+        "foco": "unica",
+        "nivelSeguranca": 1,
+        "natureza": "orientacao",
+        "coreOrigem": "admin",
+        "coreVersao": 11,
+        "bpRecuperadas": 2,
+        "bpInjetadas": 2,
+        "bpChars": 4361,
+        "msBp": 14509,
+        "jornada_dia": null,
+        "jornada_fechamento": false,
+        "jornada_chars": 0,
+        "trial_doc_chars": 0,
+        "modo": "normal",
+        "pos_trial_chars": 0,
+        "pos_trial_nivel": null,
+        "pos_trial_fatos": null,
+        "forma_modo": "off",
+        "forma_disparou": null,
+        "msParalelo": 14509,
+        "msCtx": 1,
+        "msCore": 0,
+        "msTrial": 0,
+        "msOnda1": 0,
+        "msFoco": 0,
+        "msOnda3": 0
+      },
+      "falhas": [],
+      "chamadasModelo": 2,
+      "traceBps": [
+        {
+          "select": "id,titulo,versao_curta,versao_conversa,quando_usar,passos_praticos,skills_relacionadas,tags,peso_relevancia,faixa_etaria_min,faixa_etaria_max",
+          "url": "/rest/v1/boas_praticas?select=id%2Ctitulo%2Cversao_curta%2Cversao_conversa%2Cquando_usar%2Cpassos_praticos%2Cskills_relacionadas%2Ctags%2Cpeso_relevancia%2Cfaixa_etaria_min%2Cfaixa_etaria_max&status=in.%28ativo%29&or=%28skills_relacionadas.cs.%5B%22socializacao%22%5D%29&order=peso_relevancia.desc&limit=200",
+          "rows": 42
+        },
+        {
+          "select": "id,titulo,versao_curta,versao_conversa,quando_usar,passos_praticos,skills_relacionadas,tags,peso_relevancia,faixa_etaria_min,faixa_etaria_max",
+          "url": "/rest/v1/boas_praticas?select=id%2Ctitulo%2Cversao_curta%2Cversao_conversa%2Cquando_usar%2Cpassos_praticos%2Cskills_relacionadas%2Ctags%2Cpeso_relevancia%2Cfaixa_etaria_min%2Cfaixa_etaria_max&status=in.%28ativo%29&or=%28skills_relacionadas.cs.%5B%22socializacao%22%5D%29&order=peso_relevancia.desc&limit=200",
+          "rows": 42
+        }
+      ]
+    },
+    {
+      "id": "brincadeira",
+      "mensagem": "Ele só gira a roda do carrinho e chora se eu tento brincar diferente.",
+      "nivelSeguranca": 1,
+      "decisao": {
+        "intencao": "outro",
+        "tema": "brincadeira repetitiva e resistência a mudanças na forma de brincar",
+        "aceite": null,
+        "skills": [
+          "rotina",
+          "emocional"
+        ],
+        "skillsAvaliadas": true,
+        "pedidoExplicito": false,
+        "continuacao": false,
+        "naturezaEmocional": "neutra",
+        "pediuParaContar": false,
+        "necessidadeConhecimento": "nenhum",
+        "temaConhecimento": null,
+        "origem": "gpt"
+      },
+      "repertorio": [
+        {
+          "id": "7e5c901c-02d0-46a4-8284-cc99e20b81cf",
+          "titulo": "Em crise emocional, conecte primeiro (cérebro direito), redirecione depois (cérebro…"
+        },
+        {
+          "id": "21a9fc7b-e719-4341-aa5b-6a1b09667f11",
+          "titulo": "Crianças pequenas não têm capacidade neurológica de se auto-regular."
+        }
+      ],
+      "resposta": "Comece pelo que o Leo já aceita: sente-se perto e gire a roda junto, sem tentar tirar o carrinho ou mudar a brincadeira de uma vez. Depois experimente **uma variação bem pequena**, como empurrar o carrinho só alguns centímetros e voltar para a roda; se ele chorar, retome o que estava funcionando e tente novamente em outro momento. Se ele tolerar um pouco mais antes de chorar, isso indica que esse tamanho de mudança pode ser um bom próximo passo; se não, vale reduzir ainda mais a variação.",
+      "metrica": {
+        "consultasBanco": 6,
+        "chamadasLLM": 1,
+        "tokensEntrada": 11221,
+        "tokensSaida": 362,
+        "msContexto": 19112,
+        "msModelo": 7129,
+        "msInspecao": 11,
+        "msTotal": 26252,
+        "modelo": "gpt-5.6-luna",
+        "provider": "openai",
+        "fronteiraBarrou": false,
+        "foco": "unica",
+        "nivelSeguranca": 1,
+        "natureza": "orientacao",
+        "coreOrigem": "admin",
+        "coreVersao": 11,
+        "bpRecuperadas": 2,
+        "bpInjetadas": 2,
+        "bpChars": 4828,
+        "msBp": 19112,
+        "jornada_dia": null,
+        "jornada_fechamento": false,
+        "jornada_chars": 0,
+        "trial_doc_chars": 0,
+        "modo": "normal",
+        "pos_trial_chars": 0,
+        "pos_trial_nivel": null,
+        "pos_trial_fatos": null,
+        "forma_modo": "off",
+        "forma_disparou": null,
+        "msParalelo": 19112,
+        "msCtx": 5,
+        "msCore": 4561,
+        "msTrial": 0,
+        "msOnda1": 0,
+        "msFoco": 0,
+        "msOnda3": 0
+      },
+      "falhas": [],
+      "chamadasModelo": 2,
+      "traceBps": [
+        {
+          "select": "id,titulo,versao_curta,versao_conversa,quando_usar,passos_praticos,skills_relacionadas,tags,peso_relevancia,faixa_etaria_min,faixa_etaria_max",
+          "url": "/rest/v1/boas_praticas?select=id%2Ctitulo%2Cversao_curta%2Cversao_conversa%2Cquando_usar%2Cpassos_praticos%2Cskills_relacionadas%2Ctags%2Cpeso_relevancia%2Cfaixa_etaria_min%2Cfaixa_etaria_max&status=in.%28ativo%29&or=%28skills_relacionadas.cs.%5B%22rotina%22%5D%2Cskills_relacionadas.cs.%5B%22emocional%22%5D%29&order=peso_relevancia.desc&limit=200",
+          "rows": 113
+        },
+        {
+          "select": "id,titulo,versao_curta,versao_conversa,quando_usar,passos_praticos,skills_relacionadas,tags,peso_relevancia,faixa_etaria_min,faixa_etaria_max",
+          "url": "/rest/v1/boas_praticas?select=id%2Ctitulo%2Cversao_curta%2Cversao_conversa%2Cquando_usar%2Cpassos_praticos%2Cskills_relacionadas%2Ctags%2Cpeso_relevancia%2Cfaixa_etaria_min%2Cfaixa_etaria_max&status=in.%28ativo%29&or=%28skills_relacionadas.cs.%5B%22rotina%22%5D%2Cskills_relacionadas.cs.%5B%22emocional%22%5D%29&order=peso_relevancia.desc&limit=200",
+          "rows": 113
+        }
+      ]
+    },
+    {
+      "id": "mudanca_abrupta",
+      "mensagem": "Ele começou a ficar muito irritado do nada essa semana.",
+      "nivelSeguranca": 1,
+      "decisao": {
+        "intencao": "outro",
+        "tema": "irritabilidade repentina",
+        "aceite": null,
+        "skills": [
+          "emocional"
+        ],
+        "skillsAvaliadas": true,
+        "pedidoExplicito": false,
+        "continuacao": false,
+        "naturezaEmocional": "neutra",
+        "pediuParaContar": false,
+        "necessidadeConhecimento": "nenhum",
+        "temaConhecimento": null,
+        "origem": "gpt"
+      },
+      "repertorio": [
+        {
+          "id": "f7f7a200-76d7-43d9-85e2-5a8f424a0001",
+          "titulo": "Sentimento intenso parece permanente, mas não é. 'Agora você está…"
+        },
+        {
+          "id": "382b2389-199b-4042-adbb-4128cdc34a2c",
+          "titulo": "Momentos de quietude estruturados (sem pressão para fazer nada) restauram…"
+        }
+      ],
+      "resposta": "Como isso começou de repente nesta semana, vale primeiro observar se apareceu junto com algum desconforto: dor, febre, prisão de ventre, sono diferente ou mudança no apetite. Hoje, reduza cobranças na hora em que ele ficar irritado, fale pouco e ofereça uma pausa; anote o que aconteceu logo antes e quanto tempo levou para ele se reorganizar. Se vier com dor importante, febre, muita sonolência ou uma mudança muito intensa do comportamento, procure avaliação profissional. Isso acontece mais em alguma situação específica ou ficou presente ao longo do dia?",
+      "metrica": {
+        "consultasBanco": 6,
+        "chamadasLLM": 1,
+        "tokensEntrada": 11246,
+        "tokensSaida": 353,
+        "msContexto": 17725,
+        "msModelo": 9196,
+        "msInspecao": 2,
+        "msTotal": 26923,
+        "modelo": "gpt-5.6-luna",
+        "provider": "openai",
+        "fronteiraBarrou": false,
+        "foco": "unica",
+        "nivelSeguranca": 1,
+        "natureza": "orientacao",
+        "coreOrigem": "admin",
+        "coreVersao": 11,
+        "bpRecuperadas": 2,
+        "bpInjetadas": 2,
+        "bpChars": 4932,
+        "msBp": 17725,
+        "jornada_dia": null,
+        "jornada_fechamento": false,
+        "jornada_chars": 0,
+        "trial_doc_chars": 0,
+        "modo": "normal",
+        "pos_trial_chars": 0,
+        "pos_trial_nivel": null,
+        "pos_trial_fatos": null,
+        "forma_modo": "off",
+        "forma_disparou": null,
+        "msParalelo": 17725,
+        "msCtx": 1,
+        "msCore": 0,
+        "msTrial": 0,
+        "msOnda1": 0,
+        "msFoco": 0,
+        "msOnda3": 0
+      },
+      "falhas": [],
+      "chamadasModelo": 2,
+      "traceBps": [
+        {
+          "select": "id,titulo,versao_curta,versao_conversa,quando_usar,passos_praticos,skills_relacionadas,tags,peso_relevancia,faixa_etaria_min,faixa_etaria_max",
+          "url": "/rest/v1/boas_praticas?select=id%2Ctitulo%2Cversao_curta%2Cversao_conversa%2Cquando_usar%2Cpassos_praticos%2Cskills_relacionadas%2Ctags%2Cpeso_relevancia%2Cfaixa_etaria_min%2Cfaixa_etaria_max&status=in.%28ativo%29&or=%28skills_relacionadas.cs.%5B%22emocional%22%5D%29&order=peso_relevancia.desc&limit=200",
+          "rows": 75
+        },
+        {
+          "select": "id,titulo,versao_curta,versao_conversa,quando_usar,passos_praticos,skills_relacionadas,tags,peso_relevancia,faixa_etaria_min,faixa_etaria_max",
+          "url": "/rest/v1/boas_praticas?select=id%2Ctitulo%2Cversao_curta%2Cversao_conversa%2Cquando_usar%2Cpassos_praticos%2Cskills_relacionadas%2Ctags%2Cpeso_relevancia%2Cfaixa_etaria_min%2Cfaixa_etaria_max&status=in.%28ativo%29&or=%28skills_relacionadas.cs.%5B%22emocional%22%5D%29&order=peso_relevancia.desc&limit=200",
+          "rows": 75
+        }
+      ]
+    }
+  ]
+}

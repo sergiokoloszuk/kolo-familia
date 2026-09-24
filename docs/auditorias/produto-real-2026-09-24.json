@@ -1,0 +1,2869 @@
+{
+  "gerado_em": "2026-09-24T16:00:55.298Z",
+  "periodo": {
+    "inicio": "2026-09-06T00:00:00.000Z",
+    "fim": "2026-09-24T16:00:55.298Z",
+    "motivo": "janela pós-ativação do Core v11"
+  },
+  "privacidade": "contas internas excluídas; IDs pseudonimizados; nomes, contatos, documentos e links redigidos",
+  "fontes": {
+    "mensagens_whatsapp": 1342,
+    "chamadas_api": 2769,
+    "mensagens_web": 72,
+    "familias_total": 344,
+    "familias_internas_excluidas": 3,
+    "feedbacks": 0,
+    "avaliacoes": 0
+  },
+  "producao": {
+    "documentos_ativos": [
+      {
+        "chave": "core",
+        "versao": 11,
+        "status": "ativo",
+        "publicado_em": "2026-09-05T20:58:42.794137+00:00",
+        "updated_at": "2026-09-05T20:58:42.948806+00:00"
+      },
+      {
+        "chave": "trial",
+        "versao": 5,
+        "status": "ativo",
+        "publicado_em": "2026-08-26T21:11:05.308+00:00",
+        "updated_at": "2026-08-26T21:11:06.504771+00:00"
+      }
+    ]
+  },
+  "trafego": {
+    "inbound": 472,
+    "outbound": 870,
+    "familias_com_inbound": 40,
+    "tipos_outbound": {
+      "resposta_registro": 443,
+      "rotina": 223,
+      "trial_d0": 51,
+      "boas_vindas": 43,
+      "trial_d3": 41,
+      "plano_seguimento": 17,
+      "crianca_especifica": 16,
+      "video_guia": 8,
+      "entrada_guiada": 8,
+      "perfil_nudge": 5,
+      "fim_de_semana": 4,
+      "pos_trial": 3,
+      "assinatura_nudge": 2,
+      "midia_nao_suportada": 2,
+      "rotina_conversa": 2,
+      "engajamento_2dias": 2
+    },
+    "categorias_outbound": {
+      "reativa": 465,
+      "proativa": 405
+    },
+    "features_api": {
+      "ayla_experimental": 415,
+      "ayla_parser_pos": 412,
+      "decisao_turno": 406,
+      "extrair_conhecimento": 321,
+      "ayla_espontanea": 305,
+      "ayla_dedup_diario": 280,
+      "classificar_area_diario": 219,
+      "rotina_card": 105,
+      "ayla_audio": 104,
+      "classificar_intencao": 42,
+      "conversa_web": 36,
+      "ayla_rotear_kv": 32,
+      "ayla_repertorio": 30,
+      "ayla_conflito_kv": 25,
+      "conversa_titulo": 13,
+      "rotina_roteiro": 10,
+      "rotina_mascote": 6,
+      "avatar_geracao": 6,
+      "avatar_vestir": 2
+    },
+    "modelos_api": {
+      "anthropic/claude-haiku-4-5": 1223,
+      "openai/gpt-5.6-luna": 857,
+      "anthropic/claude-sonnet-4-6": 466,
+      "openai/gpt-image-1": 119,
+      "openai/whisper-1": 104
+    },
+    "metadata_keys_outbound": {
+      "entrega": 870,
+      "lacuna_sugerida": 196,
+      "campo_investigado": 158,
+      "plano_id": 33,
+      "lacuna": 13
+    }
+  },
+  "continuidade": {
+    "familias_um_dia": 17,
+    "familias_dois_ou_mais_dias": 23,
+    "familias_cinco_ou_mais_dias": 2,
+    "outbound_maduro_72h": 695,
+    "respondeu_24h": 307,
+    "respondeu_24h_pct": 44.2,
+    "respondeu_72h": 308,
+    "respondeu_72h_pct": 44.3,
+    "comparacao_associativa": {
+      "com_resposta_24h": {
+        "n": 307,
+        "chars_mediana": 395,
+        "acima_700_pct": 16,
+        "com_pergunta_pct": 67.8,
+        "mais_de_uma_pergunta_pct": 17.9,
+        "com_cta_pct": 20.8,
+        "com_acao_pct": 31.6,
+        "com_frase_pronta_pct": 19.5,
+        "com_lista_pct": 4.6,
+        "com_termo_tecnico_pct": 3.9
+      },
+      "sem_resposta_72h": {
+        "n": 387,
+        "chars_mediana": 328,
+        "acima_700_pct": 9,
+        "com_pergunta_pct": 81.1,
+        "mais_de_uma_pergunta_pct": 32.6,
+        "com_cta_pct": 41.6,
+        "com_acao_pct": 17.1,
+        "com_frase_pronta_pct": 10.1,
+        "com_lista_pct": 7,
+        "com_termo_tecnico_pct": 0.3
+      },
+      "ressalva": "associação observacional; não prova que a forma da mensagem causou resposta ou silêncio"
+    },
+    "por_categoria": {
+      "reativa": {
+        "maduras": 354,
+        "respondeu_24h": 238,
+        "respondeu_24h_pct": 67.2,
+        "com_resposta_24h": {
+          "n": 238,
+          "chars_mediana": 407,
+          "acima_700_pct": 15.1,
+          "com_pergunta_pct": 60.5,
+          "mais_de_uma_pergunta_pct": 10.1,
+          "com_cta_pct": 11.3,
+          "com_acao_pct": 40.3,
+          "com_frase_pronta_pct": 23.5,
+          "com_lista_pct": 5.9,
+          "com_termo_tecnico_pct": 4.6
+        },
+        "sem_resposta_72h": {
+          "n": 116,
+          "chars_mediana": 407,
+          "acima_700_pct": 10.3,
+          "com_pergunta_pct": 58.6,
+          "mais_de_uma_pergunta_pct": 15.5,
+          "com_cta_pct": 2.6,
+          "com_acao_pct": 50.9,
+          "com_frase_pronta_pct": 31.9,
+          "com_lista_pct": 2.6,
+          "com_termo_tecnico_pct": 0
+        }
+      },
+      "proativa": {
+        "maduras": 341,
+        "respondeu_24h": 69,
+        "respondeu_24h_pct": 20.2,
+        "com_resposta_24h": {
+          "n": 69,
+          "chars_mediana": 272,
+          "acima_700_pct": 18.8,
+          "com_pergunta_pct": 92.8,
+          "mais_de_uma_pergunta_pct": 44.9,
+          "com_cta_pct": 53.6,
+          "com_acao_pct": 1.4,
+          "com_frase_pronta_pct": 5.8,
+          "com_lista_pct": 0,
+          "com_termo_tecnico_pct": 1.4
+        },
+        "sem_resposta_72h": {
+          "n": 271,
+          "chars_mediana": 293,
+          "acima_700_pct": 8.5,
+          "com_pergunta_pct": 90.8,
+          "mais_de_uma_pergunta_pct": 39.9,
+          "com_cta_pct": 58.3,
+          "com_acao_pct": 2.6,
+          "com_frase_pronta_pct": 0.7,
+          "com_lista_pct": 8.9,
+          "com_termo_tecnico_pct": 0.4
+        }
+      }
+    },
+    "por_tipo": {
+      "resposta_registro": {
+        "maduras": 334,
+        "respondeu_24h": 223,
+        "respondeu_24h_pct": 66.8,
+        "com_resposta_24h": {
+          "n": 223,
+          "chars_mediana": 415,
+          "acima_700_pct": 15.7,
+          "com_pergunta_pct": 59.2,
+          "mais_de_uma_pergunta_pct": 10.3,
+          "com_cta_pct": 6.7,
+          "com_acao_pct": 41.7,
+          "com_frase_pronta_pct": 25.1,
+          "com_lista_pct": 2.7,
+          "com_termo_tecnico_pct": 1.8
+        },
+        "sem_resposta_72h": {
+          "n": 111,
+          "chars_mediana": 407,
+          "acima_700_pct": 10.8,
+          "com_pergunta_pct": 57.7,
+          "mais_de_uma_pergunta_pct": 14.4,
+          "com_cta_pct": 1.8,
+          "com_acao_pct": 51.4,
+          "com_frase_pronta_pct": 31.5,
+          "com_lista_pct": 2.7,
+          "com_termo_tecnico_pct": 0
+        }
+      },
+      "rotina": {
+        "maduras": 185,
+        "respondeu_24h": 43,
+        "respondeu_24h_pct": 23.2,
+        "com_resposta_24h": {
+          "n": 43,
+          "chars_mediana": 221,
+          "acima_700_pct": 0,
+          "com_pergunta_pct": 100,
+          "mais_de_uma_pergunta_pct": 62.8,
+          "com_cta_pct": 37.2,
+          "com_acao_pct": 2.3,
+          "com_frase_pronta_pct": 2.3,
+          "com_lista_pct": 0,
+          "com_termo_tecnico_pct": 2.3
+        },
+        "sem_resposta_72h": {
+          "n": 141,
+          "chars_mediana": 296,
+          "acima_700_pct": 0.7,
+          "com_pergunta_pct": 97.2,
+          "mais_de_uma_pergunta_pct": 65.2,
+          "com_cta_pct": 31.2,
+          "com_acao_pct": 5,
+          "com_frase_pronta_pct": 0.7,
+          "com_lista_pct": 17,
+          "com_termo_tecnico_pct": 0.7
+        }
+      },
+      "trial_d0": {
+        "maduras": 42,
+        "respondeu_24h": 2,
+        "respondeu_24h_pct": 4.8,
+        "com_resposta_24h": {
+          "n": 2,
+          "chars_mediana": 293,
+          "acima_700_pct": 0,
+          "com_pergunta_pct": 100,
+          "mais_de_uma_pergunta_pct": 0,
+          "com_cta_pct": 100,
+          "com_acao_pct": 0,
+          "com_frase_pronta_pct": 0,
+          "com_lista_pct": 0,
+          "com_termo_tecnico_pct": 0
+        },
+        "sem_resposta_72h": {
+          "n": 40,
+          "chars_mediana": 277,
+          "acima_700_pct": 0,
+          "com_pergunta_pct": 100,
+          "mais_de_uma_pergunta_pct": 0,
+          "com_cta_pct": 100,
+          "com_acao_pct": 0,
+          "com_frase_pronta_pct": 0,
+          "com_lista_pct": 0,
+          "com_termo_tecnico_pct": 0
+        }
+      },
+      "boas_vindas": {
+        "maduras": 35,
+        "respondeu_24h": 13,
+        "respondeu_24h_pct": 37.1,
+        "com_resposta_24h": {
+          "n": 13,
+          "chars_mediana": 810,
+          "acima_700_pct": 100,
+          "com_pergunta_pct": 100,
+          "mais_de_uma_pergunta_pct": 0,
+          "com_cta_pct": 100,
+          "com_acao_pct": 0,
+          "com_frase_pronta_pct": 0,
+          "com_lista_pct": 0,
+          "com_termo_tecnico_pct": 0
+        },
+        "sem_resposta_72h": {
+          "n": 22,
+          "chars_mediana": 806,
+          "acima_700_pct": 100,
+          "com_pergunta_pct": 100,
+          "mais_de_uma_pergunta_pct": 0,
+          "com_cta_pct": 100,
+          "com_acao_pct": 0,
+          "com_frase_pronta_pct": 0,
+          "com_lista_pct": 0,
+          "com_termo_tecnico_pct": 0
+        }
+      },
+      "trial_d3": {
+        "maduras": 36,
+        "respondeu_24h": 5,
+        "respondeu_24h_pct": 13.9,
+        "com_resposta_24h": {
+          "n": 5,
+          "chars_mediana": 113,
+          "acima_700_pct": 0,
+          "com_pergunta_pct": 0,
+          "mais_de_uma_pergunta_pct": 0,
+          "com_cta_pct": 0,
+          "com_acao_pct": 0,
+          "com_frase_pronta_pct": 0,
+          "com_lista_pct": 0,
+          "com_termo_tecnico_pct": 0
+        },
+        "sem_resposta_72h": {
+          "n": 31,
+          "chars_mediana": 216,
+          "acima_700_pct": 0,
+          "com_pergunta_pct": 51.6,
+          "mais_de_uma_pergunta_pct": 0,
+          "com_cta_pct": 51.6,
+          "com_acao_pct": 0,
+          "com_frase_pronta_pct": 0,
+          "com_lista_pct": 0,
+          "com_termo_tecnico_pct": 0
+        }
+      },
+      "plano_seguimento": {
+        "maduras": 16,
+        "respondeu_24h": 1,
+        "respondeu_24h_pct": 6.3,
+        "com_resposta_24h": {
+          "n": 1,
+          "chars_mediana": 329,
+          "acima_700_pct": 0,
+          "com_pergunta_pct": 100,
+          "mais_de_uma_pergunta_pct": 100,
+          "com_cta_pct": 100,
+          "com_acao_pct": 0,
+          "com_frase_pronta_pct": 0,
+          "com_lista_pct": 0,
+          "com_termo_tecnico_pct": 0
+        },
+        "sem_resposta_72h": {
+          "n": 15,
+          "chars_mediana": 322,
+          "acima_700_pct": 0,
+          "com_pergunta_pct": 100,
+          "mais_de_uma_pergunta_pct": 100,
+          "com_cta_pct": 100,
+          "com_acao_pct": 0,
+          "com_frase_pronta_pct": 0,
+          "com_lista_pct": 0,
+          "com_termo_tecnico_pct": 0
+        }
+      },
+      "crianca_especifica": {
+        "maduras": 15,
+        "respondeu_24h": 1,
+        "respondeu_24h_pct": 6.7,
+        "com_resposta_24h": {
+          "n": 1,
+          "chars_mediana": 343,
+          "acima_700_pct": 0,
+          "com_pergunta_pct": 100,
+          "mais_de_uma_pergunta_pct": 0,
+          "com_cta_pct": 100,
+          "com_acao_pct": 0,
+          "com_frase_pronta_pct": 0,
+          "com_lista_pct": 0,
+          "com_termo_tecnico_pct": 0
+        },
+        "sem_resposta_72h": {
+          "n": 14,
+          "chars_mediana": 344,
+          "acima_700_pct": 0,
+          "com_pergunta_pct": 100,
+          "mais_de_uma_pergunta_pct": 0,
+          "com_cta_pct": 100,
+          "com_acao_pct": 0,
+          "com_frase_pronta_pct": 0,
+          "com_lista_pct": 0,
+          "com_termo_tecnico_pct": 0
+        }
+      },
+      "video_guia": {
+        "maduras": 6,
+        "respondeu_24h": 0,
+        "respondeu_24h_pct": 0,
+        "com_resposta_24h": {
+          "n": 0,
+          "chars_mediana": null,
+          "acima_700_pct": null,
+          "com_pergunta_pct": null,
+          "mais_de_uma_pergunta_pct": null,
+          "com_cta_pct": null,
+          "com_acao_pct": null,
+          "com_frase_pronta_pct": null,
+          "com_lista_pct": null,
+          "com_termo_tecnico_pct": null
+        },
+        "sem_resposta_72h": {
+          "n": 6,
+          "chars_mediana": 547,
+          "acima_700_pct": 0,
+          "com_pergunta_pct": 0,
+          "mais_de_uma_pergunta_pct": 0,
+          "com_cta_pct": 100,
+          "com_acao_pct": 0,
+          "com_frase_pronta_pct": 0,
+          "com_lista_pct": 0,
+          "com_termo_tecnico_pct": 0
+        }
+      },
+      "entrada_guiada": {
+        "maduras": 7,
+        "respondeu_24h": 7,
+        "respondeu_24h_pct": 100,
+        "com_resposta_24h": {
+          "n": 7,
+          "chars_mediana": 390,
+          "acima_700_pct": 0,
+          "com_pergunta_pct": 100,
+          "mais_de_uma_pergunta_pct": 0,
+          "com_cta_pct": 100,
+          "com_acao_pct": 0,
+          "com_frase_pronta_pct": 0,
+          "com_lista_pct": 100,
+          "com_termo_tecnico_pct": 100
+        },
+        "sem_resposta_72h": {
+          "n": 0,
+          "chars_mediana": null,
+          "acima_700_pct": null,
+          "com_pergunta_pct": null,
+          "mais_de_uma_pergunta_pct": null,
+          "com_cta_pct": null,
+          "com_acao_pct": null,
+          "com_frase_pronta_pct": null,
+          "com_lista_pct": null,
+          "com_termo_tecnico_pct": null
+        }
+      },
+      "perfil_nudge": {
+        "maduras": 5,
+        "respondeu_24h": 3,
+        "respondeu_24h_pct": 60,
+        "com_resposta_24h": {
+          "n": 3,
+          "chars_mediana": 536,
+          "acima_700_pct": 33.3,
+          "com_pergunta_pct": 100,
+          "mais_de_uma_pergunta_pct": 33.3,
+          "com_cta_pct": 66.7,
+          "com_acao_pct": 33.3,
+          "com_frase_pronta_pct": 0,
+          "com_lista_pct": 0,
+          "com_termo_tecnico_pct": 0
+        },
+        "sem_resposta_72h": {
+          "n": 2,
+          "chars_mediana": 632,
+          "acima_700_pct": 0,
+          "com_pergunta_pct": 100,
+          "mais_de_uma_pergunta_pct": 50,
+          "com_cta_pct": 50,
+          "com_acao_pct": 100,
+          "com_frase_pronta_pct": 50,
+          "com_lista_pct": 0,
+          "com_termo_tecnico_pct": 0
+        }
+      },
+      "fim_de_semana": {
+        "maduras": 4,
+        "respondeu_24h": 3,
+        "respondeu_24h_pct": 75,
+        "com_resposta_24h": {
+          "n": 3,
+          "chars_mediana": 296,
+          "acima_700_pct": 0,
+          "com_pergunta_pct": 100,
+          "mais_de_uma_pergunta_pct": 100,
+          "com_cta_pct": 100,
+          "com_acao_pct": 0,
+          "com_frase_pronta_pct": 100,
+          "com_lista_pct": 0,
+          "com_termo_tecnico_pct": 0
+        },
+        "sem_resposta_72h": {
+          "n": 1,
+          "chars_mediana": 318,
+          "acima_700_pct": 0,
+          "com_pergunta_pct": 100,
+          "mais_de_uma_pergunta_pct": 100,
+          "com_cta_pct": 100,
+          "com_acao_pct": 0,
+          "com_frase_pronta_pct": 100,
+          "com_lista_pct": 0,
+          "com_termo_tecnico_pct": 0
+        }
+      },
+      "pos_trial": {
+        "maduras": 3,
+        "respondeu_24h": 1,
+        "respondeu_24h_pct": 33.3,
+        "com_resposta_24h": {
+          "n": 1,
+          "chars_mediana": 123,
+          "acima_700_pct": 0,
+          "com_pergunta_pct": 0,
+          "mais_de_uma_pergunta_pct": 0,
+          "com_cta_pct": 0,
+          "com_acao_pct": 0,
+          "com_frase_pronta_pct": 0,
+          "com_lista_pct": 0,
+          "com_termo_tecnico_pct": 0
+        },
+        "sem_resposta_72h": {
+          "n": 2,
+          "chars_mediana": 91,
+          "acima_700_pct": 0,
+          "com_pergunta_pct": 50,
+          "mais_de_uma_pergunta_pct": 0,
+          "com_cta_pct": 0,
+          "com_acao_pct": 0,
+          "com_frase_pronta_pct": 0,
+          "com_lista_pct": 0,
+          "com_termo_tecnico_pct": 0
+        }
+      },
+      "assinatura_nudge": {
+        "maduras": 1,
+        "respondeu_24h": 0,
+        "respondeu_24h_pct": 0,
+        "com_resposta_24h": {
+          "n": 0,
+          "chars_mediana": null,
+          "acima_700_pct": null,
+          "com_pergunta_pct": null,
+          "mais_de_uma_pergunta_pct": null,
+          "com_cta_pct": null,
+          "com_acao_pct": null,
+          "com_frase_pronta_pct": null,
+          "com_lista_pct": null,
+          "com_termo_tecnico_pct": null
+        },
+        "sem_resposta_72h": {
+          "n": 1,
+          "chars_mediana": 451,
+          "acima_700_pct": 0,
+          "com_pergunta_pct": 100,
+          "mais_de_uma_pergunta_pct": 100,
+          "com_cta_pct": 0,
+          "com_acao_pct": 0,
+          "com_frase_pronta_pct": 100,
+          "com_lista_pct": 0,
+          "com_termo_tecnico_pct": 0
+        }
+      },
+      "midia_nao_suportada": {
+        "maduras": 2,
+        "respondeu_24h": 2,
+        "respondeu_24h_pct": 100,
+        "com_resposta_24h": {
+          "n": 2,
+          "chars_mediana": 177,
+          "acima_700_pct": 0,
+          "com_pergunta_pct": 0,
+          "mais_de_uma_pergunta_pct": 0,
+          "com_cta_pct": 100,
+          "com_acao_pct": 100,
+          "com_frase_pronta_pct": 0,
+          "com_lista_pct": 0,
+          "com_termo_tecnico_pct": 0
+        },
+        "sem_resposta_72h": {
+          "n": 0,
+          "chars_mediana": null,
+          "acima_700_pct": null,
+          "com_pergunta_pct": null,
+          "mais_de_uma_pergunta_pct": null,
+          "com_cta_pct": null,
+          "com_acao_pct": null,
+          "com_frase_pronta_pct": null,
+          "com_lista_pct": null,
+          "com_termo_tecnico_pct": null
+        }
+      },
+      "rotina_conversa": {
+        "maduras": 2,
+        "respondeu_24h": 2,
+        "respondeu_24h_pct": 100,
+        "com_resposta_24h": {
+          "n": 2,
+          "chars_mediana": 293,
+          "acima_700_pct": 0,
+          "com_pergunta_pct": 100,
+          "mais_de_uma_pergunta_pct": 0,
+          "com_cta_pct": 50,
+          "com_acao_pct": 0,
+          "com_frase_pronta_pct": 0,
+          "com_lista_pct": 50,
+          "com_termo_tecnico_pct": 0
+        },
+        "sem_resposta_72h": {
+          "n": 0,
+          "chars_mediana": null,
+          "acima_700_pct": null,
+          "com_pergunta_pct": null,
+          "mais_de_uma_pergunta_pct": null,
+          "com_cta_pct": null,
+          "com_acao_pct": null,
+          "com_frase_pronta_pct": null,
+          "com_lista_pct": null,
+          "com_termo_tecnico_pct": null
+        }
+      },
+      "engajamento_2dias": {
+        "maduras": 2,
+        "respondeu_24h": 1,
+        "respondeu_24h_pct": 50,
+        "com_resposta_24h": {
+          "n": 1,
+          "chars_mediana": 117,
+          "acima_700_pct": 0,
+          "com_pergunta_pct": 100,
+          "mais_de_uma_pergunta_pct": 0,
+          "com_cta_pct": 100,
+          "com_acao_pct": 0,
+          "com_frase_pronta_pct": 0,
+          "com_lista_pct": 0,
+          "com_termo_tecnico_pct": 0
+        },
+        "sem_resposta_72h": {
+          "n": 1,
+          "chars_mediana": 62,
+          "acima_700_pct": 0,
+          "com_pergunta_pct": 100,
+          "mais_de_uma_pergunta_pct": 0,
+          "com_cta_pct": 0,
+          "com_acao_pct": 0,
+          "com_frase_pronta_pct": 0,
+          "com_lista_pct": 0,
+          "com_termo_tecnico_pct": 0
+        }
+      }
+    },
+    "entradas_pedindo_como": 35,
+    "entradas_relato_de_resultado": 7
+  },
+  "trial": {
+    "familias_novas": 72,
+    "onboarding_concluido": 51,
+    "com_qualquer_inbound": 34,
+    "voltou_d1": 10,
+    "voltou_outro_dia": 21,
+    "voltou_outro_dia_pct_dos_que_conversaram": 61.8,
+    "d1_observavel": 45,
+    "voltou_d1_pct_observavel": 17.8,
+    "coorte_maturada_8_dias": 29,
+    "convertidos_na_coorte_maturada": 0,
+    "conversao_maturada_pct": 0,
+    "trial_valido_agora": 19,
+    "trial_expirado_agora": 32,
+    "status_atual": {
+      "trialing": 51,
+      "sem_linha": 21
+    },
+    "observacao": "status atual não prova conversão atribuível à conversa; famílias recentes ainda têm janela incompleta"
+  },
+  "recursos": {
+    "planos": {
+      "criados": 36,
+      "familias": 25,
+      "com_resultado": 1,
+      "notas": {}
+    },
+    "rotinas": {
+      "criados": 6,
+      "familias": 5,
+      "com_resultado": 4,
+      "notas": {}
+    },
+    "relatorios": {
+      "criados": 0,
+      "familias": 0
+    },
+    "web": {
+      "mensagens": 72,
+      "familias": 11,
+      "papeis": {
+        "user": 36,
+        "assistant": 36
+      },
+      "outputs": {
+        "(nulo)": 72
+      }
+    },
+    "perfil_vivo": {
+      "familias_com_perfil": 228,
+      "completude_mediana": 27
+    }
+  },
+  "conversas_representativas_candidatas": [
+    {
+      "tipo": "retorno_de_teste",
+      "familia": "F-1a5e3c09",
+      "demora_horas": 0,
+      "conversa": [
+        {
+          "direcao": "inbound",
+          "tipo": null,
+          "categoria": null,
+          "em": "2026-09-10T18:06:39.314625+00:00",
+          "texto": "No meu ponto de vista tdah da direito ao bpcloas"
+        },
+        {
+          "direcao": "outbound",
+          "tipo": "resposta_registro",
+          "categoria": "reativa",
+          "em": "2026-09-10T18:06:49.454806+00:00",
+          "texto": "Entendi. O [nome] consegue brincar, mas parece ter muita dificuldade quando perde ou precisa esperar a vez; correr também pode ser uma forma de se organizar, e isso sozinho não confirma autismo. Por enquanto, prefira brincadeiras sem competição: mostre fisicamente revezando “minha vez, sua vez” e faça turnos bem curtos. Se ele tentar bater, bloqueie com calma e diga apenas: **“Não vou deixar bater. Vamos fazer uma pausa.”** Depois que se acalmar, retome com uma situação fácil em que ele consiga esperar e terminar bem."
+        },
+        {
+          "direcao": "inbound",
+          "tipo": null,
+          "categoria": null,
+          "em": "2026-09-10T18:08:28.15203+00:00",
+          "texto": "Sim afeta precisar de mim ora tudo pra ir no banheiro e nao quer comer a comida tai fiz macarrão torrei o ovo delle e ele nao quiz comer de jeito nenhum"
+        },
+        {
+          "direcao": "outbound",
+          "tipo": "resposta_registro",
+          "categoria": "reativa",
+          "em": "2026-09-10T18:08:52.757923+00:00",
+          "texto": "Entendi, [nome]. Isso mostra que o [nome] precisa de bastante ajuda na autonomia, mas a recusa de um prato específico não significa que ele não vá comer nada. **Não force nem insista muitas vezes**: ofereça o macarrão e deixe junto uma pequena porção de algo que ele costuma aceitar; se recusar, mantenha a calma e tente novamente em outro momento. Para o banheiro, ajude por etapas curtas, mostrando e iniciando o primeiro movimento, em vez de dar várias instruções de longe. Vale anotar exemplos concretos dessa ajuda para conversar com os profissionais e registrar a situação da família. **Ele aceita outros alimentos normalmente ou também vem recusando comidas que já comia?**"
+        }
+      ],
+      "chars_resposta": 522
+    },
+    {
+      "tipo": "pedido_de_como",
+      "familia": "F-03a8b5a4",
+      "demora_horas": 0,
+      "conversa": [
+        {
+          "direcao": "inbound",
+          "tipo": null,
+          "categoria": null,
+          "em": "2026-09-08T16:46:49.685707+00:00",
+          "texto": "A gente tem setembro, outubro, novembro, acabou. Estão três meses de escola. Nunca vi meu filho assim, sabia? Por conta de uma escola. É difícil, assim, quando ele fica incrivel, ele fica... Ele fica... Ele fica... Ele fica... Ele fica... Ele fica... Ele fica... É difícil, assim, quando ele fica em crise, sabe? É difícil, assim, quando ele fica em crise, sabe? Eu já pedi ajuda aqui pra terapeuta, Eu já pedi ajuda aqui pra terapeuta, mas... mas... mas... mas... mas... mas... mas... mas... mas... mas..."
+        },
+        {
+          "direcao": "outbound",
+          "tipo": "resposta_registro",
+          "categoria": "reativa",
+          "em": "2026-09-08T16:47:14.04502+00:00",
+          "texto": "[nome], eu estou aqui. **Parece que você está muito abalada e cansada de ver o [nome] sofrer**, e você não precisa conseguir explicar tudo agora.\n\nSe ele estiver em crise neste momento, reduza os estímulos, fale pouco e fique por perto sem tentar resolver a escola agora: **“Eu estou aqui. Você está seguro. A gente conversa quando você conseguir.”** Depois, anote o que aconteceu para levar à terapeuta e à escola; vocês podem pensar nos três meses restantes por partes, não tudo hoje.\n\n**O [nome] está seguro agora, sem risco de se machucar ou machucar alguém?**"
+        },
+        {
+          "direcao": "inbound",
+          "tipo": null,
+          "categoria": null,
+          "em": "2026-09-08T16:49:25.925701+00:00",
+          "texto": "Não, não, ele não tá em crise agora, tô falando se caso ele tiver outra crise igual ele teve ontem, entendeu? Ele não tá em crise agora, ele tá tranquilo, mas ele é muito esperto, né? Ele é muito articulado, ele não, não, eu não quero falar nisso depois, sem chance, eu não vou mais voltar pra escola e tá meio que irredutível, sabe? Tá meio que irredutível mesmo, assim, uma loucura isso. E não sei, como é que eu vou ficar, tipo, todo dia ele vai ficar em crise, agora como é que eu vou falar? A gente não precisa falar disso agora, ele vai falar que eu tô enrolando ele, entendeu? Ele é muito articulado, muito esperto."
+        },
+        {
+          "direcao": "outbound",
+          "tipo": "resposta_registro",
+          "categoria": "reativa",
+          "em": "2026-09-08T16:49:56.349583+00:00",
+          "texto": "Entendi agora, [nome]: **o [nome] está tranquilo**, e você está tentando se preparar caso aconteça outra crise como a de ontem. Você não precisa conversar sobre a escola com ele agora nem prometer que tudo vai se resolver imediatamente.\n\nSe ele entrar em crise, evite discutir ou tentar convencê-lo naquele momento. Use uma frase curta e verdadeira:\n\n**“Eu entendi que você não quer voltar para essa escola. Não vou resolver isso discutindo enquanto você está muito nervoso. Primeiro vamos cuidar para você ficar seguro; depois vamos conversar sobre as opções.”**\n\nComo ele percebe quando sente que estão adiando, evite dizer apenas “depois a gente vê”. Quando ele estiver calmo, você pode reconhecer o que já sabe e combinar um próximo passo concreto: **“Eu sei que você está sofrendo e estou tratando isso com seriedade. Ainda não tenho a decisão final, mas estou buscando alternativas. Amanhã vamo"
+        }
+      ],
+      "chars_resposta": 566
+    },
+    {
+      "tipo": "resposta_a_iniciativa",
+      "familia": "F-fcdadc06",
+      "demora_horas": 0,
+      "conversa": [
+        {
+          "direcao": "outbound",
+          "tipo": "trial_d0",
+          "categoria": "proativa",
+          "em": "2026-09-09T18:00:43.861031+00:00",
+          "texto": "Oi, [nome]. Seu período grátis terminou 🌿\n\nTudo que você me contou continua salvo. Se quiser continuar comigo, os planos estão aqui:\n[link]\n\nSe tiver alguma dúvida, pode me perguntar por aqui."
+        },
+        {
+          "direcao": "inbound",
+          "tipo": null,
+          "categoria": null,
+          "em": "2026-09-09T18:01:56.463566+00:00",
+          "texto": "Obrigada"
+        },
+        {
+          "direcao": "outbound",
+          "tipo": "pos_trial",
+          "categoria": "reativa",
+          "em": "2026-09-09T18:02:19.294676+00:00",
+          "texto": "Tudo bem, [nome]. Respeito sua decisão e agradeço por ter conversado comigo. Se mudar de ideia algum dia, estarei por aqui."
+        }
+      ],
+      "chars_resposta": 276
+    },
+    {
+      "tipo": "retorno_em_outro_dia",
+      "familia": "F-eb7d4b2f",
+      "demora_horas": 14.9,
+      "conversa": [
+        {
+          "direcao": "inbound",
+          "tipo": null,
+          "categoria": null,
+          "em": "2026-09-14T20:44:36.798129+00:00",
+          "texto": "Ta bom obgda"
+        },
+        {
+          "direcao": "outbound",
+          "tipo": "resposta_registro",
+          "categoria": "reativa",
+          "em": "2026-09-14T20:44:59.464753+00:00",
+          "texto": "De nada, [nome]. Só preciso confirmar por segurança: **[nome] está se batendo neste momento ou ficou machucado?**"
+        },
+        {
+          "direcao": "inbound",
+          "tipo": null,
+          "categoria": null,
+          "em": "2026-09-15T11:41:42.452765+00:00",
+          "texto": "O [nome] ele e muito agitado"
+        },
+        {
+          "direcao": "outbound",
+          "tipo": "resposta_registro",
+          "categoria": "reativa",
+          "em": "2026-09-15T11:42:15.033728+00:00",
+          "texto": "Entendo, [nome]. Para ajudar o [nome] a ficar mais regulado, tente oferecer **alguns minutos de movimento antes da lição** e começar com uma instrução curta, mostrando o que ele precisa fazer, em vez de explicar muito. Na hora da agitação, fale pouco e diga: **“Vamos parar um pouco; depois fazemos só esta parte.”**\n\nSe ele voltar a se bater, interrompa a atividade e priorize a segurança, afastando objetos perigosos e procurando ajuda se houver risco de ferimento. Essa agitação acontece mais na lição, quando ele precisa esperar ou mudar de atividade, ou ao longo do dia?"
+        }
+      ],
+      "chars_resposta": 115
+    },
+    {
+      "tipo": "sem_resposta_72h",
+      "familia": "F-5107ae69",
+      "demora_horas": null,
+      "conversa": [
+        {
+          "direcao": "inbound",
+          "tipo": null,
+          "categoria": null,
+          "em": "2026-09-20T12:04:36.159027+00:00",
+          "texto": "Gostaria de aprender atividades para ensiná-la e brincadeiras cm atividades"
+        },
+        {
+          "direcao": "outbound",
+          "tipo": "resposta_registro",
+          "categoria": "reativa",
+          "em": "2026-09-20T12:04:59.20624+00:00",
+          "texto": "Claro, [nome] 💛 Dá para ensinar brincando com o que a [nome] já gosta:\n\n1️⃣ **Música que para:** dance com ela e pause a música. Espere alguns segundos e diga **“parou… quer mais?”**. Ajude-a a pedir com palavra, gesto ou apontar e retome a música.\n\n2️⃣ **Bichinhos e sons:** faça uma “casa” com os animais. Pegue um por vez e modele: **“o gato entrou”**, “quem é?”. Aceite palavra, som ou apontar; não precisa exigir que ela repita.\n\n3️⃣ **Dança do imita:** faça movimentos simples, como bater palmas ou girar, e diga **“minha vez”**. Depois convide: **“agora a vez da [nome]”** e imite o movimento dela.\n\nFaça por poucos minutos, em um momento tranquilo, e pare enquanto ainda estiver divertido. Se ela recusar, ofereça outra opção sem pressionar. 🌿"
+        }
+      ],
+      "chars_resposta": 755
+    }
+  ],
+  "candidatos_anonimizados_para_revisao": {
+    "pedido_de_como": [
+      {
+        "tipo": "pedido_de_como",
+        "familia": "F-03a8b5a4",
+        "demora_horas": 0,
+        "conversa": [
+          {
+            "direcao": "inbound",
+            "tipo": null,
+            "categoria": null,
+            "em": "2026-09-08T16:46:49.685707+00:00",
+            "texto": "A gente tem setembro, outubro, novembro, acabou. Estão três meses de escola. Nunca vi meu filho assim, sabia? Por conta de uma escola. É difícil, assim, quando ele fica incrivel, ele fica... Ele fica... Ele fica... Ele fica... Ele fica... Ele fica... Ele fica... É difícil, assim, quando ele fica em crise, sabe? É difícil, assim, quando ele fica em crise, sabe? Eu já pedi ajuda aqui pra terapeuta, Eu já pedi ajuda aqui pra terapeuta, mas... mas... mas... mas... mas... mas... mas... mas... mas... mas..."
+          },
+          {
+            "direcao": "outbound",
+            "tipo": "resposta_registro",
+            "categoria": "reativa",
+            "em": "2026-09-08T16:47:14.04502+00:00",
+            "texto": "[nome], eu estou aqui. **Parece que você está muito abalada e cansada de ver o [nome] sofrer**, e você não precisa conseguir explicar tudo agora.\n\nSe ele estiver em crise neste momento, reduza os estímulos, fale pouco e fique por perto sem tentar resolver a escola agora: **“Eu estou aqui. Você está seguro. A gente conversa quando você conseguir.”** Depois, anote o que aconteceu para levar à terapeuta e à escola; vocês podem pensar nos três meses restantes por partes, não tudo hoje.\n\n**O [nome] está seguro agora, sem risco de se machucar ou machucar alguém?**"
+          },
+          {
+            "direcao": "inbound",
+            "tipo": null,
+            "categoria": null,
+            "em": "2026-09-08T16:49:25.925701+00:00",
+            "texto": "Não, não, ele não tá em crise agora, tô falando se caso ele tiver outra crise igual ele teve ontem, entendeu? Ele não tá em crise agora, ele tá tranquilo, mas ele é muito esperto, né? Ele é muito articulado, ele não, não, eu não quero falar nisso depois, sem chance, eu não vou mais voltar pra escola e tá meio que irredutível, sabe? Tá meio que irredutível mesmo, assim, uma loucura isso. E não sei, como é que eu vou ficar, tipo, todo dia ele vai ficar em crise, agora como é que eu vou falar? A gente não precisa falar disso agora, ele vai falar que eu tô enrolando ele, entendeu? Ele é muito articulado, muito esperto."
+          },
+          {
+            "direcao": "outbound",
+            "tipo": "resposta_registro",
+            "categoria": "reativa",
+            "em": "2026-09-08T16:49:56.349583+00:00",
+            "texto": "Entendi agora, [nome]: **o [nome] está tranquilo**, e você está tentando se preparar caso aconteça outra crise como a de ontem. Você não precisa conversar sobre a escola com ele agora nem prometer que tudo vai se resolver imediatamente.\n\nSe ele entrar em crise, evite discutir ou tentar convencê-lo naquele momento. Use uma frase curta e verdadeira:\n\n**“Eu entendi que você não quer voltar para essa escola. Não vou resolver isso discutindo enquanto você está muito nervoso. Primeiro vamos cuidar para você ficar seguro; depois vamos conversar sobre as opções.”**\n\nComo ele percebe quando sente que estão adiando, evite dizer apenas “depois a gente vê”. Quando ele estiver calmo, você pode reconhecer o que já sabe e combinar um próximo passo concreto: **“Eu sei que você está sofrendo e estou tratando isso com seriedade. Ainda não tenho a decisão final, mas estou buscando alternativas. Amanhã vamo"
+          }
+        ],
+        "chars_resposta": 566
+      },
+      {
+        "tipo": "pedido_de_como",
+        "familia": "F-03a8b5a4",
+        "demora_horas": 0,
+        "conversa": [
+          {
+            "direcao": "inbound",
+            "tipo": null,
+            "categoria": null,
+            "em": "2026-09-08T20:44:16.538865+00:00",
+            "texto": "Para não mudar ele de escola agora"
+          },
+          {
+            "direcao": "outbound",
+            "tipo": "resposta_registro",
+            "categoria": "reativa",
+            "em": "2026-09-08T20:44:42.530172+00:00",
+            "texto": "[nome], conversei com a psicóloga sobre você mudar de escola agora. Ela entende que o conteúdo está muito pesado e que isso acabou se misturando com o cansaço que você está sentindo em relação à escola inteira.\n\nPor isso, a sugestão dela é **tentar terminar este ano na escola atual**, mas não simplesmente continuar do mesmo jeito. Podemos conversar com a Rita para ver se é possível **diminuir ou adaptar um pouco o conteúdo**, para você terminar o ano com menos desgaste.\n\nMudar agora também traria várias coisas novas ao mesmo tempo: escola, professores, material, conteúdo e amizades. Talvez seja mais difícil fazer tantas adaptações no final do ano. No começo do próximo ano, você poderia começar na FIAP desde o início, junto com outros alunos, com mais tempo para conhecer os professores e fazer amizades.\n\nIsso não significa que estamos ignorando o que você está sentindo, nem que você preci"
+          },
+          {
+            "direcao": "inbound",
+            "tipo": null,
+            "categoria": null,
+            "em": "2026-09-08T20:44:43.895946+00:00",
+            "texto": "Agora em relação ao Lourenço poxa é uma pena porque assim eu acho que valeria muito a pena ele tentar aguentar a simônia até o final do ano porque eu acho que você mudando de escola agora até para você é um pouco ruim não sei como que vai ser na FIAP mas acredito que eles vão solicitar material você vai ter que comprar material tudo de novo. Então eu acho que valeria a pena pelo menos finalizar esse ano lá porque aí o Lourenço fica um pouco mais acostumado com o conteúdo. Por mais que esteja um pouco mais. Por mais que seja cansativa porque eu acho muito que o Lourenço ele relacionou o conteúdo pedagógico com essa exaustão mental que ele está sentindo. Uma coisa não se separa da outra. Não tem como como hoje o mais pesado tem sido o conteúdo. Obviamente que ele vai relacionar isso para a escola em si. Então isso vai pegar um pouquinho de tudo ali. Mas eu acho que valeria a pena tentar ma"
+          },
+          {
+            "direcao": "outbound",
+            "tipo": "resposta_registro",
+            "categoria": "reativa",
+            "em": "2026-09-08T20:45:07.413861+00:00",
+            "texto": "Acho que a ideia faz sentido **se continuar na escola vier acompanhada de mudanças concretas**, e não apenas de pedir que o [nome] aguente até o fim do ano. Pelo que você contou, o conteúdo parece estar muito ligado ao cansaço mental dele; então manter a escola sem reduzir ou adaptar essa carga pode aumentar o sofrimento.\n\nEu conversaria com a Rita e a psicóloga para combinar uma tentativa com prazo de revisão, por exemplo: **reduzir ou priorizar conteúdos, ajustar tarefas e provas, organizar o que é realmente indispensável e prever apoio quando ele estiver sobrecarregado**. Depois, vocês observam se ele está conseguindo terminar o período mais disposto e com menos crises.\n\nPara explicar ao [nome], eu diria:\n\n**[nome], eu entendi que o conteúdo está muito pesado e que você está cansado. Não estou ignorando isso nem dizendo que você precisa simplesmente aguentar. Estamos pensando em tenta"
+          }
+        ],
+        "chars_resposta": 1143
+      },
+      {
+        "tipo": "pedido_de_como",
+        "familia": "F-03a8b5a4",
+        "demora_horas": 0,
+        "conversa": [
+          {
+            "direcao": "inbound",
+            "tipo": null,
+            "categoria": null,
+            "em": "2026-09-10T20:28:43.828513+00:00",
+            "texto": "Agora eu vou tentar fazer uma transição de carreira pra que eu possa ficar mais tempo com a [nome]. E eu não sei se você pode me ajudar ou se você pode me indicar algum outro chat ou algum site, porque assim, eu vou tentar ser coach de carreira. Não sou psicóloga, mas assim, eu tenho muita expertise no que eu faço. Eu tenho 26 anos de área comercial na indústria farmacêutica. Na oncologia. E eu tenho uma... a minha primeira consultoria, que vai ser gratuita, vai ser na terça-feira. Com uma outra representante que quer muito vir pra essa linha especial de oncologia. Eu já faço isso informalmente, de ajudar as pessoas, procurar vaga no LinkedIn. Agora, o que eu tenho que fazer? Eu tenho que ficar especialista no LinkedIn. Então, eu queria que você me desse dicas de como que eu vou ficar... Algum curso que eu posso fazer online, rápido, de como melhorar o LinkedIn da pessoa, como melhorar o"
+          },
+          {
+            "direcao": "outbound",
+            "tipo": "resposta_registro",
+            "categoria": "reativa",
+            "em": "2026-09-10T20:29:20.624675+00:00",
+            "texto": "Sim, [nome] — e você já tem um diferencial forte: **26 anos de experiência comercial na indústria farmacêutica e conhecimento específico em oncologia**. Você não precisa começar como especialista genérica em carreira; pode se posicionar como alguém que ajuda profissionais da área farmacêutica a apresentarem melhor sua experiência e encontrarem oportunidades mais alinhadas.\n\nPara a consultoria de terça, eu faria algo simples e concreto:\n\n1️⃣ **Antes da conversa:** peça o currículo atual e o link do LinkedIn, além de três informações: qual cargo ela busca, em quais empresas ou regiões gostaria de trabalhar e quais resultados profissionais mais importantes já alcançou.\n\n2️⃣ **Durante a conversa:** entenda a trajetória, escolha o objetivo profissional e transforme tarefas em resultados. Por exemplo, em vez de apenas “realizava visitas médicas”, procurar algo como “ampliou a cobertura de dete"
+          },
+          {
+            "direcao": "inbound",
+            "tipo": null,
+            "categoria": null,
+            "em": "2026-09-10T20:32:03.561002+00:00",
+            "texto": "Você pode me ajudar a fazer também um contrato, tipo um contrato assim de gaveta de pessoa física, um modelo assim de contrato? E como que eu posso ser chamada coaching de carreira, personal branding? Como que fica melhor? Para que eu seja chamada eu vou ser uma coaching, coaching de carreira na indústria farmacêutica, me dá sugestão aqui."
+          },
+          {
+            "direcao": "outbound",
+            "tipo": "resposta_registro",
+            "categoria": "reativa",
+            "em": "2026-09-10T20:32:31.902075+00:00",
+            "texto": "Posso te ajudar a organizar uma **minuta geral**, mas, por envolver contrato e dados pessoais, é importante pedir uma revisão jurídica antes de usar. O documento pode se chamar **Contrato de Prestação de Serviços de Consultoria de Carreira e Posicionamento Profissional** e incluir: objetivo e escopo, encontros e entregas, valor e pagamento, cancelamento, prazo, confidencialidade, autorização para tratar currículo e LinkedIn, ausência de garantia de emprego e limite de responsabilidade. Também deixe claro que não é psicoterapia nem orientação jurídica.\n\nPara seu posicionamento, eu usaria: **Consultora de Carreira e Posicionamento Profissional na Indústria Farmacêutica**. Outras opções: **Especialista em Carreira Comercial Farmacêutica** ou **Consultora de Carreira em Oncologia e Indústria Farmacêutica**. “Coach de carreira” também é possível, mas “consultora” comunica melhor sua experiênc"
+          }
+        ],
+        "chars_resposta": 3048
+      },
+      {
+        "tipo": "pedido_de_como",
+        "familia": "F-03a8b5a4",
+        "demora_horas": 0,
+        "conversa": [
+          {
+            "direcao": "inbound",
+            "tipo": null,
+            "categoria": null,
+            "em": "2026-09-10T20:32:03.561002+00:00",
+            "texto": "Você pode me ajudar a fazer também um contrato, tipo um contrato assim de gaveta de pessoa física, um modelo assim de contrato? E como que eu posso ser chamada coaching de carreira, personal branding? Como que fica melhor? Para que eu seja chamada eu vou ser uma coaching, coaching de carreira na indústria farmacêutica, me dá sugestão aqui."
+          },
+          {
+            "direcao": "outbound",
+            "tipo": "resposta_registro",
+            "categoria": "reativa",
+            "em": "2026-09-10T20:32:31.902075+00:00",
+            "texto": "Posso te ajudar a organizar uma **minuta geral**, mas, por envolver contrato e dados pessoais, é importante pedir uma revisão jurídica antes de usar. O documento pode se chamar **Contrato de Prestação de Serviços de Consultoria de Carreira e Posicionamento Profissional** e incluir: objetivo e escopo, encontros e entregas, valor e pagamento, cancelamento, prazo, confidencialidade, autorização para tratar currículo e LinkedIn, ausência de garantia de emprego e limite de responsabilidade. Também deixe claro que não é psicoterapia nem orientação jurídica.\n\nPara seu posicionamento, eu usaria: **Consultora de Carreira e Posicionamento Profissional na Indústria Farmacêutica**. Outras opções: **Especialista em Carreira Comercial Farmacêutica** ou **Consultora de Carreira em Oncologia e Indústria Farmacêutica**. “Coach de carreira” também é possível, mas “consultora” comunica melhor sua experiênc"
+          },
+          {
+            "direcao": "inbound",
+            "tipo": null,
+            "categoria": null,
+            "em": "2026-09-10T20:33:30.949264+00:00",
+            "texto": "E tem alguma coisa assim pra eu dar um aceite pra eu acessar os dados de LGTB da pessoa? Já que eu vou ter que mexer com senha, e-mail, essas coisas... Pra eu dar um aceite, assim? Porque eu já vou pedir pra ela o currículo, a senha do LinkedIn dela... Então, tem alguma coisa que eu posso mandar pro WhatsApp, assim, pra ela dar um aceite, assim? Como são dados pessoais?"
+          },
+          {
+            "direcao": "outbound",
+            "tipo": "resposta_registro",
+            "categoria": "reativa",
+            "em": "2026-09-10T20:33:55.46871+00:00",
+            "texto": "Sim — isso se relaciona à **LGPD**, mas o mais importante é: **não peça nem receba a senha do LinkedIn ou do e-mail**. A pessoa pode compartilhar o currículo e fazer login enquanto você orienta, ou usar uma forma oficial de acesso delegado; depois, deve revogar o acesso. Um aceite por WhatsApp ajuda a documentar, mas não substitui um contrato e uma orientação jurídica.\n\nVocê pode enviar:\n\n**Autorizo [seu nome/CPF] a tratar os dados que forneci, como currículo e informações do LinkedIn, exclusivamente para análise e orientação de carreira, revisão de currículo e posicionamento profissional. Fui informada sobre a finalidade, o prazo de uso, a confidencialidade e que posso revogar esta autorização. Não autorizo o compartilhamento com terceiros nem o acesso às minhas senhas. Declaro que li e concordo. Nome completo, CPF e data.**\n\nDefina também por quanto tempo guardará os dados, onde ficarã"
+          }
+        ],
+        "chars_resposta": 1049
+      },
+      {
+        "tipo": "pedido_de_como",
+        "familia": "F-03a8b5a4",
+        "demora_horas": 0,
+        "conversa": [
+          {
+            "direcao": "inbound",
+            "tipo": null,
+            "categoria": null,
+            "em": "2026-09-12T01:25:33.225931+00:00",
+            "texto": "Não, essas escolas elas ficam próximas, já sei que elas ficam próximas, o que a minha pergunta é, são escolas assim que tem uma boa avaliação? São escolas acolhedoras? É isso que eu preciso saber."
+          },
+          {
+            "direcao": "outbound",
+            "tipo": "resposta_registro",
+            "categoria": "reativa",
+            "em": "2026-09-12T01:25:58.211496+00:00",
+            "texto": "Você tem razão, [nome] — eu entendi errado. A questão é **a qualidade da escola e o quanto ela é acolhedora**, não a distância.\n\nNota em avaliações públicas ajuda, mas não mostra como a escola lida com um aluno autista, sobrecarga, adaptação de conteúdo ou crises. Para o [nome], eu buscaria respostas concretas sobre: como fazem adaptações, quem acompanha quando ele se desregula, como lidam com tom de voz e situações sensíveis, e como garantem a continuidade até o Ensino Médio. Também vale conversar com famílias de alunos atuais e observar se a escola responde com exemplos ou apenas diz que “está preparada”.\n\nNa visita, você pode perguntar: **“O que vocês fariam se ele entrasse em sobrecarga durante a aula?”** A resposta vai revelar mais do que a nota online."
+          },
+          {
+            "direcao": "inbound",
+            "tipo": null,
+            "categoria": null,
+            "em": "2026-09-12T01:26:55.032376+00:00",
+            "texto": "Eu entendi também o seu ponto. É que eu acho que não tem um ranqueamento, né? Hoje, infelizmente, atualmente, eu acho que não tem um ranqueamento de escolas acolhedoras e inclusivas em São Paulo, né? Eu acho que não é confiável ter como norte, assim como parâmetro, uma avaliação, é isso, né?"
+          },
+          {
+            "direcao": "outbound",
+            "tipo": "resposta_registro",
+            "categoria": "reativa",
+            "em": "2026-09-12T01:27:15.722678+00:00",
+            "texto": "É isso, [nome]. **Não há um ranqueamento confiável e específico de escolas acolhedoras e inclusivas em São Paulo** que permita escolher apenas pela nota. Avaliações públicas e rankings podem servir como um primeiro filtro, mas geralmente não mostram como a escola adapta conteúdos, previne sobrecarga, acolhe uma crise ou garante continuidade até o Ensino Médio.\n\nPara o [nome], eu usaria essas avaliações só como complemento e daria mais peso às respostas da coordenação, à visita e, se possível, ao relato de famílias de alunos atuais. O principal é pedir exemplos concretos, não apenas ouvir que a escola “é inclusiva”."
+          }
+        ],
+        "chars_resposta": 769
+      },
+      {
+        "tipo": "pedido_de_como",
+        "familia": "F-03a8b5a4",
+        "demora_horas": 0,
+        "conversa": [
+          {
+            "direcao": "inbound",
+            "tipo": null,
+            "categoria": null,
+            "em": "2026-09-12T01:31:04.979576+00:00",
+            "texto": "Obrigada ☺️"
+          },
+          {
+            "direcao": "outbound",
+            "tipo": "resposta_registro",
+            "categoria": "reativa",
+            "em": "2026-09-12T01:31:23.055023+00:00",
+            "texto": "Por nada, [nome] 💛"
+          },
+          {
+            "direcao": "inbound",
+            "tipo": null,
+            "categoria": null,
+            "em": "2026-09-12T01:31:30.996047+00:00",
+            "texto": "Eu quero, por favor, me ajuda a fazer perguntas curtas, inteligentes, tanto na parte pedagógica, dando exemplos, que ele se desorganiza, com muito conteúdo, organização de agenda, prazo, e como questão de fazer amigos, entendendo bullying, não sei, faz umas cinco perguntinhas assim, curtas e diretas e com exemplo. Pra escola me responder."
+          },
+          {
+            "direcao": "outbound",
+            "tipo": "resposta_registro",
+            "categoria": "reativa",
+            "em": "2026-09-12T01:31:53.683592+00:00",
+            "texto": "Claro, [nome]. Você pode levar estas cinco perguntas:\n\n1️⃣ Quando há muito conteúdo, como vocês dividem a matéria e ajudam o aluno a saber o que é prioridade?\n\n2️⃣ Como organizam agenda, tarefas e prazos? Por exemplo: avisam com antecedência e dividem um trabalho grande em etapas?\n\n3️⃣ Se ele se desorganizar durante uma atividade aberta, como um trabalho cujo tema precisa ser escolhido, quem o ajuda a definir o tema e começar?\n\n4️⃣ Como vocês acompanham a formação de amizades e percebem se ele está ficando isolado ou sofrendo bullying?\n\n5️⃣ Se acontecer uma provocação ou conflito, como a escola investiga o que houve e intervém com os alunos envolvidos?\n\nPreste atenção se respondem com **exemplos concretos de procedimento**, e não apenas que a escola é inclusiva ou acolhedora. 💛"
+          }
+        ],
+        "chars_resposta": 19
+      },
+      {
+        "tipo": "pedido_de_como",
+        "familia": "F-1a5e3c09",
+        "demora_horas": 0,
+        "conversa": [
+          {
+            "direcao": "outbound",
+            "tipo": "boas_vindas",
+            "categoria": "proativa",
+            "em": "2026-09-08T16:36:18.473491+00:00",
+            "texto": "Oi, [nome]! Eu sou a Ayla 💛 Estou aqui pra te ajudar nos desafios do dia a dia com o [nome].\n\nPelo que você contou quando entrou, o que mais tem pesado são o sono, a escola e a alimentação.\n\nPosso te ajudar com estratégias práticas, o que fazer e o que falar nas horas difíceis, e também com brincadeiras e atividades pra trabalhar essas habilidades de um jeito mais leve pro [nome].\n\nVocê não precisa saber o que pedir: me conta o que está acontecendo, do seu jeito. Por qual você quer começar? Pode mandar um *áudio*, se for mais fácil — com o que você me contar eu já te trago uma primeira ideia prática. 🌿\n\nE se quiser conhecer rapidinho tudo o que dá pra fazer na Kolo, tem um vídeo curto mostrando a plataforma por dentro:\n[link]"
+          },
+          {
+            "direcao": "inbound",
+            "tipo": null,
+            "categoria": null,
+            "em": "2026-09-08T16:38:15.421343+00:00",
+            "texto": "Eu vou ver o [nome] 10 metros pra frente e pra trás, o [nome] que é celular, o [nome] que sorriu tão cripto quando pegou. O [nome] não vai vir pra escola, quer tomar banho, não precisa estar informando ele. O que é na cara dele é da escola, é possível ser inteligente e imaginar o que eu faço com ele. Ele poderia também ter a característica de altíssimo, como eu acho que o mestre poderia estar investigando, porque aquele olho só deu pra ele entender a garra. Ele não escutou o que eu tinha pra falar. Se eu tivesse escrito que tinha que ter um balançamento de frente pra trás, de repente dar um surto pra bater, empurrar a irmã, é agressivo. Não sei mais o que eu faço com ele, mas não. Porque nenhum remédio tá mais significativo que a sua mão dele, ele tá educando."
+          },
+          {
+            "direcao": "outbound",
+            "tipo": "resposta_registro",
+            "categoria": "reativa",
+            "em": "2026-09-08T16:38:42.818888+00:00",
+            "texto": "[nome], entendi que você está muito preocupada porque o [nome] pode estar tendo um surto, empurrando ou batendo na irmã, além de não querer ir à escola. **Se isso estiver acontecendo agora, afaste a irmã e objetos que possam machucar, fale pouco e com calma, e não tente discutir ou exigir que ele escute nesse momento.** Depois que ele se acalmar, vocês podem entender o que aconteceu; não é preciso dar bronca ou exigir desculpas durante a crise.\n\nSe alguém se machucou, se ele não consegue parar ou há risco de ferimento, procure ajuda presencial imediatamente. E **não mude nem suspenda nenhum remédio sem falar com o profissional que prescreveu**.\n\nO [nome] está batendo ou empurrando alguém agora, ou alguém se machucou?"
+          }
+        ],
+        "chars_resposta": 798
+      },
+      {
+        "tipo": "pedido_de_como",
+        "familia": "F-1a5e3c09",
+        "demora_horas": 0,
+        "conversa": [
+          {
+            "direcao": "inbound",
+            "tipo": null,
+            "categoria": null,
+            "em": "2026-09-08T16:40:09.625404+00:00",
+            "texto": "Mas a gente pode falar que ele não escuta, que ele não aceita a regra, até na escola você falou isso. Uma vez o pai dele levou ele para a igreja e ele fica direto correndo. O pai dele reclama, a reina não escuta, um velho de rei todo machucado, com um nome sei lá onde. Ele não liga para o perigo, ele não tem medo do perigo, não liga o que vai acontecer."
+          },
+          {
+            "direcao": "outbound",
+            "tipo": "resposta_registro",
+            "categoria": "reativa",
+            "em": "2026-09-08T16:40:34.326636+00:00",
+            "texto": "Pode falar para a escola que **o [nome] corre em situações como igreja e parece não perceber o perigo**, mas eu evitaria dizer apenas que ele “não escuta” ou “não aceita regras”. Isso pode soar como escolha ou desobediência, quando ainda precisamos entender se ele não compreendeu, ficou muito agitado, buscou movimento ou não conseguiu parar.\n\nPor enquanto, em lugares assim, mantenham-no **sempre perto de um adulto**, reduzam o tempo no ambiente e combinem uma saída rápida. A frase para ele pode ser: **“Parou. Minha mão. Vamos juntos.”** Ensinem isso em momentos calmos, não só quando ele já estiver correndo.\n\nQuando ele corre, vai em direção a algum perigo específico, como rua, escada ou porta, ou fica correndo pelo espaço sem um destino?"
+          },
+          {
+            "direcao": "inbound",
+            "tipo": null,
+            "categoria": null,
+            "em": "2026-09-08T16:41:16.059533+00:00",
+            "texto": "Porque ele tem uma infância de 9 anos, também ela tem TDDH, deficiência intelectual, ela não grava nada na cabeça dela. A dificuldade dela é de já aprender. E ele também, ele também, eu acho que ele é inteligente. Mas quando ele passar pro primeiro ano, que ele tá no infantil 5, que lá no infantil 5 não é como no primeiro ano, que a professora ensina, fica ali, né? E não vai ser como um da CRES, vai ser muito mais diferente. E ele vai achar a mudança muito forrada e ele pode ficar igual ela."
+          },
+          {
+            "direcao": "outbound",
+            "tipo": "resposta_registro",
+            "categoria": "reativa",
+            "em": "2026-09-08T16:41:45.86511+00:00",
+            "texto": "Entendi, [nome]. Você está com medo de que a mudança do Infantil 5 para o 1º ano seja grande demais para o [nome] e que ele passe pelas mesmas dificuldades que a irmã. **Mas ele não necessariamente vai ficar igual a ela**: cada criança aprende e reage às mudanças de um jeito, e ainda dá para preparar essa passagem com antecedência.\n\nPara ajudá-lo, vale combinar com a escola uma adaptação bem concreta: mostrar fotos ou visitar o novo espaço, explicar com frases curtas o que vai acontecer e treinar pequenas mudanças na rotina, sempre avisando antes. Como ele corre e pode não perceber o perigo, isso também precisa ser informado à escola para planejarem um adulto de referência e uma forma segura de acompanhá-lo.\n\nO que mais preocupa você nessa mudança: **ele não acompanhar as atividades ou não conseguir ficar seguro e organizado na nova rotina?**"
+          }
+        ],
+        "chars_resposta": 746
+      },
+      {
+        "tipo": "pedido_de_como",
+        "familia": "F-eb7d4b2f",
+        "demora_horas": 0,
+        "conversa": [
+          {
+            "direcao": "inbound",
+            "tipo": null,
+            "categoria": null,
+            "em": "2026-09-14T13:44:11.146781+00:00",
+            "texto": "O aluno encontra-se na hipótese silábica com valor sonoro, oscilando entre vogais e consoantes, conseguindo compreender apenas uma das letras que compõe a sílaba, na maioria das vezes, o que faz com que escreva parcialmente as palavras. Na leitura ainda possui bastante dificuldade e apresenta leve problema fonético, o que dificulta sua aprendizagem nesse aspecto. Nota-se leve dificuldade de compreensão e interpretação, inclusive em Matemática, com certa dificuldade no sistema numérico e cálculo."
+          },
+          {
+            "direcao": "outbound",
+            "tipo": "resposta_registro",
+            "categoria": "reativa",
+            "em": "2026-09-14T13:44:36.966258+00:00",
+            "texto": "Esse relato ajuda a entender que o [nome] pode precisar de **instruções curtas, uma etapa por vez e apoio visual ou concreto**, principalmente em leitura, escrita e Matemática. Como ele gosta de jogos, dá para aproveitar esse interesse com palavras e números pequenos, pedindo que ele demonstre ou escolha a resposta antes de registrar no papel; assim, a dificuldade de escrita não esconde o que ele compreendeu.\n\nTambém vale alinhar esse quadro com a escola e manter acompanhamento pedagógico e fonoaudiológico, especialmente por causa da dificuldade de leitura e do aspecto fonético. Para eu adaptar melhor as próximas ideias: **ele aprende melhor quando alguém explica falando, quando vê um exemplo, quando manipula materiais ou quando transforma o conteúdo em jogo?**"
+          },
+          {
+            "direcao": "inbound",
+            "tipo": null,
+            "categoria": null,
+            "em": "2026-09-14T13:46:40.285443+00:00",
+            "texto": "Quando eu tento explicar em jogo alguma coisa, ele fica mais... ele não entende nada. Aí eu tento explicar escrevendo. Ele não consegue compreender, menos ainda. Por isso que eu não sei como mais fazer para ele entender. E eu queria saber se ele tem autismo ou ADHD. Para mim, correr atrás de neuropediatra, fono, essas coisas. Você consegue informar para mim, na leitura da escola, se ele tem autismo ou ADHD?"
+          },
+          {
+            "direcao": "outbound",
+            "tipo": "resposta_registro",
+            "categoria": "reativa",
+            "em": "2026-09-14T13:47:08.842926+00:00",
+            "texto": "Não. **A leitura do relatório escolar, sozinha, não permite confirmar autismo ou TDAH** — e as dificuldades de leitura, escrita, compreensão e matemática também podem ter outras causas. O relatório é importante para mostrar o que acontece na escola, em quais situações e quanto isso interfere, mas o diagnóstico precisa de uma avaliação clínica do desenvolvimento, considerando a história do [nome] em casa e na escola.\n\nFaz sentido buscar um **neuropediatra, pediatra do desenvolvimento ou psiquiatra infantil**. A avaliação com **fonoaudiólogo** também é muito importante pelas dificuldades de fala, consciência dos sons, leitura e escrita; se possível, vale verificar também audição e visão. Nenhum desses profissionais deve concluir apenas por um comportamento isolado.\n\nEnquanto isso, para ele entender melhor, tente trocar explicações longas por **uma instrução curta + demonstração**: faça voc"
+          }
+        ],
+        "chars_resposta": 772
+      },
+      {
+        "tipo": "pedido_de_como",
+        "familia": "F-b4c6233d",
+        "demora_horas": 0,
+        "conversa": [
+          {
+            "direcao": "inbound",
+            "tipo": null,
+            "categoria": null,
+            "em": "2026-09-15T07:46:15.584562+00:00",
+            "texto": "Não, mas eu não consegui imprimir eles. Eu queria que você mandasse aqui pelo WhatsApp."
+          },
+          {
+            "direcao": "outbound",
+            "tipo": "resposta_registro",
+            "categoria": "reativa",
+            "em": "2026-09-15T07:46:32.729689+00:00",
+            "texto": "Pronto 💛 Te mandei aqui o PDF da rotina, é só imprimir."
+          },
+          {
+            "direcao": "inbound",
+            "tipo": null,
+            "categoria": null,
+            "em": "2026-09-15T07:47:38.044588+00:00",
+            "texto": "Só que aí veio como lista, lá no Face, foi feito o cartão com o personagem, que era ele mesmo, personalizado."
+          },
+          {
+            "direcao": "outbound",
+            "tipo": "perfil_nudge",
+            "categoria": "reativa",
+            "em": "2026-09-15T07:48:03.50172+00:00",
+            "texto": "Entendi, [nome] — você não queria uma lista em texto. Os cartões do [nome] foram feitos **com o personagem dele, de forma personalizada**, e é essa versão ilustrada que você queria receber aqui. Desculpa, eu entendi errado antes. Eu não consigo recuperar nem anexar por conta própria os cartões personalizados criados no outro fluxo; a lista que veio não substitui esses cartões.\n\nSe ajudar, dá para me contar como [nome] lida com mudanças de plano: [link]"
+          }
+        ],
+        "chars_resposta": 56
+      }
+    ],
+    "retorno_em_outro_dia": [
+      {
+        "tipo": "retorno_em_outro_dia",
+        "familia": "F-eb7d4b2f",
+        "demora_horas": 14.9,
+        "conversa": [
+          {
+            "direcao": "inbound",
+            "tipo": null,
+            "categoria": null,
+            "em": "2026-09-14T20:44:36.798129+00:00",
+            "texto": "Ta bom obgda"
+          },
+          {
+            "direcao": "outbound",
+            "tipo": "resposta_registro",
+            "categoria": "reativa",
+            "em": "2026-09-14T20:44:59.464753+00:00",
+            "texto": "De nada, [nome]. Só preciso confirmar por segurança: **[nome] está se batendo neste momento ou ficou machucado?**"
+          },
+          {
+            "direcao": "inbound",
+            "tipo": null,
+            "categoria": null,
+            "em": "2026-09-15T11:41:42.452765+00:00",
+            "texto": "O [nome] ele e muito agitado"
+          },
+          {
+            "direcao": "outbound",
+            "tipo": "resposta_registro",
+            "categoria": "reativa",
+            "em": "2026-09-15T11:42:15.033728+00:00",
+            "texto": "Entendo, [nome]. Para ajudar o [nome] a ficar mais regulado, tente oferecer **alguns minutos de movimento antes da lição** e começar com uma instrução curta, mostrando o que ele precisa fazer, em vez de explicar muito. Na hora da agitação, fale pouco e diga: **“Vamos parar um pouco; depois fazemos só esta parte.”**\n\nSe ele voltar a se bater, interrompa a atividade e priorize a segurança, afastando objetos perigosos e procurando ajuda se houver risco de ferimento. Essa agitação acontece mais na lição, quando ele precisa esperar ou mudar de atividade, ou ao longo do dia?"
+          }
+        ],
+        "chars_resposta": 115
+      },
+      {
+        "tipo": "retorno_em_outro_dia",
+        "familia": "F-51928698",
+        "demora_horas": 16.5,
+        "conversa": [
+          {
+            "direcao": "inbound",
+            "tipo": null,
+            "categoria": null,
+            "em": "2026-09-23T18:38:40.374758+00:00",
+            "texto": "Ok, eu entendo. Obrigada, Tietchan."
+          },
+          {
+            "direcao": "outbound",
+            "tipo": "resposta_registro",
+            "categoria": "reativa",
+            "em": "2026-09-23T18:39:00.638251+00:00",
+            "texto": "De nada, [nome]. 💛"
+          },
+          {
+            "direcao": "inbound",
+            "tipo": null,
+            "categoria": null,
+            "em": "2026-09-24T11:11:50.278672+00:00",
+            "texto": "Sim"
+          },
+          {
+            "direcao": "outbound",
+            "tipo": "resposta_registro",
+            "categoria": "reativa",
+            "em": "2026-09-24T11:12:11.040406+00:00",
+            "texto": "Que bom que vocês conseguiram testar, [nome]. Na hora de sair da tela, o Darlison **conseguiu sair mais tranquilo**, ficou irritado mas saiu, ou continuou muito irritado e não conseguiu?"
+          }
+        ],
+        "chars_resposta": 19
+      },
+      {
+        "tipo": "retorno_em_outro_dia",
+        "familia": "F-93321069",
+        "demora_horas": 16.5,
+        "conversa": [
+          {
+            "direcao": "inbound",
+            "tipo": null,
+            "categoria": null,
+            "em": "2026-09-23T23:08:05.567562+00:00",
+            "texto": "Receber mais ideia prática para testar com o Enzo em casa"
+          },
+          {
+            "direcao": "outbound",
+            "tipo": "resposta_registro",
+            "categoria": "reativa",
+            "em": "2026-09-23T23:08:27.608679+00:00",
+            "texto": "Uma ideia para testar com o Enzo é o **jogo do “animal que espera”**, usando desenhos ou Lego. Em um momento tranquilo, diga: **“Agora é minha vez por 10 segundos; depois é a sua.”** Use um timer curto e, quando ele esperar sem bater ou chutar, entregue a vez e reconheça: **“Você esperou; agora é sua vez.”** Comece com poucos segundos e aumente devagar. Se ele começar a se irritar, encerre antes da crise e ofereça uma pausa — não é hora de ensinar enquanto ele está desregulado. 💛"
+          },
+          {
+            "direcao": "inbound",
+            "tipo": null,
+            "categoria": null,
+            "em": "2026-09-24T15:37:07.845941+00:00",
+            "texto": "Não aceita não"
+          },
+          {
+            "direcao": "outbound",
+            "tipo": "resposta_registro",
+            "categoria": "reativa",
+            "em": "2026-09-24T15:37:34.46216+00:00",
+            "texto": "Quando ele ouvir não, tente responder com poucas palavras: **Eu sei que você queria, mas hoje não. Você pode escolher entre isso ou aquilo.** Depois, mantenha a decisão sem explicar muitas vezes. Comece oferecendo escolhas pequenas antes do limite, como escolher o desenho ou o animal do jogo — sem transformar o não em negociação. Quando você diz não, ele costuma **gritar e bater** ou fica mais insistente e discute?"
+          }
+        ],
+        "chars_resposta": 485
+      },
+      {
+        "tipo": "retorno_em_outro_dia",
+        "familia": "F-03a8b5a4",
+        "demora_horas": 17.5,
+        "conversa": [
+          {
+            "direcao": "inbound",
+            "tipo": null,
+            "categoria": null,
+            "em": "2026-09-10T01:15:47.193152+00:00",
+            "texto": "Ficou melhor"
+          },
+          {
+            "direcao": "outbound",
+            "tipo": "resposta_registro",
+            "categoria": "reativa",
+            "em": "2026-09-10T01:16:07.228879+00:00",
+            "texto": "Sim, ficou mais firme sem abrir espaço para outra discussão. Agora, o melhor é enviar e **não responder às provocações seguintes**; guarde as mensagens e mantenha [nome] fora desse assunto. 💛"
+          },
+          {
+            "direcao": "inbound",
+            "tipo": null,
+            "categoria": null,
+            "em": "2026-09-10T18:44:33.670843+00:00",
+            "texto": "Veja a resposta abaixo do pai do [nome]"
+          },
+          {
+            "direcao": "outbound",
+            "tipo": "resposta_registro",
+            "categoria": "reativa",
+            "em": "2026-09-10T18:44:52.283721+00:00",
+            "texto": "Pode me enviar a resposta dele aqui — colando o texto ou mandando uma imagem. Eu te ajudo a entender o tom e a formular uma resposta firme, sem colocar o [nome] no meio."
+          }
+        ],
+        "chars_resposta": 193
+      },
+      {
+        "tipo": "retorno_em_outro_dia",
+        "familia": "F-5db2edad",
+        "demora_horas": 19.7,
+        "conversa": [
+          {
+            "direcao": "inbound",
+            "tipo": null,
+            "categoria": null,
+            "em": "2026-09-19T22:23:50.244225+00:00",
+            "texto": "Mas mesmo que coloque ele não come"
+          },
+          {
+            "direcao": "outbound",
+            "tipo": "resposta_registro",
+            "categoria": "reativa",
+            "em": "2026-09-19T22:24:14.713277+00:00",
+            "texto": "Entendo, [nome]. Então, por enquanto, o objetivo não precisa ser comer: pode ser apenas **tolerar a fruta perto dele**, sem insistir nem transformar a refeição em disputa. Como sua rotina é corrida, tente isso fora da refeição, por 2 minutos: Pedro pode escolher uma fruta para desenhar, lavar ou cortar com ajuda — sem precisar provar. **Ele aceita algum alimento de textura lisa**, como purê, iogurte ou vitamina?"
+          },
+          {
+            "direcao": "inbound",
+            "tipo": null,
+            "categoria": null,
+            "em": "2026-09-20T18:03:37.460638+00:00",
+            "texto": "Ok"
+          },
+          {
+            "direcao": "outbound",
+            "tipo": "resposta_registro",
+            "categoria": "reativa",
+            "em": "2026-09-20T18:03:58.644634+00:00",
+            "texto": "Certo, [nome]. Quando acontecer algo novo com o Pedro que você queira entender melhor, pode me contar por aqui. 💛"
+          }
+        ],
+        "chars_resposta": 415
+      },
+      {
+        "tipo": "retorno_em_outro_dia",
+        "familia": "F-59704146",
+        "demora_horas": 20.8,
+        "conversa": [
+          {
+            "direcao": "inbound",
+            "tipo": null,
+            "categoria": null,
+            "em": "2026-09-16T01:24:43.216826+00:00",
+            "texto": "Quando está brincando"
+          },
+          {
+            "direcao": "outbound",
+            "tipo": "resposta_registro",
+            "categoria": "reativa",
+            "em": "2026-09-16T01:25:04.396092+00:00",
+            "texto": "Entendi. Durante a brincadeira, observe se ele bate quando **perde, precisa esperar a vez ou alguém muda a regra**. Por enquanto, combine antes uma frase para ele usar, como **“pausa”**, e interrompa a brincadeira assim que ele tentar bater: “Não vou deixar bater. Vamos fazer uma pausa.” Isso acontece mais quando ele perde ou quando outra criança mexe no que ele está fazendo?"
+          },
+          {
+            "direcao": "inbound",
+            "tipo": null,
+            "categoria": null,
+            "em": "2026-09-16T22:11:02.165319+00:00",
+            "texto": "Oi"
+          },
+          {
+            "direcao": "outbound",
+            "tipo": "resposta_registro",
+            "categoria": "reativa",
+            "em": "2026-09-16T22:11:21.760964+00:00",
+            "texto": "Oi, [nome]! 💛 Como o Vitor está hoje?"
+          }
+        ],
+        "chars_resposta": 378
+      },
+      {
+        "tipo": "retorno_em_outro_dia",
+        "familia": "F-59704146",
+        "demora_horas": 20.8,
+        "conversa": [
+          {
+            "direcao": "inbound",
+            "tipo": null,
+            "categoria": null,
+            "em": "2026-09-16T01:24:43.216826+00:00",
+            "texto": "Quando está brincando"
+          },
+          {
+            "direcao": "outbound",
+            "tipo": "resposta_registro",
+            "categoria": "reativa",
+            "em": "2026-09-16T01:25:45.041672+00:00",
+            "texto": "Montei um plano estratégico com atividades sobre isso — mandei em PDF aqui em cima 👆 (dá pra salvar e imprimir).\nPra ver no app (já entra direto): [link]\nDá uma olhada com calma e volta aqui pra me contar o que você achou? Quero muito saber se faz sentido pro dia a dia de vocês — e se algo não encaixou, a gente ajusta. 💛"
+          },
+          {
+            "direcao": "inbound",
+            "tipo": null,
+            "categoria": null,
+            "em": "2026-09-16T22:11:02.165319+00:00",
+            "texto": "Oi"
+          },
+          {
+            "direcao": "outbound",
+            "tipo": "resposta_registro",
+            "categoria": "reativa",
+            "em": "2026-09-16T22:11:21.760964+00:00",
+            "texto": "Oi, [nome]! 💛 Como o Vitor está hoje?"
+          }
+        ],
+        "chars_resposta": 407
+      },
+      {
+        "tipo": "retorno_em_outro_dia",
+        "familia": "F-1a5e3c09",
+        "demora_horas": 23.2,
+        "conversa": [
+          {
+            "direcao": "inbound",
+            "tipo": null,
+            "categoria": null,
+            "em": "2026-09-09T18:50:52.285514+00:00",
+            "texto": "Na piscina não quer mais sair nao adorar agua"
+          },
+          {
+            "direcao": "outbound",
+            "tipo": "resposta_registro",
+            "categoria": "reativa",
+            "em": "2026-09-09T18:51:16.254212+00:00",
+            "texto": "Ele **adora água**, então sair da piscina pode ser uma mudança muito difícil para o [nome]. Avise antes: “faltam 5 minutos”, depois “mais 2 minutos”, e finalize sempre do mesmo jeito, levando-o para uma próxima atividade com água, como secar os brinquedos ou ajudar no banho. **Não deixe que ele fique na piscina sem supervisão**, porque você contou que ele não percebe bem o perigo; se ele correr ou chorar, fale pouco e conduza-o com calma para um local seguro."
+          },
+          {
+            "direcao": "inbound",
+            "tipo": null,
+            "categoria": null,
+            "em": "2026-09-10T18:01:39.110541+00:00",
+            "texto": "Não ele vai pra cama vai dormir.ir mais de 11 horas da noite"
+          },
+          {
+            "direcao": "outbound",
+            "tipo": "resposta_registro",
+            "categoria": "reativa",
+            "em": "2026-09-10T18:02:15.090792+00:00",
+            "texto": "Entendi: ele vai para a cama, mas só dorme depois das 23h, principalmente quando o celular descarrega. Se ele fica usando até a bateria acabar, tente combinar um horário fixo para desligar antes disso, avisando 10 e 5 minutos antes, e depois seguir direto para banho, pijama e cama. **O celular costuma ficar com ele até descarregar?**"
+          }
+        ],
+        "chars_resposta": 462
+      },
+      {
+        "tipo": "retorno_em_outro_dia",
+        "familia": "F-1a5e3c09",
+        "demora_horas": 23.2,
+        "conversa": [
+          {
+            "direcao": "inbound",
+            "tipo": null,
+            "categoria": null,
+            "em": "2026-09-09T18:50:52.285514+00:00",
+            "texto": "Na piscina não quer mais sair nao adorar agua"
+          },
+          {
+            "direcao": "outbound",
+            "tipo": "resposta_registro",
+            "categoria": "reativa",
+            "em": "2026-09-09T18:52:09.295064+00:00",
+            "texto": "Montei um plano estratégico com atividades sobre isso — mandei em PDF aqui em cima 👆 (dá pra salvar e imprimir).\nPra ver no app (já entra direto): [link]\nDá uma olhada com calma e volta aqui pra me contar o que você achou? Quero muito saber se faz sentido pro dia a dia de vocês — e se algo não encaixou, a gente ajusta. 💛"
+          },
+          {
+            "direcao": "inbound",
+            "tipo": null,
+            "categoria": null,
+            "em": "2026-09-10T18:01:39.110541+00:00",
+            "texto": "Não ele vai pra cama vai dormir.ir mais de 11 horas da noite"
+          },
+          {
+            "direcao": "outbound",
+            "tipo": "resposta_registro",
+            "categoria": "reativa",
+            "em": "2026-09-10T18:02:15.090792+00:00",
+            "texto": "Entendi: ele vai para a cama, mas só dorme depois das 23h, principalmente quando o celular descarrega. Se ele fica usando até a bateria acabar, tente combinar um horário fixo para desligar antes disso, avisando 10 e 5 minutos antes, e depois seguir direto para banho, pijama e cama. **O celular costuma ficar com ele até descarregar?**"
+          }
+        ],
+        "chars_resposta": 407
+      },
+      {
+        "tipo": "retorno_em_outro_dia",
+        "familia": "F-77624560",
+        "demora_horas": 23.2,
+        "conversa": [
+          {
+            "direcao": "inbound",
+            "tipo": null,
+            "categoria": null,
+            "em": "2026-09-16T12:05:40.243552+00:00",
+            "texto": "se n for interessante p ele ele n fica"
+          },
+          {
+            "direcao": "outbound",
+            "tipo": "resposta_registro",
+            "categoria": "reativa",
+            "em": "2026-09-16T12:05:49.069701+00:00",
+            "texto": "Entendi. Então o foco do [nome] aparece principalmente quando a atividade interessa a ele; isso não significa que ele não consiga prestar atenção, mas que tarefas pouco motivadoras podem exigir mais apoio. Comece com algo bem curto e use o Lego como ponte: **duas ou três peças, uma tarefa pequena e depois uma pausa ou alguns minutos de Lego**. Fale: “Primeiro isso, depois Lego”. Observe se ele se dispersa, recusa ou fica nervoso quando a atividade não é do interesse dele."
+          },
+          {
+            "direcao": "inbound",
+            "tipo": null,
+            "categoria": null,
+            "em": "2026-09-17T11:15:44.208357+00:00",
+            "texto": "transição \ndesfraldar \nele tá sem as terapias \ne muito difícil o não p ele"
+          },
+          {
+            "direcao": "outbound",
+            "tipo": "resposta_registro",
+            "categoria": "reativa",
+            "em": "2026-09-17T11:16:10.478045+00:00",
+            "texto": "Entendi, [nome]. Como o [nome] está sem as terapias e o **não** está difícil, eu começaria pelas transições: avise antes, use uma frase curta e mostre o que vem depois — **“Mais uma peça e vamos parar. Primeiro banheiro, depois Lego.”** Se ele se irritar, fale pouco, reduza a exigência e priorize a segurança; não tente explicar muito no auge da crise. O desfralde pode ser trabalhado em pequenas aproximações, sem pressão, porque juntar muitas mudanças pode pesar. **O “não” costuma ser mais difícil quando ele precisa parar algo de que gosta ou quando precisa mudar de lugar/atividade?**"
+          }
+        ],
+        "chars_resposta": 478
+      }
+    ],
+    "resposta_a_iniciativa": [
+      {
+        "tipo": "resposta_a_iniciativa",
+        "familia": "F-fcdadc06",
+        "demora_horas": 0,
+        "conversa": [
+          {
+            "direcao": "outbound",
+            "tipo": "trial_d0",
+            "categoria": "proativa",
+            "em": "2026-09-09T18:00:43.861031+00:00",
+            "texto": "Oi, [nome]. Seu período grátis terminou 🌿\n\nTudo que você me contou continua salvo. Se quiser continuar comigo, os planos estão aqui:\n[link]\n\nSe tiver alguma dúvida, pode me perguntar por aqui."
+          },
+          {
+            "direcao": "inbound",
+            "tipo": null,
+            "categoria": null,
+            "em": "2026-09-09T18:01:56.463566+00:00",
+            "texto": "Obrigada"
+          },
+          {
+            "direcao": "outbound",
+            "tipo": "pos_trial",
+            "categoria": "reativa",
+            "em": "2026-09-09T18:02:19.294676+00:00",
+            "texto": "Tudo bem, [nome]. Respeito sua decisão e agradeço por ter conversado comigo. Se mudar de ideia algum dia, estarei por aqui."
+          }
+        ],
+        "chars_resposta": 276
+      },
+      {
+        "tipo": "resposta_a_iniciativa",
+        "familia": "F-1322edc6",
+        "demora_horas": 0,
+        "conversa": [
+          {
+            "direcao": "outbound",
+            "tipo": "rotina",
+            "categoria": "proativa",
+            "em": "2026-09-11T15:00:17.074551+00:00",
+            "texto": "[nome], qual desafio tá pegando mais agora com o [nome]? Sono, escola, transições, crises? Eu monto um plano prático — passos, frases pra usar, o que observar — pensado pro jeito dele mesmo."
+          },
+          {
+            "direcao": "inbound",
+            "tipo": null,
+            "categoria": null,
+            "em": "2026-09-11T15:02:06.165006+00:00",
+            "texto": "Crises"
+          },
+          {
+            "direcao": "outbound",
+            "tipo": "resposta_registro",
+            "categoria": "reativa",
+            "em": "2026-09-11T15:02:32.667134+00:00",
+            "texto": "Quando o [nome] começar a se irritar, fale pouco, afaste objetos que possam machucar e dê espaço — como você já percebeu, **segurá-lo tende a piorar**. Enquanto ele estiver batendo ou muito desregulado, priorize segurança e não tente explicar ou dar sermão; converse só depois, quando ele estiver calmo. Isso está acontecendo agora ou você quer se preparar para a próxima crise?"
+          }
+        ],
+        "chars_resposta": 190
+      },
+      {
+        "tipo": "resposta_a_iniciativa",
+        "familia": "F-1a5e3c09",
+        "demora_horas": 0,
+        "conversa": [
+          {
+            "direcao": "inbound",
+            "tipo": null,
+            "categoria": null,
+            "em": "2026-09-09T18:50:52.285514+00:00",
+            "texto": "Na piscina não quer mais sair nao adorar agua"
+          },
+          {
+            "direcao": "outbound",
+            "tipo": "rotina",
+            "categoria": "proativa",
+            "em": "2026-09-10T18:00:16.726141+00:00",
+            "texto": "E o [nome], quando chega a hora de dormir, ele fica agitado ou cai duro? Tipo, tem alguma coisa que funciona — banho, história na água — ou é sempre uma luta?"
+          },
+          {
+            "direcao": "inbound",
+            "tipo": null,
+            "categoria": null,
+            "em": "2026-09-10T18:01:39.110541+00:00",
+            "texto": "Não ele vai pra cama vai dormir.ir mais de 11 horas da noite"
+          },
+          {
+            "direcao": "outbound",
+            "tipo": "resposta_registro",
+            "categoria": "reativa",
+            "em": "2026-09-10T18:02:15.090792+00:00",
+            "texto": "Entendi: ele vai para a cama, mas só dorme depois das 23h, principalmente quando o celular descarrega. Se ele fica usando até a bateria acabar, tente combinar um horário fixo para desligar antes disso, avisando 10 e 5 minutos antes, e depois seguir direto para banho, pijama e cama. **O celular costuma ficar com ele até descarregar?**"
+          }
+        ],
+        "chars_resposta": 157
+      },
+      {
+        "tipo": "resposta_a_iniciativa",
+        "familia": "F-5f8d81d8",
+        "demora_horas": 0,
+        "conversa": [
+          {
+            "direcao": "inbound",
+            "tipo": null,
+            "categoria": null,
+            "em": "2026-09-11T18:04:27.22155+00:00",
+            "texto": "A cabo deixando mais um pouco"
+          },
+          {
+            "direcao": "outbound",
+            "tipo": "rotina",
+            "categoria": "proativa",
+            "em": "2026-09-12T18:00:17.402349+00:00",
+            "texto": "[nome], fico curiosa em saber: quando o João fica frustrado (tipo, morre de raiva num jogo ou algo não dá certo), como ele reage? Ele consegue desabafar ou costuma explodir?\n\nPode responder como quiser — áudio tb vale 🌿"
+          },
+          {
+            "direcao": "inbound",
+            "tipo": null,
+            "categoria": null,
+            "em": "2026-09-12T18:01:18.816151+00:00",
+            "texto": "Ele fica bravo e não desabafa"
+          },
+          {
+            "direcao": "outbound",
+            "tipo": "resposta_registro",
+            "categoria": "reativa",
+            "em": "2026-09-12T18:01:42.736699+00:00",
+            "texto": "Entendi. Quando ele fica bravo, **não tente fazer João explicar o que sentiu na hora**; fale pouco e diga: **“Você ficou muito bravo. Vamos acalmar primeiro.”** Depois, em um momento tranquilo, ensine uma forma simples de pedir ajuda, como falar **“pausa”**, apontar para uma opção ou mostrar uma carinha de bravo. 💛\n\nQuando ele fica bravo, costuma mais **gritar, chorar, se afastar ou jogar/bater nas coisas**?"
+          }
+        ],
+        "chars_resposta": 221
+      },
+      {
+        "tipo": "resposta_a_iniciativa",
+        "familia": "F-79cbb0dc",
+        "demora_horas": 0,
+        "conversa": [
+          {
+            "direcao": "outbound",
+            "tipo": "boas_vindas",
+            "categoria": "proativa",
+            "em": "2026-09-11T08:13:11.597158+00:00",
+            "texto": "Oi, [nome]! Eu sou a Ayla 💛 Estou aqui pra te ajudar nos desafios do dia a dia com a [nome].\n\nPelo que você contou quando entrou, o que mais tem pesado são o foco, as emoções e as crises e a escola.\n\nPosso te ajudar com estratégias práticas, o que fazer e o que falar nas horas difíceis, e também com brincadeiras e atividades pra trabalhar essas habilidades de um jeito mais leve pro [nome].\n\nVocê não precisa saber o que pedir: me conta o que está acontecendo, do seu jeito. Por qual você quer começar? Pode mandar um *áudio*, se for mais fácil — com o que você me contar eu já te trago uma primeira ideia prática. 🌿\n\nE se quiser conhecer rapidinho tudo o que dá pra fazer na Kolo, tem um vídeo curto mostrando a plataforma por dentro:\n[link]"
+          },
+          {
+            "direcao": "inbound",
+            "tipo": null,
+            "categoria": null,
+            "em": "2026-09-11T08:15:02.191896+00:00",
+            "texto": "O que mais me incomoda, o que mais tá sendo difícil, é não ter nunca ido pra escola. Quando vai pra escola, tu escuta de fugir, fala que tá doente na escola, fala que tá doente em casa por não ir pra escola. E banho. Com 15 anos eu já tô 16. Às vezes não quer tomar banho, finge que vai tomar banho e não banha. Pra lavar o cabelo também é uma dificuldade, tem que ser brigando. Eu não lavo o cabelo todo dia. E também é passar de celular. Muita, muita briga pra largar o celular."
+          },
+          {
+            "direcao": "outbound",
+            "tipo": "resposta_registro",
+            "categoria": "reativa",
+            "em": "2026-09-11T08:15:34.668387+00:00",
+            "texto": "[nome], dá para entender por que isso está pesando tanto: são três momentos de muita briga, mas eu começaria pela escola, sem tentar resolver tudo de uma vez. Quando a [nome] diz que está doente, evite chamar de mentira; diga: **“Eu acredito que você não está bem. Vamos entender o que seu corpo está sentindo e pensar no próximo passo.”** Se houver febre, vômitos, dor forte ou outro sintoma físico persistente, vale avaliação de saúde. Se não houver sinais físicos claros, a entrada pode precisar ser bem gradual, com uma pessoa de referência e uma rotina previsível combinada com a escola.\n\nPara o banho, tente trocar a disputa por uma escolha limitada: **“Você prefere tomar banho agora ou às 19h?”** e, sobre o cabelo, combinar dias e horário específicos, sem exigir que seja lavado todos os dias. Para o celular, avise antes e use um cronômetro visível: **“Quando o tempo acabar, o celular desc"
+          }
+        ],
+        "chars_resposta": 810
+      },
+      {
+        "tipo": "resposta_a_iniciativa",
+        "familia": "F-f2dc15fd",
+        "demora_horas": 0,
+        "conversa": [
+          {
+            "direcao": "outbound",
+            "tipo": "boas_vindas",
+            "categoria": "proativa",
+            "em": "2026-09-12T23:08:33.101675+00:00",
+            "texto": "Oi, [nome]! Eu sou a Ayla 💛 Estou aqui pra te ajudar nos desafios do dia a dia com o [nome].\n\nPelo que você contou quando entrou, o que mais tem pesado são a comunicação, a socialização e as emoções e as crises.\n\nPosso te ajudar com estratégias práticas, o que fazer e o que falar nas horas difíceis, e também com brincadeiras e atividades pra trabalhar essas habilidades de um jeito mais leve pro [nome].\n\nVocê não precisa saber o que pedir: me conta o que está acontecendo, do seu jeito. Por qual você quer começar? Pode mandar um *áudio*, se for mais fácil — com o que você me contar eu já te trago uma primeira ideia prática. 🌿\n\nE se quiser conhecer rapidinho tudo o que dá pra fazer na Kolo, tem um vídeo curto mostrando a plataforma por dentro:\n[link]"
+          },
+          {
+            "direcao": "inbound",
+            "tipo": null,
+            "categoria": null,
+            "em": "2026-09-12T23:10:00.693671+00:00",
+            "texto": "meu filho fica muito nervoso quando perde um jogo e tem mania de achar que seus amigos querem machucar ele de propósito,  quando estao brincando e um acidente acontece"
+          },
+          {
+            "direcao": "outbound",
+            "tipo": "resposta_registro",
+            "categoria": "reativa",
+            "em": "2026-09-12T23:10:26.614991+00:00",
+            "texto": "Quando ele perde, ajude primeiro a se regular: **pare o jogo, fale pouco e combine uma pausa** antes de voltar. Você pode dizer: “Você ficou muito bravo e se assustou. Vamos respirar; depois a gente entende o que aconteceu.” Sobre os acidentes, valide o medo sem confirmar a intenção: “Eu vi que machucou, mas vamos conferir se foi sem querer.” Quando estiver calmo, pergunte como o amigo pode ter visto a situação — sem obrigá-lo a mudar de ideia na hora. **Quando ele se acalma, ainda acha que o amigo quis machucá-lo ou percebe que foi um acidente?**"
+          }
+        ],
+        "chars_resposta": 820
+      },
+      {
+        "tipo": "resposta_a_iniciativa",
+        "familia": "F-f2dc15fd",
+        "demora_horas": 0,
+        "conversa": [
+          {
+            "direcao": "inbound",
+            "tipo": null,
+            "categoria": null,
+            "em": "2026-09-12T23:10:00.693671+00:00",
+            "texto": "meu filho fica muito nervoso quando perde um jogo e tem mania de achar que seus amigos querem machucar ele de propósito,  quando estao brincando e um acidente acontece"
+          },
+          {
+            "direcao": "outbound",
+            "tipo": "rotina",
+            "categoria": "proativa",
+            "em": "2026-09-14T18:00:17.395591+00:00",
+            "texto": "[nome], qual é o desafio que tá pegando mais agora com o [nome]? Sono, transição, escola, birra — qualquer coisa que deixa vocês sem saber o que fazer. A partir daí eu monto um plano prático com passos que fazem sentido pro jeito dele."
+          },
+          {
+            "direcao": "inbound",
+            "tipo": null,
+            "categoria": null,
+            "em": "2026-09-14T18:00:54.622121+00:00",
+            "texto": "birra e transição"
+          },
+          {
+            "direcao": "outbound",
+            "tipo": "resposta_registro",
+            "categoria": "reativa",
+            "em": "2026-09-14T18:01:18.242852+00:00",
+            "texto": "Nas transições, pode ajudar avisar o [nome] antes e deixar claro **o que termina e o que vem depois**: “Faltam 5 minutos para guardar o Lego; depois você escolhe se vai tomar banho ou colocar o pijama.” Se ele entrar em birra, fale pouco e mantenha a sequência, sem tentar explicar demais naquele momento. **Qual mudança costuma ser mais difícil para ele: parar uma brincadeira, sair de algum lugar ou começar uma tarefa?**"
+          }
+        ],
+        "chars_resposta": 233
+      },
+      {
+        "tipo": "resposta_a_iniciativa",
+        "familia": "F-f2dc15fd",
+        "demora_horas": 0,
+        "conversa": [
+          {
+            "direcao": "inbound",
+            "tipo": null,
+            "categoria": null,
+            "em": "2026-09-14T18:00:54.622121+00:00",
+            "texto": "birra e transição"
+          },
+          {
+            "direcao": "outbound",
+            "tipo": "rotina",
+            "categoria": "proativa",
+            "em": "2026-09-18T18:00:18.353884+00:00",
+            "texto": "[nome], qual é o desafio que tá pegando mais agora com o [nome]? Sono, escola, transição, birra? Eu monto um plano prático pra vocês tentarem — passos que funcionam, frases que abrem espaço, o que observar. É no dia a dia que muda mesmo."
+          },
+          {
+            "direcao": "inbound",
+            "tipo": null,
+            "categoria": null,
+            "em": "2026-09-18T18:02:18.698638+00:00",
+            "texto": "tem torneio de tênis dele sabado que vem , devo colocar ele na categoria mais iniciante ou mais avançada? ele não sabe, pediu para eu escolher mas sofre demais quando perde. ele tem nível para as 2 esta em transição"
+          },
+          {
+            "direcao": "outbound",
+            "tipo": "resposta_registro",
+            "categoria": "reativa",
+            "em": "2026-09-18T18:02:42.814775+00:00",
+            "texto": "Eu escolheria a categoria **mais iniciante desta vez**, desde que ela seja realmente adequada às regras do torneio e não fique muito abaixo do nível dele. Como o [nome] está em transição e ainda sofre bastante quando perde, o objetivo pode ser viver a competição com mais segurança, não testar o limite máximo agora. Diga: “Vamos escolher uma categoria para você ganhar experiência e aprender a lidar com o torneio; depois avaliamos o próximo passo.” Antes, combinem que o sucesso será **jogar até o fim, tentar uma estratégia e se recuperar depois de um ponto difícil** — não necessariamente vencer. Se a categoria iniciante for claramente fácil demais, aí a avançada pode ser uma boa oportunidade, com esse mesmo foco."
+          }
+        ],
+        "chars_resposta": 235
+      },
+      {
+        "tipo": "resposta_a_iniciativa",
+        "familia": "F-5107ae69",
+        "demora_horas": 0,
+        "conversa": [
+          {
+            "direcao": "inbound",
+            "tipo": null,
+            "categoria": null,
+            "em": "2026-09-14T11:06:19.235033+00:00",
+            "texto": "Certo"
+          },
+          {
+            "direcao": "outbound",
+            "tipo": "rotina",
+            "categoria": "proativa",
+            "em": "2026-09-16T11:01:03.882528+00:00",
+            "texto": "Sabe como funciona aqui? Quanto mais você me conta do dia a dia da [nome], mais consigo enxergar o panorama inteiro dela — aquilo que evolui, os padrões, o que dispara as coisas. Aí fica fácil mostrar pra escola ou terapeuta com dados reais, não achismo.\n\nE com esse panorama monto ideias que fazem sentido pra [nome] de verdade, não genérico. Quando surge um desafio específico — seja sono, alimentação, transição — a gente tem base pra planejar juntas.\n\nComeça por aí: me conta uma coisa de hoje. Uma pequena vitória dela ou algo que te deixou intrigada. Vamos construindo esse mapa junto 🌿"
+          },
+          {
+            "direcao": "inbound",
+            "tipo": null,
+            "categoria": null,
+            "em": "2026-09-16T11:03:50.53273+00:00",
+            "texto": "Bom dia"
+          },
+          {
+            "direcao": "outbound",
+            "tipo": "entrada_guiada",
+            "categoria": "reativa",
+            "em": "2026-09-16T11:04:03.951929+00:00",
+            "texto": "Oi, [nome]! 💛\n\nPor onde você quer que eu te ajude com [nome]?\n\nQuando você entrou, me contou que alguns pontos importantes são:\n1. Comunicação\n2. Sono\n3. Foco\n\nTambém posso ajudar com:\n4. Regulação emocional\n5. Rotina\n6. Alimentação\n7. Sensorial\n8. Socialização\n9. Outra situação\n\nPode responder só com o número. Se for mais fácil, manda um *áudio* me contando o que está acontecendo. 🌿"
+          }
+        ],
+        "chars_resposta": 593
+      },
+      {
+        "tipo": "resposta_a_iniciativa",
+        "familia": "F-5107ae69",
+        "demora_horas": 0,
+        "conversa": [
+          {
+            "direcao": "inbound",
+            "tipo": null,
+            "categoria": null,
+            "em": "2026-09-16T11:06:12.866786+00:00",
+            "texto": "Depois quwr chorar"
+          },
+          {
+            "direcao": "outbound",
+            "tipo": "rotina",
+            "categoria": "proativa",
+            "em": "2026-09-17T11:00:51.84637+00:00",
+            "texto": "E aí, como tem sido com essas emoções intensas da [nome] ultimamente? Aquele \"não\" que dispara tudo — choro, grito — continua sendo o maior desafio?\n\nQueria entender melhor: o que vocês já tentaram que ajudou um pouco? E ela continua amando música e dançar? Dá pra gente montar algo prático com isso, sabe. Pode ser áudio se preferir 🌿"
+          },
+          {
+            "direcao": "inbound",
+            "tipo": null,
+            "categoria": null,
+            "em": "2026-09-17T11:01:33.818758+00:00",
+            "texto": "Sim ela ama música e dançar"
+          },
+          {
+            "direcao": "outbound",
+            "tipo": "resposta_registro",
+            "categoria": "reativa",
+            "em": "2026-09-17T11:02:02.929352+00:00",
+            "texto": "Bom dia, [nome]! 💛 Saber que a [nome] ama música e dançar pode ajudar a tornar esses momentos mais leves. Pensando no que vocês testaram até aqui, **o que mais ajudou um pouquinho** nas birras para pedir água, ir ao banheiro ou quando ela escuta não?"
+          }
+        ],
+        "chars_resposta": 336
+      }
+    ],
+    "continuidade_curta": [
+      {
+        "tipo": "continuidade_curta",
+        "familia": "F-03a8b5a4",
+        "demora_horas": 0,
+        "conversa": [
+          {
+            "direcao": "inbound",
+            "tipo": null,
+            "categoria": null,
+            "em": "2026-09-08T03:23:24.705062+00:00",
+            "texto": "Me ajuda a montar uma agenda p amanhã/semana\nSupermercado maracujá,banana,salgado\nAgendar vacina Lore domingo \nIr na Fiap ou ligar \nLigar Rita escola\nEnviar reembolso [nome] \nMandar mensagem Rh /Valéria sobre horários de quinta \nMandar mensagem aula Dra Bruna"
+          },
+          {
+            "direcao": "outbound",
+            "tipo": "resposta_registro",
+            "categoria": "reativa",
+            "em": "2026-09-08T03:23:53.504505+00:00",
+            "texto": "Claro, [nome]. Eu organizaria assim:\n\n**Amanhã**\n\n1️⃣ **De manhã:** ligar para a Rita, da escola. \n2️⃣ Mandar mensagem para o RH/Valéria sobre os horários de quinta. \n3️⃣ Mandar mensagem para a Dra. Bruna sobre a aula. \n4️⃣ **FIAP:** ligar primeiro; se não resolver por telefone, combinar de ir até lá. \n5️⃣ **Supermercado:** comprar maracujá, banana e salgado. \n6️⃣ Enviar o reembolso do [nome].\n\n**Durante a semana**\n\n7️⃣ Agendar a vacina da Lore para domingo e já confirmar o horário e os documentos necessários.\n\nAssim, você resolve primeiro o que depende de outras pessoas e deixa o supermercado para um horário mais flexível. Se “Lore” for o [nome], vale usar o nome dele no agendamento para evitar confusão."
+          },
+          {
+            "direcao": "inbound",
+            "tipo": null,
+            "categoria": null,
+            "em": "2026-09-08T03:23:53.625752+00:00",
+            "texto": "Pode ser um check list"
+          },
+          {
+            "direcao": "outbound",
+            "tipo": "resposta_registro",
+            "categoria": "reativa",
+            "em": "2026-09-08T03:24:23.678937+00:00",
+            "texto": "Claro — o **checklist** fica mais fácil de acompanhar pelo celular:\n\n**Amanhã**\n\n☐ Ligar para a Rita, da escola \n☐ Mandar mensagem para o RH/Valéria sobre os horários de quinta \n☐ Mandar mensagem para a Dra. Bruna sobre a aula \n☐ Ligar para a FIAP; se precisar, ir até lá \n☐ Comprar maracujá, banana e salgado \n☐ Enviar o reembolso do [nome] \n\n**Durante a semana**\n\n☐ Agendar a vacina da Lore para domingo \n☐ Confirmar horário e documentos necessários \n\nVocê pode ir marcando cada item conforme resolver."
+          }
+        ],
+        "chars_resposta": 716
+      },
+      {
+        "tipo": "continuidade_curta",
+        "familia": "F-03a8b5a4",
+        "demora_horas": 0,
+        "conversa": [
+          {
+            "direcao": "inbound",
+            "tipo": null,
+            "categoria": null,
+            "em": "2026-09-08T03:30:16.300069+00:00",
+            "texto": "Socorro"
+          },
+          {
+            "direcao": "outbound",
+            "tipo": "resposta_registro",
+            "categoria": "reativa",
+            "em": "2026-09-08T03:30:44.498502+00:00",
+            "texto": "[nome], **agora não tente convencê-lo sobre esperar até o próximo ano nem discutir a mudança de escola**. Na crise, fale pouco e com frases literais:\n\n**“Eu entendi que está demais. Você não precisa resolver a escola agora. Primeiro vamos deixar seu corpo seguro e mais calmo.”**\n\nLeve-o para um lugar silencioso, reduza luz e pessoas, afaste objetos duros e mantenha uma distância que permita segurança. Não exija que ele levante, olhe para você ou explique tudo; ofereça água e tempo. Se ele aceitar, pode usar algo que ajude a regular, como pressão firme ou um abraço forte — **mas só se ele pedir ou aceitar**, sem apertá-lo à força.\n\nQuando estiver mais regulado, diga: **“Eu vou levar isso a sério. Amanhã vamos organizar uma conversa com a escola e a FIAP para entender o que pode mudar agora, enquanto avaliamos a troca.”** A mudança pode ser discutida ainda este ano, mas a decisão não preci"
+          },
+          {
+            "direcao": "inbound",
+            "tipo": null,
+            "categoria": null,
+            "em": "2026-09-08T03:32:06.687312+00:00",
+            "texto": "Ele está calmo sim e dormindo eu que não consigo dormir de preocupação"
+          },
+          {
+            "direcao": "outbound",
+            "tipo": "resposta_registro",
+            "categoria": "reativa",
+            "em": "2026-09-08T03:32:29.947715+00:00",
+            "texto": "Entendo, [nome]. Depois de ver o [nome] tão descompensado, é natural seu corpo continuar em alerta. Se ele está dormindo, respirando normalmente e sem ter se machucado, **deixe-o descansar e tente descansar também**; você pode apenas fazer uma checagem tranquila antes de deitar e manter o celular por perto.\n\nAmanhã, não precisa resolver a escola inteira de uma vez. Anote o que aconteceu e os pontos que ele trouxe — excesso de conteúdo, falta de amigos e distância — para levar à conversa com a escola e à avaliação da FIAP. **Você não precisa decidir tudo esta noite.**"
+          }
+        ],
+        "chars_resposta": 1200
+      },
+      {
+        "tipo": "continuidade_curta",
+        "familia": "F-03a8b5a4",
+        "demora_horas": 0,
+        "conversa": [
+          {
+            "direcao": "inbound",
+            "tipo": null,
+            "categoria": null,
+            "em": "2026-09-08T03:30:16.300069+00:00",
+            "texto": "Socorro"
+          },
+          {
+            "direcao": "outbound",
+            "tipo": "resposta_registro",
+            "categoria": "reativa",
+            "em": "2026-09-08T03:31:39.195219+00:00",
+            "texto": "Montei um plano estratégico com atividades sobre isso — mandei em PDF aqui em cima 👆 (dá pra salvar e imprimir).\nPra ver no app (já entra direto): [link]\nDá uma olhada com calma e volta aqui pra me contar o que você achou? Quero muito saber se faz sentido pro dia a dia de vocês — e se algo não encaixou, a gente ajusta. 💛"
+          },
+          {
+            "direcao": "inbound",
+            "tipo": null,
+            "categoria": null,
+            "em": "2026-09-08T03:32:06.687312+00:00",
+            "texto": "Ele está calmo sim e dormindo eu que não consigo dormir de preocupação"
+          },
+          {
+            "direcao": "outbound",
+            "tipo": "resposta_registro",
+            "categoria": "reativa",
+            "em": "2026-09-08T03:32:29.947715+00:00",
+            "texto": "Entendo, [nome]. Depois de ver o [nome] tão descompensado, é natural seu corpo continuar em alerta. Se ele está dormindo, respirando normalmente e sem ter se machucado, **deixe-o descansar e tente descansar também**; você pode apenas fazer uma checagem tranquila antes de deitar e manter o celular por perto.\n\nAmanhã, não precisa resolver a escola inteira de uma vez. Anote o que aconteceu e os pontos que ele trouxe — excesso de conteúdo, falta de amigos e distância — para levar à conversa com a escola e à avaliação da FIAP. **Você não precisa decidir tudo esta noite.**"
+          }
+        ],
+        "chars_resposta": 407
+      },
+      {
+        "tipo": "continuidade_curta",
+        "familia": "F-03a8b5a4",
+        "demora_horas": 0,
+        "conversa": [
+          {
+            "direcao": "inbound",
+            "tipo": null,
+            "categoria": null,
+            "em": "2026-09-08T03:32:06.687312+00:00",
+            "texto": "Ele está calmo sim e dormindo eu que não consigo dormir de preocupação"
+          },
+          {
+            "direcao": "outbound",
+            "tipo": "resposta_registro",
+            "categoria": "reativa",
+            "em": "2026-09-08T03:32:29.947715+00:00",
+            "texto": "Entendo, [nome]. Depois de ver o [nome] tão descompensado, é natural seu corpo continuar em alerta. Se ele está dormindo, respirando normalmente e sem ter se machucado, **deixe-o descansar e tente descansar também**; você pode apenas fazer uma checagem tranquila antes de deitar e manter o celular por perto.\n\nAmanhã, não precisa resolver a escola inteira de uma vez. Anote o que aconteceu e os pontos que ele trouxe — excesso de conteúdo, falta de amigos e distância — para levar à conversa com a escola e à avaliação da FIAP. **Você não precisa decidir tudo esta noite.**"
+          },
+          {
+            "direcao": "inbound",
+            "tipo": null,
+            "categoria": null,
+            "em": "2026-09-08T03:33:39.357529+00:00",
+            "texto": "É melhor conversar com a Rita coordenadora atual certo?"
+          },
+          {
+            "direcao": "outbound",
+            "tipo": "resposta_registro",
+            "categoria": "reativa",
+            "em": "2026-09-08T03:34:01.737454+00:00",
+            "texto": "Sim, [nome]. **A Rita, como coordenadora atual, é a melhor primeira conversa**, porque pode ajudar a pensar em ajustes imediatos enquanto vocês avaliam a mudança de escola.\n\nVocê pode dizer: **“O [nome] teve uma crise importante e está dizendo que não está conseguindo suportar o excesso de conteúdo, a falta de amigos e a distância. Precisamos conversar com urgência sobre como apoiá-lo agora e quais alternativas existem.”** Registre também o que ele relatou e peça que a escola participe da conversa com a FIAP."
+          }
+        ],
+        "chars_resposta": 574
+      },
+      {
+        "tipo": "continuidade_curta",
+        "familia": "F-03a8b5a4",
+        "demora_horas": 0,
+        "conversa": [
+          {
+            "direcao": "inbound",
+            "tipo": null,
+            "categoria": null,
+            "em": "2026-09-08T03:33:39.357529+00:00",
+            "texto": "É melhor conversar com a Rita coordenadora atual certo?"
+          },
+          {
+            "direcao": "outbound",
+            "tipo": "resposta_registro",
+            "categoria": "reativa",
+            "em": "2026-09-08T03:34:01.737454+00:00",
+            "texto": "Sim, [nome]. **A Rita, como coordenadora atual, é a melhor primeira conversa**, porque pode ajudar a pensar em ajustes imediatos enquanto vocês avaliam a mudança de escola.\n\nVocê pode dizer: **“O [nome] teve uma crise importante e está dizendo que não está conseguindo suportar o excesso de conteúdo, a falta de amigos e a distância. Precisamos conversar com urgência sobre como apoiá-lo agora e quais alternativas existem.”** Registre também o que ele relatou e peça que a escola participe da conversa com a FIAP."
+          },
+          {
+            "direcao": "inbound",
+            "tipo": null,
+            "categoria": null,
+            "em": "2026-09-08T03:35:22.39211+00:00",
+            "texto": "A Fiap é a futura escola provavelmente a Rita não vai conversar terá que ser Eu mesma"
+          },
+          {
+            "direcao": "outbound",
+            "tipo": "resposta_registro",
+            "categoria": "reativa",
+            "em": "2026-09-08T03:35:47.029688+00:00",
+            "texto": "Entendi, [nome]. **Você mesma pode procurar a FIAP diretamente**, já que é a escola que vocês estão considerando. A Rita ainda pode ser acionada apenas para discutir apoios imediatos na Sta. Amália, mas você não precisa esperar uma conversa entre as duas escolas para começar.\n\nPara a FIAP, você pode escrever: **O [nome] está em sofrimento importante com a escola atual e teve uma crise hoje, relatando excesso de conteúdo, falta de amigos e distância. Gostaria de conversar ainda este ano sobre a possibilidade de mudança, critérios, prazo e apoios necessários para uma adaptação segura.** Registre também o que ele disse e como ficou na crise. Enquanto isso, vale pedir à escola atual ajustes temporários na carga e nas demandas, sem esperar a transferência."
+          }
+        ],
+        "chars_resposta": 515
+      },
+      {
+        "tipo": "continuidade_curta",
+        "familia": "F-03a8b5a4",
+        "demora_horas": 0,
+        "conversa": [
+          {
+            "direcao": "inbound",
+            "tipo": null,
+            "categoria": null,
+            "em": "2026-09-08T20:44:14.328756+00:00",
+            "texto": "Agora em relação ao Lourenço poxa é uma pena porque assim eu acho que valeria muito a pena ele tentar aguentar a simônia até o final do ano porque eu acho que você mudando de escola agora até para você é um pouco ruim não sei como que vai ser na FIAP mas acredito que eles vão solicitar material você vai ter que comprar material tudo de novo. Então eu acho que valeria a pena pelo menos finalizar esse ano lá porque aí o Lourenço fica um pouco mais acostumado com o conteúdo. Por mais que esteja um pouco mais por mais que seja cansativa porque eu acho muito que o Lourenço ele relacionou o conteúdo pedagógico com essa exaustão mental que ele está sentindo. Uma coisa não se separa da outra. Não tem como como hoje o mais pesado tem sido o conteúdo. Obviamente que ele vai relacionar isso para a escola em si. Então isso vai pegar um pouquinho de tudo ali. Mas eu acho que valeria a pena tentar man"
+          },
+          {
+            "direcao": "outbound",
+            "tipo": "resposta_registro",
+            "categoria": "reativa",
+            "em": "2026-09-08T20:44:14.413074+00:00",
+            "texto": "Pode me enviar ou colar aqui a mensagem da psicóloga? Eu adapto para o [nome], com uma linguagem clara e que não pareça que você está enrolando ele."
+          },
+          {
+            "direcao": "inbound",
+            "tipo": null,
+            "categoria": null,
+            "em": "2026-09-08T20:44:16.538865+00:00",
+            "texto": "Para não mudar ele de escola agora"
+          },
+          {
+            "direcao": "outbound",
+            "tipo": "resposta_registro",
+            "categoria": "reativa",
+            "em": "2026-09-08T20:44:42.530172+00:00",
+            "texto": "[nome], conversei com a psicóloga sobre você mudar de escola agora. Ela entende que o conteúdo está muito pesado e que isso acabou se misturando com o cansaço que você está sentindo em relação à escola inteira.\n\nPor isso, a sugestão dela é **tentar terminar este ano na escola atual**, mas não simplesmente continuar do mesmo jeito. Podemos conversar com a Rita para ver se é possível **diminuir ou adaptar um pouco o conteúdo**, para você terminar o ano com menos desgaste.\n\nMudar agora também traria várias coisas novas ao mesmo tempo: escola, professores, material, conteúdo e amizades. Talvez seja mais difícil fazer tantas adaptações no final do ano. No começo do próximo ano, você poderia começar na FIAP desde o início, junto com outros alunos, com mais tempo para conhecer os professores e fazer amizades.\n\nIsso não significa que estamos ignorando o que você está sentindo, nem que você preci"
+          }
+        ],
+        "chars_resposta": 149
+      },
+      {
+        "tipo": "continuidade_curta",
+        "familia": "F-03a8b5a4",
+        "demora_horas": 0,
+        "conversa": [
+          {
+            "direcao": "inbound",
+            "tipo": null,
+            "categoria": null,
+            "em": "2026-09-08T20:44:43.895946+00:00",
+            "texto": "Agora em relação ao Lourenço poxa é uma pena porque assim eu acho que valeria muito a pena ele tentar aguentar a simônia até o final do ano porque eu acho que você mudando de escola agora até para você é um pouco ruim não sei como que vai ser na FIAP mas acredito que eles vão solicitar material você vai ter que comprar material tudo de novo. Então eu acho que valeria a pena pelo menos finalizar esse ano lá porque aí o Lourenço fica um pouco mais acostumado com o conteúdo. Por mais que esteja um pouco mais. Por mais que seja cansativa porque eu acho muito que o Lourenço ele relacionou o conteúdo pedagógico com essa exaustão mental que ele está sentindo. Uma coisa não se separa da outra. Não tem como como hoje o mais pesado tem sido o conteúdo. Obviamente que ele vai relacionar isso para a escola em si. Então isso vai pegar um pouquinho de tudo ali. Mas eu acho que valeria a pena tentar ma"
+          },
+          {
+            "direcao": "outbound",
+            "tipo": "resposta_registro",
+            "categoria": "reativa",
+            "em": "2026-09-08T20:45:07.413861+00:00",
+            "texto": "Acho que a ideia faz sentido **se continuar na escola vier acompanhada de mudanças concretas**, e não apenas de pedir que o [nome] aguente até o fim do ano. Pelo que você contou, o conteúdo parece estar muito ligado ao cansaço mental dele; então manter a escola sem reduzir ou adaptar essa carga pode aumentar o sofrimento.\n\nEu conversaria com a Rita e a psicóloga para combinar uma tentativa com prazo de revisão, por exemplo: **reduzir ou priorizar conteúdos, ajustar tarefas e provas, organizar o que é realmente indispensável e prever apoio quando ele estiver sobrecarregado**. Depois, vocês observam se ele está conseguindo terminar o período mais disposto e com menos crises.\n\nPara explicar ao [nome], eu diria:\n\n**[nome], eu entendi que o conteúdo está muito pesado e que você está cansado. Não estou ignorando isso nem dizendo que você precisa simplesmente aguentar. Estamos pensando em tenta"
+          },
+          {
+            "direcao": "inbound",
+            "tipo": null,
+            "categoria": null,
+            "em": "2026-09-08T20:47:36.309968+00:00",
+            "texto": "Até porque vou visitar a Fiap sexta para saber se realmente será uma boa opção ou se terei que buscar outra opção"
+          },
+          {
+            "direcao": "outbound",
+            "tipo": "resposta_registro",
+            "categoria": "reativa",
+            "em": "2026-09-08T20:47:57.162132+00:00",
+            "texto": "Sim, essa visita vai ajudar a decidir com mais segurança, sem tratar a FIAP como única alternativa antes de conhecer melhor a proposta. Na visita, vale observar principalmente **como eles podem adaptar o conteúdo, apoiar o [nome] nas transições e acolher as necessidades dele**, além de perguntar sobre material, rotina, tamanho das turmas e integração de novos alunos.\n\nEnquanto isso, vocês podem manter a possibilidade de ele concluir o ano atual, mas **sem compromisso de decidir agora**. Depois da visita, comparem o que a FIAP oferece com o que ele precisa para estudar com menos desgaste."
+          }
+        ],
+        "chars_resposta": 1360
+      },
+      {
+        "tipo": "continuidade_curta",
+        "familia": "F-03a8b5a4",
+        "demora_horas": 0,
+        "conversa": [
+          {
+            "direcao": "inbound",
+            "tipo": null,
+            "categoria": null,
+            "em": "2026-09-08T20:47:36.309968+00:00",
+            "texto": "Até porque vou visitar a Fiap sexta para saber se realmente será uma boa opção ou se terei que buscar outra opção"
+          },
+          {
+            "direcao": "outbound",
+            "tipo": "resposta_registro",
+            "categoria": "reativa",
+            "em": "2026-09-08T20:47:57.162132+00:00",
+            "texto": "Sim, essa visita vai ajudar a decidir com mais segurança, sem tratar a FIAP como única alternativa antes de conhecer melhor a proposta. Na visita, vale observar principalmente **como eles podem adaptar o conteúdo, apoiar o [nome] nas transições e acolher as necessidades dele**, além de perguntar sobre material, rotina, tamanho das turmas e integração de novos alunos.\n\nEnquanto isso, vocês podem manter a possibilidade de ele concluir o ano atual, mas **sem compromisso de decidir agora**. Depois da visita, comparem o que a FIAP oferece com o que ele precisa para estudar com menos desgaste."
+          },
+          {
+            "direcao": "inbound",
+            "tipo": null,
+            "categoria": null,
+            "em": "2026-09-08T20:47:59.268746+00:00",
+            "texto": "Incluir essa fala"
+          },
+          {
+            "direcao": "outbound",
+            "tipo": "resposta_registro",
+            "categoria": "reativa",
+            "em": "2026-09-08T20:48:20.286201+00:00",
+            "texto": "[nome], eu entendi que o conteúdo está muito pesado e que você está cansado. Não estou ignorando isso nem dizendo que você precisa simplesmente aguentar. Estamos pensando em tentar terminar este ano na escola atual, conversando com a Rita para diminuir e adaptar o que está te sobrecarregando.\n\n**Na sexta-feira, também vou visitar a FIAP para conhecer melhor a escola e ver se ela realmente seria uma boa opção para você — ou se precisaremos procurar outra alternativa.** Depois dessa visita, vamos comparar as possibilidades com calma. A decisão ainda não está fechada, e vamos considerar principalmente o que pode ajudar você a estudar com menos desgaste."
+          }
+        ],
+        "chars_resposta": 595
+      },
+      {
+        "tipo": "continuidade_curta",
+        "familia": "F-03a8b5a4",
+        "demora_horas": 0,
+        "conversa": [
+          {
+            "direcao": "inbound",
+            "tipo": null,
+            "categoria": null,
+            "em": "2026-09-08T22:57:33.113862+00:00",
+            "texto": "Mando por e-mail?"
+          },
+          {
+            "direcao": "outbound",
+            "tipo": "resposta_registro",
+            "categoria": "reativa",
+            "em": "2026-09-08T22:57:56.715506+00:00",
+            "texto": "Pode mandar por e-mail, sim — especialmente se esse canal costuma ser usado entre vocês. Escreva de forma **curta, objetiva e respeitosa**, sem mencionar o conflito judicial, e guarde o registro do envio.\n\nVocê pode escrever:\n\n**Olá. O [nome] comentou que gostaria de vê-lo no Dia das Crianças. Você tem interesse e disponibilidade? Peço que responda até [data], para conseguirmos nos organizar.**\n\nSe houver prazo ou regra definida judicialmente para essa comunicação, siga-a."
+          },
+          {
+            "direcao": "inbound",
+            "tipo": null,
+            "categoria": null,
+            "em": "2026-09-08T22:58:20.389469+00:00",
+            "texto": "Pq ele não tem respondido pelo WhatsApp"
+          },
+          {
+            "direcao": "outbound",
+            "tipo": "resposta_registro",
+            "categoria": "reativa",
+            "em": "2026-09-08T22:58:43.175065+00:00",
+            "texto": "Justamente por ele não estar respondendo pelo WhatsApp, o e-mail pode ser uma alternativa para fazer **uma tentativa clara e registrada**. Não dá para saber por que ele não responde, então evite interpretar ou insistir em vários canais.\n\nVocê pode enviar uma única mensagem curta, guardar o registro e esperar o prazo:\n\n**Olá. O [nome] comentou que gostaria de vê-lo no Dia das Crianças. Você tem interesse e disponibilidade? Peço que responda até [data], para conseguirmos nos organizar.**\n\nSe houver alguma regra judicial sobre o canal de comunicação ou sobre as visitas, siga o que estiver definido ou confirme com sua advogada/Defensoria."
+          }
+        ],
+        "chars_resposta": 478
+      },
+      {
+        "tipo": "continuidade_curta",
+        "familia": "F-03a8b5a4",
+        "demora_horas": 0,
+        "conversa": [
+          {
+            "direcao": "inbound",
+            "tipo": null,
+            "categoria": null,
+            "em": "2026-09-08T22:58:20.389469+00:00",
+            "texto": "Pq ele não tem respondido pelo WhatsApp"
+          },
+          {
+            "direcao": "outbound",
+            "tipo": "resposta_registro",
+            "categoria": "reativa",
+            "em": "2026-09-08T22:58:43.175065+00:00",
+            "texto": "Justamente por ele não estar respondendo pelo WhatsApp, o e-mail pode ser uma alternativa para fazer **uma tentativa clara e registrada**. Não dá para saber por que ele não responde, então evite interpretar ou insistir em vários canais.\n\nVocê pode enviar uma única mensagem curta, guardar o registro e esperar o prazo:\n\n**Olá. O [nome] comentou que gostaria de vê-lo no Dia das Crianças. Você tem interesse e disponibilidade? Peço que responda até [data], para conseguirmos nos organizar.**\n\nSe houver alguma regra judicial sobre o canal de comunicação ou sobre as visitas, siga o que estiver definido ou confirme com sua advogada/Defensoria."
+          },
+          {
+            "direcao": "inbound",
+            "tipo": null,
+            "categoria": null,
+            "em": "2026-09-08T22:58:43.595799+00:00",
+            "texto": "E acredito que e/mail fique registrado"
+          },
+          {
+            "direcao": "outbound",
+            "tipo": "resposta_registro",
+            "categoria": "reativa",
+            "em": "2026-09-08T22:59:03.253243+00:00",
+            "texto": "Sim, o e-mail costuma deixar um registro do envio e da mensagem. Guarde também uma cópia e, se possível, qualquer confirmação de entrega.\n\nEnvie **uma única mensagem objetiva**, sem envolver o [nome] nem entrar nos conflitos judiciais. Se houver alguma regra judicial sobre o canal de comunicação, siga o que estiver definido ou confirme com sua advogada ou com a Defensoria."
+          }
+        ],
+        "chars_resposta": 643
+      }
+    ],
+    "sem_resposta_72h": [
+      {
+        "tipo": "sem_resposta_72h",
+        "familia": "F-5107ae69",
+        "demora_horas": null,
+        "conversa": [
+          {
+            "direcao": "inbound",
+            "tipo": null,
+            "categoria": null,
+            "em": "2026-09-20T12:04:36.159027+00:00",
+            "texto": "Gostaria de aprender atividades para ensiná-la e brincadeiras cm atividades"
+          },
+          {
+            "direcao": "outbound",
+            "tipo": "resposta_registro",
+            "categoria": "reativa",
+            "em": "2026-09-20T12:04:59.20624+00:00",
+            "texto": "Claro, [nome] 💛 Dá para ensinar brincando com o que a [nome] já gosta:\n\n1️⃣ **Música que para:** dance com ela e pause a música. Espere alguns segundos e diga **“parou… quer mais?”**. Ajude-a a pedir com palavra, gesto ou apontar e retome a música.\n\n2️⃣ **Bichinhos e sons:** faça uma “casa” com os animais. Pegue um por vez e modele: **“o gato entrou”**, “quem é?”. Aceite palavra, som ou apontar; não precisa exigir que ela repita.\n\n3️⃣ **Dança do imita:** faça movimentos simples, como bater palmas ou girar, e diga **“minha vez”**. Depois convide: **“agora a vez da [nome]”** e imite o movimento dela.\n\nFaça por poucos minutos, em um momento tranquilo, e pare enquanto ainda estiver divertido. Se ela recusar, ofereça outra opção sem pressionar. 🌿"
+          }
+        ],
+        "chars_resposta": 755
+      },
+      {
+        "tipo": "sem_resposta_72h",
+        "familia": "F-f2dc15fd",
+        "demora_horas": null,
+        "conversa": [
+          {
+            "direcao": "inbound",
+            "tipo": null,
+            "categoria": null,
+            "em": "2026-09-18T18:02:18.698638+00:00",
+            "texto": "tem torneio de tênis dele sabado que vem , devo colocar ele na categoria mais iniciante ou mais avançada? ele não sabe, pediu para eu escolher mas sofre demais quando perde. ele tem nível para as 2 esta em transição"
+          },
+          {
+            "direcao": "outbound",
+            "tipo": "resposta_registro",
+            "categoria": "reativa",
+            "em": "2026-09-18T18:02:42.814775+00:00",
+            "texto": "Eu escolheria a categoria **mais iniciante desta vez**, desde que ela seja realmente adequada às regras do torneio e não fique muito abaixo do nível dele. Como o [nome] está em transição e ainda sofre bastante quando perde, o objetivo pode ser viver a competição com mais segurança, não testar o limite máximo agora. Diga: “Vamos escolher uma categoria para você ganhar experiência e aprender a lidar com o torneio; depois avaliamos o próximo passo.” Antes, combinem que o sucesso será **jogar até o fim, tentar uma estratégia e se recuperar depois de um ponto difícil** — não necessariamente vencer. Se a categoria iniciante for claramente fácil demais, aí a avançada pode ser uma boa oportunidade, com esse mesmo foco."
+          }
+        ],
+        "chars_resposta": 719
+      },
+      {
+        "tipo": "sem_resposta_72h",
+        "familia": "F-48f715d5",
+        "demora_horas": null,
+        "conversa": [
+          {
+            "direcao": "inbound",
+            "tipo": null,
+            "categoria": null,
+            "em": "2026-09-18T21:34:09.32979+00:00",
+            "texto": "Uma brincadeira usando bandeira para trabalhar a comunicação"
+          },
+          {
+            "direcao": "outbound",
+            "tipo": "perfil_nudge",
+            "categoria": "reativa",
+            "em": "2026-09-18T21:34:29.581092+00:00",
+            "texto": "Claro 💛 Brinquem de **“adivinhe a bandeira”**: você escolhe uma do álbum e dá duas opções, como “é a do Brasil ou a da Itália?”. Depois, espere [nome] responder falando, apontando ou pegando a imagem — qualquer uma dessas formas vale como comunicação. Em seguida, troquem os papéis: ele escolhe a bandeira e você tenta adivinhar, para ele praticar também **mostrar, pedir e corrigir**. Se ele não responder, modele sem pressionar: “Você quer a azul? Mostra pra mim”.\n\nSe quiser, posso conhecer um pouquinho melhor como [nome] se comunica — isso me ajuda a deixar as próximas ideias mais do jeitinho dele: [link]"
+          }
+        ],
+        "chars_resposta": 697
+      },
+      {
+        "tipo": "sem_resposta_72h",
+        "familia": "F-48f715d5",
+        "demora_horas": null,
+        "conversa": [
+          {
+            "direcao": "inbound",
+            "tipo": null,
+            "categoria": null,
+            "em": "2026-09-18T21:34:09.32979+00:00",
+            "texto": "Uma brincadeira usando bandeira para trabalhar a comunicação"
+          },
+          {
+            "direcao": "outbound",
+            "tipo": "rotina",
+            "categoria": "proativa",
+            "em": "2026-09-19T22:00:14.150123+00:00",
+            "texto": "Sabe, [nome], quanto mais você me conta do dia a dia do [nome] — aquele momento que ele conseguiu ficar sentado mais tempo, ou quando travou numa transição — mais eu consigo enxergar como ele tá evoluindo mesmo. Aí a gente monta um panorama real pra mostrar pra escola ou pro terapeuta, sabe? Eles veem com outros olhos quando a gente chega com histórias concretas.\n\nE aí personalizo tudo pro [nome] de verdade, não genérico. Um plano que funciona pra ele, não pra qualquer criança. A gente também consegue pegar um desafio específico e montar uma estratégia junto.\n\nQue tal você me contar uma coisa de hoje — uma conquista dele ou algo que foi difícil? Começa por aí 🌿"
+          }
+        ],
+        "chars_resposta": 673
+      },
+      {
+        "tipo": "sem_resposta_72h",
+        "familia": "F-34c7eae3",
+        "demora_horas": null,
+        "conversa": [
+          {
+            "direcao": "inbound",
+            "tipo": null,
+            "categoria": null,
+            "em": "2026-09-09T18:27:45.11905+00:00",
+            "texto": "Ayla, ele chegou muito desregulado da escola hoje e não quer fazer nada. O que eu posso tentar?"
+          },
+          {
+            "direcao": "outbound",
+            "tipo": "resposta_registro",
+            "categoria": "reativa",
+            "em": "2026-09-09T18:28:11.555365+00:00",
+            "texto": "Hoje, eu começaria **tirando as demandas**, não tentando fazê-lo cumprir a rotina. Leve [nome] para um lugar mais calmo, fale pouco e diga: **“Você chegou muito cansado. Primeiro vamos descansar; depois vemos o que vem.”** Ofereça água ou um lanche e uma escolha simples, como ficar quieto, desenhar ou montar Lego — sem insistir se ele recusar.\n\nQuando estiver mais regulado, retome só o essencial da noite, avisando uma coisa por vez. Se essa desregulação estiver muito diferente do habitual ou vier com dor, febre, sonolência incomum ou outro sintoma físico, vale investigar a saúde. Ele parece mais cansado, irritado ou incomodado com algum barulho/estímulo?"
+          }
+        ],
+        "chars_resposta": 662
+      },
+      {
+        "tipo": "sem_resposta_72h",
+        "familia": "F-e151cbbd",
+        "demora_horas": null,
+        "conversa": [
+          {
+            "direcao": "inbound",
+            "tipo": null,
+            "categoria": null,
+            "em": "2026-09-07T19:44:34.113458+00:00",
+            "texto": "Todas \nAjudar nas tarefas de casa \nDa escola e outras"
+          },
+          {
+            "direcao": "outbound",
+            "tipo": "rotina",
+            "categoria": "proativa",
+            "em": "2026-09-08T18:00:28.540168+00:00",
+            "texto": "Quando você conta como foi o dia da Maria, a gente consegue enxergar padrões que ninguém mais vê — aquelas pequenas vitórias que se repetem, ou os mesmos perrengues. Isso vira um panorama real que você leva pra escola ou pro terapeuta e diz: olha, é assim mesmo que funciona com ela.\n\nCom essas informações, a gente personaliza tudo. Não é dica genérica — é pensado na Maria, no jeito dela, nas dificuldades de verdade que você enfrenta todo dia. E quando surge um desafio específico, já temos o retrato inteiro pra montar um plano que faz sentido.\n\nQuer começar? Me conta uma coisa de hoje — pode ser uma conquista pequenininha ou algo que foi mais difícil."
+          }
+        ],
+        "chars_resposta": 658
+      },
+      {
+        "tipo": "sem_resposta_72h",
+        "familia": "F-9748d7b1",
+        "demora_horas": null,
+        "conversa": [
+          {
+            "direcao": "inbound",
+            "tipo": null,
+            "categoria": null,
+            "em": "2026-09-20T23:00:07.427214+00:00",
+            "texto": "Eu vou resolver tudo na terça-feira, vamos ver."
+          },
+          {
+            "direcao": "outbound",
+            "tipo": "rotina",
+            "categoria": "proativa",
+            "em": "2026-09-21T22:00:36.86039+00:00",
+            "texto": "Sabe, [nome], quanto mais você me conta do dia a dia do Luis — aqueles pequenos momentos, as dificuldades, o que funcionou — mais consigo enxergar como ele tá evoluindo de verdade. E aí fica bem mais fácil montar um quadro pra mostrar pra escola ou terapeuta, sem precisar de anotações complicadas.\n\nAlém disso, conhecendo a rotina dele, consigo sugerir ideias que fazem sentido pra QUEM ele é, não genérico. E quando surge um desafio específico, a gente tem base pra montar um plano que realmente funciona com ele.\n\nQue tal começar agora? Conta pra mim uma coisa de hoje — uma conquista do Luis ou algo que foi mais difícil. Por aí a gente entra no ritmo."
+          }
+        ],
+        "chars_resposta": 656
+      },
+      {
+        "tipo": "sem_resposta_72h",
+        "familia": "F-59704146",
+        "demora_horas": null,
+        "conversa": [
+          {
+            "direcao": "inbound",
+            "tipo": null,
+            "categoria": null,
+            "em": "2026-09-23T13:00:26.128258+00:00",
+            "texto": "O vídeo fica ligado até tarde."
+          },
+          {
+            "direcao": "outbound",
+            "tipo": "assinatura_nudge",
+            "categoria": "reativa",
+            "em": "2026-09-23T13:00:45.800058+00:00",
+            "texto": "Entendi, [nome]. Quando o vídeo fica ligado até tarde, a noite pode ficar mais difícil — e a Kolo ajudaria a olhar esse momento específico com você, considerando o que já foi conhecido sobre o Vitor em telas, emoções, socialização e interesses. A partir daí, vocês testariam um caminho, acompanhariam o que ajudou e registrariam para não recomeçar do zero. O período gratuito terminou, mas os registros dele continuam guardados. Se quiser continuar esse acompanhamento, as opções estão logo abaixo. 💛\n\nOs planos estão aqui, se fizer sentido:\n[link]"
+          }
+        ],
+        "chars_resposta": 633
+      },
+      {
+        "tipo": "sem_resposta_72h",
+        "familia": "F-bd5a25bd",
+        "demora_horas": null,
+        "conversa": [
+          {
+            "direcao": "inbound",
+            "tipo": null,
+            "categoria": null,
+            "em": "2026-09-12T14:26:28.015639+00:00",
+            "texto": "Eu perco o ponto se eu desobedecer a minha mãe?"
+          },
+          {
+            "direcao": "outbound",
+            "tipo": "rotina",
+            "categoria": "proativa",
+            "em": "2026-09-14T11:00:51.221763+00:00",
+            "texto": "Entendo que contar o dia a dia do [nome] pode parecer só jogar conversa fora, mas funciona diferente. Quando você compartilha como ele se saiu hoje, como reagiu, o que conquistou, consigo montando um quadro real da evolução dele ao longo do tempo — aquilo que a escola ou terapeuta precisam ver com números e padrões.\n\nCom essas histórias do dia a dia, consigo também personalizar as ideias pra dificuldade específica do [nome], não dar genérico. E quando surge um desafio maior, já tenho contexto pra ajudar a planejar junto com você.\n\nE aí, como foi o [nome] hoje? Teve alguma coisa que rolou bem ou algo que pediu mais paciência sua?"
+          }
+        ],
+        "chars_resposta": 630
+      },
+      {
+        "tipo": "sem_resposta_72h",
+        "familia": "F-34c7eae3",
+        "demora_horas": null,
+        "conversa": [
+          {
+            "direcao": "inbound",
+            "tipo": null,
+            "categoria": null,
+            "em": "2026-09-09T18:27:45.11905+00:00",
+            "texto": "Ayla, ele chegou muito desregulado da escola hoje e não quer fazer nada. O que eu posso tentar?"
+          },
+          {
+            "direcao": "outbound",
+            "tipo": "rotina",
+            "categoria": "proativa",
+            "em": "2026-09-11T18:00:27.636377+00:00",
+            "texto": "Sabe, [nome], quando você compartilha o dia a dia do [nome] comigo, a gente consegue ver padrões que sozinha passa batido. Daqui a alguns meses você tem um mapa real da evolução dele — exatamente aquilo que a escola e os terapeutas pedem pra entender como ele tá indo.\n\nAlém disso, quanto mais eu conheço o [nome] de verdade, mais dá pra oferecer ideias que fazem sentido PRA ELE, não genérico. E quando surge um desafio específico, a gente monta um plano que leva em conta quem ele é mesmo.\n\nQue tal começar? Me conta uma coisa de hoje — uma conquista pequena ou algo que foi complicado. Só pra gente começar esse papo mesmo."
+          }
+        ],
+        "chars_resposta": 627
+      }
+    ],
+    "retorno_de_teste": [
+      {
+        "tipo": "retorno_de_teste",
+        "familia": "F-1a5e3c09",
+        "demora_horas": 0,
+        "conversa": [
+          {
+            "direcao": "inbound",
+            "tipo": null,
+            "categoria": null,
+            "em": "2026-09-10T18:06:39.314625+00:00",
+            "texto": "No meu ponto de vista tdah da direito ao bpcloas"
+          },
+          {
+            "direcao": "outbound",
+            "tipo": "resposta_registro",
+            "categoria": "reativa",
+            "em": "2026-09-10T18:06:49.454806+00:00",
+            "texto": "Entendi. O [nome] consegue brincar, mas parece ter muita dificuldade quando perde ou precisa esperar a vez; correr também pode ser uma forma de se organizar, e isso sozinho não confirma autismo. Por enquanto, prefira brincadeiras sem competição: mostre fisicamente revezando “minha vez, sua vez” e faça turnos bem curtos. Se ele tentar bater, bloqueie com calma e diga apenas: **“Não vou deixar bater. Vamos fazer uma pausa.”** Depois que se acalmar, retome com uma situação fácil em que ele consiga esperar e terminar bem."
+          },
+          {
+            "direcao": "inbound",
+            "tipo": null,
+            "categoria": null,
+            "em": "2026-09-10T18:08:28.15203+00:00",
+            "texto": "Sim afeta precisar de mim ora tudo pra ir no banheiro e nao quer comer a comida tai fiz macarrão torrei o ovo delle e ele nao quiz comer de jeito nenhum"
+          },
+          {
+            "direcao": "outbound",
+            "tipo": "resposta_registro",
+            "categoria": "reativa",
+            "em": "2026-09-10T18:08:52.757923+00:00",
+            "texto": "Entendi, [nome]. Isso mostra que o [nome] precisa de bastante ajuda na autonomia, mas a recusa de um prato específico não significa que ele não vá comer nada. **Não force nem insista muitas vezes**: ofereça o macarrão e deixe junto uma pequena porção de algo que ele costuma aceitar; se recusar, mantenha a calma e tente novamente em outro momento. Para o banheiro, ajude por etapas curtas, mostrando e iniciando o primeiro movimento, em vez de dar várias instruções de longe. Vale anotar exemplos concretos dessa ajuda para conversar com os profissionais e registrar a situação da família. **Ele aceita outros alimentos normalmente ou também vem recusando comidas que já comia?**"
+          }
+        ],
+        "chars_resposta": 522
+      },
+      {
+        "tipo": "retorno_de_teste",
+        "familia": "F-1a5e3c09",
+        "demora_horas": 0,
+        "conversa": [
+          {
+            "direcao": "inbound",
+            "tipo": null,
+            "categoria": null,
+            "em": "2026-09-10T18:06:39.314625+00:00",
+            "texto": "No meu ponto de vista tdah da direito ao bpcloas"
+          },
+          {
+            "direcao": "outbound",
+            "tipo": "resposta_registro",
+            "categoria": "reativa",
+            "em": "2026-09-10T18:07:00.009734+00:00",
+            "texto": "Entendo, [nome]. **O TDAH, por si só, não dá direito automático ao BPC/LOAS.** A análise considera se há impedimento de longo prazo que afeta de forma importante a participação e a autonomia, junto com a situação socioeconômica da família. A decisão é feita pelo INSS, com avaliação médica e social; não dá para confirmar o direito apenas pela conversa. Posso te ajudar a organizar como o TDAH do [nome] afeta a rotina, a escola e os cuidados necessários, para você levar essas informações aos canais oficiais e aos profissionais que acompanham vocês."
+          },
+          {
+            "direcao": "inbound",
+            "tipo": null,
+            "categoria": null,
+            "em": "2026-09-10T18:08:28.15203+00:00",
+            "texto": "Sim afeta precisar de mim ora tudo pra ir no banheiro e nao quer comer a comida tai fiz macarrão torrei o ovo delle e ele nao quiz comer de jeito nenhum"
+          },
+          {
+            "direcao": "outbound",
+            "tipo": "resposta_registro",
+            "categoria": "reativa",
+            "em": "2026-09-10T18:08:52.757923+00:00",
+            "texto": "Entendi, [nome]. Isso mostra que o [nome] precisa de bastante ajuda na autonomia, mas a recusa de um prato específico não significa que ele não vá comer nada. **Não force nem insista muitas vezes**: ofereça o macarrão e deixe junto uma pequena porção de algo que ele costuma aceitar; se recusar, mantenha a calma e tente novamente em outro momento. Para o banheiro, ajude por etapas curtas, mostrando e iniciando o primeiro movimento, em vez de dar várias instruções de longe. Vale anotar exemplos concretos dessa ajuda para conversar com os profissionais e registrar a situação da família. **Ele aceita outros alimentos normalmente ou também vem recusando comidas que já comia?**"
+          }
+        ],
+        "chars_resposta": 549
+      },
+      {
+        "tipo": "retorno_de_teste",
+        "familia": "F-79cbb0dc",
+        "demora_horas": 0,
+        "conversa": [
+          {
+            "direcao": "inbound",
+            "tipo": null,
+            "categoria": null,
+            "em": "2026-09-11T08:18:38.728135+00:00",
+            "texto": "Eu já tentei combinar com a escola, eu não tô se esforçando nada na escola. Vai pra escola, não copia nada, não gosta da escola, reclama que lá tem muita bagunça, muito barulho. Tá sofrendo muito bullying. Ela tá numa turma, ela já tem 15 anos, tá numa turma de alunos mais novos que a faixa etária dela. Porque ela repetiu muito a série anterior, a dificuldade dela de aprendizagem é muito grande. Ela não era nem pra ter passado pra sexta série, ela vai na sexta série e ela mudou de escola. Essa mudança, ela não se adaptou de jeito nenhum. A terapia que ela tá fazendo encerrou, porque disse que tinha alta prevista. Agora, atualmente, ela não tá fazendo acompanhamento nem com fono, nem com psicólogo. E, às vezes, eu tô sentindo que ela tá mais agressiva, mais nervosa, mais rebelde. Ela também tem TOD, que é o desafio do opositor, desafiador, sei lá. E tá tudo mais forte nele e, às vezes, eu"
+          },
+          {
+            "direcao": "outbound",
+            "tipo": "resposta_registro",
+            "categoria": "reativa",
+            "em": "2026-09-11T08:19:05.786011+00:00",
+            "texto": "[nome], isso parece muito mais do que falta de esforço. **Barulho, bullying, mudança de escola, dificuldade de aprendizagem e uma turma diferente da idade podem estar tornando a escola um lugar de sofrimento para a [nome].** Eu evitaria chamar de mentira ou rebeldia: mesmo quando ela depois diz que não estava doente, a dor pode aparecer como forma de expressar ansiedade ou vontade de escapar daquela situação — mas dores repetidas também precisam ser avaliadas por um profissional de saúde, especialmente dor de dente e dor no corpo.\n\nA prioridade agora é a segurança dela e uma reavaliação. Peça uma reunião com a direção, coordenação e alguém de confiança da escola para registrar o bullying e combinar **um adulto de referência, um local mais tranquilo, proteção nos momentos de maior risco e uma volta com demandas reduzidas**, em vez de exigir que ela simplesmente entre e copie tudo. Como a "
+          },
+          {
+            "direcao": "inbound",
+            "tipo": null,
+            "categoria": null,
+            "em": "2026-09-11T08:19:57.689013+00:00",
+            "texto": "Já tentei essa do banho, horário, combinadinha específica, mas não adianta. Às vezes falta aqui em casa não ter banheiro, a gente acaba sempre banhando à noite, que é o horário que não tem movimento. O muro aqui não tem muro, é seco, moro no interior, então é o horário melhor para se tomar banho à noite. Às vezes eu falo, está indo banho cedo, no começo da noite, às vezes parece que está fazendo frio, mas até que agora está fazendo calor, mesma noite. E também o cabelo. Minha mãe falou assim, amanhã eu lavo o cabelo, meia-noite amanhã eu lavo o cabelo, depois eu lavo o cabelo, e ela fica, fica, e eu lembro, e ela fala, depois, depois, quando essa coisa depois, não vai. Passa o dia e não faz."
+          },
+          {
+            "direcao": "outbound",
+            "tipo": "resposta_registro",
+            "categoria": "reativa",
+            "em": "2026-09-11T08:20:27.345591+00:00",
+            "texto": "Entendi, [nome]. Então o problema não é só escolher um horário: o banho depende de um momento específico da casa, e o “depois” acaba ficando aberto demais. Eu tentaria combinar apenas o início, no horário possível: **“Quando terminar o jantar, você vai pegar a toalha e entrar; o celular fica carregando enquanto você toma banho.”** Para o cabelo, não deixe para “amanhã”: escolha um dia possível e avise no mesmo dia, com um alarme; se lavar o cabelo for a parte mais difícil, pode separar a lavagem do cabelo do banho comum.\n\nQuando você chama para o banho, o que acontece primeiro: ela continua no celular, diz que está frio ou que não quer água, evita entrar, ou entra mas não lava alguma parte?"
+          }
+        ],
+        "chars_resposta": 1612
+      },
+      {
+        "tipo": "retorno_de_teste",
+        "familia": "F-bd5a25bd",
+        "demora_horas": 0.1,
+        "conversa": [
+          {
+            "direcao": "outbound",
+            "tipo": "boas_vindas",
+            "categoria": "proativa",
+            "em": "2026-09-08T12:54:26.781439+00:00",
+            "texto": "Oi, Ana! Eu sou a Ayla 💛 Estou aqui pra te ajudar nos desafios do dia a dia com o [nome].\n\nPelo que você contou quando entrou, o que mais tem pesado são o foco, a autonomia e a alimentação.\n\nPosso te ajudar com estratégias práticas, o que fazer e o que falar nas horas difíceis, e também com brincadeiras e atividades pra trabalhar essas habilidades de um jeito mais leve pro [nome].\n\nVocê não precisa saber o que pedir: me conta o que está acontecendo, do seu jeito. Por qual você quer começar? Pode mandar um *áudio*, se for mais fácil — com o que você me contar eu já te trago uma primeira ideia prática. 🌿\n\nE se quiser conhecer rapidinho tudo o que dá pra fazer na Kolo, tem um vídeo curto mostrando a plataforma por dentro:\n[link]"
+          },
+          {
+            "direcao": "inbound",
+            "tipo": null,
+            "categoria": null,
+            "em": "2026-09-08T13:00:39.628671+00:00",
+            "texto": "Ele está com muita dificuldade de obedecer, de seguir ordem. Eu fiz uma brincadeira com ele, o que ele me obedecer, ele vai ganhando um ponto pra merecer o que ele quer."
+          },
+          {
+            "direcao": "outbound",
+            "tipo": "resposta_registro",
+            "categoria": "reativa",
+            "em": "2026-09-08T13:01:06.697026+00:00",
+            "texto": "Transformar em brincadeira pode ajudar, Ana, mas tente trocar **“ganhar ponto por obedecer”** por pontos por ações bem específicas. Dê **uma instrução de cada vez**, curta e clara: “[nome], coloque o tênis na mochila”. Quando ele fizer, marque o ponto na hora e diga: “Você colocou o tênis quando eu pedi; ganhou um ponto!”. \n\nCombine antes quantos pontos dão acesso ao que ele quer e evite retirar pontos já conquistados. Se ele não fizer, mostre ou ajude a começar, em vez de repetir a ordem muitas vezes. **Qual tipo de pedido costuma ser mais difícil para ele: começar uma tarefa, parar algo que gosta ou fazer uma rotina?**"
+          }
+        ],
+        "chars_resposta": 797
+      },
+      {
+        "tipo": "retorno_de_teste",
+        "familia": "F-79cbb0dc",
+        "demora_horas": 0.1,
+        "conversa": [
+          {
+            "direcao": "inbound",
+            "tipo": null,
+            "categoria": null,
+            "em": "2026-09-11T08:15:02.191896+00:00",
+            "texto": "O que mais me incomoda, o que mais tá sendo difícil, é não ter nunca ido pra escola. Quando vai pra escola, tu escuta de fugir, fala que tá doente na escola, fala que tá doente em casa por não ir pra escola. E banho. Com 15 anos eu já tô 16. Às vezes não quer tomar banho, finge que vai tomar banho e não banha. Pra lavar o cabelo também é uma dificuldade, tem que ser brigando. Eu não lavo o cabelo todo dia. E também é passar de celular. Muita, muita briga pra largar o celular."
+          },
+          {
+            "direcao": "outbound",
+            "tipo": "resposta_registro",
+            "categoria": "reativa",
+            "em": "2026-09-11T08:15:34.668387+00:00",
+            "texto": "[nome], dá para entender por que isso está pesando tanto: são três momentos de muita briga, mas eu começaria pela escola, sem tentar resolver tudo de uma vez. Quando a [nome] diz que está doente, evite chamar de mentira; diga: **“Eu acredito que você não está bem. Vamos entender o que seu corpo está sentindo e pensar no próximo passo.”** Se houver febre, vômitos, dor forte ou outro sintoma físico persistente, vale avaliação de saúde. Se não houver sinais físicos claros, a entrada pode precisar ser bem gradual, com uma pessoa de referência e uma rotina previsível combinada com a escola.\n\nPara o banho, tente trocar a disputa por uma escolha limitada: **“Você prefere tomar banho agora ou às 19h?”** e, sobre o cabelo, combinar dias e horário específicos, sem exigir que seja lavado todos os dias. Para o celular, avise antes e use um cronômetro visível: **“Quando o tempo acabar, o celular desc"
+          },
+          {
+            "direcao": "inbound",
+            "tipo": null,
+            "categoria": null,
+            "em": "2026-09-11T08:18:38.728135+00:00",
+            "texto": "Eu já tentei combinar com a escola, eu não tô se esforçando nada na escola. Vai pra escola, não copia nada, não gosta da escola, reclama que lá tem muita bagunça, muito barulho. Tá sofrendo muito bullying. Ela tá numa turma, ela já tem 15 anos, tá numa turma de alunos mais novos que a faixa etária dela. Porque ela repetiu muito a série anterior, a dificuldade dela de aprendizagem é muito grande. Ela não era nem pra ter passado pra sexta série, ela vai na sexta série e ela mudou de escola. Essa mudança, ela não se adaptou de jeito nenhum. A terapia que ela tá fazendo encerrou, porque disse que tinha alta prevista. Agora, atualmente, ela não tá fazendo acompanhamento nem com fono, nem com psicólogo. E, às vezes, eu tô sentindo que ela tá mais agressiva, mais nervosa, mais rebelde. Ela também tem TOD, que é o desafio do opositor, desafiador, sei lá. E tá tudo mais forte nele e, às vezes, eu"
+          },
+          {
+            "direcao": "outbound",
+            "tipo": "resposta_registro",
+            "categoria": "reativa",
+            "em": "2026-09-11T08:19:05.786011+00:00",
+            "texto": "[nome], isso parece muito mais do que falta de esforço. **Barulho, bullying, mudança de escola, dificuldade de aprendizagem e uma turma diferente da idade podem estar tornando a escola um lugar de sofrimento para a [nome].** Eu evitaria chamar de mentira ou rebeldia: mesmo quando ela depois diz que não estava doente, a dor pode aparecer como forma de expressar ansiedade ou vontade de escapar daquela situação — mas dores repetidas também precisam ser avaliadas por um profissional de saúde, especialmente dor de dente e dor no corpo.\n\nA prioridade agora é a segurança dela e uma reavaliação. Peça uma reunião com a direção, coordenação e alguém de confiança da escola para registrar o bullying e combinar **um adulto de referência, um local mais tranquilo, proteção nos momentos de maior risco e uma volta com demandas reduzidas**, em vez de exigir que ela simplesmente entre e copie tudo. Como a "
+          }
+        ],
+        "chars_resposta": 1217
+      },
+      {
+        "tipo": "retorno_de_teste",
+        "familia": "F-9748d7b1",
+        "demora_horas": 0.1,
+        "conversa": [
+          {
+            "direcao": "inbound",
+            "tipo": null,
+            "categoria": null,
+            "em": "2026-09-20T22:24:27.885748+00:00",
+            "texto": "Ah... ele está sossegado... ele está em casa... não sai... então ele fica sossegado... está no quarto dele... ele joga... conversa com os amigos... e o Lain... eu vou tentar levar ele só na terça... porque eu trabalho amanhã... e eu fico terça em casa... e ele só vai se a gente levar... e ele só quer ir comigo... então... eu levo os dias que eu estou em casa... então eu vou tentar levar ele. Mas para isso, por enquanto, está tudo calmo... o negócio dele é mais em escola mesmo... em casa ele fica sossegado..."
+          },
+          {
+            "direcao": "outbound",
+            "tipo": "resposta_registro",
+            "categoria": "reativa",
+            "em": "2026-09-20T22:24:50.748631+00:00",
+            "texto": "Entendi, [nome]. Em casa ele fica tranquilo, joga e conversa com os amigos; a maior dificuldade parece aparecer na ida e na entrada da escola, principalmente quando não é você quem o leva. Na terça, pode ajudar combinar antes **quem vai levá-lo, como será a despedida e o que ele fará assim que chegar**, deixando tudo curto e previsível. **Quando ele chega à escola, o que costuma acontecer: ele chora, recusa entrar, fica agitado ou é outra coisa?**"
+          },
+          {
+            "direcao": "inbound",
+            "tipo": null,
+            "categoria": null,
+            "em": "2026-09-20T22:28:05.62835+00:00",
+            "texto": "Ele já sai de casa, você já fala pra ele, quando eu acordo com ele de manhã ele já começa a passar a mão na cabeça, e ele enrola, enrola, enrola na cama, e eu vou, levanto e falo, filho, você tem que tomar banho, você tem que tomar café, porque ele não come o lanche da escola, né, então antes dele eu dou um lanche, vou o café da manhã reforçando pra ele, porque ele não come de jeito nenhum na escola, e ele vai com cara de assustado, quando eu consigo tirar ele de dentro de casa, né, já tentei respiração, já tentei várias coisas que o médico mandou fazer com ele, mas não tem jeito, quando ele não quer ir, não tem jeito, a gente não consegue, mas ele fica com cara de assustado, e aí ele vai com fone de ouvido de um lado, escutando música na escola também, ele fica na classe assim só de um lado ouvindo música, e aí eu vou ver na terça se elas liberem mais cedo, porque elas tem que liberar, "
+          },
+          {
+            "direcao": "outbound",
+            "tipo": "resposta_registro",
+            "categoria": "reativa",
+            "em": "2026-09-20T22:28:29.828787+00:00",
+            "texto": "[nome], pelo que você descreve, o Luis já sai de casa muito assustado e chega à escola com pouca disponibilidade para conversar. **Na terça, o objetivo não precisa ser ficar o período inteiro**: combine com a escola uma chegada curta, um adulto específico para recebê-lo, um lugar mais tranquilo e o horário de saída que está indicado pela médica. Na hora, fale pouco e não exija que ele olhe ou responda; pode dizer apenas: **“Eu sei que está difícil. Você vai entrar, ficar um pouco com a professora e depois eu volto no horário combinado.”**\n\nO fone pode continuar sendo um apoio, se a escola permitir, mas combine como ele será usado para que ele ainda consiga perceber orientações e permanecer seguro. Esses laudos podem ajudar a escola a organizar esse acolhimento; vale pedir que alguém responsável já esteja esperando por ele, em vez de vocês decidirem tudo na porta.\n\n**A escola consegue com"
+          }
+        ],
+        "chars_resposta": 451
+      },
+      {
+        "tipo": "retorno_de_teste",
+        "familia": "F-d3aa89cb",
+        "demora_horas": 1,
+        "conversa": [
+          {
+            "direcao": "inbound",
+            "tipo": null,
+            "categoria": null,
+            "em": "2026-09-06T14:27:59.901885+00:00",
+            "texto": "Ok obrigado"
+          },
+          {
+            "direcao": "outbound",
+            "tipo": "trial_d3",
+            "categoria": "proativa",
+            "em": "2026-09-08T11:00:43.681858+00:00",
+            "texto": "[nome], faltam 3 dias pro fim do seu período grátis.\n\nQuis te avisar com antecedência, pra você decidir com calma."
+          },
+          {
+            "direcao": "inbound",
+            "tipo": null,
+            "categoria": null,
+            "em": "2026-09-08T12:00:48.449249+00:00",
+            "texto": "Ele até dormiu rápido. Esse passeio que eu fiz com ele, esse passeio nesse periado prolongado pra ficar com as irmãs, acho que fez bem pra ele."
+          },
+          {
+            "direcao": "outbound",
+            "tipo": "resposta_registro",
+            "categoria": "reativa",
+            "em": "2026-09-08T12:01:13.37049+00:00",
+            "texto": "Pode ser que o passeio e o tempo gostoso com as irmãs tenham contribuído para ele ficar mais tranquilo, mas vale observar sem precisar tirar uma conclusão agora. **O que você acha que fez mais diferença para ele: estar com as irmãs, mudar de ambiente ou o passeio em si?** 💛"
+          }
+        ],
+        "chars_resposta": 113
+      },
+      {
+        "tipo": "retorno_de_teste",
+        "familia": "F-59704146",
+        "demora_horas": 2.2,
+        "conversa": [
+          {
+            "direcao": "inbound",
+            "tipo": null,
+            "categoria": null,
+            "em": "2026-09-16T23:00:06.517107+00:00",
+            "texto": "Ele está desenhando agora"
+          },
+          {
+            "direcao": "outbound",
+            "tipo": "rotina",
+            "categoria": "proativa",
+            "em": "2026-09-18T22:00:32.921509+00:00",
+            "texto": "E aí, [nome] — você conseguiu testar o plano com o Vitor? Me conta o que funcionou e o que não saiu como esperava, que eu melhoro pro próximo."
+          },
+          {
+            "direcao": "inbound",
+            "tipo": null,
+            "categoria": null,
+            "em": "2026-09-19T00:12:50.24024+00:00",
+            "texto": "Funcionou um pouco"
+          },
+          {
+            "direcao": "outbound",
+            "tipo": "resposta_registro",
+            "categoria": "reativa",
+            "em": "2026-09-19T00:13:13.324788+00:00",
+            "texto": "Que bom que ajudou um pouco, [nome]. Para eu ajustar o próximo passo: melhorou mais na hora de **tirar o celular**, nas brincadeiras com as irmãs/colegas ou quando ele começa a ficar bravo?"
+          }
+        ],
+        "chars_resposta": 143
+      },
+      {
+        "tipo": "retorno_de_teste",
+        "familia": "F-d3aa89cb",
+        "demora_horas": 25,
+        "conversa": [
+          {
+            "direcao": "inbound",
+            "tipo": null,
+            "categoria": null,
+            "em": "2026-09-06T14:27:59.901885+00:00",
+            "texto": "Ok obrigado"
+          },
+          {
+            "direcao": "outbound",
+            "tipo": "rotina",
+            "categoria": "proativa",
+            "em": "2026-09-07T11:00:57.772332+00:00",
+            "texto": "[nome], qual desafio tá pegando mais agora com o Lucas? Sono, transições, birra na escola, comida — seja o que for. Eu monto um plano prático com passos que vocês conseguem fazer mesmo."
+          },
+          {
+            "direcao": "inbound",
+            "tipo": null,
+            "categoria": null,
+            "em": "2026-09-08T12:00:48.449249+00:00",
+            "texto": "Ele até dormiu rápido. Esse passeio que eu fiz com ele, esse passeio nesse periado prolongado pra ficar com as irmãs, acho que fez bem pra ele."
+          },
+          {
+            "direcao": "outbound",
+            "tipo": "resposta_registro",
+            "categoria": "reativa",
+            "em": "2026-09-08T12:01:13.37049+00:00",
+            "texto": "Pode ser que o passeio e o tempo gostoso com as irmãs tenham contribuído para ele ficar mais tranquilo, mas vale observar sem precisar tirar uma conclusão agora. **O que você acha que fez mais diferença para ele: estar com as irmãs, mudar de ambiente ou o passeio em si?** 💛"
+          }
+        ],
+        "chars_resposta": 184
+      },
+      {
+        "tipo": "retorno_de_teste",
+        "familia": "F-59704146",
+        "demora_horas": 26.2,
+        "conversa": [
+          {
+            "direcao": "inbound",
+            "tipo": null,
+            "categoria": null,
+            "em": "2026-09-16T23:00:06.517107+00:00",
+            "texto": "Ele está desenhando agora"
+          },
+          {
+            "direcao": "outbound",
+            "tipo": "rotina",
+            "categoria": "proativa",
+            "em": "2026-09-17T22:00:40.328335+00:00",
+            "texto": "Ó [nome], voltei aqui no que você falou sobre as brigas do Vitor com os colegas e as irmãs. Como é que tem sido ultimamente? Fico curioso pra entender melhor como acontecem essas situações.\n\nA gente pode desenhar um plano que usa mesmo o que ele adora — jogos, personagens, essas coisas — pra mexer nesse desafio. Quer contar um pouco mais de como começa, o que já tentaram? Áudio vale também, se preferir. 🌿"
+          },
+          {
+            "direcao": "inbound",
+            "tipo": null,
+            "categoria": null,
+            "em": "2026-09-19T00:12:50.24024+00:00",
+            "texto": "Funcionou um pouco"
+          },
+          {
+            "direcao": "outbound",
+            "tipo": "resposta_registro",
+            "categoria": "reativa",
+            "em": "2026-09-19T00:13:13.324788+00:00",
+            "texto": "Que bom que ajudou um pouco, [nome]. Para eu ajustar o próximo passo: melhorou mais na hora de **tirar o celular**, nas brincadeiras com as irmãs/colegas ou quando ele começa a ficar bravo?"
+          }
+        ],
+        "chars_resposta": 410
+      }
+    ]
+  }
+}

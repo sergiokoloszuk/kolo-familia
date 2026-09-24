@@ -1,0 +1,520 @@
+{
+  "data": "2026-09-24T17:03:42.120Z",
+  "familia": "Karina/Manu (autorizada)",
+  "modo": "somente leitura; sem WhatsApp; sem persistência; sem contexto bruto no artefato",
+  "casos": [
+    {
+      "id": "comunicacao",
+      "mensagem": "A Manu me puxa pela mão quando quer alguma coisa.",
+      "decisao": {
+        "intencao": "outro",
+        "tema": "comunicação para pedir o que quer",
+        "aceite": null,
+        "skills": [
+          "comunicacao"
+        ],
+        "skillsAvaliadas": true,
+        "pedidoExplicito": false,
+        "continuacao": false,
+        "naturezaEmocional": "neutra",
+        "pediuParaContar": false,
+        "necessidadeConhecimento": "nenhum",
+        "temaConhecimento": null,
+        "origem": "gpt"
+      },
+      "A": {
+        "repertorio": [
+          {
+            "id": "c753936d-9a74-488c-9333-2c1d3657ad76",
+            "titulo": "Quando dois crianças têm conflito: 'Você quer o carro. Ele…"
+          },
+          {
+            "id": "854864cc-4189-4e77-bb7e-89498ff70193",
+            "titulo": "Aviso prévio de 5 minutos com linguagem concreta"
+          }
+        ],
+        "resposta": "Isso já é uma forma de comunicação: ela está mostrando que precisa de ajuda para chegar ao que quer. Quando ela puxar sua mão, acompanhe até perto do objeto, pare antes de entregar e modele uma palavra ou gesto, como **mais**, **abre** ou apontar; aceite qualquer tentativa e entregue logo depois. Se ela começar a apontar ou usar a palavra, isso indica que esse apoio está ajudando a tornar o pedido mais claro. Quando chega ao que quer, ela costuma apontar ou falar alguma palavra?",
+        "metrica": {
+          "consultasBanco": 6,
+          "chamadasLLM": 1,
+          "tokensEntrada": 12897,
+          "tokensSaida": 347,
+          "msContexto": 7837,
+          "msModelo": 6451,
+          "msInspecao": 21,
+          "msTotal": 14319,
+          "modelo": "gpt-5.6-luna",
+          "provider": "openai",
+          "fronteiraBarrou": false,
+          "foco": "individual",
+          "nivelSeguranca": 1,
+          "natureza": "orientacao",
+          "coreOrigem": "admin",
+          "coreVersao": 11,
+          "bpRecuperadas": 2,
+          "bpInjetadas": 2,
+          "bpChars": 3886,
+          "msBp": 7827,
+          "jornada_dia": null,
+          "jornada_fechamento": false,
+          "jornada_chars": 0,
+          "trial_doc_chars": 0,
+          "modo": "normal",
+          "pos_trial_chars": 0,
+          "pos_trial_nivel": null,
+          "pos_trial_fatos": null,
+          "forma_modo": "off",
+          "forma_disparou": null,
+          "msParalelo": 7830,
+          "msCtx": 394,
+          "msCore": 197,
+          "msTrial": 0,
+          "msOnda1": 157,
+          "msFoco": 5,
+          "msOnda3": 100
+        },
+        "falhas": [],
+        "chamadasModelo": 1
+      },
+      "B": {
+        "repertorio": [
+          {
+            "id": "e1e083df-15ea-4297-9652-69530f8780e7",
+            "titulo": "Puxar pela mão, apontar ou entregar objeto já é comunicação funcional"
+          },
+          {
+            "id": "c753936d-9a74-488c-9333-2c1d3657ad76",
+            "titulo": "Quando dois crianças têm conflito: 'Você quer o carro. Ele…"
+          }
+        ],
+        "resposta": "Isso já é uma forma de comunicação: a Manu está mostrando que precisa de algo. Quando ela puxar sua mão, acompanhe até entender o pedido e modele uma palavra curta, gesto ou apontar, como **“água?”**, **“abre?”** ou **“vem”**, sem exigir que ela repita antes de ajudar. Depois, repare qual desses sinais ela volta a usar espontaneamente em situações parecidas.",
+        "metrica": {
+          "consultasBanco": 6,
+          "chamadasLLM": 1,
+          "tokensEntrada": 12989,
+          "tokensSaida": 247,
+          "msContexto": 8408,
+          "msModelo": 3494,
+          "msInspecao": 11,
+          "msTotal": 11915,
+          "modelo": "gpt-5.6-luna",
+          "provider": "openai",
+          "fronteiraBarrou": false,
+          "foco": "individual",
+          "nivelSeguranca": 1,
+          "natureza": "orientacao",
+          "coreOrigem": "admin",
+          "coreVersao": 11,
+          "bpRecuperadas": 2,
+          "bpInjetadas": 2,
+          "bpChars": 4334,
+          "msBp": 8406,
+          "jornada_dia": null,
+          "jornada_fechamento": false,
+          "jornada_chars": 0,
+          "trial_doc_chars": 0,
+          "modo": "normal",
+          "pos_trial_chars": 0,
+          "pos_trial_nivel": null,
+          "pos_trial_fatos": null,
+          "forma_modo": "off",
+          "forma_disparou": null,
+          "msParalelo": 8406,
+          "msCtx": 411,
+          "msCore": 0,
+          "msTrial": 0,
+          "msOnda1": 151,
+          "msFoco": 3,
+          "msOnda3": 147
+        },
+        "falhas": [],
+        "chamadasModelo": 1
+      }
+    },
+    {
+      "id": "atividade",
+      "mensagem": "A Manu não quer fazer nenhuma atividade hoje.",
+      "decisao": {
+        "intencao": "outro",
+        "tema": "recusa em fazer atividades",
+        "aceite": null,
+        "skills": [
+          "foco"
+        ],
+        "skillsAvaliadas": true,
+        "pedidoExplicito": false,
+        "continuacao": false,
+        "naturezaEmocional": "neutra",
+        "pediuParaContar": false,
+        "necessidadeConhecimento": "nenhum",
+        "temaConhecimento": null,
+        "origem": "gpt"
+      },
+      "A": {
+        "repertorio": [
+          {
+            "id": "99c86175-4ba2-4f50-9e4c-8e985ebe6fbb",
+            "titulo": "O cérebro tem andares: tronco cerebral (sobrevivência), sistema límbico (emoção),…"
+          },
+          {
+            "id": "361bbf6f-4fc8-4a6a-8c87-0ee1bcb2f511",
+            "titulo": "Criança que brinca livremente (não dirigida) aprende mais sobre si…"
+          }
+        ],
+        "resposta": "Hoje eu não insistiria em uma atividade estruturada. Ofereça uma escolha pequena ligada ao que ela gosta: **“Você quer brincar de cozinha ou escolher um dinossauro?”**; se ela aceitar, participe só por alguns minutos, sem transformar em tarefa. Se ela também recusar brincadeiras que costuma aceitar ou parecer muito diferente do habitual, observe sono, dor ou algum mal-estar antes de propor mais estímulos.",
+        "metrica": {
+          "consultasBanco": 6,
+          "chamadasLLM": 1,
+          "tokensEntrada": 13323,
+          "tokensSaida": 351,
+          "msContexto": 7781,
+          "msModelo": 4382,
+          "msInspecao": 1,
+          "msTotal": 12167,
+          "modelo": "gpt-5.6-luna",
+          "provider": "openai",
+          "fronteiraBarrou": false,
+          "foco": "individual",
+          "nivelSeguranca": 1,
+          "natureza": "orientacao",
+          "coreOrigem": "admin",
+          "coreVersao": 11,
+          "bpRecuperadas": 2,
+          "bpInjetadas": 2,
+          "bpChars": 4777,
+          "msBp": 7781,
+          "jornada_dia": null,
+          "jornada_fechamento": false,
+          "jornada_chars": 0,
+          "trial_doc_chars": 0,
+          "modo": "normal",
+          "pos_trial_chars": 0,
+          "pos_trial_nivel": null,
+          "pos_trial_fatos": null,
+          "forma_modo": "off",
+          "forma_disparou": null,
+          "msParalelo": 7781,
+          "msCtx": 335,
+          "msCore": 1,
+          "msTrial": 0,
+          "msOnda1": 149,
+          "msFoco": 3,
+          "msOnda3": 116
+        },
+        "falhas": [],
+        "chamadasModelo": 1
+      },
+      "B": {
+        "repertorio": [
+          {
+            "id": "4f7f16aa-f67a-44d1-bf4b-ce23c54f7e35",
+            "titulo": "Não quer fazer: distinguir compreender, começar, sustentar e pré-requisito"
+          },
+          {
+            "id": "99c86175-4ba2-4f50-9e4c-8e985ebe6fbb",
+            "titulo": "O cérebro tem andares: tronco cerebral (sobrevivência), sistema límbico (emoção),…"
+          }
+        ],
+        "resposta": "Hoje, não tente sustentar uma atividade inteira. Ofereça só **o primeiro passo**, por menos de um minuto, usando algo que ela gosta: separar uvas-passas para uma brincadeira de cozinha ou escolher um dinossauro para começar uma história. Diga: **“Vamos fazer só esta parte; depois você escolhe se continua ou para.”** Se ela entrar, compare por quanto tempo consegue ficar; se nem começar, pode ser melhor priorizar uma pausa e retomar mais tarde. Ela recusa antes mesmo de começar ou começa e logo para?",
+        "metrica": {
+          "consultasBanco": 6,
+          "chamadasLLM": 1,
+          "tokensEntrada": 13220,
+          "tokensSaida": 347,
+          "msContexto": 7997,
+          "msModelo": 4497,
+          "msInspecao": 1,
+          "msTotal": 12497,
+          "modelo": "gpt-5.6-luna",
+          "provider": "openai",
+          "fronteiraBarrou": false,
+          "foco": "individual",
+          "nivelSeguranca": 1,
+          "natureza": "orientacao",
+          "coreOrigem": "admin",
+          "coreVersao": 11,
+          "bpRecuperadas": 2,
+          "bpInjetadas": 2,
+          "bpChars": 4468,
+          "msBp": 7996,
+          "jornada_dia": null,
+          "jornada_fechamento": false,
+          "jornada_chars": 0,
+          "trial_doc_chars": 0,
+          "modo": "normal",
+          "pos_trial_chars": 0,
+          "pos_trial_nivel": null,
+          "pos_trial_fatos": null,
+          "forma_modo": "off",
+          "forma_disparou": null,
+          "msParalelo": 7997,
+          "msCtx": 383,
+          "msCore": 226,
+          "msTrial": 0,
+          "msOnda1": 131,
+          "msFoco": 0,
+          "msOnda3": 135
+        },
+        "falhas": [],
+        "chamadasModelo": 1
+      }
+    },
+    {
+      "id": "sensorial_foco",
+      "mensagem": "No mercado a Manu corre e parece que nem me escuta.",
+      "decisao": {
+        "intencao": "outro",
+        "tema": "comportamento da Manu no mercado",
+        "aceite": null,
+        "skills": [
+          "rotina",
+          "comunicacao"
+        ],
+        "skillsAvaliadas": true,
+        "pedidoExplicito": false,
+        "continuacao": false,
+        "naturezaEmocional": "neutra",
+        "pediuParaContar": false,
+        "necessidadeConhecimento": "nenhum",
+        "temaConhecimento": null,
+        "origem": "gpt"
+      },
+      "A": {
+        "repertorio": [
+          {
+            "id": "0502c313-a25b-4fdb-9bc8-91283bc0cb9c",
+            "titulo": "Ouça com atenção quando seu filho fala — desligue o…"
+          },
+          {
+            "id": "21a9fc7b-e719-4341-aa5b-6a1b09667f11",
+            "titulo": "Crianças pequenas não têm capacidade neurológica de se auto-regular."
+          }
+        ],
+        "resposta": "No mercado, tente combinar **antes de entrar** uma sequência bem curta: “primeiro ficar perto do carrinho, depois escolher uma coisa”. Mostre ou faça junto, em vez de repetir ordens; se ela correr, fale pouco, aproxime-se com calma e conduza-a para perto do carrinho, sem transformar o momento em muitas explicações. Repare se ela corre **assim que entra ou depois de algum tempo/parte específica do mercado** — isso ajuda a decidir o próximo ajuste.",
+        "metrica": {
+          "consultasBanco": 6,
+          "chamadasLLM": 1,
+          "tokensEntrada": 13339,
+          "tokensSaida": 408,
+          "msContexto": 8148,
+          "msModelo": 4983,
+          "msInspecao": 1,
+          "msTotal": 13133,
+          "modelo": "gpt-5.6-luna",
+          "provider": "openai",
+          "fronteiraBarrou": false,
+          "foco": "individual",
+          "nivelSeguranca": 1,
+          "natureza": "orientacao",
+          "coreOrigem": "admin",
+          "coreVersao": 11,
+          "bpRecuperadas": 2,
+          "bpInjetadas": 2,
+          "bpChars": 4584,
+          "msBp": 8147,
+          "jornada_dia": null,
+          "jornada_fechamento": false,
+          "jornada_chars": 0,
+          "trial_doc_chars": 0,
+          "modo": "normal",
+          "pos_trial_chars": 0,
+          "pos_trial_nivel": null,
+          "pos_trial_fatos": null,
+          "forma_modo": "off",
+          "forma_disparou": null,
+          "msParalelo": 8147,
+          "msCtx": 313,
+          "msCore": 1,
+          "msTrial": 0,
+          "msOnda1": 150,
+          "msFoco": 0,
+          "msOnda3": 111
+        },
+        "falhas": [],
+        "chamadasModelo": 1
+      },
+      "B": {
+        "repertorio": [
+          {
+            "id": "d5c505c5-03cf-4d5b-9dc9-562bfb6c327d",
+            "titulo": "No primeiro teste no mercado, mude só o ambiente antes de concluir desatenção"
+          },
+          {
+            "id": "0502c313-a25b-4fdb-9bc8-91283bc0cb9c",
+            "titulo": "Ouça com atenção quando seu filho fala — desligue o…"
+          }
+        ],
+        "resposta": "No mercado, o som, a luz e o movimento podem dificultar que Manu responda — isso não permite concluir que ela esteja ignorando você. Na próxima ida, tente **um horário mais vazio** e mantenha-se perto dela, sem acrescentar comandos ou treinos; compare se ela corre menos ou responde mais quando você chama. Se melhorar, o ambiente pode estar pesando nessa situação; se continuar igual, vale investigar outra barreira. Isso também acontece em lugares mais tranquilos?",
+        "metrica": {
+          "consultasBanco": 6,
+          "chamadasLLM": 1,
+          "tokensEntrada": 13317,
+          "tokensSaida": 392,
+          "msContexto": 8023,
+          "msModelo": 4895,
+          "msInspecao": 1,
+          "msTotal": 12922,
+          "modelo": "gpt-5.6-luna",
+          "provider": "openai",
+          "fronteiraBarrou": false,
+          "foco": "individual",
+          "nivelSeguranca": 1,
+          "natureza": "orientacao",
+          "coreOrigem": "admin",
+          "coreVersao": 11,
+          "bpRecuperadas": 2,
+          "bpInjetadas": 2,
+          "bpChars": 4512,
+          "msBp": 8023,
+          "jornada_dia": null,
+          "jornada_fechamento": false,
+          "jornada_chars": 0,
+          "trial_doc_chars": 0,
+          "modo": "normal",
+          "pos_trial_chars": 0,
+          "pos_trial_nivel": null,
+          "pos_trial_fatos": null,
+          "forma_modo": "off",
+          "forma_disparou": null,
+          "msParalelo": 8023,
+          "msCtx": 452,
+          "msCore": 0,
+          "msTrial": 0,
+          "msOnda1": 104,
+          "msFoco": 0,
+          "msOnda3": 243
+        },
+        "falhas": [],
+        "chamadasModelo": 1
+      }
+    },
+    {
+      "id": "socializacao",
+      "mensagem": "A Manu fica sozinha no recreio.",
+      "decisao": {
+        "intencao": "outro",
+        "tema": "socialização no recreio",
+        "aceite": null,
+        "skills": [
+          "socializacao"
+        ],
+        "skillsAvaliadas": true,
+        "pedidoExplicito": false,
+        "continuacao": false,
+        "naturezaEmocional": "neutra",
+        "pediuParaContar": false,
+        "necessidadeConhecimento": "nenhum",
+        "temaConhecimento": null,
+        "origem": "gpt"
+      },
+      "A": {
+        "repertorio": [
+          {
+            "id": "f27c8188-b103-47c5-b130-9ccf1f4f7ef1",
+            "titulo": "Durante brincadeira com outro criança, observe e comente sem interromper:…"
+          },
+          {
+            "id": "adbc13a6-63ba-4bc4-9507-a97f16119461",
+            "titulo": "Você faz papel: 'Sou o médico, vou ouvir seu coração'.…"
+          }
+        ],
+        "resposta": "Isso merece ser observado com cuidado, sem concluir que ela não quer brincar. Como a Manu tem pouca iniciativa com outras crianças, eu começaria com **uma colega tranquila e uma brincadeira curta e estruturada**, com a professora fazendo a ponte — por exemplo: “Vamos procurar um dinossauro juntas?”. Depois, vale observar se ela fica mais tempo perto da colega ou participa de alguma troca, mesmo sem falar muito. No recreio, ela tenta se aproximar e não consegue, ou fica afastada sem procurar as outras crianças?",
+        "metrica": {
+          "consultasBanco": 6,
+          "chamadasLLM": 1,
+          "tokensEntrada": 12978,
+          "tokensSaida": 562,
+          "msContexto": 7616,
+          "msModelo": 8032,
+          "msInspecao": 1,
+          "msTotal": 15652,
+          "modelo": "gpt-5.6-luna",
+          "provider": "openai",
+          "fronteiraBarrou": false,
+          "foco": "individual",
+          "nivelSeguranca": 1,
+          "natureza": "orientacao",
+          "coreOrigem": "admin",
+          "coreVersao": 11,
+          "bpRecuperadas": 2,
+          "bpInjetadas": 2,
+          "bpChars": 4361,
+          "msBp": 7615,
+          "jornada_dia": null,
+          "jornada_fechamento": false,
+          "jornada_chars": 0,
+          "trial_doc_chars": 0,
+          "modo": "normal",
+          "pos_trial_chars": 0,
+          "pos_trial_nivel": null,
+          "pos_trial_fatos": null,
+          "forma_modo": "off",
+          "forma_disparou": null,
+          "msParalelo": 7616,
+          "msCtx": 242,
+          "msCore": 220,
+          "msTrial": 0,
+          "msOnda1": 142,
+          "msFoco": 0,
+          "msOnda3": 60
+        },
+        "falhas": [],
+        "chamadasModelo": 1
+      },
+      "B": {
+        "repertorio": [
+          {
+            "id": "60263003-e70e-4246-a2dc-cc7e49caa37e",
+            "titulo": "Fica sozinho no recreio: observar a entrada e construir uma ponte concreta"
+          },
+          {
+            "id": "f27c8188-b103-47c5-b130-9ccf1f4f7ef1",
+            "titulo": "Durante brincadeira com outro criança, observe e comente sem interromper:…"
+          }
+        ],
+        "resposta": "Para ajudar a Manu a entrar na brincadeira, peça à escola que escolha **uma colega tranquila**, combine uma atividade curta ligada a dinossauros ou cozinha e dê um papel claro para cada uma, como montar e entregar as peças. O adulto pode apoiar só o início e observar se ela se aproxima, participa ou permanece mais tempo; isso mostra qual etapa ainda precisa de ajuda. Ela tenta chegar perto das crianças e não consegue entrar, ou já fica afastada desde o começo?",
+        "metrica": {
+          "consultasBanco": 6,
+          "chamadasLLM": 1,
+          "tokensEntrada": 12955,
+          "tokensSaida": 333,
+          "msContexto": 7977,
+          "msModelo": 5144,
+          "msInspecao": 6,
+          "msTotal": 13128,
+          "modelo": "gpt-5.6-luna",
+          "provider": "openai",
+          "fronteiraBarrou": false,
+          "foco": "individual",
+          "nivelSeguranca": 1,
+          "natureza": "orientacao",
+          "coreOrigem": "admin",
+          "coreVersao": 11,
+          "bpRecuperadas": 2,
+          "bpInjetadas": 2,
+          "bpChars": 4348,
+          "msBp": 7977,
+          "jornada_dia": null,
+          "jornada_fechamento": false,
+          "jornada_chars": 0,
+          "trial_doc_chars": 0,
+          "modo": "normal",
+          "pos_trial_chars": 0,
+          "pos_trial_nivel": null,
+          "pos_trial_fatos": null,
+          "forma_modo": "off",
+          "forma_disparou": null,
+          "msParalelo": 7977,
+          "msCtx": 345,
+          "msCore": 0,
+          "msTrial": 0,
+          "msOnda1": 111,
+          "msFoco": 0,
+          "msOnda3": 134
+        },
+        "falhas": [],
+        "chamadasModelo": 1
+      }
+    }
+  ]
+}

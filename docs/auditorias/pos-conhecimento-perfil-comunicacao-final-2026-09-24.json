@@ -1,0 +1,136 @@
+{
+  "data": "2026-09-24T17:36:30.984Z",
+  "familia": "Karina/Manu (autorizada)",
+  "conjunto": "Pós + Perfil",
+  "modo": "somente leitura; sem WhatsApp; sem persistência; sem contexto bruto no artefato",
+  "casos": [
+    {
+      "id": "comunicacao",
+      "mensagem": "A Manu me puxa pela mão quando quer alguma coisa.",
+      "decisao": {
+        "intencao": "outro",
+        "tema": "comunicação para pedir coisas",
+        "aceite": null,
+        "skills": [
+          "comunicacao"
+        ],
+        "skillsAvaliadas": true,
+        "pedidoExplicito": false,
+        "continuacao": false,
+        "naturezaEmocional": "neutra",
+        "pediuParaContar": false,
+        "necessidadeConhecimento": "nenhum",
+        "temaConhecimento": null,
+        "origem": "gpt"
+      },
+      "A": {
+        "repertorio": [
+          {
+            "id": "c753936d-9a74-488c-9333-2c1d3657ad76",
+            "titulo": "Quando dois crianças têm conflito: 'Você quer o carro. Ele…"
+          },
+          {
+            "id": "854864cc-4189-4e77-bb7e-89498ff70193",
+            "titulo": "Aviso prévio de 5 minutos com linguagem concreta"
+          }
+        ],
+        "resposta": "Isso pode ser o jeito que a Manu encontrou para mostrar o que quer. Quando ela puxar sua mão, acompanhe até o objeto, pare por um instante e **modele uma palavra ou gesto**, como “uva”, “quero” ou apontar; aceite qualquer tentativa e entregue depois. Se ela não conseguir, ajude sem transformar em cobrança. 💛\n\nQuando você para e espera, ela aponta ou fala alguma palavra para mostrar o que quer?",
+        "metrica": {
+          "consultasBanco": 6,
+          "chamadasLLM": 1,
+          "tokensEntrada": 12897,
+          "tokensSaida": 307,
+          "msContexto": 7890,
+          "msModelo": 5110,
+          "msInspecao": 22,
+          "msTotal": 13029,
+          "modelo": "gpt-5.6-luna",
+          "provider": "openai",
+          "fronteiraBarrou": false,
+          "foco": "individual",
+          "nivelSeguranca": 1,
+          "natureza": "orientacao",
+          "coreOrigem": "admin",
+          "coreVersao": 11,
+          "bpRecuperadas": 2,
+          "bpInjetadas": 2,
+          "bpChars": 3886,
+          "msBp": 7883,
+          "jornada_dia": null,
+          "jornada_fechamento": false,
+          "jornada_chars": 0,
+          "trial_doc_chars": 0,
+          "modo": "normal",
+          "pos_trial_chars": 0,
+          "pos_trial_nivel": null,
+          "pos_trial_fatos": null,
+          "forma_modo": "off",
+          "forma_disparou": null,
+          "msParalelo": 7884,
+          "msCtx": 362,
+          "msCore": 263,
+          "msTrial": 0,
+          "msOnda1": 217,
+          "msFoco": 3,
+          "msOnda3": 67
+        },
+        "falhas": [],
+        "chamadasModelo": 1
+      },
+      "B": {
+        "repertorio": [
+          {
+            "id": "e1e083df-15ea-4297-9652-69530f8780e7",
+            "titulo": "Puxar pela mão, apontar ou entregar objeto já é comunicação funcional"
+          },
+          {
+            "id": "c753936d-9a74-488c-9333-2c1d3657ad76",
+            "titulo": "Quando dois crianças têm conflito: 'Você quer o carro. Ele…"
+          }
+        ],
+        "resposta": "Isso já é uma forma de comunicação: a Manu está mostrando que quer algo ao puxar sua mão. Quando ela fizer isso, acompanhe até o item, diga **uma palavra só**, como “água” ou “abrir”, e entregue sem exigir que ela repita; com o tempo, essa palavra pode começar a acompanhar o gesto. Observe qual palavra ela tenta usar espontaneamente depois. 💛",
+        "metrica": {
+          "consultasBanco": 6,
+          "chamadasLLM": 1,
+          "tokensEntrada": 13060,
+          "tokensSaida": 200,
+          "msContexto": 7927,
+          "msModelo": 3057,
+          "msInspecao": 5,
+          "msTotal": 10991,
+          "modelo": "gpt-5.6-luna",
+          "provider": "openai",
+          "fronteiraBarrou": false,
+          "foco": "individual",
+          "nivelSeguranca": 1,
+          "natureza": "orientacao",
+          "coreOrigem": "admin",
+          "coreVersao": 11,
+          "bpRecuperadas": 2,
+          "bpInjetadas": 2,
+          "bpChars": 4624,
+          "msBp": 7926,
+          "jornada_dia": null,
+          "jornada_fechamento": false,
+          "jornada_chars": 0,
+          "trial_doc_chars": 0,
+          "modo": "normal",
+          "pos_trial_chars": 0,
+          "pos_trial_nivel": null,
+          "pos_trial_fatos": null,
+          "forma_modo": "off",
+          "forma_disparou": null,
+          "msParalelo": 7926,
+          "msCtx": 393,
+          "msCore": 0,
+          "msTrial": 0,
+          "msOnda1": 119,
+          "msFoco": 2,
+          "msOnda3": 170
+        },
+        "falhas": [],
+        "chamadasModelo": 1
+      }
+    }
+  ]
+}
