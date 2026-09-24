@@ -1,0 +1,327 @@
+{
+  "data": "2026-09-24T18:54:46.523Z",
+  "ambiente": "familias sinteticas; provider real; Supabase somente leitura; sem WhatsApp; sem persistencia",
+  "criterio": "aprovar somente se as perguntas agrupadas produzirem orientacao significativamente melhor, sem repetir Perfil nem abrir nova bateria",
+  "casos": [
+    {
+      "id": "alimentacao",
+      "mensagem": "Ja tentei oferecer aos poucos, sem pressao e mudar a apresentacao, mas nao funcionou. Antes de tentar mais uma coisa, quero entender o que pesa na alimentacao do Leo.",
+      "perfil": {
+        "nutricional": "Aceita bem / preferidos: arroz; banana"
+      },
+      "respostaA": "Ele cheira, afasta o prato e chora se insistimos.",
+      "respostaB": "Com alimento novo ele primeiro cheira, afasta o prato e chora se insistimos. Pastosos e cheiros fortes incomodam; seco e crocante ele tolera melhor.",
+      "ramos": {
+        "A": {
+          "t1": "Entendo. Para descobrir o que pesa, observe **em que momento ele recusa**: antes de tocar por causa da aparência ou do cheiro, ao tocar por causa da textura, depois de provar, ou quando a comida é diferente do que ele esperava. Hoje, sem insistir, repare nisso e me diga: **quando aparece uma comida nova, qual é a reação do Leo?**",
+          "t2": "Isso mostra que a recusa acontece **antes de ele provar**, provavelmente diante da novidade ou do cheiro — e o choro aparece quando a pressão aumenta. Por enquanto, tente colocar uma porção bem pequena ao lado da comida que ele costuma aceitar, sem pedir para cheirar, tocar ou comer. Se ele afastar, retire sem insistir e encerre com calma; o primeiro objetivo é ele conseguir permanecer perto da comida sem entrar em sofrimento.",
+          "mini_t1": {
+            "acao": "NAO_USAR",
+            "tema": null,
+            "campos": [],
+            "perguntas": [],
+            "motivo": "flag desligada"
+          },
+          "campos_declarados_t1": [],
+          "mini_t2": {
+            "acao": "NAO_USAR",
+            "tema": null,
+            "campos": [],
+            "perguntas": [],
+            "motivo": "flag desligada"
+          },
+          "chars": [
+            331,
+            430
+          ],
+          "perguntas": [
+            1,
+            0
+          ]
+        },
+        "B": {
+          "t1": "Enquanto entendemos melhor, mantenha um alimento que o Leo já aceita e não force a provar nada novo. Quero entender só duas coisas para adaptar melhor; você pode responder tudo junto, inclusive por áudio:\n\n1️⃣ O que acontece quando aparece um alimento diferente?\n2️⃣ Você percebe alguma textura, cheiro ou consistência que incomoda mais?",
+          "t2": "Pelo que você descreve, isso parece pesar mais como **desconforto com textura e cheiro** do que uma recusa simples: ele tolera melhor o seco e crocante, mas cheiros fortes e pastosos já provocam afastamento e choro quando há insistência. Hoje, mantenha o arroz que ele aceita e coloque **um pedacinho minúsculo de alimento seco e crocante, separado**, sem pedir que prove. Você pode dizer: **“Ele pode ficar aqui; você não precisa comer.”** Observe se ele consegue permanecer perto sem chorar ou afastar o prato; se o desconforto aparecer, retire o novo e encerre, sem insistir. O próximo passo será reduzir essa reação, não aumentar a quantidade.",
+          "mini_t1": {
+            "acao": "PERGUNTAR",
+            "tema": "alimentacao",
+            "campos": [
+              "alimentacao.reacao_novo",
+              "alimentacao.sensorial"
+            ],
+            "perguntas": [
+              "O que acontece quando aparece um alimento diferente?",
+              "Você percebe alguma textura, cheiro ou consistência que incomoda mais?"
+            ],
+            "motivo": "2 respostas juntas separam estrategias diferentes"
+          },
+          "campos_declarados_t1": [
+            "alimentacao.reacao_novo",
+            "alimentacao.sensorial"
+          ],
+          "mini_t2": {
+            "acao": "ORIENTAR",
+            "tema": "alimentacao",
+            "campos": [
+              "alimentacao.reacao_novo",
+              "alimentacao.sensorial"
+            ],
+            "perguntas": [],
+            "motivo": "a familia respondeu a mini-investigacao anterior; este turno deve orientar"
+          },
+          "chars": [
+            337,
+            647
+          ],
+          "perguntas": [
+            2,
+            0
+          ]
+        }
+      },
+      "juizo": "VENCEDOR: B  \nB_SIGNIFICATIVAMENTE_MELHOR: SIM\n\n- **Turnos até ajuda útil:** ambos chegam a uma orientação no segundo turno. B chega a uma orientação mais ajustada porque identifica não só a recusa diante do novo, mas também os gatilhos sensoriais e o que Leo tolera melhor.\n- **Repetição do que o Perfil já sabia:** A evita repetir diretamente “arroz e banana”, embora diga “comida que ele costuma aceitar”. B retoma o arroz, já conhecido, mas o usa como base concreta para a estratégia; não é repetição vazia.\n- **Especificidade:** B é significativamente mais específico: alimento seco e crocante, pedacinho minúsculo, separado, sem exigir prova. A permanece em “porção bem pequena” ao lado de um alimento aceito.\n- **Ação concreta:** ambos orientam exposição sem pressão e retirada diante do sofrimento. B acrescenta critérios mais claros e adaptados ao perfil sensorial: usar algo seco/crocante e observar permanência sem choro ou afastamento.\n- **Frase pronta:** A não oferece. B oferece “Ele pode ficar aqui; você não precisa comer”, diretamente utilizável pela família.\n- **Tamanho:** A é mais curta e eficiente. B é mais longa, mas a extensão acrescenta instruções práticas relevantes; não parece prolixa.\n- **Naturalidade:** ambas são naturais. B mantém tom acolhedor e não transforma a orientação em diagnóstico.\n- **Sensação de interrogatório:** A faz uma pergunta única, portanto é mais leve. B faz duas perguntas, mas as limita explicitamente e permite responder tudo junto; a carga continua moderada.\n- **Personalização:** B personaliza claramente a intervenção aos incômodos com pastosos e cheiros fortes e à tolerância ao seco/crocante. A personaliza apenas ao fato de a recusa ocorrer antes de provar.\n- **Nova bateria:** B não cria uma nova bateria no segundo turno; usa as duas respostas obtidas para orientar. A também não.\n- **Qualidade do segundo turno:** B produz uma orientação significativamente mais acionável, sensorialmente compatível e acompanhada de frase e critério de observação."
+    },
+    {
+      "id": "regulacao",
+      "mensagem": "Ja tentei falar baixo, dar espaco e antecipar, mas nada ajuda sempre quando o Leo explode. Quero entender o que muda o que devo fazer.",
+      "perfil": {},
+      "respostaA": "Geralmente acontece depois de uma mudanca sem aviso ou quando esta cansado.",
+      "respostaB": "Geralmente vem depois de uma mudanca sem aviso ou quando esta cansado. Falar muito e tocar pioram; lugar quieto e eu ficar perto em silencio ajudam. No auge ele nao fala, so me puxa pela mao.",
+      "ramos": {
+        "A": {
+          "t1": "O que muda a conduta é **o que acontece logo antes da explosão**. No auge, mantenha a segurança, reduza estímulos e fale pouco; depois, observe se ele estava tentando escapar de algo, pedir ajuda, lidar com uma mudança ou se estava cansado. Se for seguro, anote apenas: o que veio antes, o que ele fez e o que aconteceu depois — isso mostra qual apoio testar, em vez de repetir a mesma estratégia para toda explosão.\n\nIsso acontece mais depois de **frustração ou limite**, de **mudança ou espera**, de **barulho/toque**, ou parece surgir sem um gatilho claro?",
+          "t2": "Então, o que muda é o momento de agir: quando houver mudança, avise antes com uma frase curta — **“agora vai terminar; depois vamos fazer X”** — e mantenha sempre a mesma sequência de transição. Quando ele estiver cansado, reduza demandas e evite introduzir mudanças desnecessárias; ofereça uma pausa ou uma atividade mais previsível. Se a explosão começar, priorize segurança, diminua estímulos e fale pouco. O primeiro teste pode ser observar se ele consegue fazer a mudança com menos apoio quando recebe esse aviso antes.",
+          "mini_t1": {
+            "acao": "NAO_USAR",
+            "tema": null,
+            "campos": [],
+            "perguntas": [],
+            "motivo": "flag desligada"
+          },
+          "campos_declarados_t1": [],
+          "mini_t2": {
+            "acao": "NAO_USAR",
+            "tema": null,
+            "campos": [],
+            "perguntas": [],
+            "motivo": "flag desligada"
+          },
+          "chars": [
+            559,
+            524
+          ],
+          "perguntas": [
+            1,
+            0
+          ]
+        },
+        "B": {
+          "t1": "No auge, priorize a segurança, reduza os estímulos e use poucas palavras. Quero entender só três coisas para adaptar melhor; você pode responder tudo junto, inclusive por áudio:\n\n1. O que geralmente acontece logo antes de ele explodir?\n2. O que costuma ajudar — e o que piora — quando ele já está muito irritado?\n3. Nesse momento ele consegue falar ou mostrar o que precisa?",
+          "t2": "Pelo que você contou, a hipótese mais provável é que **mudanças inesperadas, somadas ao cansaço, levem o Leo ao limite**; puxar sua mão parece ser o jeito que ele ainda encontra para pedir ajuda quando não consegue falar. Hoje, teste uma mesma sequência antes das mudanças: aproxime-se sem tocar, mostre o que vai acontecer e diga: **“Leo, falta pouco; depois vamos para o lugar quieto.”** Se ele explodir, reduza estímulos, fique perto em silêncio e não tente ensinar ou conversar no auge. Quando se recuperar, nomeie brevemente: “Você puxou minha mão para pedir ajuda”; depois pratique essa mesma forma de pedir em um momento calmo. Observe se o aviso reduz a intensidade da crise ou se ele se recupera mais rápido; isso indica se o próximo ajuste deve ser no aviso ou no tempo de descanso.",
+          "mini_t1": {
+            "acao": "PERGUNTAR",
+            "tema": "regulacao",
+            "campos": [
+              "regulacao.antes",
+              "regulacao.ajuda_piora",
+              "regulacao.comunicacao"
+            ],
+            "perguntas": [
+              "O que geralmente acontece logo antes de ele explodir?",
+              "O que costuma ajudar — e o que piora — quando ele ja esta muito irritado?",
+              "Nesse momento ele consegue falar ou mostrar o que precisa?"
+            ],
+            "motivo": "3 respostas juntas separam estrategias diferentes"
+          },
+          "campos_declarados_t1": [
+            "regulacao.antes",
+            "regulacao.ajuda_piora",
+            "regulacao.comunicacao"
+          ],
+          "mini_t2": {
+            "acao": "ORIENTAR",
+            "tema": "regulacao",
+            "campos": [
+              "regulacao.antes",
+              "regulacao.ajuda_piora",
+              "regulacao.comunicacao"
+            ],
+            "perguntas": [],
+            "motivo": "a familia respondeu a mini-investigacao anterior; este turno deve orientar"
+          },
+          "chars": [
+            374,
+            792
+          ],
+          "perguntas": [
+            3,
+            0
+          ]
+        }
+      },
+      "juizo": "VENCEDOR: A  \nB_SIGNIFICATIVAMENTE_MELHOR: NAO\n\n- **Turnos até ajuda útil:** A entrega orientação imediatamente no T1 e a refina no T2. B oferece apenas manejo genérico no T1 e só chega à orientação personalizada no T2.\n- **Repetição do que o Perfil já sabia:** Não houve repetição relevante em nenhum dos dois; o Perfil inicial estava vazio.\n- **Especificidade:** B é mais específico no T2, pois incorpora que falar e tocar pioram, que o silêncio e a proximidade ajudam e que Leo puxa a mão.\n- **Ação concreta:** B propõe uma sequência mais completa: avisar, mostrar o que ocorrerá, ir ao local quieto, evitar falar no auge e praticar o pedido depois. A também propõe aviso prévio, redução de demandas e pausa, mas de modo menos individualizado.\n- **Frase pronta:** Ambos têm frase pronta. B acrescenta uma formulação para o momento de transição e uma para depois da crise; A oferece uma frase funcional e simples.\n- **Tamanho:** A é mais enxuta e proporcional. B é mais longa, embora ainda manejável.\n- **Naturalidade:** A soa mais direta e natural. B fica um pouco mais técnica ao dizer “a hipótese mais provável”.\n- **Sensação de interrogatório:** A faz uma pergunta única e bem delimitada. B faz uma bateria de três perguntas antes de oferecer ajuda personalizada.\n- **Personalização:** B é superior no T2, porque usa todos os dados obtidos e reconhece o puxar da mão como possível comunicação.\n- **Nova bateria:** Sim, B introduz três perguntas de uma vez; A não cria nova bateria.\n\nB produz um segundo turno mais detalhado e personalizado, mas não **significativamente** melhor a ponto de compensar ter adiado a ajuda e aumentado a sensação de interrogatório."
+    },
+    {
+      "id": "atividade",
+      "mensagem": "Ja tentei deixar a atividade curta, dar escolhas e usar o que o Leo gosta, mas nao funcionou. Nao sei onde trava.",
+      "perfil": {
+        "essencial": "Interesses: trens e mapas"
+      },
+      "respostaA": "Ele entende e comeca se eu fizer o primeiro passo, mas abandona depois de uns tres minutos.",
+      "respostaB": "Ele entende quando eu mostro. Nao comeca sozinho, mas comeca se eu fizer o primeiro passo. Depois de uns tres minutos abandona quando ha muita coisa na mesa.",
+      "ramos": {
+        "A": {
+          "t1": "Entendi. Então talvez o bloqueio não esteja na duração, nas escolhas ou no interesse, mas em **qual etapa da atividade trava**. Hoje, tente mostrar só o primeiro movimento — por exemplo, “pegue o lápis” — e faça junto uma vez, sem explicar tudo; observe se ele não começa, começa e para, ou começa mas não entende o que vem depois. O que acontece exatamente quando você apresenta a atividade?",
+          "t2": "Então o Leo **entende e consegue começar**, mas a parte difícil parece ser sustentar a atividade. Em vez de esperar ele abandonar, experimente marcar uma meta bem pequena: “vamos fazer só mais uma parte e paramos para uma pausa”. Faça junto essa parte, reconheça o fim e ofereça uma pausa curta antes de retomar — assim ele pratica permanecer sem precisar chegar ao limite. Quando ele abandona, costuma **se levantar e procurar outra coisa** ou fica frustrado porque não consegue continuar?",
+          "mini_t1": {
+            "acao": "NAO_USAR",
+            "tema": null,
+            "campos": [],
+            "perguntas": [],
+            "motivo": "flag desligada"
+          },
+          "campos_declarados_t1": [],
+          "mini_t2": {
+            "acao": "NAO_USAR",
+            "tema": null,
+            "campos": [],
+            "perguntas": [],
+            "motivo": "flag desligada"
+          },
+          "chars": [
+            392,
+            490
+          ],
+          "perguntas": [
+            1,
+            1
+          ]
+        },
+        "B": {
+          "t1": "Na próxima tentativa, mostre somente o primeiro passo e não insista se ele travar. Quero entender só três coisas para adaptar melhor — você pode responder tudo junto, inclusive por áudio:\n\n1. Quando você mostra o que é para fazer, ele parece entender a atividade?\n2. Ele não chega a começar, ou começa quando você ajuda no primeiro passo?\n3. Quando começa, ele abandona em que momento — e o que parece pesar ali?",
+          "t2": "Pelo que você observou, o Leo **entende a atividade**; a barreira parece estar em começar sem ajuda e sustentar quando muitos materiais ficam visíveis. Uma hipótese é que a mesa cheia esteja competindo pela atenção e deixando difícil saber o que vem agora.\n\nHoje, deixe na mesa **apenas o material do primeiro passo** e faça esse começo com ele. Você pode dizer: **“Primeiro fazemos só este aqui; depois eu te mostro o próximo.”** Observe se ele permanece por mais tempo ou precisa de menos ajuda para iniciar; se funcionar, o próximo ajuste é colocar apenas um material novo por vez.",
+          "mini_t1": {
+            "acao": "PERGUNTAR",
+            "tema": "atividade",
+            "campos": [
+              "atividade.compreende",
+              "atividade.inicia",
+              "atividade.sustenta"
+            ],
+            "perguntas": [
+              "Quando voce mostra o que e para fazer, ele parece entender a atividade?",
+              "Ele nao chega a comecar, ou comeca quando voce ajuda no primeiro passo?",
+              "Quando comeca, ele abandona em que momento — e o que parece pesar ali?"
+            ],
+            "motivo": "3 respostas juntas separam estrategias diferentes"
+          },
+          "campos_declarados_t1": [
+            "atividade.compreende",
+            "atividade.inicia",
+            "atividade.sustenta"
+          ],
+          "mini_t2": {
+            "acao": "ORIENTAR",
+            "tema": "atividade",
+            "campos": [
+              "atividade.compreende",
+              "atividade.inicia",
+              "atividade.sustenta"
+            ],
+            "perguntas": [],
+            "motivo": "a familia respondeu a mini-investigacao anterior; este turno deve orientar"
+          },
+          "chars": [
+            412,
+            584
+          ],
+          "perguntas": [
+            3,
+            0
+          ]
+        }
+      },
+      "juizo": "**VENCEDOR: B**  \n**B_SIGNIFICATIVAMENTE_MELHOR: SIM**\n\n- **Turnos até ajuda útil:** A oferece uma orientação parcial no T2, mas ainda termina com nova pergunta. B chega a uma orientação mais ajustada no T2, sem precisar perguntar novamente.\n- **Repetição do que o perfil já sabia:** Nenhuma repete diretamente os interesses “trens e mapas”. A repete que Leo entende e começa com ajuda; B também retoma esses dados, mas os usa para formular uma hipótese nova sobre a mesa cheia.\n- **Especificidade:** B é mais específico: identifica a presença de muitos materiais como possível fator de distração. A fala apenas em “sustentar a atividade”.\n- **Ação concreta:** B propõe retirar tudo, deixar apenas o material do primeiro passo e introduzir um item por vez. A propõe uma meta pequena e pausa, mas sem esclarecer o provável gatilho.\n- **Frase pronta:** B fornece uma frase diretamente utilizável: “Primeiro fazemos só este aqui; depois eu te mostro o próximo.” A não oferece uma formulação exata no T2.\n- **Tamanho:** A é mais enxuta. B tem um T1 mais longo por reunir três perguntas, mas o T2 permanece proporcional e útil.\n- **Naturalidade:** A soa mais conversacional na sequência. B é natural no T2, embora o T1 tenha formato mais estruturado.\n- **Sensação de interrogatório:** B produz maior sensação de interrogatório no T1 por apresentar três perguntas. Isso é parcialmente compensado por permitir responder tudo junto. A faz perguntas mais leves e graduais, mas prolonga a investigação.\n- **Personalização:** B personaliza claramente a orientação a partir de “muita coisa na mesa”. A personaliza apenas quanto à duração e à necessidade de ajuda inicial.\n- **Nova bateria:** B fez uma bateria inicial de três perguntas, mas ela foi eficiente e não houve nova bateria no T2. A evitou bateria, porém fez uma nova pergunta ao final do T2 e adiou uma orientação mais precisa.\n\nApesar do custo de o T1 de B parecer mais interrogativo, as respostas agrupadas revelaram o fator decisivo e produziram uma orientação de segundo turno significativamente mais concreta e testável."
+    },
+    {
+      "id": "comunicacao",
+      "mensagem": "Ja tentei oferecer duas escolhas e modelar uma palavra, mas nao funcionou. O perfil ainda nao tem informacao suficiente sobre como o Leo se comunica.",
+      "perfil": {},
+      "respostaA": "Ele usa algumas palavras soltas, aponta ou me leva pela mao.",
+      "respostaB": "Ele usa algumas palavras soltas. Quando nao consegue, aponta ou me leva pela mao. Entende pedidos simples melhor quando eu mostro junto.",
+      "ramos": {
+        "A": {
+          "t1": "Entendi. Talvez duas escolhas e uma palavra tenham exigido uma habilidade que ainda não sabemos se o Leo usa. Hoje, observe o que ele faz quando quer algo — aponta, puxa você, entrega o objeto, faz um som ou tenta uma palavra — e responda a esse sinal, modelando só uma palavra ligada ao pedido, sem exigir que ele repita ou olhe. 💛\n\nQuando ele quer alguma coisa, o que costuma fazer para mostrar isso?",
+          "t2": "Isso já mostra que o Leo **se comunica de mais de uma forma**: usa palavras, aponta e leva você pela mão. Quando ele fizer um desses sinais, responda ao que ele quer e modele **uma única palavra ligada ao pedido**, sem exigir que repita nem que olhe — por exemplo, ao apontar para a água, diga “água” e entregue. Assim, você amplia a comunicação sem transformar a fala em condição para ser atendido. 💛",
+          "mini_t1": {
+            "acao": "NAO_USAR",
+            "tema": null,
+            "campos": [],
+            "perguntas": [],
+            "motivo": "flag desligada"
+          },
+          "campos_declarados_t1": [],
+          "mini_t2": {
+            "acao": "NAO_USAR",
+            "tema": null,
+            "campos": [],
+            "perguntas": [],
+            "motivo": "flag desligada"
+          },
+          "chars": [
+            403,
+            402
+          ],
+          "perguntas": [
+            1,
+            0
+          ]
+        },
+        "B": {
+          "t1": "Por enquanto, acolha qualquer gesto, olhar, som ou tentativa que o Leo usar e responda ao que ele parece estar comunicando, sem exigir uma fala melhor. 💛\n\nQuero entender só três coisas para adaptar melhor — vocês podem responder tudo junto, inclusive por áudio:\n\n1. Como ele costuma se comunicar hoje: frases, palavras, gestos ou outro jeito?\n2. Como ele mostra o que quer quando a palavra não vem?\n3. Como você percebe o que ele entende do que vocês falam?",
+          "t2": "O Leo **já se comunica funcionalmente**: usa palavras soltas, aponta e leva você até o que quer. Pelo que você contou, a dificuldade parece estar mais em juntar a intenção ao pedido e entender melhor quando não há apoio visual — não em falta de comunicação.\n\nHoje, quando ele apontar ou levar você pela mão, mostre o que ele quer e modele **uma única palavra ligada à situação**, sem exigir que ele repita: “água”, “bola” ou “abre”. Você pode dizer: **“Você quer água. Água.”** e atender ao pedido, mesmo que ele use só o gesto.\n\nObserve se, com esse apoio, ele começa a usar a palavra em algumas situações ou precisa cada vez de menos ajuda para mostrar o que quer. 🌿",
+          "mini_t1": {
+            "acao": "PERGUNTAR",
+            "tema": "comunicacao",
+            "campos": [
+              "comunicacao.forma",
+              "comunicacao.mostra",
+              "comunicacao.entende"
+            ],
+            "perguntas": [
+              "Como ele costuma se comunicar hoje: frases, palavras, gestos ou outro jeito?",
+              "Como ele mostra o que quer quando a palavra nao vem?",
+              "Como voce percebe o que ele entende do que voces falam?"
+            ],
+            "motivo": "3 respostas juntas separam estrategias diferentes"
+          },
+          "campos_declarados_t1": [
+            "comunicacao.forma",
+            "comunicacao.mostra",
+            "comunicacao.entende"
+          ],
+          "mini_t2": {
+            "acao": "ORIENTAR",
+            "tema": "comunicacao",
+            "campos": [
+              "comunicacao.forma",
+              "comunicacao.mostra",
+              "comunicacao.entende"
+            ],
+            "perguntas": [],
+            "motivo": "a familia respondeu a mini-investigacao anterior; este turno deve orientar"
+          },
+          "chars": [
+            458,
+            669
+          ],
+          "perguntas": [
+            3,
+            0
+          ]
+        }
+      },
+      "juizo": "**VENCEDOR: A**  \n**B_SIGNIFICATIVAMENTE_MELHOR: NAO**\n\n**Justificativa por dimensão:**\n\n- **Turnos até ajuda útil:** A oferece uma orientação concreta já no T1 e faz apenas uma pergunta relevante. B também oferece uma orientação inicial, mas abre uma bateria de três perguntas antes de personalizar.\n- **Repetição do que o Perfil já sabia:** No início, o perfil estava vazio, então não houve repetição indevida. Depois da resposta da família, A retoma apenas os dados necessários. B repete e reorganiza quase toda a informação recebida.\n- **Especificidade:** B obtém uma informação adicional útil — o Leo entende melhor com apoio visual — e a incorpora parcialmente. Ainda assim, a orientação central de ambos é praticamente a mesma.\n- **Ação concreta:** As duas conduções orientam responder ao gesto e modelar uma palavra sem exigir repetição. A dá um exemplo direto (“água”); B dá exemplos e recomenda mostrar o que ele quer.\n- **Frase pronta:** B é ligeiramente superior por oferecer “Você quer água. Água.” A oferece o modelo “água”, mas não uma frase pronta completa.\n- **Tamanho:** A é mais enxuta e suficiente. B é mais longa, sobretudo por causa das três perguntas iniciais.\n- **Naturalidade:** A soa mais fluida e centrada na situação apresentada. B soa mais estruturada e técnica, com a expressão “já se comunica funcionalmente” e uma inferência parcialmente especulativa sobre a dificuldade.\n- **Sensação de interrogatório:** A faz uma única pergunta após ajudar. B faz uma nova bateria de três perguntas, ainda que agrupadas e pertinentes.\n- **Personalização:** B personaliza um pouco melhor ao mencionar o apoio visual. Porém, a recomendação não muda significativamente: continua sendo mostrar, modelar uma palavra e não exigir repetição.\n- **Nova bateria:** Sim. B introduz três perguntas quando uma orientação útil já poderia ter sido dada com a informação disponível. O ganho informacional não produz uma orientação de segundo turno significativamente melhor.\n\nB tem pequenos ganhos de personalização e frase pronta, mas não supera A de forma significativa; A é mais econômica, natural e igualmente acionável."
+    }
+  ]
+}

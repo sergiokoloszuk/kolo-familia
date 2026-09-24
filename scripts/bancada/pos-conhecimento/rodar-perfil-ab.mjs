@@ -93,13 +93,11 @@ const [
   { responderExperimental },
   { decidirTurno },
   { carregarCatalogoSkills },
-  { classificarNivelSeguranca },
   { recuperarBoasPraticas },
 ] = await Promise.all([
   modulo("lib/ayla/experimental.ts"),
   modulo("lib/conducao/decisao-do-turno.ts"),
   modulo("lib/ayla/catalogo-skills.ts"),
-  modulo("lib/ayla/estado-seguranca.ts"),
   modulo("lib/conhecimento/recuperar.ts"),
 ]);
 
@@ -152,7 +150,6 @@ for (const [id, mensagem] of casos) {
       origem: "simulador",
       turnosSimulados: [],
       turnoClassificado: decisao,
-      nivelSeguranca: classificarNivelSeguranca(mensagem),
       onFalha: (motivo, detalhe) => falhas.push({ motivo, detalhe }),
     });
     if (!resposta) throw new Error(`Produtor não concluiu ${id}/${ramo}: ${JSON.stringify(falhas)}`);

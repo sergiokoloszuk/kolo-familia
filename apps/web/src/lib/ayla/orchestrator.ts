@@ -3310,6 +3310,14 @@ async function processInboundInterno(
       // que a pergunta de fato procurou, declarado pelo Core. Podem divergir —
       // e é justamente a divergência que a gente quer poder medir.
       const campoInvestigado = exp.campoInvestigado ?? null;
+      const mini = exp.miniInvestigacao ?? null;
+      const camposMiniDeclarados = exp.camposInvestigados ?? [];
+      const miniConfirmada =
+        mini?.acao === "PERGUNTAR" &&
+        camposMiniDeclarados.length >= 2 &&
+        camposMiniDeclarados.length === mini.campos.length &&
+        camposMiniDeclarados.every((campo, i) => campo === mini.campos[i]);
+      const camposMini = miniConfirmada ? camposMiniDeclarados : [];
 
       // ⚠️ NENHUM CAMINHO VIVO DO DECISOR TERMINA INVISÍVEL. O rastro sai
       // mesmo em NO_ASK — é justamente ele que explica por que a Ayla NÃO
@@ -3340,6 +3348,11 @@ async function processInboundInterno(
             turno: rastro.turno,
             lacuna_sugerida: lacunaSugerida,
             campo_investigado: campoInvestigado,
+            mini_investigacao_acao: mini?.acao ?? "NAO_USAR",
+            mini_investigacao_tema: mini?.tema ?? null,
+            mini_investigacao_campos_sugeridos: mini?.campos ?? [],
+            mini_investigacao_campos_confirmados: camposMini,
+            mini_investigacao_motivo: mini?.motivo ?? null,
             /**
              * ⚠️ OS DOIS SINAIS EM SOMBRA — PEND-203 Gate 2C. TELEMETRIA, NÃO
              * DECISÃO: nenhum `if` deste arquivo os lê, e há teste prendendo
@@ -3495,11 +3508,17 @@ async function processInboundInterno(
         // ⚠️ CHAVE NOVA, e o nome carrega a semântica. `lacuna` legado fica
         // legível no histórico e NÃO é migrado: seriam afirmações diferentes
         // sobre o passado.
-        ...(lacunaSugerida || campoInvestigado
+        ...(lacunaSugerida || campoInvestigado || camposMini.length
           ? {
               metadataMensagem: {
                 ...(lacunaSugerida ? { lacuna_sugerida: lacunaSugerida } : {}),
                 ...(campoInvestigado ? { campo_investigado: campoInvestigado } : {}),
+                ...(camposMini.length && mini?.tema
+                  ? {
+                      mini_investigacao_tema: mini.tema,
+                      mini_investigacao_campos: camposMini,
+                    }
+                  : {}),
               },
             }
           : {}),

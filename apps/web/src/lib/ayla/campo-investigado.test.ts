@@ -46,7 +46,11 @@ describe("PEND-187B · o contrato de saída", () => {
       };
     };
     expect(e.json_schema.strict).toBe(true);
-    expect(e.json_schema.schema.required).toEqual(["fala", "campo_investigado"]);
+    expect(e.json_schema.schema.required).toEqual([
+      "fala",
+      "campo_investigado",
+      "campos_investigados",
+    ]);
     const enums = e.json_schema.schema.properties.campo_investigado.enum;
     expect(enums).toContain(null);
     expect(enums.length).toBe(CHAVES_DECISIVAS.length + 1);
@@ -72,21 +76,21 @@ describe("PEND-187B · o contrato de saída", () => {
 
 describe("PEND-187B · a leitura do envelope", () => {
   it("envelope válido devolve fala e campo", () => {
-    const r = lerEnvelope(JSON.stringify({ fala: "Vale reparar no que vem antes.", campo_investigado: "emocional.gatilhos" }));
+    const r = lerEnvelope(JSON.stringify({ fala: "Vale reparar no que vem antes.", campo_investigado: "emocional.gatilhos", campos_investigados: [] }));
     expect(r.valido).toBe(true);
     expect(r.fala).toBe("Vale reparar no que vem antes.");
     expect(r.campo).toBe("emocional.gatilhos");
   });
 
   it("campo null é resultado legítimo, não falha", () => {
-    const r = lerEnvelope(JSON.stringify({ fala: "Hoje é só respirar. 💛", campo_investigado: null }));
+    const r = lerEnvelope(JSON.stringify({ fala: "Hoje é só respirar. 💛", campo_investigado: null, campos_investigados: [] }));
     expect(r.valido).toBe(true);
     expect(r.campo).toBeNull();
     expect(r.fala).toBeTruthy();
   });
 
   it("chave FORA do enum vira null — segunda camada, como no decisor", () => {
-    const r = lerEnvelope(JSON.stringify({ fala: "oi", campo_investigado: "telepatia.leitura" }));
+    const r = lerEnvelope(JSON.stringify({ fala: "oi", campo_investigado: "telepatia.leitura", campos_investigados: [] }));
     expect(r.valido).toBe(true);
     expect(r.campo).toBeNull();
   });
@@ -101,7 +105,7 @@ describe("PEND-187B · a leitura do envelope", () => {
   });
 
   it("JSON sem fala é inválido — e não inventa campo", () => {
-    const r = lerEnvelope(JSON.stringify({ campo_investigado: "emocional.gatilhos" }));
+    const r = lerEnvelope(JSON.stringify({ campo_investigado: "emocional.gatilhos", campos_investigados: [] }));
     expect(r.valido).toBe(false);
     expect(r.campo).toBeNull();
   });
@@ -246,7 +250,7 @@ describe("PEND-187B · os dois turnos reais da Manu", () => {
 
   it("sugerida = investigada é um resultado possível, e não é suspeito", () => {
     const r = lerEnvelope(
-      JSON.stringify({ fala: "O que costuma disparar?", campo_investigado: "emocional.gatilhos" }),
+      JSON.stringify({ fala: "O que costuma disparar?", campo_investigado: "emocional.gatilhos", campos_investigados: [] }),
     );
     expect(r.campo).toBe("emocional.gatilhos");
   });

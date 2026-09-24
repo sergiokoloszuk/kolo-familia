@@ -169,7 +169,9 @@ describe("D · SOMBRA — nenhum consumidor lê os campos novos", () => {
     // O contrato do Core segue sendo `{ fala, campo_investigado }`.
     const LAC = readFileSync(new URL("../ayla/lacuna-decisiva.ts", import.meta.url), "utf8");
     expect(LAC).not.toMatch(/natureza_emocional|pediu_para_contar/);
-    expect(LAC).toMatch(/required: \["fala", "campo_investigado"\]/);
+    expect(LAC).toMatch(
+      /required: \["fala", "campo_investigado", "campos_investigados"\]/,
+    );
   });
 });
 

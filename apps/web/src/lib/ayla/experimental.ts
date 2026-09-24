@@ -62,6 +62,11 @@ import {
   type DecisaoDeLacuna,
 } from "./lacuna-decisiva";
 import {
+  blocoMiniInvestigacao,
+  decidirMiniInvestigacao,
+  type MiniInvestigacao,
+} from "./mini-investigacao";
+import {
   FORMATO_WHATSAPP,
   formasDeEntrega,
   pedeEntregaEstruturada,
@@ -249,6 +254,9 @@ export type TurnoExperimental = {
    * saiba o que foi perguntado. Aqui ela não volta ao prompt.
    */
   decisaoLacuna?: DecisaoDeLacuna | null;
+  /** Excecao agrupada realmente declarada pelo envelope do modelo. */
+  miniInvestigacao?: MiniInvestigacao | null;
+  camposInvestigados?: string[];
   /** Medição do turno — ver `ayla_path` no relatório da PEND-064. */
   metrica: {
     consultasBanco: number;
@@ -411,6 +419,7 @@ type ContextoDoTurno = {
   bloco: string;
   /** A decisão de lacuna do turno — sobe ao orquestrador, nunca ao prompt. */
   decisaoLacuna: DecisaoDeLacuna | null;
+  miniInvestigacao: MiniInvestigacao;
   foco: Foco;
   diagnosticoRegistrado: string;
   consultas: number;
@@ -595,14 +604,18 @@ async function montarContexto(
   //
   // ⚠️ E NÃO É UM SEGUNDO RETRATO. O que sai daqui é, no máximo, UMA linha: a
   // pergunta que vale a pena. A lista do que falta não vai ao prompt.
+  const perfilConsultavel =
+    emFoco.length === 1
+      ? perfilConsultavelDaLinha(
+          (perfis[0] ?? null) as Record<string, unknown> | null,
+          emFoco[0].id,
+        )
+      : null;
   const decisaoLacuna =
     modo === "pos_trial" || emFoco.length !== 1
       ? null
       : escolherLacunaDecisiva({
-          perfil: perfilConsultavelDaLinha(
-            (perfis[0] ?? null) as Record<string, unknown> | null,
-            emFoco[0].id,
-          ),
+          perfil: perfilConsultavel!,
           temas: skills,
           relato: mensagem,
           // ⚠️ SEM ISTO A FALHA VIRA SILÊNCIO. Ver PEND-184: catálogo
@@ -617,6 +630,24 @@ async function montarContexto(
             emFoco[0].id,
           ),
         });
+
+  const falasCronologicas = ((falas ?? []) as Fala[]).slice().reverse();
+  const miniInvestigacao =
+    modo === "normal" && emFoco.length === 1 && perfilConsultavel
+      ? decidirMiniInvestigacao({
+          perfil: perfilConsultavel,
+          temas: skills,
+          relato: mensagem,
+          falas: falasCronologicas,
+          membroId: emFoco[0].id,
+        })
+      : {
+          acao: "NAO_USAR" as const,
+          tema: null,
+          campos: [] as [],
+          perguntas: [] as [],
+          motivo: "modo ou foco incompativel",
+        };
 
   // ⚠️ O HISTÓRICO É ETIQUETADO, NÃO RECORTADO — mesma decisão de
   // `carregarHistorico` no legacy. Recortar mataria o multi-criança; deixar sem
@@ -678,7 +709,11 @@ async function montarContexto(
           // modelo recebia buracos de formulário e, ao lado, o Core §8 mandando
           // não interrogar. Agora entra ZERO OU UMA lacuna, a do assunto de
           // agora, e só quando ela mudaria a conduta.
-          decisaoLacuna ? blocoDaLacuna(decisaoLacuna) : "",
+          miniInvestigacao.acao !== "NAO_USAR"
+            ? blocoMiniInvestigacao(miniInvestigacao)
+            : decisaoLacuna
+              ? blocoDaLacuna(decisaoLacuna)
+              : "",
           blocoDeFoco(foco),
           // Depois do retrato da criança e antes da trajetória: a casa é contexto de
           // quem ela é, não um assunto próprio.
@@ -758,6 +793,7 @@ async function montarContexto(
     bloco,
     /** A decisão de lacuna deste turno — para o metadata e para o rastro. */
     decisaoLacuna: decisaoDoTurno,
+    miniInvestigacao,
     foco,
     diagnosticoRegistrado,
     consultas: 3 + emFoco.length + 2,
@@ -1314,6 +1350,7 @@ export async function responderExperimental(
     let env = lerEnvelope(r.texto);
     let texto = env.fala;
     let campoInvestigado = env.campo;
+    let camposInvestigados = env.campos;
     let envelopeFalhou = !env.valido;
     if (!texto) {
       console.warn("[ayla:oficial] resposta vazia — uma segunda tentativa");
@@ -1321,6 +1358,7 @@ export async function responderExperimental(
       env = lerEnvelope(r.texto);
       texto = env.fala;
       campoInvestigado = env.campo;
+      camposInvestigados = env.campos;
       envelopeFalhou = !env.valido;
     }
     if (envelopeFalhou) {
@@ -1328,6 +1366,7 @@ export async function responderExperimental(
       r = await gerar(undefined, true);
       texto = (r.texto ?? "").trim();
       campoInvestigado = null;
+      camposInvestigados = [];
     }
     const msModelo = Date.now() - tModelo;
 
@@ -1472,6 +1511,8 @@ export async function responderExperimental(
       texto,
       membroId: membroDoTurno,
       decisaoLacuna: ctxTurno.decisaoLacuna ?? null,
+      miniInvestigacao: ctxTurno.miniInvestigacao,
+      camposInvestigados,
       /**
        * ⚠️ O CAMPO QUE A PERGUNTA DE FATO INVESTIGOU — PEND-187B.
        *

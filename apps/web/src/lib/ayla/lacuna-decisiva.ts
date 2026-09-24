@@ -1,4 +1,5 @@
 import type { PerfilConsultavel, CampoPerfil } from "@/lib/kolo-vivo/consultar";
+import { CHAVES_MINI_INVESTIGACAO } from "./mini-investigacao";
 
 /**
  * A LACUNA QUE MUDA A CONDUTA — Gate B, 08/09/2026.
@@ -733,12 +734,17 @@ export function esquemaDaResposta(): Record<string, unknown> {
       schema: {
         type: "object",
         additionalProperties: false,
-        required: ["fala", "campo_investigado"],
+        required: ["fala", "campo_investigado", "campos_investigados"],
         properties: {
           fala: { type: "string" },
           campo_investigado: {
             type: ["string", "null"],
             enum: [...CHAVES_DECISIVAS, null],
+          },
+          campos_investigados: {
+            type: "array",
+            maxItems: 3,
+            items: { type: "string", enum: [...CHAVES_MINI_INVESTIGACAO] },
           },
         },
       },
@@ -785,7 +791,12 @@ PERGUNTA procurou.
 
 ⚠️ E nunca declare a chave que foi sugerida se não foi ela que você perguntou —
 declare a da sua pergunta, ou null. Isto também NÃO é ordem de perguntar:
-orientar sem perguntar continua certo, e aí o campo é null.`;
+orientar sem perguntar continua certo, e aí o campo é null.
+
+"campos_investigados" — use SOMENTE quando o contexto trouxer uma
+<mini_investigacao>. Liste, na mesma ordem, as 2 ou 3 chaves que as perguntas
+realmente investigaram. Fora desse formato, devolva []. No turno seguinte, em
+que a família já respondeu e você orienta, devolva [] também.`;
 }
 
 /**
@@ -804,20 +815,32 @@ orientar sem perguntar continua certo, e aí o campo é null.`;
 export function lerEnvelope(bruto: string | null | undefined): {
   fala: string;
   campo: string | null;
+  campos: string[];
   valido: boolean;
 } {
   const t = (bruto ?? "").trim();
-  if (!t) return { fala: "", campo: null, valido: false };
+  if (!t) return { fala: "", campo: null, campos: [], valido: false };
   try {
-    const o = JSON.parse(t) as { fala?: unknown; campo_investigado?: unknown };
+    const o = JSON.parse(t) as {
+      fala?: unknown;
+      campo_investigado?: unknown;
+      campos_investigados?: unknown;
+    };
     const fala = typeof o.fala === "string" ? o.fala.trim() : "";
-    if (!fala) return { fala: "", campo: null, valido: false };
+    if (!fala) return { fala: "", campo: null, campos: [], valido: false };
     const c = o.campo_investigado;
     const campo = typeof c === "string" && CHAVES_DECISIVAS.includes(c) ? c : null;
-    return { fala, campo, valido: true };
+    const campos = Array.isArray(o.campos_investigados)
+      ? [...new Set(o.campos_investigados)].filter(
+          (v): v is string =>
+            typeof v === "string" &&
+            CHAVES_MINI_INVESTIGACAO.includes(v as (typeof CHAVES_MINI_INVESTIGACAO)[number]),
+        ).slice(0, 3)
+      : [];
+    return { fala, campo, campos, valido: true };
   } catch {
     // Não é JSON: a fala é o texto inteiro, e não há campo a declarar.
-    return { fala: t, campo: null, valido: false };
+    return { fala: t, campo: null, campos: [], valido: false };
   }
 }
 

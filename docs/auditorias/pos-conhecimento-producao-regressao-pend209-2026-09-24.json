@@ -1,0 +1,510 @@
+{
+  "data": "2026-09-24T19:00:54.504Z",
+  "familia": "Karina/Manu (autorizada)",
+  "conjunto": "produção + regressão PEND-209",
+  "modo": "somente leitura; sem WhatsApp; sem persistência; sem contexto bruto no artefato",
+  "casos": [
+    {
+      "id": "aprendizagem",
+      "mensagem": "A Manu não aprende nada. Estou bem cansada.",
+      "decisao": {
+        "intencao": "outro",
+        "tema": "dificuldade de aprendizagem da Manu",
+        "aceite": null,
+        "skills": [
+          "aprendizado",
+          "meu_bem_estar"
+        ],
+        "skillsAvaliadas": true,
+        "pedidoExplicito": false,
+        "continuacao": false,
+        "naturezaEmocional": "neutra",
+        "pediuParaContar": false,
+        "necessidadeConhecimento": "nenhum",
+        "temaConhecimento": null,
+        "origem": "gpt"
+      },
+      "PRODUCAO": {
+        "repertorio": [
+          {
+            "id": "4f7f16aa-f67a-44d1-bf4b-ce23c54f7e35",
+            "titulo": "Não quer fazer: distinguir compreender, começar, sustentar e pré-requisito"
+          },
+          {
+            "id": "99c86175-4ba2-4f50-9e4c-8e985ebe6fbb",
+            "titulo": "O cérebro tem andares: tronco cerebral (sobrevivência), sistema límbico (emoção),…"
+          }
+        ],
+        "resposta": "Parece muito cansativo sentir que você está tentando e não vê a Manu avançar. Isso não quer dizer que ela não aprenda: já houve momentos em que ela conseguiu avançar nas letras e começar uma atividade sozinha; talvez agora a dificuldade esteja em **entender como começar, sustentar a atividade ou mostrar o que sabe**, especialmente na escola. Hoje, escolha uma tarefa bem pequena, faça apenas o primeiro passo junto com ela e observe: quando ela não consegue, **parece não entender o que é para fazer ou começa e logo para?**",
+        "metrica": {
+          "consultasBanco": 6,
+          "chamadasLLM": 1,
+          "tokensEntrada": 11947,
+          "tokensSaida": 576,
+          "msContexto": 1030,
+          "msModelo": 7137,
+          "msInspecao": 30,
+          "msTotal": 8216,
+          "modelo": "gpt-5.6-luna",
+          "provider": "openai",
+          "fronteiraBarrou": false,
+          "foco": "individual",
+          "natureza": "orientacao",
+          "coreOrigem": "admin",
+          "coreVersao": 11,
+          "bpRecuperadas": 2,
+          "bpInjetadas": 2,
+          "bpChars": 3665,
+          "msBp": 1024,
+          "jornada_dia": null,
+          "jornada_fechamento": false,
+          "jornada_chars": 0,
+          "trial_doc_chars": 0,
+          "modo": "normal",
+          "pos_trial_chars": 0,
+          "pos_trial_nivel": null,
+          "pos_trial_fatos": null,
+          "forma_modo": "off",
+          "forma_disparou": null,
+          "msParalelo": 1026,
+          "msCtx": 810,
+          "msCore": 558,
+          "msTrial": 0,
+          "msOnda1": 482,
+          "msFoco": 5,
+          "msOnda3": 186
+        },
+        "falhas": [],
+        "chamadasModelo": 1
+      }
+    },
+    {
+      "id": "regulacao",
+      "mensagem": "A Manu está gritando e muito irritada.",
+      "decisao": {
+        "intencao": "outro",
+        "tema": "irritação e gritos da Manu",
+        "aceite": null,
+        "skills": [
+          "emocional"
+        ],
+        "skillsAvaliadas": true,
+        "pedidoExplicito": false,
+        "continuacao": false,
+        "naturezaEmocional": "neutra",
+        "pediuParaContar": false,
+        "necessidadeConhecimento": "nenhum",
+        "temaConhecimento": null,
+        "origem": "gpt"
+      },
+      "PRODUCAO": {
+        "repertorio": [
+          {
+            "id": "4f7f16aa-f67a-44d1-bf4b-ce23c54f7e35",
+            "titulo": "Não quer fazer: distinguir compreender, começar, sustentar e pré-requisito"
+          },
+          {
+            "id": "d5c505c5-03cf-4d5b-9dc9-562bfb6c327d",
+            "titulo": "No primeiro teste no mercado, mude só o ambiente antes de concluir desatenção"
+          }
+        ],
+        "resposta": "Agora, diminua os estímulos: leve a Manu para um lugar mais silencioso, reduza a luz e fale pouco, com voz calma. Não insista em perguntas ou atividades; diga apenas: **“Eu estou aqui. Você está segura. Quando conseguir, me mostra o que precisa.”** Fique por perto e retire objetos que possam machucá-la. Ela está tentando se machucar ou machucar alguém?",
+        "metrica": {
+          "consultasBanco": 6,
+          "chamadasLLM": 1,
+          "tokensEntrada": 11865,
+          "tokensSaida": 239,
+          "msContexto": 424,
+          "msModelo": 2964,
+          "msInspecao": 16,
+          "msTotal": 3408,
+          "modelo": "gpt-5.6-luna",
+          "provider": "openai",
+          "fronteiraBarrou": false,
+          "foco": "individual",
+          "natureza": "orientacao",
+          "coreOrigem": "admin",
+          "coreVersao": 11,
+          "bpRecuperadas": 2,
+          "bpInjetadas": 2,
+          "bpChars": 3437,
+          "msBp": 421,
+          "jornada_dia": null,
+          "jornada_fechamento": false,
+          "jornada_chars": 0,
+          "trial_doc_chars": 0,
+          "modo": "normal",
+          "pos_trial_chars": 0,
+          "pos_trial_nivel": null,
+          "pos_trial_fatos": null,
+          "forma_modo": "off",
+          "forma_disparou": null,
+          "msParalelo": 422,
+          "msCtx": 214,
+          "msCore": 0,
+          "msTrial": 0,
+          "msOnda1": 90,
+          "msFoco": 2,
+          "msOnda3": 67
+        },
+        "falhas": [],
+        "chamadasModelo": 1
+      }
+    },
+    {
+      "id": "choro",
+      "mensagem": "A Manu está chorando e eu não entendo o motivo.",
+      "decisao": {
+        "intencao": "outro",
+        "tema": "choro sem motivo aparente",
+        "aceite": null,
+        "skills": [
+          "emocional"
+        ],
+        "skillsAvaliadas": true,
+        "pedidoExplicito": false,
+        "continuacao": false,
+        "naturezaEmocional": "neutra",
+        "pediuParaContar": false,
+        "necessidadeConhecimento": "nenhum",
+        "temaConhecimento": null,
+        "origem": "gpt"
+      },
+      "PRODUCAO": {
+        "repertorio": [
+          {
+            "id": "4f7f16aa-f67a-44d1-bf4b-ce23c54f7e35",
+            "titulo": "Não quer fazer: distinguir compreender, começar, sustentar e pré-requisito"
+          },
+          {
+            "id": "d5c505c5-03cf-4d5b-9dc9-562bfb6c327d",
+            "titulo": "No primeiro teste no mercado, mude só o ambiente antes de concluir desatenção"
+          }
+        ],
+        "resposta": "Karina, primeiro reduza as perguntas e fique perto dela com calma. Observe **o que aconteceu logo antes do choro**: alguém pediu algo, houve mudança, barulho ou luz forte, ela estava cansada, com fome ou com dor? Você pode mostrar duas opções e dizer: **quer ajuda ou quer ficar quietinha?** — ela pode apontar, sem precisar explicar com palavras. Se o choro parecer diferente do habitual, vier com dor, febre ou muita sonolência, procure avaliação. O que aconteceu imediatamente antes de ela começar a chorar?",
+        "metrica": {
+          "consultasBanco": 6,
+          "chamadasLLM": 1,
+          "tokensEntrada": 11868,
+          "tokensSaida": 291,
+          "msContexto": 507,
+          "msModelo": 4035,
+          "msInspecao": 1,
+          "msTotal": 4544,
+          "modelo": "gpt-5.6-luna",
+          "provider": "openai",
+          "fronteiraBarrou": false,
+          "foco": "individual",
+          "natureza": "orientacao",
+          "coreOrigem": "admin",
+          "coreVersao": 11,
+          "bpRecuperadas": 2,
+          "bpInjetadas": 2,
+          "bpChars": 3437,
+          "msBp": 506,
+          "jornada_dia": null,
+          "jornada_fechamento": false,
+          "jornada_chars": 0,
+          "trial_doc_chars": 0,
+          "modo": "normal",
+          "pos_trial_chars": 0,
+          "pos_trial_nivel": null,
+          "pos_trial_fatos": null,
+          "forma_modo": "off",
+          "forma_disparou": null,
+          "msParalelo": 507,
+          "msCtx": 318,
+          "msCore": 0,
+          "msTrial": 0,
+          "msOnda1": 155,
+          "msFoco": 4,
+          "msOnda3": 112
+        },
+        "falhas": [],
+        "chamadasModelo": 1
+      }
+    },
+    {
+      "id": "tablet",
+      "mensagem": "Está difícil tirar a Manu do tablet.",
+      "decisao": {
+        "intencao": "outro",
+        "tema": "dificuldade para tirar a Manu do tablet",
+        "aceite": null,
+        "skills": [
+          "rotina",
+          "foco"
+        ],
+        "skillsAvaliadas": true,
+        "pedidoExplicito": false,
+        "continuacao": false,
+        "naturezaEmocional": "neutra",
+        "pediuParaContar": false,
+        "necessidadeConhecimento": "nenhum",
+        "temaConhecimento": null,
+        "origem": "gpt"
+      },
+      "PRODUCAO": {
+        "repertorio": [
+          {
+            "id": "d5c505c5-03cf-4d5b-9dc9-562bfb6c327d",
+            "titulo": "No primeiro teste no mercado, mude só o ambiente antes de concluir desatenção"
+          },
+          {
+            "id": "21a9fc7b-e719-4341-aa5b-6a1b09667f11",
+            "titulo": "Crianças pequenas não têm capacidade neurológica de se auto-regular."
+          }
+        ],
+        "resposta": "Pode ajudar avisar antes e marcar um encerramento previsível, em vez de tirar o tablet de repente: **“Mais 5 minutos e ele vai descansar. Depois você escolhe: brincar de cozinha ou comer uva passa.”** Quando o tempo acabar, fale pouco, mantenha o combinado e ajude a Manu a começar a opção escolhida. O mais importante é repetir a mesma sequência por alguns dias; se ela se desregular, reduza a fala e dê um tempo para se acalmar.",
+        "metrica": {
+          "consultasBanco": 6,
+          "chamadasLLM": 1,
+          "tokensEntrada": 11988,
+          "tokensSaida": 317,
+          "msContexto": 552,
+          "msModelo": 4992,
+          "msInspecao": 0,
+          "msTotal": 5546,
+          "modelo": "gpt-5.6-luna",
+          "provider": "openai",
+          "fronteiraBarrou": false,
+          "foco": "individual",
+          "natureza": "orientacao",
+          "coreOrigem": "admin",
+          "coreVersao": 11,
+          "bpRecuperadas": 2,
+          "bpInjetadas": 2,
+          "bpChars": 3928,
+          "msBp": 551,
+          "jornada_dia": null,
+          "jornada_fechamento": false,
+          "jornada_chars": 0,
+          "trial_doc_chars": 0,
+          "modo": "normal",
+          "pos_trial_chars": 0,
+          "pos_trial_nivel": null,
+          "pos_trial_fatos": null,
+          "forma_modo": "off",
+          "forma_disparou": null,
+          "msParalelo": 552,
+          "msCtx": 290,
+          "msCore": 0,
+          "msTrial": 0,
+          "msOnda1": 154,
+          "msFoco": 0,
+          "msOnda3": 82
+        },
+        "falhas": [],
+        "chamadasModelo": 1
+      }
+    },
+    {
+      "id": "atividade",
+      "mensagem": "A Manu não quer fazer a atividade.",
+      "decisao": {
+        "intencao": "outro",
+        "tema": "recusa em fazer atividade",
+        "aceite": null,
+        "skills": [
+          "foco"
+        ],
+        "skillsAvaliadas": true,
+        "pedidoExplicito": false,
+        "continuacao": false,
+        "naturezaEmocional": "neutra",
+        "pediuParaContar": false,
+        "necessidadeConhecimento": "nenhum",
+        "temaConhecimento": null,
+        "origem": "gpt"
+      },
+      "PRODUCAO": {
+        "repertorio": [
+          {
+            "id": "4f7f16aa-f67a-44d1-bf4b-ce23c54f7e35",
+            "titulo": "Não quer fazer: distinguir compreender, começar, sustentar e pré-requisito"
+          },
+          {
+            "id": "d5c505c5-03cf-4d5b-9dc9-562bfb6c327d",
+            "titulo": "No primeiro teste no mercado, mude só o ambiente antes de concluir desatenção"
+          }
+        ],
+        "resposta": "Antes de concluir que é falta de atenção, deixe **só o começo visível**: faça a primeira parte junto com ela por menos de um minuto e diga: “Vamos fazer apenas esta aqui; depois paramos.” Use algo que ela goste, como dinossauro ou cozinha, se combinar com a atividade. Ela não consegue começar de jeito nenhum ou começa e logo para?",
+        "metrica": {
+          "consultasBanco": 6,
+          "chamadasLLM": 1,
+          "tokensEntrada": 11854,
+          "tokensSaida": 230,
+          "msContexto": 548,
+          "msModelo": 3024,
+          "msInspecao": 0,
+          "msTotal": 3574,
+          "modelo": "gpt-5.6-luna",
+          "provider": "openai",
+          "fronteiraBarrou": false,
+          "foco": "individual",
+          "natureza": "orientacao",
+          "coreOrigem": "admin",
+          "coreVersao": 11,
+          "bpRecuperadas": 2,
+          "bpInjetadas": 2,
+          "bpChars": 3437,
+          "msBp": 548,
+          "jornada_dia": null,
+          "jornada_fechamento": false,
+          "jornada_chars": 0,
+          "trial_doc_chars": 0,
+          "modo": "normal",
+          "pos_trial_chars": 0,
+          "pos_trial_nivel": null,
+          "pos_trial_fatos": null,
+          "forma_modo": "off",
+          "forma_disparou": null,
+          "msParalelo": 548,
+          "msCtx": 428,
+          "msCore": 0,
+          "msTrial": 0,
+          "msOnda1": 111,
+          "msFoco": 0,
+          "msOnda3": 282
+        },
+        "falhas": [],
+        "chamadasModelo": 1
+      }
+    },
+    {
+      "id": "brincadeira",
+      "mensagem": "Me sugira uma brincadeira para fazer com a Manu.",
+      "decisao": {
+        "intencao": "outro",
+        "tema": "brincadeira para fazer com a Manu",
+        "aceite": null,
+        "skills": [],
+        "skillsAvaliadas": true,
+        "pedidoExplicito": true,
+        "continuacao": false,
+        "naturezaEmocional": "neutra",
+        "pediuParaContar": false,
+        "necessidadeConhecimento": "boas_praticas",
+        "temaConhecimento": "brincadeira para fazer com a criança",
+        "origem": "gpt"
+      },
+      "PRODUCAO": {
+        "repertorio": [],
+        "resposta": "Uma brincadeira simples é o **restaurante dos dinossauros**: coloque 2 opções de “comida” de brinquedo ou segura e diga: **“O dinossauro quer uva passa ou água?”**. Espere alguns segundos para Manu escolher apontando, pegando ou falando; depois, ajude o dinossauro a pedir e agradeça com um “tchau”. O objetivo é ela praticar escolhas e pedidos sem pressão. Se ela não quiser participar, deixe-a observar ou brincar do jeito dela e tente de novo mais tarde. 💛",
+        "metrica": {
+          "consultasBanco": 6,
+          "chamadasLLM": 1,
+          "tokensEntrada": 10931,
+          "tokensSaida": 234,
+          "msContexto": 272,
+          "msModelo": 4138,
+          "msInspecao": 1,
+          "msTotal": 4413,
+          "modelo": "gpt-5.6-luna",
+          "provider": "openai",
+          "fronteiraBarrou": false,
+          "foco": "individual",
+          "natureza": "orientacao",
+          "coreOrigem": "admin",
+          "coreVersao": 11,
+          "bpRecuperadas": 0,
+          "bpInjetadas": 0,
+          "bpChars": 0,
+          "msBp": 0,
+          "jornada_dia": null,
+          "jornada_fechamento": false,
+          "jornada_chars": 0,
+          "trial_doc_chars": 0,
+          "modo": "normal",
+          "pos_trial_chars": 0,
+          "pos_trial_nivel": null,
+          "pos_trial_fatos": null,
+          "forma_modo": "off",
+          "forma_disparou": null,
+          "msParalelo": 272,
+          "msCtx": 272,
+          "msCore": 1,
+          "msTrial": 0,
+          "msOnda1": 162,
+          "msFoco": 0,
+          "msOnda3": 63
+        },
+        "falhas": [],
+        "chamadasModelo": 1
+      }
+    },
+    {
+      "id": "comunicacao",
+      "mensagem": "A Manu tem dificuldade para pedir o que quer e se expressar.",
+      "decisao": {
+        "intencao": "outro",
+        "tema": "dificuldade para pedir o que quer e se expressar",
+        "aceite": null,
+        "skills": [
+          "comunicacao"
+        ],
+        "skillsAvaliadas": true,
+        "pedidoExplicito": false,
+        "continuacao": false,
+        "naturezaEmocional": "neutra",
+        "pediuParaContar": false,
+        "necessidadeConhecimento": "nenhum",
+        "temaConhecimento": null,
+        "origem": "gpt"
+      },
+      "PRODUCAO": {
+        "repertorio": [
+          {
+            "id": "854864cc-4189-4e77-bb7e-89498ff70193",
+            "titulo": "Aviso prévio de 5 minutos com linguagem concreta"
+          },
+          {
+            "id": "363fd1e4-7f89-4815-8c83-4ce2a5edf39d",
+            "titulo": "Limite firme + acolhimento na mesma frase"
+          }
+        ],
+        "resposta": "Pode ajudar começar pelo que ela já consegue fazer, sem exigir frases nem contato visual. Quando Manu quiser algo, ofereça duas opções visíveis e modele uma palavra ou gesto: **“uva ou pão?”**; se ela apontar, olhar ou tentar falar, responda como um pedido e entregue logo, dizendo **“uva”**. Isso ensina que se expressar funciona. Quando ela quer alguma coisa, costuma apontar, puxar você até o objeto ou usar alguma palavra?",
+        "metrica": {
+          "consultasBanco": 6,
+          "chamadasLLM": 1,
+          "tokensEntrada": 11532,
+          "tokensSaida": 343,
+          "msContexto": 447,
+          "msModelo": 4340,
+          "msInspecao": 0,
+          "msTotal": 4788,
+          "modelo": "gpt-5.6-luna",
+          "provider": "openai",
+          "fronteiraBarrou": false,
+          "foco": "individual",
+          "natureza": "orientacao",
+          "coreOrigem": "admin",
+          "coreVersao": 11,
+          "bpRecuperadas": 2,
+          "bpInjetadas": 2,
+          "bpChars": 1789,
+          "msBp": 447,
+          "jornada_dia": null,
+          "jornada_fechamento": false,
+          "jornada_chars": 0,
+          "trial_doc_chars": 0,
+          "modo": "normal",
+          "pos_trial_chars": 0,
+          "pos_trial_nivel": null,
+          "pos_trial_fatos": null,
+          "forma_modo": "off",
+          "forma_disparou": null,
+          "msParalelo": 447,
+          "msCtx": 259,
+          "msCore": 0,
+          "msTrial": 0,
+          "msOnda1": 142,
+          "msFoco": 0,
+          "msOnda3": 69
+        },
+        "falhas": [],
+        "chamadasModelo": 1
+      }
+    }
+  ]
+}
