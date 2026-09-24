@@ -17,6 +17,7 @@ import { createClient } from "@supabase/supabase-js";
 
 const raiz = process.cwd();
 const web = resolve(raiz, "apps/web");
+const fase = process.env.FASE ?? "ANTES";
 
 registerHooks({
   resolve(specifier, context, nextResolve) {
@@ -133,7 +134,7 @@ const casos = [
 
 const resultado = {
   data: new Date().toISOString(),
-  fase: "ANTES",
+  fase,
   criterioNorte: {
     fonte: "AYLA_KOLO_FAMILIA_PROMPT_MESTRE.pdf (transcrição fiel versionada em docs/documentos-ayla/prompt-mestre-agencia-v1.md)",
     regraFinal:
@@ -235,7 +236,12 @@ for (const [id, mensagem] of casos) {
   );
 }
 
-const saida = resolve(raiz, "docs/auditorias/pos-conhecimento-antes-2026-09-24.json");
+const saida = resolve(
+  raiz,
+  fase === "PRODUCAO"
+    ? "docs/auditorias/pos-conhecimento-producao-seis-casos-2026-09-24.json"
+    : "docs/auditorias/pos-conhecimento-antes-2026-09-24.json",
+);
 mkdirSync(dirname(saida), { recursive: true });
 writeFileSync(saida, `${JSON.stringify(resultado, null, 2)}\n`);
 console.log(`Resultado: ${saida}`);

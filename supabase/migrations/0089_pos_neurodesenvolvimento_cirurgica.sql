@@ -43,7 +43,22 @@ insert into public.boas_praticas (
   1, 18, '[]'::jsonb, 'iniciante', 'admin', 0.5, 1, 'ativo',
   '[]'::jsonb,
   $bp$Só conta como pedido quando a criança fala ou olha para o adulto.$bp$
-);
+)
+on conflict (id) do nothing;
+
+do $$
+begin
+  if not exists (
+    select 1
+    from public.boas_praticas
+    where id = 'e1e083df-15ea-4297-9652-69530f8780e7'
+      and status = 'ativo'
+      and versao = 1
+      and titulo = $bp$Puxar pela mão, apontar ou entregar objeto já é comunicação funcional$bp$
+  ) then
+    raise exception '0089: BP de comunicação existente diverge do conteúdo aprovado';
+  end if;
+end $$;
 
 do $$
 declare
@@ -79,8 +94,20 @@ begin
     and versao = 1;
 
   get diagnostics alteradas = row_count;
-  if alteradas <> 1 then
-    raise exception '0089: BP de atividade divergiu do baseline; esperada versão ativa 1, alteradas=%', alteradas;
+  if alteradas = 0 then
+    if not exists (
+      select 1
+      from public.boas_praticas
+      where id = '4f7f16aa-f67a-44d1-bf4b-ce23c54f7e35'
+        and status = 'ativo'
+        and versao = 2
+        and titulo = $bp$Não quer fazer: distinguir compreender, começar, sustentar e pré-requisito$bp$
+        and versao_conversa = $bp$"Não quer fazer" ainda não explica a barreira. Ajude primeiro tornando só o começo pequeno e visível. Se precisar perguntar, escolha um único contraste que mude a próxima ajuda — por exemplo, se não sabe como começar ou se começa e logo para.$bp$
+    ) then
+      raise exception '0089: BP de atividade divergiu do baseline e do estado final aprovado';
+    end if;
+  elsif alteradas <> 1 then
+    raise exception '0089: BP de atividade alterou quantidade inesperada de linhas: %', alteradas;
   end if;
 end $$;
 
@@ -119,8 +146,20 @@ begin
     and versao = 1;
 
   get diagnostics alteradas = row_count;
-  if alteradas <> 1 then
-    raise exception '0089: BP sensorial divergiu do baseline; esperada versão ativa 1, alteradas=%', alteradas;
+  if alteradas = 0 then
+    if not exists (
+      select 1
+      from public.boas_praticas
+      where id = 'd5c505c5-03cf-4d5b-9dc9-562bfb6c327d'
+        and status = 'ativo'
+        and versao = 2
+        and titulo = $bp$No primeiro teste no mercado, mude só o ambiente antes de concluir desatenção$bp$
+        and versao_conversa = $bp$Em mercado, festa, escola barulhenta ou lugar cheio, correr ou parecer não escutar não prova falta de atenção. Ajude primeiro com UMA mudança ambiental, como ir num horário mais vazio. Nesse primeiro teste, não acrescente tarefa nem treino de regra. Observe se ele corre menos ou responde mais; se nada mudar, reduza o peso da hipótese sensorial.$bp$
+    ) then
+      raise exception '0089: BP sensorial divergiu do baseline e do estado final aprovado';
+    end if;
+  elsif alteradas <> 1 then
+    raise exception '0089: BP sensorial alterou quantidade inesperada de linhas: %', alteradas;
   end if;
 end $$;
 
@@ -154,6 +193,21 @@ insert into public.boas_praticas (
   4, 18, '[]'::jsonb, 'iniciante', 'admin', 0.5, 1, 'ativo',
   '[]'::jsonb,
   $bp$Basta colocar a criança perto das outras para ela aprender a participar.$bp$
-);
+)
+on conflict (id) do nothing;
+
+do $$
+begin
+  if not exists (
+    select 1
+    from public.boas_praticas
+    where id = '60263003-e70e-4246-a2dc-cc7e49caa37e'
+      and status = 'ativo'
+      and versao = 1
+      and titulo = $bp$Fica sozinho no recreio: observar a entrada e construir uma ponte concreta$bp$
+  ) then
+    raise exception '0089: BP social existente diverge do conteúdo aprovado';
+  end if;
+end $$;
 
 notify pgrst, 'reload schema';

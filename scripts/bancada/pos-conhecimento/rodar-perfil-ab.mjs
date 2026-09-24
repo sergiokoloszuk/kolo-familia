@@ -123,13 +123,16 @@ const casosPend209 = [
   ["comunicacao", "A Manu tem dificuldade para pedir o que quer e se expressar."],
 ];
 const regressaoPend209 = process.env.CASOS_PEND209 === "1";
+const producaoReal = process.env.PRODUCAO_REAL === "1";
 const conjuntoBase = regressaoPend209 ? casosPend209 : casosPerfil;
 const filtroCasos = new Set((process.env.CASOS_FILTRO ?? "").split(",").map((x) => x.trim()).filter(Boolean));
 const casos = filtroCasos.size ? conjuntoBase.filter(([id]) => filtroCasos.has(id)) : conjuntoBase;
 const resultado = {
   data: new Date().toISOString(),
   familia: "Karina/Manu (autorizada)",
-  conjunto: regressaoPend209 ? "regressao PEND-209" : "Pós + Perfil",
+  conjunto: producaoReal
+    ? regressaoPend209 ? "produção + regressão PEND-209" : "produção + Pós + Perfil"
+    : regressaoPend209 ? "regressao PEND-209" : "Pós + Perfil",
   modo: "somente leitura; sem WhatsApp; sem persistência; sem contexto bruto no artefato",
   casos: [],
 };
@@ -139,7 +142,7 @@ for (const [id, mensagem] of casos) {
   const decisao = await decidirTurno({ texto: mensagem, blocoEstado: "", catalogoSkills: catalogo.skills, catalogoDisponivel: true });
   if (decisao.origem !== "gpt") throw new Error(`Decisor não concluiu ${id}`);
   const porRamo = {};
-  for (const ramo of ["A", "B"]) {
+  for (const ramo of producaoReal ? ["PRODUCAO"] : ["A", "B"]) {
     ramoAtual = ramo;
     chamadasModelo = 0;
     const falhas = [];
@@ -168,7 +171,11 @@ for (const [id, mensagem] of casos) {
 
 const arquivo = resolve(
   raiz,
-  regressaoPend209
+  producaoReal
+    ? regressaoPend209
+      ? "docs/auditorias/pos-conhecimento-producao-regressao-pend209-2026-09-24.json"
+      : "docs/auditorias/pos-conhecimento-producao-perfil-2026-09-24.json"
+    : regressaoPend209
     ? "docs/auditorias/pos-conhecimento-regressao-pend209-2026-09-24.json"
     : filtroCasos.size
     ? "docs/auditorias/pos-conhecimento-perfil-comunicacao-final-2026-09-24.json"
