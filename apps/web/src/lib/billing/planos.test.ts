@@ -485,19 +485,18 @@ describe("nenhum número comercial volta a viver em texto", () => {
     expect(ofensores).toEqual([]);
   });
 
-  it("22. os DOIS caminhos de checkout passam pela trava", () => {
-    // Uma trava que vale em um caminho só não vale em nenhum: bastaria a
-    // chamada entrar pelo outro para a cobrança errada passar.
-    const caminhos = [
+  it("22. os DOIS caminhos de checkout usam a mesma porta fiscal e a trava de preço", () => {
+    const porta = readFileSync(resolve(RAIZ, "src/lib/fiscal/checkout.ts"), "utf8");
+    expect(porta).toMatch(/dadosFiscaisSchema\.parse\(/);
+    expect(porta).toMatch(/exigirPlanoCobravel\(/);
+    expect(porta).not.toMatch(/line_items:\s*\[\{\s*price:\s*priceIdFor\(/);
+
+    for (const caminho of [
       "src/app/(app)/assinatura/actions.ts",
       "src/app/api/stripe/checkout/route.ts",
-    ];
-    for (const c of caminhos) {
-      const txt = readFileSync(resolve(RAIZ, c), "utf8");
-      expect(txt, `${c} precisa chamar exigirPlanoCobravel`).toMatch(/exigirPlanoCobravel\(/);
-      expect(txt, `${c} não pode montar line_items com price fora da trava`).not.toMatch(
-        /line_items:\s*\[\{\s*price:\s*priceIdFor\(/,
-      );
+    ]) {
+      const txt = readFileSync(resolve(RAIZ, caminho), "utf8");
+      expect(txt, `${caminho} precisa usar a porta fiscal canônica`).toMatch(/criarCheckoutFiscal\(/);
     }
   });
 

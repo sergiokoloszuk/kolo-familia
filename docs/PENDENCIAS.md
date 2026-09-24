@@ -9855,7 +9855,34 @@ desenho da atividade — nao so o nome.
 
 ---
 
-**Proximo ID livre: PEND-209. *(024 e 025 reservadas por frentes ainda nao publicadas; PEND-202 reivindicada em commit e ainda sem ficha; 0076 e numero de MIGRACAO reservado — ver PEND-121.)***
+### PEND-212
+**Assinaturas antigas podem renovar sem endereço fiscal completo no Customer Stripe**
+Bloco: **D · Comercial / cobrança** · Prioridade: **P1**
+STATUS: **ABERTA — achado fora do escopo; fluxo novo protegido** · Aberta em: 2026-09-24
+
+A missão de dados fiscais tornou nome completo, CPF e endereço completo
+obrigatórios antes de toda nova sessão de Checkout. Isso protege contratações e
+recontratações, mas não intercepta a renovação automática de uma assinatura
+criada antes dessa regra. Um Customer legado pode, portanto, gerar uma Invoice
+paga antes de voltar à tela de assinatura e o link fiscal chegar com campo
+"Não informado".
+
+Não houve consulta ou alteração de famílias reais nesta missão. O achado vem da
+jornada técnica: renovação automática não passa pelo formulário novo. Corrigir
+silenciosamente com dados de Perfil ou conversa seria inadequado e misturaria
+finalidades de dados.
+
+**CRITÉRIO DE CONCLUSÃO:** inventário administrativo seguro identifica apenas a
+quantidade de Customers ativos incompletos; existe uma coleta explícita de
+nome/CPF/endereço antes da próxima renovação; Rosangela recebe alerta distinto
+quando uma Invoice legada ainda estiver incompleta; nenhuma PII entra em logs,
+WhatsApp, Perfil Vivo ou conversa.
+
+**RELAÇÕES:** fluxo vigente em `docs/specs/dados-fiscais-pagamento.md`.
+
+---
+
+**Proximo ID livre: PEND-213. *(PEND-209 a PEND-211 já estão reivindicadas no working tree principal por outra frente; 024 e 025 reservadas por frentes ainda nao publicadas; PEND-202 reivindicada em commit e ainda sem ficha; 0076 e numero de MIGRACAO reservado — ver PEND-121.)***
 
 > Conferir contra `origin/main`, não contra o seu branch. Dois branches podem
 > reivindicar o mesmo número — o conflito de merge nesta linha é o alarme.

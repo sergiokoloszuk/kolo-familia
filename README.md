@@ -79,6 +79,7 @@ Em `apps/web/.env.local`:
 | `AYLA_WEBHOOK_SECRET` | Header `x-ayla-secret` no webhook | só pra Ayla |
 | `KOLO_GERACAO_SECRET` | Header `x-ayla-secret` da chamada interna que gera os cartões da rotina | **obrigatório** — sem ele nenhum cartão sai |
 | `CRON_SECRET` | `Authorization: Bearer` em `/api/ayla/cron` | só pra cron |
+| `ROSANGELA_FISCAL_WHATSAPP_E164` | Destino dos links de emissão de nota, em E.164 | obrigatório para operação fiscal |
 | `BETA_GATE_ENABLED` | `true` exige convite no signup | opcional |
 | `NEXT_PUBLIC_BETA_GATE_ENABLED` | Mesmo valor, exposto ao client | opcional |
 

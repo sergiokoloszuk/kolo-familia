@@ -30,7 +30,7 @@ const STATUS_VARIANT: Record<string, "default" | "secondary" | "outline" | "dest
 };
 
 export default async function AssinaturaPage(props: PageProps<"/assinatura">) {
-  const { supabase, family } = await loadFamilyContext();
+  const { supabase, family, user } = await loadFamilyContext();
   const familyId = family!.id;
 
   // ⚠️ A MEDIÇÃO SEGUIU O DESTINO — 27/08/2026. O convite de fim de teste
@@ -135,6 +135,7 @@ export default async function AssinaturaPage(props: PageProps<"/assinatura">) {
           <AssinaturaActions
             status={statusKey}
             temCustomerId={Boolean(sub?.stripe_customer_id)}
+            emailFiscalInicial={user.email ?? ""}
           />
         </CardContent>
       </Card>

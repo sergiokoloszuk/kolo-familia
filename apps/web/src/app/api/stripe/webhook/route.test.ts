@@ -32,6 +32,7 @@ function criarBanco(subscriptionAccesses: Linha[] = []) {
   const tabelas: Record<string, Linha[]> = {
     subscription_accesses: subscriptionAccesses,
     assinaturas: [],
+    fiscal_alertas: [],
   };
   let erroProgramado: { tabela: string; restantes: number; erro: ErroFalso } | null = null;
 
@@ -45,7 +46,7 @@ function criarBanco(subscriptionAccesses: Linha[] = []) {
 
   function from(tabela: string) {
     const filtros: Array<(l: Linha) => boolean> = [];
-    let acao: { tipo: "select" | "update" | "insert"; patch?: Linha; novos?: Linha[] } = {
+    let acao: { tipo: "select" | "update" | "insert" | "upsert"; patch?: Linha; novos?: Linha[] } = {
       tipo: "select",
     };
 
@@ -60,13 +61,16 @@ function criarBanco(subscriptionAccesses: Linha[] = []) {
         for (const l of casadas) Object.assign(l, acao.patch);
         return { data: casadas.map((l) => ({ family_account_id: l.family_account_id })), error: null };
       }
-      if (acao.tipo === "insert") {
+      if (acao.tipo === "insert" || acao.tipo === "upsert") {
         const novos = acao.novos ?? [];
         for (const novo of novos) {
-          const jaExiste = (tabelas[tabela] ?? []).some(
-            (l) => l.stripe_event_id === novo.stripe_event_id,
+          const jaExiste = (tabelas[tabela] ?? []).some((l) =>
+            tabela === "fiscal_alertas"
+              ? l.stripe_invoice_id === novo.stripe_invoice_id
+              : l.stripe_event_id === novo.stripe_event_id,
           );
           if (jaExiste) {
+            if (acao.tipo === "upsert") continue;
             return {
               data: null,
               error: {
@@ -90,6 +94,10 @@ function criarBanco(subscriptionAccesses: Linha[] = []) {
       },
       insert(novos: Linha | Linha[]) {
         acao = { tipo: "insert", novos: Array.isArray(novos) ? novos : [novos] };
+        return builder;
+      },
+      upsert(novos: Linha | Linha[]) {
+        acao = { tipo: "upsert", novos: Array.isArray(novos) ? novos : [novos] };
         return builder;
       },
       eq(coluna: string, valor: unknown) {
@@ -240,7 +248,7 @@ function eventoFatura(tipo: "invoice.payment_succeeded" | "invoice.payment_faile
   return {
     id: idEvento(),
     type: tipo,
-    data: { object: { customer: CLIENTE, subscription: ASSINATURA, metadata: {} } },
+    data: { object: { id: "in_teste", customer: CLIENTE, subscription: ASSINATURA, metadata: {} } },
   };
 }
 
@@ -600,4 +608,15 @@ describe("redundância: três eventos independentes concedem acesso", () => {
       expect(acessoLiberado()).toBe(true);
     });
   }
+});
+
+describe("alerta fiscal", () => {
+  it("reserva uma única pendência administrativa por Invoice paga", async () => {
+    const evento = eventoFatura("invoice.payment_succeeded");
+    await entregar(evento);
+    await entregar(evento);
+
+    expect(banco.tabelas.fiscal_alertas).toHaveLength(1);
+    expect(banco.tabelas.fiscal_alertas[0]?.stripe_customer_id).toBe(CLIENTE);
+  });
 });

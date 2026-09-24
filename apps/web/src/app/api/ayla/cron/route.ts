@@ -30,6 +30,8 @@ import {
 } from "@/lib/stripe/reconciliacao";
 import { assinaturaLiberada } from "@/lib/auth/assinatura";
 import { familiasDeStaff } from "@/lib/auth/acesso";
+import { createHash, randomBytes } from "node:crypto";
+import { enviarLinksFiscais } from "@/lib/fiscal/notificacao";
 
 /**
  * Cron da Ayla — chamado por scheduler externo (n8n, Vercel Cron, etc.).
@@ -87,6 +89,7 @@ async function handle(request: NextRequest) {
     if (tipo === "cleanup") return await runCleanup(supabase);
     if (tipo === "snapshots") return await runSnapshots(supabase);
     if (tipo === "healthcheck") return await runHealthcheck();
+    if (tipo === "fiscal") return await runFiscal(supabase, url.origin);
 
     return NextResponse.json({ error: `tipo inválido: ${tipo}` }, { status: 400 });
   } catch (err) {
@@ -95,6 +98,96 @@ async function handle(request: NextRequest) {
       { error: err instanceof Error ? err.message : "erro" },
       { status: 500 },
     );
+  }
+}
+
+/**
+ * Operação fiscal separada da Ayla. O WhatsApp recebe apenas links opacos;
+ * nome, CPF e endereço nunca passam pela Z-API, logs ou tabelas de conversa.
+ */
+async function runFiscal(supabase: AdminClient, origin: string) {
+  const destinoRosangela = process.env.ROSANGELA_FISCAL_WHATSAPP_E164 ?? "";
+  const agora = new Date();
+  const reservaLimite = new Date(agora.getTime() - 30 * 60 * 1000).toISOString();
+  const { data: candidatas, error } = await supabase
+    .from("fiscal_alertas")
+    .select("id, stripe_invoice_id, status, reserva_ate")
+    .or(`status.in.(pendente,falha),and(status.eq.reservado,reserva_ate.lt.${reservaLimite})`)
+    .order("created_at", { ascending: true })
+    .limit(20);
+  if (error) throw error;
+  if (!candidatas?.length) return NextResponse.json({ pagamentos: 0, enviada: false });
+
+  const expira = new Date(agora.getTime() + 36 * 60 * 60 * 1000).toISOString();
+  const reservaAte = new Date(agora.getTime() + 30 * 60 * 1000).toISOString();
+  const links: Array<{ id: string; invoiceId: string; url: string }> = [];
+
+  for (const alerta of candidatas) {
+    const token = randomBytes(32).toString("base64url");
+    const tokenHash = createHash("sha256").update(token).digest("hex");
+    let reserva = supabase
+      .from("fiscal_alertas")
+      .update({
+        status: "reservado",
+        token_hash: tokenHash,
+        token_expira_em: expira,
+        reserva_ate: reservaAte,
+        ultimo_erro: null,
+        updated_at: agora.toISOString(),
+      })
+      .eq("id", alerta.id)
+      .eq("status", alerta.status);
+    // Uma reserva vencida só pode ser retomada se continuar vencida. Para
+    // pendente/falha, a igualdade de status já funciona como compare-and-set.
+    if (alerta.status === "reservado") reserva = reserva.lt("reserva_ate", reservaLimite);
+    const { data: reservada, error: reservaErro } = await reserva.select("id, stripe_invoice_id");
+    if (reservaErro) throw reservaErro;
+    if (reservada?.length === 1) {
+      links.push({
+        id: reservada[0].id as string,
+        invoiceId: reservada[0].stripe_invoice_id as string,
+        url: `${origin}/fiscal/notas/${token}`,
+      });
+    }
+  }
+  if (!links.length) {
+    return NextResponse.json({ pagamentos: 0, enviada: false, motivo: "reservado_por_outra_execucao" });
+  }
+
+  try {
+    const envio = await enviarLinksFiscais(destinoRosangela, links);
+    const { error: concluidoErro } = await supabase
+      .from("fiscal_alertas")
+      .update({
+        status: "enviado",
+        provider_message_id: envio.messageId,
+        enviada_em: new Date().toISOString(),
+        reserva_ate: null,
+        updated_at: new Date().toISOString(),
+      })
+      .in("id", links.map((link) => link.id));
+    if (concluidoErro) throw concluidoErro;
+    await logEvent({
+      kind: "fiscal_alerta_enviado",
+      severity: "info",
+      persistir: true,
+      message: `${links.length} cobrança(s) fiscal(is) avisada(s)`,
+      payload: { total: links.length },
+    });
+    return NextResponse.json({ pagamentos: links.length, enviada: true });
+  } catch (e) {
+    const motivo = e instanceof Error ? e.message.slice(0, 300) : "erro";
+    const { error: falhaErro } = await supabase
+      .from("fiscal_alertas")
+      .update({
+        status: "falha",
+        ultimo_erro: motivo,
+        reserva_ate: null,
+        updated_at: new Date().toISOString(),
+      })
+      .in("id", links.map((link) => link.id));
+    if (falhaErro) throw falhaErro;
+    throw e;
   }
 }
 

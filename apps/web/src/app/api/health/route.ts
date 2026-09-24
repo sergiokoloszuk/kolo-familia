@@ -114,6 +114,8 @@ export async function GET() {
    * diferença entre "alguém digitou algo" e "o runtime está ligado".
    */
   const flags = {
+    // Expõe apenas presença/ausência; nunca o telefone da destinatária fiscal.
+    fiscal_rosangela_configurada: Boolean(process.env.ROSANGELA_FISCAL_WHATSAPP_E164),
     ayla_pos_trial: posTrialAtivo(),
     ayla_experimental_todas: experimentalParaTodas(),
     /**

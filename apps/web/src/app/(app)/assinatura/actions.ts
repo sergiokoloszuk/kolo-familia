@@ -1,16 +1,19 @@
 "use server";
 
 import { headers } from "next/headers";
-import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
-import { getStripeClient, type PlanoTipo } from "@/lib/stripe/client";
-import { exigirPlanoCobravel } from "@/lib/billing/planos";
+import { getStripeClient } from "@/lib/stripe/client";
 import { trackFeature } from "@/lib/analytics/track";
 import { logServerError } from "@/lib/log";
+import { criarCheckoutFiscal } from "@/lib/fiscal/checkout";
+import {
+  dadosFiscaisSchema,
+  primeiraMensagemDeErro,
+  type DadosFiscaisInput,
+} from "@/lib/fiscal/dados";
 
 async function requireFamilyAndOrigin(): Promise<{
   familyId: string;
-  userEmail: string | null;
   origin: string;
 }> {
   const supabase = await createClient();
@@ -36,86 +39,59 @@ async function requireFamilyAndOrigin(): Promise<{
 
   return {
     familyId: family.id,
-    userEmail: user.email ?? null,
     origin,
   };
 }
-
-const planoSchema = z.object({ plano: z.enum(["mensal", "anual"]) });
 
 export type CheckoutResult =
   | { ok: true; url: string }
   | { ok: false; error: string };
 
 /**
- * Cria a sessão de checkout do Stripe e devolve a URL. O Next esconde a
- * mensagem de exceções em produção ("Server Components render") — por isso
- * retornamos Result em vez de throw, pra mãe ver o motivo real.
+ * Não existe mais Checkout sem dados fiscais: esta é a única ação da tela.
+ * Retorna Result porque o Next esconde mensagens de exceção em produção.
  */
-export async function iniciarCheckout(
-  input: { plano: PlanoTipo },
+export async function iniciarCheckoutComDadosFiscais(
+  input: DadosFiscaisInput,
 ): Promise<CheckoutResult> {
-  try {
-    const { plano } = planoSchema.parse(input);
-    const { familyId, userEmail, origin } = await requireFamilyAndOrigin();
+  const validacao = dadosFiscaisSchema.safeParse(input);
+  if (!validacao.success) {
+    return { ok: false, error: primeiraMensagemDeErro(validacao.error) };
+  }
 
+  let familyId: string | null = null;
+  try {
+    const contexto = await requireFamilyAndOrigin();
+    familyId = contexto.familyId;
     const supabase = await createClient();
-    const { data: subAcc } = await supabase
+    const { data: subAcc, error: subError } = await supabase
       .from("subscription_accesses")
       .select("stripe_customer_id")
       .eq("family_account_id", familyId)
       .maybeSingle();
+    if (subError) throw subError;
 
-    // ⛔ TRAVA FAIL-CLOSED — 20/08/2026. NÃO REMOVER.
-    //
-    // O plano anual esteve configurado no Stripe como `month × 1` a R$ 603,90:
-    // quem clicasse aqui seria cobrado R$ 603,90 POR MÊS, com a tela dizendo
-    // "por ano". Depois, a primeira correção criou um price `one_time`, que o
-    // `mode: "subscription"` recusa — o botão daria erro na cara da mãe.
-    //
-    // Nenhum dos dois casos era detectável antes de cobrar. Agora é: esta
-    // chamada confere, AO VIVO no Stripe, que o price tem a recorrência que o
-    // nome do plano promete. Não batendo, o checkout não abre.
-    //
-    // Endpoint que move dinheiro é fail-closed (§16): recusar custa uma venda
-    // adiada; cobrar errado custa a confiança de uma família e um estorno.
-    let precoConferido;
-    try {
-      precoConferido = await exigirPlanoCobravel(plano);
-    } catch (e) {
-      await logServerError("checkout_preco_invalido", e, { family_account_id: familyId });
-      return {
-        ok: false,
-        error:
-          "Não consegui abrir o pagamento agora — a configuração deste plano está sendo corrigida. Tente o outro plano ou volte em instantes.",
-      };
-    }
-
-    const stripe = getStripeClient();
-    const session = await stripe.checkout.sessions.create({
-      mode: "subscription",
-      line_items: [{ price: precoConferido.priceId as string, quantity: 1 }],
-      customer: subAcc?.stripe_customer_id ?? undefined,
-      customer_email: subAcc?.stripe_customer_id ? undefined : userEmail ?? undefined,
-      client_reference_id: familyId,
-      metadata: { family_account_id: familyId, plano },
-      subscription_data: { metadata: { family_account_id: familyId, plano } },
-      allow_promotion_codes: true,
-      success_url: `${origin}/assinatura?status=success&session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${origin}/assinatura?status=canceled`,
+    const checkout = await criarCheckoutFiscal({
+      familyId,
+      origin: contexto.origin,
+      stripeCustomerId: (subAcc?.stripe_customer_id as string | null) ?? null,
+      dados: validacao.data,
     });
-
-    if (!session.url) return { ok: false, error: "Stripe não retornou URL" };
     await trackFeature({
       familyId,
       evento: "checkout_iniciado",
-      detalhe: { plano },
+      detalhe: { plano: checkout.plano, fiscal: true },
     });
-    return { ok: true, url: session.url };
+    return { ok: true, url: checkout.url };
   } catch (e) {
+    await logServerError(
+      "checkout_fiscal_falhou",
+      e,
+      familyId ? { family_account_id: familyId } : undefined,
+    );
     return {
       ok: false,
-      error: e instanceof Error ? e.message : "Erro desconhecido ao iniciar checkout",
+      error: "Não consegui abrir o pagamento agora. Confira os dados e tente novamente.",
     };
   }
 }

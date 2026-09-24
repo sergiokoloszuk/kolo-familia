@@ -2,13 +2,15 @@
 
 import { useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
-import { iniciarCheckout, abrirPortal } from "./actions";
+import { abrirPortal } from "./actions";
+import { DadosFiscaisForm } from "./dados-fiscais-form";
 
 export function AssinaturaActions({
   status,
   temCustomerId,
   precoMensal = null,
   precoAnual = null,
+  emailFiscalInicial = "",
 }: {
   status: string;
   temCustomerId: boolean;
@@ -18,24 +20,13 @@ export function AssinaturaActions({
    *  que é inalcançável pra quem está no bloqueio. */
   precoMensal?: string | null;
   precoAnual?: string | null;
+  emailFiscalInicial?: string;
 }) {
   const [pending, startTransition] = useTransition();
   const [erro, setErro] = useState<string | null>(null);
   const [pendingAcao, setPendingAcao] = useState<string | null>(null);
 
-  function checkout(plano: "mensal" | "anual") {
-    setErro(null);
-    setPendingAcao(`checkout-${plano}`);
-    startTransition(async () => {
-      const r = await iniciarCheckout({ plano });
-      if (!r.ok) {
-        setErro(traduzirErro(r.error));
-        setPendingAcao(null);
-        return;
-      }
-      window.location.assign(r.url);
-    });
-  }
+  const [planoFiscal, setPlanoFiscal] = useState<"mensal" | "anual" | null>(null);
 
   function portal() {
     setErro(null);
@@ -64,21 +55,21 @@ export function AssinaturaActions({
 
       {podeAssinar && (
         <div className="flex flex-wrap gap-2">
-          <Button onClick={() => checkout("mensal")} disabled={pending}>
-            {pendingAcao === "checkout-mensal"
-              ? "Abrindo..."
-              : precoMensal
+          <Button onClick={() => setPlanoFiscal("mensal")} disabled={pending}>
+            {precoMensal
                 ? `Assinar mensal — ${precoMensal}/mês`
                 : "Assinar mensal"}
           </Button>
-          <Button variant="outline" onClick={() => checkout("anual")} disabled={pending}>
-            {pendingAcao === "checkout-anual"
-              ? "Abrindo..."
-              : precoAnual
+          <Button variant="outline" onClick={() => setPlanoFiscal("anual")} disabled={pending}>
+            {precoAnual
                 ? `Assinar anual — ${precoAnual}/ano`
                 : "Assinar anual (com desconto)"}
           </Button>
         </div>
+      )}
+
+      {planoFiscal && (
+        <DadosFiscaisForm plano={planoFiscal} emailFiscalInicial={emailFiscalInicial} />
       )}
 
       {podeGerenciar && (

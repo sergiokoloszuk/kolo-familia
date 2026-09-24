@@ -268,6 +268,7 @@ async function onSubscriptionChanged(
       stripeStatus: sub.status,
     },
   );
+
 }
 
 async function onSubscriptionDeleted(
@@ -338,6 +339,22 @@ async function onInvoiceSucceeded(
       stripeStatus: sub.status,
     },
   );
+
+  const customerId = typeof sub.customer === "string" ? sub.customer : sub.customer.id;
+  const { error: alertaError } = await admin.from("fiscal_alertas").upsert(
+    {
+      stripe_invoice_id: invoice.id,
+      stripe_customer_id: customerId,
+      stripe_subscription_id: subscriptionId,
+      family_account_id: familyId,
+      status: "pendente",
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: "stripe_invoice_id", ignoreDuplicates: true },
+  );
+  // Escrita crítica: sem a pendência, uma cobrança paga some da emissão.
+  // Falhar faz o Stripe reenviar o evento idempotente.
+  if (alertaError) throw alertaError;
 }
 
 async function onInvoiceFailed(
