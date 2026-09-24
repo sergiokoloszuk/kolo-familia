@@ -99,6 +99,52 @@ export async function enviarTexto(params: {
 }
 
 /**
+ * Envia de 2 a 3 reply buttons. O `id` é o contrato de backend; o `label` é
+ * somente a fala visível. A correlação da oferta viaja no id opaco e volta no
+ * `buttonsResponseMessage.buttonId` do ReceivedCallback.
+ */
+export async function enviarListaBotoes(params: {
+  phoneE164: string;
+  mensagem: string;
+  botoes: Array<{ id: string; label: string }>;
+}): Promise<{ messageId: string | null; raw: unknown }> {
+  const { instanceId, token, clientToken } = getZapiConfig();
+  const mensagem = paraWhatsApp(params.mensagem).trim();
+  if (!mensagem) throw new Error("Mensagem dos botões não pode ser vazia.");
+  if (params.botoes.length < 2 || params.botoes.length > 3) {
+    throw new Error("Uma oferta precisa ter de 2 a 3 botões.");
+  }
+  const botoes = params.botoes.map((botao) => ({
+    id: botao.id.trim(),
+    label: botao.label.trim(),
+  }));
+  if (botoes.some((botao) => !botao.id || !botao.label)) {
+    throw new Error("Id e texto de todos os botões são obrigatórios.");
+  }
+
+  const phone = params.phoneE164.replace(/^\+/, "");
+  const url = `${ZAPI_BASE}/instances/${instanceId}/token/${token}/send-button-list`;
+  const res = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Client-Token": clientToken,
+    },
+    body: JSON.stringify({
+      phone,
+      message: mensagem,
+      buttonList: { buttons: botoes },
+    }),
+  });
+  if (!res.ok) {
+    const detalhe = await res.text().catch(() => "");
+    throw new Error(`Z-API send-button-list ${res.status}: ${detalhe.slice(0, 500)}`);
+  }
+  const json = (await res.json()) as { messageId?: string; zaapId?: string; id?: string };
+  return { messageId: json.messageId ?? json.zaapId ?? json.id ?? null, raw: json };
+}
+
+/**
  * Envia um DOCUMENTO (ex.: PDF do plano) via Z-API.
  * Endpoint: POST /send-document/{extensao}  body { phone, document, fileName }.
  * `document` aceita uma URL pública ou data URI base64.
@@ -168,6 +214,13 @@ export type InboundWhatsApp = {
   midiaTipo?: string;
   /** Id da mensagem da Z-API — trava de idempotência contra reenvio. */
   messageId?: string;
+  /** Escolha estruturada; nunca é inferida do texto visível quando há payload. */
+  interacao?: {
+    tipo: "botao" | "lista";
+    id: string;
+    label: string;
+    referenceMessageId?: string;
+  };
 };
 
 export function parseZapiWebhook(payload: unknown): InboundWhatsApp | null {
@@ -186,10 +239,40 @@ export function parseZapiWebhook(payload: unknown): InboundWhatsApp | null {
   if (!phoneRaw) return null;
   const phoneE164 = phoneRaw.startsWith("+") ? phoneRaw : `+${phoneRaw}`;
 
+  const respostaBotao =
+    p.buttonsResponseMessage && typeof p.buttonsResponseMessage === "object"
+      ? (p.buttonsResponseMessage as Record<string, unknown>)
+      : null;
+  const respostaLista =
+    p.listResponseMessage && typeof p.listResponseMessage === "object"
+      ? (p.listResponseMessage as Record<string, unknown>)
+      : null;
+  const buttonId = pickString(respostaBotao?.buttonId);
+  const selectedRowId = pickString(respostaLista?.selectedRowId);
+  const interacao = buttonId
+    ? {
+        tipo: "botao" as const,
+        id: buttonId,
+        label: pickString(respostaBotao?.message) ?? buttonId,
+        referenceMessageId: pickString(p.referenceMessageId),
+      }
+    : selectedRowId
+      ? {
+          tipo: "lista" as const,
+          id: selectedRowId,
+          label:
+            pickString(respostaLista?.title) ??
+            pickString(respostaLista?.message) ??
+            selectedRowId,
+          referenceMessageId: pickString(p.referenceMessageId),
+        }
+      : undefined;
+
   // Texto pode estar em várias chaves — Z-API ReceivedCallback usa
   // { text: { message: "..." } }; n8n às vezes manda { message: { text: "..." } }
   // ou { text: "..." } direto. Cobre tudo.
   const texto =
+    interacao?.label ??
     pickString(p.text) ??
     pickString((p.text as Record<string, unknown> | undefined)?.message) ??
     pickString((p.message as Record<string, unknown> | undefined)?.text) ??
@@ -238,7 +321,7 @@ export function parseZapiWebhook(payload: unknown): InboundWhatsApp | null {
   const ehAudio = Boolean(midiaUrl) && midiaTipo === "audio";
   const ehImagem = Boolean(midiaUrl) && midiaTipo === "image";
   const ehVideo = midiaTipo === "video";
-  if (!texto.trim() && !ehAudio && !ehImagem && !ehVideo) return null;
+  if (!texto.trim() && !ehAudio && !ehImagem && !ehVideo && !interacao) return null;
 
   // Timestamp
   const tsMs =
@@ -261,6 +344,7 @@ export function parseZapiWebhook(payload: unknown): InboundWhatsApp | null {
     midiaUrl,
     midiaTipo,
     messageId,
+    interacao,
   };
 }
 

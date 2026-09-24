@@ -130,10 +130,13 @@ describe("prova de envio no WhatsApp", () => {
     // comentario empurrou `registroDeEnvio` para o char 550 — sem nada ter
     // mudado no comportamento. Uma regua que reprova por comentario obriga a
     // escolher entre explicar o codigo e manter o teste verde.
-    const literal = (b: string) => b.slice(0, b.indexOf("});") + 1);
-    const inserts = ORQUESTRADOR.split('from("ayla_messages").insert(')
+    // O insert reativo agora encadeia `.select("id").single()` para que a
+    // oferta contextual referencie exatamente a mensagem enviada. Recortar no
+    // primeiro `});` deixou de representar o insert inteiro; a próxima chamada
+    // à tabela continua sendo uma fronteira estrutural estável.
+    const inserts = ORQUESTRADOR.split('from("ayla_messages")')
       .slice(1)
-      .map(literal);
+      .filter((b) => b.includes(".insert("));
     const saida = inserts.filter((b) => b.includes('direcao: "outbound"'));
     expect(saida.length).toBeGreaterThanOrEqual(2); // reativa + proativa
     const comRegistro = saida.filter((b) => b.includes("registroDeEnvio("));

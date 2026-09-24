@@ -9882,7 +9882,60 @@ WhatsApp, Perfil Vivo ou conversa.
 
 ---
 
-**Proximo ID livre: PEND-213. *(PEND-209 a PEND-211 já estão reivindicadas no working tree principal por outra frente; 024 e 025 reservadas por frentes ainda nao publicadas; PEND-202 reivindicada em commit e ainda sem ficha; 0076 e numero de MIGRACAO reservado — ver PEND-121.)***
+### PEND-213
+**Aprofundamento contextual por botões no WhatsApp**
+Bloco: **B · Ayla** · Prioridade: **P1**
+STATUS: **IMPLEMENTADA LOCALMENTE — falta prova real e produção** · Aberta em: 2026-09-24
+
+Hoje a Ayla ajuda por texto no WhatsApp, mas não oferece bifurcações clicáveis.
+O `whatsappSender` só conhece texto/documento e o webhook não lê
+`buttonsResponseMessage`; os sete `output_types` existem, porém foram desenhados
+como pedidos independentes, sem o turno de origem. Ligar as peças diretamente
+faria o clique parecer uma conversa nova e perderia problema, criança e resposta
+anterior.
+
+A implementação deve usar o callback estruturado da Z-API, preservar o turno
+por referências em banco, reivindicar o clique atomicamente, reutilizar
+`output_types` com Perfil Vivo/BPs e degradar para texto. A resposta principal
+vem antes e o menu só aparece quando houver pelo menos dois caminhos bons.
+
+Não haverá piloto por família. A ativação será global depois de A/B, regressões,
+typecheck/build e prova interna autorizada no WhatsApp; uma única flag global
+permanece como rollback sem redeploy.
+
+**CRITÉRIO DE CONCLUSÃO:** sete casos e conversa de 8–12 turnos passam; clique
+mantém contexto e alvo; reentrega não duplica; fallback funciona; PEND-209 e
+mini-investigação não regridem; migração, deploy, health, SHA e prova real
+autorizada estão registrados; funcionalidade fica ligada globalmente.
+
+**EVIDÊNCIA LOCAL 24/09:** A/B editorial, prova dos três ramos no mesmo caso e
+auditoria semântica passaram; cada resposta aprofundada registrou a skill e
+três BPs realmente enviadas ao modelo, incluindo BPs da Pós. Suíte: 4.050
+testes passaram, 7 foram pulados e os dois defeitos reproduzidos em `main`
+continuam cobertos por PEND-205/PEND-214; a terceira falha era permissão do
+sandbox e passou isoladamente (20/20). Typecheck e build de produção passaram.
+
+**RELAÇÕES:** `docs/specs/aprofundamento-contextual-whatsapp-SPEC.md`, PEND-208,
+PEND-210.
+
+---
+
+### PEND-214
+**`provider.test.ts` depende da mensagem de erro da rede ao remover a chave Anthropic**
+Bloco: **H · Governança** · Prioridade: **P3**
+STATUS: **ABERTA — achado fora do escopo, NÃO corrigido** · Aberta em: 2026-09-24
+
+A suíte completa falha no teste “chave ausente não quebra a montagem” porque
+espera que a rejeição contenha literalmente `anthropic`, mas o SDK atualmente
+chega à rede e devolve `fetch failed`. A mesma falha reproduz no checkout
+original, junto da PEND-205; portanto não é regressão da PEND-213.
+
+**CRITÉRIO DE CONCLUSÃO:** o teste isola a fronteira do SDK/rede e verifica o
+contrato do provider sem depender da mensagem variável de um erro externo.
+
+---
+
+**Proximo ID livre: PEND-215. *(PEND-209 a PEND-211 já estão reivindicadas no working tree principal por outra frente; 024 e 025 reservadas por frentes ainda nao publicadas; PEND-202 reivindicada em commit e ainda sem ficha; 0076 e numero de MIGRACAO reservado — ver PEND-121.)***
 
 > Conferir contra `origin/main`, não contra o seu branch. Dois branches podem
 > reivindicar o mesmo número — o conflito de merge nesta linha é o alarme.

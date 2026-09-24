@@ -1,0 +1,240 @@
+{
+  "data": "2026-09-24T23:37:14.233Z",
+  "ambiente": "familias sinteticas; provider real; Supabase somente leitura; sem WhatsApp; sem persistencia",
+  "criterio": "B so vence se o clique produzir orientacao significativamente mais contextual, pratica e natural; tamanho nao e premio",
+  "casos": [
+    {
+      "id": "socializacao",
+      "mensagem": "Meu filho nao consegue brincar com as outras criancas.",
+      "primeiraResposta": "Pode começar sem exigir que ele brinque junto: escolha **uma criança e um ambiente mais calmo**, com uma brincadeira curta em que você mostre fazendo — já que o Leo entende melhor assim. Fique perto e narre de vez em quando: “você colocou a peça, agora ele colocou uma”. 💛\n\nQuando está com outras crianças, ele costuma **ficar perto observando, tentar se aproximar mas não saber como, ou se afastar e ficar incomodado**?",
+      "candidatos": [],
+      "decisaoOferta": {
+        "acao": "NAO_OFERECER",
+        "opcoes": [],
+        "motivo": "a Ayla já abriu uma pergunta"
+      },
+      "esperado": "oferta somente se houver dois caminhos de valor",
+      "A": {
+        "experiencia": "primeira ajuda; sem caminho de aprofundamento descobrivel",
+        "resposta": "Pode começar sem exigir que ele brinque junto: escolha **uma criança e um ambiente mais calmo**, com uma brincadeira curta em que você mostre fazendo — já que o Leo entende melhor assim. Fique perto e narre de vez em quando: “você colocou a peça, agora ele colocou uma”. 💛\n\nQuando está com outras crianças, ele costuma **ficar perto observando, tentar se aproximar mas não saber como, ou se afastar e ficar incomodado**?",
+        "esforcoParaContinuar": "a familia precisa formular e digitar um novo pedido"
+      },
+      "B": {
+        "escolha": "Brincar / passear",
+        "resposta": "**Estação de Trem dos Dois**\n\n**Para que serve:** praticar turnos e permanecer na brincadeira com outra criança, num contexto previsível que o Leo já domina.\n\n**Materiais e tempo:** trilhos ou carrinhos de trem que o Leo já tem, ou caixas de papelão como vagões, fita crepe no chão como trilho, 10–15 minutos.\n\n**Como começar:** monte a \"estação\" antes de a outra criança chegar — Leo já conhece o cenário quando o amigo entra. Você apresenta o papel de cada um: \"Leo é o maquinista, João cuida da estação.\" Papéis simples, sem texto para decorar.\n\n**Turnos:** use uma \"bandeirinha\" (um papel dobrado serve) — quem segura manda o trem. Quando o trem chega, passa pra outro. Concreto e visual, sem depender só de fala.\n\n**O que falar (você, de longe):** \"o trem saiu da estação\", \"chegou, hora de trocar.\" Frases curtas, descrevendo o que acontece — não corrigindo, só nomeando.\n\n**Como facilitar:** se o Leo travar na troca, mostre o gesto de estender a mão com a bandeirinha antes de pedir com palavra.\n\n**Aumentar o desafio:** adicionar uma \"carga\" (tampinhas como passageiros) que os dois carregam juntos até o destino — cooperação com objetivo compartilhado.\n\n**Quando parar:** no primeiro sinal de que Leo está se fechando — recuo, tensão, desviar o olhar — encerre com naturalidade: \"o trem chegou no fim da linha hoje.\"",
+        "outputType": "brincadeiras"
+      },
+      "juizo": "VENCEDOR: B; B_SIGNIFICATIVAMENTE_MELHOR: SIM; Valor novo: B oferece uma brincadeira completa e imediatamente aplicável, não apenas repete a orientação inicial. Especificidade/personalização: usa trens, demonstração, apoio visual, turnos curtos e uma criança em ambiente previsível, adequados ao perfil do Leo. Profundidade: detalha materiais, início, mediação, adaptação e quando encerrar. Naturalidade/segurança: é acolhedora e segura, embora “de longe” possa ser ajustado para manter o apoio próximo; não há conselho arriscado. Esforço para continuar: um clique entrega bastante valor, sem exigir que a família formule outro pedido.",
+      "chamadasModelo": 5,
+      "ramoSugeridoNestaAmostra": false
+    },
+    {
+      "id": "atividade",
+      "mensagem": "O Leo nao quer fazer nenhuma atividade.",
+      "primeiraResposta": "Pode ser que o difícil esteja **em começar**, e não na atividade inteira. Hoje, escolha uma atividade curta, mostre apenas o primeiro passo e faça junto com ele por menos de um minuto — sem exigir que termine. Observe se ele entra quando você mostra; **ele não começa nem quando você faz junto, ou começa e logo para?**",
+      "candidatos": [],
+      "decisaoOferta": {
+        "acao": "NAO_OFERECER",
+        "opcoes": [],
+        "motivo": "menos de dois caminhos realmente úteis"
+      },
+      "esperado": "oferta somente se houver dois caminhos de valor",
+      "A": {
+        "experiencia": "primeira ajuda; sem caminho de aprofundamento descobrivel",
+        "resposta": "Pode ser que o difícil esteja **em começar**, e não na atividade inteira. Hoje, escolha uma atividade curta, mostre apenas o primeiro passo e faça junto com ele por menos de um minuto — sem exigir que termine. Observe se ele entra quando você mostra; **ele não começa nem quando você faz junto, ou começa e logo para?**",
+        "esforcoParaContinuar": "a familia precisa formular e digitar um novo pedido"
+      },
+      "B": {
+        "escolha": "Brincar / passear",
+        "resposta": "**Estação de Trem em Casa**\n\n**Para que serve:** praticar começar e sustentar uma atividade juntos, com o Leo no comando — ele mostra o que quer, você segue.\n\n**Materiais e tempo:** almofadas, caixas de sapato ou livros empilhados, um carrinho ou qualquer objeto que vire \"trem\" (até uma caixa pequena serve), 10 minutos.\n\n**Como começar:** Monte uma \"estação\" simples no chão — duas almofadas paralelas formam o trilho. Coloque o trem na mão dele e diga: *\"Onde vai esse trem?\"* Nada mais. Deixa ele liderar.\n\n**Turnos e papéis:** Você é o passageiro ou o fiscal. Leo é o maquinista. Toda decisão de rota é dele. Se ele parar ou travar, não preencha o silêncio — pegue um objeto qualquer e coloque na \"estação\" como se fosse esperar o trem chegar. Isso convida sem exigir.\n\n**O que falar:** Pouco. *\"Chegou!\"*, *\"Próxima parada?\"*, *\"Passageiro esperando aqui.\"* Fala curta, concreta, no ritmo dele.\n\n**Como facilitar:** Se ele não começar mesmo com você mostrando, mova o trem devagar na frente dele e pare — dê a vez. Se ele pegar, já entrou.\n\n**Como aumentar o desafio:** Introduza uma \"carga\" (tampinha, bloquinho) que precisa ser entregue em outra estação. Ele decide o que carregar e para onde.\n\n**Quando parar:** No sinal dele — larga o trem, se levanta, olha pra outro lado. Diga *\"chegamos\"* e encerre sem pressão. Parar bem é tão importante quanto começar.",
+        "outputType": "brincadeiras"
+      },
+      "juizo": "VENCEDOR: B  \nB_SIGNIFICATIVAMENTE_MELHOR: SIM  \nJustificativa por critério: Valor novo: B transforma a orientação em uma brincadeira concreta, sem repetir apenas o conselho inicial. Especificidade/personalização: usa trens, demonstração, fala curta, liderança do Leo e encerra diante de sinais de sobrecarga. Naturalidade/profundidade: oferece uma sequência prática e flexível, sem conselho inseguro ou contradição, embora um pouco estruturada demais. Esforço para continuar: o botão reduz muito o esforço em comparação com inventar outro pedido; após o clique, a resposta é claramente mais profunda e acionável.",
+      "chamadasModelo": 5,
+      "ramoSugeridoNestaAmostra": false
+    },
+    {
+      "id": "desabafo",
+      "mensagem": "Estou exausta. Nada funciona.",
+      "primeiraResposta": "Parece que hoje foi pesado demais por aí. Você quer só me contar o que aconteceu ou prefere que eu te ajude a pensar em **uma coisa pequena para tentar com o Leo agora**?",
+      "candidatos": [],
+      "decisaoOferta": {
+        "acao": "NAO_OFERECER",
+        "opcoes": [],
+        "motivo": "desabafo pede acolhimento"
+      },
+      "esperado": "sem oferta obrigatoriamente",
+      "A": null,
+      "B": null,
+      "juizo": null,
+      "chamadasModelo": 2
+    },
+    {
+      "id": "urgencia",
+      "mensagem": "O Leo bateu a cabeca forte, esta sonolento e vomitou.",
+      "primeiraResposta": "Isso é uma **emergência**. Depois de uma pancada forte, sonolência e vômito precisam de avaliação médica **agora**: chame o serviço de emergência da sua região ou vá imediatamente ao pronto-socorro. Não o deixe sozinho, não ofereça comida ou bebida e, se ele ficar difícil de acordar, convulsionar ou respirar de forma diferente, chame a emergência sem transportá-lo por conta própria.",
+      "candidatos": [],
+      "decisaoOferta": {
+        "acao": "NAO_OFERECER",
+        "opcoes": [],
+        "motivo": "segurança/crise aberta"
+      },
+      "esperado": "sem oferta obrigatoriamente",
+      "A": null,
+      "B": null,
+      "juizo": null,
+      "chamadasModelo": 2
+    },
+    {
+      "id": "compartilhar",
+      "mensagem": "O Leo nao empresta o carrinho de jeito nenhum.",
+      "primeiraResposta": "Pode ser que a parte difícil ainda não seja “emprestar”, mas **aceitar que outra pessoa mexa no carrinho**. Como ele entende melhor quando você mostra, hoje tente encostar no carrinho e empurrá-lo junto com ele por só 2 segundos, dizendo: **“Vamos juntos”** — depois devolva o controle, sem arrancar da mão nem insistir. O objetivo inicial é tolerar uma pequena participação, não dividir por muito tempo. Quando outra criança se aproxima, ele tenta brincar junto de algum jeito ou se irrita principalmente quando mexem no carrinho?",
+      "candidatos": [],
+      "decisaoOferta": {
+        "acao": "NAO_OFERECER",
+        "opcoes": [],
+        "motivo": "a Ayla já abriu uma pergunta"
+      },
+      "esperado": "oferta somente se houver dois caminhos de valor",
+      "A": {
+        "experiencia": "primeira ajuda; sem caminho de aprofundamento descobrivel",
+        "resposta": "Pode ser que a parte difícil ainda não seja “emprestar”, mas **aceitar que outra pessoa mexa no carrinho**. Como ele entende melhor quando você mostra, hoje tente encostar no carrinho e empurrá-lo junto com ele por só 2 segundos, dizendo: **“Vamos juntos”** — depois devolva o controle, sem arrancar da mão nem insistir. O objetivo inicial é tolerar uma pequena participação, não dividir por muito tempo. Quando outra criança se aproxima, ele tenta brincar junto de algum jeito ou se irrita principalmente quando mexem no carrinho?",
+        "esforcoParaContinuar": "a familia precisa formular e digitar um novo pedido"
+      },
+      "B": {
+        "escolha": "Brincar / passear",
+        "resposta": "**Estação com Dois Maquinistas**\n\n**Para que serve:** praticar a presença de outra pessoa no espaço do brinquedo — sem exigir empréstimo, só participação lado a lado com papel claro pra cada um.\n\n**Materiais e tempo:** o carrinho/trem do Leo + uma caixinha, livro ou bloco como \"estação\" + 10 minutos.\n\n**Como começar:** Monte uma \"estação\" com você num ponto e o Leo com o carrinho no outro. Diga: *\"Você é o maquinista, eu sou a estação. Me manda o trem quando chegar aqui.\"* Você nunca segura — só recebe, faz barulho de apito e devolve logo.\n\n**Turnos:** Leo manda → você recebe na estação → você devolve empurrando de volta. O carrinho sempre volta pra mão dele.\n\n**O que falar:** *\"Chegou! Beeep. Vai!\"* — curto e animado. Deixa o Leo comandar o ritmo.\n\n**Como facilitar:** Se ele hesitar, empurre o trem em direção a você mesmo sem pedir. A primeira vez pode ser acidental — tudo bem.\n\n**Aumentar o desafio:** depois de algumas rodadas, peça *\"Posso ser o maquinista agora?\"* e troque o papel por uma viagem só — depois devolva.\n\n**Quando parar:** assim que Leo puxar o trem de volta sem querer continuar. Encerre com *\"Boa viagem!\"* — nada de insistir.",
+        "outputType": "brincadeiras",
+        "repertorio": {
+          "skills": [
+            "socializacao"
+          ],
+          "boasPraticasIds": [
+            "60263003-e70e-4246-a2dc-cc7e49caa37e",
+            "f27c8188-b103-47c5-b130-9ccf1f4f7ef1",
+            "adbc13a6-63ba-4bc4-9507-a97f16119461"
+          ]
+        }
+      },
+      "juizo": "VENCEDOR: B  \nB_SIGNIFICATIVAMENTE_MELHOR: SIM  \nValor novo: oferece uma atividade estruturada de turnos, além da tolerância inicial da resposta A.  \nEspecificidade e personalização: usa trem, demonstração, papéis claros e devolve o controle ao Leo.  \nNaturalidade e segurança: é lúdica e gradual, embora empurrar o trem sem pedir possa exigir cuidado; há pequena tensão entre “nunca segura” e a troca posterior de papéis.  \nEsforço e profundidade: o clique é muito mais fácil que inventar um novo pedido, e a resposta aprofunda com materiais, falas, progressão e critério de encerramento.",
+      "chamadasModelo": 5,
+      "ramoSugeridoNestaAmostra": false
+    },
+    {
+      "id": "mercado",
+      "mensagem": "O Leo nao presta atencao em nada.",
+      "primeiraResposta": "Pode ser que ele ainda precise de um começo mais claro, e não que simplesmente “não preste atenção”. Hoje, escolha uma atividade curta, **mostre o primeiro passo fazendo junto com ele** e peça só essa parte; depois observe se ele consegue continuar por um pouquinho. Ele costuma **nem começar** ou começa e logo abandona?",
+      "candidatos": [],
+      "decisaoOferta": {
+        "acao": "NAO_OFERECER",
+        "opcoes": [],
+        "motivo": "a Ayla já abriu uma pergunta"
+      },
+      "esperado": "oferta somente se houver dois caminhos de valor",
+      "A": {
+        "experiencia": "primeira ajuda; sem caminho de aprofundamento descobrivel",
+        "resposta": "Pode ser que ele ainda precise de um começo mais claro, e não que simplesmente “não preste atenção”. Hoje, escolha uma atividade curta, **mostre o primeiro passo fazendo junto com ele** e peça só essa parte; depois observe se ele consegue continuar por um pouquinho. Ele costuma **nem começar** ou começa e logo abandona?",
+        "esforcoParaContinuar": "a familia precisa formular e digitar um novo pedido"
+      },
+      "B": {
+        "escolha": "Como lidar agora",
+        "resposta": "**Comece pequeno e junto — literalmente.**\n\nComo o Leo entende melhor quando alguém mostra junto, o segredo é você entrar na atividade primeiro, sem pedir nada ainda. Não \"você quer brincar de trem?\" — só sente perto, pegue os trens e comece a montar. Ele provavelmente vai chegar.\n\n**O que fazer neste momento:**\n\n- **Mostre um único passo** em silêncio ou com pouquíssimas palavras — \"o trem vai aqui\" — e espere. Dê uns 5 a 10 segundos antes de qualquer coisa.\n- **Reduza a demanda ao mínimo possível.** Em vez de \"presta atenção\", peça só um gesto: \"coloca esse aqui pra mim.\"\n- **Fique no ritmo dele.** Se ele começar e parar, não chame de volta imediatamente — observe se ele ainda está de olho, mesmo de longe. Às vezes ele processa enquanto parece fora.\n\n**Uma frase curta que funciona:**\n> \"Olha o que eu achei.\" *(e mostra, sem exigir resposta)*\n\n**Sinal de que está ajudando:** ele se aproxima, pega alguma peça ou te puxa para mostrar algo — mesmo sem falar.\n\n**Se não entrar nem assim:** reduza ainda mais o ambiente — apague a TV, diminua o barulho de fundo — e tente de novo. Ambiente cheio pode ser o que está competindo com a sua presença.",
+        "outputType": "o_que_fazer_diferente",
+        "repertorio": {
+          "skills": [
+            "foco"
+          ],
+          "boasPraticasIds": [
+            "4f7f16aa-f67a-44d1-bf4b-ce23c54f7e35",
+            "d5c505c5-03cf-4d5b-9dc9-562bfb6c327d",
+            "99c86175-4ba2-4f50-9e4c-8e985ebe6fbb"
+          ]
+        }
+      },
+      "juizo": "VENCEDOR: B  \nB_SIGNIFICATIVAMENTE_MELHOR: SIM  \n\n- **Valor novo:** acrescenta passos imediatos, tempo de espera, frase-modelo, sinais de engajamento e ajuste de ruído.  \n- **Especificidade e personalização:** usa o modo de aprendizagem do Leo e considera sua sensibilidade a barulho, além do interesse por trens.  \n- **Naturalidade e segurança:** orientação prática, respeitosa e sem diagnóstico ou conselho arriscado.  \n- **Esforço e profundidade:** o clique entrega uma continuação realmente mais detalhada, sem exigir que a família descubra outro pedido.",
+      "chamadasModelo": 6,
+      "ramoSugeridoNestaAmostra": false
+    },
+    {
+      "id": "tablet",
+      "mensagem": "Quando tiro o tablet, o Leo entra em crise.",
+      "primeiraResposta": "Pode ajudar preparar a saída do tablet **mostrando junto o que vem depois**, em vez de apenas avisar. Antes de tirar, diga “mais um pouco e acabou” e mostre a próxima atividade; quando chegar a hora, mantenha a combinação e fale pouco. Se ele entrar em crise, reduza os estímulos e espere ele se acalmar antes de explicar. **O apoio visual pode funcionar melhor para o Leo do que só falar.**",
+      "candidatos": [],
+      "decisaoOferta": {
+        "acao": "NAO_OFERECER",
+        "opcoes": [],
+        "motivo": "menos de dois caminhos realmente úteis"
+      },
+      "esperado": "oferta somente se houver dois caminhos de valor",
+      "A": {
+        "experiencia": "primeira ajuda; sem caminho de aprofundamento descobrivel",
+        "resposta": "Pode ajudar preparar a saída do tablet **mostrando junto o que vem depois**, em vez de apenas avisar. Antes de tirar, diga “mais um pouco e acabou” e mostre a próxima atividade; quando chegar a hora, mantenha a combinação e fale pouco. Se ele entrar em crise, reduza os estímulos e espere ele se acalmar antes de explicar. **O apoio visual pode funcionar melhor para o Leo do que só falar.**",
+        "esforcoParaContinuar": "a familia precisa formular e digitar um novo pedido"
+      },
+      "B": {
+        "escolha": "Crenças + falas",
+        "resposta": "**LEO**\n\nPode ser que, quando o tablet sai, o que Leo está vivendo não é teimosia — é a sensação de que algo bom acabou *sem aviso real*. Para ele, que processa o mundo com poucas palavras e muito concreto, \"daqui a pouco acaba\" pode não ter peso de tempo — o tablet simplesmente some. O que queremos ajudá-lo a construir é a ideia de que o fim tem forma, é previsível e tem um \"depois\". Uma frase curta e firme que funciona: **\"Trem para na estação. Agora a gente vai fazer [atividade].\"**\n\n---\n\n**ADULTO**\n\nPode acontecer de, no meio da crise, surgir o pensamento de que ele está testando limites ou que ceder um pouco resolve. Mas o que possivelmente está em jogo é outra coisa: ele ainda não tem como regular sozinho a frustração da mudança brusca — ele precisa que você esteja calma *primeiro*, antes de qualquer explicação. Uma perspectiva útil: a crise não é resposta à regra; é resposta à transição não ancorada.\n\n**Frase-âncora para você:** *\"Eu termino primeiro. Depois a gente conversa.\"*\n\nMenos palavras durante a crise, voz baixa e presença próxima fazem mais do que qualquer explicação naquele momento.\n\n---\n\n**Para testar hoje:** antes de tirar o tablet, mostre algo concreto do \"depois\" — um trem de brinquedo na mesa, por exemplo. O concreto ancora mais do que a fala.",
+        "outputType": "crencas",
+        "repertorio": {
+          "skills": [
+            "rotina"
+          ],
+          "boasPraticasIds": [
+            "d5c505c5-03cf-4d5b-9dc9-562bfb6c327d",
+            "21a9fc7b-e719-4341-aa5b-6a1b09667f11",
+            "08ee4afb-4f8b-4e9e-95cc-a3f03ee44602"
+          ]
+        }
+      },
+      "juizo": "VENCEDOR: B  \nB_SIGNIFICATIVAMENTE_MELHOR: SIM  \nJustificativa por critério: Valor novo: SIM — acrescenta o trem como âncora concreta, falas prontas e orientação ao adulto durante a crise. Especificidade/personalização: SIM — usa os interesses e o modo de compreensão do Leo. Naturalidade: PARCIAL — “Eu termino primeiro” é pouco natural, mas o restante é claro. Repetição: MODERADA — aprofunda a mesma estratégia sem apenas repeti-la. Segurança: SIM — recomenda reduzir estímulos, falar pouco e esperar a regulação. Esforço para continuar: BAIXO — exige apenas um clique. Profundidade: SIM — explica o possível mecanismo e diferencia prevenção da resposta à crise.",
+      "chamadasModelo": 5,
+      "ramoSugeridoNestaAmostra": false
+    }
+  ],
+  "provaDistincaoSemantica": {
+    "caso": "Quando tiro o tablet, o Leo entra em crise.",
+    "primeiraResposta": "Isso pode estar travando principalmente na **transição e no encerramento**, não necessariamente no tablet em si. Como o Leo entende melhor quando você mostra junto, avise com antecedência e mostre a sequência: **“mais 2 minutos, depois tablet guarda e vamos fazer X”**; na hora, repita a frase, ajude-o a guardar e fale pouco. Deixe a próxima atividade já pronta e interessante. Se a crise começar, reduza estímulos e espere ele se regular antes de explicar. Ela começa quando você avisa ou só quando o tablet é retirado?",
+    "respostas": {
+      "aprofundar_lidar": {
+        "texto": "**Quando a crise já começou**, o momento de explicar passou — agora é co-regular primeiro.\n\n**O que fazer:**\n- Fique perto, abaixe o tom de voz (ou silêncio mesmo) e reduza o que chega nele: apaga a TV de fundo, diminui movimento ao redor.\n- Se ele aceitar toque, um abraço firme ou a mão no ombro pode ajudar a ancorar. Se recuar, respeite e fique só presente.\n- Fale pouco e devagar: **\"Eu estou aqui. Pode ser difícil.\"** Só isso. Sem explicar regra, sem negociar, sem prometer que volta o tablet depois.\n\n**O que evitar:**\n- Não aumente o volume nem acelere a fala — isso soma estímulo numa hora que ele já está no limite.\n- Não tente convencer ou raciocinar durante a crise; ele não consegue processar agora.\n\n**Quando ele começar a sair da crise** (respiração muda, choro diminui), aí sim você pode redirecionar: **\"Pronto. Agora vamos ver os trens?\"** — e já ter algo concreto esperando, como o livro de trens ou as miniaturas dele.\n\n**Sinal de que está ajudando:** a crise começa a durar menos do que antes, ou ele aceita o redirecionamento mais cedo.\n\nSe mesmo assim a intensidade continuar alta toda vez, vale observar se há algum padrão — horário, cansaço acumulado, fome — que esteja pesando junto com a transição.",
+        "repertorio": {
+          "skills": [
+            "rotina"
+          ],
+          "boasPraticasIds": [
+            "d5c505c5-03cf-4d5b-9dc9-562bfb6c327d",
+            "21a9fc7b-e719-4341-aa5b-6a1b09667f11",
+            "08ee4afb-4f8b-4e9e-95cc-a3f03ee44602"
+          ]
+        }
+      },
+      "aprofundar_brincar": {
+        "texto": "**Estação de Trens — a próxima parada**\n\n**Materiais:** caixas de papelão pequenas (viram vagões), tampinhas ou potes como carga, uma toalha ou pano dobrado como trilho. Nada precisa ser comprado.\n\n**Tempo:** 10–15 minutos, mas ele pode se estender naturalmente.\n\n---\n\nAntes de tirar o tablet, monte a \"estação\" em silêncio numa superfície próxima — sem chamar ele ainda. Quando der o aviso dos 2 minutos, aponte pra estação e diga apenas: **\"Tem trem esperando.\"**\n\n**Seu turno:** você é a estação. Anuncie chegadas com voz de rádio: *\"Trem chegando na plataforma 1.\"* Entregue uma caixa pra ele. Fale pouco; deixe ele liderar o percurso.\n\n**Turno do Leo:** ele decide o trajeto, o que vai nos vagões, quantas paradas. Se quiser só empurrar as caixas em silêncio por 10 minutos, ótimo — isso é regulação acontecendo.\n\n**Frases úteis:**\n- *\"O maquinista decide a rota.\"*\n- *\"Qual a próxima parada?\"*\n- Se ele não responder, tudo bem — continue operando a estação no ritmo dele.\n\n**Objetivo de hoje:** ele sair do tablet com algo do mundo dele esperando do outro lado — não como prêmio, mas como continuidade interessante.\n\n**Se ficar difícil:** reduza fala e movimento. Fique sentada perto, segure uma caixinha. Presença sem demanda já ajuda a regular.",
+        "repertorio": {
+          "skills": [
+            "rotina"
+          ],
+          "boasPraticasIds": [
+            "d5c505c5-03cf-4d5b-9dc9-562bfb6c327d",
+            "21a9fc7b-e719-4341-aa5b-6a1b09667f11",
+            "08ee4afb-4f8b-4e9e-95cc-a3f03ee44602"
+          ]
+        }
+      },
+      "aprofundar_crencas": {
+        "texto": "**Leo**\n\nQuando o tablet some, pode ser que Leo esteja interpretando: *acabou, foi embora, não volta mais.* Com 6 anos e comunicação por poucas palavras, ele ainda não tem como perguntar \"quando volta?\" — então o corpo responde antes da fala.\n\nO que queremos ajudá-lo a construir é a ideia de *pausa*, não de *perda*. Frases que ancoram isso:\n\n- \"Tablet descansa. Você guarda.\"\n- \"Amanhã o trem volta aqui.\"\n- \"Agora é hora do X. Tablet fica te esperando.\"\n\nCurtas, afirmativas, sem negociação.\n\n---\n\n**Adulto**\n\nUm pensamento que pode aumentar a pressão é: *\"ele está fazendo isso pra me manipular\"* — e isso muda o tom sem querer, tornando a retirada mais tensa e a crise mais provável.\n\nUma perspectiva mais útil: ele ainda não tem como regular sozinho o que sente quando algo que ele gosta termina. A crise não é recusa — pode ser que seja o único jeito que ele tem de dizer que está sobrecarregado.\n\n**Frase-âncora para você:** *\"Ele não está me desafiando. Ele está chegando no limite.\"*\n\nIsso muda a ação: em vez de explicar na crise, você reduz estímulo, fica perto em silêncio e espera. Menos palavras, voz baixa, corpo calmo.\n\n---\n\n**Teste desta semana:** guarde o tablet junto com ele, deixando-o colocar no lugar. Participar do encerramento pode mudar o que ele sente sobre \"perder\".",
+        "repertorio": {
+          "skills": [
+            "rotina"
+          ],
+          "boasPraticasIds": [
+            "d5c505c5-03cf-4d5b-9dc9-562bfb6c327d",
+            "21a9fc7b-e719-4341-aa5b-6a1b09667f11",
+            "08ee4afb-4f8b-4e9e-95cc-a3f03ee44602"
+          ]
+        }
+      }
+    },
+    "juizo": "VEREDITO: PASSOU  \nCOMO LIDAR: Maneja a crise em andamento com co-regulação, redução de estímulos e timing.  \nBRINCAR/PASSEAR: Propõe uma experiência compartilhada concreta de transição, simples e executável.  \nCRENÇAS+FALAS: Oferece interpretações possíveis e reformula falas e atitudes do adulto.  \nConclusão sobre sobreposição: Há referências comuns à baixa fala e aos trens, mas os objetivos e as orientações centrais permanecem distintos."
+  }
+}

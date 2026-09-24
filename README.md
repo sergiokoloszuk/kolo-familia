@@ -77,6 +77,7 @@ Em `apps/web/.env.local`:
 | `ZAPI_TOKEN` | Token Z-API | só pra Ayla |
 | `ZAPI_CLIENT_TOKEN` | Token de cliente Z-API | só pra Ayla |
 | `AYLA_WEBHOOK_SECRET` | Header `x-ayla-secret` no webhook | só pra Ayla |
+| `AYLA_APROFUNDAMENTO_WHATSAPP` | `on` ativa aprofundamentos contextuais para todas as conversas elegíveis; `off` é rollback global | não |
 | `KOLO_GERACAO_SECRET` | Header `x-ayla-secret` da chamada interna que gera os cartões da rotina | **obrigatório** — sem ele nenhum cartão sai |
 | `CRON_SECRET` | `Authorization: Bearer` em `/api/ayla/cron` | só pra cron |
 | `ROSANGELA_FISCAL_WHATSAPP_E164` | Destino dos links de emissão de nota, em E.164 | obrigatório para operação fiscal |

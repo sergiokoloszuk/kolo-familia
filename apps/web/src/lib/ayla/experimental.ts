@@ -257,6 +257,8 @@ export type TurnoExperimental = {
   /** Excecao agrupada realmente declarada pelo envelope do modelo. */
   miniInvestigacao?: MiniInvestigacao | null;
   camposInvestigados?: string[];
+  /** Ramos semânticos sugeridos pelo mesmo turno; o portão externo ainda veta. */
+  aprofundamentos?: string[];
   /** Medição do turno — ver `ayla_path` no relatório da PEND-064. */
   metrica: {
     consultasBanco: number;
@@ -1351,6 +1353,7 @@ export async function responderExperimental(
     let texto = env.fala;
     let campoInvestigado = env.campo;
     let camposInvestigados = env.campos;
+    let aprofundamentos = env.aprofundamentos;
     let envelopeFalhou = !env.valido;
     if (!texto) {
       console.warn("[ayla:oficial] resposta vazia — uma segunda tentativa");
@@ -1359,6 +1362,7 @@ export async function responderExperimental(
       texto = env.fala;
       campoInvestigado = env.campo;
       camposInvestigados = env.campos;
+      aprofundamentos = env.aprofundamentos;
       envelopeFalhou = !env.valido;
     }
     if (envelopeFalhou) {
@@ -1367,6 +1371,7 @@ export async function responderExperimental(
       texto = (r.texto ?? "").trim();
       campoInvestigado = null;
       camposInvestigados = [];
+      aprofundamentos = [];
     }
     const msModelo = Date.now() - tModelo;
 
@@ -1513,6 +1518,7 @@ export async function responderExperimental(
       decisaoLacuna: ctxTurno.decisaoLacuna ?? null,
       miniInvestigacao: ctxTurno.miniInvestigacao,
       camposInvestigados,
+      aprofundamentos,
       /**
        * ⚠️ O CAMPO QUE A PERGUNTA DE FATO INVESTIGOU — PEND-187B.
        *

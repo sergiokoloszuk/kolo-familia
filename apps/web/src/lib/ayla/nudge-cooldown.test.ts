@@ -289,7 +289,9 @@ describe("invariantes", () => {
       /from\("ayla_messages"\)[\s\S]{0,200}\.in\("tipo", TIPOS_QUE_JA_LEVARAM_O_LINK\)/,
     );
     // `enviarEPersistir` só grava em ayla_messages quando `resultado.enviada`.
-    expect(ORCH).toMatch(/if \(resultado\.enviada\) \{\s*\n\s*await supabase\.from\("ayla_messages"\)/);
+    expect(ORCH).toMatch(
+      /if \(resultado\.enviada\) \{[\s\S]{0,180}?\.from\("ayla_messages"\)/,
+    );
   });
 
   it("a copy do convite não mudou", () => {

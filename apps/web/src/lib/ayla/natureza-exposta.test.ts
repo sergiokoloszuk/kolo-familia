@@ -129,10 +129,10 @@ describe("B · a exposição, e o que ela não muda", () => {
       expect(src).not.toMatch(/natureza === "desabafo"/);
       expect(src).not.toMatch(/if \(natureza === "continuacao"\)/);
     }
-    // Lida em lugares CONTADOS: o rastro da lacuna, a entrada do decisor do
-    // convite e a telemetria do convite. Se o número subir, alguém começou a
-    // usá-la em outro lugar — e essa decisão tem de ser deliberada.
-    expect((ORQ.match(/exp\.metrica\.natureza/g) ?? []).length).toBe(4);
+    // Lida em lugares CONTADOS: o rastro da lacuna, o convite e, desde a
+    // PEND-213, o portão de aprofundamento (que veta conversa simples). Se o
+    // número subir, uma nova decisão precisa ser deliberada.
+    expect((ORQ.match(/exp\.metrica\.natureza/g) ?? []).length).toBe(5);
     expect(EXP).not.toMatch(/metrica\.natureza/);
   });
 

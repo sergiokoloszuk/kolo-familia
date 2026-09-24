@@ -157,8 +157,12 @@ describe("a ordem no orquestrador", () => {
 
   it("o gate continua acima dos handlers de entregável", () => {
     // A garantia original não pode ter se perdido no caminho.
-    const iGate = SRC.indexOf("if (!(await aylaServicoLiberado(supabase, family.id)))");
-    const iSeguranca = SRC.indexOf("const seguranca = await segurancaAberta(");
+    const inicioTurno = SRC.indexOf("async function processInboundInterno(");
+    const iGate = SRC.indexOf("if (!(await aylaServicoLiberado(supabase, family.id)))", inicioTurno);
+    const iSeguranca = SRC.indexOf("const seguranca = await segurancaAberta(", iGate);
+    expect(inicioTurno).toBeGreaterThan(-1);
+    expect(iGate).toBeGreaterThan(inicioTurno);
+    expect(iSeguranca).toBeGreaterThan(iGate);
     expect(iGate).toBeLessThan(iSeguranca);
   });
 });

@@ -3,6 +3,7 @@ import { createServiceRoleClient } from "@/lib/supabase/server";
 import { posTrialAtivo, experimentalParaTodas } from "@/lib/ayla/experimental";
 import { extratorSombraLigado } from "@/lib/ayla/extrator-sombra";
 import { alvoDaEscritaDoExtrator } from "@/lib/ayla/extrator-escrita";
+import { aprofundamentoGlobalLigado } from "@/lib/ayla/aprofundamento-tipos";
 import { lerPlanosNoStripe, PLANOS } from "@/lib/billing/planos";
 
 /**
@@ -118,6 +119,7 @@ export async function GET() {
     fiscal_rosangela_configurada: Boolean(process.env.ROSANGELA_FISCAL_WHATSAPP_E164),
     ayla_pos_trial: posTrialAtivo(),
     ayla_experimental_todas: experimentalParaTodas(),
+    ayla_aprofundamento_whatsapp: aprofundamentoGlobalLigado(),
     /**
      * A SOMBRA DO EXTRATOR UNIFICADO — PEND-194, 10/09/2026.
      *

@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { hojeLocalISO, idadeAnos } from "@/lib/idade";
 import { chaveTelefoneBR } from "@/lib/telefone";
-import { enviarTexto, type InboundWhatsApp } from "./whatsappSender";
+import { enviarListaBotoes, enviarTexto, type InboundWhatsApp } from "./whatsappSender";
 import { podeEnviarProativa } from "./rules";
 import { parseInbound, detectarComando } from "./parser";
 import {
@@ -151,6 +151,25 @@ import { montarKoloVivoResumo } from "@/lib/kolo-vivo/incorporar";
 import { acessoLiberado } from "@/lib/auth/acesso";
 import { classificarAreasDiario } from "@/lib/ia/classificar-area";
 import type { AylaTipoProativa, AylaTipoReativa, ParserResult } from "./types";
+import {
+  APROFUNDAMENTOS,
+  aprofundamentoGlobalLigado,
+  atualizarOferta,
+  buscarFallbackPendente,
+  criarOferta,
+  decidirAprofundamento,
+  existeOfertaRecente,
+  gerarRespostaAprofundada,
+  idDoBotao,
+  lerIdDoBotao,
+  ramoDoFallback,
+  registrarSeguimentoAprofundamento,
+  respostaPedeRetornoDaFamilia,
+  reivindicarOferta,
+  textoDaOferta,
+  textoDoFallback,
+  type RamoAprofundamento,
+} from "./aprofundamento";
 
 /**
  * Orchestrator da Ayla — PRD §12.4. Os dois pontos de entrada:
@@ -175,7 +194,7 @@ export type EnvioResultado =
    * `messageId` pode ser null: 200 sem id acontece, e inventar um id ("unknown")
    * é pior que assumir que não veio.
    */
-  | { enviada: true; messageId: string | null }
+  | { enviada: true; messageId: string | null; aylaMessageId?: string | null }
   | { enviada: false; motivo: string };
 
 // ============================================================
@@ -1890,6 +1909,157 @@ export async function processInbound(
   }
 }
 
+/**
+ * Resolve somente escolhas que pertencem a uma oferta viva. Um clique inválido
+ * ou repetido é consumido sem cair no classificador; texto comum continua o
+ * fluxo normal.
+ */
+async function processarEscolhaAprofundamento(
+  supabase: SupabaseClient,
+  params: {
+    familyId: string;
+    phone: string | null;
+    inbound: InboundWhatsApp;
+    inboundMessageRowId: string;
+  },
+): Promise<{ tratada: boolean; familia: string; resposta?: EnvioResultado } | null> {
+  if (!params.phone) return null;
+
+  let escolha = lerIdDoBotao(params.inbound.interacao?.id);
+  let estruturada = Boolean(escolha);
+  if (!escolha && !params.inbound.interacao) {
+    // Evita uma consulta em toda mensagem normal: só as seis formas explícitas
+    // do fallback podem ser uma escolha pendente.
+    if (!/^(como lidar( agora)?|lidar|brincar( \/ passear)?|passear|cren[çc]as( \+ falas)?|falas)$/i.test(params.inbound.texto.trim())) {
+      return null;
+    }
+    const pendente = await buscarFallbackPendente(supabase, params.familyId).catch(() => null);
+    if (!pendente) return null;
+    const ramo = ramoDoFallback(params.inbound.texto, pendente.opcoes);
+    if (!ramo) return null;
+    escolha = { ofertaId: pendente.id, ramo };
+    estruturada = false;
+  }
+  if (!escolha) return null;
+
+  // O atalho não contorna nenhum portão do serviço. Se o acesso venceu ou uma
+  // situação de segurança foi aberta depois da oferta, devolve o turno ao
+  // fluxo normal — que já sabe conduzir assinatura e segurança.
+  if (!(await aylaServicoLiberado(supabase, params.familyId))) return null;
+  const seguranca = await segurancaAberta(supabase, params.familyId, params.inbound.recebidaEm);
+  if (seguranca.aberta) return null;
+
+  const oferta = await reivindicarOferta(supabase, {
+    ofertaId: escolha.ofertaId,
+    familyId: params.familyId,
+    ramo: escolha.ramo,
+    inboundEscolhaId: params.inboundMessageRowId,
+    referenceMessageId: params.inbound.interacao?.referenceMessageId,
+  }).catch(async (e) => {
+    await logServerError("aprofundamento_reivindicacao_falhou", e, {
+      family_account_id: params.familyId,
+      payload: { oferta_id: escolha?.ofertaId, ramo: escolha?.ramo },
+    });
+    return null;
+  });
+  if (!oferta) {
+    // Reentrega ou segundo clique: a primeira reivindicação já é a dona. Não
+    // manda uma segunda resposta e não transforma o label em assunto novo.
+    if (estruturada) {
+      await logEvent({
+        kind: "aprofundamento_escolha_ignorada",
+        severity: "info",
+        family_account_id: params.familyId,
+        persistir: true,
+        payload: { oferta_id: escolha.ofertaId, ramo: escolha.ramo },
+      });
+      return { tratada: true, familia: params.familyId };
+    }
+    return null;
+  }
+
+  await logEvent({
+    kind: "aprofundamento_escolhido",
+    severity: "info",
+    family_account_id: params.familyId,
+    persistir: true,
+    payload: {
+      oferta_id: oferta.oferta_id,
+      ramo: escolha.ramo,
+      canal: estruturada ? "botao" : "texto",
+      segundos_ate_escolha: Math.max(
+        0,
+        Math.round((params.inbound.recebidaEm.getTime() - new Date(oferta.criada_em).getTime()) / 1000),
+      ),
+    },
+  });
+
+  try {
+    const aprofundada = await gerarRespostaAprofundada(supabase, {
+      familyId: params.familyId,
+      membroId: oferta.membro_atipico_id,
+      sourceInboundId: oferta.source_inbound_message_id,
+      sourceOutboundId: oferta.source_outbound_message_id,
+      ramo: escolha.ramo,
+    });
+    const resposta = await enviarEPersistir(supabase, {
+      family_account_id: params.familyId,
+      membro_atipico_id: oferta.membro_atipico_id,
+      phone: params.phone,
+      texto: aprofundada.texto,
+      category: "reativa",
+      tipo: "aprofundamento_resposta",
+      metadataMensagem: {
+        aprofundamento: {
+          oferta_id: oferta.oferta_id,
+          ramo: escolha.ramo,
+          output_type: aprofundada.outputType,
+        },
+      },
+      meta: { ramo: escolha.ramo, output_type: aprofundada.outputType },
+    });
+    if (!resposta.enviada) throw new Error(resposta.motivo);
+    await atualizarOferta(supabase, oferta.oferta_id, {
+      status: "respondida",
+      respondida_em: new Date().toISOString(),
+    }, "escolhida");
+    await logEvent({
+      kind: "aprofundamento_respondido",
+      severity: "info",
+      family_account_id: params.familyId,
+      persistir: true,
+      payload: {
+        oferta_id: oferta.oferta_id,
+        ramo: escolha.ramo,
+        skills: aprofundada.repertorio.skills,
+        boas_praticas_ids: aprofundada.repertorio.boasPraticasIds,
+        n_boas_praticas: aprofundada.repertorio.boasPraticasIds.length,
+      },
+    });
+    return { tratada: true, familia: params.familyId, resposta };
+  } catch (e) {
+    await atualizarOferta(supabase, oferta.oferta_id, {
+      status: "falhou",
+      falha_codigo: "GERACAO_OU_ENVIO",
+    }, "escolhida").catch(() => false);
+    await logServerError("aprofundamento_resposta_falhou", e, {
+      family_account_id: params.familyId,
+      payload: { oferta_id: oferta.oferta_id, ramo: escolha.ramo },
+    });
+    const resposta = await enviarEPersistir(supabase, {
+      family_account_id: params.familyId,
+      membro_atipico_id: oferta.membro_atipico_id,
+      phone: params.phone,
+      texto:
+        "Eu não consegui abrir esse caminho agora. Se você me disser em uma frase qual parte quer aprofundar, eu continuo daqui sem você precisar contar tudo de novo.",
+      category: "reativa",
+      tipo: "aprofundamento_fallback",
+      meta: { oferta_id: oferta.oferta_id, etapa: "resposta" },
+    });
+    return { tratada: true, familia: params.familyId, resposta };
+  }
+}
+
 async function processInboundInterno(
   supabase: SupabaseClient,
   inboundRecebido: InboundWhatsApp,
@@ -2007,7 +2177,19 @@ async function processInboundInterno(
     midia_url: inbound.midiaUrl ?? null,
     midia_tipo: inbound.midiaTipo ?? null,
     recebida_em: inbound.recebidaEm.toISOString(),
+    ...(inbound.interacao
+      ? {
+          metadata: {
+            interacao: {
+              tipo: inbound.interacao.tipo,
+              id: inbound.interacao.id,
+              reference_message_id: inbound.interacao.referenceMessageId ?? null,
+            },
+          },
+        }
+      : {}),
   };
+  let inboundMessageRowId: string | null = null;
   if (inbound.messageId) {
     const { data: claim, error: claimErr } = await supabase
       .from("ayla_messages")
@@ -2020,16 +2202,61 @@ async function processInboundInterno(
       // Falha inesperada (ex.: coluna ainda não migrada) — NÃO trava a Ayla:
       // insere normal e segue (sem dedup nesse caso).
       console.error("[ayla] claim de idempotência falhou, seguindo:", claimErr.message);
-      await supabase.from("ayla_messages").insert(baseInbound);
+      const { data: recuperada, error: recuperadaErro } = await supabase
+        .from("ayla_messages")
+        .insert(baseInbound)
+        .select("id")
+        .single();
+      if (recuperadaErro) {
+        console.error("[ayla] persistência inbound sem dedup falhou:", recuperadaErro.message);
+      } else {
+        inboundMessageRowId = recuperada.id as string;
+      }
     } else if (!claim || claim.length === 0) {
       console.warn(
         `[ayla] inbound duplicado ignorado (messageId ${inbound.messageId})`,
       );
       return { tratada: false, familia: family.id };
+    } else {
+      inboundMessageRowId = claim[0]?.id as string | null;
     }
   } else {
     // Sem id (payload raro) — não dá pra deduplicar; insere normal.
-    await supabase.from("ayla_messages").insert(baseInbound);
+    const { data: inserida, error: inseridaErro } = await supabase
+      .from("ayla_messages")
+      .insert(baseInbound)
+      .select("id")
+      .single();
+    if (inseridaErro) {
+      console.error("[ayla] persistência inbound sem messageId falhou:", inseridaErro.message);
+    } else {
+      inboundMessageRowId = inserida.id as string;
+    }
+  }
+
+  // O clique é uma continuação explícita, não uma fala a reclassificar. Ele
+  // entra depois da trava de idempotência e antes de comando/lote/decisor.
+  if (aprofundamentoGlobalLigado() && inboundMessageRowId) {
+    const seguimento = await registrarSeguimentoAprofundamento(supabase, {
+      familyId: family.id,
+      recebidaEm: inbound.recebidaEm,
+    }).catch(() => null);
+    if (seguimento) {
+      void logEvent({
+        kind: "aprofundamento_seguimento",
+        severity: "info",
+        family_account_id: family.id,
+        persistir: true,
+        payload: { oferta_id: seguimento },
+      });
+    }
+    const aprofundada = await processarEscolhaAprofundamento(supabase, {
+      familyId: family.id,
+      phone: family.whatsapp_e164,
+      inbound,
+      inboundMessageRowId,
+    });
+    if (aprofundada) return aprofundada;
   }
 
   /**
@@ -3544,6 +3771,7 @@ async function processInboundInterno(
         // ser lida como uma OFERTA no turno seguinte, e o "Ok" da mãe gera
         // outro Plano (caso Matheo, 11/08/2026).
         let planoEntregueId: string | null = null;
+        let houveNudge = false;
         const nudge = await ponteDePlano(supabase, {
           familyId: family.id,
           membroId: exp.membroId,
@@ -3565,7 +3793,7 @@ async function processInboundInterno(
           return null;
         });
         if (nudge) {
-          await enviarEPersistir(supabase, {
+          const envioNudge = await enviarEPersistir(supabase, {
             family_account_id: family.id,
             membro_atipico_id: exp.membroId,
             phone: ctxExp.whatsapp_e164,
@@ -3578,6 +3806,62 @@ async function processInboundInterno(
             // `meta` iria só para o log de auditoria e não fecharia a oferta.
             ...(planoEntregueId ? { metadataMensagem: { plano_id: planoEntregueId } } : {}),
           });
+          houveNudge = envioNudge.enviada;
+        }
+
+        // A primeira ajuda já saiu. Só agora o portão considera uma escolha —
+        // e nunca junto de Plano, convite, pergunta ou mini-investigação.
+        try {
+          const ligado = aprofundamentoGlobalLigado();
+          const ofertaRecente = ligado
+            ? await existeOfertaRecente(supabase, family.id, inbound.recebidaEm)
+            : false;
+          const decisaoAprofundamento = decidirAprofundamento({
+            ligado,
+            candidatos: exp.aprofundamentos ?? [],
+            segurancaAberta: seguranca.aberta,
+            naturezaEmocional: turnoClassificado.naturezaEmocional,
+            naturezaDoTurno: exp.metrica.natureza,
+            fezPergunta: Boolean(
+              campoInvestigado ||
+              camposMini.length ||
+              respostaPedeRetornoDaFamilia(exp.texto)
+            ),
+            miniInvestigacao: Boolean(mini?.acao === "PERGUNTAR" || camposMini.length),
+            conviteConcorrente: Boolean(conviteTexto || houveNudge),
+            ofertaRecente,
+          });
+          void logEvent({
+            kind: "aprofundamento_decisao",
+            severity: "info",
+            family_account_id: family.id,
+            payload: {
+              turno: rastro.turno,
+              acao: decisaoAprofundamento.acao,
+              motivo: decisaoAprofundamento.motivo,
+              opcoes: decisaoAprofundamento.opcoes,
+            },
+          });
+          if (
+            decisaoAprofundamento.acao === "OFERECER" &&
+            inboundMessageRowId &&
+            resp.aylaMessageId
+          ) {
+            await publicarOfertaAprofundamento(supabase, {
+              familyId: family.id,
+              membroId: exp.membroId,
+              sourceInboundId: inboundMessageRowId,
+              sourceOutboundId: resp.aylaMessageId,
+              phone: ctxExp.whatsapp_e164,
+              opcoes: decisaoAprofundamento.opcoes,
+            });
+          }
+        } catch (e) {
+          // O menu é opcional; falhar nele nunca apaga a orientação já enviada.
+          await logServerError("aprofundamento_oferta_falhou", e, {
+            family_account_id: family.id,
+            payload: { turno: rastro.turno },
+          }).catch(() => {});
         }
       }
 
@@ -5765,16 +6049,33 @@ export async function enviarEPersistir(
 
   // Mensagem (mesmo se falhou, pra deixar rastro)
   if (resultado.enviada) {
-    await supabase.from("ayla_messages").insert({
-      family_account_id: params.family_account_id,
-      membro_atipico_id: params.membro_atipico_id,
-      direcao: "outbound",
-      category: params.category,
-      tipo: params.tipo,
-      texto,
-      enviada_em: new Date().toISOString(),
-      ...registroDeEnvio(idsBolhas, params.metadataMensagem ?? null),
-    });
+    const { data: mensagemGravada, error: mensagemErro } = await supabase
+      .from("ayla_messages")
+      .insert({
+        family_account_id: params.family_account_id,
+        membro_atipico_id: params.membro_atipico_id,
+        direcao: "outbound",
+        category: params.category,
+        tipo: params.tipo,
+        texto,
+        enviada_em: new Date().toISOString(),
+        ...registroDeEnvio(idsBolhas, params.metadataMensagem ?? null),
+      })
+      .select("id")
+      .single();
+    if (mensagemErro) {
+      console.error("[ayla] envio aceito, mas ayla_messages falhou:", mensagemErro.message);
+      await logServerError("ayla_mensagem_outbound_nao_persistiu", mensagemErro, {
+        family_account_id: params.family_account_id,
+        payload: { tipo: params.tipo, provider_message_id: resultado.messageId },
+      }).catch(() => {});
+    } else {
+      resultado = {
+        enviada: true,
+        messageId: resultado.messageId,
+        aylaMessageId: mensagemGravada.id as string,
+      };
+    }
 
     await supabase
       .from("ayla_preferences")
@@ -5783,6 +6084,144 @@ export async function enviarEPersistir(
   }
 
   return resultado;
+}
+
+/**
+ * Publica a SEGUNDA mensagem do turno. A reserva vem antes do provedor e seu ID
+ * viaja no botão, eliminando a corrida "clique chegou antes do UPDATE".
+ */
+async function publicarOfertaAprofundamento(
+  supabase: SupabaseClient,
+  params: {
+    familyId: string;
+    membroId: string | null;
+    sourceInboundId: string;
+    sourceOutboundId: string;
+    phone: string;
+    opcoes: RamoAprofundamento[];
+  },
+): Promise<boolean> {
+  const ofertaId = await criarOferta(supabase, params);
+  const texto = textoDaOferta(params.opcoes);
+  let provider: Awaited<ReturnType<typeof enviarListaBotoes>>;
+  try {
+    provider = await enviarListaBotoes({
+      phoneE164: params.phone,
+      mensagem: texto,
+      botoes: params.opcoes.map((ramo) => ({
+        id: idDoBotao(ofertaId, ramo),
+        label: APROFUNDAMENTOS[ramo].label,
+      })),
+    });
+  } catch (erroBotao) {
+    // O fallback existe somente quando o provedor NÃO aceitou os botões.
+    // Uma falha posterior de banco/telemetria não pode duplicar a oferta que
+    // a família já recebeu no WhatsApp.
+    await logEvent({
+      kind: "aprofundamento_fallback",
+      severity: "warn",
+      family_account_id: params.familyId,
+      payload: {
+        oferta_id: ofertaId,
+        motivo: erroBotao instanceof Error ? erroBotao.message.slice(0, 180) : "erro",
+      },
+    }).catch(() => {});
+    const fallback = await enviarEPersistir(supabase, {
+      family_account_id: params.familyId,
+      membro_atipico_id: params.membroId,
+      phone: params.phone,
+      texto: textoDoFallback(params.opcoes),
+      category: "reativa",
+      tipo: "aprofundamento_fallback",
+      metadataMensagem: {
+        aprofundamento: { oferta_id: ofertaId, opcoes: params.opcoes, canal: "texto" },
+      },
+      meta: { oferta_id: ofertaId, opcoes: params.opcoes, canal: "texto" },
+    });
+    if (!fallback.enviada) {
+      await atualizarOferta(supabase, ofertaId, {
+        status: "falhou",
+        falha_codigo: "BOTAO_E_FALLBACK",
+      }, "preparada").catch(() => false);
+      return false;
+    }
+    await atualizarOferta(supabase, ofertaId, {
+      status: "oferecida",
+      canal: "texto",
+      provider_message_id: fallback.messageId,
+      offer_message_id: fallback.aylaMessageId ?? null,
+    }, "preparada");
+    await logEvent({
+      kind: "aprofundamento_oferecido",
+      severity: "info",
+      family_account_id: params.familyId,
+      persistir: true,
+      payload: { oferta_id: ofertaId, opcoes: params.opcoes, canal: "texto" },
+    });
+    return true;
+  }
+
+  let offerMessageId: string | null = null;
+  try {
+    const { data: mensagem, error: mensagemErro } = await supabase
+      .from("ayla_messages")
+      .insert({
+        family_account_id: params.familyId,
+        membro_atipico_id: params.membroId,
+        direcao: "outbound",
+        category: "reativa",
+        tipo: "aprofundamento_oferta",
+        texto,
+        enviada_em: new Date().toISOString(),
+        ...registroDeEnvio([provider.messageId], {
+          aprofundamento: { oferta_id: ofertaId, opcoes: params.opcoes, canal: "botao" },
+        }),
+      })
+      .select("id")
+      .single();
+    offerMessageId = mensagem?.id ?? null;
+    if (mensagemErro) {
+      await logServerError("aprofundamento_oferta_nao_persistiu", mensagemErro, {
+        family_account_id: params.familyId,
+        payload: { oferta_id: ofertaId },
+      }).catch(() => {});
+    }
+  } catch (erroPersistencia) {
+    await logServerError("aprofundamento_oferta_nao_persistiu", erroPersistencia, {
+      family_account_id: params.familyId,
+      payload: { oferta_id: ofertaId },
+    }).catch(() => {});
+  }
+
+  try {
+    // Não exige status "preparada": um clique ultrarrápido pode já ter
+    // reivindicado a oferta, e nunca devemos rebaixar "escolhida".
+    await atualizarOferta(
+      supabase,
+      ofertaId,
+      {
+        status: "oferecida",
+        canal: "botao",
+        provider_message_id: provider.messageId,
+        offer_message_id: offerMessageId,
+      },
+      "preparada",
+    );
+  } catch (erroEstado) {
+    await logServerError("aprofundamento_oferta_estado_nao_persistiu", erroEstado, {
+      family_account_id: params.familyId,
+      payload: { oferta_id: ofertaId, provider_message_id: provider.messageId },
+    }).catch(() => {});
+  }
+
+  await logEvent({
+    kind: "aprofundamento_oferecido",
+    severity: "info",
+    family_account_id: params.familyId,
+    persistir: true,
+    payload: { oferta_id: ofertaId, opcoes: params.opcoes, canal: "botao" },
+  }).catch(() => {});
+  return true;
 }
 
 /** Idioma da família (pt/es/en) por id — pra traduzir as proativas no envio. */

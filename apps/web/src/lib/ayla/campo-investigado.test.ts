@@ -50,6 +50,7 @@ describe("PEND-187B · o contrato de saída", () => {
       "fala",
       "campo_investigado",
       "campos_investigados",
+      "aprofundamentos",
     ]);
     const enums = e.json_schema.schema.properties.campo_investigado.enum;
     expect(enums).toContain(null);

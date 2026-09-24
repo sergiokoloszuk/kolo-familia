@@ -134,7 +134,13 @@ export type AylaTipoReativa =
    *
    * Também não é `resposta_registro`: aquele tipo dispara a ponte do Plano.
    */
-  | "pos_trial";
+  | "pos_trial"
+  /** Oferta clicável enviada somente depois da primeira ajuda. */
+  | "aprofundamento_oferta"
+  /** O provedor não aceitou botões; a escolha foi oferecida em texto. */
+  | "aprofundamento_fallback"
+  /** Resposta ao ramo escolhido, preservando o turno que originou a oferta. */
+  | "aprofundamento_resposta";
 
 export type AylaTipo = AylaTipoProativa | AylaTipoReativa;
 

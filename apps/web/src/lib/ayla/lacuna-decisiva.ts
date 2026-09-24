@@ -1,5 +1,6 @@
 import type { PerfilConsultavel, CampoPerfil } from "@/lib/kolo-vivo/consultar";
 import { CHAVES_MINI_INVESTIGACAO } from "./mini-investigacao";
+import { RAMOS_APROFUNDAMENTO } from "./aprofundamento-tipos";
 
 /**
  * A LACUNA QUE MUDA A CONDUTA — Gate B, 08/09/2026.
@@ -734,7 +735,7 @@ export function esquemaDaResposta(): Record<string, unknown> {
       schema: {
         type: "object",
         additionalProperties: false,
-        required: ["fala", "campo_investigado", "campos_investigados"],
+        required: ["fala", "campo_investigado", "campos_investigados", "aprofundamentos"],
         properties: {
           fala: { type: "string" },
           campo_investigado: {
@@ -745,6 +746,11 @@ export function esquemaDaResposta(): Record<string, unknown> {
             type: "array",
             maxItems: 3,
             items: { type: "string", enum: [...CHAVES_MINI_INVESTIGACAO] },
+          },
+          aprofundamentos: {
+            type: "array",
+            maxItems: 3,
+            items: { type: "string", enum: [...RAMOS_APROFUNDAMENTO] },
           },
         },
       },
@@ -796,7 +802,19 @@ orientar sem perguntar continua certo, e aí o campo é null.
 "campos_investigados" — use SOMENTE quando o contexto trouxer uma
 <mini_investigacao>. Liste, na mesma ordem, as 2 ou 3 chaves que as perguntas
 realmente investigaram. Fora desse formato, devolva []. No turno seguinte, em
-que a família já respondeu e você orienta, devolva [] também.`;
+que a família já respondeu e você orienta, devolva [] também.
+
+"aprofundamentos" — DEPOIS de escrever a fala, avalie se existem pelo menos
+DOIS caminhos diferentes que acrescentariam valor real a esta conversa:
+- aprofundar_lidar: estratégias concretas, o que falar e o que observar;
+- aprofundar_brincar: brincadeira, passeio ou experiência de vida real;
+- aprofundar_crencas: possíveis interpretações da criança e do adulto + falas.
+
+Devolva [] quando houver só um próximo passo útil, quando a fala for desabafo,
+urgência, administrativa ou simples, ou quando você tiver feito pergunta/mini-
+investigação. Nunca altere "fala" para anunciar menu: a oferta é uma segunda
+mensagem decidida pelo código. Não ofereça um ramo se o contexto não sustenta
+conteúdo responsável e personalizado para ele.`;
 }
 
 /**
@@ -816,18 +834,20 @@ export function lerEnvelope(bruto: string | null | undefined): {
   fala: string;
   campo: string | null;
   campos: string[];
+  aprofundamentos: string[];
   valido: boolean;
 } {
   const t = (bruto ?? "").trim();
-  if (!t) return { fala: "", campo: null, campos: [], valido: false };
+  if (!t) return { fala: "", campo: null, campos: [], aprofundamentos: [], valido: false };
   try {
     const o = JSON.parse(t) as {
       fala?: unknown;
       campo_investigado?: unknown;
       campos_investigados?: unknown;
+      aprofundamentos?: unknown;
     };
     const fala = typeof o.fala === "string" ? o.fala.trim() : "";
-    if (!fala) return { fala: "", campo: null, campos: [], valido: false };
+    if (!fala) return { fala: "", campo: null, campos: [], aprofundamentos: [], valido: false };
     const c = o.campo_investigado;
     const campo = typeof c === "string" && CHAVES_DECISIVAS.includes(c) ? c : null;
     const campos = Array.isArray(o.campos_investigados)
@@ -837,10 +857,17 @@ export function lerEnvelope(bruto: string | null | undefined): {
             CHAVES_MINI_INVESTIGACAO.includes(v as (typeof CHAVES_MINI_INVESTIGACAO)[number]),
         ).slice(0, 3)
       : [];
-    return { fala, campo, campos, valido: true };
+    const aprofundamentos = Array.isArray(o.aprofundamentos)
+      ? [...new Set(o.aprofundamentos)].filter(
+          (v): v is string =>
+            typeof v === "string" &&
+            RAMOS_APROFUNDAMENTO.includes(v as (typeof RAMOS_APROFUNDAMENTO)[number]),
+        ).slice(0, 3)
+      : [];
+    return { fala, campo, campos, aprofundamentos, valido: true };
   } catch {
     // Não é JSON: a fala é o texto inteiro, e não há campo a declarar.
-    return { fala: t, campo: null, campos: [], valido: false };
+    return { fala: t, campo: null, campos: [], aprofundamentos: [], valido: false };
   }
 }
 

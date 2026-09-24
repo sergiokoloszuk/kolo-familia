@@ -166,11 +166,11 @@ describe("D · SOMBRA — nenhum consumidor lê os campos novos", () => {
   });
 
   it("os campos não entram no envelope da PEND-187B", () => {
-    // O contrato do Core segue sendo `{ fala, campo_investigado }`.
+    // O contrato do Core segue sem estes dois sinais de sombra.
     const LAC = readFileSync(new URL("../ayla/lacuna-decisiva.ts", import.meta.url), "utf8");
     expect(LAC).not.toMatch(/natureza_emocional|pediu_para_contar/);
     expect(LAC).toMatch(
-      /required: \["fala", "campo_investigado", "campos_investigados"\]/,
+      /required: \["fala", "campo_investigado", "campos_investigados", "aprofundamentos"\]/,
     );
   });
 });
