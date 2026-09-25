@@ -120,7 +120,20 @@ describe("continuidade da história no WhatsApp", () => {
     expect(objetivoDaHistoriaExplicito("Sobre o pai e o bisavô que morreram")).toBe(false);
     expect(
       objetivoDaHistoriaExplicito(
+        "Quero uma história para ajudar ela nesta aventura do final de semana",
+      ),
+    ).toBe(false);
+    expect(
+      objetivoDaHistoriaExplicito("Quero uma história para ajudar o Bento com o mercado"),
+    ).toBe(false);
+    expect(
+      objetivoDaHistoriaExplicito(
         "Quero uma história para ajudar ele a entender que pode pedir uma pausa",
+      ),
+    ).toBe(true);
+    expect(
+      objetivoDaHistoriaExplicito(
+        "Quero uma história para ajudar o Bento a pedir uma pausa quando precisar",
       ),
     ).toBe(true);
     expect(objetivoDaHistoriaExplicito("Quero que ela aprenda a dizer não")).toBe(true);

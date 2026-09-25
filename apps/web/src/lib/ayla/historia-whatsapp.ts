@@ -77,7 +77,11 @@ export function objetivoDaHistoriaExplicito(texto: string): boolean {
   const t = normalizar(texto);
   return (
     /\b(?:objetivo|moral|mensagem) (?:da historia )?(?:e|seria|deve ser)\b/.test(t) ||
-    /\b(?:para|pra) (?:ajudar|ensinar|mostrar|preparar|estimular|trabalhar|aprender|entender|compreender|lidar|aceitar|conseguir|perceber)\b/.test(t) ||
+    /\b(?:para|pra) (?:ensinar|mostrar|preparar|estimular|trabalhar|aprender|entender|compreender|lidar|aceitar|conseguir|perceber)\b/.test(t) ||
+    // “Para ajudar nesta aventura” ainda é só intenção genérica. A família só
+    // declarou o objetivo quando disse O QUE a criança deve construir — por
+    // exemplo, “ajudar a entender” ou “ajudar o Bento a pedir uma pausa”.
+    /\b(?:para|pra) ajudar\b.{0,50}\ba (?:se )?(?:aprender|entender|compreender|perceber|conseguir|saber|aceitar|pedir|dizer|fazer|lidar|escolher|tentar|esperar|participar|comunicar)\b/.test(t) ||
     /\bquero que (?:(?:ele|ela|a crianca|meu filho|minha filha) )?(?:aprenda|entenda|compreenda|perceba|consiga|saiba|aceite)\b/.test(t)
   );
 }
