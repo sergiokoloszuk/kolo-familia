@@ -51,6 +51,10 @@ create unique index if not exists ayla_aprofundamento_inbound_escolha_uidx
 
 alter table public.ayla_aprofundamento_ofertas enable row level security;
 
+grant select, insert, update, delete
+  on table public.ayla_aprofundamento_ofertas
+  to service_role;
+
 drop policy if exists ayla_aprofundamento_admin_all
   on public.ayla_aprofundamento_ofertas;
 create policy ayla_aprofundamento_admin_all

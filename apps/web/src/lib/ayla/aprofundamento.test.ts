@@ -255,6 +255,7 @@ describe("PEND-213 · envelope e fiação", () => {
     expect(sql).toMatch(/p_ramo = any\(o\.opcoes\)/i);
     expect(sql).toMatch(/source_inbound_message_id uuid[^\n]+ayla_messages/i);
     expect(sql).not.toMatch(/pedido_original|texto_original|fala_original/i);
+    expect(sql).toMatch(/grant select, insert, update, delete[\s\S]*to service_role/i);
   });
 
   it("o clique é interceptado antes do comando e da classificação", () => {
