@@ -118,21 +118,19 @@ describe("B · a exposição, e o que ela não muda", () => {
     expect(EXP).not.toMatch(/texto.*\$\{natureza\}|natureza.*\+ texto/);
   });
 
-  it("12. nenhuma FEATURE roteia por natureza — só o convite a consome", () => {
+  it("12. nenhuma FEATURE geral roteia por natureza", () => {
     /**
-     * ⚠️ INVERTIDO EM PARTE NO GATE 2. `exp.metrica.natureza` passou a ser
-     * LIDA — de propósito, e num lugar só: a guarda de conversa curta do
-     * convite de Perfil. O que continua proibido é uma FEATURE (rotina, plano,
-     * organização) mudar de rota por causa dela.
+     * O convite espontâneo de Perfil foi removido após a falha real de 24/09.
+     * O que continua permitido é telemetria e o portão específico do
+     * aprofundamento vetar conversa simples.
      */
     for (const src of [ORQ, EXP]) {
       expect(src).not.toMatch(/natureza === "desabafo"/);
       expect(src).not.toMatch(/if \(natureza === "continuacao"\)/);
     }
-    // Lida em lugares CONTADOS: o rastro da lacuna, o convite e, desde a
-    // PEND-213, o portão de aprofundamento (que veta conversa simples). Se o
-    // número subir, uma nova decisão precisa ser deliberada.
-    expect((ORQ.match(/exp\.metrica\.natureza/g) ?? []).length).toBe(5);
+    // Lida em lugares CONTADOS: rastros e, desde a PEND-213, o portão de
+    // aprofundamento. Se o número subir, uma nova decisão precisa ser deliberada.
+    expect((ORQ.match(/exp\.metrica\.natureza/g) ?? []).length).toBe(4);
     expect(EXP).not.toMatch(/metrica\.natureza/);
   });
 
@@ -201,9 +199,9 @@ describe("C · sabotagens", () => {
 
   it("o decisor do convite ESTÁ fiado — e as guardas têm bancada própria", () => {
     // ⚠️ INVERTIDO NO GATE 2: era a afirmação de que nada estava ligado.
-    // As guardas são provadas em `convite-perfil.test.ts` (58 casos).
+    // As guardas são provadas em `convite-perfil.test.ts` (52 casos).
     expect(ORQ).toContain("decidirConviteDePerfil({");
-    expect(ORQ).toContain("reservarConviteDePerfil(");
+    expect(ORQ).not.toContain("await reservarConviteDePerfil(");
     expect(ORQ).toContain("fraseDoConvite({");
   });
 

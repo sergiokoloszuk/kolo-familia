@@ -152,10 +152,10 @@ describe("D · SOMBRA — nenhum consumidor lê os campos novos", () => {
      */
     expect(ORQ).not.toContain("intencao = turnoClassificado.pediuParaContar");
     expect(EXP).not.toContain("pediuParaContar");
-    // Consumido em lugares CONTADOS, todos do convite: o rastro da lacuna, a
-    // entrada do decisor, o gate da reserva e a telemetria. Se subir, alguem
-    // comecou a usa-lo em outro lugar.
-    expect((ORQ.match(/turnoClassificado\.pediuParaContar/g) ?? []).length).toBe(4);
+    // Consumido em lugares CONTADOS: o rastro da lacuna, a entrada do decisor
+    // e a telemetria. A reserva espontânea saiu após a falha real de 24/09.
+    // Se subir, alguém começou a usá-lo em outro lugar.
+    expect((ORQ.match(/turnoClassificado\.pediuParaContar/g) ?? []).length).toBe(3);
   });
 
   it("o convite ESTA fiado, e o magic link e o existente", () => {

@@ -29,17 +29,10 @@ import {
 
 const base: EntradaDoConvite = {
   pediuParaContar: false,
-  decisaoLacuna: {
-    decisao: "ASK",
-    escolhida: { dominio: "comunicacao", campo: "reciprocidade", label: "Vai-e-vem" },
-    candidatasChaves: ["comunicacao.reciprocidade"],
-  },
   campoInvestigado: null,
   perguntaAberta: false,
   segurancaAberta: false,
   naturezaEmocional: "neutra",
-  naturezaDoTurno: "orientacao",
-  cooldownLiberado: true,
   dominiosJaEstruturados: [],
   temaDoTurno: null,
 };
@@ -54,26 +47,8 @@ describe("A · caminho PRINCIPAL — o pedido explícito", () => {
     expect(r.motivo).toBe("a mãe pediu para adiantar informações");
   });
 
-  it("9. pedido CURTO também convida — tamanho não é o critério", () => {
-    // "Quero te contar mais sobre ele." é curto e é pedido.
-    const r = decidirConviteDePerfil(
-      e({ pediuParaContar: true, naturezaDoTurno: "simples" }),
-    );
-    expect(r.acao).toBe("CONVIDAR");
-  });
-
-  it("11. o pedido explícito FURA o cooldown — ela está pedindo agora", () => {
-    const r = decidirConviteDePerfil(e({ pediuParaContar: true, cooldownLiberado: false }));
-    expect(r.acao).toBe("CONVIDAR");
-  });
-
-  it("e convida mesmo sem lacuna do Gate B — não depende dele", () => {
-    const r = decidirConviteDePerfil(
-      e({
-        pediuParaContar: true,
-        decisaoLacuna: { decisao: "NO_ASK", escolhida: null, candidatasChaves: [] },
-      }),
-    );
+  it("pedido explícito não depende de lacuna interna nem de tamanho", () => {
+    const r = decidirConviteDePerfil(e({ pediuParaContar: true }));
     expect(r.acao).toBe("CONVIDAR");
     expect(r.dominio).toBeNull(); // destino genérico
   });
@@ -128,44 +103,22 @@ describe("B · BLOQUEADORES ABSOLUTOS — nem o pedido atravessa", () => {
   });
 });
 
-describe("C · caminho ESPONTÂNEO — guardas de ritmo", () => {
-  it("8. conversa curta/continuação bloqueia o convite espontâneo", () => {
-    for (const n of ["simples", "continuacao"]) {
-      const r = decidirConviteDePerfil(e({ naturezaDoTurno: n }));
-      expect(r.acao, n).toBe("NENHUMA");
-      expect(r.motivo).toContain("conversa curta");
-    }
-  });
-
-  it("10. cooldown bloqueia o espontâneo", () => {
-    const r = decidirConviteDePerfil(e({ cooldownLiberado: false }));
-    expect(r.acao).toBe("NENHUMA");
-    expect(r.motivo).toContain("cooldown");
-  });
-
-  it("2. `pediuParaContar=false` sozinho NÃO basta: precisa da lacuna do Gate B", () => {
-    const r = decidirConviteDePerfil(
-      e({ decisaoLacuna: { decisao: "NO_ASK", escolhida: null, candidatasChaves: [] } }),
-    );
-    expect(r.acao).toBe("NENHUMA");
-    expect(r.motivo).toContain("a mãe não pediu");
-  });
-
-  it("20. o caminho SECUNDÁRIO ainda funciona, com origem própria", () => {
+describe("C · sem pedido explícito, nunca oferece Perfil", () => {
+  it("o caso real: orientação com lacuna interna não vira link", () => {
     const r = decidirConviteDePerfil(e());
-    expect(r.acao).toBe("CONVIDAR");
-    expect(r.origem).toBe("lacuna_nao_perguntada");
-    expect(r.dominio).toBe("comunicacao");
+    expect(r.acao).toBe("NENHUMA");
+    expect(r.origem).toBeNull();
+    expect(r.motivo).toContain("não pediu");
   });
 
-  it("Gate B ausente ⇒ nada", () => {
-    expect(decidirConviteDePerfil(e({ decisaoLacuna: null })).acao).toBe("NENHUMA");
-  });
-
-  it("domínio já estruturado não é oferecido no espontâneo", () => {
-    expect(
-      decidirConviteDePerfil(e({ dominiosJaEstruturados: ["comunicacao"] })).acao,
-    ).toBe("NENHUMA");
+  it("nem orientação, continuação ou lacuna conhecida criam exceção", () => {
+    for (const over of [
+      {},
+      { temaDoTurno: "emocional" },
+      { dominiosJaEstruturados: ["emocional"] },
+    ]) {
+      expect(decidirConviteDePerfil(e(over)).acao).toBe("NENHUMA");
+    }
   });
 });
 
@@ -333,7 +286,6 @@ describe("G · a fiação no orquestrador", () => {
     expect(bloco).toMatch(/perguntaAberta: estadoDoTurno\?\.perguntaPendente\.conhecido === "sim"/);
     expect(bloco).toMatch(/segurancaAberta: seguranca\.aberta/);
     expect(bloco).toMatch(/naturezaEmocional: turnoClassificado\.naturezaEmocional/);
-    expect(bloco).toMatch(/naturezaDoTurno: exp\.metrica\.natureza/);
     expect(bloco).toMatch(/campoInvestigado,/);
   });
 
@@ -374,10 +326,8 @@ describe("G · a fiação no orquestrador", () => {
     expect(ORQ).toMatch(/link_enviado/);
   });
 
-  it("a reserva não é pedida quando o pedido foi explícito — não se gasta consulta", () => {
-    expect(ORQ).toMatch(
-      /cooldownLiberado: turnoClassificado\.pediuParaContar\s*\n\s*\? true\s*\n\s*: await reservarConviteDePerfil/,
-    );
+  it("não consulta reserva em todo turno quando convite espontâneo está proibido", () => {
+    expect(ORQ).not.toContain("await reservarConviteDePerfil");
   });
 
   it("Etapa 1: `natureza_turno` entra no rastro sem recálculo", () => {
@@ -424,18 +374,16 @@ describe("H · as 10 jornadas", () => {
     expect(j({ perguntaAberta: true }).acao).toBe("NENHUMA");
   });
 
-  it("J7 continuação curta ('sim', 'pode', 'obrigada') → zero link", () => {
-    expect(j({ naturezaDoTurno: "simples" }).acao).toBe("NENHUMA");
-    expect(j({ naturezaDoTurno: "continuacao" }).acao).toBe("NENHUMA");
+  it("J7 continuação sem pedido explícito → zero link", () => {
+    expect(j({}).acao).toBe("NENHUMA");
   });
 
   it("J8 mãe ignora o link e segue conversando → o turno seguinte não cobra", () => {
-    // Sem pedido novo e com o cooldown consumido pelo convite anterior.
-    expect(j({ cooldownLiberado: false }).acao).toBe("NENHUMA");
+    expect(j({ pediuParaContar: false }).acao).toBe("NENHUMA");
   });
 
-  it("J9 já convidou há pouco → dedup bloqueia", () => {
-    expect(j({ cooldownLiberado: false, pediuParaContar: false }).acao).toBe("NENHUMA");
+  it("J9 orientação com tema de Perfil → sem convite espontâneo", () => {
+    expect(j({ pediuParaContar: false, temaDoTurno: "emocional" }).acao).toBe("NENHUMA");
   });
 
   it("J10 multi-criança: o decisor não escolhe criança nenhuma", () => {
@@ -485,9 +433,9 @@ describe("I · sabotagens", () => {
     expect(destinoDoConvite("https://evil.com")).toBe("/kolo-vivo");
   });
 
-  it("REPETIR CONVITE", () => {
-    expect(SRC).toMatch(/if \(!e\.cooldownLiberado\) return nao/);
-    expect(decidirConviteDePerfil(e({ cooldownLiberado: false })).acao).toBe("NENHUMA");
+  it("CONVIDAR SEM PEDIDO EXPLÍCITO", () => {
+    expect(SRC).toContain('return nao("a família não pediu para completar informações")');
+    expect(decidirConviteDePerfil(e()).acao).toBe("NENHUMA");
   });
 
   it("TRATAR `null` COMO `neutra`", () => {

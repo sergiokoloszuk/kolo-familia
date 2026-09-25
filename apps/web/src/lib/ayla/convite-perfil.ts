@@ -1,5 +1,4 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { DecisaoDeLacuna } from "./lacuna-decisiva";
 
 /**
  * O ATALHO OPCIONAL PARA O KOLO VIVO — PEND-203.
@@ -12,50 +11,28 @@ import type { DecisaoDeLacuna } from "./lacuna-decisiva";
  * ⚠️ NÃO É UM SEGUNDO DECISOR DE LACUNA, e a diferença é estrutural. Quem
  * decide se existe lacuna pertinente ao tema é o Gate B
  * (`escolherLacunaDecisiva`), e quem decide se a pergunta vale a pena AGORA é o
- * Core, pela instrução que já está em `blocoDaLacuna`: *"só pergunte se a
- * resposta mudaria mesmo o que você vai sugerir"*. Este módulo não repete
- * nenhuma dessas duas decisões — ele LÊ o resultado das duas e escolhe entre
- * calar e oferecer um atalho.
+ * Core. Este módulo não converte nenhuma dessas decisões em convite: só uma
+ * solicitação explícita da família pode abrir o atalho.
  *
  * ── a tabela de verdade, e por que ela é exatamente esta ──────────────────
  *
- * | Gate B      | a Ayla perguntou? | saída          |
- * |-------------|-------------------|----------------|
- * | `NO_ASK`    | —                 | **NENHUMA**    |
- * | `ASK`       | sim               | **NENHUMA**    |
- * | `ASK`       | não               | **CONVIDAR**   |
+ * | A família pediu para contar/completar? | saída       |
+ * |----------------------------------------|-------------|
+ * | não                                    | **NENHUMA** |
+ * | sim, sem bloqueador                    | **CONVIDAR**|
  *
- * A primeira linha: sem lacuna pertinente ao tema, não há o que oferecer.
- *
- * A segunda é a mais importante, e é a guarda 7 do desenho: **ASK não vira
- * link**. Se a informação era decisiva, a pergunta de uma frase resolve melhor
- * que mandar a mãe para uma tela — e mandar as duas coisas no mesmo turno é o
- * interrogatório que isto existe para evitar.
- *
- * A terceira é o caso que faltava: havia lacuna do tema, a Ayla julgou que não
- * mudava a conduta, ajudou sem perguntar — e conhecer aquele domínio melhoraria
- * as próximas personalizações. É aqui, e só aqui, que o atalho faz sentido.
+ * ⚠️ O CAMINHO ESPONTÂNEO FOI REMOVIDO APÓS PROVA REAL EM 24/09/2026. Uma
+ * mãe pediu ajuda sobre uma transição difícil e, embora já tivesse recebido
+ * orientação suficiente, o Gate B anexou um link de Perfil que ela não pediu.
+ * O link ainda abriu no irmão errado porque a tela usa a criança ativa do
+ * cookie. Corrigir apenas o destino preservaria o erro de produto: naquele
+ * turno não deveria haver link algum. Lacuna interna não é autorização para
+ * interromper uma orientação com cadastro.
  *
  * ⚠️ A AJUDA NUNCA DEPENDE DO LINK. O convite é a última linha de uma resposta
  * que já está completa — o mesmo padrão que o pós-trial usa em produção desde
- * 18/08/2026, onde o cooldown governa SÓ O LINK e nunca a resposta. Quem não
- * clica recebeu a orientação inteira.
+ * 18/08/2026. Quem não clica recebeu a orientação inteira.
  */
-
-/**
- * A NATUREZA DO TURNO, do ponto de vista de "cabe oferecer algo aqui?".
- *
- * ⚠️ Não é um classificador novo: são estados que o orquestrador JÁ conhece
- * quando chega neste ponto — `estado-seguranca` diz se é crise, `desabafo.ts`
- * diz se é desabafo puro, `naturezaDoTurno` diz se é continuação curta. Este
- * tipo só dá nome ao que já foi decidido, para a guarda ser legível.
- */
-export type NaturezaParaConvite =
-  | "crise"
-  | "seguranca"
-  | "desabafo"
-  | "continuacao_curta"
-  | "normal";
 
 export type EntradaDoConvite = {
   /**
@@ -68,12 +45,10 @@ export type EntradaDoConvite = {
    * a Ayla respondeu *"pode me contar aqui mesmo na conversa"*, aceitando
    * receber uma informação por vez pelo WhatsApp.
    *
-   * Então o gatilho é o pedido explícito da mãe, e o mecanismo do Gate B fica
-   * como caminho SECUNDÁRIO.
+   * Então o gatilho é o pedido explícito da mãe. A prova real de 24/09 eliminou
+   * o antigo caminho secundário: orientação comum não oferece Perfil.
    */
   pediuParaContar: boolean;
-  /** A decisão do Gate B — hoje só alimenta o caminho secundário. */
-  decisaoLacuna: Pick<DecisaoDeLacuna, "decisao" | "escolhida" | "candidatasChaves"> | null;
   /**
    * O que o envelope do Core devolveu em `campo_investigado`. Não-nulo = a Ayla
    * perguntou algo NESTE turno, e aí o convite está proibido: pergunta + link
@@ -93,9 +68,6 @@ export type EntradaDoConvite = {
   segurancaAberta: boolean;
   /** `natureza_emocional` do decisor. `null` = "não sei", e bloqueia. */
   naturezaEmocional: "neutra" | "desabafo" | null;
-  /** `naturezaDoTurno` — `simples`/`continuacao` são conversa curta. */
-  naturezaDoTurno: string | null;
-  cooldownLiberado: boolean;
   dominiosJaEstruturados: readonly string[];
   /** Tema do turno, quando houver — orienta o domínio do destino. */
   temaDoTurno?: string | null;
@@ -107,15 +79,8 @@ export type SaidaDoConvite = {
   dominio: string | null;
   /** Por que — para o rastro e para a auditoria, nunca para o prompt. */
   motivo: string;
-  /**
-   * QUAL DOS DOIS CAMINHOS gerou o convite — PEND-203 Gate 2.
-   *
-   * ⚠️ SEPARADO NO RASTRO DE PROPÓSITO. O Gate 2C mediu que um dos caminhos
-   * ocorre e o outro não; sem distinguir os dois na telemetria, daqui a um mês
-   * ninguém consegue dizer qual deles gerou valor real — e a decisão de manter
-   * ou remover o secundário vira palpite.
-   */
-  origem: "pedido_explicito" | "lacuna_nao_perguntada" | null;
+  /** Convites futuros só podem nascer de pedido explícito. */
+  origem: "pedido_explicito" | null;
 };
 
 /** Domínios do Perfil Vivo que o convite pode oferecer. */
@@ -192,30 +157,9 @@ export function decidirConviteDePerfil(e: EntradaDoConvite): SaidaDoConvite {
     };
   }
 
-  // ── 3. as guardas de ritmo, que valem só para o caminho espontâneo ──────
-  if (e.naturezaDoTurno === "simples" || e.naturezaDoTurno === "continuacao") {
-    return nao("conversa curta — não se interrompe com link");
-  }
-  if (!e.cooldownLiberado) return nao("cooldown do convite ativo");
-
-  // ── 4. CAMINHO SECUNDÁRIO — a lacuna que o Gate B viu e não foi perguntada
-  //
-  // ⚠️ MEDIDO EM 0 DE 12 TURNOS REAIS (Gate 2C). Fica porque é correto e
-  // barato, não porque se espera volume dele. A arquitetura NÃO foi otimizada
-  // para este caso, e a telemetria o separa para que daqui a um mês se possa
-  // decidir mantê-lo ou removê-lo com número na mão.
-  if (!e.decisaoLacuna) return nao("Gate B não rodou neste turno");
-  if (e.decisaoLacuna.decisao === "NO_ASK") {
-    return nao("nenhuma lacuna pertinente ao tema, e a mãe não pediu");
-  }
-  const alvo = primeiroDominioOferecivel(e);
-  if (!alvo) return nao("nenhum domínio oferecível em aberto");
-  return {
-    acao: "CONVIDAR",
-    dominio: alvo,
-    motivo: "lacuna do tema não era decisiva agora",
-    origem: "lacuna_nao_perguntada",
-  };
+  // A Ayla pode reconhecer lacunas internamente; isso não transforma uma
+  // conversa de ajuda em convite para outra tela. Sem pedido explícito, cala.
+  return nao("a família não pediu para completar informações");
 }
 
 /**
@@ -230,20 +174,6 @@ function dominioDoPedido(e: EntradaDoConvite): string | null {
   const tema = (e.temaDoTurno ?? "").trim();
   if (tema && DOMINIOS_OFERECIVEIS.includes(tema) && !e.dominiosJaEstruturados.includes(tema)) {
     return tema;
-  }
-  return null;
-}
-
-function primeiroDominioOferecivel(e: EntradaDoConvite): string | null {
-  const daEscolhida = e.decisaoLacuna?.escolhida?.dominio ?? null;
-  const daCandidata = (e.decisaoLacuna?.candidatasChaves ?? [])
-    .map((c) => c.split(".")[0])
-    .find((d) => d);
-  const brutos = [daEscolhida, daCandidata].filter((d): d is string => Boolean(d));
-  for (const d of brutos) {
-    if (!DOMINIOS_OFERECIVEIS.includes(d)) continue;
-    if (e.dominiosJaEstruturados.includes(d)) continue;
-    return d;
   }
   return null;
 }

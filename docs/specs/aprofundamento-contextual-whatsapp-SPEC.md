@@ -3,7 +3,7 @@
 Nível de risco: **CRÍTICA** — altera a conversa de IA no canal principal e
 processa contexto comportamental de criança.
 
-Estado: **DESENHADA**
+Estado: **PUBLICADA COM FLAG DESLIGADA — TESTE REAL FALHOU EM 24/09/2026**
 
 ## 1. Problema e dono
 
@@ -79,11 +79,23 @@ registra oferta, escolha, resposta e fallback sem copiar fala sensível.
 | P1 Problema e dono | PASS | 2026-09-24 | — | missão e critério final da agência |
 | P2 Descoberta | PASS | 2026-09-24 | — | corpus acima + sete casos obrigatórios |
 | P3 Conversa mínima e dados | PASS | 2026-09-24 | — | ajuda primeiro; estado só por referência |
-| P4 Jornada e canais | PASS | 2026-09-24 | — | botão Z-API + fallback textual |
-| P5 Identidade, alvo e permissão | PASS | 2026-09-24 | — | família, criança e oferta validadas |
+| P4 Jornada e canais | FAIL | 2026-09-24 | `311570f` | Z-API aceitou a mensagem, mas o WhatsApp da QA não renderizou os reply buttons |
+| P5 Identidade, alvo e permissão | FAIL | 2026-09-24 | `311570f` | a oferta manual ficou sem membro; no turno seguinte um convite concorrente falou de Bento e abriu Mário |
 | P6 Continuidade | PASS | 2026-09-24 | — | origem inbound/outbound persistida |
-| P7 Quando dá errado | PASS | 2026-09-24 | — | fallback, expiração, idempotência e rollback |
-| P8 Prova e entrega | BLOQUEADO | — | — | depende de implementação, bancada e prova interna real |
+| P7 Quando dá errado | FAIL | 2026-09-24 | `311570f` | HTTP 200 do provedor foi tratado como oferta utilizável; não há prova de renderização no aparelho |
+| P8 Prova e entrega | BLOQUEADO | 2026-09-24 | `311570f` | rollback global executado; falta aceitar/verificar termos dos botões na Z-API e repetir a prova |
+
+### Prova real que reprovou o gate
+
+- oferta `93b4893a-047d-4ca8-99e2-4cc28ccb315b`;
+- mensagem do provedor `3EB04B465B6CF8B1637846`;
+- Z-API respondeu sucesso e a persistência ficou `oferecida`, mas a Karina viu
+  apenas o texto, sem ação clicável;
+- a oferta foi encerrada como `falhou`, com
+  `QA_BOTOES_NAO_RENDERIZADOS`, e a flag global voltou para `false`;
+- a documentação oficial da Z-API afirma que o recurso é instável e exige
+  aceite prévio dos termos de uso dos botões. O painel da conta ainda precisa
+  ser verificado antes de novo envio.
 
 ## 6. O que esta funcionalidade NÃO faz
 

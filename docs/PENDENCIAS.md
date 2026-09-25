@@ -9629,7 +9629,20 @@ publicacao.
 ### PEND-203
 **HELP + LINK — o atalho opcional para o Kolo Vivo (convite de Perfil)**
 Bloco: **B · Ayla** · Prioridade: **P2**
-STATUS: **EM PRODUCAO desde 2026-09-12 23:10 (SHA `0aa7562`, servido por `1163871`)** · Aberta em: 2026-09-11
+STATUS: **EM PRODUÇÃO; CORREÇÃO LOCAL AGUARDA PUBLICAÇÃO** · Aberta em: 2026-09-11
+
+**REGRESSÃO REAL — 24/09/2026.** Em uma orientação sobre transição inesperada
+de Bento, o caminho espontâneo `lacuna_nao_perguntada` anexou um link de Perfil
+que a família não pediu. A frase dizia Bento, mas `/kolo-vivo` abriu em Mário,
+porque a tela escolhe a criança ativa do cookie e o destino não transporta o
+membro do turno. O evento `convite_perfil` provou: `pediu_para_contar=false`,
+`origem=lacuna_nao_perguntada`, `membro_atipico_id` de Bento e domínio
+`emocional`.
+
+**CORREÇÃO LOCAL — 24/09/2026.** O caminho espontâneo foi removido. Lacuna
+interna não autoriza interromper orientação com cadastro; o link só pode sair
+quando a família pedir explicitamente para contar/completar informações. A
+reserva deixou de rodar em todo turno comum. Testes direcionados: 82/82.
 
 Ficha aberta em 14/09 com atraso: a frente andou seis commits (`9f0b7e3`,
 `5e222ee`, `f29b258`, `871ee89`, `a0587c1`, `0aa7562`) sem ficha aqui. O ID ja
@@ -9661,9 +9674,10 @@ porque nao houve nenhum pedido explicito na janela. A regra NAO foi alterada.
 [[pend-204]]. Corrigido em 14/09; **o convite corrigido ainda nao foi
 exercitado em producao**.
 
-**CRITERIO DE CONCLUSAO:** um convite real entregue com o destino certo
-(`/kolo-vivo`), mais evidencia de ao menos um turno com
-`pediu_para_contar=true` — sem isso o caminho principal segue sem prova.
+**CRITERIO DE CONCLUSAO:** correção publicada; uma orientação comum real termina
+sem link; e um pedido explícito real preserva a criança certa ou permanece no
+WhatsApp — sem isso o caminho principal segue sem prova em família
+multi-criança.
 
 **RELACOES.** [[pend-204]] (o destino descartado), [[pend-194]] (a Fase 2, que
 roda no mesmo turno).
@@ -9885,7 +9899,7 @@ WhatsApp, Perfil Vivo ou conversa.
 ### PEND-213
 **Aprofundamento contextual por botões no WhatsApp**
 Bloco: **B · Ayla** · Prioridade: **P1**
-STATUS: **IMPLEMENTADA LOCALMENTE — falta prova real e produção** · Aberta em: 2026-09-24
+STATUS: **TESTE REAL FALHOU — rollback global ativo (`flag=false`)** · Aberta em: 2026-09-24
 
 Hoje a Ayla ajuda por texto no WhatsApp, mas não oferece bifurcações clicáveis.
 O `whatsappSender` só conhece texto/documento e o webhook não lê
@@ -9914,6 +9928,22 @@ três BPs realmente enviadas ao modelo, incluindo BPs da Pós. Suíte: 4.050
 testes passaram, 7 foram pulados e os dois defeitos reproduzidos em `main`
 continuam cobertos por PEND-205/PEND-214; a terceira falha era permissão do
 sandbox e passou isoladamente (20/20). Typecheck e build de produção passaram.
+
+**EVIDÊNCIA REAL 24/09 — REPROVADA.** A oferta
+`93b4893a-047d-4ca8-99e2-4cc28ccb315b`, correlacionada ao par correto de
+mensagens, foi aceita pela Z-API (`3EB04B465B6CF8B1637846`) e persistida, mas o
+WhatsApp da QA mostrou somente o texto, sem botões clicáveis. A oferta foi
+marcada `falhou/QA_BOTOES_NAO_RENDERIZADOS`, um evento `warn` foi persistido e
+o rollback global foi executado; health confirmou
+`ayla_aprofundamento_whatsapp=false` no SHA `311570f`.
+
+A documentação oficial da Z-API registra instabilidade dos botões e exige
+aceite dos termos no painel. O contrato HTTP estava correto; `200 + messageId`
+prova apenas entrada na fila, não renderização. Antes de outro teste é
+obrigatório verificar o aceite na conta da instância. A oferta manual também
+revelou uma falha do harness: herdou `membro_atipico_id=null` do inbound em vez
+do membro resolvido da resposta. O fluxo normal usa `exp.membroId`; o próximo
+harness deve usar a mesma fonte.
 
 **RELAÇÕES:** `docs/specs/aprofundamento-contextual-whatsapp-SPEC.md`, PEND-208,
 PEND-210.

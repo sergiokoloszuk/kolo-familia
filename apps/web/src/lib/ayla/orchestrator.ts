@@ -139,7 +139,6 @@ import {
   decidirConviteDePerfil,
   destinoDoConvite,
   fraseDoConvite,
-  reservarConviteDePerfil,
   TIPO_CONVITE_PERFIL,
 } from "./convite-perfil";
 import {
@@ -3642,31 +3641,14 @@ async function processInboundInterno(
       try {
         const decisao = decidirConviteDePerfil({
           pediuParaContar: turnoClassificado.pediuParaContar,
-          decisaoLacuna: d,
           campoInvestigado,
           perguntaAberta: estadoDoTurno?.perguntaPendente.conhecido === "sim",
           segurancaAberta: seguranca.aberta,
           naturezaEmocional: turnoClassificado.naturezaEmocional,
-          naturezaDoTurno: exp.metrica.natureza,
-          // ⚠️ A RESERVA SÓ É PEDIDA QUANDO O PEDIDO FOI EXPLÍCITO OU QUANDO
-          // ela pode mudar a decisão — pedir reserva em todo turno gastaria
-          // duas consultas por conversa para nada.
-          cooldownLiberado: turnoClassificado.pediuParaContar
-            ? true
-            : await reservarConviteDePerfil(supabase, family.id),
           /**
-           * ⚠️ VAZIO, E ISSO É CORRETO — NÃO UM ATALHO. A guarda "não oferecer
-           * por campo já estruturado" é garantida por quem é dono dela:
-           *
-           *   - caminho SECUNDÁRIO: o Gate B já exclui da disputa todo campo
-           *     respondido, então uma `escolhida` existir significa que ela
-           *     está em aberto. Repetir a checagem aqui exigiria trazer o
-           *     `PerfilConsultavel` para este escopo — ele vive dentro de
-           *     `responderExperimental` — só para reconfirmar o que o gate já
-           *     afirmou.
-           *   - caminho PRINCIPAL: a mãe pediu para contar MAIS. Barrá-la
-           *     porque um campo daquele domínio já tem valor seria o oposto do
-           *     que ela pediu.
+           * ⚠️ VAZIO, E ISSO É CORRETO. O único caminho restante é a família
+           * pedir explicitamente para contar MAIS. Barrá-la porque aquele
+           * domínio já tem algum valor seria o oposto do que ela pediu.
            */
           dominiosJaEstruturados: [],
           temaDoTurno: temaAtivo,
