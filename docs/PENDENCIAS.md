@@ -9629,7 +9629,7 @@ publicacao.
 ### PEND-203
 **HELP + LINK — o atalho opcional para o Kolo Vivo (convite de Perfil)**
 Bloco: **B · Ayla** · Prioridade: **P2**
-STATUS: **EM PRODUÇÃO; CORREÇÃO LOCAL AGUARDA PUBLICAÇÃO** · Aberta em: 2026-09-11
+STATUS: **CORREÇÃO DO CONVITE ESPONTÂNEO EM PRODUÇÃO — SHA `44ce03a`** · Aberta em: 2026-09-11
 
 **REGRESSÃO REAL — 24/09/2026.** Em uma orientação sobre transição inesperada
 de Bento, o caminho espontâneo `lacuna_nao_perguntada` anexou um link de Perfil
@@ -9639,10 +9639,13 @@ membro do turno. O evento `convite_perfil` provou: `pediu_para_contar=false`,
 `origem=lacuna_nao_perguntada`, `membro_atipico_id` de Bento e domínio
 `emocional`.
 
-**CORREÇÃO LOCAL — 24/09/2026.** O caminho espontâneo foi removido. Lacuna
+**CORREÇÃO PUBLICADA — 25/09/2026, SHA `44ce03a`.** O caminho espontâneo foi removido. Lacuna
 interna não autoriza interromper orientação com cadastro; o link só pode sair
 quando a família pedir explicitamente para contar/completar informações. A
-reserva deixou de rodar em todo turno comum. Testes direcionados: 82/82.
+reserva deixou de rodar em todo turno comum. Testes afetados: 118/118;
+typecheck e build passaram; suíte completa: 4.047 passaram, 7 pulados e só
+PEND-205/PEND-214 falharam. Health confirmou SHA novo, banco saudável e a flag
+do aprofundamento desligada.
 
 Ficha aberta em 14/09 com atraso: a frente andou seis commits (`9f0b7e3`,
 `5e222ee`, `f29b258`, `871ee89`, `a0587c1`, `0aa7562`) sem ficha aqui. O ID ja
@@ -9899,7 +9902,7 @@ WhatsApp, Perfil Vivo ou conversa.
 ### PEND-213
 **Aprofundamento contextual por botões no WhatsApp**
 Bloco: **B · Ayla** · Prioridade: **P1**
-STATUS: **TESTE REAL FALHOU — rollback global ativo (`flag=false`)** · Aberta em: 2026-09-24
+STATUS: **TESTE REAL FALHOU — rollback global ativo (`flag=false`), produção em `44ce03a`** · Aberta em: 2026-09-24
 
 Hoje a Ayla ajuda por texto no WhatsApp, mas não oferece bifurcações clicáveis.
 O `whatsappSender` só conhece texto/documento e o webhook não lê
