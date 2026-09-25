@@ -4,6 +4,7 @@ import { posTrialAtivo, experimentalParaTodas } from "@/lib/ayla/experimental";
 import { extratorSombraLigado } from "@/lib/ayla/extrator-sombra";
 import { alvoDaEscritaDoExtrator } from "@/lib/ayla/extrator-escrita";
 import { aprofundamentoGlobalLigado } from "@/lib/ayla/aprofundamento-tipos";
+import { planosWhatsappLigados } from "@/lib/ayla/plano-disponibilidade";
 import { lerPlanosNoStripe, PLANOS } from "@/lib/billing/planos";
 
 /**
@@ -120,6 +121,7 @@ export async function GET() {
     ayla_pos_trial: posTrialAtivo(),
     ayla_experimental_todas: experimentalParaTodas(),
     ayla_aprofundamento_whatsapp: aprofundamentoGlobalLigado(),
+    ayla_planos_whatsapp: planosWhatsappLigados(),
     /**
      * A SOMBRA DO EXTRATOR UNIFICADO — PEND-194, 10/09/2026.
      *

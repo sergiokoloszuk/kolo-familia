@@ -182,6 +182,7 @@ import {
   objetivoHistoriaDoFallback,
   type EscolhaObjetivoHistoria,
 } from "./historia-whatsapp";
+import { planosWhatsappLigados } from "./plano-disponibilidade";
 
 /**
  * Orchestrator da Ayla — PRD §12.4. Os dois pontos de entrada:
@@ -498,6 +499,9 @@ export async function sendPlanoSeguimento(
   plano: { id: string; tema: string | null; membro_atipico_id: string | null },
   agora: Date = new Date(),
 ): Promise<EnvioResultado> {
+  if (!planosWhatsappLigados()) {
+    return { enviada: false, motivo: "Planos no WhatsApp estão suspensos." };
+  }
   const podeRes = await podeEnviarProativa(
     supabase,
     { family_account_id: familyAccountId, agora },
@@ -624,6 +628,9 @@ export async function sendRecuperacaoPlano(
   plano: { id: string; tema: string | null; membro_atipico_id: string | null },
   agora: Date = new Date(),
 ): Promise<EnvioResultado> {
+  if (!planosWhatsappLigados()) {
+    return { enviada: false, motivo: "Planos no WhatsApp estão suspensos." };
+  }
   const podeRes = await podeEnviarProativa(
     supabase,
     { family_account_id: familyAccountId, agora },
@@ -751,6 +758,9 @@ export async function sendOfertaFimDeSemana(
   familyAccountId: string,
   agora: Date = new Date(),
 ): Promise<EnvioResultado> {
+  if (!planosWhatsappLigados()) {
+    return { enviada: false, motivo: "Planos no WhatsApp estão suspensos." };
+  }
   const podeRes = await podeEnviarProativa(
     supabase,
     { family_account_id: familyAccountId, agora },
@@ -805,6 +815,7 @@ async function ofertaFimDeSemanaPendente(
   familyId: string,
   agora: Date,
 ): Promise<{ membroId: string | null } | null> {
+  if (!planosWhatsappLigados()) return null;
   const limite = new Date(agora.getTime() - 48 * 60 * 60 * 1000);
   const { data: ofertas } = await supabase
     .from("ayla_messages")
@@ -4817,7 +4828,7 @@ async function processInboundInterno(
   // mão, colou o do Relatório pra professora. Quem entrega o Plano é a ponte,
   // com o link de /planos/{id}. De quebra, param de nascer 5 tokens por turno
   // que ninguém vai usar.
-  const pedidoDePlano = pedeUmPlano(inbound.texto);
+  const pedidoDePlano = planosWhatsappLigados() && pedeUmPlano(inbound.texto);
   const ofereceLudico = ehCrianca && !pedidoDePlano;
   const [
     koloVivoResumo,
@@ -5048,6 +5059,7 @@ async function ponteDePlano(
     aoEntregar?: (planoId: string) => void;
   },
 ): Promise<string | null> {
+  if (!planosWhatsappLigados()) return null;
   const querPlano =
     args.querPlano ??
     (pedeUmPlano(args.mensagem) ||
@@ -5102,16 +5114,17 @@ async function enviarRespostaEmChunks(
   // A pessoa pediu um plano? Então a Ayla NÃO escreve o plano no chat — dá uma
   // resposta curta e o sistema entrega o plano (PDF + link). Vale tanto pro pedido
   // EXPLÍCITO quanto pro "sim" curto logo depois de a Ayla OFERECER um plano (1c).
-  const querPlano =
-    pedeUmPlano(args.params.mensagem) ||
-    // ⚠️ Mesma troca do outro ponto de uso: quem responde "há oferta pendente?"
-    // deixou de ser o texto da própria entrega. Ver o caso Matheo.
-    (ehAfirmacaoCurta(args.params.mensagem) &&
-      (await ofertaDePlanoPendente(
-        supabase,
-        args.family_account_id,
-        args.membro_atipico_id,
-      )));
+  const querPlano = planosWhatsappLigados()
+    ? pedeUmPlano(args.params.mensagem) ||
+      // ⚠️ Mesma troca do outro ponto de uso: quem responde "há oferta pendente?"
+      // deixou de ser o texto da própria entrega. Ver o caso Matheo.
+      (ehAfirmacaoCurta(args.params.mensagem) &&
+        (await ofertaDePlanoPendente(
+          supabase,
+          args.family_account_id,
+          args.membro_atipico_id,
+        )))
+    : false;
   args.params.querPlano = querPlano;
 
   // ⚠️ O BALÃO DE ESPERA FOI DESLIGADO em 03/08/2026.

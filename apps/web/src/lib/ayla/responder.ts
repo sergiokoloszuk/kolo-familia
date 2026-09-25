@@ -65,6 +65,10 @@ import {
   A_CRIANCA_ANTES_DO_ROTULO,
 } from "@/lib/conducao/formas";
 import { FATOS_COMERCIAIS } from "@/lib/billing/fatos-comerciais";
+import {
+  BLOCO_PLANO_WHATSAPP_SUSPENSO,
+  planosWhatsappLigados,
+} from "./plano-disponibilidade";
 
 /**
  * Tracking opcional pra logar a chamada em api_calls. Quando ausente, a
@@ -652,7 +656,9 @@ HISTÓRIA é um destes casos: quem monta é ela, no app, e é rápido — você 
     );
   }
 
-  if (params.querPlano) {
+  if (!planosWhatsappLigados()) {
+    notas.push(BLOCO_PLANO_WHATSAPP_SUSPENSO);
+  } else if (params.querPlano) {
     notas.push(
       `A pessoa está PEDINDO um plano (um roteiro / passo a passo). MUITO IMPORTANTE: NÃO escreva o plano aqui no WhatsApp — nada de passos numerados, listas longas, seções ou plano completo no chat. Responda em 1 ou 2 frases curtas, com carinho, mostrando que entendeu o que ela quer trabalhar. No máximo UMA dica curtinha.
 QUEM ENTREGA O PLANO NÃO É VOCÊ, É O SISTEMA — logo depois desta sua fala, e numa mensagem própria, com o PDF e o link certo. Então nesta mensagem: NÃO mande link nenhum, NÃO diga que o PDF está vindo, NÃO diga que já montou, NÃO dê caminho de menu no app. Caso real (03/08/2026): você anunciou o PDF e colou um link que abria o Relatório pra professora — a mãe recebeu duas entregas, e a primeira era de outro recurso. Se você anunciar, ela vai procurar algo que ainda não existe.`,

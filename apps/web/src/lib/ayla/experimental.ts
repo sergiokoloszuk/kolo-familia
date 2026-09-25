@@ -108,6 +108,10 @@ import {
   type EscolhaObjetivoHistoria,
 } from "./historia-whatsapp";
 import {
+  BLOCO_PLANO_WHATSAPP_SUSPENSO,
+  planosWhatsappLigados,
+} from "./plano-disponibilidade";
+import {
   blocoDaJornada,
   lerEvidenciasJornada,
   EVIDENCIAS_VAZIAS,
@@ -1335,6 +1339,7 @@ export async function responderExperimental(
         !posTrial && params.entregarHistoriaNoWhatsapp
           ? blocoEntregaHistoriaWhatsApp(params.objetivoHistoria)
           : "",
+        planosWhatsappLigados() ? "" : BLOCO_PLANO_WHATSAPP_SUSPENSO,
         conducaoPosTrial,
         comercial,
         // ⚠️ ANTES DO FORMATO, E O MOTIVO É UMA REGRA QUE JÁ EXISTIA — PEND-187B.

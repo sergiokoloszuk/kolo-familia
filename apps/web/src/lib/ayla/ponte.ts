@@ -7,6 +7,7 @@ import { logEvent, logServerError } from "@/lib/log";
 import { criarLinkAcesso } from "@/lib/auth/acesso-link";
 import { avaliarProntidaoParaPlano } from "./prontidao-plano";
 import { semOutrosMembros } from "./membro-escopo";
+import { planosWhatsappLigados } from "./plano-disponibilidade";
 
 /**
  * Num pedido de plano EXPLÍCITO ("me traz um plano"), o desafio de verdade está
@@ -258,6 +259,7 @@ export async function montarPonteWhatsApp(
     aoEntregar?: (planoId: string) => void;
   },
 ): Promise<string | null> {
+  if (!planosWhatsappLigados()) return null;
   const { familyId, membroAtipicoId, mensagem, phoneE164, forcar } = params;
 
   try {
@@ -419,6 +421,7 @@ export async function montarPlanoFimDeSemana(
     phoneE164: string;
   },
 ): Promise<string | null> {
+  if (!planosWhatsappLigados()) return null;
   try {
     const desafio =
       params.contexto.trim() ||
@@ -480,6 +483,7 @@ export async function montarPlanoDoRelato(
     phoneE164: string;
   },
 ): Promise<string | null> {
+  if (!planosWhatsappLigados()) return null;
   try {
     const desafio = params.contexto.trim();
     if (!desafio) return null;

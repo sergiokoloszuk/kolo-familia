@@ -10112,7 +10112,42 @@ aplicada.
 
 ---
 
-**Proximo ID livre: PEND-217. *(PEND-209 a PEND-211 já estão reivindicadas no working tree principal por outra frente; 024 e 025 reservadas por frentes ainda nao publicadas; PEND-202 reivindicada em commit e ainda sem ficha; 0076 e numero de MIGRACAO reservado — ver PEND-121.)***
+### PEND-217
+**Reavaliar se Plano deve continuar existindo como artefato da Ayla**
+Bloco: **B · Ayla / Produto** · Prioridade: **P1**
+STATUS: **SUSPENSÃO IMPLEMENTADA LOCALMENTE — decisão de produto pendente** · Aberta em: 2026-09-25
+
+Por decisão da Karina, a entrega de Plano pelo WhatsApp deve ficar suspensa
+enquanto o produto verifica se o artefato ainda melhora a experiência ou se a
+mesma necessidade é melhor atendida por orientação conversacional,
+brincadeiras, histórias e rotinas visuais. A suspensão não apaga Planos já
+criados nem remove a criação manual no app.
+
+**IMPLEMENTAÇÃO DA SUSPENSÃO.** A chave global reversível
+`AYLA_PLANOS_WHATSAPP=off` impede oferta, promessa, geração, PDF, link,
+recuperação, follow-up e roteiro de fim de semana baseados em Plano. Um pedido
+da família continua recebendo ajuda prática no próprio turno. O health expõe o
+valor efetivo em `flags.ayla_planos_whatsapp`; remover a variável ou configurá-la
+como `on` restaura o comportamento histórico no próximo deploy.
+
+**EVIDÊNCIA LOCAL (2026-09-25).** Os testes focados passaram (`99/99`), o
+typecheck passou e o build de produção concluiu as `106` rotas. A regressão
+completa terminou com `4.078` testes aprovados e `7` ignorados; as únicas duas
+falhas são as já registradas em PEND-205 (`perfil-marcos.test.ts`) e PEND-214
+(`provider.test.ts`), reproduzidas sem relação com esta mudança.
+
+**CRITÉRIO DE CONCLUSÃO:** analisar uso real, abertura e retorno dos Planos;
+comparar o valor percebido com respostas aprofundadas, brincadeiras, histórias
+e rotinas; decidir documentadamente entre manter, redesenhar ou remover o
+artefato; só então religar ou retirar definitivamente seus caminhos. Até essa
+decisão, nenhuma conversa ou proativa pode voltar a oferecer Plano.
+
+**RELAÇÕES:** PEND-213 (aprofundamento), PEND-215 (latência) e PEND-216
+(histórias entregues no WhatsApp).
+
+---
+
+**Proximo ID livre: PEND-218. *(PEND-209 a PEND-211 já estão reivindicadas no working tree principal por outra frente; 024 e 025 reservadas por frentes ainda nao publicadas; PEND-202 reivindicada em commit e ainda sem ficha; 0076 e numero de MIGRACAO reservado — ver PEND-121.)***
 
 > Conferir contra `origin/main`, não contra o seu branch. Dois branches podem
 > reivindicar o mesmo número — o conflito de merge nesta linha é o alarme.

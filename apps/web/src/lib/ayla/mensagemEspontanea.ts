@@ -13,6 +13,7 @@ import { primeiroNome } from "@/lib/nome";
 import { gerarMagicLink } from "./ponte";
 import { carregarCadenciaMap } from "@/lib/crm/ayla-cadencia";
 import { primeiroNomeConfiavel } from "./crianca-nome";
+import { planosWhatsappLigados } from "./plano-disponibilidade";
 
 const MS_DIA = 86_400_000;
 
@@ -357,7 +358,7 @@ EXEMPLOS DE TOM (não copie literal, só inspira):
 Gere UMA nova mensagem.`;
 }
 
-function promptEnsinarValor(ctx: Context): string {
+function promptEnsinarValor(ctx: Context, planosLigados: boolean): string {
   return `INTENÇÃO: ensinar_valor
 
 CONTEXTO:
@@ -368,7 +369,11 @@ TAREFA:
 Muita gente no começo não sabe PRA QUÊ contar o dia a dia. Explique, do jeito de uma amiga (não tutorial, não lista fria), que quanto mais ${ctx.nomeMae} te conta do dia a dia, mais você consegue ajudar de verdade:
 - montar um panorama da EVOLUÇÃO ${ctx.deNomeMembro} ao longo do tempo — que dá pra mostrar pra escola ou terapeuta;
 - personalizar as ideias pra ${ctx.nomeMembro};
-- e montar PLANOS pra um desafio específico.
+${
+  planosLigados
+    ? `- e montar PLANOS pra um desafio específico.`
+    : `- e transformar o que você conta em orientações, brincadeiras ou histórias que façam sentido pra ${ctx.nomeMembro}.`
+}
 
 Termine convidando de leve a começar por UMA coisa de hoje (uma conquista ou um desafio). NÃO soe manual; é conversa. NÃO use "funcionalidade", "plataforma", "recurso", "banco de dados".
 
@@ -396,6 +401,7 @@ Gere UMA nova mensagem.`;
 function promptAprofundarTema(
   ctx: Context,
   tema: { dominio: string; label: string; texto: string },
+  planosLigados: boolean,
 ): string {
   const usaInteresses = ctx.interesses.length
     ? ` A ${ctx.nomeMembro} gosta de: ${ctx.interesses.join(", ")} — dá pra usar isso pra deixar mais leve.`
@@ -408,7 +414,11 @@ CONTEXTO:
 - Tema que ${ctx.nomeMae} JÁ indicou como desafiador: "${tema.label}"${tema.texto ? ` — ela contou: "${tema.texto.slice(0, 200)}"` : ""}.${usaInteresses}
 
 TAREFA:
-Retome esse tema com carinho: pergunte como TEM SIDO ultimamente (de forma atemporal). Convide a contar um pouco mais — o que costuma acontecer, o que já tentaram — e ofereça montar um PLANO prático pra isso${ctx.interesses.length ? ", usando o que a criança ama" : ""}. Deixe a opção de ÁUDIO.
+Retome esse tema com carinho: pergunte como TEM SIDO ultimamente (de forma atemporal). Convide a contar um pouco mais — o que costuma acontecer e o que já tentaram.${
+  planosLigados
+    ? ` Ofereça montar um PLANO prático pra isso${ctx.interesses.length ? ", usando o que a criança ama" : ""}.`
+    : ` Diga que, com isso, você consegue trazer uma orientação prática já na conversa${ctx.interesses.length ? ", usando o que a criança ama" : ""}.`
+} Deixe a opção de ÁUDIO.
 
 Regras:
 - Diga "desafiador" / "difícil" — NUNCA "pega bastante aí".
@@ -440,14 +450,22 @@ Regras:
 Gere UMA nova mensagem.`;
 }
 
-function promptMenuDia(ctx: Context, links: { rotina: string | null; historia: string | null }): string {
+function promptMenuDia(
+  ctx: Context,
+  links: { rotina: string | null; historia: string | null },
+  planosLigados: boolean,
+): string {
   const opcoes = ctx.ehCrianca
     ? `1. Ajuda pra uma SITUAÇÃO específica (um desafio de agora)
 2. Montar uma ROTINA VISUAL — dá previsibilidade e segurança nas transições do dia${links.rotina ? ` (abre direto: ${links.rotina})` : ""}
 3. Uma HISTÓRIA com ${ctx.nomeMembro} de protagonista, pra ajudar num desafio${links.historia ? ` (abre direto na criação: ${links.historia})` : ""}
 Ou só CONTAR como foi o dia — pode ser ÁUDIO`
-    : `1. Ajuda pra uma SITUAÇÃO específica (um desafio de agora)
+    : planosLigados
+      ? `1. Ajuda pra uma SITUAÇÃO específica (um desafio de agora)
 2. Montar um PLANO pra um desafio atual
+Ou só CONTAR como foi o dia — pode ser ÁUDIO`
+      : `1. Ajuda pra uma SITUAÇÃO específica (um desafio de agora)
+2. Ideias práticas para uma HABILIDADE que quer desenvolver
 Ou só CONTAR como foi o dia — pode ser ÁUDIO`;
 
   return `INTENÇÃO: menu_do_dia
@@ -529,6 +547,17 @@ export async function gerarMensagemEspontanea(
     temTemaComInfo: ctx.temasComInfo.length > 0,
     temGapExplorar: ctx.ehCrianca && ctx.temasSemInfo.length > 0,
   });
+  const planosLigados = planosWhatsappLigados();
+  if (
+    !planosLigados &&
+    (intent === "convite_plano" || intent === "feedback_plano")
+  ) {
+    intent = ctx.temasComInfo.length
+      ? "aprofundar_tema"
+      : ctx.ehCrianca && ctx.temasSemInfo.length
+        ? "explorar_temas"
+        : "acolhimento";
+  }
   // Situação desligada por você na Configuração → cai no acolhimento (sempre on).
   if (cadenciaMap.get(intent)?.ativo === false) intent = "acolhimento";
 
@@ -538,8 +567,8 @@ export async function gerarMensagemEspontanea(
   if (intent === "completar_perfil") {
     const gap = pickGap(seed, ctx.gapsAbertos);
     if (!gap) {
-      intent = "convite_plano";
-      userPrompt = promptConvitePlano(ctx);
+      intent = planosLigados ? "convite_plano" : "acolhimento";
+      userPrompt = planosLigados ? promptConvitePlano(ctx) : promptAcolhimento(ctx);
     } else {
       userPrompt = promptCompletarPerfil(ctx, gap);
     }
@@ -549,7 +578,7 @@ export async function gerarMensagemEspontanea(
   } else if (intent === "convite_plano") {
     userPrompt = promptConvitePlano(ctx);
   } else if (intent === "ensinar_valor") {
-    userPrompt = promptEnsinarValor(ctx);
+    userPrompt = promptEnsinarValor(ctx, planosLigados);
   } else if (intent === "feedback_plano") {
     userPrompt = promptFeedbackPlano(ctx);
   } else if (intent === "menu_do_dia") {
@@ -559,12 +588,16 @@ export async function gerarMensagemEspontanea(
           gerarMagicLink(supabase, { familyId: params.familyId, next: "/historias/criar" }),
         ])
       : [null, null];
-    userPrompt = promptMenuDia(ctx, { rotina, historia });
+    userPrompt = promptMenuDia(ctx, { rotina, historia }, planosLigados);
   } else if (intent === "aprofundar_tema") {
     const tema = ctx.temasComInfo.length
       ? ctx.temasComInfo[hashSeed(`${seed}-tema`) % ctx.temasComInfo.length]
       : null;
-    userPrompt = tema ? promptAprofundarTema(ctx, tema) : promptConvitePlano(ctx);
+    userPrompt = tema
+      ? promptAprofundarTema(ctx, tema, planosLigados)
+      : planosLigados
+        ? promptConvitePlano(ctx)
+        : promptAcolhimento(ctx);
   } else if (intent === "explorar_temas") {
     const dom = ctx.temasSemInfo.length
       ? ctx.temasSemInfo[hashSeed(`${seed}-explorar`) % ctx.temasSemInfo.length]

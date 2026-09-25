@@ -53,7 +53,9 @@ describe("o desafio é o pedido de agora", () => {
 
 describe("o turno reativo não compete com a ponte", () => {
   it("pedido de plano não recebe os links do Lúdico", () => {
-    expect(ORCH).toMatch(/const pedidoDePlano = pedeUmPlano\(inbound\.texto\)/);
+    expect(ORCH).toMatch(
+      /const pedidoDePlano = planosWhatsappLigados\(\) && pedeUmPlano\(inbound\.texto\)/,
+    );
     expect(ORCH).toMatch(/const ofereceLudico = ehCrianca && !pedidoDePlano/);
     expect(ORCH).toMatch(/const linksLudico = ofereceLudico/);
   });

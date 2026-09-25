@@ -109,15 +109,19 @@ function doisIrmaos() {
 }
 
 const ENV = process.env.AYLA_EXPERIMENTAL_FAMILY_IDS;
+const ENV_PLANOS = process.env.AYLA_PLANOS_WHATSAPP;
 beforeEach(() => {
   registros.length = 0;
   chamadasPonte.length = 0;
   ponteRef.real = false;
   ponteRef.resposta = NUDGE;
+  delete process.env.AYLA_PLANOS_WHATSAPP;
 });
 afterEach(() => {
   if (ENV === undefined) delete process.env.AYLA_EXPERIMENTAL_FAMILY_IDS;
   else process.env.AYLA_EXPERIMENTAL_FAMILY_IDS = ENV;
+  if (ENV_PLANOS === undefined) delete process.env.AYLA_PLANOS_WHATSAPP;
+  else process.env.AYLA_PLANOS_WHATSAPP = ENV_PLANOS;
 });
 
 /** As saídas gravadas desta família — o que sobrou depois do turno. */
@@ -231,6 +235,24 @@ describe("O CAMINHO NOVO ENTREGA PLANO", () => {
 });
 
 describe("O QUE A PONTE NÃO PODE FAZER", () => {
+  it("a chave global suspende a entrega sem silenciar a resposta principal", async () => {
+    const mundo = criancaEscolar();
+    mundoRef.atual = mundo;
+    mundoRef.alvo = mundo.membros["Daniel"];
+    process.env.AYLA_EXPERIMENTAL_FAMILY_IDS = mundo.familyId;
+    process.env.AYLA_PLANOS_WHATSAPP = "off";
+
+    await processInbound(
+      mundo.db.cliente(),
+      inboundDe(mundo, "Me manda um plano pra ajudar o Daniel com a hora de dormir"),
+    );
+    await esperarPersistencia();
+
+    expect(chamadasPonte).toHaveLength(0);
+    expect(mundo.enviadas.some((e) => e.texto.includes("[resposta da Ayla experimental]"))).toBe(true);
+    expect(mundo.enviadas.some((e) => e.texto.includes("/planos/"))).toBe(false);
+  }, 30000);
+
   it('5. "sim" curto sem oferta recente NÃO vira plano forçado', async () => {
     const mundo = criancaEscolar();
     mundoRef.atual = mundo;
