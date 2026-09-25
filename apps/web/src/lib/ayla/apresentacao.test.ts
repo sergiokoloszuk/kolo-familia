@@ -47,6 +47,11 @@ describe("CONVERTE — o que o WhatsApp não renderiza vira o que ele renderiza"
     expect(paraWhatsApp("* arroz\n* feijão")).toBe("• arroz\n• feijão");
   });
 
+  it("preserva emojis usados como marcadores e o respiro entre blocos", () => {
+    const t = "Uma pista simples.\n\n🧩 Avise antes.\n🗣️ Use poucas palavras.\n👀 Observe se ele se aproxima.";
+    expect(paraWhatsApp(t)).toBe(t);
+  });
+
   it("negrito sublinhado e triplo também", () => {
     expect(paraWhatsApp("__assim__ e ***assim***")).toBe("*assim* e *assim*");
   });

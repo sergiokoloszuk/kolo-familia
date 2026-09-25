@@ -75,6 +75,15 @@ describe("PEND-213 · portão editorial", () => {
     expect(crencas).toMatch(/falar E agir/);
   });
 
+  it("os três aprofundamentos respiram no WhatsApp sem virar relatório", () => {
+    for (const { receita } of Object.values(APROFUNDAMENTOS)) {
+      expect(receita).toMatch(/parágrafos curtos e espaço entre ideias/i);
+      expect(receita).toMatch(/2–4 passos, materiais, falas ou opções paralelas/i);
+      expect(receita).toMatch(/• ou um emoji funcional relacionado ao conteúdo/i);
+      expect(receita).toMatch(/Não transforme a resposta em relatório/i);
+    }
+  });
+
   it("não confunde frase pronta interrogativa com pergunta à família", () => {
     expect(respostaPedeRetornoDaFamilia('Diga: “Posso brincar?” Depois observe por dois minutos.')).toBe(false);
     expect(respostaPedeRetornoDaFamilia("Isso também acontece em lugares tranquilos?")).toBe(true);

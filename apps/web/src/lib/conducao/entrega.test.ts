@@ -287,8 +287,9 @@ describe("formas de entrega", () => {
     expect(wa).toMatch(/Se parecer rótulo de seção/);
   });
 
-  it("segura o emoji", () => {
-    expect(wa).toMatch(/No máximo um emoji/);
+  it("emoji pode marcar lista curta, mas não vira decoração", () => {
+    expect(wa).toMatch(/Fora de uma lista curta/);
+    expect(wa).toMatch(/use no máximo um emoji/);
   });
 
   it("o tema ativo prioriza o perfil sem travar o assunto", () => {

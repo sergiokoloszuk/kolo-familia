@@ -13,6 +13,13 @@ export { aprofundamentoGlobalLigado } from "./aprofundamento-tipos";
 
 const RAMOS = new Set<string>(RAMOS_APROFUNDAMENTO);
 
+const APRESENTACAO_APROFUNDAMENTO_WHATSAPP = `Apresente como conversa de
+WhatsApp fácil de varrer no celular: parágrafos curtos e espaço entre ideias.
+Quando houver 2–4 passos, materiais, falas ou opções paralelas, use uma linha
+por item com • ou um emoji funcional relacionado ao conteúdo, no máximo um por
+item. Destaque no máximo uma frase realmente importante.
+Não transforme a resposta em relatório, checklist automático ou bloco corrido.`;
+
 export const APROFUNDAMENTOS: Record<
   RamoAprofundamento,
   { label: string; outputType: string; receita: string }
@@ -36,7 +43,9 @@ Entregue uma orientação prática e personalizada, não uma aula. Quando couber
 
 Não reabra a investigação antes de ajudar. Selecione o próximo passo de maior
 valor para esta criança. Prefira 120–180 palavras; ultrapasse apenas se uma
-informação indispensável não couber. Evite palavras de alarme em casos comuns.`,
+informação indispensável não couber. Evite palavras de alarme em casos comuns.
+
+${APRESENTACAO_APROFUNDAMENTO_WHATSAPP}`,
   },
   aprofundar_brincar: {
     label: "Brincar / passear",
@@ -64,7 +73,9 @@ Respeite comunicação, sensibilidades, habilidades, dificuldades, rotina,
 pré-requisitos e o que já funcionou. Não faça pergunta antes de entregar.
 Nunca ignore, atrase ou teste um sinal de “não”, “para”, recuo ou desconforto;
 aumentar o desafio significa manter segurança e previsibilidade, não provocar.
-Prefira 150–220 palavras e elimine introduções, separadores e repetições.`,
+Prefira 150–220 palavras e elimine introduções, separadores e repetições.
+
+${APRESENTACAO_APROFUNDAMENTO_WHATSAPP}`,
   },
   aprofundar_crencas: {
     label: "Crenças + falas",
@@ -90,7 +101,9 @@ estável, menor velocidade e regulação antes de ensinar.
 Não diagnostique, não atribua intenção e não afirme que a mãe pensa algo sem
 evidência. Não faça pergunta. Entregue somente CRIANÇA, ADULTO e uma ação curta
 para testar; frases à criança também devem ser afirmativas, sem interrogação.
-Prefira 130–190 palavras. A escolha precisa gerar valor novo.`,
+Prefira 130–190 palavras. A escolha precisa gerar valor novo.
+
+${APRESENTACAO_APROFUNDAMENTO_WHATSAPP}`,
   },
 };
 

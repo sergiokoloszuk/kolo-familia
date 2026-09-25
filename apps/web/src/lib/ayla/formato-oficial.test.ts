@@ -54,15 +54,18 @@ describe("A · a regra de formato chegou ao caminho OFICIAL", () => {
     expect(itens[0]).toBe("core.conteudo");
   });
 
-  it("3. a proibição cobre o que o canal NÃO converte", () => {
+  it("3. o formato proíbe sintaxe crua, mas permite bullets legíveis", () => {
     // ⚠️ A REGRA MUDOU EM 05/09/2026, e este guarda mudou junto — mas não
     // afrouxou. O que era "sem markdown" virou uma lista do que o WhatsApp
-    // realmente não renderiza. Títulos, citações e listas continuam proibidos
-    // porque `paraWhatsApp` NÃO os converte para nada.
+    // realmente não renderiza. Títulos e citações continuam proibidos;
+    // bullets simples são texto nativo e ajudam a leitura no celular.
     expect(FORMATO_WHATSAPP).toContain("##");
-    expect(FORMATO_WHATSAPP).toMatch(/sem títulos/i);
-    expect(FORMATO_WHATSAPP).toMatch(/sem citações/i);
-    expect(FORMATO_WHATSAPP).toMatch(/sem listas com - ou •/i);
+    expect(FORMATO_WHATSAPP).toMatch(/sem títulos \(##\), citações \(>\)/i);
+    expect(FORMATO_WHATSAPP).toMatch(/RESPIRO/);
+    expect(FORMATO_WHATSAPP).toMatch(/2–4 passos ou opções/);
+    expect(FORMATO_WHATSAPP).toMatch(/• ou 1 emoji funcional/);
+    expect(FORMATO_WHATSAPP).toMatch(/Não faça bullet único/);
+    expect(FORMATO_WHATSAPP).not.toMatch(/sem listas com - ou •/i);
   });
 
   it("3b. MORDE: negrito só é liberado porque o envio normaliza a marcação", () => {
@@ -71,7 +74,7 @@ describe("A · a regra de formato chegou ao caminho OFICIAL", () => {
     // é exatamente o defeito medido em 65,2% das respostas após o rollout de
     // 17/08. Se alguém remover `paraWhatsApp` de `enviarTexto`, este teste cai
     // e a regra do prompt precisa voltar atrás no mesmo commit.
-    expect(FORMATO_WHATSAPP).toMatch(/NEGRITO é permitido/);
+    expect(FORMATO_WHATSAPP).toMatch(/Negrito só na ação, frase pronta ou sinal importante/);
     const sender = readFileSync(
       resolve(process.cwd(), "src/lib/ayla/whatsappSender.ts"),
       "utf8",
@@ -352,7 +355,9 @@ describe("H · o BLOCO DE ENTREGA ficou completo (PEND-144, itens 5 e 6)", () =>
     // ⚠️ SEM REGRESSÃO DE CACHE: o prefixo cacheável do `system` já terminava no
     // primeiro elemento (`core.conteudo`), porque `bloco` — que varia a cada
     // turno — vem logo depois. Crescer o item 8 não move esse limite.
-    expect(conversa).toBeLessThan(2600);
+    // +uma regra curta de legibilidade, sem transformar o formato num segundo
+    // prompt: continua abaixo de 2.700 caracteres (~772 tokens).
+    expect(conversa).toBeLessThan(2700);
   });
 });
 
