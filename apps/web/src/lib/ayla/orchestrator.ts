@@ -172,8 +172,15 @@ import {
   type RamoAprofundamento,
 } from "./aprofundamento";
 import {
+  OBJETIVOS_HISTORIA,
+  OBJETIVO_ESCOLHA_AYLA,
   detectarEntregaHistoria,
   guiaHistoriaNoLudico,
+  idDoBotaoObjetivoHistoria,
+  lerIdDoBotaoObjetivoHistoria,
+  objetivoDaHistoriaExplicito,
+  objetivoHistoriaDoFallback,
+  type EscolhaObjetivoHistoria,
 } from "./historia-whatsapp";
 
 /**
@@ -1914,6 +1921,304 @@ export async function processInbound(
   }
 }
 
+type OfertaObjetivoHistoriaReivindicada = {
+  oferta_id: string;
+  membro_atipico_id: string | null;
+  source_inbound_message_id: string;
+  opcoes: string[];
+  skills: string[];
+  skills_avaliadas: boolean;
+  criada_em: string;
+};
+
+async function atualizarOfertaObjetivoHistoria(
+  supabase: SupabaseClient,
+  ofertaId: string,
+  patch: Record<string, unknown>,
+  statusEsperado?: string,
+): Promise<boolean> {
+  let q = supabase
+    .from("ayla_historia_objetivo_ofertas")
+    .update({ ...patch, updated_at: new Date().toISOString() })
+    .eq("id", ofertaId);
+  if (statusEsperado) q = q.eq("status", statusEsperado);
+  const { data, error } = await q.select("id");
+  if (error) throw new Error(`Falha ao atualizar objetivo da história: ${error.message}`);
+  return Boolean(data?.length);
+}
+
+async function criarOfertaObjetivoHistoria(
+  supabase: SupabaseClient,
+  params: {
+    familyId: string;
+    membroId: string | null;
+    sourceInboundId: string;
+    skills: readonly string[];
+    skillsAvaliadas: boolean;
+  },
+): Promise<string> {
+  const { data, error } = await supabase
+    .from("ayla_historia_objetivo_ofertas")
+    .insert({
+      family_account_id: params.familyId,
+      membro_atipico_id: params.membroId,
+      source_inbound_message_id: params.sourceInboundId,
+      opcoes: OBJETIVOS_HISTORIA.map((o) => o.chave),
+      skills: [...new Set(params.skills)],
+      skills_avaliadas: params.skillsAvaliadas,
+      status: "preparada",
+    })
+    .select("id")
+    .single();
+  if (error || !data?.id) {
+    throw new Error(`Não foi possível reservar a escolha da história: ${error?.message ?? "sem id"}`);
+  }
+  return data.id as string;
+}
+
+async function buscarObjetivoHistoriaPendente(
+  supabase: SupabaseClient,
+  familyId: string,
+  qualquerCanal = false,
+): Promise<{ id: string; opcoes: string[] } | null> {
+  let q = supabase
+    .from("ayla_historia_objetivo_ofertas")
+    .select("id, opcoes")
+    .eq("family_account_id", familyId)
+    .eq("status", "oferecida")
+    .gt("expira_em", new Date().toISOString());
+  // “Escolhe você” é oferecido também junto aos botões, mas não cabe como um
+  // quarto reply button. As demais respostas textuais só pertencem ao fallback.
+  if (!qualquerCanal) q = q.eq("canal", "texto");
+  const { data, error } = await q
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (error) throw new Error(`Falha ao buscar objetivo pendente: ${error.message}`);
+  return data ? { id: data.id as string, opcoes: (data.opcoes ?? []) as string[] } : null;
+}
+
+async function reivindicarObjetivoHistoria(
+  supabase: SupabaseClient,
+  params: {
+    ofertaId: string;
+    familyId: string;
+    objetivo: EscolhaObjetivoHistoria;
+    inboundEscolhaId: string;
+    referenceMessageId?: string;
+  },
+): Promise<OfertaObjetivoHistoriaReivindicada | null> {
+  const { data, error } = await supabase.rpc("reivindicar_objetivo_historia_ayla", {
+    p_oferta_id: params.ofertaId,
+    p_family_account_id: params.familyId,
+    p_objetivo: params.objetivo,
+    p_inbound_escolha_id: params.inboundEscolhaId,
+    p_reference_message_id: params.referenceMessageId ?? null,
+  });
+  if (error) throw new Error(`Falha ao reivindicar objetivo da história: ${error.message}`);
+  return ((data ?? [])[0] as OfertaObjetivoHistoriaReivindicada | undefined) ?? null;
+}
+
+/**
+ * O clique retoma a história antes do classificador comum. A oferta carrega as
+ * skills do pedido original, então Perfil, histórico e BPs continuam no mesmo
+ * gerador oficial mesmo que o texto do clique seja apenas “Saber o que fazer”.
+ */
+async function processarEscolhaObjetivoHistoria(
+  supabase: SupabaseClient,
+  params: {
+    familyId: string;
+    phone: string | null;
+    inbound: InboundWhatsApp;
+    inboundMessageRowId: string;
+  },
+): Promise<{ tratada: boolean; familia: string; resposta?: EnvioResultado } | null> {
+  if (!params.phone) return null;
+
+  let escolha: { ofertaId: string; objetivo: EscolhaObjetivoHistoria } | null =
+    lerIdDoBotaoObjetivoHistoria(params.inbound.interacao?.id);
+  let estruturada = Boolean(escolha);
+  if (!escolha && !params.inbound.interacao) {
+    if (!/^(?:1|2|3|entender o que sente|saber o que fazer|coragem para escolher|escolh[ae] voc[eê]|voc[eê] escolhe|pode escolher)$/i.test(params.inbound.texto.trim())) {
+      return null;
+    }
+    const escolheAyla = /^(?:escolh[ae] voc[eê]|voc[eê] escolhe|pode escolher)$/i.test(
+      params.inbound.texto.trim(),
+    );
+    const pendente = await buscarObjetivoHistoriaPendente(
+      supabase,
+      params.familyId,
+      escolheAyla,
+    ).catch(() => null);
+    if (!pendente) return null;
+    const objetivo = objetivoHistoriaDoFallback(params.inbound.texto, pendente.opcoes);
+    if (!objetivo) return null;
+    escolha = { ofertaId: pendente.id, objetivo };
+    estruturada = false;
+  }
+  if (!escolha) return null;
+
+  if (!(await aylaServicoLiberado(supabase, params.familyId))) return null;
+  const seguranca = await segurancaAberta(supabase, params.familyId, params.inbound.recebidaEm);
+  if (seguranca.aberta) return null;
+
+  const oferta = await reivindicarObjetivoHistoria(supabase, {
+    ofertaId: escolha.ofertaId,
+    familyId: params.familyId,
+    objetivo: escolha.objetivo,
+    inboundEscolhaId: params.inboundMessageRowId,
+    referenceMessageId: params.inbound.interacao?.referenceMessageId,
+  }).catch(async (e) => {
+    await logServerError("historia_objetivo_reivindicacao_falhou", e, {
+      family_account_id: params.familyId,
+      payload: { oferta_id: escolha?.ofertaId, objetivo: escolha?.objetivo },
+    });
+    return null;
+  });
+  if (!oferta) {
+    // O primeiro callback já é o dono. O duplicado não vira assunto novo nem
+    // produz uma segunda história.
+    if (estruturada) {
+      await logEvent({
+        kind: "historia_objetivo_escolha_ignorada",
+        severity: "info",
+        family_account_id: params.familyId,
+        persistir: true,
+        payload: { oferta_id: escolha.ofertaId, objetivo: escolha.objetivo },
+      });
+      return { tratada: true, familia: params.familyId };
+    }
+    return null;
+  }
+
+  await logEvent({
+    kind: "historia_objetivo_escolhido",
+    severity: "info",
+    family_account_id: params.familyId,
+    persistir: true,
+    payload: {
+      oferta_id: oferta.oferta_id,
+      objetivo: escolha.objetivo,
+      canal: estruturada ? "botao" : "texto",
+      segundos_ate_escolha: Math.max(
+        0,
+        Math.round((params.inbound.recebidaEm.getTime() - new Date(oferta.criada_em).getTime()) / 1000),
+      ),
+    },
+  });
+
+  const destino = oferta.membro_atipico_id
+    ? `/historias/criar?membro=${encodeURIComponent(oferta.membro_atipico_id)}`
+    : "/historias/criar";
+  const linkPromise = gerarMagicLink(supabase, { familyId: params.familyId, next: destino });
+  const exp = await responderExperimental(supabase, {
+    familyId: params.familyId,
+    mensagem: params.inbound.texto,
+    turnoClassificado: {
+      intencao: "outro",
+      tema: "historia",
+      aceite: null,
+      skills: oferta.skills ?? [],
+      skillsAvaliadas: oferta.skills_avaliadas !== false,
+    },
+    entregarHistoriaNoWhatsapp: true,
+    objetivoHistoria: escolha.objetivo,
+    membroPreferidoId: oferta.membro_atipico_id,
+  });
+
+  if (!exp) {
+    await atualizarOfertaObjetivoHistoria(supabase, oferta.oferta_id, {
+      status: "falhou",
+      falha_codigo: "GERACAO",
+    }, "escolhida").catch(() => false);
+    const resposta = await enviarEPersistir(supabase, {
+      family_account_id: params.familyId,
+      membro_atipico_id: oferta.membro_atipico_id,
+      phone: params.phone,
+      texto: "Eu não consegui montar a história como deveria agora. O tema e a escolha ficaram registrados; você não precisa repetir tudo.",
+      category: "reativa",
+      tipo: "resposta_registro",
+      meta: { oferta_id: oferta.oferta_id, etapa: "geracao_falhou" },
+    });
+    return { tratada: true, familia: params.familyId, resposta };
+  }
+
+  const membroId = exp.membroId ?? oferta.membro_atipico_id;
+  const resposta = await enviarEPersistir(supabase, {
+    family_account_id: params.familyId,
+    membro_atipico_id: membroId,
+    phone: params.phone,
+    texto: exp.texto,
+    category: "reativa",
+    tipo: "resposta_registro",
+    metadataMensagem: {
+      historia_whatsapp: {
+        origem: "objetivo_escolhido",
+        objetivo: escolha.objetivo,
+        destino,
+      },
+    },
+    meta: { ayla_path: "historia_objetivo", oferta_id: oferta.oferta_id, ...exp.metrica },
+  });
+  if (!resposta.enviada) {
+    await atualizarOfertaObjetivoHistoria(supabase, oferta.oferta_id, {
+      status: "falhou",
+      falha_codigo: "ENVIO",
+    }, "escolhida").catch(() => false);
+    return { tratada: true, familia: params.familyId, resposta };
+  }
+
+  await atualizarOfertaObjetivoHistoria(supabase, oferta.oferta_id, {
+    status: "respondida",
+    respondida_em: new Date().toISOString(),
+  }, "escolhida").catch(() => false);
+  await logEvent({
+    kind: "historia_whatsapp_aceita",
+    severity: "info",
+    persistir: true,
+    family_account_id: params.familyId,
+    payload: {
+      oferta_id: oferta.oferta_id,
+      origem: "objetivo_escolhido",
+      objetivo: escolha.objetivo,
+      membro_atipico_id: membroId,
+      zaap_message_id: resposta.messageId,
+      skills: oferta.skills ?? [],
+      bp_recuperadas: exp.metrica.bpRecuperadas,
+      bp_injetadas: exp.metrica.bpInjetadas,
+    },
+  }).catch(() => {});
+
+  const link = await linkPromise;
+  if (link) {
+    const { data: membro } = membroId
+      ? await supabase.from("membros_atipicos").select("nome").eq("id", membroId).maybeSingle()
+      : { data: null };
+    const guia = await enviarEPersistir(supabase, {
+      family_account_id: params.familyId,
+      membro_atipico_id: membroId,
+      phone: params.phone,
+      texto: guiaHistoriaNoLudico({ link, nomeCrianca: membro?.nome ?? null }),
+      category: "reativa",
+      tipo: "resposta_registro",
+      metadataMensagem: {
+        historia_ludico: { etapa: "guia", destino, origem: "objetivo_escolhido" },
+      },
+      meta: { ayla_path: "historia_ludico", oferta_id: oferta.oferta_id },
+    });
+    void logEvent({
+      kind: guia.enviada ? "historia_ludico_guia_aceito" : "historia_ludico_guia_falhou",
+      severity: guia.enviada ? "info" : "error",
+      persistir: true,
+      family_account_id: params.familyId,
+      message: guia.enviada ? undefined : guia.motivo,
+      payload: { oferta_id: oferta.oferta_id, membro_atipico_id: membroId, destino },
+    });
+  }
+
+  return { tratada: true, familia: params.familyId, resposta };
+}
+
 /**
  * Resolve somente escolhas que pertencem a uma oferta viva. Um clique inválido
  * ou repetido é consumido sem cair no classificador; texto comum continua o
@@ -2285,6 +2590,14 @@ async function processInboundInterno(
   // O clique é uma continuação explícita, não uma fala a reclassificar. Ele
   // entra depois da trava de idempotência e antes de comando/lote/decisor.
   if (aprofundamentoGlobalLigado() && inboundMessageRowId) {
+    const historia = await processarEscolhaObjetivoHistoria(supabase, {
+      familyId: family.id,
+      phone: family.whatsapp_e164,
+      inbound,
+      inboundMessageRowId,
+    });
+    if (historia) return historia;
+
     const seguimento = await registrarSeguimentoAprofundamento(supabase, {
       familyId: family.id,
       recebidaEm: inbound.recebidaEm,
@@ -3573,6 +3886,33 @@ async function processInboundInterno(
         },
       });
     }
+    let deveEscolherObjetivoHistoria = Boolean(
+      entregaHistoria &&
+      aprofundamentoGlobalLigado() &&
+      inboundMessageRowId &&
+      !objetivoDaHistoriaExplicito(inbound.texto),
+    );
+    let ofertaObjetivoHistoriaId: string | null = null;
+    if (deveEscolherObjetivoHistoria && inboundMessageRowId) {
+      try {
+        // A reserva vem ANTES do texto de escolha. Se o estado não puder ser
+        // garantido, o Core recebe a autorização para escolher e entrega a
+        // história já neste turno — nunca mostramos um botão sem continuidade.
+        ofertaObjetivoHistoriaId = await criarOfertaObjetivoHistoria(supabase, {
+          familyId: family.id,
+          membroId: membroConversa,
+          sourceInboundId: inboundMessageRowId,
+          skills: turnoClassificado.skills ?? [],
+          skillsAvaliadas: turnoClassificado.skillsAvaliadas !== false,
+        });
+      } catch (e) {
+        deveEscolherObjetivoHistoria = false;
+        await logServerError("historia_objetivo_preparacao_falhou", e, {
+          family_account_id: family.id,
+          payload: { turno: rastro.turno },
+        }).catch(() => {});
+      }
+    }
     const exp = ctxExp
       ? await responderExperimental(supabase, {
           familyId: family.id,
@@ -3580,10 +3920,25 @@ async function processInboundInterno(
           // ⚠️ C2 · UM DONO PARA A DECISÃO. A classificação deste turno já
           // aconteceu acima; o experimental consome, nunca reclassifica.
           turnoClassificado,
-          entregarHistoriaNoWhatsapp: Boolean(entregaHistoria),
+          prepararObjetivosHistoria: deveEscolherObjetivoHistoria,
+          entregarHistoriaNoWhatsapp: Boolean(
+            entregaHistoria && !deveEscolherObjetivoHistoria,
+          ),
+          objetivoHistoria:
+            entregaHistoria &&
+            !deveEscolherObjetivoHistoria &&
+            !objetivoDaHistoriaExplicito(inbound.texto)
+              ? OBJETIVO_ESCOLHA_AYLA
+              : null,
           onFalha: registrarQueda,
         })
       : null;
+    if (ofertaObjetivoHistoriaId && !exp) {
+      await atualizarOfertaObjetivoHistoria(supabase, ofertaObjetivoHistoriaId, {
+        status: "falhou",
+        falha_codigo: "GERACAO_DA_ESCOLHA",
+      }, "preparada").catch(() => false);
+    }
     if (ctxExp && exp) {
       console.log(
         `[ayla:path] experimental — ${exp.metrica.consultasBanco} consultas · ${exp.metrica.chamadasLLM} LLM · ` +
@@ -3600,7 +3955,7 @@ async function processInboundInterno(
         : "/historias/criar";
       // Começa assim que o alvo está resolvido e corre junto do envio da
       // história. O tutorial não acrescenta a ida ao banco depois da bolha.
-      const linkHistoriaPromise = entregaHistoria
+      const linkHistoriaPromise = entregaHistoria && !deveEscolherObjetivoHistoria
         ? gerarMagicLink(supabase, { familyId: family.id, next: destinoHistoria })
         : Promise.resolve(null);
       // ── A LACUNA SUGERIDA — Gate B, com a semântica da PEND-187A ───────
@@ -3623,8 +3978,10 @@ async function processInboundInterno(
       // `lacuna_sugerida` é o que o Gate B ofereceu; `campo_investigado` é o
       // que a pergunta de fato procurou, declarado pelo Core. Podem divergir —
       // e é justamente a divergência que a gente quer poder medir.
-      const campoInvestigado = exp.campoInvestigado ?? null;
-      const mini = exp.miniInvestigacao ?? null;
+      const campoInvestigado = deveEscolherObjetivoHistoria
+        ? null
+        : exp.campoInvestigado ?? null;
+      const mini = deveEscolherObjetivoHistoria ? null : exp.miniInvestigacao ?? null;
       const camposMiniDeclarados = exp.camposInvestigados ?? [];
       const miniConfirmada =
         mini?.acao === "PERGUNTAR" &&
@@ -3796,50 +4153,59 @@ async function processInboundInterno(
         },
       });
 
-      const resp = await enviarEPersistir(supabase, {
-        family_account_id: family.id,
-        membro_atipico_id: exp.membroId,
-        phone: ctxExp.whatsapp_e164,
-        // ⚠️ O CONVITE É A ÚLTIMA LINHA, SEMPRE. `exp.texto` vem primeiro e
-        // inteiro; sem convite, a string é exatamente a de antes.
-        texto: conviteTexto ? `${exp.texto}\n\n${conviteTexto}` : exp.texto,
-        category: "reativa",
-        // ⚠️ O TIPO SÓ MUDA QUANDO HÁ CONVITE, e é ele que o cooldown procura —
-        // uma regra só. Sem convite, `resposta_registro` continua intacto para
-        // todos os consumidores que já o leem.
-        tipo: conviteTexto ? TIPO_CONVITE_PERFIL : "resposta_registro",
-        // ⚠️ CHAVE NOVA, e o nome carrega a semântica. `lacuna` legado fica
-        // legível no histórico e NÃO é migrado: seriam afirmações diferentes
-        // sobre o passado.
-        ...(lacunaSugerida || campoInvestigado || camposMini.length || entregaHistoria
-          ? {
-              metadataMensagem: {
-                ...(lacunaSugerida ? { lacuna_sugerida: lacunaSugerida } : {}),
-                ...(campoInvestigado ? { campo_investigado: campoInvestigado } : {}),
-                ...(camposMini.length && mini?.tema
-                  ? {
-                      mini_investigacao_tema: mini.tema,
-                      mini_investigacao_campos: camposMini,
-                    }
-                  : {}),
-                ...(entregaHistoria
-                  ? {
-                      historia_whatsapp: {
-                        origem: entregaHistoria.origem,
-                        destino: destinoHistoria,
-                      },
-                    }
-                  : {}),
-              },
-            }
-          : {}),
-        meta: { ayla_path: "experimental", ...exp.metrica },
-      });
+      const resp =
+        deveEscolherObjetivoHistoria && ofertaObjetivoHistoriaId
+          ? await publicarOfertaObjetivoHistoria(supabase, {
+              ofertaId: ofertaObjetivoHistoriaId,
+              familyId: family.id,
+              membroId: exp.membroId ?? membroConversa,
+              phone: ctxExp.whatsapp_e164,
+              mensagem: exp.texto,
+            })
+          : await enviarEPersistir(supabase, {
+              family_account_id: family.id,
+              membro_atipico_id: exp.membroId,
+              phone: ctxExp.whatsapp_e164,
+              // ⚠️ O CONVITE É A ÚLTIMA LINHA, SEMPRE. `exp.texto` vem primeiro e
+              // inteiro; sem convite, a string é exatamente a de antes.
+              texto: conviteTexto ? `${exp.texto}\n\n${conviteTexto}` : exp.texto,
+              category: "reativa",
+              // ⚠️ O TIPO SÓ MUDA QUANDO HÁ CONVITE, e é ele que o cooldown procura —
+              // uma regra só. Sem convite, `resposta_registro` continua intacto para
+              // todos os consumidores que já o leem.
+              tipo: conviteTexto ? TIPO_CONVITE_PERFIL : "resposta_registro",
+              // ⚠️ CHAVE NOVA, e o nome carrega a semântica. `lacuna` legado fica
+              // legível no histórico e NÃO é migrado: seriam afirmações diferentes
+              // sobre o passado.
+              ...(lacunaSugerida || campoInvestigado || camposMini.length || entregaHistoria
+                ? {
+                    metadataMensagem: {
+                      ...(lacunaSugerida ? { lacuna_sugerida: lacunaSugerida } : {}),
+                      ...(campoInvestigado ? { campo_investigado: campoInvestigado } : {}),
+                      ...(camposMini.length && mini?.tema
+                        ? {
+                            mini_investigacao_tema: mini.tema,
+                            mini_investigacao_campos: camposMini,
+                          }
+                        : {}),
+                      ...(entregaHistoria
+                        ? {
+                            historia_whatsapp: {
+                              origem: entregaHistoria.origem,
+                              destino: destinoHistoria,
+                            },
+                          }
+                        : {}),
+                    },
+                  }
+                : {}),
+              meta: { ayla_path: "experimental", ...exp.metrica },
+            });
 
       // Duas mensagens de propósito: a história pode ser lida sem um tutorial
       // no meio, e o caminho da plataforma fica escaneável logo abaixo. O link
       // nunca substitui a história; se falhar, a primeira entrega permanece.
-      if (resp.enviada && entregaHistoria) {
+      if (resp.enviada && entregaHistoria && !deveEscolherObjetivoHistoria) {
         void logEvent({
           kind: "historia_whatsapp_aceita",
           severity: "info",
@@ -6229,6 +6595,137 @@ export async function enviarEPersistir(
   }
 
   return resultado;
+}
+
+/**
+ * Publica a escolha que antecede a história. A reserva foi criada antes da
+ * geração: se o estado não puder ser garantido, o orquestrador entrega a
+ * história diretamente em vez de mostrar botões que depois não funcionariam.
+ */
+async function publicarOfertaObjetivoHistoria(
+  supabase: SupabaseClient,
+  params: {
+    ofertaId: string;
+    familyId: string;
+    membroId: string | null;
+    phone: string;
+    mensagem: string;
+  },
+): Promise<EnvioResultado> {
+  let provider: Awaited<ReturnType<typeof enviarListaBotoes>>;
+  try {
+    provider = await enviarListaBotoes({
+      phoneE164: params.phone,
+      mensagem: params.mensagem,
+      botoes: OBJETIVOS_HISTORIA.map((objetivo) => ({
+        id: idDoBotaoObjetivoHistoria(params.ofertaId, objetivo.chave),
+        label: objetivo.label,
+      })),
+    });
+  } catch (erroBotao) {
+    await logEvent({
+      kind: "historia_objetivo_fallback",
+      severity: "warn",
+      family_account_id: params.familyId,
+      payload: {
+        oferta_id: params.ofertaId,
+        motivo: erroBotao instanceof Error ? erroBotao.message.slice(0, 180) : "erro",
+      },
+    }).catch(() => {});
+    const fallback = await enviarEPersistir(supabase, {
+      family_account_id: params.familyId,
+      membro_atipico_id: params.membroId,
+      phone: params.phone,
+      texto: `${params.mensagem}\n\nSe os botões não aparecerem, responda *1*, *2*, *3* ou “escolhe você”.`,
+      category: "reativa",
+      tipo: "historia_objetivo_fallback",
+      metadataMensagem: {
+        historia_objetivo: {
+          oferta_id: params.ofertaId,
+          opcoes: OBJETIVOS_HISTORIA.map((o) => o.chave),
+          canal: "texto",
+        },
+      },
+      meta: { oferta_id: params.ofertaId, canal: "texto" },
+    });
+    if (!fallback.enviada) {
+      await atualizarOfertaObjetivoHistoria(supabase, params.ofertaId, {
+        status: "falhou",
+        falha_codigo: "BOTAO_E_FALLBACK",
+      }, "preparada").catch(() => false);
+      return fallback;
+    }
+    await atualizarOfertaObjetivoHistoria(supabase, params.ofertaId, {
+      status: "oferecida",
+      canal: "texto",
+      membro_atipico_id: params.membroId,
+      provider_message_id: fallback.messageId,
+      offer_message_id: fallback.aylaMessageId ?? null,
+    }, "preparada");
+    await logEvent({
+      kind: "historia_objetivo_oferecido",
+      severity: "info",
+      family_account_id: params.familyId,
+      persistir: true,
+      payload: { oferta_id: params.ofertaId, canal: "texto" },
+    });
+    return fallback;
+  }
+
+  let offerMessageId: string | null = null;
+  try {
+    const { data: mensagem, error: mensagemErro } = await supabase
+      .from("ayla_messages")
+      .insert({
+        family_account_id: params.familyId,
+        membro_atipico_id: params.membroId,
+        direcao: "outbound",
+        category: "reativa",
+        tipo: "historia_objetivo_oferta",
+        texto: params.mensagem,
+        enviada_em: new Date().toISOString(),
+        ...registroDeEnvio([provider.messageId], {
+          historia_objetivo: {
+            oferta_id: params.ofertaId,
+            opcoes: OBJETIVOS_HISTORIA.map((o) => o.chave),
+            canal: "botao",
+          },
+        }),
+      })
+      .select("id")
+      .single();
+    if (mensagemErro) throw mensagemErro;
+    offerMessageId = mensagem?.id ?? null;
+  } catch (erroPersistencia) {
+    // O provedor já aceitou: não se envia uma segunda bolha. A referência do
+    // provedor ainda basta para validar o clique e o erro fica observável.
+    await logServerError("historia_objetivo_oferta_nao_persistiu", erroPersistencia, {
+      family_account_id: params.familyId,
+      payload: { oferta_id: params.ofertaId },
+    }).catch(() => {});
+  }
+
+  await atualizarOfertaObjetivoHistoria(supabase, params.ofertaId, {
+    status: "oferecida",
+    canal: "botao",
+    membro_atipico_id: params.membroId,
+    provider_message_id: provider.messageId,
+    offer_message_id: offerMessageId,
+  }, "preparada").catch(async (e) => {
+    await logServerError("historia_objetivo_estado_nao_persistiu", e, {
+      family_account_id: params.familyId,
+      payload: { oferta_id: params.ofertaId, provider_message_id: provider.messageId },
+    }).catch(() => {});
+    return false;
+  });
+  await logEvent({
+    kind: "historia_objetivo_oferecido",
+    severity: "info",
+    family_account_id: params.familyId,
+    persistir: true,
+    payload: { oferta_id: params.ofertaId, canal: "botao" },
+  }).catch(() => {});
+  return { enviada: true, messageId: provider.messageId, aylaMessageId: offerMessageId };
 }
 
 /**

@@ -10077,6 +10077,16 @@ autenticada e ensina os passos reais de avatar e criação. Convite de Perfil,
 Plano e botões de aprofundamento não concorrem nesse turno. Falha do link não
 apaga a história.
 
+Quando a família trouxe o tema, mas ainda não declarou o que quer ajudar a
+criança a construir, a entrega agora faz uma única escolha curta antes da
+história: três objetivos com descrições personalizadas — compreender o que
+sente, saber o que fazer ou fortalecer a coragem para escolher — e o atalho
+“escolhe você”. Objetivo já explícito pula essa etapa. A oferta guarda o membro
+e as skills do pedido original; depois do clique, o mesmo gerador oficial volta
+a receber Perfil, histórico e BPs. A correlação usa `buttonId` e
+`referenceMessageId`, o primeiro clique ganha atomicamente, há fallback por
+texto e a flag global de aprofundamento funciona como rollback.
+
 **CRITÉRIO DE CONCLUSÃO:** testes e build verdes; caso real reproduzido sem
 nova bateria de perguntas; história e guia aceitos pelo provedor em teste
 interno autorizado; destino abre a criança correta; eventos distinguem
@@ -10086,12 +10096,16 @@ compromisso, história e guia; health confirma o SHA publicado; nenhuma mensagem
 **EVIDÊNCIA LOCAL (25/09).** O caso literal de Darlison está preso em teste,
 junto de pedido direto, aceite do decisor, vários balões, falso positivo
 “quero te contar uma história”, segurança, falha do link, não concorrência com
-Perfil/Plano/botões e preservação do membro no destino. Focados: **115/115**;
-o teste próprio da frente passou **11/11** após o reforço editorial final;
-typecheck limpo; build de produção compilou, tipou e gerou 106 rotas. Na suíte
-completa anterior ao reforço textual final, **4.066 passaram, 7 foram pulados**;
-as duas únicas falhas são PEND-205 e PEND-214, reproduzidas antes e não
-relacionadas. Nenhum WhatsApp foi enviado.
+Perfil/Plano/botões e preservação do membro no destino. A escolha de objetivo
+acrescentou testes de tema × objetivo explícito, três opções, “escolhe você”,
+fallback textual, membro/skills/BPs restaurados, correlação da oferta,
+idempotência e ausência de botão órfão quando a reserva falha. Focados:
+**159/159**; typecheck limpo; build de produção compilou, tipou e gerou 106
+rotas. Regressão completa: **4.074 passaram, 7 foram pulados**; as duas únicas
+falhas são PEND-205 e PEND-214, reproduzidas antes e não relacionadas. A prova
+do novo texto com modelo real foi bloqueada pelo certificado TLS do host; não
+houve bypass inseguro. Nenhum WhatsApp foi enviado e a migração não foi
+aplicada.
 
 **RELAÇÕES:** PEND-191 (brincadeira entregue, não prometida), PEND-208
 (repertório criativo), PEND-213 (botões) e PEND-215 (latência).

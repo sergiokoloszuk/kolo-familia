@@ -140,7 +140,11 @@ export type AylaTipoReativa =
   /** O provedor não aceitou botões; a escolha foi oferecida em texto. */
   | "aprofundamento_fallback"
   /** Resposta ao ramo escolhido, preservando o turno que originou a oferta. */
-  | "aprofundamento_resposta";
+  | "aprofundamento_resposta"
+  /** Escolha única do objetivo antes de uma história cujo tema já foi dado. */
+  | "historia_objetivo_oferta"
+  /** Mesma escolha em texto quando o provedor não aceita reply buttons. */
+  | "historia_objetivo_fallback";
 
 export type AylaTipo = AylaTipoProativa | AylaTipoReativa;
 

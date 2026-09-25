@@ -94,12 +94,18 @@ describe("A · a regra de formato chegou ao caminho OFICIAL", () => {
     expect(FORMATO_WHATSAPP).toMatch(/sem títulos \(##\), citações \(>\)/i);
     expect(FORMATO_WHATSAPP).toMatch(/RESPIRO VISUAL/);
     expect(FORMATO_WHATSAPP).toMatch(/RESPIRO VISUAL OBRIGATÓRIO/);
-    expect(FORMATO_WHATSAPP).toMatch(/duas ou mais informações acionáveis não ficam amontoadas/);
+    expect(FORMATO_WHATSAPP).toMatch(/não amontoe informações acionáveis/);
     expect(FORMATO_WHATSAPP).toMatch(/1️⃣ 2️⃣… só para sequência/);
     expect(FORMATO_WHATSAPP).toMatch(/• para apoios, opções ou falas paralelas/);
     expect(FORMATO_WHATSAPP).toMatch(/parágrafos curtos com linha em branco/);
     expect(FORMATO_WHATSAPP).toMatch(/Não agrupe ações, exemplos ou falas/);
     expect(FORMATO_WHATSAPP).toMatch(/(?:não|nem) faça bullet único/i);
+    expect(FORMATO_WHATSAPP).toContain(
+      "1️⃣ *Prepare o ambiente* — diminua o barulho.",
+    );
+    expect(FORMATO_WHATSAPP).toMatch(/Sempre que usar números/);
+    expect(FORMATO_WHATSAPP).toMatch(/número \+ título curto em negrito \+ explicação/);
+    expect(FORMATO_WHATSAPP).toMatch(/sem título/);
     expect(FORMATO_WHATSAPP).not.toMatch(/sem listas com - ou •/i);
   });
 

@@ -256,7 +256,9 @@ describe("G · a fiação no orquestrador", () => {
     const fala = ORQ.indexOf("const exp = await responderExperimental");
     const decisao = ORQ.indexOf("const decisao = decidirConviteDePerfil({");
     const link = ORQ.indexOf("const link = await gerarMagicLink(supabase, {\n            familyId: family.id,\n            next: destinoDoConvite");
-    const envio = ORQ.indexOf("const resp = await enviarEPersistir(supabase, {\n        family_account_id: family.id,\n        membro_atipico_id: exp.membroId,");
+    // A história com escolha de objetivo acrescenta um segundo publicador,
+    // mas o envio normal (e o convite de perfil) continua neste mesmo ponto.
+    const envio = ORQ.indexOf("const resp =\n        deveEscolherObjetivoHistoria", link);
     expect(fala).toBeGreaterThan(0);
     expect(fala).toBeLessThan(decisao);
     expect(decisao).toBeLessThan(link);

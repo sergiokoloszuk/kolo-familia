@@ -102,7 +102,11 @@ import { lerEventos, eventosRelevantes, blocoDeEventos } from "./experimental-me
 import { recuperarBoasPraticas, blocoBoasPraticas } from "@/lib/conhecimento/recuperar";
 import { lerEstadoTrial } from "@/lib/trial/estado";
 import { blocoDeContinuidade } from "@/lib/conducao/continuidade";
-import { BLOCO_ENTREGA_HISTORIA_WHATSAPP } from "./historia-whatsapp";
+import {
+  BLOCO_ESCOLHA_OBJETIVO_HISTORIA,
+  blocoEntregaHistoriaWhatsApp,
+  type EscolhaObjetivoHistoria,
+} from "./historia-whatsapp";
 import {
   blocoDaJornada,
   lerEvidenciasJornada,
@@ -482,6 +486,8 @@ async function montarContexto(
   skills: readonly string[] = [],
   /** Ver PEND-184: `skills` vazio por falha ≠ `skills` vazio por decisão. */
   catalogoDisponivel = true,
+  /** Continuidade já correlacionada por oferta; nunca aceita id de outra família. */
+  membroPreferidoId?: string | null,
 ): Promise<ContextoDoTurno> {
   // As três leituras de abertura não dependem uma da outra: vão juntas.
   // ⚠️ `lerPerfilFamilia` SUBIU PARA A ONDA 1 — 26/08/2026, quick win 3.
@@ -529,7 +535,12 @@ async function montarContexto(
   const msOnda1 = Date.now() - tOnda1;
 
   const tFoco = Date.now();
-  const foco = await resolverFoco(supabase, familyId, mensagem, lista);
+  const membroPreferido = membroPreferidoId
+    ? lista.find((m) => m.id === membroPreferidoId) ?? null
+    : null;
+  const foco: Foco = membroPreferido
+    ? { tipo: lista.length === 1 ? "unica" : "individual", membros: [membroPreferido] }
+    : await resolverFoco(supabase, familyId, mensagem, lista);
   const msFoco = Date.now() - tFoco;
   const emFoco = foco.membros;
 
@@ -893,6 +904,16 @@ export async function responderExperimental(
      */
     entregarHistoriaNoWhatsapp?: boolean;
     /**
+     * O tema já existe, mas o objetivo ainda não. O Core usa Perfil e histórico
+     * para tornar três caminhos concretos; os botões são publicados pelo
+     * orquestrador e esta resposta não entrega nem investiga além da escolha.
+     */
+    prepararObjetivosHistoria?: boolean;
+    /** Eixo escolhido pela família — ou a autorização “escolhe você”. */
+    objetivoHistoria?: EscolhaObjetivoHistoria | null;
+    /** Alvo já provado pela oferta que originou este clique. */
+    membroPreferidoId?: string | null;
+    /**
      * ⚠️ SÓ O SIMULADOR PASSA ISTO — e existe porque `null` era uma resposta
      * mentirosa. Três causas completamente diferentes (modelo devolveu vazio ·
      * fronteira barrou · exceção) chegavam à tela como a MESMA frase, e a
@@ -999,6 +1020,7 @@ export async function responderExperimental(
         modo,
         skillsDoTurno,
         catalogoDisponivel,
+        params.membroPreferidoId,
       ),
     );
     const [ctxTurno, core, bps, estadoTrial, evidencias, docTrial] = await Promise.all([
@@ -1307,8 +1329,11 @@ export async function responderExperimental(
         // A história continua nascendo do Core + Perfil + histórico + BPs.
         // Este bloco não traz conteúdo clínico novo: apenas transforma uma
         // promessa já feita em entrega no mesmo turno.
+        !posTrial && params.prepararObjetivosHistoria
+          ? BLOCO_ESCOLHA_OBJETIVO_HISTORIA
+          : "",
         !posTrial && params.entregarHistoriaNoWhatsapp
-          ? BLOCO_ENTREGA_HISTORIA_WHATSAPP
+          ? blocoEntregaHistoriaWhatsApp(params.objetivoHistoria)
           : "",
         conducaoPosTrial,
         comercial,
