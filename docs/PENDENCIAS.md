@@ -9968,7 +9968,37 @@ contrato do provider sem depender da mensagem variável de um erro externo.
 
 ---
 
-**Proximo ID livre: PEND-215. *(PEND-209 a PEND-211 já estão reivindicadas no working tree principal por outra frente; 024 e 025 reservadas por frentes ainda nao publicadas; PEND-202 reivindicada em commit e ainda sem ficha; 0076 e numero de MIGRACAO reservado — ver PEND-121.)***
+### PEND-215
+**Latência perceptível da Ayla no WhatsApp, inclusive em cliques estruturados**
+Bloco: **B · Ayla** · Prioridade: **P1**
+STATUS: **ABERTA — baseline real medido, NÃO corrigida** · Aberta em: 2026-09-25
+
+No teste interno autorizado de 25/09, três turnos consecutivos levaram
+**36.243 ms**, **30.917 ms** e **35.560 ms**; mediana de **35.560 ms**. A espera
+é perceptível no WhatsApp e enfraquece a sensação de acompanhamento, mesmo
+quando a resposta final é útil.
+
+O rastro `turno_externo` separou aproximadamente **10,7–10,8 s** de debounce
+deliberado, **1,6–5,9 s** de decisor e **17,7–23,2 s** ainda classificados como
+`nao_medido`. O primeiro caso era um clique de botão estruturado, que não
+precisa esperar uma possível sequência de balões como uma mensagem textual
+comum. Não otimizar removendo contexto, Perfil Vivo, BPs ou portões de
+segurança; primeiro decompor o trecho não medido e distinguir latência
+necessária de espera evitável.
+
+**CRITÉRIO DE CONCLUSÃO:** `turno_externo` atribui tempo a todas as etapas
+relevantes (debounce, identidade/alvo, contexto e repertório, modelo,
+persistência e provedor); clique estruturado não paga debounce de texto sem
+necessidade; uma amostra real autorizada comprova melhora de P50 e P95 sem
+reduzir personalização, segurança, continuidade ou qualidade editorial; os
+limites de aceite ficam documentados antes da implementação.
+
+**RELAÇÕES:** PEND-201 (cobertura de `turno_externo`) e PEND-213 (botões no
+WhatsApp).
+
+---
+
+**Proximo ID livre: PEND-216. *(PEND-209 a PEND-211 já estão reivindicadas no working tree principal por outra frente; 024 e 025 reservadas por frentes ainda nao publicadas; PEND-202 reivindicada em commit e ainda sem ficha; 0076 e numero de MIGRACAO reservado — ver PEND-121.)***
 
 > Conferir contra `origin/main`, não contra o seu branch. Dois branches podem
 > reivindicar o mesmo número — o conflito de merge nesta linha é o alarme.
