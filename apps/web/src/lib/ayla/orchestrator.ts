@@ -151,17 +151,19 @@ import { acessoLiberado } from "@/lib/auth/acesso";
 import { classificarAreasDiario } from "@/lib/ia/classificar-area";
 import type { AylaTipoProativa, AylaTipoReativa, ParserResult } from "./types";
 import {
-  APROFUNDAMENTOS,
   aprofundamentoGlobalLigado,
   atualizarOferta,
   buscarFallbackPendente,
   criarOferta,
   decidirAprofundamento,
+  escolhasDaOferta,
   existeOfertaRecente,
   gerarRespostaAprofundada,
   idDoBotao,
+  labelDaEscolha,
   lerIdDoBotao,
   ramoDoFallback,
+  ramosDaEscolha,
   registrarSeguimentoAprofundamento,
   respostaPedeRetornoDaFamilia,
   reivindicarOferta,
@@ -1927,9 +1929,9 @@ async function processarEscolhaAprofundamento(
   let escolha = lerIdDoBotao(params.inbound.interacao?.id);
   let estruturada = Boolean(escolha);
   if (!escolha && !params.inbound.interacao) {
-    // Evita uma consulta em toda mensagem normal: só as seis formas explícitas
+    // Evita uma consulta em toda mensagem normal: só as formas explícitas
     // do fallback podem ser uma escolha pendente.
-    if (!/^(como lidar( agora)?|lidar|brincar( \/ passear)?|passear|cren[çc]as( \+ falas)?|falas)$/i.test(params.inbound.texto.trim())) {
+    if (!/^(como lidar( agora)?|lidar|brincar( \/ passear)?|passear|cren[çc]as( \+ falas)?|falas|quero os dois|os dois|ambos)$/i.test(params.inbound.texto.trim())) {
       return null;
     }
     const pendente = await buscarFallbackPendente(supabase, params.familyId).catch(() => null);
@@ -1993,35 +1995,74 @@ async function processarEscolhaAprofundamento(
     },
   });
 
+  const ramos = ramosDaEscolha(escolha.ramo, oferta.opcoes);
+  const envios: EnvioResultado[] = [];
   try {
-    const aprofundada = await gerarRespostaAprofundada(supabase, {
-      familyId: params.familyId,
-      membroId: oferta.membro_atipico_id,
-      sourceInboundId: oferta.source_inbound_message_id,
-      sourceOutboundId: oferta.source_outbound_message_id,
-      ramo: escolha.ramo,
-    });
-    const resposta = await enviarEPersistir(supabase, {
-      family_account_id: params.familyId,
-      membro_atipico_id: oferta.membro_atipico_id,
-      phone: params.phone,
-      texto: aprofundada.texto,
-      category: "reativa",
-      tipo: "aprofundamento_resposta",
-      metadataMensagem: {
-        aprofundamento: {
-          oferta_id: oferta.oferta_id,
-          ramo: escolha.ramo,
+    if (ramos.length === 0) throw new Error("Escolha sem ramos válidos na oferta.");
+
+    // “Quero os dois” não comprime conteúdo: prepara dois aprofundamentos
+    // completos e distintos, depois os envia em dois balões, na ordem exibida.
+    const aprofundadas = await Promise.all(ramos.map((ramo) =>
+      gerarRespostaAprofundada(supabase, {
+        familyId: params.familyId,
+        membroId: oferta.membro_atipico_id,
+        sourceInboundId: oferta.source_inbound_message_id,
+        sourceOutboundId: oferta.source_outbound_message_id,
+        ramo,
+        emConjunto: ramos.length > 1,
+      })
+    ));
+
+    for (const [indice, aprofundada] of aprofundadas.entries()) {
+      const ramo = ramos[indice];
+      const resposta = await enviarEPersistir(supabase, {
+        family_account_id: params.familyId,
+        membro_atipico_id: oferta.membro_atipico_id,
+        phone: params.phone,
+        texto: aprofundada.texto,
+        category: "reativa",
+        tipo: "aprofundamento_resposta",
+        metadataMensagem: {
+          aprofundamento: {
+            oferta_id: oferta.oferta_id,
+            escolha: escolha.ramo,
+            ramo,
+            sequencia: indice + 1,
+            total: aprofundadas.length,
+            output_type: aprofundada.outputType,
+          },
+        },
+        meta: {
+          escolha: escolha.ramo,
+          ramo,
+          sequencia: indice + 1,
+          total: aprofundadas.length,
           output_type: aprofundada.outputType,
         },
-      },
-      meta: { ramo: escolha.ramo, output_type: aprofundada.outputType },
-    });
-    if (!resposta.enviada) throw new Error(resposta.motivo);
-    await atualizarOferta(supabase, oferta.oferta_id, {
+      });
+      if (!resposta.enviada) throw new Error(resposta.motivo);
+      envios.push(resposta);
+    }
+
+    const ofertaRespondida = await atualizarOferta(supabase, oferta.oferta_id, {
       status: "respondida",
       respondida_em: new Date().toISOString(),
-    }, "escolhida");
+    }, "escolhida").catch(async (erro) => {
+      await logServerError("aprofundamento_estado_nao_confirmado", erro, {
+        family_account_id: params.familyId,
+        payload: { oferta_id: oferta.oferta_id },
+      }).catch(() => {});
+      return false;
+    });
+    if (!ofertaRespondida) {
+      await logServerError(
+        "aprofundamento_estado_nao_confirmado",
+        new Error("A oferta não permaneceu em status escolhida após o envio."),
+        { family_account_id: params.familyId, payload: { oferta_id: oferta.oferta_id } },
+      ).catch(() => {});
+    }
+    const skills = [...new Set(aprofundadas.flatMap((r) => r.repertorio.skills))];
+    const boasPraticasIds = [...new Set(aprofundadas.flatMap((r) => r.repertorio.boasPraticasIds))];
     await logEvent({
       kind: "aprofundamento_respondido",
       severity: "info",
@@ -2029,13 +2070,15 @@ async function processarEscolhaAprofundamento(
       persistir: true,
       payload: {
         oferta_id: oferta.oferta_id,
-        ramo: escolha.ramo,
-        skills: aprofundada.repertorio.skills,
-        boas_praticas_ids: aprofundada.repertorio.boasPraticasIds,
-        n_boas_praticas: aprofundada.repertorio.boasPraticasIds.length,
+        escolha: escolha.ramo,
+        ramos,
+        respostas: envios.length,
+        skills,
+        boas_praticas_ids: boasPraticasIds,
+        n_boas_praticas: boasPraticasIds.length,
       },
-    });
-    return { tratada: true, familia: params.familyId, resposta };
+    }).catch(() => {});
+    return { tratada: true, familia: params.familyId, resposta: envios.at(-1) };
   } catch (e) {
     await atualizarOferta(supabase, oferta.oferta_id, {
       status: "falhou",
@@ -2045,12 +2088,14 @@ async function processarEscolhaAprofundamento(
       family_account_id: params.familyId,
       payload: { oferta_id: oferta.oferta_id, ramo: escolha.ramo },
     });
+    const ramoPendente = ramos[envios.length];
     const resposta = await enviarEPersistir(supabase, {
       family_account_id: params.familyId,
       membro_atipico_id: oferta.membro_atipico_id,
       phone: params.phone,
-      texto:
-        "Eu não consegui abrir esse caminho agora. Se você me disser em uma frase qual parte quer aprofundar, eu continuo daqui sem você precisar contar tudo de novo.",
+      texto: envios.length > 0 && ramoPendente
+        ? `A primeira parte chegou, mas a parte “${labelDaEscolha(ramoPendente)}” não saiu como deveria. Não precisa repetir o contexto — pode me pedir só essa parte que eu retomo daqui.`
+        : "Eu não consegui abrir esse caminho agora. Se você me disser em uma frase qual parte quer aprofundar, eu continuo daqui sem você precisar contar tudo de novo.",
       category: "reativa",
       tipo: "aprofundamento_fallback",
       meta: { oferta_id: oferta.oferta_id, etapa: "resposta" },
@@ -6090,9 +6135,9 @@ async function publicarOfertaAprofundamento(
     provider = await enviarListaBotoes({
       phoneE164: params.phone,
       mensagem: texto,
-      botoes: params.opcoes.map((ramo) => ({
-        id: idDoBotao(ofertaId, ramo),
-        label: APROFUNDAMENTOS[ramo].label,
+      botoes: escolhasDaOferta(params.opcoes).map((escolha) => ({
+        id: idDoBotao(ofertaId, escolha),
+        label: labelDaEscolha(escolha),
       })),
     });
   } catch (erroBotao) {

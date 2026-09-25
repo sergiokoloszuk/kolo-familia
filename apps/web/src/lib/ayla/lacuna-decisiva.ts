@@ -810,6 +810,9 @@ DOIS caminhos diferentes que acrescentariam valor real a esta conversa:
 - aprofundar_brincar: brincadeira, passeio ou experiência de vida real;
 - aprofundar_crencas: possíveis interpretações da criança e do adulto + falas.
 
+Ordene os caminhos do que mais acrescenta valor para esta criança para o que
+menos acrescenta; o código exibirá somente os dois primeiros e “Quero os dois”.
+
 Quando a família quer desenvolver uma habilidade — por exemplo foco,
 comunicação, autonomia, flexibilidade ou interação — considere
 proativamente aprofundar_brincar se uma experiência compartilhada puder

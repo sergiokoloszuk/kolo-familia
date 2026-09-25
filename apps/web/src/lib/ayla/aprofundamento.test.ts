@@ -3,10 +3,14 @@ import { resolve } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   APROFUNDAMENTOS,
+  ESCOLHA_AMBOS,
   decidirAprofundamento,
+  escolhasDaOferta,
   idDoBotao,
+  labelDaEscolha,
   lerIdDoBotao,
   ramoDoFallback,
+  ramosDaEscolha,
   respostaPedeRetornoDaFamilia,
   textoDaOferta,
   textoDoFallback,
@@ -38,6 +42,17 @@ describe("PEND-213 · portão editorial", () => {
     ).toBe("NAO_OFERECER");
   });
 
+  it("prioriza dois caminhos para sempre deixar o terceiro botão aos dois", () => {
+    expect(decidirAprofundamento({
+      ...BASE,
+      candidatos: ["aprofundar_lidar", "aprofundar_brincar", "aprofundar_crencas"],
+    })).toEqual({
+      acao: "OFERECER",
+      opcoes: ["aprofundar_lidar", "aprofundar_brincar"],
+      motivo: "dois ou mais caminhos úteis",
+    });
+  });
+
   it.each([
     ["flag", { ligado: false }],
     ["segurança", { segurancaAberta: true }],
@@ -67,6 +82,7 @@ describe("PEND-213 · portão editorial", () => {
     expect(instrucao).toMatch(/considere\s+proativamente aprofundar_brincar/i);
     expect(instrucao).toMatch(/Não espere que a família saiba pedir/i);
     expect(instrucao).toMatch(/não cria menu automático/i);
+    expect(instrucao).toMatch(/Ordene os caminhos do que mais acrescenta valor/i);
   });
 
   it("mantém contratos semanticamente distintos para os três ramos", () => {
@@ -129,8 +145,8 @@ describe("PEND-213 · portão editorial", () => {
     const orquestrador = readFileSync(new URL("./orchestrator.ts", import.meta.url), "utf8");
     expect(gerador).toContain("boasPraticasIds: contextoPronto.ctx.boasPraticas.map((bp) => bp.id)");
     expect(gerador).toContain("skills: contextoPronto.roteadas.map((r) => r.skill.name)");
-    expect(orquestrador).toContain("boas_praticas_ids: aprofundada.repertorio.boasPraticasIds");
-    expect(orquestrador).toContain("n_boas_praticas: aprofundada.repertorio.boasPraticasIds.length");
+    expect(orquestrador).toContain("boas_praticas_ids: boasPraticasIds");
+    expect(orquestrador).toContain("n_boas_praticas: boasPraticasIds.length");
   });
 });
 
@@ -142,6 +158,10 @@ describe("PEND-213 · correlação e fallback", () => {
     expect(lerIdDoBotao(id)).toEqual({ ofertaId: oferta, ramo: "aprofundar_brincar" });
     expect(lerIdDoBotao(`${id}:lixo`)).toBeNull();
     expect(lerIdDoBotao("aprofundar_brincar")).toBeNull();
+    expect(lerIdDoBotao(idDoBotao(oferta, ESCOLHA_AMBOS))).toEqual({
+      ofertaId: oferta,
+      ramo: ESCOLHA_AMBOS,
+    });
   });
 
   it("fallback textual só aceita escolhas explícitas oferecidas", () => {
@@ -149,14 +169,29 @@ describe("PEND-213 · correlação e fallback", () => {
     expect(ramoDoFallback("Como lidar agora", opcoes)).toBe("aprofundar_lidar");
     expect(ramoDoFallback("brincar / passear", opcoes)).toBe("aprofundar_brincar");
     expect(ramoDoFallback("crenças + falas", opcoes)).toBeNull();
+    expect(ramoDoFallback("quero os dois", opcoes)).toBe(ESCOLHA_AMBOS);
     expect(ramoDoFallback("quero ajuda", opcoes)).toBeNull();
+  });
+
+  it("oferece os dois como terceira escolha e expande na ordem original", () => {
+    const opcoes = ["aprofundar_lidar", "aprofundar_brincar"] as const;
+    expect(escolhasDaOferta(opcoes)).toEqual([
+      "aprofundar_lidar",
+      "aprofundar_brincar",
+      ESCOLHA_AMBOS,
+    ]);
+    expect(labelDaEscolha(ESCOLHA_AMBOS)).toBe("Quero os dois");
+    expect(ramosDaEscolha(ESCOLHA_AMBOS, opcoes)).toEqual(opcoes);
+    expect(ramosDaEscolha("aprofundar_brincar", opcoes)).toEqual(["aprofundar_brincar"]);
   });
 
   it("a oferta é conversa, e o fallback ensina como responder", () => {
     const opcoes = ["aprofundar_lidar", "aprofundar_brincar"] as const;
     expect(textoDaOferta(opcoes)).toMatch(/o que fazer na hora/i);
+    expect(textoDaOferta(opcoes)).toMatch(/os dois, em mensagens separadas/i);
     expect(textoDoFallback(opcoes)).toMatch(/Se os botões não aparecerem/i);
     expect(textoDoFallback(opcoes)).toContain("Como lidar agora");
+    expect(textoDoFallback(opcoes)).toContain("Quero os dois");
   });
 });
 
@@ -275,6 +310,17 @@ describe("PEND-213 · envelope e fiação", () => {
     expect(sql).toMatch(/grant select, insert, update, delete[\s\S]*to service_role/i);
   });
 
+  it("o claim novo consome o clique e aceita os dois somente para duas opções", () => {
+    const sql = readFileSync(
+      resolve(process.cwd(), "../../supabase/migrations/0092_aprofundamento_ambos_e_turno.sql"),
+      "utf8",
+    );
+    expect(sql).toMatch(/update public\.ayla_messages m[\s\S]*processada_em = coalesce/i);
+    expect(sql).toMatch(/m\.id = p_inbound_escolha_id[\s\S]*m\.family_account_id = p_family_account_id/i);
+    expect(sql).toMatch(/p_ramo = 'aprofundar_ambos' and cardinality\(o\.opcoes\) = 2/i);
+    expect(sql).toMatch(/from interacao_consumida/i);
+  });
+
   it("o clique é interceptado antes do comando e da classificação", () => {
     const src = readFileSync(new URL("./orchestrator.ts", import.meta.url), "utf8");
     const persistiu = src.indexOf("let inboundMessageRowId");
@@ -295,6 +341,14 @@ describe("PEND-213 · envelope e fiação", () => {
     expect(clique).toBeGreaterThan(-1);
     expect(retorno).toBeGreaterThan(clique);
     expect(fluxoComum).toBeGreaterThan(retorno);
+  });
+
+  it("quero os dois prepara duas respostas completas e envia dois balões", () => {
+    const src = readFileSync(new URL("./orchestrator.ts", import.meta.url), "utf8");
+    expect(src).toContain("const aprofundadas = await Promise.all(ramos.map");
+    expect(src).toContain("for (const [indice, aprofundada] of aprofundadas.entries())");
+    expect(src).toContain("total: aprofundadas.length");
+    expect(src).toContain("emConjunto: ramos.length > 1");
   });
 
   it("só aciona o fallback quando o provedor de botões falha", () => {

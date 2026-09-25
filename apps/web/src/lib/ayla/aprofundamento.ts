@@ -1,12 +1,16 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { montarContextoDeSecoes, respondAsOutputType } from "@/lib/ia/engine";
 import {
+  ESCOLHA_AMBOS,
   RAMOS_APROFUNDAMENTO,
+  type EscolhaAprofundamento,
   type RamoAprofundamento,
 } from "./aprofundamento-tipos";
 
 export {
+  ESCOLHA_AMBOS,
   RAMOS_APROFUNDAMENTO,
+  type EscolhaAprofundamento,
   type RamoAprofundamento,
 } from "./aprofundamento-tipos";
 export { aprofundamentoGlobalLigado } from "./aprofundamento-tipos";
@@ -154,20 +158,22 @@ export function decidirAprofundamento(
 
   const opcoes = [...new Set(e.candidatos)]
     .filter((v): v is RamoAprofundamento => RAMOS.has(v))
-    .slice(0, 3);
+    // A Z-API aceita no máximo três botões. Dois caminhos + “Quero os dois”
+    // deixam explícito que a família não precisa abrir mão de conteúdo útil.
+    .slice(0, 2);
   if (opcoes.length < 2) return nao("menos de dois caminhos realmente úteis");
   return { acao: "OFERECER", opcoes, motivo: "dois ou mais caminhos úteis" };
 }
 
 const ID_PREFIXO = "ak1";
 
-export function idDoBotao(ofertaId: string, ramo: RamoAprofundamento): string {
-  return `${ID_PREFIXO}:${ofertaId}:${ramo}`;
+export function idDoBotao(ofertaId: string, escolha: EscolhaAprofundamento): string {
+  return `${ID_PREFIXO}:${ofertaId}:${escolha}`;
 }
 
 export function lerIdDoBotao(
   id: string | null | undefined,
-): { ofertaId: string; ramo: RamoAprofundamento } | null {
+): { ofertaId: string; ramo: EscolhaAprofundamento } | null {
   const partes = (id ?? "").split(":");
   if (partes.length !== 3 || partes[0] !== ID_PREFIXO) return null;
   const ofertaId = partes[1];
@@ -175,7 +181,9 @@ export function lerIdDoBotao(
   if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(ofertaId)) {
     return null;
   }
-  return RAMOS.has(ramo) ? { ofertaId, ramo: ramo as RamoAprofundamento } : null;
+  return RAMOS.has(ramo) || ramo === ESCOLHA_AMBOS
+    ? { ofertaId, ramo: ramo as EscolhaAprofundamento }
+    : null;
 }
 
 function normalizarEscolha(texto: string): string {
@@ -190,7 +198,7 @@ function normalizarEscolha(texto: string): string {
 export function ramoDoFallback(
   texto: string,
   opcoes: readonly string[],
-): RamoAprofundamento | null {
+): EscolhaAprofundamento | null {
   const t = normalizarEscolha(texto);
   const aliases: Record<RamoAprofundamento, string[]> = {
     aprofundar_lidar: ["como lidar agora", "como lidar", "lidar"],
@@ -201,7 +209,33 @@ export function ramoDoFallback(
     if (!opcoes.includes(ramo)) continue;
     if (aliases[ramo].includes(t)) return ramo;
   }
+  if (
+    opcoes.length === 2
+    && ["quero os dois", "os dois", "ambos"].includes(t)
+  ) return ESCOLHA_AMBOS;
   return null;
+}
+
+export function escolhasDaOferta(
+  opcoes: readonly RamoAprofundamento[],
+): EscolhaAprofundamento[] {
+  return opcoes.length === 2 ? [...opcoes, ESCOLHA_AMBOS] : [...opcoes];
+}
+
+export function labelDaEscolha(escolha: EscolhaAprofundamento): string {
+  return escolha === ESCOLHA_AMBOS
+    ? "Quero os dois"
+    : APROFUNDAMENTOS[escolha].label;
+}
+
+export function ramosDaEscolha(
+  escolha: EscolhaAprofundamento,
+  opcoes: readonly string[],
+): RamoAprofundamento[] {
+  const validos = opcoes
+    .filter((ramo): ramo is RamoAprofundamento => RAMOS.has(ramo));
+  if (escolha === ESCOLHA_AMBOS) return validos.length === 2 ? validos : [];
+  return validos.includes(escolha) ? [escolha] : [];
 }
 
 export function textoDaOferta(opcoes: readonly RamoAprofundamento[]): string {
@@ -209,19 +243,19 @@ export function textoDaOferta(opcoes: readonly RamoAprofundamento[]): string {
   const temBrincar = opcoes.includes("aprofundar_brincar");
   const temCrencas = opcoes.includes("aprofundar_crencas");
   if (temLidar && temBrincar && !temCrencas) {
-    return "Se quiser, posso seguir pelo que fazer na hora ou por uma brincadeira para trabalhar isso sem virar tarefa.";
+    return "Posso seguir pelo que fazer na hora, por uma brincadeira para desenvolver isso — ou trazer os dois, em mensagens separadas.";
   }
   if (temLidar && temCrencas && !temBrincar) {
-    return "Se quiser, posso aprofundar o que fazer na hora ou pensar nas interpretações e falas que podem ajudar.";
+    return "Posso aprofundar o que fazer na hora, as interpretações e falas que podem ajudar — ou trazer os dois, em mensagens separadas.";
   }
   if (temBrincar && temCrencas && !temLidar) {
-    return "Se quiser, posso transformar isso numa experiência leve ou pensar nas interpretações e falas envolvidas.";
+    return "Posso transformar isso numa experiência leve, olhar as interpretações e falas envolvidas — ou trazer os dois, em mensagens separadas.";
   }
   return "Se quiser, posso continuar por três caminhos diferentes.";
 }
 
 export function textoDoFallback(opcoes: readonly RamoAprofundamento[]): string {
-  const labels = opcoes.map((o) => `“${APROFUNDAMENTOS[o].label}”`);
+  const labels = escolhasDaOferta(opcoes).map((o) => `“${labelDaEscolha(o)}”`);
   const final = labels.length === 2
     ? `${labels[0]} ou ${labels[1]}`
     : `${labels.slice(0, -1).join(", ")} ou ${labels.at(-1)}`;
@@ -304,7 +338,7 @@ export async function reivindicarOferta(
   params: {
     ofertaId: string;
     familyId: string;
-    ramo: RamoAprofundamento;
+    ramo: EscolhaAprofundamento;
     inboundEscolhaId: string;
     referenceMessageId?: string;
   },
@@ -373,6 +407,7 @@ export async function gerarRespostaAprofundada(
     sourceInboundId: string;
     sourceOutboundId: string;
     ramo: RamoAprofundamento;
+    emConjunto?: boolean;
   },
 ): Promise<{
   texto: string;
@@ -406,8 +441,11 @@ export async function gerarRespostaAprofundada(
     `A família contou: ${(inbound.texto as string).slice(0, 2200)}`,
     `A Ayla já respondeu: ${(outbound.texto as string).slice(0, 2200)}`,
     `Agora a família escolheu: ${config.label}.`,
+    params.emConjunto
+      ? "Esta é uma de duas respostas completas que serão enviadas em balões separados. Entregue somente este ramo, sem repetir acolhimento ou contexto e sem abrir outro menu."
+      : null,
     "Entregue valor novo para este mesmo caso, usando Perfil Vivo, histórico e repertório.",
-  ].join("\n\n");
+  ].filter(Boolean).join("\n\n");
   const contextoPronto = await montarContextoDeSecoes(supabase, {
     familyId: params.familyId,
     membroAtipicoId: params.membroId,

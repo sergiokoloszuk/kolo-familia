@@ -9902,7 +9902,7 @@ WhatsApp, Perfil Vivo ou conversa.
 ### PEND-213
 **Aprofundamento contextual por botões no WhatsApp**
 Bloco: **B · Ayla** · Prioridade: **P1**
-STATUS: **TESTE REAL PARCIAL — botões renderizam; ramos ainda não validados; rollback global ativo (`flag=false`)** · Aberta em: 2026-09-24
+STATUS: **CORREÇÃO EM CURSO — botões renderizam; teste real encontrou mensagem textual presa; rollback global ativo (`flag=false`)** · Aberta em: 2026-09-24
 
 Hoje a Ayla ajuda por texto no WhatsApp, mas não oferece bifurcações clicáveis.
 O `whatsappSender` só conhece texto/documento e o webhook não lê
@@ -9959,6 +9959,27 @@ contornado indevidamente o gate que impediria sua criação em produção; foi
 marcada `falhou/QA_CASO_SEGURANCA_INADEQUADO`. Portanto, o teste prova o
 transporte interativo, mas não prova nenhum dos três ramos. O próximo teste
 deve usar caso não urgente e elegível.
+
+**EVIDÊNCIA REAL 25/09 — ROLLBACK POR FALA NÃO RESPONDIDA.** Num caso elegível
+de foco para Bento, a oferta normal vinculou membro e turno corretamente e os
+botões renderizaram. O primeiro clique real (`Como lidar agora`) reivindicou a
+oferta e gerou resposta contextual; o segundo clique foi ignorado conforme a
+idempotência vigente. Porém uma nova fala textual sobre Mario, enviada dois
+segundos antes do primeiro clique, permaneceu com `processada_em = null`. A
+execução textual cedeu ao inbound mais novo durante o debounce, enquanto o
+clique retornou pelo atalho sem consumir sua própria linha nem recuperar a
+fala anterior. Isso viola continuidade: a flag global voltou para `false`
+antes de qualquer ampliação.
+
+O feedback humano também mostrou que dois botões parecem caminhos que podem
+ser explorados, não uma escolha exclusiva invisível. A correção desta mesma
+frente acrescenta **“Quero os dois”** como terceira ação quando existem dois
+caminhos úteis. Essa escolha deve gerar duas respostas completas, em dois
+balões separados, sem comprimir os ramos nem abrir novo menu. A reivindicação
+passa a consumir atomicamente a interação em `ayla_messages`, para que o clique
+não sequestre mensagem textual enviada na mesma janela. A baixa continua
+bloqueada até prova real do turno concorrente, dos três botões, idempotência,
+fallback, regressões, build, SHA/health e rollback.
 
 **RELAÇÕES:** `docs/specs/aprofundamento-contextual-whatsapp-SPEC.md`, PEND-208,
 PEND-210.

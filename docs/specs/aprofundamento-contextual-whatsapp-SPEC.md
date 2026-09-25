@@ -3,7 +3,7 @@
 Nível de risco: **CRÍTICA** — altera a conversa de IA no canal principal e
 processa contexto comportamental de criança.
 
-Estado: **PUBLICADA COM FLAG DESLIGADA — BOTÕES RENDERIZAM; RAMOS AINDA NÃO VALIDADOS**
+Estado: **ROLLBACK ATIVO — TESTE REAL ENCONTROU MENSAGEM TEXTUAL PRESA AO LADO DO CLIQUE**
 
 ## 1. Problema e dono
 
@@ -29,24 +29,29 @@ Frase que deixa de existir: “não sei como pedir para ela aprofundar isso”.
 | Resposta que fez mini-investigação | NÃO DEVE | perguntas e menu não se acumulam |
 | Resposta com apenas um próximo passo útil | NÃO DEVE | botão não cria falsa escolha |
 | Clique em “Brincar / passear” | DEVE aprofundar a conversa exata | clique não é assunto novo |
+| Clique em “Quero os dois” | DEVE enviar duas respostas completas, em dois balões | os ramos são complementares; não comprimir nem abrir novo menu |
 | Clique repetido na mesma oferta | NÃO DEVE duplicar resposta | webhook é at-least-once |
+| Mensagem textual + clique na mesma janela | DEVE responder os dois turnos | o atalho do clique não pode sequestrar a mensagem comum |
 
 ## 3. Comportamento
 
 1. A Ayla responde primeiro com a menor resposta que ajuda de verdade.
 2. O mesmo turno pode declarar zero a três ramos candidatos em estrutura
-   fechada; essa declaração nunca aparece na fala.
+   fechada; essa declaração nunca aparece na fala. O portão escolhe os dois
+   mais úteis para que a terceira ação seja sempre **“Quero os dois”**.
 3. Um portão determinístico veta oferta em segurança, desabafo, pergunta ainda
    aberta, mini-investigação, convite concorrente, conversa simples, decisão
    incerta ou menos de dois ramos bons.
    Quando o pedido é desenvolver uma habilidade, `aprofundar_brincar` deve ser
    considerado proativamente se houver experiência compartilhada útil; a mãe
    não precisa conhecer ou pedir esse formato para descobri-lo.
-4. A oferta é uma segunda mensagem curta com dois ou três reply buttons.
+4. A oferta é uma segunda mensagem curta com três reply buttons: dois caminhos
+   específicos e **“Quero os dois”**.
 5. Cada botão carrega ramo lógico e ID opaco da oferta. O callback também é
    validado contra família e, quando disponível, mensagem referenciada.
-6. O primeiro clique válido reivindica a oferta atomicamente. Reentrega ou
-   segundo clique não gera outra resposta.
+6. O primeiro clique válido reivindica a oferta e consome a linha da interação
+   atomicamente. Reentrega ou segundo clique não gera outra resposta nem faz
+   uma mensagem textual anterior ceder o turno ao atalho.
 7. O aprofundamento reutiliza `output_types`, Perfil Vivo, BPs e o par exato de
    mensagens que originou a oferta. Não reclassifica o clique como conversa
    genérica.
@@ -60,6 +65,9 @@ Frase que deixa de existir: “não sei como pedir para ela aprofundar isso”.
 10. Cada aprofundamento reconstrói o contexto pelo mesmo motor de conhecimento
     da Ayla. A prova registra skills e IDs de BPs enviados ao modelo; uma
     resposta produzida apenas pela receita do ramo reprova o gate.
+11. **“Quero os dois”** gera os dois ramos completos em paralelo e os envia,
+    na ordem da oferta, como dois balões separados. Cada balão mantém o formato
+    próprio do ramo; não há resumo, terceira investigação ou novo menu.
 
 Ativação: uma única flag global, desligada por padrão e usada apenas como
 rollback. Não há coorte, allowlist ou tratamento diferente entre famílias.
@@ -104,7 +112,7 @@ registra oferta, escolha, resposta e fallback sem copiar fala sensível.
 ## 6. O que esta funcionalidade NÃO faz
 
 - não mostra menu em toda resposta;
-- não oferece “quero todos”, PDF, Plano, proativas ou nova curadoria;
+- não oferece PDF, Plano, proativas ou nova curadoria;
 - não usa botão no lugar de orientação;
 - não afirma crença como diagnóstico;
 - não transforma passeio em terapia;
