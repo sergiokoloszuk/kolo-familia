@@ -1,5 +1,9 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { getAnthropicClient, MODELS } from "./anthropic";
+import {
+  gerarConversacional,
+  MODELO_CONVERSA,
+  type Provider,
+} from "./provider";
 import { loadActiveSkills, routeSkillsAI, type RoutedSkill } from "./router";
 import { buildContext } from "./context";
 import type { ContextoSkillResposta } from "./context";
@@ -30,6 +34,12 @@ export type EngineResponse = {
     tokens_output?: number;
     cache_read_tokens?: number;
     cache_write_tokens?: number;
+  };
+  /** Provider/modelo e duração da geração — sem conteúdo da família. */
+  telemetria: {
+    provider: Provider;
+    modelo: string;
+    ms: number;
   };
 };
 
@@ -308,7 +318,16 @@ export async function respondAsOutputType(params: {
 
   const modo: Modo = { kind: "output_type", outputType };
 
-  const resposta = await callClaude(roteadas, ctx, pedido, modo);
+  // Decisão de produto (PEND-162): toda formulação que a família lê é GPT.
+  // Este engine serve atalhos da Web, Plano e aprofundamento no WhatsApp; um
+  // default Claude aqui criava uma porta familiar invisível à migração.
+  const resposta = await callProviderConversacional(
+    roteadas,
+    ctx,
+    pedido,
+    modo,
+    "openai",
+  );
 
   // Validadores: rodar tudo exceto tamanho (output types têm tamanho próprio)
   const validacao = runAllValidatorsExceptSize(resposta.texto, ctx.boasPraticas);
@@ -325,6 +344,7 @@ export async function respondAsOutputType(params: {
       ? { ok: true }
       : { ok: false, motivo: validacao.motivo, regenerou: false },
     uso: resposta.uso,
+    telemetria: resposta.telemetria,
   };
 }
 
@@ -346,56 +366,55 @@ function runAllValidatorsExceptSize(
   return { ok: true };
 }
 
-async function callClaude(
+/**
+ * O mesmo prompt, contexto, output type e validadores; só troca o transporte
+ * pelo provider conversacional já homologado no WhatsApp. Esta separação
+ * impede que a correção de latência crie uma Ayla com menos Perfil ou BPs.
+ */
+async function callProviderConversacional(
   roteadas: RoutedSkill[],
   ctx: Awaited<ReturnType<typeof buildContext>>,
   userInput: string,
   modo: Modo,
-  options: {
-    intencao?: Intencao;
-    regeneracao?: { motivo: string; sugestao?: string };
-  } = {},
-): Promise<{ texto: string; uso: EngineResponse["uso"] }> {
-  const client = getAnthropicClient();
-
-  const inputComRegeneracao = options.regeneracao
-    ? `${userInput}\n\n<sistema>A resposta anterior falhou na validação: ${options.regeneracao.motivo}. ${options.regeneracao.sugestao ?? ""} Refaça respeitando o formato e os limites.</sistema>`
-    : userInput;
-
+  provider: Provider,
+): Promise<{
+  texto: string;
+  uso: EngineResponse["uso"];
+  telemetria: EngineResponse["telemetria"];
+}> {
   const { system, messages } = assemblePrompt({
     skills: roteadas.map((r) => r.skill),
     ctx,
-    userInput: inputComRegeneracao,
+    userInput,
     modo,
-    intencao: options.intencao,
   });
-
-  const stream = client.messages.stream({
-    model: MODELS.principal,
-    max_tokens: 2048,
-    // Budget fixo em vez de "adaptive": o adaptive disparava picos de até
-    // ~10s de thinking. Limitado, o custo fica previsível mantendo algum
-    // raciocínio (estes caminhos não fazem streaming, então o tempo total
-    // é o que a pessoa espera).
-    thinking: { type: "enabled", budget_tokens: 1024 },
-    system,
+  const modelo = MODELO_CONVERSA[provider];
+  const resposta = await gerarConversacional({
+    provider,
+    model: modelo,
+    // `assemblePrompt` usa blocos para marcar cache na Anthropic. O provider
+    // comum recebe o mesmo texto, sem o envelope específico do SDK.
+    system: system.map((bloco) => bloco.text).join("\n\n"),
     messages,
+    // Mesmo teto já homologado na Ayla oficial. As respostas de output type
+    // medidas ficaram entre 242–351 tokens visíveis; 2.048 só ampliava a cauda
+    // possível de um modelo de raciocínio sem acrescentar valor à família.
+    maxTokens: 1200,
+    cacheSystem: true,
+    esforcoRaciocinio: "low",
   });
-
-  const finalMessage = await stream.finalMessage();
-
-  const texto = finalMessage.content
-    .filter((b): b is Extract<typeof b, { type: "text" }> => b.type === "text")
-    .map((b) => b.text)
-    .join("");
-
   return {
-    texto: texto.trim(),
+    texto: resposta.texto.trim(),
     uso: {
-      tokens_input: finalMessage.usage.input_tokens,
-      tokens_output: finalMessage.usage.output_tokens,
-      cache_read_tokens: finalMessage.usage.cache_read_input_tokens ?? undefined,
-      cache_write_tokens: finalMessage.usage.cache_creation_input_tokens ?? undefined,
+      tokens_input: resposta.tokensIn,
+      tokens_output: resposta.tokensOut,
+      cache_read_tokens: resposta.cacheRead || undefined,
+      cache_write_tokens: resposta.cacheWrite || undefined,
+    },
+    telemetria: {
+      provider: resposta.provider,
+      modelo: resposta.model,
+      ms: resposta.ms,
     },
   };
 }

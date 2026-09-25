@@ -221,6 +221,15 @@ describe("ISOLAMENTO — a economia não pode misturar famílias", () => {
 });
 
 describe("as consultas paralelizadas continuam independentes", () => {
+  it("desafios do onboarding são carregados uma vez e reutilizados no decisor", () => {
+    const ORCH = readFileSync(resolve(__dirname, "orchestrator.ts"), "utf8");
+    const inicio = ORCH.indexOf("async function processInboundInterno(");
+    const fim = ORCH.indexOf("\nasync function ", inicio + 20);
+    const turno = ORCH.slice(inicio, fim > inicio ? fim : undefined);
+    expect(turno.split("carregarDesafiosOnboarding(").length - 1).toBe(1);
+    expect(turno).toContain("temasOnboarding: desafiosOnboarding");
+  });
+
   it("MORDE: o trio de abertura vai junto, e os portões seguem em ordem", () => {
     const ORCH = readFileSync(resolve(__dirname, "orchestrator.ts"), "utf8");
     expect(ORCH).toMatch(/const \[\{ data: pref \}, ofertaFds, rotinaConversa\] = await Promise\.all\(\[/);

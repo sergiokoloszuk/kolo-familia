@@ -45,11 +45,17 @@ export type RastroTurno = {
   chars_entrada: number;
   /** Da hora que a Z-API carimbou até o `after()` começar de fato. */
   ms_ate_processar: number | null;
+  /** Do carimbo do inbound até a primeira aceitação do provedor. */
+  ms_ate_primeira_resposta: number | null;
+  /** Trabalho mantido vivo depois que a família já recebeu a primeira bolha. */
+  ms_apos_primeira_resposta: number | null;
   /** Onde o turno terminou — inclusive as saídas mudas. */
   saida: string | null;
   motivo: string | null;
   /** Duração por etapa. `debounce` é latência DELIBERADA — ver PEND-058. */
   ms: Record<string, number>;
+  /** Tempos internos que explicam uma etapa, sem serem somados duas vezes. */
+  detalhes: Record<string, number>;
   chamadas: ChamadaLLM[];
   /** Consultas ao banco contadas por nome lógico, para achar repetição. */
   queries: Record<string, number>;
@@ -76,12 +82,18 @@ export function novoRastroTurno(params: {
     // a fila do `after()`. É justamente por isso que ele vale — parte da espera
     // que a família sente acontece antes de a nossa primeira linha rodar.
     ms_ate_processar: Number.isFinite(carimbo) ? t0 - carimbo : null,
+    ms_ate_primeira_resposta: null,
+    ms_apos_primeira_resposta: null,
     saida: null,
     motivo: null,
     ms: {},
+    detalhes: {},
     chamadas: [],
     queries: {},
-    marcos: { inicio: t0 },
+    marcos: {
+      inicio: t0,
+      ...(Number.isFinite(carimbo) ? { inbound_recebido: carimbo } : {}),
+    },
   };
 }
 
@@ -123,6 +135,30 @@ export function contarQuery(r: RastroTurno, nome: string): void {
   r.queries[nome] = (r.queries[nome] ?? 0) + 1;
 }
 
+/** Registra detalhe interno sem misturá-lo às etapas não sobrepostas. */
+export function registrarDetalhe(r: RastroTurno, nome: string, ms: number): void {
+  if (!Number.isFinite(ms) || ms < 0) return;
+  r.detalhes[nome] = (r.detalhes[nome] ?? 0) + Math.round(ms);
+}
+
+/**
+ * Carimba a primeira bolha no instante em que o provedor a aceitou. Chamadas
+ * posteriores são ignoradas (ex.: “Quero os dois”), porque a experiência da
+ * família começa na primeira e não na última resposta.
+ */
+export function registrarPrimeiraResposta(
+  r: RastroTurno,
+  aceite: { aceitoEmMs: number; provedorMs?: number },
+): void {
+  if (r.marcos.primeira_resposta_aceita || !Number.isFinite(aceite.aceitoEmMs)) return;
+  r.marcos.primeira_resposta_aceita = aceite.aceitoEmMs;
+  const inicioPercebido = r.marcos.inbound_recebido ?? r.marcos.inicio;
+  r.ms_ate_primeira_resposta = Math.max(0, aceite.aceitoEmMs - inicioPercebido);
+  if (typeof aceite.provedorMs === "number") {
+    registrarDetalhe(r, "provedor_primeira_resposta", aceite.provedorMs);
+  }
+}
+
 /**
  * Fecha o orçamento e persiste. Chamado em `finally` — sucesso, fallback,
  * `return null`, erro tratado e erro inesperado geram rastro.
@@ -137,7 +173,18 @@ export async function registrarRastroTurno(r: RastroTurno): Promise<void> {
   // prendem deliberadamente a forma dessas chamadas — um deles CONTA
   // ocorrências. Medir não pode custar a garantia de quem já estava lá. Um
   // carimbo antes e outro depois medem o mesmo e não tocam em nada.
-  for (const nome of ["debounce", "decisor", "capacidade", "envio"]) {
+  const etapas = [
+    "identidade",
+    "persistencia_inbound",
+    "debounce",
+    "pre_decisao",
+    "decisor",
+    "capacidade",
+    "geracao_resposta",
+    "envio",
+    "interacao_estruturada",
+  ];
+  for (const nome of etapas) {
     const i = r.marcos[`${nome}_inicio`];
     const f = r.marcos[`${nome}_fim`];
     if (typeof i === "number" && typeof f === "number" && f >= i) {
@@ -145,6 +192,34 @@ export async function registrarRastroTurno(r: RastroTurno): Promise<void> {
     }
   }
   const total = agoraMs() - r.marcos.inicio;
+  if (r.marcos.primeira_resposta_aceita) {
+    r.ms_apos_primeira_resposta = Math.max(
+      0,
+      agoraMs() - r.marcos.primeira_resposta_aceita,
+    );
+    if (r.ms_ate_primeira_resposta !== null) {
+      const inicio = r.marcos.inbound_recebido ?? r.marcos.inicio;
+      const fim = r.marcos.primeira_resposta_aceita;
+      const conhecidoAntesDoProcesso = Math.max(0, r.marcos.inicio - inicio);
+      const conhecidoNoProcesso = etapas.reduce((soma, nome) => {
+        const etapaInicio = r.marcos[`${nome}_inicio`];
+        const etapaFim = r.marcos[`${nome}_fim`];
+        if (typeof etapaInicio !== "number" || typeof etapaFim !== "number") return soma;
+        const sobreposicao = Math.max(0, Math.min(etapaFim, fim) - Math.max(etapaInicio, r.marcos.inicio));
+        return soma + sobreposicao;
+      }, 0);
+      const naoMedido = Math.max(
+        0,
+        r.ms_ate_primeira_resposta - conhecidoAntesDoProcesso - conhecidoNoProcesso,
+      );
+      registrarDetalhe(r, "nao_medido_ate_primeira_resposta", naoMedido);
+      registrarDetalhe(
+        r,
+        "percentual_nao_medido_primeira_resposta",
+        r.ms_ate_primeira_resposta > 0 ? (naoMedido / r.ms_ate_primeira_resposta) * 100 : 0,
+      );
+    }
+  }
   r.ms.total = total;
   const somaEtapas = Object.entries(r.ms)
     .filter(([k]) => k !== "total" && k !== "nao_medido")

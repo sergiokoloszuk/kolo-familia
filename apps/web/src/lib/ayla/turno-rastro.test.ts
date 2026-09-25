@@ -6,6 +6,8 @@ import {
   marco,
   contarQuery,
   registrarLLM,
+  registrarDetalhe,
+  registrarPrimeiraResposta,
 } from "./turno-rastro";
 
 const ORQ = readFileSync(new URL("./orchestrator.ts", import.meta.url), "utf8");
@@ -111,6 +113,27 @@ describe("o orçamento fecha, e a ignorância é medida", () => {
     expect(novoRastroTurno({ chars: 10 }).ms_ate_processar).toBeNull();
     expect(novoRastroTurno({ chars: 10, recebidaEm: null }).ms_ate_processar).toBeNull();
   });
+
+  it("separa espera percebida do trabalho posterior à primeira bolha", async () => {
+    const recebida = new Date(Date.now() - 2500);
+    const r = novoRastroTurno({ chars: 10, recebidaEm: recebida });
+    registrarPrimeiraResposta(r, {
+      aceitoEmMs: recebida.getTime() + 2000,
+      provedorMs: 350,
+    });
+    await registrarRastroTurno(r);
+    expect(r.ms_ate_primeira_resposta).toBe(2000);
+    expect(r.ms_apos_primeira_resposta).toBeGreaterThanOrEqual(400);
+    expect(r.detalhes.provedor_primeira_resposta).toBe(350);
+  });
+
+  it("a segunda bolha não sobrescreve o tempo da primeira", () => {
+    const r = novoRastroTurno({ chars: 10 });
+    const primeira = Date.now() + 100;
+    registrarPrimeiraResposta(r, { aceitoEmMs: primeira });
+    registrarPrimeiraResposta(r, { aceitoEmMs: primeira + 5000 });
+    expect(r.marcos.primeira_resposta_aceita).toBe(primeira);
+  });
 });
 
 describe("o que o rastro conta, e o que ele nunca guarda", () => {
@@ -140,6 +163,13 @@ describe("o que o rastro conta, e o que ele nunca guarda", () => {
     });
     expect(r.chamadas).toHaveLength(1);
     expect(r.chamadas[0].modelo).toBe("gpt-x");
+  });
+
+  it("detalhe interno não entra como etapa somada duas vezes", () => {
+    const r = novoRastroTurno({ chars: 10 });
+    registrarDetalhe(r, "resposta_modelo", 1234);
+    expect(r.detalhes.resposta_modelo).toBe(1234);
+    expect(r.ms.resposta_modelo).toBeUndefined();
   });
 
   it("nenhum campo carrega fala da mãe ou da Ayla", () => {

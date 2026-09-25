@@ -152,6 +152,31 @@ describe("PEND-213 · portão editorial", () => {
     expect(orquestrador).toContain("boas_praticas_ids: boasPraticasIds");
     expect(orquestrador).toContain("n_boas_praticas: boasPraticasIds.length");
   });
+
+  it("o gerador familiar compartilhado usa GPT sem perder o mesmo contexto", () => {
+    const engine = readFileSync(resolve(process.cwd(), "src/lib/ia/engine.ts"), "utf8");
+    const inicio = engine.indexOf("export async function respondAsOutputType");
+    const fim = engine.indexOf("function runAllValidatorsExceptSize", inicio);
+    const funcao = engine.slice(inicio, fim);
+
+    expect(funcao).toContain("callProviderConversacional(");
+    expect(funcao).toContain('"openai"');
+    expect(funcao).not.toContain("callClaude");
+    expect(engine).not.toContain("getAnthropicClient");
+    expect(funcao).toContain("contextoPronto");
+    expect(funcao).toContain("runAllValidatorsExceptSize");
+    expect(engine).toContain("maxTokens: 1200");
+    expect(engine).toContain('esforcoRaciocinio: "low"');
+  });
+
+  it("mede contexto e modelo sem criar outra chamada nem remover repertório", () => {
+    const gerador = readFileSync(resolve(process.cwd(), "src/lib/ayla/aprofundamento.ts"), "utf8");
+    expect(gerador).toContain("const contextoMs = Date.now() - inicioContexto");
+    expect(gerador).toContain("modeloMs += resposta.telemetria.ms");
+    expect(gerador).toContain("tokensEntrada: resposta.uso.tokens_input ?? 0");
+    expect(gerador).toContain("boasPraticasIds: contextoPronto.ctx.boasPraticas.map");
+    expect(gerador.split("respondAsOutputType({").length - 1).toBe(1);
+  });
 });
 
 describe("PEND-213 · correlação e fallback", () => {
@@ -335,6 +360,16 @@ describe("PEND-213 · envelope e fiação", () => {
     expect(clique).toBeGreaterThan(persistiu);
     expect(clique).toBeLessThan(comando);
     expect(clique).toBeLessThan(decisor);
+  });
+
+  it("o clique não atravessa o debounce textual e registra o modelo usado", () => {
+    const src = readFileSync(new URL("./orchestrator.ts", import.meta.url), "utf8");
+    const clique = src.indexOf("const aprofundada = await processarEscolhaAprofundamento(");
+    const debounce = src.indexOf('marco(rastro, "debounce_inicio")');
+    expect(clique).toBeGreaterThan(-1);
+    expect(clique).toBeLessThan(debounce);
+    expect(src).toContain('funcao: "gerarRespostaAprofundada"');
+    expect(src).toContain("geracoes: aprofundadas.map((r) => r.metrica)");
   });
 
   it("a resposta do clique encerra o turno antes do fluxo que poderia oferecer outro menu", () => {

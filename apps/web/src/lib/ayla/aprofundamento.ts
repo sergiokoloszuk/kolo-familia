@@ -415,7 +415,19 @@ export async function gerarRespostaAprofundada(
   texto: string;
   outputType: string;
   repertorio: { skills: string[]; boasPraticasIds: string[] };
+  metrica: {
+    preparacaoMs: number;
+    contextoMs: number;
+    modeloMs: number;
+    totalMs: number;
+    provider: string;
+    modelo: string;
+    tokensEntrada: number;
+    tokensSaida: number;
+    tentativas: number;
+  };
 }> {
+  const inicioTotal = Date.now();
   const ids = [params.sourceInboundId, params.sourceOutboundId];
   const { data: mensagens, error: mensagensErro } = await supabase
     .from("ayla_messages")
@@ -448,13 +460,16 @@ export async function gerarRespostaAprofundada(
       : null,
     "Entregue valor novo para este mesmo caso, usando Perfil Vivo, histórico e repertório.",
   ].filter(Boolean).join("\n\n");
+  const inicioContexto = Date.now();
   const contextoPronto = await montarContextoDeSecoes(supabase, {
     familyId: params.familyId,
     membroAtipicoId: params.membroId,
     pedido,
   });
+  const contextoMs = Date.now() - inicioContexto;
 
   let ultimoErro = "resposta inválida";
+  let modeloMs = 0;
   for (let tentativa = 0; tentativa < 2; tentativa++) {
     const resposta = await respondAsOutputType({
       supabase,
@@ -472,6 +487,7 @@ export async function gerarRespostaAprofundada(
       pedido,
       contextoPronto,
     });
+    modeloMs += resposta.telemetria.ms;
     if (resposta.validacao.ok && resposta.texto.trim()) {
       return {
         texto: resposta.texto.trim(),
@@ -479,6 +495,17 @@ export async function gerarRespostaAprofundada(
         repertorio: {
           skills: contextoPronto.roteadas.map((r) => r.skill.name),
           boasPraticasIds: contextoPronto.ctx.boasPraticas.map((bp) => bp.id),
+        },
+        metrica: {
+          preparacaoMs: Math.max(0, Date.now() - inicioTotal - contextoMs - modeloMs),
+          contextoMs,
+          modeloMs,
+          totalMs: Date.now() - inicioTotal,
+          provider: resposta.telemetria.provider,
+          modelo: resposta.telemetria.modelo,
+          tokensEntrada: resposta.uso.tokens_input ?? 0,
+          tokensSaida: resposta.uso.tokens_output ?? 0,
+          tentativas: tentativa + 1,
         },
       };
     }

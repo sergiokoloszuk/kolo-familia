@@ -56,6 +56,9 @@ import {
   novoRastroTurno,
   registrarRastroTurno,
   marco,
+  registrarDetalhe,
+  registrarLLM,
+  registrarPrimeiraResposta,
   type RastroTurno,
 } from "./turno-rastro";
 import { pedeUmPlano } from "@/lib/ia/pedido-plano";
@@ -207,7 +210,12 @@ export type EnvioResultado =
    * `messageId` pode ser null: 200 sem id acontece, e inventar um id ("unknown")
    * é pior que assumir que não veio.
    */
-  | { enviada: true; messageId: string | null; aylaMessageId?: string | null }
+  | {
+      enviada: true;
+      messageId: string | null;
+      aylaMessageId?: string | null;
+      metrica?: { aceitoEmMs: number; provedorMs: number; persistenciaMs: number };
+    }
   | { enviada: false; motivo: string };
 
 // ============================================================
@@ -1918,10 +1926,16 @@ export async function processInbound(
     chars: (inboundRecebido.texto ?? "").length,
     recebidaEm: inboundRecebido.recebidaEm ?? null,
   });
+  rastro.tipo_mensagem =
+    inboundRecebido.interacao?.tipo ?? inboundRecebido.midiaTipo ?? "texto";
   try {
     const r = await processInboundInterno(supabase, inboundRecebido, rastro);
     if (!rastro.saida) rastro.saida = r.tratada ? "tratada" : "nao_tratada";
     if (r.familia && !rastro.familia) rastro.familia = r.familia;
+    if (r.resposta?.enviada && r.resposta.metrica) {
+      registrarPrimeiraResposta(rastro, r.resposta.metrica);
+      registrarDetalhe(rastro, "persistencia_apos_provedor", r.resposta.metrica.persistenciaMs);
+    }
     return r;
   } catch (e) {
     rastro.saida = "null_excecao";
@@ -2242,6 +2256,7 @@ async function processarEscolhaAprofundamento(
     phone: string | null;
     inbound: InboundWhatsApp;
     inboundMessageRowId: string;
+    rastro: RastroTurno;
   },
 ): Promise<{ tratada: boolean; familia: string; resposta?: EnvioResultado } | null> {
   if (!params.phone) return null;
@@ -2333,6 +2348,21 @@ async function processarEscolhaAprofundamento(
       })
     ));
 
+    for (const aprofundada of aprofundadas) {
+      registrarDetalhe(params.rastro, "aprofundamento_preparacao", aprofundada.metrica.preparacaoMs);
+      registrarDetalhe(params.rastro, "aprofundamento_contexto", aprofundada.metrica.contextoMs);
+      registrarDetalhe(params.rastro, "aprofundamento_modelo", aprofundada.metrica.modeloMs);
+      registrarLLM(params.rastro, {
+        funcao: "gerarRespostaAprofundada",
+        provider: aprofundada.metrica.provider,
+        modelo: aprofundada.metrica.modelo,
+        ms: aprofundada.metrica.modeloMs,
+        tokens_in: aprofundada.metrica.tokensEntrada,
+        tokens_out: aprofundada.metrica.tokensSaida,
+        desfecho: aprofundada.metrica.tentativas > 1 ? "retentativa" : "ok",
+      });
+    }
+
     for (const [indice, aprofundada] of aprofundadas.entries()) {
       const ramo = ramos[indice];
       const resposta = await enviarEPersistir(supabase, {
@@ -2361,6 +2391,10 @@ async function processarEscolhaAprofundamento(
         },
       });
       if (!resposta.enviada) throw new Error(resposta.motivo);
+      if (resposta.metrica) {
+        registrarPrimeiraResposta(params.rastro, resposta.metrica);
+        registrarDetalhe(params.rastro, "persistencia_apos_provedor", resposta.metrica.persistenciaMs);
+      }
       envios.push(resposta);
     }
 
@@ -2396,6 +2430,7 @@ async function processarEscolhaAprofundamento(
         skills,
         boas_praticas_ids: boasPraticasIds,
         n_boas_praticas: boasPraticasIds.length,
+        geracoes: aprofundadas.map((r) => r.metrica),
       },
     }).catch(() => {});
     return { tratada: true, familia: params.familyId, resposta: envios.at(-1) };
@@ -2437,7 +2472,9 @@ async function processInboundInterno(
   // pegadinha do 9º dígito + variações de formato/país). Comparamos por
   // uma chave normalizada em vez de igualdade exata.
   const chaveIn = chaveTelefoneBR(inbound.phoneE164);
+  marco(rastro, "identidade_inicio");
   const busca = await encontrarFamiliaPorTelefone(supabase, inbound.phoneE164);
+  marco(rastro, "identidade_fim");
 
   if (busca.tipo === "erro") {
     // FALHA DE BANCO — NÃO é "número não cadastrado". Antes o `error` da consulta
@@ -2534,6 +2571,7 @@ async function processInboundInterno(
   // mesmo webhook mais de uma vez (at-least-once); o índice único em
   // zaap_message_id faz o segundo insert virar no-op → paramos aqui, evitando
   // gerar plano/resposta em duplicata (o bug dos 2 PDFs iguais).
+  marco(rastro, "persistencia_inbound_inicio");
   const baseInbound = {
     family_account_id: family.id,
     direcao: "inbound",
@@ -2580,6 +2618,7 @@ async function processInboundInterno(
       console.warn(
         `[ayla] inbound duplicado ignorado (messageId ${inbound.messageId})`,
       );
+      marco(rastro, "persistencia_inbound_fim");
       return { tratada: false, familia: family.id };
     } else {
       inboundMessageRowId = claim[0]?.id as string | null;
@@ -2597,17 +2636,22 @@ async function processInboundInterno(
       inboundMessageRowId = inserida.id as string;
     }
   }
+  marco(rastro, "persistencia_inbound_fim");
 
   // O clique é uma continuação explícita, não uma fala a reclassificar. Ele
   // entra depois da trava de idempotência e antes de comando/lote/decisor.
   if (aprofundamentoGlobalLigado() && inboundMessageRowId) {
+    marco(rastro, "interacao_estruturada_inicio");
     const historia = await processarEscolhaObjetivoHistoria(supabase, {
       familyId: family.id,
       phone: family.whatsapp_e164,
       inbound,
       inboundMessageRowId,
     });
-    if (historia) return historia;
+    if (historia) {
+      marco(rastro, "interacao_estruturada_fim");
+      return historia;
+    }
 
     const seguimento = await registrarSeguimentoAprofundamento(supabase, {
       familyId: family.id,
@@ -2627,7 +2671,9 @@ async function processInboundInterno(
       phone: family.whatsapp_e164,
       inbound,
       inboundMessageRowId,
+      rastro,
     });
+    marco(rastro, "interacao_estruturada_fim");
     if (aprofundada) return aprofundada;
   }
 
@@ -2691,6 +2737,7 @@ async function processInboundInterno(
     // O resto da função (parser, responder, ponte) passa a ver a fala inteira.
     inbound = { ...inbound, texto: turno.texto };
   }
+  marco(rastro, "pre_decisao_inicio");
 
   // 3c. VÍDEO — a Ayla não assiste, e ficar muda é muito pior do que dizer isso.
   //
@@ -3223,6 +3270,7 @@ async function processInboundInterno(
   // CONTA as ocorrências, então nem este comentário pode citá-la. Medir não
   // pode custar a garantia de quem já estava lá: a instrumentação é um carimbo
   // antes e outro depois, e o corpo da chamada fica intocado.
+  marco(rastro, "pre_decisao_fim");
   marco(rastro, "decisor_inicio");
   const turnoClassificado = rotinaConversa
     ? {
@@ -3256,7 +3304,9 @@ async function processInboundInterno(
         supabase,
         familyId: family.id,
         ...(await ultimasFalas(supabase, family.id, inbound.texto, await historicoDoTurno())),
-        temasOnboarding: await carregarDesafiosOnboarding(supabase, membroConversa),
+        // Já carregado para a entrada guiada. Repetir a mesma leitura aqui
+        // acrescentava uma ida remota antes de toda resposta comum.
+        temasOnboarding: desafiosOnboarding,
         ...(await (async () => {
           // ⚠️ FALHA ≠ VAZIO — PEND-184. O catálogo indisponível some do prompt
           // e faz o modelo devolver `skills: []` obedecendo ao contrato; sem
@@ -3924,6 +3974,7 @@ async function processInboundInterno(
         }).catch(() => {});
       }
     }
+    marco(rastro, "geracao_resposta_inicio");
     const exp = ctxExp
       ? await responderExperimental(supabase, {
           familyId: family.id,
@@ -3944,6 +3995,7 @@ async function processInboundInterno(
           onFalha: registrarQueda,
         })
       : null;
+    marco(rastro, "geracao_resposta_fim");
     if (ofertaObjetivoHistoriaId && !exp) {
       await atualizarOfertaObjetivoHistoria(supabase, ofertaObjetivoHistoriaId, {
         status: "falhou",
@@ -3951,6 +4003,18 @@ async function processInboundInterno(
       }, "preparada").catch(() => false);
     }
     if (ctxExp && exp) {
+      registrarDetalhe(rastro, "resposta_contexto", exp.metrica.msContexto);
+      registrarDetalhe(rastro, "resposta_modelo", exp.metrica.msModelo);
+      registrarDetalhe(rastro, "resposta_inspecao", exp.metrica.msInspecao);
+      registrarLLM(rastro, {
+        funcao: "responderExperimental",
+        provider: exp.metrica.provider,
+        modelo: exp.metrica.modelo,
+        ms: exp.metrica.msModelo,
+        tokens_in: exp.metrica.tokensEntrada,
+        tokens_out: exp.metrica.tokensSaida,
+        desfecho: "ok",
+      });
       console.log(
         `[ayla:path] experimental — ${exp.metrica.consultasBanco} consultas · ${exp.metrica.chamadasLLM} LLM · ` +
           `in=${exp.metrica.tokensEntrada} out=${exp.metrica.tokensSaida} · ` +
@@ -4164,6 +4228,7 @@ async function processInboundInterno(
         },
       });
 
+      marco(rastro, "envio_inicio");
       const resp =
         deveEscolherObjetivoHistoria && ofertaObjetivoHistoriaId
           ? await publicarOfertaObjetivoHistoria(supabase, {
@@ -4212,6 +4277,11 @@ async function processInboundInterno(
                 : {}),
               meta: { ayla_path: "experimental", ...exp.metrica },
             });
+      marco(rastro, "envio_fim");
+      if (resp.enviada && resp.metrica) {
+        registrarPrimeiraResposta(rastro, resp.metrica);
+        registrarDetalhe(rastro, "persistencia_apos_provedor", resp.metrica.persistenciaMs);
+      }
 
       // Duas mensagens de propósito: a história pode ser lida sem um tutorial
       // no meio, e o caminho da plataforma fica escaneável logo abaixo. O link
@@ -6540,9 +6610,14 @@ export async function enviarEPersistir(
   let providerResp: unknown = null;
   let erro: string | null = null;
   const idsBolhas: Array<string | null> = [];
+  const inicioProvedor = Date.now();
+  let aceitoEmMs: number | null = null;
+  let provedorMs = 0;
 
   try {
     const r = await enviarTexto({ phoneE164: params.phone, texto });
+    aceitoEmMs = Date.now();
+    provedorMs = aceitoEmMs - inicioProvedor;
     providerResp = r.raw;
     idsBolhas.push(r.messageId);
     resultado = { enviada: true, messageId: r.messageId };
@@ -6550,6 +6625,8 @@ export async function enviarEPersistir(
     erro = e instanceof Error ? e.message : "Falha desconhecida";
     resultado = { enviada: false, motivo: erro };
   }
+
+  const inicioPersistencia = Date.now();
 
   // Auditoria. Com reserva, a linha JA existe (foi ela que garantiu a janela) —
   // atualiza. Sem reserva (reativa, isenta, ou banco fora), insere como antes.
@@ -6605,6 +6682,17 @@ export async function enviarEPersistir(
       .from("ayla_preferences")
       .update({ ultima_mensagem_em: new Date().toISOString() })
       .eq("family_account_id", params.family_account_id);
+  }
+
+  if (resultado.enviada && aceitoEmMs !== null) {
+    resultado = {
+      ...resultado,
+      metrica: {
+        aceitoEmMs,
+        provedorMs,
+        persistenciaMs: Date.now() - inicioPersistencia,
+      },
+    };
   }
 
   return resultado;

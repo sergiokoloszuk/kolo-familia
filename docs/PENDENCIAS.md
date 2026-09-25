@@ -7488,6 +7488,16 @@ li o registro `MODELO_CONVERSA` inteiro (que contém os dois) e reportei o lado
 errado, e por isso a "validação Claude × GPT" de 60 execuções foi **GPT nos dois
 braços**. Os cinco documentos levam retificação no topo desde 05/09.
 
+**ACHADO DE 25/09, DURANTE A PEND-215.** `respondAsOutputType`, gerador
+compartilhado pelos atalhos da Web, seções de Plano e aprofundamentos do
+WhatsApp, ainda chamava `getAnthropicClient()` diretamente e ignorava a
+migração conversacional. O clique real pagou ~22 s. A porta familiar foi
+movida para o GPT preservando o mesmo prompt, Perfil, skills, BPs e validadores.
+Isso não conclui esta pendência: a auditoria encontrou outros usos diretos em
+proativas, Lúdico, histórias, relatórios e auxiliares da Ayla; eles continuam
+exigindo a classificação de impacto já definida acima, não uma troca em massa
+sem prova.
+
 
 ### PEND-163
 **A idade da criança não chega à recuperação de repertório — e só no caminho que todas as famílias usam**
@@ -10021,20 +10031,60 @@ contrato do provider sem depender da mensagem variável de um erro externo.
 ### PEND-215
 **Latência perceptível da Ayla no WhatsApp, inclusive em cliques estruturados**
 Bloco: **B · Ayla** · Prioridade: **P1**
-STATUS: **ABERTA — baseline real medido, NÃO corrigida** · Aberta em: 2026-09-25
+STATUS: **EM IMPLEMENTAÇÃO — baseline e limites registrados antes da correção** · Aberta em: 2026-09-25
 
-No teste interno autorizado de 25/09, três turnos consecutivos levaram
-**36.243 ms**, **30.917 ms** e **35.560 ms**; mediana de **35.560 ms**. A espera
-é perceptível no WhatsApp e enfraquece a sensação de acompanhamento, mesmo
-quando a resposta final é útil.
+**BASELINE CORRIGIDO (produção, antes da implementação).** Os **36.243 ms**,
+**30.917 ms** e **35.560 ms** inicialmente lidos em `turno_externo` mediam a
+execução inteira, inclusive o aprendizado longitudinal feito *depois* de a
+bolha já ter sido aceita pela Z-API. Não são, portanto, a espera percebida pela
+família. Cruzando o carimbo do último inbound com a primeira aceitação do
+outbound em 7 dias (18–25/09), a espera real foi:
 
-O rastro `turno_externo` separou aproximadamente **10,7–10,8 s** de debounce
-deliberado, **1,6–5,9 s** de decisor e **17,7–23,2 s** ainda classificados como
-`nao_medido`. O primeiro caso era um clique de botão estruturado, que não
-precisa esperar uma possível sequência de balões como uma mensagem textual
-comum. Não otimizar removendo contexto, Perfil Vivo, BPs ou portões de
-segurança; primeiro decompor o trecho não medido e distinguir latência
-necessária de espera evitável.
+- mensagens comuns: **P50 23.304 ms · P95 31.883 ms · n=269**;
+- cliques estruturados: **P50 21.729 ms · P95 22.424 ms · n=4** — amostra que
+  prova o defeito, mas não estima a população;
+- quatro turnos internos recentes: **21,660 s · 22,135 s · 25,404 s ·
+  28,181 s** até o provedor aceitar a primeira resposta.
+
+Nas mensagens comuns há **~10,7–10,9 s** de silêncio deliberado para reunir os
+balões que a família manda em sequência, **~1,5–2,2 s** no decisor e **~5–8 s**
+na geração oficial. Nos cliques atuais o código já entra antes do debounce; a
+espera restante está principalmente no gerador de aprofundamento, que preserva
+Perfil Vivo, histórico, skills e BPs, mas usa um caminho Claude com até 2.048
+tokens e 1.024 tokens de raciocínio e não expõe a própria duração. Há ainda uma
+segunda leitura idêntica de desafios do onboarding antes do decisor comum.
+
+**LIMITES DE ACEITE DESTA CORREÇÃO (registrados antes da implementação).**
+
+- clique estruturado: **P50 ≤ 10 s e P95 ≤ 15 s** em prova interna autorizada,
+  sem debounce e sem retirar Perfil, histórico, skills, BPs ou validação;
+- mensagem comum: primeira melhora conservadora para **P50 ≤ 22 s e P95 ≤
+  30 s**; o alvo de experiência da frente completa permanece **P50 ≤ 20 s e
+  P95 ≤ 28 s** e não pode ser declarado cumprido só por build ou bancada;
+- `turno_externo` deve registrar o tempo até a primeira aceitação separadamente
+  do trabalho pós-resposta e atribuir identidade, inbound, contexto/modelo,
+  provedor e persistência; tempo desconhecido até a bolha deve ficar **≤ 10%**;
+- **zero** resposta duplicada, regressão de segurança, perda de continuidade ou
+  empobrecimento editorial. A saída rápida precisa continuar provando quais
+  skills e BPs recebeu.
+
+A janela global de 10 s não será reduzida nesta primeira correção: em 156
+sequências reais de balões, a mediana entre mensagens foi **11,22 s** e o P75
+**16,60 s**. Cortá-la por inteiro agora recriaria respostas fragmentadas. A
+primeira intervenção ataca o clique, elimina trabalho repetido e fecha a
+telemetria; uma janela adaptativa só será avaliada com prova específica.
+
+**EVIDÊNCIA LOCAL COM MODELO REAL (25/09, sem envio de WhatsApp).** O primeiro
+ensaio revelou que o teto herdado de 2.048 tokens ainda permitia uma cauda de
+22,4 s, embora 4/5 respostas ficassem entre 5,7 e 8,6 s. O teto foi alinhado ao
+Core oficial (**1.200 tokens**) e a bancada foi repetida. Resultado final:
+**6.480 · 6.610 · 6.899 · 6.949 · 8.118 ms; P50 6.899 ms; P95 8.118 ms; n=5**.
+As cinco gerações registraram `provider=openai`, `modelo=gpt-5.6-luna`, a skill
+`comunicacao`, idade de 6 anos e **3 BPs** no contexto. Os ramos permaneceram
+semanticamente distintos: manejo + frase pronta; brincadeira com materiais,
+tempo, turnos e facilitação; crenças da criança/adulto em linguagem de
+possibilidade. Limite da prova: mede o gerador com dados internos reais, não a
+viagem completa pelo webhook/Z-API; o aceite final depende do WhatsApp real.
 
 **CRITÉRIO DE CONCLUSÃO:** `turno_externo` atribui tempo a todas as etapas
 relevantes (debounce, identidade/alvo, contexto e repertório, modelo,
