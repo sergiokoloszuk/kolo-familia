@@ -171,6 +171,10 @@ import {
   textoDoFallback,
   type RamoAprofundamento,
 } from "./aprofundamento";
+import {
+  detectarEntregaHistoria,
+  guiaHistoriaNoLudico,
+} from "./historia-whatsapp";
 
 /**
  * Orchestrator da Ayla — PRD §12.4. Os dois pontos de entrada:
@@ -3543,6 +3547,32 @@ async function processInboundInterno(
     if (!ctxExp) {
       registrarQueda("CONTEXTO_NULO", "loadFamiliaParaEnvio devolveu null duas vezes");
     }
+
+    // A oferta de história é um compromisso, não uma pergunta descartável.
+    // O histórico já foi lido neste turno; a primeira fala anterior da Ayla
+    // resolve inclusive respostas enviadas em vários balões. Segurança atual
+    // sempre vence esta entrega.
+    const entregaHistoria =
+      ctxExp && !seguranca.aberta && !mensagemPedeSeguranca(inbound.texto)
+        ? detectarEntregaHistoria({
+            mensagem: inbound.texto,
+            aceite: turnoClassificado.aceite,
+            historicoMaisRecentePrimeiro: await historicoDoTurno(),
+          })
+        : null;
+    if (entregaHistoria) {
+      void logEvent({
+        kind: "historia_compromisso_detectado",
+        severity: "info",
+        persistir: true,
+        family_account_id: family.id,
+        payload: {
+          turno: rastro.turno,
+          origem: entregaHistoria.origem,
+          membro_atipico_id: membroConversa,
+        },
+      });
+    }
     const exp = ctxExp
       ? await responderExperimental(supabase, {
           familyId: family.id,
@@ -3550,6 +3580,7 @@ async function processInboundInterno(
           // ⚠️ C2 · UM DONO PARA A DECISÃO. A classificação deste turno já
           // aconteceu acima; o experimental consome, nunca reclassifica.
           turnoClassificado,
+          entregarHistoriaNoWhatsapp: Boolean(entregaHistoria),
           onFalha: registrarQueda,
         })
       : null;
@@ -3560,6 +3591,18 @@ async function processInboundInterno(
           `contexto=${exp.metrica.msContexto}ms modelo=${exp.metrica.msModelo}ms ` +
           `inspecao=${exp.metrica.msInspecao}ms total=${exp.metrica.msTotal}ms`,
       );
+      // O destino usa o mesmo membro que o gerador oficial resolveu. Assim uma
+      // família com dois filhos não abre a criação na criança ativa do cookie.
+      const membroHistoriaId =
+        exp.membroId ?? (ctxExp.membros.length === 1 ? ctxExp.membros[0]?.id ?? null : null);
+      const destinoHistoria = membroHistoriaId
+        ? `/historias/criar?membro=${encodeURIComponent(membroHistoriaId)}`
+        : "/historias/criar";
+      // Começa assim que o alvo está resolvido e corre junto do envio da
+      // história. O tutorial não acrescenta a ida ao banco depois da bolha.
+      const linkHistoriaPromise = entregaHistoria
+        ? gerarMagicLink(supabase, { familyId: family.id, next: destinoHistoria })
+        : Promise.resolve(null);
       // ── A LACUNA SUGERIDA — Gate B, com a semântica da PEND-187A ───────
       //
       // ⚠️ O QUE SE GRAVA É A SUGESTÃO, NÃO A PERGUNTA. Até 10/09/2026 a chave
@@ -3698,13 +3741,19 @@ async function processInboundInterno(
           dominiosJaEstruturados: [],
           temaDoTurno: temaAtivo,
         });
-        conviteRastro = {
-          acao: decisao.acao,
-          origem: decisao.origem,
-          motivo: decisao.motivo,
-          dominio: decisao.dominio,
-        };
-        if (decisao.acao === "CONVIDAR") {
+        conviteRastro = entregaHistoria
+          ? {
+              acao: "NENHUMA",
+              motivo: "historia_em_entrega",
+              dominio: null,
+            }
+          : {
+              acao: decisao.acao,
+              origem: decisao.origem,
+              motivo: decisao.motivo,
+              dominio: decisao.dominio,
+            };
+        if (!entregaHistoria && decisao.acao === "CONVIDAR") {
           const link = await gerarMagicLink(supabase, {
             familyId: family.id,
             next: destinoDoConvite(decisao.dominio),
@@ -3762,7 +3811,7 @@ async function processInboundInterno(
         // ⚠️ CHAVE NOVA, e o nome carrega a semântica. `lacuna` legado fica
         // legível no histórico e NÃO é migrado: seriam afirmações diferentes
         // sobre o passado.
-        ...(lacunaSugerida || campoInvestigado || camposMini.length
+        ...(lacunaSugerida || campoInvestigado || camposMini.length || entregaHistoria
           ? {
               metadataMensagem: {
                 ...(lacunaSugerida ? { lacuna_sugerida: lacunaSugerida } : {}),
@@ -3773,11 +3822,80 @@ async function processInboundInterno(
                       mini_investigacao_campos: camposMini,
                     }
                   : {}),
+                ...(entregaHistoria
+                  ? {
+                      historia_whatsapp: {
+                        origem: entregaHistoria.origem,
+                        destino: destinoHistoria,
+                      },
+                    }
+                  : {}),
               },
             }
           : {}),
         meta: { ayla_path: "experimental", ...exp.metrica },
       });
+
+      // Duas mensagens de propósito: a história pode ser lida sem um tutorial
+      // no meio, e o caminho da plataforma fica escaneável logo abaixo. O link
+      // nunca substitui a história; se falhar, a primeira entrega permanece.
+      if (resp.enviada && entregaHistoria) {
+        void logEvent({
+          kind: "historia_whatsapp_aceita",
+          severity: "info",
+          persistir: true,
+          family_account_id: family.id,
+          payload: {
+            turno: rastro.turno,
+            origem: entregaHistoria.origem,
+            membro_atipico_id: exp.membroId,
+            zaap_message_id: resp.messageId,
+          },
+        });
+
+        const linkHistoria = await linkHistoriaPromise;
+        if (linkHistoria) {
+          const nomeCrianca =
+            ctxExp.membros?.find((m) => m.id === exp.membroId)?.nome ?? null;
+          const guia = await enviarEPersistir(supabase, {
+            family_account_id: family.id,
+            membro_atipico_id: exp.membroId,
+            phone: ctxExp.whatsapp_e164,
+            texto: guiaHistoriaNoLudico({ link: linkHistoria, nomeCrianca }),
+            category: "reativa",
+            tipo: "resposta_registro",
+            metadataMensagem: {
+              historia_ludico: {
+                etapa: "guia",
+                destino: destinoHistoria,
+                origem: entregaHistoria.origem,
+              },
+            },
+            meta: { ayla_path: "historia_ludico" },
+          });
+          void logEvent({
+            kind: guia.enviada ? "historia_ludico_guia_aceito" : "historia_ludico_guia_falhou",
+            severity: guia.enviada ? "info" : "error",
+            persistir: true,
+            family_account_id: family.id,
+            message: guia.enviada ? undefined : guia.motivo,
+            payload: {
+              turno: rastro.turno,
+              membro_atipico_id: exp.membroId,
+              destino: destinoHistoria,
+            },
+          });
+        } else {
+          await logServerError(
+            "historia_ludico_link_falhou",
+            "Magic link para /historias/criar não foi gerado",
+            {
+              family_account_id: family.id,
+              payload: { turno: rastro.turno, membro_atipico_id: exp.membroId },
+            },
+          ).catch(() => {});
+        }
+      }
       // ⚠️ A PONTE DO PLANO CHEGA AO CAMINHO NOVO — 15/08/2026.
       //
       // É a MESMA função que o Legacy chama (`ponteDePlano`), com o mesmo
@@ -3793,7 +3911,7 @@ async function processInboundInterno(
       // janela de 20h da própria ponte procuram "/auth/wa" em `ayla_messages`.
       // Uma bolha enviada e não persistida deixaria o dedup cego, e a família
       // ganharia um plano por turno.
-      if (resp.enviada) {
+      if (resp.enviada && !entregaHistoria) {
         // A ÂNCORA DA ENTREGA. Sem ela, a mensagem que entrega o Plano volta a
         // ser lida como uma OFERTA no turno seguinte, e o "Ok" da mãe gera
         // outro Plano (caso Matheo, 11/08/2026).

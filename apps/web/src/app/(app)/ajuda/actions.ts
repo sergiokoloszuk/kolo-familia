@@ -22,6 +22,7 @@ const ROTAS_AJUDA: { rota: string; label: string }[] = [
   { rota: "/planos", label: "Meus Planos" },
   { rota: "/evolucao", label: "Evolução" },
   { rota: "/ludico", label: "Lúdico" },
+  { rota: "/historias/criar", label: "Criar uma história" },
   { rota: "/registrar/diario", label: "Registrar o dia" },
   { rota: "/configuracoes", label: "Configurações" },
   { rota: "/configuracoes/conta", label: "Minha conta" },
@@ -40,6 +41,7 @@ const MAPA = `# Mapa do app Kolo Família (telas reais e o que se faz em cada um
 - /registrar/diario (Registrar o dia / Registro Diário): check-in (como você está e como a criança está) + conquista, desafio, observação e contexto (quem estava, como reagiu). A IA organiza e guarda na Evolução.
 - /evolucao (Evolução): como a criança está ao longo do tempo, por tema, e o que ajudou. No fim, dá pra gerar um RELATÓRIO pra escola ou terapeuta (a IA escreve, você edita e baixa em PDF).
 - /ludico (Lúdico): engloba Histórias ilustradas, Rotinas visuais (cards), "O que o desenho conta" (leitura de desenho), Meditação guiada, Timer lúdico e o Avatar da criança.
+- /historias/criar (Criar uma história): abre direto a criação de história ilustrada. Se aparecer "Falta o avatar", toque em "Criar avatar de [nome]"; escolha o estilo, descreva a aparência e toque em "Criar avatar". Depois volte a "Criar uma história", selecione criança/avatar quando esses campos aparecerem, escreva a situação em "O que você quer contar?", escolha de 3 a 6 páginas e toque em "Criar história". A geração pode levar cerca de um minuto.
 - /configuracoes (Configurações): acompanhamento da Ayla no WhatsApp (ligar/desligar, horário, frequência) e categorias de comunicação. Sub-telas:
   - /configuracoes/conta (Minha conta): mudar o nome e "como prefere ser chamada", trocar senha, EXPORTAR seus dados, e EXCLUIR a conta.
   - /configuracoes/familia (Mapa familiar): quem cuida junto (pai, avós, babá, professora, terapeuta).

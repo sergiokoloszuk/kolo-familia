@@ -15,8 +15,13 @@ export const metadata = { title: "Criar história — Kolo Família" };
 // marcar status='erro', prendendo o usuário no skeleton).
 export const maxDuration = 300;
 
-export default async function CriarHistoriaPage() {
+export default async function CriarHistoriaPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ membro?: string }>;
+}) {
   const { supabase, family } = await loadFamilyContext();
+  const sp = await searchParams;
 
   const { data: membros } = await supabase
     .from("membros_atipicos")
@@ -68,8 +73,12 @@ export default async function CriarHistoriaPage() {
   const todas = criancas.map((c) => ({ id: c.id, nome: c.nome, temAvatar: c.avatares.length > 0 }));
   const comAvatar = criancas.filter((c) => c.avatares.length > 0);
   const semAvatar = todas.filter((m) => !m.temAvatar);
-  // Já abre na criança ativa (de quem a mãe está falando), se ela tiver avatar.
-  const ativaId = (await resolverCriancaAtivaId(comAvatar)) ?? "";
+  // O link da Ayla transporta a criança do turno. Só aceita o id se ele estiver
+  // na lista da própria família e tiver avatar; query adulterada nunca escolhe
+  // outra família. Sem alvo válido, preserva a criança ativa do app.
+  const membroPedido = sp.membro?.trim() ?? "";
+  const pedidoValido = comAvatar.some((m) => m.id === membroPedido) ? membroPedido : "";
+  const ativaId = pedidoValido || (await resolverCriancaAtivaId(comAvatar)) || "";
 
   return (
     <div className="mx-auto flex w-full max-w-2xl flex-col gap-6">

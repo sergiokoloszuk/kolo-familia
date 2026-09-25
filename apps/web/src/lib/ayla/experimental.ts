@@ -102,6 +102,7 @@ import { lerEventos, eventosRelevantes, blocoDeEventos } from "./experimental-me
 import { recuperarBoasPraticas, blocoBoasPraticas } from "@/lib/conhecimento/recuperar";
 import { lerEstadoTrial } from "@/lib/trial/estado";
 import { blocoDeContinuidade } from "@/lib/conducao/continuidade";
+import { BLOCO_ENTREGA_HISTORIA_WHATSAPP } from "./historia-whatsapp";
 import {
   blocoDaJornada,
   lerEvidenciasJornada,
@@ -886,6 +887,12 @@ export async function responderExperimental(
       skillsAvaliadas?: boolean;
     } | null;
     /**
+     * A família pediu a história ou respondeu ao tema que a Ayla havia
+     * solicitado. A decisão é determinística no orquestrador; aqui o Core só
+     * recebe a obrigação de concluir a entrega usando o contexto já carregado.
+     */
+    entregarHistoriaNoWhatsapp?: boolean;
+    /**
      * ⚠️ SÓ O SIMULADOR PASSA ISTO — e existe porque `null` era uma resposta
      * mentirosa. Três causas completamente diferentes (modelo devolveu vazio ·
      * fronteira barrou · exceção) chegavam à tela como a MESMA frase, e a
@@ -1297,6 +1304,12 @@ export async function responderExperimental(
          */
         posTrial ? "" : BLOCO_DNA,
         repertorio,
+        // A história continua nascendo do Core + Perfil + histórico + BPs.
+        // Este bloco não traz conteúdo clínico novo: apenas transforma uma
+        // promessa já feita em entrega no mesmo turno.
+        !posTrial && params.entregarHistoriaNoWhatsapp
+          ? BLOCO_ENTREGA_HISTORIA_WHATSAPP
+          : "",
         conducaoPosTrial,
         comercial,
         // ⚠️ ANTES DO FORMATO, E O MOTIVO É UMA REGRA QUE JÁ EXISTIA — PEND-187B.

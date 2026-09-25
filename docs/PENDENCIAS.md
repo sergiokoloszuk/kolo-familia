@@ -10048,7 +10048,57 @@ WhatsApp).
 
 ---
 
-**Proximo ID livre: PEND-216. *(PEND-209 a PEND-211 já estão reivindicadas no working tree principal por outra frente; 024 e 025 reservadas por frentes ainda nao publicadas; PEND-202 reivindicada em commit e ainda sem ficha; 0076 e numero de MIGRACAO reservado — ver PEND-121.)***
+### PEND-216
+**Ayla oferece história, recebe o tema e volta a investigar em vez de entregar**
+Bloco: **B · Ayla / Lúdico** · Prioridade: **P0**
+STATUS: **IMPLEMENTADA E TESTADA LOCALMENTE — NÃO publicada** · Aberta em: 2026-09-25
+
+**CASO REAL.** A Ayla perguntou qual situação a família queria transformar em
+história para Darlison. Quatro horas depois, a família trouxe luto e lembranças
+do pai e do bisavô. A resposta não entregou a história: abriu uma distinção
+entre lembrança, sonho, imaginação e percepção atual. A família respondeu,
+depois acrescentou o interesse por super-heróis, Dragon Ball e Sonic, e a Ayla
+fez uma terceira pergunta sobre imaginação. A promessa inicial morreu e a
+conversa passou a ruminar a mesma cautela.
+
+**CAUSA RAIZ.** O decisor já produz `aceite`, mas o caminho oficial
+`experimental.ts` não consumia o campo. A continuidade textual também não
+tratava a pergunta de tema como compromisso pendente. Perfil, histórico e BPs
+chegavam ao modelo; faltava a obrigação de concluir o que a própria Ayla havia
+oferecido.
+
+**CORREÇÃO.** Um portão determinístico reconhece pedido direto, aceite
+classificado ou resposta à pergunta de tema. Segurança atual continua vencendo.
+O Core oficial recebe Perfil, histórico e repertório e deve entregar, no mesmo
+turno, uma história curta pronta para leitura no WhatsApp; luto é tratado como
+lembrança, sonho, imaginação, saudade ou vínculo, sem validar presença física.
+Depois da história, uma segunda mensagem separada abre `/historias/criar` já
+autenticada e ensina os passos reais de avatar e criação. Convite de Perfil,
+Plano e botões de aprofundamento não concorrem nesse turno. Falha do link não
+apaga a história.
+
+**CRITÉRIO DE CONCLUSÃO:** testes e build verdes; caso real reproduzido sem
+nova bateria de perguntas; história e guia aceitos pelo provedor em teste
+interno autorizado; destino abre a criança correta; eventos distinguem
+compromisso, história e guia; health confirma o SHA publicado; nenhuma mensagem
+é enviada a família real durante QA.
+
+**EVIDÊNCIA LOCAL (25/09).** O caso literal de Darlison está preso em teste,
+junto de pedido direto, aceite do decisor, vários balões, falso positivo
+“quero te contar uma história”, segurança, falha do link, não concorrência com
+Perfil/Plano/botões e preservação do membro no destino. Focados: **115/115**;
+o teste próprio da frente passou **11/11** após o reforço editorial final;
+typecheck limpo; build de produção compilou, tipou e gerou 106 rotas. Na suíte
+completa anterior ao reforço textual final, **4.066 passaram, 7 foram pulados**;
+as duas únicas falhas são PEND-205 e PEND-214, reproduzidas antes e não
+relacionadas. Nenhum WhatsApp foi enviado.
+
+**RELAÇÕES:** PEND-191 (brincadeira entregue, não prometida), PEND-208
+(repertório criativo), PEND-213 (botões) e PEND-215 (latência).
+
+---
+
+**Proximo ID livre: PEND-217. *(PEND-209 a PEND-211 já estão reivindicadas no working tree principal por outra frente; 024 e 025 reservadas por frentes ainda nao publicadas; PEND-202 reivindicada em commit e ainda sem ficha; 0076 e numero de MIGRACAO reservado — ver PEND-121.)***
 
 > Conferir contra `origin/main`, não contra o seu branch. Dois branches podem
 > reivindicar o mesmo número — o conflito de merge nesta linha é o alarme.
