@@ -10031,7 +10031,7 @@ contrato do provider sem depender da mensagem variável de um erro externo.
 ### PEND-215
 **Latência perceptível da Ayla no WhatsApp, inclusive em cliques estruturados**
 Bloco: **B · Ayla** · Prioridade: **P1**
-STATUS: **EM IMPLEMENTAÇÃO — baseline e limites registrados antes da correção** · Aberta em: 2026-09-25
+STATUS: **SEGUNDA CORREÇÃO PRONTA PARA PROVA REAL — aceite de produção pendente** · Aberta em: 2026-09-25
 
 **BASELINE CORRIGIDO (produção, antes da implementação).** Os **36.243 ms**,
 **30.917 ms** e **35.560 ms** inicialmente lidos em `turno_externo` mediam a
@@ -10073,6 +10073,38 @@ sequências reais de balões, a mediana entre mensagens foi **11,22 s** e o P75
 **16,60 s**. Cortá-la por inteiro agora recriaria respostas fragmentadas. A
 primeira intervenção ataca o clique, elimina trabalho repetido e fecha a
 telemetria; uma janela adaptativa só será avaliada com prova específica.
+
+**PROVA REAL APÓS O PRIMEIRO DEPLOY (25/09, conta interna autorizada).** Quatro
+mensagens comuns no SHA `f4601ea` chegaram à primeira aceitação em **23.789 ·
+25.047 · 27.243 · 23.834 ms**. O rastro fechou a ignorância em **3–4%**, mas
+também provou que a experiência ainda não passou: cada turno ficou **~10,7 s
+inteiros parado** antes de gastar 4,6–8,6 s no GPT. O menu não apareceu nessa
+sequência porque havia oferta respondida 26 minutos antes; o cooldown de 2 h
+funcionou como desenhado, não houve falha de envio de botão.
+
+**SEGUNDA INTERVENÇÃO E ACEITE, REGISTRADOS ANTES DA EDIÇÃO.** Preservar a
+janela segura de **10 s**, mas deixar o turno ser claimado e a resposta começar
+a ser preparada aos **3 s**. Imediatamente antes de qualquer publicação, o
+sistema espera somente o restante dos 10 s e consulta se chegou inbound mais
+novo — mesmo que outra execução já o tenha claimado. Se chegou, a resposta
+antiga é cancelada. Contexto, Perfil, histórico, BPs, envelope e fronteiras não
+mudam; o GPT oficial passa apenas a `reasoning_effort=low`, configuração já
+provada no aprofundamento. Aceite interno: **P50 ≤ 18 s, P95 ≤ 22 s em pelo
+menos cinco turnos comuns**, zero resposta duplicada quando um segundo balão
+chega entre 3 e 10 s, risco/correção tardia cancelando a resposta antiga, e
+nenhuma queda editorial nos casos de conversa já aprovados.
+
+**PROVA LOCAL DA SEGUNDA INTERVENÇÃO (25/09).** O teste de relógio mediu o
+preparo liberado em **~3 s** e a publicação ainda bloqueada até **~10 s**. Os
+casos concorrentes provaram: mensagem nova entre 3–10 s cancela a resposta
+antiga; apenas a execução mais nova publica; o inbound anterior permanece no
+histórico; e o próprio inbound claimado não é confundido com fala nova mesmo
+sob desalinhamento de relógio entre aplicação e banco. Regressão focada:
+**117/117**; typecheck e build de produção com **106 páginas** passaram.
+Regressão completa: **4.086 passaram, 7 pulados**; permaneceram somente as duas
+falhas anteriores e não relacionadas, PEND-205 e PEND-214. Esta prova autoriza
+deploy, mas **não** satisfaz sozinha o P50/P95: faltam os cinco turnos no
+WhatsApp interno e a leitura do rastro no SHA publicado.
 
 **EVIDÊNCIA LOCAL COM MODELO REAL (25/09, sem envio de WhatsApp).** O primeiro
 ensaio revelou que o teto herdado de 2.048 tokens ainda permitia uma cauda de

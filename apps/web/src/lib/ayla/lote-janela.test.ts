@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import { BancoMemoria } from "./__harness/banco-memoria";
-import { aguardarTurnoDaMae } from "./lote-inbound";
+import { aguardarTurnoDaMae, confirmarTurnoAindaAtual } from "./lote-inbound";
 
 /**
  * A JANELA DO LOTE — exercitada com RELÓGIO, não com string.
@@ -70,8 +70,9 @@ describe("a janela do lote — o valor e a evidência ao lado dele", () => {
    * produto, não ajuste. Quem mudar troca este teste junto — com a medição na
    * mão, escrita ao lado da constante.
    */
-  it("a janela é de 10 segundos, e as duas medições que a explicam estão escritas ao lado", () => {
+  it("a janela segura segue em 10 s, mas o preparo começa aos 3 s", () => {
     expect(FONTE).toMatch(/const JANELA_SILENCIO_MS = 10000;/);
+    expect(FONTE).toMatch(/const JANELA_PREPARACAO_MS = 3000;/);
     expect(FONTE, "sumiu a medição de 19/08 que sustenta os 10s").toMatch(
       /janela 10s captura 14\/16 \(88%\)/,
     );
@@ -83,20 +84,52 @@ describe("a janela do lote — o valor e a evidência ao lado dele", () => {
     expect(FONTE, "voltou uma janela antiga").not.toMatch(/JANELA_SILENCIO_MS = (3000|7000);/);
   });
 
-  it("MEDIDO no relógio real: uma mensagem sozinha espera ~10s", async () => {
+  it("MEDIDO no relógio real: prepara em ~3 s, mas publica somente após ~10 s", async () => {
     const db = bancoCom([{ id: "m1", texto: "ele não quer ir", criadaEm: new Date() }]);
     const t0 = Date.now();
     const r = await aguardarTurnoDaMae(db.cliente(), {
       familyId: "fam-1",
       textoAtual: "ele não quer ir",
     });
-    const ms = Date.now() - t0;
-    // Guarda anti-teste-vazio: num caminho de erro o tempo seria ~0 e o teste
-    // passaria dizendo nada.
+    const preparoMs = Date.now() - t0;
     expect(r, "o lote não devolveu turno — o teste mediria o caminho de erro").not.toBeNull();
-    expect(ms, `esperou ${ms}ms — a janela sumiu`).toBeGreaterThan(9_000);
-    expect(ms, `esperou ${ms}ms — muito além da janela`).toBeLessThan(14_000);
+    expect(preparoMs, `preparo levou ${preparoMs}ms`).toBeGreaterThan(2_500);
+    expect(preparoMs, `preparo levou ${preparoMs}ms`).toBeLessThan(6_000);
+    await expect(
+      confirmarTurnoAindaAtual(db.cliente(), {
+        familyId: "fam-1",
+        controle: r!.controle,
+      }),
+    ).resolves.toBe(true);
+    const totalMs = Date.now() - t0;
+    expect(totalMs, `publicaria com ${totalMs}ms — a janela segura sumiu`).toBeGreaterThan(9_000);
+    expect(totalMs, `publicaria com ${totalMs}ms — muito além da janela`).toBeLessThan(14_000);
   }, 30_000);
+
+  it("não confunde o próprio inbound claimado com uma mensagem nova", async () => {
+    const db = bancoCom([{ id: "m1", texto: "mensagem atual", criadaEm: BASE }]);
+    vi.useFakeTimers();
+    vi.setSystemTime(BASE);
+
+    const preparando = aguardarTurnoDaMae(db.cliente(), {
+      familyId: "fam-1",
+      textoAtual: "mensagem atual",
+    });
+    await vi.advanceTimersByTimeAsync(3_500);
+    const turno = await preparando;
+    expect(turno).not.toBeNull();
+
+    // Simula um pequeno desalinhamento entre o relógio da aplicação e o do DB.
+    // Mesmo aparecendo depois do marco, este id já pertence ao próprio turno.
+    db.linhas("ayla_messages")[0].created_at = new Date(BASE.getTime() + 1).toISOString();
+
+    const podePublicar = confirmarTurnoAindaAtual(db.cliente(), {
+      familyId: "fam-1",
+      controle: turno!.controle,
+    });
+    await vi.advanceTimersByTimeAsync(7_000);
+    await expect(podePublicar).resolves.toBe(true);
+  });
 });
 
 describe("os balões que a janela existe para juntar", () => {
@@ -109,8 +142,8 @@ describe("os balões que a janela existe para juntar", () => {
    * contraditórias — uma dizendo que NÃO há risco, outra reabrindo o risco e
    * mandando ligar para o 190.
    *
-   * O que este teste guarda não é o agrupamento em si: é que o modelo receba
-   * a correção de digitação COLADA à frase que ela corrige.
+   * O que este teste guarda é que a resposta antiga seja cancelada. A fala
+   * anterior continua no histórico que a execução nova recebe.
    */
   it("caso Lia: 'Não há tisco' + 4s + 'Risco' produzem UMA resposta, não duas contraditórias", async () => {
     const db = bancoCom([{ id: "m1", texto: "Não  há  tisco", criadaEm: BASE }]);
@@ -142,14 +175,24 @@ describe("os balões que a janela existe para juntar", () => {
     await vi.advanceTimersByTimeAsync(25_000);
     const [a, b] = await Promise.all([execA, execB]);
 
-    // ⚠️ ESTE É O TESTE DE SEGURANÇA. Duas execuções respondendo foi o que
-    // produziu, no mesmo minuto, "não há risco" e "há risco? ligue 190".
-    const turnos = [a, b].filter((x) => x !== null);
+    const turnos = [];
+    for (const candidato of [a, b]) {
+      if (
+        candidato &&
+        (await confirmarTurnoAindaAtual(db.cliente(), {
+          familyId: "fam-1",
+          controle: candidato.controle,
+        }))
+      ) {
+        turnos.push(candidato);
+      }
+    }
     expect(turnos.length, "duas execuções responderam — é o defeito de 19/08").toBe(1);
-
-    // E a correção de digitação chega COLADA à frase que ela corrige.
-    expect(turnos[0]!.quantidade).toBe(2);
-    expect(turnos[0]!.texto).toBe("Não  há  tisco\nRisco");
+    expect(turnos[0]!.texto).toBe("Risco");
+    expect(db.linhas("ayla_messages").map((m) => m.texto)).toEqual([
+      "Não  há  tisco",
+      "Risco",
+    ]);
   });
 
   it("TESTE 2: 'Meu filho não quer ir' + 5s + 'para escola' viram UM turno", async () => {
@@ -184,8 +227,8 @@ describe("quem responde quando duas execuções disputam o mesmo turno", () => {
    * TESTE 4 — mensagem nova chegando enquanto a primeira execução espera.
    *
    * É o cenário exato da fragmentação: o webhook dispara um `processInbound`
-   * por balão. A execução do balão 1 tem que CEDER, e a do balão 2 responde
-   * pelos dois. Duas respostas aqui é o defeito.
+   * por balão. A execução do balão 1 pode preparar, mas tem que CEDER antes
+   * de publicar. Duas respostas aqui é o defeito.
    */
   it("TESTE 4: a execução do primeiro balão cede a vez; a do segundo responde pelos dois", async () => {
     const db = bancoCom([{ id: "m1", texto: "primeira", criadaEm: BASE }]);
@@ -212,10 +255,21 @@ describe("quem responde quando duas execuções disputam o mesmo turno", () => {
     await vi.advanceTimersByTimeAsync(20_000);
     const [a, b] = await Promise.all([execA, execB]);
 
-    expect(a, "a execução do primeiro balão respondeu — a mãe recebe duas respostas").toBeNull();
-    expect(b, "ninguém respondeu — a mãe ficou no silêncio").not.toBeNull();
-    expect(b!.quantidade, "o segundo turno não levou os dois balões").toBe(2);
-    expect(b!.texto).toBe("primeira\nsegunda");
+    expect(a, "a primeira execução precisa ter conseguido preparar").not.toBeNull();
+    expect(b, "ninguém preparou a fala mais nova").not.toBeNull();
+    await expect(
+      confirmarTurnoAindaAtual(db.cliente(), {
+        familyId: "fam-1",
+        controle: a!.controle,
+      }),
+    ).resolves.toBe(false);
+    await expect(
+      confirmarTurnoAindaAtual(db.cliente(), {
+        familyId: "fam-1",
+        controle: b!.controle,
+      }),
+    ).resolves.toBe(true);
+    expect(b!.texto).toBe("segunda");
   });
 
   /**

@@ -51,7 +51,12 @@ import { gerarMensagemEspontanea } from "./mensagemEspontanea";
 import { traduzirProativa } from "./traduzir";
 import { montarPonteWhatsApp, gerarMagicLink, montarPlanoFimDeSemana } from "./ponte";
 import { fechamentoReativoRecente } from "@/lib/trial/jornada";
-import { aguardarTurnoDaMae, descartarTurnoPendente } from "./lote-inbound";
+import {
+  aguardarTurnoDaMae,
+  confirmarTurnoAindaAtual,
+  descartarTurnoPendente,
+  type ControleTurno,
+} from "./lote-inbound";
 import {
   novoRastroTurno,
   registrarRastroTurno,
@@ -2725,6 +2730,9 @@ async function processInboundInterno(
   });
   marco(rastro, "debounce_fim");
   if (!turno) return { tratada: false, familia: family.id };
+  // O preparo pode começar aos 3 s, mas nenhuma resposta deste turno pode ser
+  // publicada antes do portão final de 10 s sem mensagem nova.
+  const controleTurno = turno.controle;
   // ⚠️ ADOTA O TEXTO DO LOTE SEMPRE QUE ELE TIVER TEXTO — antes era só
   // `quantidade > 1`, e `quantidade` conta textos NÃO VAZIOS, não linhas
   // claimadas. Uma mensagem só-de-mídia (texto vazio) entrando no mesmo lote de
@@ -2767,6 +2775,7 @@ async function processInboundInterno(
       texto: TEXTO_VIDEO_SEM_TEXTO,
       category: "reativa",
       tipo: "midia_nao_suportada",
+      controleTurno,
     });
     return { tratada: true, familia: family.id, resposta: resp };
   }
@@ -2854,6 +2863,7 @@ async function processInboundInterno(
         // `seguranca` ABRE o estado: os próximos turnos desta família entram
         // por `segurancaAberta` acima, mesmo sem palavra-chave na mensagem.
         tipo: "seguranca",
+        controleTurno,
       });
       return { tratada: true, familia: family.id, resposta: resp };
     }
@@ -2908,6 +2918,7 @@ async function processInboundInterno(
           // continua funcionando sem uma segunda regra.
           tipo: link ? "assinatura_nudge" : "pos_trial",
           meta: { ayla_path: "pos_trial", ...exp.metrica },
+          controleTurno,
         });
         return { tratada: true, familia: family.id, resposta: resp };
       }
@@ -2923,6 +2934,7 @@ async function processInboundInterno(
           texto: `Oi, ${ctxA.nomeMae}! Eu adoraria seguir te ajudando 🌿 Mas seu período grátis acabou. Pra a gente continuar — estratégias, rotina, tudo o que você já conhece — é só assinar aqui:\n${link}\n\nO que você me contou fica tudo guardado. 💛`,
           category: "reativa",
           tipo: "assinatura_nudge",
+          controleTurno,
         });
         return { tratada: true, familia: family.id, resposta: resp };
       }
@@ -2957,6 +2969,7 @@ async function processInboundInterno(
         texto,
         category: "reativa",
         tipo: "assinatura_nudge",
+        controleTurno,
       });
       return { tratada: true, familia: family.id, resposta: resp };
     }
@@ -3000,6 +3013,7 @@ async function processInboundInterno(
         texto,
         category: "reativa",
         tipo: "resposta_registro",
+        controleTurno,
       });
       return { tratada: true, familia: family.id, resposta: resp };
     }
@@ -3037,6 +3051,7 @@ async function processInboundInterno(
           texto: msg,
           category: "reativa",
           tipo: "resposta_registro",
+          controleTurno,
         });
         marco(rastro, "envio_fim");
         rastro.saida = "fim_de_semana";
@@ -3063,6 +3078,7 @@ async function processInboundInterno(
           texto: msg,
           category: "reativa",
           tipo: "resposta_registro",
+          controleTurno,
         });
         return { tratada: true, familia: family.id, resposta: resp };
       }
@@ -3136,6 +3152,7 @@ async function processInboundInterno(
         }),
         category: "reativa",
         tipo: TIPO_ENTRADA_GUIADA,
+        controleTurno,
       });
       return { tratada: true, familia: family.id, resposta: resp };
     }
@@ -3187,6 +3204,7 @@ async function processInboundInterno(
               texto,
               category: "reativa",
               tipo,
+              controleTurno,
             })
           : undefined;
         return { tratada: true as const, familia: family.id, resposta: resp ?? undefined };
@@ -3423,6 +3441,7 @@ async function processInboundInterno(
           texto: msg,
           category: "reativa",
           tipo: "resposta_registro",
+          controleTurno,
         });
         return { tratada: true, familia: family.id, resposta: resp };
       }
@@ -3522,6 +3541,7 @@ async function processInboundInterno(
           texto: msg,
           category: "reativa",
           tipo: "resposta_registro",
+          controleTurno,
         });
         return { tratada: true, familia: family.id, resposta: resp };
       }
@@ -3622,6 +3642,7 @@ async function processInboundInterno(
           texto: r,
           category: "reativa",
           tipo: "resposta_registro",
+          controleTurno,
         });
         return { tratada: true, resposta: resp };
       }
@@ -3775,6 +3796,7 @@ async function processInboundInterno(
             : r.pronto && !r.aguardandoTema
               ? "rotina_pronta"
               : "rotina_conversa",
+          controleTurno,
           // Mesmo canal que a clarificação já usa pra guardar o pedido que a
           // originou: `ayla_messages.metadata`, lido pela mensagem seguinte.
           ...(r.proposta?.length ? { metadataMensagem: { proposta: r.proposta } } : {}),
@@ -3809,6 +3831,7 @@ async function processInboundInterno(
         texto: `Pronto, guardei no Perfil${aplicada.nomeMembro ? ` do ${aplicada.nomeMembro}` : ""}: "${aplicada.texto}". 🌿`,
         category: "reativa",
         tipo: "confirmacao_sugestao",
+        controleTurno,
       });
       return { tratada: true, familia: family.id, resposta: resp };
     }
@@ -4237,6 +4260,7 @@ async function processInboundInterno(
               membroId: exp.membroId ?? membroConversa,
               phone: ctxExp.whatsapp_e164,
               mensagem: exp.texto,
+              controleTurno,
             })
           : await enviarEPersistir(supabase, {
               family_account_id: family.id,
@@ -4276,6 +4300,7 @@ async function processInboundInterno(
                   }
                 : {}),
               meta: { ayla_path: "experimental", ...exp.metrica },
+              controleTurno,
             });
       marco(rastro, "envio_fim");
       if (resp.enviada && resp.metrica) {
@@ -4319,6 +4344,7 @@ async function processInboundInterno(
               },
             },
             meta: { ayla_path: "historia_ludico" },
+            controleTurno,
           });
           void logEvent({
             kind: guia.enviada ? "historia_ludico_guia_aceito" : "historia_ludico_guia_falhou",
@@ -4397,6 +4423,7 @@ async function processInboundInterno(
             // `ayla_messages.metadata`, que é onde `ofertaDePlanoPendente` lê.
             // `meta` iria só para o log de auditoria e não fecharia a oferta.
             ...(planoEntregueId ? { metadataMensagem: { plano_id: planoEntregueId } } : {}),
+            controleTurno,
           });
           houveNudge = envioNudge.enviada;
         }
@@ -4446,6 +4473,7 @@ async function processInboundInterno(
               sourceOutboundId: resp.aylaMessageId,
               phone: ctxExp.whatsapp_e164,
               opcoes: decisaoAprofundamento.opcoes,
+              controleTurno,
             });
           }
         } catch (e) {
@@ -4766,6 +4794,7 @@ async function processInboundInterno(
       texto: TEXTO_NAO_CONSEGUI_AGORA,
       category: "reativa",
       tipo: "indisponivel",
+      controleTurno,
     });
     return { tratada: true, familia: family.id, resposta: resp };
   }
@@ -5006,6 +5035,7 @@ async function processInboundInterno(
     membro_atipico_id: membroContextoId,
     phone: ctx.whatsapp_e164,
     tipo: precisaEscolherMembro ? "clarificacao_identificacao" : "resposta_registro",
+    controleTurno,
     params: {
       nomeMae: ctx.nomeMae,
       cuidador: ctx.cuidador,
@@ -5167,6 +5197,7 @@ async function enviarRespostaEmChunks(
     phone: string;
     tipo: AylaTipoReativa;
     params: RespostaParams;
+    controleTurno?: ControleTurno | null;
   },
 ): Promise<EnvioResultado> {
   let providerResp: unknown = null;
@@ -5299,6 +5330,15 @@ async function enviarRespostaEmChunks(
   const bolhas = dividirEmBolhas(paraWhatsApp(textoCompleto));
   const ritmo = ritmoDasBolhas(bolhas);
   let esperaGasta = ritmo.reduce((a, b) => a + b, 0);
+  if (
+    args.controleTurno &&
+    !(await confirmarTurnoAindaAtual(supabase, {
+      familyId: args.family_account_id,
+      controle: args.controleTurno,
+    }))
+  ) {
+    return { enviada: false, motivo: "turno_cedido_mensagem_mais_nova" };
+  }
   for (const [i, par] of bolhas.entries()) {
     const delay = ritmo[i];
     try {
@@ -6546,8 +6586,21 @@ export async function enviarEPersistir(
      * da mãe retomar o fluxo em vez de virar assunto novo.
      */
     metadataMensagem?: Record<string, unknown>;
+    /** Janela segura do inbound; ausente em proativas e envios fora de turno. */
+    controleTurno?: ControleTurno | null;
   },
 ): Promise<EnvioResultado> {
+  if (
+    params.category === "reativa" &&
+    params.controleTurno &&
+    !(await confirmarTurnoAindaAtual(supabase, {
+      familyId: params.family_account_id,
+      controle: params.controleTurno,
+    }))
+  ) {
+    return { enviada: false, motivo: "turno_cedido_mensagem_mais_nova" };
+  }
+
   // Idioma da família: todo texto proativo/template é gerado em PT; se a
   // família é es/en, traduz AQUI (choke point único) antes de enviar. PT não
   // passa pela tradução — zero custo/latência. A conversa reativa não usa esta
@@ -6711,8 +6764,18 @@ async function publicarOfertaObjetivoHistoria(
     membroId: string | null;
     phone: string;
     mensagem: string;
+    controleTurno?: ControleTurno | null;
   },
 ): Promise<EnvioResultado> {
+  if (
+    params.controleTurno &&
+    !(await confirmarTurnoAindaAtual(supabase, {
+      familyId: params.familyId,
+      controle: params.controleTurno,
+    }))
+  ) {
+    return { enviada: false, motivo: "turno_cedido_mensagem_mais_nova" };
+  }
   let provider: Awaited<ReturnType<typeof enviarListaBotoes>>;
   try {
     provider = await enviarListaBotoes({
@@ -6842,8 +6905,18 @@ async function publicarOfertaAprofundamento(
     sourceOutboundId: string;
     phone: string;
     opcoes: RamoAprofundamento[];
+    controleTurno?: ControleTurno | null;
   },
 ): Promise<boolean> {
+  if (
+    params.controleTurno &&
+    !(await confirmarTurnoAindaAtual(supabase, {
+      familyId: params.familyId,
+      controle: params.controleTurno,
+    }))
+  ) {
+    return false;
+  }
   const ofertaId = await criarOferta(supabase, params);
   const texto = textoDaOferta(params.opcoes);
   let provider: Awaited<ReturnType<typeof enviarListaBotoes>>;

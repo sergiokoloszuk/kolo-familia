@@ -12,16 +12,17 @@ import type { SupabaseClient } from "@supabase/supabase-js";
  *
  * O mecanismo tem duas partes, e as duas são necessárias:
  *
- * 1. ESPERAR O SILÊNCIO. Depois de persistir a mensagem, a execução dorme uns
- *    segundos. Se chegou mensagem nova nesse meio-tempo, ESTA execução desiste
- *    — quem chegou depois responde por todas. Numa rajada, só a última fala.
+ * 1. PREPARAR DURANTE O SILÊNCIO. Depois de persistir a mensagem, a execução
+ *    espera uma janela curta e pode começar a montar a resposta. A publicação,
+ *    porém, continua bloqueada até completar a janela segura de 10 s. Se chegou
+ *    mensagem nova, ESTA execução desiste — quem chegou depois responde.
  *
  * 2. CLAIMAR O LOTE. Quem sobrevive faz `update ... where processada_em is
  *    null returning *`: um único statement, então duas execuções concorrentes
  *    nunca pegam a mesma mensagem. Quem perde recebe zero linhas e sai calada.
  *
- * O preço são alguns segundos a mais de latência. Vale: a Ayla já leva dezenas
- * de segundos pra responder, e uma resposta coerente compensa muito a espera.
+ * Assim a janela de segurança deixa de ser tempo morto: contexto e modelo podem
+ * trabalhar enquanto ela corre, sem publicar por cima de um novo balão.
  */
 
 /**
@@ -90,6 +91,15 @@ import type { SupabaseClient } from "@supabase/supabase-js";
  */
 const JANELA_SILENCIO_MS = 10000;
 
+/**
+ * Aos 3 s o turno pode ser CLAIMADO e preparado, mas ainda não publicado. A
+ * diferença até `JANELA_SILENCIO_MS` é paga em paralelo com contexto/modelo.
+ * Em produção (25/09), a resposta comum gastava 10,7 s parada + 10–16 s de
+ * trabalho; sobrepor os dois blocos preserva a janela que protege fragmentos e
+ * remove cerca de 7 s do caminho feliz.
+ */
+const JANELA_PREPARACAO_MS = 3000;
+
 /** Teto de mensagens no lote — rajada absurda não vira prompt gigante. */
 const MAX_MENSAGENS_LOTE = 12;
 
@@ -106,6 +116,17 @@ export type Lote = {
   texto: string;
   /** Quantas mensagens entraram (1 = turno normal). */
   quantidade: number;
+  /** Portão que precisa ser confirmado imediatamente antes da publicação. */
+  controle: ControleTurno;
+};
+
+export type ControleTurno = {
+  /** Instante posterior à persistência do inbound atual. */
+  marcoSilencio: string;
+  /** A resposta nunca pode sair antes deste instante. */
+  publicarNaoAntesDeMs: number;
+  /** Inbounds deste próprio turno, excluídos da confirmação final. */
+  idsClaimados?: string[];
 };
 
 /**
@@ -119,9 +140,14 @@ export async function aguardarTurnoDaMae(
 ): Promise<Lote | null> {
   // Marco tirado ANTES de dormir: a minha mensagem já está gravada, então
   // qualquer linha mais nova que isto é mensagem que chegou durante a espera.
-  const marco = new Date().toISOString();
+  const inicioSilencio = Date.now();
+  const marco = new Date(inicioSilencio).toISOString();
+  const controle: ControleTurno = {
+    marcoSilencio: marco,
+    publicarNaoAntesDeMs: inicioSilencio + JANELA_SILENCIO_MS,
+  };
 
-  await dormir(JANELA_SILENCIO_MS);
+  await dormir(JANELA_PREPARACAO_MS);
 
   const desde = new Date(Date.now() - JANELA_LOTE_MIN * 60_000).toISOString();
 
@@ -155,13 +181,15 @@ export async function aguardarTurnoDaMae(
       // Coluna ainda não migrada (0070) ou falha inesperada: NÃO travar a Ayla.
       // Degrada pro comportamento antigo — responde só esta mensagem.
       console.warn("[ayla:turno] claim falhou, seguindo sem agrupar:", error.message);
-      return { texto: params.textoAtual, quantidade: 1 };
+      return { texto: params.textoAtual, quantidade: 1, controle };
     }
 
     const linhas = ((claimadas ?? []) as LinhaInbound[])
       .slice()
       .sort((a, b) => a.created_at.localeCompare(b.created_at))
       .slice(-MAX_MENSAGENS_LOTE);
+
+    controle.idsClaimados = linhas.map((linha) => linha.id);
 
     if (linhas.length === 0) {
       // Outra execução já levou este turno (corrida perdida) — sai calada,
@@ -173,15 +201,64 @@ export async function aguardarTurnoDaMae(
     const textos = linhas
       .map((l) => (l.texto ?? "").trim())
       .filter(Boolean);
-    if (textos.length === 0) return { texto: params.textoAtual, quantidade: 1 };
+    if (textos.length === 0) {
+      return { texto: params.textoAtual, quantidade: 1, controle };
+    }
 
     if (textos.length > 1) {
       console.log(`[ayla:turno] agrupando ${textos.length} mensagens num turno só`);
     }
-    return { texto: textos.join("\n"), quantidade: textos.length };
+    return { texto: textos.join("\n"), quantidade: textos.length, controle };
   } catch (e) {
     console.warn("[ayla:turno] erro inesperado, seguindo sem agrupar:", e instanceof Error ? e.message : e);
-    return { texto: params.textoAtual, quantidade: 1 };
+    return { texto: params.textoAtual, quantidade: 1, controle };
+  }
+}
+
+/**
+ * Último portão antes do provedor. Espera apenas o pedaço da janela de 10 s
+ * que o preparo ainda não consumiu e verifica QUALQUER inbound mais novo — até
+ * se outra execução já o claimou. Isso impede a resposta antiga de atravessar
+ * a nova fala da família.
+ *
+ * Falha de leitura não emudece a Ayla: depois de respeitar os 10 s, degrada para
+ * o comportamento anterior e publica. O erro fica visível no log.
+ */
+export async function confirmarTurnoAindaAtual(
+  supabase: SupabaseClient,
+  params: { familyId: string; controle?: ControleTurno | null },
+): Promise<boolean> {
+  if (!params.controle) return true;
+  const restante = params.controle.publicarNaoAntesDeMs - Date.now();
+  if (restante > 0) await dormir(restante);
+
+  try {
+    const { data, error } = await supabase
+      .from("ayla_messages")
+      .select("id")
+      .eq("family_account_id", params.familyId)
+      .eq("direcao", "inbound")
+      .gt("created_at", params.controle.marcoSilencio)
+      .limit(MAX_MENSAGENS_LOTE + 1);
+    if (error) {
+      console.warn("[ayla:turno] confirmação final falhou, seguindo:", error.message);
+      return true;
+    }
+    const idsDoTurno = new Set(params.controle.idsClaimados ?? []);
+    const chegouOutraMensagem = (data ?? []).some(
+      (linha: { id: string }) => !idsDoTurno.has(linha.id),
+    );
+    if (chegouOutraMensagem) {
+      console.log("[ayla:turno] mensagem mais nova chegou durante o preparo — publicação cancelada");
+      return false;
+    }
+    return true;
+  } catch (e) {
+    console.warn(
+      "[ayla:turno] confirmação final falhou, seguindo:",
+      e instanceof Error ? e.message : e,
+    );
+    return true;
   }
 }
 

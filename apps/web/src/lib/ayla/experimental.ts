@@ -1365,6 +1365,10 @@ export async function responderExperimental(
       messages: [{ role: "user", content: params.mensagem }],
       maxTokens: 1200,
       cacheSystem: true,
+      // A resposta comum usa o mesmo GPT leve já provado no aprofundamento.
+      // O Core, Perfil, histórico, BPs, envelope e fronteiras permanecem
+      // idênticos; reduzimos somente o raciocínio invisível do transporte.
+      esforcoRaciocinio: "low",
       // ⚠️ ENVELOPE — PEND-187B. Ver `esquemaDaResposta`. `semEnvelope` é a
       // recuperação: uma única passada em texto livre quando a estrutura falha.
       ...(semEnvelope ? {} : { formatoJson: esquemaDaResposta() }),
