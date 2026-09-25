@@ -11,7 +11,7 @@ import {
   textoDaOferta,
   textoDoFallback,
 } from "./aprofundamento";
-import { esquemaDaResposta, lerEnvelope } from "./lacuna-decisiva";
+import { esquemaDaResposta, instrucaoDoEnvelope, lerEnvelope } from "./lacuna-decisiva";
 import { enviarListaBotoes, parseZapiWebhook } from "./whatsappSender";
 
 const BASE = {
@@ -59,6 +59,14 @@ describe("PEND-213 · portão editorial", () => {
     expect(APROFUNDAMENTOS.aprofundar_crencas.receita).toMatch(/CRIANÇA/);
     expect(APROFUNDAMENTOS.aprofundar_crencas.receita).toMatch(/ADULTO/);
     expect(APROFUNDAMENTOS.aprofundar_lidar.receita).toMatch(/sinal observável/i);
+  });
+
+  it("torna a brincadeira descobrível quando a família quer desenvolver uma habilidade", () => {
+    const instrucao = instrucaoDoEnvelope();
+    expect(instrucao).toMatch(/desenvolver uma habilidade/i);
+    expect(instrucao).toMatch(/considere\s+proativamente aprofundar_brincar/i);
+    expect(instrucao).toMatch(/Não espere que a família saiba pedir/i);
+    expect(instrucao).toMatch(/não cria menu automático/i);
   });
 
   it("mantém contratos semanticamente distintos para os três ramos", () => {

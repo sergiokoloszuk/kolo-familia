@@ -9902,7 +9902,7 @@ WhatsApp, Perfil Vivo ou conversa.
 ### PEND-213
 **Aprofundamento contextual por botões no WhatsApp**
 Bloco: **B · Ayla** · Prioridade: **P1**
-STATUS: **TESTE REAL FALHOU — rollback global ativo (`flag=false`), produção em `44ce03a`** · Aberta em: 2026-09-24
+STATUS: **TESTE REAL PARCIAL — botões renderizam; ramos ainda não validados; rollback global ativo (`flag=false`)** · Aberta em: 2026-09-24
 
 Hoje a Ayla ajuda por texto no WhatsApp, mas não oferece bifurcações clicáveis.
 O `whatsappSender` só conhece texto/documento e o webhook não lê
@@ -9947,6 +9947,18 @@ obrigatório verificar o aceite na conta da instância. A oferta manual também
 revelou uma falha do harness: herdou `membro_atipico_id=null` do inbound em vez
 do membro resolvido da resposta. O fluxo normal usa `exp.membroId`; o próximo
 harness deve usar a mesma fonte.
+
+**EVIDÊNCIA REAL 25/09 — TRANSPORTE PASSOU, FLUXO NÃO VALIDADO.** A opção
+`Mensagens de Botões` estava desligada em Configurações Beta da instância
+Z-API; o titular aceitou os termos e a ativou. O reteste `08230ada`, desta vez
+vinculado explicitamente a Bento, renderizou os três botões no WhatsApp. Os
+cliques chegaram com `buttonId` e `referenceMessageId` corretos. Entretanto, o
+turno de origem era um caso de risco/urgência: o portão de segurança recusou a
+reivindicação e devolveu os cliques ao fluxo comum. A oferta manual tinha
+contornado indevidamente o gate que impediria sua criação em produção; foi
+marcada `falhou/QA_CASO_SEGURANCA_INADEQUADO`. Portanto, o teste prova o
+transporte interativo, mas não prova nenhum dos três ramos. O próximo teste
+deve usar caso não urgente e elegível.
 
 **RELAÇÕES:** `docs/specs/aprofundamento-contextual-whatsapp-SPEC.md`, PEND-208,
 PEND-210.

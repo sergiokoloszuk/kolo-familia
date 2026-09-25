@@ -3,7 +3,7 @@
 Nível de risco: **CRÍTICA** — altera a conversa de IA no canal principal e
 processa contexto comportamental de criança.
 
-Estado: **PUBLICADA COM FLAG DESLIGADA — TESTE REAL FALHOU EM 24/09/2026**
+Estado: **PUBLICADA COM FLAG DESLIGADA — BOTÕES RENDERIZAM; RAMOS AINDA NÃO VALIDADOS**
 
 ## 1. Problema e dono
 
@@ -20,6 +20,7 @@ Frase que deixa de existir: “não sei como pedir para ela aprofundar isso”.
 | “Ela não empresta o carrinho de jeito nenhum.” | DEVE, após ajudar, se houver 2 caminhos bons | lidar, brincar e falas podem mudar a continuação |
 | “Meu filho não consegue brincar com as outras crianças.” | DEVE, após ajudar | manejo e experiência social são caminhos distintos |
 | “Ela não presta atenção em nada.” | PODE | só se o contexto sustentar 2 aprofundamentos |
+| “Ele precisa melhorar foco” → “desengaja ao terminar” | DEVE considerar brincar, após orientar | a família não precisa saber que uma experiência compartilhada pode praticar a habilidade |
 | “Ela não quer fazer nenhuma atividade.” | PODE | primeiro distingue barreira e dá ação concreta |
 | “Quando tiro o tablet ela entra em crise.” | PODE, sem sobrecarregar | orientação vem antes; risco continua soberano |
 | “Estou exausta. Nada funciona.” | NÃO DEVE | acolhimento, não menu |
@@ -38,6 +39,9 @@ Frase que deixa de existir: “não sei como pedir para ela aprofundar isso”.
 3. Um portão determinístico veta oferta em segurança, desabafo, pergunta ainda
    aberta, mini-investigação, convite concorrente, conversa simples, decisão
    incerta ou menos de dois ramos bons.
+   Quando o pedido é desenvolver uma habilidade, `aprofundar_brincar` deve ser
+   considerado proativamente se houver experiência compartilhada útil; a mãe
+   não precisa conhecer ou pedir esse formato para descobri-lo.
 4. A oferta é uma segunda mensagem curta com dois ou três reply buttons.
 5. Cada botão carrega ramo lógico e ID opaco da oferta. O callback também é
    validado contra família e, quando disponível, mensagem referenciada.
