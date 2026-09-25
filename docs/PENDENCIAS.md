@@ -9981,6 +9981,23 @@ não sequestre mensagem textual enviada na mesma janela. A baixa continua
 bloqueada até prova real do turno concorrente, dos três botões, idempotência,
 fallback, regressões, build, SHA/health e rollback.
 
+**EVIDÊNCIA LOCAL 25/09 — RESPIRO VISUAL APROVADO, FLAG AINDA DESLIGADA.** O
+teste humano mostrou que conteúdo bom em dois parágrafos densos ainda exige
+esforço demais no celular. A regra editorial passou a escolher a forma pela
+relação entre as ideias: números somente para sequência, bullets para itens
+paralelos e parágrafos curtos quando cada ideia precisa de contexto. Prompt e
+descrição do schema, sozinhos, não mudaram de modo confiável três gerações
+reais do caso sintético de Mario; por isso foi acrescentado um último portão
+determinístico que **só troca espaços entre frases por linhas em branco**. Ele
+não reescreve, não acrescenta conteúdo, não cria listas e não chama modelo.
+Uma nova geração real ficou em cinco blocos curtos, preservando a orientação,
+a personalização e a continuidade. Regressão focada: 274/274; typecheck e
+build passaram. Regressão completa: 4.054 passaram, 7 pulados; PEND-205 e
+PEND-214 permaneceram as duas falhas não relacionadas já conhecidas, e a falha
+de escrita do sandbox passou isoladamente (20/20). Health do SHA `8fc0a6e`
+confirmou `ok=true`, banco saudável e
+`ayla_aprofundamento_whatsapp=false` antes do novo deploy.
+
 **RELAÇÕES:** `docs/specs/aprofundamento-contextual-whatsapp-SPEC.md`, PEND-208,
 PEND-210.
 

@@ -102,8 +102,12 @@ describe("PEND-213 · portão editorial", () => {
   it("os três aprofundamentos respiram no WhatsApp sem virar relatório", () => {
     for (const { receita } of Object.values(APROFUNDAMENTOS)) {
       expect(receita).toMatch(/parágrafos curtos e espaço entre ideias/i);
-      expect(receita).toMatch(/2–4 passos, materiais, falas ou opções paralelas/i);
-      expect(receita).toMatch(/• ou um emoji funcional relacionado ao conteúdo/i);
+      expect(receita).toMatch(/2–4 ações, passos, materiais, falas ou opções paralelas/i);
+      expect(receita).toMatch(/1️⃣ 2️⃣… só quando houver sequência/i);
+      expect(receita).toMatch(/• ou um emoji funcional para itens paralelos/i);
+      expect(receita).toMatch(/blocos curtos com\s+espaço/i);
+      expect(receita).toMatch(/Frase pronta fica em linha\s+própria/i);
+      expect(receita).toMatch(/não os\s+esconda num parágrafo/i);
       expect(receita).toMatch(/Não transforme a resposta em relatório/i);
     }
   });

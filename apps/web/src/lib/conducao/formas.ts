@@ -45,6 +45,50 @@ export function notaDeProporcao(natureza: NaturezaDoTurno): string {
   return `# Proporção desta resposta\n${linha[natureza]}`;
 }
 
+const MARCADOR_VISUAL = /(?:^|\n)\s*(?:[•-]\s+|\d+\s*[.)]\s+|\d+\uFE0F?\u20E3)/m;
+const ABREVIACAO = /\b(?:Dr|Dra|Sr|Sra|Prof|Profa)\.$/i;
+
+/**
+ * Dá respiro sem reescrever: só troca espaços ENTRE frases por uma linha em
+ * branco. Não resume, não cria título, não escolhe conteúdo e não chama modelo.
+ *
+ * Aplica-se apenas à orientação concreta longa que veio em até dois blocos e
+ * ainda não tem lista. Nunca cria marcadores: desabafo e urgência continuam em
+ * prosa. Conversa curta, resposta técnica e texto já organizado passam byte a
+ * byte. A mudança é idempotente.
+ */
+export function darRespiroVisual(
+  texto: string,
+  natureza: NaturezaDoTurno,
+): string {
+  const original = String(texto ?? "");
+  const limpo = original.trim();
+  if (
+    natureza !== "orientacao" ||
+    limpo.length < 240 ||
+    MARCADOR_VISUAL.test(limpo) ||
+    limpo.split(/\n\s*\n/).filter(Boolean).length >= 3
+  ) return original;
+
+  const respirado = limpo
+    .split(/\n\s*\n/)
+    .map((bloco) =>
+      bloco.replace(
+        /([.!?][”"']?)\s+(?=[A-ZÁÀÂÃÉÈÊÍÌÎÓÒÔÕÚÙÛÇ])/g,
+        (trecho, pontuacao: string, deslocamento: number, fonte: string) => {
+          const antes = fonte.slice(0, deslocamento + pontuacao.length);
+          return ABREVIACAO.test(antes) ? trecho : `${pontuacao}\n\n`;
+        },
+      ),
+    )
+    .join("\n\n")
+    .replace(/\n{3,}/g, "\n\n");
+
+  return respirado.split(/\n\s*\n/).filter(Boolean).length >= 3
+    ? respirado
+    : original;
+}
+
 /**
  * AS FORMAS DE ENTREGA — o repertório de jeitos de ajudar numa resposta.
  *
@@ -138,7 +182,7 @@ const TIPOS_DE_AJUDA = [
  */
 export const FORMATO_WHATSAPP = `# Formato (WhatsApp)
 - Texto de WhatsApp: sem títulos (##), citações (>), divisórias, aspas, rótulo ou "Ayla:". Negrito só na ação, frase pronta ou sinal importante; o envio normaliza a marcação.
-- RESPIRO: separe ideias em parágrafos curtos. Com 2–4 passos ou opções, use uma linha por item com • ou 1 emoji funcional. Não faça bullet único nem use emoji como enfeite; desabafo segue conversa e urgência, direta.
+- RESPIRO VISUAL OBRIGATÓRIO: duas ou mais informações acionáveis não ficam amontoadas. Escolha: 1️⃣ 2️⃣… só para sequência; • para apoios, opções ou falas paralelas; parágrafos curtos com linha em branco quando a ideia precisa de contexto. Frase pronta importante fica em linha própria. Não agrupe ações, exemplos ou falas por vírgulas em parágrafo longo, nem faça bullet único. Desabafo e urgência seguem em prosa.
 - A MENOR RESPOSTA QUE REALMENTE AJUDA VENCE. Entregue primeiro o essencial — o que fazer agora. Acrescente detalhe só quando ele muda a conduta ou quando pedirem. Uma resposta completa que a pessoa não consegue ler no meio de uma crise ajudou menos que três frases certas.
 - PROPORÇÃO COM O QUE FOI PEDIDO. Cumprimento ou confirmação curta ("oi", "sim", "isso") pede resposta curta — não abra assunto novo nem devolva um bloco. Uma situação concreta pede uma orientação breve e prática. Uma situação delicada ou complexa pode ocupar mais espaço. Um pedido explicitamente técnico (lei, laudo, documento, medicação) pede o tamanho que o pedido exige — aí encurtar é errar.
 - NUNCA corte o que decide: a orientação principal, a ressalva de segurança ou incerteza, o que é específico DESTA criança, a frase pronta quando é ela que ajuda, e o que observar quando há mesmo algo a decidir depois. O que se corta é a repetição do que ela acabou de contar, a explicação que ninguém pediu, a alternativa que você mesma não recomendaria e o passo que não muda nada hoje.

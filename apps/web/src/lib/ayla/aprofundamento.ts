@@ -19,9 +19,11 @@ const RAMOS = new Set<string>(RAMOS_APROFUNDAMENTO);
 
 const APRESENTACAO_APROFUNDAMENTO_WHATSAPP = `Apresente como conversa de
 WhatsApp fácil de varrer no celular: parágrafos curtos e espaço entre ideias.
-Quando houver 2–4 passos, materiais, falas ou opções paralelas, use uma linha
-por item com • ou um emoji funcional relacionado ao conteúdo, no máximo um por
-item. Destaque no máximo uma frase realmente importante.
+Quando houver 2–4 ações, passos, materiais, falas ou opções paralelas, não os
+esconda num parágrafo. Use 1️⃣ 2️⃣… só quando houver sequência; uma linha por
+item com • ou um emoji funcional para itens paralelos; ou blocos curtos com
+espaço quando cada ideia precisar de contexto. Frase pronta fica em linha
+própria. Destaque no máximo uma frase realmente importante.
 Não transforme a resposta em relatório, checklist automático ou bloco corrido.`;
 
 export const APROFUNDAMENTOS: Record<

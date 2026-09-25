@@ -3,7 +3,7 @@
 Nível de risco: **CRÍTICA** — altera a conversa de IA no canal principal e
 processa contexto comportamental de criança.
 
-Estado: **ROLLBACK ATIVO — TESTE REAL ENCONTROU MENSAGEM TEXTUAL PRESA AO LADO DO CLIQUE**
+Estado: **ROLLBACK ATIVO — CORREÇÃO DO TURNO CONCORRENTE E RESPIRO VISUAL EM VALIDAÇÃO**
 
 ## 1. Problema e dono
 
@@ -68,6 +68,11 @@ Frase que deixa de existir: “não sei como pedir para ela aprofundar isso”.
 11. **“Quero os dois”** gera os dois ramos completos em paralelo e os envia,
     na ordem da oferta, como dois balões separados. Cada balão mantém o formato
     próprio do ramo; não há resumo, terceira investigação ou novo menu.
+12. A forma visual acompanha o conteúdo, sem molde único: números significam
+    sequência; bullets separam itens paralelos; parágrafos curtos dão contexto
+    sem criar relatório. Uma orientação longa que ainda venha amontoada em até
+    dois blocos recebe apenas linhas em branco entre frases. Esse último portão
+    é determinístico, preserva todo o texto e não acrescenta latência de IA.
 
 Ativação: uma única flag global, desligada por padrão e usada apenas como
 rollback. Não há coorte, allowlist ou tratamento diferente entre famílias.

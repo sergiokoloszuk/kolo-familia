@@ -737,7 +737,11 @@ export function esquemaDaResposta(): Record<string, unknown> {
         additionalProperties: false,
         required: ["fala", "campo_investigado", "campos_investigados", "aprofundamentos"],
         properties: {
-          fala: { type: "string" },
+          fala: {
+            type: "string",
+            description:
+              "Resposta final para WhatsApp. Quando houver duas ou mais informações acionáveis, dê respiro visual: numere somente sequências, use bullets para itens paralelos ou separe ideias em parágrafos curtos com linha em branco. Não amontoe ações, exemplos ou falas no mesmo parágrafo.",
+          },
           campo_investigado: {
             type: ["string", "null"],
             enum: [...CHAVES_DECISIVAS, null],

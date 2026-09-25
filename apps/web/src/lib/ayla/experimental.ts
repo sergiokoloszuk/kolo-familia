@@ -68,6 +68,7 @@ import {
 } from "./mini-investigacao";
 import {
   FORMATO_WHATSAPP,
+  darRespiroVisual,
   formasDeEntrega,
   pedeEntregaEstruturada,
   INTERESSE_COMO_VEICULO,
@@ -1450,6 +1451,11 @@ export async function responderExperimental(
         });
       }
     }
+
+    // Respiro é só whitespace entre frases: zero conteúdo novo, zero chamada e
+    // zero latência. Não cria lista nem rótulo; turno curto e resposta já
+    // estruturada não entram nessa transformação.
+    texto = darRespiroVisual(texto, natureza);
 
     // ── A REDE DE FORMA — 26/08/2026 ────────────────────────────────────────
     //

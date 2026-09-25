@@ -42,7 +42,13 @@ describe("PEND-187B · o contrato de saída", () => {
     const e = esquemaDaResposta() as {
       json_schema: {
         strict: boolean;
-        schema: { required: string[]; properties: { campo_investigado: { enum: unknown[] } } };
+        schema: {
+          required: string[];
+          properties: {
+            fala: { description: string };
+            campo_investigado: { enum: unknown[] };
+          };
+        };
       };
     };
     expect(e.json_schema.strict).toBe(true);
@@ -55,6 +61,11 @@ describe("PEND-187B · o contrato de saída", () => {
     const enums = e.json_schema.schema.properties.campo_investigado.enum;
     expect(enums).toContain(null);
     expect(enums.length).toBe(CHAVES_DECISIVAS.length + 1);
+    const descricaoFala = e.json_schema.schema.properties.fala.description;
+    expect(descricaoFala).toMatch(/respiro visual/i);
+    expect(descricaoFala).toMatch(/numere somente sequências/i);
+    expect(descricaoFala).toMatch(/bullets para itens paralelos/i);
+    expect(descricaoFala).toMatch(/parágrafos curtos com linha em branco/i);
   });
 
   it("a instrução NÃO altera o Core v11 — ela é do turno, não da identidade", () => {

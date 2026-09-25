@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 import { itensDoSystem } from "./__harness/system-array";
 import {
   FORMATO_WHATSAPP,
+  darRespiroVisual,
   formasDeEntrega,
   pedeEntregaEstruturada,
   INTERESSE_COMO_VEICULO,
@@ -33,6 +34,36 @@ import {
 const EXPERIMENTAL = readFileSync(resolve(__dirname, "experimental.ts"), "utf8");
 const RESPONDER = readFileSync(resolve(__dirname, "responder.ts"), "utf8");
 const FORMAS = readFileSync(resolve(__dirname, "../conducao/formas.ts"), "utf8");
+
+describe("respiro visual determinístico", () => {
+  const mario =
+    "Você pode ajudá-lo sem exigir que fale o tempo todo. Antes de sair, combinem duas perguntas simples para ele testar.\n\n" +
+    "Ensine também a continuar a partir da resposta. Se ele travar, entre com uma pista curta e deixe espaço. Uma pausa também conta como participação.";
+
+  it("separa frases de uma orientação longa sem trocar nenhuma palavra", () => {
+    const saiu = darRespiroVisual(mario, "orientacao");
+    expect(saiu.split(/\n\s*\n/).filter(Boolean).length).toBeGreaterThanOrEqual(3);
+    const semDiferencaDeEspaco = (s: string) => s.replace(/\s+/g, " ").trim();
+    expect(semDiferencaDeEspaco(saiu)).toBe(semDiferencaDeEspaco(mario));
+  });
+
+  it("não força lista onde respiro basta e é idempotente", () => {
+    const uma = darRespiroVisual(mario, "orientacao");
+    expect(uma).not.toMatch(/(?:^|\n)\s*(?:•|1️⃣)/);
+    expect(darRespiroVisual(uma, "orientacao")).toBe(uma);
+  });
+
+  it("preserva lista existente, desabafo e abreviação", () => {
+    const lista = "Agora:\n\n• faça uma pausa\n• reduza o barulho";
+    expect(darRespiroVisual(lista, "orientacao")).toBe(lista);
+    expect(darRespiroVisual(mario, "simples")).toBe(mario);
+    const curta = "Tente uma mudança pequena hoje. Observe se ele se aproxima mais.";
+    expect(darRespiroVisual(curta, "orientacao")).toBe(curta);
+    const comDoutora = mario.replace("Antes", "Converse com a Dra. Ana. Antes");
+    expect(darRespiroVisual(comDoutora, "orientacao")).toContain("Dra. Ana.");
+    expect(darRespiroVisual(comDoutora, "orientacao")).not.toContain("Dra.\n\nAna");
+  });
+});
 const PROMPT_WEB = readFileSync(resolve(__dirname, "../ia/prompt.ts"), "utf8");
 
 /** Sem comentários — asserção estrutural testa código, não prosa. */
@@ -61,10 +92,14 @@ describe("A · a regra de formato chegou ao caminho OFICIAL", () => {
     // bullets simples são texto nativo e ajudam a leitura no celular.
     expect(FORMATO_WHATSAPP).toContain("##");
     expect(FORMATO_WHATSAPP).toMatch(/sem títulos \(##\), citações \(>\)/i);
-    expect(FORMATO_WHATSAPP).toMatch(/RESPIRO/);
-    expect(FORMATO_WHATSAPP).toMatch(/2–4 passos ou opções/);
-    expect(FORMATO_WHATSAPP).toMatch(/• ou 1 emoji funcional/);
-    expect(FORMATO_WHATSAPP).toMatch(/Não faça bullet único/);
+    expect(FORMATO_WHATSAPP).toMatch(/RESPIRO VISUAL/);
+    expect(FORMATO_WHATSAPP).toMatch(/RESPIRO VISUAL OBRIGATÓRIO/);
+    expect(FORMATO_WHATSAPP).toMatch(/duas ou mais informações acionáveis não ficam amontoadas/);
+    expect(FORMATO_WHATSAPP).toMatch(/1️⃣ 2️⃣… só para sequência/);
+    expect(FORMATO_WHATSAPP).toMatch(/• para apoios, opções ou falas paralelas/);
+    expect(FORMATO_WHATSAPP).toMatch(/parágrafos curtos com linha em branco/);
+    expect(FORMATO_WHATSAPP).toMatch(/Não agrupe ações, exemplos ou falas/);
+    expect(FORMATO_WHATSAPP).toMatch(/(?:não|nem) faça bullet único/i);
     expect(FORMATO_WHATSAPP).not.toMatch(/sem listas com - ou •/i);
   });
 
@@ -355,9 +390,9 @@ describe("H · o BLOCO DE ENTREGA ficou completo (PEND-144, itens 5 e 6)", () =>
     // ⚠️ SEM REGRESSÃO DE CACHE: o prefixo cacheável do `system` já terminava no
     // primeiro elemento (`core.conteudo`), porque `bloco` — que varia a cada
     // turno — vem logo depois. Crescer o item 8 não move esse limite.
-    // +uma regra curta de legibilidade, sem transformar o formato num segundo
-    // prompt: continua abaixo de 2.700 caracteres (~772 tokens).
-    expect(conversa).toBeLessThan(2700);
+    // +um contrato visual curto, sem transformar o formato num segundo prompt:
+    // continua abaixo de 2.850 caracteres (~815 tokens).
+    expect(conversa).toBeLessThan(2850);
   });
 });
 
