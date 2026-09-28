@@ -14,6 +14,7 @@ import {
   lerIdDoBotaoObjetivoHistoria,
   objetivoDaHistoriaExplicito,
   objetivoHistoriaDoFallback,
+  respostaPareceHistoria,
 } from "./historia-whatsapp";
 
 describe("continuidade da história no WhatsApp", () => {
@@ -94,6 +95,25 @@ describe("continuidade da história no WhatsApp", () => {
         ],
       }),
     ).toBeNull();
+  });
+
+  it("pedido atual de brincadeira vence um convite antigo para história", () => {
+    expect(detectarEntregaHistoria({
+      mensagem: "Quero uma ideia de brincadeira para ajudar a Manu com o barulho do mercado. Ela se comunica por gestos.",
+      aceite: "uma história para a Manu",
+      historicoMaisRecentePrimeiro: [
+        { direcao: "outbound", texto: "Qual tema você quer transformar em história?" },
+      ],
+    })).toBeNull();
+    expect(detectarEntregaHistoria({
+      mensagem: "Quero uma história com uma brincadeira no mercado",
+      historicoMaisRecentePrimeiro: [],
+    })).toEqual({ origem: "pedido_explicito" });
+  });
+
+  it("não confirma história quando a primeira bolha é orientação ou jogo", () => {
+    expect(respostaPareceHistoria("Uma brincadeira é o mercadinho.\n\nUse uma cesta.\n\nDepois peça pausa.\n\nObserve a reação.")).toBe(false);
+    expect(respostaPareceHistoria("**A colher curiosa**\n\nManu encontrou uma colher.\n\nUm dia, ela escolheu uma receita.\n\nEntão as duas cozinharam juntas.\n\nFim.")).toBe(true);
   });
 
   it("manda entregar agora e protege o tema de luto sem apagar a história", () => {

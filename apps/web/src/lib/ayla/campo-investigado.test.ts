@@ -142,6 +142,13 @@ describe("PEND-187B · fluxo, segurança e recuperação", () => {
     expect(FONTE_EXP).not.toMatch(/fronteiraAtravessada\(\s*r\.texto/);
   });
 
+  it("a regeneração da fronteira também extrai a fala do envelope", () => {
+    const bruto = JSON.stringify({ fala: "Vamos brincar com uma pista por vez.", campo_investigado: null });
+    expect(lerEnvelope(bruto).fala).toBe("Vamos brincar com uma pista por vez.");
+    expect(FONTE_EXP).toContain("segunda = lerEnvelope(r2.texto).fala;");
+    expect(FONTE_EXP).not.toContain('segunda = (r2.texto ?? "").trim()');
+  });
+
   it("envelope inválido cai UMA vez para texto livre — e sem laço", () => {
     expect(FONTE_EXP).toMatch(/if \(envelopeFalhou\)/);
     expect(FONTE_EXP).toMatch(/gerar\(undefined, true\)/);

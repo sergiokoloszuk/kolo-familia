@@ -9847,6 +9847,14 @@ do Perfil e queda de genericidade. **PENDENTE** — sem trafego no SHA novo ate
 Bloco: **B · Ayla** · Prioridade: **P1**
 STATUS: **ABERTA — medida, nao corrigida** · Aberta em: 2026-09-14
 
+**CANDIDATA LOCAL 28/09 — NÃO PUBLICADA.** Pedido explícito de brincadeira
+ganhou três opções com fala pronta do adulto, resposta possível da criança
+por gesto ou palavra, reação seguinte e capacidade exercitada. A/B sintético
+com modelo real cobriu mercado, foco, pedido livre, fala emergente e adolescente;
+a qualidade ainda oscila no caso de mercado. O pedido de manejo ficou manejo.
+Proteção local impede tutorial de história após pedido de brincadeira. Ver
+`docs/auditorias/brincadeira-pedido-2026-09-28.md`. Falta prova no WhatsApp.
+
 ⚠️ **ESTA FICHA EXISTE PARA QUE O GANHO DA PEND-207 NAO SEJA LIDO COMO VITORIA
 COMPLETA.** O DNA subiu alto valor de 4% para 24%. O teto e 24%: **tres em cada
 quatro respostas do MELHOR braco ainda sao "corretas e comuns"** — o nivel 1 da

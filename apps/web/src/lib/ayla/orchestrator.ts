@@ -188,6 +188,7 @@ import {
   lerIdDoBotaoObjetivoHistoria,
   objetivoDaHistoriaExplicito,
   objetivoHistoriaDoFallback,
+  respostaPareceHistoria,
   type EscolhaObjetivoHistoria,
 } from "./historia-whatsapp";
 import { planosWhatsappLigados } from "./plano-disponibilidade";
@@ -4026,6 +4027,18 @@ async function processInboundInterno(
       }, "preparada").catch(() => false);
     }
     if (ctxExp && exp) {
+      const historiaEntregue = Boolean(
+        entregaHistoria && !deveEscolherObjetivoHistoria && respostaPareceHistoria(exp.texto),
+      );
+      if (entregaHistoria && !deveEscolherObjetivoHistoria && !historiaEntregue) {
+        void logEvent({
+          kind: "historia_conteudo_nao_confirmado",
+          severity: "error",
+          persistir: true,
+          family_account_id: family.id,
+          payload: { turno: rastro.turno, origem: entregaHistoria.origem },
+        });
+      }
       registrarDetalhe(rastro, "resposta_contexto", exp.metrica.msContexto);
       registrarDetalhe(rastro, "resposta_modelo", exp.metrica.msModelo);
       registrarDetalhe(rastro, "resposta_inspecao", exp.metrica.msInspecao);
@@ -4053,7 +4066,7 @@ async function processInboundInterno(
         : "/historias/criar";
       // Começa assim que o alvo está resolvido e corre junto do envio da
       // história. O tutorial não acrescenta a ida ao banco depois da bolha.
-      const linkHistoriaPromise = entregaHistoria && !deveEscolherObjetivoHistoria
+      const linkHistoriaPromise = historiaEntregue
         ? gerarMagicLink(supabase, { familyId: family.id, next: destinoHistoria })
         : Promise.resolve(null);
       // ── A LACUNA SUGERIDA — Gate B, com a semântica da PEND-187A ───────
@@ -4277,7 +4290,7 @@ async function processInboundInterno(
               // ⚠️ CHAVE NOVA, e o nome carrega a semântica. `lacuna` legado fica
               // legível no histórico e NÃO é migrado: seriam afirmações diferentes
               // sobre o passado.
-              ...(lacunaSugerida || campoInvestigado || camposMini.length || entregaHistoria
+              ...(lacunaSugerida || campoInvestigado || camposMini.length || historiaEntregue
                 ? {
                     metadataMensagem: {
                       ...(lacunaSugerida ? { lacuna_sugerida: lacunaSugerida } : {}),
@@ -4288,7 +4301,7 @@ async function processInboundInterno(
                             mini_investigacao_campos: camposMini,
                           }
                         : {}),
-                      ...(entregaHistoria
+                      ...(historiaEntregue && entregaHistoria
                         ? {
                             historia_whatsapp: {
                               origem: entregaHistoria.origem,
@@ -4311,7 +4324,7 @@ async function processInboundInterno(
       // Duas mensagens de propósito: a história pode ser lida sem um tutorial
       // no meio, e o caminho da plataforma fica escaneável logo abaixo. O link
       // nunca substitui a história; se falhar, a primeira entrega permanece.
-      if (resp.enviada && entregaHistoria && !deveEscolherObjetivoHistoria) {
+      if (resp.enviada && historiaEntregue && entregaHistoria) {
         void logEvent({
           kind: "historia_whatsapp_aceita",
           severity: "info",

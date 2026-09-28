@@ -6,6 +6,7 @@
  * módulo mantém a decisão determinística e deixa a criação do texto com o Core,
  * que continua recebendo Perfil, histórico e Boas Práticas.
  */
+import { pedidoExplicitoDeBrincadeira } from "./pedido-brincadeira";
 
 export type OrigemEntregaHistoria =
   | "pedido_explicito"
@@ -181,6 +182,10 @@ export function detectarEntregaHistoria(params: {
     return { origem: "pedido_explicito" };
   }
 
+  // Pedido novo e explícito supera a inferência de que a família responde a
+  // um convite anterior para contar o tema de uma história.
+  if (pedidoExplicitoDeBrincadeira(params.mensagem)) return null;
+
   if (params.aceite && HISTORIA.test(normalizar(params.aceite))) {
     return { origem: "aceite_classificado" };
   }
@@ -195,6 +200,16 @@ export function detectarEntregaHistoria(params: {
   }
 
   return null;
+}
+
+/** Conservador: só anexar o tutorial quando a primeira bolha parece história. */
+export function respostaPareceHistoria(texto: string): boolean {
+  const blocos = texto.trim().split(/\n\s*\n/).map((b) => b.trim()).filter(Boolean);
+  if (blocos.length < 4) return false;
+  if (!/^\*{1,2}[^*\n]{4,100}\*{1,2}$/.test(blocos[0])) return false;
+  const narrativa = blocos.slice(1).join(" ");
+  if (/\b(?:tente|faça|use|observe|combine|monte|coloque|brinque)\b/i.test(narrativa.slice(0, 170))) return false;
+  return /\b(?:era|foi|estava|encontrou|começou|decidiu|um dia|então|quando)\b/i.test(narrativa);
 }
 
 /**

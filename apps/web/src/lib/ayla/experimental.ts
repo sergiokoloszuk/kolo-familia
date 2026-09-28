@@ -99,6 +99,7 @@ import {
 import { pronomesPara, type Genero } from "./pronomes";
 import { resolverFoco, blocoDeFoco, type Foco } from "./experimental-foco";
 import { lerEventos, eventosRelevantes, blocoDeEventos } from "./experimental-memoria";
+import { BLOCO_PEDIDO_BRINCADEIRA, pedidoExplicitoDeBrincadeira } from "./pedido-brincadeira";
 import { recuperarBoasPraticas, blocoBoasPraticas } from "@/lib/conhecimento/recuperar";
 import { lerEstadoTrial } from "@/lib/trial/estado";
 import { blocoDeContinuidade } from "@/lib/conducao/continuidade";
@@ -1330,6 +1331,10 @@ export async function responderExperimental(
          */
         posTrial ? "" : BLOCO_DNA,
         repertorio,
+        !posTrial && !params.entregarHistoriaNoWhatsapp && !params.prepararObjetivosHistoria &&
+          pedidoExplicitoDeBrincadeira(params.mensagem)
+          ? BLOCO_PEDIDO_BRINCADEIRA
+          : "",
         // A história continua nascendo do Core + Perfil + histórico + BPs.
         // Este bloco não traz conteúdo clínico novo: apenas transforma uma
         // promessa já feita em entrega no mesmo turno.
@@ -1470,7 +1475,9 @@ export async function responderExperimental(
       let segunda = "";
       try {
         const r2 = await gerar(vazamento.fronteira.instrucao(vazamento.achados));
-        segunda = (r2.texto ?? "").trim();
+        // A regeneração usa o mesmo schema JSON da primeira passada. A fala,
+        // não o envelope inteiro, é o que pode chegar à família.
+        segunda = lerEnvelope(r2.texto).fala;
       } catch {
         segunda = "";
       }
