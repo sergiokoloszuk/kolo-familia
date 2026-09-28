@@ -4,6 +4,8 @@ import type { SkillRow } from "./router";
 import type { Intencao } from "./intencao";
 import { MARCADOR_PLANO } from "./marcadores";
 import { pronomesPara } from "@/lib/ayla/pronomes";
+import { blocoMecanicasBrincadeira, pedidoExplicitoDeBrincadeira } from "@/lib/ayla/pedido-brincadeira";
+import { DIRETRIZES_BRINCADEIRA, REGRA_BRINCADEIRA_SE_SURGIR } from "@/lib/conducao/brincadeira-diretrizes";
 // NÚCLEO DE CONDUÇÃO — fonte única compartilhada com a Ayla (WhatsApp):
 // identidade + norte, princípios, regra de sequência, exemplos, piso e tom.
 // Ver lib/conducao/diretrizes.ts. A mesma "cabeça" nos dois canais.
@@ -35,6 +37,14 @@ export type OutputTypeData = {
   label: string;
   prompt_template: string;
 };
+
+export function quantidadeDeBrincadeirasNoFormato(template: string): string {
+  if (/Crie UMA ideia principal/i.test(template))
+    return "Neste aprofundamento, entregue UMA brincadeira completa, não três esboços.";
+  if (/\b2\s*(?:a|-)\s*3\b/i.test(template))
+    return "Neste botão de apoio, entregue 2 a 3 brincadeiras COMPLETAS e diferentes entre si, não uma só.";
+  return "Siga a quantidade de brincadeiras definida pelo formato desta resposta.";
+}
 
 /**
  * Bloco de identidade das skills — usado em ambos os modos (conversa e
@@ -208,7 +218,7 @@ Aqui você pensa a partir destas lentes de especialista do Kolo Família (app qu
 
 ${buildIdentityBlock(skills)}
 
-${VOZ_CONVERSA}${intencao ? `\n\n${blocoIntencao(intencao)}` : ""}${
+${VOZ_CONVERSA}\n\n${REGRA_BRINCADEIRA_SE_SURGIR}${intencao ? `\n\n${blocoIntencao(intencao)}` : ""}${
     entrega
       ? `\n\n${formasDeEntrega({ canal: "web", tema })}\n\n${INTERESSE_COMO_VEICULO}\n\n${A_CRIANCA_ANTES_DO_ROTULO}`
       : ""
@@ -272,9 +282,13 @@ ${buildIdentityBlock(skills)}
 
 ${VOZ_LIMITES_E_FRONTEIRA}
 
+${REGRA_BRINCADEIRA_SE_SURGIR}
+
 # Formato da resposta — "${outputType.label}"
 
 ${outputType.prompt_template}
+
+${outputType.key === "brincadeiras" ? `# Qualidade da brincadeira\n${DIRETRIZES_BRINCADEIRA}` : ""}
 
 # Tamanho
 
@@ -547,6 +561,12 @@ export function assemblePrompt(params: {
   // como fato do TURNO, junto do aceite — não no system, que é regra de
   // produto e fica em cache.
   const notasDoTurno = [
+    modo.kind === "conversa" && pedidoExplicitoDeBrincadeira(userInput)
+      ? `<pedido_explicito_de_brincadeira>Ofereça três alternativas de jogo com mecânicas distintas, para experimentar uma agora e guardar outras para depois. ${DIRETRIZES_BRINCADEIRA}\n${blocoMecanicasBrincadeira(userInput)}</pedido_explicito_de_brincadeira>`
+      : "",
+    modo.kind === "output_type" && modo.outputType.key === "brincadeiras"
+      ? `<repertorio_ludico_do_caso>Escolha brincadeira(s) que existam pelo jogo, não por escolher corredor, procurar produtos ou ensaiar tolerância sensorial. ${quantidadeDeBrincadeirasNoFormato(modo.outputType.prompt_template)} As três mecânicas abaixo são candidatas, não uma ordem de entregar exatamente três.\n${blocoMecanicasBrincadeira(userInput)}</repertorio_ludico_do_caso>`
+      : "",
     // ⚠️ NA WEB ELA JÁ ESTÁ LOGADA. Não precisa de magic link: `/assinatura`
     // direto já resolve, e o CTA por estado daquela tela faz o resto.
     ehPerguntaComercial(userInput) ? notaComercial(linkAssinatura("pos_trial")) : "",

@@ -43,6 +43,8 @@ import { pronomesPara, type Genero, type CuidadorDescrito } from "./pronomes";
 // (formato e idioma). A identidade agora vive no CÓDIGO (não mais no banco
 // voz_ayla), o que elimina o drift banco×código.
 import { nucleoConducao } from "@/lib/conducao/diretrizes";
+import { DIRETRIZES_BRINCADEIRA, REGRA_BRINCADEIRA_SE_SURGIR } from "@/lib/conducao/brincadeira-diretrizes";
+import { pedidoExplicitoDeBrincadeira } from "./pedido-brincadeira";
 // FASE 4A · as MESMAS constantes que `lib/ia/prompt.ts` injeta na web. Uma
 // redação só para os dois canais: se a precedência do perfil mudar, muda nos
 // dois no mesmo commit.
@@ -427,6 +429,7 @@ async function gerarUmaVez(
   const entrega = ehEntrega(params);
   const system = [
     nucleoConducao(),
+    REGRA_BRINCADEIRA_SE_SURGIR,
     // FATO COMERCIAL — fora do núcleo de propósito. O núcleo guarda voz e
     // segurança universais; prazo de teste é regra de produto, e é injetada
     // por quem fala com a família. Sem isto, perguntada quanto dura o teste,
@@ -617,6 +620,9 @@ Use para NÃO re-perguntar o que ela já disse. Isto é relato dela, não diagn�
   linhas.push(`\n<mensagem_de_agora>\n${params.mensagem}\n</mensagem_de_agora>`);
 
   const notas: string[] = [];
+  if (pedidoExplicitoDeBrincadeira(params.mensagem)) {
+    notas.push(`A família pediu brincadeira agora. Entregue três alternativas de mecânicas distintas, não apenas uma promessa de sugerir depois. ${DIRETRIZES_BRINCADEIRA}`);
+  }
   notas.push(
     `ANCORE no que está sendo falado AGORA (a <mensagem_de_agora> + a <conversa_recente>), como alguém atenta à conversa — um bom ouvinte. NÃO puxe por conta própria um assunto guardado no perfil que ninguém trouxe agora (um interesse antigo como futebol/Copa, um passeio/viagem que já foi mencionado antes) — o perfil é fundo e pode estar desatualizado. Se a mensagem citar algo que você NÃO conhece, PERGUNTE o que é (com naturalidade) — nunca troque por um fato antigo do perfil nem invente um contexto.`,
   );

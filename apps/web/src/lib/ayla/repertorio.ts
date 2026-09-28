@@ -2,6 +2,7 @@ import { getAylaAnthropicClient, AYLA_MODEL_FALLBACK } from "./anthropic";
 import { getSystemPrompt } from "@/lib/ai/prompts";
 import { logarUsoApi } from "@/lib/billing/logar";
 import type { UsageTracking } from "./responder";
+import { DIRETRIZES_BRINCADEIRA } from "@/lib/conducao/brincadeira-diretrizes";
 
 /**
  * Sugestão de EXPANSÃO DE REPERTÓRIO (Fatia 3.3b) — a Ayla propõe, de leve,
@@ -16,7 +17,7 @@ export const SISTEMA_REPERTORIO_FALLBACK = `Você é a Ayla — uma presença ca
 Pegue 1 ou 2 coisas que a criança JÁ AMA e use como ponte pra algo NOVO e próximo (adjacente). Ex.: ama dinossauro + água → "dinossauro tomando banho de mangueira"; ama desenhar + come bem morango → "carimbo de morango com tinta".
 
 # Como escrever
-- WhatsApp: curtinho, quente, 2 a 4 linhas. Português do Brasil natural.
+- WhatsApp: curto, quente e fácil de ler; use o espaço necessário para a mãe conseguir executar. Português do Brasil natural.
 - UMA sugestão só, concreta e fácil de fazer em casa, hoje.
 - SEM pressão: deixe claro que tentar já vale, que tudo bem se ela não curtir.
 - Convide a contar depois como foi ("se topar, me conta").
@@ -40,6 +41,10 @@ export type RepertorioParams = {
   jaTentados: string[];
 };
 
+export function montarSistemaRepertorio(system: string): string {
+  return `${system}\n\nSe a experiência proposta for uma brincadeira, siga estas diretrizes sem criar uma segunda sugestão:\n${DIRETRIZES_BRINCADEIRA}`;
+}
+
 export async function gerarSugestaoRepertorio(
   params: RepertorioParams,
   tracking?: UsageTracking,
@@ -49,6 +54,9 @@ export async function gerarSugestaoRepertorio(
 
   const client = getAylaAnthropicClient();
   const system = await getSystemPrompt("repertorio_ayla", SISTEMA_REPERTORIO_FALLBACK);
+  // O prompt salvo no banco pode ser antigo: a diretriz comum entra também
+  // depois dele, sem depender de migração nem de nova chamada ao modelo.
+  const sistemaComDiretrizes = montarSistemaRepertorio(system);
 
   const userMsg = [
     `Mãe: ${params.nomeMae}.`,
@@ -69,7 +77,7 @@ export async function gerarSugestaoRepertorio(
     const stream = client.messages.stream({
       model: AYLA_MODEL_FALLBACK,
       max_tokens: 400,
-      system: [{ type: "text", text: system, cache_control: { type: "ephemeral" } }],
+      system: [{ type: "text", text: sistemaComDiretrizes, cache_control: { type: "ephemeral" } }],
       messages: [{ role: "user", content: userMsg }],
     });
     const final = await stream.finalMessage();

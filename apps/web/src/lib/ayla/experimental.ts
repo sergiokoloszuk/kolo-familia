@@ -99,7 +99,8 @@ import {
 import { pronomesPara, type Genero } from "./pronomes";
 import { resolverFoco, blocoDeFoco, type Foco } from "./experimental-foco";
 import { lerEventos, eventosRelevantes, blocoDeEventos } from "./experimental-memoria";
-import { BLOCO_PEDIDO_BRINCADEIRA, pedidoExplicitoDeBrincadeira } from "./pedido-brincadeira";
+import { BLOCO_PEDIDO_BRINCADEIRA, auditarBrincadeiras, blocoMecanicasBrincadeira, pedidoExplicitoDeBrincadeira } from "./pedido-brincadeira";
+import { DIRETRIZES_BRINCADEIRA, REGRA_BRINCADEIRA_SE_SURGIR } from "@/lib/conducao/brincadeira-diretrizes";
 import { recuperarBoasPraticas, blocoBoasPraticas } from "@/lib/conhecimento/recuperar";
 import { lerEstadoTrial } from "@/lib/trial/estado";
 import { blocoDeContinuidade } from "@/lib/conducao/continuidade";
@@ -1330,10 +1331,11 @@ export async function responderExperimental(
          * uma conversa que ninguém mediu.
          */
         posTrial ? "" : BLOCO_DNA,
+        posTrial ? "" : REGRA_BRINCADEIRA_SE_SURGIR,
         repertorio,
         !posTrial && !params.entregarHistoriaNoWhatsapp && !params.prepararObjetivosHistoria &&
           pedidoExplicitoDeBrincadeira(params.mensagem)
-          ? BLOCO_PEDIDO_BRINCADEIRA
+          ? `${DIRETRIZES_BRINCADEIRA}\n${BLOCO_PEDIDO_BRINCADEIRA}\n${blocoMecanicasBrincadeira(params.mensagem)}`
           : "",
         // A história continua nascendo do Core + Perfil + histórico + BPs.
         // Este bloco não traz conteúdo clínico novo: apenas transforma uma
@@ -1502,6 +1504,20 @@ export async function responderExperimental(
         // escrito para este caso, em vez de o turno cair para outro cérebro.
         texto = (aindaVaza ?? vazamento).fronteira.piso({
           nomeMembro: nomeCrianca ?? null,
+        });
+      }
+    }
+
+    // Observação editorial apenas. Não aciona segunda chamada nem substitui a
+    // resposta: o detector estrutural ainda precisa de A/B antes de virar gate.
+    if (pedidoExplicitoDeBrincadeira(params.mensagem)) {
+      const auditoria = auditarBrincadeiras(texto);
+      if (auditoria.quantidade !== 3 || auditoria.falhas.length > 0) {
+        void logEvent({
+          kind: "ayla_brincadeira_estrutura_incompleta",
+          severity: "warn",
+          family_account_id: params.familyId,
+          payload: { quantidade: auditoria.quantidade, falhas: auditoria.falhas },
         });
       }
     }

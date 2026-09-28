@@ -29,9 +29,9 @@ globalThis.fetch = async (input, init = {}) => {
   return nativeFetch(input, { ...init, signal: init.signal ?? AbortSignal.timeout(60000) });
 };
 const load = (file) => import(pathToFileURL(resolve(web, 'src', file)).href);
-const [{ montarMundo }, { decidirTurno }, { responderExperimental }, { carregarCatalogoSkills }] = await Promise.all([
+const [{ montarMundo }, { decidirTurno }, { responderExperimental }, { carregarCatalogoSkills }, { auditarBrincadeiras, pedidoExplicitoDeBrincadeira }] = await Promise.all([
   load('lib/ayla/__harness/cenario.ts'), load('lib/conducao/decisao-do-turno.ts'),
-  load('lib/ayla/experimental.ts'), load('lib/ayla/catalogo-skills.ts'),
+  load('lib/ayla/experimental.ts'), load('lib/ayla/catalogo-skills.ts'), load('lib/ayla/pedido-brincadeira.ts'),
 ]);
 const supabase = createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
 const catalogo = await carregarCatalogoSkills(supabase);
@@ -67,5 +67,6 @@ for (const { id, fala, crianca } of cases) {
     turnoClassificado: decisao, onFalha: (motivo, detalhe) => falhas.push({ motivo, detalhe }) });
   if (!resposta) throw Error(`${id}: ${JSON.stringify(falhas)}`);
   console.log(JSON.stringify({ id, fala, skills: decisao.skills, texto: resposta.texto,
+    auditoria: pedidoExplicitoDeBrincadeira(fala) ? auditarBrincadeiras(resposta.texto) : null,
     bpInjetadas: resposta.metrica.bpInjetadas, ms: resposta.metrica.msTotal }));
 }

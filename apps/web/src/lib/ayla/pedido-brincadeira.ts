@@ -4,6 +4,52 @@ export function pedidoExplicitoDeBrincadeira(texto: string): boolean {
   return /\b(?:quero|queria|gostaria|preciso|me (?:de|da|mostre|sugira|ensine)|pode (?:me )?(?:dar|sugerir|ensinar|passar)|sugira|indique|invente|crie|monte|tem (?:alguma|uma))\b.{0,110}\b(?:brincadeiras?|brincar|jogos?|atividade ludica)\b/.test(t);
 }
 
+export type AuditoriaBrincadeiras = {
+  quantidade: number;
+  falhas: Array<{ opcao: number; codigo: "sem_fala" | "sem_acao" | "sem_virada" | "virada_generica" | "sem_continuidade" }>;
+};
+
+/** Auditoria de forma, sem LLM e sem registrar falas da família ou da criança. */
+export function auditarBrincadeiras(resposta: string): AuditoriaBrincadeiras {
+  const blocos = resposta.split(/\n\s*\n/).map((b) => b.trim()).filter(Boolean);
+  const jogos = blocos.filter((b) => /^(?:[•\-]|[^\p{L}\p{N}\s]{1,4})\s*\*{1,2}[^*]+\*{1,2}/u.test(b));
+  const falhas: AuditoriaBrincadeiras["falhas"] = [];
+  jogos.forEach((jogo, i) => {
+    const opcao = i + 1;
+    if (!/\bVoc[eê]\s*:/i.test(jogo) && !/[“"][^”"]{8,}[”"]/u.test(jogo))
+      falhas.push({ opcao, codigo: "sem_fala" });
+    if (!/\b(?:El[ae]\s*:|(?:el[ae]|a crian[cç]a|[A-Z][a-z]+) pode\b|se el[ae]\b)/i.test(jogo))
+      falhas.push({ opcao, codigo: "sem_acao" });
+    const entao = jogo.match(/\bEnt[aã]o\s*[:,]\s*([^\n]+)/i)?.[1]
+      ?? jogo.match(/\bVoc[eê] transforma\b([^\n]+)/i)?.[1] ?? "";
+    if (!entao) falhas.push({ opcao, codigo: "sem_virada" });
+    else if (/^(?:conte|narre|invente|fa[cç]a|encene|represente)\b[^.!?]{0,85}\b(?:consequ[eê]ncia|surpresa|cena|rea[cç][aã]o|escolha)\b[^.!?]{0,60}[.!?]?/i.test(entao)
+      && !/[“"][^”"]+[”"]/.test(entao) && !/\bse el[ae]\b/i.test(entao))
+      falhas.push({ opcao, codigo: "virada_generica" });
+    if (!/\b(?:depois|(?:na |a )?(?:pr[oó]xima|segunda) rodada|(?:na |a )?rodada seguinte|(?:na |a )?vez seguinte|troqu?em|inverta|agora [ée] a vez|agora voc[eê] manda|pr[oó]ximo objeto)\b/i.test(jogo))
+      falhas.push({ opcao, codigo: "sem_continuidade" });
+  });
+  return { quantidade: jogos.length, falhas };
+}
+
+/** Pontos de partida lúdicos, não roteiros prontos nem substitutos do Perfil/BPs. */
+export function blocoMecanicasBrincadeira(texto: string): string {
+  const t = texto.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+  const mercado = /\b(?:mercado|supermercado|compras|corredor)\b/.test(t);
+  const contexto = mercado
+    ? `Cenário: durante a ida ao mercado, sem exigir objetos extras, fala da criança ou exposição a sons. Três MECÂNICAS candidatas diferentes:
+• Mímica com personagem do interesse da criança: o adulto usa só as mãos ou expressões para representar uma ação engraçada; um gesto da criança muda a expressão/ação do personagem e o adulto encena a consequência. A segunda rodada inverte quem comanda o personagem. Não transforme isso em caminhar, parar ou seguir por corredores.
+• O adulto inventa um apelido absurdo e seguro para UM produto comum (sem mexer nele); a criança rejeita ou aceita por gesto, apontamento ou palavra, o adulto reage com humor e depois deixa a criança criar um apelido para ele descobrir. A graça é a incongruência, não encontrar itens. Nunca finja que algo não comestível é comida ou que um produto perigoso pode ser usado de modo inadequado.
+• História de superpoder impossível: um item do carrinho ganha um poder fictício; a criança escolhe por gesto entre duas ações engraçadas, o adulto narra a consequência breve e devolve a vez para ela criar uma segunda mudança. Não use o personagem/interesse da primeira opção novamente.
+Não entregue três variações de caça, caminhada, escolher produtos ou trajeto. Não repita o mesmo personagem ou interesse em duas opções. Se algum jogo não couber na idade, interesses, comunicação, sensibilidade ou histórico, troque-o por outra mecânica realmente distinta.`
+    : `Três MECÂNICAS candidatas diferentes para criar opções, adaptando lugar, idade, interesses e comunicação ao Perfil:
+• Adivinhação por pistas, com a criança podendo dar uma pista e o adulto adivinhar de modo divertido.
+• Faz-de-conta com papéis invertidos: o gesto ou escolha da criança altera a ação do personagem; o adulto representa a consequência.
+• Transformação ou construção conjunta: cada turno muda um objeto, desenho ou enredo e causa uma surpresa pequena, sem exigir material que a família não tenha.
+São estruturas, não respostas fixas. Evite repetir uma mecânica já tentada e substitua qualquer uma inadequada ao pedido.`;
+  return `<mecanicas_ludicas_para_escolha>\n${contexto}\nPara cada opção escolhida, mostre abertura exata do adulto → ação possível da criança → reação/virada → próxima rodada. Uma habilidade realmente exercitada, sem promessa de resultado. As BPs e o Perfil têm precedência sobre estes exemplos.\n</mecanicas_ludicas_para_escolha>`;
+}
+
 /** Critério de experiência, não nova fonte clínica nem substituto das BPs. */
 export const BLOCO_PEDIDO_BRINCADEIRA = `<pedido_explicito_de_brincadeira>
 A família pediu brincadeira AGORA. Ofereça TRÊS opções de jogo para a família poder experimentar uma hoje e guardar as outras para depois. Cada opção precisa ser uma experiência compartilhada divertida mesmo sem o objetivo de desenvolvimento. Não reembale um treino, uma simulação da situação difícil ou uma atividade já tentada como se fosse jogo novo. Use um interesse forte da criança para tornar UMA opção especial; não repita o mesmo personagem, enredo ou objeto nas três. As outras podem aproveitar outra preferência, uma ação do lugar ou o humor da relação entre adulto e criança. Personalizar não é só repetir o tema favorito.
