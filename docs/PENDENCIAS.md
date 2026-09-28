@@ -9847,6 +9847,13 @@ do Perfil e queda de genericidade. **PENDENTE** — sem trafego no SHA novo ate
 Bloco: **B · Ayla** · Prioridade: **P1**
 STATUS: **ABERTA — medida, nao corrigida** · Aberta em: 2026-09-14
 
+**PUBLICAÇÃO AUTORIZADA COM RESSALVAS (28/09).** A diretriz compartilhada de
+brincadeira cobre pedido direto, conversa web, apoio, aprofundamento e proposta
+espontânea, respeitando idade, comunicação, Perfil, segurança e quantidade do
+formato. A/B sintético, testes dirigidos, typecheck e build passaram. Falta
+prova editorial em casos reais pós-publicação: fazer varredura somente leitura
+em 05/10/2026, sem envio a famílias. Não baixar esta pendência antes disso.
+
 **CANDIDATA LOCAL 28/09 — NÃO PUBLICADA.** Pedido explícito de brincadeira
 ganhou três opções com fala pronta do adulto, resposta possível da criança
 por gesto ou palavra, reação seguinte e capacidade exercitada. A/B sintético
