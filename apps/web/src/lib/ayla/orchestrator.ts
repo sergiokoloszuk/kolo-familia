@@ -3409,6 +3409,11 @@ async function processInboundInterno(
     contexto: string | null,
   ): { membroId: string | null; ambiguo: Array<{ id: string; nome?: string | null }> | null } => {
     if (!ctxR?.membros?.length) return { membroId: null, ambiguo: null };
+    // A resposta explícita à clarificação prevalece sobre pronomes do pedido
+    // original retomado ("meu filho" pode ter sido respondido com "Manu").
+    if (retomada?.membroId && ctxR.membros.some((m) => m.id === retomada.membroId)) {
+      return { membroId: retomada.membroId, ambiguo: null };
+    }
     const r = resolverMembroAlvo({
       texto: inbound.texto,
       membros: ctxR.membros,
@@ -3729,7 +3734,8 @@ async function processInboundInterno(
         abriu_por_desempate: portao.porDesempate,
         // O desfecho do roteamento.
         rotina_conversa_em_curso: Boolean(rotinaConversa),
-        abriu: portao.abre || Boolean(rotinaConversa) || (intent === "rotina_criar" && pedidoExplicito),
+        abriu: portao.abre || Boolean(rotinaConversa) || (intent === "rotina_criar" && pedidoExplicito) ||
+          (intent === "organizacao" && portao.nomeou && portao.ato === "ambiguo"),
       },
       persistir: true,
     });
@@ -3745,6 +3751,9 @@ async function processInboundInterno(
       // NÃO diz que precisa de rotina. Quem escolhe entre orientação, sequência
       // curta e o período inteiro é a prontidão, um passo adiante.
       (intent === "organizacao" && pedidoExplicito) ||
+      // A família pede ajuda com uma rotina, mas ainda não escolheu criar
+      // cartões: o condutor especializado decide entre orientar e montar.
+      (intent === "organizacao" && portao.nomeou && portao.ato === "ambiguo") ||
       pedidoDeRotina)
   ) {
     const ctxR = await loadFamiliaParaEnvio(supabase, family.id);

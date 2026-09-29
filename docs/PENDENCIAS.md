@@ -1605,6 +1605,16 @@ conflito. Esta ficha é o registro de estado; o laudo é a prova.
 Categoria: Produto · Prioridade: **P2** · Estado: **AGUARDANDO VALIDAÇÃO**
 Aberta em: 2026-08-08 · Origem: decisão de produto (2026-08-08)
 
+- **Incidente de 29/09/2026 (Karina, áudio da rotina):** após o pedido para
+  "meu filho", a mãe respondeu "Manu" e depois "Mario", mas a clarificação
+  se repetiu. O texto original retomado voltava ao resolvedor com o pronome
+  masculino e anulava a escolha explícita. Mais tarde, "rotina mais organizada"
+  caiu na resposta genérica; ela pediu "Cozinha" e recebeu apenas confirmação,
+  sem novo artefato ou link. Correção isolada: priorizar a resposta à
+  clarificação, encaminhar organização ambígua ao condutor de rotina, restringir
+  a recuperação do tema à data de criação da rotina e conferir erro de escrita.
+  **Ainda falta prova real de ponta a ponta no WhatsApp e das imagens prontas;
+  não baixar esta pendência por build ou testes locais.**
 - **Teste real de 29/09/2026 (Manu): REPROVOU a entrega visual.** A mãe ditou
   Café → Banho → Escola → Casa da vó e já tinha escolhido "Fada rosa" na mesma
   conversa; a Ayla confirmou essa escolha, mas depois criou a rotina com

@@ -1263,7 +1263,7 @@ async function rotinaAguardandoTema(
   supabase: SupabaseClient,
   familyId: string,
   membroId: string,
-): Promise<{ id: string; nome: string } | null> {
+): Promise<{ id: string; nome: string; criadaEm: string | null } | null> {
   // ⚠️ A JANELA SAIU DAQUI — Gate A, 08/09/2026. Os 6 h continuam valendo e
   // continuam sendo a decisão certa (caso "Carrinho", 08/08), mas quem os
   // guarda agora é `VALIDADE_MS.capturar_tema`, em `rotina-pendencia.ts`.
@@ -1272,7 +1272,7 @@ async function rotinaAguardandoTema(
   // Aqui o caminho ESCREVE (grava tema e dispara geração), então "não sei"
   // e "não há" têm o mesmo desfecho: não capturar.
   const r = await pendenciaDeRotina(supabase, { familyId, membroId, finalidade: "capturar_tema" });
-  return r.estado === "sim" ? { id: r.valor.id, nome: r.valor.nome } : null;
+  return r.estado === "sim" ? { id: r.valor.id, nome: r.valor.nome, criadaEm: r.valor.criadaEm } : null;
 }
 
 /** A família desistiu dos cartões desta rotina? */
@@ -1585,10 +1585,10 @@ export function temaEnunciado(texto: string | null | undefined): string | null {
 /**
  * O tema que a família JÁ disse, em qualquer turno recente.
  *
- * ⚠️ JANELA DE 12 HORAS, a mesma que `conduzirRotina` usa para não repetir
- * pergunta. Mais que isso e um tema de outra conversa poderia ser capturado —
- * foi exatamente o beco do "Carrinho" que a janela de `rotinaAguardandoTema`
- * já evita.
+ * ⚠️ JANELA DE 12 HORAS E INÍCIO DA ROTINA PENDENTE. Tema de antes da criação
+ * do artefato não pode ser aplicado a ele: foi o risco visto quando a mãe
+ * escolheu "Fada rosa" para uma rotina e depois pediu outra com "Cozinha".
+ * O tema informado no pedido inicial é tratado pelo próprio condutor.
  *
  * Lê do mais novo para o mais antigo: se a família mudou de ideia, vale a
  * última palavra dela.
@@ -1596,9 +1596,12 @@ export function temaEnunciado(texto: string | null | undefined): string | null {
 export async function temaJaDitoNoHistorico(
   supabase: SupabaseClient,
   familyId: string,
+  criadoEm?: string | null,
 ): Promise<string | null> {
   try {
-    const desde = new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString();
+    const janela = Date.now() - 12 * 60 * 60 * 1000;
+    const inicio = criadoEm ? Date.parse(criadoEm) : janela;
+    const desde = new Date(Number.isFinite(inicio) ? Math.max(janela, inicio) : janela).toISOString();
     const { data } = await supabase
       .from("ayla_messages")
       .select("texto")
@@ -1812,12 +1815,14 @@ export async function conduzirRotina(
       // reconhecida aqui. O que muda é de ONDE o tema é lido: da conversa
       // inteira desde que a rotina nasceu, e não só do último turno. Qualquer
       // referência contextual — "cadê?", "e as figuras?", "não apareceu" —
-      // chega neste mesmo ponto e encontra o dado que a família já deu.
+      // chega neste mesmo ponto e encontra o dado que a família já deu DEPOIS
+      // da criação desta rotina. Tema anterior pertence a outro pedido.
       //
       // ⚠️ E NÃO INVENTA NADA. Só encontra o que a própria família escreveu,
       // pelo MESMO extrator (`lerTemaEscolhido`). Sem tema no histórico, o
       // fluxo segue perguntando, como antes.
-      const escolhido = lerTemaEscolhido(params.contexto) ?? (await temaJaDitoNoHistorico(supabase, familyId));
+      const escolhido = lerTemaEscolhido(params.contexto) ??
+        (await temaJaDitoNoHistorico(supabase, familyId, pendente.criadaEm));
       rastro.tema = escolhido ? String(escolhido).slice(0, 60) : null;
       rastro.tema_fonte = escolhido
         ? (lerTemaEscolhido(params.contexto) ? "mensagem_atual" : "historico")
@@ -1826,7 +1831,11 @@ export async function conduzirRotina(
         rastro.saida = "tema_aplicado";
         rastro.rotina_ids = [pendente.id];
         rastro.rotina_reutilizada = true;
-        await supabase.from("rotinas").update({ tema: escolhido }).eq("id", pendente.id);
+        const { error: erroTema } = await supabase.from("rotinas").update({ tema: escolhido }).eq("id", pendente.id);
+        if (erroTema) {
+          console.error(`[ayla:rotina] tema não gravado em ${pendente.id}: ${erroTema.message}`);
+          return { mensagem: "Não consegui salvar o tema desta rotina agora. Pode me mandar o tema de novo daqui a pouco?", pronto: true };
+        }
         const comecou = await dispararGeracao(pendente.id, escolhido);
         rastro.geracao_iniciada = comecou;
         const link = await gerarMagicLink(supabase, {

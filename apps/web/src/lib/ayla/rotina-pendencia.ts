@@ -100,6 +100,7 @@ export type PendenciaDeRotina = {
   membroId: string | null;
   falta: FaltaNaPendencia;
   atualizadaEm: string | null;
+  criadaEm: string | null;
   idadeHoras: number;
 };
 
@@ -179,6 +180,7 @@ export async function pendenciaDeRotina(
         membroId: r.membro_atipico_id,
         falta: (r.tema ?? "").trim() ? "geracao" : "tema",
         atualizadaEm: r.updated_at ?? r.created_at,
+        criadaEm: r.created_at,
         idadeHoras,
       },
     };
