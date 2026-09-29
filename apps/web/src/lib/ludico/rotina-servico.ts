@@ -3,7 +3,7 @@ import { avaliarProntidaoParaRotina } from "@/lib/ayla/prontidao-rotina";
 import { validarRotina, resumirFalhas, type FalhaRotina } from "@/lib/ayla/validacao-rotina";
 import { interpretarRotina } from "./rotina-ia";
 import { conflitoDeIdentidade } from "@/lib/ayla/membro-alvo";
-import type { RotinaProposta } from "./rotina-ia-core";
+import type { PropostaRotina, RotinaProposta } from "./rotina-ia-core";
 
 /**
  * O SERVIÇO ÚNICO DE ROTINA — uma política, dois canais.
@@ -68,6 +68,8 @@ export async function gerarRotina(
     tamanho?: "orientacao" | "mini" | "rotina";
     /** Ajuste de uma proposta já mostrada (o app usa nas idas e vindas). */
     propostaAtual?: RotinaProposta[] | null;
+    /** Lista literal do pedido atual; quando existe, não passa pelo gerador. */
+    sequenciaDitada?: readonly string[] | null;
     /** Pula a prontidão: o app quando a mãe já está no assistente e ajustando. */
     pularProntidao?: boolean;
     /** Todos os membros da família — pra guarda de identidade. Sem eles, a
@@ -119,13 +121,39 @@ export async function gerarRotina(
   }
   const historico = notas.length ? [...params.historico, ...notas] : params.historico;
 
-  const proposta = await interpretarRotina(supabase, {
-    familyId: params.familyId,
-    nome: params.nome,
-    idade: params.idade,
-    historico,
-    propostaAtual: params.propostaAtual ?? null,
-  });
+  const etapasLiterais = params.sequenciaDitada?.map((s) => s.trim()) ?? [];
+  const listaLiteralValida = etapasLiterais.length >= 3 && etapasLiterais.length <= 20 &&
+    etapasLiterais.every((s) => s.length > 0 && s.length <= 60);
+  if (listaLiteralValida && params.membrosDaFamilia?.length) {
+    const citadoNoPedido = conflitoDeIdentidade({
+      texto: params.mensagem,
+      membroEscolhido: params.membroAtipicoId,
+      membros: params.membrosDaFamilia,
+    });
+    if (citadoNoPedido) return {
+      desfecho: "conflito_identidade",
+      citado: citadoNoPedido,
+      motivo: "pedido atual nomeia outra criança; quadro não publicado",
+    };
+  }
+  const proposta: PropostaRotina = listaLiteralValida
+    ? {
+        resposta: `Organizei a sequência que você me contou para ${params.nome}.`,
+        pergunta: null,
+        tema: null,
+        rotinas: [{
+          nome: `Rotina de ${params.nome}`,
+          dia_semana: null,
+          tarefas: etapasLiterais.map((texto) => ({ texto, hora: null })),
+        }],
+      }
+    : await interpretarRotina(supabase, {
+        familyId: params.familyId,
+        nome: params.nome,
+        idade: params.idade,
+        historico,
+        propostaAtual: params.propostaAtual ?? null,
+      });
 
   // REDE CONTRA MULTIPLICAÇÃO. O prompt já pede uma rotina por pedido, mas o
   // caso real (1 tarde → 5 rotinas de 33 etapas) mostra que a instrução sozinha

@@ -140,7 +140,7 @@ Só o que está aberto. 🔒 = bloqueada.
 | [PEND-021](#pend-021) | Jornada dos 7 dias e conversão | G · Comercial | P1 | ABERTA | preencher o DESEJADO |
 | [PEND-040](#pend-040) | Observabilidade de IA — conversa Web e Plano não existem em `api_calls` | H · Governança | P1 | ABERTA | achar por que a instrumentação atual não grava |
 | [PEND-041](#pend-041) | Rastro web não separa conversa de artefato | H · Governança | P2 | ABERTA | carregar a origem no evento |
-| [PEND-038](#pend-038) | Latência percebida no WhatsApp e resposta em vários balões | A · Condução | P1 pós-rollout | NÃO MEDIDA EM PRODUÇÃO | os 56s são bancada do Plano; depende de [PEND-040] |
+| [PEND-038](#pend-038) | Latência percebida no WhatsApp e resposta em vários balões | A · Condução | P1 pós-rollout | MEDIÇÃO PARCIAL · ABERTA | turno real de rotina em 29/09: 19,8s; falta amostra e correção |
 | [PEND-043](#pend-043) | Ter objetivo ≠ gerar Plano — falta decisão de valor | D · Entregas | P1 | ABERTA | separar suficiência de valor de consolidação |
 | [PEND-044](#pend-044) | A Kolo terceiriza antes de tentar ajudar | A · Condução | P1 | ABERTA | classe funcional, não regra de palavra |
 | [PEND-036](#pend-036) | O Plano reoferece o que a conversa acabou de descartar | D · Entregas | P1 | DESCONTAMINADA | medida sozinha após a 035; é defeito próprio |
@@ -836,7 +836,7 @@ Aberta em: 2026-08-11 · Origem: decisão de 11/08/2026
 
 ### PEND-038
 **Latência percebida no WhatsApp — e a resposta que chega em vários balões**
-Bloco: **A · Condução** · Prioridade: **P1 pós-rollout** · Estado: **ABERTA · NÃO MEDIDA EM PRODUÇÃO**
+Bloco: **A · Condução** · Prioridade: **P1 pós-rollout** · Estado: **ABERTA · MEDIÇÃO PARCIAL EM PRODUÇÃO**
 Aberta em: 2026-08-11 · Origem: teste real (Karina/Manu, 11:25–11:28)
 
 > **Paralela à 3b, não depois dela.** Não adianta a inteligência melhorar se a
@@ -844,6 +844,12 @@ Aberta em: 2026-08-11 · Origem: teste real (Karina/Manu, 11:25–11:28)
 
 - **O caso.** Entre 11:27 e 11:28 houve espera perceptível, e a resposta chegou
   em **vários balões seguidos**. A percepção é de peso, não de cuidado.
+- **Medida nova (29/09/2026, um turno real, pedido de rotina visual da Manu):**
+  19,794 s até concluir o turno; 19,388 s até a primeira resposta; 3,280 s de
+  debounce deliberado; 2,868 s na prontidão, 4,659 s no condutor e 2,138 s no
+  envio. É um ponto, não p50/p95; a correção editorial da rotina não fecha esta
+  pendência. Próximo passo: medir amostra de conversas comuns e rotinas, separar
+  tempo de espera, IA, banco e provedor, e só então otimizar.
 - **Medir separadamente**, no caminho real, antes de otimizar qualquer coisa:
   tempo até começar a responder · tempo total · chamadas ao roteador · chamadas
   ao modelo · queries · geração do Plano · geração do PDF · envio ao WhatsApp ·

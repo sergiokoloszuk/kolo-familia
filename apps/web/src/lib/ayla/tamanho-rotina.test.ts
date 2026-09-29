@@ -153,9 +153,10 @@ describe("orientação não gera artefato nenhum", () => {
 // ============================================================
 
 describe("mini não é um segundo sistema", () => {
-  it("passa pelo mesmo gerador e pela mesma validação", () => {
-    // Se `mini` tivesse gerador próprio, haveria outro import aqui.
-    expect(SERVICO).toMatch(/const proposta = await interpretarRotina\(supabase, \{/);
+  it("usa um único gerador quando precisa interpretar e sempre passa pela validação", () => {
+    // Lista literal ditada pela família não precisa de gerador; os demais
+    // pedidos, inclusive mini, continuam com a implementação única.
+    expect(SERVICO).toMatch(/: await interpretarRotina\(supabase, \{/);
     expect(SERVICO).toMatch(/const veredito = validarRotina\(\{/);
     // Uma chamada só — duas seriam dois geradores de novo.
     expect(SERVICO.match(/await interpretarRotina\(/g)?.length).toBe(1);
@@ -213,7 +214,7 @@ describe("cartões saem por necessidade visual, não por tema", () => {
     // em 'aguardando', que é o que distingue "falta escolher o tema" de
     // "ninguém pediu cartão" — antes as duas eram 'nenhum'.
     expect(GUIADA).toMatch(/const faltaTema = visual && ids\.length > 0 && !tema/);
-    expect(GUIADA).toMatch(/Falta só escolher o tema dos cartões/);
+    expect(GUIADA).toMatch(/\*Para ilustrar os cartões\*/);
     expect(GUIADA).toMatch(/await marcarAguardandoTema\(supabase, ids\)/);
     expect(GUIADA).toMatch(/o cartão existe quando VER a sequência ajuda/);
   });

@@ -166,13 +166,14 @@ describe("estado verdadeiro dos cartões", () => {
    * peça o PDF — e o link levava a uma rotina em `aguardando`, sem cartão
    * nenhum pra ver. Neste turno a Ayla tem um objetivo só.
    */
-  it("no turno que pede o tema não sai link nem oferta de PDF", () => {
-    expect(GUIADA).toMatch(/const link = faltaTema \? null : await gerarMagicLink/);
+  it("no turno que pede o tema só pode haver link para o rascunho, sem oferta de PDF", () => {
+    expect(GUIADA).toMatch(/const link = ids\.length \? await gerarMagicLink\(supabase, \{ familyId, next \}\) : null/);
+    expect(GUIADA).toMatch(/const opcaoLudico = faltaTema && ids\.length === 1/);
     expect(GUIADA).toMatch(/const dica = faltaTema\s*\n?\s*\? ""/);
   });
 
   it("o tema é perguntado pelo CÓDIGO, com no máximo duas sugestões reais", () => {
-    expect(GUIADA).toMatch(/Falta só escolher o tema dos cartões/);
+    expect(GUIADA).toMatch(/\*Para ilustrar os cartões\*/);
     expect(GUIADA).toMatch(/\.slice\(0, 2\)/);
     expect(GUIADA).toMatch(/TEMA dos cartões NÃO é assunto seu/);
   });
@@ -208,11 +209,12 @@ describe("endpoint de geração paga", () => {
  * A ORDEM É DETERMINÍSTICA — e é o que faltava no caso da Karina.
  *
  * fala útil → sequência REAL persistida → pergunta do tema.
- * E, enquanto o tema estiver pendente: nada de link, PDF ou "já comecei".
+ * Enquanto o tema estiver pendente: só o link do rascunho da criança, sem PDF
+ * nem promessa de que os cartões já estão prontos.
  */
 describe("ordem da entrega quando falta tema", () => {
   const BLOCO = GUIADA.slice(
-    GUIADA.indexOf("const link = faltaTema ? null"),
+    GUIADA.indexOf("const link = ids.length ? await gerarMagicLink"),
     GUIADA.indexOf("return { mensagem, pronto:"),
   );
 
@@ -226,16 +228,16 @@ describe("ordem da entrega quando falta tema", () => {
   });
 
   it("a mensagem monta na ordem fala → quadro → tema/cartões → link", () => {
-    const molde = BLOCO.slice(BLOCO.indexOf("mensagem = link"));
+    const molde = BLOCO.slice(BLOCO.indexOf("mensagem = faltaTema"));
     const pos = (t: string) => molde.indexOf(t);
     expect(pos("${fechamento}")).toBeGreaterThanOrEqual(0);
     expect(pos("${fechamento}")).toBeLessThan(pos("${quadro}"));
     expect(pos("${quadro}")).toBeLessThan(pos("${orient}"));
-    expect(pos("${orient}")).toBeLessThan(pos("${link}"));
+    expect(pos("${orient}")).toBeLessThan(pos("${opcaoLudico}"));
   });
 
-  it("com tema pendente não sai link, nem PDF, nem promessa de arte", () => {
-    expect(BLOCO).toMatch(/const link = faltaTema \? null/);
+  it("com tema pendente só oferece o rascunho, sem PDF nem promessa de arte", () => {
+    expect(BLOCO).toMatch(/const opcaoLudico = faltaTema && ids\.length === 1/);
     expect(BLOCO).toMatch(/const dica = faltaTema\s*\n?\s*\? ""/);
     // "já comecei a gerar" só existe no ramo do disparo confirmado
     expect(BLOCO).toContain("? `\\n\\nJá comecei a preparar");

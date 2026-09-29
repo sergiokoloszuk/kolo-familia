@@ -287,7 +287,7 @@ describe("o tema é escolha da família — e quem pergunta é o CÓDIGO", () =>
   });
 
   it("o código pergunta, com no máximo duas sugestões dos interesses REAIS", () => {
-    expect(GUIADA).toMatch(/Falta só escolher o tema dos cartões/);
+    expect(GUIADA).toMatch(/\*Para ilustrar os cartões\*/);
     expect(GUIADA).toMatch(/sugestoesDeTema/);
     expect(GUIADA).toMatch(/\.slice\(0, 2\)/);
   });
@@ -298,7 +298,7 @@ describe("o tema é escolha da família — e quem pergunta é o CÓDIGO", () =>
     // sugestões e a oferecer NENHUM tema, como pede cartoes-visuais-v2 §10.
     // A garantia deste teste ("ela pode escolher outro") continua; o que ele
     // media era a frase, e a frase se mudou.
-    expect(GUIADA).toMatch(/outro tema que \$\{nome\} esteja gostando agora/);
+    expect(GUIADA).toMatch(/outro tema que \$\{nome\} curta agora/);
   });
 
   it("e pode escolher NENHUM tema — a saída que faltava", () => {
@@ -314,7 +314,7 @@ describe("o tema é escolha da família — e quem pergunta é o CÓDIGO", () =>
   });
 
   it("sem interesse conhecido, o convite fica aberto", () => {
-    expect(GUIADA).toMatch(/Me fala um tema que \$\{nome\} ama/);
+    expect(GUIADA).toMatch(/Qual tema \$\{nome\} gosta agora/);
   });
 
   it("a geração dispara com tema — e pela MESMA condição que pergunta", () => {

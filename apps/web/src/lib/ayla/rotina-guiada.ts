@@ -13,7 +13,7 @@ import { ORIENTACAO_DE_TRANSICAO } from "@/lib/conducao/formas";
 import { gerarMagicLink } from "./ponte";
 import { gerarRotina } from "@/lib/ludico/rotina-servico";
 import { idadeAnos } from "@/lib/idade";
-import { avaliarProntidaoParaRotina } from "./prontidao-rotina";
+import { avaliarProntidaoParaRotina, type ProntidaoRotina } from "./prontidao-rotina";
 import { validarRotina, resumirFalhas } from "./validacao-rotina";
 import {
   DIAS_LABEL,
@@ -607,10 +607,16 @@ export function portaoDeterministicoDeRotina(texto: string | null | undefined): 
 export function perguntaDeTema(nome: string, sugestoes: readonly string[]): string {
   const semTema = `Se preferir, faço *sem tema*, com imagens bem simples.`;
   if (!sugestoes.length) {
-    return `Falta só escolher o tema dos cartões. Me fala um tema que ${nome} ama — animais, dinossauros, fundo do mar, um personagem — que eu desenho em cima disso. ${semTema}`;
+    return `*Para ilustrar os cartões*\nQual tema ${nome} gosta agora? Pode ser um animal, personagem ou outro interesse de ${nome}. ${semTema}`;
   }
   const lista = sugestoes.map((s, i) => `${i + 1}️⃣ *${s}*`).join("\n");
-  return `Falta só escolher o tema dos cartões. Pensei em:\n${lista}\n\nPode responder só o número, me dizer outro tema que ${nome} esteja gostando agora, ou pedir *sem tema* — aí faço com imagens bem simples.`;
+  return `*Para ilustrar os cartões*\nPensei nestes temas para ${nome}:\n${lista}\n\nPode responder só o número, dizer outro tema que ${nome} curta agora ou pedir *sem tema* — aí faço com imagens bem simples.`;
+}
+
+export function opcaoDeContinuarRotinaNoLudico(nome: string, link: string | null): string {
+  return link
+    ? `\n\n*Prefere continuar no Lúdico?*\nAbra a rotina de ${nome} e toque em *Gerar cartões* para escolher o tema por lá:\n${link}`
+    : "";
 }
 
 export function familiaDitouSequencia(texto: string | null | undefined): boolean {
@@ -640,6 +646,36 @@ export function familiaDitouSequencia(texto: string | null | undefined): boolean
     if (partes.length >= 3 && partes.every(ehItem)) return true;
   }
   return false;
+}
+
+/** Linhas curtas ditadas após o pedido são o quadro, não sugestões ao gerador. */
+export function etapasDitadasEmLinhas(texto: string): string[] | null {
+  const linhas = texto.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+  if (linhas.length < 4 || !pediuRotinaExplicitamente(linhas[0])) return null;
+  const etapas = linhas.slice(1).map((l) => l.replace(/^(?:[-•*]|\d+[.)])\s*/, "").trim());
+  if (etapas.length < 3 || etapas.length > 20 || etapas.some((l) => !l || l.length > 60 || l.endsWith("?") || l.split(/\s+/).length > 8 || /\b\d{1,2}(?::\d{2}|h\d{0,2})\b/i.test(l))) return null;
+  return etapas;
+}
+
+/** O recorte pedido são as etapas ditadas, mesmo sem rótulo de período. */
+export function aplicarPisosDeRotinaDitada(
+  prontidao: ProntidaoRotina,
+  pedidoAtual: string,
+): ProntidaoRotina {
+  const visual = prontidao.visual || pediuApoioVisual(pedidoAtual);
+  if (
+    !pediuRotinaExplicitamente(pedidoAtual) ||
+    !familiaDitouSequencia(pedidoAtual) ||
+    prontidao.desfecho === "limite_atuacao" ||
+    prontidao.desfecho === "nao_e_rotina"
+  ) return { ...prontidao, visual };
+  return {
+    ...prontidao,
+    desfecho: "suficiente",
+    pergunta: null,
+    visual,
+    motivo: "pedido explícito com sequência atual: o recorte são as etapas ditadas",
+  };
 }
 
 /**
@@ -984,10 +1020,11 @@ async function aplicarRotina(
     .eq("family_account_id", familyId)
     .eq("nome", nome);
   q = r.dia_semana === null ? q.is("dia_semana", null) : q.eq("dia_semana", r.dia_semana);
-  const { data: existe } = await q.maybeSingle();
+  const { data: existe, error: leituraErro } = await q.maybeSingle();
+  if (leituraErro) throw leituraErro;
   let rotinaId = existe?.id as string | undefined;
   if (!rotinaId) {
-    const { data: nova } = await supabase
+    const { data: nova, error: criacaoErro } = await supabase
       .from("rotinas")
       .insert({
         family_account_id: familyId,
@@ -999,20 +1036,24 @@ async function aplicarRotina(
       })
       .select("id")
       .single();
+    if (criacaoErro) throw criacaoErro;
     rotinaId = nova?.id as string | undefined;
   } else if (tema) {
     // tema mudou → cartões (temáticos) precisam ser regerados
-    await supabase
+    const { error: temaErro } = await supabase
       .from("rotinas")
       .update({ tema, cards_status: "nenhum", modo_exibicao: visual ? "cartoes" : "lista" })
       .eq("id", rotinaId);
+    if (temaErro) throw temaErro;
   } else if (visual) {
     // Virou visual numa rodada seguinte: a tela acompanha. O caminho contrário
     // não existe — se a mãe já escolheu ver em cartões, não desfazemos.
-    await supabase.from("rotinas").update({ modo_exibicao: "cartoes" }).eq("id", rotinaId);
+    const { error: visualErro } = await supabase.from("rotinas").update({ modo_exibicao: "cartoes" }).eq("id", rotinaId);
+    if (visualErro) throw visualErro;
   }
   if (!rotinaId) return undefined;
-  await supabase.from("rotina_tarefas").delete().eq("rotina_id", rotinaId);
+  const { error: exclusaoErro } = await supabase.from("rotina_tarefas").delete().eq("rotina_id", rotinaId);
+  if (exclusaoErro) throw exclusaoErro;
   const rows = r.tarefas.slice(0, 25).map((t, i) => ({
     rotina_id: rotinaId,
     texto: t.texto.slice(0, 120),
@@ -1020,7 +1061,10 @@ async function aplicarRotina(
     icone: null,
     ordem: i,
   }));
-  if (rows.length) await supabase.from("rotina_tarefas").insert(rows);
+  if (rows.length) {
+    const { error: tarefasErro } = await supabase.from("rotina_tarefas").insert(rows);
+    if (tarefasErro) throw tarefasErro;
+  }
   return rotinaId;
 }
 
@@ -1193,11 +1237,8 @@ async function sequenciaDoQuadro(
 /** Rotinas criadas com cartões pedidos, esperando só a escolha do tema. */
 async function marcarAguardandoTema(supabase: SupabaseClient, ids: string[]): Promise<void> {
   if (!ids.length) return;
-  try {
-    await supabase.from("rotinas").update({ cards_status: "aguardando" }).in("id", ids);
-  } catch (e) {
-    console.error("[ayla:rotina] falha ao marcar 'aguardando':", e instanceof Error ? e.message : e);
-  }
+  const { error } = await supabase.from("rotinas").update({ cards_status: "aguardando" }).in("id", ids);
+  if (error) throw error;
 }
 
 /** A rotina mais recente deste membro que está esperando um tema. */
@@ -1872,7 +1913,7 @@ export async function conduzirRotina(
     // confundir aquilo com a sequência de agora.
     const anteriorTxt = inicio > 0 ? linhas(historico.slice(0, inicio)) : "";
     rastro.chamadas_llm += 1;
-    const prontidao = await etapa(rastro, "prontidao", () =>
+    const prontidaoModelo = await etapa(rastro, "prontidao", () =>
       avaliarProntidaoParaRotina({
       mensagem: params.contexto,
       conversa: conversaTxt,
@@ -1895,6 +1936,7 @@ export async function conduzirRotina(
       idadeMeses: idadeEmMeses((membro.data_nascimento as string | null) ?? null),
       }),
     );
+    const prontidao = aplicarPisosDeRotinaDitada(prontidaoModelo, params.contexto);
     // ── PISO DO TAMANHO ────────────────────────────────────────────────────
     // Quem pediu a rotina com todas as letras recebe rotina. O modelo pode
     // achar que uma sequência curta bastaria — e pode DIZER isso na conversa —,
@@ -2244,6 +2286,7 @@ ${jaSabemos.perfil}` : "",
               },
             ]
           : null,
+        sequenciaDitada: etapasDitadasEmLinhas(params.contexto),
         // A prontidão já rodou lá em cima, antes do turno de conversa.
         pularProntidao: true,
         // A guarda de identidade precisa da família inteira pra comparar o
@@ -2426,18 +2469,19 @@ ${jaSabemos.perfil}` : "",
       }
 
       // ── UM OBJETIVO POR TURNO ──────────────────────────────────────────
-      // Enquanto falta o tema, a Ayla quer UMA palavra e mais nada. Em
+      // Enquanto falta o tema, a Ayla quer UMA escolha e mais nada. Em
       // 07/08/2026 o turno saiu com três chamadas à ação coladas — escolha um
-      // tema, abra o link, peça o PDF — e o link levava a uma rotina em
-      // `aguardando`, ou seja, a cartões que ainda nem tinham sido
-      // encomendados. Abrir ali não acrescentava nada e competia com a única
-      // resposta que destrava a geração.
+      // tema, abra o link, peça o PDF. O link novo é apenas uma alternativa
+      // para escolher O MESMO tema no rascunho já salvo — não promete cartões
+      // prontos nem acrescenta outra decisão à família.
       //
-      // Nem geramos o token: um magic link não usado é mais uma URL válida
-      // solta no histórico da conversa — e o modelo já foi visto repescando
-      // link antigo de turnos anteriores.
-      const link = faltaTema ? null : await gerarMagicLink(supabase, { familyId, next });
-      const fechamento = mensagem || `Prontinho — montei a rotina do(a) ${nome} 🌿`;
+      // Quando há quadro salvo, o link aponta para ESTE quadro, da criança
+      // escolhida. A família pode selecionar o tema no WhatsApp ou abrir o
+      // mesmo rascunho no Lúdico — sem recriar etapas nem cair no perfil.
+      const link = ids.length ? await gerarMagicLink(supabase, { familyId, next }) : null;
+      const fechamento = etapasDitadasEmLinhas(params.contexto)
+        ? `*Rotina visual de ${nome}*\nOrganizei os passos na ordem que você me contou:`
+        : mensagem || `Organizei a rotina de ${nome} 🌿`;
       // As etapas, lidas do quadro. A fala do condutor vem antes (o que ele
       // entendeu, a dica, a frase de antecipação); a lista vem daqui.
       const sequencia = await sequenciaDoQuadro(supabase, ids);
@@ -2508,9 +2552,14 @@ Ah — se quiser, o próprio ${nome} pode ser o personagem dos cartões em vez d
       // entendeu, vê o quadro exatamente como ficou, e só então os cartões, o
       // link e as opções.
       const quadro = sequencia ? `\n\n${sequencia}` : "";
-      mensagem = link
-        ? `${fechamento}${quadro}${orient}\n\nAbre aqui (já entra direto):\n${link}${dica}`
-        : `${fechamento}${quadro}${orient}${dica}`;
+      const opcaoLudico = faltaTema && ids.length === 1
+        ? opcaoDeContinuarRotinaNoLudico(nome, link)
+        : "";
+      mensagem = faltaTema
+        ? `${fechamento}${quadro}${orient}${opcaoLudico}`
+        : link
+          ? `${fechamento}${quadro}${orient}\n\nAbre aqui (já entra direto):\n${link}${dica}`
+          : `${fechamento}${quadro}${orient}${dica}`;
     }
 
     // ── A PROPOSTA É IMPRESSA PELO CÓDIGO, DA MESMA FONTE QUE SERÁ GRAVADA ──
