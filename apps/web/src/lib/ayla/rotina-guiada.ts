@@ -1014,8 +1014,8 @@ SE VOCÊ ACHA QUE FALTA UMA ETAPA no que ela deu, não acrescente calado: propon
 NÃO escreva a sequência na sua "mensagem": o sistema mostra as etapas exatamente como ficaram no quadro, logo abaixo da sua fala. Sua parte é o que só você sabe fazer — dizer o que entendeu, a dica no ponto difícil, a frase de antecipação. Confirme no passado, não no futuro. NUNCA escreva "vou montar", "vou gerar", "vou te mandar" ou "vai aparecer": quando você devolve "montar", já está feito.
 NÃO diga que mandou PDF, nem que os cartões estão sendo gerados: isso depende da necessidade e do que ela pediu, e o sistema acrescenta a frase certa depois da sua. Se você anunciar um arquivo que não saiu, ela vai procurar no celular e não vai achar. A entrega concreta é a ROTINA — o PDF é opção de impressão pra quem quer colar na parede.`;
 
-/** Cria/reusa uma rotina (por nome+dia), aplica o tema e grava as tarefas. */
-async function aplicarRotina(
+/** Pedido novo cria outro quadro; edição explícita pode atualizar o existente. */
+export async function aplicarRotina(
   supabase: SupabaseClient,
   familyId: string,
   membroAtipicoId: string,
@@ -1028,18 +1028,23 @@ async function aplicarRotina(
    * mesmo quando ninguém tinha decidido que ali cabia apoio visual.
    */
   visual = false,
+  reusarExistente = false,
 ): Promise<string | undefined> {
   const nome = r.nome.trim() || "Rotina";
-  let q = supabase
-    .from("rotinas")
-    .select("id")
-    .eq("membro_atipico_id", membroAtipicoId)
-    .eq("family_account_id", familyId)
-    .eq("nome", nome);
-  q = r.dia_semana === null ? q.is("dia_semana", null) : q.eq("dia_semana", r.dia_semana);
-  const { data: existe, error: leituraErro } = await q.maybeSingle();
-  if (leituraErro) throw leituraErro;
-  let rotinaId = existe?.id as string | undefined;
+  let rotinaId: string | undefined;
+  if (reusarExistente) {
+    let q = supabase
+      .from("rotinas")
+      .select("id")
+      .eq("membro_atipico_id", membroAtipicoId)
+      .eq("family_account_id", familyId)
+      .eq("nome", nome);
+    q = r.dia_semana === null ? q.is("dia_semana", null) : q.eq("dia_semana", r.dia_semana);
+    const { data: existe, error: leituraErro } = await q.maybeSingle();
+    if (leituraErro) throw leituraErro;
+    rotinaId = existe?.id as string | undefined;
+  }
+  const encontrouExistente = Boolean(rotinaId);
   if (!rotinaId) {
     const { data: nova, error: criacaoErro } = await supabase
       .from("rotinas")
@@ -1056,21 +1061,21 @@ async function aplicarRotina(
     if (criacaoErro) throw criacaoErro;
     rotinaId = nova?.id as string | undefined;
   } else if (tema) {
-    // tema mudou → cartões (temáticos) precisam ser regerados
     const { error: temaErro } = await supabase
       .from("rotinas")
       .update({ tema, cards_status: "nenhum", modo_exibicao: visual ? "cartoes" : "lista" })
       .eq("id", rotinaId);
     if (temaErro) throw temaErro;
   } else if (visual) {
-    // Virou visual numa rodada seguinte: a tela acompanha. O caminho contrário
-    // não existe — se a mãe já escolheu ver em cartões, não desfazemos.
+    // Na edição, se a mãe já escolheu ver em cartões, não desfazemos.
     const { error: visualErro } = await supabase.from("rotinas").update({ modo_exibicao: "cartoes" }).eq("id", rotinaId);
     if (visualErro) throw visualErro;
   }
   if (!rotinaId) return undefined;
-  const { error: exclusaoErro } = await supabase.from("rotina_tarefas").delete().eq("rotina_id", rotinaId);
-  if (exclusaoErro) throw exclusaoErro;
+  if (encontrouExistente) {
+    const { error: exclusaoErro } = await supabase.from("rotina_tarefas").delete().eq("rotina_id", rotinaId);
+    if (exclusaoErro) throw exclusaoErro;
+  }
   const rows = r.tarefas.slice(0, 25).map((t, i) => ({
     rotina_id: rotinaId,
     texto: t.texto.slice(0, 120),
@@ -2213,13 +2218,12 @@ ${jaSabemos.perfil}` : "",
         `[ayla:rotina] condutor perguntou com prontidão suficiente e SEM proposta — turno gasto sem sequência na mesa`,
       );
     }
-    // Nunca aceitar tema inventado pelo modelo. Para a sequência visual que a
-    // família ditou, reutilizar só o tema que ela escolheu e a Ayla confirmou
-    // para ESTA criança nesta conversa. Sem tema confirmado, usar ilustração
-    // neutra do cotidiano: a família pediu cartões prontos, não outra tarefa.
+    // Nunca aceitar tema inventado pelo modelo. A família ditou a sequência,
+    // não o tema das imagens. Se ainda não escolheu, a rotina fica salva e a
+    // Ayla faz UMA pergunta de tema antes de iniciar as ilustrações.
     const tema: string | null =
       visual && etapasDitadasEmLinhas(params.contexto)
-        ? temaEnunciado(params.contexto) ?? temaConfirmadoNestaRotina(historicoDaRotina, params.membroAtipicoId) ?? "Dia a dia"
+        ? temaEnunciado(params.contexto) ?? (ditouAgora ? null : temaConfirmadoNestaRotina(historicoDaRotina, params.membroAtipicoId))
         : null;
 
     // ── A AYLA NÃO É MAIS O GERADOR ────────────────────────────────────────
@@ -2416,7 +2420,7 @@ ${jaSabemos.perfil}` : "",
 
       const ids: string[] = [];
       for (const r of rotinas) {
-        const id = await aplicarRotina(supabase, familyId, params.membroAtipicoId, r, tema, visual);
+        const id = await aplicarRotina(supabase, familyId, params.membroAtipicoId, r, tema, visual, !pedidoNovo);
         if (id) ids.push(id);
       }
       // As rotinas que ESTE turno persistiu — é sobre elas que o portão 3
@@ -2597,8 +2601,11 @@ Ah — se quiser, o próprio ${nome} pode ser o personagem dos cartões em vez d
       const opcaoLudico = faltaTema && ids.length === 1
         ? opcaoDeContinuarRotinaNoLudico(nome, link)
         : "";
-      const criarOutraDepois = autoGerou && link
-        ? "\n\n*Para criar outra depois*\nEm kolofamilia.com.br: *Lúdico → Rotina Visual*. Escreva os passos na ordem e toque em *Gerar minha rotina visual*."
+      const linkParaCriarOutra = autoGerou && link
+        ? await gerarMagicLink(supabase, { familyId, next: "/ludico/rotinas" })
+        : null;
+      const criarOutraDepois = linkParaCriarOutra
+        ? `\n\n*Para criar outra depois*\nAbra o Lúdico por aqui (já entra direto):\n${linkParaCriarOutra}\nToque em *Gerar minha rotina visual* e escreva os passos na ordem.`
         : "";
       mensagem = faltaTema || geracaoFalhou
         ? `${fechamento}${quadro}${orient}${opcaoLudico}`

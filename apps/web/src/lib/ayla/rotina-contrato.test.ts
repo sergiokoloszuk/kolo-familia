@@ -308,7 +308,9 @@ describe("tema: uma porta só", () => {
   it("o código não lê tema do modelo em lugar nenhum", () => {
     expect(semComentarios(GUIADA)).not.toMatch(/parsed\??\.tema/);
     expect(GUIADA).toMatch(/temaConfirmadoNestaRotina\(historicoDaRotina, params\.membroAtipicoId\)/);
-    expect(GUIADA).toMatch(/\?\? "Dia a dia"/);
+    // Novo pedido ditado sem tema não herda o da rotina anterior: pergunta.
+    expect(GUIADA).toMatch(/ditouAgora \? null : temaConfirmadoNestaRotina/);
+    expect(GUIADA).not.toMatch(/\?\? "Dia a dia"/);
   });
 
   it("somente sem tema resolvido o pedido visual passa pela pergunta", () => {

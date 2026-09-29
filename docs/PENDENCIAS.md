@@ -1605,6 +1605,15 @@ conflito. Esta ficha é o registro de estado; o laudo é a prova.
 Categoria: Produto · Prioridade: **P2** · Estado: **AGUARDANDO VALIDAÇÃO**
 Aberta em: 2026-08-08 · Origem: decisão de produto (2026-08-08)
 
+- **Teste real de 29/09/2026, após `d7ffe10`:** a Ayla criou a sequência
+  ditada da Manu sem perguntar o tema e iniciou imagens neutras; a mensagem
+  ofereceu um primeiro link com acesso direto e, em "Para criar outra depois",
+  o domínio comum, que exigiu login. A consulta de acesso mostrou que o token
+  da primeira e da segunda rotina apontava para o mesmo ID: o gravador
+  reutilizava por nome+dia e apagava as etapas anteriores. Correção em curso:
+  novo pedido preserva quadro antigo, tema é perguntado quando não informado,
+  e o segundo convite também usa link de acesso direto. **Provar no WhatsApp
+  os dois links, os dois IDs distintos e todas as imagens antes de baixar.**
 - **Incidente de 29/09/2026 (Karina, áudio da rotina):** após o pedido para
   "meu filho", a mãe respondeu "Manu" e depois "Mario", mas a clarificação
   se repetiu. O texto original retomado voltava ao resolvedor com o pronome

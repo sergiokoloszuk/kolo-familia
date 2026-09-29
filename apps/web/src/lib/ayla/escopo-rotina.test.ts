@@ -156,7 +156,7 @@ describe("visual e impressão não varrem 12 horas", () => {
 describe("a decisão do visual chega ao artefato e à tela", () => {
   it("a Ayla escreve `modo_exibicao` ao criar", () => {
     expect(GUIADA).toMatch(/modo_exibicao: visual \? "cartoes" : "lista"/);
-    expect(GUIADA).toMatch(/aplicarRotina\(supabase, familyId, params\.membroAtipicoId, r, tema, visual\)/);
+    expect(GUIADA).toMatch(/aplicarRotina\(supabase, familyId, params\.membroAtipicoId, r, tema, visual, !pedidoNovo\)/);
   });
 
   it("virar visual depois atualiza a tela; o contrário não desfaz a escolha dela", () => {
