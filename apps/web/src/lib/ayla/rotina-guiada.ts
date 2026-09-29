@@ -619,6 +619,23 @@ export function opcaoDeContinuarRotinaNoLudico(nome: string, link: string | null
     : "";
 }
 
+export function temaConfirmadoNestaRotina(
+  historico: readonly { de: "mae" | "kolo"; texto: string; membroId?: string | null }[],
+  membroId: string,
+): string | null {
+  for (let i = historico.length - 1; i >= 0; i--) {
+    const fala = historico[i];
+    if (fala.de !== "kolo" || fala.membroId !== membroId) continue;
+    const confirmado = fala.texto.match(/^(.{2,25}?)\s+anotad[oa]\s+(?:pro|para o)\s+tema dos cart[õo]es\b/i)?.[1]?.trim();
+    if (!confirmado) continue;
+    const anterior = historico[i - 1];
+    if (anterior?.de === "mae" && anterior.texto.trim().toLocaleLowerCase("pt-BR") === confirmado.toLocaleLowerCase("pt-BR")) {
+      return confirmado;
+    }
+  }
+  return null;
+}
+
 export function familiaDitouSequencia(texto: string | null | undefined): boolean {
   const bruto = String(texto ?? "");
   if (!bruto.trim()) return false;
@@ -1845,20 +1862,24 @@ export async function conduzirRotina(
     const desde = new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString();
     const { data: msgs } = await supabase
       .from("ayla_messages")
-      .select("texto, direcao, tipo, created_at")
+      .select("texto, direcao, tipo, created_at, membro_atipico_id")
       .eq("family_account_id", familyId)
       .gte("created_at", desde)
-      .order("created_at", { ascending: true })
+      .order("created_at", { ascending: false })
       .limit(40);
-    const historico = (msgs ?? [])
+    // Limitar após ordenar ASC descartava precisamente os turnos MAIS
+    // recentes numa conversa longa. Lemos os 40 últimos e só então voltamos
+    // à ordem cronológica para interpretar pergunta → resposta.
+    const historico = [...(msgs ?? [])].reverse()
       .map((m) => ({
         de: (m.direcao === "inbound" ? "mae" : "kolo") as "mae" | "kolo",
         texto: ((m.texto as string) ?? "").trim(),
         tipo: (m.tipo as string | null) ?? null,
+        membroId: (m.membro_atipico_id as string | null) ?? null,
       }))
       .filter((h) => h.texto);
     if (!historico.some((h) => h.de === "mae" && h.texto === params.contexto.trim())) {
-      historico.push({ de: "mae", texto: params.contexto.trim(), tipo: null });
+      historico.push({ de: "mae", texto: params.contexto.trim(), tipo: null, membroId: null });
     }
 
     // ── O QUE PERTENCE A ESTA ROTINA ───────────────────────────────────────
@@ -2183,9 +2204,14 @@ ${jaSabemos.perfil}` : "",
         `[ayla:rotina] condutor perguntou com prontidão suficiente e SEM proposta — turno gasto sem sequência na mesa`,
       );
     }
-    // O tema NÃO vem do modelo. Nesta função ele é sempre null: quando a
-    // família escolhe, quem grava é o gatilho determinístico, direto no banco.
-    const tema: string | null = null;
+    // Nunca aceitar tema inventado pelo modelo. Para a sequência visual que a
+    // família ditou, reutilizar só o tema que ela escolheu e a Ayla confirmou
+    // para ESTA criança nesta conversa. Sem tema confirmado, usar ilustração
+    // neutra do cotidiano: a família pediu cartões prontos, não outra tarefa.
+    const tema: string | null =
+      visual && etapasDitadasEmLinhas(params.contexto)
+        ? temaEnunciado(params.contexto) ?? temaConfirmadoNestaRotina(historicoDaRotina, params.membroAtipicoId) ?? "Dia a dia"
+        : null;
 
     // ── A AYLA NÃO É MAIS O GERADOR ────────────────────────────────────────
     // Quando decide que dá pra montar, ela DELEGA ao serviço oficial — o mesmo
@@ -2434,6 +2460,7 @@ ${jaSabemos.perfil}` : "",
       // rotina, não tem tema. Se perguntamos, esperamos — e se esperamos,
       // geramos quando ela responder. As duas pontas usam a MESMA condição.
       let autoGerou = false;
+      let geracaoFalhou = false;
       const faltaTema = visual && ids.length > 0 && !tema;
       faltaTemaFinal = faltaTema;
       rastro.rotina_ids = ids;
@@ -2449,12 +2476,16 @@ ${jaSabemos.perfil}` : "",
         console.warn(`[ayla:rotina] ARTEFATO A MAIS — ${ids.length} rotinas num turno ditado`);
       }
       rastro.tema = tema ? String(tema).slice(0, 60) : null;
-      rastro.tema_fonte = tema ? (rastro.tema_fonte ?? "mensagem_atual") : "nenhuma";
+      rastro.tema_fonte = tema
+        ? (tema === "Dia a dia" ? "neutro" : temaEnunciado(params.contexto) ? "mensagem_atual" : "historico_confirmado")
+        : "nenhuma";
       rastro.status_final = faltaTema ? "aguardando" : tema ? "gerando" : "nenhum";
       if (visual && tema && ids.length) {
-        for (const id of ids) await dispararGeracao(id, tema);
-        autoGerou = true;
-        rastro.geracao_iniciada = true;
+        const iniciadas = await Promise.all(ids.map((id) => dispararGeracao(id, tema)));
+        autoGerou = iniciadas.every(Boolean);
+        geracaoFalhou = !autoGerou;
+        rastro.geracao_iniciada = autoGerou;
+        if (geracaoFalhou) rastro.status_final = "falha_disparo";
       }
       if (faltaTema) {
         // ESTADO OPERACIONAL VERDADEIRO. Antes ficava `cards_status="nenhum"`,
@@ -2495,7 +2526,7 @@ ${jaSabemos.perfil}` : "",
       // 04/08/2026 — e a oferta vem DEPOIS de organizar, nunca na primeira
       // fala: perguntar tema antes de entender o dia é formulário.
       const ofereceCartoes =
-        !autoGerou && !faltaTema && pedidoExplicito && tamanho === "rotina" && !temSemana;
+        !autoGerou && !geracaoFalhou && !faltaTema && pedidoExplicito && tamanho === "rotina" && !temSemana;
       // A conversa segue ABERTA enquanto a resposta dela ainda pode virar
       // imagem — vale pro tema que falta e pra oferta que acabou de sair.
       if (ofereceCartoes) faltaTemaFinal = true;
@@ -2530,7 +2561,9 @@ Ah — se quiser, o próprio ${nome} pode ser o personagem dos cartões em vez d
       // chips de tema na web. Onde o interesse existe como dado, a sugestão é
       // dela; onde só existe como prosa no perfil, cai no convite aberto.
       const cartoes = autoGerou
-        ? `\n\nJá comecei a preparar os cartões no tema *${tema}* — eles vão aparecendo nesta rotina conforme ficarem prontos 🌿`
+        ? `\n\n*Cartões em preparo*\n${tema === "Dia a dia" ? "Vou ilustrar os passos com cenas simples do dia a dia" : `Vou usar o tema *${tema}* que você escolheu`}. Ao abrir o link, você pode ver uma ampulheta; aguarde as imagens aparecerem nesta rotina 🌿`
+        : geracaoFalhou
+          ? "\n\n*Cartões ainda não iniciados*\nNão consegui começar as imagens agora. A sequência ficou salva, mas não vou chamar de pronta uma rotina sem cartões."
         : faltaTema || ofereceCartoes
           ? `\n\n${perguntaDeTema(nome, sugestoesDeTema)}`
           : "";
@@ -2543,7 +2576,7 @@ Ah — se quiser, o próprio ${nome} pode ser o personagem dos cartões em vez d
       // objetivo só. Editar e imprimir continuam existindo — entram no turno
       // seguinte, quando os cartões já estão a caminho e há o que abrir.
       // `impresso` fica: é fato consumado (o PDF já foi enviado), não oferta.
-      const dica = faltaTema
+      const dica = faltaTema || geracaoFalhou || autoGerou
         ? ""
         : querImprimir
           ? "\n\nSe quiser mudar uma etapa ou um horário, é só me falar aqui que eu ajusto."
@@ -2555,10 +2588,13 @@ Ah — se quiser, o próprio ${nome} pode ser o personagem dos cartões em vez d
       const opcaoLudico = faltaTema && ids.length === 1
         ? opcaoDeContinuarRotinaNoLudico(nome, link)
         : "";
-      mensagem = faltaTema
+      const criarOutraDepois = autoGerou && link
+        ? "\n\n*Para criar outra depois*\nEm kolofamilia.com.br: *Lúdico → Rotina Visual*. Escreva os passos na ordem e toque em *Gerar minha rotina visual*."
+        : "";
+      mensagem = faltaTema || geracaoFalhou
         ? `${fechamento}${quadro}${orient}${opcaoLudico}`
         : link
-          ? `${fechamento}${quadro}${orient}\n\nAbre aqui (já entra direto):\n${link}${dica}`
+          ? `${fechamento}${quadro}${orient}\n\nAbra a rotina de ${nome} aqui:\n${link}${criarOutraDepois}${dica}`
           : `${fechamento}${quadro}${orient}${dica}`;
     }
 

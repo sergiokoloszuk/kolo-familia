@@ -169,7 +169,7 @@ describe("estado verdadeiro dos cartões", () => {
   it("no turno que pede o tema só pode haver link para o rascunho, sem oferta de PDF", () => {
     expect(GUIADA).toMatch(/const link = ids\.length \? await gerarMagicLink\(supabase, \{ familyId, next \}\) : null/);
     expect(GUIADA).toMatch(/const opcaoLudico = faltaTema && ids\.length === 1/);
-    expect(GUIADA).toMatch(/const dica = faltaTema\s*\n?\s*\? ""/);
+    expect(GUIADA).toMatch(/const dica = faltaTema \|\| geracaoFalhou \|\| autoGerou\s*\n?\s*\? ""/);
   });
 
   it("o tema é perguntado pelo CÓDIGO, com no máximo duas sugestões reais", () => {
@@ -238,9 +238,9 @@ describe("ordem da entrega quando falta tema", () => {
 
   it("com tema pendente só oferece o rascunho, sem PDF nem promessa de arte", () => {
     expect(BLOCO).toMatch(/const opcaoLudico = faltaTema && ids\.length === 1/);
-    expect(BLOCO).toMatch(/const dica = faltaTema\s*\n?\s*\? ""/);
+    expect(BLOCO).toMatch(/const dica = faltaTema \|\| geracaoFalhou \|\| autoGerou\s*\n?\s*\? ""/);
     // "já comecei a gerar" só existe no ramo do disparo confirmado
-    expect(BLOCO).toContain("? `\\n\\nJá comecei a preparar");
+    expect(BLOCO).toContain("? `\\n\\n*Cartões em preparo*");
   });
 });
 
@@ -307,19 +307,18 @@ describe("tema: uma porta só", () => {
 
   it("o código não lê tema do modelo em lugar nenhum", () => {
     expect(semComentarios(GUIADA)).not.toMatch(/parsed\??\.tema/);
-    expect(GUIADA).toMatch(/const tema: string \| null = null;/);
+    expect(GUIADA).toMatch(/temaConfirmadoNestaRotina\(historicoDaRotina, params\.membroAtipicoId\)/);
+    expect(GUIADA).toMatch(/\?\? "Dia a dia"/);
   });
 
-  it("sem tema do modelo, todo pedido visual passa pela pergunta", () => {
-    // `faltaTema = visual && ids.length > 0 && !tema` — com tema sempre null
-    // nesta função, quem quer cartão sempre é perguntado.
+  it("somente sem tema resolvido o pedido visual passa pela pergunta", () => {
     expect(GUIADA).toMatch(/const faltaTema = visual && ids\.length > 0 && !tema/);
   });
 
   it("os cartões não colam na última etapa da lista", () => {
     // A lista agora vem antes; sem a quebra, "11. Chegar em casa 🏠" colava
     // com "Já comecei a preparar os cartões" na mesma linha (Karina, 08/08).
-    expect(GUIADA).toContain("? `\\n\\nJá comecei a preparar os cartões");
+    expect(GUIADA).toContain("? `\\n\\n*Cartões em preparo*\\n");
     expect(GUIADA).toContain('? "\\n\\nTe mandei também um *PDF pra imprimir*');
   });
 });

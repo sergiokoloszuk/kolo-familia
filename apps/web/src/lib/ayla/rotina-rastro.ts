@@ -46,7 +46,7 @@ export type SaidaDoTurno =
   | "null_sem_mensagem"
   | "null_excecao";
 
-export type FonteDoTema = "mensagem_atual" | "historico" | "ja_na_rotina" | "nenhuma";
+export type FonteDoTema = "mensagem_atual" | "historico" | "historico_confirmado" | "neutro" | "ja_na_rotina" | "nenhuma";
 
 export type RastroRotina = {
   turno: string;

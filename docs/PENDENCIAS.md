@@ -1605,6 +1605,24 @@ conflito. Esta ficha é o registro de estado; o laudo é a prova.
 Categoria: Produto · Prioridade: **P2** · Estado: **AGUARDANDO VALIDAÇÃO**
 Aberta em: 2026-08-08 · Origem: decisão de produto (2026-08-08)
 
+- **Teste real de 29/09/2026 (Manu): REPROVOU a entrega visual.** A mãe ditou
+  Café → Banho → Escola → Casa da vó e já tinha escolhido "Fada rosa" na mesma
+  conversa; a Ayla confirmou essa escolha, mas depois criou a rotina com
+  `tema=null`, `cards_status=aguardando`, perguntou o tema de novo e enviou
+  link para cartões sem imagem. Correção localizada em andamento: recuperar
+  tema confirmado da criança certa; no pedido explícito com sequência ditada,
+  iniciar a ilustração antes de enviar link; avisar que a ampulheta significa
+  geração em curso. **Não baixar PEND-004 antes da prova real do link e das 4
+  imagens.**
+- **Auditoria de estados em produção (29/09, últimos 30 dias):** 21 rotinas,
+  18 marcadas `pronto`, 2 `aguardando`, 1 `erro`. Entre as 18 `pronto`, **3
+  têm pelo menos uma tarefa sem imagem** (18/19, 8/9 e 7/9 cartões com arte).
+  O gerador aceitava `null` após retries e marcava a rotina pronta sem reler
+  as tarefas. Novo portão confere todas as imagens gravadas antes de `pronto`;
+  **as 3 rotinas antigas permanecem pendentes de reparo seguro**, sem edição
+  automática de artefatos das famílias. Erro de geração ainda não notifica a
+  família por WhatsApp; a página mostra erro e botão de tentar novamente.
+
 - **Impacto:** é a funcionalidade escolhida para validar o
   [protocolo de entrega](FEATURE-DELIVERY-PROTOCOL.md); redesenhar antes de
   auditar repetiria o erro que o protocolo existe para evitar.

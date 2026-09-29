@@ -61,7 +61,7 @@ describe("o que pertence a esta rotina", () => {
   });
 
   it("o `tipo` passou a ser carregado — sem ele não há fronteira", () => {
-    expect(GUIADA).toMatch(/\.select\("texto, direcao, tipo, created_at"\)/);
+    expect(GUIADA).toMatch(/\.select\("texto, direcao, tipo, created_at, membro_atipico_id"\)/);
   });
 
   it("a prontidão julga sobre a conversa DESTA rotina", () => {

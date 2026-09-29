@@ -129,7 +129,11 @@ export async function POST(request: NextRequest) {
   const usarAvatar = Boolean(avatarUrl);
   if (usarAvatar) console.log("[rotina:cards] avatar da criança como personagem");
 
-  await svc.from("rotinas").update({ tema, cards_status: "gerando" }).eq("id", rotinaId);
+  const { error: inicioErro } = await svc.from("rotinas").update({ tema, cards_status: "gerando" }).eq("id", rotinaId);
+  if (inicioErro) {
+    console.error("[ludico:gerar-rotina] falha ao iniciar geração:", inicioErro.message);
+    return NextResponse.json({ error: "não iniciou geração" }, { status: 500 });
+  }
 
   after(async () => {
     try {
@@ -145,7 +149,13 @@ export async function POST(request: NextRequest) {
         referenciaUrl: preservar ? (mascoteAtual ?? undefined) : (avatarUrl ?? undefined),
         arteExistente,
       });
-      await Promise.all(
+      // "pronto" significa que a família pode abrir TODOS os cartões. O
+      // ilustrador devolve null depois dos retries; sem este portão, o banco
+      // marcava pronto mesmo quando a página só tinha ícones vazios.
+      if (roteiro.cards.length !== tarefaIds.length || imagens.length !== tarefaIds.length || imagens.some((url) => !url)) {
+        throw new Error(`cartões incompletos: ${imagens.filter(Boolean).length}/${tarefaIds.length}`);
+      }
+      const escritas = await Promise.all(
         tarefaIds.map((id, i) => {
           const card = roteiro.cards[i];
           if (!card) return Promise.resolve();
@@ -158,10 +168,19 @@ export async function POST(request: NextRequest) {
             .eq("id", id);
         }),
       );
-      await svc
+      if (escritas.some((r) => r?.error)) throw new Error("falha ao salvar imagem de cartão");
+      const { data: gravadas, error: leituraErro } = await svc
+        .from("rotina_tarefas")
+        .select("imagem_url")
+        .eq("rotina_id", rotinaId);
+      if (leituraErro || gravadas?.length !== tarefaIds.length || gravadas.some((t) => !t.imagem_url)) {
+        throw new Error("cartões salvos incompletos");
+      }
+      const { error: conclusaoErro } = await svc
         .from("rotinas")
         .update({ historia: roteiro.historia, mascote_url: mascoteUrl, cards_status: "pronto" })
         .eq("id", rotinaId);
+      if (conclusaoErro) throw conclusaoErro;
     } catch (e) {
       console.error("[api gerar-rotina]", e instanceof Error ? e.message : e);
       await svc.from("rotinas").update({ cards_status: "erro" }).eq("id", rotinaId);
