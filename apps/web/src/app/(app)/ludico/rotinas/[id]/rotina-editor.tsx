@@ -122,8 +122,8 @@ function CardGerando() {
         <span className="size-2 animate-bounce rounded-full bg-brand-yellow" style={{ animationDelay: "300ms" }} />
       </div>
       <p className="max-w-sm text-sm text-muted-foreground">
-        Pode levar alguns minutos. Deixe esta tela aberta — ela atualiza sozinha quando os cartões ficarem prontos.{" "}
-        <strong className="text-foreground">Não travou 🙂</strong>
+        Pode levar alguns minutos. Você pode sair e voltar; enquanto esta tela estiver aberta,
+        ela atualiza sozinha para mostrar os cartões prontos.
       </p>
     </div>
   );
