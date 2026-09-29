@@ -68,9 +68,10 @@ describe("tema e segundo link", () => {
     expect(CODIGO).toContain("const faltaTema = visual && ids.length > 0 && !tema");
   });
 
-  it("o convite para criar outra usa acesso direto ao Lúdico, não o domínio solto", () => {
-    expect(CODIGO).toContain('gerarMagicLink(supabase, { familyId, next: "/ludico/rotinas" })');
-    expect(CODIGO).toContain("Abra o Lúdico por aqui (já entra direto):");
+  it("a mensagem oferece somente o link direto para conferir esta rotina", () => {
+    expect(CODIGO).toContain("const link = ids.length ? await gerarMagicLink(supabase, { familyId, next }) : null");
+    expect(CODIGO).not.toContain('gerarMagicLink(supabase, { familyId, next: "/ludico/rotinas" })');
+    expect(CODIGO).toContain("*Abra a rotina de ${nome}*");
     expect(CODIGO).not.toContain("Em kolofamilia.com.br:");
   });
 });

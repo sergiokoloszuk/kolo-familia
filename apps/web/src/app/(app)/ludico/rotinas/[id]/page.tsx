@@ -110,6 +110,7 @@ export default async function RotinaPage({
         cardsStatus={((rotina.cards_status as string | null) ?? "nenhum") as
           | "nenhum"
           | "aguardando"
+          | "revisao"
           | "gerando"
           | "pronto"
           | "erro"}

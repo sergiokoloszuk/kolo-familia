@@ -45,6 +45,6 @@ describe("tema de outra rotina não contamina a pendente", () => {
 
   it("erro ao salvar tema não autoriza prometer cartões", () => {
     expect(GUIADA).toContain("if (erroTema) {");
-    expect(GUIADA.indexOf("if (erroTema) {")).toBeLessThan(GUIADA.indexOf("const comecou = await dispararGeracao"));
+    expect(GUIADA.indexOf("if (erroTema) {")).toBeLessThan(GUIADA.indexOf("rastro.geracao_iniciada = false"));
   });
 });

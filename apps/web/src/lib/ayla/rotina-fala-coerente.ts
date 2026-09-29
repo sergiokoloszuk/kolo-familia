@@ -23,7 +23,7 @@
  */
 
 /** O que a linha `rotinas.cards_status` pode dizer, de verdade. */
-export type EstadoDeCartoes = "nenhum" | "aguardando" | "gerando" | "pronto" | "erro";
+export type EstadoDeCartoes = "nenhum" | "aguardando" | "revisao" | "gerando" | "pronto" | "erro";
 
 /**
  * As formas de dizer "acabou, está aí".
@@ -57,7 +57,8 @@ export function podeAfirmarConclusao(
 function ressalvaHonesta(estado: EstadoDeCartoes): string {
   switch (estado) {
     case "aguardando":
-      return "Assim que eu tiver o tema, começo a preparar os cartões";
+    case "revisao":
+      return "A lista está salva; confira o tema e as etapas e toque em Gerar cartões para começar";
     case "gerando":
       return "Já comecei a preparar os cartões — eles vão aparecendo conforme ficarem prontos";
     case "erro":

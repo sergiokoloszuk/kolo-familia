@@ -69,7 +69,7 @@ import {
  * em modo cartões, mostrava ícone e não dizia nada, então a família ficava
  * esperando uma arte que nunca tinha sido encomendada.
  */
-type CardsStatus = "nenhum" | "aguardando" | "gerando" | "pronto" | "erro";
+type CardsStatus = "nenhum" | "aguardando" | "revisao" | "gerando" | "pronto" | "erro";
 
 /** Ícones curados pros passos visuais. A chave é guardada em rotina_tarefas.icone. */
 const ICONES: Record<string, LucideIcon> = {
@@ -109,21 +109,23 @@ function StepBadge({ n }: { n: number }) {
 }
 
 /** Cartão de espera (geração dos cartões) — moldura amarela, animado, "não travou". */
-function CardGerando() {
+function CardGerando({ total }: { total: number }) {
   return (
-    <div className="flex flex-col items-center gap-3 rounded-2xl border-2 border-brand-yellow/60 bg-brand-yellow/[0.1] px-4 py-8 text-center shadow-[0_4px_20px_rgba(230,180,40,0.15)] print:hidden">
+    <div role="status" aria-live="polite" className="flex flex-col items-center gap-3 rounded-2xl border-2 border-brand-yellow/60 bg-brand-yellow/[0.1] px-4 py-8 text-center shadow-[0_4px_20px_rgba(230,180,40,0.15)] print:hidden">
       <span className="animate-bounce text-4xl" aria-hidden>
         ⏳
       </span>
-      <p className="font-heading text-lg text-brand-purple-dark">Gerando os cartões ilustrados…</p>
+      <p className="font-heading text-lg text-brand-purple-dark">
+        Gerando as imagens {total > 0 ? `das ${total} etapas` : "da rotina"}…
+      </p>
       <div className="flex gap-1.5" aria-hidden>
         <span className="size-2 animate-bounce rounded-full bg-brand-yellow" style={{ animationDelay: "0ms" }} />
         <span className="size-2 animate-bounce rounded-full bg-brand-purple/60" style={{ animationDelay: "150ms" }} />
         <span className="size-2 animate-bounce rounded-full bg-brand-yellow" style={{ animationDelay: "300ms" }} />
       </div>
       <p className="max-w-sm text-sm text-muted-foreground">
-        Pode levar alguns minutos. Você pode sair e voltar; enquanto esta tela estiver aberta,
-        ela atualiza sozinha para mostrar os cartões prontos.
+        Pode levar alguns minutos. Você pode sair e voltar. Esta página se atualiza
+        sozinha e mostrará os cartões quando todos estiverem prontos.
       </p>
     </div>
   );
@@ -342,45 +344,87 @@ export function RotinaEditor({
         </div>
       </div>
 
-      {cardsStatus === "gerando" && <CardGerando />}
-      {/* ESPERANDO A ESCOLHA, não esperando a arte. A diferença importa: aqui
-          nada foi encomendado ainda, e a tela precisa dizer isso em vez de
-          deixar a família olhando ícone achando que a imagem está a caminho. */}
-      {cardsStatus === "aguardando" && (
-        <p className="rounded-2xl border border-brand-purple/20 bg-brand-purple/5 px-4 py-3 text-sm text-foreground/80 print:hidden">
-          Os cartões desta rotina ainda não começaram — falta escolher o tema. Você pode
-          responder à Ayla no WhatsApp ou escolher aqui mesmo, embaixo.
-        </p>
+      {visual && cardsStatus !== "pronto" && cardsStatus !== "gerando" && (
+        <section className="flex flex-col gap-4 rounded-2xl border-2 border-brand-purple/25 bg-white p-4 shadow-sm print:hidden">
+          <div>
+            <h2 className="font-heading text-xl text-foreground">1. Confira a sequência</h2>
+            <p className="mt-1 text-sm text-foreground/75">
+              Estes são os passos que você pediu, nesta ordem. Quer mudar ou incluir algo?
+              Faça isso antes de gerar as imagens.
+            </p>
+          </div>
+          {tarefas.length > 0 && (
+            <ol className="space-y-2" aria-label="Etapas desta rotina">
+              {tarefas.map((t, i) => (
+                <li key={t.id} className="flex gap-3 rounded-xl bg-kolo-lilas-bg-2/50 px-3 py-2 text-sm">
+                  <span className="font-bold text-brand-purple">{i + 1}.</span>
+                  <span>{t.texto}</span>
+                </li>
+              ))}
+            </ol>
+          )}
+          {!editando && (
+            <button
+              type="button"
+              onClick={() => setEditando(true)}
+              className="w-fit rounded-full border border-brand-purple/35 px-4 py-2 text-sm font-semibold text-brand-purple"
+            >
+              ✏️ Editar ou incluir etapas
+            </button>
+          )}
+          {editando && (
+            <>
+              {tarefas.length > 0 && (
+                <ListaEditavel tarefas={tarefas} onRenomear={renomearPasso} onMover={mover} onRemover={remover} />
+              )}
+              <AddTarefa
+                rotinaId={rotinaId}
+                visual={visual}
+                temPassos={tarefas.length > 0}
+                diaSemana={diaSemana}
+                onAdd={adicionar}
+                onAddVarios={adicionarVarios}
+              />
+              {tarefas.length > 0 && (
+                <button type="button" onClick={() => setEditando(false)} className="w-fit rounded-full border border-brand-purple px-4 py-2 text-sm font-semibold text-brand-purple">
+                  Concluir edição ✓
+                </button>
+              )}
+            </>
+          )}
+          {!editando && tarefas.length > 0 && (
+            <GerarCards
+              rotinaId={rotinaId}
+              membroAtipicoId={membroAtipicoId}
+              temaInicial={tema}
+              jaTem={false}
+              nomeMembro={nomeMembro}
+              avatares={avatares}
+            />
+          )}
+        </section>
       )}
+      {cardsStatus === "gerando" && <CardGerando total={tarefas.length} />}
       {cardsStatus === "erro" && (
         <p className="rounded-2xl border border-amber-300/60 bg-amber-50 px-4 py-3 text-sm text-amber-800 print:hidden">
           Algo falhou ao montar os cards. Dá pra tentar de novo abaixo.
         </p>
       )}
 
-      {historia && <HistoriaPanel historia={historia} nomeMembro={nomeMembro} />}
+      {(!visual || cardsStatus === "pronto") && <ProgressoDaRotina tarefas={tarefas} />}
 
-      {/* COMO USAR — nos DOIS modos. Antes só o modo cartões explicava; quem
-          abria em lista recebia uma linha solta ("dá pra abrir no celular") e
-          tinha que deduzir o resto. Uma mãe que nunca usou cartões precisa
-          saber as três coisas: dá pra usar na tela, dá pra imprimir, e dá pra
-          mudar o que estiver errado. */}
-      <ComoUsar visual={visual} nomeMembro={nomeMembro} />
-
-      <ProgressoDaRotina tarefas={tarefas} />
-
-      {visual && cardsStatus === "pronto" && (
-        <a
-          href={`/api/ludico/rotinas/${rotinaId}/cartoes`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex w-fit items-center gap-2 rounded-full border border-brand-purple/30 px-4 py-2 text-sm font-semibold text-brand-purple transition-colors hover:bg-brand-purple/5 print:hidden"
-        >
-          ✂️ Cartões pra recortar (varalzinho)
-        </a>
+      {((visual && cardsStatus === "pronto") || !visual) && (
+        <div className="flex flex-wrap gap-2 print:hidden">
+          <button type="button" onClick={() => window.print()} className="rounded-full bg-brand-purple px-5 py-2.5 text-sm font-semibold text-white">
+            <Printer className="mr-2 inline size-4" /> Imprimir a rotina
+          </button>
+          {visual && <a href={`/api/ludico/rotinas/${rotinaId}/cartoes`} target="_blank" rel="noopener noreferrer" className="rounded-full border border-brand-purple/35 px-5 py-2.5 text-sm font-semibold text-brand-purple">
+            ✂️ Imprimir cartões para recortar
+          </a>}
+        </div>
       )}
 
-      {visual ? (
+      {visual && cardsStatus === "pronto" ? (
         <ViewCartoes
           tarefas={tarefas}
           agoraId={progressoDaRotina(tarefas).agoraId}
@@ -388,7 +432,7 @@ export function RotinaEditor({
           onMover={mover}
           onRemover={remover}
         />
-      ) : (
+      ) : !visual ? (
         <ViewChecklist
           tarefas={tarefas}
           agoraId={progressoDaRotina(tarefas).agoraId}
@@ -396,12 +440,15 @@ export function RotinaEditor({
           onMover={mover}
           onRemover={remover}
         />
-      )}
+      ) : null}
+
+      {(!visual || cardsStatus === "pronto") && <ComoUsar visual={visual} nomeMembro={nomeMembro} />}
+      {historia && cardsStatus === "pronto" && <HistoriaPanel historia={historia} nomeMembro={nomeMembro} />}
 
       {/* "ESSA ROTINA AJUDOU?" — depois da sequência, nunca antes: perguntar
           se ajudou acima do quadro é pedir opinião sobre algo que ela ainda
           não olhou. Só aparece quando há o que avaliar. */}
-      {tarefas.length > 0 && (
+      {tarefas.length > 0 && (!visual || cardsStatus === "pronto") && (
         <FeedbackRotina
           rotinaId={rotinaId}
           resultadoInicial={resultadoInicial}
@@ -409,7 +456,7 @@ export function RotinaEditor({
         />
       )}
 
-      {editando ? (
+      {(cardsStatus === "pronto" || !visual) && editando ? (
         <>
           {tarefas.length > 0 && (
             <ListaEditavel
@@ -429,9 +476,10 @@ export function RotinaEditor({
             onAddVarios={adicionarVarios}
           />
 
-          {visual && cardsStatus !== "gerando" && (
+          {visual && (
             <GerarCards
               rotinaId={rotinaId}
+              membroAtipicoId={membroAtipicoId}
               temaInicial={tema}
               jaTem={cardsStatus === "pronto"}
               nomeMembro={nomeMembro}
@@ -449,20 +497,8 @@ export function RotinaEditor({
             </button>
           )}
         </>
-      ) : (
+      ) : cardsStatus === "pronto" || !visual ? (
         <>
-          {/* O "Gerar cartões" aparece aqui quando ainda não há cartões (senão
-              ficaria escondido atrás de "Editar"). A espera já está no topo. */}
-          {visual &&
-            (cardsStatus === "nenhum" || cardsStatus === "aguardando" || cardsStatus === "erro") && (
-            <GerarCards
-              rotinaId={rotinaId}
-              temaInicial={tema}
-              jaTem={false}
-              nomeMembro={nomeMembro}
-              avatares={avatares}
-            />
-          )}
           <div className="flex flex-wrap items-center gap-3 print:hidden">
             <button
               type="button"
@@ -482,7 +518,7 @@ export function RotinaEditor({
             )}
           </div>
         </>
-      )}
+      ) : null}
 
       <p className="text-xs text-muted-foreground print:hidden">
         Marcar é só pra acompanhar o que já passou — ajuda na previsibilidade e na
@@ -543,18 +579,6 @@ function CabecalhoRotina({
           </button>
         )}
         <div className="flex gap-2 print:hidden">
-          {/* IMPRIMIR VALE NOS DOIS MODOS. Ficava atrás de `visual` — quem
-              abrisse a rotina em lista não tinha como imprimir, embora a lista
-              seja perfeitamente imprimível (o `print:hidden` está só nos
-              controles, nunca no conteúdo). A mãe que quer colar na geladeira
-              não deveria precisar descobrir que existe um modo "Cartões". */}
-          <button
-            type="button"
-            onClick={() => window.print()}
-            className="inline-flex items-center gap-1.5 rounded-full border border-foreground/10 bg-white px-3 py-1.5 text-xs font-semibold text-foreground/70 hover:bg-kolo-lilas-bg-2 hover:text-brand-purple"
-          >
-            <Printer className="size-3.5" /> Imprimir
-          </button>
           <button
             type="button"
             onClick={onReset}
@@ -1208,7 +1232,7 @@ function Mini({
  * criança pro que vai acontecer — e é isso que o título passa a dizer.
  */
 function HistoriaPanel({ historia, nomeMembro }: { historia: string; nomeMembro?: string | null }) {
-  const [aberto, setAberto] = useState(true);
+  const [aberto, setAberto] = useState(false);
   return (
     <div className="rounded-2xl border border-brand-yellow/40 bg-brand-yellow/[0.07] p-4">
       <button
@@ -1233,12 +1257,14 @@ function HistoriaPanel({ historia, nomeMembro }: { historia: string; nomeMembro?
 
 function GerarCards({
   rotinaId,
+  membroAtipicoId,
   temaInicial,
   jaTem,
   nomeMembro,
   avatares,
 }: {
   rotinaId: string;
+  membroAtipicoId: string;
   temaInicial: string | null;
   jaTem: boolean;
   nomeMembro: string | null;
@@ -1350,26 +1376,37 @@ function GerarCards({
           {!temAvatar && (
             <p className="mt-2 text-xs text-muted-foreground">
               Quer usar a carinha de {nome}?{" "}
-              <Link href="/configuracoes/avatar" className="font-semibold text-brand-purple underline-offset-2 hover:underline">
-                Criar avatar
+              <Link href={`/configuracoes/avatar/${membroAtipicoId}`} className="font-semibold text-brand-purple underline-offset-2 hover:underline">
+                Criar avatar de {nome}
               </Link>{" "}
               (sua lista fica salva — é só voltar).
             </p>
           )}
 
           {erro && <p className="mt-2 text-sm text-destructive">{erro}</p>}
-          <div className="mt-3 flex flex-wrap gap-2">
+          <div className="mt-3 flex flex-col gap-2">
+            <label htmlFor={`tema-rotina-${rotinaId}`} className="text-sm font-semibold text-foreground">
+              Tema dos cartões {usarAvatar ? "(opcional)" : ""}
+            </label>
+            <p className="text-xs text-muted-foreground">Você pode manter a sugestão ou escrever outro tema antes de gerar.</p>
+            <div className="flex flex-col gap-2 sm:flex-row">
             <Input
+              id={`tema-rotina-${rotinaId}`}
               value={tema}
               onChange={(e) => setTema(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && gerar()}
               placeholder={
                 usarAvatar ? "Tema (opcional) — ex.: praia, espaço…" : "Tema (ex.: carros, dinossauros, espaço…)"
               }
-              className="max-w-xs"
+              className="w-full sm:max-w-xs"
               disabled={pending}
             />
-            <Button type="button" onClick={gerar} disabled={pending || (!usarAvatar && !tema.trim())}>
+            <Button
+              type="button"
+              onClick={gerar}
+              disabled={pending || (!usarAvatar && !tema.trim())}
+              className="w-full sm:w-auto"
+            >
               {pending ? (
                 <>
                   <span className="animate-pulse" aria-hidden>⏳</span> Começando…
@@ -1380,6 +1417,7 @@ function GerarCards({
                 </>
               )}
             </Button>
+            </div>
           </div>
         </div>
       </div>
