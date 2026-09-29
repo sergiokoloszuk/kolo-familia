@@ -9788,7 +9788,7 @@ e o entregue, e a diferenca fica consultavel sem leitura manual de tabela.
 ### PEND-205
 **`perfil-marcos.test.ts` #11 apodrece com o relogio — `main` esta VERMELHA**
 Bloco: **B · Ayla** · Prioridade: **P3**
-STATUS: **ABERTA — achado fora do escopo, NAO corrigido** · Aberta em: 2026-09-14
+STATUS: **CONCLUÍDA — teste estabilizado sem mudança funcional** · Aberta em: 2026-09-14 · Concluída em: 2026-09-29
 
 `marcosRecentes` tem `agora: Date = new Date()` e janela de 30 dias. O teste 11
 fixa o marco em `2026-08-15` e **nao passa `agora`**, entao usa o relogio real.
@@ -9797,6 +9797,11 @@ Em 14/09 o marco saiu da janela e o teste virou vermelho sozinho.
 **NAO E DEFEITO DE PRODUTO.** O teste 10, ao lado, passa `HOJE` explicito e
 segue verde. Confirmado em `main` limpa (`1163871`), sem alteracao no working
 tree: **1 failed | 3969 passed | 7 skipped**. Em 11/09 a suite fechava 3966/0.
+
+**CORREÇÃO — 29/09/2026.** O teste 11 agora congela o relógio em `HOJE`
+durante a montagem do contexto e o restaura em `finally`. A regra de produção,
+a janela de 30 dias e a assinatura de `montarContextoBase` permaneceram
+inalteradas; a correção é exclusivamente determinística no teste.
 
 **CRITERIO DE CONCLUSAO:** o teste injeta `agora`, e uma varredura diz se outro
 teste da suite depende do relogio real.

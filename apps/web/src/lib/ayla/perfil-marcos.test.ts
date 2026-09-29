@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { detectarMarcos } from "@/lib/kolo-vivo/incorporar";
 import { marcosRecentes, montarContextoBase } from "./experimental-contexto";
 
@@ -132,17 +132,23 @@ describe("o bloco de contexto", () => {
   const MEMBRO = { nome: "Manu", data_nascimento: "2020-03-01", diagnosticos_formais: null, genero: "feminino" };
 
   it("11. com marco recente, a linha aparece", () => {
-    const { bloco } = montarContextoBase({
-      nomeResponsavel: "Karina",
-      membro: MEMBRO,
-      perfilVivo: {
-        categorias_extras: {
-          marcos: [{ data: "2026-08-15", dominio: "comunicacao", texto: "Como se comunica: Não-verbal → Fala palavras soltas" }],
-        },
-      } as never,
-    });
-    expect(bloco).toContain("Mudou recentemente (registrado):");
-    expect(bloco).toContain("Não-verbal → Fala palavras soltas");
+    vi.useFakeTimers();
+    vi.setSystemTime(HOJE);
+    try {
+      const { bloco } = montarContextoBase({
+        nomeResponsavel: "Karina",
+        membro: MEMBRO,
+        perfilVivo: {
+          categorias_extras: {
+            marcos: [{ data: "2026-08-15", dominio: "comunicacao", texto: "Como se comunica: Não-verbal → Fala palavras soltas" }],
+          },
+        } as never,
+      });
+      expect(bloco).toContain("Mudou recentemente (registrado):");
+      expect(bloco).toContain("Não-verbal → Fala palavras soltas");
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it("12. MORDE: sem marco, o bloco fica byte a byte igual ao de antes", () => {
