@@ -7,6 +7,7 @@ const ROTA = readFileSync(
   new URL("../../app/api/ludico/gerar-rotina/route.ts", import.meta.url),
   "utf8",
 );
+const CRON = readFileSync(new URL("../../app/api/ayla/cron/route.ts", import.meta.url), "utf8");
 
 /** Só o CÓDIGO: os comentários citam de propósito as frases que saíram. */
 const semComentarios = (fonte: string) =>
@@ -127,13 +128,15 @@ describe("gatilho determinístico do tema", () => {
     expect(lerTemaEscolhido("hoje foi um dia bem difícil, ela chorou muito na saída da escola")).toBeNull();
   });
 
-  it("aplica o tema e dispara sem passar por modelo", () => {
+  it("aplica o tema sem gerar antes do clique da família", () => {
     const bloco = GUIADA.slice(
       GUIADA.indexOf("GATILHO DETERMINÍSTICO DO TEMA"),
       GUIADA.indexOf("Conversa desta sessão"),
     );
     expect(bloco).toMatch(/lerTemaEscolhido\(params\.contexto\)/);
-    expect(bloco).toMatch(/dispararGeracao\(pendente\.id, escolhido\)/);
+    expect(bloco).toMatch(/update\(\{ tema: escolhido \}\)/);
+    expect(bloco).not.toMatch(/dispararGeracao\(pendente\.id, escolhido\)/);
+    expect(bloco).toContain("*Gere os cartões*");
     // Roda ANTES da chamada ao condutor.
     expect(GUIADA.indexOf("GATILHO DETERMINÍSTICO DO TEMA")).toBeLessThan(
       GUIADA.indexOf("tools: [FERRAMENTA_CONDUTOR]"),
@@ -146,18 +149,22 @@ describe("gatilho determinístico do tema", () => {
  * pergunta em si, que "segurava a entrega" em 03/08.
  */
 describe("estado verdadeiro dos cartões", () => {
-  it("cartões pedidos sem tema ficam em 'aguardando', não em 'nenhum'", () => {
-    expect(GUIADA).toMatch(/cards_status: "aguardando"/);
-    expect(GUIADA).toMatch(/await marcarAguardandoTema\(supabase, ids\)/);
+  it("cartões pedidos ficam em revisão, sem o reconciliador iniciar a arte", () => {
+    expect(GUIADA).toMatch(/cards_status: "revisao"/);
+    expect(GUIADA).toMatch(/await marcarRevisaoPendente\(supabase, ids\)/);
   });
 
   it("desistir dos cartões limpa o estado — nada fica pendurado", () => {
     expect(GUIADA).toMatch(/recusouTema\(params\.contexto\)/);
   });
 
-  it("a Ayla só diz que começou quando o gerador confirmou", () => {
-    expect(GUIADA).toMatch(/const comecou = await dispararGeracao/);
-    expect(GUIADA).toMatch(/Os cartões ainda não começaram a ser desenhados/);
+  it("a Ayla não diz que a geração começou antes do clique", () => {
+    expect(GUIADA).toMatch(/rastro\.geracao_iniciada = false/);
+    expect(GUIADA).toContain("As imagens começam depois desse clique");
+  });
+
+  it("o cron não pede avaliação enquanto a rotina ainda está em revisão", () => {
+    expect(CRON).toMatch(/\["gerando", "aguardando", "revisao"\]\.includes/);
   });
 
   /**
@@ -169,7 +176,7 @@ describe("estado verdadeiro dos cartões", () => {
   it("no turno que pede o tema só pode haver link para o rascunho, sem oferta de PDF", () => {
     expect(GUIADA).toMatch(/const link = ids\.length \? await gerarMagicLink\(supabase, \{ familyId, next \}\) : null/);
     expect(GUIADA).toMatch(/const opcaoLudico = faltaTema && ids\.length === 1/);
-    expect(GUIADA).toMatch(/const dica = faltaTema \|\| geracaoFalhou \|\| autoGerou\s*\n?\s*\? ""/);
+    expect(GUIADA).toMatch(/const dica = faltaTema \|\| visual\s*\n?\s*\? ""/);
   });
 
   it("o tema é perguntado pelo CÓDIGO, com no máximo duas sugestões reais", () => {
@@ -238,9 +245,8 @@ describe("ordem da entrega quando falta tema", () => {
 
   it("com tema pendente só oferece o rascunho, sem PDF nem promessa de arte", () => {
     expect(BLOCO).toMatch(/const opcaoLudico = faltaTema && ids\.length === 1/);
-    expect(BLOCO).toMatch(/const dica = faltaTema \|\| geracaoFalhou \|\| autoGerou\s*\n?\s*\? ""/);
-    // "já comecei a gerar" só existe no ramo do disparo confirmado
-    expect(BLOCO).toContain("? `\\n\\n*Cartões em preparo*");
+    expect(BLOCO).toMatch(/const dica = faltaTema \|\| visual\s*\n?\s*\? ""/);
+    expect(GUIADA).toContain("As imagens começam depois desse clique");
   });
 });
 
@@ -320,7 +326,7 @@ describe("tema: uma porta só", () => {
   it("os cartões não colam na última etapa da lista", () => {
     // A lista agora vem antes; sem a quebra, "11. Chegar em casa 🏠" colava
     // com "Já comecei a preparar os cartões" na mesma linha (Karina, 08/08).
-    expect(GUIADA).toContain("? `\\n\\n*Cartões em preparo*\\n");
+    expect(GUIADA).toContain("? `\\n\\n*Próximos passos*\\n");
     expect(GUIADA).toContain('? "\\n\\nTe mandei também um *PDF pra imprimir*');
   });
 });

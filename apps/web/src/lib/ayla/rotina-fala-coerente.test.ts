@@ -33,7 +33,7 @@ describe("aguardando → nunca afirma pronto/montei/enviei", () => {
   });
   it("põe uma ressalva verdadeira no lugar, e não cala", () => {
     expect(r.texto.length).toBeGreaterThan(10);
-    expect(r.texto).toMatch(/tema/i);
+    expect(r.texto).toMatch(/confira o tema e as etapas/i);
   });
   it.each(["Montei a rotina dela.", "Já enviei os cartões.", "Aqui está a rotina!", "Criei o quadro.", "Ficou pronta."])(
     "%s não sobrevive",

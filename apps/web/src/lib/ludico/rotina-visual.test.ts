@@ -259,7 +259,7 @@ describe("editar devolve a lista com as palavras da mãe", () => {
   });
 
   it("a lista editável aparece em modo edição, antes de adicionar", () => {
-    expect(EDITOR).toMatch(/\{editando \? \(\n\s*<>\n\s*\{tarefas\.length > 0 && \(\n\s*<ListaEditavel/);
+    expect(EDITOR).toMatch(/\{editando && \(\n\s*<>\n\s*\{tarefas\.length > 0 && \(\n\s*<ListaEditavel/);
   });
 
   it("cada passo é um campo com o texto dela", () => {

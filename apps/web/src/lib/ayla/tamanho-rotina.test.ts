@@ -202,7 +202,8 @@ describe("PDF deixou de ser automático", () => {
 
 describe("cartões saem por necessidade visual, não por tema", () => {
   it("o gatilho é `visual`", () => {
-    expect(GUIADA).toMatch(/if \(visual && tema && ids\.length\)/);
+    expect(GUIADA).toMatch(/if \(visual && ids\.length\)/);
+    expect(GUIADA).not.toMatch(/dispararGeracao\(id, tema\)/);
     // O gatilho antigo era o tema sozinho — o interesse virando artefato.
     expect(GUIADA).not.toMatch(/if \(!temSemana && tema && ids\.length\)/);
   });
@@ -215,7 +216,7 @@ describe("cartões saem por necessidade visual, não por tema", () => {
     // "ninguém pediu cartão" — antes as duas eram 'nenhum'.
     expect(GUIADA).toMatch(/const faltaTema = visual && ids\.length > 0 && !tema/);
     expect(GUIADA).toMatch(/\*Para ilustrar os cartões\*/);
-    expect(GUIADA).toMatch(/await marcarAguardandoTema\(supabase, ids\)/);
+    expect(GUIADA).toMatch(/await marcarRevisaoPendente\(supabase, ids\)/);
     expect(GUIADA).toMatch(/o cartão existe quando VER a sequência ajuda/);
   });
 
@@ -401,8 +402,9 @@ describe("o visual é decisão própria", () => {
     expect(GUIADA).toMatch(/não pedir com essas palavras não zera nada/);
   });
 
-  it("os cartões disparam pelo visual resolvido, não pelo campo cru", () => {
-    expect(GUIADA).toMatch(/if \(visual && tema && ids\.length\)/);
+  it("o visual resolvido abre revisão; não dispara cartões antes do clique", () => {
+    expect(GUIADA).toMatch(/if \(visual && ids\.length\)/);
+    expect(GUIADA).not.toMatch(/if \(visual && tema && ids\.length\)/);
     expect(GUIADA).not.toMatch(/if \(!temSemana && prontidao\.visual/);
   });
 });
@@ -463,13 +465,17 @@ describe("o avatar entra depois, com o cartão já na mão", () => {
     expect(ROTA).toMatch(/if \(membroId && !preservar\)/);
   });
 
-  it("o convite só sai DEPOIS dos cartões, e só pra quem não tem avatar", () => {
-    expect(GUIADA).toMatch(/autoGerou && !temAvatar/);
-    expect(GUIADA).toMatch(/pode ser o personagem dos cartões/);
-    expect(GUIADA).toMatch(/Pôr a criação do\n\s*\/\/ avatar ANTES da rotina seria uma etapa de setup/);
+  it("o avatar não bloqueia a revisão nem o clique de gerar", () => {
+    expect(GUIADA).not.toMatch(/autoGerou && !temAvatar/);
+    expect(GUIADA).toContain("As imagens começam depois desse clique");
   });
 
-  it("em falha da consulta, NÃO convida — sugerir criar o que existe é pior", () => {
-    expect(GUIADA).toMatch(/Sem saber, NÃO convida/);
+  it("a página oferece avatar da criança certa sem trocar a rotina", () => {
+    const EDITOR = readFileSync(
+      resolve(__dirname, "../../app/(app)/ludico/rotinas/[id]/rotina-editor.tsx"),
+      "utf8",
+    );
+    expect(EDITOR).toContain("/configuracoes/avatar/${membroAtipicoId}");
+    expect(EDITOR).toContain("sua lista fica salva");
   });
 });

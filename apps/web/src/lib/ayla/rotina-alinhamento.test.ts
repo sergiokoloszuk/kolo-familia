@@ -317,9 +317,10 @@ describe("o tema é escolha da família — e quem pergunta é o CÓDIGO", () =>
     expect(GUIADA).toMatch(/Qual tema \$\{nome\} gosta agora/);
   });
 
-  it("a geração dispara com tema — e pela MESMA condição que pergunta", () => {
+  it("o pedido visual aguarda revisão mesmo com tema escolhido", () => {
     expect(GUIADA).toMatch(/const faltaTema = visual && ids\.length > 0 && !tema/);
-    expect(GUIADA).toMatch(/if \(visual && tema && ids\.length\)/);
+    expect(GUIADA).toMatch(/if \(visual && ids\.length\)/);
+    expect(GUIADA).not.toMatch(/if \(visual && tema && ids\.length\)/);
     // o `!temSemana` era o buraco: perguntava e não guardava pendência
     expect(GUIADA).not.toMatch(/!temSemana && visual && tema/);
   });

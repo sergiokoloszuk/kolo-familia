@@ -149,7 +149,7 @@ export async function pendenciaDeRotina(
       .from("rotinas")
       .select("id, nome, tema, membro_atipico_id, updated_at, created_at")
       .eq("family_account_id", params.familyId)
-      .eq("cards_status", "aguardando");
+      .in("cards_status", params.finalidade === "reconciliar" ? ["aguardando"] : ["aguardando", "revisao"]);
 
     // A invariante, aplicada na consulta e não na leitura: o que não é da
     // criança em foco nem chega a ser considerado.

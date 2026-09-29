@@ -157,24 +157,6 @@ export function pediuApoioVisual(texto: string | null | undefined): boolean {
 }
 
 /**
- * A criança já tem avatar? Só pra decidir se vale CONVIDAR a criar um — a
- * geração em si é oportunista do outro lado (se existe, usa).
- */
-async function membroTemAvatar(supabase: SupabaseClient, membroId: string): Promise<boolean> {
-  try {
-    const { data } = await supabase
-      .from("avatares_membros_atipicos")
-      .select("id")
-      .eq("membro_atipico_id", membroId)
-      .limit(1);
-    return (data?.length ?? 0) > 0;
-  } catch {
-    // Sem saber, NÃO convida: sugerir criar um avatar que já existe é pior.
-    return true;
-  }
-}
-
-/**
  * Uma etapa proposta — o que a família vai ver e o que vai virar cartão.
  *
  * ⚠️ MESMO SHAPE DE `TarefaProposta`, de propósito: é isto que vai para
@@ -605,12 +587,12 @@ export function portaoDeterministicoDeRotina(texto: string | null | undefined): 
  * aberto em vez de inventar preferência — §19 do Prompt Mestre.
  */
 export function perguntaDeTema(nome: string, sugestoes: readonly string[]): string {
-  const semTema = `Se preferir, faço *sem tema*, com imagens bem simples.`;
+  const semTema = `Se preferir, escolha *sem tema* para usar imagens bem simples.`;
   if (!sugestoes.length) {
     return `*Para ilustrar os cartões*\nQual tema ${nome} gosta agora? Pode ser um animal, personagem ou outro interesse de ${nome}. ${semTema}`;
   }
   const lista = sugestoes.map((s, i) => `${i + 1}️⃣ *${s}*`).join("\n");
-  return `*Para ilustrar os cartões*\nPensei nestes temas para ${nome}:\n${lista}\n\nPode responder só o número, dizer outro tema que ${nome} curta agora ou pedir *sem tema* — aí faço com imagens bem simples.`;
+  return `*Para ilustrar os cartões*\nPensei nestes temas para ${nome}:\n${lista}\n\nPode responder só o número, dizer outro tema que ${nome} curta agora ou pedir *sem tema*. Depois você confere a lista e toca em *Gerar cartões*.`;
 }
 
 export function opcaoDeContinuarRotinaNoLudico(nome: string, link: string | null): string {
@@ -1256,10 +1238,10 @@ async function sequenciaDoQuadro(
   }
 }
 
-/** Rotinas criadas com cartões pedidos, esperando só a escolha do tema. */
-async function marcarAguardandoTema(supabase: SupabaseClient, ids: string[]): Promise<void> {
+/** A lista espera a revisão e o clique da família, não o reconciliador. */
+async function marcarRevisaoPendente(supabase: SupabaseClient, ids: string[]): Promise<void> {
   if (!ids.length) return;
-  const { error } = await supabase.from("rotinas").update({ cards_status: "aguardando" }).in("id", ids);
+  const { error } = await supabase.from("rotinas").update({ cards_status: "revisao" }).in("id", ids);
   if (error) throw error;
 }
 
@@ -1277,7 +1259,9 @@ async function rotinaAguardandoTema(
   // Aqui o caminho ESCREVE (grava tema e dispara geração), então "não sei"
   // e "não há" têm o mesmo desfecho: não capturar.
   const r = await pendenciaDeRotina(supabase, { familyId, membroId, finalidade: "capturar_tema" });
-  return r.estado === "sim" ? { id: r.valor.id, nome: r.valor.nome, criadaEm: r.valor.criadaEm } : null;
+  return r.estado === "sim" && r.valor.falta === "tema"
+    ? { id: r.valor.id, nome: r.valor.nome, criadaEm: r.valor.criadaEm }
+    : null;
 }
 
 /** A família desistiu dos cartões desta rotina? */
@@ -1664,7 +1648,7 @@ async function conferirFalaContraOBanco(
     // ⚠️ O PIOR ESTADO MANDA. Com duas rotinas no turno, uma pronta e outra
     // aguardando, a fala não pode afirmar conclusão — parte do que foi
     // prometido não existe. Afirmar pelo melhor caso é como o bug começou.
-    const ordem: EstadoDeCartoes[] = ["erro", "aguardando", "gerando", "pronto", "nenhum"];
+    const ordem: EstadoDeCartoes[] = ["erro", "aguardando", "revisao", "gerando", "pronto", "nenhum"];
     const estados = linhas
       .map((l) => (l.cards_status ?? "nenhum") as EstadoDeCartoes)
       .sort((a, b) => ordem.indexOf(a) - ordem.indexOf(b));
@@ -1841,28 +1825,22 @@ export async function conduzirRotina(
           console.error(`[ayla:rotina] tema não gravado em ${pendente.id}: ${erroTema.message}`);
           return { mensagem: "Não consegui salvar o tema desta rotina agora. Pode me mandar o tema de novo daqui a pouco?", pronto: true };
         }
-        const comecou = await dispararGeracao(pendente.id, escolhido);
-        rastro.geracao_iniciada = comecou;
+        // A família confere a sequência e inicia as imagens na página.
+        // Escolher o tema no WhatsApp não equivale a apertar "Gerar cartões".
+        rastro.geracao_iniciada = false;
         const link = await gerarMagicLink(supabase, {
           familyId,
           next: `/ludico/rotinas/${pendente.id}`,
         });
         console.log(
-          `[ayla:rotina] tema "${escolhido}" aplicado em ${pendente.id} — geração ${comecou ? "iniciada" : "NÃO iniciada"}`,
+          `[ayla:rotina] tema "${escolhido}" aplicado em ${pendente.id} — aguardando revisão e clique`,
         );
         // A fala reflete o estado real. Sem 200 do gerador, ninguém promete arte.
-        const corpo = comecou
-          ? `Perfeito — vou usar *${escolhido}* nesta rotina 🌿 Já comecei a preparar os cartões; eles vão aparecendo aí conforme ficarem prontos.`
-          : `Anotei o tema *${escolhido}* nesta rotina. Os cartões ainda não começaram a ser desenhados — me chama daqui a pouco que eu tento de novo.`;
-        const comoUsar = comecou
-          ? // Sem exemplo fixo: "agora vamos ao mercado" saía até em rotina de
-            // viagem pra casa da avó. Se é frase de modelo, tem que servir.
-            `\n\nQuando estiverem prontos, mostre um de cada vez e vá dizendo o que é agora e o que vem depois.`
-          : "";
+        const corpo = `*Rotina pronta para conferir* 🌿\nTema: *${escolhido}*\n\n1️⃣ *Confira a rotina*\nAbra o link, veja a ordem e o tema. Você pode editar ou incluir uma etapa.\n\n2️⃣ *Gere os cartões*\nSe estiver tudo certo, toque em *Gerar cartões*. As imagens começam depois desse clique.`;
         return {
           mensagem: link
-            ? `${corpo}\n\nAbre aqui (já entra direto):\n${link}${comoUsar}`
-            : `${corpo}${comoUsar}`,
+            ? `${corpo}\n\n*Rotina de ${pendente.nome}:*\n${link}`
+            : corpo,
           pronto: true,
         };
       }
@@ -2472,8 +2450,6 @@ ${jaSabemos.perfil}` : "",
       // A condição agora é só o que descreve o artefato: quer cartão, existe
       // rotina, não tem tema. Se perguntamos, esperamos — e se esperamos,
       // geramos quando ela responder. As duas pontas usam a MESMA condição.
-      let autoGerou = false;
-      let geracaoFalhou = false;
       const faltaTema = visual && ids.length > 0 && !tema;
       faltaTemaFinal = faltaTema;
       rastro.rotina_ids = ids;
@@ -2492,23 +2468,16 @@ ${jaSabemos.perfil}` : "",
       rastro.tema_fonte = tema
         ? (tema === "Dia a dia" ? "neutro" : temaEnunciado(params.contexto) ? "mensagem_atual" : "historico_confirmado")
         : "nenhuma";
-      rastro.status_final = faltaTema ? "aguardando" : tema ? "gerando" : "nenhum";
-      if (visual && tema && ids.length) {
-        const iniciadas = await Promise.all(ids.map((id) => dispararGeracao(id, tema)));
-        autoGerou = iniciadas.every(Boolean);
-        geracaoFalhou = !autoGerou;
-        rastro.geracao_iniciada = autoGerou;
-        if (geracaoFalhou) rastro.status_final = "falha_disparo";
-      }
-      if (faltaTema) {
+      rastro.status_final = visual && ids.length ? "revisao" : "nenhum";
+      rastro.geracao_iniciada = false;
+      if (visual && ids.length) {
         // ESTADO OPERACIONAL VERDADEIRO. Antes ficava `cards_status="nenhum"`,
-        // indistinguível de "ninguém pediu cartão" — e a tela abria em modo
-        // cartões mostrando ícone, calada, pra sempre. `aguardando` diz o que
-        // realmente acontece: os cartões existem no plano, falta ela escolher
-        // o tema. É o que permite perguntar sem abandonar.
-        await marcarAguardandoTema(supabase, ids);
+        // indistinguível de "ninguém pediu cartão". `revisao` registra que a
+        // lista visual existe, mas a família ainda precisa conferir e iniciar
+        // as imagens. Diferente de `aguardando`, o reconciliador não o consome.
+        await marcarRevisaoPendente(supabase, ids);
         console.warn(
-          `[ayla:rotina] cartões pedidos sem tema — rotina(s) em 'aguardando', tema perguntado na mensagem`,
+          `[ayla:rotina] rotina visual em revisao — aguardando clique para gerar`,
         );
       }
 
@@ -2539,21 +2508,10 @@ ${jaSabemos.perfil}` : "",
       // 04/08/2026 — e a oferta vem DEPOIS de organizar, nunca na primeira
       // fala: perguntar tema antes de entender o dia é formulário.
       const ofereceCartoes =
-        !autoGerou && !geracaoFalhou && !faltaTema && pedidoExplicito && tamanho === "rotina" && !temSemana;
+        !visual && pedidoExplicito && tamanho === "rotina" && !temSemana;
       // A conversa segue ABERTA enquanto a resposta dela ainda pode virar
       // imagem — vale pro tema que falta e pra oferta que acabou de sair.
       if (ofereceCartoes) faltaTemaFinal = true;
-      // AVATAR: a oferta vem DEPOIS, com os cartões já na mão. Pôr a criação do
-      // avatar ANTES da rotina seria uma etapa de setup antes da primeira
-      // entrega — e quem não terminasse ficaria sem rotina nenhuma. Com o
-      // cartão na tela, o valor é óbvio: "ele podia ser o personagem".
-      const temAvatar = await membroTemAvatar(supabase, params.membroAtipicoId);
-      const convidaAvatar =
-        autoGerou && !temAvatar
-          ? `
-
-Ah — se quiser, o próprio ${nome} pode ser o personagem dos cartões em vez de um desenho genérico. É só criar o avatar dele uma vez (Configurações → Avatar): fica salvo e vale pras histórias também. Aí eu refaço os cartões com a cara dele.`
-          : "";
       // E NÃO PROMETE PRAZO. "1-2 minutinhos" era uma promessa que a gente
       // quebrava: as gerações medidas em 08/08/2026 levaram 2min18, 2min38 e
       // 3min08. Dizer que aparecem "conforme ficarem prontos" é verdade em
@@ -2573,12 +2531,10 @@ Ah — se quiser, o próprio ${nome} pode ser o personagem dos cartões em vez d
       // reais da criança (`carregarInteresses`), a mesma fonte que alimenta os
       // chips de tema na web. Onde o interesse existe como dado, a sugestão é
       // dela; onde só existe como prosa no perfil, cai no convite aberto.
-      const cartoes = autoGerou
-        ? `\n\n*Cartões em preparo*\n${tema === "Dia a dia" ? "Vou ilustrar os passos com cenas simples do dia a dia" : `Vou usar o tema *${tema}* que você escolheu`}. Ao abrir o link, você pode ver uma ampulheta; aguarde as imagens aparecerem nesta rotina 🌿`
-        : geracaoFalhou
-          ? "\n\n*Cartões ainda não iniciados*\nNão consegui começar as imagens agora. A sequência ficou salva, mas não vou chamar de pronta uma rotina sem cartões."
-        : faltaTema || ofereceCartoes
+      const cartoes = faltaTema || ofereceCartoes
           ? `\n\n${perguntaDeTema(nome, sugestoesDeTema)}`
+          : visual && ids.length
+            ? `\n\n*Próximos passos*\n\n1️⃣ *Confira a rotina*\nAbra o link, veja a ordem e o tema. Você pode editar ou incluir uma etapa.\n\n2️⃣ *Gere os cartões*\nSe estiver tudo certo, toque em *Gerar cartões*. As imagens começam depois desse clique.`
           : "";
       const impresso = querImprimir
         ? "\n\nTe mandei também um *PDF pra imprimir* (com quadradinhos pra marcar)."
@@ -2589,7 +2545,7 @@ Ah — se quiser, o próprio ${nome} pode ser o personagem dos cartões em vez d
       // objetivo só. Editar e imprimir continuam existindo — entram no turno
       // seguinte, quando os cartões já estão a caminho e há o que abrir.
       // `impresso` fica: é fato consumado (o PDF já foi enviado), não oferta.
-      const dica = faltaTema || geracaoFalhou || autoGerou
+      const dica = faltaTema || visual
         ? ""
         : querImprimir
           ? "\n\nSe quiser mudar uma etapa ou um horário, é só me falar aqui que eu ajusto."
@@ -2601,16 +2557,10 @@ Ah — se quiser, o próprio ${nome} pode ser o personagem dos cartões em vez d
       const opcaoLudico = faltaTema && ids.length === 1
         ? opcaoDeContinuarRotinaNoLudico(nome, link)
         : "";
-      const linkParaCriarOutra = autoGerou && link
-        ? await gerarMagicLink(supabase, { familyId, next: "/ludico/rotinas" })
-        : null;
-      const criarOutraDepois = linkParaCriarOutra
-        ? `\n\n*Para criar outra depois*\nAbra o Lúdico por aqui (já entra direto):\n${linkParaCriarOutra}\nToque em *Gerar minha rotina visual* e escreva os passos na ordem.`
-        : "";
-      mensagem = faltaTema || geracaoFalhou
+      mensagem = faltaTema
         ? `${fechamento}${quadro}${orient}${opcaoLudico}`
         : link
-          ? `${fechamento}${quadro}${orient}\n\nAbra a rotina de ${nome} aqui:\n${link}${criarOutraDepois}${dica}`
+          ? `${fechamento}${quadro}${orient}\n\n*Abra a rotina de ${nome}*\n${link}${dica}`
           : `${fechamento}${quadro}${orient}${dica}`;
     }
 
@@ -2773,14 +2723,10 @@ export async function pedirRotinaDoDia(
     const tema = (rot.tema as string | null) ?? null;
     const status = (rot.cards_status as string | null) ?? "nenhum";
 
-    let gerando = false;
-    if (tema && (status === "nenhum" || status === "erro")) {
-      await dispararGeracao(rotinaId, tema);
-      gerando = true;
-    }
-
     const link = await gerarMagicLink(supabase, { familyId: params.familyId, next: `/ludico/rotinas/${rotinaId}` });
-    const extra = gerando ? " Tô gerando os cartões — ao abrir, já vão aparecendo 🌿" : "";
+    const extra = tema && (status === "nenhum" || status === "aguardando" || status === "erro")
+      ? " Confira as etapas no link e toque em *Gerar cartões* quando estiver tudo certo."
+      : "";
     const base = `Aqui está a rotina de *${nomeDia}* do(a) ${nome} 🗓️${extra}`;
     return link ? `${base}\nAbre aqui:\n${link}` : base;
   } catch (e) {

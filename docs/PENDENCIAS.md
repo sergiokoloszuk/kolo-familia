@@ -1605,6 +1605,16 @@ conflito. Esta ficha é o registro de estado; o laudo é a prova.
 Categoria: Produto · Prioridade: **P2** · Estado: **AGUARDANDO VALIDAÇÃO**
 Aberta em: 2026-08-08 · Origem: decisão de produto (2026-08-08)
 
+- **Revisão consciente antes das imagens (29/09/2026): implementação local.**
+  O WhatsApp passa a entregar um passo a passo curto; o link abre a lista e o
+  tema preenchidos; a família pode editar ou incluir etapas e só então toca em
+  **Gerar cartões**. O novo estado `revisao` impede que o reconciliador antigo
+  comece as imagens antes desse clique. Na página, lista, tema e CTA aparecem
+  em ordem; durante a geração há estado de espera explícito; impressão e
+  feedback só aparecem quando os cartões existem. Evidência local: 534 testes
+  de rotina e 129 testes diretamente afetados passaram; typecheck e build de
+  produção passaram. **Ainda não publicada e ainda requer prova ponta a ponta
+  no link autenticado antes de baixar a pendência.**
 - **Teste real de 29/09/2026, após `d7ffe10`:** a Ayla criou a sequência
   ditada da Manu sem perguntar o tema e iniciou imagens neutras; a mensagem
   ofereceu um primeiro link com acesso direto e, em "Para criar outra depois",
@@ -9778,7 +9788,7 @@ e o entregue, e a diferenca fica consultavel sem leitura manual de tabela.
 ### PEND-205
 **`perfil-marcos.test.ts` #11 apodrece com o relogio — `main` esta VERMELHA**
 Bloco: **B · Ayla** · Prioridade: **P3**
-STATUS: **ABERTA — achado fora do escopo, NAO corrigido** · Aberta em: 2026-09-14
+STATUS: **CONCLUÍDA — teste estabilizado sem mudança funcional** · Aberta em: 2026-09-14 · Concluída em: 2026-09-29
 
 `marcosRecentes` tem `agora: Date = new Date()` e janela de 30 dias. O teste 11
 fixa o marco em `2026-08-15` e **nao passa `agora`**, entao usa o relogio real.
@@ -9787,6 +9797,11 @@ Em 14/09 o marco saiu da janela e o teste virou vermelho sozinho.
 **NAO E DEFEITO DE PRODUTO.** O teste 10, ao lado, passa `HOJE` explicito e
 segue verde. Confirmado em `main` limpa (`1163871`), sem alteracao no working
 tree: **1 failed | 3969 passed | 7 skipped**. Em 11/09 a suite fechava 3966/0.
+
+**CORREÇÃO — 29/09/2026.** O teste 11 agora congela o relógio em `HOJE`
+durante a montagem do contexto e o restaura em `finally`. A regra de produção,
+a janela de 30 dias e a assinatura de `montarContextoBase` permaneceram
+inalteradas; a correção é exclusivamente determinística no teste.
 
 **CRITERIO DE CONCLUSAO:** o teste injeta `agora`, e uma varredura diz se outro
 teste da suite depende do relogio real.
@@ -10287,7 +10302,35 @@ decisão, nenhuma conversa ou proativa pode voltar a oferecer Plano.
 
 ---
 
-**Proximo ID livre: PEND-218. *(PEND-209 a PEND-211 já estão reivindicadas no working tree principal por outra frente; 024 e 025 reservadas por frentes ainda nao publicadas; PEND-202 reivindicada em commit e ainda sem ficha; 0076 e numero de MIGRACAO reservado — ver PEND-121.)***
+### PEND-218
+**Ponte WhatsApp → Lúdico para avatar, histórias e confirmação do Perfil**
+Bloco: **D · Entregas / Lúdico** · Prioridade: **P1**
+STATUS: **ABERTA — aguarda estabilização da rotina visual** · Aberta em: 2026-09-29
+
+Reaproveitar, somente depois de validar a rotina visual, o padrão: a família
+faz o pedido no WhatsApp; a Ayla usa Perfil e histórico para preencher o que já
+sabe; pergunta de uma vez apenas os dados realmente ausentes; envia um link de
+acesso direto com os campos preenchidos; a pessoa confere, edita se quiser e
+aciona conscientemente a geração.
+
+Aplicar separadamente a: criação de avatar salvo para a criança certa;
+histórias com objetivo, tema, avatar e imagens; e revisão assistida de uma área
+do Perfil Vivo. O link deve manter identidade, criança, intenção e dados
+preenchidos sem exigir novo login nem substituir artefato anterior em silêncio.
+
+**CRITÉRIO DE CONCLUSÃO:** jornada e dados de cada artefato auditados antes de
+implementar; link autenticado abre o membro correto; os campos vindos do
+WhatsApp aparecem para revisão; editar e confirmar não perde dados; geração
+tem estado de espera, falha recuperável e resultado reencontrável; prova real
+autorizada confirma que promessa no WhatsApp e entrega na plataforma são a
+mesma coisa.
+
+**RELAÇÕES:** PEND-004 (padrão validado primeiro em Rotina), PEND-216
+(histórias) e PEND-018 (Perfil Vivo).
+
+---
+
+**Proximo ID livre: PEND-219. *(PEND-209 a PEND-211 já estão reivindicadas no working tree principal por outra frente; 024 e 025 reservadas por frentes ainda nao publicadas; PEND-202 reivindicada em commit e ainda sem ficha; 0076 e numero de MIGRACAO reservado — ver PEND-121.)***
 
 > Conferir contra `origin/main`, não contra o seu branch. Dois branches podem
 > reivindicar o mesmo número — o conflito de merge nesta linha é o alarme.

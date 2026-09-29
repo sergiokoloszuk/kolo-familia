@@ -1169,10 +1169,11 @@ async function recuperarRotinas(
     if (!fid || porFamilia.has(fid)) continue;
     // Cartões ainda sendo ilustrados: não adianta chamar ela pra ver agora.
     // A janela do cron (3–30 min) pega essa rotina numa passada seguinte.
-    // "aguardando" pelo mesmo motivo, e por um pior: ali os cartões nem foram
-    // encomendados (falta a família escolher o tema). Chamar pra ver seria
-    // anunciar como pronta uma rotina que ainda não tem arte nenhuma.
-    if (r.cards_status === "gerando" || r.cards_status === "aguardando") continue;
+    // "aguardando" e "revisao" pelo mesmo motivo, e por um pior: ali os
+    // cartões nem foram encomendados. Em `revisao`, a família ainda precisa
+    // conferir lista/tema e tocar em Gerar. Chamar pra avaliar seria anunciar
+    // como pronta uma rotina que ainda não tem arte nenhuma.
+    if (["gerando", "aguardando", "revisao"].includes(String(r.cards_status))) continue;
     porFamilia.set(fid, {
       id: r.id as string,
       membro_atipico_id: (r.membro_atipico_id as string | null) ?? null,

@@ -35,12 +35,18 @@ function bancoCom(linhas: Linha[]): SupabaseClient {
     eq(col: string, val: unknown) {
       return builder([...filtros, [col, val]]);
     },
+    in(col: string, valores: unknown[]) {
+      return builder([...filtros, [col, valores]]);
+    },
     order() {
       return builder(filtros);
     },
     limit() {
       const data = linhas
-        .filter((l) => filtros.every(([c, v]) => (l as unknown as Record<string, unknown>)[c] === v))
+        .filter((l) => filtros.every(([c, v]) => {
+          const atual = (l as unknown as Record<string, unknown>)[c];
+          return Array.isArray(v) ? v.includes(atual) : atual === v;
+        }))
         .sort((a, b) => String(b.updated_at).localeCompare(String(a.updated_at)));
       return Promise.resolve({ data, error: null });
     },
@@ -155,7 +161,24 @@ describe("a validade por finalidade — cada número tem origem", () => {
   });
 });
 
-describe("só `aguardando` é pendência", () => {
+describe("somente estados ainda acionáveis são pendência", () => {
+  it("revisão aparece para a conversa, mas não é capturada pelo reconciliador", async () => {
+    const linha = rotina({ cards_status: "revisao", tema: "Dinossauros" });
+    const conversa = await pendenciaDeRotina(bancoCom([linha]), {
+      familyId: FAM,
+      membroId: MANU,
+      finalidade: "mostrar_ao_modelo",
+      agora: AGORA,
+    });
+    const reconciliacao = await pendenciaDeRotina(bancoCom([linha]), {
+      familyId: FAM,
+      finalidade: "reconciliar",
+      agora: AGORA,
+    });
+    expect(val(conversa)?.falta).toBe("geracao");
+    expect(val(reconciliacao)).toBeNull();
+  });
+
   it("gerando NÃO vira nova pergunta de tema", async () => {
     const p = await pendenciaDeRotina(bancoCom([rotina({ cards_status: "gerando", tema: "Princesa" })]), {
       familyId: FAM,
