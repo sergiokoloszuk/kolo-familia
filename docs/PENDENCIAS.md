@@ -1610,7 +1610,7 @@ conflito. Esta ficha é o registro de estado; o laudo é a prova.
 Categoria: Produto · Prioridade: **P2** · Estado: **AGUARDANDO VALIDAÇÃO**
 Aberta em: 2026-08-08 · Origem: decisão de produto (2026-08-08)
 
-- **Etapa 1 consolidada em 30/09/2026 — implementação local.** O fluxo agora
+- **Etapa 1 consolidada e publicada em 30/09/2026 (`b24eb93`).** O fluxo agora
   parte da situação concreta, oferece jornada inteira versus trecho difícil,
   explica que a proposta é editável antes das imagens, preserva o filho em foco
   e só pergunta o alvo quando houver ambiguidade real. A família também pode
@@ -1620,7 +1620,8 @@ Aberta em: 2026-08-08 · Origem: decisão de produto (2026-08-08)
   **685/685** testes da frente (30 arquivos), typecheck e build de produção com
   106 páginas passaram. Diagnóstico,
   baseline e roteiro de prova: [analises/rotina-etapa-1-2026-09-30.md](analises/rotina-etapa-1-2026-09-30.md).
-  **Não baixar:** falta publicar e executar a prova real de WhatsApp, link,
+  O `/api/health` confirmou esse SHA em `main`, ambiente `production`, com banco
+  saudável. **Não baixar:** falta executar a nova prova real de WhatsApp, link,
   edição e imagens.
 - **Teste real de 30/09/2026 (Manu, banho): REPROVOU identidade, fidelidade e
   entrega.** O primeiro balão nomeou Manu e o segundo completou “Gosta da
@@ -1635,7 +1636,7 @@ Aberta em: 2026-08-08 · Origem: decisão de produto (2026-08-08)
   recompor todos os inbounds desde a última resposta, proposta estruturada para
   situação contida, uma escolha por turno, limpeza de linhas e fallback para o
   domínio canônico quando a configuração for inválida. **Exige novo teste real
-  após o deploy; não baixar esta pendência.**
+  no SHA publicado; não baixar esta pendência antes da prova humana.**
 - **Revisão consciente antes das imagens (29/09/2026): implementação local.**
   O WhatsApp passa a entregar um passo a passo curto; o link abre a lista e o
   tema preenchidos; a família pode editar ou incluir etapas e só então toca em
@@ -10137,16 +10138,17 @@ contrato do provider sem depender da mensagem variável de um erro externo.
 Bloco: **B · Ayla** · Prioridade: **P1**
 STATUS: **SEGUNDA CORREÇÃO PRONTA PARA PROVA REAL — aceite de produção pendente** · Aberta em: 2026-09-25
 
-**INTERVENÇÃO ESPECÍFICA DA ROTINA (30/09/2026, local).** O turno real da Manu
+**INTERVENÇÃO ESPECÍFICA DA ROTINA (30/09/2026, produção `b24eb93`).** O turno real da Manu
 mediu 19,794 s, dos quais 2,868 s foram na prontidão e 4,659 s no condutor. Nos
 desfechos em que o porteiro já decidiu uma única pergunta (`falta_escopo` ou
 `falta`), o condutor deixou de ser chamado; a passagem curta que precisa de uma
 proposta continua usando-o. Leituras independentes também passaram a ocorrer em
 paralelo. A melhora esperada é retirar os 4,659 s desse caminho mais a espera
-serial do banco, mas **não há número novo de produção antes do deploy**. O rastro
+serial do banco, mas **ainda não há número do novo comportamento em turno real**. O rastro
 ganhou saídas próprias para permitir a comparação. Prova local atualizada:
 685 testes da frente, typecheck e build de produção passaram. Ver
 [analises/rotina-etapa-1-2026-09-30.md](analises/rotina-etapa-1-2026-09-30.md).
+O endpoint de saúde confirmou o SHA em produção; falta medir a conversa humana.
 
 **BASELINE CORRIGIDO (produção, antes da implementação).** Os **36.243 ms**,
 **30.917 ms** e **35.560 ms** inicialmente lidos em `turno_externo` mediam a

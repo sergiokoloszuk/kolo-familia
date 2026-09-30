@@ -2,8 +2,7 @@
 
 **Data:** 30/09/2026
 **Pendências relacionadas:** PEND-004, PEND-038, PEND-058 e PEND-215
-**Estado:** implementação corrigida após reprovação real; novo deploy e nova
-prova humana pendentes
+**Estado:** publicada em produção no SHA `b24eb93`; nova prova humana pendente
 
 ## Problema observado
 
@@ -95,6 +94,8 @@ turnos reais autorizados.
 - Regressões literais cobrem Manu/Bento entre balões, “pode ser essa”, as cinco
   etapas do banho, formatação sem recuo e a URL com espaços vista em produção.
 - Build Next.js de produção: compilação, TypeScript e 106 páginas concluídos.
+- `/api/health` confirmou `b24eb93` em `main`, ambiente `production`, com banco
+  saudável após o deploy.
 - `tsc --noEmit --incremental false`: nenhuma falha nos arquivos alterados; o
   comando isolado ainda encontra os `PageProps` globais ausentes em 14 páginas
   preexistentes. O build oficial gera esses tipos e passou.
