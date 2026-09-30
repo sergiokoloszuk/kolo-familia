@@ -3851,13 +3851,10 @@ async function processInboundInterno(
       pedidoDeRotina)
   ) {
     const ctxR = await loadFamiliaParaEnvio(supabase, family.id);
-    // Uma rotina nova, pedida de modo genérico, não pode herdar a criança de
-    // outro assunto. Em perfil com dois ou mais filhos, Bento mencionado numa
-    // história anterior não autoriza criar a rotina para ele: só a conversa de
-    // rotina ainda aberta, uma retomada explícita, nome/pronome atual ou perfil
-    // de filho único resolvem. O resolvedor pergunta quando a escolha é real.
-    const contextoDaRotina = rotinaConversa?.membroId ?? (pedidoExplicito ? null : membroConversa);
-    const alvo = alvoDaRotina(ctxR, contextoDaRotina);
+    // A conversa atual é contexto legítimo: se a mãe vinha falando do Bento,
+    // "quero uma rotina visual" continua sendo sobre ele. Só perguntamos a
+    // criança quando não há nome, pronome, retomada nem contexto em foco.
+    const alvo = alvoDaRotina(ctxR, rotinaConversa?.membroId ?? membroConversa);
     if (alvo.ambiguo) return await perguntarQualCrianca(supabase, family, ctxR, alvo.ambiguo);
     const membroId = alvo.membroId;
     if (ctxR && membroId) {

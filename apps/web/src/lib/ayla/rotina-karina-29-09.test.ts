@@ -19,10 +19,9 @@ describe("Karina 29/09 — clarificação não pergunta a mesma criança de novo
     expect(ORCH).toContain("const r = await conduzirRotina(supabase");
   });
 
-  it("pedido genérico de nova rotina não herda a criança de outro assunto", () => {
-    const rotina = ORCH.slice(ORCH.indexOf("const contextoDaRotina"), ORCH.indexOf("const r = await conduzirRotina"));
-    expect(rotina).toContain("rotinaConversa?.membroId ?? (pedidoExplicito ? null : membroConversa)");
-    expect(rotina).toContain("const alvo = alvoDaRotina(ctxR, contextoDaRotina)");
+  it("pedido genérico de nova rotina preserva a criança da conversa em foco", () => {
+    const rotina = ORCH.slice(ORCH.indexOf("A conversa atual é contexto legítimo"), ORCH.indexOf("const r = await conduzirRotina"));
+    expect(rotina).toContain("const alvo = alvoDaRotina(ctxR, rotinaConversa?.membroId ?? membroConversa)");
   });
 });
 
