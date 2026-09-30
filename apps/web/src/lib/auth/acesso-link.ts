@@ -48,7 +48,9 @@ function novoToken(): string {
   return randomBytes(32).toString("base64url");
 }
 
-export const APP_URL_PUBLICA = "https://www.kolofamilia.com.br";
+// `www` é o site institucional e redireciona para uma origem que não expõe
+// `/auth/wa`. Links de WhatsApp são credenciais e precisam aterrissar no app.
+export const APP_URL_PUBLICA = "https://app.kolofamilia.com.br";
 
 /** A Vercel é infraestrutura: nenhum link enviado à família expõe esse host. */
 export function appUrlPublica(): string {

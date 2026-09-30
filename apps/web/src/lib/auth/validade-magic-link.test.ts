@@ -85,7 +85,7 @@ describe("o endereço enviado à família é o domínio oficial", () => {
     const anterior = process.env.NEXT_PUBLIC_APP_URL;
     process.env.NEXT_PUBLIC_APP_URL = "https://kolo-familia-web.vercel.app";
     try {
-      expect(appUrlPublica()).toBe("https://www.kolofamilia.com.br");
+      expect(appUrlPublica()).toBe("https://app.kolofamilia.com.br");
     } finally {
       if (anterior == null) delete process.env.NEXT_PUBLIC_APP_URL;
       else process.env.NEXT_PUBLIC_APP_URL = anterior;
