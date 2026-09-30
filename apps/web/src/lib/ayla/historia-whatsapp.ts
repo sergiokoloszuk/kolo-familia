@@ -263,14 +263,14 @@ export function guiaHistoriaNoLudico(params: {
 }): string {
   const nome = params.nomeCrianca?.trim();
   return [
-    `✨ *Quer transformar essa ideia em uma história ilustrada${nome ? ` com o avatar de ${nome}` : " com o avatar da criança"}?*`,
+    `✨ *Quer transformar essa ideia em uma história ilustrada${nome ? ` para ${nome}` : " para a criança"}?*`,
     "",
     `Abra direto em *Criar uma história*: ${params.link}`,
     "",
-    `🎨 Se ${nome ?? "a criança"} ainda não tiver avatar, toque em *“Criar avatar${nome ? ` de ${nome}` : ""}”*. A tela pode mostrar *“Falta o avatar”* ou *“Criar avatar de outra pessoa”*. Escolha o estilo, conte como ${nome ?? "a criança"} é e toque em *“Criar avatar”*.`,
+    `1️⃣ *Confira a ideia* — a situação e o objetivo já estarão preenchidos. Você pode ajustar o texto antes de gerar.`,
     "",
-    `📖 Depois, volte para *Criar uma história*. Em *“O que você quer contar?”*, escreva ou cole a situação que quer transformar em história.`,
+    `2️⃣ *Escolha os personagens* — pode usar o avatar de ${nome ?? "a criança"}, se houver, ou criar sem avatar com animais, dinossauros, robôs ou personagens fictícios.`,
     "",
-    `🪄 Escolha de 3 a 6 páginas e toque em *“Criar história”*. Ela pode levar cerca de um minuto para ficar pronta.`,
+    `3️⃣ *Escolha o visual e gere* — selecione o estilo 3D, escolha de 3 a 6 páginas e toque em *“Criar história”*. Ela pode levar cerca de um minuto para ficar pronta.`,
   ].join("\n");
 }

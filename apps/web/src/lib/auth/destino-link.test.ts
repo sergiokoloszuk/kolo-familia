@@ -31,6 +31,8 @@ describe("allowlist de destinos", () => {
     "/ludico/rotinas/12dc78f3-6367-4b86-8d01-fb6f5be1abcc",
     "/ludico/desenhos",
     "/configuracoes/avatar",
+    "/configuracoes/avatar/12dc78f3-6367-4b86-8d01-fb6f5be1abcc?origem=whatsapp",
+    "/historias/criar?membro=12dc78f3-6367-4b86-8d01-fb6f5be1abcc",
     "/planos",
     "/planos/77763306-504b-4da4-9259-5e6eed1739a4",
   ];
@@ -63,6 +65,23 @@ describe("allowlist de destinos", () => {
   for (const d of NAO) {
     it(`recusa ${JSON.stringify(d)}`, () => expect(destinoPermitido(d)).toBe(false));
   }
+});
+
+describe("avatar e história preservam a criança do WhatsApp", () => {
+  const membroId = "12dc78f3-6367-4b86-8d01-fb6f5be1abcc";
+
+  it("mantém destinos específicos válidos, inclusive com query segura", () => {
+    expect(normalizarDestino(`/configuracoes/avatar/${membroId}?origem=whatsapp`)).toBe(
+      `/configuracoes/avatar/${membroId}?origem=whatsapp`,
+    );
+    expect(normalizarDestino(`/historias/criar?membro=${membroId}`)).toBe(
+      `/historias/criar?membro=${membroId}`,
+    );
+  });
+
+  it("recusa identificadores que não são UUID", () => {
+    expect(normalizarDestino("/configuracoes/avatar/Mario")).toBe("/configuracoes");
+  });
 });
 
 describe("fallback: destino inválido nunca vira 404", () => {

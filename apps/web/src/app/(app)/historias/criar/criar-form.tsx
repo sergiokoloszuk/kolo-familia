@@ -2,11 +2,12 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Sparkles, Wand2 } from "lucide-react";
+import { Check, Sparkles, Wand2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
-import { criarHistoria, responderEnriquecimento, type Enriquecimento } from "../actions";
+import { AVATAR_ESTILOS, type AvatarEstilo } from "@/lib/imagem/avatar-prompt";
+import { criarHistoria } from "../actions";
 
 const EXEMPLOS = [
   "Preparar para a primeira ida ao dentista",
@@ -16,7 +17,7 @@ const EXEMPLOS = [
 ];
 
 type Avatar = { id: string; url: string; selecionado: boolean };
-type Crianca = { id: string; nome: string; avatares: Avatar[] };
+type Crianca = { id: string; nome: string; idade: number | null; avatares: Avatar[] };
 
 function avatarPadrao(avs: Avatar[]): string {
   return (avs.find((a) => a.selecionado) ?? avs[0])?.id ?? "";
@@ -25,55 +26,61 @@ function avatarPadrao(avs: Avatar[]): string {
 export function CriarHistoriaForm({
   criancas,
   ativaId,
+  intencaoId,
+  descricaoInicial = "",
+  objetivoInicial = "compreender",
 }: {
   criancas: Crianca[];
   ativaId?: string;
+  intencaoId?: string;
+  descricaoInicial?: string;
+  objetivoInicial?: "compreender" | "agir" | "agencia";
 }) {
   const router = useRouter();
   const inicial = criancas.find((c) => c.id === ativaId) ?? criancas[0];
   const [membroId, setMembroId] = useState(inicial?.id ?? "");
   const [avatarId, setAvatarId] = useState(() => avatarPadrao(inicial?.avatares ?? []));
-  const [descricao, setDescricao] = useState("");
+  const [descricao, setDescricao] = useState(descricaoInicial);
+  const [objetivo, setObjetivo] = useState(objetivoInicial);
+  const [tom, setTom] = useState("acolhedora");
+  const [personagem, setPersonagem] = useState<"avatar" | "animais_floresta" | "criancas" | "dinossauros" | "robos">(
+    inicial?.avatares.length ? "avatar" : "animais_floresta",
+  );
+  const [estiloVisual, setEstiloVisual] = useState<AvatarEstilo>("animacao_3d");
   const [nPaginas, setNPaginas] = useState(5);
   const [erro, setErro] = useState<string | null>(null);
   const [pending, start] = useTransition();
 
   const avatares = criancas.find((c) => c.id === membroId)?.avatares ?? [];
+  const idade = criancas.find((c) => c.id === membroId)?.idade ?? null;
+  const estilosOrdenados = [...AVATAR_ESTILOS].sort((a, b) => {
+    const jovem = (idade ?? 0) >= 11;
+    const prioridade = jovem
+      ? ["gamer_3d", "anime_3d", "ficcao_3d", "fantasia_3d", "animacao_3d"]
+      : ["animacao_3d", "massinha_3d", "pelucia", "fantasia_3d"];
+    const rank = (value: string) => {
+      const i = prioridade.indexOf(value);
+      return i < 0 ? prioridade.length : i;
+    };
+    return rank(a.value) - rank(b.value);
+  });
 
   function trocarCrianca(id: string) {
     setMembroId(id);
     setAvatarId(avatarPadrao(criancas.find((c) => c.id === id)?.avatares ?? []));
   }
-  // Compreensão ativa (Fatia 3.2): perguntinha de leve depois de gerar.
-  const [enriq, setEnriq] = useState<(Enriquecimento & { id: string }) | null>(null);
-  const [salvandoOpcao, setSalvandoOpcao] = useState(false);
-
   function criar() {
     if (!descricao.trim() || pending) return;
     setErro(null);
     start(async () => {
-      const r = await criarHistoria({ membroId, descricao, nPaginas, avatarId: avatarId || undefined });
+      const descricaoCompleta = `${descricao.trim()}\nObjetivo da história: ${objetivo}. Tom: ${tom}.`;
+      const r = await criarHistoria({ membroId, descricao: descricaoCompleta, nPaginas, avatarId: personagem === "avatar" ? avatarId || undefined : undefined, personagem, estiloVisual, intencaoId });
       if (!r.ok) {
         setErro(r.error);
         return;
       }
-      if (r.enriquecimento) {
-        setEnriq({ ...r.enriquecimento, id: r.id });
-        return;
-      }
       router.push(`/historias/${r.id}`);
     });
-  }
-
-  async function responder(valor: string) {
-    if (!enriq || salvandoOpcao) return;
-    setSalvandoOpcao(true);
-    try {
-      await responderEnriquecimento({ membroId, area: enriq.area, valor });
-    } catch {
-      // não trava o fluxo — o importante é ver a história
-    }
-    router.push(`/historias/${enriq.id}`);
   }
 
   if (pending) {
@@ -103,52 +110,8 @@ export function CriarHistoriaForm({
     );
   }
 
-  if (enriq) {
-    return (
-      <div className="flex flex-col items-center gap-6 rounded-3xl bg-gradient-to-br from-kolo-creme to-kolo-lilas-bg px-7 py-12 text-center">
-        <span className="grid size-14 place-items-center rounded-full bg-brand-yellow/20 text-brand-purple">
-          <Sparkles className="size-6" aria-hidden />
-        </span>
-        <div>
-          <p className="text-xs font-bold uppercase tracking-[0.18em] text-muted-foreground">
-            Sua história está pronta
-          </p>
-          <h2 className="mt-2 max-w-md font-heading text-2xl text-foreground">
-            {enriq.pergunta}
-          </h2>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Uma coisinha rápida pra deixar as próximas ainda mais com a cara dela.
-          </p>
-        </div>
-
-        <div className="flex flex-wrap justify-center gap-2">
-          {enriq.opcoes.map((op) => (
-            <button
-              key={op}
-              type="button"
-              onClick={() => responder(op)}
-              disabled={salvandoOpcao}
-              className="rounded-full border border-brand-purple/20 bg-white px-4 py-2 text-sm font-medium text-foreground transition-all hover:-translate-y-0.5 hover:border-brand-purple hover:text-brand-purple disabled:opacity-50"
-            >
-              {op}
-            </button>
-          ))}
-        </div>
-
-        <button
-          type="button"
-          onClick={() => router.push(`/historias/${enriq.id}`)}
-          disabled={salvandoOpcao}
-          className="text-sm font-semibold text-brand-purple underline-offset-4 transition-colors hover:underline disabled:opacity-50"
-        >
-          {salvandoOpcao ? "abrindo…" : "ver a história agora"}
-        </button>
-      </div>
-    );
-  }
-
   return (
-    <div className="flex flex-col gap-5 rounded-2xl border border-kolo-linha bg-white p-5">
+    <div className="flex flex-col gap-6 rounded-2xl border border-kolo-linha bg-white p-5">
       {criancas.length > 1 && (
         <div className="flex flex-col gap-1.5">
           <Label htmlFor="crianca">Pra quem</Label>
@@ -167,7 +130,24 @@ export function CriarHistoriaForm({
         </div>
       )}
 
-      {avatares.length > 1 && (
+      <div className="flex flex-col gap-2">
+        <p className="text-xs font-bold uppercase tracking-[0.16em] text-brand-purple">1. Escolha quem vive a história</p>
+        <div className="grid gap-2 sm:grid-cols-3">
+          {[
+            ...(avatares.length ? [["avatar", "🧒", "O avatar"]] : []),
+            ["animais_floresta", "🦊", "Animais da floresta"],
+            ["criancas", "🧑🏽‍🤝‍🧑🏻", (idade ?? 0) >= 13 ? "Pessoas fictícias" : "Crianças fictícias"],
+            ["dinossauros", "🦕", "Dinossauros"],
+            ["robos", "🤖", "Robôs"],
+          ].map(([valor, emoji, label]) => (
+            <button key={valor} type="button" onClick={() => setPersonagem(valor as typeof personagem)} className={cn("min-h-24 rounded-2xl border-2 p-3 text-left", personagem === valor ? "border-brand-purple bg-kolo-lilas-bg-2/50" : "border-input bg-secondary/20")}>
+              <span className="block text-3xl" aria-hidden>{emoji}</span><span className="mt-2 block text-sm font-semibold">{label}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {personagem === "avatar" && avatares.length > 1 && (
         <div className="flex flex-col gap-1.5">
           <Label>Com qual avatar?</Label>
           <div className="flex flex-wrap gap-2.5">
@@ -198,8 +178,23 @@ export function CriarHistoriaForm({
         </div>
       )}
 
+      <div className="flex flex-col gap-2">
+        <p className="text-xs font-bold uppercase tracking-[0.16em] text-brand-purple">2. Escolha o visual do mundo</p>
+        <p className="text-sm text-muted-foreground">Personagens e cenários seguem o mesmo estilo em todas as páginas.</p>
+        <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+          {estilosOrdenados.map((estilo) => (
+            <button key={estilo.value} type="button" onClick={() => setEstiloVisual(estilo.value)} className={cn("min-h-28 rounded-2xl border-2 bg-gradient-to-br from-secondary/60 to-white p-4 text-left", estiloVisual === estilo.value ? "border-brand-purple shadow-sm" : "border-input")}>
+              <span aria-hidden className="block aspect-[4/3] w-full rounded-xl bg-cover" style={{ backgroundImage: "url('/avatar-styles/style-sheet-3d.png')", backgroundSize: "400% 200%", backgroundPosition: estilo.previewPosition }} />
+              <span className="mt-2 block text-sm font-semibold">{estilo.label}</span>
+              <span className="mt-1 block text-xs text-muted-foreground">{estilo.descricao}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+
       <div className="flex flex-col gap-1.5">
-        <Label htmlFor="descricao">O que você quer contar?</Label>
+        <p className="text-xs font-bold uppercase tracking-[0.16em] text-brand-purple">3. Conte a situação</p>
+        <Label htmlFor="descricao" className="text-base">O que está acontecendo?</Label>
         <textarea
           id="descricao"
           rows={4}
@@ -222,6 +217,31 @@ export function CriarHistoriaForm({
         </div>
       </div>
 
+      <div className="flex flex-col gap-2">
+        <p className="text-xs font-bold uppercase tracking-[0.16em] text-brand-purple">4. Escolha o que a história deve ajudar</p>
+        <div className="grid gap-2 sm:grid-cols-3">
+          {([
+            ["compreender", "Entender o que acontece"],
+            ["agir", "Saber o que fazer"],
+            ["agencia", "Sentir segurança e escolha"],
+          ] as const).map(([valor, label]) => (
+            <button key={valor} type="button" onClick={() => setObjetivo(valor)} className={cn("flex min-h-16 items-center gap-2 rounded-xl border-2 p-3 text-left text-sm font-medium", objetivo === valor ? "border-brand-purple bg-kolo-lilas-bg-2/50" : "border-input")}>
+              <span className={cn("grid size-5 shrink-0 place-items-center rounded-full border", objetivo === valor && "border-brand-purple bg-brand-purple text-white")}>{objetivo === valor && <Check className="size-3" />}</span>{label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="tom">Clima da história</Label>
+          <select id="tom" value={tom} onChange={(e) => setTom(e.target.value)} className="flex h-10 rounded-md border border-input bg-background px-3 text-sm">
+            <option value="acolhedora">Acolhedora e tranquila</option>
+            <option value="divertida">Divertida e leve</option>
+            <option value="aventureira">Aventura e coragem</option>
+          </select>
+        </div>
+
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="paginas">Quantas páginas</Label>
         <select
@@ -237,6 +257,7 @@ export function CriarHistoriaForm({
           ))}
         </select>
       </div>
+      </div>
 
       {erro && (
         <p className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
@@ -244,8 +265,10 @@ export function CriarHistoriaForm({
         </p>
       )}
 
-      <div>
-        <Button type="button" onClick={criar} disabled={!descricao.trim()}>
+      <div className="rounded-2xl bg-kolo-creme p-4">
+        <p className="text-xs font-bold uppercase tracking-[0.16em] text-brand-purple">5. Gere e acompanhe</p>
+        <p className="mt-1 text-sm text-muted-foreground">Você verá a história assim que ficar pronta e poderá voltar a ela depois.</p>
+        <Button className="mt-4 h-12 w-full text-base" type="button" onClick={criar} disabled={!descricao.trim()}>
           <Sparkles className="size-4" aria-hidden />
           Criar história
         </Button>

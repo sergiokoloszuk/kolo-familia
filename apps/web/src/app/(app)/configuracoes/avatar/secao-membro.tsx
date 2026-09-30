@@ -124,7 +124,9 @@ export function AvatarMembroSecao({
           <AvatarForm
             key={modo}
             membroId={membroId}
+            nome={nome}
             inicial={modo === "criar" ? inicialCriar : inicialEditar}
+            temAvatar={temAvatares}
           />
         </div>
       ) : null}

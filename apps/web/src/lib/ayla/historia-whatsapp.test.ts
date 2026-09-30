@@ -215,10 +215,10 @@ describe("guia fiel do Lúdico", () => {
     });
 
     expect(guia).toContain("Criar uma história");
-    expect(guia).toContain("Falta o avatar");
-    expect(guia).toContain("Criar avatar de outra pessoa");
-    expect(guia).toContain("Criar avatar de Darlison");
-    expect(guia).toContain("O que você quer contar?");
+    expect(guia).toContain("a situação e o objetivo já estarão preenchidos");
+    expect(guia).toContain("pode usar o avatar de Darlison");
+    expect(guia).toContain("ou criar sem avatar");
+    expect(guia).toContain("estilo 3D");
     expect(guia).toContain("3 a 6 páginas");
     expect(guia).toContain("Criar história");
     expect(guia).toContain("https://kolo.test/auth/wa");
@@ -296,17 +296,38 @@ describe("integração no caminho oficial", () => {
 
   it("ensina o caminho real também na Ajuda do produto", () => {
     expect(AJUDA).toContain('{ rota: "/historias/criar", label: "Criar uma história" }');
-    expect(AJUDA).toContain('"O que você quer contar?"');
+    expect(AJUDA).toContain("O avatar é opcional");
+    expect(AJUDA).toContain("animais, dinossauros, robôs e personagens fictícios");
+    expect(AJUDA).toContain("estilo visual 3D");
     expect(AJUDA).toContain('toque em "Criar história"');
   });
 
   it("o link preserva a criança do turno e a página valida que ela é da família", () => {
-    expect(CRIAR_HISTORIA).toContain("searchParams: Promise<{ membro?: string }>");
-    expect(CRIAR_HISTORIA).toContain("comAvatar.some((m) => m.id === membroPedido)");
+    expect(CRIAR_HISTORIA).toContain("searchParams: Promise<{ membro?: string; intencao?: string }>");
+    expect(CRIAR_HISTORIA).toContain("criancas.some((m) => m.id === membroPedido)");
     expect(CRIAR_HISTORIA).toContain(
-      "pedidoValido || (await resolverCriancaAtivaId(comAvatar))",
+      "pedidoValido || (await resolverCriancaAtivaId(criancas))",
     );
     const destino = "/historias/criar?membro=baa1ac66-4d35-46d6-8ea5-586609d43a7b";
     expect(normalizarDestino(destino)).toBe(destino);
+  });
+
+  it("retoma a história só depois de confirmar o avatar da mesma criança", () => {
+    const avatarPage = readFileSync(
+      resolve(__dirname, "../../app/(app)/configuracoes/avatar/[id]/page.tsx"),
+      "utf8",
+    );
+    const avatarActions = readFileSync(
+      resolve(__dirname, "../../app/(app)/configuracoes/avatar/[id]/actions.ts"),
+      "utf8",
+    );
+    const criarPage = readFileSync(
+      resolve(__dirname, "../../app/(app)/historias/criar/page.tsx"),
+      "utf8",
+    );
+    expect(criarPage).toContain("&intencao=${encodeURIComponent(intencao.id)}");
+    expect(avatarPage).toContain("membroId: id");
+    expect(avatarActions).toContain('etapa: "avatar_aprovado"');
+    expect(avatarActions).toContain('intencao.artefato !== "historia"');
   });
 });

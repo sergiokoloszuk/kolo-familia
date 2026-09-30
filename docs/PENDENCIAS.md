@@ -10305,7 +10305,7 @@ decisão, nenhuma conversa ou proativa pode voltar a oferecer Plano.
 ### PEND-218
 **Ponte WhatsApp → Lúdico para avatar, histórias e confirmação do Perfil**
 Bloco: **D · Entregas / Lúdico** · Prioridade: **P1**
-STATUS: **ABERTA — aguarda estabilização da rotina visual** · Aberta em: 2026-09-29
+STATUS: **EM IMPLEMENTAÇÃO ISOLADA** · Aberta em: 2026-09-29
 
 Reaproveitar, somente depois de validar a rotina visual, o padrão: a família
 faz o pedido no WhatsApp; a Ayla usa Perfil e histórico para preencher o que já
@@ -10318,6 +10318,15 @@ histórias com objetivo, tema, avatar e imagens; e revisão assistida de uma ár
 do Perfil Vivo. O link deve manter identidade, criança, intenção e dados
 preenchidos sem exigir novo login nem substituir artefato anterior em silêncio.
 
+**DECISÕES DE PRODUTO (29/09).** WhatsApp coleta somente texto ou áudio e
+devolve um link autenticado; upload, revisão visual, customizações e geração
+vivem na Web. Avatar é opcional tanto para rotina quanto para história. História
+sem avatar pode usar animais da floresta, dinossauros, robôs ou pessoas
+fictícias e deve continuar completa, ilustrada e adequada à idade. A escolha
+visual governa personagens **e cenário**, com referências reais de estilos 3D,
+nunca cards abstratos. A intenção original fica persistida para, após aprovar
+o avatar, retomar automaticamente história ou rotina sem a mãe recontar tudo.
+
 **CRITÉRIO DE CONCLUSÃO:** jornada e dados de cada artefato auditados antes de
 implementar; link autenticado abre o membro correto; os campos vindos do
 WhatsApp aparecem para revisão; editar e confirmar não perde dados; geração
@@ -10326,11 +10335,143 @@ autorizada confirma que promessa no WhatsApp e entrega na plataforma são a
 mesma coisa.
 
 **RELAÇÕES:** PEND-004 (padrão validado primeiro em Rotina), PEND-216
-(histórias) e PEND-018 (Perfil Vivo).
+(histórias), PEND-018 (Perfil Vivo), PEND-220 a PEND-223.
 
 ---
 
-**Proximo ID livre: PEND-219. *(PEND-209 a PEND-211 já estão reivindicadas no working tree principal por outra frente; 024 e 025 reservadas por frentes ainda nao publicadas; PEND-202 reivindicada em commit e ainda sem ficha; 0076 e numero de MIGRACAO reservado — ver PEND-121.)***
+### PEND-219
+**Dar nome e significado aos atalhos por ícone abaixo de Admin no menu mobile**
+Bloco: **F · UX / Navegação** · Prioridade: **P2**
+STATUS: **ABERTA** · Aberta em: 2026-09-29
+
+Na navegação lateral mobile, três atalhos abaixo de **Admin** aparecem apenas
+como ícones (engrenagem, cartão/retângulo e ajuda), sem rótulo textual nem
+explicação visível. A pessoa precisa inferir o destino, e dois dos símbolos não
+têm significado inequívoco. Evidência: captura real da navegação mobile em
+29/09/2026.
+
+Investigar o destino e a frequência de uso de cada atalho antes de redesenhar.
+Preferir rótulos curtos visíveis ou um agrupamento claramente nomeado; tooltip
+sozinho não resolve em tela de toque. Preservar hierarquia, área de toque e
+acessibilidade, sem aumentar a poluição do menu.
+
+**CRITÉRIO DE CONCLUSÃO:** cada ação é compreensível sem tentativa e erro; há
+nome acessível e rótulo visível em mobile; o destino continua correto para
+família e admin; prova em largura de celular confirma leitura, toque e ausência
+de sobreposição; teste de navegação e build passam.
+
+**RELAÇÕES:** PEND-218 (ponte WhatsApp → Lúdico, que aumenta a circulação por
+essas telas).
+
+---
+
+### PEND-220
+**Ayla precisa conhecer e navegar toda a plataforma sem inventar caminhos**
+Bloco: **B · Ayla / Produto** · Prioridade: **P1**
+STATUS: **ABERTA — depende da fundação da PEND-218** · Aberta em: 2026-09-29
+
+Criar uma fonte única de capacidades reais da plataforma: o que cada recurso
+faz, quem pode usar, pré-requisitos, campos necessários, estados, caminho pelo
+menu e gerador de link direto para a pessoa/artefato corretos. A Ayla deve
+consultar esse catálogo para ensinar e reenviar o caminho quando a família
+pedir depois, sem depender de prompt solto nem inventar telas.
+
+**CRITÉRIO DE CONCLUSÃO:** avatar, roupas, história com/sem avatar, rotina,
+impressão e retomada têm contrato registrado e link direto validado; respostas
+de texto e áudio chegam à mesma decisão; corpus mede sinônimos e falsos
+positivos; caminho inexistente não é prometido; `/ajuda` usa a mesma fonte.
+
+---
+
+### PEND-221
+**Avatar original assistido por foto, com roupa e privacidade**
+Bloco: **D · Entregas / Lúdico** · Prioridade: **P1**
+STATUS: **ABERTA — depende de PEND-218 e revisão de privacidade** · Aberta em: 2026-09-29
+
+Na Web, oferecer “contar como é” ou “usar foto como referência”. A foto serve
+somente para características aproximadas; o resultado é personagem original,
+não reprodução facial. A família revisa cabelo, pele, óculos, faixa etária,
+traços e roupa preferida — inclusive variações como pijama de dinossauro —,
+escolhe um estilo 3D visual e aprova. WhatsApp nunca recebe nem reutiliza foto.
+
+**CRITÉRIO DE CONCLUSÃO:** consentimento explícito; regra documentada de
+retenção/eliminação da foto; nenhuma inferência de diagnóstico, identidade ou
+atributo não confirmado; foto com terceiros tratada; versão anterior
+preservada; história/rotina usam apenas o avatar aprovado; segurança e custo
+medidos.
+
+---
+
+### PEND-222
+**Círculo de personagens para histórias e rotinas**
+Bloco: **D · Entregas / Lúdico** · Prioridade: **P2**
+STATUS: **ABERTA — depende de PEND-221** · Aberta em: 2026-09-29
+
+Permitir personagens vinculados à criança: mãe, pai, avós, irmãos, pets,
+professora e profissionais. Cada pessoa tem nome/apelido, relação, avatar
+original aprovado e roupas opcionais. A história seleciona explicitamente o
+elenco e mantém identidade visual consistente entre páginas. Pessoa externa
+sem autorização pode ser representada apenas por personagem genérico.
+
+**CRITÉRIO DE CONCLUSÃO:** isolamento entre famílias e irmãos; consentimento
+para adultos externos; pet e pessoas funcionam; seleção e remoção do elenco
+antes de gerar; consistência multi-personagem medida; versões reencontráveis;
+nenhuma foto original aparece no artefato ou no WhatsApp.
+
+---
+
+### PEND-223
+**Jornada conduzida do trial para história e rotina visual**
+Bloco: **C · Trial / Conversão** · Prioridade: **P1**
+STATUS: **ABERTA — executar depois de PEND-218 e PEND-220** · Aberta em: 2026-09-29
+
+Durante o trial, partir dos temas escolhidos e de uma necessidade real para
+oferecer história ou rotina. Se a família aceitar, oferecer avatar como
+personalização opcional, agrupar apenas dados ausentes e permitir áudio. O link
+abre tudo preenchido para revisão. Adiar não perde a intenção: a família pode
+perguntar depois e a Ayla retorna ao mesmo lugar.
+
+**CRITÉRIO DE CONCLUSÃO:** piloto somente na conta Karina antes de expansão;
+dia/estado, não horário rígido, governa a jornada; entrega de valor precede
+convite; aceitar, recusar, adiar, abandonar e retomar são cobertos; nenhuma
+oferta em desabafo/urgência; métricas de oferta, abertura, geração, aprovação,
+retorno e conversão; sete dias sem repetição mecânica.
+
+---
+
+### PEND-224
+**Explicar a escolha antes dos botões e ampliar brincadeiras como ensaio social**
+Bloco: **B · Ayla / Conversa e repertório** · Prioridade: **P1**
+STATUS: **ABERTA — evidência de incompreensão real** · Aberta em: 2026-09-29
+
+Uma usuária recebeu botões de aprofundamento e não entendeu o que deveria
+fazer. A mensagem anterior precisa dizer, em linguagem humana, por que as
+opções apareceram, que basta tocar em uma e o que receberá depois — sem cara de
+menu técnico. O texto varia conforme os ramos reais; não pode anunciar algo que
+o clique não entrega.
+
+Ampliar também a oferta de brincadeiras além de pedidos explicitamente
+“lúdicos”. Bonecas, dinossauros, bichos, carrinhos e personagens podem simular
+interações sociais, permitir ensaio de diálogos, tomada de perspectiva,
+reparação e empatia em situações emocionalmente desafiadoras. A ideia precisa
+ser compatível com idade, comunicação, interesses, sensibilidades e objetivo
+da criança; trazer papéis do adulto e da criança, falas e variação de
+dificuldade. Reprovar propostas bobas, superficiais, moralistas ou tão óbvias
+que não agregam valor.
+
+**CRITÉRIO DE CONCLUSÃO:** corpus com situações sociais, emocionais e de
+regulação; mensagem anterior aos botões compreendida sem instrução externa;
+cada clique entrega exatamente o ramo anunciado; brincadeiras têm execução
+clara e benefício observável; adolescentes e pessoas não verbais recebem
+adaptação adequada; A/B prova mais compreensão e utilidade sem alongar demais;
+nenhum botão em desabafo/urgência.
+
+**RELAÇÕES:** PEND-191 (qualidade de brincadeiras), PEND-208 (repertório
+criativo) e PEND-213 (aprofundamento por botões).
+
+---
+
+**Proximo ID livre: PEND-225. *(PEND-209 a PEND-211 já estão reivindicadas no working tree principal por outra frente; 024 e 025 reservadas por frentes ainda nao publicadas; PEND-202 reivindicada em commit e ainda sem ficha; 0076 e numero de MIGRACAO reservado — ver PEND-121.)***
 
 > Conferir contra `origin/main`, não contra o seu branch. Dois branches podem
 > reivindicar o mesmo número — o conflito de merge nesta linha é o alarme.

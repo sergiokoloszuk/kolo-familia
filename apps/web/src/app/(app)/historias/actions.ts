@@ -6,11 +6,12 @@ import { z } from "zod";
 import { createClient, createServiceRoleClient } from "@/lib/supabase/server";
 import { requireActiveWrite } from "@/lib/auth/require-active-write";
 import { idadeAnos } from "@/lib/idade";
-import { gerarRoteiro, ilustrarPaginas, ilustrarComRetryPublico } from "@/lib/historias/gerar";
-import { AVATAR_ESTILOS, coerceEstilo } from "@/lib/imagem/avatar-prompt";
+import { gerarRoteiro, ilustrarPaginas, ilustrarPaginasSemAvatar, ilustrarComRetryPublico } from "@/lib/historias/gerar";
+import { AVATAR_ESTILOS, AVATAR_ESTILO_VALUES, coerceEstilo } from "@/lib/imagem/avatar-prompt";
 import { pathDeImagem } from "@/lib/storage/imagens";
 import { resolveFamily } from "@/lib/auth/current-family";
 import { trackFeature } from "@/lib/analytics/track";
+import { atualizarIntencaoLudico } from "@/lib/ludico/intencao";
 
 /**
  * Busca os bytes do avatar com retry. O bucket é PRIVADO, então baixa via
@@ -64,6 +65,9 @@ const schema = z.object({
   nPaginas: z.coerce.number().int().min(3).max(6).default(5),
   // Avatar escolhido pra ESTA história. Se ausente/ inválido, cai no "em uso".
   avatarId: z.string().uuid().optional(),
+  personagem: z.enum(["avatar", "animais_floresta", "criancas", "dinossauros", "robos"]).default("avatar"),
+  estiloVisual: z.enum(AVATAR_ESTILO_VALUES).default("animacao_3d"),
+  intencaoId: z.string().uuid().optional(),
 });
 
 const CAMPOS_KV: Record<string, string> = {
@@ -122,11 +126,11 @@ export async function criarHistoria(
         .maybeSingle();
       avatar = r.data;
     }
-    if (!avatar?.imagem_url) {
+    if (data.personagem === "avatar" && !avatar?.imagem_url) {
       return {
         ok: false,
         error:
-          "Crie primeiro o avatar dessa pessoa (em Configurações → Avatar). Ele é usado como personagem da história.",
+          "Escolha um personagem fictício ou crie o avatar para usar a própria criança na história.",
       };
     }
 
@@ -140,7 +144,7 @@ export async function criarHistoria(
         conteudo: "",
         imagens: [],
         descricao_input: data.descricao,
-        estilo: avatar.estilo,
+        estilo: data.estiloVisual,
         status: "gerando",
       })
       .select("id")
@@ -149,6 +153,24 @@ export async function criarHistoria(
       return { ok: false, error: `Falha ao iniciar a história: ${errInsert?.message}` };
     }
     const historiaId = row.id as string;
+    if (data.intencaoId) {
+      try {
+        await atualizarIntencaoLudico(supabase, {
+          id: data.intencaoId,
+          familyId: family.id,
+          membroId: data.membroId,
+          etapa: "gerando",
+          avatarId: data.avatarId ?? null,
+          artefatoId: historiaId,
+        });
+      } catch (e) {
+        const { error: limparError } = await supabase.from("historias").delete().eq("id", historiaId);
+        return {
+          ok: false,
+          error: `Não consegui preservar o andamento desta história: ${e instanceof Error ? e.message : "erro inesperado"}${limparError ? `; limpeza: ${limparError.message}` : ""}`,
+        };
+      }
+    }
     after(() =>
       trackFeature({ familyId: family.id, evento: "ludico_gerado", detalhe: { tipo: "historia" } }),
     );
@@ -160,8 +182,15 @@ export async function criarHistoria(
       idade: idadeAnos(membro.data_nascimento as string | null),
       perfil: membro.perfil as string,
     };
-    const avatarUrl = avatar.imagem_url as string;
-    const avatarEstilo = coerceEstilo(avatar.estilo);
+    const avatarUrl = avatar?.imagem_url as string | undefined;
+    const avatarEstilo = coerceEstilo(data.estiloVisual || avatar?.estilo);
+    const personagemDescricao: Record<typeof data.personagem, string> = {
+      avatar: `A própria criança ${membroSnap.nome}, representada pelo avatar de referência.`,
+      animais_floresta: "Um grupo original de animais da floresta: uma raposa pequena cor de cobre, um coelho cinza de orelhas longas e uma coruja dourada gentil.",
+      criancas: `Um pequeno grupo diverso de pessoas fictícias, acolhedoras, com aproximadamente ${membroSnap.idade ?? "a mesma faixa etária da pessoa"} anos, sem representar uma pessoa real específica.`,
+      dinossauros: "Três dinossauros infantis originais e amigáveis: um tricerátopo verde, um braquiossauro azul e um tiranossauro pequeno cor de laranja.",
+      robos: "Dois robôs infantis originais e amigáveis: um arredondado azul e outro pequeno amarelo, ambos muito expressivos.",
+    };
 
     // Lê Kolo Vivo (resumo + gostos) já aqui — o cliente do user ainda está vivo.
     const { data: kv } = await supabase
@@ -195,7 +224,7 @@ export async function criarHistoria(
     after(async () => {
       const admin = createServiceRoleClient();
       try {
-        const avatarBytes = await fetchAvatarBytes(avatarUrl);
+        const avatarBytes = avatarUrl ? await fetchAvatarBytes(avatarUrl) : null;
 
         const roteiro = await gerarRoteiro(
           {
@@ -204,15 +233,22 @@ export async function criarHistoria(
             gostos,
             descricao: data.descricao,
             nPaginas: data.nPaginas,
+            personagem: personagemDescricao[data.personagem],
           },
           { supabase: admin, family_account_id: family.id },
         );
 
-        const paginas = await ilustrarPaginas(admin, roteiro.paginas, {
-          familyAccountId: family.id,
-          avatarBytes,
-          avatarEstilo,
-        });
+        const paginas = avatarBytes
+          ? await ilustrarPaginas(admin, roteiro.paginas, {
+              familyAccountId: family.id,
+              avatarBytes,
+              avatarEstilo,
+            })
+          : await ilustrarPaginasSemAvatar(admin, roteiro.paginas, {
+              familyAccountId: family.id,
+              personagem: personagemDescricao[data.personagem],
+              avatarEstilo,
+            });
 
         const conteudo = paginas.map((p) => p.texto).join("\n\n");
         const imagens = paginas.map((p) => p.imagem_url).filter(Boolean);
@@ -232,7 +268,7 @@ export async function criarHistoria(
         );
         if (errPag) throw new Error(`páginas: ${errPag.message}`);
 
-        await admin
+        const { data: finalizada, error: finalError } = await admin
           .from("historias")
           .update({
             titulo: roteiro.titulo,
@@ -246,16 +282,40 @@ export async function criarHistoria(
                 ? `${falhasImg} ilustraç${falhasImg === 1 ? "ão" : "ões"} falhou — você pode regerar.`
                 : null,
           })
-          .eq("id", historiaId);
+          .eq("id", historiaId)
+          .select("id")
+          .maybeSingle();
+        if (finalError || !finalizada) throw new Error(`finalização: ${finalError?.message ?? "história não encontrada"}`);
+        if (data.intencaoId) {
+          await atualizarIntencaoLudico(admin, {
+            id: data.intencaoId,
+            familyId: family.id,
+            membroId: data.membroId,
+            etapa: "concluida",
+            avatarId: data.avatarId ?? null,
+            artefatoId: historiaId,
+          });
+        }
       } catch (e) {
         console.error("[historia.after]", e);
-        await admin
+        const { error: erroStatus } = await admin
           .from("historias")
           .update({
             status: "erro",
             erro: e instanceof Error ? e.message : "Erro inesperado",
           })
           .eq("id", historiaId);
+        if (erroStatus) console.error("[historia.after] falha ao persistir erro", erroStatus);
+        if (data.intencaoId) {
+          await atualizarIntencaoLudico(admin, {
+            id: data.intencaoId,
+            familyId: family.id,
+            membroId: data.membroId,
+            etapa: "erro",
+            avatarId: data.avatarId ?? null,
+            artefatoId: historiaId,
+          }).catch((err) => console.error("[historia.after] falha ao marcar intenção", err));
+        }
       } finally {
         revalidatePath("/historias");
         revalidatePath(`/historias/${historiaId}`);

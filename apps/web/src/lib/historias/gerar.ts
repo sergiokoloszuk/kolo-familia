@@ -1,13 +1,13 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { getAnthropicClient, MODELS } from "@/lib/ia/anthropic";
-import { gerarImagemComReferencia } from "@/lib/imagem/generate";
+import { gerarImagem, gerarImagemComReferencia } from "@/lib/imagem/generate";
 import { AVATAR_ESTILOS, type AvatarEstilo } from "@/lib/imagem/avatar-prompt";
 import { logarUsoApi } from "@/lib/billing/logar";
 
 /**
  * Geração de história ilustrada — o responsável descreve, a IA escreve em
- * páginas (Sonnet) e ilustra cada uma usando o avatar da criança como
- * referência, mantendo o mesmo personagem em todas as cenas.
+ * páginas e ilustra cada uma. Pode usar o avatar como referência OU um elenco
+ * fictício escolhido pela família (animais, crianças, robôs etc.).
  */
 
 export type PaginaGerada = {
@@ -21,9 +21,9 @@ export type PaginaGerada = {
 
 type PaginaRoteiro = { texto: string; fala: string | null; cena: string };
 
-const SYSTEM = `Você escreve HISTÓRIAS SOCIAIS curtas e ilustradas para uma criança neurodivergente, em português do Brasil. A criança é a PROTAGONISTA e a heroína da história. O objetivo é ajudá-la a antecipar, ensaiar ou celebrar uma situação real da vida dela.
+const SYSTEM = `Você escreve HISTÓRIAS SOCIAIS curtas e ilustradas para uma pessoa neurodivergente, em português do Brasil. O objetivo é ajudá-la a antecipar, ensaiar ou celebrar uma situação real da vida dela. A família escolhe se a pessoa aparece pelo avatar ou se a mensagem é vivida por personagens fictícios. A idade informada manda no vocabulário, na complexidade, nos interesses e na aparência dos personagens: nunca infantilize adolescente ou adulto.
 
-Tom: calmo, concreto, afetuoso, previsível. A criança sempre lida bem ou é apoiada — nada assustador, nada de vergonha, nada de diagnóstico ou termos clínicos. Linguagem simples, de livro infantil.
+Tom: calmo, concreto, afetuoso, previsível. A pessoa sempre lida bem ou é apoiada — nada assustador, nada de vergonha, nada de diagnóstico ou termos clínicos. Linguagem simples e adequada à idade.
 
 Devolva APENAS um JSON, sem texto antes ou depois:
 {
@@ -32,7 +32,7 @@ Devolva APENAS um JSON, sem texto antes ou depois:
     {
       "texto": "1 a 2 frases narrativas curtas (livro infantil)",
       "fala": "uma fala curta da criança, ou null",
-      "cena": "descrição VISUAL rica pro ilustrador: a AÇÃO e a POSE do personagem, o ENQUADRAMENTO/ângulo (varie entre as páginas: plano aberto, mais perto, de cima, de lado) e o cenário com objetos, profundidade e luz. NÃO descreva a aparência da criança (já temos o avatar dela). Em português."
+      "cena": "descrição VISUAL rica pro ilustrador: a AÇÃO e a POSE do personagem, o ENQUADRAMENTO/ângulo e o cenário. Quando houver avatar, NÃO descreva a aparência da criança. Quando houver elenco fictício, repita em cada cena os mesmos traços visuais essenciais para manter consistência. Em português."
     }
   ]
 }
@@ -51,12 +51,13 @@ export async function gerarRoteiro(
     gostos?: string;
     descricao: string;
     nPaginas: number;
+    personagem?: string;
   },
   tracking?: { supabase: SupabaseClient; family_account_id: string | null },
 ): Promise<{ titulo: string; paginas: PaginaRoteiro[] }> {
   const n = Math.min(Math.max(params.nPaginas, 3), 6);
   const client = getAnthropicClient();
-  const userMsg = `Criança: ${params.membro.nome}${params.membro.idade != null ? `, ${params.membro.idade} anos` : ""}, perfil ${params.membro.perfil}.
+  const userMsg = `Pessoa: ${params.membro.nome}${params.membro.idade != null ? `, ${params.membro.idade} anos` : ""}, perfil ${params.membro.perfil}.
 
 <o_que_sabemos_da_crianca>
 ${params.koloVivoResumo || "(pouca informação ainda)"}
@@ -69,6 +70,10 @@ ${
 <pedido_do_responsavel>
 ${params.descricao}
 </pedido_do_responsavel>
+
+<personagem_da_historia>
+${params.personagem || "A própria criança, usando o avatar fornecido ao ilustrador."}
+</personagem_da_historia>
 
 Escreva a história em EXATAMENTE ${n} páginas. Devolva o JSON.`;
 
@@ -141,6 +146,48 @@ export async function ilustrarPaginas(
   }
 
   await Promise.all(Array.from({ length: PARALELAS }, () => worker()));
+  return resultados;
+}
+
+/** Ilustra sem avatar: o mesmo elenco original é repetido em todas as cenas. */
+export async function ilustrarPaginasSemAvatar(
+  supabase: SupabaseClient,
+  paginas: PaginaRoteiro[],
+  params: { familyAccountId: string; personagem: string; avatarEstilo: AvatarEstilo },
+): Promise<PaginaGerada[]> {
+  const estiloPrompt =
+    AVATAR_ESTILOS.find((e) => e.value === params.avatarEstilo)?.prompt ??
+    AVATAR_ESTILOS[0].prompt;
+  const resultados: PaginaGerada[] = new Array(paginas.length);
+  let cursor = 0;
+  async function worker() {
+    while (true) {
+      const i = cursor++;
+      if (i >= paginas.length) return;
+      const p = paginas[i];
+      const prompt = `Ilustração original de livro infantil, rica em detalhes, no estilo: ${estiloPrompt}. O cenário inteiro, os personagens, a luz e os objetos devem seguir essa linguagem visual tridimensional; nada flat e nada fotorrealista. Mantenha exatamente o mesmo elenco e identidade visual em todas as páginas. Personagens: ${params.personagem}. Cena: ${p.cena}. Sem texto, letras, números, marcas ou personagens de franquias.`;
+      let url: string | null = null;
+      let erro: string | undefined;
+      for (let tentativa = 1; tentativa <= 2; tentativa++) {
+        try {
+          const r = await gerarImagem(supabase, {
+            prompt,
+            familyAccountId: params.familyAccountId,
+            tipo: "historia_social",
+            feature: "historias_imagem_sem_avatar",
+          });
+          url = r.url;
+          erro = undefined;
+          break;
+        } catch (e) {
+          erro = e instanceof Error ? e.message : String(e);
+          if (tentativa < 2) await new Promise((resolve) => setTimeout(resolve, 1500));
+        }
+      }
+      resultados[i] = { ordem: i + 1, texto: p.texto, fala: p.fala, cena: p.cena, imagem_url: url, ...(erro ? { erro } : {}) };
+    }
+  }
+  await Promise.all(Array.from({ length: 2 }, () => worker()));
   return resultados;
 }
 

@@ -121,6 +121,7 @@ import {
   segurancaFoiEncaminhada,
 } from "./estado-seguranca";
 import { primeiroNomeConfiavel, primeiroNomeCriancaConfiavel } from "./crianca-nome";
+import { criarOuReusarIntencaoLudico } from "@/lib/ludico/intencao";
 import { TEMAS } from "@/lib/conducao/temas";
 import {
   deveMostrarMenu,
@@ -4076,8 +4077,37 @@ async function processInboundInterno(
       // Começa assim que o alvo está resolvido e corre junto do envio da
       // história. O tutorial não acrescenta a ida ao banco depois da bolha.
       const linkHistoriaPromise = historiaEntregue
-        ? gerarMagicLink(supabase, { familyId: family.id, next: destinoHistoria })
-        : Promise.resolve(null);
+        ? (async () => {
+            let destino = destinoHistoria;
+            if (membroHistoriaId) {
+              try {
+                const intencao = await criarOuReusarIntencaoLudico(supabase, {
+                  familyId: family.id,
+                  membroId: membroHistoriaId,
+                  artefato: "historia",
+                  origem: "whatsapp",
+                  etapa: "revisar",
+                  sourceMessageId: inboundMessageRowId,
+                  payload: {
+                    descricao: inbound.texto,
+                    objetivo: null,
+                  },
+                });
+                if (intencao) destino += `&intencao=${encodeURIComponent(intencao.id)}`;
+              } catch (e) {
+                await logServerError(
+                  "historia_ludico_intencao_falhou",
+                  e instanceof Error ? e.message : "Falha ao guardar intenção",
+                  { family_account_id: family.id, payload: { membro_atipico_id: membroHistoriaId } },
+                ).catch(() => {});
+              }
+            }
+            return {
+              link: await gerarMagicLink(supabase, { familyId: family.id, next: destino }),
+              destino,
+            };
+          })()
+        : Promise.resolve({ link: null, destino: destinoHistoria });
       // ── A LACUNA SUGERIDA — Gate B, com a semântica da PEND-187A ───────
       //
       // ⚠️ O QUE SE GRAVA É A SUGESTÃO, NÃO A PERGUNTA. Até 10/09/2026 a chave
@@ -4347,7 +4377,7 @@ async function processInboundInterno(
           },
         });
 
-        const linkHistoria = await linkHistoriaPromise;
+        const { link: linkHistoria, destino: destinoHistoriaComIntencao } = await linkHistoriaPromise;
         if (linkHistoria) {
           const nomeCrianca =
             ctxExp.membros?.find((m) => m.id === exp.membroId)?.nome ?? null;
@@ -4361,7 +4391,7 @@ async function processInboundInterno(
             metadataMensagem: {
               historia_ludico: {
                 etapa: "guia",
-                destino: destinoHistoria,
+                destino: destinoHistoriaComIntencao,
                 origem: entregaHistoria.origem,
               },
             },
@@ -4377,7 +4407,7 @@ async function processInboundInterno(
             payload: {
               turno: rastro.turno,
               membro_atipico_id: exp.membroId,
-              destino: destinoHistoria,
+              destino: destinoHistoriaComIntencao,
             },
           });
         } else {
@@ -4973,13 +5003,25 @@ async function processInboundInterno(
       nomePorMembro,
       await historicoDoTurno(),
     ),
-    ofereceLudico ? gerarMagicLink(supabase, { familyId: family.id, next: "/historias/criar" }) : Promise.resolve(null),
+    ofereceLudico
+      ? gerarMagicLink(supabase, {
+          familyId: family.id,
+          next: membroContextoId
+            ? `/historias/criar?membro=${encodeURIComponent(membroContextoId)}`
+            : "/historias/criar",
+        })
+      : Promise.resolve(null),
     ofereceLudico
       ? gerarMagicLink(supabase, { familyId: family.id, next: "/ludico/rotinas/semana" })
       : Promise.resolve(null),
     ofereceLudico ? gerarMagicLink(supabase, { familyId: family.id, next: "/ludico/desenhos" }) : Promise.resolve(null),
     ofereceLudico
-      ? gerarMagicLink(supabase, { familyId: family.id, next: "/configuracoes/avatar" })
+      ? gerarMagicLink(supabase, {
+          familyId: family.id,
+          next: membroContextoId
+            ? `/configuracoes/avatar/${encodeURIComponent(membroContextoId)}?origem=whatsapp`
+            : "/configuracoes/avatar",
+        })
       : Promise.resolve(null),
     ofereceLudico ? gerarMagicLink(supabase, { familyId: family.id, next: "/evolucao/relatorio" }) : Promise.resolve(null),
   ]);

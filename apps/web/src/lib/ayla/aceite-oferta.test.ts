@@ -107,6 +107,7 @@ describe("o aceite chega até a fala", () => {
     // Este é um aceite de HISTÓRIA, não um pedido de plano: os links precisam
     // estar na mão do modelo. Só o turno de plano fica sem eles.
     expect(ORCH).toMatch(/const ofereceLudico = ehCrianca && !pedidoDePlano/);
-    expect(ORCH).toMatch(/next: "\/historias\/criar"/);
+    expect(ORCH).toContain('`/historias/criar?membro=${encodeURIComponent(membroContextoId)}`');
+    expect(ORCH).toContain(': "/historias/criar"');
   });
 });

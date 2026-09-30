@@ -8,6 +8,8 @@ import { idadeAnos } from "@/lib/idade";
 import { AvatarForm } from "./avatar-form";
 import { AvataresGaleria } from "./avatares-galeria";
 import { coerceEstilo, type AvatarDescricao } from "@/lib/imagem/avatar-prompt";
+import { normalizarDestino } from "@/lib/auth/destino-link";
+import { carregarIntencaoLudico } from "@/lib/ludico/intencao";
 
 // Geração de imagem (gpt-image-1) leva ~15-25s; evita timeout da action.
 export const maxDuration = 60;
@@ -16,8 +18,13 @@ export default async function AvatarMembroPage(
   props: PageProps<"/configuracoes/avatar/[id]">,
 ) {
   const { id } = await props.params;
+  const searchParams = await props.searchParams;
+  const origemWhatsapp = searchParams.origem === "whatsapp";
+  const retomarBruto = typeof searchParams.retomar === "string" ? searchParams.retomar : null;
+  const retomarHref = retomarBruto ? normalizarDestino(retomarBruto) : undefined;
   const { supabase, family } = await loadFamilyContext();
   const familyId = family!.id;
+  const intencaoId = typeof searchParams.intencao === "string" ? searchParams.intencao : undefined;
 
   const [{ data: membro }, { data: avatares }] = await Promise.all([
     supabase
@@ -35,6 +42,10 @@ export default async function AvatarMembroPage(
   ]);
 
   if (!membro) notFound();
+  const intencao = intencaoId
+    ? await carregarIntencaoLudico(supabase, { id: intencaoId, familyId, membroId: id }).catch(() => null)
+    : null;
+  const intencaoHistoriaId = intencao?.artefato === "historia" ? intencao.id : undefined;
 
   // Bucket privado → assina cada avatar na leitura.
   const avatarUrls = await assinarImagens(
@@ -77,10 +88,12 @@ export default async function AvatarMembroPage(
           Lúdico
         </Link>
         <h1 className="font-heading text-2xl font-semibold tracking-tight">
-          Avatares de {membro.nome}
+          {temAvatares ? `Avatar de ${membro.nome}` : `Vamos criar o avatar de ${membro.nome}`}
         </h1>
         <p className="text-sm text-muted-foreground">
-          {idadeAnos(membro.data_nascimento)} anos · {membro.perfil}
+          {origemWhatsapp
+            ? "Trouxemos o que já sabemos. Confira, ajuste se quiser e gere quando estiver tudo certo."
+            : `${idadeAnos(membro.data_nascimento)} anos · ${membro.perfil}`}
         </p>
       </header>
 
@@ -111,7 +124,14 @@ export default async function AvatarMembroPage(
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <AvatarForm membroId={membro.id} inicial={inicial} />
+          <AvatarForm
+            membroId={membro.id}
+            nome={membro.nome}
+            inicial={inicial}
+            temAvatar={temAvatares}
+            retomarHref={retomarHref}
+            intencaoId={intencaoHistoriaId}
+          />
         </CardContent>
       </Card>
     </div>

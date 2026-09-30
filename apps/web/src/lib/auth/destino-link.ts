@@ -19,6 +19,7 @@ const PERMITIDOS: readonly RegExp[] = [
   /^\/assinatura$/,
   /^\/precos$/,
   /^\/configuracoes(\/[a-z-]+)?$/,
+  /^\/configuracoes\/avatar\/[0-9a-f-]{36}$/,
   /^\/evolucao(\/(registros|relatorio))?$/,
   /^\/historias(\/criar)?$/,
   /**
@@ -46,6 +47,7 @@ const PERMITIDOS: readonly RegExp[] = [
 
 /** Quando o destino pedido não serve, cada área tem uma volta decente. */
 const FALLBACK: ReadonlyArray<[RegExp, string]> = [
+  [/^\/configuracoes/, "/configuracoes"],
   [/^\/planos/, "/planos"],
   [/^\/ludico\/rotinas/, "/ludico/rotinas"],
   [/^\/ludico/, "/ludico"],
@@ -91,10 +93,13 @@ export async function destinoDaFamilia(
 
   const plano = destino.match(/^\/planos\/([0-9a-f-]{36})$/);
   const rotina = destino.match(/^\/ludico\/rotinas\/([0-9a-f-]{36})$/);
-  if (!plano && !rotina) return destino;
+  const avatarMembro = destino.match(/^\/configuracoes\/avatar\/([0-9a-f-]{36})(?:[?#].*)?$/);
+  const historiaMembro = destino.match(/^\/historias\/criar\?[^#]*\bmembro=([0-9a-f-]{36})(?:[&#].*)?$/);
+  if (!plano && !rotina && !avatarMembro && !historiaMembro) return destino;
 
-  const tabela = plano ? "planos" : "rotinas";
-  const id = (plano ?? rotina)![1];
+  const membro = avatarMembro ?? historiaMembro;
+  const tabela = plano ? "planos" : rotina ? "rotinas" : "membros_atipicos";
+  const id = (plano ?? rotina ?? membro)![1];
   try {
     const { data, error } = await supabase
       .from(tabela)
@@ -106,10 +111,22 @@ export async function destinoDaFamilia(
       console.warn(
         `[auth:wa] destino recusado — ${tabela}/${id} não é da família ${params.familyId}`,
       );
-      return plano ? "/planos" : "/ludico/rotinas";
+      return plano
+        ? "/planos"
+        : rotina
+          ? "/ludico/rotinas"
+          : historiaMembro
+            ? "/historias"
+            : "/configuracoes/avatar";
     }
     return destino;
   } catch {
-    return plano ? "/planos" : "/ludico/rotinas";
+    return plano
+      ? "/planos"
+      : rotina
+        ? "/ludico/rotinas"
+        : historiaMembro
+          ? "/historias"
+          : "/configuracoes/avatar";
   }
 }

@@ -13,6 +13,7 @@ import {
   type AvatarDescricao,
 } from "@/lib/imagem/avatar-prompt";
 import { resolveFamily } from "@/lib/auth/current-family";
+import { atualizarIntencaoLudico, carregarIntencaoLudico } from "@/lib/ludico/intencao";
 
 async function requireFamilyAndMembro(membroId: string) {
   const supabase = await createClient();
@@ -34,6 +35,7 @@ async function requireFamilyAndMembro(membroId: string) {
 
 const descricaoSchema = z.object({
   membroId: z.string().uuid(),
+  intencaoId: z.string().uuid().optional(),
   estilo: z.enum(AVATAR_ESTILO_VALUES),
   idade: z.coerce.number().int().min(0).max(120).nullable().optional(),
   generoVisual: z.enum(["menino", "menina", "neutro"]).nullable().optional(),
@@ -64,9 +66,22 @@ export async function criarEGerarAvatar(
   input: CriarAvatarInput,
 ): Promise<GerarAvatarResult> {
   try {
-    const { membroId, ...desc } = descricaoSchema.parse(input);
+    const { membroId, intencaoId, ...desc } = descricaoSchema.parse(input);
     const { supabase, family } = await requireFamilyAndMembro(membroId);
     await requireActiveWrite(family.id);
+
+    // A retomada só pode consumir a intenção da mesma família e pessoa. A
+    // tela também confere, mas a action é a fronteira de escrita.
+    if (intencaoId) {
+      const intencao = await carregarIntencaoLudico(supabase, {
+        id: intencaoId,
+        familyId: family.id,
+        membroId,
+      });
+      if (!intencao || intencao.artefato !== "historia") {
+        return { ok: false, error: "Não consegui confirmar a história que este avatar deve retomar." };
+      }
+    }
 
     const descricao = desc as AvatarDescricao;
     const promptCanonico = montarPromptCanonico(descricao);
@@ -79,12 +94,6 @@ export async function criarEGerarAvatar(
       tipo: "avatar",
       feature: "avatar_geracao",
     });
-
-    // O novo vira o selecionado: tira a seleção dos outros, insere já marcado.
-    await supabase
-      .from("avatares_membros_atipicos")
-      .update({ selecionado: false })
-      .eq("membro_atipico_id", membroId);
 
     const { data: novo, error } = await supabase
       .from("avatares_membros_atipicos")
@@ -101,6 +110,36 @@ export async function criarEGerarAvatar(
       .single();
     if (error || !novo) {
       return { ok: false, error: `Imagem gerada, mas falhou ao salvar: ${error?.message}` };
+    }
+    // Só desmarca as versões anteriores DEPOIS que a nova está persistida.
+    // Assim uma falha de insert nunca deixa a criança sem avatar selecionado.
+    const { error: desmarcarError } = await supabase
+      .from("avatares_membros_atipicos")
+      .update({ selecionado: false })
+      .eq("membro_atipico_id", membroId)
+      .neq("id", novo.id as string);
+    if (desmarcarError) {
+      return {
+        ok: false,
+        error: `Avatar salvo, mas não consegui concluir a seleção: ${desmarcarError.message}`,
+      };
+    }
+
+    if (intencaoId) {
+      try {
+        await atualizarIntencaoLudico(supabase, {
+          id: intencaoId,
+          familyId: family.id,
+          membroId,
+          etapa: "avatar_aprovado",
+          avatarId: novo.id as string,
+        });
+      } catch (e) {
+        return {
+          ok: false,
+          error: `Avatar salvo, mas não consegui preservar a retomada da história: ${e instanceof Error ? e.message : "erro inesperado"}`,
+        };
+      }
     }
 
     revalidatePath(`/configuracoes/avatar/${membroId}`);
@@ -170,7 +209,7 @@ export async function vestirAvatar(
     // de pedido que o modelo resolve desenhando um personagem conhecido — o que
     // faz a moderação de imagem barrar o RESULTADO (04/08/2026, avatar do
     // Mario). A roupa é genérica e original, sempre.
-    const prompt = `${estiloDef.prompt}. Mantenha EXATAMENTE o mesmo personagem da imagem de referência — mesmo rosto, cabelo, tom de pele e identidade visual. Mude APENAS a roupa/figurino para: ${ocasiao}. A roupa deve ser GENÉRICA e ORIGINAL: nada de personagens de filmes, desenhos, quadrinhos ou jogos, nem logotipos, símbolos ou uniformes de marcas e times reais. Corpo inteiro, expressão acolhedora, postura natural, fundo neutro claro, sem texto, sem letras, sem logotipos, ilustração 2D, NÃO fotorrealista.`;
+    const prompt = `${estiloDef.prompt}. Mantenha EXATAMENTE o mesmo personagem da imagem de referência — mesmo rosto, cabelo, tom de pele e identidade visual. Mude APENAS a roupa/figurino para: ${ocasiao}. A roupa deve ser GENÉRICA e ORIGINAL: nada de personagens de filmes, desenhos, quadrinhos ou jogos, nem logotipos, símbolos ou uniformes de marcas e times reais. Corpo inteiro, expressão acolhedora, postura natural, fundo neutro claro, sem texto, sem letras, sem logotipos, acabamento tridimensional coerente com o avatar, NÃO fotorrealista.`;
 
     const result = await gerarImagemComReferencia(admin, {
       prompt,
@@ -179,12 +218,6 @@ export async function vestirAvatar(
       tipo: "avatar",
       feature: "avatar_vestir",
     });
-
-    // O novo (vestido) vira o selecionado.
-    await supabase
-      .from("avatares_membros_atipicos")
-      .update({ selecionado: false })
-      .eq("membro_atipico_id", base.membro_atipico_id);
 
     const desc = {
       ...((base.descricao_textual as Record<string, unknown>) ?? {}),
@@ -205,6 +238,17 @@ export async function vestirAvatar(
       .single();
     if (error || !novo) {
       return { ok: false, error: `Imagem gerada, mas falhou ao salvar: ${error?.message}` };
+    }
+    const { error: desmarcarError } = await supabase
+      .from("avatares_membros_atipicos")
+      .update({ selecionado: false })
+      .eq("membro_atipico_id", base.membro_atipico_id)
+      .neq("id", novo.id as string);
+    if (desmarcarError) {
+      return {
+        ok: false,
+        error: `Nova versão salva, mas não consegui concluir a seleção: ${desmarcarError.message}`,
+      };
     }
 
     revalidatePath("/configuracoes/avatar");

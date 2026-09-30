@@ -740,7 +740,11 @@ E o caminho é pra CRIAR algo que ainda não existe. Se o artefato JÁ foi criad
     );
     if (l.avatar)
       partes.push(
-        `AVATAR (explique bem quando oferecer história): pra ${nome} virar o personagem das histórias e dos cards, dá pra criar o avatar dele ANTES, uma vez só — fica salvo e vale pra tudo. É opcional, mas deixa a história com a cara dele. Diga o passo a passo curtinho: "1) se quiser, cria antes o avatar do ${nome} (Configurações → Avatar) — ${l.avatar}  2) depois é só criar a história (Lúdico → Histórias) — ${l.historia ?? ""}". Deixe claro que sem avatar também funciona.`,
+        `AVATAR (explique bem quando oferecer história): pra ${nome} virar o personagem das histórias e dos cards, dá pra criar o avatar uma vez e reutilizar. O link abre DIRETO na pessoa certa, com o que já sabemos preenchido para ela revisar antes de gerar: ${l.avatar}. O avatar é OPCIONAL: sem ele, a história pode usar animais da floresta, dinossauros, robôs ou personagens fictícios. Nunca bloqueie a história por falta de avatar.`,
+      );
+    if (l.avatar)
+      partes.push(
+        `MUDAR AVATAR: se ela pedir para mudar cabelo, óculos, roupa ou estilo, não mande criar tudo do zero e não repita dados conhecidos. Explique em uma frase que a versão atual continuará salva; envie o link direto de ${nome}; diga: "1) confira o que já está preenchido, 2) mude só o que quiser, 3) escolha o estilo visual e toque em Gerar". Se faltarem 2–3 características visuais decisivas, agrupe-as numa única mensagem e permita resposta por áudio.`,
       );
     notas.push(
       `RECURSOS DO LÚDICO: se ${params.nomeMae} pedir OU claramente se beneficiar — MESMO sem usar essas palavras — convide de leve. Não force nem ofereça se não vier a propósito.\n${partes.join("\n")}`,

@@ -68,10 +68,12 @@ describe("o turno reativo não compete com a ponte", () => {
   it("os links continuam existindo pra quem realmente pede o recurso", () => {
     // A regressão proibida: história, rotina, desenho, avatar e relatório
     // seguem sendo entregues em conversa comum.
-    expect(ORCH).toMatch(/next: "\/historias\/criar"/);
+    expect(ORCH).toContain('`/historias/criar?membro=${encodeURIComponent(membroContextoId)}`');
+    expect(ORCH).toContain(': "/historias/criar"');
     expect(ORCH).toMatch(/next: "\/ludico\/rotinas\/semana"/);
     expect(ORCH).toMatch(/next: "\/ludico\/desenhos"/);
-    expect(ORCH).toMatch(/next: "\/configuracoes\/avatar"/);
+    expect(ORCH).toContain('`/configuracoes/avatar/${encodeURIComponent(membroContextoId)}?origem=whatsapp`');
+    expect(ORCH).toContain(': "/configuracoes/avatar"');
     expect(ORCH).toMatch(/next: "\/evolucao\/relatorio"/);
   });
 
