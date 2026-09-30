@@ -79,6 +79,10 @@ import {
   pedeRotina,
   pedeRotinaDeUmDia,
   pedirRotinaDoDia,
+  pedeListaDeRotinas,
+  pedeTrazerRotinaExistente,
+  listarRotinasDaCrianca,
+  trazerRotinaExistente,
   pedeEditarRotina,
   entregarArtefatoImprimivel,
   lerFeedbackDaRotina,
@@ -606,7 +610,9 @@ export async function sendRotinaSeguimento(
   const refMembro = citarCrianca(membro, "de");
   // Pergunta o que MUDOU, não se gostou: é isso que muda a próxima orientação.
   const texto = `Oi, ${ctx.nomeMae}! Vocês chegaram a usar aquela sequência${refRotina}${refMembro}? Queria saber se ela facilitou alguma parte — ou se tem algum trecho que a gente precisa ajustar. É só tocar aqui:
-${link}`;
+${link}
+
+E, quando outro momento do dia estiver difícil, pode me contar do seu jeito. Eu também posso ajudar a transformar essa situação em uma sequência.`;
 
   const r = await enviarEPersistir(supabase, {
     family_account_id: familyAccountId,
@@ -3470,6 +3476,47 @@ async function processInboundInterno(
     if (r.tipo === "ambiguo") return { membroId: null, ambiguo: r.candidatos };
     return { membroId: null, ambiguo: null };
   };
+
+  // 3c-rotina-reencontro. A família não precisa lembrar onde a sequência foi
+  // salva nem repetir o pedido. Listar e reabrir são só leitura + link para o
+  // artefato existente: nunca criam uma segunda rotina.
+  if (
+    !seguranca.aberta &&
+    !rotinaConversa &&
+    (pedeListaDeRotinas(inbound.texto) || pedeTrazerRotinaExistente(inbound.texto))
+  ) {
+    const ctxR = await loadFamiliaParaEnvio(supabase, family.id);
+    const alvo = alvoDaRotina(ctxR, membroConversa);
+    if (alvo.ambiguo) return await perguntarQualCrianca(supabase, family, ctxR, alvo.ambiguo);
+    const membroId = alvo.membroId;
+    const membro = ctxR?.membros.find((item) => item.id === membroId);
+    if (ctxR && membroId && membro?.nome) {
+      const msg = pedeListaDeRotinas(inbound.texto)
+        ? await listarRotinasDaCrianca(supabase, {
+            familyId: family.id,
+            membroId,
+            nome: membro.nome,
+          })
+        : await trazerRotinaExistente(supabase, {
+            familyId: family.id,
+            membroId,
+            nome: membro.nome,
+            texto: inbound.texto,
+          });
+      if (msg) {
+        const resp = await enviarEPersistir(supabase, {
+          family_account_id: family.id,
+          membro_atipico_id: membroId,
+          phone: ctxR.whatsapp_e164,
+          texto: msg,
+          category: "reativa",
+          tipo: "resposta_registro",
+          controleTurno,
+        });
+        return { tratada: true, familia: family.id, resposta: resp };
+      }
+    }
+  }
 
   // 3c-rotina-ver. "Traga a rotina de hoje/terça" — só quando NÃO está montando
   // uma agora (senão o pedido é parte da conversa). Acha o dia, gera se faltar e

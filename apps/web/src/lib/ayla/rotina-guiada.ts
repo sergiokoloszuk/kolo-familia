@@ -125,6 +125,23 @@ export function pediuRotinaExplicitamente(texto: string | null | undefined): boo
 }
 
 /**
+ * A família quer ver quais sequências já salvou. Não depende de ela lembrar o
+ * nome técnico "rotina": é a volta natural de quem pergunta "o que já
+ * criamos?" depois de uma conversa anterior.
+ */
+export function pedeListaDeRotinas(texto: string | null | undefined): boolean {
+  const t = (texto ?? "").toLowerCase();
+  return /\b(quais|que)\s+(rotinas|sequ[êe]ncias|cart[õo]es)\b.*\b(j[aá]|criamos|temos|fizemos)\b|\b(o que|quais)\s+(j[aá]\s+)?(criamos|temos|fizemos)\b.*\b(rotinas|sequ[êe]ncias|cart[õo]es)\b/.test(t);
+}
+
+/** Pedido para reabrir uma sequência já criada, pelo nome que a mãe lembra. */
+export function pedeTrazerRotinaExistente(texto: string | null | undefined): boolean {
+  const t = (texto ?? "").toLowerCase();
+  return /\b(traz|traga|manda|mostra|abre|quero ver|me mostra|me manda)\b/.test(t) &&
+    /\b(rotina|sequ[êe]ncia|cart[õo]es|aquela|essa|fila|mercado|dentista|banho|escola|sono|dormir)\b/.test(t);
+}
+
+/**
  * A FAMÍLIA QUER IMPRIMIR?
  *
  * Decisão de produto (Sérgio, 03/08/2026): toda Rotina tem entrega concreta,
@@ -931,9 +948,11 @@ que você precise evitar, e você NUNCA deve escapar nada à mão.
 ## A FAMÍLIA NÃO SABE O QUE PEDIR — quem guia é você
 Ninguém chega dizendo "quero uma rotina visual semanal". Chega dizendo "preciso de uma rotina", "tá tudo bagunçado aqui", "ele não tem rotina nenhuma", "não sei nem por onde começar". Ela não conhece o produto, e não deveria precisar conhecer.
 
-PEDIDO GENÉRICO → ofereça caminhos concretos, em linguagem de gente, e espere ela escolher. Nada de menu numerado rígido nem jargão: são possibilidades numa frase cada — organizar um período do dia (manhã, depois da escola, noite), o dia inteiro, um momento difícil específico (sair do celular, começar a lição, ir dormir), ou um dia especial (passeio, festa, médico). Escolha as que fazem sentido pra ESTA família; não recite as quatro sempre.
+PEDIDO GENÉRICO → explique em uma frase que uma rotina visual mostra o que acontece agora e o que vem depois. Então pergunte QUAL SITUAÇÃO está precisando de ajuda. Não ofereça o menu "dia inteiro / manhã / noite": isso faz a mãe classificar a própria vida antes de poder contar o que está acontecendo. Dê apenas exemplos leves, como sair de casa, banho, mercado ou dentista, e convide a mãe a contar do jeito dela ou mandar áudio.
 
-PEDIDO JÁ CLARO → NÃO mostre caminho nenhum. "quero organizar a tarde depois da escola" já disse tudo: vá direto.
+PEDIDO JÁ CLARO → NÃO mostre caminho nenhum. "quero organizar a tarde depois da escola" já disse tudo: vá direto. Se ela já citou uma situação, como mercado ou dentista, ela também JÁ escolheu o assunto: descubra somente qual trecho precisa de mais apoio (a jornada toda ou um ponto como fila, barulho ou espera). Nunca volte a perguntar qual período do dia ela quer.
+
+DEPOIS DE ENTENDER A SITUAÇÃO → ofereça uma escolha contextual, nunca um cardápio genérico: uma sequência da jornada inteira (por exemplo, sair de casa → mercado → voltar) OU uma sequência curta só do trecho mais difícil (por exemplo, fila ou barulho). Explique que você sugere os cartões e ela pode trocar, tirar, acrescentar ou mudar a ordem antes de gerar as imagens. Quando sugerir uma sequência, ela é uma PROPOSTA — não trate como se fosse a rotina real da família.
 
 DEPOIS QUE ELA ESCOLHE, ensine o mínimo — sem virar formulário. Diga o que você precisa saber, em uma frase, e tire dela o peso de organizar: "me conta como é hoje, mesmo bagunçado — pode mandar áudio, que eu organizo". Pra um dia inteiro, o que importa é a sequência do que acontece, os horários que realmente mandam (escola, terapia, atividade fixa) e onde costuma travar. Diga isso do jeito que uma pessoa diria, não como três campos.
 
@@ -953,6 +972,8 @@ ANTES DE MONTAR (só quando já dá pra montar), diga em duas ou três linhas o 
 "Já dá pra montar a rotina da tarde do Mario. Vou organizar cada dia com a sequência das atividades e usar os horários que você me passou; onde não houver horário fixo, deixo só a ordem, pra não inventar precisão. A Rotina Visual serve justamente pra ficar claro o que vem agora e o que vem depois."
 
 DEPOIS QUE EXISTE, comente o que foi personalizado — a transição difícil, o horário que ELA deu, o que você encaixou por causa do que ela contou. Sem listar as etapas: elas aparecem logo abaixo, do jeito que ficaram.
+
+FECHAMENTO QUE ENSINA SEM VIRAR PROPAGANDA: depois de a sequência existir, diga em uma frase que ela pode voltar para contar se ajudou ou para ajustar. Diga também, de modo natural, que pode pedir outra sequência sempre que outro momento do dia estiver difícil — ela não precisa saber o nome "Rotina Visual". Não transforme isso num catálogo nem pergunte por outra situação no mesmo turno.
 
 ## COMBINADO VISUAL — quando o que trava é um acordo, não uma sequência do dia
 Tem hora que o problema não é "ela não sabe o que vem depois", é "a gente combina e não se sustenta": a ida à loja, o tempo de tela, a visita na casa de alguém. Aí a sequência serve pra tirar o acordo da fala e deixá-lo concreto — e é uma sequência curta como qualquer outra (mesma rotina, mesmas tarefas, mesmos cartões). Não anuncie como produto diferente: chame do que é ("um combinado pra loja", "o combinado do tempo de tela").
@@ -2018,7 +2039,9 @@ export async function conduzirRotina(
 
     const userPrompt = [
       prontidao.desfecho === "falta_escopo"
-        ? `ELA AINDA NÃO DISSE O QUE QUER ORGANIZAR. NÃO pergunte dado nenhum — nem idade, nem horário, nem qual criança. Faça UMA pergunta DISCRIMINATIVA, com opções curtas e numeradas, pra ela responder com um número: o dia inteiro, a manhã, depois da escola, a noite — ou uma passagem específica que está mais difícil. Pergunta aberta ("como é a rotina dele?") custa um turno e devolve texto que você ainda vai ter que interpretar. acao="perguntar".`
+        ? `AINDA FALTA DESCOBRIR A SITUAÇÃO QUE PRECISA DE AJUDA. NÃO pergunte dado nenhum — nem idade, nem horário, nem qual criança — e NÃO use o menu "dia inteiro / manhã / noite". Explique em uma frase que uma rotina visual mostra o que acontece agora e o que vem depois; faça UMA pergunta simples: qual situação está difícil? Dê, no máximo, exemplos leves como sair de casa, banho, mercado ou dentista e aceite texto livre ou áudio.
+
+SE A MÃE JÁ CITOU UMA SITUAÇÃO NO PEDIDO ATUAL OU NA CONVERSA, NÃO DIGA QUE FALTA ESCOPO. Retome a situação com as palavras dela e pergunte qual trecho merece apoio: a jornada inteira ou um ponto como fila, barulho ou espera. Diga que os cartões podem antecipar os passos e trazer combinados pertinentes, como um sinal para pedir pausa. acao="perguntar".`
         : "",
       prontidao.desfecho === "falta" && prontidao.pergunta && !(faltaSequencia && tamanho === "mini")
         ? `AINDA FALTA UMA COISA pra montar: ${prontidao.pergunta}\nFaça ESSA pergunta, do seu jeito — UMA só —, e NÃO monte a rotina neste turno (acao="perguntar").`
@@ -3002,6 +3025,108 @@ ${link}`
     console.warn("[ayla:pdf-rota]", e instanceof Error ? e.message : e);
     return RESPOSTA_PDF.falhou;
   }
+}
+
+type RotinaParaRetomar = {
+  id: string;
+  nome: string;
+  cards_status: string | null;
+  created_at: string;
+};
+
+function normalizarBuscaDeRotina(texto: string): string[] {
+  return texto
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .match(/[a-z0-9]{3,}/g)
+    ?.filter((p) => !new Set(["traz", "traga", "manda", "mostra", "abre", "quero", "rotina", "sequencia", "cartoes", "essa", "aquela", "para"]).has(p)) ?? [];
+}
+
+async function rotinasDaCrianca(
+  supabase: SupabaseClient,
+  familyId: string,
+  membroId: string,
+): Promise<RotinaParaRetomar[] | null> {
+  const { data, error } = await supabase
+    .from("rotinas")
+    .select("id, nome, cards_status, created_at")
+    .eq("family_account_id", familyId)
+    .eq("membro_atipico_id", membroId)
+    .order("created_at", { ascending: false })
+    .limit(12);
+  if (error) {
+    console.warn("[ayla:rotina] não consegui ler as rotinas para retomada:", error.message);
+    return null;
+  }
+  return (data ?? []) as RotinaParaRetomar[];
+}
+
+/** Lista títulos reconhecíveis, sem criar nem alterar nenhum artefato. */
+export async function listarRotinasDaCrianca(
+  supabase: SupabaseClient,
+  params: { familyId: string; membroId: string; nome: string },
+): Promise<string | null> {
+  const rotinas = await rotinasDaCrianca(supabase, params.familyId, params.membroId);
+  if (rotinas === null) return null;
+  if (!rotinas.length) {
+    return `Ainda não criamos uma sequência para ${params.nome}. Me conta uma situação que está difícil e eu te ajudo a montar a primeira.`;
+  }
+  const nomes = [...new Set(rotinas.map((r) => r.nome.trim()).filter(Boolean))].slice(0, 8);
+  return `Já criamos estas sequências para ${params.nome}:\n${nomes.map((nome, i) => `${i + 1}. ${nome}`).join("\n")}\n\nQual você quer abrir ou ajustar?`;
+}
+
+/**
+ * Reabre uma sequência pelo nome, sem gerar uma cópia. O resumo permite que a
+ * mãe se localize no WhatsApp; o link autenticado é onde os cartões e a edição
+ * continuam vivos.
+ */
+export async function trazerRotinaExistente(
+  supabase: SupabaseClient,
+  params: { familyId: string; membroId: string; nome: string; texto: string },
+): Promise<string | null> {
+  const rotinas = await rotinasDaCrianca(supabase, params.familyId, params.membroId);
+  if (rotinas === null || !rotinas.length) return null;
+
+  const termos = normalizarBuscaDeRotina(params.texto);
+  const pontuadas = rotinas
+    .map((rotina) => {
+      const titulo = normalizarBuscaDeRotina(rotina.nome);
+      return { rotina, pontos: termos.filter((termo) => titulo.includes(termo)).length };
+    })
+    .filter((item) => item.pontos > 0)
+    .sort((a, b) => b.pontos - a.pontos || b.rotina.created_at.localeCompare(a.rotina.created_at));
+
+  const melhor = pontuadas[0];
+  if (!melhor || (pontuadas[1] && pontuadas[1].pontos === melhor.pontos)) {
+    const nomes = [...new Set(rotinas.map((r) => r.nome.trim()).filter(Boolean))].slice(0, 5);
+    return `Encontrei mais de uma sequência para ${params.nome}. Qual delas você quer abrir?\n${nomes.map((nome, i) => `${i + 1}. ${nome}`).join("\n")}`;
+  }
+
+  const { data: tarefas, error } = await supabase
+    .from("rotina_tarefas")
+    .select("texto, ordem")
+    .eq("rotina_id", melhor.rotina.id)
+    .order("ordem", { ascending: true })
+    .limit(8);
+  if (error) {
+    console.warn("[ayla:rotina] não consegui ler as etapas para retomada:", error.message);
+    return null;
+  }
+  const etapas = ((tarefas ?? []) as Array<{ texto: string }>).map((t) => t.texto.trim()).filter(Boolean);
+  const link = await gerarMagicLink(supabase, {
+    familyId: params.familyId,
+    next: `/ludico/rotinas/${melhor.rotina.id}`,
+  });
+  if (!link) return null;
+
+  const resumo = etapas.length
+    ? `\n${etapas.map((etapa, i) => `${i + 1}. ${etapa}`).join("\n")}`
+    : "";
+  const estado = melhor.rotina.cards_status === "pronto"
+    ? "Os cartões estão prontos aqui:"
+    : "A sequência está aqui para você revisar ou continuar criando os cartões:";
+  return `Claro — aqui está “${melhor.rotina.nome}”.${resumo}\n\n${estado}\n${link}`;
 }
 
 export async function lerFeedbackDaRotina(

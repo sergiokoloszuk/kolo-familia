@@ -116,10 +116,11 @@ describe("estado 2: propõe o recorte em vez de perguntar a ordem", () => {
   });
 });
 
-describe("estado 3: uma pergunta discriminativa, não uma aberta", () => {
-  it("oferece opções numeradas em vez de 'como é a rotina dele?'", () => {
-    expect(GUIADA).toMatch(/UMA pergunta DISCRIMINATIVA, com opções curtas e numeradas/);
-    expect(GUIADA).toMatch(/responder com um número/);
+describe("estado 3: descobrir a situação sem transformar a mãe em classificadora", () => {
+  it("pergunta pela situação, não oferece o menu genérico de período", () => {
+    expect(GUIADA).toMatch(/qual situação está difícil/i);
+    expect(GUIADA).toMatch(/NÃO use o menu "dia inteiro \/ manhã \/ noite"/);
+    expect(GUIADA).toMatch(/texto livre ou áudio/i);
   });
 
   it("continua não perguntando dado nenhum nesse turno", () => {
