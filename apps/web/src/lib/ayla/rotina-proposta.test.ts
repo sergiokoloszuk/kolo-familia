@@ -64,13 +64,14 @@ vi.mock("./whatsappSender", () => ({
 
 // ── O modelo é o duplo: cada cenário DIZ o que a prontidão e o condutor fazem ─
 type Cenario = {
-  prontidao: "suficiente" | "falta" | "nao_e_rotina" | "limite_atuacao";
+  prontidao: "suficiente" | "falta_escopo" | "falta" | "nao_e_rotina" | "limite_atuacao";
   tamanho?: "orientacao" | "mini" | "rotina";
   acao: "montar" | "perguntar" | "responder" | "sair";
   mensagem?: string;
   proposta?: Array<{ texto: string; hora?: string }>;
 };
 let cenario: Cenario;
+let chamadasModelo = 0;
 
 vi.mock("./anthropic", () => ({
   AYLA_MODEL: "modelo-leve",
@@ -78,6 +79,7 @@ vi.mock("./anthropic", () => ({
   getAylaAnthropicClient: () => ({
     messages: {
       create: async (args: { system?: string }) => {
+        chamadasModelo += 1;
         const s = String(args.system ?? "");
         // A PRONTIDÃO se reconhece pelo próprio contrato dela.
         if (/Você decide se a Ayla já pode MONTAR/.test(s)) {
@@ -165,6 +167,7 @@ function semearProposta(etapas: string[], quando = new Date().toISOString()) {
 
 beforeEach(() => {
   chamadasGerador.length = 0;
+  chamadasModelo = 0;
   semearFamilia();
   cenario = { prontidao: "suficiente", acao: "montar" };
 });
@@ -238,6 +241,42 @@ describe("2 · a Ayla inferiu a sequência → propõe e NÃO gera", () => {
     const r = await conduzir("ele trava na hora do banho todo dia");
     // Era exatamente isto que `mensagem = ""` matava.
     expect(r?.mensagem).toContain("Pensei numa sequência curta");
+  });
+
+  it('MORDE: "pode ser essa" preserva exatamente o exemplo do banho da Manu', async () => {
+    const etapas = [
+      "Entrar no banheiro",
+      "Ligar o chuveiro",
+      "Lavar o corpo",
+      "Lavar o cabelo",
+      "Toalha fofinha",
+    ];
+    cenario = {
+      prontidao: "falta",
+      tamanho: "rotina",
+      acao: "perguntar",
+      mensagem: "Para o banho da Manu, eu sugiro esta sequência.",
+      proposta: etapas.map((texto) => ({ texto })),
+    };
+
+    const proposta = await conduzir(
+      "Quero a sequência visual do banho da Manu. A água fria e o barulho incomodam; ela gosta da toalha fofinha.",
+    );
+    expect(proposta?.pronto).toBe(false);
+    expect(proposta?.proposta?.map((e) => e.texto)).toEqual(etapas);
+    expect(rotinasCriadas()).toBe(0);
+
+    semearProposta(etapas);
+    cenario = { prontidao: "falta", tamanho: "rotina", acao: "montar", mensagem: "Combinado." };
+    const pronta = await conduzir("Pode ser essa");
+    expect(pronta?.pronto).toBe(true);
+    const recebida = chamadasGerador[0]!.propostaAtual as Array<{
+      tarefas: Array<{ texto: string }>;
+    }>;
+    expect(recebida[0]!.tarefas.map((e) => e.texto)).toEqual(etapas);
+    expect(recebida[0]!.tarefas.map((e) => e.texto).join(" ")).not.toMatch(
+      /5 minutos|quente ou morno/i,
+    );
   });
 });
 
@@ -352,6 +391,44 @@ describe("5 · a segunda porta fechou", () => {
     const r = await conduzir("a rotina aqui está corrida");
     expect(r, "conduziu uma rotina a partir de um comentário").toBeNull();
     expect(rotinasCriadas()).toBe(0);
+  });
+});
+
+describe("5b · pergunta simples não paga uma segunda IA", () => {
+  it("pedido genérico usa só a prontidão e explica qual situação contar", async () => {
+    cenario = { prontidao: "falta_escopo", acao: "perguntar" };
+    const r = await conduzir("Quero uma rotina visual");
+
+    expect(r?.mensagem).toMatch(/o que acontece agora e o que vem depois/i);
+    expect(r?.mensagem).toMatch(/qual situação está difícil/i);
+    expect(r?.mensagem).toMatch(/mandar áudio/i);
+    expect(chamadasModelo).toBe(1);
+  });
+
+  it("quando falta uma decisão, usa a pergunta do porteiro e ensina que dá para editar", async () => {
+    cenario = { prontidao: "falta", acao: "perguntar" };
+    const r = await conduzir("Ela tem dificuldade para sair de casa e ir ao mercado");
+
+    expect(r?.mensagem).toContain("como costuma ser?");
+    expect(r?.mensagem).toMatch(/trocar, tirar ou acrescentar etapas/i);
+    expect(chamadasModelo).toBe(1);
+  });
+
+  it("mantém o condutor quando ele precisa propor uma sequência curta", async () => {
+    cenario = {
+      prontidao: "falta",
+      tamanho: "mini",
+      acao: "perguntar",
+      mensagem: "Eu sugeriria esta passagem.",
+      proposta: [{ texto: "Avisar que vamos sair" }, { texto: "Calçar o sapato" }],
+    };
+    const r = await conduzir("Ela trava para sair de casa; o que acontece depois?");
+
+    expect(r?.proposta?.map((e) => e.texto)).toEqual([
+      "Avisar que vamos sair",
+      "Calçar o sapato",
+    ]);
+    expect(chamadasModelo).toBe(2);
   });
 });
 

@@ -91,6 +91,18 @@ describe("o endereço enviado à família é o domínio oficial", () => {
       else process.env.NEXT_PUBLIC_APP_URL = anterior;
     }
   });
+
+  it("MORDE: a configuração com espaços vista em produção nunca quebra o link", () => {
+    const anterior = process.env.NEXT_PUBLIC_APP_URL;
+    process.env.NEXT_PUBLIC_APP_URL = "https://app. kolofamilia. com. br";
+    try {
+      expect(appUrlPublica()).toBe("https://app.kolofamilia.com.br");
+      expect(appUrlPublica()).not.toContain(" ");
+    } finally {
+      if (anterior == null) delete process.env.NEXT_PUBLIC_APP_URL;
+      else process.env.NEXT_PUBLIC_APP_URL = anterior;
+    }
+  });
 });
 
 describe("o comportamento do token, exercitado de verdade", () => {

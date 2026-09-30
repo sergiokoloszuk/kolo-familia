@@ -54,9 +54,30 @@ export const APP_URL_PUBLICA = "https://app.kolofamilia.com.br";
 
 /** A Vercel é infraestrutura: nenhum link enviado à família expõe esse host. */
 export function appUrlPublica(): string {
-  const configurada = (process.env.NEXT_PUBLIC_APP_URL || "").trim().replace(/\/$/, "");
-  if (/^https:\/\/[^/]+\.vercel\.app$/i.test(configurada)) return APP_URL_PUBLICA;
-  if (configurada) return configurada;
+  const configurada = (process.env.NEXT_PUBLIC_APP_URL || "").trim();
+  if (configurada) {
+    try {
+      // URL de acesso é credencial: espaço, caminho, query, fragmento ou
+      // usuário/senha na origem configurada tornam o endereço inteiro
+      // suspeito. Em produção a saída segura é o domínio canônico — nunca
+      // publicar uma configuração quebrada para a família descobrir no clique.
+      if (/\s/.test(configurada)) return APP_URL_PUBLICA;
+      const url = new URL(configurada);
+      const ehLocal = process.env.NODE_ENV !== "production" &&
+        /^(localhost|127\.0\.0\.1)$/i.test(url.hostname);
+      const origemValida =
+        (url.protocol === "https:" || (ehLocal && url.protocol === "http:")) &&
+        !url.username &&
+        !url.password &&
+        (url.pathname === "/" || url.pathname === "") &&
+        !url.search &&
+        !url.hash;
+      if (!origemValida || /\.vercel\.app$/i.test(url.hostname)) return APP_URL_PUBLICA;
+      return url.origin;
+    } catch {
+      return APP_URL_PUBLICA;
+    }
+  }
   return process.env.NODE_ENV === "production" ? APP_URL_PUBLICA : "http://localhost:3000";
 }
 

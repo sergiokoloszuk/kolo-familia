@@ -1,7 +1,9 @@
 # SPEC — Rotina / Sequência Visual
 
 **Estado:** DESEJADO consolidado · ATUAL auditado · **decisões D-R1 a D-R5
-tomadas em 2026-08-08** · **não implementado**.
+tomadas em 2026-08-08** · implementação em fatias · **aguardando validação
+ponta a ponta**. Fechamento técnico mais recente:
+[Rotina Visual — Etapa 1, 30/09/2026](../analises/rotina-etapa-1-2026-09-30.md).
 Fonte: decisões de produto do Sérgio (2026-08-08) + auditoria do código de
 2026-08-08. Pendência: **PEND-004**.
 
@@ -91,6 +93,12 @@ burocrática. Não é confirmar sempre nem nunca — é confirmar **o que é da 
 rotina, que é o lugar oficial do artefato.
 - **WhatsApp:** conversa, construção, confirmação, aviso de pronto, link.
 - **App:** rotina, cartões, execução, edição, impressão, salvamento, feedback.
+
+Quando a sequência existe e ainda falta tema, a Ayla faz **uma escolha por
+turno**: mostra o quadro e pergunta o tema. O link autenticado é enviado na
+resposta seguinte, já com o tema salvo; não concorre com a pergunta anterior.
+Uma origem pública malformada nunca é publicada — o link cai no domínio
+canônico `https://app.kolofamilia.com.br`.
 
 ### 1.8 Na página
 Título · para qual criança · objetivo/contexto quando útil · etapas · cartões ·

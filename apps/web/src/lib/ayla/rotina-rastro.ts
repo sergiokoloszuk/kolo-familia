@@ -37,6 +37,8 @@ export type SaidaDoTurno =
   | "montou"
   | "propos"
   | "perguntou"
+  | "pergunta_escopo_sem_condutor"
+  | "pergunta_unica_sem_condutor"
   | "tema_aplicado"
   | "tema_recusado"
   | "null_sem_contexto"

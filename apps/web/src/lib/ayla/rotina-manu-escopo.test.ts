@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { aplicarPisosDeRotinaDitada, etapasDitadasEmLinhas, familiaDitouSequencia, opcaoDeContinuarRotinaNoLudico, pediuApoioVisual, perguntaDeTema, temaConfirmadoNestaRotina } from "./rotina-guiada";
+import { aplicarPisosDeRotinaDitada, etapasDitadasEmLinhas, familiaDitouSequencia, formatarMensagemDaRotina, opcaoDeContinuarRotinaNoLudico, pediuApoioVisual, perguntaDeTema, temaConfirmadoNestaRotina } from "./rotina-guiada";
 import { gerarRotina } from "@/lib/ludico/rotina-servico";
 import { destinoPermitido } from "@/lib/auth/destino-link";
 import type { SupabaseClient } from "@supabase/supabase-js";
@@ -82,6 +82,16 @@ describe("Manu: sequência ditada já define o recorte da rotina", () => {
     expect(convite).toContain("*Gerar cartões*");
     expect(convite).toContain(destino);
     expect(opcaoDeContinuarRotinaNoLudico("Manu", null)).toBe("");
+  });
+
+  it("limpa recuos acidentais sem mexer no endereço clicável", () => {
+    const texto = formatarMensagemDaRotina(
+      "  Perfeito!  \n  1. Entrar no banheiro  \n\n\n  https://app.kolofamilia.com.br/auth/wa?k=abc  ",
+    );
+    expect(texto).toBe(
+      "Perfeito!\n1. Entrar no banheiro\n\nhttps://app.kolofamilia.com.br/auth/wa?k=abc",
+    );
+    expect(texto.split("\n").some((linha) => linha.startsWith(" "))).toBe(false);
   });
 
   it("preserva limite clínico ou avaliação de que não é rotina", () => {

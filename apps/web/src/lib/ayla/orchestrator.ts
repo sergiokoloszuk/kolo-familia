@@ -114,7 +114,7 @@ import { apontaParaPendente } from "./rotina-retomada";
 import { dispararGeracao } from "./rotina-guiada";
 import { resolverRotinaOrfa, rotinaOrfaDaFamilia } from "./rotina-reconciliacao";
 import { pedeArtefatoImprimivel, apontaProRecente } from "./rotina-pdf-rota";
-import { resolverMembroAlvo } from "./membro-alvo";
+import { resolverMembroAlvo, textoDoTurnoSemResposta } from "./membro-alvo";
 import {
   segurancaAberta,
   mensagemPedeSeguranca,
@@ -4105,10 +4105,25 @@ async function processInboundInterno(
       }
     }
     marco(rastro, "geracao_resposta_inicio");
+    // A identidade usa todos os balões ainda sem resposta, não só o último.
+    // Caso real 30/09: "Manu tem dificuldade..." foi claimado; 13 s depois
+    // "Gosta da toalha fofinha" cancelou a primeira execução. Sem recompor os
+    // dois balões, o turno novo herdou Bento da conversa anterior.
+    const alvoDoTurno = ctxExp
+      ? resolverMembroAlvo({
+          texto: textoDoTurnoSemResposta(await historicoDoTurno(), inbound.texto),
+          membros: ctxExp.membros,
+          membroContexto: membroConversa,
+        })
+      : null;
+    const membroPreferidoId = alvoDoTurno?.tipo === "resolvido"
+      ? alvoDoTurno.membroId
+      : null;
     const exp = ctxExp
       ? await responderExperimental(supabase, {
           familyId: family.id,
           mensagem: inbound.texto,
+          membroPreferidoId,
           // ⚠️ C2 · UM DONO PARA A DECISÃO. A classificação deste turno já
           // aconteceu acima; o experimental consome, nunca reclassifica.
           turnoClassificado,

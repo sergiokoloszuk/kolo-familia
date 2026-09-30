@@ -173,9 +173,9 @@ describe("estado verdadeiro dos cartões", () => {
    * peça o PDF — e o link levava a uma rotina em `aguardando`, sem cartão
    * nenhum pra ver. Neste turno a Ayla tem um objetivo só.
    */
-  it("no turno que pede o tema só pode haver link para o rascunho, sem oferta de PDF", () => {
-    expect(GUIADA).toMatch(/const link = ids\.length \? await gerarMagicLink\(supabase, \{ familyId, next \}\) : null/);
-    expect(GUIADA).toMatch(/const opcaoLudico = faltaTema && ids\.length === 1/);
+  it("no turno que pede o tema não compete com link nem oferta de PDF", () => {
+    expect(GUIADA).toMatch(/const link = ids\.length && !faltaTema/);
+    expect(GUIADA).toMatch(/\? `\$\{fechamento\}\$\{quadro\}\$\{orient\}`/);
     expect(GUIADA).toMatch(/const dica = faltaTema \|\| visual\s*\n?\s*\? ""/);
   });
 
@@ -216,12 +216,12 @@ describe("endpoint de geração paga", () => {
  * A ORDEM É DETERMINÍSTICA — e é o que faltava no caso da Karina.
  *
  * fala útil → sequência REAL persistida → pergunta do tema.
- * Enquanto o tema estiver pendente: só o link do rascunho da criança, sem PDF
- * nem promessa de que os cartões já estão prontos.
+ * Enquanto o tema estiver pendente: uma pergunta só, sem link, PDF nem
+ * promessa de que os cartões já estão prontos. O link entra após a escolha.
  */
 describe("ordem da entrega quando falta tema", () => {
   const BLOCO = GUIADA.slice(
-    GUIADA.indexOf("const link = ids.length ? await gerarMagicLink"),
+    GUIADA.indexOf("const link = ids.length && !faltaTema"),
     GUIADA.indexOf("return { mensagem, pronto:"),
   );
 
@@ -234,17 +234,18 @@ describe("ordem da entrega quando falta tema", () => {
     expect(BLOCO.indexOf("sequenciaDoQuadro")).toBeLessThan(BLOCO.indexOf("perguntaDeTema("));
   });
 
-  it("a mensagem monta na ordem fala → quadro → tema/cartões → link", () => {
+  it("a mensagem monta na ordem fala → quadro → tema/cartões, sem segundo CTA", () => {
     const molde = BLOCO.slice(BLOCO.indexOf("mensagem = faltaTema"));
     const pos = (t: string) => molde.indexOf(t);
     expect(pos("${fechamento}")).toBeGreaterThanOrEqual(0);
     expect(pos("${fechamento}")).toBeLessThan(pos("${quadro}"));
     expect(pos("${quadro}")).toBeLessThan(pos("${orient}"));
-    expect(pos("${orient}")).toBeLessThan(pos("${opcaoLudico}"));
+    expect(pos("${orient}")).toBeGreaterThan(pos("${quadro}"));
+    expect(molde).not.toContain("${opcaoLudico}");
   });
 
-  it("com tema pendente só oferece o rascunho, sem PDF nem promessa de arte", () => {
-    expect(BLOCO).toMatch(/const opcaoLudico = faltaTema && ids\.length === 1/);
+  it("com tema pendente faz uma escolha por vez, sem PDF nem promessa de arte", () => {
+    expect(BLOCO).not.toMatch(/const opcaoLudico/);
     expect(BLOCO).toMatch(/const dica = faltaTema \|\| visual\s*\n?\s*\? ""/);
     expect(GUIADA).toContain("As imagens começam depois desse clique");
   });

@@ -33,6 +33,32 @@ export type AlvoResolvido =
   | { tipo: "ambiguo"; candidatos: MembroConhecido[]; motivo: "genero" | "sem_referencia" }
   | { tipo: "sem_membro" };
 
+type FalaRecente = { direcao: string; texto?: string | null };
+
+/**
+ * Recompõe os balões da mãe que ainda não receberam resposta.
+ *
+ * O lote de 3 s pode já ter marcado o primeiro balão como processado quando a
+ * mãe manda a continuação alguns segundos depois. A execução antiga é
+ * cancelada pelo portão de 10 s, mas a nova não pode esquecer o nome dito no
+ * primeiro balão. O histórico vem do mais recente para o mais antigo e para na
+ * última resposta da Ayla, que é a fronteira real do assunto em andamento.
+ */
+export function textoDoTurnoSemResposta(
+  historicoMaisRecentePrimeiro: readonly FalaRecente[],
+  textoAtual: string,
+): string {
+  const falas: string[] = [];
+  for (const linha of historicoMaisRecentePrimeiro) {
+    if (linha.direcao !== "inbound") break;
+    const texto = (linha.texto ?? "").trim();
+    if (texto) falas.unshift(texto);
+  }
+  const atual = textoAtual.trim();
+  if (atual && falas[falas.length - 1] !== atual) falas.push(atual);
+  return falas.join("\n");
+}
+
 function norm(s: string): string {
   return (s ?? "")
     .toLowerCase()

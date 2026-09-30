@@ -241,7 +241,7 @@ describe("I/J/K. o que já existia continua", () => {
   });
 
   it("mini continua propondo recorte e rotina grande continua perguntando", () => {
-    expect(GUIADA).toMatch(/faltaSequencia && tamanho === "mini"/);
-    expect(GUIADA).toMatch(/faltaSequencia && tamanho !== "mini"/);
+    expect(GUIADA).toMatch(/deveConduzirSequencia && tamanho === "mini"/);
+    expect(GUIADA).toMatch(/deveConduzirSequencia && tamanho !== "mini"/);
   });
 });

@@ -93,7 +93,7 @@ describe("estado 2: propõe o recorte em vez de perguntar a ordem", () => {
   });
 
   it("numa passagem curta, PROPÕE — e não monta ainda", () => {
-    expect(GUIADA).toMatch(/faltaSequencia && tamanho === "mini"/);
+    expect(GUIADA).toMatch(/deveConduzirSequencia && tamanho === "mini"/);
     expect(GUIADA).toMatch(/NÃO pergunte "como é a rotina dele" — PROPONHA/);
     expect(GUIADA).toMatch(/NÃO monte neste turno: acao="perguntar"/);
   });
@@ -106,13 +106,14 @@ describe("estado 2: propõe o recorte em vez de perguntar a ordem", () => {
   it("num período inteiro, continua PERGUNTANDO a sequência", () => {
     // Inventar a manhã de uma casa desconhecida seria a família corrigindo
     // ficção — pior que a pergunta.
-    expect(GUIADA).toMatch(/faltaSequencia && tamanho !== "mini"/);
+    expect(GUIADA).toMatch(/deveConduzirSequencia && tamanho !== "mini"/);
     expect(GUIADA).toMatch(/O QUE FALTA É A SEQUÊNCIA/);
+    expect(GUIADA).toMatch(/PERÍODO AMPLO/);
   });
 
   it("a pergunta genérica não compete com a proposta no mesmo turno", () => {
     // Duas instruções de "pergunte" no mesmo prompt = a Ayla faz as duas.
-    expect(GUIADA).toMatch(/&& !\(faltaSequencia && tamanho === "mini"\)/);
+    expect(GUIADA).toMatch(/&& !deveConduzirSequencia/);
   });
 });
 

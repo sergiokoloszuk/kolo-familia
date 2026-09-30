@@ -1,7 +1,12 @@
 import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { resolverMembroAlvo, conflitoDeIdentidade, generoApontado } from "./membro-alvo";
+import {
+  resolverMembroAlvo,
+  conflitoDeIdentidade,
+  generoApontado,
+  textoDoTurnoSemResposta,
+} from "./membro-alvo";
 
 /**
  * DE QUEM É ESTE PEDIDO — os 13 casos, a partir de um erro real.
@@ -35,6 +40,40 @@ describe("1-2. nome explícito manda", () => {
   it("nome vence o contexto anterior — referência atual não perde pra assunto velho", () => {
     const r = alvo("agora quero uma pra Manu", DOIS, "m-1");
     expect(r).toMatchObject({ tipo: "resolvido", membroId: "m-2", motivo: "nome" });
+  });
+});
+
+describe("balões seguidos antes da resposta", () => {
+  it("MORDE: conserva Manu quando o segundo balão não repete o nome", () => {
+    const texto = textoDoTurnoSemResposta(
+      [
+        { direcao: "inbound", texto: "Gosta da toalha fofinha" },
+        { direcao: "inbound", texto: "Manu tem dificuldade no banho. O barulho do chuveiro" },
+        { direcao: "outbound", texto: "Conversa anterior sobre Bento" },
+      ],
+      "Gosta da toalha fofinha",
+    );
+    expect(texto).toBe(
+      "Manu tem dificuldade no banho. O barulho do chuveiro\nGosta da toalha fofinha",
+    );
+    expect(alvo(texto, DOIS, "m-1")).toMatchObject({
+      tipo: "resolvido",
+      membroId: "m-2",
+      motivo: "nome",
+    });
+  });
+
+  it("não atravessa a última resposta da Ayla para ressuscitar assunto antigo", () => {
+    expect(
+      textoDoTurnoSemResposta(
+        [
+          { direcao: "inbound", texto: "Agora o barulho piorou" },
+          { direcao: "outbound", texto: "Vamos falar da Manu" },
+          { direcao: "inbound", texto: "Manu tem dificuldade no banho" },
+        ],
+        "Agora o barulho piorou",
+      ),
+    ).toBe("Agora o barulho piorou");
   });
 });
 

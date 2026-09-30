@@ -618,6 +618,16 @@ export function opcaoDeContinuarRotinaNoLudico(nome: string, link: string | null
     : "";
 }
 
+/** Formato final do WhatsApp: sem recuos acidentais nem linhas sobrando. */
+export function formatarMensagemDaRotina(texto: string): string {
+  return texto
+    .split("\n")
+    .map((linha) => linha.trim())
+    .join("\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
 export function temaConfirmadoNestaRotina(
   historico: readonly { de: "mae" | "kolo"; texto: string; membroId?: string | null }[],
   membroId: string,
@@ -1728,8 +1738,14 @@ export async function conduzirRotina(
     // ⚠️ UMA LEITURA PARA O TURNO INTEIRO. Eram três consultas à mesma linha —
     // interesses, transições e "o que já sabemos" —, em série, a ~400 ms cada.
     // O rastro de 09:46 mediu `leituras_perfil=3`.
-    const perfilDaRotina = await etapa(rastro, "contexto", () =>
-      lerPerfilDaRotina(supabase, params.membroAtipicoId),
+    // Perfil e proposta não dependem um do outro. Em produção cada ida ao
+    // banco custa centenas de milissegundos; fazê-las em série atrasava todos
+    // os turnos sem acrescentar segurança nem contexto.
+    const [perfilDaRotina, proposta] = await etapa(rastro, "contexto", () =>
+      Promise.all([
+        lerPerfilDaRotina(supabase, params.membroAtipicoId),
+        propostaPendente(supabase, familyId),
+      ]),
     );
     rastro.leituras_perfil += 1;
     const interesses = carregarInteresses(perfilDaRotina);
@@ -1754,7 +1770,6 @@ export async function conduzirRotina(
     // Com a proposta pendente lida ANTES, a pergunta que o sistema faz na
     // ordem certa é: "há uma sequência esperando resposta?" Só depois: "há uma
     // rotina esperando tema?".
-    const proposta = await propostaPendente(supabase, familyId);
     const respostaAProposta = proposta ? lerRespostaAProposta(params.contexto) : null;
     if (proposta) {
       console.log(
@@ -1873,13 +1888,28 @@ export async function conduzirRotina(
     // de WhatsApp que se estende, tudo que a mãe respondeu antes disso sumia e o
     // condutor voltava a perguntar "que horas ela acorda?".
     const desde = new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString();
-    const { data: msgs } = await supabase
-      .from("ayla_messages")
-      .select("texto, direcao, tipo, created_at, membro_atipico_id")
-      .eq("family_account_id", familyId)
-      .gte("created_at", desde)
-      .order("created_at", { ascending: false })
-      .limit(40);
+    // Histórico, rotinas anteriores e irmãos são três leituras independentes.
+    // O fluxo antigo esperava cada uma terminar antes de iniciar a seguinte.
+    const [mensagensResultado, jaSabemos, irmaosResultado] = await etapa(
+      rastro,
+      "contexto",
+      () => Promise.all([
+        supabase
+          .from("ayla_messages")
+          .select("texto, direcao, tipo, created_at, membro_atipico_id")
+          .eq("family_account_id", familyId)
+          .gte("created_at", desde)
+          .order("created_at", { ascending: false })
+          .limit(40),
+        carregarOQueJaSabemos(supabase, params.membroAtipicoId, perfilDaRotina),
+        supabase
+          .from("membros_atipicos")
+          .select("id, nome")
+          .eq("family_account_id", familyId)
+          .eq("ativo", true),
+      ]),
+    );
+    const msgs = mensagensResultado.data;
     // Limitar após ordenar ASC descartava precisamente os turnos MAIS
     // recentes numa conversa longa. Lemos os 40 últimos e só então voltamos
     // à ordem cronológica para interpretar pergunta → resposta.
@@ -1923,16 +1953,8 @@ export async function conduzirRotina(
     // contexto. É o que impede o passeio de barco de virar etapa de hoje.
     const transicoesTxt = blocoDeTransicoes(transicoesConhecidas);
 
-    const jaSabemos = await etapa(rastro, "contexto", () =>
-      carregarOQueJaSabemos(supabase, params.membroAtipicoId, perfilDaRotina),
-    );
-
     // Todos os membros da família — só pra guarda de identidade comparar nomes.
-    const { data: irmaosRaw } = await supabase
-      .from("membros_atipicos")
-      .select("id, nome")
-      .eq("family_account_id", familyId)
-      .eq("ativo", true);
+    const irmaosRaw = irmaosResultado.data;
     const irmaos = (irmaosRaw ?? []) as Array<{ id: string; nome: string | null }>;
 
     // ── PORTÃO 1: ISTO DEVE VIRAR ROTINA AGORA? ────────────────────────────
@@ -2035,7 +2057,46 @@ export async function conduzirRotina(
     // que a gente não conhece, não.
     const faltaSequencia =
       prontidao.desfecho === "falta" &&
-      /sequ[êe]ncia|ordem|o que acontece|como (é|e) (a|o)/i.test(prontidao.pergunta ?? "");
+      /sequ[êe]ncia|ordem|etapas?|passos?|o que acontece|como (?:é|e|acontece|costuma)/i.test(
+        prontidao.pergunta ?? "",
+      );
+    const deveConduzirSequencia =
+      faltaSequencia && (tamanho === "mini" || pedidoExplicito);
+
+    // ── PERGUNTA JÁ DECIDIDA: NÃO PAGAR UMA SEGUNDA IA ───────────────────
+    // O porteiro acabou de ler Perfil + conversa e decidiu, com o contrato de
+    // segurança, que ainda falta escopo ou uma única informação. Antes o
+    // Sonnet recebia essa decisão apenas para reescrever a pergunta: no turno
+    // real da Manu foram 4,659 s adicionais, além dos 2,868 s da prontidão.
+    // A proposta pendente fica fora deste atalho porque aceite/correção precisa
+    // do condutor para preservar exatamente a sequência vista pela família.
+    if (!proposta && prontidao.desfecho === "falta_escopo") {
+      rastro.acao = "perguntar";
+      rastro.saida = "pergunta_escopo_sem_condutor";
+      return {
+        mensagem:
+          `A rotina visual mostra para ${nome} o que acontece agora e o que vem depois — isso ajuda a se preparar sem precisar adivinhar.\n\n` +
+          "Qual situação está difícil hoje? Pode ser sair de casa, banho, mercado, dentista ou outra. Pode me contar do seu jeito ou mandar áudio.",
+        pronto: false,
+      };
+    }
+    if (
+      !proposta &&
+      prontidao.desfecho === "falta" &&
+      prontidao.pergunta?.trim() &&
+      // Numa passagem curta, o segundo modelo não está só reescrevendo uma
+      // pergunta: ele põe uma proposta concreta na mesa. Esse valor fica.
+      !deveConduzirSequencia
+    ) {
+      rastro.acao = "perguntar";
+      rastro.saida = "pergunta_unica_sem_condutor";
+      return {
+        mensagem:
+          `Entendi. Para os cartões ajudarem de verdade, preciso definir só uma coisa: ${prontidao.pergunta.trim()}\n\n` +
+          "Depois eu sugiro a sequência e você pode trocar, tirar ou acrescentar etapas antes de gerar as imagens.",
+        pronto: false,
+      };
+    }
 
     const userPrompt = [
       prontidao.desfecho === "falta_escopo"
@@ -2043,7 +2104,7 @@ export async function conduzirRotina(
 
 SE A MÃE JÁ CITOU UMA SITUAÇÃO NO PEDIDO ATUAL OU NA CONVERSA, NÃO DIGA QUE FALTA ESCOPO. Retome a situação com as palavras dela e pergunte qual trecho merece apoio: a jornada inteira ou um ponto como fila, barulho ou espera. Diga que os cartões podem antecipar os passos e trazer combinados pertinentes, como um sinal para pedir pausa. acao="perguntar".`
         : "",
-      prontidao.desfecho === "falta" && prontidao.pergunta && !(faltaSequencia && tamanho === "mini")
+      prontidao.desfecho === "falta" && prontidao.pergunta && !deveConduzirSequencia
         ? `AINDA FALTA UMA COISA pra montar: ${prontidao.pergunta}\nFaça ESSA pergunta, do seu jeito — UMA só —, e NÃO monte a rotina neste turno (acao="perguntar").`
         : "",
       // ── ESTADO 2: PROPOR O RECORTE, não perguntar a sequência ───────────
@@ -2052,12 +2113,15 @@ SE A MÃE JÁ CITOU UMA SITUAÇÃO NO PEDIDO ATUAL OU NA CONVERSA, NÃO DIGA QUE
       // pra sair do videogame e ir pro banho" não pede "como é a rotina
       // dele?" — pede uma proposta que ela confirma com uma palavra.
       // Só vale no tamanho "mini": um período inteiro não se inventa.
-      faltaSequencia && tamanho === "mini"
+      deveConduzirSequencia && tamanho === "mini"
         ? `A MÃE JÁ DISSE QUAL É O MOMENTO DIFÍCIL, SÓ NÃO DISSE A ORDEM. NÃO pergunte "como é a rotina dele" — PROPONHA. Diga em uma linha que você não faria o dia inteiro, e sim só essa passagem; escreva a sequência que você montaria (3 a 5 etapas, com seta), e feche perguntando se a ordem bate com a casa dela. Ela responde "sim" ou corrige uma etapa — e aí você monta. NÃO monte neste turno: acao="perguntar".
 Exemplo do formato (não copie o conteúdo): "Eu não faria uma rotina do dia inteiro pra isso — focaria nessa passagem. Montaria assim: aviso de que está terminando → salvar → guardar o controle → banho → jantar. Faz sentido essa ordem aí na sua casa?"`
         : "",
-      faltaSequencia && tamanho !== "mini"
-        ? `O QUE FALTA É A SEQUÊNCIA — e o jeito de pedir ENSINA a mãe a usar você. Peça as atividades na ordem em que acontecem e MOSTRE como é simples, com um exemplo curto ("café → escola → almoço → brincar → banho → jantar → dormir"). Diga que horário é OPCIONAL e ofereça o áudio. Uma frase, do seu jeito, sem virar formulário — e NÃO peça mais nada além da sequência (nem horário, nem ponto difícil, nem idade).`
+      deveConduzirSequencia && tamanho !== "mini"
+        ? `O QUE FALTA É A SEQUÊNCIA. Primeiro diferencie pelo que a mãe já contou:
+- SITUAÇÃO CONTIDA (banho, mercado, dentista, saída, fila, consulta ou outro acontecimento com começo e fim): proponha AGORA de 3 a 7 etapas concretas no campo \`proposta\`, usando apenas o que ela contou e passos inevitáveis. acao="perguntar". A lista exibida será a lista salva se ela responder "pode ser essa" — não escreva um exemplo descartável e não acrescente aviso, escolha, recompensa ou combinado que ela não mencionou.
+- PERÍODO AMPLO (dia inteiro, manhã, tarde, noite ou semana) sem atividades suficientes: peça as atividades na ordem em que acontecem e mostre só o formato genérico, sem fingir que o exemplo é proposta. Diga que horário é opcional e ofereça áudio. acao="perguntar".
+Faça UMA pergunta ou UMA proposta por turno; não peça tema, idade nem outra informação junto.`
         : "",
       soOrientacao ? ORIENTACAO_DE_TRANSICAO : "",
       // VAI HAVER CARTÃO. O TEMA É PERGUNTADO — decisão de 22/07/2026,
@@ -2507,14 +2571,13 @@ ${jaSabemos.perfil}` : "",
       // ── UM OBJETIVO POR TURNO ──────────────────────────────────────────
       // Enquanto falta o tema, a Ayla quer UMA escolha e mais nada. Em
       // 07/08/2026 o turno saiu com três chamadas à ação coladas — escolha um
-      // tema, abra o link, peça o PDF. O link novo é apenas uma alternativa
-      // para escolher O MESMO tema no rascunho já salvo — não promete cartões
-      // prontos nem acrescenta outra decisão à família.
-      //
-      // Quando há quadro salvo, o link aponta para ESTE quadro, da criança
-      // escolhida. A família pode selecionar o tema no WhatsApp ou abrir o
-      // mesmo rascunho no Lúdico — sem recriar etapas nem cair no perfil.
-      const link = ids.length ? await gerarMagicLink(supabase, { familyId, next }) : null;
+      // tema, abra o link, peça o PDF. Enquanto falta tema, nem sequer criamos
+      // um token que não será entregue: além de simplificar a conversa, evita
+      // uma escrita e uma ida ao banco sem utilidade. O link nasce no turno
+      // seguinte, já com o tema escolhido.
+      const link = ids.length && !faltaTema
+        ? await gerarMagicLink(supabase, { familyId, next })
+        : null;
       const fechamento = etapasDitadasEmLinhas(params.contexto)
         ? `*Rotina visual de ${nome}*\nOrganizei os passos na ordem que você me contou:`
         : mensagem || `Organizei a rotina de ${nome} 🌿`;
@@ -2577,11 +2640,11 @@ ${jaSabemos.perfil}` : "",
       // entendeu, vê o quadro exatamente como ficou, e só então os cartões, o
       // link e as opções.
       const quadro = sequencia ? `\n\n${sequencia}` : "";
-      const opcaoLudico = faltaTema && ids.length === 1
-        ? opcaoDeContinuarRotinaNoLudico(nome, link)
-        : "";
       mensagem = faltaTema
-        ? `${fechamento}${quadro}${orient}${opcaoLudico}`
+        // Uma escolha por vez. Neste turno a família vê a sequência e escolhe
+        // o tema. O link entra no turno seguinte, depois da resposta — não
+        // compete com a pergunta nem cria duas chamadas para ação.
+        ? `${fechamento}${quadro}${orient}`
         : link
           ? `${fechamento}${quadro}${orient}\n\n*Abra a rotina de ${nome}*\n${link}${dica}`
           : `${fechamento}${quadro}${orient}${dica}`;
@@ -2622,7 +2685,11 @@ ${jaSabemos.perfil}` : "",
     // Foi assim que "Pronto! A rotina da Manu está montada" saiu com a rotina
     // em `aguardando`. O ramo "achava" que tinha terminado; a linha do banco
     // dizia outra coisa; ninguém confrontou as duas.
-    const conferida = await conferirFalaContraOBanco(supabase, idsDoTurno, mensagem);
+    const conferida = await conferirFalaContraOBanco(
+      supabase,
+      idsDoTurno,
+      formatarMensagemDaRotina(mensagem),
+    );
     if (conferida.corrigida) {
       console.warn(
         `[ayla:rotina] fala afirmava conclusão sem estado — ${conferida.removido.length} trecho(s) retirado(s)`,

@@ -68,8 +68,8 @@ describe("tema e segundo link", () => {
     expect(CODIGO).toContain("const faltaTema = visual && ids.length > 0 && !tema");
   });
 
-  it("a mensagem oferece somente o link direto para conferir esta rotina", () => {
-    expect(CODIGO).toContain("const link = ids.length ? await gerarMagicLink(supabase, { familyId, next }) : null");
+  it("o link direto só nasce depois da escolha do tema", () => {
+    expect(CODIGO).toContain("const link = ids.length && !faltaTema");
     expect(CODIGO).not.toContain('gerarMagicLink(supabase, { familyId, next: "/ludico/rotinas" })');
     expect(CODIGO).toContain("*Abra a rotina de ${nome}*");
     expect(CODIGO).not.toContain("Em kolofamilia.com.br:");

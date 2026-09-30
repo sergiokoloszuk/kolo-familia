@@ -850,6 +850,11 @@ Aberta em: 2026-08-11 · Origem: teste real (Karina/Manu, 11:25–11:28)
   envio. É um ponto, não p50/p95; a correção editorial da rotina não fecha esta
   pendência. Próximo passo: medir amostra de conversas comuns e rotinas, separar
   tempo de espera, IA, banco e provedor, e só então otimizar.
+- **Correção específica da rotina (30/09/2026, local):** nos turnos em que a
+  prontidão já decidiu a única pergunta, a segunda chamada de 4,659 s foi
+  removida; leituras independentes passaram a ocorrer em paralelo. O portão
+  final anti-fragmentação de 10 s e a prontidão clínica foram preservados.
+  **Não fecha a pendência geral:** falta publicar e medir P50/P95 em produção.
 - **Medir separadamente**, no caminho real, antes de otimizar qualquer coisa:
   tempo até começar a responder · tempo total · chamadas ao roteador · chamadas
   ao modelo · queries · geração do Plano · geração do PDF · envio ao WhatsApp ·
@@ -1605,6 +1610,32 @@ conflito. Esta ficha é o registro de estado; o laudo é a prova.
 Categoria: Produto · Prioridade: **P2** · Estado: **AGUARDANDO VALIDAÇÃO**
 Aberta em: 2026-08-08 · Origem: decisão de produto (2026-08-08)
 
+- **Etapa 1 consolidada em 30/09/2026 — implementação local.** O fluxo agora
+  parte da situação concreta, oferece jornada inteira versus trecho difícil,
+  explica que a proposta é editável antes das imagens, preserva o filho em foco
+  e só pergunta o alvo quando houver ambiguidade real. A família também pode
+  listar as rotinas salvas e reabrir uma pelo nome, sem duplicar o artefato. O
+  caminho de pergunta simples deixou de pagar uma segunda chamada de IA e as
+  leituras independentes do banco foram paralelizadas. Evidência atualizada:
+  **685/685** testes da frente (30 arquivos), typecheck e build de produção com
+  106 páginas passaram. Diagnóstico,
+  baseline e roteiro de prova: [analises/rotina-etapa-1-2026-09-30.md](analises/rotina-etapa-1-2026-09-30.md).
+  **Não baixar:** falta publicar e executar a prova real de WhatsApp, link,
+  edição e imagens.
+- **Teste real de 30/09/2026 (Manu, banho): REPROVOU identidade, fidelidade e
+  entrega.** O primeiro balão nomeou Manu e o segundo completou “Gosta da
+  toalha fofinha”; a execução que respondeu recuperou Bento do contexto antigo.
+  Depois, a mãe aceitou “essa” sequência de cinco etapas, mas o sistema não a
+  tinha persistido como proposta e criou sete etapas diferentes. A mensagem
+  reuniu explicação, quadro, tema e convite ao Lúdico, e o endereço foi gravado
+  com espaços (`https://app. kolofamilia. com. br/...`), portanto não clicável.
+  Causas provadas no banco e no código: balão anterior claimado não participava
+  da resolução de identidade; exemplo em prosa não virava proposta estruturada;
+  `NEXT_PUBLIC_APP_URL` era aceito sem validar a origem. Correções locais:
+  recompor todos os inbounds desde a última resposta, proposta estruturada para
+  situação contida, uma escolha por turno, limpeza de linhas e fallback para o
+  domínio canônico quando a configuração for inválida. **Exige novo teste real
+  após o deploy; não baixar esta pendência.**
 - **Revisão consciente antes das imagens (29/09/2026): implementação local.**
   O WhatsApp passa a entregar um passo a passo curto; o link abre a lista e o
   tema preenchidos; a família pode editar ou incluir etapas e só então toca em
@@ -10105,6 +10136,17 @@ contrato do provider sem depender da mensagem variável de um erro externo.
 **Latência perceptível da Ayla no WhatsApp, inclusive em cliques estruturados**
 Bloco: **B · Ayla** · Prioridade: **P1**
 STATUS: **SEGUNDA CORREÇÃO PRONTA PARA PROVA REAL — aceite de produção pendente** · Aberta em: 2026-09-25
+
+**INTERVENÇÃO ESPECÍFICA DA ROTINA (30/09/2026, local).** O turno real da Manu
+mediu 19,794 s, dos quais 2,868 s foram na prontidão e 4,659 s no condutor. Nos
+desfechos em que o porteiro já decidiu uma única pergunta (`falta_escopo` ou
+`falta`), o condutor deixou de ser chamado; a passagem curta que precisa de uma
+proposta continua usando-o. Leituras independentes também passaram a ocorrer em
+paralelo. A melhora esperada é retirar os 4,659 s desse caminho mais a espera
+serial do banco, mas **não há número novo de produção antes do deploy**. O rastro
+ganhou saídas próprias para permitir a comparação. Prova local atualizada:
+685 testes da frente, typecheck e build de produção passaram. Ver
+[analises/rotina-etapa-1-2026-09-30.md](analises/rotina-etapa-1-2026-09-30.md).
 
 **BASELINE CORRIGIDO (produção, antes da implementação).** Os **36.243 ms**,
 **30.917 ms** e **35.560 ms** inicialmente lidos em `turno_externo` mediam a
