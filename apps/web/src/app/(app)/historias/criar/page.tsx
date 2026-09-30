@@ -116,8 +116,7 @@ export default async function CriarHistoriaPage({
           </span>
         </div>
         <p className="mt-2 text-muted-foreground">
-          Conte a situação com suas palavras. A Kolo escreve e ilustra cada página.
-          Você escolhe quem vive a história e o estilo visual do mundo.
+          Vamos transformar uma ideia em uma história ilustrada, feita para a criança.
         </p>
       </header>
 
@@ -132,22 +131,29 @@ export default async function CriarHistoriaPage({
         </div>
       ) : (
         <div className="flex flex-col gap-6">
-          <CriarHistoriaForm
-            criancas={criancas}
-            ativaId={ativaId}
-            intencaoId={intencao?.id}
-            descricaoInicial={descricaoInicial}
-            objetivoInicial={objetivoInicial}
-          />
+          <div className="rounded-2xl border border-brand-purple/20 bg-kolo-creme p-4">
+            <p className="font-heading text-lg text-foreground">Uma aventura com imagens, do jeito dela ✨</p>
+            <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+              A Kolo escreve e ilustra cada página. Você só confere a ideia, escolhe quem vive a aventura e o visual do mundo.
+            </p>
+          </div>
+          <div className="order-2">
+            <CriarHistoriaForm
+              criancas={criancas}
+              ativaId={ativaId}
+              intencaoId={intencao?.id}
+              descricaoInicial={descricaoInicial}
+              objetivoInicial={objetivoInicial}
+            />
+          </div>
 
           {semAvatar.length > 0 && (
-            <div className="rounded-2xl border border-brand-purple/20 bg-kolo-lilas-bg-2/40 p-4">
+            <div className="order-1 rounded-2xl border border-brand-purple/20 bg-kolo-lilas-bg-2/40 p-4">
               <p className="font-heading text-base font-medium text-foreground">
-                Personalizar com o próprio avatar
+                Quer deixar a história ainda mais parecida com {semAvatar.length === 1 ? semAvatar[0]?.nome : "a criança"}?
               </p>
               <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-                É opcional: a história já pode usar animais, robôs ou personagens
-                fictícios. Criando um avatar, a própria pessoa também pode protagonizar.
+                Criar um avatar é opcional. A ideia da história fica guardada e volta preenchida assim que o avatar estiver pronto.
               </p>
               <div className="mt-3 flex flex-wrap gap-2">
                 {semAvatar.map((m) => (

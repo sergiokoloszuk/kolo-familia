@@ -2139,10 +2139,9 @@ async function processarEscolhaObjetivoHistoria(
     },
   });
 
-  const destino = oferta.membro_atipico_id
+  const destinoBase = oferta.membro_atipico_id
     ? `/historias/criar?membro=${encodeURIComponent(oferta.membro_atipico_id)}`
     : "/historias/criar";
-  const linkPromise = gerarMagicLink(supabase, { familyId: params.familyId, next: destino });
   const exp = await responderExperimental(supabase, {
     familyId: params.familyId,
     mensagem: params.inbound.texto,
@@ -2176,6 +2175,54 @@ async function processarEscolhaObjetivoHistoria(
   }
 
   const membroId = exp.membroId ?? oferta.membro_atipico_id;
+  // O clique contém apenas o foco escolhido. A ideia original está na mensagem
+  // que abriu a oferta, e é ela que a página precisa mostrar para revisão.
+  let destino = destinoBase;
+  let intencaoPreparada = false;
+  if (membroId) {
+    const { data: pedidoOriginal, error: pedidoOriginalErro } = await supabase
+      .from("ayla_messages")
+      .select("texto")
+      .eq("id", oferta.source_inbound_message_id)
+      .eq("family_account_id", params.familyId)
+      .eq("direcao", "inbound")
+      .maybeSingle();
+    if (pedidoOriginalErro) {
+      await logServerError("historia_ludico_pedido_original_falhou", pedidoOriginalErro, {
+        family_account_id: params.familyId,
+        payload: { oferta_id: oferta.oferta_id, membro_atipico_id: membroId },
+      }).catch(() => {});
+    }
+    try {
+      const descricao = pedidoOriginal?.texto?.trim();
+      if (!descricao) throw new Error("Mensagem original da história não encontrada");
+      const objetivo = escolha.objetivo === "historia_agir"
+        ? "agir"
+        : escolha.objetivo === "historia_agencia"
+          ? "agencia"
+          : "compreender";
+      const intencao = await criarOuReusarIntencaoLudico(supabase, {
+        familyId: params.familyId,
+        membroId,
+        artefato: "historia",
+        origem: "whatsapp",
+        etapa: "revisar",
+        sourceMessageId: oferta.source_inbound_message_id,
+        payload: { descricao, objetivo },
+      });
+      if (intencao) {
+        destino += `&intencao=${encodeURIComponent(intencao.id)}`;
+        intencaoPreparada = true;
+      }
+    } catch (e) {
+      await logServerError(
+        "historia_ludico_intencao_falhou",
+        e instanceof Error ? e.message : "Falha ao guardar intenção",
+        { family_account_id: params.familyId, payload: { oferta_id: oferta.oferta_id, membro_atipico_id: membroId } },
+      ).catch(() => {});
+    }
+  }
+  const link = await gerarMagicLink(supabase, { familyId: params.familyId, next: destino });
   const resposta = await enviarEPersistir(supabase, {
     family_account_id: params.familyId,
     membro_atipico_id: membroId,
@@ -2221,7 +2268,6 @@ async function processarEscolhaObjetivoHistoria(
     },
   }).catch(() => {});
 
-  const link = await linkPromise;
   if (link) {
     const { data: membro } = membroId
       ? await supabase.from("membros_atipicos").select("nome").eq("id", membroId).maybeSingle()
@@ -2230,7 +2276,7 @@ async function processarEscolhaObjetivoHistoria(
       family_account_id: params.familyId,
       membro_atipico_id: membroId,
       phone: params.phone,
-      texto: guiaHistoriaNoLudico({ link, nomeCrianca: membro?.nome ?? null }),
+      texto: guiaHistoriaNoLudico({ link, nomeCrianca: membro?.nome ?? null, intencaoPreparada }),
       category: "reativa",
       tipo: "resposta_registro",
       metadataMensagem: {

@@ -219,7 +219,7 @@ export function respostaPareceHistoria(texto: string): boolean {
 export const BLOCO_ESCOLHA_OBJETIVO_HISTORIA = `<escolha_de_objetivo_da_historia>
 A família já pediu a história. O tema pode estar na mensagem ou na conversa recente, mas ela ainda não disse o que quer ajudar a criança a construir com a história. NÃO escreva a história neste turno.
 
-Reconheça o tema em uma frase curta e apresente exatamente três caminhos. Preserve estes títulos, nesta ordem, e personalize somente a descrição de cada um com o Perfil e o histórico — sem inventar:
+Reconheça o tema em uma frase curta e explique, antes das opções, que esta é a escolha do FOCO da história: ela define o que a criança vai poder praticar na aventura; personagens e visual são escolhidos depois, na plataforma. Diga também, em uma frase leve, que a família pode acrescentar o tema ou mundo que quer ver na aventura (por exemplo, dinossauros, espaço, animais ou um personagem inventado); se não disser, você usa somente os interesses que já conhece, sem inventar. Apresente exatamente três caminhos. Preserve estes títulos, nesta ordem, e personalize somente a descrição de cada um com o Perfil e o histórico — sem inventar:
 
 1️⃣ *Entender o que sente* — uma descrição concreta do que esta criança poderia compreender ou organizar.
 2️⃣ *Saber o que fazer* — uma descrição concreta de um recurso ou próximo passo que caberia no enredo.
@@ -260,14 +260,18 @@ export function blocoEntregaHistoriaWhatsApp(
 export function guiaHistoriaNoLudico(params: {
   link: string;
   nomeCrianca?: string | null;
+  intencaoPreparada?: boolean;
 }): string {
   const nome = params.nomeCrianca?.trim();
+  const ideia = params.intencaoPreparada !== false
+    ? "A ideia e o foco da história já estarão preenchidos. Você pode ajustar o texto antes de gerar."
+    : "Você pode contar a ideia com suas palavras antes de gerar.";
   return [
     `✨ *Quer transformar essa ideia em uma história ilustrada${nome ? ` para ${nome}` : " para a criança"}?*`,
     "",
     `Abra direto em *Criar uma história*: ${params.link}`,
     "",
-    `1️⃣ *Confira a ideia* — a situação e o objetivo já estarão preenchidos. Você pode ajustar o texto antes de gerar.`,
+    `1️⃣ *Confira a ideia* — ${ideia}`,
     "",
     `2️⃣ *Escolha os personagens* — pode usar o avatar de ${nome ?? "a criança"}, se houver, ou criar sem avatar com animais, dinossauros, robôs ou personagens fictícios.`,
     "",

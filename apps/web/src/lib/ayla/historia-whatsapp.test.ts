@@ -215,7 +215,7 @@ describe("guia fiel do Lúdico", () => {
     });
 
     expect(guia).toContain("Criar uma história");
-    expect(guia).toContain("a situação e o objetivo já estarão preenchidos");
+    expect(guia).toContain("A ideia e o foco da história já estarão preenchidos");
     expect(guia).toContain("pode usar o avatar de Darlison");
     expect(guia).toContain("ou criar sem avatar");
     expect(guia).toContain("estilo 3D");
@@ -271,6 +271,8 @@ describe("integração no caminho oficial", () => {
     expect(ORCH).toMatch(
       /entregarHistoriaNoWhatsapp: Boolean\(\s*entregaHistoria && !deveEscolherObjetivoHistoria/,
     );
+    expect(BLOCO_ESCOLHA_OBJETIVO_HISTORIA).toContain("tema ou mundo que quer ver na aventura");
+    expect(BLOCO_ESCOLHA_OBJETIVO_HISTORIA).toContain("dinossauros, espaço, animais ou um personagem inventado");
   });
 
   it("processa a escolha antes de outro menu e consome clique duplicado", () => {
@@ -310,6 +312,11 @@ describe("integração no caminho oficial", () => {
     );
     const destino = "/historias/criar?membro=baa1ac66-4d35-46d6-8ea5-586609d43a7b";
     expect(normalizarDestino(destino)).toBe(destino);
+    // O clique de objetivo traz somente “Saber o que fazer”; a tela precisa
+    // recuperar a ideia do pedido original e levá-la no mesmo link autenticado.
+    expect(ORCH).toContain("sourceMessageId: oferta.source_inbound_message_id");
+    expect(ORCH).toContain("pedidoOriginal?.texto?.trim()");
+    expect(ORCH).toContain("&intencao=${encodeURIComponent(intencao.id)}");
   });
 
   it("retoma a história só depois de confirmar o avatar da mesma criança", () => {

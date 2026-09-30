@@ -44,7 +44,7 @@ export function CriarHistoriaForm({
   const [objetivo, setObjetivo] = useState(objetivoInicial);
   const [tom, setTom] = useState("acolhedora");
   const [personagem, setPersonagem] = useState<"avatar" | "animais_floresta" | "criancas" | "dinossauros" | "robos">(
-    inicial?.avatares.length ? "avatar" : "animais_floresta",
+    inicial?.avatares.length ? "avatar" : /dinossaur/i.test(descricaoInicial) ? "dinossauros" : "animais_floresta",
   );
   const [estiloVisual, setEstiloVisual] = useState<AvatarEstilo>("animacao_3d");
   const [nPaginas, setNPaginas] = useState(5);
@@ -112,6 +112,13 @@ export function CriarHistoriaForm({
 
   return (
     <div className="flex flex-col gap-6 rounded-2xl border border-kolo-linha bg-white p-5">
+      {descricaoInicial && (
+        <div className="rounded-2xl border border-brand-purple/25 bg-kolo-lilas-bg-2/40 p-4">
+          <p className="text-xs font-bold uppercase tracking-[0.16em] text-brand-purple">História preparada para {inicial?.nome ?? "a criança"}</p>
+          <p className="mt-2 text-sm leading-relaxed text-foreground">{descricaoInicial}</p>
+          <p className="mt-2 text-sm text-muted-foreground">Revise a ideia e o foco abaixo. Depois, escolha quem vive a aventura e o visual.</p>
+        </div>
+      )}
       {criancas.length > 1 && (
         <div className="flex flex-col gap-1.5">
           <Label htmlFor="crianca">Pra quem</Label>
@@ -130,8 +137,9 @@ export function CriarHistoriaForm({
         </div>
       )}
 
-      <div className="flex flex-col gap-2">
-        <p className="text-xs font-bold uppercase tracking-[0.16em] text-brand-purple">1. Escolha quem vive a história</p>
+      <div className="order-3 flex flex-col gap-2">
+        <p className="text-xs font-bold uppercase tracking-[0.16em] text-brand-purple">3. Escolha quem vive a história</p>
+        <p className="text-sm text-muted-foreground">Isso define os personagens da aventura; não muda a situação que você contou.</p>
         <div className="grid gap-2 sm:grid-cols-3">
           {[
             ...(avatares.length ? [["avatar", "🧒", "O avatar"]] : []),
@@ -178,8 +186,8 @@ export function CriarHistoriaForm({
         </div>
       )}
 
-      <div className="flex flex-col gap-2">
-        <p className="text-xs font-bold uppercase tracking-[0.16em] text-brand-purple">2. Escolha o visual do mundo</p>
+      <div className="order-4 flex flex-col gap-2">
+        <p className="text-xs font-bold uppercase tracking-[0.16em] text-brand-purple">4. Escolha o visual do mundo</p>
         <p className="text-sm text-muted-foreground">Personagens e cenários seguem o mesmo estilo em todas as páginas.</p>
         <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
           {estilosOrdenados.map((estilo) => (
@@ -192,8 +200,8 @@ export function CriarHistoriaForm({
         </div>
       </div>
 
-      <div className="flex flex-col gap-1.5">
-        <p className="text-xs font-bold uppercase tracking-[0.16em] text-brand-purple">3. Conte a situação</p>
+      <div className="order-1 flex flex-col gap-1.5">
+        <p className="text-xs font-bold uppercase tracking-[0.16em] text-brand-purple">1. Confira a situação</p>
         <Label htmlFor="descricao" className="text-base">O que está acontecendo?</Label>
         <textarea
           id="descricao"
@@ -217,8 +225,8 @@ export function CriarHistoriaForm({
         </div>
       </div>
 
-      <div className="flex flex-col gap-2">
-        <p className="text-xs font-bold uppercase tracking-[0.16em] text-brand-purple">4. Escolha o que a história deve ajudar</p>
+      <div className="order-2 flex flex-col gap-2">
+        <p className="text-xs font-bold uppercase tracking-[0.16em] text-brand-purple">2. Confira o foco da história</p>
         <div className="grid gap-2 sm:grid-cols-3">
           {([
             ["compreender", "Entender o que acontece"],
