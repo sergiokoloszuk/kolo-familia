@@ -18,6 +18,12 @@ describe("Karina 29/09 — clarificação não pergunta a mesma criança de novo
     expect(ORCH).toContain('(intent === "organizacao" && portao.nomeou && portao.ato === "ambiguo")');
     expect(ORCH).toContain("const r = await conduzirRotina(supabase");
   });
+
+  it("pedido genérico de nova rotina não herda a criança de outro assunto", () => {
+    const rotina = ORCH.slice(ORCH.indexOf("const contextoDaRotina"), ORCH.indexOf("const r = await conduzirRotina"));
+    expect(rotina).toContain("rotinaConversa?.membroId ?? (pedidoExplicito ? null : membroConversa)");
+    expect(rotina).toContain("const alvo = alvoDaRotina(ctxR, contextoDaRotina)");
+  });
 });
 
 describe("tema de outra rotina não contamina a pendente", () => {
