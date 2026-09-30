@@ -175,7 +175,7 @@ describe("nunca derruba o webhook", () => {
     const r = await atenderDesconhecido(bancoFalso(0), INBOUND);
     expect(r).toMatchObject({ respondido: true });
     const enviado = enviarTexto.mock.calls[0]![0] as { texto: string };
-    expect(enviado.texto).toContain("https://kolo-familia-web.vercel.app/signup");
+    expect(enviado.texto).toContain("https://www.kolofamilia.com.br/signup");
   });
 });
 

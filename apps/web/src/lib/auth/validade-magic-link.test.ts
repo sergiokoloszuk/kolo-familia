@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { criarLinkAcesso, resolverLinkAcesso } from "./acesso-link";
+import { appUrlPublica, criarLinkAcesso, resolverLinkAcesso } from "./acesso-link";
 
 /**
  * MAGIC LINK = 30 DIAS — decisão de produto de 27/08/2026.
@@ -77,6 +77,19 @@ describe("a validade é de 30 dias, e tem um dono só", () => {
 
   it("3. MORDE: a constante não é exportada — ninguém a sobrescreve", () => {
     expect(SRC).not.toMatch(/export const VALIDADE_HORAS/);
+  });
+});
+
+describe("o endereço enviado à família é o domínio oficial", () => {
+  it("nunca expõe o domínio técnico da Vercel", () => {
+    const anterior = process.env.NEXT_PUBLIC_APP_URL;
+    process.env.NEXT_PUBLIC_APP_URL = "https://kolo-familia-web.vercel.app";
+    try {
+      expect(appUrlPublica()).toBe("https://www.kolofamilia.com.br");
+    } finally {
+      if (anterior == null) delete process.env.NEXT_PUBLIC_APP_URL;
+      else process.env.NEXT_PUBLIC_APP_URL = anterior;
+    }
   });
 });
 

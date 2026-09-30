@@ -94,13 +94,14 @@ function habilitado(env: Record<string, string | undefined> = process.env): bool
  * `sitemap.xml` público, que é montado a partir da mesma variável. Ou seja, o
  * piso está correto hoje e não é um palpite.
  *
- * ⚠️ Trocar quando o app ganhar domínio próprio — `kolofamilia.com.br` é a
- * landing da Base44, não o app.
+ * Endereço público oficial. Hosts `*.vercel.app` são infraestrutura e nunca
+ * devem aparecer numa orientação para a família.
  */
-const APP_PADRAO = "https://kolo-familia-web.vercel.app";
+const APP_PADRAO = "https://www.kolofamilia.com.br";
 
 function linkDeCadastro(): string {
-  const base = (process.env.NEXT_PUBLIC_APP_URL || APP_PADRAO).replace(/\/$/, "");
+  const configurada = (process.env.NEXT_PUBLIC_APP_URL || APP_PADRAO).replace(/\/$/, "");
+  const base = /\.vercel\.app$/i.test(configurada) ? APP_PADRAO : configurada;
   return base ? `${base}/signup` : "";
 }
 

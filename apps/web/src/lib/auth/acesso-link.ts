@@ -48,8 +48,14 @@ function novoToken(): string {
   return randomBytes(32).toString("base64url");
 }
 
-function appUrl(): string {
-  return (process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000").replace(/\/$/, "");
+export const APP_URL_PUBLICA = "https://www.kolofamilia.com.br";
+
+/** A Vercel é infraestrutura: nenhum link enviado à família expõe esse host. */
+export function appUrlPublica(): string {
+  const configurada = (process.env.NEXT_PUBLIC_APP_URL || "").trim().replace(/\/$/, "");
+  if (/^https:\/\/[^/]+\.vercel\.app$/i.test(configurada)) return APP_URL_PUBLICA;
+  if (configurada) return configurada;
+  return process.env.NODE_ENV === "production" ? APP_URL_PUBLICA : "http://localhost:3000";
 }
 
 /** Só caminho interno — nunca deixa virar redirect pra fora. */
@@ -86,7 +92,7 @@ export async function criarLinkAcesso(
       console.warn("[acesso-link] falha ao gravar:", error.message);
       return null;
     }
-    return `${appUrl()}/auth/wa?k=${encodeURIComponent(token)}`;
+    return `${appUrlPublica()}/auth/wa?k=${encodeURIComponent(token)}`;
   } catch (e) {
     console.warn("[acesso-link] erro:", e instanceof Error ? e.message : e);
     return null;
