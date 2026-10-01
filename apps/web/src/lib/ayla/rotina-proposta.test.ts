@@ -45,8 +45,11 @@ vi.mock("@/lib/ludico/rotina-servico", () => ({
       | Array<{ tarefas: Array<{ texto: string; hora: string | null }> }>
       | null
       | undefined;
+    const ditada = p.sequenciaDitada as string[] | null | undefined;
     const tarefas = proposta?.[0]?.tarefas?.length
       ? proposta[0].tarefas
+      : ditada?.length
+        ? ditada.map((texto) => ({ texto, hora: null }))
       : [{ texto: "Etapa inventada pelo gerador", hora: null }];
     return {
       desfecho: "gerou" as const,
@@ -194,6 +197,29 @@ describe("1 · a família ditou a sequência → monta direto, sem burocracia", 
     expect(chamadasGerador.length).toBe(1);
     expect(r?.proposta, "não devia propor: a sequência já era dela").toBeUndefined();
     expect(rotinasCriadas()).toBe(1);
+  });
+
+  it("MORDE 01/10: áudio por vírgulas preserva cinco ações, pula o condutor e fala curto", async () => {
+    cenario = {
+      prontidao: "suficiente",
+      acao: "montar",
+      mensagem: "Dica longa do modelo que não pode aparecer.",
+    };
+    const r = await conduzir(
+      "Eu quero criar uma rotina visual para a Manu, para ajudar ela a ir na casa da amiga. Então, ela primeiro precisa arrumar a malinha dela, precisa escovar o dente, entrar no carro, chegar lá falar oi, brincar bastante, e é isso.",
+    );
+
+    expect(chamadasModelo, "pagou prontidão + condutor apesar da lista completa").toBe(1);
+    expect(chamadasGerador[0]?.sequenciaDitada).toEqual([
+      "arrumar a malinha dela",
+      "escovar o dente",
+      "entrar no carro",
+      "chegar lá falar oi",
+      "brincar bastante",
+    ]);
+    expect(r?.mensagem).toContain("*Rotina de Manu salva para conferir* 🌿");
+    expect(r?.mensagem).not.toContain("Dica longa");
+    expect(r?.mensagem).not.toMatch(/respirar fundo|olhar para a amiga/i);
   });
 });
 

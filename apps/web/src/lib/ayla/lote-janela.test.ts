@@ -130,6 +130,49 @@ describe("a janela do lote — o valor e a evidência ao lado dele", () => {
     await vi.advanceTimersByTimeAsync(7_000);
     await expect(podePublicar).resolves.toBe(true);
   });
+
+  it('resposta estruturada como "1" é claimada e liberada sem pagar 10 s', async () => {
+    const db = bancoCom([{ id: "m1", texto: "1", criadaEm: BASE }]);
+    vi.useFakeTimers();
+    vi.setSystemTime(BASE);
+
+    const turno = await aguardarTurnoDaMae(db.cliente(), {
+      familyId: "fam-1",
+      textoAtual: "1",
+      respostaEstruturada: true,
+    });
+
+    expect(turno).not.toBeNull();
+    expect(turno!.texto).toBe("1");
+    await expect(
+      confirmarTurnoAindaAtual(db.cliente(), {
+        familyId: "fam-1",
+        controle: turno!.controle,
+      }),
+    ).resolves.toBe(true);
+    expect(Date.now()).toBe(BASE.getTime());
+  });
+
+  it("áudio já completo conserva 3 s para continuação, não 10 s", async () => {
+    const db = bancoCom([{ id: "m1", texto: "primeiro banho, pijama, cama", criadaEm: BASE }]);
+    vi.useFakeTimers();
+    vi.setSystemTime(BASE);
+
+    const preparando = aguardarTurnoDaMae(db.cliente(), {
+      familyId: "fam-1",
+      textoAtual: "primeiro banho, pijama, cama",
+      mensagemCompleta: true,
+    });
+    await vi.advanceTimersByTimeAsync(3_000);
+    const turno = await preparando;
+    await expect(
+      confirmarTurnoAindaAtual(db.cliente(), {
+        familyId: "fam-1",
+        controle: turno!.controle,
+      }),
+    ).resolves.toBe(true);
+    expect(Date.now()).toBe(BASE.getTime() + 3_000);
+  });
 });
 
 describe("os balões que a janela existe para juntar", () => {

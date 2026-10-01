@@ -7,6 +7,7 @@ import type { ProntidaoRotina } from "./prontidao-rotina";
 import { readFileSync } from "node:fs";
 
 const pedido = "Quero montar uma rotina visual para a Manu\nCafé\nBanho\nEscola\nCasa da vó";
+const audioReal = "Eu quero criar uma rotina visual para a Manu, para ajudar ela a ir na casa da amiga. Então, ela primeiro precisa arrumar a malinha dela, precisa escovar o dente, entrar no carro, chegar lá falar oi, brincar bastante, e é isso.";
 const falta: ProntidaoRotina = {
   desfecho: "falta",
   tamanho: "rotina",
@@ -49,6 +50,23 @@ describe("Manu: sequência ditada já define o recorte da rotina", () => {
       { texto: "Café", hora: null }, { texto: "Banho", hora: null },
       { texto: "Escola", hora: null }, { texto: "Casa da vó", hora: null },
     ]);
+  });
+
+  it("reconhece a lista falada real de 01/10 e não inventa transições", () => {
+    expect(familiaDitouSequencia(audioReal)).toBe(true);
+    expect(etapasDitadasEmLinhas(audioReal)).toEqual([
+      "arrumar a malinha dela",
+      "escovar o dente",
+      "entrar no carro",
+      "chegar lá falar oi",
+      "brincar bastante",
+    ]);
+  });
+
+  it("não transforma relato com vírgulas em sequência ditada", () => {
+    expect(etapasDitadasEmLinhas(
+      "Quero ajuda com a rotina da Manu porque ela chora, grita, se joga no chão e depois fica cansada.",
+    )).toBeNull();
   });
 
   it("não converte mero pedido sem sequência em rotina pronta", () => {

@@ -136,18 +136,34 @@ export type ControleTurno = {
  */
 export async function aguardarTurnoDaMae(
   supabase: SupabaseClient,
-  params: { familyId: string; textoAtual: string },
+  params: {
+    familyId: string;
+    textoAtual: string;
+    respostaEstruturada?: boolean;
+    mensagemCompleta?: boolean;
+  },
 ): Promise<Lote | null> {
   // Marco tirado ANTES de dormir: a minha mensagem já está gravada, então
   // qualquer linha mais nova que isto é mensagem que chegou durante a espera.
   const inicioSilencio = Date.now();
   const marco = new Date(inicioSilencio).toISOString();
+  // Resposta a uma pergunta fechada já é um turno completo. No caso real de
+  // 01/10, "1" escolhia uma das duas opções de tema persistidas: esperar 10 s
+  // não agrupava linguagem natural nem aumentava segurança, só atrasava uma
+  // escrita determinística. Um áudio que já contém pedido + sequência completa
+  // conserva 3 s para uma continuação; mensagens livres preservam os 10 s.
+  const janelaSilencioMs = params.respostaEstruturada
+    ? 0
+    : params.mensagemCompleta
+      ? JANELA_PREPARACAO_MS
+      : JANELA_SILENCIO_MS;
+  const janelaPreparacaoMs = params.respostaEstruturada ? 0 : JANELA_PREPARACAO_MS;
   const controle: ControleTurno = {
     marcoSilencio: marco,
-    publicarNaoAntesDeMs: inicioSilencio + JANELA_SILENCIO_MS,
+    publicarNaoAntesDeMs: inicioSilencio + janelaSilencioMs,
   };
 
-  await dormir(JANELA_PREPARACAO_MS);
+  if (janelaPreparacaoMs > 0) await dormir(janelaPreparacaoMs);
 
   const desde = new Date(Date.now() - JANELA_LOTE_MIN * 60_000).toISOString();
 

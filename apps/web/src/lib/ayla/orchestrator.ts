@@ -69,6 +69,7 @@ import {
 import { pedeUmPlano } from "@/lib/ia/pedido-plano";
 import { abreFluxoDeArtefato, atoSobreArtefato } from "@/lib/conducao/ato-artefato";
 import {
+  etapasDitadasEmLinhas,
   rotinaConversaPendente,
   pediuRotinaExplicitamente,
   portaoDeterministicoDeRotina,
@@ -2774,6 +2775,12 @@ async function processInboundInterno(
   // todas. Ver lib/ayla/lote-inbound.ts.
   rastro.familia = family.id;
   marco(rastro, "familia_resolvida");
+  const respostaEstruturadaDeRotina = Boolean(
+    rotinaConversa && /^\s*(?:\d{1,2}|sem tema)\s*$/iu.test(inbound.texto),
+  );
+  const audioComRotinaCompleta = Boolean(
+    inbound.midiaTipo === "audio" && etapasDitadasEmLinhas(inbound.texto) !== null,
+  );
   // ⚠️ LATÊNCIA DELIBERADA DE PRODUTO — 10 s de silêncio (3 s → 10 s em
   // 19/08/2026, PEND-058). Fica numa etapa própria justamente para NÃO se
   // confundir com tempo de computação no orçamento.
@@ -2781,11 +2788,13 @@ async function processInboundInterno(
   const turno = await aguardarTurnoDaMae(supabase, {
     familyId: family.id,
     textoAtual: inbound.texto,
+    respostaEstruturada: respostaEstruturadaDeRotina,
+    mensagemCompleta: audioComRotinaCompleta,
   });
   marco(rastro, "debounce_fim");
   if (!turno) return { tratada: false, familia: family.id };
-  // O preparo pode começar aos 3 s, mas nenhuma resposta deste turno pode ser
-  // publicada antes do portão final de 10 s sem mensagem nova.
+  // Mensagem livre: preparo aos 3 s e publicação depois do portão de 10 s.
+  // Áudio com lista completa: 3 s. Escolha fechada: publicação imediata.
   const controleTurno = turno.controle;
   // ⚠️ ADOTA O TEXTO DO LOTE SEMPRE QUE ELE TIVER TEXTO — antes era só
   // `quantidade > 1`, e `quantidade` conta textos NÃO VAZIOS, não linhas

@@ -645,16 +645,49 @@ export function temaConfirmadoNestaRotina(
   return null;
 }
 
+function ehEtapaCurtaDitada(texto: string): boolean {
+  return texto.length > 0 && texto.length <= 60 && !texto.endsWith("?") && texto.split(/\s+/).length <= 8;
+}
+
+/**
+ * Lista falada em áudio, depois de uma âncora inequívoca de ordem.
+ *
+ * Caso real de 01/10/2026: "ela primeiro precisa arrumar a malinha, precisa
+ * escovar o dente, entrar no carro...". A vírgula anterior à lista pertence à
+ * explicação do pedido; por isso dividir a mensagem inteira falhava. O recorte
+ * só abre com pedido explícito de rotina + "primeiro precisa/deve/vai" e ainda
+ * exige ao menos três ações curtas. Relato comum continua fora.
+ */
+function etapasDitadasEmFala(texto: string): string[] | null {
+  if (!pediuRotinaExplicitamente(texto)) return null;
+  const depoisDaAncora = texto.match(
+    /\b(?:ela|ele)?\s*primeiro\s+(?:precisa|deve|vai)\s+(?:de\s+)?(.+)$/iu,
+  )?.[1];
+  if (!depoisDaAncora) return null;
+
+  const partes = depoisDaAncora
+    .replace(/[,;]?\s+e\s+[ée]\s+isso[.!?]*\s*$/iu, "")
+    .split(/\s*(?:,|→|->|;)\s*/)
+    .map((parte) => parte
+      .replace(/^e\s+/iu, "")
+      .replace(/^(?:(?:ela|ele)\s+)?(?:depois\s+)?(?:precisa|deve|vai)\s+(?:de\s+)?/iu, "")
+      .replace(/[.!?]+$/u, "")
+      .trim())
+    .filter(Boolean);
+
+  if (partes.length < 3 || partes.length > 20 || !partes.every(ehEtapaCurtaDitada)) return null;
+  return partes;
+}
+
 export function familiaDitouSequencia(texto: string | null | undefined): boolean {
   const bruto = String(texto ?? "");
   if (!bruto.trim()) return false;
 
-  const ehItem = (l: string) =>
-    l.length > 0 && l.length <= 60 && !l.endsWith("?") && l.split(/\s+/).length <= 8;
+  if (etapasDitadasEmFala(bruto)) return true;
 
   // Forma 1 — uma etapa por linha. É como a mãe escreveu em 08/09 08:53.
   const linhas = bruto.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
-  if (linhas.length >= 4 && linhas.filter(ehItem).length >= 3) return true;
+  if (linhas.length >= 4 && linhas.filter(ehEtapaCurtaDitada).length >= 3) return true;
 
   // ⚠️ FORMA 2 — TUDO NUMA LINHA SÓ, separado por vírgula ou seta. Faltava, e
   // custou o segundo incidente: às 09:13 do mesmo dia a mãe escreveu
@@ -669,13 +702,15 @@ export function familiaDitouSequencia(texto: string | null | undefined): boolean
       .split(/\s*(?:,|→|->|;)\s*/)
       .map((p) => p.trim())
       .filter(Boolean);
-    if (partes.length >= 3 && partes.every(ehItem)) return true;
+    if (partes.length >= 3 && partes.every(ehEtapaCurtaDitada)) return true;
   }
   return false;
 }
 
 /** Linhas curtas ditadas após o pedido são o quadro, não sugestões ao gerador. */
 export function etapasDitadasEmLinhas(texto: string): string[] | null {
+  const faladas = etapasDitadasEmFala(texto);
+  if (faladas) return faladas;
   const linhas = texto.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
   if (linhas.length < 4 || !pediuRotinaExplicitamente(linhas[0])) return null;
   const etapas = linhas.slice(1).map((l) => l.replace(/^(?:[-•*]|\d+[.)])\s*/, "").trim());
@@ -1928,7 +1963,7 @@ export async function conduzirRotina(
           `[ayla:rotina] tema "${escolhido}" aplicado em ${pendente.id} — aguardando revisão e clique`,
         );
         // A fala reflete o estado real. Sem 200 do gerador, ninguém promete arte.
-        const corpo = `*Rotina pronta para conferir* 🌿\nTema: *${escolhido}*\n\n1️⃣ *Confira a rotina*\nAbra o link, veja a ordem e o tema. Você pode editar ou incluir uma etapa.\n\n2️⃣ *Gere os cartões*\nSe estiver tudo certo, toque em *Gerar cartões*. As imagens começam depois desse clique.`;
+        const corpo = `*Rotina pronta para conferir* 🌿\nTema: *${escolhido}*\n\nAbra o link e confira a ordem. Se estiver tudo certo, toque em *Gerar cartões* — as imagens só começam depois desse clique.`;
         return {
           mensagem: link
             ? `${corpo}\n\n*Rotina de ${pendente.nome}:*\n${link}`
@@ -2002,6 +2037,7 @@ export async function conduzirRotina(
 
     // A família ditou a sequência NESTE turno? Decide se o quadro de conversas
     // antigas pode competir com o pedido de agora — ver `podarSequenciasAntigas`.
+    const sequenciaDitadaAgora = etapasDitadasEmLinhas(params.contexto);
     const ditouAgora = familiaDitouSequencia(params.contexto);
     const transicoesConhecidas = carregarTransicoes(perfilDaRotina);
     // ⚠️ NÃO É MAIS `momento → estratégia` DE TUDO. Ver `blocoDeTransicoes`: só
@@ -2247,27 +2283,40 @@ ${jaSabemos.perfil}` : "",
       .filter(Boolean)
       .join("\n\n");
 
-    const client = getAylaAnthropicClient();
-    rastro.chamadas_llm += 1;
-    const resp = await etapa(rastro, "condutor", () =>
-      client.messages.create({
-      model: AYLA_MODEL_FALLBACK,
-      max_tokens: 1600,
-      system: `${nucleoConducao()}\n\n${CONTRATO_ROTINA}`,
-      tools: [FERRAMENTA_CONDUTOR],
-      // Força a ferramenta: o turno SEMPRE volta estruturado, nunca como prosa
-      // que alguém precise reinterpretar.
-      tool_choice: { type: "tool", name: FERRAMENTA_CONDUTOR.name },
-      messages: [{ role: "user", content: userPrompt }],
-      }),
-    );
-    const parsed = lerDesfechoDoCondutor(resp) as
+    // Lista ditada + portão clínico aprovado já determinam a ação e o texto.
+    // Pagar outro modelo aqui custou 6,5 s no turno real de 01/10 e ainda
+    // acrescentou três etapas que a família não disse. O condutor permanece
+    // para propostas, ajustes e pedidos que precisam de interpretação.
+    const parsed = (sequenciaDitadaAgora && prontidaoAutoriza
+      ? {
+          acao: "montar",
+          mensagem: `Organizei a sequência de ${nome} exatamente como você contou.`,
+          proposta: [],
+        }
+      : await (async () => {
+          const client = getAylaAnthropicClient();
+          rastro.chamadas_llm += 1;
+          const resp = await etapa(rastro, "condutor", () =>
+            client.messages.create({
+              model: AYLA_MODEL_FALLBACK,
+              max_tokens: 1600,
+              system: `${nucleoConducao()}\n\n${CONTRATO_ROTINA}`,
+              tools: [FERRAMENTA_CONDUTOR],
+              // Força a ferramenta: o turno SEMPRE volta estruturado, nunca como prosa
+              // que alguém precise reinterpretar.
+              tool_choice: { type: "tool", name: FERRAMENTA_CONDUTOR.name },
+              messages: [{ role: "user", content: userPrompt }],
+            }),
+          );
+          return lerDesfechoDoCondutor(resp);
+        })()) as
       | {
           acao?: string;
           mensagem?: string;
           pronto?: boolean;
           recorrente?: boolean;
           transicoes?: unknown;
+          proposta?: unknown;
         }
       | null;
 
@@ -2451,7 +2500,7 @@ ${jaSabemos.perfil}` : "",
         // etapas; ajustes explícitos continuam no caminho de propostaAtual.
         sequenciaDitada: respostaAProposta === "aceite" && proposta
           ? proposta.etapas.map((etapa) => etapa.texto)
-          : etapasDitadasEmLinhas(params.contexto),
+          : sequenciaDitadaAgora,
         // A prontidão já rodou lá em cima, antes do turno de conversa.
         pularProntidao: true,
         // A guarda de identidade precisa da família inteira pra comparar o
@@ -2639,8 +2688,10 @@ ${jaSabemos.perfil}` : "",
       const link = ids.length && !faltaTema
         ? await gerarMagicLink(supabase, { familyId, next })
         : null;
-      const fechamento = etapasDitadasEmLinhas(params.contexto)
-        ? `*Rotina visual de ${nome}*\nOrganizei os passos na ordem que você me contou:`
+      const fechamento = faltaTema
+        ? `*Rotina de ${nome} salva para conferir* 🌿`
+        : sequenciaDitadaAgora
+          ? `*Rotina visual de ${nome}*\nOrganizei os passos na ordem que você me contou:`
         : mensagem || `Organizei a rotina de ${nome} 🌿`;
       // As etapas, lidas do quadro. A fala do condutor vem antes (o que ele
       // entendeu, a dica, a frase de antecipação); a lista vem daqui.

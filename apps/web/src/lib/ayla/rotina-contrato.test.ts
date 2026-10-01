@@ -136,7 +136,8 @@ describe("gatilho determinístico do tema", () => {
     expect(bloco).toMatch(/lerTemaEscolhido\(params\.contexto\)/);
     expect(bloco).toMatch(/update\(\{ tema: escolhido \}\)/);
     expect(bloco).not.toMatch(/dispararGeracao\(pendente\.id, escolhido\)/);
-    expect(bloco).toContain("*Gere os cartões*");
+    // O contrato usa o rótulo exato do botão mostrado à família.
+    expect(bloco).toContain("*Gerar cartões*");
     // Roda ANTES da chamada ao condutor.
     expect(GUIADA.indexOf("GATILHO DETERMINÍSTICO DO TEMA")).toBeLessThan(
       GUIADA.indexOf("tools: [FERRAMENTA_CONDUTOR]"),

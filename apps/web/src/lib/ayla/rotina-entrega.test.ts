@@ -196,6 +196,14 @@ describe("mudança de assunto — a rotina não sequestra a conversa", () => {
     expect(ROTINA).toContain("temaPelaOpcaoExibida(params.contexto, opcoesExibidas)");
   });
 
+  it('a escolha fechada de tema não paga a janela de mensagem livre', () => {
+    expect(ORCHESTRATOR).toContain("const respostaEstruturadaDeRotina = Boolean(");
+    expect(ORCHESTRATOR).toContain("rotinaConversa &&");
+    expect(ORCHESTRATOR).toContain("respostaEstruturada: respostaEstruturadaDeRotina");
+    expect(ORCHESTRATOR).toContain('inbound.midiaTipo === "audio" && etapasDitadasEmLinhas(inbound.texto) !== null');
+    expect(ORCHESTRATOR).toContain("mensagemCompleta: audioComRotinaCompleta");
+  });
+
   it("MORDE: o modelo NÃO tem porta própria pra gerar o artefato", () => {
     // ⚠️ ESTE TESTE FOI INVERTIDO EM 17/08/2026, DE PROPÓSITO.
     //
