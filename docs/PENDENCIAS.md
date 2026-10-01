@@ -10518,7 +10518,7 @@ criativo) e PEND-213 (aprofundamento por botões).
 ### PEND-229
 **Qualidade, profundidade e concisão da conversa da Ayla no WhatsApp**
 Bloco: **B · Ayla / A · Condução** · Prioridade: **P1**
-STATUS: **IMPLEMENTADA LOCALMENTE — publicação e prova real pendentes** · Aberta em: 2026-10-01
+STATUS: **EM PRODUÇÃO — prova conversacional e latência ponta a ponta pendentes** · Aberta em: 2026-10-01
 
 O Core ativo v11 orienta aprofundamento progressivo, amostra no primeiro turno
 e convites como “se quiser, eu explico”. Isso conflita com a experiência
@@ -10550,6 +10550,20 @@ candidata. A latência local oscilou contra a candidata (P50 3,55 s versus
 testes anteriores à publicação são sintéticos/internos. Depois dos portões, o
 mesmo código e o Core ativo valem globalmente; rollback global reativa o Core
 v11 e o SHA anterior. Não usar família real como ambiente de QA.
+
+**PUBLICAÇÃO GLOBAL (2026-10-01).** Regressão completa: 4.170 testes verdes e
+7 ignorados; typecheck limpo; build Webpack compilou, tipou e gerou 106 rotas.
+O commit `04674ee88d11a64dd2454eab0bca2131a0f15504` foi publicado por
+fast-forward na `main`. O health público sem cache respondeu HTTP 200,
+`x-vercel-cache=MISS`, `age=0`, `ref=main`, `ambiente=production`, `db.ok=true`
+e o mesmo SHA. Em seguida, o Core v12 foi salvo fora do ar, relido e conferido
+(24.261 caracteres; SHA-256
+`d11c8134f04e8b7a02c9b55bf725deda29776d03565ba28ceee1095b5d25c7a7`) e
+ativado. A releitura final encontrou exatamente um Core ativo, a v12; a v11
+ficou arquivada. `ayla_experimental_todas=true` no health e o documento ativo
+não possuem lista de famílias: o alcance é global, sem piloto. Falta um turno
+natural autorizado posterior à ativação para comprovar fala, versão consumida
+e latência até a primeira aceitação; até lá, não declarar ganho de latência.
 
 **CRITÉRIO DE CONCLUSÃO:** suíte completa, typecheck e build verdes; Core v12
 versionado e lido de volta antes de ativar; SHA do código confirmado no health
