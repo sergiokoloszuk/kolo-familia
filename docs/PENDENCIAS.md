@@ -10515,7 +10515,52 @@ criativo) e PEND-213 (aprofundamento por botões).
 
 ---
 
-**Proximo ID livre: PEND-225. *(PEND-209 a PEND-211 já estão reivindicadas no working tree principal por outra frente; 024 e 025 reservadas por frentes ainda nao publicadas; PEND-202 reivindicada em commit e ainda sem ficha; 0076 e numero de MIGRACAO reservado — ver PEND-121.)***
+### PEND-229
+**Qualidade, profundidade e concisão da conversa da Ayla no WhatsApp**
+Bloco: **B · Ayla / A · Condução** · Prioridade: **P1**
+STATUS: **IMPLEMENTADA LOCALMENTE — publicação e prova real pendentes** · Aberta em: 2026-10-01
+
+O Core ativo v11 orienta aprofundamento progressivo, amostra no primeiro turno
+e convites como “se quiser, eu explico”. Isso conflita com a experiência
+aprovada: primeira ajuda curta e completa, uma forma escolhida pela Ayla, dois
+balões normalmente, retorno simples e mudança real de mecanismo quando a
+família diz que não funcionou. O caminho oficial também mantinha morto o bloco
+de formas porque procurava a intenção `desafio`, inexistente na taxonomia desse
+caminho; pedido explícito de brincadeira exigia três jogos completos.
+
+A candidata v12 troca o teaser pela menor ajuda completa; preserva a parte
+segura dos materiais da Pós sem copiar afirmações frágeis; define participação
+com o apoio necessário, sem retirada automática; proíbe inferir emoção ou causa
+do comportamento; escolhe uma única entrega; e deixa três momentos somente
+quando a situação pede. O runtime liga a forma à natureza oficial, entrega uma
+brincadeira completa e compacta deterministicamente uma orientação em no
+máximo duas bolhas sem reescrever. Não há chamada extra ao modelo.
+
+**BASELINE E PROVA LOCAL.** Core ativo v11: 27.994 caracteres, SHA curto
+`c30e6a4d4c6c9e24`. Candidata v12: 24.261 caracteres, SHA curto
+`d11c8134f04e8b7a`. Regressão focal: 161/161. A bancada mais recente executou
+10 casos pareados (20 respostas) com o modelo de produção, sem WhatsApp: zero
+teaser e zero abertura automática; no máximo duas bolhas; brincadeira única;
+desabafo sem estratégia antes da escolha; apoio preservado; e “ficou igual”
+mudando o mecanismo. Média de tamanho: 427 caracteres no controle e 420 na
+candidata. A latência local oscilou contra a candidata (P50 3,55 s versus
+4,04 s) e não prova ganho; a frente não atribui a ela melhoria de latência.
+
+**ROLLOUT DECIDIDO.** Não haverá piloto, amostra de famílias nem allowlist. Os
+testes anteriores à publicação são sintéticos/internos. Depois dos portões, o
+mesmo código e o Core ativo valem globalmente; rollback global reativa o Core
+v11 e o SHA anterior. Não usar família real como ambiente de QA.
+
+**CRITÉRIO DE CONCLUSÃO:** suíte completa, typecheck e build verdes; Core v12
+versionado e lido de volta antes de ativar; SHA do código confirmado no health
+de produção sem cache; exatamente um Core ativo, com versão e hash esperados;
+configuração sem coorte; turno interno/autorizado reconstruído ponta a ponta
+com texto, número de bolhas, versão do Core e latência até a primeira aceitação.
+Ver [SPEC](specs/qualidade-conversa-ayla-v12-SPEC.md).
+
+---
+
+**Proximo ID livre: PEND-230. *(PEND-225 a PEND-228 estão reivindicadas no worktree `ayla-conversa-valor`; PEND-209 a PEND-211 já estão reivindicadas por outra frente; 024 e 025 reservadas por frentes ainda nao publicadas; PEND-202 reivindicada em commit e ainda sem ficha; 0076 e numero de MIGRACAO reservado — ver PEND-121.)***
 
 > Conferir contra `origin/main`, não contra o seu branch. Dois branches podem
 > reivindicar o mesmo número — o conflito de merge nesta linha é o alarme.

@@ -70,7 +70,7 @@ export const DNA: readonly PrincipioDoDna[] = [
   },
   {
     id: "reducao_de_suporte",
-    titulo: "Progresso é redução de suporte, não faz/não faz",
+    titulo: "Progresso é participação possível com o apoio necessário, não faz/não faz",
     em: ["autonomia", "aprendizado"],
     evidencia:
       "autonomia: “Progresso se mede por redução de suporte, não por faz/não faz”; “Não retira ajuda de uma vez”. " +
@@ -151,8 +151,11 @@ Esta é a forma de pensar dos especialistas da Kolo. Ela não aparece na respost
    vontade.
 
 3. UM PASSO, NÃO UM PROGRAMA. Entregue a menor mudança testável — uma coisa
-   para fazer hoje. Progresso aqui se mede por REDUÇÃO DE SUPORTE, não por
-   faz/não faz.
+   para fazer hoje. Progresso se mede pela PARTICIPAÇÃO possível naquela
+   condição: o que a criança fez, em qual etapa e com qual apoio. Não presuma
+   que o apoio precisa ser retirado. Se a família ajudou até o fim, primeiro
+   localize a etapa e preserve o apoio atual. Só proponha reduzi-lo quando
+   houver evidência de que aquela etapa se sustenta com menos ajuda.
 
 4. ANTES DE ESCOLHER A CONDUTA, DESCARTE O VIZINHO. Dificuldade de escrever
    pode ser coordenação ou pode ser a etapa da escrita — copiar bem e falhar no

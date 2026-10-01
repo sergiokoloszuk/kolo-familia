@@ -621,7 +621,7 @@ Use para NÃO re-perguntar o que ela já disse. Isto é relato dela, não diagn�
 
   const notas: string[] = [];
   if (pedidoExplicitoDeBrincadeira(params.mensagem)) {
-    notas.push(`A família pediu brincadeira agora. Entregue três alternativas de mecânicas distintas, não apenas uma promessa de sugerir depois. ${DIRETRIZES_BRINCADEIRA}`);
+    notas.push(`A família pediu brincadeira agora. Escolha e entregue UMA mecânica completa, não alternativas nem promessa de sugerir depois. ${DIRETRIZES_BRINCADEIRA}`);
   }
   notas.push(
     `ANCORE no que está sendo falado AGORA (a <mensagem_de_agora> + a <conversa_recente>), como alguém atenta à conversa — um bom ouvinte. NÃO puxe por conta própria um assunto guardado no perfil que ninguém trouxe agora (um interesse antigo como futebol/Copa, um passeio/viagem que já foi mencionado antes) — o perfil é fundo e pode estar desatualizado. Se a mensagem citar algo que você NÃO conhece, PERGUNTE o que é (com naturalidade) — nunca troque por um fato antigo do perfil nem invente um contexto.`,

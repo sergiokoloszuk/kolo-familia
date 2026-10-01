@@ -1163,8 +1163,10 @@ export async function responderExperimental(
       .filter(Boolean)
       .join("\n\n");
 
+    const natureza = naturezaDoTurno(params.mensagem, ctxTurno.jaHouveOrientacao);
     const entrega = pedeEntregaEstruturada({
       intencao: params.turnoClassificado?.intencao ?? null,
+      natureza,
     });
     // ⚠️ AS TRÊS SÃO UM BLOCO SÓ, e a PEND-145 portou uma delas.
     //
@@ -1211,7 +1213,6 @@ export async function responderExperimental(
      * Isto NÃO é classificação nova: zero chamada, zero modelo, mesma função,
      * mesmo argumento, mesmo resultado. O que muda é só ele ficar observável.
      */
-    const natureza = naturezaDoTurno(params.mensagem, ctxTurno.jaHouveOrientacao);
     const proporcao = notaDeProporcao(natureza);
 
     const formato = [
@@ -1512,7 +1513,7 @@ export async function responderExperimental(
     // resposta: o detector estrutural ainda precisa de A/B antes de virar gate.
     if (pedidoExplicitoDeBrincadeira(params.mensagem)) {
       const auditoria = auditarBrincadeiras(texto);
-      if (auditoria.quantidade !== 3 || auditoria.falhas.length > 0) {
+      if (auditoria.quantidade !== 1 || auditoria.falhas.length > 0) {
         void logEvent({
           kind: "ayla_brincadeira_estrutura_incompleta",
           severity: "warn",

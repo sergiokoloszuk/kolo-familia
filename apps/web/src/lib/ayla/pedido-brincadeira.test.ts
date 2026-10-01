@@ -15,19 +15,14 @@ describe("pedido explícito de brincadeira", () => {
     expect(pedidoExplicitoDeBrincadeira("Quero uma história sobre um passeio.")).toBe(false);
   });
   it("instrui uma experiência lúdica, sem treino sensorial automático", () => {
-    expect(BLOCO_PEDIDO_BRINCADEIRA).toContain("divertida mesmo sem o objetivo");
-    expect(BLOCO_PEDIDO_BRINCADEIRA).toContain("TRÊS opções de jogo");
-    expect(BLOCO_PEDIDO_BRINCADEIRA).toContain("MECÂNICAS diferentes entre si");
-    expect(BLOCO_PEDIDO_BRINCADEIRA).toContain("três blocos com • ou emoji + título curto em negrito");
-    expect(BLOCO_PEDIDO_BRINCADEIRA).toContain("as três opções devem poder acontecer ali");
-    expect(BLOCO_PEDIDO_BRINCADEIRA).toContain("Em TODAS as três opções");
-    expect(BLOCO_PEDIDO_BRINCADEIRA).toContain("nenhum dos três blocos pode ficar sem essa ligação concreta");
-    expect(BLOCO_PEDIDO_BRINCADEIRA).toContain("não deve ser o truque repetido nas três opções");
-    expect(BLOCO_PEDIDO_BRINCADEIRA).toContain("uma FALA EXATA de abertura do adulto");
-    expect(BLOCO_PEDIDO_BRINCADEIRA).toContain("o que o adulto faz em seguida");
-    expect(BLOCO_PEDIDO_BRINCADEIRA).toContain("NÃO omita os turnos concretos");
-    expect(BLOCO_PEDIDO_BRINCADEIRA).toContain("NÃO reproduza nem simule esse estímulo");
-    expect(BLOCO_PEDIDO_BRINCADEIRA).toContain("O objetivo técnico fica por trás");
+    expect(BLOCO_PEDIDO_BRINCADEIRA).toContain("divertido mesmo sem meta");
+    expect(BLOCO_PEDIDO_BRINCADEIRA).toContain("exatamente UMA mecânica");
+    expect(BLOCO_PEDIDO_BRINCADEIRA).toMatch(/não opções para\s+mostrar/);
+    expect(BLOCO_PEDIDO_BRINCADEIRA).toMatch(/uma\s+FALA EXATA para começar/);
+    expect(BLOCO_PEDIDO_BRINCADEIRA).toMatch(/como começa a próxima\s+rodada/);
+    expect(BLOCO_PEDIDO_BRINCADEIRA).toContain("Não reproduza sensibilidade registrada");
+    expect(BLOCO_PEDIDO_BRINCADEIRA).toMatch(/O objetivo técnico fica por\s+trás/);
+    expect(BLOCO_PEDIDO_BRINCADEIRA).not.toContain("TRÊS opções de jogo");
   });
   it("seleciona mecânicas distintas no mercado sem trocar Perfil e BPs por roteiro fixo", () => {
     const bloco = blocoMecanicasBrincadeira("Quero brincar com ela no mercado");

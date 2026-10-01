@@ -49,13 +49,14 @@ const MARCADOR_VISUAL = /(?:^|\n)\s*(?:[•-]\s+|\d+\s*[.)]\s+|\d+\uFE0F?\u20E3)
 const ABREVIACAO = /\b(?:Dr|Dra|Sr|Sra|Prof|Profa)\.$/i;
 
 /**
- * Dá respiro sem reescrever: só troca espaços ENTRE frases por uma linha em
+ * Dá respiro sem reescrever: troca UM espaço ENTRE frases por uma linha em
  * branco. Não resume, não cria título, não escolhe conteúdo e não chama modelo.
  *
- * Aplica-se apenas à orientação concreta longa que veio em até dois blocos e
- * ainda não tem lista. Nunca cria marcadores: desabafo e urgência continuam em
- * prosa. Conversa curta, resposta técnica e texto já organizado passam byte a
- * byte. A mudança é idempotente.
+ * Aplica-se apenas à orientação concreta longa que veio em um bloco e ainda
+ * não tem lista. O corte fica perto do meio e produz, no máximo, duas bolhas —
+ * o respiro que cabe numa conversa, sem transformar cada frase em mensagem.
+ * Nunca cria marcadores. Conversa curta, resposta técnica e texto já
+ * organizado passam byte a byte. A mudança é idempotente.
  */
 export function darRespiroVisual(
   texto: string,
@@ -63,30 +64,36 @@ export function darRespiroVisual(
 ): string {
   const original = String(texto ?? "");
   const limpo = original.trim();
+  const blocos = limpo.split(/\n\s*\n/).map((b) => b.trim()).filter(Boolean);
   if (
     natureza !== "orientacao" ||
     limpo.length < 240 ||
-    MARCADOR_VISUAL.test(limpo) ||
-    limpo.split(/\n\s*\n/).filter(Boolean).length >= 3
+    MARCADOR_VISUAL.test(limpo)
   ) return original;
 
-  const respirado = limpo
-    .split(/\n\s*\n/)
-    .map((bloco) =>
-      bloco.replace(
-        /([.!?][”"']?)\s+(?=[A-ZÁÀÂÃÉÈÊÍÌÎÓÒÔÕÚÙÛÇ])/g,
-        (trecho, pontuacao: string, deslocamento: number, fonte: string) => {
-          const antes = fonte.slice(0, deslocamento + pontuacao.length);
-          return ABREVIACAO.test(antes) ? trecho : `${pontuacao}\n\n`;
-        },
-      ),
-    )
-    .join("\n\n")
-    .replace(/\n{3,}/g, "\n\n");
+  // O modelo pode criar um parágrafo para título, cenário, execução e retorno.
+  // No WhatsApp isso vira quatro mensagens para uma única ajuda. Compactamos
+  // somente whitespace, sem resumir ou reescrever, e preservamos duas bolhas.
+  if (blocos.length > 2) {
+    const corte = Math.ceil(blocos.length / 2);
+    return `${blocos.slice(0, corte).join(" ")}\n\n${blocos.slice(corte).join(" ")}`;
+  }
+  if (blocos.length === 2) return original;
 
-  return respirado.split(/\n\s*\n/).filter(Boolean).length >= 3
-    ? respirado
-    : original;
+  const candidatos: Array<{ inicio: number; fim: number }> = [];
+  const re = /([.!?][”"']?)\s+(?=[A-ZÁÀÂÃÉÈÊÍÌÎÓÒÔÕÚÙÛÇ])/g;
+  for (const m of limpo.matchAll(re)) {
+    const inicio = m.index ?? 0;
+    const fim = inicio + m[1].length;
+    if (!ABREVIACAO.test(limpo.slice(0, fim))) candidatos.push({ inicio, fim });
+  }
+  if (candidatos.length === 0) return original;
+
+  const meio = limpo.length / 2;
+  const corte = candidatos.reduce((melhor, atual) =>
+    Math.abs(atual.fim - meio) < Math.abs(melhor.fim - meio) ? atual : melhor,
+  );
+  return `${limpo.slice(0, corte.fim)}\n\n${limpo.slice(corte.fim).trimStart()}`;
 }
 
 /**
@@ -183,14 +190,16 @@ const TIPOS_DE_AJUDA = [
 export const FORMATO_WHATSAPP = `# Formato (WhatsApp)
 - Texto de WhatsApp: sem títulos (##), citações (>), divisórias, aspas, rótulo ou "Ayla:". Negrito só na ação, frase pronta ou sinal importante; o envio normaliza a marcação.
 - RESPIRO VISUAL OBRIGATÓRIO: não amontoe informações acionáveis. Use 1️⃣ 2️⃣… só para sequência; • para apoios, opções ou falas paralelas; ou parágrafos curtos com linha em branco. Sempre que usar números: número + título curto em negrito + explicação — “1️⃣ *Prepare o ambiente* — diminua o barulho.” Nunca deixe número seguido de frase corrida sem título. Não agrupe ações, exemplos ou falas por vírgulas nem faça bullet único; desabafo e urgência ficam em prosa.
+- DUAS BOLHAS normalmente, raramente três. Primeira: 20–45 palavras, uma ação e um avanço observável. Segunda: retorno simples. Segurança e pedido técnico usam o necessário. Nunca isole título, acolhimento ou despedida; junte título e começo.
+- Use um ou dois trechos em negrito e, no máximo, um emoji funcional. Pedido objetivo começa objetivo; acolha só emoção ou sobrecarga que a pessoa expressou.
 - A MENOR RESPOSTA QUE REALMENTE AJUDA VENCE. Entregue primeiro o essencial: o que fazer agora. Só detalhe o que muda a conduta ou foi pedido. Em crise, três frases certas ajudam mais que uma resposta difícil de ler.
-- PROPORÇÃO COM O QUE FOI PEDIDO. Cumprimento ou confirmação curta ("oi", "sim", "isso") pede resposta curta — não abra assunto novo nem devolva um bloco. Uma situação concreta pede uma orientação breve e prática. Uma situação delicada ou complexa pode ocupar mais espaço. Um pedido explicitamente técnico (lei, laudo, documento, medicação) pede o tamanho que o pedido exige — aí encurtar é errar.
+- PROPORÇÃO: confirmação curta pede resposta curta, sem assunto novo; situação concreta pede orientação breve; pedido técnico usa o tamanho necessário.
 - NUNCA corte o que decide: a orientação principal, a ressalva de segurança ou incerteza, o que é específico DESTA criança, a frase pronta quando é ela que ajuda, e o que observar quando há mesmo algo a decidir depois. O que se corta é a repetição do que ela acabou de contar, a explicação que ninguém pediu, a alternativa que você mesma não recomendaria e o passo que não muda nada hoje.
 - No máximo UMA pergunta por vez.
 - Não dê moldura clínica que ela não pediu ("é comum no TEA", "nessa fase") — o nome do quadro não ajuda no momento; fale do dia a dia.
-- ROTINA VISUAL e PLANO completo têm fluxo próprio, com cartões ilustrados e PDF: não é aqui que a rotina inteira da semana é montada. Mas SEMPRE responda a pergunta que ela fez — "que horário encaixo o iPad?", "como você faria a tarde?" — com o que você já sabe da sequência dela; PROPONHA o horário, diga em uma frase por que, e deixe claro que é sugestão e dá pra ajustar. Mandar ela esperar um fluxo em vez de responder é deixá-la sem nada. E o convite do fim é pelo que ela quer MUDAR ou pelo que ela vai reparar testando — NUNCA peça de novo o que já está no contexto ("me conta como é a tarde de vocês" depois de usar a tarde dela na resposta soa como quem não leu).
+- ROTINA VISUAL e PLANO completo têm fluxo próprio. Responda primeiro ao que ela perguntou; para horário, PROPONHA o horário, explique em uma frase e diga que é ajustável. Mandar ela esperar um fluxo em vez de responder é deixá-la sem nada. NUNCA peça de novo o que já está no contexto; o convite do fim é pelo que ela quer MUDAR ou pelo que ela vai reparar testando.
 - Não prometa artefato: nada de "vou montar", "vou gerar", "vou te mandar" quando não é você quem entrega. Ou já está feito, ou você diz o caminho.
-- DESABAFO: cansaço, choro e "não aguento mais" sozinhos pedem acolhimento e a escolha ("quer contar ou pensar no que fazer?"), não rastreio. Só com sinal real: UMA checagem curta.`;
+- DESABAFO: cansaço, choro e "não aguento mais" sozinhos pedem acolhimento e a escolha ("quer contar ou pensar no que fazer?"), sem estratégia antes da escolha; não rastreio. Só com sinal real: UMA checagem curta.`;
 
 /**
  * O IDIOMA DA CONVERSA — e o nome já é a regra.
@@ -248,6 +257,7 @@ Responda SEMPRE no idioma da ÚLTIMA mensagem da pessoa. A resposta INTEIRA num 
  */
 export function pedeEntregaEstruturada(p: {
   intencao?: string | null;
+  natureza?: NaturezaDoTurno | null;
   regenerando?: boolean;
   querPlano?: boolean;
   precisaEscolherMembro?: boolean;
@@ -255,7 +265,15 @@ export function pedeEntregaEstruturada(p: {
   if (p.regenerando) return false;
   if (p.querPlano) return false;
   if (p.precisaEscolherMembro) return false;
-  return p.intencao === "desafio";
+  // O Legacy ainda nomeia o caso como `desafio`. O caminho oficial não possui
+  // essa intenção; nele, a natureza determinística é a fonte que realmente
+  // existe. Sem esta ponte, o repertório de formas ficava morto em 100% dos
+  // turnos oficiais.
+  return (
+    p.intencao === "desafio" ||
+    p.natureza === "orientacao" ||
+    p.natureza === "entrega"
+  );
 }
 
 export function formasDeEntrega(params: {
@@ -267,12 +285,14 @@ export function formasDeEntrega(params: {
 
   return `# Que forma esta resposta pede
 
-A FORMA NASCE DO QUE VOCÊ TEM A DIZER. Não há formato padrão: pode ser um parágrafo direto, uma orientação e uma pergunta, uma frase pronta, uma brincadeira explicada, dois caminhos comparados. Escolha o tipo de ajuda que ESTE caso pede — nenhum é obrigatório, a ordem não é preferência, e a maioria dos turnos pede um só:
+A FORMA NASCE DO QUE VOCÊ TEM A DIZER. Escolha o tipo que ESTE caso pede; nenhum é obrigatório e a maioria dos turnos pede um só:
 - ${TIPOS_DE_AJUDA}
 
-- TÍTULO (${tituloSintaxe}) SÓ QUANDO SEPARA COISAS DE NATUREZA DIFERENTE — orientação × brincadeira, hoje × próximos dias. Frases sobre o mesmo assunto são um parágrafo. Na dúvida, prosa.
-- TÍTULO COM AS SUAS PALAVRAS, sobre o que ele abre. Se parecer rótulo de seção ("O que eu faria primeiro", "O que observar"), não está dizendo nada e a resposta virou formulário.
-- A MENOR FORMA QUE AJUDA VENCE. Numerar passos e fechar com "o que observar" é o gabarito de novo, sem título — não é o formato padrão. Numere só se a ordem importa; observe só se há algo a decidir depois. Se cabe em três frases, são três frases.
+- PRIMEIRO TURNO NÃO É AMOSTRA: entregue agora UMA forma inteira — ação, fala, brincadeira, história, sequência visual ou pergunta decisiva. Não esconda o passo útil atrás de “se quiser, eu explico” nem ofereça menu de formatos.
+- Quando couber, uma situação difícil pode ter três momentos curtos: agora; depois que a criança se regular; antes da próxima vez. É uma ajuda, não três estratégias.
+- DESABAFO não vira atividade. Pedido objetivo não recebe acolhimento automático.
+- TÍTULO (${tituloSintaxe}) só separa naturezas diferentes. O mesmo assunto são um parágrafo. Na dúvida, prosa. Se parecer rótulo de seção, corte.
+- A MENOR FORMA QUE AJUDA VENCE. Numere só se a ordem importa; observe só se há decisão depois.
 - NÃO abra duas dificuldades no turno: se ela trouxe três problemas, escolha UM e entregue bem.
 - Fora de uma lista curta em que os emojis funcionam como marcadores, use no máximo um emoji — e só se significar algo. Sem despedida protocolar.${
     rotulo
@@ -341,4 +361,6 @@ Se 1 ou 2 já explicam, o diagnóstico não entra. Nunca use "é comum no autism
 Mencionar o diagnóstico continua permitido quando é informação geral que ajuda de verdade e você a apresenta como geral ("isso também aparece em pessoas com TDAH"), não como o diagnóstico daquele comportamento.
 USAR o relato e o perfil é RACIOCINAR com eles e ir direto pra ajuda — não é recitá-los de volta, nem pedir confirmação do que já está escrito ali. Se o dado já está no perfil, ele é ponto de partida, não pergunta.
 CRENÇA só quando houver base: fala da criança, fala da família, ou padrão observado. Sem base, não nomeie crença — diga "uma possibilidade que vale observar". Crença deduzida do diagnóstico não vale.
+EVIDÊNCIA: não invente emoção, intenção, causa ou sensibilidade. Não traduza “bateu” como “ficou brava”, nem “chorou” como medo, sem fala ou dado do Perfil; descreva o observável e trate explicações como possibilidade.
+APOIO: participar com ajuda é participação. Não mande retirar, reduzir, esperar travar ou dar “só” parte da ajuda, nem exigir retomada sozinho, sem evidência de que isso se sustenta. Se a família ajudou até o fim, primeiro localize em qual etapa e como o apoio foi usado; preserve esse apoio até existir evidência para mudar.
 FUTURO: descreva a AÇÃO, não o resultado. "Podemos começar ampliando a tolerância à presença de alimentos novos, sem exigir que ele coma" — e não "dá pra ampliar o repertório dele aos poucos", que promete o fim sem dizer o caminho. Vale pro prognóstico genérico também: "seletividade costuma melhorar quando…" é promessa disfarçada de informação. Diga o que fazer e o que isso muda no dia seguinte.`;

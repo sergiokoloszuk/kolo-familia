@@ -387,6 +387,13 @@ describe("quando os blocos NÃO entram", () => {
     expect(pedeEntregaEstruturada({ intencao: "desafio" })).toBe(true);
   });
 
+  it("o Oficial ativa formas pela natureza real, sem depender da intenção inexistente `desafio`", () => {
+    expect(pedeEntregaEstruturada({ intencao: "outro", natureza: "orientacao" })).toBe(true);
+    expect(pedeEntregaEstruturada({ intencao: "outro", natureza: "entrega" })).toBe(true);
+    expect(pedeEntregaEstruturada({ intencao: "outro", natureza: "simples" })).toBe(false);
+    expect(pedeEntregaEstruturada({ intencao: "outro", natureza: "continuacao" })).toBe(false);
+  });
+
   it("pedido explícito de plano não ganha blocos — a resposta ali é curta", () => {
     expect(pedeEntregaEstruturada({ intencao: "desafio", querPlano: true })).toBe(false);
   });

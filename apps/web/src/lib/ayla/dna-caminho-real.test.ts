@@ -176,6 +176,12 @@ describe("o que o DNA NÃO pode mudar", () => {
     expect(BLOCO_DNA.length).toBeLessThan(2200);
   });
 
+  it("9b. participação não vira retirada automática de apoio", () => {
+    expect(BLOCO_DNA).toMatch(/PARTICIPAÇÃO/);
+    expect(BLOCO_DNA).toMatch(/Não presuma\s+que o apoio precisa ser retirado/);
+    expect(BLOCO_DNA).not.toMatch(/Progresso aqui se mede por REDUÇÃO DE SUPORTE/);
+  });
+
   it("10. não toca o escritor da Fase 2 — nenhuma menção a Perfil Vivo ou escrita", () => {
     expect(BLOCO_DNA).not.toMatch(/grave|registre|salve|perfil vivo|atualize o perfil/i);
   });

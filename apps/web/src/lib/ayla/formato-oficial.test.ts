@@ -42,7 +42,7 @@ describe("respiro visual determinístico", () => {
 
   it("separa frases de uma orientação longa sem trocar nenhuma palavra", () => {
     const saiu = darRespiroVisual(mario, "orientacao");
-    expect(saiu.split(/\n\s*\n/).filter(Boolean).length).toBeGreaterThanOrEqual(3);
+    expect(saiu.split(/\n\s*\n/).filter(Boolean)).toHaveLength(2);
     const semDiferencaDeEspaco = (s: string) => s.replace(/\s+/g, " ").trim();
     expect(semDiferencaDeEspaco(saiu)).toBe(semDiferencaDeEspaco(mario));
   });
@@ -51,6 +51,21 @@ describe("respiro visual determinístico", () => {
     const uma = darRespiroVisual(mario, "orientacao");
     expect(uma).not.toMatch(/(?:^|\n)\s*(?:•|1️⃣)/);
     expect(darRespiroVisual(uma, "orientacao")).toBe(uma);
+  });
+
+  it("compacta quatro parágrafos de uma ajuda em duas bolhas sem trocar palavras", () => {
+    const longa = [
+      "*Jogo da panela* 🍳",
+      "Use a cozinha de brinquedo e uma panela que seja fácil de abrir.",
+      "Diga: “A panela emperrou; você consegue me pedir ajuda?”. Ela pode apontar, entregar ou dizer ajuda.",
+      "Abra com uma surpresa engraçada e troquem o objeto na rodada seguinte. Isso pratica pedir ajuda.",
+    ].join("\n\n");
+    const saiu = darRespiroVisual(longa, "orientacao");
+    expect(saiu.split(/\n\s*\n/).filter(Boolean)).toHaveLength(2);
+    expect(saiu.replace(/\s+/g, " ").trim()).toBe(
+      longa.replace(/\s+/g, " ").trim(),
+    );
+    expect(darRespiroVisual(saiu, "orientacao")).toBe(saiu);
   });
 
   it("preserva lista existente, desabafo e abreviação", () => {
@@ -107,6 +122,10 @@ describe("A · a regra de formato chegou ao caminho OFICIAL", () => {
     expect(FORMATO_WHATSAPP).toMatch(/número \+ título curto em negrito \+ explicação/);
     expect(FORMATO_WHATSAPP).toMatch(/sem título/);
     expect(FORMATO_WHATSAPP).not.toMatch(/sem listas com - ou •/i);
+    expect(FORMATO_WHATSAPP).toMatch(/DUAS BOLHAS/);
+    expect(FORMATO_WHATSAPP).toMatch(/20–45 palavras/);
+    expect(FORMATO_WHATSAPP).toMatch(/um ou dois trechos em negrito/i);
+    expect(FORMATO_WHATSAPP).toMatch(/no máximo, um emoji funcional/i);
   });
 
   it("3b. MORDE: negrito só é liberado porque o envio normaliza a marcação", () => {
@@ -198,6 +217,13 @@ describe("C · OS 12 CASOS — estrutura só quando é entrega de fato", () => {
     }
   });
 
+  it("7b. o caminho oficial usa a natureza que realmente possui", () => {
+    expect(pedeEntregaEstruturada({ intencao: "outro", natureza: "orientacao" })).toBe(true);
+    expect(pedeEntregaEstruturada({ intencao: "outro", natureza: "entrega" })).toBe(true);
+    expect(pedeEntregaEstruturada({ intencao: "outro", natureza: "continuacao" })).toBe(false);
+    expect(pedeEntregaEstruturada({ intencao: "outro", natureza: "simples" })).toBe(false);
+  });
+
   it("8. as três exclusões do Legacy continuam vencendo mesmo em `desafio`", () => {
     expect(pedeEntregaEstruturada({ intencao: "desafio", regenerando: true })).toBe(false);
     expect(pedeEntregaEstruturada({ intencao: "desafio", querPlano: true })).toBe(false);
@@ -218,6 +244,12 @@ describe("D · o canal decide a sintaxe do título", () => {
     const src = semComentarios(EXPERIMENTAL);
     expect(src).toMatch(/formasDeEntrega\(\{ canal: "whatsapp"/);
     expect(src).not.toMatch(/canal: "web"/);
+  });
+
+  it("10b. a entrega oficial recebe a natureza determinística do turno", () => {
+    const src = semComentarios(EXPERIMENTAL);
+    expect(src).toMatch(/const natureza = naturezaDoTurno/);
+    expect(src).toMatch(/pedeEntregaEstruturada\(\{[\s\S]*?natureza,[\s\S]*?\}\)/);
   });
 
   it("11. e só injeta a forma quando há entrega", () => {
@@ -339,6 +371,8 @@ describe("H · o BLOCO DE ENTREGA ficou completo (PEND-144, itens 5 e 6)", () =>
 
   it("28. e a explicação nasce da criança, não do rótulo", () => {
     expect(A_CRIANCA_ANTES_DO_ROTULO).toMatch(/diagn[óo]stico|r[óo]tulo/i);
+    expect(A_CRIANCA_ANTES_DO_ROTULO).toMatch(/não traduza “bateu” como “ficou brava”/i);
+    expect(A_CRIANCA_ANTES_DO_ROTULO).toMatch(/preserve esse apoio/i);
   });
 
   it("29. nenhuma chamada de modelo entrou junto", () => {

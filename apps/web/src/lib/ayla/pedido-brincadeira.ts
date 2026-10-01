@@ -51,7 +51,7 @@ São estruturas, não respostas fixas. Evite repetir uma mecânica já tentada e
 }
 
 /** Critério de experiência, não nova fonte clínica nem substituto das BPs. */
-export const BLOCO_PEDIDO_BRINCADEIRA = `<pedido_explicito_de_brincadeira>
+export const BLOCO_PEDIDO_BRINCADEIRA_TRES_LEGADO = `<pedido_explicito_de_brincadeira>
 A família pediu brincadeira AGORA. Ofereça TRÊS opções de jogo para a família poder experimentar uma hoje e guardar as outras para depois. Cada opção precisa ser uma experiência compartilhada divertida mesmo sem o objetivo de desenvolvimento. Não reembale um treino, uma simulação da situação difícil ou uma atividade já tentada como se fosse jogo novo. Use um interesse forte da criança para tornar UMA opção especial; não repita o mesmo personagem, enredo ou objeto nas três. As outras podem aproveitar outra preferência, uma ação do lugar ou o humor da relação entre adulto e criança. Personalizar não é só repetir o tema favorito.
 
 As três opções devem ter MECÂNICAS diferentes entre si e diferentes das já tentadas. Compare as ações, não só os nomes: restaurante seguido de receita/cozinha ainda é a mesma mecânica de escolher e servir comida; expedição, caça e carrinho em missão podem ser a mesma busca reembalada. No máximo UMA pode ser achar/esconder algo; no máximo UMA pode ser criar uma regra ou escolher o trajeto. Outras formas possíveis: faz-de-conta com personagem, adivinhação por pistas, imitação engraçada com troca de papéis, transformar uma compra em personagem com pequena aventura — só se couberem no lugar e no Perfil. Em cada opção, dê o mínimo para executar sem improvisar o resto: material ou cenário, como começar, uma FALA EXATA de abertura do adulto, uma resposta possível da criança no modo em que ela de fato se comunica, o que o adulto faz em seguida e um momento de descoberta, surpresa ou humor. O leitor deve conseguir brincar sem inventar as falas nem adivinhar o próximo turno. Se a criança usa gestos, mostre o gesto ou escolha plausível e a reação imediata do adulto; não escreva uma fala hipotética da criança como condição para continuar. Variem também o PAPEL do adulto: errar de propósito pode tornar UM jogo divertido, mas não deve ser o truque repetido nas três opções. Em outra, a criança pode virar quem dá a pista, esconde algo ou cria a regra. Só andar, encontrar e apontar três vezes não é suficiente. Ela pode apontar, mover, gesticular ou falar conforme sua comunicação; não exija fala nem olhar. Use idade, interesses e sensibilidades para mudar as ações do jogo, não só o título. Uma frase comum ao fim pode dizer como facilitar ou encerrar sem cobrança.
@@ -63,4 +63,34 @@ Quando Perfil ou conversa indicam sensibilidade a sons, texturas ou cheiros, NÃ
 Se um gesto de pausa puder ser útil, ele pertence à escolha espontânea da criança durante o jogo. Não interrompa a brincadeira periodicamente para o adulto fazer o gesto e a criança copiá-lo: isso voltaria a ser exercício disfarçado. NENHUMA das três opções pode ser apenas pedir pausa, buscar corredor mais calmo, escolher trajeto, respirar ou ensaiar lidar com barulho. Essas são estratégias de manejo, não brincadeiras. A pausa e a saída aparecem somente no aviso final, fora das três opções. Em cada jogo deve haver pelo menos uma virada lúdica que faça a criança querer repetir a vez — surpresa, faz-de-conta ou humor, sem susto e sem estímulo sensorial desconfortável. O gesto ou a escolha da criança precisa CAUSAR a virada; não acrescente uma descoberta aleatória após ela apontar. Mostre como a segunda rodada muda ou como os papéis se invertem, para a mãe não ficar sem saber como continuar. Se tirar a meta de desenvolvimento e o jogo deixar de ter graça, substitua a opção antes de responder.
 
 SAÍDA: comece diretamente por três blocos com • ou emoji + título curto em negrito, separados por UMA linha em branco. São alternativas, não etapas; não as numere como sequência. Não coloque a primeira opção no parágrafo introdutório. Em cada bloco, use linhas curtas SEM linhas vazias internas: cenário/começo; "Você: ..." com frase pronta; "Ela: ..." com gesto/ação ou palavra possível; "Então: ..." com sua reação e a virada divertida; e uma linha curta com UMA capacidade convidada. Pode juntar linhas se ficar natural, mas NÃO omita os turnos concretos para caber em um limite artificial de palavras. Não transforme o jogo em ficha técnica ou diálogo longo. Se o histórico diz que já fizeram restaurante, descarte chef/cozinha/receita/servir como mecânica, mesmo que a criança goste de comida; use o interesse dela de outro modo. Não recorra automaticamente a cozinhar/servir quando o cenário é mercado: isso pode repetir a mesma mecânica, sem aproveitar o lugar. Depois das três opções, no máximo uma frase para sugerir por qual começar e outra para lembrar que pausa ou saída vem primeiro se ela estiver desconfortável. Não repita a recomendação antes e depois da lista. O objetivo técnico fica por trás. Não ofereça tutorial de história ou link do Lúdico neste pedido.
+</pedido_explicito_de_brincadeira>`;
+
+/**
+ * Contrato vigente: uma brincadeira boa, não três alternativas longas.
+ *
+ * A versão anterior continua acima apenas como registro editorial; ela exigia
+ * três jogos completos e foi medida no caminho real com 1.346 caracteres e
+ * quatro bolhas para um pedido no singular. Mais opções competiam com a
+ * qualidade de cada mecânica e aumentavam a latência. Os três pontos de
+ * partida de `blocoMecanicasBrincadeira` agora são repertório interno para o
+ * modelo escolher, nunca quantidade de saída.
+ */
+export const BLOCO_PEDIDO_BRINCADEIRA = `<pedido_explicito_de_brincadeira>
+A família pediu uma brincadeira AGORA. Escolha exatamente UMA mecânica adequada
+ao lugar, idade, comunicação, interesses, sensibilidades e histórico desta
+criança. Os exemplos recebidos são repertório para escolher, não opções para
+mostrar. Entregue o jogo inteiro, sem introdução e sem oferecer alternativas.
+
+O jogo precisa ser divertido mesmo sem meta de desenvolvimento. Interesse muda
+a mecânica, não só o título. Mostre, em poucas linhas: material ou cenário; uma
+FALA EXATA para começar; ação possível da criança no modo como ela se comunica
+(gesto e apontar valem); reação ou virada divertida causada por essa ação; e
+como começa a próxima rodada. Diga em uma frase o que a brincadeira convida a
+praticar, sem prometer resultado.
+
+Não reembale manejo, treino, exposição sensorial ou atividade já tentada como
+jogo. Não exija fala nem olhar. Não reproduza sensibilidade registrada. Se
+houver desconforto, pausa ou saída vêm primeiro. Use um título curto, no máximo
+um emoji funcional e um único bloco executável. O objetivo técnico fica por
+trás; a família recebe a brincadeira.
 </pedido_explicito_de_brincadeira>`;
