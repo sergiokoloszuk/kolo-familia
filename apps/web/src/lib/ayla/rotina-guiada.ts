@@ -1318,7 +1318,7 @@ export function ehAceitePuro(texto: string | null | undefined): boolean {
     .replace(/[^\p{L}\s]/gu, "")
     .trim();
   if (!t) return false;
-  return /^(sim|isso|isso mesmo|e isso|exato|exatamente|perfeito|otimo|ok|okay|blz|beleza|show|ta bom|tudo bem|pode ser|pode fazer|pode montar|pode mandar|podes|concordo|gostei|adorei|amei|ficou bom|ficou otimo|ta otimo|vamos|bora|manda|fecha|fechado|combinado|acho que sim|por mim ta bom|do jeito que voce falou|assim mesmo|assim ta bom)$/.test(
+  return /^(sim|isso|isso mesmo|e isso|exato|exatamente|perfeito|otimo|ok|okay|blz|beleza|show|ta bom|tudo bem|pode ser|pode ser essa|pode ser este|pode ser assim|pode fazer|pode montar|pode mandar|podes|concordo|gostei|adorei|amei|ficou bom|ficou otimo|ta otimo|vamos|bora|manda|fecha|fechado|combinado|acho que sim|por mim ta bom|do jeito que voce falou|assim mesmo|assim ta bom)$/.test(
     t,
   );
 }
@@ -1402,6 +1402,54 @@ export function lerTemaEscolhido(texto: string | null | undefined): string | nul
   // Uma ou duas palavras é tema; uma frase é outra coisa.
   if (limpo.split(/\s+/).length > 4) return null;
   return limpo;
+}
+
+/**
+ * Resolve uma escolha NUMERADA somente contra as opções que a Ayla mostrou
+ * naquele turno. O número não tem significado fora dessa pergunta: nunca é
+ * reinterpretado por interesse atual, perfil alterado ou uma lista nova.
+ */
+export function temaPelaOpcaoExibida(
+  texto: string | null | undefined,
+  opcoes: readonly string[] | null | undefined,
+): string | null {
+  const numero = String(texto ?? "").trim().match(/^(\d{1,2})$/)?.[1];
+  if (!numero) return null;
+  const indice = Number(numero) - 1;
+  const tema = opcoes?.[indice]?.trim();
+  return tema && tema.length >= 2 && tema.length <= 40 ? tema : null;
+}
+
+async function opcoesDaPerguntaDeTema(
+  supabase: SupabaseClient,
+  familyId: string,
+  membroId: string,
+  criadaEm: string | null,
+): Promise<string[] | null> {
+  try {
+    const { data, error } = await supabase
+      .from("ayla_messages")
+      .select("metadata")
+      .eq("family_account_id", familyId)
+      .eq("membro_atipico_id", membroId)
+      .eq("direcao", "outbound")
+      .eq("tipo", "rotina_conversa")
+      .gte("created_at", criadaEm ?? new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString())
+      .order("created_at", { ascending: false })
+      .limit(1);
+    if (error) throw error;
+    const opcoes = (data?.[0]?.metadata as { temas_oferecidos?: unknown } | undefined)?.temas_oferecidos;
+    if (!Array.isArray(opcoes)) return null;
+    const validas = opcoes
+      .filter((tema): tema is string => typeof tema === "string")
+      .map((tema) => tema.trim())
+      .filter((tema) => tema.length >= 2 && tema.length <= 40)
+      .slice(0, 2);
+    return validas.length ? validas : null;
+  } catch (e) {
+    console.warn("[ayla:rotina] não conseguiu reler opções de tema:", e instanceof Error ? e.message : e);
+    return null;
+  }
 }
 
 /**
@@ -1705,6 +1753,8 @@ export async function conduzirRotina(
   mensagem: string;
   pronto: boolean;
   aguardandoTema?: boolean;
+  /** Opções apresentadas à família; o orquestrador as persiste para o "1" ter referente. */
+  temasOferecidos?: string[];
   /** A fala afirmava conclusão que o estado não sustentava. Vira telemetria. */
   falaCorrigida?: boolean;
   /** As etapas propostas neste turno, quando a Ayla está esperando resposta. */
@@ -1846,7 +1896,13 @@ export async function conduzirRotina(
       // ⚠️ E NÃO INVENTA NADA. Só encontra o que a própria família escreveu,
       // pelo MESMO extrator (`lerTemaEscolhido`). Sem tema no histórico, o
       // fluxo segue perguntando, como antes.
-      const escolhido = lerTemaEscolhido(params.contexto) ??
+      const opcoesExibidas = await opcoesDaPerguntaDeTema(
+        supabase,
+        familyId,
+        params.membroAtipicoId,
+        pendente.criadaEm,
+      );
+      const escolhido = temaPelaOpcaoExibida(params.contexto, opcoesExibidas) ?? lerTemaEscolhido(params.contexto) ??
         (await temaJaDitoNoHistorico(supabase, familyId, pendente.criadaEm));
       rastro.tema = escolhido ? String(escolhido).slice(0, 60) : null;
       rastro.tema_fonte = escolhido
@@ -2390,7 +2446,12 @@ ${jaSabemos.perfil}` : "",
               },
             ]
           : null,
-        sequenciaDitada: etapasDitadasEmLinhas(params.contexto),
+        // Um aceite puro congela o quadro que a família acabou de aprovar.
+        // O gerador não recebe autorização para completar, reordenar ou criar
+        // etapas; ajustes explícitos continuam no caminho de propostaAtual.
+        sequenciaDitada: respostaAProposta === "aceite" && proposta
+          ? proposta.etapas.map((etapa) => etapa.texto)
+          : etapasDitadasEmLinhas(params.contexto),
         // A prontidão já rodou lá em cima, antes do turno de conversa.
         pularProntidao: true,
         // A guarda de identidade precisa da família inteira pra comparar o
@@ -2706,6 +2767,7 @@ ${jaSabemos.perfil}` : "",
       mensagem: conferida.texto,
       pronto: pronto && rotinas.length > 0,
       aguardandoTema: faltaTemaFinal,
+      temasOferecidos: faltaTemaFinal ? sugestoesDeTema : undefined,
       falaCorrigida: conferida.corrigida,
       // Quem persiste é o orquestrador (é ele que fala com `ayla_messages`).
       // Devolver as etapas aqui é o que faz a proposta sobreviver ao turno.

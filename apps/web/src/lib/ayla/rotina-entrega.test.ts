@@ -186,6 +186,16 @@ describe("mudança de assunto — a rotina não sequestra a conversa", () => {
     expect(trecho).not.toMatch(/tipo: "resposta_registro"/);
   });
 
+  it('persiste as opções exibidas para a resposta "1" ter referente', () => {
+    const trecho = ORCHESTRATOR.slice(
+      ORCHESTRATOR.indexOf("const r = await conduzirRotina"),
+      ORCHESTRATOR.indexOf("const r = await conduzirRotina") + 3200,
+    );
+    expect(trecho).toContain("r.temasOferecidos");
+    expect(trecho).toContain("temas_oferecidos: r.temasOferecidos");
+    expect(ROTINA).toContain("temaPelaOpcaoExibida(params.contexto, opcoesExibidas)");
+  });
+
   it("MORDE: o modelo NÃO tem porta própria pra gerar o artefato", () => {
     // ⚠️ ESTE TESTE FOI INVERTIDO EM 17/08/2026, DE PROPÓSITO.
     //

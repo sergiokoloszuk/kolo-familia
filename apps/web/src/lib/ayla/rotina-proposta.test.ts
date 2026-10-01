@@ -126,6 +126,7 @@ vi.mock("./anthropic", () => ({
 const {
   conduzirRotina,
   lerTemaEscolhido,
+  temaPelaOpcaoExibida,
   ehAceitePuro,
   lerRespostaAProposta,
   propostaPendente,
@@ -277,6 +278,7 @@ describe("2 · a Ayla inferiu a sequência → propõe e NÃO gera", () => {
     expect(recebida[0]!.tarefas.map((e) => e.texto).join(" ")).not.toMatch(
       /5 minutos|quente ou morno/i,
     );
+    expect(chamadasGerador[0]!.sequenciaDitada).toEqual(etapas);
   });
 });
 
@@ -365,6 +367,40 @@ describe("4 · o tema, quando é mesmo o tema", () => {
     const rot = db.linhas("rotinas").find((x) => x.id === "rot-1");
     expect(rot?.tema).toBe("aventureiro");
     expect(r?.pronto).toBe(true);
+  });
+
+  it('MORDE: "1" vale somente pela opção que a Ayla exibiu e devolve o link', async () => {
+    db.semear("rotinas", [
+      {
+        id: "rot-1",
+        family_account_id: FAM,
+        membro_atipico_id: MEMBRO,
+        nome: "Banho da Manu",
+        cards_status: "aguardando",
+        updated_at: new Date().toISOString(),
+        created_at: new Date().toISOString(),
+        tema: null,
+      },
+    ]);
+    db.semear("ayla_messages", [
+      {
+        family_account_id: FAM,
+        membro_atipico_id: MEMBRO,
+        direcao: "outbound",
+        tipo: "rotina_conversa",
+        metadata: { temas_oferecidos: ["Cozinha", "Dinossauros"] },
+        texto: "1️⃣ Cozinha\n2️⃣ Dinossauros",
+        created_at: new Date().toISOString(),
+      },
+    ]);
+
+    const r = await conduzir("1");
+    const rot = db.linhas("rotinas").find((x) => x.id === "rot-1");
+    expect(rot?.tema).toBe("Cozinha");
+    expect(r?.pronto).toBe(true);
+    expect(r?.mensagem).toContain("https://link.teste/x");
+    expect(r?.mensagem).toContain("Gerar cartões");
+    expect(r?.mensagem).not.toContain("Pensei nestes temas");
   });
 });
 
@@ -544,5 +580,10 @@ describe("7 · o que é aceite, o que é sequência, o que é tema", () => {
 
   it("MORDE: a frase exata que quebrou em produção", () => {
     expect(lerTemaEscolhido("Vamos tomar sorvete depois")).toBeNull();
+  });
+
+  it('"1" sem a pergunta correspondente não vira tema', () => {
+    expect(temaPelaOpcaoExibida("1", null)).toBeNull();
+    expect(lerTemaEscolhido("1")).toBeNull();
   });
 });

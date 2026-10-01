@@ -3906,7 +3906,14 @@ async function processInboundInterno(
           controleTurno,
           // Mesmo canal que a clarificação já usa pra guardar o pedido que a
           // originou: `ayla_messages.metadata`, lido pela mensagem seguinte.
-          ...(r.proposta?.length ? { metadataMensagem: { proposta: r.proposta } } : {}),
+          ...((r.proposta?.length || r.temasOferecidos?.length)
+            ? {
+                metadataMensagem: {
+                  ...(r.proposta?.length ? { proposta: r.proposta } : {}),
+                  ...(r.temasOferecidos?.length ? { temas_oferecidos: r.temasOferecidos } : {}),
+                },
+              }
+            : {}),
         });
         marco(rastro, "envio_fim");
         rastro.saida = "capacidade_rotina";
