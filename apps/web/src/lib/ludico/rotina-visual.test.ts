@@ -236,6 +236,23 @@ describe("reusa o que já funcionava", () => {
     expect(ACTIONS).toMatch(/cards_status: "erro"/);
   });
 
+  it("o clique no app só declara pronto depois de conferir todos os cartões gravados", () => {
+    // A rota interna da Ayla já fazia essa conferência. Sem ela aqui, a mãe
+    // via a rotina como pronta mesmo com imagem ausente ou escrita recusada.
+    expect(ACTIONS).toMatch(/cartões incompletos/);
+    expect(ACTIONS).toMatch(/escritas\.some\(\(r\) => r\?\.error\)/);
+    expect(ACTIONS).toMatch(/gravadas\?\.length !== tarefaIds\.length/);
+    expect(ACTIONS).toMatch(/gravadas\.some\(\(t\) => !t\.imagem_url\)/);
+    expect(ACTIONS.indexOf("gravadas.some((t) => !t.imagem_url)")).toBeLessThan(
+      ACTIONS.indexOf('cards_status: "pronto"'),
+    );
+  });
+
+  it("não confirma início de geração se a escrita de gerando falhar", () => {
+    expect(ACTIONS).toMatch(/const \{ error: inicioErro \} = await supabase/);
+    expect(ACTIONS).toMatch(/if \(inicioErro\) \{[\s\S]{0,180}?Não consegui iniciar os cartões agora/);
+  });
+
   it("nada nasce na semana por este caminho", () => {
     expect(ACTIONS).toMatch(/dia_semana: null/);
   });

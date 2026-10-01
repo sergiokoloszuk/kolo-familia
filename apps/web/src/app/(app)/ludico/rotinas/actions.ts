@@ -705,11 +705,14 @@ export async function gerarCardsVisuais(
     const membro = rel ? (Array.isArray(rel) ? rel[0] ?? null : rel) : null;
     const idade = idadeAnos(membro?.data_nascimento ?? null);
 
-    await supabase
+    const { error: inicioErro } = await supabase
       .from("rotinas")
       .update({ tema, cards_status: "gerando" })
       .eq("id", rotinaId)
       .eq("family_account_id", family.id);
+    if (inicioErro) {
+      return { ok: false, error: "Não consegui iniciar os cartões agora. Tente de novo daqui a pouco." };
+    }
     revalidatePath(`/ludico/rotinas/${rotinaId}`);
     after(() =>
       trackFeature({ familyId: family.id, evento: "ludico_gerado", detalhe: { tipo: "rotina" } }),
@@ -737,7 +740,13 @@ export async function gerarCardsVisuais(
           cards: roteiro.cards,
           referenciaUrl,
         });
-        await Promise.all(
+        // `pronto` só pode significar que todos os cartões existem e podem
+        // ser abertos. A rota da Ayla já tinha este portão; o clique no app
+        // precisa obedecer ao mesmo contrato, ou a tela vira falso sucesso.
+        if (roteiro.cards.length !== tarefaIds.length || imagens.length !== tarefaIds.length || imagens.some((url) => !url)) {
+          throw new Error(`cartões incompletos: ${imagens.filter(Boolean).length}/${tarefaIds.length}`);
+        }
+        const escritas = await Promise.all(
           tarefaIds.map((id, i) => {
             const card = roteiro.cards[i];
             if (!card) return Promise.resolve();
@@ -751,7 +760,15 @@ export async function gerarCardsVisuais(
               .eq("id", id);
           }),
         );
-        await svc
+        if (escritas.some((r) => r?.error)) throw new Error("falha ao salvar imagem de cartão");
+        const { data: gravadas, error: leituraErro } = await svc
+          .from("rotina_tarefas")
+          .select("imagem_url")
+          .eq("rotina_id", rotinaId);
+        if (leituraErro || gravadas?.length !== tarefaIds.length || gravadas.some((t) => !t.imagem_url)) {
+          throw new Error("cartões salvos incompletos");
+        }
+        const { error: conclusaoErro } = await svc
           .from("rotinas")
           .update({
             historia: roteiro.historia,
@@ -759,9 +776,11 @@ export async function gerarCardsVisuais(
             cards_status: "pronto",
           })
           .eq("id", rotinaId);
+        if (conclusaoErro) throw conclusaoErro;
       } catch (e) {
         console.error("[gerarCardsVisuais]", e);
-        await svc.from("rotinas").update({ cards_status: "erro" }).eq("id", rotinaId);
+        const { error: erroFinal } = await svc.from("rotinas").update({ cards_status: "erro" }).eq("id", rotinaId);
+        if (erroFinal) console.error("[gerarCardsVisuais] não conseguiu registrar erro:", erroFinal.message);
       }
     });
 
