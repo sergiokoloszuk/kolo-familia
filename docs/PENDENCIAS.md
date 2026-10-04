@@ -10518,7 +10518,7 @@ criativo) e PEND-213 (aprofundamento por botões).
 ### PEND-227
 **Rotina perde a proposta quando a família corrige em dois balões rápidos**
 Bloco: **A · Ayla / H · Entrega** · Prioridade: **P0**
-STATUS: **CORREÇÃO LOCAL E RECUPERAÇÃO PREPARADA — publicação e prova de produção pendentes** · Atualizada em: 2026-10-04
+STATUS: **EM PRODUÇÃO — recuperação concluída; uso natural dos cartões em monitoramento** · Atualizada em: 2026-10-04
 
 Em 01/10, a família de Sofia aprovou uma rotina da tarde em seis etapas e
 corrigiu dois horários em balões separados por oito segundos. O lote agrupou as
@@ -10556,13 +10556,32 @@ proposta, criança ativa, seis etapas e ausência de envio anterior. A mensagem
 preparada reconhece a demora, entrega link direto, pede conferência e orienta
 escolher o tema e tocar em “Gerar cartões”, sem dizer que as imagens já existem.
 
-**CRITÉRIO DE CONCLUSÃO:** commit servido no health de produção, mesmo código
-global sem coorte; suíte completa, typecheck e build verdes; releitura de
-produção confirma que a proposta da Sofia resultou em uma rotina da criança
-certa com exatamente seis etapas (17:30 · 17:40 · brincadeira · 19:00 · 19:30 ·
-20:00), link persistido para essa rotina e uma única mensagem aceita pelo
-provedor e gravada com rastro da recuperação. Não usar família real como QA e
-não afirmar entrega/leitura do WhatsApp apenas por `messageId`.
+**PUBLICAÇÃO E REPARO (2026-10-04).** A correção entrou globalmente na `main`
+em dois commits: `30e721e` fecha o estado, as confirmações, a preservação do
+artefato anterior e a escrita conferida; `f707759` mantém o mesmo resultado
+substituindo duas leituras antigas por uma, sem consulta adicional no caminho
+comum. O health público sem cache serviu
+`f7077598e411839be0e4606890ad76cb520041b9`, `ref=main`,
+`ambiente=production`, `db.ok=true` e `ayla_experimental_todas=true`. O Core
+permaneceu v12, único ativo, com 24.261 caracteres e SHA-256
+`d11c8134f04e8b7a02c9b55bf725deda29776d03565ba28ceee1095b5d25c7a7`.
+
+O reparo idempotente criou exatamente uma rotina para Sofia (`3b1e2865…`), em
+modo cartões e aguardando tema, e a releitura confirmou a criança e as seis
+etapas: chegar 17:30 · lanche 17:40 · brincadeira livre · jantar 19:00 · banho
+19:30 · dormir 20:00. O link persistido aponta diretamente para essa rotina e
+vale até 03/11. Uma única mensagem (`0c192957…`) reconheceu a demora, trouxe o
+link e orientou escolher o tema e tocar em “Gerar cartões”; a Z-API aceitou uma
+bolha com `messageId` `1B3B51954949E451FF3F`. A reexecução devolveu
+`idempotente=true` e não duplicou rotina nem mensagem. Aceite do provedor não
+prova entrega, leitura ou clique.
+
+**CRITÉRIO DE CONCLUSÃO:** os portões técnicos e a recuperação acima passaram.
+Baixar somente depois de a auditoria diária observar uma interação natural
+pós-deploy em que correção/aceite permaneçam no fluxo especializado, e o tema +
+clique em “Gerar cartões” avancem o mesmo artefato sem trocar criança nem
+etapas. Não provocar esse turno, não usar família real como QA e não afirmar
+entrega/leitura do WhatsApp apenas por `messageId`.
 
 ---
 
