@@ -125,7 +125,7 @@ Só o que está aberto. 🔒 = bloqueada.
 | [PEND-114](#pend-114) | WhatsApp obrigatório antes de iniciar o Trial | G · Comercial | P1 | AGUARDANDO DECISÃO COM A AGÊNCIA | causa raiz no gatilho `handle_new_user` |
 | [PEND-027](#pend-027) | Plano Kolo — contexto, conhecimento e aprendizado | D · Entregas | P1 | A INVESTIGAR | guarda-chuva de PEND-099 |
 | [PEND-082](#pend-082) | Ayla repete orientação do turno anterior — medir frequência real | A · Condução | P1 | MEDIDA | caso Lia/Valentina: "pausa" em 10 de 25 respostas |
-| [PEND-230](#pend-230) | Confirmações sociais reabrem orientação e alongam a conversa | A · Condução | P1 | IMPLEMENTADA · NÃO PUBLICADA | fechar só conversa concluída; provar uso natural pós-deploy |
+| [PEND-230](#pend-230) | Confirmações sociais reabrem orientação e alongam a conversa | A · Condução | P1 | PUBLICADA · PROVA NATURAL PENDENTE | auditar fechamento e exceções em turnos pós-deploy |
 | [PEND-080](#pend-080) | Liberar o caminho novo para TODAS as famílias | A · Condução | P1 | ABERTA 🔒 | fechar os 6 bloqueadores antes de ampliar a allowlist |
 | [PEND-077](#pend-077) | `ayla_daily_checkins` nunca gravou uma linha (400 desde 0001) | H · Governança | P1 | ESCRITA PROVADA · LEITURA NÃO | ligar a leitura do check-in no caminho novo |
 | [PEND-078](#pend-078) | Auditoria (`api_calls`) escrita com a sessão da família em outros pontos | H · Governança | P2 | PARCIALMENTE CORRIGIDA | varrer os 37 pontos de chamada de `logarUsoApi` |
@@ -10653,7 +10653,7 @@ Ver [SPEC](specs/qualidade-conversa-ayla-v12-SPEC.md).
 ### PEND-230
 **Confirmações sociais reabrem orientação e alongam a conversa**
 Bloco: **A · Condução** · Prioridade: **P1**
-STATUS: **IMPLEMENTADA · NÃO PUBLICADA** · Aberta em: 2026-10-04
+STATUS: **PUBLICADA · PROVA NATURAL PENDENTE** · Aberta em: 2026-10-04
 
 **BASELINE REAL.** Auditoria de 03/10 11h05 a 04/10 11h05 (Brasília): quatro
 confirmações puras (“Sim”, dois “Ok”, “Obrigada”), nenhuma com resposta de até
@@ -10677,6 +10677,17 @@ decisão cobrem perguntas, oferta, segurança, rotina, trial, “Sim” e “nã
 funcionou”. O portão fica após o decisor, portanto reduz a fala e evita geração
 de resposta, mas NÃO elimina a classificação nem autoriza alegar redução de
 latência real. Nenhum WhatsApp foi disparado em QA.
+
+**PUBLICAÇÃO GLOBAL.** Commit `610940f984fa4c86f90399727daff1496aa58073`
+enviado por fast-forward à `main` em 04/10. O health público sem cache respondeu
+HTTP 200, `x-vercel-cache=MISS`, `age=0`, `ref=main`, `ambiente=production`,
+`db.ok=true`, mesmo SHA e `ayla_experimental_todas=true`. Leitura posterior do
+banco encontrou exatamente um Core ativo: v12, 24.261 caracteres, SHA-256
+`d11c8134f04e8b7a02c9b55bf725deda29776d03565ba28ceee1095b5d25c7a7`.
+O código não usa coorte. No instante da checagem havia zero mensagens naturais
+`confirmacao_curta` posteriores ao deploy: a experiência real ainda não foi
+provada, e isso não é falha de funcionamento nem autorização para provocar QA
+numa conta de família.
 
 **CRITÉRIO DE CONCLUSÃO:** publicar globalmente sem coorte, confirmar SHA exato
 no health e Core ativo inalterado, depois auditar turnos naturais com estado e
