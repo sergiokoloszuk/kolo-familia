@@ -74,6 +74,8 @@ export type AylaTipoReativa =
   | "clarificacao_conteudo"
   | "resposta_comando"
   | "confirmacao_sugestao"
+  /** Fechamento social sem geração nem ponte de plano; não afirma ação. */
+  | "confirmacao_curta"
   | "plano_pergunta"
   | "rotina_pergunta"
   | "rotina_conversa"

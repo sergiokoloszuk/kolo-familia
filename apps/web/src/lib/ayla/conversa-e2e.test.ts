@@ -214,6 +214,30 @@ beforeEach(() => {
   mundoRef.alvo = null;
 });
 
+describe("continuidade de confirmações sociais pelo orquestrador real", () => {
+  it("responde uma vez, em uma bolha curta, sem repetir a orientação", async () => {
+    const m = familiaAnaEGeovanna();
+    m.db.semear("ayla_messages", [{
+      family_account_id: m.familyId,
+      direcao: "outbound",
+      tipo: "resposta_registro",
+      membro_atipico_id: m.membros.Geovanna,
+      texto: "Experimente avisar antes da transição e mantenha o apoio que já ajuda.",
+      created_at: new Date(Date.now() - 60_000).toISOString(),
+    }]);
+    mundoRef.atual = m;
+    mundoRef.alvo = m.membros.Geovanna;
+    const primeiro = await processInbound(m.db.cliente(), inboundDe(m, "Ok"));
+    expect(primeiro.tratada).toBe(true);
+    expect(m.enviadas.map((x) => x.texto)).toEqual(["Combinado 🌿"]);
+    expect(estadoDoTurno(m).tipo).toBe("confirmacao_curta");
+
+    const segundo = await processInbound(m.db.cliente(), inboundDe(m, "Obrigada"));
+    expect(segundo.tratada).toBe(true);
+    expect(m.enviadas).toHaveLength(1);
+  });
+});
+
 describe("A · a família só relata dificuldade com rotina", () => {
   /**
    * ⚠️ A PRONTIDÃO VAI FORÇADA EM "suficiente", e sem isso este cenário NÃO

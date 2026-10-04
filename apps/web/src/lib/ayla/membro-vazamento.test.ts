@@ -33,7 +33,7 @@ const RESP = readFileSync(resolve(__dirname, "responder.ts"), "utf8");
 
 describe("o histórico sabe de quem é cada fala", () => {
   it("o SELECT traz membro_atipico_id", () => {
-    expect(ORCH).toMatch(/\.select\("direcao, texto, created_at, membro_atipico_id"\)/);
+    expect(ORCH).toMatch(/\.select\("direcao, texto, created_at, tipo, membro_atipico_id"\)/);
   });
 
   it("o turno de OUTRA criança é marcado, e o do membro em foco não", () => {

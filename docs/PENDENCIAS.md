@@ -125,6 +125,7 @@ Só o que está aberto. 🔒 = bloqueada.
 | [PEND-114](#pend-114) | WhatsApp obrigatório antes de iniciar o Trial | G · Comercial | P1 | AGUARDANDO DECISÃO COM A AGÊNCIA | causa raiz no gatilho `handle_new_user` |
 | [PEND-027](#pend-027) | Plano Kolo — contexto, conhecimento e aprendizado | D · Entregas | P1 | A INVESTIGAR | guarda-chuva de PEND-099 |
 | [PEND-082](#pend-082) | Ayla repete orientação do turno anterior — medir frequência real | A · Condução | P1 | MEDIDA | caso Lia/Valentina: "pausa" em 10 de 25 respostas |
+| [PEND-230](#pend-230) | Confirmações sociais reabrem orientação e alongam a conversa | A · Condução | P1 | IMPLEMENTADA · NÃO PUBLICADA | fechar só conversa concluída; provar uso natural pós-deploy |
 | [PEND-080](#pend-080) | Liberar o caminho novo para TODAS as famílias | A · Condução | P1 | ABERTA 🔒 | fechar os 6 bloqueadores antes de ampliar a allowlist |
 | [PEND-077](#pend-077) | `ayla_daily_checkins` nunca gravou uma linha (400 desde 0001) | H · Governança | P1 | ESCRITA PROVADA · LEITURA NÃO | ligar a leitura do check-in no caminho novo |
 | [PEND-078](#pend-078) | Auditoria (`api_calls`) escrita com a sessão da família em outros pontos | H · Governança | P2 | PARCIALMENTE CORRIGIDA | varrer os 37 pontos de chamada de `logarUsoApi` |
@@ -3969,6 +3970,11 @@ Aberta em: 2026-08-17 · Origem: conversa real da Karina, pós-rollout geral
     tokens/latência, menor correção estrutural e risco de quebrar continuidade.
 - **Amostra em 17/08:** ~13 turnos com métrica desde a liberação geral. **Não
   suficiente** — a medição precisa esperar acumular.
+- **Atualização 04/10:** a janela de sete dias trouxe 43 confirmações puras;
+  só 8 receberam respostas de até 40 caracteres. A subclasse de fecho social
+  comum está em [PEND-230](#pend-230). A repetição de orientação quando a
+  família traz conteúdo novo continua aberta nesta pendência e não é resolvida
+  pelo fecho determinístico.
 - **Hipótese estrutural a testar SE virar padrão (não medida):** as respostas
   anteriores da própria Ayla ocupam ~3.000 dos ~7.700 tokens de entrada (5 de
   10 linhas do histórico, de 1.297 a 3.722 chars cada). Quanto mais texto
@@ -10644,7 +10650,44 @@ Ver [SPEC](specs/qualidade-conversa-ayla-v12-SPEC.md).
 
 ---
 
-**Proximo ID livre: PEND-230. *(PEND-225, PEND-226 e PEND-228 estão reivindicadas no worktree `ayla-conversa-valor`; PEND-227 foi incorporada nesta frente; PEND-209 a PEND-211 já estão reivindicadas por outra frente; 024 e 025 reservadas por frentes ainda nao publicadas; PEND-202 reivindicada em commit e ainda sem ficha; 0076 e numero de MIGRACAO reservado — ver PEND-121.)***
+### PEND-230
+**Confirmações sociais reabrem orientação e alongam a conversa**
+Bloco: **A · Condução** · Prioridade: **P1**
+STATUS: **IMPLEMENTADA · NÃO PUBLICADA** · Aberta em: 2026-10-04
+
+**BASELINE REAL.** Auditoria de 03/10 11h05 a 04/10 11h05 (Brasília): quatro
+confirmações puras (“Sim”, dois “Ok”, “Obrigada”), nenhuma com resposta de até
+40 caracteres. Nos sete dias anteriores, 8/43 ficaram nesse limite. “Sim” no
+caso do dia era de segurança e não autoriza uma regra genérica de silêncio.
+
+**CAUSA E CORREÇÃO.** A confirmação comum atravessava o classificador e chegava
+ao gerador como novo pedido. Um portão depois dos fluxos especializados e do
+aceite do Kolo Vivo agora fecha apenas “Ok”, “Obrigada” e equivalentes, quando
+a última saída recente é uma resposta comum concluída e não há pergunta,
+oferta, segurança ou artefato pendente. A resposta é “Combinado 🌿” ou “Por
+nada 💛”; uma confirmação seguinte não recebe outra bolha. “Sim” continua no
+roteamento normal porque pode autorizar uma entrega. O último outbound é
+escolhido pelo `created_at`: outro consumidor reverte o array de histórico
+memoizado dentro do turno, detalhe que o teste de ponta a ponta revelou.
+
+**PROVA LOCAL.** 4.207 testes passaram (7 ignorados), typecheck limpo e build
+Webpack concluiu 106 rotas em 04/10. O teste do orquestrador real usa banco e
+provedor simulados e cobre “Ok” seguido de “Obrigada” sem repetição; testes de
+decisão cobrem perguntas, oferta, segurança, rotina, trial, “Sim” e “não
+funcionou”. O portão fica após o decisor, portanto reduz a fala e evita geração
+de resposta, mas NÃO elimina a classificação nem autoriza alegar redução de
+latência real. Nenhum WhatsApp foi disparado em QA.
+
+**CRITÉRIO DE CONCLUSÃO:** publicar globalmente sem coorte, confirmar SHA exato
+no health e Core ativo inalterado, depois auditar turnos naturais com estado e
+formato exibido: fechamento curto uma vez; nenhum aceite de ação sequestrado;
+segurança, rotina, trial e identidade preservados. Medir latência à primeira
+aceitação separadamente. Ver também [PEND-082](#pend-082), [PEND-229](#pend-229)
+e [SPEC](specs/qualidade-conversa-ayla-v12-SPEC.md).
+
+---
+
+**Proximo ID livre: PEND-231. *(PEND-225, PEND-226 e PEND-228 estão reivindicadas no worktree `ayla-conversa-valor`; PEND-227 foi incorporada nesta frente; PEND-209 a PEND-211 já estão reivindicadas por outra frente; 024 e 025 reservadas por frentes ainda nao publicadas; PEND-202 reivindicada em commit e ainda sem ficha; 0076 e numero de MIGRACAO reservado — ver PEND-121.)***
 
 > Conferir contra `origin/main`, não contra o seu branch. Dois branches podem
 > reivindicar o mesmo número — o conflito de merge nesta linha é o alarme.

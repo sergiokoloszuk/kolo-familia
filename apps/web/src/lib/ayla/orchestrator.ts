@@ -107,6 +107,7 @@ import { secoesDe, temMaterial } from "@/lib/conducao/base2";
 import { montarRastro, registrarRastroConhecimento } from "@/lib/conhecimento/rastro";
 import { dividirEmBolhas, ritmoDasBolhas, TETO_ESPERA_SEGUNDOS } from "./bolhas";
 import { paraWhatsApp, residuoDeEscrita } from "./apresentacao";
+import { decidirConfirmacaoCurta, ehFechamentoSocial, textoFechamentoCurto } from "./confirmacao-curta";
 import { semOutrosMembros } from "./membro-escopo";
 import { ehFamiliaExperimental, responderExperimental, posTrialAtivo } from "./experimental";
 import { atenderDesconhecido } from "./desconhecido";
@@ -3961,6 +3962,53 @@ async function processInboundInterno(
     }
   }
 
+  // Uma confirmação social não é um novo pedido de orientação. Este portão
+  // vem DEPOIS dos fluxos especializados e da confirmação do Kolo Vivo; não
+  // intercepta pergunta, oferta, segurança nem artefato pendente. Reusa o
+  // histórico deste turno e não acrescenta chamada ao modelo.
+  const confirmacaoSocial = ehFechamentoSocial(inbound.texto);
+  const historicoConfirmacao = confirmacaoSocial ? await historicoDoTurno() : [];
+  // Outros consumidores podem reverter o array memoizado do histórico; a
+  // última saída é escolhida pelo carimbo, nunca pela posição na lista.
+  const ultimaSaida = historicoConfirmacao
+    .filter((m) => m.direcao === "outbound")
+    .reduce<LinhaDeHistorico | null>((maisRecente, m) =>
+      !maisRecente || m.created_at >= maisRecente.created_at ? m : maisRecente, null);
+  const planoOferecido = confirmacaoSocial && ehAfirmacaoCurta(inbound.texto)
+    ? await ofertaDePlanoPendente(supabase, family.id, membroConversa ?? null)
+    : false;
+  const fechamento = confirmacaoSocial && !planoOferecido && !escolha
+    ? decidirConfirmacaoCurta({
+        mensagem: inbound.texto,
+        ultimaSaida,
+        agora: inbound.recebidaEm,
+        perguntaPendente: estadoDoTurno?.perguntaPendente.conhecido !== "nenhum",
+        artefatoPendente: estadoDoTurno?.artefatoPendente.conhecido === "sim",
+        segurancaAberta: seguranca.aberta || mensagemPedeSeguranca(inbound.texto),
+        rotinaPendente: Boolean(rotinaConversa),
+        ofertaFimDeSemanaPendente: Boolean(ofertaFds),
+      })
+    : "seguir";
+  if (fechamento === "silencio") {
+    rastro.saida = "confirmacao_curta_repetida";
+    return { tratada: true, familia: family.id };
+  }
+  if (fechamento === "responder") {
+    marco(rastro, "envio_inicio");
+    const resp = await enviarEPersistir(supabase, {
+      family_account_id: family.id,
+      membro_atipico_id: null,
+      phone: inbound.phoneE164,
+      texto: textoFechamentoCurto(inbound.texto),
+      category: "reativa",
+      tipo: "confirmacao_curta",
+      controleTurno,
+    });
+    marco(rastro, "envio_fim");
+    rastro.saida = "confirmacao_curta";
+    return { tratada: true, familia: family.id, resposta: resp };
+  }
+
   // ⚠️ 15/08/2026 · C2 — O EXPERIMENTAL DESCEU PARA CÁ.
   //
   // Ele era a PRIMEIRA porta depois do gate de assinatura, e o `return` dele
@@ -7521,6 +7569,7 @@ type LinhaDeHistorico = {
   direcao: string;
   texto: string | null;
   created_at: string;
+  tipo: string | null;
   membro_atipico_id?: string | null;
 };
 
@@ -7541,7 +7590,7 @@ async function lerHistoricoBruto(
 ): Promise<LinhaDeHistorico[]> {
   const { data } = await supabase
     .from("ayla_messages")
-    .select("direcao, texto, created_at, membro_atipico_id")
+    .select("direcao, texto, created_at, tipo, membro_atipico_id")
     .eq("family_account_id", familyId)
     .order("created_at", { ascending: false })
     .limit(9);
