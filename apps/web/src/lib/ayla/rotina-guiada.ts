@@ -205,7 +205,6 @@ export async function propostaPendente(
       .select("tipo, metadata, membro_atipico_id")
       .eq("family_account_id", familyId)
       .eq("direcao", "outbound")
-      .in("tipo", ["rotina_proposta", "rotina_conversa", "rotina_pronta"])
       .gte("created_at", limite.toISOString())
       .order("created_at", { ascending: false })
       .limit(1);
@@ -242,88 +241,20 @@ export async function rotinaConversaPendente(
   const limite = new Date(agora.getTime() - 48 * 60 * 60 * 1000);
   const { data: perguntas } = await supabase
     .from("ayla_messages")
-    .select("created_at, membro_atipico_id")
+    .select("tipo, membro_atipico_id")
     .eq("family_account_id", familyId)
-    // ⚠️ A PROPOSTA TAMBÉM MANTÉM A CONVERSA ABERTA. Sem isto o portão do
-    // orquestrador não reconheceria o turno seguinte como continuação, e o
-    // "sim" da mãe cairia na conversa comum — a proposta morreria calada,
-    // que é exatamente o beco que `cards_status='aguardando'` já resolveu
-    // para o tema em 08/08/2026.
-    .in("tipo", ["rotina_conversa", "rotina_proposta"])
     .eq("direcao", "outbound")
     .gte("created_at", limite.toISOString())
     .order("created_at", { ascending: false })
     .limit(1);
   const p = perguntas?.[0];
-  if (!p) return null;
-
-  const { data: respostas } = await supabase
-    .from("ayla_messages")
-    .select("id")
-    .eq("family_account_id", familyId)
-    .eq("direcao", "inbound")
-    .gt("created_at", p.created_at as string)
-    .limit(1);
-  if ((respostas?.length ?? 0) > 0) return null;
+  // A chegada de uma inbound NÃO consome o estado: ela pode ser apenas o
+  // primeiro balão de um turno que ainda está sendo agrupado. O estado termina
+  // quando a Ayla publica outra outbound. Ler a última outbound de qualquer
+  // tipo resolve a corrida da Sofia sem acrescentar consulta ao caminho comum.
+  if (p?.tipo !== "rotina_conversa" && p?.tipo !== "rotina_proposta") return null;
 
   return { membroId: (p.membro_atipico_id as string | null) ?? null };
-}
-
-export type RotinaAntesDoTurno =
-  | { estado: "encontrada"; membroId: string | null; tipo: "rotina_conversa" | "rotina_proposta" }
-  | { estado: "nao_encontrada" }
-  | { estado: "falhou"; motivo: string };
-
-/**
- * Reconstrói o estado que existia ANTES do lote já claimado.
- *
- * Cada balão do WhatsApp abre uma execução. A segunda correção rápida enxerga
- * a primeira inbound já gravada e, por isso, o preflight de
- * `rotinaConversaPendente` deixa de considerar a proposta pendente. Só que é a
- * execução da segunda mensagem que claima o lote inteiro e responde. A decisão
- * definitiva precisa, portanto, olhar para a última outbound ANTERIOR à
- * primeira mensagem do lote — não para o estado observado por uma execução
- * concorrente antes de o lote existir.
- *
- * Consultamos qualquer tipo de outbound. Se houve uma resposta comum entre a
- * proposta e este turno, a proposta não é ressuscitada.
- */
-export async function rotinaAntesDoTurno(
-  supabase: SupabaseClient,
-  familyId: string,
-  primeiraMensagemEm: string,
-): Promise<RotinaAntesDoTurno> {
-  const inicio = new Date(primeiraMensagemEm);
-  if (!Number.isFinite(inicio.getTime())) {
-    return { estado: "falhou", motivo: "início do lote inválido" };
-  }
-  const limite = new Date(inicio.getTime() - 48 * 60 * 60 * 1000).toISOString();
-  try {
-    const { data, error } = await supabase
-      .from("ayla_messages")
-      .select("tipo, membro_atipico_id")
-      .eq("family_account_id", familyId)
-      .eq("direcao", "outbound")
-      .gte("created_at", limite)
-      .lt("created_at", inicio.toISOString())
-      .order("created_at", { ascending: false })
-      .limit(1);
-    if (error) return { estado: "falhou", motivo: error.message };
-    const ultima = data?.[0];
-    if (ultima?.tipo !== "rotina_conversa" && ultima?.tipo !== "rotina_proposta") {
-      return { estado: "nao_encontrada" };
-    }
-    return {
-      estado: "encontrada",
-      tipo: ultima.tipo,
-      membroId: (ultima.membro_atipico_id as string | null) ?? null,
-    };
-  } catch (e) {
-    return {
-      estado: "falhou",
-      motivo: e instanceof Error ? e.message : String(e),
-    };
-  }
 }
 
 /**

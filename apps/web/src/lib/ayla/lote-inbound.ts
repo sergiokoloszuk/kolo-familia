@@ -116,8 +116,6 @@ export type Lote = {
   texto: string;
   /** Quantas mensagens entraram (1 = turno normal). */
   quantidade: number;
-  /** Instante da primeira mensagem realmente claimada neste turno. */
-  primeiraMensagemEm: string;
   /** Portão que precisa ser confirmado imediatamente antes da publicação. */
   controle: ControleTurno;
 };
@@ -199,7 +197,7 @@ export async function aguardarTurnoDaMae(
       // Coluna ainda não migrada (0070) ou falha inesperada: NÃO travar a Ayla.
       // Degrada pro comportamento antigo — responde só esta mensagem.
       console.warn("[ayla:turno] claim falhou, seguindo sem agrupar:", error.message);
-      return { texto: params.textoAtual, quantidade: 1, primeiraMensagemEm: marco, controle };
+      return { texto: params.textoAtual, quantidade: 1, controle };
     }
 
     const linhas = ((claimadas ?? []) as LinhaInbound[])
@@ -220,21 +218,16 @@ export async function aguardarTurnoDaMae(
       .map((l) => (l.texto ?? "").trim())
       .filter(Boolean);
     if (textos.length === 0) {
-      return { texto: params.textoAtual, quantidade: 1, primeiraMensagemEm: marco, controle };
+      return { texto: params.textoAtual, quantidade: 1, controle };
     }
 
     if (textos.length > 1) {
       console.log(`[ayla:turno] agrupando ${textos.length} mensagens num turno só`);
     }
-    return {
-      texto: textos.join("\n"),
-      quantidade: textos.length,
-      primeiraMensagemEm: linhas[0]?.created_at ?? marco,
-      controle,
-    };
+    return { texto: textos.join("\n"), quantidade: textos.length, controle };
   } catch (e) {
     console.warn("[ayla:turno] erro inesperado, seguindo sem agrupar:", e instanceof Error ? e.message : e);
-    return { texto: params.textoAtual, quantidade: 1, primeiraMensagemEm: marco, controle };
+    return { texto: params.textoAtual, quantidade: 1, controle };
   }
 }
 

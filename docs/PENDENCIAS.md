@@ -10536,15 +10536,15 @@ artefatos antigos seguem incompletos: dois pertencem à conta da Karina e não
 serão usados como QA; três são pedidos contextuais de julho/agosto/setembro e
 não autorizam contato surpresa nesta correção.
 
-**CAUSA E CORREÇÃO LOCAL.** O preflight anterior ao insert continua servindo
-para reconhecer escolha fechada sem espera, mas deixou de decidir o roteamento
-final. Depois do claim, o lote agora carrega a data da primeira mensagem e o
-orquestrador relê a última outbound anterior a essa fronteira. Duas correções do
-mesmo lote continuam ligadas à proposta; uma outbound comum no meio encerra o
-estado e não ressuscita conversa velha. “faz sentido” e o erro real “faz
-sentindo” viraram aceitações explícitas. Proposta aceita sempre abre quadro
-novo, sem substituir silenciosamente rotina homônima, e a escrita relê família,
-criança e sequência antes de autorizar fala de sucesso.
+**CAUSA E CORREÇÃO LOCAL.** O estado era consumido pela simples chegada da
+primeira inbound, antes de a Ayla responder. Agora o preflight lê a última
+outbound de qualquer tipo: duas correções continuam ligadas à proposta até a
+Ayla publicar uma resposta; uma outbound comum encerra o estado e não
+ressuscita conversa velha. A mudança substitui duas consultas por uma e não
+acrescenta leitura ao caminho comum. “faz sentido” e o erro real “faz sentindo”
+viraram aceitações explícitas. Proposta aceita sempre abre quadro novo, sem
+substituir silenciosamente rotina homônima, e a escrita relê família, criança e
+sequência antes de autorizar fala de sucesso.
 
 **PROVA LOCAL ATÉ AQUI.** Typecheck limpo com `--incremental false`; regressão
 da Ayla: 2.096 testes verdes e 7 ignorados em 117 arquivos. Suíte completa:

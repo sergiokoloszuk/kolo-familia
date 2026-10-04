@@ -133,7 +133,7 @@ const {
   ehAceitePuro,
   lerRespostaAProposta,
   propostaPendente,
-  rotinaAntesDoTurno,
+  rotinaConversaPendente,
 } = await import("./rotina-guiada");
 
 const FAM = "fam-1";
@@ -187,7 +187,7 @@ const conduzir = (texto: string) =>
 
 const rotinasCriadas = () => db.linhas("rotinas").length;
 
-describe("0 · o estado especializado é reconstruído pela fronteira do lote", () => {
+describe("0 · inbound não consome o estado antes de a Ayla responder", () => {
   it("MORDE 01/10: duas correções rápidas continuam ligadas à proposta da Sofia", async () => {
     const propostaEm = "2026-10-01T04:12:00.000Z";
     const primeiraCorrecaoEm = "2026-10-01T04:12:10.000Z";
@@ -214,12 +214,12 @@ describe("0 · o estado especializado é reconstruído pela fronteira do lote", 
       },
     ]);
 
-    const estado = await rotinaAntesDoTurno(db.cliente() as never, FAM, primeiraCorrecaoEm);
-    expect(estado).toEqual({
-      estado: "encontrada",
-      tipo: "rotina_proposta",
-      membroId: MEMBRO,
-    });
+    const estado = await rotinaConversaPendente(
+      db.cliente() as never,
+      FAM,
+      new Date("2026-10-01T04:12:20.000Z"),
+    );
+    expect(estado).toEqual({ membroId: MEMBRO });
   });
 
   it("não ressuscita proposta quando uma resposta comum saiu antes do novo turno", async () => {
@@ -237,8 +237,11 @@ describe("0 · o estado especializado é reconstruído pela fronteira do lote", 
     ]);
 
     await expect(
-      rotinaAntesDoTurno(db.cliente() as never, FAM, "2026-10-01T04:14:00.000Z"),
-    ).resolves.toEqual({ estado: "nao_encontrada" });
+      rotinaConversaPendente(db.cliente() as never, FAM, new Date("2026-10-01T04:14:00.000Z")),
+    ).resolves.toBeNull();
+    await expect(
+      propostaPendente(db.cliente() as never, FAM, new Date("2026-10-01T04:14:00.000Z")),
+    ).resolves.toBeNull();
   });
 });
 
