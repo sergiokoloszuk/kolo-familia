@@ -133,6 +133,7 @@ const {
   ehAceitePuro,
   lerRespostaAProposta,
   propostaPendente,
+  rotinaAntesDoTurno,
 } = await import("./rotina-guiada");
 
 const FAM = "fam-1";
@@ -185,6 +186,61 @@ const conduzir = (texto: string) =>
   });
 
 const rotinasCriadas = () => db.linhas("rotinas").length;
+
+describe("0 · o estado especializado é reconstruído pela fronteira do lote", () => {
+  it("MORDE 01/10: duas correções rápidas continuam ligadas à proposta da Sofia", async () => {
+    const propostaEm = "2026-10-01T04:12:00.000Z";
+    const primeiraCorrecaoEm = "2026-10-01T04:12:10.000Z";
+    semearProposta(
+      ["Chegar 17:30", "Lanche", "Brincadeira livre", "Jantar 19:00", "Banho", "Dormir 20:00"],
+      propostaEm,
+    );
+    db.semear("ayla_messages", [
+      {
+        id: "correcao-1",
+        family_account_id: FAM,
+        direcao: "inbound",
+        texto: "Banho às 19:30",
+        created_at: primeiraCorrecaoEm,
+        processada_em: "2026-10-01T04:12:20.000Z",
+      },
+      {
+        id: "correcao-2",
+        family_account_id: FAM,
+        direcao: "inbound",
+        texto: "Lanche às 17:40",
+        created_at: "2026-10-01T04:12:15.000Z",
+        processada_em: "2026-10-01T04:12:20.000Z",
+      },
+    ]);
+
+    const estado = await rotinaAntesDoTurno(db.cliente() as never, FAM, primeiraCorrecaoEm);
+    expect(estado).toEqual({
+      estado: "encontrada",
+      tipo: "rotina_proposta",
+      membroId: MEMBRO,
+    });
+  });
+
+  it("não ressuscita proposta quando uma resposta comum saiu antes do novo turno", async () => {
+    semearProposta(["Lanche", "Banho"], "2026-10-01T04:12:00.000Z");
+    db.semear("ayla_messages", [
+      {
+        id: "resposta-comum",
+        family_account_id: FAM,
+        membro_atipico_id: MEMBRO,
+        direcao: "outbound",
+        tipo: "resposta_registro",
+        texto: "Outro assunto já foi respondido.",
+        created_at: "2026-10-01T04:13:00.000Z",
+      },
+    ]);
+
+    await expect(
+      rotinaAntesDoTurno(db.cliente() as never, FAM, "2026-10-01T04:14:00.000Z"),
+    ).resolves.toEqual({ estado: "nao_encontrada" });
+  });
+});
 
 // ═══════════════════════════════════════════════════════════════════════════
 describe("1 · a família ditou a sequência → monta direto, sem burocracia", () => {
@@ -326,6 +382,39 @@ describe("3 · a mãe responde à proposta", () => {
       "Tomar a vacina",
       "Terminou",
     ]);
+  });
+
+  it("MORDE D-R3: aceitar proposta não substitui rotina antiga com o mesmo nome", async () => {
+    db.semear("rotinas", [
+      {
+        id: "rotina-antiga",
+        family_account_id: FAM,
+        membro_atipico_id: MEMBRO,
+        nome: "Hora da vacina",
+        dia_semana: null,
+        tema: null,
+        modo_exibicao: "lista",
+      },
+    ]);
+    db.semear("rotina_tarefas", [
+      {
+        id: "tarefa-antiga",
+        rotina_id: "rotina-antiga",
+        texto: "Etapa antiga preservada",
+        hora: null,
+        ordem: 0,
+      },
+    ]);
+    semearProposta(["Chegar ao posto", "Tomar a vacina", "Terminou"]);
+    cenario = { prontidao: "falta", acao: "montar", mensagem: "Combinado 🌿" };
+
+    const r = await conduzir("faz sentido");
+
+    expect(r?.pronto).toBe(true);
+    expect(db.linhas("rotinas")).toHaveLength(2);
+    expect(
+      db.linhas("rotina_tarefas").find((t) => t.rotina_id === "rotina-antiga")?.texto,
+    ).toBe("Etapa antiga preservada");
   });
 
   it('MORDE: "depois sorvete" entra na SEQUÊNCIA, nunca como tema', async () => {
@@ -573,7 +662,17 @@ describe("6 · REGRESSÃO — vacina → sorvete → aventureiro (caso Manu)", (
 
 // ═══════════════════════════════════════════════════════════════════════════
 describe("7 · o que é aceite, o que é sequência, o que é tema", () => {
-  const ACEITES = ["sim", "isso", "isso mesmo", "pode ser", "perfeito", "ficou bom", "ok"];
+  const ACEITES = [
+    "sim",
+    "isso",
+    "isso mesmo",
+    "pode ser",
+    "perfeito",
+    "ficou bom",
+    "faz sentido",
+    "faz sentindo",
+    "ok",
+  ];
   const SEQUENCIA = [
     "Vamos tomar sorvete depois",
     "depois sorvete",

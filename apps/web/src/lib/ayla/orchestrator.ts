@@ -70,6 +70,7 @@ import { pedeUmPlano } from "@/lib/ia/pedido-plano";
 import { abreFluxoDeArtefato, atoSobreArtefato } from "@/lib/conducao/ato-artefato";
 import {
   etapasDitadasEmLinhas,
+  rotinaAntesDoTurno,
   rotinaConversaPendente,
   pediuRotinaExplicitamente,
   portaoDeterministicoDeRotina,
@@ -2601,7 +2602,7 @@ async function processInboundInterno(
   //
   // `ofertaFds` e `rotinaConversa` continuam calculadas ANTES de o inbound
   // ser persistido — é disso que depende detectar "primeira resposta".
-  const [{ data: pref }, ofertaFds, rotinaConversa] = await Promise.all([
+  const [{ data: pref }, ofertaFds, rotinaConversaNoPreflight] = await Promise.all([
     supabase
       .from("ayla_preferences")
       .select("desativada, consentimento_em")
@@ -2610,6 +2611,7 @@ async function processInboundInterno(
     ofertaFimDeSemanaPendente(supabase, family.id, inbound.recebidaEm),
     rotinaConversaPendente(supabase, family.id, inbound.recebidaEm),
   ]);
+  let rotinaConversa = rotinaConversaNoPreflight;
   // Bloqueada DE VERDADE = desativada E já tinha consentido (opt-out "sair" ou
   // bloqueio manual do admin). `desativada` + SEM consentimento é só o padrão do
   // cadastro (LGPD, "ainda não consentiu") — NÃO bloqueia o reativo.
@@ -2807,6 +2809,32 @@ async function processInboundInterno(
   if (turno.texto.trim()) {
     // O resto da função (parser, responder, ponte) passa a ver a fala inteira.
     inbound = { ...inbound, texto: turno.texto };
+  }
+
+  // O preflight acontece antes de persistir ESTE inbound e é útil para liberar
+  // escolhas fechadas ("1") sem espera. Ele não pode ser a decisão final do
+  // roteamento: quando a família manda duas correções rápidas, a execução da
+  // segunda mensagem vê a primeira inbound no banco e conclui cedo demais que
+  // a proposta já foi respondida. É justamente essa segunda execução que
+  // claima o lote e deve responder pelas duas.
+  //
+  // Agora que o lote tem fronteira, reconstruímos o que existia imediatamente
+  // antes da primeira mensagem claimada. Uma outbound comum no meio encerra o
+  // estado; duas inbounds do mesmo lote não.
+  const rotinaNoInicioDoTurno = await rotinaAntesDoTurno(
+    supabase,
+    family.id,
+    turno.primeiraMensagemEm,
+  );
+  if (rotinaNoInicioDoTurno.estado === "falhou") {
+    console.warn(
+      "[ayla:rotina] falha ao reconstruir estado anterior ao lote; mantendo preflight:",
+      rotinaNoInicioDoTurno.motivo,
+    );
+  } else {
+    rotinaConversa = rotinaNoInicioDoTurno.estado === "encontrada"
+      ? { membroId: rotinaNoInicioDoTurno.membroId }
+      : null;
   }
   marco(rastro, "pre_decisao_inicio");
 

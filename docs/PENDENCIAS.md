@@ -10515,6 +10515,57 @@ criativo) e PEND-213 (aprofundamento por botões).
 
 ---
 
+### PEND-227
+**Rotina perde a proposta quando a família corrige em dois balões rápidos**
+Bloco: **A · Ayla / H · Entrega** · Prioridade: **P0**
+STATUS: **CORREÇÃO LOCAL E RECUPERAÇÃO PREPARADA — publicação e prova de produção pendentes** · Atualizada em: 2026-10-04
+
+Em 01/10, a família de Sofia aprovou uma rotina da tarde em seis etapas e
+corrigiu dois horários em balões separados por oito segundos. O lote agrupou as
+duas mensagens, mas a execução que venceu a disputa já tinha classificado o
+turno antes de o lote existir: como a primeira inbound estava no banco, ela não
+enxergou mais a `rotina_proposta`. A resposta saiu como `resposta_registro`, o
+“Faz sentindo” seguinte também caiu na conversa comum e nenhuma linha nasceu em
+`rotinas`. A fala confirmou uma ação que não aconteceu.
+
+**BASELINE DE PRODUÇÃO (27/09–04/10).** Houve duas `rotina_proposta`: a da Manu
+gerou três artefatos no período; a de Sofia recebeu “Banho às 19:30” + “Lanche
+às 17:40”, produziu resposta comum e ficou com zero rotina nas seis horas
+seguintes — e continua sem rotina. É o único caso perdido nessa janela. Cinco
+artefatos antigos seguem incompletos: dois pertencem à conta da Karina e não
+serão usados como QA; três são pedidos contextuais de julho/agosto/setembro e
+não autorizam contato surpresa nesta correção.
+
+**CAUSA E CORREÇÃO LOCAL.** O preflight anterior ao insert continua servindo
+para reconhecer escolha fechada sem espera, mas deixou de decidir o roteamento
+final. Depois do claim, o lote agora carrega a data da primeira mensagem e o
+orquestrador relê a última outbound anterior a essa fronteira. Duas correções do
+mesmo lote continuam ligadas à proposta; uma outbound comum no meio encerra o
+estado e não ressuscita conversa velha. “faz sentido” e o erro real “faz
+sentindo” viraram aceitações explícitas. Proposta aceita sempre abre quadro
+novo, sem substituir silenciosamente rotina homônima, e a escrita relê família,
+criança e sequência antes de autorizar fala de sucesso.
+
+**PROVA LOCAL ATÉ AQUI.** Typecheck limpo com `--incremental false`; regressão
+da Ayla: 2.096 testes verdes e 7 ignorados em 117 arquivos. Suíte completa:
+4.176 verdes, 7 ignorados e uma falha ambiental já conhecida em
+`provider.test.ts` (esperava erro contendo “anthropic”, recebeu `fetch failed`).
+Build Webpack compilou, passou TypeScript e gerou 106 rotas. O reparo
+idempotente da Sofia foi executado em modo somente leitura e confirmou
+proposta, criança ativa, seis etapas e ausência de envio anterior. A mensagem
+preparada reconhece a demora, entrega link direto, pede conferência e orienta
+escolher o tema e tocar em “Gerar cartões”, sem dizer que as imagens já existem.
+
+**CRITÉRIO DE CONCLUSÃO:** commit servido no health de produção, mesmo código
+global sem coorte; suíte completa, typecheck e build verdes; releitura de
+produção confirma que a proposta da Sofia resultou em uma rotina da criança
+certa com exatamente seis etapas (17:30 · 17:40 · brincadeira · 19:00 · 19:30 ·
+20:00), link persistido para essa rotina e uma única mensagem aceita pelo
+provedor e gravada com rastro da recuperação. Não usar família real como QA e
+não afirmar entrega/leitura do WhatsApp apenas por `messageId`.
+
+---
+
 ### PEND-229
 **Qualidade, profundidade e concisão da conversa da Ayla no WhatsApp**
 Bloco: **B · Ayla / A · Condução** · Prioridade: **P1**
@@ -10574,7 +10625,7 @@ Ver [SPEC](specs/qualidade-conversa-ayla-v12-SPEC.md).
 
 ---
 
-**Proximo ID livre: PEND-230. *(PEND-225 a PEND-228 estão reivindicadas no worktree `ayla-conversa-valor`; PEND-209 a PEND-211 já estão reivindicadas por outra frente; 024 e 025 reservadas por frentes ainda nao publicadas; PEND-202 reivindicada em commit e ainda sem ficha; 0076 e numero de MIGRACAO reservado — ver PEND-121.)***
+**Proximo ID livre: PEND-230. *(PEND-225, PEND-226 e PEND-228 estão reivindicadas no worktree `ayla-conversa-valor`; PEND-227 foi incorporada nesta frente; PEND-209 a PEND-211 já estão reivindicadas por outra frente; 024 e 025 reservadas por frentes ainda nao publicadas; PEND-202 reivindicada em commit e ainda sem ficha; 0076 e numero de MIGRACAO reservado — ver PEND-121.)***
 
 > Conferir contra `origin/main`, não contra o seu branch. Dois branches podem
 > reivindicar o mesmo número — o conflito de merge nesta linha é o alarme.

@@ -10,17 +10,33 @@ describe("novo pedido de rotina não substitui o anterior", () => {
     const operacoes: string[] = [];
     const db = {
       from(tabela: string) {
+        if (tabela === "rotinas") return {
+          insert(linhas: unknown) {
+            operacoes.push(`insert:${tabela}`);
+            expect(linhas).toMatchObject({ nome: "Rotina visual de Manu", tema: null });
+            return { select: () => ({ single: async () => ({ data: { id: "novo-id" }, error: null }) }) };
+          },
+          select: () => ({
+            eq: () => ({
+              maybeSingle: async () => ({
+                data: { id: "novo-id", family_account_id: "familia", membro_atipico_id: "manu" },
+                error: null,
+              }),
+            }),
+          }),
+          delete: () => ({ eq: async () => ({ error: null }) }),
+        };
         return {
           insert(linhas: unknown) {
             operacoes.push(`insert:${tabela}`);
-            if (tabela === "rotinas") {
-              expect(linhas).toMatchObject({ nome: "Rotina visual de Manu", tema: null });
-              return { select: () => ({ single: async () => ({ data: { id: "novo-id" }, error: null }) }) };
-            }
             expect(linhas).toMatchObject([{ rotina_id: "novo-id", texto: "Almoço" }]);
             return Promise.resolve({ error: null });
           },
-          select() { throw new Error("não deve procurar rotina antiga pelo nome"); },
+          select: () => ({
+            eq: () => ({
+              order: async () => ({ data: [{ texto: "Almoço", hora: null, ordem: 0 }], error: null }),
+            }),
+          }),
           delete() { throw new Error("não deve apagar etapas da rotina antiga"); },
         };
       },
@@ -39,15 +55,27 @@ describe("novo pedido de rotina não substitui o anterior", () => {
     const db = {
       from(tabela: string) {
         if (tabela === "rotinas") return {
-          select: () => ({ eq: () => ({ eq: () => ({ eq: () => ({
-            is: () => ({ maybeSingle: async () => ({ data: { id: "antigo-id" }, error: null }) }),
-          }) }) }) }),
+          select: (campos: string) => campos === "id"
+            ? ({ eq: () => ({ eq: () => ({ eq: () => ({
+                is: () => ({ maybeSingle: async () => ({ data: { id: "antigo-id" }, error: null }) }),
+              }) }) }) })
+            : ({ eq: () => ({
+                maybeSingle: async () => ({
+                  data: { id: "antigo-id", family_account_id: "familia", membro_atipico_id: "manu" },
+                  error: null,
+                }),
+              }) }),
           update: () => ({ eq: async () => { operacoes.push("atualizar:antigo-id"); return { error: null }; } }),
           insert: () => { throw new Error("não deve criar cópia na continuação"); },
         };
         return {
           delete: () => ({ eq: async () => { operacoes.push("apagar-etapas:antigo-id"); return { error: null }; } }),
           insert: async () => { operacoes.push("gravar-etapas:antigo-id"); return { error: null }; },
+          select: () => ({
+            eq: () => ({
+              order: async () => ({ data: [{ texto: "Almoço", hora: null, ordem: 0 }], error: null }),
+            }),
+          }),
         };
       },
     } as unknown as SupabaseClient;

@@ -232,7 +232,8 @@ describe("as consultas paralelizadas continuam independentes", () => {
 
   it("MORDE: o trio de abertura vai junto, e os portões seguem em ordem", () => {
     const ORCH = readFileSync(resolve(__dirname, "orchestrator.ts"), "utf8");
-    expect(ORCH).toMatch(/const \[\{ data: pref \}, ofertaFds, rotinaConversa\] = await Promise\.all\(\[/);
+    expect(ORCH).toMatch(/const \[\{ data: pref \}, ofertaFds, rotinaConversaNoPreflight\] = await Promise\.all\(\[/);
+    expect(ORCH).toContain("await rotinaAntesDoTurno(");
     // O portão do bloqueio continua ANTES de tudo o que responde.
     const iPref = ORCH.indexOf("if (pref?.desativada && pref?.consentimento_em)");
     const iLote = ORCH.indexOf("const turno = await aguardarTurnoDaMae");

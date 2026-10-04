@@ -269,6 +269,63 @@ export async function rotinaConversaPendente(
   return { membroId: (p.membro_atipico_id as string | null) ?? null };
 }
 
+export type RotinaAntesDoTurno =
+  | { estado: "encontrada"; membroId: string | null; tipo: "rotina_conversa" | "rotina_proposta" }
+  | { estado: "nao_encontrada" }
+  | { estado: "falhou"; motivo: string };
+
+/**
+ * Reconstrói o estado que existia ANTES do lote já claimado.
+ *
+ * Cada balão do WhatsApp abre uma execução. A segunda correção rápida enxerga
+ * a primeira inbound já gravada e, por isso, o preflight de
+ * `rotinaConversaPendente` deixa de considerar a proposta pendente. Só que é a
+ * execução da segunda mensagem que claima o lote inteiro e responde. A decisão
+ * definitiva precisa, portanto, olhar para a última outbound ANTERIOR à
+ * primeira mensagem do lote — não para o estado observado por uma execução
+ * concorrente antes de o lote existir.
+ *
+ * Consultamos qualquer tipo de outbound. Se houve uma resposta comum entre a
+ * proposta e este turno, a proposta não é ressuscitada.
+ */
+export async function rotinaAntesDoTurno(
+  supabase: SupabaseClient,
+  familyId: string,
+  primeiraMensagemEm: string,
+): Promise<RotinaAntesDoTurno> {
+  const inicio = new Date(primeiraMensagemEm);
+  if (!Number.isFinite(inicio.getTime())) {
+    return { estado: "falhou", motivo: "início do lote inválido" };
+  }
+  const limite = new Date(inicio.getTime() - 48 * 60 * 60 * 1000).toISOString();
+  try {
+    const { data, error } = await supabase
+      .from("ayla_messages")
+      .select("tipo, membro_atipico_id")
+      .eq("family_account_id", familyId)
+      .eq("direcao", "outbound")
+      .gte("created_at", limite)
+      .lt("created_at", inicio.toISOString())
+      .order("created_at", { ascending: false })
+      .limit(1);
+    if (error) return { estado: "falhou", motivo: error.message };
+    const ultima = data?.[0];
+    if (ultima?.tipo !== "rotina_conversa" && ultima?.tipo !== "rotina_proposta") {
+      return { estado: "nao_encontrada" };
+    }
+    return {
+      estado: "encontrada",
+      tipo: ultima.tipo,
+      membroId: (ultima.membro_atipico_id as string | null) ?? null,
+    };
+  } catch (e) {
+    return {
+      estado: "falhou",
+      motivo: e instanceof Error ? e.message : String(e),
+    };
+  }
+}
+
 /**
  * O QUE JÁ SABEMOS — perfil, desafios que a própria família marcou no onboarding,
  * e a rotina que já existe. Sem isto o condutor só tinha nome, idade e interesses,
@@ -1080,6 +1137,7 @@ export async function aplicarRotina(
 ): Promise<string | undefined> {
   const nome = r.nome.trim() || "Rotina";
   let rotinaId: string | undefined;
+  let criadaNesteTurno = false;
   if (reusarExistente) {
     let q = supabase
       .from("rotinas")
@@ -1108,6 +1166,7 @@ export async function aplicarRotina(
       .single();
     if (criacaoErro) throw criacaoErro;
     rotinaId = nova?.id as string | undefined;
+    criadaNesteTurno = Boolean(rotinaId);
   } else if (tema) {
     const { error: temaErro } = await supabase
       .from("rotinas")
@@ -1120,22 +1179,69 @@ export async function aplicarRotina(
     if (visualErro) throw visualErro;
   }
   if (!rotinaId) return undefined;
-  if (encontrouExistente) {
-    const { error: exclusaoErro } = await supabase.from("rotina_tarefas").delete().eq("rotina_id", rotinaId);
-    if (exclusaoErro) throw exclusaoErro;
+  try {
+    if (encontrouExistente) {
+      const { error: exclusaoErro } = await supabase.from("rotina_tarefas").delete().eq("rotina_id", rotinaId);
+      if (exclusaoErro) throw exclusaoErro;
+    }
+    const rows = r.tarefas.slice(0, 25).map((t, i) => ({
+      rotina_id: rotinaId,
+      texto: t.texto.slice(0, 120),
+      hora: t.hora ? t.hora.slice(0, 10) : null,
+      icone: null,
+      ordem: i,
+    }));
+    if (rows.length) {
+      const { error: tarefasErro } = await supabase.from("rotina_tarefas").insert(rows);
+      if (tarefasErro) throw tarefasErro;
+    }
+
+    // ESCRITA CRÍTICA CONFERE O PRÓPRIO RESULTADO. A fala só pode dizer que a
+    // rotina existe depois de reler identidade e sequência do banco. Isso
+    // separa "o insert não lançou" de "o quadro certo ficou persistido".
+    const [{ data: rotinaGravada, error: rotinaErro }, { data: tarefasGravadas, error: leituraTarefasErro }] =
+      await Promise.all([
+        supabase
+          .from("rotinas")
+          .select("id, family_account_id, membro_atipico_id")
+          .eq("id", rotinaId)
+          .maybeSingle(),
+        supabase
+          .from("rotina_tarefas")
+          .select("texto, hora, ordem")
+          .eq("rotina_id", rotinaId)
+          .order("ordem", { ascending: true }),
+      ]);
+    if (rotinaErro) throw rotinaErro;
+    if (leituraTarefasErro) throw leituraTarefasErro;
+    if (
+      !rotinaGravada ||
+      rotinaGravada.family_account_id !== familyId ||
+      rotinaGravada.membro_atipico_id !== membroAtipicoId
+    ) {
+      throw new Error("rotina persistida com identidade divergente");
+    }
+    const esperado = rows.map((x) => ({ texto: x.texto, hora: x.hora, ordem: x.ordem }));
+    const confirmado = (tarefasGravadas ?? []).map((x) => ({
+      texto: String(x.texto ?? ""),
+      hora: x.hora ? String(x.hora) : null,
+      ordem: Number(x.ordem),
+    }));
+    if (JSON.stringify(confirmado) !== JSON.stringify(esperado)) {
+      throw new Error("sequência persistida diverge da rotina aprovada");
+    }
+    return rotinaId;
+  } catch (e) {
+    // Se a própria criação deste turno ficou pela metade, não deixa um quadro
+    // vazio parecendo válido. Em edição, não apagamos o artefato preexistente.
+    if (criadaNesteTurno) {
+      const { error: limpezaErro } = await supabase.from("rotinas").delete().eq("id", rotinaId);
+      if (limpezaErro) {
+        console.error("[ayla:rotina] falha ao remover criação parcial:", limpezaErro.message);
+      }
+    }
+    throw e;
   }
-  const rows = r.tarefas.slice(0, 25).map((t, i) => ({
-    rotina_id: rotinaId,
-    texto: t.texto.slice(0, 120),
-    hora: t.hora ? t.hora.slice(0, 10) : null,
-    icone: null,
-    ordem: i,
-  }));
-  if (rows.length) {
-    const { error: tarefasErro } = await supabase.from("rotina_tarefas").insert(rows);
-    if (tarefasErro) throw tarefasErro;
-  }
-  return rotinaId;
 }
 
 /**
@@ -1353,7 +1459,7 @@ export function ehAceitePuro(texto: string | null | undefined): boolean {
     .replace(/[^\p{L}\s]/gu, "")
     .trim();
   if (!t) return false;
-  return /^(sim|isso|isso mesmo|e isso|exato|exatamente|perfeito|otimo|ok|okay|blz|beleza|show|ta bom|tudo bem|pode ser|pode ser essa|pode ser este|pode ser assim|pode fazer|pode montar|pode mandar|podes|concordo|gostei|adorei|amei|ficou bom|ficou otimo|ta otimo|vamos|bora|manda|fecha|fechado|combinado|acho que sim|por mim ta bom|do jeito que voce falou|assim mesmo|assim ta bom)$/.test(
+  return /^(sim|isso|isso mesmo|e isso|exato|exatamente|perfeito|otimo|ok|okay|blz|beleza|show|ta bom|tudo bem|pode ser|pode ser essa|pode ser este|pode ser assim|pode fazer|pode montar|pode mandar|podes|concordo|gostei|adorei|amei|ficou bom|ficou otimo|ta otimo|faz sentido|faz sentindo|vamos|bora|manda|fecha|fechado|combinado|acho que sim|por mim ta bom|do jeito que voce falou|assim mesmo|assim ta bom)$/.test(
     t,
   );
 }
@@ -2595,7 +2701,19 @@ ${jaSabemos.perfil}` : "",
 
       const ids: string[] = [];
       for (const r of rotinas) {
-        const id = await aplicarRotina(supabase, familyId, params.membroAtipicoId, r, tema, visual, !pedidoNovo);
+        // Aceitar uma proposta abre um novo quadro. A edição de uma rotina
+        // existente já tem rota própria (`editarRotina`); reusar só porque o
+        // gerador chamou ambas de "Rotina" substituiria silenciosamente um
+        // artefato anterior, contra D-R3 da especificação.
+        const id = await aplicarRotina(
+          supabase,
+          familyId,
+          params.membroAtipicoId,
+          r,
+          tema,
+          visual,
+          !pedidoNovo && !proposta,
+        );
         if (id) ids.push(id);
       }
       // As rotinas que ESTE turno persistiu — é sobre elas que o portão 3
