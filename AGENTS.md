@@ -22,6 +22,15 @@ estado válido está lá. Em toda missão:
   correção silenciosa, e não ampliação da missão.
 - **NO FINAL:** informar quais `PEND-XXX` foram criadas, atualizadas ou
   concluídas. Baixa só com o critério de conclusão comprovado.
+- Antes de editar pendências, comparar checkout com `origin/main` e com o SHA
+  remoto; preservar trabalho local de outras frentes. A ficha é a fonte do
+  estado. Regenerar o painel com `node scripts/pendencias-index.mjs --write`,
+  revisar o diff e rodar `--check`; o CI rejeita índice divergente e ID
+  duplicado. Não atualizar manualmente só o painel.
+- A partir de 04/10/2026, usar a **Regra de prova operacional** de
+  `docs/PENDENCIAS.md`: CONCLUÍDO exige SHA/health e prova atual em produção;
+  PARCIAL diz o que funciona e falta; PENDENTE não presume prova; FALHOU traz
+  saída; BLOQUEADO nomeia dependência. Não dar baixa por teste local.
 
 **[docs/FEATURE-DELIVERY-PROTOCOL.md](docs/FEATURE-DELIVERY-PROTOCOL.md)** vale
 **quando a missão cria ou altera algo que uma família percebe** — e aí é de

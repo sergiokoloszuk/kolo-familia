@@ -38,6 +38,11 @@ jobs:
           node-version: 20
           cache: npm
 
+      - name: Pendências — índice e IDs
+        run: |
+          node --test scripts/pendencias-index.test.mjs
+          node scripts/pendencias-index.mjs --check
+
       - name: Install
         run: npm ci
 

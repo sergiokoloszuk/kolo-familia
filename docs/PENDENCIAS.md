@@ -25,6 +25,26 @@ tem cinco degraus, e cada um é uma afirmação diferente:
 > ⚠️ Build verde, merge e deploy movem no máximo até PUBLICADO. Nenhum deles
 > prova que uma mãe recebeu a coisa certa.
 
+### Regra de prova operacional — aprovada em 04/10/2026
+
+Esta classificação vale **daqui para frente** para toda ficha criada ou
+reavaliada. A etapa de entrega acima e o estado da pendência respondem a
+perguntas diferentes; nenhum dos dois substitui o outro.
+
+| Estado | Prova exigida |
+|---|---|
+| **CONCLUÍDO** | Evidência atual de produção: SHA publicado e versão/health; consulta somente leitura; smoke com dado fictício autorizado ou teste negativo correspondente. Cada item que não se aplicar recebe N/A com motivo. |
+| **PARCIAL** | Prova do que já funciona e critério explícito do que falta. |
+| **PENDENTE** | Ainda não há prova suficiente; não inferir conclusão de build ou relato antigo. |
+| **FALHOU** | Saída, log ou teste reproduzível que demonstra a falha. |
+| **BLOQUEADO** | Dependência concreta e verificável, sem inventar conclusão. |
+
+Para concluir, a ficha deve registrar **data, ambiente, SHA servido, versão ou
+flag efetiva, consulta read-only, resultado do smoke/negativo e critério de
+baixa satisfeito**. Prova antiga não vira atual por ter sido copiada para o
+painel. Não usar família real como QA, nem enviar mensagem ou alterar dados
+para fabricar essa prova.
+
 ### Frente Trial / Pós-Trial — as quatro ondas (18/08/2026)
 
 | Onda | O quê | Estado |
@@ -41,128 +61,203 @@ Stripe e pagamento→acesso.
 
 ## Painel
 
-Só o que está aberto. 🔒 = bloqueada.
+O índice abaixo é gerado das fichas, que são a única fonte de prioridade e
+estado. Ficha nova ou alterada exige regeneração no mesmo commit; o CI
+rejeita divergência ou ID duplicado. O índice inclui fichas legadas já
+encerradas que aguardam migração para o arquivo (PEND-103).
 
-| ID | Pendência | Bloco | Prio | Estado | Próximo passo |
-|---|---|---|---|---|---|
-| **ONDA 1** | **Pós-Trial: fim do silêncio + modo comercial** | A · Condução | **P0** | **PROVADO EM PRODUÇÃO 28/08** | nenhum — `AYLA_POS_TRIAL` está ligada: o turno de Nicole (28/08 11h24) gravou `ayla_path=pos_trial`, `modo=pos_trial`, `nivel=B` |
-| [PEND-152](#pend-152) | **27 famílias engajadas (D2+) nunca receberam convite de assinatura** | G · Comercial | **P1 ALTA** | MEDIDA · NÃO INVESTIGADA | descobrir por que o convite não sai para quem voltou |
-| [PEND-153](#pend-153) | **89% do abandono é antes da 1ª pergunta — não é o WhatsApp** | G · Comercial | **P1 ALTA** | MEDIDA · INSTRUMENTADA · AGUARDANDO VOLUME | acumular 2 semanas de marcos e ler o funil |
-| [PEND-156](#pend-156) | **Duas fontes de link no mesmo turno pós-Trial** — 2 links e 2 tokens em "Quero assinar"; marcador `[link de Planos]` no "Oi" | A · Condução | **P1** | **CORRIGIDA 28/08 · SMOKE REAL VERDE · PRONTA PARA BAIXA** | aguarda aprovação e deploy |
-| [PEND-157](#pend-157) | Ex-assinante recebe copy de "período grátis" | G · Comercial | P2 | REGISTRADA 28/08 · NÃO CORRIGIDA | separar quem nunca assinou de quem cancelou |
-| [PEND-158](#pend-158) | Testes que leem o fonte com janela de N bytes quebram por comentário | H · Governança | P2 | 2 CORRIGIDOS 28/08 · RESTO NÃO VARRIDO | varrer os demais `slice(i, i + N)` e ancorar no fim real |
-| [PEND-071](#pend-071) | Segurança está abaixo do gate de assinatura | F · Limites | **P0** | ~~CORRIGIDA~~ **BAIXADA** | nenhum — `0fc1feb` é ancestral de `main` (PR #98) e está no ar |
-| [PEND-072](#pend-072) | Teste do caminho novo cai para o Legacy sem mock do provider | H · Governança | P1 | PARCIALMENTE CORRIGIDA | varrer os outros testes que dizem medir o experimental |
-| [PEND-073](#pend-073) | Caminho novo não encurta a resposta em pedido de plano | A · Condução | P2 | ABERTA | decidir se o Core do experimental recebe a nota de `querPlano` |
-| [PEND-074](#pend-074) | Condução D0–D7 do Trial não existe em runtime | G · Comercial | P1 | IMPLEMENTADA, NÃO PUBLICADA | provar a condução na bancada com modelo real antes de publicar |
-| [PEND-075](#pend-075) | Allowlist do caminho novo: quem é, e por quê | H · Governança | P3 | RESOLVIDA | nenhum — a composição das 3 contas é intencional |
-| [PEND-090](#pend-090) | Contradição entre o perfil salvo e o relato de agora | C · Memória | P1 | ABERTA | frente própria: definir se a regra mora no Core v9 ou no código |
-| [PEND-089](#pend-089) | Prioridade dos desafios — corte CORRIGIDO, ordenação por recência aberta | C · Memória | P1 | CORTE OK · PRIORIZAÇÃO ABERTA | decidir de onde vem a prioridade quando o perfil passar do teto |
-| [PEND-091](#pend-091) | Três lacunas menores do contexto (interesses, idade, confirmação) | C · Memória | P2 | ABERTA | depende de PEND-089 |
-| [PEND-088](#pend-088) | Dois P2 da auditoria — decisão registrada: NÃO implementar agora | H · Governança | P2 | ADIADA | retomar quando houver investigação de latência ou funil |
-| [PEND-155](#pend-155) | **Trial nasce no cadastro** — estrutura CORRIGIDA; falta decidir as 96 contas antigas | H · Governança | P1 | **ESTRUTURAL BAIXADA 27/08** · RESÍDUO ABERTO | 0082 aplicada e provada ponta a ponta; 96 contas pré-0082 aguardam regra |
-| [PEND-058](#pend-058) | Fragmentação multi-balão: a Ayla responde duas vezes ao mesmo pensamento | A · Condução | **P0** | CORRIGIDA · PUBLICADA | janela 3s→10s; remedir a amostra nova antes de baixar |
-| [PEND-083](#pend-083) | Branch `bia/ciclo-tecnico` pode ter mais correções prontas e nunca publicadas | G · Entrega | P1 | ABERTA | auditar paridade Legacy × novo e branches não ancestrais de `main` |
-| [PEND-084](#pend-084) | Caminho reativo escreve sequência de rotina que não é o quadro | B · Artefatos | P2 | ABERTA | ou não escreve etapas, ou lê do quadro como o condutor |
-| [PEND-085](#pend-085) | Medir "condutor perguntou sem pôr proposta na mesa" | A · Condução | P2 | EM OBSERVAÇÃO | contar as ocorrências do log contra o total de turnos de rotina |
-| [PEND-086](#pend-086) | Desfecho ilegível do condutor deixou de gerar artefato | B · Artefatos | P2 | EM OBSERVAÇÃO | contar `DESFECHO PERDIDO` após 17/08 |
-| **ORDEM** | **FRENTE DA INTELIGÊNCIA — sequência decidida em 18/08/2026** | | | | |
-| [PEND-092](#pend-092) | **0 ·** Backup automático + cópia fora da máquina | H · Governança | **P1 ALTA** | A INVESTIGAR | reconfirmada em 20/08: 2º dump manual, ainda no mesmo disco do PGDATA |
-| [PEND-017](#pend-017) | **1 ·** Governança da Inteligência + **Forma Kolo de Pensar** | B · Conhecimento | P1 | DECISÃO PENDENTE · REDEFINIR AGORA | é a fundação: define como a Kolo pensa |
-| [PEND-098](#pend-098) | **2 ·** Crenças, evidências e mudança de perspectiva | B · Conhecimento | P1 | A INVESTIGAR | definir ANTES do corpus |
-| [PEND-093](#pend-093) | ✅ Motor da BIA na main, flag OFF | B · Conhecimento | P1 | **CONCLUÍDA** | publicada e inerte em 18/08 (`0973695`) |
-| [PEND-094](#pend-094) | **4 ·** Cautela científica: estável × datável | B · Conhecimento | P1 | DECISÃO PENDENTE | o material da pós (104) é o caso concreto: 6 afirmações a verificar |
-| [PEND-095](#pend-095) | **5 ·** Importar e validar os 1.120 chunks | B · Conhecimento | P1 | PRONTA PARA IMPLEMENTAR | depende de 092, 093, 094; o corpus só existe em `bia/ciclo-tecnico` |
-| [PEND-039](#pend-039) | **6 ·** Bancada: provar que a Ayla passou a pensar Kolo | A · Condução | P1 | PRONTA PARA IMPLEMENTAR | 3 colunas: sem BIA × com BIA × genérica |
-| [PEND-042](#pend-042) | **7 ·** Por que o repertório não chega em 58% dos turnos | B · Conhecimento | P1 | INVESTIGADA · BASELINE CEGO | releitura 19/08 tem viés de canal — ver PEND-106 |
-| [PEND-097](#pend-097) | **8 ·** BIA × Boas Práticas: raciocinar → escolher estratégia | B · Conhecimento | P2 | A INVESTIGAR | segue como a MEDIÇÃO; a decisão migrou para PEND-105 |
-| [PEND-099](#pend-099) | **9 ·** Plano Kolo — transformar compreensão em evolução | D · Entregas | P2 | A INVESTIGAR | depende de 098 e 097 |
-| [PEND-100](#pend-100) | **10 ·** Entrada contínua de novos materiais | H · Governança | P2 | A INVESTIGAR | a BIA sem depender do VS Code |
-| [PEND-022](#pend-022) | **11 ·** Governança de Fontes Oficiais (guarda-chuva) | F · Limites | P2 | INVESTIGADA · DECISÃO PENDENTE | filhas: 101 e 102 |
-| [PEND-101](#pend-101) | **12 ·** Legislação federal vigente | F · Limites | P2 | INVESTIGADA · DECISÃO PENDENTE | só federal; allowlist no código |
-| [PEND-102](#pend-102) | **13 ·** Sites/fontes confiáveis permitidos | F · Limites | P3 | A INVESTIGAR | whitelist com precedência |
-| [PEND-096](#pend-096) | **14 ·** Ativação gradual + medição real | B · Conhecimento | P2 | A INVESTIGAR | última etapa |
-| [PEND-103](#pend-103) | **‖ paralela ·** Higiene da fila | H · Governança | P3 | A INVESTIGAR | não bloqueia produto |
-| [PEND-115](#pend-115) | **Ayla não sabe o preço** — o bloco que respondia ficou no Legacy | G · Comercial | **P0** | **PUBLICADA · AGUARDANDO VALIDAÇÃO EM CONVERSA REAL** | `41a1054` no ar em 24/08 11:24Z |
-| [PEND-117](#pend-117) | CPU da VPS: steal 91,6% explica a janela medida; `dockerd` a 346% segue sem explicação | H · Governança | P1 | **PAUSADA 28/08** · aguarda conversa com Sérgio · não intervir | **precisa de shell no host**: CPU/memória, por que realtime/pg-meta/functions dão 5xx, pg_stat_activity |
-| [PEND-118](#pend-118) | `DUNNING_DELETE_ENABLED` não existe — a exclusão prometida não executa | G · Comercial | **P1 ALTA** | PROVADA · NÃO CORRIGIDA | decidir se liga a exclusão ou corrige a promessa do `PagamentoGate` |
-| [PEND-119](#pend-119) | Aplicar migração é manual, e o PostgREST não recarrega o schema sozinho | H · Governança | P1 | PROVADA · NÃO CORRIGIDA | conferir o event trigger de reload e desenhar o caminho de aplicação |
-| [PEND-120](#pend-120) | `.env.local` de desenvolvimento aponta para preços que não valem mais | H · Governança | P3 | ABERTA | atualizar os dois `STRIPE_PRICE_ID_*` locais |
-| [PEND-121](#pend-121) | Migração 0076 espera o branch do Plano Kolo | H · Governança | P2 | AGUARDANDO BRANCH | aplicar quando `feat/plano-kolo-estrutura` entrar na `main` |
-| [PEND-122](#pend-122) | Termos e Privacidade não descrevem a política real de cancelamento e retenção | F · Limites | P1 | ABERTA | revisar depois que a política de cancelamento/retenção estiver fechada |
-| [PEND-123](#pend-123) | Assinatura anômala: `active` + `cancel_at_period_end` + período vencido em 26/06 | G · Comercial | P2 | MEDIDA · NÃO DIAGNOSTICADA | descobrir por que não virou `canceled` — pode ser webhook perdido |
-| [PEND-124](#pend-124) | `configuracao_geral` não existe em produção (migração 0068 nunca aplicada) | H · Governança | P2 | MEDIDA · IMPACTO NÃO PROVADO | exercitar a tela do Admin antes de decidir aplicar ou aposentar |
-| [PEND-125](#pend-125) | **31% dos cadastros nunca confirmam o e-mail e nunca entram** | G · Comercial | **P0** | MEDIDA · CAUSA NÃO ISOLADA | ler os logs de entrega do Brevo — só isso separa "não chegou" de "não abriu" |
-| [PEND-126](#pend-126) | **A jornada D0–D7 não acontece**: 2 dias de 8, 94% nunca contactadas | A · Condução | **P0** | MEDIDA · NÃO CORRIGIDA | Trial entra na varredura da rotina; bloqueia PEND-118 |
-| [PEND-127](#pend-127) | `utm_attribution` não existe em produção (0052 nunca aplicada) | H · Governança | P1 | MEDIDA | sem atribuição, funil é chute |
-| [PEND-128](#pend-128) | Suporte ainda duplicado no documento `trial` v4 | Conteúdo | P2 | PARCIALMENTE CORRIGIDA | publicar `trial` v5 sem o número |
-| [PEND-129](#pend-129) | **HMAC do código de ativação tem valor padrão público no código** | Segurança | **P0** | MEDIDA · IMPACTO NÃO CONFIRMADO | conferir nomes das envs na Vercel; corrigir com `KOLO_GERACAO_SECRET` |
-| [PEND-130](#pend-130) | Código de ativação sem limite de tentativas, reenvios ou cooldown | Segurança | P1 | MEDIDA · NÃO CORRIGIDA | usar `verificacoes_whatsapp` (0080), que já está aplicada e sem uso |
-| [PEND-131](#pend-131) | Sem caminho de reativação após opt-out ou bloqueio do Admin | G · Comercial | P2 | ABERTA | hoje 0 famílias afetadas; o beco existe |
-| [PEND-133](#pend-133) | **Medir o degrau novo do OTP no onboarding** | G · Comercial | P1 | ABERTA | o gate entra na tela 1; medir antes de julgar |
-| [PEND-135](#pend-135) | Terceira cópia de `montarKoloVivoResumo` em `conversar/actions.ts` | H · Governança | P3 | ABERTA | equivalente por comportamento; fora do escopo autorizado |
-| [PEND-136](#pend-136) | A conversa web é o único caminho de escrita no perfil que não registra marco | C · Memória | P1 | MEDIDA · NÃO CORRIGIDA | 3 dos 4 caminhos chamam `detectarMarcos`; este não |
-| [PEND-137](#pend-137) | Marcos ligados desde 17/08 produziram **1** marco em 143 perfis | C · Memória | P1 | MEDIDA · NÃO CORRIGIDA | o mecanismo funciona; nada flui por ele |
-| [PEND-138](#pend-138) | `sugestao_perfil_vivos`: 3 das 4 origens do CHECK nunca gravaram | H · Governança | P2 | MEDIDA · NÃO CORRIGIDA | `app`, `skill` e `diario_parser` = 0 linhas |
-| [PEND-148](#pend-148) | O conteúdo do check-in é escrito por todos e lido por ninguém na conversa | C · Memória | P2 | MEDIDA · NÃO CORRIGIDA | `emocao_mae` em 78% dos 36; nenhum canal lê |
-| [PEND-149](#pend-149) | **A Ayla oficial não enxerga imagem — regressão desde 17/08** | D · Entregas | **P1** | MEDIDA · NÃO CORRIGIDA | 100 imagens de 7 famílias no histórico; 0 desde o rollout |
-| [PEND-150](#pend-150) | A Ayla oficial perdeu a progressão por ângulos — regressão desde 17/08 | A · Condução | P1 | MEDIDA · NÃO CORRIGIDA | mecanismo de 07/08 contra repetir orientação; ver [PEND-082](#pend-082) |
-| [PEND-151](#pend-151) | O fallback do WhatsApp terminava em SILÊNCIO se os dois contextos falhassem | A · Condução | **P1** | **IMPLEMENTADA/PUBLICADA · AGUARDANDO PROVA REAL** | `28a8d97` no ar; falta varrer outros caminhos de silêncio |
-| [PEND-144](#pend-144) | **Retirar o Legacy do runtime da Ayla** | A · Condução | P1 | **PARCIALMENTE CORRIGIDA** | 4 fechados + 2 publicados aguardando prova; falta `DIRETRIZ_IDIOMA` e a flag |
-| [PEND-145](#pend-145) | **A Ayla oficial manda markdown que o WhatsApp não renderiza** | D · Entregas | **P0** | **PUBLICADA · AGUARDANDO MEDIÇÃO REAL** | `fc70305` no ar em 24/08 10:37Z; baseline congelado |
-| [PEND-146](#pend-146) | O documento `core` é escrito EM markdown, e o modelo imita | D · Entregas | P2 | MEDIDA · NÃO CORRIGIDA | `## Psicologia`, `**compreender → ajudar**` no próprio Core |
-| [PEND-147](#pend-147) | A regra de entrega da web ainda é literal, fora da fonte compartilhada | H · Governança | P3 | ABERTA | `intencao === "desafio"` em `lib/ia/prompt.ts:199` |
-| [PEND-104](#pend-104) | **2b ·** Material da pós — LOCALIZADO, em auditoria | B · Conhecimento | P1 | LOCALIZADO · NÃO ATIVO | camada transversal; cobre os buracos do Compilado (rho demanda×regras = 0,042) |
-| [PEND-105](#pend-105) | **8b ·** Conhecimento Especializado: BIA é mecanismo, não inteligência | B · Conhecimento | P1 | PROPOSTA · DECISÃO PENDENTE | sobreposição Compilado × BPs medida em 0% |
-| [PEND-106](#pend-106) | Rastro do conhecimento não cobre o WhatsApp desde 17/08 | H · Governança | P1 | MEDIDA · NÃO CORRIGIDA | invalida o baseline de PEND-042 |
-| [PEND-107](#pend-107) | Auditoria da Rotina contra o documento aprovado | D · Entregas | P1 | A INVESTIGAR | aderência ao documento ≠ funciona |
-| [PEND-108](#pend-108) | Auditoria do Plano contra o documento aprovado | D · Entregas | P1 | A INVESTIGAR | documento `plano` v1 está arquivado |
-| [PEND-109](#pend-109) | Central de Avisos no Admin — Trial · Pós-Trial · Todos | G · Comercial | P1 | A INVESTIGAR | fila, lotes, pausa, idempotência; reusar as reservas |
-| [PEND-110](#pend-110) | Satisfação no D3 | G · Comercial | P2 | DEFINIDA · NÃO CONSTRUÍDA | depende de PEND-074 |
-| [PEND-111](#pend-111) | Indicação — não existe | G · Comercial | P2 | DECISÃO DE PRODUTO PENDENTE | decidir antes de codar |
-| [PEND-112](#pend-112) | Recuperação dos Trials expirados | G · Comercial | P1 | 80 ELEGÍVEIS · NÃO DISPARADA | bloqueada por PEND-109 |
-| [PEND-113](#pend-113) | Métricas completas do funil | G · Comercial | P1 | A INVESTIGAR | uma consulta versionada, com paginação |
-| [PEND-114](#pend-114) | WhatsApp obrigatório antes de iniciar o Trial | G · Comercial | P1 | AGUARDANDO DECISÃO COM A AGÊNCIA | causa raiz no gatilho `handle_new_user` |
-| [PEND-027](#pend-027) | Plano Kolo — contexto, conhecimento e aprendizado | D · Entregas | P1 | A INVESTIGAR | guarda-chuva de PEND-099 |
-| [PEND-082](#pend-082) | Ayla repete orientação do turno anterior — medir frequência real | A · Condução | P1 | MEDIDA | caso Lia/Valentina: "pausa" em 10 de 25 respostas |
-| [PEND-230](#pend-230) | Confirmações sociais reabrem orientação e alongam a conversa | A · Condução | P1 | PUBLICADA · PROVA NATURAL PENDENTE | auditar fechamento e exceções em turnos pós-deploy |
-| [PEND-080](#pend-080) | Liberar o caminho novo para TODAS as famílias | A · Condução | P1 | ABERTA 🔒 | fechar os 6 bloqueadores antes de ampliar a allowlist |
-| [PEND-077](#pend-077) | `ayla_daily_checkins` nunca gravou uma linha (400 desde 0001) | H · Governança | P1 | ESCRITA PROVADA · LEITURA NÃO | ligar a leitura do check-in no caminho novo |
-| [PEND-078](#pend-078) | Auditoria (`api_calls`) escrita com a sessão da família em outros pontos | H · Governança | P2 | PARCIALMENTE CORRIGIDA | varrer os 37 pontos de chamada de `logarUsoApi` |
-| [PEND-079](#pend-079) | Webhook do Stripe recusa assinatura e não deixa rastro nosso | H · Governança | P2 | ABERTA | persistir a recusa; decidir sobre os 2 endpoints de outro produto |
-| [PEND-069](#pend-069) | Migração 0077 (`ayla_documentos`) não aplicada em produção | H · Governança | P1 | ~~ABERTA~~ **BAIXADA** | nenhum — a tabela existe com 11 linhas (medido 16/08) |
-| [PEND-070](#pend-070) | `ai_prompts.versao` promete versionamento que a PK impede | H · Governança | P3 | ABERTA | decidir entre documentar ou migrar |
-| [PEND-015](#pend-015) | Exposição de secrets no Easypanel | H · Governança | a definir | ABERTA | investigar o risco antes de priorizar |
-| [PEND-007](#pend-007) | Ativação do GPT parada na prova da chave | H · Governança | P1 | ABERTA 🔒 | publicar e rodar `provider-check` |
-| [PEND-002](#pend-002) | Pagamento confirmado sem acesso na Kolo | G · Comercial | P1 | AGUARDANDO VALIDAÇÃO | esperar a primeira assinatura real |
-| [PEND-001](#pend-001) | Cooldown do convite de assinatura | G · Comercial | P1 | AGUARDANDO VALIDAÇÃO | esperar o próximo convite real |
-| [PEND-016](#pend-016) | Condução da Ayla — o que ela diz e por quê | **A · Condução** | P1 | ABERTA | **preencher o DESEJADO com a Karina** |
-| [PEND-018](#pend-018) | Memória e retrato da criança | **C · Memória** | P1 | ABERTA | desenhar junto com A |
-| [PEND-021](#pend-021) | Jornada dos 7 dias e conversão | G · Comercial | P1 | ABERTA | preencher o DESEJADO |
-| [PEND-040](#pend-040) | Observabilidade de IA — conversa Web e Plano não existem em `api_calls` | H · Governança | P1 | ABERTA | achar por que a instrumentação atual não grava |
-| [PEND-041](#pend-041) | Rastro web não separa conversa de artefato | H · Governança | P2 | ABERTA | carregar a origem no evento |
-| [PEND-038](#pend-038) | Latência percebida no WhatsApp e resposta em vários balões | A · Condução | P1 pós-rollout | MEDIÇÃO PARCIAL · ABERTA | turno real de rotina em 29/09: 19,8s; falta amostra e correção |
-| [PEND-043](#pend-043) | Ter objetivo ≠ gerar Plano — falta decisão de valor | D · Entregas | P1 | ABERTA | separar suficiência de valor de consolidação |
-| [PEND-044](#pend-044) | A Kolo terceiriza antes de tentar ajudar | A · Condução | P1 | ABERTA | classe funcional, não regra de palavra |
-| [PEND-036](#pend-036) | O Plano reoferece o que a conversa acabou de descartar | D · Entregas | P1 | DESCONTAMINADA | medida sozinha após a 035; é defeito próprio |
-| [PEND-037](#pend-037) | O Plano afirma causas sem fonte rastreável | D · Entregas | P2 | ABERTA | classificar PERFIL/BASE/INFERÊNCIA/SEM FONTE |
-| [PEND-032](#pend-032) | Bancada instável entre execuções — método, não produto | A · Condução | P3 | MÉTODO | só é achado o que se repete |
-| [PEND-031](#pend-031) | Repetição entre seções do Plano — medida, e anterior à 3a | D · Entregas | P2 | MEDIDA | 7 ideias repetidas JÁ sem a 4A; tratar na Fatia 4 |
-| [PEND-030](#pend-030) | Confirmações curtas e continuidade do objetivo | D · Entregas | P3 | VALIDAÇÃO NO PILOTO | observar conversas reais antes de ajustar |
-| [PEND-029](#pend-029) | Aprendizado do Plano sabe o resultado, não a intervenção | D · Entregas | P2 | ABERTA | medir quantas notas são descritivas |
-| [PEND-028](#pend-028) | Piloto 4A — o que a bancada deixou em aberto | **A · Condução** | P2 | ABERTA | não bloqueia o piloto; medir depois do uso real |
-| [PEND-004](#pend-004) | Rotina/Sequência Visual | D · Entregas | P2 | AGUARDANDO VALIDAÇÃO | 4 fatias no ar; falta conversa real |
-| [PEND-019](#pend-019) | Estratégias que a família consegue usar | D · Entregas | P2 | ABERTA | depende de A+B+C |
-| [PEND-020](#pend-020) | Relatórios para escola, terapeuta e médico | D · Entregas | P2 | ABERTA | depende de C |
-| [PEND-023](#pend-023) | Feedback da família e aprendizado | E · Feedback | P2 | ABERTA | depende de D |
-| [PEND-026](#pend-026) | Impacto das funcionalidades no Admin (equipe/agência) | H · Governança | a definir | ABERTA | montar o mapa de impacto; prioridade sai dele |
-| [PEND-009](#pend-009) | Primeira conversa da Ayla | A · Condução | P2 | ABERTA | entra no DESEJADO de PEND-016 |
-| [PEND-012](#pend-012) | RUNBOOK — como operar a Kolo com segurança | H · Governança | P2 | ABERTA | levantar o que só existe em memória |
-| [PEND-005](#pend-005) | `MEMORY.md` perto do limite de leitura | H · Governança | P2 | ABERTA | compactar o índice |
-| [PEND-006](#pend-006) | Dois arquivos não rastreados em `lib/conducao/` | H · Governança | P2 | ABERTA | identificar a frente dona |
-| [PEND-014](#pend-014) | Revisar o protocolo de engenharia | H · Governança | P2 | ABERTA | decidir os níveis de risco |
-| [PEND-011](#pend-011) | README aponta para documentos inexistentes | H · Governança | P3 | ABERTA | restaurar ou corrigir os links |
-| [PEND-013](#pend-013) | Mapa do sistema | H · Governança | P3 | ABERTA | listar os fluxos que merecem ponteiro |
+A ordem estratégica da frente de inteligência decidida em 18/08/2026 foi:
+PEND-092 → 017 → 098 → 093 → 094 → 095 → 039 → 042 → 097 → 099 →
+100 → 022 → 101 → 102 → 096. Ela registra dependências de desenho, não
+substitui a prioridade atual de segurança nem a análise de produção.
+
+<!-- PENDENCIAS-INDEX:START -->
+Índice completo gerado de 181 fichas neste arquivo. A ficha é a fonte do estado; não edite as linhas abaixo à mão. Para atualizar: `node scripts/pendencias-index.mjs --write`.
+
+| ID | Pendência | Prioridade | Estado da ficha |
+|---|---|---|---|
+| [PEND-001](#pend-001) | Cooldown do convite de assinatura — publicado, aguardando tráfego real | P1 | AGUARDANDO VALIDAÇÃO |
+| [PEND-002](#pend-002) | Pagamento confirmado no Stripe sem acesso na Kolo (classe Rochelle) | P1 | AGUARDANDO VALIDAÇÃO |
+| [PEND-004](#pend-004) | Rotina/Sequência Visual — auditar o fluxo atual antes de redesenhar | P2 | AGUARDANDO VALIDAÇÃO |
+| [PEND-005](#pend-005) | MEMORY.md do agente perto do limite de leitura | P2 | ABERTA |
+| [PEND-006](#pend-006) | Dois arquivos não rastreados em apps/web/src/lib/conducao/ | P2 | ABERTA |
+| [PEND-007](#pend-007) | Ativação do GPT parada na prova da chave de produção | P1 | ABERTA |
+| [PEND-009](#pend-009) | Primeira conversa da Ayla — spec registrada, nunca construída | P2 | ABERTA |
+| [PEND-011](#pend-011) | README aponta para três documentos que não existem no repositório | P3 | ABERTA |
+| [PEND-012](#pend-012) | RUNBOOK — documento operacional de como operar a Kolo com segurança | P2 | ABERTA |
+| [PEND-013](#pend-013) | Mapa do sistema — onde vivem os principais componentes | P3 | ABERTA |
+| [PEND-014](#pend-014) | Revisar o AI-ENGINEERING-PROTOCOL com o aprendizado das primeiras missões reais | P2 | ABERTA |
+| [PEND-015](#pend-015) | Revisar exposição e governança de secrets no Easypanel | a definir após investigação de risco | ABERTA |
+| [PEND-016](#pend-016) | Condução da Ayla — o que ela diz, e por quê | P1 | ABERTA |
+| [PEND-017](#pend-017) | Governança da Inteligência + A FORMA KOLO DE PENSAR | P1 | DECISÃO PENDENTE · REDEFINIR AGORA |
+| [PEND-018](#pend-018) | Memória e retrato da criança | P1 | ABERTA |
+| [PEND-019](#pend-019) | Estratégias que a família consegue usar | P2 | ABERTA |
+| [PEND-020](#pend-020) | Relatórios para escola, terapeuta e médico | P2 | ABERTA |
+| [PEND-021](#pend-021) | Jornada dos 7 dias de teste e conversão | P1 | ABERTA |
+| [PEND-022](#pend-022) | Fontes Oficiais/Vivas — camada separada da BIA (guarda-chuva) | P2 | INVESTIGADA · DECISÃO PENDENTE |
+| [PEND-023](#pend-023) | Feedback da família e aprendizado | P2 | ABERTA |
+| [PEND-026](#pend-026) | Impacto das funcionalidades no Admin — o que a equipe precisa enxergar | a definir | ABERTA |
+| [PEND-027](#pend-027) | Plano Kolo — o que ele sabe da criança, o que recupera e o que aprende | P1 | A INVESTIGAR |
+| [PEND-028](#pend-028) | Piloto 4A — os quatro achados que a bancada de 10/08 deixou em aberto | P2 | ABERTA |
+| [PEND-029](#pend-029) | O aprendizado do Plano sabe o RESULTADO, não a INTERVENÇÃO que o recebeu | P2 | ABERTA |
+| [PEND-030](#pend-030) | Confirmações curtas e continuidade do objetivo — validar no piloto | P3 | ABERTA · VALIDAÇÃO NO PILOTO |
+| [PEND-031](#pend-031) | Repetição entre seções do Plano — MEDIDA, e anterior à 3a | P2 | ABERTA · MEDIDA |
+| [PEND-032](#pend-032) | Bancada instável entre execuções — dois braços não separam efeito de acaso | P3 | ABERTA · MÉTODO |
+| [PEND-033](#pend-033) | ✅ BAIXADA · O perfil consultável lia vazio de TODAS as crianças | P0 | CONCLUÍDA · EM PRODUÇÃO |
+| [PEND-034](#pend-034) | ✅ BAIXADA · O negativo do perfil não tinha semântica, só entrega | P1 | CONCLUÍDA · EM PRODUÇÃO |
+| [PEND-035](#pend-035) | ✅ BAIXADA · O objetivo do Plano confundia BARREIRA com OBJETIVO FINAL | P1 | CONCLUÍDA |
+| [PEND-036](#pend-036) | O contexto mais recente não prevalece — o Plano reoferece o que a conversa acabou de descartar | P1 | ABERTA |
+| [PEND-037](#pend-037) | Fato × hipótese — o Plano afirma causas sem fonte rastreável | P2 | ABERTA |
+| [PEND-038](#pend-038) | Latência percebida no WhatsApp — e a resposta que chega em vários balões | P1 pós-rollout | ABERTA · MEDIÇÃO PARCIAL EM PRODUÇÃO |
+| [PEND-039](#pend-039) | BIA-5 · Bancada permanente de golden cases (e a prova de recuperação da BIA) | P1 | PRONTA PARA IMPLEMENTAR |
+| [PEND-040](#pend-040) | Observabilidade de IA — a conversa Web e o Plano não existem em api_calls | P1 | ABERTA |
+| [PEND-041](#pend-041) | O rastro do canal web não distingue conversa de geração de artefato | P2 | ABERTA |
+| [PEND-042](#pend-042) | 58% dos turnos de WhatsApp saem sem uma linha de repertório | P1 | INVESTIGADA · CAUSA DESCONHECIDA |
+| [PEND-043](#pend-043) | Ter objetivo ≠ gerar Plano — falta decisão compartilhada de valor | P1 | ABERTA |
+| [PEND-044](#pend-044) | A Kolo manda a família para fora antes de tentar ajudar diretamente | P1 | ABERTA |
+| [PEND-058](#pend-058) | Fragmentação multi-balão: a Ayla responde duas vezes ao mesmo pensamento | P0 | CORRIGIDA · PUBLICADA · AGUARDANDO REMEDIÇÃO |
+| [PEND-069](#pend-069) | Migração 0077 (ayla_documentos) não aplicada em produção | P1 | ABERTA 🔒 |
+| [PEND-070](#pend-070) | ai_prompts.versao promete versionamento que a PK impede | P3 | ABERTA |
+| [PEND-071](#pend-071) | Segurança está ABAIXO do gate de assinatura — trial vencido em crise recebe convite comercial, ou silêncio | P0 | CORRIGIDA, NÃO PUBLICADA |
+| [PEND-072](#pend-072) | Teste do caminho novo cai para o Legacy sem mock do provider | P1 | PARCIALMENTE CORRIGIDA |
+| [PEND-073](#pend-073) | Caminho novo não encurta a resposta em pedido explícito de plano | P2 | ABERTA |
+| [PEND-074](#pend-074) | Condução D0–D7 do Trial não existe em runtime | P1 | IMPLEMENTADA, NÃO PUBLICADA |
+| [PEND-075](#pend-075) | Allowlist do caminho novo (AYLA_EXPERIMENTAL_FAMILY_IDS): quem é, e por quê | P3 | RESOLVIDA |
+| [PEND-076](#pend-076) | Teste vencido recebendo servico — FALSO POSITIVO | — | BAIXADA — falso positivo |
+| [PEND-077](#pend-077) | ayla_daily_checkins nunca gravou uma linha — 400 em toda execução desde 0001 | P1 | CORRIGIDA, NÃO PUBLICADA |
+| [PEND-078](#pend-078) | Auditoria (api_calls) escrita com a sessão da família em outros pontos | P2 | PARCIALMENTE CORRIGIDA |
+| [PEND-079](#pend-079) | Webhook do Stripe recusa assinatura e não deixa rastro nosso | P2 | ABERTA |
+| [PEND-080](#pend-080) | Liberar o caminho novo (Ayla experimental) para TODAS as famílias | P1 | PARCIAL — flag global ligada; qualidade e critérios históricos não revalidados |
+| [PEND-081](#pend-081) | O caminho novo grava o check-in e nunca o lê de volta | P3 | ✅ BAIXADA — ENCERRADA POR INVESTIGAÇÃO |
+| [PEND-082](#pend-082) | Ayla repete orientação já dada no turno imediatamente anterior | P2 | EM OBSERVAÇÃO |
+| [PEND-083](#pend-083) | ✅ BAIXADA · Branch bia/ciclo-tecnico tinha correções prontas e nunca publicadas | P1 | CONCLUÍDA |
+| [PEND-084](#pend-084) | Caminho reativo escreve sequência de rotina que não é o quadro | P2 | ABERTA |
+| [PEND-085](#pend-085) | Medir com que frequência o condutor pergunta sem pôr proposta na mesa | P2 | EM OBSERVAÇÃO |
+| [PEND-086](#pend-086) | Desfecho ilegível do condutor deixou de gerar artefato — observar | P2 | EM OBSERVAÇÃO |
+| [PEND-088](#pend-088) | Dois P2 da auditoria de paridade — decisão registrada: NÃO implementar agora | P2 | ADIADA (decisão) |
+| [PEND-089](#pend-089) | Prioridade real dos desafios da criança — o corte caiu, a ordenação continua | P1 | CORTE CORRIGIDO · PRIORIZAÇÃO ABERTA |
+| [PEND-090](#pend-090) | Contradição entre o perfil salvo e o relato de agora — frente própria | P1 | ABERTA |
+| [PEND-091](#pend-091) | Três lacunas menores do contexto essencial | P2 | ABERTA |
+| [PEND-092](#pend-092) | Não existe rotina de backup do banco de produção | P1 | ABERTA |
+| [PEND-093](#pend-093) | ✅ BIA-1 · Motor da Biblioteca na main, atrás de flag desligada | P1 | CONCLUÍDA · PUBLICADA E INERTE |
+| [PEND-094](#pend-094) | BIA-3 · Cautela científica: separar conhecimento estável de fato datável | P1 | DECISÃO PENDENTE |
+| [PEND-095](#pend-095) | BIA-4 · Importar e validar os 1.120 chunks | P1 | PRONTA PARA IMPLEMENTAR |
+| [PEND-096](#pend-096) | BIA-6 · Ativação controlada e medição | P2 | A INVESTIGAR |
+| [PEND-097](#pend-097) | Boas Práticas × BIA: o que cada uma acrescenta, e onde se sobrepõem | P2 | A INVESTIGAR |
+| [PEND-098](#pend-098) | Crenças, evidências e mudança de perspectiva | P1 | A INVESTIGAR |
+| [PEND-099](#pend-099) | Plano Kolo — transformar compreensão em evolução | P2 | A INVESTIGAR |
+| [PEND-100](#pend-100) | Entrada contínua de material no Admin — a BIA sem depender do VS Code | P2 | A INVESTIGAR |
+| [PEND-101](#pend-101) | Legislação federal brasileira — primeira etapa das Fontes Vivas | P2 | INVESTIGADA · DECISÃO PENDENTE |
+| [PEND-102](#pend-102) | Whitelist de sites de referência em neurodivergência | P3 | A INVESTIGAR |
+| [PEND-103](#pend-103) | Higiene da fila de pendências | P1 | PARCIAL — índice e guarda de CI preparados, ainda não publicados |
+| [PEND-104](#pend-104) | Material da pós — LOCALIZADO, em auditoria, NÃO ATIVO | P1 | MATERIAL LOCALIZADO — EM AUDITORIA / NÃO ATIVO |
+| [PEND-105](#pend-105) | Conhecimento Especializado — uma camada só, e a BIA como mecanismo | P1 | PROPOSTA — AGUARDANDO DECISÃO |
+| [PEND-106](#pend-106) | O rastro do conhecimento não cobre o WhatsApp desde o rollout de 17/08 | P1 | MEDIDA — CORREÇÃO NÃO IMPLEMENTADA |
+| [PEND-107](#pend-107) | Auditoria da Rotina contra o documento aprovado | P1 | A INVESTIGAR |
+| [PEND-108](#pend-108) | Auditoria do Plano contra o documento aprovado | P1 | A INVESTIGAR |
+| [PEND-109](#pend-109) | Central de Avisos no Admin — Trial · Pós-Trial · Todos | P1 | A INVESTIGAR |
+| [PEND-110](#pend-110) | Satisfação no D3 — perguntar, guardar e usar | P2 | DEFINIDA — NÃO CONSTRUÍDA |
+| [PEND-111](#pend-111) | Indicação — não existe, e o D3 pressupõe que exista | P2 | DECISÃO DE PRODUTO PENDENTE |
+| [PEND-112](#pend-112) | Recuperação dos Trials expirados | P1 | POPULAÇÃO MEDIDA — CAMPANHA NÃO DISPARADA |
+| [PEND-113](#pend-113) | Métricas completas do funil | P1 | A INVESTIGAR |
+| [PEND-114](#pend-114) | WhatsApp obrigatório antes de iniciar o Trial | P1 | AGUARDANDO DECISÃO COM A AGÊNCIA |
+| [PEND-115](#pend-115) | A Ayla não sabe o preço — e o caminho novo perdeu o bloco que respondia | P0 | PUBLICADA · AGUARDANDO VALIDAÇÃO EM CONVERSA REAL |
+| [PEND-117](#pend-117) | Stack Supabase: CPU anormal e seis serviços ausentes | P1 ALTA | MEDIDA — CAUSA DESCONHECIDA |
+| [PEND-118](#pend-118) | DUNNING_DELETE_ENABLED não existe — a exclusão prometida não executa | P1 ALTA | PROVADA — NÃO CORRIGIDA |
+| [PEND-119](#pend-119) | Aplicar migração é manual, e o PostgREST não recarrega o schema sozinho | P1 | PROVADA — NÃO CORRIGIDA |
+| [PEND-120](#pend-120) | .env.local de desenvolvimento aponta para preços que não valem mais | P3 | ABERTA |
+| [PEND-121](#pend-121) | Migração 0076 espera o branch do Plano Kolo | P2 | AGUARDANDO BRANCH |
+| [PEND-122](#pend-122) | Termos e Privacidade não descrevem a política real de cancelamento e retenção | P1 | ABERTA |
+| [PEND-123](#pend-123) | Assinatura anômala: active com cancel_at_period_end e período vencido | P2 | MEDIDA — NÃO DIAGNOSTICADA |
+| [PEND-124](#pend-124) | configuracao_geral não existe em produção — migração 0068 nunca aplicada | P2 | MEDIDA — IMPACTO NÃO PROVADO |
+| [PEND-125](#pend-125) | 31% dos cadastros nunca confirmam o e-mail e nunca entram | P0 | MEDIDA — CAUSA NÃO ISOLADA |
+| [PEND-126](#pend-126) | A jornada D0–D7 do Trial não acontece: 2 dias de 8, e 94% nunca são contactadas | P0 | MEDIDA — NÃO CORRIGIDA |
+| [PEND-127](#pend-127) | utm_attribution não existe em produção (migração 0052 nunca aplicada) | P1 | MEDIDA |
+| [PEND-128](#pend-128) | O contato do suporte ainda está duplicado no documento trial v4 | P2 | PARCIALMENTE CORRIGIDA |
+| [PEND-129](#pend-129) | O HMAC do código de ativação tem valor padrão público no código | P0 | MEDIDA — IMPACTO EM PRODUÇÃO NÃO CONFIRMADO |
+| [PEND-130](#pend-130) | O código de ativação não tem limite de tentativas, de reenvios nem cooldown | P1 | MEDIDA — NÃO CORRIGIDA |
+| [PEND-131](#pend-131) | Não existe caminho para reativar a Ayla depois de opt-out ou bloqueio administrativo | P2 | ABERTA |
+| [PEND-133](#pend-133) | Medir o degrau que o OTP criou no início do onboarding | P1 | ABERTA |
+| [PEND-135](#pend-135) | Terceira cópia de montarKoloVivoResumo vive em conversar/actions.ts | P3 | ABERTA |
+| [PEND-136](#pend-136) | A conversa web é o único caminho de escrita no perfil que não registra marco | P1 | MEDIDA · NÃO CORRIGIDA |
+| [PEND-137](#pend-137) | O mecanismo de marcos está ligado e produziu 1 marco em 143 perfis | P1 | MEDIDA · NÃO CORRIGIDA |
+| [PEND-138](#pend-138) | sugestao_perfil_vivos: três das quatro origens nunca gravaram uma linha | P2 | MEDIDA · NÃO CORRIGIDA |
+| [PEND-144](#pend-144) | Retirar o Legacy do runtime da Ayla | P1 | PARCIALMENTE CORRIGIDA |
+| [PEND-145](#pend-145) | A Ayla oficial manda markdown que o WhatsApp não renderiza | P0 | PUBLICADA · AGUARDANDO MEDIÇÃO REAL |
+| [PEND-146](#pend-146) | O documento core é escrito EM markdown — e o modelo imita o que ele demonstra | P2 | MEDIDA · NÃO CORRIGIDA |
+| [PEND-147](#pend-147) | A regra de entrega da web ainda é um literal, fora da fonte compartilhada | P3 | ABERTA |
+| [PEND-148](#pend-148) | O conteúdo do check-in é escrito por todos e lido por ninguém na conversa | P2 | MEDIDA · NÃO CORRIGIDA |
+| [PEND-149](#pend-149) | A Ayla oficial não enxerga imagem — e isso regrediu no rollout de 17/08 | P1 | MEDIDA · NÃO CORRIGIDA |
+| [PEND-150](#pend-150) | A Ayla oficial perdeu a progressão por ângulos — regressão desde 17/08 | P1 | MEDIDA · NÃO CORRIGIDA |
+| [PEND-151](#pend-151) | Se os dois contextos falharem, a família não recebe nada | P1 | IMPLEMENTADA/PUBLICADA · AGUARDANDO PROVA REAL |
+| [PEND-152](#pend-152) | 27 famílias que chegaram ao D2+ nunca receberam convite de assinatura | P1 ALTA | MEDIDA · NÃO INVESTIGADA |
+| [PEND-153](#pend-153) | Onde o onboarding realmente quebra — e a correção de uma leitura errada | P1 ALTA | MEDIDA 26/08 · INSTRUMENTADA · AGUARDANDO VOLUME |
+| [PEND-155](#pend-155) | O teste de 7 dias começa na criação da conta, não na entrada real | P0 | DIAGNOSTICADA · FASE 1 VERSIONADA, NÃO PUBLICADA |
+| [PEND-156](#pend-156) | A resposta pós-Trial tem duas vozes | P1 | CORRIGIDA · SMOKE REAL VERDE · PRONTA PARA BAIXA |
+| [PEND-157](#pend-157) | Quem cancelou uma assinatura recebe copy de "período grátis" | P2 | REGISTRADA · NÃO CORRIGIDA |
+| [PEND-158](#pend-158) | Testes que leem o fonte com janela de N bytes quebram por comentário | P2 | 2 CORRIGIDOS · RESTO NÃO VARRIDO |
+| [PEND-159](#pend-159) | O portão do e-mail está desligado no app, não no lugar certo (Easypanel) | P2 | CONTORNO NO AR · VIRAR A ENV ESTÁ EM DÚVIDA (ver revisão abaixo) |
+| [PEND-160](#pend-160) | Ligar o Google agora abre tomada de conta — a confirmação de e-mail era o que segurava | — | CANCELADA POR DECISÃO (31/08/2026) |
+| [PEND-161](#pend-161) | Quem errar o e-mail no cadastro fica sem caminho de volta — e desde 31/08 nem descobre | P1 | ABERTA · CAUSADA POR f2e3c2e |
+| [PEND-162](#pend-162) | GPT como cérebro único da Ayla: geração *e* interpretação — Claude ainda fala com família e ainda interpreta criança | P1 | ABERTA |
+| [PEND-163](#pend-163) | A idade da criança não chega à recuperação de repertório — e só no caminho que todas as famílias usam | P1 | ABERTA |
+| [PEND-164](#pend-164) | primeiraFrase corta a comunicação em 180 caracteres — e o que importa costuma estar na terceira frase | P1 | ABERTA |
+| [PEND-165](#pend-165) | Fala espontânea: repete quase palavra por palavra, e é Claude falando com família | P2 | ABERTA |
+| [PEND-166](#pend-166) | Três defeitos de entrega observados na janela de 05/09 — registrados, não corrigidos | P2 | ABERTA |
+| [PEND-167](#pend-167) | Aceite curto depois de a Ayla oferecer o artefato — quem decide, e o quê | P2 | ABERTA |
+| [PEND-168](#pend-168) | A bancada media pedidoExplicito como se fosse a porta da feature | P3 | CONCLUIDA |
+| [PEND-169](#pend-169) | O gate de pedido explicito nao alcanca o Plano — o comentario diz que sim | P2 | ABERTA |
+| [PEND-173](#pend-173) | A janela de 60 dias e heuristica, nao definicao de "padrao" | P3 | ABERTA |
+| [PEND-174](#pend-174) | O onboarding sobrescreve categorias_extras inteiro — risco de perda de memoria | P1 | ABERTA |
+| [PEND-175](#pend-175) | cards_status='aguardando' nao expira — rotina presa governa conversa para sempre | P2 | PARCIAL |
+| [PEND-176](#pend-176) | Duas rotinas em erro nunca investigadas — e nada alerta sobre elas | P2 | ABERTA |
+| [PEND-177](#pend-177) | Artefatos reais incorretos preservados como evidencia — limpar apos o Gate A | P3 | PARCIAL |
+| [PEND-178](#pend-178) | O decisor nao reconhece pedido telegrafico — a mae nao sabe pedir pelo nome | P1 | ABERTA |
+| [PEND-179](#pend-179) | Core v11 §16 nega capacidades que o sistema tem — a mae teve que corrigir a Ayla | P1 | ABERTA |
+| [PEND-180](#pend-180) | A linguagem dos cartoes ignora a compreensao da crianca — benchmark do Gate F | P2 | ABERTA |
+| [PEND-182](#pend-182) | metadata de ayla_messages apagado por sobrescrita de chave — 3 mecanismos mortos | P1 | EM PRODUCAO — aguardando prova de leitura |
+| [PEND-183](#pend-183) | Plano Estrategico automatico com UMA mensagem — o gate de suficiencia nao exige que a conversa seja SOBRE o problema | P1 | ABERTA — nao corrigir sem decisao de produto |
+| [PEND-184](#pend-184) | O decisor de lacuna do Gate B ficou mudo porque o decisor de turno nao devolveu tema | P1 | CORRIGIDA — aguardando prova em producao |
+| [PEND-185](#pend-185) | O caminho vivo nao emite rastro de conhecimento | P2 | ABERTA |
+| [PEND-186](#pend-186) | 21,5% das decisoes de turno sao truncadas no teto de 300 tokens e viram o neutro — em silencio | P0 | CONCLUIDA — PRODUCAO PROVADA, SEM REGRESSAO |
+| [PEND-187](#pend-187) | metadata.lacuna marca a lacuna ESCOLHIDA, nao a pergunta FEITA | P1 | 187A e 187B CONCLUIDAS — PRODUCAO PROVADA |
+| [PEND-188](#pend-188) | Conducao condicional em vez de afirmar opcao universal — Gate F | P2 | ABERTA (desenho, para o Gate F) |
+| [PEND-189](#pend-189) | Subcampos escritos numa linha so ficam INVISIVEIS ao parser — e o Core os ve, o Gate B nao | P2 | CONCLUIDA — PRODUCAO PROVADA, SEM REGRESSAO |
+| [PEND-190](#pend-190) | IMPROCEDENTE — o fato FOI incorporado; o erro foi da minha varredura | — | IMPROCEDENTE (retratada) |
+| [PEND-191](#pend-191) | Brincadeira tem de ser ENTREGUE, nao prometida — regra de produto para o Gate F | P2 | ABERTA (desenho aprovado, nao implementar agora) |
+| [PEND-192](#pend-192) | A escada pre-verbal escolhe um degrau que o proprio perfil ja desmentiu | P1 | CORRIGIDA — aguardando prova em producao |
+| [PEND-193](#pend-193) | Envelope invalido so avisa em console.warn — o null nao se distingue da falha | P2 | ABERTA |
+| [PEND-194](#pend-194) | O canal de 99% do aprendizado usa o extrator fraco — migracao para o extrator unificado | P1 | PARCIAL — flags de sombra e escrita global ligadas; efeito e qualidade não auditados |
+| [PEND-195](#pend-195) | A base da pos nao tem o mecanismo do caso Mario: perda de acesso a fala sob estresse | P2 | ABERTA — lacuna de FONTE, nao de codigo |
+| [PEND-196](#pend-196) | Conhecimento pre-verbal recuperado para crianca que ja fala — a PEND-192 do lado da BIA | P1 | BAIXADA — implementada e provada na bancada (10/10) |
+| [PEND-197](#pend-197) | Quem transforma o Perfil Vivo em habilidadesProvadas — o produtor que ainda nao existe | P1 | ABERTA — BLOQUEADA POR DEPENDENCIA: PEND-194 Fase 2 |
+| [PEND-198](#pend-198) | Um em cada tres turnos nao aprendia nada — promise solta depois da resposta | P1 | BAIXADA — causa corrigida e comprovada em producao; n=5 pos-correcao, suficiente como prova do MECANISMO e nao como estimativa da taxa historica |
+| [PEND-199](#pend-199) | seedExemplo e resetMinhaConta podem apagar a Manu e o Mario por cascade | P1 | ABERTA — investigada, NAO corrigida (correcao fora do escopo da missao que a achou) |
+| [PEND-200](#pend-200) | A sombra transforma histórico em fato novo — e atribui fato de um irmao a outro | P0 | BAIXADA — corrigida em duas etapas, ambas no ar, e comprovada em producao |
+| [PEND-201](#pend-201) | Turno respondido sem publicar turno_externo — o rastro do turno falha em silencio | P2 | ABERTA — registrada, NAO corrigida (achado fora do escopo da missao que a achou) |
+| [PEND-203](#pend-203) | HELP + LINK — o atalho opcional para o Kolo Vivo (convite de Perfil) | P2 | CORREÇÃO DO CONVITE ESPONTÂNEO EM PRODUÇÃO — SHA 44ce03a |
+| [PEND-204](#pend-204) | normalizarDestino descarta o destino em silencio — e derrubou o primeiro convite real | P2 | allowlist CORRIGIDA em 2026-09-14; o RASTRO segue ABERTO |
+| [PEND-205](#pend-205) | perfil-marcos.test.ts #11 apodrece com o relogio — main esta VERMELHA | P3 | CONCLUÍDA — teste estabilizado sem mudança funcional |
+| [PEND-206](#pend-206) | O extrator unificado e a MAIOR linha de custo de IA da Kolo — 41,8% do total | P3 | ABERTA — medido em 2026-09-14, nenhuma decisao tomada |
+| [PEND-207](#pend-207) | O DNA dos especialistas no WhatsApp — o unico componente que a arena provou | P1 | EM PRODUCAO desde 2026-09-14 22:16 (SHA c817c94) |
+| [PEND-208](#pend-208) | O repertorio criativo continua obvio — nenhum braco resolveu a brincadeira | P1 | ABERTA — medida, nao corrigida |
+| [PEND-212](#pend-212) | Assinaturas antigas podem renovar sem endereço fiscal completo no Customer Stripe | P1 | ABERTA — achado fora do escopo; fluxo novo protegido |
+| [PEND-213](#pend-213) | Aprofundamento contextual por botões no WhatsApp | P1 | PARCIAL — flag global ligada; continuidade e entrega ainda sem prova de conclusão |
+| [PEND-214](#pend-214) | provider.test.ts depende da mensagem de erro da rede ao remover a chave Anthropic | P3 | ABERTA — achado fora do escopo, NÃO corrigido |
+| [PEND-215](#pend-215) | Latência perceptível da Ayla no WhatsApp, inclusive em cliques estruturados | P1 | SEGUNDA CORREÇÃO PRONTA PARA PROVA REAL — aceite de produção pendente |
+| [PEND-216](#pend-216) | Ayla oferece história, recebe o tema e volta a investigar em vez de entregar | P0 | PARCIAL — código publicado; entrega real e destino não comprovados |
+| [PEND-217](#pend-217) | Reavaliar se Plano deve continuar existindo como artefato da Ayla | P1 | SUSPENSÃO IMPLEMENTADA LOCALMENTE — decisão de produto pendente |
+| [PEND-218](#pend-218) | Ponte WhatsApp → Lúdico para avatar, histórias e confirmação do Perfil | P1 | EM IMPLEMENTAÇÃO ISOLADA |
+| [PEND-219](#pend-219) | Dar nome e significado aos atalhos por ícone abaixo de Admin no menu mobile | P2 | ABERTA |
+| [PEND-220](#pend-220) | Ayla precisa conhecer e navegar toda a plataforma sem inventar caminhos | P1 | ABERTA — depende da fundação da PEND-218 |
+| [PEND-221](#pend-221) | Avatar original assistido por foto, com roupa e privacidade | P1 | ABERTA — depende de PEND-218 e revisão de privacidade |
+| [PEND-222](#pend-222) | Círculo de personagens para histórias e rotinas | P2 | ABERTA — depende de PEND-221 |
+| [PEND-223](#pend-223) | Jornada conduzida do trial para história e rotina visual | P1 | ABERTA — executar depois de PEND-218 e PEND-220 |
+| [PEND-224](#pend-224) | Explicar a escolha antes dos botões e ampliar brincadeiras como ensaio social | P1 | ABERTA — evidência de incompreensão real |
+| [PEND-227](#pend-227) | Rotina perde a proposta quando a família corrige em dois balões rápidos | P0 | EM PRODUÇÃO — recuperação concluída; uso natural dos cartões em monitoramento |
+| [PEND-229](#pend-229) | Qualidade, profundidade e concisão da conversa da Ayla no WhatsApp | P1 | EM PRODUÇÃO — prova conversacional e latência ponta a ponta pendentes |
+| [PEND-230](#pend-230) | Confirmações sociais reabrem orientação e alongam a conversa | P1 | PUBLICADA · PROVA NATURAL PENDENTE |
+<!-- PENDENCIAS-INDEX:END -->
 
 ---
 
@@ -3990,8 +4085,17 @@ Aberta em: 2026-08-17 · Origem: conversa real da Karina, pós-rollout geral
 
 ### PEND-080
 **Liberar o caminho novo (Ayla experimental) para TODAS as famílias**
-Bloco: **A · Condução** · Prioridade: **P1** · Estado: **ABERTA 🔒**
+Bloco: **A · Condução** · Prioridade: **P1** · Estado: **PARCIAL — flag global ligada; qualidade e critérios históricos não revalidados**
 Aberta em: 2026-08-16 · Origem: decisão de produto — ampliar além das 3 contas
+
+**RECONCILIAÇÃO 04/10/2026.** O health público sem cache serviu o SHA
+`9bf4975dd621db6fd01607eb318425a0d670023a` em `main/production`,
+`db.ok=true` e `ayla_experimental_todas=true`. Isso comprova a configuração
+global, não a correção de cada bloqueio abaixo nem a qualidade dos turnos. A
+ordem em degraus registrada em agosto foi substituída pela decisão posterior
+da titular de implementar para todas as famílias, sem coorte. Os seis itens
+abaixo são a fotografia histórica da abertura; cada um exige reavaliação
+individual antes de qualquer baixa.
 
 - **O pedido:** parar de testar só nas 3 contas e liberar os ajustes para todo
   mundo.
@@ -5123,8 +5227,25 @@ STATUS: **A INVESTIGAR** · Aberta em: 2026-08-18
 
 ### PEND-103
 **Higiene da fila de pendências**
-Bloco: **H · Governança** · Prioridade: **P3** · **ORDEM DA FRENTE: paralela**
-STATUS: **A INVESTIGAR** · Aberta em: 2026-08-18
+Bloco: **H · Governança** · Prioridade: **P1** · **ORDEM DA FRENTE: paralela**
+STATUS: **PARCIAL — índice e guarda de CI preparados, ainda não publicados** · Aberta em: 2026-08-18
+
+**RECONCILIAÇÃO 04/10/2026.** Em `origin/main` havia 181 fichas e só 116
+linhas no painel: 65 fichas sem representação. A `main` do checkout principal
+estava 47 commits atrás de `origin/main` e continha alterações locais de outras
+frentes, preservadas. Nesta frente isolada foi gerado o índice completo das 181
+fichas e criado um verificador que reprova ID duplicado, ficha sem estado e
+painel desatualizado. O CI foi preparado para executar esse verificador, com
+cinco testes unitários passando. Isso é prova local; a proteção ainda não
+está ativa no CI remoto nem constitui prova de produção. Permanecem a
+reconciliação dos estados livres, o arquivamento das baixadas e a verificação
+de que o CI do commit publicado executou o controle. Há também uma colisão
+entre worktrees: `PEND-227` significa a correção da rotina da Manu em
+`ayla-conversa-valor` e a perda da proposta da rotina da Sofia em `origin/main`.
+São defeitos distintos; antes de integrar aquele worktree, preservar as duas
+fichas e renumerar uma delas com referência cruzada. O verificador local
+detecta duplicata no arquivo integrado, mas não consegue enxergar outros
+worktrees automaticamente.
 
 - **Três achados laterais da reorganização de 18/08**, registrados em vez de
   corrigidos em silêncio:
@@ -9017,7 +9138,16 @@ recuperacao, e o `null` do rastro passando a ser legivel sem consultar
 ### PEND-194
 **O canal de 99% do aprendizado usa o extrator fraco — migracao para o extrator unificado**
 Bloco: **B · Ayla** · Prioridade: **P1**
-STATUS: **BLOQUEADA EXTERNAMENTE — Fase 1 no ar e INERTE, aguardando `KOLO_EXTRATOR_SOMBRA` na Vercel Production** · Aberta em: 2026-09-10
+STATUS: **PARCIAL — flags de sombra e escrita global ligadas; efeito e qualidade não auditados** · Aberta em: 2026-09-10
+
+**RECONCILIAÇÃO 04/10/2026.** O health público sem cache serviu
+`9bf4975dd621db6fd01607eb318425a0d670023a` em `main/production` e
+reportou `kolo_extrator_sombra=true` e `kolo_extrator_escrita="todas"`.
+A declaração antiga de sombra inerte está superada. O health comprova a
+configuração, não a execução de extrações, a integridade das escritas ou ganho
+contra os 16,1% do baseline. Auditar somente metadados agregados e prova
+negativa/sintética antes de chamar a migração de concluída; não ler perfis
+nem usar família como QA.
 
 Nasceu da PEND-192, no turno real do Mario (10/09, 12:27). O decisor sugeriu
 `comunicacao.contato` — degrau pre-verbal — para uma crianca cujo perfil diz
@@ -10023,7 +10153,14 @@ WhatsApp, Perfil Vivo ou conversa.
 ### PEND-213
 **Aprofundamento contextual por botões no WhatsApp**
 Bloco: **B · Ayla** · Prioridade: **P1**
-STATUS: **CORREÇÃO EM CURSO — botões renderizam; teste real encontrou mensagem textual presa; rollback global ativo (`flag=false`)** · Aberta em: 2026-09-24
+STATUS: **PARCIAL — flag global ligada; continuidade e entrega ainda sem prova de conclusão** · Aberta em: 2026-09-24
+
+**RECONCILIAÇÃO 04/10/2026.** O health público sem cache serviu
+`9bf4975dd621db6fd01607eb318425a0d670023a` em `main/production` e
+`ayla_aprofundamento_whatsapp=true`. Portanto a afirmação antiga de rollback
+global ativo está desatualizada. Esta leitura não demonstra que uma fala
+concorrente deixe de ficar presa, que os três ramos sejam entregues, nem que
+o clique preserve a criança; o critério de conclusão abaixo continua aberto.
 
 Hoje a Ayla ajuda por texto no WhatsApp, mas não oferece bifurcações clicáveis.
 O `whatsappSender` só conhece texto/documento e o webhook não lê
@@ -10256,7 +10393,14 @@ WhatsApp).
 ### PEND-216
 **Ayla oferece história, recebe o tema e volta a investigar em vez de entregar**
 Bloco: **B · Ayla / Lúdico** · Prioridade: **P0**
-STATUS: **IMPLEMENTADA E TESTADA LOCALMENTE — NÃO publicada** · Aberta em: 2026-09-25
+STATUS: **PARCIAL — código publicado; entrega real e destino não comprovados** · Aberta em: 2026-09-25
+
+**RECONCILIAÇÃO 04/10/2026.** Os commits `d1b61d7` e `1f85ed4` de
+continuidade de história integram a `main` servida no health pelo SHA
+`9bf4975dd621db6fd01607eb318425a0d670023a`. A frase antiga “não
+publicada” não se sustenta para esse código. Publicação não comprova história
+aceita e exibida, identidade do destino, nem a jornada de criação; estes
+portões permanecem sem prova suficiente para baixa.
 
 **CASO REAL.** A Ayla perguntou qual situação a família queria transformar em
 história para Darlison. Quatro horas depois, a família trouxe luto e lembranças
