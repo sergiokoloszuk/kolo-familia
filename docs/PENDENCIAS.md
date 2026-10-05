@@ -9170,8 +9170,19 @@ extraídos: **não são denominadores equivalentes**. Esta medição comprova us
 global e ausência de falha registrada, mas não acerto semântico dos campos,
 nem que 254 perfis tenham sido alterados: o evento também pode registrar
 zero fatos. Ela não supera o portão de qualidade da Fase 2. Falta uma
-comparação de mesma unidade e prova negativa/sintética antes de concluir;
+comparação pareada e prova negativa/sintética antes de concluir;
 não usar conta real como QA.
+
+**COMPARAÇÃO DE UNIDADE, NÃO DE POPULAÇÃO (05/10/2026).** Entre 10/09 e
+28/09, 60 eventos `extrator_sombra` somaram 79 fatos de camada 1, 8 no
+balde (10,1%) e 2 rejeitados. Na mesma janela ampla, 513 eventos
+`extrator_escreveu` somaram 256 fatos, 53 no balde (20,7%) e 18 rejeitados.
+Os contadores têm a mesma definição no código, mas sombra e escrita
+observaram turnos distintos, sem pareamento de família, caso ou período
+exato de ativação. A última semana do escritor ficou em 22,8% por fato.
+Esses números **não demonstram ganho** e não autorizam atribuir piora
+causalmente ao extrator; pedem avaliação pareada com casos sintéticos e
+metadados seguros antes de declarar a configuração global validada.
 
 Nasceu da PEND-192, no turno real do Mario (10/09, 12:27). O decisor sugeriu
 `comunicacao.contato` — degrau pre-verbal — para uma crianca cujo perfil diz
