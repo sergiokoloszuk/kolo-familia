@@ -5236,16 +5236,23 @@ estava 47 commits atrás de `origin/main` e continha alterações locais de outr
 frentes, preservadas. Nesta frente isolada foi gerado o índice completo das 181
 fichas e criado um verificador que reprova ID duplicado, ficha sem estado e
 painel desatualizado. O CI foi preparado para executar esse verificador, com
-cinco testes unitários passando. Isso é prova local; a proteção ainda não
-está ativa no CI remoto nem constitui prova de produção. Permanecem a
-reconciliação dos estados livres, o arquivamento das baixadas e a verificação
-de que o CI do commit publicado executou o controle. Há também uma colisão
+cinco testes unitários passando. Isso era prova local; naquele momento a
+proteção ainda não estava ativa no CI remoto nem constituía prova de
+produção. Permanecem a reconciliação dos estados livres, o arquivamento das
+baixadas e a verificação de que o CI do commit publicado executou o controle.
+Há também uma colisão
 entre worktrees: `PEND-227` significa a correção da rotina da Manu em
 `ayla-conversa-valor` e a perda da proposta da rotina da Sofia em `origin/main`.
 São defeitos distintos; antes de integrar aquele worktree, preservar as duas
 fichas e renumerar uma delas com referência cruzada. O verificador local
 detecta duplicata no arquivo integrado, mas não consegue enxergar outros
 worktrees automaticamente.
+
+**PROVA REMOTA 05/10/2026.** O PR #141, commit `a616e8c`, executou o job
+`CI / build` no GitHub Actions com sucesso (run `37230823711`): a etapa
+“Pendências — índice e IDs”, typecheck, testes e build ficaram verdes.
+A Vercel publicou apenas um **Preview** da branch. A trava ainda não está
+em `main` nem na produção; não baixar esta ficha por essa prova de PR.
 
 - **Três achados laterais da reorganização de 18/08**, registrados em vez de
   corrigidos em silêncio:
@@ -9149,6 +9156,22 @@ contra os 16,1% do baseline. Auditar somente metadados agregados e prova
 negativa/sintética antes de chamar a migração de concluída; não ler perfis
 nem usar família como QA.
 
+**CONTAGEM READ-ONLY 05/10/2026, 08h35 BRT.** No health sem cache das 09h09,
+o mesmo SHA e as mesmas flags continuavam servidos. Em `eventos_app`, sem
+ler perfis, fatos, mensagens ou identificadores, houve **32** eventos
+`extrator_escreveu` nas 24 horas anteriores e **254** nos sete dias; nesse
+período, zero eventos `extrator_escrita_falhou` e zero
+`aprendizado_pos_resposta_falhou`. A sombra ficou em zero, como previsto pelo
+código quando o novo escritor é o dono de todos os turnos. Somando apenas
+contadores numéricos dos 254 eventos: **136** fatos de camada 1, **31** no
+balde de sobra (22,8% desta unidade), **10** sem subcampo e **11** rejeitados.
+O baseline histórico de 16,1% conta incorporações com par anterior, não fatos
+extraídos: **não são denominadores equivalentes**. Esta medição comprova uso
+global e ausência de falha registrada, mas não acerto semântico dos campos,
+nem supera o portão de qualidade da Fase 2. Falta uma comparação de mesma
+unidade e prova negativa/sintética antes de concluir; não usar conta real
+como QA.
+
 Nasceu da PEND-192, no turno real do Mario (10/09, 12:27). O decisor sugeriu
 `comunicacao.contato` — degrau pre-verbal — para uma crianca cujo perfil diz
 **"Conversa bem, estamos treinando ter autonomia e ligar para resolver coisas,
@@ -10161,6 +10184,16 @@ STATUS: **PARCIAL — flag global ligada; continuidade e entrega ainda sem prova
 global ativo está desatualizada. Esta leitura não demonstra que uma fala
 concorrente deixe de ficar presa, que os três ramos sejam entregues, nem que
 o clique preserve a criança; o critério de conclusão abaixo continua aberto.
+
+**CONTAGEM READ-ONLY 05/10/2026, 08h35 BRT.** Nas últimas 24 horas, zero
+ofertas, escolhas ou respostas de aprofundamento. Em sete dias, eventos
+persistidos registram **5** ofertas, **4** escolhas e **4** respostas; a tabela
+operacional tem **4** ofertas em `respondida` e **1** em `oferecida`, sem
+`falhou` no intervalo. Foram consultados apenas totais por tipo/estado,
+sem texto, família ou criança. Isso comprova execução do mecanismo em
+produção, mas não que uma fala textual concorrente tenha sido processada
+nem que os ramos, formato e alvo ficaram corretos. Sem nova amostra natural
+pertinente, a falha de continuidade de 25/09 permanece sem reteste conclusivo.
 
 Hoje a Ayla ajuda por texto no WhatsApp, mas não oferece bifurcações clicáveis.
 O `whatsappSender` só conhece texto/documento e o webhook não lê
