@@ -9168,9 +9168,10 @@ balde de sobra (22,8% desta unidade), **10** sem subcampo e **11** rejeitados.
 O baseline histórico de 16,1% conta incorporações com par anterior, não fatos
 extraídos: **não são denominadores equivalentes**. Esta medição comprova uso
 global e ausência de falha registrada, mas não acerto semântico dos campos,
-nem supera o portão de qualidade da Fase 2. Falta uma comparação de mesma
-unidade e prova negativa/sintética antes de concluir; não usar conta real
-como QA.
+nem que 254 perfis tenham sido alterados: o evento também pode registrar
+zero fatos. Ela não supera o portão de qualidade da Fase 2. Falta uma
+comparação de mesma unidade e prova negativa/sintética antes de concluir;
+não usar conta real como QA.
 
 Nasceu da PEND-192, no turno real do Mario (10/09, 12:27). O decisor sugeriu
 `comunicacao.contato` — degrau pre-verbal — para uma crianca cujo perfil diz
@@ -10192,8 +10193,9 @@ operacional tem **4** ofertas em `respondida` e **1** em `oferecida`, sem
 `falhou` no intervalo. Foram consultados apenas totais por tipo/estado,
 sem texto, família ou criança. Isso comprova execução do mecanismo em
 produção, mas não que uma fala textual concorrente tenha sido processada
-nem que os ramos, formato e alvo ficaram corretos. Sem nova amostra natural
-pertinente, a falha de continuidade de 25/09 permanece sem reteste conclusivo.
+nem que os ramos, formato e alvo ficaram corretos. Sem reconstrução de um
+turno natural com concorrência, a falha de continuidade de 25/09 permanece
+sem reteste conclusivo.
 
 Hoje a Ayla ajuda por texto no WhatsApp, mas não oferece bifurcações clicáveis.
 O `whatsappSender` só conhece texto/documento e o webhook não lê
@@ -10765,6 +10767,13 @@ pós-deploy em que correção/aceite permaneçam no fluxo especializado, e o tem
 clique em “Gerar cartões” avancem o mesmo artefato sem trocar criança nem
 etapas. Não provocar esse turno, não usar família real como QA e não afirmar
 entrega/leitura do WhatsApp apenas por `messageId`.
+
+**CONTAGEM READ-ONLY 05/10/2026, 09h45 BRT.** Entre as rotinas criadas nas
+24 horas anteriores havia **1** em `aguardando` e **0** em `pronto`; em sete
+dias, **9** rotinas: 3 em `revisao`, 2 em `aguardando`, 4 em `pronto` e nenhuma
+em `gerando` ou `erro`. São somente totais por estado, sem abrir temas,
+etapas, família ou criança. Esses totais não ligam tema, clique e cartões
+à mesma rotina corrigida; portanto não satisfazem o critério de baixa.
 
 ---
 
