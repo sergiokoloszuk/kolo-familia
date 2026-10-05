@@ -149,7 +149,7 @@ substitui a prioridade atual de segurança nem a análise de produção.
 | [PEND-100](#pend-100) | Entrada contínua de material no Admin — a BIA sem depender do VS Code | P2 | A INVESTIGAR |
 | [PEND-101](#pend-101) | Legislação federal brasileira — primeira etapa das Fontes Vivas | P2 | INVESTIGADA · DECISÃO PENDENTE |
 | [PEND-102](#pend-102) | Whitelist de sites de referência em neurodivergência | P3 | A INVESTIGAR |
-| [PEND-103](#pend-103) | Higiene da fila de pendências | P1 | PARCIAL — índice e guarda de CI preparados, ainda não publicados |
+| [PEND-103](#pend-103) | Higiene da fila de pendências | P1 | PARCIAL — índice e guarda de CI testados; reconciliação legada pendente |
 | [PEND-104](#pend-104) | Material da pós — LOCALIZADO, em auditoria, NÃO ATIVO | P1 | MATERIAL LOCALIZADO — EM AUDITORIA / NÃO ATIVO |
 | [PEND-105](#pend-105) | Conhecimento Especializado — uma camada só, e a BIA como mecanismo | P1 | PROPOSTA — AGUARDANDO DECISÃO |
 | [PEND-106](#pend-106) | O rastro do conhecimento não cobre o WhatsApp desde o rollout de 17/08 | P1 | MEDIDA — CORREÇÃO NÃO IMPLEMENTADA |
@@ -5228,7 +5228,7 @@ STATUS: **A INVESTIGAR** · Aberta em: 2026-08-18
 ### PEND-103
 **Higiene da fila de pendências**
 Bloco: **H · Governança** · Prioridade: **P1** · **ORDEM DA FRENTE: paralela**
-STATUS: **PARCIAL — índice e guarda de CI preparados, ainda não publicados** · Aberta em: 2026-08-18
+STATUS: **PARCIAL — índice e guarda de CI testados; reconciliação legada pendente** · Aberta em: 2026-08-18
 
 **RECONCILIAÇÃO 04/10/2026.** Em `origin/main` havia 181 fichas e só 116
 linhas no painel: 65 fichas sem representação. A `main` do checkout principal
@@ -5248,11 +5248,13 @@ fichas e renumerar uma delas com referência cruzada. O verificador local
 detecta duplicata no arquivo integrado, mas não consegue enxergar outros
 worktrees automaticamente.
 
-**PROVA REMOTA 05/10/2026.** O PR #141, commit `a616e8c`, executou o job
-`CI / build` no GitHub Actions com sucesso (run `37230823711`): a etapa
+**PROVA REMOTA 05/10/2026, antes da integração.** O PR #141, commit
+`a616e8c`, executou o job `CI / build` no GitHub Actions com sucesso
+(run `37230823711`): a etapa
 “Pendências — índice e IDs”, typecheck, testes e build ficaram verdes.
-A Vercel publicou apenas um **Preview** da branch. A trava ainda não está
-em `main` nem na produção; não baixar esta ficha por essa prova de PR.
+A Vercel publicou apenas um **Preview** da branch naquela verificação.
+Esta prova de PR não basta para baixar a ficha: conferir a integração em
+`main` e a execução do CI após ela, além dos critérios legados abaixo.
 
 - **Três achados laterais da reorganização de 18/08**, registrados em vez de
   corrigidos em silêncio:
