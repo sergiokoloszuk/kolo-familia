@@ -11,7 +11,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { pronomesVars, type Genero } from "./pronomes";
 import { nomeUsavelCrianca, primeiroNome, primeiroNomeCriancaConfiavel } from "./crianca-especifica";
-import { fraseDoTema, listarTemas } from "@/lib/conducao/temas";
+import { listarTemas } from "@/lib/conducao/temas";
 import { linkPlanos } from "@/lib/billing/destino-comercial";
 import { linkComercialAutenticado } from "@/lib/billing/link-comercial";
 
@@ -203,14 +203,9 @@ export async function templateBoasVindas(
  * e de assunto aleatório — porque "uma IA no WhatsApp" não tem território
  * visível.
  *
- * Agora a abertura faz cinco coisas, nesta ordem, e nada além disso:
- *   1. reconhece que já conheceu um pouco da criança (continuidade);
- *   2. devolve os desafios que A PRÓPRIA FAMÍLIA marcou — até três, com as
- *      palavras dela. NÃO é inferência da Ayla, e o texto diz isso;
- *   3. explica em uma frase o TIPO de ajuda (não o catálogo inteiro);
- *   4. pergunta por qual começar — e a resposta vira o tema ativo;
- *   5. convida a contar, por áudio ou texto, prometendo uma primeira ideia
- *      prática — não um questionário.
+ * A abertura é curta e oferece dois caminhos: uma situação concreta recebe
+ * ajuda já no próximo turno; quem ainda não sabe por onde começar pode aceitar
+ * até três perguntas breves. O convite não é um formulário obrigatório.
  *
  * O que ela NÃO faz: listar recursos ("tenho planos, rotinas, relatórios,
  * histórias"), prometer artefato, nem pedir dado nenhum.
@@ -229,18 +224,13 @@ export function templateBoasVindasComDesafio(params: {
   linkGuia?: string | null;
 }): string {
   const lista = listarTemas(params.desafios, 3);
-  const frase = lista || fraseDoTema(params.desafios[0] ?? "");
-  const varios = params.desafios.filter((d) => fraseDoTema(d) !== fraseDoTema("")).length > 1;
 
   // Só cita a criança quando o nome É nome (o campo aceita recado) e com o
   // primeiro nome. Sem isso a frase sai "a comunicação da Cuido de Várias
   // Crianças. Sou Terapeuta! tem pesado" — foi o que aconteceu em 25/07.
   // Uma fonte só: a mesma regra vale para as proativas escritas no orquestrador.
   const nomeCurto = primeiroNomeCriancaConfiavel(params.nomeMembro);
-  const artigo = params.genero === "feminino" ? "da" : "do";
-  const generoDefinido = params.genero === "feminino" || params.genero === "masculino";
-  const comCrianca = nomeCurto && generoDefinido ? ` com ${artigo === "da" ? "a" : "o"} ${nomeCurto}` : "";
-  const dele = nomeCurto ? ` pro ${nomeCurto}` : "";
+  const pessoa = nomeCurto ? ` ${nomeCurto}` : " a pessoa que você acompanha";
 
   // O NOME DE QUEM FALA passa pelo mesmo detector do nome da criança. Em
   // 02/08/2026 uma mãe escreveu a apresentação inteira no campo do nome e a
@@ -251,26 +241,11 @@ export function templateBoasVindasComDesafio(params: {
   const saudacao = nomeQuemFala ? `Oi, ${nomeQuemFala}!` : "Oi!";
 
   return [
-    `${saudacao} Eu sou a Ayla 💛 Estou aqui pra te ajudar nos desafios do dia a dia${comCrianca}.`,
-    "",
-    `Pelo que você contou quando entrou, o que mais tem pesado ${varios ? "são" : "é"} ${frase}.`,
-    "",
-    `Posso te ajudar com estratégias práticas, o que fazer e o que falar nas horas difíceis, e também com brincadeiras e atividades pra trabalhar essas habilidades de um jeito mais leve${dele}.`,
-    "",
-    // "Você não precisa saber o que pedir" é a frase que destrava quem chega
-    // sem conhecer o produto: a família não sabe que existe Plano, Rotina ou
-    // História — e não deveria precisar saber. Quem conduz é a Ayla.
-    `Você não precisa saber o que pedir: me conta o que está acontecendo, do seu jeito. Por qual você quer começar? Pode mandar um *áudio*, se for mais fácil — com o que você me contar eu já te trago uma primeira ideia prática. 🌿`,
-    // O GUIA VEM POR ÚLTIMO, e só pra quem ainda não abriu o vídeo no app. A
-    // primeira mensagem da Ayla AJUDA antes de apresentar a plataforma: se ela
-    // abrir com "assista nosso vídeo", virou propaganda.
-    params.linkGuia
-      ? `\nE se quiser conhecer rapidinho tudo o que dá pra fazer na Kolo, tem um vídeo curto mostrando a plataforma por dentro:\n${params.linkGuia}`
-      : "",
-  ]
-    .filter((l) => l !== "" || true)
-    .join("\n")
-    .trimEnd();
+    `${saudacao} Eu sou a Ayla 🌿 Quero conhecer melhor${pessoa} para adaptar a ajuda ao que funciona aí.`,
+    lista ? `Você marcou ${lista} quando entrou; não precisa me contar isso de novo.` : "",
+    "Se topar, faço até 3 perguntas rápidas. Ou me conte o que está pegando hoje e já começamos por isso — pode ser por áudio.",
+    params.linkGuia ? `Guia da Kolo, se quiser ver depois: ${params.linkGuia}` : "",
+  ].filter(Boolean).join("\n\n");
 }
 
 // ============================================================

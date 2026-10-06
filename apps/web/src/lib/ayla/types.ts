@@ -55,6 +55,9 @@ export type AylaTipoReativa =
   /** O menu de temas da entrada guiada. Tipo próprio porque o texto dele É o
    *  estado: é dele que sai a numeração quando a mãe responde só "2". */
   | "entrada_guiada"
+  /** Uma pergunta inicial opcional, aceita após as boas-vindas. */
+  | "primeiro_contato_pergunta"
+  | "primeiro_contato_recusa"
   | "resposta_registro"
   /**
    * A RESPOSTA QUE LEVOU O ATALHO DO KOLO VIVO — PEND-203 Gate 2.
