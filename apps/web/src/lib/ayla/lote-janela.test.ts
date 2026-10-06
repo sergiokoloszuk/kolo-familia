@@ -504,3 +504,141 @@ describe("execução órfã — o que acontece quando quem ia responder morre", 
     // execução e a mensagem nova, a família ficou sem resposta.
   });
 });
+
+describe("texto seguido de clique estruturado — nenhuma fala fica sem resposta", () => {
+  it("interação de outra família não altera o turno desta família", async () => {
+    const db = bancoCom([{ id: "texto", texto: "Preciso de ajuda", criadaEm: BASE }]);
+    vi.useFakeTimers();
+    vi.setSystemTime(BASE);
+
+    const preparando = aguardarTurnoDaMae(db.cliente(), {
+      familyId: "fam-1",
+      textoAtual: "Preciso de ajuda",
+    });
+    await vi.advanceTimersByTimeAsync(2_000);
+    db.semear("ayla_messages", [{
+      id: "clique-outra-familia",
+      family_account_id: "fam-2",
+      direcao: "inbound",
+      texto: "Como lidar agora",
+      metadata: { interacao: { tipo: "botao", id: "ak1:11111111-1111-4111-8111-111111111111:aprofundar_lidar" } },
+      created_at: new Date(BASE.getTime() + 2_000).toISOString(),
+      processada_em: null,
+    }]);
+    await vi.advanceTimersByTimeAsync(1_500);
+    const turno = await preparando;
+    expect(turno?.texto).toBe("Preciso de ajuda");
+    expect(db.linhas("ayla_messages").find((linha) => linha.id === "clique-outra-familia")?.processada_em)
+      .toBeNull();
+    const confirmar = confirmarTurnoAindaAtual(db.cliente(), {
+      familyId: "fam-1",
+      controle: turno!.controle,
+    });
+    await vi.advanceTimersByTimeAsync(7_000);
+    await expect(confirmar).resolves.toBe(true);
+  });
+
+  it("não cede o texto a um clique que só consome a própria linha", async () => {
+    const db = bancoCom([{ id: "texto", texto: "Ela recusa o almoço", criadaEm: BASE }]);
+    vi.useFakeTimers();
+    vi.setSystemTime(BASE);
+
+    const preparando = aguardarTurnoDaMae(db.cliente(), {
+      familyId: "fam-1",
+      textoAtual: "Ela recusa o almoço",
+    });
+    await vi.advanceTimersByTimeAsync(2_000);
+    db.semear("ayla_messages", [{
+      id: "clique",
+      family_account_id: "fam-1",
+      direcao: "inbound",
+      texto: "Brincar / passear",
+      metadata: { interacao: { tipo: "botao", id: "ak1:11111111-1111-4111-8111-111111111111:aprofundar_brincar" } },
+      created_at: new Date(BASE.getTime() + 2_000).toISOString(),
+      processada_em: null,
+    }]);
+    await vi.advanceTimersByTimeAsync(1_500);
+    const turno = await preparando;
+    expect(turno, "o clique não responde pelo texto anterior").not.toBeNull();
+    expect(turno?.texto).toBe("Ela recusa o almoço");
+    expect(db.linhas("ayla_messages").find((linha) => linha.id === "clique")?.processada_em)
+      .toBeNull();
+  });
+
+  it("não cancela a resposta do texto por um clique já consumido", async () => {
+    const db = bancoCom([{ id: "texto", texto: "Ela recusa o almoço", criadaEm: BASE }]);
+    vi.useFakeTimers();
+    vi.setSystemTime(BASE);
+
+    const preparando = aguardarTurnoDaMae(db.cliente(), {
+      familyId: "fam-1",
+      textoAtual: "Ela recusa o almoço",
+    });
+    await vi.advanceTimersByTimeAsync(3_500);
+    const turno = await preparando;
+    expect(turno).not.toBeNull();
+
+    db.semear("ayla_messages", [{
+      id: "clique",
+      family_account_id: "fam-1",
+      direcao: "inbound",
+      texto: "Brincar / passear",
+      metadata: { interacao: { tipo: "botao", id: "ak1:11111111-1111-4111-8111-111111111111:aprofundar_brincar" } },
+      created_at: new Date(BASE.getTime() + 4_000).toISOString(),
+      processada_em: new Date(BASE.getTime() + 4_100).toISOString(),
+    }]);
+    const confirmar = confirmarTurnoAindaAtual(db.cliente(), {
+      familyId: "fam-1",
+      controle: turno!.controle,
+    });
+    await vi.advanceTimersByTimeAsync(7_000);
+    await expect(confirmar).resolves.toBe(true);
+  });
+
+  it("clique devolvido ao fluxo comum claima só a si mesmo, sem roubar texto anterior", async () => {
+    const db = bancoCom([{ id: "texto", texto: "Ela recusa o almoço", criadaEm: BASE }]);
+    db.semear("ayla_messages", [{
+      id: "clique",
+      family_account_id: "fam-1",
+      direcao: "inbound",
+      texto: "Como lidar agora",
+      metadata: { interacao: { tipo: "botao", id: "ak1:11111111-1111-4111-8111-111111111111:aprofundar_lidar" } },
+      created_at: new Date(BASE.getTime() + 2_000).toISOString(),
+      processada_em: null,
+    }]);
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(BASE.getTime() + 2_000));
+
+    const clique = await aguardarTurnoDaMae(db.cliente(), {
+      familyId: "fam-1",
+      textoAtual: "Como lidar agora",
+      respostaEstruturada: true,
+      interacaoEstruturada: true,
+      inboundMessageId: "clique",
+    });
+    expect(clique?.texto).toBe("Como lidar agora");
+    expect(db.linhas("ayla_messages").find((linha) => linha.id === "clique")?.processada_em)
+      .not.toBeNull();
+    expect(db.linhas("ayla_messages").find((linha) => linha.id === "texto")?.processada_em)
+      .toBeNull();
+    db.semear("ayla_messages", [{
+      id: "texto-seguinte",
+      family_account_id: "fam-1",
+      direcao: "inbound",
+      texto: "Outra pergunta",
+      created_at: new Date(BASE.getTime() + 3_000).toISOString(),
+      processada_em: null,
+    }]);
+    await expect(confirmarTurnoAindaAtual(db.cliente(), {
+      familyId: "fam-1",
+      controle: clique!.controle,
+    })).resolves.toBe(true);
+    await expect(aguardarTurnoDaMae(db.cliente(), {
+      familyId: "fam-1",
+      textoAtual: "Como lidar agora",
+      respostaEstruturada: true,
+      interacaoEstruturada: true,
+      inboundMessageId: "clique",
+    })).resolves.toBeNull();
+  });
+});

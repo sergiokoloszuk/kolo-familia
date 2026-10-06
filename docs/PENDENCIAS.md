@@ -10193,6 +10193,25 @@ WhatsApp, Perfil Vivo ou conversa.
 Bloco: **B · Ayla** · Prioridade: **P1**
 STATUS: **PARCIAL — flag global ligada; continuidade e entrega ainda sem prova de conclusão** · Aberta em: 2026-09-24
 
+**REPRODUÇÃO LOCAL 06/10/2026 — FALHA CONFIRMADA, CORREÇÃO CANDIDATA NÃO PUBLICADA.**
+Dois testes de relógio em `lote-janela.test.ts` reproduziram o par
+texto+clique: quando o clique chega antes dos 3 s, a execução textual cede
+sem que o atalho responda por ela; quando chega depois do claim e já foi
+consumido, o portão final cancela a publicação do texto. Resultado focal:
+15 testes passaram, **2 falharam**, ambos os novos casos. São testes locais,
+não evidência de ocorrência nova em família de produção. A migração 0092
+consome a linha do clique, mas não resolve estas duas janelas. A candidata
+separa interações estruturadas do lote textual e reivindica somente a própria
+linha quando um clique cai no fluxo comum: **19/19** testes de janela e
+**79/79** testes focados passaram, inclusive isolamento entre famílias;
+typecheck e build passaram. Na suíte ampla,
+4.190 passaram com dois workers; o teste do provedor excluído permanece na
+PEND-214, e a falha EPERM de `base2.test.ts` no sandbox passou isoladamente
+(20/20). Não é prova de CI ou produção. G1 da
+[missão crítica](specs/ayla-conducao-adaptativa-whatsapp-SPEC.md) continua
+**PARCIAL** até regressão ampla, CI e QA interno ponta a ponta. Não ampliar
+rótulos nem frequência de ofertas até essa prova.
+
 **RECONCILIAÇÃO 04/10/2026.** O health público sem cache serviu
 `9bf4975dd621db6fd01607eb318425a0d670023a` em `main/production` e
 `ayla_aprofundamento_whatsapp=true`. Portanto a afirmação antiga de rollback
@@ -10902,6 +10921,15 @@ e [SPEC](specs/qualidade-conversa-ayla-v12-SPEC.md).
 **Condução adaptativa no WhatsApp: descobrir possibilidades, perguntar o mínimo e aprender com o retorno**
 Bloco: **A · Condução / C · Memória / E · Feedback / G · Trial** · Prioridade: **P1**
 STATUS: **PENDENTE — missão de desenho; nenhuma oferta nova ou cadência de avaliação implementada** · Aberta em: 2026-10-06
+
+**MISSÃO DE EXECUÇÃO APROVADA EM LINHAS GERAIS 06/10.** A
+[SPEC de condução adaptativa](specs/ayla-conducao-adaptativa-whatsapp-SPEC.md)
+define G0–G7, falas de→para, corpus, dados, continuidade, revisão humana e
+prova global. Karina aprovou o desenho geral e a ordem Rotina/transições →
+Comunicação/socialização; os rótulos específicos e a segurança alimentar
+continuam em revisão. A aprovação não muda o estado da ficha nem autoriza
+chamar qualquer recurso de pronto. PEND-213/G1 é dependência de liberação;
+dois testes locais falharam antes da correção candidata e passaram depois.
 
 **PEDIDO DE PRODUTO (06/10).** A família não sabe todos os temas em que a Kolo
 pode ajudar. Os botões clicáveis do WhatsApp podem revelar uma próxima ajuda

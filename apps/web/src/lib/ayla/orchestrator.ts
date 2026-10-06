@@ -2789,8 +2789,10 @@ async function processInboundInterno(
   const turno = await aguardarTurnoDaMae(supabase, {
     familyId: family.id,
     textoAtual: inbound.texto,
-    respostaEstruturada: respostaEstruturadaDeRotina,
+    respostaEstruturada: respostaEstruturadaDeRotina || Boolean(inbound.interacao),
     mensagemCompleta: audioComRotinaCompleta,
+    interacaoEstruturada: Boolean(inbound.interacao),
+    inboundMessageId: inboundMessageRowId,
   });
   marco(rastro, "debounce_fim");
   if (!turno) return { tratada: false, familia: family.id };
