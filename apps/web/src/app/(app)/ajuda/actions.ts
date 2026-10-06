@@ -42,7 +42,7 @@ const MAPA = `# Mapa do app Kolo Família (telas reais e o que se faz em cada um
 - /evolucao (Evolução): como a criança está ao longo do tempo, por tema, e o que ajudou. No fim, dá pra gerar um RELATÓRIO pra escola ou terapeuta (a IA escreve, você edita e baixa em PDF).
 - /ludico (Lúdico): engloba Histórias ilustradas, Rotinas visuais (cards), "O que o desenho conta" (leitura de desenho), Meditação guiada, Timer lúdico e o Avatar da criança.
 - /historias/criar (Criar uma história): abre direto a criação de história ilustrada. O avatar é opcional: a pessoa pode protagonizar com seu avatar ou a história pode usar animais, dinossauros, robôs e personagens fictícios. Confira a situação e o objetivo, escolha os personagens, o estilo visual 3D e de 3 a 6 páginas; então toque em "Criar história". A geração pode levar cerca de um minuto.
-- /configuracoes (Configurações): acompanhamento da Ayla no WhatsApp (ligar/desligar, horário, frequência) e categorias de comunicação. Sub-telas:
+- /configuracoes (Configurações): acompanhamento da Ayla no WhatsApp (ligar/desligar, horário, frequência) e categorias de comunicação. No primeiro contato pelo WhatsApp, a pessoa pode contar uma situação livremente ou aceitar perguntas rápidas opcionais; não precisa preencher questionário para pedir ajuda. Sub-telas:
   - /configuracoes/conta (Minha conta): mudar o nome e "como prefere ser chamada", trocar senha, EXPORTAR seus dados, e EXCLUIR a conta.
   - /configuracoes/familia (Mapa familiar): quem cuida junto (pai, avós, babá, professora, terapeuta).
   - /configuracoes/avatar (Avatar): criar/editar o avatar ilustrado de cada criança, em vários estilos.

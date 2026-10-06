@@ -34,7 +34,6 @@ import { decidirDedup } from "./dedup-kolo-vivo";
 import { decidirDedupDiario } from "./dedup-diario";
 import {
   limparNomeAusente,
-  templateBoasVindas,
   templateClarificacaoMembro,
   templateBoasVindasComDesafio,
   templateRotinaDiaria,
@@ -108,6 +107,7 @@ import { montarRastro, registrarRastroConhecimento } from "@/lib/conhecimento/ra
 import { dividirEmBolhas, ritmoDasBolhas, TETO_ESPERA_SEGUNDOS } from "./bolhas";
 import { paraWhatsApp, residuoDeEscrita } from "./apresentacao";
 import { decidirConfirmacaoCurta, ehFechamentoSocial, textoFechamentoCurto } from "./confirmacao-curta";
+import { aceitouPerguntasIniciais, perguntaInicial, recusouPerguntasIniciais } from "./primeiro-contato";
 import { semOutrosMembros } from "./membro-escopo";
 import { ehFamiliaExperimental, responderExperimental, posTrialAtivo } from "./experimental";
 import { atenderDesconhecido } from "./desconhecido";
@@ -327,20 +327,13 @@ export async function sendBoasVindas(
    */
   const jaAbriuVideo = await abriuGuiaNoApp(supabase, familyAccountId);
 
-  const texto = desafios.length
-    ? templateBoasVindasComDesafio({
-        nomeMae: ctx.nomeMae,
-        nomeMembro: membroFoco.nome,
-        genero: membroFoco.genero,
-        desafios,
-        linkGuia: jaAbriuVideo ? null : LINK_GUIA_KOLO,
-      })
-    : await templateBoasVindas(supabase, {
-        nomeMae: ctx.nomeMae,
-        nomeMembro: membroFoco.nome,
-        genero: membroFoco.genero,
-        seed: `${familyAccountId}-boas-vindas`,
-      });
+  const texto = templateBoasVindasComDesafio({
+    nomeMae: ctx.nomeMae,
+    nomeMembro: membroFoco.nome,
+    genero: membroFoco.genero,
+    desafios,
+    linkGuia: jaAbriuVideo ? null : LINK_GUIA_KOLO,
+  });
 
   return enviarEPersistir(supabase, {
     family_account_id: familyAccountId,
@@ -3186,6 +3179,41 @@ async function processInboundInterno(
   // o filho certo e não caírem no membros[0] (bug Manu→Mario).
   const membroConversa = retomada?.membroId ?? (await criancaDaConversa(supabase, family.id));
 
+  // O convite das boas-vindas só vira pergunta se a família o aceitou sem
+  // trazer uma situação concreta. Não sequestra "sim" de segurança, Rotina,
+  // oferta ou outro fluxo; a última saída precisa ser a própria abertura.
+  if (!seguranca.aberta && !rotinaConversa &&
+      (aceitouPerguntasIniciais(inbound.texto) || recusouPerguntasIniciais(inbound.texto))) {
+    const ultimaSaida = (await historicoDoTurno())
+      .filter((m) => m.direcao === "outbound")
+      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0];
+    const recente = ultimaSaida &&
+      inbound.recebidaEm.getTime() - new Date(ultimaSaida.created_at).getTime() >= 0 &&
+      inbound.recebidaEm.getTime() - new Date(ultimaSaida.created_at).getTime() <= 7 * 86_400_000;
+    if (recente && ultimaSaida?.tipo === "boas_vindas") {
+      const ctxInicial = await loadFamiliaParaEnvio(supabase, family.id);
+      const membro = ctxInicial?.membros.find((m) => m.id === ultimaSaida.membro_atipico_id);
+      if (ctxInicial && membro) {
+        const recusou = recusouPerguntasIniciais(inbound.texto);
+        const resp = await enviarEPersistir(supabase, {
+          family_account_id: family.id,
+          membro_atipico_id: membro.id,
+          phone: ctxInicial.whatsapp_e164,
+          texto: recusou ? "Tudo bem. Se quiser, me conte uma situação quando for melhor para você 🌿" : perguntaInicial({
+            nome: membro.nome,
+            dataNascimento: membro.data_nascimento,
+            falaPorSi: /eu mesmo/i.test(ctxInicial.cuidador.relacao),
+          }),
+          category: "reativa",
+          tipo: recusou ? "primeiro_contato_recusa" : "primeiro_contato_pergunta",
+          controleTurno,
+        });
+        rastro.saida = recusou ? "primeiro_contato_recusa" : "primeiro_contato_pergunta";
+        return { tratada: true, familia: family.id, resposta: resp };
+      }
+    }
+  }
+
   // ENTRADA GUIADA — a rampa de quem chega sem saber o que contar.
   //
   // Vem ANTES da classificação de propósito: "oi" não tem o que classificar, e
@@ -4189,6 +4217,7 @@ async function processInboundInterno(
           familyId: family.id,
           mensagem: inbound.texto,
           membroPreferidoId,
+          inboundMessageRowId,
           // ⚠️ C2 · UM DONO PARA A DECISÃO. A classificação deste turno já
           // aconteceu acima; o experimental consome, nunca reclassifica.
           turnoClassificado,

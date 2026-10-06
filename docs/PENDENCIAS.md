@@ -2036,6 +2036,15 @@ Categoria: Ayla/IA · Prioridade: **P2** · Estado: **ABERTA**
 Aberta em: 2026-08-08 · Origem: `docs/pendencia-primeira-conversa-ayla.md`
 (registrada em 2026-08-04)
 
+**REAVALIAÇÃO 06/10/2026 — CANDIDATA LOCAL, NÃO PUBLICADA.** O título e a
+evidência de 08/08 estão defasados: a abertura atual já lê temas do onboarding,
+mas foi medida longa e sem caminho opcional de perguntas. A
+[SPEC de primeiro contato](specs/primeiro-contato-conversa-SPEC.md) agora fixa
+dois caminhos (relato livre com ajuda ou até três perguntas aceitas), recusa
+curta e identificação pelo membro da abertura. Há testes sintéticos do turno
+real; faltam CI, publicação e prova de conversa/latência no canal real. Não
+baixar esta ficha por existir código ou SPEC.
+
 - **Impacto:** o primeiro contato é onde a família decide se isto serve para
   ela; hoje ele não usa o que o onboarding já sabe.
 - **Evidência (2026-08-08):** o documento existe (110 linhas) e está declarado
@@ -3554,6 +3563,13 @@ Aberta em: 2026-08-08 · Origem: consolidação da PEND-010 +
 Bloco: **C · Memória** · Prioridade: **P1** · Estado: **ABERTA**
 Aberta em: 2026-08-08 · Origem: consolidação da PEND-010 +
 `docs/perfil-vivo-fatos-versionados.md`
+
+**RECORTE LOCAL 06/10/2026, NÃO PUBLICADO.** Uma correção explícita de idade
+ou vínculo (“sou tia da Lia”) passa a viajar no inbound com membro e data e a
+ser relida no turno seguinte. O cadastro não é alterado e vínculos ambíguos
+não são inferidos. Testes sintéticos cobrem dois irmãos; isso não resolve a
+memória geral, relatos externos nem a proveniência de todos os fatos desta
+ficha. A ficha permanece aberta.
 
 - **Impacto:** é o que faz a orientação ser *daquela* criança. Sem separar fato,
   relato de terceiro e inferência da IA, tudo vira "a Kolo disse" — e um
@@ -7725,6 +7741,14 @@ sem prova.
 Bloco: **B · Ayla** · Prioridade: **P1**
 STATUS: **ABERTA** · Aberta em: 2026-09-05
 
+**REAVALIAÇÃO 06/10/2026.** O código mais novo de `origin/main` já passa
+`idadeFoco` a `recuperarBoasPraticas`; portanto a ausência descrita abaixo é
+baseline histórico, não descrição fiel do código atual. A prova de
+distribuição por faixa etária e de elegibilidade legítima ainda precisa ser
+reexecutada antes de baixar. Uma candidata local separada evita que a idade
+explicitamente corrigida pela família seja sobreposta pela data de nascimento
+inconsistente; a prova ainda é sintética, sem publicação.
+
 **PROVEI POR EXECUÇÃO (05/09).** Três chamadores de `recuperarBoasPraticas`:
 
 | chamador | passa `idade`? |
@@ -10794,6 +10818,15 @@ etapas, família ou criança. Esses totais não ligam tema, clique e cartões
 **Qualidade, profundidade e concisão da conversa da Ayla no WhatsApp**
 Bloco: **B · Ayla / A · Condução** · Prioridade: **P1**
 STATUS: **EM PRODUÇÃO — prova conversacional e latência ponta a ponta pendentes** · Aberta em: 2026-10-01
+
+**CANDIDATA DE PRIMEIRO CONTATO 06/10 — NÃO PUBLICADA.** A abertura foi
+encurtada e o aceite das perguntas roteado; a resposta à primeira pergunta
+recebe instrução de trazer uma ajuda situada. O exemplo “da brincadeira à
+porta” define a granularidade: antes de chamar, mostrar o próximo passo num
+meio compreensível e, se possível, combinar o lugar do brinquedo. Teste com
+modelo falso prova a injeção da instrução, **não** a qualidade da fala real.
+Ver [SPEC](specs/primeiro-contato-conversa-SPEC.md). Não atribuir a esta
+candidata ganho de latência nem execução em produção antes das medições.
 
 O Core ativo v11 orienta aprofundamento progressivo, amostra no primeiro turno
 e convites como “se quiser, eu explico”. Isso conflita com a experiência

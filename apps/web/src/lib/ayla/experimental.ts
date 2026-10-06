@@ -37,6 +37,8 @@
  */
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { idadeAnos } from "@/lib/idade";
+import { idadeDitaSobreMembro, idadeRelatadaValida } from "./idade-relatada";
+import { rotuloVinculo, vinculoDitoSobreMembro, vinculoRelatadoValido, type Vinculo } from "./vinculo-relatado";
 import { gerarConversacional, MODELO_CONVERSA } from "@/lib/ia/provider";
 import { BLOCO_DNA } from "@/lib/conducao/dna-especialistas";
 import { apurarEstadoDoTurno, blocoDeEstado } from "@/lib/conducao/estado-do-turno";
@@ -249,9 +251,11 @@ type Membro = {
 
 /** Uma fala do histórico, já com o dono resolvido. */
 type Fala = {
+  id?: string;
   direcao: string;
   texto: string | null;
   membro_atipico_id: string | null;
+  tipo?: string | null;
   metadata?: Record<string, unknown> | null;
 };
 
@@ -494,6 +498,8 @@ async function montarContexto(
   catalogoDisponivel = true,
   /** Continuidade já correlacionada por oferta; nunca aceita id de outra família. */
   membroPreferidoId?: string | null,
+  /** Somente o turno real pode persistir uma idade informada pela família. */
+  inboundMessageRowId?: string | null,
 ): Promise<ContextoDoTurno> {
   // As três leituras de abertura não dependem uma da outra: vão juntas.
   // ⚠️ `lerPerfilFamilia` SUBIU PARA A ONDA 1 — 26/08/2026, quick win 3.
@@ -529,7 +535,7 @@ async function montarContexto(
       .from("ayla_messages")
       // ⚠️ `metadata` NA MESMA CONSULTA — Gate B. É onde viaja a lacuna que o
       // turno anterior perguntou. Uma coluna a mais, nenhuma query nova.
-      .select("direcao, texto, membro_atipico_id, metadata")
+      .select("id, direcao, texto, membro_atipico_id, tipo, metadata")
       .eq("family_account_id", familyId)
       .order("created_at", { ascending: false })
       .limit(12),
@@ -558,11 +564,87 @@ async function montarContexto(
   // inútil para quem cria sozinha. O Legacy já lia isto; era a última lacuna
   // real de contexto do caminho novo.
   const tOnda3 = Date.now();
-  const [perfis, eventos] = await Promise.all([
+  const [perfis, eventos, identidadeAnterior] = await Promise.all([
     Promise.all(emFoco.map((m) => lerPerfilVivo(supabase, m.id))),
     lerEventos(supabase, familyId, emFoco.map((m) => m.id)),
+    emFoco.length === 1
+      ? supabase.from("ayla_messages")
+          .select("metadata, created_at")
+          .eq("family_account_id", familyId)
+          .eq("membro_atipico_id", emFoco[0].id)
+          .eq("direcao", "inbound")
+          .in("tipo", ["idade_reportada", "vinculo_reportado", "identidade_reportada"])
+          .order("created_at", { ascending: false })
+          .limit(10)
+      : Promise.resolve({ data: [], error: null }),
   ]);
   const msOnda3 = Date.now() - tOnda3;
+
+  if (identidadeAnterior.error) {
+    void logEvent({
+      kind: "identidade_reportada_leitura_falhou",
+      severity: "error",
+      persistir: true,
+      family_account_id: familyId,
+      message: identidadeAnterior.error.message,
+    });
+  }
+
+  // A data de nascimento continua intacta: a fala "4 anos" não revela dia e
+  // mês. Mas a correção nomeada da família tem precedência na conversa e na
+  // recuperação etária até que o cadastro seja corrigido. Uma mudança da data
+  // no cadastro invalida automaticamente a anotação anterior.
+  const idadesInformadas = new Map<string, number>();
+  const vinculosInformados = new Map<string, Vinculo>();
+  if (emFoco.length === 1) {
+    const membro = lista.find((m) => m.id === emFoco[0].id);
+    if (membro) {
+      const registros = (identidadeAnterior.data ?? []) as Array<{ metadata?: Record<string, unknown> }>;
+      const anterior = registros.map((r) => idadeRelatadaValida(r.metadata, membro.data_nascimento)).find(Boolean);
+      const vinculoAnterior = registros.map((r) => vinculoRelatadoValido(r.metadata)).find(Boolean);
+      const destaFala = idadeDitaSobreMembro(mensagem, membro.nome);
+      const desteVinculo = vinculoDitoSobreMembro(mensagem, membro.nome, lista.length === 1);
+      const idade = destaFala ?? anterior?.anos ?? null;
+      if (idade != null) idadesInformadas.set(membro.id, idade);
+      const vinculo = desteVinculo ?? vinculoAnterior?.tipo;
+      if (vinculo && vinculo !== "nao_informado") vinculosInformados.set(membro.id, vinculo);
+      // Também grava a RETIFICAÇÃO de uma correção antiga: se a pessoa agora
+      // confirma a idade derivada do cadastro, a anotação anterior não pode
+      // reaparecer no turno seguinte.
+      const idadeCorrigida = destaFala != null && destaFala !== anterior?.anos &&
+        (destaFala !== idadeAnos(membro.data_nascimento) || anterior != null);
+      if ((idadeCorrigida || desteVinculo) && inboundMessageRowId) {
+        const inboundAtual = ((falas ?? []) as Fala[]).find((f) => f.id === inboundMessageRowId);
+        const informadaEm = new Date().toISOString();
+        const registro = {
+          ...(inboundAtual?.metadata ?? {}),
+          ...(idadeCorrigida ? { idade_reportada: {
+            anos: destaFala,
+            nascimento_base: membro.data_nascimento,
+            informada_em: informadaEm,
+          } } : {}),
+          ...(desteVinculo ? { vinculo_reportado: { tipo: desteVinculo, informada_em: informadaEm } } : {}),
+        };
+        const tipoIdentidade = idadeCorrigida && desteVinculo ? "identidade_reportada"
+          : idadeCorrigida ? "idade_reportada" : "vinculo_reportado";
+        const { data: gravada, error } = await supabase.from("ayla_messages")
+          .update({ tipo: tipoIdentidade, membro_atipico_id: membro.id, metadata: registro })
+          .eq("id", inboundMessageRowId)
+          .eq("family_account_id", familyId)
+          .select("id");
+        if (error || !gravada?.length) {
+          void logEvent({
+            kind: "identidade_reportada_nao_persistiu",
+            severity: "error",
+            persistir: true,
+            family_account_id: familyId,
+            message: error?.message ?? "update sem linha",
+            payload: { membro_id: membro.id },
+          });
+        }
+      }
+    }
+  }
 
   const nomeResponsavelBruto =
     (perfilFamilia as { como_chamar?: string; nome_mae?: string } | null)?.como_chamar ||
@@ -591,11 +673,13 @@ async function montarContexto(
       const pv = perfis[i] ?? null;
       rotulosPorMembro.push(...rotulosConhecidos(pv));
       fatosDoTurno = Math.max(fatosDoTurno, fatosDisponiveis(pv));
-      const idade = idadeAnos(membroCompleto?.data_nascimento ?? null);
+      const idade = idadesInformadas.get(m.id) ?? idadeAnos(membroCompleto?.data_nascimento ?? null);
+      const vinculo = vinculosInformados.get(m.id);
       const p = pronomesPara(membroCompleto?.genero as Genero);
       const ident = [
         i === 0 && nomeResponsavel ? `Responsável: ${nomeResponsavel}` : "",
         `Criança: ${membroCompleto?.nome ?? "(sem nome)"}${idade != null ? `, ${idade} anos` : ""}`,
+        vinculo ? `Vínculo da pessoa que escreve com ${membroCompleto?.nome ?? "a criança"}: ${rotuloVinculo(vinculo)} (informado pela família; não presumir outro vínculo)` : "",
         p.generoDefinido ? `Como falar dela: ${p.sujeito}/${p.possessivo}` : "",
         interessesAtuais(pv).length ? `Interesses: ${interessesAtuais(pv).join(", ")}` : "",
       ]
@@ -607,12 +691,16 @@ async function montarContexto(
     const base = montarContextoBase({
       nomeResponsavel: i === 0 ? nomeResponsavel : null,
       membro: membroCompleto,
+      idadeInformada: idadesInformadas.get(m.id),
       perfilVivo: perfis[i] ?? null,
       // O assunto do turno decide QUAL domínio ganha profundidade. Já veio do
       // classificador que rodou acima — nenhuma consulta, nenhum modelo novo.
       skills,
     });
-    if (base.bloco) retratos.push(base.bloco);
+    const vinculo = vinculosInformados.get(m.id);
+    if (base.bloco) retratos.push(vinculo
+      ? `${base.bloco}\nVínculo da pessoa que escreve com ${membroCompleto?.nome ?? "a criança"}: ${rotuloVinculo(vinculo)} (informado pela família; não presumir outro vínculo)`
+      : base.bloco);
   });
 
   // ── A LACUNA QUE MUDA A CONDUTA — Gate B, 08/09/2026 ────────────────────
@@ -758,6 +846,12 @@ async function montarContexto(
     (f) => f.direcao === "outbound" && (f.texto ?? "").trim(),
   )?.texto;
   const continuidade = blocoDeContinuidade({ ultimaAyla: ultimaFalaDaAyla, mensagem });
+  const ultimaSaidaDoHistorico = ((falas ?? []) as Fala[]).find((f) => f.direcao === "outbound");
+  const respostaInicial = ultimaSaidaDoHistorico?.tipo === "primeiro_contato_pergunta"
+    ? `<resposta_primeiro_contato>
+A família respondeu à pergunta inicial que aceitou. Use esta resposta e o Perfil para oferecer uma primeira ajuda concreta agora, em uma situação reconhecível: momento certo, ação pequena e meio de comunicação que a pessoa já compreende. Exemplo de granularidade, não texto para copiar: na passagem da brincadeira à porta, antes de chamar, mostrar o próximo passo com objeto, foto, gesto ou palavras compreensíveis; se possível, combinar onde o brinquedo ficará. Não invente que isso funciona para esta pessoa sem conhecê-la. Se a resposta trouxe apenas a idade, sem situação, peça um exemplo em vez de inventar uma orientação. Não repita as boas-vindas nem transforme isto em triagem. Só faça outra pergunta se a resposta mudar de fato a orientação; no máximo uma.
+</resposta_primeiro_contato>`
+    : "";
 
   // ── O ESTADO DO TURNO ────────────────────────────────────────────────────
   // ⚠️ FATOS QUE O MODELO NÃO CONSEGUIA VER — 06/09/2026. A auditoria mostrou
@@ -783,7 +877,7 @@ async function montarContexto(
       .map((f) => ({ direcao: f.direcao, texto: f.texto })),
   });
 
-  const bloco = [...partes, continuidade, blocoDeEstado(estado)].filter(Boolean).join(SEP);
+  const bloco = [...partes, continuidade, respostaInicial, blocoDeEstado(estado)].filter(Boolean).join(SEP);
   // A decisão do turno viaja junto — o orquestrador precisa dela para gravar o
   // `metadata.lacuna` e para o rastro. Ela NÃO volta ao prompt.
   const decisaoDoTurno = decisaoLacuna;
@@ -817,15 +911,14 @@ async function montarContexto(
     miniInvestigacao,
     foco,
     diagnosticoRegistrado,
-    consultas: 3 + emFoco.length + 2,
+    consultas: 3 + emFoco.length + 2 + (emFoco.length === 1 ? 1 : 0),
     rotulos: [...new Set(rotulosPorMembro)],
     fatos: fatosDoTurno,
     nomeCrianca: emFoco.length === 1 ? (emFoco[0]?.nome ?? null) : null,
     // ⚠️ SÓ COM UMA CRIANÇA EM FOCO. Ver o comentário do campo no tipo.
-    idadeFoco:
-      emFoco.length === 1
-        ? idadeAnos(lista.find((x) => x.id === emFoco[0]?.id)?.data_nascimento ?? null)
-        : null,
+    idadeFoco: emFoco.length === 1
+      ? idadesInformadas.get(emFoco[0].id) ?? idadeAnos(lista.find((x) => x.id === emFoco[0]?.id)?.data_nascimento ?? null)
+      : null,
     jaHouveOrientacao,
     msOndas: { onda1: msOnda1, foco: msFoco, onda3: msOnda3 },
   };
@@ -919,6 +1012,8 @@ export async function responderExperimental(
     objetivoHistoria?: EscolhaObjetivoHistoria | null;
     /** Alvo já provado pela oferta que originou este clique. */
     membroPreferidoId?: string | null;
+    /** ID já persistido do inbound real; o simulador nunca passa este campo. */
+    inboundMessageRowId?: string | null;
     /**
      * ⚠️ SÓ O SIMULADOR PASSA ISTO — e existe porque `null` era uma resposta
      * mentirosa. Três causas completamente diferentes (modelo devolveu vazio ·
@@ -1027,6 +1122,7 @@ export async function responderExperimental(
         skillsDoTurno,
         catalogoDisponivel,
         params.membroPreferidoId,
+        params.inboundMessageRowId,
       ),
     );
     const [ctxTurno, core, bps, estadoTrial, evidencias, docTrial] = await Promise.all([
