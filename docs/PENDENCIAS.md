@@ -10960,6 +10960,14 @@ não cria outro motor de botões, memória, pesquisa ou proativas.
    sem piloto por família; uma melhora de cliques com piora de ajuda ou
    segurança reprova a mudança. Incluir custo, P50/P95 e pressão de mensagens.
 
+**FORMA DE APRESENTAR A PROPOSTA À KARINA:** para cada mudança relevante,
+mostrar a fala em português comum como **"a conversa vai mudar de: [fala
+atual] → para: [fala proposta]"**, com a resposta seguinte e o efeito no
+estado. Incluir exemplos de alimentação, outra skill, descoberta de capacidade
+não solicitada, dado já conhecido, lacuna de segurança, retorno positivo,
+"não ajudou" e "ainda não testei". Diferenciar exemplo ilustrativo de fala
+efetivamente observada; não inventar um "antes" de produção.
+
 **PORTÕES DA PROPOSTA (risco CRÍTICO):** P1–P8 do protocolo de funcionalidade
 em SPEC completa, corpus positivo/negativo por tema e dois irmãos, estados
 intermediários, matriz dado conhecido/desconhecido/conflitante, exemplos de
