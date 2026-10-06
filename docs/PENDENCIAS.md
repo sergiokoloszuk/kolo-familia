@@ -72,7 +72,7 @@ PEND-092 → 017 → 098 → 093 → 094 → 095 → 039 → 042 → 097 → 099
 substitui a prioridade atual de segurança nem a análise de produção.
 
 <!-- PENDENCIAS-INDEX:START -->
-Índice completo gerado de 181 fichas neste arquivo. A ficha é a fonte do estado; não edite as linhas abaixo à mão. Para atualizar: `node scripts/pendencias-index.mjs --write`.
+Índice completo gerado de 182 fichas neste arquivo. A ficha é a fonte do estado; não edite as linhas abaixo à mão. Para atualizar: `node scripts/pendencias-index.mjs --write`.
 
 | ID | Pendência | Prioridade | Estado da ficha |
 |---|---|---|---|
@@ -257,6 +257,7 @@ substitui a prioridade atual de segurança nem a análise de produção.
 | [PEND-227](#pend-227) | Rotina perde a proposta quando a família corrige em dois balões rápidos | P0 | EM PRODUÇÃO — recuperação concluída; uso natural dos cartões em monitoramento |
 | [PEND-229](#pend-229) | Qualidade, profundidade e concisão da conversa da Ayla no WhatsApp | P1 | EM PRODUÇÃO — prova conversacional e latência ponta a ponta pendentes |
 | [PEND-230](#pend-230) | Confirmações sociais reabrem orientação e alongam a conversa | P1 | PUBLICADA · PROVA NATURAL PENDENTE |
+| [PEND-231](#pend-231) | Condução adaptativa no WhatsApp: descobrir possibilidades, perguntar o mínimo e aprender com o retorno | P1 | PENDENTE — missão de desenho; nenhuma oferta nova ou cadência de avaliação implementada |
 <!-- PENDENCIAS-INDEX:END -->
 
 ---
@@ -10897,7 +10898,89 @@ e [SPEC](specs/qualidade-conversa-ayla-v12-SPEC.md).
 
 ---
 
-**Proximo ID livre: PEND-231. *(PEND-225, PEND-226 e PEND-228 estão reivindicadas no worktree `ayla-conversa-valor`; PEND-227 foi incorporada nesta frente; PEND-209 a PEND-211 já estão reivindicadas por outra frente; 024 e 025 reservadas por frentes ainda nao publicadas; PEND-202 reivindicada em commit e ainda sem ficha; 0076 e numero de MIGRACAO reservado — ver PEND-121.)***
+### PEND-231
+**Condução adaptativa no WhatsApp: descobrir possibilidades, perguntar o mínimo e aprender com o retorno**
+Bloco: **A · Condução / C · Memória / E · Feedback / G · Trial** · Prioridade: **P1**
+STATUS: **PENDENTE — missão de desenho; nenhuma oferta nova ou cadência de avaliação implementada** · Aberta em: 2026-10-06
+
+**PEDIDO DE PRODUTO (06/10).** A família não sabe todos os temas em que a Kolo
+pode ajudar. Os botões clicáveis do WhatsApp podem revelar uma próxima ajuda
+pertinente e, quando a pessoa a escolher, permitir uma pergunta curta sobre o
+dado que ainda falta. Os rótulos não devem ser sempre os mesmos: em alimentação,
+por exemplo, "Quero uma receita" pode fazer sentido; em outra situação, a
+oferta deve refletir outra capacidade. A oferta não substitui a primeira ajuda
+concreta, não vira catálogo nem obriga a família a clicar ou preencher perfil.
+
+**FRONTEIRA COM AS FICHAS EXISTENTES.** [PEND-213](#pend-213) é dona do
+transporte, clique, idempotência, três ramos atuais e da prova ainda faltante
+de que texto concorrente não se perde. [PEND-016](#pend-016) e
+[PEND-229](#pend-229) são donas da qualidade da fala. [PEND-018](#pend-018)
+é dona do retrato/proveniência; [PEND-023](#pend-023) do retorno que muda a
+próxima recomendação. [PEND-021](#pend-021), [PEND-074](#pend-074),
+[PEND-110](#pend-110) e [PEND-126](#pend-126) cobrem a jornada e a avaliação
+no Trial. Esta ficha coordena o **desenho ponta a ponta e o corpus por tema**;
+não cria outro motor de botões, memória, pesquisa ou proativas.
+
+**MISSÃO — INVESTIGAR → PROPOR, antes de implementar:**
+1. Revalidar no SHA servido o fluxo PEND-213, inclusive a mensagem textual na
+   mesma janela do clique, os três ramos, fallback, exibição no aparelho e
+   isolamento entre irmãos. Não ampliar a oferta enquanto uma fala puder ficar
+   sem resposta. Congelar baseline de ofertas, cliques, respostas úteis,
+   abandono, latência e feedback; não chamar clique de satisfação.
+2. Mapear as capacidades e limites de cada skill: que ajuda pode ser descoberta
+   pelo contexto, que rótulo de botão a descreve em português natural, qual
+   informação já está disponível, qual falta e qual pergunta **realmente muda**
+   a próxima ação. Testar falsos positivos: não propor receita para todo relato
+   alimentar nem transformar toda conversa em menu. Preservar texto/áudio livre.
+3. Desenhar a jornada completa: relato → primeira ajuda curta e suficiente →
+   oferta contextual opcional → escolha → pergunta mínima **só se necessária** →
+   resposta executável → registro conferido → retomada sem repetir pergunta →
+   avaliação suave e contextual → ajuste quando não ajudou. Especificar também
+   recusa, silêncio, clique tardio, falha de envio/escrita, troca de criança e
+   situação de segurança.
+4. Alimentação é caso sentinela de segurança, não template universal. Antes de
+   personalizar receita, conferir para a **criança certa** idade, alergias
+   relatadas, restrições, alimentos aceitos/rejeitados e atualidade/fonte do
+   dado. Desconhecido não significa "sem alergia"; conflito ou lacuna crítica
+   pede uma pergunta clara antes da sugestão. Resposta nova precisa ser salva,
+   ter a escrita conferida e ser relida no turno seguinte; não prometer que
+   atualizou o cadastro se só registrou contexto conversacional. Validar o
+   contrato de segurança com revisão humana pertinente antes de publicar.
+5. Projetar descoberta leve no Trial sem sete mensagens fixas: mostrar uma
+   capacidade relacionada ao desafio atual quando ela servir; não esperar a
+   família saber o nome da funcionalidade. Avaliar mais vezes **depois de
+   valor entregue**, com pergunta breve e opcional, sem pesquisa em cada turno,
+   sem competir com o fluxo de aprofundamento e sem insistir após silêncio.
+   Distinguir "ajudou", "em parte", "não ajudou" e "ainda não testei"; o
+   negativo muda o mecanismo seguinte, e o não testado não vira insatisfação.
+6. Definir métricas por etapa e denominador: ajuda entregue antes da escolha,
+   oferta exibida de fato versus aceita pelo provedor, escolha, resposta
+   concluída, tempo até primeira ajuda, retorno contextual, não testou,
+   satisfação e retorno no dia seguinte. Comparar antes/depois e por tema,
+   sem piloto por família; uma melhora de cliques com piora de ajuda ou
+   segurança reprova a mudança. Incluir custo, P50/P95 e pressão de mensagens.
+
+**PORTÕES DA PROPOSTA (risco CRÍTICO):** P1–P8 do protocolo de funcionalidade
+em SPEC completa, corpus positivo/negativo por tema e dois irmãos, estados
+intermediários, matriz dado conhecido/desconhecido/conflitante, exemplos de
+fala e botões, feedback e persistência, falhas/rollback, prova no WhatsApp
+interno autorizado e observação longitudinal após publicação global. Nenhum
+teste em conta de família real e nenhum disparo proativo sem autorização.
+
+**CRITÉRIO DE CONCLUSÃO DESTA FICHA:** proposta de condução completa e SPEC
+aprovadas pela pessoa responsável, com dono e prova exigida para cada portão,
+baseline atual e dependências acima reconciliadas. Isso conclui **o desenho**,
+não declara o recurso implementado ou validado em produção; a execução só
+começa em missão própria depois da aprovação.
+
+**PRÓXIMO ATAQUE:** PEND-213 — reconstruir e fechar a prova do turno
+texto+clique e dos três ramos no fluxo já ligado, por leitura e QA interno
+autorizado. Em paralelo, desenhar esta PEND-231; só depois ampliar rótulos,
+temas e frequência de avaliação. Não alterar a flag como parte deste registro.
+
+---
+
+**Proximo ID livre: PEND-232. *(PEND-225, PEND-226 e PEND-228 estão reivindicadas no worktree `ayla-conversa-valor`; PEND-227 foi incorporada nesta frente; PEND-209 a PEND-211 já estão reivindicadas por outra frente; 024 e 025 reservadas por frentes ainda nao publicadas; PEND-202 reivindicada em commit e ainda sem ficha; 0076 e numero de MIGRACAO reservado — ver PEND-121.)***
 
 > Conferir contra `origin/main`, não contra o seu branch. Dois branches podem
 > reivindicar o mesmo número — o conflito de merge nesta linha é o alarme.
