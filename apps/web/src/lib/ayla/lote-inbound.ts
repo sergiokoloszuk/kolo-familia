@@ -127,6 +127,8 @@ export type ControleTurno = {
   publicarNaoAntesDeMs: number;
   /** Inbounds deste próprio turno, excluídos da confirmação final. */
   idsClaimados?: string[];
+  /** Clique/lista segue independente de falas livres posteriores. */
+  interacaoIndependente?: boolean;
 };
 
 /**
@@ -141,6 +143,8 @@ export async function aguardarTurnoDaMae(
     textoAtual: string;
     respostaEstruturada?: boolean;
     mensagemCompleta?: boolean;
+    interacaoEstruturada?: boolean;
+    inboundMessageId?: string | null;
   },
 ): Promise<Lote | null> {
   // Marco tirado ANTES de dormir: a minha mensagem já está gravada, então
@@ -161,7 +165,37 @@ export async function aguardarTurnoDaMae(
   const controle: ControleTurno = {
     marcoSilencio: marco,
     publicarNaoAntesDeMs: inicioSilencio + janelaSilencioMs,
+    interacaoIndependente: Boolean(params.interacaoEstruturada),
   };
+
+  // Botões/listas são um turno lateral, não continuação textual. Os atalhos
+  // válidos saem antes desta função; este ramo trata uma interação que caiu no
+  // fluxo comum (acesso/segurança/oferta expirada) sem reivindicar mensagens
+  // livres da família. O mesmo claim por id impede reentrega duplicada.
+  if (params.interacaoEstruturada && !params.inboundMessageId) {
+    // Persistência anterior falhou: manter a degradação existente sem tomar o
+    // lote textual de outra execução. A falha já foi registrada no chamador.
+    return { texto: params.textoAtual, quantidade: 1, controle };
+  }
+  if (params.interacaoEstruturada && params.inboundMessageId) {
+    try {
+      const { data, error } = await supabase
+        .from("ayla_messages")
+        .update({ processada_em: new Date().toISOString() })
+        .eq("id", params.inboundMessageId)
+        .eq("family_account_id", params.familyId)
+        .eq("direcao", "inbound")
+        .is("processada_em", null)
+        .select("id");
+      if (error) throw error;
+      if (!data?.length) return null;
+      controle.idsClaimados = [params.inboundMessageId];
+      return { texto: params.textoAtual, quantidade: 1, controle };
+    } catch (e) {
+      console.warn("[ayla:turno] claim da interação falhou, seguindo sem agrupar:", e instanceof Error ? e.message : e);
+      return { texto: params.textoAtual, quantidade: 1, controle };
+    }
+  }
 
   if (janelaPreparacaoMs > 0) await dormir(janelaPreparacaoMs);
 
@@ -176,6 +210,7 @@ export async function aguardarTurnoDaMae(
       .eq("family_account_id", params.familyId)
       .eq("direcao", "inbound")
       .is("processada_em", null)
+      .is("metadata->interacao", null)
       .gt("created_at", marco)
       .limit(1);
     if ((novas?.length ?? 0) > 0) {
@@ -190,6 +225,7 @@ export async function aguardarTurnoDaMae(
       .eq("family_account_id", params.familyId)
       .eq("direcao", "inbound")
       .is("processada_em", null)
+      .is("metadata->interacao", null)
       .gte("created_at", desde)
       .select("id, texto, created_at");
 
@@ -233,9 +269,9 @@ export async function aguardarTurnoDaMae(
 
 /**
  * Último portão antes do provedor. Espera apenas o pedaço da janela de 10 s
- * que o preparo ainda não consumiu e verifica QUALQUER inbound mais novo — até
- * se outra execução já o claimou. Isso impede a resposta antiga de atravessar
- * a nova fala da família.
+ * que o preparo ainda não consumiu e verifica qualquer FALA LIVRE mais nova —
+ * até se outra execução já a claimou. Interações estruturadas têm turno
+ * próprio e não podem cancelar uma fala anterior que o atalho não responde.
  *
  * Falha de leitura não emudece a Ayla: depois de respeitar os 10 s, degrada para
  * o comportamento anterior e publica. O erro fica visível no log.
@@ -245,6 +281,7 @@ export async function confirmarTurnoAindaAtual(
   params: { familyId: string; controle?: ControleTurno | null },
 ): Promise<boolean> {
   if (!params.controle) return true;
+  if (params.controle.interacaoIndependente) return true;
   const restante = params.controle.publicarNaoAntesDeMs - Date.now();
   if (restante > 0) await dormir(restante);
 
@@ -254,6 +291,7 @@ export async function confirmarTurnoAindaAtual(
       .select("id")
       .eq("family_account_id", params.familyId)
       .eq("direcao", "inbound")
+      .is("metadata->interacao", null)
       .gt("created_at", params.controle.marcoSilencio)
       .limit(MAX_MENSAGENS_LOTE + 1);
     if (error) {

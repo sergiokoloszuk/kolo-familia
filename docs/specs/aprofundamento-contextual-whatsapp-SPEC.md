@@ -3,7 +3,13 @@
 Nível de risco: **CRÍTICA** — altera a conversa de IA no canal principal e
 processa contexto comportamental de criança.
 
-Estado: **ROLLBACK ATIVO — CORREÇÃO DO TURNO CONCORRENTE E RESPIRO VISUAL EM VALIDAÇÃO**
+Estado em 06/10/2026: **flag global ligada em produção; continuidade texto+clique
+reprovada em teste local e entrega ponta a ponta ainda sem prova suficiente**.
+O rollback descrito abaixo é o incidente de 24/09, não o estado atual. O
+health serviu `70d322dcf5e1c11020015747166ebfaee7ba6ee2` em `main`, com
+`ayla_aprofundamento_whatsapp=true`; isso prova alcance global da flag, não
+que cada botão foi exibido nem que cada fala recebeu resposta. A correção e
+os gates atuais estão em [ayla-conducao-adaptativa-whatsapp-SPEC.md](ayla-conducao-adaptativa-whatsapp-SPEC.md).
 
 ## 1. Problema e dono
 
