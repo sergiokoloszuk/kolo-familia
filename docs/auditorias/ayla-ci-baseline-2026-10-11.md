@@ -43,7 +43,14 @@ Provas locais de 11/10/2026:
 - `git -c core.whitespace=cr-at-eol diff --check` passou. O `diff --check`
   padrão sinaliza o CRLF preexistente de `PENDENCIAS.md` nas linhas alteradas.
 
-Ainda falta: commit, PR de rascunho, CI remota verde e reconciliação/merge
-autorizado. O PR G0 #145 permanece separado e vermelho no seu SHA atual. Não
-houve merge, deploy, alteração de Core/acervo, smoke no canal real nem teste
-com famílias.
+O commit `e665b9180aa56efa8b4b30d3cff92ef075e72049` foi enviado à branch;
+o [PR #146](https://github.com/sergiokoloszuk/kolo-familia/pull/146) foi
+aberto em rascunho. A [CI #976](https://github.com/sergiokoloszuk/kolo-familia/actions/runs/38167629822)
+passou em 11/10/2026 às 16h26 de São Paulo, incluindo testes e build. Este
+adendo documental exige sua própria CI após o push; não atribuir-lhe a prova
+do commit anterior.
+
+Ainda falta: revisão, reconciliação com os outros branches de pendências,
+merge autorizado e SHA servido conferido. O PR G0 #145 permanece separado e
+vermelho no seu SHA atual. Não houve merge, deploy, alteração de Core/acervo,
+smoke no canal real nem teste com famílias.
