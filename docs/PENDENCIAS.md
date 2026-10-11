@@ -11011,18 +11011,29 @@ STATUS: **ABERTA — achado fora do escopo da instrumentação G0** · Aberta em
 
 **Achado:** `apps/web/src/app/api/ayla/webhook/route.ts` imprime os primeiros
 600 caracteres do payload bruto e depois telefone e texto parseados. O áudio
-transcrito também é enviado ao orquestrador; a retenção e o acesso a esses logs
-não foram auditados nesta missão. O evento técnico novo de falha do STT não
-contém esses valores, mas não elimina o risco preexistente.
+transcrito também é enviado ao orquestrador. A revisão estática de 11/10/2026
+encontrou mais saídas no mesmo caminho: `orchestrator.ts` escreve telefone e
+chave normalizada nos ramos de falha de busca e número desconhecido, telefone
+no ramo de possível criança/não-titular e texto de marcos do Perfil no stdout.
+Na falha de busca, `logServerError` ainda recebe telefone, chave e os primeiros
+120 caracteres da mensagem para `eventos_app` (além do stdout). O health de
+11/10/2026 16:43:17.595 BRT informou produção no SHA `25e8891`, cujo código
+contém essas chamadas. Isto é prova do **caminho de código servido**, não de
+ocorrência, conteúdo, acesso ou retenção efetiva dos logs; nenhum log de
+família foi aberto. O evento técnico novo de falha do STT não contém esses
+valores, mas não elimina o risco preexistente.
 
-**Próximo ataque:** investigar acesso, retenção e ocorrências nos logs sem
-reproduzir conteúdo de famílias; propor redução/redação na origem e teste que
-impeça regressão. Não tratar o log novo como prova de privacidade enquanto o
-`console.log` antigo permanecer. Não fazer correção silenciosa nesta missão.
+**Próximo ataque:** investigar acesso e retenção de stdout e `eventos_app` sem
+reproduzir conteúdo de famílias; avaliar ocorrência por metadados, se houver
+método seguro; reduzir/redigir na origem todos os caminhos acima e testar os
+ramos de sucesso, falha, desconhecido e não-titular com dados fictícios. Não
+tratar o log novo como prova de privacidade enquanto esses caminhos persistirem.
+Correção funcional em escopo separado, nunca silenciosamente neste PR G0.
 
-**Critério de baixa:** logging do webhook sem payload, telefone, texto ou URL de
-mídia; testes de regressão e prova do comportamento no SHA servido, com
-retenção/acesso aos logs revisados. Nenhum dado de família real em teste.
+**Critério de baixa:** logging do webhook e dos ramos relacionados sem payload,
+telefone, texto ou URL de mídia em stdout/`eventos_app`; testes de regressão e
+prova do comportamento no SHA servido, com retenção/acesso aos dois destinos
+revisados. Nenhum dado de família real em teste.
 
 ---
 
