@@ -72,7 +72,7 @@ PEND-092 → 017 → 098 → 093 → 094 → 095 → 039 → 042 → 097 → 099
 substitui a prioridade atual de segurança nem a análise de produção.
 
 <!-- PENDENCIAS-INDEX:START -->
-Índice completo gerado de 182 fichas neste arquivo. A ficha é a fonte do estado; não edite as linhas abaixo à mão. Para atualizar: `node scripts/pendencias-index.mjs --write`.
+Índice completo gerado de 183 fichas neste arquivo. A ficha é a fonte do estado; não edite as linhas abaixo à mão. Para atualizar: `node scripts/pendencias-index.mjs --write`.
 
 | ID | Pendência | Prioridade | Estado da ficha |
 |---|---|---|---|
@@ -243,7 +243,7 @@ substitui a prioridade atual de segurança nem a análise de produção.
 | [PEND-208](#pend-208) | O repertorio criativo continua obvio — nenhum braco resolveu a brincadeira | P1 | ABERTA — medida, nao corrigida |
 | [PEND-212](#pend-212) | Assinaturas antigas podem renovar sem endereço fiscal completo no Customer Stripe | P1 | ABERTA — achado fora do escopo; fluxo novo protegido |
 | [PEND-213](#pend-213) | Aprofundamento contextual por botões no WhatsApp | P1 | PARCIAL — flag global ligada; continuidade e entrega ainda sem prova de conclusão |
-| [PEND-214](#pend-214) | provider.test.ts depende da mensagem de erro da rede ao remover a chave Anthropic | P3 | ABERTA — achado fora do escopo, NÃO corrigido |
+| [PEND-214](#pend-214) | provider.test.ts dependia da mensagem de erro da rede ao remover a chave Anthropic | P3 | PARCIAL — teste isolado localmente; CI e SHA servido pendentes |
 | [PEND-215](#pend-215) | Latência perceptível da Ayla no WhatsApp, inclusive em cliques estruturados | P1 | SEGUNDA CORREÇÃO PRONTA PARA PROVA REAL — aceite de produção pendente |
 | [PEND-216](#pend-216) | Ayla oferece história, recebe o tema e volta a investigar em vez de entregar | P0 | PARCIAL — código publicado; entrega real e destino não comprovados |
 | [PEND-217](#pend-217) | Reavaliar se Plano deve continuar existindo como artefato da Ayla | P1 | SUSPENSÃO IMPLEMENTADA LOCALMENTE — decisão de produto pendente |
@@ -258,6 +258,7 @@ substitui a prioridade atual de segurança nem a análise de produção.
 | [PEND-229](#pend-229) | Qualidade, profundidade e concisão da conversa da Ayla no WhatsApp | P1 | EM PRODUÇÃO — prova conversacional e latência ponta a ponta pendentes |
 | [PEND-230](#pend-230) | Confirmações sociais reabrem orientação e alongam a conversa | P1 | PUBLICADA · PROVA NATURAL PENDENTE |
 | [PEND-231](#pend-231) | Condução adaptativa no WhatsApp: descobrir possibilidades, perguntar o mínimo e aprender com o retorno | P1 | PENDENTE — missão de desenho; nenhuma oferta nova ou cadência de avaliação implementada |
+| [PEND-241](#pend-241) | Duas asserções antigas de contexto da Ayla deixaram a CI vermelha após o carimbo temporal | P3 | PARCIAL — testes corrigidos localmente; CI e SHA servido pendentes |
 <!-- PENDENCIAS-INDEX:END -->
 
 ---
@@ -10311,17 +10312,25 @@ PEND-210.
 ---
 
 ### PEND-214
-**`provider.test.ts` depende da mensagem de erro da rede ao remover a chave Anthropic**
+**`provider.test.ts` dependia da mensagem de erro da rede ao remover a chave Anthropic**
 Bloco: **H · Governança** · Prioridade: **P3**
-STATUS: **ABERTA — achado fora do escopo, NÃO corrigido** · Aberta em: 2026-09-24
+STATUS: **PARCIAL — teste isolado localmente; CI e SHA servido pendentes** · Aberta em: 2026-09-24
 
 A suíte completa falha no teste “chave ausente não quebra a montagem” porque
-espera que a rejeição contenha literalmente `anthropic`, mas o SDK atualmente
-chega à rede e devolve `fetch failed`. A mesma falha reproduz no checkout
-original, junto da PEND-205; portanto não é regressão da PEND-213.
+esperava que a rejeição contivesse literalmente `anthropic`, mas a chamada
+`fetch` chegava à rede e devolvia `fetch failed`. A mesma falha reproduz na
+base `25e8891`; portanto não é regressão da instrumentação G0.
 
-**CRITÉRIO DE CONCLUSÃO:** o teste isola a fronteira do SDK/rede e verifica o
-contrato do provider sem depender da mensagem variável de um erro externo.
+**11/10/2026 — correção isolada em `codex/ayla-ci-baseline`:** o teste usa um
+`fetch` falso que devolve 401, verifica cabeçalho sem chave e erro normalizado,
+e restaura `fetch` e a variável de ambiente mesmo se falhar. Passou localmente
+com os outros três arquivos relacionados (65/65) e na suíte completa da base
+(4.207 aprovados, 7 pulados). Não houve alteração no provider funcional.
+Faltam CI no PR desta branch e prova do SHA servido para baixa operacional.
+
+**CRITÉRIO DE CONCLUSÃO:** o teste isola a fronteira de `fetch`/rede, verifica
+o contrato do provider sem depender de erro externo variável, passa na CI e a
+versão servida é identificada por health. Não fazer chamada real ao provider.
 
 ---
 
@@ -10988,7 +10997,33 @@ temas e frequência de avaliação. Não alterar a flag como parte deste registr
 
 ---
 
-**Proximo ID livre: PEND-232. *(PEND-225, PEND-226 e PEND-228 estão reivindicadas no worktree `ayla-conversa-valor`; PEND-227 foi incorporada nesta frente; PEND-209 a PEND-211 já estão reivindicadas por outra frente; 024 e 025 reservadas por frentes ainda nao publicadas; PEND-202 reivindicada em commit e ainda sem ficha; 0076 e numero de MIGRACAO reservado — ver PEND-121.)***
+### PEND-241
+**Duas asserções antigas de contexto da Ayla deixaram a CI vermelha após o carimbo temporal**
+Bloco: **H · Governança / B · Ayla** · Prioridade: **P3**
+STATUS: **PARCIAL — testes corrigidos localmente; CI e SHA servido pendentes** · Aberta em: 2026-10-11
+
+**BASELINE (base `25e8891`, 11/10/2026):** `experimental-onboarding.test.ts`
+exigia a linha exata `sono: Acorda 3x`, mas a função acrescenta
+`[informação antiga: há ~2 meses]`. `memoria-pertinente.test.ts` exigia que a
+linha inteira tivesse no máximo 160 caracteres; o carimbo temporal elevou-a
+a 186, sem ampliar o conteúdo do domínio. Os dois testes foram escritos antes
+da marca temporal. A suíte do PR G0 #145 tinha essas duas falhas mais a
+PEND-214, também reproduzidas na base, impedindo a etapa de build na CI.
+
+**11/10/2026 — branch `codex/ayla-ci-baseline`:** as asserções agora medem o
+conteúdo antes do carimbo, cuja presença/formato é verificada separadamente em
+`perfil-temporal.test.ts`. Nenhuma função da Ayla foi alterada. Os quatro
+arquivos relacionados passaram (65/65); a suíte completa da base passou
+(4.207 aprovados, 7 pulados). Esta prova é local, não é aprovação de CI nem
+de produção.
+
+**CRITÉRIO DE CONCLUSÃO:** PR isolado revisto, CI completa verde, merge
+autorizado, SHA servido conferido em health e PEND-214 reconciliada. Se a CI
+apontar outra falha, investigar antes de ajustar esta ficha ou publicar G0.
+
+---
+
+**Proximo ID livre: PEND-242. *(PEND-232 a PEND-240 foram reivindicadas em outros worktrees/checkout local e precisam ser reconciliadas antes do merge; PEND-240 está no PR G0 #145. PEND-225, PEND-226 e PEND-228 estão reivindicadas no worktree `ayla-conversa-valor`; PEND-209 a PEND-211 já estão reivindicadas por outra frente; 024 e 025 reservadas por frentes ainda nao publicadas; PEND-202 reivindicada em commit e ainda sem ficha; 0076 e numero de MIGRACAO reservado — ver PEND-121.)***
 
 > Conferir contra `origin/main`, não contra o seu branch. Dois branches podem
 > reivindicar o mesmo número — o conflito de merge nesta linha é o alarme.
