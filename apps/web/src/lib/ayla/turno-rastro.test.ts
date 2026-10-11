@@ -8,6 +8,12 @@ import {
   registrarLLM,
   registrarDetalhe,
   registrarPrimeiraResposta,
+  iniciarTentativaBolha,
+  aceitarBolha,
+  falharBolha,
+  estadoDasBolhas,
+  executarNoTurno,
+  rastroDoTurnoAtual,
 } from "./turno-rastro";
 
 const ORQ = readFileSync(new URL("./orchestrator.ts", import.meta.url), "utf8");
@@ -178,6 +184,46 @@ describe("o que o rastro conta, e o que ele nunca guarda", () => {
     for (const k of Object.keys(r)) {
       expect(["texto", "mensagem", "fala", "conversa", "nome"], `campo suspeito: ${k}`).not.toContain(k);
     }
+  });
+
+  it("registra primeira bolha aceita e segunda falha sem inventar entrega", () => {
+    const r = novoRastroTurno({ chars: 10 });
+    const primeira = iniciarTentativaBolha(r, "resposta_comum", 1, 2);
+    aceitarBolha(primeira, "provider-1");
+    const segunda = iniciarTentativaBolha(r, "resposta_comum", 2, 2);
+    falharBolha(segunda);
+    expect(r.bolhas.map((b) => b.estado)).toEqual(["aceita", "falha"]);
+    expect(r.bolhas[0].provider_message_id).toBe("provider-1");
+    expect(r.bolhas[1].provider_message_id).toBeNull();
+    expect(r.bolhas[0].aceite_em).toBeGreaterThanOrEqual(r.bolhas[0].tentativa_em);
+    expect(r.bolhas[1].falha_em).toBeGreaterThanOrEqual(r.bolhas[1].tentativa_em);
+    expect(estadoDasBolhas(r.bolhas)).toBe("parcial");
+    expect(JSON.stringify(r.bolhas)).not.toContain("entregue");
+  });
+
+  it("não confunde uma falha total com aceite parcial", () => {
+    const r = novoRastroTurno({ chars: 10 });
+    expect(estadoDasBolhas(r.bolhas)).toBe("sem_tentativa");
+    const tentativa = iniciarTentativaBolha(r, "resposta_comum", 1, 1);
+    falharBolha(tentativa);
+    expect(estadoDasBolhas(r.bolhas)).toBe("falha");
+  });
+
+  it("não mistura turnos simultâneos ao medir envios internos", async () => {
+    const primeiro = novoRastroTurno({ chars: 1 });
+    const segundo = novoRastroTurno({ chars: 2 });
+    const ids = await Promise.all([
+      executarNoTurno(primeiro, async () => {
+        await Promise.resolve();
+        return rastroDoTurnoAtual()?.turno;
+      }),
+      executarNoTurno(segundo, async () => {
+        await Promise.resolve();
+        return rastroDoTurnoAtual()?.turno;
+      }),
+    ]);
+    expect(ids).toEqual([primeiro.turno, segundo.turno]);
+    expect(rastroDoTurnoAtual()).toBeNull();
   });
 
   it("é PERSISTIDO, não só logado", async () => {

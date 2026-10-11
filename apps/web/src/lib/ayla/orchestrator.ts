@@ -64,6 +64,12 @@ import {
   registrarDetalhe,
   registrarLLM,
   registrarPrimeiraResposta,
+  iniciarTentativaBolha,
+  aceitarBolha,
+  falharBolha,
+  estadoDasBolhas,
+  executarNoTurno,
+  rastroDoTurnoAtual,
   type RastroTurno,
 } from "./turno-rastro";
 import { pedeUmPlano } from "@/lib/ia/pedido-plano";
@@ -1943,8 +1949,11 @@ export async function processInbound(
   });
   rastro.tipo_mensagem =
     inboundRecebido.interacao?.tipo ?? inboundRecebido.midiaTipo ?? "texto";
+  if (inboundRecebido.midiaTipo === "audio" && inboundRecebido.transcricaoMs !== undefined) {
+    registrarDetalhe(rastro, "transcricao_audio", inboundRecebido.transcricaoMs);
+  }
   try {
-    const r = await processInboundInterno(supabase, inboundRecebido, rastro);
+    const r = await executarNoTurno(rastro, () => processInboundInterno(supabase, inboundRecebido, rastro));
     if (!rastro.saida) rastro.saida = r.tratada ? "tratada" : "nao_tratada";
     if (r.familia && !rastro.familia) rastro.familia = r.familia;
     if (r.resposta?.enviada && r.resposta.metrica) {
@@ -2698,6 +2707,7 @@ async function processInboundInterno(
     }
   }
   marco(rastro, "persistencia_inbound_fim");
+  rastro.inbound_message_id = inboundMessageRowId;
 
   // O clique é uma continuação explícita, não uma fala a reclassificar. Ele
   // entra depois da trava de idempotência e antes de comando/lote/decisor.
@@ -5270,7 +5280,9 @@ async function processInboundInterno(
     }),
   );
 
+  rastro.membro = membroContextoId;
   const resp = await enviarRespostaEmChunks(supabase, {
+    rastro,
     family_account_id: family.id,
     membro_atipico_id: membroContextoId,
     phone: ctx.whatsapp_e164,
@@ -5432,6 +5444,7 @@ async function ponteDePlano(
 async function enviarRespostaEmChunks(
   supabase: SupabaseClient,
   args: {
+    rastro: RastroTurno;
     family_account_id: string;
     membro_atipico_id: string | null;
     phone: string;
@@ -5448,6 +5461,7 @@ async function enviarRespostaEmChunks(
   // ficaram com `zaap_message_id` nulo, e por isso a Ayla pôde dizer "Chegou!"
   // sem ter como saber.
   const idsBolhas: Array<string | null> = [];
+  const tentativasDaResposta: RastroTurno["bolhas"] = [];
   let erro: string | null = null;
   /** Id do Plano que a ponte entregou neste turno — a âncora que fecha a oferta. */
   let planoEntregueId: string | null = null;
@@ -5581,11 +5595,21 @@ async function enviarRespostaEmChunks(
   }
   for (const [i, par] of bolhas.entries()) {
     const delay = ritmo[i];
+    const tentativa = iniciarTentativaBolha(args.rastro, "resposta_comum", i + 1, bolhas.length);
+    tentativasDaResposta.push(tentativa);
     try {
       const r = await enviarTexto({ phoneE164: args.phone, texto: par, delaySegundos: delay });
       providerResp = r.raw;
       idsBolhas.push(r.messageId);
+      aceitarBolha(tentativa, r.messageId);
+      if (i === 0 && tentativa.aceite_em !== null) {
+        registrarPrimeiraResposta(args.rastro, {
+          aceitoEmMs: tentativa.aceite_em,
+          provedorMs: tentativa.aceite_em - tentativa.tentativa_em,
+        });
+      }
     } catch (e) {
+      falharBolha(tentativa);
       erro = e instanceof Error ? e.message : "falha no envio";
       break;
     }
@@ -5621,6 +5645,8 @@ async function enviarRespostaEmChunks(
     });
     if (nudge) {
       try {
+        const tentativa = iniciarTentativaBolha(args.rastro, "ponte_plano", bolhas.length + 1, bolhas.length + 1);
+        tentativasDaResposta.push(tentativa);
         // O link do plano é a última bolha do turno, e antes custava 3 s fixos
         // POR CIMA das outras. Entra no mesmo orçamento: se a resposta já
         // consumiu o teto, ele sai sem espera.
@@ -5628,8 +5654,11 @@ async function enviarRespostaEmChunks(
         esperaGasta += delayNudge;
         const r = await enviarTexto({ phoneE164: args.phone, texto: nudge, delaySegundos: delayNudge });
         idsBolhas.push(r.messageId);
+        aceitarBolha(tentativa, r.messageId);
         textoCompleto = `${textoCompleto}\n\n${nudge}`;
       } catch (e) {
+        const tentativa = tentativasDaResposta[tentativasDaResposta.length - 1];
+        if (tentativa?.emissor === "ponte_plano" && tentativa.estado === "tentativa") falharBolha(tentativa);
         console.warn(
           "[ayla:ponte] falha ao enviar link no WhatsApp:",
           e instanceof Error ? e.message : e,
@@ -5638,17 +5667,38 @@ async function enviarRespostaEmChunks(
     }
   }
 
-  await supabase.from("ayla_send_log").insert({
+  const { error: envioLogErro } = await supabase.from("ayla_send_log").insert({
     family_account_id: args.family_account_id,
     template_key: args.tipo,
-    payload: { phone: args.phone, texto: textoCompleto },
+    payload: {
+      phone: args.phone,
+      texto: textoCompleto,
+      meta: {
+        turno: args.rastro.turno,
+        estado_bolhas: estadoDasBolhas(tentativasDaResposta),
+        bolhas: tentativasDaResposta,
+      },
+    },
     resposta_provider: providerResp as Record<string, unknown> | null,
     status: enviada ? "enviada" : "falha",
     erro,
   });
+  if (envioLogErro) {
+    await logEvent({
+      kind: "ayla_send_log_nao_persistiu",
+      severity: "error",
+      family_account_id: args.family_account_id,
+      payload: {
+        turno: args.rastro.turno,
+        tipo: args.tipo,
+        bolhas_aceitas: idsBolhas.length,
+        codigo: envioLogErro.code ?? "sem_codigo",
+      },
+    }).catch(() => {});
+  }
 
   if (enviada) {
-    await supabase.from("ayla_messages").insert({
+    const { error: outboundErro } = await supabase.from("ayla_messages").insert({
       family_account_id: args.family_account_id,
       membro_atipico_id: args.membro_atipico_id,
       direcao: "outbound",
@@ -5660,8 +5710,24 @@ async function enviarRespostaEmChunks(
       // seguinte NÃO gerar outro Plano (`ofertaDePlanoPendente` lê este campo).
       // Entra DENTRO de `registroDeEnvio` para conviver com o registro de
       // entrega, em vez de apagá-lo. Ver o comentário lá.
-      ...registroDeEnvio(idsBolhas, planoEntregueId ? { plano_id: planoEntregueId } : null),
+      ...registroDeEnvio(idsBolhas, {
+        turno: args.rastro.turno,
+        ...(planoEntregueId ? { plano_id: planoEntregueId } : {}),
+      }),
     });
+    if (outboundErro) {
+      await logEvent({
+        kind: "ayla_mensagem_outbound_nao_persistiu",
+        severity: "error",
+        family_account_id: args.family_account_id,
+        payload: {
+          turno: args.rastro.turno,
+          tipo: args.tipo,
+          bolhas_aceitas: idsBolhas.length,
+          codigo: outboundErro.code ?? "sem_codigo",
+        },
+      }).catch(() => {});
+    }
     await supabase
       .from("ayla_preferences")
       .update({ ultima_mensagem_em: new Date().toISOString() })
@@ -6903,6 +6969,9 @@ export async function enviarEPersistir(
   let providerResp: unknown = null;
   let erro: string | null = null;
   const idsBolhas: Array<string | null> = [];
+  const rastro = rastroDoTurnoAtual();
+  const iniciativaId = rastro ? null : `in_${globalThis.crypto.randomUUID()}`;
+  const tentativa = iniciarTentativaBolha(rastro, "envio_unico", 1, 1);
   const inicioProvedor = Date.now();
   let aceitoEmMs: number | null = null;
   let provedorMs = 0;
@@ -6913,8 +6982,16 @@ export async function enviarEPersistir(
     provedorMs = aceitoEmMs - inicioProvedor;
     providerResp = r.raw;
     idsBolhas.push(r.messageId);
+    aceitarBolha(tentativa, r.messageId);
+    if (rastro && tentativa.aceite_em !== null) {
+      registrarPrimeiraResposta(rastro, {
+        aceitoEmMs: tentativa.aceite_em,
+        provedorMs: tentativa.aceite_em - tentativa.tentativa_em,
+      });
+    }
     resultado = { enviada: true, messageId: r.messageId };
   } catch (e) {
+    falharBolha(tentativa);
     erro = e instanceof Error ? e.message : "Falha desconhecida";
     resultado = { enviada: false, motivo: erro };
   }
@@ -6929,16 +7006,30 @@ export async function enviarEPersistir(
     payload: {
       phone: params.phone,
       texto,
-      ...(params.meta ? { meta: params.meta } : {}),
+      meta: {
+        ...(params.meta ?? {}),
+        rastreio: { turno: rastro?.turno ?? null, iniciativa_id: iniciativaId, bolhas: [tentativa] },
+      },
     },
     resposta_provider: providerResp as Record<string, unknown> | null,
     status: resultado.enviada ? "enviada" : ("falha" as const),
     erro,
   };
-  if (reservaId) {
-    await supabase.from("ayla_send_log").update(auditoria).eq("id", reservaId);
-  } else {
-    await supabase.from("ayla_send_log").insert(auditoria);
+  const auditoriaResultado = reservaId
+    ? await supabase.from("ayla_send_log").update(auditoria).eq("id", reservaId)
+    : await supabase.from("ayla_send_log").insert(auditoria);
+  if (auditoriaResultado.error) {
+    await logEvent({
+      kind: "ayla_send_log_nao_persistiu",
+      severity: "error",
+      family_account_id: params.family_account_id,
+      payload: {
+        turno: rastro?.turno ?? null,
+        iniciativa_id: iniciativaId,
+        tipo: params.tipo,
+        codigo: auditoriaResultado.error.code ?? "sem_codigo",
+      },
+    }).catch(() => {});
   }
 
   // Mensagem (mesmo se falhou, pra deixar rastro)
@@ -6953,7 +7044,10 @@ export async function enviarEPersistir(
         tipo: params.tipo,
         texto,
         enviada_em: new Date().toISOString(),
-        ...registroDeEnvio(idsBolhas, params.metadataMensagem ?? null),
+        ...registroDeEnvio(idsBolhas, {
+          ...(params.metadataMensagem ?? {}),
+          rastreio: { turno: rastro?.turno ?? null, iniciativa_id: iniciativaId, bolhas: [tentativa] },
+        }),
       })
       .select("id")
       .single();
@@ -7016,6 +7110,8 @@ async function publicarOfertaObjetivoHistoria(
   ) {
     return { enviada: false, motivo: "turno_cedido_mensagem_mais_nova" };
   }
+  const rastro = rastroDoTurnoAtual();
+  const tentativa = iniciarTentativaBolha(rastro, "oferta_objetivo_historia", 1, 1);
   let provider: Awaited<ReturnType<typeof enviarListaBotoes>>;
   try {
     provider = await enviarListaBotoes({
@@ -7026,7 +7122,10 @@ async function publicarOfertaObjetivoHistoria(
         label: objetivo.label,
       })),
     });
+    aceitarBolha(tentativa, provider.messageId);
+    if (rastro && tentativa.aceite_em !== null) registrarPrimeiraResposta(rastro, { aceitoEmMs: tentativa.aceite_em });
   } catch (erroBotao) {
+    falharBolha(tentativa);
     await logEvent({
       kind: "historia_objetivo_fallback",
       severity: "warn",
@@ -7089,6 +7188,7 @@ async function publicarOfertaObjetivoHistoria(
         texto: params.mensagem,
         enviada_em: new Date().toISOString(),
         ...registroDeEnvio([provider.messageId], {
+          rastreio: { turno: rastro?.turno ?? null, bolhas: [tentativa] },
           historia_objetivo: {
             oferta_id: params.ofertaId,
             opcoes: OBJETIVOS_HISTORIA.map((o) => o.chave),
@@ -7159,6 +7259,8 @@ async function publicarOfertaAprofundamento(
   }
   const ofertaId = await criarOferta(supabase, params);
   const texto = textoDaOferta(params.opcoes);
+  const rastro = rastroDoTurnoAtual();
+  const tentativa = iniciarTentativaBolha(rastro, "oferta_aprofundamento", 1, 1);
   let provider: Awaited<ReturnType<typeof enviarListaBotoes>>;
   try {
     provider = await enviarListaBotoes({
@@ -7169,7 +7271,10 @@ async function publicarOfertaAprofundamento(
         label: labelDaEscolha(escolha),
       })),
     });
+    aceitarBolha(tentativa, provider.messageId);
+    if (rastro && tentativa.aceite_em !== null) registrarPrimeiraResposta(rastro, { aceitoEmMs: tentativa.aceite_em });
   } catch (erroBotao) {
+    falharBolha(tentativa);
     // O fallback existe somente quando o provedor NÃO aceitou os botões.
     // Uma falha posterior de banco/telemetria não pode duplicar a oferta que
     // a família já recebeu no WhatsApp.
@@ -7230,6 +7335,7 @@ async function publicarOfertaAprofundamento(
         texto,
         enviada_em: new Date().toISOString(),
         ...registroDeEnvio([provider.messageId], {
+          rastreio: { turno: rastro?.turno ?? null, bolhas: [tentativa] },
           aprofundamento: { oferta_id: ofertaId, opcoes: params.opcoes, canal: "botao" },
         }),
       })

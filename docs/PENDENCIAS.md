@@ -72,7 +72,7 @@ PEND-092 → 017 → 098 → 093 → 094 → 095 → 039 → 042 → 097 → 099
 substitui a prioridade atual de segurança nem a análise de produção.
 
 <!-- PENDENCIAS-INDEX:START -->
-Índice completo gerado de 182 fichas neste arquivo. A ficha é a fonte do estado; não edite as linhas abaixo à mão. Para atualizar: `node scripts/pendencias-index.mjs --write`.
+Índice completo gerado de 183 fichas neste arquivo. A ficha é a fonte do estado; não edite as linhas abaixo à mão. Para atualizar: `node scripts/pendencias-index.mjs --write`.
 
 | ID | Pendência | Prioridade | Estado da ficha |
 |---|---|---|---|
@@ -258,6 +258,7 @@ substitui a prioridade atual de segurança nem a análise de produção.
 | [PEND-229](#pend-229) | Qualidade, profundidade e concisão da conversa da Ayla no WhatsApp | P1 | EM PRODUÇÃO — prova conversacional e latência ponta a ponta pendentes |
 | [PEND-230](#pend-230) | Confirmações sociais reabrem orientação e alongam a conversa | P1 | PUBLICADA · PROVA NATURAL PENDENTE |
 | [PEND-231](#pend-231) | Condução adaptativa no WhatsApp: descobrir possibilidades, perguntar o mínimo e aprender com o retorno | P1 | PENDENTE — missão de desenho; nenhuma oferta nova ou cadência de avaliação implementada |
+| [PEND-240](#pend-240) | Webhook da Ayla escreve payload e texto de famílias no stdout | P1 | ABERTA — achado fora do escopo da instrumentação G0 |
 <!-- PENDENCIAS-INDEX:END -->
 
 ---
@@ -847,6 +848,15 @@ Aberta em: 2026-08-11 · Origem: prova pós-rollout que não pôde ser feita
 - **⚠️ NÃO IMPLEMENTAR AINDA.** Primeiro descobrir por que a instrumentação que
   já existe não grava — acrescentar uma segunda instrumentação por cima de uma
   que falha em silêncio seria repetir o erro que a [PEND-033] documentou.
+- **Revisão G0 em 11/10/2026 (sem baixa):** o ZERO histórico acima não descreve
+  mais a janela 03–09/10: a leitura semanal encontrou 11 chamadas
+  `conversa_web` e 11 pares aparentes de mensagens. A causa antiga foi a RLS
+  da sessão da família; o SHA atual já usa service role apenas no billing.
+  Igualdade de contagens não prova qual `user` gerou qual `assistant` nem que
+  o `assistant` foi salvo após o stream. A instrumentação de correlação está
+  preparada neste worktree; commit/CI são portões separados e não há SHA
+  servido dela.
+  O Plano continua fora deste recorte e o critério de baixa segue aberto.
 - **Critério de baixa:** uma conversa web real e uma geração de Plano real
   aparecendo em `api_calls` com provider, modelo e duração, conferidas contra o
   horário do turno.
@@ -956,6 +966,12 @@ Aberta em: 2026-08-11 · Origem: teste real (Karina/Manu, 11:25–11:28)
   tempo até começar a responder · tempo total · chamadas ao roteador · chamadas
   ao modelo · queries · geração do Plano · geração do PDF · envio ao WhatsApp ·
   **número de balões**.
+- **Preparação local G0, 11/10/2026 — sem baixa:** worktree isolado acrescenta
+  tentativa/aceite/falha por bolha, inclusive primeira aceita seguida de
+  falha, com `turno` nos envios reativos e ID de iniciativa nos proativos.
+  Testes sintéticos atravessaram os emissores comum, único e de botões;
+  ainda faltam CI, SHA servido e série prospectiva por canal. Aceite da Z-API
+  não é entrega no aparelho nem satisfação da família.
 - **E separar as três latências**, que hoje se confundem numa só queixa:
   a da conversa · a da geração do Plano · a do PDF e do envio.
 - **⚠️ O NÚMERO QUE CIRCULA É DE BANCADA, E É DO PLANO — não da conversa.** Os
@@ -10988,7 +11004,29 @@ temas e frequência de avaliação. Não alterar a flag como parte deste registr
 
 ---
 
-**Proximo ID livre: PEND-232. *(PEND-225, PEND-226 e PEND-228 estão reivindicadas no worktree `ayla-conversa-valor`; PEND-227 foi incorporada nesta frente; PEND-209 a PEND-211 já estão reivindicadas por outra frente; 024 e 025 reservadas por frentes ainda nao publicadas; PEND-202 reivindicada em commit e ainda sem ficha; 0076 e numero de MIGRACAO reservado — ver PEND-121.)***
+### PEND-240
+**Webhook da Ayla escreve payload e texto de famílias no stdout**
+Bloco: **F · Segurança / Observabilidade** · Prioridade: **P1**
+STATUS: **ABERTA — achado fora do escopo da instrumentação G0** · Aberta em: 2026-10-11
+
+**Achado:** `apps/web/src/app/api/ayla/webhook/route.ts` imprime os primeiros
+600 caracteres do payload bruto e depois telefone e texto parseados. O áudio
+transcrito também é enviado ao orquestrador; a retenção e o acesso a esses logs
+não foram auditados nesta missão. O evento técnico novo de falha do STT não
+contém esses valores, mas não elimina o risco preexistente.
+
+**Próximo ataque:** investigar acesso, retenção e ocorrências nos logs sem
+reproduzir conteúdo de famílias; propor redução/redação na origem e teste que
+impeça regressão. Não tratar o log novo como prova de privacidade enquanto o
+`console.log` antigo permanecer. Não fazer correção silenciosa nesta missão.
+
+**Critério de baixa:** logging do webhook sem payload, telefone, texto ou URL de
+mídia; testes de regressão e prova do comportamento no SHA servido, com
+retenção/acesso aos logs revisados. Nenhum dado de família real em teste.
+
+---
+
+**Proximo ID livre: PEND-241. *(PEND-240 é provisória neste worktree; PEND-232 a PEND-239 foram reivindicadas no checkout principal local e devem ser reconciliadas antes do merge. PEND-225, PEND-226 e PEND-228 estão reivindicadas no worktree `ayla-conversa-valor`; PEND-227 foi incorporada nesta frente; PEND-209 a PEND-211 já estão reivindicadas por outra frente; 024 e 025 reservadas por frentes ainda nao publicadas; PEND-202 reivindicada em commit e ainda sem ficha; 0076 e numero de MIGRACAO reservado — ver PEND-121.)***
 
 > Conferir contra `origin/main`, não contra o seu branch. Dois branches podem
 > reivindicar o mesmo número — o conflito de merge nesta linha é o alarme.

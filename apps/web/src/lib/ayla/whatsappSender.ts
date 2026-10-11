@@ -212,6 +212,8 @@ export type InboundWhatsApp = {
   recebidaEm: Date;
   midiaUrl?: string;
   midiaTipo?: string;
+  /** Tempo técnico até o STT devolver texto; não contém mídia nem transcrição. */
+  transcricaoMs?: number;
   /** Id da mensagem da Z-API — trava de idempotência contra reenvio. */
   messageId?: string;
   /** Escolha estruturada; nunca é inferida do texto visível quando há payload. */

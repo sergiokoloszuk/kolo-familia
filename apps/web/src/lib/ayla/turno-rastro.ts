@@ -1,4 +1,5 @@
 import { logEvent } from "@/lib/log";
+import { AsyncLocalStorage } from "node:async_hooks";
 
 /**
  * O ORÇAMENTO TEMPORAL DO TURNO — 08/09/2026.
@@ -36,11 +37,23 @@ export type ChamadaLLM = {
   desfecho: string;
 };
 
+export type TentativaBolha = {
+  emissor: string;
+  indice: number;
+  total: number;
+  tentativa_em: number;
+  estado: "tentativa" | "aceita" | "falha";
+  aceite_em: number | null;
+  falha_em: number | null;
+  provider_message_id: string | null;
+};
+
 export type RastroTurno = {
   turno: string;
   sha: string | null;
   familia: string | null;
   membro: string | null;
+  inbound_message_id: string | null;
   tipo_mensagem: string | null;
   chars_entrada: number;
   /** Da hora que a Z-API carimbou até o `after()` começar de fato. */
@@ -57,6 +70,8 @@ export type RastroTurno = {
   /** Tempos internos que explicam uma etapa, sem serem somados duas vezes. */
   detalhes: Record<string, number>;
   chamadas: ChamadaLLM[];
+  /** Tentativas individuais; aceite do provedor não é entrega no aparelho. */
+  bolhas: TentativaBolha[];
   /** Consultas ao banco contadas por nome lógico, para achar repetição. */
   queries: Record<string, number>;
   /** Marcos absolutos (epoch ms), para reconstruir a linha do tempo. */
@@ -64,6 +79,16 @@ export type RastroTurno = {
 };
 
 const agoraMs = () => Date.now();
+const contextoDoTurno = new AsyncLocalStorage<RastroTurno>();
+
+/** Compartilha apenas o ID/medição com emissores internos deste mesmo turno. */
+export function executarNoTurno<T>(r: RastroTurno, fn: () => Promise<T>): Promise<T> {
+  return contextoDoTurno.run(r, fn);
+}
+
+export function rastroDoTurnoAtual(): RastroTurno | null {
+  return contextoDoTurno.getStore() ?? null;
+}
 
 export function novoRastroTurno(params: {
   chars: number;
@@ -76,6 +101,7 @@ export function novoRastroTurno(params: {
     sha: process.env.VERCEL_GIT_COMMIT_SHA ?? null,
     familia: null,
     membro: null,
+    inbound_message_id: null,
     tipo_mensagem: null,
     chars_entrada: params.chars,
     // ⚠️ ESTE NÚMERO INCLUI O QUE NÃO É NOSSO: a viagem da Z-API até o webhook e
@@ -89,12 +115,51 @@ export function novoRastroTurno(params: {
     ms: {},
     detalhes: {},
     chamadas: [],
+    bolhas: [],
     queries: {},
     marcos: {
       inicio: t0,
       ...(Number.isFinite(carimbo) ? { inbound_recebido: carimbo } : {}),
     },
   };
+}
+
+export function iniciarTentativaBolha(
+  r: RastroTurno | null,
+  emissor: string,
+  indice: number,
+  total: number,
+): TentativaBolha {
+  const tentativa: TentativaBolha = {
+    emissor,
+    indice,
+    total,
+    tentativa_em: agoraMs(),
+    estado: "tentativa",
+    aceite_em: null,
+    falha_em: null,
+    provider_message_id: null,
+  };
+  r?.bolhas.push(tentativa);
+  return tentativa;
+}
+
+export function aceitarBolha(tentativa: TentativaBolha, providerMessageId: string | null): void {
+  tentativa.estado = "aceita";
+  tentativa.aceite_em = agoraMs();
+  tentativa.provider_message_id = providerMessageId;
+}
+
+export function falharBolha(tentativa: TentativaBolha): void {
+  tentativa.estado = "falha";
+  tentativa.falha_em = agoraMs();
+}
+
+export function estadoDasBolhas(bolhas: TentativaBolha[]): "sem_tentativa" | "aceita" | "parcial" | "falha" {
+  if (bolhas.length === 0) return "sem_tentativa";
+  const aceitas = bolhas.filter((bolha) => bolha.estado === "aceita").length;
+  if (aceitas === bolhas.length) return "aceita";
+  return aceitas > 0 ? "parcial" : "falha";
 }
 
 /** Carimba um marco absoluto — a linha do tempo, não a duração. */

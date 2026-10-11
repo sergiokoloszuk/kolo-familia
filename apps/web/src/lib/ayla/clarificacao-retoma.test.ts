@@ -28,7 +28,8 @@ describe("a resposta da clarificação retoma o pedido", () => {
     // `meta` já existia e vai pro ayla_send_log (auditoria). Estado que a
     // próxima mensagem precisa ler tem que estar em `ayla_messages.metadata`.
     expect(ORCH).toMatch(/metadataMensagem\?: Record<string, unknown>;/);
-    expect(ORCH).toMatch(/registroDeEnvio\(idsBolhas, params\.metadataMensagem \?\? null\)/);
+    expect(ORCH).toMatch(/registroDeEnvio\(idsBolhas, \{/);
+    expect(ORCH).toMatch(/\.\.\.\(params\.metadataMensagem \?\? \{\}\)/);
 
     // ⚠️ E TEM QUE CONVIVER COM O REGISTRO DE ENTREGA — PEND-182, 08/09/2026.
     //
