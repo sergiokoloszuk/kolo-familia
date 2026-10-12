@@ -72,7 +72,7 @@ PEND-092 → 017 → 098 → 093 → 094 → 095 → 039 → 042 → 097 → 099
 substitui a prioridade atual de segurança nem a análise de produção.
 
 <!-- PENDENCIAS-INDEX:START -->
-Índice completo gerado de 183 fichas neste arquivo. A ficha é a fonte do estado; não edite as linhas abaixo à mão. Para atualizar: `node scripts/pendencias-index.mjs --write`.
+Índice completo gerado de 184 fichas neste arquivo. A ficha é a fonte do estado; não edite as linhas abaixo à mão. Para atualizar: `node scripts/pendencias-index.mjs --write`.
 
 | ID | Pendência | Prioridade | Estado da ficha |
 |---|---|---|---|
@@ -259,6 +259,7 @@ substitui a prioridade atual de segurança nem a análise de produção.
 | [PEND-230](#pend-230) | Confirmações sociais reabrem orientação e alongam a conversa | P1 | PUBLICADA · PROVA NATURAL PENDENTE |
 | [PEND-231](#pend-231) | Condução adaptativa no WhatsApp: descobrir possibilidades, perguntar o mínimo e aprender com o retorno | P1 | PENDENTE — missão de desenho; nenhuma oferta nova ou cadência de avaliação implementada |
 | [PEND-240](#pend-240) | Webhook da Ayla escreve payload e texto de famílias no stdout | P1 | ABERTA — achado fora do escopo da instrumentação G0 |
+| [PEND-241](#pend-241) | Testes antigos de contexto e provider deixaram a CI do G0 vermelha | P3 | PARCIAL — testes e CI da PR 145 verdes; merge e SHA servido pendentes |
 <!-- PENDENCIAS-INDEX:END -->
 
 ---
@@ -11037,7 +11038,20 @@ revisados. Nenhum dado de família real em teste.
 
 ---
 
-**Proximo ID livre: PEND-241. *(PEND-240 é provisória neste worktree; PEND-232 a PEND-239 foram reivindicadas no checkout principal local e devem ser reconciliadas antes do merge. PEND-225, PEND-226 e PEND-228 estão reivindicadas no worktree `ayla-conversa-valor`; PEND-227 foi incorporada nesta frente; PEND-209 a PEND-211 já estão reivindicadas por outra frente; 024 e 025 reservadas por frentes ainda nao publicadas; PEND-202 reivindicada em commit e ainda sem ficha; 0076 e numero de MIGRACAO reservado — ver PEND-121.)***
+### PEND-241
+**Testes antigos de contexto e provider deixaram a CI do G0 vermelha**
+Bloco: **H · Governança / B · Ayla** · Prioridade: **P3**
+STATUS: **PARCIAL — testes e CI da PR 145 verdes; merge e SHA servido pendentes** · Aberta em: 2026-10-11
+
+**Baseline:** na base `25e8891`, `experimental-onboarding.test.ts` exigia `sono: Acorda 3x` sem o carimbo temporal já adicionado pela função; `memoria-pertinente.test.ts` incluía esse carimbo no teto de comprimento do conteúdo. O teste de provider dependia de uma resposta de rede em vez de simular o erro HTTP. As três falhas apareceram na CI anterior da PR #145 e foram reproduzidas no checkout limpo, sem atribuí-las à instrumentação.
+
+**Correção em 12/10/2026:** só três testes mudaram no commit `1d4dfd1fb833e863b5c159368d56a18a2b284015` da [PR #145](https://github.com/sergiokoloszuk/kolo-familia/pull/145). As duas asserções medem o conteúdo antes do carimbo; o teste de provider simula resposta 401 e restaura o ambiente. A bateria dirigida passou **112/112** em nove arquivos, a suíte completa **4224 passaram/7 ignorados**, e o typecheck passou. O [run de CI #38256790401](https://github.com/sergiokoloszuk/kolo-familia/actions/runs/38256790401) concluiu com sucesso: índice, instalação, typegen, typecheck, testes e build. O build local deste checkout sem variáveis Supabase não concluiu o pré-render; a CI configurada é a prova do build nesse commit. A [PR #146](https://github.com/sergiokoloszuk/kolo-familia/pull/146) permanece em rascunho com as mesmas correções de testes e uma ficha anterior desta PEND; reconciliar a documentação sem duplicar ou apagar PEND-240 antes de qualquer merge.
+
+**Critério de baixa:** revisão do pacote, integração autorizada, SHA servido conferido e PEND-214 reconciliada. CI verde isolada não comprova publicação da instrumentação ou qualidade da conversa. Não baixar por este commit.
+
+---
+
+**Proximo ID livre: PEND-242. *(PEND-232 a PEND-239 foram reivindicadas no checkout principal local e devem ser reconciliadas antes do merge; PEND-240 e PEND-241 estão neste PR. PEND-225, PEND-226 e PEND-228 estão reivindicadas no worktree `ayla-conversa-valor`; PEND-227 foi incorporada nesta frente; PEND-209 a PEND-211 já estão reivindicadas por outra frente; 024 e 025 reservadas por frentes ainda nao publicadas; PEND-202 reivindicada em commit e ainda sem ficha; 0076 e numero de MIGRACAO reservado — ver PEND-121.)***
 
 > Conferir contra `origin/main`, não contra o seu branch. Dois branches podem
 > reivindicar o mesmo número — o conflito de merge nesta linha é o alarme.
