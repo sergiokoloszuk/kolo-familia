@@ -3,6 +3,7 @@ import { createServiceRoleClient } from "@/lib/supabase/server";
 import { enviarTexto, parseZapiWebhook } from "@/lib/ayla/whatsappSender";
 import { processInbound, idiomaPorTelefone } from "@/lib/ayla/orchestrator";
 import { transcreverAudio } from "@/lib/ayla/transcribe";
+import { logEvent } from "@/lib/log";
 
 // A resposta da Ayla passa por IA (Sonnet) e, num pedido de plano, ainda
 // dispara a geração completa do plano (chamada única de até 12k tokens, ~40–90s)
@@ -84,6 +85,7 @@ export async function POST(request: NextRequest) {
         inbound.midiaUrl &&
         inbound.midiaTipo === "audio"
       ) {
+        const transcricaoIniciadaEm = Date.now();
         // Dica de idioma pro Whisper pela língua da família (pt/es/en) — assim
         // áudio em espanhol transcreve em espanhol sem arriscar o português.
         const idiomaFamilia = await idiomaPorTelefone(supabase, inbound.phoneE164);
@@ -96,22 +98,34 @@ export async function POST(request: NextRequest) {
           },
           idiomaFamilia,
         );
+        const transcricaoMs = Date.now() - transcricaoIniciadaEm;
         if (transcrito) {
           console.log(
             `[ayla webhook] áudio transcrito (${transcrito.length} chars)`,
           );
-          inboundFinal = { ...inbound, texto: transcrito };
+          inboundFinal = { ...inbound, texto: transcrito, transcricaoMs };
         } else {
           console.warn("[ayla webhook] transcrição falhou — enviando fallback");
+          let fallbackAceito = false;
           try {
             await enviarTexto({
               phoneE164: inbound.phoneE164,
               texto:
                 "Não consegui ouvir o áudio agora 🌿 Pode mandar de novo, ou escrever em texto?",
             });
+            fallbackAceito = true;
           } catch {
             /* fallback é best-effort */
           }
+          await logEvent({
+            kind: "ayla_audio_transcricao_falhou",
+            severity: "warn",
+            payload: {
+              inbound_message_id: inbound.messageId ?? null,
+              transcricao_ms: transcricaoMs,
+              fallback_aceito_provedor: fallbackAceito,
+            },
+          }).catch(() => {});
           return;
         }
       }

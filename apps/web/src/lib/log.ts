@@ -58,7 +58,7 @@ export async function logEvent(evt: LogEvent): Promise<void> {
 
   try {
     const supabase = createServiceRoleClient();
-    await supabase.from("eventos_app").insert({
+    const { error } = await supabase.from("eventos_app").insert({
       kind: evt.kind,
       severity: sev,
       family_account_id: evt.family_account_id ?? null,
@@ -66,6 +66,7 @@ export async function logEvent(evt: LogEvent): Promise<void> {
       message: evt.message ?? null,
       payload: evt.payload ?? {},
     });
+    if (error) throw new Error(error.code ?? "eventos_app_insert_failed");
   } catch (e) {
     // Persistência best-effort: nunca falhar o request por causa do log
     console.error(

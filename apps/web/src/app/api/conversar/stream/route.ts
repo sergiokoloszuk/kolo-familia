@@ -51,7 +51,7 @@ export async function POST(req: NextRequest) {
     // Responde a última mensagem do usuário.
     const { data: msgs } = await supabase
       .from("mensagens_skill")
-      .select("papel, conteudo, created_at")
+      .select("id, papel, conteudo, created_at")
       .eq("conversa_id", conversaId)
       .order("created_at", { ascending: true });
     const all = msgs ?? [];
@@ -60,6 +60,7 @@ export async function POST(req: NextRequest) {
       return new Response("Nada a responder", { status: 409 });
     }
     const userInput = ultima.conteudo as string;
+    const userMessageId = ultima.id as string;
 
     const { system, messages, roteadas, intencao, tema, ctx } = await prepararRespostaStream({
       supabase,
@@ -106,6 +107,7 @@ export async function POST(req: NextRequest) {
         // chamada única (`gerarConversacional`) não muda nada do que a mãe vê,
         // e é o que torna esta rota portável entre providers.
         try {
+          const geracaoIniciadaEm = Date.now();
           const r = await gerarConversacional({
             provider,
             model,
@@ -118,6 +120,7 @@ export async function POST(req: NextRequest) {
             maxTokens: 2048,
             cacheSystem: true,
           });
+          const textoProntoEm = Date.now();
           const bruto = r.texto.trim();
 
           // SÓ A REDE DE FRONTEIRAS. Os outros validadores de `engine.ts`
@@ -152,13 +155,15 @@ export async function POST(req: NextRequest) {
             });
           }
 
+          let enfileiradaEm: number | null = null;
           try {
             controller.enqueue(encoder.encode(texto));
+            enfileiradaEm = Date.now();
           } catch {
             // controller já fechado — ignora
           }
 
-          await supabase.from("mensagens_skill").insert({
+          const { data: assistenteGravado, error: assistenteErro } = await supabase.from("mensagens_skill").insert({
             conversa_id: conversaId,
             family_account_id: family.id,
             papel: "assistant",
@@ -180,10 +185,23 @@ export async function POST(req: NextRequest) {
               // escreveu o quê — e a avaliação da troca fica sem chão.
               provider: r.provider,
               model: r.model,
+              source_user_message_id: userMessageId,
             },
             tokens_input: r.tokensIn,
             tokens_output: r.tokensOut,
-          });
+          }).select("id").single();
+          if (assistenteErro) {
+            await logEvent({
+              kind: "conversa_web_assistente_nao_persistiu",
+              severity: "error",
+              family_account_id: family.id,
+              payload: {
+                conversa_id: conversaId,
+                user_message_id: userMessageId,
+                codigo: assistenteErro.code ?? "sem_codigo",
+              },
+            }).catch(() => {});
+          }
 
           // BILLING — esta rota é a conversa da web. Provider e modelo saem do
           // RETORNO da chamada, nunca de uma constante local: é o único jeito
@@ -208,6 +226,12 @@ export async function POST(req: NextRequest) {
             output_tokens: r.tokensOut,
             meta: {
               conversa_id: conversaId,
+              user_message_id: userMessageId,
+              assistant_message_id: assistenteGravado?.id ?? null,
+              assistant_persistida: !assistenteErro && Boolean(assistenteGravado?.id),
+              geracao_iniciada_em: geracaoIniciadaEm,
+              texto_pronto_em: textoProntoEm,
+              enfileirada_em: enfileiradaEm,
               membro_atipico_id: (conversa.membro_atipico_id as string | null) ?? null,
               // PEND-041: canal e ORIGEM são coisas diferentes. "web" diz por
               // onde entrou; "conversa" diz o que era. Sem o segundo, uma

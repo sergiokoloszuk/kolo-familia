@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { inboundDe, montarMundo, type Mundo } from "./__harness/cenario";
 import { clienteFalso, type Registro } from "./__harness/modelo";
 
@@ -25,6 +25,9 @@ import { clienteFalso, type Registro } from "./__harness/modelo";
 
 // ── OS DUPLOS ────────────────────────────────────────────────────────────
 const registros: Registro[] = [];
+const eventos = vi.hoisted(() => [] as Array<Record<string, unknown>>);
+const envio = { chamadas: 0, falharNaChamada: 0 };
+const oferta = { chamadas: 0, falhar: false };
 const mundoRef: { atual: Mundo | null; alvo: string | null } = { atual: null, alvo: null };
 const roteiro: {
   fala: string;
@@ -32,15 +35,25 @@ const roteiro: {
   acaoRotina?: "montar" | "perguntar" | "responder" | "sair";
 } = { fala: "[resposta da Ayla]" };
 
-vi.mock("@/lib/log", () => ({ logEvent: async () => {}, logServerError: async () => {} }));
+vi.mock("@/lib/log", () => ({
+  logEvent: async (evento: Record<string, unknown>) => { eventos.push(evento); },
+  logServerError: async () => {},
+}));
 
 vi.mock("./whatsappSender", () => ({
   enviarTexto: async (p: { phoneE164: string; texto: string }) => {
+    envio.chamadas += 1;
+    if (envio.chamadas === envio.falharNaChamada) throw new Error("falha sintética do provedor");
     mundoRef.atual?.enviadas.push({ para: p.phoneE164, texto: p.texto });
     return { ok: true, messageId: `zaap-out-${mundoRef.atual?.enviadas.length}` };
   },
   enviarImagem: async () => ({ ok: true, messageId: "img" }),
   enviarDocumento: async () => ({ ok: true, messageId: "doc" }),
+  enviarListaBotoes: async () => {
+    oferta.chamadas += 1;
+    if (oferta.falhar) throw new Error("falha sintética dos botões");
+    return { messageId: `zaap-botoes-${oferta.chamadas}`, raw: {} };
+  },
 }));
 
 vi.mock("@/lib/ia/provider", () => ({
@@ -58,6 +71,7 @@ vi.mock("@/lib/ia/provider", () => ({
             skills: [],
             pedido_explicito: false,
             continuacao: true,
+            natureza_emocional: "neutra",
             necessidade_conhecimento: "nenhum",
             tema_conhecimento: null,
           })
@@ -94,6 +108,7 @@ vi.mock("@/lib/ai/prompts", () => ({ getSystemPrompt: async (_k: string, f: stri
 
 const { processInbound, enviarEPersistir, ofertaDePlanoPendente } = await import("./orchestrator");
 const { propostaPendente } = await import("./rotina-guiada");
+const { executarNoTurno, novoRastroTurno } = await import("./turno-rastro");
 
 type Linha = Record<string, unknown>;
 
@@ -129,6 +144,165 @@ beforeEach(() => {
   delete roteiro.prontidaoRotina;
   delete roteiro.acaoRotina;
   registros.length = 0;
+  eventos.length = 0;
+  envio.chamadas = 0;
+  envio.falharNaChamada = 0;
+  oferta.chamadas = 0;
+  oferta.falhar = false;
+});
+
+afterEach(() => vi.unstubAllEnvs());
+
+describe("G0 · vínculo e falha da auditoria do envio", () => {
+  it("liga turno, log e outbound sem misturar o membro", async () => {
+    const m = mundoCom([MANU, MARIO]);
+    mundoRef.atual = m;
+    const rastro = novoRastroTurno({ chars: 0 });
+
+    await executarNoTurno(rastro, () => enviarEPersistir(m.db.cliente(), {
+      family_account_id: m.familyId,
+      membro_atipico_id: m.membros.Mario,
+      phone: m.telefone,
+      texto: "resposta fictícia",
+      category: "reativa",
+      tipo: "resposta_registro",
+    }));
+
+    const log = m.db.linhas("ayla_send_log").at(-1) as Linha;
+    const outbound = saidas(m).at(-1) as Linha;
+    const logRastreio = ((log.payload as Linha).meta as Linha).rastreio as Linha;
+    const outboundRastreio = (outbound.metadata as Linha).rastreio as Linha;
+    expect(logRastreio.turno).toBe(rastro.turno);
+    expect(outboundRastreio.turno).toBe(rastro.turno);
+    expect(outbound.membro_atipico_id).toBe(m.membros.Mario);
+    expect(JSON.stringify(logRastreio)).not.toContain("resposta fictícia");
+  });
+
+  it("não declara log gravado quando o Supabase devolve error", async () => {
+    const m = mundoCom([MANU]);
+    mundoRef.atual = m;
+    m.db.falhamAoEscrever.add("ayla_send_log");
+
+    const resultado = await enviarEPersistir(m.db.cliente(), {
+      family_account_id: m.familyId,
+      membro_atipico_id: m.membros.Manu,
+      phone: m.telefone,
+      texto: "resposta fictícia",
+      category: "reativa",
+      tipo: "resposta_registro",
+    });
+
+    expect(resultado.enviada).toBe(true);
+    expect(m.db.linhas("ayla_send_log")).toHaveLength(0);
+    expect(saidas(m)).toHaveLength(1);
+    expect(eventos.some((e) => e.kind === "ayla_send_log_nao_persistiu")).toBe(true);
+  });
+
+  it("registra primeira bolha aceita e segunda falha como envio parcial", async () => {
+    const m = mundoCom([MANU]);
+    mundoRef.atual = m;
+    mundoRef.alvo = m.membros.Manu;
+    roteiro.fala = "Primeira ajuda fictícia.\n\nSegunda ajuda fictícia.";
+    envio.falharNaChamada = 2;
+
+    await processInbound(m.db.cliente(), inboundDe(m, "Quero entender esta situação."));
+
+    expect(envio.chamadas).toBe(2);
+    expect(m.enviadas).toHaveLength(1);
+    const log = m.db.linhas("ayla_send_log").at(-1) as Linha;
+    const meta = (log.payload as Linha).meta as Linha;
+    expect(meta.estado_bolhas).toBe("parcial");
+    expect((meta.bolhas as Array<{ estado: string }>).map((b) => b.estado)).toEqual(["aceita", "falha"]);
+    expect(meta.turno).toMatch(/^tn_/);
+  });
+
+  it("sinaliza erro devolvido pelo Supabase no log do emissor comum", async () => {
+    const m = mundoCom([MANU]);
+    mundoRef.atual = m;
+    mundoRef.alvo = m.membros.Manu;
+    m.db.falhamAoEscrever.add("ayla_send_log");
+
+    await processInbound(m.db.cliente(), inboundDe(m, "Quero entender esta situação."));
+
+    expect(m.enviadas).toHaveLength(1);
+    expect(m.db.linhas("ayla_send_log")).toHaveLength(0);
+    expect(eventos.some((e) => e.kind === "ayla_send_log_nao_persistiu")).toBe(true);
+  });
+
+  it("preserva o vínculo do áudio transcrito sem guardar mídia ou transcrição no rastro", async () => {
+    const m = mundoCom([MANU]);
+    mundoRef.atual = m;
+    mundoRef.alvo = m.membros.Manu;
+    const inbound = {
+      ...inboundDe(m, "Transcrição fictícia: quero conversar sobre a Manu."),
+      midiaTipo: "audio",
+      midiaUrl: "https://exemplo.invalid/audio-ficticio.ogg",
+      transcricaoMs: 123,
+    };
+
+    await processInbound(m.db.cliente(), inbound);
+
+    const turno = eventos.find((e) => e.kind === "turno_externo")?.payload as Linha | undefined;
+    const log = m.db.linhas("ayla_send_log").at(-1) as Linha;
+    const meta = (log.payload as Linha).meta as Linha;
+    expect(turno?.tipo_mensagem).toBe("audio");
+    expect((turno?.detalhes as Linha)?.transcricao_audio).toBe(123);
+    expect(turno?.inbound_message_id).toBeTruthy();
+    expect(meta.turno).toBe(turno?.turno);
+    expect(JSON.stringify(turno)).not.toContain("audio-ficticio.ogg");
+    expect(JSON.stringify(turno)).not.toContain("Transcrição fictícia");
+  });
+
+  it("rastreia a oferta de botões aceita no mesmo turno", async () => {
+    vi.stubEnv("AYLA_EXPERIMENTAL_TODAS", "true");
+    vi.stubEnv("AYLA_APROFUNDAMENTO_WHATSAPP", "on");
+    const m = mundoCom([MANU]);
+    mundoRef.atual = m;
+    mundoRef.alvo = m.membros.Manu;
+    roteiro.fala = JSON.stringify({
+      fala: "Uma orientação fictícia completa, sem pergunta ao final.",
+      campo_investigado: null,
+      campos_investigados: [],
+      aprofundamentos: ["aprofundar_lidar", "aprofundar_brincar"],
+    });
+
+    await processInbound(m.db.cliente(), inboundDe(m, "Quero ajuda para a Manu nesta situação."));
+
+    expect(eventos.find((e) => e.kind === "aprofundamento_decisao")?.payload).toMatchObject({ acao: "OFERECER" });
+    expect(oferta.chamadas).toBe(1);
+    const turno = eventos.find((e) => e.kind === "turno_externo")?.payload as Linha | undefined;
+    const bolhas = turno?.bolhas as Array<{ emissor: string; estado: string }>;
+    expect(bolhas.map((b) => [b.emissor, b.estado])).toContainEqual(["oferta_aprofundamento", "aceita"]);
+    const outbound = saidas(m).find((l) => ((l.metadata as Linha)?.aprofundamento as Linha | undefined)?.canal === "botao");
+    expect(((outbound?.metadata as Linha)?.rastreio as Linha)?.turno).toBe(turno?.turno);
+  });
+
+  it("registra a falha dos botões e o fallback textual sem duplicar a oferta", async () => {
+    vi.stubEnv("AYLA_EXPERIMENTAL_TODAS", "true");
+    vi.stubEnv("AYLA_APROFUNDAMENTO_WHATSAPP", "on");
+    const m = mundoCom([MANU]);
+    mundoRef.atual = m;
+    mundoRef.alvo = m.membros.Manu;
+    oferta.falhar = true;
+    roteiro.fala = JSON.stringify({
+      fala: "Uma orientação fictícia completa, sem pergunta ao final.",
+      campo_investigado: null,
+      campos_investigados: [],
+      aprofundamentos: ["aprofundar_lidar", "aprofundar_brincar"],
+    });
+
+    await processInbound(m.db.cliente(), inboundDe(m, "Quero ajuda para a Manu nesta situação."));
+
+    expect(oferta.chamadas).toBe(1);
+    const turno = eventos.find((e) => e.kind === "turno_externo")?.payload as Linha | undefined;
+    const bolhas = turno?.bolhas as Array<{ emissor: string; estado: string }>;
+    expect(bolhas.map((b) => [b.emissor, b.estado])).toContainEqual(["oferta_aprofundamento", "falha"]);
+    expect(bolhas.map((b) => [b.emissor, b.estado])).toContainEqual(["envio_unico", "aceita"]);
+    expect(eventos.some((e) => e.kind === "aprofundamento_fallback")).toBe(true);
+    const fallback = saidas(m).find((l) => l.tipo === "aprofundamento_fallback");
+    expect(((fallback?.metadata as Linha)?.rastreio as Linha)?.turno).toBe(turno?.turno);
+    expect(saidas(m).filter((l) => ((l.metadata as Linha)?.aprofundamento as Linha | undefined)?.canal === "botao")).toHaveLength(0);
+  });
 });
 
 // ═══════════════════════════════════════════════════════════════════════
@@ -165,9 +339,15 @@ describe("PEND-182 · a âncora e o registro de entrega convivem no banco", () =
     expect(meta?.entrega, "o registro de entrega foi apagado pela âncora").toBeTruthy();
   });
 
-  it("sem âncora: o registro de entrega continua igual ao que sempre foi", async () => {
+  it("sem âncora: entrega e rastreio coexistem sem dados da conversa", async () => {
     const meta = await gravar(undefined);
-    expect(Object.keys(meta ?? {})).toEqual(["entrega"]);
+    expect(Object.keys(meta ?? {})).toEqual(["rastreio", "entrega"]);
+    const rastreio = meta?.rastreio as { turno?: string | null; iniciativa_id?: string | null; bolhas?: Array<{ estado?: string }> };
+    expect(rastreio.turno).toBeNull();
+    expect(rastreio.iniciativa_id).toMatch(/^in_/);
+    expect(rastreio.bolhas?.[0]?.estado).toBe("aceita");
+    expect(JSON.stringify(rastreio)).not.toContain("uma fala qualquer");
+    expect(JSON.stringify(rastreio)).not.toContain("telefone");
   });
 
   it("a âncora NUNCA pode sobrescrever o registro de entrega", async () => {
