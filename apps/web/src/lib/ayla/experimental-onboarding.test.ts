@@ -264,12 +264,12 @@ describe("NÃO REGREDIU — o que já funcionava continua", () => {
     expect(b.bloco).toContain("Sensibilidades: Incomoda com barulho alto");
   });
 
-  it("`desafiosAtuais` segue com o comportamento antigo — não foi alterada", () => {
-    expect(
-      desafiosAtuais({
-        categorias_extras: { sono: { texto: "Acorda 3x", atualizado_em: "2026-08-10" } },
-      } as never),
-    ).toEqual(["sono: Acorda 3x"]);
+  it("`desafiosAtuais` preserva o conteúdo mesmo quando marca o registro antigo", () => {
+    const desafios = desafiosAtuais({
+      categorias_extras: { sono: { texto: "Acorda 3x", atualizado_em: "2026-08-10" } },
+    } as never);
+    expect(desafios).toHaveLength(1);
+    expect(desafios[0].split(" [")[0]).toBe("sono: Acorda 3x");
   });
 
   it("responsável ausente continua virando lacuna", () => {

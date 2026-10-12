@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { MODELO_CONVERSA, gerarConversacional } from "./provider";
@@ -103,17 +103,32 @@ describe("erro não vira resposta vazia", () => {
 
   it("chave ausente não quebra a montagem — a API é quem recusa", async () => {
     const antes = process.env.ANTHROPIC_API_KEY;
-    process.env.ANTHROPIC_API_KEY = "";
-    await expect(
-      gerarConversacional({
-        provider: "anthropic",
-        model: "claude-sonnet-4-6",
-        system: "oi",
-        messages: [{ role: "user", content: "oi" }],
-        maxTokens: 8,
-      }),
-    ).rejects.toThrow(/anthropic/);
-    if (antes) process.env.ANTHROPIC_API_KEY = antes;
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 401,
+      json: async () => ({ error: { message: "missing x-api-key" } }),
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    try {
+      process.env.ANTHROPIC_API_KEY = "";
+      await expect(
+        gerarConversacional({
+          provider: "anthropic",
+          model: "claude-sonnet-4-6",
+          system: "oi",
+          messages: [{ role: "user", content: "oi" }],
+          maxTokens: 8,
+        }),
+      ).rejects.toThrow("anthropic 401: missing x-api-key");
+      expect(fetchMock).toHaveBeenCalledWith(
+        "https://api.anthropic.com/v1/messages",
+        expect.objectContaining({ headers: expect.objectContaining({ "x-api-key": "" }) }),
+      );
+    } finally {
+      if (antes === undefined) delete process.env.ANTHROPIC_API_KEY;
+      else process.env.ANTHROPIC_API_KEY = antes;
+      vi.unstubAllGlobals();
+    }
   });
 });
 
