@@ -11031,6 +11031,20 @@ ramos de sucesso, falha, desconhecido e não-titular com dados fictícios. Não
 tratar o log novo como prova de privacidade enquanto esses caminhos persistirem.
 Correção funcional em escopo separado, nunca silenciosamente neste PR G0.
 
+**Avanço isolado de 19/10/2026 — sem baixa:** a branch
+`codex/ayla-privacidade-g0`, empilhada sobre o PR #145, remove dos caminhos
+identificados payload, telefone, texto e mensagens arbitrárias de erro em
+stdout/`eventos_app`, inclusive no rastro do turno. Testes sintéticos de
+webhook, áudio, lookup, desconhecido e rastro passaram **65/65** após integrar
+os dois conjuntos de testes; a suíte completa passou **4.227/4.227**, com 7
+pulados, e a CI desta branch ainda deve ser conferida.
+[Auditoria delimitada](auditorias/ayla-privacidade-logs-g0-2026-10-19.md).
+Na configuração versionada e na tela autenticada de Cron Jobs da Vercel,
+`?tipo=cleanup` **não está agendado**; o código de purga por idade existe, mas
+não prova execução. Acesso/retenção de stdout e RLS aplicada no banco seguem
+sem prova: o painel Supabase não estava autenticado, e nenhum log ou dado de
+família foi aberto. O patch não foi publicado; a PEND permanece **ABERTA**.
+
 **Critério de baixa:** logging do webhook e dos ramos relacionados sem payload,
 telefone, texto ou URL de mídia em stdout/`eventos_app`; testes de regressão e
 prova do comportamento no SHA servido, com retenção/acesso aos dois destinos
