@@ -4,51 +4,45 @@ const estado = vi.hoisted(() => ({
   tarefas: [] as Array<() => Promise<void>>,
   entradas: [] as Array<Record<string, unknown>>,
   enviadas: [] as Array<Record<string, unknown>>,
+  eventos: [] as Array<Record<string, unknown>>,
+  inbound: {
+    phoneE164: "+5511999990000",
+    texto: "",
+    messageId: "inbound-ficticio",
+    recebidaEm: new Date("2026-10-11T10:00:00.000Z"),
+    midiaTipo: "audio" as string | null,
+    midiaUrl: "https://exemplo.invalid/audio.ogg" as string | null,
+  },
   transcricao: "" as string | null,
   chamadasStt: 0,
-  eventos: [] as Array<Record<string, unknown>>,
   falharEnvio: false,
+  falharProcessamento: false,
 }));
 
 vi.mock("@/lib/log", () => ({
   logEvent: async (evento: Record<string, unknown>) => { estado.eventos.push(evento); },
 }));
-
 vi.mock("next/server", () => ({
-  NextResponse: {
-    json: (body: unknown, init?: ResponseInit) => Response.json(body, init),
-  },
+  NextResponse: { json: (body: unknown, init?: ResponseInit) => Response.json(body, init) },
   after: (tarefa: () => Promise<void>) => { estado.tarefas.push(tarefa); },
 }));
-
-vi.mock("@/lib/supabase/server", () => ({
-  createServiceRoleClient: () => ({ origem: "banco-ficticio" }),
-}));
-
+vi.mock("@/lib/supabase/server", () => ({ createServiceRoleClient: () => ({ origem: "banco-ficticio" }) }));
 vi.mock("@/lib/ayla/whatsappSender", () => ({
-  parseZapiWebhook: () => ({
-    phoneE164: "+5511999990000",
-    texto: "",
-    messageId: "inbound-ficticio",
-    recebidaEm: new Date("2026-10-11T10:00:00.000Z"),
-    midiaTipo: "audio",
-    midiaUrl: "https://exemplo.invalid/audio.ogg",
-  }),
+  parseZapiWebhook: () => ({ ...estado.inbound }),
   enviarTexto: async (params: Record<string, unknown>) => {
     estado.enviadas.push(params);
     if (estado.falharEnvio) throw new Error("falha sintética do provedor");
     return { ok: true, messageId: "fallback-ficticio" };
   },
 }));
-
 vi.mock("@/lib/ayla/orchestrator", () => ({
   idiomaPorTelefone: async () => "pt",
   processInbound: async (_db: unknown, inbound: Record<string, unknown>) => {
     estado.entradas.push(inbound);
+    if (estado.falharProcessamento) throw new Error("erro com texto-ficticio-sigiloso e +5511999990000");
     return { tratada: true };
   },
 }));
-
 vi.mock("@/lib/ayla/transcribe", () => ({
   transcreverAudio: async () => {
     estado.chamadasStt += 1;
@@ -58,11 +52,26 @@ vi.mock("@/lib/ayla/transcribe", () => ({
 
 const { POST } = await import("./route");
 
-async function receberAudio() {
+beforeEach(() => {
+  estado.tarefas.length = 0;
+  estado.entradas.length = 0;
+  estado.enviadas.length = 0;
+  estado.eventos.length = 0;
+  estado.chamadasStt = 0;
+  estado.falharEnvio = false;
+  estado.falharProcessamento = false;
+  estado.transcricao = "Áudio fictício transcrito";
+  estado.inbound.texto = "";
+  estado.inbound.midiaTipo = "audio";
+  estado.inbound.midiaUrl = "https://exemplo.invalid/audio.ogg";
+  vi.restoreAllMocks();
+});
+
+async function receber(payload: Record<string, unknown>) {
   const resposta = await POST(new Request("http://localhost/api/ayla/webhook", {
     method: "POST",
     headers: { "content-type": "application/json" },
-    body: JSON.stringify({ phone: "5511999990000", audio: { audioUrl: "https://exemplo.invalid/audio.ogg" } }),
+    body: JSON.stringify(payload),
   }) as never);
   expect(resposta.status).toBe(200);
   expect(await resposta.json()).toEqual({ ok: true, queued: true });
@@ -70,20 +79,13 @@ async function receberAudio() {
   await estado.tarefas[0]();
 }
 
-beforeEach(() => {
-  estado.tarefas.length = 0;
-  estado.entradas.length = 0;
-  estado.enviadas.length = 0;
-  estado.chamadasStt = 0;
-  estado.eventos.length = 0;
-  estado.falharEnvio = false;
-  estado.transcricao = "Áudio fictício transcrito";
-});
+async function receberAudio() {
+  await receber({ phone: "5511999990000", audio: { audioUrl: "https://exemplo.invalid/audio.ogg" } });
+}
 
 describe("G0 · fronteira do áudio no webhook", () => {
   it("passa a transcrição para o turno sem mudar o tipo de mídia", async () => {
     await receberAudio();
-
     expect(estado.chamadasStt).toBe(1);
     expect(estado.entradas).toHaveLength(1);
     expect(estado.entradas[0]).toMatchObject({
@@ -99,7 +101,6 @@ describe("G0 · fronteira do áudio no webhook", () => {
   it("se STT devolve null, não chama o orquestrador e pede reenvio", async () => {
     estado.transcricao = null;
     await receberAudio();
-
     expect(estado.chamadasStt).toBe(1);
     expect(estado.entradas).toHaveLength(0);
     expect(estado.enviadas).toHaveLength(1);
@@ -120,8 +121,40 @@ describe("G0 · fronteira do áudio no webhook", () => {
     estado.transcricao = null;
     estado.falharEnvio = true;
     await receberAudio();
-
     expect(estado.entradas).toHaveLength(0);
     expect(estado.eventos[0].payload).toMatchObject({ fallback_aceito_provedor: false });
+  });
+});
+
+describe("PEND-240 · privacidade do webhook", () => {
+  it.each([false, true])("não registra payload, telefone ou texto; erro=%s", async (falha) => {
+    const log = vi.spyOn(console, "log").mockImplementation(() => {});
+    const erro = vi.spyOn(console, "error").mockImplementation(() => {});
+    estado.inbound.texto = "texto-ficticio-sigiloso";
+    estado.inbound.midiaTipo = null;
+    estado.inbound.midiaUrl = null;
+    estado.falharProcessamento = falha;
+
+    await receber({ phone: "5511999990000", text: "texto-ficticio-sigiloso", token: "segredo-ficticio" });
+
+    expect(estado.entradas).toHaveLength(1);
+    const saida = JSON.stringify([...log.mock.calls, ...erro.mock.calls]);
+    expect(saida).not.toMatch(/5511999990000|texto-ficticio-sigiloso|segredo-ficticio/);
+    expect(saida).toContain("tem_texto");
+    if (falha) expect(saida).toContain("erro no processamento");
+  });
+
+  it("classifica LID sem imprimir campos arbitrários ou seus valores", async () => {
+    const erro = vi.spyOn(console, "error").mockImplementation(() => {});
+    const log = vi.spyOn(console, "log").mockImplementation(() => {});
+    estado.inbound.texto = "texto-ficticio-sigiloso";
+    estado.inbound.midiaTipo = null;
+    estado.inbound.midiaUrl = null;
+
+    await receber({ phone: "lid-ficticio@lid", "segredo-ficticio": "valor-ficticio" });
+
+    const saida = JSON.stringify([...log.mock.calls, ...erro.mock.calls]);
+    expect(saida).toContain("IDENTIFICADOR NÃO-TELEFONE");
+    expect(saida).not.toMatch(/lid-ficticio|segredo-ficticio|valor-ficticio/);
   });
 });

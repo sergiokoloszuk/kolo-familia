@@ -38,28 +38,17 @@ export async function POST(request: NextRequest) {
   } catch {
     return NextResponse.json({ error: "invalid json" }, { status: 400 });
   }
-  console.log("[ayla webhook] raw payload:", JSON.stringify(payload).slice(0, 600));
-
   /**
-   * ⚠️ AS CHAVES DO PAYLOAD, QUANDO O REMETENTE VEM COMO LID — 14/09/2026.
-   *
-   * O `console.log` acima trunca em 600 caracteres e morre com a retenção da
-   * Vercel. Para consertar o LID de verdade é preciso saber SE a Z-API manda o
-   * telefone real em algum outro campo — e essa pergunta não tinha como ser
-   * respondida sem olhar um payload ao vivo no minuto certo.
-   *
-   * Aqui vão só os NOMES dos campos de primeiro nível. Nenhum valor: nome de
-   * campo é forma do protocolo, não dado de ninguém.
+   * Remetentes LID precisam continuar distinguíveis para diagnóstico, mas
+   * payload, valores e até nomes de campos arbitrários podem conter dados da
+   * família. Registrar apenas a classe técnica do identificador.
    */
   const identificador =
     (typeof (payload as Record<string, unknown>)?.phone === "string"
       ? ((payload as Record<string, unknown>).phone as string)
       : "") || "";
   if (identificador.includes("@")) {
-    console.error(
-      "[ayla webhook] IDENTIFICADOR NÃO-TELEFONE — campos do payload:",
-      JSON.stringify(Object.keys(payload as Record<string, unknown>)),
-    );
+    console.error("[ayla webhook] IDENTIFICADOR NÃO-TELEFONE");
   }
 
   const inbound = parseZapiWebhook(payload);
@@ -67,7 +56,10 @@ export async function POST(request: NextRequest) {
     console.log("[ayla webhook] parser retornou null — skipped");
     return NextResponse.json({ skipped: true });
   }
-  console.log("[ayla webhook] parsed:", { phone: inbound.phoneE164, texto: inbound.texto });
+  console.log("[ayla webhook] parsed", {
+    tem_texto: Boolean(inbound.texto.trim()),
+    tipo_midia: inbound.midiaTipo ?? null,
+  });
 
   const supabase = createServiceRoleClient();
 
@@ -131,8 +123,9 @@ export async function POST(request: NextRequest) {
       }
 
       await processInbound(supabase, inboundFinal);
-    } catch (e) {
-      console.error(`[ayla webhook] erro no processamento:`, e instanceof Error ? e.message : e);
+    } catch {
+      // Erros de provedores podem incluir payload, URL de mídia ou telefone.
+      console.error("[ayla webhook] erro no processamento");
     }
   });
 

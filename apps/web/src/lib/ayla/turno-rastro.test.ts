@@ -48,6 +48,8 @@ describe("o rastro cobre todas as saídas do turno", () => {
   it("a exceção é nomeada antes de subir — e continua subindo", () => {
     expect(ORQ).toMatch(/rastro\.saida = "null_excecao"/);
     const bloco = ORQ.slice(ORQ.indexOf('rastro.saida = "null_excecao"'), ORQ.indexOf('rastro.saida = "null_excecao"') + 300);
+    expect(bloco).toMatch(/rastro\.motivo = "erro_nao_tratado"/);
+    expect(bloco).not.toMatch(/e\.message\.slice|String\(e\)\.slice/);
     expect(bloco).toMatch(/throw e;/);
   });
 

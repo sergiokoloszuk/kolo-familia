@@ -299,7 +299,7 @@ export async function registrarRastroTurno(r: RastroTurno): Promise<void> {
       payload: r as unknown as Record<string, unknown>,
       persistir: true,
     });
-  } catch (e) {
-    console.error("[ayla:turno-rastro] falha ao persistir:", e instanceof Error ? e.message : e);
+  } catch {
+    console.error("[ayla:turno-rastro] falha ao persistir");
   }
 }
