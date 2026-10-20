@@ -18,7 +18,13 @@ async function lerTabela(admin: SupabaseClient, tabela: string, colunas: string,
     const { data, error } = await admin.from(tabela).select(colunas).order(ordem).range(inicio, inicio + lote - 1);
     if (error) throw new Error(`Não foi possível conferir os públicos (${tabela}): ${error.message}`);
     if (!data) throw new Error(`Não foi possível conferir os públicos (${tabela}): leitura sem dados.`);
-    const pagina = data as Linha[];
+    const paginaDesconhecida: unknown = data;
+    if (!Array.isArray(paginaDesconhecida) ||
+      !paginaDesconhecida.every((item: unknown): item is Linha =>
+        item !== null && typeof item === "object" && !Array.isArray(item))) {
+      throw new Error(`Não foi possível conferir os públicos (${tabela}): resposta inválida.`);
+    }
+    const pagina: Linha[] = paginaDesconhecida;
     linhas.push(...pagina);
     if (pagina.length < lote) return linhas;
   }
