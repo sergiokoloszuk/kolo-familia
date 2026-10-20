@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -184,6 +185,11 @@ export function CampanhaForm({ inicial }: { inicial: CampanhaInicial }) {
 
       <fieldset className="flex flex-col gap-3 rounded-md border bg-muted/20 p-3">
         <legend className="px-1 text-sm font-medium">Segmentação</legend>
+
+        <p className="text-sm text-muted-foreground">
+          Antes de selecionar, <Link href="/admin/campanhas/publicos" target="_blank" rel="noopener noreferrer" className="underline">veja os contatos de cada grupo</Link>.
+          Esta lista é um retrato do cadastro; a elegibilidade para receber será conferida novamente antes do envio.
+        </p>
 
         <div className="flex flex-col gap-1.5">
           <Label>Quem recebe</Label>
