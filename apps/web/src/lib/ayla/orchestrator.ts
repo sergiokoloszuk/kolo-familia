@@ -1963,7 +1963,8 @@ export async function processInbound(
     return r;
   } catch (e) {
     rastro.saida = "null_excecao";
-    rastro.motivo = e instanceof Error ? e.message.slice(0, 200) : String(e).slice(0, 200);
+    // Mensagens arbitrárias de erro podem conter telefone, fala ou URL de mídia.
+    rastro.motivo = "erro_nao_tratado";
     throw e;
   } finally {
     void registrarRastroTurno(rastro);
@@ -2538,10 +2539,8 @@ async function processInboundInterno(
   // mensagens que a mãe mandou em sequência viram uma fala só. Todo o resto da
   // função segue lendo `inbound` normalmente, sem saber se veio 1 ou 4 balões.
   let inbound = inboundRecebido;
-  // 1. Identifica família pelo número — casamento TOLERANTE (BR tem a
-  // pegadinha do 9º dígito + variações de formato/país). Comparamos por
-  // uma chave normalizada em vez de igualdade exata.
-  const chaveIn = chaveTelefoneBR(inbound.phoneE164);
+  // 1. Identifica família pelo número — o lookup compara uma chave BR
+  // normalizada para tolerar variações de formato e o 9º dígito.
   marco(rastro, "identidade_inicio");
   const busca = await encontrarFamiliaPorTelefone(supabase, inbound.phoneE164);
   marco(rastro, "identidade_fim");
@@ -2553,12 +2552,9 @@ async function processInboundInterno(
     // banco ficava indistinguível de um desconhecido — foi o que aconteceu em
     // 02/08/2026, com 47s entre o parse e o "não cadastrado", num número que ESTÁ
     // cadastrado. O log agora é inequívoco e a família não é reclassificada.
-    console.error(
-      `[ayla] FALHA AO CONSULTAR FAMÍLIAS (não é número desconhecido): ${busca.erro} | telefone=${inbound.phoneE164} chave=${chaveIn}`,
-    );
-    await logServerError("ayla_lookup_familia_falhou", new Error(busca.erro), {
+    console.error("[ayla] FALHA AO CONSULTAR FAMÍLIAS (não é número desconhecido)");
+    await logServerError("ayla_lookup_familia_falhou", new Error("family_lookup_failed"), {
       family_account_id: null,
-      payload: { telefone: inbound.phoneE164, chave: chaveIn, texto: inbound.texto.slice(0, 120) },
     }).catch(() => {});
     // ⚠️ A MENSAGEM SE PERDE, e isto é uma lacuna conhecida — ver a nota sobre
     // reentrega em `encontrarFamiliaPorTelefone`. Não há como pedir retry daqui.
@@ -2585,10 +2581,7 @@ async function processInboundInterno(
     // existe muito abaixo, depois de a família estar identificada. Número
     // desconhecido nunca fala com agente conversacional.
     const atendida = await atenderDesconhecido(supabase, inbound);
-    console.warn(
-      `[ayla] inbound de número não cadastrado: ${inbound.phoneE164} (chave ${chaveIn})` +
-        ` — respondido=${atendida.respondido}${atendida.motivo ? ` (${atendida.motivo})` : ""}`,
-    );
+    console.warn(`[ayla] inbound de número não cadastrado — respondido=${atendida.respondido}`);
     return { tratada: false };
   }
 
@@ -2632,7 +2625,7 @@ async function processInboundInterno(
   // titular. NÃO responde (evita o loop que aconteceu com a Isis) e AVISA a admin
   // no WhatsApp com o número + link pro Admin, pra ela revisar e bloquear.
   if (pareceCrianca(inbound.texto)) {
-    console.warn(`[ayla] possível criança/não-titular: ${inbound.phoneE164} (family ${family.id})`);
+    console.warn(`[ayla] possível criança/não-titular (family ${family.id})`);
     await alertarNaoTitular(supabase, family.id, inbound.phoneE164, inbound.texto);
     return { tratada: false, familia: family.id };
   }
@@ -5888,9 +5881,7 @@ async function aplicarSugestaoNoMembro(
   }
 
   if (marcos.length) {
-    console.log(
-      `[ayla:kv] marco registrado — ${marcos.map((m) => m.texto).join(" · ")}`,
-    );
+    console.log(`[ayla:kv] marcos registrados — total=${marcos.length}`);
   }
 
   const { error } = await supabase.from("perfil_vivo_membro").upsert(

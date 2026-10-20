@@ -72,7 +72,7 @@ PEND-092 → 017 → 098 → 093 → 094 → 095 → 039 → 042 → 097 → 099
 substitui a prioridade atual de segurança nem a análise de produção.
 
 <!-- PENDENCIAS-INDEX:START -->
-Índice completo gerado de 184 fichas neste arquivo. A ficha é a fonte do estado; não edite as linhas abaixo à mão. Para atualizar: `node scripts/pendencias-index.mjs --write`.
+Índice completo gerado de 185 fichas neste arquivo. A ficha é a fonte do estado; não edite as linhas abaixo à mão. Para atualizar: `node scripts/pendencias-index.mjs --write`.
 
 | ID | Pendência | Prioridade | Estado da ficha |
 |---|---|---|---|
@@ -258,8 +258,9 @@ substitui a prioridade atual de segurança nem a análise de produção.
 | [PEND-229](#pend-229) | Qualidade, profundidade e concisão da conversa da Ayla no WhatsApp | P1 | EM PRODUÇÃO — prova conversacional e latência ponta a ponta pendentes |
 | [PEND-230](#pend-230) | Confirmações sociais reabrem orientação e alongam a conversa | P1 | PUBLICADA · PROVA NATURAL PENDENTE |
 | [PEND-231](#pend-231) | Condução adaptativa no WhatsApp: descobrir possibilidades, perguntar o mínimo e aprender com o retorno | P1 | PENDENTE — missão de desenho; nenhuma oferta nova ou cadência de avaliação implementada |
-| [PEND-240](#pend-240) | Webhook da Ayla escreve payload e texto de famílias no stdout | P1 | ABERTA — achado fora do escopo da instrumentação G0 |
+| [PEND-240](#pend-240) | Webhook da Ayla escreve payload e texto de famílias no stdout | P1 | ABERTA — correção em PR #147; validação operacional aguarda Sérgio |
 | [PEND-241](#pend-241) | Testes antigos de contexto e provider deixaram a CI do G0 vermelha | P3 | PARCIAL — testes e CI da PR 145 verdes; merge e SHA servido pendentes |
+| [PEND-242](#pend-242) | Cleanup operacional sem limite real e com filtro de idade incompleto | P1 | ABERTA — não agendar nem executar o job atual |
 <!-- PENDENCIAS-INDEX:END -->
 
 ---
@@ -11008,7 +11009,7 @@ temas e frequência de avaliação. Não alterar a flag como parte deste registr
 ### PEND-240
 **Webhook da Ayla escreve payload e texto de famílias no stdout**
 Bloco: **F · Segurança / Observabilidade** · Prioridade: **P1**
-STATUS: **ABERTA — achado fora do escopo da instrumentação G0** · Aberta em: 2026-10-11
+STATUS: **ABERTA — correção em PR #147; validação operacional aguarda Sérgio** · Aberta em: 2026-10-11
 
 **Achado:** `apps/web/src/app/api/ayla/webhook/route.ts` imprime os primeiros
 600 caracteres do payload bruto e depois telefone e texto parseados. O áudio
@@ -11031,6 +11032,34 @@ ramos de sucesso, falha, desconhecido e não-titular com dados fictícios. Não
 tratar o log novo como prova de privacidade enquanto esses caminhos persistirem.
 Correção funcional em escopo separado, nunca silenciosamente neste PR G0.
 
+**Avanço isolado de 19/10/2026 — sem baixa:** a branch
+`codex/ayla-privacidade-g0`, empilhada sobre o PR #145, remove dos caminhos
+identificados payload, telefone, texto e mensagens arbitrárias de erro em
+stdout/`eventos_app`, inclusive no rastro do turno. Testes sintéticos de
+webhook, áudio, lookup, desconhecido e rastro passaram **65/65** após integrar
+os dois conjuntos de testes; a suíte completa passou **4.227/4.227**, com 7
+pulados, e a CI desta branch ainda deve ser conferida.
+[Auditoria delimitada](auditorias/ayla-privacidade-logs-g0-2026-10-19.md).
+Na configuração versionada e na tela autenticada de Cron Jobs da Vercel,
+`?tipo=cleanup` **não está agendado**; o código de purga por idade existe, mas
+não prova execução. Acesso/retenção de stdout e RLS aplicada no banco seguem
+sem prova: o painel Supabase não estava autenticado, e nenhum log ou dado de
+família foi aberto. O patch não foi publicado; a PEND permanece **ABERTA**.
+
+**Verificação de 19/10/2026:** o [PR #147](https://github.com/sergiokoloszuk/kolo-familia/pull/147)
+está em rascunho, com os dois checks exibidos de preview concluídos. O health
+continua servindo `25e8891` em produção, portanto não há prova de publicação
+do patch. Antes de agendar `cleanup`, resolver a PEND-242: o job atual não
+aplica o limite nem a idade anunciados a todas as exclusões.
+
+**Encaminhamento de 20/10/2026:** a sessão do Supabase foi autenticada, mas
+mostrou somente uma organização com dois projetos não identificados como Kolo
+Família. Nenhuma tabela, linha, política ou segredo foi aberto; a RLS aplicada
+de `eventos_app` segue **não verificável** com esse acesso. Karina pediu para
+conferir essa pendência junto com Sérgio quando ele estiver disponível. O PR
+#147 permanece em rascunho e não foi publicado; a Missão G1 editorial da
+conversa pode avançar separadamente, mas G0/G5 não ganham aprovação por isso.
+
 **Critério de baixa:** logging do webhook e dos ramos relacionados sem payload,
 telefone, texto ou URL de mídia em stdout/`eventos_app`; testes de regressão e
 prova do comportamento no SHA servido, com retenção/acesso aos dois destinos
@@ -11051,7 +11080,34 @@ STATUS: **PARCIAL — testes e CI da PR 145 verdes; merge e SHA servido pendente
 
 ---
 
-**Proximo ID livre: PEND-242. *(PEND-232 a PEND-239 foram reivindicadas no checkout principal local e devem ser reconciliadas antes do merge; PEND-240 e PEND-241 estão neste PR. PEND-225, PEND-226 e PEND-228 estão reivindicadas no worktree `ayla-conversa-valor`; PEND-227 foi incorporada nesta frente; PEND-209 a PEND-211 já estão reivindicadas por outra frente; 024 e 025 reservadas por frentes ainda nao publicadas; PEND-202 reivindicada em commit e ainda sem ficha; 0076 e numero de MIGRACAO reservado — ver PEND-121.)***
+### PEND-242
+**Cleanup operacional sem limite real e com filtro de idade incompleto**
+Bloco: **F · Segurança / Observabilidade** · Prioridade: **P1**
+STATUS: **ABERTA — não agendar nem executar o job atual** · Aberta em: 2026-10-19
+
+**Achado confirmado no código:** `runCleanup` em `apps/web/src/app/api/ayla/cron/route.ts`
+promete purga delimitada por `DEL_LIMIT`, mas faz `.delete()` por filtro sem
+limite em `eventos_app`, `links_vivos`, `beta_invites` e
+`campanhas_destinatarios`. Para `links_vivos` e `beta_invites`, a condição
+`revogado.eq.true OR expira_em < limite` não exige idade dos revogados, embora
+o comentário descreva retenção de 90/180 dias. O job não aparece nos 14 crons
+ativos da Vercel nem no `vercel.json` versionado; isto é um **risco latente**,
+não evidência de exclusão ocorrida. Nenhum dado real foi lido.
+
+**Próximo ataque:** definir a regra exata de idade para cada tabela, inclusive
+revogados; separar retenção de `eventos_app` do restante se necessário;
+implementar exclusão em lotes verificáveis com teste de fronteira, erro e
+idempotência usando dados sintéticos. Só então discutir agendamento e provar
+execução por metadados em produção, sem inspecionar conteúdo.
+
+**Critério de baixa:** filtros e limites implementados e testados para todas
+as tabelas do job; revisão de risco de exclusão; agendamento autorizado;
+SHA servido, execução e contagens agregadas conferidos sem apagar dados de QA
+ou família fora da política aprovada.
+
+---
+
+**Proximo ID livre: PEND-243. *(PEND-232 a PEND-239 foram reivindicadas no checkout principal local e devem ser reconciliadas antes do merge; PEND-240 a PEND-242 estão neste PR empilhado ou em sua base. PEND-225, PEND-226 e PEND-228 estão reivindicadas no worktree `ayla-conversa-valor`; PEND-227 foi incorporada nesta frente; PEND-209 a PEND-211 já estão reivindicadas por outra frente; 024 e 025 reservadas por frentes ainda nao publicadas; PEND-202 reivindicada em commit e ainda sem ficha; 0076 e numero de MIGRACAO reservado — ver PEND-121.)***
 
 > Conferir contra `origin/main`, não contra o seu branch. Dois branches podem
 > reivindicar o mesmo número — o conflito de merge nesta linha é o alarme.
