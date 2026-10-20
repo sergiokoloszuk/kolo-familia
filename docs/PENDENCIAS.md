@@ -258,7 +258,7 @@ substitui a prioridade atual de segurança nem a análise de produção.
 | [PEND-229](#pend-229) | Qualidade, profundidade e concisão da conversa da Ayla no WhatsApp | P1 | EM PRODUÇÃO — prova conversacional e latência ponta a ponta pendentes |
 | [PEND-230](#pend-230) | Confirmações sociais reabrem orientação e alongam a conversa | P1 | PUBLICADA · PROVA NATURAL PENDENTE |
 | [PEND-231](#pend-231) | Condução adaptativa no WhatsApp: descobrir possibilidades, perguntar o mínimo e aprender com o retorno | P1 | PENDENTE — missão de desenho; nenhuma oferta nova ou cadência de avaliação implementada |
-| [PEND-240](#pend-240) | Webhook da Ayla escreve payload e texto de famílias no stdout | P1 | ABERTA — achado fora do escopo da instrumentação G0 |
+| [PEND-240](#pend-240) | Webhook da Ayla escreve payload e texto de famílias no stdout | P1 | ABERTA — correção em PR #147; validação operacional aguarda Sérgio |
 | [PEND-241](#pend-241) | Testes antigos de contexto e provider deixaram a CI do G0 vermelha | P3 | PARCIAL — testes e CI da PR 145 verdes; merge e SHA servido pendentes |
 | [PEND-242](#pend-242) | Cleanup operacional sem limite real e com filtro de idade incompleto | P1 | ABERTA — não agendar nem executar o job atual |
 <!-- PENDENCIAS-INDEX:END -->
@@ -11009,7 +11009,7 @@ temas e frequência de avaliação. Não alterar a flag como parte deste registr
 ### PEND-240
 **Webhook da Ayla escreve payload e texto de famílias no stdout**
 Bloco: **F · Segurança / Observabilidade** · Prioridade: **P1**
-STATUS: **ABERTA — achado fora do escopo da instrumentação G0** · Aberta em: 2026-10-11
+STATUS: **ABERTA — correção em PR #147; validação operacional aguarda Sérgio** · Aberta em: 2026-10-11
 
 **Achado:** `apps/web/src/app/api/ayla/webhook/route.ts` imprime os primeiros
 600 caracteres do payload bruto e depois telefone e texto parseados. O áudio
@@ -11051,6 +11051,14 @@ está em rascunho, com os dois checks exibidos de preview concluídos. O health
 continua servindo `25e8891` em produção, portanto não há prova de publicação
 do patch. Antes de agendar `cleanup`, resolver a PEND-242: o job atual não
 aplica o limite nem a idade anunciados a todas as exclusões.
+
+**Encaminhamento de 20/10/2026:** a sessão do Supabase foi autenticada, mas
+mostrou somente uma organização com dois projetos não identificados como Kolo
+Família. Nenhuma tabela, linha, política ou segredo foi aberto; a RLS aplicada
+de `eventos_app` segue **não verificável** com esse acesso. Karina pediu para
+conferir essa pendência junto com Sérgio quando ele estiver disponível. O PR
+#147 permanece em rascunho e não foi publicado; a Missão G1 editorial da
+conversa pode avançar separadamente, mas G0/G5 não ganham aprovação por isso.
 
 **Critério de baixa:** logging do webhook e dos ramos relacionados sem payload,
 telefone, texto ou URL de mídia em stdout/`eventos_app`; testes de regressão e
