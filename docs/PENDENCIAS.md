@@ -72,7 +72,7 @@ PEND-092 → 017 → 098 → 093 → 094 → 095 → 039 → 042 → 097 → 099
 substitui a prioridade atual de segurança nem a análise de produção.
 
 <!-- PENDENCIAS-INDEX:START -->
-Índice completo gerado de 182 fichas neste arquivo. A ficha é a fonte do estado; não edite as linhas abaixo à mão. Para atualizar: `node scripts/pendencias-index.mjs --write`.
+Índice completo gerado de 183 fichas neste arquivo. A ficha é a fonte do estado; não edite as linhas abaixo à mão. Para atualizar: `node scripts/pendencias-index.mjs --write`.
 
 | ID | Pendência | Prioridade | Estado da ficha |
 |---|---|---|---|
@@ -258,6 +258,7 @@ substitui a prioridade atual de segurança nem a análise de produção.
 | [PEND-229](#pend-229) | Qualidade, profundidade e concisão da conversa da Ayla no WhatsApp | P1 | EM PRODUÇÃO — prova conversacional e latência ponta a ponta pendentes |
 | [PEND-230](#pend-230) | Confirmações sociais reabrem orientação e alongam a conversa | P1 | PUBLICADA · PROVA NATURAL PENDENTE |
 | [PEND-231](#pend-231) | Condução adaptativa no WhatsApp: descobrir possibilidades, perguntar o mínimo e aprender com o retorno | P1 | PENDENTE — missão de desenho; nenhuma oferta nova ou cadência de avaliação implementada |
+| [PEND-232](#pend-232) | CI vermelho em testes da Ayla bloqueia publicação de frentes independentes | P1 | PENDENTE — investigar baseline; não atribuir causa sem reprodução |
 <!-- PENDENCIAS-INDEX:END -->
 
 ---
@@ -10996,7 +10997,20 @@ temas e frequência de avaliação. Não alterar a flag como parte deste registr
 
 ---
 
-**Proximo ID livre: PEND-232. *(PEND-225, PEND-226 e PEND-228 estão reivindicadas no worktree `ayla-conversa-valor`; PEND-227 foi incorporada nesta frente; PEND-209 a PEND-211 já estão reivindicadas por outra frente; 024 e 025 reservadas por frentes ainda nao publicadas; PEND-202 reivindicada em commit e ainda sem ficha; 0076 e numero de MIGRACAO reservado — ver PEND-121.)***
+### PEND-232
+**CI vermelho em testes da Ayla bloqueia publicação de frentes independentes**
+Bloco: **H · Engenharia / Qualidade** · Prioridade: **P1**
+STATUS: **PENDENTE — investigar baseline; não atribuir causa sem reprodução** · Aberta em: 2026-10-20
+
+**EVIDÊNCIA (20/10).** O [CI do PR #148](https://github.com/sergiokoloszuk/kolo-familia/actions/runs/39451497362) passou por instalação e typecheck, mas parou nos testes unitários: 2 arquivos falharam, 216 passaram e 3 foram pulados. As falhas exibidas são em `src/lib/ayla/experimental-onboarding.test.ts` (resumo de sono trouxe uma segunda linha antiga) e `src/lib/ayla/memoria-persistente.test.ts` (texto com 186 caracteres contra teto de 160). O PR altera o Admin de campanhas, não esses módulos. Isso sugere falha de baseline ou interação indireta; ainda não está comprovado qual.
+
+**PRÓXIMO PASSO:** executar os mesmos testes no SHA-base `25e8891daf1e0d5bd881512e6f128742fdcd0184`, comparar resultado e causa, corrigir em missão própria se reproduzirem na base ou no PR se forem regressão. Não contornar o CI nem declarar produção pronta antes de teste, build e smoke passarem.
+
+**CRITÉRIO DE CONCLUSÃO:** causa comprovada com comparação base/PR, testes afetados verdes e CI completo verde no commit a publicar.
+
+---
+
+**Proximo ID livre: PEND-233. *(PEND-225, PEND-226 e PEND-228 estão reivindicadas no worktree `ayla-conversa-valor`; PEND-227 foi incorporada nesta frente; PEND-209 a PEND-211 já estão reivindicadas por outra frente; 024 e 025 reservadas por frentes ainda nao publicadas; PEND-202 reivindicada em commit e ainda sem ficha; 0076 e numero de MIGRACAO reservado — ver PEND-121.)***
 
 > Conferir contra `origin/main`, não contra o seu branch. Dois branches podem
 > reivindicar o mesmo número — o conflito de merge nesta linha é o alarme.
