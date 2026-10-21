@@ -155,7 +155,7 @@ substitui a prioridade atual de segurança nem a análise de produção.
 | [PEND-106](#pend-106) | O rastro do conhecimento não cobre o WhatsApp desde o rollout de 17/08 | P1 | MEDIDA — CORREÇÃO NÃO IMPLEMENTADA |
 | [PEND-107](#pend-107) | Auditoria da Rotina contra o documento aprovado | P1 | A INVESTIGAR |
 | [PEND-108](#pend-108) | Auditoria do Plano contra o documento aprovado | P1 | A INVESTIGAR |
-| [PEND-109](#pend-109) | Central de Avisos no Admin — Trial · Pós-Trial · Todos | P1 | A INVESTIGAR |
+| [PEND-109](#pend-109) | Central de Avisos no Admin — Trial · Pós-Trial · Todos | P1 | EM IMPLEMENTAÇÃO PARCIAL — PR #148 rascunho; envio não liberado |
 | [PEND-110](#pend-110) | Satisfação no D3 — perguntar, guardar e usar | P2 | DEFINIDA — NÃO CONSTRUÍDA |
 | [PEND-111](#pend-111) | Indicação — não existe, e o D3 pressupõe que exista | P2 | DECISÃO DE PRODUTO PENDENTE |
 | [PEND-112](#pend-112) | Recuperação dos Trials expirados | P1 | POPULAÇÃO MEDIDA — CAMPANHA NÃO DISPARADA |
@@ -5487,7 +5487,7 @@ STATUS: **A INVESTIGAR** · Aberta em: 2026-08-19
 ### PEND-109
 **Central de Avisos no Admin — Trial · Pós-Trial · Todos**
 Bloco: **G · Comercial** · Prioridade: **P1** · **ORDEM DA FRENTE: —**
-STATUS: **A INVESTIGAR** · Aberta em: 2026-08-19
+STATUS: **EM IMPLEMENTAÇÃO PARCIAL — PR #148 rascunho; envio não liberado** · Aberta em: 2026-08-19
 
 > **Auditoria de código em 20/10/2026, SHA `25e8891`:** já existe `/admin/campanhas` com campo de texto, categorias, seleção cumulativa de segmentos, simulação, aprovação e botão de envio. Ainda não é a central segura pedida pela Karina. Não há “todos cadastrados”; `assinante` (`status=active`) não separa pagante de cortesia; seleção vazia volta ao público padrão. O botão tenta enviar até **200 mensagens na própria requisição** e o cron até **500 por execução**. Não existe pausa do envio em curso; `cancelarCampanha` a recusa. Preparação e atualização de resultados ignoram erros de escrita. A cadência geral da Ayla não substitui uma reserva durável por campanha e destinatário. **Não usar “Disparar” na Black Friday antes de corrigir e provar estes portões.**
 
