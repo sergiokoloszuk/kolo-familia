@@ -119,7 +119,7 @@ export default async function CampanhaDetalhePage(
             <CardTitle className="text-base">Andamento do disparo</CardTitle>
           </CardHeader>
           <CardContent className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-4">
-            <Estat label="Entregues" value={agregados.enviada} />
+            <Estat label="Aceitas para envio" value={agregados.enviada} />
             <Estat label="Bloqueadas" value={agregados.bloqueada} />
             <Estat label="Falhas" value={agregados.falha} />
             <Estat label="Pendentes" value={agregados.pendente} />

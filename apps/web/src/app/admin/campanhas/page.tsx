@@ -65,12 +65,14 @@ export default async function AdminCampanhasPage() {
             aprovadora.
           </p>
         </div>
-        <Link
-          href="/admin/campanhas/nova"
-          className={cn(buttonVariants({ size: "sm" }))}
-        >
-          <Plus aria-hidden="true" className="size-4" /> Nova campanha
-        </Link>
+        <div className="flex flex-wrap gap-2">
+          <Link href="/admin/campanhas/publicos" className={cn(buttonVariants({ size: "sm", variant: "outline" }))}>
+            Ver contatos por grupo
+          </Link>
+          <Link href="/admin/campanhas/nova" className={cn(buttonVariants({ size: "sm" }))}>
+            <Plus aria-hidden="true" className="size-4" /> Nova campanha
+          </Link>
+        </div>
       </header>
 
       {campanhas && campanhas.length > 0 ? (
@@ -90,7 +92,7 @@ export default async function AdminCampanhasPage() {
                         locale: ptBR,
                       })}
                       {c.status === "enviada" &&
-                        ` · ${c.total_alcance ?? 0} entregues, ${c.total_bloqueados ?? 0} bloqueados`}
+                        ` · ${c.total_alcance ?? 0} aceitas para envio, ${c.total_bloqueados ?? 0} bloqueadas`}
                     </p>
                   </div>
                   <Badge

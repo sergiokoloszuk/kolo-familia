@@ -72,7 +72,7 @@ PEND-092 → 017 → 098 → 093 → 094 → 095 → 039 → 042 → 097 → 099
 substitui a prioridade atual de segurança nem a análise de produção.
 
 <!-- PENDENCIAS-INDEX:START -->
-Índice completo gerado de 182 fichas neste arquivo. A ficha é a fonte do estado; não edite as linhas abaixo à mão. Para atualizar: `node scripts/pendencias-index.mjs --write`.
+Índice completo gerado de 183 fichas neste arquivo. A ficha é a fonte do estado; não edite as linhas abaixo à mão. Para atualizar: `node scripts/pendencias-index.mjs --write`.
 
 | ID | Pendência | Prioridade | Estado da ficha |
 |---|---|---|---|
@@ -155,7 +155,7 @@ substitui a prioridade atual de segurança nem a análise de produção.
 | [PEND-106](#pend-106) | O rastro do conhecimento não cobre o WhatsApp desde o rollout de 17/08 | P1 | MEDIDA — CORREÇÃO NÃO IMPLEMENTADA |
 | [PEND-107](#pend-107) | Auditoria da Rotina contra o documento aprovado | P1 | A INVESTIGAR |
 | [PEND-108](#pend-108) | Auditoria do Plano contra o documento aprovado | P1 | A INVESTIGAR |
-| [PEND-109](#pend-109) | Central de Avisos no Admin — Trial · Pós-Trial · Todos | P1 | A INVESTIGAR |
+| [PEND-109](#pend-109) | Central de Avisos no Admin — Trial · Pós-Trial · Todos | P1 | EM IMPLEMENTAÇÃO PARCIAL — PR #148 rascunho; envio não liberado |
 | [PEND-110](#pend-110) | Satisfação no D3 — perguntar, guardar e usar | P2 | DEFINIDA — NÃO CONSTRUÍDA |
 | [PEND-111](#pend-111) | Indicação — não existe, e o D3 pressupõe que exista | P2 | DECISÃO DE PRODUTO PENDENTE |
 | [PEND-112](#pend-112) | Recuperação dos Trials expirados | P1 | POPULAÇÃO MEDIDA — CAMPANHA NÃO DISPARADA |
@@ -258,6 +258,7 @@ substitui a prioridade atual de segurança nem a análise de produção.
 | [PEND-229](#pend-229) | Qualidade, profundidade e concisão da conversa da Ayla no WhatsApp | P1 | EM PRODUÇÃO — prova conversacional e latência ponta a ponta pendentes |
 | [PEND-230](#pend-230) | Confirmações sociais reabrem orientação e alongam a conversa | P1 | PUBLICADA · PROVA NATURAL PENDENTE |
 | [PEND-231](#pend-231) | Condução adaptativa no WhatsApp: descobrir possibilidades, perguntar o mínimo e aprender com o retorno | P1 | PENDENTE — missão de desenho; nenhuma oferta nova ou cadência de avaliação implementada |
+| [PEND-241](#pend-241) | CI vermelho em testes da Ayla bloqueia publicação de frentes independentes | P1 | CORRIGIDA NO PR #148 · CI VERDE · NÃO INTEGRADA |
 <!-- PENDENCIAS-INDEX:END -->
 
 ---
@@ -5486,7 +5487,17 @@ STATUS: **A INVESTIGAR** · Aberta em: 2026-08-19
 ### PEND-109
 **Central de Avisos no Admin — Trial · Pós-Trial · Todos**
 Bloco: **G · Comercial** · Prioridade: **P1** · **ORDEM DA FRENTE: —**
-STATUS: **A INVESTIGAR** · Aberta em: 2026-08-19
+STATUS: **EM IMPLEMENTAÇÃO PARCIAL — PR #148 rascunho; envio não liberado** · Aberta em: 2026-08-19
+
+> **Auditoria de código em 20/10/2026, SHA `25e8891`:** já existe `/admin/campanhas` com campo de texto, categorias, seleção cumulativa de segmentos, simulação, aprovação e botão de envio. Ainda não é a central segura pedida pela Karina. Não há “todos cadastrados”; `assinante` (`status=active`) não separa pagante de cortesia; seleção vazia volta ao público padrão. O botão tenta enviar até **200 mensagens na própria requisição** e o cron até **500 por execução**. Não existe pausa do envio em curso; `cancelarCampanha` a recusa. Preparação e atualização de resultados ignoram erros de escrita. A cadência geral da Ayla não substitui uma reserva durável por campanha e destinatário. **Não usar “Disparar” na Black Friday antes de corrigir e provar estes portões.**
+
+> **Pedido de 20/10:** redigir mensagem, escolher públicos cumulativos (todos cadastrados, pagantes, trial, etc.), ver alcance e exclusões, aprovar, enviar gradualmente, pausar/cancelar pendentes e auditar cada destinatário. No Admin, Karina também descreve o que quer comunicar e pode pedir à IA uma redação com blocos, respiro e negritos; pode pedir ajustes, editar e aprovar o texto exato. A sugestão nunca envia sozinha. Aceitar links diretos de **Instagram, YouTube e páginas da Kolo** no texto, com prévia e teste de destino; não prometer miniatura automática no WhatsApp. Arquivos exigem upload privado, revisão de tipo/tamanho/permissão e prova de aceite/entrega quando o provedor informar; abertura do arquivo não é comprovável pelo envio. O sender atual de campanha só chama `enviarTexto`; `enviarDocumento` existe em outros fluxos, mas não está integrado à central. Mensagens de vídeo, encontro e promoção têm categorias próprias. “Todos” nunca ignora pedido de parada ou opt-out; pagantes são excluídos da promoção de novembro, não de toda comunicação futura.
+
+> **Consentimento — achado e decisão em 20/10:** o opt-in nos dois onboardings é para a Ayla acompanhar pelo WhatsApp; Configurações oferece opt-out de ofertas, mas não foi localizado opt-in inicial separado. Karina decidiu que ela própria define texto, categoria, públicos e disparo no Admin; não criar bloqueio promocional novo por inferência do agente. A lacuna deve ser mostrada, a decisão/autorização da campanha registrada e os pedidos de parada/opt-outs respeitados. Não apresentar aceite da Ayla como prova de oferta nem reclassificar promoção como aviso operacional.
+
+> **Execução parcial em 20/10, ainda não publicada:** criada no código a página Admin somente de leitura para ver contatos por grupo. Ela separa cortesia, trial válido/vencido, cancelamento solicitado/efetivo e `past_due` com/sem carimbo de cobrança; a listagem exige Admin e falha se alguma consulta falhar. Sete verificações funcionais isoladas passaram, mas instalação de dependências/build local ficaram indisponíveis no ambiente; CI e produção ainda não foram provados. O envio, agendamento, seleção “todos cadastrados”, opção de rodapé e opt-out global **não foram implementados**. Não baixar PEND-109 por esta fatia.
+
+> **Fatia adicional local em 20/10, ainda não publicada:** formulário sem público pré-marcado; seleção vazia é recusada, leituras de assinatura/preferências são paginadas/conferidas, e há sugestão de redação pela IA com pedido de ajuste e cópia explícita para o texto final. Três arquivos de testes locais somaram 30 verificações aprovadas. O briefing não persiste, a IA não foi exercida ao vivo, o typecheck/build deste checkout não foi comprovado e o envio continua sem fila segura. Nada disso libera “Disparar”; PEND-109 permanece aberta.
 
 > Nasce da campanha de recuperação de 18/08, que ficou **não disparada** por
 > falta exatamente disto: não existe jeito seguro de mandar uma mensagem para
@@ -10988,7 +10999,22 @@ temas e frequência de avaliação. Não alterar a flag como parte deste registr
 
 ---
 
-**Proximo ID livre: PEND-232. *(PEND-225, PEND-226 e PEND-228 estão reivindicadas no worktree `ayla-conversa-valor`; PEND-227 foi incorporada nesta frente; PEND-209 a PEND-211 já estão reivindicadas por outra frente; 024 e 025 reservadas por frentes ainda nao publicadas; PEND-202 reivindicada em commit e ainda sem ficha; 0076 e numero de MIGRACAO reservado — ver PEND-121.)***
+### PEND-241
+**CI vermelho em testes da Ayla bloqueia publicação de frentes independentes**
+Bloco: **H · Engenharia / Qualidade** · Prioridade: **P1**
+STATUS: **CORRIGIDA NO PR #148 · CI VERDE · NÃO INTEGRADA** · Aberta em: 2026-10-20
+
+**EVIDÊNCIA (20–21/10).** O [CI do PR #148](https://github.com/sergiokoloszuk/kolo-familia/actions/runs/39620345352) no commit `d6edb59` passou por instalação, typegen e typecheck, mas parou nos testes unitários; build foi pulado. As anotações apontam `src/lib/ayla/experimental-onboarding.test.ts` (resumo de sono incluiu informação antiga) e `src/lib/ayla/memoria-pertinente.test.ts` (186 caracteres contra teto de 160). A consulta ao log completo exige permissão de administrador do repositório; não inferir contagens totais deste run. O PR altera o Admin de campanhas, não esses módulos. Isso sugere falha de baseline ou interação indireta; ainda não está comprovado qual.
+
+**CORREÇÃO RECONCILIADA EM 21/10.** O commit já validado `1d4dfd1` foi aplicado isoladamente ao PR #148 como `2dfc7f3`, alterando somente três testes. As duas asserções de contexto passaram a medir o conteúdo sem contar o carimbo temporal já produzido pelo código; o teste do provider passou a simular a resposta HTTP e restaurar o ambiente, sem depender de rede ou chave local. Nesta worktree, os três testes que bloqueavam o CI e os três testes da Central somaram **85/85 aprovados**; `git diff --check` passou. O typecheck local ficou inconclusivo porque o checkout isolado não tinha o typegen gravável, não por erro novo atribuído ao patch. O [CI #39641057859](https://github.com/sergiokoloszuk/kolo-familia/actions/runs/39641057859), no SHA `2dfc7f3173d308d84c97fc0d1c1718c218ecd2f6`, concluiu com sucesso em 21/10, incluindo índice, instalação, typegen, typecheck, testes e build. A prévia da Vercel também concluiu. Isso remove o bloqueio de CI do PR, mas não autoriza merge, produção ou envio: a central continua bloqueada pelos portões próprios da PEND-109 e pelo backup da PEND-092.
+
+**PRÓXIMO PASSO:** revisar e integrar o PR somente quando os portões funcionais da PEND-109 permitirem; depois conferir o SHA servido. Não confundir CI verde com central pronta ou envio autorizado.
+
+**CRITÉRIO DE CONCLUSÃO:** correção integrada à `main` e SHA servido conferido. Os testes afetados e o CI completo já estão verdes no commit do PR.
+
+---
+
+**Proximo ID livre: PEND-233. *(PEND-225, PEND-226 e PEND-228 estão reivindicadas no worktree `ayla-conversa-valor`; PEND-227 foi incorporada nesta frente; PEND-209 a PEND-211 já estão reivindicadas por outra frente; 024 e 025 reservadas por frentes ainda nao publicadas; PEND-202 reivindicada em commit e ainda sem ficha; 0076 e numero de MIGRACAO reservado — ver PEND-121.)***
 
 > Conferir contra `origin/main`, não contra o seu branch. Dois branches podem
 > reivindicar o mesmo número — o conflito de merge nesta linha é o alarme.
