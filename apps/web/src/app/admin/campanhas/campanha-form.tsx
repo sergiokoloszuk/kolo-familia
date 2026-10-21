@@ -6,10 +6,10 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { saveCampanha, type SaveCampanhaInput } from "./actions";
+import { RespostaMarkdown } from "@/components/resposta-markdown";
+import { saveCampanha, sugerirRedacaoCampanha, type SaveCampanhaInput } from "./actions";
 import {
   SEGMENTOS_ASSINATURA,
-  SEGMENTOS_DEFAULT,
 } from "@/lib/admin/campanha-target";
 
 const CATEGORIAS = [
@@ -40,14 +40,18 @@ export function CampanhaForm({ inicial }: { inicial: CampanhaInicial }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [erro, setErro] = useState<string | null>(null);
+  const [objetivo, setObjetivo] = useState("");
+  const [ajuste, setAjuste] = useState("");
+  const [sugestao, setSugestao] = useState<string | null>(null);
   const [form, setForm] = useState<SaveCampanhaInput>({
     id: inicial.id,
     titulo: inicial.titulo ?? "",
     categoria: inicial.categoria ?? "informacional",
     canais: inicial.canais ?? ["whatsapp"],
-    segmentacao: inicial.segmentacao ?? {
-      assinatura: [...SEGMENTOS_DEFAULT],
-      exigir_consentimento_ayla: true,
+    segmentacao: {
+      ...inicial.segmentacao,
+      assinatura: inicial.segmentacao?.assinatura ?? [],
+      exigir_consentimento_ayla: inicial.segmentacao?.exigir_consentimento_ayla ?? true,
     },
     conteudo_whatsapp: inicial.conteudo_whatsapp ?? "",
     conteudo_email_assunto: inicial.conteudo_email_assunto ?? "",
@@ -97,6 +101,23 @@ export function CampanhaForm({ inicial }: { inicial: CampanhaInicial }) {
         else router.refresh();
       } catch (e) {
         setErro(e instanceof Error ? e.message : "Erro inesperado");
+      }
+    });
+  }
+
+  function pedirSugestao(aprimorar: boolean) {
+    setErro(null);
+    startTransition(async () => {
+      try {
+        const resultado = await sugerirRedacaoCampanha({
+          objetivo,
+          textoAtual: aprimorar ? (sugestao ?? form.conteudo_whatsapp ?? "") : undefined,
+          ajuste: aprimorar ? ajuste : undefined,
+        });
+        setSugestao(resultado.texto);
+        setAjuste("");
+      } catch (e) {
+        setErro(e instanceof Error ? e.message : "Não foi possível sugerir a redação.");
       }
     });
   }
@@ -167,20 +188,62 @@ export function CampanhaForm({ inicial }: { inicial: CampanhaInicial }) {
       </div>
 
       {form.canais.includes("whatsapp") && (
-        <div className="flex flex-col gap-1.5">
-          <Label htmlFor="ww">Conteúdo WhatsApp</Label>
-          <textarea
-            id="ww"
-            rows={6}
-            value={form.conteudo_whatsapp ?? ""}
-            onChange={(e) => set("conteudo_whatsapp", e.target.value)}
-            placeholder="Texto que vai pra cada família. Pode usar quebras de linha."
-            className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-          />
-          <p className="text-xs text-muted-foreground">
-            {(form.conteudo_whatsapp ?? "").length} caracteres
-          </p>
-        </div>
+        <>
+          <section className="flex flex-col gap-3 rounded-lg border bg-muted/20 p-4" aria-label="Ajuda para redigir">
+            <div>
+              <h2 className="text-sm font-semibold">Conte para a IA o que você quer comunicar</h2>
+              <p className="text-xs text-muted-foreground">Ela sugere a redação; você revisa, edita ou pede ajustes. Nada é enviado daqui.</p>
+            </div>
+            <textarea
+              value={objetivo}
+              onChange={(e) => setObjetivo(e.target.value)}
+              rows={4}
+              maxLength={3000}
+              aria-label="Objetivo e informações da mensagem"
+              placeholder="Ex.: Convide as famílias para o programa de amanhã às 9h30 na Vibe Mundial, sobre respiração. Inclua o link que informei. Tom acolhedor e direto."
+              className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+            />
+            <Button type="button" variant="outline" disabled={pending || objetivo.trim().length < 10} onClick={() => pedirSugestao(false)}>
+              {pending ? "Preparando..." : "Sugerir redação"}
+            </Button>
+            {sugestao && (
+              <div className="flex flex-col gap-3 rounded-md border bg-white p-3">
+                <p className="text-xs font-semibold">Sugestão para revisar — ainda não é o texto final</p>
+                <RespostaMarkdown
+                  texto={sugestao.replace(/\*([^*\n]+)\*/g, "**$1**")}
+                  className="flex flex-col gap-2 text-sm"
+                />
+                <label className="flex flex-col gap-1 text-xs">
+                  O que quer ajustar?
+                  <Input value={ajuste} onChange={(e) => setAjuste(e.target.value)} maxLength={1000} placeholder="Ex.: mais curto, mais caloroso, destaque o horário" />
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  <Button type="button" variant="outline" disabled={pending || !ajuste.trim()} onClick={() => pedirSugestao(true)}>Pedir ajuste</Button>
+                  <Button type="button" disabled={pending} onClick={() => {
+                    if (form.conteudo_whatsapp?.trim() && !confirm("Substituir o texto atual pela sugestão?")) return;
+                    set("conteudo_whatsapp", sugestao);
+                    setSugestao(null);
+                  }}>Usar esta redação</Button>
+                </div>
+              </div>
+            )}
+          </section>
+
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="ww">Texto final para WhatsApp — editável</Label>
+            <textarea
+              id="ww"
+              rows={6}
+              value={form.conteudo_whatsapp ?? ""}
+              onChange={(e) => set("conteudo_whatsapp", e.target.value)}
+              placeholder="Escreva ou aprove uma sugestão. Pode usar blocos e quebras de linha."
+              className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+            />
+            <p className="text-xs text-muted-foreground">
+              {(form.conteudo_whatsapp ?? "").length} caracteres. Confira datas, valores e links antes de aprovar a campanha.
+            </p>
+          </div>
+        </>
       )}
 
       <fieldset className="flex flex-col gap-3 rounded-md border bg-muted/20 p-3">
@@ -193,6 +256,7 @@ export function CampanhaForm({ inicial }: { inicial: CampanhaInicial }) {
 
         <div className="flex flex-col gap-1.5">
           <Label>Quem recebe</Label>
+          <p className="text-xs text-muted-foreground">Escolha ao menos um grupo antes de simular ou enviar. Nenhum grupo vem marcado automaticamente.</p>
           <div className="flex flex-col gap-1.5 text-sm">
             {STATUS_ASSINATURA.map((s) => (
               <label key={s.value} className="flex items-start gap-1.5">
@@ -222,7 +286,7 @@ export function CampanhaForm({ inicial }: { inicial: CampanhaInicial }) {
               })
             }
           />
-          Apenas famílias com consentimento ativo da Ayla
+          Apenas famílias com consentimento ativo da Ayla (filtro legado)
         </label>
       </fieldset>
 

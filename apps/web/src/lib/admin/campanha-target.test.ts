@@ -1,9 +1,10 @@
 import { describe, it, expect } from "vitest";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import {
   segmentoDa,
   normalizarSegmentos,
+  resolveDestinatarios,
   SEGMENTOS_ASSINATURA,
-  SEGMENTOS_DEFAULT,
   type SegmentoAssinatura,
 } from "./campanha-target";
 import { trialValido } from "@/lib/auth/assinatura";
@@ -26,6 +27,61 @@ const DAQUI_A_3_DIAS = new Date(AGORA + 3 * DIA).toISOString();
 const linha = (status: string | null, trial_ends_at: string | null = null) => ({
   status,
   trial_ends_at,
+});
+
+describe("resolução segura de destinatários", () => {
+  type Assinatura = { family_account_id: string; status: string; trial_ends_at: string | null };
+  const simularBanco = (
+    assinaturas: Assinatura[],
+    prefs: string[],
+    falha?: "assinaturas" | "preferencias",
+  ) => ({
+    from(tabela: string) {
+      let filtrados = prefs;
+      const query = {
+        select() { return query; },
+        in(campo: string, valores: string[]) {
+          if (campo === "family_account_id") filtrados = prefs.filter((id) => valores.includes(id));
+          return query;
+        },
+        order() { return query; },
+        range(inicio: number, fim: number) {
+          if (falha === "assinaturas") return Promise.resolve({ data: null, error: { message: "indisponível" } });
+          return Promise.resolve({ data: assinaturas.slice(inicio, fim + 1), error: null });
+        },
+        not() { return query; },
+        eq() {
+          if (falha === "preferencias") return Promise.resolve({ data: null, error: { message: "indisponível" } });
+          return Promise.resolve({ data: filtrados.map((family_account_id) => ({ family_account_id })), error: null });
+        },
+      };
+      if (tabela !== "subscription_accesses" && tabela !== "ayla_preferences") throw new Error("Tabela inesperada");
+      return query;
+    },
+  }) as unknown as SupabaseClient;
+
+  it("recusa público não escolhido, antes de consultar o banco", async () => {
+    await expect(resolveDestinatarios(simularBanco([], []), { assinatura: [] }))
+      .rejects.toThrow("Selecione explicitamente");
+  });
+
+  it("falha de leitura de assinatura não vira alcance zero", async () => {
+    await expect(resolveDestinatarios(simularBanco([], [], "assinaturas"), { assinatura: ["assinante"] }))
+      .rejects.toThrow("Falha ao conferir assinaturas");
+  });
+
+  it("falha de leitura de preferências não vira alcance zero", async () => {
+    const a = [{ family_account_id: "f1", status: "active", trial_ends_at: null }];
+    await expect(resolveDestinatarios(simularBanco(a, ["f1"], "preferencias"), { assinatura: ["assinante"] }))
+      .rejects.toThrow("Falha ao conferir consentimentos");
+  });
+
+  it("percorre mais de uma página e devolve IDs únicos", async () => {
+    const a = Array.from({ length: 501 }, (_, i) => ({ family_account_id: `f${i}`, status: "active", trial_ends_at: null }));
+    const ids = a.map((x) => x.family_account_id);
+    await expect(resolveDestinatarios(simularBanco(a, ids), { assinatura: ["assinante"] }))
+      .resolves.toHaveLength(501);
+  });
 });
 
 describe("segmento: o trial decide, não o status", () => {
@@ -103,14 +159,9 @@ describe("campanha de retomada tem público próprio", () => {
 });
 
 describe("compatibilidade: rascunho antigo não quebra em silêncio", () => {
-  it("segmentação vazia usa o default", () => {
-    expect(normalizarSegmentos(undefined)).toEqual(SEGMENTOS_DEFAULT);
-    expect(normalizarSegmentos([])).toEqual(SEGMENTOS_DEFAULT);
-  });
-
-  it("o default NÃO inclui trial vencido — quem quer retomada pede explicitamente", () => {
-    expect(SEGMENTOS_DEFAULT).not.toContain("trial_vencido");
-    expect(SEGMENTOS_DEFAULT).toContain("em_teste");
+  it("segmentação vazia não herda destinatários", () => {
+    expect(normalizarSegmentos(undefined)).toEqual([]);
+    expect(normalizarSegmentos([])).toEqual([]);
   });
 
   it("valores antigos são traduzidos, e a tradução só ESTREITA o público", () => {

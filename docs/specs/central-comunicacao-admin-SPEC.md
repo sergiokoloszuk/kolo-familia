@@ -2,7 +2,7 @@
 
 **Dona de produto:** Karina. **Risco:** CRÍTICO — WhatsApp proativo, dados de famílias e campanha comercial. **Estado em 20/10/2026:** desenho; nenhuma mensagem enviada e nenhum botão de produção alterado. **Pendência-mãe:** PEND-109. A campanha de novembro é um uso desta central, não uma segunda fila.
 
-**Achado de consentimento em 20/10 (código, não auditoria de produção):** os dois onboardings registram autorização para a **Ayla escrever e acompanhar pelo WhatsApp**, não uma escolha explícita de receber ofertas da Kolo. A tela de Configurações tem opt-out de “Ofertas e descontos”, mas ausência de opt-out não comprova autorização inicial. Não foi localizado campo/timestamp de opt-in promocional. Karina também não sabe onde estaria outra prova. Portanto, a campanha promocional por WhatsApp permanece bloqueada por destinatário até a origem dessa permissão ser encontrada ou a pessoa optar por recebê-la. Avisos de serviço e promoção não devem ser classificados como a mesma coisa para contornar este portão.
+**Achado de consentimento em 20/10 (código, não auditoria de produção):** os dois onboardings registram autorização para a **Ayla escrever e acompanhar pelo WhatsApp**; não foi localizado campo/timestamp separado para ofertas. **Decisão de produto de Karina:** ela define no Admin o conteúdo, a categoria, os públicos e o disparo; não criar um bloqueio promocional novo por inferência do agente. A central deve mostrar essa lacuna e registrar a decisão e a autorização da campanha, sem fingir que o aceite da Ayla prova aceite de oferta. Pedidos de parar e bloqueios já registrados continuam respeitados.
 
 ## A conversa vai mudar de → para
 
@@ -24,9 +24,11 @@ Entrada visível no Admin: **Comunicações → Nova comunicação**. Seleções
 
 ## P3 · Conteúdo e dados mínimos
 
-Karina escolhe o motivo: **conteúdo/vídeo**, **encontro**, **promoção** ou **aviso operacional**. O tipo determina consentimento, opt-out e cadência; não é uma forma de contornar restrições. Editor com títulos, linhas em branco, negrito WhatsApp e prévia após `paraWhatsApp`. Links diretos de Instagram, YouTube ou Kolo podem ser colados; o Admin valida URL HTTPS, exibe domínio/destino e não promete miniatura automática. Anexos da primeira versão: PDF, PNG e JPEG, com nome, tamanho, prévia e verificação de acesso antes do envio. Vídeo entra por link nesta versão. Arquivo é armazenado com acesso restrito e link temporário acessível ao provedor no momento do envio. Não inserir dados de criança na mensagem geral por padrão; personalização só com campos permitidos e prova de identidade.
+Karina escolhe o motivo: **conteúdo/vídeo**, **encontro**, **promoção** ou **aviso operacional**. O tipo classifica a comunicação e aplica os opt-outs existentes; a decisão de enviar pertence à operadora no Admin. Editor com títulos, linhas em branco, negrito WhatsApp e prévia após `paraWhatsApp`. Links diretos de Instagram, YouTube ou Kolo podem ser colados; o Admin valida URL HTTPS, exibe domínio/destino e não promete miniatura automática. Anexos da primeira versão: PDF, PNG e JPEG, com nome, tamanho, prévia e verificação de acesso antes do envio. Vídeo entra por link nesta versão. Arquivo é armazenado com acesso restrito e link temporário acessível ao provedor no momento do envio. Não inserir dados de criança na mensagem geral por padrão; personalização só com campos permitidos e prova de identidade.
 
 **Decisão de Karina em 20/10:** no formulário de envio, ela escreve a mensagem, escolhe dia e hora de início (Brasília), seleciona os públicos e decide se marca uma **caixa opcional** para acrescentar ao final a informação de como parar de receber. A caixa inicia desmarcada; o texto final aparece na prévia e é congelado na aprovação. A ausência dessa frase não desativa o processamento de pedidos de parada nem substitui a prova de permissão inicial. O agendamento só pode aparecer como ativo se o cron respeitar a hora e se a fila segura estiver provada.
+
+**Redação assistida, pedida em 20/10:** Karina pode escrever em linguagem livre o que quer comunicar, pedir uma sugestão com blocos, respiro e negritos adequados ao WhatsApp, solicitar ajustes sucessivos, editar o texto final e só então aprová-lo. Sugestão não salva, aprova ou envia por conta própria. A IA não pode inventar data, preço, oferta ou link; links novos são rejeitados antes de apresentar a sugestão. O texto aprovado deve ser o texto congelado para a campanha, não uma nova geração na hora do envio. A primeira fatia local usa o prompt `campanha_redacao` com fallback e apenas produz a sugestão; persistência do briefing e prévia final ainda exigem prova.
 
 ## P4 · Jornada e canais
 
@@ -41,7 +43,7 @@ O aceite da Z-API não é prova de entrega ao aparelho nem de leitura. Abrir um 
 
 ## P5 · Identidade, alvo e permissão
 
-Uma linha única por `campanha_id + family_account_id`. Antes de cada reserva, revalidar família, telefone, estado de assinatura, consentimento específico para a categoria, opt-out e pausa. Para promoções, consentimento de uso da Ayla não deve ser tratado sozinho como autorização promocional; comprovar a fonte da permissão ou excluir. Ex-assinante com conta apagada não entra em “todos cadastrados”; o caso excepcional de retorno de novembro exige fluxo próprio e prova de contato/consentimento. Não selecionar por criança, nem misturar irmãos numa mensagem geral. Admin autenticado pode redigir; autorização de envio real é separada.
+Uma linha única por `campanha_id + family_account_id`. Antes de cada reserva, revalidar família, telefone, estado de assinatura e pedido de não receber/opt-out; falha de consulta bloqueia, não equivale a autorização. O Admin registra quem decidiu disparar e os públicos escolhidos. Não tratar consentimento de uso da Ayla como prova automática de aceite promocional, nem criar um bloqueio adicional de ofertas que Karina não aprovou. Ex-assinante com conta apagada não entra em “todos cadastrados”; o caso excepcional de retorno de novembro exige fluxo próprio. Não selecionar por criança, nem misturar irmãos numa mensagem geral. Admin autenticado pode redigir; autorização de envio real é separada.
 
 ## P6 · Continuidade
 

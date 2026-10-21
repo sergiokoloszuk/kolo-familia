@@ -258,7 +258,7 @@ substitui a prioridade atual de segurança nem a análise de produção.
 | [PEND-229](#pend-229) | Qualidade, profundidade e concisão da conversa da Ayla no WhatsApp | P1 | EM PRODUÇÃO — prova conversacional e latência ponta a ponta pendentes |
 | [PEND-230](#pend-230) | Confirmações sociais reabrem orientação e alongam a conversa | P1 | PUBLICADA · PROVA NATURAL PENDENTE |
 | [PEND-231](#pend-231) | Condução adaptativa no WhatsApp: descobrir possibilidades, perguntar o mínimo e aprender com o retorno | P1 | PENDENTE — missão de desenho; nenhuma oferta nova ou cadência de avaliação implementada |
-| [PEND-232](#pend-232) | CI vermelho em testes da Ayla bloqueia publicação de frentes independentes | P1 | PENDENTE — investigar baseline; não atribuir causa sem reprodução |
+| [PEND-241](#pend-241) | CI vermelho em testes da Ayla bloqueia publicação de frentes independentes | P1 | PENDENTE — investigar baseline; não atribuir causa sem reprodução |
 <!-- PENDENCIAS-INDEX:END -->
 
 ---
@@ -5491,11 +5491,13 @@ STATUS: **A INVESTIGAR** · Aberta em: 2026-08-19
 
 > **Auditoria de código em 20/10/2026, SHA `25e8891`:** já existe `/admin/campanhas` com campo de texto, categorias, seleção cumulativa de segmentos, simulação, aprovação e botão de envio. Ainda não é a central segura pedida pela Karina. Não há “todos cadastrados”; `assinante` (`status=active`) não separa pagante de cortesia; seleção vazia volta ao público padrão. O botão tenta enviar até **200 mensagens na própria requisição** e o cron até **500 por execução**. Não existe pausa do envio em curso; `cancelarCampanha` a recusa. Preparação e atualização de resultados ignoram erros de escrita. A cadência geral da Ayla não substitui uma reserva durável por campanha e destinatário. **Não usar “Disparar” na Black Friday antes de corrigir e provar estes portões.**
 
-> **Pedido de 20/10:** redigir mensagem, escolher públicos cumulativos (todos cadastrados, pagantes, trial, etc.), ver alcance e exclusões, aprovar, enviar gradualmente, pausar/cancelar pendentes e auditar cada destinatário. Aceitar links diretos de **Instagram, YouTube e páginas da Kolo** no texto, com prévia e teste de destino; não prometer miniatura automática no WhatsApp. Arquivos exigem upload privado, revisão de tipo/tamanho/permissão e prova de aceite/entrega quando o provedor informar; abertura do arquivo não é comprovável pelo envio. O sender atual de campanha só chama `enviarTexto`; `enviarDocumento` existe em outros fluxos, mas não está integrado à central. Mensagens de vídeo, encontro e promoção têm categorias e consentimentos próprios. “Todos” nunca ignora opt-out ou demais travas; pagantes são excluídos da promoção de novembro, não de toda comunicação futura.
+> **Pedido de 20/10:** redigir mensagem, escolher públicos cumulativos (todos cadastrados, pagantes, trial, etc.), ver alcance e exclusões, aprovar, enviar gradualmente, pausar/cancelar pendentes e auditar cada destinatário. No Admin, Karina também descreve o que quer comunicar e pode pedir à IA uma redação com blocos, respiro e negritos; pode pedir ajustes, editar e aprovar o texto exato. A sugestão nunca envia sozinha. Aceitar links diretos de **Instagram, YouTube e páginas da Kolo** no texto, com prévia e teste de destino; não prometer miniatura automática no WhatsApp. Arquivos exigem upload privado, revisão de tipo/tamanho/permissão e prova de aceite/entrega quando o provedor informar; abertura do arquivo não é comprovável pelo envio. O sender atual de campanha só chama `enviarTexto`; `enviarDocumento` existe em outros fluxos, mas não está integrado à central. Mensagens de vídeo, encontro e promoção têm categorias próprias. “Todos” nunca ignora pedido de parada ou opt-out; pagantes são excluídos da promoção de novembro, não de toda comunicação futura.
 
-> **Consentimento — achado em 20/10:** o opt-in nos dois onboardings é para a Ayla acompanhar pelo WhatsApp; Configurações oferece opt-out de ofertas, mas não foi localizado opt-in inicial separado nem prova de autorização promocional por destinatário. Karina não sabe onde outra prova estaria. **G0/G1 da promoção em WhatsApp bloqueados** até localizar evidência verificável ou captar escolha específica. A central pode avançar como rascunho/simulação e oferecer avisos conforme a permissão aplicável; não reclassificar promoção como aviso operacional.
+> **Consentimento — achado e decisão em 20/10:** o opt-in nos dois onboardings é para a Ayla acompanhar pelo WhatsApp; Configurações oferece opt-out de ofertas, mas não foi localizado opt-in inicial separado. Karina decidiu que ela própria define texto, categoria, públicos e disparo no Admin; não criar bloqueio promocional novo por inferência do agente. A lacuna deve ser mostrada, a decisão/autorização da campanha registrada e os pedidos de parada/opt-outs respeitados. Não apresentar aceite da Ayla como prova de oferta nem reclassificar promoção como aviso operacional.
 
 > **Execução parcial em 20/10, ainda não publicada:** criada no código a página Admin somente de leitura para ver contatos por grupo. Ela separa cortesia, trial válido/vencido, cancelamento solicitado/efetivo e `past_due` com/sem carimbo de cobrança; a listagem exige Admin e falha se alguma consulta falhar. Sete verificações funcionais isoladas passaram, mas instalação de dependências/build local ficaram indisponíveis no ambiente; CI e produção ainda não foram provados. O envio, agendamento, seleção “todos cadastrados”, opção de rodapé e opt-out global **não foram implementados**. Não baixar PEND-109 por esta fatia.
+
+> **Fatia adicional local em 20/10, ainda não publicada:** formulário sem público pré-marcado; seleção vazia é recusada, leituras de assinatura/preferências são paginadas/conferidas, e há sugestão de redação pela IA com pedido de ajuste e cópia explícita para o texto final. Três arquivos de testes locais somaram 30 verificações aprovadas. O briefing não persiste, a IA não foi exercida ao vivo, o typecheck/build deste checkout não foi comprovado e o envio continua sem fila segura. Nada disso libera “Disparar”; PEND-109 permanece aberta.
 
 > Nasce da campanha de recuperação de 18/08, que ficou **não disparada** por
 > falta exatamente disto: não existe jeito seguro de mandar uma mensagem para
@@ -10997,7 +10999,7 @@ temas e frequência de avaliação. Não alterar a flag como parte deste registr
 
 ---
 
-### PEND-232
+### PEND-241
 **CI vermelho em testes da Ayla bloqueia publicação de frentes independentes**
 Bloco: **H · Engenharia / Qualidade** · Prioridade: **P1**
 STATUS: **PENDENTE — investigar baseline; não atribuir causa sem reprodução** · Aberta em: 2026-10-20

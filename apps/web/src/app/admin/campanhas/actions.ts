@@ -15,6 +15,15 @@ import {
 } from "@/lib/ayla/orchestrator";
 import { podeEnviarProativa } from "@/lib/ayla/rules";
 import type { AylaTipoProativa } from "@/lib/ayla/types";
+import { getSystemPrompt } from "@/lib/ai/prompts";
+import { MODELS } from "@/lib/ia/anthropic";
+import { gerarConversacional } from "@/lib/ia/provider";
+import { logarUsoApi } from "@/lib/billing/logar";
+import {
+  PROMPT_REDACAO_CAMPANHA,
+  montarPedidoRedacaoCampanha,
+  validarSugestaoCampanha,
+} from "@/lib/admin/redacao-campanha";
 
 const categoriaEnum = z.enum([
   "informacional",
@@ -61,6 +70,39 @@ const campanhaSchema = z.object({
 });
 
 export type SaveCampanhaInput = z.infer<typeof campanhaSchema>;
+
+const redacaoSchema = z.object({
+  objetivo: z.string().trim().min(10).max(3000),
+  textoAtual: z.string().max(4000).optional(),
+  ajuste: z.string().trim().max(1000).optional(),
+});
+
+/** Só sugere texto ao Admin; não salva campanha nem envia WhatsApp. */
+export async function sugerirRedacaoCampanha(
+  input: z.infer<typeof redacaoSchema>,
+): Promise<{ texto: string }> {
+  await requireAdmin();
+  const pedido = redacaoSchema.parse(input);
+  const resposta = await gerarConversacional({
+    provider: "anthropic",
+    model: MODELS.principal,
+    system: await getSystemPrompt("campanha_redacao", PROMPT_REDACAO_CAMPANHA),
+    messages: [{ role: "user", content: montarPedidoRedacaoCampanha(pedido) }],
+    maxTokens: 1200,
+  });
+  await logarUsoApi(createServiceRoleClient(), {
+    provider: "anthropic",
+    model: resposta.model,
+    feature: "admin_redacao_campanha",
+    input_tokens: resposta.tokensIn,
+    output_tokens: resposta.tokensOut,
+    meta: { motivo_de_parada: resposta.motivoDeParada },
+  });
+  if (resposta.motivoDeParada === "max_tokens" || resposta.motivoDeParada === "length") {
+    throw new Error("A sugestão veio incompleta. Peça uma nova redação.");
+  }
+  return { texto: validarSugestaoCampanha(resposta.texto, pedido) };
+}
 
 export async function saveCampanha(
   input: SaveCampanhaInput,
@@ -206,12 +248,12 @@ export type SimulacaoCampanha = {
 
 export async function simularCampanha(id: string): Promise<SimulacaoCampanha> {
   const { supabase } = await requireAdmin();
-  const { data: c } = await supabase
+  const { data: c, error: campanhaError } = await supabase
     .from("campanhas")
     .select("categoria, segmentacao")
     .eq("id", id)
     .single();
-  if (!c) throw new Error("Campanha não encontrada.");
+  if (campanhaError || !c) throw new Error("Campanha não encontrada ou indisponível para simulação.");
 
   // Service role pra simular sem RLS atrapalhar (mesmas queries do envio)
   const admin = createServiceRoleClient();
@@ -230,12 +272,13 @@ export async function simularCampanha(id: string): Promise<SimulacaoCampanha> {
   for (const familyId of familias) {
     // Opt-out (operacional não tem opt-out)
     if (c.categoria !== "operacional") {
-      const { data: optout } = await admin
+      const { data: optout, error: optoutError } = await admin
         .from("categorias_optout")
         .select("id")
         .eq("family_account_id", familyId)
         .eq("categoria", c.categoria)
         .maybeSingle();
+      if (optoutError) throw new Error("Não foi possível conferir as preferências de contato; simulação bloqueada.");
       if (optout) {
         bloqueados++;
         bloqueios.optout = (bloqueios.optout ?? 0) + 1;
