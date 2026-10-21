@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RespostaMarkdown } from "@/components/resposta-markdown";
+import { paraWhatsApp } from "@/lib/ayla/apresentacao";
 import { saveCampanha, sugerirRedacaoCampanha, type SaveCampanhaInput } from "./actions";
 import {
   SEGMENTOS_ASSINATURA,
@@ -22,6 +23,11 @@ const CATEGORIAS = [
 // Os segmentos e suas definições vêm da MESMA fonte que resolve o público —
 // rótulo na tela e regra no código não podem divergir.
 const STATUS_ASSINATURA = SEGMENTOS_ASSINATURA;
+
+/** Reusa a normalização do envio; o renderizador Web exibe o asterisco do WhatsApp como negrito. */
+function textoParaPrevia(texto: string): string {
+  return paraWhatsApp(texto).replace(/\*([^*\n]+)\*/g, "**$1**");
+}
 
 export type CampanhaInicial = {
   id?: string;
@@ -210,21 +216,23 @@ export function CampanhaForm({ inicial }: { inicial: CampanhaInicial }) {
               <div className="flex flex-col gap-3 rounded-md border bg-white p-3">
                 <p className="text-xs font-semibold">Sugestão para revisar — ainda não é o texto final</p>
                 <RespostaMarkdown
-                  texto={sugestao.replace(/\*([^*\n]+)\*/g, "**$1**")}
+                  texto={textoParaPrevia(sugestao)}
                   className="flex flex-col gap-2 text-sm"
                 />
-                <label className="flex flex-col gap-1 text-xs">
-                  O que quer ajustar?
-                  <Input value={ajuste} onChange={(e) => setAjuste(e.target.value)} maxLength={1000} placeholder="Ex.: mais curto, mais caloroso, destaque o horário" />
-                </label>
                 <div className="flex flex-wrap gap-2">
-                  <Button type="button" variant="outline" disabled={pending || !ajuste.trim()} onClick={() => pedirSugestao(true)}>Pedir ajuste</Button>
                   <Button type="button" disabled={pending} onClick={() => {
                     if (form.conteudo_whatsapp?.trim() && !confirm("Substituir o texto atual pela sugestão?")) return;
                     set("conteudo_whatsapp", sugestao);
                     setSugestao(null);
                   }}>Usar esta redação</Button>
                 </div>
+              </div>
+            )}
+            {(sugestao || form.conteudo_whatsapp?.trim()) && (
+              <div className="flex flex-col gap-2 text-xs">
+                <Label htmlFor="ajuste-redacao">O que você quer ajustar na sugestão ou no texto atual?</Label>
+                <Input id="ajuste-redacao" value={ajuste} onChange={(e) => setAjuste(e.target.value)} maxLength={1000} placeholder="Ex.: mais curto, mais caloroso, destaque o horário" />
+                <Button type="button" variant="outline" disabled={pending || !ajuste.trim() || objetivo.trim().length < 10} onClick={() => pedirSugestao(true)}>Pedir ajuste à IA</Button>
               </div>
             )}
           </section>
@@ -242,6 +250,12 @@ export function CampanhaForm({ inicial }: { inicial: CampanhaInicial }) {
             <p className="text-xs text-muted-foreground">
               {(form.conteudo_whatsapp ?? "").length} caracteres. Confira datas, valores e links antes de aprovar a campanha.
             </p>
+            {form.conteudo_whatsapp?.trim() && (
+              <div className="rounded-md border bg-white p-3">
+                <p className="mb-2 text-xs font-semibold">Prévia do texto final no formato WhatsApp</p>
+                <RespostaMarkdown texto={textoParaPrevia(form.conteudo_whatsapp)} className="flex flex-col gap-2 text-sm" />
+              </div>
+            )}
           </div>
         </>
       )}
