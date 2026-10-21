@@ -258,7 +258,7 @@ substitui a prioridade atual de segurança nem a análise de produção.
 | [PEND-229](#pend-229) | Qualidade, profundidade e concisão da conversa da Ayla no WhatsApp | P1 | EM PRODUÇÃO — prova conversacional e latência ponta a ponta pendentes |
 | [PEND-230](#pend-230) | Confirmações sociais reabrem orientação e alongam a conversa | P1 | PUBLICADA · PROVA NATURAL PENDENTE |
 | [PEND-231](#pend-231) | Condução adaptativa no WhatsApp: descobrir possibilidades, perguntar o mínimo e aprender com o retorno | P1 | PENDENTE — missão de desenho; nenhuma oferta nova ou cadência de avaliação implementada |
-| [PEND-241](#pend-241) | CI vermelho em testes da Ayla bloqueia publicação de frentes independentes | P1 | PENDENTE — investigar baseline; não atribuir causa sem reprodução |
+| [PEND-241](#pend-241) | CI vermelho em testes da Ayla bloqueia publicação de frentes independentes | P1 | CORRIGIDA NO PR #148 · CI VERDE · NÃO INTEGRADA |
 <!-- PENDENCIAS-INDEX:END -->
 
 ---
@@ -11002,13 +11002,15 @@ temas e frequência de avaliação. Não alterar a flag como parte deste registr
 ### PEND-241
 **CI vermelho em testes da Ayla bloqueia publicação de frentes independentes**
 Bloco: **H · Engenharia / Qualidade** · Prioridade: **P1**
-STATUS: **PENDENTE — investigar baseline; não atribuir causa sem reprodução** · Aberta em: 2026-10-20
+STATUS: **CORRIGIDA NO PR #148 · CI VERDE · NÃO INTEGRADA** · Aberta em: 2026-10-20
 
 **EVIDÊNCIA (20–21/10).** O [CI do PR #148](https://github.com/sergiokoloszuk/kolo-familia/actions/runs/39620345352) no commit `d6edb59` passou por instalação, typegen e typecheck, mas parou nos testes unitários; build foi pulado. As anotações apontam `src/lib/ayla/experimental-onboarding.test.ts` (resumo de sono incluiu informação antiga) e `src/lib/ayla/memoria-pertinente.test.ts` (186 caracteres contra teto de 160). A consulta ao log completo exige permissão de administrador do repositório; não inferir contagens totais deste run. O PR altera o Admin de campanhas, não esses módulos. Isso sugere falha de baseline ou interação indireta; ainda não está comprovado qual.
 
-**PRÓXIMO PASSO:** executar os mesmos testes no SHA-base `25e8891daf1e0d5bd881512e6f128742fdcd0184`, comparar resultado e causa, corrigir em missão própria se reproduzirem na base ou no PR se forem regressão. Não contornar o CI nem declarar produção pronta antes de teste, build e smoke passarem.
+**CORREÇÃO RECONCILIADA EM 21/10.** O commit já validado `1d4dfd1` foi aplicado isoladamente ao PR #148 como `2dfc7f3`, alterando somente três testes. As duas asserções de contexto passaram a medir o conteúdo sem contar o carimbo temporal já produzido pelo código; o teste do provider passou a simular a resposta HTTP e restaurar o ambiente, sem depender de rede ou chave local. Nesta worktree, os três testes que bloqueavam o CI e os três testes da Central somaram **85/85 aprovados**; `git diff --check` passou. O typecheck local ficou inconclusivo porque o checkout isolado não tinha o typegen gravável, não por erro novo atribuído ao patch. O [CI #39641057859](https://github.com/sergiokoloszuk/kolo-familia/actions/runs/39641057859), no SHA `2dfc7f3173d308d84c97fc0d1c1718c218ecd2f6`, concluiu com sucesso em 21/10, incluindo índice, instalação, typegen, typecheck, testes e build. A prévia da Vercel também concluiu. Isso remove o bloqueio de CI do PR, mas não autoriza merge, produção ou envio: a central continua bloqueada pelos portões próprios da PEND-109 e pelo backup da PEND-092.
 
-**CRITÉRIO DE CONCLUSÃO:** causa comprovada com comparação base/PR, testes afetados verdes e CI completo verde no commit a publicar.
+**PRÓXIMO PASSO:** revisar e integrar o PR somente quando os portões funcionais da PEND-109 permitirem; depois conferir o SHA servido. Não confundir CI verde com central pronta ou envio autorizado.
+
+**CRITÉRIO DE CONCLUSÃO:** correção integrada à `main` e SHA servido conferido. Os testes afetados e o CI completo já estão verdes no commit do PR.
 
 ---
 
