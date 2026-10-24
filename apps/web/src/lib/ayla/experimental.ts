@@ -76,7 +76,7 @@ import {
   IDIOMA_DA_CONVERSA,
   notaDeProporcao,
 } from "@/lib/conducao/formas";
-import { FATOS_COMERCIAIS } from "@/lib/billing/fatos-comerciais";
+import { fatosComerciaisParaFamilia } from "@/lib/billing/fatos-comerciais";
 import {
   ehPerguntaComercial,
   precisaDeHumano,
@@ -1029,7 +1029,7 @@ export async function responderExperimental(
         params.membroPreferidoId,
       ),
     );
-    const [ctxTurno, core, bps, estadoTrial, evidencias, docTrial] = await Promise.all([
+    const [ctxTurno, core, bps, estadoTrial, evidencias, docTrial, fatosComerciais] = await Promise.all([
       ctxP,
       cron("core", resolverDocumento(supabase, "core", params.rascunhoCore ?? null)),
       skillsDoTurno.length
@@ -1057,6 +1057,7 @@ export async function responderExperimental(
       // já escolheu. Não decide o dia, não conta dias, não agenda nada — quem
       // faz isso é `lerEstadoTrial` e o código das proativas.
       semJornada ? Promise.resolve(null) : cron("trial_doc", resolverDocumento(supabase, "trial")),
+      fatosComerciaisParaFamilia(supabase, params.familyId),
     ]);
     // ⚠️ `msParalelo` CARREGA O SIGNIFICADO ANTIGO de `msBp` — o bloco inteiro —
     // para que a série histórica continue comparável. `msBp` passa a ser o que
@@ -1156,7 +1157,7 @@ export async function responderExperimental(
         ? await linkComercialAutenticado(supabase, params.familyId, "pos_trial")
         : null;
     const comercial = [
-      FATOS_COMERCIAIS,
+      fatosComerciais,
       linkComercial !== null ? notaComercial(linkComercial) : "",
       precisaDeHumano(params.mensagem) ? notaSuporte() : "",
     ]

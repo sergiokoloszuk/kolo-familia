@@ -163,11 +163,11 @@ substitui a prioridade atual de segurança nem a análise de produção.
 | [PEND-114](#pend-114) | WhatsApp obrigatório antes de iniciar o Trial | P1 | AGUARDANDO DECISÃO COM A AGÊNCIA |
 | [PEND-115](#pend-115) | A Ayla não sabe o preço — e o caminho novo perdeu o bloco que respondia | P0 | PUBLICADA · AGUARDANDO VALIDAÇÃO EM CONVERSA REAL |
 | [PEND-117](#pend-117) | Stack Supabase: CPU anormal e seis serviços ausentes | P1 ALTA | MEDIDA — CAUSA DESCONHECIDA |
-| [PEND-118](#pend-118) | DUNNING_DELETE_ENABLED não existe — a exclusão prometida não executa | P1 ALTA | PROVADA — NÃO CORRIGIDA |
+| [PEND-118](#pend-118) | DUNNING_DELETE_ENABLED não existe — a exclusão prometida não executa | P1 ALTA | CORREÇÃO LOCAL PREPARADA · NÃO PUBLICADA · NÃO ATIVADA |
 | [PEND-119](#pend-119) | Aplicar migração é manual, e o PostgREST não recarrega o schema sozinho | P1 | PROVADA — NÃO CORRIGIDA |
 | [PEND-120](#pend-120) | .env.local de desenvolvimento aponta para preços que não valem mais | P3 | ABERTA |
 | [PEND-121](#pend-121) | Migração 0076 espera o branch do Plano Kolo | P2 | AGUARDANDO BRANCH |
-| [PEND-122](#pend-122) | Termos e Privacidade não descrevem a política real de cancelamento e retenção | P1 | ABERTA |
+| [PEND-122](#pend-122) | Termos e Privacidade não descrevem a política real de cancelamento e retenção | P1 | REDAÇÃO E FLUXOS PREPARADOS LOCALMENTE · VALIDAÇÃO JURÍDICA/PRODUÇÃO PENDENTE |
 | [PEND-123](#pend-123) | Assinatura anômala: active com cancel_at_period_end e período vencido | P2 | MEDIDA — NÃO DIAGNOSTICADA |
 | [PEND-124](#pend-124) | configuracao_geral não existe em produção — migração 0068 nunca aplicada | P2 | MEDIDA — IMPACTO NÃO PROVADO |
 | [PEND-125](#pend-125) | 31% dos cadastros nunca confirmam o e-mail e nunca entram | P0 | MEDIDA — CAUSA NÃO ISOLADA |
@@ -3858,6 +3858,22 @@ Aberta em: 2026-08-08 · Origem: consolidação da PEND-010 (itens 23, 24, 25) +
   paralelo**. Liga-se a PEND-001 e PEND-002, já publicadas.
 - **Admin:** ADMIN PRECISA DE AJUSTE — acompanhar a jornada e a conversão por
   família. O funil já separa "em teste × trial vencido" (PEND-008, concluída).
+- **BLACK FRIDAY 2026 — contrato aprovado e implementação local em 24/10,
+  NÃO PUBLICADA:** campanha pública de 01/11/2026 00:00 a 30/11/2026 23:59
+  (Brasília); 15 dias completos de trial, sem cartão e sem cobrança automática;
+  R$ 39,90/mês (`price_1UTQfzPAH1xSrJeSwmrOEor2`); anual oculto; compra durante
+  o trial preserva os dias e cobra depois; oferta individual termina no fim do
+  dia mais tardio entre 30/11 e o fim do trial, **sem sete dias adicionais**;
+  checkout iniciado no prazo tem 30 minutos. Trials ativos recebem 15 dias
+  totais; trial encerrado e ex-assinante podem ativar uma vez; pagantes,
+  cortesias e cobrança em recuperação ficam fora. O código, Admin, checkout,
+  webhook, termos e consentimentos foram preparados na branch
+  `codex/black-friday-2026-core`, com chave desligada por padrão. Prova local:
+  134/134 testes dirigidos, lint dirigido e typecheck sem erro. Build completo local ficou sem
+  veredito porque o ambiente não validou o certificado das fontes Google; CI ainda
+  deve provar. Migrações 0096/0097 não aplicadas; nenhum envio, cobrança ou
+  deploy. Produção segue **BLOQUEADA** por PEND-092, CI/preview, QA isolado e
+  autorização expressa do Gate 8.
 - **Critério de conclusão:** DESEJADO aprovado; investigação ATUAL × DESEJADO
   com o número de conversão de antes.
 - **Agente recomendado:** PROPOR
@@ -4875,6 +4891,11 @@ Aberta em: 2026-08-18 · Origem: aplicação da migração 0071 (BIA)
   Backup **BLOQUEIA**: importação de corpus · gravação em massa · nova
   migração ou DDL · mudança de estrutura de dados · qualquer operação com
   risco real para produção.
+- **Bloqueio acrescido em 24/10/2026:** as migrações 0096 (Black Friday) e 0097
+  (aceites, marketing e exclusão agendada) foram somente escritas. Não aplicar,
+  não ativar campanha e não ligar exclusão real antes de backup externo com
+  restauração testada e prova registrada. A implementação falha fechada e chega
+  desligada, mas isso não substitui o portão.
 - **Dependente direta: PEND-095** (importar os 1.120 chunks) — a primeira
   gravação em massa que este banco vai receber.
 - **Agente recomendado:** PROPOR
@@ -5510,6 +5531,12 @@ STATUS: **A INVESTIGAR** · Aberta em: 2026-08-19
   escrito por que essas não serviram.
 - **Regra que vale desde já:** disparo para família real exige **autorização
   explícita do Sérgio**, campanha a campanha. Canário antes de lote.
+- **Avanço local da Black Friday em 24/10/2026, sem envio:** a página específica
+  do Admin confere o preço, estado, migração e prova de backup e pode ativar ou
+  pausar somente a regra comercial. Ela **não substitui esta Central** e não tem
+  botão de disparo. O envio promocional passou a exigir aceite positivo para
+  novidades e promoções; ausência de opt-out não basta. Fila gradual, canário,
+  pausa de mensagens e relatório por contato continuam abertos nesta ficha.
 - **CRITÉRIO DE BAIXA:** uma campanha real enviada por lotes, com pausa
   exercitada, sem envio duplicado e com o relatório por família.
 
@@ -6197,7 +6224,7 @@ desligado sem `docker stats` + backup externo verificado.
 ### PEND-118
 **`DUNNING_DELETE_ENABLED` não existe — a exclusão prometida não executa**
 Bloco: **G · Comercial** · Prioridade: **P1 ALTA**
-STATUS: **PROVADA — NÃO CORRIGIDA** · Aberta em: 2026-08-20
+STATUS: **CORREÇÃO LOCAL PREPARADA · NÃO PUBLICADA · NÃO ATIVADA** · Aberta em: 2026-08-20
 
 > A Kolo promete a uma mãe, na tela, que os dados dela serão apagados num
 > prazo — e o mecanismo que apagaria está desligado. Ninguém foi prejudicado;
@@ -6221,6 +6248,15 @@ STATUS: **PROVADA — NÃO CORRIGIDA** · Aberta em: 2026-08-20
 - **DUAS SAÍDAS, e a escolha é de produto:** ligar a exclusão (com isenção de
   staff antes), **ou** corrigir o texto para o que o sistema de fato faz.
   Prometer e não cumprir é o pior dos três estados.
+- **Avanço local em 24/10/2026:** exclusão solicitada durante período pago foi
+  separada do cancelamento e passa a ser agendada para o fim do acesso; sem
+  período pago, pode ocorrer imediatamente. A rotina de retenção da Black Friday
+  apaga não assinantes 30 dias depois do prazo individual. As duas rotinas
+  chegam em `dry-run` e exigem flags próprias; `CRON_SECRET` agora falha fechado.
+  Falha ao cancelar no Stripe impede a exclusão, evitando cobrança viva sem
+  conta. **Não dar baixa:** migração 0097 não aplicada, flags não configuradas,
+  isenção de staff ainda precisa de teste explícito, e não houve ensaio destrutivo
+  em conta fictícia após backup.
 - **CRITÉRIO DE CONCLUSÃO:** tela e comportamento dizendo a mesma coisa, com a
   decisão registrada e — se a exclusão for ligada — isenção de staff coberta
   por teste.
@@ -6305,7 +6341,7 @@ STATUS: **AGUARDANDO BRANCH** · Aberta em: 2026-08-20
 ### PEND-122
 **Termos e Privacidade não descrevem a política real de cancelamento e retenção**
 Bloco: **F · Limites** · Prioridade: **P1**
-STATUS: **ABERTA** · Aberta em: 2026-08-20
+STATUS: **REDAÇÃO E FLUXOS PREPARADOS LOCALMENTE · VALIDAÇÃO JURÍDICA/PRODUÇÃO PENDENTE** · Aberta em: 2026-08-20
 
 - **O QUE OS DOCUMENTOS DIZEM HOJE — VI NO CÓDIGO.** Termos §7
   (`app/(public)/termos/page.tsx`) diz apenas que o usuário poderá solicitar o
@@ -6324,6 +6360,15 @@ STATUS: **ABERTA** · Aberta em: 2026-08-20
 - **Cuidado registrado:** se a tela disser que os dados são apagados numa data
   e o sistema guardar mais 7 dias, é a Privacidade que precisa declarar o prazo
   real.
+- **Avanço local em 24/10/2026:** Termos, Privacidade, Cookies e Regulamento da
+  Black Friday foram alinhados às decisões V2 conhecidas; razão social, CNPJ,
+  endereço e suporte foram preenchidos. Cancelar assinatura foi separado de
+  excluir conta; aceite de Termos/Privacidade ganhou versão e histórico; o
+  marketing ganhou escolha opcional positiva e revogável; cookies ficaram em
+  aceitar ou rejeitar os não essenciais. A integração usa APIs comerciais de
+  Anthropic e OpenAI, cujas políticas oficiais declaram não treinar por padrão,
+  mas ainda falta comprovar que as contas da Kolo não aderiram a compartilhamento
+  opcional, revisar DPA/contratos e validar fornecedores/backup. Nada publicado.
 - **CRITÉRIO DE CONCLUSÃO:** Termos e Privacidade descrevendo cancelamento, fim
   do período pago, exclusão, retenção após trial, retenção após falha de
   pagamento e os registros técnicos que permanecem.
@@ -6469,6 +6514,11 @@ STATUS: **MEDIDA — NÃO CORRIGIDA** · Aberta em: 2026-08-21
   documento.
 - **⚠️ BLOQUEIA A EXCLUSÃO AUTOMÁTICA (PEND-118).** Apagar dados ao fim de um
   teste que 94% nunca soube que existia é indefensável.
+- **Black Friday 2026 não fecha esta ficha:** o código local aumenta a duração
+  elegível para 15 dias e registra participação/conversão, mas não cria sozinho
+  a experiência útil D0–D15 nem prova que a Ayla entregou valor. Antes de ligar
+  retenção destrutiva, a jornada e a exportação precisam de QA isolado; flags de
+  exclusão permanecem desligadas.
 - **CRITÉRIO DE CONCLUSÃO:** uma coorte real percorrendo D0→D7 com registro de
   avaliação em todos os dias — prova longitudinal de 8 dias, não retrato de um
   dia.

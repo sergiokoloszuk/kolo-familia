@@ -4,6 +4,7 @@ import { criarCheckoutFiscal } from "@/lib/fiscal/checkout";
 import { dadosFiscaisSchema, primeiraMensagemDeErro } from "@/lib/fiscal/dados";
 import { trackFeature } from "@/lib/analytics/track";
 import { logServerError } from "@/lib/log";
+import { resolverOfertaDaFamilia } from "@/lib/billing/oferta-familia";
 
 /**
  * Compatibilidade com o cliente antigo. Usa a mesma porta fiscal da tela:
@@ -58,17 +59,27 @@ export async function POST(request: NextRequest) {
   }
 
   try {
+    const ofertaBlackFriday = await resolverOfertaDaFamilia(supabase);
     const origin = request.headers.get("origin") ?? process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
     const checkout = await criarCheckoutFiscal({
       familyId: family.id,
       origin,
       stripeCustomerId: (subAcc?.stripe_customer_id as string | null) ?? null,
       dados: parsed.data,
+      ofertaBlackFriday,
+      registrarCheckoutBlackFriday: ofertaBlackFriday ? async (sessionId) => {
+        const { data, error } = await supabase.rpc("registrar_meu_checkout_black_friday_2026", {
+          p_session_id: sessionId,
+          p_iniciado_em: ofertaBlackFriday.checkoutIniciadoEm,
+          p_expira_em: ofertaBlackFriday.checkoutExpiraEm,
+        });
+        return !error && data === true;
+      } : undefined,
     });
     await trackFeature({
       familyId: family.id,
       evento: "checkout_iniciado",
-      detalhe: { plano: checkout.plano, fiscal: true },
+      detalhe: { plano: checkout.plano, fiscal: true, black_friday_2026: Boolean(ofertaBlackFriday) },
     });
     return NextResponse.json({ url: checkout.url });
   } catch (e) {

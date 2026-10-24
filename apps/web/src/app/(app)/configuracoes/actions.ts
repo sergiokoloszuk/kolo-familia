@@ -72,3 +72,19 @@ export async function alterarOptOut(input: z.infer<typeof optoutSchema>): Promis
 
   revalidatePath("/configuracoes");
 }
+
+const marketingSchema = z.object({ aceitar: z.boolean() });
+
+export async function alterarConsentimentoMarketing(
+  input: z.infer<typeof marketingSchema>,
+): Promise<void> {
+  const { aceitar } = marketingSchema.parse(input);
+  const { supabase } = await requireFamily();
+  const { data, error } = await supabase.rpc("alterar_meu_consentimento_marketing", {
+    p_aceitar: aceitar,
+  });
+  if (error) throw new Error(`Falha ao salvar: ${error.message}`);
+  if (!data) throw new Error("Família não inicializada.");
+
+  revalidatePath("/configuracoes");
+}

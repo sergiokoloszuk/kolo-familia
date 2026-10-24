@@ -128,8 +128,9 @@ export default async function MinhaContaPage() {
             Excluir minha conta
           </CardTitle>
           <CardDescription>
-            Isso não tem volta: apaga todos os seus registros, cancela a
-            assinatura e encerra o acesso.
+            Isso não tem volta. Sem período pago, os dados são apagados agora.
+            Com período pago, a renovação é cancelada e a exclusão ocorre ao
+            final do acesso, para que você possa exportar o que precisa antes.
           </CardDescription>
         </CardHeader>
         <CardContent>
