@@ -19,7 +19,7 @@ export function ExcluirContaForm() {
     }
     if (
       !confirm(
-        "Isso é irreversível. Vou apagar sua conta, todos os registros e cancelar a assinatura. Continuar?",
+        "Isso é irreversível. Se houver período pago, a renovação será cancelada e a exclusão ocorrerá ao final dele. Sem período pago, os dados serão apagados agora. Continuar?",
       )
     )
       return;
@@ -60,7 +60,7 @@ export function ExcluirContaForm() {
           variant="destructive"
           disabled={pending || confirmacao !== "EXCLUIR"}
         >
-          {pending ? "Excluindo..." : "Excluir minha conta"}
+          {pending ? "Processando..." : "Excluir minha conta"}
         </Button>
       </div>
     </form>

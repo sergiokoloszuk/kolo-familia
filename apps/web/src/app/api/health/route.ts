@@ -6,6 +6,9 @@ import { alvoDaEscritaDoExtrator } from "@/lib/ayla/extrator-escrita";
 import { aprofundamentoGlobalLigado } from "@/lib/ayla/aprofundamento-tipos";
 import { planosWhatsappLigados } from "@/lib/ayla/plano-disponibilidade";
 import { lerPlanosNoStripe, PLANOS } from "@/lib/billing/planos";
+import { BLACK_FRIDAY_2026, janelaPublicaAberta } from "@/lib/billing/black-friday-2026";
+import { lerOfertaBlackFridayNoStripe } from "@/lib/billing/oferta-black-friday";
+import { lerEstadoBlackFriday, lerProvaBackupBlackFriday } from "@/lib/billing/estado-black-friday";
 
 /**
  * Health check: responde com latência do DB + presença das envs
@@ -152,6 +155,8 @@ export async function GET() {
   let db_ok = false;
   let db_latency_ms: number | null = null;
   let db_error: string | null = null;
+  let blackFridayEstado = "desligada";
+  let blackFridayBackupProvado = false;
 
   try {
     const supabase = createServiceRoleClient();
@@ -162,7 +167,15 @@ export async function GET() {
       .limit(1);
     db_latency_ms = Date.now() - t1;
     if (error) db_error = error.message;
-    else db_ok = true;
+    else {
+      db_ok = true;
+      const [estado, prova] = await Promise.all([
+        lerEstadoBlackFriday(supabase),
+        lerProvaBackupBlackFriday(supabase),
+      ]);
+      blackFridayEstado = estado;
+      blackFridayBackupProvado = Boolean(prova);
+    }
   } catch (e) {
     db_error = e instanceof Error ? e.message : "unknown";
   }
@@ -188,6 +201,20 @@ export async function GET() {
     ref: process.env.VERCEL_GIT_COMMIT_REF ?? null,
     ambiente: process.env.VERCEL_ENV ?? null,
   };
+  const ofertaBlackFriday = await lerOfertaBlackFridayNoStripe();
+  const black_friday_2026 = {
+    estado: blackFridayEstado,
+    janela_publica_aberta: janelaPublicaAberta(new Date()),
+    backup_restaurado_provado: blackFridayBackupProvado,
+    price_id: ofertaBlackFriday.priceId,
+    price_ok: ofertaBlackFriday.ok,
+    price_problema: ofertaBlackFriday.problema,
+    dias_trial: BLACK_FRIDAY_2026.diasTrial,
+    valor_centavos: BLACK_FRIDAY_2026.valorCentavos,
+    checkout_minutos: BLACK_FRIDAY_2026.checkoutSegundos / 60,
+    pronta_para_ativar:
+      db_ok && blackFridayBackupProvado && ofertaBlackFriday.ok && janelaPublicaAberta(new Date()),
+  };
 
   return NextResponse.json(
     {
@@ -197,6 +224,7 @@ export async function GET() {
       env,
       flags,
       planos,
+      black_friday_2026,
       total_ms,
       ts: new Date().toISOString(),
     },

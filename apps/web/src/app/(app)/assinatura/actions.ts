@@ -1,6 +1,7 @@
 "use server";
 
 import { headers } from "next/headers";
+import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { getStripeClient } from "@/lib/stripe/client";
 import { trackFeature } from "@/lib/analytics/track";
@@ -11,6 +12,7 @@ import {
   primeiraMensagemDeErro,
   type DadosFiscaisInput,
 } from "@/lib/fiscal/dados";
+import { resolverOfertaDaFamilia } from "@/lib/billing/oferta-familia";
 
 async function requireFamilyAndOrigin(): Promise<{
   familyId: string;
@@ -64,6 +66,7 @@ export async function iniciarCheckoutComDadosFiscais(
     const contexto = await requireFamilyAndOrigin();
     familyId = contexto.familyId;
     const supabase = await createClient();
+    const ofertaBlackFriday = await resolverOfertaDaFamilia(supabase);
     const { data: subAcc, error: subError } = await supabase
       .from("subscription_accesses")
       .select("stripe_customer_id")
@@ -76,11 +79,20 @@ export async function iniciarCheckoutComDadosFiscais(
       origin: contexto.origin,
       stripeCustomerId: (subAcc?.stripe_customer_id as string | null) ?? null,
       dados: validacao.data,
+      ofertaBlackFriday,
+      registrarCheckoutBlackFriday: ofertaBlackFriday ? async (sessionId) => {
+        const { data, error } = await supabase.rpc("registrar_meu_checkout_black_friday_2026", {
+          p_session_id: sessionId,
+          p_iniciado_em: ofertaBlackFriday.checkoutIniciadoEm,
+          p_expira_em: ofertaBlackFriday.checkoutExpiraEm,
+        });
+        return !error && data === true;
+      } : undefined,
     });
     await trackFeature({
       familyId,
       evento: "checkout_iniciado",
-      detalhe: { plano: checkout.plano, fiscal: true },
+      detalhe: { plano: checkout.plano, fiscal: true, black_friday_2026: Boolean(ofertaBlackFriday) },
     });
     return { ok: true, url: checkout.url };
   } catch (e) {
@@ -99,6 +111,26 @@ export async function iniciarCheckoutComDadosFiscais(
 export type PortalResult =
   | { ok: true; url: string }
   | { ok: false; error: string };
+
+export async function ativarMeuTrialBlackFriday(): Promise<void> {
+  // Autentica e resolve a família novamente dentro da própria Server Action.
+  await requireFamilyAndOrigin();
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("ativar_meu_trial_black_friday_2026");
+  if (error) throw new Error(`Não foi possível ativar o teste: ${error.message}`);
+  if (data !== "ativado") {
+    const mensagens: Record<string, string> = {
+      campanha_inativa: "A campanha não está aberta.",
+      fora_da_janela: "O período para ativar este teste terminou.",
+      ja_utilizou: "Este benefício já foi usado nesta conta.",
+      acesso_atual_nao_elegivel: "Sua conta já possui acesso ou pagamento em tratamento.",
+      trial_ja_em_curso: "Seu teste já está em andamento.",
+    };
+    throw new Error(mensagens[String(data)] ?? "Esta conta não está elegível para o novo teste.");
+  }
+  revalidatePath("/assinatura");
+  revalidatePath("/painel");
+}
 
 export async function abrirPortal(): Promise<PortalResult> {
   try {

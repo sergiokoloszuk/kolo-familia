@@ -25,11 +25,12 @@ export async function POST(request: NextRequest) {
 
 async function handle(request: NextRequest) {
   const expectedSecret = process.env.CRON_SECRET;
-  if (expectedSecret) {
-    const auth = request.headers.get("authorization");
-    if (auth !== `Bearer ${expectedSecret}`) {
-      return NextResponse.json({ error: "unauthorized" }, { status: 401 });
-    }
+  if (!expectedSecret) {
+    return NextResponse.json({ error: "CRON_SECRET não configurado" }, { status: 503 });
+  }
+  const auth = request.headers.get("authorization");
+  if (auth !== `Bearer ${expectedSecret}`) {
+    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
 
   const apagarDeVerdade = process.env.DUNNING_DELETE_ENABLED === "true";
@@ -61,13 +62,18 @@ async function handle(request: NextRequest) {
 
     if (!apagarDeVerdade) continue; // DRY-RUN: só lista
 
-    // Cancela a assinatura no Stripe (best-effort) antes de apagar.
+    // Cancela a assinatura no Stripe antes de apagar. Falha aqui interrompe a
+    // exclusão: nunca apagamos a conta deixando uma cobrança viva.
     const subId = a.stripe_subscription_id as string | null;
     if (subId) {
       try {
         await getStripeClient().subscriptions.cancel(subId);
-      } catch {
-        /* best-effort */
+      } catch (e) {
+        await logServerError("dunning_cancelar_stripe_falhou", e, {
+          user_id: userId,
+          family_account_id: familyId,
+        });
+        continue;
       }
     }
     // Registra que este e-mail/número já consumiu o teste (só o hash) — senão

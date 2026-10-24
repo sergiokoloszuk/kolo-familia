@@ -15,6 +15,7 @@ import {
   exigirFamiliaResolvida,
   avisarFamiliaNaoResolvida,
 } from "@/lib/stripe/acesso";
+import { BLACK_FRIDAY_2026 } from "@/lib/billing/black-friday-2026";
 
 /**
  * Webhook do Stripe — recebe eventos de assinatura e atualiza
@@ -143,9 +144,23 @@ async function onCheckoutSessionCompleted(
       : session.subscription?.id ?? null;
 
   let currentPeriodEnd: string | null = null;
+  let subscription: Stripe.Subscription | null = null;
   if (subscriptionId) {
-    const sub = await stripe.subscriptions.retrieve(subscriptionId);
-    currentPeriodEnd = isoFromUnix(getSubPeriodEnd(sub));
+    subscription = await stripe.subscriptions.retrieve(subscriptionId);
+    currentPeriodEnd = isoFromUnix(getSubPeriodEnd(subscription));
+  }
+
+  const blackFriday = session.metadata?.campanha === BLACK_FRIDAY_2026.chave;
+  if (blackFriday) {
+    const { data: participacao, error: participacaoError } = await admin
+      .from("black_friday_2026_participacoes")
+      .select("family_account_id, checkout_expira_em")
+      .eq("family_account_id", familyId)
+      .eq("checkout_session_id", session.id)
+      .maybeSingle();
+    if (participacaoError || !participacao) {
+      throw participacaoError ?? new Error("BF2026_CHECKOUT_NAO_REGISTRADO");
+    }
   }
 
   // Sessão concluída SEM pagamento (fluxo assíncrono ainda pendente) não
@@ -153,6 +168,7 @@ async function onCheckoutSessionCompleted(
   // `invoice.payment_succeeded` que vêm depois. Grava só o vínculo.
   const pago =
     session.payment_status === "paid" || session.payment_status === "no_payment_required";
+  const emTrialPromocional = blackFriday && subscription?.status === "trialing";
 
   const patch: Record<string, unknown> = {
     stripe_customer_id: customerId,
@@ -160,7 +176,10 @@ async function onCheckoutSessionCompleted(
     current_period_end: currentPeriodEnd,
     cancel_at_period_end: false,
   };
-  if (pago) {
+  if (emTrialPromocional) {
+    patch.status = "trialing";
+    patch.trial_ends_at = isoFromUnix(subscription?.trial_end ?? null);
+  } else if (pago) {
     patch.status = "active";
     // Regularizou pagando de novo → limpa o carimbo de dunning, senão a linha
     // fica active com carimbo antigo e o cron de exclusão pode encontrá-la
@@ -185,6 +204,26 @@ async function onCheckoutSessionCompleted(
     },
   );
 
+  if (blackFriday) {
+    const concluidoEm = new Date(event.created * 1000).toISOString();
+    await conferirEscrita(
+      admin
+        .from("black_friday_2026_participacoes")
+        .update({ checkout_concluido_em: concluidoEm, convertido_em: concluidoEm })
+        .eq("family_account_id", familyId)
+        .eq("checkout_session_id", session.id)
+        .select("family_account_id"),
+      {
+        kind: "black_friday_checkout_concluido",
+        familyId,
+        eventId: event.id,
+        eventType: event.type,
+        decisao: emTrialPromocional ? "preserva_trial" : "converte",
+        campos: ["checkout_concluido_em", "convertido_em"],
+      },
+    );
+  }
+
   // ⚠️ A AYLA RECEBE A FAMÍLIA — 27/08/2026. Depois da escrita CONFERIDA, e
   // nunca antes: mandar a mensagem sobre uma escrita que não pegou seria dizer
   // "sua assinatura já está ativa" para quem continua bloqueada.
@@ -192,7 +231,7 @@ async function onCheckoutSessionCompleted(
   // A função é segura de chamar sempre: ela mesma confere se está `active` e
   // se a família já foi recebida alguma vez. Não existe regra aqui — a regra
   // mora num lugar só, e o reconciliador chama a MESMA.
-  if (pago) await talvezReceberComoAssinante(admin, familyId);
+  if (pago && !emTrialPromocional) await talvezReceberComoAssinante(admin, familyId);
 }
 
 async function onSubscriptionChanged(
@@ -285,6 +324,48 @@ async function onSubscriptionDeleted(
     });
     return;
   }
+
+  // Na Black Friday a assinatura pode ser criada ainda durante os 15 dias
+  // gratuitos. Se a família cancelar antes da primeira cobrança, o Stripe
+  // apaga a assinatura — mas isso não pode apagar os dias gratuitos que ela
+  // já ganhou. A participação registrada no banco é a fonte dessa data.
+  if (sub.metadata?.campanha === BLACK_FRIDAY_2026.chave) {
+    const { data: participacao, error: participacaoError } = await admin
+      .from("black_friday_2026_participacoes")
+      .select("trial_fim_em")
+      .eq("family_account_id", familyId)
+      .maybeSingle();
+    if (participacaoError) throw participacaoError;
+
+    const trialFim = participacao?.trial_fim_em as string | null | undefined;
+    if (trialFim && new Date(trialFim).getTime() > Date.now()) {
+      const patch = {
+        status: "trialing",
+        trial_ends_at: trialFim,
+        stripe_subscription_id: null,
+        current_period_end: null,
+        cancel_at_period_end: false,
+      };
+      await conferirEscrita(
+        admin
+          .from("subscription_accesses")
+          .update(patch)
+          .eq("family_account_id", familyId)
+          .select("family_account_id"),
+        {
+          kind: "stripe_subscription_deleted_trial_black_friday_preservado",
+          familyId,
+          eventId: event.id,
+          eventType: event.type,
+          decisao: "preserva_trial",
+          campos: Object.keys(patch),
+          stripeStatus: sub.status,
+        },
+      );
+      return;
+    }
+  }
+
   // Cancelamento real: autoridade total, rebaixa inclusive quem está active.
   await conferirEscrita(
     admin

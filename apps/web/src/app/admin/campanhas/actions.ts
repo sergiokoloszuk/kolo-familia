@@ -228,6 +228,20 @@ export async function simularCampanha(id: string): Promise<SimulacaoCampanha> {
   const bloqueios: Record<string, number> = {};
 
   for (const familyId of familias) {
+    if (c.categoria === "promocional" || c.categoria === "informacional") {
+      const { data: familia } = await admin
+        .from("family_accounts")
+        .select("marketing_consentido_em")
+        .eq("id", familyId)
+        .maybeSingle();
+      if (!familia?.marketing_consentido_em) {
+        bloqueados++;
+        bloqueios.sem_consentimento_marketing =
+          (bloqueios.sem_consentimento_marketing ?? 0) + 1;
+        continue;
+      }
+    }
+
     // Opt-out (operacional não tem opt-out)
     if (c.categoria !== "operacional") {
       const { data: optout } = await admin

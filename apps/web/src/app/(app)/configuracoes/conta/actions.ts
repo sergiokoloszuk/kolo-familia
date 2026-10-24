@@ -159,8 +159,8 @@ const schema = z.object({
  * Exclui a conta da usuária — direito LGPD §18, V (eliminação).
  *
  * Ordem:
- *   1. Cancela subscription no Stripe se existir (best-effort — falha
- *      aqui não impede a deleção; evento fica em eventos_app).
+ *   1. Cancela subscription no Stripe se existir. Se o Stripe recusar,
+ *      interrompe: apagar a conta deixando uma cobrança viva é proibido.
  *   2. Deleta auth.users → cascateia para family_accounts e dependentes
  *      via ON DELETE CASCADE definido em 0001_init.sql.
  *   3. Loga evento.
@@ -177,15 +177,72 @@ export async function excluirContaAction(input: {
   const { user, supabase } = await requireUser();
   const { family } = await loadFamilyContext();
   const familyId = family?.id ?? null;
+  const admin = createServiceRoleClient();
 
-  // 1. Cancela subscription Stripe
+  // 1. Se há período pago vigente, cancela somente a renovação e agenda a
+  // exclusão para o fim do acesso. Assim a família pode exportar o histórico
+  // que já pagou para usar.
   if (familyId) {
     const { data: sub } = await supabase
       .from("subscription_accesses")
-      .select("stripe_subscription_id")
+      .select("status, stripe_subscription_id, current_period_end")
       .eq("family_account_id", familyId)
       .maybeSingle();
     const subId = sub?.stripe_subscription_id as string | null;
+    const fimPeriodo = sub?.current_period_end
+      ? new Date(sub.current_period_end as string)
+      : null;
+    const acessoPagoVigente = sub?.status === "active" && fimPeriodo &&
+      fimPeriodo.getTime() > Date.now();
+
+    if (subId && acessoPagoVigente) {
+      try {
+        const stripe = getStripeClient();
+        await stripe.subscriptions.update(subId, { cancel_at_period_end: true });
+      } catch (e) {
+        await logServerError("agendar_exclusao_stripe", e, {
+          family_account_id: familyId,
+          user_id: user.id,
+        });
+        throw new Error(
+          "Não consegui cancelar a renovação agora, então a exclusão não foi agendada. Tente novamente ou fale com o suporte.",
+        );
+      }
+
+      const { error: agendaError } = await admin
+        .from("exclusao_conta_solicitacoes")
+        .upsert({
+          family_account_id: familyId,
+          user_id: user.id,
+          solicitada_em: new Date().toISOString(),
+          executar_em: fimPeriodo.toISOString(),
+          status: "agendada",
+          tentativas: 0,
+          ultimo_erro: null,
+          updated_at: new Date().toISOString(),
+        }, { onConflict: "family_account_id" });
+      if (agendaError) {
+        await logServerError("agendar_exclusao_banco", agendaError, {
+          family_account_id: familyId,
+          user_id: user.id,
+        });
+        throw new Error(
+          "A renovação foi cancelada, mas não consegui agendar a exclusão dos dados. Fale com o suporte para concluirmos com segurança.",
+        );
+      }
+
+      await logEvent({
+        kind: "conta_exclusao_agendada",
+        severity: "warn",
+        user_id: user.id,
+        family_account_id: familyId,
+        message: `Exclusão agendada para ${fimPeriodo.toISOString()}, após o fim do acesso pago.`,
+      });
+      redirect("/configuracoes/conta?exclusao_agendada=1");
+    }
+
+    // Sem período pago vigente: cancela qualquer assinatura remanescente e
+    // só então prossegue para a eliminação imediata.
     if (subId) {
       try {
         const stripe = getStripeClient();
@@ -195,6 +252,9 @@ export async function excluirContaAction(input: {
           family_account_id: familyId,
           user_id: user.id,
         });
+        throw new Error(
+          "Não consegui cancelar a cobrança agora, então sua conta não foi apagada. Tente novamente ou fale com o suporte.",
+        );
       }
     }
   }
@@ -204,7 +264,6 @@ export async function excluirContaAction(input: {
   //    de verdade, e ninguém ganha outros 7 dias grátis recadastrando. O hash
   //    é calculado no banco (fonte única), não aqui, pra não haver divergência
   //    de normalização.
-  const admin = createServiceRoleClient();
   {
     const { data: conta } = familyId
       ? await admin

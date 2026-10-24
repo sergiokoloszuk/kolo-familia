@@ -7,6 +7,7 @@ const mocks = vi.hoisted(() => ({
   listTaxIds: vi.fn(),
   createTaxId: vi.fn(),
   sessionsCreate: vi.fn(),
+  sessionsExpire: vi.fn(),
 }));
 
 vi.mock("@/lib/billing/planos", () => ({
@@ -20,7 +21,7 @@ vi.mock("@/lib/stripe/client", () => ({
       listTaxIds: mocks.listTaxIds,
       createTaxId: mocks.createTaxId,
     },
-    checkout: { sessions: { create: mocks.sessionsCreate } },
+    checkout: { sessions: { create: mocks.sessionsCreate, expire: mocks.sessionsExpire } },
   }),
 }));
 
@@ -46,7 +47,8 @@ describe("porta única do checkout fiscal", () => {
     mocks.exigirPlanoCobravel.mockResolvedValue({ priceId: "price_mensal" });
     mocks.customersCreate.mockResolvedValue({ id: "cus_novo" });
     mocks.listTaxIds.mockResolvedValue({ data: [] });
-    mocks.sessionsCreate.mockResolvedValue({ url: "https://checkout.stripe.test/session" });
+    mocks.sessionsCreate.mockResolvedValue({ id: "cs_normal", url: "https://checkout.stripe.test/session" });
+    mocks.sessionsExpire.mockResolvedValue({ id: "cs_bf", status: "expired" });
   });
 
   it("salva nome, endereço completo e CPF antes de criar a sessão", async () => {
@@ -110,5 +112,79 @@ describe("porta única do checkout fiscal", () => {
       expect.objectContaining({ name: "Maria da Silva", address: expect.any(Object) }),
     );
     expect(mocks.createTaxId).not.toHaveBeenCalled();
+  });
+
+  it("na Black Friday usa só o mensal, preserva o trial e expira em 30 minutos", async () => {
+    mocks.sessionsCreate.mockResolvedValue({ id: "cs_bf", url: "https://checkout.stripe.test/bf" });
+    const registrar = vi.fn().mockResolvedValue(true);
+
+    await criarCheckoutFiscal({
+      familyId: "familia-1",
+      origin: "https://kolo.test",
+      stripeCustomerId: null,
+      dados,
+      ofertaBlackFriday: {
+        priceId: "price_1UTQfzPAH1xSrJeSwmrOEor2",
+        valorCentavos: 3990,
+        trialFimEm: "2026-11-20T12:00:00.000Z",
+        ofertaFimExclusivo: "2026-12-01T03:00:00.000Z",
+        checkoutIniciadoEm: "2026-11-10T12:00:00.000Z",
+        checkoutExpiraEm: "2026-11-10T12:30:00.000Z",
+      },
+      registrarCheckoutBlackFriday: registrar,
+    });
+
+    expect(mocks.exigirPlanoCobravel).not.toHaveBeenCalled();
+    expect(mocks.sessionsCreate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        line_items: [{ price: "price_1UTQfzPAH1xSrJeSwmrOEor2", quantity: 1 }],
+        allow_promotion_codes: false,
+        expires_at: Date.parse("2026-11-10T12:30:00.000Z") / 1000,
+        subscription_data: expect.objectContaining({
+          trial_end: Date.parse("2026-11-20T12:00:00.000Z") / 1000,
+          metadata: expect.objectContaining({ campanha: "black_friday_2026" }),
+        }),
+      }),
+      expect.objectContaining({ idempotencyKey: expect.stringMatching(/^bf2026:familia-1:/) }),
+    );
+    expect(registrar).toHaveBeenCalledWith("cs_bf");
+  });
+
+  it("fecha a sessão Stripe se o banco não confirmar o checkout promocional", async () => {
+    mocks.sessionsCreate.mockResolvedValue({ id: "cs_bf", url: "https://checkout.stripe.test/bf" });
+    await expect(criarCheckoutFiscal({
+      familyId: "familia-1",
+      origin: "https://kolo.test",
+      stripeCustomerId: null,
+      dados,
+      ofertaBlackFriday: {
+        priceId: "price_1UTQfzPAH1xSrJeSwmrOEor2",
+        valorCentavos: 3990,
+        trialFimEm: "2026-11-20T12:00:00.000Z",
+        ofertaFimExclusivo: "2026-12-01T03:00:00.000Z",
+        checkoutIniciadoEm: "2026-11-10T12:00:00.000Z",
+        checkoutExpiraEm: "2026-11-10T12:30:00.000Z",
+      },
+      registrarCheckoutBlackFriday: vi.fn().mockResolvedValue(false),
+    })).rejects.toThrow(/não pôde ser registrado/);
+    expect(mocks.sessionsExpire).toHaveBeenCalledWith("cs_bf");
+  });
+
+  it("recusa plano anual na oferta antes de criar Customer", async () => {
+    await expect(criarCheckoutFiscal({
+      familyId: "familia-1",
+      origin: "https://kolo.test",
+      stripeCustomerId: null,
+      dados: { ...dados, plano: "anual" },
+      ofertaBlackFriday: {
+        priceId: "price_1UTQfzPAH1xSrJeSwmrOEor2",
+        valorCentavos: 3990,
+        trialFimEm: "2026-11-20T12:00:00.000Z",
+        ofertaFimExclusivo: "2026-12-01T03:00:00.000Z",
+        checkoutIniciadoEm: "2026-11-10T12:00:00.000Z",
+        checkoutExpiraEm: "2026-11-10T12:30:00.000Z",
+      },
+    })).rejects.toThrow(/somente mensal/);
+    expect(mocks.customersCreate).not.toHaveBeenCalled();
   });
 });

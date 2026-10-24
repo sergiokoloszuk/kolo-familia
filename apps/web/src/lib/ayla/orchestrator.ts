@@ -1500,7 +1500,20 @@ export async function sendCampanha(
 ): Promise<EnvioResultado> {
   const tipo: AylaTipoProativa = (`campanha_${params.categoria}` as AylaTipoProativa);
 
-  // 1. Opt-out por categoria (operacional é exceção — comunicado obrigatório)
+  // 1. Promoção/novidade exige aceite positivo. Ausência de recusa não é
+  // consentimento. Mensagens operacionais continuam separadas.
+  if (params.categoria === "promocional" || params.categoria === "informacional") {
+    const { data: familia, error: consentimentoError } = await supabase
+      .from("family_accounts")
+      .select("marketing_consentido_em")
+      .eq("id", params.family_account_id)
+      .maybeSingle();
+    if (consentimentoError || !familia?.marketing_consentido_em) {
+      return { enviada: false, motivo: "Sem consentimento para novidades e promoções." };
+    }
+  }
+
+  // 2. Opt-out por categoria (operacional é exceção — comunicado obrigatório)
   if (params.categoria !== "operacional") {
     const { data: optout } = await supabase
       .from("categorias_optout")
@@ -1516,7 +1529,7 @@ export async function sendCampanha(
     }
   }
 
-  // 2. Regras Ayla (consentimento, pausa, 2/dia, silêncio total, comercial-pós-crise)
+  // 3. Regras Ayla (consentimento, pausa, 2/dia, silêncio total, comercial-pós-crise)
   const podeRes = await podeEnviarProativa(
     supabase,
     { family_account_id: params.family_account_id, agora },
@@ -1524,7 +1537,7 @@ export async function sendCampanha(
   );
   if (!podeRes.permitido) return { enviada: false, motivo: podeRes.motivo };
 
-  // 3. Carrega contato
+  // 4. Carrega contato
   const ctx = await loadFamiliaParaEnvio(supabase, params.family_account_id);
   if (!ctx) return { enviada: false, motivo: "Sem contexto da família." };
 

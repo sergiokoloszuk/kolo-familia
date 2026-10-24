@@ -117,7 +117,7 @@ describe("B · o OFICIAL recebe a verdade comercial", () => {
     // partir de `const comercial = [` deixaria `ehPerguntaComercial` de fora e
     // o teste passaria a não provar nada.
     const bloco = src.slice(src.indexOf("const linkComercial ="), src.indexOf("const entrega ="));
-    expect(bloco).toMatch(/FATOS_COMERCIAIS,/);
+    expect(bloco).toMatch(/fatosComerciais,/);
     expect(bloco).toMatch(/ehPerguntaComercial\(params\.mensagem\)[\s\S]{0,200}notaComercial\(/);
     expect(bloco).toMatch(/precisaDeHumano\(params\.mensagem\) \? notaSuporte\(\) : ""/);
   });
@@ -271,7 +271,7 @@ describe("G · zero chamada de modelo a mais, e nada novo no Legacy", () => {
     // sendo 1 — o que se prende é "uma chamada, nem uma a mais".
     expect((src.match(/notaComercial\(/g) ?? []).length).toBe(1);
     expect((src.match(/notaSuporte\(\)/g) ?? []).length).toBe(1);
-    expect((src.match(/FATOS_COMERCIAIS/g) ?? []).length).toBe(2); // import + uso
+    expect((src.match(/fatosComerciaisParaFamilia/g) ?? []).length).toBe(2); // import + uso
   });
 
   it("23. e o Oficial não passou a depender do Legacy", () => {

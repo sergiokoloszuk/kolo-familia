@@ -66,7 +66,7 @@ import {
   INTERESSE_COMO_VEICULO,
   A_CRIANCA_ANTES_DO_ROTULO,
 } from "@/lib/conducao/formas";
-import { FATOS_COMERCIAIS } from "@/lib/billing/fatos-comerciais";
+import { fatosComerciaisParaFamilia } from "@/lib/billing/fatos-comerciais";
 import {
   BLOCO_PLANO_WHATSAPP_SUSPENSO,
   planosWhatsappLigados,
@@ -427,6 +427,10 @@ async function gerarUmaVez(
   // negrito é frieza, e uma pergunta pontual com quatro blocos é ruído. Só
   // entra quando o turno é de fato uma entrega (ver `ehEntrega`).
   const entrega = ehEntrega(params);
+  const fatosComerciais = await fatosComerciaisParaFamilia(
+    tracking?.supabase,
+    tracking?.family_account_id,
+  );
   const system = [
     nucleoConducao(),
     REGRA_BRINCADEIRA_SE_SURGIR,
@@ -434,7 +438,7 @@ async function gerarUmaVez(
     // segurança universais; prazo de teste é regra de produto, e é injetada
     // por quem fala com a família. Sem isto, perguntada quanto dura o teste,
     // ela chutava — e chutou 30 dias, que é o palpite de mercado.
-    FATOS_COMERCIAIS,
+    fatosComerciais,
     FORMATO_WHATSAPP,
     ...(entrega
       ? [

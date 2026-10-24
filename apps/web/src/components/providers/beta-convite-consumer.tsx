@@ -13,6 +13,7 @@ import { useEffect } from "react";
 
 const KEY_BETA = "beta_codigo_pendente";
 const KEY_TERMOS = "termos_aceitos_em_pendente";
+const KEY_MARKETING = "marketing_aceito_pendente";
 
 export function BetaConviteConsumer() {
   useEffect(() => {
@@ -20,9 +21,11 @@ export function BetaConviteConsumer() {
 
     let codigo: string | null = null;
     let termosTs: string | null = null;
+    let marketingRaw: string | null = null;
     try {
       codigo = localStorage.getItem(KEY_BETA);
       termosTs = localStorage.getItem(KEY_TERMOS);
+      marketingRaw = localStorage.getItem(KEY_MARKETING);
     } catch {
       return;
     }
@@ -54,12 +57,16 @@ export function BetaConviteConsumer() {
           const r = await fetch("/api/me/aceitar-termos", {
             method: "POST",
             headers: { "content-type": "application/json" },
-            body: JSON.stringify({ aceitos_em: termosTs }),
+            body: JSON.stringify({
+              aceitos_em: termosTs,
+              ...(marketingRaw === null ? {} : { marketing: marketingRaw === "true" }),
+            }),
             keepalive: true,
           });
           if (!cancelled && r.ok) {
             try {
               localStorage.removeItem(KEY_TERMOS);
+              localStorage.removeItem(KEY_MARKETING);
             } catch {
               /* ignora */
             }

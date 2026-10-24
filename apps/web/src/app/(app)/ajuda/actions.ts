@@ -81,7 +81,7 @@ function montarSystem(precos: { mensal: string | null; anual: string | null }): 
 - Plano mensal: ${precos.mensal ?? "ver na tela de Assinatura"}.
 - Plano anual: ${precos.anual ?? "ver na tela de Assinatura"}.
 - Teste grátis: ${TRIAL_DIAS} dias, sem precisar de cartão.
-- Cancelar: na tela de Assinatura há "Cancelar assinatura". IMPORTANTE — cancelar APAGA a conta e TODOS os registros (diários, Perfil, histórias, evolução), pra sempre e sem volta. Quem só quer dar uma pausa ou trocar o cartão deve usar "Gerenciar assinatura", não cancelar.`;
+- Cancelar: na tela de Assinatura, use "Gerenciar assinatura" para cancelar a renovação. Cancelar a assinatura NÃO apaga a conta nem os registros. Para apagar definitivamente os dados, use Configurações > Minha conta.`;
   return `${SYSTEM_BASE}\n\n${fatos}\n\n${MAPA}`;
 }
 

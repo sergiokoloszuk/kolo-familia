@@ -71,7 +71,7 @@ const HERO_VISITANTE = {
 } as const;
 
 /** O CTA de cada estado — puro, para poder ser testado sem banco nem sessão. */
-export function ctaDoEstado(estado: EstadoComercial): CtaPrecos {
+export function ctaDoEstado(estado: EstadoComercial, diasTrialVisitante = 7): CtaPrecos {
   switch (estado) {
     case "em_trial":
       return {
@@ -116,10 +116,14 @@ export function ctaDoEstado(estado: EstadoComercial): CtaPrecos {
     default:
       return {
         estado: "visitante",
-        rotulo: "Começar 7 dias grátis",
+        rotulo: `Começar ${diasTrialVisitante} dias grátis`,
         destino: "/signup",
         nota: null,
-        hero: HERO_VISITANTE,
+        hero: diasTrialVisitante === 7 ? HERO_VISITANTE : {
+          titulo: `${diasTrialVisitante} dias grátis`,
+          destaque: "pra sentir se vale",
+          sub: "Sem cartão pra começar. Depois você decide.",
+        },
       };
   }
 }

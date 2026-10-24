@@ -6,6 +6,7 @@ import { logEvent } from "@/lib/log";
 const schema = z.object({
   // ISO timestamp do aceite (cliente envia o que registrou)
   aceitos_em: z.string().datetime().optional(),
+  marketing: z.boolean().optional(),
 });
 
 /**
@@ -30,38 +31,26 @@ export async function POST(request: NextRequest) {
   }
   const ts = body.aceitos_em ?? new Date().toISOString();
 
-  const { data: family } = await supabase
-    .from("family_accounts")
-    .select("id, termos_aceitos_em, privacidade_aceita_em")
-    .eq("user_id", user.id)
-    .maybeSingle();
-  if (!family) {
+  const { data: familyId, error } = await supabase.rpc("registrar_meus_aceites_kolo", {
+    p_aceitos_em: ts,
+    p_marketing: body.marketing === true,
+    p_marketing_informado: body.marketing !== undefined,
+  });
+  if (error) {
+    return NextResponse.json({ ok: false, motivo: error.message }, { status: 500 });
+  }
+  if (!familyId) {
     return NextResponse.json(
       { ok: false, motivo: "family ainda não criada" },
       { status: 404 },
     );
   }
 
-  const update: Record<string, string> = {};
-  if (!family.termos_aceitos_em) update.termos_aceitos_em = ts;
-  if (!family.privacidade_aceita_em) update.privacidade_aceita_em = ts;
-  if (Object.keys(update).length === 0) {
-    return NextResponse.json({ ok: true, ja_aceito: true });
-  }
-
-  const { error } = await supabase
-    .from("family_accounts")
-    .update(update)
-    .eq("id", family.id);
-  if (error) {
-    return NextResponse.json({ ok: false, motivo: error.message }, { status: 500 });
-  }
-
   await logEvent({
     kind: "termos_aceitos",
     severity: "info",
     user_id: user.id,
-    family_account_id: family.id as string,
+    family_account_id: familyId as string,
   });
 
   return NextResponse.json({ ok: true });
