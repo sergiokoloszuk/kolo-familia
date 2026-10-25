@@ -181,11 +181,15 @@ onomatopeia, a correção ocorreu antes do envio e o caso focal seguinte passou.
 
 - PR em rascunho: <https://github.com/sergiokoloszuk/kolo-familia/pull/150>;
 - commit funcional: `9c733ef6ab80e261b5ef9015c28f541c7f190820`;
-- preview Vercel: <https://kolo-familia-2sjkysu2o-kolo-familia.vercel.app/>;
+- preview Vercel do branch:
+  <https://kolo-familia-web-git-codex-ayla-qualidade-b-b848a6-kolo-familia.vercel.app/>;
 - deploy de preview concluído, sem conflitos com `main` e sem feedback não
   resolvido no Vercel Preview Comments;
-- o CI principal foi iniciado pela PR e ainda precisa concluir após este
-  registro documental;
+- CI `#992`: índice, instalação, typegen e typecheck passaram; a suíte completa
+  interrompeu o job antes do build com as duas falhas de baseline já observadas
+  fora do diff (`memoria-pertinente`, teto 160 versus 186, e
+  `experimental-onboarding`, marcador de informação antiga). O build Webpack
+  local já havia passado; o build da preview Vercel também concluiu;
 - a preview é protegida por login Vercel e a flag continua desligada. Portanto,
   ela prova empacotamento e entrega do branch, não o comportamento funcional da
   candidata.

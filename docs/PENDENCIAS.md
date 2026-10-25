@@ -10135,7 +10135,8 @@ dependente de rede); geração de tipos, typecheck, lint tocado e build Webpack
 passaram. A candidata está na PR em rascunho
 <https://github.com/sergiokoloszuk/kolo-familia/pull/150>, commit funcional
 `9c733ef6ab80e261b5ef9015c28f541c7f190820`, com preview Vercel concluída em
-<https://kolo-familia-2sjkysu2o-kolo-familia.vercel.app/>. A preview é
+<https://kolo-familia-web-git-codex-ayla-qualidade-b-b848a6-kolo-familia.vercel.app/>.
+A preview é
 protegida por login e a flag permanece off; ela prova a entrega isolada do
 branch, não o comportamento ativado. A PEND-208 continua aberta: faltam
 aprovação humana e, após publicação autorizada, prova somente leitura em uso
