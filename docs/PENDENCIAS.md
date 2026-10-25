@@ -10109,7 +10109,7 @@ do Perfil e queda de genericidade. **PENDENTE** — sem trafego no SHA novo ate
 ### PEND-208
 **O repertorio criativo continua obvio — nenhum braco resolveu a brincadeira**
 Bloco: **B · Ayla** · Prioridade: **P1**
-STATUS: **ABERTA — medida, nao corrigida** · Aberta em: 2026-09-14
+STATUS: **CANDIDATA EM PR #150 — aprovação humana e publicação pendentes** · Aberta em: 2026-09-14
 
 **CANDIDATA ISOLADA 25/10/2026 — NÃO PUBLICADA.** No worktree
 `ayla-qualidade-brincadeiras`, a flag nova `AYLA_QUALIDADE_RESPOSTA_V2`
