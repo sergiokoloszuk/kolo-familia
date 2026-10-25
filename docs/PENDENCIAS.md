@@ -10142,11 +10142,114 @@ branch, não o comportamento ativado. A PEND-208 continua aberta: faltam
 aprovação humana e, após publicação autorizada, prova somente leitura em uso
 natural.
 
+**RETORNO HUMANO INFORMAL NA PREVIEW — 25/10/2026, NÃO É QA FORMAL.** Em uso
+natural autorizado, uma brincadeira personalizada saiu como título seguido de
+dois parágrafos corridos, sem tempo, passos visualmente separados ou
+encerramento; a responsável rejeitou o formato. A causa estava no próprio
+contrato: ele pedia "um único bloco executável", e a auditoria aceitava prosa
+compacta. A candidata agora exige e repara para título, tempo, material, fala
+inicial, três passos, próxima rodada, encerramento e adaptação. O mesmo retorno
+mostrou um segundo defeito: uma pessoa adulta não pode ser chamada de criança;
+o repertório ativo e o piso passaram a usar linguagem neutra e o contrato
+proíbe explicitamente a infantilização. Três exemplos editoriais externos
+serviram somente como comparação de experiência: a parte adotada foi ajuda
+organizada, frase pronta e próximo passo executável; causas internas,
+diagnóstico e prazo continuam hipótese, nunca fato. Apoio físico leve aceito e
+oportunidades naturais de comunicação permanecem permitidos — a correção não
+transforma cautela em veto. Rede focada após a recalibração: **31/31 testes**.
+Ainda faltam nova Preview e reteste humano; nada deste bloco prova produção.
+
+**REFINAMENTO DA ABERTURA — 25/10/2026, CANDIDATA LOCAL.** A responsável pediu
+verificação prévia do tema no Perfil/histórico: havendo dados, resumir o que
+já se sabe; não havendo, orientar o que informar em bullets, com opção de
+áudio; havendo dados parciais, perguntar só pelas lacunas. O contrato dos doze
+temas e dos dois canais foi ajustado; teste de contrato não comprova consulta
+nem uso pelo modelo. Preview e aceite humano seguem pendentes.
+
+**TOM DA RETOMADA — 25/10/2026, CANDIDATA LOCAL.** A responsável pediu
+"Pelo que você já me contou sobre ela…", sem anunciar perfil ou cadastro.
+Os contratos dos doze temas e dos dois canais foram ajustados, mantendo a
+consulta e a distinção entre relato, hipótese e biblioteca. Rede focada:
+13/13 testes passaram (temas, formato compartilhado e montagem web). Testes
+de contrato não comprovam a redação pelo modelo; novo ensaio e Preview
+seguem pendentes. PEND-208 permanece aberta.
+
+**COMPARATIVO COM A REFERÊNCIA BASE44 — 25/10/2026.** Seis perguntas da
+conversa foram executadas nos dois produtores com os mesmos dados de
+demonstração: 12 respostas reais, sem edição posterior. Evidência em
+`docs/auditorias/ayla-comparativo-base44-2026-10-25.md` e JSON associado.
+**FALHOU na equivalência editorial pretendida:** Foco repete informação já
+conhecida e a brincadeira ainda vaza rótulos internos. A responsável pediu
+conferir negrito, respiro, bullets e emojis antes de aprovar. Build completo
+e suíte de código **4.244 passaram / 7 pulados** não baixam esta pendência.
+O material completo da pós (PEND-104) e o lote XLSX v6 não foram importados.
+Produção intacta; a nova candidata ainda não foi enviada à PR neste ponto.
+
+**ABERTURA E CONTINUIDADE — 25/10/2026, CANDIDATA LOCAL.** A entrada simples
+por área agora não recebe a ordem concorrente de investigar lacuna decisiva;
+o texto livre conhecido permanece no contexto. Pedidos concretos, crise e
+flag off preservam suas rotas. O roteiro de brincadeira passou a pedir ações
+naturais e passos numerados, com auditoria que aceita negrito nos metadados e
+detecta rótulos internos vazados. Rede focada: 43/43 testes passaram antes do
+ajuste de continuidade. Produto confirmou ofertas de exploração nos doze
+temas: duas ou três possibilidades pertinentes após orientação substancial,
+sem menu obrigatório em toda mensagem. Teste com modelo, Preview e aceite
+continuam necessários; a pendência não está concluída.
+
 **RECONCILIAÇÃO COM PEND-209.** Esta candidata também testa a fronteira entre
 fato registrado, relato atual e hipótese, mas não cria nem baixa a ficha
 PEND-209 neste branch: os IDs PEND-209 a PEND-211 estão reivindicados por outra
 frente conforme o rodapé deste documento. A integração deve reconciliar a
 evidência sem duplicar ficha ou sobrescrever trabalho concorrente.
+
+**PLANO ATUALIZADO E PACOTE BRINCA CONFERIDO — 25/10/2026.**
+`docs/specs/ayla-referencia-base44-SPEC.md` passa a conter a matriz de camadas,
+dificuldades, responsáveis, dependências e prova por canal/versão em produção.
+São duas entregas: conversa e catálogo. Hashes dos quatro novos arquivos
+conferidos; JSON corresponde à origem em 15 atividades, 65 passos e duas cenas,
+sem divergência de valores. Revisão: 28 propostas, incluindo segurança alta na
+001 e na 005, além da 013 já bloqueada; a 006 e a 011 têm achados de segurança
+baixo/médio. Nenhuma atividade aprovada ou importada. O plano propõe excluir
+001/005 até correção e revisão e manter 013 fora até validação profissional;
+não altera silenciosamente arquivos ou estados do pacote.
+
+Health somente leitura às 18:33:55 de 25/10: produção em `main`, SHA
+`25e8891daf1e0d5bd881512e6f128742fdcd0184`, banco saudável. Não é prova da
+candidata. Ensaio v2: 12 saídas, aberturas Foco adequadas nos dois produtores,
+mas brincadeira adulta do Oficial caiu em piso infantil. Rede atual focada:
+44/44. **FALHOU na entrega completa**; faltam correções, fonte por tema,
+continuidade/mindset avaliados, Preview, aceite, publicação e provas de
+persistência/concorrência/retomada. PEND-208 continua aberta; PEND-104 não foi
+baixada nem teve o corpus integral ativado. Plano não equivale a autorização
+automática para merge, importação ou mensagens a famílias.
+
+**AVALIAÇÃO E MEMÓRIA CONTÍNUA — PEDIDO DE 25/10/2026.** Produto acrescentou
+nota 0–5 (cinco estrelas mais zero separado), comentário opcional e gravação
+de toda informação nova relevante explicitamente relatada para a próxima
+consulta. Desenho/aceite registrados na SPEC da referência Base44; feedback
+separado do perfil e de escolhas numéricas. Não implementados por esta anotação.
+O escritor já existe no WhatsApp; a web exige proposta/confirmação e não pode
+ser declarada atualização automática. Antes de baixar: provar escrita, leitura
+seguinte e escopo por pessoa nos dois canais, além de avaliação persistida,
+edição idempotente e falhas visíveis. PEND-208 permanece aberta.
+
+**CONVERSA TEMÁTICA E CONTINUIDADE — 25/10/2026.** A candidata implementa
+doze áreas web, áudio com transcrição editável e guias compartilhados. O
+envelope do Oficial proibia opções na fala: conflito removido somente na
+candidata, com segundo menu legado desativado nessa saída. Histórico preserva
+as ofertas finais e o piso respeita a idade. Bancada de continuidade v5:
+12 saídas reais, com escolha do primeiro caminho reconhecida nos dois
+produtores; alimentação apresenta opções em bullets. Não comprova
+orquestrador WhatsApp, efeitos de plano, UI autenticada ou gravação remota.
+Relatório: `docs/auditorias/ayla-entrega-conversa-2026-10-25.md`.
+Suíte final: 4.264 testes passaram, sete pulados; build Webpack e TypeScript
+passaram. Lint tocado: zero erros, oito avisos preexistentes. Isso não comprova
+publicação, durabilidade remota nem equivalência editorial.
+Preview encontrada na tela de login; aceite e smoke isolado pendentes.
+Concorrência/retomada da área e memória automática web continuam abertas.
+NPS 0–10 e feedback textual existentes não são avaliação 0–5 por mensagem;
+estrelas ainda não implementadas. PEND-208 permanece aberta, sem baixa da
+PEND-104 ou importação do Brinca.
 
 **PUBLICAÇÃO AUTORIZADA COM RESSALVAS (28/09).** A diretriz compartilhada de
 brincadeira cobre pedido direto, conversa web, apoio, aprofundamento e proposta

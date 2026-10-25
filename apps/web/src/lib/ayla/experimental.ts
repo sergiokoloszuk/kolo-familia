@@ -39,6 +39,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { idadeAnos } from "@/lib/idade";
 import { gerarConversacional, MODELO_CONVERSA } from "@/lib/ia/provider";
 import { BLOCO_DNA } from "@/lib/conducao/dna-especialistas";
+import { apoioTematico, aberturaTematicaDoTurno, blocoAberturaTematica } from "@/lib/conducao/temas-conversa";
 import { apurarEstadoDoTurno, blocoDeEstado } from "@/lib/conducao/estado-do-turno";
 import { fronteiraAtravessada } from "@/lib/conducao/fronteiras";
 import {
@@ -55,6 +56,7 @@ import { perfilConsultavelDaLinha } from "@/lib/kolo-vivo/consultar";
 import {
   BRINCADEIRA_PERSONALIZADA_V2,
   CONDUCAO_COM_EVIDENCIA,
+  FORMATO_RESPOSTA_RICA,
   qualidadeRespostaV2Ativa,
 } from "./qualidade-resposta";
 import {
@@ -106,6 +108,7 @@ import { resolverFoco, blocoDeFoco, type Foco } from "./experimental-foco";
 import { lerEventos, eventosRelevantes, blocoDeEventos } from "./experimental-memoria";
 import {
   BLOCO_PEDIDO_BRINCADEIRA,
+  BLOCO_PEDIDO_BRINCADEIRA_PUBLICADO,
   auditarBrincadeiras,
   blocoLimitesSensoriaisBrincadeira,
   blocoMecanicasBrincadeira,
@@ -335,6 +338,11 @@ export type TurnoExperimental = {
      * resposta, e é trabalho da bancada, nunca do runtime.
      */
     bpRecuperadas: number;
+    /** Rastro da candidata: material entregue, sem alegar uso pelo modelo. */
+    qualidade_resposta_v2?: boolean;
+    guias_tema?: string[];
+    base2_ids?: string[];
+    base2_chars?: number;
     bpInjetadas: number;
     bpChars: number;
     msBp: number;
@@ -512,6 +520,7 @@ async function montarContexto(
   catalogoDisponivel = true,
   /** Continuidade já correlacionada por oferta; nunca aceita id de outra família. */
   membroPreferidoId?: string | null,
+  aberturaDeArea = false,
 ): Promise<ContextoDoTurno> {
   // As três leituras de abertura não dependem uma da outra: vão juntas.
   // ⚠️ `lerPerfilFamilia` SUBIU PARA A ONDA 1 — 26/08/2026, quick win 3.
@@ -659,7 +668,7 @@ async function montarContexto(
       )
     : [];
   const decisaoLacuna =
-    modo === "pos_trial" || emFoco.length !== 1
+    modo === "pos_trial" || emFoco.length !== 1 || aberturaDeArea
       ? null
       : escolherLacunaDecisiva({
           perfil: perfilConsultavel!,
@@ -680,7 +689,7 @@ async function montarContexto(
 
   const falasCronologicas = ((falas ?? []) as Fala[]).slice().reverse();
   const miniInvestigacao =
-    modo === "normal" && emFoco.length === 1 && perfilConsultavel
+    modo === "normal" && emFoco.length === 1 && perfilConsultavel && !aberturaDeArea
       ? decidirMiniInvestigacao({
           perfil: perfilConsultavel,
           temas: skills,
@@ -981,6 +990,11 @@ export async function responderExperimental(
     const modo: ModoTurno = params.modo ?? "normal";
     const posTrial = modo === "pos_trial";
     const skillsDoTurno = posTrial ? [] : (params.turnoClassificado?.skills ?? []);
+    const respostaRica = qualidadeRespostaV2Ativa() && !posTrial &&
+      !params.entregarHistoriaNoWhatsapp && !params.prepararObjetivosHistoria &&
+      !ehPerguntaComercial(params.mensagem) && !precisaDeHumano(params.mensagem) &&
+      !["crise", "desabafo"].includes(params.turnoClassificado?.intencao ?? "");
+    const aberturaDeArea = respostaRica ? aberturaTematicaDoTurno(params.mensagem, skillsDoTurno) : null;
     /**
      * ⚠️ O CATÁLOGO ESTAVA DISPONÍVEL? — PEND-184, 09/09/2026.
      *
@@ -1055,6 +1069,7 @@ export async function responderExperimental(
         skillsDoTurno,
         catalogoDisponivel,
         params.membroPreferidoId,
+        aberturaDeArea !== null,
       ),
     );
     const [ctxTurno, core, bps, estadoTrial, evidencias, docTrial] = await Promise.all([
@@ -1192,6 +1207,7 @@ export async function responderExperimental(
       .join("\n\n");
 
     const natureza = naturezaDoTurno(params.mensagem, ctxTurno.jaHouveOrientacao);
+    const apoioDoTema = respostaRica ? apoioTematico(skillsDoTurno, "whatsapp") : null;
     const entrega = pedeEntregaEstruturada({
       intencao: params.turnoClassificado?.intencao ?? null,
       natureza,
@@ -1244,15 +1260,16 @@ export async function responderExperimental(
     const proporcao = notaDeProporcao(natureza);
 
     const formato = [
-      FORMATO_WHATSAPP,
-      proporcao,
-      ...(entrega
+      respostaRica ? FORMATO_RESPOSTA_RICA : FORMATO_WHATSAPP,
+      respostaRica ? "" : proporcao,
+      ...(entrega && !respostaRica
         ? [
             formasDeEntrega({ canal: "whatsapp", tema: params.turnoClassificado?.tema }),
             INTERESSE_COMO_VEICULO,
             A_CRIANCA_ANTES_DO_ROTULO,
           ]
         : []),
+      aberturaDeArea ? blocoAberturaTematica(aberturaDeArea, "whatsapp") : "",
       // ⚠️ POR ÚLTIMO DENTRO DO ÚLTIMO BLOCO, e precisa ser verdade: esta é a
       // única instrução que PREVALECE sobre o resto do prompt — que é inteiro
       // escrito em português. Se vier antes, compete com o exemplo, e o exemplo
@@ -1360,11 +1377,13 @@ export async function responderExperimental(
          * uma conversa que ninguém mediu.
          */
         posTrial ? "" : BLOCO_DNA,
+        apoioDoTema?.bloco ?? "",
+        apoioDoTema?.biblioteca ?? "",
         posTrial ? "" : REGRA_BRINCADEIRA_SE_SURGIR,
         repertorio,
         !posTrial && !params.entregarHistoriaNoWhatsapp && !params.prepararObjetivosHistoria &&
           pedidoExplicitoDeBrincadeira(params.mensagem)
-          ? `${DIRETRIZES_BRINCADEIRA}\n${BLOCO_PEDIDO_BRINCADEIRA}\n${
+          ? `${DIRETRIZES_BRINCADEIRA}\n${qualidadeRespostaV2Ativa() ? BLOCO_PEDIDO_BRINCADEIRA : BLOCO_PEDIDO_BRINCADEIRA_PUBLICADO}\n${
               qualidadeRespostaV2Ativa() ? BRINCADEIRA_PERSONALIZADA_V2 : ""
             }\n${
               qualidadeRespostaV2Ativa()
@@ -1395,7 +1414,7 @@ export async function responderExperimental(
         // E não custa nada estar aqui: isto é contrato de SERIALIZAÇÃO, não de
         // estilo — não compete com o formato, e fica fora do Core v11 do mesmo
         // jeito.
-        semEnvelope ? "" : instrucaoDoEnvelope(),
+        semEnvelope ? "" : instrucaoDoEnvelope(respostaRica),
         formato,
         // A instrução da fronteira entra DEPOIS de tudo, inclusive do idioma:
         // ela é a correção de uma resposta que já saiu errada, e precisa ser a
@@ -1405,7 +1424,7 @@ export async function responderExperimental(
         .filter(Boolean)
         .join("\n\n"),
       messages: [{ role: "user", content: params.mensagem }],
-      maxTokens: 1200,
+      maxTokens: respostaRica ? 2300 : 1200,
       cacheSystem: true,
       // A resposta comum usa o mesmo GPT leve já provado no aprofundamento.
       // O Core, Perfil, histórico, BPs, envelope e fronteiras permanecem
@@ -1548,8 +1567,9 @@ export async function responderExperimental(
     }
 
     // Com a flag desligada, preserva a observação publicada. Com a flag ligada,
-    // falha estrutural segue como telemetria; só reprodução de sensibilidade
-    // registrada aciona uma correção. A segunda falha recebe piso determinístico.
+    // estilo segue como telemetria; risco sensorial, formato corrido, rótulo
+    // interno ou falta de encerramento acionam correção. A segunda passagem
+    // usa os MESMOS critérios, sem reprovar linguagem natural por heurística.
     if (pedidoExplicitoDeBrincadeira(params.mensagem)) {
       const auditoria = auditarBrincadeiras(texto, ctxTurno.sensibilidadesRegistradas);
       if (auditoria.quantidade !== 1 || auditoria.falhas.length > 0) {
@@ -1583,7 +1603,7 @@ export async function responderExperimental(
             corrigida &&
             !fronteiraDaCorrecao &&
             auditoriaCorrigida.quantidade === 1 &&
-            auditoriaCorrigida.falhas.length === 0
+            !exigeCorrecaoDeBrincadeira(auditoriaCorrigida)
           ) {
             texto = corrigida;
             void logEvent({
@@ -1593,7 +1613,7 @@ export async function responderExperimental(
               payload: { codigos: [...new Set(auditoria.falhas.map((f) => f.codigo))] },
             });
           } else {
-            texto = pisoBrincadeiraSegura();
+            texto = pisoBrincadeiraSegura(ctxTurno.idadeFoco);
             void logEvent({
               kind: "ayla_brincadeira_piso_seguro",
               severity: "error",
@@ -1613,7 +1633,7 @@ export async function responderExperimental(
     // Respiro é só whitespace entre frases: zero conteúdo novo, zero chamada e
     // zero latência. Não cria lista nem rótulo; turno curto e resposta já
     // estruturada não entram nessa transformação.
-    texto = darRespiroVisual(texto, natureza);
+    texto = respostaRica ? texto : darRespiroVisual(texto, natureza);
 
     // ── A REDE DE FORMA — 26/08/2026 ────────────────────────────────────────
     //
@@ -1682,7 +1702,10 @@ export async function responderExperimental(
       decisaoLacuna: ctxTurno.decisaoLacuna ?? null,
       miniInvestigacao: ctxTurno.miniInvestigacao,
       camposInvestigados,
-      aprofundamentos,
+      // A candidata entrega caminhos na fala. O menu legado em uma segunda
+      // mensagem não pode competir nem duplicar a oferta, mesmo se o modelo
+      // preencher indevidamente este campo do envelope.
+      aprofundamentos: respostaRica ? [] : aprofundamentos,
       /**
        * ⚠️ O CAMPO QUE A PERGUNTA DE FATO INVESTIGOU — PEND-187B.
        *
@@ -1714,6 +1737,10 @@ export async function responderExperimental(
         coreOrigem: core.origem,
         coreVersao: core.versao,
         bpRecuperadas: bps.length,
+        qualidade_resposta_v2: respostaRica,
+        guias_tema: apoioDoTema?.guias ?? [],
+        base2_ids: apoioDoTema?.secoes.map((s) => s.id) ?? [],
+        base2_chars: apoioDoTema?.biblioteca.length ?? 0,
         // Injetadas ≠ recuperadas: se o bloco vier vazio, nada chegou ao
         // modelo por mais que a consulta tenha devolvido linhas.
         bpInjetadas: repertorio ? bps.length : 0,

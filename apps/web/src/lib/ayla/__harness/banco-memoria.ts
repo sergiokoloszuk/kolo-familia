@@ -22,6 +22,7 @@ type Linha = Record<string, unknown>;
 type Filtro =
   | { op: "eq" | "neq" | "gt" | "gte" | "lt" | "lte"; col: string; val: unknown }
   | { op: "in"; col: string; val: unknown[] }
+  | { op: "contains"; col: string; val: Record<string, unknown> }
   | { op: "ilike"; col: string; val: string }
   | { op: "is"; col: string; val: null }
   | { op: "not"; col: string; val: unknown };
@@ -80,6 +81,8 @@ export class BancoMemoria {
 function passa(l: Linha, f: Filtro): boolean {
   const v = l[f.col];
   switch (f.op) {
+    case "contains":
+      return Boolean(v && typeof v === "object" && Object.entries(f.val).every(([k, x]) => (v as Linha)[k] === x));
     case "eq":
       return v === f.val;
     case "neq":
@@ -181,6 +184,10 @@ class Consulta implements PromiseLike<{ data: unknown; error: unknown }> {
   }
   in(col: string, val: unknown[]) {
     this.filtros.push({ op: "in", col, val });
+    return this;
+  }
+  contains(col: string, val: Record<string, unknown>) {
+    this.filtros.push({ op: "contains", col, val });
     return this;
   }
   ilike(col: string, val: string) {

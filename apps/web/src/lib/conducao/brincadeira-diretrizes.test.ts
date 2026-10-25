@@ -37,7 +37,7 @@ describe("diretrizes de brincadeira entre superfícies", () => {
     const oficial = readFileSync(resolve(__dirname, "../ayla/experimental.ts"), "utf8");
     expect(oficial).toContain('DIRETRIZES_BRINCADEIRA, REGRA_BRINCADEIRA_SE_SURGIR } from "@/lib/conducao/brincadeira-diretrizes"');
     expect(oficial).toContain('posTrial ? "" : REGRA_BRINCADEIRA_SE_SURGIR');
-    expect(oficial).toContain("${DIRETRIZES_BRINCADEIRA}\\n${BLOCO_PEDIDO_BRINCADEIRA}");
+    expect(oficial).toContain("${DIRETRIZES_BRINCADEIRA}\\n${qualidadeRespostaV2Ativa() ? BLOCO_PEDIDO_BRINCADEIRA : BLOCO_PEDIDO_BRINCADEIRA_PUBLICADO}");
     expect(oficial).toContain("auditoria.quantidade !== 1");
     const web = prompt("Quero uma brincadeira para fazer com Manu");
     expect(String(web.messages.at(-1)?.content)).toContain(DIRETRIZES_BRINCADEIRA);

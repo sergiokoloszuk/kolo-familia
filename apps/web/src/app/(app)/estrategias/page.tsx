@@ -6,6 +6,8 @@ import { resolverCriancaAtivaId } from "@/lib/crianca-ativa";
 import { capitalizarNome } from "@/lib/nome";
 import { ConversarForm } from "../conversar/conversar-form";
 import { ConversaItem } from "./conversa-item";
+import { GUIAS_TEMATICOS } from "@/lib/conducao/temas-conversa";
+import { qualidadeRespostaV2Ativa } from "@/lib/ayla/qualidade-resposta";
 
 /**
  * Estratégias Kolo — UM CAMINHO:
@@ -20,12 +22,14 @@ import { ConversaItem } from "./conversa-item";
 export default async function EstrategiasPage({
   searchParams,
 }: {
-  searchParams: Promise<{ membro?: string; tema?: string }>;
+  searchParams: Promise<{ membro?: string; tema?: string; area?: string }>;
 }) {
   const { supabase, family } = await loadFamilyContext();
   const familyId = family!.id;
   const sp = await searchParams;
   const temaContexto = sp.tema?.trim() || null;
+  const novaExperiencia = qualidadeRespostaV2Ativa();
+  const area = novaExperiencia ? GUIAS_TEMATICOS.find((g) => g.chave === sp.area) : null;
 
   const { data: membros } = await supabase
     .from("membros_atipicos")
@@ -34,7 +38,8 @@ export default async function EstrategiasPage({
     .eq("ativo", true)
     .order("created_at", { ascending: true });
 
-  const ativaId = (await resolverCriancaAtivaId(membros ?? [])) ?? undefined;
+  const ativaId = membros?.some((m) => m.id === sp.membro)
+    ? sp.membro : (await resolverCriancaAtivaId(membros ?? [])) ?? undefined;
 
   // Conversas anteriores da CRIANÇA ATIVA (não mistura os filhos).
   let convQuery = supabase
@@ -64,13 +69,42 @@ export default async function EstrategiasPage({
       <header className="max-w-2xl">
         <Eyebrow>Estratégias</Eyebrow>
         <h1 className="mt-1 font-heading text-3xl text-foreground md:text-4xl">
-          Conte o que tá difícil —{" "}
+          {novaExperiencia ? (area ? `Ayla · ${area.nome}` : "O que vamos explorar juntas?") : <>Conte o que tá difícil —{" "}
           <em className="not-italic text-brand-purple">eu acho um caminho</em>.
+          </>}
         </h1>
         <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-          Escreva do seu jeito; quanto mais do dia real, mais certeira eu fico.
+          {area ? area.proposito : novaExperiencia
+            ? "Escolha uma área ou conte livremente o que está acontecendo. A Ayla considera o perfil e o que vocês já compartilharam."
+            : "Escreva do seu jeito; quanto mais do dia real, mais certeira eu fico."}
         </p>
+        {area && <Link href="/estrategias" className="mt-3 inline-block text-sm font-semibold text-brand-purple hover:underline">Ver todas as áreas</Link>}
       </header>
+
+      {novaExperiencia && !area && (
+        <section className="flex flex-col gap-7" aria-label="Áreas para explorar com a Ayla">
+          {[
+            { nome: "Desenvolvimento e Habilidades", chaves: ["sensorial", "comunicacao", "socializacao", "imitacao", "motor", "autonomia", "aprendizado", "foco"] },
+            { nome: "Regulação e Bem-Estar", chaves: ["rotina", "sono", "nutricional", "emocional"] },
+          ].map((grupo) => (
+            <div key={grupo.nome}>
+              <h2 className="mb-4 font-heading text-xl text-foreground">{grupo.nome}</h2>
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {grupo.chaves.map((chave) => {
+                  const guia = GUIAS_TEMATICOS.find((g) => g.chave === chave)!;
+                  return <Link key={chave}
+                    href={`/estrategias?area=${chave}${ativaId ? `&membro=${encodeURIComponent(ativaId)}` : ""}`}
+                    className="rounded-2xl border border-brand-purple/15 bg-white p-5 transition hover:-translate-y-0.5 hover:border-brand-purple/50 hover:shadow-md focus-visible:outline-2 focus-visible:outline-brand-purple">
+                    <h3 className="font-semibold text-brand-purple">{guia.nome}</h3>
+                    <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{guia.proposito}</p>
+                    <span className="mt-3 inline-block text-sm font-medium text-brand-purple">Explorar com a Ayla →</span>
+                  </Link>;
+                })}
+              </div>
+            </div>
+          ))}
+        </section>
+      )}
 
       {/* Ajuda contextual — invisível enquanto não houver URL em lib/video-ajuda. */}
       <VideoAjuda area="estrategias" />
@@ -78,17 +112,21 @@ export default async function EstrategiasPage({
       {/* Dicas pra perto de onde importam (saíram do cabeçalho): o que incluir
           + o plano de fim de semana, numa linha discreta acima do campo. */}
       <div className="flex flex-col gap-3">
-        <p className="max-w-2xl text-sm leading-relaxed text-muted-foreground">
+        {novaExperiencia && !area && <h2 className="font-heading text-xl">Ou converse livremente com a Ayla</h2>}
+        {!area && <p className="max-w-2xl text-sm leading-relaxed text-muted-foreground">
           <span className="font-medium text-foreground">Ajuda incluir:</span> o que acontece e
           quando, como {nomesFmt} {reageVerbo} e o que parece disparar, e o que você já tentou.
           Também monto{" "}
           <span className="font-medium text-foreground">plano de fim de semana ou férias</span> — é
           só contar a programação.
-        </p>
+        </p>}
         <ConversarForm
+          key={area?.chave ?? "livre"}
           membros={membros ?? []}
-          initialMembroId={sp.membro ?? ativaId}
-          tema={temaContexto ?? undefined}
+          initialMembroId={ativaId}
+          tema={area?.nome ?? temaContexto ?? undefined}
+          temaEscolhido={area?.chave}
+          aceitaAudio={novaExperiencia}
         />
       </div>
 

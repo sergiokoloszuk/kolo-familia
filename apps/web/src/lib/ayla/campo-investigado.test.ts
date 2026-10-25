@@ -165,7 +165,7 @@ describe("PEND-187B · fluxo, segurança e recuperação", () => {
   });
 
   it("sem envelope, a instrução do envelope também sai do prompt", () => {
-    expect(FONTE_EXP).toMatch(/semEnvelope \? "" : instrucaoDoEnvelope\(\)/);
+    expect(FONTE_EXP).toMatch(/semEnvelope \? "" : instrucaoDoEnvelope\(respostaRica\)/);
     expect(FONTE_EXP).toMatch(/\.\.\.\(semEnvelope \? \{\} : \{ formatoJson: esquemaDaResposta\(\) \}\)/);
   });
 });

@@ -6,6 +6,8 @@ import { RespostaMarkdown, limparRespostaKolo } from "@/components/resposta-mark
 import { ofereceuPlano } from "@/lib/ia/marcadores";
 import { pedeUmPlano } from "@/lib/ia/pedido-plano";
 import { RespostaStreamer } from "./resposta-streamer";
+import { temaEscolhidoDoContexto } from "@/lib/conducao/temas-conversa";
+import { qualidadeRespostaV2Ativa } from "@/lib/ayla/qualidade-resposta";
 
 // "Montar plano completo" roda uma chamada longa do Sonnet (server action
 // criarPlanoDaConversa) nesta rota. Sem isso, a função do Vercel estourava o
@@ -28,13 +30,14 @@ export default async function ConversaPage(props: PageProps<"/conversar/[id]">) 
   const { data: conversa } = await supabase
     .from("conversas")
     .select(
-      "id, titulo, created_at, encerrada, membro_atipico_id, membros_atipicos(nome)",
+      "id, titulo, created_at, encerrada, membro_atipico_id, contexto_inicial, membros_atipicos(nome)",
     )
     .eq("id", id)
     .eq("family_account_id", familyId)
     .maybeSingle();
 
   if (!conversa) notFound();
+  const area = qualidadeRespostaV2Ativa() ? temaEscolhidoDoContexto(conversa.contexto_inicial) : null;
 
   const { data: mensagens } = await supabase
     .from("mensagens_skill")
@@ -79,7 +82,7 @@ export default async function ConversaPage(props: PageProps<"/conversar/[id]">) 
           Voltar
         </Link>
         <h1 className="font-heading text-2xl text-foreground md:text-3xl">
-          {conversa.titulo ?? "Conversa"}
+          {area ? `Ayla · ${area.nome}` : conversa.titulo ?? "Conversa"}
         </h1>
         {membroNome && (
           <p className="text-sm text-muted-foreground">Sobre {membroNome}</p>
@@ -101,7 +104,7 @@ export default async function ConversaPage(props: PageProps<"/conversar/[id]">) 
             ) : (
               <div>
                 <span className="text-[11px] font-bold uppercase tracking-[0.18em] text-brand-purple">
-                  Kolo
+                  {qualidadeRespostaV2Ativa() ? "Ayla" : "Kolo"}
                 </span>
                 <RespostaMarkdown
                   texto={limparRespostaKolo(m.conteudo)}
@@ -120,6 +123,7 @@ export default async function ConversaPage(props: PageProps<"/conversar/[id]">) 
         temResposta={temResposta}
         msgCount={msgs.length}
         planoOferecido={planoOferecido}
+        aceitaAudio={qualidadeRespostaV2Ativa()}
       />
     </div>
   );

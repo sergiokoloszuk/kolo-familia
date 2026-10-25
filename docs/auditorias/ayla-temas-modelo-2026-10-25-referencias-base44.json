@@ -1,0 +1,509 @@
+{
+  "data": "2026-10-25T20:49:16.582Z",
+  "escopo": "Pessoas fictícias, dados em memória; biblioteca e templates só GET; produtor OpenAI real; sem WhatsApp, mensagens externas, atualização de Perfil ou cobrança de família.",
+  "resultados": [
+    {
+      "id": "ref_alimentacao",
+      "tema": "nutricional",
+      "mensagem": "Ela come arroz, frango e batata. Se coloco feijão ou salada, manda tirar. Eu insisto porque tenho medo de ela nunca aprender a comer outras coisas.",
+      "perfil": {
+        "nome": "Isabela",
+        "nascimento": "2007-12-25",
+        "genero": "feminino",
+        "sabe": {
+          "como_e": {
+            "texto": "Gosta de cinema, música, comida japonesa, poke, frutos do mar e sair com amigas. Quer começar a trabalhar e prestar vestibular no próximo ano."
+          },
+          "sensorial": "Sensível a sons, luz forte e cheiros. Às vezes não quer ser tocada. Gosta de experimentar texturas diferentes."
+        },
+        "extras": {
+          "comunicacao": "Verbal e fluente, vocabulário ótimo e compreensão ótima.",
+          "socializacao": "Interage bem com os pares e gosta de sair com amigas. Também gosta de ficar sozinha no quarto.",
+          "foco": "Mantém atenção quando está engajada; às vezes se distrai. Não há episódios de hiperfoco registrados.",
+          "nutricional": "Gosta de comida japonesa, poke e frutos do mar. Os ingredientes que aceita não estão detalhados.",
+          "sono": "Dormia cerca de 7 horas; não há descrição de rotina ou ambiente de sono.",
+          "emocional": "Expressa emoções gritando, chorando e falando palavrões. Mudanças na rotina são relatadas como difíceis."
+        }
+      },
+      "canal": "web",
+      "flag": "on",
+      "texto": "O ponto não parece ser apenas “ela não come feijão ou salada”: *a presença desses alimentos no prato já faz ela pedir para tirar*. Quando a insistência continua, a refeição pode virar uma disputa antes mesmo de ela ter chance de se aproximar do alimento. E, aos 18 anos, a participação dela nas escolhas precisa ser preservada.\n\n*Eu mudaria o objetivo inicial:* não tentar fazê-la comer logo, mas criar contato sem pressão.\n\n### Para começar\n\n- Sirva arroz, frango e batata como ela já aceita.\n- Coloque feijão ou salada *em uma travessa separada*, não no prato dela. Assim ela pode escolher sem ter o alimento escondido nem ser obrigada a tolerá-lo no próprio prato.\n- Diga uma vez: **“Você não precisa comer. Vou deixar separado; se quiser experimentar algum dia, você me fala.”**\n- Se ela pedir para retirar a travessa também, respeite. A exposição só ajuda quando ainda existe alguma sensação de controle.\n\nUma possibilidade é usar a lógica de montagem do poke: cada componente separado, e ela decide o que entra no prato. Gostar de poke não significa que ela aceitará qualquer ingrediente, mas esse formato pode combinar com a autonomia que você quer construir.\n\nSe em algum momento ela demonstrar curiosidade, deixe que escolha o passo: olhar, cheirar, tocar, colocar no prato ou provar. *Provar não precisa ser o primeiro objetivo.* Para algumas pessoas, a aproximação acontece em etapas; pressionar pode fazer o alimento ficar associado ao conflito, enquanto poder recusar mantém aberta a possibilidade de uma tentativa futura.\n\nA sua frase pode ser:\n\n> **“Eu quero te ajudar a conhecer outras comidas, mas não vou te obrigar. Você pode escolher se quer deixar separado, colocar no prato ou experimentar.”**\n\nObserve por alguns dias uma coisa específica: *ela tolera melhor o alimento na mesa quando fica separado, ou rejeita até a presença dele no ambiente?* Essa diferença mostra qual é o próximo passo — e evita aumentar a exigência antes da hora.\n\nSe houver ânsia, dor, engasgos, perda de peso ou redução importante do que ela já comia, isso merece ser levado a um profissional de saúde, sem insistir em exposições por conta própria.",
+      "modelo": "gpt-5.6-luna",
+      "ms": 9976,
+      "base2Ids": [
+        "nutricional/principio-central",
+        "nutricional/missao"
+      ],
+      "fatosEntregues": {
+        "nome": "Isabela",
+        "idade": 18,
+        "secoes": {
+          "nutricional": "Gosta de comida japonesa, poke e frutos do mar. Os ingredientes que aceita não estão detalhados.",
+          "sensorial": "Sensível a sons, luz forte e cheiros. Às vezes não quer ser tocada. Gosta de experimentar texturas diferentes.",
+          "como_e": "Gosta de cinema, música, comida japonesa, poke, frutos do mar e sair com amigas. Quer começar a trabalhar e prestar vestibular no próximo ano.",
+          "comunicacao": "Verbal e fluente, vocabulário ótimo e compreensão ótima."
+        }
+      }
+    },
+    {
+      "id": "ref_alimentacao",
+      "tema": "nutricional",
+      "mensagem": "Ela come arroz, frango e batata. Se coloco feijão ou salada, manda tirar. Eu insisto porque tenho medo de ela nunca aprender a comer outras coisas.",
+      "perfil": {
+        "nome": "Isabela",
+        "nascimento": "2007-12-25",
+        "genero": "feminino",
+        "sabe": {
+          "como_e": {
+            "texto": "Gosta de cinema, música, comida japonesa, poke, frutos do mar e sair com amigas. Quer começar a trabalhar e prestar vestibular no próximo ano."
+          },
+          "sensorial": "Sensível a sons, luz forte e cheiros. Às vezes não quer ser tocada. Gosta de experimentar texturas diferentes."
+        },
+        "extras": {
+          "comunicacao": "Verbal e fluente, vocabulário ótimo e compreensão ótima.",
+          "socializacao": "Interage bem com os pares e gosta de sair com amigas. Também gosta de ficar sozinha no quarto.",
+          "foco": "Mantém atenção quando está engajada; às vezes se distrai. Não há episódios de hiperfoco registrados.",
+          "nutricional": "Gosta de comida japonesa, poke e frutos do mar. Os ingredientes que aceita não estão detalhados.",
+          "sono": "Dormia cerca de 7 horas; não há descrição de rotina ou ambiente de sono.",
+          "emocional": "Expressa emoções gritando, chorando e falando palavrões. Mudanças na rotina são relatadas como difíceis."
+        }
+      },
+      "canal": "whatsapp",
+      "flag": "on",
+      "texto": "Entendo seu medo — quando ela aceita poucos alimentos, parece mesmo importante aproveitar cada refeição para insistir. Mas, como ela também rejeita a presença do feijão ou da salada no prato, insistir pode transformar a refeição em conflito e aumentar a recusa; isso não significa que ela nunca vai aprender.\n\nPor agora, mantenha arroz, frango e batata como alimentos seguros e coloque o feijão ou a salada **em uma travessa separada**, sem pedir que ela toque, cheire ou prove. Você pode dizer: **“Você não precisa comer. Vou deixar separado para você escolher.”** Assim, ela continua participando da refeição sem perder autonomia, e o alimento novo fica disponível sem ser imposto.\n\nComo ela gosta de poke e de experimentar texturas diferentes, vale observar se aceita melhor algum ingrediente quando vem separado, em pouca quantidade ou numa apresentação diferente — sem concluir que gostar de poke significa aceitar todos os ingredientes. Nas próximas refeições, repare apenas se ela tolera o alimento na mesa ou se prefere que ele nem fique por perto; isso ajuda a escolher o próximo passo.",
+      "modelo": "gpt-5.6-luna",
+      "ms": 3896,
+      "base2Ids": [
+        "nutricional/principio-central",
+        "nutricional/missao"
+      ],
+      "guias": [
+        "nutricional"
+      ],
+      "regrasConcisao": [
+        "- uma história curta que ensine ou ensaie a cena;",
+        "- uma sequência visual curta, quando ver a ordem realmente ajuda;",
+        "Uma resposta pode ser curta e completa. Complete o mecanismo necessário para a",
+        "comum, duração curta, mediação do adulto, colegas de apoio.",
+        "Na conversa, você pode organizar passos de um momento difícil, sequência curta,",
+        "<lacuna_decisiva>Se ainda faltar UMA coisa para orientar melhor, é esta: **Seletividade alimentar**. Só pergunte se a resposta mudaria mesmo o que você vai sugerir — e, se perguntar, entregue uma orientação útil no MESMO turno. Nunca pergunte mais de uma coisa.</lacuna_decisiva>",
+        "Faça a personalização aparecer: ligue um ou dois fatos confirmados a uma decisão prática, em vez de apenas mencionar nome e interesse. Uma preferência antiga não prova que continua igual: se o relato atual divergir, reconheça e confira. Não despeje todo o Perfil, não explique comportamento pelo diagnóstico e não transforme ausência de informação em causa. Cumprimento, continuação curta, crise e pedido de brincadeira conservam seus formatos próprios.",
+        "Este é o contrato de apresentação desta candidata: o tamanho acompanha a ajuda. Uma situação complexa pode receber vários blocos e várias orientações completas no mesmo turno; não a reduza a uma ideia ou a duas bolhas por uma regra antiga de concisão.",
+        "Use títulos curtos, parágrafos com respiro, listas de ações e destaque das falas prontas. Evite tabela para instruções simples, títulos \"BLOCO 2\" e relatório burocrático. No WhatsApp use *negrito* e listas simples; na web use markdown leve. Emojis podem marcar passagens, sem decorar toda frase.",
+        "Não transforme uma orientação cotidiana em uma lista de ressalvas. Ajude com naturalidade e respeite preferências e apoio aceito. Pedido de brincadeira segue seu roteiro completo; história, crise e necessidade imediata seguem seus próprios formatos. Não prometa registro, relatório salvo ou melhora sem evidência.",
+        "Para um pedido concreto com preocupação e dificuldade recorrente, o acolhimento, a compreensão e as opções práticas devem aparecer juntos: não entregue apenas uma ação e encerre. Uma mudança de leitura do medo da mãe e duas ou três possibilidades aplicáveis são parte da ajuda solicitada, não aprofundamentos a adiar. Esta regra substitui limites antigos de uma orientação por turno; concisão não significa cortar a compreensão ou o próximo passo.",
+        "Responda SEMPRE no idioma da ÚLTIMA mensagem da pessoa. A resposta INTEIRA num único idioma — nunca misture português com espanhol ou inglês, nem em conectivos. O contexto, o perfil e as notas podem vir em português: leia normalmente, mas ESCREVA na língua da pessoa (nomes próprios ficam como são). Mensagem curta ou ambígua (\"ok\", \"😊\"): siga o idioma que vocês já vinham usando."
+      ]
+    },
+    {
+      "id": "ref_socializacao",
+      "tema": "socializacao",
+      "mensagem": "ela nao quer sair com as amigas, acha que nao sabe o que conversar, não se acha bonita.",
+      "perfil": {
+        "nome": "Isabela",
+        "nascimento": "2007-12-25",
+        "genero": "feminino",
+        "sabe": {
+          "como_e": {
+            "texto": "Gosta de cinema, música, comida japonesa, poke, frutos do mar e sair com amigas. Quer começar a trabalhar e prestar vestibular no próximo ano."
+          },
+          "sensorial": "Sensível a sons, luz forte e cheiros. Às vezes não quer ser tocada. Gosta de experimentar texturas diferentes."
+        },
+        "extras": {
+          "comunicacao": "Verbal e fluente, vocabulário ótimo e compreensão ótima.",
+          "socializacao": "Interage bem com os pares e gosta de sair com amigas. Também gosta de ficar sozinha no quarto.",
+          "foco": "Mantém atenção quando está engajada; às vezes se distrai. Não há episódios de hiperfoco registrados.",
+          "nutricional": "Gosta de comida japonesa, poke e frutos do mar. Os ingredientes que aceita não estão detalhados.",
+          "sono": "Dormia cerca de 7 horas; não há descrição de rotina ou ambiente de sono.",
+          "emocional": "Expressa emoções gritando, chorando e falando palavrões. Mudanças na rotina são relatadas como difíceis."
+        }
+      },
+      "canal": "web",
+      "flag": "on",
+      "texto": "Pelo que você contou, a dificuldade da Isabela não parece ser falta de interesse pelas amigas: ela está evitando sair porque a situação virou uma prova — *“não vou saber conversar”* e *“não estou bonita”*. Quando a pessoa entra nesse lugar, insistir que “é só ir” ou responder apenas “você é linda” costuma não resolver, porque não diminui o medo de se sentir exposta.\n\n**Eu faria assim:**\n\n- **Não force nem trate como frescura.**  \n  Diga: **“Eu entendo que sair está parecendo difícil. Não quero te empurrar, quero entender o que deixaria esse encontro mais confortável para você.”**\n\n- **Troque o encontro aberto por um contexto com apoio.**  \n  Como ela gosta de cinema, música e comida japonesa, talvez seja mais fácil combinar algo em que a conversa não precise sustentar todo o encontro: cinema e depois comer alguma coisa, por exemplo. Ela pode combinar com uma amiga de confiança, em vez de encontrar um grupo grande.\n\n- **Deixe uma saída combinada.**  \n  **“Você pode ir e, se ficar desconfortável, me avisa e a gente pensa em voltar.”**  \n  Ter essa possibilidade não ensina a fugir; pode dar segurança suficiente para ela experimentar participar sem sentir que ficou presa.\n\nPara as conversas, ajude com *duas ou três frases de apoio*, não com um roteiro inteiro:\n\n- **“Como foi sua semana?”**\n- **“Você viu algum filme ou série boa?”**\n- **“O que você tem feito?”**\n\nE também uma frase para quando ela não souber continuar: **“Eu não sei muito o que falar agora, mas estou gostando de estar com vocês.”** Conversar não precisa ser uma apresentação perfeita; estar presente, ouvir e fazer uma pergunta já é participação.\n\nSobre ela não se achar bonita, tente não entrar numa disputa para provar o contrário. Em vez de “você é linda, para com isso”, experimente: **“Você não está se sentindo bonita hoje. Quer escolher uma roupa em que se sinta mais confortável, sem precisar parecer outra pessoa?”** Isso devolve alguma autonomia para ela, em vez de transformar a aparência numa discussão.\n\nObserve uma diferença importante: ela *quer* sair e recua por medo, ou realmente prefere ficar sozinha e não sente falta do encontro? Se esse sentimento de não ser bonita vier acompanhado de isolamento cada vez maior, sofrimento intenso, mudança importante no sono ou alimentação, desesperança ou fala sobre se machucar, vale levar isso a um profissional de saúde mental e relatar exatamente essas mudanças.",
+      "modelo": "gpt-5.6-luna",
+      "ms": 12144,
+      "base2Ids": [
+        "socializacao/primeira-pergunta-de-alto-valor",
+        "socializacao/principio-central"
+      ],
+      "fatosEntregues": {
+        "nome": "Isabela",
+        "idade": 18,
+        "secoes": {
+          "socializacao": "Interage bem com os pares e gosta de sair com amigas. Também gosta de ficar sozinha no quarto.",
+          "como_e": "Gosta de cinema, música, comida japonesa, poke, frutos do mar e sair com amigas. Quer começar a trabalhar e prestar vestibular no próximo ano.",
+          "sensorial": "Sensível a sons, luz forte e cheiros. Às vezes não quer ser tocada. Gosta de experimentar texturas diferentes.",
+          "comunicacao": "Verbal e fluente, vocabulário ótimo e compreensão ótima."
+        }
+      }
+    },
+    {
+      "id": "ref_socializacao",
+      "tema": "socializacao",
+      "mensagem": "ela nao quer sair com as amigas, acha que nao sabe o que conversar, não se acha bonita.",
+      "perfil": {
+        "nome": "Isabela",
+        "nascimento": "2007-12-25",
+        "genero": "feminino",
+        "sabe": {
+          "como_e": {
+            "texto": "Gosta de cinema, música, comida japonesa, poke, frutos do mar e sair com amigas. Quer começar a trabalhar e prestar vestibular no próximo ano."
+          },
+          "sensorial": "Sensível a sons, luz forte e cheiros. Às vezes não quer ser tocada. Gosta de experimentar texturas diferentes."
+        },
+        "extras": {
+          "comunicacao": "Verbal e fluente, vocabulário ótimo e compreensão ótima.",
+          "socializacao": "Interage bem com os pares e gosta de sair com amigas. Também gosta de ficar sozinha no quarto.",
+          "foco": "Mantém atenção quando está engajada; às vezes se distrai. Não há episódios de hiperfoco registrados.",
+          "nutricional": "Gosta de comida japonesa, poke e frutos do mar. Os ingredientes que aceita não estão detalhados.",
+          "sono": "Dormia cerca de 7 horas; não há descrição de rotina ou ambiente de sono.",
+          "emocional": "Expressa emoções gritando, chorando e falando palavrões. Mudanças na rotina são relatadas como difíceis."
+        }
+      },
+      "canal": "whatsapp",
+      "flag": "on",
+      "texto": "Isso parece estar pesando em dois pontos ao mesmo tempo: o medo de não saber o que dizer e a forma como ela está se enxergando. Como a Isabela já interage bem com as amigas, eu evitaria transformar isso em “você precisa sair” e começaria por uma opção menor e mais previsível, como convidar uma amiga para um café, cinema ou poke — atividades que já combinam com interesses dela.\n\nVocê pode dizer: **“Não precisa parecer bonita nem ter assunto o tempo todo para ser querida. Podemos pensar juntas em um encontro curto, e você pode ir embora quando quiser.”** Antes, combinem duas perguntas simples que ela possa usar — “o que você tem feito?” e “você viu algum filme ou ouviu alguma música boa?” — sem exigir que ela mantenha a conversa sozinha.\n\nEla quer sair, mas fica insegura e evita, ou realmente prefere não sair neste momento?",
+      "modelo": "gpt-5.6-luna",
+      "ms": 5918,
+      "base2Ids": [
+        "socializacao/primeira-pergunta-de-alto-valor",
+        "socializacao/principio-central"
+      ],
+      "guias": [
+        "socializacao"
+      ],
+      "regrasConcisao": [
+        "- uma história curta que ensine ou ensaie a cena;",
+        "- uma sequência visual curta, quando ver a ordem realmente ajuda;",
+        "Uma resposta pode ser curta e completa. Complete o mecanismo necessário para a",
+        "comum, duração curta, mediação do adulto, colegas de apoio.",
+        "Na conversa, você pode organizar passos de um momento difícil, sequência curta,",
+        "<lacuna_decisiva>Se ainda faltar UMA coisa para orientar melhor, é esta: **Como é socializar pra ele(a)**. Só pergunte se a resposta mudaria mesmo o que você vai sugerir — e, se perguntar, entregue uma orientação útil no MESMO turno. Nunca pergunte mais de uma coisa.</lacuna_decisiva>",
+        "Faça a personalização aparecer: ligue um ou dois fatos confirmados a uma decisão prática, em vez de apenas mencionar nome e interesse. Uma preferência antiga não prova que continua igual: se o relato atual divergir, reconheça e confira. Não despeje todo o Perfil, não explique comportamento pelo diagnóstico e não transforme ausência de informação em causa. Cumprimento, continuação curta, crise e pedido de brincadeira conservam seus formatos próprios.",
+        "Este é o contrato de apresentação desta candidata: o tamanho acompanha a ajuda. Uma situação complexa pode receber vários blocos e várias orientações completas no mesmo turno; não a reduza a uma ideia ou a duas bolhas por uma regra antiga de concisão.",
+        "Use títulos curtos, parágrafos com respiro, listas de ações e destaque das falas prontas. Evite tabela para instruções simples, títulos \"BLOCO 2\" e relatório burocrático. No WhatsApp use *negrito* e listas simples; na web use markdown leve. Emojis podem marcar passagens, sem decorar toda frase.",
+        "Não transforme uma orientação cotidiana em uma lista de ressalvas. Ajude com naturalidade e respeite preferências e apoio aceito. Pedido de brincadeira segue seu roteiro completo; história, crise e necessidade imediata seguem seus próprios formatos. Não prometa registro, relatório salvo ou melhora sem evidência.",
+        "Para um pedido concreto com preocupação e dificuldade recorrente, o acolhimento, a compreensão e as opções práticas devem aparecer juntos: não entregue apenas uma ação e encerre. Uma mudança de leitura do medo da mãe e duas ou três possibilidades aplicáveis são parte da ajuda solicitada, não aprofundamentos a adiar. Esta regra substitui limites antigos de uma orientação por turno; concisão não significa cortar a compreensão ou o próximo passo.",
+        "Responda SEMPRE no idioma da ÚLTIMA mensagem da pessoa. A resposta INTEIRA num único idioma — nunca misture português com espanhol ou inglês, nem em conectivos. O contexto, o perfil e as notas podem vir em português: leia normalmente, mas ESCREVA na língua da pessoa (nomes próprios ficam como são). Mensagem curta ou ambígua (\"ok\", \"😊\"): siga o idioma que vocês já vinham usando."
+      ]
+    },
+    {
+      "id": "ref_autonomia_8",
+      "tema": "autonomia",
+      "mensagem": "minha filha de 8 anos não sabe arrumar quarto, escovar dente, tomar banho, amarrar sapato. e se falo fica brava, não quer aprender",
+      "perfil": {
+        "nome": "Filha",
+        "nascimento": "2018-01-10",
+        "genero": "feminino"
+      },
+      "canal": "web",
+      "flag": "on",
+      "texto": "Quando várias tarefas aparecem juntas — quarto, dentes, banho e sapato — a cobrança pode acabar virando o momento mais difícil. E “fica brava” não mostra, sozinha, se ela não sabe fazer, não consegue começar, se perde na sequência ou sente desconforto. Cada uma dessas barreiras pede uma ajuda diferente.\n\n*Eu começaria pela escovação dos dentes*, porque é uma rotina curta e frequente. Deixaria amarrar o sapato e arrumar o quarto para depois, sem transformar tudo em meta ao mesmo tempo.\n\n### Para começar amanhã\n\n1. **Mostre apenas o primeiro passo:** deixar a escova e o creme dental no lugar.\n2. Diga uma frase curta: **“Vamos fazer só o começo juntas: pegar a escova.”**\n3. Depois, mostre uma sequência com desenhos ou fotos:\n   - pegar a escova;\n   - colocar creme;\n   - escovar em cima;\n   - escovar embaixo;\n   - enxaguar;\n   - guardar.\n4. Faça junto, sem repetir muitas instruções. Se ela travar, ofereça: **“Você quer começar em cima ou embaixo?”**\n5. Observe onde ela para: antes de começar, ao colocar o creme, durante a escovação ou na hora de terminar.\n\nA sequência visual ajuda porque substitui parte da fala do adulto e deixa claro o que vem depois. Para algumas crianças, ouvir “vai escovar os dentes” é amplo demais; ver uma etapa pequena torna a tarefa mais previsível. O objetivo inicial não é ela fazer tudo sozinha: é descobrir em qual parte ela já participa e reduzir apenas uma camada de ajuda.\n\nPara o banho, use a mesma lógica depois: primeiro entrar e pegar o sabonete; mais adiante, seguir duas ou três imagens. Para o quarto, comece com *uma categoria*, como guardar só os livros. Amarrar o sapato pode ficar para um momento separado, quando as outras tarefas estiverem menos carregadas.\n\nQuando ela ficar brava, evite discutir sobre “querer aprender”. Tente dizer:\n\n**“Eu não vou te fazer fazer tudo agora. Vou te ajudar só com o primeiro pedaço.”**\n\nNos próximos dias, repare especialmente nisto: *ela recusa antes mesmo de ver a tarefa ou aceita quando o primeiro passo fica pequeno e visível?* Essa diferença vai mostrar se o próximo apoio precisa ser mais visual, mais ajuda no início ou uma adaptação do próprio cuidado.",
+      "modelo": "gpt-5.6-luna",
+      "ms": 7738,
+      "base2Ids": [
+        "autonomia/pergunta-de-alto-valor",
+        "autonomia/principio-central"
+      ],
+      "fatosEntregues": {
+        "nome": "Filha",
+        "idade": 8,
+        "secoes": {}
+      }
+    },
+    {
+      "id": "ref_autonomia_8",
+      "tema": "autonomia",
+      "mensagem": "minha filha de 8 anos não sabe arrumar quarto, escovar dente, tomar banho, amarrar sapato. e se falo fica brava, não quer aprender",
+      "perfil": {
+        "nome": "Filha",
+        "nascimento": "2018-01-10",
+        "genero": "feminino"
+      },
+      "canal": "whatsapp",
+      "flag": "on",
+      "texto": "Isso parece menos uma questão de “não querer aprender” e mais uma dificuldade que ainda precisa ser dividida em partes menores — e falar várias vezes pode estar aumentando a irritação. **Escolha só uma tarefa por enquanto**, de preferência escovar os dentes, e troque a cobrança por uma sequência visível com 3 passos: pegar a escova → colocar a pasta → escovar; você pode fazer junto, sem exigir que ela complete tudo sozinha.\n\nDiga: **“Não precisa fazer tudo agora. Vamos fazer só o primeiro passo juntas; você escolhe se quer começar pegando a escova ou colocando a pasta.”** Depois, observe se ela participa de alguma etapa, mesmo com ajuda, em vez de medir apenas se terminou.\n\nPara eu localizar o ponto de partida: quando você deixa os materiais prontos, **qual parte de alguma dessas tarefas ela já consegue fazer, mesmo precisando de ajuda depois?** Pode responder por áudio, do seu jeito.",
+      "modelo": "gpt-5.6-luna",
+      "ms": 6114,
+      "base2Ids": [
+        "autonomia/pergunta-de-alto-valor",
+        "autonomia/principio-central"
+      ],
+      "guias": [
+        "autonomia"
+      ],
+      "regrasConcisao": [
+        "- uma história curta que ensine ou ensaie a cena;",
+        "- uma sequência visual curta, quando ver a ordem realmente ajuda;",
+        "Uma resposta pode ser curta e completa. Complete o mecanismo necessário para a",
+        "comum, duração curta, mediação do adulto, colegas de apoio.",
+        "Na conversa, você pode organizar passos de um momento difícil, sequência curta,",
+        "<lacuna_decisiva>Se ainda faltar UMA coisa para orientar melhor, é esta: **Autonomia no dia a dia**. Só pergunte se a resposta mudaria mesmo o que você vai sugerir — e, se perguntar, entregue uma orientação útil no MESMO turno. Nunca pergunte mais de uma coisa.</lacuna_decisiva>",
+        "Faça a personalização aparecer: ligue um ou dois fatos confirmados a uma decisão prática, em vez de apenas mencionar nome e interesse. Uma preferência antiga não prova que continua igual: se o relato atual divergir, reconheça e confira. Não despeje todo o Perfil, não explique comportamento pelo diagnóstico e não transforme ausência de informação em causa. Cumprimento, continuação curta, crise e pedido de brincadeira conservam seus formatos próprios.",
+        "Este é o contrato de apresentação desta candidata: o tamanho acompanha a ajuda. Uma situação complexa pode receber vários blocos e várias orientações completas no mesmo turno; não a reduza a uma ideia ou a duas bolhas por uma regra antiga de concisão.",
+        "Use títulos curtos, parágrafos com respiro, listas de ações e destaque das falas prontas. Evite tabela para instruções simples, títulos \"BLOCO 2\" e relatório burocrático. No WhatsApp use *negrito* e listas simples; na web use markdown leve. Emojis podem marcar passagens, sem decorar toda frase.",
+        "Não transforme uma orientação cotidiana em uma lista de ressalvas. Ajude com naturalidade e respeite preferências e apoio aceito. Pedido de brincadeira segue seu roteiro completo; história, crise e necessidade imediata seguem seus próprios formatos. Não prometa registro, relatório salvo ou melhora sem evidência.",
+        "Para um pedido concreto com preocupação e dificuldade recorrente, o acolhimento, a compreensão e as opções práticas devem aparecer juntos: não entregue apenas uma ação e encerre. Uma mudança de leitura do medo da mãe e duas ou três possibilidades aplicáveis são parte da ajuda solicitada, não aprofundamentos a adiar. Esta regra substitui limites antigos de uma orientação por turno; concisão não significa cortar a compreensão ou o próximo passo.",
+        "Responda SEMPRE no idioma da ÚLTIMA mensagem da pessoa. A resposta INTEIRA num único idioma — nunca misture português com espanhol ou inglês, nem em conectivos. O contexto, o perfil e as notas podem vir em português: leia normalmente, mas ESCREVA na língua da pessoa (nomes próprios ficam como são). Mensagem curta ou ambígua (\"ok\", \"😊\"): siga o idioma que vocês já vinham usando."
+      ]
+    },
+    {
+      "id": "ref_comunicacao_4",
+      "tema": "comunicacao",
+      "mensagem": "minha filha é não verbal e tem 4 anos\ncomo posso ajudar ela a entender mais o contexto e explicar o que ela quer e entender o que eu peço",
+      "perfil": {
+        "nome": "Filha",
+        "nascimento": "2022-01-10",
+        "genero": "feminino",
+        "extras": {
+          "comunicacao": "A mãe descreve a filha como não verbal. Não há outros detalhes de expressão ou compreensão registrados."
+        }
+      },
+      "canal": "web",
+      "flag": "on",
+      "texto": "A fala não é a única forma de comunicação. Aos 4 anos, ela pode mostrar o que quer apontando, olhando, puxando você, entregando um objeto, fazendo um gesto, vocalizando ou usando imagens — e tudo isso merece ser reconhecido como comunicação.\n\nO caminho é trabalhar *duas coisas ao mesmo tempo*: ajudá-la a entender melhor o que acontece e oferecer formas mais claras de expressar o que quer.\n\n### Para ela entender o que você pede\n\n- Dê *uma instrução por vez*:  \n  **“Pega o sapato.”**  \n  Em vez de: “Pega o sapato, coloca ali e vem se arrumar.”\n- Fale enquanto mostra o objeto ou aponta para o lugar.\n- Use sempre palavras parecidas para a mesma ação: **“guardar”, “abrir”, “dar”, “sentar”**.\n- Depois do pedido, espere alguns segundos antes de repetir. Nesse intervalo, observe se ela olha, se aproxima, toca no objeto ou começa a ação.\n- Quando ela fizer qualquer parte do que foi pedido, reconheça:  \n  **“Você pegou o sapato. Agora vamos colocar.”**\n\nIsso ajuda porque compreender uma frase depende também do contexto, dos gestos e da previsibilidade — não apenas de ouvir as palavras.\n\nComece por pedidos ligados a ações reais do dia: **“abre a porta”, “pega a água”, “vamos guardar”, “senta aqui”**. Assim, ela consegue ver imediatamente o significado do que você falou.\n\n### Para ela explicar o que quer\n\nEm momentos em que você já sabe que ela quer algo, não faça muitas perguntas. Ofereça duas opções visíveis:\n\n**“Você quer água ou suco?”**  \nMostre os dois e aceite qualquer resposta intencional: olhar, tocar, apontar, pegar, vocalizar ou entregar sua mão.\n\nQuando ela escolher, coloque em palavras:\n\n**“Você quer água. Água.”**\n\nNão é necessário exigir que ela repita. Você está dando um modelo para que aquela forma de comunicação fique mais clara com o tempo.\n\nSe ela costuma puxar você pela mão, siga o movimento até entender o pedido e então acrescente uma forma mais específica:\n\n**“Você quer abrir. Me mostra: abrir.”**\n\nVocê pode apontar para a porta, fazer um gesto de abrir ou usar uma imagem, caso ela já tenha familiaridade com imagens. O objetivo não é impedir que ela puxe você, mas transformar uma comunicação que já existe em algo mais compreensível para as duas.\n\n### Um jogo simples de escolha\n\nUse dois objetos que ela costuma procurar. Coloque-os à vista, mas sem entregar imediatamente.\n\nDiga:\n\n**“Qual você quer?”**\n\nEspere. Quando ela olhar, tocar ou apontar para um deles, faça uma reação clara e divertida:\n\n**“Esse! Você escolheu a bola!”**\n\nEntregue o objeto e continue a interação com ele. Na próxima rodada, repita. Não corrija a forma como ela escolheu e não esconda algo de que ela precisa; use uma situação leve, em que ela possa escolher sem pressão.\n\n### O que observar\n\nNos próximos dias, repare principalmente em uma coisa:\n\n- *Sem você perguntar, ela usa algum sinal para pedir?* Pode ser olhar, apontar, puxar, entregar um objeto, levar você até algum lugar, gesto, som ou imagem.\n\nEssa observação mostra qual caminho já funciona para começar — não precisamos partir do zero nem esperar a fala para considerar que ela está se comunicando.\n\nSe ela ainda não usa imagens ou outra forma de comunicação, vale conversar com uma fonoaudióloga para avaliar recursos adequados. Enquanto isso, você já pode usar objetos, gestos, escolhas e palavras curtas no cotidiano, sem exigir fala nem contato visual.",
+      "modelo": "gpt-5.6-luna",
+      "ms": 11872,
+      "base2Ids": [
+        "comunicacao/antes-de-orientar-diferencie-quando-comunicacao-nao-e-o-tema-principal",
+        "comunicacao/pergunta-de-alto-valor-golden-case"
+      ],
+      "fatosEntregues": {
+        "nome": "Filha",
+        "idade": 4,
+        "secoes": {
+          "comunicacao": "A mãe descreve a filha como não verbal. Não há outros detalhes de expressão ou compreensão registrados."
+        }
+      }
+    },
+    {
+      "id": "ref_comunicacao_4",
+      "tema": "comunicacao",
+      "mensagem": "minha filha é não verbal e tem 4 anos\ncomo posso ajudar ela a entender mais o contexto e explicar o que ela quer e entender o que eu peço",
+      "perfil": {
+        "nome": "Filha",
+        "nascimento": "2022-01-10",
+        "genero": "feminino",
+        "extras": {
+          "comunicacao": "A mãe descreve a filha como não verbal. Não há outros detalhes de expressão ou compreensão registrados."
+        }
+      },
+      "canal": "whatsapp",
+      "flag": "on",
+      "texto": "Dá para trabalhar as duas partes juntas: *compreender o que você pede* e *ter uma forma clara de mostrar o que quer*. Como ela já se comunica de algum jeito — mesmo que seja por olhar, gesto, movimento, objeto ou puxando você — use essa via que já funciona, sem exigir fala.\n\n- Faça pedidos curtos, mostrando o objeto ou a ação: “pega o sapato” enquanto aponta para o sapato. Espere alguns segundos e aceite qualquer resposta que mostre compreensão; depois ajude apenas o necessário.\n- Para ela pedir, deixe duas opções visíveis e diga: “quer água ou suco?”. Aceite olhar, tocar, apontar, entregar a figura ou levar sua mão até a opção. Responda logo ao sinal intencional, sem exigir uma palavra ou um gesto específico.\n- Ao longo do dia, narre o contexto em frases simples: “acabou”, “agora banho”, “depois parque”, sempre junto do que está acontecendo. Isso ajuda a ligar palavras, pessoas e ações reais.\n\nUma pergunta muda bastante a melhor próxima sugestão: *sem você perguntar, como ela mostra que quer algo* — usa algum gesto, olha para a opção, entrega um objeto, puxa você ou usa figuras? Você pode responder por texto ou áudio, do seu jeito.",
+      "modelo": "gpt-5.6-luna",
+      "ms": 4633,
+      "base2Ids": [
+        "comunicacao/antes-de-orientar-diferencie-quando-comunicacao-nao-e-o-tema-principal",
+        "comunicacao/pergunta-de-alto-valor-golden-case"
+      ],
+      "guias": [
+        "comunicacao"
+      ],
+      "regrasConcisao": [
+        "- uma história curta que ensine ou ensaie a cena;",
+        "- uma sequência visual curta, quando ver a ordem realmente ajuda;",
+        "Uma resposta pode ser curta e completa. Complete o mecanismo necessário para a",
+        "comum, duração curta, mediação do adulto, colegas de apoio.",
+        "Na conversa, você pode organizar passos de um momento difícil, sequência curta,",
+        "<lacuna_decisiva>Se ainda faltar UMA coisa para orientar melhor, é esta: **Contato visual e gestos**. Só pergunte se a resposta mudaria mesmo o que você vai sugerir — e, se perguntar, entregue uma orientação útil no MESMO turno. Nunca pergunte mais de uma coisa.</lacuna_decisiva>",
+        "Faça a personalização aparecer: ligue um ou dois fatos confirmados a uma decisão prática, em vez de apenas mencionar nome e interesse. Uma preferência antiga não prova que continua igual: se o relato atual divergir, reconheça e confira. Não despeje todo o Perfil, não explique comportamento pelo diagnóstico e não transforme ausência de informação em causa. Cumprimento, continuação curta, crise e pedido de brincadeira conservam seus formatos próprios.",
+        "Este é o contrato de apresentação desta candidata: o tamanho acompanha a ajuda. Uma situação complexa pode receber vários blocos e várias orientações completas no mesmo turno; não a reduza a uma ideia ou a duas bolhas por uma regra antiga de concisão.",
+        "Use títulos curtos, parágrafos com respiro, listas de ações e destaque das falas prontas. Evite tabela para instruções simples, títulos \"BLOCO 2\" e relatório burocrático. No WhatsApp use *negrito* e listas simples; na web use markdown leve. Emojis podem marcar passagens, sem decorar toda frase.",
+        "Não transforme uma orientação cotidiana em uma lista de ressalvas. Ajude com naturalidade e respeite preferências e apoio aceito. Pedido de brincadeira segue seu roteiro completo; história, crise e necessidade imediata seguem seus próprios formatos. Não prometa registro, relatório salvo ou melhora sem evidência.",
+        "Para um pedido concreto com preocupação e dificuldade recorrente, o acolhimento, a compreensão e as opções práticas devem aparecer juntos: não entregue apenas uma ação e encerre. Uma mudança de leitura do medo da mãe e duas ou três possibilidades aplicáveis são parte da ajuda solicitada, não aprofundamentos a adiar. Esta regra substitui limites antigos de uma orientação por turno; concisão não significa cortar a compreensão ou o próximo passo.",
+        "Responda SEMPRE no idioma da ÚLTIMA mensagem da pessoa. A resposta INTEIRA num único idioma — nunca misture português com espanhol ou inglês, nem em conectivos. O contexto, o perfil e as notas podem vir em português: leia normalmente, mas ESCREVA na língua da pessoa (nomes próprios ficam como são). Mensagem curta ou ambígua (\"ok\", \"😊\"): siga o idioma que vocês já vinham usando."
+      ]
+    },
+    {
+      "id": "ref_brincadeira_adulta",
+      "tema": "socializacao",
+      "mensagem": "Quero uma brincadeira rápida para fazer com a Isabela agora, usando o que você sabe sobre ela.",
+      "perfil": {
+        "nome": "Isabela",
+        "nascimento": "2007-12-25",
+        "genero": "feminino",
+        "sabe": {
+          "como_e": {
+            "texto": "Gosta de cinema, música, comida japonesa, poke, frutos do mar e sair com amigas. Quer começar a trabalhar e prestar vestibular no próximo ano."
+          },
+          "sensorial": "Sensível a sons, luz forte e cheiros. Às vezes não quer ser tocada. Gosta de experimentar texturas diferentes."
+        },
+        "extras": {
+          "comunicacao": "Verbal e fluente, vocabulário ótimo e compreensão ótima.",
+          "socializacao": "Interage bem com os pares e gosta de sair com amigas. Também gosta de ficar sozinha no quarto.",
+          "foco": "Mantém atenção quando está engajada; às vezes se distrai. Não há episódios de hiperfoco registrados.",
+          "nutricional": "Gosta de comida japonesa, poke e frutos do mar. Os ingredientes que aceita não estão detalhados.",
+          "sono": "Dormia cerca de 7 horas; não há descrição de rotina ou ambiente de sono.",
+          "emocional": "Expressa emoções gritando, chorando e falando palavrões. Mudanças na rotina são relatadas como difíceis."
+        }
+      },
+      "canal": "web",
+      "flag": "on",
+      "texto": "**Título curto**  \n*Qual é o filme impossível?* 🎬\n\n**Tempo:** 3 a 5 minutos\n\n**Material:** papel e caneta\n\n**Como começar:** “Isabela, vou escrever duas opções de filme; você escolhe uma e me dá uma pista. Eu vou tentar adivinhar — mas posso errar de propósito de um jeito absurdo.”\n\n**1⃣ preparo visível das opções:** escreva no papel duas opções, como *comédia* e *ficção científica*, e deixe Isabela escolher uma apontando, falando ou fazendo um gesto combinado.\n\n**2⃣ participação possível da pessoa:** ela dá uma pista sobre o tipo de filme escolhido, sem precisar dizer o nome; também pode escolher a pista que você oferece entre duas possibilidades visíveis.\n\n**3⃣ reação ou virada divertida causada por essa participação:** você interpreta a pista de forma exageradamente errada — “Então é um filme sobre um polvo que presta vestibular?” — e depois faz uma tentativa mais próxima.\n\n**Próxima rodada:** troquem os papéis: você escolhe uma das duas opções e dá uma pista; Isabela tenta adivinhar ou inventa uma resposta engraçada.\n\n**Para terminar:** “Última rodada e você decide se meu palpite merece uma estrela ou um ingresso só de ida para fora do cinema.”\n\n**Adaptação:** se ela não quiser falar, pode apenas apontar para uma das duas opções e escolher entre duas pistas que você mostrar no papel.\n\n**Por que combina:** usa o interesse da Isabela por cinema, permite conversa e humor sem exigir toque, barulho ou exposição sensorial.",
+      "modelo": "gpt-5.6-luna",
+      "ms": 6627,
+      "base2Ids": [
+        "socializacao/primeira-pergunta-de-alto-valor",
+        "socializacao/principio-central"
+      ],
+      "fatosEntregues": {
+        "nome": "Isabela",
+        "idade": 18,
+        "secoes": {
+          "socializacao": "Interage bem com os pares e gosta de sair com amigas. Também gosta de ficar sozinha no quarto.",
+          "como_e": "Gosta de cinema, música, comida japonesa, poke, frutos do mar e sair com amigas. Quer começar a trabalhar e prestar vestibular no próximo ano.",
+          "sensorial": "Sensível a sons, luz forte e cheiros. Às vezes não quer ser tocada. Gosta de experimentar texturas diferentes.",
+          "comunicacao": "Verbal e fluente, vocabulário ótimo e compreensão ótima."
+        }
+      }
+    },
+    {
+      "id": "ref_brincadeira_adulta",
+      "tema": "socializacao",
+      "mensagem": "Quero uma brincadeira rápida para fazer com a Isabela agora, usando o que você sabe sobre ela.",
+      "perfil": {
+        "nome": "Isabela",
+        "nascimento": "2007-12-25",
+        "genero": "feminino",
+        "sabe": {
+          "como_e": {
+            "texto": "Gosta de cinema, música, comida japonesa, poke, frutos do mar e sair com amigas. Quer começar a trabalhar e prestar vestibular no próximo ano."
+          },
+          "sensorial": "Sensível a sons, luz forte e cheiros. Às vezes não quer ser tocada. Gosta de experimentar texturas diferentes."
+        },
+        "extras": {
+          "comunicacao": "Verbal e fluente, vocabulário ótimo e compreensão ótima.",
+          "socializacao": "Interage bem com os pares e gosta de sair com amigas. Também gosta de ficar sozinha no quarto.",
+          "foco": "Mantém atenção quando está engajada; às vezes se distrai. Não há episódios de hiperfoco registrados.",
+          "nutricional": "Gosta de comida japonesa, poke e frutos do mar. Os ingredientes que aceita não estão detalhados.",
+          "sono": "Dormia cerca de 7 horas; não há descrição de rotina ou ambiente de sono.",
+          "emocional": "Expressa emoções gritando, chorando e falando palavrões. Mudanças na rotina são relatadas como difíceis."
+        }
+      },
+      "canal": "whatsapp",
+      "flag": "on",
+      "texto": "**Crítica de cinema em 3 pistas**\nTempo: 5 minutos\nMaterial: nenhum\nComo começar: “Vamos brincar de crítica-relâmpago? Eu vou tentar adivinhar um filme que você escolher — sem precisar falar se preferir fazer sinais.”\n1⃣ preparo visível das opções: mostre três opções com os dedos: filme, música ou comida; Isabela escolhe uma apontando, falando ou fazendo um gesto.\n2⃣ participação possível da pessoa: ela dá até três pistas sobre algo da categoria escolhida — por exemplo, uma palavra, um gesto ou uma expressão; também pode escolher entre “gostei” e “não gostei” com polegar para cima ou para baixo.\n3⃣ reação ou virada divertida causada por essa participação: você faz um palpite propositalmente absurdo e depois um palpite sério: “É um filme sobre um sushi que quer ganhar o Oscar?”; então comemore a pista e tente acertar.\nPróxima rodada: troquem os papéis; você dá três pistas sobre um filme, uma música ou uma comida, e Isabela pode adivinhar ou apenas escolher entre duas respostas visíveis.\nPara terminar: “Última rodada ou paramos por aqui?” e aceite a escolha dela sem insistir.\nAdaptação: se ela não quiser dar pistas, ela pode apenas escolher uma categoria e você faz as pistas; se não quiser participar, encerre sem cobrança.\nPor que combina: usa interesses confirmados da Isabela — cinema, música e comida japonesa — e permite participação verbal ou por gesto, sem exigir olhar nem reproduzir sons, cheiros, luzes ou texturas.",
+      "modelo": "gpt-5.6-luna",
+      "ms": 4910,
+      "base2Ids": [
+        "socializacao/primeira-pergunta-de-alto-valor",
+        "socializacao/principio-central"
+      ],
+      "guias": [
+        "socializacao"
+      ],
+      "regrasConcisao": [
+        "- uma história curta que ensine ou ensaie a cena;",
+        "- uma sequência visual curta, quando ver a ordem realmente ajuda;",
+        "Uma resposta pode ser curta e completa. Complete o mecanismo necessário para a",
+        "comum, duração curta, mediação do adulto, colegas de apoio.",
+        "Na conversa, você pode organizar passos de um momento difícil, sequência curta,",
+        "<lacuna_decisiva>Se ainda faltar UMA coisa para orientar melhor, é esta: **Como é socializar pra ele(a)**. Só pergunte se a resposta mudaria mesmo o que você vai sugerir — e, se perguntar, entregue uma orientação útil no MESMO turno. Nunca pergunte mais de uma coisa.</lacuna_decisiva>",
+        "Faça a personalização aparecer: ligue um ou dois fatos confirmados a uma decisão prática, em vez de apenas mencionar nome e interesse. Uma preferência antiga não prova que continua igual: se o relato atual divergir, reconheça e confira. Não despeje todo o Perfil, não explique comportamento pelo diagnóstico e não transforme ausência de informação em causa. Cumprimento, continuação curta, crise e pedido de brincadeira conservam seus formatos próprios.",
+        "Cada jogo deve ser executável por uma pessoa cansada: título curto; material seguro ou cenário real; como começar; uma frase literal e natural de quem cuida; o que a pessoa em foco pode fazer no modo em que se comunica, sem exigir fala ou olhar; o que quem cuida faz em resposta, com uma virada concreta de humor, descoberta ou faz-de-conta causada pela ação dela; e como começa a próxima rodada ou se trocam os papéis. Diga em uma frase curta o que aquela ação convida a exercitar, sem prometer melhora. Se ficar difícil, simplifique; diante de recuo, desconforto ou \"não\", pare sem insistir. Não finja que algo não comestível é comida nem proponha material inadequado à idade.",
+        "**Título curto**",
+        "Tempo: duração curta e realista",
+        "Este é o contrato de apresentação desta candidata: o tamanho acompanha a ajuda. Uma situação complexa pode receber vários blocos e várias orientações completas no mesmo turno; não a reduza a uma ideia ou a duas bolhas por uma regra antiga de concisão.",
+        "Use títulos curtos, parágrafos com respiro, listas de ações e destaque das falas prontas. Evite tabela para instruções simples, títulos \"BLOCO 2\" e relatório burocrático. No WhatsApp use *negrito* e listas simples; na web use markdown leve. Emojis podem marcar passagens, sem decorar toda frase.",
+        "Não transforme uma orientação cotidiana em uma lista de ressalvas. Ajude com naturalidade e respeite preferências e apoio aceito. Pedido de brincadeira segue seu roteiro completo; história, crise e necessidade imediata seguem seus próprios formatos. Não prometa registro, relatório salvo ou melhora sem evidência.",
+        "Para um pedido concreto com preocupação e dificuldade recorrente, o acolhimento, a compreensão e as opções práticas devem aparecer juntos: não entregue apenas uma ação e encerre. Uma mudança de leitura do medo da mãe e duas ou três possibilidades aplicáveis são parte da ajuda solicitada, não aprofundamentos a adiar. Esta regra substitui limites antigos de uma orientação por turno; concisão não significa cortar a compreensão ou o próximo passo.",
+        "Responda SEMPRE no idioma da ÚLTIMA mensagem da pessoa. A resposta INTEIRA num único idioma — nunca misture português com espanhol ou inglês, nem em conectivos. O contexto, o perfil e as notas podem vir em português: leia normalmente, mas ESCREVA na língua da pessoa (nomes próprios ficam como são). Mensagem curta ou ambígua (\"ok\", \"😊\"): siga o idioma que vocês já vinham usando."
+      ]
+    },
+    {
+      "id": "ref_introducao_foco",
+      "tema": "foco",
+      "mensagem": "Quero explorar Atenção e Concentração.",
+      "perfil": {
+        "nome": "Isabela",
+        "nascimento": "2007-12-25",
+        "genero": "feminino",
+        "sabe": {
+          "como_e": {
+            "texto": "Gosta de cinema, música, comida japonesa, poke, frutos do mar e sair com amigas. Quer começar a trabalhar e prestar vestibular no próximo ano."
+          },
+          "sensorial": "Sensível a sons, luz forte e cheiros. Às vezes não quer ser tocada. Gosta de experimentar texturas diferentes."
+        },
+        "extras": {
+          "comunicacao": "Verbal e fluente, vocabulário ótimo e compreensão ótima.",
+          "socializacao": "Interage bem com os pares e gosta de sair com amigas. Também gosta de ficar sozinha no quarto.",
+          "foco": "Mantém atenção quando está engajada; às vezes se distrai. Não há episódios de hiperfoco registrados.",
+          "nutricional": "Gosta de comida japonesa, poke e frutos do mar. Os ingredientes que aceita não estão detalhados.",
+          "sono": "Dormia cerca de 7 horas; não há descrição de rotina ou ambiente de sono.",
+          "emocional": "Expressa emoções gritando, chorando e falando palavrões. Mudanças na rotina são relatadas como difíceis."
+        }
+      },
+      "canal": "web",
+      "flag": "on",
+      "texto": "A atenção da Isabela parece funcionar melhor quando ela está realmente envolvida, embora às vezes se distraia. Então, aqui vale investigar *em que parte da atividade a atenção trava* — começar, continuar, retomar ou lidar com uma tarefa pouco interessante — sem tratar movimento ou distração como falta de vontade.\n\nPodemos explorar por um destes caminhos:\n\n- entender como ela se concentra em estudos, filmes, música ou outras atividades;\n- encontrar formas de começar e sustentar tarefas ligadas ao vestibular e ao trabalho;\n- observar o que ajuda: ambiente, demonstração, pausas, uso das mãos ou divisão da atividade.\n\nPara eu direcionar melhor, me conte:\n\n- A dificuldade maior da Isabela é *começar*, *continuar* ou *retomar* uma atividade?\n- Em algo de que gosta, como cinema, música ou sair com amigas, ela consegue manter a atenção por bastante tempo?\n- Quando se distrai, o que costuma acontecer: perde o fio, troca de atividade, esquece etapas ou se incomoda com algo ao redor?\n\nPode responder livremente ou pelo botão de áudio; não precisa seguir a lista.",
+      "modelo": "gpt-5.6-luna",
+      "ms": 3953,
+      "base2Ids": [
+        "foco/triagem-inicial-duas-perguntas-que-separam-caminhos-rapidamente",
+        "foco/principio-central"
+      ],
+      "fatosEntregues": {
+        "nome": "Isabela",
+        "idade": 18,
+        "secoes": {
+          "foco": "Mantém atenção quando está engajada; às vezes se distrai. Não há episódios de hiperfoco registrados.",
+          "como_e": "Gosta de cinema, música, comida japonesa, poke, frutos do mar e sair com amigas. Quer começar a trabalhar e prestar vestibular no próximo ano.",
+          "sensorial": "Sensível a sons, luz forte e cheiros. Às vezes não quer ser tocada. Gosta de experimentar texturas diferentes.",
+          "comunicacao": "Verbal e fluente, vocabulário ótimo e compreensão ótima."
+        }
+      }
+    },
+    {
+      "id": "ref_introducao_foco",
+      "tema": "foco",
+      "mensagem": "Quero explorar Atenção e Concentração.",
+      "perfil": {
+        "nome": "Isabela",
+        "nascimento": "2007-12-25",
+        "genero": "feminino",
+        "sabe": {
+          "como_e": {
+            "texto": "Gosta de cinema, música, comida japonesa, poke, frutos do mar e sair com amigas. Quer começar a trabalhar e prestar vestibular no próximo ano."
+          },
+          "sensorial": "Sensível a sons, luz forte e cheiros. Às vezes não quer ser tocada. Gosta de experimentar texturas diferentes."
+        },
+        "extras": {
+          "comunicacao": "Verbal e fluente, vocabulário ótimo e compreensão ótima.",
+          "socializacao": "Interage bem com os pares e gosta de sair com amigas. Também gosta de ficar sozinha no quarto.",
+          "foco": "Mantém atenção quando está engajada; às vezes se distrai. Não há episódios de hiperfoco registrados.",
+          "nutricional": "Gosta de comida japonesa, poke e frutos do mar. Os ingredientes que aceita não estão detalhados.",
+          "sono": "Dormia cerca de 7 horas; não há descrição de rotina ou ambiente de sono.",
+          "emocional": "Expressa emoções gritando, chorando e falando palavrões. Mudanças na rotina são relatadas como difíceis."
+        }
+      },
+      "canal": "whatsapp",
+      "flag": "on",
+      "texto": "Podemos explorar como facilitar que a Isabela comece, mantenha e retome atividades que façam sentido para ela. Já sabemos que ela sustenta a atenção quando está engajada, mas às vezes se distrai — então vale entender em quais situações essa diferença aparece, sem concluir que seja falta de esforço.\n\nQuando ela está fazendo algo de que gosta, como cinema, música ou sair com as amigas, consegue permanecer envolvida por bastante tempo? Pode responder por texto ou áudio, do seu jeito.",
+      "modelo": "gpt-5.6-luna",
+      "ms": 4704,
+      "base2Ids": [
+        "foco/triagem-inicial-duas-perguntas-que-separam-caminhos-rapidamente",
+        "foco/principio-central"
+      ],
+      "guias": [
+        "foco"
+      ],
+      "regrasConcisao": [
+        "- uma história curta que ensine ou ensaie a cena;",
+        "- uma sequência visual curta, quando ver a ordem realmente ajuda;",
+        "Uma resposta pode ser curta e completa. Complete o mecanismo necessário para a",
+        "comum, duração curta, mediação do adulto, colegas de apoio.",
+        "Na conversa, você pode organizar passos de um momento difícil, sequência curta,",
+        "<lacuna_decisiva>Se ainda faltar UMA coisa para orientar melhor, é esta: **Como é o foco**. Só pergunte se a resposta mudaria mesmo o que você vai sugerir — e, se perguntar, entregue uma orientação útil no MESMO turno. Nunca pergunte mais de uma coisa.</lacuna_decisiva>",
+        "Faça a personalização aparecer: ligue um ou dois fatos confirmados a uma decisão prática, em vez de apenas mencionar nome e interesse. Uma preferência antiga não prova que continua igual: se o relato atual divergir, reconheça e confira. Não despeje todo o Perfil, não explique comportamento pelo diagnóstico e não transforme ausência de informação em causa. Cumprimento, continuação curta, crise e pedido de brincadeira conservam seus formatos próprios.",
+        "Este é o contrato de apresentação desta candidata: o tamanho acompanha a ajuda. Uma situação complexa pode receber vários blocos e várias orientações completas no mesmo turno; não a reduza a uma ideia ou a duas bolhas por uma regra antiga de concisão.",
+        "Use títulos curtos, parágrafos com respiro, listas de ações e destaque das falas prontas. Evite tabela para instruções simples, títulos \"BLOCO 2\" e relatório burocrático. No WhatsApp use *negrito* e listas simples; na web use markdown leve. Emojis podem marcar passagens, sem decorar toda frase.",
+        "Não transforme uma orientação cotidiana em uma lista de ressalvas. Ajude com naturalidade e respeite preferências e apoio aceito. Pedido de brincadeira segue seu roteiro completo; história, crise e necessidade imediata seguem seus próprios formatos. Não prometa registro, relatório salvo ou melhora sem evidência.",
+        "Para um pedido concreto com preocupação e dificuldade recorrente, o acolhimento, a compreensão e as opções práticas devem aparecer juntos: não entregue apenas uma ação e encerre. Uma mudança de leitura do medo da mãe e duas ou três possibilidades aplicáveis são parte da ajuda solicitada, não aprofundamentos a adiar. Esta regra substitui limites antigos de uma orientação por turno; concisão não significa cortar a compreensão ou o próximo passo.",
+        "Responda SEMPRE no idioma da ÚLTIMA mensagem da pessoa. A resposta INTEIRA num único idioma — nunca misture português com espanhol ou inglês, nem em conectivos. O contexto, o perfil e as notas podem vir em português: leia normalmente, mas ESCREVA na língua da pessoa (nomes próprios ficam como são). Mensagem curta ou ambígua (\"ok\", \"😊\"): siga o idioma que vocês já vinham usando."
+      ]
+    }
+  ]
+}

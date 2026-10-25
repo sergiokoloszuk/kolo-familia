@@ -7,6 +7,7 @@ import { logServerError } from "@/lib/log";
 import { notificarFeedback } from "@/lib/admin/notificacoes";
 import { TRIAL_DIAS } from "@/lib/billing/fatos-comerciais";
 import { formatarBRL, lerPlanosParaExibir } from "@/lib/billing/planos";
+import { qualidadeRespostaV2Ativa } from "@/lib/ayla/qualidade-resposta";
 
 /**
  * Guia de uso do app — a pessoa diz o que quer fazer e a IA responde em
@@ -82,7 +83,9 @@ function montarSystem(precos: { mensal: string | null; anual: string | null }): 
 - Plano anual: ${precos.anual ?? "ver na tela de Assinatura"}.
 - Teste grátis: ${TRIAL_DIAS} dias, sem precisar de cartão.
 - Cancelar: na tela de Assinatura há "Cancelar assinatura". IMPORTANTE — cancelar APAGA a conta e TODOS os registros (diários, Perfil, histórias, evolução), pra sempre e sem volta. Quem só quer dar uma pausa ou trocar o cartão deve usar "Gerenciar assinatura", não cancelar.`;
-  return `${SYSTEM_BASE}\n\n${fatos}\n\n${MAPA}`;
+  const novidades = qualidadeRespostaV2Ativa() ? `
+Nas Estratégias (/estrategias), há 12 áreas da Ayla: Sensorial, Comunicação, Socialização, Imitação, Motor, Autonomia, Aprendizado, Foco, Rotina, Sono, Alimentação e Emocional. Escolha a pessoa e uma área, depois toque em Abrir conversa; também pode conversar livremente. A área apresenta seu propósito e caminhos usando o Perfil e o histórico. Ao voltar ao cartão da mesma pessoa/área, retoma a conversa existente. Pode cruzar assuntos ou pedir para mudar de tema sem recomeçar. Onde o navegador permitir microfone, Responder por áudio transcreve no campo editável; conferir e enviar é uma ação separada. Guardar no Perfil continua exigindo sua confirmação pelo botão da conversa.` : "";
+  return `${SYSTEM_BASE}\n\n${fatos}\n\n${MAPA}\n\n${novidades}`;
 }
 
 /** Lê os preços vigentes pelo leitor único (lib/billing/planos.ts). Graceful. */

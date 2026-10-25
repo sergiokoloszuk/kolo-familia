@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { blocoDeContinuidade, perguntaAberta } from "./continuidade";
+import { blocoDeContinuidade, perguntaAberta, trechoComContinuidade } from "./continuidade";
 
 /**
  * OS QUATRO REPLAYS — cada um é um incidente de produção de 05/09/2026.
@@ -9,6 +9,15 @@ import { blocoDeContinuidade, perguntaAberta } from "./continuidade";
  * interpretação continua sendo do modelo.
  */
 describe("continuidade — os quatro replays", () => {
+  it("preserva as ofertas no fim de uma resposta rica dentro do orçamento", () => {
+    const texto = "Acolhimento e contexto. " + "Explicação. ".repeat(300) + "\nPosso montar a refeição ou uma atividade na cozinha. Qual prefere?";
+    const trecho = trechoComContinuidade(texto);
+    expect(trecho).toHaveLength(900);
+    expect(trecho).toContain("Acolhimento e contexto");
+    expect(trecho).toContain("atividade na cozinha");
+    expect(trecho).toContain("Qual prefere?");
+    expect(trechoComContinuidade("texto curto")).toBe("texto curto");
+  });
   /**
    * VANESSA. Respondeu "Ok" a um aviso de fim de teste. Virou um plano chamado
    * "Responder 'ok' com clareza".

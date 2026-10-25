@@ -6,6 +6,7 @@ import { alvoDaEscritaDoExtrator } from "@/lib/ayla/extrator-escrita";
 import { aprofundamentoGlobalLigado } from "@/lib/ayla/aprofundamento-tipos";
 import { planosWhatsappLigados } from "@/lib/ayla/plano-disponibilidade";
 import { lerPlanosNoStripe, PLANOS } from "@/lib/billing/planos";
+import { qualidadeRespostaV2Ativa } from "@/lib/ayla/qualidade-resposta";
 
 /**
  * Health check: responde com latência do DB + presença das envs
@@ -122,6 +123,7 @@ export async function GET() {
     ayla_experimental_todas: experimentalParaTodas(),
     ayla_aprofundamento_whatsapp: aprofundamentoGlobalLigado(),
     ayla_planos_whatsapp: planosWhatsappLigados(),
+    ayla_qualidade_resposta_v2: qualidadeRespostaV2Ativa(),
     /**
      * A SOMBRA DO EXTRATOR UNIFICADO — PEND-194, 10/09/2026.
      *

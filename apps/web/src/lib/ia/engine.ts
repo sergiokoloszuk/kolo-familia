@@ -1,4 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { qualidadeRespostaV2Ativa } from "@/lib/ayla/qualidade-resposta";
+import { apoioTematico, guiasDoTurno } from "@/lib/conducao/temas-conversa";
 import {
   gerarConversacional,
   MODELO_CONVERSA,
@@ -90,6 +92,7 @@ export async function prepararRespostaStream(params: {
   membroAtipicoId: string | null;
   conversaId: string;
   userInput: string;
+  temaEscolhido?: string | null;
 }) {
   const { supabase, telemetria, familyId, membroAtipicoId, conversaId, userInput } = params;
 
@@ -105,13 +108,19 @@ export async function prepararRespostaStream(params: {
   //
   // O histórico é carregado EM PARALELO com o roteamento, e a classificação em
   // paralelo com o contexto: a correção não custa uma ida a mais no relógio.
-  const [roteadas, anterior] = await Promise.all([
-    routeSkillsAI(userInput, skills),
+  const [roteadasIniciais, anterior] = await Promise.all([
+    qualidadeRespostaV2Ativa() && params.temaEscolhido
+      ? Promise.resolve((() => {
+          const skill = skills.find((s) => s.name === params.temaEscolhido);
+          if (!skill) throw new Error("Esta área não está disponível no momento.");
+          return [{ skill, score: 100, matchedKeywords: [] }];
+        })())
+      : routeSkillsAI(userInput, skills),
     carregarTurnosAnteriores(supabase, conversaId, userInput),
   ]);
+  let roteadas = roteadasIniciais;
 
-  const [ctx, turno] = await Promise.all([
-    buildContext(supabase, {
+  const montarContexto = () => buildContext(supabase, {
       familyId,
       membroAtipicoId,
       skills: roteadas.map((r) => r.skill),
@@ -119,17 +128,35 @@ export async function prepararRespostaStream(params: {
       // FASE 4A.1 · só a conversa em streaming (Estratégias) passa o relato.
       // `respondAsOutputType`, logo abaixo, não passa — artefato não é conversa.
       relato: userInput,
-    }),
-    classificarIntencao({
+    });
+  const classificar = () => classificarIntencao({
       // A telemetria do classificador vai para `api_calls`, que a sessão da
       // família não pode escrever. Ver a nota em `telemetria`, acima.
       supabase: telemetria,
       familyId,
       texto: userInput,
       historico: anterior.historico,
-      temaAnterior: anterior.tema,
-    }),
-  ]);
+      temaAnterior: params.temaEscolhido ?? anterior.tema,
+      areaEscolhida: qualidadeRespostaV2Ativa() ? params.temaEscolhido : null,
+    });
+  let ctx: ContextoSkillResposta;
+  let turno: Awaited<ReturnType<typeof classificarIntencao>>;
+  let areaAtiva = qualidadeRespostaV2Ativa() ? params.temaEscolhido ?? null : null;
+  if (areaAtiva) {
+    // A mesma classificação já necessária resolve complemento versus troca.
+    // Montar o contexto DEPOIS evita buscar BPs e perguntas da área errada.
+    turno = await classificar();
+    const troca = guiasDoTurno(turno.trocaTema ? [turno.trocaTema] : [])[0];
+    if (troca && skills.some((s) => s.name === troca.chave)) areaAtiva = troca.chave;
+    const chaves = [areaAtiva, ...guiasDoTurno(turno.tema ? [turno.tema] : []).map((g) => g.chave)];
+    roteadas = [...new Set(chaves)].flatMap((chave) => {
+      const skill = skills.find((s) => s.name === chave);
+      return skill ? [{ skill, score: chave === areaAtiva ? 100 : 75, matchedKeywords: [] }] : [];
+    }).slice(0, 2);
+    ctx = await montarContexto();
+  } else {
+    [ctx, turno] = await Promise.all([montarContexto(), classificar()]);
+  }
 
   // O histórico já inclui a última mensagem do usuário (= userInput);
   // remover pra não duplicar no prompt.
@@ -146,11 +173,17 @@ export async function prepararRespostaStream(params: {
     userInput,
     modo: { kind: "conversa" },
     intencao: turno.intencao,
-    tema: turno.tema,
+    tema: areaAtiva ?? turno.tema,
     aceite: turno.aceite,
   });
 
-  return { system, messages, roteadas, intencao: turno.intencao, tema: turno.tema, ctx };
+  return { system, messages, roteadas, intencao: turno.intencao,
+    tema: areaAtiva ?? turno.tema, areaAtiva, ctx,
+    base2Ids: qualidadeRespostaV2Ativa()
+      ? (ctx.base2?.length ? ctx.base2 : !["crise", "desabafo"].includes(turno.intencao)
+          ? apoioTematico(roteadas.map((r) => r.skill.name), "web").secoes : []).map((s) => s.id)
+      : [],
+  };
 }
 
 /**

@@ -1,0 +1,91 @@
+{
+  "data": "2026-10-25T20:40:50.121Z",
+  "escopo": "Pessoas fictícias, dados em memória; biblioteca e templates só GET; produtor OpenAI real; sem WhatsApp, mensagens externas, atualização de Perfil ou cobrança de família.",
+  "resultados": [
+    {
+      "id": "alimentacao_medo_de_nao_aprender",
+      "tema": "nutricional",
+      "mensagem": "Ela come arroz, frango e batata. Se coloco feijão ou salada, manda tirar. Eu insisto porque tenho medo de ela nunca aprender a comer outras coisas.",
+      "perfil": {
+        "nome": "Nora",
+        "nascimento": "2007-02-12",
+        "genero": "feminino",
+        "sabe": {
+          "como_e": {
+            "texto": "Gosta de cinema e música; quer começar a trabalhar."
+          },
+          "sensorial": "Evita cheiros fortes e não gosta de abraço."
+        },
+        "extras": {
+          "comunicacao": "Conversa fluentemente e expressa suas escolhas.",
+          "nutricional": "Aceita arroz, frango e batata. Já experimentou poke montado por ela, mas não sabemos os ingredientes escolhidos."
+        }
+      },
+      "canal": "web",
+      "flag": "on",
+      "texto": "O medo de ela “nunca aprender” está levando você a insistir, mas quando a Nora pede que feijão ou salada sejam retirados, a insistência pode transformar a refeição numa disputa antes mesmo de existir espaço para conhecer o alimento. Para algumas pessoas, a pressão aumenta a necessidade de escapar; a aproximação costuma funcionar melhor quando há escolha e nenhum risco de ser obrigada a provar.\n\nComo ela tem 19 anos e consegue expressar o que quer, a participação dela precisa ser parte do caminho — não apenas algo que os adultos decidem por ela.\n\n### Um jeito mais possível de começar\n\n1. **Pare de colocar o alimento recusado diretamente no prato dela.**  \n   Sirva feijão ou salada em uma travessa separada, apenas se ela aceitar que fiquem na mesa. Se até a presença incomodar, respeite e tente outro contexto depois. Não esconda o alimento na comida nem peça para tocar, cheirar ou provar.\n\n2. **Combine uma regra sem pressão.**  \n   Você pode dizer:  \n   **“Você não precisa comer. Eu só vou deixar o feijão separado para quem quiser. Se algum dia quiser olhar, escolher ou experimentar, você me fala.”**  \n   Isso reduz a sensação de que qualquer contato vai terminar em insistência.\n\n3. **Dê a ela controle sobre a próxima tentativa.**  \n   Pergunte uma coisa de cada vez:  \n   **“Entre feijão e salada, qual você toleraria deixar numa tigela separada — ou hoje prefere nenhum dos dois?”**  \n   A resposta pode ser “nenhum”. Isso não encerra o processo; mostra qual é o ponto de partida real.\n\n4. **Use a experiência do poke sem presumir que ela aceita todos os ingredientes.**  \n   Como ela já montou um poke, vale repetir a lógica de *montar a própria refeição*: cada item separado, porções pequenas e liberdade para escolher. O objetivo inicial não é comer salada ou feijão; é participar da composição da refeição sem conflito.\n\nA meta, por enquanto, não precisa ser “comer um prato variado”. Pode ser: **aceitar que um alimento fique separado na mesa, escolher se quer olhar, ou conversar sobre como prefere que seja apresentado**. Essas também são etapas de aproximação.\n\nObserve por alguns dias: a recusa acontece só quando o alimento entra no prato, ou também quando ele fica numa travessa separada? Essa diferença ajuda a decidir o próximo passo sem forçar a Nora. Se houver ânsia, engasgos, dor, perda de peso, queda do repertório ou sofrimento importante nas refeições, vale levar esse quadro a um profissional de saúde.",
+      "modelo": "gpt-5.6-luna",
+      "ms": 10828,
+      "base2Ids": [
+        "nutricional/principio-central",
+        "nutricional/missao"
+      ],
+      "fatosEntregues": {
+        "nome": "Nora",
+        "idade": 19,
+        "secoes": {
+          "nutricional": "Aceita arroz, frango e batata. Já experimentou poke montado por ela, mas não sabemos os ingredientes escolhidos.",
+          "sensorial": "Evita cheiros fortes e não gosta de abraço.",
+          "como_e": "Gosta de cinema e música; quer começar a trabalhar.",
+          "comunicacao": "Conversa fluentemente e expressa suas escolhas."
+        }
+      }
+    },
+    {
+      "id": "alimentacao_medo_de_nao_aprender",
+      "tema": "nutricional",
+      "mensagem": "Ela come arroz, frango e batata. Se coloco feijão ou salada, manda tirar. Eu insisto porque tenho medo de ela nunca aprender a comer outras coisas.",
+      "perfil": {
+        "nome": "Nora",
+        "nascimento": "2007-02-12",
+        "genero": "feminino",
+        "sabe": {
+          "como_e": {
+            "texto": "Gosta de cinema e música; quer começar a trabalhar."
+          },
+          "sensorial": "Evita cheiros fortes e não gosta de abraço."
+        },
+        "extras": {
+          "comunicacao": "Conversa fluentemente e expressa suas escolhas.",
+          "nutricional": "Aceita arroz, frango e batata. Já experimentou poke montado por ela, mas não sabemos os ingredientes escolhidos."
+        }
+      },
+      "canal": "whatsapp",
+      "flag": "on",
+      "texto": "Entendo esse medo — quando ela manda tirar o feijão ou a salada, parece que, sem insistência, o repertório pode ficar ainda menor. Mas, nesse caso, a pressão pode aumentar a recusa; e ela já mostrou uma abertura importante ao experimentar um poke que pôde montar, então vale começar pela autonomia e pela previsibilidade.\n\nNa próxima refeição:\n- Deixe arroz, frango e batata como opção segura.\n- Ofereça o feijão ou a salada em uma travessa separada, sem colocar no prato dela e sem pedir que toque, cheire ou prove.\n- Diga: **“Você não precisa comer. Pode escolher se quer colocar um pouco no seu prato.”**\n\nSe ela disser que não quer, respeite e retire da mesa dela. Em outro momento, você pode convidá-la a escolher entre duas opções novas, sem transformar a escolha em obrigação. Observe se ela recusa qualquer alimento novo ou se a dificuldade aparece mais com cheiro, textura, aparência ou mistura — essa diferença muda o próximo passo. Você pode me contar por texto ou áudio, do seu jeito.",
+      "modelo": "gpt-5.6-luna",
+      "ms": 4092,
+      "base2Ids": [
+        "nutricional/principio-central",
+        "nutricional/missao"
+      ],
+      "guias": [
+        "nutricional"
+      ],
+      "regrasConcisao": [
+        "- uma história curta que ensine ou ensaie a cena;",
+        "- uma sequência visual curta, quando ver a ordem realmente ajuda;",
+        "Uma resposta pode ser curta e completa. Complete o mecanismo necessário para a",
+        "comum, duração curta, mediação do adulto, colegas de apoio.",
+        "Na conversa, você pode organizar passos de um momento difícil, sequência curta,",
+        "<lacuna_decisiva>Se ainda faltar UMA coisa para orientar melhor, é esta: **Seletividade alimentar**. Só pergunte se a resposta mudaria mesmo o que você vai sugerir — e, se perguntar, entregue uma orientação útil no MESMO turno. Nunca pergunte mais de uma coisa.</lacuna_decisiva>",
+        "Faça a personalização aparecer: ligue um ou dois fatos confirmados a uma decisão prática, em vez de apenas mencionar nome e interesse. Uma preferência antiga não prova que continua igual: se o relato atual divergir, reconheça e confira. Não despeje todo o Perfil, não explique comportamento pelo diagnóstico e não transforme ausência de informação em causa. Cumprimento, continuação curta, crise e pedido de brincadeira conservam seus formatos próprios.",
+        "Este é o contrato de apresentação desta candidata: o tamanho acompanha a ajuda. Uma situação complexa pode receber vários blocos e várias orientações completas no mesmo turno; não a reduza a uma ideia ou a duas bolhas por uma regra antiga de concisão.",
+        "Use títulos curtos, parágrafos com respiro, listas de ações e destaque das falas prontas. Evite tabela para instruções simples, títulos \"BLOCO 2\" e relatório burocrático. No WhatsApp use *negrito* e listas simples; na web use markdown leve. Emojis podem marcar passagens, sem decorar toda frase.",
+        "Não transforme uma orientação cotidiana em uma lista de ressalvas. Ajude com naturalidade e respeite preferências e apoio aceito. Pedido de brincadeira segue seu roteiro completo; história, crise e necessidade imediata seguem seus próprios formatos. Não prometa registro, relatório salvo ou melhora sem evidência.",
+        "Para um pedido concreto com preocupação e dificuldade recorrente, o acolhimento, a compreensão e as opções práticas devem aparecer juntos: não entregue apenas uma ação e encerre. Uma mudança de leitura do medo da mãe e duas ou três possibilidades aplicáveis são parte da ajuda solicitada, não aprofundamentos a adiar. Esta regra substitui limites antigos de uma orientação por turno; concisão não significa cortar a compreensão ou o próximo passo.",
+        "Responda SEMPRE no idioma da ÚLTIMA mensagem da pessoa. A resposta INTEIRA num único idioma — nunca misture português com espanhol ou inglês, nem em conectivos. O contexto, o perfil e as notas podem vir em português: leia normalmente, mas ESCREVA na língua da pessoa (nomes próprios ficam como são). Mensagem curta ou ambígua (\"ok\", \"😊\"): siga o idioma que vocês já vinham usando."
+      ]
+    }
+  ]
+}
