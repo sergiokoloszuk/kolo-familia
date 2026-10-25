@@ -1,13 +1,25 @@
 import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { BLOCO_PEDIDO_BRINCADEIRA, auditarBrincadeiras, blocoMecanicasBrincadeira, pedidoExplicitoDeBrincadeira } from "./pedido-brincadeira";
+import {
+  BLOCO_PEDIDO_BRINCADEIRA,
+  auditarBrincadeiras,
+  blocoLimitesSensoriaisBrincadeira,
+  blocoMecanicasBrincadeira,
+  detectarSensibilidadesRegistradas,
+  exigeCorrecaoDeBrincadeira,
+  instrucaoCorrecaoBrincadeira,
+  pedidoExplicitoDeBrincadeira,
+  pisoBrincadeiraSegura,
+} from "./pedido-brincadeira";
 
 describe("pedido explícito de brincadeira", () => {
   it("reconhece a fala interna da Manu e sinônimos de pedido", () => {
     expect(pedidoExplicitoDeBrincadeira("Quero uma ideia de brincadeira para ajudar a Manu com o mercado.")).toBe(true);
     expect(pedidoExplicitoDeBrincadeira("Pode me sugerir um jogo para fazermos juntos?")).toBe(true);
     expect(pedidoExplicitoDeBrincadeira("Me dê uma atividade lúdica para hoje.")).toBe(true);
+    expect(pedidoExplicitoDeBrincadeira("Inventa uma brincadeira rápida antes do banho.")).toBe(true);
+    expect(pedidoExplicitoDeBrincadeira("Ensina uma brincadeira que eu consiga começar?")).toBe(true);
   });
   it("não captura relato de brincar, manejo ou pedido de história", () => {
     expect(pedidoExplicitoDeBrincadeira("Ela brincou no mercado ontem.")).toBe(false);
@@ -49,6 +61,16 @@ describe("pedido explícito de brincadeira", () => {
     const texto = "🎧 *Crítica musical*\nEscolha uma música. Você: “Que mistério ela guarda?” Ela pode dar uma pista. Então: invente uma acusação engraçada: “Os aliens roubaram o refrão!” Na rodada seguinte, ela apresenta o programa.";
     expect(auditarBrincadeiras(texto)).toEqual({ quantidade: 1, falhas: [] });
   });
+  it("audita a continuação depois de uma linha em branco como parte do mesmo jogo", () => {
+    const texto = `**Expedição do dinossauro** 🦖
+
+Escolha um brinquedo e diga: “O dinossauro sumiu! Você me mostra onde procurar?” Manu pode apontar ou fazer um gesto. Então, siga a indicação e faça uma descoberta engraçada. Depois, ela esconde o dinossauro e você procura.`;
+    expect(auditarBrincadeiras(texto)).toEqual({ quantidade: 1, falhas: [] });
+  });
+  it("aceita reação e continuidade escritas naturalmente", () => {
+    const texto = `**Defenda o indefensável** Escolham um tema leve. Você diz: “Vou defender uma opinião absurda.” Bia pode falar, apontar ou escrever; você reage levando o argumento a sério e faz uma contraproposta engraçada. Na rodada seguinte, troquem os papéis.`;
+    expect(auditarBrincadeiras(texto)).toEqual({ quantidade: 1, falhas: [] });
+  });
   it("detecta uma virada vaga mesmo com turnos e segunda rodada", () => {
     const texto = "• **Dinossauro**\nVocê: “O que ele faz?”\nEla: aponta.\nEntão: encene a escolha dela de modo engraçado. Depois ela escolhe de novo.";
     expect(auditarBrincadeiras(texto)).toEqual({ quantidade: 1, falhas: [{ opcao: 1, codigo: "virada_generica" }] });
@@ -58,5 +80,92 @@ describe("pedido explícito de brincadeira", () => {
     expect(src).toContain("respostaPareceHistoria(exp.texto)");
     expect(src).toContain("const linkHistoriaPromise = historiaEntregue");
     expect(src).toContain("if (resp.enviada && historiaEntregue && entregaHistoria)");
+  });
+});
+
+describe("portão estrutural e sensorial", () => {
+  const completa = `🎲 **Objeto viajante**
+Você: "Ele vai parar ou passear?"
+Ela: pode apontar, gesticular ou só observar.
+Então: o objeto segue a escolha e vira um personagem engraçado.
+Na próxima rodada, ela escolhe uma nova virada.`;
+
+  it("extrai somente categorias de sensibilidade", () => {
+    expect(detectarSensibilidadesRegistradas([
+      { key: "sons", valor: "Incomoda-se com barulho alto" },
+      { key: "texturas", valor: "Evita algumas texturas" },
+      { key: "toques", valor: "Não gosta de abraço" },
+    ])).toEqual(["som", "textura", "toque"]);
+  });
+
+  it("não transforma preferência positiva em sensibilidade", () => {
+    expect(detectarSensibilidadesRegistradas([
+      { key: "sons", valor: "Gosta de música baixa" },
+      { key: "texturas", valor: "Prefere roupas macias" },
+      { key: "perfil", valor: "Misto" },
+    ])).toEqual([]);
+  });
+
+  it("aprova uma brincadeira completa que não reproduz o estímulo", () => {
+    expect(auditarBrincadeiras(completa, ["som"])).toEqual({ quantidade: 1, falhas: [] });
+    expect(auditarBrincadeiras(completa.replace("🎲 ", ""), ["som"])).toEqual({
+      quantidade: 1,
+      falhas: [],
+    });
+  });
+
+  it("barra som usado como mecânica quando som é sensibilidade registrada", () => {
+    const insegura = completa.replace(
+      "o objeto segue a escolha",
+      "o adulto imite um som alto e o objeto segue a escolha",
+    );
+    expect(auditarBrincadeiras(insegura, ["som"]).falhas).toContainEqual({
+      opcao: 1,
+      codigo: "reproduz_som_sensivel",
+    });
+  });
+
+  it("barra onomatopeia como virada quando som é sensibilidade registrada", () => {
+    const sonora = completa.replace(
+      "o objeto segue a escolha",
+      'o adulto diz "quack!" e o objeto segue a escolha',
+    );
+    expect(auditarBrincadeiras(sonora, ["som"]).falhas).toContainEqual({
+      opcao: 1,
+      codigo: "reproduz_som_sensivel",
+    });
+  });
+
+  it("injeta somente categorias e proíbe onomatopeia no limite sonoro", () => {
+    const bloco = blocoLimitesSensoriaisBrincadeira(["som", "textura"]);
+    expect(bloco).toContain("som, textura");
+    expect(bloco).toContain("nem escreva onomatopeias");
+    expect(blocoLimitesSensoriaisBrincadeira([])).toBe("");
+  });
+
+  it("a instrução de correção leva códigos, não o texto do perfil", () => {
+    const auditoria = auditarBrincadeiras("**Jogo**\nFaça um barulho como rodada.", ["som"]);
+    const instrucao = instrucaoCorrecaoBrincadeira(auditoria, ["som"]);
+    expect(instrucao).toContain("reproduz_som_sensivel");
+    expect(instrucao).toContain("som");
+    expect(instrucao).toContain("use um interesse registrado para mudar a MECÂNICA");
+    expect(instrucao).toContain("A criança:");
+    expect(instrucao).not.toContain("barulho como rodada");
+  });
+
+  it("só transforma risco sensorial comprovado em correção automática", () => {
+    expect(exigeCorrecaoDeBrincadeira(auditarBrincadeiras("**Jogo**\nFaça algo."))).toBe(false);
+    expect(exigeCorrecaoDeBrincadeira(auditarBrincadeiras(
+      "**Jogo**\nFaça um barulho como rodada.",
+      ["som"],
+    ))).toBe(true);
+  });
+
+  it("o piso mantém participação acessível sem fala, toque ou olhar", () => {
+    const piso = pisoBrincadeiraSegura();
+    expect(piso).toContain("apontar, olhar para uma opção, gesticular, falar ou só observar");
+    expect(piso).toContain("sem exigir resposta");
+    expect(piso).not.toMatch(/contato visual|toque obrigat/i);
+    expect(auditarBrincadeiras(piso)).toEqual({ quantidade: 1, falhas: [] });
   });
 });

@@ -1,35 +1,185 @@
 /** Pedido explícito de jogo compartilhado, não toda menção casual a brincar. */
 export function pedidoExplicitoDeBrincadeira(texto: string): boolean {
   const t = texto.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
-  return /\b(?:quero|queria|gostaria|preciso|me (?:de|da|mostre|sugira|ensine)|pode (?:me )?(?:dar|sugerir|ensinar|passar)|sugira|indique|invente|crie|monte|tem (?:alguma|uma))\b.{0,110}\b(?:brincadeiras?|brincar|jogos?|atividade ludica)\b/.test(t);
+  return /\b(?:quero|queria|gostaria|preciso|me (?:de|da|mostre|sugira|ensine|ensina)|pode (?:me )?(?:dar|sugerir|ensinar|passar)|sugira|sugere|indique|indica|invente|inventa|crie|cria|monte|monta|ensine|ensina|tem (?:alguma|uma))\b.{0,110}\b(?:brincadeiras?|brincar|jogos?|atividade ludica)\b/.test(t);
 }
 
 export type AuditoriaBrincadeiras = {
   quantidade: number;
-  falhas: Array<{ opcao: number; codigo: "sem_fala" | "sem_acao" | "sem_virada" | "virada_generica" | "sem_continuidade" }>;
+  falhas: Array<{
+    opcao: number;
+    codigo:
+      | "sem_fala"
+      | "sem_acao"
+      | "sem_virada"
+      | "virada_generica"
+      | "sem_continuidade"
+      | "reproduz_som_sensivel"
+      | "reproduz_toque_sensivel"
+      | "reproduz_textura_sensivel"
+      | "reproduz_cheiro_sensivel"
+      | "reproduz_luz_sensivel";
+  }>;
 };
 
+export type CategoriaSensorial = "som" | "toque" | "textura" | "cheiro" | "luz";
+
+export type CampoSensorialRegistrado = {
+  key: string;
+  valor: string;
+};
+
+const normalizar = (texto: string): string =>
+  texto.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+
+const SINAL_DE_AVERSAO =
+  /\b(?:incomod|sensiv|evit|rejeit|nao gost|odei|detest|assust|desconfort|intoler|irrit|cobre os ouvidos|doi|doem|chora|grita|avers)\w*/;
+
+/** Extrai categorias só de campos aversivos; preferência positiva não vira trava. */
+export function detectarSensibilidadesRegistradas(
+  campos: readonly CampoSensorialRegistrado[],
+): CategoriaSensorial[] {
+  const categorias = new Set<CategoriaSensorial>();
+  for (const campo of campos) {
+    const key = normalizar(campo.key);
+    const valor = normalizar(campo.valor);
+    if (!valor) continue;
+    if (
+      key === "sons" &&
+      (SINAL_DE_AVERSAO.test(valor) || /\b(?:barulho|ruido|som alto|volume alto)\w*/.test(valor))
+    ) categorias.add("som");
+    if (key === "toques" && SINAL_DE_AVERSAO.test(valor)) categorias.add("toque");
+    if (key === "texturas" && SINAL_DE_AVERSAO.test(valor)) categorias.add("textura");
+    if (
+      key === "luz" &&
+      (SINAL_DE_AVERSAO.test(valor) || /\b(?:luz forte|flash|pisca)\w*/.test(valor))
+    ) categorias.add("luz");
+    if (
+      key === "cheiros" &&
+      (SINAL_DE_AVERSAO.test(valor) || /\b(?:cigarro|perfume forte|odor forte)\w*/.test(valor))
+    ) categorias.add("cheiro");
+    if (key === "outras" && SINAL_DE_AVERSAO.test(valor)) {
+      if (/\b(?:som|sons|barulho|ruido|musica|auditiv)\w*/.test(valor)) categorias.add("som");
+      if (/\b(?:toque|abraco|contato|tatil)\w*/.test(valor)) categorias.add("toque");
+      if (/\b(?:textura|tecido|massinha|areia|espuma)\w*/.test(valor)) categorias.add("textura");
+      if (/\b(?:cheiro|odor|aroma|olfativ)\w*/.test(valor)) categorias.add("cheiro");
+      if (/\b(?:luz|claridade|flash|pisca|fotossens)\w*/.test(valor)) categorias.add("luz");
+    }
+  }
+  return [...categorias];
+}
+
+const ACAO_SENSORIAL: Record<CategoriaSensorial, RegExp> = {
+  som: /\b(?:faca|imite|produza|aumente|toque|bata|grave|reproduza|adivinhe|coloque|ligue|cante|grite|estale|assobie)\b.{0,55}\b(?:som|sons|barulho|barulhos|ruido|ruidos|musica|palmas|apito)\b|\b(?:som|sons|barulho|barulhos)\b.{0,35}\b(?:jogo|brincadeira|missao|rodada)\b/,
+  toque: /\b(?:toque|encoste|abrace|aperte|segure|massageie|acaricie|faca cosquinha)\b.{0,45}\b(?:crianca|mao|braco|rosto|corpo|pele|costas|pe|pes|cabeca)\b/,
+  textura: /\b(?:toque|encoste|pegue|passe|explore|experimente|adivinhe)\b.{0,55}\b(?:textura|texturas|massinha|areia|espuma|gelatina|tecido)\b/,
+  cheiro: /\b(?:cheire|sinta|compare|adivinhe|experimente)\b.{0,55}\b(?:cheiro|cheiros|odor|odores|aroma)\b/,
+  luz: /\b(?:pisque|apague|acenda|aponte|mova|use)\b.{0,55}\b(?:luz|luzes|lanterna|flash)\b/,
+};
+
+const CODIGO_SENSORIAL: Record<CategoriaSensorial, AuditoriaBrincadeiras["falhas"][number]["codigo"]> = {
+  som: "reproduz_som_sensivel",
+  toque: "reproduz_toque_sensivel",
+  textura: "reproduz_textura_sensivel",
+  cheiro: "reproduz_cheiro_sensivel",
+  luz: "reproduz_luz_sensivel",
+};
+
+const ONOMATOPEIA_SONORA =
+  /\b(?:qu+a+c+k|miau|au(?:\s+au)+|vr+u+m|b+i+p|pl+i+m|toc(?:\s+toc)+|bo+om|po+w|pum|trim|ding|dong)\b/;
+
+/** Reforço curto por categoria; não leva texto do Perfil para logs ou prompt extra. */
+export function blocoLimitesSensoriaisBrincadeira(
+  sensibilidades: readonly CategoriaSensorial[],
+): string {
+  if (!sensibilidades.length) return "";
+  const detalheSom = sensibilidades.includes("som")
+    ? " Para som: não imite, vocalize nem escreva onomatopeias como parte do jogo; uma fala breve e calma do adulto serve apenas para conduzir."
+    : "";
+  return `<limites_sensoriais_da_brincadeira>
+Categorias aversivas registradas para esta criança: ${sensibilidades.join(", ")}. Não transforme nenhuma delas em estímulo, surpresa, desafio, ensaio ou tolerância.${detalheSom}
+</limites_sensoriais_da_brincadeira>`;
+}
+
 /** Auditoria de forma, sem LLM e sem registrar falas da família ou da criança. */
-export function auditarBrincadeiras(resposta: string): AuditoriaBrincadeiras {
+export function auditarBrincadeiras(
+  resposta: string,
+  sensibilidades: readonly CategoriaSensorial[] = [],
+): AuditoriaBrincadeiras {
   const blocos = resposta.split(/\n\s*\n/).map((b) => b.trim()).filter(Boolean);
-  const jogos = blocos.filter((b) => /^(?:[•\-]|[^\p{L}\p{N}\s]{1,4})\s*\*{1,2}[^*]+\*{1,2}/u.test(b));
+  const iniciaJogo = (bloco: string): boolean =>
+    /^(?:(?:[•\-]|[^\p{L}\p{N}\s*]{1,4})\s*)?\*{1,2}[^*]+\*{1,2}/u.test(bloco);
+  const jogos: string[] = [];
+  for (const bloco of blocos) {
+    if (iniciaJogo(bloco)) jogos.push(bloco);
+    else if (jogos.length) jogos[jogos.length - 1] += `\n\n${bloco}`;
+  }
   const falhas: AuditoriaBrincadeiras["falhas"] = [];
   jogos.forEach((jogo, i) => {
     const opcao = i + 1;
     if (!/\bVoc[eê]\s*:/i.test(jogo) && !/[“"][^”"]{8,}[”"]/u.test(jogo))
       falhas.push({ opcao, codigo: "sem_fala" });
-    if (!/\b(?:El[ae]\s*:|(?:el[ae]|a crian[cç]a|[A-Z][a-z]+) pode\b|se el[ae]\b)/i.test(jogo))
+    if (!/\b(?:El[ae]\s*:|A crian[cç]a\s*:|(?:el[ae]|a crian[cç]a|[A-Z][a-z]+) pode\b|se el[ae]\b)/i.test(jogo))
       falhas.push({ opcao, codigo: "sem_acao" });
     const entao = jogo.match(/\bEnt[aã]o\s*[:,]\s*([^\n]+)/i)?.[1]
-      ?? jogo.match(/\bVoc[eê] transforma\b([^\n]+)/i)?.[1] ?? "";
+      ?? jogo.match(/\bVoc[eê] transforma\b([^\n]+)/i)?.[1]
+      ?? jogo.match(/\b(?:voc[eê]\s+)?(?:reage|responde|cumpre|faz|vira|transforma)\b([^\n]{12,})/i)?.[1]
+      ?? "";
     if (!entao) falhas.push({ opcao, codigo: "sem_virada" });
     else if (/^(?:conte|narre|invente|fa[cç]a|encene|represente)\b[^.!?]{0,85}\b(?:consequ[eê]ncia|surpresa|cena|rea[cç][aã]o|escolha)\b[^.!?]{0,60}[.!?]?/i.test(entao)
       && !/[“"][^”"]+[”"]/.test(entao) && !/\bse el[ae]\b/i.test(entao))
       falhas.push({ opcao, codigo: "virada_generica" });
-    if (!/\b(?:depois|(?:na |a )?(?:pr[oó]xima|segunda) rodada|(?:na |a )?rodada seguinte|(?:na |a )?vez seguinte|troqu?em|inverta|agora [ée] a vez|agora voc[eê] manda|pr[oó]ximo objeto)\b/i.test(jogo))
+    if (!/\b(?:depois|(?:na |a )?(?:pr[oó]xima|segunda) rodada|(?:na |a )?rodada seguinte|(?:na |a )?vez seguinte|troqu?em(?: os pap[eé]is)?|inverta|devolva a vez|repita|agora [ée] a vez|agora voc[eê] manda|pr[oó]ximo objeto)\b/i.test(jogo))
       falhas.push({ opcao, codigo: "sem_continuidade" });
   });
+  const textoNormalizado = normalizar(resposta);
+  for (const categoria of sensibilidades) {
+    if (
+      ACAO_SENSORIAL[categoria].test(textoNormalizado)
+      || (categoria === "som" && ONOMATOPEIA_SONORA.test(textoNormalizado))
+    ) {
+      falhas.push({ opcao: 1, codigo: CODIGO_SENSORIAL[categoria] });
+    }
+  }
   return { quantidade: jogos.length, falhas };
+}
+
+export function instrucaoCorrecaoBrincadeira(
+  auditoria: AuditoriaBrincadeiras,
+  sensibilidades: readonly CategoriaSensorial[],
+): string {
+  const codigos = [...new Set(auditoria.falhas.map((f) => f.codigo))];
+  return `<corrigir_brincadeira>
+A resposta anterior não pode sair. Reescreva uma única brincadeira completa e curta. Corrija estes códigos objetivos: ${codigos.join(", ") || "quantidade_incorreta"}.
+${sensibilidades.length ? `Sensibilidades registradas que NÃO podem virar estímulo, ensaio ou parte do jogo: ${sensibilidades.join(", ")}.` : ""}
+Releia o pedido e o retrato no contexto. Preserve nome, idade e modo de comunicação; use um interesse registrado para mudar a MECÂNICA, não só o título. Se não houver interesse registrado, não invente. Não troque uma ideia personalizada por uma genérica.
+Use literalmente este formato, sem introdução e sem linhas vazias internas:
+**Título curto**
+Você: “fala inicial exata”
+A criança: ação possível no modo de comunicação registrado, sem exigir fala, toque ou olhar
+Então: consequência divertida e específica causada pela ação
+Na próxima rodada: como a troca continua
+Feche com uma capacidade realmente convidada. Preserve o alvo e não invente característica.
+</corrigir_brincadeira>`;
+}
+
+/**
+ * Só segurança sensorial justifica substituir automaticamente a resposta.
+ * A arena provou que reprovar prosa natural por rótulo ausente pode piorar uma
+ * brincadeira boa; as demais falhas continuam como telemetria para revisão.
+ */
+export function exigeCorrecaoDeBrincadeira(auditoria: AuditoriaBrincadeiras): boolean {
+  return auditoria.falhas.some((falha) => falha.codigo.startsWith("reproduz_"));
+}
+
+/** Último piso: útil, sem exigir fala, toque, contato visual ou estímulo novo. */
+export function pisoBrincadeiraSegura(): string {
+  return `**Você comanda a virada**
+Você: “Hoje você decide: isso fica igual ou muda?”
+A criança: pode apontar, olhar para uma opção, gesticular, falar ou só observar.
+Então: se ficar igual, repita a mesma ação duas vezes; se mudar, faça a ação ao contrário e reaja com surpresa.
+Na próxima rodada: devolva a vez com duas novas opções simples.
+Isso convida a escolher e alternar turnos, sem exigir resposta. Se houver desconforto, pare; observar também vale.`;
 }
 
 /** Pontos de partida lúdicos, não roteiros prontos nem substitutos do Perfil/BPs. */

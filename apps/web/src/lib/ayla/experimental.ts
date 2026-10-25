@@ -53,6 +53,11 @@ import { comRetentativaCurta } from "@/lib/conducao/retentativa";
 import { logEvent } from "@/lib/log";
 import { perfilConsultavelDaLinha } from "@/lib/kolo-vivo/consultar";
 import {
+  BRINCADEIRA_PERSONALIZADA_V2,
+  CONDUCAO_COM_EVIDENCIA,
+  qualidadeRespostaV2Ativa,
+} from "./qualidade-resposta";
+import {
   escolherLacunaDecisiva,
   blocoDaLacuna,
   esquemaDaResposta,
@@ -99,7 +104,18 @@ import {
 import { pronomesPara, type Genero } from "./pronomes";
 import { resolverFoco, blocoDeFoco, type Foco } from "./experimental-foco";
 import { lerEventos, eventosRelevantes, blocoDeEventos } from "./experimental-memoria";
-import { BLOCO_PEDIDO_BRINCADEIRA, auditarBrincadeiras, blocoMecanicasBrincadeira, pedidoExplicitoDeBrincadeira } from "./pedido-brincadeira";
+import {
+  BLOCO_PEDIDO_BRINCADEIRA,
+  auditarBrincadeiras,
+  blocoLimitesSensoriaisBrincadeira,
+  blocoMecanicasBrincadeira,
+  detectarSensibilidadesRegistradas,
+  exigeCorrecaoDeBrincadeira,
+  instrucaoCorrecaoBrincadeira,
+  pedidoExplicitoDeBrincadeira,
+  pisoBrincadeiraSegura,
+  type CategoriaSensorial,
+} from "./pedido-brincadeira";
 import { DIRETRIZES_BRINCADEIRA, REGRA_BRINCADEIRA_SE_SURGIR } from "@/lib/conducao/brincadeira-diretrizes";
 import { recuperarBoasPraticas, blocoBoasPraticas } from "@/lib/conhecimento/recuperar";
 import { lerEstadoTrial } from "@/lib/trial/estado";
@@ -452,6 +468,8 @@ type ContextoDoTurno = {
    * que hoje alcança 3 famílias — a trava de uma criança vale desde 08/08.
    */
   idadeFoco: number | null;
+  /** Só categorias já registradas da única pessoa em foco; nunca texto do perfil. */
+  sensibilidadesRegistradas: CategoriaSensorial[];
   /**
    * ESTA CONVERSA JÁ PRODUZIU ALGUMA AJUDA? — 26/08/2026, rede de forma.
    *
@@ -632,6 +650,14 @@ async function montarContexto(
           emFoco[0].id,
         )
       : null;
+  const qualidadeRespostaAtiva = qualidadeRespostaV2Ativa();
+  const sensibilidadesRegistradas = qualidadeRespostaAtiva && perfilConsultavel
+    ? detectarSensibilidadesRegistradas(
+        (perfilConsultavel.dominios.get("sensorial")?.conhecidos ?? [])
+          .filter((campo) => campo.estado === "preenchido")
+          .map((campo) => ({ key: campo.key, valor: campo.valor ?? "" })),
+      )
+    : [];
   const decisaoLacuna =
     modo === "pos_trial" || emFoco.length !== 1
       ? null
@@ -735,6 +761,7 @@ async function montarContexto(
             : decisaoLacuna
               ? blocoDaLacuna(decisaoLacuna)
               : "",
+          qualidadeRespostaAtiva ? CONDUCAO_COM_EVIDENCIA : "",
           blocoDeFoco(foco),
           // Depois do retrato da criança e antes da trajetória: a casa é contexto de
           // quem ela é, não um assunto próprio.
@@ -826,6 +853,7 @@ async function montarContexto(
       emFoco.length === 1
         ? idadeAnos(lista.find((x) => x.id === emFoco[0]?.id)?.data_nascimento ?? null)
         : null,
+    sensibilidadesRegistradas,
     jaHouveOrientacao,
     msOndas: { onda1: msOnda1, foco: msFoco, onda3: msOnda3 },
   };
@@ -1336,7 +1364,13 @@ export async function responderExperimental(
         repertorio,
         !posTrial && !params.entregarHistoriaNoWhatsapp && !params.prepararObjetivosHistoria &&
           pedidoExplicitoDeBrincadeira(params.mensagem)
-          ? `${DIRETRIZES_BRINCADEIRA}\n${BLOCO_PEDIDO_BRINCADEIRA}\n${blocoMecanicasBrincadeira(params.mensagem)}`
+          ? `${DIRETRIZES_BRINCADEIRA}\n${BLOCO_PEDIDO_BRINCADEIRA}\n${
+              qualidadeRespostaV2Ativa() ? BRINCADEIRA_PERSONALIZADA_V2 : ""
+            }\n${
+              qualidadeRespostaV2Ativa()
+                ? blocoLimitesSensoriaisBrincadeira(ctxTurno.sensibilidadesRegistradas)
+                : ""
+            }\n${blocoMecanicasBrincadeira(params.mensagem)}`
           : "",
         // A história continua nascendo do Core + Perfil + histórico + BPs.
         // Este bloco não traz conteúdo clínico novo: apenas transforma uma
@@ -1446,6 +1480,10 @@ export async function responderExperimental(
     const tInspecao = Date.now();
     const vazamento = fronteiraAtravessada(texto, diagnosticoRegistrado || null);
     const msInspecao = Date.now() - tInspecao;
+    // Mantém os dois portões nomeados e auditáveis: a fronteira clínica faz
+    // no máximo uma regeneração abaixo; uma brincadeira insegura pode fazer,
+    // separadamente, no máximo uma correção sensorial antes do envio.
+    const gerarCorrecaoSensorialDaBrincadeira = gerar;
     // ⚠️ A FRONTEIRA DEIXA DE SER UMA QUEDA (PEND-151, 24/08/2026).
     //
     // Até aqui, resposta barrada = `return null` = o turno ia para o Legacy.
@@ -1509,10 +1547,11 @@ export async function responderExperimental(
       }
     }
 
-    // Observação editorial apenas. Não aciona segunda chamada nem substitui a
-    // resposta: o detector estrutural ainda precisa de A/B antes de virar gate.
+    // Com a flag desligada, preserva a observação publicada. Com a flag ligada,
+    // falha estrutural segue como telemetria; só reprodução de sensibilidade
+    // registrada aciona uma correção. A segunda falha recebe piso determinístico.
     if (pedidoExplicitoDeBrincadeira(params.mensagem)) {
-      const auditoria = auditarBrincadeiras(texto);
+      const auditoria = auditarBrincadeiras(texto, ctxTurno.sensibilidadesRegistradas);
       if (auditoria.quantidade !== 1 || auditoria.falhas.length > 0) {
         void logEvent({
           kind: "ayla_brincadeira_estrutura_incompleta",
@@ -1520,6 +1559,54 @@ export async function responderExperimental(
           family_account_id: params.familyId,
           payload: { quantidade: auditoria.quantidade, falhas: auditoria.falhas },
         });
+        if (qualidadeRespostaV2Ativa() && exigeCorrecaoDeBrincadeira(auditoria)) {
+          let corrigida = "";
+          try {
+            const r2 = await gerarCorrecaoSensorialDaBrincadeira(
+              instrucaoCorrecaoBrincadeira(
+                auditoria,
+                ctxTurno.sensibilidadesRegistradas,
+              ),
+            );
+            corrigida = lerEnvelope(r2.texto).fala;
+          } catch {
+            corrigida = "";
+          }
+          const fronteiraDaCorrecao = corrigida
+            ? fronteiraAtravessada(corrigida, diagnosticoRegistrado || null)
+            : null;
+          const auditoriaCorrigida = auditarBrincadeiras(
+            corrigida,
+            ctxTurno.sensibilidadesRegistradas,
+          );
+          if (
+            corrigida &&
+            !fronteiraDaCorrecao &&
+            auditoriaCorrigida.quantidade === 1 &&
+            auditoriaCorrigida.falhas.length === 0
+          ) {
+            texto = corrigida;
+            void logEvent({
+              kind: "ayla_brincadeira_corrigida_antes_do_envio",
+              severity: "warn",
+              family_account_id: params.familyId,
+              payload: { codigos: [...new Set(auditoria.falhas.map((f) => f.codigo))] },
+            });
+          } else {
+            texto = pisoBrincadeiraSegura();
+            void logEvent({
+              kind: "ayla_brincadeira_piso_seguro",
+              severity: "error",
+              family_account_id: params.familyId,
+              payload: {
+                codigos_1a: [...new Set(auditoria.falhas.map((f) => f.codigo))],
+                quantidade_2a: auditoriaCorrigida.quantidade,
+                codigos_2a: [...new Set(auditoriaCorrigida.falhas.map((f) => f.codigo))],
+                fronteira_2a: fronteiraDaCorrecao?.fronteira.nome ?? null,
+              },
+            });
+          }
+        }
       }
     }
 

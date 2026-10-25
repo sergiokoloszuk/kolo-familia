@@ -10111,6 +10111,36 @@ do Perfil e queda de genericidade. **PENDENTE** — sem trafego no SHA novo ate
 Bloco: **B · Ayla** · Prioridade: **P1**
 STATUS: **ABERTA — medida, nao corrigida** · Aberta em: 2026-09-14
 
+**CANDIDATA ISOLADA 25/10/2026 — NÃO PUBLICADA.** No worktree
+`ayla-qualidade-brincadeiras`, a flag nova `AYLA_QUALIDADE_RESPOSTA_V2`
+(ausente/off por padrão) adiciona disciplina de evidência e um portão local
+para sensibilidade registrada. O interesse precisa alterar a ação central;
+modo de comunicação, idade, alvo e histórico são preservados; som, toque,
+textura, cheiro ou luz aversivos não podem virar estímulo da brincadeira. A
+auditoria estrutural permanece telemetria; somente reprodução sensorial
+objetiva autoriza uma regeneração, seguida de piso seguro se ainda falhar.
+
+A bancada final usou 20 famílias sintéticas, produtor real, juiz cego e
+Supabase limitado a GET, sem WhatsApp ou escrita externa: a candidata obteve
+20/20 respostas de alta qualidade contra 19/20 do comportamento publicado,
+zero falha grave contra uma, sete vitórias contra quatro e nove empates. Nos
+13 pedidos de brincadeira, o caso sonoro sentinela demonstrou o portão: a
+versão publicada gerou estímulo sonoro; a candidata encerrou sem falha grave.
+Evidência: `docs/auditorias/ayla-qualidade-cego-2026-10-23.json`.
+
+Portões locais: 24/24 testes focados e 51/51 com a rede de segurança; suíte
+completa com 4.218 testes aprovados, sete pulados e três falhas preexistentes
+fora desta frente (marca temporal de dado antigo, teto de memória e provedor
+dependente de rede); geração de tipos, typecheck, lint tocado e build Webpack
+passaram. A PEND-208 continua aberta: faltam PR/preview, aprovação humana e,
+após publicação autorizada, prova somente leitura em uso natural.
+
+**RECONCILIAÇÃO COM PEND-209.** Esta candidata também testa a fronteira entre
+fato registrado, relato atual e hipótese, mas não cria nem baixa a ficha
+PEND-209 neste branch: os IDs PEND-209 a PEND-211 estão reivindicados por outra
+frente conforme o rodapé deste documento. A integração deve reconciliar a
+evidência sem duplicar ficha ou sobrescrever trabalho concorrente.
+
 **PUBLICAÇÃO AUTORIZADA COM RESSALVAS (28/09).** A diretriz compartilhada de
 brincadeira cobre pedido direto, conversa web, apoio, aprofundamento e proposta
 espontânea, respeitando idade, comunicação, Perfil, segurança e quantidade do
