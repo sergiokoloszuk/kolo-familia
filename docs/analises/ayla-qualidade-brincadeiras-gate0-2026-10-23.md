@@ -177,9 +177,22 @@ onomatopeia, a correção ocorreu antes do envio e o caso focal seguinte passou.
   Google Fonts e ausência de `.env.local` no worktree; a execução final
   carregou as variáveis apenas em memória e concluiu.
 
-## Veredito antes de PR/preview
+## Gate 5 — PR e preview
+
+- PR em rascunho: <https://github.com/sergiokoloszuk/kolo-familia/pull/150>;
+- commit funcional: `9c733ef6ab80e261b5ef9015c28f541c7f190820`;
+- preview Vercel: <https://kolo-familia-2sjkysu2o-kolo-familia.vercel.app/>;
+- deploy de preview concluído, sem conflitos com `main` e sem feedback não
+  resolvido no Vercel Preview Comments;
+- o CI principal foi iniciado pela PR e ainda precisa concluir após este
+  registro documental;
+- a preview é protegida por login Vercel e a flag continua desligada. Portanto,
+  ela prova empacotamento e entrega do branch, não o comportamento funcional da
+  candidata.
+
+## Veredito após PR/preview
 
 **PASSOU COM RESSALVAS.** A candidata superou a régua sintética, zerou falhas
-graves na rodada final e passou os portões de compilação. Ainda não está em
-produção e não foi validada em aparelho ou WhatsApp. Faltam revisão do diff,
-PR, CI/preview e aprovação humana. A flag permanece desligada por padrão.
+graves na rodada final, passou os portões locais e possui PR e preview
+isoladas. Ainda não está em produção, não foi validada em aparelho ou WhatsApp
+e precisa de aprovação humana. A flag permanece desligada por padrão.

@@ -240,7 +240,7 @@ substitui a prioridade atual de segurança nem a análise de produção.
 | [PEND-205](#pend-205) | perfil-marcos.test.ts #11 apodrece com o relogio — main esta VERMELHA | P3 | CONCLUÍDA — teste estabilizado sem mudança funcional |
 | [PEND-206](#pend-206) | O extrator unificado e a MAIOR linha de custo de IA da Kolo — 41,8% do total | P3 | ABERTA — medido em 2026-09-14, nenhuma decisao tomada |
 | [PEND-207](#pend-207) | O DNA dos especialistas no WhatsApp — o unico componente que a arena provou | P1 | EM PRODUCAO desde 2026-09-14 22:16 (SHA c817c94) |
-| [PEND-208](#pend-208) | O repertorio criativo continua obvio — nenhum braco resolveu a brincadeira | P1 | ABERTA — medida, nao corrigida |
+| [PEND-208](#pend-208) | O repertorio criativo continua obvio — nenhum braco resolveu a brincadeira | P1 | CANDIDATA EM PR #150 — aprovação humana e publicação pendentes |
 | [PEND-212](#pend-212) | Assinaturas antigas podem renovar sem endereço fiscal completo no Customer Stripe | P1 | ABERTA — achado fora do escopo; fluxo novo protegido |
 | [PEND-213](#pend-213) | Aprofundamento contextual por botões no WhatsApp | P1 | PARCIAL — flag global ligada; continuidade e entrega ainda sem prova de conclusão |
 | [PEND-214](#pend-214) | provider.test.ts depende da mensagem de erro da rede ao remover a chave Anthropic | P3 | ABERTA — achado fora do escopo, NÃO corrigido |
@@ -10132,8 +10132,14 @@ Portões locais: 24/24 testes focados e 51/51 com a rede de segurança; suíte
 completa com 4.218 testes aprovados, sete pulados e três falhas preexistentes
 fora desta frente (marca temporal de dado antigo, teto de memória e provedor
 dependente de rede); geração de tipos, typecheck, lint tocado e build Webpack
-passaram. A PEND-208 continua aberta: faltam PR/preview, aprovação humana e,
-após publicação autorizada, prova somente leitura em uso natural.
+passaram. A candidata está na PR em rascunho
+<https://github.com/sergiokoloszuk/kolo-familia/pull/150>, commit funcional
+`9c733ef6ab80e261b5ef9015c28f541c7f190820`, com preview Vercel concluída em
+<https://kolo-familia-2sjkysu2o-kolo-familia.vercel.app/>. A preview é
+protegida por login e a flag permanece off; ela prova a entrega isolada do
+branch, não o comportamento ativado. A PEND-208 continua aberta: faltam
+aprovação humana e, após publicação autorizada, prova somente leitura em uso
+natural.
 
 **RECONCILIAÇÃO COM PEND-209.** Esta candidata também testa a fronteira entre
 fato registrado, relato atual e hipótese, mas não cria nem baixa a ficha
