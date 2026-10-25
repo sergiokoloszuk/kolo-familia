@@ -194,6 +194,29 @@ onomatopeia, a correção ocorreu antes do envio e o caso focal seguinte passou.
   ela prova empacotamento e entrega do branch, não o comportamento funcional da
   candidata.
 
+### Complemento de 25/10/2026 — baseline reconciliado e Preview habilitado
+
+- o commit test-only `3e5867c` transporta da PR #146 somente as três correções
+  de teste que correspondem às falhas conhecidas: o teto mede o conteúdo antes
+  do carimbo temporal, o onboarding preserva o conteúdo sem exigir ausência do
+  carimbo e o teste do provider usa `fetch` controlado em vez de rede externa;
+- os dois testes de memória/onboarding passaram: **36/36**; o teste de provider
+  passou: **19/19**;
+- a primeira repetição completa chegou a **4.220 testes passados**, 7 pulados e
+  uma falha de provider antes do isolamento de rede. A repetição após o patch
+  ficou presa em testes com relógio simulado no executor local e foi
+  interrompida; por isso não é registrada como sucesso. O CI da cabeça
+  combinada continua sendo o portão definitivo;
+- a variável `AYLA_QUALIDADE_RESPOSTA_V2=on` foi criada no Vercel como Config
+  exclusivamente para a Preview Branch `codex/ayla-qualidade-brincadeiras`.
+  `Production` e `Development` não foram selecionados;
+- a alteração de variável exige um novo deploy. Este complemento é enviado à
+  branch para disparar uma Preview nova com a configuração atualizada, sem
+  promover ou alterar produção;
+- a PEND-211 não é baixada por este relatório: ela pertence à frente oficial
+  que precisa reconciliar e provar seu próprio head. Aqui as correções servem
+  apenas para remover falsos negativos do CI da PR #150.
+
 ## Veredito após PR/preview
 
 **PASSOU COM RESSALVAS.** A candidata superou a régua sintética, zerou falhas
