@@ -2265,6 +2265,11 @@ PEND-003 (2026-08-08), reportado em vez de tratado
   dashboard · secret key base · chave de vault**. Difere da Vercel, que oculta
   valores marcados como *Sensitive*.
   ⚠️ **Nenhum valor foi copiado para esta documentação, e nada foi alterado.**
+- **Rechecagem somente leitura em 26/10/2026:** a página de autenticação do
+  Easypanel informou que a conta administrativa **não tem verificação em duas
+  etapas ativada**. O histórico visível mostrou acessos do mesmo usuário
+  administrativo, mas não fornece aqui prova suficiente de segregação de
+  pessoas ou de MFA. Nenhuma credencial foi exibida, copiada ou modificada.
 - **Por que a prioridade não está definida:** o raio de alcance é grande — a
   service role bypassa RLS, ou seja, alcança dado de saúde e comportamento de
   criança de todas as famílias — mas não há evidência de exposição fora do
@@ -4896,6 +4901,15 @@ Aberta em: 2026-08-18 · Origem: aplicação da migração 0071 (BIA)
   não ativar campanha e não ligar exclusão real antes de backup externo com
   restauração testada e prova registrada. A implementação falha fechada e chega
   desligada, mas isso não substitui o portão.
+- **Rechecagem somente leitura em 26/10/2026:** `Storage Providers` contém
+  apenas **Local Disk**; nenhum Google Drive, S3, R2, B2, SFTP ou outro destino
+  externo está configurado. `Snapshots` oferece somente exportar/importar/
+  migrar um serviço em modo experimental; o compose `supabase` continua sem
+  rotina própria de backup. O histórico de ações visível contém logins e um
+  deploy antigo, sem execução de backup. O painel permite criar um Postgres
+  separado, que pode servir para provar uma restauração, e oferece modelos de
+  backup PostgreSQL para S3, mas nenhum foi criado. Isso confirma, sem alterar
+  o servidor, que ainda faltam **destino externo + rotina + restore provado**.
 - **Dependente direta: PEND-095** (importar os 1.120 chunks) — a primeira
   gravação em massa que este banco vai receber.
 - **Agente recomendado:** PROPOR
