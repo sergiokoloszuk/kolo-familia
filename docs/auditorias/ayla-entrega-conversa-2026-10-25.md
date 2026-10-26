@@ -90,3 +90,13 @@ A consulta não autenticada ao health recebeu HTML, não metadados verificáveis
 Karina esclareceu que sua conta é fictícia e autorizou o teste nela com os dados já cadastrados da Manu. Essa é a conta de teste indicada por Produto, não autorização para procurar senha, inventar fatos, apagar o perfil ou acessar outra família. O login fica com a responsável. Nenhum teste ou escrita foi executado nessa conta nesta entrega.
 
 Baseline adicional para a etapa de memória: `proporAtualizacao` lê o transcript com `.slice(0, 8000)`. Em uma conversa longa, fatos recentes podem ficar fora da proposta. Registrado na PEND-208 para a implementação de captura contínua; não corrigido silenciosamente junto da entrega de conversa.
+
+## Bloqueio de configuração confirmado em 26 de outubro
+
+O health acessado pelo navegador com sessão Vercel em `2026-10-26T12:00:17.051Z` confirmou SHA `2a96b691a1fda3ff1cdf4f00334f3d99aa3a6c71`, ambiente Preview e `ayla_qualidade_resposta_v2=true`. Porém `db.ok=false`; `SUPABASE_SERVICE_ROLE_KEY`, `OPENAI_API_KEY` e `ANTHROPIC_API_KEY` estão ausentes. A Vercel mostra `OPENAI_API_KEY` como Secret, somente Production e sem cópia/revelação do valor. Nenhum segredo foi lido ou alterado.
+
+Isso corrige o diagnóstico anterior: o acesso à conta não era o único bloqueio. A Preview não estava pronta para gerar respostas, apesar de build e checks verdes. Não pedir outro teste humano antes de resolver as dependências e conferir o retorno real.
+
+O health também reporta Z-API token e cron secret presentes. Sua presença não prova disparo, mas habilitar serviço de banco/IA exige verificar antes as portas de webhook, cron e envio para não ativar efeitos fora do QA web. Não copiar indiscriminadamente todas as variáveis da produção nem configurar Stripe para este teste.
+
+Proposta mínima, sujeita à autorização de acesso: disponibilizar apenas credenciais de servidor compatíveis com o banco da Preview e as APIs de IA, restritas ao branch `codex/ayla-qualidade-brincadeiras`; preservar configuração de produção; isolar rotas com efeitos fora do teste; novo deploy; provar SHA/flag e chamadas de banco/modelo; só então login e teste da conta fictícia com Manu. Não enviar valores de chaves no chat. Nenhuma alteração de ambiente ou código funcional foi executada nesta investigação. PEND-208 atualizada e aberta; veredito do teste humano: **BLOQUEADO**.

@@ -10263,6 +10263,22 @@ registrado para captura contínua, não alterado nesta entrega. Evidência e
 limites no relatório de entrega. Produção sem merge/ativação por esta frente;
 PEND-208 continua aberta.
 
+**BLOQUEIO DE CONFIGURAÇÃO COMPROVADO — 26/10/2026.** A inspeção pelo
+navegador autenticado na Vercel conseguiu ler o health da Preview (ts
+`2026-10-26T12:00:17.051Z`): SHA `2a96b691a1fda3ff1cdf4f00334f3d99aa3a6c71`,
+ambiente `preview`, `ayla_qualidade_resposta_v2=true`, mas `db.ok=false` e
+ausentes `SUPABASE_SERVICE_ROLE_KEY`, `OPENAI_API_KEY` e `ANTHROPIC_API_KEY`.
+A configuração da Vercel confirma `OPENAI_API_KEY` restrita a Production,
+com valor secreto não revelável. Portanto build verde e flag ligada NÃO
+significavam Preview funcional para o teste de respostas. Não era só login.
+Não foram alterados segredos, permissões, produção ou dados da conta da Manu.
+Antes de liberar credenciais: autorização específica para o acesso servidor
+na Preview deste branch, verificar compatibilidade com o banco configurado
+e revisar isolamento de webhook/cron/envios. O health já reporta token Z-API e
+cron presentes; isso não prova envio, mas impede prometer isolamento sem
+conferência. Teste autenticado segue BLOQUEADO. Evidência e plano mínimo no
+relatório de entrega; PEND-208 permanece aberta.
+
 **PUBLICAÇÃO AUTORIZADA COM RESSALVAS (28/09).** A diretriz compartilhada de
 brincadeira cobre pedido direto, conversa web, apoio, aprofundamento e proposta
 espontânea, respeitando idade, comunicação, Perfil, segurança e quantidade do
