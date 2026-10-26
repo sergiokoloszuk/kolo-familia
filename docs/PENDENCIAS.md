@@ -6519,6 +6519,19 @@ STATUS: **MEDIDA — NÃO CORRIGIDA** · Aberta em: 2026-08-21
   a experiência útil D0–D15 nem prova que a Ayla entregou valor. Antes de ligar
   retenção destrutiva, a jornada e a exportação precisam de QA isolado; flags de
   exclusão permanecem desligadas.
+- **Tour do painel reaparece — evidência em produção de 26/10/2026:** ao abrir
+  `https://kolo-familia-web.vercel.app/painel`, sem o parâmetro de prévia
+  `?tour=1`, o passo “1 de 6 · Home” foi exibido novamente. A leitura do código
+  confirmou que o aceite fica somente no `localStorage` do navegador, na chave
+  `kolo-tour-v1`; ele não é salvo na conta da família e a falha de leitura ou
+  gravação é silenciosamente ignorada. Assim, outro navegador, aparelho,
+  armazenamento apagado ou contexto isolado volta a tratar a pessoa como nova.
+  **Correção aprovada por Karina:** persistir “concluiu/pulou o tour” na conta,
+  usar o armazenamento local apenas como apoio, não reabrir automaticamente e
+  manter “Ver o tour novamente” como escolha manual. **Prova exigida:** primeira
+  entrada abre; concluir ou pular grava com erro conferido; sair e entrar de
+  novo, recarregar e usar outro aparelho não reabrem; o comando manual reabre.
+  **Não corrigido nem publicado nesta atualização.**
 - **Avanço local em 24/10/2026 — ainda sem publicação nem envio:** o PR #149
   passou a usar o prazo real da família para os dois formatos de teste. D-3
   pergunta o que foi útil sem oferecer plano; D-1 avisa a data e esclarece que
