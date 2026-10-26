@@ -1,6 +1,6 @@
 # Black Friday 2026 — prova dos Gates 1 a 7
 
-Data da conferência: **24/10/2026** · branch:
+Data da conferência: **26/10/2026** · branch:
 `codex/black-friday-2026-core` · base de produção:
 `25e8891daf1e0d5bd881512e6f128742fdcd0184`.
 
@@ -27,13 +27,13 @@ Para evitar a confusão do checklist anterior, as palavras significam:
 | 4 · jornada | PASSOU COM RESSALVAS | no PR: tela de preços/assinatura, 15 dias, anual oculto, reativação voluntária, prazo individual e avisos D-3/D-1/D-0 para trials de 7 ou 15 dias; 173/173 testes dirigidos da jornada | prévia visual, teste isolado no celular, relatório dos motivos de não continuar e prova de entrega sem duplicidade |
 | 5 · checkout | PASSOU COM RESSALVAS | teste preserva trial, expira em 30 minutos, registra sessão antes de aceitar webhook e evita duplicidade | teste com Stripe em modo de teste/conta fictícia; sem cobrança real |
 | 6 · Admin | PASSOU COM RESSALVAS | estado, preço, backup, ativar e pausar preparados; ativação falha fechada | migração isolada, perfil admin de QA e ensaio de pausa; Central de mensagens continua PEND-109 |
-| 7 · preview | PARCIAL | pacote comercial anterior: 134/134 testes; última alteração da jornada: 173/173; lint e typecheck sem erro | CI do novo commit, banco isolado, QA mobile, exportação/exclusão e smoke test completo |
+| 7 · preview | BLOQUEADO | o Regulamento abre na prévia do commit `b63613c`; a tela `/precos` falha e o health explica a causa: a prévia não tem banco isolado nem chaves de teste do Supabase e Stripe | configurar ambiente isolado, repetir CI, QA mobile, exportação/exclusão e smoke test completo |
 | 8 · produção | NÃO AUTORIZADO | health atual ainda serve a base antiga e saudável | backup, CI, preview, QA, aprovação expressa, migração, deploy e prova do SHA servido |
 
 ## Produção hoje
 
-Leitura de `https://kolo-familia-web.vercel.app/api/health` em 24/10/2026 às
-09:04 BRT:
+Leitura de `https://kolo-familia-web.vercel.app/api/health` reconfirmada em
+26/10/2026 às 12:43 BRT:
 
 - `ok: true`, banco saudável, 367 ms;
 - branch `main`, SHA `25e8891daf1e0d5bd881512e6f128742fdcd0184`;
@@ -66,12 +66,12 @@ Isso prova saúde do estado atual; não prova a campanha nova.
 | Ordem | O que precisa acontecer | Situação real | Dificuldade | Prova exigida para marcar concluído |
 |---|---|---|---|---|
 | 1 | Fechar a experiência do trial de 7 e 15 dias | NO PR, PARCIAL | média | textos aprovados, preview no celular, conta fictícia passando por D-3/D-1/D-0 e registro de cada tentativa |
-| 2 | Terminar CI e revisão do PR #149 | PENDENTE | baixa a média | todos os checks verdes no commit exato |
+| 2 | Terminar CI e revisão do PR #149 | FALHOU POR 4 TESTES DA AYLA, FORA DA BLACK FRIDAY | média | integrar primeiro a correção já verde da PEND-241/PR #145 e repetir o CI do commit exato |
 | 3 | Fazer backup e restaurar em ambiente separado | BLOQUEADO — PEND-092 | alta | arquivo externo, hash, horário e consulta comprovando que a restauração abre e contém os dados esperados |
 | 4 | Aplicar 0096/0097 somente em banco isolado | PENDENTE | média | migrações aplicadas sem erro e testes de entrada, pausa, aceite e exclusão com conta fictícia |
 | 5 | Conferir Stripe promocional sem cobrar | PARCIAL | baixa | leitura do preço R$ 39,90, mensal, BRL, ativo e modo correto; depois checkout em modo teste |
 | 6 | Validar telas e textos jurídicos | NO PR, NÃO PUBLICADO | média | revisão final, links acessíveis no preview, versões/aceites gravados e política compatível com fornecedores reais |
-| 7 | Testar a jornada inteira no preview pelo celular | PENDENTE | alta | vídeo ou capturas: cadastro, 15 dias, aviso, checkout, cancelamento, exportação e exclusão simulada |
+| 7 | Testar a jornada inteira no preview pelo celular | BLOQUEADO POR AMBIENTE | alta | banco isolado e Stripe de teste configurados; depois vídeo ou capturas de cadastro, 15 dias, aviso, checkout, cancelamento, exportação e exclusão simulada |
 | 8 | Preparar Central de mensagens com canário e pausa | FORA DO PR — PEND-109 | alta | prévia, aprovação humana, envio só para número de teste, relatório por contato e bloqueio de duplicidade |
 | 9 | Autorizar e publicar desligado | NÃO AUTORIZADO | média | aprovação expressa, SHA do deploy, health verde e flags ainda desligadas |
 | 10 | Virar a chave em 01/11 às 00h BRT | FUTURO | baixa operacional / alto risco | nova leitura Stripe, contagens do Admin, ativação registrada, uma conta fictícia elegível e outra inelegível |
@@ -106,6 +106,28 @@ Antes da publicação jurídica, conferir e guardar prova de:
 3. DPA e transferências internacionais revisados;
 4. fornecedores de WhatsApp, e-mail, banco, armazenamento e analytics listados;
 5. acesso humano, retenção e exclusão em cada fornecedor.
+
+## Rechecagem objetiva de 26/10/2026
+
+- **CI oficial do commit atual `b63613c`: FALHOU somente nas quatro provas da
+  Ayla.** O GitHub executou 4.250 testes: **4.246 passaram**, 7 foram ignorados
+  e 4 falharam. A quinta falha do commit anterior, que pertencia à Black
+  Friday, foi corrigida: os testes dirigidos de boas-vindas e webhook passaram
+  **53/53**, e o CI não voltou a apontá-la.
+- As outras quatro falhas são da Ayla e correspondem à frente PEND-241. O PR
+  #145 contém essas correções e teve CI oficial verde no commit `b09fadc`, com
+  **4.224 testes aprovados e 7 ignorados**. Ele precisa de revisão/integração
+  própria antes de atualizar a base da Black Friday; não deve ser misturado
+  silenciosamente a esta campanha.
+- **Prévia pública:** o Regulamento abriu e mostrou as regras comerciais e a
+  identificação da Kolo. A tela `/precos` exibiu “Algo quebrou aqui”. O health
+  da mesma prévia serviu o SHA `b63613c`, porém com `ok:false` e `db:false`:
+  faltam a chave administrativa do Supabase, o Stripe de teste e seus IDs de
+  preço. A correção é criar um ambiente isolado de QA; copiar segredos reais de
+  produção para a prévia não é aceitável.
+- **Produção não mudou:** continua saudável no SHA `25e8891`, com teste normal
+  de 7 dias, mensal de R$ 54,90 e anual de R$ 603,90. Nenhuma campanha,
+  cobrança ou mensagem foi acionada nesta rechecagem.
 
 ## Decisões e aprovações ainda necessárias
 
