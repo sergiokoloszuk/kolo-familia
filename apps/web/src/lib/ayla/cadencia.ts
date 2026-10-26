@@ -53,7 +53,7 @@ export const JANELA_CADENCIA_MS = 3 * 60 * 60 * 1000;
  * sobreposição — e porque não têm um "próximo horário" equivalente:
  *
  * - `boas_vindas`: a primeira mensagem da relação. Atrasar é começar errado.
- * - `trial_d0` / `trial_d3`: presos ao ciclo de vida da assinatura; adiar muda
+ * - `trial_d0` / `trial_d1` / `trial_d3`: presos ao ciclo de vida da assinatura; adiar muda
  *   o sentido da mensagem.
  * - `crianca_especifica`: a Ayla está sem saber de quem a família fala; segurar
  *   isso trava a conversa inteira.
@@ -68,6 +68,7 @@ export const JANELA_CADENCIA_MS = 3 * 60 * 60 * 1000;
 export const PROATIVAS_ISENTAS: ReadonlySet<string> = new Set<AylaTipoProativa>([
   "boas_vindas",
   "trial_d0",
+  "trial_d1",
   "trial_d3",
   "crianca_especifica",
   "campanha_operacional",
@@ -202,7 +203,7 @@ export async function iniciativaDoDiaConsumida(
  * Existe Trial obrigatório para esta família HOJE?
  *
  * ⚠️ MESMA CONSULTA DO CRON, e de propósito. `runTrial` seleciona por
- * `trial_ends_at` caindo em hoje (d0) ou em três dias (d3). Duplicar o critério
+ * `trial_ends_at` caindo em hoje (d0), amanhã (d1) ou em três dias (d3). Duplicar o critério
  * com outra fonte criaria duas verdades sobre o mesmo fato — e a proativa
  * cederia (ou não) por um motivo diferente do que o Trial usa para falar.
  */
@@ -225,8 +226,9 @@ export async function trialObrigatorioHoje(
     if (!fim) return false;
     const t = new Date(fim).getTime();
     const d0 = t >= hoje.getTime() && t < hoje.getTime() + dia;
+    const d1 = t >= hoje.getTime() + dia && t < hoje.getTime() + 2 * dia;
     const d3 = t >= hoje.getTime() + 3 * dia && t < hoje.getTime() + 4 * dia;
-    return d0 || d3;
+    return d0 || d1 || d3;
   } catch {
     return false;
   }
@@ -243,7 +245,8 @@ export async function podeIniciarConversa(
   params: { familyAccountId: string; tipo: string; agora?: Date },
 ): Promise<{ ok: true } | { ok: false; motivo: string }> {
   const agora = params.agora ?? new Date();
-  const ehTrial = params.tipo === "trial_d0" || params.tipo === "trial_d3";
+  const ehTrial =
+    params.tipo === "trial_d0" || params.tipo === "trial_d1" || params.tipo === "trial_d3";
 
   // ⚠️ NINGUÉM ENTRA NO MEIO DE UM TURNO — nem o Trial. Ele espera a janela
   // segura do mesmo dia; a próxima passada do cron o pega.

@@ -1027,7 +1027,7 @@ async function registrarTentativaTrial(p: {
 export async function sendTrial(
   supabase: SupabaseClient,
   familyAccountId: string,
-  diasRestantes: 3 | 0,
+  diasRestantes: 3 | 1 | 0,
   agora: Date = new Date(),
   /**
    * O INSTANTE EM QUE O TESTE TERMINA — para o texto não mentir sobre o prazo.
@@ -1054,13 +1054,23 @@ export async function sendTrial(
    */
   trialEndsAt?: string | null,
 ): Promise<EnvioResultado> {
-  const tipo: AylaTipoProativa = diasRestantes === 3 ? "trial_d3" : "trial_d0";
+  const tipo: AylaTipoProativa =
+    diasRestantes === 3 ? "trial_d3" : diasRestantes === 1 ? "trial_d1" : "trial_d0";
   // ⚠️ SÓ AFIRMA A EXPIRAÇÃO COM DATA NA MÃO. Sem `trialEndsAt` legível, o
   // texto continua o de hoje: dizer "acabou" para quem ainda tem horas custaria
   // uma conversão, e a dúvida não é evidência.
   const fim = trialEndsAt ? new Date(trialEndsAt) : null;
   const jaExpirou =
     diasRestantes === 0 && fim !== null && !Number.isNaN(fim.getTime()) && fim <= agora;
+  const terminaEm =
+    fim !== null && !Number.isNaN(fim.getTime())
+      ? new Intl.DateTimeFormat("pt-BR", {
+          timeZone: "America/Sao_Paulo",
+          day: "2-digit",
+          month: "2-digit",
+          year: "numeric",
+        }).format(fim)
+      : undefined;
 
   // ⚠️ A TRAVA VEM PRIMEIRO, e antes de qualquer consulta cara. Com quatro
   // batidas por dia, este é o único ponto que impede a família de receber o
@@ -1109,6 +1119,7 @@ export async function sendTrial(
   const texto = await templateTrial(supabase, {
     diasRestantes,
     jaExpirou,
+    terminaEm,
     nomeMae: ctx.nomeMae,
     seed: `${familyAccountId}-trial-${diasRestantes}`,
     // ⚠️ SEM `familyId` O LINK CHEGA DESLOGADO — e `/assinatura` é rota

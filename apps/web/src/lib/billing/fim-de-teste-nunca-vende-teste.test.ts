@@ -84,7 +84,11 @@ describe("1. o destino do fim de teste é /assinatura, nunca /precos", () => {
     expect(i, "`templateTrial` sumiu").toBeGreaterThan(-1);
     const fim = SRC_TEMPLATES.indexOf("\n// ====", i);
     const corpo = SRC_TEMPLATES.slice(i, fim > i ? fim : i + 2500);
-    expect(corpo).toMatch(/link_planos:\s*await linkComercialAutenticado/);
+    // O link só nasce no D-0. D-3 escuta e D-1 avisa; criar magic link nesses
+    // dias seria ação comercial escondida mesmo que o texto não o mostrasse.
+    expect(corpo).toMatch(
+      /link_planos:[\s\S]*params\.diasRestantes === 0[\s\S]*await linkComercialAutenticado/,
+    );
     expect(corpo).not.toMatch(/https?:\/\//);
   });
 });

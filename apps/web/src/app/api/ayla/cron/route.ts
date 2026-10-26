@@ -39,7 +39,7 @@ import { enviarLinksFiscais } from "@/lib/fiscal/notificacao";
  * Tipos suportados via query param `?tipo=`:
  *   - rotina       — manda pergunta diária (PRD §12.9.1)
  *   - inatividade  — detecta 2 e 5 dias sem responder (PRD §12.9.2)
- *   - comercial    — trial D-3 e D-0 (PRD §12.9.3)
+ *   - comercial    — trial D-3, D-1 e D-0 (PRD §12.9.3)
  *   - emocional    — streak 7 dias (PRD §12.9.3)
  *   - insights     — detecta padrões + envia próximo pendente (PRD §12.9.4)
  *
@@ -691,22 +691,30 @@ async function runInatividade(supabase: AdminClient) {
 }
 
 /**
- * Comercial: trial D-3 e D-0. Roda 1×/dia.
+ * Comercial: trial D-3, D-1 e D-0. O cron bate nas quatro janelas preferidas.
  */
 async function runComercial(supabase: AdminClient) {
   const agora = new Date();
   const hoje = startOfDay(agora);
   const em3 = new Date(hoje.getTime() + 3 * 24 * 60 * 60 * 1000);
   const em3Fim = new Date(em3.getTime() + 24 * 60 * 60 * 1000);
+  const amanha = new Date(hoje.getTime() + 24 * 60 * 60 * 1000);
+  const amanhaFim = new Date(amanha.getTime() + 24 * 60 * 60 * 1000);
   const hojeFim = new Date(hoje.getTime() + 24 * 60 * 60 * 1000);
 
-  const [{ data: d3 }, { data: d0 }] = await Promise.all([
+  const [{ data: d3 }, { data: d1 }, { data: d0 }] = await Promise.all([
     supabase
       .from("subscription_accesses")
       .select("family_account_id, trial_ends_at")
       .eq("status", "trialing")
       .gte("trial_ends_at", em3.toISOString())
       .lt("trial_ends_at", em3Fim.toISOString()),
+    supabase
+      .from("subscription_accesses")
+      .select("family_account_id, trial_ends_at")
+      .eq("status", "trialing")
+      .gte("trial_ends_at", amanha.toISOString())
+      .lt("trial_ends_at", amanhaFim.toISOString()),
     supabase
       .from("subscription_accesses")
       .select("family_account_id, trial_ends_at")
@@ -730,6 +738,31 @@ async function runComercial(supabase: AdminClient) {
       resultados.push({
         familyId: r.family_account_id as string,
         tipo: "trial_d3",
+        enviada: false,
+        motivo: e instanceof Error ? e.message : "erro",
+      });
+    }
+  }
+
+  for (const r of d1 ?? []) {
+    try {
+      const res = await sendTrial(
+        supabase,
+        r.family_account_id as string,
+        1,
+        agora,
+        r.trial_ends_at as string | null,
+      );
+      resultados.push({
+        familyId: r.family_account_id as string,
+        tipo: "trial_d1",
+        enviada: res.enviada,
+        motivo: res.enviada ? undefined : res.motivo,
+      });
+    } catch (e) {
+      resultados.push({
+        familyId: r.family_account_id as string,
+        tipo: "trial_d1",
         enviada: false,
         motivo: e instanceof Error ? e.message : "erro",
       });

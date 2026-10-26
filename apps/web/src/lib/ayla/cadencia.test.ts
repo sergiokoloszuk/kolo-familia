@@ -198,6 +198,7 @@ describe("cadência — o que nunca espera", () => {
       "crianca_especifica",
       "dass21_resultado_severo",
       "trial_d0",
+      "trial_d1",
       "trial_d3",
     ]);
   });

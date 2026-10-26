@@ -6519,6 +6519,21 @@ STATUS: **MEDIDA — NÃO CORRIGIDA** · Aberta em: 2026-08-21
   a experiência útil D0–D15 nem prova que a Ayla entregou valor. Antes de ligar
   retenção destrutiva, a jornada e a exportação precisam de QA isolado; flags de
   exclusão permanecem desligadas.
+- **Avanço local em 24/10/2026 — ainda sem publicação nem envio:** o PR #149
+  passou a usar o prazo real da família para os dois formatos de teste. D-3
+  pergunta o que foi útil sem oferecer plano; D-1 avisa a data e esclarece que
+  não haverá cobrança automática; D-0 mostra a escolha de assinar ou não. Uma
+  recusa permite uma única pergunta opcional de motivo e proíbe insistência.
+  Foi corrigida também a marcação interna que, num trial de 15 dias, poderia
+  tratar D8–D14 como se fossem todos o “dia 7”. Prova local dirigida: 173/173
+  testes; typecheck sem erro; lint sem erro (6 avisos anteriores). Isto melhora
+  o fechamento, mas **não conclui a ficha**: falta provar entrega em dados
+  fictícios, consolidar os motivos num relatório e acompanhar uma coorte real
+  de ponta a ponta.
+- **Redação D-3 aprovada por Karina em 26/10/2026:** a mensagem oferece cinco
+  respostas simples — compreensão, ideia prática, acolhimento, pouco uso ou
+  falta de ajuda — e permite resposta livre. Não apresenta preço nem plano;
+  serve para ajustar os três últimos dias enquanto ainda há tempo de ajudar.
 - **CRITÉRIO DE CONCLUSÃO:** uma coorte real percorrendo D0→D7 com registro de
   avaliação em todos os dias — prova longitudinal de 8 dias, não retrato de um
   dia.

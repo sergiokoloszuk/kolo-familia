@@ -118,6 +118,7 @@ import {
   lerEvidenciasJornada,
   EVIDENCIAS_VAZIAS,
   DIAS_DE_FECHAMENTO,
+  intencaoDoDia,
   blocoPosTrial,
   nivelDeEvidencia,
 } from "@/lib/trial/jornada";
@@ -1082,7 +1083,9 @@ export async function responderExperimental(
       jornada &&
         estadoTrial &&
         DIAS_DE_FECHAMENTO.has(
-          estadoTrial.fase === "trial_encerrado" ? 7 : Math.min(estadoTrial.dia ?? 0, 7),
+          estadoTrial.fase === "trial_encerrado"
+            ? 7
+            : intencaoDoDia(estadoTrial.dia ?? 0, estadoTrial.diasRestantes ?? 0),
         ),
     );
     const repertorio = blocoBoasPraticas(bps);

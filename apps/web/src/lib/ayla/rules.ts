@@ -31,6 +31,7 @@ import { criancaPendente } from "./crianca-especifica";
 
 const COMERCIAL: ReadonlyArray<AylaTipoProativa> = [
   "trial_d3",
+  "trial_d1",
   "trial_d0",
   "campanha_promocional",
 ] as const;

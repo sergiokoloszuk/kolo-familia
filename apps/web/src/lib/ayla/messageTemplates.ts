@@ -105,13 +105,16 @@ const FALLBACK: Record<string, string[]> = {
   // Isto é o FALLBACK: em produção mandam as variações de
   // `ayla_message_templates`. Ele só aparece se a leitura do banco falhar — e
   // era exatamente aí que a rota errada voltaria a sair.
-  trial_d3: [
-    "Oi, {nomeMae}. Te lembrando que seu período grátis termina em 3 dias.\n\nSe quiser continuar com a gente, os planos estão aqui: {link_planos}\n\nSem pressa.",
-    "{nomeMae}, faltam 3 dias pro fim do seu período grátis.\n\nQuis te avisar com antecedência, pra você decidir com calma.",
+  // A versão 2 é deliberadamente uma chave nova. As linhas antigas do banco
+  // continuam servindo de histórico, mas não podem sobrepor esta jornada.
+  trial_d3_v2: [
+    "Oi, {nomeMae}. Faltam 3 dias para o seu período gratuito terminar.\n\nQuero aproveitar esses últimos dias para ser mais útil para você. Até aqui, qual opção combina mais com a sua experiência?\n\n1. Consegui entender melhor alguma situação\n2. Recebi uma ideia prática que pude testar\n3. Me senti ouvida e apoiada\n4. Ainda não consegui usar o suficiente\n5. Ainda não senti a ajuda que precisava\n\nSe preferir, pode responder do seu jeito.",
   ],
-  trial_d0: [
-    "Oi, {nomeMae}. Hoje é o último dia do seu período grátis 🌿\n\nTudo que você me contou continua salvo. Se quiser seguir, é aqui: {link_planos} — cancela quando quiser.",
-    "{nomeMae}, hoje termina seu período grátis.\n\nSe fizer sentido continuar com a Kolo, os planos estão aqui: {link_planos}\n\nSe não quiser, sem problema — seus registros ficam aqui, caso queira voltar depois.",
+  trial_d1_v2: [
+    "Oi, {nomeMae}. Seu período gratuito termina amanhã, em {termina_em}.\n\nNão haverá cobrança automática. Você pode continuar usando normalmente até o fim do período. Amanhã eu mostro as opções com clareza, sem surpresa.",
+  ],
+  trial_d0_v2: [
+    "Oi, {nomeMae}. Hoje é o último dia do seu período gratuito 🌿\n\nNão haverá cobrança automática. Se quiser continuar com a Kolo depois do encerramento, você pode conhecer e escolher o plano aqui:\n{link_planos}\n\nSe não quiser continuar, pode responder “agora não”. Vou respeitar e, se você quiser, perguntar uma única vez o motivo para a gente melhorar.",
   ],
   // ⚠️ TERCEIRA CHAVE, E ELA EXISTE POR UM DEFEITO MEDIDO — 28/08/2026.
   //
@@ -130,9 +133,8 @@ const FALLBACK: Record<string, string[]> = {
   //
   // O tipo do evento continua `trial_d0`: é o mesmo fechamento, no mesmo dia,
   // com a mesma idempotência. O que muda é só a verdade sobre o prazo.
-  trial_expirado: [
-    "Oi, {nomeMae}. Seu período grátis terminou 🌿\n\nTudo que você me contou continua salvo. Se quiser continuar comigo, os planos estão aqui:\n{link_planos}\n\nSe tiver alguma dúvida, pode me perguntar por aqui.",
-    "{nomeMae}, seu período grátis chegou ao fim.\n\nSeus registros ficam guardados aqui. Se fizer sentido continuar com a Kolo, as opções estão aqui:\n{link_planos}\n\nSe quiser, posso te explicar antes de você decidir.",
+  trial_expirado_v2: [
+    "Oi, {nomeMae}. Seu período gratuito terminou e não houve cobrança automática.\n\nVocê quer continuar com a Kolo?\n1. Quero assinar: {link_planos}\n2. Agora não\n\nSe escolher 2, posso perguntar uma única vez o motivo para a gente melhorar. Você também pode preferir não responder.",
   ],
   emocional_streak: [
     "{nomeMae}, você me respondeu 7 dias seguidos 🌿\n\nIsso é cuidado de verdade. {nomeMembro} está tendo um cuidado bem presente — e isso vem de você.",
@@ -347,7 +349,7 @@ export function templateRespostaRegistro(params: {
 // ============================================================
 
 /**
- * As mensagens de fim de teste (D-3 e D-0).
+ * As mensagens de fim de teste (D-3, D-1 e D-0).
  *
  * ⚠️ O LINK ENTRA COMO VARIÁVEL, não escrito dentro do texto. MEDIDO em
  * 22/08/2026: as duas variações de `trial_d0` em produção diziam "é só assinar
@@ -362,7 +364,7 @@ export function templateRespostaRegistro(params: {
 export async function templateTrial(
   supabase: SupabaseClient,
   params: {
-    diasRestantes: 3 | 0;
+    diasRestantes: 3 | 1 | 0;
     nomeMae: string;
     seed: string;
     familyId?: string;
@@ -378,14 +380,18 @@ export async function templateTrial(
      * Quem não passa o parâmetro não regride.
      */
     jaExpirou?: boolean;
+    /** Data já formatada no fuso da família; o modelo nunca calcula prazo. */
+    terminaEm?: string;
   },
 ): Promise<string> {
   const key =
     params.diasRestantes === 0
       ? params.jaExpirou
-        ? "trial_expirado"
-        : "trial_d0"
-      : "trial_d3";
+        ? "trial_expirado_v2"
+        : "trial_d0_v2"
+      : params.diasRestantes === 1
+        ? "trial_d1_v2"
+        : "trial_d3_v2";
   const de = params.diasRestantes === 0 ? "d7" : "d3";
   const variations = await getVariations(supabase, key);
   // ⚠️ `jaExpirou` NÃO É VARIÁVEL DE TEXTO — ela escolheu a chave lá em cima.
@@ -395,10 +401,16 @@ export async function templateTrial(
   void _escolhaDaChave;
   return fill(pickVariation(variations, params.seed), {
     ...vars,
+    termina_em: params.terminaEm,
     // ⚠️ A ORIGEM VIAJA NO LINK — e só ela. É o que permite separar "abriu
     // porque a Ayla convidou" de "abriu navegando", sem pôr identificador
     // nenhum numa URL que vai por WhatsApp. Ver `linkPlanos`.
-    link_planos: await linkComercialAutenticado(supabase, params.familyId, de),
+    // D-3 escuta e D-1 avisa: nenhum deles cria magic link escondido. O link
+    // só nasce no fechamento, quando realmente será mostrado à família.
+    link_planos:
+      params.diasRestantes === 0
+        ? await linkComercialAutenticado(supabase, params.familyId, de)
+        : "",
   });
 }
 

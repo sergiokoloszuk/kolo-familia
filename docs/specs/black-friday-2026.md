@@ -11,6 +11,16 @@ mensagem, cobrança, alteração no Stripe ou escrita em produção.
   **30/11/2026 23:59**, horário de Brasília.
 - Quem entra recebe **15 dias completos de teste**, sem cartão e sem cobrança
   automática ao final.
+- Os avisos de encerramento são relativos à data real de cada família e valem
+  tanto para o teste normal de 7 dias quanto para o promocional de 15 dias:
+  D-3 oferece alternativas simples para a família dizer o que ajudou, se usou
+  pouco ou se ainda não sentiu ajuda, sem vender; D-1 informa a data e que não
+  haverá cobrança automática; D-0 apresenta a decisão de continuar; depois do
+  fim, a família pode assinar ou dizer que não quer.
+- Se a família disser que não quer continuar, a Ayla pode perguntar **uma única
+  vez**, de forma opcional, o principal motivo. Depois disso, encerra sem
+  insistir. A própria resposta fica no histórico; o painel agregado de motivos
+  ainda precisa ser construído e validado antes de ser tratado como métrica.
 - Assinar antes do fim do teste preserva os 15 dias: a primeira cobrança fica
   para depois do término do teste.
 - O plano promocional é somente mensal, por **R$ 39,90/mês**. O anual fica
@@ -72,7 +82,8 @@ clique, reenvio ou duas requisições simultâneas não concedem dois benefício
 2. **Banco preparado:** migração revisada, ainda não aplicada enquanto a
    PEND-092 estiver aberta.
 3. **Preço conferido:** ID, valor, moeda, recorrência e modo do Stripe provados.
-4. **Jornada preparada:** entrada, 15 dias, preço individual e anual oculto.
+4. **Jornada preparada:** entrada, 15 dias, preço individual, anual oculto e
+   avisos D-3/D-1/D-0 funcionando pelo prazo real de cada família.
 5. **Checkout seguro:** 30 minutos, preservação do teste e idempotência.
 6. **Admin preparado:** prévia, contagens, bloqueios, ativar, pausar e auditoria.
 7. **Preview validado:** testes automatizados, build, revisão, migrações em
