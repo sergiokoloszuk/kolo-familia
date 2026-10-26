@@ -80,3 +80,13 @@ Em 25/10, a navegação na Preview encontrou a tela de login. O teste autenticad
 Depois do aceite da conversa: implementar avaliação por mensagem, com estrelas 1–5, zero separado, ausência distinta, comentário opcional, edição idempotente e autorização; depois unificar captura factual e provar escrita → leitura → nova consulta por pessoa. A investigação local encontrou NPS 0–10 e feedback textual, não um contrato pronto de estrelas por resposta: não reaproveitar esses números com outro significado nem lançar nota dentro do perfil.
 
 **Pendências:** PEND-208 atualizada e aberta; nenhuma criada ou concluída nesta entrega. PEND-104 não foi baixada. **Veredito da prontidão para produção: BLOQUEADO**, pelos portões acima. A candidata serve ao próximo aceite em Preview, não à declaração de entrega completa.
+
+## Publicação isolada e acesso para o teste
+
+O commit funcional `ad9809896ce5675b03ffb3676ea3a7f8040e4ed5` foi enviado à PR #150. A API do GitHub confirmou Vercel `success`, build `completed/success` e Vercel Preview Comments `completed/success`. Deploy: <https://vercel.com/kolo-familia/kolo-familia-web/GCKRATFnCWn7Yf7ATQQDEhj3SwWg>. Entrada: <https://kolo-familia-web-git-codex-ayla-qualidade-b-b848a6-kolo-familia.vercel.app/estrategias>.
+
+A consulta não autenticada ao health recebeu HTML, não metadados verificáveis; o navegador continuou em `/login`. Portanto configuração efetiva, SHA servido e smoke autenticado ainda precisam ser conferidos. Checks verdes não substituem essas provas.
+
+Karina esclareceu que sua conta é fictícia e autorizou o teste nela com os dados já cadastrados da Manu. Essa é a conta de teste indicada por Produto, não autorização para procurar senha, inventar fatos, apagar o perfil ou acessar outra família. O login fica com a responsável. Nenhum teste ou escrita foi executado nessa conta nesta entrega.
+
+Baseline adicional para a etapa de memória: `proporAtualizacao` lê o transcript com `.slice(0, 8000)`. Em uma conversa longa, fatos recentes podem ficar fora da proposta. Registrado na PEND-208 para a implementação de captura contínua; não corrigido silenciosamente junto da entrega de conversa.

@@ -10251,6 +10251,18 @@ NPS 0–10 e feedback textual existentes não são avaliação 0–5 por mensage
 estrelas ainda não implementadas. PEND-208 permanece aberta, sem baixa da
 PEND-104 ou importação do Brinca.
 
+**PREVIEW A PUBLICADA — 25/10/2026.** Commit funcional
+`ad9809896ce5675b03ffb3676ea3a7f8040e4ed5`, PR #150: Vercel e checks de build
+concluíram com sucesso. Runtime/flag e smoke ainda não comprovados: o health
+não autenticado devolveu HTML e o navegador está no login. Karina autorizou
+sua conta fictícia com os dados cadastrados da Manu; aguarda login da
+responsável, sem procurar credenciais nem criar fatos de teste no perfil.
+Na investigação da próxima camada, a proposta web usa o prefixo de 8.000
+caracteres do transcript e pode excluir fatos recentes de conversa longa;
+registrado para captura contínua, não alterado nesta entrega. Evidência e
+limites no relatório de entrega. Produção sem merge/ativação por esta frente;
+PEND-208 continua aberta.
+
 **PUBLICAÇÃO AUTORIZADA COM RESSALVAS (28/09).** A diretriz compartilhada de
 brincadeira cobre pedido direto, conversa web, apoio, aprofundamento e proposta
 espontânea, respeitando idade, comunicação, Perfil, segurança e quantidade do
