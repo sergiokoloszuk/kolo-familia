@@ -159,7 +159,12 @@ describe("a ordem no orquestrador", () => {
     // A garantia original não pode ter se perdido no caminho.
     const inicioTurno = SRC.indexOf("async function processInboundInterno(");
     const iGate = SRC.indexOf("if (!(await aylaServicoLiberado(supabase, family.id)))", inicioTurno);
-    const iSeguranca = SRC.indexOf("const seguranca = await segurancaAberta(", iGate);
+    // A leitura pode compartilhar uma onda com outra leitura independente; o
+    // contrato deste teste é a posição do gate, não a forma do `await`.
+    const iSeguranca = SRC.indexOf(
+      "segurancaAberta(supabase, family.id, inbound.recebidaEm)",
+      iGate,
+    );
     expect(inicioTurno).toBeGreaterThan(-1);
     expect(iGate).toBeGreaterThan(inicioTurno);
     expect(iSeguranca).toBeGreaterThan(iGate);
