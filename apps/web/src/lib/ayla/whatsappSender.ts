@@ -12,6 +12,7 @@
  */
 
 import { paraWhatsApp } from "./apresentacao";
+import { exigirEnvioForaDaPreview } from "@/lib/preview-conversa";
 
 const ZAPI_BASE = "https://api.z-api.io";
 
@@ -22,6 +23,7 @@ type ZapiConfig = {
 };
 
 function getZapiConfig(): ZapiConfig {
+  exigirEnvioForaDaPreview();
   const instanceId = process.env.ZAPI_INSTANCE_ID;
   const token = process.env.ZAPI_TOKEN;
   const clientToken = process.env.ZAPI_CLIENT_TOKEN;

@@ -3,6 +3,7 @@ import { createServiceRoleClient } from "@/lib/supabase/server";
 import { getStripeClient } from "@/lib/stripe/client";
 import { logEvent, logServerError } from "@/lib/log";
 import { RETENCAO_DIAS } from "@/lib/auth/assinatura";
+import { previewSomenteConversa, ERRO_PREVIEW_CONVERSA } from "@/lib/preview-conversa";
 
 /**
  * Cron diário do DUNNING: apaga os dados de quem falhou o pagamento há mais de
@@ -24,6 +25,9 @@ export async function POST(request: NextRequest) {
 }
 
 async function handle(request: NextRequest) {
+  if (previewSomenteConversa()) {
+    return NextResponse.json({ error: ERRO_PREVIEW_CONVERSA }, { status: 403 });
+  }
   const expectedSecret = process.env.CRON_SECRET;
   if (expectedSecret) {
     const auth = request.headers.get("authorization");

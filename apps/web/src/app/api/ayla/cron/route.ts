@@ -32,6 +32,7 @@ import { assinaturaLiberada } from "@/lib/auth/assinatura";
 import { familiasDeStaff } from "@/lib/auth/acesso";
 import { createHash, randomBytes } from "node:crypto";
 import { enviarLinksFiscais } from "@/lib/fiscal/notificacao";
+import { previewSomenteConversa, ERRO_PREVIEW_CONVERSA } from "@/lib/preview-conversa";
 
 /**
  * Cron da Ayla — chamado por scheduler externo (n8n, Vercel Cron, etc.).
@@ -58,6 +59,9 @@ export async function POST(request: NextRequest) {
 }
 
 async function handle(request: NextRequest) {
+  if (previewSomenteConversa()) {
+    return NextResponse.json({ error: ERRO_PREVIEW_CONVERSA }, { status: 403 });
+  }
   const expectedSecret = process.env.CRON_SECRET;
   if (expectedSecret) {
     const auth = request.headers.get("authorization");

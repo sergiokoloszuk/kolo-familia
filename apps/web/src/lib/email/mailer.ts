@@ -20,6 +20,7 @@
 
 import "server-only";
 import nodemailer, { type Transporter } from "nodemailer";
+import { exigirEnvioForaDaPreview } from "@/lib/preview-conversa";
 
 // ============================================================
 // Validação de envs (lazy — só quando o transporter for usado)
@@ -75,6 +76,7 @@ let cachedTransporter: Transporter | null = null;
 let cachedFrom: string | null = null;
 
 function getTransporter(): { transporter: Transporter; from: string } {
+  exigirEnvioForaDaPreview();
   if (cachedTransporter && cachedFrom) {
     return { transporter: cachedTransporter, from: cachedFrom };
   }
