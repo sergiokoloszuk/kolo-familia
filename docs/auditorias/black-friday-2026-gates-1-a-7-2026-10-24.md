@@ -157,6 +157,19 @@ Antes da publicação jurídica, conferir e guardar prova de:
   quebrar configurações ou exclusão. Logo, **não fazer merge/deploy do PR inteiro
   antes de banco e aplicação estarem coordenados**.
 
+- **Caminho dos trials encerrados corrigido localmente em 27/10/2026:** o
+  `TrialGate` impedia chegar à tela que oferecia a reentrada promocional. O
+  próprio bloqueio passou a mostrar a ativação voluntária dos 15 dias para
+  trial encerrado e ex-assinante elegível. Pagante, cortesia, trial vigente e
+  pagamento em recuperação continuam excluídos. Uma participação já existente
+  continua distinta da disponibilidade momentânea do Stripe, evitando oferecer
+  um segundo trial quando a consulta do preço ou da participação falha. Prova:
+  pacote dirigido anterior com **265/265 testes**, módulo final com **17/17**,
+  typecheck e build das **108 páginas** concluídos localmente. A varredura
+  ampliada passou **447/449**; os dois restantes são os timeouts já conhecidos
+  de `semear-vinculo.test.ts`. Ainda faltam CI oficial e teste humano em banco
+  isolado.
+
 ## Decisões e aprovações ainda necessárias
 
 1. **Karina:** aprovar a redação pública final após revisão jurídica do plugin/

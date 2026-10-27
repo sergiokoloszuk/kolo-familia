@@ -112,7 +112,7 @@ function LoginPageInner() {
         <p className="text-center text-sm text-muted-foreground">
           Ainda não tem conta?{" "}
           <Link href="/signup" className="font-medium text-foreground underline-offset-4 hover:underline">
-            Começar 7 dias grátis
+            Começar grátis
           </Link>
         </p>
       </CardContent>

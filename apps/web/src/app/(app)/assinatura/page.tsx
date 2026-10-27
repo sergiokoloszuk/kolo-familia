@@ -11,10 +11,11 @@ import { formatarBRL, lerPlanosParaExibir } from "@/lib/billing/planos";
 import { AssinaturaActions } from "./assinatura-actions";
 import { origemValida } from "@/app/(public)/precos/origem";
 import { MarcoOrigem } from "@/app/(public)/precos/marco-origem";
-import { resolverOfertaDaFamilia } from "@/lib/billing/oferta-familia";
+import {
+  podeSolicitarTrialBlackFriday,
+  resolverSituacaoBlackFridayDaFamilia,
+} from "@/lib/billing/oferta-familia";
 import { BLACK_FRIDAY_2026 } from "@/lib/billing/black-friday-2026";
-import { janelaPublicaAberta } from "@/lib/billing/black-friday-2026";
-import { lerEstadoBlackFriday } from "@/lib/billing/estado-black-friday";
 import { ativarMeuTrialBlackFriday } from "./actions";
 
 const STATUS_LABEL: Record<string, string> = {
@@ -57,12 +58,18 @@ export default async function AssinaturaPage(props: PageProps<"/assinatura">) {
   // esta tela mostra exatamente o que o checkout vai cobrar. Service-role
   // porque configuração de preço é pública.
   const admin = createServiceRoleClient();
-  const [planos, ofertaBlackFriday, estadoCampanha] = await Promise.all([
+  const [planos, situacaoBlackFriday] = await Promise.all([
     lerPlanosParaExibir(admin),
-    resolverOfertaDaFamilia(supabase),
-    lerEstadoBlackFriday(admin),
+    resolverSituacaoBlackFridayDaFamilia(supabase),
   ]);
-  const mensalLabel = formatarBRL(ofertaBlackFriday ? BLACK_FRIDAY_2026.valorCentavos : planos.mensal.centavos);
+  const ofertaBlackFriday = situacaoBlackFriday.oferta;
+  const ofertaBlackFridayIndisponivel = !situacaoBlackFriday.consultaConfiavel ||
+    (situacaoBlackFriday.direitoAoPreco && !ofertaBlackFriday);
+  const mensalLabel = formatarBRL(
+    situacaoBlackFriday.direitoAoPreco
+      ? BLACK_FRIDAY_2026.valorCentavos
+      : planos.mensal.centavos,
+  );
   const anualLabel = formatarBRL(planos.anual.centavos);
 
   const sp = await props.searchParams;
@@ -79,15 +86,13 @@ export default async function AssinaturaPage(props: PageProps<"/assinatura">) {
 
   const statusKey = sub?.status ?? "trialing";
   const agora = new Date();
-  const cortesiaVigente = sub?.cortesia === true &&
-    (!sub.cortesia_ate || new Date(sub.cortesia_ate).getTime() > agora.getTime());
-  const trialVencido = sub?.status === "trialing" && Boolean(sub.trial_ends_at) &&
-    new Date(sub!.trial_ends_at as string).getTime() <= agora.getTime();
-  const podePedirTrialBlackFriday = !ofertaBlackFriday && estadoCampanha === "ativa" &&
-    janelaPublicaAberta(agora) && !cortesiaVigente && (
-      trialVencido || sub?.status === "canceled" ||
-      (sub?.status === "past_due" && !sub.pagamento_falhou_em)
-    );
+  const podePedirTrialBlackFriday = podeSolicitarTrialBlackFriday({
+    assinatura: sub,
+    consultaConfiavel: situacaoBlackFriday.consultaConfiavel,
+    jaParticipa: situacaoBlackFriday.participa,
+    estado: situacaoBlackFriday.estado,
+    agora,
+  });
 
   return (
     <div className="flex flex-col gap-8">
@@ -149,6 +154,17 @@ export default async function AssinaturaPage(props: PageProps<"/assinatura">) {
         </div>
       )}
 
+      {ofertaBlackFridayIndisponivel && (
+        <div className="rounded-2xl border border-amber-300 bg-amber-50 px-5 py-4">
+          <p className="font-semibold text-amber-950">Sua oferta está preservada.</p>
+          <p className="mt-1 text-sm text-amber-900">
+            O pagamento de R$ 39,90 por mês está temporariamente indisponível.
+            Não vamos substituir sua oferta pelo preço normal; tente novamente
+            mais tarde ou fale com o suporte.
+          </p>
+        </div>
+      )}
+
       {podePedirTrialBlackFriday && (
         <div className="rounded-2xl border-l-4 border-brand-yellow bg-brand-yellow/10 px-5 py-4">
           <p className="font-semibold text-brand-purple-dark">Você pode experimentar de novo por {BLACK_FRIDAY_2026.diasTrial} dias.</p>
@@ -172,14 +188,16 @@ export default async function AssinaturaPage(props: PageProps<"/assinatura">) {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <AssinaturaActions
-            status={statusKey}
-            temCustomerId={Boolean(sub?.stripe_customer_id)}
-            precoMensal={mensalLabel}
-            precoAnual={ofertaBlackFriday ? null : anualLabel}
-            mostrarAnual={!ofertaBlackFriday}
-            emailFiscalInicial={user.email ?? ""}
-          />
+          {!ofertaBlackFridayIndisponivel && (
+            <AssinaturaActions
+              status={statusKey}
+              temCustomerId={Boolean(sub?.stripe_customer_id)}
+              precoMensal={mensalLabel}
+              precoAnual={ofertaBlackFriday ? null : anualLabel}
+              mostrarAnual={!ofertaBlackFriday}
+              emailFiscalInicial={user.email ?? ""}
+            />
+          )}
         </CardContent>
       </Card>
 

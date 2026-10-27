@@ -6570,6 +6570,22 @@ STATUS: **MEDIDA — NÃO CORRIGIDA** · Aberta em: 2026-08-21
   respostas simples — compreensão, ideia prática, acolhimento, pouco uso ou
   falta de ajuda — e permite resposta livre. Não apresenta preço nem plano;
   serve para ajustar os três últimos dias enquanto ainda há tempo de ajudar.
+- **Falha P0 corrigida localmente em 27/10/2026, ainda sem publicação:** o
+  bloqueio global de acesso interceptava a família com trial encerrado antes de
+  ela alcançar `/assinatura`. Assim, justamente os trials encerrados e
+  ex-assinantes elegíveis não conseguiriam pedir os 15 dias voluntários da
+  Black Friday. O bloqueio agora usa a mesma regra única de elegibilidade,
+  oferece ali a ativação dos 15 dias, exclui pagantes, cortesias e pagamentos
+  em recuperação e preserva R$ 39,90 para quem já participou. Textos fixos de
+  “7 dias” também foram retirados das telas que podem atender trials de 7 ou 15
+  dias. Se a consulta da participação falhar, a interface agora fecha a
+  reentrada e não oferece preço normal no lugar de uma oferta que ainda pode
+  estar vigente. Prova local: pacote dirigido anterior com **265/265 testes em
+  19 arquivos**; após a proteção final, módulo com **17/17**, typecheck sem erro
+  e build completo das **108 páginas**. Na varredura ampliada, **447/449**
+  passaram; os dois restantes são os timeouts já conhecidos de
+  `semear-vinculo.test.ts`. Falta CI oficial do novo commit, banco isolado,
+  teste humano e produção.
 - **CRITÉRIO DE CONCLUSÃO:** uma coorte real percorrendo D0→D7 com registro de
   avaliação em todos os dias — prova longitudinal de 8 dias, não retrato de um
   dia.
