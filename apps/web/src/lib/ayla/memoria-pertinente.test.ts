@@ -78,7 +78,9 @@ describe("2. Pertinência decide QUEM aprofunda — e o assunto nunca some", () 
 
   it("sem skill, ninguém aprofunda — o teto é o antigo para todos", () => {
     for (const l of desafiosAtuais(MATHEO, 20, [])) {
-      expect(l.length).toBeLessThanOrEqual(TETO_DOMINIO_PADRAO + 20);
+      // O carimbo temporal vem depois do recorte e não consome o teto de
+      // conteúdo. Sua presença e formato são cobertos por perfil-temporal.
+      expect(l.split(" [")[0].length).toBeLessThanOrEqual(TETO_DOMINIO_PADRAO + 20);
     }
   });
 
