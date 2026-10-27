@@ -167,8 +167,10 @@ Antes da publicação jurídica, conferir e guardar prova de:
   pacote dirigido anterior com **265/265 testes**, módulo final com **17/17**,
   typecheck e build das **108 páginas** concluídos localmente. A varredura
   ampliada passou **447/449**; os dois restantes são os timeouts já conhecidos
-  de `semear-vinculo.test.ts`. Ainda faltam CI oficial e teste humano em banco
-  isolado.
+  de `semear-vinculo.test.ts`. O CI oficial do commit `ad3b5fb` passou por
+  completo em 5min59s ([execução
+  40562096888](https://github.com/sergiokoloszuk/kolo-familia/actions/runs/40562096888)).
+  Ainda falta o teste humano em banco isolado.
 
 ## Decisões e aprovações ainda necessárias
 

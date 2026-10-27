@@ -6584,8 +6584,10 @@ STATUS: **MEDIDA — NÃO CORRIGIDA** · Aberta em: 2026-08-21
   19 arquivos**; após a proteção final, módulo com **17/17**, typecheck sem erro
   e build completo das **108 páginas**. Na varredura ampliada, **447/449**
   passaram; os dois restantes são os timeouts já conhecidos de
-  `semear-vinculo.test.ts`. Falta CI oficial do novo commit, banco isolado,
-  teste humano e produção.
+  `semear-vinculo.test.ts`. O CI oficial do commit `ad3b5fb` passou por
+  completo em 5min59s ([execução
+  40562096888](https://github.com/sergiokoloszuk/kolo-familia/actions/runs/40562096888)).
+  Faltam banco isolado, teste humano e produção.
 - **CRITÉRIO DE CONCLUSÃO:** uma coorte real percorrendo D0→D7 com registro de
   avaliação em todos os dias — prova longitudinal de 8 dias, não retrato de um
   dia.
