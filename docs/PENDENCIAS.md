@@ -10279,6 +10279,35 @@ cron presentes; isso não prova envio, mas impede prometer isolamento sem
 conferência. Teste autenticado segue BLOQUEADO. Evidência e plano mínimo no
 relatório de entrega; PEND-208 permanece aberta.
 
+**ISOLAMENTO DA PREVIEW — 27/10/2026, ETAPA 2 PARCIAL.** Karina autorizou
+configurar banco e APIs de IA somente na Preview desta PR, sem produção ou
+Stripe. A candidata passa a recusar webhook Ayla e os dois crons com 403 antes
+do payload/banco, e impede Z-API/SMTP nos transportes centrais quando
+`VERCEL_ENV=preview`, inclusive transporter SMTP já cacheado. Fora da Preview,
+as verificações existentes permanecem. A restrição não transforma o banco
+compartilhado em sandbox: usar apenas a conta fictícia de QA autorizada;
+nenhum perfil foi alterado. E-mails do Supabase Auth não passam pelo mailer:
+não acionar cadastro, recuperação de senha ou magic link como teste.
+Foram executados **29/29 testes dirigidos**, com rede, banco e SMTP falsos.
+Suíte final, sem build concorrente e com limites padrão: **4.286 passaram,
+sete pulados**, 555,22s; build/TypeScript, lint tocado e cinco testes do índice
+passaram. A primeira rodada teve um timeout de 5s em teste Stripe, preservado
+no relatório, sem alteração do código de pagamentos. Commit funcional
+`cb498844e5a9f2f25cbc91fc535e2dceef794b1f` publicado na PR #150; Vercel
+confirmou deploy `success`. Isso não comprova configuração ou smoke remoto.
+O health distingue `preview_somente_conversa` e configuração da conversa da
+saúde global, que ainda inclui Stripe. Presença de chaves não prova chamada
+de modelo. A API GitHub reconfirmou PR #150 aberta, em rascunho e sem merge;
+main remota permanece `25e8891daf1e0d5bd881512e6f128742fdcd0184`.
+Nesta tentativa, o acesso ao Chrome aguardou aprovação e expirou antes de
+inspeção; a busca de integração Vercel também não pôde ser executada neste
+contexto. Não foi concluído acesso ao painel.
+Nenhum segredo foi configurado. Permanecem pendentes configuração restrita
+ao branch, compatibilidade das credenciais, deploy/runtime, conversa
+autenticada e aceite. Relatório de entrega atualizado; PEND-208 aberta,
+PEND-104 inalterada. Não entregar o link como Preview funcional sem essas
+provas. Veredito do teste humano: **BLOQUEADO**.
+
 **PUBLICAÇÃO AUTORIZADA COM RESSALVAS (28/09).** A diretriz compartilhada de
 brincadeira cobre pedido direto, conversa web, apoio, aprofundamento e proposta
 espontânea, respeitando idade, comunicação, Perfil, segurança e quantidade do
