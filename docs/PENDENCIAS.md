@@ -6383,6 +6383,15 @@ STATUS: **REDAÇÃO E FLUXOS PREPARADOS LOCALMENTE · VALIDAÇÃO JURÍDICA/PROD
   Anthropic e OpenAI, cujas políticas oficiais declaram não treinar por padrão,
   mas ainda falta comprovar que as contas da Kolo não aderiram a compartilhamento
   opcional, revisar DPA/contratos e validar fornecedores/backup. Nada publicado.
+- **Gate de compatibilidade provado em 27/10/2026:** o PR #149 não pode ser
+  publicado inteiro antes da migração 0097 como se fosse apenas código inerte.
+  `/api/me/aceitar-termos` chama a RPC `registrar_meus_aceites_kolo`; a tela de
+  Configurações lê e altera `marketing_consentido_em`; e o fluxo de exclusão
+  agendada grava `exclusao_conta_solicitacoes`. Esses objetos só nascem na 0097.
+  Sem ela, o novo aceite retorna erro e configurações/exclusão podem falhar.
+  A prova automática do commit `dee8638` ficou verde, mas não elimina essa
+  dependência de banco. Merge, migração e deploy precisam ser uma sequência
+  coordenada após o gate da PEND-092.
 - **CRITÉRIO DE CONCLUSÃO:** Termos e Privacidade descrevendo cancelamento, fim
   do período pago, exclusão, retenção após trial, retenção após falha de
   pagamento e os registros técnicos que permanecem.

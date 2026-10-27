@@ -66,7 +66,7 @@ Isso prova saúde do estado atual; não prova a campanha nova.
 | Ordem | O que precisa acontecer | Situação real | Dificuldade | Prova exigida para marcar concluído |
 |---|---|---|---|---|
 | 1 | Fechar a experiência do trial de 7 e 15 dias | NO PR, PARCIAL | média | textos aprovados, preview no celular, conta fictícia passando por D-3/D-1/D-0 e registro de cada tentativa |
-| 2 | Terminar CI e revisão do PR #149 | 4 TESTES DA AYLA CORRIGIDOS LOCALMENTE; CI OFICIAL AINDA PRECISA REPETIR | média | enviar a correção mínima ao PR e obter o CI verde no commit exato |
+| 2 | Terminar CI e revisão do PR #149 | **CI OFICIAL VERDE NO COMMIT `dee8638`** | concluída para testes/build | preservar o commit exato até a decisão de merge |
 | 3 | Fazer backup e restaurar em ambiente separado | BLOQUEADO — PEND-092 | alta | arquivo externo, hash, horário e consulta comprovando que a restauração abre e contém os dados esperados |
 | 4 | Aplicar 0096/0097 somente em banco isolado | PENDENTE | média | migrações aplicadas sem erro e testes de entrada, pausa, aceite e exclusão com conta fictícia |
 | 5 | Conferir Stripe promocional sem cobrar | PARCIAL | baixa | leitura do preço R$ 39,90, mensal, BRL, ativo e modo correto; depois checkout em modo teste. **Neste ponto avisar Karina que chegou a hora de falar com Rosângela e entregar a mensagem pronta.** |
@@ -145,6 +145,17 @@ Antes da publicação jurídica, conferir e guardar prova de:
   quebra de linha do checkout Windows e três timeouts da reconciliação Stripe.
   O CI oficial em Linux continua sendo a prova necessária antes de aprovar o
   merge.
+- **CI oficial obtido depois dessa medição:** o job `build` do GitHub terminou
+  com sucesso no commit `dee8638`, em 6m15s. Typecheck, testes unitários e build
+  concluíram verdes. A prévia da Vercel também foi construída.
+- **Bloqueio de compatibilidade encontrado antes do merge:** o pacote inteiro
+  não é inerte sem a migração 0097. O endpoint que registra Termos e Privacidade
+  passou a depender da RPC `registrar_meus_aceites_kolo`; Configurações passou a
+  ler e alterar o consentimento de marketing; e a exclusão agendada usa a tabela
+  `exclusao_conta_solicitacoes`. Todos esses objetos nascem somente na 0097.
+  Publicar o código sem aplicar a migração faria o aceite retornar erro e pode
+  quebrar configurações ou exclusão. Logo, **não fazer merge/deploy do PR inteiro
+  antes de banco e aplicação estarem coordenados**.
 
 ## Decisões e aprovações ainda necessárias
 
