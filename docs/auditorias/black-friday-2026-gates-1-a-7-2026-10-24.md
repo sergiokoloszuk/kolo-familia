@@ -66,10 +66,10 @@ Isso prova saúde do estado atual; não prova a campanha nova.
 | Ordem | O que precisa acontecer | Situação real | Dificuldade | Prova exigida para marcar concluído |
 |---|---|---|---|---|
 | 1 | Fechar a experiência do trial de 7 e 15 dias | NO PR, PARCIAL | média | textos aprovados, preview no celular, conta fictícia passando por D-3/D-1/D-0 e registro de cada tentativa |
-| 2 | Terminar CI e revisão do PR #149 | FALHOU POR 4 TESTES DA AYLA, FORA DA BLACK FRIDAY | média | integrar primeiro a correção já verde da PEND-241/PR #145 e repetir o CI do commit exato |
+| 2 | Terminar CI e revisão do PR #149 | 4 TESTES DA AYLA CORRIGIDOS LOCALMENTE; CI OFICIAL AINDA PRECISA REPETIR | média | enviar a correção mínima ao PR e obter o CI verde no commit exato |
 | 3 | Fazer backup e restaurar em ambiente separado | BLOQUEADO — PEND-092 | alta | arquivo externo, hash, horário e consulta comprovando que a restauração abre e contém os dados esperados |
 | 4 | Aplicar 0096/0097 somente em banco isolado | PENDENTE | média | migrações aplicadas sem erro e testes de entrada, pausa, aceite e exclusão com conta fictícia |
-| 5 | Conferir Stripe promocional sem cobrar | PARCIAL | baixa | leitura do preço R$ 39,90, mensal, BRL, ativo e modo correto; depois checkout em modo teste |
+| 5 | Conferir Stripe promocional sem cobrar | PARCIAL | baixa | leitura do preço R$ 39,90, mensal, BRL, ativo e modo correto; depois checkout em modo teste. **Neste ponto avisar Karina que chegou a hora de falar com Rosângela e entregar a mensagem pronta.** |
 | 6 | Validar telas e textos jurídicos | NO PR, NÃO PUBLICADO | média | revisão final, links acessíveis no preview, versões/aceites gravados e política compatível com fornecedores reais |
 | 7 | Testar a jornada inteira no preview pelo celular | BLOQUEADO POR AMBIENTE | alta | banco isolado e Stripe de teste configurados; depois vídeo ou capturas de cadastro, 15 dias, aviso, checkout, cancelamento, exportação e exclusão simulada |
 | 8 | Preparar Central de mensagens com canário e pausa | FORA DO PR — PEND-109 | alta | prévia, aprovação humana, envio só para número de teste, relatório por contato e bloqueio de duplicidade |
@@ -128,6 +128,23 @@ Antes da publicação jurídica, conferir e guardar prova de:
 - **Produção não mudou:** continua saudável no SHA `25e8891`, com teste normal
   de 7 dias, mensal de R$ 54,90 e anual de R$ 603,90. Nenhuma campanha,
   cobrança ou mensagem foi acionada nesta rechecagem.
+
+## Rechecagem local de 27/10/2026
+
+- As quatro falhas do CI oficial anterior foram reproduzidas localmente. Eram
+  provas textuais desatualizadas: duas ainda procuravam a assinatura antiga do
+  mesmo `Promise.all`, e duas contavam o carimbo temporal como se fosse conteúdo.
+  O comportamento funcional não foi alterado.
+- Depois da correção mínima, os quatro arquivos passaram **85/85 testes**.
+- O pacote dirigido da Black Friday, jornada, checkout, webhook e essas quatro
+  provas passou **265/265 testes em 19 arquivos**. O typecheck terminou sem erro
+  e `git diff --check` terminou limpo.
+- A suíte local completa não foi considerada verde: **4.223 testes passaram,
+  27 falharam em 12 arquivos e 7 foram ignorados**. As falhas restantes não
+  tocam os quatro arquivos corrigidos; incluem testes literais sensíveis a
+  quebra de linha do checkout Windows e três timeouts da reconciliação Stripe.
+  O CI oficial em Linux continua sendo a prova necessária antes de aprovar o
+  merge.
 
 ## Decisões e aprovações ainda necessárias
 
