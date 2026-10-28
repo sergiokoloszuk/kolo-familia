@@ -23,14 +23,17 @@ ao lado: comando/CI, commit, URL do deploy ou consulta com data e amostra.
 - [x] 0.3 Commit local criado: `1d2f8bb`.
 - [x] 0.4 Testes diretamente afetados: 120/120.
 - [x] 0.5 Typecheck local passou após `next typegen`.
-- [ ] 0.6 Suíte completa verde: hoje há 2 testes antigos sensíveis à data
-  falhando fora dos arquivos alterados.
+- [ ] 0.6 Suíte completa verde: 4.206 testes passaram e 7 foram pulados; a
+  falha estrutural desta frente foi corrigida e passou isoladamente. Restam
+  uma dependência de rede no provider e dois timeouts de importação Stripe no
+  Windows; a decisão final pertence ao runner Linux do PR.
 - [ ] 0.7 Build verde: o build local foi bloqueado pelo proxy no carregamento
   de Google Fonts; não vale como prova de compilação.
 - [ ] 0.8 Branch publicada, PR aberto, merge e deploy: ainda não realizados.
 
-**Estado atual da missão:** Gate 1 ainda não iniciado; produção permanece
-bloqueada até os Gates 1–4 passarem.
+**Estado atual da missão (28/10/2026):** Gate 1 passou. Gate 2 está bloqueado
+até a CI Linux provar instalação limpa, suíte e build; produção permanece
+bloqueada até os Gates 2–4 passarem.
 
 ---
 
@@ -41,17 +44,17 @@ bloqueada até os Gates 1–4 passarem.
 **Objetivo:** levar somente esta mudança para uma base atual, sem sobrescrever
 trabalho paralelo.
 
-1. [ ] Listar quais frentes ainda alteram `orchestrator.ts`, testes da Ayla ou
+1. [x] Listar quais frentes ainda alteram `orchestrator.ts`, testes da Ayla ou
    `docs/PENDENCIAS.md`.
-2. [ ] Definir a ordem de integração dessas frentes.
-3. [ ] Atualizar `origin/main` com `git fetch`.
-4. [ ] Criar/reusar um worktree limpo a partir da `origin/main` atualizada.
-5. [ ] Aplicar `1d2f8bb` nessa base por cherry-pick ou rebase.
-6. [ ] Se houver conflito em `orchestrator.ts` ou `PENDENCIAS.md`, parar e
+2. [x] Definir a ordem de integração dessas frentes.
+3. [x] Atualizar `origin/main` com `git fetch`.
+4. [x] Criar/reusar um worktree limpo a partir da `origin/main` atualizada.
+5. [x] Aplicar `1d2f8bb` nessa base por cherry-pick ou rebase.
+6. [x] Se houver conflito em `orchestrator.ts` ou `PENDENCIAS.md`, parar e
    reconciliar por comportamento; nunca escolher “ours/theirs” às cegas.
-7. [ ] Confirmar que o diff final contém somente os arquivos necessários desta
+7. [x] Confirmar que o diff final contém somente os arquivos necessários desta
    frente e eventuais ajustes explícitos de integração.
-8. [ ] Confirmar `core.autocrlf=false` e `git diff --check` limpo, tratando o
+8. [x] Confirmar `core.autocrlf=false` e `git diff --check` limpo, tratando o
    CRLF histórico de `PENDENCIAS.md` como `cr-at-eol` quando necessário.
 
 **PASS quando:** base atualizada, conflitos auditados e nenhuma mudança de
@@ -59,6 +62,13 @@ outra frente foi perdida.
 
 **FAIL quando:** algum arquivo paralelo foi sobrescrito ou o comportamento de
 um portão mudou sem decisão explícita.
+
+**Estado: PASS (28/10/2026).** `origin/main=25e8891`; worktree
+`codex/ayla-latencia` isolado e limpo. `git merge-tree --write-tree` simulou a
+integração com `origin/codex/black-friday-2026-core` e
+`origin/codex/ayla-qualidade-brincadeiras`, ambas sem conflito. Os hunks de
+`orchestrator.ts` são distintos; `PENDENCIAS.md` auto-mergeia. Configuração
+`core.autocrlf=false`; CRLF histórico conferido como `cr-at-eol`.
 
 ---
 
@@ -70,12 +80,12 @@ um portão mudou sem decisão explícita.
 deploy.
 
 1. [ ] Rodar `npm ci` em ambiente limpo.
-2. [ ] Rodar `node --test scripts/pendencias-index.test.mjs`.
-3. [ ] Rodar `node scripts/pendencias-index.mjs --check`.
-4. [ ] Rodar `npx next typegen` em `apps/web`.
-5. [ ] Rodar `npx tsc --noEmit` em `apps/web`.
+2. [x] Rodar `node --test scripts/pendencias-index.test.mjs`.
+3. [x] Rodar `node scripts/pendencias-index.mjs --check`.
+4. [x] Rodar `npx next typegen` em `apps/web`.
+5. [x] Rodar `npx tsc --noEmit` em `apps/web`.
 6. [ ] Rodar a suíte completa com `npm test` em `apps/web`.
-7. [ ] Resolver os dois testes sensíveis à data em commit separado, ou provar
+7. [x] Resolver os dois testes sensíveis à data em commit separado, ou provar
    que a `main` mais nova já os resolveu. Se a solução exigir mudar o produto,
    abrir frente própria; não esconder mudança funcional como ajuste de teste.
 8. [ ] Rodar `npx next build --webpack` em ambiente capaz de acessar as fontes.
@@ -86,6 +96,13 @@ deploy.
 **BLOQUEADO quando:** fontes externas, dependências ou runner impedem o build;
 o log do bloqueio deve ser anexado e a publicação não avança.
 
+**Estado: BLOQUEADO LOCALMENTE (28/10/2026).** Índice 5/5 e sincronizado;
+`next typegen` e `tsc --noEmit` passaram. Asserções temporais: 36/36; prova de
+continuidade: 71/71. Na suíte completa, 4.206 passaram e 7 foram pulados. O
+provider depende de uma recusa HTTP externa e recebeu `fetch failed`; a
+importação dinâmica Stripe excedeu 5 s neste Windows. `npm ci` e o build limpo
+dependem do runner Linux do PR, que decidirá este gate.
+
 ---
 
 ## Gate 3 — Auditoria independente da mudança
@@ -95,26 +112,31 @@ o log do bloqueio deve ser anexado e a publicação não avança.
 **Objetivo:** provar que a otimização não mudou decisões nem abriu concorrência
 perigosa.
 
-1. [ ] Comparar o diff contra a `main` que será publicada.
-2. [ ] Confirmar que todos os itens adicionados aos `Promise.all` são somente
+1. [x] Comparar o diff contra a `main` que será publicada.
+2. [x] Confirmar que todos os itens adicionados aos `Promise.all` são somente
    leitura.
-3. [ ] Confirmar que não há `insert`, `upsert`, `update`, `delete`, envio de
+3. [x] Confirmar que não há `insert`, `upsert`, `update`, `delete`, envio de
    WhatsApp ou chamada de modelo dentro das ondas novas.
-4. [ ] Confirmar que a segurança continua abaixo do gate de acesso e antes dos
+4. [x] Confirmar que a segurança continua abaixo do gate de acesso e antes dos
    handlers de entregáveis.
-5. [ ] Confirmar isolamento por `family.id` e que a promessa de histórico é
+5. [x] Confirmar isolamento por `family.id` e que a promessa de histórico é
    local ao turno.
-6. [ ] Confirmar que janela de 10 s, prompts, modelos, fallbacks e textos não
+6. [x] Confirmar que janela de 10 s, prompts, modelos, fallbacks e textos não
    mudaram.
-7. [ ] Confirmar que não há migração, variável de ambiente, cron ou segredo
+7. [x] Confirmar que não há migração, variável de ambiente, cron ou segredo
    novo.
-8. [ ] Revisar a seção de rollback desta missão.
+8. [x] Revisar a seção de rollback desta missão.
 
 **PASS quando:** revisão sem achado P0/P1 e todos os invariantes acima têm
 evidência em código/teste.
 
 **FAIL quando:** houver escrita concorrente, risco entre famílias/irmãos ou
 mudança de comportamento não coberta por teste.
+
+**Auditoria técnica do executor: PASS (28/10/2026).** Nenhum efeito funcional
+entrou nas ondas. O alarme já existente do catálogo continua `void logEvent`,
+fora do resultado aguardado. A revisão independente permanece obrigatória no
+PR antes de este gate receber PASS final.
 
 ---
 
@@ -263,11 +285,11 @@ outras frentes.
 
 | Gate | Estado | Evidência |
 |---|---|---|
-| 1 · Integração | ⬜ | |
-| 2 · CI | ⬜ | |
-| 3 · Auditoria | ⬜ | |
-| 4 · PR/aprovação | ⬜ | |
-| 5 · Publicação | ⬜ | |
-| 6 · Smoke | ⬜ | |
-| 7 · Métrica 72 h | ⬜ | |
-| 8 · Fechamento | ⬜ | |
+| 1 · Integração | PASS | Base `25e8891`; simulações de merge sem conflito |
+| 2 · CI | BLOQUEADO | Provas locais parciais; falta runner Linux limpo |
+| 3 · Auditoria | BLOQUEADO | Auditoria técnica passou; falta revisão independente |
+| 4 · PR/aprovação | BLOQUEADO | Branch e PR ainda não publicados |
+| 5 · Publicação | BLOQUEADO | Depende dos Gates 2–4 |
+| 6 · Smoke | BLOQUEADO | Depende do deploy |
+| 7 · Métrica 72 h | BLOQUEADO | Depende do deploy e `n >= 20` |
+| 8 · Fechamento | BLOQUEADO | Depende da prova em produção |

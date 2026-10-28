@@ -967,10 +967,20 @@ Aberta em: 2026-08-11 · Origem: teste real (Karina/Manu, 11:25–11:28)
   modelos, prompts, portões e respostas; transforma apenas leituras
   independentes em ondas paralelas: segurança + retomada; desafios + estado do
   menu; e escolha do menu + histórico/estado + últimas falas + catálogo. Não há
-  escrita em nenhum `Promise.all`. Validação local: testes diretamente afetados
-  120/120, typecheck passou; suíte Ayla 2.126/2.128 passou, com duas falhas
-  preexistentes e sensíveis à data em funções não alteradas. Build bloqueado no
-  download de Google Fonts pelo proxy/certificado do ambiente. Detalhes em
+  `insert`, `upsert`, `update` ou `delete` nas ondas. O carregador do catálogo
+  mantém o alarme preexistente, disparado sem `await` somente quando a leitura
+  falha; a onda não aguarda nem coordena essa escrita de observabilidade.
+- **Validação local atualizada (28/10/2026):** testes diretamente afetados
+  120/120; as duas asserções temporais foram estabilizadas em commit separado
+  (`992d3a3`) e passaram 36/36; a prova de continuidade foi alinhada à promessa
+  compartilhada (`01724a0`) e passou 71/71; `next typegen` e `tsc --noEmit`
+  passaram. A suíte completa chegou a 4.206 testes aprovados e 7 pulados; das
+  três falhas, a estrutural desta frente foi corrigida e passou isoladamente.
+  Restam duas provas dependentes do ambiente: o provider recebeu `fetch failed`
+  ao tentar a Anthropic sem chave, e a importação dinâmica de Stripe excedeu o
+  timeout de 5 s neste Windows. `npm ci`, suíte e build limpos ficam pendentes
+  no runner Linux do PR; o build local segue bloqueado pelo proxy de Google
+  Fonts. Detalhes em
   `docs/analises/AYLA-LATENCIA-WHATSAPP-2026-10-27.md`.
 - **Medir separadamente**, no caminho real, antes de otimizar qualquer coisa:
   tempo até começar a responder · tempo total · chamadas ao roteador · chamadas
