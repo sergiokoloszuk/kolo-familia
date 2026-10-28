@@ -10372,8 +10372,13 @@ nunca condição para brincar. Rodadas sintéticas preservadas em JSON; nenhuma
 escrita no cadastro da Manu. Material integral da pós/PEND-104 e catálogo Brinca
 não foram integrados. Regressão: 4.296 passaram, 7 ignorados; build webpack,
 TypeScript e 107 páginas concluídos; 62 testes dirigidos e lint da versão final
-passaram. Publicação candidata e teste autenticado
-com aceite humano ainda pendentes; PEND-208 aberta, PEND-104 inalterada.
+passaram. Candidata funcional `4ecfe076a3614debd5f06621c81d88e540c4506b`
+enviada à PR #150 em rascunho; CI build, Vercel e Preview Comments success.
+Deploy HeP47aZ8vhkMQLbNfkbxbAHFJ8ko Ready; health `2026-10-28T20:30:33.898Z`
+confirmou o SHA, banco acessível, conversa OpenAI configurada e isolamento/V2
+ligados. Ambos os crons continuam bloqueados. `/estrategias` redirecionou a
+login; teste autenticado e aceite humano ainda pendentes. PEND-208 aberta,
+PEND-104 inalterada. Sem merge/publicação em produção.
 
 **PUBLICAÇÃO AUTORIZADA COM RESSALVAS (28/09).** A diretriz compartilhada de
 brincadeira cobre pedido direto, conversa web, apoio, aprofundamento e proposta

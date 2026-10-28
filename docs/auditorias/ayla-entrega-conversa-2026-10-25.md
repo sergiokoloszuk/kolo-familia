@@ -364,3 +364,29 @@ SHA-256 dos artefatos finais (respostas integrais, sem edição):
   `a8d856030b6253c753565e61e969752230056f9d3d6859569e6f6f3ed17f6dd3`.
 - `ayla-piloto-foco-2026-10-28-alinhamento-candidata-4-repertorio.json`:
   `b73230a58c58df4ebe92a666469ac0e5108e6e0e25494d9ff85d25dad77ee7c6`.
+
+**Publicação funcional verificada.** Commit
+`4ecfe076a3614debd5f06621c81d88e540c4506b` enviado ao branch da PR #150,
+sem merge. Main continuou `25e8891daf1e0d5bd881512e6f128742fdcd0184`.
+API GitHub: Vercel success; checks `build` e `Vercel Preview Comments`
+completed/success. Título e descrição da PR atualizados ao escopo atual,
+mantendo rascunho e ressalvas. Deploy
+<https://vercel.com/kolo-familia/kolo-familia-web/HeP47aZ8vhkMQLbNfkbxbAHFJ8ko>
+Ready, Preview, origem `4ecfe07`.
+
+Runtime <https://kolo-familia-j7jbddib8-kolo-familia.vercel.app/api/health>,
+`2026-10-28T20:30:33.898Z`: commit completo conferido, banco ok (554 ms),
+credenciais necessárias presentes, conversa configurada/OpenAI e flags V2/
+isolamento true. Saúde global false apenas por configuração Stripe ausente.
+GETs dos dois crons exibiram `preview_somente_conversa` novamente, sem efeitos.
+Alias `/estrategias` chegou a `/login`; login não realizado pelo agente.
+Entrada de teste:
+<https://kolo-familia-web-git-codex-ayla-qualidade-b-b848a6-kolo-familia.vercel.app/estrategias>.
+Prova visual: `ayla-foco-preview-4ecfe07-20261028-completa.jpg` na pasta de
+visualizações desta tarefa. Não é prova de conversa autenticada ou produção.
+
+O diff de código/documentação passou; o comparativo Markdown preserva espaços
+duplos de quebra de linha das saídas originais, por isso foi excluído apenas da
+checagem de whitespace. JSONs originais continuam como prova integral. Este
+registro de smoke é documentação posterior ao commit funcional, sem novo teste
+ou mudança de comportamento. PEND-208 permanece aberta; PEND-104 inalterada.
