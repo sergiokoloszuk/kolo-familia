@@ -2270,6 +2270,12 @@ PEND-003 (2026-08-08), reportado em vez de tratado
   etapas ativada**. O histórico visível mostrou acessos do mesmo usuário
   administrativo, mas não fornece aqui prova suficiente de segregação de
   pessoas ou de MFA. Nenhuma credencial foi exibida, copiada ou modificada.
+- **Rechecagem somente leitura em 27/10/2026:** o `Project Schema` do projeto
+  continua apresentando os valores das variáveis sensíveis em texto legível a
+  quem já está autenticado no Easypanel. Nenhum valor foi copiado para arquivo,
+  relatório ou mensagem, e nenhuma configuração foi alterada. A exposição
+  segue aberta e a rotação não deve ser improvisada antes de mapear
+  dependências e provar a recuperação do banco.
 - **Por que a prioridade não está definida:** o raio de alcance é grande — a
   service role bypassa RLS, ou seja, alcança dado de saúde e comportamento de
   criança de todas as famílias — mas não há evidência de exposição fora do
@@ -4910,6 +4916,10 @@ Aberta em: 2026-08-18 · Origem: aplicação da migração 0071 (BIA)
   separado, que pode servir para provar uma restauração, e oferece modelos de
   backup PostgreSQL para S3, mas nenhum foi criado. Isso confirma, sem alterar
   o servidor, que ainda faltam **destino externo + rotina + restore provado**.
+- **Rechecagem somente leitura em 27/10/2026:** `Storage Providers` permanece
+  somente com **Local Disk** e o compose do Supabase persiste o banco em volume
+  do próprio servidor, sem serviço ou agenda de backup visível. Nada foi criado
+  ou alterado. O portão das migrações 0096/0097 permanece bloqueado.
 - **Dependente direta: PEND-095** (importar os 1.120 chunks) — a primeira
   gravação em massa que este banco vai receber.
 - **Agente recomendado:** PROPOR

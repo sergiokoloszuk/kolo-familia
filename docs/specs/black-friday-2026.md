@@ -5,6 +5,9 @@
 Esta especificação é a fonte técnica da campanha. Ela não autoriza publicação,
 mensagem, cobrança, alteração no Stripe ou escrita em produção.
 
+O roteiro operacional e as provas exigidas para a virada estão em
+[`docs/BLACK-FRIDAY-2026-CHECKLIST-DE-VIRADA.md`](../BLACK-FRIDAY-2026-CHECKLIST-DE-VIRADA.md).
+
 ## O que uma família recebe
 
 - A campanha aceita novas entradas de **01/11/2026 00:00** até
