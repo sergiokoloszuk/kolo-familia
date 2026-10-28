@@ -231,8 +231,10 @@ describe("tema ativo", () => {
   it("o orquestrador carrega as falas anteriores pra dar continuidade", () => {
     expect(ORCHESTRATOR).toMatch(/async function ultimasFalas/);
     // 13/08/2026 (PEND-064): o quarto argumento é o histórico já lido no turno.
+    // A leitura agora é uma promessa local compartilhada pelas apurações em
+    // paralelo; continua sendo a mesma família de histórico, sem nova consulta.
     expect(ORCHESTRATOR).toMatch(
-      /await ultimasFalas\(supabase, family\.id, inbound\.texto, await historicoDoTurno\(\)\)/,
+      /const historicoPromise = historicoDoTurno\(\);[\s\S]*historicoPromise\.then\(\(historico\) =>\s*ultimasFalas\(supabase, family\.id, inbound\.texto, historico\)/,
     );
   });
 });
