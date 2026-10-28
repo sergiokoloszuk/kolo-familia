@@ -23,6 +23,8 @@ migração, deploy ou alteração no Stripe.
 | Preview isolado | BLOQUEADO | Não há banco isolado funcional para exercer migrações e jornada | Restaurar o backup em destino isolado e testar ali |
 | Stripe promocional | BLOQUEADO | Produto mensal de R$ 39,90 criado; ID informado por Karina | Conferir modo, moeda, recorrência e ativação sem alterar preço |
 | Jornada humana | BLOQUEADO | Testes automatizados e build verdes | Conta fictícia no celular, sem cobrança, cobrindo todos os públicos |
+| Documentos jurídicos | BLOQUEADO | Termos, Privacidade, Cookies e Regulamento preparados no PR | Revisão final, publicação, links e aceites por versão provados |
+| Experiência da Ayla no trial | BLOQUEADO | Avisos D-3, D-1, D-0 e pergunta opcional de saída preparados | Provar formato, utilidade, entrega sem repetição e motivos de saída no celular |
 | Central de mensagens | BLOQUEADO | PEND-109 | Não fazer disparo até prévia, aprovação, pausa e antirrepetição provadas |
 | Produção | BLOQUEADO | Health saudável no código anterior em 27/10 | Banco, deploy inerte, smoke e autorização de Karina |
 
@@ -62,6 +64,15 @@ derrubar autenticação, banco, e-mail, IA ou WhatsApp.
 - [ ] Confirmar que uma segunda aplicação não duplica nem destrói dados.
 - [ ] Exercitar cadastro, aceite, trial, checkout, cancelamento, exportação e
       exclusão em modo de simulação.
+- [ ] Abrir Termos, Privacidade, Cookies e Regulamento no celular.
+- [ ] Confirmar razão social, CNPJ, endereço, contato, datas e regras da oferta.
+- [ ] Confirmar que aceite de Termos/Privacidade e escolha de marketing ficam
+      separados, identificados por versão e recuperáveis no Admin.
+- [ ] Confirmar que cookies não essenciais podem ser aceitos ou rejeitados com
+      a mesma facilidade.
+- [ ] Confirmar os avisos D-3, D-1 e D-0 e a pergunta opcional após a saída.
+- [ ] Confirmar que a Ayla respeita o formato aprovado, não insiste, não manda
+      link inexistente e não promete imagem ou benefício indisponível.
 - [ ] Usar somente contas e crianças fictícias e apagá-las no final.
 - [ ] Provar a volta: recriar o ambiente a partir do backup inicial.
 
