@@ -1,0 +1,420 @@
+{
+  "data": "2026-10-28T20:13:43.926Z",
+  "escopo": "Pessoas fictícias, dados em memória; biblioteca e templates só GET; produtor OpenAI real; sem WhatsApp, mensagens externas, atualização de Perfil ou cobrança de família.",
+  "piloto": "Foco na Web; saída do modelo, não entrega HTTP/visual, memória remota ou aprovação humana.",
+  "avaliacaoHumana": "PENDENTE",
+  "resultados": [
+    {
+      "id": "foco_abertura_conhecida_e_escolha",
+      "turno": 0,
+      "tema": "foco",
+      "mensagem": "Quero explorar Atenção e Concentração.",
+      "perfil": {
+        "nome": "Isabela",
+        "nascimento": "2007-12-25",
+        "genero": "feminino",
+        "sabe": {
+          "como_e": {
+            "texto": "Gosta de cinema, música, comida japonesa, poke, frutos do mar e sair com amigas. Quer começar a trabalhar e prestar vestibular no próximo ano."
+          },
+          "sensorial": "Sensível a sons, luz forte e cheiros. Às vezes não quer ser tocada. Gosta de experimentar texturas diferentes."
+        },
+        "extras": {
+          "comunicacao": "Verbal e fluente, vocabulário ótimo e compreensão ótima.",
+          "socializacao": "Interage bem com os pares e gosta de sair com amigas. Também gosta de ficar sozinha no quarto.",
+          "foco": "Mantém atenção quando está engajada; às vezes se distrai. Não há episódios de hiperfoco registrados.",
+          "nutricional": "Gosta de comida japonesa, poke e frutos do mar. Os ingredientes que aceita não estão detalhados.",
+          "sono": "Dormia cerca de 7 horas; não há descrição de rotina ou ambiente de sono.",
+          "emocional": "Expressa emoções gritando, chorando e falando palavrões. Mudanças na rotina são relatadas como difíceis."
+        }
+      },
+      "canal": "web",
+      "flag": "on",
+      "texto": "Oi! Eu sou a Ayla. Em *Atenção com Propósito*, posso ajudar a Isabela a começar, acompanhar, pausar e retomar atividades que façam sentido — sem tratar movimento ou distração como falta de vontade.\n\nPelo que você já me contou, ela mantém a atenção quando está engajada e tem interesses que podem servir de ponte, como cinema, música e planos de trabalho e vestibular. Podemos olhar para isso respeitando a autonomia dela e a idade que tem.\n\nPodemos seguir por um destes caminhos:\n\n- **🔎 Retrato e conquistas:** entender em quais situações ela consegue se manter envolvida e o que já ajuda.\n- **🧭 Orientações práticas:** pensar em formas de começar uma tarefa, dividir uma atividade longa ou retomar depois de uma pausa.\n- **🎬 Atividades adequadas à idade:** criar propostas ligadas aos interesses dela, sem transformar tudo em obrigação ou treino disfarçado.\n- **💭 Crenças e reflexão:** conversar sobre ideias como “se ela consegue se concentrar no que gosta, então deveria conseguir em tudo” e encontrar uma leitura mais útil.\n\nVocê pode escolher um caminho ou contar livremente o que gostaria de observar na atenção dela. Também pode usar o botão de áudio, se estiver disponível; a transcrição aparece para você conferir antes de enviar.",
+      "modelo": "gpt-5.6-luna",
+      "ms": 4762,
+      "base2Ids": [
+        "foco/triagem-inicial-duas-perguntas-que-separam-caminhos-rapidamente",
+        "foco/principio-central"
+      ],
+      "areaAtiva": "foco",
+      "intencao": "duvida",
+      "fatosEntregues": {
+        "nome": "Isabela",
+        "idade": 18,
+        "secoes": {
+          "foco": "Mantém atenção quando está engajada; às vezes se distrai. Não há episódios de hiperfoco registrados.",
+          "como_e": "Gosta de cinema, música, comida japonesa, poke, frutos do mar e sair com amigas. Quer começar a trabalhar e prestar vestibular no próximo ano.",
+          "sensorial": "Sensível a sons, luz forte e cheiros. Às vezes não quer ser tocada. Gosta de experimentar texturas diferentes.",
+          "comunicacao": "Verbal e fluente, vocabulário ótimo e compreensão ótima."
+        }
+      },
+      "verificar": [
+        "Abertura reconhece atenção em interesses já relatada, propósito e quatro caminhos, com áudio.",
+        "Não pergunta nome/idade nem se ela sustenta atenção no que gosta; não infantiliza a jovem adulta.",
+        "Escolha entrega orientação de estudo e autonomia, não nova apresentação; ideias finais são específicas."
+      ]
+    },
+    {
+      "id": "foco_abertura_conhecida_e_escolha",
+      "turno": 1,
+      "tema": "foco",
+      "mensagem": "Quero orientações práticas para ela começar os estudos para o vestibular, sem eu ficar cobrando.",
+      "perfil": {
+        "nome": "Isabela",
+        "nascimento": "2007-12-25",
+        "genero": "feminino",
+        "sabe": {
+          "como_e": {
+            "texto": "Gosta de cinema, música, comida japonesa, poke, frutos do mar e sair com amigas. Quer começar a trabalhar e prestar vestibular no próximo ano."
+          },
+          "sensorial": "Sensível a sons, luz forte e cheiros. Às vezes não quer ser tocada. Gosta de experimentar texturas diferentes."
+        },
+        "extras": {
+          "comunicacao": "Verbal e fluente, vocabulário ótimo e compreensão ótima.",
+          "socializacao": "Interage bem com os pares e gosta de sair com amigas. Também gosta de ficar sozinha no quarto.",
+          "foco": "Mantém atenção quando está engajada; às vezes se distrai. Não há episódios de hiperfoco registrados.",
+          "nutricional": "Gosta de comida japonesa, poke e frutos do mar. Os ingredientes que aceita não estão detalhados.",
+          "sono": "Dormia cerca de 7 horas; não há descrição de rotina ou ambiente de sono.",
+          "emocional": "Expressa emoções gritando, chorando e falando palavrões. Mudanças na rotina são relatadas como difíceis."
+        }
+      },
+      "canal": "web",
+      "flag": "on",
+      "texto": "Para ela começar a estudar sem você virar a pessoa que cobra, o objetivo é trocar *“você já estudou?”* por um começo claro, escolhido por ela e fácil de retomar.\n\nComo ela quer prestar vestibular no próximo ano e já consegue se envolver quando a atividade faz sentido, eu começaria trabalhando o *início*, não exigindo longos períodos de estudo.\n\n### Um jeito prático de começar\n\nCombine com Isabela um pequeno ritual de entrada, definido por ela:\n\n1. Ela escolhe a matéria ou o tipo de tarefa.\n2. Deixa visível apenas o primeiro material necessário.\n3. Define uma ação inicial bem concreta: abrir uma aula, ler o enunciado de uma questão ou separar os tópicos.\n4. Quando terminar esse primeiro trecho, decide se continua, pausa ou troca de atividade.\n\nVocê pode dizer:\n\n> “Você prefere começar por questões, aula ou revisão? O que seria um primeiro passo pequeno o bastante para entrar sem ficar pesado?”\n\nA pergunta ajuda a transformar *“estudar para o vestibular”*, que é enorme e abstrato, em uma ação que ela consegue enxergar. Para algumas pessoas, a maior barreira não é permanecer na tarefa, mas iniciar algo amplo demais ou sem um ponto de entrada definido.\n\n### Para você não ficar cobrando\n\nEscolham um sinal de acompanhamento que não seja uma fiscalização. Por exemplo, ela pode deixar um cartão ou mensagem simples dizendo:\n\n- **Ainda não comecei**\n- **Comecei**\n- **Parei em…**\n- **Preciso de ajuda para retomar**\n\nAssim, você pergunta sobre o processo, não sobre desempenho:\n\n> “Você quer que eu só te ajude a escolher o próximo passo ou prefere que eu fique por perto enquanto você começa?”\n\nSe ela disser que não quer ajuda, respeite. A autonomia também se constrói quando ela pode escolher o tipo de apoio — inclusive nenhum naquele momento.\n\n### Para facilitar a retomada\n\nQuando parar, ela pode deixar uma frase escrita no material:\n\n> “Na próxima vez, começo pela questão 4.”\n\nou\n\n> “Falta assistir aos 12 minutos finais.”\n\nIsso evita que cada sessão comece com a tarefa de descobrir *onde estava*. Observe se, com esse registro, ela retorna com menos ajuda. O que importa inicialmente não é terminar uma quantidade fixa, mas identificar se ela consegue iniciar e retomar com apoio cada vez menor.\n\nEvite transformar cada conversa em “estudou hoje?”. Prefira uma conversa combinada, em um momento tranquilo:\n\n> “Como está funcionando o jeito que você escolheu para começar? Tem alguma parte que está travando: escolher, iniciar, continuar ou voltar depois?”\n\nA resposta vai mostrar qual é a próxima adaptação necessária, sem presumir que o problema seja falta de concentração.\n\nPodemos continuar por três caminhos:\n\n- **🧭 Analisar uma situação real:** por exemplo, quando ela senta para estudar e não começa.\n- **📚 Adaptar uma matéria ou tarefa do vestibular:** transformar algo amplo em um primeiro passo possível.\n- **🎯 Criar uma atividade-jogo de planejamento:** usando cinema ou música como ponte, sem transformar o interesse dela em recompensa por estudar.",
+      "modelo": "gpt-5.6-luna",
+      "ms": 9230,
+      "base2Ids": [
+        "foco/triagem-inicial-duas-perguntas-que-separam-caminhos-rapidamente",
+        "foco/principio-central"
+      ],
+      "areaAtiva": "foco",
+      "intencao": "desafio",
+      "fatosEntregues": {
+        "nome": "Isabela",
+        "idade": 18,
+        "secoes": {
+          "foco": "Mantém atenção quando está engajada; às vezes se distrai. Não há episódios de hiperfoco registrados.",
+          "como_e": "Gosta de cinema, música, comida japonesa, poke, frutos do mar e sair com amigas. Quer começar a trabalhar e prestar vestibular no próximo ano.",
+          "sensorial": "Sensível a sons, luz forte e cheiros. Às vezes não quer ser tocada. Gosta de experimentar texturas diferentes.",
+          "comunicacao": "Verbal e fluente, vocabulário ótimo e compreensão ótima."
+        }
+      },
+      "verificar": [
+        "Abertura reconhece atenção em interesses já relatada, propósito e quatro caminhos, com áudio.",
+        "Não pergunta nome/idade nem se ela sustenta atenção no que gosta; não infantiliza a jovem adulta.",
+        "Escolha entrega orientação de estudo e autonomia, não nova apresentação; ideias finais são específicas."
+      ]
+    },
+    {
+      "id": "foco_abertura_conhecida_e_escolha",
+      "turno": 2,
+      "tema": "foco",
+      "mensagem": "Me dê ideias de outras coisas que posso te pedir sobre isso.",
+      "perfil": {
+        "nome": "Isabela",
+        "nascimento": "2007-12-25",
+        "genero": "feminino",
+        "sabe": {
+          "como_e": {
+            "texto": "Gosta de cinema, música, comida japonesa, poke, frutos do mar e sair com amigas. Quer começar a trabalhar e prestar vestibular no próximo ano."
+          },
+          "sensorial": "Sensível a sons, luz forte e cheiros. Às vezes não quer ser tocada. Gosta de experimentar texturas diferentes."
+        },
+        "extras": {
+          "comunicacao": "Verbal e fluente, vocabulário ótimo e compreensão ótima.",
+          "socializacao": "Interage bem com os pares e gosta de sair com amigas. Também gosta de ficar sozinha no quarto.",
+          "foco": "Mantém atenção quando está engajada; às vezes se distrai. Não há episódios de hiperfoco registrados.",
+          "nutricional": "Gosta de comida japonesa, poke e frutos do mar. Os ingredientes que aceita não estão detalhados.",
+          "sono": "Dormia cerca de 7 horas; não há descrição de rotina ou ambiente de sono.",
+          "emocional": "Expressa emoções gritando, chorando e falando palavrões. Mudanças na rotina são relatadas como difíceis."
+        }
+      },
+      "canal": "web",
+      "flag": "on",
+      "texto": "Você pode me pedir coisas bem concretas, sempre ligadas ao que acontece com a Isabela no estudo. Por exemplo:\n\n- **🚪 Criar um começo sem cobrança:**  \n  “Me ajude a montar uma forma de ela iniciar os estudos sem eu perguntar se ela já estudou.”\n\n- **🧩 Transformar uma tarefa grande em uma missão clara:**  \n  “Pegue ‘estudar matemática’ e transforme em uma missão de 20 minutos, sem parecer infantil.”\n\n- **🗣️ Encontrar frases curtas para apoiar sem pressionar:**  \n  “O que posso dizer quando ela está diante do material, mas não começa?”  \n  “Como oferecer ajuda sem ficar repetindo?”\n\n- **🧭 Ajudar quando ela perde a sequência:**  \n  “Crie um jeito de ela saber qual é a próxima etapa sem depender de mim.”\n\n- **⏸️ Facilitar a retomada:**  \n  “Como ela pode parar um estudo e deixar claro onde recomeçar depois?”\n\n- **🛠️ Preparar o ambiente antes de ela sentar:**  \n  “O que posso deixar organizado para reduzir o esforço de começar, sem controlar o estudo dela?”\n\n- **🤫 Reduzir minha fala:**  \n  “Monte uma forma de acompanhá-la usando poucas palavras, sem transformar o estudo numa cobrança.”\n\n- **📚 Adaptar uma atividade real:**  \n  “Tenho uma lista de questões/redação/aula gravada. Como posso dividir isso para ela começar, continuar e parar com autonomia?”\n\n- **📈 Observar evolução de verdade:**  \n  “Como saber se ela está precisando de menos apoio, mesmo quando ainda não termina tudo?”\n\n- **🎬 Usar cinema ou música como ponte, sem prêmio:**  \n  “Crie uma forma adulta de usar um interesse dela para organizar o estudo, sem transformar o interesse em recompensa.”\n\nUm pedido que já pode render uma orientação bem específica é:\n\n> “Ela precisa estudar [matéria ou tarefa], costuma travar em [começar/continuar/retomar], e eu quero ajudar sem cobrar. O que faço e o que digo?”\n\nAssim eu consigo trabalhar em cima de uma situação real, sem transformar a preparação para o vestibular em mais uma fonte de pressão.",
+      "modelo": "gpt-5.6-luna",
+      "ms": 6708,
+      "base2Ids": [
+        "foco/triagem-inicial-duas-perguntas-que-separam-caminhos-rapidamente",
+        "foco/principio-central"
+      ],
+      "areaAtiva": "foco",
+      "intencao": "duvida",
+      "fatosEntregues": {
+        "nome": "Isabela",
+        "idade": 18,
+        "secoes": {
+          "foco": "Mantém atenção quando está engajada; às vezes se distrai. Não há episódios de hiperfoco registrados.",
+          "como_e": "Gosta de cinema, música, comida japonesa, poke, frutos do mar e sair com amigas. Quer começar a trabalhar e prestar vestibular no próximo ano.",
+          "sensorial": "Sensível a sons, luz forte e cheiros. Às vezes não quer ser tocada. Gosta de experimentar texturas diferentes.",
+          "comunicacao": "Verbal e fluente, vocabulário ótimo e compreensão ótima."
+        }
+      },
+      "verificar": [
+        "Abertura reconhece atenção em interesses já relatada, propósito e quatro caminhos, com áudio.",
+        "Não pergunta nome/idade nem se ela sustenta atenção no que gosta; não infantiliza a jovem adulta.",
+        "Escolha entrega orientação de estudo e autonomia, não nova apresentação; ideias finais são específicas."
+      ]
+    },
+    {
+      "id": "foco_abertura_sem_dados_do_tema",
+      "turno": 0,
+      "tema": "foco",
+      "mensagem": "Quero explorar Atenção e Concentração.",
+      "perfil": {
+        "nome": "Luna",
+        "nascimento": "2018-02-12",
+        "genero": "feminino"
+      },
+      "canal": "web",
+      "flag": "on",
+      "texto": "Oi! Vamos olhar para a atenção da Luna, aos 8 anos, de um jeito prático: entender o que ajuda ela a *começar, acompanhar, pausar e retomar* atividades que façam sentido — sem tratar movimento ou interesse como falta de atenção.\n\nAinda quero conhecer três pontos para escolher o melhor caminho:\n\n- A dificuldade maior é *começar*, continuar, retomar depois de uma pausa ou terminar?\n- Em algo de que ela gosta, como costuma ser a concentração dela?\n- Ela parece prestar mais atenção quando está desenhando, montando, mexendo nas mãos ou se movimentando?\n\nVocê pode responder livremente, contar um episódio específico ou usar o botão de áudio, se estiver disponível. A partir disso, posso te ajudar com:\n\n- **Retrato e conquistas** 🌱 — identificar quando a atenção da Luna já aparece e o que favorece isso.\n- **Orientação prática** 🧭 — adaptar uma tarefa ou um momento que está difícil.\n- **Atividades adequadas à idade** 🎲 — criar jogos que trabalhem começar, acompanhar ou retomar sem virar cobrança.\n- **Crenças e reflexão** 💭 — pensar sobre ideias como “ela consegue quando quer” ou “se eu não insistir, ela não aprende”.",
+      "modelo": "gpt-5.6-luna",
+      "ms": 5288,
+      "base2Ids": [
+        "foco/triagem-inicial-duas-perguntas-que-separam-caminhos-rapidamente",
+        "foco/principio-central"
+      ],
+      "areaAtiva": "foco",
+      "intencao": "duvida",
+      "fatosEntregues": {
+        "nome": "Luna",
+        "idade": 8,
+        "secoes": {}
+      },
+      "verificar": [
+        "Apresenta propósito e até três perguntas pertinentes em bullets, com convite a texto/áudio.",
+        "Não pergunta nome/idade disponíveis; não inventa atenção, comunicação, interesses ou conquistas."
+      ]
+    },
+    {
+      "id": "foco_abertura_dados_parciais",
+      "turno": 0,
+      "tema": "foco",
+      "mensagem": "Quero explorar Atenção e Concentração.",
+      "perfil": {
+        "nome": "Bento",
+        "nascimento": "2017-06-20",
+        "genero": "masculino",
+        "sabe": {
+          "como_e": {
+            "interesses": [
+              "trens",
+              "mapas"
+            ]
+          }
+        },
+        "extras": {
+          "comunicacao": "Conversa em frases e aponta quando prefere."
+        }
+      },
+      "canal": "web",
+      "flag": "on",
+      "texto": "Oi! Sou a Ayla. Nesta área, vou ajudar a entender o que facilita o Bento a *começar, acompanhar, pausar e retomar* atividades que façam sentido para ele.\n\nPelo que você já me contou, trens e mapas podem ser boas pistas para observar a atenção — não como prova de facilidade, mas como contextos em que vale comparar o que acontece. Para eu direcionar melhor, me conta:\n\n- Ele consegue ficar envolvido por bastante tempo quando está com trens, mapas ou outra coisa de que gosta?\n- A maior dificuldade aparece para *começar*, para *continuar* ou para *retomar* depois de uma pausa?\n- Quando mexe em algo com as mãos ou pode se movimentar, ele acompanha melhor o que você fala ou a tarefa?\n\nVocê pode responder livremente, sem seguir a lista, ou usar o botão de áudio se estiver disponível.",
+      "modelo": "gpt-5.6-luna",
+      "ms": 4190,
+      "base2Ids": [
+        "foco/triagem-inicial-duas-perguntas-que-separam-caminhos-rapidamente",
+        "foco/principio-central"
+      ],
+      "areaAtiva": "foco",
+      "intencao": "duvida",
+      "fatosEntregues": {
+        "nome": "Bento",
+        "idade": 9,
+        "secoes": {
+          "como_e": "trens; mapas",
+          "comunicacao": "Conversa em frases e aponta quando prefere."
+        }
+      },
+      "verificar": [
+        "Retoma interesses sem deduzir que sustenta atenção neles; pergunta só pelas lacunas de Foco.",
+        "Interesses conhecidos não viram habilidades, hiperfoco ou causa confirmada."
+      ]
+    },
+    {
+      "id": "foco_caso_concreto_e_refinamento",
+      "turno": 0,
+      "tema": "foco",
+      "mensagem": "Estou exausta de chamar a Clara para a lição. Com quebra-cabeça ela fica um tempão. Acho que só faz quando quer. Como posso ajudar sem brigar?",
+      "perfil": {
+        "nome": "Clara",
+        "nascimento": "2018-03-15",
+        "genero": "feminino",
+        "sabe": {
+          "como_e": {
+            "interesses": [
+              "quebra-cabeças",
+              "animais"
+            ]
+          }
+        },
+        "extras": {
+          "foco": "Mantém atenção montando quebra-cabeças. A escola relata demora para iniciar tarefas escritas."
+        }
+      },
+      "canal": "web",
+      "flag": "on",
+      "texto": "Você já trouxe uma pista importante: a Clara consegue ficar bastante tempo montando quebra-cabeças. Isso não mostra que ela “faz quando quer”; mostra que *o início, o formato e o sentido da atividade* mudam muito a participação dela. Uma lição escrita pode exigir várias etapas antes de aparecer algo interessante: sentar, pegar o material, entender o que fazer e decidir por onde começar.\n\nPara ajudar sem transformar o momento numa sequência de chamados, eu faria um teste simples:\n\n### Comece pela primeira peça da lição\n\nEm vez de chamar várias vezes, aproxime-se e deixe visível *uma única ação inicial*:\n\n> “Clara, vamos só abrir na página da lição. Eu fico com você para começar.”\n\nDepois que ela abrir:\n\n> “Agora vamos achar a primeira questão. Você prefere começar pela 1 ou pela 2?”\n\nA escolha não é sobre fazer ou não fazer; é sobre *por onde entrar*. Para algumas crianças, poder enxergar o primeiro passo e escolher entre duas opções reduz a dificuldade de iniciar. Você não precisa terminar a lição por ela nem transformar tudo em brincadeira — só dividir a entrada em uma etapa que ela consiga localizar.\n\nSe ela começar, evite voltar imediatamente com muitas instruções. Aponte apenas a etapa atual:\n\n> “Você está nesta questão. Quando terminar essa, a gente olha a próxima.”\n\nObserve se isso basta para ela continuar ou se ela perde a sequência logo depois. Essa diferença importa: se o problema principal for começar, o apoio fica na entrada; se ela começa e depois se perde, será melhor deixar a etapa atual marcada.\n\nTambém vale trocar a medida de sucesso por alguns dias. Em vez de olhar apenas se terminou tudo, observe:\n\n- quantos chamados foram necessários;\n- qual foi o primeiro passo que ela conseguiu fazer;\n- se continuou depois que você iniciou junto;\n- qual apoio ela precisou para passar à etapa seguinte.\n\nA frase para você se lembrar é: *“Ela não está escolhendo simplesmente obedecer ou não; vamos descobrir qual parte da entrada está pesada.”* Isso mantém o limite da lição sem transformar a Clara em preguiçosa — e poupa você de repetir a mesma convocação até se esgotar.\n\nPara continuarmos, posso ajudar com:\n\n- **Uma situação real de lição**: você me conta como começa e eu adapto a primeira entrada.\n- **Um jeito de marcar a etapa atual**, para ela não depender de você a cada questão.\n- **Uma brincadeira de quebra-cabeça com animais**, usada como jogo de verdade e sem virar prêmio por fazer a lição.",
+      "modelo": "gpt-5.6-luna",
+      "ms": 9246,
+      "base2Ids": [
+        "foco/triagem-inicial-duas-perguntas-que-separam-caminhos-rapidamente",
+        "foco/principio-central"
+      ],
+      "areaAtiva": "foco",
+      "intencao": "desafio",
+      "fatosEntregues": {
+        "nome": "Clara",
+        "idade": 8,
+        "secoes": {
+          "foco": "Mantém atenção montando quebra-cabeças. A escola relata demora para iniciar tarefas escritas.",
+          "como_e": "quebra-cabeças; animais"
+        }
+      },
+      "verificar": [
+        "Pedido de ajuda com exaustão recebe compreensão, ações, fala pronta e continuação, não só acolhimento/pergunta.",
+        "Reformula só-faz-quando-quer sem culpabilizar nem diagnosticar; usa capacidade já demonstrada.",
+        "Informação nova muda sustentação para iniciação e depois medo de errar como hipótese, sem repetir timer/primeira-junto."
+      ]
+    },
+    {
+      "id": "foco_caso_concreto_e_refinamento",
+      "turno": 1,
+      "tema": "foco",
+      "mensagem": "Quando eu começo a primeira com ela, depois faz tudo certo. O difícil é começar.",
+      "perfil": {
+        "nome": "Clara",
+        "nascimento": "2018-03-15",
+        "genero": "feminino",
+        "sabe": {
+          "como_e": {
+            "interesses": [
+              "quebra-cabeças",
+              "animais"
+            ]
+          }
+        },
+        "extras": {
+          "foco": "Mantém atenção montando quebra-cabeças. A escola relata demora para iniciar tarefas escritas."
+        }
+      },
+      "canal": "web",
+      "flag": "on",
+      "texto": "Isso muda bastante a leitura: a Clara *sabe fazer a lição*; o ponto difícil é entrar na atividade. Então sua ajuda pode ser uma ponte curta de início — não fazer por ela nem chamá-la repetidamente.\n\n### Faça a “largada” e passe o controle\n\nAntes de chamá-la, deixe só o necessário à vista: caderno, lápis e a página aberta. Vá até ela, diga uma frase curta e comece apenas o primeiro movimento:\n\n> “Clara, eu vou começar com você. Leia a primeira questão.”\n\nVocê pode apontar para o enunciado ou marcar o lugar onde ela deve começar. Depois que ela fizer a primeira parte:\n\n> “Agora é sua vez de continuar. Eu fico aqui por perto.”\n\nA ideia é reduzir a quantidade de fala. Muitas explicações, lembretes e chamados podem virar mais uma tarefa antes da tarefa. Como ela costuma seguir corretamente depois que começa, não é preciso reensinar a lição inteira.\n\n### Vá retirando sua ajuda aos poucos\n\nQuando isso estiver mais fácil, mude o tipo de apoio:\n\n1. primeiro, você começa a primeira questão com ela;\n2. depois, você apenas aponta onde começar;\n3. depois, pergunta: **“Qual é o primeiro movimento?”** e espera que ela mostre;\n4. por fim, deixe a página preparada e use só uma frase: **“Hora da largada.”**\n\nSe ela travar, volte um nível sem transformar isso em fracasso. O objetivo é ela precisar de *menos ajuda para iniciar*, não terminar tudo sem nenhum apoio de imediato.\n\nPor alguns dias, observe especialmente quantas partes você precisa fazer antes de ela assumir. Esse é um progresso mais útil do que contar apenas se a lição terminou: passar de “a mãe começa” para “a mãe aponta” já é uma conquista de autonomia.\n\nVocê pode continuar por um destes caminhos:\n\n- **Atividade real:** adaptar esse jeito para uma lição específica da Clara.\n- **Marcador de início:** criar uma sequência curtinha para ela consultar sozinha.\n- **Brincadeira com animais:** transformar apenas o treino de “começar e passar a vez” em um jogo, sem usar a brincadeira como recompensa.",
+      "modelo": "gpt-5.6-luna",
+      "ms": 9710,
+      "base2Ids": [
+        "foco/triagem-inicial-duas-perguntas-que-separam-caminhos-rapidamente",
+        "foco/principio-central"
+      ],
+      "areaAtiva": "foco",
+      "intencao": "desafio",
+      "fatosEntregues": {
+        "nome": "Clara",
+        "idade": 8,
+        "secoes": {
+          "foco": "Mantém atenção montando quebra-cabeças. A escola relata demora para iniciar tarefas escritas.",
+          "como_e": "quebra-cabeças; animais"
+        }
+      },
+      "verificar": [
+        "Pedido de ajuda com exaustão recebe compreensão, ações, fala pronta e continuação, não só acolhimento/pergunta.",
+        "Reformula só-faz-quando-quer sem culpabilizar nem diagnosticar; usa capacidade já demonstrada.",
+        "Informação nova muda sustentação para iniciação e depois medo de errar como hipótese, sem repetir timer/primeira-junto."
+      ]
+    },
+    {
+      "id": "foco_caso_concreto_e_refinamento",
+      "turno": 2,
+      "tema": "foco",
+      "mensagem": "Já faço a primeira junto, mas agora diz que vai errar e apaga tudo várias vezes. O que mudo?",
+      "perfil": {
+        "nome": "Clara",
+        "nascimento": "2018-03-15",
+        "genero": "feminino",
+        "sabe": {
+          "como_e": {
+            "interesses": [
+              "quebra-cabeças",
+              "animais"
+            ]
+          }
+        },
+        "extras": {
+          "foco": "Mantém atenção montando quebra-cabeças. A escola relata demora para iniciar tarefas escritas."
+        }
+      },
+      "canal": "web",
+      "flag": "on",
+      "texto": "O ponto mudou: a Clara já consegue entrar quando você começa com ela, mas depois o medo de errar está interrompendo a tentativa. A borracha vira uma saída imediata: apaga, sente alívio por um instante, mas perde a chance de descobrir se a resposta estava mesmo errada.\n\nEu mudaria *o que acontece depois do erro*, não apenas a forma de chamá-la.\n\n### Combine uma primeira tentativa sem apagar\n\nAntes de começar, prepare só uma questão visível e diga:\n\n> “Nesta primeira tentativa, a gente não apaga. Você pode deixar um pontinho ou escrever bem fraquinho. Depois nós duas fazemos uma revisão.”\n\nSe ela disser “vou errar”:\n\n> “Pode ser que alguma parte precise ser corrigida. Primeiro vamos descobrir o que você pensou; corrigir vem depois.”\n\nEvite responder apenas “você não vai errar”, porque isso pode aumentar a pressão: se ela errar, parece que algo deu errado com ela. A mensagem mais útil é que *errar e revisar fazem parte da tarefa*.\n\n### Separe “responder” de “revisar”\n\nDeixe a borracha fora da mão dela durante a primeira tentativa — não como punição nem escondida, apenas afastada junto dos materiais de revisão. Use um papel pequeno de rascunho se a atividade permitir.\n\nA sequência pode ser:\n\n1. você lê a primeira questão com ela;\n2. Clara dá uma resposta, mesmo sem certeza;\n3. você pergunta: **“O que fez você pensar nisso?”**;\n4. só depois vocês conferem e corrigem.\n\nSe ela já apagou, não entre numa disputa para impedir. Diga:\n\n> “Você quis deixar perfeito antes de continuar. Vamos testar outro jeito nesta questão: primeiro registramos a ideia, depois conferimos.”\n\n### Dê uma missão concreta\n\nEm vez de ficar repetindo que ela precisa “ter confiança”, dê uma função objetiva:\n\n> “Sua missão agora é encontrar a primeira pista da questão. Você não precisa ter certeza ainda.”\n\nComo ela gosta de quebra-cabeças, a comparação pode ser natural, sem transformar a lição em prêmio:\n\n> “Em um quebra-cabeça, às vezes a peça parece caber e depois a gente testa outro lugar. Na lição, a resposta também pode ser uma tentativa para conferir.”\n\nObserve uma coisa específica: Clara apaga assim que começa a escrever, ou só depois de perceber que não sabe a resposta? Se for logo no primeiro traço, eu manteria o papel de rascunho e a revisão separada. Se for quando encontra uma questão difícil, a ajuda principal será localizar *qual pista da questão* ela pode usar antes de responder.\n\nO objetivo inicial não é ela nunca apagar; é conseguir deixar uma tentativa registrada antes de decidir corrigi-la. Isso mede participação e tolerância ao processo, não apenas acerto.\n\nSe quiser continuar, posso ajudar a:\n\n- **adaptar esse combinado a uma lição real** da Clara;\n- **criar frases curtas para quando ela disser “vou errar”**;\n- **montar um jogo de detetive de pistas**, sem usar como recompensa pela lição.",
+      "modelo": "gpt-5.6-luna",
+      "ms": 11708,
+      "base2Ids": [
+        "foco/triagem-inicial-duas-perguntas-que-separam-caminhos-rapidamente",
+        "foco/principio-central"
+      ],
+      "areaAtiva": "foco",
+      "intencao": "desafio",
+      "fatosEntregues": {
+        "nome": "Clara",
+        "idade": 8,
+        "secoes": {
+          "foco": "Mantém atenção montando quebra-cabeças. A escola relata demora para iniciar tarefas escritas.",
+          "como_e": "quebra-cabeças; animais"
+        }
+      },
+      "verificar": [
+        "Pedido de ajuda com exaustão recebe compreensão, ações, fala pronta e continuação, não só acolhimento/pergunta.",
+        "Reformula só-faz-quando-quer sem culpabilizar nem diagnosticar; usa capacidade já demonstrada.",
+        "Informação nova muda sustentação para iniciação e depois medo de errar como hipótese, sem repetir timer/primeira-junto."
+      ]
+    },
+    {
+      "id": "foco_dois_irmaos_alvo_correto",
+      "turno": 0,
+      "tema": "foco",
+      "mensagem": "Quero ajudar a Lia: ela pega o caderno, mas esquece o que eu pedi depois. O Rui está bem, é sobre ela.",
+      "perfil": {
+        "nome": "Lia",
+        "nascimento": "2019-04-10",
+        "genero": "feminino",
+        "sabe": {
+          "como_e": {
+            "interesses": [
+              "desenho",
+              "gatos"
+            ]
+          }
+        },
+        "extras": {
+          "foco": "Acompanha histórias desenhando. Perde a segunda instrução quando o pedido tem várias etapas."
+        }
+      },
+      "canal": "web",
+      "flag": "on",
+      "texto": "Pelo que você descreveu, a Lia *começa a tarefa* — pega o caderno —, mas a segunda parte do pedido se perde. Isso é diferente de não querer fazer: quando há mais de uma etapa falada, a sequência pode ficar difícil de manter enquanto ela age.\n\n**Teste assim em casa:**\n\n1. Dê apenas a primeira instrução:  \n   **“Lia, pegue o caderno.”**\n2. Espere ela pegar.\n3. Só então diga a próxima:  \n   **“Agora abra na página do exercício.”**\n4. Depois que ela abrir, entregue a etapa seguinte.\n\nSe a atividade tiver duas ou três etapas, desenhe rapidamente dois símbolos ao lado dela — por exemplo, um caderno e um lápis — ou escreva palavras curtas: **1. caderno → 2. lápis**. Como ela acompanha histórias desenhando, esse apoio visual pode ajudar a manter a sequência disponível sem exigir que ela guarde tudo apenas ouvindo.\n\nQuando ela perguntar ou parar, evite repetir o pedido inteiro. Aponte para a etapa atual e diga só:  \n**“Agora é esta parte.”**\n\nO que vale observar não é apenas se ela termina sozinha. Repare: *com uma instrução por vez, ela inicia e continua com menos ajuda?* Se sim, a dificuldade parece estar mais na retenção da sequência do que no interesse pela atividade. Se mesmo com uma etapa visível ela não souber como começar, aí o apoio precisa mostrar o primeiro movimento também.\n\nUma pergunta que ajuda a escolher o próximo ajuste: em outras situações, ela esquece principalmente a **segunda etapa**, como nesse caso, ou também começa uma tarefa simples e logo abandona?\n\nPosso continuar por qualquer destes caminhos:\n\n- **Analisar uma situação real de casa** e transformar o pedido em etapas curtas.\n- **Adaptar uma atividade que ela já faz**, sem acrescentar tarefa escolar.\n- **Criar uma brincadeira de sequência** usando desenho e gatos para praticar lembrar “primeiro e depois”.",
+      "modelo": "gpt-5.6-luna",
+      "ms": 8835,
+      "base2Ids": [
+        "foco/triagem-inicial-duas-perguntas-que-separam-caminhos-rapidamente",
+        "foco/principio-central"
+      ],
+      "areaAtiva": "foco",
+      "intencao": "desafio",
+      "fatosEntregues": {
+        "nome": "Lia",
+        "idade": 7,
+        "secoes": {
+          "foco": "Acompanha histórias desenhando. Perde a segunda instrução quando o pedido tem várias etapas.",
+          "como_e": "desenho; gatos"
+        }
+      },
+      "verificar": [
+        "Usa dados de Lia, não xadrez/concentração de Rui; considera carga de instrução sem presumir incapacidade.",
+        "Oferece ajuste executável na instrução e observação do resultado, sem exigir imobilidade."
+      ]
+    }
+  ]
+}

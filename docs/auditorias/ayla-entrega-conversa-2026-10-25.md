@@ -1,5 +1,101 @@
 # Entrega da candidata de conversa da Ayla
 
+## Alinhamento editorial e bloqueio atual — 28/10/2026
+
+Depois da bancada, Karina simulou o relato da professora (distração e atividade
+não concluída), aprovou a direção e pediu foco no que a mãe observa e pode
+experimentar em casa. Confirmou três brincadeiras por pedido, permitindo
+opções fora dos interesses habituais. Decisões registradas na SPEC: não são
+mudança funcional já publicada, resultado de modelo no app ou atualização de
+perfil. Exemplos de cinco anos não foram escritos na Manu. Falta implementar
+essa última direção e testá-la; os 4.290 testes/build relatados abaixo antecedem
+essa incorporação funcional, não a comprovam.
+
+Health no navegador integrado em `2026-10-28T19:27:55.721Z`: branch
+`codex/ayla-qualidade-brincadeiras`, SHA `51600b883d374cad101e10b8e0da96ec7ee300af`,
+V2/isolamento ativos, serviço Supabase e chaves de IA ausentes no runtime,
+`db.ok=false`, `conversa_web_configurada=false`. A Vercel mostrou o deploy
+`76mDwK3PBCJ7NWgGwnVDmBuKcbWi` Ready, mas isso não significou conversa pronta.
+Nova tentativa autorizada de redeploy Preview (mesmo branch, sem cache)
+retornou **Reauthenticate / Send Code to Email**. Nenhum código foi solicitado
+ou preenchido pelo agente e nenhum novo deploy foi confirmado. Aba preservada
+para a titular e solicitada abertura à direita; retorno da abertura foi
+`queued`, não prova de visibilidade. Screenshot:
+`C:/Users/karin/.codex/visualizations/2026/10/24/01a16b9a-fa1d-7593-b07b-e8bb45919def/vercel-foco-reauth-20261028.jpg`.
+
+Main remota reconfirmada como `25e8891daf1e0d5bd881512e6f128742fdcd0184`.
+Nenhum commit/push para contornar a autenticação. PEND-208 atualizada e aberta;
+PEND-104 preservada; nenhuma nova pendência ou baixa. **Veredito: BLOQUEADO**
+para teste humano na Web até reautenticação, configuração efetiva, atualização
+da candidata e login da conta fictícia autorizada. Esta etapa só alterou
+documentação; nenhum novo teste de código foi atribuído a ela.
+
+## Atualização de 28/10/2026 — primeiro piloto: Foco na Web
+
+**Escopo autorizado.** Karina escolheu Foco, sem Base44, como primeira prova de
+qualidade. Risco CRÍTICO mantido; somente o worktree desta PR foi alterado.
+Main remota conferida como `25e8891daf1e0d5bd881512e6f128742fdcd0184`. HEAD do
+baseline: `51600b883d374cad101e10b8e0da96ec7ee300af`, mais os dois registros locais
+de configuração/reautenticação já existentes. Nenhuma modificação no checkout
+original, em perfis familiares, no catálogo Brinca ou na produção.
+
+**Prova e causa observada.** A bancada existente ganhou cinco casos/nove turnos
+com pessoas sintéticas: referência adulta, tema sem dados, dados parciais,
+orientação com refinamento e dois irmãos. Reusa `prepararRespostaStream`,
+contexto, compositor, classificador real e gerador real. Supabase remoto aceita
+somente GET da biblioteca/templates; demais tabelas e telemetria em memória.
+Não exercita o handler HTTP, a autenticação, a renderização ou a memória remota.
+As saídas não são reescritas. No baseline, o pedido “Me dê ideias de outras
+coisas que posso te pedir” foi classificado como desabafo: o formato rico ficou
+fora. Abertura com interesses, mas sem dados de atenção, ofereceu menu sem
+perguntas. Os testes anteriores de contrato não detectavam esses comportamentos
+do classificador/gerador reais: verificavam composição ou usavam modelos falsos.
+
+**Correção mínima e rollback.** Orientação ao classificador sobre pedido atual
+vs. emoção passada, restrita a área Foco com V2 ativa; abertura diferencia
+interesse conhecido de padrão de atenção conhecido. Mantida a chamada existente
+e preservados crise/desabafo genuínos; nenhuma regex reclassifica o relato.
+Desligar V2 preserva o contrato anterior. Não altera persistência, autorização,
+reconciliação, transportes ou modelo. Sem nova escrita de negócio ou migração.
+
+**Modelo real, não aprovação.** Nove saídas no baseline e nove na candidata,
+ambos com `gpt-5.6-luna`, pessoas em memória e biblioteca corrente. Pedido de
+ideias voltou a `duvida` e recebeu exemplos em bullets; a abertura parcial
+retomou interesses e perguntou pelas lacunas. Foco permaneceu área ativa nos
+nove turnos da candidata. São observações de uma rodada antes/depois, sem juiz
+independente e sem garantia de estabilidade. Caso Lia ainda deslocou a tarefa
+concreta para desenho e as ofertas não têm destaque uniforme. A abertura com
+dados conhecidos acumulou três perguntas e quatro caminhos; concisão e pergunta
+parcialmente repetida continuam em revisão. Karina ainda precisa aprovar riqueza,
+acolhimento e apresentação. Não afirmar equivalência. A nota de abertura é
+compartilhada entre canais, mas só a Web foi exercitada nesta rodada; não
+atribuir a ela prova do WhatsApp.
+
+Artefatos: `ayla-piloto-foco-2026-10-28-baseline-1.json` e
+`ayla-piloto-foco-2026-10-28-candidata-1.json`; exportação integral sem edição em
+`ayla-piloto-foco-2026-10-28-comparativo.md`. SHA-256 dos JSONs:
+`7ad288a1f36d19921213f6891bf340b2b00d6c22038b9d449b496e634ac5e613` e
+`e3e38bff2fb1116f6511b3c7e126838d7e58bbc29eb3e1c9068a7bb6cd3eb7d6`.
+Seções BASE2 por ID, identidade,
+idade, fatos sintéticos entregues e respostas preservados. Logs da execução
+registraram BPs recuperadas/enviadas e `uso_efetivo=nao_observavel`: não provar
+consulta integral à pós a partir desses IDs. PEND-104 continua aberta.
+
+**Verificação até esta atualização.** Cinco testes de integridade da bancada e
+30 testes dirigidos passaram (classificação, abertura, engine, formato legado,
+flag off e controles crise/desabafo). Sintaxe do runner validada. A primeira
+tentativa de executar a bancada parou antes do modelo por suporte TypeScript
+do Node; repetida com `--experimental-transform-types`, sem alterar o runtime
+do app. **Regressão completa: 4.290 passaram, sete pulados, 227 arquivos
+aprovados e três pulados (230), 402,23 segundos, limites padrão e dois workers.**
+Build Webpack aprovado, incluindo TypeScript e 107 páginas estáticas, executado
+após a suíte; lint dos quatro arquivos TypeScript alterados sem erro/aviso.
+Índice de pendências sincronizado (182 fichas, IDs únicos), diff sem erro.
+Configuração/auth/deploy e smoke humano não foram
+revalidados nesta etapa. Nenhum commit/push enquanto o portão de reautenticação
+da Vercel continuar pendente. PEND-208 atualizada e aberta, nenhuma criada ou
+concluída. **Prontidão para produção: BLOQUEADO.**
+
 25/10/2026. Risco CRÍTICO: a IA decide o que dizer e usa informações comportamentais por pessoa. Esta entrega prepara a Preview A para aceite de Karina. Não publica o catálogo Brinca nem ativa a candidata em produção. Avaliação por estrelas e memória automática na web permanecem etapas seguintes.
 
 ## Resultado para a família
@@ -122,3 +218,149 @@ Proposta mínima, sujeita à autorização de acesso: disponibilizar apenas cred
 **Publicação desta etapa.** Código e testes no commit `cb498844e5a9f2f25cbc91fc535e2dceef794b1f`, branch da PR #150. Push confirmado; status Vercel `success`, deploy <https://vercel.com/kolo-familia/kolo-familia-web/BZ9TpM4Vs9DorHmxFpkKwZbjDFYY>. API GitHub reconfirmou checks `build` e `Vercel Preview Comments` concluídos com `success`. O status da plataforma não comprova SHA lido pelo runtime, 403 remoto, validade das chaves ou geração da conversa. Não houve configuração de credenciais nem alteração de produção.
 
 **Veredito:** teste humano **BLOQUEADO** por configuração e acesso ao painel. PEND-208 atualizada, sem baixa; PEND-104 preservada. O isolamento local é avanço da etapa 2, não comprovação de Preview funcional nem de produção.
+
+## Configuração autorizada e reautenticação — 27/10/2026
+
+O acesso pelo navegador integrado funcionou. Health observado em `2026-10-27T15:37:55.991Z`: SHA `51600b883d374cad101e10b8e0da96ec7ee300af`, ambiente Preview, candidata e isolamento ligados, banco/credenciais de IA ainda ausentes no runtime. GETs dos dois crons exibiram `preview_somente_conversa`; não se mede aqui o código HTTP pela árvore de acessibilidade. Nenhuma mensagem, cobrança ou exclusão foi disparada.
+
+Após confirmação humana específica, configuração local compatível foi carregada sem exibir valores e copiada para entradas novas restritas ao branch `codex/ayla-qualidade-brincadeiras`. Três Secrets: `SUPABASE_SERVICE_ROLE_KEY`, `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`. Três Configs: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `IA_PROVIDER=openai` (mesmo provedor da bancada). A chave do cliente foi verificada como anônima. Nenhuma entrada de produção foi editada; não foram criadas/copiadas variáveis Stripe, SMTP, Z-API ou cron.
+
+**Escrita parcial conferida:** a tentativa de salvar as cinco credenciais como Secret retornou validação que proíbe `NEXT_PUBLIC_` nesse tipo, mas as três privadas foram persistidas. Leitura de volta no painel identificou cada entrada e seu branch; não houve reenvio cego. Os dois campos públicos e o provedor foram salvos em lote Config separado. Toast confirmou sucesso; leitura posterior confirmou tipo e escopo. Valores não foram expostos no chat, logs, screenshots ou arquivos novos. A referência em memória às credenciais foi descartada após o preenchimento; o `.env.local` original foi preservado.
+
+**Deploy e bloqueio:** origem `76mDwK3PBCJ7NWgGwnVDmBuKcbWi`, SHA `51600b8`; modal de redeploy confirmou Preview, branch e alias corretos, sem cache de build. Ao confirmar, a Vercel exigiu reautenticação com código enviado por e-mail. O agente parou antes de enviar/preencher o código e manteve a tela para a titular. Não acionar GitHub/API/outro mecanismo para contornar essa verificação. Nenhum redeploy novo ou geração autenticada foi comprovado; não chamar a Preview de funcional. Prova visual local: `preview-reauth-20261027.jpg` na pasta de visualizações desta tarefa.
+
+Código funcional inalterado; nenhuma nova suíte executada para esta mudança de configuração. Os resultados anteriores permanecem identificados pelos commits correspondentes, não validam o novo ambiente. Não houve escrita em perfil/conversa, teste de concorrência, ativação da pós integral ou importação Brinca. Main reconferida como `25e8891daf1e0d5bd881512e6f128742fdcd0184`; checkout da PR em `51600b8`, limpo antes deste registro.
+
+**Rollback:** se for necessário, revogar somente as seis entradas novas desse branch, preservando as entradas prévias de produção e Preview geral; isso exige a confirmação aplicável. Não remover dados nem enfraquecer o bloqueio para concluir o teste. **Próximo passo:** titular conclui reautenticação no painel; depois conferir conclusão do redeploy, configuração efetiva, persistência dos bloqueios e login na conta fictícia autorizada. Documentação fica local, sem commit/push enquanto a confirmação de segurança do deploy estiver pendente. PEND-208 atualizada e aberta; nenhuma criada ou concluída, PEND-104 inalterada. **Veredito: BLOQUEADO** pela reautenticação/deploy e smoke pendentes.
+
+## Etapa 3 — piloto Foco e configuração efetiva, 28/10/2026
+
+**Problema, dono e escopo.** Karina quer qualidade comparável às referências
+Base44 na conversa da família, começando por Foco. O aceite inclui apresentação,
+leitura do conhecido, perguntas só pelas lacunas, orientação prática em casa,
+reflexão sem culpa, formatação legível, continuidade e jogos completos. Esta
+etapa prepara candidata na PR #150; não autoriza merge/produção. Risco CRÍTICO.
+
+**Baseline e causa raiz.** Nove turnos sintéticos no engine real identificaram
+pedido de ideias classificado como desabafo (que retirava o formato rico) e
+abertura parcial sem perguntas sobre o tema. Em quatro turnos de alinhamento,
+a orientação começava pela escola; a pergunta natural “teria alguma brincadeira”
+não recebia o contrato esperado; o contrato candidato mandava entregar uma só.
+As primeiras três opções ainda repetiam cozinha. Os baselines e todas as
+repetições ficam preservados, sem editar respostas do modelo.
+
+**Solução e reutilização.** Usa o classificador, compositor, perfil/histórico,
+biblioteca e provedor existentes. A instrução do classificador prioriza o pedido
+atual somente em Foco/V2; não sobrepõe crise/desabafo por regex. Abertura reconhece
+relatos livres de atenção e diferencia interesses de dados efetivos do tema.
+A orientação web prioriza apoio viável em casa; pedido explícito sobre escola
+continua atendido. Uma fábrica conserva o corpo executável de brincadeira e
+retira a ordem conflitante de uma só no piloto: três por padrão, quantidade
+explícita respeitada. O reconhecimento de perguntas naturais fica restrito ao
+piloto, preservando as outras superfícies. Nenhuma chamada extra ou modelo novo.
+
+**Ajustes editoriais do piloto.** Interesses são portas opcionais, não fronteiras
+do repertório. Cada jogo explica “O que vocês exercitam”, relacionando uma
+capacidade à ação e ao vínculo pela criação/iniciativa compartilhada quando
+presente. Repertório aberto a memória, imitação, movimento, percursos e chefinho
+com troca de papéis. Respiração/movimento podem ser pausa confortável, não
+condição nem obrigação. Não prometer transferência de jogo para desempenho na
+escola. Estes ajustes não publicam atividades KB nem aprovam o catálogo.
+
+**Evidências do modelo.** Arquivos `ayla-piloto-foco-2026-10-28-*.json` nesta
+pasta. Baseline e candidata inicial: cinco cenários/nove turnos. Alinhamento:
+três cenários/quatro turnos, baseline e candidatas 1, 2, 3-vinculo e 4-repertorio.
+A rodada `candidata-2-final` repete os nove turnos com o código final; a
+`alinhamento-candidata-4-repertorio` repete os quatro. Classificador e gerador
+reais; dados pessoais/históricos em memória, biblioteca apenas GET. Não são
+testes HTTP autenticados nem execução no navegador ou WhatsApp.
+
+Na rodada final, a orientação da professora começou por casa e usou a atenção
+na cozinha já conhecida sem perguntar de novo. O pedido de jogo entregou três
+propostas, incluindo percurso fora dos favoritos. O caso massinha ofereceu
+pistas, robô com movimentos e desenho sem exigir massinha. O pedido explícito
+de uma recebeu uma só. Todos trouxeram explicação ligada à ação. Nos nove turnos,
+o pedido de ideias foi `duvida`, a adulta teve continuidade de estudos, os dados
+parciais geraram perguntas, e o refinamento passou de início a medo de errar.
+
+**Ressalvas editoriais.** Não há equivalência/estabilidade comprovada ao Base44.
+Respostas de jogos chegaram a cerca de quatro mil caracteres; avaliar carga
+visual. Há exemplos ainda pouco fechados (“a boneca encontrou uma surpresa”)
+e hipótese tratada como fato (“apaga, sente alívio”). Não declarar os critérios
+editoriais integralmente aprovados. A abertura sem dados ainda acumulou perguntas
+e menu em uma repetição. A revisão humana deve julgar utilidade e dosagem.
+
+**Consulta ao conhecimento e limites.** Saídas guardam `base2Ids`, incluindo
+`foco/triagem-inicial-duas-perguntas-que-separam-caminhos-rapidamente` e
+`foco/principio-central`. Logs `conhecimento_consultado` mostraram dois trechos
+recuperados e dois enviados por turno; `uso_efetivo=nao_observavel` conserva o
+limite: envio não prova aplicação. As seções de Base 2 continuaram iguais mesmo
+no refinamento, então não afirmar recuperação específica de todo subtema.
+O material integral da pós está localizado e não ativo (PEND-104); parte da
+origem já existe no Compilado. O lote Brinca em rascunho e seu guia não foram
+importados. Não chamar jogos gerados de atividade aprovada do catálogo.
+
+**Configuração e segurança remotas.** A titular concluiu a reautenticação.
+Redeploy Gtdkqzrsw87tkZQKrPP2CZW1L13h Ready, SHA ainda `51600b8`, Preview
+`https://kolo-familia-c9knpifmh-kolo-familia.vercel.app`.
+Health `2026-10-28T19:45:28.384Z`: `db.ok=true`, credenciais necessárias
+presentes, `conversa_web_configurada=true`, provedor OpenAI, V2 e isolamento
+ligados. Stripe ausente mantém saúde global negativa sem bloquear a conversa;
+não configurar pagamentos para fazer o health ficar verde. GETs dos crons
+mostraram `preview_somente_conversa`; árvore de acessibilidade não mede status
+HTTP. Branch alias `/estrategias` direcionou a `/login`. Nenhuma conversa
+autenticada, mensagem externa ou escrita no cadastro da Manu nesta etapa.
+
+**Testes e regressão.** Vitest completo executado em 28/10, 17:00:48–17:10:21:
+227 arquivos passaram, três ignorados; **4.296 testes passaram, sete ignorados**,
+572,75 s, `--maxWorkers 2`, timeouts normais. Dirigidos: 62 passaram em cinco
+arquivos. Integridade dos cenários: seis passaram. Lint dos oito TS alterados
+sem erros/avisos; scripts da bancada/exportador com sintaxe válida. As últimas
+mudanças de texto (habilidades/vínculo/repertório) foram posteriores ao início
+da suíte completa: rodada real final concluída; conferência dirigida e build
+final em conclusão, registrados abaixo quando terminarem.
+
+**Persistência, concorrência e reconciliação.** Esta etapa não cria escritor,
+fila, reserva ou confirmação de negócio. BancoMemoria contém os perfis de teste;
+guarda remota do histórico, concorrência, idempotência e retomada permanecem
+NÃO VALIDADAS nesta rodada. Memória automática web e estrelas não implementadas;
+provas previstas na SPEC e PEND-208, sem inventar baixa. Cadastro da Manu deve
+permanecer intacto; exemplos sintéticos não viram fatos.
+
+**Arquivos e remoções.** Classificador/compositor web, guias temáticos e fábrica
+do pedido de brincadeira; testes respectivos; casos/runner/exportador de bancada,
+JSONs de evidência, SPEC, relatório e PEND-208. Removida a ordem concorrente de
+uma só para o piloto; preservado contrato das outras áreas e o publicado.
+Sem dependência, migração, transporte ou implementação de outro provedor.
+
+**Rollback e portões.** Desligar V2 volta à condução anterior; mudanças não
+apagam histórico ou migram dados. Isolamento Preview deve continuar ligado,
+independentemente do aceite. P1 problema/aceite documentados; P2 descoberta,
+P3 dados reais, P4 canais/áudio, P5 alvo/RLS remoto, P6 continuidade/memória,
+P7 falhas/adoção e P8 aceite/produção continuam abertos conforme PEND-208.
+Portões de persistência/concorrência/reconciliação não se aplicam à alteração
+de texto, mas não estão aprovados para a entrega completa da funcionalidade.
+
+**Operação e veredito.** Main e branch remoto reconferidos: `25e8891d` e
+`51600b8`, respectivamente; checkout original preservado. Commit/push da nova
+candidata seguem após o fechamento do build e conferências. Configuração resolvida
+não aprova respostas. **PASSOU COM RESSALVAS** para a avaliação sintética;
+**BLOQUEADO** para declarar produção pronta. PEND-208 atualizada e aberta;
+nenhuma criada/concluída; PEND-104 inalterada. Próximo aceite é Karina na Preview,
+com a conta fictícia já autorizada e os dados existentes da Manu.
+
+**Fechamento local da candidata.** Build Next 16.2.5 com webpack passou:
+compilação, TypeScript e 107 páginas estáticas, exit 0. Após as últimas mudanças
+editoriais, os mesmos cinco arquivos dirigidos passaram novamente: 62 testes,
+7,05 s, 17:20:08; lint dos oito TS exit 0, sem avisos. `git diff --check` e
+índice oficial de pendências passaram (182 fichas, IDs únicos). Regressão completa
+anterior e dirigida final estão separadas para não atribuir o texto novo a um
+teste iniciado antes dele. Rodadas reais finais concluídas e revistas, com as
+ressalvas acima. Não ampliar testes sem nova alteração/falha.
+
+SHA-256 dos artefatos finais (respostas integrais, sem edição):
+
+- `ayla-piloto-foco-2026-10-28-candidata-2-final.json`:
+  `a8d856030b6253c753565e61e969752230056f9d3d6859569e6f6f3ed17f6dd3`.
+- `ayla-piloto-foco-2026-10-28-alinhamento-candidata-4-repertorio.json`:
+  `b73230a58c58df4ebe92a666469ac0e5108e6e0e25494d9ff85d25dad77ee7c6`.

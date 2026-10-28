@@ -2,6 +2,24 @@
 import { readFileSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 const raiz = process.cwd();
+if (process.argv[2] === "piloto-foco") {
+  const pasta = resolve(raiz, "docs/auditorias");
+  const ler = (ramo) => JSON.parse(readFileSync(resolve(pasta, `ayla-piloto-foco-2026-10-28-${ramo}-1.json`), "utf8"));
+  const antes = ler("baseline"), depois = ler("candidata");
+  if (antes.resultados.length !== 9 || depois.resultados.length !== 9) throw new Error("Aguardar os nove turnos das duas rodadas.");
+  const partes = ["# Piloto Foco — respostas para revisão", "28/10/2026. Pessoas sintéticas; engine e modelos reais da Web; sem integração Base44, sem escrita em perfis e sem entrega na interface. Aprovação humana pendente. As respostas abaixo são exportadas integralmente, sem edição."];
+  for (const linha of depois.resultados) {
+    const anterior = antes.resultados.find((r) => r.id === linha.id && r.turno === linha.turno);
+    if (!anterior) throw new Error(`Baseline ausente: ${linha.id}/${linha.turno}`);
+    partes.push(`## ${linha.id} — turno ${linha.turno + 1}`, `**Pedido**\n\n> ${linha.mensagem.replaceAll("\n", "\n> ")}`,
+      `Classificação: \`${anterior.intencao}\` → \`${linha.intencao}\`. Área: \`${linha.areaAtiva}\`. Modelo: \`${linha.modelo}\`.`,
+      "### Antes", anterior.texto, "### Candidata", linha.texto);
+  }
+  const destino = resolve(pasta, "ayla-piloto-foco-2026-10-28-comparativo.md");
+  writeFileSync(destino, partes.join("\n\n") + "\n");
+  console.log(JSON.stringify({ arquivo: destino, turnosComparados: 9 }));
+  process.exit(0);
+}
 const entrada = resolve(raiz, "docs/auditorias/ayla-temas-modelo-2026-10-25-referencias-base44.json");
 const dados = JSON.parse(readFileSync(entrada, "utf8"));
 const referencias = {

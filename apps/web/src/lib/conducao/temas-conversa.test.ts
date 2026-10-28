@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { GUIAS_TEMATICOS, apoioTematico, guiasDoTurno, temaEscolhidoDoContexto, aberturaTematicaDoTurno, blocoAberturaTematica } from "./temas-conversa";
+import { GUIAS_TEMATICOS, apoioTematico, guiasDoTurno, temaEscolhidoDoContexto, aberturaTematicaDoTurno, blocoAberturaTematica, CONDUCAO_CASO_FOCO } from "./temas-conversa";
 
 describe("áreas da Ayla e biblioteca real", () => {
   it("reconhece somente a escolha inteira de uma área conhecida", () => {
@@ -43,6 +43,24 @@ describe("áreas da Ayla e biblioteca real", () => {
         expect(apoio.biblioteca).toContain(s.titulo);
       }
     }
+  });
+  it("Foco não confunde interesse conhecido com padrão de atenção já relatado", () => {
+    for (const guia of GUIAS_TEMATICOS) {
+      const bloco = blocoAberturaTematica(guia, "web");
+      if (guia.chave === "foco") {
+        expect(bloco).toContain("Conhecer interesses ou comunicação não prova esse padrão");
+        expect(bloco).toContain("não substitua essas lacunas apenas pelo menu");
+      } else {
+        expect(bloco).not.toContain("Para saber se há dados de Foco");
+      }
+    }
+  });
+  it("guia Foco começa pelo apoio doméstico sem proibir ajuda específica à escola", () => {
+    const foco = apoioTematico(["foco"], "web").bloco;
+    expect(foco).toContain("observações da mãe em casa");
+    expect(CONDUCAO_CASO_FOCO).toContain("Não abra com mensagem para professora");
+    expect(CONDUCAO_CASO_FOCO).toContain("Se ela pedir explicitamente o que a escola pode mudar");
+    expect(foco).not.toContain("<pedido_de_orientacao_foco>");
   });
   it("deduplica aliases, limita dois apoios e não inventa área desconhecida", () => {
     expect(guiasDoTurno(["nutricao", "alimentacao", "sono", "motor"]).map((g) => g.chave)).toEqual(["nutricional", "sono"]);

@@ -1,7 +1,8 @@
 /** Pedido explícito de jogo compartilhado, não toda menção casual a brincar. */
-export function pedidoExplicitoDeBrincadeira(texto: string): boolean {
+export function pedidoExplicitoDeBrincadeira(texto: string, linguagemNaturalFoco = false): boolean {
   const t = texto.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
-  return /\b(?:quero|queria|gostaria|preciso|me (?:de|da|mostre|sugira|ensine|ensina)|pode (?:me )?(?:dar|sugerir|ensinar|passar)|sugira|sugere|indique|indica|invente|inventa|crie|cria|monte|monta|ensine|ensina|tem (?:alguma|uma))\b.{0,110}\b(?:brincadeiras?|brincar|jogos?|atividade ludica)\b/.test(t);
+  return /\b(?:quero|queria|gostaria|preciso|me (?:de|da|mostre|sugira|ensine|ensina)|pode (?:me )?(?:dar|sugerir|ensinar|passar)|sugira|sugere|indique|indica|invente|inventa|crie|cria|monte|monta|ensine|ensina|tem (?:alguma|uma))\b.{0,110}\b(?:brincadeiras?|brincar|jogos?|atividade ludica)\b/.test(t)
+    || (linguagemNaturalFoco && /(?:^|[.!?]\s*)(?:teria|tem|ha|existe[m]?|conhece)\s+(?:(?:algumas?|umas?|outras?|mais|novas?)\s+)?(?:brincadeiras?|jogos?|atividades ludicas?)\b/.test(t));
 }
 
 export type AuditoriaBrincadeiras = {
@@ -290,20 +291,25 @@ um emoji funcional e um único bloco executável. O objetivo técnico fica por
 trás; a família recebe a brincadeira.
 </pedido_explicito_de_brincadeira>`;
 
-/** Contrato candidato, ativado somente pela flag de qualidade. */
-export const BLOCO_PEDIDO_BRINCADEIRA = `<pedido_explicito_de_brincadeira>
-A família pediu uma brincadeira AGORA. Escolha exatamente UMA mecânica adequada
+/** Um corpo executável; o piloto Foco escolhe três opções, os demais mantêm uma. */
+export function contratoPedidoBrincadeira(opcoesFoco = false): string {
+  const abertura = opcoesFoco
+    ? `A família pediu brincadeira AGORA. Por padrão, ofereça TRÊS opções completas com mecânicas diferentes. Se pedir explicitamente apenas uma ou outra quantidade, respeite essa escolha. Não confunda o singular informal "teria alguma brincadeira?" com um pedido de uma só. Interesses são portas de entrada, não limites: entre várias opções, no máximo uma depende do mesmo material, cenário ou interesse favorito; inclua também uma proposta fora deles. Se pediu experiências sem o material favorito, não o imponha nem em uma opção. Não apresente três versões de cozinhar/servir, procurar ou seguir comandos.`
+    : `A família pediu uma brincadeira AGORA. Escolha exatamente UMA mecânica adequada
 ao lugar, idade, comunicação, interesses, sensibilidades e histórico desta
 pessoa. Os exemplos recebidos são repertório para escolher, não opções para
-mostrar. Entregue o jogo inteiro, sem introdução e sem oferecer alternativas.
+mostrar. Entregue o jogo inteiro, sem introdução e sem oferecer alternativas.`;
+  return `<pedido_explicito_de_brincadeira>
+${abertura}
 
-O jogo precisa ser divertido mesmo sem meta de desenvolvimento. Interesse muda
-a mecânica, não só o título. Toda escolha precisa estar visível ou ser mostrada
+${opcoesFoco ? "Repertório aberto: considere também imitação com troca de papéis, memória por pistas, percursos com obstáculos baixos e movimentos que caibam no espaço; o banco de exemplos não é uma lista fechada. ‘Chefinho mandou’ pode ser jogo com a pessoa também inventando e conduzindo as ações, sem cobrar acertos. Uma pausa de movimento ou respiração tranquila pode caber entre rodadas, quando for confortável e útil; não é etapa obrigatória nem condição para participar. Escolha o que combina com o pedido, não inclua todos os formatos em toda resposta." : ""}
+
+O jogo precisa ser divertido mesmo sem meta de desenvolvimento. ${opcoesFoco ? "Quando usar um interesse, ele participa da ação, não só do título. Outras opções podem se apoiar em humor, movimento, criação ou descoberta adequados à pessoa." : "Interesse muda\na mecânica, não só o título."} Toda escolha precisa estar visível ou ser mostrada
 por dois gestos claros; não mande a pessoa apontar para opções que o adulto não
-preparou. Diga em uma frase o que a brincadeira convida a praticar, sem prometer
-resultado.
+preparou. ${opcoesFoco ? `Em cada opção, inclua **O que vocês exercitam:** com uma ou duas frases curtas ligando uma capacidade à ação concreta do jogo: acompanhar a sequência, lembrar uma pista, escolher, criar ou alternar papéis. Explique também como a troca pode favorecer vínculo quando isso estiver presente: a pessoa toma iniciativa, quem cuida acompanha e ambos criam ou se divertem juntos. Não repita uma lista genérica de benefícios nas três; não afirme vínculo fortalecido ou melhora de atenção como resultado garantido, nem transferência automática para a escola.` : `Diga em uma frase o que a brincadeira convida a praticar, sem prometer
+resultado.`}
 
-Apresente um nome criativo real em negrito, nunca o texto "Título curto".
+${opcoesFoco ? "Em cada opção, apresente" : "Apresente"} um nome criativo real em negrito, nunca o texto "Título curto".
 Depois, em linhas separadas: Tempo: com duração curta e realista;
 Material: com objeto comum concreto ou nenhum; Como começar: com a “fala exata do adulto”.
 Use uma lista numerada com 1., 2. e 3., uma linha por item. Escreva diretamente
@@ -323,7 +329,11 @@ Não reembale manejo, treino, exposição sensorial ou atividade já tentada com
 jogo. Use o nome quando conhecido. Nunca chame uma pessoa adulta de criança.
 Não exija fala nem olhar. Não reproduza sensibilidade registrada. Se
 houver desconforto, pausa ou saída vêm primeiro. Use no máximo um emoji
-funcional. O objetivo técnico fica por trás; a família recebe uma brincadeira
+funcional${opcoesFoco ? " por opção" : ""}. O objetivo técnico fica por trás; a família recebe ${opcoesFoco ? "cada brincadeira" : "uma brincadeira"}
 legível e pronta para usar. Não prometa regular, desenvolver ou mudar o estado
 emocional; descreva apenas a participação que a mecânica convida.
 </pedido_explicito_de_brincadeira>`;
+}
+
+/** Contrato candidato anterior preservado para os demais temas e produtores. */
+export const BLOCO_PEDIDO_BRINCADEIRA = contratoPedidoBrincadeira();

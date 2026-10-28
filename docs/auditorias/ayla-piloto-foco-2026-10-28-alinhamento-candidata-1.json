@@ -1,0 +1,194 @@
+{
+  "data": "2026-10-28T19:54:27.616Z",
+  "escopo": "Pessoas fictícias, dados em memória; biblioteca e templates só GET; produtor OpenAI real; sem WhatsApp, mensagens externas, atualização de Perfil ou cobrança de família.",
+  "piloto": "Foco na Web; saída do modelo, não entrega HTTP/visual, memória remota ou aprovação humana.",
+  "avaliacaoHumana": "PENDENTE",
+  "resultados": [
+    {
+      "id": "foco_professora_casa_e_brincadeira",
+      "turno": 0,
+      "tema": "foco",
+      "mensagem": "a professora falou que ela não tem muito foco. que se distrai na sala de aula. não conclui a atividade em tempo",
+      "perfil": {
+        "nome": "Nina",
+        "nascimento": "2021-02-12",
+        "genero": "feminino",
+        "sabe": {
+          "como_e": {
+            "interesses": [
+              "cozinhar de faz-de-conta",
+              "bonecas",
+              "brincadeiras com água"
+            ]
+          }
+        },
+        "extras": {
+          "comunicacao": "Conversa em frases e expressa suas escolhas.",
+          "foco": "Permanece envolvida nas brincadeiras de cozinha. Ainda não há relato de como inicia ou retoma outras tarefas em casa."
+        }
+      },
+      "canal": "web",
+      "flag": "on",
+      "texto": "A fala da professora é importante, mas *“não tem muito foco”* ainda é uma descrição ampla. Não concluir a atividade no tempo pode acontecer por motivos diferentes: ela pode demorar para começar, perder o fio, não entender alguma etapa, se distrair com o ambiente ou precisar de mais tempo para terminar — e cada situação pede um apoio diferente.\n\nPelo que você já me contou, Nina consegue permanecer envolvida em brincadeiras de cozinha de faz-de-conta. Então vale observar *em que condições* a atenção dela aparece, sem transformar isso em “ela consegue quando quer”.\n\n**Para conversar com a professora, você pode enviar:**\n\n> “Você consegue me dar um exemplo recente? Ela demora para começar, começa e abandona, ou permanece fazendo mas em um ritmo mais lento? Ela entende a proposta e as etapas? O que acontece quando você mostra só o primeiro passo ou fica perto dela?”\n\nEssas respostas ajudam a separar foco de outras dificuldades. Também vale perguntar:\n\n- Ela conclui mais quando a atividade é dividida em duas ou três partes?\n- O que costuma distraí-la: colegas, materiais, barulho, mudanças na sala ou a própria tarefa?\n- Ela termina com alguns minutos a mais ou com mediação individual?\n\n**Um apoio que a escola pode testar já:** apresentar a atividade em uma sequência curta, por exemplo:  \n1. fazer a primeira parte;  \n2. mostrar o que vem depois;  \n3. avisar claramente quando terminou.\n\nEm vez de “faça a atividade”, a professora pode dizer: **“Agora vamos fazer só esta parte. Quando terminar, eu venho mostrar a próxima.”** Para algumas crianças, saber onde começa e onde termina torna mais fácil acompanhar a tarefa. O que importa é observar se Nina inicia mais rápido, se permanece por mais tempo e se precisa de menos lembretes — não apenas se termina dentro do tempo.\n\nEm casa, você pode experimentar isso numa atividade breve, sem transformar em treino escolar: **“vamos preparar a brincadeira de cozinha em três partes: escolher os objetos, fazer a receita de faz-de-conta e guardar.”** Observe em qual parte ela precisa de ajuda para começar, continuar ou encerrar.\n\nA pergunta que mais muda o próximo apoio é: *na escola, ela chega a começar as atividades sozinha e depois para, ou o principal problema já aparece para iniciar?*\n\nPosso continuar por um destes caminhos:\n\n- 📨 escrever uma mensagem completa para a professora;\n- 🏠 montar uma experiência curta em casa para diferenciar começar, continuar e terminar;\n- 📌 organizar as observações da escola em um resumo para levar à conversa.",
+      "modelo": "gpt-5.6-luna",
+      "ms": 10416,
+      "base2Ids": [
+        "foco/triagem-inicial-duas-perguntas-que-separam-caminhos-rapidamente",
+        "foco/principio-central"
+      ],
+      "areaAtiva": "foco",
+      "intencao": "duvida",
+      "fatosEntregues": {
+        "nome": "Nina",
+        "idade": 5,
+        "secoes": {
+          "foco": "Permanece envolvida nas brincadeiras de cozinha. Ainda não há relato de como inicia ou retoma outras tarefas em casa.",
+          "como_e": "cozinhar de faz-de-conta; bonecas; brincadeiras com água",
+          "comunicacao": "Conversa em frases e expressa suas escolhas."
+        }
+      },
+      "verificar": [
+        "Começa por observações e apoio possível em casa, sem depender de mudar a escola.",
+        "Não pergunta novamente se sustenta atenção na cozinha; pergunta só pelas situações desconhecidas.",
+        "Pedido de brincadeira entrega três jogos completos e distintos; interesses não limitam todas as opções."
+      ]
+    },
+    {
+      "id": "foco_professora_casa_e_brincadeira",
+      "turno": 1,
+      "tema": "foco",
+      "mensagem": "teria alguma brincadeira para melhorar atenção?",
+      "perfil": {
+        "nome": "Nina",
+        "nascimento": "2021-02-12",
+        "genero": "feminino",
+        "sabe": {
+          "como_e": {
+            "interesses": [
+              "cozinhar de faz-de-conta",
+              "bonecas",
+              "brincadeiras com água"
+            ]
+          }
+        },
+        "extras": {
+          "comunicacao": "Conversa em frases e expressa suas escolhas.",
+          "foco": "Permanece envolvida nas brincadeiras de cozinha. Ainda não há relato de como inicia ou retoma outras tarefas em casa."
+        }
+      },
+      "canal": "web",
+      "flag": "on",
+      "texto": "Como a Nina já se envolve nas brincadeiras de cozinha, eu usaria esse interesse como uma ponte — não para fazê-la “sentar e prestar atenção”, mas para convidá-la a acompanhar uma sequência, esperar a sua vez e perceber o que muda a cada rodada.\n\n*Esses jogos não garantem “melhorar o foco”, mas dão oportunidades divertidas para observar como ela acompanha uma ação até o fim.*\n\n1. **A Chef e o Ingrediente Misterioso** 🍳  \n**Tempo:** 5 minutos  \n**Material:** 3 objetos seguros da cozinha de faz-de-conta, como panelinha, colher e copo vazio.  \n**Como começar:** esconda um objeto atrás das costas e diga: **“A chef Nina precisa descobrir o que sumiu da cozinha. Vou dar uma pista: serve para mexer.”**\n\nA Nina pode responder falando, apontando ou pegando o objeto que acha correto. Quando ela escolher, revele o objeto fazendo uma reação engraçada: **“A colher escapou! Ela estava tentando cozinhar sozinha!”** Faça a colher “andar” até a panela.\n\n**Próxima rodada:** deixe Nina esconder um objeto e dar uma pista para você. Você pode errar de propósito uma vez: **“É a panela?”** Se ela corrigir, comemore a descoberta e faça o objeto realizar uma ação inesperada.\n\n**Para terminar:** diga **“A cozinha fechou por hoje; a chef pode escolher o último objeto que vai descansar.”**  \nA brincadeira convida Nina a acompanhar pistas, lembrar o que foi escondido e esperar a descoberta — sem exigir que ela fique parada.\n\n---\n\n2. **Restaurante de Cabeça para Baixo** 🍽️  \n**Tempo:** 5 a 8 minutos  \n**Material:** panelinha, copo vazio, colher e uma boneca.  \n**Como começar:** coloque a boneca como cliente e diga: **“Hoje a cliente vai mandar no restaurante. Nina, você decide: ela quer cozinhar, dormir ou fazer uma dança?”**\n\nA escolha dela — por fala, gesto ou pegando um objeto — muda imediatamente a cena. Se ela escolher cozinhar, você representa a boneca tentando preparar algo e fazendo uma consequência divertida: **“A cliente mexeu tanto que a colher ficou tonta!”** Se escolher dormir, a boneca ronca e acorda pedindo outra coisa.\n\n**Próxima rodada:** troquem os papéis. Nina vira a cliente e você pergunta à boneca: **“O que você escolhe agora?”** A resposta da boneca pode ser uma opção visível, como pegar a colher ou deitar.\n\n**Para terminar:** faça a boneca anunciar: **“Último pedido: guardar um objeto e dar tchau para os outros.”**  \nAqui, a ação da Nina altera a história; isso convida a acompanhar a resposta do outro e manter o fio da brincadeira.\n\n---\n\n3. **A Receita que se Transforma** 🥣  \n**Tempo:** 5 minutos  \n**Material:** 3 ou 4 objetos de faz-de-conta, uma folha e lápis opcional.  \n**Como começar:** coloque uma panela vazia no centro e diga: **“Vamos criar uma receita maluca. Cada pessoa coloca uma coisa, e a panela se transforma.”**\n\nNina escolhe um objeto para colocar. Você faz a transformação correspondente:  \n- colher → **“Virou uma ponte para a panela!”**  \n- copo → **“A panela ficou com chapéu!”**  \n- boneca → **“Agora a boneca é a chefe e vai dar a ordem!”**\n\nDepois, você acrescenta um objeto, e Nina decide o que acontece. Não precisa fingir que objetos não comestíveis são comida: eles podem ser ferramentas, personagens ou partes da cozinha.\n\n**Próxima rodada:** retire um objeto e diga: **“A receita mudou. O que acontece agora?”** Nina pode escolher falando, apontando ou reorganizando os objetos; você representa a mudança que ela criou.\n\n**Para terminar:** tire uma “foto imaginária” da receita e diga: **“Pronto, a receita maluca ficou registrada. Vamos desmontar a cozinha juntos.”**  \nEssa brincadeira convida Nina a acompanhar mudanças e continuar uma sequência que foi construída pelos dois.\n\nComo ela já permanece envolvida no faz-de-conta de cozinha, as propostas começam nesse nível de participação: ela escolhe, fala e muda a história, em vez de apenas seguir comandos.",
+      "modelo": "gpt-5.6-luna",
+      "ms": 11678,
+      "base2Ids": [
+        "foco/triagem-inicial-duas-perguntas-que-separam-caminhos-rapidamente",
+        "foco/principio-central"
+      ],
+      "areaAtiva": "foco",
+      "intencao": "duvida",
+      "fatosEntregues": {
+        "nome": "Nina",
+        "idade": 5,
+        "secoes": {
+          "foco": "Permanece envolvida nas brincadeiras de cozinha. Ainda não há relato de como inicia ou retoma outras tarefas em casa.",
+          "como_e": "cozinhar de faz-de-conta; bonecas; brincadeiras com água",
+          "comunicacao": "Conversa em frases e expressa suas escolhas."
+        }
+      },
+      "verificar": [
+        "Começa por observações e apoio possível em casa, sem depender de mudar a escola.",
+        "Não pergunta novamente se sustenta atenção na cozinha; pergunta só pelas situações desconhecidas.",
+        "Pedido de brincadeira entrega três jogos completos e distintos; interesses não limitam todas as opções."
+      ]
+    },
+    {
+      "id": "foco_massinha_e_repertorio_aberto",
+      "turno": 0,
+      "tema": "foco",
+      "mensagem": "Ela adora massinha. Tem brincadeiras para atenção? Podemos experimentar outras que não envolvam massinha.",
+      "perfil": {
+        "nome": "Bia",
+        "nascimento": "2021-03-15",
+        "genero": "feminino",
+        "sabe": {
+          "como_e": {
+            "interesses": [
+              "massinha"
+            ]
+          }
+        },
+        "extras": {
+          "comunicacao": "Conversa em frases, aponta e inventa personagens."
+        }
+      },
+      "canal": "web",
+      "flag": "on",
+      "texto": "Claro. Como a Bia conversa em frases, aponta e inventa personagens, dá para usar essas habilidades como parte da diversão — sem precisar de massinha.\n\n1. **Detetive dos Personagens** 🔎  \n**Tempo:** 5 a 8 minutos  \n**Material:** 3 objetos seguros da casa, como uma colher, um pano e um boneco ou carrinho.  \n**Como começar:** “Atenção, detetive Bia: um personagem secreto está escondido nesta sala. Eu vou dar uma pista engraçada!”\n\n1. Coloque os três objetos visíveis. Escolha um sem contar e diga uma pista: “Esse personagem gosta de viajar, mas não tem pernas.” Bia pode apontar, falar ou inventar outra pista para você tentar adivinhar.  \n2. Quando ela escolher ou der a resposta, transforme o objeto em personagem: “O carrinho era o Capitão Rodinha! Ele estava fugindo de uma poça gigante!”  \n3. Entregue o objeto a ela e deixe que mude a história. Se ela disser “ele foi dormir”, faça o personagem roncar; se apontar para outro objeto, diga que apareceu um novo suspeito.\n\n**Próxima rodada:** Bia escolhe o personagem e você tenta adivinhar fazendo duas tentativas engraçadas antes de acertar.  \n\n**Para terminar:** “O detetive encontrou todos os personagens. Agora eles vão descansar na estação.” Guardem os objetos juntos, sem pedir mais uma rodada.\n\nEssa brincadeira convida Bia a acompanhar pistas, esperar a sua tentativa e manter o fio de uma história curta.\n\n---\n\n2. **A Chefona do Castelo** 👑  \n**Tempo:** 5 minutos  \n**Material:** Uma cadeira, um pano ou cobertor e dois brinquedos ou objetos.  \n**Como começar:** “Hoje você é a chefe do castelo, e eu sou o personagem que sempre entende tudo errado!”\n\n1. Faça um pequeno castelo com a cadeira e o pano. Bia decide, falando ou apontando, quem você será: um dragão, uma rainha, um gato ou outro personagem que inventar.  \n2. Pergunte: “O que o personagem deve fazer agora?” Se ela disser “entrar”, faça o personagem entrar no lugar errado: “Entrei no castelo da geladeira!”  \n3. Bia corrige, ri ou muda a ordem. Cada escolha dela altera sua atuação: se apontar para o pano, você pode dizer “o tapete virou uma ponte”; se apontar para o brinquedo, ele vira o visitante real.\n\n**Próxima rodada:** Troquem os papéis: Bia pode representar o personagem, sem precisar falar, e você imita o que ela fizer — sempre acrescentando uma consequência divertida.  \n\n**Para terminar:** “O castelo fechou os portões e todos os personagens foram dormir.” Desmonte o castelo junto com ela.\n\nAqui, a atenção aparece na troca de turnos: Bia acompanha o que você fez, decide a continuação e percebe que a escolha dela muda a história.\n\n---\n\n3. **Desenho que Foge** ✏️  \n**Tempo:** 8 a 10 minutos  \n**Material:** Papel e lápis, giz de cera ou canetinhas.  \n**Como começar:** “Vou fazer um desenho bem comum… mas acho que ele vai aprontar alguma coisa.”\n\n1. Desenhe apenas uma parte simples, como dois olhos ou uma porta, e passe o papel para Bia completar do jeito que quiser. Ela pode desenhar, apontar o que você deve acrescentar ou inventar falando.  \n2. Faça exatamente uma transformação causada pela ideia dela: se ela disser “é um monstro”, acrescente pés enormes; se disser “é uma casa”, desenhe uma janela que pisca.  \n3. Dê voz ao desenho: “A janela piscou e revelou uma passagem secreta!” Bia decide o que apareceu do outro lado.\n\n**Próxima rodada:** Comece um desenho diferente e deixe Bia escolher quem aparece primeiro; depois você adiciona uma surpresa que combine com a escolha dela.  \n\n**Para terminar:** “O desenho encontrou um lugar seguro para morar.” Dê um nome à criação e deixe-a escolher onde o papel ficará.\n\nEssa proposta convida Bia a sustentar uma ideia por várias pequenas mudanças, sem transformar o desenho em tarefa.\n\nSe ela recusar alguma opção, deixe essa de lado e experimente outra em outro momento. O jogo precisa continuar divertido para ela, não virar uma obrigação.",
+      "modelo": "gpt-5.6-luna",
+      "ms": 12080,
+      "base2Ids": [
+        "foco/triagem-inicial-duas-perguntas-que-separam-caminhos-rapidamente",
+        "foco/principio-central"
+      ],
+      "areaAtiva": "foco",
+      "intencao": "duvida",
+      "fatosEntregues": {
+        "nome": "Bia",
+        "idade": 5,
+        "secoes": {
+          "como_e": "massinha",
+          "comunicacao": "Conversa em frases, aponta e inventa personagens."
+        }
+      },
+      "verificar": [
+        "Entrega três alternativas distintas, incluindo propostas sem massinha.",
+        "Jogos têm convite, ação da criança, consequência divertida e continuação; não exercícios de obedecer."
+      ]
+    },
+    {
+      "id": "foco_quantidade_explicitamente_uma",
+      "turno": 0,
+      "tema": "foco",
+      "mensagem": "Quero apenas uma brincadeira, bem completa, para fazer agora.",
+      "perfil": {
+        "nome": "Bia",
+        "nascimento": "2021-03-15",
+        "genero": "feminino",
+        "sabe": {
+          "como_e": {
+            "interesses": [
+              "massinha"
+            ]
+          }
+        },
+        "extras": {
+          "comunicacao": "Conversa em frases, aponta e inventa personagens."
+        }
+      },
+      "canal": "web",
+      "flag": "on",
+      "texto": "## **A agência de personagens da Bia** 🎭\n\n**Tempo:** 10 a 15 minutos  \n**Material:** massinha e uma superfície livre\n\n**Como começar:** coloque um pedacinho de massinha na sua frente e diga:\n\n> “Atenção! Abriu uma agência para personagens que precisam de um emprego muito estranho. Eu vou fazer um personagem e você decide o que ele vai fazer!”\n\n1. Faça um personagem simples com a massinha — pode ser um bichinho, monstro ou pessoa — e pergunte:  \n   > “Quem é ele e qual trabalho combina com ele?”\n\n   Bia pode responder falando, apontando para alguma parte ou inventando um nome. Se ela disser, por exemplo, “um monstro cozinheiro”, faça uma panela pequena de massinha e anuncie, exagerando:\n\n   > “O Monstro Cozinheiro vai preparar uma sopa de… uma meia!”\n\n   A escolha dela muda imediatamente a cena. Faça uma reação engraçada do personagem, como ele provar a sopa e dizer:  \n   > “Hummm… tem gosto de pé!”\n\n2. Entregue um pedaço de massinha para Bia e diga:  \n   > “Agora você cria o próximo personagem. Eu só descubro o que ele faz quando você me mostrar.”\n\n   Ela pode modelar, apontar ou contar o que inventou. Você acompanha a ideia dela sem corrigir o formato. Se ela fizer uma bolinha e disser que é “a princesa”, transforme isso em ação:\n\n   > “A Princesa-Bolinha entrou rolando no castelo e apertou o botão secreto!”\n\n   Então faça uma porta ou botão na sua massinha e deixe a consequência depender do que ela indicar: abriu, explodiu confete imaginário, chamou um dragão ou virou outra coisa.\n\n3. Depois diga:  \n   > “A agência recebeu uma missão: esses dois personagens precisam trabalhar juntos. O que acontece agora?”\n\n   Bia pode escolher falando, apontando ou acrescentando massinha. Represente exatamente a escolha dela. Se ela fizer uma ponte, os personagens atravessam; se fizer uma cama, eles dormem; se fizer um chapéu, todos precisam falar como aquele personagem.\n\n**Próxima rodada:** troquem os papéis. Bia faz a pergunta — “qual trabalho ele tem?” ou “o que acontece?” — e você cria a resposta mais inesperada que ainda combine com a ideia dela.\n\n**Para terminar:** avise com naturalidade:\n\n> “A agência vai fechar por enquanto. Vamos deixar os personagens descansando e escolher qual foi o mais engraçado.”\n\nEla pode escolher falando, apontando ou apenas pegando um deles. Se perder o interesse, encerre a história sem insistir. A brincadeira foi pensada para a invenção de personagens e para que cada escolha da Bia realmente transforme o que acontece em seguida.",
+      "modelo": "gpt-5.6-luna",
+      "ms": 8501,
+      "base2Ids": [
+        "foco/triagem-inicial-duas-perguntas-que-separam-caminhos-rapidamente",
+        "foco/principio-central"
+      ],
+      "areaAtiva": "foco",
+      "intencao": "duvida",
+      "fatosEntregues": {
+        "nome": "Bia",
+        "idade": 5,
+        "secoes": {
+          "como_e": "massinha",
+          "comunicacao": "Conversa em frases, aponta e inventa personagens."
+        }
+      },
+      "verificar": [
+        "Respeita a quantidade explícita de uma, sem despejar três opções.",
+        "Adequada a cinco anos, com escolha e participação, sem prometer melhora escolar."
+      ]
+    }
+  ]
+}

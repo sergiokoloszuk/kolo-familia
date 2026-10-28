@@ -66,9 +66,9 @@ export const GUIAS_TEMATICOS: readonly GuiaTematico[] = [
   {
     chave: "foco", nome: "Atenção com Propósito",
     proposito: "Facilitar começar, acompanhar, pausar e retomar atividades que façam sentido.",
-    consultar: "interesses, quando sustenta atenção, início/continuidade, movimento, ambiente, energia e compreensão da tarefa",
+    consultar: "observações da mãe em casa, interesses, quando sustenta atenção, início/continuidade, movimento, ambiente, energia, compreensão da tarefa e tentativas que já ajudaram",
     perguntas: ["A dificuldade maior é começar, continuar ou retomar?", "Como fica a atenção em algo de que gosta?", "Que diferença fazem o ambiente, o movimento ou uma demonstração?"],
-    diferenciar: "Atenção varia com tarefa e contexto; movimento não prova desatenção. Timer é uma possibilidade, não uma duração obrigatória.",
+    diferenciar: "Atenção varia com tarefa e contexto; movimento não prova desatenção. Timer é uma possibilidade, não uma duração obrigatória. Brincadeira é jogo por si, não seguir ordens com um título divertido.",
   },
   {
     chave: "rotina", nome: "Organização do Dia",
@@ -140,11 +140,20 @@ export function blocoAberturaTematica(guia: GuiaTematico, canal: "web" | "whatsa
 Este turno é somente a entrada em ${guia.nome}, não um relato de dificuldade nem um pedido de intervenção. A prioridade é apresentar e abrir possibilidades, não aplicar o roteiro de uma orientação ou investigar uma lacuna decisiva.
 Comece com uma saudação humana, mantendo a identidade Ayla, e explique em uma frase como pode ajudar nesta área: ${guia.proposito}
 Leia o conteúdo recebido sobre esta pessoa, inclusive texto livre e histórico, não apenas rótulos de campos. Retome um ou dois fatos pertinentes com "Pelo que você já me contou…"; mostre como eles podem orientar a ajuda. Não deduza falta de informação só porque o texto não tem um rótulo estruturado. Não pergunte novamente se sustenta atenção em interesses quando isso já foi contado.
+${guia.chave === "foco" ? "Para saber se há dados de Foco, considere também relatos em texto livre como 'mantém atenção quando está engajada'. Quando já há esse relato, resuma e ofereça os caminhos, sem acumular um questionário antes do menu. Conhecer interesses ou comunicação não prova esse padrão. Se só conhece interesses, retome-os como possibilidades e faça até três perguntas em bullets sobre a atenção que ainda falta conhecer; não substitua essas lacunas apenas pelo menu." : ""}
 Se já há informações do tema, ofereça quatro caminhos em bullets, com destaque e um emoji funcional: retrato e conquistas; orientações práticas; atividades adequadas à idade; crenças e reflexão. Descreva cada caminho com uma possibilidade concreta ligada à área. Não escreva apenas uma pergunta e encerre.
 Se faltam informações relevantes, reconheça o que já sabe e liste só o que falta conhecer, em até três bullets. Não invente lembranças, não anuncie perfil/cadastro e não transforme esta abertura num plano pronto. Biblioteca não é relato da família. Uma consulta indisponível não prova ausência de informação.
 Feche convidando a escolher um caminho ou contar livremente ${canal === "whatsapp" ? "por texto ou áudio" : "por texto ou pelo botão de áudio, quando disponível"}. Não é preciso seguir uma lista nem responder tudo de uma vez.
 </abertura_de_area>`;
 }
+
+/** Prioridade do pedido no piloto web; não muda perfil, tema ou classificação. */
+export const CONDUCAO_CASO_FOCO = `<pedido_de_orientacao_foco>
+A interlocutora é quem pode experimentar o apoio em casa. Quando relata que a professora disse "se distrai/não termina", comece pelo que ela já observa em casa e por uma experiência doméstica possível. Não abra com mensagem para professora, lista de perguntas para escola ou adaptações de sala: isso pode vir depois, como complemento. Se ela pedir explicitamente o que a escola pode mudar, atenda esse pedido.
+Use os dados de atenção já recebidos; se já sustenta atenção na cozinha ou em outro interesse, não pergunte isso outra vez. Descubra só a lacuna que muda a ajuda: em outras situações, não inicia, perde a sequência ou não retoma? A pergunta pode acompanhar orientação já útil, sem depender de uma resposta da escola.
+Na primeira parte da resposta, ofereça algo que a mãe possa observar ou testar no cotidiano: por exemplo, primeiro passo visível para iniciar, pista da etapa atual para continuar, ou marcação do ponto de parada para retomar. Escolha pelo relato e explique com uma fala pronta; não imponha todas as estratégias nem acrescente dever escolar. Meça apoio necessário e participação, não só terminar no prazo. Não prometa transferência automática para a sala.
+Feche com caminhos úteis à família: analisar uma situação em casa, adaptar uma atividade real ou criar uma brincadeira. Apoio escolar é complementar, não a condição para ela começar.
+</pedido_de_orientacao_foco>`;
 
 export function apoioTematico(skills: readonly string[], canal: "web" | "whatsapp") {
   const guias = guiasDoTurno(skills);

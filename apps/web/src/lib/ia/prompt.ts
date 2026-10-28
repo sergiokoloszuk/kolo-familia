@@ -4,9 +4,9 @@ import type { SkillRow } from "./router";
 import type { Intencao } from "./intencao";
 import { MARCADOR_PLANO } from "./marcadores";
 import { pronomesPara } from "@/lib/ayla/pronomes";
-import { BLOCO_PEDIDO_BRINCADEIRA, blocoMecanicasBrincadeira, pedidoExplicitoDeBrincadeira } from "@/lib/ayla/pedido-brincadeira";
+import { BLOCO_PEDIDO_BRINCADEIRA, contratoPedidoBrincadeira, blocoMecanicasBrincadeira, pedidoExplicitoDeBrincadeira } from "@/lib/ayla/pedido-brincadeira";
 import { CONDUCAO_COM_EVIDENCIA, FORMATO_RESPOSTA_RICA, qualidadeRespostaV2Ativa } from "@/lib/ayla/qualidade-resposta";
-import { apoioTematico, aberturaTematicaDoTurno, blocoAberturaTematica } from "@/lib/conducao/temas-conversa";
+import { apoioTematico, aberturaTematicaDoTurno, blocoAberturaTematica, CONDUCAO_CASO_FOCO } from "@/lib/conducao/temas-conversa";
 import { DIRETRIZES_BRINCADEIRA, REGRA_BRINCADEIRA_SE_SURGIR } from "@/lib/conducao/brincadeira-diretrizes";
 // NÚCLEO DE CONDUÇÃO — fonte única compartilhada com a Ayla (WhatsApp):
 // identidade + norte, princípios, regra de sequência, exemplos, piso e tom.
@@ -537,6 +537,7 @@ export function assemblePrompt(params: {
 
   const conversaRica = modo.kind === "conversa" && qualidadeRespostaV2Ativa() &&
     intencao !== "crise" && intencao !== "desabafo";
+  const pilotoFoco = conversaRica && (tema ?? skills[0]?.name) === "foco";
   const aberturaDeArea = conversaRica ? aberturaTematicaDoTurno(userInput, skills.map((s) => s.name)) : null;
   const bibliotecaTematica = conversaRica && !ctx.base2.length
     ? apoioTematico(skills.map((s) => s.name), "web").biblioteca : "";
@@ -579,9 +580,11 @@ export function assemblePrompt(params: {
   // produto e fica em cache.
   const notasDoTurno = [
     aberturaDeArea ? blocoAberturaTematica(aberturaDeArea, "web") : "",
-    modo.kind === "conversa" && pedidoExplicitoDeBrincadeira(userInput)
+    pilotoFoco && !aberturaDeArea && !pedidoExplicitoDeBrincadeira(userInput, true)
+      ? CONDUCAO_CASO_FOCO : "",
+    modo.kind === "conversa" && pedidoExplicitoDeBrincadeira(userInput, pilotoFoco)
       ? (conversaRica
-        ? `${DIRETRIZES_BRINCADEIRA}\n${BLOCO_PEDIDO_BRINCADEIRA}\n${blocoMecanicasBrincadeira(userInput)}`
+        ? `${DIRETRIZES_BRINCADEIRA}\n${pilotoFoco ? contratoPedidoBrincadeira(true) : BLOCO_PEDIDO_BRINCADEIRA}\n${blocoMecanicasBrincadeira(userInput)}`
         : `<pedido_explicito_de_brincadeira>Ofereça três alternativas de jogo com mecânicas distintas, para experimentar uma agora e guardar outras para depois. ${DIRETRIZES_BRINCADEIRA}\n${blocoMecanicasBrincadeira(userInput)}</pedido_explicito_de_brincadeira>`)
       : "",
     modo.kind === "output_type" && modo.outputType.key === "brincadeiras"

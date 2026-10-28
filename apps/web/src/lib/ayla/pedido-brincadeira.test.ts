@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import {
   BLOCO_PEDIDO_BRINCADEIRA,
+  contratoPedidoBrincadeira,
   auditarBrincadeiras,
   blocoLimitesSensoriaisBrincadeira,
   blocoMecanicasBrincadeira,
@@ -14,6 +15,25 @@ import {
 } from "./pedido-brincadeira";
 
 describe("pedido explícito de brincadeira", () => {
+  it("reconhece perguntas naturais somente quando o piloto pede essa ampliação", () => {
+    for (const texto of ["teria alguma brincadeira para melhorar atenção?", "Ela adora massinha. Tem brincadeiras para atenção?", "Há jogos para fazermos juntas?"]) {
+      expect(pedidoExplicitoDeBrincadeira(texto, true), texto).toBe(true);
+      expect(pedidoExplicitoDeBrincadeira(texto), texto).toBe(false);
+    }
+    for (const texto of ["Ela tem brincadeiras favoritas.", "Ontem ela brincou de massinha.", "A escola tem jogos na sala."]) {
+      expect(pedidoExplicitoDeBrincadeira(texto, true), texto).toBe(false);
+    }
+  });
+  it("Foco tem três alternativas por padrão sem manter uma ordem concorrente de uma só", () => {
+    const bloco = contratoPedidoBrincadeira(true);
+    expect(bloco).toContain("ofereça TRÊS opções completas");
+    expect(bloco).toContain("pedir explicitamente apenas uma ou outra quantidade");
+    expect(bloco).toContain("Interesses são portas de entrada, não limites");
+    expect(bloco).toContain("Em cada opção, apresente");
+    expect(bloco).not.toContain("exatamente UMA mecânica");
+    expect(bloco).not.toContain("sem oferecer alternativas");
+    expect(contratoPedidoBrincadeira()).toBe(BLOCO_PEDIDO_BRINCADEIRA);
+  });
   it("reconhece a fala interna da Manu e sinônimos de pedido", () => {
     expect(pedidoExplicitoDeBrincadeira("Quero uma ideia de brincadeira para ajudar a Manu com o mercado.")).toBe(true);
     expect(pedidoExplicitoDeBrincadeira("Pode me sugerir um jogo para fazermos juntos?")).toBe(true);

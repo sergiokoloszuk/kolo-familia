@@ -10308,6 +10308,73 @@ autenticada e aceite. Relatório de entrega atualizado; PEND-208 aberta,
 PEND-104 inalterada. Não entregar o link como Preview funcional sem essas
 provas. Veredito do teste humano: **BLOQUEADO**.
 
+**CONFIGURAÇÃO GRAVADA — 27/10/2026; REDEPLOY AGUARDA REAUTENTICAÇÃO.** Após
+confirmação humana específica, foram criadas entradas separadas somente para
+`preview` / `codex/ayla-qualidade-brincadeiras`: `SUPABASE_SERVICE_ROLE_KEY`,
+`OPENAI_API_KEY` e `ANTHROPIC_API_KEY` como Secret; URL e chave anônima do
+Supabase e `IA_PROVIDER=openai` como Config. Chave pública verificada como
+anônima antes de expor no cliente. Valores não impressos, sem arquivo de
+segredos novo; entradas de produção não editadas. A Vercel recusou os dois
+campos `NEXT_PUBLIC_` no lote Secret, mas persistiu as três credenciais:
+leitura de volta detectou a escrita parcial e evitou duplicação. O complemento
+Config foi salvo e as seis entradas foram conferidas por nome/tipo/branch.
+Health antes do novo deploy: SHA `51600b8`, flags de candidata e isolamento
+ligadas, dependências ainda ausentes no runtime. Ambos os crons consultados
+no navegador retornaram `preview_somente_conversa`, sem autenticação ou envio.
+O redeploy foi preparado a partir de `76mDwK3PBCJ7NWgGwnVDmBuKcbWi`, com
+Preview e branch corretos, mas a Vercel exigiu código de reautenticação por
+e-mail. Agente não enviou nem preencheu código; titular deve concluir no
+painel. Não usar push/API como alternativa para contornar a verificação.
+Nenhum novo deploy, conversa ou escrita no perfil foi comprovado. Registros
+ficam locais, sem commit/push enquanto essa autorização estiver pendente.
+PEND-208 permanece aberta; PEND-104 inalterada. **BLOQUEADO** para teste humano
+até concluir reautenticação, deploy, leitura de configuração efetiva e login.
+
+**PILOTO FOCO ESCOLHIDO — 28/10/2026, LOCAL E SEM BASE44.** Karina escolheu
+Foco como primeiro tema de aceite na Web, no lugar de Alimentação. Bancada
+existente estendida: cinco cenários sintéticos, nove turnos por rodada, sem
+leitura/escrita de conta familiar. Baseline congelado e candidata preservados
+em `docs/auditorias/ayla-piloto-foco-2026-10-28-{baseline-1,candidata-1}.json`.
+O baseline classificou pedido de ideias como desabafo e perdeu o formato rico;
+a candidata corrigiu esse caso e perguntou pelas lacunas de atenção quando
+só havia interesses conhecidos. Refinamentos locais restritos a Foco com a
+flag V2, sem alterar modelo, perfis, outros temas ou produção. Teste de
+instrução não garante classificação correta: a repetição com modelo real é
+prova separada. Permanecem ressalvas de naturalidade, ofertas e manutenção da
+tarefa concreta; não há aceite editorial nem smoke autenticado. Contagens de
+testes e limites no relatório de entrega. PEND-208 aberta; PEND-104 inalterada;
+nenhum catálogo importado, commit ou push nesta etapa. Não declarar a Preview
+disponível com base nas respostas da bancada. **BLOQUEADO** para produção.
+
+**ALINHAMENTO E PREVIEW RECONFERIDOS — 28/10/2026.** Karina aprovou a direção
+da simulação Foco: começar por observações e experiências possíveis em casa;
+escola complementar. Pedidos de brincadeira recebem três propostas completas
+e distintas, salvo quantidade diferente pedida; interesses não limitam todas
+as opções. Exemplos de cinco anos não são fatos da Manu. Decisões na SPEC;
+incorporação ao contrato/modelo real e nova rodada ainda pendentes. Health em
+`2026-10-28T19:27:55.721Z`: Preview `51600b8`, V2/isolamento ligados, banco e
+conversa não configurados, segredos ainda ausentes no runtime. Redeploy no
+branch correto voltou a exigir reautenticação por e-mail; titular deve concluir
+na Vercel. Nenhum novo deploy, commit/push, teste autenticado ou escrita em
+perfil. PEND-208 aberta; PEND-104 inalterada. **BLOQUEADO** para teste na Web.
+
+**PILOTO FOCO IMPLEMENTADO LOCALMENTE; CONFIGURAÇÃO RESOLVIDA — 28/10/2026.**
+A titular concluiu reautenticação; redeploy Preview Gtdkqzrsw87tkZQKrPP2CZW1L13h
+Ready, SHA ainda `51600b8`. Health `2026-10-28T19:45:28.384Z`: banco acessível,
+credenciais presentes, conversa configurada/OpenAI, V2 e isolamento ligados;
+os dois crons continuaram exibindo `preview_somente_conversa`. Bloqueio de
+reautenticação resolvido, sem contorno. Ajustes candidatos locais: classificação
+do pedido atual, abertura conforme fatos, orientação de casa primeiro, três
+jogos distintos por padrão, quantidade explícita respeitada, interesses opcionais,
+explicação da habilidade e vínculo pela ação compartilhada, repertório aberto
+a memória/imitação/movimento/percursos. Respiração pode ser pausa confortável,
+nunca condição para brincar. Rodadas sintéticas preservadas em JSON; nenhuma
+escrita no cadastro da Manu. Material integral da pós/PEND-104 e catálogo Brinca
+não foram integrados. Regressão: 4.296 passaram, 7 ignorados; build webpack,
+TypeScript e 107 páginas concluídos; 62 testes dirigidos e lint da versão final
+passaram. Publicação candidata e teste autenticado
+com aceite humano ainda pendentes; PEND-208 aberta, PEND-104 inalterada.
+
 **PUBLICAÇÃO AUTORIZADA COM RESSALVAS (28/09).** A diretriz compartilhada de
 brincadeira cobre pedido direto, conversa web, apoio, aprofundamento e proposta
 espontânea, respeitando idade, comunicação, Perfil, segurança e quantidade do

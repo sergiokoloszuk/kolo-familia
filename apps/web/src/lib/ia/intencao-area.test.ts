@@ -10,6 +10,35 @@ const responder = (texto: string) => {
   mock.stream.mockReturnValue({ finalMessage: mock.final });
 };
 describe("classificador de troca usa a chamada existente", () => {
+  it("piloto Foco distingue pedido atual de ideias/ajuda de desabafo, sem nova chamada", async () => {
+    process.env.AYLA_QUALIDADE_RESPOSTA_V2 = "on";
+    responder("duvida|foco|-|-");
+    const antes = mock.stream.mock.calls.length;
+    const r = await classificarIntencao({ supabase: {} as never, familyId: "f1",
+      texto: "Me dê ideias de outras coisas que posso te pedir sobre isso.", areaEscolhida: "foco" });
+    expect(r.intencao).toBe("duvida");
+    expect(mock.stream.mock.calls.length - antes).toBe(1);
+    const prompt = mock.stream.mock.lastCall?.[0].system[0].text;
+    expect(prompt).toContain("classifique o PEDIDO DA ÚLTIMA MENSAGEM");
+    expect(prompt).toContain("Uma necessidade imediata ou risco continua sendo crise");
+  });
+  it("refinamento de Foco fica fora dos outros temas e do rollback", async () => {
+    responder("desafio|sono|-|-");
+    for (const [flag, area] of [["on", "sono"], ["off", "foco"]]) {
+      process.env.AYLA_QUALIDADE_RESPOSTA_V2 = flag;
+      await classificarIntencao({ supabase: {} as never, familyId: "f1", texto: "Quero ajuda", areaEscolhida: area });
+      expect(mock.stream.mock.lastCall?.[0].system[0].text).not.toContain("No piloto de Foco");
+    }
+  });
+  it("não reescreve crise ou desabafo verdadeiro com uma heurística de palavras", async () => {
+    process.env.AYLA_QUALIDADE_RESPOSTA_V2 = "on";
+    for (const intencao of ["crise", "desabafo"]) {
+      responder(`${intencao}|foco|-|-`);
+      const r = await classificarIntencao({ supabase: {} as never, familyId: "f1",
+        texto: intencao === "crise" ? "Preciso de ajuda agora, ela está se machucando" : "Hoje só quero desabafar", areaEscolhida: "foco" });
+      expect(r.intencao).toBe(intencao);
+    }
+  });
   it("recebe a oferta final mesmo depois de uma orientação longa", async () => {
     process.env.AYLA_QUALIDADE_RESPOSTA_V2 = "on";
     responder("desafio|nutricional|montar a próxima refeição|-");

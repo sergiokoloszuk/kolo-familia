@@ -371,3 +371,103 @@ vira memória factual. Registrar origem por turno e resultado de escrita.
 Essas duas camadas ampliam a Entrega A. A Preview da conversa pode demonstrar
 texto e navegação antes delas, mas não será declarada entrega completa nem
 produção aprovada até as provas de avaliação e memória serem cumpridas.
+
+## Piloto escolhido em 28/10/2026 — Foco, sem Base44
+
+Karina escolheu **Foco** como primeiro tema para demonstrar a qualidade na Web,
+sem integração com o Base44. A decisão substitui Alimentação como primeiro
+piloto, não elimina os outros temas nem aprova produção. Risco CRÍTICO mantido.
+O código existente de áreas, contexto, produtor e apresentação será reutilizado;
+nenhuma migração, modelo novo, perfil paralelo ou importação do Brinca.
+
+Aceite editorial: apresentação com propósito; resumo fiel do conhecido; lacunas
+em até três bullets e convite a áudio quando faltam dados; orientação completa
+com explicação, ações e fala pronta; reflexão sobre a crença expressa sem culpa;
+opções pertinentes para continuar; informação nova muda a orientação. Atenção
+em interesses não prova má vontade; movimento não é prova de desatenção. Pessoa
+adulta preserva sua autonomia. Interesse sozinho não prova padrão de atenção.
+
+Primeira prova: cinco cenários sintéticos e nove turnos no engine/compositor
+reais da Web, classificadores e gerador de IA reais, biblioteca apenas leitura.
+Inclui referência adulta fornecida, abertura sem dados, dados parciais,
+iniciação → refinamento por medo de errar e dois irmãos com alvo explícito.
+Não lê/escreve o cadastro da Manu. Registro de expectativas não é nota de
+aprovação; cada resposta integral fica preservada para revisão humana.
+
+Baseline e repetição candidata estão em
+`docs/auditorias/ayla-piloto-foco-2026-10-28-{baseline-1,candidata-1}.json`.
+O pedido de ideias foi classificado como `desabafo` no baseline, retirando o
+formato rico; a candidata classificou como `duvida` e entregou exemplos em
+bullets. Na abertura parcial, o baseline ofereceu apenas caminhos; a candidata
+retomou interesses e perguntou pelo padrão de atenção desconhecido. Correções
+locais limitadas a Foco com `AYLA_QUALIDADE_RESPOSTA_V2` ativa, sem nova chamada
+de IA ou heurística que sobrescreva uma classificação de crise/desabafo.
+
+Os demais portões e bloqueios desta SPEC permanecem abertos. Uma repetição
+melhor não prova estabilidade, equivalência ao Base44, apresentação no navegador,
+isolamento remoto, memória persistida ou consulta integral à pós. A saída sobre
+Lia ainda trocou a tarefa concreta por um exemplo de desenho e terminou com
+ofertas sem destaque uniforme: ressalvas para o aceite, não aprovação automática.
+A abertura conhecida ainda acumulou perguntas e menu; revisar redundância e
+carga antes de aprovar. A nota de abertura é compartilhada, mas esta rodada
+não comprova o canal WhatsApp. Testes e build no relatório de entrega.
+Antes de ampliar: revisão por Karina, questões novas e conversa autenticada na
+Preview com os dados existentes da Manu, sem gravar como fatos os exemplos
+sintéticos. Reautenticação/deploy pendentes não podem ser contornados por push.
+
+### Alinhamento humano de Foco após a simulação — 28/10/2026
+
+A resposta sobre distração em sala recebeu avaliação positiva de Karina, com
+ajustes: priorizar o que a mãe observa e pode experimentar em casa; escola é
+fonte complementar, não condição para começar. Diferenciar iniciar, sustentar,
+sequenciar e retomar em atividades reais e convites lúdicos, sem transformar a
+casa em extensão da cobrança escolar nem prometer transferência automática.
+Consultar os fatos já disponíveis antes das perguntas; não repetir perguntas
+sobre interesse/atenção que já foram respondidas. Perguntar por exemplos e apoios
+domésticos ainda desconhecidos, sem inventar que o perfil foi consultado.
+
+Ao pedir brincadeiras, oferecer três propostas completas com mecânicas
+distintas, salvo quantidade diferente pedida pela família. Cada uma deve
+permitir começar sem improvisar, com materiais, convite, participação real,
+surpresa/virada e continuidade. A criança ou pessoa adulta também escolhe e
+conduz; exercício de obedecer ordens não vira brincadeira só por ganhar título.
+Interesses são portas de entrada, não uma restrição a todas as opções: pode
+haver propostas sem cozinhar, bonecas, água ou massinha, mantendo adequação à
+idade, comunicação, preferências e limites. Quando o interesse for usado, deve
+ajudar a experiência, não apenas trocar a decoração de uma mecânica repetida.
+
+Os exemplos de cinco anos e interesses são **cenários de simulação**, não
+atualizações do cadastro da Manu, e não aprovação/publicação de atividade KB.
+Este alinhamento é aceite de direção editorial, não prova de que o modelo no
+app já a segue. Falta incorporá-lo ao contrato candidato e repetir os casos
+exatos com o produtor real, preservando o baseline e os controles de rollback.
+
+Em `2026-10-28T19:27:55.721Z`, health da Preview ainda servia `51600b8`, flag
+V2 e isolamento ligados, `db.ok=false`, credenciais de servidor/IA ausentes no
+runtime e `conversa_web_configurada=false`. A tentativa de redeploy somente
+Preview, branch exato e sem cache, voltou a exigir **Reauthenticate**. Código
+de e-mail deve ser solicitado/preenchido pela titular diretamente na Vercel.
+Nenhum novo deploy, código de autenticação, commit/push ou conversa de QA foi
+concluído nesta etapa. Não pedir teste da família antes da configuração efetiva.
+
+### Complementos editoriais e configuração resolvida — 28/10/2026
+
+Interesse é pista opcional também nas orientações, não assunto obrigatório.
+Personalizar inclui idade, comunicação, contexto, experiências e apoios já
+conhecidos; ampliar o repertório pode ser mais pertinente do que repetir o favorito.
+No piloto de Foco, cada brincadeira explica brevemente **O que vocês exercitam**,
+ligando a habilidade à ação real do jogo e, quando presente, ao vínculo pela
+iniciativa acolhida, criação conjunta e diversão compartilhada. Sem lista genérica,
+promessa de resultado ou transferência automática para a sala de aula.
+O repertório pode incluir memória, imitação com troca de papéis, movimento,
+percursos e chefinho mandou com iniciativa também da criança. Banco temático
+orienta e amplia, não limita a criação. Pausas de movimento/respiração são
+possibilidades pertinentes, sem ritual obrigatório nem condição para participar.
+
+A titular concluiu a reautenticação. O redeploy Preview Gtdkqzrsw87tkZQKrPP2CZW1L13h
+ficou Ready com SHA `51600b8`; health em `2026-10-28T19:45:28.384Z` confirmou
+`db.ok=true`, credenciais necessárias presentes, `conversa_web_configurada=true`,
+provedor OpenAI e isolamento Preview ligado. Os dois crons continuaram exibindo
+`preview_somente_conversa`. O bloqueio de reautenticação desta etapa foi resolvido;
+as provas anteriores permanecem como histórico. A conversa exige login da titular.
+Esse deploy ainda não contém os ajustes locais de Foco e não prova aceite humano.

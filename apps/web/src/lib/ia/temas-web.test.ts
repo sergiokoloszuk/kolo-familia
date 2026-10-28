@@ -36,6 +36,36 @@ const rodar = (area = "nutricional", userInput = "Quero ajuda na alimentação")
     membroAtipicoId: "m1", conversaId: "c1", userInput, temaEscolhido: area });
 };
 describe("conversa temática pelo engine e compositor reais (classificador/contexto simulados)", () => {
+  it("seleciona três jogos completos no Foco, inclusive no pedido natural da simulação", async () => {
+    mock.classify.mockResolvedValue({ intencao: "desafio", tema: "foco", aceite: null, trocaTema: null });
+    for (const pedido of ["teria alguma brincadeira para melhorar atenção?", "Quero apenas uma brincadeira bem completa."]) {
+      const r = await rodar("foco", pedido);
+      const mensagens = JSON.stringify(r.messages);
+      expect(mensagens).toContain("ofereça TRÊS opções completas");
+      expect(mensagens).toContain("pedir explicitamente apenas uma ou outra quantidade");
+      expect(mensagens).not.toContain("exatamente UMA mecânica");
+      expect(mensagens).toContain("Próxima rodada: com variação concreta");
+    }
+  });
+  it("não muda quantidade dos outros temas nem injeta o piloto com flag off", async () => {
+    const outro = JSON.stringify((await rodar("nutricional", "Quero uma brincadeira")).messages);
+    expect(outro).toContain("exatamente UMA mecânica");
+    expect(outro).not.toContain("ofereça TRÊS opções completas");
+    process.env.AYLA_QUALIDADE_RESPOSTA_V2 = "off";
+    expect(JSON.stringify((await rodar("foco", "teria alguma brincadeira?")).messages)).not.toContain("ofereça TRÊS opções completas");
+  });
+  it("prioriza a casa na nota do caso de Foco, sem misturar abertura, jogo ou outro tema", async () => {
+    mock.classify.mockResolvedValue({ intencao: "desafio", tema: "foco", aceite: null, trocaTema: null });
+    const caso = await rodar("foco", "A professora falou que ela se distrai");
+    expect(JSON.stringify(caso.messages)).toContain("<pedido_de_orientacao_foco>");
+    for (const pedido of ["Quero explorar Atenção e Concentração.", "teria alguma brincadeira?"]) {
+      expect(JSON.stringify((await rodar("foco", pedido)).messages)).not.toContain("<pedido_de_orientacao_foco>");
+    }
+    mock.classify.mockResolvedValue({ intencao: "crise", tema: "foco", aceite: null });
+    expect(JSON.stringify((await rodar("foco", "Preciso de ajuda agora")).messages)).not.toContain("<pedido_de_orientacao_foco>");
+    mock.classify.mockResolvedValue({ intencao: "desafio", tema: "sono", aceite: null });
+    expect(JSON.stringify((await rodar("sono", "Ela não dorme")).messages)).not.toContain("<pedido_de_orientacao_foco>");
+  });
   it("entrega perfil, biblioteca identificável e contrato rico ao produtor", async () => {
     const r = await rodar();
     const system = r.system.map((s) => s.text).join("\n");

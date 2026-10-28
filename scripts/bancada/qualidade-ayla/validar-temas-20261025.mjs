@@ -5,6 +5,7 @@ import { pathToFileURL } from "node:url";
 import { registerHooks } from "node:module";
 import { createClient } from "@supabase/supabase-js";
 import { referenciasBase44 } from "./casos-base44-referencia.mjs";
+import { casosPilotoFoco, casosAlinhamentoFoco } from "./casos-piloto-foco.mjs";
 const web = resolve(process.cwd(), "apps/web");
 registerHooks({ resolve(specifier, context, nextResolve) {
   if (specifier.startsWith("@/")) return nextResolve(pathToFileURL(resolve(web, "src", `${specifier.slice(2)}.ts`)).href, context);
@@ -48,17 +49,23 @@ const casos = [
 ];
 const comparativo = process.argv[2] === "referencias";
 const continuidade = process.argv[2] === "continuidade";
-const filtros = comparativo || continuidade ? [] : process.argv[2]?.split(",") ?? [];
-const casosDaRodada = continuidade ? referenciasBase44.filter((c) => ["ref_alimentacao", "ref_introducao_foco"].includes(c.id)) : comparativo ? referenciasBase44 : casos;
+const alinhamentoFoco = process.argv[2] === "foco-alinhamento";
+const pilotoFoco = process.argv[2] === "piloto-foco" || alinhamentoFoco;
+const exercitarEngine = continuidade || pilotoFoco;
+const filtros = comparativo || continuidade || pilotoFoco ? [] : process.argv[2]?.split(",") ?? [];
+const casosDaRodada = alinhamentoFoco ? casosAlinhamentoFoco : pilotoFoco ? casosPilotoFoco : continuidade ? referenciasBase44.filter((c) => ["ref_alimentacao", "ref_introducao_foco"].includes(c.id)) : comparativo ? referenciasBase44 : casos;
 const rotulo = process.env.AYLA_BANCADA_ROTULO ?? "";
 if (rotulo && !/^[a-z0-9-]+$/.test(rotulo)) throw new Error("Rótulo inválido");
-const arquivo = resolve(process.cwd(), `docs/auditorias/ayla-temas-modelo-2026-10-25${continuidade ? "-continuidade" : comparativo ? "-referencias-base44" : filtros.length ? "-reteste" : ""}${rotulo ? `-${rotulo}` : ""}.json`);
+const arquivo = resolve(process.cwd(), pilotoFoco
+  ? `docs/auditorias/ayla-piloto-foco-2026-10-28${alinhamentoFoco ? "-alinhamento" : ""}${rotulo ? `-${rotulo}` : ""}.json`
+  : `docs/auditorias/ayla-temas-modelo-2026-10-25${continuidade ? "-continuidade" : comparativo ? "-referencias-base44" : filtros.length ? "-reteste" : ""}${rotulo ? `-${rotulo}` : ""}.json`);
 if (existsSync(arquivo)) throw new Error("Referência já existe; use AYLA_BANCADA_ROTULO novo para preservar o histórico.");
-const saida = { data: new Date().toISOString(), escopo: "Pessoas fictícias, dados em memória; biblioteca e templates só GET; produtor OpenAI real; sem WhatsApp, mensagens externas, atualização de Perfil ou cobrança de família.", resultados: [] };
+const saida = { data: new Date().toISOString(), escopo: "Pessoas fictícias, dados em memória; biblioteca e templates só GET; produtor OpenAI real; sem WhatsApp, mensagens externas, atualização de Perfil ou cobrança de família.",
+  ...(pilotoFoco ? { piloto: "Foco na Web; saída do modelo, não entrega HTTP/visual, memória remota ou aprovação humana.", avaliacaoHumana: "PENDENTE" } : {}), resultados: [] };
 function salvar() { mkdirSync(dirname(arquivo), { recursive: true }); writeFileSync(arquivo, JSON.stringify(saida, null, 2) + "\n"); }
 async function produzir(caso, canal, flag = "on", historico = []) {
   process.env.AYLA_QUALIDADE_RESPOSTA_V2 = flag;
-  const mundo = montarMundo({ nomeMae: "Ana", criancas: [caso.pessoa] });
+  const mundo = montarMundo({ nomeMae: "Ana", criancas: [caso.pessoa, ...(caso.outrasPessoas ?? [])] });
   const db = { from(t) { return ["ayla_documentos", "boas_praticas", "specialist_prompt_templates"].includes(t) ? remote.from(t) : mundo.db.from(t); } };
   if (canal === "whatsapp") {
     const falhas = [];
@@ -72,12 +79,14 @@ async function produzir(caso, canal, flag = "on", historico = []) {
       regrasConcisao: ultimoSystem.split("\n").filter((l) => /700|uma (?:ideia|orientação)|curt[oa]|bolhas|uma frente|UMA UNIDADE/.test(l)).map((l) => l.slice(0, 1800)),
     };
   }
-  if (continuidade) {
+  if (exercitarEngine) {
     const conversaId = "00000000-0000-4000-8000-000000000001";
     mundo.db.semear("mensagens_skill", historico.map((h, i) => ({ conversa_id: conversaId, ...h, created_at: new Date(Date.UTC(2026, 9, 25, 12, 0, i)).toISOString(), metadata: { tema: caso.tema } })));
     const prompt = await prepararRespostaStream({ supabase: db, telemetria: mundo.db.cliente(), familyId: mundo.familyId, membroAtipicoId: mundo.membros[caso.pessoa.nome], conversaId, userInput: caso.mensagem, temaEscolhido: caso.tema });
     const r = await gerarConversacional({ provider: "openai", model: MODELO_CONVERSA.openai, system: prompt.system.map((b) => b.text).join("\n\n"), messages: prompt.messages, maxTokens: 2300, cacheSystem: true });
-    return { canal, flag, texto: r.texto, modelo: r.model, ms: r.ms, base2Ids: prompt.base2Ids, areaAtiva: prompt.areaAtiva, intencao: prompt.intencao };
+    return { canal, flag, texto: r.texto, modelo: r.model, ms: r.ms, base2Ids: prompt.base2Ids, areaAtiva: prompt.areaAtiva, intencao: prompt.intencao,
+      ...(pilotoFoco ? { fatosEntregues: { nome: prompt.ctx.membroFoco?.nome, idade: prompt.ctx.membroFoco?.idade, secoes: prompt.ctx.membroFoco?.secoes }, verificar: caso.verificar } : {}),
+    };
   }
   const selecionadas = skills.filter((s) => s.name === caso.tema);
   if (!selecionadas.length) throw new Error(`Skill inexistente: ${caso.tema}`);
@@ -87,9 +96,9 @@ async function produzir(caso, canal, flag = "on", historico = []) {
   return { canal, flag, texto: r.texto, modelo: r.model, ms: r.ms, base2Ids: flag === "on" ? apoioTematico([caso.tema], "web").secoes.map((s) => s.id) : [], fatosEntregues: { nome: ctx.membroFoco?.nome, idade: ctx.membroFoco?.idade, secoes: ctx.membroFoco?.secoes } };
 }
 for (const caso of casosDaRodada.filter((c) => !filtros.length || filtros.includes(c.id))) {
-  for (const canal of ["web", "whatsapp"]) {
+  for (const canal of (pilotoFoco ? ["web"] : ["web", "whatsapp"])) {
     const historico = [];
-    const mensagens = continuidade ? [caso.mensagem, "Quero a primeira opção que você ofereceu no fim.", "Me dê ideias de outras coisas que posso te pedir sobre isso."] : [caso.mensagem];
+    const mensagens = pilotoFoco ? caso.mensagens ?? [caso.mensagem] : continuidade ? [caso.mensagem, "Quero a primeira opção que você ofereceu no fim.", "Me dê ideias de outras coisas que posso te pedir sobre isso."] : [caso.mensagem];
     for (const [turno, mensagem] of mensagens.entries()) {
       const r = await produzir({ ...caso, mensagem }, canal, "on", historico);
       saida.resultados.push({ id: caso.id, turno, tema: caso.tema, mensagem, perfil: caso.pessoa, ...r });
@@ -99,7 +108,7 @@ for (const caso of casosDaRodada.filter((c) => !filtros.length || filtros.includ
   }
 }
 // Baseline off no mesmo pedido alimentar, sem alterar o artefato histórico da PR.
-for (const canal of (filtros.length || comparativo || continuidade ? [] : ["web", "whatsapp"])) {
+for (const canal of (filtros.length || comparativo || continuidade || pilotoFoco ? [] : ["web", "whatsapp"])) {
   const r = await produzir(casos[1], canal, "off");
   saida.resultados.push({ id: casos[1].id, tema: casos[1].tema, mensagem: casos[1].mensagem, perfil: casos[1].pessoa, ...r }); salvar();
 }

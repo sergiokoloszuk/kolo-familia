@@ -100,6 +100,8 @@ A INTENÇÃO é exatamente uma destas:
 - duvida: pergunta pontual e objetiva, busca uma informação curta.
 - desafio: uma dificuldade recorrente do dia a dia que ela quer ajuda pra lidar (sono, birra, escola, transições, alimentação). Este é o caso mais comum — na dúvida, escolha desafio.
 
+${qualidadeRespostaV2Ativa() && params.areaEscolhida === "foco" ? `No piloto de Foco, classifique o PEDIDO DA ÚLTIMA MENSAGEM, não o tom de uma fala anterior. Pedir exemplos do que pode perguntar ou possibilidades de ajuda é duvida, não desabafo. Pedir orientação sobre uma dificuldade é desafio, mesmo acompanhado de cansaço. Exemplos: "Me dê ideias de outras coisas que posso te pedir sobre isso" → duvida; "Estou exausta de chamar para a lição. Como ajudo sem brigar?" → desafio; "Hoje só quero desabafar, não quero sugestões" → desabafo. Uma necessidade imediata ou risco continua sendo crise; não a rebaixe por conter um pedido de ajuda.
+` : ""}
 ⚠️ RESPOSTA CURTA NÃO RECOMEÇA A CONVERSA. "sim", "quero", "vamos", "pode ser", "faz", "essa", "a segunda", "vamos começar por isso" continuam o que já estava acontecendo — olhe a conversa acima pra saber o quê. Nunca classifique uma dessas como se fosse uma mensagem nova e solta.
 
 O TEMA é o assunto do desenvolvimento sobre o qual se está falando. Use EXATAMENTE uma destas chaves, ou "-" se nenhuma servir:
