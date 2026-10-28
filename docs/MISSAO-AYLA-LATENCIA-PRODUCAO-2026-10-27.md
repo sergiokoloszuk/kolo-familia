@@ -23,17 +23,15 @@ ao lado: comando/CI, commit, URL do deploy ou consulta com data e amostra.
 - [x] 0.3 Commit local criado: `1d2f8bb`.
 - [x] 0.4 Testes diretamente afetados: 120/120.
 - [x] 0.5 Typecheck local passou após `next typegen`.
-- [ ] 0.6 Suíte completa verde: 4.206 testes passaram e 7 foram pulados; a
-  falha estrutural desta frente foi corrigida e passou isoladamente. Restam
-  uma dependência de rede no provider e dois timeouts de importação Stripe no
-  Windows; a decisão final pertence ao runner Linux do PR.
-- [ ] 0.7 Build verde: o build local foi bloqueado pelo proxy no carregamento
-  de Google Fonts; não vale como prova de compilação.
-- [ ] 0.8 Branch publicada, PR aberto, merge e deploy: ainda não realizados.
+- [x] 0.6 Suíte completa verde no runner Linux da GitHub Actions, no PR #151.
+- [x] 0.7 Build de produção verde no mesmo runner Linux.
+- [ ] 0.8 Branch publicada e PR #151 aberto; merge e deploy ainda não
+  realizados.
 
-**Estado atual da missão (28/10/2026):** Gate 1 passou. Gate 2 está bloqueado
-até a CI Linux provar instalação limpa, suíte e build; produção permanece
-bloqueada até os Gates 2–4 passarem.
+**Estado atual da missão (28/10/2026):** Gates 1 e 2 passaram. O PR #151 está
+aberto como rascunho e a CI Linux ficou verde. Gate 3 aguarda revisão
+independente; Gate 4 aguarda essa revisão e autorização humana específica para
+merge/deploy. Produção permanece bloqueada até os Gates 3–4 passarem.
 
 ---
 
@@ -79,29 +77,29 @@ integração com `origin/codex/black-friday-2026-core` e
 **Objetivo:** cumprir exatamente a CI do repositório antes de abrir caminho ao
 deploy.
 
-1. [ ] Rodar `npm ci` em ambiente limpo.
+1. [x] Rodar `npm ci` em ambiente limpo.
 2. [x] Rodar `node --test scripts/pendencias-index.test.mjs`.
 3. [x] Rodar `node scripts/pendencias-index.mjs --check`.
 4. [x] Rodar `npx next typegen` em `apps/web`.
 5. [x] Rodar `npx tsc --noEmit` em `apps/web`.
-6. [ ] Rodar a suíte completa com `npm test` em `apps/web`.
+6. [x] Rodar a suíte completa com `npm test` em `apps/web`.
 7. [x] Resolver os dois testes sensíveis à data em commit separado, ou provar
    que a `main` mais nova já os resolveu. Se a solução exigir mudar o produto,
    abrir frente própria; não esconder mudança funcional como ajuste de teste.
-8. [ ] Rodar `npx next build --webpack` em ambiente capaz de acessar as fontes.
-9. [ ] Não desabilitar TLS nem aceitar build parcial para atravessar o gate.
+8. [x] Rodar `npx next build --webpack` em ambiente capaz de acessar as fontes.
+9. [x] Não desabilitar TLS nem aceitar build parcial para atravessar o gate.
 
 **PASS quando:** todos os passos da CI terminam com código 0 em base limpa.
 
 **BLOQUEADO quando:** fontes externas, dependências ou runner impedem o build;
 o log do bloqueio deve ser anexado e a publicação não avança.
 
-**Estado: BLOQUEADO LOCALMENTE (28/10/2026).** Índice 5/5 e sincronizado;
-`next typegen` e `tsc --noEmit` passaram. Asserções temporais: 36/36; prova de
-continuidade: 71/71. Na suíte completa, 4.206 passaram e 7 foram pulados. O
-provider depende de uma recusa HTTP externa e recebeu `fetch failed`; a
-importação dinâmica Stripe excedeu 5 s neste Windows. `npm ci` e o build limpo
-dependem do runner Linux do PR, que decidirá este gate.
+**Estado: PASS (28/10/2026).** No PR #151, a GitHub Actions executou o workflow
+`CI` em runner Linux limpo: índice/IDs, `npm ci`, `next typegen`,
+`tsc --noEmit`, suíte completa e `next build --webpack` terminaram com código
+0. Run `40760820029`, job `123071947109`, commit `50e9219`, duração 6m12s.
+Isso resolveu a incerteza ambiental do Windows sem desabilitar TLS nem aceitar
+build parcial. O preview da Vercel também passou.
 
 ---
 
@@ -146,16 +144,21 @@ PR antes de este gate receber PASS final.
 
 **Objetivo:** tornar a integração revisável e só então autorizar merge.
 
-1. [ ] Publicar a branch de integração no remoto.
-2. [ ] Abrir PR para `main`, anexando o diagnóstico, a PEND-038 e este checklist.
-3. [ ] Conferir no PR que não há arquivos de outras frentes.
-4. [ ] Aguardar a GitHub Actions `CI` ficar verde em todos os passos.
+1. [x] Publicar a branch de integração no remoto.
+2. [x] Abrir PR para `main`, anexando o diagnóstico, a PEND-038 e este checklist.
+3. [x] Conferir no PR que não há arquivos de outras frentes.
+4. [x] Aguardar a GitHub Actions `CI` ficar verde em todos os passos.
 5. [ ] Registrar aprovação da revisão.
 6. [ ] Registrar autorização humana explícita para merge/deploy.
 
 **PASS quando:** PR aprovado, CI verde e merge autorizado.
 
 **BLOQUEADO quando:** CI, revisão ou autorização estiver pendente.
+
+**Estado: BLOQUEADO (28/10/2026).** PR em rascunho
+`https://github.com/sergiokoloszuk/kolo-familia/pull/151`; branch publicada,
+diff restrito aos nove arquivos da missão, CI verde. Faltam revisão
+independente e autorização humana específica para merge/deploy.
 
 ---
 
@@ -286,9 +289,9 @@ outras frentes.
 | Gate | Estado | Evidência |
 |---|---|---|
 | 1 · Integração | PASS | Base `25e8891`; simulações de merge sem conflito |
-| 2 · CI | BLOQUEADO | Provas locais parciais; falta runner Linux limpo |
+| 2 · CI | PASS | PR #151; run `40760820029`, job `123071947109`, 6m12s |
 | 3 · Auditoria | BLOQUEADO | Auditoria técnica passou; falta revisão independente |
-| 4 · PR/aprovação | BLOQUEADO | Branch e PR ainda não publicados |
+| 4 · PR/aprovação | BLOQUEADO | PR #151 e CI verdes; faltam revisão e autorização de merge |
 | 5 · Publicação | BLOQUEADO | Depende dos Gates 2–4 |
 | 6 · Smoke | BLOQUEADO | Depende do deploy |
 | 7 · Métrica 72 h | BLOQUEADO | Depende do deploy e `n >= 20` |

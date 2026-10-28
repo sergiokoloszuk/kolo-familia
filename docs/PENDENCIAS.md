@@ -108,7 +108,7 @@ substitui a prioridade atual de segurança nem a análise de produção.
 | [PEND-035](#pend-035) | ✅ BAIXADA · O objetivo do Plano confundia BARREIRA com OBJETIVO FINAL | P1 | CONCLUÍDA |
 | [PEND-036](#pend-036) | O contexto mais recente não prevalece — o Plano reoferece o que a conversa acabou de descartar | P1 | ABERTA |
 | [PEND-037](#pend-037) | Fato × hipótese — o Plano afirma causas sem fonte rastreável | P2 | ABERTA |
-| [PEND-038](#pend-038) | Latência percebida no WhatsApp — e a resposta que chega em vários balões | P1 pós-rollout | ABERTA · MEDIDA · CORREÇÃO LOCAL NÃO PUBLICADA |
+| [PEND-038](#pend-038) | Latência percebida no WhatsApp — e a resposta que chega em vários balões | P1 pós-rollout | ABERTA · MEDIDA · PR #151 COM CI VERDE · AGUARDANDO REVISÃO/MERGE |
 | [PEND-039](#pend-039) | BIA-5 · Bancada permanente de golden cases (e a prova de recuperação da BIA) | P1 | PRONTA PARA IMPLEMENTAR |
 | [PEND-040](#pend-040) | Observabilidade de IA — a conversa Web e o Plano não existem em api_calls | P1 | ABERTA |
 | [PEND-041](#pend-041) | O rastro do canal web não distingue conversa de geração de artefato | P2 | ABERTA |
@@ -933,7 +933,7 @@ Aberta em: 2026-08-11 · Origem: decisão de 11/08/2026
 
 ### PEND-038
 **Latência percebida no WhatsApp — e a resposta que chega em vários balões**
-Bloco: **A · Condução** · Prioridade: **P1 pós-rollout** · Estado: **ABERTA · MEDIDA · CORREÇÃO LOCAL NÃO PUBLICADA**
+Bloco: **A · Condução** · Prioridade: **P1 pós-rollout** · Estado: **ABERTA · MEDIDA · PR #151 COM CI VERDE · AGUARDANDO REVISÃO/MERGE**
 Aberta em: 2026-08-11 · Origem: teste real (Karina/Manu, 11:25–11:28)
 
 > **Paralela à 3b, não depois dela.** Não adianta a inteligência melhorar se a
@@ -982,6 +982,15 @@ Aberta em: 2026-08-11 · Origem: teste real (Karina/Manu, 11:25–11:28)
   no runner Linux do PR; o build local segue bloqueado pelo proxy de Google
   Fonts. Detalhes em
   `docs/analises/AYLA-LATENCIA-WHATSAPP-2026-10-27.md`.
+- **Prova no runner Linux (28/10/2026):** branch `codex/ayla-latencia`
+  publicada e PR em rascunho #151 aberto contra `main`. A GitHub Actions
+  executou índice/IDs, `npm ci`, `next typegen`, `tsc --noEmit`, suíte completa
+  e `next build --webpack` com código 0 no commit `50e9219` (run
+  `40760820029`, job `123071947109`, 6m12s). O preview da Vercel também passou.
+  Isso prova compilação e regressão em ambiente limpo; **não prova produção**:
+  faltam revisão independente, autorização de merge, deploy/health, smoke
+  passivo e medição pós-deploy. Checklist:
+  `docs/MISSAO-AYLA-LATENCIA-PRODUCAO-2026-10-27.md`.
 - **Medir separadamente**, no caminho real, antes de otimizar qualquer coisa:
   tempo até começar a responder · tempo total · chamadas ao roteador · chamadas
   ao modelo · queries · geração do Plano · geração do PDF · envio ao WhatsApp ·
