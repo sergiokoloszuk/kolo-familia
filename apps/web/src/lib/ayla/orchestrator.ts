@@ -4528,6 +4528,7 @@ async function processInboundInterno(
               // ⚠️ O CONVITE É A ÚLTIMA LINHA, SEMPRE. `exp.texto` vem primeiro e
               // inteiro; sem convite, a string é exatamente a de antes.
               texto: conviteTexto ? `${exp.texto}\n\n${conviteTexto}` : exp.texto,
+              agruparConteudo: true,
               category: "reativa",
               // ⚠️ O TIPO SÓ MUDA QUANDO HÁ CONVITE, e é ele que o cooldown procura —
               // uma regra só. Sem convite, `resposta_registro` continua intacto para
@@ -6847,6 +6848,8 @@ export async function enviarEPersistir(
     membro_atipico_id: string | null;
     phone: string;
     texto: string;
+    /** Apenas a apresentação da resposta principal; proativas/botões não optam. */
+    agruparConteudo?: boolean;
     category: "proativa" | "reativa";
     tipo: AylaTipoProativa | AylaTipoReativa;
     /** Metadados opcionais que vão pro ayla_send_log.payload.meta (auditoria). */
@@ -6934,17 +6937,30 @@ export async function enviarEPersistir(
   let providerResp: unknown = null;
   let erro: string | null = null;
   const idsBolhas: Array<string | null> = [];
+  const mensagens = params.agruparConteudo && params.category === "reativa"
+    ? dividirEmBolhas(paraWhatsApp(texto))
+    : [texto];
   const inicioProvedor = Date.now();
   let aceitoEmMs: number | null = null;
   let provedorMs = 0;
 
   try {
-    const r = await enviarTexto({ phoneE164: params.phone, texto });
-    aceitoEmMs = Date.now();
-    provedorMs = aceitoEmMs - inicioProvedor;
-    providerResp = r.raw;
-    idsBolhas.push(r.messageId);
-    resultado = { enviada: true, messageId: r.messageId };
+    if (!mensagens.length) throw new Error("Resposta vazia: nenhuma mensagem para enviar.");
+    const respostas: unknown[] = [];
+    for (const [indice, mensagem] of mensagens.entries()) {
+      if (indice > 0 && params.controleTurno && !(await confirmarTurnoAindaAtual(supabase, {
+        familyId: params.family_account_id,
+        controle: params.controleTurno,
+      }))) throw new Error("turno_cedido_mensagem_mais_nova");
+      const r = await enviarTexto({ phoneE164: params.phone, texto: mensagem });
+      aceitoEmMs ??= Date.now();
+      respostas.push(r.raw);
+      idsBolhas.push(r.messageId);
+      // Preserva os aceites anteriores no diagnóstico se uma parte falhar.
+      providerResp = respostas.length === 1 ? respostas[0] : [...respostas];
+    }
+    provedorMs = Date.now() - inicioProvedor;
+    resultado = { enviada: true, messageId: idsBolhas[0] ?? null };
   } catch (e) {
     erro = e instanceof Error ? e.message : "Falha desconhecida";
     resultado = { enviada: false, motivo: erro };
@@ -6960,6 +6976,9 @@ export async function enviarEPersistir(
     payload: {
       phone: params.phone,
       texto,
+      ...(params.agruparConteudo && params.category === "reativa"
+        ? { apresentacao: { partes_previstas: mensagens.length, partes_aceitas: idsBolhas.length } }
+        : {}),
       ...(params.meta ? { meta: params.meta } : {}),
     },
     resposta_provider: providerResp as Record<string, unknown> | null,
@@ -6972,8 +6991,17 @@ export async function enviarEPersistir(
     await supabase.from("ayla_send_log").insert(auditoria);
   }
 
-  // Mensagem (mesmo se falhou, pra deixar rastro)
-  if (resultado.enviada) {
+  // Uma resposta lógica no histórico. Se apenas parte foi aceita, registrar
+  // só o que saiu, sem afirmar entrega completa nem guardar âncora de uma
+  // oferta que poderia estar na parte não enviada. O original fica no log.
+  const incompleta = !resultado.enviada && idsBolhas.length > 0;
+  if (resultado.enviada || incompleta) {
+    const registro = registroDeEnvio(idsBolhas, incompleta ? null : params.metadataMensagem ?? null);
+    if (incompleta) registro.metadata.entrega = {
+      ...(registro.metadata.entrega as Record<string, unknown>),
+      incompleta: true,
+      partes_previstas: mensagens.length,
+    };
     const { data: mensagemGravada, error: mensagemErro } = await supabase
       .from("ayla_messages")
       .insert({
@@ -6982,9 +7010,9 @@ export async function enviarEPersistir(
         direcao: "outbound",
         category: params.category,
         tipo: params.tipo,
-        texto,
+        texto: incompleta ? mensagens.slice(0, idsBolhas.length).join("\n\n") : texto,
         enviada_em: new Date().toISOString(),
-        ...registroDeEnvio(idsBolhas, params.metadataMensagem ?? null),
+        ...registro,
       })
       .select("id")
       .single();
@@ -6992,9 +7020,9 @@ export async function enviarEPersistir(
       console.error("[ayla] envio aceito, mas ayla_messages falhou:", mensagemErro.message);
       await logServerError("ayla_mensagem_outbound_nao_persistiu", mensagemErro, {
         family_account_id: params.family_account_id,
-        payload: { tipo: params.tipo, provider_message_id: resultado.messageId },
+        payload: { tipo: params.tipo, provider_message_id: idsBolhas[0] ?? null },
       }).catch(() => {});
-    } else {
+    } else if (resultado.enviada) {
       resultado = {
         enviada: true,
         messageId: resultado.messageId,

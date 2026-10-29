@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowRight, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { RespostaMarkdown, limparRespostaKolo } from "@/components/resposta-markdown";
+import { RespostaConversa } from "@/components/resposta-markdown";
 import { adicionarMensagemUsuario } from "../actions";
 import { ConversaAcoes } from "./conversa-acoes";
 
@@ -131,10 +131,7 @@ export function RespostaStreamer({
             Kolo
           </span>
           {parcial ? (
-            <RespostaMarkdown
-              texto={limparRespostaKolo(parcial)}
-              className="mt-2 flex flex-col gap-3 text-base text-foreground"
-            />
+            <RespostaConversa texto={parcial} />
           ) : (
             <p className="mt-2 inline-flex items-center gap-2 text-sm text-muted-foreground">
               <RefreshCw className="size-4 animate-spin" aria-hidden />
