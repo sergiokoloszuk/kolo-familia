@@ -11,6 +11,8 @@ import { logarUsoApi } from "@/lib/billing/logar";
 import { logEvent } from "@/lib/log";
 import { requireActiveWrite } from "@/lib/auth/require-active-write";
 import { resolveFamily } from "@/lib/auth/current-family";
+import { temaEscolhidoDoContexto } from "@/lib/conducao/temas-conversa";
+import { qualidadeRespostaV2Ativa } from "@/lib/ayla/qualidade-resposta";
 
 /**
  * Resposta da Kolo em STREAMING (texto token a token).
@@ -36,7 +38,7 @@ export async function POST(req: NextRequest) {
 
     const { data: conversa } = await supabase
       .from("conversas")
-      .select("id, membro_atipico_id")
+      .select("id, membro_atipico_id, contexto_inicial")
       .eq("id", conversaId)
       .eq("family_account_id", family.id)
       .maybeSingle();
@@ -61,7 +63,7 @@ export async function POST(req: NextRequest) {
     }
     const userInput = ultima.conteudo as string;
 
-    const { system, messages, roteadas, intencao, tema, ctx } = await prepararRespostaStream({
+    const { system, messages, roteadas, intencao, tema, areaAtiva, base2Ids, ctx } = await prepararRespostaStream({
       supabase,
       // O MESMO privilégio pontual do billing lá embaixo, pela mesma razão:
       // `api_calls` é auditoria e a sessão da família não a escreve. Tudo o
@@ -71,6 +73,7 @@ export async function POST(req: NextRequest) {
       membroAtipicoId: conversa.membro_atipico_id as string | null,
       conversaId,
       userInput,
+      temaEscolhido: qualidadeRespostaV2Ativa() ? temaEscolhidoDoContexto(conversa.contexto_inicial)?.chave : null,
     });
 
     // O PROVIDER É UMA VARIÁVEL DE AMBIENTE, e o modelo vem dele — nunca uma
@@ -115,7 +118,7 @@ export async function POST(req: NextRequest) {
             // `cacheSystem` preserva o desconto que esta rota já tinha.
             system: system.map((b) => b.text).join("\n\n"),
             messages,
-            maxTokens: 2048,
+            maxTokens: qualidadeRespostaV2Ativa() ? 2300 : 2048,
             cacheSystem: true,
           });
           const bruto = r.texto.trim();
@@ -152,13 +155,7 @@ export async function POST(req: NextRequest) {
             });
           }
 
-          try {
-            controller.enqueue(encoder.encode(texto));
-          } catch {
-            // controller já fechado — ignora
-          }
-
-          await supabase.from("mensagens_skill").insert({
+          const { error: erroResposta } = await supabase.from("mensagens_skill").insert({
             conversa_id: conversaId,
             family_account_id: family.id,
             papel: "assistant",
@@ -174,6 +171,9 @@ export async function POST(req: NextRequest) {
             metadata: {
               intencao,
               tema,
+              tema_escolhido: temaEscolhidoDoContexto(conversa.contexto_inicial)?.chave ?? null,
+              qualidade_resposta_v2: qualidadeRespostaV2Ativa(),
+              base2_ids: base2Ids ?? [],
               fronteira: vazamento?.fronteira.nome ?? null,
               // Quem respondeu ESTE turno. Sem isto, uma migração com rollback
               // no meio deixa um histórico em que não dá pra saber qual modelo
@@ -184,6 +184,20 @@ export async function POST(req: NextRequest) {
             tokens_input: r.tokensIn,
             tokens_output: r.tokensOut,
           });
+          if (erroResposta) throw new Error("Não consegui guardar a resposta. Tente novamente.");
+          if (areaAtiva && areaAtiva !== temaEscolhidoDoContexto(conversa.contexto_inicial)?.chave) {
+            const { error: erroTroca } = await supabase.from("conversas").update({
+              contexto_inicial: { ...(conversa.contexto_inicial as Record<string, unknown> ?? {}), tema_ativo: areaAtiva },
+            }).eq("id", conversaId).eq("family_account_id", family.id);
+            // A resposta já foi salva: falha no cabeçalho não autoriza gerar de novo.
+            if (erroTroca) await logEvent({ kind: "conversa_troca_area_nao_salvou", severity: "error",
+              family_account_id: family.id, payload: { conversa_id: conversaId, tema: areaAtiva } }).catch(() => {});
+          }
+          try {
+            controller.enqueue(encoder.encode(texto));
+          } catch {
+            // O texto já está salvo e pode ser reencontrado ao recarregar.
+          }
 
           // BILLING — esta rota é a conversa da web. Provider e modelo saem do
           // RETORNO da chamada, nunca de uma constante local: é o único jeito

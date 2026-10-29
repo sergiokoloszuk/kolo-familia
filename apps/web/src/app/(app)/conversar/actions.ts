@@ -21,6 +21,9 @@ import { appendFato, aplicarTextoCampo } from "@/lib/kolo-vivo/incorporar";
 import { idadeAnos, hojeLocalISO } from "@/lib/idade";
 import { requireActiveWrite, SubscriptionBlockedError } from "@/lib/auth/require-active-write";
 import { resolveFamily } from "@/lib/auth/current-family";
+import { GUIAS_TEMATICOS } from "@/lib/conducao/temas-conversa";
+import { qualidadeRespostaV2Ativa } from "@/lib/ayla/qualidade-resposta";
+import { logEvent } from "@/lib/log";
 
 /**
  * Em background (after()), gera um título curto e bem-escrito pra conversa e
@@ -63,14 +66,24 @@ async function requireFamily() {
 
 const criarConversaSchema = z.object({
   membroAtipicoId: z.string().uuid().nullable(),
-  texto: z.string().trim().min(1, "Mensagem vazia").max(2000),
-});
+  texto: z.string().trim().max(2000),
+  temaEscolhido: z.string().optional(),
+}).refine((v) => Boolean(v.texto || v.temaEscolhido), "Escreva uma mensagem ou escolha uma área.");
 
 export async function criarConversa(
   input: z.infer<typeof criarConversaSchema>,
 ): Promise<{ conversaId: string } | { erro: string; assinatura?: boolean }> {
-  const { membroAtipicoId, texto } = criarConversaSchema.parse(input);
+  const { membroAtipicoId, texto, temaEscolhido } = criarConversaSchema.parse(input);
   const { supabase, family } = await requireFamily();
+  const guia = temaEscolhido ? GUIAS_TEMATICOS.find((g) => g.chave === temaEscolhido) : null;
+  if (temaEscolhido && (!qualidadeRespostaV2Ativa() || !guia)) {
+    return { erro: "Esta área não está disponível. Você pode conversar livremente com a Ayla." };
+  }
+  if (membroAtipicoId) {
+    const { data: membro, error: erroMembro } = await supabase.from("membros_atipicos")
+      .select("id").eq("id", membroAtipicoId).eq("family_account_id", family.id).eq("ativo", true).maybeSingle();
+    if (erroMembro || !membro) return { erro: "Escolha uma pessoa cadastrada na sua família." };
+  }
   // Assinatura: em vez de dar throw (o Next MASCARA a mensagem de server action
   // que sobe sem tratamento → vira "Server Components render error" genérico),
   // devolvemos um sinal pra UI mostrar "quer assinar?" + botão pra /assinatura.
@@ -81,25 +94,60 @@ export async function criarConversa(
     throw e;
   }
 
+  // O cartão é também a porta de retomada: tema e pessoa vivem na conversa,
+  // sem depender do último turno nem do cookie que pode ter sido trocado.
+  if (guia) {
+    let busca = supabase.from("conversas").select("id")
+      .eq("family_account_id", family.id).eq("encerrada", false)
+      .contains("contexto_inicial", { tema_escolhido: guia.chave })
+      .order("created_at", { ascending: false }).limit(1);
+    busca = membroAtipicoId ? busca.eq("membro_atipico_id", membroAtipicoId) : busca.is("membro_atipico_id", null);
+    const { data: anterior, error: erroBusca } = await busca.maybeSingle();
+    if (erroBusca) return { erro: "Não consegui recuperar a conversa desta área. Tente novamente." };
+    if (anterior) {
+      const { data: ultima, error: erroUltima } = await supabase.from("mensagens_skill").select("id")
+        .eq("conversa_id", anterior.id).order("created_at", { ascending: false }).limit(1).maybeSingle();
+      if (erroUltima) return { erro: "Não consegui recuperar as mensagens desta conversa. Tente novamente." };
+      if (texto || !ultima) {
+        const { error: erroMensagem } = await supabase.from("mensagens_skill").insert({
+          conversa_id: anterior.id, family_account_id: family.id, papel: "user", conteudo: texto || `Quero explorar ${guia.nome}.`,
+          ...(!texto ? { metadata: { abertura_tema: guia.chave } } : {}),
+        });
+        if (erroMensagem) return { erro: "Não consegui guardar sua mensagem. O texto continua aqui para tentar novamente." };
+      }
+      return { conversaId: anterior.id as string };
+    }
+  }
+
   const { data: nova, error } = await supabase
     .from("conversas")
     .insert({
       family_account_id: family.id,
       membro_atipico_id: membroAtipicoId,
-      titulo: texto.slice(0, 80),
+      titulo: guia ? `Ayla · ${guia.nome}` : texto.slice(0, 80),
+      ...(guia ? { contexto_inicial: { tema_escolhido: guia.chave } } : {}),
     })
     .select("id")
     .single();
   if (error || !nova) throw new Error(`Falha ao criar conversa: ${error?.message}`);
 
-  await supabase.from("mensagens_skill").insert({
+  const { error: erroPrimeiraMensagem } = await supabase.from("mensagens_skill").insert({
     conversa_id: nova.id,
     family_account_id: family.id,
     papel: "user",
-    conteudo: texto,
+    conteudo: texto || `Quero explorar ${guia!.nome}.`,
+    ...(guia && !texto ? { metadata: { abertura_tema: guia.chave } } : {}),
   });
+  if (erroPrimeiraMensagem) {
+    // Só a reserva criada por esta chamada, antes de devolver o link à família.
+    const { error: erroLimpeza } = await supabase.from("conversas").delete()
+      .eq("id", nova.id).eq("family_account_id", family.id);
+    if (erroLimpeza) await logEvent({ kind: "conversa_vazia_nao_removeu", severity: "error",
+      family_account_id: family.id, payload: { conversa_id: nova.id } }).catch(() => {});
+    return { erro: "Não consegui guardar a primeira mensagem. Tente novamente." };
+  }
 
-  agendarTituloConversa(family.id, nova.id as string, texto);
+  if (!guia) agendarTituloConversa(family.id, nova.id as string, texto);
   after(() =>
     trackFeature({ familyId: family.id, evento: "conversa_mensagem", detalhe: { nova: true } }),
   );

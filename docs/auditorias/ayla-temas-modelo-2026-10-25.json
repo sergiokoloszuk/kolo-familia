@@ -1,0 +1,348 @@
+{
+  "data": "2026-10-25T20:24:42.883Z",
+  "escopo": "Pessoas fictícias, dados em memória; biblioteca e templates só GET; produtor OpenAI real; sem WhatsApp, mensagens externas, atualização de Perfil ou cobrança de família.",
+  "resultados": [
+    {
+      "id": "abertura_alimentacao_com_registros",
+      "tema": "nutricional",
+      "mensagem": "Quero explorar Alimentação Positiva.",
+      "perfil": {
+        "nome": "Nora",
+        "nascimento": "2007-02-12",
+        "genero": "feminino",
+        "sabe": {
+          "como_e": {
+            "texto": "Gosta de cinema e música; quer começar a trabalhar."
+          },
+          "sensorial": "Evita cheiros fortes e não gosta de abraço."
+        },
+        "extras": {
+          "comunicacao": "Conversa fluentemente e expressa suas escolhas.",
+          "nutricional": "Aceita arroz, frango e batata. Já experimentou poke montado por ela, mas não sabemos os ingredientes escolhidos."
+        }
+      },
+      "canal": "web",
+      "flag": "on",
+      "texto": "A *Alimentação Positiva* pode ajudar a tornar as refeições mais possíveis para a Nora, sem transformar comida em disputa. Pelo que já sei, ela aceita arroz, frango e batata, já montou um poke para experimentar, e cheiros fortes podem atrapalhar — então podemos partir do que ela já tolera e respeitar a forma como prefere participar.\n\nPodemos focar em:\n\n- ampliar o repertório sem pressão;\n- entender o que dificulta uma comida nova — cheiro, textura, aparência, mistura ou apresentação;\n- tornar as refeições mais confortáveis e participativas;\n- pensar em preparações que aproveitem alimentos já aceitos;\n- observar como a alimentação se relaciona com a rotina dela e com o desejo de começar a trabalhar.\n\nPara começarmos, pode me contar livremente ou responder por áudio:\n\n- O que mais preocupa na alimentação da Nora hoje?\n- O que acontece quando aparece uma comida que ela não quer: recusa pelo cheiro, aparência, textura, mistura, ou nem chega a experimentar?\n- Como foi uma refeição recente e o que vocês já tentaram?\n\nNão precisamos preencher tudo de uma vez; basta começar pela situação que mais pesa agora.",
+      "modelo": "gpt-5.6-luna",
+      "ms": 5391,
+      "base2Ids": [
+        "nutricional/principio-central",
+        "nutricional/missao"
+      ],
+      "fatosEntregues": {
+        "nome": "Nora",
+        "idade": 19,
+        "secoes": {
+          "nutricional": "Aceita arroz, frango e batata. Já experimentou poke montado por ela, mas não sabemos os ingredientes escolhidos.",
+          "sensorial": "Evita cheiros fortes e não gosta de abraço.",
+          "como_e": "Gosta de cinema e música; quer começar a trabalhar.",
+          "comunicacao": "Conversa fluentemente e expressa suas escolhas."
+        }
+      }
+    },
+    {
+      "id": "abertura_alimentacao_com_registros",
+      "tema": "nutricional",
+      "mensagem": "Quero explorar Alimentação Positiva.",
+      "perfil": {
+        "nome": "Nora",
+        "nascimento": "2007-02-12",
+        "genero": "feminino",
+        "sabe": {
+          "como_e": {
+            "texto": "Gosta de cinema e música; quer começar a trabalhar."
+          },
+          "sensorial": "Evita cheiros fortes e não gosta de abraço."
+        },
+        "extras": {
+          "comunicacao": "Conversa fluentemente e expressa suas escolhas.",
+          "nutricional": "Aceita arroz, frango e batata. Já experimentou poke montado por ela, mas não sabemos os ingredientes escolhidos."
+        }
+      },
+      "canal": "whatsapp",
+      "flag": "on",
+      "texto": "A ideia é construir refeições mais possíveis para a Nora, sem pressão e respeitando a autonomia dela. Hoje sabemos que ela aceita arroz, frango e batata; ela também já participou montando um poke, mas não sabemos ainda o que escolheu nele.\n\nPara eu entender por onde começar, me conta:\n- O que mais preocupa na alimentação dela hoje?\n- Quando aparece um alimento recusado, ela não aceita pela aparência, cheiro, textura, mistura ou acontece outra coisa?\n\nPode responder por texto ou áudio, do seu jeito.",
+      "modelo": "gpt-5.6-luna",
+      "ms": 5606,
+      "base2Ids": [
+        "nutricional/principio-central",
+        "nutricional/missao"
+      ],
+      "guias": [
+        "nutricional"
+      ]
+    },
+    {
+      "id": "alimentacao_medo_de_nao_aprender",
+      "tema": "nutricional",
+      "mensagem": "Ela come arroz, frango e batata. Se coloco feijão ou salada, manda tirar. Eu insisto porque tenho medo de ela nunca aprender a comer outras coisas.",
+      "perfil": {
+        "nome": "Nora",
+        "nascimento": "2007-02-12",
+        "genero": "feminino",
+        "sabe": {
+          "como_e": {
+            "texto": "Gosta de cinema e música; quer começar a trabalhar."
+          },
+          "sensorial": "Evita cheiros fortes e não gosta de abraço."
+        },
+        "extras": {
+          "comunicacao": "Conversa fluentemente e expressa suas escolhas.",
+          "nutricional": "Aceita arroz, frango e batata. Já experimentou poke montado por ela, mas não sabemos os ingredientes escolhidos."
+        }
+      },
+      "canal": "web",
+      "flag": "on",
+      "texto": "Você está tentando ampliar a alimentação da Nora, mas a insistência pode acabar transformando o feijão e a salada em uma disputa. Como ela já é adulta e consegue expressar escolhas, o caminho precisa incluir a participação dela — não apenas a decisão de colocar algo no prato.\n\nO fato de ela ter montado um poke é uma pista útil: talvez escolher os componentes e mantê-los separados torne a experiência mais previsível. Isso não prova a causa da recusa, mas dá uma direção para testar.\n\n**Na próxima refeição, tente assim:**\n\n1. **Mantenha arroz, frango ou batata** como parte segura da refeição.  \n2. Coloque o alimento novo **separado**, em uma quantidade pequena, sem misturar e sem pedir que ela coma.  \n3. Dê uma escolha real:  \n   **“Você prefere deixar o feijão neste potinho ou experimentar colocar um pouquinho ao lado?”**  \n4. Se ela disser não, responda:  \n   **“Tudo bem, você não precisa comer agora. Vou deixar separado para você decidir.”**\n\nA meta inicial não precisa ser comer. Pode ser tolerar o alimento no prato, aceitar que fique ao lado, observar, tocar ou sentir o cheiro. Para algumas pessoas, a pressão aumenta a rejeição; quando a comida deixa de ser uma disputa, fica mais possível perceber se o obstáculo é o cheiro — algo que já sabemos que incomoda a Nora —, a aparência, a mistura ou a textura.\n\nTambém vale experimentar preparações diferentes sem insistir: feijão separado e em pouca quantidade; salada sem molho ou com o molho à parte; um único item por vez. Não apresente feijão e salada juntos, porque fica difícil saber o que exatamente ela recusou.\n\nObserve especialmente: **ela manda tirar antes mesmo de sentir o cheiro? aceita que fique no prato? recusa mais quando está misturado?** Essa diferença indica qual pequeno passo faz sentido, sem precisar transformar a refeição em teste.\n\nE uma coisa importante: não dá para concluir apenas pela lista de alimentos se a alimentação dela está nutricionalmente suficiente. Se o repertório estiver diminuindo, houver perda de peso, dor, ânsia, engasgos ou grande sofrimento nas refeições, vale organizar isso para conversar com um profissional de saúde.",
+      "modelo": "gpt-5.6-luna",
+      "ms": 9021,
+      "base2Ids": [
+        "nutricional/principio-central",
+        "nutricional/missao"
+      ],
+      "fatosEntregues": {
+        "nome": "Nora",
+        "idade": 19,
+        "secoes": {
+          "nutricional": "Aceita arroz, frango e batata. Já experimentou poke montado por ela, mas não sabemos os ingredientes escolhidos.",
+          "sensorial": "Evita cheiros fortes e não gosta de abraço.",
+          "como_e": "Gosta de cinema e música; quer começar a trabalhar.",
+          "comunicacao": "Conversa fluentemente e expressa suas escolhas."
+        }
+      }
+    },
+    {
+      "id": "alimentacao_medo_de_nao_aprender",
+      "tema": "nutricional",
+      "mensagem": "Ela come arroz, frango e batata. Se coloco feijão ou salada, manda tirar. Eu insisto porque tenho medo de ela nunca aprender a comer outras coisas.",
+      "perfil": {
+        "nome": "Nora",
+        "nascimento": "2007-02-12",
+        "genero": "feminino",
+        "sabe": {
+          "como_e": {
+            "texto": "Gosta de cinema e música; quer começar a trabalhar."
+          },
+          "sensorial": "Evita cheiros fortes e não gosta de abraço."
+        },
+        "extras": {
+          "comunicacao": "Conversa fluentemente e expressa suas escolhas.",
+          "nutricional": "Aceita arroz, frango e batata. Já experimentou poke montado por ela, mas não sabemos os ingredientes escolhidos."
+        }
+      },
+      "canal": "whatsapp",
+      "flag": "on",
+      "texto": "Entendo esse medo — mas insistir para ela comer pode fazer a refeição virar um confronto e aumentar a rejeição. Como ela já aceita arroz, frango e batata, comece sem exigir provar: coloque uma porção bem pequena de feijão ou salada separada no prato e diga: **“Você não precisa comer; pode deixar aqui enquanto come o que já conhece.”**\n\nSe ela pedir para tirar, responda: **“Tudo bem não comer agora, mas vamos deixar no cantinho do prato.”** Observe se ela tolera a presença, toca ou cheira; isso já mostra participação. Como ela evita cheiros fortes, mantenha a salada e o feijão em pouca quantidade e separados, sem misturar nem aproximar do rosto.",
+      "modelo": "gpt-5.6-luna",
+      "ms": 3748,
+      "base2Ids": [
+        "nutricional/principio-central",
+        "nutricional/missao"
+      ],
+      "guias": [
+        "nutricional"
+      ]
+    },
+    {
+      "id": "abertura_sono_sem_registros",
+      "tema": "sono",
+      "mensagem": "Quero explorar Sono Tranquilo.",
+      "perfil": {
+        "nome": "Nora",
+        "nascimento": "2007-02-12",
+        "genero": "feminino",
+        "sabe": {
+          "como_e": {
+            "texto": "Gosta de cinema e música; quer começar a trabalhar."
+          },
+          "sensorial": "Evita cheiros fortes e não gosta de abraço."
+        },
+        "extras": {
+          "comunicacao": "Conversa fluentemente e expressa suas escolhas.",
+          "nutricional": "Aceita arroz, frango e batata. Já experimentou poke montado por ela, mas não sabemos os ingredientes escolhidos."
+        }
+      },
+      "canal": "web",
+      "flag": "on",
+      "texto": "O *Sono Tranquilo* serve para entender o padrão de descanso da Nora e encontrar ajustes que deixem as noites mais previsíveis — sem presumir a causa antes de observar como isso acontece com ela.\n\nPara começar, me conta livremente ou responde por áudio:\n\n- A maior dificuldade é *adormecer, acordar durante o sono, levantar cedo* ou outra?\n- Como costuma ser a sequência até ela ir dormir?\n- Houve alguma mudança recente no sono ou esse padrão já acontece há bastante tempo?\n\nComo a Nora evita cheiros fortes, o ambiente do quarto também pode entrar na observação — mas só se isso aparecer como algo que interfere para ela.",
+      "modelo": "gpt-5.6-luna",
+      "ms": 3726,
+      "base2Ids": [
+        "sono/antes-de-orientar-diferencie-quando-sono-nao-e-o-tema-principal",
+        "sono/pergunta-de-alto-valor-golden-case"
+      ],
+      "fatosEntregues": {
+        "nome": "Nora",
+        "idade": 19,
+        "secoes": {
+          "sensorial": "Evita cheiros fortes e não gosta de abraço.",
+          "como_e": "Gosta de cinema e música; quer começar a trabalhar.",
+          "comunicacao": "Conversa fluentemente e expressa suas escolhas."
+        }
+      }
+    },
+    {
+      "id": "abertura_sono_sem_registros",
+      "tema": "sono",
+      "mensagem": "Quero explorar Sono Tranquilo.",
+      "perfil": {
+        "nome": "Nora",
+        "nascimento": "2007-02-12",
+        "genero": "feminino",
+        "sabe": {
+          "como_e": {
+            "texto": "Gosta de cinema e música; quer começar a trabalhar."
+          },
+          "sensorial": "Evita cheiros fortes e não gosta de abraço."
+        },
+        "extras": {
+          "comunicacao": "Conversa fluentemente e expressa suas escolhas.",
+          "nutricional": "Aceita arroz, frango e batata. Já experimentou poke montado por ela, mas não sabemos os ingredientes escolhidos."
+        }
+      },
+      "canal": "whatsapp",
+      "flag": "on",
+      "texto": "No Sono Tranquilo, vamos entender o padrão da Nora e pensar em formas de deixar as noites mais previsíveis, respeitando a autonomia dela.\n\nPara começar:\n- Como costuma ser a rotina até ela dormir?\n- A maior dificuldade é adormecer, acordar durante a noite, levantar cedo ou outra coisa?\n- Como é o ambiente onde ela dorme — por exemplo, luz, barulhos, cheiros e temperatura?\n\nPode responder por texto ou áudio, do seu jeito, sem precisar seguir a lista.",
+      "modelo": "gpt-5.6-luna",
+      "ms": 4174,
+      "base2Ids": [
+        "sono/antes-de-orientar-diferencie-quando-sono-nao-e-o-tema-principal",
+        "sono/pergunta-de-alto-valor-golden-case"
+      ],
+      "guias": [
+        "sono"
+      ]
+    },
+    {
+      "id": "comunicacao_quatro_anos",
+      "tema": "comunicacao",
+      "mensagem": "Como posso ajudar ela a entender mais o contexto, explicar o que quer e entender o que eu peço?",
+      "perfil": {
+        "nome": "Luna",
+        "nascimento": "2022-02-12",
+        "genero": "feminino",
+        "sabe": {
+          "como_e": {
+            "interesses": [
+              "ônibus"
+            ]
+          }
+        },
+        "extras": {
+          "comunicacao": "Aponta para pedir objetos e conduz o adulto até o que quer. Não usa fala oral nem prancha atualmente."
+        }
+      },
+      "canal": "web",
+      "flag": "on",
+      "texto": "A Luna já mostra o que quer apontando e levando você até o objeto. Isso é comunicação — então o caminho não é fazer ela abandonar essa forma, e sim *dar mais clareza e variedade ao que ela já consegue fazer*.\n\n### Para ela entender melhor o contexto\n\nUse frases curtas junto de algo que ela possa ver ou tocar:\n\n- Mostre o sapato: **“Vamos sair.”**\n- Mostre o copo: **“Vamos beber água.”**\n- Antes de guardar um brinquedo: **“Acabou. Guardar.”**\n- Ao chegar em algum lugar: **“Chegamos. Agora entrar.”**\n\nFale sobre o que está acontecendo *antes, durante e depois*, sem explicar demais. Para algumas crianças, ouvir a palavra junto com o objeto e a ação ajuda a ligar o significado ao contexto.\n\nCom o interesse dela por ônibus, você pode comentar durante a brincadeira:\n\n**“Ônibus chegou.” → “Entrar.” → “Andar.” → “Parou.” → “Acabou.”**\n\nNão é necessário pedir que ela repita. A participação dela pode ser olhar, apontar, entregar o ônibus ou fazer a ação.\n\n### Para ela explicar melhor o que quer\n\nQuando ela apontar, não transforme o pedido em um teste. Responda primeiro e acrescente uma forma mais clara:\n\nEla aponta para a água. Você pode dizer:\n\n**“Água. Você quer água.”**\n\nDepois, ofereça duas opções visíveis quando houver escolha:\n\n**“Água ou suco?”**\n\nMostre os dois objetos e espere alguns segundos. Ela pode apontar, tocar, olhar fixamente ou levar você até um deles. Qualquer sinal intencional pode ser aceito como resposta. Aos poucos, você modela:\n\n**“Mais água.”**  \n**“Abrir.”**  \n**“Ônibus.”**  \n**“Acabou.”**\n\nNão é preciso exigir fala oral. Você pode usar fala, gesto e objeto ao mesmo tempo. Se ela puxar sua mão, acompanhe o pedido e nomeie o que ela está mostrando: **“Você quer abrir.”**\n\n### Para ela entender o que você pede\n\nComece com uma instrução por vez, usando poucas palavras e um gesto:\n\n- **“Pega o sapato.”** — apontando para o sapato.\n- **“Coloca aqui.”** — mostrando o lugar.\n- **“Dá para a mamãe.”** — estendendo a mão.\n\nDepois, espere um pouco antes de repetir. Repetir muitas vezes pode deixar a instrução virar apenas um som de fundo. Se ela não iniciar, mostre o primeiro movimento ou faça junto; quando ela participar, continue a ação imediatamente.\n\nEm vez de perguntar algo amplo como **“Você quer guardar?”**, diga o que vai acontecer:\n\n**“Agora guardar o ônibus.”**\n\nE mostre onde colocar.\n\n### Uma brincadeira simples\n\nFaça o *ônibus das escolhas* com dois objetos seguros.\n\nDiga: **“O ônibus vai levar um passageiro. Quem vai?”**  \nOfereça dois bonecos ou objetos e deixe Luna escolher apontando ou pegando.\n\nQuando ela escolher, reaja de forma concreta:\n\n**“Esse entrou! O ônibus vai andar: vrum-vrum!”**\n\nDepois pare e espere que ela indique continuar, escolher outro passageiro ou encerrar. Assim ela pratica escolha, compreensão de sequência e comunicação sem precisar falar.\n\nObserve nos próximos dias uma coisa específica: *quando você mostra o objeto junto da fala, Luna entende melhor do que quando você apenas fala?* Essa comparação ajuda a descobrir qual apoio torna seus pedidos mais claros para ela.\n\nUma pergunta que pode orientar o próximo ajuste: quando você dá uma instrução simples, como “pega o sapato”, ela costuma realizar com o gesto junto ou ainda precisa que você a conduza até o objeto?",
+      "modelo": "gpt-5.6-luna",
+      "ms": 12526,
+      "base2Ids": [
+        "comunicacao/antes-de-orientar-diferencie-quando-comunicacao-nao-e-o-tema-principal",
+        "comunicacao/pergunta-de-alto-valor-golden-case"
+      ],
+      "fatosEntregues": {
+        "nome": "Luna",
+        "idade": 4,
+        "secoes": {
+          "comunicacao": "Aponta para pedir objetos e conduz o adulto até o que quer. Não usa fala oral nem prancha atualmente.",
+          "como_e": "ônibus"
+        }
+      }
+    },
+    {
+      "id": "comunicacao_quatro_anos",
+      "tema": "comunicacao",
+      "mensagem": "Como posso ajudar ela a entender mais o contexto, explicar o que quer e entender o que eu peço?",
+      "perfil": {
+        "nome": "Luna",
+        "nascimento": "2022-02-12",
+        "genero": "feminino",
+        "sabe": {
+          "como_e": {
+            "interesses": [
+              "ônibus"
+            ]
+          }
+        },
+        "extras": {
+          "comunicacao": "Aponta para pedir objetos e conduz o adulto até o que quer. Não usa fala oral nem prancha atualmente."
+        }
+      },
+      "canal": "whatsapp",
+      "flag": "on",
+      "texto": "Dá para trabalhar as duas partes separadamente: **entender o que você pede** e **mostrar o que ela quer**. Como a Luna já aponta e leva o adulto até o que deseja, essa intenção comunicativa existe; vamos usar isso como ponto de partida, sem exigir fala.\n\n- **Para ela entender:** dê pedidos curtos, com um verbo e um objeto, e mostre o que está falando: “pega o ônibus” ou “coloca o ônibus aqui”. Espere alguns segundos e aceite que ela responda fazendo, apontando ou olhando para a opção.\n- **Para ela explicar o que quer:** coloque duas opções visíveis — por exemplo, dois ônibus — e diga “qual você quer?”. Aceite apontar, tocar ou olhar para um deles; entregue o escolhido e modele uma palavra ou gesto, como “ônibus azul”, sem exigir que repita.\n- **Para ampliar o contexto:** enquanto brincam de ônibus, narre relações simples: “o ônibus está dentro”, “agora ele parou”, “a mamãe entrou”. Use a mesma frase em situações reais, porque a repetição com ação ajuda mais do que explicar muito.\n\nO principal é não fazer perguntas que ela ainda não consegue responder nem retirar o que ela quer até falar: qualquer forma intencional de comunicação já pode ser aproveitada. Hoje, observe uma coisa: quando você dá um pedido simples, ela costuma realizar, procurar o objeto, olhar para você ou mostrar de algum outro jeito que entendeu?",
+      "modelo": "gpt-5.6-luna",
+      "ms": 6122,
+      "base2Ids": [
+        "comunicacao/antes-de-orientar-diferencie-quando-comunicacao-nao-e-o-tema-principal",
+        "comunicacao/pergunta-de-alto-valor-golden-case"
+      ],
+      "guias": [
+        "comunicacao"
+      ]
+    },
+    {
+      "id": "alimentacao_medo_de_nao_aprender",
+      "tema": "nutricional",
+      "mensagem": "Ela come arroz, frango e batata. Se coloco feijão ou salada, manda tirar. Eu insisto porque tenho medo de ela nunca aprender a comer outras coisas.",
+      "perfil": {
+        "nome": "Nora",
+        "nascimento": "2007-02-12",
+        "genero": "feminino",
+        "sabe": {
+          "como_e": {
+            "texto": "Gosta de cinema e música; quer começar a trabalhar."
+          },
+          "sensorial": "Evita cheiros fortes e não gosta de abraço."
+        },
+        "extras": {
+          "comunicacao": "Conversa fluentemente e expressa suas escolhas.",
+          "nutricional": "Aceita arroz, frango e batata. Já experimentou poke montado por ela, mas não sabemos os ingredientes escolhidos."
+        }
+      },
+      "canal": "web",
+      "flag": "off",
+      "texto": "## Um passo sem transformar a refeição em disputa\n\nVocê está tentando proteger a alimentação dela no futuro, mas insistir para que ela coma pode fazer o feijão e a salada ficarem associados à pressão. Para algumas pessoas, cheiro, textura e aparência já dificultam a aproximação antes mesmo de provar — e, no caso da Nora, cheiros fortes merecem ser observados como uma possível barreira, não tratados como recusa “sem motivo”.\n\nNa próxima refeição, mantenha arroz, frango ou batata como parte segura e coloque **uma quantidade bem pequena do alimento novo em um recipiente separado**, sem pedir que ela coma. Ela pode escolher se quer deixar ali, retirar depois ou apenas conviver com o alimento.\n\n> “Você não precisa comer. Vou deixar separado para você decidir o que fazer com ele.”\n\nIsso muda o objetivo: por enquanto, não é chegar à boca; é tolerar a presença e manter alguma autonomia. Como ela já montou um poke para experimentar, vale deixá-la escolher o ingrediente, a quantidade e a forma de montagem quando houver abertura.\n\nPor alguns dias, observe em qual etapa ela recua: ao sentir o cheiro, ver no prato, tocar, ou só quando aparece a expectativa de provar. Essa pista ajuda a escolher o próximo passo sem transformar a refeição numa queda de braço.",
+      "modelo": "gpt-5.6-luna",
+      "ms": 5669,
+      "base2Ids": [],
+      "fatosEntregues": {
+        "nome": "Nora",
+        "idade": 19,
+        "secoes": {
+          "nutricional": "Aceita arroz, frango e batata. Já experimentou poke montado por ela, mas não sabemos os ingredientes escolhidos.",
+          "sensorial": "Evita cheiros fortes e não gosta de abraço."
+        }
+      }
+    },
+    {
+      "id": "alimentacao_medo_de_nao_aprender",
+      "tema": "nutricional",
+      "mensagem": "Ela come arroz, frango e batata. Se coloco feijão ou salada, manda tirar. Eu insisto porque tenho medo de ela nunca aprender a comer outras coisas.",
+      "perfil": {
+        "nome": "Nora",
+        "nascimento": "2007-02-12",
+        "genero": "feminino",
+        "sabe": {
+          "como_e": {
+            "texto": "Gosta de cinema e música; quer começar a trabalhar."
+          },
+          "sensorial": "Evita cheiros fortes e não gosta de abraço."
+        },
+        "extras": {
+          "comunicacao": "Conversa fluentemente e expressa suas escolhas.",
+          "nutricional": "Aceita arroz, frango e batata. Já experimentou poke montado por ela, mas não sabemos os ingredientes escolhidos."
+        }
+      },
+      "canal": "whatsapp",
+      "flag": "off",
+      "texto": "Insistir pode transformar a refeição numa disputa. Hoje, mantenha arroz, frango ou batata no prato e coloque **uma porção minúscula do feijão ou da salada separada**, sem pedir que ela coma; ela pode apenas olhar, tocar ou cheirar. Diga: “Você não precisa comer agora. Pode deixar aqui.”\n\nObserve se ela rejeita mais pela textura, cheiro, aparência ou pela presença do alimento. Se houver tosse, engasgos, dor ao comer ou recusa cada vez maior, procure avaliação profissional.",
+      "modelo": "gpt-5.6-luna",
+      "ms": 3371,
+      "base2Ids": [],
+      "guias": []
+    }
+  ]
+}

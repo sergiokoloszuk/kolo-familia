@@ -126,10 +126,12 @@ describe("FASE 4A.1 · as três leituras estão atrás da flag", () => {
     );
   });
 
-  it("4. MORDE: as três leituras não podem rodar fora do piloto", () => {
+  it("4. ranking e perfil só abrem no piloto ou na candidata explícita; rascunhos continuam só no piloto", () => {
     // Se alguém tirar a guarda de qualquer uma delas, o WhatsApp e o resto da
     // web passam a receber contexto que ninguém mediu.
-    expect(contexto).toMatch(/relato: piloto \? params\.relato : undefined/);
+    expect(contexto).toMatch(/relato: piloto \|\| conversaRica \? params\.relato : undefined/);
+    expect(contexto).toMatch(/const conversaRica = qualidadeRespostaV2Ativa\(\) && Boolean\(params\.relato\?\.trim\(\)\)/);
+    expect(contexto).toMatch(/statusAceitos: piloto \? \["ativo", "rascunho"\] : undefined/);
     expect(contexto).toMatch(/const base2 =\s*\n?\s*piloto &&/);
     expect(contexto).toMatch(/const perfilConsultavel =\s*\n?\s*piloto &&/);
   });
@@ -285,7 +287,7 @@ describe("o bloco do perfil", () => {
     // 5 rodadas do mesmo caso em cada condição, 09/08/2026: com 3 BPs o pior
     // caso foi 17,3 s e o Perfil apareceu em 1 de 5; com 2, o pior caso caiu
     // para 5,9 s e o Perfil apareceu em 3 de 5.
-    expect(src("ia/context.ts")).toMatch(/limite: piloto \? 2 : undefined/);
+    expect(src("ia/context.ts")).toMatch(/limite: piloto \|\| conversaRica \? 2 : undefined/);
     // Fora do piloto, o padrão do recuperador continua 3.
     expect(src("conhecimento/recuperar.ts")).toMatch(/p\.limite \?\? 3/);
   });

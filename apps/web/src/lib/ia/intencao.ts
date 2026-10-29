@@ -2,6 +2,8 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { getAnthropicClient, MODELS } from "./anthropic";
 import { logarUsoApi } from "@/lib/billing/logar";
 import { CHAVES_TEMA } from "@/lib/conducao/temas";
+import { qualidadeRespostaV2Ativa } from "@/lib/ayla/qualidade-resposta";
+import { trechoComContinuidade } from "@/lib/conducao/continuidade";
 
 /**
  * Intenção por trás da mensagem da mãe (Fase 2 — roteador de intenção).
@@ -38,6 +40,8 @@ export type TurnoWeb = {
    * reconstrói o turno a partir da conversa inteira e responde outra coisa.
    */
   aceite: string | null;
+  /** Só muda a área-base quando a família pede ou aceita claramente a troca. */
+  trocaTema?: string | null;
 };
 
 /**
@@ -61,6 +65,7 @@ export async function classificarIntencao(params: {
   historico?: { papel: "user" | "assistant"; conteudo: string }[];
   /** Tema do turno anterior — é o que impede o classificador de recomeçar. */
   temaAnterior?: string | null;
+  areaEscolhida?: string | null;
 }): Promise<TurnoWeb> {
   const { supabase, familyId, texto, historico = [], temaAnterior = null } = params;
   const semModelo: TurnoWeb = { intencao: "desafio", tema: temaAnterior, aceite: null };
@@ -76,12 +81,12 @@ export async function classificarIntencao(params: {
     temaAnterior ? `(Tema do turno anterior: ${temaAnterior} — mantenha se a conversa continuar nele)` : "",
     historico
       .slice(-6)
-      .map((h) => `${h.papel === "user" ? "Mãe" : "Kolo"}: ${h.conteudo}`)
+      .map((h) => `${h.papel === "user" ? "Mãe" : "Kolo"}: ${qualidadeRespostaV2Ativa() ? trechoComContinuidade(h.conteudo, h.papel === "assistant" ? 1200 : 500) : h.conteudo}`)
       .join("\n"),
   ]
     .filter(Boolean)
-    .join("\n")
-    .slice(0, 2400);
+    .join("\n");
+  const contextoDoTurno = qualidadeRespostaV2Ativa() ? contexto.slice(-4800) : contexto.slice(0, 2400);
 
   const system = `Você classifica a última mensagem de uma mãe/responsável de criança neurodivergente, pra a assistente Kolo responder no tom certo.
 
@@ -95,6 +100,8 @@ A INTENÇÃO é exatamente uma destas:
 - duvida: pergunta pontual e objetiva, busca uma informação curta.
 - desafio: uma dificuldade recorrente do dia a dia que ela quer ajuda pra lidar (sono, birra, escola, transições, alimentação). Este é o caso mais comum — na dúvida, escolha desafio.
 
+${qualidadeRespostaV2Ativa() && params.areaEscolhida === "foco" ? `No piloto de Foco, classifique o PEDIDO DA ÚLTIMA MENSAGEM, não o tom de uma fala anterior. Pedir exemplos do que pode perguntar ou possibilidades de ajuda é duvida, não desabafo. Pedir orientação sobre uma dificuldade é desafio, mesmo acompanhado de cansaço. Exemplos: "Me dê ideias de outras coisas que posso te pedir sobre isso" → duvida; "Estou exausta de chamar para a lição. Como ajudo sem brigar?" → desafio; "Hoje só quero desabafar, não quero sugestões" → desabafo. Uma necessidade imediata ou risco continua sendo crise; não a rebaixe por conter um pedido de ajuda.
+` : ""}
 ⚠️ RESPOSTA CURTA NÃO RECOMEÇA A CONVERSA. "sim", "quero", "vamos", "pode ser", "faz", "essa", "a segunda", "vamos começar por isso" continuam o que já estava acontecendo — olhe a conversa acima pra saber o quê. Nunca classifique uma dessas como se fosse uma mensagem nova e solta.
 
 O TEMA é o assunto do desenvolvimento sobre o qual se está falando. Use EXATAMENTE uma destas chaves, ou "-" se nenhuma servir:
@@ -108,9 +115,11 @@ O ACEITE responde: a Kolo OFERECEU fazer alguma coisa na última fala dela, e es
 - Oferta com DUAS opções + "sim" é ambíguo: escreva "-".
 - Sem oferta anterior, "-".
 
+${params.areaEscolhida ? `A conversa foi aberta na área ${params.areaEscolhida}. Acrescente UM QUARTO campo: intencao|tema|aceite|troca_area.
+troca_area é uma chave da lista SOMENTE se a família pedir claramente para passar a outra área ("agora quero falar de sono") ou aceitar uma oferta inequívoca de mudança. Citar uma dificuldade de outra área, responder uma pergunta ou um "sim" ambíguo NÃO muda a área-base: escreva "-". O campo tema pode indicar um apoio complementar sem que haja troca_area.` : ""}
 Responda só a linha.`;
 
-  const user = `${contexto ? `Conversa até agora:\n${contexto}\n\n` : ""}Última mensagem da mãe:\n"""${texto.slice(0, 1500)}"""\n\nResposta:`;
+  const user = `${contextoDoTurno ? `Conversa até agora:\n${contextoDoTurno}\n\n` : ""}Última mensagem da mãe:\n"""${texto.slice(0, 1500)}"""\n\nResposta:`;
 
   let raw: string | null = null;
   let inTok = 0;
@@ -144,7 +153,7 @@ Responda só a linha.`;
     output_tokens: outTok,
   });
 
-  const [ladoIntencao, ladoTema, ladoAceite] = (raw ?? "").toLowerCase().split("|");
+  const [ladoIntencao, ladoTema, ladoAceite, ladoTroca] = (raw ?? "").toLowerCase().split("|");
   const intencao = INTENCOES.find((i) => (ladoIntencao ?? raw ?? "").includes(i)) ?? "desafio";
 
   // Só chave do vocabulário. Fora da lista = como se nada tivesse sido dito, e
@@ -156,5 +165,8 @@ Responda só a linha.`;
   const bruto = (ladoAceite ?? "").trim();
   const aceite = bruto && bruto !== "-" && bruto.length > 3 ? bruto.slice(0, 200) : null;
 
-  return { intencao, tema, aceite };
+  const troca = (ladoTroca ?? "").trim();
+  return { intencao, tema, aceite,
+    ...(params.areaEscolhida ? { trocaTema: CHAVES_TEMA.includes(troca) ? troca : null } : {}),
+  };
 }

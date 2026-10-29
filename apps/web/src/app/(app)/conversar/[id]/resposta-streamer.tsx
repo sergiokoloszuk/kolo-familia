@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { RespostaMarkdown, limparRespostaKolo } from "@/components/resposta-markdown";
 import { adicionarMensagemUsuario } from "../actions";
 import { ConversaAcoes } from "./conversa-acoes";
+import { AudioMensagem } from "@/components/audio-mensagem";
 
 /**
  * Resposta da Kolo em streaming + caixa de "continuar". Auto-responde a
@@ -20,6 +21,7 @@ export function RespostaStreamer({
   temResposta,
   msgCount,
   planoOferecido,
+  aceitaAudio = false,
 }: {
   conversaId: string;
   precisaResposta: boolean;
@@ -29,6 +31,7 @@ export function RespostaStreamer({
   msgCount: number;
   /** A Kolo ofereceu o plano na última resposta? Só então mostra o botão. */
   planoOferecido: boolean;
+  aceitaAudio?: boolean;
 }) {
   const router = useRouter();
   const [streaming, setStreaming] = useState(false);
@@ -36,6 +39,7 @@ export function RespostaStreamer({
   const [pendingUser, setPendingUser] = useState<string | null>(null);
   const [erro, setErro] = useState<string | null>(null);
   const [texto, setTexto] = useState("");
+  const [audioOcupado, setAudioOcupado] = useState(false);
   const jaIniciou = useRef(false);
   // Quantas mensagens existiam quando o stream atual começou. A resposta salva
   // "chegou" quando msgCount passa desse valor — só então limpamos o transmitido.
@@ -91,7 +95,7 @@ export function RespostaStreamer({
 
   async function enviar() {
     const t = texto.trim();
-    if (!t || streaming) return;
+    if (!t || streaming || audioOcupado) return;
     setErro(null);
     setTexto("");
     setPendingUser(t);
@@ -101,6 +105,7 @@ export function RespostaStreamer({
     setStreaming(true);
     const r = await adicionarMensagemUsuario({ conversaId, texto: t });
     if (!r.ok) {
+      setTexto(t);
       setErro(r.error);
       setPendingUser(null);
       setStreaming(false);
@@ -128,7 +133,7 @@ export function RespostaStreamer({
       {(streaming || (parcial && !respostaChegou)) && (
         <div>
           <span className="text-[11px] font-bold uppercase tracking-[0.18em] text-brand-purple">
-            Kolo
+            {aceitaAudio ? "Ayla" : "Kolo"}
           </span>
           {parcial ? (
             <RespostaMarkdown
@@ -173,8 +178,10 @@ export function RespostaStreamer({
           disabled={streaming}
           className="w-full resize-none rounded-2xl border border-foreground/[0.08] bg-white/70 px-4 py-3 text-base leading-relaxed text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-1 focus:ring-foreground/10 disabled:opacity-60"
         />
+        {aceitaAudio && <AudioMensagem disabled={streaming} onOcupado={setAudioOcupado}
+          onTexto={(t) => setTexto((atual) => [atual.trim(), t].filter(Boolean).join("\n"))} />}
         <div className="flex items-center justify-end gap-3">
-          <Button type="submit" size="lg" disabled={streaming || !texto.trim()}>
+          <Button type="submit" size="lg" disabled={streaming || audioOcupado || !texto.trim()}>
             {streaming ? "Pensando..." : "Continuar"}
             {!streaming && <ArrowRight className="size-4" aria-hidden />}
           </Button>

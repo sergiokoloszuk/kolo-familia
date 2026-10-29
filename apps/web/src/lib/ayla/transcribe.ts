@@ -41,9 +41,28 @@ export async function transcreverAudio(
     const mime = audioRes.headers.get("content-type") ?? "audio/ogg";
     const ext = mime.includes("mpeg") || mime.includes("mp3") ? "mp3" : "ogg";
 
+    return await transcreverArquivo(new Blob([audioBuffer], { type: mime }), `audio.${ext}`, tracking, idioma);
+  } catch (e) {
+    console.warn("[transcribe] download falhou:", e instanceof Error ? e.message : String(e));
+    return null;
+  }
+}
+
+/** Mesmo transcritor para áudio recebido na web; não guarda arquivo ou perfil. */
+export async function transcreverArquivo(
+  audio: Blob,
+  nomeArquivo = "audio.webm",
+  tracking?: UsageTracking,
+  idioma: "pt" | "es" | "en" = "pt",
+): Promise<string | null> {
+  const apiKey = process.env.OPENAI_API_KEY;
+  if (!apiKey) return null;
+  try {
+    const audioBuffer = await audio.arrayBuffer();
+
     // 2. Whisper API (multipart/form-data)
     const form = new FormData();
-    form.append("file", new Blob([audioBuffer], { type: mime }), `audio.${ext}`);
+    form.append("file", audio, nomeArquivo);
     form.append("model", "whisper-1");
     // Hint de idioma pela LÍNGUA DA FAMÍLIA (pt/es/en). Melhora a qualidade em
     // áudios curtos e, pra família es/en, transcreve na língua certa SEM

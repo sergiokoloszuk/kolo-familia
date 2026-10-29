@@ -6,6 +6,8 @@ import { alvoDaEscritaDoExtrator } from "@/lib/ayla/extrator-escrita";
 import { aprofundamentoGlobalLigado } from "@/lib/ayla/aprofundamento-tipos";
 import { planosWhatsappLigados } from "@/lib/ayla/plano-disponibilidade";
 import { lerPlanosNoStripe, PLANOS } from "@/lib/billing/planos";
+import { qualidadeRespostaV2Ativa } from "@/lib/ayla/qualidade-resposta";
+import { previewSomenteConversa } from "@/lib/preview-conversa";
 
 /**
  * Health check: responde com latência do DB + presença das envs
@@ -116,12 +118,14 @@ export async function GET() {
    * diferença entre "alguém digitou algo" e "o runtime está ligado".
    */
   const flags = {
+    preview_somente_conversa: previewSomenteConversa(),
     // Expõe apenas presença/ausência; nunca o telefone da destinatária fiscal.
     fiscal_rosangela_configurada: Boolean(process.env.ROSANGELA_FISCAL_WHATSAPP_E164),
     ayla_pos_trial: posTrialAtivo(),
     ayla_experimental_todas: experimentalParaTodas(),
     ayla_aprofundamento_whatsapp: aprofundamentoGlobalLigado(),
     ayla_planos_whatsapp: planosWhatsappLigados(),
+    ayla_qualidade_resposta_v2: qualidadeRespostaV2Ativa(),
     /**
      * A SOMBRA DO EXTRATOR UNIFICADO — PEND-194, 10/09/2026.
      *
@@ -170,6 +174,13 @@ export async function GET() {
   const total_ms = Date.now() - t0;
   const allEnvOk = Object.values(env).every(Boolean);
   const ok = db_ok && allEnvOk;
+  // Readiness da conversa não depende de cobrança/envios. Não muda o health geral.
+  // Presença de chave não comprova a resposta do modelo; o aceite humano vem depois.
+  const capacidades = {
+    conversa_web_configurada: db_ok && env.supabase_url && env.supabase_anon
+      && env.supabase_service_role && env.anthropic && env.openai,
+    provedor_conversa: process.env.IA_PROVIDER ?? "anthropic",
+  };
 
   // ⚠️ QUAL COMMIT ESTÁ NO AR (17/08/2026).
   //
@@ -196,6 +207,7 @@ export async function GET() {
       db: { ok: db_ok, latency_ms: db_latency_ms, error: db_error },
       env,
       flags,
+      capacidades,
       planos,
       total_ms,
       ts: new Date().toISOString(),

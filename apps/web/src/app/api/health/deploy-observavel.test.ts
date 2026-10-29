@@ -22,6 +22,10 @@ const ROTA = readFileSync(
 );
 
 describe("O HEALTH DIZ QUAL COMMIT ESTÁ NO AR", () => {
+  it("expõe o valor efetivo da candidata sem tratar flag off como falha", () => {
+    expect(ROTA).toContain("ayla_qualidade_resposta_v2: qualidadeRespostaV2Ativa()");
+    expect(ROTA.slice(ROTA.indexOf("const env = {"), ROTA.indexOf("const flags = {"))).not.toContain("ayla_qualidade_resposta_v2:");
+  });
   it("expõe o SHA do commit que a Vercel está servindo", () => {
     expect(ROTA).toContain("VERCEL_GIT_COMMIT_SHA");
     expect(ROTA).toContain("commit:");

@@ -3,6 +3,7 @@ import { createServiceRoleClient } from "@/lib/supabase/server";
 import { enviarTexto, parseZapiWebhook } from "@/lib/ayla/whatsappSender";
 import { processInbound, idiomaPorTelefone } from "@/lib/ayla/orchestrator";
 import { transcreverAudio } from "@/lib/ayla/transcribe";
+import { previewSomenteConversa, ERRO_PREVIEW_CONVERSA } from "@/lib/preview-conversa";
 
 // A resposta da Ayla passa por IA (Sonnet) e, num pedido de plano, ainda
 // dispara a geração completa do plano (chamada única de até 12k tokens, ~40–90s)
@@ -22,6 +23,9 @@ export const maxDuration = 300;
  * Comunicação com o app é só via banco.
  */
 export async function POST(request: NextRequest) {
+  if (previewSomenteConversa()) {
+    return NextResponse.json({ error: ERRO_PREVIEW_CONVERSA }, { status: 403 });
+  }
   // Validação de origem
   const expectedSecret = process.env.AYLA_WEBHOOK_SECRET;
   if (expectedSecret) {

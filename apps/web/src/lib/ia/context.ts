@@ -6,12 +6,14 @@ import { pilotoQuatroA } from "@/lib/conducao/piloto";
 import { secoesDe, temMaterial, type SecaoBase2 } from "@/lib/conducao/base2";
 import {
   carregarPerfilConsultavel,
+  perfilConsultavelDaLinha,
   type PerfilConsultavel,
 } from "@/lib/kolo-vivo/consultar";
 import { montarRastro, registrarRastroConhecimento } from "@/lib/conhecimento/rastro";
 import { idadeAnos } from "@/lib/idade";
 import { descricaoCuidador, type Genero } from "@/lib/ayla/pronomes";
 import { resumirComposicao } from "@/lib/familia/composicao";
+import { qualidadeRespostaV2Ativa } from "@/lib/ayla/qualidade-resposta";
 
 // Campos jsonb top-level em perfil_vivo_membro (legados, mantidos)
 const KOLO_VIVO_FIELDS_MEMBRO_TOPLEVEL = [
@@ -151,6 +153,7 @@ export async function buildContext(
   // argumento — um booleano global que alcançava as 172 famílias de uma vez.
   // O piloto restrito exigiu granularidade por família; ver `conducao/piloto.ts`.
   const piloto = pilotoQuatroA(familyId) && Boolean(params.relato?.trim());
+  const conversaRica = qualidadeRespostaV2Ativa() && Boolean(params.relato?.trim());
 
   // União dos campos do Kolo Vivo que essas skills consomem
   const camposMembroAcionados = new Set<string>();
@@ -163,6 +166,11 @@ export async function buildContext(
   }
   // Sempre incluir essencial — identidade básica do membro.
   camposMembroAcionados.add("essencial");
+  if (conversaRica) {
+    // A mesma linha já foi lida: interesses e comunicação mudam a forma de
+    // orientar, mesmo quando a área escolhida é Alimentação, Sono ou Foco.
+    for (const campo of ["como_e", "sensorial", "comunicacao", "corpo_rotina"]) camposMembroAcionados.add(campo);
+  }
 
   const tagsConhecimento = new Set<string>();
   for (const s of skills) {
@@ -338,7 +346,7 @@ export async function buildContext(
     // FASE 4A.1 · o ranking por aderência. Fora do piloto isto é `undefined`, e
     // `recuperarBoasPraticas` volta a escolher as 3 por peso — que é o que ele
     // sempre fez e o que o WhatsApp continua recebendo.
-    relato: piloto ? params.relato : undefined,
+    relato: piloto || conversaRica ? params.relato : undefined,
     // FASE 4A.3 · o repertório novo entra SÓ no piloto, e sem sair do rascunho.
     //
     // Publicar (status = ativo) para poder testar exporia o WhatsApp e toda a
@@ -357,7 +365,7 @@ export async function buildContext(
     // A economia de tokens é o efeito menor. O que importa é que a latência
     // acompanha o TAMANHO DA RESPOSTA, e mais repertório convida o modelo a
     // escrever mais. Fora do piloto continua 3, como sempre foi.
-    limite: piloto ? 2 : undefined,
+    limite: piloto || conversaRica ? 2 : undefined,
     aoFalhar: () => {
       erroNaConsulta = true;
     },
@@ -389,7 +397,9 @@ export async function buildContext(
           // pode é derrubar o turno por causa de um enriquecimento.
           () => null,
         )
-      : null;
+      : conversaRica && membroAtipicoId
+        ? perfilConsultavelDaLinha(perfilMembroResult.data as Record<string, unknown> | null, membroAtipicoId)
+        : null;
   // RASTRO — o mesmo do WhatsApp, no módulo compartilhado. Aqui `enviadas` é
   // igual a `recuperadas` porque `buildContextBlock` monta o bloco com o array
   // inteiro; o dia em que alguém filtrar no meio, o rastro mostra.

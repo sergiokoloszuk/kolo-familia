@@ -36,6 +36,17 @@ export type PerguntaAberta = {
   opcoes: OpcaoDaPergunta[];
 };
 
+/** Preserva o começo e principalmente o fim, onde ficam perguntas/ofertas.
+ * Corte só no prefixo escondia as opções da decisão do turno seguinte.
+ */
+export function trechoComContinuidade(texto: string, limite = 900): string {
+  if (texto.length <= limite) return texto;
+  const marcador = "\n[trecho intermediário omitido]\n";
+  const inicio = Math.floor((limite - marcador.length) / 4);
+  const fim = limite - marcador.length - inicio;
+  return texto.slice(0, inicio) + marcador + texto.slice(-fim);
+}
+
 /** As linhas `1. …` / `2) …`, em linha própria ou inline. */
 function extrairOpcoes(texto: string): OpcaoDaPergunta[] {
   const achados = new Map<number, string>();

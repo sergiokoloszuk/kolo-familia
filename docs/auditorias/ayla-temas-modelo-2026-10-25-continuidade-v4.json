@@ -1,0 +1,629 @@
+{
+  "data": "2026-10-25T22:32:44.319Z",
+  "escopo": "Pessoas fictícias, dados em memória; biblioteca e templates só GET; produtor OpenAI real; sem WhatsApp, mensagens externas, atualização de Perfil ou cobrança de família.",
+  "resultados": [
+    {
+      "id": "ref_alimentacao",
+      "turno": 0,
+      "tema": "nutricional",
+      "mensagem": "Ela come arroz, frango e batata. Se coloco feijão ou salada, manda tirar. Eu insisto porque tenho medo de ela nunca aprender a comer outras coisas.",
+      "perfil": {
+        "nome": "Isabela",
+        "nascimento": "2007-12-25",
+        "genero": "feminino",
+        "sabe": {
+          "como_e": {
+            "texto": "Gosta de cinema, música, comida japonesa, poke, frutos do mar e sair com amigas. Quer começar a trabalhar e prestar vestibular no próximo ano."
+          },
+          "sensorial": "Sensível a sons, luz forte e cheiros. Às vezes não quer ser tocada. Gosta de experimentar texturas diferentes."
+        },
+        "extras": {
+          "comunicacao": "Verbal e fluente, vocabulário ótimo e compreensão ótima.",
+          "socializacao": "Interage bem com os pares e gosta de sair com amigas. Também gosta de ficar sozinha no quarto.",
+          "foco": "Mantém atenção quando está engajada; às vezes se distrai. Não há episódios de hiperfoco registrados.",
+          "nutricional": "Gosta de comida japonesa, poke e frutos do mar. Os ingredientes que aceita não estão detalhados.",
+          "sono": "Dormia cerca de 7 horas; não há descrição de rotina ou ambiente de sono.",
+          "emocional": "Expressa emoções gritando, chorando e falando palavrões. Mudanças na rotina são relatadas como difíceis."
+        }
+      },
+      "canal": "web",
+      "flag": "on",
+      "texto": "O medo de ela “nunca aprender” está fazendo a refeição virar uma disputa: você oferece, ela manda tirar, e quanto mais insiste, mais a comida nova fica associada à pressão. Isso não significa que ela não possa ampliar o repertório — só que *insistir para comer* não é a única forma de apresentar algo novo e pode atrapalhar a aproximação.\n\nComo a Isabela já gosta de montar refeições como poke, eu começaria pela *participação e pela escolha*, não pela prova:\n\n- Coloque arroz, frango e batata como base segura.\n- Deixe feijão ou salada em uma travessa separada, sem colocar no prato dela contra a vontade.\n- Diga: **“Você não precisa comer. Quer escolher se deixamos separado ou se prefere nem colocar na mesa?”**\n- Se ela aceitar, o objetivo inicial pode ser apenas tolerar a presença, escolher uma preparação ou ajudar a montar o próprio prato. Tocar, cheirar e provar só entram se ela quiser.\n\nPara não deixar a ampliação vaga, escolha *um único alimento por vez* — feijão **ou** salada — e converse com ela sobre qual formato seria menos desagradável: separado, mais frio ou morno, em pouca quantidade, com molho à parte, por exemplo. Não esconda o ingrediente nem troque comida por recompensa. O aprendizado fica mais consistente quando ela mantém algum controle e a refeição continua segura.\n\nUma frase que pode ajudar:\n\n> **“Eu gostaria que você tivesse mais opções para escolher, mas não vou te obrigar a comer. Vamos descobrir juntas qual é o jeito menos ruim de conhecer algo novo.”**\n\nObserve nos próximos dias: ela recusa pelo gosto, cheiro, aparência, textura, mistura no prato ou pela pressão do momento? Essa diferença mostra qual será o próximo passo. Pelo que já me contou, ela gosta de experimentar texturas diferentes, então talvez o obstáculo não seja “não aceitar novidades” em geral — pode ser especificamente a apresentação desses alimentos ou a sensação de perder controle na refeição.\n\nSe houver ânsia, dor, engasgos, perda de peso ou redução do que ela já comia, vale levar isso a um profissional de saúde, sem fazer novas exposições por conta própria.\n\nPosso continuar por um destes caminhos:\n\n- **Montar uma refeição possível** usando arroz, frango, batata e apresentação em formato de bowl.\n- **Criar uma conversa com a Isabela** para ela participar do planejamento das refeições.\n- **Investigar a recusa do feijão e da salada** de um jeito simples, para diferenciar aparência, cheiro, textura e mistura.",
+      "modelo": "gpt-5.6-luna",
+      "ms": 13376,
+      "base2Ids": [
+        "nutricional/principio-central",
+        "nutricional/missao"
+      ],
+      "areaAtiva": "nutricional",
+      "intencao": "desafio"
+    },
+    {
+      "id": "ref_alimentacao",
+      "turno": 1,
+      "tema": "nutricional",
+      "mensagem": "Quero a primeira opção que você ofereceu no fim.",
+      "perfil": {
+        "nome": "Isabela",
+        "nascimento": "2007-12-25",
+        "genero": "feminino",
+        "sabe": {
+          "como_e": {
+            "texto": "Gosta de cinema, música, comida japonesa, poke, frutos do mar e sair com amigas. Quer começar a trabalhar e prestar vestibular no próximo ano."
+          },
+          "sensorial": "Sensível a sons, luz forte e cheiros. Às vezes não quer ser tocada. Gosta de experimentar texturas diferentes."
+        },
+        "extras": {
+          "comunicacao": "Verbal e fluente, vocabulário ótimo e compreensão ótima.",
+          "socializacao": "Interage bem com os pares e gosta de sair com amigas. Também gosta de ficar sozinha no quarto.",
+          "foco": "Mantém atenção quando está engajada; às vezes se distrai. Não há episódios de hiperfoco registrados.",
+          "nutricional": "Gosta de comida japonesa, poke e frutos do mar. Os ingredientes que aceita não estão detalhados.",
+          "sono": "Dormia cerca de 7 horas; não há descrição de rotina ou ambiente de sono.",
+          "emocional": "Expressa emoções gritando, chorando e falando palavrões. Mudanças na rotina são relatadas como difíceis."
+        }
+      },
+      "canal": "web",
+      "flag": "on",
+      "texto": "Vamos montar um *bowl com base segura*, usando exatamente o que a Isabela já come — arroz, frango e batata — sem transformar a refeição em teste.\n\n### Bowl da Isabela\n\n**Base**\n- arroz em uma parte do prato;\n- frango em outra;\n- batata separada, do jeito que ela já aceita.\n\nA ideia é não misturar tudo de início. Em um poke, os ingredientes podem ficar organizados em partes, e isso dá mais controle sobre cada textura, cheiro e sabor.\n\n**Apresentação**\n- Use uma tigela ou prato em que os alimentos fiquem visíveis e separados.\n- Sirva a quantidade habitual, sem aumentar a porção para “sobrar espaço” para o novo.\n- Se quiser oferecer *feijão ou salada*, deixe em uma travessa separada. Ela pode escolher não colocar no prato; não precisa tocar, cheirar ou provar.\n\nVocê pode dizer:\n\n> **“Hoje você pode montar seu bowl com arroz, frango e batata. O feijão e a salada ficam disponíveis à parte, mas você não precisa colocar nem comer. Quer montar do seu jeito?”**\n\nO objetivo dessa refeição não é ela comer algo novo. É participar da montagem, manter os alimentos seguros e perceber que uma novidade pode estar presente sem virar pressão. Para algumas pessoas, ter controle sobre a separação dos alimentos torna mais possível observar uma novidade com calma.\n\nComo ela é adulta e se comunica bem, vale incluí-la na decisão:\n\n> **“Entre feijão e salada, qual você prefere deixar disponível separado — ou hoje prefere nenhum dos dois?”**\n\nSe ela disser que não quer, respeite e encerre o assunto naquele momento. A refeição continua sendo bem-sucedida porque ela participou sem precisar entrar numa disputa.\n\nNa próxima vez, vocês podem escolher juntas uma única mudança pequena: trocar apenas o formato da batata, organizar o bowl de outro jeito ou deixar um alimento novo numa travessa distante do prato. Assim vocês descobrem se a barreira está na novidade em si, na mistura, no cheiro ou na sensação de perder controle — sem exigir que ela coma para vocês aprenderem.\n\nDepois, observe só uma coisa: *o que foi mais fácil para ela — montar, aceitar o bowl na mesa ou manter o alimento novo separado?* Esse dado mostra qual pode ser o próximo avanço.",
+      "modelo": "gpt-5.6-luna",
+      "ms": 8287,
+      "base2Ids": [
+        "nutricional/principio-central",
+        "nutricional/missao"
+      ],
+      "areaAtiva": "nutricional",
+      "intencao": "desafio"
+    },
+    {
+      "id": "ref_alimentacao",
+      "turno": 2,
+      "tema": "nutricional",
+      "mensagem": "Me dê ideias de outras coisas que posso te pedir sobre isso.",
+      "perfil": {
+        "nome": "Isabela",
+        "nascimento": "2007-12-25",
+        "genero": "feminino",
+        "sabe": {
+          "como_e": {
+            "texto": "Gosta de cinema, música, comida japonesa, poke, frutos do mar e sair com amigas. Quer começar a trabalhar e prestar vestibular no próximo ano."
+          },
+          "sensorial": "Sensível a sons, luz forte e cheiros. Às vezes não quer ser tocada. Gosta de experimentar texturas diferentes."
+        },
+        "extras": {
+          "comunicacao": "Verbal e fluente, vocabulário ótimo e compreensão ótima.",
+          "socializacao": "Interage bem com os pares e gosta de sair com amigas. Também gosta de ficar sozinha no quarto.",
+          "foco": "Mantém atenção quando está engajada; às vezes se distrai. Não há episódios de hiperfoco registrados.",
+          "nutricional": "Gosta de comida japonesa, poke e frutos do mar. Os ingredientes que aceita não estão detalhados.",
+          "sono": "Dormia cerca de 7 horas; não há descrição de rotina ou ambiente de sono.",
+          "emocional": "Expressa emoções gritando, chorando e falando palavrões. Mudanças na rotina são relatadas como difíceis."
+        }
+      },
+      "canal": "web",
+      "flag": "on",
+      "texto": "Claro. Sobre a alimentação da Isabela, você pode me pedir coisas bem práticas, por exemplo:\n\n- **“Monte uma refeição com arroz, frango e batata, deixando uma novidade separada.”**\n- **“Me ajude a descobrir se ela recusa o feijão pelo cheiro, textura, aparência ou por não querer misturar.”**\n- **“Crie uma conversa para eu falar com ela sem parecer que estou pressionando.”**\n- **“Como posso oferecer salada sem colocá-la no prato contra a vontade dela?”**\n- **“Me dê ideias de alimentos que combinem com o que ela já aceita, sem começar pela obrigação de comer.”**\n- **“Monte uma lista de compras para ela participar e escolher alguns itens.”**\n- **“Me ajude a planejar uma receita simples que ela possa preparar comigo.”**\n- **“Como trabalhar mais autonomia alimentar pensando no vestibular e em quando ela começar a trabalhar?”**\n- **“Organize o que devo observar nas próximas refeições para entender melhor as recusas.”**\n- **“O que eu faço quando insisto e a refeição vira uma discussão?”**\n\nTambém posso ajudar a transformar uma comida de que ela já gosta, como um poke, em uma refeição de montagem: ela escolhe a base, mantém os ingredientes separados e decide se quer apenas deixar uma novidade disponível — sem precisar provar naquele dia.\n\nVocê pode me escrever do jeito que vier, ou usar o botão de áudio e contar como foi uma refeição recente.",
+      "modelo": "gpt-5.6-luna",
+      "ms": 5661,
+      "base2Ids": [
+        "nutricional/principio-central",
+        "nutricional/missao"
+      ],
+      "areaAtiva": "nutricional",
+      "intencao": "desafio"
+    },
+    {
+      "id": "ref_alimentacao",
+      "turno": 0,
+      "tema": "nutricional",
+      "mensagem": "Ela come arroz, frango e batata. Se coloco feijão ou salada, manda tirar. Eu insisto porque tenho medo de ela nunca aprender a comer outras coisas.",
+      "perfil": {
+        "nome": "Isabela",
+        "nascimento": "2007-12-25",
+        "genero": "feminino",
+        "sabe": {
+          "como_e": {
+            "texto": "Gosta de cinema, música, comida japonesa, poke, frutos do mar e sair com amigas. Quer começar a trabalhar e prestar vestibular no próximo ano."
+          },
+          "sensorial": "Sensível a sons, luz forte e cheiros. Às vezes não quer ser tocada. Gosta de experimentar texturas diferentes."
+        },
+        "extras": {
+          "comunicacao": "Verbal e fluente, vocabulário ótimo e compreensão ótima.",
+          "socializacao": "Interage bem com os pares e gosta de sair com amigas. Também gosta de ficar sozinha no quarto.",
+          "foco": "Mantém atenção quando está engajada; às vezes se distrai. Não há episódios de hiperfoco registrados.",
+          "nutricional": "Gosta de comida japonesa, poke e frutos do mar. Os ingredientes que aceita não estão detalhados.",
+          "sono": "Dormia cerca de 7 horas; não há descrição de rotina ou ambiente de sono.",
+          "emocional": "Expressa emoções gritando, chorando e falando palavrões. Mudanças na rotina são relatadas como difíceis."
+        }
+      },
+      "canal": "whatsapp",
+      "flag": "on",
+      "texto": "Esse medo é compreensível: você está tentando ampliar a alimentação dela, não dificultar. Mas, quando Isabela manda tirar o feijão ou a salada, insistir para que permaneçam no prato pode transformar a refeição numa disputa — e não ensina, por si só, a aceitar o alimento.\n\nPor enquanto, tente assim:\n\n1. Sirva o que ela já come e deixe feijão ou salada *em uma travessa separada*, sem colocar no prato dela contra a vontade. Diga: **“Você não precisa comer nem deixar no prato. Se quiser conhecer, pode escolher como.”**\n\n2. Ofereça participação sem exigir prova: escolher a salada no mercado, lavar uma folha, montar um potinho ou observar você colocando no seu prato. Como ela é fluente e já tem preferências claras, vale envolvê-la na decisão, não tratá-la como alguém que precisa obedecer para aprender.\n\n3. Em alguma refeição tranquila, proponha uma aproximação pequena: olhar, tocar com o garfo ou colocar uma quantidade mínima num recipiente separado. Se ela recuar ou pedir para retirar, respeite e encerre sem comentário.\n\nO ponto não é desistir de ampliar o repertório; é separar *ter uma oportunidade de conhecer* de ser obrigada a manter o alimento perto ou provar. Ela já come arroz, frango e batata: agora precisamos descobrir se o bloqueio é principalmente pela presença, pela textura, pelo cheiro, pela aparência ou por uma experiência anterior.\n\nEla já comeu feijão ou salada alguma vez, mesmo que tenha parado depois? Posso continuar a partir disso com **uma próxima refeição possível**, uma **atividade de participação na cozinha** ou uma conversa sobre esse medo de ela “nunca aprender”.",
+      "modelo": "gpt-5.6-luna",
+      "ms": 7593,
+      "base2Ids": [
+        "nutricional/principio-central",
+        "nutricional/missao"
+      ],
+      "guias": [
+        "nutricional"
+      ],
+      "decisao": {
+        "intencao": "outro",
+        "tema": "alimentação seletiva e introdução de novos alimentos",
+        "aceite": null,
+        "skills": [
+          "nutricional"
+        ],
+        "skillsAvaliadas": true,
+        "pedidoExplicito": false,
+        "continuacao": false,
+        "naturezaEmocional": "neutra",
+        "pediuParaContar": false,
+        "necessidadeConhecimento": "boas_praticas",
+        "temaConhecimento": "estratégias para introdução de novos alimentos e alimentação seletiva",
+        "origem": "gpt"
+      },
+      "regrasConcisao": [
+        "- uma história curta que ensine ou ensaie a cena;",
+        "- uma sequência visual curta, quando ver a ordem realmente ajuda;",
+        "Uma resposta pode ser curta e completa. Complete o mecanismo necessário para a",
+        "comum, duração curta, mediação do adulto, colegas de apoio.",
+        "Na conversa, você pode organizar passos de um momento difícil, sequência curta,",
+        "<lacuna_decisiva>Se ainda faltar UMA coisa para orientar melhor, é esta: **Seletividade alimentar**. Só pergunte se a resposta mudaria mesmo o que você vai sugerir — e, se perguntar, entregue uma orientação útil no MESMO turno. Nunca pergunte mais de uma coisa.</lacuna_decisiva>",
+        "Faça a personalização aparecer: ligue um ou dois fatos confirmados a uma decisão prática, em vez de apenas mencionar nome e interesse. Uma preferência antiga não prova que continua igual: se o relato atual divergir, reconheça e confira. Não despeje todo o Perfil, não explique comportamento pelo diagnóstico e não transforme ausência de informação em causa. Cumprimento, continuação curta, crise e pedido de brincadeira conservam seus formatos próprios.",
+        "Este é o contrato de apresentação desta candidata: o tamanho acompanha a ajuda. Uma situação complexa pode receber vários blocos e várias orientações completas no mesmo turno; não a reduza a uma ideia ou a duas bolhas por uma regra antiga de concisão.",
+        "5. CONTINUIDADE E DESCOBERTA. Em todos os temas, depois de uma resposta substancial de orientação ou exploração, mostre duas ou três possibilidades concretas de como pode continuar ajudando. Use uma frase curta de convite e bullets com nome em negrito e emoji discreto. As ofertas nascem da conversa, não de um menu fixo: em alimentação, por exemplo, montar a próxima refeição, criar uma atividade na cozinha ou conversar sobre o medo explicitamente relatado. Em outros temas, proponha entregas próprias daquela área e da idade. Não use apenas \"quer saber mais?\" nem adie para essas ofertas a ajuda que foi pedida agora. Se a família escolher, entregue o caminho escolhido no turno seguinte, usando o histórico; não recomece a introdução nem reofereça o mesmo menu. Se pedir ideias do que pode perguntar, dê exemplos de pedidos escritos na linguagem dela e adequados ao que já contou. Uma pergunta realmente necessária pode substituir as ofertas; cumprimento, agradecimento, resposta curta, recusa de continuar e necessidade imediata não precisam de menu. Nenhuma pergunta é obrigatória para fechar.",
+        "Use títulos curtos, parágrafos com respiro, listas de ações e destaque das falas prontas. Evite tabela para instruções simples, títulos \"BLOCO 2\" e relatório burocrático. No WhatsApp use *negrito* e listas simples; na web use markdown leve. Emojis podem marcar passagens, sem decorar toda frase.",
+        "Não transforme uma orientação cotidiana em uma lista de ressalvas. Ajude com naturalidade e respeite preferências e apoio aceito. Pedido de brincadeira segue seu roteiro completo; história, crise e necessidade imediata seguem seus próprios formatos. Não prometa registro, relatório salvo ou melhora sem evidência.",
+        "Para um pedido concreto com preocupação e dificuldade recorrente, o acolhimento, a compreensão e as opções práticas devem aparecer juntos: não entregue apenas uma ação e encerre. Uma mudança de leitura do medo da mãe e duas ou três possibilidades aplicáveis são parte da ajuda solicitada, não aprofundamentos a adiar. Esta regra substitui limites antigos de uma orientação por turno; concisão não significa cortar a compreensão ou o próximo passo.",
+        "Responda SEMPRE no idioma da ÚLTIMA mensagem da pessoa. A resposta INTEIRA num único idioma — nunca misture português com espanhol ou inglês, nem em conectivos. O contexto, o perfil e as notas podem vir em português: leia normalmente, mas ESCREVA na língua da pessoa (nomes próprios ficam como são). Mensagem curta ou ambígua (\"ok\", \"😊\"): siga o idioma que vocês já vinham usando."
+      ]
+    },
+    {
+      "id": "ref_alimentacao",
+      "turno": 1,
+      "tema": "nutricional",
+      "mensagem": "Quero a primeira opção que você ofereceu no fim.",
+      "perfil": {
+        "nome": "Isabela",
+        "nascimento": "2007-12-25",
+        "genero": "feminino",
+        "sabe": {
+          "como_e": {
+            "texto": "Gosta de cinema, música, comida japonesa, poke, frutos do mar e sair com amigas. Quer começar a trabalhar e prestar vestibular no próximo ano."
+          },
+          "sensorial": "Sensível a sons, luz forte e cheiros. Às vezes não quer ser tocada. Gosta de experimentar texturas diferentes."
+        },
+        "extras": {
+          "comunicacao": "Verbal e fluente, vocabulário ótimo e compreensão ótima.",
+          "socializacao": "Interage bem com os pares e gosta de sair com amigas. Também gosta de ficar sozinha no quarto.",
+          "foco": "Mantém atenção quando está engajada; às vezes se distrai. Não há episódios de hiperfoco registrados.",
+          "nutricional": "Gosta de comida japonesa, poke e frutos do mar. Os ingredientes que aceita não estão detalhados.",
+          "sono": "Dormia cerca de 7 horas; não há descrição de rotina ou ambiente de sono.",
+          "emocional": "Expressa emoções gritando, chorando e falando palavrões. Mudanças na rotina são relatadas como difíceis."
+        }
+      },
+      "canal": "whatsapp",
+      "flag": "on",
+      "texto": "Vamos montar uma próxima refeição possível, sem transformar o feijão ou a salada em teste.\n\nSirva arroz, frango e batata como ela já aceita. Coloque uma pequena porção de um alimento novo *em uma travessa separada*, e deixe Isabela decidir se quer apenas olhar, escolher um utensílio para servir ou não se aproximar. Diga: **“Hoje você não precisa comer isso. Estou deixando separado caso queira escolher.”**\n\nComo ela gosta de poke, uma opção é montar a refeição em partes: arroz, frango, um ingrediente que ela já aceite e, separado, apenas um novo ingrediente de aparência ou textura parecida com algo que ela já come. Observe se o que pesa é a presença, o cheiro, a aparência ou a mistura — e encerre a tentativa se ela recuar, sem insistir.\n\nDepois, repare apenas em uma coisa: ela tolerou o alimento separado e participou de alguma escolha, mesmo sem provar?",
+      "modelo": "gpt-5.6-luna",
+      "ms": 4539,
+      "base2Ids": [
+        "nutricional/principio-central",
+        "sensorial/antes-de-orientar-diferencie-quando-sensorial-nao-e-o-tema-principal"
+      ],
+      "guias": [
+        "nutricional",
+        "sensorial"
+      ],
+      "decisao": {
+        "intencao": "plano",
+        "tema": "alimentação seletiva",
+        "aceite": "Aceitou a opção de construir uma próxima refeição possível.",
+        "skills": [
+          "nutricional",
+          "sensorial"
+        ],
+        "skillsAvaliadas": true,
+        "pedidoExplicito": true,
+        "continuacao": true,
+        "naturezaEmocional": "neutra",
+        "pediuParaContar": false,
+        "necessidadeConhecimento": "boas_praticas",
+        "temaConhecimento": "ampliação alimentar sem pressão",
+        "origem": "gpt"
+      },
+      "regrasConcisao": [
+        "- uma história curta que ensine ou ensaie a cena;",
+        "- uma sequência visual curta, quando ver a ordem realmente ajuda;",
+        "Uma resposta pode ser curta e completa. Complete o mecanismo necessário para a",
+        "comum, duração curta, mediação do adulto, colegas de apoio.",
+        "Na conversa, você pode organizar passos de um momento difícil, sequência curta,",
+        "<lacuna_decisiva>Se ainda faltar UMA coisa para orientar melhor, é esta: **Seletividade alimentar**. Só pergunte se a resposta mudaria mesmo o que você vai sugerir — e, se perguntar, entregue uma orientação útil no MESMO turno. Nunca pergunte mais de uma coisa.</lacuna_decisiva>",
+        "Faça a personalização aparecer: ligue um ou dois fatos confirmados a uma decisão prática, em vez de apenas mencionar nome e interesse. Uma preferência antiga não prova que continua igual: se o relato atual divergir, reconheça e confira. Não despeje todo o Perfil, não explique comportamento pelo diagnóstico e não transforme ausência de informação em causa. Cumprimento, continuação curta, crise e pedido de brincadeira conservam seus formatos próprios.",
+        "Este é o contrato de apresentação desta candidata: o tamanho acompanha a ajuda. Uma situação complexa pode receber vários blocos e várias orientações completas no mesmo turno; não a reduza a uma ideia ou a duas bolhas por uma regra antiga de concisão.",
+        "5. CONTINUIDADE E DESCOBERTA. Em todos os temas, depois de uma resposta substancial de orientação ou exploração, mostre duas ou três possibilidades concretas de como pode continuar ajudando. Use uma frase curta de convite e bullets com nome em negrito e emoji discreto. As ofertas nascem da conversa, não de um menu fixo: em alimentação, por exemplo, montar a próxima refeição, criar uma atividade na cozinha ou conversar sobre o medo explicitamente relatado. Em outros temas, proponha entregas próprias daquela área e da idade. Não use apenas \"quer saber mais?\" nem adie para essas ofertas a ajuda que foi pedida agora. Se a família escolher, entregue o caminho escolhido no turno seguinte, usando o histórico; não recomece a introdução nem reofereça o mesmo menu. Se pedir ideias do que pode perguntar, dê exemplos de pedidos escritos na linguagem dela e adequados ao que já contou. Uma pergunta realmente necessária pode substituir as ofertas; cumprimento, agradecimento, resposta curta, recusa de continuar e necessidade imediata não precisam de menu. Nenhuma pergunta é obrigatória para fechar.",
+        "Use títulos curtos, parágrafos com respiro, listas de ações e destaque das falas prontas. Evite tabela para instruções simples, títulos \"BLOCO 2\" e relatório burocrático. No WhatsApp use *negrito* e listas simples; na web use markdown leve. Emojis podem marcar passagens, sem decorar toda frase.",
+        "Não transforme uma orientação cotidiana em uma lista de ressalvas. Ajude com naturalidade e respeite preferências e apoio aceito. Pedido de brincadeira segue seu roteiro completo; história, crise e necessidade imediata seguem seus próprios formatos. Não prometa registro, relatório salvo ou melhora sem evidência.",
+        "Para um pedido concreto com preocupação e dificuldade recorrente, o acolhimento, a compreensão e as opções práticas devem aparecer juntos: não entregue apenas uma ação e encerre. Uma mudança de leitura do medo da mãe e duas ou três possibilidades aplicáveis são parte da ajuda solicitada, não aprofundamentos a adiar. Esta regra substitui limites antigos de uma orientação por turno; concisão não significa cortar a compreensão ou o próximo passo.",
+        "Responda SEMPRE no idioma da ÚLTIMA mensagem da pessoa. A resposta INTEIRA num único idioma — nunca misture português com espanhol ou inglês, nem em conectivos. O contexto, o perfil e as notas podem vir em português: leia normalmente, mas ESCREVA na língua da pessoa (nomes próprios ficam como são). Mensagem curta ou ambígua (\"ok\", \"😊\"): siga o idioma que vocês já vinham usando."
+      ]
+    },
+    {
+      "id": "ref_alimentacao",
+      "turno": 2,
+      "tema": "nutricional",
+      "mensagem": "Me dê ideias de outras coisas que posso te pedir sobre isso.",
+      "perfil": {
+        "nome": "Isabela",
+        "nascimento": "2007-12-25",
+        "genero": "feminino",
+        "sabe": {
+          "como_e": {
+            "texto": "Gosta de cinema, música, comida japonesa, poke, frutos do mar e sair com amigas. Quer começar a trabalhar e prestar vestibular no próximo ano."
+          },
+          "sensorial": "Sensível a sons, luz forte e cheiros. Às vezes não quer ser tocada. Gosta de experimentar texturas diferentes."
+        },
+        "extras": {
+          "comunicacao": "Verbal e fluente, vocabulário ótimo e compreensão ótima.",
+          "socializacao": "Interage bem com os pares e gosta de sair com amigas. Também gosta de ficar sozinha no quarto.",
+          "foco": "Mantém atenção quando está engajada; às vezes se distrai. Não há episódios de hiperfoco registrados.",
+          "nutricional": "Gosta de comida japonesa, poke e frutos do mar. Os ingredientes que aceita não estão detalhados.",
+          "sono": "Dormia cerca de 7 horas; não há descrição de rotina ou ambiente de sono.",
+          "emocional": "Expressa emoções gritando, chorando e falando palavrões. Mudanças na rotina são relatadas como difíceis."
+        }
+      },
+      "canal": "whatsapp",
+      "flag": "on",
+      "texto": "Sobre a alimentação da Isabela, você pode me pedir, por exemplo:\n\n- **Montar outra refeição possível** usando o que ela já aceita e um alimento novo separado.\n- **Criar uma atividade na cozinha** para ela participar, sem obrigação de provar.\n- **Pensar em aproximações para um alimento específico**, como feijão, salada ou algum ingrediente do poke.\n- **Ajudar a diferenciar o que está dificultando**: presença no prato, cheiro, aparência, textura, mistura ou uma experiência anterior.\n- **Conversar sobre o medo de ela nunca aprender a comer outras coisas** e encontrar uma forma de ampliar sem transformar as refeições em disputa.\n- **Organizar perguntas para levar a um nutricionista ou fonoaudiólogo**, caso haja alguma dificuldade para mastigar, engolir, tosse ou engasgos.\n\nVocê pode escrever do seu jeito ou mandar áudio — por exemplo: “Ela recusa até deixar o alimento na mesa; o que faço?” ou “Quero trabalhar primeiro com a salada”.",
+      "modelo": "gpt-5.6-luna",
+      "ms": 3395,
+      "base2Ids": [
+        "nutricional/principio-central",
+        "nutricional/missao"
+      ],
+      "guias": [
+        "nutricional"
+      ],
+      "decisao": {
+        "intencao": "outro",
+        "tema": "alimentação e seletividade alimentar",
+        "aceite": null,
+        "skills": [
+          "nutricional"
+        ],
+        "skillsAvaliadas": true,
+        "pedidoExplicito": true,
+        "continuacao": false,
+        "naturezaEmocional": "neutra",
+        "pediuParaContar": false,
+        "necessidadeConhecimento": "nenhum",
+        "temaConhecimento": null,
+        "origem": "gpt"
+      },
+      "regrasConcisao": [
+        "- uma história curta que ensine ou ensaie a cena;",
+        "- uma sequência visual curta, quando ver a ordem realmente ajuda;",
+        "Uma resposta pode ser curta e completa. Complete o mecanismo necessário para a",
+        "comum, duração curta, mediação do adulto, colegas de apoio.",
+        "Na conversa, você pode organizar passos de um momento difícil, sequência curta,",
+        "<lacuna_decisiva>Se ainda faltar UMA coisa para orientar melhor, é esta: **Seletividade alimentar**. Só pergunte se a resposta mudaria mesmo o que você vai sugerir — e, se perguntar, entregue uma orientação útil no MESMO turno. Nunca pergunte mais de uma coisa.</lacuna_decisiva>",
+        "Faça a personalização aparecer: ligue um ou dois fatos confirmados a uma decisão prática, em vez de apenas mencionar nome e interesse. Uma preferência antiga não prova que continua igual: se o relato atual divergir, reconheça e confira. Não despeje todo o Perfil, não explique comportamento pelo diagnóstico e não transforme ausência de informação em causa. Cumprimento, continuação curta, crise e pedido de brincadeira conservam seus formatos próprios.",
+        "Este é o contrato de apresentação desta candidata: o tamanho acompanha a ajuda. Uma situação complexa pode receber vários blocos e várias orientações completas no mesmo turno; não a reduza a uma ideia ou a duas bolhas por uma regra antiga de concisão.",
+        "5. CONTINUIDADE E DESCOBERTA. Em todos os temas, depois de uma resposta substancial de orientação ou exploração, mostre duas ou três possibilidades concretas de como pode continuar ajudando. Use uma frase curta de convite e bullets com nome em negrito e emoji discreto. As ofertas nascem da conversa, não de um menu fixo: em alimentação, por exemplo, montar a próxima refeição, criar uma atividade na cozinha ou conversar sobre o medo explicitamente relatado. Em outros temas, proponha entregas próprias daquela área e da idade. Não use apenas \"quer saber mais?\" nem adie para essas ofertas a ajuda que foi pedida agora. Se a família escolher, entregue o caminho escolhido no turno seguinte, usando o histórico; não recomece a introdução nem reofereça o mesmo menu. Se pedir ideias do que pode perguntar, dê exemplos de pedidos escritos na linguagem dela e adequados ao que já contou. Uma pergunta realmente necessária pode substituir as ofertas; cumprimento, agradecimento, resposta curta, recusa de continuar e necessidade imediata não precisam de menu. Nenhuma pergunta é obrigatória para fechar.",
+        "Use títulos curtos, parágrafos com respiro, listas de ações e destaque das falas prontas. Evite tabela para instruções simples, títulos \"BLOCO 2\" e relatório burocrático. No WhatsApp use *negrito* e listas simples; na web use markdown leve. Emojis podem marcar passagens, sem decorar toda frase.",
+        "Não transforme uma orientação cotidiana em uma lista de ressalvas. Ajude com naturalidade e respeite preferências e apoio aceito. Pedido de brincadeira segue seu roteiro completo; história, crise e necessidade imediata seguem seus próprios formatos. Não prometa registro, relatório salvo ou melhora sem evidência.",
+        "Para um pedido concreto com preocupação e dificuldade recorrente, o acolhimento, a compreensão e as opções práticas devem aparecer juntos: não entregue apenas uma ação e encerre. Uma mudança de leitura do medo da mãe e duas ou três possibilidades aplicáveis são parte da ajuda solicitada, não aprofundamentos a adiar. Esta regra substitui limites antigos de uma orientação por turno; concisão não significa cortar a compreensão ou o próximo passo.",
+        "Responda SEMPRE no idioma da ÚLTIMA mensagem da pessoa. A resposta INTEIRA num único idioma — nunca misture português com espanhol ou inglês, nem em conectivos. O contexto, o perfil e as notas podem vir em português: leia normalmente, mas ESCREVA na língua da pessoa (nomes próprios ficam como são). Mensagem curta ou ambígua (\"ok\", \"😊\"): siga o idioma que vocês já vinham usando."
+      ]
+    },
+    {
+      "id": "ref_introducao_foco",
+      "turno": 0,
+      "tema": "foco",
+      "mensagem": "Quero explorar Atenção e Concentração.",
+      "perfil": {
+        "nome": "Isabela",
+        "nascimento": "2007-12-25",
+        "genero": "feminino",
+        "sabe": {
+          "como_e": {
+            "texto": "Gosta de cinema, música, comida japonesa, poke, frutos do mar e sair com amigas. Quer começar a trabalhar e prestar vestibular no próximo ano."
+          },
+          "sensorial": "Sensível a sons, luz forte e cheiros. Às vezes não quer ser tocada. Gosta de experimentar texturas diferentes."
+        },
+        "extras": {
+          "comunicacao": "Verbal e fluente, vocabulário ótimo e compreensão ótima.",
+          "socializacao": "Interage bem com os pares e gosta de sair com amigas. Também gosta de ficar sozinha no quarto.",
+          "foco": "Mantém atenção quando está engajada; às vezes se distrai. Não há episódios de hiperfoco registrados.",
+          "nutricional": "Gosta de comida japonesa, poke e frutos do mar. Os ingredientes que aceita não estão detalhados.",
+          "sono": "Dormia cerca de 7 horas; não há descrição de rotina ou ambiente de sono.",
+          "emocional": "Expressa emoções gritando, chorando e falando palavrões. Mudanças na rotina são relatadas como difíceis."
+        }
+      },
+      "canal": "web",
+      "flag": "on",
+      "texto": "Olá! Eu sou a Ayla. Em *Atenção e Concentração*, posso ajudar a Isabela a começar, acompanhar, pausar e retomar atividades que façam sentido — sem tratar movimento ou distração como falta de vontade.\n\nPelo que você já me contou, ela mantém a atenção quando está engajada e às vezes se distrai. Isso ajuda a olhar não só *quanto* tempo ela fica concentrada, mas também o que facilita esse envolvimento — algo importante para os planos de vestibular e trabalho.\n\nPodemos seguir por um destes caminhos:\n\n- **🧭 Retrato e conquistas:** organizar o que já funciona na atenção dela e em quais situações ela consegue se manter envolvida.\n- **🛠️ Orientações práticas:** pensar em formas de iniciar, dividir, pausar e retomar tarefas de estudo ou preparação para o trabalho.\n- **🎬 Atividades adequadas à idade:** criar propostas usando interesses como cinema, música ou saídas, sem transformar isso em recompensa.\n- **💭 Crenças e reflexão:** conversar sobre ideias como “se ela consegue se concentrar no que gosta, então deveria conseguir em tudo” e encontrar uma leitura mais justa.\n\nVocê pode escolher um caminho ou contar livremente o que quer observar na atenção da Isabela. Também pode usar o botão de áudio, se ele estiver disponível no navegador; a transcrição aparece para você conferir antes de enviar.",
+      "modelo": "gpt-5.6-luna",
+      "ms": 3780,
+      "base2Ids": [
+        "foco/triagem-inicial-duas-perguntas-que-separam-caminhos-rapidamente",
+        "foco/principio-central"
+      ],
+      "areaAtiva": "foco",
+      "intencao": "duvida"
+    },
+    {
+      "id": "ref_introducao_foco",
+      "turno": 1,
+      "tema": "foco",
+      "mensagem": "Quero a primeira opção que você ofereceu no fim.",
+      "perfil": {
+        "nome": "Isabela",
+        "nascimento": "2007-12-25",
+        "genero": "feminino",
+        "sabe": {
+          "como_e": {
+            "texto": "Gosta de cinema, música, comida japonesa, poke, frutos do mar e sair com amigas. Quer começar a trabalhar e prestar vestibular no próximo ano."
+          },
+          "sensorial": "Sensível a sons, luz forte e cheiros. Às vezes não quer ser tocada. Gosta de experimentar texturas diferentes."
+        },
+        "extras": {
+          "comunicacao": "Verbal e fluente, vocabulário ótimo e compreensão ótima.",
+          "socializacao": "Interage bem com os pares e gosta de sair com amigas. Também gosta de ficar sozinha no quarto.",
+          "foco": "Mantém atenção quando está engajada; às vezes se distrai. Não há episódios de hiperfoco registrados.",
+          "nutricional": "Gosta de comida japonesa, poke e frutos do mar. Os ingredientes que aceita não estão detalhados.",
+          "sono": "Dormia cerca de 7 horas; não há descrição de rotina ou ambiente de sono.",
+          "emocional": "Expressa emoções gritando, chorando e falando palavrões. Mudanças na rotina são relatadas como difíceis."
+        }
+      },
+      "canal": "web",
+      "flag": "on",
+      "texto": "## Retrato inicial da atenção da Isabela\n\nO ponto de partida é importante: *ela consegue manter a atenção quando está envolvida*. Isso mostra que a atenção dela não desaparece; ela varia conforme a atividade, o sentido que tem para ela e as condições ao redor.\n\n### O que já sabemos\n\n- **Atenção engajada:** quando algo desperta interesse, ela consegue permanecer envolvida.\n- **Distração ocasional:** às vezes ela perde o foco, mas ainda não temos indicação de que isso aconteça em todas as situações.\n- **Interesses que podem revelar condições favoráveis:** cinema, música e sair com amigas são contextos em que podemos observar participação, conversa, planejamento e permanência.\n- **Próximos desafios reais:** vestibular e início do trabalho vão exigir começar tarefas, acompanhar etapas, retomar depois de uma pausa e lidar com atividades menos interessantes.\n\nA leitura mais justa, por enquanto, não é “ela só se concentra no que quer”. É: *a atenção dela parece responder ao envolvimento; agora precisamos descobrir quais elementos tornam uma tarefa mais fácil ou mais difícil de acompanhar*.\n\n### O que vale observar\n\nNas próximas situações de estudo ou organização, repare em qual ponto a atenção trava:\n\n1. **Começar:** ela sabe por onde iniciar ou fica parada diante da tarefa?\n2. **Continuar:** começa, mas abandona rapidamente?\n3. **Manter o fio:** continua presente, mas perde instruções ou etapas?\n4. **Retomar:** depois de uma pausa, consegue voltar sozinha?\n5. **Ambiente:** luz forte, sons ou cheiros interferem naquele momento?\n6. **Formato:** acompanha melhor quando pode escrever, falar, marcar, organizar visualmente ou usar as mãos?\n\nUma forma simples de registrar é:\n\n> “A atividade era ____. Ela conseguiu começar ____. Depois de ____ aconteceu ____. O que ajudou foi ____.”\n\nIsso evita transformar toda distração em julgamento e mostra *em que parte ela precisa de apoio*. Para o vestibular e o trabalho, essa diferença será mais útil do que contar apenas quantos minutos ela ficou concentrada.\n\nPor enquanto, a conquista central é esta: *Isabela já tem atenção disponível quando encontra envolvimento*. O próximo desenvolvimento é ampliar as condições para que ela consiga usar essa atenção também em tarefas necessárias, mesmo quando não são naturalmente interessantes.\n\nA partir daqui, posso continuar por um destes caminhos:\n\n- **🛠️ Mapear o estudo para o vestibular:** separar dificuldade de começar, continuar e retomar.\n- **💼 Pensar no início do trabalho:** observar quais apoios de organização podem favorecer autonomia.\n- **🎬 Criar uma atividade de observação usando cinema ou música:** não como prêmio, mas como forma de entender quais condições ajudam a atenção dela.",
+      "modelo": "gpt-5.6-luna",
+      "ms": 8635,
+      "base2Ids": [
+        "foco/triagem-inicial-duas-perguntas-que-separam-caminhos-rapidamente",
+        "foco/principio-central"
+      ],
+      "areaAtiva": "foco",
+      "intencao": "duvida"
+    },
+    {
+      "id": "ref_introducao_foco",
+      "turno": 2,
+      "tema": "foco",
+      "mensagem": "Me dê ideias de outras coisas que posso te pedir sobre isso.",
+      "perfil": {
+        "nome": "Isabela",
+        "nascimento": "2007-12-25",
+        "genero": "feminino",
+        "sabe": {
+          "como_e": {
+            "texto": "Gosta de cinema, música, comida japonesa, poke, frutos do mar e sair com amigas. Quer começar a trabalhar e prestar vestibular no próximo ano."
+          },
+          "sensorial": "Sensível a sons, luz forte e cheiros. Às vezes não quer ser tocada. Gosta de experimentar texturas diferentes."
+        },
+        "extras": {
+          "comunicacao": "Verbal e fluente, vocabulário ótimo e compreensão ótima.",
+          "socializacao": "Interage bem com os pares e gosta de sair com amigas. Também gosta de ficar sozinha no quarto.",
+          "foco": "Mantém atenção quando está engajada; às vezes se distrai. Não há episódios de hiperfoco registrados.",
+          "nutricional": "Gosta de comida japonesa, poke e frutos do mar. Os ingredientes que aceita não estão detalhados.",
+          "sono": "Dormia cerca de 7 horas; não há descrição de rotina ou ambiente de sono.",
+          "emocional": "Expressa emoções gritando, chorando e falando palavrões. Mudanças na rotina são relatadas como difíceis."
+        }
+      },
+      "canal": "web",
+      "flag": "on",
+      "texto": "Você pode me pedir coisas bem concretas, como:\n\n- *“Me ajude a descobrir se a dificuldade da Isabela está em começar, continuar ou retomar uma tarefa.”*\n- *“Monte um jeito de preparar o ambiente antes do estudo, afastando o que costuma puxar a atenção sem transformar isso numa cobrança.”*\n- *“Crie um treino gradual para ela estudar começando por períodos curtos e aumentando aos poucos.”*\n- *“Pense em formas de ela usar movimento — caminhar um pouco, apertar algo ou mudar de posição — sem perder o fio do que está fazendo.”*\n- *“Escreva frases curtas para orientar uma tarefa sem explicar demais nem repetir muitas vezes.”*\n- *“Ajude a preparar uma situação nova do vestibular ou do trabalho para que ela saiba o que fazer antes de chegar.”*\n- *“Monte uma forma de observar se ela retoma sozinha depois de uma pausa.”*\n- *“Adapte uma tarefa de estudo para usar cinema ou música como ponto de entrada, sem transformar o interesse em prêmio.”*\n\nEu começaria pelo treino gradual: para vestibular e trabalho, não basta saber se ela se distrai; é importante construir a experiência de *começar, sustentar por um período possível e voltar depois de uma pausa*. Você pode me pedir: *“Monte esse treino para a Isabela.”*",
+      "modelo": "gpt-5.6-luna",
+      "ms": 5242,
+      "base2Ids": [],
+      "areaAtiva": "foco",
+      "intencao": "desabafo"
+    },
+    {
+      "id": "ref_introducao_foco",
+      "turno": 0,
+      "tema": "foco",
+      "mensagem": "Quero explorar Atenção e Concentração.",
+      "perfil": {
+        "nome": "Isabela",
+        "nascimento": "2007-12-25",
+        "genero": "feminino",
+        "sabe": {
+          "como_e": {
+            "texto": "Gosta de cinema, música, comida japonesa, poke, frutos do mar e sair com amigas. Quer começar a trabalhar e prestar vestibular no próximo ano."
+          },
+          "sensorial": "Sensível a sons, luz forte e cheiros. Às vezes não quer ser tocada. Gosta de experimentar texturas diferentes."
+        },
+        "extras": {
+          "comunicacao": "Verbal e fluente, vocabulário ótimo e compreensão ótima.",
+          "socializacao": "Interage bem com os pares e gosta de sair com amigas. Também gosta de ficar sozinha no quarto.",
+          "foco": "Mantém atenção quando está engajada; às vezes se distrai. Não há episódios de hiperfoco registrados.",
+          "nutricional": "Gosta de comida japonesa, poke e frutos do mar. Os ingredientes que aceita não estão detalhados.",
+          "sono": "Dormia cerca de 7 horas; não há descrição de rotina ou ambiente de sono.",
+          "emocional": "Expressa emoções gritando, chorando e falando palavrões. Mudanças na rotina são relatadas como difíceis."
+        }
+      },
+      "canal": "whatsapp",
+      "flag": "on",
+      "texto": "Oi! Eu sou a Ayla da Kolo Família. Em *Atenção com Propósito*, posso ajudar a Isabela a começar, acompanhar, pausar e retomar atividades que façam sentido para ela.\n\nPelo que você já me contou, ela mantém a atenção quando está engajada, mas às vezes se distrai. Como ela gosta de cinema, música e de sair com as amigas, podemos pensar em estratégias que respeitem a idade e conectem a atenção ao que realmente importa para ela.\n\n- **Retrato e conquistas** 🎯 — entender em quais situações ela já consegue se concentrar e o que favorece isso.\n- **Orientações práticas** 🧭 — facilitar o início, a continuidade ou a retomada de estudos e tarefas.\n- **Atividades adequadas à idade** 🎬 — criar uma proposta usando interesses dela, sem transformar tudo em treino.\n- **Crenças e reflexão** 💭 — conversar sobre ideias como “ela se distrai porque não se esforça” e observar o que pode estar por trás.\n\nVocê pode escolher um caminho ou me contar livremente o que está acontecendo, por texto ou áudio, sem precisar seguir uma lista.",
+      "modelo": "gpt-5.6-luna",
+      "ms": 4688,
+      "base2Ids": [
+        "foco/triagem-inicial-duas-perguntas-que-separam-caminhos-rapidamente",
+        "foco/principio-central"
+      ],
+      "guias": [
+        "foco"
+      ],
+      "decisao": {
+        "intencao": "outro",
+        "tema": "atenção e concentração",
+        "aceite": null,
+        "skills": [
+          "foco"
+        ],
+        "skillsAvaliadas": true,
+        "pedidoExplicito": false,
+        "continuacao": false,
+        "naturezaEmocional": "neutra",
+        "pediuParaContar": false,
+        "necessidadeConhecimento": "nenhum",
+        "temaConhecimento": null,
+        "origem": "gpt"
+      },
+      "regrasConcisao": [
+        "- uma história curta que ensine ou ensaie a cena;",
+        "- uma sequência visual curta, quando ver a ordem realmente ajuda;",
+        "Uma resposta pode ser curta e completa. Complete o mecanismo necessário para a",
+        "comum, duração curta, mediação do adulto, colegas de apoio.",
+        "Na conversa, você pode organizar passos de um momento difícil, sequência curta,",
+        "Faça a personalização aparecer: ligue um ou dois fatos confirmados a uma decisão prática, em vez de apenas mencionar nome e interesse. Uma preferência antiga não prova que continua igual: se o relato atual divergir, reconheça e confira. Não despeje todo o Perfil, não explique comportamento pelo diagnóstico e não transforme ausência de informação em causa. Cumprimento, continuação curta, crise e pedido de brincadeira conservam seus formatos próprios.",
+        "Este é o contrato de apresentação desta candidata: o tamanho acompanha a ajuda. Uma situação complexa pode receber vários blocos e várias orientações completas no mesmo turno; não a reduza a uma ideia ou a duas bolhas por uma regra antiga de concisão.",
+        "5. CONTINUIDADE E DESCOBERTA. Em todos os temas, depois de uma resposta substancial de orientação ou exploração, mostre duas ou três possibilidades concretas de como pode continuar ajudando. Use uma frase curta de convite e bullets com nome em negrito e emoji discreto. As ofertas nascem da conversa, não de um menu fixo: em alimentação, por exemplo, montar a próxima refeição, criar uma atividade na cozinha ou conversar sobre o medo explicitamente relatado. Em outros temas, proponha entregas próprias daquela área e da idade. Não use apenas \"quer saber mais?\" nem adie para essas ofertas a ajuda que foi pedida agora. Se a família escolher, entregue o caminho escolhido no turno seguinte, usando o histórico; não recomece a introdução nem reofereça o mesmo menu. Se pedir ideias do que pode perguntar, dê exemplos de pedidos escritos na linguagem dela e adequados ao que já contou. Uma pergunta realmente necessária pode substituir as ofertas; cumprimento, agradecimento, resposta curta, recusa de continuar e necessidade imediata não precisam de menu. Nenhuma pergunta é obrigatória para fechar.",
+        "Use títulos curtos, parágrafos com respiro, listas de ações e destaque das falas prontas. Evite tabela para instruções simples, títulos \"BLOCO 2\" e relatório burocrático. No WhatsApp use *negrito* e listas simples; na web use markdown leve. Emojis podem marcar passagens, sem decorar toda frase.",
+        "Não transforme uma orientação cotidiana em uma lista de ressalvas. Ajude com naturalidade e respeite preferências e apoio aceito. Pedido de brincadeira segue seu roteiro completo; história, crise e necessidade imediata seguem seus próprios formatos. Não prometa registro, relatório salvo ou melhora sem evidência.",
+        "Para um pedido concreto com preocupação e dificuldade recorrente, o acolhimento, a compreensão e as opções práticas devem aparecer juntos: não entregue apenas uma ação e encerre. Uma mudança de leitura do medo da mãe e duas ou três possibilidades aplicáveis são parte da ajuda solicitada, não aprofundamentos a adiar. Esta regra substitui limites antigos de uma orientação por turno; concisão não significa cortar a compreensão ou o próximo passo.",
+        "Este turno é somente a entrada em Atenção com Propósito, não um relato de dificuldade nem um pedido de intervenção. A prioridade é apresentar e abrir possibilidades, não aplicar o roteiro de uma orientação ou investigar uma lacuna decisiva.",
+        "Responda SEMPRE no idioma da ÚLTIMA mensagem da pessoa. A resposta INTEIRA num único idioma — nunca misture português com espanhol ou inglês, nem em conectivos. O contexto, o perfil e as notas podem vir em português: leia normalmente, mas ESCREVA na língua da pessoa (nomes próprios ficam como são). Mensagem curta ou ambígua (\"ok\", \"😊\"): siga o idioma que vocês já vinham usando."
+      ]
+    },
+    {
+      "id": "ref_introducao_foco",
+      "turno": 1,
+      "tema": "foco",
+      "mensagem": "Quero a primeira opção que você ofereceu no fim.",
+      "perfil": {
+        "nome": "Isabela",
+        "nascimento": "2007-12-25",
+        "genero": "feminino",
+        "sabe": {
+          "como_e": {
+            "texto": "Gosta de cinema, música, comida japonesa, poke, frutos do mar e sair com amigas. Quer começar a trabalhar e prestar vestibular no próximo ano."
+          },
+          "sensorial": "Sensível a sons, luz forte e cheiros. Às vezes não quer ser tocada. Gosta de experimentar texturas diferentes."
+        },
+        "extras": {
+          "comunicacao": "Verbal e fluente, vocabulário ótimo e compreensão ótima.",
+          "socializacao": "Interage bem com os pares e gosta de sair com amigas. Também gosta de ficar sozinha no quarto.",
+          "foco": "Mantém atenção quando está engajada; às vezes se distrai. Não há episódios de hiperfoco registrados.",
+          "nutricional": "Gosta de comida japonesa, poke e frutos do mar. Os ingredientes que aceita não estão detalhados.",
+          "sono": "Dormia cerca de 7 horas; não há descrição de rotina ou ambiente de sono.",
+          "emocional": "Expressa emoções gritando, chorando e falando palavrões. Mudanças na rotina são relatadas como difíceis."
+        }
+      },
+      "canal": "whatsapp",
+      "flag": "on",
+      "texto": "Vamos começar pelo *retrato do que já funciona* na atenção da Isabela. Pelo que você já me contou, ela consegue se manter focada quando está engajada — então vale descobrir o que muda entre essas situações e aquelas em que se distrai, sem tratar isso como falta de esforço.\n\nQuando ela está fazendo algo de que gosta, como assistir a um filme, ouvir música ou se preparar para sair com as amigas, ela consegue manter a atenção por bastante tempo? Pode me contar por texto ou áudio, do seu jeito.",
+      "modelo": "gpt-5.6-luna",
+      "ms": 3607,
+      "base2Ids": [
+        "foco/triagem-inicial-duas-perguntas-que-separam-caminhos-rapidamente",
+        "foco/principio-central"
+      ],
+      "guias": [
+        "foco"
+      ],
+      "decisao": {
+        "intencao": "outro",
+        "tema": "retrato e conquistas sobre atenção e concentração",
+        "aceite": "Explorar em quais situações Isabela já consegue se concentrar e o que favorece isso.",
+        "skills": [
+          "foco"
+        ],
+        "skillsAvaliadas": true,
+        "pedidoExplicito": false,
+        "continuacao": true,
+        "naturezaEmocional": "neutra",
+        "pediuParaContar": false,
+        "necessidadeConhecimento": "nenhum",
+        "temaConhecimento": null,
+        "origem": "gpt"
+      },
+      "regrasConcisao": [
+        "- uma história curta que ensine ou ensaie a cena;",
+        "- uma sequência visual curta, quando ver a ordem realmente ajuda;",
+        "Uma resposta pode ser curta e completa. Complete o mecanismo necessário para a",
+        "comum, duração curta, mediação do adulto, colegas de apoio.",
+        "Na conversa, você pode organizar passos de um momento difícil, sequência curta,",
+        "<lacuna_decisiva>Se ainda faltar UMA coisa para orientar melhor, é esta: **Como é o foco**. Só pergunte se a resposta mudaria mesmo o que você vai sugerir — e, se perguntar, entregue uma orientação útil no MESMO turno. Nunca pergunte mais de uma coisa.</lacuna_decisiva>",
+        "Faça a personalização aparecer: ligue um ou dois fatos confirmados a uma decisão prática, em vez de apenas mencionar nome e interesse. Uma preferência antiga não prova que continua igual: se o relato atual divergir, reconheça e confira. Não despeje todo o Perfil, não explique comportamento pelo diagnóstico e não transforme ausência de informação em causa. Cumprimento, continuação curta, crise e pedido de brincadeira conservam seus formatos próprios.",
+        "Este é o contrato de apresentação desta candidata: o tamanho acompanha a ajuda. Uma situação complexa pode receber vários blocos e várias orientações completas no mesmo turno; não a reduza a uma ideia ou a duas bolhas por uma regra antiga de concisão.",
+        "5. CONTINUIDADE E DESCOBERTA. Em todos os temas, depois de uma resposta substancial de orientação ou exploração, mostre duas ou três possibilidades concretas de como pode continuar ajudando. Use uma frase curta de convite e bullets com nome em negrito e emoji discreto. As ofertas nascem da conversa, não de um menu fixo: em alimentação, por exemplo, montar a próxima refeição, criar uma atividade na cozinha ou conversar sobre o medo explicitamente relatado. Em outros temas, proponha entregas próprias daquela área e da idade. Não use apenas \"quer saber mais?\" nem adie para essas ofertas a ajuda que foi pedida agora. Se a família escolher, entregue o caminho escolhido no turno seguinte, usando o histórico; não recomece a introdução nem reofereça o mesmo menu. Se pedir ideias do que pode perguntar, dê exemplos de pedidos escritos na linguagem dela e adequados ao que já contou. Uma pergunta realmente necessária pode substituir as ofertas; cumprimento, agradecimento, resposta curta, recusa de continuar e necessidade imediata não precisam de menu. Nenhuma pergunta é obrigatória para fechar.",
+        "Use títulos curtos, parágrafos com respiro, listas de ações e destaque das falas prontas. Evite tabela para instruções simples, títulos \"BLOCO 2\" e relatório burocrático. No WhatsApp use *negrito* e listas simples; na web use markdown leve. Emojis podem marcar passagens, sem decorar toda frase.",
+        "Não transforme uma orientação cotidiana em uma lista de ressalvas. Ajude com naturalidade e respeite preferências e apoio aceito. Pedido de brincadeira segue seu roteiro completo; história, crise e necessidade imediata seguem seus próprios formatos. Não prometa registro, relatório salvo ou melhora sem evidência.",
+        "Para um pedido concreto com preocupação e dificuldade recorrente, o acolhimento, a compreensão e as opções práticas devem aparecer juntos: não entregue apenas uma ação e encerre. Uma mudança de leitura do medo da mãe e duas ou três possibilidades aplicáveis são parte da ajuda solicitada, não aprofundamentos a adiar. Esta regra substitui limites antigos de uma orientação por turno; concisão não significa cortar a compreensão ou o próximo passo.",
+        "Responda SEMPRE no idioma da ÚLTIMA mensagem da pessoa. A resposta INTEIRA num único idioma — nunca misture português com espanhol ou inglês, nem em conectivos. O contexto, o perfil e as notas podem vir em português: leia normalmente, mas ESCREVA na língua da pessoa (nomes próprios ficam como são). Mensagem curta ou ambígua (\"ok\", \"😊\"): siga o idioma que vocês já vinham usando."
+      ]
+    },
+    {
+      "id": "ref_introducao_foco",
+      "turno": 2,
+      "tema": "foco",
+      "mensagem": "Me dê ideias de outras coisas que posso te pedir sobre isso.",
+      "perfil": {
+        "nome": "Isabela",
+        "nascimento": "2007-12-25",
+        "genero": "feminino",
+        "sabe": {
+          "como_e": {
+            "texto": "Gosta de cinema, música, comida japonesa, poke, frutos do mar e sair com amigas. Quer começar a trabalhar e prestar vestibular no próximo ano."
+          },
+          "sensorial": "Sensível a sons, luz forte e cheiros. Às vezes não quer ser tocada. Gosta de experimentar texturas diferentes."
+        },
+        "extras": {
+          "comunicacao": "Verbal e fluente, vocabulário ótimo e compreensão ótima.",
+          "socializacao": "Interage bem com os pares e gosta de sair com amigas. Também gosta de ficar sozinha no quarto.",
+          "foco": "Mantém atenção quando está engajada; às vezes se distrai. Não há episódios de hiperfoco registrados.",
+          "nutricional": "Gosta de comida japonesa, poke e frutos do mar. Os ingredientes que aceita não estão detalhados.",
+          "sono": "Dormia cerca de 7 horas; não há descrição de rotina ou ambiente de sono.",
+          "emocional": "Expressa emoções gritando, chorando e falando palavrões. Mudanças na rotina são relatadas como difíceis."
+        }
+      },
+      "canal": "whatsapp",
+      "flag": "on",
+      "texto": "Você pode me pedir, por exemplo:\n\n- **Entender o padrão** 🎯 — “Me ajude a descobrir em quais situações a Isabela se distrai mais.”\n- **Facilitar os estudos** — “Como posso ajudá-la a começar e continuar uma tarefa do vestibular sem transformar isso em cobrança?”\n- **Ajudar a retomar** — “O que posso dizer quando ela perde o fio e quer abandonar?”\n- **Adaptar o ambiente** — “Como testar se barulho, luz ou celular estão atrapalhando a atenção dela?”\n- **Criar uma estratégia prática** — “Monte uma forma de ela organizar uma atividade longa em partes menores, preservando a autonomia.”\n- **Conversar sobre uma situação real** — “Hoje ela se distraiu enquanto fazia ___; me ajude a entender em que etapa travou.”\n\nTambém pode me contar livremente o que aconteceu, por texto ou áudio, e eu parto daí.",
+      "modelo": "gpt-5.6-luna",
+      "ms": 4342,
+      "base2Ids": [
+        "foco/triagem-inicial-duas-perguntas-que-separam-caminhos-rapidamente",
+        "foco/principio-central"
+      ],
+      "guias": [
+        "foco"
+      ],
+      "decisao": {
+        "intencao": "outro",
+        "tema": "foco e atenção",
+        "aceite": null,
+        "skills": [
+          "foco"
+        ],
+        "skillsAvaliadas": true,
+        "pedidoExplicito": true,
+        "continuacao": true,
+        "naturezaEmocional": "neutra",
+        "pediuParaContar": false,
+        "necessidadeConhecimento": "boas_praticas",
+        "temaConhecimento": "foco e atenção",
+        "origem": "gpt"
+      },
+      "regrasConcisao": [
+        "- uma história curta que ensine ou ensaie a cena;",
+        "- uma sequência visual curta, quando ver a ordem realmente ajuda;",
+        "Uma resposta pode ser curta e completa. Complete o mecanismo necessário para a",
+        "comum, duração curta, mediação do adulto, colegas de apoio.",
+        "Na conversa, você pode organizar passos de um momento difícil, sequência curta,",
+        "<lacuna_decisiva>Se ainda faltar UMA coisa para orientar melhor, é esta: **Como é o foco**. Só pergunte se a resposta mudaria mesmo o que você vai sugerir — e, se perguntar, entregue uma orientação útil no MESMO turno. Nunca pergunte mais de uma coisa.</lacuna_decisiva>",
+        "Faça a personalização aparecer: ligue um ou dois fatos confirmados a uma decisão prática, em vez de apenas mencionar nome e interesse. Uma preferência antiga não prova que continua igual: se o relato atual divergir, reconheça e confira. Não despeje todo o Perfil, não explique comportamento pelo diagnóstico e não transforme ausência de informação em causa. Cumprimento, continuação curta, crise e pedido de brincadeira conservam seus formatos próprios.",
+        "Este é o contrato de apresentação desta candidata: o tamanho acompanha a ajuda. Uma situação complexa pode receber vários blocos e várias orientações completas no mesmo turno; não a reduza a uma ideia ou a duas bolhas por uma regra antiga de concisão.",
+        "5. CONTINUIDADE E DESCOBERTA. Em todos os temas, depois de uma resposta substancial de orientação ou exploração, mostre duas ou três possibilidades concretas de como pode continuar ajudando. Use uma frase curta de convite e bullets com nome em negrito e emoji discreto. As ofertas nascem da conversa, não de um menu fixo: em alimentação, por exemplo, montar a próxima refeição, criar uma atividade na cozinha ou conversar sobre o medo explicitamente relatado. Em outros temas, proponha entregas próprias daquela área e da idade. Não use apenas \"quer saber mais?\" nem adie para essas ofertas a ajuda que foi pedida agora. Se a família escolher, entregue o caminho escolhido no turno seguinte, usando o histórico; não recomece a introdução nem reofereça o mesmo menu. Se pedir ideias do que pode perguntar, dê exemplos de pedidos escritos na linguagem dela e adequados ao que já contou. Uma pergunta realmente necessária pode substituir as ofertas; cumprimento, agradecimento, resposta curta, recusa de continuar e necessidade imediata não precisam de menu. Nenhuma pergunta é obrigatória para fechar.",
+        "Use títulos curtos, parágrafos com respiro, listas de ações e destaque das falas prontas. Evite tabela para instruções simples, títulos \"BLOCO 2\" e relatório burocrático. No WhatsApp use *negrito* e listas simples; na web use markdown leve. Emojis podem marcar passagens, sem decorar toda frase.",
+        "Não transforme uma orientação cotidiana em uma lista de ressalvas. Ajude com naturalidade e respeite preferências e apoio aceito. Pedido de brincadeira segue seu roteiro completo; história, crise e necessidade imediata seguem seus próprios formatos. Não prometa registro, relatório salvo ou melhora sem evidência.",
+        "Para um pedido concreto com preocupação e dificuldade recorrente, o acolhimento, a compreensão e as opções práticas devem aparecer juntos: não entregue apenas uma ação e encerre. Uma mudança de leitura do medo da mãe e duas ou três possibilidades aplicáveis são parte da ajuda solicitada, não aprofundamentos a adiar. Esta regra substitui limites antigos de uma orientação por turno; concisão não significa cortar a compreensão ou o próximo passo.",
+        "Responda SEMPRE no idioma da ÚLTIMA mensagem da pessoa. A resposta INTEIRA num único idioma — nunca misture português com espanhol ou inglês, nem em conectivos. O contexto, o perfil e as notas podem vir em português: leia normalmente, mas ESCREVA na língua da pessoa (nomes próprios ficam como são). Mensagem curta ou ambígua (\"ok\", \"😊\"): siga o idioma que vocês já vinham usando."
+      ]
+    }
+  ]
+}

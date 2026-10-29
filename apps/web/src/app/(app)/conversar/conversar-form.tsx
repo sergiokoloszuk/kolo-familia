@@ -6,6 +6,7 @@ import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PaywallAssine } from "@/components/paywall-assine";
 import { criarConversa } from "./actions";
+import { AudioMensagem } from "@/components/audio-mensagem";
 
 /**
  * Form principal de Estratégias. Seletor de criança e CTA destacados.
@@ -15,11 +16,15 @@ export function ConversarForm({
   membros,
   initialMembroId,
   tema,
+  temaEscolhido,
+  aceitaAudio = false,
 }: {
   membros: Array<{ id: string; nome: string }>;
   initialMembroId?: string;
   /** Quando vem de um card do Kolo Vivo: guia a pergunta sem pré-preencher. */
   tema?: string;
+  temaEscolhido?: string;
+  aceitaAudio?: boolean;
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
@@ -29,18 +34,20 @@ export function ConversarForm({
     initialMembroId ?? membros[0]?.id ?? "",
   );
   const [texto, setTexto] = useState("");
+  const [audioOcupado, setAudioOcupado] = useState(false);
   const placeholder = tema
     ? `Conte o desafio atual com ${tema.toLowerCase()} — o que acontece no dia a dia — e depois aperte Conversar.`
     : "Escreva à vontade o que está acontecendo. Quando terminar, é só apertar Conversar.";
 
   function submit() {
-    if (!texto.trim() || pending) return;
+    if ((!texto.trim() && !temaEscolhido) || pending || audioOcupado) return;
     setError(null);
     startTransition(async () => {
       try {
         const res = await criarConversa({
           membroAtipicoId: membroId || null,
           texto,
+          temaEscolhido,
         });
         if ("erro" in res) {
           if (res.assinatura) setBloqueado(true);
@@ -90,7 +97,7 @@ export function ConversarForm({
       {tema && (
         <p className="text-sm font-medium text-foreground">
           Sobre <span className="text-brand-purple">{tema}</span> — conte o desafio
-          atual:
+          {temaEscolhido ? "atual ou comece pela apresentação da Ayla:" : "atual:"}
         </p>
       )}
 
@@ -104,9 +111,11 @@ export function ConversarForm({
         disabled={pending}
       />
 
+      {aceitaAudio && <AudioMensagem disabled={pending} onOcupado={setAudioOcupado}
+        onTexto={(t) => setTexto((atual) => [atual.trim(), t].filter(Boolean).join("\n"))} />}
       <div className="flex items-center justify-end gap-3">
-        <Button type="submit" size="lg" disabled={pending || !texto.trim()}>
-          {pending ? "Pensando..." : "Conversar"}
+        <Button type="submit" size="lg" disabled={pending || audioOcupado || (!texto.trim() && !temaEscolhido)}>
+          {pending ? "Abrindo conversa..." : temaEscolhido && !texto.trim() ? "Começar ou retomar" : "Conversar"}
           {!pending && <ArrowRight className="size-4" aria-hidden />}
         </Button>
       </div>

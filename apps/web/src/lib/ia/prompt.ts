@@ -4,7 +4,9 @@ import type { SkillRow } from "./router";
 import type { Intencao } from "./intencao";
 import { MARCADOR_PLANO } from "./marcadores";
 import { pronomesPara } from "@/lib/ayla/pronomes";
-import { blocoMecanicasBrincadeira, pedidoExplicitoDeBrincadeira } from "@/lib/ayla/pedido-brincadeira";
+import { BLOCO_PEDIDO_BRINCADEIRA, contratoPedidoBrincadeira, blocoMecanicasBrincadeira, pedidoExplicitoDeBrincadeira } from "@/lib/ayla/pedido-brincadeira";
+import { CONDUCAO_COM_EVIDENCIA, FORMATO_RESPOSTA_RICA, qualidadeRespostaV2Ativa } from "@/lib/ayla/qualidade-resposta";
+import { apoioTematico, aberturaTematicaDoTurno, blocoAberturaTematica, CONDUCAO_CASO_FOCO } from "@/lib/conducao/temas-conversa";
 import { DIRETRIZES_BRINCADEIRA, REGRA_BRINCADEIRA_SE_SURGIR } from "@/lib/conducao/brincadeira-diretrizes";
 // NÚCLEO DE CONDUÇÃO — fonte única compartilhada com a Ayla (WhatsApp):
 // identidade + norte, princípios, regra de sequência, exemplos, piso e tom.
@@ -204,6 +206,16 @@ export function buildSystemTextConversa(
   intencao?: Intencao,
   tema?: string | null,
 ): string {
+  if (qualidadeRespostaV2Ativa() && intencao !== "crise" && intencao !== "desabafo") {
+    return [
+      nucleoConducao(), FATOS_COMERCIAIS,
+      buildIdentityBlock(skills), VOZ_CONVERSA,
+      CONDUCAO_COM_EVIDENCIA,
+      apoioTematico(skills.map((s) => s.name), "web").bloco,
+      REGRA_BRINCADEIRA_SE_SURGIR,
+      FORMATO_RESPOSTA_RICA,
+    ].filter(Boolean).join("\n\n");
+  }
   // ENTREGA = desafio. É a mesma regra do WhatsApp (`ehEntrega`): crise,
   // desabafo e dúvida pontual continuam em texto corrido, porque título em
   // cima de desabafo é frieza.
@@ -523,7 +535,13 @@ export function assemblePrompt(params: {
     },
   ];
 
-  const contextoBloco = buildContextBlock(ctx);
+  const conversaRica = modo.kind === "conversa" && qualidadeRespostaV2Ativa() &&
+    intencao !== "crise" && intencao !== "desabafo";
+  const pilotoFoco = conversaRica && (tema ?? skills[0]?.name) === "foco";
+  const aberturaDeArea = conversaRica ? aberturaTematicaDoTurno(userInput, skills.map((s) => s.name)) : null;
+  const bibliotecaTematica = conversaRica && !ctx.base2.length
+    ? apoioTematico(skills.map((s) => s.name), "web").biblioteca : "";
+  const contextoBloco = [buildContextBlock(ctx), bibliotecaTematica].filter(Boolean).join("\n\n");
 
   const messages: Anthropic.MessageParam[] = [];
 
@@ -561,8 +579,13 @@ export function assemblePrompt(params: {
   // como fato do TURNO, junto do aceite — não no system, que é regra de
   // produto e fica em cache.
   const notasDoTurno = [
-    modo.kind === "conversa" && pedidoExplicitoDeBrincadeira(userInput)
-      ? `<pedido_explicito_de_brincadeira>Ofereça três alternativas de jogo com mecânicas distintas, para experimentar uma agora e guardar outras para depois. ${DIRETRIZES_BRINCADEIRA}\n${blocoMecanicasBrincadeira(userInput)}</pedido_explicito_de_brincadeira>`
+    aberturaDeArea ? blocoAberturaTematica(aberturaDeArea, "web") : "",
+    pilotoFoco && !aberturaDeArea && !pedidoExplicitoDeBrincadeira(userInput, true)
+      ? CONDUCAO_CASO_FOCO : "",
+    modo.kind === "conversa" && pedidoExplicitoDeBrincadeira(userInput, pilotoFoco)
+      ? (conversaRica
+        ? `${DIRETRIZES_BRINCADEIRA}\n${pilotoFoco ? contratoPedidoBrincadeira(true) : BLOCO_PEDIDO_BRINCADEIRA}\n${blocoMecanicasBrincadeira(userInput)}`
+        : `<pedido_explicito_de_brincadeira>Ofereça três alternativas de jogo com mecânicas distintas, para experimentar uma agora e guardar outras para depois. ${DIRETRIZES_BRINCADEIRA}\n${blocoMecanicasBrincadeira(userInput)}</pedido_explicito_de_brincadeira>`)
       : "",
     modo.kind === "output_type" && modo.outputType.key === "brincadeiras"
       ? `<repertorio_ludico_do_caso>Escolha brincadeira(s) que existam pelo jogo, não por escolher corredor, procurar produtos ou ensaiar tolerância sensorial. ${quantidadeDeBrincadeirasNoFormato(modo.outputType.prompt_template)} As três mecânicas abaixo são candidatas, não uma ordem de entregar exatamente três.\n${blocoMecanicasBrincadeira(userInput)}</repertorio_ludico_do_caso>`

@@ -240,7 +240,7 @@ substitui a prioridade atual de segurança nem a análise de produção.
 | [PEND-205](#pend-205) | perfil-marcos.test.ts #11 apodrece com o relogio — main esta VERMELHA | P3 | CONCLUÍDA — teste estabilizado sem mudança funcional |
 | [PEND-206](#pend-206) | O extrator unificado e a MAIOR linha de custo de IA da Kolo — 41,8% do total | P3 | ABERTA — medido em 2026-09-14, nenhuma decisao tomada |
 | [PEND-207](#pend-207) | O DNA dos especialistas no WhatsApp — o unico componente que a arena provou | P1 | EM PRODUCAO desde 2026-09-14 22:16 (SHA c817c94) |
-| [PEND-208](#pend-208) | O repertorio criativo continua obvio — nenhum braco resolveu a brincadeira | P1 | ABERTA — medida, nao corrigida |
+| [PEND-208](#pend-208) | O repertorio criativo continua obvio — nenhum braco resolveu a brincadeira | P1 | CANDIDATA EM PR #150 — aprovação humana e publicação pendentes |
 | [PEND-212](#pend-212) | Assinaturas antigas podem renovar sem endereço fiscal completo no Customer Stripe | P1 | ABERTA — achado fora do escopo; fluxo novo protegido |
 | [PEND-213](#pend-213) | Aprofundamento contextual por botões no WhatsApp | P1 | PARCIAL — flag global ligada; continuidade e entrega ainda sem prova de conclusão |
 | [PEND-214](#pend-214) | provider.test.ts depende da mensagem de erro da rede ao remover a chave Anthropic | P3 | ABERTA — achado fora do escopo, NÃO corrigido |
@@ -10158,7 +10158,276 @@ do Perfil e queda de genericidade. **PENDENTE** — sem trafego no SHA novo ate
 ### PEND-208
 **O repertorio criativo continua obvio — nenhum braco resolveu a brincadeira**
 Bloco: **B · Ayla** · Prioridade: **P1**
-STATUS: **ABERTA — medida, nao corrigida** · Aberta em: 2026-09-14
+STATUS: **CANDIDATA EM PR #150 — aprovação humana e publicação pendentes** · Aberta em: 2026-09-14
+
+**CANDIDATA ISOLADA 25/10/2026 — NÃO PUBLICADA.** No worktree
+`ayla-qualidade-brincadeiras`, a flag nova `AYLA_QUALIDADE_RESPOSTA_V2`
+(ausente/off por padrão) adiciona disciplina de evidência e um portão local
+para sensibilidade registrada. O interesse precisa alterar a ação central;
+modo de comunicação, idade, alvo e histórico são preservados; som, toque,
+textura, cheiro ou luz aversivos não podem virar estímulo da brincadeira. A
+auditoria estrutural permanece telemetria; somente reprodução sensorial
+objetiva autoriza uma regeneração, seguida de piso seguro se ainda falhar.
+
+A bancada final usou 20 famílias sintéticas, produtor real, juiz cego e
+Supabase limitado a GET, sem WhatsApp ou escrita externa: a candidata obteve
+20/20 respostas de alta qualidade contra 19/20 do comportamento publicado,
+zero falha grave contra uma, sete vitórias contra quatro e nove empates. Nos
+13 pedidos de brincadeira, o caso sonoro sentinela demonstrou o portão: a
+versão publicada gerou estímulo sonoro; a candidata encerrou sem falha grave.
+Evidência: `docs/auditorias/ayla-qualidade-cego-2026-10-23.json`.
+
+Portões locais: 24/24 testes focados e 51/51 com a rede de segurança; suíte
+completa com 4.218 testes aprovados, sete pulados e três falhas preexistentes
+fora desta frente (marca temporal de dado antigo, teto de memória e provedor
+dependente de rede); geração de tipos, typecheck, lint tocado e build Webpack
+passaram. A candidata está na PR em rascunho
+<https://github.com/sergiokoloszuk/kolo-familia/pull/150>, commit funcional
+`9c733ef6ab80e261b5ef9015c28f541c7f190820`, com preview Vercel concluída em
+<https://kolo-familia-web-git-codex-ayla-qualidade-b-b848a6-kolo-familia.vercel.app/>.
+A preview é
+protegida por login e a flag permanece off; ela prova a entrega isolada do
+branch, não o comportamento ativado. A PEND-208 continua aberta: faltam
+aprovação humana e, após publicação autorizada, prova somente leitura em uso
+natural.
+
+**RETORNO HUMANO INFORMAL NA PREVIEW — 25/10/2026, NÃO É QA FORMAL.** Em uso
+natural autorizado, uma brincadeira personalizada saiu como título seguido de
+dois parágrafos corridos, sem tempo, passos visualmente separados ou
+encerramento; a responsável rejeitou o formato. A causa estava no próprio
+contrato: ele pedia "um único bloco executável", e a auditoria aceitava prosa
+compacta. A candidata agora exige e repara para título, tempo, material, fala
+inicial, três passos, próxima rodada, encerramento e adaptação. O mesmo retorno
+mostrou um segundo defeito: uma pessoa adulta não pode ser chamada de criança;
+o repertório ativo e o piso passaram a usar linguagem neutra e o contrato
+proíbe explicitamente a infantilização. Três exemplos editoriais externos
+serviram somente como comparação de experiência: a parte adotada foi ajuda
+organizada, frase pronta e próximo passo executável; causas internas,
+diagnóstico e prazo continuam hipótese, nunca fato. Apoio físico leve aceito e
+oportunidades naturais de comunicação permanecem permitidos — a correção não
+transforma cautela em veto. Rede focada após a recalibração: **31/31 testes**.
+Ainda faltam nova Preview e reteste humano; nada deste bloco prova produção.
+
+**REFINAMENTO DA ABERTURA — 25/10/2026, CANDIDATA LOCAL.** A responsável pediu
+verificação prévia do tema no Perfil/histórico: havendo dados, resumir o que
+já se sabe; não havendo, orientar o que informar em bullets, com opção de
+áudio; havendo dados parciais, perguntar só pelas lacunas. O contrato dos doze
+temas e dos dois canais foi ajustado; teste de contrato não comprova consulta
+nem uso pelo modelo. Preview e aceite humano seguem pendentes.
+
+**TOM DA RETOMADA — 25/10/2026, CANDIDATA LOCAL.** A responsável pediu
+"Pelo que você já me contou sobre ela…", sem anunciar perfil ou cadastro.
+Os contratos dos doze temas e dos dois canais foram ajustados, mantendo a
+consulta e a distinção entre relato, hipótese e biblioteca. Rede focada:
+13/13 testes passaram (temas, formato compartilhado e montagem web). Testes
+de contrato não comprovam a redação pelo modelo; novo ensaio e Preview
+seguem pendentes. PEND-208 permanece aberta.
+
+**COMPARATIVO COM A REFERÊNCIA BASE44 — 25/10/2026.** Seis perguntas da
+conversa foram executadas nos dois produtores com os mesmos dados de
+demonstração: 12 respostas reais, sem edição posterior. Evidência em
+`docs/auditorias/ayla-comparativo-base44-2026-10-25.md` e JSON associado.
+**FALHOU na equivalência editorial pretendida:** Foco repete informação já
+conhecida e a brincadeira ainda vaza rótulos internos. A responsável pediu
+conferir negrito, respiro, bullets e emojis antes de aprovar. Build completo
+e suíte de código **4.244 passaram / 7 pulados** não baixam esta pendência.
+O material completo da pós (PEND-104) e o lote XLSX v6 não foram importados.
+Produção intacta; a nova candidata ainda não foi enviada à PR neste ponto.
+
+**ABERTURA E CONTINUIDADE — 25/10/2026, CANDIDATA LOCAL.** A entrada simples
+por área agora não recebe a ordem concorrente de investigar lacuna decisiva;
+o texto livre conhecido permanece no contexto. Pedidos concretos, crise e
+flag off preservam suas rotas. O roteiro de brincadeira passou a pedir ações
+naturais e passos numerados, com auditoria que aceita negrito nos metadados e
+detecta rótulos internos vazados. Rede focada: 43/43 testes passaram antes do
+ajuste de continuidade. Produto confirmou ofertas de exploração nos doze
+temas: duas ou três possibilidades pertinentes após orientação substancial,
+sem menu obrigatório em toda mensagem. Teste com modelo, Preview e aceite
+continuam necessários; a pendência não está concluída.
+
+**RECONCILIAÇÃO COM PEND-209.** Esta candidata também testa a fronteira entre
+fato registrado, relato atual e hipótese, mas não cria nem baixa a ficha
+PEND-209 neste branch: os IDs PEND-209 a PEND-211 estão reivindicados por outra
+frente conforme o rodapé deste documento. A integração deve reconciliar a
+evidência sem duplicar ficha ou sobrescrever trabalho concorrente.
+
+**PLANO ATUALIZADO E PACOTE BRINCA CONFERIDO — 25/10/2026.**
+`docs/specs/ayla-referencia-base44-SPEC.md` passa a conter a matriz de camadas,
+dificuldades, responsáveis, dependências e prova por canal/versão em produção.
+São duas entregas: conversa e catálogo. Hashes dos quatro novos arquivos
+conferidos; JSON corresponde à origem em 15 atividades, 65 passos e duas cenas,
+sem divergência de valores. Revisão: 28 propostas, incluindo segurança alta na
+001 e na 005, além da 013 já bloqueada; a 006 e a 011 têm achados de segurança
+baixo/médio. Nenhuma atividade aprovada ou importada. O plano propõe excluir
+001/005 até correção e revisão e manter 013 fora até validação profissional;
+não altera silenciosamente arquivos ou estados do pacote.
+
+Health somente leitura às 18:33:55 de 25/10: produção em `main`, SHA
+`25e8891daf1e0d5bd881512e6f128742fdcd0184`, banco saudável. Não é prova da
+candidata. Ensaio v2: 12 saídas, aberturas Foco adequadas nos dois produtores,
+mas brincadeira adulta do Oficial caiu em piso infantil. Rede atual focada:
+44/44. **FALHOU na entrega completa**; faltam correções, fonte por tema,
+continuidade/mindset avaliados, Preview, aceite, publicação e provas de
+persistência/concorrência/retomada. PEND-208 continua aberta; PEND-104 não foi
+baixada nem teve o corpus integral ativado. Plano não equivale a autorização
+automática para merge, importação ou mensagens a famílias.
+
+**AVALIAÇÃO E MEMÓRIA CONTÍNUA — PEDIDO DE 25/10/2026.** Produto acrescentou
+nota 0–5 (cinco estrelas mais zero separado), comentário opcional e gravação
+de toda informação nova relevante explicitamente relatada para a próxima
+consulta. Desenho/aceite registrados na SPEC da referência Base44; feedback
+separado do perfil e de escolhas numéricas. Não implementados por esta anotação.
+O escritor já existe no WhatsApp; a web exige proposta/confirmação e não pode
+ser declarada atualização automática. Antes de baixar: provar escrita, leitura
+seguinte e escopo por pessoa nos dois canais, além de avaliação persistida,
+edição idempotente e falhas visíveis. PEND-208 permanece aberta.
+
+**CONVERSA TEMÁTICA E CONTINUIDADE — 25/10/2026.** A candidata implementa
+doze áreas web, áudio com transcrição editável e guias compartilhados. O
+envelope do Oficial proibia opções na fala: conflito removido somente na
+candidata, com segundo menu legado desativado nessa saída. Histórico preserva
+as ofertas finais e o piso respeita a idade. Bancada de continuidade v5:
+12 saídas reais, com escolha do primeiro caminho reconhecida nos dois
+produtores; alimentação apresenta opções em bullets. Não comprova
+orquestrador WhatsApp, efeitos de plano, UI autenticada ou gravação remota.
+Relatório: `docs/auditorias/ayla-entrega-conversa-2026-10-25.md`.
+Suíte final: 4.264 testes passaram, sete pulados; build Webpack e TypeScript
+passaram. Lint tocado: zero erros, oito avisos preexistentes. Isso não comprova
+publicação, durabilidade remota nem equivalência editorial.
+Preview encontrada na tela de login; aceite e smoke isolado pendentes.
+Concorrência/retomada da área e memória automática web continuam abertas.
+NPS 0–10 e feedback textual existentes não são avaliação 0–5 por mensagem;
+estrelas ainda não implementadas. PEND-208 permanece aberta, sem baixa da
+PEND-104 ou importação do Brinca.
+
+**PREVIEW A PUBLICADA — 25/10/2026.** Commit funcional
+`ad9809896ce5675b03ffb3676ea3a7f8040e4ed5`, PR #150: Vercel e checks de build
+concluíram com sucesso. Runtime/flag e smoke ainda não comprovados: o health
+não autenticado devolveu HTML e o navegador está no login. Karina autorizou
+sua conta fictícia com os dados cadastrados da Manu; aguarda login da
+responsável, sem procurar credenciais nem criar fatos de teste no perfil.
+Na investigação da próxima camada, a proposta web usa o prefixo de 8.000
+caracteres do transcript e pode excluir fatos recentes de conversa longa;
+registrado para captura contínua, não alterado nesta entrega. Evidência e
+limites no relatório de entrega. Produção sem merge/ativação por esta frente;
+PEND-208 continua aberta.
+
+**BLOQUEIO DE CONFIGURAÇÃO COMPROVADO — 26/10/2026.** A inspeção pelo
+navegador autenticado na Vercel conseguiu ler o health da Preview (ts
+`2026-10-26T12:00:17.051Z`): SHA `2a96b691a1fda3ff1cdf4f00334f3d99aa3a6c71`,
+ambiente `preview`, `ayla_qualidade_resposta_v2=true`, mas `db.ok=false` e
+ausentes `SUPABASE_SERVICE_ROLE_KEY`, `OPENAI_API_KEY` e `ANTHROPIC_API_KEY`.
+A configuração da Vercel confirma `OPENAI_API_KEY` restrita a Production,
+com valor secreto não revelável. Portanto build verde e flag ligada NÃO
+significavam Preview funcional para o teste de respostas. Não era só login.
+Não foram alterados segredos, permissões, produção ou dados da conta da Manu.
+Antes de liberar credenciais: autorização específica para o acesso servidor
+na Preview deste branch, verificar compatibilidade com o banco configurado
+e revisar isolamento de webhook/cron/envios. O health já reporta token Z-API e
+cron presentes; isso não prova envio, mas impede prometer isolamento sem
+conferência. Teste autenticado segue BLOQUEADO. Evidência e plano mínimo no
+relatório de entrega; PEND-208 permanece aberta.
+
+**ISOLAMENTO DA PREVIEW — 27/10/2026, ETAPA 2 PARCIAL.** Karina autorizou
+configurar banco e APIs de IA somente na Preview desta PR, sem produção ou
+Stripe. A candidata passa a recusar webhook Ayla e os dois crons com 403 antes
+do payload/banco, e impede Z-API/SMTP nos transportes centrais quando
+`VERCEL_ENV=preview`, inclusive transporter SMTP já cacheado. Fora da Preview,
+as verificações existentes permanecem. A restrição não transforma o banco
+compartilhado em sandbox: usar apenas a conta fictícia de QA autorizada;
+nenhum perfil foi alterado. E-mails do Supabase Auth não passam pelo mailer:
+não acionar cadastro, recuperação de senha ou magic link como teste.
+Foram executados **29/29 testes dirigidos**, com rede, banco e SMTP falsos.
+Suíte final, sem build concorrente e com limites padrão: **4.286 passaram,
+sete pulados**, 555,22s; build/TypeScript, lint tocado e cinco testes do índice
+passaram. A primeira rodada teve um timeout de 5s em teste Stripe, preservado
+no relatório, sem alteração do código de pagamentos. Commit funcional
+`cb498844e5a9f2f25cbc91fc535e2dceef794b1f` publicado na PR #150; Vercel
+confirmou deploy `success`. Isso não comprova configuração ou smoke remoto.
+O health distingue `preview_somente_conversa` e configuração da conversa da
+saúde global, que ainda inclui Stripe. Presença de chaves não prova chamada
+de modelo. A API GitHub reconfirmou PR #150 aberta, em rascunho e sem merge;
+main remota permanece `25e8891daf1e0d5bd881512e6f128742fdcd0184`.
+Nesta tentativa, o acesso ao Chrome aguardou aprovação e expirou antes de
+inspeção; a busca de integração Vercel também não pôde ser executada neste
+contexto. Não foi concluído acesso ao painel.
+Nenhum segredo foi configurado. Permanecem pendentes configuração restrita
+ao branch, compatibilidade das credenciais, deploy/runtime, conversa
+autenticada e aceite. Relatório de entrega atualizado; PEND-208 aberta,
+PEND-104 inalterada. Não entregar o link como Preview funcional sem essas
+provas. Veredito do teste humano: **BLOQUEADO**.
+
+**CONFIGURAÇÃO GRAVADA — 27/10/2026; REDEPLOY AGUARDA REAUTENTICAÇÃO.** Após
+confirmação humana específica, foram criadas entradas separadas somente para
+`preview` / `codex/ayla-qualidade-brincadeiras`: `SUPABASE_SERVICE_ROLE_KEY`,
+`OPENAI_API_KEY` e `ANTHROPIC_API_KEY` como Secret; URL e chave anônima do
+Supabase e `IA_PROVIDER=openai` como Config. Chave pública verificada como
+anônima antes de expor no cliente. Valores não impressos, sem arquivo de
+segredos novo; entradas de produção não editadas. A Vercel recusou os dois
+campos `NEXT_PUBLIC_` no lote Secret, mas persistiu as três credenciais:
+leitura de volta detectou a escrita parcial e evitou duplicação. O complemento
+Config foi salvo e as seis entradas foram conferidas por nome/tipo/branch.
+Health antes do novo deploy: SHA `51600b8`, flags de candidata e isolamento
+ligadas, dependências ainda ausentes no runtime. Ambos os crons consultados
+no navegador retornaram `preview_somente_conversa`, sem autenticação ou envio.
+O redeploy foi preparado a partir de `76mDwK3PBCJ7NWgGwnVDmBuKcbWi`, com
+Preview e branch corretos, mas a Vercel exigiu código de reautenticação por
+e-mail. Agente não enviou nem preencheu código; titular deve concluir no
+painel. Não usar push/API como alternativa para contornar a verificação.
+Nenhum novo deploy, conversa ou escrita no perfil foi comprovado. Registros
+ficam locais, sem commit/push enquanto essa autorização estiver pendente.
+PEND-208 permanece aberta; PEND-104 inalterada. **BLOQUEADO** para teste humano
+até concluir reautenticação, deploy, leitura de configuração efetiva e login.
+
+**PILOTO FOCO ESCOLHIDO — 28/10/2026, LOCAL E SEM BASE44.** Karina escolheu
+Foco como primeiro tema de aceite na Web, no lugar de Alimentação. Bancada
+existente estendida: cinco cenários sintéticos, nove turnos por rodada, sem
+leitura/escrita de conta familiar. Baseline congelado e candidata preservados
+em `docs/auditorias/ayla-piloto-foco-2026-10-28-{baseline-1,candidata-1}.json`.
+O baseline classificou pedido de ideias como desabafo e perdeu o formato rico;
+a candidata corrigiu esse caso e perguntou pelas lacunas de atenção quando
+só havia interesses conhecidos. Refinamentos locais restritos a Foco com a
+flag V2, sem alterar modelo, perfis, outros temas ou produção. Teste de
+instrução não garante classificação correta: a repetição com modelo real é
+prova separada. Permanecem ressalvas de naturalidade, ofertas e manutenção da
+tarefa concreta; não há aceite editorial nem smoke autenticado. Contagens de
+testes e limites no relatório de entrega. PEND-208 aberta; PEND-104 inalterada;
+nenhum catálogo importado, commit ou push nesta etapa. Não declarar a Preview
+disponível com base nas respostas da bancada. **BLOQUEADO** para produção.
+
+**ALINHAMENTO E PREVIEW RECONFERIDOS — 28/10/2026.** Karina aprovou a direção
+da simulação Foco: começar por observações e experiências possíveis em casa;
+escola complementar. Pedidos de brincadeira recebem três propostas completas
+e distintas, salvo quantidade diferente pedida; interesses não limitam todas
+as opções. Exemplos de cinco anos não são fatos da Manu. Decisões na SPEC;
+incorporação ao contrato/modelo real e nova rodada ainda pendentes. Health em
+`2026-10-28T19:27:55.721Z`: Preview `51600b8`, V2/isolamento ligados, banco e
+conversa não configurados, segredos ainda ausentes no runtime. Redeploy no
+branch correto voltou a exigir reautenticação por e-mail; titular deve concluir
+na Vercel. Nenhum novo deploy, commit/push, teste autenticado ou escrita em
+perfil. PEND-208 aberta; PEND-104 inalterada. **BLOQUEADO** para teste na Web.
+
+**PILOTO FOCO IMPLEMENTADO LOCALMENTE; CONFIGURAÇÃO RESOLVIDA — 28/10/2026.**
+A titular concluiu reautenticação; redeploy Preview Gtdkqzrsw87tkZQKrPP2CZW1L13h
+Ready, SHA ainda `51600b8`. Health `2026-10-28T19:45:28.384Z`: banco acessível,
+credenciais presentes, conversa configurada/OpenAI, V2 e isolamento ligados;
+os dois crons continuaram exibindo `preview_somente_conversa`. Bloqueio de
+reautenticação resolvido, sem contorno. Ajustes candidatos locais: classificação
+do pedido atual, abertura conforme fatos, orientação de casa primeiro, três
+jogos distintos por padrão, quantidade explícita respeitada, interesses opcionais,
+explicação da habilidade e vínculo pela ação compartilhada, repertório aberto
+a memória/imitação/movimento/percursos. Respiração pode ser pausa confortável,
+nunca condição para brincar. Rodadas sintéticas preservadas em JSON; nenhuma
+escrita no cadastro da Manu. Material integral da pós/PEND-104 e catálogo Brinca
+não foram integrados. Regressão: 4.296 passaram, 7 ignorados; build webpack,
+TypeScript e 107 páginas concluídos; 62 testes dirigidos e lint da versão final
+passaram. Candidata funcional `4ecfe076a3614debd5f06621c81d88e540c4506b`
+enviada à PR #150 em rascunho; CI build, Vercel e Preview Comments success.
+Deploy HeP47aZ8vhkMQLbNfkbxbAHFJ8ko Ready; health `2026-10-28T20:30:33.898Z`
+confirmou o SHA, banco acessível, conversa OpenAI configurada e isolamento/V2
+ligados. Ambos os crons continuam bloqueados. `/estrategias` redirecionou a
+login; teste autenticado e aceite humano ainda pendentes. PEND-208 aberta,
+PEND-104 inalterada. Sem merge/publicação em produção.
 
 **PUBLICAÇÃO AUTORIZADA COM RESSALVAS (28/09).** A diretriz compartilhada de
 brincadeira cobre pedido direto, conversa web, apoio, aprofundamento e proposta

@@ -28,6 +28,8 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { gerarConversacional, MODELO_CONVERSA } from "@/lib/ia/provider";
 import { logarUsoApi } from "@/lib/billing/logar";
 import { logEvent } from "@/lib/log";
+import { qualidadeRespostaV2Ativa } from "@/lib/ayla/qualidade-resposta";
+import { trechoComContinuidade } from "./continuidade";
 import type { IntencaoAyla, SkillDoCatalogo, TurnoClassificado } from "@/lib/ayla/intent";
 
 /**
@@ -351,7 +353,7 @@ export async function decidirTurno(params: {
 
   const contexto = [
     params.blocoEstado,
-    params.ultimaAyla ? `<ultima_fala_da_ayla>${params.ultimaAyla.slice(0, 900)}</ultima_fala_da_ayla>` : "",
+    params.ultimaAyla ? `<ultima_fala_da_ayla>${qualidadeRespostaV2Ativa() ? trechoComContinuidade(params.ultimaAyla) : params.ultimaAyla.slice(0, 900)}</ultima_fala_da_ayla>` : "",
     params.ultimaMae ? `<fala_anterior_da_familia>${params.ultimaMae.slice(0, 400)}</fala_anterior_da_familia>` : "",
     params.temaAnterior ? `<tema_do_turno_anterior>${params.temaAnterior}</tema_do_turno_anterior>` : "",
     params.temasOnboarding?.length

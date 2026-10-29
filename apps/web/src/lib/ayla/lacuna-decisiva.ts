@@ -769,7 +769,7 @@ export function esquemaDaResposta(): Record<string, unknown> {
  * contrato de formato do turno, e misturar as duas coisas faria a identidade
  * carregar um detalhe de serialização.
  */
-export function instrucaoDoEnvelope(): string {
+export function instrucaoDoEnvelope(caminhosNaFala = false): string {
   const QUEBRA = String.fromCharCode(10);
   const glossario = Object.entries(CAMPOS_DECISIVOS)
     .map(([d, campos]) => `- ${d}: ${campos.map((c) => `${d}.${c}`).join(", ")}`)
@@ -808,7 +808,12 @@ orientar sem perguntar continua certo, e aí o campo é null.
 realmente investigaram. Fora desse formato, devolva []. No turno seguinte, em
 que a família já respondeu e você orienta, devolva [] também.
 
-"aprofundamentos" — DEPOIS de escrever a fala, avalie se existem pelo menos
+${caminhosNaFala ? `"aprofundamentos" — devolva []. Nesta candidata, os caminhos de continuidade
+fazem parte da própria "fala", conforme o contrato de apresentação. Não reserve
+essas opções para uma segunda mensagem e não produza uma oferta paralela.
+A orientação concreta vem primeiro; depois, as possibilidades pertinentes de
+continuação. Este campo não limita a profundidade nem o número de ações úteis
+na fala.` : `"aprofundamentos" — DEPOIS de escrever a fala, avalie se existem pelo menos
 DOIS caminhos diferentes que acrescentariam valor real a esta conversa:
 - aprofundar_lidar: estratégias concretas, o que falar e o que observar;
 - aprofundar_brincar: brincadeira, passeio ou experiência de vida real;
@@ -829,7 +834,7 @@ Devolva [] quando houver só um próximo passo útil, quando a fala for desabafo
 urgência, administrativa ou simples, ou quando você tiver feito pergunta/mini-
 investigação. Nunca altere "fala" para anunciar menu: a oferta é uma segunda
 mensagem decidida pelo código. Não ofereça um ramo se o contexto não sustenta
-conteúdo responsável e personalizado para ele.`;
+conteúdo responsável e personalizado para ele.`}`;
 }
 
 /**
