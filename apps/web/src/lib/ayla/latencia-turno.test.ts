@@ -257,6 +257,7 @@ describe("as consultas paralelizadas continuam independentes", () => {
 
   it("MORDE: as leituras anteriores ao decisor formam uma onda só", () => {
     const ORCH = readFileSync(resolve(__dirname, "orchestrator.ts"), "utf8");
+    const CATALOGO = readFileSync(resolve(__dirname, "catalogo-skills.ts"), "utf8");
     const inicio = ORCH.indexOf("const [escolha, estado, falas, catalogo] = await Promise.all([");
     const fim = ORCH.indexOf("        ]);", inicio);
     expect(inicio, "a onda pré-decisão sumiu").toBeGreaterThan(-1);
@@ -271,6 +272,16 @@ describe("as consultas paralelizadas continuam independentes", () => {
       expect(onda, `leitura voltou para a fila: ${leitura}`).toContain(leitura);
     }
     expect(onda).not.toMatch(/\.(insert|upsert|update|delete)\(/);
+    const leituraCatalogo = CATALOGO.slice(
+      CATALOGO.indexOf("export async function carregarCatalogoSkills"),
+      CATALOGO.indexOf("export function registrarFalhaCatalogoSkills"),
+    );
+    expect(leituraCatalogo, "a leitura do catálogo voltou a esconder uma escrita").not.toContain(
+      "logEvent(",
+    );
+    expect(ORCH).toMatch(
+      /\]\);\s*if \(catalogo\.estado === "indisponivel"\) \{\s*registrarFalhaCatalogoSkills\(/,
+    );
   });
 
   it("segurança/retomada e conteúdo/estado do menu também são pares só de leitura", () => {

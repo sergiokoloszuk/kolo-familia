@@ -92,7 +92,7 @@ import {
 import { classificarIntencao } from "./intent";
 import { decidirTurno } from "@/lib/conducao/decisao-do-turno";
 import { apurarEstadoDoTurno, blocoDeEstado } from "@/lib/conducao/estado-do-turno";
-import { carregarCatalogoSkills } from "./catalogo-skills";
+import { carregarCatalogoSkills, registrarFalhaCatalogoSkills } from "./catalogo-skills";
 import { recuperarBoasPraticas, blocoBoasPraticas } from "@/lib/conhecimento/recuperar";
 // FASE 4A NO WHATSAPP (10/08/2026) — os MESMOS módulos que a web usa, chamados
 // daqui. Nenhum deles é web-only: `carregarPerfilConsultavel`, `secoesDe` e as
@@ -3352,8 +3352,11 @@ async function processInboundInterno(
           historicoPromise.then((historico) =>
             ultimasFalas(supabase, family.id, inbound.texto, historico),
           ),
-          carregarCatalogoSkills(supabase, family.id),
+          carregarCatalogoSkills(supabase),
         ]);
+        if (catalogo.estado === "indisponivel") {
+          registrarFalhaCatalogoSkills(family.id, catalogo.motivo);
+        }
         return {
           escolha,
           estado,

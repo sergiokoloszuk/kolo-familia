@@ -28,9 +28,12 @@ ao lado: comando/CI, commit, URL do deploy ou consulta com data e amostra.
 - [ ] 0.8 Branch publicada e PR #151 aberto; merge e deploy ainda não
   realizados.
 
-**Estado atual da missão (28/10/2026):** Gates 1 e 2 passaram. O PR #151 está
-aberto como rascunho e a CI Linux ficou verde. Gate 3 aguarda revisão
-independente; Gate 4 aguarda essa revisão e autorização humana específica para
+**Estado atual da missão (29/10/2026):** Gates 1 e 2 passaram. O PR #151 está
+aberto e pronto para revisão, com CI Linux verde. A primeira auditoria
+independente encontrou uma escrita indireta de observabilidade dentro da onda
+paralela; a correção mínima está local e passou 154/154 testes relacionados e
+`tsc --noEmit`. Gate 3 aguarda nova auditoria sobre o commit corrigido; Gate 4
+aguarda essa revisão, a nova CI e autorização humana específica para
 merge/deploy. Produção permanece bloqueada até os Gates 3–4 passarem.
 
 ---
@@ -111,9 +114,9 @@ build parcial. O preview da Vercel também passou.
 perigosa.
 
 1. [x] Comparar o diff contra a `main` que será publicada.
-2. [x] Confirmar que todos os itens adicionados aos `Promise.all` são somente
+2. [ ] Confirmar que todos os itens adicionados aos `Promise.all` são somente
    leitura.
-3. [x] Confirmar que não há `insert`, `upsert`, `update`, `delete`, envio de
+3. [ ] Confirmar que não há `insert`, `upsert`, `update`, `delete`, envio de
    WhatsApp ou chamada de modelo dentro das ondas novas.
 4. [x] Confirmar que a segurança continua abaixo do gate de acesso e antes dos
    handlers de entregáveis.
@@ -131,10 +134,19 @@ evidência em código/teste.
 **FAIL quando:** houver escrita concorrente, risco entre famílias/irmãos ou
 mudança de comportamento não coberta por teste.
 
-**Auditoria técnica do executor: PASS (28/10/2026).** Nenhum efeito funcional
-entrou nas ondas. O alarme já existente do catálogo continua `void logEvent`,
-fora do resultado aguardado. A revisão independente permanece obrigatória no
-PR antes de este gate receber PASS final.
+**Auditoria independente: FALHOU (29/10/2026, HEAD `987193c`).** A leitura
+`carregarCatalogoSkills` participava da onda, mas seu caminho de falha chamava
+`void logEvent`, que inicia um `insert` em `eventos_app` antes de as demais
+leituras necessariamente terminarem. Não houve risco de mistura entre famílias
+nem mutação de domínio, mas a escrita indireta contradizia os itens 2–3 e o
+critério explícito deste gate.
+
+**Correção local (29/10/2026):** a leitura agora apenas devolve
+`indisponivel`; depois de o `Promise.all` terminar, o orquestrador dispara
+explicitamente o alarme best-effort. O teste de falha prova que nenhum evento é
+iniciado durante a leitura e que a persistência continua ocorrendo depois.
+Testes relacionados 154/154 e `tsc --noEmit` passaram. O gate segue
+**BLOQUEADO** até revisão independente do novo commit e CI verde do novo HEAD.
 
 ---
 
@@ -155,10 +167,11 @@ PR antes de este gate receber PASS final.
 
 **BLOQUEADO quando:** CI, revisão ou autorização estiver pendente.
 
-**Estado: BLOQUEADO (28/10/2026).** PR em rascunho
-`https://github.com/sergiokoloszuk/kolo-familia/pull/151`; branch publicada,
-diff restrito aos nove arquivos da missão, CI verde. Faltam revisão
-independente e autorização humana específica para merge/deploy.
+**Estado: BLOQUEADO (29/10/2026).** PR
+`https://github.com/sergiokoloszuk/kolo-familia/pull/151` aberto e pronto para
+revisão. A CI do HEAD anterior ficou verde; a correção do achado P1 ainda
+precisa ser commitada, publicada, revisada e validada pela CI. Depois disso,
+falta autorização humana específica para merge/deploy.
 
 ---
 
@@ -290,8 +303,8 @@ outras frentes.
 |---|---|---|
 | 1 · Integração | PASS | Base `25e8891`; simulações de merge sem conflito |
 | 2 · CI | PASS | PR #151; run `40760820029`, job `123071947109`, 6m12s |
-| 3 · Auditoria | BLOQUEADO | Auditoria técnica passou; falta revisão independente |
-| 4 · PR/aprovação | BLOQUEADO | PR #151 e CI verdes; faltam revisão e autorização de merge |
+| 3 · Auditoria | BLOQUEADO | Revisão encontrou escrita indireta; correção local aguarda nova auditoria |
+| 4 · PR/aprovação | BLOQUEADO | PR #151 aberto; correção aguarda push, CI, revisão e autorização de merge |
 | 5 · Publicação | BLOQUEADO | Depende dos Gates 2–4 |
 | 6 · Smoke | BLOQUEADO | Depende do deploy |
 | 7 · Métrica 72 h | BLOQUEADO | Depende do deploy e `n >= 20` |

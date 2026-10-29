@@ -108,7 +108,7 @@ substitui a prioridade atual de segurança nem a análise de produção.
 | [PEND-035](#pend-035) | ✅ BAIXADA · O objetivo do Plano confundia BARREIRA com OBJETIVO FINAL | P1 | CONCLUÍDA |
 | [PEND-036](#pend-036) | O contexto mais recente não prevalece — o Plano reoferece o que a conversa acabou de descartar | P1 | ABERTA |
 | [PEND-037](#pend-037) | Fato × hipótese — o Plano afirma causas sem fonte rastreável | P2 | ABERTA |
-| [PEND-038](#pend-038) | Latência percebida no WhatsApp — e a resposta que chega em vários balões | P1 pós-rollout | ABERTA · MEDIDA · PR #151 COM CI VERDE · AGUARDANDO REVISÃO/MERGE |
+| [PEND-038](#pend-038) | Latência percebida no WhatsApp — e a resposta que chega em vários balões | P1 pós-rollout | ABERTA · MEDIDA · CORREÇÃO P1 LOCAL · AGUARDANDO CI/REVISÃO/MERGE |
 | [PEND-039](#pend-039) | BIA-5 · Bancada permanente de golden cases (e a prova de recuperação da BIA) | P1 | PRONTA PARA IMPLEMENTAR |
 | [PEND-040](#pend-040) | Observabilidade de IA — a conversa Web e o Plano não existem em api_calls | P1 | ABERTA |
 | [PEND-041](#pend-041) | O rastro do canal web não distingue conversa de geração de artefato | P2 | ABERTA |
@@ -933,7 +933,7 @@ Aberta em: 2026-08-11 · Origem: decisão de 11/08/2026
 
 ### PEND-038
 **Latência percebida no WhatsApp — e a resposta que chega em vários balões**
-Bloco: **A · Condução** · Prioridade: **P1 pós-rollout** · Estado: **ABERTA · MEDIDA · PR #151 COM CI VERDE · AGUARDANDO REVISÃO/MERGE**
+Bloco: **A · Condução** · Prioridade: **P1 pós-rollout** · Estado: **ABERTA · MEDIDA · CORREÇÃO P1 LOCAL · AGUARDANDO CI/REVISÃO/MERGE**
 Aberta em: 2026-08-11 · Origem: teste real (Karina/Manu, 11:25–11:28)
 
 > **Paralela à 3b, não depois dela.** Não adianta a inteligência melhorar se a
@@ -967,9 +967,18 @@ Aberta em: 2026-08-11 · Origem: teste real (Karina/Manu, 11:25–11:28)
   modelos, prompts, portões e respostas; transforma apenas leituras
   independentes em ondas paralelas: segurança + retomada; desafios + estado do
   menu; e escolha do menu + histórico/estado + últimas falas + catálogo. Não há
-  `insert`, `upsert`, `update` ou `delete` nas ondas. O carregador do catálogo
-  mantém o alarme preexistente, disparado sem `await` somente quando a leitura
-  falha; a onda não aguarda nem coordena essa escrita de observabilidade.
+  `insert`, `upsert`, `update` ou `delete` diretos nas ondas.
+- **Auditoria independente e correção P1 local (29/10/2026):** a revisão do
+  HEAD `987193c` encontrou que `carregarCatalogoSkills`, embora parecesse uma
+  leitura, iniciava `logEvent` no caminho de falha e portanto abria uma escrita
+  indireta de observabilidade enquanto o `Promise.all` ainda podia estar em
+  curso. Não havia mutação de domínio nem mistura entre famílias, mas o Gate 3
+  proíbe qualquer escrita na onda. A correção separa leitura e alarme: o helper
+  só devolve `indisponivel`, e o orquestrador dispara o evento explicitamente
+  depois da conclusão da onda. A prova comportamental confirma zero evento
+  durante a leitura e persistência posterior; testes relacionados 154/154 e
+  `tsc --noEmit` passaram. Falta commit/push, CI limpa e nova auditoria antes do
+  merge.
 - **Validação local atualizada (28/10/2026):** testes diretamente afetados
   120/120; as duas asserções temporais foram estabilizadas em commit separado
   (`992d3a3`) e passaram 36/36; a prova de continuidade foi alinhada à promessa

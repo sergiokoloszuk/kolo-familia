@@ -32,7 +32,9 @@ vi.mock("@/lib/log", () => ({
   logServerError: async () => {},
 }));
 
-const { carregarCatalogoSkills, _limparCacheDeSkills } = await import("./catalogo-skills");
+const { carregarCatalogoSkills, registrarFalhaCatalogoSkills, _limparCacheDeSkills } = await import(
+  "./catalogo-skills"
+);
 
 /** Um cliente mínimo: responde o que o cenário mandar, e conta as tentativas. */
 function clienteQue(
@@ -85,10 +87,12 @@ describe("PEND-184 · o catálogo distingue falha de vazio", () => {
     expect(eventos.length).toBe(0);
   });
 
-  it("erro do banco → indisponível E evento persistido", async () => {
+  it("erro do banco → leitura indisponível; evento só depois da onda", async () => {
     const { cliente } = clienteQue(() => ({ error: { message: "timeout ao ler" } }));
-    const r = await carregarCatalogoSkills(cliente, "fam-1");
+    const r = await carregarCatalogoSkills(cliente);
     expect(r.estado).toBe("indisponivel");
+    expect(eventos, "a leitura iniciou uma escrita dentro da onda paralela").toHaveLength(0);
+    if (r.estado === "indisponivel") registrarFalhaCatalogoSkills("fam-1", r.motivo);
     const alarme = eventos.find((e) => e.kind === "catalogo_skills_indisponivel");
     expect(alarme, "a falha não deixou rastro — foi o defeito inteiro").toBeTruthy();
     expect(alarme?.severity).toBe("error");
@@ -103,6 +107,8 @@ describe("PEND-184 · o catálogo distingue falha de vazio", () => {
     const { cliente } = clienteQue(() => Promise.reject(new Error("fetch failed")));
     const r = await carregarCatalogoSkills(cliente);
     expect(r.estado).toBe("indisponivel");
+    expect(eventos).toHaveLength(0);
+    if (r.estado === "indisponivel") registrarFalhaCatalogoSkills(null, r.motivo);
     expect(eventos.some((e) => e.kind === "catalogo_skills_indisponivel")).toBe(true);
   });
 
